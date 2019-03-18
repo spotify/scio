@@ -335,7 +335,7 @@ class BeamSQLTest extends PipelineSpec {
     """tsql[Bar, (String, Long)]("select `PCOLLECTION`.`f`.`s`, l from PCOLLECTION")""" should compile
     // st fallback support
     // XXX: scalac :bomb: this test seems to be problematic under scala 2.11 ...
-    // """tsql[UserWithFallBack, Locale]("select locale from PCOLLECTION")""" should compile
+//    """tsql[UserWithFallBack, Locale]("select locale from PCOLLECTION")""" should compile
     """tsql[UserWithOption, Option[Int]]("select age from PCOLLECTION")""" should compile
     """tsql[Bar, Long]("select cast(`PCOLLECTION`.`f`.`i` as BIGINT) from PCOLLECTION")""" should compile
     """tsql[UserBean, (String, Int)]("select name, age from PCOLLECTION")""" should compile

@@ -16,6 +16,8 @@
  */
 package com.spotify.scio.sql
 
+import java.util.Collections
+
 import com.spotify.scio.values._
 import com.spotify.scio.coders._
 import com.spotify.scio.schemas.{PrettyPrint, Record, ScalarWrapper, Schema, SchemaMaterializer}
@@ -26,7 +28,6 @@ import org.apache.beam.sdk.extensions.sql.impl.schema.BeamPCollectionTable
 import org.apache.beam.sdk.extensions.sql.impl.schema.BaseBeamTable
 import org.apache.beam.sdk.schemas.{SchemaCoder, Schema => BSchema}
 import org.apache.beam.sdk.extensions.sql.impl.utils.CalciteUtils
-import com.google.common.collect.ImmutableMap
 
 import scala.collection.JavaConverters._
 import scala.language.experimental.macros
@@ -68,11 +69,11 @@ object Query {
     }
 
     val sqlEnv =
-      BeamSqlEnv.readOnly(PCollectionName, ImmutableMap.of(PCollectionName, table))
+      BeamSqlEnv.readOnly(PCollectionName, Collections.singletonMap(PCollectionName, table))
 
     val expectedSchema: BSchema =
       Schema[O] match {
-        case s @ Record(_, _, _) =>
+        case s: Record[O] =>
           SchemaMaterializer.fieldType(s).getRowSchema
         case _ =>
           SchemaMaterializer.fieldType(Schema[ScalarWrapper[O]]).getRowSchema
@@ -167,7 +168,7 @@ object Query {
 
         val sqlEnv = BeamSqlEnv.readOnly(
           PCollectionName,
-          ImmutableMap.of(PCollectionName, new BeamPCollectionTable(scoll.internal)))
+          Collections.singletonMap(PCollectionName, new BeamPCollectionTable(scoll.internal)))
         var sqlTransform = SqlTransform.query(query)
 
         udfs.foreach {

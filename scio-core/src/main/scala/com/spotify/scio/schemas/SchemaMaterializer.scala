@@ -89,7 +89,7 @@ object SchemaMaterializer {
   private def decode[A](schema: Record[A])(v: schema.Repr): A = {
     val values =
       v.getValues.asScala.zip(schema.schemas).map {
-        case (v, (name, schema)) =>
+        case (v, (_, schema)) =>
           dispatchDecode(schema)(v.asInstanceOf[schema.Repr])
       }
     schema.construct(values)
@@ -107,9 +107,10 @@ object SchemaMaterializer {
   // XXX: scalac can't unify schema.Repr with s.Repr
   private def dispatchEncode[A](schema: Schema[A], fieldType: FieldType): schema.Encode =
     schema match {
-      case s @ Record(_, _, _) => (encode(s, fieldType)(_)).asInstanceOf[A => schema.Repr]
-      case s @ Type(_)         => (encode(s)(_)).asInstanceOf[A => schema.Repr]
-      case s @ Optional(_)     => (encode(s, fieldType)(_)).asInstanceOf[A => schema.Repr]
+      case s @ Record(_, _, _)    => (encode(s, fieldType)(_)).asInstanceOf[A => schema.Repr]
+      case RawRecord(_, _, toRow) => (toRow.apply _).asInstanceOf[A => schema.Repr]
+      case s @ Type(_)            => (encode(s)(_)).asInstanceOf[A => schema.Repr]
+      case s @ Optional(_)        => (encode(s, fieldType)(_)).asInstanceOf[A => schema.Repr]
       case s @ Arr(_, _, _) =>
         (encode[s._F, s._T](s, fieldType)(_)).asInstanceOf[A => schema.Repr]
       case s @ Fallback(_) =>
@@ -138,9 +139,7 @@ object SchemaMaterializer {
     schema
       .toList(v)
       .asScala
-      .map { x =>
-        dispatchEncode(schema.schema, fieldType.getCollectionElementType)(x)
-      }
+      .map(dispatchEncode(schema.schema, fieldType.getCollectionElementType))
       .asJava
   }
   private def encode[A](schema: Fallback[BCoder, A])(v: A): schema.Repr =
