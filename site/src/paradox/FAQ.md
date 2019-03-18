@@ -535,13 +535,3 @@ To get stacktrace:
 ```
 jstack <pid>
 ```
-
-***
-
-For maintainers, follow the following steps to update the table of contents.
-
-- Clone wiki repo `git clone git@github.com:spotify/scio.wiki`
-- Create a new personal access token under https://github.com/settings/tokens
-- Save new token in `scripts/token.txt`
-- Run `./scripts/faq.sh`
-- Commit and push changes to `FAQ.md`
