@@ -7,7 +7,7 @@ Scio
 [![Maven Central](https://img.shields.io/maven-central/v/com.spotify/scio-core_2.11.svg)](https://maven-badges.herokuapp.com/maven-central/com.spotify/scio-core_2.11)
 [![Join the chat at https://gitter.im/spotify/scio](https://badges.gitter.im/spotify/scio.svg)](https://gitter.im/spotify/scio)
 
-<img src="https://raw.github.com/spotify/scio/master/logo/logo.png" alt="Scio Logo" width="250"/>
+<img src="https://raw.github.com/spotify/scio/master/site/src/paradox/images/scio.png" alt="Scio Logo" width="250"/>
 
 > Ecclesiastical Latin IPA: /ˈʃi.o/, [ˈʃiː.o], [ˈʃi.i̯o]  
 > Verb: I can, know, understand, have knowledge.
