@@ -52,7 +52,17 @@ object MetadataSchemaTest {
     "dense_shape" -> longFeature(Seq(100))
   )
 
+  val e1FeatureList = Map[String, FeatureList](
+    "string_list" -> featureList(
+      Seq("one", "two", "eighty")
+        .map(v => Seq(ByteString.copyFromUtf8(v)))
+        .map(byteStrFeature)),
+    "long_list" -> featureList(Seq(1L, 2L, 3L).map(Seq(_)).map(longFeature)),
+    "floats_list" -> featureList(Seq(1.0f, 2.0f, 3.0f).map(Seq(_)).map(floatFeature))
+  )
+
   val examples = Seq(e1Features, e2Features).map(mkExample)
+  val sequenceExamples = Seq(e1Features, e2Features).map(m => mkSequenceExample(m, e1FeatureList))
 
   val expectedSchema = Schema
     .newBuilder()
@@ -131,10 +141,24 @@ object MetadataSchemaTest {
     fb.build
   }
 
+  private def featureList(fs: Seq[Feature]): FeatureList =
+    FeatureList
+      .newBuilder()
+      .addAllFeature(fs.asJava)
+      .build
+
   private def mkExample(features: Map[String, Feature]): Example =
     Example
       .newBuilder()
       .setFeatures(Features.newBuilder().putAllFeature(features.asJava))
+      .build
+
+  private def mkSequenceExample(context: Map[String, Feature],
+                                featureList: Map[String, FeatureList]): SequenceExample =
+    SequenceExample
+      .newBuilder()
+      .setContext(Features.newBuilder().putAllFeature(context.asJava))
+      .setFeatureLists(FeatureLists.newBuilder().putAllFeatureList(featureList.asJava))
       .build
 }
 
