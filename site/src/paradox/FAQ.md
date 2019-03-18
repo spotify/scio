@@ -356,6 +356,10 @@ Among these, `--kryoRegistrationRequired=true` might be useful when developing t
 
 SBT might run out of memory sometimes and show an `OutOfMemoryError: Metaspace` error. Override default memory setting with `-mem <integer>`, e.g. `sbt -mem 1024`.
 
+#### How do I fix SBT heap size error in IntelliJ?
+
+If you encounter an SBT error with message "Initial heap size set to a larger value than the maximum heap size", that is because IntelliJ has a lower default `-Xmx` for SBT than `-Xms` in our `.jvmopts`. To fix that, open `Preferences` -> `Build, Execution, Deployment` -> `Build Tools` -> `sbt`, and update `Maximum heap size, MB` to `2048`.
+
 #### How do I fix "Unable to create parent directories" error in IntelliJ?
 
 You might get an error message like `java.io.IOException: Unable to create parent directories of /Applications/IntelliJ IDEA CE.app/Contents/bin/.bigquery/012345abcdef.schema.json`. This usually happens to people who run IntelliJ IDEA with its bundled JVM. There are two solutions.
