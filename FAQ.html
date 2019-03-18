@@ -477,7 +477,7 @@ sc.pubsubSubscription(&quot;projects/data-university/topics/data-university&quot
 </code></pre>
 <p>In this example, the <code>map</code>&rsquo;s transform name is &ldquo;MakeUpper&rdquo; and the <code>filter</code>&rsquo;s is &ldquo;BigWords&rdquo;. If we later decided that we want to count 6 letter words as &ldquo;big&rdquo; too, then we can change it to <code>_.length &gt; 5</code>, and because the transform name is the same the job can be updated on the fly.</p>
 <h4><a href="#how-do-i-read-pubsub-input-in-a-local-pipeline-" name="how-do-i-read-pubsub-input-in-a-local-pipeline-" class="anchor"><span class="anchor-link"></span></a>How do I read Pubsub input in a local pipeline?</h4>
-<p>You can use a custom <a href="https://beam.apache.org/releases/javadoc/2.10.0/?org/apache/beam/sdk/io/gcp/pubsub/PubsubIO.html"><code>PubsubIO</code></a> transform and specify <code>maxNumRecord</code> &amp; <code>maxReadTime</code> in order not to blow up local JVM.</p>
+<p>You can use a custom <a href="https://beam.apache.org/releases/javadoc/2.11.0/?org/apache/beam/sdk/io/gcp/pubsub/PubsubIO.html"><code>PubsubIO</code></a> transform and specify <code>maxNumRecord</code> &amp; <code>maxReadTime</code> in order not to blow up local JVM.</p>
 <pre class="prettyprint"><code class="language-scala">sc.customInput(&quot;ReadFromPubsub&quot;,
   PubsubIO.read()
     .topic(&quot;projects/data-university/topics/data-university&quot;)
@@ -492,7 +492,7 @@ sc.pubsubSubscription(&quot;projects/data-university/topics/data-university&quot
 <ul>
   <li>For Scio version &gt;= <code>0.4.0</code></li>
 </ul>
-<p>Starting from Scio <code>0.4.0</code> you can use Apache Beam&rsquo;s <a href="https://beam.apache.org/releases/javadoc/2.10.0/?org/apache/beam/sdk/io/FileSystems.html">Filesystems</a> abstraction:</p>
+<p>Starting from Scio <code>0.4.0</code> you can use Apache Beam&rsquo;s <a href="https://beam.apache.org/releases/javadoc/2.11.0/?org/apache/beam/sdk/io/FileSystems.html">Filesystems</a> abstraction:</p>
 <pre class="prettyprint"><code class="language-scala">// the path can be any of the supported Filesystems, e.g. local, GCS, HDFS
 val readmeResource = FileSystems.matchNewResource(&quot;gs://&lt;bucket&gt;/README.md&quot;)
 val readme = FileSystems.open(readmeResource)
@@ -501,7 +501,7 @@ val readme = FileSystems.open(readmeResource)
   <li>For Scio version &lt; <code>0.4.0</code></li>
 </ul><div class="callout note "><div class="callout-title">Note</div>
 <p>This part is GCS specific.</p></div>
-<p>You can get a <a href="https://beam.apache.org/releases/javadoc/2.10.0/?org/apache/beam/sdk/extensions/gcp/options/GcsOptions.html#getGcsUtil--"><code>GcsUtil</code></a> instance from <code>ScioContext</code>, which can be used to open GCS files in read or write mode.</p>
+<p>You can get a <a href="https://beam.apache.org/releases/javadoc/2.11.0/?org/apache/beam/sdk/extensions/gcp/options/GcsOptions.html#getGcsUtil--"><code>GcsUtil</code></a> instance from <code>ScioContext</code>, which can be used to open GCS files in read or write mode.</p>
 <pre class="prettyprint"><code class="language-scala">val gcsUtil = sc.optionsAs[GcsOptions].getGcsUtil
 </code></pre>
 <h4><a href="#how-do-i-reduce-datastore-boilerplate-" name="how-do-i-reduce-datastore-boilerplate-" class="anchor"><span class="anchor-link"></span></a>How do I reduce Datastore boilerplate?</h4>
@@ -624,7 +624,7 @@ p.map(kv =&gt; Result(kv._1, kv._2)).saveAsTypedBigQuery(args(&quot;output&quot;
 <h4><a href="#how-to-inspect-the-content-of-an-scollection-" name="how-to-inspect-the-content-of-an-scollection-" class="anchor"><span class="anchor-link"></span></a>How to inspect the content of an <code>SCollection</code>?</h4>
 <p>There is multiple options here: - Use <code>debug()</code> method on an <code>SCollection</code> to print its content as the data flows through the DAG during the execution (after the <code>close</code> or <code>closeAndCollect</code>) - Use a debugger and setup break points - make sure to break inside of your functions to stop control at the execution not the pipeline construction time - In <a href="./Scio-REPL.html">Scio-REPL</a>, use <code>closeAndCollect()</code> to close the context and materialize the content of an <code>SCollection</code></p>
 <h4><a href="#how-do-i-improve-side-input-performance-" name="how-do-i-improve-side-input-performance-" class="anchor"><span class="anchor-link"></span></a>How do I improve side input performance?</h4>
-<p>By default Dataflow workers allocate 100MB (see <a href="https://beam.apache.org/releases/javadoc/2.10.0/?org/apache/beam/runners/dataflow/options/DataflowWorkerHarnessOptions.html#getWorkerCacheMb--">DataflowWorkerHarnessOptions#getWorkerCacheMb</a>) of memory for caching side inputs, and falls back to disk or network. Therefore jobs with large side inputs may be slow. To override this default, register <code>DataflowWorkerHarnessOptions</code> before parsing command line arguments and then pass <code>--workerCacheMb=N</code> when submitting the job.</p>
+<p>By default Dataflow workers allocate 100MB (see <a href="https://beam.apache.org/releases/javadoc/2.11.0/?org/apache/beam/runners/dataflow/options/DataflowWorkerHarnessOptions.html#getWorkerCacheMb--">DataflowWorkerHarnessOptions#getWorkerCacheMb</a>) of memory for caching side inputs, and falls back to disk or network. Therefore jobs with large side inputs may be slow. To override this default, register <code>DataflowWorkerHarnessOptions</code> before parsing command line arguments and then pass <code>--workerCacheMb=N</code> when submitting the job.</p>
 <pre class="prettyprint"><code class="language-scala">PipelineOptionsFactory.register(classOf[DataflowWorkerHarnessOptions])
 val (sc, args) = ContextAndArgs(cmdlineArgs)
 </code></pre>
