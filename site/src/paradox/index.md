@@ -1,4 +1,4 @@
-<img src="https://raw.github.com/spotify/scio/master/logo/logo.png" alt="Scio Logo" width="125"/>
+<img src="images/scio.png" alt="Scio Logo" width="125"/>
 
 > Ecclesiastical Latin IPA: /ˈʃi.o/, [ˈʃiː.o], [ˈʃi.i̯o]  
 > Verb: I can, know, understand, have knowledge.
@@ -7,13 +7,11 @@
 
 Scio is a Scala API for [Apache Beam](https://beam.apache.org/) and [Google Cloud Dataflow](https://github.com/GoogleCloudPlatform/DataflowJavaSDK) inspired by [Apache Spark](https://spark.apache.org/) and [Scalding](https://github.com/twitter/scalding).
 
-Scio `0.3.0` and future versions depend on Apache Beam (`org.apache.beam`) while earlier versions depend on Google Cloud Dataflow SDK (`com.google.cloud.dataflow`). See this @ref[page](Apache-Beam.md) for a list of breaking changes.
-
 @ref:[Getting Started](Getting-Started.md) is the best place to start with Scio. If you are new to Apache Beam and distributed data processing, check out the [Beam Programming Guide](https://beam.apache.org/documentation/programming-guide/) first for a detailed explanation of the Beam programming model and concepts. If you have experience with other Scala data processing libraries, check out this comparison between [[Scio, Scalding and Spark]]. Finally check out this document about the relationship between [[Scio, Beam and Dataflow]].
 
 Example Scio pipelines and tests can be found under @github[scio-examples](/scio-examples/src). A lot of them are direct ports from Beam's Java [examples](https://github.com/apache/beam/tree/master/examples). See this [page](https://spotify.github.io/scio/examples/) for some of them with side-by-side explanation. Also see [Big Data Rosetta Code](https://github.com/spotify/big-data-rosetta-code) for common data processing code snippets in Scio, Scalding and Spark.
 
-See [Scio Scaladocs](https://spotify.github.io/scio) for current API documentation.
+See @scaladoc[Scio Scaladocs](com.spotify.scio.index)  for current API documentation.
 
 See [scio-contrib](https://github.com/spotify/scio-contrib) for community-supported add-ons for Scio.
 
