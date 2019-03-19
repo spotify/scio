@@ -268,7 +268,19 @@ final class TFExampleSCollectionFunctions[T <: Example](private val self: SColle
    * Saves this SCollection of `org.tensorflow.example.Example` as a TensorFlow TFRecord file.
    * @return
    */
+  @deprecated("saveAsTfExampleFile is deprecated: use saveAsTfRecordFile instead", "Scio 0.7.3")
   def saveAsTfExampleFile(
+    path: String,
+    suffix: String = TFExampleIO.WriteParam.DefaultSuffix,
+    compression: Compression = TFExampleIO.WriteParam.DefaultCompression,
+    numShards: Int = TFExampleIO.WriteParam.DefaultNumShards): Future[Tap[Example]] =
+    saveAsTfRecordFile(path, suffix = suffix, compression = compression, numShards = numShards)
+
+  /**
+   * Saves this SCollection of `org.tensorflow.example.Example` as a TensorFlow TFRecord file.
+   * @return
+   */
+  def saveAsTfRecordFile(
     path: String,
     suffix: String = TFExampleIO.WriteParam.DefaultSuffix,
     compression: Compression = TFExampleIO.WriteParam.DefaultCompression,
@@ -377,14 +389,28 @@ final class SeqTFExampleSCollectionFunctions[T <: Example](private val self: SCo
    *
    * @group output
    */
+  @deprecated("saveAsTfExampleFile is deprecated: use saveAsTfRecordFile instead", "Scio 0.7.3")
   def saveAsTfExampleFile(
+    path: String,
+    suffix: String = TFExampleIO.WriteParam.DefaultSuffix,
+    compression: Compression = TFExampleIO.WriteParam.DefaultCompression,
+    numShards: Int = TFExampleIO.WriteParam.DefaultNumShards): Future[Tap[Example]] =
+    saveAsTfRecordFile(path, suffix = suffix, compression = compression, numShards = numShards)
+
+  /**
+   * Merge each [[Seq]] of [[Example]] and save them as TensorFlow TFRecord files.
+   * Caveat: if some feature names are repeated in different feature specs, they will be collapsed.
+   *
+   * @group output
+   */
+  def saveAsTfRecordFile(
     path: String,
     suffix: String = TFExampleIO.WriteParam.DefaultSuffix,
     compression: Compression = TFExampleIO.WriteParam.DefaultCompression,
     numShards: Int = TFExampleIO.WriteParam.DefaultNumShards): Future[Tap[Example]] =
     self
       .map(SeqTFExampleSCollectionFunctions.mergeExamples)
-      .saveAsTfExampleFile(path, suffix, compression, numShards)
+      .saveAsTfRecordFile(path, suffix, compression, numShards)
 
   /**
    * Merge each [[Seq]] of [[Example]] and save them as TensorFlow TFRecord files.
@@ -460,7 +486,7 @@ final class TFSequenceExampleSCollectionFunctions[T <: SequenceExample](
    *
    * @return
    */
-  def saveAsTfSequenceExampleFile(
+  def saveAsTfRecordFile(
     path: String,
     suffix: String = TFExampleIO.WriteParam.DefaultSuffix,
     compression: Compression = TFExampleIO.WriteParam.DefaultCompression,

@@ -64,9 +64,9 @@ class TFSequenceExampleIOTest extends ScioIOSpec {
 
   "TFSequenceExampleIO" should "work" in {
     val xs = (1 to 100).map(x => toSequenceExample(Record(x, Seq(x.toString, x.toString))))
-    testTap(xs)(_.saveAsTfSequenceExampleFile(_))(".tfrecords")
+    testTap(xs)(_.saveAsTfRecordFile(_))(".tfrecords")
     testJobTest(xs)(TFSequenceExampleIO(_))(_.tfRecordSequenceExampleFile(_))(
-      _.saveAsTfSequenceExampleFile(_)
+      _.saveAsTfRecordFile(_)
     )
   }
 
