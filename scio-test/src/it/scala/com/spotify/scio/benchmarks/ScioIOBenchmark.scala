@@ -43,7 +43,8 @@ object ScioIOBenchmark {
   @AvroType.toSchema
   case class Shakespeare(word: String, word_count: Long, corpus: String, corpus_date: Long)
 
-  @BigQueryType.fromQuery("SELECT key, word FROM [bigquery_benchmarks.bigquery_read]")
+  @BigQueryType.fromQuery(
+    "SELECT key, word FROM [data-integration-test:bigquery_benchmarks.bigquery_read]")
   class Row
 
   @BigQueryType.toTable
