@@ -20,6 +20,7 @@ import java.util.Collections
 
 import com.spotify.scio.values._
 import com.spotify.scio.coders._
+import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.schemas.{PrettyPrint, Record, ScalarWrapper, Schema, SchemaMaterializer}
 import org.apache.beam.sdk.values._
 import org.apache.beam.sdk.extensions.sql.SqlTransform
@@ -31,7 +32,7 @@ import org.apache.beam.sdk.extensions.sql.impl.utils.CalciteUtils
 
 import scala.collection.JavaConverters._
 import scala.language.experimental.macros
-import scala.util.{Failure, Success, Try}
+import scala.util.Try
 
 sealed trait Query[I, O] extends (SCollection[I] => SCollection[O]) {
   def query: String
@@ -95,14 +96,9 @@ object Query {
         case _                                     => false
       })
 
-    // Try.toEither does not exists in Scala 2.11
-    @inline def toEither[T](t: Try[T]): Either[Throwable, T] =
-      t match {
-        case Success(s) => Right(s)
-        case Failure(e) => Left(e)
-      }
-
-    toEither(Try(silence(() => sqlEnv.parseQuery(q.query)))).left
+    ScioUtil
+      .toEither(Try(silence(() => sqlEnv.parseQuery(q.query))))
+      .left
       .map { ex =>
         val mess = org.apache.commons.lang3.exception.ExceptionUtils.getRootCauseMessage(ex)
         s"""

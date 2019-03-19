@@ -43,12 +43,12 @@ object To {
   }
 
   private def areCompatible(s0: BSchema, s1: BSchema): Boolean = {
-    val s0Fields = s0.getFields.asScala
+    val s0Fields = s0.getFields.asScala.map { x =>
+      (x.getName, x)
+    }.toMap
     s1.getFields.asScala.forall { f =>
       s0Fields
-        .find { x =>
-          x.getName == f.getName
-        }
+        .get(f.getName)
         .exists(other => areCompatible(f.getType, other.getType))
     }
   }

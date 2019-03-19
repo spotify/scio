@@ -20,6 +20,16 @@ import scala.collection.JavaConverters._
 import org.apache.beam.sdk.schemas.{Schema => BSchema}
 
 private[scio] object PrettyPrint {
+
+  val header =
+    f"""
+    |┌──────────────────────────────────────────┬──────────┬──────────┐
+    |│ NAME                                     │ TYPE     │ NULLABLE │
+    |├──────────────────────────────────────────┼──────────┼──────────┤%n""".stripMargin.drop(1)
+  val footer =
+    f"""
+    |└──────────────────────────────────────────┴──────────┴──────────┘%n""".stripMargin.trim
+
   private def printContent(fs: List[BSchema.Field], prefix: String = ""): String = {
     fs.map { f =>
         val nullable = if (f.getType.getNullable) "YES" else "NO"
@@ -42,16 +52,6 @@ private[scio] object PrettyPrint {
       .mkString("")
   }
 
-  def prettyPrint(fs: List[BSchema.Field]): String = {
-    val header =
-      f"""
-      |┌──────────────────────────────────────────┬──────────┬──────────┐
-      |│ NAME                                     │ TYPE     │ NULLABLE │
-      |├──────────────────────────────────────────┼──────────┼──────────┤%n""".stripMargin.drop(1)
-    val footer =
-      f"""
-      |└──────────────────────────────────────────┴──────────┴──────────┘%n""".stripMargin.trim
-
+  def prettyPrint(fs: List[BSchema.Field]): String =
     header + printContent(fs) + footer
-  }
 }
