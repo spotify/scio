@@ -19,7 +19,6 @@ package com.spotify.scio.tensorflow.instances
 
 import com.spotify.scio.coders.Coder
 
-import scala.language.implicitConversions
 
 trait CoderInstances {
 
