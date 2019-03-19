@@ -15,8 +15,6 @@
  * under the License.
  */
 
-package com.spotify.scio
-import com.spotify.scio.tensorflow.instances.Instances
-import com.spotify.scio.tensorflow.syntax.Syntax
+package com.spotify.scio.tensorflow.instances
 
-package object tensorflow extends Instances with Syntax
+trait Instances extends CoderInstances
