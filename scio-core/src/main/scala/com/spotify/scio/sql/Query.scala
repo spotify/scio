@@ -164,7 +164,8 @@ object Query {
           val (schema, to, from) = SchemaMaterializer.materialize(c.context, Schema[I])
           Coder.beam(SchemaCoder.of(schema, to, from))
         }
-        val scoll = c.transform("set schema")(_.map(identity)(coder)).setSchema(Schema[I])
+        val scoll =
+          c.transform(s"${c.tfName}: set schema")(_.map(identity)(coder)).setSchema(Schema[I])
 
         val sqlEnv = BeamSqlEnv.readOnly(
           PCollectionName,
