@@ -19,7 +19,6 @@ package com.spotify.scio.tensorflow.instances
 
 import com.spotify.scio.coders.Coder
 
-
 trait CoderInstances {
 
   implicit val featureTypeCoder: Coder[org.tensorflow.metadata.v0.FeatureType] = Coder.kryo
