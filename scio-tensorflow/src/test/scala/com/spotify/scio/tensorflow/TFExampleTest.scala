@@ -31,7 +31,7 @@ object ExamplesJobV2 {
   def main(argv: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(argv)
     sc.parallelize(MetadataSchemaTest.examples)
-      .saveAsTfExampleFile(args("output"))
+      .saveAsTfRecordFile(args("output"))
     sc.close()
   }
 }
