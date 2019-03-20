@@ -23,9 +23,19 @@ import java.util.concurrent.TimeUnit
 import com.esotericsoftware.kryo.io.{Input, Output}
 import com.esotericsoftware.kryo.{Kryo, Serializer}
 import com.spotify.scio.coders._
+import com.spotify.scio.schemas._
 import com.twitter.chill.IKryoRegistrar
-import org.apache.beam.sdk.coders.{AtomicCoder, ByteArrayCoder, SerializableCoder, StringUtf8Coder}
+import org.apache.beam.sdk.coders.{
+  CoderRegistry,
+  AtomicCoder,
+  ByteArrayCoder,
+  SerializableCoder,
+  StringUtf8Coder,
+  Coder => BCoder
+}
 import org.apache.beam.sdk.util.CoderUtils
+import org.apache.beam.sdk.schemas.SchemaCoder
+import org.apache.beam.sdk.options.PipelineOptionsFactory
 import org.openjdk.jmh.annotations._
 
 final case class UserId(bytes: Array[Byte])
@@ -38,7 +48,7 @@ final case class SpecializedUserForDerived(id: UserId, username: String, email: 
 @BenchmarkMode(Array(Mode.AverageTime))
 @OutputTimeUnit(TimeUnit.NANOSECONDS)
 @State(Scope.Thread)
-class KryoAtomicCoderBenchmark {
+class CoderBenchmark {
 
   // please don't use arrays outside of benchmarks
   val userId = UserId(Array[Byte](1, 2, 3, 4))
@@ -51,9 +61,16 @@ class KryoAtomicCoderBenchmark {
     SpecializedUser(userId, "johndoe", "johndoe@spotify.com")
   val specializedUserForDerived =
     SpecializedUserForDerived(userId, "johndoe", "johndoe@spotify.com")
+
+  val javaUser =
+    new j.User(new j.UserId(Array[Byte](1, 2, 3, 4).map(x => x: java.lang.Byte)),
+               "johndoe",
+               "johndoe@spotify.com")
+
   val tenTimes = List.fill(10)(specializedUserForDerived)
 
   val kryoCoder = new KryoAtomicCoder[User](KryoOptions())
+  val kryoJavaCoder = new KryoAtomicCoder[j.User](KryoOptions())
   val javaCoder = SerializableCoder.of(classOf[User])
   val specializedCoder = new SpecializedCoder
   val specializedKryoCoder = new KryoAtomicCoder[SpecializedUser](KryoOptions())
@@ -75,55 +92,75 @@ class KryoAtomicCoderBenchmark {
   }.toList
 
   @Benchmark
-  def kryoEncode: Array[Byte] =
-    CoderUtils.encodeToByteArray(kryoCoder, user)
+  def kryoEncode(o: SerializedOutputSize): Array[Byte] =
+    Counter.track(o) {
+      CoderUtils.encodeToByteArray(kryoCoder, user)
+    }
 
   @Benchmark
-  def javaEncode: Array[Byte] =
-    CoderUtils.encodeToByteArray(javaCoder, user)
+  def javaEncode(o: SerializedOutputSize): Array[Byte] =
+    Counter.track(o) {
+      CoderUtils.encodeToByteArray(javaCoder, user)
+    }
 
   @Benchmark
-  def customEncode: Array[Byte] =
-    CoderUtils.encodeToByteArray(specializedCoder, specializedUser)
+  def customEncode(o: SerializedOutputSize): Array[Byte] =
+    Counter.track(o) {
+      CoderUtils.encodeToByteArray(specializedCoder, specializedUser)
+    }
 
   @Benchmark
-  def customKryoEncode: Array[Byte] =
-    CoderUtils.encodeToByteArray(specializedKryoCoder, specializedUser)
+  def customKryoEncode(o: SerializedOutputSize): Array[Byte] =
+    Counter.track(o) {
+      CoderUtils.encodeToByteArray(specializedKryoCoder, specializedUser)
+    }
 
   @Benchmark
-  def derivedEncode: Array[Byte] =
-    CoderUtils.encodeToByteArray(derivedCoder, specializedUserForDerived)
+  def derivedEncode(o: SerializedOutputSize): Array[Byte] =
+    Counter.track(o) {
+      CoderUtils.encodeToByteArray(derivedCoder, specializedUserForDerived)
+    }
 
   @Benchmark
-  def derivedListEncode: Array[Byte] =
-    CoderUtils.encodeToByteArray(derivedListCoder, tenTimes)
+  def derivedListEncode(o: SerializedOutputSize): Array[Byte] =
+    Counter.track(o) {
+      CoderUtils.encodeToByteArray(derivedListCoder, tenTimes)
+    }
 
   @Benchmark
-  def kryoMapEncode: Array[Byte] =
-    CoderUtils.encodeToByteArray(specializedMapKryoCoder, mapExample)
+  def kryoMapEncode(o: SerializedOutputSize): Array[Byte] =
+    Counter.track(o) {
+      CoderUtils.encodeToByteArray(specializedMapKryoCoder, mapExample)
+    }
 
   @Benchmark
-  def derivedMapEncode: Array[Byte] =
-    CoderUtils.encodeToByteArray(derivedMapCoder, mapExample)
+  def derivedMapEncode(o: SerializedOutputSize): Array[Byte] =
+    Counter.track(o) {
+      CoderUtils.encodeToByteArray(derivedMapCoder, mapExample)
+    }
 
   @Benchmark
-  def kryoStringListEncode: Array[Byte] =
-    CoderUtils.encodeToByteArray(specializedStringListKryoCoder, stringListExample)
+  def kryoStringListEncode(o: SerializedOutputSize): Array[Byte] =
+    Counter.track(o) {
+      CoderUtils.encodeToByteArray(specializedStringListKryoCoder, stringListExample)
+    }
 
   @Benchmark
-  def derivedStringListEncode: Array[Byte] =
-    CoderUtils.encodeToByteArray(derivedStringListCoder, stringListExample)
+  def derivedStringListEncode(o: SerializedOutputSize): Array[Byte] =
+    Counter.track(o) {
+      CoderUtils.encodeToByteArray(derivedStringListCoder, stringListExample)
+    }
 
-  val kryoEncoded = kryoEncode
-  val javaEncoded = javaEncode
-  val customEncoded = customEncode
-  val customKryoEncoded = customKryoEncode
-  val derivedEncoded = derivedEncode
-  val derivedListEncoded = derivedListEncode
-  val kryoMapEncoded = kryoMapEncode
-  val derivedMapEncoded = derivedMapEncode
-  val kryoStringListEncoded = kryoStringListEncode
-  val derivedStringListEncoded = derivedStringListEncode
+  val kryoEncoded = kryoEncode(new SerializedOutputSize)
+  val javaEncoded = javaEncode(new SerializedOutputSize)
+  val customEncoded = customEncode(new SerializedOutputSize)
+  val customKryoEncoded = customKryoEncode(new SerializedOutputSize)
+  val derivedEncoded = derivedEncode(new SerializedOutputSize)
+  val derivedListEncoded = derivedListEncode(new SerializedOutputSize)
+  val kryoMapEncoded = kryoMapEncode(new SerializedOutputSize)
+  val derivedMapEncoded = derivedMapEncode(new SerializedOutputSize)
+  val kryoStringListEncoded = kryoStringListEncode(new SerializedOutputSize)
+  val derivedStringListEncoded = derivedStringListEncode(new SerializedOutputSize)
 
   @Benchmark
   def kryoDecode: User =
@@ -164,6 +201,80 @@ class KryoAtomicCoderBenchmark {
   @Benchmark
   def derivedStringListDecode: Seq[String] =
     CoderUtils.decodeFromByteArray(derivedStringListCoder, derivedStringListEncoded)
+
+  // Compare the performance of Schema Coders vs compile time derived Coder. Run with:
+  // jmh:run -f1 -wi 10 -i 20 com.spotify.scio.jmh.CoderBenchmark.(derived|schemaCoder)(De|En)code
+  val (specializedUserSchema, specializedTo, specializedFrom) =
+    SchemaMaterializer.materialize(CoderRegistry.createDefault(),
+                                   PipelineOptionsFactory.create(),
+                                   Schema[SpecializedUserForDerived])
+
+  val specializedSchemaCoder: BCoder[SpecializedUserForDerived] =
+    SchemaCoder.of(specializedUserSchema, specializedTo, specializedFrom)
+
+  @Benchmark
+  def schemaCoderEncode(o: SerializedOutputSize): Array[Byte] =
+    Counter.track(o) {
+      CoderUtils.encodeToByteArray(specializedSchemaCoder, specializedUserForDerived)
+    }
+
+  val shemaEncoded = schemaCoderEncode(new SerializedOutputSize)
+
+  @Benchmark
+  def schemaCoderDecode: SpecializedUserForDerived =
+    CoderUtils.decodeFromByteArray(specializedSchemaCoder, shemaEncoded)
+
+  // Compare the performance of Schema Coders vs Kryo coder for java class run with:
+  // jmh:run -f1 -wi 10 -i 20 com.spotify.scio.jmh.CoderBenchmark.java(Kryo|Schema)CoderEncode
+  val (javaUserSchema, javaTo, javaFrom) =
+    SchemaMaterializer.materialize(CoderRegistry.createDefault(),
+                                   PipelineOptionsFactory.create(),
+                                   Schema[j.User])
+
+  val javaSchemaCoder: BCoder[j.User] =
+    SchemaCoder.of(javaUserSchema, javaTo, javaFrom)
+
+  @Benchmark
+  def javaSchemaCoderEncode(o: SerializedOutputSize): Array[Byte] =
+    Counter.track(o) {
+      CoderUtils.encodeToByteArray(javaSchemaCoder, javaUser)
+    }
+
+  val javaShemaEncoded = javaSchemaCoderEncode(new SerializedOutputSize)
+
+  @Benchmark
+  def javaSchemaCoderDecode: j.User =
+    CoderUtils.decodeFromByteArray(javaSchemaCoder, javaShemaEncoded)
+
+  @Benchmark
+  def javaKryoCoderEncode(o: SerializedOutputSize): Array[Byte] =
+    Counter.track(o) {
+      CoderUtils.encodeToByteArray(kryoJavaCoder, javaUser)
+    }
+
+  val javaKryoEncoded = javaKryoCoderEncode(new SerializedOutputSize)
+
+  @Benchmark
+  def javaKryoCoderDecode: j.User =
+    CoderUtils.decodeFromByteArray(kryoJavaCoder, javaKryoEncoded)
+}
+
+/**
+ * Counter to track the size of the serialized output
+ */
+@State(Scope.Thread)
+@AuxCounters(AuxCounters.Type.EVENTS)
+class SerializedOutputSize(var outputSize: Int) {
+  def this() { this(0) }
+}
+
+object Counter {
+  def track[A](o: SerializedOutputSize)(f: => Array[Byte]): Array[Byte] = {
+    val out = f
+    if (o.outputSize == 0)
+      o.outputSize = out.length
+    out
+  }
 }
 
 final class SpecializedCoder extends AtomicCoder[SpecializedUser] {
@@ -210,6 +321,9 @@ class KryoRegistrar extends IKryoRegistrar {
     k.register(classOf[SpecializedUser], new SpecializedKryoSerializer)
     k.register(classOf[UserId])
     k.register(classOf[Array[Byte]])
+    k.register(classOf[Array[java.lang.Byte]])
+    k.register(classOf[j.UserId])
+    k.register(classOf[j.User])
 
     k.setRegistrationRequired(true)
   }
