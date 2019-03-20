@@ -396,4 +396,10 @@ class CodersTest extends FlatSpec with Matchers {
   it should "#1651: remove all anotations from derived coders" in {
     coderIsSerializable[TraitWithAnnotation]
   }
+
+  it should "Serialize Java beans using a Schema Coder" in {
+    val javaUser = new com.spotify.scio.bean.UserBean("Julien", 33)
+    javaUser coderShould roundtrip()
+    javaUser coderShould notFallback()
+  }
 }

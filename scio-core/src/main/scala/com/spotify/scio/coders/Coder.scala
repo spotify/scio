@@ -171,7 +171,7 @@ private[coders] object CoderException {
 
 // XXX: Workaround a NPE deep down the stack in Beam
 // info]   java.lang.NullPointerException: null value in entry: T=null
-private case class WrappedBCoder[T](u: BCoder[T]) extends BCoder[T] {
+private[scio] case class WrappedBCoder[T](u: BCoder[T]) extends BCoder[T] {
 
   /**
    * Eagerly compute a stack trace on materialization
@@ -228,11 +228,12 @@ private object WrappedBCoder {
 // Coder used internally specifically for Magnolia derived coders.
 // It's technically possible to define Product coders only in terms of `Coder.transform`
 // This is just faster
-private class RecordCoder[T](typeName: String,
-                             cs: Array[(String, BCoder[Any])],
-                             construct: Seq[Any] => T,
-                             destruct: T => Array[Any])
+private[scio] final case class RecordCoder[T](typeName: String,
+                                              cs: Array[(String, BCoder[Any])],
+                                              construct: Seq[Any] => T,
+                                              destruct: T => Array[Any])
     extends AtomicCoder[T] {
+
   @inline def onErrorMsg[A](msg: => String)(f: => A): A =
     try { f } catch {
       case e: Exception =>

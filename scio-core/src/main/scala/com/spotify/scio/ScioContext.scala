@@ -693,11 +693,12 @@ class ScioContext private[scio] (val options: PipelineOptions, private var artif
    */
   def parallelize[T: Coder](elems: Iterable[T]): SCollection[T] =
     requireNotClosed {
+      val coder = CoderMaterializer.beam(context, Coder[T])
       wrap(
         this.applyInternal(
           Create
             .of(elems.asJava)
-            .withCoder(CoderMaterializer.beam(context, Coder[T]))))
+            .withCoder(coder)))
     }
 
   /**
