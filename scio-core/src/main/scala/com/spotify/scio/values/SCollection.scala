@@ -28,16 +28,20 @@ import com.spotify.scio.ScioContext
 import com.spotify.scio.annotations.experimental
 import com.spotify.scio.coders.{AvroBytesUtil, Coder, CoderMaterializer}
 import com.spotify.scio.io._
+import com.spotify.scio.schemas.{Schema, SchemaMaterializer, To}
+import com.spotify.scio.sql.Query
 import com.spotify.scio.testing.TestDataManager
 import com.spotify.scio.util._
 import com.spotify.scio.util.random.{BernoulliSampler, PoissonSampler}
 import com.twitter.algebird.{Aggregator, Monoid, Semigroup}
 import org.apache.avro.file.CodecFactory
 import org.apache.avro.generic.GenericRecord
+import org.apache.beam.sdk.coders.{Coder => BCoder}
 import org.apache.beam.sdk.io.{Compression, FileBasedSink}
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
 import org.apache.beam.sdk.transforms._
 import org.apache.beam.sdk.transforms.windowing._
+import org.apache.beam.sdk.util.SerializableUtils
 import org.apache.beam.sdk.values.WindowingStrategy.AccumulationMode
 import org.apache.beam.sdk.values._
 import org.apache.beam.sdk.{io => beam}
@@ -131,18 +135,31 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   def setCoder(coder: org.apache.beam.sdk.coders.Coder[T]): SCollection[T] =
     context.wrap(internal.setCoder(coder))
 
+  def setSchema(schema: Schema[T]): SCollection[T] = {
+    if (!internal.hasSchema) {
+      val (s, to, from) = SchemaMaterializer.materialize(this.context, schema)
+      context.wrap(internal.setSchema(s, to, from))
+    } else this
+  }
+
+  private def checkCoderSerialization[A](coder: BCoder[A]): Unit =
+    coder match {
+      case _ if !context.isTest => ()
+      // https://issues.apache.org/jira/browse/BEAM-5645
+      case c if c.getClass.getPackage.getName.startsWith("org.apache.beam") =>
+        ()
+      case _ => SerializableUtils.ensureSerializable(coder)
+    }
+
   /**
    * Apply a [[org.apache.beam.sdk.transforms.PTransform PTransform]] and wrap the output in an
    * [[SCollection]].
    */
   def applyTransform[U: Coder](
     transform: PTransform[_ >: PCollection[T], PCollection[U]]): SCollection[U] = {
-    val bcoder = CoderMaterializer.beam(context, Coder[U])
-    if (context.isTest) {
-      org.apache.beam.sdk.util.SerializableUtils
-        .ensureSerializable(bcoder)
-    }
-    this.pApply(transform).setCoder(bcoder)
+    val coder = CoderMaterializer.beam(context, Coder[U])
+    checkCoderSerialization(coder)
+    this.pApply(transform).setCoder(coder)
   }
 
   /**
@@ -154,16 +171,22 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     implicit koder: Coder[K],
     voder: Coder[V]): SCollection[KV[K, V]] = {
     val bcoder = CoderMaterializer.kvCoder[K, V](context)
-    if (context.isTest) {
-      org.apache.beam.sdk.util.SerializableUtils
-        .ensureSerializable(bcoder)
-    }
+    checkCoderSerialization(bcoder)
     this.pApply(transform).setCoder(bcoder)
   }
 
   /** Apply a transform. */
   @experimental
   def transform[U](f: SCollection[T] => SCollection[U]): SCollection[U] = transform(this.tfName)(f)
+
+  /**
+   * Apply BeamSQL query to this SCollection
+   */
+  // this method is not strictly necessary but using a invariant type instead of
+  // simple (SCollection[T] => SCollection[U]) helps with type inference
+  def sql[U](q: Query[T, U]): SCollection[U] = transform(q.query)(q)
+
+  def to[U](to: To[T, U]): SCollection[U] = transform(to)
 
   @experimental
   def transform[U](name: String)(f: SCollection[T] => SCollection[U]): SCollection[U] =
