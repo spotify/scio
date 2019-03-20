@@ -28,7 +28,7 @@ import org.tensorflow.metadata.v0._
 
 import scala.language.implicitConversions
 
-final class TFScioContextOps(private val self: ScioContext) extends AnyVal {
+final class ScioContextOps(private val self: ScioContext) extends AnyVal {
 
   /**
    * Get an SCollection for a TensorFlow TFRecord file. Note that TFRecord files are not
@@ -98,7 +98,7 @@ final class TFScioContextOps(private val self: ScioContext) extends AnyVal {
 
 trait ScioContextSyntax {
 
-  /** Implicit conversion from [[ScioContext]] to [[TFScioContextOps]]. */
-  implicit def makeTFScioContextFunctions(s: ScioContext): TFScioContextOps =
-    new TFScioContextOps(s)
+  /** Implicit conversion from [[ScioContext]] to [[ScioContextOps]]. */
+  implicit def tensorFlowScioContextFunctions(s: ScioContext): ScioContextOps =
+    new ScioContextOps(s)
 }

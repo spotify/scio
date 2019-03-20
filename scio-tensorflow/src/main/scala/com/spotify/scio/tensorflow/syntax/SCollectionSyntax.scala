@@ -42,7 +42,7 @@ import scala.concurrent.Future
 import scala.language.implicitConversions
 import scala.reflect.ClassTag
 
-object TFExampleSCollectionOps {
+object ExampleSCollectionOps {
   @deprecated("Schema inference will be removed. We recommend using TensorFlow Data Validation",
               "Scio 0.7.0")
   def saveExampleMetadata(schema: SCollection[Schema], schemaPath: String): Unit =
@@ -144,7 +144,7 @@ final class PredictSCollectionOps[T: ClassTag](private val self: SCollection[T])
     self.parDo(new SavedBundlePredictDoFn[T, V](savedModelUri, options, fetchOps, inFn, outFn))
 }
 
-final class TFExampleSCollectionOps[T <: Example](private val self: SCollection[T]) extends AnyVal {
+final class ExampleSCollectionOps[T <: Example](private val self: SCollection[T]) extends AnyVal {
 
   /**
    * Saves this SCollection of `org.tensorflow.example.Example` as a TensorFlow TFRecord file.
@@ -220,7 +220,7 @@ final class TFExampleSCollectionOps[T <: Example](private val self: SCollection[
       // by default if there is no schema provided infer and save schema
       inferExampleMetadata(schemaPath)
     } else {
-      TFExampleSCollectionOps
+      ExampleSCollectionOps
         .saveExampleMetadata(self.context.parallelize(Some(schema)), schemaPath)
     }
     val param = TFExampleIO.WriteParam(suffix, compression, numShards)
@@ -239,30 +239,30 @@ final class TFExampleSCollectionOps[T <: Example](private val self: SCollection[
     implicit val sc = Coder[Schema]
     implicit val fc = Coder[Feature]
 
-    val result = TFExampleSCollectionOps
+    val result = ExampleSCollectionOps
       .examplesToFeatures(self.asInstanceOf[SCollection[Example]])
       .groupBy(_ => ())
       .values
       .map(features => Schema.newBuilder().addAllFeature(features.asJava).build())
     if (schemaPath != null) {
-      TFExampleSCollectionOps.saveExampleMetadata(result, schemaPath)
+      ExampleSCollectionOps.saveExampleMetadata(result, schemaPath)
     }
     result
   }
 
 }
 
-object SeqTFExampleSCollectionOps {
+object SeqExampleSCollectionOps {
 
   private val mergeExamples: Seq[Example] => Example =
     _.foldLeft(Example.newBuilder)((b, i) => b.mergeFrom(i)).build()
 
 }
 
-final class SeqTFExampleSCollectionOps[T <: Example](private val self: SCollection[Seq[T]])
+final class SeqExampleSCollectionOps[T <: Example](private val self: SCollection[Seq[T]])
     extends AnyVal {
 
-  def mergeExamples(e: Seq[Example]): Example = SeqTFExampleSCollectionOps.mergeExamples(e)
+  def mergeExamples(e: Seq[Example]): Example = SeqExampleSCollectionOps.mergeExamples(e)
 
   /**
    * Merge each [[Seq]] of [[Example]] and save them as TensorFlow TFRecord files.
@@ -289,7 +289,7 @@ final class SeqTFExampleSCollectionOps[T <: Example](private val self: SCollecti
     suffix: String = TFExampleIO.WriteParam.DefaultSuffix,
     compression: Compression = TFExampleIO.WriteParam.DefaultCompression,
     numShards: Int = TFExampleIO.WriteParam.DefaultNumShards): Future[Tap[Example]] =
-    new TFExampleSCollectionOps(self.map(SeqTFExampleSCollectionOps.mergeExamples))
+    new ExampleSCollectionOps(self.map(SeqExampleSCollectionOps.mergeExamples))
       .saveAsTfRecordFile(path, suffix, compression, numShards)
 
   /**
@@ -329,7 +329,7 @@ final class SeqTFExampleSCollectionOps[T <: Example](private val self: SCollecti
     suffix: String = TFExampleIO.WriteParam.DefaultSuffix,
     compression: Compression = TFExampleIO.WriteParam.DefaultCompression,
     numShards: Int = TFExampleIO.WriteParam.DefaultNumShards): Future[Tap[Example]] =
-    new TFExampleSCollectionOps(self.map(this.mergeExamples))
+    new ExampleSCollectionOps(self.map(this.mergeExamples))
       .saveAsTfExampleFileWithSchema(path, schema, schemaFilename, suffix, compression, numShards)
 
 }
@@ -355,7 +355,7 @@ final class TFRecordSCollectionOps[T <: Array[Byte]](private val self: SCollecti
 
 }
 
-final class TFSequenceExampleSCollectionOps[T <: SequenceExample](private val self: SCollection[T])
+final class SequenceExampleSCollectionOps[T <: SequenceExample](private val self: SCollection[T])
     extends AnyVal {
 
   /**
@@ -380,38 +380,34 @@ trait SCollectionSyntax {
    * Implicit conversion from [[com.spotify.scio.values.SCollection SCollection]] to
    * [[PredictSCollectionOps]].
    */
-  implicit def makePredictSCollectionOps[T: ClassTag](s: SCollection[T]): PredictSCollectionOps[T] =
-    new PredictSCollectionOps(s)
+  implicit def tensorFlowPredictSCollectionOps[T: ClassTag](
+    s: SCollection[T]): PredictSCollectionOps[T] = new PredictSCollectionOps(s)
 
   /**
    * Implicit conversion from [[com.spotify.scio.values.SCollection SCollection]] to
    * [[TFRecordSCollectionOps]].
    */
-  implicit def makeTFRecordSCollectionOps[T <: Array[Byte]](
-    s: SCollection[T]): TFRecordSCollectionOps[T] =
-    new TFRecordSCollectionOps(s)
+  implicit def tensorFlowTFRecordSCollectionOps[T <: Array[Byte]](
+    s: SCollection[T]): TFRecordSCollectionOps[T] = new TFRecordSCollectionOps(s)
 
   /**
    * Implicit conversion from [[com.spotify.scio.values.SCollection SCollection]] to
-   * [[TFExampleSCollectionOps]].
+   * [[ExampleSCollectionOps]].
    */
-  implicit def makeTFExampleSCollectionOps[T <: Example](
-    s: SCollection[T]): TFExampleSCollectionOps[T] =
-    new TFExampleSCollectionOps(s)
+  implicit def tensorFlowExampleSCollectionOps[T <: Example](
+    s: SCollection[T]): ExampleSCollectionOps[T] = new ExampleSCollectionOps(s)
 
   /**
    * Implicit conversion from [[com.spotify.scio.values.SCollection SCollection]] to
-   * [[SeqTFExampleSCollectionOps]].
+   * [[SeqExampleSCollectionOps]].
    */
-  implicit def makeSeqTFExampleSCollectionOps[T <: Example](
-    s: SCollection[Seq[T]]): SeqTFExampleSCollectionOps[T] =
-    new SeqTFExampleSCollectionOps(s)
+  implicit def tensorFlowSeqExampleSCollectionOps[T <: Example](
+    s: SCollection[Seq[T]]): SeqExampleSCollectionOps[T] = new SeqExampleSCollectionOps(s)
 
   /**
    * Implicit conversion from [[com.spotify.scio.values.SCollection SCollection]] to
-   * [[TFSequenceExampleSCollectionOps]].
+   * [[SequenceExampleSCollectionOps]].
    */
-  implicit def makeSequenceTFExampleSCollectionOps[T <: SequenceExample](
-    s: SCollection[T]): TFSequenceExampleSCollectionOps[T] =
-    new TFSequenceExampleSCollectionOps(s)
+  implicit def tensorFlowSequenceExampleSCollectionOps[T <: SequenceExample](
+    s: SCollection[T]): SequenceExampleSCollectionOps[T] = new SequenceExampleSCollectionOps(s)
 }

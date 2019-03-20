@@ -23,7 +23,7 @@ import com.spotify.featran.{FeatureSpec, MultiFeatureSpec}
 import com.spotify.featran.transformers.{OneHotEncoder, StandardScaler}
 import com.spotify.scio._
 import com.spotify.scio.tensorflow.TFSavedJob.Iris
-import com.spotify.scio.tensorflow.syntax.TFExampleSCollectionOps
+import com.spotify.scio.tensorflow.syntax.ExampleSCollectionOps
 import com.spotify.scio.testing._
 import org.tensorflow.example.Example
 import org.tensorflow.metadata.v0.{FixedShape, Schema, SparseFeature}
@@ -114,8 +114,8 @@ class TFExampleTest extends PipelineSpec {
     f.toFile.deleteOnExit()
     val sc = ScioContext()
     val schema = ExamplesJobV2WithSchema.dummySchema()
-    TFExampleSCollectionOps.saveExampleMetadata(sc.parallelize(Some(schema)),
-                                                f.toFile.getAbsolutePath)
+    ExampleSCollectionOps.saveExampleMetadata(sc.parallelize(Some(schema)),
+                                              f.toFile.getAbsolutePath)
     sc.close()
     Files.readAllBytes(f) shouldBe schema.toByteArray
   }
