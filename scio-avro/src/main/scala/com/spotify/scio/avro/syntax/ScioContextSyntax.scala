@@ -31,7 +31,7 @@ import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
 
 /** Enhanced version of [[ScioContext]] with Avro methods. */
-final class AvroScioContext(private val self: ScioContext) extends AnyVal {
+final class ScioContextOps(private val self: ScioContext) extends AnyVal {
 
   /**
    * Get an SCollection for an object file using default serialization.
@@ -80,5 +80,5 @@ final class AvroScioContext(private val self: ScioContext) extends AnyVal {
 
 /** Enhanced with Avro methods. */
 trait ScioContextSyntax {
-  implicit def toAvroScioContext(c: ScioContext): AvroScioContext = new AvroScioContext(c)
+  implicit def avroScioContextOps(c: ScioContext): ScioContextOps = new ScioContextOps(c)
 }
