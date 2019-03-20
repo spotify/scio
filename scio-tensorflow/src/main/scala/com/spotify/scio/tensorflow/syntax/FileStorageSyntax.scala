@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,18 @@
  * under the License.
  */
 
-package com.spotify.scio.tensorflow
+package com.spotify.scio.tensorflow.syntax
 
 import java.io.InputStream
 
 import com.spotify.scio.io.FileStorage
+import com.spotify.scio.tensorflow.TFRecordCodec
 import org.apache.beam.sdk.io.Compression
 
+import scala.language.implicitConversions
+
 /** File storage functions for Tensorflow TFRecord files. */
-class TFFileStorageFunctions(self: FileStorage) {
+final class FileStorageOps(private val self: FileStorage) extends AnyVal {
 
   def tfRecordFile: Iterator[Array[Byte]] = {
     new Iterator[Array[Byte]] {
@@ -41,4 +44,9 @@ class TFFileStorageFunctions(self: FileStorage) {
     }
   }
 
+}
+
+trait FileStorageSyntax {
+  implicit def tensorFlowFileStorageFunctions(s: FileStorage): FileStorageOps =
+    new FileStorageOps(s)
 }

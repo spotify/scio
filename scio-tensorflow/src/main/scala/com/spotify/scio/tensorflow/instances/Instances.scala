@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,6 @@
  * under the License.
  */
 
-package com.spotify.scio
-import com.spotify.scio.tensorflow.instances.Instances
-import com.spotify.scio.tensorflow.syntax.Syntax
+package com.spotify.scio.tensorflow.instances
 
-package object tensorflow extends Instances with Syntax
+trait Instances extends CoderInstances

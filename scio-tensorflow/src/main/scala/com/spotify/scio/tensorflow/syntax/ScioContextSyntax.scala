@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,17 +15,20 @@
  * under the License.
  */
 
-package com.spotify.scio.tensorflow
+package com.spotify.scio.tensorflow.syntax
 
 import java.nio.file.Files
 
 import com.spotify.scio.ScioContext
+import com.spotify.scio.tensorflow.{TFExampleIO, TFRecordIO, TFSequenceExampleIO}
 import com.spotify.scio.values.{DistCache, SCollection}
 import org.apache.beam.sdk.io.Compression
 import org.tensorflow.example.{Example, SequenceExample}
-import org.tensorflow.metadata.v0.Schema
+import org.tensorflow.metadata.v0._
 
-class TFScioContextFunctions(val self: ScioContext) extends AnyVal {
+import scala.language.implicitConversions
+
+final class ScioContextOps(private val self: ScioContext) extends AnyVal {
 
   /**
    * Get an SCollection for a TensorFlow TFRecord file. Note that TFRecord files are not
@@ -91,4 +94,11 @@ class TFScioContextFunctions(val self: ScioContext) extends AnyVal {
 
     (tfRecordSequenceExampleFile(path, compression), distCache)
   }
+}
+
+trait ScioContextSyntax {
+
+  /** Implicit conversion from [[ScioContext]] to [[ScioContextOps]]. */
+  implicit def tensorFlowScioContextFunctions(s: ScioContext): ScioContextOps =
+    new ScioContextOps(s)
 }
