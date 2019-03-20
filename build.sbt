@@ -313,7 +313,7 @@ lazy val scioCore: Project = Project(
     libraryDependencies ++= Seq(
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
-      "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion % "provided",
+      "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion % Provided,
       "com.twitter" %% "algebird-core" % algebirdVersion,
       "com.twitter" %% "chill" % chillVersion,
       "com.twitter" %% "chill-algebird" % chillVersion,
@@ -330,7 +330,8 @@ lazy val scioCore: Project = Project(
       "io.grpc" % "grpc-all" % grpcVersion exclude ("io.opencensus", "opencensus-api"),
       "com.github.alexarchambault" %% "case-app" % caseappVersion,
       "me.lyh" %% "magnolia" % magnoliaVersion,
-      "org.scalatest" %% "scalatest" % scalatestVersion % "test"
+      "org.scalatest" %% "scalatest" % scalatestVersion % Test,
+      "org.apache.beam" % "beam-sdks-java-extensions-sql" % beamVersion
     )
   )
   .dependsOn(
@@ -364,7 +365,8 @@ lazy val scioTest: Project = Project(
       "com.spotify.sparkey" % "sparkey" % sparkeyVersion % "test",
       "com.novocode" % "junit-interface" % junitInterfaceVersion,
       "junit" % "junit" % junitVersion % "test"
-    )
+    ),
+    (Test / compileOrder) := CompileOrder.JavaThenScala
   )
   .configs(
     IntegrationTest
@@ -385,7 +387,8 @@ lazy val scioMacros: Project = Project(
   libraryDependencies ++= Seq(
     "me.lyh" %% "magnolia" % magnoliaVersion,
     "com.chuusai" %% "shapeless" % shapelessVersion,
-    "com.esotericsoftware" % "kryo-shaded" % kryoVersion
+    "com.esotericsoftware" % "kryo-shaded" % kryoVersion,
+    "org.apache.beam" % "beam-sdks-java-extensions-sql" % beamVersion
   )
 )
 

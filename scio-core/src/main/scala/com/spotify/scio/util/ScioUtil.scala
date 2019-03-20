@@ -33,6 +33,13 @@ import scala.util.{Failure, Success, Try}
 
 private[scio] object ScioUtil {
 
+  // Try.toEither does not exists in Scala 2.11
+  def toEither[T](t: Try[T]): Either[Throwable, T] =
+    t match {
+      case Success(s) => Right(s)
+      case Failure(e) => Left(e)
+    }
+
   @transient lazy private val log = LoggerFactory.getLogger(this.getClass)
   @transient lazy val jsonFactory = Transport.getJsonFactory
 

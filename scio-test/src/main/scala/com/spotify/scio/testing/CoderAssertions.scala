@@ -82,8 +82,6 @@ object CoderAssertions {
 
   private def checkRoundtripWithCoder[T](beamCoder: BCoder[T], value: T)(
     implicit eq: Equality[T]): Assertion = {
-    coderIsSerializable[T](beamCoder)
-
     val bytes = CoderUtils.encodeToByteArray(beamCoder, value)
     val result = CoderUtils.decodeFromByteArray(beamCoder, bytes)
 
