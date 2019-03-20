@@ -80,5 +80,5 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
 
 /** Enhanced with Avro methods. */
 trait ScioContextSyntax {
-  implicit def toScioContextOps(c: ScioContext): ScioContextOps = new ScioContextOps(c)
+  implicit def avroScioContextOps(c: ScioContext): ScioContextOps = new ScioContextOps(c)
 }
