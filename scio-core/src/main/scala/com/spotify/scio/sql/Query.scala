@@ -159,9 +159,7 @@ object Query {
           val (schema, to, from) = SchemaMaterializer.materialize(c.context, Schema[I])
           Coder.beam(SchemaCoder.of(schema, to, from))
         }
-        val scoll =
-          c.transform(s"${c.tfName}: set schema")(_.map(identity)(coder)).setSchema(Schema[I])
-
+        val scoll = c.transform(s"${c.tfName}: set schema")(_.map(identity)(coder))
         val sqlTransform = udfs.foldLeft(SqlTransform.query(query)) {
           case (st, x: UdfFromClass[_]) =>
             st.registerUdf(x.fnName, x.clazz)
