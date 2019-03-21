@@ -30,6 +30,17 @@ private[coders] object CoderMacros {
 
   private[this] val BlacklistedTypes = List("org.apache.beam.sdk.values.Row")
 
+  private[this] val Warnings =
+    Map(
+      "org.apache.avro.generic.GenericRecord" ->
+        """
+          |Using a fallback coder for Avro's GenericRecord is discouraged as it is VERY ineficient.
+          |It is highly recommended to define a proper Coder[GenericRecord] using:
+          |
+          |  Coder.avroGenericRecordCoder(schema)
+        """.stripMargin
+    )
+
   /**
    * Makes it possible to configure fallback warnings by passing
    * "-Xmacro-settings:show-coder-fallback=true" as a Scalac option.
@@ -43,6 +54,7 @@ private[coders] object CoderMacros {
       .getOrElse(ShowWarnDefault)
 
   // scalastyle:off method.length
+  // scalastyle:off cyclomatic.complexity
   def issueFallbackWarning[T: c.WeakTypeTag](c: whitebox.Context)(
     lp: c.Expr[shapeless.LowPriority]): c.Tree = {
     import c.universe._
@@ -109,6 +121,11 @@ private[coders] object CoderMacros {
         val msg =
           s"Can't use a Kryo coder for ${wtt}. You need to explicitly set the Coder for this type"
         c.abort(c.enclosingPosition, msg)
+      case _ if Warnings.get(wtt.toString).isDefined =>
+        Warnings.get(wtt.toString).foreach { m =>
+          c.echo(c.enclosingPosition, m)
+        }
+        fallback
       case (false, false) =>
         if (show) c.echo(c.enclosingPosition, shortMessage.stripMargin)
         fallback
@@ -120,6 +137,7 @@ private[coders] object CoderMacros {
         fallback
     }
   }
+  // scalastyle:on cyclomatic.complexity
 
   // Add a level of indirection to prevent the macro from capturing
   // $outer which would make the Coder serialization fail
