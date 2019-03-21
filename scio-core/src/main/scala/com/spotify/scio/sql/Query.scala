@@ -25,7 +25,6 @@ import com.spotify.scio.schemas.{PrettyPrint, Record, ScalarWrapper, Schema, Sch
 import org.apache.beam.sdk.values._
 import org.apache.beam.sdk.extensions.sql.SqlTransform
 import org.apache.beam.sdk.extensions.sql.impl.{BeamSqlEnv, ParseException}
-import org.apache.beam.sdk.extensions.sql.impl.schema.BeamPCollectionTable
 import org.apache.beam.sdk.extensions.sql.impl.schema.BaseBeamTable
 import org.apache.beam.sdk.schemas.{SchemaCoder, Schema => BSchema}
 import org.apache.beam.sdk.extensions.sql.impl.utils.CalciteUtils
@@ -152,7 +151,7 @@ object Query {
   def row[I: Schema](q: String, udfs: Udf*): Query[I, Row] =
     new Query[I, Row] {
       val query: String = q
-      def apply(c: SCollection[I]): SCollection[Row] = {
+      def apply(c: SCollection[I]): SCollection[Row] = c.context.wrap {
 
         // XXX: Hack to set the coder on the existing PCOLLECTION
         // and hide it in a "set schema" dataflow block
@@ -160,30 +159,17 @@ object Query {
           val (schema, to, from) = SchemaMaterializer.materialize(c.context, Schema[I])
           Coder.beam(SchemaCoder.of(schema, to, from))
         }
-        val scoll =
-          c.transform(s"${c.tfName}: set schema")(_.map(identity)(coder)).setSchema(Schema[I])
-
-        val sqlEnv = BeamSqlEnv.readOnly(
-          PCollectionName,
-          Collections.singletonMap(PCollectionName, new BeamPCollectionTable(scoll.internal)))
-        var sqlTransform = SqlTransform.query(query)
-
-        udfs.foreach {
-          case x: UdfFromClass[_] =>
-            sqlTransform = sqlTransform.registerUdf(x.fnName, x.clazz)
-            sqlEnv.registerUdf(x.fnName, x.clazz)
-          case x: UdfFromSerializableFn[_, _] =>
-            sqlTransform = sqlTransform.registerUdf(x.fnName, x.fn)
-            sqlEnv.registerUdf(x.fnName, x.fn)
-          case x: UdafFromCombineFn[_, _, _] =>
-            sqlTransform = sqlTransform.registerUdaf(x.fnName, x.fn)
-            sqlEnv.registerUdaf(x.fnName, x.fn)
+        val scoll = c.transform(s"${c.tfName}: set schema")(_.map(identity)(coder))
+        val sqlTransform = udfs.foldLeft(SqlTransform.query(query)) {
+          case (st, x: UdfFromClass[_]) =>
+            st.registerUdf(x.fnName, x.clazz)
+          case (st, x: UdfFromSerializableFn[_, _]) =>
+            st.registerUdf(x.fnName, x.fn)
+          case (st, x: UdafFromCombineFn[_, _, _]) =>
+            st.registerUdaf(x.fnName, x.fn)
         }
 
-        val q = sqlEnv.parseQuery(query)
-        val schema = CalciteUtils.toSchema(q.getRowType)
-
-        scoll.applyTransform[Row](sqlTransform)(Coder.row(schema))
+        scoll.applyInternal(sqlTransform)
       }
     }
 
