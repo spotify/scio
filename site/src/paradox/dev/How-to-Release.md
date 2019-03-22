@@ -41,6 +41,7 @@ credentials ++= Seq(
 ## Past release names
 
 ### 0.7.x
+- [v0.7.4](https://github.com/spotify/scio/releases/tag/v0.7.4) - _"Watsonula wautieri"_
 - [v0.7.3](https://github.com/spotify/scio/releases/tag/v0.7.3) - _"Vulpes Vulpes"_
 - [v0.7.2](https://github.com/spotify/scio/releases/tag/v0.7.2) - _"Ursus t. Ussuricus"_
 - [v0.7.1](https://github.com/spotify/scio/releases/tag/v0.7.1) - _"Taxidea Taxus"_
