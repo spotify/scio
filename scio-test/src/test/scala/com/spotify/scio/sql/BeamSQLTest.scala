@@ -254,8 +254,21 @@ class BeamSQLTest extends PipelineSpec {
     "Schema.javaBeanSchema[TypeMismatch]" shouldNot compile
   }
 
-  ignore should "support JOIN" in {
-    // TODO: Join SCollections impl
+  it should "support JOIN" in runWithContext { sc =>
+    val a = sc.parallelize(users).setName("A")
+    val b = sc.parallelize(users).setName("B")
+
+    val query: Query2[User, User, Row] =
+      Query2.row("select a.username from B a join A b on a.username = b.username", "A", "B")
+    val scoll = a.sqlJoin(b)(query)
+
+    scoll shouldNot beEmpty
+
+    val tq: Query2[User, User, String] =
+      Query2.of("select a.username from B a join A b on a.username = b.username", "A", "B")
+    val tccoll = a.sqlJoin(b)(tq)
+
+    tccoll shouldNot beEmpty
   }
 
   it should "properly chain typed queries" in runWithContext { sc =>

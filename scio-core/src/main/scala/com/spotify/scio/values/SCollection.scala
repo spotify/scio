@@ -29,7 +29,7 @@ import com.spotify.scio.annotations.experimental
 import com.spotify.scio.coders.{AvroBytesUtil, Coder, CoderMaterializer}
 import com.spotify.scio.io._
 import com.spotify.scio.schemas.{Schema, SchemaMaterializer, To}
-import com.spotify.scio.sql.Query
+import com.spotify.scio.sql.{Query, Query2}
 import com.spotify.scio.testing.TestDataManager
 import com.spotify.scio.util._
 import com.spotify.scio.util.random.{BernoulliSampler, PoissonSampler}
@@ -131,6 +131,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   /** A friendly name for this SCollection. */
   def name: String = internal.getName
 
+  def setName(name: String): SCollection[T] = context.wrap(internal.setName(name))
+
   /** Assign a Coder to this SCollection. */
   def setCoder(coder: org.apache.beam.sdk.coders.Coder[T]): SCollection[T] =
     context.wrap(internal.setCoder(coder))
@@ -179,15 +181,6 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   @experimental
   def transform[U](f: SCollection[T] => SCollection[U]): SCollection[U] = transform(this.tfName)(f)
 
-  /**
-   * Apply BeamSQL query to this SCollection
-   */
-  // this method is not strictly necessary but using a invariant type instead of
-  // simple (SCollection[T] => SCollection[U]) helps with type inference
-  def sql[U](q: Query[T, U]): SCollection[U] = transform(q.query)(q)
-
-  def to[U](to: To[T, U]): SCollection[U] = transform(to)
-
   @experimental
   def transform[U](name: String)(f: SCollection[T] => SCollection[U]): SCollection[U] =
     context.wrap {
@@ -196,6 +189,18 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
           f(context.wrap(input)).internal
       })
     }
+
+  /**
+   * Apply BeamSQL query to this SCollection
+   */
+  // this method is not strictly necessary but using a invariant type instead of
+  // simple (SCollection[T] => SCollection[U]) helps with type inference
+  def sql[U](q: Query[T, U]): SCollection[U] = transform(q.query)(q)
+
+  def sqlJoin[B, U](other: SCollection[B])(q: Query2[T, B, U]): SCollection[U] =
+    transform(q.query)(x => q(x, other))
+
+  def to[U](to: To[T, U]): SCollection[U] = transform(to)
 
   // =======================================================================
   // Collection operations
