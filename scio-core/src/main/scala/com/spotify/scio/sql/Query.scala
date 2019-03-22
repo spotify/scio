@@ -331,6 +331,7 @@ object QueryMacros {
       )
   }
 
+  // scalastyle:off line.size.limit
   def tsqlJoinImpl[A, B, O](c: blackbox.Context)(query: c.Expr[String],
                                                  left: c.Expr[String],
                                                  right: c.Expr[String],
@@ -368,4 +369,5 @@ object QueryMacros {
         }
       )
   }
+  // scalastyle:on line.size.limit
 }
