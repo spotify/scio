@@ -260,7 +260,7 @@ class BeamSQLTest extends PipelineSpec {
 
     val query: Query2[User, User, Row] =
       Query2.row("select a.username from B a join A b on a.username = b.username", "A", "B")
-     a.sqlJoin(b)(query) shouldNot beEmpty
+    a.sqlJoin(b)(query) shouldNot beEmpty
 
     val tq: Query2[User, User, String] =
       Query2.of("select a.username from B a join A b on a.username = b.username", "A", "B")
