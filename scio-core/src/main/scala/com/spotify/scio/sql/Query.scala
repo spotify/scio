@@ -116,13 +116,16 @@ object Query {
 
 trait Query2[A, B, C] extends ((SCollection[A], SCollection[B]) => SCollection[C]) {
   def query: String
+
+  def leftTag: String
+
+  def rightTag: String
 }
 
 object Query2 {
 
-  def typecheck[A: Schema, B: Schema, O: Schema](q: Query2[A, B, O],
-                                                 left: String,
-                                                 right: String): Either[String, Query2[A, B, O]] = {
+  def typecheck[A: Schema, B: Schema, O: Schema](
+    q: Query2[A, B, O]): Either[String, Query2[A, B, O]] = {
     val schemaA: BSchema = SchemaMaterializer.fieldType(Schema[A]).getRowSchema
     val schemaB: BSchema = SchemaMaterializer.fieldType(Schema[B]).getRowSchema
     val expectedSchema: BSchema =
@@ -134,7 +137,7 @@ object Query2 {
       }
 
     QueryUtils
-      .typecheck(q.query, List((left, schemaA), (right, schemaB)), expectedSchema)
+      .typecheck(q.query, List((q.leftTag, schemaA), (q.rightTag, schemaB)), expectedSchema)
       .map(_ => q)
   }
 
@@ -143,7 +146,11 @@ object Query2 {
                                 right: String,
                                 udfs: Udf*): Query2[A, B, Row] =
     new Query2[A, B, Row] {
-      override def query: String = q
+      override val query: String = q
+
+      override val leftTag: String = left
+
+      override val rightTag: String = right
 
       override def apply(a: SCollection[A], b: SCollection[B]): SCollection[Row] =
         a.context.wrap {
@@ -152,8 +159,8 @@ object Query2 {
           val sqlTransform = SqlTransform.query(query).registerUdf(udfs: _*)
 
           PCollectionTuple
-            .of(new TupleTag[A](left), collA.internal)
-            .and(new TupleTag[B](right), collB.internal)
+            .of(new TupleTag[A](leftTag), collA.internal)
+            .and(new TupleTag[B](rightTag), collB.internal)
             .apply(s"${collA.tfName} join ${collB.tfName}", sqlTransform)
         }
     }
@@ -163,17 +170,21 @@ object Query2 {
                                           right: String,
                                           udfs: Udf*): Query2[A, B, O] =
     new Query2[A, B, O] {
-      val query: String = q
+      override val query: String = q
 
-      def apply(a: SCollection[A], b: SCollection[B]): SCollection[O] = {
+      override val leftTag: String = left
+
+      override val rightTag: String = right
+
+      override def apply(a: SCollection[A], b: SCollection[B]): SCollection[O] = {
         try {
           val (schema, to, from) = SchemaMaterializer.materialize(a.context, Schema[O])
-          row[A, B](query, left, right, udfs: _*)
+          row[A, B](query, leftTag, rightTag, udfs: _*)
             .apply(a, b)
             .map[O](r => from(r))(Coder.beam(SchemaCoder.of(schema, to, from)))
         } catch {
           case e: ParseException =>
-            typecheck(this, left, right)
+            typecheck(this)
               .fold(err => throw new RuntimeException(err, e), _ => throw e)
         }
       }
@@ -348,7 +359,7 @@ object QueryMacros {
       }
 
     Query2
-      .typecheck(sq, leftName, rightName)(sInA, sInB, sOut)
+      .typecheck(sq)(sInA, sInB, sOut)
       .fold(
         err => c.abort(c.enclosingPosition, err), { t =>
           val out =

@@ -255,20 +255,17 @@ class BeamSQLTest extends PipelineSpec {
   }
 
   it should "support JOIN" in runWithContext { sc =>
-    val a = sc.parallelize(users).setName("A")
-    val b = sc.parallelize(users).setName("B")
+    val a = sc.parallelize(users)
+    val b = sc.parallelize(users)
 
     val query: Query2[User, User, Row] =
       Query2.row("select a.username from B a join A b on a.username = b.username", "A", "B")
-    val scoll = a.sqlJoin(b)(query)
-
-    scoll shouldNot beEmpty
+     a.sqlJoin(b)(query) shouldNot beEmpty
 
     val tq: Query2[User, User, String] =
       Query2.of("select a.username from B a join A b on a.username = b.username", "A", "B")
-    val tccoll = a.sqlJoin(b)(tq)
 
-    tccoll shouldNot beEmpty
+    a.sqlJoin(b)(tq) shouldNot beEmpty
   }
 
   it should "properly chain typed queries" in runWithContext { sc =>
