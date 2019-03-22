@@ -19,6 +19,8 @@ package com.spotify.scio.sql
 
 package object syntax {
 
+  // scalastyle:off object.name
   object sqltransform extends SqlTransformSyntax
+  // scalastyle:on object.name
 
 }
