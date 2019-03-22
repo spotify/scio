@@ -72,6 +72,7 @@ Scio includes the following artifacts:
 - `scio-cassandra3`: add-on for Cassandra 3.x
 - `scio-elasticsearch2`: add-on for Elasticsearch 2.x
 - `scio-elasticsearch5`: add-on for Elasticsearch 5.x
+- `scio-elasticsearch6`: add-on for Elasticsearch 6.x
 - `scio-extra`: extra utilities for working with collections, Breeze, etc.
 - `scio-hdfs`: add-on for HDFS IO
 - `scio-jdbc`: add-on for JDBC IO
