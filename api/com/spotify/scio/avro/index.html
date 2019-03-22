@@ -806,10 +806,10 @@ releases.
       </span>
       
       <p class="shortcomment cmt">Typed Avro annotations and converters.</p>
-    </li><li name="com.spotify.scio.avro.syntax.ScioContextSyntax#toAvroScioContext" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="toAvroScioContext(c:com.spotify.scio.ScioContext):com.spotify.scio.avro.syntax.AvroScioContext"></a><a id="toAvroScioContext(ScioContext):AvroScioContext"></a>
+    </li><li name="com.spotify.scio.avro.syntax.SCollectionSyntax#avroGenericRecordSCollectionOps" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="avroGenericRecordSCollectionOps[T](c:com.spotify.scio.values.SCollection[T]):com.spotify.scio.avro.syntax.GenericRecordSCollectionOps[T]"></a><a id="avroGenericRecordSCollectionOps[T](SCollection[T]):GenericRecordSCollectionOps[T]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/avro/index.html#toAvroScioContext(c:com.spotify.scio.ScioContext):com.spotify.scio.avro.syntax.AvroScioContext" title="Permalink">
+      <a href="../../../../com/spotify/scio/avro/index.html#avroGenericRecordSCollectionOps[T](c:com.spotify.scio.values.SCollection[T]):com.spotify.scio.avro.syntax.GenericRecordSCollectionOps[T]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -818,14 +818,46 @@ releases.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">toAvroScioContext</span><span class="params">(<span name="c">c: <a href="../ScioContext.html" class="extype" name="com.spotify.scio.ScioContext">ScioContext</a></span>)</span><span class="result">: <a href="syntax/AvroScioContext.html" class="extype" name="com.spotify.scio.avro.syntax.AvroScioContext">AvroScioContext</a></span>
+        <span class="name">avroGenericRecordSCollectionOps</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="c">c: <a href="../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.avro.syntax.SCollectionSyntax.avroGenericRecordSCollectionOps.T">T</span>]</span>)</span><span class="result">: <a href="syntax/GenericRecordSCollectionOps.html" class="extype" name="com.spotify.scio.avro.syntax.GenericRecordSCollectionOps">GenericRecordSCollectionOps</a>[<span class="extype" name="com.spotify.scio.avro.syntax.SCollectionSyntax.avroGenericRecordSCollectionOps.T">T</span>]</span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="syntax/SCollectionSyntax.html" class="extype" name="com.spotify.scio.avro.syntax.SCollectionSyntax">SCollectionSyntax</a></dd></dl></div>
+    </li><li name="com.spotify.scio.avro.syntax.SCollectionSyntax#avroProtobufSCollectionOps" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="avroProtobufSCollectionOps[T&lt;:com.google.protobuf.Message](c:com.spotify.scio.values.SCollection[T]):com.spotify.scio.avro.syntax.ProtobufSCollectionOps[T]"></a><a id="avroProtobufSCollectionOps[T&lt;:Message](SCollection[T]):ProtobufSCollectionOps[T]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/avro/index.html#avroProtobufSCollectionOps[T&lt;:com.google.protobuf.Message](c:com.spotify.scio.values.SCollection[T]):com.spotify.scio.avro.syntax.ProtobufSCollectionOps[T]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">implicit </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">avroProtobufSCollectionOps</span><span class="tparams">[<span name="T">T &lt;: <span class="extype" name="com.google.protobuf.Message">Message</span></span>]</span><span class="params">(<span name="c">c: <a href="../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.avro.syntax.SCollectionSyntax.avroProtobufSCollectionOps.T">T</span>]</span>)</span><span class="result">: <a href="syntax/ProtobufSCollectionOps.html" class="extype" name="com.spotify.scio.avro.syntax.ProtobufSCollectionOps">ProtobufSCollectionOps</a>[<span class="extype" name="com.spotify.scio.avro.syntax.SCollectionSyntax.avroProtobufSCollectionOps.T">T</span>]</span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="syntax/SCollectionSyntax.html" class="extype" name="com.spotify.scio.avro.syntax.SCollectionSyntax">SCollectionSyntax</a></dd></dl></div>
+    </li><li name="com.spotify.scio.avro.syntax.ScioContextSyntax#avroScioContextOps" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="avroScioContextOps(c:com.spotify.scio.ScioContext):com.spotify.scio.avro.syntax.ScioContextOps"></a><a id="avroScioContextOps(ScioContext):ScioContextOps"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/avro/index.html#avroScioContextOps(c:com.spotify.scio.ScioContext):com.spotify.scio.avro.syntax.ScioContextOps" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">implicit </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">avroScioContextOps</span><span class="params">(<span name="c">c: <a href="../ScioContext.html" class="extype" name="com.spotify.scio.ScioContext">ScioContext</a></span>)</span><span class="result">: <a href="syntax/ScioContextOps.html" class="extype" name="com.spotify.scio.avro.syntax.ScioContextOps">ScioContextOps</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="syntax/ScioContextSyntax.html" class="extype" name="com.spotify.scio.avro.syntax.ScioContextSyntax">ScioContextSyntax</a></dd></dl></div>
-    </li><li name="com.spotify.scio.avro.syntax.SCollectionSyntax#toGenericRecordSCollection" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="toGenericRecordSCollection[T](c:com.spotify.scio.values.SCollection[T]):com.spotify.scio.avro.syntax.GenericRecordSCollection[T]"></a><a id="toGenericRecordSCollection[T](SCollection[T]):GenericRecordSCollection[T]"></a>
+    </li><li name="com.spotify.scio.avro.syntax.SCollectionSyntax#avroSpecificRecordSCollectionOps" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="avroSpecificRecordSCollectionOps[T&lt;:org.apache.avro.specific.SpecificRecordBase](c:com.spotify.scio.values.SCollection[T]):com.spotify.scio.avro.syntax.SpecificRecordSCollectionOps[T]"></a><a id="avroSpecificRecordSCollectionOps[T&lt;:SpecificRecordBase](SCollection[T]):SpecificRecordSCollectionOps[T]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/avro/index.html#toGenericRecordSCollection[T](c:com.spotify.scio.values.SCollection[T]):com.spotify.scio.avro.syntax.GenericRecordSCollection[T]" title="Permalink">
+      <a href="../../../../com/spotify/scio/avro/index.html#avroSpecificRecordSCollectionOps[T&lt;:org.apache.avro.specific.SpecificRecordBase](c:com.spotify.scio.values.SCollection[T]):com.spotify.scio.avro.syntax.SpecificRecordSCollectionOps[T]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -834,14 +866,14 @@ releases.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">toGenericRecordSCollection</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="c">c: <a href="../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.avro.syntax.SCollectionSyntax.toGenericRecordSCollection.T">T</span>]</span>)</span><span class="result">: <a href="syntax/GenericRecordSCollection.html" class="extype" name="com.spotify.scio.avro.syntax.GenericRecordSCollection">GenericRecordSCollection</a>[<span class="extype" name="com.spotify.scio.avro.syntax.SCollectionSyntax.toGenericRecordSCollection.T">T</span>]</span>
+        <span class="name">avroSpecificRecordSCollectionOps</span><span class="tparams">[<span name="T">T &lt;: <a href="https://avro.apache.org/docs/current/api/java/org/apache/avro/specific/SpecificRecordBase.html#org.apache.avro.specific.SpecificRecordBase" class="extype" name="org.apache.avro.specific.SpecificRecordBase">SpecificRecordBase</a></span>]</span><span class="params">(<span name="c">c: <a href="../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.avro.syntax.SCollectionSyntax.avroSpecificRecordSCollectionOps.T">T</span>]</span>)</span><span class="result">: <a href="syntax/SpecificRecordSCollectionOps.html" class="extype" name="com.spotify.scio.avro.syntax.SpecificRecordSCollectionOps">SpecificRecordSCollectionOps</a>[<span class="extype" name="com.spotify.scio.avro.syntax.SCollectionSyntax.avroSpecificRecordSCollectionOps.T">T</span>]</span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="syntax/SCollectionSyntax.html" class="extype" name="com.spotify.scio.avro.syntax.SCollectionSyntax">SCollectionSyntax</a></dd></dl></div>
-    </li><li name="com.spotify.scio.avro.syntax.SCollectionSyntax#toProtobufSCollection" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="toProtobufSCollection[T&lt;:com.google.protobuf.Message](c:com.spotify.scio.values.SCollection[T]):com.spotify.scio.avro.syntax.ProtobufSCollection[T]"></a><a id="toProtobufSCollection[T&lt;:Message](SCollection[T]):ProtobufSCollection[T]"></a>
+    </li><li name="com.spotify.scio.avro.syntax.SCollectionSyntax#avroTypedAvroSCollectionOps" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="avroTypedAvroSCollectionOps[T&lt;:com.spotify.scio.avro.types.AvroType.HasAvroAnnotation](c:com.spotify.scio.values.SCollection[T]):com.spotify.scio.avro.syntax.TypedAvroSCollectionOps[T]"></a><a id="avroTypedAvroSCollectionOps[T&lt;:HasAvroAnnotation](SCollection[T]):TypedAvroSCollectionOps[T]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/avro/index.html#toProtobufSCollection[T&lt;:com.google.protobuf.Message](c:com.spotify.scio.values.SCollection[T]):com.spotify.scio.avro.syntax.ProtobufSCollection[T]" title="Permalink">
+      <a href="../../../../com/spotify/scio/avro/index.html#avroTypedAvroSCollectionOps[T&lt;:com.spotify.scio.avro.types.AvroType.HasAvroAnnotation](c:com.spotify.scio.values.SCollection[T]):com.spotify.scio.avro.syntax.TypedAvroSCollectionOps[T]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -850,39 +882,7 @@ releases.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">toProtobufSCollection</span><span class="tparams">[<span name="T">T &lt;: <span class="extype" name="com.google.protobuf.Message">Message</span></span>]</span><span class="params">(<span name="c">c: <a href="../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.avro.syntax.SCollectionSyntax.toProtobufSCollection.T">T</span>]</span>)</span><span class="result">: <a href="syntax/ProtobufSCollection.html" class="extype" name="com.spotify.scio.avro.syntax.ProtobufSCollection">ProtobufSCollection</a>[<span class="extype" name="com.spotify.scio.avro.syntax.SCollectionSyntax.toProtobufSCollection.T">T</span>]</span>
-      </span>
-      
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="syntax/SCollectionSyntax.html" class="extype" name="com.spotify.scio.avro.syntax.SCollectionSyntax">SCollectionSyntax</a></dd></dl></div>
-    </li><li name="com.spotify.scio.avro.syntax.SCollectionSyntax#toSpecificRecordSCollection" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="toSpecificRecordSCollection[T&lt;:org.apache.avro.specific.SpecificRecordBase](c:com.spotify.scio.values.SCollection[T]):com.spotify.scio.avro.syntax.SpecificRecordSCollection[T]"></a><a id="toSpecificRecordSCollection[T&lt;:SpecificRecordBase](SCollection[T]):SpecificRecordSCollection[T]"></a>
-      <span class="permalink">
-      <a href="../../../../com/spotify/scio/avro/index.html#toSpecificRecordSCollection[T&lt;:org.apache.avro.specific.SpecificRecordBase](c:com.spotify.scio.values.SCollection[T]):com.spotify.scio.avro.syntax.SpecificRecordSCollection[T]" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier">implicit </span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">toSpecificRecordSCollection</span><span class="tparams">[<span name="T">T &lt;: <a href="https://avro.apache.org/docs/current/api/java/org/apache/avro/specific/SpecificRecordBase.html#org.apache.avro.specific.SpecificRecordBase" class="extype" name="org.apache.avro.specific.SpecificRecordBase">SpecificRecordBase</a></span>]</span><span class="params">(<span name="c">c: <a href="../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.avro.syntax.SCollectionSyntax.toSpecificRecordSCollection.T">T</span>]</span>)</span><span class="result">: <a href="syntax/SpecificRecordSCollection.html" class="extype" name="com.spotify.scio.avro.syntax.SpecificRecordSCollection">SpecificRecordSCollection</a>[<span class="extype" name="com.spotify.scio.avro.syntax.SCollectionSyntax.toSpecificRecordSCollection.T">T</span>]</span>
-      </span>
-      
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="syntax/SCollectionSyntax.html" class="extype" name="com.spotify.scio.avro.syntax.SCollectionSyntax">SCollectionSyntax</a></dd></dl></div>
-    </li><li name="com.spotify.scio.avro.syntax.SCollectionSyntax#toTypedAvroSCollection" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="toTypedAvroSCollection[T&lt;:com.spotify.scio.avro.types.AvroType.HasAvroAnnotation](c:com.spotify.scio.values.SCollection[T]):com.spotify.scio.avro.syntax.TypedAvroSCollection[T]"></a><a id="toTypedAvroSCollection[T&lt;:HasAvroAnnotation](SCollection[T]):TypedAvroSCollection[T]"></a>
-      <span class="permalink">
-      <a href="../../../../com/spotify/scio/avro/index.html#toTypedAvroSCollection[T&lt;:com.spotify.scio.avro.types.AvroType.HasAvroAnnotation](c:com.spotify.scio.values.SCollection[T]):com.spotify.scio.avro.syntax.TypedAvroSCollection[T]" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier">implicit </span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">toTypedAvroSCollection</span><span class="tparams">[<span name="T">T &lt;: <a href="types/AvroType$$HasAvroAnnotation.html" class="extype" name="com.spotify.scio.avro.types.AvroType.HasAvroAnnotation">HasAvroAnnotation</a></span>]</span><span class="params">(<span name="c">c: <a href="../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.avro.syntax.SCollectionSyntax.toTypedAvroSCollection.T">T</span>]</span>)</span><span class="result">: <a href="syntax/TypedAvroSCollection.html" class="extype" name="com.spotify.scio.avro.syntax.TypedAvroSCollection">TypedAvroSCollection</a>[<span class="extype" name="com.spotify.scio.avro.syntax.SCollectionSyntax.toTypedAvroSCollection.T">T</span>]</span>
+        <span class="name">avroTypedAvroSCollectionOps</span><span class="tparams">[<span name="T">T &lt;: <a href="types/AvroType$$HasAvroAnnotation.html" class="extype" name="com.spotify.scio.avro.types.AvroType.HasAvroAnnotation">HasAvroAnnotation</a></span>]</span><span class="params">(<span name="c">c: <a href="../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.avro.syntax.SCollectionSyntax.avroTypedAvroSCollectionOps.T">T</span>]</span>)</span><span class="result">: <a href="syntax/TypedAvroSCollectionOps.html" class="extype" name="com.spotify.scio.avro.syntax.TypedAvroSCollectionOps">TypedAvroSCollectionOps</a>[<span class="extype" name="com.spotify.scio.avro.syntax.SCollectionSyntax.avroTypedAvroSCollectionOps.T">T</span>]</span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="syntax/SCollectionSyntax.html" class="extype" name="com.spotify.scio.avro.syntax.SCollectionSyntax">SCollectionSyntax</a></dd></dl></div>

@@ -202,7 +202,7 @@ spotify/scio
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.7.4*
+<i class="md-icon" title="Version">label_outline</i> 0.7.5*
 </label>
 </li>
 </ul>
@@ -286,6 +286,7 @@ spotify/scio
   <li><a href="FAQ.html#development-environment-issues" class="header">Development environment issues</a>
   <ul>
     <li><a href="FAQ.html#how-do-i-keep-sbt-from-running-out-of-memory-" class="header">How do I keep SBT from running out of memory?</a></li>
+    <li><a href="FAQ.html#how-do-i-fix-sbt-heap-size-error-in-intellij-" class="header">How do I fix SBT heap size error in IntelliJ?</a></li>
     <li><a href="FAQ.html#how-do-i-fix-error-in-intellij-" class="header">How do I fix &ldquo;Unable to create parent directories&rdquo; error in IntelliJ?</a></li>
     <li><a href="FAQ.html#how-to-make-intellij-idea-work-with-type-safe-bigquery-classes-" class="header">How to make IntelliJ IDEA work with type safe BigQuery classes?</a></li>
   </ul></li>
@@ -550,6 +551,8 @@ class MyKryoRegistrar extends IKryoRegistrar {
 <h3><a href="#development-environment-issues" name="development-environment-issues" class="anchor"><span class="anchor-link"></span></a>Development environment issues</h3>
 <h4><a href="#how-do-i-keep-sbt-from-running-out-of-memory-" name="how-do-i-keep-sbt-from-running-out-of-memory-" class="anchor"><span class="anchor-link"></span></a>How do I keep SBT from running out of memory?</h4>
 <p>SBT might run out of memory sometimes and show an <code>OutOfMemoryError: Metaspace</code> error. Override default memory setting with <code>-mem &lt;integer&gt;</code>, e.g. <code>sbt -mem 1024</code>.</p>
+<h4><a href="#how-do-i-fix-sbt-heap-size-error-in-intellij-" name="how-do-i-fix-sbt-heap-size-error-in-intellij-" class="anchor"><span class="anchor-link"></span></a>How do I fix SBT heap size error in IntelliJ?</h4>
+<p>If you encounter an SBT error with message &ldquo;Initial heap size set to a larger value than the maximum heap size&rdquo;, that is because IntelliJ has a lower default <code>-Xmx</code> for SBT than <code>-Xms</code> in our <code>.jvmopts</code>. To fix that, open <code>Preferences</code> -&gt; <code>Build, Execution, Deployment</code> -&gt; <code>Build Tools</code> -&gt; <code>sbt</code>, and update <code>Maximum heap size, MB</code> to <code>2048</code>.</p>
 <h4><a href="#how-do-i-fix-error-in-intellij-" name="how-do-i-fix-error-in-intellij-" class="anchor"><span class="anchor-link"></span></a>How do I fix &ldquo;Unable to create parent directories&rdquo; error in IntelliJ?</h4>
 <p>You might get an error message like <code>java.io.IOException: Unable to create parent directories of /Applications/IntelliJ IDEA CE.app/Contents/bin/.bigquery/012345abcdef.schema.json</code>. This usually happens to people who run IntelliJ IDEA with its bundled JVM. There are two solutions.</p>
 <ul>
@@ -653,15 +656,6 @@ apt-get install default-jdk -y
 <p>To get stacktrace:</p>
 <pre><code>jstack &lt;pid&gt;
 </code></pre>
-<hr/>
-<p>For maintainers, follow the following steps to update the table of contents.</p>
-<ul>
-  <li>Clone wiki repo <code>git clone git@github.com:spotify/scio.wiki</code></li>
-  <li>Create a new personal access token under <a href="https://github.com/settings/tokens">https://github.com/settings/tokens</a></li>
-  <li>Save new token in <code>scripts/token.txt</code></li>
-  <li>Run <code>./scripts/faq.sh</code></li>
-  <li>Commit and push changes to <code>FAQ.md</code></li>
-</ul>
 </div>
 <div>
 <a href="https://github.com/spotify/scio/tree/master/site/src/paradox/FAQ.md" title="Edit this page" class="md-source-file md-edit">
@@ -670,7 +664,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.7.4*
+0.7.5*
 </span>
 </div>
 </article>
