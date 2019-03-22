@@ -24,9 +24,10 @@ Early Scio releases depend on Google Cloud [Dataflow Java SDK](https://github.co
 
 | **Scio Version** | **Beam Version** |
 |:----------------:|:----------------:|
+| 0.7.4            | 2.11.0           |
 | 0.7.3            | 2.10.0           |
 | 0.7.2            | 2.10.0           |
-| 0.7.0            | 2.9.0            |
+| 0.7.0+           | 2.9.0            |
 | 0.6.0            | 2.6.0            |
 | 0.5.7            | 2.6.0            |
 | 0.5.6            | 2.5.0            |
