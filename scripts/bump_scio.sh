@@ -22,7 +22,7 @@ if ! [ -x "$(command -v hub)" ]; then
   exit 1
 fi
 
-URL="https://oss.sonatype.org/content/repositories/releases/com/spotify/scio-core_2.11/maven-metadata.xml"
+URL="https://repo1.maven.org/maven2/com/spotify/scio-core_2.12/maven-metadata.xml"
 SCIO_VERSION=$(curl -s $URL | grep -o '<latest>[^<>]\+</latest>' | sed -E 's/<\/?latest>//g')
 echo "Latest Scio release: $SCIO_VERSION"
 
