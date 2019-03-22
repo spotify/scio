@@ -61,7 +61,7 @@ object Query {
           SchemaMaterializer.fieldType(Schema[ScalarWrapper[O]]).getRowSchema
       }
 
-    QueryUtils.typecheck(q.query, schema, expectedSchema).map(_ => q)
+    QueryUtils.typecheck(q.query, schema, expectedSchema).right.map(_ => q)
   }
 
   /**
@@ -201,17 +201,6 @@ object QueryUtils {
 
   private[this] val PCollectionName = "PCOLLECTION"
 
-  // Beam is annoyingly verbose when is parses SQL queries.
-  // This function makes is silent.
-  private def silence[A](a: () => A): A = {
-    val prop = "org.slf4j.simpleLogger.defaultLogLevel"
-    val ll = System.getProperty(prop)
-    System.setProperty(prop, "ERROR")
-    val x = a()
-    if (ll != null) System.setProperty(prop, ll)
-    x
-  }
-
   def transform[T: Schema](c: SCollection[T]): SCollection[T] = {
     val coderT: Coder[T] = {
       val (schema, to, from) = SchemaMaterializer.materialize(c.context, Schema[T])
@@ -232,9 +221,7 @@ object QueryUtils {
         }
     }.toMap
 
-    silence { () =>
-      BeamSqlEnv.readOnly(PCollectionName, tables.asJava).parseQuery(query)
-    }
+    BeamSqlEnv.readOnly(PCollectionName, tables.asJava).parseQuery(query)
   }
 
   def parseQuery(query: String, schema: BSchema): Try[BeamRelNode] =
