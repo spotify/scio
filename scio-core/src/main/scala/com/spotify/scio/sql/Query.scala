@@ -138,6 +138,7 @@ object Query2 {
 
     QueryUtils
       .typecheck(q.query, List((q.leftTag, schemaA), (q.rightTag, schemaB)), expectedSchema)
+      .right
       .map(_ => q)
   }
 
