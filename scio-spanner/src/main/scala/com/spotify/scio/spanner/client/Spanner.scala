@@ -35,5 +35,5 @@ object Spanner {
   }
 
   def adminClient(project: String, instance: Spanner = defaultInstance): DatabaseAdminClient =
-    instance.getDatabaseAdminClient
+    SpannerOptions.newBuilder().setProjectId(project).build().getService.getDatabaseAdminClient
 }
