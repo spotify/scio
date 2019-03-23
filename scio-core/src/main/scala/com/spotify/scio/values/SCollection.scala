@@ -49,15 +49,7 @@ import scala.concurrent._
 import scala.reflect.ClassTag
 
 /** Convenience functions for creating SCollections. */
-object SCollection {
-
-  /**
-   * Create a union of multiple [[SCollection]] instances.
-   * Will throw an exception if the provided iterable is empty.
-   * For a version that accepts empty iterables, see [[ScioContext#unionAll]].
-   */
-  def unionAll[T: Coder](scs: Iterable[SCollection[T]]): SCollection[T] =
-    scs.head.context.unionAll(scs)
+trait SCollectionImplicits {
 
   import scala.language.implicitConversions
 
@@ -83,8 +75,19 @@ object SCollection {
     s: SCollection[(K, V)]): PairSkewedSCollectionFunctions[K, V] =
     new PairSkewedSCollectionFunctions(s)
 
-  private[scio] final case class State(postCoGroup: Boolean = false)
+}
 
+object SCollection extends SCollectionImplicits {
+
+  /**
+   * Create a union of multiple [[SCollection]] instances.
+   * Will throw an exception if the provided iterable is empty.
+   * For a version that accepts empty iterables, see [[ScioContext#unionAll]].
+   */
+  def unionAll[T: Coder](scs: Iterable[SCollection[T]]): SCollection[T] =
+    scs.head.context.unionAll(scs)
+
+  private[scio] final case class State(postCoGroup: Boolean = false)
 }
 
 // scalastyle:off number.of.methods
