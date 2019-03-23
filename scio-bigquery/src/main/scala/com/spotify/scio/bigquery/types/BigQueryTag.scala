@@ -17,4 +17,4 @@
 
 package com.spotify.scio.bigquery.types
 
-class BigQueryTag extends scala.annotation.StaticAnnotation
+class BigQueryTag extends scala.annotation.StaticAnnotation with Serializable
