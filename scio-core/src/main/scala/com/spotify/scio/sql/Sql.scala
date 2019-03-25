@@ -1,4 +1,5 @@
 package com.spotify.scio.sql
+
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.schemas._
 import com.spotify.scio.values.SCollection
@@ -37,6 +38,14 @@ object Queries {
     QueryUtils.typecheck(q.query, schema, expectedSchema).right.map(_ => q)
   }
 
+  def typedQuery[A: Schema, B: Schema](query: String, udfs: Udf*): Query[A, B] =
+    macro QueryMacros.typedQuerylImpl[A, B]
+
+  def typedQuery[A: Schema, B: Schema, C: Schema](query: String,
+                                                  aTag: TupleTag[A],
+                                                  bTag: TupleTag[B],
+                                                  udfs: Udf*): Query2[A, B, C] = ???
+
   def typecheck[A: Schema, B: Schema, C: Schema](
     q: Query2[A, B, C]): Either[String, Query2[A, B, C]] = {
     val schemaA: BSchema = SchemaMaterializer.fieldType(Schema[A]).getRowSchema
@@ -58,16 +67,16 @@ object Queries {
 
 object Sql {
 
-  def from[A: Schema](sc: SCollection[A]) = SqlSCollection(sc)
+  def from[A: Schema](sc: SCollection[A]) = new SqlSCollection(sc)
 
   def from[A: Schema, B: Schema](a: SCollection[A], b: SCollection[B]) =
-    SqlSCollection2(a, b)
+    new SqlSCollection2(a, b)
 
 }
 
-final case class SqlSCollection[A: Schema](sc: SCollection[A]) {
+final class SqlSCollection[A: Schema](sc: SCollection[A]) {
 
-  def queryRaw(q: String, udfs: List[Udf] = Nil): SCollection[Row] = query(Query(q, udfs))
+  def queryRaw(q: String, udfs: Udf*): SCollection[Row] = query(Query(q, udfs.toList))
 
   def query(q: Query[A, Row]): SCollection[Row] = {
     sc.context.wrap {
@@ -76,13 +85,14 @@ final case class SqlSCollection[A: Schema](sc: SCollection[A]) {
     }
   }
 
-  def queryRawAs[C: Schema](q: String, udfs: List[Udf] = Nil): SCollection[C] =
-    queryAs(Query(q, udfs))
+  def queryRawAs[C: Schema](q: String, udfs: Udf*): SCollection[C] =
+    queryAs(Query(q, udfs.toList))
 
   def queryAs[C: Schema](q: Query[A, C]): SCollection[C] =
     try {
       val (schema, to, from) = SchemaMaterializer.materialize(sc.context, Schema[C])
-      queryRaw(q.query, q.udfs).map[C](r => from(r))(Coder.beam(SchemaCoder.of(schema, to, from)))
+      queryRaw(q.query, q.udfs: _*)
+        .map[C](r => from(r))(Coder.beam(SchemaCoder.of(schema, to, from)))
     } catch {
       case e: ParseException =>
         Queries.typecheck(q).fold(err => throw new RuntimeException(err, e), _ => throw e)
@@ -90,13 +100,10 @@ final case class SqlSCollection[A: Schema](sc: SCollection[A]) {
 
 }
 
-final case class SqlSCollection2[A: Schema, B: Schema](a: SCollection[A], b: SCollection[B]) {
+final class SqlSCollection2[A: Schema, B: Schema](a: SCollection[A], b: SCollection[B]) {
 
-  def queryRaw(q: String,
-               aTag: TupleTag[A],
-               bTag: TupleTag[B],
-               udfs: List[Udf] = Nil): SCollection[Row] =
-    query(Query2(q, udfs, aTag, bTag))
+  def queryRaw(q: String, aTag: TupleTag[A], bTag: TupleTag[B], udfs: Udf*): SCollection[Row] =
+    query(Query2(q, udfs.toList, aTag, bTag))
 
   def query(q: Query2[A, B, Row]): SCollection[Row] = {
     a.context.wrap {
@@ -114,13 +121,13 @@ final case class SqlSCollection2[A: Schema, B: Schema](a: SCollection[A], b: SCo
   def queryRawAs[C: Schema](q: String,
                             aTag: TupleTag[A],
                             bTag: TupleTag[B],
-                            udfs: List[Udf] = Nil): SCollection[C] =
-    queryAs(Query2(q, udfs, aTag, bTag))
+                            udfs: Udf*): SCollection[C] =
+    queryAs(Query2(q, udfs.toList, aTag, bTag))
 
   def queryAs[C: Schema](q: Query2[A, B, C]): SCollection[C] =
     try {
       val (schema, to, from) = SchemaMaterializer.materialize(a.context, Schema[C])
-      queryRaw(q.query, q.aTag, q.bTag, q.udfs)
+      queryRaw(q.query, q.aTag, q.bTag, q.udfs: _*)
         .map[C](r => from(r))(Coder.beam(SchemaCoder.of(schema, to, from)))
     } catch {
       case e: ParseException =>
@@ -213,5 +220,38 @@ object QueryUtils {
         """.stripMargin
           Left(message)
       }
+  }
+}
+
+object QueryMacros {
+  import scala.reflect.macros.blackbox
+
+  def typedQuerylImpl[A, B](c: blackbox.Context)(query: c.Expr[String], udfs: c.Expr[Udf]*)(
+    iSchema: c.Expr[Schema[A]],
+    oSchema: c.Expr[Schema[B]]): c.Expr[Query[A, B]] = {
+    import c.universe._
+
+    val queryTree = c.untypecheck(query.tree.duplicate)
+    val sInTree = c.untypecheck(iSchema.tree.duplicate)
+    val sOutTree = c.untypecheck(oSchema.tree.duplicate)
+
+    val (sIn, sOut) =
+      c.eval(c.Expr[(Schema[A], Schema[B])](q"($sInTree, $sOutTree)"))
+
+    val sq =
+      queryTree match {
+        case Literal(Constant(q: String)) =>
+          Query[A, B](q)
+        case _ =>
+          c.abort(c.enclosingPosition, s"Expression $queryTree does not evaluate to a constant")
+      }
+
+    Queries
+      .typecheck(sq)(sIn, sOut)
+      .fold(
+        err => c.abort(c.enclosingPosition, err), { t =>
+          c.Expr[Query[A, B]](q"_root_.com.spotify.scio.sql.Query($query, ..$udfs)")
+        }
+      )
   }
 }

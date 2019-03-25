@@ -336,46 +336,46 @@ class BeamSQLTest extends PipelineSpec {
     checkNOK[UserBean, (String, List[Int])]("select name, age from PCOLLECTION")
   }
 
-//  it should "typecheck queries at compile time" in {
-//    import Query.tsql
-//    // scalastyle:off line.size.limit
-//    """tsql[Bar, Long]("select l from PCOLLECTION")""" should compile
-//    """tsql[Bar, Int]("select `PCOLLECTION`.`f`.`i` from PCOLLECTION")""" should compile
-//    """tsql[Bar, Result]("select `PCOLLECTION`.`f`.`i` from PCOLLECTION")""" should compile
-//    """tsql[Bar, Foo]("select f from PCOLLECTION")""" should compile
-//    """tsql[Bar, (String, Long)]("select `PCOLLECTION`.`f`.`s`, l from PCOLLECTION")""" should compile
-//    // st fallback support
-//    // XXX: scalac :bomb: this test seems to be problematic under scala 2.11 ...
-////    """tsql[UserWithFallBack, Locale]("select locale from PCOLLECTION")""" should compile
-//    """tsql[UserWithOption, Option[Int]]("select age from PCOLLECTION")""" should compile
-//    """tsql[Bar, Long]("select cast(`PCOLLECTION`.`f`.`i` as BIGINT) from PCOLLECTION")""" should compile
-//    """tsql[UserBean, (String, Int)]("select name, age from PCOLLECTION")""" should compile
-//    """tsql[UserBean, (Long, Int, String)]("select cast(age AS BIGINT), row(age, name) from PCOLLECTION")""" should compile
-//    """tsql[UserBean, List[Int]]("select ARRAY[age] from PCOLLECTION")""" should compile
-//    """tsql[UserBean, (String, List[Int])]("select name, ARRAY[age] from PCOLLECTION")""" should compile
-//    """tsql[UserWithOption, Int]("select age from PCOLLECTION")""" shouldNot compile
-//    """tsql[Bar, (String, Long)]("select l from PCOLLECTION")""" shouldNot compile
-//    """tsql[Bar, String]("select l from PCOLLECTION")""" shouldNot compile
-//    """tsql[UserBean, (String, Long)]("select name, age from PCOLLECTION")""" shouldNot compile
-//    """tsql[UserBean, User]("select name, age from PCOLLECTION")""" shouldNot compile
-//    """tsql[UserBean, (String, Option[Int])]("select name, age from PCOLLECTION")""" shouldNot compile
-//    """tsql[UserBean, Bar]("select name, age from PCOLLECTION")""" shouldNot compile
-//    """tsql[UserBean, (String, Int)]("select name, ARRAY[age] from PCOLLECTION")""" shouldNot compile
-//    """tsql[UserBean, (String, List[Int])]("select name, age from PCOLLECTION")""" shouldNot compile
-//    // scalastyle:on line.size.limit
-//
-//  }
-//
-//  it should "give a clear error message when the query can not be checked at compile time" in {
-//    """
-//    val q = "select name, age from PCOLLECTION"
-//    Query.tsql[UserBean, (String, Int)](q)
-//    """ shouldNot compile
-//
-//    """
-//    def functionName(q: String) = Query.tsql[(String, String), String](q)
-//    """ shouldNot compile
-//  }
+  it should "typecheck queries at compile time" in {
+    import Queries.typedQuery
+    // scalastyle:off line.size.limit
+    """typedQuery[Bar, Long]("select l from PCOLLECTION")""" should compile
+    """typedQuery[Bar, Int]("select `PCOLLECTION`.`f`.`i` from PCOLLECTION")""" should compile
+    """typedQuery[Bar, Result]("select `PCOLLECTION`.`f`.`i` from PCOLLECTION")""" should compile
+    """typedQuery[Bar, TestData.Foo]("select f from PCOLLECTION")""" should compile
+    """typedQuery[Bar, (String, Long)]("select `PCOLLECTION`.`f`.`s`, l from PCOLLECTION")""" should compile
+    // st fallback support
+    // XXX: scalac :bomb: this test seems to be problematic under scala 2.11 ...
+//    """tsql[UserWithFallBack, Locale]("select locale from PCOLLECTION")""" should compile
+    """typedQuery[UserWithOption, Option[Int]]("select age from PCOLLECTION")""" should compile
+    """typedQuery[Bar, Long]("select cast(`PCOLLECTION`.`f`.`i` as BIGINT) from PCOLLECTION")""" should compile
+    """typedQuery[UserBean, (String, Int)]("select name, age from PCOLLECTION")""" should compile
+    """typedQuery[UserBean, (Long, Int, String)]("select cast(age AS BIGINT), row(age, name) from PCOLLECTION")""" should compile
+    """typedQuery[UserBean, List[Int]]("select ARRAY[age] from PCOLLECTION")""" should compile
+    """typedQuery[UserBean, (String, List[Int])]("select name, ARRAY[age] from PCOLLECTION")""" should compile
+    """typedQuery[UserWithOption, Int]("select age from PCOLLECTION")""" shouldNot compile
+    """typedQuery[Bar, (String, Long)]("select l from PCOLLECTION")""" shouldNot compile
+    """typedQuery[Bar, String]("select l from PCOLLECTION")""" shouldNot compile
+    """typedQuery[UserBean, (String, Long)]("select name, age from PCOLLECTION")""" shouldNot compile
+    """typedQuery[UserBean, User]("select name, age from PCOLLECTION")""" shouldNot compile
+    """typedQuery[UserBean, (String, Option[Int])]("select name, age from PCOLLECTION")""" shouldNot compile
+    """typedQuery[UserBean, Bar]("select name, age from PCOLLECTION")""" shouldNot compile
+    """typedQuery[UserBean, (String, Int)]("select name, ARRAY[age] from PCOLLECTION")""" shouldNot compile
+    """typedQuery[UserBean, (String, List[Int])]("select name, age from PCOLLECTION")""" shouldNot compile
+    // scalastyle:on line.size.limit
+
+  }
+
+  it should "give a clear error message when the query can not be checked at compile time" in {
+    """
+    val q = "select name, age from PCOLLECTION"
+    Queries.typedQuery[UserBean, (String, Int)](q)
+    """ shouldNot compile
+
+    """
+    def functionName(q: String) = Queries.typedQuery[(String, String), String](q)
+    """ shouldNot compile
+  }
 
   it should "support UDFs from SerializableFunctions and classes" in runWithContext { sc =>
     val schemaRes = BSchema
@@ -393,12 +393,12 @@ class BeamSQLTest extends PipelineSpec {
 
     in.queryRaw(
       "select username, isUserOver18(age) as isOver18 from PCOLLECTION",
-      Udf.fromSerializableFn("isUserOver18", new IsOver18UdfFn()) :: Nil
+      Udf.fromSerializableFn("isUserOver18", new IsOver18UdfFn())
     ) should containInAnyOrder(expected)
 
     in.queryRaw(
       "select username, isUserOver18(age) as isOver18 from PCOLLECTION",
-      Udf.fromClass("isUserOver18", classOf[IsOver18Udf]) :: Nil
+      Udf.fromClass("isUserOver18", classOf[IsOver18Udf])
     ) should containInAnyOrder(expected)
   }
 
@@ -414,31 +414,31 @@ class BeamSQLTest extends PipelineSpec {
     sc.parallelize(users)
       .queryRaw(
         "select maxUserAge(age) as maxUserAge from PCOLLECTION",
-        Udf.fromAggregateFn("maxUserAge", new MaxUserAgeUdafFn()) :: Nil
+        Udf.fromAggregateFn("maxUserAge", new MaxUserAgeUdafFn())
       ) should containInAnyOrder(expected)
   }
 
-//  it should "automatically convert from compatible classes" in runWithContext { sc =>
-//    import TypeConvertionsTestData._
-//    sc.parallelize(from)
-//      .to[To1](To.unsafe) should containInAnyOrder(to)
-//
-//    sc.parallelize(javaUsers)
-//      .to[JavaCompatibleUser](To.unsafe) should containInAnyOrder(expectedJavaCompatUsers)
-//
-//    sc.parallelize(from)
-//      .to[TinyTo](To.unsafe) should containInAnyOrder(tinyTo)
-//
-//    sc.parallelize(from)
-//      .to[To1](To.safe) should containInAnyOrder(to)
-//
-//    sc.parallelize(javaUsers)
-//      .to[JavaCompatibleUser](To.safe) should containInAnyOrder(expectedJavaCompatUsers)
-//
-//    sc.parallelize(from)
-//      .to[TinyTo](To.safe) should containInAnyOrder(tinyTo)
-//  }
-//
+  it should "automatically convert from compatible classes" in runWithContext { sc =>
+    import TypeConvertionsTestData._
+    sc.parallelize(from)
+      .to[To1](To.unsafe) should containInAnyOrder(to)
+
+    sc.parallelize(javaUsers)
+      .to[JavaCompatibleUser](To.unsafe) should containInAnyOrder(expectedJavaCompatUsers)
+
+    sc.parallelize(from)
+      .to[TinyTo](To.unsafe) should containInAnyOrder(tinyTo)
+
+    sc.parallelize(from)
+      .to[To1](To.safe) should containInAnyOrder(to)
+
+    sc.parallelize(javaUsers)
+      .to[JavaCompatibleUser](To.safe) should containInAnyOrder(expectedJavaCompatUsers)
+
+    sc.parallelize(from)
+      .to[TinyTo](To.safe) should containInAnyOrder(tinyTo)
+  }
+
 //  it should "Support queries on Avro generated classes" in runWithContext { sc =>
 //    val expected: List[(Int, String, String)] =
 //      avroUsers.map { u =>
@@ -452,33 +452,33 @@ class BeamSQLTest extends PipelineSpec {
 //    sc.parallelize(avroUsers)
 //      .sql(query) should containInAnyOrder(expected)
 //  }
-//
-//  it should "Automatically convert from Avro to Scala" in runWithContext { sc =>
-//    import TypeConvertionsTestData._
-//    val expected: List[AvroCompatibleUser] =
-//      avroUsers.map { u =>
-//        AvroCompatibleUser(u.getId.toInt, u.getFirstName.toString, u.getLastName.toString)
-//      }
-//
-//    sc.parallelize(avroUsers)
-//      .to[AvroCompatibleUser](To.unsafe) should containInAnyOrder(expected)
-//
-//    // Test support for nullable fields
-//    sc.parallelize(avroWithNullable)
-//      .to[CompatibleAvroTestRecord](To.unsafe) should containInAnyOrder(expectedAvro)
-//
-//    sc.parallelize(avroUsers)
-//      .to[AvroCompatibleUser](To.safe) should containInAnyOrder(expected)
-//
-//    sc.parallelize(avroWithNullable)
-//      .to[CompatibleAvroTestRecord](To.safe) should containInAnyOrder(expectedAvro)
-//  }
-//
-//  it should "typecheck classes compatibilty" in {
-//    import TypeConvertionsTestData._
-//    """To.safe[TinyTo, From0]""" shouldNot compile
-//    """To.safe[From0, CompatibleAvroTestRecord]""" shouldNot compile
-//  }
+
+  it should "Automatically convert from Avro to Scala" in runWithContext { sc =>
+    import TypeConvertionsTestData._
+    val expected: List[AvroCompatibleUser] =
+      avroUsers.map { u =>
+        AvroCompatibleUser(u.getId.toInt, u.getFirstName.toString, u.getLastName.toString)
+      }
+
+    sc.parallelize(avroUsers)
+      .to[AvroCompatibleUser](To.unsafe) should containInAnyOrder(expected)
+
+    // Test support for nullable fields
+    sc.parallelize(avroWithNullable)
+      .to[CompatibleAvroTestRecord](To.unsafe) should containInAnyOrder(expectedAvro)
+
+    sc.parallelize(avroUsers)
+      .to[AvroCompatibleUser](To.safe) should containInAnyOrder(expected)
+
+    sc.parallelize(avroWithNullable)
+      .to[CompatibleAvroTestRecord](To.safe) should containInAnyOrder(expectedAvro)
+  }
+
+  it should "typecheck classes compatibilty" in {
+    import TypeConvertionsTestData._
+    """To.safe[TinyTo, From0]""" shouldNot compile
+    """To.safe[From0, CompatibleAvroTestRecord]""" shouldNot compile
+  }
 }
 
 object TypeConvertionsTestData {
