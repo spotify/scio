@@ -565,12 +565,21 @@ lazy val scioExtra: Project = Project(
       "io.circe" %% "circe-core",
       "io.circe" %% "circe-generic",
       "io.circe" %% "circe-parser"
-    ).map(_ % circeVersion)
+    ).map(_ % circeVersion),
+    AvroConfig / version := avroVersion,
+    AvroConfig / sourceDirectory := baseDirectory.value / "src" / "test" / "avro",
+    Compile / sourceDirectories := (Compile / sourceDirectories).value
+      .filterNot(_.getPath.endsWith("/src_managed/main")),
+    Compile / managedSourceDirectories := (Compile / managedSourceDirectories).value
+      .filterNot(_.getPath.endsWith("/src_managed/main")),
+    Compile / doc / sources := List(), // suppress warnings
+    compileOrder := CompileOrder.JavaThenScala
   )
   .dependsOn(
     scioCore,
     scioTest % "it->it;test->test",
     scioAvro,
+    scioBigQuery,
     scioMacros
   )
   .configs(IntegrationTest)

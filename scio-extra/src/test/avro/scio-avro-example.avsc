@@ -1,0 +1,27 @@
+{
+  "type": "record",
+  "namespace": "com.spotify.scio.extra.bigquery",
+  "name": "AvroExample",
+  "fields": [
+    {"name": "intField", "type": "int"},
+    {"name": "stringField", "type": "string"},
+    {"name": "booleanField", "type": "boolean"},
+    {"name": "longField", "type": "long"},
+    {"name": "doubleField", "type": "double"},
+    {"name": "floatField", "type": "float"},
+    {"name": "bytesField", "type": "bytes"},
+    {"name": "unionField", "type": ["null", "string"]},
+    {"name": "arrayField", "doc": "some array doc", "type": {
+      "type": "array", "items": {
+        "type": "record",
+        "name": "NestedAvro",
+        "fields": [
+          {"name": "nestedField", "type": "string"}
+        ]}
+      }
+    },
+    {"name": "mapField", "type": { "type": "map", "values": "double" } },
+    {"name": "enumField", "type": { "type": "enum", "name": "Kind", "symbols" : ["FOO", "BAR"] } },
+    {"name": "fixedField", "type": { "type": "fixed", "size": 16, "name": "fixedType" }}
+  ]
+}
