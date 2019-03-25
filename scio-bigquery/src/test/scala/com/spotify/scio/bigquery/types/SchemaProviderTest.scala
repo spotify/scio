@@ -104,8 +104,8 @@ class SchemaProviderTest extends FlatSpec with Matchers {
   }
 
   it should "have serializable descriptions" in {
-    SerializableUtils.ensureSerializable(User("Michael Jackson", 13))
-    // Micheal Jackson started his solo career in 1971 at the age of 13.
+    // The description annotation should be serializable.
+    SerializableUtils.ensureSerializable(new description(value = "this a field description"))
   }
 
 }

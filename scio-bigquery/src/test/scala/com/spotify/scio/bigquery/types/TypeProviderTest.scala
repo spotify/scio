@@ -82,6 +82,10 @@ class TypeProviderTest extends FlatSpec with Matchers {
     SerializableUtils.ensureSerializable(S1(1))
   }
 
+  "BigQueryTag" should "be a serializable annotation" in {
+    SerializableUtils.ensureSerializable[BigQueryTag](new BigQueryTag())
+  }
+
   @BigQueryType.fromSchema("""{"fields": [{"name": "f1", "type": "INTEGER"}]}""")
   class MissingMode
 
