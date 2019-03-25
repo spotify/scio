@@ -28,7 +28,7 @@ import org.apache.beam.sdk.extensions.sql.BeamSqlUdf
 import org.apache.beam.sdk.schemas.{Schema => BSchema}
 import org.apache.beam.sdk.transforms.Combine.CombineFn
 import org.apache.beam.sdk.transforms.SerializableFunction
-import org.apache.beam.sdk.values.Row
+import org.apache.beam.sdk.values.{Row, TupleTag}
 import org.scalatest.Assertion
 
 import scala.collection.JavaConverters._
@@ -127,14 +127,14 @@ class BeamSQLTest extends PipelineSpec {
     }
     implicit def coderRowRes: Coder[Row] = Coder.row(schemaRes)
     val in = sc.parallelize(users)
-    val r = in.query("select username from PCOLLECTION")
+    val r = in.queryRaw("select username from PCOLLECTION")
     r should containInAnyOrder(expected)
   }
 
   it should "support scalar results" in runWithContext { sc =>
     val expected = 255
     val in = sc.parallelize(users)
-    val r = in.queryAs[Int]("select sum(age) from PCOLLECTION")
+    val r = in.queryRawAs[Int]("select sum(age) from PCOLLECTION")
     r should containSingleValue(expected)
   }
 
@@ -156,11 +156,11 @@ class BeamSQLTest extends PipelineSpec {
 
     implicit def coderRowRes: Coder[Row] = Coder.row(schemaRes)
     val in = sc.parallelize(usersWithIds)
-    val r = in.query("select id, username from PCOLLECTION")
+    val r = in.queryRaw("select id, username from PCOLLECTION")
     r should containInAnyOrder(expected)
 
     val in2 = sc.parallelize(usersWithIds)
-    val r2 = in2.query("select `PCOLLECTION`.`id`.`id`, username from PCOLLECTION")
+    val r2 = in2.queryRaw("select `PCOLLECTION`.`id`.`id`, username from PCOLLECTION")
     r2 should containInAnyOrder(expected)
   }
 
@@ -171,7 +171,7 @@ class BeamSQLTest extends PipelineSpec {
     }
     implicit def coderRowRes: Coder[Row] = Coder.row(schemaRes)
     val in = sc.parallelize(usersWithLocale)
-    val r = in.query("select username from PCOLLECTION")
+    val r = in.queryRaw("select username from PCOLLECTION")
     r should containInAnyOrder(expected)
   }
 
@@ -182,7 +182,7 @@ class BeamSQLTest extends PipelineSpec {
     }
     implicit def coderRowRes: Coder[Row] = Coder.row(schemaRes)
     val in = sc.parallelize(users)
-    val r = in.query("select username from PCOLLECTION")
+    val r = in.queryRaw("select username from PCOLLECTION")
     r should containInAnyOrder(expected)
   }
 
@@ -191,7 +191,7 @@ class BeamSQLTest extends PipelineSpec {
       (u.username, u.age)
     }
     val in = sc.parallelize(users)
-    val r = in.queryAs[(String, Int)]("select username, age from PCOLLECTION")
+    val r = in.queryRawAs[(String, Int)]("select username, age from PCOLLECTION")
     r should containInAnyOrder(expected)
   }
 
@@ -200,7 +200,7 @@ class BeamSQLTest extends PipelineSpec {
       (u.username, u.locale)
     }
     val in = sc.parallelize(usersWithLocale)
-    val r = in.queryAs[(String, Locale)]("select username, locale from PCOLLECTION")
+    val r = in.queryRawAs[(String, Locale)]("select username, locale from PCOLLECTION")
     r should containInAnyOrder(expected)
   }
 
@@ -209,11 +209,11 @@ class BeamSQLTest extends PipelineSpec {
       (u.username, u.age)
     }
     val in = sc.parallelize(usersWithOption)
-    val r = in.queryAs[(String, Option[Int])]("select username, age from PCOLLECTION")
+    val r = in.queryRawAs[(String, Option[Int])]("select username, age from PCOLLECTION")
     r should containInAnyOrder(expected)
 
     val in2 = sc.parallelize(usersWithOption)
-    val r2 = in2.queryAs[Option[Int]]("select age from PCOLLECTION")
+    val r2 = in2.queryRawAs[Option[Int]]("select age from PCOLLECTION")
     r2 should containInAnyOrder(expected.map(_._2))
   }
 
@@ -222,14 +222,14 @@ class BeamSQLTest extends PipelineSpec {
       (u.username, u.emails)
     }
     val in = sc.parallelize(usersWithList)
-    val r = in.queryAs[(String, List[String])]("select username, emails from PCOLLECTION")
+    val r = in.queryRawAs[(String, List[String])]("select username, emails from PCOLLECTION")
     r should containInAnyOrder(expected)
   }
 
   it should "support javabeans" in runWithContext { sc =>
     val expected = 255
     val in = sc.parallelize(users)
-    val r = in.queryAs[Int]("select sum(age) from PCOLLECTION")
+    val r = in.queryRawAs[Int]("select sum(age) from PCOLLECTION")
     r should containSingleValue(expected)
   }
 
@@ -239,7 +239,7 @@ class BeamSQLTest extends PipelineSpec {
     }
     val in = sc.parallelize(usersWithJList)
     val r =
-      in.queryAs[(String, String)]("select username, emails[1] from PCOLLECTION")
+      in.queryRawAs[(String, String)]("select username, emails[1] from PCOLLECTION")
     r should containInAnyOrder(expected)
   }
 
@@ -259,81 +259,83 @@ class BeamSQLTest extends PipelineSpec {
     val b = sc.parallelize(users)
 
     Sql
-      .from("A" -> a, "B" -> b)
-      .query("select a.username from B a join A b on a.username = b.username") shouldNot beEmpty
+      .from(a, b)
+      .queryRaw("select a.username from B a join A b on a.username = b.username",
+                new TupleTag[User]("A"),
+                new TupleTag[User]("B")) shouldNot beEmpty
 
     Sql
-      .from("A" -> a, "B" -> b)
-      .queryAs[String]("select a.username from B a join A b on a.username = b.username") shouldNot beEmpty
+      .from(a, b)
+      .queryRawAs[String]("select a.username from B a join A b on a.username = b.username",
+                          new TupleTag[User]("A"),
+                          new TupleTag[User]("B")) shouldNot beEmpty
   }
 
   it should "properly chain typed queries" in runWithContext { sc =>
     val expected = 255
     val in = sc.parallelize(users)
     val r =
-      in.queryAs[(String, Int)]("select username, age from PCOLLECTION")
-        .queryAs[Int]("select sum(_2) from PCOLLECTION")
+      in.queryRawAs[(String, Int)]("select username, age from PCOLLECTION")
+        .queryRawAs[Int]("select sum(_2) from PCOLLECTION")
     r should containSingleValue(expected)
   }
 
   it should "Support scalar inputs" in runWithContext { sc =>
     val in = sc.parallelize((1 to 10).toList)
-    val r = in.queryAs[Int]("select sum(`value`) from PCOLLECTION")
+    val r = in.queryRawAs[Int]("select sum(`value`) from PCOLLECTION")
     r should containSingleValue(55)
   }
 
   it should "support applying multiple queries on the same SCollection" in runWithContext { sc =>
     val in = sc.parallelize(users)
-    val sumAges = in.queryAs[Int]("select sum(age) from PCOLLECTION")
+    val sumAges = in.queryRawAs[Int]("select sum(age) from PCOLLECTION")
     sumAges should containSingleValue(255)
-    val usernames = in.queryAs[String]("select username from PCOLLECTION")
+    val usernames = in.queryRawAs[String]("select username from PCOLLECTION")
     usernames should containInAnyOrder(users.map(_.username))
   }
-//
-//  it should "provide a typecheck method for tests" in {
-//    val Q = Query
-//
-//    def checkOK[A: Schema, B: Schema](q: String): Assertion =
-//      Q.typecheck(Q.of[A, B](q)) should be('right)
-//
-//    def checkNOK[A: Schema, B: Schema](q: String): Assertion =
-//      Q.typecheck(Q.of[A, B](q)) should be('left)
-//
-//    checkOK[Bar, Long]("select l from PCOLLECTION")
-//    checkOK[Bar, Int]("select `PCOLLECTION`.`f`.`i` from PCOLLECTION")
-//    checkOK[Bar, Result]("select `PCOLLECTION`.`f`.`i` from PCOLLECTION")
-//    checkOK[Bar, Foo]("select f from PCOLLECTION")
-//    checkOK[Bar, (String, Long)]("select `PCOLLECTION`.`f`.`s`, l from PCOLLECTION")
-//
-//    // test fallback support
-//    checkOK[UserWithFallBack, Locale]("select locale from PCOLLECTION")
-//
-//    checkOK[UserWithOption, Option[Int]]("select age from PCOLLECTION")
-//    checkNOK[UserWithOption, Int]("select age from PCOLLECTION")
-//
-//    checkNOK[Bar, (String, Long)]("select l from PCOLLECTION")
-//    checkNOK[Bar, String]("select l from PCOLLECTION")
-//
-//    checkOK[Bar, Long]("""
-//      select cast(`PCOLLECTION`.`f`.`i` as BIGINT)
-//      from PCOLLECTION
-//    """)
-//
-//    checkOK[UserBean, (String, Int)]("select name, age from PCOLLECTION")
-//    checkNOK[UserBean, (String, Long)]("select name, age from PCOLLECTION")
-//    checkNOK[UserBean, User]("select name, age from PCOLLECTION")
-//    checkNOK[UserBean, (String, Option[Int])]("select name, age from PCOLLECTION")
-//    checkNOK[UserBean, Bar]("select name, age from PCOLLECTION")
-//    // Calcite flattens the row value
-//    checkOK[UserBean, (Long, Int, String)](
-//      "select cast(age AS BIGINT), row(age, name) from PCOLLECTION")
-//
-//    checkOK[UserBean, List[Int]]("select ARRAY[age] from PCOLLECTION")
-//    checkOK[UserBean, (String, List[Int])]("select name, ARRAY[age] from PCOLLECTION")
-//    checkNOK[UserBean, (String, Int)]("select name, ARRAY[age] from PCOLLECTION")
-//    checkNOK[UserBean, (String, List[Int])]("select name, age from PCOLLECTION")
-//  }
-//
+
+  it should "provide a typecheck method for tests" in {
+    def checkOK[A: Schema, B: Schema](q: String): Assertion =
+      Queries.typecheck(Query[A, B](q)) should be('right)
+
+    def checkNOK[A: Schema, B: Schema](q: String): Assertion =
+      Queries.typecheck(Query[A, B](q)) should be('left)
+
+    checkOK[Bar, Long]("select l from PCOLLECTION")
+    checkOK[Bar, Int]("select `PCOLLECTION`.`f`.`i` from PCOLLECTION")
+    checkOK[Bar, Result]("select `PCOLLECTION`.`f`.`i` from PCOLLECTION")
+    checkOK[Bar, Foo]("select f from PCOLLECTION")
+    checkOK[Bar, (String, Long)]("select `PCOLLECTION`.`f`.`s`, l from PCOLLECTION")
+
+    // test fallback support
+    checkOK[UserWithFallBack, Locale]("select locale from PCOLLECTION")
+
+    checkOK[UserWithOption, Option[Int]]("select age from PCOLLECTION")
+    checkNOK[UserWithOption, Int]("select age from PCOLLECTION")
+
+    checkNOK[Bar, (String, Long)]("select l from PCOLLECTION")
+    checkNOK[Bar, String]("select l from PCOLLECTION")
+
+    checkOK[Bar, Long]("""
+      select cast(`PCOLLECTION`.`f`.`i` as BIGINT)
+      from PCOLLECTION
+    """)
+
+    checkOK[UserBean, (String, Int)]("select name, age from PCOLLECTION")
+    checkNOK[UserBean, (String, Long)]("select name, age from PCOLLECTION")
+    checkNOK[UserBean, User]("select name, age from PCOLLECTION")
+    checkNOK[UserBean, (String, Option[Int])]("select name, age from PCOLLECTION")
+    checkNOK[UserBean, Bar]("select name, age from PCOLLECTION")
+    // Calcite flattens the row value
+    checkOK[UserBean, (Long, Int, String)](
+      "select cast(age AS BIGINT), row(age, name) from PCOLLECTION")
+
+    checkOK[UserBean, List[Int]]("select ARRAY[age] from PCOLLECTION")
+    checkOK[UserBean, (String, List[Int])]("select name, ARRAY[age] from PCOLLECTION")
+    checkNOK[UserBean, (String, Int)]("select name, ARRAY[age] from PCOLLECTION")
+    checkNOK[UserBean, (String, List[Int])]("select name, age from PCOLLECTION")
+  }
+
 //  it should "typecheck queries at compile time" in {
 //    import Query.tsql
 //    // scalastyle:off line.size.limit
@@ -389,14 +391,14 @@ class BeamSQLTest extends PipelineSpec {
 
     val in = sc.parallelize(users)
 
-    in.query(
+    in.queryRaw(
       "select username, isUserOver18(age) as isOver18 from PCOLLECTION",
-      Udf.fromSerializableFn("isUserOver18", new IsOver18UdfFn())
+      Udf.fromSerializableFn("isUserOver18", new IsOver18UdfFn()) :: Nil
     ) should containInAnyOrder(expected)
 
-    in.query(
+    in.queryRaw(
       "select username, isUserOver18(age) as isOver18 from PCOLLECTION",
-      Udf.fromClass("isUserOver18", classOf[IsOver18Udf])
+      Udf.fromClass("isUserOver18", classOf[IsOver18Udf]) :: Nil
     ) should containInAnyOrder(expected)
   }
 
@@ -410,9 +412,9 @@ class BeamSQLTest extends PipelineSpec {
     implicit def coderRowRes: Coder[Row] = Coder.row(schemaRes)
 
     sc.parallelize(users)
-      .query(
+      .queryRaw(
         "select maxUserAge(age) as maxUserAge from PCOLLECTION",
-        Udf.fromAggregateFn("maxUserAge", new MaxUserAgeUdafFn())
+        Udf.fromAggregateFn("maxUserAge", new MaxUserAgeUdafFn()) :: Nil
       ) should containInAnyOrder(expected)
   }
 
