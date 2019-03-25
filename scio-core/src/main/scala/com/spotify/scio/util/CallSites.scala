@@ -33,7 +33,6 @@ private[scio] object CallSites {
     // Not in our code base or an interpreter
     (!c.startsWith(scioNs) && !c.startsWith("scala.") && !c.startsWith(beamNs)) ||
       c.startsWith(scioNs + "examples.") || // unless if it's in examples
-      c.startsWith(scioNs + "contrib.") || // or scio-contrib
       c.startsWith(scioNs + "values.ClosureTest") // or this test
 
   private def isTransform(e: StackTraceElement): Boolean =
