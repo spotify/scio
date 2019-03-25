@@ -74,7 +74,7 @@ class GroupByBenchmark {
   val kvCoder: BCoder[KV[Char, Double]] = KvCoder.of(charCoder, doubleCoder)
 
   @Benchmark
-  def testScioGroupByKey =
+  def testScioGroupByKey: ScioResult =
     runWithContext { sc =>
       sc.avroFile[GenericRecord](source, schema = avroSchema)
         .map { rec =>
@@ -84,7 +84,7 @@ class GroupByBenchmark {
     }
 
   @Benchmark
-  def testBeamGroupByKey =
+  def testBeamGroupByKey: ScioResult =
     runWithContext { sc =>
       sc.wrap {
           sc.avroFile[GenericRecord](source, schema = avroSchema)
