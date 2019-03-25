@@ -18,6 +18,7 @@
 package com.spotify.scio.bigquery.types
 
 import com.google.api.services.bigquery.model.TableRow
+import org.apache.beam.sdk.util.SerializableUtils
 import org.joda.time.Instant
 import org.scalatest.{Assertion, FlatSpec, Matchers}
 
@@ -28,12 +29,6 @@ import scala.reflect.runtime.universe._
 object TypeProviderTest {
   @BigQueryType.toTable
   case class RefinedClass(a1: Int)
-}
-
-// TODO: mock BigQueryClient for fromTable and fromQuery
-class TypeProviderTest extends FlatSpec with Matchers {
-
-  val NOW = Instant.now()
 
   @BigQueryType.fromSchema(
     """{"fields": [{"mode": "REQUIRED", "name": "f1", "type": "INTEGER"}]}""")
@@ -55,6 +50,15 @@ class TypeProviderTest extends FlatSpec with Matchers {
   @description("Table S4")
   class S4
 
+}
+
+// TODO: mock BigQueryClient for fromTable and fromQuery
+class TypeProviderTest extends FlatSpec with Matchers {
+
+  val NOW = Instant.now()
+
+  import TypeProviderTest._
+
   "BigQueryType.fromSchema" should "support string literal" in {
     val r = S1(1L)
     r.f1 shouldBe 1L
@@ -72,6 +76,10 @@ class TypeProviderTest extends FlatSpec with Matchers {
 
   it should "support table description" in {
     S4.tableDescription shouldBe "Table S4"
+  }
+
+  it should "be serializable" in {
+    SerializableUtils.ensureSerializable(S1(1))
   }
 
   @BigQueryType.fromSchema("""{"fields": [{"name": "f1", "type": "INTEGER"}]}""")

@@ -71,4 +71,8 @@ object Schemas {
   case class RepeatedNested(required: List[Required],
                             optional: List[Optional],
                             repeated: List[Repeated])
+
+  case class User(@description("user name") name: String, @description("user age") age: Int)
+  case class Account(@description("account user") user: User,
+                     @description("in USD") balance: Double)
 }
