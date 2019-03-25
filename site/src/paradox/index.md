@@ -13,8 +13,6 @@ Example Scio pipelines and tests can be found under @github[scio-examples](/scio
 
 See @scaladoc[Scio Scaladocs](com.spotify.scio.index)  for current API documentation.
 
-See [scio-contrib](https://github.com/spotify/scio-contrib) for community-supported add-ons for Scio.
-
 ## Getting help
 - [![Join the chat at https://gitter.im/spotify/scio](https://badges.gitter.im/spotify/scio.svg)](https://gitter.im/spotify/scio)
 - [![Google Group](https://img.shields.io/badge/Google%20Group-scio--users-blue.svg)](https://groups.google.com/forum/#!forum/scio-users)
@@ -66,7 +64,6 @@ See [scio-contrib](https://github.com/spotify/scio-contrib) for community-suppor
   - [Apache Beam Presentation Materials](https://beam.apache.org/contribute/presentation-materials/)
 
 ## Projects using or related to Scio
-  - [scio-contrib](https://github.com/spotify/scio-contrib) - Community-supported add-ons for Scio
   - [Featran](https://github.com/spotify/featran) - A Scala feature transformation library for data science and machine learning
   - [Big Data Rosetta Code](https://github.com/spotify/big-data-rosetta-code) - Code snippets for solving common big data problems in various platforms. Inspired by [Rosetta Code](https://rosettacode.org/)
   - [Ratatool](https://github.com/spotify/ratatool) - A tool for random data sampling and generation, which includes [BigDiffy](https://github.com/spotify/ratatool/blob/master/ratatool-diffy/src/main/scala/com/spotify/ratatool/diffy/BigDiffy.scala), a Scio library for pairwise field-level statistical diff of data sets ([slides](http://www.lyh.me/slides/bigdiffy.html))

@@ -13,7 +13,6 @@ REPOS=(
   'git@github.com:spotify/big-data-rosetta-code.git'
   'git@github.com:spotify/featran.git'
   'git@github.com:spotify/ratatool.git'
-  'git@github.com:spotify/scio-contrib.git'
   'git@github.com:spotify/scio.g8.git'
 )
 
