@@ -83,14 +83,14 @@ object Queries {
       .map(_ => q)
   }
 
-  def typedQuery[A: Schema, B: Schema](query: String, udfs: Udf*): Query[A, B] =
-    macro QueryMacros.typedQuerylImpl[A, B]
+  def typed[A: Schema, B: Schema](query: String, udfs: Udf*): Query[A, B] =
+    macro QueryMacros.typedImpl[A, B]
 
-  def typedQuery[A: Schema, B: Schema, R: Schema](query: String,
-                                                  aTag: TupleTag[A],
-                                                  bTag: TupleTag[B],
-                                                  udfs: Udf*): Query2[A, B, R] =
-    macro QueryMacros.typedQuery2Impl[A, B, R]
+  def typed[A: Schema, B: Schema, R: Schema](query: String,
+                                             aTag: TupleTag[A],
+                                             bTag: TupleTag[B],
+                                             udfs: Udf*): Query2[A, B, R] =
+    macro QueryMacros.typed2Impl[A, B, R]
 }
 
 object Sql {
@@ -264,7 +264,7 @@ object QueryUtils {
 object QueryMacros {
   import scala.reflect.macros.blackbox
 
-  def typedQuerylImpl[A, B](c: blackbox.Context)(query: c.Expr[String], udfs: c.Expr[Udf]*)(
+  def typedImpl[A, B](c: blackbox.Context)(query: c.Expr[String], udfs: c.Expr[Udf]*)(
     iSchema: c.Expr[Schema[A]],
     oSchema: c.Expr[Schema[B]]): c.Expr[Query[A, B]] = {
     import c.universe._
@@ -293,10 +293,10 @@ object QueryMacros {
       )
   }
 
-  def typedQuery2Impl[A, B, R](c: blackbox.Context)(query: c.Expr[String],
-                                                    aTag: c.Expr[TupleTag[A]],
-                                                    bTag: c.Expr[TupleTag[B]],
-                                                    udfs: c.Expr[Udf]*)(
+  def typed2Impl[A, B, R](c: blackbox.Context)(query: c.Expr[String],
+                                               aTag: c.Expr[TupleTag[A]],
+                                               bTag: c.Expr[TupleTag[B]],
+                                               udfs: c.Expr[Udf]*)(
     aSchema: c.Expr[Schema[A]],
     bSchema: c.Expr[Schema[B]],
     oSchema: c.Expr[Schema[R]]): c.Expr[Query2[A, B, R]] = {

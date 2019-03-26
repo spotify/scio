@@ -270,10 +270,10 @@ class BeamSQLTest extends PipelineSpec {
                           new TupleTag[User]("A"),
                           new TupleTag[User]("B")) shouldNot beEmpty
 
-    import Queries.typedQuery
+    import Queries.typed
     // scalastyle:off line.size.limit
     """
-      |typedQuery[User, User, String]("select a.username from B a join A b on a.username = b.username", new TupleTag[User]("A"), new TupleTag[User]("B"))
+      |typed[User, User, String]("select a.username from B a join A b on a.username = b.username", new TupleTag[User]("A"), new TupleTag[User]("B"))
       |""".stripMargin should compile
   // scalastyle:on line.size.limit
   }
@@ -344,31 +344,31 @@ class BeamSQLTest extends PipelineSpec {
   }
 
   it should "typecheck queries at compile time" in {
-    import Queries.typedQuery
+    import Queries.typed
     // scalastyle:off line.size.limit
-    """typedQuery[Bar, Long]("select l from PCOLLECTION")""" should compile
-    """typedQuery[Bar, Int]("select `PCOLLECTION`.`f`.`i` from PCOLLECTION")""" should compile
-    """typedQuery[Bar, Result]("select `PCOLLECTION`.`f`.`i` from PCOLLECTION")""" should compile
-    """typedQuery[Bar, TestData.Foo]("select f from PCOLLECTION")""" should compile
-    """typedQuery[Bar, (String, Long)]("select `PCOLLECTION`.`f`.`s`, l from PCOLLECTION")""" should compile
+    """typed[Bar, Long]("select l from PCOLLECTION")""" should compile
+    """typed[Bar, Int]("select `PCOLLECTION`.`f`.`i` from PCOLLECTION")""" should compile
+    """typed[Bar, Result]("select `PCOLLECTION`.`f`.`i` from PCOLLECTION")""" should compile
+    """typed[Bar, TestData.Foo]("select f from PCOLLECTION")""" should compile
+    """typed[Bar, (String, Long)]("select `PCOLLECTION`.`f`.`s`, l from PCOLLECTION")""" should compile
     // st fallback support
     // XXX: scalac :bomb: this test seems to be problematic under scala 2.11 ...
 //    """tsql[UserWithFallBack, Locale]("select locale from PCOLLECTION")""" should compile
-    """typedQuery[UserWithOption, Option[Int]]("select age from PCOLLECTION")""" should compile
-    """typedQuery[Bar, Long]("select cast(`PCOLLECTION`.`f`.`i` as BIGINT) from PCOLLECTION")""" should compile
-    """typedQuery[UserBean, (String, Int)]("select name, age from PCOLLECTION")""" should compile
-    """typedQuery[UserBean, (Long, Int, String)]("select cast(age AS BIGINT), row(age, name) from PCOLLECTION")""" should compile
-    """typedQuery[UserBean, List[Int]]("select ARRAY[age] from PCOLLECTION")""" should compile
-    """typedQuery[UserBean, (String, List[Int])]("select name, ARRAY[age] from PCOLLECTION")""" should compile
-    """typedQuery[UserWithOption, Int]("select age from PCOLLECTION")""" shouldNot compile
-    """typedQuery[Bar, (String, Long)]("select l from PCOLLECTION")""" shouldNot compile
-    """typedQuery[Bar, String]("select l from PCOLLECTION")""" shouldNot compile
-    """typedQuery[UserBean, (String, Long)]("select name, age from PCOLLECTION")""" shouldNot compile
-    """typedQuery[UserBean, User]("select name, age from PCOLLECTION")""" shouldNot compile
-    """typedQuery[UserBean, (String, Option[Int])]("select name, age from PCOLLECTION")""" shouldNot compile
-    """typedQuery[UserBean, Bar]("select name, age from PCOLLECTION")""" shouldNot compile
-    """typedQuery[UserBean, (String, Int)]("select name, ARRAY[age] from PCOLLECTION")""" shouldNot compile
-    """typedQuery[UserBean, (String, List[Int])]("select name, age from PCOLLECTION")""" shouldNot compile
+    """typed[UserWithOption, Option[Int]]("select age from PCOLLECTION")""" should compile
+    """typed[Bar, Long]("select cast(`PCOLLECTION`.`f`.`i` as BIGINT) from PCOLLECTION")""" should compile
+    """typed[UserBean, (String, Int)]("select name, age from PCOLLECTION")""" should compile
+    """typed[UserBean, (Long, Int, String)]("select cast(age AS BIGINT), row(age, name) from PCOLLECTION")""" should compile
+    """typed[UserBean, List[Int]]("select ARRAY[age] from PCOLLECTION")""" should compile
+    """typed[UserBean, (String, List[Int])]("select name, ARRAY[age] from PCOLLECTION")""" should compile
+    """typed[UserWithOption, Int]("select age from PCOLLECTION")""" shouldNot compile
+    """typed[Bar, (String, Long)]("select l from PCOLLECTION")""" shouldNot compile
+    """typed[Bar, String]("select l from PCOLLECTION")""" shouldNot compile
+    """typed[UserBean, (String, Long)]("select name, age from PCOLLECTION")""" shouldNot compile
+    """typed[UserBean, User]("select name, age from PCOLLECTION")""" shouldNot compile
+    """typed[UserBean, (String, Option[Int])]("select name, age from PCOLLECTION")""" shouldNot compile
+    """typed[UserBean, Bar]("select name, age from PCOLLECTION")""" shouldNot compile
+    """typed[UserBean, (String, Int)]("select name, ARRAY[age] from PCOLLECTION")""" shouldNot compile
+    """typed[UserBean, (String, List[Int])]("select name, age from PCOLLECTION")""" shouldNot compile
     // scalastyle:on line.size.limit
 
   }
@@ -376,11 +376,11 @@ class BeamSQLTest extends PipelineSpec {
   it should "give a clear error message when the query can not be checked at compile time" in {
     """
     val q = "select name, age from PCOLLECTION"
-    Queries.typedQuery[UserBean, (String, Int)](q)
+    Queries.typed[UserBean, (String, Int)](q)
     """ shouldNot compile
 
     """
-    def functionName(q: String) = Queries.typedQuery[(String, String), String](q)
+    def functionName(q: String) = Queries.typed[(String, String), String](q)
     """ shouldNot compile
   }
 
