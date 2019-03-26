@@ -79,13 +79,14 @@ def main(out):
 
         package com.spotify.scio.coders.instances
 
+        import com.spotify.scio.coders.Coder
         import shapeless.Strict
 
         trait TupleCoders {
         ''').replace('  # NOQA', '').lstrip('\n')
 
     N = 22
-    for i in xrange(2, N + 1):
+    for i in xrange(3, N + 1):
         tupleFns(out, i)
 
     print >> out, '}'
