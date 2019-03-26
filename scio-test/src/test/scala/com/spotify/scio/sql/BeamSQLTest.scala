@@ -269,6 +269,13 @@ class BeamSQLTest extends PipelineSpec {
       .queryRawAs[String]("select a.username from B a join A b on a.username = b.username",
                           new TupleTag[User]("A"),
                           new TupleTag[User]("B")) shouldNot beEmpty
+
+    import Queries.typedQuery
+    // scalastyle:off line.size.limit
+    """
+      |typedQuery[User, User, String]("select a.username from B a join A b on a.username = b.username", new TupleTag[User]("A"), new TupleTag[User]("B"))
+      |""".stripMargin should compile
+  // scalastyle:on line.size.limit
   }
 
   it should "properly chain typed queries" in runWithContext { sc =>

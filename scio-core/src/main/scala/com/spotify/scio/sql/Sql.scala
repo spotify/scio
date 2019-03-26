@@ -19,10 +19,10 @@ import scala.collection.JavaConverters._
 
 final case class Query[A, B](query: String, udfs: List[Udf] = Nil)
 
-final case class Query2[A, B, C](query: String,
-                                 udfs: List[Udf] = Nil,
+final case class Query2[A, B, R](query: String,
                                  aTag: TupleTag[A],
-                                 bTag: TupleTag[B])
+                                 bTag: TupleTag[B],
+                                 udfs: List[Udf] = Nil)
 
 object Queries {
   def typecheck[A: Schema, B: Schema](q: Query[A, B]): Either[String, Query[A, B]] = {
@@ -38,24 +38,16 @@ object Queries {
     QueryUtils.typecheck(q.query, schema, expectedSchema).right.map(_ => q)
   }
 
-  def typedQuery[A: Schema, B: Schema](query: String, udfs: Udf*): Query[A, B] =
-    macro QueryMacros.typedQuerylImpl[A, B]
-
-  def typedQuery[A: Schema, B: Schema, C: Schema](query: String,
-                                                  aTag: TupleTag[A],
-                                                  bTag: TupleTag[B],
-                                                  udfs: Udf*): Query2[A, B, C] = ???
-
-  def typecheck[A: Schema, B: Schema, C: Schema](
-    q: Query2[A, B, C]): Either[String, Query2[A, B, C]] = {
+  def typecheck[A: Schema, B: Schema, R: Schema](
+    q: Query2[A, B, R]): Either[String, Query2[A, B, R]] = {
     val schemaA: BSchema = SchemaMaterializer.fieldType(Schema[A]).getRowSchema
     val schemaB: BSchema = SchemaMaterializer.fieldType(Schema[B]).getRowSchema
     val expectedSchema: BSchema =
-      Schema[C] match {
-        case s: Record[C] =>
+      Schema[R] match {
+        case s: Record[R] =>
           SchemaMaterializer.fieldType(s).getRowSchema
         case _ =>
-          SchemaMaterializer.fieldType(Schema[ScalarWrapper[C]]).getRowSchema
+          SchemaMaterializer.fieldType(Schema[ScalarWrapper[R]]).getRowSchema
       }
 
     QueryUtils
@@ -63,6 +55,15 @@ object Queries {
       .right
       .map(_ => q)
   }
+
+  def typedQuery[A: Schema, B: Schema](query: String, udfs: Udf*): Query[A, B] =
+    macro QueryMacros.typedQuerylImpl[A, B]
+
+  def typedQuery[A: Schema, B: Schema, R: Schema](query: String,
+                                                  aTag: TupleTag[A],
+                                                  bTag: TupleTag[B],
+                                                  udfs: Udf*): Query2[A, B, R] =
+    macro QueryMacros.typedQuery2Impl[A, B, R]
 }
 
 object Sql {
@@ -85,14 +86,14 @@ final class SqlSCollection[A: Schema](sc: SCollection[A]) {
     }
   }
 
-  def queryRawAs[C: Schema](q: String, udfs: Udf*): SCollection[C] =
+  def queryRawAs[R: Schema](q: String, udfs: Udf*): SCollection[R] =
     queryAs(Query(q, udfs.toList))
 
-  def queryAs[C: Schema](q: Query[A, C]): SCollection[C] =
+  def queryAs[R: Schema](q: Query[A, R]): SCollection[R] =
     try {
-      val (schema, to, from) = SchemaMaterializer.materialize(sc.context, Schema[C])
+      val (schema, to, from) = SchemaMaterializer.materialize(sc.context, Schema[R])
       queryRaw(q.query, q.udfs: _*)
-        .map[C](r => from(r))(Coder.beam(SchemaCoder.of(schema, to, from)))
+        .map[R](r => from(r))(Coder.beam(SchemaCoder.of(schema, to, from)))
     } catch {
       case e: ParseException =>
         Queries.typecheck(q).fold(err => throw new RuntimeException(err, e), _ => throw e)
@@ -103,7 +104,7 @@ final class SqlSCollection[A: Schema](sc: SCollection[A]) {
 final class SqlSCollection2[A: Schema, B: Schema](a: SCollection[A], b: SCollection[B]) {
 
   def queryRaw(q: String, aTag: TupleTag[A], bTag: TupleTag[B], udfs: Udf*): SCollection[Row] =
-    query(Query2(q, udfs.toList, aTag, bTag))
+    query(Query2(q, aTag, bTag, udfs.toList))
 
   def query(q: Query2[A, B, Row]): SCollection[Row] = {
     a.context.wrap {
@@ -118,17 +119,17 @@ final class SqlSCollection2[A: Schema, B: Schema](a: SCollection[A], b: SCollect
     }
   }
 
-  def queryRawAs[C: Schema](q: String,
+  def queryRawAs[R: Schema](q: String,
                             aTag: TupleTag[A],
                             bTag: TupleTag[B],
-                            udfs: Udf*): SCollection[C] =
-    queryAs(Query2(q, udfs.toList, aTag, bTag))
+                            udfs: Udf*): SCollection[R] =
+    queryAs(Query2(q, aTag, bTag, udfs.toList))
 
-  def queryAs[C: Schema](q: Query2[A, B, C]): SCollection[C] =
+  def queryAs[R: Schema](q: Query2[A, B, R]): SCollection[R] =
     try {
-      val (schema, to, from) = SchemaMaterializer.materialize(a.context, Schema[C])
+      val (schema, to, from) = SchemaMaterializer.materialize(a.context, Schema[R])
       queryRaw(q.query, q.aTag, q.bTag, q.udfs: _*)
-        .map[C](r => from(r))(Coder.beam(SchemaCoder.of(schema, to, from)))
+        .map[R](r => from(r))(Coder.beam(SchemaCoder.of(schema, to, from)))
     } catch {
       case e: ParseException =>
         Queries.typecheck(q).fold(err => throw new RuntimeException(err, e), _ => throw e)
@@ -254,4 +255,50 @@ object QueryMacros {
         }
       )
   }
+
+  def typedQuery2Impl[A, B, R](c: blackbox.Context)(query: c.Expr[String],
+                                                    aTag: c.Expr[TupleTag[A]],
+                                                    bTag: c.Expr[TupleTag[B]],
+                                                    udfs: c.Expr[Udf]*)(
+    aSchema: c.Expr[Schema[A]],
+    bSchema: c.Expr[Schema[B]],
+    oSchema: c.Expr[Schema[R]]): c.Expr[Query2[A, B, R]] = {
+    import c.universe._
+
+    val queryTree = c.untypecheck(query.tree.duplicate)
+    val sInTreeA = c.untypecheck(aSchema.tree.duplicate)
+    val sInTreeB = c.untypecheck(bSchema.tree.duplicate)
+    val sOutTree = c.untypecheck(oSchema.tree.duplicate)
+
+    val (sInA, sInB, sOut) =
+      c.eval(c.Expr[(Schema[A], Schema[B], Schema[R])](q"($sInTreeA, $sInTreeB, $sOutTree)"))
+
+    val sq =
+      queryTree match {
+        case Literal(Constant(q: String)) =>
+          Query2[A, B, R](q, tupleTag(c)(aTag), tupleTag(c)(bTag))
+        case _ =>
+          c.abort(c.enclosingPosition, s"Expression $queryTree does not evaluate to a constant")
+      }
+
+    Queries
+      .typecheck(sq)(sInA, sInB, sOut)
+      .fold(
+        err => c.abort(c.enclosingPosition, err), { t =>
+          val out = q"_root_.com.spotify.scio.sql.Query2($query, $aTag, $bTag, ..$udfs)"
+          c.Expr[Query2[A, B, R]](out)
+        }
+      )
+  }
+
+  private[this] def tupleTag[T](c: blackbox.Context)(e: c.Expr[TupleTag[T]]): TupleTag[T] = {
+    import c.universe._
+
+    e.tree match {
+      case Apply(_, List(Literal(Constant(tag: String)))) => new TupleTag[T](tag)
+      case _ =>
+        c.abort(c.enclosingPosition, s"Expression ${e.tree}")
+    }
+  }
+
 }
