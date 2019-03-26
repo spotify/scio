@@ -124,6 +124,16 @@ object ContextAndArgs {
   final case class TypedParser[T: Parser: Help] private () extends ArgsParser[Try] {
     override type ArgsType = T
 
+    // #1770 CaseApp supports kebab-case only but we want camelCase for consistency with Beam.
+    private val ArgReg = "^(-{1,2})([^=]+)(.*)$".r
+
+    private def hyphenizeArg(arg: String): String = arg match {
+      case ArgReg(pre, name, v) =>
+        val n = CaseUtil.pascalCaseSplit(name.toList).map(_.toLowerCase).mkString("-")
+        pre + n + v
+      case _ => arg
+    }
+
     // scalastyle:off regex
     // scalastyle:off cyclomatic.complexity
     override def parse(args: Array[String]): Try[Result] = {
@@ -133,9 +143,7 @@ object ContextAndArgs {
       val supportedCustomArgs =
         Parser[T].args
           .flatMap { a =>
-            val pname =
-              CaseUtil.pascalCaseSplit(a.name.name.toList).map(_.toLowerCase).mkString("-")
-            pname +: a.extraNames.map(_.name)
+            a.name.name +: a.extraNames.map(_.name)
           } ++ List("help", "usage")
 
       val Reg = "^-{1,2}(.+)$".r
@@ -147,7 +155,7 @@ object ContextAndArgs {
           case _ => true
         }
 
-      CaseApp.detailedParseWithHelp[T](customArgs) match {
+      CaseApp.detailedParseWithHelp[T](customArgs.map(hyphenizeArg)) match {
         case Left(error) =>
           Failure(new Exception(error.message))
         case Right((_, usage, help, _)) if help =>
