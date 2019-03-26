@@ -303,7 +303,7 @@ class CodersTest extends FlatSpec with Matchers {
     "Coder.gen[Row]" shouldNot compile
   }
 
-  it should "have a nice verifyDeterministic exception for case classes" in {
+  it should "have a nice verifyDeterministic exception for pairs" in {
     val caught =
       intercept[NonDeterministicException] {
         val coder = Coder[(Double, Double)]
@@ -312,11 +312,29 @@ class CodersTest extends FlatSpec with Matchers {
       }
 
     val expectedMsg =
-      "RecordCoder[scala.Tuple2](_1 -> DoubleCoder, _2 -> DoubleCoder) is not deterministic"
+      "PairCoder(_1 -> DoubleCoder, _2 -> DoubleCoder) is not deterministic"
 
     caught.getMessage should startWith(expectedMsg)
     caught.getMessage should include("field _1 is using non-deterministic DoubleCoder")
     caught.getMessage should include("field _2 is using non-deterministic DoubleCoder")
+  }
+
+  it should "have a nice verifyDeterministic exception for case classes" in {
+    val caught =
+      intercept[NonDeterministicException] {
+        val coder = Coder[(Double, Double, Double)]
+
+        materialize(coder).verifyDeterministic()
+      }
+
+    val expectedMsg =
+      "RecordCoder[scala.Tuple3](_1 -> DoubleCoder, _2 -> DoubleCoder, _3 -> DoubleCoder)" +
+        " is not deterministic"
+
+    caught.getMessage should startWith(expectedMsg)
+    caught.getMessage should include("field _1 is using non-deterministic DoubleCoder")
+    caught.getMessage should include("field _2 is using non-deterministic DoubleCoder")
+    caught.getMessage should include("field _3 is using non-deterministic DoubleCoder")
   }
 
   it should "have a nice verifyDeterministic exception for disjunctions" in {
