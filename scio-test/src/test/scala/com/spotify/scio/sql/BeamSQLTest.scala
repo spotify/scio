@@ -446,19 +446,17 @@ class BeamSQLTest extends PipelineSpec {
       .to[TinyTo](To.safe) should containInAnyOrder(tinyTo)
   }
 
-//  it should "Support queries on Avro generated classes" in runWithContext { sc =>
-//    val expected: List[(Int, String, String)] =
-//      avroUsers.map { u =>
-//        (u.getId.toInt, u.getFirstName.toString, u.getLastName.toString)
-//      }
-//
-//    val query =
-//      Query.of[avro.User, (Int, String, String)](
-//        "SELECT id, first_name, last_name from PCOLLECTION")
-//
-//    sc.parallelize(avroUsers)
-//      .sql(query) should containInAnyOrder(expected)
-//  }
+  it should "Support queries on Avro generated classes" in runWithContext { sc =>
+    val expected: List[(Int, String, String)] =
+      avroUsers.map { u =>
+        (u.getId.toInt, u.getFirstName.toString, u.getLastName.toString)
+      }
+
+    val q =
+      Query[avro.User, (Int, String, String)]("SELECT id, first_name, last_name from PCOLLECTION")
+
+    sc.parallelize(avroUsers).queryAs(q) should containInAnyOrder(expected)
+  }
 
   it should "Automatically convert from Avro to Scala" in runWithContext { sc =>
     import TypeConvertionsTestData._
