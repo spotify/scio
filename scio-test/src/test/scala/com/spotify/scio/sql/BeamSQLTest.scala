@@ -127,7 +127,7 @@ class BeamSQLTest extends PipelineSpec {
     }
     implicit def coderRowRes: Coder[Row] = Coder.row(schemaRes)
     val in = sc.parallelize(users)
-    val r = in.queryRaw("select username from SCOLLECTION")
+    val r = in.query("select username from SCOLLECTION")
     r should containInAnyOrder(expected)
   }
 
@@ -141,7 +141,7 @@ class BeamSQLTest extends PipelineSpec {
   it should "support scalar results" in runWithContext { sc =>
     val expected = 255
     val in = sc.parallelize(users)
-    val r = in.queryRawAs[Int]("select sum(age) from SCOLLECTION")
+    val r = in.queryAs[Int]("select sum(age) from SCOLLECTION")
     r should containSingleValue(expected)
   }
 
@@ -163,11 +163,11 @@ class BeamSQLTest extends PipelineSpec {
 
     implicit def coderRowRes: Coder[Row] = Coder.row(schemaRes)
     val in = sc.parallelize(usersWithIds)
-    val r = in.queryRaw("select id, username from SCOLLECTION")
+    val r = in.query("select id, username from SCOLLECTION")
     r should containInAnyOrder(expected)
 
     val in2 = sc.parallelize(usersWithIds)
-    val r2 = in2.queryRaw("select `SCOLLECTION`.`id`.`id`, username from SCOLLECTION")
+    val r2 = in2.query("select `SCOLLECTION`.`id`.`id`, username from SCOLLECTION")
     r2 should containInAnyOrder(expected)
   }
 
@@ -178,7 +178,7 @@ class BeamSQLTest extends PipelineSpec {
     }
     implicit def coderRowRes: Coder[Row] = Coder.row(schemaRes)
     val in = sc.parallelize(usersWithLocale)
-    val r = in.queryRaw("select username from SCOLLECTION")
+    val r = in.query("select username from SCOLLECTION")
     r should containInAnyOrder(expected)
   }
 
@@ -189,7 +189,7 @@ class BeamSQLTest extends PipelineSpec {
     }
     implicit def coderRowRes: Coder[Row] = Coder.row(schemaRes)
     val in = sc.parallelize(users)
-    val r = in.queryRaw("select username from SCOLLECTION")
+    val r = in.query("select username from SCOLLECTION")
     r should containInAnyOrder(expected)
   }
 
@@ -198,7 +198,7 @@ class BeamSQLTest extends PipelineSpec {
       (u.username, u.age)
     }
     val in = sc.parallelize(users)
-    val r = in.queryRawAs[(String, Int)]("select username, age from SCOLLECTION")
+    val r = in.queryAs[(String, Int)]("select username, age from SCOLLECTION")
     r should containInAnyOrder(expected)
   }
 
@@ -207,7 +207,7 @@ class BeamSQLTest extends PipelineSpec {
       (u.username, u.locale)
     }
     val in = sc.parallelize(usersWithLocale)
-    val r = in.queryRawAs[(String, Locale)]("select username, locale from SCOLLECTION")
+    val r = in.queryAs[(String, Locale)]("select username, locale from SCOLLECTION")
     r should containInAnyOrder(expected)
   }
 
@@ -216,11 +216,11 @@ class BeamSQLTest extends PipelineSpec {
       (u.username, u.age)
     }
     val in = sc.parallelize(usersWithOption)
-    val r = in.queryRawAs[(String, Option[Int])]("select username, age from SCOLLECTION")
+    val r = in.queryAs[(String, Option[Int])]("select username, age from SCOLLECTION")
     r should containInAnyOrder(expected)
 
     val in2 = sc.parallelize(usersWithOption)
-    val r2 = in2.queryRawAs[Option[Int]]("select age from SCOLLECTION")
+    val r2 = in2.queryAs[Option[Int]]("select age from SCOLLECTION")
     r2 should containInAnyOrder(expected.map(_._2))
   }
 
@@ -229,14 +229,14 @@ class BeamSQLTest extends PipelineSpec {
       (u.username, u.emails)
     }
     val in = sc.parallelize(usersWithList)
-    val r = in.queryRawAs[(String, List[String])]("select username, emails from SCOLLECTION")
+    val r = in.queryAs[(String, List[String])]("select username, emails from SCOLLECTION")
     r should containInAnyOrder(expected)
   }
 
   it should "support javabeans" in runWithContext { sc =>
     val expected = 255
     val in = sc.parallelize(users)
-    val r = in.queryRawAs[Int]("select sum(age) from SCOLLECTION")
+    val r = in.queryAs[Int]("select sum(age) from SCOLLECTION")
     r should containSingleValue(expected)
   }
 
@@ -246,7 +246,7 @@ class BeamSQLTest extends PipelineSpec {
     }
     val in = sc.parallelize(usersWithJList)
     val r =
-      in.queryRawAs[(String, String)]("select username, emails[1] from SCOLLECTION")
+      in.queryAs[(String, String)]("select username, emails[1] from SCOLLECTION")
     r should containInAnyOrder(expected)
   }
 
@@ -267,15 +267,15 @@ class BeamSQLTest extends PipelineSpec {
 
     Sql
       .from(a, b)
-      .queryRaw("select a.username from B a join A b on a.username = b.username",
-                new TupleTag[User]("A"),
-                new TupleTag[User]("B")) shouldNot beEmpty
+      .query("select a.username from B a join A b on a.username = b.username",
+             new TupleTag[User]("A"),
+             new TupleTag[User]("B")) shouldNot beEmpty
 
     Sql
       .from(a, b)
-      .queryRawAs[String]("select a.username from B a join A b on a.username = b.username",
-                          new TupleTag[User]("A"),
-                          new TupleTag[User]("B")) shouldNot beEmpty
+      .queryAs[String]("select a.username from B a join A b on a.username = b.username",
+                       new TupleTag[User]("A"),
+                       new TupleTag[User]("B")) shouldNot beEmpty
 
     import Queries.typed
     // scalastyle:off line.size.limit
@@ -289,22 +289,22 @@ class BeamSQLTest extends PipelineSpec {
     val expected = 255
     val in = sc.parallelize(users)
     val r =
-      in.queryRawAs[(String, Int)]("select username, age from SCOLLECTION")
-        .queryRawAs[Int]("select sum(_2) from SCOLLECTION")
+      in.queryAs[(String, Int)]("select username, age from SCOLLECTION")
+        .queryAs[Int]("select sum(_2) from SCOLLECTION")
     r should containSingleValue(expected)
   }
 
   it should "Support scalar inputs" in runWithContext { sc =>
     val in = sc.parallelize((1 to 10).toList)
-    val r = in.queryRawAs[Int]("select sum(`value`) from SCOLLECTION")
+    val r = in.queryAs[Int]("select sum(`value`) from SCOLLECTION")
     r should containSingleValue(55)
   }
 
   it should "support applying multiple queries on the same SCollection" in runWithContext { sc =>
     val in = sc.parallelize(users)
-    val sumAges = in.queryRawAs[Int]("select sum(age) from SCOLLECTION")
+    val sumAges = in.queryAs[Int]("select sum(age) from SCOLLECTION")
     sumAges should containSingleValue(255)
-    val usernames = in.queryRawAs[String]("select username from SCOLLECTION")
+    val usernames = in.queryAs[String]("select username from SCOLLECTION")
     usernames should containInAnyOrder(users.map(_.username))
   }
 
@@ -405,12 +405,12 @@ class BeamSQLTest extends PipelineSpec {
 
     val in = sc.parallelize(users)
 
-    in.queryRaw(
+    in.query(
       "select username, isUserOver18(age) as isOver18 from SCOLLECTION",
       Udf.fromSerializableFn("isUserOver18", new IsOver18UdfFn())
     ) should containInAnyOrder(expected)
 
-    in.queryRaw(
+    in.query(
       "select username, isUserOver18(age) as isOver18 from SCOLLECTION",
       Udf.fromClass("isUserOver18", classOf[IsOver18Udf])
     ) should containInAnyOrder(expected)
@@ -426,7 +426,7 @@ class BeamSQLTest extends PipelineSpec {
     implicit def coderRowRes: Coder[Row] = Coder.row(schemaRes)
 
     sc.parallelize(users)
-      .queryRaw(
+      .query(
         "select maxUserAge(age) as maxUserAge from SCOLLECTION",
         Udf.fromAggregateFn("maxUserAge", new MaxUserAgeUdafFn())
       ) should containInAnyOrder(expected)

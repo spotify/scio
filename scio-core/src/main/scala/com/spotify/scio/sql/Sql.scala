@@ -127,7 +127,7 @@ object Sql {
 
 final class SqlSCollection[A: Schema](sc: SCollection[A]) {
 
-  def queryRaw(q: String, udfs: Udf*): SCollection[Row] = query(Query(q, udfs = udfs.toList))
+  def query(q: String, udfs: Udf*): SCollection[Row] = query(Query[A, Row](q, udfs = udfs.toList))
 
   def query(q: Query[A, Row]): SCollection[Row] = {
     sc.context.wrap {
@@ -141,13 +141,13 @@ final class SqlSCollection[A: Schema](sc: SCollection[A]) {
     }
   }
 
-  def queryRawAs[R: Schema](q: String, udfs: Udf*): SCollection[R] =
-    queryAs(Query(q, udfs = udfs.toList))
+  def queryAs[R: Schema](q: String, udfs: Udf*): SCollection[R] =
+    queryAs(Query[A, R](q, udfs = udfs.toList))
 
   def queryAs[R: Schema](q: Query[A, R]): SCollection[R] =
     try {
       val (schema, to, from) = SchemaMaterializer.materialize(sc.context, Schema[R])
-      query(Query(q.query, q.tag, q.udfs))
+      query(Query[A, Row](q.query, q.tag, q.udfs))
         .map[R](r => from(r))(Coder.beam(SchemaCoder.of(schema, to, from)))
     } catch {
       case e: ParseException =>
@@ -158,7 +158,7 @@ final class SqlSCollection[A: Schema](sc: SCollection[A]) {
 
 final class SqlSCollection2[A: Schema, B: Schema](a: SCollection[A], b: SCollection[B]) {
 
-  def queryRaw(q: String, aTag: TupleTag[A], bTag: TupleTag[B], udfs: Udf*): SCollection[Row] =
+  def query(q: String, aTag: TupleTag[A], bTag: TupleTag[B], udfs: Udf*): SCollection[Row] =
     query(Query2(q, aTag, bTag, udfs.toList))
 
   def query(q: Query2[A, B, Row]): SCollection[Row] = {
@@ -174,16 +174,16 @@ final class SqlSCollection2[A: Schema, B: Schema](a: SCollection[A], b: SCollect
     }
   }
 
-  def queryRawAs[R: Schema](q: String,
-                            aTag: TupleTag[A],
-                            bTag: TupleTag[B],
-                            udfs: Udf*): SCollection[R] =
+  def queryAs[R: Schema](q: String,
+                         aTag: TupleTag[A],
+                         bTag: TupleTag[B],
+                         udfs: Udf*): SCollection[R] =
     queryAs(Query2(q, aTag, bTag, udfs.toList))
 
   def queryAs[R: Schema](q: Query2[A, B, R]): SCollection[R] =
     try {
       val (schema, to, from) = SchemaMaterializer.materialize(a.context, Schema[R])
-      queryRaw(q.query, q.aTag, q.bTag, q.udfs: _*)
+      query(q.query, q.aTag, q.bTag, q.udfs: _*)
         .map[R](r => from(r))(Coder.beam(SchemaCoder.of(schema, to, from)))
     } catch {
       case e: ParseException =>
