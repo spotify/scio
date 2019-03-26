@@ -33,7 +33,7 @@ package object types {
    * }}}
    */
   // scalastyle:off class.name
-  final class description(value: String) extends StaticAnnotation
+  final class description(value: String) extends StaticAnnotation with Serializable
   // scalastyle:on class.name
 
 }
