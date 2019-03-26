@@ -191,16 +191,6 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       })
     }
 
-  /**
-   * Apply BeamSQL query to this SCollection
-   */
-  // this method is not strictly necessary but using a invariant type instead of
-  // simple (SCollection[T] => SCollection[U]) helps with type inference
-//  def sql[U](q: Query[T, U]): SCollection[U] = transform(q.query)(q)
-//
-//  def sqlJoin[B, U](other: SCollection[B])(q: Query2[T, B, U]): SCollection[U] =
-//    transform(q.query)(x => q(x, other))
-
   def to[U](to: To[T, U]): SCollection[U] = transform(to)
 
   // =======================================================================

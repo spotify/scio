@@ -43,10 +43,10 @@ final case class Query2[A, B, R](query: String,
 object Queries {
 
   /**
-    * Typecheck [[Query]] q against the provided schemas.
-    * If the query correctly typechecks, it's simply return as a [[Right]].
-    * If it fails, a error message is returned in a [[Left]].
-    */
+   * Typecheck [[Query]] q against the provided schemas.
+   * If the query correctly typechecks, it's simply return as a [[Right]].
+   * If it fails, a error message is returned in a [[Left]].
+   */
   def typecheck[A: Schema, B: Schema](q: Query[A, B]): Either[String, Query[A, B]] = {
     val schema: BSchema = SchemaMaterializer.fieldType(Schema[A]).getRowSchema
     val expectedSchema: BSchema =
@@ -61,10 +61,10 @@ object Queries {
   }
 
   /**
-    * Typecheck [[Query2]] q against the provided schemas.
-    * If the query correctly typechecks, it's simply return as a [[Right]].
-    * If it fails, a error message is returned in a [[Left]].
-    */
+   * Typecheck [[Query2]] q against the provided schemas.
+   * If the query correctly typechecks, it's simply return as a [[Right]].
+   * If it fails, a error message is returned in a [[Left]].
+   */
   def typecheck[A: Schema, B: Schema, R: Schema](
     q: Query2[A, B, R]): Either[String, Query2[A, B, R]] = {
     val schemaA: BSchema = SchemaMaterializer.fieldType(Schema[A]).getRowSchema
