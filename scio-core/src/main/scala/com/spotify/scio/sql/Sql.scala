@@ -1,3 +1,20 @@
+/*
+ * Copyright 2019 Spotify AB.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+
 package com.spotify.scio.sql
 
 import com.spotify.scio.coders.Coder
@@ -6,7 +23,6 @@ import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.extensions.sql.{BeamSqlTable, SqlTransform}
 import org.apache.beam.sdk.values._
 import org.apache.beam.sdk.schemas.{SchemaCoder, Schema => BSchema}
-import com.spotify.scio.sql.syntax.sqltransform._
 import com.spotify.scio.util.ScioUtil
 import org.apache.beam.sdk.extensions.sql.impl.rel.BeamRelNode
 import org.apache.beam.sdk.extensions.sql.impl.{BeamSqlEnv, ParseException}
@@ -68,10 +84,20 @@ object Queries {
 
 object Sql {
 
-  def from[A: Schema](sc: SCollection[A]) = new SqlSCollection(sc)
+  def from[A: Schema](sc: SCollection[A]): SqlSCollection[A] = new SqlSCollection(sc)
 
-  def from[A: Schema, B: Schema](a: SCollection[A], b: SCollection[B]) =
+  def from[A: Schema, B: Schema](a: SCollection[A], b: SCollection[B]): SqlSCollection2[A, B] =
     new SqlSCollection2(a, b)
+
+  private[sql] def registerUdf(t: SqlTransform, udfs: Udf*): SqlTransform =
+    udfs.foldLeft(t) {
+      case (st, x: UdfFromClass[_]) =>
+        st.registerUdf(x.fnName, x.clazz)
+      case (st, x: UdfFromSerializableFn[_, _]) =>
+        st.registerUdf(x.fnName, x.fn)
+      case (st, x: UdafFromCombineFn[_, _, _]) =>
+        st.registerUdaf(x.fnName, x.fn)
+    }
 
 }
 
@@ -81,7 +107,7 @@ final class SqlSCollection[A: Schema](sc: SCollection[A]) {
 
   def query(q: Query[A, Row]): SCollection[Row] = {
     sc.context.wrap {
-      val sqlTransform = SqlTransform.query(q.query).registerUdf(q.udfs: _*)
+      val sqlTransform = Sql.registerUdf(SqlTransform.query(q.query), q.udfs: _*)
       QueryUtils.transform(sc).applyInternal(sqlTransform)
     }
   }
@@ -110,7 +136,7 @@ final class SqlSCollection2[A: Schema, B: Schema](a: SCollection[A], b: SCollect
     a.context.wrap {
       val collA = QueryUtils.transform(a)
       val collB = QueryUtils.transform(b)
-      val sqlTransform = SqlTransform.query(q.query).registerUdf(q.udfs: _*)
+      val sqlTransform = Sql.registerUdf(SqlTransform.query(q.query), q.udfs: _*)
 
       PCollectionTuple
         .of(q.aTag, collA.internal)
