@@ -794,11 +794,13 @@ lazy val scioJmh: Project = Project(
     libraryDependencies ++= Seq(
       "junit" % "junit" % junitVersion % "test",
       "org.hamcrest" % "hamcrest-all" % hamcrestVersion % "test",
-      "org.slf4j" % "slf4j-nop" % slf4jVersion
+      "org.slf4j" % "slf4j-nop" % slf4jVersion,
+      directRunnerDependency
     )
   )
   .dependsOn(
-    scioCore
+    scioCore,
+    scioAvro
   )
   .enablePlugins(JmhPlugin)
 

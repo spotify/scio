@@ -25,6 +25,7 @@ import org.apache.beam.sdk.coders.Coder.NonDeterministicException
 import org.apache.beam.sdk.coders.{Coder => BCoder, _}
 import org.apache.beam.sdk.util.common.ElementByteSizeObserver
 
+import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
 import scala.collection.{BitSet, SortedSet, TraversableOnce, mutable => m}
 import scala.collection.convert.Wrappers
@@ -39,6 +40,73 @@ private object UnitCoder extends AtomicCoder[Unit] {
 private object NothingCoder extends AtomicCoder[Nothing] {
   override def encode(value: Nothing, os: OutputStream): Unit = ()
   override def decode(is: InputStream): Nothing = ??? // can't possibly happen
+}
+
+/**
+ * Most Coders TupleX are derived by Magnolia but we specialize Coder[(A, B)] for
+ * performance reasons given that pairs are really common and used in groupBy operations.
+ */
+private final class PairCoder[A, B](ac: BCoder[A], bc: BCoder[B]) extends AtomicCoder[(A, B)] {
+
+  @inline def onErrorMsg[T](msg: => (String, String))(f: => T): T =
+    try { f } catch {
+      case e: Exception =>
+        throw new RuntimeException(s"Exception while trying to `${msg._1}` an instance of Tuple2:" +
+                                     s" Can't decode field ${msg._2}",
+                                   e)
+    }
+
+  override def encode(value: (A, B), os: OutputStream): Unit = {
+    onErrorMsg("encode" -> "_1")(ac.encode(value._1, os))
+    onErrorMsg("encode" -> "_2")(bc.encode(value._2, os))
+  }
+  override def decode(is: InputStream): (A, B) = {
+    val _1 = onErrorMsg("decode" -> "_1")(ac.decode(is))
+    val _2 = onErrorMsg("decode" -> "_2")(bc.decode(is))
+    (_1, _2)
+  }
+
+  override def toString: String =
+    s"PairCoder(_1 -> $ac, _2 -> $bc)"
+
+  // delegate methods for determinism and equality checks
+
+  override def verifyDeterministic(): Unit = {
+    val cs = List("_1" -> ac, "_2" -> bc)
+    val problems = cs.toList.flatMap {
+      case (label, c) =>
+        try {
+          c.verifyDeterministic()
+          Nil
+        } catch {
+          case e: NonDeterministicException =>
+            val reason = s"field $label is using non-deterministic $c"
+            List(reason -> e)
+        }
+    }
+
+    problems match {
+      case (_, e) :: _ =>
+        val reasons = problems.map { case (reason, _) => reason }
+        throw new NonDeterministicException(this, reasons.asJava, e)
+      case Nil =>
+    }
+  }
+
+  override def consistentWithEquals(): Boolean =
+    ac.consistentWithEquals() && bc.consistentWithEquals()
+
+  override def structuralValue(value: (A, B)): AnyRef =
+    (ac.structuralValue(value._1), bc.structuralValue(value._2))
+
+  // delegate methods for byte size estimation
+  override def isRegisterByteSizeObserverCheap(value: (A, B)): Boolean =
+    ac.isRegisterByteSizeObserverCheap(value._1) && bc.isRegisterByteSizeObserverCheap(value._2)
+
+  override def registerByteSizeObserver(value: (A, B), observer: ElementByteSizeObserver): Unit = {
+    ac.registerByteSizeObserver(value._1, observer)
+    bc.registerByteSizeObserver(value._2, observer)
+  }
 }
 
 private abstract class BaseSeqLikeCoder[M[_], T](val elemCoder: BCoder[T])(
@@ -301,6 +369,14 @@ trait ScalaCoders {
   implicit def seqCoder[T: Coder]: Coder[Seq[T]] =
     Coder.transform(Coder[T]) { bc =>
       Coder.beam(new SeqCoder[T](bc))
+    }
+
+  import shapeless.Strict
+  implicit def pairCoder[A, B](implicit CA: Strict[Coder[A]], CB: Strict[Coder[B]]): Coder[(A, B)] =
+    Coder.transform(CA.value) { ac =>
+      Coder.transform(CB.value) { bc =>
+        Coder.beam(new PairCoder[A, B](ac, bc))
+      }
     }
 
   // TODO: proper chunking implementation
