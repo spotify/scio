@@ -20,14 +20,13 @@ package com.spotify.scio.extra.bigquery
 import com.google.api.services.bigquery.model.TableReference
 import com.spotify.scio.bigquery.BigQueryTable.WriteParam
 import com.spotify.scio.bigquery._
-import com.spotify.scio.io.Tap
+import com.spotify.scio.io.ClosedTap
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
 import org.apache.avro.Schema
 import org.apache.avro.generic.IndexedRecord
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
 
-import scala.concurrent.Future
 import scala.reflect.ClassTag
 
 /** Provides implicit helpers for SCollections interacting with BigQuery. */
@@ -51,9 +50,8 @@ object Implicits extends ToTableRow with ToTableSchema {
                            avroSchema: Schema = null,
                            writeDisposition: WriteDisposition = null,
                            createDisposition: CreateDisposition = null,
-                           tableDescription: String = null)(
-      implicit ev: T <:< IndexedRecord,
-      c: ClassTag[T]): Future[Tap[TableRow]] = {
+                           tableDescription: String = null)(implicit ev: T <:< IndexedRecord,
+                                                            c: ClassTag[T]): ClosedTap[TableRow] = {
       val schema: Schema = Option(avroSchema)
         .getOrElse {
           val cls = ScioUtil.classOf[T]
