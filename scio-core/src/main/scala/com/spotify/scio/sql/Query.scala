@@ -108,7 +108,7 @@ object Query {
           |
           |PCOLLECTION schema:
           |${PrettyPrint.prettyPrint(schema.getFields.asScala.toList)}
-          |Query result schema (infered) is unknown
+          |Query result schema (inferred) is unknown
           |Expected schema:
           |${PrettyPrint.prettyPrint(expectedSchema.getFields.asScala.toList)}
         """.stripMargin
@@ -126,14 +126,14 @@ object Query {
         case inferredSchema =>
           val message =
             s"""
-          |Infered schema for query is not compatible with the expected schema.
+          |Inferred schema for query is not compatible with the expected schema.
           |
           |Query:
           |${q.query}
           |
           |PCOLLECTION schema:
           |${PrettyPrint.prettyPrint(schema.getFields.asScala.toList)}
-          |Query result schema (infered):
+          |Query result schema (inferred):
           |${PrettyPrint.prettyPrint(inferredSchema.getFields.asScala.toList)}
           |Expected schema:
           |${PrettyPrint.prettyPrint(expectedSchema.getFields.asScala.toList)}
@@ -145,7 +145,7 @@ object Query {
   /**
    * Create a BeanSQL Query that can be applied on a SCollection[I]
    * and will return a SCollection[Row].
-   * Note that the Schema of thoses Rows is automatically infered, and therefore,
+   * Note that the Schema of thoses Rows is automatically inferred, and therefore,
    * does not need to be set.
    */
   def row[I: Schema](q: String, udfs: Udf*): Query[I, Row] =
