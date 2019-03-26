@@ -37,6 +37,15 @@ executors:
     docker:
       - image: circleci/openjdk:11-jdk
 
+  deploy: &deploy
+    <<: [*settings]
+    docker:
+      # this image has both JDK and golang needed for deploying artifacts
+      - image: circleci/golang:1.12.1-browsers
+    environment:
+      <<: *env
+      SCALA_VERSION: 2.12.8
+
 commands:
   build:
     parameters:
@@ -136,11 +145,13 @@ jobs:
     executor: scala_212_jdk11
 
   deploy:
-    executor: scala_212
+    executor: deploy
     steps:
     - build:
         build-steps:
-        - run: sbt -v $SBT_OPTS ++$SCALA_VERSION scio-repl/assembly
+        - run: curl --silent --show-error --location --fail --retry 3 --output /tmp/sbt.tgz https://circle-downloads.s3.amazonaws.com/circleci-images/cache/linux-amd64/sbt-latest.tgz
+        - run: tar xzf /tmp/sbt.tgz
+        - run: ./sbt/bin/sbt -v $SBT_OPTS ++$SCALA_VERSION scio-repl/assembly
         - run: go get -u github.com/tcnksm/ghr
         - run: ghr -u spotify -draft $CIRCLE_TAG scio-repl/target/scala-*/scio-repl-*.jar
 
