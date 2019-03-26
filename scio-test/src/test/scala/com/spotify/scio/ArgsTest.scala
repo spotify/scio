@@ -153,12 +153,18 @@ class ArgsTest extends FlatSpec with Matchers {
                                 @HelpMessage("Path of the file to write to")
                                 @ExtraName("o")
                                 output: String,
-                                camelCaseTest: String) // This param will not be parsed properly.
+                                camelCaseTest: String)
 
-  it should "#1436: support camel case" in {
-    val rawArgs = Array("--output=/path/to/output", "--camel-case-test=value1")
+  it should "#1436: support camelCase" in {
+    val rawArgs = Array("--output=/path/to/output", "--camelCaseTest=value1")
     val result = TypedParser[CamelCaseArguments]().parse(rawArgs)
     result should be a 'success
+  }
+
+  it should "#1770: fail kebab-case" in {
+    val rawArgs = Array("--output=/path/to/output", "--camel-case-test=value1")
+    val result = TypedParser[CamelCaseArguments]().parse(rawArgs)
+    result should be a 'failure
   }
 
 }
