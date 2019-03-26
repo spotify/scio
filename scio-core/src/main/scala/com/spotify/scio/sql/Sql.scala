@@ -17,6 +17,8 @@
 
 package com.spotify.scio.sql
 
+import java.util.Collections
+
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.schemas._
 import com.spotify.scio.values.SCollection
@@ -26,14 +28,17 @@ import org.apache.beam.sdk.schemas.{SchemaCoder, Schema => BSchema}
 import com.spotify.scio.util.ScioUtil
 import org.apache.beam.sdk.extensions.sql.impl.rel.BeamRelNode
 import org.apache.beam.sdk.extensions.sql.impl.{BeamSqlEnv, ParseException}
-import org.apache.beam.sdk.extensions.sql.impl.schema.BaseBeamTable
+import org.apache.beam.sdk.extensions.sql.impl.schema.{BaseBeamTable, BeamPCollectionTable}
 import org.apache.beam.sdk.extensions.sql.impl.utils.CalciteUtils
+import org.apache.beam.sdk.extensions.sql.meta.provider.{ReadOnlyTableProvider, TableProvider}
 
 import scala.language.experimental.macros
 import scala.util.Try
 import scala.collection.JavaConverters._
 
-final case class Query[A, B](query: String, udfs: List[Udf] = Nil)
+final case class Query[A, B](query: String,
+                             tag: TupleTag[A] = new TupleTag[A]("SCOLLECTION"),
+                             udfs: List[Udf] = Nil)
 
 final case class Query2[A, B, R](query: String,
                                  aTag: TupleTag[A],
@@ -57,7 +62,7 @@ object Queries {
           SchemaMaterializer.fieldType(Schema[ScalarWrapper[B]]).getRowSchema
       }
 
-    QueryUtils.typecheck(q.query, schema, expectedSchema).right.map(_ => q)
+    QueryUtils.typecheck(q.query, (q.tag.getId, schema) :: Nil, expectedSchema).right.map(_ => q)
   }
 
   /**
@@ -95,6 +100,9 @@ object Queries {
 
 object Sql {
 
+  private[sql] val BeamProviderName = "beam"
+  private[sql] val SCollectionTypeName = "SCOLLECTION"
+
   def from[A: Schema](sc: SCollection[A]): SqlSCollection[A] = new SqlSCollection(sc)
 
   def from[A: Schema, B: Schema](a: SCollection[A], b: SCollection[B]): SqlSCollection2[A, B] =
@@ -110,26 +118,36 @@ object Sql {
         st.registerUdaf(x.fnName, x.fn)
     }
 
+  def tableProvider[A](tag: TupleTag[A], sc: SCollection[A]): TableProvider = {
+    val table = new BeamPCollectionTable[A](sc.internal)
+    new ReadOnlyTableProvider(SCollectionTypeName, Collections.singletonMap(tag.getId, table))
+  }
+
 }
 
 final class SqlSCollection[A: Schema](sc: SCollection[A]) {
 
-  def queryRaw(q: String, udfs: Udf*): SCollection[Row] = query(Query(q, udfs.toList))
+  def queryRaw(q: String, udfs: Udf*): SCollection[Row] = query(Query(q, udfs = udfs.toList))
 
   def query(q: Query[A, Row]): SCollection[Row] = {
     sc.context.wrap {
-      val sqlTransform = Sql.registerUdf(SqlTransform.query(q.query), q.udfs: _*)
-      QueryUtils.transform(sc).applyInternal(sqlTransform)
+      val scWithSchema = QueryUtils.transform(sc)
+      val transform =
+        SqlTransform
+          .query(q.query)
+          .withTableProvider(Sql.BeamProviderName, Sql.tableProvider(q.tag, scWithSchema))
+      val sqlTransform = Sql.registerUdf(transform, q.udfs: _*)
+      scWithSchema.applyInternal(sqlTransform)
     }
   }
 
   def queryRawAs[R: Schema](q: String, udfs: Udf*): SCollection[R] =
-    queryAs(Query(q, udfs.toList))
+    queryAs(Query(q, udfs = udfs.toList))
 
   def queryAs[R: Schema](q: Query[A, R]): SCollection[R] =
     try {
       val (schema, to, from) = SchemaMaterializer.materialize(sc.context, Schema[R])
-      queryRaw(q.query, q.udfs: _*)
+      query(Query(q.query, q.tag, q.udfs))
         .map[R](r => from(r))(Coder.beam(SchemaCoder.of(schema, to, from)))
     } catch {
       case e: ParseException =>
@@ -176,8 +194,6 @@ final class SqlSCollection2[A: Schema, B: Schema](a: SCollection[A], b: SCollect
 
 object QueryUtils {
 
-  private[this] val PCollectionName = "PCOLLECTION"
-
   def transform[T: Schema](c: SCollection[T]): SCollection[T] = {
     val coderT: Coder[T] = {
       val (schema, to, from) = SchemaMaterializer.materialize(c.context, Schema[T])
@@ -198,21 +214,11 @@ object QueryUtils {
         }
     }.toMap
 
-    BeamSqlEnv.readOnly(PCollectionName, tables.asJava).parseQuery(query)
+    BeamSqlEnv.readOnly(Sql.SCollectionTypeName, tables.asJava).parseQuery(query)
   }
-
-  def parseQuery(query: String, schema: BSchema): Try[BeamRelNode] =
-    parseQuery(query, (PCollectionName, schema))
 
   def schema(query: String, schemas: (String, BSchema)*): Try[BSchema] =
     parseQuery(query, schemas: _*).map(n => CalciteUtils.toSchema(n.getRowType))
-
-  def schema(query: String, s: BSchema): Try[BSchema] = schema(query, (PCollectionName, s))
-
-  def typecheck(query: String,
-                inferredSchema: BSchema,
-                expectedSchema: BSchema): Either[String, String] =
-    typecheck(query, List((PCollectionName, inferredSchema)), expectedSchema)
 
   def typecheck(query: String,
                 inferredSchemas: List[(String, BSchema)],
@@ -287,7 +293,7 @@ object QueryMacros {
     Queries
       .typecheck(sq)(sIn, sOut)
       .fold(
-        err => c.abort(c.enclosingPosition, err), { t =>
+        err => c.abort(c.enclosingPosition, err), { _ =>
           c.Expr[Query[A, B]](q"_root_.com.spotify.scio.sql.Query($query, ..$udfs)")
         }
       )
@@ -321,7 +327,7 @@ object QueryMacros {
     Queries
       .typecheck(sq)(sInA, sInB, sOut)
       .fold(
-        err => c.abort(c.enclosingPosition, err), { t =>
+        err => c.abort(c.enclosingPosition, err), { _ =>
           val out = q"_root_.com.spotify.scio.sql.Query2($query, $aTag, $bTag, ..$udfs)"
           c.Expr[Query2[A, B, R]](out)
         }
