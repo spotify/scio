@@ -61,13 +61,17 @@ object Sql {
     new ReadOnlyTableProvider(SCollectionTypeName, Collections.singletonMap(tag.getId, table))
   }
 
-  private[sql] def transform[T: Schema](c: SCollection[T]): SCollection[T] = {
-    val coderT: Coder[T] = {
+  private[sql] def setSchema[T: Schema](c: SCollection[T]): SCollection[T] =
+    c.transform { x =>
       val (schema, to, from) = SchemaMaterializer.materialize(c.context, Schema[T])
-      Coder.beam(SchemaCoder.of(schema, to, from))
+      x.map(identity)(Coder.beam(SchemaCoder.of(schema, to, from)))
     }
-    c.transform(s"${c.tfName}: set schema")(_.map(identity)(coderT))
-  }
+
+  private[sql] def fromRow[T: Schema](c: SCollection[Row]): SCollection[T] =
+    c.transform { x =>
+      val (schema, to, from) = SchemaMaterializer.materialize(c.context, Schema[T])
+      x.map(from(_))(Coder.beam(SchemaCoder.of(schema, to, from)))
+    }
 
 }
 
@@ -77,7 +81,7 @@ final class SqlSCollection[A: Schema](sc: SCollection[A]) {
 
   def query(q: Query[A, Row]): SCollection[Row] = {
     sc.context.wrap {
-      val scWithSchema = Sql.transform(sc)
+      val scWithSchema = Sql.setSchema(sc)
       val transform =
         SqlTransform
           .query(q.query)
@@ -92,9 +96,7 @@ final class SqlSCollection[A: Schema](sc: SCollection[A]) {
 
   def queryAs[R: Schema](q: Query[A, R]): SCollection[R] =
     try {
-      val (schema, to, from) = SchemaMaterializer.materialize(sc.context, Schema[R])
-      query(Query[A, Row](q.query, q.tag, q.udfs))
-        .map[R](r => from(r))(Coder.beam(SchemaCoder.of(schema, to, from)))
+      Sql.fromRow(query(Query[A, Row](q.query, q.tag, q.udfs)))
     } catch {
       case e: ParseException =>
         Queries.typecheck(q).fold(err => throw new RuntimeException(err, e), _ => throw e)
@@ -109,8 +111,8 @@ final class SqlSCollection2[A: Schema, B: Schema](a: SCollection[A], b: SCollect
 
   def query(q: Query2[A, B, Row]): SCollection[Row] = {
     a.context.wrap {
-      val collA = Sql.transform(a)
-      val collB = Sql.transform(b)
+      val collA = Sql.setSchema(a)
+      val collB = Sql.setSchema(b)
       val sqlTransform = Sql.registerUdf(SqlTransform.query(q.query), q.udfs: _*)
 
       PCollectionTuple
@@ -128,9 +130,7 @@ final class SqlSCollection2[A: Schema, B: Schema](a: SCollection[A], b: SCollect
 
   def queryAs[R: Schema](q: Query2[A, B, R]): SCollection[R] =
     try {
-      val (schema, to, from) = SchemaMaterializer.materialize(a.context, Schema[R])
-      query(q.query, q.aTag, q.bTag, q.udfs: _*)
-        .map[R](r => from(r))(Coder.beam(SchemaCoder.of(schema, to, from)))
+      Sql.fromRow(query(q.query, q.aTag, q.bTag, q.udfs: _*))
     } catch {
       case e: ParseException =>
         Queries.typecheck(q).fold(err => throw new RuntimeException(err, e), _ => throw e)
