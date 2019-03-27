@@ -272,6 +272,12 @@ def beamRunnerSettings: Seq[Setting[_]] = Seq(
   libraryDependencies ++= beamRunnersEval.value
 )
 
+lazy val protobufSettings = Def.settings(
+  version in ProtobufConfig := protobufVersion,
+  protobufRunProtoc in ProtobufConfig := (args =>
+    com.github.os72.protocjar.Protoc.runProtoc("-v3.7.0" +: args.toArray))
+)
+
 lazy val root: Project = Project("scio", file("."))
   .settings(commonSettings)
   .settings(noPublishSettings)
@@ -661,15 +667,14 @@ lazy val scioTensorFlow: Project = Project(
   "scio-tensorflow",
   file("scio-tensorflow")
 ).enablePlugins(ProtobufPlugin)
+  .settings(commonSettings)
+  .settings(itSettings)
+  .settings(protobufSettings)
   .settings(
-    commonSettings ++ itSettings,
     description := "Scio add-on for TensorFlow",
-    version in ProtobufConfig := protobufVersion,
-    protobufRunProtoc in ProtobufConfig := (args =>
-      com.github.os72.protocjar.Protoc.runProtoc("-v3.7.0" +: args.toArray)),
-    sourceDirectories in Compile := (sourceDirectories in Compile).value
+    Compile / sourceDirectories := (Compile / sourceDirectories).value
       .filterNot(_.getPath.endsWith("/src_managed/main")),
-    managedSourceDirectories in Compile := (managedSourceDirectories in Compile).value
+    Compile / managedSourceDirectories := (Compile / managedSourceDirectories).value
       .filterNot(_.getPath.endsWith("/src_managed/main")),
     libraryDependencies ++= Seq(
       "org.tensorflow" % "tensorflow" % tensorFlowVersion,
@@ -701,18 +706,15 @@ lazy val scioSchemas: Project = Project(
   "scio-schemas",
   file("scio-schemas")
 ).enablePlugins(ProtobufPlugin)
+  .settings(commonSettings)
+  .settings(noPublishSettings)
+  .settings(protobufSettings)
   .settings(
-    commonSettings ++ noPublishSettings,
     description := "Avro/Proto schemas for testing",
     version in AvroConfig := avroVersion,
-    version in ProtobufConfig := protobufVersion,
-    protobufRunProtoc in ProtobufConfig := (args =>
-      com.github.os72.protocjar.Protoc.runProtoc("-v3.6.0" +: args.toArray)),
-    // Avro and Protobuf files are compiled to src_managed/main/compiled_{avro,protobuf}
-    // Exclude their parent to avoid confusing IntelliJ
-    sourceDirectories in Compile := (sourceDirectories in Compile).value
+    Compile / sourceDirectories := (Compile / sourceDirectories).value
       .filterNot(_.getPath.endsWith("/src_managed/main")),
-    managedSourceDirectories in Compile := (managedSourceDirectories in Compile).value
+    Compile / managedSourceDirectories := (Compile / managedSourceDirectories).value
       .filterNot(_.getPath.endsWith("/src_managed/main")),
     sources in doc in Compile := List(), // suppress warnings
     compileOrder := CompileOrder.JavaThenScala
