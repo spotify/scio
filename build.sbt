@@ -275,7 +275,7 @@ def beamRunnerSettings: Seq[Setting[_]] = Seq(
 lazy val protobufSettings = Def.settings(
   version in ProtobufConfig := protobufVersion,
   protobufRunProtoc in ProtobufConfig := (args =>
-    com.github.os72.protocjar.Protoc.runProtoc("-v3.7.0" +: args.toArray))
+    com.github.os72.protocjar.Protoc.runProtoc("-v3.7.0.1" +: args.toArray))
 )
 
 lazy val root: Project = Project("scio", file("."))
