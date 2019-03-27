@@ -36,68 +36,6 @@ import scala.language.experimental.macros
 import scala.util.Try
 import scala.collection.JavaConverters._
 
-final case class Query[A, B](query: String,
-                             tag: TupleTag[A] = new TupleTag[A]("SCOLLECTION"),
-                             udfs: List[Udf] = Nil)
-
-final case class Query2[A, B, R](query: String,
-                                 aTag: TupleTag[A],
-                                 bTag: TupleTag[B],
-                                 udfs: List[Udf] = Nil)
-
-object Queries {
-
-  /**
-   * Typecheck [[Query]] q against the provided schemas.
-   * If the query correctly typechecks, it's simply return as a [[Right]].
-   * If it fails, a error message is returned in a [[Left]].
-   */
-  def typecheck[A: Schema, B: Schema](q: Query[A, B]): Either[String, Query[A, B]] = {
-    val schema: BSchema = SchemaMaterializer.fieldType(Schema[A]).getRowSchema
-    val expectedSchema: BSchema =
-      Schema[B] match {
-        case s: Record[B] =>
-          SchemaMaterializer.fieldType(s).getRowSchema
-        case _ =>
-          SchemaMaterializer.fieldType(Schema[ScalarWrapper[B]]).getRowSchema
-      }
-
-    QueryUtils.typecheck(q.query, (q.tag.getId, schema) :: Nil, expectedSchema).right.map(_ => q)
-  }
-
-  /**
-   * Typecheck [[Query2]] q against the provided schemas.
-   * If the query correctly typechecks, it's simply return as a [[Right]].
-   * If it fails, a error message is returned in a [[Left]].
-   */
-  def typecheck[A: Schema, B: Schema, R: Schema](
-    q: Query2[A, B, R]): Either[String, Query2[A, B, R]] = {
-    val schemaA: BSchema = SchemaMaterializer.fieldType(Schema[A]).getRowSchema
-    val schemaB: BSchema = SchemaMaterializer.fieldType(Schema[B]).getRowSchema
-    val expectedSchema: BSchema =
-      Schema[R] match {
-        case s: Record[R] =>
-          SchemaMaterializer.fieldType(s).getRowSchema
-        case _ =>
-          SchemaMaterializer.fieldType(Schema[ScalarWrapper[R]]).getRowSchema
-      }
-
-    QueryUtils
-      .typecheck(q.query, List((q.aTag.getId, schemaA), (q.bTag.getId, schemaB)), expectedSchema)
-      .right
-      .map(_ => q)
-  }
-
-  def typed[A: Schema, B: Schema](query: String, udfs: Udf*): Query[A, B] =
-    macro QueryMacros.typedImpl[A, B]
-
-  def typed[A: Schema, B: Schema, R: Schema](query: String,
-                                             aTag: TupleTag[A],
-                                             bTag: TupleTag[B],
-                                             udfs: Udf*): Query2[A, B, R] =
-    macro QueryMacros.typed2Impl[A, B, R]
-}
-
 object Sql {
 
   private[sql] val BeamProviderName = "beam"
@@ -118,9 +56,17 @@ object Sql {
         st.registerUdaf(x.fnName, x.fn)
     }
 
-  def tableProvider[A](tag: TupleTag[A], sc: SCollection[A]): TableProvider = {
+  private[sql] def tableProvider[A](tag: TupleTag[A], sc: SCollection[A]): TableProvider = {
     val table = new BeamPCollectionTable[A](sc.internal)
     new ReadOnlyTableProvider(SCollectionTypeName, Collections.singletonMap(tag.getId, table))
+  }
+
+  private[sql] def transform[T: Schema](c: SCollection[T]): SCollection[T] = {
+    val coderT: Coder[T] = {
+      val (schema, to, from) = SchemaMaterializer.materialize(c.context, Schema[T])
+      Coder.beam(SchemaCoder.of(schema, to, from))
+    }
+    c.transform(s"${c.tfName}: set schema")(_.map(identity)(coderT))
   }
 
 }
@@ -131,7 +77,7 @@ final class SqlSCollection[A: Schema](sc: SCollection[A]) {
 
   def query(q: Query[A, Row]): SCollection[Row] = {
     sc.context.wrap {
-      val scWithSchema = QueryUtils.transform(sc)
+      val scWithSchema = Sql.transform(sc)
       val transform =
         SqlTransform
           .query(q.query)
@@ -163,8 +109,8 @@ final class SqlSCollection2[A: Schema, B: Schema](a: SCollection[A], b: SCollect
 
   def query(q: Query2[A, B, Row]): SCollection[Row] = {
     a.context.wrap {
-      val collA = QueryUtils.transform(a)
-      val collB = QueryUtils.transform(b)
+      val collA = Sql.transform(a)
+      val collB = Sql.transform(b)
       val sqlTransform = Sql.registerUdf(SqlTransform.query(q.query), q.udfs: _*)
 
       PCollectionTuple
@@ -192,17 +138,66 @@ final class SqlSCollection2[A: Schema, B: Schema](a: SCollection[A], b: SCollect
 
 }
 
-object QueryUtils {
+final case class Query[A, B](query: String,
+                             tag: TupleTag[A] = new TupleTag[A]("SCOLLECTION"),
+                             udfs: List[Udf] = Nil)
 
-  def transform[T: Schema](c: SCollection[T]): SCollection[T] = {
-    val coderT: Coder[T] = {
-      val (schema, to, from) = SchemaMaterializer.materialize(c.context, Schema[T])
-      Coder.beam(SchemaCoder.of(schema, to, from))
-    }
-    c.transform(s"${c.tfName}: set schema")(_.map(identity)(coderT))
+final case class Query2[A, B, R](query: String,
+                                 aTag: TupleTag[A],
+                                 bTag: TupleTag[B],
+                                 udfs: List[Udf] = Nil)
+
+object Queries {
+
+  /**
+   * Typecheck [[Query]] q against the provided schemas.
+   * If the query correctly typechecks, it's simply return as a [[Right]].
+   * If it fails, a error message is returned in a [[Left]].
+   */
+  def typecheck[A: Schema, B: Schema](q: Query[A, B]): Either[String, Query[A, B]] = {
+    val schema: BSchema = SchemaMaterializer.fieldType(Schema[A]).getRowSchema
+    val expectedSchema: BSchema =
+      Schema[B] match {
+        case s: Record[B] =>
+          SchemaMaterializer.fieldType(s).getRowSchema
+        case _ =>
+          SchemaMaterializer.fieldType(Schema[ScalarWrapper[B]]).getRowSchema
+      }
+
+    typecheck(q.query, (q.tag.getId, schema) :: Nil, expectedSchema).right.map(_ => q)
   }
 
-  def parseQuery(query: String, schemas: (String, BSchema)*): Try[BeamRelNode] = Try {
+  /**
+   * Typecheck [[Query2]] q against the provided schemas.
+   * If the query correctly typechecks, it's simply return as a [[Right]].
+   * If it fails, a error message is returned in a [[Left]].
+   */
+  def typecheck[A: Schema, B: Schema, R: Schema](
+    q: Query2[A, B, R]): Either[String, Query2[A, B, R]] = {
+    val schemaA: BSchema = SchemaMaterializer.fieldType(Schema[A]).getRowSchema
+    val schemaB: BSchema = SchemaMaterializer.fieldType(Schema[B]).getRowSchema
+    val expectedSchema: BSchema =
+      Schema[R] match {
+        case s: Record[R] =>
+          SchemaMaterializer.fieldType(s).getRowSchema
+        case _ =>
+          SchemaMaterializer.fieldType(Schema[ScalarWrapper[R]]).getRowSchema
+      }
+
+    typecheck(q.query, List((q.aTag.getId, schemaA), (q.bTag.getId, schemaB)), expectedSchema).right
+      .map(_ => q)
+  }
+
+  def typed[A: Schema, B: Schema](query: String, udfs: Udf*): Query[A, B] =
+    macro QueryMacros.typedImpl[A, B]
+
+  def typed[A: Schema, B: Schema, R: Schema](query: String,
+                                             aTag: TupleTag[A],
+                                             bTag: TupleTag[B],
+                                             udfs: Udf*): Query2[A, B, R] =
+    macro QueryMacros.typed2Impl[A, B, R]
+
+  private[this] def parseQuery(query: String, schemas: (String, BSchema)*): Try[BeamRelNode] = Try {
     val tables: Map[String, BeamSqlTable] = schemas.map {
       case (tag, schema) =>
         tag -> new BaseBeamTable(schema) {
@@ -217,12 +212,12 @@ object QueryUtils {
     BeamSqlEnv.readOnly(Sql.SCollectionTypeName, tables.asJava).parseQuery(query)
   }
 
-  def schema(query: String, schemas: (String, BSchema)*): Try[BSchema] =
+  private[this] def schema(query: String, schemas: (String, BSchema)*): Try[BSchema] =
     parseQuery(query, schemas: _*).map(n => CalciteUtils.toSchema(n.getRowType))
 
-  def typecheck(query: String,
-                inferredSchemas: List[(String, BSchema)],
-                expectedSchema: BSchema): Either[String, String] = {
+  private[this] def typecheck(query: String,
+                              inferredSchemas: List[(String, BSchema)],
+                              expectedSchema: BSchema): Either[String, String] = {
     ScioUtil
       .toEither(schema(query, inferredSchemas: _*))
       .left
@@ -267,6 +262,7 @@ object QueryUtils {
           Left(message)
       }
   }
+
 }
 
 object QueryMacros {
