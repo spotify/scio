@@ -255,8 +255,10 @@ object QueryUtils {
                |Query:
                |$query
                |
-               |PCOLLECTION schema:
-               |${inferredSchemas.map(i => PrettyPrint.prettyPrint(i._2.getFields.asScala.toList))}
+               |SCOLLECTION schema:
+               |${inferredSchemas
+                 .map(i => PrettyPrint.prettyPrint(i._2.getFields.asScala.toList))
+                 .mkString("\n")}
                |Query result schema (infered):
                |${PrettyPrint.prettyPrint(inferredSchema.getFields.asScala.toList)}
                |Expected schema:
