@@ -29,7 +29,7 @@ import com.spotify.scio.annotations.experimental
 import com.spotify.scio.coders.{AvroBytesUtil, Coder, CoderMaterializer}
 import com.spotify.scio.io._
 import com.spotify.scio.schemas.{Schema, SchemaMaterializer, To}
-import com.spotify.scio.sql.Query
+import com.spotify.scio.sql.{Sql, SqlSCollection}
 import com.spotify.scio.testing.TestDataManager
 import com.spotify.scio.util._
 import com.spotify.scio.util.random.{BernoulliSampler, PoissonSampler}
@@ -85,6 +85,9 @@ object SCollection {
   implicit def makePairSkewedSCollectionFunctions[K, V](
     s: SCollection[(K, V)]): PairSkewedSCollectionFunctions[K, V] =
     new PairSkewedSCollectionFunctions(s)
+
+  implicit def sqlSCollection[A: Schema](sc: SCollection[A]): SqlSCollection[A] =
+    Sql.from(sc)
 
   private[scio] final case class State(postCoGroup: Boolean = false)
 
@@ -179,15 +182,6 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   @experimental
   def transform[U](f: SCollection[T] => SCollection[U]): SCollection[U] = transform(this.tfName)(f)
 
-  /**
-   * Apply BeamSQL query to this SCollection
-   */
-  // this method is not strictly necessary but using a invariant type instead of
-  // simple (SCollection[T] => SCollection[U]) helps with type inference
-  def sql[U](q: Query[T, U]): SCollection[U] = transform(q.query)(q)
-
-  def to[U](to: To[T, U]): SCollection[U] = transform(to)
-
   @experimental
   def transform[U](name: String)(f: SCollection[T] => SCollection[U]): SCollection[U] =
     context.wrap {
@@ -196,6 +190,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
           f(context.wrap(input)).internal
       })
     }
+
+  def to[U](to: To[T, U]): SCollection[U] = transform(to)
 
   // =======================================================================
   // Collection operations

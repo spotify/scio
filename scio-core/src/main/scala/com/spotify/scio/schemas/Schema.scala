@@ -203,3 +203,23 @@ trait LowPrioritySchemaDerivation {
   import com.spotify.scio.MagnoliaMacros
   implicit def gen[T]: Schema[T] = macro MagnoliaMacros.genWithoutAnnotations[T]
 }
+
+object SchemaTypes {
+
+  def typesEqual(s1: BSchema.FieldType, s2: BSchema.FieldType): Boolean =
+    (s1.getTypeName == s2.getTypeName) && (s1.getTypeName match {
+      case BSchema.TypeName.ROW =>
+        s1.getRowSchema.getFields.asScala
+          .map(_.getType)
+          .zip(s2.getRowSchema.getFields.asScala.map(_.getType))
+          .forall { case (l, r) => typesEqual(l, r) }
+      case BSchema.TypeName.ARRAY =>
+        typesEqual(s1.getCollectionElementType, s2.getCollectionElementType)
+      case BSchema.TypeName.MAP =>
+        typesEqual(s1.getMapKeyType, s2.getMapKeyType) && typesEqual(s1.getMapValueType,
+                                                                     s2.getMapValueType)
+      case _ if s1.getNullable == s2.getNullable => true
+      case _                                     => false
+    })
+
+}
