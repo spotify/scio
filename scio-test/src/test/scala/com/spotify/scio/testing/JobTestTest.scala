@@ -62,7 +62,7 @@ object GenericAvroFileJob {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
     implicit val coder = Coder.avroGenericRecordCoder(AvroUtils.schema)
     sc.avroFile[GenericRecord](args("input"), AvroUtils.schema)
-      .saveAsAvroFile(args("output"), schema = AvroUtils.schema)
+      .saveAsAvroFile(args("output"))
     sc.close()
   }
 }

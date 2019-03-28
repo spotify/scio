@@ -18,12 +18,11 @@
 package com.spotify.scio.avro
 
 import com.google.protobuf.Message
-import com.spotify.scio.ScioContext
-import com.spotify.scio.avro.types.AvroType.HasAvroAnnotation
-import com.spotify.scio.coders.Coder
-import com.spotify.scio.values._
 import org.apache.avro.Schema
-import org.apache.avro.specific.SpecificRecordBase
+import com.spotify.scio.ScioContext
+import com.spotify.scio.coders.Coder
+import com.spotify.scio.avro.types.AvroType.HasAvroAnnotation
+import com.spotify.scio.values._
 
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
@@ -41,18 +40,12 @@ final class AvroScioContext(@transient val self: ScioContext) extends Serializab
     self.read(ObjectFileIO[T](path))
 
   /**
-   * Get an SCollection of type [[org.apache.avro.generic.GenericRecord GenericRecord]] for an Avro
-   * file.
+   * Get an SCollection for an Avro file.
+   * @param schema must be not null if `T` is of type
+   *               [[org.apache.avro.generic.GenericRecord GenericRecord]].
    */
-  def avroFile[T: ClassTag: Coder](path: String, schema: Schema): SCollection[T] =
-    self.read(GenericRecordIO[T](path, schema))
-
-  /**
-   * Get an SCollection of type [[org.apache.avro.specific.SpecificRecordBase SpecificRecordBase]]
-   * for an Avro file.
-   */
-  def avroFile[T <: SpecificRecordBase: ClassTag: Coder](path: String): SCollection[T] =
-    self.read(SpecificRecordIO[T](path))
+  def avroFile[T: ClassTag: Coder](path: String, schema: Schema = null): SCollection[T] =
+    self.read(AvroIO[T](path, schema))
 
   /**
    * Get a typed SCollection from an Avro schema.
