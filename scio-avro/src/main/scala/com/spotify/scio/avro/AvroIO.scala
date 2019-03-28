@@ -88,7 +88,8 @@ object ObjectFileIO {
   val WriteParam = AvroIO.WriteParam
 }
 
-final case class ProtobufIO[T <: Message: ClassTag](path: String) extends ScioIO[T] {
+final case class ProtobufIO[T: ClassTag](path: String)(implicit ev: T <:< Message)
+    extends ScioIO[T] {
   override type ReadP = Unit
   override type WriteP = ProtobufIO.WriteParam
   override final val tapT = TapOf[T]
@@ -241,7 +242,8 @@ object AvroIO {
 
 object AvroTyped {
 
-  final case class AvroIO[T <: HasAvroAnnotation: ClassTag: TypeTag: Coder](path: String)
+  final case class AvroIO[T: ClassTag: TypeTag: Coder](path: String)(
+    implicit ev: T <:< HasAvroAnnotation)
       extends ScioIO[T] {
 
     override type ReadP = Unit

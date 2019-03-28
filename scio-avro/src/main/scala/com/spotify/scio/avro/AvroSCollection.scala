@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Spotify AB.
+ * Copyright 2018 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,24 +15,22 @@
  * under the License.
  */
 
-package com.spotify.scio.avro.syntax
+package com.spotify.scio.avro
 
 import com.google.protobuf.Message
-import com.spotify.scio.avro._
 import com.spotify.scio.avro.types.AvroType.HasAvroAnnotation
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.io.Tap
 import com.spotify.scio.values._
 import org.apache.avro.Schema
 import org.apache.avro.file.CodecFactory
-import org.apache.avro.specific.SpecificRecordBase
 
 import scala.concurrent.Future
-import scala.language.implicitConversions
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
 
-final class GenericRecordSCollection[T](private val self: SCollection[T]) extends AnyVal {
+/** Enhanced version of [[SCollection]] with Avro methods. */
+final class AvroSCollection[T](@transient val self: SCollection[T]) extends Serializable {
 
   /**
    * Save this SCollection of type
@@ -52,6 +50,25 @@ final class GenericRecordSCollection[T](private val self: SCollection[T]) extend
   }
 
   /**
+   * Save this SCollection as an Avro file. Note that element type `T` must be a case class
+   * annotated with [[com.spotify.scio.avro.types.AvroType AvroType.toSchema]].
+   */
+  // scalastyle:off parameter.number
+  def saveAsTypedAvroFile(path: String,
+                          numShards: Int = AvroIO.WriteParam.DefaultNumShards,
+                          suffix: String = AvroIO.WriteParam.DefaultSuffix,
+                          codec: CodecFactory = AvroIO.WriteParam.DefaultCodec,
+                          metadata: Map[String, AnyRef] = AvroIO.WriteParam.DefaultMetadata)(
+    implicit ct: ClassTag[T],
+    tt: TypeTag[T],
+    ev: T <:< HasAvroAnnotation,
+    coder: Coder[T]): Future[Tap[T]] = {
+    val param = AvroIO.WriteParam(numShards, suffix, codec, metadata)
+    self.write(AvroTyped.AvroIO[T](path))(param)
+  }
+  // scalastyle:on parameter.number
+
+  /**
    * Save this SCollection as an object file using default serialization.
    *
    * Serialized objects are stored in Avro files to leverage Avro's block file format. Note that
@@ -66,52 +83,6 @@ final class GenericRecordSCollection[T](private val self: SCollection[T]) extend
     val param = ObjectFileIO.WriteParam(numShards, suffix, codec, metadata)
     self.write(ObjectFileIO[T](path))(param)
   }
-}
-
-final class SpecificRecordSCollection[T <: SpecificRecordBase](private val self: SCollection[T])
-    extends AnyVal {
-
-  /**
-   * Save this SCollection of type
-   * [[org.apache.avro.specific.SpecificRecordBase SpecificRecordBase]] as an Avro file.
-   *
-   */
-  def saveAsAvroFile(path: String,
-                     numShards: Int = AvroIO.WriteParam.DefaultNumShards,
-                     suffix: String = AvroIO.WriteParam.DefaultSuffix,
-                     codec: CodecFactory = AvroIO.WriteParam.DefaultCodec,
-                     metadata: Map[String, AnyRef] = AvroIO.WriteParam.DefaultMetadata)(
-    implicit ct: ClassTag[T],
-    coder: Coder[T]): Future[Tap[T]] = {
-    val param = AvroIO.WriteParam(numShards, suffix, codec, metadata)
-    self.write(SpecificRecordIO[T](path))(param)
-  }
-}
-
-final class TypedAvroSCollection[T <: HasAvroAnnotation](private val self: SCollection[T])
-    extends AnyVal {
-
-  /**
-   * Save this SCollection as an Avro file. Note that element type `T` must be a case class
-   * annotated with [[com.spotify.scio.avro.types.AvroType AvroType.toSchema]].
-   */
-  // scalastyle:off parameter.number
-  def saveAsTypedAvroFile(path: String,
-                          numShards: Int = AvroIO.WriteParam.DefaultNumShards,
-                          suffix: String = AvroIO.WriteParam.DefaultSuffix,
-                          codec: CodecFactory = AvroIO.WriteParam.DefaultCodec,
-                          metadata: Map[String, AnyRef] = AvroIO.WriteParam.DefaultMetadata)(
-    implicit ct: ClassTag[T],
-    tt: TypeTag[T],
-    coder: Coder[T]): Future[Tap[T]] = {
-    val param = AvroIO.WriteParam(numShards, suffix, codec, metadata)
-    self.write(AvroTyped.AvroIO[T](path))(param)
-  }
-  // scalastyle:on parameter.number
-
-}
-
-final class ProtobufSCollection[T <: Message](private val self: SCollection[T]) extends AnyVal {
 
   /**
    * Save this SCollection as a Protobuf file.
@@ -124,27 +95,10 @@ final class ProtobufSCollection[T <: Message](private val self: SCollection[T]) 
                          suffix: String = ".protobuf",
                          codec: CodecFactory = AvroIO.WriteParam.DefaultCodec,
                          metadata: Map[String, AnyRef] = AvroIO.WriteParam.DefaultMetadata)(
-    implicit ct: ClassTag[T],
+    implicit ev: T <:< Message,
+    ct: ClassTag[T],
     coder: Coder[T]): Future[Tap[T]] = {
     val param = ProtobufIO.WriteParam(numShards, suffix, codec, metadata)
     self.write(ProtobufIO[T](path))(param)
   }
-
-}
-
-/** Enhanced with Avro methods. */
-trait SCollectionSyntax {
-  implicit def toGenericRecordSCollection[T](c: SCollection[T]): GenericRecordSCollection[T] =
-    new GenericRecordSCollection[T](c)
-
-  implicit def toSpecificRecordSCollection[T <: SpecificRecordBase](
-    c: SCollection[T]): SpecificRecordSCollection[T] =
-    new SpecificRecordSCollection[T](c)
-
-  implicit def toTypedAvroSCollection[T <: HasAvroAnnotation](
-    c: SCollection[T]): TypedAvroSCollection[T] =
-    new TypedAvroSCollection[T](c)
-
-  implicit def toProtobufSCollection[T <: Message](c: SCollection[T]): ProtobufSCollection[T] =
-    new ProtobufSCollection[T](c)
 }

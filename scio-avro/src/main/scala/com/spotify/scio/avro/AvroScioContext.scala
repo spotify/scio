@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Spotify AB.
+ * Copyright 2018 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,23 +15,21 @@
  * under the License.
  */
 
-package com.spotify.scio.avro.syntax
+package com.spotify.scio.avro
 
 import com.google.protobuf.Message
 import com.spotify.scio.ScioContext
-import com.spotify.scio.avro._
 import com.spotify.scio.avro.types.AvroType.HasAvroAnnotation
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.values._
 import org.apache.avro.Schema
 import org.apache.avro.specific.SpecificRecordBase
 
-import scala.language.implicitConversions
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
 
 /** Enhanced version of [[ScioContext]] with Avro methods. */
-final class AvroScioContext(private val self: ScioContext) extends AnyVal {
+final class AvroScioContext(@transient val self: ScioContext) extends Serializable {
 
   /**
    * Get an SCollection for an object file using default serialization.
@@ -74,11 +72,7 @@ final class AvroScioContext(private val self: ScioContext) extends AnyVal {
    * Protobuf messages are serialized into `Array[Byte]` and stored in Avro files to leverage
    * Avro's block file format.
    */
-  def protobufFile[T <: Message: ClassTag: Coder](path: String): SCollection[T] =
+  def protobufFile[T: ClassTag: Coder](path: String)(implicit ev: T <:< Message): SCollection[T] =
     self.read(ProtobufIO[T](path))
-}
 
-/** Enhanced with Avro methods. */
-trait ScioContextSyntax {
-  implicit def toAvroScioContext(c: ScioContext): AvroScioContext = new AvroScioContext(c)
 }
