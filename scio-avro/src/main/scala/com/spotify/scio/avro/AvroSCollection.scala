@@ -19,9 +19,9 @@ package com.spotify.scio.avro
 
 import com.google.protobuf.Message
 import com.spotify.scio.avro.types.AvroType.HasAvroAnnotation
-import com.spotify.scio.values._
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.io.Tap
+import com.spotify.scio.values._
 import org.apache.avro.Schema
 import org.apache.avro.file.CodecFactory
 
@@ -33,20 +33,20 @@ import scala.reflect.runtime.universe._
 final class AvroSCollection[T](@transient val self: SCollection[T]) extends Serializable {
 
   /**
-   * Save this SCollection as an Avro file.
-   * @param schema must be not null if `T` is of type
-   *               [[org.apache.avro.generic.GenericRecord GenericRecord]].
+   * Save this SCollection of type
+   * [[org.apache.avro.specific.SpecificRecordBase SpecificRecordBase]] as an Avro file.
    */
+  // scalastyle:off parameter.number
   def saveAsAvroFile(path: String,
                      numShards: Int = AvroIO.WriteParam.DefaultNumShards,
-                     schema: Schema = null,
+                     schema: Schema,
                      suffix: String = AvroIO.WriteParam.DefaultSuffix,
                      codec: CodecFactory = AvroIO.WriteParam.DefaultCodec,
                      metadata: Map[String, AnyRef] = AvroIO.WriteParam.DefaultMetadata)(
     implicit ct: ClassTag[T],
     coder: Coder[T]): Future[Tap[T]] = {
     val param = AvroIO.WriteParam(numShards, suffix, codec, metadata)
-    self.write(AvroIO[T](path, schema))(param)
+    self.write(GenericRecordIO[T](path, schema))(param)
   }
 
   /**

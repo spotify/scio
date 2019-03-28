@@ -18,6 +18,7 @@ package com.spotify.scio.avro.types
 
 import com.spotify.scio.avro.AvroTaps
 import com.spotify.scio.io.Taps
+import org.apache.avro.Schema.Parser
 import org.apache.avro.generic.GenericRecord
 import org.apache.beam.sdk.io.FileSystems
 import org.apache.beam.sdk.options.PipelineOptionsFactory
@@ -27,12 +28,30 @@ import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 
 final class AvroTapIT extends FlatSpec with Matchers {
+  private val schema = new Parser().parse("""{
+                                                    |  "type" : "record",
+                                                    |  "name" : "Root",
+                                                    |  "fields" : [ {
+                                                    |    "name" : "word",
+                                                    |    "type" : [ "string", "null" ]
+                                                    |  }, {
+                                                    |    "name" : "word_count",
+                                                    |    "type" : [ "long", "null" ]
+                                                    |  }, {
+                                                    |    "name" : "corpus",
+                                                    |    "type" : [ "string", "null" ]
+                                                    |  }, {
+                                                    |    "name" : "corpus_date",
+                                                    |    "type" : [ "long", "null" ]
+                                                    |  } ]
+                                                    |}""".stripMargin)
 
   it should "read avro file" in {
     FileSystems.setDefaultPipelineOptions(PipelineOptionsFactory.create)
 
     val asd = AvroTaps(Taps()).avroFile[GenericRecord](
-      "gs://data-integration-test-eu/avro-integration-test/folder-a/folder-b/shakespeare.avro")
+      "gs://data-integration-test-eu/avro-integration-test/folder-a/folder-b/shakespeare.avro",
+      schema = schema)
     val result = Await.result(asd, Duration.Inf)
 
     result.value.hasNext shouldBe true
