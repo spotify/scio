@@ -32,7 +32,7 @@ import scala.language.implicitConversions
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
 
-final class GenericRecordSCollectionOps[T](private val self: SCollection[T]) extends AnyVal {
+final class GenericRecordSCollection[T](private val self: SCollection[T]) extends AnyVal {
 
   /**
    * Save this SCollection of type
@@ -68,7 +68,7 @@ final class GenericRecordSCollectionOps[T](private val self: SCollection[T]) ext
   }
 }
 
-final class SpecificRecordSCollectionOps[T <: SpecificRecordBase](private val self: SCollection[T])
+final class SpecificRecordSCollection[T <: SpecificRecordBase](private val self: SCollection[T])
     extends AnyVal {
 
   /**
@@ -88,7 +88,7 @@ final class SpecificRecordSCollectionOps[T <: SpecificRecordBase](private val se
   }
 }
 
-final class TypedAvroSCollectionOps[T <: HasAvroAnnotation](private val self: SCollection[T])
+final class TypedAvroSCollection[T <: HasAvroAnnotation](private val self: SCollection[T])
     extends AnyVal {
 
   /**
@@ -111,7 +111,7 @@ final class TypedAvroSCollectionOps[T <: HasAvroAnnotation](private val self: SC
 
 }
 
-final class ProtobufSCollectionOps[T <: Message](private val self: SCollection[T]) extends AnyVal {
+final class ProtobufSCollection[T <: Message](private val self: SCollection[T]) extends AnyVal {
 
   /**
    * Save this SCollection as a Protobuf file.
@@ -134,15 +134,17 @@ final class ProtobufSCollectionOps[T <: Message](private val self: SCollection[T
 
 /** Enhanced with Avro methods. */
 trait SCollectionSyntax {
-  implicit def avroGenericRecordSCollectionOps[T](
-    c: SCollection[T]): GenericRecordSCollectionOps[T] = new GenericRecordSCollectionOps[T](c)
+  implicit def toGenericRecordSCollection[T](c: SCollection[T]): GenericRecordSCollection[T] =
+    new GenericRecordSCollection[T](c)
 
-  implicit def avroSpecificRecordSCollectionOps[T <: SpecificRecordBase](
-    c: SCollection[T]): SpecificRecordSCollectionOps[T] = new SpecificRecordSCollectionOps[T](c)
+  implicit def toSpecificRecordSCollection[T <: SpecificRecordBase](
+    c: SCollection[T]): SpecificRecordSCollection[T] =
+    new SpecificRecordSCollection[T](c)
 
-  implicit def avroTypedAvroSCollectionOps[T <: HasAvroAnnotation](
-    c: SCollection[T]): TypedAvroSCollectionOps[T] = new TypedAvroSCollectionOps[T](c)
+  implicit def toTypedAvroSCollection[T <: HasAvroAnnotation](
+    c: SCollection[T]): TypedAvroSCollection[T] =
+    new TypedAvroSCollection[T](c)
 
-  implicit def avroProtobufSCollectionOps[T <: Message](
-    c: SCollection[T]): ProtobufSCollectionOps[T] = new ProtobufSCollectionOps[T](c)
+  implicit def toProtobufSCollection[T <: Message](c: SCollection[T]): ProtobufSCollection[T] =
+    new ProtobufSCollection[T](c)
 }
