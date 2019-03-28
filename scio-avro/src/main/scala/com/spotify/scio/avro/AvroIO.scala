@@ -27,7 +27,7 @@ import com.spotify.scio.{avro, ScioContext}
 import org.apache.avro.Schema
 import org.apache.avro.file.CodecFactory
 import org.apache.avro.generic.GenericRecord
-import org.apache.avro.specific.SpecificRecordBase
+import org.apache.avro.specific.SpecificRecord
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
 import org.apache.beam.sdk.transforms.{DoFn, SerializableFunction}
 import org.apache.beam.sdk.{io => beam}
@@ -149,7 +149,7 @@ sealed trait AvroIO[T] extends ScioIO[T] {
 
 }
 
-final case class SpecificRecordIO[T <: SpecificRecordBase: ClassTag: Coder](path: String)
+final case class SpecificRecordIO[T <: SpecificRecord: ClassTag: Coder](path: String)
     extends AvroIO[T] {
   override type ReadP = Unit
   override type WriteP = AvroIO.WriteParam
@@ -157,7 +157,7 @@ final case class SpecificRecordIO[T <: SpecificRecordBase: ClassTag: Coder](path
   override def testId: String = s"AvroIO($path)"
 
   /**
-   * Get an SCollection of [[org.apache.avro.specific.SpecificRecordBase SpecificRecordBase]]
+   * Get an SCollection of [[org.apache.avro.specific.SpecificRecord SpecificRecord]]
    * from an Avro file.
    */
   override def read(sc: ScioContext, params: ReadP): SCollection[T] = {
@@ -167,7 +167,7 @@ final case class SpecificRecordIO[T <: SpecificRecordBase: ClassTag: Coder](path
   }
 
   /**
-   * Save this SCollection of [[org.apache.avro.specific.SpecificRecordBase SpecificRecordBase]] as
+   * Save this SCollection of [[org.apache.avro.specific.SpecificRecord SpecificRecord]] as
    * an Avro file.
    */
   override def write(data: SCollection[T], params: WriteP): Tap[T] = {

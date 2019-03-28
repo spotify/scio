@@ -25,7 +25,7 @@ import com.spotify.scio.io.ClosedTap
 import com.spotify.scio.values._
 import org.apache.avro.Schema
 import org.apache.avro.file.CodecFactory
-import org.apache.avro.specific.SpecificRecordBase
+import org.apache.avro.specific.SpecificRecord
 
 import scala.language.implicitConversions
 import scala.reflect.ClassTag
@@ -35,7 +35,7 @@ final class GenericRecordSCollectionOps[T](private val self: SCollection[T]) ext
 
   /**
    * Save this SCollection of type
-   * [[org.apache.avro.specific.SpecificRecordBase SpecificRecordBase]] as an Avro file.
+   * [[org.apache.avro.specific.SpecificRecord SpecificRecord]] as an Avro file.
    */
   // scalastyle:off parameter.number
   def saveAsAvroFile(path: String,
@@ -67,12 +67,12 @@ final class GenericRecordSCollectionOps[T](private val self: SCollection[T]) ext
   }
 }
 
-final class SpecificRecordSCollectionOps[T <: SpecificRecordBase](private val self: SCollection[T])
+final class SpecificRecordSCollectionOps[T <: SpecificRecord](private val self: SCollection[T])
     extends AnyVal {
 
   /**
    * Save this SCollection of type
-   * [[org.apache.avro.specific.SpecificRecordBase SpecificRecordBase]] as an Avro file.
+   * [[org.apache.avro.specific.SpecificRecord SpecificRecord]] as an Avro file.
    *
    */
   def saveAsAvroFile(path: String,
@@ -136,7 +136,7 @@ trait SCollectionSyntax {
   implicit def avroGenericRecordSCollectionOps[T](
     c: SCollection[T]): GenericRecordSCollectionOps[T] = new GenericRecordSCollectionOps[T](c)
 
-  implicit def avroSpecificRecordSCollectionOps[T <: SpecificRecordBase](
+  implicit def avroSpecificRecordSCollectionOps[T <: SpecificRecord](
     c: SCollection[T]): SpecificRecordSCollectionOps[T] = new SpecificRecordSCollectionOps[T](c)
 
   implicit def avroTypedAvroSCollectionOps[T <: HasAvroAnnotation](
