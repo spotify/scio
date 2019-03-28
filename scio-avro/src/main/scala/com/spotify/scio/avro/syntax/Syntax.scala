@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,23 +15,6 @@
  * under the License.
  */
 
-package com.spotify.scio
+package com.spotify.scio.avro.syntax
 
-import com.spotify.scio.avro.syntax.Syntax
-
-/**
- * Main package for Avro APIs. Import all.
- *
- * {{{
- * import com.spotify.scio.avro._
- * }}}
- */
-package object avro extends Syntax {
-
-  /** Typed Avro annotations and converters. */
-  val AvroType = com.spotify.scio.avro.types.AvroType
-
-  /** Annotation for Avro field and record documentation. */
-  type doc = com.spotify.scio.avro.types.doc
-
-}
+trait Syntax extends ScioContextSyntax with SCollectionSyntax
