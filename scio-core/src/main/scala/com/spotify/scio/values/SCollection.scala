@@ -50,6 +50,7 @@ import org.joda.time.{Duration, Instant}
 import scala.collection.JavaConverters._
 import scala.collection.immutable.TreeMap
 import scala.reflect.ClassTag
+import scala.util.Try
 
 /** Convenience functions for creating SCollections. */
 object SCollection {
@@ -145,13 +146,15 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     } else this
   }
 
-  private def checkCoderSerialization[A](coder: BCoder[A]): Unit =
+  private def ensureSerializable[A](coder: BCoder[A]): Either[Throwable, BCoder[A]] =
     coder match {
-      case _ if !context.isTest => ()
+      case c if !context.isTest =>
+        Right(c)
       // https://issues.apache.org/jira/browse/BEAM-5645
       case c if c.getClass.getPackage.getName.startsWith("org.apache.beam") =>
-        ()
-      case _ => SerializableUtils.ensureSerializable(coder)
+        Right(c)
+      case _ =>
+        ScioUtil.toEither(Try(SerializableUtils.ensureSerializable(coder)))
     }
 
   /**
@@ -161,8 +164,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   def applyTransform[U: Coder](
     transform: PTransform[_ >: PCollection[T], PCollection[U]]): SCollection[U] = {
     val coder = CoderMaterializer.beam(context, Coder[U])
-    checkCoderSerialization(coder)
-    this.pApply(transform).setCoder(coder)
+    ensureSerializable(coder).fold(e => throw e, this.pApply(transform).setCoder)
   }
 
   /**
@@ -174,8 +176,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     implicit koder: Coder[K],
     voder: Coder[V]): SCollection[KV[K, V]] = {
     val bcoder = CoderMaterializer.kvCoder[K, V](context)
-    checkCoderSerialization(bcoder)
-    this.pApply(transform).setCoder(bcoder)
+    ensureSerializable(bcoder).fold(e => throw e, this.pApply(transform).setCoder)
   }
 
   /** Apply a transform. */
