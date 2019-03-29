@@ -36,6 +36,108 @@ import scala.language.experimental.macros
 import scala.util.Try
 import scala.collection.JavaConverters._
 
+object Sql {
+
+  private[sql] val BeamProviderName = "beam"
+  private[sql] val SCollectionTypeName = "SCOLLECTION"
+
+  def from[A: Schema](sc: SCollection[A]): SqlSCollection[A] = new SqlSCollection(sc)
+
+  def from[A: Schema, B: Schema](a: SCollection[A], b: SCollection[B]): SqlSCollection2[A, B] =
+    new SqlSCollection2(a, b)
+
+  private[sql] def registerUdf(t: SqlTransform, udfs: Udf*): SqlTransform =
+    udfs.foldLeft(t) {
+      case (st, x: UdfFromClass[_]) =>
+        st.registerUdf(x.fnName, x.clazz)
+      case (st, x: UdfFromSerializableFn[_, _]) =>
+        st.registerUdf(x.fnName, x.fn)
+      case (st, x: UdafFromCombineFn[_, _, _]) =>
+        st.registerUdaf(x.fnName, x.fn)
+    }
+
+  private[sql] def tableProvider[A](tag: TupleTag[A], sc: SCollection[A]): TableProvider = {
+    val table = new BeamPCollectionTable[A](sc.internal)
+    new ReadOnlyTableProvider(SCollectionTypeName, Collections.singletonMap(tag.getId, table))
+  }
+
+  private[sql] def setSchema[T: Schema](c: SCollection[T]): SCollection[T] =
+    c.transform { x =>
+      val (schema, to, from) = SchemaMaterializer.materialize(c.context, Schema[T])
+      x.map(identity)(Coder.beam(SchemaCoder.of(schema, to, from)))
+    }
+
+  private[sql] def fromRow[T: Schema](c: SCollection[Row]): SCollection[T] =
+    c.transform { x =>
+      val (schema, to, from) = SchemaMaterializer.materialize(c.context, Schema[T])
+      x.map(from(_))(Coder.beam(SchemaCoder.of(schema, to, from)))
+    }
+
+}
+
+final class SqlSCollection[A: Schema](sc: SCollection[A]) {
+
+  def query(q: String, udfs: Udf*): SCollection[Row] = query(Query[A, Row](q, udfs = udfs.toList))
+
+  def query(q: Query[A, Row]): SCollection[Row] = {
+    sc.context.wrap {
+      val scWithSchema = Sql.setSchema(sc)
+      val transform =
+        SqlTransform
+          .query(q.query)
+          .withTableProvider(Sql.BeamProviderName, Sql.tableProvider(q.tag, scWithSchema))
+      val sqlTransform = Sql.registerUdf(transform, q.udfs: _*)
+      scWithSchema.applyInternal(sqlTransform)
+    }
+  }
+
+  def queryAs[R: Schema](q: String, udfs: Udf*): SCollection[R] =
+    queryAs(Query[A, R](q, udfs = udfs.toList))
+
+  def queryAs[R: Schema](q: Query[A, R]): SCollection[R] =
+    try {
+      Sql.fromRow(query(Query[A, Row](q.query, q.tag, q.udfs)))
+    } catch {
+      case e: ParseException =>
+        Queries.typecheck(q).fold(err => throw new RuntimeException(err, e), _ => throw e)
+    }
+
+}
+
+final class SqlSCollection2[A: Schema, B: Schema](a: SCollection[A], b: SCollection[B]) {
+
+  def query(q: String, aTag: TupleTag[A], bTag: TupleTag[B], udfs: Udf*): SCollection[Row] =
+    query(Query2(q, aTag, bTag, udfs.toList))
+
+  def query(q: Query2[A, B, Row]): SCollection[Row] = {
+    a.context.wrap {
+      val collA = Sql.setSchema(a)
+      val collB = Sql.setSchema(b)
+      val sqlTransform = Sql.registerUdf(SqlTransform.query(q.query), q.udfs: _*)
+
+      PCollectionTuple
+        .of(q.aTag, collA.internal)
+        .and(q.bTag, collB.internal)
+        .apply(s"${collA.tfName} join ${collB.tfName}", sqlTransform)
+    }
+  }
+
+  def queryAs[R: Schema](q: String,
+                         aTag: TupleTag[A],
+                         bTag: TupleTag[B],
+                         udfs: Udf*): SCollection[R] =
+    queryAs(Query2(q, aTag, bTag, udfs.toList))
+
+  def queryAs[R: Schema](q: Query2[A, B, R]): SCollection[R] =
+    try {
+      Sql.fromRow(query(q.query, q.aTag, q.bTag, q.udfs: _*))
+    } catch {
+      case e: ParseException =>
+        Queries.typecheck(q).fold(err => throw new RuntimeException(err, e), _ => throw e)
+    }
+
+}
+
 final case class Query[A, B](query: String,
                              tag: TupleTag[A] = new TupleTag[A]("SCOLLECTION"),
                              udfs: List[Udf] = Nil)
@@ -62,7 +164,7 @@ object Queries {
           SchemaMaterializer.fieldType(Schema[ScalarWrapper[B]]).getRowSchema
       }
 
-    QueryUtils.typecheck(q.query, (q.tag.getId, schema) :: Nil, expectedSchema).right.map(_ => q)
+    typecheck(q.query, (q.tag.getId, schema) :: Nil, expectedSchema).right.map(_ => q)
   }
 
   /**
@@ -82,9 +184,7 @@ object Queries {
           SchemaMaterializer.fieldType(Schema[ScalarWrapper[R]]).getRowSchema
       }
 
-    QueryUtils
-      .typecheck(q.query, List((q.aTag.getId, schemaA), (q.bTag.getId, schemaB)), expectedSchema)
-      .right
+    typecheck(q.query, List((q.aTag.getId, schemaA), (q.bTag.getId, schemaB)), expectedSchema).right
       .map(_ => q)
   }
 
@@ -96,113 +196,8 @@ object Queries {
                                              bTag: TupleTag[B],
                                              udfs: Udf*): Query2[A, B, R] =
     macro QueryMacros.typed2Impl[A, B, R]
-}
 
-object Sql {
-
-  private[sql] val BeamProviderName = "beam"
-  private[sql] val SCollectionTypeName = "SCOLLECTION"
-
-  def from[A: Schema](sc: SCollection[A]): SqlSCollection[A] = new SqlSCollection(sc)
-
-  def from[A: Schema, B: Schema](a: SCollection[A], b: SCollection[B]): SqlSCollection2[A, B] =
-    new SqlSCollection2(a, b)
-
-  private[sql] def registerUdf(t: SqlTransform, udfs: Udf*): SqlTransform =
-    udfs.foldLeft(t) {
-      case (st, x: UdfFromClass[_]) =>
-        st.registerUdf(x.fnName, x.clazz)
-      case (st, x: UdfFromSerializableFn[_, _]) =>
-        st.registerUdf(x.fnName, x.fn)
-      case (st, x: UdafFromCombineFn[_, _, _]) =>
-        st.registerUdaf(x.fnName, x.fn)
-    }
-
-  def tableProvider[A](tag: TupleTag[A], sc: SCollection[A]): TableProvider = {
-    val table = new BeamPCollectionTable[A](sc.internal)
-    new ReadOnlyTableProvider(SCollectionTypeName, Collections.singletonMap(tag.getId, table))
-  }
-
-}
-
-final class SqlSCollection[A: Schema](sc: SCollection[A]) {
-
-  def query(q: String, udfs: Udf*): SCollection[Row] = query(Query[A, Row](q, udfs = udfs.toList))
-
-  def query(q: Query[A, Row]): SCollection[Row] = {
-    sc.context.wrap {
-      val scWithSchema = QueryUtils.transform(sc)
-      val transform =
-        SqlTransform
-          .query(q.query)
-          .withTableProvider(Sql.BeamProviderName, Sql.tableProvider(q.tag, scWithSchema))
-      val sqlTransform = Sql.registerUdf(transform, q.udfs: _*)
-      scWithSchema.applyInternal(sqlTransform)
-    }
-  }
-
-  def queryAs[R: Schema](q: String, udfs: Udf*): SCollection[R] =
-    queryAs(Query[A, R](q, udfs = udfs.toList))
-
-  def queryAs[R: Schema](q: Query[A, R]): SCollection[R] =
-    try {
-      val (schema, to, from) = SchemaMaterializer.materialize(sc.context, Schema[R])
-      query(Query[A, Row](q.query, q.tag, q.udfs))
-        .map[R](r => from(r))(Coder.beam(SchemaCoder.of(schema, to, from)))
-    } catch {
-      case e: ParseException =>
-        Queries.typecheck(q).fold(err => throw new RuntimeException(err, e), _ => throw e)
-    }
-
-}
-
-final class SqlSCollection2[A: Schema, B: Schema](a: SCollection[A], b: SCollection[B]) {
-
-  def query(q: String, aTag: TupleTag[A], bTag: TupleTag[B], udfs: Udf*): SCollection[Row] =
-    query(Query2(q, aTag, bTag, udfs.toList))
-
-  def query(q: Query2[A, B, Row]): SCollection[Row] = {
-    a.context.wrap {
-      val collA = QueryUtils.transform(a)
-      val collB = QueryUtils.transform(b)
-      val sqlTransform = Sql.registerUdf(SqlTransform.query(q.query), q.udfs: _*)
-
-      PCollectionTuple
-        .of(q.aTag, collA.internal)
-        .and(q.bTag, collB.internal)
-        .apply(s"${collA.tfName} join ${collB.tfName}", sqlTransform)
-    }
-  }
-
-  def queryAs[R: Schema](q: String,
-                         aTag: TupleTag[A],
-                         bTag: TupleTag[B],
-                         udfs: Udf*): SCollection[R] =
-    queryAs(Query2(q, aTag, bTag, udfs.toList))
-
-  def queryAs[R: Schema](q: Query2[A, B, R]): SCollection[R] =
-    try {
-      val (schema, to, from) = SchemaMaterializer.materialize(a.context, Schema[R])
-      query(q.query, q.aTag, q.bTag, q.udfs: _*)
-        .map[R](r => from(r))(Coder.beam(SchemaCoder.of(schema, to, from)))
-    } catch {
-      case e: ParseException =>
-        Queries.typecheck(q).fold(err => throw new RuntimeException(err, e), _ => throw e)
-    }
-
-}
-
-object QueryUtils {
-
-  def transform[T: Schema](c: SCollection[T]): SCollection[T] = {
-    val coderT: Coder[T] = {
-      val (schema, to, from) = SchemaMaterializer.materialize(c.context, Schema[T])
-      Coder.beam(SchemaCoder.of(schema, to, from))
-    }
-    c.transform(s"${c.tfName}: set schema")(_.map(identity)(coderT))
-  }
-
-  def parseQuery(query: String, schemas: (String, BSchema)*): Try[BeamRelNode] = Try {
+  private[this] def parseQuery(query: String, schemas: (String, BSchema)*): Try[BeamRelNode] = Try {
     val tables: Map[String, BeamSqlTable] = schemas.map {
       case (tag, schema) =>
         tag -> new BaseBeamTable(schema) {
@@ -217,12 +212,12 @@ object QueryUtils {
     BeamSqlEnv.readOnly(Sql.SCollectionTypeName, tables.asJava).parseQuery(query)
   }
 
-  def schema(query: String, schemas: (String, BSchema)*): Try[BSchema] =
+  private[this] def schema(query: String, schemas: (String, BSchema)*): Try[BSchema] =
     parseQuery(query, schemas: _*).map(n => CalciteUtils.toSchema(n.getRowType))
 
-  def typecheck(query: String,
-                inferredSchemas: List[(String, BSchema)],
-                expectedSchema: BSchema): Either[String, String] = {
+  private[this] def typecheck(query: String,
+                              inferredSchemas: List[(String, BSchema)],
+                              expectedSchema: BSchema): Either[String, String] = {
     ScioUtil
       .toEither(schema(query, inferredSchemas: _*))
       .left
@@ -267,6 +262,7 @@ object QueryUtils {
           Left(message)
       }
   }
+
 }
 
 object QueryMacros {
