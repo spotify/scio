@@ -18,8 +18,10 @@
 // Example: Minimal BeamSQL Word Count Example
 // Usage:
 
-// `sbt runMain "com.spotify.scio.examples.BeamSqlExample
-//  --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]"`
+// `sbt runMain "com.spotify.scio.examples.MinimalBeamSqlWordCountExample
+// --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
+// --input=gs://apache-beam-samples/shakespeare/kinglear.txt
+// --output=gs://[BUCKET]/[PATH]/minimal_wordcount"`
 package com.spotify.scio.examples
 
 import com.spotify.scio._
