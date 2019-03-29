@@ -26,7 +26,7 @@ import com.spotify.scio.values._
 import com.twitter.chill.Externalizer
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecord
-import org.apache.avro.specific.SpecificRecordBase
+import org.apache.avro.specific.SpecificRecord
 
 import scala.concurrent.Future
 import scala.reflect.ClassTag
@@ -47,9 +47,9 @@ final case class GenericRecordTap[T: ClassTag: Coder](path: String,
 }
 
 /**
- * Tap for [[org.apache.avro.specific.SpecificRecordBase SpecificRecordBase]] Avro files.
+ * Tap for [[org.apache.avro.specific.SpecificRecord SpecificRecord]] Avro files.
  */
-final case class SpecificRecordTap[T <: SpecificRecordBase: ClassTag: Coder](path: String)
+final case class SpecificRecordTap[T <: SpecificRecord: ClassTag: Coder](path: String)
     extends Tap[T] {
 
   override def value: Iterator[T] = FileStorage(path).avroFile[T]()
@@ -88,9 +88,9 @@ final case class AvroTaps(self: Taps) {
     self.mkTap(s"Avro: $path", () => self.isPathDone(path), () => GenericRecordTap[T](path, schema))
 
   /** Get a `Future[Tap[T]]` for
-   * [[org.apache.avro.specific.SpecificRecordBase SpecificRecordBase]] Avro file.
+   * [[org.apache.avro.specific.SpecificRecord SpecificRecord]] Avro file.
    */
-  def avroFile[T <: SpecificRecordBase: ClassTag: Coder](path: String): Future[Tap[T]] =
+  def avroFile[T <: SpecificRecord: ClassTag: Coder](path: String): Future[Tap[T]] =
     self.mkTap(s"Avro: $path", () => self.isPathDone(path), () => SpecificRecordTap[T](path))
 
   /** Get a `Future[Tap[T]]` for typed Avro source. */
