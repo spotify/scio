@@ -276,22 +276,26 @@ class BeamSQLTest extends PipelineSpec {
       .queryAs[String]("select a.username from B a join A b on a.username = b.username",
                        new TupleTag[User]("A"),
                        new TupleTag[User]("B")) shouldNot beEmpty
-
-    import Queries.typed
-    // scalastyle:off line.size.limit
-    """
-      |typed[User, User, String]("select a.username from B a join A b on a.username = b.username", new TupleTag[User]("A"), new TupleTag[User]("B"))
-      |""".stripMargin should compile
-  // scalastyle:on line.size.limit
   }
 
   it should "properly chain typed queries" in runWithContext { sc =>
     val expected = 255
     val in = sc.parallelize(users)
-    val r =
+    val r1 =
       in.queryAs[(String, Int)]("select username, age from SCOLLECTION")
         .queryAs[Int]("select sum(_2) from SCOLLECTION")
-    r should containSingleValue(expected)
+    r1 should containSingleValue(expected)
+
+    val inB = sc.parallelize(users)
+    val r2 = Sql
+      .from(in, inB)
+      .queryAs[(String, Int)](
+        "select a.username, b.age from B a join A b on a.username = b.username",
+        new TupleTag[User]("A"),
+        new TupleTag[User]("B"))
+      .queryAs[Int]("select sum(_2) from SCOLLECTION")
+
+    r2 should containSingleValue(expected)
   }
 
   it should "Support scalar inputs" in runWithContext { sc =>
@@ -309,11 +313,25 @@ class BeamSQLTest extends PipelineSpec {
   }
 
   it should "provide a typecheck method for tests" in {
-    def checkOK[A: Schema, B: Schema](q: String): Assertion =
-      Queries.typecheck(Query[A, B](q)) should be('right)
+    object checkOK {
+      def apply[A: Schema, B: Schema](q: String): Assertion =
+        Queries.typecheck(Query[A, B](q)) should be('right)
 
-    def checkNOK[A: Schema, B: Schema](q: String): Assertion =
-      Queries.typecheck(Query[A, B](q)) should be('left)
+      def apply[A: Schema, B: Schema, C: Schema](q: String,
+                                                 a: TupleTag[A],
+                                                 b: TupleTag[B]): Assertion =
+        Queries.typecheck(Query2[A, B, C](q, a, b)) should be('right)
+    }
+
+    object checkNOK {
+      def apply[A: Schema, B: Schema](q: String): Assertion =
+        Queries.typecheck(Query[A, B](q)) should be('left)
+
+      def apply[A: Schema, B: Schema, C: Schema](q: String,
+                                                 a: TupleTag[A],
+                                                 b: TupleTag[B]): Assertion =
+        Queries.typecheck(Query2[A, B, C](q, a, b)) should be('left)
+    }
 
     checkOK[Bar, Long]("select l from SCOLLECTION")
     checkOK[Bar, Int]("select `SCOLLECTION`.`f`.`i` from SCOLLECTION")
@@ -348,6 +366,15 @@ class BeamSQLTest extends PipelineSpec {
     checkOK[UserBean, (String, List[Int])]("select name, ARRAY[age] from SCOLLECTION")
     checkNOK[UserBean, (String, Int)]("select name, ARRAY[age] from SCOLLECTION")
     checkNOK[UserBean, (String, List[Int])]("select name, age from SCOLLECTION")
+
+    checkOK[User, User, (String, Int)](
+      "select a.username, b.age from A a join B b on a.username = b.username",
+      new TupleTag[User]("A"),
+      new TupleTag[User]("B"))
+    checkNOK[User, User, (String, String)](
+      "select a.username, b.age from A a join B b on a.username = b.username",
+      new TupleTag[User]("A"),
+      new TupleTag[User]("B"))
   }
 
   it should "typecheck queries at compile time" in {
@@ -376,8 +403,19 @@ class BeamSQLTest extends PipelineSpec {
     """typed[UserBean, Bar]("select name, age from SCOLLECTION")""" shouldNot compile
     """typed[UserBean, (String, Int)]("select name, ARRAY[age] from SCOLLECTION")""" shouldNot compile
     """typed[UserBean, (String, List[Int])]("select name, age from SCOLLECTION")""" shouldNot compile
-    // scalastyle:on line.size.limit
 
+    // joins
+
+    """
+      |typed[User, User, String]("select a.username from B a join A b on a.username = b.username", new TupleTag[User]("A"), new TupleTag[User]("B"))
+      |""".stripMargin should compile
+    """
+      |typed[User, User, Int]("select a.username from B a join A b on a.username = b.username", new TupleTag[User]("A"), new TupleTag[User]("B"))
+      |""".stripMargin shouldNot compile
+    """
+      |typed[User, User, String]("select a.username from B a join A b on a.username = b.username", new TupleTag[User]("C"), new TupleTag[User]("D"))
+      |""".stripMargin shouldNot compile
+    // scalastyle:on line.size.limit
   }
 
   it should "give a clear error message when the query can not be checked at compile time" in {
