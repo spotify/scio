@@ -24,7 +24,7 @@ import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import com.spotify.scio.util._
 import com.spotify.scio.util.random.{BernoulliValueSampler, PoissonValueSampler}
-import com.twitter.algebird._
+import com.twitter.algebird.{BloomFilter => _, BloomFilterAggregator => _, _}
 import org.apache.beam.sdk.coders.KvCoder
 import org.apache.beam.sdk.transforms._
 import org.apache.beam.sdk.values.{KV, PCollection, PCollectionView}
@@ -493,7 +493,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
   private[values] def optimalKeysBloomFiltersAsSideInputs(thisNumKeys: Long, fpProb: Double)(
     implicit hash: Hash128[K],
     koder: Coder[K],
-    voder: Coder[V]): Seq[SideInput[BF[K]]] = {
+    voder: Coder[V]): Seq[SideInput[MutableBF[K]]] = {
     val bfSettings = PairSCollectionFunctions.optimalBFSettings(thisNumKeys, fpProb)
 
     val numKeysPerPartition = if (bfSettings.numBFs == 1) thisNumKeys.toInt else bfSettings.capacity
@@ -504,7 +504,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     self.keys
       .hashPartition(n)
       .map { me =>
-        me.aggregate(bfAggregator.monoid.zero)(_ + _, _ ++ _)
+        me.aggregate(bfAggregator.monoid.zero)(_ += _, _ ++= _)
           .asSingletonSideInput(bfAggregator.monoid.zero)
       }
   }
@@ -707,6 +707,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     }
   }
 
+  // TODO (anish): Refactor this to use `optimalKeysBloomFiltersAsSideInputs`
   protected def sparseIntersectByKeyImpl(that: SCollection[K],
                                          thatNumKeys: Int,
                                          computeExact: Boolean = false,
@@ -718,7 +719,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     val numHashes = BloomFilter.optimalNumHashes(thatNumKeys, width)
     val bfAggregator = BloomFilterAggregator[K](numHashes, width)
     val rhsBf = that
-      .aggregate(bfAggregator.monoid.zero)(_ + _, _ ++ _)
+      .aggregate(bfAggregator.monoid.zero)(_ += _, _ ++= _)
       .asSingletonSideInput(bfAggregator.monoid.zero)
 
     val approxResults = self
