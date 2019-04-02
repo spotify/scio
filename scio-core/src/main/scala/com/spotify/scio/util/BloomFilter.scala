@@ -333,6 +333,7 @@ case class MutableBFInstance[A](hashes: KirMit32Hash[A], bits: util.BitSet, widt
     (this += other, doesContain)
   }
 
+  // scalastyle:off return
   def maybeContains(item: A): Boolean = {
     val il = hashes(item)
     var idx = 0
@@ -343,6 +344,7 @@ case class MutableBFInstance[A](hashes: KirMit32Hash[A], bits: util.BitSet, widt
     }
     true
   }
+  // scalastyle:on return
 
   // use an approximation width of 0.05
   def size: Approximate[Long] =
