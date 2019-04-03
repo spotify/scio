@@ -66,13 +66,6 @@ object Sql {
       val (schema, to, from) = SchemaMaterializer.materialize(c.context, Schema[T])
       x.map(identity)(Coder.beam(SchemaCoder.of(schema, to, from)))
     }
-
-  private[sql] def fromRow[T: Schema](c: SCollection[Row]): SCollection[T] =
-    c.transform { x =>
-      val (schema, to, from) = SchemaMaterializer.materialize(c.context, Schema[T])
-      x.map(from(_))(Coder.beam(SchemaCoder.of(schema, to, from)))
-    }
-
 }
 
 final class SqlSCollection[A: Schema](sc: SCollection[A]) {
@@ -96,7 +89,7 @@ final class SqlSCollection[A: Schema](sc: SCollection[A]) {
 
   def queryAs[R: Schema](q: Query[A, R]): SCollection[R] =
     try {
-      Sql.fromRow(query(Query[A, Row](q.query, q.tag, q.udfs)))
+      query(Query[A, Row](q.query, q.tag, q.udfs)).to(To.unchecked((_, i) => i))
     } catch {
       case e: ParseException =>
         Queries.typecheck(q).fold(err => throw new RuntimeException(err, e), _ => throw e)
@@ -130,7 +123,7 @@ final class SqlSCollection2[A: Schema, B: Schema](a: SCollection[A], b: SCollect
 
   def queryAs[R: Schema](q: Query2[A, B, R]): SCollection[R] =
     try {
-      Sql.fromRow(query(q.query, q.aTag, q.bTag, q.udfs: _*))
+      query(q.query, q.aTag, q.bTag, q.udfs: _*).to(To.unchecked((_, i) => i))
     } catch {
       case e: ParseException =>
         Queries.typecheck(q).fold(err => throw new RuntimeException(err, e), _ => throw e)
