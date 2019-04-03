@@ -34,6 +34,14 @@ import org.scalatest.Assertion
 import scala.collection.JavaConverters._
 import com.spotify.scio.avro
 
+class IsOver18UdfFn extends SerializableFunction[Integer, Boolean] {
+  override def apply(input: Integer): Boolean = input >= 18
+}
+
+class IsOver18Udf extends BeamSqlUdf {
+  def eval(input: Integer): Boolean = input >= 18
+}
+
 object TestData {
   case class Foo(i: Int, s: String)
   case class Bar(l: Long, f: Foo)
@@ -81,14 +89,6 @@ object TestData {
     (1 to 10).map { i =>
       UserWithJList(s"user$i", java.util.Arrays.asList(s"user$i@spotify.com", s"user$i@yolo.com"))
     }.toList
-
-  class IsOver18UdfFn extends SerializableFunction[Integer, Boolean] {
-    override def apply(input: Integer): Boolean = input >= 18
-  }
-
-  class IsOver18Udf extends BeamSqlUdf {
-    def eval(input: Integer): Boolean = input >= 18
-  }
 
   class MaxUserAgeUdafFn extends CombineFn[Integer, Integer, Integer] {
     override def createAccumulator(): Integer = 0
@@ -377,58 +377,6 @@ class BeamSQLTest extends PipelineSpec {
       new TupleTag[User]("B"))
   }
 
-  it should "typecheck queries at compile time" in {
-    import Queries.typed
-    // scalastyle:off line.size.limit
-    """typed[Bar, Long]("select l from SCOLLECTION")""" should compile
-    """typed[Bar, Int]("select `SCOLLECTION`.`f`.`i` from SCOLLECTION")""" should compile
-    """typed[Bar, Result]("select `SCOLLECTION`.`f`.`i` from SCOLLECTION")""" should compile
-    """typed[Bar, TestData.Foo]("select f from SCOLLECTION")""" should compile
-    """typed[Bar, (String, Long)]("select `SCOLLECTION`.`f`.`s`, l from SCOLLECTION")""" should compile
-    // st fallback support
-    // XXX: scalac :bomb: this test seems to be problematic under scala 2.11 ...
-//    """tsql[UserWithFallBack, Locale]("select locale from SCOLLECTION")""" should compile
-    """typed[UserWithOption, Option[Int]]("select age from SCOLLECTION")""" should compile
-    """typed[Bar, Long]("select cast(`SCOLLECTION`.`f`.`i` as BIGINT) from SCOLLECTION")""" should compile
-    """typed[UserBean, (String, Int)]("select name, age from SCOLLECTION")""" should compile
-    """typed[UserBean, (Long, Int, String)]("select cast(age AS BIGINT), row(age, name) from SCOLLECTION")""" should compile
-    """typed[UserBean, List[Int]]("select ARRAY[age] from SCOLLECTION")""" should compile
-    """typed[UserBean, (String, List[Int])]("select name, ARRAY[age] from SCOLLECTION")""" should compile
-    """typed[UserWithOption, Int]("select age from SCOLLECTION")""" shouldNot compile
-    """typed[Bar, (String, Long)]("select l from SCOLLECTION")""" shouldNot compile
-    """typed[Bar, String]("select l from SCOLLECTION")""" shouldNot compile
-    """typed[UserBean, (String, Long)]("select name, age from SCOLLECTION")""" shouldNot compile
-    """typed[UserBean, User]("select name, age from SCOLLECTION")""" shouldNot compile
-    """typed[UserBean, (String, Option[Int])]("select name, age from SCOLLECTION")""" shouldNot compile
-    """typed[UserBean, Bar]("select name, age from SCOLLECTION")""" shouldNot compile
-    """typed[UserBean, (String, Int)]("select name, ARRAY[age] from SCOLLECTION")""" shouldNot compile
-    """typed[UserBean, (String, List[Int])]("select name, age from SCOLLECTION")""" shouldNot compile
-
-    // joins
-
-    """
-      |typed[User, User, String]("select a.username from B a join A b on a.username = b.username", new TupleTag[User]("A"), new TupleTag[User]("B"))
-      |""".stripMargin should compile
-    """
-      |typed[User, User, Int]("select a.username from B a join A b on a.username = b.username", new TupleTag[User]("A"), new TupleTag[User]("B"))
-      |""".stripMargin shouldNot compile
-    """
-      |typed[User, User, String]("select a.username from B a join A b on a.username = b.username", new TupleTag[User]("C"), new TupleTag[User]("D"))
-      |""".stripMargin shouldNot compile
-    // scalastyle:on line.size.limit
-  }
-
-  it should "give a clear error message when the query can not be checked at compile time" in {
-    """
-    val q = "select name, age from SCOLLECTION"
-    Queries.typed[UserBean, (String, Int)](q)
-    """ shouldNot compile
-
-    """
-    def functionName(q: String) = Queries.typed[(String, String), String](q)
-    """ shouldNot compile
-  }
-
   it should "support UDFs from SerializableFunctions and classes" in runWithContext { sc =>
     val schemaRes = BSchema
       .builder()
@@ -522,12 +470,6 @@ class BeamSQLTest extends PipelineSpec {
 
     sc.parallelize(avroWithNullable)
       .to[CompatibleAvroTestRecord](To.safe) should containInAnyOrder(expectedAvro)
-  }
-
-  it should "typecheck classes compatibilty" in {
-    import TypeConvertionsTestData._
-    """To.safe[TinyTo, From0]""" shouldNot compile
-    """To.safe[From0, CompatibleAvroTestRecord]""" shouldNot compile
   }
 }
 

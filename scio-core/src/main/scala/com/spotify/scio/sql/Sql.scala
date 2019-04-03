@@ -164,7 +164,7 @@ object Queries {
           SchemaMaterializer.fieldType(Schema[ScalarWrapper[B]]).getRowSchema
       }
 
-    typecheck(q.query, (q.tag.getId, schema) :: Nil, expectedSchema).right.map(_ => q)
+    typecheck(q.query, (q.tag.getId, schema) :: Nil, expectedSchema, q.udfs).right.map(_ => q)
   }
 
   /**
@@ -184,7 +184,10 @@ object Queries {
           SchemaMaterializer.fieldType(Schema[ScalarWrapper[R]]).getRowSchema
       }
 
-    typecheck(q.query, List((q.aTag.getId, schemaA), (q.bTag.getId, schemaB)), expectedSchema).right
+    typecheck(q.query,
+              List((q.aTag.getId, schemaA), (q.bTag.getId, schemaB)),
+              expectedSchema,
+              q.udfs).right
       .map(_ => q)
   }
 
@@ -197,7 +200,9 @@ object Queries {
                                              udfs: Udf*): Query2[A, B, R] =
     macro QueryMacros.typed2Impl[A, B, R]
 
-  private[this] def parseQuery(query: String, schemas: (String, BSchema)*): Try[BeamRelNode] = Try {
+  private[this] def parseQuery(query: String,
+                               schemas: List[(String, BSchema)],
+                               udfs: List[Udf]): Try[BeamRelNode] = Try {
     val tables: Map[String, BeamSqlTable] = schemas.map {
       case (tag, schema) =>
         tag -> new BaseBeamTable(schema) {
@@ -209,17 +214,29 @@ object Queries {
         }
     }.toMap
 
-    BeamSqlEnv.readOnly(Sql.SCollectionTypeName, tables.asJava).parseQuery(query)
+    val env = BeamSqlEnv.readOnly(Sql.SCollectionTypeName, tables.asJava)
+    udfs.foreach {
+      case (x: UdfFromClass[_]) =>
+        env.registerUdf(x.fnName, x.clazz)
+      case (x: UdfFromSerializableFn[_, _]) =>
+        env.registerUdf(x.fnName, x.fn)
+      case (x: UdafFromCombineFn[_, _, _]) =>
+        env.registerUdaf(x.fnName, x.fn)
+    }
+    env.parseQuery(query)
   }
 
-  private[this] def schema(query: String, schemas: (String, BSchema)*): Try[BSchema] =
-    parseQuery(query, schemas: _*).map(n => CalciteUtils.toSchema(n.getRowType))
+  private[this] def schema(query: String,
+                           schemas: List[(String, BSchema)],
+                           udfs: List[Udf]): Try[BSchema] =
+    parseQuery(query, schemas, udfs).map(n => CalciteUtils.toSchema(n.getRowType))
 
   private[this] def typecheck(query: String,
                               inferredSchemas: List[(String, BSchema)],
-                              expectedSchema: BSchema): Either[String, String] = {
+                              expectedSchema: BSchema,
+                              udfs: List[Udf]): Either[String, String] = {
     ScioUtil
-      .toEither(schema(query, inferredSchemas: _*))
+      .toEither(schema(query, inferredSchemas, udfs))
       .left
       .map { ex =>
         val mess = org.apache.commons.lang3.exception.ExceptionUtils.getRootCauseMessage(ex)
@@ -276,14 +293,16 @@ object QueryMacros {
     val queryTree = c.untypecheck(query.tree.duplicate)
     val sInTree = c.untypecheck(iSchema.tree.duplicate)
     val sOutTree = c.untypecheck(oSchema.tree.duplicate)
+    val udfsTrees = udfs.map(u => c.untypecheck(u.tree.duplicate))
 
-    val (sIn, sOut) =
-      c.eval(c.Expr[(Schema[A], Schema[B])](q"($sInTree, $sOutTree)"))
+    val (sIn, sOut, udfss) =
+      c.eval(
+        c.Expr[(Schema[A], Schema[B], List[Udf])](q"($sInTree, $sOutTree, List(..$udfsTrees))"))
 
     val sq =
       queryTree match {
         case Literal(Constant(q: String)) =>
-          Query[A, B](q)
+          Query[A, B](q, udfs = udfss)
         case _ =>
           c.abort(c.enclosingPosition, s"Expression $queryTree does not evaluate to a constant")
       }
@@ -292,7 +311,8 @@ object QueryMacros {
       .typecheck(sq)(sIn, sOut)
       .fold(
         err => c.abort(c.enclosingPosition, err), { _ =>
-          c.Expr[Query[A, B]](q"_root_.com.spotify.scio.sql.Query($query, ..$udfs)")
+          c.Expr[Query[A, B]](
+            q"""_root_.com.spotify.scio.sql.Query($query, udfs = List(..$udfs))""")
         }
       )
   }
@@ -310,14 +330,17 @@ object QueryMacros {
     val sInTreeA = c.untypecheck(aSchema.tree.duplicate)
     val sInTreeB = c.untypecheck(bSchema.tree.duplicate)
     val sOutTree = c.untypecheck(oSchema.tree.duplicate)
+    val udfsTrees = udfs.map(u => c.untypecheck(u.tree.duplicate))
 
-    val (sInA, sInB, sOut) =
-      c.eval(c.Expr[(Schema[A], Schema[B], Schema[R])](q"($sInTreeA, $sInTreeB, $sOutTree)"))
+    val (sInA, sInB, sOut, udfss) =
+      c.eval(
+        c.Expr[(Schema[A], Schema[B], Schema[R], List[Udf])](
+          q"($sInTreeA, $sInTreeB, $sOutTree, List(..$udfsTrees))"))
 
     val sq =
       queryTree match {
         case Literal(Constant(q: String)) =>
-          Query2[A, B, R](q, tupleTag(c)(aTag), tupleTag(c)(bTag))
+          Query2[A, B, R](q, tupleTag(c)(aTag), tupleTag(c)(bTag), udfs = udfss)
         case _ =>
           c.abort(c.enclosingPosition, s"Expression $queryTree does not evaluate to a constant")
       }
@@ -326,7 +349,8 @@ object QueryMacros {
       .typecheck(sq)(sInA, sInB, sOut)
       .fold(
         err => c.abort(c.enclosingPosition, err), { _ =>
-          val out = q"_root_.com.spotify.scio.sql.Query2($query, $aTag, $bTag, ..$udfs)"
+          val out =
+            q"_root_.com.spotify.scio.sql.Query2($query, $aTag, $bTag, udfs = List(..$udfs))"
           c.Expr[Query2[A, B, R]](out)
         }
       )
