@@ -240,7 +240,6 @@ object TableRowJsonIO {
 }
 
 object BigQueryTyped {
-  import scala.language.higherKinds
 
   @annotation.implicitNotFound(
     """

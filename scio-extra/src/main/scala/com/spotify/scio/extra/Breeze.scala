@@ -21,7 +21,6 @@ import breeze.linalg.operators.OpAdd
 import breeze.linalg.support.CanCopy
 import com.twitter.algebird.Semigroup
 
-import scala.language.higherKinds
 import scala.reflect.ClassTag
 
 /**

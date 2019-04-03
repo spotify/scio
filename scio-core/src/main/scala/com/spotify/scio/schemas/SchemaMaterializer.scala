@@ -18,7 +18,7 @@ package com.spotify.scio.schemas
 
 import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
-import scala.language.higherKinds
+
 import scala.reflect.ClassTag
 import scala.collection.JavaConverters._
 import org.apache.beam.sdk.schemas.{Schema => BSchema}

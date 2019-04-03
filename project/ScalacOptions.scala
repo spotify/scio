@@ -33,7 +33,7 @@ object Scalac {
     "-explaintypes", // Explain type errors in more detail.
     // "-language:existentials", // Existential types (besides wildcard types) can be written and inferred
     // "-language:experimental.macros", // Allow macro definition (besides implementation and application)
-    // "-language:higherKinds", // Allow higher-kinded types
+    "-language:higherKinds", // Allow higher-kinded types
     // "-language:implicitConversions", // Allow definition of implicit functions called views
     "-Xcheckinit", // Wrap field accessors to throw an exception on uninitialized access.
     // "-Xfatal-warnings", // Fail the compilation if there are any warnings.
@@ -55,7 +55,7 @@ object Scalac {
     "-Xlint:stars-align", // Pattern sequence wildcard must align with sequence component.
     "-Xlint:type-parameter-shadow", // A local type parameter shadows a type already in scope.
     "-Xlint:unsound-match", // Pattern match may not be typesafe.
-    // "-Ypartial-unification", // Enable partial unification in type constructor inference
+    "-Ypartial-unification", // Enable partial unification in type constructor inference
     // "-Ywarn-dead-code", // Warn when dead code is identified.
     "-Ywarn-inaccessible", // Warn about inaccessible types in method signatures.
     "-Ywarn-infer-any", // Warn when a type argument is inferred to be `Any`.
