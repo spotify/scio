@@ -98,7 +98,6 @@ private object RunnerContext {
 /** Convenience object for creating [[ScioContext]] and [[Args]]. */
 object ContextAndArgs {
 
-  import scala.language.higherKinds
   sealed trait ArgsParser[F[_]] {
     type ArgsType
     type UsageOrHelp = String
