@@ -28,6 +28,7 @@ import com.spotify.scio.coders.Coder
 import com.spotify.scio.avro._
 import com.spotify.scio.avro.Account
 import com.spotify.scio.avro.types.AvroType
+import com.spotify.scio.io.ClosedTap
 import org.apache.avro.Schema
 import org.apache.avro.generic.{GenericData, GenericRecord}
 
@@ -80,7 +81,7 @@ object AvroExample {
     ()
   }
 
-  private def specificOut(sc: ScioContext, args: Args): Unit = {
+  private def specificOut(sc: ScioContext, args: Args): ClosedTap[Account] = {
     sc.parallelize(1 to 100)
       .map { i =>
         Account
@@ -94,13 +95,13 @@ object AvroExample {
       .saveAsAvroFile(args("output"))
   }
 
-  private def specificIn(sc: ScioContext, args: Args): Unit = {
+  private def specificIn(sc: ScioContext, args: Args): ClosedTap[String] = {
     sc.avroFile[Account](args("input"))
       .map(_.toString)
       .saveAsTextFile(args("output"))
   }
 
-  private def genericOut(sc: ScioContext, args: Args): Unit = {
+  private def genericOut(sc: ScioContext, args: Args): ClosedTap[GenericRecord] = {
     // Avro generic record encoding is more efficient with an explicit schema
     implicit def genericCoder = Coder.avroGenericRecordCoder(schema)
     sc.parallelize(1 to 100)
@@ -115,11 +116,11 @@ object AvroExample {
       .saveAsAvroFile(args("output"), schema = schema)
   }
 
-  private def typedIn(sc: ScioContext, args: Args): Unit =
+  private def typedIn(sc: ScioContext, args: Args): ClosedTap[String] =
     sc.typedAvroFile[AccountFromSchema](args("input"))
       .saveAsTextFile(args("output"))
 
-  private def typedOut(sc: ScioContext, args: Args): Unit = {
+  private def typedOut(sc: ScioContext, args: Args): ClosedTap[AccountToSchema] = {
     sc.parallelize(1 to 100)
       .map { i =>
         AccountToSchema(id = i, amount = i.toDouble, name = "account" + i, `type` = "checking")
@@ -127,7 +128,7 @@ object AvroExample {
       .saveAsTypedAvroFile(args("output"))
   }
 
-  private def genericIn(sc: ScioContext, args: Args): Unit = {
+  private def genericIn(sc: ScioContext, args: Args): ClosedTap[String] = {
     implicit def genericCoder = Coder.avroGenericRecordCoder(schema)
     sc.avroFile[GenericRecord](args("input"), schema)
       .map(_.toString)
