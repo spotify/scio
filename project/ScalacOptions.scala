@@ -39,15 +39,15 @@ object Scalac {
     // "-Xfatal-warnings", // Fail the compilation if there are any warnings.
     // "-Xfuture", // Turn on future language features.
     "-Xlint:adapted-args", // Warn if an argument list is modified to match the receiver.
-    // "-Xlint:by-name-right-associative", // By-name parameter of right associative operator.
-    // "-Xlint:constant", // Evaluation of a constant arithmetic expression results in an error.
+    "-Xlint:by-name-right-associative", // By-name parameter of right associative operator.
+    "-Xlint:constant", // Evaluation of a constant arithmetic expression results in an error.
     // "-Xlint:delayedinit-select", // Selecting member of DelayedInit.
     "-Xlint:doc-detached", // A Scaladoc comment appears to be detached from its element.
     "-Xlint:inaccessible", // Warn about inaccessible types in method signatures.
     "-Xlint:infer-any", // Warn when a type argument is inferred to be `Any`.
     "-Xlint:missing-interpolator", // A string literal appears to be missing an interpolator id.
     "-Xlint:nullary-override", // Warn when non-nullary `def f()' overrides nullary `def f'.
-    // "-Xlint:nullary-unit", // Warn when nullary methods return Unit.
+    "-Xlint:nullary-unit", // Warn when nullary methods return Unit.
     "-Xlint:option-implicit", // Option.apply used implicit view.
     // "-Xlint:package-object-classes", // Class or object defined in package object.
     "-Xlint:poly-implicit-overload", // Parameterized overloaded implicit methods are not visible as view bounds.
