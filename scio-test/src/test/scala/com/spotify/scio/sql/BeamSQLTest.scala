@@ -34,15 +34,15 @@ import org.scalatest.Assertion
 import scala.collection.JavaConverters._
 import com.spotify.scio.avro
 
-class IsOver18UdfFn extends SerializableFunction[Integer, Boolean] {
-  override def apply(input: Integer): Boolean = input >= 18
-}
-
-class IsOver18Udf extends BeamSqlUdf {
-  def eval(input: Integer): Boolean = input >= 18
-}
-
 object TestData {
+  class IsOver18UdfFn extends SerializableFunction[Integer, Boolean] {
+    override def apply(input: Integer): Boolean = input >= 18
+  }
+
+  class IsOver18Udf extends BeamSqlUdf {
+    def eval(input: Integer): Boolean = input >= 18
+  }
+
   case class Foo(i: Int, s: String)
   case class Bar(l: Long, f: Foo)
   case class Result(x: Int)

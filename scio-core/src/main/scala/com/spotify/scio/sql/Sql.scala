@@ -191,13 +191,12 @@ object Queries {
       .map(_ => q)
   }
 
-  def typed[A: Schema, B: Schema](query: String, udfs: Udf*): Query[A, B] =
+  def typed[A: Schema, B: Schema](query: String): Query[A, B] =
     macro QueryMacros.typedImpl[A, B]
 
   def typed[A: Schema, B: Schema, R: Schema](query: String,
                                              aTag: TupleTag[A],
-                                             bTag: TupleTag[B],
-                                             udfs: Udf*): Query2[A, B, R] =
+                                             bTag: TupleTag[B]): Query2[A, B, R] =
     macro QueryMacros.typed2Impl[A, B, R]
 
   private[this] def parseQuery(query: String,
@@ -285,7 +284,7 @@ object Queries {
 object QueryMacros {
   import scala.reflect.macros.blackbox
 
-  def typedImpl[A, B](c: blackbox.Context)(query: c.Expr[String], udfs: c.Expr[Udf]*)(
+  def typedImpl[A, B](c: blackbox.Context)(query: c.Expr[String])(
     iSchema: c.Expr[Schema[A]],
     oSchema: c.Expr[Schema[B]]): c.Expr[Query[A, B]] = {
     import c.universe._
@@ -293,16 +292,14 @@ object QueryMacros {
     val queryTree = c.untypecheck(query.tree.duplicate)
     val sInTree = c.untypecheck(iSchema.tree.duplicate)
     val sOutTree = c.untypecheck(oSchema.tree.duplicate)
-    val udfsTrees = udfs.map(u => c.untypecheck(u.tree.duplicate))
 
-    val (sIn, sOut, udfss) =
-      c.eval(
-        c.Expr[(Schema[A], Schema[B], List[Udf])](q"($sInTree, $sOutTree, List(..$udfsTrees))"))
+    val (sIn, sOut) =
+      c.eval(c.Expr[(Schema[A], Schema[B])](q"($sInTree, $sOutTree)"))
 
     val sq =
       queryTree match {
         case Literal(Constant(q: String)) =>
-          Query[A, B](q, udfs = udfss)
+          Query[A, B](q)
         case _ =>
           c.abort(c.enclosingPosition, s"Expression $queryTree does not evaluate to a constant")
       }
@@ -311,16 +308,14 @@ object QueryMacros {
       .typecheck(sq)(sIn, sOut)
       .fold(
         err => c.abort(c.enclosingPosition, err), { _ =>
-          c.Expr[Query[A, B]](
-            q"""_root_.com.spotify.scio.sql.Query($query, udfs = List(..$udfs))""")
+          c.Expr[Query[A, B]](q"""_root_.com.spotify.scio.sql.Query($query)""")
         }
       )
   }
 
   def typed2Impl[A, B, R](c: blackbox.Context)(query: c.Expr[String],
                                                aTag: c.Expr[TupleTag[A]],
-                                               bTag: c.Expr[TupleTag[B]],
-                                               udfs: c.Expr[Udf]*)(
+                                               bTag: c.Expr[TupleTag[B]])(
     aSchema: c.Expr[Schema[A]],
     bSchema: c.Expr[Schema[B]],
     oSchema: c.Expr[Schema[R]]): c.Expr[Query2[A, B, R]] = {
@@ -330,17 +325,14 @@ object QueryMacros {
     val sInTreeA = c.untypecheck(aSchema.tree.duplicate)
     val sInTreeB = c.untypecheck(bSchema.tree.duplicate)
     val sOutTree = c.untypecheck(oSchema.tree.duplicate)
-    val udfsTrees = udfs.map(u => c.untypecheck(u.tree.duplicate))
 
-    val (sInA, sInB, sOut, udfss) =
-      c.eval(
-        c.Expr[(Schema[A], Schema[B], Schema[R], List[Udf])](
-          q"($sInTreeA, $sInTreeB, $sOutTree, List(..$udfsTrees))"))
+    val (sInA, sInB, sOut) =
+      c.eval(c.Expr[(Schema[A], Schema[B], Schema[R])](q"($sInTreeA, $sInTreeB, $sOutTree)"))
 
     val sq =
       queryTree match {
         case Literal(Constant(q: String)) =>
-          Query2[A, B, R](q, tupleTag(c)(aTag), tupleTag(c)(bTag), udfs = udfss)
+          Query2[A, B, R](q, tupleTag(c)(aTag), tupleTag(c)(bTag))
         case _ =>
           c.abort(c.enclosingPosition, s"Expression $queryTree does not evaluate to a constant")
       }
@@ -350,7 +342,7 @@ object QueryMacros {
       .fold(
         err => c.abort(c.enclosingPosition, err), { _ =>
           val out =
-            q"_root_.com.spotify.scio.sql.Query2($query, $aTag, $bTag, udfs = List(..$udfs))"
+            q"_root_.com.spotify.scio.sql.Query2($query, $aTag, $bTag)"
           c.Expr[Query2[A, B, R]](out)
         }
       )

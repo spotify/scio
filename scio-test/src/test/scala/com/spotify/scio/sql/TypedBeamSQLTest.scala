@@ -24,8 +24,6 @@ import org.apache.beam.sdk.values.TupleTag
 class TypedBeamSQLTest extends PipelineSpec {
   import TestData._
 
-  new IsOver18UdfFn()
-
   // scalastyle:off line.size.limit
   "(Typed) BeamSQL" should "typecheck queries at compile time" in {
     import Queries.typed
@@ -67,40 +65,6 @@ class TypedBeamSQLTest extends PipelineSpec {
     |""".stripMargin shouldNot compile
   }
   // scalastyle:on line.size.limit
-
-  it should "typecheck queries with Udf" in {
-    import Queries.typed
-    """
-    |typed[User, (String, Boolean)](
-    |  "select username, isUserOver18(age) as isOver18 from SCOLLECTION",
-    |  Udf.fromSerializableFn("isUserOver18", new IsOver18UdfFn()))
-    |""".stripMargin should compile
-
-    """
-    |typed[User, (String, Boolean)](
-    |  "select username, isUserOver18(age) as isOver18 from SCOLLECTION",
-    |  Udf.fromClass("isUserOver18", classOf[IsOver18Udf]))
-    |""".stripMargin should compile
-  }
-
-  it should "typecheck queries with Udfs AND JOINs" in {
-    import Queries.typed
-    """
-    |typed[User, User, (String, Boolean)](
-    |  "select a.username, isUserOver18(a.age) from B a join A b on a.username = b.username",
-    |  new TupleTag[User]("A"),
-    |  new TupleTag[User]("B"),
-    |  Udf.fromSerializableFn("isUserOver18", new IsOver18UdfFn()))
-    |""".stripMargin should compile
-
-    """
-    |typed[User, User, (String, Boolean)](
-    |  "select a.username, isUserOver18(a.age) from B a join A b on a.username = b.username",
-    |  new TupleTag[User]("A"),
-    |  new TupleTag[User]("B"),
-    |  Udf.fromClass("isUserOver18", classOf[IsOver18Udf]))
-    |""".stripMargin should compile
-  }
 
   it should "give a clear error message when the query can not be checked at compile time" in {
     """
