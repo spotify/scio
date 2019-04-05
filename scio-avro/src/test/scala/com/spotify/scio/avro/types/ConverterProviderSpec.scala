@@ -21,10 +21,10 @@ import com.google.protobuf.ByteString
 import org.scalacheck.ScalacheckShapeless._
 import org.scalacheck._
 import org.scalatest._
-import org.scalatest.prop.GeneratorDrivenPropertyChecks
+import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import shapeless.datatype.record._
 
-class ConverterProviderSpec extends PropSpec with GeneratorDrivenPropertyChecks with Matchers {
+class ConverterProviderSpec extends PropSpec with ScalaCheckDrivenPropertyChecks with Matchers {
 
   // TODO: remove this once https://github.com/scalatest/scalatest/issues/1090 is addressed
   override implicit val generatorDrivenConfig: PropertyCheckConfiguration =
