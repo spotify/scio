@@ -65,7 +65,6 @@ class GroupByBenchmark {
     val sc = ScioContext(opts)
     fn(sc)
     sc.close()
-    ()
   }
 
   val source = "src/test/resources/events-10000-0.avro"
