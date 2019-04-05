@@ -75,7 +75,7 @@ final case class ObjectFileIO[T: Coder](path: String) extends ScioIO[T] {
           c.output(AvroBytesUtil.encode(elemCoder, c.element()))
       })
     GenericRecordIO[GenericRecord](path, AvroBytesUtil.schema).write(bytes, params)
-    tap(Unit)
+    tap(())
   }
 
   override def tap(read: ReadP): Tap[T] =
@@ -175,7 +175,7 @@ final case class SpecificRecordIO[T <: SpecificRecord: ClassTag: Coder](path: St
     val t = beam.AvroIO.write(cls)
     data.applyInternal(
       avroOut(data, t, path, params.numShards, params.suffix, params.codec, params.metadata))
-    tap(Unit)
+    tap(())
   }
 
   override def tap(read: ReadP): Tap[T] =
@@ -209,7 +209,7 @@ final case class GenericRecordIO[T: ClassTag: Coder](path: String, schema: Schem
     val t = beam.AvroIO.writeGenericRecords(schema).asInstanceOf[beam.AvroIO.Write[T]]
     data.applyInternal(
       avroOut(data, t, path, params.numShards, params.suffix, params.codec, params.metadata))
-    tap(Unit)
+    tap(())
   }
 
   override def tap(read: ReadP): Tap[T] =
@@ -290,7 +290,7 @@ object AvroTyped {
         .withSchema(avroT.schema)
       data.applyInternal(
         typedAvroOut(data, t, path, params.numShards, params.suffix, params.codec, params.metadata))
-      tap(Unit)
+      tap(())
     }
 
     override def tap(read: ReadP): Tap[T] = {

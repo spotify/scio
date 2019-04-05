@@ -49,6 +49,7 @@ object JavaConvertersExample {
       .map(_.toString)
       .saveAsCustomOutput(output, transform)
     sc.close()
+    ()
   }
 
 }

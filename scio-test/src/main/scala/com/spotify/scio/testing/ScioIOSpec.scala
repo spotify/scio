@@ -55,12 +55,16 @@ trait ScioIOSpec extends PipelineSpec {
       val (sc, argz) = ContextAndArgs(args)
       readFn(sc, argz("input")).saveAsTextFile("out")
       sc.close()
+      ()
     }
 
     val builder = com.spotify.scio.testing
       .JobTest("null")
       .input(ioFn(in), xs)
-      .output(TextIO("out"))(_ should containInAnyOrder(xs.map(_.toString)))
+      .output(TextIO("out")) { coll =>
+        coll should containInAnyOrder(xs.map(_.toString))
+        ()
+      }
     builder.setUp()
     runMain(Array(s"--input=$in") :+ s"--appName=${builder.testId}")
     builder.tearDown()
@@ -70,12 +74,16 @@ trait ScioIOSpec extends PipelineSpec {
       val builder = com.spotify.scio.testing
         .JobTest("null")
         .input(CustomIO[T](in), xs)
-        .output(TextIO("out"))(_ should containInAnyOrder(xs.map(_.toString)))
+        .output(TextIO("out")) { coll =>
+          coll should containInAnyOrder(xs.map(_.toString))
+          ()
+        }
       builder.setUp()
       runMain(Array(s"--input=$in") :+ s"--appName=${builder.testId}")
       builder.tearDown()
     } should have message s"requirement failed: Missing test input: ${ioFn(in).testId}, " +
       s"available: [CustomIO($in)]"
+    ()
     // scalastyle:on no.whitespace.before.left.bracket
   }
 
@@ -85,11 +93,15 @@ trait ScioIOSpec extends PipelineSpec {
       val (sc, argz) = ContextAndArgs(args)
       writeFn(sc.parallelize(xs), argz("output"))
       sc.close()
+      ()
     }
 
     val builder = com.spotify.scio.testing
       .JobTest("null")
-      .output(ioFn(out))(_ should containInAnyOrder(xs))
+      .output(ioFn(out)) { coll =>
+        coll should containInAnyOrder(xs)
+        ()
+      }
     builder.setUp()
     runMain(Array(s"--output=$out") :+ s"--appName=${builder.testId}")
     builder.tearDown()
@@ -98,12 +110,16 @@ trait ScioIOSpec extends PipelineSpec {
     the[IllegalArgumentException] thrownBy {
       val builder = com.spotify.scio.testing
         .JobTest("null")
-        .output(CustomIO[T](out))(_ should containInAnyOrder(xs))
+        .output(CustomIO[T](out)) { coll =>
+          coll should containInAnyOrder(xs)
+          ()
+        }
       builder.setUp()
       runMain(Array(s"--output=$out") :+ s"--appName=${builder.testId}")
       builder.tearDown()
     } should have message s"requirement failed: Missing test output: ${ioFn(out).testId}, " +
       s"available: [CustomIO($out)]"
+    ()
     // scalastyle:on no.whitespace.before.left.bracket
   }
 
@@ -115,12 +131,16 @@ trait ScioIOSpec extends PipelineSpec {
       val data = readFn(sc, argz("input"))
       writeFn(data, argz("output"))
       sc.close()
+      ()
     }
 
     val builder = com.spotify.scio.testing
       .JobTest("null")
       .input(ioFn(in), xs)
-      .output(ioFn(out))(_ should containInAnyOrder(xs))
+      .output(ioFn(out)) { coll =>
+        coll should containInAnyOrder(xs)
+        ()
+      }
     builder.setUp()
     runMain(Array(s"--input=$in", s"--output=$out") :+ s"--appName=${builder.testId}")
     builder.tearDown()
@@ -130,7 +150,10 @@ trait ScioIOSpec extends PipelineSpec {
       val builder = com.spotify.scio.testing
         .JobTest("null")
         .input(CustomIO[T](in), xs)
-        .output(ioFn(out))(_ should containInAnyOrder(xs))
+        .output(ioFn(out)) { coll =>
+          coll should containInAnyOrder(xs)
+          ()
+        }
       builder.setUp()
       runMain(Array(s"--input=$in", s"--output=$out") :+ s"--appName=${builder.testId}")
       builder.tearDown()
@@ -141,12 +164,16 @@ trait ScioIOSpec extends PipelineSpec {
       val builder = com.spotify.scio.testing
         .JobTest("null")
         .input(ioFn(in), xs)
-        .output(CustomIO[T](out))(_ should containInAnyOrder(xs))
+        .output(CustomIO[T](out)) { coll =>
+          coll should containInAnyOrder(xs)
+          ()
+        }
       builder.setUp()
       runMain(Array(s"--input=$in", s"--output=$out") :+ s"--appName=${builder.testId}")
       builder.tearDown()
     } should have message s"requirement failed: Missing test output: ${ioFn(out).testId}, " +
       s"available: [CustomIO($out)]"
+    ()
     // scalastyle:on no.whitespace.before.left.bracket
   }
 

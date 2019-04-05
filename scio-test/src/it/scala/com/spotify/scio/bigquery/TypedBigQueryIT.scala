@@ -76,6 +76,7 @@ class TypedBigQueryIT extends PipelineSpec with BeforeAndAfterAll {
     sc.parallelize(records).saveAsTypedBigQuery(table)
 
     sc.close()
+    ()
   }
 
   "TypedBigQuery" should "read records" in {

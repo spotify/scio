@@ -37,6 +37,7 @@ class StateTest extends FlatSpec with Matchers {
     val c = sc.parallelize(Seq.empty[(String, String)])
     f(a, b, c)
     sc.close()
+    ()
   }
 
   "SCollection.State" should "pass MultiJoin" in {

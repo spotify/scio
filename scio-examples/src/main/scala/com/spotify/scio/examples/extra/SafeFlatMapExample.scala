@@ -46,5 +46,6 @@ object SafeFlatMapExample {
     (longs ++ rescue).sum.saveAsTextFile("num-sum")
 
     sc.close()
+    ()
   }
 }

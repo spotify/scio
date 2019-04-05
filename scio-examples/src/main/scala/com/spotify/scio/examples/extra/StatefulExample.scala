@@ -64,6 +64,7 @@ object StatefulExample {
       .applyPerKeyDoFn(new StatefulDoFn)
       .debug()
     sc.close()
+    ()
   }
 
 }

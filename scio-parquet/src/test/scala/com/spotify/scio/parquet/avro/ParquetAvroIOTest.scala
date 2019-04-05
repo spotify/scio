@@ -36,6 +36,7 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
     sc.parallelize(specificRecords)
       .saveAsParquetAvroFile(dir.toString)
     sc.close()
+    ()
   }
 
   override protected def afterAll(): Unit = FileUtils.deleteDirectory(dir)
@@ -59,6 +60,7 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
         .size() == 0
     }
     sc.close()
+    ()
   }
 
   it should "read specific records with predicate" in {
@@ -68,6 +70,7 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
       sc.parquetAvroFile[TestRecord](dir + "/*.parquet", predicate = predicate)
     data.map(identity) should containInAnyOrder(specificRecords.filter(_.getIntField <= 5))
     sc.close()
+    ()
   }
 
   it should "read specific records with projection and predicate" in {
@@ -83,6 +86,7 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
         .size() == 0
     }
     sc.close()
+    ()
   }
 
   it should "read with incomplete projection" in {

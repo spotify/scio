@@ -53,5 +53,6 @@ object TFExampleExample {
       .map(featuresType.toExample(_))
       .saveAsTfExampleFile(args("output"))
     sc.close()
+    ()
   }
 }

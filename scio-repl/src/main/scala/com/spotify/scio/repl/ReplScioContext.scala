@@ -45,6 +45,7 @@ class ReplScioContext(options: PipelineOptions, artifacts: List[String])
     this.getClass.getClassLoader
       .asInstanceOf[{ def createReplCodeJar: String }]
       .createReplCodeJar
+    ()
     // scalastyle:on structural.type
   }
 

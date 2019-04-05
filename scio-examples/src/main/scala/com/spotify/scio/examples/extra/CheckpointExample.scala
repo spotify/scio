@@ -47,5 +47,6 @@ object CheckpointExample {
     count.max(Ordering.by(_._2)).saveAsTextFile(args("output") + "-max")
     count.map(t => t._1 + ": " + t._2).saveAsTextFile(args("output"))
     sc.close()
+    ()
   }
 }

@@ -70,5 +70,6 @@ object DoFnExample {
       }))
       .saveAsTextFile(args("output"))
     sc.close()
+    ()
   }
 }

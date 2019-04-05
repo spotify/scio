@@ -77,6 +77,7 @@ object AvroExample {
     }
 
     sc.close()
+    ()
   }
 
   private def specificOut(sc: ScioContext, args: Args): Unit = {
