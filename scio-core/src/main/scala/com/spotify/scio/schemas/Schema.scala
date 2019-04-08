@@ -16,7 +16,7 @@
  */
 package com.spotify.scio.schemas
 
-import java.util.{List => jList}
+import java.util.{List => jList, Map => jMap}
 
 import com.spotify.scio.schemas.instances.AllInstances
 import com.spotify.scio.util.ScioUtil
@@ -33,16 +33,16 @@ object Schema extends AllInstances {
 }
 
 sealed trait Schema[T] {
-  type Repr
-  type Decode = Repr => T
-  type Encode = T => Repr
+  type FieldType
+  type Decode = FieldType => T
+  type Encode = T => FieldType
 }
 
 final case class Record[T] private (schemas: Array[(String, Schema[Any])],
                                     construct: Seq[Any] => T,
                                     destruct: T => Array[Any])
     extends Schema[T] {
-  type Repr = Row
+  type FieldType = Row
 
 }
 
@@ -54,7 +54,7 @@ final case class RawRecord[T](schema: BSchema,
                               fromRow: SerializableFunction[Row, T],
                               toRow: SerializableFunction[T, Row])
     extends Schema[T] {
-  type Repr = Row
+  type FieldType = Row
 }
 
 object RawRecord {
@@ -69,23 +69,37 @@ object RawRecord {
 
 }
 
-final case class Type[T](fieldType: FieldType) extends Schema[T] {
-  type Repr = T
-}
-final case class Optional[T](schema: Schema[T]) extends Schema[Option[T]] {
-  type Repr = schema.Repr
-}
-final case class Fallback[F[_], T](coder: F[T]) extends Schema[T] {
-  type Repr = Array[Byte]
+final case class Field[T](fieldType: FieldType) extends Schema[T] {
+  type FieldType = T
 }
 
-final case class Arr[F[_], T](schema: Schema[T],
-                              toList: F[T] => jList[T],
-                              fromList: jList[T] => F[T])
+final case class OptionField[T](schema: Schema[T]) extends Schema[Option[T]] {
+  type FieldType = schema.FieldType
+}
+
+final case class Fallback[F[_], T](coder: F[T]) extends Schema[T] {
+  type FieldType = Array[Byte]
+}
+
+final case class ArrayField[F[_], T](schema: Schema[T],
+                                     toList: F[T] => jList[T],
+                                     fromList: jList[T] => F[T])
     extends Schema[F[T]] { // TODO: polymorphism ?
-  type Repr = jList[schema.Repr]
+  type FieldType = jList[schema.FieldType]
   type _T = T
   type _F[A] = F[A]
+}
+
+final case class MapField[F[_, _], K, V](keySchema: Schema[K],
+                                         valueSchema: Schema[V],
+                                         toMap: F[K, V] => jMap[K, V],
+                                         fromMap: jMap[K, V] => F[K, V])
+    extends Schema[F[K, V]] {
+  type FieldType = jMap[keySchema.FieldType, valueSchema.FieldType]
+
+  type _K = K
+  type _V = V
+  type _F[XK, XV] = F[XK, XV]
 }
 
 private[scio] case class ScalarWrapper[T](value: T) extends AnyVal

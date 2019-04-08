@@ -19,7 +19,7 @@ package com.spotify.scio.schemas.instances
 import java.util
 
 import com.spotify.scio.IsJavaBean
-import com.spotify.scio.schemas.{Arr, RawRecord, Schema, Type}
+import com.spotify.scio.schemas.{ArrayField, Field, MapField, RawRecord, Schema}
 import org.apache.beam.sdk.schemas.JavaBeanSchema
 import org.apache.beam.sdk.schemas.Schema.FieldType
 
@@ -27,38 +27,42 @@ import scala.reflect.ClassTag
 
 trait JavaInstances {
 
-  implicit val jByteSchema: Type[java.lang.Byte] =
-    Type[java.lang.Byte](FieldType.BYTE)
+  implicit val jByteSchema: Field[java.lang.Byte] =
+    Field[java.lang.Byte](FieldType.BYTE)
 
-  implicit val jBytesSchema: Type[Array[java.lang.Byte]] =
-    Type[Array[java.lang.Byte]](FieldType.BYTES)
+  implicit val jBytesSchema: Field[Array[java.lang.Byte]] =
+    Field[Array[java.lang.Byte]](FieldType.BYTES)
 
-  implicit val jShortSchema: Type[java.lang.Short] =
-    Type[java.lang.Short](FieldType.INT16)
+  implicit val jShortSchema: Field[java.lang.Short] =
+    Field[java.lang.Short](FieldType.INT16)
 
-  implicit val jIntegerSchema: Type[java.lang.Integer] =
-    Type[java.lang.Integer](FieldType.INT32)
+  implicit val jIntegerSchema: Field[java.lang.Integer] =
+    Field[java.lang.Integer](FieldType.INT32)
 
-  implicit val jLongSchema: Type[java.lang.Long] =
-    Type[java.lang.Long](FieldType.INT64)
+  implicit val jLongSchema: Field[java.lang.Long] =
+    Field[java.lang.Long](FieldType.INT64)
 
-  implicit val jFloatSchema: Type[java.lang.Float] =
-    Type[java.lang.Float](FieldType.FLOAT)
+  implicit val jFloatSchema: Field[java.lang.Float] =
+    Field[java.lang.Float](FieldType.FLOAT)
 
-  implicit val jDoubleSchema: Type[java.lang.Double] =
-    Type[java.lang.Double](FieldType.DOUBLE)
+  implicit val jDoubleSchema: Field[java.lang.Double] =
+    Field[java.lang.Double](FieldType.DOUBLE)
 
-  implicit val jBigDecimalSchema: Type[java.math.BigDecimal] =
-    Type[java.math.BigDecimal](FieldType.DECIMAL)
+  implicit val jBigDecimalSchema: Field[java.math.BigDecimal] =
+    Field[java.math.BigDecimal](FieldType.DECIMAL)
 
-  implicit val jBooleanSchema: Type[java.lang.Boolean] =
-    Type[java.lang.Boolean](FieldType.BOOLEAN)
+  implicit val jBooleanSchema: Field[java.lang.Boolean] =
+    Field[java.lang.Boolean](FieldType.BOOLEAN)
 
   implicit def jListSchema[T](implicit s: Schema[T]): Schema[java.util.List[T]] =
-    Arr(s, identity, identity)
+    ArrayField(s, identity, identity)
 
   implicit def jArrayListSchema[T](implicit s: Schema[T]): Schema[java.util.ArrayList[T]] =
-    Arr(s, identity, l => new util.ArrayList[T](l))
+    ArrayField(s, identity, l => new util.ArrayList[T](l))
+
+  implicit def jMapSchema[K, V](implicit ks: Schema[K],
+                                vs: Schema[V]): Schema[java.util.Map[K, V]] =
+    MapField(ks, vs, identity, identity)
 
   implicit def javaBeanSchema[T: IsJavaBean: ClassTag]: RawRecord[T] =
     RawRecord[T](new JavaBeanSchema())
