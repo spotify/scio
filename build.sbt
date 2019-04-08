@@ -735,6 +735,7 @@ lazy val scioExamples: Project = Project(
       "mysql" % "mysql-connector-java" % "8.0.15",
       "com.google.cloud.sql" % "mysql-socket-factory" % "1.0.13",
       "org.slf4j" % "slf4j-simple" % slf4jVersion,
+      "com.squareup.okhttp3" % "okhttp" % "3.8.0",
       "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test",
       "org.apache.beam" % "beam-sdks-java-extensions-sql" % beamVersion
     ),
