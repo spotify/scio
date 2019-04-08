@@ -70,20 +70,21 @@ object To {
     }
 
   @inline private def transform(schema: BSchema): Row => Row = { t0 =>
-    val values =
-      schema.getFields.asScala.map { f =>
-        t0.getValue[Object](f.getName) match {
-          case None => null
-          case r if f.getType.getTypeName == BSchema.TypeName.ROW =>
-            transform(f.getType.getRowSchema)(r.asInstanceOf[Row])
-          case v =>
-            v
-        }
+    val iter = schema.getFields.iterator()
+    val builder: Row.Builder = Row.withSchema(schema)
+    while (iter.hasNext) {
+      val f = iter.next()
+      val value = t0.getValue[Object](f.getName) match {
+        case None => null
+        case r: Row if f.getType.getTypeName == BSchema.TypeName.ROW =>
+          transform(f.getType.getRowSchema)(r)
+        case v =>
+          v
       }
-    Row
-      .withSchema(schema)
-      .addValues(values: _*)
-      .build()
+      builder.addValue(value)
+    }
+
+    builder.build()
   }
 
   /**
@@ -92,18 +93,16 @@ object To {
    * The compatibility of the 2 schemas is NOT checked at compile time, so the execution may fail.
    * @see To#apply
    */
-  def unsafe[I: Schema, O: Schema]: To[I, O] =
+  def unsafe[I: Schema, O: Schema]: To[I, O] = unsafe(unchecked)
+
+  private[scio] def unsafe[I: Schema, O: Schema](to: To[I, O]): To[I, O] =
     new To[I, O] {
       def apply(coll: SCollection[I]): SCollection[O] = {
-        val (bst, toT, _) = SchemaMaterializer.materialize(coll.context, Schema[I])
-        val (bso, toO, fromO) = SchemaMaterializer.materialize(coll.context, Schema[O])
+        val (bst, _, _) = SchemaMaterializer.materialize(coll.context, Schema[I])
+        val (bso, _, _) = SchemaMaterializer.materialize(coll.context, Schema[O])
 
-        checkCompatibility(bst, bso) {
-          val trans = transform(bso)
-          coll.map[O] { t =>
-            fromO(trans(toT(t)))
-          }(Coder.beam(SchemaCoder.of(bso, toO, fromO)))
-        }.fold(message => throw new IllegalArgumentException(message), identity)
+        checkCompatibility(bst, bso)(to)
+          .fold(message => throw new IllegalArgumentException(message), _.apply(coll))
       }
     }
 
@@ -112,15 +111,19 @@ object To {
    * @see To#safe
    * @see To#unsafe
    */
-  def unchecked[I: Schema, O: Schema]: To[I, O] =
+  private[scio] def unchecked[I: Schema, O: Schema]: To[I, O] =
     new To[I, O] {
       def apply(coll: SCollection[I]): SCollection[O] = {
         val (_, toT, _) = SchemaMaterializer.materialize(coll.context, Schema[I])
+        unchecked[I, O]((s: BSchema, i: I) => transform(s)(toT(i))).apply(coll)
+      }
+    }
+
+  private[scio] def unchecked[I, O: Schema](f: (BSchema, I) => Row): To[I, O] =
+    new To[I, O] {
+      def apply(coll: SCollection[I]): SCollection[O] = {
         val (bso, toO, fromO) = SchemaMaterializer.materialize(coll.context, Schema[O])
-        val trans = transform(bso)
-        coll.map[O] { t =>
-          fromO(trans(toT(t)))
-        }(Coder.beam(SchemaCoder.of(bso, toO, fromO)))
+        coll.map[O](f.curried(bso).andThen(fromO(_)))(Coder.beam(SchemaCoder.of(bso, toO, fromO)))
       }
     }
 

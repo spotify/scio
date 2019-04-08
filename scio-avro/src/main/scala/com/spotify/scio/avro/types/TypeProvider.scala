@@ -48,7 +48,7 @@ private[types] object TypeProvider {
 
   // In order to use FileSystems functions we first need to register all FileSystemRegistrars
   // located on our class path.
-  registerFileSystemRegistrars
+  registerFileSystemRegistrars()
 
   def schemaImpl(c: blackbox.Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
     val schemaString = extractStrings(c, "Missing schema").head
@@ -454,7 +454,7 @@ private[types] object TypeProvider {
     Files.asCharSink(genSrcFile, Charsets.UTF_8).write(prettyCode)
   }
 
-  private def registerFileSystemRegistrars: Unit = {
+  private def registerFileSystemRegistrars(): Unit = {
     // In order to find all the FileSystemRegistrars on the path we need to change
     // ContextClassLoader to be the same as our ClassLoader.
     java.lang.Thread

@@ -124,7 +124,7 @@ class MockTable(private val bq: BigQuery,
     this.mocked = true
   }
 
-  private def writeRows(rows: Seq[TableRow]): Unit =
+  private def writeRows(rows: Seq[TableRow]): Long =
     bq.tables.writeRows(temp, rows.toList, schema, WRITE_EMPTY, CREATE_IF_NEEDED)
 
   /**
@@ -133,6 +133,7 @@ class MockTable(private val bq: BigQuery,
   def withData(rows: Seq[TableRow]): Unit = {
     ensureUnique()
     writeRows(rows)
+    ()
   }
 
   /**
@@ -152,6 +153,7 @@ class MockTable(private val bq: BigQuery,
     val rows = bq.tables.rows(original).take(numRows).toList
     require(rows.length == numRows, s"Sample size ${rows.length} != requested $numRows")
     writeRows(rows)
+    ()
   }
 
   /**
@@ -164,6 +166,7 @@ class MockTable(private val bq: BigQuery,
     require(rows.length >= minNumRows && rows.length <= maxNumRows,
             s"Sample size ${rows.length} < requested minimal $minNumRows")
     writeRows(rows)
+    ()
   }
 
 }

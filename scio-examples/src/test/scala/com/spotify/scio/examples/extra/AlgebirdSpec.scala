@@ -20,9 +20,9 @@ package com.spotify.scio.examples.extra
 import com.twitter.algebird._
 import org.scalacheck._
 import org.scalatest._
-import org.scalatest.prop.GeneratorDrivenPropertyChecks
+import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
-class AlgebirdSpec extends PropSpec with GeneratorDrivenPropertyChecks with Matchers {
+class AlgebirdSpec extends PropSpec with ScalaCheckDrivenPropertyChecks with Matchers {
 
   // TODO: remove this once https://github.com/scalatest/scalatest/issues/1090 is addressed
   override implicit val generatorDrivenConfig: PropertyCheckConfiguration =

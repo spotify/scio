@@ -55,6 +55,7 @@ object ShapelessTensorFlowWriteExample {
       .map(t => wordCountType.toExample(WordCount.tupled(t)).toByteArray)
       .saveAsTfRecordFile(args("output"))
     sc.close()
+    ()
   }
 }
 
@@ -79,5 +80,6 @@ object ShapelessTensorFlowReadExample {
       .map(wc => wc.word + ": " + wc.count)
       .saveAsTextFile(args("output"))
     sc.close()
+    ()
   }
 }

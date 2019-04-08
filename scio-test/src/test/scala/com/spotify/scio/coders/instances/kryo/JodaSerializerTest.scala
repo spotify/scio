@@ -21,7 +21,7 @@ import com.spotify.scio.coders.{CoderTestUtils, KryoAtomicCoder, KryoOptions}
 import org.joda.time.{DateTime, DateTimeZone, LocalDate, LocalDateTime, LocalTime}
 import org.scalacheck._
 import org.scalatest._
-import org.scalatest.prop.Checkers
+import org.scalatestplus.scalacheck.Checkers
 
 import scala.collection.JavaConverters._
 import scala.util.Try

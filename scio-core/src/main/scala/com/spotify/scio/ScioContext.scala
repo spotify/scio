@@ -60,12 +60,12 @@ trait RunnerContext {
 }
 
 private case object NoOpContext extends RunnerContext {
-  override def prepareOptions(options: PipelineOptions, artifacts: List[String]): Unit = Unit
+  override def prepareOptions(options: PipelineOptions, artifacts: List[String]): Unit = ()
 }
 
 /** Direct runner specific context. */
 private case object DirectContext extends RunnerContext {
-  override def prepareOptions(options: PipelineOptions, artifacts: List[String]): Unit = Unit
+  override def prepareOptions(options: PipelineOptions, artifacts: List[String]): Unit = ()
 }
 
 /** Companion object for [[RunnerContext]]. */
@@ -98,7 +98,6 @@ private object RunnerContext {
 /** Convenience object for creating [[ScioContext]] and [[Args]]. */
 object ContextAndArgs {
 
-  import scala.language.higherKinds
   sealed trait ArgsParser[F[_]] {
     type ArgsType
     type UsageOrHelp = String

@@ -149,7 +149,7 @@ private[client] final class TableOps(client: Client) {
                 rows: List[TableRow],
                 schema: TableSchema,
                 writeDisposition: WriteDisposition,
-                createDisposition: CreateDisposition): Unit = withBigQueryService { service =>
+                createDisposition: CreateDisposition): Long = withBigQueryService { service =>
     val table = new Table().setTableReference(tableReference).setSchema(schema)
     if (createDisposition == CreateDisposition.CREATE_IF_NEEDED) {
       service.createTable(table)
@@ -172,7 +172,7 @@ private[client] final class TableOps(client: Client) {
                 rows: List[TableRow],
                 schema: TableSchema = null,
                 writeDisposition: WriteDisposition = WriteDisposition.WRITE_APPEND,
-                createDisposition: CreateDisposition = CreateDisposition.CREATE_IF_NEEDED): Unit =
+                createDisposition: CreateDisposition = CreateDisposition.CREATE_IF_NEEDED): Long =
     writeRows(bq.BigQueryHelpers.parseTableSpec(tableSpec),
               rows,
               schema,
@@ -195,11 +195,13 @@ private[client] final class TableOps(client: Client) {
   }
 
   /** Delete table */
-  private[bigquery] def delete(table: TableReference): Unit =
+  private[bigquery] def delete(table: TableReference): Unit = {
     client.underlying
       .tables()
       .delete(table.getProjectId, table.getDatasetId, table.getTableId)
       .execute()
+    ()
+  }
 
   /* Create a staging dataset at a specified location, e.g US */
   private[bigquery] def prepareStagingDataset(location: String): Unit = {
@@ -220,6 +222,7 @@ private[client] final class TableOps(client: Client) {
           .datasets()
           .insert(client.project, ds)
           .execute()
+        ()
       case NonFatal(e) => throw e
     }
   }

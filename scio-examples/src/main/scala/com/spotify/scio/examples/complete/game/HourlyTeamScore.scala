@@ -96,6 +96,7 @@ object HourlyTeamScore {
 
     // Close context and execute the pipeline
     sc.close()
+    ()
   }
 
 }

@@ -34,7 +34,7 @@ import org.apache.beam.sdk.transforms.SerializableFunction
 import org.apache.beam.sdk.values.{Row, TypeDescriptor}
 
 import scala.collection.JavaConverters._
-import scala.language.higherKinds
+
 import scala.reflect.{classTag, ClassTag}
 
 sealed trait Schema[T] {

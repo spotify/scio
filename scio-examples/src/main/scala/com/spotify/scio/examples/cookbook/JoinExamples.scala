@@ -79,6 +79,7 @@ object JoinExamples {
       .saveAsTextFile(args("output"))
 
     sc.close()
+    ()
   }
 }
 
@@ -114,6 +115,7 @@ object SideInputJoinExamples {
       .saveAsTextFile(args("output"))
 
     sc.close()
+    ()
   }
 }
 
@@ -141,5 +143,6 @@ object HashJoinExamples {
       .saveAsTextFile(args("output"))
 
     sc.close()
+    ()
   }
 }

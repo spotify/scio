@@ -54,7 +54,7 @@ val kryoVersion = "4.0.2" // explicitly depend on 4.0.1+ due to https://github.c
 val parquetAvroExtraVersion = "0.2.2"
 val parquetVersion = "1.10.1"
 val protobufGenericVersion = "0.2.4"
-val protobufVersion = "3.7.0"
+val protobufVersion = "3.7.1"
 val scalacheckShapelessVersion = "1.1.8"
 val scalacheckVersion = "1.14.0"
 val scalaMacrosVersion = "2.1.1"
@@ -735,7 +735,7 @@ lazy val scioExamples: Project = Project(
       "me.lyh" %% "shapeless-datatype-datastore_1.3" % shapelessDatatypeVersion,
       "me.lyh" %% "shapeless-datatype-tensorflow" % shapelessDatatypeVersion,
       "mysql" % "mysql-connector-java" % "8.0.15",
-      "com.google.cloud.sql" % "mysql-socket-factory" % "1.0.12",
+      "com.google.cloud.sql" % "mysql-socket-factory" % "1.0.13",
       "org.slf4j" % "slf4j-simple" % slf4jVersion,
       "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test",
       "org.apache.beam" % "beam-sdks-java-extensions-sql" % beamVersion

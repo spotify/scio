@@ -44,12 +44,11 @@ import scala.reflect.ClassTag
 object ExampleSCollectionOps {
   @deprecated("Schema inference will be removed. We recommend using TensorFlow Data Validation",
               "Scio 0.7.0")
-  def saveExampleMetadata(schema: SCollection[Schema], schemaPath: String): Unit =
+  def saveExampleMetadata(schema: SCollection[Schema], schemaPath: String): Unit = {
+    val d = FileSystems.matchNewResource(schemaPath, false)
     if (!schema.context.isTest) {
       schema.map { s =>
-        val d = FileSystems.matchNewResource(schemaPath, false)
-        val chnnl =
-          Channels.newOutputStream(FileSystems.create(d, MimeTypes.BINARY))
+        val chnnl = Channels.newOutputStream(FileSystems.create(d, MimeTypes.BINARY))
         try {
           s.writeTo(chnnl)
         } finally {
@@ -57,6 +56,9 @@ object ExampleSCollectionOps {
         }
       }
     }
+
+    ()
+  }
 
   // scalastyle:off method.length
   @deprecated("Schema inference will be removed. We recommend using TensorFlow Data Validation",

@@ -108,13 +108,14 @@ private[scio] object TestDataManager {
     distCaches += (testId -> new TestDistCache(dcs))
   }
 
-  def tearDown(testId: String, f: ScioResult => Unit = _ => Unit): Unit = {
+  def tearDown(testId: String, f: ScioResult => Unit = _ => ()): Unit = {
     inputs.remove(testId).foreach(_.validate())
     outputs.remove(testId).foreach(_.validate())
     distCaches.remove(testId).get.validate()
     ensureClosed(testId)
     val result = results.remove(testId).get
     f(result)
+    ()
   }
 
   def startTest(testId: String): Unit = closed(testId) = false

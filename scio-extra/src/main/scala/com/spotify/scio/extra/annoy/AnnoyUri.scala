@@ -95,10 +95,14 @@ private[annoy] class AnnoyWriter(metric: AnnoyMetric, dim: Int, nTrees: Int) {
     case Euclidean => AnnoyWriter.lib.createAngular(dim)
   }
 
-  def addItem(item: Int, w: Array[Float]): Unit =
+  def addItem(item: Int, w: Array[Float]): Unit = {
     AnnoyWriter.lib.addItem(annoy4sIndex, item, w)
-  def save(filename: String): Unit =
+    ()
+  }
+  def save(filename: String): Unit = {
     AnnoyWriter.lib.save(annoy4sIndex, filename)
+    ()
+  }
   def build(): Unit = AnnoyWriter.lib.build(annoy4sIndex, nTrees)
   def free(): Unit = AnnoyWriter.lib.deleteIndex(annoy4sIndex)
   def size: Int = AnnoyWriter.lib.getNItems(annoy4sIndex)

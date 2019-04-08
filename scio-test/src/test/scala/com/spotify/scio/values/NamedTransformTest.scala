@@ -31,6 +31,7 @@ object SimpleJob {
     sc.parallelize(1 to 5)
       .saveAsTextFile(output)
     sc.close()
+    ()
   }
 }
 

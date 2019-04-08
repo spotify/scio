@@ -63,6 +63,7 @@ object ShapelessDatastoreWriteExample {
       }
       .saveAsDatastore(args("output"))
     sc.close()
+    ()
   }
 }
 
@@ -86,5 +87,6 @@ object ShapelessDatastoreReadExample {
       .map(wc => wc.word + ": " + wc.count)
       .saveAsTextFile(args("output"))
     sc.close()
+    ()
   }
 }

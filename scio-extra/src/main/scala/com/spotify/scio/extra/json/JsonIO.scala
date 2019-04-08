@@ -43,14 +43,14 @@ final case class JsonIO[T: ClassTag: Encoder: Decoder: Coder](path: String) exte
     data
       .map(x => params.printer.pretty(x.asJson))
       .applyInternal(jsonOut(path, params))
-    tap(Unit)
+    tap(())
   }
 
   override def tap(params: ReadP): Tap[T] = new Tap[T] {
     override def value: Iterator[T] =
       TextIO.textFile(ScioUtil.addPartSuffix(path)).map(decodeJson)
     override def open(sc: ScioContext): SCollection[T] =
-      JsonIO(ScioUtil.addPartSuffix(path)).read(sc, Unit)
+      JsonIO(ScioUtil.addPartSuffix(path)).read(sc, ())
   }
 
   private def decodeJson(json: String): T = decode[T](json) match {

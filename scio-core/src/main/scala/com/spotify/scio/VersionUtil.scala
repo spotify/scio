@@ -47,10 +47,12 @@ private[scio] object VersionUtil {
     val transport = new NetHttpTransport()
     val response = transport
       .createRequestFactory(new HttpRequestInitializer {
-        override def initialize(request: HttpRequest) = {
+        override def initialize(request: HttpRequest): Unit = {
           request.setConnectTimeout(TIMEOUT)
           request.setReadTimeout(TIMEOUT)
           request.setParser(new JsonObjectParser(new JacksonFactory))
+
+          ()
         }
       })
       .buildGetRequest(new GenericUrl(url))
