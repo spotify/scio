@@ -19,9 +19,12 @@ package com.spotify.scio.bigquery.client
 
 import com.google.api.client.googleapis.json.GoogleJsonResponseException
 import com.google.api.services.bigquery.model._
+import com.google.cloud.bigquery.storage.v1beta1.Storage.CreateReadSessionRequest
+import com.google.cloud.bigquery.storage.v1beta1.TableReferenceProto
 import com.google.cloud.hadoop.util.ApiErrorExtractor
-import com.spotify.scio.bigquery.TableRow
 import com.spotify.scio.bigquery.client.BigQuery.Client
+import com.spotify.scio.bigquery.{StorageUtil, TableRow}
+import org.apache.avro.Schema
 import org.apache.beam.sdk.extensions.gcp.options.GcsOptions
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryOptions
@@ -89,6 +92,30 @@ private[client] final class TableOps(client: Client) {
   /** Get schema from a table. */
   def schema(tableRef: TableReference): TableSchema =
     Cache.withCacheKey(bq.BigQueryHelpers.toTableSpec(tableRef))(table(tableRef).getSchema)
+
+  /** Get schema from a table using the storage API. */
+  def storageReadSchema(tableSpec: String,
+                        selectedFields: List[String] = Nil,
+                        rowRestriction: String = null): Schema = {
+    val tableRef = bq.BigQueryHelpers.parseTableSpec(tableSpec)
+    val tableRefProto = TableReferenceProto.TableReference.newBuilder()
+    if (tableRef.getProjectId != null) {
+      tableRefProto.setProjectId(tableRef.getProjectId)
+    }
+    tableRefProto
+      .setDatasetId(tableRef.getDatasetId)
+      .setTableId(tableRef.getTableId)
+      .build()
+
+    val request = CreateReadSessionRequest
+      .newBuilder()
+      .setTableReference(tableRefProto.build())
+      .setReadOptions(StorageUtil.tableReadOptions(selectedFields, rowRestriction))
+      .setParent(s"projects/${client.project}")
+      .build()
+    val session = client.storage.createReadSession(request)
+    new Schema.Parser().parse(session.getAvroSchema.getSchema)
+  }
 
   /** Get table metadata. */
   def table(tableSpec: String): Table =
