@@ -16,16 +16,49 @@
  */
 package com.spotify.scio.schemas.instances
 
+import java.util
+
 import com.spotify.scio.IsJavaBean
-import com.spotify.scio.schemas.{Arr, RawRecord, Schema}
+import com.spotify.scio.schemas.{Arr, RawRecord, Schema, Type}
 import org.apache.beam.sdk.schemas.JavaBeanSchema
+import org.apache.beam.sdk.schemas.Schema.FieldType
 
 import scala.reflect.ClassTag
 
 trait JavaInstances {
 
+  implicit val jByteSchema: Type[java.lang.Byte] =
+    Type[java.lang.Byte](FieldType.BYTE)
+
+  implicit val jBytesSchema: Type[Array[java.lang.Byte]] =
+    Type[Array[java.lang.Byte]](FieldType.BYTES)
+
+  implicit val jShortSchema: Type[java.lang.Short] =
+    Type[java.lang.Short](FieldType.INT16)
+
+  implicit val jIntegerSchema: Type[java.lang.Integer] =
+    Type[java.lang.Integer](FieldType.INT32)
+
+  implicit val jLongSchema: Type[java.lang.Long] =
+    Type[java.lang.Long](FieldType.INT64)
+
+  implicit val jFloatSchema: Type[java.lang.Float] =
+    Type[java.lang.Float](FieldType.FLOAT)
+
+  implicit val jDoubleSchema: Type[java.lang.Double] =
+    Type[java.lang.Double](FieldType.DOUBLE)
+
+  implicit val jBigDecimalSchema: Type[java.math.BigDecimal] =
+    Type[java.math.BigDecimal](FieldType.DECIMAL)
+
+  implicit val jBooleanSchema: Type[java.lang.Boolean] =
+    Type[java.lang.Boolean](FieldType.BOOLEAN)
+
   implicit def jListSchema[T](implicit s: Schema[T]): Schema[java.util.List[T]] =
     Arr(s, identity, identity)
+
+  implicit def jArrayListSchema[T](implicit s: Schema[T]): Schema[java.util.ArrayList[T]] =
+    Arr(s, identity, l => new util.ArrayList[T](l))
 
   implicit def javaBeanSchema[T: IsJavaBean: ClassTag]: RawRecord[T] =
     RawRecord[T](new JavaBeanSchema())
