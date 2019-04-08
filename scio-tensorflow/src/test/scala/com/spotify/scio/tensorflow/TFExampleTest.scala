@@ -34,6 +34,7 @@ object ExamplesJobV2 {
     sc.parallelize(MetadataSchemaTest.examples)
       .saveAsTfRecordFile(args("output"))
     sc.close()
+    ()
   }
 }
 
@@ -56,6 +57,7 @@ object ExamplesJobV2WithSchema {
     val examples = sc.parallelize(MetadataSchemaTest.examples)
     examples.saveAsTfExampleFileWithSchema(args("output"), dummySchema())
     sc.close()
+    ()
   }
 }
 
@@ -88,6 +90,7 @@ object MultiSpecFeatranJob {
       .saveAsTfExampleFile(args("output"))
 
     sc.close()
+    ()
   }
 
 }

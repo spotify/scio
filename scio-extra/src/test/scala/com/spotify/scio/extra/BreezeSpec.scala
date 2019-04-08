@@ -23,8 +23,6 @@ import com.spotify.scio.extra.Breeze._
 import com.twitter.algebird.Semigroup
 import org.scalacheck._
 
-import scala.language.higherKinds
-
 trait BreezeSpec[M[_], T] extends PropertySpec {
   val dimension = 10
   val rows = 20

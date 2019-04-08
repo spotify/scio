@@ -77,6 +77,7 @@ abstract class ScioResult private[scio] (val internal: PipelineResult) {
         out.close()
       }
     }
+    ()
   }
 
   protected def getBeamMetrics: BeamMetrics = {

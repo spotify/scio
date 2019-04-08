@@ -56,6 +56,7 @@ object ShapelessAvroWriteExample {
       .map(t => wordCountType.toGenericRecord(WordCount.tupled(t)))
       .saveAsAvroFile(args("output"), schema = wordCountSchema)
     sc.close()
+    ()
   }
 }
 
@@ -77,5 +78,6 @@ object ShapelessAvroReadExample {
       .map(wc => wc.word + ": " + wc.count)
       .saveAsTextFile(args("output"))
     sc.close()
+    ()
   }
 }

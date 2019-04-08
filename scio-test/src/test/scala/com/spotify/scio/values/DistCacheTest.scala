@@ -42,6 +42,7 @@ object SimpleDistCacheJob {
       .flatMap(x => dc().map(x + _))
       .saveAsTextFile(args("output"))
     sc.close()
+    ()
   }
 }
 
@@ -57,6 +58,7 @@ object NonSerializableDistCacheJob {
       .map(_ => dc().noDefaultCntr)
       .saveAsTextFile(args("output"))
     sc.close()
+    ()
   }
 }
 
@@ -72,6 +74,7 @@ object AnnoyDistCacheJob {
       }
       .saveAsObjectFile(args("output"))
     sc.close()
+    ()
   }
 }
 
@@ -84,6 +87,7 @@ object SparkeyDistCacheJob {
       .map(dc().getAsString)
       .saveAsTextFile(args("output"))
     sc.close()
+    ()
   }
 }
 

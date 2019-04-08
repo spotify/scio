@@ -19,10 +19,10 @@ package com.spotify.scio.bigquery
 
 import com.spotify.scio.bigquery.client.BigQuery
 import org.scalacheck.Gen
-import org.scalatest.prop.GeneratorDrivenPropertyChecks
+import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import org.scalatest._
 
-class BigQueryClientTest extends FlatSpec with Matchers with GeneratorDrivenPropertyChecks {
+class BigQueryClientTest extends FlatSpec with Matchers with ScalaCheckDrivenPropertyChecks {
 
   "BigQueryClient" should "throw an exception when an empty or null ProjectId is provided" in {
     assertThrows[IllegalArgumentException] {

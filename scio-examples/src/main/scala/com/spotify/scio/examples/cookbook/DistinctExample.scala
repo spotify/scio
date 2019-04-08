@@ -43,5 +43,6 @@ object DistinctExample {
 
     // Close the context and execute the pipeline
     sc.close()
+    ()
   }
 }

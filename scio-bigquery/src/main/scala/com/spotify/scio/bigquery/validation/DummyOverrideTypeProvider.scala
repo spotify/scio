@@ -39,5 +39,5 @@ final class DummyOverrideTypeProvider extends OverrideTypeProvider {
 
   override def initializeToTable(c: blackbox.Context)(modifiers: c.universe.Modifiers,
                                                       variableName: c.universe.TermName,
-                                                      tpe: c.universe.Tree): Unit = Unit
+                                                      tpe: c.universe.Tree): Unit = ()
 }

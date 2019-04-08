@@ -84,5 +84,6 @@ object TemplateExample {
 
     // Close the context
     sc.close()
+    ()
   }
 }

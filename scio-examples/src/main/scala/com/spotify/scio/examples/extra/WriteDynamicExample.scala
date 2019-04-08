@@ -52,5 +52,6 @@ object WriteDynamicExample {
       }
 
     sc.close()
+    ()
   }
 }

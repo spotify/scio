@@ -45,6 +45,7 @@ object ObjectFileJob {
       .map(_ * 10)
       .saveAsObjectFile(args("output"))
     sc.close()
+    ()
   }
 }
 
@@ -54,6 +55,7 @@ object SpecificAvroFileJob {
     sc.avroFile[TestRecord](args("input"))
       .saveAsAvroFile(args("output"))
     sc.close()
+    ()
   }
 }
 
@@ -64,6 +66,7 @@ object GenericAvroFileJob {
     sc.avroFile[GenericRecord](args("input"), AvroUtils.schema)
       .saveAsAvroFile(args("output"), schema = AvroUtils.schema)
     sc.close()
+    ()
   }
 }
 
@@ -73,6 +76,7 @@ object BigQueryJob {
     sc.bigQueryTable(args("input"))
       .saveAsBigQuery(args("output"))
     sc.close()
+    ()
   }
 }
 
@@ -82,6 +86,7 @@ object TableRowJsonJob {
     sc.tableRowJsonFile(args("input"))
       .saveAsTableRowJsonFile(args("output"))
     sc.close()
+    ()
   }
 }
 
@@ -91,6 +96,7 @@ object DatastoreJob {
     sc.datastore(args("input"), null, null)
       .saveAsDatastore(args("output"))
     sc.close()
+    ()
   }
 }
 
@@ -101,6 +107,7 @@ object PubsubJob {
       .map(_ + "X")
       .saveAsPubsub(args("output"))
     sc.close()
+    ()
   }
 }
 
@@ -113,6 +120,7 @@ object PubsubWithAttributesJob {
       .map(kv => (kv._1 + "X", kv._2))
       .saveAsPubsubWithAttributes[String](args("output"), timestampAttribute = timestampAttribute)
     sc.close()
+    ()
   }
 }
 
@@ -123,6 +131,7 @@ object TextFileJob {
       .map(_ + "X")
       .saveAsTextFile(args("output"))
     sc.close()
+    ()
   }
 }
 
@@ -135,6 +144,7 @@ object DistCacheJob {
       .flatMap(x => dc().map(x + _))
       .saveAsTextFile(args("output"))
     sc.close()
+    ()
   }
 }
 
@@ -145,6 +155,7 @@ object MaterializeJob {
     data.materialize
     data.saveAsTextFile(args("output"))
     sc.close()
+    ()
   }
 }
 
@@ -163,6 +174,7 @@ object CustomIOJob {
       .map(_.toString)
       .saveAsCustomOutput("TextOut", outputTransform)
     sc.close()
+    ()
   }
 }
 
@@ -173,6 +185,7 @@ object ReadAllJob {
       .readAll(beam.TextIO.readAll())
       .saveAsTextFile(args("output"))
     sc.close()
+    ()
   }
 }
 
@@ -184,6 +197,7 @@ object ReadAllBytesJob {
       .map(new String(_))
       .saveAsTextFile(args("output"))
     sc.close()
+    ()
   }
 }
 
@@ -202,6 +216,7 @@ object JobWithDuplicateInput {
     sc.textFile(args("input"))
     sc.textFile(args("input"))
     sc.close()
+    ()
   }
 }
 
@@ -215,6 +230,7 @@ object JobWithDuplicateOutput {
       .saveAsTextFile(args("output"))
 
     sc.close()
+    ()
   }
 }
 
@@ -233,6 +249,7 @@ object MetricsJob {
         x
       }
     sc.close()
+    ()
   }
 }
 

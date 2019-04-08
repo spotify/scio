@@ -37,8 +37,10 @@ abstract class ScalaAsyncDoFn[I, O, R] extends BaseAsyncDoFn[I, O, R, Future[O]]
       ExecutionContext.defaultReporter(cause)
   }
 
-  override protected def waitForFutures(futures: JIterable[Future[O]]): Unit =
+  override protected def waitForFutures(futures: JIterable[Future[O]]): Unit = {
     Await.ready(Future.sequence(futures.asScala), Duration.Inf)
+    ()
+  }
 
   override protected def addCallback(future: Future[O],
                                      onSuccess: JFunction[O, Void],

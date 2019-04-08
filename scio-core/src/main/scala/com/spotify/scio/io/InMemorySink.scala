@@ -35,6 +35,8 @@ private[scio] object InMemorySink {
         cache += (id -> values)
         ()
       }
+
+    ()
   }
 
   def get[T](id: String): Iterable[T] = cache(id).asInstanceOf[Iterable[T]]

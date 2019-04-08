@@ -196,6 +196,9 @@ private class BeamParquetInputFile(var channel: SeekableByteChannel) extends Inp
   override def newStream: SeekableInputStream =
     new DelegatingSeekableInputStream(Channels.newInputStream(channel)) {
       override def getPos: Long = channel.position
-      override def seek(newPos: Long): Unit = channel.position(newPos)
+      override def seek(newPos: Long): Unit = {
+        channel.position(newPos)
+        ()
+      }
     }
 }

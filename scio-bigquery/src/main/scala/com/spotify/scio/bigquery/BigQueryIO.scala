@@ -222,7 +222,7 @@ final case class TableRowJsonIO(path: String) extends ScioIO[TableRow] {
     data
       .map(e => ScioUtil.jsonFactory.toString(e))
       .applyInternal(data.textOut(path, ".json", params.numShards, params.compression))
-    tap(Unit)
+    tap(())
   }
 
   override def tap(read: ReadP): Tap[TableRow] =
@@ -240,7 +240,6 @@ object TableRowJsonIO {
 }
 
 object BigQueryTyped {
-  import scala.language.higherKinds
 
   @annotation.implicitNotFound(
     """

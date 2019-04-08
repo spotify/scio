@@ -104,7 +104,7 @@ final class BigQuery private (client: Client) {
   def writeTypedRows[T <: HasAnnotation: TypeTag](table: TableReference,
                                                   rows: List[T],
                                                   writeDisposition: WriteDisposition,
-                                                  createDisposition: CreateDisposition): Unit = {
+                                                  createDisposition: CreateDisposition): Long = {
     val bqt = BigQueryType[T]
     tables.writeRows(table,
                      rows.map(bqt.toTableRow),
@@ -121,7 +121,7 @@ final class BigQuery private (client: Client) {
                                                   rows: List[T],
                                                   writeDisposition: WriteDisposition = WRITE_EMPTY,
                                                   createDisposition: CreateDisposition =
-                                                    CREATE_IF_NEEDED): Unit =
+                                                    CREATE_IF_NEEDED): Long =
     writeTypedRows(beam.BigQueryHelpers.parseTableSpec(tableSpec),
                    rows,
                    writeDisposition,

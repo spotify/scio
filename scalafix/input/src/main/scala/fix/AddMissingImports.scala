@@ -16,5 +16,6 @@ object AddMissingImports {
       .saveAsProtobufFile("output")
 
     sc.close()
+    ()
   }
 }

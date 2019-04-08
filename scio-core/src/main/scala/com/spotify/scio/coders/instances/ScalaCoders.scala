@@ -29,7 +29,7 @@ import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
 import scala.collection.{BitSet, SortedSet, TraversableOnce, mutable => m}
 import scala.collection.convert.Wrappers
-import scala.language.higherKinds
+
 import scala.util.Try
 
 private object UnitCoder extends AtomicCoder[Unit] {

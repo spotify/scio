@@ -25,9 +25,12 @@ import org.scalatest.{BeforeAndAfterAll, FlatSpec, Matchers}
 // properties on the individual field level processing data
 class BigQueryValidationTest extends FlatSpec with Matchers with BeforeAndAfterAll {
 
-  override def beforeAll(): Unit =
+  override def beforeAll(): Unit = {
     // We need this at runtime as well and tests are run in a fork
     SetProperty.setSystemProperty()
+
+    ()
+  }
 
   @SetProperty.setProperty
   @BigQueryType.fromSchema(

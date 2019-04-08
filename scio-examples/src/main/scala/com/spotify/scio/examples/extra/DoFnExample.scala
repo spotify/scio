@@ -47,12 +47,12 @@ object DoFnExample {
       .applyTransform(ParDo.of(new DoFn[String, Int] {
         // `@Setup` (optional) is called once per worker thread before any processing starts.
         @Setup
-        private[extra] def setup(): Unit = Unit
+        private[extra] def setup(): Unit = ()
 
         // `@StartBundle` (optional) is called once per worker thread before processing each batch
         // of elements, e.g. elements in a window.
         @StartBundle
-        private[extra] def startBundle(c: DoFn[String, Int]#StartBundleContext): Unit = Unit
+        private[extra] def startBundle(c: DoFn[String, Int]#StartBundleContext): Unit = ()
 
         // `@ProcessElement` is called once per element.
         @ProcessElement
@@ -62,13 +62,14 @@ object DoFnExample {
         // `@FinishBundle` (optional) is called once per worker thread after processing each batch
         // of elements, e.g. elements in a window.
         @FinishBundle
-        private[extra] def finishBundle(c: DoFn[String, Int]#FinishBundleContext): Unit = Unit
+        private[extra] def finishBundle(c: DoFn[String, Int]#FinishBundleContext): Unit = ()
 
         // `@Teardown` (optional) is called once per worker thread after all processing completes.
         @Teardown
-        private[extra] def teardown(): Unit = Unit
+        private[extra] def teardown(): Unit = ()
       }))
       .saveAsTextFile(args("output"))
     sc.close()
+    ()
   }
 }

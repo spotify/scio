@@ -31,7 +31,7 @@ import org.scalacheck.commands.Commands
 
 import scala.collection.mutable.{Buffer => MBuffer}
 import scala.concurrent.{Future, Promise}
-import scala.language.higherKinds
+
 import scala.util.Try
 
 object AsyncDoFnSpec extends Properties("AsyncDoFn") {

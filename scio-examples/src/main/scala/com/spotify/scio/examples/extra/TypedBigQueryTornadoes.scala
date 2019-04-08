@@ -54,6 +54,7 @@ object TypedBigQueryTornadoes {
       .saveAsTypedBigQuery(args("output"), WRITE_TRUNCATE, CREATE_IF_NEEDED)
 
     sc.close()
+    ()
   }
 
 }

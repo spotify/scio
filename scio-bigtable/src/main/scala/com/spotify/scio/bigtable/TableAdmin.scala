@@ -130,6 +130,7 @@ object TableAdmin {
           .setName(tablePath)
           .addAllModifications(modifications.asJava)
           .build)
+      ()
     }
   }
 
