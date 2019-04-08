@@ -41,6 +41,7 @@ object TopWikipediaSessions {
     computeTopSessions(input, samplingThreshold).saveAsTextFile(args("output"))
 
     sc.close()
+    ()
   }
 
   def computeTopSessions(input: SCollection[TableRow],

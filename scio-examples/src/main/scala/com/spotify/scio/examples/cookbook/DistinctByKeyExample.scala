@@ -62,5 +62,6 @@ object DistinctByKeyExample {
 
     // Close the context and execute the pipeline
     sc.close()
+    ()
   }
 }

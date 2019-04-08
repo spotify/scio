@@ -63,7 +63,10 @@ private[scio] final class FileStorage(protected[scio] val path: String) {
         in.read(ByteBuffer.wrap(b, off, len))
       override def tell(): Long = in.position()
       override def length(): Long = in.size()
-      override def seek(p: Long): Unit = in.position(p)
+      override def seek(p: Long): Unit = {
+        in.position(p)
+        ()
+      }
       override def close(): Unit = in.close()
     }
 

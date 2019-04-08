@@ -148,7 +148,10 @@ private class MatrixNNBuilder[K: ClassTag,
     extends NearestNeighborBuilder[K, V] {
 
   /** Add a key->vector pair. The vector should be normalized. */
-  override def add(key: K, vec: DenseVector[V]): Unit = addVector(key, vec)
+  override def add(key: K, vec: DenseVector[V]): Unit = {
+    addVector(key, vec)
+    ()
+  }
 
   /** Build an immutable NearestNeighbor instance. */
   override def build: NearestNeighbor[K, V] =

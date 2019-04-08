@@ -50,5 +50,6 @@ object MinimalWordCount {
 
     // Close the context and execute the pipeline
     sc.close()
+    ()
   }
 }

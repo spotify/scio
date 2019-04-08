@@ -111,8 +111,7 @@ private final class ScioKryoRegistrar extends IKryoRegistrar {
     k.forSubclass[Path](new JPathSerializer)
     k.forSubclass[ByteString](new ByteStringSerializer)
     k.forClass(new KVSerializer)
-    // TODO:
-    // TimestampedValueCoder
+    ()
   }
 }
 

@@ -29,7 +29,7 @@ private[validation] object SetProperty {
     def macroTransform(annottees: Any*): Any = macro setPropertyImpl
   }
 
-  def setSystemProperty(): Unit =
+  def setSystemProperty(): String =
     System.setProperty("override.type.provider",
                        "com.spotify.scio.bigquery.validation.SampleOverrideTypeProvider")
 

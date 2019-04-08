@@ -115,7 +115,7 @@ private object TFRecordMethods {
           .from(path)
           .withCompression(params.compression)))
 
-  def write(data: SCollection[Array[Byte]], path: String, params: TFRecordIO.WriteParam): Unit =
+  def write(data: SCollection[Array[Byte]], path: String, params: TFRecordIO.WriteParam): Unit = {
     data.applyInternal(
       beam.TFRecordIO
         .write()
@@ -123,6 +123,9 @@ private object TFRecordMethods {
         .withSuffix(params.suffix)
         .withCompression(params.compression)
         .withNumShards(params.numShards))
+
+    ()
+  }
 
   def tap(read: TFRecordIO.ReadParam, path: String): Tap[Array[Byte]] =
     TFRecordFileTap(ScioUtil.addPartSuffix(path))

@@ -59,6 +59,7 @@ object TsvExampleWrite {
 
     // Close the context
     sc.close()
+    ()
   }
 
   // Shard output filename generator function. See `TypedWrite.to`.
@@ -96,5 +97,6 @@ object TsvExampleRead {
       .saveAsTextFile(args("output"))
     // Close the context
     sc.close()
+    ()
   }
 }

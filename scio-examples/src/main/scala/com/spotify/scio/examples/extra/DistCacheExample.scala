@@ -57,5 +57,6 @@ object DistCacheExample {
       .saveAsTextFile(args("output"))
 
     sc.close()
+    ()
   }
 }

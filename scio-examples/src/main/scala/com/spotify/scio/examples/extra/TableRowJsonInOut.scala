@@ -38,5 +38,6 @@ object TableRowJsonInOut {
       // Save result as text files under the output path
       .saveAsTableRowJsonFile(args("output"))
     sc.close()
+    ()
   }
 }

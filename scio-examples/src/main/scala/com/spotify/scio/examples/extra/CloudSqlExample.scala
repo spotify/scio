@@ -39,6 +39,7 @@ object CloudSqlExample {
       // Write to Cloud SQL
       .saveAsJdbc(writeOptions)
     sc.close()
+    ()
   }
 
   // `socketFactory=com.google.cloud.sql.mysql.SocketFactory` enables a secure connection to a

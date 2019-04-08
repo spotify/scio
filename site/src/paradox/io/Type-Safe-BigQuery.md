@@ -209,6 +209,7 @@ def main(cmdlineArgs: Array[String]): Unit = {
     .map(kv => Result(kv._1, kv._2))
     .saveAsTypedBigQuery(args("output"))  // schema from Row.schema
   sc.close()
+()
 }
 ```
 

@@ -32,6 +32,7 @@ object JdbcJob {
       .map(_ + "J")
       .saveAsJdbc(getWriteOptions(opts))
     sc.close()
+    ()
   }
 
   def getReadOptions(opts: CloudSqlOptions): JdbcReadOptions[String] =

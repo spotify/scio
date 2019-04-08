@@ -60,6 +60,7 @@ object AnnoyIndexSaveExample {
     sc.parallelize(data).asAnnoy(args("output"), metric, dim, nTrees)
 
     sc.close()
+    ()
   }
 }
 
@@ -98,5 +99,6 @@ object AnnoySideInputExample {
       .toSCollection
       .saveAsTextFile(args("output"))
     sc.close()
+    ()
   }
 }

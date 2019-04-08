@@ -26,6 +26,7 @@ object SequenceExamplesJob {
     sc.parallelize(MetadataSchemaTest.sequenceExamples)
       .saveAsTfRecordFile(args("output"))
     sc.close()
+    ()
   }
 }
 

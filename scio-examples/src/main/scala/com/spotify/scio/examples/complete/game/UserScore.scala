@@ -67,6 +67,7 @@ object UserScore {
 
     // Close context and execute the pipeline
     sc.close()
+    ()
   }
 
 }

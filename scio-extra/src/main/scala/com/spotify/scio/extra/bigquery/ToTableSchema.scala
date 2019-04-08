@@ -88,11 +88,17 @@ trait ToTableSchema {
     }
 
     schemaType match {
-      case UNION  => setFieldDataTypeFromUnion(field, schema)
-      case ARRAY  => setFieldDataTypeFromArray(field, schema)
-      case RECORD => field.setFields(getFieldSchemas(schema).asJava)
-      case MAP    => setFieldTypeFromMap(field, schema)
-      case _      =>
+      case UNION =>
+        setFieldDataTypeFromUnion(field, schema)
+      case ARRAY =>
+        setFieldDataTypeFromArray(field, schema)
+      case RECORD =>
+        field.setFields(getFieldSchemas(schema).asJava)
+        ()
+      case MAP =>
+        setFieldTypeFromMap(field, schema)
+      case _ =>
+        ()
     }
   }
 
@@ -116,6 +122,8 @@ trait ToTableSchema {
       .foreach { fieldType =>
         setFieldType(field, fieldType)
       }
+
+    ()
   }
 
   private def setFieldDataTypeFromArray(field: TableFieldSchema, schema: Schema): Unit = {
@@ -143,5 +151,6 @@ trait ToTableSchema {
     setFieldType(valueField, schema.getValueType)
 
     field.setFields(List(keyField, valueField).asJava)
+    ()
   }
 }

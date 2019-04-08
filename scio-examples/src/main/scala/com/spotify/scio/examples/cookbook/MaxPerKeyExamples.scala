@@ -54,5 +54,6 @@ object MaxPerKeyExamples {
 
     // Close the context and execute the pipeline
     sc.close()
+    ()
   }
 }

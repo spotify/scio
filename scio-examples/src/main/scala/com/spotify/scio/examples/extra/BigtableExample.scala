@@ -116,5 +116,6 @@ object BigtableReadExample {
       .saveAsTextFile(args("output"))
 
     sc.close()
+    ()
   }
 }

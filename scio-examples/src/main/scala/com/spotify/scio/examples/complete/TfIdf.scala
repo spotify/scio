@@ -83,6 +83,7 @@ object TfIdf {
       .saveAsTextFile(args("output"))
 
     sc.close()
+    ()
   }
 
   // Compute TF-IDF from an input collection of `(doc, line)`

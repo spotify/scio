@@ -103,6 +103,7 @@ object RefreshingSideInputExample {
       } // Can save output to PubSub, BigQuery, etc.
 
     sc.close()
+    ()
   }
 
   private def toLotteryTicket(message: String): Option[LotteryTicket] =
