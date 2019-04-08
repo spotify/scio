@@ -20,6 +20,7 @@ package com.spotify.scio.bigquery.types
 import java.nio.file.{Path, Paths}
 import java.util.{List => JList}
 
+import com.google.api.client.json.jackson2.JacksonFactory
 import com.google.api.services.bigquery.model.{TableFieldSchema, TableSchema}
 import com.google.common.base.Charsets
 import com.google.common.hash.Hashing
@@ -268,8 +269,10 @@ private[types] object TypeProvider {
           desc.headOption.map(d => q"override def tableDescription: _root_.java.lang.String = $d")
         val defTblTrait =
           defTblDesc.map(_ => tq"${p(c, SType)}.HasTableDescription").toSeq
-        val defSchema =
+        val defSchema = {
+          schema.setFactory(new JacksonFactory)
           q"override def schema: ${p(c, GModel)}.TableSchema = ${p(c, SUtil)}.parseSchema(${schema.toString})"
+        }
         val defToPrettyString =
           q"override def toPrettyString(indent: Int = 0): String = ${p(c, s"$SBQ.types.SchemaUtil")}.toPrettyString(this.schema, ${cName.toString}, indent)"
 
