@@ -48,13 +48,13 @@ private[types] object TypeProvider {
       case Nil => c.abort(c.enclosingPosition, "Missing table specification")
       case l   => l
     }
-    val (query: String, _) :: _ = args
+    val (table: String, _) :: _ = args
     val tableSpec =
       BigQueryPartitionUtil.latestTable(bigquery, formatString(args.map(_._1)))
     val schema = bigquery.tables.schema(tableSpec)
     val traits = List(tq"${p(c, SType)}.HasTable")
 
-    val tableDef = q"override def table: _root_.java.lang.String = $query"
+    val tableDef = q"override def table: _root_.java.lang.String = $table"
 
     val ta =
       annottees.map(_.tree) match {
