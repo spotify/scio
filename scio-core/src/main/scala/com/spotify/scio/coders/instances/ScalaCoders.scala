@@ -153,6 +153,9 @@ private abstract class SeqLikeCoder[M[_], T](bc: BCoder[T])(
     }
     builder.result()
   }
+
+  override def toString: String =
+    s"SeqLikeCoder($bc)"
 }
 
 private class OptionCoder[T](bc: BCoder[T]) extends SeqLikeCoder[Option, T](bc) {
@@ -166,6 +169,9 @@ private class OptionCoder[T](bc: BCoder[T]) extends SeqLikeCoder[Option, T](bc) 
     val isDefined = bcoder.decode(is)
     if (isDefined) Some(bc.decode(is)) else None
   }
+
+  override def toString: String =
+    s"OptionCoder($bc)"
 }
 
 private class SeqCoder[T](bc: BCoder[T]) extends SeqLikeCoder[Seq, T](bc) {
@@ -274,6 +280,9 @@ private class MapCoder[K, V](kc: BCoder[K], vc: BCoder[V]) extends AtomicCoder[M
         vc.registerByteSizeObserver(v, observer)
     }
   }
+
+  override def toString: String =
+    s"MapCoder($kc, $vc)"
 }
 
 private class MutableMapCoder[K, V](kc: BCoder[K], vc: BCoder[V]) extends AtomicCoder[m.Map[K, V]] {
@@ -318,6 +327,9 @@ private class MutableMapCoder[K, V](kc: BCoder[K], vc: BCoder[V]) extends Atomic
         vc.registerByteSizeObserver(v, observer)
     }
   }
+
+  override def toString: String =
+    s"MutableMapCoder($kc, $vc)"
 }
 
 // scalastyle:off number.of.methods
