@@ -248,21 +248,6 @@ sc.textFile(...)
 
 In this example, the `map`'s transform name is "MakeUpper" and the `filter`'s is "BigWords". If we later decided that we want to count 6 letter words as "big" too, then we can change it to `_.length > 5`, and because the transform name is the same the job can be updated on the fly.
 
-#### How do I read Pubsub input in a local pipeline?
-
-You can use a custom @javadoc[`PubsubIO`](org.apache.beam.sdk.io.gcp.pubsub.PubsubIO) transform and specify `maxNumRecord` & `maxReadTime` in order not to blow up local JVM.
-
-```scala
-sc.customInput("ReadFromPubsub",
-  PubsubIO.read()
-    .topic("projects/data-university/topics/data-university")
-    .idLabel("id")
-    .timestampLabel("ts")
-    .withCoder(StringUtf8Coder.of())
-    .maxNumRecords(50)
-    .maxReadTime(Duration.standardMinutes(10))
-```
-
 ### Other IO components
 
 #### How do I access various files outside of a ScioContext?
