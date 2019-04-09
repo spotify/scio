@@ -16,7 +16,7 @@
  */
 package com.spotify.scio.schemas
 
-import java.util.{List => jList}
+import java.util.{List => jList, Map => jMap}
 
 import com.spotify.scio.schemas.instances.AllInstances
 import com.spotify.scio.util.ScioUtil
@@ -72,20 +72,34 @@ object RawRecord {
 final case class Type[T](fieldType: FieldType) extends Schema[T] {
   type Repr = T
 }
-final case class Optional[T](schema: Schema[T]) extends Schema[Option[T]] {
+
+final case class OptionType[T](schema: Schema[T]) extends Schema[Option[T]] {
   type Repr = schema.Repr
 }
+
 final case class Fallback[F[_], T](coder: F[T]) extends Schema[T] {
   type Repr = Array[Byte]
 }
 
-final case class Arr[F[_], T](schema: Schema[T],
-                              toList: F[T] => jList[T],
-                              fromList: jList[T] => F[T])
+final case class ArrayType[F[_], T](schema: Schema[T],
+                                    toList: F[T] => jList[T],
+                                    fromList: jList[T] => F[T])
     extends Schema[F[T]] { // TODO: polymorphism ?
   type Repr = jList[schema.Repr]
   type _T = T
   type _F[A] = F[A]
+}
+
+final case class MapType[F[_, _], K, V](keySchema: Schema[K],
+                                        valueSchema: Schema[V],
+                                        toMap: F[K, V] => jMap[K, V],
+                                        fromMap: jMap[K, V] => F[K, V])
+    extends Schema[F[K, V]] {
+  type Repr = jMap[keySchema.Repr, valueSchema.Repr]
+
+  type _K = K
+  type _V = V
+  type _F[XK, XV] = F[XK, XV]
 }
 
 private[scio] case class ScalarWrapper[T](value: T) extends AnyVal

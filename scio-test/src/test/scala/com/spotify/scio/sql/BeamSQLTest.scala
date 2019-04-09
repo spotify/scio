@@ -35,14 +35,6 @@ import scala.collection.JavaConverters._
 import com.spotify.scio.avro
 
 object TestData {
-  class IsOver18UdfFn extends SerializableFunction[Integer, Boolean] {
-    override def apply(input: Integer): Boolean = input >= 18
-  }
-
-  class IsOver18Udf extends BeamSqlUdf {
-    def eval(input: Integer): Boolean = input >= 18
-  }
-
   case class Foo(i: Int, s: String)
   case class Bar(l: Long, f: Foo)
   case class Result(x: Int)
@@ -89,6 +81,20 @@ object TestData {
     (1 to 10).map { i =>
       UserWithJList(s"user$i", java.util.Arrays.asList(s"user$i@spotify.com", s"user$i@yolo.com"))
     }.toList
+
+  case class UserWithMap(username: String, contacts: Map[String, String])
+  val usersWithMap =
+    (1 to 10).map { i =>
+      UserWithMap(s"user$i", Map("work" -> s"user$i@spotify.com", "personal" -> s"user$i@yolo.com"))
+    }.toList
+
+  class IsOver18UdfFn extends SerializableFunction[Integer, Boolean] {
+    override def apply(input: Integer): Boolean = input >= 18
+  }
+
+  class IsOver18Udf extends BeamSqlUdf {
+    def eval(input: Integer): Boolean = input >= 18
+  }
 
   class MaxUserAgeUdafFn extends CombineFn[Integer, Integer, Integer] {
     override def createAccumulator(): Integer = 0
@@ -247,6 +253,16 @@ class BeamSQLTest extends PipelineSpec {
     val in = sc.parallelize(usersWithJList)
     val r =
       in.queryAs[(String, String)]("select username, emails[1] from SCOLLECTION")
+    r should containInAnyOrder(expected)
+  }
+
+  it should "support Map[K, V]" in runWithContext { sc =>
+    val expected = usersWithMap.map { u =>
+      (u.username, u.contacts)
+    }
+    val in = sc.parallelize(usersWithMap)
+    val r =
+      in.queryAs[(String, Map[String, String])]("select username, contacts from SCOLLECTION")
     r should containInAnyOrder(expected)
   }
 

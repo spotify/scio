@@ -16,7 +16,7 @@
  */
 package com.spotify.scio.schemas.instances
 
-import com.spotify.scio.schemas.{Arr, Optional, Schema, Type}
+import com.spotify.scio.schemas._
 import org.apache.beam.sdk.schemas.Schema.FieldType
 
 import scala.collection.JavaConverters._
@@ -54,9 +54,12 @@ trait ScalaInstances {
     Type[Boolean](FieldType.BOOLEAN)
 
   implicit def optionSchema[T](implicit s: Schema[T]): Schema[Option[T]] =
-    Optional(s)
+    OptionType(s)
 
   implicit def listSchema[T](implicit s: Schema[T]): Schema[List[T]] =
-    Arr(s, _.asJava, _.asScala.toList)
+    ArrayType(s, _.asJava, _.asScala.toList)
+
+  implicit def mapSchema[K, V](implicit k: Schema[K], v: Schema[V]): Schema[Map[K, V]] =
+    MapType(k, v, _.asJava, _.asScala.toMap)
 
 }
