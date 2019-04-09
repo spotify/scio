@@ -66,6 +66,8 @@ object HttpAsyncLookupExample {
     }
 }
 
+// You can specify the maximum number of pending requests and the lookup cache. The default maximum
+// number of pending requests is 1000.
 class HttpAsyncLookup(url: String)
     extends AsyncLookupDoFn[Account, String, AsyncHttpClient](100, new LookupCacheSupplier) {
 
