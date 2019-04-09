@@ -40,7 +40,6 @@ object Scalac {
     // "-Xfuture", // Turn on future language features.
     "-Xlint:adapted-args", // Warn if an argument list is modified to match the receiver.
     "-Xlint:by-name-right-associative", // By-name parameter of right associative operator.
-    "-Xlint:constant", // Evaluation of a constant arithmetic expression results in an error.
     // "-Xlint:delayedinit-select", // Selecting member of DelayedInit.
     "-Xlint:doc-detached", // A Scaladoc comment appears to be detached from its element.
     "-Xlint:inaccessible", // Warn about inaccessible types in method signatures.
@@ -71,6 +70,7 @@ object Scalac {
 
   def scala212settings = Def.setting {
     List(
+      "-Xlint:constant", // Evaluation of a constant arithmetic expression results in an error.
       "-Ywarn-unused:imports", // Warn if an import selector is not referenced.
       "-Ywarn-extra-implicit", // Warn when more than one implicit parameter section is defined.,
       "-Ydelambdafy:inline" // Set the strategy used for translating lambdas into JVM code to "inline"
