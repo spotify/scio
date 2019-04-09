@@ -46,11 +46,11 @@ object SchemaMaterializer {
         BFieldType.row(BSchema.of(out: _*))
       case RawRecord(bschema, _, _) =>
         BFieldType.row(bschema)
-      case Field(t)               => t
-      case Fallback(_)            => BFieldType.BYTES
-      case ArrayField(s, _, _)    => BFieldType.array(fieldType(s))
-      case MapField(ks, vs, _, _) => BFieldType.map(fieldType(ks), fieldType(vs))
-      case OptionField(s)         => fieldType(s).withNullable(true)
+      case Type(t)               => t
+      case Fallback(_)           => BFieldType.BYTES
+      case ArrayType(s, _, _)    => BFieldType.array(fieldType(s))
+      case MapType(ks, vs, _, _) => BFieldType.map(fieldType(ks), fieldType(vs))
+      case OptionType(s)         => fieldType(s).withNullable(true)
     }
 
   /**
@@ -68,18 +68,18 @@ object SchemaMaterializer {
         Record[A](schemasMat, construct, destruct)
       case r @ RawRecord(_, _, _) =>
         r
-      case t @ Field(_) =>
+      case t @ Type(_) =>
         t
-      case OptionField(s) =>
-        OptionField(materializeSchema(reg, opt, s))
+      case OptionType(s) =>
+        OptionType(materializeSchema(reg, opt, s))
       case Fallback(c) =>
         Fallback[BCoder, A](CoderMaterializer.beam[A](reg, opt, c.asInstanceOf[Coder[A]]))
-      case a @ ArrayField(s, t, f) =>
-        ArrayField[a._F, a._T](materializeSchema(reg, opt, s), t, f)
-      case m @ MapField(ks, vs, t, f) =>
+      case a @ ArrayType(s, t, f) =>
+        ArrayType[a._F, a._T](materializeSchema(reg, opt, s), t, f)
+      case m @ MapType(ks, vs, t, f) =>
         val mk = materializeSchema(reg, opt, ks)
         val mv = materializeSchema(reg, opt, vs)
-        MapField[m._F, m._K, m._V](mk, mv, t, f)
+        MapType[m._F, m._K, m._V](mk, mv, t, f)
     }
 
   import org.apache.beam.sdk.util.CoderUtils
@@ -87,18 +87,18 @@ object SchemaMaterializer {
   // XXX: scalac can't unify schema.Repr with s.Repr
   private def dispatchDecode[A](schema: Schema[A]): schema.Decode =
     schema match {
-      case s @ Record(_, _, _)      => (decode(s)(_)).asInstanceOf[schema.FieldType => A]
-      case RawRecord(_, fromRow, _) => (fromRow.apply _).asInstanceOf[schema.FieldType => A]
-      case s @ Field(_)             => (decode(s)(_)).asInstanceOf[schema.FieldType => A]
-      case s @ OptionField(_)       => (decode(s)(_)).asInstanceOf[schema.FieldType => A]
-      case s @ ArrayField(_, _, _)  => (decode[s._F, s._T](s)(_)).asInstanceOf[schema.FieldType => A]
-      case s @ MapField(_, _, _, _) =>
-        (decode[s._F, s._K, s._V](s)(_)).asInstanceOf[schema.FieldType => A]
+      case s @ Record(_, _, _)      => (decode(s)(_)).asInstanceOf[schema.Repr => A]
+      case RawRecord(_, fromRow, _) => (fromRow.apply _).asInstanceOf[schema.Repr => A]
+      case s @ Type(_)              => (decode(s)(_)).asInstanceOf[schema.Repr => A]
+      case s @ OptionType(_)        => (decode(s)(_)).asInstanceOf[schema.Repr => A]
+      case s @ ArrayType(_, _, _)   => (decode[s._F, s._T](s)(_)).asInstanceOf[schema.Repr => A]
+      case s @ MapType(_, _, _, _) =>
+        (decode[s._F, s._K, s._V](s)(_)).asInstanceOf[schema.Repr => A]
       case s @ Fallback(_) =>
-        (decode(s.asInstanceOf[Fallback[BCoder, A]])(_)).asInstanceOf[schema.FieldType => A]
+        (decode(s.asInstanceOf[Fallback[BCoder, A]])(_)).asInstanceOf[schema.Repr => A]
     }
 
-  private def decode[A](record: Record[A])(v: record.FieldType): A = {
+  private def decode[A](record: Record[A])(v: record.Repr): A = {
     val size = v.getValues.size
     val vs = v.getValues
     val values = new Array[Any](size)
@@ -106,17 +106,17 @@ object SchemaMaterializer {
     while (i < size) {
       val (_, schema) = record.schemas(i)
       val v = vs.get(i)
-      values.update(i, dispatchDecode(schema)(v.asInstanceOf[schema.FieldType]))
+      values.update(i, dispatchDecode(schema)(v.asInstanceOf[schema.Repr]))
       i = i + 1
     }
     record.construct(values)
   }
-  private def decode[A](schema: Field[A])(v: schema.FieldType): A = v
+  private def decode[A](schema: Type[A])(v: schema.Repr): A = v
 
-  private def decode[A](schema: OptionField[A])(v: schema.FieldType): Option[A] =
+  private def decode[A](schema: OptionType[A])(v: schema.Repr): Option[A] =
     Option(dispatchDecode(schema.schema)(v))
 
-  private def decode[F[_], A: ClassTag](schema: ArrayField[F, A])(v: schema.FieldType): F[A] = {
+  private def decode[F[_], A: ClassTag](schema: ArrayType[F, A])(v: schema.Repr): F[A] = {
     val values = new Array[A](v.size)
     var i = 0
     while (i < v.size) {
@@ -126,12 +126,11 @@ object SchemaMaterializer {
     schema.fromList(java.util.Arrays.asList(values: _*))
   }
 
-  private def decode[F[_, _], A: ClassTag, B: ClassTag](schema: MapField[F, A, B])(
-    v: schema.FieldType): F[A, B] = {
+  private def decode[F[_, _], A, B](schema: MapType[F, A, B])(v: schema.Repr): F[A, B] = {
     val h = new util.HashMap[A, B]()
 
-    v.forEach(new BiConsumer[schema.keySchema.FieldType, schema.valueSchema.FieldType] {
-      override def accept(t: schema.keySchema.FieldType, u: schema.valueSchema.FieldType): Unit = {
+    v.forEach(new BiConsumer[schema.keySchema.Repr, schema.valueSchema.Repr] {
+      override def accept(t: schema.keySchema.Repr, u: schema.valueSchema.Repr): Unit = {
         h.put(dispatchDecode[A](schema.keySchema)(t), dispatchDecode[B](schema.valueSchema)(u))
         ()
       }
@@ -140,25 +139,25 @@ object SchemaMaterializer {
     schema.fromMap(h)
   }
 
-  private def decode[A](schema: Fallback[BCoder, A])(v: schema.FieldType): A =
+  private def decode[A](schema: Fallback[BCoder, A])(v: schema.Repr): A =
     CoderUtils.decodeFromByteArray(schema.coder, v)
 
   // XXX: scalac can't unify schema.Repr with s.Repr
   private def dispatchEncode[A](schema: Schema[A], fieldType: BFieldType): schema.Encode =
     schema match {
-      case s @ Record(_, _, _)    => (encode(s, fieldType)(_)).asInstanceOf[A => schema.FieldType]
-      case RawRecord(_, _, toRow) => (toRow.apply _).asInstanceOf[A => schema.FieldType]
-      case s @ Field(_)           => (encode(s)(_)).asInstanceOf[A => schema.FieldType]
-      case s @ OptionField(_)     => (encode(s, fieldType)(_)).asInstanceOf[A => schema.FieldType]
-      case s @ ArrayField(_, _, _) =>
-        (encode[s._F, s._T](s, fieldType)(_)).asInstanceOf[A => schema.FieldType]
-      case s @ MapField(_, _, _, _) =>
-        (encode[s._F, s._K, s._V](s, fieldType)(_)).asInstanceOf[A => schema.FieldType]
+      case s @ Record(_, _, _)    => (encode(s, fieldType)(_)).asInstanceOf[A => schema.Repr]
+      case RawRecord(_, _, toRow) => (toRow.apply _).asInstanceOf[A => schema.Repr]
+      case s @ Type(_)            => (encode(s)(_)).asInstanceOf[A => schema.Repr]
+      case s @ OptionType(_)      => (encode(s, fieldType)(_)).asInstanceOf[A => schema.Repr]
+      case s @ ArrayType(_, _, _) =>
+        (encode[s._F, s._T](s, fieldType)(_)).asInstanceOf[A => schema.Repr]
+      case s @ MapType(_, _, _, _) =>
+        (encode[s._F, s._K, s._V](s, fieldType)(_)).asInstanceOf[A => schema.Repr]
       case s @ Fallback(_) =>
-        (encode(s.asInstanceOf[Fallback[BCoder, A]])(_)).asInstanceOf[A => schema.FieldType]
+        (encode(s.asInstanceOf[Fallback[BCoder, A]])(_)).asInstanceOf[A => schema.Repr]
     }
 
-  private def encode[A](schema: Record[A], fieldType: BFieldType)(v: A): schema.FieldType = {
+  private def encode[A](schema: Record[A], fieldType: BFieldType)(v: A): schema.Repr = {
     val fields = schema.destruct(v)
     var i = 0
     val builder = Row.withSchema(fieldType.getRowSchema)
@@ -173,15 +172,14 @@ object SchemaMaterializer {
     builder.build()
   }
 
-  private def encode[A](schema: Field[A])(v: A): schema.FieldType = v
+  private def encode[A](schema: Type[A])(v: A): schema.Repr = v
 
-  private def encode[A](schema: OptionField[A], fieldType: BFieldType)(
-    v: Option[A]): schema.FieldType =
+  private def encode[A](schema: OptionType[A], fieldType: BFieldType)(v: Option[A]): schema.Repr =
     v.map { dispatchEncode(schema.schema, fieldType)(_) }
-      .getOrElse(null.asInstanceOf[schema.FieldType])
+      .getOrElse(null.asInstanceOf[schema.Repr])
 
-  private def encode[F[_], A](schema: ArrayField[F, A], fieldType: BFieldType)(
-    v: F[A]): schema.FieldType = {
+  private def encode[F[_], A](schema: ArrayType[F, A], fieldType: BFieldType)(
+    v: F[A]): schema.Repr = {
     schema
       .toList(v)
       .asScala
@@ -189,9 +187,9 @@ object SchemaMaterializer {
       .asJava
   }
 
-  private def encode[F[_, _], A, B](schema: MapField[F, A, B], fieldType: BFieldType)(
-    v: F[A, B]): schema.FieldType = {
-    val h: util.Map[schema.keySchema.FieldType, schema.valueSchema.FieldType] = new util.HashMap()
+  private def encode[F[_, _], A, B](schema: MapType[F, A, B], fieldType: BFieldType)(
+    v: F[A, B]): schema.Repr = {
+    val h: util.Map[schema.keySchema.Repr, schema.valueSchema.Repr] = new util.HashMap()
     schema
       .toMap(v)
       .forEach(new BiConsumer[A, B] {
@@ -208,7 +206,7 @@ object SchemaMaterializer {
     h
   }
 
-  private def encode[A](schema: Fallback[BCoder, A])(v: A): schema.FieldType =
+  private def encode[A](schema: Fallback[BCoder, A])(v: A): schema.Repr =
     CoderUtils.encodeToByteArray(schema.coder, v)
 
   final def materialize[T](

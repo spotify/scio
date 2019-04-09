@@ -23,43 +23,43 @@ import scala.collection.JavaConverters._
 
 trait ScalaInstances {
 
-  implicit val stringSchema: Field[String] =
-    Field[String](FieldType.STRING)
+  implicit val stringSchema: Type[String] =
+    Type[String](FieldType.STRING)
 
-  implicit val byteSchema: Field[Byte] =
-    Field[Byte](FieldType.BYTE)
+  implicit val byteSchema: Type[Byte] =
+    Type[Byte](FieldType.BYTE)
 
-  implicit val bytesSchema: Field[Array[Byte]] =
-    Field[Array[Byte]](FieldType.BYTES)
+  implicit val bytesSchema: Type[Array[Byte]] =
+    Type[Array[Byte]](FieldType.BYTES)
 
-  implicit val sortSchema: Field[Short] =
-    Field[Short](FieldType.INT16)
+  implicit val sortSchema: Type[Short] =
+    Type[Short](FieldType.INT16)
 
-  implicit val intSchema: Field[Int] =
-    Field[Int](FieldType.INT32)
+  implicit val intSchema: Type[Int] =
+    Type[Int](FieldType.INT32)
 
-  implicit val longSchema: Field[Long] =
-    Field[Long](FieldType.INT64)
+  implicit val longSchema: Type[Long] =
+    Type[Long](FieldType.INT64)
 
-  implicit val floatSchema: Field[Float] =
-    Field[Float](FieldType.FLOAT)
+  implicit val floatSchema: Type[Float] =
+    Type[Float](FieldType.FLOAT)
 
-  implicit val doubleSchema: Field[Double] =
-    Field[Double](FieldType.DOUBLE)
+  implicit val doubleSchema: Type[Double] =
+    Type[Double](FieldType.DOUBLE)
 
-  implicit val bigDecimalSchema: Field[BigDecimal] =
-    Field[BigDecimal](FieldType.DECIMAL)
+  implicit val bigDecimalSchema: Type[BigDecimal] =
+    Type[BigDecimal](FieldType.DECIMAL)
 
-  implicit val booleanSchema: Field[Boolean] =
-    Field[Boolean](FieldType.BOOLEAN)
+  implicit val booleanSchema: Type[Boolean] =
+    Type[Boolean](FieldType.BOOLEAN)
 
   implicit def optionSchema[T](implicit s: Schema[T]): Schema[Option[T]] =
-    OptionField(s)
+    OptionType(s)
 
   implicit def listSchema[T](implicit s: Schema[T]): Schema[List[T]] =
-    ArrayField(s, _.asJava, _.asScala.toList)
+    ArrayType(s, _.asJava, _.asScala.toList)
 
   implicit def mapSchema[K, V](implicit k: Schema[K], v: Schema[V]): Schema[Map[K, V]] =
-    MapField(k, v, _.asJava, _.asScala.toMap)
+    MapType(k, v, _.asJava, _.asScala.toMap)
 
 }
