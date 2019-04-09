@@ -232,8 +232,8 @@ object Queries {
       .right
       .flatMap {
         case inferredSchema
-            if SchemaTypes.typesEqual(BSchema.FieldType.row(inferredSchema),
-                                      BSchema.FieldType.row(expectedSchema)) =>
+            if SchemaTypes.equal(BSchema.FieldType.row(inferredSchema),
+                                 BSchema.FieldType.row(expectedSchema)) =>
           Right(query)
         case inferredSchema =>
           val message =
