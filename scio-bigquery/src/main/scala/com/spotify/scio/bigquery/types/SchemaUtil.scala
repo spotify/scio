@@ -38,6 +38,7 @@ object SchemaUtil {
       case "INTEGER"   => "Long"
       case "FLOAT"     => "Double"
       case "STRING"    => "String"
+      case "NUMERIC"   => "BigDecimal"
       case "BYTES"     => "ByteString"
       case "TIMESTAMP" => "Instant"
       case "DATE"      => "LocalDate"

@@ -35,6 +35,7 @@ import scala.util.Try
  * | INTEGER    | INT64        | `Long`, `Int`                                   |
  * | FLOAT      | FLOAT64      | `Double`, `Float`                               |
  * | STRING     | STRING       | `String`                                        |
+ * | NUMERIC    | NUMERIC      | `BigDecimal`                                    |
  * | BYTES      | BYTES        | `com.google.protobuf.ByteString`, `Array[Byte]` |
  * | RECORD     | STRUCT       | Nested case class                               |
  * | REPEATED   | ARRAY        | `List[T]`                                       |
