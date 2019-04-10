@@ -91,10 +91,12 @@ private[types] object ConverterProvider {
       q"$tree.asInstanceOf[$jl].asScala.map(x => ${cast(q"x", tpe)})($bo)"
     }
 
+    // scalastyle:off line.size.limit
     def map(tree: Tree, tpe: Type): Tree = {
-      val jm = tq"_root_.java.util.Map[String, AnyRef]"
-      q"$tree.asInstanceOf[$jm].asScala.mapValues(x => ${cast(q"x", tpe)}).toMap"
+      val jm = tq"_root_.java.util.Map[AnyRef, AnyRef]"
+      q"$tree.asInstanceOf[$jm].asScala.iterator.map(kv => (kv._1.toString, ${cast(q"kv._2", tpe)})).toMap"
     }
+    // scalastyle:on line.size.limit
 
     def field(symbol: Symbol, fn: TermName): Tree = {
       val name = symbol.name.toString
