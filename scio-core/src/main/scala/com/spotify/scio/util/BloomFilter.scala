@@ -49,6 +49,8 @@ import com.twitter.algebird.{
   BloomFilter => AlgebirdImmutableBloomFilter
 }
 
+import scala.collection.mutable
+
 /**
  * Helpers for creating Mutable Bloom Filters.
  *
@@ -292,7 +294,7 @@ case class MutableBFZero[A](hashes: KirMit32Hash[A], width: Int) extends Mutable
   def copy: MutableBF[A] = MutableBFZero(hashes, width)
 }
 
-/*
+/**
  * Mutable Bloom filter with multiple values
  */
 case class MutableBFInstance[A](hashes: KirMit32Hash[A], bits: util.BitSet, width: Int)
@@ -313,9 +315,12 @@ case class MutableBFInstance[A](hashes: KirMit32Hash[A], bits: util.BitSet, widt
     require(this.numHashes == other.numHashes)
 
     other match {
-      case MutableBFZero(_, _)                => this
+      case MutableBFZero(_, _)                         => this
+      case MutableSparseBFInstance(_, otherSetBits, _) =>
+        // This is MutableBFInstance, hence not sparse, so don't convert to sparse.
+        otherSetBits.foreach(bits.set) // This is doing OR
+        this
       case MutableBFInstance(_, otherBits, _) =>
-        // assume same hashes used
         bits.or(otherBits)
         this
     }
@@ -353,6 +358,101 @@ case class MutableBFInstance[A](hashes: KirMit32Hash[A], bits: util.BitSet, widt
   def copy: MutableBF[A] = MutableBFInstance(hashes, bits.clone.asInstanceOf[util.BitSet], width)
 }
 
+/**
+ * Mutable SparseBloomFilter or a Delayed MutableBFInstance.
+ * If the bit set is less than 1/32 filled, it stores the actual hash values
+ * instead of allocating memory for the complete BitSet
+ *
+ * After adding enough elements when the size of the underlying Set becomes
+ * more than 32 * numBits, it allocates memory for a BitSet and creates a MutableBFInstance.
+ *
+ * If a BitSet with a width of 'w' has very few elements it still allocates memory to store
+ * bits from 0 to w-1. This method is a workaround for that.
+ *
+ * EWAHCompressedBitmap is not used because OR operations are immutable and copies the underlying
+ * bitmap. Also Apache Beam doesn't have a Coder for EWAHCompressedBitmap, and it would fallback
+ * to Kryo
+ */
+case class MutableSparseBFInstance[A](hashes: KirMit32Hash[A],
+                                      setBits: mutable.Set[Int],
+                                      width: Int)
+    extends MutableBF[A] {
+
+  def numHashes: Int = hashes.size
+
+  /**
+   * The number of bits set to true
+   */
+  def numBits: Int = setBits.size
+
+  def toBitSet: util.BitSet = {
+    val jbitSet = new util.BitSet()
+    setBits.foreach(jbitSet.set)
+    jbitSet
+  }
+
+  /**
+   * Convert to a MutableBFInstance backed by an actual BitSet instead of storing indexes in a Set.
+   */
+  private def asMutableBFInstance = MutableBFInstance(hashes, toBitSet, width)
+
+  // scalastyle:off method.name
+  def ++=(other: MutableBF[A]): MutableBF[A] = {
+    require(this.width == other.width)
+    require(this.numHashes == other.numHashes)
+
+    other match {
+      case MutableBFZero(_, _) => this
+      case MutableSparseBFInstance(_, otherSetBits, _) =>
+        if ((setBits.size + otherSetBits.size) * 32 >= width) {
+          // convert to MutableBFInstance
+          asMutableBFInstance ++= other
+        } else {
+          // stay sparse
+          setBits ++= otherSetBits
+          this
+        }
+      case MutableBFInstance(_, otherBits, _) =>
+        // since the other is not a sparse BF, the result cannot be sparse.
+        asMutableBFInstance ++= other
+    }
+  }
+
+  def +=(item: A): MutableBF[A] = {
+    val itemHashes = hashes(item)
+    setBits ++= itemHashes
+    this
+  }
+  // scalastyle:on method.name
+
+  def checkAndAdd(other: A): (MutableBF[A], ApproximateBoolean) = {
+    val doesContain = contains(other)
+    (this += other, doesContain)
+  }
+
+  // scalastyle:off return
+  def maybeContains(item: A): Boolean = {
+    val il = hashes(item)
+    var idx = 0
+    while (idx < il.length) {
+      val i = il(idx)
+      if (!setBits.contains(i)) return false
+      idx += 1
+    }
+    true
+  }
+  // scalastyle:on return
+
+  // use an approximation width of 0.05
+  def size: Approximate[Long] =
+    BloomFilter.sizeEstimate(numBits, numHashes, width, 0.05)
+
+  def copy: MutableBF[A] = MutableSparseBFInstance(hashes, setBits.clone, width)
+}
+
+/**
+ * Constructors for mutable bloom filters
+ */
 object MutableBFInstance {
   def apply[A](hashes: KirMit32Hash[A], width: Int, firstElement: A): MutableBF[A] = {
     val bf = MutableBFInstance.empty(hashes, width)
@@ -362,8 +462,10 @@ object MutableBFInstance {
   def apply[A](hashes: KirMit32Hash[A], width: Int): MutableBF[A] =
     empty(hashes, width)
 
+  // Always Start with a Sparse BF Instance
   def empty[A](hashes: KirMit32Hash[A], width: Int): MutableBF[A] =
-    MutableBFInstance(hashes, new util.BitSet(), width)
+//    MutableBFInstance(hashes, new util.BitSet(), width)
+    MutableSparseBFInstance(hashes, mutable.Set[Int](), width)
 }
 
 /**
