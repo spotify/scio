@@ -37,6 +37,7 @@ import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.transforms.GroupByKey;
 import org.apache.beam.sdk.transforms.PTransform;
 import org.apache.beam.sdk.transforms.ParDo;
+import org.apache.beam.sdk.transforms.ProcessFunction;
 import org.apache.beam.sdk.transforms.SerializableFunction;
 import org.apache.beam.sdk.transforms.windowing.AfterProcessingTime;
 import org.apache.beam.sdk.transforms.windowing.GlobalWindows;
@@ -44,7 +45,9 @@ import org.apache.beam.sdk.transforms.windowing.Repeatedly;
 import org.apache.beam.sdk.transforms.windowing.TimestampCombiner;
 import org.apache.beam.sdk.transforms.windowing.Window;
 import org.apache.beam.sdk.util.BackOff;
+import org.apache.beam.sdk.util.BackOffUtils;
 import org.apache.beam.sdk.util.FluentBackoff;
+import org.apache.beam.sdk.util.Sleeper;
 import org.apache.beam.sdk.values.KV;
 import org.apache.beam.sdk.values.PCollection;
 import org.apache.beam.sdk.values.PDone;
@@ -52,7 +55,6 @@ import org.elasticsearch.action.DocWriteRequest;
 import org.elasticsearch.action.bulk.BulkItemResponse;
 import org.elasticsearch.action.bulk.BulkRequest;
 import org.elasticsearch.action.bulk.BulkResponse;
-import org.elasticsearch.action.support.WriteRequest;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.settings.Settings;
@@ -141,9 +143,9 @@ public class ElasticsearchIO {
     /**
      * Returns a transform for writing to Elasticsearch cluster.
      *
-     * @param retryPause Number of seconds to wait between successive retry attempts.
+     * @param retryPause Duration to wait between successive retry attempts.
      */
-    public static <T> Bound withRetryPause(int retryPause) {
+    public static <T> Bound withRetryPause(Duration retryPause) {
       return new Bound<>().withRetryPause(retryPause);
     }
 
@@ -151,7 +153,7 @@ public class ElasticsearchIO {
 
       private static final int CHUNK_SIZE = 3000;
       private static final int DEFAULT_RETRIES = 3;
-      private static final int DEFAULT_RETRY_PAUSE = 5;
+      private static final Duration DEFAULT_RETRY_PAUSE = Duration.millis(35000);
 
       private final String clusterName;
       private final InetSocketAddress[] servers;
@@ -160,7 +162,7 @@ public class ElasticsearchIO {
       private final long numOfShard;
       private final int maxBulkRequestSize;
       private final int maxRetries;
-      private final int retryPause;
+      private final Duration retryPause;
       private final ThrowingConsumer<BulkExecutionException> error;
 
       private Bound(final String clusterName,
@@ -170,7 +172,7 @@ public class ElasticsearchIO {
                     final long numOfShard,
                     final int maxBulkRequestSize,
                     int maxRetries,
-                    int retryPause,
+                    Duration retryPause,
                     final ThrowingConsumer<BulkExecutionException> error) {
         this.clusterName = clusterName;
         this.servers = servers;
@@ -229,7 +231,7 @@ public class ElasticsearchIO {
             maxRetries, retryPause, error);
       }
 
-      public Bound<T> withRetryPause(int retryPause) {
+      public Bound<T> withRetryPause(Duration retryPause) {
         return new Bound<>(clusterName, servers, flushInterval, toDocWriteRequests, numOfShard,
             maxBulkRequestSize,
             maxRetries, retryPause, error);
@@ -244,7 +246,7 @@ public class ElasticsearchIO {
         checkArgument(numOfShard > 0);
         checkArgument(maxBulkRequestSize > 0);
         checkArgument(maxRetries >= 0);
-        checkArgument(retryPause >= 0);
+        checkArgument(retryPause.getMillis() >= 0);
         input
             .apply("Assign To Shard", ParDo.of(new AssignToShard<>(numOfShard)))
             .apply("Re-Window to Global Window", Window.<KV<Long, T>>into(new GlobalWindows())
@@ -282,13 +284,18 @@ public class ElasticsearchIO {
     private static class ElasticsearchWriter<T> extends DoFn<KV<Long, Iterable<T>>, Void> {
 
       private static final Logger LOG = LoggerFactory.getLogger(ElasticsearchWriter.class);
+      private static final String RETRY_ATTEMPT_LOG =
+          "Error writing to Elasticsearch. Retry attempt[%d]";
+      private static final String RETRY_FAILED_LOG =
+          "Error writing to ES after %d attempt(s). No more attempts allowed";
+
       private final ClientSupplier clientSupplier;
       private final SerializableFunction<T, Iterable<DocWriteRequest<?>>> toDocWriteRequests;
       private final ThrowingConsumer<BulkExecutionException> error;
       private FluentBackoff backoffConfig;
       private final int maxBulkRequestSize;
       private final int maxRetries;
-      private final int retryPause;
+      private final Duration retryPause;
 
       public ElasticsearchWriter(String clusterName,
                     InetSocketAddress[] servers,
@@ -296,7 +303,7 @@ public class ElasticsearchIO {
                     SerializableFunction<T, Iterable<DocWriteRequest<?>>> toDocWriteRequests,
                     ThrowingConsumer<BulkExecutionException> error,
                     int maxRetries,
-                    int retryPause) {
+                    Duration retryPause) {
         this.maxBulkRequestSize = maxBulkRequestSize;
         this.clientSupplier = new ClientSupplier(clusterName, servers);
         this.toDocWriteRequests = toDocWriteRequests;
@@ -309,7 +316,7 @@ public class ElasticsearchIO {
       public void setup() throws Exception {
         this.backoffConfig = FluentBackoff.DEFAULT
             .withMaxRetries(this.maxRetries)
-            .withInitialBackoff(Duration.standardSeconds(this.retryPause));
+            .withInitialBackoff(this.retryPause);
       }
 
       @SuppressWarnings("Duplicates")
@@ -332,58 +339,61 @@ public class ElasticsearchIO {
         final Iterable<List<DocWriteRequest>> chunks =
             Iterables.partition(docWriteRequests::iterator, maxBulkRequestSize);
 
-        chunks.forEach(chunk -> {
-          Exception exception;
+        final ProcessFunction<List<DocWriteRequest>, BulkResponse> requestFn =
+            request(clientSupplier, error);
+        final ProcessFunction<List<DocWriteRequest>, BulkResponse> retryFn =
+            retry(requestFn, backoffConfig);
 
+        for (final List<DocWriteRequest> chunk : chunks) {
+          try {
+            requestFn.apply(chunk);
+          } catch (Exception e) {
+            retryFn.apply(chunk);
+          }
+        }
+      }
+
+      private static ProcessFunction<List<DocWriteRequest>, BulkResponse> request(
+          final ClientSupplier clientSupplier,
+          final ThrowingConsumer<BulkExecutionException> bulkErrorHandler) {
+        return chunk -> {
+          final BulkRequest bulkRequest =
+              new BulkRequest().add(chunk.toArray(new DocWriteRequest[0]));
+          final BulkResponse bulkItemResponse = clientSupplier.get().bulk(bulkRequest).get();
+
+          if (bulkItemResponse.hasFailures()) {
+            bulkErrorHandler.accept(new BulkExecutionException(bulkItemResponse));
+          }
+
+          return bulkItemResponse;
+        };
+      }
+
+      private static ProcessFunction<List<DocWriteRequest>, BulkResponse> retry(
+          final ProcessFunction<List<DocWriteRequest>, BulkResponse> requestFn,
+          final FluentBackoff backoffConfig) {
+        return chunk -> {
           final BackOff backoff = backoffConfig.backoff();
+          int attempt = 0;
+          BulkResponse response = null;
+          Exception exception = null;
 
-          do {
+          while (response == null && BackOffUtils.next(Sleeper.DEFAULT, backoff)) {
+            LOG.warn(String.format(RETRY_ATTEMPT_LOG, ++attempt));
             try {
-              final BulkRequest bulkRequest = new BulkRequest().add(chunk.toArray(
-                  new DocWriteRequest[0]))
-                  .setRefreshPolicy(WriteRequest.RefreshPolicy.NONE);
-              final BulkResponse bulkItemResponse = clientSupplier.get().bulk(bulkRequest).get();
-              if (bulkItemResponse.hasFailures()) {
-                throw new BulkExecutionException(bulkItemResponse);
-              } else {
-                exception = null;
-                break;
-              }
+              response = requestFn.apply(chunk);
+              exception = null;
             } catch (Exception e) {
               exception = e;
-
-              LOG.error(
-                  "ElasticsearchWriter: Failed to bulk save chunk of " +
-                      Objects.toString(chunk.size()),
-                  exception);
-
-              // Backoff
-              try {
-                final long sleepTime = backoff.nextBackOffMillis();
-                if (sleepTime == BackOff.STOP) {
-                  break;
-                }
-                Thread.sleep(sleepTime);
-              } catch (InterruptedException | IOException e1) {
-                LOG.error("Interrupt during backoff", e1);
-                break;
-              }
             }
-          } while (true);
-
-          try {
-            if (exception != null) {
-              if (exception instanceof BulkExecutionException) {
-                // This may result in no exception being thrown, depending on callback.
-                error.accept((BulkExecutionException) exception);
-              } else {
-                throw exception;
-              }
-            }
-          } catch (Exception e) {
-            throw new RuntimeException(e);
           }
-        });
+
+          if (exception != null) {
+            throw new Exception(String.format(RETRY_FAILED_LOG, attempt), exception);
+          }
+
+          return response;
+        };
       }
     }
 
