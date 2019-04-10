@@ -24,7 +24,7 @@ import com.spotify.scio.avro._
 import org.apache.commons.io.FileUtils
 import org.scalatest._
 
-class ConverterProviderTest extends FlatSpec with Matchers with BeforeAndAfterAll {
+class ConverterProviderTest extends FlatSpec with Matchers {
 
   import ConverterProviderTest._
 
