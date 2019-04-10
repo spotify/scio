@@ -20,7 +20,7 @@ import org.apache.beam.sdk.extensions.sql.BeamSqlUdf
 import org.apache.beam.sdk.transforms.Combine.CombineFn
 import org.apache.beam.sdk.transforms.SerializableFunction
 
-sealed trait Udf
+sealed trait Udf { val fnName: String }
 
 private final case class UdfFromSerializableFn[I, O](
   fnName: String,

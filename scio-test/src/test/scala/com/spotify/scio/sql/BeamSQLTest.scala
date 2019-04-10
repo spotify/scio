@@ -561,6 +561,30 @@ class BeamSQLTest extends PipelineSpec {
     sc.parallelize(avroWithNullable)
       .to[CompatibleAvroTestRecord](To.safe) should containInAnyOrder(expectedAvro)
   }
+
+  "String interpolation" should "support simple queries" in runWithContext { sc =>
+    val expected = users.map { u =>
+      (u.username, u.age)
+    }
+    val in = sc.parallelize(users)
+    val r = sql"select username, age from $in".as[(String, Int)]
+    r should containInAnyOrder(expected)
+  }
+
+  it should "support UDF" in runWithContext { sc =>
+    val in = sc.parallelize(users)
+    val maxUserAge = Udf.fromAggregateFn("maxUserAge", new MaxUserAgeUdafFn())
+    val r = sql"select $maxUserAge(age) as maxUserAge from $in".as[Int]
+    r should containSingleValue(30)
+  }
+
+  it should "support joins" in runWithContext { sc =>
+    val a = sc.parallelize(users)
+    val b = sc.parallelize(users)
+    sql"""
+      select $a.username from $a join $b on $a.username = $b.username
+    """.as[String] shouldNot beEmpty
+  }
 }
 
 object TypeConvertionsTestData {
