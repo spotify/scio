@@ -22,7 +22,7 @@ import java.net.InetSocketAddress
 import com.spotify.scio.io.ClosedTap
 import com.spotify.scio.values.SCollection
 import com.spotify.scio.coders.Coder
-import com.spotify.scio.elasticsearch.ElasticsearchIO.WriteParam
+import com.spotify.scio.elasticsearch.ElasticsearchIO.{RetryConfig, WriteParam}
 import org.apache.beam.sdk.io.elasticsearch.ElasticsearchIO.Write.BulkExecutionException
 import org.elasticsearch.action.DocWriteRequest
 import org.joda.time.Duration
@@ -55,9 +55,10 @@ package object elasticsearch {
                             flushInterval: Duration = WriteParam.DefaultFlushInterval,
                             numOfShards: Long = WriteParam.DefaultNumShards,
                             maxBulkRequestSize: Int = WriteParam.DefaultMaxBulkRequestSize,
-                            errorFn: BulkExecutionException => Unit = WriteParam.DefaultErrorFn)(
+                            errorFn: BulkExecutionException => Unit = WriteParam.DefaultErrorFn,
+                            retry: RetryConfig = WriteParam.DefaultRetryConfig)(
       f: T => Iterable[DocWriteRequest[_]])(implicit coder: Coder[T]): ClosedTap[Nothing] = {
-      val param = WriteParam(f, errorFn, flushInterval, numOfShards, maxBulkRequestSize)
+      val param = WriteParam(f, errorFn, flushInterval, numOfShards, maxBulkRequestSize, retry)
       self.write(ElasticsearchIO[T](esOptions))(param)
     }
   }
