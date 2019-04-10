@@ -396,6 +396,26 @@ class CodersTest extends FlatSpec with Matchers {
     null.asInstanceOf[jShort] coderShould roundtrip(opts)
     (null, null).asInstanceOf[(String, String)] coderShould roundtrip(opts)
     DummyCC(null) coderShould roundtrip(opts)
+
+    type T = (String, Int, Top)
+    val example: T = ("Hello", 42, TA(1, "World"))
+    val nullExample1: T = ("Hello", 42, TA(1, null))
+    val nullExample2: T = ("Hello", 42, null)
+    example coderShould roundtrip(opts)
+    nullExample1 coderShould roundtrip(opts)
+    nullExample2 coderShould roundtrip(opts)
+
+    val nullBCoder = CoderMaterializer.beamWithDefault(Coder[T], o = opts)
+    nullBCoder.isRegisterByteSizeObserverCheap(nullExample1)
+    nullBCoder.isRegisterByteSizeObserverCheap(nullExample2)
+
+    val noopObserver =
+      new org.apache.beam.sdk.util.common.ElementByteSizeObserver {
+        def reportElementSize(s: Long) = ()
+      }
+
+    nullBCoder.registerByteSizeObserver(nullExample1, noopObserver)
+    nullBCoder.registerByteSizeObserver(nullExample2, noopObserver)
   }
 
   it should "have a useful stacktrace when a Coder throws" in {
