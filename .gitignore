@@ -7,3 +7,4 @@ target
 *.jfr
 
 .bloop
+.metals
