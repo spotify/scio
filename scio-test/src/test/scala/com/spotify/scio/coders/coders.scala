@@ -416,6 +416,15 @@ class CodersTest extends FlatSpec with Matchers {
 
     nullBCoder.registerByteSizeObserver(nullExample1, noopObserver)
     nullBCoder.registerByteSizeObserver(nullExample2, noopObserver)
+
+    import com.spotify.scio.avro.TestRecord
+    val record: GenericRecord = TestRecord
+      .newBuilder()
+      .setStringField(null)
+      .build()
+
+    val nullExample3 = (record, record.get("string_field"))
+    nullExample3 coderShould roundtrip(opts)
   }
 
   it should "have a useful stacktrace when a Coder throws" in {

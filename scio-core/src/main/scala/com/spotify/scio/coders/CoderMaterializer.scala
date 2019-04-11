@@ -45,7 +45,8 @@ object CoderMaterializer {
       case Beam(c) =>
         WrappedBCoder.create(nullCoder(o, c))
       case Fallback(ct) =>
-        WrappedBCoder.create(new KryoAtomicCoder[T](KryoOptions(o)))
+        val kryoCoder = new KryoAtomicCoder[T](KryoOptions(o))
+        WrappedBCoder.create(nullCoder(o, kryoCoder))
       case Transform(c, f) =>
         val u = f(beam(r, o, c))
         WrappedBCoder.create(beam(r, o, u))
