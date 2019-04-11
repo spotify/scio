@@ -284,7 +284,7 @@ scio> result.state
 res1: org.apache.beam.sdk.PipelineResult.State = RUNNING
 ```
 
-Note that now `sc.close()` doesn't block and wait until job completes and gives back control of the REPL right away. Use @scaladoc[`ScioResult`](com.spotify.scio.ScioResult) and `Future[Tap[T]]`s to check for progress, results and orchestrate jobs.
+Note that now `sc.close()` doesn't block and wait until job completes and gives back control of the REPL right away. Use @scaladoc[`ClosedScioContext`](com.spotify.scio.ClosedScioContext) to check for progress, results and orchestrate jobs.
 
 ### Multiple Scio contexts
 

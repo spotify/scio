@@ -49,4 +49,4 @@ Scio also offers some additional features.
 
 - Each worker can pull files from Google Cloud Storage via @scaladoc[`DistCache`](com.spotify.scio.values.DistCache) to be used in transforms locally, similar to Hadoop distributed cache. See @extref[DistCacheExample.scala](example:DistCacheExample).
 - Type safe BigQuery IO via Scala macros. Case classes and converters are generated at compile time based on BQ schema. This eliminates the error prone process of handling generic JSON objects. See @extref[TypedBigQueryTornadoes.scala](example:TypedBigQueryTornadoes).
-- Sinks (`saveAs*` methods) return `Future[Tap[T]]` that can be opened either in another pipeline as `SCollection[T]` or directly as `Iterator[T]` once the current pipeline completes. This enables complex pipeline orchestration. See @extref[WordCountOrchestration.scala](example:WordCountOrchestration).
+- Sinks (`saveAs*` methods) return `ClosedTap[T]` that can be opened either in another pipeline as `SCollection[T]` or directly as `Iterator[T]` once the current pipeline completes. This enables complex pipeline orchestration. See @extref[WordCountOrchestration.scala](example:WordCountOrchestration).

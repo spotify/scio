@@ -84,7 +84,7 @@ We want to adhere to the styles of well known Scala projects and use the followi
     writeDisposition: WriteDisposition,
     createDisposition: CreateDisposition,
     tableDescription: String,
-    timePartitioning: TimePartitioning)(implicit ev: T <:< TableRow): Future[Tap[TableRow]] = {
+    timePartitioning: TimePartitioning)(implicit ev: T <:< TableRow): ClosedTap[TableRow] = {
    // method body 
   }
 
@@ -95,7 +95,7 @@ We want to adhere to the styles of well known Scala projects and use the followi
     timePartitioning: TimePartitioning = TableWriteParam.DefaultTimePartitioning)(
     implicit tt: TypeTag[T],
     ev: T <:< HasAnnotation,
-    coder: Coder[T]): Future[Tap[T]] = {
+    coder: Coder[T]): ClosedTap[T] = {
       // method body
   }
 ```
