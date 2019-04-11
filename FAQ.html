@@ -273,7 +273,6 @@ spotify/scio
   <li><a href="FAQ.html#streaming-questions" class="header">Streaming questions</a>
   <ul>
     <li><a href="FAQ.html#how-do-i-update-a-streaming-job-" class="header">How do I update a streaming job?</a></li>
-    <li><a href="FAQ.html#how-do-i-read-pubsub-input-in-a-local-pipeline-" class="header">How do I read Pubsub input in a local pipeline?</a></li>
   </ul></li>
   <li><a href="FAQ.html#other-io-components" class="header">Other IO components</a>
   <ul>
@@ -477,17 +476,6 @@ sc.pubsubSubscription(&quot;projects/data-university/topics/data-university&quot
    .withName(&quot;BigWords&quot;).filter(_.length &gt; 6)
 </code></pre>
 <p>In this example, the <code>map</code>&rsquo;s transform name is &ldquo;MakeUpper&rdquo; and the <code>filter</code>&rsquo;s is &ldquo;BigWords&rdquo;. If we later decided that we want to count 6 letter words as &ldquo;big&rdquo; too, then we can change it to <code>_.length &gt; 5</code>, and because the transform name is the same the job can be updated on the fly.</p>
-<h4><a href="#how-do-i-read-pubsub-input-in-a-local-pipeline-" name="how-do-i-read-pubsub-input-in-a-local-pipeline-" class="anchor"><span class="anchor-link"></span></a>How do I read Pubsub input in a local pipeline?</h4>
-<p>You can use a custom <a href="https://beam.apache.org/releases/javadoc/2.11.0/?org/apache/beam/sdk/io/gcp/pubsub/PubsubIO.html"><code>PubsubIO</code></a> transform and specify <code>maxNumRecord</code> &amp; <code>maxReadTime</code> in order not to blow up local JVM.</p>
-<pre class="prettyprint"><code class="language-scala">sc.customInput(&quot;ReadFromPubsub&quot;,
-  PubsubIO.read()
-    .topic(&quot;projects/data-university/topics/data-university&quot;)
-    .idLabel(&quot;id&quot;)
-    .timestampLabel(&quot;ts&quot;)
-    .withCoder(StringUtf8Coder.of())
-    .maxNumRecords(50)
-    .maxReadTime(Duration.standardMinutes(10))
-</code></pre>
 <h3><a href="#other-io-components" name="other-io-components" class="anchor"><span class="anchor-link"></span></a>Other IO components</h3>
 <h4><a href="#how-do-i-access-various-files-outside-of-a-sciocontext-" name="how-do-i-access-various-files-outside-of-a-sciocontext-" class="anchor"><span class="anchor-link"></span></a>How do I access various files outside of a ScioContext?</h4>
 <ul>

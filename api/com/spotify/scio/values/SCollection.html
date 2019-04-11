@@ -418,9 +418,9 @@ multiple times (use <a href="#distinct:com.spotify.scio.values.SCollection[T]" c
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
     </li><li name="com.spotify.scio.values.SCollection#aggregate" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="transform">
-      <a id="aggregate[A,U](aggregator:com.twitter.algebird.Aggregator[T,A,U])(implicitevidence$4:com.spotify.scio.coders.Coder[A],implicitevidence$5:com.spotify.scio.coders.Coder[U],implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[U]"></a><a id="aggregate[A,U](Aggregator[T,A,U])(Coder[A],Coder[U],Coder[T]):SCollection[U]"></a>
+      <a id="aggregate[A,U](aggregator:com.twitter.algebird.Aggregator[T,A,U])(implicitevidence$5:com.spotify.scio.coders.Coder[A],implicitevidence$6:com.spotify.scio.coders.Coder[U],implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[U]"></a><a id="aggregate[A,U](Aggregator[T,A,U])(Coder[A],Coder[U],Coder[T]):SCollection[U]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/values/SCollection.html#aggregate[A,U](aggregator:com.twitter.algebird.Aggregator[T,A,U])(implicitevidence$4:com.spotify.scio.coders.Coder[A],implicitevidence$5:com.spotify.scio.coders.Coder[U],implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[U]" title="Permalink">
+      <a href="../../../../com/spotify/scio/values/SCollection.html#aggregate[A,U](aggregator:com.twitter.algebird.Aggregator[T,A,U])(implicitevidence$5:com.spotify.scio.coders.Coder[A],implicitevidence$6:com.spotify.scio.coders.Coder[U],implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[U]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -437,9 +437,9 @@ to <code>A</code>, then we reduce with a <span class="extype" name="com.twitter.
 finally we present the results as <code>U</code>. This could be more powerful and better optimized in
 some cases.</p></div></div>
     </li><li name="com.spotify.scio.values.SCollection#aggregate" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="transform">
-      <a id="aggregate[U](zeroValue:U)(seqOp:(U,T)=&gt;U,combOp:(U,U)=&gt;U)(implicitevidence$3:com.spotify.scio.coders.Coder[U],implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[U]"></a><a id="aggregate[U](U)((U,T)⇒U,(U,U)⇒U)(Coder[U],Coder[T]):SCollection[U]"></a>
+      <a id="aggregate[U](zeroValue:U)(seqOp:(U,T)=&gt;U,combOp:(U,U)=&gt;U)(implicitevidence$4:com.spotify.scio.coders.Coder[U],implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[U]"></a><a id="aggregate[U](U)((U,T)⇒U,(U,U)⇒U)(Coder[U],Coder[T]):SCollection[U]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/values/SCollection.html#aggregate[U](zeroValue:U)(seqOp:(U,T)=&gt;U,combOp:(U,U)=&gt;U)(implicitevidence$3:com.spotify.scio.coders.Coder[U],implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[U]" title="Permalink">
+      <a href="../../../../com/spotify/scio/values/SCollection.html#aggregate[U](zeroValue:U)(seqOp:(U,T)=&gt;U,combOp:(U,U)=&gt;U)(implicitevidence$4:com.spotify.scio.coders.Coder[U],implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[U]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -473,13 +473,13 @@ of creating a new <code>U</code> to avoid memory allocation.</p></div></div>
       
       <p class="shortcomment cmt">Apply a <span class="extype" name="org.apache.beam.sdk.transforms.PTransform">PTransform</span> and wrap the output in an
 <a href="" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>.</p><div class="fullcomment"><div class="comment cmt"><p>Apply a <span class="extype" name="org.apache.beam.sdk.transforms.PTransform">PTransform</span> and wrap the output in an
-<a href="" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>. This is a special case of <a href="#applyTransform[U](transform:org.apache.beam.sdk.transforms.PTransform[_&gt;:org.apache.beam.sdk.values.PCollection[T],org.apache.beam.sdk.values.PCollection[U]])(implicitevidence$2:com.spotify.scio.coders.Coder[U]):com.spotify.scio.values.SCollection[U]" class="extmbr" name="com.spotify.scio.values.SCollection#applyTransform">applyTransform</a> for transforms with <span class="extype" name="KV">KV</span>
+<a href="" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>. This is a special case of <a href="#applyTransform[U](transform:org.apache.beam.sdk.transforms.PTransform[_&gt;:org.apache.beam.sdk.values.PCollection[T],org.apache.beam.sdk.values.PCollection[U]])(implicitevidence$3:com.spotify.scio.coders.Coder[U]):com.spotify.scio.values.SCollection[U]" class="extmbr" name="com.spotify.scio.values.SCollection#applyTransform">applyTransform</a> for transforms with <span class="extype" name="KV">KV</span>
 output.
 </p></div></div>
     </li><li name="com.spotify.scio.values.SCollection#applyTransform" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="applyTransform[U](transform:org.apache.beam.sdk.transforms.PTransform[_&gt;:org.apache.beam.sdk.values.PCollection[T],org.apache.beam.sdk.values.PCollection[U]])(implicitevidence$2:com.spotify.scio.coders.Coder[U]):com.spotify.scio.values.SCollection[U]"></a><a id="applyTransform[U](PTransform[_&gt;:PCollection[T],PCollection[U]])(Coder[U]):SCollection[U]"></a>
+      <a id="applyTransform[U](transform:org.apache.beam.sdk.transforms.PTransform[_&gt;:org.apache.beam.sdk.values.PCollection[T],org.apache.beam.sdk.values.PCollection[U]])(implicitevidence$3:com.spotify.scio.coders.Coder[U]):com.spotify.scio.values.SCollection[U]"></a><a id="applyTransform[U](PTransform[_&gt;:PCollection[T],PCollection[U]])(Coder[U]):SCollection[U]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/values/SCollection.html#applyTransform[U](transform:org.apache.beam.sdk.transforms.PTransform[_&gt;:org.apache.beam.sdk.values.PCollection[T],org.apache.beam.sdk.values.PCollection[U]])(implicitevidence$2:com.spotify.scio.coders.Coder[U]):com.spotify.scio.values.SCollection[U]" title="Permalink">
+      <a href="../../../../com/spotify/scio/values/SCollection.html#applyTransform[U](transform:org.apache.beam.sdk.transforms.PTransform[_&gt;:org.apache.beam.sdk.values.PCollection[T],org.apache.beam.sdk.values.PCollection[U]])(implicitevidence$3:com.spotify.scio.coders.Coder[U]):com.spotify.scio.values.SCollection[U]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -606,9 +606,9 @@ to be used with <a href="#withSideInputs(sides:com.spotify.scio.values.SideInput
               
         </dd></dl></div>
     </li><li name="com.spotify.scio.values.SCollection#collect" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="transform">
-      <a id="collect[U](pfn:PartialFunction[T,U])(implicitevidence$6:com.spotify.scio.coders.Coder[U]):com.spotify.scio.values.SCollection[U]"></a><a id="collect[U](PartialFunction[T,U])(Coder[U]):SCollection[U]"></a>
+      <a id="collect[U](pfn:PartialFunction[T,U])(implicitevidence$7:com.spotify.scio.coders.Coder[U]):com.spotify.scio.values.SCollection[U]"></a><a id="collect[U](PartialFunction[T,U])(Coder[U]):SCollection[U]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/values/SCollection.html#collect[U](pfn:PartialFunction[T,U])(implicitevidence$6:com.spotify.scio.coders.Coder[U]):com.spotify.scio.values.SCollection[U]" title="Permalink">
+      <a href="../../../../com/spotify/scio/values/SCollection.html#collect[U](pfn:PartialFunction[T,U])(implicitevidence$7:com.spotify.scio.coders.Coder[U]):com.spotify.scio.values.SCollection[U]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -622,9 +622,9 @@ to be used with <a href="#withSideInputs(sides:com.spotify.scio.values.SideInput
       
       <p class="shortcomment cmt">Filter the elements for which the given <code>PartialFunction</code> is defined, and then map.</p>
     </li><li name="com.spotify.scio.values.SCollection#combine" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="transform">
-      <a id="combine[C](createCombiner:T=&gt;C)(mergeValue:(C,T)=&gt;C)(mergeCombiners:(C,C)=&gt;C)(implicitevidence$7:com.spotify.scio.coders.Coder[C],implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[C]"></a><a id="combine[C]((T)⇒C)((C,T)⇒C)((C,C)⇒C)(Coder[C],Coder[T]):SCollection[C]"></a>
+      <a id="combine[C](createCombiner:T=&gt;C)(mergeValue:(C,T)=&gt;C)(mergeCombiners:(C,C)=&gt;C)(implicitevidence$8:com.spotify.scio.coders.Coder[C],implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[C]"></a><a id="combine[C]((T)⇒C)((C,T)⇒C)((C,C)⇒C)(Coder[C],Coder[T]):SCollection[C]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/values/SCollection.html#combine[C](createCombiner:T=&gt;C)(mergeValue:(C,T)=&gt;C)(mergeCombiners:(C,C)=&gt;C)(implicitevidence$7:com.spotify.scio.coders.Coder[C],implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[C]" title="Permalink">
+      <a href="../../../../com/spotify/scio/values/SCollection.html#combine[C](createCombiner:T=&gt;C)(mergeValue:(C,T)=&gt;C)(mergeCombiners:(C,C)=&gt;C)(implicitevidence$8:com.spotify.scio.coders.Coder[C],implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[C]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -707,9 +707,9 @@ more accurate the estimate will be; should be <code>&gt;= 16</code></p></dd></dl
       
       <p class="shortcomment cmt">Count of each unique value in this SCollection as an SCollection of (value, count) pairs.</p>
     </li><li name="com.spotify.scio.values.SCollection#cross" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="hash">
-      <a id="cross[U](that:com.spotify.scio.values.SCollection[U])(implicitevidence$10:com.spotify.scio.coders.Coder[U],implicittcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[(T,U)]"></a><a id="cross[U](SCollection[U])(Coder[U],Coder[T]):SCollection[(T,U)]"></a>
+      <a id="cross[U](that:com.spotify.scio.values.SCollection[U])(implicitevidence$11:com.spotify.scio.coders.Coder[U],implicittcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[(T,U)]"></a><a id="cross[U](SCollection[U])(Coder[U],Coder[T]):SCollection[(T,U)]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/values/SCollection.html#cross[U](that:com.spotify.scio.values.SCollection[U])(implicitevidence$10:com.spotify.scio.coders.Coder[U],implicittcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[(T,U)]" title="Permalink">
+      <a href="../../../../com/spotify/scio/values/SCollection.html#cross[U](that:com.spotify.scio.values.SCollection[U])(implicitevidence$11:com.spotify.scio.coders.Coder[U],implicittcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[(T,U)]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -847,9 +847,9 @@ representative value for each input element.
               
         </dd></dl></div>
     </li><li name="com.spotify.scio.values.SCollection#flatMap" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="transform">
-      <a id="flatMap[U](f:T=&gt;TraversableOnce[U])(implicitevidence$8:com.spotify.scio.coders.Coder[U]):com.spotify.scio.values.SCollection[U]"></a><a id="flatMap[U]((T)⇒TraversableOnce[U])(Coder[U]):SCollection[U]"></a>
+      <a id="flatMap[U](f:T=&gt;TraversableOnce[U])(implicitevidence$9:com.spotify.scio.coders.Coder[U]):com.spotify.scio.values.SCollection[U]"></a><a id="flatMap[U]((T)⇒TraversableOnce[U])(Coder[U]):SCollection[U]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/values/SCollection.html#flatMap[U](f:T=&gt;TraversableOnce[U])(implicitevidence$8:com.spotify.scio.coders.Coder[U]):com.spotify.scio.values.SCollection[U]" title="Permalink">
+      <a href="../../../../com/spotify/scio/values/SCollection.html#flatMap[U](f:T=&gt;TraversableOnce[U])(implicitevidence$9:com.spotify.scio.coders.Coder[U]):com.spotify.scio.values.SCollection[U]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -991,9 +991,9 @@ aggregation (such as a sum or average) over each key, using
       
       <p class="shortcomment cmt">Return a new SCollection containing only the elements that also exist in the SideSet.</p>
     </li><li name="com.spotify.scio.values.SCollection#hashLookup" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="hash">
-      <a id="hashLookup[V](that:com.spotify.scio.values.SCollection[(T,V)])(implicitevidence$11:com.spotify.scio.coders.Coder[V],implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[(T,Iterable[V])]"></a><a id="hashLookup[V](SCollection[(T,V)])(Coder[V],Coder[T]):SCollection[(T,Iterable[V])]"></a>
+      <a id="hashLookup[V](that:com.spotify.scio.values.SCollection[(T,V)])(implicitevidence$12:com.spotify.scio.coders.Coder[V],implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[(T,Iterable[V])]"></a><a id="hashLookup[V](SCollection[(T,V)])(Coder[V],Coder[T]):SCollection[(T,Iterable[V])]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/values/SCollection.html#hashLookup[V](that:com.spotify.scio.values.SCollection[(T,V)])(implicitevidence$11:com.spotify.scio.coders.Coder[V],implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[(T,Iterable[V])]" title="Permalink">
+      <a href="../../../../com/spotify/scio/values/SCollection.html#hashLookup[V](that:com.spotify.scio.values.SCollection[(T,V)])(implicitevidence$12:com.spotify.scio.coders.Coder[V],implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[(T,Iterable[V])]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -1076,9 +1076,9 @@ duplicate elements, even if the input SCollections did.</p><p>Note that this met
       
       <p class="shortcomment cmt">Create tuples of the elements in this SCollection by applying <code>f</code>.</p>
     </li><li name="com.spotify.scio.values.SCollection#map" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="transform">
-      <a id="map[U](f:T=&gt;U)(implicitevidence$9:com.spotify.scio.coders.Coder[U]):com.spotify.scio.values.SCollection[U]"></a><a id="map[U]((T)⇒U)(Coder[U]):SCollection[U]"></a>
+      <a id="map[U](f:T=&gt;U)(implicitevidence$10:com.spotify.scio.coders.Coder[U]):com.spotify.scio.values.SCollection[U]"></a><a id="map[U]((T)⇒U)(Coder[U]):SCollection[U]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/values/SCollection.html#map[U](f:T=&gt;U)(implicitevidence$9:com.spotify.scio.coders.Coder[U]):com.spotify.scio.values.SCollection[U]" title="Permalink">
+      <a href="../../../../com/spotify/scio/values/SCollection.html#map[U](f:T=&gt;U)(implicitevidence$10:com.spotify.scio.coders.Coder[U]):com.spotify.scio.values.SCollection[U]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -1092,9 +1092,9 @@ duplicate elements, even if the input SCollections did.</p><p>Note that this met
       
       <p class="shortcomment cmt">Return a new SCollection by applying a function to all elements of this SCollection.</p>
     </li><li name="com.spotify.scio.values.SCollection#materialize" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="output">
-      <a id="materialize(implicitcoder:com.spotify.scio.coders.Coder[T]):scala.concurrent.Future[com.spotify.scio.io.Tap[T]]"></a><a id="materialize(Coder[T]):Future[Tap[T]]"></a>
+      <a id="materialize(implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.io.ClosedTap[T]"></a><a id="materialize(Coder[T]):ClosedTap[T]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/values/SCollection.html#materialize(implicitcoder:com.spotify.scio.coders.Coder[T]):scala.concurrent.Future[com.spotify.scio.io.Tap[T]]" title="Permalink">
+      <a href="../../../../com/spotify/scio/values/SCollection.html#materialize(implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.io.ClosedTap[T]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -1103,7 +1103,7 @@ duplicate elements, even if the input SCollections did.</p><p>Note that this met
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">materialize</span><span class="params">(<span class="implicit">implicit </span><span name="coder">coder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.SCollection.T">T</span>]</span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/concurrent/Future.html#scala.concurrent.Future" class="extype" name="scala.concurrent.Future">Future</a>[<a href="../io/Tap.html" class="extype" name="com.spotify.scio.io.Tap">Tap</a>[<span class="extype" name="com.spotify.scio.values.SCollection.T">T</span>]]</span>
+        <span class="name">materialize</span><span class="params">(<span class="implicit">implicit </span><span name="coder">coder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.SCollection.T">T</span>]</span>)</span><span class="result">: <a href="../io/ClosedTap.html" class="extype" name="com.spotify.scio.io.ClosedTap">ClosedTap</a>[<span class="extype" name="com.spotify.scio.values.SCollection.T">T</span>]</span>
       </span>
       
       <p class="shortcomment cmt">Extract data from this SCollection as a <code>Future</code>.</p><div class="fullcomment"><div class="comment cmt"><p>Extract data from this SCollection as a <code>Future</code>. The <code>Future</code> will be completed once the
@@ -1396,9 +1396,9 @@ Note: <code>0 &lt; weightA + weightB &lt; 1</code>
       <p class="shortcomment cmt">Randomly splits this SCollection with the provided weights.</p><div class="fullcomment"><div class="comment cmt"><p>Randomly splits this SCollection with the provided weights.
 </p></div><dl class="paramcmts block"><dt class="param">weights</dt><dd class="cmt"><p>weights for splits, will be normalized if they don't sum to 1</p></dd><dt>returns</dt><dd class="cmt"><p>split SCollections in an array</p></dd></dl></div>
     </li><li name="com.spotify.scio.values.SCollection#readAll" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="readAll[U](read:org.apache.beam.sdk.transforms.PTransform[org.apache.beam.sdk.values.PCollection[String],org.apache.beam.sdk.values.PCollection[U]])(implicitevidence$13:com.spotify.scio.coders.Coder[U],implicitev:T&lt;:&lt;String):com.spotify.scio.values.SCollection[U]"></a><a id="readAll[U](PTransform[PCollection[String],PCollection[U]])(Coder[U],&lt;:&lt;[T,String]):SCollection[U]"></a>
+      <a id="readAll[U](read:org.apache.beam.sdk.transforms.PTransform[org.apache.beam.sdk.values.PCollection[String],org.apache.beam.sdk.values.PCollection[U]])(implicitevidence$14:com.spotify.scio.coders.Coder[U],implicitev:T&lt;:&lt;String):com.spotify.scio.values.SCollection[U]"></a><a id="readAll[U](PTransform[PCollection[String],PCollection[U]])(Coder[U],&lt;:&lt;[T,String]):SCollection[U]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/values/SCollection.html#readAll[U](read:org.apache.beam.sdk.transforms.PTransform[org.apache.beam.sdk.values.PCollection[String],org.apache.beam.sdk.values.PCollection[U]])(implicitevidence$13:com.spotify.scio.coders.Coder[U],implicitev:T&lt;:&lt;String):com.spotify.scio.values.SCollection[U]" title="Permalink">
+      <a href="../../../../com/spotify/scio/values/SCollection.html#readAll[U](read:org.apache.beam.sdk.transforms.PTransform[org.apache.beam.sdk.values.PCollection[String],org.apache.beam.sdk.values.PCollection[U]])(implicitevidence$14:com.spotify.scio.coders.Coder[U],implicitev:T&lt;:&lt;String):com.spotify.scio.values.SCollection[U]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -1477,9 +1477,9 @@ binary operator.</p>
       
       <p class="shortcomment cmt">Return a sampled subset of this SCollection.</p><div class="fullcomment"><div class="comment cmt"><p>Return a sampled subset of this SCollection.</p></div><dl class="paramcmts block"><dt>returns</dt><dd class="cmt"><p>a new SCollection whose single value is an <code>Iterable</code> of the samples</p></dd></dl></div>
     </li><li name="com.spotify.scio.values.SCollection#saveAsBinaryFile" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="output">
-      <a id="saveAsBinaryFile(path:String,numShards:Int,suffix:String,compression:org.apache.beam.sdk.io.Compression)(implicitev:T&lt;:&lt;Array[Byte]):scala.concurrent.Future[com.spotify.scio.io.Tap[Nothing]]"></a><a id="saveAsBinaryFile(String,Int,String,Compression)(&lt;:&lt;[T,Array[Byte]]):Future[Tap[Nothing]]"></a>
+      <a id="saveAsBinaryFile(path:String,numShards:Int,suffix:String,compression:org.apache.beam.sdk.io.Compression)(implicitev:T&lt;:&lt;Array[Byte]):com.spotify.scio.io.ClosedTap[Nothing]"></a><a id="saveAsBinaryFile(String,Int,String,Compression)(&lt;:&lt;[T,Array[Byte]]):ClosedTap[Nothing]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/values/SCollection.html#saveAsBinaryFile(path:String,numShards:Int,suffix:String,compression:org.apache.beam.sdk.io.Compression)(implicitev:T&lt;:&lt;Array[Byte]):scala.concurrent.Future[com.spotify.scio.io.Tap[Nothing]]" title="Permalink">
+      <a href="../../../../com/spotify/scio/values/SCollection.html#saveAsBinaryFile(path:String,numShards:Int,suffix:String,compression:org.apache.beam.sdk.io.Compression)(implicitev:T&lt;:&lt;Array[Byte]):com.spotify.scio.io.ClosedTap[Nothing]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -1488,14 +1488,14 @@ binary operator.</p>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">saveAsBinaryFile</span><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="numShards">numShards: <a href="http://www.scala-lang.org/api/2.12.8/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a> = <span class="symbol">0</span></span>, <span name="suffix">suffix: <span class="extype" name="scala.Predef.String">String</span> = <span class="symbol">&quot;.bin&quot;</span></span>, <span name="compression">compression: <span class="extype" name="org.apache.beam.sdk.io.Compression">Compression</span> = <span class="symbol"><span class="name"><a href="../../../../org/index.html">Compression.UNCOMPRESSED</a></span></span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="ev">ev: <span class="extype" name="scala.Predef.&lt;:&lt;">&lt;:&lt;</span>[<span class="extype" name="com.spotify.scio.values.SCollection.T">T</span>, <a href="http://www.scala-lang.org/api/2.12.8/scala/Array.html#scala.Array" class="extype" name="scala.Array">Array</a>[<a href="http://www.scala-lang.org/api/2.12.8/scala/Byte.html#scala.Byte" class="extype" name="scala.Byte">Byte</a>]]</span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/concurrent/Future.html#scala.concurrent.Future" class="extype" name="scala.concurrent.Future">Future</a>[<a href="../io/Tap.html" class="extype" name="com.spotify.scio.io.Tap">Tap</a>[<a href="http://www.scala-lang.org/api/2.12.8/scala/Nothing.html#scala.Nothing" class="extype" name="scala.Nothing">Nothing</a>]]</span>
+        <span class="name">saveAsBinaryFile</span><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="numShards">numShards: <a href="http://www.scala-lang.org/api/2.12.8/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a> = <span class="symbol">0</span></span>, <span name="suffix">suffix: <span class="extype" name="scala.Predef.String">String</span> = <span class="symbol">&quot;.bin&quot;</span></span>, <span name="compression">compression: <span class="extype" name="org.apache.beam.sdk.io.Compression">Compression</span> = <span class="symbol"><span class="name"><a href="../../../../org/index.html">Compression.UNCOMPRESSED</a></span></span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="ev">ev: <span class="extype" name="scala.Predef.&lt;:&lt;">&lt;:&lt;</span>[<span class="extype" name="com.spotify.scio.values.SCollection.T">T</span>, <a href="http://www.scala-lang.org/api/2.12.8/scala/Array.html#scala.Array" class="extype" name="scala.Array">Array</a>[<a href="http://www.scala-lang.org/api/2.12.8/scala/Byte.html#scala.Byte" class="extype" name="scala.Byte">Byte</a>]]</span>)</span><span class="result">: <a href="../io/ClosedTap.html" class="extype" name="com.spotify.scio.io.ClosedTap">ClosedTap</a>[<a href="http://www.scala-lang.org/api/2.12.8/scala/Nothing.html#scala.Nothing" class="extype" name="scala.Nothing">Nothing</a>]</span>
       </span>
       
       <p class="shortcomment cmt">Save this SCollection as raw bytes.</p><div class="fullcomment"><div class="comment cmt"><p>Save this SCollection as raw bytes. Note that elements must be of type <code>Array[Byte]</code>.</p></div></div>
     </li><li name="com.spotify.scio.values.SCollection#saveAsCustomOutput" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="output">
-      <a id="saveAsCustomOutput[O&lt;:org.apache.beam.sdk.values.POutput](name:String,transform:org.apache.beam.sdk.transforms.PTransform[org.apache.beam.sdk.values.PCollection[T],O]):scala.concurrent.Future[com.spotify.scio.io.Tap[T]]"></a><a id="saveAsCustomOutput[O&lt;:POutput](String,PTransform[PCollection[T],O]):Future[Tap[T]]"></a>
+      <a id="saveAsCustomOutput[O&lt;:org.apache.beam.sdk.values.POutput](name:String,transform:org.apache.beam.sdk.transforms.PTransform[org.apache.beam.sdk.values.PCollection[T],O]):com.spotify.scio.io.ClosedTap[Nothing]"></a><a id="saveAsCustomOutput[O&lt;:POutput](String,PTransform[PCollection[T],O]):ClosedTap[Nothing]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/values/SCollection.html#saveAsCustomOutput[O&lt;:org.apache.beam.sdk.values.POutput](name:String,transform:org.apache.beam.sdk.transforms.PTransform[org.apache.beam.sdk.values.PCollection[T],O]):scala.concurrent.Future[com.spotify.scio.io.Tap[T]]" title="Permalink">
+      <a href="../../../../com/spotify/scio/values/SCollection.html#saveAsCustomOutput[O&lt;:org.apache.beam.sdk.values.POutput](name:String,transform:org.apache.beam.sdk.transforms.PTransform[org.apache.beam.sdk.values.PCollection[T],O]):com.spotify.scio.io.ClosedTap[Nothing]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -1504,14 +1504,14 @@ binary operator.</p>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">saveAsCustomOutput</span><span class="tparams">[<span name="O">O &lt;: <span class="extype" name="org.apache.beam.sdk.values.POutput">POutput</span></span>]</span><span class="params">(<span name="name">name: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="transform">transform: <span class="extype" name="org.apache.beam.sdk.transforms.PTransform">PTransform</span>[<span class="extype" name="org.apache.beam.sdk.values.PCollection">PCollection</span>[<span class="extype" name="com.spotify.scio.values.SCollection.T">T</span>], <span class="extype" name="com.spotify.scio.values.SCollection.saveAsCustomOutput.O">O</span>]</span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/concurrent/Future.html#scala.concurrent.Future" class="extype" name="scala.concurrent.Future">Future</a>[<a href="../io/Tap.html" class="extype" name="com.spotify.scio.io.Tap">Tap</a>[<span class="extype" name="com.spotify.scio.values.SCollection.T">T</span>]]</span>
+        <span class="name">saveAsCustomOutput</span><span class="tparams">[<span name="O">O &lt;: <span class="extype" name="org.apache.beam.sdk.values.POutput">POutput</span></span>]</span><span class="params">(<span name="name">name: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="transform">transform: <span class="extype" name="org.apache.beam.sdk.transforms.PTransform">PTransform</span>[<span class="extype" name="org.apache.beam.sdk.values.PCollection">PCollection</span>[<span class="extype" name="com.spotify.scio.values.SCollection.T">T</span>], <span class="extype" name="com.spotify.scio.values.SCollection.saveAsCustomOutput.O">O</span>]</span>)</span><span class="result">: <a href="../io/ClosedTap.html" class="extype" name="com.spotify.scio.io.ClosedTap">ClosedTap</a>[<a href="http://www.scala-lang.org/api/2.12.8/scala/Nothing.html#scala.Nothing" class="extype" name="scala.Nothing">Nothing</a>]</span>
       </span>
       
       <p class="shortcomment cmt">Save this SCollection with a custom output transform.</p><div class="fullcomment"><div class="comment cmt"><p>Save this SCollection with a custom output transform. The transform should have a unique name.</p></div></div>
     </li><li name="com.spotify.scio.values.SCollection#saveAsDatastore" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="output">
-      <a id="saveAsDatastore(projectId:String)(implicitev:T&lt;:&lt;com.google.datastore.v1.Entity):scala.concurrent.Future[com.spotify.scio.io.Tap[Nothing]]"></a><a id="saveAsDatastore(String)(&lt;:&lt;[T,Entity]):Future[Tap[Nothing]]"></a>
+      <a id="saveAsDatastore(projectId:String)(implicitev:T&lt;:&lt;com.google.datastore.v1.Entity):com.spotify.scio.io.ClosedTap[Nothing]"></a><a id="saveAsDatastore(String)(&lt;:&lt;[T,Entity]):ClosedTap[Nothing]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/values/SCollection.html#saveAsDatastore(projectId:String)(implicitev:T&lt;:&lt;com.google.datastore.v1.Entity):scala.concurrent.Future[com.spotify.scio.io.Tap[Nothing]]" title="Permalink">
+      <a href="../../../../com/spotify/scio/values/SCollection.html#saveAsDatastore(projectId:String)(implicitev:T&lt;:&lt;com.google.datastore.v1.Entity):com.spotify.scio.io.ClosedTap[Nothing]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -1520,14 +1520,14 @@ binary operator.</p>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">saveAsDatastore</span><span class="params">(<span name="projectId">projectId: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="ev">ev: <span class="extype" name="scala.Predef.&lt;:&lt;">&lt;:&lt;</span>[<span class="extype" name="com.spotify.scio.values.SCollection.T">T</span>, <span class="extype" name="com.google.datastore.v1.Entity">Entity</span>]</span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/concurrent/Future.html#scala.concurrent.Future" class="extype" name="scala.concurrent.Future">Future</a>[<a href="../io/Tap.html" class="extype" name="com.spotify.scio.io.Tap">Tap</a>[<a href="http://www.scala-lang.org/api/2.12.8/scala/Nothing.html#scala.Nothing" class="extype" name="scala.Nothing">Nothing</a>]]</span>
+        <span class="name">saveAsDatastore</span><span class="params">(<span name="projectId">projectId: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="ev">ev: <span class="extype" name="scala.Predef.&lt;:&lt;">&lt;:&lt;</span>[<span class="extype" name="com.spotify.scio.values.SCollection.T">T</span>, <span class="extype" name="com.google.datastore.v1.Entity">Entity</span>]</span>)</span><span class="result">: <a href="../io/ClosedTap.html" class="extype" name="com.spotify.scio.io.ClosedTap">ClosedTap</a>[<a href="http://www.scala-lang.org/api/2.12.8/scala/Nothing.html#scala.Nothing" class="extype" name="scala.Nothing">Nothing</a>]</span>
       </span>
       
       <p class="shortcomment cmt">Save this SCollection as a Datastore dataset.</p><div class="fullcomment"><div class="comment cmt"><p>Save this SCollection as a Datastore dataset. Note that elements must be of type <code>Entity</code>.</p></div></div>
     </li><li name="com.spotify.scio.values.SCollection#saveAsPubsub" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="output">
-      <a id="saveAsPubsub(topic:String,idAttribute:String,timestampAttribute:String,maxBatchSize:Option[Int],maxBatchBytesSize:Option[Int])(implicitct:scala.reflect.ClassTag[T],implicitcoder:com.spotify.scio.coders.Coder[T]):scala.concurrent.Future[com.spotify.scio.io.Tap[Nothing]]"></a><a id="saveAsPubsub(String,String,String,Option[Int],Option[Int])(ClassTag[T],Coder[T]):Future[Tap[Nothing]]"></a>
+      <a id="saveAsPubsub(topic:String,idAttribute:String,timestampAttribute:String,maxBatchSize:Option[Int],maxBatchBytesSize:Option[Int])(implicitct:scala.reflect.ClassTag[T],implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.io.ClosedTap[Nothing]"></a><a id="saveAsPubsub(String,String,String,Option[Int],Option[Int])(ClassTag[T],Coder[T]):ClosedTap[Nothing]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/values/SCollection.html#saveAsPubsub(topic:String,idAttribute:String,timestampAttribute:String,maxBatchSize:Option[Int],maxBatchBytesSize:Option[Int])(implicitct:scala.reflect.ClassTag[T],implicitcoder:com.spotify.scio.coders.Coder[T]):scala.concurrent.Future[com.spotify.scio.io.Tap[Nothing]]" title="Permalink">
+      <a href="../../../../com/spotify/scio/values/SCollection.html#saveAsPubsub(topic:String,idAttribute:String,timestampAttribute:String,maxBatchSize:Option[Int],maxBatchBytesSize:Option[Int])(implicitct:scala.reflect.ClassTag[T],implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.io.ClosedTap[Nothing]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -1536,14 +1536,14 @@ binary operator.</p>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">saveAsPubsub</span><span class="params">(<span name="topic">topic: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="idAttribute">idAttribute: <span class="extype" name="scala.Predef.String">String</span> = <span class="symbol">null</span></span>, <span name="timestampAttribute">timestampAttribute: <span class="extype" name="scala.Predef.String">String</span> = <span class="symbol">null</span></span>, <span name="maxBatchSize">maxBatchSize: <a href="http://www.scala-lang.org/api/2.12.8/scala/Option.html#scala.Option" class="extype" name="scala.Option">Option</a>[<a href="http://www.scala-lang.org/api/2.12.8/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a>] = <span class="symbol">None</span></span>, <span name="maxBatchBytesSize">maxBatchBytesSize: <a href="http://www.scala-lang.org/api/2.12.8/scala/Option.html#scala.Option" class="extype" name="scala.Option">Option</a>[<a href="http://www.scala-lang.org/api/2.12.8/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a>] = <span class="symbol">None</span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="ct">ct: <a href="http://www.scala-lang.org/api/2.12.8/scala/reflect/ClassTag.html#scala.reflect.ClassTag" class="extype" name="scala.reflect.ClassTag">ClassTag</a>[<span class="extype" name="com.spotify.scio.values.SCollection.T">T</span>]</span>, <span name="coder">coder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.SCollection.T">T</span>]</span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/concurrent/Future.html#scala.concurrent.Future" class="extype" name="scala.concurrent.Future">Future</a>[<a href="../io/Tap.html" class="extype" name="com.spotify.scio.io.Tap">Tap</a>[<a href="http://www.scala-lang.org/api/2.12.8/scala/Nothing.html#scala.Nothing" class="extype" name="scala.Nothing">Nothing</a>]]</span>
+        <span class="name">saveAsPubsub</span><span class="params">(<span name="topic">topic: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="idAttribute">idAttribute: <span class="extype" name="scala.Predef.String">String</span> = <span class="symbol">null</span></span>, <span name="timestampAttribute">timestampAttribute: <span class="extype" name="scala.Predef.String">String</span> = <span class="symbol">null</span></span>, <span name="maxBatchSize">maxBatchSize: <a href="http://www.scala-lang.org/api/2.12.8/scala/Option.html#scala.Option" class="extype" name="scala.Option">Option</a>[<a href="http://www.scala-lang.org/api/2.12.8/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a>] = <span class="symbol">None</span></span>, <span name="maxBatchBytesSize">maxBatchBytesSize: <a href="http://www.scala-lang.org/api/2.12.8/scala/Option.html#scala.Option" class="extype" name="scala.Option">Option</a>[<a href="http://www.scala-lang.org/api/2.12.8/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a>] = <span class="symbol">None</span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="ct">ct: <a href="http://www.scala-lang.org/api/2.12.8/scala/reflect/ClassTag.html#scala.reflect.ClassTag" class="extype" name="scala.reflect.ClassTag">ClassTag</a>[<span class="extype" name="com.spotify.scio.values.SCollection.T">T</span>]</span>, <span name="coder">coder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.SCollection.T">T</span>]</span>)</span><span class="result">: <a href="../io/ClosedTap.html" class="extype" name="com.spotify.scio.io.ClosedTap">ClosedTap</a>[<a href="http://www.scala-lang.org/api/2.12.8/scala/Nothing.html#scala.Nothing" class="extype" name="scala.Nothing">Nothing</a>]</span>
       </span>
       
       <p class="shortcomment cmt">Save this SCollection as a Pub/Sub topic.</p>
     </li><li name="com.spotify.scio.values.SCollection#saveAsPubsubWithAttributes" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="output">
-      <a id="saveAsPubsubWithAttributes[V](topic:String,idAttribute:String,timestampAttribute:String,maxBatchSize:Option[Int],maxBatchBytesSize:Option[Int])(implicitevidence$14:scala.reflect.ClassTag[V],implicitevidence$15:com.spotify.scio.coders.Coder[V],implicitev:T&lt;:&lt;(V,Map[String,String])):scala.concurrent.Future[com.spotify.scio.io.Tap[Nothing]]"></a><a id="saveAsPubsubWithAttributes[V](String,String,String,Option[Int],Option[Int])(ClassTag[V],Coder[V],&lt;:&lt;[T,(V,Map[String,String])]):Future[Tap[Nothing]]"></a>
+      <a id="saveAsPubsubWithAttributes[V](topic:String,idAttribute:String,timestampAttribute:String,maxBatchSize:Option[Int],maxBatchBytesSize:Option[Int])(implicitevidence$15:scala.reflect.ClassTag[V],implicitevidence$16:com.spotify.scio.coders.Coder[V],implicitev:T&lt;:&lt;(V,Map[String,String])):com.spotify.scio.io.ClosedTap[Nothing]"></a><a id="saveAsPubsubWithAttributes[V](String,String,String,Option[Int],Option[Int])(ClassTag[V],Coder[V],&lt;:&lt;[T,(V,Map[String,String])]):ClosedTap[Nothing]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/values/SCollection.html#saveAsPubsubWithAttributes[V](topic:String,idAttribute:String,timestampAttribute:String,maxBatchSize:Option[Int],maxBatchBytesSize:Option[Int])(implicitevidence$14:scala.reflect.ClassTag[V],implicitevidence$15:com.spotify.scio.coders.Coder[V],implicitev:T&lt;:&lt;(V,Map[String,String])):scala.concurrent.Future[com.spotify.scio.io.Tap[Nothing]]" title="Permalink">
+      <a href="../../../../com/spotify/scio/values/SCollection.html#saveAsPubsubWithAttributes[V](topic:String,idAttribute:String,timestampAttribute:String,maxBatchSize:Option[Int],maxBatchBytesSize:Option[Int])(implicitevidence$15:scala.reflect.ClassTag[V],implicitevidence$16:com.spotify.scio.coders.Coder[V],implicitev:T&lt;:&lt;(V,Map[String,String])):com.spotify.scio.io.ClosedTap[Nothing]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -1552,14 +1552,14 @@ binary operator.</p>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">saveAsPubsubWithAttributes</span><span class="tparams">[<span name="V">V</span>]</span><span class="params">(<span name="topic">topic: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="idAttribute">idAttribute: <span class="extype" name="scala.Predef.String">String</span> = <span class="symbol">null</span></span>, <span name="timestampAttribute">timestampAttribute: <span class="extype" name="scala.Predef.String">String</span> = <span class="symbol">null</span></span>, <span name="maxBatchSize">maxBatchSize: <a href="http://www.scala-lang.org/api/2.12.8/scala/Option.html#scala.Option" class="extype" name="scala.Option">Option</a>[<a href="http://www.scala-lang.org/api/2.12.8/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a>] = <span class="symbol">None</span></span>, <span name="maxBatchBytesSize">maxBatchBytesSize: <a href="http://www.scala-lang.org/api/2.12.8/scala/Option.html#scala.Option" class="extype" name="scala.Option">Option</a>[<a href="http://www.scala-lang.org/api/2.12.8/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a>] = <span class="symbol">None</span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.8/scala/reflect/ClassTag.html#scala.reflect.ClassTag" class="extype" name="scala.reflect.ClassTag">ClassTag</a>[<span class="extype" name="com.spotify.scio.values.SCollection.saveAsPubsubWithAttributes.V">V</span>]</span>, <span name="arg1">arg1: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.SCollection.saveAsPubsubWithAttributes.V">V</span>]</span>, <span name="ev">ev: <span class="extype" name="scala.Predef.&lt;:&lt;">&lt;:&lt;</span>[<span class="extype" name="com.spotify.scio.values.SCollection.T">T</span>, (<span class="extype" name="com.spotify.scio.values.SCollection.saveAsPubsubWithAttributes.V">V</span>, <span class="extype" name="scala.Predef.Map">Map</span>[<span class="extype" name="scala.Predef.String">String</span>, <span class="extype" name="scala.Predef.String">String</span>])]</span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/concurrent/Future.html#scala.concurrent.Future" class="extype" name="scala.concurrent.Future">Future</a>[<a href="../io/Tap.html" class="extype" name="com.spotify.scio.io.Tap">Tap</a>[<a href="http://www.scala-lang.org/api/2.12.8/scala/Nothing.html#scala.Nothing" class="extype" name="scala.Nothing">Nothing</a>]]</span>
+        <span class="name">saveAsPubsubWithAttributes</span><span class="tparams">[<span name="V">V</span>]</span><span class="params">(<span name="topic">topic: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="idAttribute">idAttribute: <span class="extype" name="scala.Predef.String">String</span> = <span class="symbol">null</span></span>, <span name="timestampAttribute">timestampAttribute: <span class="extype" name="scala.Predef.String">String</span> = <span class="symbol">null</span></span>, <span name="maxBatchSize">maxBatchSize: <a href="http://www.scala-lang.org/api/2.12.8/scala/Option.html#scala.Option" class="extype" name="scala.Option">Option</a>[<a href="http://www.scala-lang.org/api/2.12.8/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a>] = <span class="symbol">None</span></span>, <span name="maxBatchBytesSize">maxBatchBytesSize: <a href="http://www.scala-lang.org/api/2.12.8/scala/Option.html#scala.Option" class="extype" name="scala.Option">Option</a>[<a href="http://www.scala-lang.org/api/2.12.8/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a>] = <span class="symbol">None</span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.8/scala/reflect/ClassTag.html#scala.reflect.ClassTag" class="extype" name="scala.reflect.ClassTag">ClassTag</a>[<span class="extype" name="com.spotify.scio.values.SCollection.saveAsPubsubWithAttributes.V">V</span>]</span>, <span name="arg1">arg1: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.SCollection.saveAsPubsubWithAttributes.V">V</span>]</span>, <span name="ev">ev: <span class="extype" name="scala.Predef.&lt;:&lt;">&lt;:&lt;</span>[<span class="extype" name="com.spotify.scio.values.SCollection.T">T</span>, (<span class="extype" name="com.spotify.scio.values.SCollection.saveAsPubsubWithAttributes.V">V</span>, <span class="extype" name="scala.Predef.Map">Map</span>[<span class="extype" name="scala.Predef.String">String</span>, <span class="extype" name="scala.Predef.String">String</span>])]</span>)</span><span class="result">: <a href="../io/ClosedTap.html" class="extype" name="com.spotify.scio.io.ClosedTap">ClosedTap</a>[<a href="http://www.scala-lang.org/api/2.12.8/scala/Nothing.html#scala.Nothing" class="extype" name="scala.Nothing">Nothing</a>]</span>
       </span>
       
       <p class="shortcomment cmt">Save this SCollection as a Pub/Sub topic using the given map as message attributes.</p>
     </li><li name="com.spotify.scio.values.SCollection#saveAsTextFile" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="output">
-      <a id="saveAsTextFile(path:String,numShards:Int,suffix:String,compression:org.apache.beam.sdk.io.Compression)(implicitct:scala.reflect.ClassTag[T]):scala.concurrent.Future[com.spotify.scio.io.Tap[String]]"></a><a id="saveAsTextFile(String,Int,String,Compression)(ClassTag[T]):Future[Tap[String]]"></a>
+      <a id="saveAsTextFile(path:String,numShards:Int,suffix:String,compression:org.apache.beam.sdk.io.Compression)(implicitct:scala.reflect.ClassTag[T]):com.spotify.scio.io.ClosedTap[String]"></a><a id="saveAsTextFile(String,Int,String,Compression)(ClassTag[T]):ClosedTap[String]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/values/SCollection.html#saveAsTextFile(path:String,numShards:Int,suffix:String,compression:org.apache.beam.sdk.io.Compression)(implicitct:scala.reflect.ClassTag[T]):scala.concurrent.Future[com.spotify.scio.io.Tap[String]]" title="Permalink">
+      <a href="../../../../com/spotify/scio/values/SCollection.html#saveAsTextFile(path:String,numShards:Int,suffix:String,compression:org.apache.beam.sdk.io.Compression)(implicitct:scala.reflect.ClassTag[T]):com.spotify.scio.io.ClosedTap[String]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -1568,7 +1568,7 @@ binary operator.</p>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">saveAsTextFile</span><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="numShards">numShards: <a href="http://www.scala-lang.org/api/2.12.8/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a> = <span class="symbol">0</span></span>, <span name="suffix">suffix: <span class="extype" name="scala.Predef.String">String</span> = <span class="symbol">&quot;.txt&quot;</span></span>, <span name="compression">compression: <span class="extype" name="org.apache.beam.sdk.io.Compression">Compression</span> = <span class="symbol"><span class="name"><a href="../../../../org/index.html">Compression.UNCOMPRESSED</a></span></span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="ct">ct: <a href="http://www.scala-lang.org/api/2.12.8/scala/reflect/ClassTag.html#scala.reflect.ClassTag" class="extype" name="scala.reflect.ClassTag">ClassTag</a>[<span class="extype" name="com.spotify.scio.values.SCollection.T">T</span>]</span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/concurrent/Future.html#scala.concurrent.Future" class="extype" name="scala.concurrent.Future">Future</a>[<a href="../io/Tap.html" class="extype" name="com.spotify.scio.io.Tap">Tap</a>[<span class="extype" name="scala.Predef.String">String</span>]]</span>
+        <span class="name">saveAsTextFile</span><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="numShards">numShards: <a href="http://www.scala-lang.org/api/2.12.8/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a> = <span class="symbol">0</span></span>, <span name="suffix">suffix: <span class="extype" name="scala.Predef.String">String</span> = <span class="symbol">&quot;.txt&quot;</span></span>, <span name="compression">compression: <span class="extype" name="org.apache.beam.sdk.io.Compression">Compression</span> = <span class="symbol"><span class="name"><a href="../../../../org/index.html">Compression.UNCOMPRESSED</a></span></span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="ct">ct: <a href="http://www.scala-lang.org/api/2.12.8/scala/reflect/ClassTag.html#scala.reflect.ClassTag" class="extype" name="scala.reflect.ClassTag">ClassTag</a>[<span class="extype" name="com.spotify.scio.values.SCollection.T">T</span>]</span>)</span><span class="result">: <a href="../io/ClosedTap.html" class="extype" name="com.spotify.scio.io.ClosedTap">ClosedTap</a>[<span class="extype" name="scala.Predef.String">String</span>]</span>
       </span>
       
       <p class="shortcomment cmt">Save this SCollection as a text file.</p><div class="fullcomment"><div class="comment cmt"><p>Save this SCollection as a text file. Note that elements must be of type <code>String</code>.</p></div></div>
@@ -1588,6 +1588,22 @@ binary operator.</p>
       </span>
       
       <p class="shortcomment cmt">Assign a Coder to this SCollection.</p>
+    </li><li name="com.spotify.scio.values.SCollection#setSchema" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="setSchema(schema:com.spotify.scio.schemas.Schema[T]):com.spotify.scio.values.SCollection[T]"></a><a id="setSchema(Schema[T]):SCollection[T]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/values/SCollection.html#setSchema(schema:com.spotify.scio.schemas.Schema[T]):com.spotify.scio.values.SCollection[T]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">setSchema</span><span class="params">(<span name="schema">schema: <a href="../schemas/Schema.html" class="extype" name="com.spotify.scio.schemas.Schema">Schema</a>[<span class="extype" name="com.spotify.scio.values.SCollection.T">T</span>]</span>)</span><span class="result">: <a href="" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.values.SCollection.T">T</span>]</span>
+      </span>
+      
+      
     </li><li name="com.spotify.scio.values.SCollection#subtract" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="transform">
       <a id="subtract(that:com.spotify.scio.values.SCollection[T])(implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]"></a><a id="subtract(SCollection[T])(Coder[T]):SCollection[T]"></a>
       <span class="permalink">
@@ -1665,11 +1681,27 @@ better optimized than <a href="#reduce(op:(T,T)=&gt;T)(implicitcoder:com.spotify
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">timestampBy</span><span class="params">(<span name="f">f: (<span class="extype" name="com.spotify.scio.values.SCollection.T">T</span>) ⇒ <span class="extype" name="org.joda.time.Instant">Instant</span></span>, <span name="allowedTimestampSkew">allowedTimestampSkew: <span class="extype" name="org.joda.time.Duration">Duration</span> = <span class="symbol"><span class="name"><a href="../../../../org/index.html">Duration.ZERO</a></span></span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="coder">coder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.SCollection.T">T</span>]</span>)</span><span class="result">: <a href="" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.values.SCollection.T">T</span>]</span>
+        <span class="name">timestampBy</span><span class="params">(<span name="f">f: (<span class="extype" name="com.spotify.scio.values.SCollection.T">T</span>) ⇒ <a href="http://www.joda.org/joda-time/apidocs/org/joda/time/Instant.html#org.joda.time.Instant" class="extype" name="org.joda.time.Instant">Instant</a></span>, <span name="allowedTimestampSkew">allowedTimestampSkew: <a href="http://www.joda.org/joda-time/apidocs/org/joda/time/Duration.html#org.joda.time.Duration" class="extype" name="org.joda.time.Duration">Duration</a> = <span class="symbol"><span class="name"><a href="../../../../org/index.html">Duration.ZERO</a></span></span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="coder">coder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.SCollection.T">T</span>]</span>)</span><span class="result">: <a href="" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.values.SCollection.T">T</span>]</span>
       </span>
       
       <p class="shortcomment cmt">Assign timestamps to values.</p><div class="fullcomment"><div class="comment cmt"><p>Assign timestamps to values.
 With a optional skew</p></div></div>
+    </li><li name="com.spotify.scio.values.SCollection#to" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="to[U](to:com.spotify.scio.schemas.To[T,U]):com.spotify.scio.values.SCollection[U]"></a><a id="to[U](To[T,U]):SCollection[U]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/values/SCollection.html#to[U](to:com.spotify.scio.schemas.To[T,U]):com.spotify.scio.values.SCollection[U]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">to</span><span class="tparams">[<span name="U">U</span>]</span><span class="params">(<span name="to">to: <a href="../schemas/To.html" class="extype" name="com.spotify.scio.schemas.To">To</a>[<span class="extype" name="com.spotify.scio.values.SCollection.T">T</span>, <span class="extype" name="com.spotify.scio.values.SCollection.to.U">U</span>]</span>)</span><span class="result">: <a href="" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.values.SCollection.to.U">U</span>]</span>
+      </span>
+      
+      
     </li><li name="com.spotify.scio.values.SCollection#toSideSet" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="toSideSet(implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SideSet[T]"></a><a id="toSideSet(Coder[T]):SideSet[T]"></a>
       <span class="permalink">
@@ -1969,7 +2001,7 @@ combine parts of the data to reduce load on the final global combine step.</p></
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">withFixedWindows</span><span class="params">(<span name="duration">duration: <span class="extype" name="org.joda.time.Duration">Duration</span></span>, <span name="offset">offset: <span class="extype" name="org.joda.time.Duration">Duration</span> = <span class="symbol"><span class="name"><a href="../../../../org/index.html">Duration.ZERO</a></span></span></span>, <span name="options">options: <a href="WindowOptions.html" class="extype" name="com.spotify.scio.values.WindowOptions">WindowOptions</a> = <span class="symbol">WindowOptions()</span></span>)</span><span class="result">: <a href="" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.values.SCollection.T">T</span>]</span>
+        <span class="name">withFixedWindows</span><span class="params">(<span name="duration">duration: <a href="http://www.joda.org/joda-time/apidocs/org/joda/time/Duration.html#org.joda.time.Duration" class="extype" name="org.joda.time.Duration">Duration</a></span>, <span name="offset">offset: <a href="http://www.joda.org/joda-time/apidocs/org/joda/time/Duration.html#org.joda.time.Duration" class="extype" name="org.joda.time.Duration">Duration</a> = <span class="symbol"><span class="name"><a href="../../../../org/index.html">Duration.ZERO</a></span></span></span>, <span name="options">options: <a href="WindowOptions.html" class="extype" name="com.spotify.scio.values.WindowOptions">WindowOptions</a> = <span class="symbol">WindowOptions()</span></span>)</span><span class="result">: <a href="" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.values.SCollection.T">T</span>]</span>
       </span>
       
       <p class="shortcomment cmt">Window values into fixed windows.</p>
@@ -2033,7 +2065,7 @@ combine parts of the data to reduce load on the final global combine step.</p></
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">withSessionWindows</span><span class="params">(<span name="gapDuration">gapDuration: <span class="extype" name="org.joda.time.Duration">Duration</span></span>, <span name="options">options: <a href="WindowOptions.html" class="extype" name="com.spotify.scio.values.WindowOptions">WindowOptions</a> = <span class="symbol">WindowOptions()</span></span>)</span><span class="result">: <a href="" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.values.SCollection.T">T</span>]</span>
+        <span class="name">withSessionWindows</span><span class="params">(<span name="gapDuration">gapDuration: <a href="http://www.joda.org/joda-time/apidocs/org/joda/time/Duration.html#org.joda.time.Duration" class="extype" name="org.joda.time.Duration">Duration</a></span>, <span name="options">options: <a href="WindowOptions.html" class="extype" name="com.spotify.scio.values.WindowOptions">WindowOptions</a> = <span class="symbol">WindowOptions()</span></span>)</span><span class="result">: <a href="" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.values.SCollection.T">T</span>]</span>
       </span>
       
       <p class="shortcomment cmt">Window values based on sessions.</p>
@@ -2111,7 +2143,7 @@ p.withSideOutputs(side1, side2).map { (x, s) <span class="kw">=&gt;</span>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">withSlidingWindows</span><span class="params">(<span name="size">size: <span class="extype" name="org.joda.time.Duration">Duration</span></span>, <span name="period">period: <span class="extype" name="org.joda.time.Duration">Duration</span> = <span class="symbol">null</span></span>, <span name="offset">offset: <span class="extype" name="org.joda.time.Duration">Duration</span> = <span class="symbol"><span class="name"><a href="../../../../org/index.html">Duration.ZERO</a></span></span></span>, <span name="options">options: <a href="WindowOptions.html" class="extype" name="com.spotify.scio.values.WindowOptions">WindowOptions</a> = <span class="symbol">WindowOptions()</span></span>)</span><span class="result">: <a href="" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.values.SCollection.T">T</span>]</span>
+        <span class="name">withSlidingWindows</span><span class="params">(<span name="size">size: <a href="http://www.joda.org/joda-time/apidocs/org/joda/time/Duration.html#org.joda.time.Duration" class="extype" name="org.joda.time.Duration">Duration</a></span>, <span name="period">period: <a href="http://www.joda.org/joda-time/apidocs/org/joda/time/Duration.html#org.joda.time.Duration" class="extype" name="org.joda.time.Duration">Duration</a> = <span class="symbol">null</span></span>, <span name="offset">offset: <a href="http://www.joda.org/joda-time/apidocs/org/joda/time/Duration.html#org.joda.time.Duration" class="extype" name="org.joda.time.Duration">Duration</a> = <span class="symbol"><span class="name"><a href="../../../../org/index.html">Duration.ZERO</a></span></span></span>, <span name="options">options: <a href="WindowOptions.html" class="extype" name="com.spotify.scio.values.WindowOptions">WindowOptions</a> = <span class="symbol">WindowOptions()</span></span>)</span><span class="result">: <a href="" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.values.SCollection.T">T</span>]</span>
       </span>
       
       <p class="shortcomment cmt">Window values into sliding windows.</p>
@@ -2127,7 +2159,7 @@ p.withSideOutputs(side1, side2).map { (x, s) <span class="kw">=&gt;</span>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">withTimestamp</span><span class="params">(<span class="implicit">implicit </span><span name="coder">coder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[(<span class="extype" name="com.spotify.scio.values.SCollection.T">T</span>, <span class="extype" name="org.joda.time.Instant">Instant</span>)]</span>)</span><span class="result">: <a href="" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[(<span class="extype" name="com.spotify.scio.values.SCollection.T">T</span>, <span class="extype" name="org.joda.time.Instant">Instant</span>)]</span>
+        <span class="name">withTimestamp</span><span class="params">(<span class="implicit">implicit </span><span name="coder">coder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[(<span class="extype" name="com.spotify.scio.values.SCollection.T">T</span>, <a href="http://www.joda.org/joda-time/apidocs/org/joda/time/Instant.html#org.joda.time.Instant" class="extype" name="org.joda.time.Instant">Instant</a>)]</span>)</span><span class="result">: <a href="" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[(<span class="extype" name="com.spotify.scio.values.SCollection.T">T</span>, <a href="http://www.joda.org/joda-time/apidocs/org/joda/time/Instant.html#org.joda.time.Instant" class="extype" name="org.joda.time.Instant">Instant</a>)]</span>
       </span>
       
       <p class="shortcomment cmt">Convert values into pairs of (value, timestamp).</p>
@@ -2170,9 +2202,9 @@ p.withSideOutputs(side1, side2).map { (x, s) <span class="kw">=&gt;</span>
       
       <p class="shortcomment cmt">Window values with the given function.</p>
     </li><li name="com.spotify.scio.values.SCollection#write" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="write(io:com.spotify.scio.io.ScioIO[T]{typeWriteP=Unit})(implicitcoder:com.spotify.scio.coders.Coder[T]):scala.concurrent.Future[com.spotify.scio.io.Tap[io.tapT.T]]"></a><a id="write(ScioIO[T]{typeWriteP=Unit})(Coder[T]):Future[Tap[T]]"></a>
+      <a id="write(io:com.spotify.scio.io.ScioIO[T]{typeWriteP=Unit})(implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.io.ClosedTap[io.tapT.T]"></a><a id="write(ScioIO[T]{typeWriteP=Unit})(Coder[T]):ClosedTap[T]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/values/SCollection.html#write(io:com.spotify.scio.io.ScioIO[T]{typeWriteP=Unit})(implicitcoder:com.spotify.scio.coders.Coder[T]):scala.concurrent.Future[com.spotify.scio.io.Tap[io.tapT.T]]" title="Permalink">
+      <a href="../../../../com/spotify/scio/values/SCollection.html#write(io:com.spotify.scio.io.ScioIO[T]{typeWriteP=Unit})(implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.io.ClosedTap[io.tapT.T]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -2181,14 +2213,14 @@ p.withSideOutputs(side1, side2).map { (x, s) <span class="kw">=&gt;</span>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">write</span><span class="params">(<span name="io">io: <a href="../io/ScioIO.html" class="extype" name="com.spotify.scio.io.ScioIO">ScioIO</a>[<span class="extype" name="com.spotify.scio.values.SCollection.T">T</span>] { type WriteP = Unit }</span>)</span><span class="params">(<span class="implicit">implicit </span><span name="coder">coder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.SCollection.T">T</span>]</span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/concurrent/Future.html#scala.concurrent.Future" class="extype" name="scala.concurrent.Future">Future</a>[<a href="../io/Tap.html" class="extype" name="com.spotify.scio.io.Tap">Tap</a>[<a href="../io/TapT.html#T" class="extmbr" name="com.spotify.scio.io.TapT.T">T</a>]]</span>
+        <span class="name">write</span><span class="params">(<span name="io">io: <a href="../io/ScioIO.html" class="extype" name="com.spotify.scio.io.ScioIO">ScioIO</a>[<span class="extype" name="com.spotify.scio.values.SCollection.T">T</span>] { type WriteP = Unit }</span>)</span><span class="params">(<span class="implicit">implicit </span><span name="coder">coder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.SCollection.T">T</span>]</span>)</span><span class="result">: <a href="../io/ClosedTap.html" class="extype" name="com.spotify.scio.io.ClosedTap">ClosedTap</a>[<a href="../io/TapT.html#T" class="extmbr" name="com.spotify.scio.io.TapT.T">T</a>]</span>
       </span>
       
       
     </li><li name="com.spotify.scio.values.SCollection#write" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="write(io:com.spotify.scio.io.ScioIO[T])(params:io.WriteP)(implicitcoder:com.spotify.scio.coders.Coder[T]):scala.concurrent.Future[com.spotify.scio.io.Tap[io.tapT.T]]"></a><a id="write(ScioIO[T])(WriteP)(Coder[T]):Future[Tap[T]]"></a>
+      <a id="write(io:com.spotify.scio.io.ScioIO[T])(params:io.WriteP)(implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.io.ClosedTap[io.tapT.T]"></a><a id="write(ScioIO[T])(WriteP)(Coder[T]):ClosedTap[T]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/values/SCollection.html#write(io:com.spotify.scio.io.ScioIO[T])(params:io.WriteP)(implicitcoder:com.spotify.scio.coders.Coder[T]):scala.concurrent.Future[com.spotify.scio.io.Tap[io.tapT.T]]" title="Permalink">
+      <a href="../../../../com/spotify/scio/values/SCollection.html#write(io:com.spotify.scio.io.ScioIO[T])(params:io.WriteP)(implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.io.ClosedTap[io.tapT.T]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -2197,7 +2229,7 @@ p.withSideOutputs(side1, side2).map { (x, s) <span class="kw">=&gt;</span>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">write</span><span class="params">(<span name="io">io: <a href="../io/ScioIO.html" class="extype" name="com.spotify.scio.io.ScioIO">ScioIO</a>[<span class="extype" name="com.spotify.scio.values.SCollection.T">T</span>]</span>)</span><span class="params">(<span name="params">params: <a href="../io/ScioIO.html#WriteP" class="extmbr" name="com.spotify.scio.io.ScioIO.WriteP">WriteP</a></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="coder">coder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.SCollection.T">T</span>]</span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/concurrent/Future.html#scala.concurrent.Future" class="extype" name="scala.concurrent.Future">Future</a>[<a href="../io/Tap.html" class="extype" name="com.spotify.scio.io.Tap">Tap</a>[<a href="../io/TapT.html#T" class="extmbr" name="com.spotify.scio.io.TapT.T">T</a>]]</span>
+        <span class="name">write</span><span class="params">(<span name="io">io: <a href="../io/ScioIO.html" class="extype" name="com.spotify.scio.io.ScioIO">ScioIO</a>[<span class="extype" name="com.spotify.scio.values.SCollection.T">T</span>]</span>)</span><span class="params">(<span name="params">params: <a href="../io/ScioIO.html#WriteP" class="extmbr" name="com.spotify.scio.io.ScioIO.WriteP">WriteP</a></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="coder">coder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.SCollection.T">T</span>]</span>)</span><span class="result">: <a href="../io/ClosedTap.html" class="extype" name="com.spotify.scio.io.ClosedTap">ClosedTap</a>[<a href="../io/TapT.html#T" class="extmbr" name="com.spotify.scio.io.TapT.T">T</a>]</span>
       </span>
       
       <p class="shortcomment cmt">Generic write method for all <code>ScioIO[T]</code> implementations, if it is test pipeline this will

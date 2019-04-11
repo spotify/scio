@@ -3912,9 +3912,9 @@ The assertion expect outputs to be produced to the provided window exactly once.
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected </dd><dt>Definition Classes</dt><dd>FlatSpecLike → Suite</dd></dl></div>
     </li><li name="com.spotify.scio.testing.PipelineTestUtils#runWithContext" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="runWithContext[T](fn:com.spotify.scio.ScioContext=&gt;T):com.spotify.scio.ScioResult"></a><a id="runWithContext[T]((ScioContext)⇒T):ScioResult"></a>
+      <a id="runWithContext[T](fn:com.spotify.scio.ScioContext=&gt;T):com.spotify.scio.ClosedScioContext"></a><a id="runWithContext[T]((ScioContext)⇒T):ClosedScioContext"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/testing/PipelineSpec.html#runWithContext[T](fn:com.spotify.scio.ScioContext=&gt;T):com.spotify.scio.ScioResult" title="Permalink">
+      <a href="../../../../com/spotify/scio/testing/PipelineSpec.html#runWithContext[T](fn:com.spotify.scio.ScioContext=&gt;T):com.spotify.scio.ClosedScioContext" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -3923,7 +3923,7 @@ The assertion expect outputs to be produced to the provided window exactly once.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">runWithContext</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="fn">fn: (<a href="../ScioContext.html" class="extype" name="com.spotify.scio.ScioContext">ScioContext</a>) ⇒ <span class="extype" name="com.spotify.scio.testing.PipelineTestUtils.runWithContext.T">T</span></span>)</span><span class="result">: <a href="../ScioResult.html" class="extype" name="com.spotify.scio.ScioResult">ScioResult</a></span>
+        <span class="name">runWithContext</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="fn">fn: (<a href="../ScioContext.html" class="extype" name="com.spotify.scio.ScioContext">ScioContext</a>) ⇒ <span class="extype" name="com.spotify.scio.testing.PipelineTestUtils.runWithContext.T">T</span></span>)</span><span class="result">: <a href="../ClosedScioContext.html" class="extype" name="com.spotify.scio.ClosedScioContext">ClosedScioContext</a></span>
       </span>
       
       <p class="shortcomment cmt">Test pipeline components with a <a href="../ScioContext.html" class="extype" name="com.spotify.scio.ScioContext">ScioContext</a>.</p><div class="fullcomment"><div class="comment cmt"><p>Test pipeline components with a <a href="../ScioContext.html" class="extype" name="com.spotify.scio.ScioContext">ScioContext</a>.</p></div><dl class="paramcmts block"><dt class="param">fn</dt><dd class="cmt"><p>code that tests the components and verifies the result</p><pre>runWithContext { sc <span class="kw">=&gt;</span>
@@ -4027,9 +4027,9 @@ verified.
 </p></div><dl class="paramcmts block"><dt class="param">fn</dt><dd class="cmt"><p>transform to be tested</p></dd><dt>returns</dt><dd class="cmt"><p>a tuple containing the <a href="../ScioResult.html" class="extype" name="com.spotify.scio.ScioResult">ScioResult</a> and the materialized result of fn as a
         <a href="http://www.scala-lang.org/api/2.12.8/scala/collection/Seq.html" class="extype" name="scala.collection.Seq">Seq</a></p></dd></dl><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="PipelineTestUtils.html" class="extype" name="com.spotify.scio.testing.PipelineTestUtils">PipelineTestUtils</a></dd></dl></div>
     </li><li name="com.spotify.scio.testing.PipelineTestUtils#runWithRealContext" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="runWithRealContext[T](options:org.apache.beam.sdk.options.PipelineOptions)(fn:com.spotify.scio.ScioContext=&gt;T):com.spotify.scio.ScioResult"></a><a id="runWithRealContext[T](PipelineOptions)((ScioContext)⇒T):ScioResult"></a>
+      <a id="runWithRealContext[T](options:org.apache.beam.sdk.options.PipelineOptions)(fn:com.spotify.scio.ScioContext=&gt;T):com.spotify.scio.ClosedScioContext"></a><a id="runWithRealContext[T](PipelineOptions)((ScioContext)⇒T):ClosedScioContext"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/testing/PipelineSpec.html#runWithRealContext[T](options:org.apache.beam.sdk.options.PipelineOptions)(fn:com.spotify.scio.ScioContext=&gt;T):com.spotify.scio.ScioResult" title="Permalink">
+      <a href="../../../../com/spotify/scio/testing/PipelineSpec.html#runWithRealContext[T](options:org.apache.beam.sdk.options.PipelineOptions)(fn:com.spotify.scio.ScioContext=&gt;T):com.spotify.scio.ClosedScioContext" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -4038,7 +4038,7 @@ verified.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">runWithRealContext</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="options">options: <span class="extype" name="org.apache.beam.sdk.options.PipelineOptions">PipelineOptions</span></span>)</span><span class="params">(<span name="fn">fn: (<a href="../ScioContext.html" class="extype" name="com.spotify.scio.ScioContext">ScioContext</a>) ⇒ <span class="extype" name="com.spotify.scio.testing.PipelineTestUtils.runWithRealContext.T">T</span></span>)</span><span class="result">: <a href="../ScioResult.html" class="extype" name="com.spotify.scio.ScioResult">ScioResult</a></span>
+        <span class="name">runWithRealContext</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="options">options: <span class="extype" name="org.apache.beam.sdk.options.PipelineOptions">PipelineOptions</span></span>)</span><span class="params">(<span name="fn">fn: (<a href="../ScioContext.html" class="extype" name="com.spotify.scio.ScioContext">ScioContext</a>) ⇒ <span class="extype" name="com.spotify.scio.testing.PipelineTestUtils.runWithRealContext.T">T</span></span>)</span><span class="result">: <a href="../ClosedScioContext.html" class="extype" name="com.spotify.scio.ClosedScioContext">ClosedScioContext</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="PipelineTestUtils.html" class="extype" name="com.spotify.scio.testing.PipelineTestUtils">PipelineTestUtils</a></dd></dl></div>

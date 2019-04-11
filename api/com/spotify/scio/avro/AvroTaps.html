@@ -190,6 +190,14 @@
                         <a class="class" href="GenericRecordTap.html" title="Tap for GenericRecord Avro files."></a>
                         <a href="GenericRecordTap.html" title="Tap for GenericRecord Avro files.">GenericRecordTap</a>
                       </li><li class="current-entities indented4">
+                        <span class="separator"></span>
+                        <a class="class" href="Kind.html" title=""></a>
+                        <a href="Kind.html" title="">Kind</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
+                        <a class="class" href="NestedAvro.html" title=""></a>
+                        <a href="NestedAvro.html" title="">NestedAvro</a>
+                      </li><li class="current-entities indented4">
                         <a class="object" href="ObjectFileIO$.html" title=""></a>
                         <a class="class" href="ObjectFileIO.html" title=""></a>
                         <a href="ObjectFileIO.html" title="">ObjectFileIO</a>
@@ -207,8 +215,12 @@
                         <a href="SpecificRecordIO.html" title="">SpecificRecordIO</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
-                        <a class="class" href="SpecificRecordTap.html" title="Tap for SpecificRecordBase Avro files."></a>
-                        <a href="SpecificRecordTap.html" title="Tap for SpecificRecordBase Avro files.">SpecificRecordTap</a>
+                        <a class="class" href="SpecificRecordTap.html" title="Tap for SpecificRecord Avro files."></a>
+                        <a href="SpecificRecordTap.html" title="Tap for SpecificRecord Avro files.">SpecificRecordTap</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
+                        <a class="class" href="fixedType.html" title=""></a>
+                        <a href="fixedType.html" title="">fixedType</a>
                       </li>
               </ul>
             </div>
@@ -378,9 +390,9 @@
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
     </li><li name="com.spotify.scio.avro.AvroTaps#avroFile" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="avroFile[T&lt;:org.apache.avro.specific.SpecificRecordBase](path:String)(implicitevidence$12:scala.reflect.ClassTag[T],implicitevidence$13:com.spotify.scio.coders.Coder[T]):scala.concurrent.Future[com.spotify.scio.io.Tap[T]]"></a><a id="avroFile[T&lt;:SpecificRecordBase](String)(ClassTag[T],Coder[T]):Future[Tap[T]]"></a>
+      <a id="avroFile[T&lt;:org.apache.avro.specific.SpecificRecord](path:String)(implicitevidence$12:scala.reflect.ClassTag[T],implicitevidence$13:com.spotify.scio.coders.Coder[T]):scala.concurrent.Future[com.spotify.scio.io.Tap[T]]"></a><a id="avroFile[T&lt;:SpecificRecord](String)(ClassTag[T],Coder[T]):Future[Tap[T]]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/avro/AvroTaps.html#avroFile[T&lt;:org.apache.avro.specific.SpecificRecordBase](path:String)(implicitevidence$12:scala.reflect.ClassTag[T],implicitevidence$13:com.spotify.scio.coders.Coder[T]):scala.concurrent.Future[com.spotify.scio.io.Tap[T]]" title="Permalink">
+      <a href="../../../../com/spotify/scio/avro/AvroTaps.html#avroFile[T&lt;:org.apache.avro.specific.SpecificRecord](path:String)(implicitevidence$12:scala.reflect.ClassTag[T],implicitevidence$13:com.spotify.scio.coders.Coder[T]):scala.concurrent.Future[com.spotify.scio.io.Tap[T]]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -389,11 +401,11 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">avroFile</span><span class="tparams">[<span name="T">T &lt;: <a href="https://avro.apache.org/docs/current/api/java/org/apache/avro/specific/SpecificRecordBase.html#org.apache.avro.specific.SpecificRecordBase" class="extype" name="org.apache.avro.specific.SpecificRecordBase">SpecificRecordBase</a></span>]</span><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.8/scala/reflect/ClassTag.html#scala.reflect.ClassTag" class="extype" name="scala.reflect.ClassTag">ClassTag</a>[<span class="extype" name="com.spotify.scio.avro.AvroTaps.avroFile.T">T</span>]</span>, <span name="arg1">arg1: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.avro.AvroTaps.avroFile.T">T</span>]</span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/concurrent/Future.html#scala.concurrent.Future" class="extype" name="scala.concurrent.Future">Future</a>[<a href="../io/Tap.html" class="extype" name="com.spotify.scio.io.Tap">Tap</a>[<span class="extype" name="com.spotify.scio.avro.AvroTaps.avroFile.T">T</span>]]</span>
+        <span class="name">avroFile</span><span class="tparams">[<span name="T">T &lt;: <a href="https://avro.apache.org/docs/current/api/java/org/apache/avro/specific/SpecificRecord.html#org.apache.avro.specific.SpecificRecord" class="extype" name="org.apache.avro.specific.SpecificRecord">SpecificRecord</a></span>]</span><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.8/scala/reflect/ClassTag.html#scala.reflect.ClassTag" class="extype" name="scala.reflect.ClassTag">ClassTag</a>[<span class="extype" name="com.spotify.scio.avro.AvroTaps.avroFile.T">T</span>]</span>, <span name="arg1">arg1: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.avro.AvroTaps.avroFile.T">T</span>]</span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/concurrent/Future.html#scala.concurrent.Future" class="extype" name="scala.concurrent.Future">Future</a>[<a href="../io/Tap.html" class="extype" name="com.spotify.scio.io.Tap">Tap</a>[<span class="extype" name="com.spotify.scio.avro.AvroTaps.avroFile.T">T</span>]]</span>
       </span>
       
       <p class="shortcomment cmt">Get a <code>Future[Tap[T]]</code> for
-<a href="https://avro.apache.org/docs/current/api/java/org/apache/avro/specific/SpecificRecordBase.html" class="extype" name="org.apache.avro.specific.SpecificRecordBase">SpecificRecordBase</a> Avro file.</p>
+<a href="https://avro.apache.org/docs/current/api/java/org/apache/avro/specific/SpecificRecord.html" class="extype" name="org.apache.avro.specific.SpecificRecord">SpecificRecord</a> Avro file.</p>
     </li><li name="com.spotify.scio.avro.AvroTaps#avroFile" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="avroFile[T](path:String,schema:org.apache.avro.Schema)(implicitevidence$10:scala.reflect.ClassTag[T],implicitevidence$11:com.spotify.scio.coders.Coder[T]):scala.concurrent.Future[com.spotify.scio.io.Tap[T]]"></a><a id="avroFile[T](String,Schema)(ClassTag[T],Coder[T]):Future[Tap[T]]"></a>
       <span class="permalink">

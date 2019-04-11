@@ -387,6 +387,7 @@ def main(cmdlineArgs: Array[String]): Unit = {
     .map(kv =&gt; Result(kv._1, kv._2))
     .saveAsTypedBigQuery(args(&quot;output&quot;))  // schema from Row.schema
   sc.close()
+()
 }
 </code></pre>
 <h3><a href="#type-safe-bigqueryclient" name="type-safe-bigqueryclient" class="anchor"><span class="anchor-link"></span></a>Type safe BigQueryClient</h3>

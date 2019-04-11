@@ -190,6 +190,14 @@
                         <a class="class" href="GenericRecordTap.html" title="Tap for GenericRecord Avro files."></a>
                         <a href="GenericRecordTap.html" title="Tap for GenericRecord Avro files.">GenericRecordTap</a>
                       </li><li class="current-entities indented4">
+                        <span class="separator"></span>
+                        <a class="class" href="Kind.html" title=""></a>
+                        <a href="Kind.html" title="">Kind</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
+                        <a class="class" href="NestedAvro.html" title=""></a>
+                        <a href="NestedAvro.html" title="">NestedAvro</a>
+                      </li><li class="current-entities indented4">
                         <a class="object" href="ObjectFileIO$.html" title=""></a>
                         <a class="class" href="ObjectFileIO.html" title=""></a>
                         <a href="ObjectFileIO.html" title="">ObjectFileIO</a>
@@ -207,8 +215,12 @@
                         <a href="" title="">SpecificRecordIO</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
-                        <a class="class" href="SpecificRecordTap.html" title="Tap for SpecificRecordBase Avro files."></a>
-                        <a href="SpecificRecordTap.html" title="Tap for SpecificRecordBase Avro files.">SpecificRecordTap</a>
+                        <a class="class" href="SpecificRecordTap.html" title="Tap for SpecificRecord Avro files."></a>
+                        <a href="SpecificRecordTap.html" title="Tap for SpecificRecord Avro files.">SpecificRecordTap</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
+                        <a class="class" href="fixedType.html" title=""></a>
+                        <a href="fixedType.html" title="">fixedType</a>
                       </li>
               </ul>
             </div>
@@ -232,7 +244,7 @@
         <span class="kind">case class</span>
       </span>
       <span class="symbol">
-        <span class="name">SpecificRecordIO</span><span class="tparams">[<span name="T">T &lt;: <a href="https://avro.apache.org/docs/current/api/java/org/apache/avro/specific/SpecificRecordBase.html#org.apache.avro.specific.SpecificRecordBase" class="extype" name="org.apache.avro.specific.SpecificRecordBase">SpecificRecordBase</a></span>]</span><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="evidence$3">evidence$3: <a href="http://www.scala-lang.org/api/2.12.8/scala/reflect/ClassTag.html#scala.reflect.ClassTag" class="extype" name="scala.reflect.ClassTag">ClassTag</a>[<span class="extype" name="com.spotify.scio.avro.SpecificRecordIO.T">T</span>]</span>, <span name="evidence$4">evidence$4: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.avro.SpecificRecordIO.T">T</span>]</span>)</span><span class="result"> extends <a href="AvroIO.html" class="extype" name="com.spotify.scio.avro.AvroIO">AvroIO</a>[<span class="extype" name="com.spotify.scio.avro.SpecificRecordIO.T">T</span>] with <a href="http://www.scala-lang.org/api/2.12.8/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.8/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+        <span class="name">SpecificRecordIO</span><span class="tparams">[<span name="T">T &lt;: <a href="https://avro.apache.org/docs/current/api/java/org/apache/avro/specific/SpecificRecord.html#org.apache.avro.specific.SpecificRecord" class="extype" name="org.apache.avro.specific.SpecificRecord">SpecificRecord</a></span>]</span><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="evidence$3">evidence$3: <a href="http://www.scala-lang.org/api/2.12.8/scala/reflect/ClassTag.html#scala.reflect.ClassTag" class="extype" name="scala.reflect.ClassTag">ClassTag</a>[<span class="extype" name="com.spotify.scio.avro.SpecificRecordIO.T">T</span>]</span>, <span name="evidence$4">evidence$4: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.avro.SpecificRecordIO.T">T</span>]</span>)</span><span class="result"> extends <a href="AvroIO.html" class="extype" name="com.spotify.scio.avro.AvroIO">AvroIO</a>[<span class="extype" name="com.spotify.scio.avro.SpecificRecordIO.T">T</span>] with <a href="http://www.scala-lang.org/api/2.12.8/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.8/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
       </span>
       </h4>
 
@@ -610,8 +622,8 @@
         <span class="name">read</span><span class="params">(<span name="sc">sc: <a href="../ScioContext.html" class="extype" name="com.spotify.scio.ScioContext">ScioContext</a></span>, <span name="params">params: <a href="#ReadP=Unit" class="extmbr" name="com.spotify.scio.avro.SpecificRecordIO.ReadP">ReadP</a></span>)</span><span class="result">: <a href="../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.avro.SpecificRecordIO.T">T</span>]</span>
       </span>
       
-      <p class="shortcomment cmt">Get an SCollection of <a href="https://avro.apache.org/docs/current/api/java/org/apache/avro/specific/SpecificRecordBase.html" class="extype" name="org.apache.avro.specific.SpecificRecordBase">SpecificRecordBase</a>
-from an Avro file.</p><div class="fullcomment"><div class="comment cmt"><p>Get an SCollection of <a href="https://avro.apache.org/docs/current/api/java/org/apache/avro/specific/SpecificRecordBase.html" class="extype" name="org.apache.avro.specific.SpecificRecordBase">SpecificRecordBase</a>
+      <p class="shortcomment cmt">Get an SCollection of <a href="https://avro.apache.org/docs/current/api/java/org/apache/avro/specific/SpecificRecord.html" class="extype" name="org.apache.avro.specific.SpecificRecord">SpecificRecord</a>
+from an Avro file.</p><div class="fullcomment"><div class="comment cmt"><p>Get an SCollection of <a href="https://avro.apache.org/docs/current/api/java/org/apache/avro/specific/SpecificRecord.html" class="extype" name="org.apache.avro.specific.SpecificRecord">SpecificRecord</a>
 from an Avro file.
 </p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="" class="extype" name="com.spotify.scio.avro.SpecificRecordIO">SpecificRecordIO</a> → <a href="../io/ScioIO.html" class="extype" name="com.spotify.scio.io.ScioIO">ScioIO</a></dd></dl></div>
     </li><li name="com.spotify.scio.io.ScioIO#readTest" visbl="prt" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
@@ -763,9 +775,9 @@ from an Avro file.
               
         </dd></dl></div>
     </li><li name="com.spotify.scio.avro.SpecificRecordIO#write" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="write(data:com.spotify.scio.values.SCollection[T],params:SpecificRecordIO.this.WriteP):scala.concurrent.Future[com.spotify.scio.io.Tap[T]]"></a><a id="write(SCollection[T],WriteP):Future[Tap[T]]"></a>
+      <a id="write(data:com.spotify.scio.values.SCollection[T],params:SpecificRecordIO.this.WriteP):com.spotify.scio.io.Tap[T]"></a><a id="write(SCollection[T],WriteP):Tap[T]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/avro/SpecificRecordIO.html#write(data:com.spotify.scio.values.SCollection[T],params:SpecificRecordIO.this.WriteP):scala.concurrent.Future[com.spotify.scio.io.Tap[T]]" title="Permalink">
+      <a href="../../../../com/spotify/scio/avro/SpecificRecordIO.html#write(data:com.spotify.scio.values.SCollection[T],params:SpecificRecordIO.this.WriteP):com.spotify.scio.io.Tap[T]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -774,17 +786,17 @@ from an Avro file.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">write</span><span class="params">(<span name="data">data: <a href="../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.avro.SpecificRecordIO.T">T</span>]</span>, <span name="params">params: <a href="#WriteP=com.spotify.scio.avro.AvroIO.WriteParam" class="extmbr" name="com.spotify.scio.avro.SpecificRecordIO.WriteP">WriteP</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/concurrent/Future.html#scala.concurrent.Future" class="extype" name="scala.concurrent.Future">Future</a>[<a href="../io/Tap.html" class="extype" name="com.spotify.scio.io.Tap">Tap</a>[<span class="extype" name="com.spotify.scio.avro.SpecificRecordIO.T">T</span>]]</span>
+        <span class="name">write</span><span class="params">(<span name="data">data: <a href="../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.avro.SpecificRecordIO.T">T</span>]</span>, <span name="params">params: <a href="#WriteP=com.spotify.scio.avro.AvroIO.WriteParam" class="extmbr" name="com.spotify.scio.avro.SpecificRecordIO.WriteP">WriteP</a></span>)</span><span class="result">: <a href="../io/Tap.html" class="extype" name="com.spotify.scio.io.Tap">Tap</a>[<span class="extype" name="com.spotify.scio.avro.SpecificRecordIO.T">T</span>]</span>
       </span>
       
-      <p class="shortcomment cmt">Save this SCollection of <a href="https://avro.apache.org/docs/current/api/java/org/apache/avro/specific/SpecificRecordBase.html" class="extype" name="org.apache.avro.specific.SpecificRecordBase">SpecificRecordBase</a> as
-an Avro file.</p><div class="fullcomment"><div class="comment cmt"><p>Save this SCollection of <a href="https://avro.apache.org/docs/current/api/java/org/apache/avro/specific/SpecificRecordBase.html" class="extype" name="org.apache.avro.specific.SpecificRecordBase">SpecificRecordBase</a> as
+      <p class="shortcomment cmt">Save this SCollection of <a href="https://avro.apache.org/docs/current/api/java/org/apache/avro/specific/SpecificRecord.html" class="extype" name="org.apache.avro.specific.SpecificRecord">SpecificRecord</a> as
+an Avro file.</p><div class="fullcomment"><div class="comment cmt"><p>Save this SCollection of <a href="https://avro.apache.org/docs/current/api/java/org/apache/avro/specific/SpecificRecord.html" class="extype" name="org.apache.avro.specific.SpecificRecord">SpecificRecord</a> as
 an Avro file.
 </p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="" class="extype" name="com.spotify.scio.avro.SpecificRecordIO">SpecificRecordIO</a> → <a href="../io/ScioIO.html" class="extype" name="com.spotify.scio.io.ScioIO">ScioIO</a></dd></dl></div>
     </li><li name="com.spotify.scio.io.ScioIO#writeTest" visbl="prt" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="writeTest(data:com.spotify.scio.values.SCollection[T],params:ScioIO.this.WriteP)(implicitcoder:com.spotify.scio.coders.Coder[T]):scala.concurrent.Future[com.spotify.scio.io.Tap[ScioIO.this.tapT.T]]"></a><a id="writeTest(SCollection[T],WriteP)(Coder[T]):Future[Tap[(tapT)#T]]"></a>
+      <a id="writeTest(data:com.spotify.scio.values.SCollection[T],params:ScioIO.this.WriteP)(implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.io.Tap[ScioIO.this.tapT.T]"></a><a id="writeTest(SCollection[T],WriteP)(Coder[T]):Tap[(tapT)#T]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/avro/SpecificRecordIO.html#writeTest(data:com.spotify.scio.values.SCollection[T],params:ScioIO.this.WriteP)(implicitcoder:com.spotify.scio.coders.Coder[T]):scala.concurrent.Future[com.spotify.scio.io.Tap[ScioIO.this.tapT.T]]" title="Permalink">
+      <a href="../../../../com/spotify/scio/avro/SpecificRecordIO.html#writeTest(data:com.spotify.scio.values.SCollection[T],params:ScioIO.this.WriteP)(implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.io.Tap[ScioIO.this.tapT.T]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -793,7 +805,7 @@ an Avro file.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">writeTest</span><span class="params">(<span name="data">data: <a href="../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.avro.SpecificRecordIO.T">T</span>]</span>, <span name="params">params: <a href="#WriteP=com.spotify.scio.avro.AvroIO.WriteParam" class="extmbr" name="com.spotify.scio.avro.SpecificRecordIO.WriteP">WriteP</a></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="coder">coder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.avro.SpecificRecordIO.T">T</span>]</span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/concurrent/Future.html#scala.concurrent.Future" class="extype" name="scala.concurrent.Future">Future</a>[<a href="../io/Tap.html" class="extype" name="com.spotify.scio.io.Tap">Tap</a>[(<a href="#tapT:com.spotify.scio.io.TapT.Aux[T,T]" class="extmbr" name="com.spotify.scio.avro.SpecificRecordIO#tapT">tapT</a>)#<span class="extype" name="com.spotify.scio.io.TapT.&lt;refinement&gt;.T">T</span>]]</span>
+        <span class="name">writeTest</span><span class="params">(<span name="data">data: <a href="../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.avro.SpecificRecordIO.T">T</span>]</span>, <span name="params">params: <a href="#WriteP=com.spotify.scio.avro.AvroIO.WriteParam" class="extmbr" name="com.spotify.scio.avro.SpecificRecordIO.WriteP">WriteP</a></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="coder">coder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.avro.SpecificRecordIO.T">T</span>]</span>)</span><span class="result">: <a href="../io/Tap.html" class="extype" name="com.spotify.scio.io.Tap">Tap</a>[(<a href="#tapT:com.spotify.scio.io.TapT.Aux[T,T]" class="extmbr" name="com.spotify.scio.avro.SpecificRecordIO#tapT">tapT</a>)#<span class="extype" name="com.spotify.scio.io.TapT.&lt;refinement&gt;.T">T</span>]</span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected </dd><dt>Definition Classes</dt><dd><a href="../io/ScioIO.html" class="extype" name="com.spotify.scio.io.ScioIO">ScioIO</a></dd></dl></div>
