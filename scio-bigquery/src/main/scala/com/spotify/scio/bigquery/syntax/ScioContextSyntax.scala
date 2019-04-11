@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,19 +15,27 @@
  * under the License.
  */
 
-package com.spotify.scio.bigquery
+package com.spotify.scio.bigquery.syntax
 
 import com.google.api.services.bigquery.model.TableReference
 import com.spotify.scio.ScioContext
+import com.spotify.scio.bigquery.{
+  BigQuerySelect,
+  BigQueryTable,
+  BigQueryTyped,
+  TableRow,
+  TableRowJsonIO
+}
 import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.values._
 
+import scala.language.implicitConversions
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
 
 /** Enhanced version of [[ScioContext]] with BigQuery methods. */
-final class BigQueryScioContext(@transient val self: ScioContext) extends Serializable {
+final class ScioContextOps(val self: ScioContext) extends AnyVal {
 
   /**
    * Get an SCollection for a BigQuery SELECT query.
@@ -130,5 +138,11 @@ final class BigQueryScioContext(@transient val self: ScioContext) extends Serial
    */
   def tableRowJsonFile(path: String): SCollection[TableRow] =
     self.read(TableRowJsonIO(path))
+
+}
+
+trait ScioContextSyntax {
+
+  implicit def bigQueryScioContextOps(sc: ScioContext): ScioContextOps = new ScioContextOps(sc)
 
 }

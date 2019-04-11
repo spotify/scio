@@ -28,12 +28,12 @@ import com.google.api.services.bigquery.model.{
 import com.spotify.scio.values.SCollection
 import org.apache.avro.Conversions.DecimalConversion
 import org.apache.avro.LogicalTypes
+import com.spotify.scio.bigquery.syntax.AllSyntax
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write
 import org.joda.time.format.{DateTimeFormat, DateTimeFormatterBuilder}
 import org.joda.time.{DateTimeZone, Instant, LocalDate, LocalDateTime, LocalTime}
 
 import scala.collection.JavaConverters._
-import scala.language.implicitConversions
 import scala.util.Try
 
 /**
@@ -54,7 +54,7 @@ import scala.util.Try
  * detects the query's dialect. To override this, start the query with either `#legacysql` or
  * `#standardsql` comment line.
  */
-package object bigquery {
+package object bigquery extends AllSyntax {
 
   /** Alias for BigQuery `CreateDisposition`. */
   val CREATE_IF_NEEDED = Write.CreateDisposition.CREATE_IF_NEEDED
@@ -81,11 +81,6 @@ package object bigquery {
    * Annotation for BigQuery field [[com.spotify.scio.bigquery.types.description description]].
    */
   type description = com.spotify.scio.bigquery.types.description
-
-  implicit def toBigQueryScioContext(c: ScioContext): BigQueryScioContext =
-    new BigQueryScioContext(c)
-  implicit def toBigQuerySCollection[T](c: SCollection[T]): BigQuerySCollection[T] =
-    new BigQuerySCollection[T](c)
 
   /**
    * Enhanced version of [[com.google.api.services.bigquery.model.TableReference TableReference]].
@@ -209,15 +204,19 @@ package object bigquery {
         new DateTimeFormatterBuilder()
           .append(DateTimeFormat.forPattern(" HH:mm:ss").getParser)
           .appendOptional(DateTimeFormat.forPattern(".SSSSSS").getParser)
-          .toParser)
+          .toParser
+      )
       .appendOptional(
         new DateTimeFormatterBuilder()
           .append(DateTimeFormat.forPattern("'T'HH:mm:ss").getParser)
           .appendOptional(DateTimeFormat.forPattern(".SSSSSS").getParser)
-          .toParser)
-      .appendOptional(new DateTimeFormatterBuilder()
-        .append(null, Array(" ZZZ", "ZZ").map(p => DateTimeFormat.forPattern(p).getParser))
-        .toParser)
+          .toParser
+      )
+      .appendOptional(
+        new DateTimeFormatterBuilder()
+          .append(null, Array(" ZZZ", "ZZ").map(p => DateTimeFormat.forPattern(p).getParser))
+          .toParser
+      )
       .toFormatter
       .withZoneUTC()
 
@@ -294,12 +293,14 @@ package object bigquery {
         new DateTimeFormatterBuilder()
           .append(DateTimeFormat.forPattern(" HH:mm:ss").getParser)
           .appendOptional(DateTimeFormat.forPattern(".SSSSSS").getParser)
-          .toParser)
+          .toParser
+      )
       .appendOptional(
         new DateTimeFormatterBuilder()
           .append(DateTimeFormat.forPattern("'T'HH:mm:ss").getParser)
           .appendOptional(DateTimeFormat.forPattern(".SSSSSS").getParser)
-          .toParser)
+          .toParser
+      )
       .toFormatter
       .withZoneUTC()
 
@@ -314,10 +315,12 @@ package object bigquery {
   /**
    * Scala wrapper for [[com.google.api.services.bigquery.model.TimePartitioning]].
    */
-  case class TimePartitioning(`type`: String,
-                              field: String = null,
-                              expirationMs: Long = 0,
-                              requirePartitionFilter: Boolean = false) {
+  case class TimePartitioning(
+    `type`: String,
+    field: String = null,
+    expirationMs: Long = 0,
+    requirePartitionFilter: Boolean = false
+  ) {
     def asJava: GTimePartitioning = {
       var p = new GTimePartitioning()
         .setType(`type`)
@@ -344,8 +347,10 @@ package object bigquery {
       } else {
         value
       }
-      require(scaled.precision <= MaxNumericPrecision,
-              s"max allowed precision is $MaxNumericPrecision")
+      require(
+        scaled.precision <= MaxNumericPrecision,
+        s"max allowed precision is $MaxNumericPrecision"
+      )
 
       BigDecimal(scaled.toString, new MathContext(MaxNumericPrecision))
     }
