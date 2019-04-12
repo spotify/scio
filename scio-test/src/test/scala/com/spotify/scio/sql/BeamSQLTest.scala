@@ -29,6 +29,8 @@ import org.apache.beam.sdk.schemas.{Schema => BSchema}
 import org.apache.beam.sdk.transforms.Combine.CombineFn
 import org.apache.beam.sdk.transforms.SerializableFunction
 import org.apache.beam.sdk.values.{Row, TupleTag}
+import org.joda.time.{DateTime, Instant}
+import org.joda.time.DateTimeZone.UTC
 import org.scalatest.Assertion
 
 import scala.collection.JavaConverters._
@@ -86,6 +88,12 @@ object TestData {
   val usersWithMap =
     (1 to 10).map { i =>
       UserWithMap(s"user$i", Map("work" -> s"user$i@spotify.com", "personal" -> s"user$i@yolo.com"))
+    }.toList
+
+  case class UserWithInstant(username: String, created: Instant, dateString: String)
+  val usersWithJoda =
+    (1 to 10).map { i =>
+      UserWithInstant(s"user$i", Instant.now(), "19851026")
     }.toList
 
   class IsOver18UdfFn extends SerializableFunction[Integer, Boolean] {
@@ -275,6 +283,39 @@ class BeamSQLTest extends PipelineSpec {
     "Schema.javaBeanSchema[UserBean]" should compile
     "Schema.javaBeanSchema[NotABean]" shouldNot compile
     "Schema.javaBeanSchema[TypeMismatch]" shouldNot compile
+  }
+
+  it should "support joda types" in runWithContext { sc =>
+    val expected = usersWithJoda.map { u =>
+      (u.username, u.created)
+    }
+
+    val r = sc
+      .parallelize(usersWithJoda)
+      .queryAs[(String, Instant)]("select username, created from SCOLLECTION")
+
+    r should containInAnyOrder(expected)
+
+    val expectedCast = usersWithJoda.map { u =>
+      (u.username, new DateTime(1985, 10, 26, 0, 0, UTC).toInstant())
+    }
+
+    val query = """
+    | select username,
+    |        cast(
+    |         substring(trim(dateString) from 1 for 4)
+    |           ||'-'
+    |           ||substring(trim(dateString) from 5 for 2)
+    |           ||'-'
+    |           ||substring(trim(dateString) from 7 for 2) as date)
+    |         from SCOLLECTION
+    """.stripMargin
+
+    val cast = sc
+      .parallelize(usersWithJoda)
+      .queryAs[(String, Instant)](query)
+
+    cast should containInAnyOrder(expectedCast)
   }
 
   it should "support JOIN" in runWithContext { sc =>

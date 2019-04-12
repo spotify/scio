@@ -16,9 +16,13 @@
  */
 package com.spotify.scio.schemas.instances
 
-trait AllInstances
-    extends ScalaInstances
-    with JavaInstances
-    with JodaInstances
-    with AvroInstances
-    with LowPriorityFallbackInstances
+import com.spotify.scio.schemas.Type
+import org.apache.beam.sdk.schemas.Schema.FieldType
+import org.joda.time.ReadableInstant
+
+trait JodaInstances {
+
+  implicit def jodaReadableInstantSchema[T <: ReadableInstant]: Type[T] =
+    Type[T](FieldType.DATETIME)
+
+}
