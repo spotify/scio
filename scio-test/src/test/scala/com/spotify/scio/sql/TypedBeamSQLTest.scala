@@ -18,6 +18,7 @@ package com.spotify.scio.sql
 
 import com.spotify.scio.bean.UserBean
 import com.spotify.scio.schemas.To
+import com.spotify.scio.values.SCollection
 import com.spotify.scio.testing.PipelineSpec
 import org.apache.beam.sdk.values.TupleTag
 
@@ -82,4 +83,19 @@ class TypedBeamSQLTest extends PipelineSpec {
     """To.safe[TinyTo, From0]""" shouldNot compile
     """To.safe[From0, CompatibleAvroTestRecord]""" shouldNot compile
   }
+
+  "String interpolation" should "statically check interpolated queries" in runWithContext { sc =>
+    """
+    def coll: SCollection[(Int, String)] =
+      sc.parallelize((1 to 10).toList.map(i => (i, i.toString)))
+    val r: SCollection[Int] = tsql"SELECT _1 FROM $coll"
+    """ should compile
+
+    """
+    def coll: SCollection[(Int, String)] =
+      sc.parallelize((1 to 10).toList.map(i => (i, i.toString)))
+    val r: SCollection[String] = tsql"SELECT _1 FROM $coll"
+    """ shouldNot compile
+  }
+
 }

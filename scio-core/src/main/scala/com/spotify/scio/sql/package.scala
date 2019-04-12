@@ -22,10 +22,11 @@ import com.spotify.scio.schemas.Schema
 import org.apache.beam.sdk.values.TupleTag
 
 import scala.language.implicitConversions
+import scala.language.experimental.macros
 
 package object sql {
 
-  sealed trait SQLBuilder {
+  trait SQLBuilder {
     def as[B: Schema]: SCollection[B]
   }
 
@@ -94,21 +95,94 @@ package object sql {
       }
     }
 
-    // def sql[A: Schema](coll: SCollection[A]): SQLBuilder = {
-    //   val strings = sc.parts.iterator
-    //   val name = Sql.SCollectionTypeName
-    //   var buf = new StringBuffer(strings.next)
-    //   while (strings.hasNext) {
-    //     buf.append(name)
-    //     buf.append(strings.next)
-    //   }
-
-    //   new SQLBuilder {
-    //     val q = buf.toString
-    //     val tag = new TupleTag[A](name)
-    //     def as[B: Schema] = Sql.from(coll).queryAs(new Query[A, B](q, tag))
-    //   }
-    // }
+    def tsql[A, B](p0: SCollection[A]): SCollection[B] =
+      macro SqlInterpolatorMacro.tsqlImpl[A, B]
   }
 
+}
+
+package sql {
+  import scala.reflect.macros.whitebox
+
+  private sealed trait SqlInterpolatorMacroHelpers {
+    protected val ctx: whitebox.Context
+
+    import ctx.universe._
+
+    def buildSQLString: String = {
+
+      val parts = ctx.prefix.tree match {
+        case q"com.spotify.scio.sql.`package`.SqlInterpolator(scala.StringContext.apply(..$ps))" =>
+          ps
+        case q"sql.this.`package`.SqlInterpolator(scala.StringContext.apply(..$ps))" => ps
+        case tree =>
+          ctx.abort(ctx.enclosingPosition,
+                    s"Implementation error. Expected tsql string interpolation, found $tree")
+      }
+
+      parts
+        .map {
+          case Literal(Constant(s: String)) => s
+          case tree =>
+            ctx.abort(ctx.enclosingPosition,
+                      s"Implementation error. Expected Literal(Constant(...)), found $tree")
+        }
+        .mkString(Sql.SCollectionTypeName)
+    }
+
+    def inferImplicitSchemas[A: ctx.WeakTypeTag, B: ctx.WeakTypeTag]
+      : (ctx.Tree, ctx.Tree, Schema[A], Schema[B]) = {
+      val wttA = ctx.weakTypeTag[A]
+      val wttB = ctx.weakTypeTag[B]
+      val needA = ctx.typecheck(tq"_root_.com.spotify.scio.schemas.Schema[$wttA]", ctx.TYPEmode).tpe
+      val needB = ctx.typecheck(tq"_root_.com.spotify.scio.schemas.Schema[$wttB]", ctx.TYPEmode).tpe
+
+      val sa = ctx.inferImplicitValue(needA)
+      val sb = ctx.inferImplicitValue(needB)
+
+      val schemaATree = ctx.untypecheck(sa.duplicate)
+      val schemaBTree = ctx.untypecheck(sb.duplicate)
+
+      val (scha, schab) =
+        ctx.eval(ctx.Expr[(Schema[A], Schema[B])](q"($schemaATree, $schemaBTree)"))
+      (sa, sb, scha, schab)
+    }
+  }
+
+  object SqlInterpolatorMacro {
+
+    def tsqlImpl[A: c.WeakTypeTag, B: c.WeakTypeTag](c: whitebox.Context)(
+      p0: c.Expr[SCollection[A]]): c.Expr[SCollection[B]] = {
+      val h = new SqlInterpolatorMacroHelpers { val ctx = c }
+      import h._
+      import c.universe._
+
+      val wttA = c.weakTypeTag[A]
+      val wttB = c.weakTypeTag[B]
+
+      val sql = buildSQLString
+      val (implA, implB, sIn, sOut) = inferImplicitSchemas[A, B]
+
+      val query = Query[A, B](sql, new TupleTag[A](Sql.SCollectionTypeName))
+
+      def q =
+        c.Expr[Query[A, B]](q"""
+        _root_.com.spotify.scio.sql.Query[$wttA, $wttB](
+          $sql,
+          new _root_.org.apache.beam.sdk.values.TupleTag[$wttA](
+            _root_.com.spotify.scio.sql.Sql.SCollectionTypeName))
+        """)
+
+      def tree =
+        c.Expr[SCollection[B]](q"""
+          _root_.com.spotify.scio.sql.Sql
+              .from($p0)(${implA.asInstanceOf[c.Tree]})
+              .queryAs($q)(${implB.asInstanceOf[c.Tree]})
+        """)
+
+      Queries
+        .typecheck(query)(sIn, sOut)
+        .fold(err => c.abort(c.enclosingPosition, err), _ => tree)
+    }
+  }
 }

@@ -39,7 +39,7 @@ import scala.collection.JavaConverters._
 object Sql {
 
   private[sql] val BeamProviderName = "beam"
-  private[sql] val SCollectionTypeName = "SCOLLECTION"
+  val SCollectionTypeName = "SCOLLECTION"
 
   def from[A: Schema](sc: SCollection[A]): SqlSCollection[A] = new SqlSCollection(sc)
 
@@ -155,6 +155,7 @@ object Queries {
    */
   def typecheck[A: Schema, B: Schema](q: Query[A, B]): Either[String, Query[A, B]] = {
     val schema: BSchema = SchemaMaterializer.fieldType(Schema[A]).getRowSchema
+    // TODO: add null check on schema. If A is a scalar (Int, String,...) schema will be null
     val expectedSchema: BSchema =
       Schema[B] match {
         case s: Record[B] =>

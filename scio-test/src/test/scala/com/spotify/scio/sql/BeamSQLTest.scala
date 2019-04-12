@@ -129,6 +129,9 @@ object TestData {
         )
       new avro.User(i, s"lastname_$i", s"firstname_$i", s"email$i@spotify.com", Nil.asJava, addr)
     }.toList
+
+  case class Order(order_id: Long, price: Long, site_id: Long)
+  val orders = List(Order(1, 2, 2), Order(2, 2, 1), Order(1, 4, 3), Order(3, 2, 1), Order(3, 3, 1))
 }
 
 class BeamSQLTest extends PipelineSpec {
@@ -582,8 +585,38 @@ class BeamSQLTest extends PipelineSpec {
     val a = sc.parallelize(users)
     val b = sc.parallelize(users)
     sql"""
-      select $a.username from $a join $b on $a.username = $b.username
+      SELECT $a.username
+      FROM $a
+      JOIN $b ON $a.username = $b.username
     """.as[String] shouldNot beEmpty
+
+    val o1 = sc.parallelize(orders)
+    val o2 = sc.parallelize(orders)
+    sql"""
+      SELECT $o1.order_id, $o1.price, $o1.site_id, $o2.order_id, $o2.price, $o2.site_id
+      FROM $o1
+      JOIN $o2
+      ON $o1.order_id = $o2.site_id AND $o2.price = $o1.site_id
+    """.as[(Long, Long, Long, Long, Long, Long)] shouldNot beEmpty
+
+    sql"""
+      SELECT o1.order_id, o1.price, o1.site_id, o2.order_id, o2.price, o2.site_id
+      FROM $o1 o1
+      JOIN $o2 o2
+      ON o1.order_id = o2.site_id AND o2.price = o1.site_id
+    """.as[(Long, Long, Long, Long, Long, Long)] shouldNot beEmpty
+  }
+
+  it should "support joins and UDF in the same query" in runWithContext { sc =>
+    val a = sc.parallelize(users)
+    val b = sc.parallelize(users)
+    val maxUserAge = Udf.fromAggregateFn("maxUserAge", new MaxUserAgeUdafFn())
+    val r =
+      sql"""
+        SELECT $maxUserAge($a.age) FROM $a
+        JOIN $b ON $a.username = $b.username
+      """.as[Int]
+    r should containSingleValue(30)
   }
 }
 
