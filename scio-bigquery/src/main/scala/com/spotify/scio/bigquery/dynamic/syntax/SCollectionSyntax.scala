@@ -36,7 +36,7 @@ import scala.language.implicitConversions
  * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with dynamic
  * destinations methods.
  */
-final class SCollectionDynamicBigQueryOps[T](private val self: SCollection[T]) extends AnyVal {
+final class DynamicBigQueryOps[T](private val self: SCollection[T]) extends AnyVal {
 
   /**
    * Save this SCollection to dynamic BigQuery tables using the table and schema specified by the
@@ -69,6 +69,15 @@ final class SCollectionDynamicBigQueryOps[T](private val self: SCollection[T]) e
     ClosedTap[Nothing](EmptyTap)
   }
 
+}
+
+/**
+ * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with dynamic
+ * destinations methods.
+ */
+final class DynamicTableRowBigQueryOps[T <: TableRow](private val self: SCollection[T])
+    extends AnyVal {
+
   /**
    * Save this SCollection to dynamic BigQuery tables using the specified table function.
    * Note that elements must be of type
@@ -79,12 +88,21 @@ final class SCollectionDynamicBigQueryOps[T](private val self: SCollection[T]) e
     writeDisposition: WriteDisposition = null,
     createDisposition: CreateDisposition = null
   )(tableFn: ValueInSingleWindow[T] => TableDestination): ClosedTap[Nothing] =
-    saveAsBigQuery(
+    new DynamicBigQueryOps(self).saveAsBigQuery(
       DynamicDestinationsUtil.tableFn(tableFn, schema),
-      (t: T) => t.asInstanceOf[TableRow],
+      identity,
       writeDisposition,
       createDisposition
     )
+
+}
+
+/**
+ * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with dynamic
+ * destinations methods.
+ */
+final class DynamicTypedBigQueryOps[T <: HasAnnotation](private val self: SCollection[T])
+    extends AnyVal {
 
   /**
    * Save this SCollection to dynamic BigQuery tables using the specified table function.
@@ -96,19 +114,33 @@ final class SCollectionDynamicBigQueryOps[T](private val self: SCollection[T]) e
     createDisposition: CreateDisposition = null
   )(
     tableFn: ValueInSingleWindow[T] => TableDestination
-  )(implicit tt: TypeTag[T], ev: T <:< HasAnnotation): ClosedTap[Nothing] = {
+  )(implicit tt: TypeTag[T]): ClosedTap[Nothing] = {
     val bqt = BigQueryType[T]
     val destinations = DynamicDestinationsUtil.tableFn(tableFn, bqt.schema)
 
-    saveAsBigQuery(destinations, bqt.toTableRow, writeDisposition, createDisposition)
+    new DynamicBigQueryOps(self).saveAsBigQuery(
+      destinations,
+      bqt.toTableRow,
+      writeDisposition,
+      createDisposition
+    )
   }
 
 }
 
 trait SCollectionSyntax {
 
-  implicit def bigQueryDynamicOps[T](
+  implicit def bigQueryDynamicOps[T](sc: SCollection[T]): DynamicBigQueryOps[T] =
+    new DynamicBigQueryOps[T](sc)
+
+  implicit def bigQueryTableRowDynamicOps[T <: TableRow](
     sc: SCollection[T]
-  ): SCollectionDynamicBigQueryOps[T] = new SCollectionDynamicBigQueryOps[T](sc)
+  ): DynamicTableRowBigQueryOps[T] =
+    new DynamicTableRowBigQueryOps[T](sc)
+
+  implicit def bigQueryTypedDynamicOps[T <: HasAnnotation](
+    sc: SCollection[T]
+  ): DynamicTypedBigQueryOps[T] =
+    new DynamicTypedBigQueryOps[T](sc)
 
 }
