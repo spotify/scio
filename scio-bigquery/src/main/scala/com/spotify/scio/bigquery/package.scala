@@ -18,6 +18,7 @@
 package com.spotify.scio
 
 import java.math.MathContext
+import java.nio.ByteBuffer
 
 import com.google.api.services.bigquery.model.{
   TableReference,
@@ -25,9 +26,11 @@ import com.google.api.services.bigquery.model.{
   TimePartitioning => GTimePartitioning
 }
 import com.spotify.scio.values.SCollection
+import org.apache.avro.Conversions.DecimalConversion
+import org.apache.avro.LogicalTypes
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write
 import org.joda.time.format.{DateTimeFormat, DateTimeFormatterBuilder}
-import org.joda.time.{Instant, LocalDate, LocalDateTime, LocalTime}
+import org.joda.time.{DateTimeZone, Instant, LocalDate, LocalDateTime, LocalTime}
 
 import scala.collection.JavaConverters._
 import scala.language.implicitConversions
@@ -228,6 +231,12 @@ package object bigquery {
     def parse(timestamp: String): Instant =
       parser.parseDateTime(timestamp).toInstant
 
+    // For BigQueryType macros only, do not use directly
+    def parse(timestamp: Any): Instant = timestamp match {
+      case t: Long => new Instant(t / 1000)
+      case _       => parse(timestamp.toString)
+    }
+
   }
 
   /** Utility for BigQuery `DATE` type. */
@@ -241,6 +250,12 @@ package object bigquery {
 
     /** Convert BigQuery `DATE` string to `LocalDate`. */
     def parse(date: String): LocalDate = LocalDate.parse(date, formatter)
+
+    // For BigQueryType macros only, do not use directly
+    def parse(date: Any): LocalDate = date match {
+      case d: Int => new LocalDate(0, DateTimeZone.UTC).plusDays(d)
+      case _      => parse(date.toString)
+    }
   }
 
   /** Utility for BigQuery `TIME` type. */
@@ -259,6 +274,12 @@ package object bigquery {
 
     /** Convert BigQuery `TIME` string to `LocalTime`. */
     def parse(time: String): LocalTime = parser.parseLocalTime(time)
+
+    // For BigQueryType macros only, do not use directly
+    def parse(time: Any): LocalTime = time match {
+      case t: Long => new LocalTime(t / 1000, DateTimeZone.UTC)
+      case _       => parse(time.toString)
+    }
   }
 
   /** Utility for BigQuery `DATETIME` type. */
@@ -311,6 +332,9 @@ package object bigquery {
     val MaxNumericPrecision = 38
     val MaxNumericScale = 9
 
+    private val conversions = new DecimalConversion
+    private val logicalType = LogicalTypes.decimal(MaxNumericPrecision, MaxNumericScale)
+
     def apply(value: String): BigDecimal = apply(BigDecimal(value))
 
     def apply(value: BigDecimal): BigDecimal = {
@@ -324,6 +348,12 @@ package object bigquery {
               s"max allowed precision is $MaxNumericPrecision")
 
       BigDecimal(scaled.toString, new MathContext(MaxNumericPrecision))
+    }
+
+    // For BigQueryType macros only, do not use directly
+    def parse(value: Any): BigDecimal = value match {
+      case b: ByteBuffer => conversions.fromBytes(b, null, logicalType)
+      case _             => apply(value.toString)
     }
   }
 

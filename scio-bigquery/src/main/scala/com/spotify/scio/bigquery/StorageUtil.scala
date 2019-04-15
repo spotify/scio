@@ -77,9 +77,12 @@ object StorageUtil {
       case Type.DOUBLE => "FLOAT64"
       case Type.BYTES =>
         schema.getLogicalType match {
-          case null                        => "BYTES"
-          case t if t.getName == "decimal" => "NUMERIC"
-          case t                           => s"Unsupported logical type: $t"
+          case null => "BYTES"
+          case t if t.getName == "decimal" =>
+            assert(schema.getObjectProp("precision").asInstanceOf[Int] == 38)
+            assert(schema.getObjectProp("scale").asInstanceOf[Int] == 9)
+            "NUMERIC"
+          case t => s"Unsupported logical type: $t"
         }
       case Type.INT =>
         schema.getLogicalType match {
