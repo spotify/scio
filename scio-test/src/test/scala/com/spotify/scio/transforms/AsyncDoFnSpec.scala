@@ -61,9 +61,12 @@ class GuavaAsyncDoFnTester extends AsyncDoFnTester[SettableFuture, ListenableFut
         pending.append((input, p))
         p
       }
-      override def createResource(): Unit = Unit
+      override def createResource(): Unit = ()
     }
-  override def completePromise(p: SettableFuture[String], result: String): Unit = p.set(result)
+  override def completePromise(p: SettableFuture[String], result: String): Unit = {
+    p.set(result)
+    ()
+  }
 }
 
 class JavaAsyncDoFnTester extends AsyncDoFnTester[CompletableFuture, CompletableFuture] {
@@ -75,10 +78,12 @@ class JavaAsyncDoFnTester extends AsyncDoFnTester[CompletableFuture, Completable
         pending.append((input, p))
         p
       }
-      override def createResource(): Unit = Unit
+      override def createResource(): Unit = ()
     }
-  override def completePromise(p: CompletableFuture[String], result: String): Unit =
+  override def completePromise(p: CompletableFuture[String], result: String): Unit = {
     p.complete(result)
+    ()
+  }
 }
 
 class ScalaAsyncDoFnTester extends AsyncDoFnTester[Promise, Future] {
@@ -90,7 +95,7 @@ class ScalaAsyncDoFnTester extends AsyncDoFnTester[Promise, Future] {
         pending.append((input, p))
         p.future
       }
-      override def createResource(): Unit = Unit
+      override def createResource(): Unit = ()
     }
   override def completePromise(p: Promise[String], result: String): Unit =
     p.success(result)

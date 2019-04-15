@@ -34,7 +34,10 @@ Using `JobTest`, you can test the entire pipeline. Specify the type of the class
  JobTest[com.spotify.scio.examples.WordCount.type]
    .args("--input=in.txt", "--output=out.txt")
    .input(TextIO("in.txt"), inData)
-   .output(TextIO("out.txt"))(_ should containInAnyOrder(expected))
+   .output(TextIO("out.txt")){ coll =>
+coll should containInAnyOrder(expected)
+()
+}
    .run()
 }
 ```
@@ -57,7 +60,10 @@ Since we have two input sources, we have to specify both in the `JobTest`. Note 
    .args("--output=out.txt")
    .input(BigQueryIO(ExampleData.EVENT_TABLE), eventData)
    .input(BigQueryIO(ExampleData.COUNTRY_TABLE), countryData)
-   .output(TextIO("out.txt"))(_ should containInAnyOrder(expected))
+   .output(TextIO("out.txt")){ coll =>
+coll should containInAnyOrder(expected)
+()
+}
    .run()
 }
 ```
@@ -73,8 +79,14 @@ Since we have two input sources, we have to specify both in the `JobTest`. Note 
      "--output2=out2.txt",
      "--output3=out3.txt",
      "--output4=out4.txt")
-   .output(TextIO("out1.txt"))(_ should containInAnyOrder(Seq.empty[String]))
-   .output(TextIO("out2.txt"))(_ should containInAnyOrder(Seq.empty[String]))
+   .output(TextIO("out1.txt")){ coll =>
+coll should containInAnyOrder(Seq.empty[String])
+()
+}
+   .output(TextIO("out2.txt")){ coll =>
+coll should containInAnyOrder(Seq.empty[String])
+()
+}
    ………………...
    }
    .run()

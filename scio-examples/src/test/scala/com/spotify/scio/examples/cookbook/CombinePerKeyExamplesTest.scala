@@ -44,7 +44,10 @@ class CombinePerKeyExamplesTest extends PipelineSpec {
     JobTest[com.spotify.scio.examples.cookbook.CombinePerKeyExamples.type]
       .args("--output=dataset.table")
       .input(BigQueryIO(ExampleData.SHAKESPEARE_TABLE), input)
-      .output(BigQueryIO[TableRow]("dataset.table"))(_ should containInAnyOrder(expected))
+      .output(BigQueryIO[TableRow]("dataset.table")) { coll =>
+        coll should containInAnyOrder(expected)
+        ()
+      }
       .run()
   }
 

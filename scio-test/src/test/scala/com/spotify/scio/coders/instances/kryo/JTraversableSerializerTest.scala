@@ -33,6 +33,7 @@ class JTraversableSerializerTest extends FlatSpec with Matchers {
     val back = ser.read(k, new Input(o), null)
     elems.size shouldBe back.size
     elems should contain theSameElementsAs back
+    ()
   }
 
   "JIterableWrapperSerializer" should "cope with the internal buffer overflow" in {

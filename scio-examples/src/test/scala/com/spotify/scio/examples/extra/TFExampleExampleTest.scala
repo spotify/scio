@@ -33,7 +33,10 @@ class TFExampleExampleTest extends PipelineSpec {
     JobTest[com.spotify.scio.examples.extra.TFExampleExample.type]
       .args("--input=in", "--output=out")
       .input(TextIO("in"), input)
-      .output(TFExampleIO("out"))(_ should containInAnyOrder(output))
+      .output(TFExampleIO("out")) { coll =>
+        coll should containInAnyOrder(output)
+        ()
+      }
       .run()
   }
 
@@ -41,7 +44,10 @@ class TFExampleExampleTest extends PipelineSpec {
     JobTest[com.spotify.scio.examples.extra.TFExampleExample.type]
       .args("--input=in", "--output=out")
       .input(TextIO("in"), input)
-      .output(TFExampleIO("out"))(_ should containInAnyOrder(output))
+      .output(TFExampleIO("out")) { coll =>
+        coll should containInAnyOrder(output)
+        ()
+      }
       .run()
   }
 

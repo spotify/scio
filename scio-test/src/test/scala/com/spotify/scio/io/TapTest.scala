@@ -44,6 +44,7 @@ trait TapSpec extends PipelineSpec {
     val sc = ScioContext()
     tap.open(sc) should containInAnyOrder(expected)
     sc.close().waitUntilFinish() // block non-test runner
+    ()
   }
 
   def runWithInMemoryFuture[T](fn: ScioContext => ClosedTap[T]): Tap[T] =

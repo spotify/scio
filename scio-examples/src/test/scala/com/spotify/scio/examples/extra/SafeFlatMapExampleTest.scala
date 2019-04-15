@@ -26,7 +26,10 @@ class SafeFlatMapExampleTest extends PipelineSpec {
     JobTest[SafeFlatMapExample.type]
       .args("--input=in", "--num-sum=num-sum")
       .input(TextIO("in"), Seq("1 foo 3 bar bar"))
-      .output(TextIO("num-sum"))(_ should containSingleValue("13"))
+      .output(TextIO("num-sum")) { coll =>
+        coll should containSingleValue("13")
+        ()
+      }
       .run()
   }
 }

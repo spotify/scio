@@ -530,8 +530,8 @@ object TypeConvertionsTestData {
   val expectedAvro =
     avroWithNullable.map { r =>
       CompatibleAvroTestRecord(
-        Option(r.getIntField),
-        Option(r.getLongField),
+        Option(r.getIntField.toInt),
+        Option(r.getLongField.toLong),
         Option(r.getStringField).map(_.toString),
         r.getArrayField.asScala.toList.map(_.toString)
       )

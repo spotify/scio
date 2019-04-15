@@ -40,7 +40,10 @@ class ShapelessAvroExampleTest extends PipelineSpec {
     JobTest[com.spotify.scio.examples.extra.ShapelessAvroWriteExample.type]
       .args("--input=in.txt", "--output=wc.avro")
       .input(TextIO("in.txt"), textIn)
-      .output(AvroIO[GenericRecord]("wc.avro"))(_ should containInAnyOrder(records))
+      .output(AvroIO[GenericRecord]("wc.avro")) { coll =>
+        coll should containInAnyOrder(records)
+        ()
+      }
       .run()
   }
 
@@ -48,7 +51,10 @@ class ShapelessAvroExampleTest extends PipelineSpec {
     JobTest[com.spotify.scio.examples.extra.ShapelessAvroReadExample.type]
       .args("--input=wc.avro", "--output=out.txt")
       .input(AvroIO[GenericRecord]("wc.avro"), records)
-      .output(TextIO("out.txt"))(_ should containInAnyOrder(textOut))
+      .output(TextIO("out.txt")) { coll =>
+        coll should containInAnyOrder(textOut)
+        ()
+      }
       .run()
   }
 
