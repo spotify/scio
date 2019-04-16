@@ -27,8 +27,34 @@ import scala.language.existentials
 
 package object sql {
 
-  trait SQLBuilder {
+  sealed trait SQLBuilder {
     def as[B: Schema]: SCollection[B]
+  }
+
+  object SQLBuilder {
+    private[sql] def apply[A](q: String,
+                              ref: SCollectionRef[A],
+                              tag: TupleTag[A],
+                              udfs: List[Udf]): SQLBuilder =
+      new SQLBuilder {
+        def as[B: Schema] =
+          Sql
+            .from(ref.coll)(ref.schema)
+            .queryAs(new Query[ref._A, B](q, tag, udfs))
+      }
+
+    private[sql] def apply[A0, A1](q: String,
+                                   ref0: SCollectionRef[A0],
+                                   ref1: SCollectionRef[A1],
+                                   tag0: TupleTag[A0],
+                                   tag1: TupleTag[A1],
+                                   udfs: List[Udf]): SQLBuilder =
+      new SQLBuilder {
+        def as[B: Schema] =
+          Sql
+            .from(ref0.coll, ref1.coll)(ref0.schema, ref1.schema)
+            .queryAs(new Query2[ref0._A, ref1._A, B](q, tag0, tag1, udfs))
+      }
   }
 
   sealed trait SqlParam
@@ -44,53 +70,38 @@ package object sql {
 
   final implicit class SqlInterpolator(val sc: StringContext) extends AnyVal {
 
-    // TODO: typed SQL ?
-    // TODO: at least 1 params is a SCollectionRef
+    private def paramToString(tags: Map[String, (SCollectionRef[_], TupleTag[_])])(
+      p: SqlParam): String =
+      p match {
+        case SCollectionRef(scoll) =>
+          tags(scoll.name)._2.getId
+        case UdfRef(udf) =>
+          udf.fnName
+      }
+
     def sql(p0: SqlParam, ps: SqlParam*): SQLBuilder = {
       val params = p0 :: ps.toList
+
       val tags =
         params.zipWithIndex.collect {
           case (ref @ SCollectionRef(scoll), i) =>
             (scoll.name, (ref, new TupleTag[ref._A](s"SCOLLECTION_$i")))
         }.toMap
 
-      val udfs =
-        params.collect {
-          case UdfRef(u) => u
-        }
-
+      val udfs = params.collect { case UdfRef(u) => u }
       val strings = sc.parts.iterator
       val expressions = params.iterator
-      var buf = new StringBuffer(strings.next)
-      while (strings.hasNext) {
-        val param = expressions.next
-        val p =
-          param match {
-            case SCollectionRef(scoll) =>
-              tags(scoll.name)._2.getId
-            case UdfRef(udf) =>
-              udf.fnName
-          }
-        buf.append(p)
-        buf.append(strings.next)
-      }
-      val q = buf.toString
+      val toString = paramToString(tags) _
 
-      tags.toList match {
-        case (name, (ref, tag)) :: Nil =>
-          new SQLBuilder {
-            def as[B: Schema] =
-              Sql
-                .from(ref.coll)(ref.schema)
-                .queryAs(new Query[ref._A, B](q, tag, udfs))
-          }
-        case (name0, (ref0, tag0)) :: (name1, (ref1, tag1)) :: Nil =>
-          new SQLBuilder {
-            def as[B: Schema] =
-              Sql
-                .from(ref0.coll, ref1.coll)(ref0.schema, ref1.schema)
-                .queryAs(new Query2[ref0._A, ref1._A, B](q, tag0, tag1, udfs))
-          }
+      val expr = expressions.map(toString)
+      val q =
+        strings.zipAll(expr, "", "").map { case (s, e) => s + e }.mkString
+
+      tags.values.toList match {
+        case (ref, tag) :: Nil =>
+          SQLBuilder[ref._A](q, ref, tag, udfs)
+        case (ref0, tag0) :: (ref1, tag1) :: Nil =>
+          SQLBuilder[ref0._A, ref1._A](q, ref0, ref1, tag0, tag1, udfs)
         case _ =>
           throw new IllegalArgumentException("WUUUUTTT????")
       }
