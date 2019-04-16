@@ -31,7 +31,7 @@ object BigQueryConfig {
   /** Default cache directory. */
   private[this] val CacheDirectoryDefault: Path = Paths
     .get(CoreSysProps.TmpDir.value)
-    .resolve(CoreSysProps.User.value)
+    .resolve(s"scio-bigquery-${CoreSysProps.User.value}")
     .resolve(".bigquery")
 
   /** Default cache behavior is enabled. */
