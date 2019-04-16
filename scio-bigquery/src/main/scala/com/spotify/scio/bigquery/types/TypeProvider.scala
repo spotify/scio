@@ -29,11 +29,16 @@ import com.spotify.scio.CoreSysProps
 import com.spotify.scio.bigquery.client.BigQuery
 import com.spotify.scio.bigquery.types.MacroUtil._
 import com.spotify.scio.bigquery.validation.{OverrideTypeProvider, OverrideTypeProviderFinder}
-import com.spotify.scio.bigquery.{BigQueryPartitionUtil, BigQuerySysProps, BigQueryUtil}
+import com.spotify.scio.bigquery.{
+  BigQueryPartitionUtil,
+  BigQuerySysProps,
+  BigQueryUtil,
+  StorageUtil
+}
 import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConverters._
-import scala.collection.mutable.{Map => MMap}
+import scala.collection.mutable.{Buffer => MBuffer, Map => MMap}
 import scala.reflect.macros._
 
 // scalastyle:off line.size.limit
@@ -59,7 +64,7 @@ private[types] object TypeProvider {
 
     val ta =
       annottees.map(_.tree) match {
-        case q"class $cName" :: tail =>
+        case q"class $cName" :: _ =>
           List(q"""
             implicit def bqTable: ${p(c, SType)}.Table[$cName] =
               new ${p(c, SType)}.Table[$cName]{
@@ -81,6 +86,37 @@ private[types] object TypeProvider {
     }
     val schema = BigQueryUtil.parseSchema(schemaString)
     schemaToType(c)(schema, annottees, Nil, Nil)
+  }
+
+  def storageImpl(c: blackbox.Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
+    import c.universe._
+
+    val (table, args, selectedFields, rowRestriction) = extractStorageArgs(c)
+    val tableSpec = BigQueryPartitionUtil.latestQuery(bigquery, formatString(table :: args))
+    val avroSchema = bigquery.tables.storageReadSchema(tableSpec, selectedFields, rowRestriction)
+    val schema = StorageUtil.toTableSchema(avroSchema)
+
+    val traits = List(tq"${p(c, SType)}.HasStorageOptions")
+    val overrides = List(
+      q"override def table: _root_.java.lang.String = $table",
+      q"override def selectedFields: _root_.scala.List[_root_.java.lang.String] = _root_.scala.List(..$selectedFields)",
+      q"override def rowRestriction: _root_.java.lang.String = $rowRestriction"
+    )
+
+    val ta =
+      annottees.map(_.tree) match {
+        case q"class $cName" :: _ =>
+          List(q"""
+            implicit def bqStorage: ${p(c, SType)}.StorageOptions[$cName] =
+              new ${p(c, SType)}.StorageOptions[$cName]{
+                ..$overrides
+              }
+          """)
+        case _ =>
+          Nil
+      }
+
+    schemaToType(c)(schema, annottees, traits, overrides ++ ta)
   }
 
   // scalastyle:off cyclomatic.complexity
@@ -323,6 +359,44 @@ private[types] object TypeProvider {
     c.macroApplication match {
       case Apply(Select(Apply(_, xs: List[_]), _), _) => xs.map(str(_))
       case _                                          => Nil
+    }
+  }
+
+  private def extractStorageArgs(
+    c: blackbox.Context): (String, List[String], List[String], String) = {
+    import c.universe._
+
+    def str(tree: c.Tree) = tree match {
+      // "argument literal"
+      case Literal(Constant(arg @ (_: String))) => arg
+      // "string literal".stripMargin
+      case Select(Literal(Constant(s: String)), TermName("stripMargin")) => s.stripMargin
+      case arg                                                           => c.abort(c.enclosingPosition, s"Unsupported argument $arg")
+    }
+
+    val posList = MBuffer.empty[List[String]]
+    val namedArgs = MMap.empty[String, List[String]]
+
+    c.macroApplication match {
+      case Apply(Select(Apply(_, xs: List[_]), _), _) =>
+        val table = str(xs.head)
+        xs.tail.foreach {
+          case q"args = List(..$xs)"           => namedArgs("args") = xs.map(str)
+          case q"selectedFields = List(..$xs)" => namedArgs("selectedFields") = xs.map(str)
+          case q"rowRestriction = $s"          => namedArgs("rowRestriction") = List(str(s))
+          case q"List(..$xs)"                  => posList += xs.map(str)
+          case q"$s"                           => posList += List(str(s))
+        }
+        val posArgs = List("args", "selectedFields", "rowRestriction").zip(posList).toMap
+        val dups = posArgs.keySet intersect namedArgs.keySet
+        if (dups.nonEmpty) {
+          c.abort(c.enclosingPosition, s"Duplicate arguments ${dups.mkString(", ")}")
+        }
+        val argMap = posArgs ++ namedArgs
+        val args = argMap.getOrElse("args", Nil)
+        val selectedFields = argMap.getOrElse("selectedFields", Nil)
+        val rowRestriction = argMap.getOrElse("rowRestriction", Nil).headOption.orNull
+        (table, args, selectedFields, rowRestriction)
     }
   }
 

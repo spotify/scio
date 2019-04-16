@@ -29,6 +29,7 @@ import com.spotify.scio.io.{ScioIO, Tap, TapOf, TestIO}
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.extensions.gcp.options.GcpOptions
+import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.TypedRead.Method
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
 import org.apache.beam.sdk.io.gcp.bigquery.SchemaAndRecord
 import org.apache.beam.sdk.io.gcp.{bigquery => beam}
@@ -82,6 +83,18 @@ private object Reads {
       }
       sc.applyInternal(query)
     }
+  }
+
+  private[scio] def bqReadStorage[T: ClassTag](sc: ScioContext)(
+    typedRead: beam.BigQueryIO.TypedRead[T],
+    tableSpec: String,
+    selectedFields: List[String] = Nil,
+    rowRestriction: String = null): SCollection[T] = sc.wrap {
+    val read = typedRead
+      .from(tableSpec)
+      .withMethod(Method.DIRECT_READ)
+      .withReadOptions(StorageUtil.tableReadOptions(selectedFields, rowRestriction))
+    sc.applyInternal(read)
   }
 
   private[scio] def avroBigQueryRead[T <: HasAnnotation: ClassTag: TypeTag](sc: ScioContext) = {
@@ -207,6 +220,33 @@ object BigQueryTable {
 }
 
 /**
+ * Get an IO for a BigQuery table using the storage API.
+ */
+final case class BigQueryStorage(tableSpec: String) extends BigQueryIO[TableRow] {
+  override type ReadP = BigQueryStorage.ReadParam
+  override type WriteP = Nothing // ReadOnly
+
+  override protected def read(sc: ScioContext, params: ReadP): SCollection[TableRow] =
+    Reads.bqReadStorage(sc)(beam.BigQueryIO.readTableRows(),
+                            tableSpec,
+                            params.selectFields,
+                            params.rowRestriction)
+
+  override protected def write(data: SCollection[TableRow], params: WriteP): Tap[TableRow] =
+    throw new IllegalStateException("BigQueryStorage is read-only")
+
+  // FIXME: implement this
+  override def tap(read: ReadP): Tap[TableRow] = ???
+}
+
+object BigQueryStorage {
+  final case class ReadParam(selectFields: List[String], rowRestriction: String)
+
+  @inline final def apply(table: TableReference): BigQueryStorage =
+    BigQueryStorage(beam.BigQueryHelpers.toTableSpec(table))
+}
+
+/**
  * Get an IO for a BigQuery TableRow JSON file.
  */
 final case class TableRowJsonIO(path: String) extends ScioIO[TableRow] {
@@ -244,9 +284,10 @@ object BigQueryTyped {
   @annotation.implicitNotFound(
     """
     Can't find annotation for type ${T}.
-    Make sure this class is annotated with BigQueryType.fromTable or with BigQueryType.fromQuery
-    Alternatively, use Typed.Query("<sqlQuery>") or Typed.Table("<bigquery table>")
-    to get a ScioIO instance.
+    Make sure this class is annotated with BigQueryType.fromStorage, BigQueryType.fromTable or
+    BigQueryType.fromQuery.
+    Alternatively, use BigQueryTyped.Storage("<table>"), BigQueryTyped.Table("<table>"), or
+    BigQueryTyped.Query("<query>") to get a ScioIO instance.
   """)
   sealed trait IO[T <: HasAnnotation] {
     type F[_ <: HasAnnotation] <: ScioIO[_]
@@ -271,6 +312,13 @@ object BigQueryTyped {
         type F[A <: HasAnnotation] = Select[A]
         def impl: Select[T] = Select(t.query)
       }
+
+    implicit def storageIO[T <: HasAnnotation: ClassTag: TypeTag: Coder](
+      implicit t: BigQueryType.StorageOptions[T]): Aux[T, Storage] =
+      new IO[T] {
+        type F[A <: HasAnnotation] = Storage[A]
+        def impl: Storage[T] = Storage(t.table)
+      }
   }
   // scalastyle:on structural.type
 
@@ -278,7 +326,8 @@ object BigQueryTyped {
    * Get a typed SCollection for a BigQuery table or a SELECT query.
    *
    * Note that `T` must be annotated with
-   * [[com.spotify.scio.bigquery.types.BigQueryType.fromTable BigQueryType.fromTable]] or
+   * [[com.spotify.scio.bigquery.types.BigQueryType.fromTable BigQueryType.fromStorage]],
+   * [[com.spotify.scio.bigquery.types.BigQueryType.fromTable BigQueryType.fromTable]], or
    * [[com.spotify.scio.bigquery.types.BigQueryType.fromQuery BigQueryType.fromQuery]]
    *
    * The source (table) specified in the annotation will be used
@@ -287,7 +336,7 @@ object BigQueryTyped {
     t.impl
 
   /**
-   * Get a typed SCollection for a BigQuery SELECT query
+   * Get a typed SCollection for a BigQuery SELECT query.
    *
    * Both [[https://cloud.google.com/bigquery/docs/reference/legacy-sql Legacy SQL]] and
    * [[https://cloud.google.com/bigquery/docs/reference/standard-sql/ Standard SQL]] dialects are
@@ -378,6 +427,34 @@ object BigQueryTyped {
       Table[T](beam.BigQueryHelpers.toTableSpec(table))
   }
 
+  /**
+   * Get a typed SCollection for a BigQuery table using the storage API.
+   */
+  final case class Storage[T <: HasAnnotation: ClassTag: TypeTag: Coder](tableSpec: String)
+      extends BigQueryIO[T] {
+    override type ReadP = Storage.ReadParam
+    override type WriteP = Nothing // ReadOnly
+
+    override def testId: String = s"BigQueryIO($tableSpec)"
+
+    override def read(sc: ScioContext, params: ReadP): SCollection[T] = {
+      @inline def typedRead(sc: ScioContext) = Reads.avroBigQueryRead[T](sc)
+      Reads.bqReadStorage(sc)(typedRead(sc), tableSpec, params.selectFields, params.rowRestriction)
+    }
+
+    override def write(data: SCollection[T], params: WriteP): Tap[T] =
+      throw new IllegalStateException("Storage API is read-only")
+
+    // FIXME: implement this
+    override def tap(params: ReadP): Tap[T] = ???
+  }
+
+  object Storage {
+    type ReadParam = BigQueryStorage.ReadParam
+    val ReadParam = BigQueryStorage.ReadParam
+  }
+
+  // scalastyle:off cyclomatic.complexity
   private[scio] def dynamic[T <: HasAnnotation: ClassTag: TypeTag: Coder](
     newSource: String
   ): ScioIO.ReadOnly[T, Unit] = {
@@ -393,8 +470,8 @@ object BigQueryTyped {
         val table = bqt.table.get
         ScioIO.ro[T](Table(table))
       case null if bqt.isQuery =>
-        val _query = bqt.query.get
-        Select[T](_query)
+        val query = bqt.query.get
+        Select[T](query)
       case null =>
         throw new IllegalArgumentException(s"Missing table or query field in companion object")
       case _ if table.isDefined =>
@@ -403,4 +480,5 @@ object BigQueryTyped {
         Select[T](newSource)
     }
   }
+  // scalastyle:on cyclomatic.complexity
 }
