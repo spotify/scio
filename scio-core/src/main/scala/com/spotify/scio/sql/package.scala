@@ -68,7 +68,7 @@ package object sql {
   implicit def toSCollectionRef[A: Schema](coll: SCollection[A]): SqlParam =
     new SCollectionRef[A](coll)
 
-  final implicit class SqlInterpolator(val sc: StringContext) extends AnyVal {
+  final implicit class SqlInterpolator(private val sc: StringContext) extends AnyVal {
 
     private def paramToString(tags: Map[String, (SCollectionRef[_], TupleTag[_])])(
       p: SqlParam): String =
