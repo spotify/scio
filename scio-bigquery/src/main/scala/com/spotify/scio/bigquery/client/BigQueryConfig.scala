@@ -17,7 +17,10 @@
 
 package com.spotify.scio.bigquery.client
 
+import java.nio.file.{Path, Paths}
+
 import com.google.api.services.bigquery.BigqueryScopes
+import com.spotify.scio.CoreSysProps
 import com.spotify.scio.bigquery.BigQuerySysProps
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.TypedRead.QueryPriority
 
@@ -26,7 +29,10 @@ import scala.util.Try
 object BigQueryConfig {
 
   /** Default cache directory. */
-  private[this] val CacheDirectoryDefault: String = sys.props("user.dir") + "/.bigquery"
+  private[this] val CacheDirectoryDefault: Path = Paths
+    .get(CoreSysProps.TmpDir.value)
+    .resolve(s"scio-bigquery-${CoreSysProps.User.value}")
+    .resolve(".bigquery")
 
   /** Default cache behavior is enabled. */
   private[this] val CacheEnabledDefault: Boolean = true
@@ -47,8 +53,8 @@ object BigQueryConfig {
       .flatMap(x => Try(x.toBoolean).toOption)
       .getOrElse(CacheEnabledDefault)
 
-  def cacheDirectory: String =
-    BigQuerySysProps.CacheDirectory.value(CacheDirectoryDefault)
+  def cacheDirectory: Path =
+    BigQuerySysProps.CacheDirectory.valueOption.map(Paths.get(_)).getOrElse(CacheDirectoryDefault)
 
   def connectTimeoutMs: Option[Int] =
     BigQuerySysProps.ConnectTimeoutMs.valueOption.map(_.toInt)
