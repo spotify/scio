@@ -186,7 +186,7 @@ package sql {
       (sa, sb, sc, scha, schab, schac)
     }
 
-    def tagFor(t: Type, lbl: String) = {
+    def tagFor(t: Type, lbl: String): Tree = {
       q"""
         new _root_.org.apache.beam.sdk.values.TupleTag[$t]($lbl)
       """
