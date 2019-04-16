@@ -41,6 +41,8 @@ object Sql {
   private[sql] val BeamProviderName = "beam"
   val SCollectionTypeName = "SCOLLECTION"
 
+  def defaultTag[A] = new TupleTag[A](SCollectionTypeName)
+
   def from[A: Schema](sc: SCollection[A]): SqlSCollection[A] = new SqlSCollection(sc)
 
   def from[A: Schema, B: Schema](a: SCollection[A], b: SCollection[B]): SqlSCollection2[A, B] =
@@ -70,7 +72,8 @@ object Sql {
 
 final class SqlSCollection[A: Schema](sc: SCollection[A]) {
 
-  def query(q: String, udfs: Udf*): SCollection[Row] = query(Query[A, Row](q, udfs = udfs.toList))
+  def query(q: String, udfs: Udf*): SCollection[Row] =
+    query(Query[A, Row](q, Sql.defaultTag, udfs = udfs.toList))
 
   def query(q: Query[A, Row]): SCollection[Row] = {
     sc.context.wrap {
@@ -85,7 +88,7 @@ final class SqlSCollection[A: Schema](sc: SCollection[A]) {
   }
 
   def queryAs[R: Schema](q: String, udfs: Udf*): SCollection[R] =
-    queryAs(Query[A, R](q, udfs = udfs.toList))
+    queryAs(Query[A, R](q, Sql.defaultTag, udfs = udfs.toList))
 
   def queryAs[R: Schema](q: Query[A, R]): SCollection[R] =
     try {
@@ -133,11 +136,9 @@ final class SqlSCollection2[A: Schema, B: Schema](a: SCollection[A], b: SCollect
 
 }
 
-final case class Query[A, B](
-  query: String,
-  tag: TupleTag[A] = new TupleTag[A]("SCOLLECTION"),
-  udfs: List[Udf] = Nil
-)
+final case class Query[A, B](query: String,
+                             tag: TupleTag[A] = Sql.defaultTag[A],
+                             udfs: List[Udf] = Nil)
 
 final case class Query2[A, B, R](
   query: String,
@@ -194,6 +195,7 @@ object Queries {
       .map(_ => q)
   }
 
+  // TODO: this should support TupleTag
   def typed[A: Schema, B: Schema](query: String): Query[A, B] =
     macro QueryMacros.typedImpl[A, B]
 
@@ -325,9 +327,8 @@ object QueryMacros {
     Queries
       .typecheck(sq)(sIn, sOut)
       .fold(
-        err => c.abort(c.enclosingPosition, err), { _ =>
-          c.Expr[Query[A, B]](q"""_root_.com.spotify.scio.sql.Query($query)""")
-        }
+        err => c.abort(c.enclosingPosition, err),
+        _ => c.Expr[Query[A, B]](q"_root_.com.spotify.scio.sql.Query($query)")
       )
   }
 

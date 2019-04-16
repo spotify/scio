@@ -28,6 +28,7 @@ class TypedBeamSQLTest extends PipelineSpec {
   // scalastyle:off line.size.limit
   "(Typed) BeamSQL" should "typecheck queries at compile time" in {
     import Queries.typed
+    typed[Bar, Long]("select l from SCOLLECTION")
     """typed[Bar, Long]("select l from SCOLLECTION")""" should compile
     """typed[Bar, Int]("select `SCOLLECTION`.`f`.`i` from SCOLLECTION")""" should compile
     """typed[Bar, Result]("select `SCOLLECTION`.`f`.`i` from SCOLLECTION")""" should compile
@@ -85,17 +86,33 @@ class TypedBeamSQLTest extends PipelineSpec {
   }
 
   "String interpolation" should "statically check interpolated queries" in runWithContext { sc =>
-    """
+    tsql"""
     def coll: SCollection[(Int, String)] =
       sc.parallelize((1 to 10).toList.map(i => (i, i.toString)))
     val r: SCollection[Int] = tsql"SELECT _1 FROM $coll"
     """ should compile
 
-    """
+    tsql"""
     def coll: SCollection[(Int, String)] =
       sc.parallelize((1 to 10).toList.map(i => (i, i.toString)))
     val r: SCollection[String] = tsql"SELECT _1 FROM $coll"
     """ shouldNot compile
+
+    tsql"""
+    val a = sc.parallelize(users)
+    val b = sc.parallelize(users)
+    val r: SCollection[String] =
+      tsql"SELECT $a.username FROM $a JOIN $b ON $a.username = $b.username"
+    """ should compile
+
+    tsql"""
+    val a = sc.parallelize(users)
+    val b = sc.parallelize(users)
+    val r: SCollection[Int] =
+      tsql"SELECT $a.username FROM $a JOIN $b ON $a.username = $b.username"
+    """ shouldNot compile
+
+  // TODO: test inline SCollection definition in tsql query
   }
 
 }

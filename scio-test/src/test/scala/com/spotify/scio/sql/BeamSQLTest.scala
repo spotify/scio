@@ -321,6 +321,12 @@ class BeamSQLTest extends PipelineSpec {
     cast should containInAnyOrder(expectedCast)
   }
 
+  it should "support tags" in runWithContext { sc =>
+    val a = sc.parallelize(users)
+    val q = new Query[User, String]("select username from A", new TupleTag[User]("A"))
+    a.queryAs(q) shouldNot beEmpty
+  }
+
   it should "support JOIN" in runWithContext { sc =>
     val a = sc.parallelize(users)
     val b = sc.parallelize(users)
@@ -401,7 +407,7 @@ class BeamSQLTest extends PipelineSpec {
   it should "provide a typecheck method for tests" in {
     object checkOK {
       def apply[A: Schema, B: Schema](q: String): Assertion =
-        Queries.typecheck(Query[A, B](q)) should be('right)
+        Queries.typecheck(Query[A, B](q, Sql.defaultTag)) should be('right)
 
       def apply[A: Schema, B: Schema, C: Schema](
         q: String,
@@ -413,7 +419,7 @@ class BeamSQLTest extends PipelineSpec {
 
     object checkNOK {
       def apply[A: Schema, B: Schema](q: String): Assertion =
-        Queries.typecheck(Query[A, B](q)) should be('left)
+        Queries.typecheck(Query[A, B](q, Sql.defaultTag)) should be('left)
 
       def apply[A: Schema, B: Schema, C: Schema](
         q: String,
@@ -539,7 +545,8 @@ class BeamSQLTest extends PipelineSpec {
       }
 
     val q =
-      Query[avro.User, (Int, String, String)]("SELECT id, first_name, last_name from SCOLLECTION")
+      Query[avro.User, (Int, String, String)]("SELECT id, first_name, last_name from SCOLLECTION",
+                                              Sql.defaultTag)
 
     sc.parallelize(avroUsers).queryAs(q) should containInAnyOrder(expected)
   }
