@@ -18,7 +18,6 @@
 package com.spotify.scio.tensorflow
 
 import com.google.protobuf.ByteString
-import com.spotify.scio.testing.PipelineSpec
 import org.tensorflow.example._
 import org.tensorflow.metadata.v0.{
   FeaturePresence,
@@ -160,19 +159,4 @@ object MetadataSchemaTest {
       .setContext(Features.newBuilder().putAllFeature(context.asJava))
       .setFeatureLists(FeatureLists.newBuilder().putAllFeatureList(featureList.asJava))
       .build
-}
-
-class MetadataSchemaTest extends PipelineSpec {
-  import MetadataSchemaTest._
-
-  "Saving example schema" should "work" in {
-    runWithContext { sc =>
-      val schema = sc.parallelize(examples).inferExampleMetadata()
-      schema should satisfy[Schema] { schema =>
-        val actualFeatures = schema.head.getFeatureList.asScala.toSet
-        val expectedFeatures = expectedSchema.getFeatureList.asScala.toSet
-        actualFeatures == expectedFeatures
-      }
-    }
-  }
 }
