@@ -75,6 +75,7 @@ private[tensorflow] object TFSavedJob {
       .saveAsTextFile(args("output"))
 
     sc.close().waitUntilDone()
+    ()
   }
 }
 
@@ -86,8 +87,8 @@ class TensorflowSpec extends PipelineSpec {
 
     JobTest[TFSavedJob.type]
       .args(s"--savedModelUri=$resource", s"--settings=$settings", "--output=output")
-      .output(TextIO("output")) {
-        _ should containInAnyOrder(List("0"))
+      .output(TextIO("output")) { out =>
+        out should containInAnyOrder(List("0"))
       }
       .run()
   }

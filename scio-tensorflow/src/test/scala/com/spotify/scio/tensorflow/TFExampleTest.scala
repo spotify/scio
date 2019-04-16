@@ -85,7 +85,7 @@ class TFExampleTest extends PipelineSpec {
     JobTest[MultiSpecFeatranJob.type]
       .args("--output=out")
       .output(TFExampleIO("out")) { out =>
-        out should satisfy [Example] { i =>
+        out should satisfy[Example] { i =>
           val features = i.head.getFeatures.getFeatureMap.asScala
           // check that there are features from both sides of the multispec, also that there is the
           // right number of features overall
