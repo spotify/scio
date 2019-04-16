@@ -33,9 +33,18 @@ class CheckpointExampleTest extends PipelineSpec {
     JobTest[CheckpointExample.type]
       .args("--output=output", "--input=input", "--checkpoint=checkpoint")
       .input(TextIO("input"), input)
-      .output(TextIO("output-max"))(_ should containSingleValue(max))
-      .output(TextIO("output-words"))(_ should containInAnyOrder(words))
-      .output(TextIO("output"))(_ should containInAnyOrder(prettyCount))
+      .output(TextIO("output-max")) { coll =>
+        coll should containSingleValue(max)
+        ()
+      }
+      .output(TextIO("output-words")) { coll =>
+        coll should containInAnyOrder(words)
+        ()
+      }
+      .output(TextIO("output")) { coll =>
+        coll should containInAnyOrder(prettyCount)
+        ()
+      }
       .run()
   }
 
@@ -43,9 +52,18 @@ class CheckpointExampleTest extends PipelineSpec {
     JobTest[CheckpointExample.type]
       .args("--output=output", "--input=input", "--checkpoint=checkpoint")
       .input(CheckpointIO[String]("checkpoint-src"), words)
-      .output(TextIO("output-max"))(_ should containSingleValue(max))
-      .output(TextIO("output-words"))(_ should containInAnyOrder(words))
-      .output(TextIO("output"))(_ should containInAnyOrder(prettyCount))
+      .output(TextIO("output-max")) { coll =>
+        coll should containSingleValue(max)
+        ()
+      }
+      .output(TextIO("output-words")) { coll =>
+        coll should containInAnyOrder(words)
+        ()
+      }
+      .output(TextIO("output")) { coll =>
+        coll should containInAnyOrder(prettyCount)
+        ()
+      }
       .run()
   }
 
@@ -54,9 +72,18 @@ class CheckpointExampleTest extends PipelineSpec {
       .args("--output=output", "--input=input", "--checkpoint=checkpoint")
       .input(CheckpointIO[String]("checkpoint-src"), words)
       .input(CheckpointIO[(String, Long)]("checkpoint-count"), count)
-      .output(TextIO("output-max"))(_ should containSingleValue(max))
-      .output(TextIO("output-words"))(_ should containInAnyOrder(words))
-      .output(TextIO("output"))(_ should containInAnyOrder(prettyCount))
+      .output(TextIO("output-max")) { coll =>
+        coll should containSingleValue(max)
+        ()
+      }
+      .output(TextIO("output-words")) { coll =>
+        coll should containInAnyOrder(words)
+        ()
+      }
+      .output(TextIO("output")) { coll =>
+        coll should containInAnyOrder(prettyCount)
+        ()
+      }
       .run()
   }
 

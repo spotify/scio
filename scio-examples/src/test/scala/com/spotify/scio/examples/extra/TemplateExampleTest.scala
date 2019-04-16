@@ -31,7 +31,10 @@ class TemplateExampleTest extends PipelineSpec {
         "--outputTopic=projects/project/topics/topic"
       )
       .input(CustomIO[String]("input"), inData)
-      .output(CustomIO[String]("output"))(_ should containInAnyOrder(inData))
+      .output(CustomIO[String]("output")) { coll =>
+        coll should containInAnyOrder(inData)
+        ()
+      }
       .run()
   }
 

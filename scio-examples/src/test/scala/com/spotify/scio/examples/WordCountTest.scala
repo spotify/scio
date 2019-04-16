@@ -29,7 +29,10 @@ class WordCountTest extends PipelineSpec {
     JobTest[com.spotify.scio.examples.WordCount.type]
       .args("--input=in.txt", "--output=out.txt")
       .input(TextIO("in.txt"), inData)
-      .output(TextIO("out.txt"))(_ should containInAnyOrder(expected))
+      .output(TextIO("out.txt")) { coll =>
+        coll should containInAnyOrder(expected)
+        ()
+      }
       .run()
   }
 
@@ -37,7 +40,10 @@ class WordCountTest extends PipelineSpec {
     JobTest[com.spotify.scio.examples.MinimalWordCount.type]
       .args("--input=in.txt", "--output=out.txt")
       .input(TextIO("in.txt"), inData)
-      .output(TextIO("out.txt"))(_ should containInAnyOrder(expected))
+      .output(TextIO("out.txt")) { coll =>
+        coll should containInAnyOrder(expected)
+        ()
+      }
       .run()
   }
 
@@ -45,7 +51,10 @@ class WordCountTest extends PipelineSpec {
     JobTest[com.spotify.scio.examples.MinimalWordCountTypedArguments.type]
       .args("--input=in.txt", "--output=out.txt")
       .input(TextIO("in.txt"), inData)
-      .output(TextIO("out.txt"))(_ should containInAnyOrder(expected))
+      .output(TextIO("out.txt")) { coll =>
+        coll should containInAnyOrder(expected)
+        ()
+      }
       .run()
   }
 
@@ -53,7 +62,10 @@ class WordCountTest extends PipelineSpec {
     JobTest[com.spotify.scio.examples.MinimalBeamSqlWordCountExample.type]
       .args("--input=in.txt", "--output=out.txt")
       .input(TextIO("in.txt"), inData)
-      .output(TextIO("out.txt"))(_ should containInAnyOrder(expected))
+      .output(TextIO("out.txt")) { coll =>
+        coll should containInAnyOrder(expected)
+        ()
+      }
       .run()
   }
 

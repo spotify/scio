@@ -31,6 +31,7 @@ class DoubleSCollectionFunctionsTest extends PipelineSpec {
   def test(s: Seq[Double], e: Double): Unit = {
     s.size shouldBe 1L
     s.head shouldBe e +- 1e-10
+    ()
   }
 
   "DoubleSCollection" should "support sampleStdev()" in {

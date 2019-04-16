@@ -198,7 +198,9 @@ class NamedTransformTest extends PipelineSpec {
     import com.spotify.scio.io.TextIO
     JobTest[SimpleJob.type]
       .args("--output=top.txt", "--stableUniqueNames=ERROR")
-      .output(TextIO("top.txt"))(_ => true)
+      .output(TextIO("top.txt")) { _ =>
+        ()
+      }
       .run()
   }
 

@@ -29,6 +29,7 @@ class ByteStringSerializerTest extends FlatSpec with Matchers {
     ser.write(k, new Output(o), bs)
     val back = ser.read(k, new Input(o), null)
     bs shouldEqual back
+    ()
   }
 
   "ByteStringSerializer" should "roundtrip large ByteString" in {

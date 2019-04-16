@@ -32,7 +32,10 @@ class AnnoySideInputExampleTest extends PipelineSpec {
         "--output=out.txt",
         s"--tempLocation=$temp"
       )
-      .output(TextIO("out.txt"))(_ should containInAnyOrder(expected))
+      .output(TextIO("out.txt")) { coll =>
+        coll should containInAnyOrder(expected)
+        ()
+      }
       .run()
   }
 }

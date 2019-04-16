@@ -58,6 +58,7 @@ class AsyncDoFnTest extends PipelineSpec {
 
     errorMessages(e) should contain("Failed to process futures")
     errorMessages(e) should contain("requirement failed: input must be >= 0")
+    ()
   }
 
   "GuavaAsyncDoFn" should "work" in {

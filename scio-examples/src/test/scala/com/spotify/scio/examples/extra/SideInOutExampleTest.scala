@@ -34,9 +34,18 @@ class SideInOutExampleTest extends PipelineSpec {
             "--output4=out4.txt")
       .input(TextIO("in.txt"), inData)
       .input(TextIO("stop.txt"), Seq("the"))
-      .output(TextIO("out1.txt"))(_ should containInAnyOrder(Seq.empty[String]))
-      .output(TextIO("out2.txt"))(_ should containInAnyOrder(Seq.empty[String]))
-      .output(TextIO("out3.txt"))(_ should containInAnyOrder(Seq("dog: 1", "fox: 1")))
+      .output(TextIO("out1.txt")) { coll =>
+        coll should containInAnyOrder(Seq.empty[String])
+        ()
+      }
+      .output(TextIO("out2.txt")) { coll =>
+        coll should containInAnyOrder(Seq.empty[String])
+        ()
+      }
+      .output(TextIO("out3.txt")) { coll =>
+        coll should containInAnyOrder(Seq("dog: 1", "fox: 1"))
+        ()
+      }
       .output(TextIO("out4.txt")) {
         _ should containInAnyOrder(Seq("brown: 1", "jumps: 1", "lazy: 1", "over: 1", "quick: 1"))
       }

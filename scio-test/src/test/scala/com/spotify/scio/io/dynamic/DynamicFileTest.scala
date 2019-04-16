@@ -42,6 +42,7 @@ class DynamicFileTest extends PipelineSpec {
       .filterNot(_.toFile.getName.startsWith("."))
       .toSet
     actual shouldBe expected.map(path.resolve).toSet
+    ()
   }
 
   "Dynamic File" should "support text files" in {
