@@ -243,7 +243,7 @@ object Queries {
              .map(i => PrettyPrint.prettyPrint(i._2.getFields.asScala.toList))
              .mkString("\n")}
            |
-           |Query result schema (infered) is unknown.
+           |Query result schema (inferred) is unknown.
            |Expected schema:
            |${PrettyPrint.prettyPrint(expectedSchema.getFields.asScala.toList)}
         """.stripMargin
@@ -267,7 +267,7 @@ object Queries {
                  .map(i => PrettyPrint.prettyPrint(i._2.getFields.asScala.toList))
                  .mkString("\n")}
                |
-               |Query result schema (infered):
+               |Query result schema (inferred):
                |${PrettyPrint.prettyPrint(inferredSchema.getFields.asScala.toList)}
                |
                |Expected schema:
