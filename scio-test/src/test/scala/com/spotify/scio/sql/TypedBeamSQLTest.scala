@@ -17,7 +17,7 @@
 package com.spotify.scio.sql
 
 import com.spotify.scio.bean.UserBean
-import com.spotify.scio.schemas.To
+import com.spotify.scio.schemas.{Schema, To}
 import com.spotify.scio.values.SCollection
 import com.spotify.scio.testing.PipelineSpec
 import org.apache.beam.sdk.values.TupleTag
@@ -126,6 +126,41 @@ class TypedBeamSQLTest extends PipelineSpec {
     val r: SCollection[Int] =
       tsql"SELECT A._1 FROM ${a.map(u => (u.username, u.age))} A"
     """ shouldNot compile
+  }
+
+  it should "support Java classes" in runWithContext { sc =>
+    val cs =
+      List(
+        new j.Customer(1, "Foo", "Wonderland"),
+        new j.Customer(2, "Bar", "Super Kingdom"),
+        new j.Customer(3, "Baz", "Wonderland"),
+        new j.Customer(4, "Grault", "Wonderland"),
+        new j.Customer(5, "Qux", "Super Kingdom")
+      )
+
+    val os =
+      List(
+        new j.Order(1, 5),
+        new j.Order(2, 2),
+        new j.Order(3, 1),
+        new j.Order(4, 3),
+        new j.Order(5, 1),
+        new j.Order(6, 5),
+        new j.Order(7, 4),
+        new j.Order(8, 4),
+        new j.Order(9, 1)
+      )
+
+    val customers: SCollection[j.Customer] = sc.parallelize(cs)
+    val orders: SCollection[j.Order] = sc.parallelize(os)
+
+    val r: SCollection[(String, String)] =
+      tsql"""
+        SELECT $customers.name, ('order id:' || CAST($orders.id AS VARCHAR))
+        FROM $orders
+        JOIN $customers ON $orders.customerId = $customers.id
+        WHERE $customers.name = 'Grault'
+      """
   }
 
 }

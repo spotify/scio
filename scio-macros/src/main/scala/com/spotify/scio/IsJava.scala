@@ -81,7 +81,8 @@ object IsJavaBean {
       checkGetterAndSetters(c)(wtt)
       q"null: _root_.com.spotify.scio.IsJavaBean[$wtt]"
     } else {
-      c.abort(c.enclosingPosition, s"$wtt is not a Java class")
+      c.abort(c.enclosingPosition,
+              s"$wtt is not a Java class. (isJava: ${sym.isJava}, isClass: ${sym.isClass})")
     }
   }
 }
