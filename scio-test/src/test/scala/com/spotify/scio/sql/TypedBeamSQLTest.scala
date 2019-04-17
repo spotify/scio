@@ -79,27 +79,7 @@ class TypedBeamSQLTest extends PipelineSpec {
     """ shouldNot compile
   }
 
-  it should "support generic definitions if the query string is a stable value" in {
-    def genericA[A: Schema]: Query[A, (String, Int)] =
-      Queries.typed[A, (String, Int)]("select name, age from SCOLLECTION")
-
-    "genericA[UserBean]" should compile
-    "genericA[String]" shouldNot compile
-
-    def genericB[B: Schema]: Query[UserBean, B] =
-      Queries.typed[UserBean, B]("select name, age from SCOLLECTION")
-
-    "genericB[(String, Int)]" should compile
-    "genericB[String]" shouldNot compile
-
-    def genericAB[A: Schema, B: Schema]: Query[A, B] =
-      Queries.typed[A, B]("select name, age from SCOLLECTION")
-
-    "genericAB[UserBean, (String, Int)]" should compile
-    "genericAB[UserBean, String]" shouldNot compile
-    "genericAB[String, (String, Int)]" should compile
-    "genericAB[String, String]" should compile
-  }
+  // TODO: test type alias support
 
   it should "typecheck classes compatibilty" in {
     import TypeConvertionsTestData._

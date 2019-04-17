@@ -304,10 +304,28 @@ object Queries {
 object QueryMacros {
   import scala.reflect.macros.blackbox
 
-  def typedImpl[A, B](c: blackbox.Context)(
-    query: c.Expr[String]
-  )(iSchema: c.Expr[Schema[A]], oSchema: c.Expr[Schema[B]]): c.Expr[Query[A, B]] = {
+  /**
+   * Make sure that A is a concrete type bc. SQL macros can only
+   * materialize Schema[A] is A is concrete
+   */
+  private def assertConcrete[A: c.WeakTypeTag](c: blackbox.Context): Unit = {
     import c.universe._
+    val wtt = weakTypeOf[A].dealias
+    val isVal = wtt <:< typeOf[AnyVal]
+    val isAbstract = wtt.typeSymbol.asType.isAbstract
+    if (!isVal && isAbstract)
+      c.abort(c.enclosingPosition, s"$wtt is an abstract type, expected a concrete type.")
+    else
+      ()
+  }
+
+  def typedImpl[A: c.WeakTypeTag, B: c.WeakTypeTag](c: blackbox.Context)(query: c.Expr[String])(
+    iSchema: c.Expr[Schema[A]],
+    oSchema: c.Expr[Schema[B]]): c.Expr[Query[A, B]] = {
+    import c.universe._
+
+    assertConcrete[A](c)
+    assertConcrete[B](c)
 
     val queryTree = c.untypecheck(query.tree.duplicate)
     val sInTree = c.untypecheck(iSchema.tree.duplicate)
@@ -332,14 +350,18 @@ object QueryMacros {
       )
   }
 
-  def typed2Impl[A, B, R](
-    c: blackbox.Context
-  )(query: c.Expr[String], aTag: c.Expr[TupleTag[A]], bTag: c.Expr[TupleTag[B]])(
-    aSchema: c.Expr[Schema[A]],
-    bSchema: c.Expr[Schema[B]],
-    oSchema: c.Expr[Schema[R]]
-  ): c.Expr[Query2[A, B, R]] = {
+  def typed2Impl[A: c.WeakTypeTag, B: c.WeakTypeTag, R: c.WeakTypeTag](c: blackbox.Context)(
+    query: c.Expr[String],
+    aTag: c.Expr[TupleTag[A]],
+    bTag: c.Expr[TupleTag[B]])(aSchema: c.Expr[Schema[A]],
+                               bSchema: c.Expr[Schema[B]],
+                               oSchema: c.Expr[Schema[R]]): c.Expr[Query2[A, B, R]] = {
+
     import c.universe._
+
+    assertConcrete[A](c)
+    assertConcrete[B](c)
+    assertConcrete[R](c)
 
     val queryTree = c.untypecheck(query.tree.duplicate)
     val sInTreeA = c.untypecheck(aSchema.tree.duplicate)
