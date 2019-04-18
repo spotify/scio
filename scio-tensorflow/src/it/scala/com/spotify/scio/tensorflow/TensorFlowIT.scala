@@ -31,22 +31,10 @@ import org.apache.beam.sdk.util.gcsfs.GcsPath
 import org.scalatest.BeforeAndAfterAll
 import org.tensorflow.example._
 import org.tensorflow.example.Feature
-import org.tensorflow.metadata.v0.{FeaturePresence, FeatureType, Schema, ValueCount}
 
 import scala.collection.JavaConverters._
 
-object TensorFlowImplicitsIT {
-  val tfSchema: Schema = Schema
-    .newBuilder()
-    .addFeature(
-      org.tensorflow.metadata.v0.Feature
-        .newBuilder()
-        .setName("values")
-        .setType(FeatureType.BYTES)
-        .setValueCount(ValueCount.newBuilder().setMin(2).setMax(3))
-        .setPresence(FeaturePresence.newBuilder().setMinCount(2).setMinFraction(1.0)))
-    .build()
-
+object TensorFlowIT {
   private val examples: Seq[Example] = Seq(
     Map("values" -> byteStrFeature(Seq("one", "nine").map(ByteString.copyFromUtf8))),
     Map("values" -> byteStrFeature(Seq("three", "five", "nine").map(ByteString.copyFromUtf8)))
@@ -66,8 +54,8 @@ object TensorFlowImplicitsIT {
   }
 }
 
-class TensorFlowImplicitsIT extends PipelineSpec with PipelineTestUtils with BeforeAndAfterAll {
-  import TensorFlowImplicitsIT._
+final class TensorFlowIT extends PipelineSpec with PipelineTestUtils with BeforeAndAfterAll {
+  import TensorFlowIT._
 
   private val options = PipelineOptionsFactory.create()
   options.as(classOf[GcpOptions]).setProject(ItUtils.project)
@@ -80,30 +68,23 @@ class TensorFlowImplicitsIT extends PipelineSpec with PipelineTestUtils with Bef
     gcsUtil.remove(files.asJava)
   }
 
-  "Storing and loading a Schema file remotely" should "work" in {
+  "Storing and loading TFRecords" should "work" in {
     val outputPath = s"$outputPrefix/${UUID.randomUUID}"
     val sc1 = ScioContext(options)
 
     val closedTap = sc1
       .parallelize(examples)
-      .saveAsTfExampleFileWithSchema(path = outputPath,
-                                     schema = tfSchema,
-                                     schemaFilename = "schema_it.pb",
-                                     suffix = ".tfrecords",
-                                     compression = Compression.UNCOMPRESSED,
-                                     numShards = 0)
+      .saveAsTfRecordFile(path = outputPath, compression = Compression.UNCOMPRESSED, numShards = 0)
 
     val tap = sc1.close().waitUntilDone().tap(closedTap)
 
     val sc2 = ScioContext(options)
-    val (data, schemaCache) = sc2.tfRecordExampleFileWithSchema(
+    val data = sc2.tfRecordExampleFile(
       path = s"$outputPath/*.tfrecords",
-      schemaFilename = s"$outputPath/schema_it.pb",
       compression = Compression.UNCOMPRESSED
     )
 
     data should containInAnyOrder(tap.value.toSeq)
     sc2.close().waitUntilDone()
-    schemaCache() shouldEqual tfSchema
   }
 }
