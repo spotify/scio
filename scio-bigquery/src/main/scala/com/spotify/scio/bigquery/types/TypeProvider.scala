@@ -464,7 +464,7 @@ private[types] object TypeProvider {
     val classCacheDir = getBQClassCacheDir
     val genSrcFile = classCacheDir.resolve(s"$name-$hash.scala").toFile
 
-    logger.info(s"Will dump generated $name of $owner from $srcFile to $genSrcFile")
+    logger.debug(s"Will dump generated $name of $owner from $srcFile to $genSrcFile")
 
     Files.createParentDirs(genSrcFile)
     Files.asCharSink(genSrcFile, Charsets.UTF_8).write(prettyCode)
