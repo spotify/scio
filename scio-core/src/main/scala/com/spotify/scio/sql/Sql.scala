@@ -238,9 +238,12 @@ object Queries {
            |Query:
            |$query
            |
-           |PCOLLECTION schema:
-           |${inferredSchemas.map(i => PrettyPrint.prettyPrint(i._2.getFields.asScala.toList))}
-           |Query result schema (infered) is unknown
+           |SCOLLECTION schema:
+           |${inferredSchemas
+             .map(i => PrettyPrint.prettyPrint(i._2.getFields.asScala.toList))
+             .mkString("\n")}
+           |
+           |Query result schema (inferred) is unknown.
            |Expected schema:
            |${PrettyPrint.prettyPrint(expectedSchema.getFields.asScala.toList)}
         """.stripMargin
@@ -263,8 +266,10 @@ object Queries {
                |${inferredSchemas
                  .map(i => PrettyPrint.prettyPrint(i._2.getFields.asScala.toList))
                  .mkString("\n")}
-               |Query result schema (infered):
+               |
+               |Query result schema (inferred):
                |${PrettyPrint.prettyPrint(inferredSchema.getFields.asScala.toList)}
+               |
                |Expected schema:
                |${PrettyPrint.prettyPrint(expectedSchema.getFields.asScala.toList)}
         """.stripMargin

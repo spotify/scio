@@ -20,6 +20,7 @@ import com.spotify.scio.schemas._
 import org.apache.beam.sdk.schemas.Schema.FieldType
 
 import scala.collection.JavaConverters._
+import scala.reflect.ClassTag
 
 trait ScalaInstances {
 
@@ -55,6 +56,9 @@ trait ScalaInstances {
 
   implicit def optionSchema[T](implicit s: Schema[T]): Schema[Option[T]] =
     OptionType(s)
+
+  implicit def arraySchema[T: ClassTag](implicit s: Schema[T]): Schema[Array[T]] =
+    ArrayType(s, _.toList.asJava, _.asScala.toArray)
 
   implicit def listSchema[T](implicit s: Schema[T]): Schema[List[T]] =
     ArrayType(s, _.asJava, _.asScala.toList)
