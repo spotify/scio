@@ -575,10 +575,14 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * @group per_key
    */
   def combineByKey[C: Coder](createCombiner: V => C)(mergeValue: (C, V) => C)(
-    mergeCombiners: (C, C) => C)(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, C)] =
+    mergeCombiners: (C, C) => C)(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, C)] = {
+    PairSCollectionFunctions.logger.warn(
+      "combineByKey/sumByKey does not support default value and may fail in some streaming " +
+        "scenarios. Consider aggregateByKey/foldByKey instead.")
     this.applyPerKey(
       Combine.perKey(Functions.combineFn(createCombiner, mergeValue, mergeCombiners)),
       kvToTuple[K, C])
+  }
 
   /**
    * Count approximate number of distinct values for each key in the SCollection.
@@ -839,8 +843,12 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * and better optimized than [[reduceByKey]] in some cases.
    * @group per_key
    */
-  def sumByKey(implicit sg: Semigroup[V], koder: Coder[K], voder: Coder[V]): SCollection[(K, V)] =
+  def sumByKey(implicit sg: Semigroup[V], koder: Coder[K], voder: Coder[V]): SCollection[(K, V)] = {
+    PairSCollectionFunctions.logger.warn(
+      "combineByKey/sumByKey does not support default value and may fail in some streaming " +
+        "scenarios. Consider aggregateByKey/foldByKey instead.")
     this.applyPerKey(Combine.perKey(Functions.reduceFn(sg)), kvToTuple[K, V])
+  }
 
   def sumByKey(sg: Semigroup[V])(implicit koder: Coder[K],
                                  voder: Coder[V],

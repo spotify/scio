@@ -73,10 +73,14 @@ class SCollectionWithHotKeyFanout[K: Coder, V: Coder] private[values] (
 
   /** [[PairSCollectionFunctions.combineByKey]] with hot key fanout. */
   def combineByKey[C: Coder](createCombiner: V => C)(mergeValue: (C, V) => C)(
-    mergeCombiners: (C, C) => C): SCollection[(K, C)] =
+    mergeCombiners: (C, C) => C): SCollection[(K, C)] = {
+    SCollection.logger.warn(
+      "combineByKey/sumByKey does not support default value and may fail in some streaming " +
+        "scenarios. Consider aggregateByKey/foldByKey instead.")
     self.applyPerKey(
       withFanout(Combine.perKey(Functions.combineFn(createCombiner, mergeValue, mergeCombiners))),
       kvToTuple[K, C])
+  }
 
   /**
    * [[PairSCollectionFunctions.foldByKey(zeroValue:V)* PairSCollectionFunctions.foldByKey]] with
@@ -98,7 +102,11 @@ class SCollectionWithHotKeyFanout[K: Coder, V: Coder] private[values] (
     self.applyPerKey(withFanout(Combine.perKey(Functions.reduceFn(op))), kvToTuple[K, V])
 
   /** [[PairSCollectionFunctions.sumByKey]] with hot key fanout. */
-  def sumByKey(implicit sg: Semigroup[V]): SCollection[(K, V)] =
+  def sumByKey(implicit sg: Semigroup[V]): SCollection[(K, V)] = {
+    SCollection.logger.warn(
+      "combineByKey/sumByKey does not support default value and may fail in some streaming " +
+        "scenarios. Consider aggregateByKey/foldByKey instead.")
     self.applyPerKey(withFanout(Combine.perKey(Functions.reduceFn(sg))), kvToTuple[K, V])
+  }
 
 }
