@@ -21,8 +21,7 @@ import java.math.MathContext
 import java.nio.ByteBuffer
 
 import com.google.api.services.bigquery.model.{
-  TableRow => GTableRow,
-  TimePartitioning => GTimePartitioning
+  TableRow => GTableRow
 }
 import com.spotify.scio.values.SCollection
 import org.apache.avro.Conversions.DecimalConversion
@@ -31,6 +30,7 @@ import com.spotify.scio.bigquery.syntax.AllSyntax
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write
 import org.joda.time.format.{DateTimeFormat, DateTimeFormatterBuilder}
 import org.joda.time.{DateTimeZone, Instant, LocalDate, LocalDateTime, LocalTime}
+import org.joda.time.{Instant, LocalDate, LocalDateTime, LocalTime}
 
 import scala.collection.JavaConverters._
 import scala.util.Try
