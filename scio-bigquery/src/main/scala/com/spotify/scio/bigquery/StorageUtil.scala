@@ -72,7 +72,8 @@ object StorageUtil {
           case null                                 => "INT64"
           case t if t.getName == "timestamp-micros" => "TIMESTAMP"
           case t if t.getName == "time-micros"      => "TIME"
-          case t                                    => s"Unsupported logical type: $t"
+          case t =>
+            throw new IllegalStateException(s"Unsupported logical type: $t")
         }
       case Type.DOUBLE => "FLOAT64"
       case Type.BYTES =>
@@ -98,14 +99,15 @@ object StorageUtil {
             case null                          => "STRING"
             case t if t.getName == "datetime"  => "DATETIME"
             case t if t.getName == "geography" => "GEOGRAPHY"
-            case t                             => s"Unsupported logical type: $t"
+            case t =>
+              throw new IllegalStateException(s"Unsupported logical type: $t")
           }
         }
       case Type.RECORD =>
         tableField.setFields(getFieldSchemas(schema).asJava)
         "RECORD"
       case t =>
-        throw new TypeNotPresentException(s"Unsupported type: $t")
+        throw new IllegalStateException(s"Unsupported type: $t")
     }
     tableField.setType(tpe)
     ()
