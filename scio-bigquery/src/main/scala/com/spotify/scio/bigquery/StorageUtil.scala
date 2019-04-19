@@ -105,7 +105,7 @@ object StorageUtil {
         tableField.setFields(getFieldSchemas(schema).asJava)
         "RECORD"
       case t =>
-        throw new RuntimeException(s"Unsupported type: $t")
+        throw new TypeNotPresentException(s"Unsupported type: $t")
     }
     tableField.setType(tpe)
     ()

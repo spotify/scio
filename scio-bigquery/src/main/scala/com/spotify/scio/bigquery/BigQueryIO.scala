@@ -235,8 +235,8 @@ final case class BigQueryStorage(tableSpec: String) extends BigQueryIO[TableRow]
   override protected def write(data: SCollection[TableRow], params: WriteP): Tap[TableRow] =
     throw new IllegalStateException("BigQueryStorage is read-only")
 
-  // FIXME: implement this
-  override def tap(read: ReadP): Tap[TableRow] = ???
+  override def tap(read: ReadP): Tap[TableRow] =
+    throw new NotImplementedError("BigQueryStore Tap not implemented")
 }
 
 object BigQueryStorage {
@@ -445,8 +445,8 @@ object BigQueryTyped {
     override def write(data: SCollection[T], params: WriteP): Tap[T] =
       throw new IllegalStateException("Storage API is read-only")
 
-    // FIXME: implement this
-    override def tap(params: ReadP): Tap[T] = ???
+    override def tap(params: ReadP): Tap[T] =
+      throw new NotImplementedError("BigQueryStore Tap not implemented")
   }
 
   object Storage {

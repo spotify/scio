@@ -332,8 +332,8 @@ package object bigquery {
     val MaxNumericPrecision = 38
     val MaxNumericScale = 9
 
-    private val conversions = new DecimalConversion
-    private val logicalType = LogicalTypes.decimal(MaxNumericPrecision, MaxNumericScale)
+    private[this] val conversions = new DecimalConversion
+    private[this] val logicalType = LogicalTypes.decimal(MaxNumericPrecision, MaxNumericScale)
 
     def apply(value: String): BigDecimal = apply(BigDecimal(value))
 
