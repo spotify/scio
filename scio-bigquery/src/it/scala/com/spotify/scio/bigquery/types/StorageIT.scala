@@ -126,7 +126,9 @@ class StorageIT extends FlatSpec with Matchers {
     val expected = (0 until 5).map { i =>
       (i.toLong, s"s$i", i.toLong, s"s$i", i.toLong, s"s$i")
     }.asJava
-    val sc = ScioContext()
+    val (sc, _) = ContextAndArgs(
+      Array("--project=data-integration-test", "--tempLocation=gs://data-integration-test-eu/temp")
+    )
     val p = sc
       .typedBigQuery[NestedWithRestriction]()
       .map { r =>
