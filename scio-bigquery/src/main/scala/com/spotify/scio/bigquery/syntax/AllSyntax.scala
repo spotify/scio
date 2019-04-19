@@ -17,4 +17,4 @@
 
 package com.spotify.scio.bigquery.syntax
 
-trait AllSyntax extends ScioContextSyntax with SCollectionSyntax
+trait AllSyntax extends ScioContextSyntax with SCollectionSyntax with TableReferenceSyntax

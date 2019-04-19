@@ -83,27 +83,6 @@ package object bigquery extends AllSyntax {
   type description = com.spotify.scio.bigquery.types.description
 
   /**
-   * Enhanced version of [[com.google.api.services.bigquery.model.TableReference TableReference]].
-   */
-  implicit class RichTableReference(private val r: TableReference) extends AnyVal {
-
-    /**
-     * Return table specification in the form of "[project_id]:[dataset_id].[table_id]" or
-     * "[dataset_id].[table_id]".
-     */
-    def asTableSpec: String = {
-      require(r.getDatasetId != null, "Dataset can't be null")
-      require(r.getTableId != null, "Table can't be null")
-
-      if (r.getProjectId != null) {
-        s"${r.getProjectId}:${r.getDatasetId}.${r.getTableId}"
-      } else {
-        s"${r.getDatasetId}.${r.getTableId}"
-      }
-    }
-  }
-
-  /**
    * Create a [[TableRow]] with `Map`-like syntax. For example:
    *
    * {{{
