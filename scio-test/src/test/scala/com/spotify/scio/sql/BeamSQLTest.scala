@@ -335,6 +335,27 @@ class BeamSQLTest extends PipelineSpec {
                        new TupleTag[User]("B")) shouldNot beEmpty
   }
 
+  it should "support sql subqueries" in runWithContext { sc =>
+    val a = sc.parallelize(users)
+    val b = sc.parallelize(users)
+
+    Sql
+      .from(a, b)
+      .queryAs[String](
+        "select username from A where username in (select username from B)",
+        new TupleTag[User]("A"),
+        new TupleTag[User]("B")
+      ) shouldNot beEmpty
+
+    Sql
+      .from(a, b)
+      .queryAs[(String, Boolean)](
+        "select username, username not in (select username from B where username = 'user1') from A",
+        new TupleTag[User]("A"),
+        new TupleTag[User]("B")
+      ) shouldNot beEmpty
+  }
+
   it should "properly chain typed queries" in runWithContext { sc =>
     val expected = 255
     val in = sc.parallelize(users)
