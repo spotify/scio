@@ -20,11 +20,6 @@ package com.spotify.scio
 import com.google.api.services.bigquery.model.{TableRow => GTableRow}
 import com.spotify.scio.bigquery.syntax.AllSyntax
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write
-import org.joda.time.{Instant, LocalDate, LocalDateTime, LocalTime}
-import org.joda.time.{Instant, LocalDate, LocalDateTime, LocalTime}
-
-import scala.collection.JavaConverters._
-import scala.util.Try
 
 /**
  * Main package for BigQuery APIs. Import all.
@@ -72,93 +67,7 @@ package object bigquery extends AllSyntax {
    */
   type description = com.spotify.scio.bigquery.types.description
 
-  /**
-   * Create a [[TableRow]] with `Map`-like syntax. For example:
-   *
-   * {{{
-   * val r = TableRow("name" -> "Alice", "score" -> 100)
-   * }}}
-   */
-  object TableRow {
-    @inline def apply(fields: (String, _)*): TableRow =
-      fields.foldLeft(new GTableRow())((r, kv) => r.set(kv._1, kv._2))
-  }
-
   /** Alias for BigQuery `TableRow`. */
   type TableRow = GTableRow
-
-  /** Enhanced version of [[TableRow]] with typed getters. */
-  implicit class RichTableRow(private val r: TableRow) extends AnyVal {
-
-    def getBoolean(name: AnyRef): Boolean =
-      this.getValue(name, _.toString.toBoolean, false)
-
-    def getBooleanOpt(name: AnyRef): Option[Boolean] =
-      this.getValueOpt(name, _.toString.toBoolean)
-
-    def getLong(name: AnyRef): Long = this.getValue(name, _.toString.toLong, 0L)
-
-    def getLongOpt(name: AnyRef): Option[Long] =
-      this.getValueOpt(name, _.toString.toLong)
-
-    def getDouble(name: AnyRef): Double =
-      this.getValue(name, _.toString.toDouble, 0.0)
-
-    def getDoubleOpt(name: AnyRef): Option[Double] =
-      this.getValueOpt(name, _.toString.toDouble)
-
-    def getString(name: AnyRef): String = this.getValue(name, _.toString, null)
-
-    def getStringOpt(name: AnyRef): Option[String] =
-      this.getValueOpt(name, _.toString)
-
-    def getTimestamp(name: AnyRef): Instant =
-      this.getValue(name, v => Timestamp.parse(v.toString), null)
-
-    def getTimestampOpt(name: AnyRef): Option[Instant] =
-      this.getValueOpt(name, v => Timestamp.parse(v.toString))
-
-    def getDate(name: AnyRef): LocalDate =
-      this.getValue(name, v => Date.parse(v.toString), null)
-
-    def getDateOpt(name: AnyRef): Option[LocalDate] =
-      this.getValueOpt(name, v => Date.parse(v.toString))
-
-    def getTime(name: AnyRef): LocalTime =
-      this.getValue(name, v => Time.parse(v.toString), null)
-
-    def getTimeOpt(name: AnyRef): Option[LocalTime] =
-      this.getValueOpt(name, v => Time.parse(v.toString))
-
-    def getDateTime(name: AnyRef): LocalDateTime =
-      this.getValue(name, v => DateTime.parse(v.toString), null)
-
-    def getDateTimeOpt(name: AnyRef): Option[LocalDateTime] =
-      this.getValueOpt(name, v => DateTime.parse(v.toString))
-
-    def getRepeated(name: AnyRef): Seq[AnyRef] =
-      this.getValue(name, _.asInstanceOf[java.util.List[AnyRef]].asScala, null)
-
-    def getRecord(name: AnyRef): TableRow = r.get(name).asInstanceOf[TableRow]
-
-    private def getValue[T](name: AnyRef, fn: AnyRef => T, default: T): T = {
-      val o = r.get(name)
-      if (o == null) {
-        default
-      } else {
-        fn(o)
-      }
-    }
-
-    private def getValueOpt[T](name: AnyRef, fn: AnyRef => T): Option[T] = {
-      val o = r.get(name)
-      if (o == null) {
-        None
-      } else {
-        Try(fn(o)).toOption
-      }
-    }
-
-  }
 
 }

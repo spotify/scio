@@ -96,7 +96,7 @@ final class SCollectionTableRowOps[T <: TableRow](private val self: SCollection[
     path: String,
     numShards: Int = TableRowJsonWriteParam.DefaultNumShards,
     compression: Compression = TableRowJsonWriteParam.DefaultCompression
-  )(implicit ev: T <:< TableRow): ClosedTap[TableRow] = {
+  ): ClosedTap[TableRow] = {
     val param = TableRowJsonWriteParam(numShards, compression)
     self.asInstanceOf[SCollection[TableRow]].write(TableRowJsonIO(path))(param)
   }
@@ -168,10 +168,14 @@ final class SCollectionTypedOps[T <: HasAnnotation](private val self: SCollectio
 
 trait SCollectionSyntax {
 
-  implicit def bigQueryTableRowOps[T <: TableRow](sc: SCollection[T]): SCollectionTableRowOps[T] =
+  implicit def bigQuerySCollectionTableRowOps[T <: TableRow](
+    sc: SCollection[T]
+  ): SCollectionTableRowOps[T] =
     new SCollectionTableRowOps[T](sc)
 
-  implicit def bigQueryTypedOps[T <: HasAnnotation](sc: SCollection[T]): SCollectionTypedOps[T] =
+  implicit def bigQuerySCollectionTypedOps[T <: HasAnnotation](
+    sc: SCollection[T]
+  ): SCollectionTypedOps[T] =
     new SCollectionTypedOps[T](sc)
 
 }

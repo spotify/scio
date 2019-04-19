@@ -37,7 +37,7 @@ import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
 
 /** Enhanced version of [[ScioContext]] with BigQuery methods. */
-final class ScioContextOps(val self: ScioContext) extends AnyVal {
+final class ScioContextOps(private val self: ScioContext) extends AnyVal {
 
   /**
    * Get an SCollection for a BigQuery SELECT query.
@@ -144,7 +144,5 @@ final class ScioContextOps(val self: ScioContext) extends AnyVal {
 }
 
 trait ScioContextSyntax {
-
   implicit def bigQueryScioContextOps(sc: ScioContext): ScioContextOps = new ScioContextOps(sc)
-
 }

@@ -19,12 +19,27 @@ package com.spotify.scio.bigquery
 import java.math.MathContext
 import java.nio.ByteBuffer
 
-import com.google.api.services.bigquery.model.{TimePartitioning => GTimePartitioning}
+import com.google.api.services.bigquery.model.{
+  TableRow => GTableRow,
+  TimePartitioning => GTimePartitioning
+}
 import org.apache.avro.Conversions.DecimalConversion
 import org.apache.avro.LogicalTypes
 import org.joda.time.format.{DateTimeFormat, DateTimeFormatterBuilder}
 import org.joda.time.{DateTimeZone, Instant, LocalDate, LocalDateTime, LocalTime}
 import org.joda.time.{Instant, LocalDate, LocalDateTime, LocalTime}
+
+/**
+ * Create a [[TableRow]] with `Map`-like syntax. For example:
+ *
+ * {{{
+ * val r = TableRow("name" -> "Alice", "score" -> 100)
+ * }}}
+ */
+object TableRow {
+  @inline def apply(fields: (String, _)*): TableRow =
+    fields.foldLeft(new GTableRow())((r, kv) => r.set(kv._1, kv._2))
+}
 
 /** Utility for BigQuery `TIMESTAMP` type. */
 object Timestamp {
