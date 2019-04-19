@@ -172,7 +172,9 @@ class StorageIT extends FlatSpec with Matchers {
         dt.toLocalDateTime.plusMillis(i)
       )
     }.asJava
-    val (sc, _) = ContextAndArgs(Array("--tempLocation=gs://data-integration-test-eu/temp"))
+    val (sc, _) = ContextAndArgs(
+      Array("--project=data-integration-test", "--tempLocation=gs://data-integration-test-eu/temp")
+    )
     val p = sc.typedBigQuery[FromTable]().internal
     PAssert.that(p).containsInAnyOrder(expected)
     sc.close()
