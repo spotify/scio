@@ -20,6 +20,7 @@ import Keys._
 import sbtassembly.AssemblyPlugin.autoImport._
 import com.typesafe.sbt.SbtGit.GitKeys.gitRemoteRepo
 import org.scalafmt.sbt.ScalafmtPlugin.scalafmtConfigSettings
+import bloop.integrations.sbt.BloopDefaults
 
 val beamVersion = "2.11.0"
 
@@ -205,6 +206,7 @@ lazy val itSettings = Defaults.itSettings ++ Seq(
     }
   }
 ) ++
+  inConfig(IntegrationTest)(BloopDefaults.configSettings) ++
   inConfig(IntegrationTest)(scalafmtConfigSettings) ++
   inConfig(IntegrationTest)(scalafixConfigSettings(IntegrationTest))
 
