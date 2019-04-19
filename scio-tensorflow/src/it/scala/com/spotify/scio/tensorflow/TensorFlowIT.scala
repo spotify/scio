@@ -31,11 +31,10 @@ import org.apache.beam.sdk.util.gcsfs.GcsPath
 import org.scalatest.BeforeAndAfterAll
 import org.tensorflow.example._
 import org.tensorflow.example.Feature
-import org.tensorflow.metadata.v0.{FeaturePresence, FeatureType, Schema, ValueCount}
 
 import scala.collection.JavaConverters._
 
-object TensorFlowImplicitsIT {
+object TensorFlowIT {
   private val examples: Seq[Example] = Seq(
     Map("values" -> byteStrFeature(Seq("one", "nine").map(ByteString.copyFromUtf8))),
     Map("values" -> byteStrFeature(Seq("three", "five", "nine").map(ByteString.copyFromUtf8)))
