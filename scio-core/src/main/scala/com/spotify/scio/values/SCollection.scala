@@ -46,6 +46,7 @@ import org.apache.beam.sdk.values.WindowingStrategy.AccumulationMode
 import org.apache.beam.sdk.values._
 import org.apache.beam.sdk.{io => beam}
 import org.joda.time.{Duration, Instant}
+import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConverters._
 import scala.collection.immutable.TreeMap
@@ -54,6 +55,8 @@ import scala.util.Try
 
 /** Convenience functions for creating SCollections. */
 object SCollection {
+
+  private[values] val logger = LoggerFactory.getLogger(this.getClass)
 
   /**
    * Create a union of multiple [[SCollection]] instances.
@@ -343,8 +346,12 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @group transform
    */
   def combine[C: Coder](createCombiner: T => C)(mergeValue: (C, T) => C)(
-    mergeCombiners: (C, C) => C)(implicit coder: Coder[T]): SCollection[C] =
+    mergeCombiners: (C, C) => C)(implicit coder: Coder[T]): SCollection[C] = {
+    SCollection.logger.warn(
+      "combine/sum does not support default value and may fail in some streaming scenarios. " +
+        "Consider aggregate/fold instead.")
     this.pApply(Combine.globally(Functions.combineFn(createCombiner, mergeValue, mergeCombiners)))
+  }
 
   /**
    * Count the number of elements in the SCollection.
@@ -644,8 +651,12 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * better optimized than [[reduce]] in some cases.
    * @group transform
    */
-  def sum(implicit sg: Semigroup[T], coder: Coder[T]): SCollection[T] =
+  def sum(implicit sg: Semigroup[T], coder: Coder[T]): SCollection[T] = {
+    SCollection.logger.warn(
+      "combine/sum does not support default value and may fail in some streaming scenarios. " +
+        "Consider aggregate/fold instead.")
     this.pApply(Combine.globally(Functions.reduceFn(sg)))
+  }
 
   /**
    * Return a sampled subset of any `num` elements of the SCollection.

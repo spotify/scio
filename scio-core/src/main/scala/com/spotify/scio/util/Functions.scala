@@ -159,8 +159,13 @@ private[scio] object Functions {
         }
       }
 
-      override def extractOutput(accumulator: (Option[C], JList[T])): C =
-        foldOption(accumulator).get
+      override def extractOutput(accumulator: (Option[C], JList[T])): C = {
+        val out = foldOption(accumulator)
+        assert(out.isDefined,
+               "Empty output in combine*/sum* transform. " +
+                 "Use aggregate* or fold* instead to fallback to a default value.")
+        out.get
+      }
 
       override def mergeAccumulators(
         accumulators: JIterable[(Option[C], JList[T])]): (Option[C], JList[T]) = {
@@ -240,8 +245,13 @@ private[scio] object Functions {
       accumulator
     }
 
-    override def extractOutput(accumulator: JList[T]): T =
-      reduceOption(accumulator).get
+    override def extractOutput(accumulator: JList[T]): T = {
+      val out = reduceOption(accumulator)
+      assert(out.isDefined,
+             "Empty output in combine*/sum* transform. " +
+               "Use aggregate* or fold* instead to fallback to a default value.")
+      out.get
+    }
 
     override def mergeAccumulators(accumulators: JIterable[JList[T]]): JList[T] = {
       val iter = accumulators.iterator()
