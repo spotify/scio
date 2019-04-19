@@ -17,9 +17,13 @@
 package com.spotify.scio.bigquery
 
 import java.math.MathContext
+import java.nio.ByteBuffer
 
 import com.google.api.services.bigquery.model.{TimePartitioning => GTimePartitioning}
+import org.apache.avro.Conversions.DecimalConversion
+import org.apache.avro.LogicalTypes
 import org.joda.time.format.{DateTimeFormat, DateTimeFormatterBuilder}
+import org.joda.time.{DateTimeZone, Instant, LocalDate, LocalDateTime, LocalTime}
 import org.joda.time.{Instant, LocalDate, LocalDateTime, LocalTime}
 
 /** Utility for BigQuery `TIMESTAMP` type. */
@@ -60,6 +64,12 @@ object Timestamp {
   def parse(timestamp: String): Instant =
     parser.parseDateTime(timestamp).toInstant
 
+  // For BigQueryType macros only, do not use directly
+  def parse(timestamp: Any): Instant = timestamp match {
+    case t: Long => new Instant(t / 1000)
+    case _       => parse(timestamp.toString)
+  }
+
 }
 
 /** Utility for BigQuery `DATE` type. */
@@ -73,6 +83,12 @@ object Date {
 
   /** Convert BigQuery `DATE` string to `LocalDate`. */
   def parse(date: String): LocalDate = LocalDate.parse(date, formatter)
+
+  // For BigQueryType macros only, do not use directly
+  def parse(date: Any): LocalDate = date match {
+    case d: Int => new LocalDate(0, DateTimeZone.UTC).plusDays(d)
+    case _      => parse(date.toString)
+  }
 }
 
 /** Utility for BigQuery `TIME` type. */
@@ -91,6 +107,12 @@ object Time {
 
   /** Convert BigQuery `TIME` string to `LocalTime`. */
   def parse(time: String): LocalTime = parser.parseLocalTime(time)
+
+  // For BigQueryType macros only, do not use directly
+  def parse(time: Any): LocalTime = time match {
+    case t: Long => new LocalTime(t / 1000, DateTimeZone.UTC)
+    case _       => parse(time.toString)
+  }
 }
 
 /** Utility for BigQuery `DATETIME` type. */
@@ -147,6 +169,9 @@ object Numeric {
   val MaxNumericPrecision = 38
   val MaxNumericScale = 9
 
+  private[this] val conversions = new DecimalConversion
+  private[this] val logicalType = LogicalTypes.decimal(MaxNumericPrecision, MaxNumericScale)
+
   def apply(value: String): BigDecimal = apply(BigDecimal(value))
 
   def apply(value: BigDecimal): BigDecimal = {
@@ -162,5 +187,11 @@ object Numeric {
     )
 
     BigDecimal(scaled.toString, new MathContext(MaxNumericPrecision))
+  }
+
+  // For BigQueryType macros only, do not use directly
+  def parse(value: Any): BigDecimal = value match {
+    case b: ByteBuffer => conversions.fromBytes(b, null, logicalType)
+    case _             => apply(value.toString)
   }
 }

@@ -21,7 +21,9 @@ import com.google.api.services.bigquery.model.TableReference
 import com.spotify.scio.ScioContext
 import com.spotify.scio.bigquery.{
   BigQuerySelect,
+  BigQueryStorage,
   BigQueryTable,
+  BigQueryType,
   BigQueryTyped,
   TableRow,
   TableRowJsonIO
