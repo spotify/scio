@@ -22,11 +22,14 @@ import java.io.{File, FileInputStream}
 import com.google.api.client.http.javanet.NetHttpTransport
 import com.google.api.client.http.{HttpRequest, HttpRequestInitializer}
 import com.google.api.client.json.jackson2.JacksonFactory
+import com.google.api.gax.core.FixedCredentialsProvider
+import com.google.api.gax.rpc.FixedHeaderProvider
 import com.google.api.services.bigquery.Bigquery
 import com.google.api.services.bigquery.model._
 import com.google.auth.Credentials
 import com.google.auth.http.HttpCredentialsAdapter
 import com.google.auth.oauth2.GoogleCredentials
+import com.google.cloud.bigquery.storage.v1beta1.{BigQueryStorageClient, BigQueryStorageSettings}
 import com.google.cloud.hadoop.util.ChainingHttpRequestInitializer
 import com.spotify.scio.bigquery.client.BigQuery.Client
 import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
@@ -216,6 +219,19 @@ object BigQuery {
       new Bigquery.Builder(new NetHttpTransport, new JacksonFactory, requestInitializer)
         .setApplicationName("scio")
         .build()
+    }
+
+    lazy val storage: BigQueryStorageClient = {
+      val settings = BigQueryStorageSettings
+        .newBuilder()
+        .setCredentialsProvider(FixedCredentialsProvider.create(credentials))
+        .setTransportChannelProvider(
+          BigQueryStorageSettings
+            .defaultGrpcTransportProviderBuilder()
+            .setHeaderProvider(FixedHeaderProvider.create("user-agent", "scio"))
+            .build())
+        .build()
+      BigQueryStorageClient.create(settings)
     }
   }
 }

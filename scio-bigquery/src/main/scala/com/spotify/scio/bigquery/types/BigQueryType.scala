@@ -92,6 +92,30 @@ object BigQueryType {
   }
 
   /**
+   * Trait for companion objects of case classes generated with storage API.
+   * @group trait
+   */
+  trait HasStorageOptions {
+
+    /** Table for case class schema. */
+    def table: String
+
+    /** Selected fields for case class schema. */
+    def selectedFields: List[String]
+
+    /** Row restriction for case class schema. */
+    def rowRestriction: String
+  }
+
+  /**
+   * Trait for companion objects of case classes generated with storage API.
+   * Instance of this trait are provided as implicits allowing static discovery.
+   * That trait provide evidence that a BQ table is statically known for a given type T.
+   * @group trait
+   */
+  trait StorageOptions[T] extends HasStorageOptions
+
+  /**
    * Trait for companion objects of case classes generated with SELECT query.
    * @group trait
    */
@@ -181,6 +205,54 @@ object BigQueryType {
    */
   class fromSchema(schema: String) extends StaticAnnotation {
     def macroTransform(annottees: Any*): Any = macro TypeProvider.schemaImpl
+  }
+
+  /**
+   * Macro annotation for a BigQuery table using the storage API.
+   *
+   * Generate case classes for BigQuery storage API, including column projection and filtering.
+   * Note that `tableSpec` must be a string literal in the form of `project:dataset.table` with
+   * optional `.stripMargin` at the end. For example:
+   *
+   * {{{
+   * @BigQueryType.fromStorage("project:dataset.table") class MyRecord
+   * }}}
+   *
+   * @param selectedFields names of the fields in the table that should be read. If empty, all
+   *                       fields will be read. If the specified field is a nested field, all the
+   *                       sub-fields in the field will be selected.
+   * @param rowRestriction SQL text filtering statement, similar ti a WHERE clause in a query.
+   *                       Currently, we support combinations of predicates that are a comparison
+   *                       between a column and a constant value in SQL statement. Aggregates are
+   *                       not supported. For example:
+   *
+   * {{{
+   * "a > DATE '2014-09-27' AND (b > 5 AND c LIKE 'date')"
+   * }}}
+   *
+   * String formatting syntax can be used in `tableSpec` when additional `args` are supplied. For
+   * example:
+   *
+   * {{{
+   * @BigQueryType.fromStorage("project:dataset.%s", "table")
+   * }}}
+   *
+   * "\$LATEST" can be used as a placeholder for table partitions. The latest partition available
+   * will be used. For example:
+   *
+   * {{{
+   * @BigQueryType.fromStorage("project:dataset.table_%s", "\$LATEST")
+   * }}}
+   *
+   * Also generate a companion object with convenience methods.
+   * @group annotation
+   */
+  class fromStorage(tableSpec: String,
+                    args: List[Any] = Nil,
+                    selectedFields: List[String] = Nil,
+                    rowRestriction: String = null)
+      extends StaticAnnotation {
+    def macroTransform(annottees: Any*): Any = macro TypeProvider.storageImpl
   }
 
   /**
@@ -287,6 +359,10 @@ class BigQueryType[T: TypeTag] {
   def isTable: Boolean =
     bases.contains(typeOf[BigQueryType.HasTable].typeSymbol)
 
+  /** Whether the case class is annotated for storage API. */
+  def isStorage: Boolean =
+    bases.contains(typeOf[BigQueryType.HasStorageOptions].typeSymbol)
+
   /** Whether the case class is annotated for a query. */
   def isQuery: Boolean =
     bases.contains(typeOf[BigQueryType.HasQuery].typeSymbol)
@@ -294,6 +370,14 @@ class BigQueryType[T: TypeTag] {
   /** Table reference from the annotation. */
   def table: Option[String] =
     Try(getField("table").asInstanceOf[String]).toOption
+
+  /** Storage API `selectedFields` from the annotation. */
+  def selectedFields: Option[List[String]] =
+    Try(getField("selectedFields").asInstanceOf[List[String]]).toOption
+
+  /** Storage API `restriction` from the annotation. */
+  def rowRestriction: Option[String] =
+    Try(getField("rowRestriction").asInstanceOf[String]).toOption
 
   /** Query from the annotation. */
   def query: Option[String] =

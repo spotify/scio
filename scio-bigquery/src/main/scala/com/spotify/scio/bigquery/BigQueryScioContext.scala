@@ -54,10 +54,39 @@ final class BigQueryScioContext(@transient val self: ScioContext) extends Serial
     self.read(BigQueryTable(tableSpec))
 
   /**
-   * Get a typed SCollection for a BigQuery SELECT query or table.
+   * Get an SCollection for a BigQuery table using the storage API.
+   *
+   * @param selectedFields names of the fields in the table that should be read. If empty, all
+   *                       fields will be read. If the specified field is a nested field, all the
+   *                       sub-fields in the field will be selected.
+   * @param rowRestriction SQL text filtering statement, similar ti a WHERE clause in a query.
+   *                       Currently, we support combinations of predicates that are a comparison
+   *                       between a column and a constant value in SQL statement. Aggregates are
+   *                       not supported. For example:
+   *
+   * {{{
+   * "a > DATE '2014-09-27' AND (b > 5 AND c LIKE 'date')"
+   * }}}
+   */
+  def bigQueryStorage(tableSpec: String,
+                      selectedFields: List[String] = Nil,
+                      rowRestriction: String = null): SCollection[TableRow] =
+    self.read(BigQueryStorage(tableSpec))(BigQueryStorage.ReadParam(selectedFields, rowRestriction))
+
+  /**
+   * Get an SCollection for a BigQuery table using the storage API.
+   */
+  def bigQueryStorage(table: TableReference,
+                      selectedFields: List[String],
+                      rowRestriction: String): SCollection[TableRow] =
+    self.read(BigQueryStorage(table))(BigQueryStorage.ReadParam(selectedFields, rowRestriction))
+
+  /**
+   * Get a typed SCollection for a BigQuery SELECT query, table or storage.
    *
    * Note that `T` must be annotated with
    * [[com.spotify.scio.bigquery.types.BigQueryType.fromSchema BigQueryType.fromSchema]],
+   * [[com.spotify.scio.bigquery.types.BigQueryType.fromSchema BigQueryType.fromStorage]],
    * [[com.spotify.scio.bigquery.types.BigQueryType.fromTable BigQueryType.fromTable]],
    * [[com.spotify.scio.bigquery.types.BigQueryType.fromQuery BigQueryType.fromQuery]], or
    * [[com.spotify.scio.bigquery.types.BigQueryType.toTable BigQueryType.toTable]].
@@ -85,8 +114,16 @@ final class BigQueryScioContext(@transient val self: ScioContext) extends Serial
    * behavior, start the query string with `#legacysql` or `#standardsql`.
    */
   def typedBigQuery[T <: HasAnnotation: ClassTag: TypeTag: Coder](
-    newSource: String = null): SCollection[T] =
-    self.read(BigQueryTyped.dynamic[T](newSource))
+    newSource: String = null): SCollection[T] = {
+    val bqt = BigQueryType[T]
+    if (bqt.isStorage) {
+      val table = if (newSource != null) newSource else bqt.table.get
+      val params = BigQueryTyped.Storage.ReadParam(bqt.selectedFields.get, bqt.rowRestriction.get)
+      self.read(BigQueryTyped.Storage(table))(params)
+    } else {
+      self.read(BigQueryTyped.dynamic[T](newSource))
+    }
+  }
 
   /**
    * Get an SCollection for a BigQuery TableRow JSON file.

@@ -79,7 +79,7 @@ private[types] object ConverterProvider {
         case t if t =:= typeOf[Double]  => q"$tree.asInstanceOf[Double]"
         case t if t =:= typeOf[String]  => q"$tree.toString"
         case t if t =:= typeOf[BigDecimal] =>
-          q"_root_.com.spotify.scio.bigquery.Numeric($tree.toString)"
+          q"_root_.com.spotify.scio.bigquery.Numeric.parse($tree)"
 
         case t if t =:= typeOf[ByteString] =>
           val b = q"$tree.asInstanceOf[_root_.java.nio.ByteBuffer]"
@@ -89,11 +89,11 @@ private[types] object ConverterProvider {
           q"_root_.java.util.Arrays.copyOfRange($b.array(), $b.position(), $b.limit())"
 
         case t if t =:= typeOf[Instant] =>
-          q"new _root_.org.joda.time.Instant($tree.asInstanceOf[Long] / 1000)"
+          q"_root_.com.spotify.scio.bigquery.Timestamp.parse($tree)"
         case t if t =:= typeOf[LocalDate] =>
-          q"_root_.com.spotify.scio.bigquery.Date.parse($tree.toString)"
+          q"_root_.com.spotify.scio.bigquery.Date.parse($tree)"
         case t if t =:= typeOf[LocalTime] =>
-          q"_root_.com.spotify.scio.bigquery.Time.parse($tree.toString)"
+          q"_root_.com.spotify.scio.bigquery.Time.parse($tree)"
         case t if t =:= typeOf[LocalDateTime] =>
           q"_root_.com.spotify.scio.bigquery.DateTime.parse($tree.toString)"
 
