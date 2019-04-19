@@ -21,7 +21,6 @@ import java.math.MathContext
 import java.nio.ByteBuffer
 
 import com.google.api.services.bigquery.model.{
-  TableReference,
   TableRow => GTableRow,
   TimePartitioning => GTimePartitioning
 }
