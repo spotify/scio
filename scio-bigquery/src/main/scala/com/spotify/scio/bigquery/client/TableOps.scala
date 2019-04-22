@@ -92,6 +92,14 @@ private[client] final class TableOps(client: Client) {
       }
     }
 
+  def typedDirectReadRows[T: TypeTag](
+    tableRef: TableReference,
+    readOptions: TableReadOptions
+  ): Iterator[T] = {
+    val fn = BigQueryType[T].fromTableRow
+    directReadRows(tableRef, readOptions).map(fn)
+  }
+
   def directReadRows(tableRef: TableReference, readOptions: TableReadOptions): Iterator[TableRow] =
     withBigQueryService { bqServices =>
       val tableRefProto = TableReferenceProto.TableReference.newBuilder()

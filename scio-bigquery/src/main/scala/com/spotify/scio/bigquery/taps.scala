@@ -132,6 +132,26 @@ final case class BigQueryTaps(self: Taps) {
       )
     )
 
+  def typedBigQueryStorage[T: TypeTag: Coder](
+    table: TableReference,
+    readOptions: TableReadOptions
+  ): Future[Tap[T]] = {
+    val fn = BigQueryType[T].fromTableRow
+    mkTap(
+      s"BigQuery direct read table: $table",
+      () => bqc.tables.exists(table),
+      () =>
+        BigQueryStorage(table)
+          .tap(
+            BigQueryStorage.ReadParam(
+              readOptions.getSelectedFieldsList().asScala.toList,
+              readOptions.getRowRestriction()
+            )
+          )
+          .map(fn)
+    )
+  }
+
   private def isQueryDone(sqlQuery: String): Boolean =
     bqc.query.extractTables(sqlQuery).forall(bqc.tables.exists)
 }

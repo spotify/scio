@@ -229,7 +229,8 @@ class StorageIT extends FlatSpec with Matchers {
     import com.google.cloud.bigquery.storage.v1beta1.ReadOptions.TableReadOptions
 
     val tableRef = beam.BigQueryHelpers.parseTableSpec("data-integration-test:storage.required")
-    val futureTap = Taps().bigQueryStorage(tableRef, TableReadOptions.newBuilder().build())
+    val futureTap =
+      Taps().typedBigQueryStorage[Required](tableRef, TableReadOptions.newBuilder().build())
 
     import scala.concurrent.Await
     import scala.concurrent.duration.Duration

@@ -481,8 +481,15 @@ object BigQueryTyped {
     override def write(data: SCollection[T], params: WriteP): Tap[T] =
       throw new UnsupportedOperationException("Storage API is read-only")
 
-    override def tap(params: ReadP): Tap[T] =
-      throw new NotImplementedError("BigQueryStore Tap not implemented")
+    override def tap(read: ReadP): Tap[T] = {
+      val fn = BigQueryType[T].fromTableRow
+      val readOptions = TableReadOptions
+        .newBuilder()
+        .setRowRestriction(read.rowRestriction)
+        .addAllSelectedFields(read.selectFields.asJava)
+        .build()
+      BigQueryDirectReadTap(beam.BigQueryHelpers.parseTableSpec(tableSpec), readOptions).map(fn)
+    }
   }
 
   object Storage {
