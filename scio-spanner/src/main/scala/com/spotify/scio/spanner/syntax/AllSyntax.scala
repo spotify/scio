@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,10 +14,6 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+package com.spotify.scio.spanner.syntax
 
-package com.spotify.scio
-
-import com.spotify.scio.spanner.instances.AllInstances
-import com.spotify.scio.spanner.syntax.AllSyntax
-
-package object spanner extends AllSyntax with AllInstances
+trait AllSyntax extends ScioContextSyntax with SCollectionSyntax
