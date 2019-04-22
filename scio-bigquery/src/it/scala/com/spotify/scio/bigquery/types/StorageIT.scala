@@ -206,6 +206,37 @@ class StorageIT extends FlatSpec with Matchers {
     PAssert.that(p).containsInAnyOrder(expected)
     sc.close()
   }
+
+  import com.spotify.scio.io.Taps
+  it should "read from tap" in {
+    import com.spotify.scio.bigquery.BigQueryTaps._
+    import org.apache.beam.sdk.io.gcp.{bigquery => beam}
+    import com.google.cloud.bigquery.storage.v1beta1.ReadOptions.TableReadOptions
+
+    val tableRef = beam.BigQueryHelpers.parseTableSpec("data-integration-test:storage.required")
+    val futureTap = Taps().bigQueryStorage(tableRef, TableReadOptions.newBuilder().build())
+
+    import scala.concurrent.Await
+    import scala.concurrent.duration.Duration
+    val res = Await.result(futureTap, Duration.Inf).value.toList
+
+    res should not be (empty)
+  }
+
+  it should "read from typed tap" in {
+    import com.spotify.scio.bigquery.BigQueryTaps._
+    import org.apache.beam.sdk.io.gcp.{bigquery => beam}
+    import com.google.cloud.bigquery.storage.v1beta1.ReadOptions.TableReadOptions
+
+    val tableRef = beam.BigQueryHelpers.parseTableSpec("data-integration-test:storage.required")
+    val futureTap = Taps().bigQueryStorage(tableRef, TableReadOptions.newBuilder().build())
+
+    import scala.concurrent.Await
+    import scala.concurrent.duration.Duration
+    val res = Await.result(futureTap, Duration.Inf).value.toList
+
+    res should not be (empty)
+  }
 }
 
 object StorageIT {

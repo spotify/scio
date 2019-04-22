@@ -19,13 +19,18 @@ package com.spotify.scio.bigquery.client
 
 import com.google.api.client.googleapis.json.GoogleJsonResponseException
 import com.google.api.services.bigquery.model._
-import com.google.cloud.bigquery.storage.v1beta1.Storage.CreateReadSessionRequest
+import com.google.cloud.bigquery.storage.v1beta1.Storage._
 import com.google.cloud.bigquery.storage.v1beta1.TableReferenceProto
+import com.google.cloud.bigquery.storage.v1beta1.ReadOptions.TableReadOptions
 import com.google.cloud.hadoop.util.ApiErrorExtractor
+import com.spotify.scio.bigquery.BigQueryType
 import com.spotify.scio.bigquery.client.BigQuery.Client
 import com.spotify.scio.bigquery.{StorageUtil, TableRow}
 import org.apache.avro.Schema
+import org.apache.avro.generic.{GenericDatumReader, GenericRecord}
+import org.apache.avro.io.{BinaryDecoder, DecoderFactory}
 import org.apache.beam.sdk.extensions.gcp.options.GcsOptions
+import org.apache.beam.sdk.io.gcp.bigquery.BigQueryAvroUtilsWrapper
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryOptions
 import org.apache.beam.sdk.io.gcp.{bigquery => bq}
@@ -34,7 +39,9 @@ import org.joda.time.Instant
 import org.joda.time.format.DateTimeFormat
 import org.slf4j.LoggerFactory
 
+import scala.collection.mutable.ArrayBuffer
 import scala.collection.JavaConverters._
+import scala.reflect.runtime.universe._
 import scala.util.Random
 import scala.util.control.NonFatal
 
@@ -82,6 +89,57 @@ private[client] final class TableOps(client: Client) {
         } else {
           throw new NoSuchElementException
         }
+      }
+    }
+
+  def directReadRows(tableRef: TableReference, readOptions: TableReadOptions): Iterator[TableRow] =
+    withBigQueryService { bqServices =>
+      val tableRefProto = TableReferenceProto.TableReference.newBuilder()
+      if (tableRef.getProjectId != null) {
+        tableRefProto.setProjectId(tableRef.getProjectId)
+      }
+      tableRefProto
+        .setDatasetId(tableRef.getDatasetId)
+        .setTableId(tableRef.getTableId)
+        .build()
+      val request = CreateReadSessionRequest
+        .newBuilder()
+        .setTableReference(tableRefProto.build())
+        .setReadOptions(readOptions)
+        .setParent(s"projects/${client.project}")
+        .setRequestedStreams(1)
+        .setFormat(DataFormat.AVRO)
+        .build()
+
+      val session = client.storage.createReadSession(request)
+      val schema = new Schema.Parser().parse(session.getAvroSchema().getSchema())
+      val reader = new GenericDatumReader[GenericRecord](schema)
+
+      val readRowsRequest = ReadRowsRequest
+        .newBuilder()
+        .setReadPosition(
+          StreamPosition
+            .newBuilder()
+            .setStream(session.getStreams(0))
+            .build()
+        )
+        .build();
+
+      var decoder: BinaryDecoder = null
+      var gr: GenericRecord = null
+      client.storage.readRowsCallable().call(readRowsRequest).asScala.iterator.flatMap { resp =>
+        val rows = resp.getAvroRows()
+        decoder =
+          DecoderFactory.get().binaryDecoder(rows.getSerializedBinaryRows.toByteArray(), decoder)
+
+        val res = ArrayBuffer.empty[TableRow]
+        while (!decoder.isEnd()) {
+          gr = reader.read(gr, decoder)
+          val table = bqServices.getTable(tableRef, new java.util.ArrayList[String]())
+          res += BigQueryAvroUtilsWrapper.convertGenericRecordToTableRow(gr, table.getSchema)
+        }
+
+        res.toIterator
       }
     }
 
