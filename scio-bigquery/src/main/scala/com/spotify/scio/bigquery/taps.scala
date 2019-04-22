@@ -47,10 +47,10 @@ final case class BigQueryTap(table: TableReference) extends Tap[TableRow] {
 }
 
 /** Tap for BigQuery tables using storage api. */
-final case class BigQueryDirectReadTap(table: TableReference, readOptions: TableReadOptions)
+final case class BigQueryStorageTap(table: TableReference, readOptions: TableReadOptions)
     extends Tap[TableRow] {
   override def value: Iterator[TableRow] =
-    BigQuery.defaultInstance().tables.directReadRows(table, readOptions)
+    BigQuery.defaultInstance().tables.storageRows(table, readOptions)
   override def open(sc: ScioContext): SCollection[TableRow] =
     sc.bigQueryStorage(
       table,

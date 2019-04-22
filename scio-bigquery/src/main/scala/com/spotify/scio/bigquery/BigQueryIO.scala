@@ -251,7 +251,7 @@ final case class BigQueryStorage(table: Table) extends BigQueryIO[TableRow] {
       .setRowRestriction(read.rowRestriction)
       .addAllSelectedFields(read.selectFields.asJava)
       .build()
-    BigQueryDirectReadTap(beam.BigQueryHelpers.parseTableSpec(tableSpec), readOptions)
+    BigQueryStorageTap(beam.BigQueryHelpers.parseTableSpec(tableSpec), readOptions)
   }
 }
 
@@ -488,7 +488,7 @@ object BigQueryTyped {
         .setRowRestriction(read.rowRestriction)
         .addAllSelectedFields(read.selectFields.asJava)
         .build()
-      BigQueryDirectReadTap(beam.BigQueryHelpers.parseTableSpec(tableSpec), readOptions).map(fn)
+      BigQueryStorageTap(beam.BigQueryHelpers.parseTableSpec(tableSpec), readOptions).map(fn)
     }
   }
 

@@ -23,7 +23,6 @@ import com.google.cloud.bigquery.storage.v1beta1.Storage._
 import com.google.cloud.bigquery.storage.v1beta1.TableReferenceProto
 import com.google.cloud.bigquery.storage.v1beta1.ReadOptions.TableReadOptions
 import com.google.cloud.hadoop.util.ApiErrorExtractor
-import com.spotify.scio.bigquery.BigQueryType
 import com.spotify.scio.bigquery.client.BigQuery.Client
 import com.spotify.scio.bigquery.{StorageUtil, TableRow}
 import org.apache.avro.Schema
@@ -41,7 +40,6 @@ import org.slf4j.LoggerFactory
 
 import scala.collection.mutable.ArrayBuffer
 import scala.collection.JavaConverters._
-import scala.reflect.runtime.universe._
 import scala.util.Random
 import scala.util.control.NonFatal
 
@@ -92,15 +90,7 @@ private[client] final class TableOps(client: Client) {
       }
     }
 
-  def typedDirectReadRows[T: TypeTag](
-    tableRef: TableReference,
-    readOptions: TableReadOptions
-  ): Iterator[T] = {
-    val fn = BigQueryType[T].fromTableRow
-    directReadRows(tableRef, readOptions).map(fn)
-  }
-
-  def directReadRows(tableRef: TableReference, readOptions: TableReadOptions): Iterator[TableRow] =
+  def storageRows(tableRef: TableReference, readOptions: TableReadOptions): Iterator[TableRow] =
     withBigQueryService { bqServices =>
       val tableRefProto = TableReferenceProto.TableReference.newBuilder()
       if (tableRef.getProjectId != null) {
