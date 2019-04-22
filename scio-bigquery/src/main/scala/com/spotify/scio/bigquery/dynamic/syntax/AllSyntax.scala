@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,6 @@
  * under the License.
  */
 
-package com.spotify.scio.bigquery
+package com.spotify.scio.bigquery.dynamic.syntax
 
-import com.spotify.scio.bigquery.dynamic.syntax.AllSyntax
-
-/**
- * BigQuery package for dynamic table destinations. Import All.
- *
- * {{{
- * import com.spotify.scio.bigquery.dynamic._
- * }}}
- */
-package object dynamic extends AllSyntax
+trait AllSyntax extends SCollectionSyntax
