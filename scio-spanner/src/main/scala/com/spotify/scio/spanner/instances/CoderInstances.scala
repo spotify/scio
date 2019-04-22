@@ -19,7 +19,7 @@ package com.spotify.scio.spanner.instances
 import com.google.cloud.spanner.{Mutation, Struct}
 import com.spotify.scio.coders.Coder
 import org.apache.beam.sdk.{coders => bcoders}
-import org.apache.beam.sdk.io.gcp.spanner.ReadOperation
+import org.apache.beam.sdk.io.gcp.spanner.{MutationGroup, ReadOperation}
 
 trait CoderInstances {
   // Kryo coders throw runtime exceptions deserializing Spanner types (#1447), so force Beam coders
@@ -31,4 +31,9 @@ trait CoderInstances {
 
   implicit val spannerMutationCoder: Coder[Mutation] =
     Coder.beam(bcoders.SerializableCoder.of(classOf[Mutation]))
+
+  implicit val spannerMutationGroupCoder: Coder[MutationGroup] =
+    Coder.beam(bcoders.SerializableCoder.of(classOf[MutationGroup]))
 }
+
+object coders extends CoderInstances

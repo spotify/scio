@@ -20,6 +20,7 @@ import com.google.cloud.spanner.Struct
 import com.spotify.scio.ScioContext
 import com.spotify.scio.values.SCollection
 import com.spotify.scio.spanner.SpannerRead
+import com.spotify.scio.spanner.instances.coders._
 import org.apache.beam.sdk.io.gcp.spanner.SpannerConfig
 
 import scala.language.implicitConversions

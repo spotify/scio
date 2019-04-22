@@ -17,3 +17,5 @@
 package com.spotify.scio.spanner.instances
 
 trait AllInstances extends CoderInstances
+
+object all extends AllInstances
