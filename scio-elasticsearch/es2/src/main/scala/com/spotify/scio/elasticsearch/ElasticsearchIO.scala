@@ -37,7 +37,7 @@ final case class ElasticsearchIO[T](esOptions: ElasticsearchOptions) extends Sci
   override val tapT = EmptyTapOf[T]
 
   override def read(sc: ScioContext, params: ReadP): SCollection[T] =
-    throw new IllegalStateException("Can't read from ElasticSearch")
+    throw new UnsupportedOperationException("Can't read from ElasticSearch")
 
   /**
    * Save this SCollection into Elasticsearch.

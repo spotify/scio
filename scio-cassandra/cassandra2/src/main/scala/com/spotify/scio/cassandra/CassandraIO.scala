@@ -28,7 +28,7 @@ final case class CassandraIO[T](opts: CassandraOptions) extends ScioIO[T] {
   override val tapT = EmptyTapOf[T]
 
   override def read(sc: ScioContext, params: ReadP): SCollection[T] =
-    throw new IllegalStateException("Can't read from Cassandra")
+    throw new UnsupportedOperationException("Can't read from Cassandra")
 
   /**
    * Save this SCollection as a Cassandra table.
