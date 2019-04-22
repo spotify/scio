@@ -158,7 +158,7 @@ object DateTime {
 
   /** Convert BigQuery `DATETIME` string to `LocalDateTime`. */
   def parse(datetime: String): LocalDateTime =
-  Parser.parseLocalDateTime(datetime)
+    Parser.parseLocalDateTime(datetime)
 }
 
 /**
