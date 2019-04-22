@@ -74,7 +74,8 @@ final case class BigtableRead(bigtableOptions: BigtableOptions, tableId: String)
   }
 
   override def write(data: SCollection[Row], params: WriteP): Tap[Nothing] =
-    throw new UnsupportedOperationException("BigtableRead is read-only, use Mutation to write to Bigtable")
+    throw new UnsupportedOperationException(
+      "BigtableRead is read-only, use Mutation to write to Bigtable")
 
   override def tap(params: ReadP): Tap[Nothing] =
     throw new NotImplementedError("Bigtable tap not implemented")
@@ -110,7 +111,8 @@ final case class BigtableWrite[T](bigtableOptions: BigtableOptions, tableId: Str
     s"BigtableIO(${bigtableOptions.getProjectId}\t${bigtableOptions.getInstanceId}\t$tableId)"
 
   override def read(sc: ScioContext, params: ReadP): SCollection[(ByteString, Iterable[T])] =
-    throw new UnsupportedOperationException("BigtableWrite is write-only, use Row to read from Bigtable")
+    throw new UnsupportedOperationException(
+      "BigtableWrite is write-only, use Row to read from Bigtable")
 
   override def write(data: SCollection[(ByteString, Iterable[T])], params: WriteP): Tap[Nothing] = {
     val sink =
