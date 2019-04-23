@@ -28,6 +28,7 @@ import org.apache.beam.sdk.schemas.{Schema => BSchema}
 import org.apache.beam.sdk.transforms.SerializableFunction
 import org.apache.beam.sdk.coders.{CoderRegistry, Coder => BCoder}
 import org.apache.beam.sdk.values.Row
+import org.apache.beam.sdk.options.PipelineOptionsFactory
 import org.apache.beam.sdk.options.PipelineOptions
 import BSchema.{Field => BField, FieldType => BFieldType}
 
@@ -213,6 +214,11 @@ object SchemaMaterializer {
     sc: ScioContext,
     schema: Schema[T]): (BSchema, SerializableFunction[T, Row], SerializableFunction[Row, T]) =
     materialize(sc.pipeline.getCoderRegistry, sc.options, schema)
+
+  final def materializeWithDefault[T](
+    schema: Schema[T]
+  ): (BSchema, SerializableFunction[T, Row], SerializableFunction[Row, T]) =
+    materialize(CoderRegistry.createDefault(), PipelineOptionsFactory.create(), schema)
 
   final def materialize[T](
     reg: CoderRegistry,
