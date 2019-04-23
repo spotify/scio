@@ -18,4 +18,6 @@ package com.spotify.scio.spanner.instances
 
 trait AllInstances extends CoderInstances
 
+//scalastyle:off object.name
 object all extends AllInstances
+//scalastyle:on object.name

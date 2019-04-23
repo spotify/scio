@@ -36,4 +36,6 @@ trait CoderInstances {
     Coder.beam(bcoders.SerializableCoder.of(classOf[MutationGroup]))
 }
 
+//scalastyle:off object.name
 object coders extends CoderInstances
+//scalastyle:on object.name
