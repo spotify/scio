@@ -92,17 +92,17 @@ private[client] final class TableOps(client: Client) {
 
   def storageRows(tableRef: TableReference, readOptions: TableReadOptions): Iterator[TableRow] =
     withBigQueryService { bqServices =>
-      val tableRefProto = TableReferenceProto.TableReference.newBuilder()
+      val tableRefProto = TableReferenceProto.TableReference
+        .newBuilder()
+        .setDatasetId(tableRef.getDatasetId)
+        .setTableId(tableRef.getTableId)
       if (tableRef.getProjectId != null) {
         tableRefProto.setProjectId(tableRef.getProjectId)
       }
-      tableRefProto
-        .setDatasetId(tableRef.getDatasetId)
-        .setTableId(tableRef.getTableId)
-        .build()
+
       val request = CreateReadSessionRequest
         .newBuilder()
-        .setTableReference(tableRefProto.build())
+        .setTableReference(tableRefProto)
         .setReadOptions(readOptions)
         .setParent(s"projects/${client.project}")
         .setRequestedStreams(1)
@@ -110,30 +110,29 @@ private[client] final class TableOps(client: Client) {
         .build()
 
       val session = client.storage.createReadSession(request)
-      val schema = new Schema.Parser().parse(session.getAvroSchema().getSchema())
-      val reader = new GenericDatumReader[GenericRecord](schema)
-
       val readRowsRequest = ReadRowsRequest
         .newBuilder()
         .setReadPosition(
           StreamPosition
             .newBuilder()
             .setStream(session.getStreams(0))
-            .build()
         )
-        .build();
+        .build()
+
+      val schema = new Schema.Parser().parse(session.getAvroSchema().getSchema())
+      val reader = new GenericDatumReader[GenericRecord](schema)
+      val responses = client.storage.readRowsCallable().call(readRowsRequest).asScala
 
       var decoder: BinaryDecoder = null
       var gr: GenericRecord = null
-      client.storage.readRowsCallable().call(readRowsRequest).asScala.iterator.flatMap { resp =>
-        val rows = resp.getAvroRows()
-        decoder =
-          DecoderFactory.get().binaryDecoder(rows.getSerializedBinaryRows.toByteArray(), decoder)
+      responses.iterator.flatMap { resp =>
+        val bytes = resp.getAvroRows().getSerializedBinaryRows.toByteArray()
+        decoder = DecoderFactory.get().binaryDecoder(bytes, decoder)
 
         val res = ArrayBuffer.empty[TableRow]
         while (!decoder.isEnd()) {
           gr = reader.read(gr, decoder)
-          val table = bqServices.getTable(tableRef, new java.util.ArrayList[String]())
+          val table = bqServices.getTable(tableRef, readOptions.getSelectedFieldsList())
           res += BigQueryAvroUtilsWrapper.convertGenericRecordToTableRow(gr, table.getSchema)
         }
 

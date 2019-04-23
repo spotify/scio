@@ -18,8 +18,12 @@
 package com.spotify.scio.bigquery.types
 
 import com.google.protobuf.ByteString
+import com.google.cloud.bigquery.storage.v1beta1.ReadOptions.TableReadOptions
 import com.spotify.scio._
+import com.spotify.scio.io.Taps
 import com.spotify.scio.bigquery._
+import com.spotify.scio.bigquery.BigQueryTaps._
+import org.apache.beam.sdk.io.gcp.{bigquery => beam}
 import org.apache.beam.sdk.testing.PAssert
 import org.joda.time.{DateTimeZone, Duration, Instant}
 import org.scalatest._
@@ -207,12 +211,7 @@ class StorageIT extends FlatSpec with Matchers {
     sc.close()
   }
 
-  import com.spotify.scio.io.Taps
-  it should "read from tap" in {
-    import com.spotify.scio.bigquery.BigQueryTaps._
-    import org.apache.beam.sdk.io.gcp.{bigquery => beam}
-    import com.google.cloud.bigquery.storage.v1beta1.ReadOptions.TableReadOptions
-
+  "Tap" should "support read" in {
     val tableRef = beam.BigQueryHelpers.parseTableSpec("data-integration-test:storage.required")
     val futureTap = Taps().bigQueryStorage(tableRef, TableReadOptions.newBuilder().build())
 
@@ -223,11 +222,7 @@ class StorageIT extends FlatSpec with Matchers {
     res should not be (empty)
   }
 
-  it should "read from typed tap" in {
-    import com.spotify.scio.bigquery.BigQueryTaps._
-    import org.apache.beam.sdk.io.gcp.{bigquery => beam}
-    import com.google.cloud.bigquery.storage.v1beta1.ReadOptions.TableReadOptions
-
+  it should "support typed read" in {
     val tableRef = beam.BigQueryHelpers.parseTableSpec("data-integration-test:storage.required")
     val futureTap =
       Taps().typedBigQueryStorage[Required](tableRef, TableReadOptions.newBuilder().build())
