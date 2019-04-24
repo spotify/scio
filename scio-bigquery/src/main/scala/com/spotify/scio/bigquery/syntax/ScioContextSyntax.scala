@@ -55,16 +55,22 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
   /**
    * Get an SCollection for a BigQuery table.
    */
-  @deprecated("use bigQueryTable(table: Table)", "Scio 0.8")
+  @deprecated(
+    "this method will be removed; use bigQueryTable(Table.Ref(table)) instead",
+    "Scio 0.8"
+  )
   def bigQueryTable(table: TableReference): SCollection[TableRow] =
-    self.read(BigQueryTable(table))
+    bigQueryTable(Table.Ref(table))
 
   /**
    * Get an SCollection for a BigQuery table.
    */
-  @deprecated("use bigQueryTable(table: Table)", "Scio 0.8")
+  @deprecated(
+    "this method will be removed; use bigQueryTable(Table.Spec(table)) instead",
+    "Scio 0.8"
+  )
   def bigQueryTable(tableSpec: String): SCollection[TableRow] =
-    self.read(BigQueryTable(tableSpec))
+    bigQueryTable(Table.Spec(tableSpec))
 
   /**
    * Get an SCollection for a BigQuery table.

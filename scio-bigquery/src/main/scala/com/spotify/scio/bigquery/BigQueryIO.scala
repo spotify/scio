@@ -216,11 +216,11 @@ object BigQueryTable {
     timePartitioning: TimePartitioning = WriteParam.DefaultTimePartitioning
   )
 
-  @deprecated("use Table.Ref(table)", "Scio 0.8")
+  @deprecated("this method will be removed; use apply(Table.Ref(table)) instead", "Scio 0.8")
   @inline final def apply(table: TableReference): BigQueryTable =
     BigQueryTable(Table.Ref(table))
 
-  @deprecated("use Table.Spec(table)", "Scio 0.8")
+  @deprecated("this method will be removed; use apply(Table.Spec(table)) instead", "Scio 0.8")
   @inline final def apply(spec: String): BigQueryTable =
     BigQueryTable(Table.Spec(spec))
 }
@@ -250,11 +250,11 @@ final case class BigQueryStorage(table: Table) extends BigQueryIO[TableRow] {
 object BigQueryStorage {
   final case class ReadParam(selectFields: List[String], rowRestriction: String)
 
-  @deprecated("use Table.Ref(table)", "Scio 0.8")
+  @deprecated("this method will be removed; use apply(Table.Ref(table)) instead", "Scio 0.8")
   @inline final def apply(table: TableReference): BigQueryStorage =
     BigQueryStorage(Table.Ref(table))
 
-  @deprecated("use Table.Spec(table)", "Scio 0.8")
+  @deprecated("this method will be removed; use apply(Table.Spec(table)) instead", "Scio 0.8")
   @inline final def apply(spec: String): BigQueryStorage =
     BigQueryStorage(Table.Spec(spec))
 }
@@ -444,12 +444,12 @@ object BigQueryTyped {
       timePartitioning: TimePartitioning = WriteParam.DefaultTimePartitioning
     )
 
-    @deprecated("use Table.Ref(table)", "Scio 0.8")
+    @deprecated("this method will be removed; use apply(Table.Ref(table)) instead", "Scio 0.8")
     @inline
     final def apply[T <: HasAnnotation: ClassTag: TypeTag: Coder](spec: String): Table[T] =
       Table[T](STable.Spec(spec))
 
-    @deprecated("use Table.Spec(table)", "Scio 0.8")
+      @deprecated("this method will be removed; use apply(Table.Spec(table)) instead", "Scio 0.8")
     @inline
     final def apply[T <: HasAnnotation: ClassTag: TypeTag: Coder](table: TableReference): Table[T] =
       Table[T](STable.Ref(table))
