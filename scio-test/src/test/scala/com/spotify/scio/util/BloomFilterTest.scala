@@ -356,6 +356,14 @@ class BloomFilterTest extends WordSpec with Matchers {
 
       val items = (1 until 10).map(_.toString)
       val bf = BloomFilter[String](10, 0.1).create(items: _*)
+      // We have added all elements.
+      // If it is a Sparse (delayed) BFInstance, it will change only when a query happens for the
+      // first time. To gaurd against this, we query it explicitly.
+      bf match {
+        case sparse @ MutableSparseBFInstance(hashes, allHashes, width) =>
+          sparse.contains("1")
+        case _ =>
+      }
       val bytesBeforeSizeCalled = Bytes(serialize(bf))
       val beforeSize = bf.size
       assert(bf.contains("1").isTrue)

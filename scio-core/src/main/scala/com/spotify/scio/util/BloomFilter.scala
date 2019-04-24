@@ -433,7 +433,7 @@ final case class MutableSparseBFInstance[A](hashes: KirMit32Hash[A],
       case MutableBFZero(_, _) => this
       case MutableSparseBFInstance(_, otherSetBits, _) =>
         setIsStale = true
-        if (((allHashes.size * numHashes) + otherSetBits.size) * 32 >= width) {
+        if ((allHashes.size + otherSetBits.size) * numHashes * 32 >= width) {
           // TODO this will work with no hash Collition. can we do better?
           // We mutate this (MutableSparseBFInstance) but return a MutableBFInstance
           // This makes sure we follow the contract of a ++= and mutate this,
