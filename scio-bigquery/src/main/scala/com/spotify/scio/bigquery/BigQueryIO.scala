@@ -449,7 +449,7 @@ object BigQueryTyped {
     final def apply[T <: HasAnnotation: ClassTag: TypeTag: Coder](spec: String): Table[T] =
       Table[T](STable.Spec(spec))
 
-      @deprecated("this method will be removed; use apply(Table.Spec(table)) instead", "Scio 0.8")
+    @deprecated("this method will be removed; use apply(Table.Spec(table)) instead", "Scio 0.8")
     @inline
     final def apply[T <: HasAnnotation: ClassTag: TypeTag: Coder](table: TableReference): Table[T] =
       Table[T](STable.Ref(table))
