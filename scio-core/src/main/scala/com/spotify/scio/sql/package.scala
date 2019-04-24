@@ -27,7 +27,7 @@ import scala.language.existentials
 
 package object sql {
 
-  sealed trait SQLBuilder {
+  trait SQLBuilder {
     def as[B: Schema]: SCollection[B]
   }
 
@@ -102,13 +102,14 @@ package object sql {
           SQLBuilder[ref._A](q, ref, tag, udfs)
         case (ref0, tag0) :: (ref1, tag1) :: Nil =>
           SQLBuilder[ref0._A, ref1._A](q, ref0, ref1, tag0, tag1, udfs)
-        case _ =>
-          throw new IllegalArgumentException("WUUUUTTT????")
+        case ts =>
+          throw new IllegalArgumentException(
+            s"sql interpolation only support JOIN on up to 2 unique SCollections, found ${ts.length}")
       }
     }
 
-    def tsql[B](ps: Any*): SCollection[B] =
-      macro SqlInterpolatorMacro.tsqlImpl[B]
+    def tsql(ps: Any*): SQLBuilder =
+      macro SqlInterpolatorMacro.builder
   }
 
 }
@@ -120,9 +121,8 @@ package sql {
     val ctx: whitebox.Context
     import ctx.universe._
 
-    def buildSQLString(tags: List[String]): String = {
-
-      val parts = ctx.prefix.tree match {
+    def partsfromContext: List[Tree] = {
+      ctx.prefix.tree match {
         case q"com.spotify.scio.sql.`package`.SqlInterpolator(scala.StringContext.apply(..$ps))" =>
           ps
         case q"sql.this.`package`.SqlInterpolator(scala.StringContext.apply(..$ps))" => ps
@@ -130,14 +130,18 @@ package sql {
           ctx.abort(ctx.enclosingPosition,
                     s"Implementation error. Expected tsql string interpolation, found $tree")
       }
+    }
 
-      parts
-        .map {
+    def buildSQLString(parts: List[Tree], tags: List[String]): String = {
+      val ps2 =
+        parts.map {
           case Literal(Constant(s: String)) => s
           case tree =>
             ctx.abort(ctx.enclosingPosition,
                       s"Implementation error. Expected Literal(Constant(...)), found $tree")
         }
+
+      ps2
         .zipAll(tags, "", "")
         .map { case (x, y) => s"$x $y" }
         .mkString("")
@@ -186,17 +190,98 @@ package sql {
       (sa, sb, sc, scha, schab, schac)
     }
 
-    def tagFor(t: Type, lbl: String): Tree = {
-      q"""
-        new _root_.org.apache.beam.sdk.values.TupleTag[$t]($lbl)
-      """
-    }
+    def tagFor(t: Type, lbl: String): Tree =
+      q"new _root_.org.apache.beam.sdk.values.TupleTag[$t]($lbl)"
   }
 
   object SqlInterpolatorMacro {
 
-    def tsqlImpl[B: c.WeakTypeTag](c: whitebox.Context)(
-      ps: c.Expr[Any]*): c.Expr[SCollection[B]] = {
+    /**
+     * This static annotation is used to pass (static) parameters to SqlInterpolatorMacro.expand
+     */
+    final class sql(parts: List[String], ps: Any*) extends scala.annotation.StaticAnnotation
+
+    def builder(c: whitebox.Context)(ps: c.Expr[Any]*): c.Expr[SQLBuilder] = {
+      val h = new { val ctx: c.type = c } with SqlInterpolatorMacroHelpers
+      import h._
+      import c.universe._
+
+      val parts = partsfromContext
+
+      val className = TypeName(c.freshName("SQLBuilder"))
+      val fakeName = TypeName(c.freshName("FakeImpl"))
+
+      // Yo Dawg i herd you like macros...
+      //
+      // The following tree generates an anonymous class to lazily expand the "real" macro (tsqlImpl).
+      // It basically acts as curryfication of the macro,
+      // where the interpolated String and it's parameters are partially applied,
+      // while the expected output type (and therefore the expected data schema) stays unapplied.
+      // Sadly macro do not allow explicit parameter passing so the following code would be illegal
+      // and the macro expansion would fail with: "term macros cannot override abstract methods"
+      //   def as[B: Schema]: SCollection[B] =
+      //     macro _root_.com.spotify.scio.sql.SqlInterpolatorMacro.expand[B](parts, ps)
+      //
+      // We workaround the limitation by using a StaticAnnotation to pass static values,
+      // as described in: https://stackoverflow.com/a/25219644/2383092
+      //
+      // It is also illegal for a macro to override abstract methods,
+      // which is why an intermediate class $fakeName is introduced.
+      // Note that we HAVE TO extend SQLBuilder, otherwise, `tsqlImpl` fails to see the concrete
+      // type of B, which also makes the macro expansion fails.
+      val tree =
+        q"""
+        {
+          import _root_.com.spotify.scio.values.SCollection
+          import _root_.com.spotify.scio.schemas.Schema
+
+          sealed trait $fakeName  extends _root_.com.spotify.scio.sql.SQLBuilder {
+            def as[B: Schema]: SCollection[B] = ???
+          }
+
+          final class $className extends $fakeName {
+            import scala.language.experimental.macros
+
+            @_root_.com.spotify.scio.sql.SqlInterpolatorMacro.sql(List(..$parts),..$ps)
+            def as[B: Schema]: SCollection[B] =
+              macro _root_.com.spotify.scio.sql.SqlInterpolatorMacro.expand[B]
+          }
+          new $className
+        }
+        """
+
+      c.Expr[SQLBuilder](tree)
+    }
+
+    def expand[B: c.WeakTypeTag](c: whitebox.Context)(
+      schB: c.Expr[Schema[B]]): c.Expr[SCollection[B]] = {
+      import c.universe._
+
+      val annotationParams =
+        c.macroApplication.symbol.annotations
+          .filter(_.tree.tpe <:< typeOf[sql])
+          .flatMap(_.tree.children.tail)
+
+      if (annotationParams.isEmpty)
+        c.abort(c.enclosingPosition, "Annotation body not provided!")
+
+      val ps: List[c.Expr[Any]] =
+        annotationParams.tail.map(t => c.Expr[Any](t))
+
+      val parts =
+        annotationParams.head match {
+          case Apply(TypeApply(Select(Select(_, _), TermName("apply")), _), pas) =>
+            pas
+          case tree =>
+            c.abort(c.enclosingPosition,
+                    s"Failed to extract SQL parts. Expected List(...), found $tree")
+        }
+
+      tsqlImpl[B](c)(parts, ps: _*)
+    }
+
+    def tsqlImpl[B: c.WeakTypeTag](
+      c: whitebox.Context)(parts: List[c.Tree], ps: c.Expr[Any]*): c.Expr[SCollection[B]] = {
       val h = new { val ctx: c.type = c } with SqlInterpolatorMacroHelpers
       import h._
       import c.universe._
@@ -229,7 +314,7 @@ package sql {
       distinctSCollections.values.toList match {
         case (c0, t0) :: Nil =>
           val tag0 = tagFor(t0, Sql.SCollectionTypeName)
-          val sql = buildSQLString(scs.map(_ => Sql.SCollectionTypeName))
+          val sql = buildSQLString(parts, scs.map(_ => Sql.SCollectionTypeName))
 
           val (implA, implB, sIn, sOut) =
             inferImplicitSchemas[B](t0)
@@ -244,7 +329,7 @@ package sql {
         case (c0, t0) :: (c1, t1) :: Nil =>
           val tag0 = tagFor(t0, toSCollectionName(c0))
           val tag1 = tagFor(t1, toSCollectionName(c1))
-          val sql = buildSQLString(scs.map(x => toSCollectionName(x._1)))
+          val sql = buildSQLString(parts, scs.map(x => toSCollectionName(x._1)))
 
           val q = q"_root_.com.spotify.scio.sql.Queries.typed[$t0, $t1, $wttB]($sql, $tag0, $tag1)"
 

@@ -91,27 +91,27 @@ class TypedBeamSQLTest extends PipelineSpec {
     """
     def coll: SCollection[(Int, String)] =
       sc.parallelize((1 to 10).toList.map(i => (i, i.toString)))
-    val r: SCollection[Int] = tsql"SELECT _1 FROM $coll"
+    val r: SCollection[Int] = tsql"SELECT _1 FROM $coll".as[Int]
     """ should compile
 
     """
     def coll: SCollection[(Int, String)] =
       sc.parallelize((1 to 10).toList.map(i => (i, i.toString)))
-    val r: SCollection[String] = tsql"SELECT _1 FROM $coll"
+    val r: SCollection[String] = tsql"SELECT _1 FROM $coll".as[String]
     """ shouldNot compile
 
     """
     val a = sc.parallelize(users)
     val b = sc.parallelize(users)
     val r: SCollection[String] =
-      tsql"SELECT $a.username FROM $a JOIN $b ON $a.username = $b.username"
+      tsql"SELECT $a.username FROM $a JOIN $b ON $a.username = $b.username".as[String]
     """ should compile
 
     """
     val a = sc.parallelize(users)
     val b = sc.parallelize(users)
     val r: SCollection[Int] =
-      tsql"SELECT $a.username FROM $a JOIN $b ON $a.username = $b.username"
+      tsql"SELECT $a.username FROM $a JOIN $b ON $a.username = $b.username".as[Int]
     """ shouldNot compile
 
   }
@@ -120,13 +120,25 @@ class TypedBeamSQLTest extends PipelineSpec {
     """
     val a = sc.parallelize(users)
     val r: SCollection[String] =
-      tsql"SELECT A._1 FROM ${a.map(u => (u.username, u.age))} A"
+      tsql"SELECT A._1 FROM ${a.map(u => (u.username, u.age))} A".as[String]
     """ should compile
 
     """
     val a = sc.parallelize(users)
     val r: SCollection[Int] =
-      tsql"SELECT A._1 FROM ${a.map(u => (u.username, u.age))} A"
+      tsql"SELECT A._1 FROM ${a.map(u => (u.username, u.age))} A".as[Int]
+    """ shouldNot compile
+  }
+
+  it should "not require type ascription" in runWithContext { sc =>
+    """
+    val a = sc.parallelize(users)
+    val r = tsql"SELECT A._1 FROM ${a.map(u => (u.username, u.age))} A".as[String]
+    """ should compile
+
+    """
+    val a = sc.parallelize(users)
+    val r = tsql"SELECT A._1 FROM ${a.map(u => (u.username, u.age))} A".as[Int]
     """ shouldNot compile
   }
 
@@ -156,12 +168,13 @@ class TypedBeamSQLTest extends PipelineSpec {
     val customers: SCollection[j.Customer] = sc.parallelize(cs)
     val orders: SCollection[j.Order] = sc.parallelize(os)
 
+    // example taken from Beam's tests
     val r: SCollection[(String, String)] =
       tsql"""
         SELECT $customers.name, ('order id:' || CAST($orders.id AS VARCHAR))
         FROM $orders
         JOIN $customers ON $orders.customerId = $customers.id
         WHERE $customers.name = 'Grault'
-      """
+      """.as[(String, String)]
   }
 }
