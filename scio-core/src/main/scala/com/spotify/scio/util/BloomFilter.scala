@@ -133,9 +133,15 @@ case class BloomFilterMonoid[A](numHashes: Int, width: Int)(implicit hash: Hash1
     if (as.isEmpty) {
       None
     } else {
-      val outputInstance = MutableBFInstance.empty(hashes, width)
+      // We start with an empty instance here.
+      // An empty instance is always Sparse, and doesn't allocate the complete
+      // memory of the underlying bit map. When adding BFs slowly, at one point
+      // it is no longer sparse and hence `++=` returns a BF with the underlying
+      // bitmap allocated. For later operations we must hold on to the new BF,
+      // and hence we use var here, even though `++=` mutates the instance.
+      var outputInstance = MutableBFInstance.empty(hashes, width)
       as.foreach { bf =>
-        outputInstance ++= bf
+        outputInstance = outputInstance ++= bf
       }
       if (outputInstance.numBits == 0) {
         Some(MutableBFZero(hashes, width))
@@ -268,7 +274,7 @@ sealed abstract class MutableBF[A] extends java.io.Serializable {
 /**
  * Empty bloom filter.
  */
-case class MutableBFZero[A](hashes: KirMit32Hash[A], width: Int) extends MutableBF[A] {
+final case class MutableBFZero[A](hashes: KirMit32Hash[A], width: Int) extends MutableBF[A] {
 
   def toBitSet: util.BitSet = new util.BitSet()
 
@@ -297,7 +303,7 @@ case class MutableBFZero[A](hashes: KirMit32Hash[A], width: Int) extends Mutable
 /**
  * Mutable Bloom filter with multiple values
  */
-case class MutableBFInstance[A](hashes: KirMit32Hash[A], bits: util.BitSet, width: Int)
+final case class MutableBFInstance[A](hashes: KirMit32Hash[A], bits: util.BitSet, width: Int)
     extends MutableBF[A] {
 
   def numHashes: Int = hashes.size
@@ -317,8 +323,12 @@ case class MutableBFInstance[A](hashes: KirMit32Hash[A], bits: util.BitSet, widt
     other match {
       case MutableBFZero(_, _)                         => this
       case MutableSparseBFInstance(_, otherSetBits, _) =>
-        // This is MutableBFInstance, hence not sparse, so don't convert to sparse.
-        otherSetBits.foreach(bits.set) // This is doing OR
+        // This is MutableBFInstance, hence not sparse, so don't convert output to sparse.
+        val it = otherSetBits.flatten.iterator
+        // OR operation, without allocating otherSetBits as util.BitSet
+        while (it.hasNext) {
+          bits.set(it.next())
+        }
         this
       case MutableBFInstance(_, otherBits, _) =>
         bits.or(otherBits)
@@ -360,7 +370,7 @@ case class MutableBFInstance[A](hashes: KirMit32Hash[A], bits: util.BitSet, widt
 
 /**
  * Mutable SparseBloomFilter or a Delayed MutableBFInstance.
- * If the bit set is less than 1/32 filled, it stores the actual hash values
+ * If the underlying bit set is less than 1/32 filled, it stores the actual hashes calculated
  * instead of allocating memory for the complete BitSet
  *
  * After adding enough elements when the size of the underlying Set becomes
@@ -373,9 +383,9 @@ case class MutableBFInstance[A](hashes: KirMit32Hash[A], bits: util.BitSet, widt
  * bitmap. Also Apache Beam doesn't have a Coder for EWAHCompressedBitmap, and it would fallback
  * to Kryo
  */
-case class MutableSparseBFInstance[A](hashes: KirMit32Hash[A],
-                                      setBits: mutable.Set[Int],
-                                      width: Int)
+final case class MutableSparseBFInstance[A](hashes: KirMit32Hash[A],
+                                            allHashes: mutable.Buffer[Array[Int]],
+                                            width: Int)
     extends MutableBF[A] {
 
   def numHashes: Int = hashes.size
@@ -385,9 +395,27 @@ case class MutableSparseBFInstance[A](hashes: KirMit32Hash[A],
    */
   def numBits: Int = setBits.size
 
+  private def allSeenBit: mutable.Buffer[Int] = allHashes.flatten
+
+  private var set: Set[Int] = _
+  // Keeps a state if elements were added after `allHashes` was converted into a set.
+  private var setIsStale: Boolean = true
+
+  // Access all the set bits as a set. This is meant to be used by maybeContains
+  // The value is cached so that it is a set is created only once.
+  // This cannot be a lazy val, because it is updated when an element gets added.
+  private def setBits: Set[Int] = {
+    if (setIsStale) {
+      set = allSeenBit.toSet
+      setIsStale = false
+    }
+    set
+  }
+
   def toBitSet: util.BitSet = {
     val jbitSet = new util.BitSet()
-    setBits.foreach(jbitSet.set)
+    allSeenBit // setBits would involve an additional hashing operation to convert to a HashSet.
+      .foreach(jbitSet.set)
     jbitSet
   }
 
@@ -404,23 +432,31 @@ case class MutableSparseBFInstance[A](hashes: KirMit32Hash[A],
     other match {
       case MutableBFZero(_, _) => this
       case MutableSparseBFInstance(_, otherSetBits, _) =>
-        if ((setBits.size + otherSetBits.size) * 32 >= width) {
+        setIsStale = true
+        if (((allHashes.size * numHashes) + otherSetBits.size) * 32 >= width) {
+          // TODO this will work with no hash Collition. can we do better?
+          // We mutate this (MutableSparseBFInstance) but return a MutableBFInstance
+          // This makes sure we follow the contract of a ++= and mutate this,
+          // and we move from sparse to non sparse once the size exceeds some.
+          allHashes ++= otherSetBits
           // convert to MutableBFInstance
           asMutableBFInstance ++= other
         } else {
           // stay sparse
-          setBits ++= otherSetBits
+          allHashes ++= otherSetBits
           this
         }
       case MutableBFInstance(_, otherBits, _) =>
+        setIsStale = true
         // since the other is not a sparse BF, the result cannot be sparse.
         asMutableBFInstance ++= other
     }
   }
 
   def +=(item: A): MutableBF[A] = {
+    setIsStale = true
     val itemHashes = hashes(item)
-    setBits ++= itemHashes
+    allHashes += itemHashes
     this
   }
   // scalastyle:on method.name
@@ -432,11 +468,12 @@ case class MutableSparseBFInstance[A](hashes: KirMit32Hash[A],
 
   // scalastyle:off return
   def maybeContains(item: A): Boolean = {
+    val sb = setBits // eval setBits only once.
     val il = hashes(item)
     var idx = 0
     while (idx < il.length) {
       val i = il(idx)
-      if (!setBits.contains(i)) return false
+      if (!sb.contains(i)) return false
       idx += 1
     }
     true
@@ -447,7 +484,7 @@ case class MutableSparseBFInstance[A](hashes: KirMit32Hash[A],
   def size: Approximate[Long] =
     BloomFilter.sizeEstimate(numBits, numHashes, width, 0.05)
 
-  def copy: MutableBF[A] = MutableSparseBFInstance(hashes, setBits.clone, width)
+  def copy: MutableBF[A] = MutableSparseBFInstance(hashes, allHashes.clone, width)
 }
 
 /**
@@ -464,8 +501,7 @@ object MutableBFInstance {
 
   // Always Start with a Sparse BF Instance
   def empty[A](hashes: KirMit32Hash[A], width: Int): MutableBF[A] =
-//    MutableBFInstance(hashes, new util.BitSet(), width)
-    MutableSparseBFInstance(hashes, mutable.Set[Int](), width)
+    MutableSparseBFInstance(hashes, mutable.Buffer.empty[Array[Int]], width)
 }
 
 /**
@@ -483,7 +519,7 @@ object MutableBFInstance {
  * We have noticed 2 to 4 times higher throughput when using this approach compared to the
  * implementation in Algebird.
  */
-case class KirMit32Hash[A](numHashes: Int, width: Int)(implicit hash128: Hash128[A]) {
+final case class KirMit32Hash[A](numHashes: Int, width: Int)(implicit hash128: Hash128[A]) {
   val size: Int = numHashes
 
   def apply(valueToHash: A): Array[Int] = {
