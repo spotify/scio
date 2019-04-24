@@ -17,7 +17,6 @@
 package com.spotify.scio.sql
 
 import com.spotify.scio.bean.UserBean
-import com.spotify.scio.schemas.{Schema, To}
 import com.spotify.scio.values.SCollection
 import com.spotify.scio.testing.PipelineSpec
 import org.apache.beam.sdk.values.TupleTag
