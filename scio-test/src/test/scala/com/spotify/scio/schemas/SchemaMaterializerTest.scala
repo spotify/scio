@@ -37,6 +37,9 @@ final class SchemaMaterializerTest extends FlatSpec with Matchers {
     fieldTypes(Schema[BigDecimal]).headOption.map(_.getType) shouldBe Some(FieldType.DECIMAL)
     fieldTypes(Schema[Boolean]).headOption.map(_.getType) shouldBe Some(FieldType.BOOLEAN)
     fieldTypes(Schema[Array[Byte]]).headOption.map(_.getType) shouldBe Some(FieldType.BYTES)
+    fieldTypes(Schema[Array[String]]).headOption.map(_.getType) shouldBe Some(
+      FieldType.array(FieldType.STRING)
+    )
     fieldTypes(Schema[Option[String]]).headOption.map(_.getType) shouldBe Some(
       FieldType.STRING.withNullable(true)
     )
