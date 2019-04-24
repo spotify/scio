@@ -39,7 +39,7 @@ import scala.collection.JavaConverters._
 object Sql {
 
   private[sql] val BeamProviderName = "beam"
-  val SCollectionTypeName = "SCOLLECTION"
+  private[sql] val SCollectionTypeName = "SCOLLECTION"
 
   def defaultTag[A]: TupleTag[A] = new TupleTag[A](SCollectionTypeName)
 
@@ -313,13 +313,15 @@ object QueryMacros {
     val wtt = weakTypeOf[A].dealias
     val isVal = wtt <:< typeOf[AnyVal]
     val isSealed =
-      if (wtt.typeSymbol.isClass) wtt.typeSymbol.asClass.isSealed
-      else false
+      if (wtt.typeSymbol.isClass) {
+        wtt.typeSymbol.asClass.isSealed
+      } else false
     val isAbstract = wtt.typeSymbol.asType.isAbstract
-    if (!isVal && isAbstract && !isSealed)
+    if (!isVal && isAbstract && !isSealed) {
       c.abort(c.enclosingPosition, s"$wtt is an abstract type, expected a concrete type.")
-    else
+    } else {
       ()
+    }
   }
 
   def typedImpl[A: c.WeakTypeTag, B: c.WeakTypeTag](c: blackbox.Context)(query: c.Expr[String])(

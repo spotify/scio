@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -95,7 +95,7 @@ package object sql {
 
       val expr = expressions.map(toString)
       val q =
-        strings.zipAll(expr, "", "").map { case (s, e) => s + e }.mkString
+        strings.zipAll(expr, "", "").foldLeft("") { case (a, (x, y)) => s"${a}${x} ${y}" }
 
       tags.values.toList match {
         case (ref, tag) :: Nil =>
@@ -104,7 +104,8 @@ package object sql {
           SQLBuilder[ref0._A, ref1._A](q, ref0, ref1, tag0, tag1, udfs)
         case ts =>
           throw new IllegalArgumentException(
-            s"sql interpolation only support JOIN on up to 2 unique SCollections, found ${ts.length}")
+            "sql interpolation only support JOIN on up to 2 unique " +
+              s"SCollections, found ${ts.length}")
       }
     }
 
@@ -143,8 +144,7 @@ package sql {
 
       ps2
         .zipAll(tags, "", "")
-        .map { case (x, y) => s"$x $y" }
-        .mkString("")
+        .foldLeft("") { case (a, (x, y)) => s"${a}${x} ${y}" }
     }
 
     def inferImplicitSchemas[B: ctx.WeakTypeTag](
@@ -199,7 +199,7 @@ package sql {
     /**
      * This static annotation is used to pass (static) parameters to SqlInterpolatorMacro.expand
      */
-    final class sql(parts: List[String], ps: Any*) extends scala.annotation.StaticAnnotation
+    final class SqlParts(parts: List[String], ps: Any*) extends scala.annotation.StaticAnnotation
 
     def builder(c: whitebox.Context)(ps: c.Expr[Any]*): c.Expr[SQLBuilder] = {
       val h = new { val ctx: c.type = c } with SqlInterpolatorMacroHelpers
@@ -213,9 +213,9 @@ package sql {
 
       // Yo Dawg i herd you like macros...
       //
-      // The following tree generates an anonymous class to lazily expand the "real" macro (tsqlImpl).
+      // The following tree generates an anonymous class to lazily expand tsqlImpl.
       // It basically acts as curryfication of the macro,
-      // where the interpolated String and it's parameters are partially applied,
+      // where the interpolated String and it's parameters are partially applied
       // while the expected output type (and therefore the expected data schema) stays unapplied.
       // Sadly macro do not allow explicit parameter passing so the following code would be illegal
       // and the macro expansion would fail with: "term macros cannot override abstract methods"
@@ -242,7 +242,7 @@ package sql {
           final class $className extends $fakeName {
             import scala.language.experimental.macros
 
-            @_root_.com.spotify.scio.sql.SqlInterpolatorMacro.sql(List(..$parts),..$ps)
+            @_root_.com.spotify.scio.sql.SqlInterpolatorMacro.SqlParts(List(..$parts),..$ps)
             def as[B: Schema]: SCollection[B] =
               macro _root_.com.spotify.scio.sql.SqlInterpolatorMacro.expand[B]
           }
@@ -259,7 +259,7 @@ package sql {
 
       val annotationParams =
         c.macroApplication.symbol.annotations
-          .filter(_.tree.tpe <:< typeOf[sql])
+          .filter(_.tree.tpe <:< typeOf[SqlParts])
           .flatMap(_.tree.children.tail)
 
       if (annotationParams.isEmpty)
