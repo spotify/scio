@@ -312,8 +312,11 @@ object QueryMacros {
     import c.universe._
     val wtt = weakTypeOf[A].dealias
     val isVal = wtt <:< typeOf[AnyVal]
+    val isSealed =
+      if (wtt.typeSymbol.isClass) wtt.typeSymbol.asClass.isSealed
+      else false
     val isAbstract = wtt.typeSymbol.asType.isAbstract
-    if (!isVal && isAbstract)
+    if (!isVal && isAbstract && !isSealed)
       c.abort(c.enclosingPosition, s"$wtt is an abstract type, expected a concrete type.")
     else
       ()
