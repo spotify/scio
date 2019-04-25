@@ -241,28 +241,34 @@ object Queries {
   ): Try[BSchema] =
     parseQuery(query, schemas, udfs).map(n => CalciteUtils.toSchema(n.getRowType))
 
-  private[this] def typecheck(
-    query: String,
-    inferredSchemas: List[(String, BSchema)],
-    expectedSchema: BSchema,
-    udfs: List[Udf]
-  ): Either[String, String] = {
+  private[this] def printInferred(inferredSchemas: List[(String, BSchema)]): String =
+    inferredSchemas
+      .map {
+        case (name, schema) =>
+          s"""
+          |schema of $name:
+          |${PrettyPrint.prettyPrint(schema.getFields.asScala.toList)}
+        """.stripMargin
+      }
+      .mkString("\n")
+
+  private[this] def typecheck(query: String,
+                              inferredSchemas: List[(String, BSchema)],
+                              expectedSchema: BSchema,
+                              udfs: List[Udf]): Either[String, String] = {
     ScioUtil
       .toEither(schema(query, inferredSchemas, udfs))
       .left
       .map { ex =>
         val mess = org.apache.commons.lang3.exception.ExceptionUtils.getRootCauseMessage(ex)
+
         s"""
            |$mess
            |
            |Query:
            |$query
            |
-           |SCOLLECTION schema:
-           |${inferredSchemas
-             .map(i => PrettyPrint.prettyPrint(i._2.getFields.asScala.toList))
-             .mkString("\n")}
-           |
+           |${printInferred(inferredSchemas)}
            |Query result schema (inferred) is unknown.
            |Expected schema:
            |${PrettyPrint.prettyPrint(expectedSchema.getFields.asScala.toList)}
@@ -284,11 +290,7 @@ object Queries {
                |Query:
                |$query
                |
-               |SCOLLECTION schema:
-               |${inferredSchemas
-                 .map(i => PrettyPrint.prettyPrint(i._2.getFields.asScala.toList))
-                 .mkString("\n")}
-               |
+               |${printInferred(inferredSchemas)}
                |Query result schema (inferred):
                |${PrettyPrint.prettyPrint(inferredSchema.getFields.asScala.toList)}
                |
