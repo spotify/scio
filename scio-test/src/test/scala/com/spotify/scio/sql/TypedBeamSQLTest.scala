@@ -80,7 +80,7 @@ class TypedBeamSQLTest extends PipelineSpec {
 
   // TODO: test type alias support
 
-  it should "typecheck classes compatibilty" in {
+  it should "typecheck classes compatibility" in {
     import TypeConvertionsTestData._
     """To.safe[TinyTo, From0]""" shouldNot compile
     """To.safe[From0, CompatibleAvroTestRecord]""" shouldNot compile
@@ -127,6 +127,11 @@ class TypedBeamSQLTest extends PipelineSpec {
     val r: SCollection[Int] =
       tsql"SELECT A._1 FROM ${a.map(u => (u.username, u.age))} A".as[Int]
     """ shouldNot compile
+
+    """
+    val a = sc.parallelize(users)
+    val r = tsql"SELECT _1 FROM ${a.map(u => (u.username, u.age))}".as[String]
+    """ should compile
   }
 
   it should "not require type ascription" in runWithContext { sc =>
@@ -138,6 +143,21 @@ class TypedBeamSQLTest extends PipelineSpec {
     """
     val a = sc.parallelize(users)
     val r = tsql"SELECT A._1 FROM ${a.map(u => (u.username, u.age))} A".as[Int]
+    """ shouldNot compile
+  }
+
+  it should "support sub-queries" in runWithContext { sc =>
+    val a = sc.parallelize(users)
+    val b = sc.parallelize(users)
+
+    """
+    tsql"SELECT * FROM (SELECT * FROM $a) A INNER JOIN $b ON A.username = $b.username"
+      .as[(String, String, Int, String, String, Int)]
+    """ should compile
+
+    """
+    tsql"SELECT * FROM (SELECT * FROM $a) A INNER JOIN $b ON A.username = $b.username"
+      .as[String]
     """ shouldNot compile
   }
 

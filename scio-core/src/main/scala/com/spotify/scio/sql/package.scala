@@ -214,6 +214,7 @@ package sql {
       // Yo Dawg i herd you like macros...
       //
       // The following tree generates an anonymous class to lazily expand tsqlImpl.
+      //
       // It basically acts as curryfication of the macro,
       // where the interpolated String and it's parameters are partially applied
       // while the expected output type (and therefore the expected data schema) stays unapplied.
@@ -298,8 +299,7 @@ package sql {
 
       val scs: List[(Tree, Type)] =
         ss.map { p =>
-          val tpe = p.actualType
-          val a = tpe.typeArgs.head
+          val a = p.actualType.typeArgs.head
           (p.tree, a)
         }.toList
 
@@ -319,7 +319,7 @@ package sql {
           val (implA, implB, sIn, sOut) =
             inferImplicitSchemas[B](t0)
 
-          // Yo Dawg i herd you like macros...
+          // ... so I put a macro in your macro so you can compile while you compile
           val q = q"_root_.com.spotify.scio.sql.Queries.typed[$t0, $wttB]($sql)"
 
           c.Expr[SCollection[B]](q"""
