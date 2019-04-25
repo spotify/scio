@@ -732,7 +732,7 @@ lazy val scioExamples: Project = Project(
       "me.lyh" %% "shapeless-datatype-avro" % shapelessDatatypeVersion,
       "me.lyh" %% "shapeless-datatype-datastore_1.3" % shapelessDatatypeVersion,
       "me.lyh" %% "shapeless-datatype-tensorflow" % shapelessDatatypeVersion,
-      "mysql" % "mysql-connector-java" % "8.0.15",
+      "mysql" % "mysql-connector-java" % "8.0.16",
       "com.google.cloud.sql" % "mysql-socket-factory" % "1.0.13",
       "org.slf4j" % "slf4j-simple" % slf4jVersion,
       "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test",
