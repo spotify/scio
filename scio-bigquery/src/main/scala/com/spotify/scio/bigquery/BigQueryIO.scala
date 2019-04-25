@@ -57,8 +57,7 @@ private object Reads {
   private[scio] def bqReadQuery[T: ClassTag](sc: ScioContext)(
     typedRead: beam.BigQueryIO.TypedRead[T],
     sqlQuery: String,
-    flattenResults: Boolean = false
-  ): SCollection[T] = sc.wrap {
+    flattenResults: Boolean = false): SCollection[T] = sc.wrap {
     val bigQueryClient = client(sc)
     if (bigQueryClient.isCacheEnabled) {
       val read = bigQueryClient.query
@@ -91,8 +90,7 @@ private object Reads {
     typedRead: beam.BigQueryIO.TypedRead[T],
     table: Table,
     selectedFields: List[String] = Nil,
-    rowRestriction: String = null
-  ): SCollection[T] = sc.wrap {
+    rowRestriction: String = null): SCollection[T] = sc.wrap {
     val read = typedRead
       .from(table.spec)
       .withMethod(Method.DIRECT_READ)
@@ -109,9 +107,9 @@ private object Reads {
       .withCoder(CoderMaterializer.beam(sc, Coder.kryo[T]))
   }
 
-  private[scio] def bqReadTable[T: ClassTag](
-    sc: ScioContext
-  )(typedRead: beam.BigQueryIO.TypedRead[T], table: TableReference): SCollection[T] =
+  private[scio] def bqReadTable[T: ClassTag](sc: ScioContext)(
+    typedRead: beam.BigQueryIO.TypedRead[T],
+    table: TableReference): SCollection[T] =
     sc.wrap(sc.applyInternal(typedRead.from(table)))
 }
 
@@ -224,15 +222,17 @@ object BigQueryTable {
     private[bigquery] val DefaultTableDescription: String = null
     private[bigquery] val DefaultTimePartitioning: TimePartitioning = null
     private[bigquery] val DefaultExtendedErrorInfo: ExtendedErrorInfo = ExtendedErrorInfo.Disabled
+    private[bigquery] val DefaultInsertErrorTransform
+      : SCollection[DefaultExtendedErrorInfo.Info] => Unit = _ => ()
 
     @inline final def apply(
-      s: TableSchema = DefaultSchema,
-      wd: WriteDisposition = DefaultWriteDisposition,
-      cd: CreateDisposition = DefaultCreateDisposition,
-      td: String = DefaultTableDescription,
-      tp: TimePartitioning = DefaultTimePartitioning,
-      ei: ExtendedErrorInfo = DefaultExtendedErrorInfo
-    )(it: SCollection[ei.Info] => Unit = _ => ()): WriteParam = new WriteParam {
+      s: TableSchema,
+      wd: WriteDisposition,
+      cd: CreateDisposition,
+      td: String,
+      tp: TimePartitioning,
+      ei: ExtendedErrorInfo,
+    )(it: SCollection[ei.Info] => Unit): WriteParam = new WriteParam {
       val schema: TableSchema = s
       val writeDisposition: WriteDisposition = wd
       val createDisposition: CreateDisposition = cd
@@ -241,6 +241,15 @@ object BigQueryTable {
       val extendedErrorInfo: ei.type = ei
       val insertErrorTransform: SCollection[extendedErrorInfo.Info] => Unit = it
     }
+
+    @inline final def apply(
+      s: TableSchema = DefaultSchema,
+      wd: WriteDisposition = DefaultWriteDisposition,
+      cd: CreateDisposition = DefaultCreateDisposition,
+      td: String = DefaultTableDescription,
+      tp: TimePartitioning = DefaultTimePartitioning,
+    ): WriteParam = apply(s, wd, cd, td, tp, DefaultExtendedErrorInfo)(DefaultInsertErrorTransform)
+
   }
   
   @deprecated("this method will be removed; use apply(Table.Ref(table)) instead", "Scio 0.8")
@@ -315,10 +324,8 @@ object TableRowJsonIO {
     private[bigquery] val DefaultCompression = Compression.UNCOMPRESSED
   }
 
-  final case class WriteParam private (
-    numShards: Int = WriteParam.DefaultNumShards,
-    compression: Compression = WriteParam.DefaultCompression
-  )
+  final case class WriteParam private (numShards: Int = WriteParam.DefaultNumShards,
+                                       compression: Compression = WriteParam.DefaultCompression)
 }
 
 object BigQueryTyped {
@@ -331,8 +338,7 @@ object BigQueryTyped {
     BigQueryType.fromQuery.
     Alternatively, use BigQueryTyped.Storage("<table>"), BigQueryTyped.Table("<table>"), or
     BigQueryTyped.Query("<query>") to get a ScioIO instance.
-  """
-  )
+  """)
   sealed trait IO[T <: HasAnnotation] {
     type F[_ <: HasAnnotation] <: ScioIO[_]
     def impl: F[T]
@@ -344,24 +350,21 @@ object BigQueryTyped {
       IO[T] { type F[A <: HasAnnotation] = F0[A] }
 
     implicit def tableIO[T <: HasAnnotation: ClassTag: TypeTag: Coder](
-      implicit t: BigQueryType.Table[T]
-    ): Aux[T, Table] =
+      implicit t: BigQueryType.Table[T]): Aux[T, Table] =
       new IO[T] {
         type F[A <: HasAnnotation] = Table[A]
         def impl: Table[T] = Table(STable.Spec(t.table))
       }
 
     implicit def queryIO[T <: HasAnnotation: ClassTag: TypeTag: Coder](
-      implicit t: BigQueryType.Query[T]
-    ): Aux[T, Select] =
+      implicit t: BigQueryType.Query[T]): Aux[T, Select] =
       new IO[T] {
         type F[A <: HasAnnotation] = Select[A]
         def impl: Select[T] = Select(t.query)
       }
 
     implicit def storageIO[T <: HasAnnotation: ClassTag: TypeTag: Coder](
-      implicit t: BigQueryType.StorageOptions[T]
-    ): Aux[T, Storage] =
+      implicit t: BigQueryType.StorageOptions[T]): Aux[T, Storage] =
       new IO[T] {
         type F[A <: HasAnnotation] = Storage[A]
         def impl: Storage[T] = Storage(STable.Spec(t.table))
@@ -439,14 +442,12 @@ object BigQueryTyped {
           .withName(s"$initialTfName$$Write")
 
       val ps =
-        BigQueryTable.WriteParam(
-          bqt.schema,
-          params.writeDisposition,
-          params.createDisposition,
-          bqt.tableDescription.orNull,
-          params.timePartitioning,
-          params.extendedErrorInfo
-        )(params.insertErrorTransform)
+        BigQueryTable.WriteParam(bqt.schema,
+                                 params.writeDisposition,
+                                 params.createDisposition,
+                                 bqt.tableDescription.orNull,
+                                 params.timePartitioning,
+                                 params.extendedErrorInfo)(params.insertErrorTransform)
 
       BigQueryTable(table)
         .write(rows, ps)
@@ -474,19 +475,27 @@ object BigQueryTyped {
       private[bigquery] val DefaultCreateDisposition: CreateDisposition = null
       private[bigquery] val DefaultTimePartitioning: TimePartitioning = null
       private[bigquery] val DefaultExtendedErrorInfo: ExtendedErrorInfo = ExtendedErrorInfo.Disabled
+      private[bigquery] val DefaultInsertErrorTransform
+        : SCollection[DefaultExtendedErrorInfo.Info] => Unit = _ => ()
 
       @inline final def apply(
-        wd: WriteDisposition = DefaultWriteDisposition,
-        cd: CreateDisposition = DefaultCreateDisposition,
-        tp: TimePartitioning = DefaultTimePartitioning,
-        ei: ExtendedErrorInfo = DefaultExtendedErrorInfo
-      )(it: SCollection[ei.Info] => Unit = _ => ()): WriteParam = new WriteParam {
+        wd: WriteDisposition,
+        cd: CreateDisposition,
+        tp: TimePartitioning,
+        ei: ExtendedErrorInfo,
+      )(it: SCollection[ei.Info] => Unit): WriteParam = new WriteParam {
         val writeDisposition: WriteDisposition = wd
         val createDisposition: CreateDisposition = cd
         val timePartitioning: TimePartitioning = tp
         val extendedErrorInfo: ei.type = ei
         val insertErrorTransform: SCollection[extendedErrorInfo.Info] => Unit = it
       }
+
+      @inline final def apply(
+        wd: WriteDisposition = DefaultWriteDisposition,
+        cd: CreateDisposition = DefaultCreateDisposition,
+        tp: TimePartitioning = DefaultTimePartitioning,
+      ): WriteParam = apply(wd, cd, tp, DefaultExtendedErrorInfo)(DefaultInsertErrorTransform)
     }
 
     @deprecated("this method will be removed; use apply(Table.Ref(table)) instead", "Scio 0.8")
