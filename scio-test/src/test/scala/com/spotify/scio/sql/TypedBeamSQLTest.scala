@@ -78,7 +78,19 @@ class TypedBeamSQLTest extends PipelineSpec {
     """ shouldNot compile
   }
 
-  // TODO: test type alias support
+  it should "support type aliases" in {
+    import Queries.typed
+
+    """
+    type R = (String, Long)
+    typed[Bar, R]("select `SCOLLECTION`.`f`.`s`, l from SCOLLECTION")
+    """ should compile
+
+    """
+    type B = Bar
+    typed[B, (String, Long)]("select `SCOLLECTION`.`f`.`s`, l from SCOLLECTION")
+    """ should compile
+  }
 
   it should "typecheck classes compatibility" in {
     import TypeConvertionsTestData._
