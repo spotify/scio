@@ -112,13 +112,17 @@ private[scio] case class ScalarWrapper[T](value: T) extends AnyVal
 
 private[scio] object SchemaTypes {
 
+  private[this] def compareRows(s1: BSchema.FieldType, s2: BSchema.FieldType): Boolean = {
+    val s1Types = s1.getRowSchema.getFields.asScala.map(_.getType)
+    val s2Types = s2.getRowSchema.getFields.asScala.map(_.getType)
+    (s1Types.length == s2Types.length) &&
+    s1Types.zip(s2Types).forall { case (l, r) => equal(l, r) }
+  }
+
   def equal(s1: BSchema.FieldType, s2: BSchema.FieldType): Boolean =
     (s1.getTypeName == s2.getTypeName) && (s1.getTypeName match {
       case BSchema.TypeName.ROW =>
-        val s1Types = s1.getRowSchema.getFields.asScala.map(_.getType)
-        val s2Types = s2.getRowSchema.getFields.asScala.map(_.getType)
-        s1Types.length == s2Types.length &&
-        s1Types.zip(s2Types).forall { case (l, r) => equal(l, r) }
+        compareRows(s1, s2)
       case BSchema.TypeName.ARRAY =>
         equal(s1.getCollectionElementType, s2.getCollectionElementType)
       case BSchema.TypeName.MAP =>
