@@ -424,27 +424,29 @@ final case class MutableSparseBFInstance[A](hashes: KirMit32Hash[A],
    */
   private def asMutableBFInstance = MutableBFInstance(hashes, toBitSet, width)
 
+  // We check the fill ratio and return a MutableBFInstance if the fill is high.
+  // This check works assuming there are no hash collision. In reality the conversion
+  // to a non-sparse BFInstance happens a little eary because of collisions.
+  private def staySparse: Boolean = allHashes.size * numHashes * 32 < width
+
+  /**
+   * Merge two mutable BFs. Assumes both have same width and hashing strategy.
+   *
+   * Return a new [[MutableBFInstance]] if we should no longer stay sparse.
+   */
   // scalastyle:off method.name
   def ++=(other: MutableBF[A]): MutableBF[A] = {
-    require(this.width == other.width)
-    require(this.numHashes == other.numHashes)
-
     other match {
       case MutableBFZero(_, _) => this
       case MutableSparseBFInstance(_, otherSetBits, _) =>
         setIsStale = true
-        if ((allHashes.size + otherSetBits.size) * numHashes * 32 >= width) {
-          // TODO this will work with no hash Collition. can we do better?
-          // We mutate this (MutableSparseBFInstance) but return a MutableBFInstance
-          // This makes sure we follow the contract of a ++= and mutate this,
-          // and we move from sparse to non sparse once the size exceeds some.
-          allHashes ++= otherSetBits
-          // convert to MutableBFInstance
-          asMutableBFInstance ++= other
-        } else {
-          // stay sparse
-          allHashes ++= otherSetBits
+        // We mutate this (MutableSparseBFInstance) to adhere to the contract of ++=
+        allHashes ++= otherSetBits
+
+        if (staySparse) {
           this
+        } else {
+          asMutableBFInstance
         }
       case MutableBFInstance(_, otherBits, _) =>
         setIsStale = true
@@ -453,11 +455,22 @@ final case class MutableSparseBFInstance[A](hashes: KirMit32Hash[A],
     }
   }
 
+  /**
+   * Add one element to this Sparse Bloom Filter.
+   *
+   * The current BF is mutated. We return a new [[MutableBFInstance]] if
+   * we should not stay sparse.
+   */
   def +=(item: A): MutableBF[A] = {
     setIsStale = true
     val itemHashes = hashes(item)
     allHashes += itemHashes
-    this
+
+    if (staySparse) {
+      this
+    } else {
+      asMutableBFInstance
+    }
   }
   // scalastyle:on method.name
 
