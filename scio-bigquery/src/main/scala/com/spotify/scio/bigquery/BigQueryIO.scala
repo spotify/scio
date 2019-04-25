@@ -231,7 +231,7 @@ object BigQueryTable {
       cd: CreateDisposition,
       td: String,
       tp: TimePartitioning,
-      ei: ExtendedErrorInfo,
+      ei: ExtendedErrorInfo
     )(it: SCollection[ei.Info] => Unit): WriteParam = new WriteParam {
       val schema: TableSchema = s
       val writeDisposition: WriteDisposition = wd
@@ -247,7 +247,7 @@ object BigQueryTable {
       wd: WriteDisposition = DefaultWriteDisposition,
       cd: CreateDisposition = DefaultCreateDisposition,
       td: String = DefaultTableDescription,
-      tp: TimePartitioning = DefaultTimePartitioning,
+      tp: TimePartitioning = DefaultTimePartitioning
     ): WriteParam = apply(s, wd, cd, td, tp, DefaultExtendedErrorInfo)(DefaultInsertErrorTransform)
 
   }
@@ -482,7 +482,7 @@ object BigQueryTyped {
         wd: WriteDisposition,
         cd: CreateDisposition,
         tp: TimePartitioning,
-        ei: ExtendedErrorInfo,
+        ei: ExtendedErrorInfo
       )(it: SCollection[ei.Info] => Unit): WriteParam = new WriteParam {
         val writeDisposition: WriteDisposition = wd
         val createDisposition: CreateDisposition = cd
@@ -494,7 +494,7 @@ object BigQueryTyped {
       @inline final def apply(
         wd: WriteDisposition = DefaultWriteDisposition,
         cd: CreateDisposition = DefaultCreateDisposition,
-        tp: TimePartitioning = DefaultTimePartitioning,
+        tp: TimePartitioning = DefaultTimePartitioning
       ): WriteParam = apply(wd, cd, tp, DefaultExtendedErrorInfo)(DefaultInsertErrorTransform)
     }
 
