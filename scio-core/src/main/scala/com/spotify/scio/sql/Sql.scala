@@ -41,7 +41,7 @@ object Sql {
   private[sql] val BeamProviderName = "beam"
   private[sql] val SCollectionTypeName = "SCOLLECTION"
 
-  def defaultTag[A]: TupleTag[A] = new TupleTag[A](SCollectionTypeName)
+  private[scio] def defaultTag[A]: TupleTag[A] = new TupleTag[A](SCollectionTypeName)
 
   def from[A: Schema](sc: SCollection[A]): SqlSCollection[A] = new SqlSCollection(sc)
 
