@@ -360,7 +360,7 @@ class BloomFilterTest extends WordSpec with Matchers {
       // If it is a Sparse (delayed) BFInstance, it will change only when a query happens for the
       // first time. To gaurd against this, we query it explicitly.
       bf match {
-        case sparse @ MutableSparseBFInstance(hashes, allHashes, width) =>
+        case sparse @ MutableSparseBFInstance(_, _) =>
           sparse.contains("1")
         case _ =>
       }

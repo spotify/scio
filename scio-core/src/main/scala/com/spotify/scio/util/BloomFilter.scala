@@ -120,7 +120,7 @@ case class BloomFilterMonoid[A](numHashes: Int, width: Int)(implicit hash: Hash1
 
   val hashes: KirMit32Hash[A] = KirMit32Hash[A](numHashes, width)(hash)
 
-  val zero: MutableBF[A] = MutableBFZero[A](hashes, width)
+  val zero: MutableBF[A] = MutableBFZero[A](hashes)
 
   /**
    * Adds the Bloom Filter on right to the left, mutating and returning Left.
@@ -139,12 +139,12 @@ case class BloomFilterMonoid[A](numHashes: Int, width: Int)(implicit hash: Hash1
       // it is no longer sparse and hence `++=` returns a BF with the underlying
       // bitmap allocated. For later operations we must hold on to the new BF,
       // and hence we use var here, even though `++=` mutates the instance.
-      var outputInstance = MutableBFInstance.empty(hashes, width)
+      var outputInstance = MutableBFInstance.empty(hashes)
       as.foreach { bf =>
         outputInstance = outputInstance ++= bf
       }
       if (outputInstance.numBits == 0) {
-        Some(MutableBFZero(hashes, width))
+        Some(MutableBFZero(hashes))
       } else {
         Some(outputInstance)
       }
@@ -153,7 +153,7 @@ case class BloomFilterMonoid[A](numHashes: Int, width: Int)(implicit hash: Hash1
   /**
    * Create a bloom filter with one item.
    */
-  def create(item: A): MutableBF[A] = MutableBFInstance(hashes, width, item)
+  def create(item: A): MutableBF[A] = MutableBFInstance(hashes, item)
 
   /**
    * Create a bloom filter with multiple items.
@@ -164,9 +164,9 @@ case class BloomFilterMonoid[A](numHashes: Int, width: Int)(implicit hash: Hash1
    * Create a bloom filter with multiple items from an iterator
    */
   def create(data: Iterator[A]): MutableBF[A] = {
-    val outputInstance = MutableBFInstance.empty(hashes, width)
+    var outputInstance = MutableBFInstance.empty(hashes)
     data.foreach { itm =>
-      outputInstance += itm
+      outputInstance = outputInstance += itm
     }
     outputInstance
   }
@@ -274,18 +274,20 @@ sealed abstract class MutableBF[A] extends java.io.Serializable {
 /**
  * Empty bloom filter.
  */
-final case class MutableBFZero[A](hashes: KirMit32Hash[A], width: Int) extends MutableBF[A] {
+final case class MutableBFZero[A](hashes: KirMit32Hash[A]) extends MutableBF[A] {
 
-  def toBitSet: util.BitSet = new util.BitSet()
+  lazy val toBitSet: util.BitSet = new util.BitSet()
 
-  def numHashes: Int = hashes.size
+  lazy val numHashes: Int = hashes.numHashes
 
-  def numBits: Int = 0
+  lazy val width: Int = hashes.width
+
+  lazy val numBits: Int = 0
 
   // scalastyle:off method.name
   def ++=(other: MutableBF[A]): MutableBF[A] = other
 
-  def +=(other: A): MutableBF[A] = MutableBFInstance[A](hashes, width, other)
+  def +=(other: A): MutableBF[A] = MutableBFInstance[A](hashes, other)
   // scalastyle:on method.name
 
   def checkAndAdd(other: A): (MutableBF[A], ApproximateBoolean) =
@@ -295,23 +297,25 @@ final case class MutableBFZero[A](hashes: KirMit32Hash[A], width: Int) extends M
 
   def maybeContains(item: A): Boolean = false
 
-  def size: Approximate[Long] = Approximate.exact[Long](0)
+  lazy val size: Approximate[Long] = Approximate.exact[Long](0)
 
-  def copy: MutableBF[A] = MutableBFZero(hashes, width)
+  def copy: MutableBF[A] = MutableBFZero(hashes)
 }
 
 /**
  * Mutable Bloom filter with multiple values
  */
-final case class MutableBFInstance[A](hashes: KirMit32Hash[A], bits: util.BitSet, width: Int)
+final case class MutableBFInstance[A](hashes: KirMit32Hash[A], bits: util.BitSet)
     extends MutableBF[A] {
 
-  def numHashes: Int = hashes.size
+  lazy val numHashes: Int = hashes.numHashes
 
   /**
    * The number of bits set to true
    */
   def numBits: Int = bits.cardinality()
+
+  lazy val width: Int = hashes.width
 
   def toBitSet: util.BitSet = bits
 
@@ -321,8 +325,8 @@ final case class MutableBFInstance[A](hashes: KirMit32Hash[A], bits: util.BitSet
     require(this.numHashes == other.numHashes)
 
     other match {
-      case MutableBFZero(_, _)                         => this
-      case MutableSparseBFInstance(_, otherSetBits, _) =>
+      case MutableBFZero(_)                         => this
+      case MutableSparseBFInstance(_, otherSetBits) =>
         // This is MutableBFInstance, hence not sparse, so don't convert output to sparse.
         val it = otherSetBits.flatten.iterator
         // OR operation, without allocating otherSetBits as util.BitSet
@@ -330,7 +334,7 @@ final case class MutableBFInstance[A](hashes: KirMit32Hash[A], bits: util.BitSet
           bits.set(it.next())
         }
         this
-      case MutableBFInstance(_, otherBits, _) =>
+      case MutableBFInstance(_, otherBits) =>
         bits.or(otherBits)
         this
     }
@@ -365,7 +369,7 @@ final case class MutableBFInstance[A](hashes: KirMit32Hash[A], bits: util.BitSet
   def size: Approximate[Long] =
     BloomFilter.sizeEstimate(numBits, numHashes, width, 0.05)
 
-  def copy: MutableBF[A] = MutableBFInstance(hashes, bits.clone.asInstanceOf[util.BitSet], width)
+  def copy: MutableBF[A] = MutableBFInstance(hashes, bits.clone.asInstanceOf[util.BitSet])
 }
 
 /**
@@ -384,16 +388,17 @@ final case class MutableBFInstance[A](hashes: KirMit32Hash[A], bits: util.BitSet
  * to Kryo
  */
 final case class MutableSparseBFInstance[A](hashes: KirMit32Hash[A],
-                                            allHashes: mutable.Buffer[Array[Int]],
-                                            width: Int)
+                                            allHashes: mutable.Buffer[Array[Int]])
     extends MutableBF[A] {
 
-  def numHashes: Int = hashes.size
+  lazy val numHashes: Int = hashes.numHashes
 
   /**
    * The number of bits set to true
    */
   def numBits: Int = setBits.size
+
+  lazy val width: Int = hashes.width
 
   private def allSeenBit: mutable.Buffer[Int] = allHashes.flatten
 
@@ -404,6 +409,7 @@ final case class MutableSparseBFInstance[A](hashes: KirMit32Hash[A],
   // Access all the set bits as a set. This is meant to be used by maybeContains
   // The value is cached so that it is a set is created only once.
   // This cannot be a lazy val, because it is updated when an element gets added.
+  @inline
   private def setBits: Set[Int] = {
     if (setIsStale) {
       set = allSeenBit.toSet
@@ -422,11 +428,13 @@ final case class MutableSparseBFInstance[A](hashes: KirMit32Hash[A],
   /**
    * Convert to a MutableBFInstance backed by an actual BitSet instead of storing indexes in a Set.
    */
-  private def asMutableBFInstance = MutableBFInstance(hashes, toBitSet, width)
+  @inline
+  private def asMutableBFInstance = MutableBFInstance(hashes, toBitSet)
 
   // We check the fill ratio and return a MutableBFInstance if the fill is high.
   // This check works assuming there are no hash collision. In reality the conversion
   // to a non-sparse BFInstance happens a little eary because of collisions.
+  @inline
   private def staySparse: Boolean = allHashes.size * numHashes * 32 < width
 
   /**
@@ -437,8 +445,8 @@ final case class MutableSparseBFInstance[A](hashes: KirMit32Hash[A],
   // scalastyle:off method.name
   def ++=(other: MutableBF[A]): MutableBF[A] = {
     other match {
-      case MutableBFZero(_, _) => this
-      case MutableSparseBFInstance(_, otherSetBits, _) =>
+      case MutableBFZero(_) => this
+      case MutableSparseBFInstance(_, otherSetBits) =>
         setIsStale = true
         // We mutate this (MutableSparseBFInstance) to adhere to the contract of ++=
         allHashes ++= otherSetBits
@@ -448,7 +456,7 @@ final case class MutableSparseBFInstance[A](hashes: KirMit32Hash[A],
         } else {
           asMutableBFInstance
         }
-      case MutableBFInstance(_, otherBits, _) =>
+      case MutableBFInstance(_, otherBits) =>
         setIsStale = true
         // since the other is not a sparse BF, the result cannot be sparse.
         asMutableBFInstance ++= other
@@ -497,24 +505,24 @@ final case class MutableSparseBFInstance[A](hashes: KirMit32Hash[A],
   def size: Approximate[Long] =
     BloomFilter.sizeEstimate(numBits, numHashes, width, 0.05)
 
-  def copy: MutableBF[A] = MutableSparseBFInstance(hashes, allHashes.clone, width)
+  def copy: MutableBF[A] = MutableSparseBFInstance(hashes, allHashes.clone)
 }
 
 /**
  * Constructors for mutable bloom filters
  */
 object MutableBFInstance {
-  def apply[A](hashes: KirMit32Hash[A], width: Int, firstElement: A): MutableBF[A] = {
-    val bf = MutableBFInstance.empty(hashes, width)
+  def apply[A](hashes: KirMit32Hash[A], firstElement: A): MutableBF[A] = {
+    val bf = MutableBFInstance.empty(hashes)
     bf += firstElement
   }
 
-  def apply[A](hashes: KirMit32Hash[A], width: Int): MutableBF[A] =
-    empty(hashes, width)
+  def apply[A](hashes: KirMit32Hash[A]): MutableBF[A] =
+    empty(hashes)
 
   // Always Start with a Sparse BF Instance
-  def empty[A](hashes: KirMit32Hash[A], width: Int): MutableBF[A] =
-    MutableSparseBFInstance(hashes, mutable.Buffer.empty[Array[Int]], width)
+  def empty[A](hashes: KirMit32Hash[A]): MutableBF[A] =
+    MutableSparseBFInstance(hashes, mutable.Buffer.empty[Array[Int]])
 }
 
 /**
@@ -533,8 +541,6 @@ object MutableBFInstance {
  * implementation in Algebird.
  */
 final case class KirMit32Hash[A](numHashes: Int, width: Int)(implicit hash128: Hash128[A]) {
-  val size: Int = numHashes
-
   def apply(valueToHash: A): Array[Int] = {
     val (hash64_1, hash_64_2) = hash128.hashWithSeed(numHashes, valueToHash)
     // We just need two 32 bit hashes. So just convert toInt, and ignore the rest.
