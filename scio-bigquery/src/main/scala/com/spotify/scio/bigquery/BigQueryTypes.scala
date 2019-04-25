@@ -19,6 +19,13 @@ package com.spotify.scio.bigquery
 import java.math.MathContext
 import java.nio.ByteBuffer
 
+import com.spotify.scio.ScioContext
+import org.apache.beam.sdk.io.gcp.bigquery.BigQueryInsertError
+import com.spotify.scio.ScioContext
+import org.apache.beam.sdk.io.gcp.bigquery.WriteResult
+import com.spotify.scio.values.SCollection
+import org.apache.beam.sdk.io.gcp.bigquery.WriteResult
+import com.spotify.scio.values.SCollection
 import com.google.api.services.bigquery.model.{
   TableRow => GTableRow,
   TimePartitioning => GTimePartitioning,
@@ -43,6 +50,29 @@ object Table {
   }
   final case class Spec(spec: String) extends Table {
     override lazy val ref: GTableReference = BigQueryHelpers.parseTableSpec(spec)
+  }
+}
+
+sealed trait ExtendedErrorInfo {
+  type Info
+
+  private[scio] def coll(sc: ScioContext, wr: WriteResult): SCollection[Info]
+}
+
+object ExtendedErrorInfo {
+  final case object Enabled extends ExtendedErrorInfo {
+
+    override type Info = BigQueryInsertError
+
+    override private[scio] def coll(sc: ScioContext, wr: WriteResult): SCollection[Info] =
+      sc.wrap(wr.getFailedInsertsWithErr())
+  }
+
+  final case object Disabled extends ExtendedErrorInfo {
+    override type Info = TableRow
+
+    override private[scio] def coll(sc: ScioContext, wr: WriteResult): SCollection[Info] =
+      sc.wrap(wr.getFailedInserts())
   }
 }
 

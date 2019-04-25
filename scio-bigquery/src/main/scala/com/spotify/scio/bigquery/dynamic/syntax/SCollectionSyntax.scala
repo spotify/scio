@@ -20,6 +20,7 @@ import com.google.api.services.bigquery.model.TableSchema
 import com.spotify.scio.bigquery.types.BigQueryType
 import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
 import com.spotify.scio.bigquery.TableRow
+import com.spotify.scio.bigquery.ExtendedErrorInfo._
 import com.spotify.scio.bigquery.dynamic._
 import com.spotify.scio.io.{ClosedTap, EmptyTap}
 import com.spotify.scio.util.Functions
@@ -28,6 +29,7 @@ import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{CreateDisposition, 
 import org.apache.beam.sdk.io.gcp.bigquery.{DynamicDestinations, TableDestination}
 import org.apache.beam.sdk.io.gcp.{bigquery => beam}
 import org.apache.beam.sdk.values.ValueInSingleWindow
+import com.spotify.scio.bigquery.ExtendedErrorInfo
 
 import scala.reflect.runtime.universe._
 import scala.language.implicitConversions
@@ -47,6 +49,27 @@ final class DynamicBigQueryOps[T](private val self: SCollection[T]) extends AnyV
     formatFn: T => TableRow,
     writeDisposition: WriteDisposition,
     createDisposition: CreateDisposition
+  ): ClosedTap[Nothing] =
+    saveAsBigQuery(
+      destinations,
+      formatFn,
+      writeDisposition,
+      createDisposition,
+      ExtendedErrorInfo.Disabled
+    )(_ => ())
+
+  /**
+   * Save this SCollection to dynamic BigQuery tables using the table and schema specified by the
+   * [[org.apache.beam.sdk.io.gcp.bigquery.DynamicDestinations DynamicDestinations]].
+   */
+  def saveAsBigQuery(
+    destinations: DynamicDestinations[T, _],
+    formatFn: T => TableRow,
+    writeDisposition: WriteDisposition,
+    createDisposition: CreateDisposition,
+    extendedErrorInfo: ExtendedErrorInfo
+  )(
+    insertErrorTransform: SCollection[extendedErrorInfo.Info] => Unit
   ): ClosedTap[Nothing] = {
     if (self.context.isTest) {
       throw new NotImplementedError(
@@ -57,13 +80,20 @@ final class DynamicBigQueryOps[T](private val self: SCollection[T]) extends AnyV
         .write()
         .to(destinations)
         .withFormatFunction(Functions.serializableFn(formatFn))
+        .withExtendedErrorInfo()
       if (createDisposition != null) {
         transform = transform.withCreateDisposition(createDisposition)
       }
       if (writeDisposition != null) {
         transform = transform.withWriteDisposition(writeDisposition)
       }
-      self.applyInternal(transform)
+      val wr = self.applyInternal(transform)
+
+      transform = extendedErrorInfo match {
+        case Disabled => transform
+        case Enabled  => transform.withExtendedErrorInfo()
+      }
+      insertErrorTransform(extendedErrorInfo.coll(self.context, wr))
     }
 
     ClosedTap[Nothing](EmptyTap)

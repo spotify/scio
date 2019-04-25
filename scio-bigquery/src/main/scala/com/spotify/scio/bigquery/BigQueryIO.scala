@@ -22,6 +22,7 @@ import java.util.function
 
 import com.google.api.services.bigquery.model.{TableReference, TableSchema}
 import com.spotify.scio.ScioContext
+import com.spotify.scio.bigquery.ExtendedErrorInfo._
 import com.spotify.scio.bigquery.client.BigQuery
 import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
@@ -187,7 +188,13 @@ final case class BigQueryTable(table: Table) extends BigQueryIO[TableRow] {
     if (params.timePartitioning != null) {
       transform = transform.withTimePartitioning(params.timePartitioning.asJava)
     }
-    data.applyInternal(transform)
+    val wr = data.applyInternal(transform)
+
+    transform = params.extendedErrorInfo match {
+      case Disabled => transform
+      case Enabled  => transform.withExtendedErrorInfo()
+    }
+    params.insertErrorTransform(params.extendedErrorInfo.coll(data.context, wr))
 
     if (params.writeDisposition == WriteDisposition.WRITE_APPEND) {
       throw new NotImplementedError("BigQuery future with append not implemented")
@@ -200,22 +207,42 @@ final case class BigQueryTable(table: Table) extends BigQueryIO[TableRow] {
 }
 
 object BigQueryTable {
+  sealed trait WriteParam {
+    val schema: TableSchema
+    val writeDisposition: WriteDisposition
+    val createDisposition: CreateDisposition
+    val tableDescription: String
+    val timePartitioning: TimePartitioning
+    val extendedErrorInfo: ExtendedErrorInfo
+    val insertErrorTransform: SCollection[extendedErrorInfo.Info] => Unit
+  }
+
   object WriteParam {
     private[bigquery] val DefaultSchema: TableSchema = null
     private[bigquery] val DefaultWriteDisposition: WriteDisposition = null
     private[bigquery] val DefaultCreateDisposition: CreateDisposition = null
     private[bigquery] val DefaultTableDescription: String = null
     private[bigquery] val DefaultTimePartitioning: TimePartitioning = null
+    private[bigquery] val DefaultExtendedErrorInfo: ExtendedErrorInfo = ExtendedErrorInfo.Disabled
+
+    @inline final def apply(
+      s: TableSchema = DefaultSchema,
+      wd: WriteDisposition = DefaultWriteDisposition,
+      cd: CreateDisposition = DefaultCreateDisposition,
+      td: String = DefaultTableDescription,
+      tp: TimePartitioning = DefaultTimePartitioning,
+      ei: ExtendedErrorInfo = DefaultExtendedErrorInfo
+    )(it: SCollection[ei.Info] => Unit = _ => ()): WriteParam = new WriteParam {
+      val schema: TableSchema = s
+      val writeDisposition: WriteDisposition = wd
+      val createDisposition: CreateDisposition = cd
+      val tableDescription: String = td
+      val timePartitioning: TimePartitioning = tp
+      val extendedErrorInfo: ei.type = ei
+      val insertErrorTransform: SCollection[extendedErrorInfo.Info] => Unit = it
+    }
   }
-
-  final case class WriteParam private (
-    schema: TableSchema = WriteParam.DefaultSchema,
-    writeDisposition: WriteDisposition = WriteParam.DefaultWriteDisposition,
-    createDisposition: CreateDisposition = WriteParam.DefaultCreateDisposition,
-    tableDescription: String = WriteParam.DefaultTableDescription,
-    timePartitioning: TimePartitioning = WriteParam.DefaultTimePartitioning
-  )
-
+  
   @deprecated("this method will be removed; use apply(Table.Ref(table)) instead", "Scio 0.8")
   @inline final def apply(table: TableReference): BigQueryTable =
     BigQueryTable(Table.Ref(table))
@@ -417,8 +444,9 @@ object BigQueryTyped {
           params.writeDisposition,
           params.createDisposition,
           bqt.tableDescription.orNull,
-          params.timePartitioning
-        )
+          params.timePartitioning,
+          params.extendedErrorInfo
+        )(params.insertErrorTransform)
 
       BigQueryTable(table)
         .write(rows, ps)
@@ -432,17 +460,34 @@ object BigQueryTyped {
   }
 
   object Table {
+
+    sealed trait WriteParam {
+      val writeDisposition: WriteDisposition
+      val createDisposition: CreateDisposition
+      val timePartitioning: TimePartitioning
+      val extendedErrorInfo: ExtendedErrorInfo
+      val insertErrorTransform: SCollection[extendedErrorInfo.Info] => Unit
+    }
+
     object WriteParam {
       private[bigquery] val DefaultWriteDisposition: WriteDisposition = null
       private[bigquery] val DefaultCreateDisposition: CreateDisposition = null
       private[bigquery] val DefaultTimePartitioning: TimePartitioning = null
-    }
+      private[bigquery] val DefaultExtendedErrorInfo: ExtendedErrorInfo = ExtendedErrorInfo.Disabled
 
-    final case class WriteParam private (
-      writeDisposition: WriteDisposition = WriteParam.DefaultWriteDisposition,
-      createDisposition: CreateDisposition = WriteParam.DefaultCreateDisposition,
-      timePartitioning: TimePartitioning = WriteParam.DefaultTimePartitioning
-    )
+      @inline final def apply(
+        wd: WriteDisposition = DefaultWriteDisposition,
+        cd: CreateDisposition = DefaultCreateDisposition,
+        tp: TimePartitioning = DefaultTimePartitioning,
+        ei: ExtendedErrorInfo = DefaultExtendedErrorInfo
+      )(it: SCollection[ei.Info] => Unit = _ => ()): WriteParam = new WriteParam {
+        val writeDisposition: WriteDisposition = wd
+        val createDisposition: CreateDisposition = cd
+        val timePartitioning: TimePartitioning = tp
+        val extendedErrorInfo: ei.type = ei
+        val insertErrorTransform: SCollection[extendedErrorInfo.Info] => Unit = it
+      }
+    }
 
     @deprecated("this method will be removed; use apply(Table.Ref(table)) instead", "Scio 0.8")
     @inline

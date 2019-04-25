@@ -59,7 +59,7 @@ final class SCollectionTableRowOps[T <: TableRow](private val self: SCollection[
         createDisposition,
         tableDescription,
         timePartitioning
-      )
+      )()
     self.asInstanceOf[SCollection[TableRow]].write(BigQueryTable(table))(param)
   }
 
@@ -82,7 +82,7 @@ final class SCollectionTableRowOps[T <: TableRow](private val self: SCollection[
         createDisposition,
         tableDescription,
         timePartitioning
-      )
+      )()
     self
       .asInstanceOf[SCollection[TableRow]]
       .write(BigQueryTable(tableSpec))(param)
@@ -117,7 +117,7 @@ final class SCollectionTypedOps[T <: HasAnnotation](private val self: SCollectio
     timePartitioning: TimePartitioning
   )(implicit tt: TypeTag[T], ct: ClassTag[T], coder: Coder[T]): ClosedTap[T] = {
     val param =
-      TableWriteParam(writeDisposition, createDisposition, timePartitioning)
+      TableWriteParam(writeDisposition, createDisposition, timePartitioning)()
     self
       .write(BigQueryTyped.Table(table))(param)
       .asInstanceOf[ClosedTap[T]]
@@ -159,7 +159,8 @@ final class SCollectionTypedOps[T <: HasAnnotation](private val self: SCollectio
     createDisposition: CreateDisposition = TableWriteParam.DefaultCreateDisposition,
     timePartitioning: TimePartitioning = TableWriteParam.DefaultTimePartitioning
   )(implicit tt: TypeTag[T], ct: ClassTag[T], coder: Coder[T]): ClosedTap[T] = {
-    val param = TableWriteParam(writeDisposition, createDisposition, timePartitioning)
+    val param =
+      TableWriteParam(writeDisposition, createDisposition, timePartitioning)()
     self
       .write(BigQueryTyped.Table[T](tableSpec))(param)
       .asInstanceOf[ClosedTap[T]]
