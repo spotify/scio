@@ -298,6 +298,28 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     )
 
   /**
+   * Inner join for cases when `this` is much larger than `that` which cannot fit in memory,
+   * but contains a mostly overlapping set of keys as `this`, i.e. when the intersection of keys
+   * is sparse in `this`. A Bloom Filter of keys in `that` is used to split `this` into 2
+   * partitions. Only those with keys in the filter go through the join and the rest are filtered
+   * out before the join.
+   * Read more about Bloom Filter: [[com.twitter.algebird.BloomFilter]].
+   * @group join
+   * @param thatNumKeys estimated number of keys in `that`
+   * @param fpProb false positive probability when computing the overlap
+   */
+  def sparseJoin[W: Coder](that: SCollection[(K, W)], thatNumKeys: Long, fpProb: Double = 0.01)(
+    implicit hash: Hash128[K],
+    koder: Coder[K],
+    voder: Coder[V]): SCollection[(K, (V, W))] =
+    SCollection.unionAll(
+      splitSelfUsing(that, thatNumKeys, fpProb).map {
+        case (_, lhsOverlap, rhs) =>
+          lhsOverlap.join(rhs)
+      }
+    )
+
+  /**
    * Left outer join for cases when `this` is much larger than `that` which cannot fit in memory,
    * but contains a mostly overlapping set of keys as `this`, i.e. when the intersection of keys
    * is sparse in `this`. A Bloom Filter of keys in `that` is used to split `this` into 2
