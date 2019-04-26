@@ -18,10 +18,13 @@
 package com.spotify.scio.util
 
 import java.io.{ByteArrayOutputStream, ObjectOutputStream}
+import java.util
 
 import org.apache.beam.sdk.util.SerializableUtils
 import org.scalatest.PropSpec
 import org.scalatest.prop.Checkers
+
+import scala.collection.mutable
 // Do not import algebird classes
 import com.twitter.algebird.{
   BF => _,
@@ -55,11 +58,32 @@ class BloomFilterLaws extends CheckProperties {
 
   implicit val bfGen: Arbitrary[MutableBF[String]] =
     Arbitrary {
-      val item = Gen.choose(0, 10000).map { v =>
+      val valueGen = Gen.choose(0, 10000)
+
+      val item = valueGen.map { v =>
         bfMonoid.create(v.toString)
       }
+
+      val sparseGen = valueGen.map { v =>
+        val sparseInstance =
+          MutableSparseBFInstance[String](bfMonoid.hashes, mutable.Buffer.empty[Array[Int]])
+        sparseInstance += v.toString
+        // Return the original sparseInstance,
+        // and not the one returned by += as that might become non sparse.
+        assert(sparseInstance.isInstanceOf[MutableSparseBFInstance[String]]) // Check
+        sparseInstance
+      }
+
+      val denseGen = valueGen.map { v =>
+        val denseInstance = MutableBFInstance[String](bfMonoid.hashes, new util.BitSet())
+        denseInstance += v.toString
+        assert(denseInstance.isInstanceOf[MutableBFInstance[String]])
+        // Return the original instance
+        denseInstance
+      }
+
       val zero = Gen.const(bfMonoid.zero)
-      Gen.frequency((1, zero), (10, item))
+      Gen.frequency((1, zero), (10, item), (10, sparseGen), (10, denseGen))
     }
 
   property("BloomFilter is a Monoid") {
@@ -239,13 +263,13 @@ class BloomFilterProperties extends ApproximateProperties("BloomFilter") {
 
   for (falsePositiveRate <- List(0.1, 0.01, 0.001)) {
     property(s"has small false positive rate with false positive rate = $falsePositiveRate") = {
-      implicit val intGen = Gen.choose(1, 1000)
+      implicit val intGen: Gen[Int] = Gen.choose(1, 1000)
       toProp(new BloomFilterFalsePositives[Int](falsePositiveRate), 50, 50, 0.01)
     }
   }
 
   property("approximate cardinality") = {
-    implicit val intGen = Gen.choose(1, 1000)
+    implicit val intGen: Gen[Int] = Gen.choose(1, 1000)
     toProp(new BloomFilterCardinality[Int], 50, 1, 0.01)
   }
 }
@@ -391,7 +415,7 @@ class BloomFilterTest extends WordSpec with Matchers {
 
   "BloomFilter method `checkAndAdd`" should {
 
-    "be identical to method `+`" in {
+    "be identical to method `+=`" in {
       (0 to 100).foreach { _ =>
         val bfMonoid = new BloomFilterMonoid[String](RAND.nextInt(5) + 1, RAND.nextInt(64) + 32)
         val numEntries = 5
