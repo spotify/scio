@@ -190,7 +190,7 @@ abstract class ScioResult private[scio] (val internal: PipelineResult) {
       .groupBy(_.getName)
       .mapValues { xs =>
         val m: Map[String, MetricValue[T]] = xs.map { r =>
-          r.getStep -> MetricValue(r.getAttempted, Try(r.getCommitted).toOption)
+          r.getKey.stepName -> MetricValue(r.getAttempted, Try(r.getCommitted).toOption)
         }(scala.collection.breakOut)
         m
       }
