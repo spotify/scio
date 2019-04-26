@@ -25,6 +25,7 @@ import com.spotify.scio.bigquery.{
   BigQueryTable,
   BigQueryType,
   BigQueryTyped,
+  Table,
   TableRow,
   TableRowJsonIO
 }
@@ -54,14 +55,28 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
   /**
    * Get an SCollection for a BigQuery table.
    */
+  @deprecated(
+    "this method will be removed; use bigQueryTable(Table.Ref(table)) instead",
+    "Scio 0.8"
+  )
   def bigQueryTable(table: TableReference): SCollection[TableRow] =
-    self.read(BigQueryTable(table))
+    bigQueryTable(Table.Ref(table))
 
   /**
    * Get an SCollection for a BigQuery table.
    */
+  @deprecated(
+    "this method will be removed; use bigQueryTable(Table.Spec(table)) instead",
+    "Scio 0.8"
+  )
   def bigQueryTable(tableSpec: String): SCollection[TableRow] =
-    self.read(BigQueryTable(tableSpec))
+    bigQueryTable(Table.Spec(tableSpec))
+
+  /**
+   * Get an SCollection for a BigQuery table.
+   */
+  def bigQueryTable(table: Table): SCollection[TableRow] =
+    self.read(BigQueryTable(table))
 
   /**
    * Get an SCollection for a BigQuery table using the storage API.
@@ -78,18 +93,14 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
    * "a > DATE '2014-09-27' AND (b > 5 AND c LIKE 'date')"
    * }}}
    */
-  def bigQueryStorage(tableSpec: String,
-                      selectedFields: List[String] = Nil,
-                      rowRestriction: String = null): SCollection[TableRow] =
-    self.read(BigQueryStorage(tableSpec))(BigQueryStorage.ReadParam(selectedFields, rowRestriction))
-
-  /**
-   * Get an SCollection for a BigQuery table using the storage API.
-   */
-  def bigQueryStorage(table: TableReference,
-                      selectedFields: List[String],
-                      rowRestriction: String): SCollection[TableRow] =
-    self.read(BigQueryStorage(table))(BigQueryStorage.ReadParam(selectedFields, rowRestriction))
+  def bigQueryStorage(
+    table: Table,
+    selectedFields: List[String] = Nil,
+    rowRestriction: String = null
+  ): SCollection[TableRow] =
+    self.read(BigQueryStorage(table))(
+      BigQueryStorage.ReadParam(selectedFields, rowRestriction)
+    )
 
   /**
    * Get a typed SCollection for a BigQuery SELECT query, table or storage.
@@ -129,7 +140,7 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
     if (bqt.isStorage) {
       val table = if (newSource != null) newSource else bqt.table.get
       val params = BigQueryTyped.Storage.ReadParam(bqt.selectedFields.get, bqt.rowRestriction.get)
-      self.read(BigQueryTyped.Storage(table))(params)
+      self.read(BigQueryTyped.Storage(Table.Spec(table)))(params)
     } else {
       self.read(BigQueryTyped.dynamic[T](newSource))
     }

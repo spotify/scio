@@ -21,13 +21,30 @@ import java.nio.ByteBuffer
 
 import com.google.api.services.bigquery.model.{
   TableRow => GTableRow,
-  TimePartitioning => GTimePartitioning
+  TimePartitioning => GTimePartitioning,
+  TableReference => GTableReference
 }
+import org.apache.beam.sdk.io.gcp.bigquery.BigQueryHelpers
 import org.apache.avro.Conversions.DecimalConversion
 import org.apache.avro.LogicalTypes
 import org.joda.time.format.{DateTimeFormat, DateTimeFormatterBuilder}
 import org.joda.time.{DateTimeZone, Instant, LocalDate, LocalDateTime, LocalTime}
 import org.joda.time.{Instant, LocalDate, LocalDateTime, LocalTime}
+
+sealed trait Table {
+  def spec: String
+
+  def ref: GTableReference
+}
+
+object Table {
+  final case class Ref(ref: GTableReference) extends Table {
+    override lazy val spec: String = BigQueryHelpers.toTableSpec(ref)
+  }
+  final case class Spec(spec: String) extends Table {
+    override lazy val ref: GTableReference = BigQueryHelpers.parseTableSpec(spec)
+  }
+}
 
 /**
  * Create a [[TableRow]] with `Map`-like syntax. For example:
