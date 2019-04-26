@@ -183,7 +183,7 @@ class ScioContextTest extends PipelineSpec {
     val res = sc.close().waitUntilDone()
 
     val actualCommitedCounterValue = res
-      .counter(ScioMetrics.counter("named-counter"))
+      .counter(ScioMetrics.counter(name = "named-counter"))
       .committed
 
     actualCommitedCounterValue shouldBe Some(0)
@@ -195,14 +195,14 @@ class ScioContextTest extends PipelineSpec {
     val res = sc.close().waitUntilDone()
 
     val actualCommitedCounterValue = res
-      .counter(ScioMetrics.counter("name-spaced-counter"))
+      .counter(ScioMetrics.counter(namespace = "ns", name = "name-spaced-counter"))
       .committed
 
     actualCommitedCounterValue shouldBe Some(0)
   }
 
   it should "initialize Counters which are registered" in {
-    val scioCounter = ScioMetrics.counter("some-counter")
+    val scioCounter = ScioMetrics.counter(name = "some-counter")
     val sc = ScioContext()
     sc.initCounter(scioCounter)
     val res = sc.close().waitUntilDone()
