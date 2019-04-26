@@ -757,13 +757,21 @@ class ScioContext private[scio] (val options: PipelineOptions, private var artif
     counter
   }
 
-  /** Initialize a new [[org.apache.beam.sdk.metrics.Counter Counter]] metric. */
+  /**
+   * Initialize a new [[org.apache.beam.sdk.metrics.Counter Counter]] metric from namespace and
+   * name.
+   * */
   def initCounter(namespace: String, name: String): Counter = {
     val counter = ScioMetrics.counter(namespace, name)
     _counters.append(counter)
     counter
   }
 
+  /** Initialize a given [[org.apache.beam.sdk.metrics.Counter Counter]] metric. */
+  def initCounter(counter: Counter): Counter = {
+    _counters.append(counter)
+    counter
+  }
 }
 // scalastyle:on number.of.methods
 
