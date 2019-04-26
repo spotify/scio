@@ -150,7 +150,8 @@ trait NearestNeighbor[K, @sp(Double, Int, Float, Long) V] extends Serializable {
 
 /** Builder for [[MatrixNN]]. */
 private class MatrixNNBuilder[
-  K: ClassTag, @sp(Double, Int, Float, Long) V: ClassTag: Numeric: Semiring
+  K: ClassTag,
+  @sp(Double, Int, Float, Long) V: ClassTag: Numeric: Semiring
 ](override val dimension: Int)
     extends NearestNeighborBuilder[K, V] {
 
