@@ -21,8 +21,8 @@ import java.io.NotSerializableException
 import java.lang.reflect.Field
 
 import org.apache.beam.sdk.util.SerializableUtils
-import org.apache.xbean.asm6.Opcodes._
-import org.apache.xbean.asm6.{ClassReader, ClassVisitor, MethodVisitor, Type}
+import org.apache.xbean.asm7.Opcodes._
+import org.apache.xbean.asm7.{ClassReader, ClassVisitor, MethodVisitor, Type}
 
 import scala.annotation.tailrec
 import scala.collection.mutable.{Map => MMap, Set => MSet, Stack => MStack}
@@ -194,7 +194,7 @@ private final case class MethodIdentifier[T](cls: Class[T], name: String, desc: 
 private final class AccessedFieldsVisitor(output: MMap[Class[_], MSet[String]],
                                           specificMethod: Option[MethodIdentifier[_]] = None,
                                           visitedMethods: MSet[MethodIdentifier[_]] = MSet.empty)
-    extends ClassVisitor(ASM6) {
+    extends ClassVisitor(ASM7) {
   override def visitMethod(access: Int,
                            name: String,
                            desc: String,
@@ -204,7 +204,7 @@ private final class AccessedFieldsVisitor(output: MMap[Class[_], MSet[String]],
         (specificMethod.get.name != name || specificMethod.get.desc != desc)) {
       null
     } else {
-      new MethodVisitor(ASM6) {
+      new MethodVisitor(ASM7) {
         override def visitFieldInsn(op: Int, owner: String, name: String, desc: String): Unit = {
           if (op == GETFIELD) {
             for (cl <- output.keys if cl.getName == owner.replace('/', '.')) {
@@ -239,7 +239,7 @@ private final class AccessedFieldsVisitor(output: MMap[Class[_], MSet[String]],
   }
 }
 
-private final class InnerClosureFinder(output: MSet[Class[_]]) extends ClassVisitor(ASM6) {
+private final class InnerClosureFinder(output: MSet[Class[_]]) extends ClassVisitor(ASM7) {
   private[this] var myName: String = _
 
   override def visit(version: Int,
@@ -255,7 +255,7 @@ private final class InnerClosureFinder(output: MSet[Class[_]]) extends ClassVisi
                            desc: String,
                            sig: String,
                            exceptions: Array[String]): MethodVisitor =
-    new MethodVisitor(ASM6) {
+    new MethodVisitor(ASM7) {
       override def visitMethodInsn(op: Int,
                                    owner: String,
                                    name: String,
