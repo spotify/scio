@@ -52,13 +52,15 @@ class NearestNeighborSpec extends PropertySpec {
     }
   }
 
-  private def verify(builder: NearestNeighborBuilder[String, Double],
-                     vectors: List[(String, DenseVector[Double])],
-                     maxResult: Int,
-                     minSimilarity: Double,
-                     minPrecision: Double,
-                     minRecall: Double,
-                     minF1: Double) = {
+  private def verify(
+    builder: NearestNeighborBuilder[String, Double],
+    vectors: List[(String, DenseVector[Double])],
+    maxResult: Int,
+    minSimilarity: Double,
+    minPrecision: Double,
+    minRecall: Double,
+    minF1: Double
+  ) = {
     vectors.foreach(kv => builder.add(kv._1, kv._2))
     val nn = builder.build
     nn.lookup(randVec, maxResult).size should be <= maxResult
@@ -67,11 +69,13 @@ class NearestNeighborSpec extends PropertySpec {
     coverage(vectors, nn, minPrecision, minRecall, minF1)
   }
 
-  private def coverage(vectors: List[(String, DenseVector[Double])],
-                       nn: NearestNeighbor[String, Double],
-                       minPrecision: Double,
-                       minRecall: Double,
-                       minF1: Double) = {
+  private def coverage(
+    vectors: List[(String, DenseVector[Double])],
+    nn: NearestNeighbor[String, Double],
+    minPrecision: Double,
+    minRecall: Double,
+    minF1: Double
+  ) = {
     val v = randVec
     val expected = vectors
       .map(kv => (kv._1, kv._2 dot v))

@@ -49,14 +49,16 @@ class SchemaUtilTest extends FlatSpec with Matchers {
           .setName("datetimeF")
           .setType("DATETIME")
           .setMode(mode)
-      ).asJava)
+      ).asJava
+    )
 
   "toPrettyString()" should "support required primitive types" in {
     SchemaUtil.toPrettyString(newSchema("REQUIRED"), "Row", 0) should equal(
       """
         |@BigQueryType.toTable
         |case class Row(boolF: Boolean, intF: Long, floatF: Double, stringF: String, bytesF: ByteString, timestampF: Instant, dateF: LocalDate, timeF: LocalTime, datetimeF: LocalDateTime)
-      """.stripMargin.trim)
+      """.stripMargin.trim
+    )
   }
 
   it should "support nullable primitive types" in {
@@ -65,7 +67,8 @@ class SchemaUtilTest extends FlatSpec with Matchers {
       """
         |@BigQueryType.toTable
         |case class Row(boolF: Option[Boolean], intF: Option[Long], floatF: Option[Double], stringF: Option[String], bytesF: Option[ByteString], timestampF: Option[Instant], dateF: Option[LocalDate], timeF: Option[LocalTime], datetimeF: Option[LocalDateTime])
-      """.stripMargin.trim)
+      """.stripMargin.trim
+    )
     // scalastyle:on line.size.limit
   }
 
@@ -75,7 +78,8 @@ class SchemaUtilTest extends FlatSpec with Matchers {
       """
         |@BigQueryType.toTable
         |case class Row(boolF: List[Boolean], intF: List[Long], floatF: List[Double], stringF: List[String], bytesF: List[ByteString], timestampF: List[Instant], dateF: List[LocalDate], timeF: List[LocalTime], datetimeF: List[LocalDateTime])
-      """.stripMargin.trim)
+      """.stripMargin.trim
+    )
     // scalastyle:on line.size.limit
   }
 
@@ -104,7 +108,8 @@ class SchemaUtilTest extends FlatSpec with Matchers {
           .setType("RECORD")
           .setFields(fields)
           .setMode("REPEATED")
-      ).asJava)
+      ).asJava
+    )
     SchemaUtil.toPrettyString(schema, "Row", 0) should equal(
       """
         |@BigQueryType.toTable
@@ -112,7 +117,8 @@ class SchemaUtilTest extends FlatSpec with Matchers {
         |case class R1$1(f1: Long, f2: Double)
         |case class R2$1(f1: Long, f2: Double)
         |case class R3$1(f1: Long, f2: Double)
-      """.stripMargin.trim)
+      """.stripMargin.trim
+    )
   }
 
   it should "support indent" in {
@@ -129,7 +135,8 @@ class SchemaUtilTest extends FlatSpec with Matchers {
         |  dateF: LocalDate,
         |  timeF: LocalTime,
         |  datetimeF: LocalDateTime)
-      """.stripMargin.trim)
+      """.stripMargin.trim
+    )
   }
 
   it should "support reserved words" in {

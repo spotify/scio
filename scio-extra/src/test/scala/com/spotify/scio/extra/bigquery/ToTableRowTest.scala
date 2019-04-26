@@ -34,11 +34,11 @@ class ToTableRowTest extends FlatSpec with Matchers with ToTableRow {
     .set("stringField", "someString")
     .set("longField", 1L)
     .set("doubleField", 1.0)
-    .set("floatField", 1F)
+    .set("floatField", 1f)
     .set("bytesField", BaseEncoding.base64Url().encode("someBytes".getBytes))
     .set("unionField", "someUnion")
     .set("arrayField", List(new TableRow().set("nestedField", "nestedValue")).asJava)
-    .set("mapField", List(new TableRow().set("key", "mapKey").set("value", 1.0D)).asJava)
+    .set("mapField", List(new TableRow().set("key", "mapKey").set("value", 1.0d)).asJava)
     .set("enumField", Kind.FOO.toString)
     .set("fixedField", BaseEncoding.base64Url().encode("1234567890123456".getBytes))
 
@@ -50,12 +50,14 @@ class ToTableRowTest extends FlatSpec with Matchers with ToTableRow {
       .setDoubleField(1.0)
       .setLongField(1L)
       .setIntField(1)
-      .setFloatField(1F)
+      .setFloatField(1f)
       .setBytesField(ByteBuffer.wrap(ByteString.copyFromUtf8("someBytes").toByteArray))
       .setArrayField(List(NestedAvro.newBuilder().setNestedField("nestedValue").build()).asJava)
       .setUnionField("someUnion")
-      .setMapField(Map("mapKey" -> 1.0D).asJava
-        .asInstanceOf[java.util.Map[java.lang.CharSequence, java.lang.Double]])
+      .setMapField(
+        Map("mapKey" -> 1.0d).asJava
+          .asInstanceOf[java.util.Map[java.lang.CharSequence, java.lang.Double]]
+      )
       .setEnumField(Kind.FOO)
       .setFixedField(new fixedType("1234567890123456".getBytes()))
       .build()
@@ -73,14 +75,18 @@ class ToTableRowTest extends FlatSpec with Matchers with ToTableRow {
     genericRecord.put("doubleField", 1.0)
     genericRecord.put("longField", 1L)
     genericRecord.put("intField", 1)
-    genericRecord.put("floatField", 1F)
-    genericRecord.put("bytesField",
-                      ByteBuffer.wrap(ByteString.copyFromUtf8("someBytes").toByteArray))
+    genericRecord.put("floatField", 1f)
+    genericRecord.put(
+      "bytesField",
+      ByteBuffer.wrap(ByteString.copyFromUtf8("someBytes").toByteArray)
+    )
     genericRecord.put("arrayField", List(nestedAvro).asJava)
     genericRecord.put("unionField", "someUnion")
-    genericRecord.put("mapField",
-                      Map("mapKey" -> 1.0D).asJava
-                        .asInstanceOf[java.util.Map[java.lang.CharSequence, java.lang.Double]])
+    genericRecord.put(
+      "mapField",
+      Map("mapKey" -> 1.0d).asJava
+        .asInstanceOf[java.util.Map[java.lang.CharSequence, java.lang.Double]]
+    )
     genericRecord.put("enumField", Kind.FOO)
     genericRecord.put("fixedField", new fixedType("1234567890123456".getBytes()))
 

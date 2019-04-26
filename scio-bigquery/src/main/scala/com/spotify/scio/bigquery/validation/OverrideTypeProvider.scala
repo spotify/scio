@@ -59,9 +59,9 @@ trait OverrideTypeProvider {
    * Called when we need to initialize the `toTable` method using annotations.
    * This is called at macro expansion time.
    */
-  def initializeToTable(c: blackbox.Context)(modifiers: c.universe.Modifiers,
-                                             variableName: c.universe.TermName,
-                                             tpe: c.universe.Tree): Unit
+  def initializeToTable(
+    c: blackbox.Context
+  )(modifiers: c.universe.Modifiers, variableName: c.universe.TermName, tpe: c.universe.Tree): Unit
 
   /**
    * Returns the `String` representation of the BigQuery column type.

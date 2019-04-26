@@ -31,7 +31,8 @@ object TypeProviderTest {
   case class RefinedClass(a1: Int)
 
   @BigQueryType.fromSchema(
-    """{"fields": [{"mode": "REQUIRED", "name": "f1", "type": "INTEGER"}]}""")
+    """{"fields": [{"mode": "REQUIRED", "name": "f1", "type": "INTEGER"}]}"""
+  )
   class S1
 
   @BigQueryType.fromSchema("""
@@ -191,11 +192,13 @@ class TypeProviderTest extends FlatSpec with Matchers {
   class RecordWithRepeatedPrimitives
 
   it should "support repeated primitive types" in {
-    val r1 = RecordWithRepeatedPrimitives(List(1L, 2L),
-                                          List(1.5, 2.5),
-                                          List(true, false),
-                                          List("hello", "world"),
-                                          List(NOW, NOW.plus(1000)))
+    val r1 = RecordWithRepeatedPrimitives(
+      List(1L, 2L),
+      List(1.5, 2.5),
+      List(true, false),
+      List("hello", "world"),
+      List(NOW, NOW.plus(1000))
+    )
     r1.f1 shouldBe List(1L, 2L)
     r1.f2 shouldBe List(1.5, 2.5)
     r1.f3 shouldBe List(true, false)
@@ -389,29 +392,31 @@ class TypeProviderTest extends FlatSpec with Matchers {
   }
 
   @BigQueryType.toTable
-  case class TwentyThree(a1: Int,
-                         a2: Int,
-                         a3: Int,
-                         a4: Int,
-                         a5: Int,
-                         a6: Int,
-                         a7: Int,
-                         a8: Int,
-                         a9: Int,
-                         a10: Int,
-                         a11: Int,
-                         a12: Int,
-                         a13: Int,
-                         a14: Int,
-                         a15: Int,
-                         a16: Int,
-                         a17: Int,
-                         a18: Int,
-                         a19: Int,
-                         a20: Int,
-                         a21: Int,
-                         a22: Int,
-                         a23: Int)
+  case class TwentyThree(
+    a1: Int,
+    a2: Int,
+    a3: Int,
+    a4: Int,
+    a5: Int,
+    a6: Int,
+    a7: Int,
+    a8: Int,
+    a9: Int,
+    a10: Int,
+    a11: Int,
+    a12: Int,
+    a13: Int,
+    a14: Int,
+    a15: Int,
+    a16: Int,
+    a17: Int,
+    a18: Int,
+    a19: Int,
+    a20: Int,
+    a21: Int,
+    a22: Int,
+    a23: Int
+  )
 
   "BigQueryType.toTable" should "not provide .tupled in companion object with >22 fields" in {
     TwentyThree.getClass.getMethods.map(_.getName) should not contain "tupled"

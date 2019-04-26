@@ -45,7 +45,8 @@ object FilterExamples {
         new TableFieldSchema().setName("month").setType("INTEGER"),
         new TableFieldSchema().setName("day").setType("INTEGER"),
         new TableFieldSchema().setName("mean_temp").setType("FLOAT")
-      ).asJava)
+      ).asJava
+    )
 
     val monthFilter = args.int("monthFilter", 7)
 

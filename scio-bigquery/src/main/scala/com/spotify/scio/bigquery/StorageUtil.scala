@@ -27,8 +27,10 @@ import scala.collection.JavaConverters._
 /** Utility for BigQuery Storage API. */
 object StorageUtil {
 
-  def tableReadOptions(selectedFields: List[String] = Nil,
-                       rowRestriction: String = null): TableReadOptions = {
+  def tableReadOptions(
+    selectedFields: List[String] = Nil,
+    rowRestriction: String = null
+  ): TableReadOptions = {
     val builder = TableReadOptions.newBuilder().addAllSelectedFields(selectedFields.asJava)
     if (rowRestriction != null) {
       builder.setRowRestriction(rowRestriction)

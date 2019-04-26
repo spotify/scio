@@ -43,7 +43,8 @@ object DistinctByKeyExample {
       List(
         new TableFieldSchema().setName("word").setType("STRING"),
         new TableFieldSchema().setName("reference_play").setType("STRING")
-      ).asJava)
+      ).asJava
+    )
 
     // Open a BigQuery table as a `SCollection[TableRow]`
     sc.bigQueryTable(args.getOrElse("input", ExampleData.SHAKESPEARE_TABLE))

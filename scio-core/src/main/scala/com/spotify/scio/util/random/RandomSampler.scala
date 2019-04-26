@@ -110,8 +110,10 @@ private[scio] class PoissonSampler[T](val fraction: Double)
     extends RandomSampler[T, IntegerDistribution] {
 
   /** Epsilon slop to avoid failure from floating point jitter. */
-  require(fraction >= (0.0 - RandomSampler.roundingEpsilon),
-          s"Sampling fraction ($fraction) must be >= 0")
+  require(
+    fraction >= (0.0 - RandomSampler.roundingEpsilon),
+    s"Sampling fraction ($fraction) must be >= 0"
+  )
 
   // PoissonDistribution throws an exception when fraction <= 0
   // If fraction is <= 0, 0 is used below, so we can use any placeholder value.
@@ -189,8 +191,10 @@ private[scio] class PoissonValueSampler[K, V](fractions: Map[K, Double])
     extends RandomValueSampler[K, V, IntegerDistribution](fractions) {
 
   /** Epsilon slop to avoid failure from floating point jitter. */
-  require(fractions.values.forall(f => f >= (0.0 - RandomSampler.roundingEpsilon)),
-          s"Sampling fractions must be >= 0")
+  require(
+    fractions.values.forall(f => f >= (0.0 - RandomSampler.roundingEpsilon)),
+    s"Sampling fractions must be >= 0"
+  )
 
   // TODO: is it necessary to setSeed for each instance like Spark does?
   override def init(fraction: Double): IntegerDistribution = {

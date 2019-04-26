@@ -33,7 +33,8 @@ object CheckpointMetrics {
 
     val (sc, args) = ContextAndArgs(
       Array(s"--checkpoint=$checkpointArg") ++
-        Option(tempLocation).map(e => s"--tempLocation=$e"))
+        Option(tempLocation).map(e => s"--tempLocation=$e")
+    )
     sc.checkpoint(args("checkpoint")) {
         sc.parallelize(1 to 10)
           .map { x =>

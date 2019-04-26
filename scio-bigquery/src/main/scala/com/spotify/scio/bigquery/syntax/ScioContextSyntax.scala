@@ -47,9 +47,10 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
    * supported. By default the query dialect will be automatically detected. To override this
    * behavior, start the query string with `#legacysql` or `#standardsql`.
    */
-  def bigQuerySelect(sqlQuery: String,
-                     flattenResults: Boolean = BigQuerySelect.ReadParam.DefaultFlattenResults)
-    : SCollection[TableRow] =
+  def bigQuerySelect(
+    sqlQuery: String,
+    flattenResults: Boolean = BigQuerySelect.ReadParam.DefaultFlattenResults
+  ): SCollection[TableRow] =
     self.read(BigQuerySelect(sqlQuery))(BigQuerySelect.ReadParam(flattenResults))
 
   /**
@@ -135,7 +136,8 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
    * behavior, start the query string with `#legacysql` or `#standardsql`.
    */
   def typedBigQuery[T <: HasAnnotation: ClassTag: TypeTag: Coder](
-    newSource: String = null): SCollection[T] = {
+    newSource: String = null
+  ): SCollection[T] = {
     val bqt = BigQueryType[T]
     if (bqt.isStorage) {
       val table = if (newSource != null) newSource else bqt.table.get

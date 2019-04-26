@@ -75,8 +75,8 @@ class ArgsTest extends FlatSpec with Matchers {
 
   it should "support float" in {
     val args = Args("--key1=1.5".split(" "))
-    args.float("key1") shouldBe 1.5F
-    args.float("key2", 2.5F) shouldBe 2.5F
+    args.float("key1") shouldBe 1.5f
+    args.float("key2", 2.5f) shouldBe 2.5f
   }
 
   it should "support double" in {
@@ -116,12 +116,14 @@ class ArgsTest extends FlatSpec with Matchers {
   @AppName("FooBar App")
   @AppVersion(BuildInfo.version)
   @ProgName("foobar")
-  case class Arguments(@HelpMessage("Path of the file to read from")
-                       @ExtraName("i")
-                       input: String,
-                       @HelpMessage("Path of the file to write to")
-                       @ExtraName("o")
-                       output: String)
+  case class Arguments(
+    @HelpMessage("Path of the file to read from")
+    @ExtraName("i")
+    input: String,
+    @HelpMessage("Path of the file to write to")
+    @ExtraName("o")
+    output: String
+  )
 
   it should "support typed args" in {
     val rawArgs = Array("--input=value1", "--output=value2")
@@ -147,13 +149,15 @@ class ArgsTest extends FlatSpec with Matchers {
   @AppName("Scio Examples")
   @AppVersion(BuildInfo.version)
   @ProgName("com.spotify.scio.examples.MinimalWordCount")
-  case class CamelCaseArguments(@HelpMessage("Path of the file to read from")
-                                @ExtraName("i")
-                                input: String = "/path/to/input",
-                                @HelpMessage("Path of the file to write to")
-                                @ExtraName("o")
-                                output: String,
-                                camelCaseTest: String)
+  case class CamelCaseArguments(
+    @HelpMessage("Path of the file to read from")
+    @ExtraName("i")
+    input: String = "/path/to/input",
+    @HelpMessage("Path of the file to write to")
+    @ExtraName("o")
+    output: String,
+    camelCaseTest: String
+  )
 
   it should "#1436: support camelCase" in {
     val rawArgs = Array("--output=/path/to/output", "--camelCaseTest=value1")

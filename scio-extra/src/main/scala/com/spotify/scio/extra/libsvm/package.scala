@@ -57,18 +57,22 @@ package object libsvm {
     val indicesLength = indices.length
     while (i < indicesLength) {
       val current = indices(i)
-      require(current > previous,
-              s"indices should be one-based and in ascending order;"
-                +
-                  s""" found current=$current, previous=$previous; line="$line"""")
+      require(
+        current > previous,
+        s"indices should be one-based and in ascending order;"
+          +
+            s""" found current=$current, previous=$previous; line="$line""""
+      )
       previous = current
       i += 1
     }
     (label, indices, values)
   }
 
-  def libSVMCollection(col: SCollection[String],
-                       numFeatures: Int = 0): SCollection[(Double, SparseVector[Double])] = {
+  def libSVMCollection(
+    col: SCollection[String],
+    numFeatures: Int = 0
+  ): SCollection[(Double, SparseVector[Double])] = {
     implicit val sparseArrayCoder: Coder[SparseVector[Double]] = Coder.kryo[SparseVector[Double]]
     val data = col
       .map(_.trim)
@@ -112,8 +116,10 @@ package object libsvm {
      *                    feature dimensions.
      * @return            labeled data stored as an SCollection[(Double, SparseVector)]
      */
-    def libSVMFile(path: String,
-                   numFeatures: Int = 0): SCollection[(Double, SparseVector[Double])] =
+    def libSVMFile(
+      path: String,
+      numFeatures: Int = 0
+    ): SCollection[(Double, SparseVector[Double])] =
       libSVMCollection(self.textFile(path), numFeatures)
   }
 

@@ -114,7 +114,8 @@ trait SCollectionMatchers {
       .map(
         e =>
           CoderUtils
-            .decodeFromByteArray(coder, CoderUtils.encodeToByteArray(coder, e)))
+            .decodeFromByteArray(coder, CoderUtils.encodeToByteArray(coder, e))
+      )
   }
 
   /**
@@ -130,24 +131,27 @@ trait SCollectionMatchers {
     }
 
   /** SCollection assertion only applied to the specified window. */
-  def inWindow[T: ClassTag, B: ClassTag](window: BoundedWindow)(
-    matcher: IterableMatcher[T, B]): Matcher[T] =
+  def inWindow[T: ClassTag, B: ClassTag](
+    window: BoundedWindow
+  )(matcher: IterableMatcher[T, B]): Matcher[T] =
     matcher.matcher(_.inWindow(window))
 
   /**
    * SCollection assertion only applied to the specified window across
    * all panes that were not produced by the arrival of late data.
    */
-  def inCombinedNonLatePanes[T: ClassTag, B: ClassTag](window: BoundedWindow)(
-    matcher: IterableMatcher[T, B]): Matcher[T] =
+  def inCombinedNonLatePanes[T: ClassTag, B: ClassTag](
+    window: BoundedWindow
+  )(matcher: IterableMatcher[T, B]): Matcher[T] =
     matcher.matcher(_.inCombinedNonLatePanes(window))
 
   /**
    * SCollection assertion only applied to the specified window,
    * running the checker only on the final pane for each key.
    */
-  def inFinalPane[T: ClassTag, B: ClassTag](window: BoundedWindow)(
-    matcher: MatcherBuilder[T]): Matcher[T] =
+  def inFinalPane[T: ClassTag, B: ClassTag](
+    window: BoundedWindow
+  )(matcher: MatcherBuilder[T]): Matcher[T] =
     matcher match {
       case value: SingleMatcher[T, _] =>
         value.matcher(_.inFinalPane(window))
@@ -159,13 +163,15 @@ trait SCollectionMatchers {
    * SCollection assertion only applied to the specified window.
    * The assertion expect outputs to be produced to the provided window exactly once.
    */
-  def inOnlyPane[T: ClassTag, B: ClassTag](window: BoundedWindow)(
-    matcher: SingleMatcher[T, B]): Matcher[T] =
+  def inOnlyPane[T: ClassTag, B: ClassTag](
+    window: BoundedWindow
+  )(matcher: SingleMatcher[T, B]): Matcher[T] =
     matcher.matcher(_.inOnlyPane(window))
 
   /** SCollection assertion only applied to early timing global window. */
   def inEarlyGlobalWindowPanes[T: ClassTag, B: ClassTag](
-    matcher: IterableMatcher[T, B]): Matcher[T] =
+    matcher: IterableMatcher[T, B]
+  ): Matcher[T] =
     matcher.matcher(_.inEarlyGlobalWindowPanes)
 
   /** Assert that the SCollection in question contains the provided elements. */
@@ -229,8 +235,10 @@ trait SCollectionMatchers {
                 }
               )
             }
-            m(() => builder(PAssert.that(serDeCycle(left).internal).satisfies(should)),
-              () => builder(PAssert.that(serDeCycle(left).internal).satisfies(shouldNot)))
+            m(
+              () => builder(PAssert.that(serDeCycle(left).internal).satisfies(should)),
+              () => builder(PAssert.that(serDeCycle(left).internal).satisfies(shouldNot))
+            )
           }
         }
     }
@@ -281,7 +289,8 @@ trait SCollectionMatchers {
 
   /** Assert that the SCollection in question is equivalent to the provided map. */
   def equalMapOf[K: Coder, V: Coder](
-    value: Map[K, V]): SingleMatcher[SCollection[(K, V)], JMap[K, V]] =
+    value: Map[K, V]
+  ): SingleMatcher[SCollection[(K, V)], JMap[K, V]] =
     new SingleMatcher[SCollection[(K, V)], JMap[K, V]] {
       override def matcher(builder: AssertBuilder): Matcher[SCollection[(K, V)]] =
         new Matcher[SCollection[(K, V)]] {
@@ -308,8 +317,10 @@ trait SCollectionMatchers {
             val p = ClosureCleaner(predicate)
             val f = makeFn[T](in => assert(p(in.asScala)))
             val g = makeFn[T](in => assert(!p(in.asScala)))
-            m(() => builder(PAssert.that(serDeCycle(left).internal)).satisfies(f),
-              () => builder(PAssert.that(serDeCycle(left).internal)).satisfies(g))
+            m(
+              () => builder(PAssert.that(serDeCycle(left).internal)).satisfies(f),
+              () => builder(PAssert.that(serDeCycle(left).internal)).satisfies(g)
+            )
           }
         }
     }

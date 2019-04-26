@@ -81,18 +81,20 @@ object MockDistCache {
   def apply[F](initFn: () => F): DistCache[F] = new MockDistCacheFunc[F](initFn)
 }
 
-private[scio] class DistCacheSingle[F](val uri: URI,
-                                       val initFn: File => F,
-                                       options: PipelineOptions)
-    extends FileDistCache[F](options) {
+private[scio] class DistCacheSingle[F](
+  val uri: URI,
+  val initFn: File => F,
+  options: PipelineOptions
+) extends FileDistCache[F](options) {
   verifyUri(uri)
   override protected def init: F = initFn(prepareFiles(Seq(uri)).head)
 }
 
-private[scio] class DistCacheMulti[F](val uris: Seq[URI],
-                                      val initFn: Seq[File] => F,
-                                      options: PipelineOptions)
-    extends FileDistCache[F](options) {
+private[scio] class DistCacheMulti[F](
+  val uris: Seq[URI],
+  val initFn: Seq[File] => F,
+  options: PipelineOptions
+) extends FileDistCache[F](options) {
   uris.foreach(verifyUri)
   override protected def init: F = initFn(prepareFiles(uris))
 }

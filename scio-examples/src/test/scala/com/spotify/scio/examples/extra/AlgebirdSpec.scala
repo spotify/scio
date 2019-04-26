@@ -160,10 +160,12 @@ class AlgebirdSpec extends PropSpec with ScalaCheckDrivenPropertyChecks with Mat
       // Combine 4 Aggregator[C, Double, Double] into 1 Aggregator[C, C, C]
       val colAgg = MultiAggregator((sumOp, maxOp, minOp, avgOp))
 
-      val expected = (xs.internal.map(_._1).sum,
-                      xs.internal.map(_._2).max,
-                      xs.internal.map(_._3).min,
-                      mean(xs.internal.map(_._4)))
+      val expected = (
+        xs.internal.map(_._1).sum,
+        xs.internal.map(_._2).max,
+        xs.internal.map(_._3).min,
+        mean(xs.internal.map(_._4))
+      )
       val actual = xs.aggregate(colAgg)
       actual._1 shouldBe expected._1
       actual._2 shouldBe expected._2
@@ -211,9 +213,11 @@ class AlgebirdSpec extends PropSpec with ScalaCheckDrivenPropertyChecks with Mat
     implicit val recordSemigroup: Semigroup[Record] = caseclass.semigroup
 
     forAll(sCollOf(recordGen)) { xs =>
-      val expected = Record(xs.internal.map(_.i).sum,
-                            xs.internal.map(_.d).sum,
-                            xs.internal.map(_.s).reduce(_ ++ _))
+      val expected = Record(
+        xs.internal.map(_.i).sum,
+        xs.internal.map(_.d).sum,
+        xs.internal.map(_.s).reduce(_ ++ _)
+      )
       xs.sum shouldBe expected
     }
   }
@@ -384,7 +388,8 @@ class AlgebirdSpec extends PropSpec with ScalaCheckDrivenPropertyChecks with Mat
         .aggregate(
           Aggregator
             .fromMonoid(DecayedValue.monoidWithEpsilon(1e-3))
-            .composePrepare { case (v, t) => DecayedValue.build(v, t, halfLife) })
+            .composePrepare { case (v, t) => DecayedValue.build(v, t, halfLife) }
+        )
         .average(halfLife)
       // approximate decayed value should be close to exact value
       actual shouldBe expected +- 1e-3

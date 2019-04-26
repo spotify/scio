@@ -23,16 +23,18 @@ import org.joda.time.{Duration, Instant}
 class AutoCompleteTest extends PipelineSpec {
 
   "AutoComplete" should "work" in {
-    val data = Seq("apple",
-                   "apple",
-                   "apricot",
-                   "banana",
-                   "blackberry",
-                   "blackberry",
-                   "blackberry",
-                   "blueberry",
-                   "blueberry",
-                   "cherry")
+    val data = Seq(
+      "apple",
+      "apple",
+      "apricot",
+      "banana",
+      "blackberry",
+      "blackberry",
+      "blackberry",
+      "blueberry",
+      "blueberry",
+      "cherry"
+    )
     val expected = Seq(
       ("a", Map("apple" -> 2L, "apricot" -> 1L)),
       ("ap", Map("apple" -> 2L, "apricot" -> 1L)),
@@ -56,9 +58,11 @@ class AutoCompleteTest extends PipelineSpec {
 
   it should "work with tiny input" in {
     val data = Seq("x", "x", "x", "xy", "xy", "xyz")
-    val expected = Seq(("x", Map("x" -> 3L, "xy" -> 2L)),
-                       ("xy", Map("xy" -> 2L, "xyz" -> 1L)),
-                       ("xyz", Map("xyz" -> 1L)))
+    val expected = Seq(
+      ("x", Map("x" -> 3L, "xy" -> 2L)),
+      ("xy", Map("xy" -> 2L, "xyz" -> 1L)),
+      ("xyz", Map("xyz" -> 1L))
+    )
     runWithContext { sc =>
       val in = sc.parallelize(data)
       for (recursive <- Seq(true, false)) {
@@ -71,11 +75,13 @@ class AutoCompleteTest extends PipelineSpec {
   }
 
   it should "work with windowed input" in {
-    val data = Seq(("xA", new Instant(1)),
-                   ("xA", new Instant(1)),
-                   ("xB", new Instant(1)),
-                   ("xB", new Instant(2)),
-                   ("xB", new Instant(2)))
+    val data = Seq(
+      ("xA", new Instant(1)),
+      ("xA", new Instant(1)),
+      ("xB", new Instant(1)),
+      ("xB", new Instant(2)),
+      ("xB", new Instant(2))
+    )
     val expected = Seq(
       // window [0, 2)
       ("x", Map("xA" -> 2L, "xB" -> 1L)),

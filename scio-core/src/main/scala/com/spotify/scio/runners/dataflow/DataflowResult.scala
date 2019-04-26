@@ -48,10 +48,12 @@ class DataflowResult(val internal: DataflowPipelineJob) extends RunnerResult {
 
   /** Get Dataflow [[com.google.api.services.dataflow.model.JobMetrics JobMetrics]]. */
   def getJobMetrics: JobMetrics =
-    DataflowResult.getJobMetrics(client,
-                                 internal.getProjectId,
-                                 internal.getRegion,
-                                 internal.getJobId)
+    DataflowResult.getJobMetrics(
+      client,
+      internal.getProjectId,
+      internal.getRegion,
+      internal.getJobId
+    )
 
   /** Get a generic [[ScioResult]]. */
   override def asScioResult: ScioResult = new DataflowScioResult(internal)
@@ -61,11 +63,13 @@ class DataflowResult(val internal: DataflowPipelineJob) extends RunnerResult {
       val options = getJob.getEnvironment.getSdkPipelineOptions
         .get("options")
         .asInstanceOf[java.util.Map[String, AnyRef]]
-      Metrics(options.get("scioVersion").toString,
-              options.get("scalaVersion").toString,
-              options.get("appName").toString,
-              internal.getState.toString,
-              getBeamMetrics)
+      Metrics(
+        options.get("scioVersion").toString,
+        options.get("scalaVersion").toString,
+        options.get("appName").toString,
+        internal.getState.toString,
+        getBeamMetrics
+      )
     }
   }
 
@@ -124,10 +128,12 @@ object DataflowResult {
       .setView("JOB_VIEW_ALL")
       .execute()
 
-  private def getJobMetrics(dataflow: Dataflow,
-                            projectId: String,
-                            location: String,
-                            jobId: String): JobMetrics =
+  private def getJobMetrics(
+    dataflow: Dataflow,
+    projectId: String,
+    location: String,
+    jobId: String
+  ): JobMetrics =
     dataflow
       .projects()
       .locations()
@@ -138,12 +144,15 @@ object DataflowResult {
   // wiring to reconstruct AppliedPTransform for name mapping
 
   private def newAppliedPTransform(
-    fullName: String): AppliedPTransform[PInput, POutput, EmptyPTransform] =
-    AppliedPTransform.of(fullName,
-                         Collections.emptyMap(),
-                         Collections.emptyMap(),
-                         new EmptyPTransform,
-                         new EmptyPipeline)
+    fullName: String
+  ): AppliedPTransform[PInput, POutput, EmptyPTransform] =
+    AppliedPTransform.of(
+      fullName,
+      Collections.emptyMap(),
+      Collections.emptyMap(),
+      new EmptyPTransform,
+      new EmptyPipeline
+    )
 
   private class EmptyPTransform extends PTransform[PInput, POutput] {
     override def expand(input: PInput): POutput = ???

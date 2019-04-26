@@ -48,7 +48,8 @@ final case class BinaryIO(path: String) extends ScioIO[Array[Byte]] {
         .withCompression(params.compression)
         .withNumShards(params.numShards)
         .withSuffix(params.suffix)
-        .to(pathWithShards(path)))
+        .to(pathWithShards(path))
+    )
     EmptyTap
   }
 
@@ -59,9 +60,11 @@ final case class BinaryIO(path: String) extends ScioIO[Array[Byte]] {
 }
 
 object BinaryIO {
-  final case class WriteParam(suffix: String = ".bin",
-                              numShards: Int = 0,
-                              compression: Compression = Compression.UNCOMPRESSED)
+  final case class WriteParam(
+    suffix: String = ".bin",
+    numShards: Int = 0,
+    compression: Compression = Compression.UNCOMPRESSED
+  )
 
   private final class BytesSink extends FileIO.Sink[Array[Byte]] {
     @transient private var channel: OutputStream = _

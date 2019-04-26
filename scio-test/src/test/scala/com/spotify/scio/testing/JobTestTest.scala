@@ -434,8 +434,10 @@ class JobTestTest extends PipelineSpec {
     val m = Map("a" -> "1", "b" -> "2", "c" -> "3") ++ timestampAttribute
     JobTest[PubsubWithAttributesJob.type]
       .args("--input=in", "--output=out")
-      .input(PubsubIO[(String, M)]("in", null, PubsubWithAttributesJob.timestampAttribute),
-             Seq("a", "b", "c").map((_, m)))
+      .input(
+        PubsubIO[(String, M)]("in", null, PubsubWithAttributesJob.timestampAttribute),
+        Seq("a", "b", "c").map((_, m))
+      )
       .output(
         PubsubIO[(String, M)]("out", null, PubsubWithAttributesJob.timestampAttribute)
       ) { coll =>
@@ -450,7 +452,8 @@ class JobTestTest extends PipelineSpec {
       Map(PubsubWithAttributesJob.timestampAttribute -> new Instant().toString),
       "aX",
       "bX",
-      "cX")
+      "cX"
+    )
   }
 
   it should "fail incorrect PubsubIO with attributes" in {
@@ -458,7 +461,8 @@ class JobTestTest extends PipelineSpec {
       testPubsubWithAttributesJob(
         Map(PubsubWithAttributesJob.timestampAttribute -> new Instant().toString),
         "aX",
-        "bX")
+        "bX"
+      )
     }
     an[AssertionError] should be thrownBy {
       testPubsubWithAttributesJob(
@@ -466,7 +470,8 @@ class JobTestTest extends PipelineSpec {
         "aX",
         "bX",
         "cX",
-        "dX")
+        "dX"
+      )
     }
   }
 
@@ -476,7 +481,8 @@ class JobTestTest extends PipelineSpec {
         Map(PubsubWithAttributesJob.timestampAttribute -> "invalidTimestamp"),
         "aX",
         "bX",
-        "cX")
+        "cX"
+      )
     }
 
     an[PipelineExecutionException] should be thrownBy {

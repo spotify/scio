@@ -32,7 +32,8 @@ object BigQueryIT {
   class Shakespeare
 
   @BigQueryType.fromQuery(
-    "SELECT word, word_count FROM `bigquery-public-data.samples.shakespeare` LIMIT 10")
+    "SELECT word, word_count FROM `bigquery-public-data.samples.shakespeare` LIMIT 10"
+  )
   class WordCount
 
 }
@@ -53,9 +54,11 @@ class BigQueryIT extends FlatSpec with Matchers {
     def wordCount(w: String, wc: Long): TableRow =
       TableRow("word" -> w, "word_count" -> wc.toString)
 
-    val inData = Seq(shakespeare("i", 10, "kinglear", 1600),
-                     shakespeare("thou", 20, "kinglear", 1600),
-                     shakespeare("thy", 30, "kinglear", 1600))
+    val inData = Seq(
+      shakespeare("i", 10, "kinglear", 1600),
+      shakespeare("thou", 20, "kinglear", 1600),
+      shakespeare("thy", 30, "kinglear", 1600)
+    )
     val expected = Seq(wordCount("i", 10), wordCount("thou", 20), wordCount("thy", 30))
 
     val mbq = MockBigQuery()
@@ -69,12 +72,16 @@ class BigQueryIT extends FlatSpec with Matchers {
   // =======================================================================
 
   it should "support typed BigQuery" in {
-    val inData = Seq(Shakespeare("i", 10, "kinglear", 1600),
-                     Shakespeare("thou", 20, "kinglear", 1600),
-                     Shakespeare("thy", 30, "kinglear", 1600))
-    val expected = Seq(WordCount(Some("i"), Some(10)),
-                       WordCount(Some("thou"), Some(20)),
-                       WordCount(Some("thy"), Some(30)))
+    val inData = Seq(
+      Shakespeare("i", 10, "kinglear", 1600),
+      Shakespeare("thou", 20, "kinglear", 1600),
+      Shakespeare("thy", 30, "kinglear", 1600)
+    )
+    val expected = Seq(
+      WordCount(Some("i"), Some(10)),
+      WordCount(Some("thou"), Some(20)),
+      WordCount(Some("thy"), Some(30))
+    )
 
     val mbq = MockBigQuery()
     mbq.mockTable(tableRef).withTypedData(inData)

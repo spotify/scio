@@ -38,10 +38,11 @@ sealed trait Schema[T] {
   type Encode = T => Repr
 }
 
-final case class Record[T] private (schemas: Array[(String, Schema[Any])],
-                                    construct: Seq[Any] => T,
-                                    destruct: T => Array[Any])
-    extends Schema[T] {
+final case class Record[T] private (
+  schemas: Array[(String, Schema[Any])],
+  construct: Seq[Any] => T,
+  destruct: T => Array[Any]
+) extends Schema[T] {
   type Repr = Row
 
 }
@@ -50,10 +51,11 @@ object Record {
   @inline final def apply[T](implicit r: Record[T]): Record[T] = r
 }
 
-final case class RawRecord[T](schema: BSchema,
-                              fromRow: SerializableFunction[Row, T],
-                              toRow: SerializableFunction[T, Row])
-    extends Schema[T] {
+final case class RawRecord[T](
+  schema: BSchema,
+  fromRow: SerializableFunction[Row, T],
+  toRow: SerializableFunction[T, Row]
+) extends Schema[T] {
   type Repr = Row
 }
 
@@ -81,20 +83,22 @@ final case class Fallback[F[_], T](coder: F[T]) extends Schema[T] {
   type Repr = Array[Byte]
 }
 
-final case class ArrayType[F[_], T](schema: Schema[T],
-                                    toList: F[T] => jList[T],
-                                    fromList: jList[T] => F[T])
-    extends Schema[F[T]] { // TODO: polymorphism ?
+final case class ArrayType[F[_], T](
+  schema: Schema[T],
+  toList: F[T] => jList[T],
+  fromList: jList[T] => F[T]
+) extends Schema[F[T]] { // TODO: polymorphism ?
   type Repr = jList[schema.Repr]
   type _T = T
   type _F[A] = F[A]
 }
 
-final case class MapType[F[_, _], K, V](keySchema: Schema[K],
-                                        valueSchema: Schema[V],
-                                        toMap: F[K, V] => jMap[K, V],
-                                        fromMap: jMap[K, V] => F[K, V])
-    extends Schema[F[K, V]] {
+final case class MapType[F[_, _], K, V](
+  keySchema: Schema[K],
+  valueSchema: Schema[V],
+  toMap: F[K, V] => jMap[K, V],
+  fromMap: jMap[K, V] => F[K, V]
+) extends Schema[F[K, V]] {
   type Repr = jMap[keySchema.Repr, valueSchema.Repr]
 
   type _K = K

@@ -36,7 +36,8 @@ object MinimalBeamSqlWordCountExample {
       .flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty))
       // Count distinct string's
       .queryAs[(String, Long)](
-        "select distinct(`value`), count(*) from SCOLLECTION group by `value`")
+        "select distinct(`value`), count(*) from SCOLLECTION group by `value`"
+      )
       // Map `(String, Long)` tuples into strings
       .map(t => t._1 + ": " + t._2)
       // Save result as text files under the output path

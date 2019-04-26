@@ -324,15 +324,19 @@ class BeamSQLTest extends PipelineSpec {
 
     Sql
       .from(a, b)
-      .query("select a.username from B a join A b on a.username = b.username",
-             new TupleTag[User]("A"),
-             new TupleTag[User]("B")) shouldNot beEmpty
+      .query(
+        "select a.username from B a join A b on a.username = b.username",
+        new TupleTag[User]("A"),
+        new TupleTag[User]("B")
+      ) shouldNot beEmpty
 
     Sql
       .from(a, b)
-      .queryAs[String]("select a.username from B a join A b on a.username = b.username",
-                       new TupleTag[User]("A"),
-                       new TupleTag[User]("B")) shouldNot beEmpty
+      .queryAs[String](
+        "select a.username from B a join A b on a.username = b.username",
+        new TupleTag[User]("A"),
+        new TupleTag[User]("B")
+      ) shouldNot beEmpty
   }
 
   it should "support sql subqueries" in runWithContext { sc =>
@@ -370,7 +374,8 @@ class BeamSQLTest extends PipelineSpec {
       .queryAs[(String, Int)](
         "select a.username, b.age from B a join A b on a.username = b.username",
         new TupleTag[User]("A"),
-        new TupleTag[User]("B"))
+        new TupleTag[User]("B")
+      )
       .queryAs[Int]("select sum(_2) from SCOLLECTION")
 
     r2 should containSingleValue(expected)
@@ -395,9 +400,11 @@ class BeamSQLTest extends PipelineSpec {
       def apply[A: Schema, B: Schema](q: String): Assertion =
         Queries.typecheck(Query[A, B](q)) should be('right)
 
-      def apply[A: Schema, B: Schema, C: Schema](q: String,
-                                                 a: TupleTag[A],
-                                                 b: TupleTag[B]): Assertion =
+      def apply[A: Schema, B: Schema, C: Schema](
+        q: String,
+        a: TupleTag[A],
+        b: TupleTag[B]
+      ): Assertion =
         Queries.typecheck(Query2[A, B, C](q, a, b)) should be('right)
     }
 
@@ -405,9 +412,11 @@ class BeamSQLTest extends PipelineSpec {
       def apply[A: Schema, B: Schema](q: String): Assertion =
         Queries.typecheck(Query[A, B](q)) should be('left)
 
-      def apply[A: Schema, B: Schema, C: Schema](q: String,
-                                                 a: TupleTag[A],
-                                                 b: TupleTag[B]): Assertion =
+      def apply[A: Schema, B: Schema, C: Schema](
+        q: String,
+        a: TupleTag[A],
+        b: TupleTag[B]
+      ): Assertion =
         Queries.typecheck(Query2[A, B, C](q, a, b)) should be('left)
     }
 
@@ -438,7 +447,8 @@ class BeamSQLTest extends PipelineSpec {
     checkNOK[UserBean, Bar]("select name, age from SCOLLECTION")
     // Calcite flattens the row value
     checkOK[UserBean, (Long, Int, String)](
-      "select cast(age AS BIGINT), row(age, name) from SCOLLECTION")
+      "select cast(age AS BIGINT), row(age, name) from SCOLLECTION"
+    )
 
     checkOK[UserBean, List[Int]]("select ARRAY[age] from SCOLLECTION")
     checkOK[UserBean, (String, List[Int])]("select name, ARRAY[age] from SCOLLECTION")
@@ -448,11 +458,13 @@ class BeamSQLTest extends PipelineSpec {
     checkOK[User, User, (String, Int)](
       "select a.username, b.age from A a join B b on a.username = b.username",
       new TupleTag[User]("A"),
-      new TupleTag[User]("B"))
+      new TupleTag[User]("B")
+    )
     checkNOK[User, User, (String, String)](
       "select a.username, b.age from A a join B b on a.username = b.username",
       new TupleTag[User]("A"),
-      new TupleTag[User]("B"))
+      new TupleTag[User]("B")
+    )
   }
 
   it should "support UDFs from SerializableFunctions and classes" in runWithContext { sc =>

@@ -37,8 +37,9 @@ class DistCacheIT extends PipelineSpec {
     }
   }
 
-  def runWithDistCache[T: ClassTag](data: Iterable[String])(
-    fn: (ScioContext, DistCache[List[String]]) => T): ScioResult = {
+  def runWithDistCache[T: ClassTag](
+    data: Iterable[String]
+  )(fn: (ScioContext, DistCache[List[String]]) => T): ScioResult = {
     val sc = ScioContext()
     val uri = ItUtils.gcpTempLocation("dist-cache-it")
     val cache = sc.distCache(uri) { f =>

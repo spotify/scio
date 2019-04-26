@@ -437,7 +437,8 @@ class CodersTest extends FlatSpec with Matchers {
       }
 
     caught.getStackTrace.find(_.getClassName.contains(classOf[CodersTest].getName)) shouldNot be(
-      None)
+      None
+    )
   }
 
   it should "#1651: remove all anotations from derived coders" in {

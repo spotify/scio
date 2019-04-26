@@ -35,20 +35,22 @@ private[client] object LoadOps {
 private[client] final class LoadOps(client: Client, jobService: JobOps) {
   import LoadOps._
 
-  def csv(sources: List[String],
-          destinationTable: String,
-          createDisposition: CreateDisposition = CREATE_IF_NEEDED,
-          writeDisposition: WriteDisposition = WRITE_APPEND,
-          schema: Option[TableSchema] = None,
-          autodetect: Boolean = false,
-          allowJaggedRows: Boolean = false,
-          allowQuotedNewLines: Boolean = false,
-          quote: Option[String] = None,
-          maxBadRecords: Int = 0,
-          skipLeadingRows: Int = 0,
-          fieldDelimiter: Option[String] = None,
-          ignoreUnknownValues: Boolean = false,
-          encoding: Option[String] = None): Try[TableReference] =
+  def csv(
+    sources: List[String],
+    destinationTable: String,
+    createDisposition: CreateDisposition = CREATE_IF_NEEDED,
+    writeDisposition: WriteDisposition = WRITE_APPEND,
+    schema: Option[TableSchema] = None,
+    autodetect: Boolean = false,
+    allowJaggedRows: Boolean = false,
+    allowQuotedNewLines: Boolean = false,
+    quote: Option[String] = None,
+    maxBadRecords: Int = 0,
+    skipLeadingRows: Int = 0,
+    fieldDelimiter: Option[String] = None,
+    ignoreUnknownValues: Boolean = false,
+    encoding: Option[String] = None
+  ): Try[TableReference] =
     execute(
       sources = sources,
       sourceFormat = "CSV",
@@ -67,15 +69,17 @@ private[client] final class LoadOps(client: Client, jobService: JobOps) {
       encoding = encoding
     )
 
-  def json(sources: List[String],
-           destinationTable: String,
-           createDisposition: CreateDisposition = CREATE_IF_NEEDED,
-           writeDisposition: WriteDisposition = WRITE_APPEND,
-           schema: Option[TableSchema] = None,
-           autodetect: Boolean = false,
-           maxBadRecords: Int = 0,
-           ignoreUnknownValues: Boolean = false,
-           encoding: Option[String] = None): Try[TableReference] =
+  def json(
+    sources: List[String],
+    destinationTable: String,
+    createDisposition: CreateDisposition = CREATE_IF_NEEDED,
+    writeDisposition: WriteDisposition = WRITE_APPEND,
+    schema: Option[TableSchema] = None,
+    autodetect: Boolean = false,
+    maxBadRecords: Int = 0,
+    ignoreUnknownValues: Boolean = false,
+    encoding: Option[String] = None
+  ): Try[TableReference] =
     execute(
       sources = sources,
       sourceFormat = "NEWLINE_DELIMITED_JSON",
@@ -89,13 +93,15 @@ private[client] final class LoadOps(client: Client, jobService: JobOps) {
       encoding = encoding
     )
 
-  def avro(sources: List[String],
-           destinationTable: String,
-           createDisposition: CreateDisposition = CREATE_IF_NEEDED,
-           writeDisposition: WriteDisposition = WRITE_APPEND,
-           schema: Option[TableSchema] = None,
-           maxBadRecords: Int = 0,
-           encoding: Option[String] = None): Try[TableReference] =
+  def avro(
+    sources: List[String],
+    destinationTable: String,
+    createDisposition: CreateDisposition = CREATE_IF_NEEDED,
+    writeDisposition: WriteDisposition = WRITE_APPEND,
+    schema: Option[TableSchema] = None,
+    maxBadRecords: Int = 0,
+    encoding: Option[String] = None
+  ): Try[TableReference] =
     execute(
       sources = sources,
       sourceFormat = "AVRO",
@@ -108,21 +114,23 @@ private[client] final class LoadOps(client: Client, jobService: JobOps) {
     )
 
   // scalastyle:off method.length
-  private def execute(sources: List[String],
-                      sourceFormat: String,
-                      destinationTable: String,
-                      createDisposition: CreateDisposition = CREATE_IF_NEEDED,
-                      writeDisposition: WriteDisposition = WRITE_APPEND,
-                      schema: Option[TableSchema] = None,
-                      autodetect: Option[Boolean] = None,
-                      allowJaggedRows: Option[Boolean] = None,
-                      allowQuotedNewLines: Option[Boolean] = None,
-                      quote: Option[String] = None,
-                      maxBadRecords: Int = 0,
-                      skipLeadingRows: Option[Int] = None,
-                      fieldDelimiter: Option[String] = None,
-                      ignoreUnknownValues: Option[Boolean] = None,
-                      encoding: Option[String] = None): Try[TableReference] = Try {
+  private def execute(
+    sources: List[String],
+    sourceFormat: String,
+    destinationTable: String,
+    createDisposition: CreateDisposition = CREATE_IF_NEEDED,
+    writeDisposition: WriteDisposition = WRITE_APPEND,
+    schema: Option[TableSchema] = None,
+    autodetect: Option[Boolean] = None,
+    allowJaggedRows: Option[Boolean] = None,
+    allowQuotedNewLines: Option[Boolean] = None,
+    quote: Option[String] = None,
+    maxBadRecords: Int = 0,
+    skipLeadingRows: Option[Int] = None,
+    fieldDelimiter: Option[String] = None,
+    ignoreUnknownValues: Option[Boolean] = None,
+    encoding: Option[String] = None
+  ): Try[TableReference] = Try {
 
     val tableRef = bq.BigQueryHelpers.parseTableSpec(destinationTable)
 

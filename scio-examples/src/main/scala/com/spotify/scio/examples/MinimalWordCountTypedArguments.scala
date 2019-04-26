@@ -33,12 +33,14 @@ object MinimalWordCountTypedArguments {
   @AppName("Scio Examples")
   @AppVersion(BuildInfo.version)
   @ProgName("com.spotify.scio.examples.MinimalWordCount")
-  case class Arguments(@HelpMessage("Path of the file to read from")
-                       @ExtraName("i")
-                       input: String = ExampleData.KING_LEAR,
-                       @HelpMessage("Path of the file to write to")
-                       @ExtraName("o")
-                       output: String)
+  case class Arguments(
+    @HelpMessage("Path of the file to read from")
+    @ExtraName("i")
+    input: String = ExampleData.KING_LEAR,
+    @HelpMessage("Path of the file to write to")
+    @ExtraName("o")
+    output: String
+  )
 
   def main(cmdlineArgs: Array[String]): Unit = {
     // Parse command line arguments, create `ScioContext` and `Args`.

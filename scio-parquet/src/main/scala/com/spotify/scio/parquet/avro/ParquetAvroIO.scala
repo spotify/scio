@@ -91,11 +91,13 @@ final case class ParquetAvroIO[T: ClassTag: Coder](path: String) extends ScioIO[
     val usedFilenamePolicy =
       DefaultFilenamePolicy.fromStandardParameters(prefix, null, ".parquet", false)
     val destinations = DynamicFileDestinations.constant[T](usedFilenamePolicy)
-    val sink = new ParquetAvroSink[T](prefix,
-                                      destinations,
-                                      writerSchema,
-                                      job.getConfiguration,
-                                      params.compression)
+    val sink = new ParquetAvroSink[T](
+      prefix,
+      destinations,
+      writerSchema,
+      job.getConfiguration,
+      params.compression
+    )
     val t = WriteFiles.to(sink).withNumShards(params.numShards)
     data.applyInternal(t)
     tap(ParquetAvroIO.ReadParam[T, T](writerSchema, null, identity))
@@ -119,9 +121,11 @@ final case class ParquetAvroIO[T: ClassTag: Coder](path: String) extends ScioIO[
 }
 
 object ParquetAvroIO {
-  final case class ReadParam[A: ClassTag, T: ClassTag] private (projection: Schema,
-                                                                predicate: FilterPredicate,
-                                                                projectionFn: A => T) {
+  final case class ReadParam[A: ClassTag, T: ClassTag] private (
+    projection: Schema,
+    predicate: FilterPredicate,
+    projectionFn: A => T
+  ) {
     val avroClass: Class[A] = ScioUtil.classOf[A]
     val readSchema: Schema = {
       if (classOf[SpecificRecordBase] isAssignableFrom avroClass) {
@@ -158,16 +162,18 @@ object ParquetAvroIO {
     private[avro] val DefaultCompression = CompressionCodecName.SNAPPY
   }
 
-  final case class WriteParam private (schema: Schema = WriteParam.DefaultSchema,
-                                       numShards: Int = WriteParam.DefaultNumShards,
-                                       suffix: String = WriteParam.DefaultSuffix,
-                                       compression: CompressionCodecName =
-                                         WriteParam.DefaultCompression)
+  final case class WriteParam private (
+    schema: Schema = WriteParam.DefaultSchema,
+    numShards: Int = WriteParam.DefaultNumShards,
+    suffix: String = WriteParam.DefaultSuffix,
+    compression: CompressionCodecName = WriteParam.DefaultCompression
+  )
 }
 
-case class ParquetAvroTap[A, T: ClassTag: Coder](path: String,
-                                                 params: ParquetAvroIO.ReadParam[A, T])
-    extends Tap[T] {
+case class ParquetAvroTap[A, T: ClassTag: Coder](
+  path: String,
+  params: ParquetAvroIO.ReadParam[A, T]
+) extends Tap[T] {
   override def value: Iterator[T] = {
     val xs = FileSystems.`match`(path).metadata().asScala.toList
     xs.iterator.flatMap { metadata =>

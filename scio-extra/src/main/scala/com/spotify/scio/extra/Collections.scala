@@ -52,9 +52,11 @@ object Collections {
     }
   }
 
-  private def topByKeyImpl[K, V](xs: Iterable[(K, V)],
-                                 num: Int,
-                                 ord: Ordering[V]): Map[K, Iterable[V]] = {
+  private def topByKeyImpl[K, V](
+    xs: Iterable[(K, V)],
+    num: Int,
+    ord: Ordering[V]
+  ): Map[K, Iterable[V]] = {
     require(num > 0, "num must be > 0")
     val size = math.min(num, xs.size)
 

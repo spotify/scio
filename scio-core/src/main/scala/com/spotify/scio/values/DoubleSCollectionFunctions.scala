@@ -74,12 +74,14 @@ class DoubleSCollectionFunctions(self: SCollection[Double]) {
     val minMax =
       self.aggregate((Double.PositiveInfinity, Double.NegativeInfinity))(
         (acc, x) => (x.min(acc._1), x.max(acc._2)),
-        (l, r) => (l._1.min(r._1), l._2.max(r._2)))
+        (l, r) => (l._1.min(r._1), l._2.max(r._2))
+      )
     val buckets = minMax.map {
       case (min, max) =>
         if (min.isNaN || max.isNaN || max.isInfinity || min.isInfinity) {
           throw new UnsupportedOperationException(
-            "Histogram on either an empty SCollection or SCollection containing +/-infinity or NaN")
+            "Histogram on either an empty SCollection or SCollection containing +/-infinity or NaN"
+          )
         }
         val range = if (min != max) {
           // Range.Double.inclusive(min, max, increment)
@@ -113,8 +115,10 @@ class DoubleSCollectionFunctions(self: SCollection[Double]) {
   def histogram(buckets: Array[Double], evenBuckets: Boolean = false): SCollection[Array[Long]] =
     histogramImpl(self.context.parallelize(Seq(buckets)), evenBuckets)
 
-  private def histogramImpl(buckets: SCollection[Array[Double]],
-                            evenBuckets: Boolean): SCollection[Array[Long]] = {
+  private def histogramImpl(
+    buckets: SCollection[Array[Double]],
+    evenBuckets: Boolean
+  ): SCollection[Array[Long]] = {
     import com.spotify.scio.values.BucketFunctions._
     // Map buckets into a side input of bucket function
     val side = buckets.map { b =>

@@ -68,7 +68,8 @@ class BigQueryClientIT extends FlatSpec with Matchers {
       List(
         new TableFieldSchema().setName("word").setType("STRING").setMode("REQUIRED"),
         new TableFieldSchema().setName("word_count").setType("INTEGER").setMode("REQUIRED")
-      ).asJava)
+      ).asJava
+    )
     bq.query.schema(legacyQuery) shouldBe expected
   }
 
@@ -77,7 +78,8 @@ class BigQueryClientIT extends FlatSpec with Matchers {
       List(
         new TableFieldSchema().setName("word").setType("STRING").setMode("NULLABLE"),
         new TableFieldSchema().setName("word_count").setType("INTEGER").setMode("NULLABLE")
-      ).asJava)
+      ).asJava
+    )
     bq.query.schema(sqlQuery) shouldBe expected
   }
 

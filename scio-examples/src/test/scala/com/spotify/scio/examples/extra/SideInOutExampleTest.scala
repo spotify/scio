@@ -26,12 +26,14 @@ class SideInOutExampleTest extends PipelineSpec {
 
   "SideInOutExample" should "work" in {
     JobTest[SideInOutExample.type]
-      .args("--input=in.txt",
-            "--stopWords=stop.txt",
-            "--output1=out1.txt",
-            "--output2=out2.txt",
-            "--output3=out3.txt",
-            "--output4=out4.txt")
+      .args(
+        "--input=in.txt",
+        "--stopWords=stop.txt",
+        "--output1=out1.txt",
+        "--output2=out2.txt",
+        "--output3=out3.txt",
+        "--output4=out4.txt"
+      )
       .input(TextIO("in.txt"), inData)
       .input(TextIO("stop.txt"), Seq("the"))
       .output(TextIO("out1.txt")) { coll =>

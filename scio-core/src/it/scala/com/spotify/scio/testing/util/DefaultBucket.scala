@@ -64,13 +64,17 @@ private object DefaultBucket {
     // by the project executing the job.
     try {
       val owner = gcpOptions.getGcsUtil.bucketOwner(GcsPath.fromComponents(bucketName, ""))
-      require(owner == projectNumber,
-              s"Bucket owner does not match the project from --project: $owner vs. $projectNumber")
+      require(
+        owner == projectNumber,
+        s"Bucket owner does not match the project from --project: $owner vs. $projectNumber"
+      )
     } catch {
       case e: IOException =>
-        throw new RuntimeException("Unable to determine the owner of the default bucket at gs://" +
-                                     bucketName,
-                                   e)
+        throw new RuntimeException(
+          "Unable to determine the owner of the default bucket at gs://" +
+            bucketName,
+          e
+        )
     }
     "gs://" + bucketName
   }
@@ -85,10 +89,12 @@ private object DefaultBucket {
   private def getProjectNumber(projectId: String, crmClient: CloudResourceManager): Long =
     getProjectNumber(projectId, crmClient, BACKOFF_FACTORY.backoff(), Sleeper.DEFAULT)
 
-  private def getProjectNumber(projectId: String,
-                               crmClient: CloudResourceManager,
-                               backoff: BackOff,
-                               sleeper: Sleeper): Long = {
+  private def getProjectNumber(
+    projectId: String,
+    crmClient: CloudResourceManager,
+    backoff: BackOff,
+    sleeper: Sleeper
+  ): Long = {
     val getProject = crmClient.projects.get(projectId)
     try {
       val project = ResilientOperation.retry(

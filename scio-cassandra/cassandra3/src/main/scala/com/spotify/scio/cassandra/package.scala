@@ -30,13 +30,15 @@ import com.spotify.scio.coders.Coder
  */
 package object cassandra {
 
-  case class CassandraOptions(keyspace: String,
-                              table: String,
-                              cql: String,
-                              seedNodeHost: String,
-                              seedNodePort: Int = -1,
-                              username: String = null,
-                              password: String = null)
+  case class CassandraOptions(
+    keyspace: String,
+    table: String,
+    cql: String,
+    seedNodeHost: String,
+    seedNodePort: Int = -1,
+    username: String = null,
+    password: String = null
+  )
 
   /**
    * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with Cassandra
@@ -61,9 +63,10 @@ package object cassandra {
      * @param parallelism number of concurrent bulk writers, default to number of Cassandra nodes
      * @param f function to convert input data to values for the CQL statement
      */
-    def saveAsCassandra(opts: CassandraOptions,
-                        parallelism: Int = CassandraIO.WriteParam.DefaultPar)(f: T => Seq[Any])(
-      implicit coder: Coder[T]): ClosedTap[Nothing] =
+    def saveAsCassandra(
+      opts: CassandraOptions,
+      parallelism: Int = CassandraIO.WriteParam.DefaultPar
+    )(f: T => Seq[Any])(implicit coder: Coder[T]): ClosedTap[Nothing] =
       self.write(CassandraIO[T](opts))(CassandraIO.WriteParam(f, parallelism))
   }
 }

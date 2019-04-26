@@ -34,11 +34,13 @@ import scala.io.Source
 
 private[tensorflow] object TFSavedJob {
 
-  case class Iris(sepalLength: Option[Double],
-                  sepalWidth: Option[Double],
-                  petalLength: Option[Double],
-                  petalWidth: Option[Double],
-                  className: Option[String])
+  case class Iris(
+    sepalLength: Option[Double],
+    sepalWidth: Option[Double],
+    petalLength: Option[Double],
+    petalWidth: Option[Double],
+    className: Option[String]
+  )
 
   val Spec: FeatureSpec[Iris] = FeatureSpec
     .of[Iris]

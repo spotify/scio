@@ -43,17 +43,21 @@ trait Taps {
    * @param readyFn function to check if the tap is ready
    * @param tapFn function to create the tap
    */
-  private[scio] def mkTap[T](name: String,
-                             readyFn: () => Boolean,
-                             tapFn: () => Tap[T]): Future[Tap[T]]
+  private[scio] def mkTap[T](
+    name: String,
+    readyFn: () => Boolean,
+    tapFn: () => Tap[T]
+  ): Future[Tap[T]]
 
 }
 
 /** Taps implementation that fails immediately if tap not available. */
 private final class ImmediateTaps extends Taps {
-  override private[scio] def mkTap[T](name: String,
-                                      readyFn: () => Boolean,
-                                      tapFn: () => Tap[T]): Future[Tap[T]] =
+  override private[scio] def mkTap[T](
+    name: String,
+    readyFn: () => Boolean,
+    tapFn: () => Tap[T]
+  ): Future[Tap[T]] =
     if (readyFn()) Future.successful(tapFn())
     else Future.failed(new TapNotAvailableException(name))
 }
@@ -61,10 +65,12 @@ private final class ImmediateTaps extends Taps {
 private object PollingTaps {
   private val logger = LoggerFactory.getLogger(this.getClass)
 
-  final case class Poll(name: String,
-                        readyFn: () => Boolean,
-                        tapFn: () => Tap[Any],
-                        promise: Promise[AnyRef])
+  final case class Poll(
+    name: String,
+    readyFn: () => Boolean,
+    tapFn: () => Tap[Any],
+    promise: Promise[AnyRef]
+  )
 }
 
 /** Taps implementation that polls for tap availability in the background. */
@@ -73,9 +79,11 @@ private final class PollingTaps(private[this] val backOff: BackOff) extends Taps
 
   private[this] var polls: List[Poll] = _
 
-  override private[scio] def mkTap[T](name: String,
-                                      readyFn: () => Boolean,
-                                      tapFn: () => Tap[T]): Future[Tap[T]] =
+  override private[scio] def mkTap[T](
+    name: String,
+    readyFn: () => Boolean,
+    tapFn: () => Tap[T]
+  ): Future[Tap[T]] =
     this.synchronized {
       val p = Promise[AnyRef]()
       val init = if (polls == null) {
@@ -179,13 +187,16 @@ object TapsSysProps {
   val Algorithm = SysProp("taps.algorithm", "System property key for taps algorithm")
   val PollingMaximumInterval = SysProp(
     "taps.polling.maximum_interval",
-    "System property key for polling taps maximum interval in milliseconds")
+    "System property key for polling taps maximum interval in milliseconds"
+  )
   val PollingInitialInterval = SysProp(
     "taps.polling.initial_interval",
-    "System property key for polling taps initial interval in milliseconds")
+    "System property key for polling taps initial interval in milliseconds"
+  )
   val PollingMaximumAttempts = SysProp(
     "taps.polling.maximum_attempts",
     "System property key for polling taps maximum number of attempts, unlimited if <= 0. " +
-      "Default is 0")
+      "Default is 0"
+  )
 
 }

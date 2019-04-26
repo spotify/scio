@@ -37,8 +37,11 @@ object MaxPerKeyExamples {
 
     // Schema for result BigQuery table
     val schema = new TableSchema().setFields(
-      List(new TableFieldSchema().setName("month").setType("INTEGER"),
-           new TableFieldSchema().setName("max_mean_temp").setType("FLOAT")).asJava)
+      List(
+        new TableFieldSchema().setName("month").setType("INTEGER"),
+        new TableFieldSchema().setName("max_mean_temp").setType("FLOAT")
+      ).asJava
+    )
 
     // Open a BigQuery table as a `SCollection[TableRow]`
     sc.bigQueryTable(args.getOrElse("input", ExampleData.WEATHER_SAMPLES_TABLE))

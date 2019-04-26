@@ -54,7 +54,8 @@ object To {
   }
 
   private[schemas] def checkCompatibility[T](bsi: BSchema, bso: BSchema)(
-    t: => T): Either[String, T] =
+    t: => T
+  ): Either[String, T] =
     if (areCompatible(bsi, bso)) {
       Right(t)
     } else {
@@ -139,9 +140,9 @@ object To {
 
 object ToMacro {
   import scala.reflect.macros.blackbox
-  def safeImpl[I: c.WeakTypeTag, O: c.WeakTypeTag](c: blackbox.Context)(
-    iSchema: c.Expr[Schema[I]],
-    oSchema: c.Expr[Schema[O]]): c.Expr[To[I, O]] = {
+  def safeImpl[I: c.WeakTypeTag, O: c.WeakTypeTag](
+    c: blackbox.Context
+  )(iSchema: c.Expr[Schema[I]], oSchema: c.Expr[Schema[O]]): c.Expr[To[I, O]] = {
     import c.universe._
 
     val tpeI = weakTypeOf[I]

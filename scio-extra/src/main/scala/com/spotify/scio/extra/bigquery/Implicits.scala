@@ -46,12 +46,13 @@ object Implicits extends ToTableRow with ToTableSchema {
      * [[org.apache.avro.generic.IndexedRecord IndexedRecord]] into a
      * [[com.spotify.scio.bigquery.TableRow TableRow]].
      */
-    def saveAvroAsBigQuery(table: TableReference,
-                           avroSchema: Schema = null,
-                           writeDisposition: WriteDisposition = null,
-                           createDisposition: CreateDisposition = null,
-                           tableDescription: String = null)(implicit ev: T <:< IndexedRecord,
-                                                            c: ClassTag[T]): ClosedTap[TableRow] = {
+    def saveAvroAsBigQuery(
+      table: TableReference,
+      avroSchema: Schema = null,
+      writeDisposition: WriteDisposition = null,
+      createDisposition: CreateDisposition = null,
+      tableDescription: String = null
+    )(implicit ev: T <:< IndexedRecord, c: ClassTag[T]): ClosedTap[TableRow] = {
       val schema: Schema = Option(avroSchema)
         .getOrElse {
           val cls = ScioUtil.classOf[T]

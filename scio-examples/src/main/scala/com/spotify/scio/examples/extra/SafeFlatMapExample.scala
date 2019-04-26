@@ -33,8 +33,10 @@ object SafeFlatMapExample {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
     val (longs, errors) = sc
       .textFile(args.getOrElse("input", ExampleData.KING_LEAR))
-      .flatMap(_.split("[^a-zA-Z0-9']+")
-        .filter(_.nonEmpty))
+      .flatMap(
+        _.split("[^a-zA-Z0-9']+")
+          .filter(_.nonEmpty)
+      )
       .safeFlatMap(e => Seq(e.toLong))
 
     // rescue from number format exceptions:

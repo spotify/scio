@@ -44,7 +44,8 @@ class BigtableIOTest extends ScioIOSpec {
       (k, Iterable(m))
     }
     testJobTestOutput(xs)(BigtableIO(projectId, instanceId, _))(
-      _.saveAsBigtable(projectId, instanceId, _))
+      _.saveAsBigtable(projectId, instanceId, _)
+    )
   }
 
 }

@@ -28,40 +28,46 @@ object BigQueryITUtil {
   case class ToTableT(word: String, word_count: Int)
 
   @BigQueryType.toTable
-  case class Required(bool: Boolean,
-                      int: Long,
-                      float: Double,
-                      numeric: BigDecimal,
-                      string: String,
-                      bytes: ByteString,
-                      timestamp: Instant,
-                      date: LocalDate,
-                      time: LocalTime,
-                      datetime: LocalDateTime)
+  case class Required(
+    bool: Boolean,
+    int: Long,
+    float: Double,
+    numeric: BigDecimal,
+    string: String,
+    bytes: ByteString,
+    timestamp: Instant,
+    date: LocalDate,
+    time: LocalTime,
+    datetime: LocalDateTime
+  )
 
   @BigQueryType.toTable
-  case class Optional(bool: Option[Boolean],
-                      int: Option[Long],
-                      float: Option[Double],
-                      numeric: Option[BigDecimal],
-                      string: Option[String],
-                      bytes: Option[ByteString],
-                      timestamp: Option[Instant],
-                      date: Option[LocalDate],
-                      time: Option[LocalTime],
-                      datetime: Option[LocalDateTime])
+  case class Optional(
+    bool: Option[Boolean],
+    int: Option[Long],
+    float: Option[Double],
+    numeric: Option[BigDecimal],
+    string: Option[String],
+    bytes: Option[ByteString],
+    timestamp: Option[Instant],
+    date: Option[LocalDate],
+    time: Option[LocalTime],
+    datetime: Option[LocalDateTime]
+  )
 
   @BigQueryType.toTable
-  case class Repeated(bool: List[Boolean],
-                      int: List[Long],
-                      float: List[Double],
-                      numeric: List[BigDecimal],
-                      string: List[String],
-                      bytes: List[ByteString],
-                      timestamp: List[Instant],
-                      date: List[LocalDate],
-                      time: List[LocalTime],
-                      datetime: List[LocalDateTime])
+  case class Repeated(
+    bool: List[Boolean],
+    int: List[Long],
+    float: List[Double],
+    numeric: List[BigDecimal],
+    string: List[String],
+    bytes: List[ByteString],
+    timestamp: List[Instant],
+    date: List[LocalDate],
+    time: List[LocalTime],
+    datetime: List[LocalDateTime]
+  )
 
   case class Record(int: Long, string: String)
 

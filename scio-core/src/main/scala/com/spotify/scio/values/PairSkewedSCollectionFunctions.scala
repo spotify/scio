@@ -71,18 +71,19 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    *                        [[SCollection.sample(withReplacement:Boolean,fraction:Double)*
    *                        SCollection.sample]].
    */
-  def skewedJoin[W: Coder](that: SCollection[(K, W)],
-                           hotKeyThreshold: Long = 9000,
-                           eps: Double = 0.001,
-                           seed: Int = 42,
-                           delta: Double = 1E-10,
-                           sampleFraction: Double = 1.0,
-                           withReplacement: Boolean = true)(
-    implicit hasher: CMSHasher[K],
-    koder: Coder[K],
-    voder: Coder[V]): SCollection[(K, (V, W))] = {
-    require(sampleFraction <= 1.0 && sampleFraction > 0.0,
-            "Sample fraction has to be between (0.0, 1.0] - default is 1.0")
+  def skewedJoin[W: Coder](
+    that: SCollection[(K, W)],
+    hotKeyThreshold: Long = 9000,
+    eps: Double = 0.001,
+    seed: Int = 42,
+    delta: Double = 1e-10,
+    sampleFraction: Double = 1.0,
+    withReplacement: Boolean = true
+  )(implicit hasher: CMSHasher[K], koder: Coder[K], voder: Coder[V]): SCollection[(K, (V, W))] = {
+    require(
+      sampleFraction <= 1.0 && sampleFraction > 0.0,
+      "Sample fraction has to be between (0.0, 1.0] - default is 1.0"
+    )
 
     import com.twitter.algebird._
     // Key aggregator for `k->#values`
@@ -128,10 +129,11 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    *                        10K, keep upper estimation error in mind.
    * @param cms left hand side key [[com.twitter.algebird.CMSMonoid]]
    */
-  def skewedJoin[W: Coder](that: SCollection[(K, W)],
-                           hotKeyThreshold: Long,
-                           cms: SCollection[CMS[K]])(implicit koder: Coder[K],
-                                                     voder: Coder[V]): SCollection[(K, (V, W))] = {
+  def skewedJoin[W: Coder](
+    that: SCollection[(K, W)],
+    hotKeyThreshold: Long,
+    cms: SCollection[CMS[K]]
+  )(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, (V, W))] = {
     val (selfPartitions, thatPartitions) =
       partitionInputs(that, hotKeyThreshold, cms)
 
@@ -185,18 +187,23 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    *                        [[SCollection.sample(withReplacement:Boolean,fraction:Double)*
    *                        SCollection.sample]].
    */
-  def skewedLeftJoin[W: Coder](that: SCollection[(K, W)],
-                               hotKeyThreshold: Long = 9000,
-                               eps: Double = 0.001,
-                               seed: Int = 42,
-                               delta: Double = 1E-10,
-                               sampleFraction: Double = 1.0,
-                               withReplacement: Boolean = true)(
+  def skewedLeftJoin[W: Coder](
+    that: SCollection[(K, W)],
+    hotKeyThreshold: Long = 9000,
+    eps: Double = 0.001,
+    seed: Int = 42,
+    delta: Double = 1e-10,
+    sampleFraction: Double = 1.0,
+    withReplacement: Boolean = true
+  )(
     implicit hasher: CMSHasher[K],
     koder: Coder[K],
-    voder: Coder[V]): SCollection[(K, (V, Option[W]))] = {
-    require(sampleFraction <= 1.0 && sampleFraction > 0.0,
-            "Sample fraction has to be between (0.0, 1.0] - default is 1.0")
+    voder: Coder[V]
+  ): SCollection[(K, (V, Option[W]))] = {
+    require(
+      sampleFraction <= 1.0 && sampleFraction > 0.0,
+      "Sample fraction has to be between (0.0, 1.0] - default is 1.0"
+    )
 
     import com.twitter.algebird._
     // Key aggregator for `k->#values`
@@ -242,11 +249,11 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    *                        10K, keep upper estimation error in mind.
    * @param cms left hand side key [[com.twitter.algebird.CMSMonoid]]
    */
-  def skewedLeftJoin[W: Coder](that: SCollection[(K, W)],
-                               hotKeyThreshold: Long,
-                               cms: SCollection[CMS[K]])(
-    implicit koder: Coder[K],
-    voder: Coder[V]): SCollection[(K, (V, Option[W]))] = {
+  def skewedLeftJoin[W: Coder](
+    that: SCollection[(K, W)],
+    hotKeyThreshold: Long,
+    cms: SCollection[CMS[K]]
+  )(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, (V, Option[W]))] = {
     val (selfPartitions, thatPartitions) =
       partitionInputs(that, hotKeyThreshold, cms)
     // Use hash join for hot keys
@@ -299,18 +306,23 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    *                        [[SCollection.sample(withReplacement:Boolean,fraction:Double)*
    *                        SCollection.sample]].
    */
-  def skewedFullOuterJoin[W: Coder](that: SCollection[(K, W)],
-                                    hotKeyThreshold: Long = 9000,
-                                    eps: Double = 0.001,
-                                    seed: Int = 42,
-                                    delta: Double = 1E-10,
-                                    sampleFraction: Double = 1.0,
-                                    withReplacement: Boolean = true)(
+  def skewedFullOuterJoin[W: Coder](
+    that: SCollection[(K, W)],
+    hotKeyThreshold: Long = 9000,
+    eps: Double = 0.001,
+    seed: Int = 42,
+    delta: Double = 1e-10,
+    sampleFraction: Double = 1.0,
+    withReplacement: Boolean = true
+  )(
     implicit hasher: CMSHasher[K],
     koder: Coder[K],
-    voder: Coder[V]): SCollection[(K, (Option[V], Option[W]))] = {
-    require(sampleFraction <= 1.0 && sampleFraction > 0.0,
-            "Sample fraction has to be between (0.0, 1.0] - default is 1.0")
+    voder: Coder[V]
+  ): SCollection[(K, (Option[V], Option[W]))] = {
+    require(
+      sampleFraction <= 1.0 && sampleFraction > 0.0,
+      "Sample fraction has to be between (0.0, 1.0] - default is 1.0"
+    )
 
     import com.twitter.algebird._
     // Key aggregator for `k->#values`
@@ -355,11 +367,11 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    *                        10K, keep upper estimation error in mind.
    * @param cms left hand side key [[com.twitter.algebird.CMSMonoid]]
    */
-  def skewedFullOuterJoin[W: Coder](that: SCollection[(K, W)],
-                                    hotKeyThreshold: Long,
-                                    cms: SCollection[CMS[K]])(
-    implicit koder: Coder[K],
-    voder: Coder[V]): SCollection[(K, (Option[V], Option[W]))] = {
+  def skewedFullOuterJoin[W: Coder](
+    that: SCollection[(K, W)],
+    hotKeyThreshold: Long,
+    cms: SCollection[CMS[K]]
+  )(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, (Option[V], Option[W]))] = {
     val (selfPartitions, thatPartitions) =
       partitionInputs(that, hotKeyThreshold, cms)
     // Use hash join for hot keys
@@ -375,11 +387,11 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     hotJoined.withName("Union hot and chill join results") ++ chillJoined
   }
 
-  private def partitionInputs[W: Coder](that: SCollection[(K, W)],
-                                        hotKeyThreshold: Long,
-                                        cms: SCollection[CMS[K]])(
-    implicit koder: Coder[K],
-    voder: Coder[V]): (Partitions[K, V], Partitions[K, W]) = {
+  private def partitionInputs[W: Coder](
+    that: SCollection[(K, W)],
+    hotKeyThreshold: Long,
+    cms: SCollection[CMS[K]]
+  )(implicit koder: Coder[K], voder: Coder[V]): (Partitions[K, V], Partitions[K, W]) = {
     val (hotSelf, chillSelf) = (SideOutput[(K, V)](), SideOutput[(K, V)]())
     // scalastyle:off line.size.limit
     // Use asIterableSideInput as workaround for:

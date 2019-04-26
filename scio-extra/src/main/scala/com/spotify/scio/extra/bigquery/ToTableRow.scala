@@ -64,7 +64,8 @@ trait ToTableRow {
       case _ =>
         throw AvroConversionException(
           s"ToTableRow conversion failed:" +
-            s"could not match ${fieldValue.getClass}")
+            s"could not match ${fieldValue.getClass}"
+        )
     }
   }
 
@@ -76,7 +77,8 @@ trait ToTableRow {
         if (item.isInstanceOf[Iterable[_]] || item.isInstanceOf[Map[_, _]]) {
           throw AvroConversionException(
             s"ToTableRow conversion failed for item $item: " +
-              s"iterable and map types not supported")
+              s"iterable and map types not supported"
+          )
         }
         toTableRowField(item, field)
       }

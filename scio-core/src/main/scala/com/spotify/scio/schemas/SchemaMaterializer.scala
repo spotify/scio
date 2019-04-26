@@ -58,9 +58,11 @@ object SchemaMaterializer {
    * Convert the Scio coders that may be embeded in this schema
    * to proper beam coders
    */
-  private def materializeSchema[A](reg: CoderRegistry,
-                                   opt: PipelineOptions,
-                                   schema: Schema[A]): Schema[A] =
+  private def materializeSchema[A](
+    reg: CoderRegistry,
+    opt: PipelineOptions,
+    schema: Schema[A]
+  ): Schema[A] =
     schema match {
       case Record(schemas, construct, destruct) =>
         val schemasMat = schemas.map {
@@ -180,7 +182,8 @@ object SchemaMaterializer {
       .getOrElse(null.asInstanceOf[schema.Repr])
 
   private def encode[F[_], A](schema: ArrayType[F, A], fieldType: BFieldType)(
-    v: F[A]): schema.Repr = {
+    v: F[A]
+  ): schema.Repr = {
     schema
       .toList(v)
       .asScala
@@ -189,7 +192,8 @@ object SchemaMaterializer {
   }
 
   private def encode[F[_, _], A, B](schema: MapType[F, A, B], fieldType: BFieldType)(
-    v: F[A, B]): schema.Repr = {
+    v: F[A, B]
+  ): schema.Repr = {
     val h: util.Map[schema.keySchema.Repr, schema.valueSchema.Repr] = new util.HashMap()
     schema
       .toMap(v)
@@ -212,7 +216,8 @@ object SchemaMaterializer {
 
   final def materialize[T](
     sc: ScioContext,
-    schema: Schema[T]): (BSchema, SerializableFunction[T, Row], SerializableFunction[Row, T]) =
+    schema: Schema[T]
+  ): (BSchema, SerializableFunction[T, Row], SerializableFunction[Row, T]) =
     materialize(sc.pipeline.getCoderRegistry, sc.options, schema)
 
   final def materializeWithDefault[T](
@@ -223,7 +228,8 @@ object SchemaMaterializer {
   final def materialize[T](
     reg: CoderRegistry,
     opt: PipelineOptions,
-    schema: Schema[T]): (BSchema, SerializableFunction[T, Row], SerializableFunction[Row, T]) = {
+    schema: Schema[T]
+  ): (BSchema, SerializableFunction[T, Row], SerializableFunction[Row, T]) = {
     schema match {
       case RawRecord(bschema, fromRow, toRow) =>
         (bschema, toRow, fromRow)

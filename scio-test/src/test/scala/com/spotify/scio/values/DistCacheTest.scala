@@ -177,8 +177,10 @@ class DistCacheTest extends PipelineSpec {
   val annoy: AnnoyIndex = {
     val v1 = Array.fill(5)(0.5f)
     val v2 = Array.fill(5)(1.5f)
-    new MockAnnoy(Map(0 -> v1, 1 -> v2, 2 -> v1, 3 -> v2),
-                  Map(v1.toSeq -> List(10, 20), v2.toSeq -> List(15, 25)))
+    new MockAnnoy(
+      Map(0 -> v1, 1 -> v2, 2 -> v1, 3 -> v2),
+      Map(v1.toSeq -> List(10, 20), v2.toSeq -> List(15, 25))
+    )
   }
 
   "AnnoyIndex" should "work with JobTest" in {
@@ -256,9 +258,10 @@ class DistCacheTest extends PipelineSpec {
 // =======================================================================
 
 // Mock Annoy with fake data and serializable
-class MockAnnoy(private val itemVectors: Map[Int, Array[Float]],
-                private val nearest: Map[Seq[Float], List[Int]])
-    extends AnnoyIndex
+class MockAnnoy(
+  private val itemVectors: Map[Int, Array[Float]],
+  private val nearest: Map[Seq[Float], List[Int]]
+) extends AnnoyIndex
     with Serializable {
   override def getNodeVector(nodeOffset: Int, v: Array[Float]): Unit = ???
   override def getItemVector(itemIndex: Int, v: Array[Float]): Unit = ???

@@ -100,7 +100,9 @@ private class GuavaClient(val numThreads: Int) {
     MoreExecutors.getExitingExecutorService(
       Executors
         .newFixedThreadPool(numThreads)
-        .asInstanceOf[ThreadPoolExecutor]))
+        .asInstanceOf[ThreadPoolExecutor]
+    )
+  )
   def request(input: Int): ListenableFuture[String] =
     es.submit(new Callable[String] {
       override def call(): String = Client.process(input)
@@ -109,7 +111,8 @@ private class GuavaClient(val numThreads: Int) {
 
 private class JavaClient(val numThreads: Int) {
   private val es = MoreExecutors.getExitingExecutorService(
-    Executors.newFixedThreadPool(numThreads).asInstanceOf[ThreadPoolExecutor])
+    Executors.newFixedThreadPool(numThreads).asInstanceOf[ThreadPoolExecutor]
+  )
   def request(input: Int): CompletableFuture[String] =
     CompletableFuture.supplyAsync(new Supplier[String] {
       override def get(): String = Client.process(input)

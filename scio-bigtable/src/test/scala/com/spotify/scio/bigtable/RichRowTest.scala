@@ -30,9 +30,11 @@ class RichRowTest extends FlatSpec with Matchers {
 
   val FAMILY_NAME = "family"
 
-  val dataMap = Seq("a" -> Seq(10 -> "x", 9 -> "y", 8 -> "z"),
-                    "b" -> Seq(7 -> "u", 6 -> "v", 5 -> "w"),
-                    "c" -> Seq(4 -> "r", 3 -> "s", 2 -> "t")).map {
+  val dataMap = Seq(
+    "a" -> Seq(10 -> "x", 9 -> "y", 8 -> "z"),
+    "b" -> Seq(7 -> "u", 6 -> "v", 5 -> "w"),
+    "c" -> Seq(4 -> "r", 3 -> "s", 2 -> "t")
+  ).map {
     case (q, cs) =>
       val kvs = cs.map(kv => (kv._1.toLong, bs(kv._2)))
       (bs(q), ListMap(kvs: _*))
@@ -57,7 +59,8 @@ class RichRowTest extends FlatSpec with Matchers {
       Family
         .newBuilder()
         .setName(FAMILY_NAME)
-        .addAllColumns(columns.asJava))
+        .addAllColumns(columns.asJava)
+    )
     .build()
 
   "RichRow" should "support getColumnCells" in {

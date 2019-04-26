@@ -71,7 +71,8 @@ trait BigtableMatchers extends SCollectionMatchers {
    * deserialized cell value. Column qualifier defaults to the same as column family.
    */
   def containSetCellValue[V: ClassTag](key: ByteString, cf: String, value: V)(
-    implicit ser: V => ByteString): Matcher[BTCollection] =
+    implicit ser: V => ByteString
+  ): Matcher[BTCollection] =
     containSetCellValue(key, cf, cf, value)
 
   /**
@@ -85,7 +86,8 @@ trait BigtableMatchers extends SCollectionMatchers {
    * @tparam V Class of expected value
    */
   def containSetCellValue[V: ClassTag](key: ByteString, cf: String, cq: String, value: V)(
-    implicit ser: V => ByteString): Matcher[BTCollection] =
+    implicit ser: V => ByteString
+  ): Matcher[BTCollection] =
     new Matcher[BTCollection] {
       override def apply(left: BTCollection): MatchResult = {
         val flattenedRows = left.flatMap {
@@ -106,7 +108,8 @@ trait BigtableMatchers extends SCollectionMatchers {
             cf,
             ByteString.copyFromUtf8(cq),
             ser.apply(value)
-          )).apply(flattenedRows)
+          )
+        ).apply(flattenedRows)
       }
     }
 
@@ -114,8 +117,10 @@ trait BigtableMatchers extends SCollectionMatchers {
    * Check that the BT collection contains a cell with the given row key and enumerated
    * MutationCase, making no assumptions about the contents of the rest of the collection.
    */
-  def containCellMutationCase[V: ClassTag](key: ByteString,
-                                           mutation: MutationCase): Matcher[BTCollection] =
+  def containCellMutationCase[V: ClassTag](
+    key: ByteString,
+    mutation: MutationCase
+  ): Matcher[BTCollection] =
     new Matcher[BTCollection] {
       override def apply(left: BTCollection): MatchResult = {
         val flattenedRows = left.flatMap {

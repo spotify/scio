@@ -61,7 +61,8 @@ final case class ElasticsearchIO[T](esOptions: ElasticsearchOptions) extends Sci
         .withError(new beam.ThrowingConsumer[BulkExecutionException] {
           override def accept(t: BulkExecutionException): Unit =
             params.errorFn(t)
-        }))
+        })
+    )
     EmptyTap
   }
 
@@ -79,8 +80,10 @@ object ElasticsearchIO {
     private[elasticsearch] val DefaultMaxRetries = 3
     private[elasticsearch] val DefaultRetryPause = Duration.millis(35000)
     private[elasticsearch] val DefaultRetryConfig =
-      RetryConfig(maxRetries = WriteParam.DefaultMaxRetries,
-                  retryPause = WriteParam.DefaultRetryPause)
+      RetryConfig(
+        maxRetries = WriteParam.DefaultMaxRetries,
+        retryPause = WriteParam.DefaultRetryPause
+      )
 
   }
 
@@ -90,7 +93,8 @@ object ElasticsearchIO {
     flushInterval: Duration = WriteParam.DefaultFlushInterval,
     numOfShards: Long = WriteParam.DefaultNumShards,
     maxBulkRequestSize: Int = WriteParam.DefaultMaxBulkRequestSize,
-    retry: RetryConfig = WriteParam.DefaultRetryConfig)
+    retry: RetryConfig = WriteParam.DefaultRetryConfig
+  )
 
   final case class RetryConfig(maxRetries: Int, retryPause: Duration)
 }
