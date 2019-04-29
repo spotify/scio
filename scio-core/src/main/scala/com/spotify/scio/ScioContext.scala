@@ -768,7 +768,7 @@ class ScioContext private[scio] (val options: PipelineOptions, private var artif
   }
 
   /** Initialize a given [[org.apache.beam.sdk.metrics.Counter Counter]] metric. */
-  def initCounter(counter: Counter*): Unit =
+  def initCounter(counter: Counter*): List[Counter] =
     _counters.appendAll(counter)
 }
 // scalastyle:on number.of.methods
