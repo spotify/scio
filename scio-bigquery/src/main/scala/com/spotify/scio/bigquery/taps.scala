@@ -20,6 +20,7 @@ package com.spotify.scio.bigquery
 import com.google.cloud.bigquery.storage.v1beta1.ReadOptions.TableReadOptions
 import com.google.api.services.bigquery.model.TableReference
 import com.spotify.scio.ScioContext
+import com.spotify.scio.bigquery.Table
 import com.spotify.scio.bigquery.client.BigQuery
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.io.{FileStorage, Tap, Taps}
@@ -47,7 +48,7 @@ final case class BigQueryTap(table: TableReference) extends Tap[TableRow] {
 }
 
 /** Tap for BigQuery tables using storage api. */
-final case class BigQueryStorageTap(table: TableReference, readOptions: TableReadOptions)
+final case class BigQueryStorageTap(table: Table, readOptions: TableReadOptions)
     extends Tap[TableRow] {
   override def value: Iterator[TableRow] =
     BigQuery.defaultInstance().tables.storageRows(table, readOptions)

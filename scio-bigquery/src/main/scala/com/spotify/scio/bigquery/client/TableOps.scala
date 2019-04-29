@@ -24,7 +24,7 @@ import com.google.cloud.bigquery.storage.v1beta1.TableReferenceProto
 import com.google.cloud.bigquery.storage.v1beta1.ReadOptions.TableReadOptions
 import com.google.cloud.hadoop.util.ApiErrorExtractor
 import com.spotify.scio.bigquery.client.BigQuery.Client
-import com.spotify.scio.bigquery.{StorageUtil, TableRow}
+import com.spotify.scio.bigquery.{StorageUtil, TableRow, Table => STable}
 import org.apache.avro.Schema
 import org.apache.avro.generic.{GenericDatumReader, GenericRecord}
 import org.apache.avro.io.{BinaryDecoder, DecoderFactory}
@@ -90,14 +90,14 @@ private[client] final class TableOps(client: Client) {
       }
     }
 
-  def storageRows(tableRef: TableReference, readOptions: TableReadOptions): Iterator[TableRow] =
+  def storageRows(table: STable, readOptions: TableReadOptions): Iterator[TableRow] =
     withBigQueryService { bqServices =>
       val tableRefProto = TableReferenceProto.TableReference
         .newBuilder()
-        .setDatasetId(tableRef.getDatasetId)
-        .setTableId(tableRef.getTableId)
-      if (tableRef.getProjectId != null) {
-        tableRefProto.setProjectId(tableRef.getProjectId)
+        .setDatasetId(table.ref.getDatasetId)
+        .setTableId(table.ref.getTableId)
+      if (table.ref.getProjectId != null) {
+        tableRefProto.setProjectId(table.ref.getProjectId)
       }
 
       val request = CreateReadSessionRequest
@@ -132,8 +132,8 @@ private[client] final class TableOps(client: Client) {
         val res = ArrayBuffer.empty[TableRow]
         while (!decoder.isEnd()) {
           gr = reader.read(gr, decoder)
-          val table = bqServices.getTable(tableRef, readOptions.getSelectedFieldsList())
-          res += BigQueryAvroUtilsWrapper.convertGenericRecordToTableRow(gr, table.getSchema)
+          val tb = bqServices.getTable(table.ref, readOptions.getSelectedFieldsList())
+          res += BigQueryAvroUtilsWrapper.convertGenericRecordToTableRow(gr, tb.getSchema)
         }
 
         res.toIterator
