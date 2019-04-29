@@ -751,25 +751,21 @@ class ScioContext private[scio] (val options: PipelineOptions, private var artif
    * Initialize a new [[org.apache.beam.sdk.metrics.Counter Counter]] metric using `T` as namespace.
    * Default is "com.spotify.scio.ScioMetrics" if `T` is not specified.
    */
-  def initCounter[T: ClassTag](name: String): Counter = {
-    val counter = ScioMetrics.counter[T](name)
-    _counters.append(counter)
-    counter
-  }
+  def initCounter[T: ClassTag](name: String): Counter =
+    initCounter(ScioMetrics.counter[T](name)).head
 
   /**
    * Initialize a new [[org.apache.beam.sdk.metrics.Counter Counter]] metric from namespace and
    * name.
    * */
-  def initCounter(namespace: String, name: String): Counter = {
-    val counter = ScioMetrics.counter(namespace, name)
-    _counters.append(counter)
-    counter
-  }
+  def initCounter(namespace: String, name: String): Counter =
+    initCounter(ScioMetrics.counter(namespace, name)).head
 
   /** Initialize a given [[org.apache.beam.sdk.metrics.Counter Counter]] metric. */
-  def initCounter(counter: Counter*): List[Counter] =
-    _counters.appendAll(counter)
+  def initCounter(counters: Counter*): Seq[Counter] = {
+    _counters.appendAll(counters)
+    counters
+  }
 }
 // scalastyle:on number.of.methods
 
