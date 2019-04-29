@@ -321,7 +321,7 @@ object BigQueryTyped {
     ): Aux[T, Table] =
       new IO[T] {
         type F[A <: HasAnnotation] = Table[A]
-        def impl: Table[T] = Table(t.table)
+        def impl: Table[T] = Table(STable.Spec(t.table))
       }
 
     implicit def queryIO[T <: HasAnnotation: ClassTag: TypeTag: Coder](
@@ -493,7 +493,8 @@ object BigQueryTyped {
       // for legacy support and should not exists once
       // BigQueryScioContext.typedBigQuery is removed
       case null if bqt.isTable =>
-        ScioIO.ro[T](Table(STable.Spec(newSource)))
+        val table = STable.Spec(bqt.table.get)
+        ScioIO.ro[T](Table[T](table))
       case null if bqt.isQuery =>
         val query = bqt.query.get
         Select[T](query)
