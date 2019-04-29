@@ -9,3 +9,4 @@ target
 .bloop
 .metals
 .vscode
+.java-version
