@@ -176,4 +176,42 @@ class ScioContextTest extends PipelineSpec {
     the[IllegalArgumentException] thrownBy { ScioContext.apply(invalidOpts) } should have message
       s"blockFor param foo cannot be cast to type scala.concurrent.duration.Duration"
   }
+
+  behavior of "Counter initialization in ScioContext"
+  it should "initialize Counters which are registered by name" in {
+    val sc = ScioContext()
+    sc.initCounter(name = "named-counter")
+    val res = sc.close().waitUntilDone()
+
+    val actualCommitedCounterValue = res
+      .counter(ScioMetrics.counter(name = "named-counter"))
+      .committed
+
+    actualCommitedCounterValue shouldBe Some(0)
+  }
+
+  it should "initialize Counters which are registered by name and namespace" in {
+    val sc = ScioContext()
+    sc.initCounter(namespace = "ns", name = "name-spaced-counter")
+    val res = sc.close().waitUntilDone()
+
+    val actualCommitedCounterValue = res
+      .counter(ScioMetrics.counter(namespace = "ns", name = "name-spaced-counter"))
+      .committed
+
+    actualCommitedCounterValue shouldBe Some(0)
+  }
+
+  it should "initialize Counters which are registered" in {
+    val scioCounter = ScioMetrics.counter(name = "some-counter")
+    val sc = ScioContext()
+    sc.initCounter(scioCounter)
+    val res = sc.close().waitUntilDone()
+
+    val actualCommitedCounterValue = res
+      .counter(scioCounter)
+      .committed
+
+    actualCommitedCounterValue shouldBe Some(0)
+  }
 }
