@@ -44,11 +44,13 @@ object SoccoIndex {
 
   def isScala(f: File): Boolean = f.isFile && f.getName.endsWith(".scala")
 
-  case class Source(file: String,
-                    section: String,
-                    title: String,
-                    url: String,
-                    objects: List[String])
+  case class Source(
+    file: String,
+    section: String,
+    title: String,
+    url: String,
+    objects: List[String]
+  )
 
   // Find all source files
   private def sources = {

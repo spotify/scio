@@ -48,7 +48,8 @@ trait PipelineSpec
   private val aliases =
     Map(
       "flink" ->
-        List("runner" -> "FlinkRunner", "flinkMaster" -> "[local]"))
+        List("runner" -> "FlinkRunner", "flinkMaster" -> "[local]")
+    )
 
   private def getBeamOptions(m: ConfigMap): List[String] =
     m.collect { case (Beam(k), v) => k -> v }

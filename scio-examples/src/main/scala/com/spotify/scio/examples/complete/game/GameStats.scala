@@ -44,10 +44,12 @@ object GameStats {
 
   // The schemas for the BigQuery tables to write output to are defined as annotated case classes
   @BigQueryType.toTable
-  case class TeamScoreSums(team: String,
-                           total_score: Int,
-                           window_start: String,
-                           processing_time: String)
+  case class TeamScoreSums(
+    team: String,
+    total_score: Int,
+    window_start: String,
+    processing_time: String
+  )
   @BigQueryType.toTable
   case class AvgSessionLength(mean_duration: Double, window_start: String)
 
@@ -114,9 +116,10 @@ object GameStats {
 
     userEvents
     // Window over a variable length of time - sessions end after sessionGap minutes no activity
-      .withSessionWindows(Duration.standardMinutes(sessionGap),
-                          options =
-                            WindowOptions(timestampCombiner = TimestampCombiner.END_OF_WINDOW))
+      .withSessionWindows(
+        Duration.standardMinutes(sessionGap),
+        options = WindowOptions(timestampCombiner = TimestampCombiner.END_OF_WINDOW)
+      )
       // Get all distinct users
       .keys
       .distinct

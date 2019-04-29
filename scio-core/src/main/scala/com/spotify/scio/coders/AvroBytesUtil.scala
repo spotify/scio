@@ -32,11 +32,14 @@ private[scio] object AvroBytesUtil {
     val s = ASchema.createRecord("AvroBytesRecord", null, null, false)
     s.setFields(
       List(
-        new ASchema.Field("bytes",
-                          ASchema.create(ASchema.Type.BYTES),
-                          null,
-                          null.asInstanceOf[Object])
-      ).asJava)
+        new ASchema.Field(
+          "bytes",
+          ASchema.create(ASchema.Type.BYTES),
+          null,
+          null.asInstanceOf[Object]
+        )
+      ).asJava
+    )
     s
   }
 

@@ -36,13 +36,17 @@ object JdbcJob {
   }
 
   def getReadOptions(opts: CloudSqlOptions): JdbcReadOptions[String] =
-    JdbcReadOptions(connectionOptions = getConnectionOptions(opts),
-                    query = "SELECT <this> FROM <this>",
-                    rowMapper = (rs: ResultSet) => rs.getString(1))
+    JdbcReadOptions(
+      connectionOptions = getConnectionOptions(opts),
+      query = "SELECT <this> FROM <this>",
+      rowMapper = (rs: ResultSet) => rs.getString(1)
+    )
 
   def getWriteOptions(opts: CloudSqlOptions): JdbcWriteOptions[String] =
-    JdbcWriteOptions[String](connectionOptions = getConnectionOptions(opts),
-                             statement = "INSERT INTO <this> VALUES( ?, ? ..?)")
+    JdbcWriteOptions[String](
+      connectionOptions = getConnectionOptions(opts),
+      statement = "INSERT INTO <this> VALUES( ?, ? ..?)"
+    )
 
   def connectionUrl(opts: CloudSqlOptions): String =
     s"jdbc:mysql://google/${opts.getCloudSqlDb}?" +
@@ -50,20 +54,24 @@ object JdbcJob {
       s"socketFactory=com.google.cloud.sql.mysql.SocketFactory"
 
   def getConnectionOptions(opts: CloudSqlOptions): JdbcConnectionOptions =
-    JdbcConnectionOptions(username = opts.getCloudSqlUsername,
-                          password = Some(opts.getCloudSqlPassword),
-                          connectionUrl = connectionUrl(opts),
-                          classOf[java.sql.Driver])
+    JdbcConnectionOptions(
+      username = opts.getCloudSqlUsername,
+      password = Some(opts.getCloudSqlPassword),
+      connectionUrl = connectionUrl(opts),
+      classOf[java.sql.Driver]
+    )
 
 }
 
 class JdbcTest extends PipelineSpec {
 
   def testJdbc(xs: String*): Unit = {
-    val args = Array("--cloudSqlUsername=john",
-                     "--cloudSqlPassword=secret",
-                     "--cloudSqlDb=mydb",
-                     "--cloudSqlInstanceConnectionName=project-id:zone:db-instance-name")
+    val args = Array(
+      "--cloudSqlUsername=john",
+      "--cloudSqlPassword=secret",
+      "--cloudSqlDb=mydb",
+      "--cloudSqlInstanceConnectionName=project-id:zone:db-instance-name"
+    )
     val (opts, _) = ScioContext.parseArguments[CloudSqlOptions](args)
     val readOpts = JdbcJob.getReadOptions(opts)
     val writeOpts = JdbcJob.getWriteOptions(opts)
@@ -91,9 +99,11 @@ class JdbcTest extends PipelineSpec {
 
   it should "connnect via JDBC without a password" in {
     val args =
-      Array("--cloudSqlUsername=john",
-            "--cloudSqlDb=mydb",
-            "--cloudSqlInstanceConnectionName=project-id:zone:db-instance-name")
+      Array(
+        "--cloudSqlUsername=john",
+        "--cloudSqlDb=mydb",
+        "--cloudSqlInstanceConnectionName=project-id:zone:db-instance-name"
+      )
     val (opts, _) = ScioContext.parseArguments[CloudSqlOptions](args)
     val readOpts = JdbcJob.getReadOptions(opts)
     val writeOpts = JdbcJob.getWriteOptions(opts)

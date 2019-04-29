@@ -37,7 +37,8 @@ class SpannerIOTest extends ScioIOSpec with Matchers {
 
   "SpannerScioContext" should "support table input" in {
     testJobTestInput(readData)(_ => SpannerRead(config))(
-      _.spannerTable(config, _, Seq("someColumn")))
+      _.spannerTable(config, _, Seq("someColumn"))
+    )
   }
 
   it should "support query input" in {

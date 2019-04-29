@@ -26,11 +26,13 @@ import scala.reflect.runtime.universe._
 
 object BigQueryTypeIT {
   @BigQueryType.fromQuery(
-    "SELECT word, word_count FROM [bigquery-public-data:samples.shakespeare] WHERE word = 'Romeo'")
+    "SELECT word, word_count FROM [bigquery-public-data:samples.shakespeare] WHERE word = 'Romeo'"
+  )
   class LegacyT
 
   @BigQueryType.fromQuery(
-    "SELECT word, word_count FROM `bigquery-public-data.samples.shakespeare` WHERE word = 'Romeo'")
+    "SELECT word, word_count FROM `bigquery-public-data.samples.shakespeare` WHERE word = 'Romeo'"
+  )
   class SqlT
 
   @BigQueryType.fromTable("bigquery-public-data:samples.shakespeare")
@@ -38,12 +40,14 @@ object BigQueryTypeIT {
 
   @BigQueryType.fromQuery(
     "SELECT word, word_count FROM [data-integration-test:partition_a.table_%s]",
-    "$LATEST")
+    "$LATEST"
+  )
   class LegacyLatestT
 
   @BigQueryType.fromQuery(
     "SELECT word, word_count FROM `data-integration-test.partition_a.table_%s`",
-    "$LATEST")
+    "$LATEST"
+  )
   class SqlLatestT
 
   @BigQueryType.fromQuery(

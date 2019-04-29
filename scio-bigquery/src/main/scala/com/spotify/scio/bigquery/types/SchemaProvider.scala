@@ -39,11 +39,13 @@ private[types] object SchemaProvider {
     r
   }
 
-  private def field(mode: String,
-                    name: String,
-                    tpe: String,
-                    desc: Option[String],
-                    nested: Iterable[TableFieldSchema]): TableFieldSchema = {
+  private def field(
+    mode: String,
+    name: String,
+    tpe: String,
+    desc: Option[String],
+    nested: Iterable[TableFieldSchema]
+  ): TableFieldSchema = {
     val s = new TableFieldSchema().setMode(mode).setName(name).setType(tpe)
     if (nested.nonEmpty) {
       s.setFields(nested.toList.asJava)

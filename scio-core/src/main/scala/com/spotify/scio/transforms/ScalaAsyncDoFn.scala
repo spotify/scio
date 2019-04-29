@@ -42,9 +42,11 @@ abstract class ScalaAsyncDoFn[I, O, R] extends BaseAsyncDoFn[I, O, R, Future[O]]
     ()
   }
 
-  override protected def addCallback(future: Future[O],
-                                     onSuccess: JFunction[O, Void],
-                                     onFailure: JFunction[Throwable, Void]): Future[O] =
+  override protected def addCallback(
+    future: Future[O],
+    onSuccess: JFunction[O, Void],
+    onFailure: JFunction[Throwable, Void]
+  ): Future[O] =
     future.transform(r => { onSuccess(r); r }, t => { onFailure(t); t })
 
 }

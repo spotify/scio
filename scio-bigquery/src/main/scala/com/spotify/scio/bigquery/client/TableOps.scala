@@ -94,9 +94,11 @@ private[client] final class TableOps(client: Client) {
     Cache.withCacheKey(bq.BigQueryHelpers.toTableSpec(tableRef))(table(tableRef).getSchema)
 
   /** Get schema from a table using the storage API. */
-  def storageReadSchema(tableSpec: String,
-                        selectedFields: List[String] = Nil,
-                        rowRestriction: String = null): Schema = {
+  def storageReadSchema(
+    tableSpec: String,
+    selectedFields: List[String] = Nil,
+    rowRestriction: String = null
+  ): Schema = {
     val tableRef = bq.BigQueryHelpers.parseTableSpec(tableSpec)
     val tableRefProto = TableReferenceProto.TableReference.newBuilder()
     if (tableRef.getProjectId != null) {
@@ -172,11 +174,13 @@ private[client] final class TableOps(client: Client) {
     exists(bq.BigQueryHelpers.parseTableSpec(tableSpec))
 
   /** Write rows to a table. */
-  def writeRows(tableReference: TableReference,
-                rows: List[TableRow],
-                schema: TableSchema,
-                writeDisposition: WriteDisposition,
-                createDisposition: CreateDisposition): Long = withBigQueryService { service =>
+  def writeRows(
+    tableReference: TableReference,
+    rows: List[TableRow],
+    schema: TableSchema,
+    writeDisposition: WriteDisposition,
+    createDisposition: CreateDisposition
+  ): Long = withBigQueryService { service =>
     val table = new Table().setTableReference(tableReference).setSchema(schema)
     if (createDisposition == CreateDisposition.CREATE_IF_NEEDED) {
       service.createTable(table)
@@ -195,16 +199,20 @@ private[client] final class TableOps(client: Client) {
   }
 
   /** Write rows to a table. */
-  def writeRows(tableSpec: String,
-                rows: List[TableRow],
-                schema: TableSchema = null,
-                writeDisposition: WriteDisposition = WriteDisposition.WRITE_APPEND,
-                createDisposition: CreateDisposition = CreateDisposition.CREATE_IF_NEEDED): Long =
-    writeRows(bq.BigQueryHelpers.parseTableSpec(tableSpec),
-              rows,
-              schema,
-              writeDisposition,
-              createDisposition)
+  def writeRows(
+    tableSpec: String,
+    rows: List[TableRow],
+    schema: TableSchema = null,
+    writeDisposition: WriteDisposition = WriteDisposition.WRITE_APPEND,
+    createDisposition: CreateDisposition = CreateDisposition.CREATE_IF_NEEDED
+  ): Long =
+    writeRows(
+      bq.BigQueryHelpers.parseTableSpec(tableSpec),
+      rows,
+      schema,
+      writeDisposition,
+      createDisposition
+    )
 
   private[bigquery] def withBigQueryService[T](f: bq.BigQueryServicesWrapper => T): T = {
     val options = PipelineOptionsFactory

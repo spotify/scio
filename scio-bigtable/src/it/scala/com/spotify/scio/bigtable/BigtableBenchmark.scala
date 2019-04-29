@@ -61,7 +61,8 @@ object BigtableBenchmark {
       RowFilter
         .newBuilder()
         .setFamilyNameRegexFilter(FamilyName)
-        .setColumnQualifierRegexFilter(ColumnQualifier))
+        .setColumnQualifierRegexFilter(ColumnQualifier)
+    )
     .setRowsLimit(1L)
     .build()
 
@@ -143,10 +144,12 @@ object BigtableBenchmark {
 
   def main(args: Array[String]): Unit = {
     // Run sequentially to avoid read/write contention
-    BenchmarkRunner.runSequentially(args,
-                                    "BigtableBenchmark",
-                                    benchmarks,
-                                    ScioBenchmarkSettings.commonArgs() :+ "--region=us-east1")
+    BenchmarkRunner.runSequentially(
+      args,
+      "BigtableBenchmark",
+      benchmarks,
+      ScioBenchmarkSettings.commonArgs() :+ "--region=us-east1"
+    )
   }
 
   private val benchmarks =
@@ -185,7 +188,8 @@ object BigtableBenchmark {
           ParDo.of(new BigtableDoFn[String, String](BigtableOptions, MaxPendingRequests) {
             override def asyncLookup(session: BigtableSession, input: String) =
               bigtableLookup(session, input)
-          }))
+          })
+        )
         .map(checkResult)
         .sum
     }
@@ -211,7 +215,8 @@ object BigtableBenchmark {
           ParDo.of(new BigtableDoFn[String, String](BigtableOptions, MaxPendingRequests, cache) {
             override def asyncLookup(session: BigtableSession, input: String) =
               bigtableLookup(session, input)
-          }))
+          })
+        )
         .map(checkResult)
         .sum
     }

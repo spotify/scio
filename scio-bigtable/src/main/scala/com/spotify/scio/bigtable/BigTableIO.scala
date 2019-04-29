@@ -63,7 +63,8 @@ final case class BigtableRead(bigtableOptions: BigtableOptions, tableId: String)
         new SerializableFunction[BigtableOptions.Builder, BigtableOptions.Builder] {
           override def apply(input: BigtableOptions.Builder): BigtableOptions.Builder =
             opts.toBuilder
-        })
+        }
+      )
     if (params.keyRange != null) {
       read = read.withKeyRange(params.keyRange)
     }
@@ -75,7 +76,8 @@ final case class BigtableRead(bigtableOptions: BigtableOptions, tableId: String)
 
   override def write(data: SCollection[Row], params: WriteP): Tap[Nothing] =
     throw new UnsupportedOperationException(
-      "BigtableRead is read-only, use Mutation to write to Bigtable")
+      "BigtableRead is read-only, use Mutation to write to Bigtable"
+    )
 
   override def tap(params: ReadP): Tap[Nothing] =
     throw new NotImplementedError("Bigtable tap not implemented")
@@ -88,8 +90,10 @@ object BigtableRead {
     private[bigtable] val DefaultRowFilter: RowFilter = null
   }
 
-  final case class ReadParam private (keyRange: ByteKeyRange = ReadParam.DefaultKeyRange,
-                                      rowFilter: RowFilter = ReadParam.DefaultRowFilter)
+  final case class ReadParam private (
+    keyRange: ByteKeyRange = ReadParam.DefaultKeyRange,
+    rowFilter: RowFilter = ReadParam.DefaultRowFilter
+  )
 
   final def apply(projectId: String, instanceId: String, tableId: String): BigtableRead = {
     val bigtableOptions = new BigtableOptions.Builder()
@@ -101,8 +105,8 @@ object BigtableRead {
 }
 
 final case class BigtableWrite[T](bigtableOptions: BigtableOptions, tableId: String)(
-  implicit ev: T <:< Mutation)
-    extends BigtableIO[(ByteString, Iterable[T])] {
+  implicit ev: T <:< Mutation
+) extends BigtableIO[(ByteString, Iterable[T])] {
 
   override type ReadP = Nothing
   override type WriteP = BigtableWrite.WriteParam
@@ -112,7 +116,8 @@ final case class BigtableWrite[T](bigtableOptions: BigtableOptions, tableId: Str
 
   override def read(sc: ScioContext, params: ReadP): SCollection[(ByteString, Iterable[T])] =
     throw new UnsupportedOperationException(
-      "BigtableWrite is write-only, use Row to read from Bigtable")
+      "BigtableWrite is write-only, use Row to read from Bigtable"
+    )
 
   override def write(data: SCollection[(ByteString, Iterable[T])], params: WriteP): Tap[Nothing] = {
     val sink =
@@ -128,7 +133,8 @@ final case class BigtableWrite[T](bigtableOptions: BigtableOptions, tableId: Str
               new SerializableFunction[BigtableOptions.Builder, BigtableOptions.Builder] {
                 override def apply(input: BigtableOptions.Builder): BigtableOptions.Builder =
                   opts.toBuilder
-              })
+              }
+            )
         case BigtableWrite.Bulk(numOfShards, flushInterval) =>
           new BigtableBulkWriter(tableId, bigtableOptions, numOfShards, flushInterval)
       }
@@ -153,12 +159,14 @@ object BigtableWrite {
     private[bigtable] val DefaultFlushInterval = Duration.standardSeconds(1)
   }
 
-  final case class Bulk private (numOfShards: Int,
-                                 flushInterval: Duration = Bulk.DefaultFlushInterval)
-      extends WriteParam
+  final case class Bulk private (
+    numOfShards: Int,
+    flushInterval: Duration = Bulk.DefaultFlushInterval
+  ) extends WriteParam
 
   final def apply[T](projectId: String, instanceId: String, tableId: String)(
-    implicit ev: T <:< Mutation): BigtableWrite[T] = {
+    implicit ev: T <:< Mutation
+  ): BigtableWrite[T] = {
     val bigtableOptions = new BigtableOptions.Builder()
       .setProjectId(projectId)
       .setInstanceId(instanceId)

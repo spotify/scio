@@ -88,7 +88,8 @@ object TfIdf {
 
   // Compute TF-IDF from an input collection of `(doc, line)`
   def computeTfIdf(
-    uriToContent: SCollection[(String, String)]): SCollection[(String, (String, Double))] = {
+    uriToContent: SCollection[(String, String)]
+  ): SCollection[(String, (String, Double))] = {
     // Split lines into terms as (doc, term)
     val uriToWords = uriToContent.flatMap {
       case (uri, line) =>

@@ -58,20 +58,22 @@ object SpannerIOIT {
         .to("bar")
         .build()
     ),
-    Seq(Struct
-          .newBuilder()
-          .set("Key")
-          .to(1L)
-          .set("Value")
-          .to("foo")
-          .build(),
-        Struct
-          .newBuilder()
-          .set("Key")
-          .to(2L)
-          .set("Value")
-          .to("bar")
-          .build())
+    Seq(
+      Struct
+        .newBuilder()
+        .set("Key")
+        .to(1L)
+        .set("Value")
+        .to("foo")
+        .build(),
+      Struct
+        .newBuilder()
+        .set("Key")
+        .to(2L)
+        .set("Value")
+        .to("bar")
+        .build()
+    )
   )
 }
 

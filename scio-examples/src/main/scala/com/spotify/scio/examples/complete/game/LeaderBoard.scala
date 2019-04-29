@@ -45,11 +45,13 @@ object LeaderBoard {
 
   // The schemas for the BigQuery tables to write output to are defined as annotated case classes
   @BigQueryType.toTable
-  case class TeamScoreSums(team: String,
-                           total_score: Int,
-                           window_start: String,
-                           processing_time: String,
-                           timing: String)
+  case class TeamScoreSums(
+    team: String,
+    total_score: Int,
+    window_start: String,
+    processing_time: String,
+    timing: String
+  )
 
   @BigQueryType.toTable
   case class UserScoreSums(user: String, total_score: Int, processing_time: String)
@@ -105,13 +107,17 @@ object LeaderBoard {
     // allowedLateness duration.
     // For more information on these options, see the Beam docs:
     // https://beam.apache.org/documentation/programming-guide/#triggers
-      .withGlobalWindow(WindowOptions(
-        trigger = Repeatedly.forever(AfterProcessingTime
-          .pastFirstElementInPane()
-          .plusDelayOf(Duration.standardMinutes(10))),
-        accumulationMode = ACCUMULATING_FIRED_PANES,
-        allowedLateness = allowedLateness
-      ))
+      .withGlobalWindow(
+        WindowOptions(
+          trigger = Repeatedly.forever(
+            AfterProcessingTime
+              .pastFirstElementInPane()
+              .plusDelayOf(Duration.standardMinutes(10))
+          ),
+          accumulationMode = ACCUMULATING_FIRED_PANES,
+          allowedLateness = allowedLateness
+        )
+      )
       // Change each event into a tuple of: user, and that user's score
       .map(i => (i.user, i.score))
       // Sum the scores by user
@@ -128,9 +134,11 @@ object LeaderBoard {
   }
   // scalastyle:on method.length
 
-  def calculateTeamScores(infos: SCollection[GameActionInfo],
-                          teamWindowDuration: Duration,
-                          allowedLateness: Duration): SCollection[(String, Int)] =
+  def calculateTeamScores(
+    infos: SCollection[GameActionInfo],
+    teamWindowDuration: Duration,
+    allowedLateness: Duration
+  ): SCollection[(String, Int)] =
     infos
       .withFixedWindows(
         // Using a fixed window, calculate every time the window ends.
@@ -151,10 +159,13 @@ object LeaderBoard {
             .withEarlyFirings(
               AfterProcessingTime
                 .pastFirstElementInPane()
-                .plusDelayOf(Duration.standardMinutes(5)))
-            .withLateFirings(AfterProcessingTime
-              .pastFirstElementInPane()
-              .plusDelayOf(Duration.standardMinutes(10))),
+                .plusDelayOf(Duration.standardMinutes(5))
+            )
+            .withLateFirings(
+              AfterProcessingTime
+                .pastFirstElementInPane()
+                .plusDelayOf(Duration.standardMinutes(10))
+            ),
           accumulationMode = ACCUMULATING_FIRED_PANES,
           allowedLateness = allowedLateness
         )

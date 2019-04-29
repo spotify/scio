@@ -161,8 +161,9 @@ private[types] object TypeProvider {
   }
   // scalastyle:on cyclomatic.complexity
 
-  private def getTableDescription(c: blackbox.Context)(
-    cd: c.universe.ClassDef): List[c.universe.Tree] = {
+  private def getTableDescription(
+    c: blackbox.Context
+  )(cd: c.universe.ClassDef): List[c.universe.Tree] = {
     cd.mods.annotations
       .filter(_.children.head.toString().matches("^new description$"))
       .map(_.children.tail.head)
@@ -193,23 +194,25 @@ private[types] object TypeProvider {
         val taggedFields = fields.map {
           case ValDef(m, n, tpt, rhs) =>
             provider.initializeToTable(c)(m, n, tpt)
-            c.universe.ValDef(c.universe.Modifiers(m.flags, m.privateWithin, m.annotations),
-                              n,
-                              tq"$tpt @${typeOf[BigQueryTag]}",
-                              rhs)
+            c.universe.ValDef(
+              c.universe.Modifiers(m.flags, m.privateWithin, m.annotations),
+              n,
+              tq"$tpt @${typeOf[BigQueryTag]}",
+              rhs
+            )
         }
         val caseClassTree =
           q"""${caseClass(c)(mods, cName, taggedFields, body)}"""
         val maybeCompanion = tail.headOption
         (q"""$caseClassTree
-            ${companion(c)(cName,
-                           traits,
-                           Seq(defSchema, defToPrettyString) ++ defTblDesc,
-                           taggedFields.asInstanceOf[Seq[Tree]].size,
-                           maybeCompanion)}
-        """,
-         caseClassTree,
-         cName.toString())
+            ${companion(c)(
+          cName,
+          traits,
+          Seq(defSchema, defToPrettyString) ++ defTblDesc,
+          taggedFields.asInstanceOf[Seq[Tree]].size,
+          maybeCompanion
+        )}
+        """, caseClassTree, cName.toString())
       case t =>
         val error =
           s"""Invalid annotation:
@@ -234,10 +237,12 @@ private[types] object TypeProvider {
 
   // scalastyle:off cyclomatic.complexity
   // scalastyle:off method.length
-  private def schemaToType(c: blackbox.Context)(schema: TableSchema,
-                                                annottees: Seq[c.Expr[Any]],
-                                                traits: Seq[c.Tree],
-                                                overrides: Seq[c.Tree]): c.Expr[Any] = {
+  private def schemaToType(c: blackbox.Context)(
+    schema: TableSchema,
+    annottees: Seq[c.Expr[Any]],
+    traits: Seq[c.Tree],
+    overrides: Seq[c.Tree]
+  ): c.Expr[Any] = {
     import c.universe._
     checkMacroEnclosed(c)
 
@@ -316,15 +321,15 @@ private[types] object TypeProvider {
         val caseClassTree = q"""${caseClass(c)(mods, cName, fields, body)}"""
         val maybeCompanion = tail.headOption
         (q"""$caseClassTree
-            ${companion(c)(cName,
-                           traits ++ defTblTrait,
-                           Seq(defSchema, defToPrettyString) ++ overrides ++ defTblDesc,
-                           fields.size,
-                           maybeCompanion)}
+            ${companion(c)(
+          cName,
+          traits ++ defTblTrait,
+          Seq(defSchema, defToPrettyString) ++ overrides ++ defTblDesc,
+          fields.size,
+          maybeCompanion
+        )}
             ..$records
-        """,
-         caseClassTree,
-         cName.toString)
+        """, caseClassTree, cName.toString)
       case t => c.abort(c.enclosingPosition, s"Invalid annotation $t")
     }
     debug(s"TypeProvider.schemaToType[$schema]:")
@@ -363,7 +368,8 @@ private[types] object TypeProvider {
   }
 
   private def extractStorageArgs(
-    c: blackbox.Context): (String, List[String], List[String], String) = {
+    c: blackbox.Context
+  ): (String, List[String], List[String], String) = {
     import c.universe._
 
     def str(tree: c.Tree) = tree match {
@@ -404,10 +410,9 @@ private[types] object TypeProvider {
     xs.head.asInstanceOf[String].format(xs.tail: _*)
 
   /** Generate a case class. */
-  private def caseClass(c: blackbox.Context)(mods: c.Modifiers,
-                                             name: c.TypeName,
-                                             fields: Seq[c.Tree],
-                                             body: Seq[c.Tree]): c.Tree = {
+  private def caseClass(
+    c: blackbox.Context
+  )(mods: c.Modifiers, name: c.TypeName, fields: Seq[c.Tree], body: Seq[c.Tree]): c.Tree = {
     import c.universe._
     val tagAnnot = q"new _root_.com.spotify.scio.bigquery.types.BigQueryTag"
     val taggedMods =
@@ -416,11 +421,13 @@ private[types] object TypeProvider {
   }
 
   /** Generate a companion object. */
-  private def companion(c: blackbox.Context)(name: c.TypeName,
-                                             traits: Seq[c.Tree],
-                                             methods: Seq[c.Tree],
-                                             numFields: Int,
-                                             originalCompanion: Option[c.Tree]): c.Tree = {
+  private def companion(c: blackbox.Context)(
+    name: c.TypeName,
+    traits: Seq[c.Tree],
+    methods: Seq[c.Tree],
+    numFields: Int,
+    originalCompanion: Option[c.Tree]
+  ): c.Tree = {
     import c.universe._
 
     val overrideFlag =
@@ -489,8 +496,9 @@ private[types] object TypeProvider {
   }
 
   // scalastyle:off line.size.limit
-  private def pShowCode(c: blackbox.Context)(records: Seq[c.Tree],
-                                             caseClass: c.Tree): Seq[String] = {
+  private def pShowCode(
+    c: blackbox.Context
+  )(records: Seq[c.Tree], caseClass: c.Tree): Seq[String] = {
     // print only records and case class and do it nicely so that we can just inject those
     // in scala plugin.
     import c.universe._
@@ -527,9 +535,9 @@ private[types] object TypeProvider {
       .toString
   }
 
-  private def dumpCodeForScalaPlugin(c: blackbox.Context)(records: Seq[c.universe.Tree],
-                                                          caseClassTree: c.universe.Tree,
-                                                          name: String): Unit = {
+  private def dumpCodeForScalaPlugin(
+    c: blackbox.Context
+  )(records: Seq[c.universe.Tree], caseClassTree: c.universe.Tree, name: String): Unit = {
     val owner = c.internal.enclosingOwner.fullName
     val srcFile = c.macroApplication.pos.source.file.canonicalPath
     val hash = genHashForMacro(owner, srcFile)

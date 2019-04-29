@@ -56,11 +56,13 @@ object JsonCompression extends NoCompressionT with GzipT
 private[client] final class ExtractOps(client: Client, jobService: JobOps) {
   import ExtractOps._
 
-  def asCsv(sourceTable: String,
-            destinationUris: List[String],
-            compression: CsvCompression.Compression = CsvCompression.NoCompression(),
-            fieldDelimiter: Option[String] = None,
-            printHeader: Option[Boolean] = None): Unit =
+  def asCsv(
+    sourceTable: String,
+    destinationUris: List[String],
+    compression: CsvCompression.Compression = CsvCompression.NoCompression(),
+    fieldDelimiter: Option[String] = None,
+    printHeader: Option[Boolean] = None
+  ): Unit =
     exportTable(
       sourceTable = sourceTable,
       destinationUris = destinationUris,
@@ -71,29 +73,39 @@ private[client] final class ExtractOps(client: Client, jobService: JobOps) {
     )
 
   /** Export a table as Json */
-  def asJson(sourceTable: String,
-             destinationUris: List[String],
-             compression: JsonCompression.Compression = JsonCompression.NoCompression()): Unit =
-    exportTable(sourceTable = sourceTable,
-                destinationUris = destinationUris,
-                format = "NEWLINE_DELIMITED_JSON",
-                compression = compression.name)
+  def asJson(
+    sourceTable: String,
+    destinationUris: List[String],
+    compression: JsonCompression.Compression = JsonCompression.NoCompression()
+  ): Unit =
+    exportTable(
+      sourceTable = sourceTable,
+      destinationUris = destinationUris,
+      format = "NEWLINE_DELIMITED_JSON",
+      compression = compression.name
+    )
 
   /** Export a table as Avro */
-  def asAvro(sourceTable: String,
-             destinationUris: List[String],
-             compression: AvroCompression.Compression = AvroCompression.NoCompression()): Unit =
-    exportTable(sourceTable = sourceTable,
-                destinationUris = destinationUris,
-                format = "AVRO",
-                compression = compression.name)
+  def asAvro(
+    sourceTable: String,
+    destinationUris: List[String],
+    compression: AvroCompression.Compression = AvroCompression.NoCompression()
+  ): Unit =
+    exportTable(
+      sourceTable = sourceTable,
+      destinationUris = destinationUris,
+      format = "AVRO",
+      compression = compression.name
+    )
 
-  private def exportTable(sourceTable: String,
-                          destinationUris: List[String],
-                          format: String,
-                          compression: Option[String],
-                          fieldDelimiter: Option[String] = None,
-                          printHeader: Option[Boolean] = None): Unit = {
+  private def exportTable(
+    sourceTable: String,
+    destinationUris: List[String],
+    format: String,
+    compression: Option[String],
+    fieldDelimiter: Option[String] = None,
+    printHeader: Option[Boolean] = None
+  ): Unit = {
 
     val tableRef = bq.BigQueryHelpers.parseTableSpec(sourceTable)
 

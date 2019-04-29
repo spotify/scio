@@ -191,15 +191,18 @@ private final class TransitiveClosureCleaner(val func: AnyRef) extends ClosureCl
 
 private final case class MethodIdentifier[T](cls: Class[T], name: String, desc: String)
 
-private final class AccessedFieldsVisitor(output: MMap[Class[_], MSet[String]],
-                                          specificMethod: Option[MethodIdentifier[_]] = None,
-                                          visitedMethods: MSet[MethodIdentifier[_]] = MSet.empty)
-    extends ClassVisitor(ASM7) {
-  override def visitMethod(access: Int,
-                           name: String,
-                           desc: String,
-                           sig: String,
-                           exceptions: Array[String]): MethodVisitor = {
+private final class AccessedFieldsVisitor(
+  output: MMap[Class[_], MSet[String]],
+  specificMethod: Option[MethodIdentifier[_]] = None,
+  visitedMethods: MSet[MethodIdentifier[_]] = MSet.empty
+) extends ClassVisitor(ASM7) {
+  override def visitMethod(
+    access: Int,
+    name: String,
+    desc: String,
+    sig: String,
+    exceptions: Array[String]
+  ): MethodVisitor = {
     if (specificMethod.isDefined &&
         (specificMethod.get.name != name || specificMethod.get.desc != desc)) {
       null
@@ -213,11 +216,13 @@ private final class AccessedFieldsVisitor(output: MMap[Class[_], MSet[String]],
           }
         }
 
-        override def visitMethodInsn(op: Int,
-                                     owner: String,
-                                     name: String,
-                                     desc: String,
-                                     itf: Boolean): Unit = {
+        override def visitMethodInsn(
+          op: Int,
+          owner: String,
+          name: String,
+          desc: String,
+          itf: Boolean
+        ): Unit = {
           for (cl <- output.keys if cl.getName == owner.replace('/', '.')) {
             // Check for calls a getter method for a variable in an interpreter wrapper object.
             // This means that the corresponding field will be accessed, so we should save it.
@@ -242,32 +247,40 @@ private final class AccessedFieldsVisitor(output: MMap[Class[_], MSet[String]],
 private final class InnerClosureFinder(output: MSet[Class[_]]) extends ClassVisitor(ASM7) {
   private[this] var myName: String = _
 
-  override def visit(version: Int,
-                     access: Int,
-                     name: String,
-                     sig: String,
-                     superName: String,
-                     interfaces: Array[String]): Unit =
+  override def visit(
+    version: Int,
+    access: Int,
+    name: String,
+    sig: String,
+    superName: String,
+    interfaces: Array[String]
+  ): Unit =
     myName = name
 
-  override def visitMethod(access: Int,
-                           name: String,
-                           desc: String,
-                           sig: String,
-                           exceptions: Array[String]): MethodVisitor =
+  override def visitMethod(
+    access: Int,
+    name: String,
+    desc: String,
+    sig: String,
+    exceptions: Array[String]
+  ): MethodVisitor =
     new MethodVisitor(ASM7) {
-      override def visitMethodInsn(op: Int,
-                                   owner: String,
-                                   name: String,
-                                   desc: String,
-                                   itf: Boolean): Unit = {
+      override def visitMethodInsn(
+        op: Int,
+        owner: String,
+        name: String,
+        desc: String,
+        itf: Boolean
+      ): Unit = {
         val argTypes = Type.getArgumentTypes(desc)
         if (op == INVOKESPECIAL && name == "<init>" && argTypes.nonEmpty
             && argTypes(0).toString.startsWith("L")
             && argTypes(0).getInternalName == myName) {
-          output += Class.forName(owner.replace('/', '.'),
-                                  false,
-                                  Thread.currentThread.getContextClassLoader)
+          output += Class.forName(
+            owner.replace('/', '.'),
+            false,
+            Thread.currentThread.getContextClassLoader
+          )
         }
       }
     }

@@ -38,8 +38,8 @@ import scala.collection.JavaConverters._
 private[this] abstract class PredictDoFn[T, V, M <: Model[_]](
   fetchOp: Seq[String],
   inFn: T => Map[String, Tensor[_]],
-  outFn: (T, Map[String, Tensor[_]]) => V)
-    extends DoFnWithResource[T, V, ConcurrentMap[String, M]] {
+  outFn: (T, Map[String, Tensor[_]]) => V
+) extends DoFnWithResource[T, V, ConcurrentMap[String, M]] {
   @transient private lazy val log = LoggerFactory.getLogger(this.getClass)
 
   def withRunner(f: Session#Runner => V): V
@@ -84,12 +84,13 @@ private[this] abstract class PredictDoFn[T, V, M <: Model[_]](
 
 }
 
-private[tensorflow] class SavedBundlePredictDoFn[T, V](uri: String,
-                                                       options: TensorFlowModel.Options,
-                                                       fetchOp: Seq[String],
-                                                       inFn: T => Map[String, Tensor[_]],
-                                                       outFn: (T, Map[String, Tensor[_]]) => V)
-    extends PredictDoFn[T, V, TensorFlowModel](fetchOp, inFn, outFn) {
+private[tensorflow] class SavedBundlePredictDoFn[T, V](
+  uri: String,
+  options: TensorFlowModel.Options,
+  fetchOp: Seq[String],
+  inFn: T => Map[String, Tensor[_]],
+  outFn: (T, Map[String, Tensor[_]]) => V
+) extends PredictDoFn[T, V, TensorFlowModel](fetchOp, inFn, outFn) {
   @transient private lazy val log = LoggerFactory.getLogger(this.getClass)
 
   override def withRunner(f: Session#Runner => V): V = {
@@ -115,12 +116,13 @@ private[tensorflow] class SavedBundlePredictDoFn[T, V](uri: String,
 
 }
 
-private[tensorflow] class GraphPredictDoFn[T, V](uri: String,
-                                                 fetchOp: Seq[String],
-                                                 @Nullable config: Array[Byte],
-                                                 inFn: T => Map[String, Tensor[_]],
-                                                 outFn: (T, Map[String, Tensor[_]]) => V)
-    extends PredictDoFn[T, V, TensorFlowGraphModel](fetchOp, inFn, outFn) {
+private[tensorflow] class GraphPredictDoFn[T, V](
+  uri: String,
+  fetchOp: Seq[String],
+  @Nullable config: Array[Byte],
+  inFn: T => Map[String, Tensor[_]],
+  outFn: (T, Map[String, Tensor[_]]) => V
+) extends PredictDoFn[T, V, TensorFlowGraphModel](fetchOp, inFn, outFn) {
   @transient private lazy val log = LoggerFactory.getLogger(this.getClass)
 
   override def withRunner(f: Session#Runner => V): V = {

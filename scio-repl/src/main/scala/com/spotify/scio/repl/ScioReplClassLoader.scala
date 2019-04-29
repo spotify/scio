@@ -119,9 +119,11 @@ class ScioReplClassLoader(urls: Array[URL], parent: ClassLoader, detachedParent:
    * @param entryPath for classes found in the virtual directory
    * @param jarStream for writing the jar file
    */
-  private def addVirtualDirectoryToJar(dir: VirtualDirectory,
-                                       entryPath: String,
-                                       jarStream: JarOutputStream): Unit = {
+  private def addVirtualDirectoryToJar(
+    dir: VirtualDirectory,
+    entryPath: String,
+    jarStream: JarOutputStream
+  ): Unit = {
     dir.foreach { file =>
       if (file.isDirectory) {
         // Recursively descend into subdirectories, adjusting the package name as we do.

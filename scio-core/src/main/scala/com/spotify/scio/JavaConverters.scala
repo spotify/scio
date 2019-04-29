@@ -38,17 +38,21 @@ object JavaConverters {
       FileBasedSink.convertToFileResourceIfPossible(s)
 
     def toFilenamePolicy: DefaultFilenamePolicy =
-      DefaultFilenamePolicy.fromStandardParameters(StaticValueProvider.of(s.toResourceId),
-                                                   null,
-                                                   null,
-                                                   false)
+      DefaultFilenamePolicy.fromStandardParameters(
+        StaticValueProvider.of(s.toResourceId),
+        null,
+        null,
+        false
+      )
   }
 
   /** Scio version of [[DefaultFilenamePolicy]]. */
-  final case class FilenamePolicy(baseFilename: String,
-                                  shardTemplate: String = null,
-                                  templateSuffix: String = null,
-                                  windowedWrites: Boolean = false) {
+  final case class FilenamePolicy(
+    baseFilename: String,
+    shardTemplate: String = null,
+    templateSuffix: String = null,
+    windowedWrites: Boolean = false
+  ) {
 
     /**
      * Convert the filename policy to a
@@ -59,7 +63,8 @@ object JavaConverters {
         StaticValueProvider.of(baseFilename.toResourceId),
         shardTemplate,
         templateSuffix,
-        windowedWrites)
+        windowedWrites
+      )
   }
 
   /** Enhanced version of [[Any]] with Beam Java SDK converter methods. */

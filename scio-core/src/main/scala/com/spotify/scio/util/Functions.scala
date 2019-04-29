@@ -70,13 +70,16 @@ private[scio] object Functions {
     override def getAccumulatorCoder(registry: CoderRegistry, inputCoder: BCoder[VI]): BCoder[VA] =
       CoderMaterializer.beamWithDefault(vacoder, registry)
 
-    override def getDefaultOutputCoder(registry: CoderRegistry,
-                                       inputCoder: BCoder[VI]): BCoder[VO] =
+    override def getDefaultOutputCoder(
+      registry: CoderRegistry,
+      inputCoder: BCoder[VI]
+    ): BCoder[VO] =
       CoderMaterializer.beamWithDefault(vocoder, registry)
   }
 
   def aggregateFn[T: Coder, U: Coder](
-    zeroValue: U)(seqOp: (U, T) => U, combOp: (U, U) => U): BCombineFn[T, (U, JList[T]), U] =
+    zeroValue: U
+  )(seqOp: (U, T) => U, combOp: (U, U) => U): BCombineFn[T, (U, JList[T]), U] =
     new CombineFn[T, (U, JList[T]), U] {
 
       val vacoder = Coder[(U, JList[T])]
@@ -116,7 +119,8 @@ private[scio] object Functions {
   def combineFn[T: Coder, C: Coder](
     createCombiner: T => C,
     mergeValue: (C, T) => C,
-    mergeCombiners: (C, C) => C): BCombineFn[T, (Option[C], JList[T]), C] =
+    mergeCombiners: (C, C) => C
+  ): BCombineFn[T, (Option[C], JList[T]), C] =
     new CombineFn[T, (Option[C], JList[T]), C] {
 
       val vacoder = Coder[(Option[C], JList[T])]
@@ -161,14 +165,17 @@ private[scio] object Functions {
 
       override def extractOutput(accumulator: (Option[C], JList[T])): C = {
         val out = foldOption(accumulator)
-        assert(out.isDefined,
-               "Empty output in combine*/sum* transform. " +
-                 "Use aggregate* or fold* instead to fallback to a default value.")
+        assert(
+          out.isDefined,
+          "Empty output in combine*/sum* transform. " +
+            "Use aggregate* or fold* instead to fallback to a default value."
+        )
         out.get
       }
 
       override def mergeAccumulators(
-        accumulators: JIterable[(Option[C], JList[T])]): (Option[C], JList[T]) = {
+        accumulators: JIterable[(Option[C], JList[T])]
+      ): (Option[C], JList[T]) = {
         val iter = accumulators.iterator()
         val empty = new JArrayList[T]()
 
@@ -247,9 +254,11 @@ private[scio] object Functions {
 
     override def extractOutput(accumulator: JList[T]): T = {
       val out = reduceOption(accumulator)
-      assert(out.isDefined,
-             "Empty output in combine*/sum* transform. " +
-               "Use aggregate* or fold* instead to fallback to a default value.")
+      assert(
+        out.isDefined,
+        "Empty output in combine*/sum* transform. " +
+          "Use aggregate* or fold* instead to fallback to a default value."
+      )
       out.get
     }
 

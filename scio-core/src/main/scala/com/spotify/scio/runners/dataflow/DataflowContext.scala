@@ -45,7 +45,8 @@ case object DataflowContext extends RunnerContext {
   /** Compute list of local files to make available to workers. */
   private def getFilesToStage(extraLocalArtifacts: List[String]): Iterable[String] = {
     val finalLocalArtifacts = detectClassPathResourcesToStage(
-      classOf[DataflowRunner].getClassLoader) ++ extraLocalArtifacts
+      classOf[DataflowRunner].getClassLoader
+    ) ++ extraLocalArtifacts
 
     logger.debug(s"Final list of extra artifacts: ${finalLocalArtifacts.mkString(":")}")
     finalLocalArtifacts

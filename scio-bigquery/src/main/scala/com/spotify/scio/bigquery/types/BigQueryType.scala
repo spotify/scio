@@ -247,11 +247,12 @@ object BigQueryType {
    * Also generate a companion object with convenience methods.
    * @group annotation
    */
-  class fromStorage(tableSpec: String,
-                    args: List[Any] = Nil,
-                    selectedFields: List[String] = Nil,
-                    rowRestriction: String = null)
-      extends StaticAnnotation {
+  class fromStorage(
+    tableSpec: String,
+    args: List[Any] = Nil,
+    selectedFields: List[String] = Nil,
+    rowRestriction: String = null
+  ) extends StaticAnnotation {
     def macroTransform(annottees: Any*): Any = macro TypeProvider.storageImpl
   }
 

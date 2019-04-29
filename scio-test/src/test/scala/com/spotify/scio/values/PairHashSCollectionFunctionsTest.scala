@@ -74,11 +74,14 @@ class PairHashSCollectionFunctionsTest extends PipelineSpec {
       val p2 = sc.parallelize(Seq(("a", 11), ("b", 12), ("b", 13)))
       val p = p1.hashLeftJoin(p2)
       p should containInAnyOrder(
-        Seq(("a", (1, Some(11))),
-            ("a", (2, Some(11))),
-            ("b", (3, Some(12))),
-            ("b", (3, Some(13))),
-            ("c", (4, None))))
+        Seq(
+          ("a", (1, Some(11))),
+          ("a", (2, Some(11))),
+          ("b", (3, Some(12))),
+          ("b", (3, Some(13))),
+          ("c", (4, None))
+        )
+      )
     }
   }
 
@@ -88,7 +91,8 @@ class PairHashSCollectionFunctionsTest extends PipelineSpec {
       val p2 = sc.parallelize(Seq(("a", 11), ("c", 13)))
       val p = p1.hashFullOuterJoin(p2)
       p should containInAnyOrder(
-        Seq(("a", (Some(1), Some(11))), ("b", (Some(2), None)), ("c", (None, Some(13)))))
+        Seq(("a", (Some(1), Some(11))), ("b", (Some(2), None)), ("c", (None, Some(13))))
+      )
     }
   }
 
@@ -109,12 +113,15 @@ class PairHashSCollectionFunctionsTest extends PipelineSpec {
       val p2 = sc.parallelize(Seq(("a", 11), ("b", 12), ("b", 13), ("d", 14)))
       val p = p1.hashFullOuterJoin(p2)
       p should containInAnyOrder(
-        Seq(("a", (Some(1), Some(11))),
-            ("a", (Some(2), Some(11))),
-            ("b", (Some(3), Some(12))),
-            ("b", (Some(3), Some(13))),
-            ("c", (Some(4), None)),
-            ("d", (None, Some(14)))))
+        Seq(
+          ("a", (Some(1), Some(11))),
+          ("a", (Some(2), Some(11))),
+          ("b", (Some(3), Some(12))),
+          ("b", (Some(3), Some(13))),
+          ("c", (Some(4), None)),
+          ("d", (None, Some(14)))
+        )
+      )
     }
   }
 

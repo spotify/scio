@@ -25,7 +25,8 @@ import scala.reflect.runtime.universe._
 
 object AvroTypeIT {
   @AvroType.fromPath(
-    "gs://data-integration-test-eu/avro-integration-test/folder-a/folder-b/shakespeare.avro")
+    "gs://data-integration-test-eu/avro-integration-test/folder-a/folder-b/shakespeare.avro"
+  )
   class FromPath
 
   @AvroType.fromPath("gs://data-integration-test-eu/avro-integration-test/folder-a/folder-b")
@@ -62,12 +63,14 @@ object AvroTypeIT {
 
   @Annotation1
   @AvroType.fromPath(
-    "gs://data-integration-test-eu/avro-integration-test/folder-a/folder-b/shakespeare.avro")
+    "gs://data-integration-test-eu/avro-integration-test/folder-a/folder-b/shakespeare.avro"
+  )
   @Annotation2
   class FromPathWithSurroundingAnnotations
 
   @AvroType.fromPath(
-    "gs://data-integration-test-eu/avro-integration-test/folder-a/folder-b/shakespeare.avro")
+    "gs://data-integration-test-eu/avro-integration-test/folder-a/folder-b/shakespeare.avro"
+  )
   @Annotation1
   @Annotation2
   class FromPathWithSequentialAnnotations

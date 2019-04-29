@@ -398,10 +398,12 @@ class SCollectionMatchersTest extends PipelineSpec {
     // Start at the epoch
       .advanceWatermarkTo(baseTime)
       // add some elements ahead of the watermark
-      .addElements(event(1, Duration.standardSeconds(3)),
-                   event(2, Duration.standardMinutes(1)),
-                   event(3, Duration.standardSeconds(22)),
-                   event(4, Duration.standardSeconds(3)))
+      .addElements(
+        event(1, Duration.standardSeconds(3)),
+        event(2, Duration.standardMinutes(1)),
+        event(3, Duration.standardSeconds(22)),
+        event(4, Duration.standardSeconds(3))
+      )
       // The watermark advances slightly, but not past the end of the window
       .advanceWatermarkTo(baseTime.plus(Duration.standardMinutes(3)))
       .addElements(event(1, Duration.standardMinutes(4)), event(2, Duration.standardSeconds(270)))
@@ -414,12 +416,16 @@ class SCollectionMatchersTest extends PipelineSpec {
           options = WindowOptions(
             trigger = AfterWatermark
               .pastEndOfWindow()
-              .withEarlyFirings(AfterProcessingTime
-                .pastFirstElementInPane()
-                .plusDelayOf(Duration.standardMinutes(5)))
-              .withLateFirings(AfterProcessingTime
-                .pastFirstElementInPane()
-                .plusDelayOf(Duration.standardMinutes(10))),
+              .withEarlyFirings(
+                AfterProcessingTime
+                  .pastFirstElementInPane()
+                  .plusDelayOf(Duration.standardMinutes(5))
+              )
+              .withLateFirings(
+                AfterProcessingTime
+                  .pastFirstElementInPane()
+                  .plusDelayOf(Duration.standardMinutes(10))
+              ),
             accumulationMode = ACCUMULATING_FIRED_PANES,
             allowedLateness = allowedLateness
           )
@@ -458,16 +464,21 @@ class SCollectionMatchersTest extends PipelineSpec {
         .testStream(
           stream
             .advanceProcessingTime(Duration.standardMinutes(21))
-            .advanceWatermarkToInfinity())
-        .withGlobalWindow(options = WindowOptions(
-          trigger = AfterWatermark
-            .pastEndOfWindow()
-            .withEarlyFirings(AfterProcessingTime
-              .pastFirstElementInPane()
-              .plusDelayOf(Duration.standardMinutes(5))),
-          accumulationMode = ACCUMULATING_FIRED_PANES,
-          allowedLateness = allowedLateness
-        ))
+            .advanceWatermarkToInfinity()
+        )
+        .withGlobalWindow(
+          options = WindowOptions(
+            trigger = AfterWatermark
+              .pastEndOfWindow()
+              .withEarlyFirings(
+                AfterProcessingTime
+                  .pastFirstElementInPane()
+                  .plusDelayOf(Duration.standardMinutes(5))
+              ),
+            accumulationMode = ACCUMULATING_FIRED_PANES,
+            allowedLateness = allowedLateness
+          )
+        )
 
       windowedStream.sum should inEarlyGlobalWindowPanes {
         containInAnyOrder(Iterable(13))

@@ -44,8 +44,10 @@ object TopWikipediaSessions {
     ()
   }
 
-  def computeTopSessions(input: SCollection[TableRow],
-                         samplingThreshold: Double): SCollection[String] = {
+  def computeTopSessions(
+    input: SCollection[TableRow],
+    samplingThreshold: Double
+  ): SCollection[String] = {
     input
     // Extract fields from `TableRow` JSON
       .flatMap { row =>

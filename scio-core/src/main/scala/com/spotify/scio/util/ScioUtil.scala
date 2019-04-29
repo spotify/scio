@@ -81,7 +81,8 @@ private[scio] object ScioUtil {
         Try(context.optionsAs[GcpOptions].getGcpTempLocation) match {
           case Success(l) =>
             log.warn(
-              "Using GCP temporary location as a temporary location to materialize data. " + m)
+              "Using GCP temporary location as a temporary location to materialize data. " + m
+            )
             l
           case Failure(_) =>
             throw new IllegalArgumentException("No temporary location was specified. " + m)

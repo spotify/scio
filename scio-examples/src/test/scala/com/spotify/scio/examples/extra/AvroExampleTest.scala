@@ -62,8 +62,10 @@ class AvroExampleTest extends PipelineSpec {
   }
 
   "AvroExample" should "work for typed input" in {
-    val input = Seq(AccountFromSchema(1, "checking", "Alice", 1000.0),
-                    AccountFromSchema(2, "checking", "Bob", 1500.0))
+    val input = Seq(
+      AccountFromSchema(1, "checking", "Alice", 1000.0),
+      AccountFromSchema(2, "checking", "Bob", 1500.0)
+    )
 
     val expected = input.map(_.toString)
 

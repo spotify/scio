@@ -209,11 +209,13 @@ object CassandraIT {
   def toValues2(i: Int): Seq[Any] = Seq(s"k1_$i", s"k2_$i", s"k3_$i", s"v1_$i", i, i.toFloat)
 
   def fromRow2(r: Row): Seq[Any] =
-    Seq(r.getString("k1"),
-        r.getString("k2"),
-        r.getString("k3"),
-        r.getString("v1"),
-        r.getInt("v2"),
-        r.getFloat("v3"))
+    Seq(
+      r.getString("k1"),
+      r.getString("k2"),
+      r.getString("k3"),
+      r.getString("v1"),
+      r.getInt("v2"),
+      r.getFloat("v3")
+    )
 
 }

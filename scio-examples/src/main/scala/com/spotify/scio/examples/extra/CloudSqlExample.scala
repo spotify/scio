@@ -60,16 +60,20 @@ object CloudSqlExample {
 
   // Basic connection details
   def getConnectionOptions(opts: CloudSqlOptions): JdbcConnectionOptions =
-    JdbcConnectionOptions(username = opts.getCloudSqlUsername,
-                          password = Some(opts.getCloudSqlPassword),
-                          driverClass = classOf[com.mysql.jdbc.Driver],
-                          connectionUrl = getJdbcUrl(opts))
+    JdbcConnectionOptions(
+      username = opts.getCloudSqlUsername,
+      password = Some(opts.getCloudSqlPassword),
+      driverClass = classOf[com.mysql.jdbc.Driver],
+      connectionUrl = getJdbcUrl(opts)
+    )
 
   // Read from a table called `word_count` with two columns `word` and `count`
   def getReadOptions(connOpts: JdbcConnectionOptions): JdbcReadOptions[(String, Long)] =
-    JdbcReadOptions(connectionOptions = connOpts,
-                    query = "SELECT * FROM word_count",
-                    rowMapper = r => (r.getString(1), r.getLong(2)))
+    JdbcReadOptions(
+      connectionOptions = connOpts,
+      query = "SELECT * FROM word_count",
+      rowMapper = r => (r.getString(1), r.getLong(2))
+    )
 
   // Write to a table called `result_word_count` with two columns `word` and `count`
   def getWriteOptions(connOpts: JdbcConnectionOptions): JdbcWriteOptions[(String, Long)] =

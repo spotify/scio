@@ -33,10 +33,12 @@ object Rows {
       .setTimestampMicros(timestampMicros)
       .build()
 
-  private def newRow(key: ByteString,
-                     familyName: String,
-                     columnQualifier: ByteString,
-                     cell: Cell): Row =
+  private def newRow(
+    key: ByteString,
+    familyName: String,
+    columnQualifier: ByteString,
+    cell: Cell
+  ): Row =
     Row
       .newBuilder()
       .setKey(key)
@@ -48,22 +50,28 @@ object Rows {
             Column
               .newBuilder()
               .setQualifier(columnQualifier)
-              .addCells(cell)))
+              .addCells(cell)
+          )
+      )
       .build()
 
   /** New `Row` with timestamp default to 0. */
-  def newRow(key: ByteString,
-             familyName: String,
-             columnQualifier: ByteString,
-             value: ByteString): Row =
+  def newRow(
+    key: ByteString,
+    familyName: String,
+    columnQualifier: ByteString,
+    value: ByteString
+  ): Row =
     newRow(key, familyName, columnQualifier, newCell(value))
 
   /** New `Row`. */
-  def newRow(key: ByteString,
-             familyName: String,
-             columnQualifier: ByteString,
-             value: ByteString,
-             timestampMicros: Long): Row =
+  def newRow(
+    key: ByteString,
+    familyName: String,
+    columnQualifier: ByteString,
+    value: ByteString,
+    timestampMicros: Long
+  ): Row =
     newRow(key, familyName, columnQualifier, newCell(value, timestampMicros))
 
 }

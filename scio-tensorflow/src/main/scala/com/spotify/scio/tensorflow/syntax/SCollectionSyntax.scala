@@ -53,10 +53,11 @@ final class PredictSCollectionOps[T: ClassTag](private val self: SCollection[T])
    *                 [[org.tensorflow.Tensor Tensor]], to elements of V. This method takes
    *                 ownership of the [[org.tensorflow.Tensor Tensor]]s.
    */
-  def predict[V: Coder, W](savedModelUri: String,
-                           fetchOps: Seq[String],
-                           options: TensorFlowModel.Options)(inFn: T => Map[String, Tensor[_]])(
-    outFn: (T, Map[String, Tensor[_]]) => V): SCollection[V] =
+  def predict[V: Coder, W](
+    savedModelUri: String,
+    fetchOps: Seq[String],
+    options: TensorFlowModel.Options
+  )(inFn: T => Map[String, Tensor[_]])(outFn: (T, Map[String, Tensor[_]]) => V): SCollection[V] =
     self.parDo(new SavedBundlePredictDoFn[T, V](savedModelUri, options, fetchOps, inFn, outFn))
 }
 
@@ -71,7 +72,8 @@ final class ExampleSCollectionOps[T <: Example](private val self: SCollection[T]
     path: String,
     suffix: String = TFExampleIO.WriteParam.DefaultSuffix,
     compression: Compression = TFExampleIO.WriteParam.DefaultCompression,
-    numShards: Int = TFExampleIO.WriteParam.DefaultNumShards): ClosedTap[Example] =
+    numShards: Int = TFExampleIO.WriteParam.DefaultNumShards
+  ): ClosedTap[Example] =
     saveAsTfRecordFile(path, suffix = suffix, compression = compression, numShards = numShards)
 
   /**
@@ -82,7 +84,8 @@ final class ExampleSCollectionOps[T <: Example](private val self: SCollection[T]
     path: String,
     suffix: String = TFExampleIO.WriteParam.DefaultSuffix,
     compression: Compression = TFExampleIO.WriteParam.DefaultCompression,
-    numShards: Int = TFExampleIO.WriteParam.DefaultNumShards): ClosedTap[Example] = {
+    numShards: Int = TFExampleIO.WriteParam.DefaultNumShards
+  ): ClosedTap[Example] = {
     val param = TFExampleIO.WriteParam(suffix, compression, numShards)
     self.asInstanceOf[SCollection[Example]].write(TFExampleIO(path))(param)
   }
@@ -112,7 +115,8 @@ final class SeqExampleSCollectionOps[T <: Example](private val self: SCollection
     path: String,
     suffix: String = TFExampleIO.WriteParam.DefaultSuffix,
     compression: Compression = TFExampleIO.WriteParam.DefaultCompression,
-    numShards: Int = TFExampleIO.WriteParam.DefaultNumShards): ClosedTap[Example] =
+    numShards: Int = TFExampleIO.WriteParam.DefaultNumShards
+  ): ClosedTap[Example] =
     saveAsTfRecordFile(path, suffix = suffix, compression = compression, numShards = numShards)
 
   /**
@@ -125,7 +129,8 @@ final class SeqExampleSCollectionOps[T <: Example](private val self: SCollection
     path: String,
     suffix: String = TFExampleIO.WriteParam.DefaultSuffix,
     compression: Compression = TFExampleIO.WriteParam.DefaultCompression,
-    numShards: Int = TFExampleIO.WriteParam.DefaultNumShards): ClosedTap[Example] =
+    numShards: Int = TFExampleIO.WriteParam.DefaultNumShards
+  ): ClosedTap[Example] =
     new ExampleSCollectionOps(self.map(SeqExampleSCollectionOps.mergeExamples))
       .saveAsTfRecordFile(path, suffix, compression, numShards)
 
@@ -141,11 +146,12 @@ final class TFRecordSCollectionOps[T <: Array[Byte]](private val self: SCollecti
    *
    * @group output
    */
-  def saveAsTfRecordFile(path: String,
-                         suffix: String = TFRecordIO.WriteParam.DefaultSuffix,
-                         compression: Compression = TFRecordIO.WriteParam.DefaultCompression,
-                         numShards: Int = TFRecordIO.WriteParam.DefaultNumShards)(
-    implicit ev: T <:< Array[Byte]): ClosedTap[Array[Byte]] = {
+  def saveAsTfRecordFile(
+    path: String,
+    suffix: String = TFRecordIO.WriteParam.DefaultSuffix,
+    compression: Compression = TFRecordIO.WriteParam.DefaultCompression,
+    numShards: Int = TFRecordIO.WriteParam.DefaultNumShards
+  )(implicit ev: T <:< Array[Byte]): ClosedTap[Array[Byte]] = {
     val param = TFRecordIO.WriteParam(suffix, compression, numShards)
     self.asInstanceOf[SCollection[Array[Byte]]].write(TFRecordIO(path))(param)
   }
@@ -165,7 +171,8 @@ final class SequenceExampleSCollectionOps[T <: SequenceExample](private val self
     path: String,
     suffix: String = TFExampleIO.WriteParam.DefaultSuffix,
     compression: Compression = TFExampleIO.WriteParam.DefaultCompression,
-    numShards: Int = TFExampleIO.WriteParam.DefaultNumShards): ClosedTap[SequenceExample] = {
+    numShards: Int = TFExampleIO.WriteParam.DefaultNumShards
+  ): ClosedTap[SequenceExample] = {
     val param = TFExampleIO.WriteParam(suffix, compression, numShards)
     self.asInstanceOf[SCollection[SequenceExample]].write(TFSequenceExampleIO(path))(param)
   }
@@ -178,33 +185,38 @@ trait SCollectionSyntax {
    * [[PredictSCollectionOps]].
    */
   implicit def tensorFlowPredictSCollectionOps[T: ClassTag](
-    s: SCollection[T]): PredictSCollectionOps[T] = new PredictSCollectionOps(s)
+    s: SCollection[T]
+  ): PredictSCollectionOps[T] = new PredictSCollectionOps(s)
 
   /**
    * Implicit conversion from [[com.spotify.scio.values.SCollection SCollection]] to
    * [[TFRecordSCollectionOps]].
    */
   implicit def tensorFlowTFRecordSCollectionOps[T <: Array[Byte]](
-    s: SCollection[T]): TFRecordSCollectionOps[T] = new TFRecordSCollectionOps(s)
+    s: SCollection[T]
+  ): TFRecordSCollectionOps[T] = new TFRecordSCollectionOps(s)
 
   /**
    * Implicit conversion from [[com.spotify.scio.values.SCollection SCollection]] to
    * [[ExampleSCollectionOps]].
    */
   implicit def tensorFlowExampleSCollectionOps[T <: Example](
-    s: SCollection[T]): ExampleSCollectionOps[T] = new ExampleSCollectionOps(s)
+    s: SCollection[T]
+  ): ExampleSCollectionOps[T] = new ExampleSCollectionOps(s)
 
   /**
    * Implicit conversion from [[com.spotify.scio.values.SCollection SCollection]] to
    * [[SeqExampleSCollectionOps]].
    */
   implicit def tensorFlowSeqExampleSCollectionOps[T <: Example](
-    s: SCollection[Seq[T]]): SeqExampleSCollectionOps[T] = new SeqExampleSCollectionOps(s)
+    s: SCollection[Seq[T]]
+  ): SeqExampleSCollectionOps[T] = new SeqExampleSCollectionOps(s)
 
   /**
    * Implicit conversion from [[com.spotify.scio.values.SCollection SCollection]] to
    * [[SequenceExampleSCollectionOps]].
    */
   implicit def tensorFlowSequenceExampleSCollectionOps[T <: SequenceExample](
-    s: SCollection[T]): SequenceExampleSCollectionOps[T] = new SequenceExampleSCollectionOps(s)
+    s: SCollection[T]
+  ): SequenceExampleSCollectionOps[T] = new SequenceExampleSCollectionOps(s)
 }

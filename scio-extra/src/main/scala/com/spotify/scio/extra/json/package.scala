@@ -64,13 +64,15 @@ package object json extends AutoDerivation {
    * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with JSON methods.
    */
   implicit class JsonSCollection[T: ClassTag: Encoder: Decoder: Coder](
-    @transient private val self: SCollection[T])
-      extends Serializable {
-    def saveAsJsonFile(path: String,
-                       suffix: String = ".json",
-                       numShards: Int = 0,
-                       compression: Compression = Compression.UNCOMPRESSED,
-                       printer: Printer = Printer.noSpaces): ClosedTap[T] =
+    @transient private val self: SCollection[T]
+  ) extends Serializable {
+    def saveAsJsonFile(
+      path: String,
+      suffix: String = ".json",
+      numShards: Int = 0,
+      compression: Compression = Compression.UNCOMPRESSED,
+      printer: Printer = Printer.noSpaces
+    ): ClosedTap[T] =
       self.write(JsonIO[T](path))(JsonIO.WriteParam(suffix, numShards, compression, printer))
   }
 

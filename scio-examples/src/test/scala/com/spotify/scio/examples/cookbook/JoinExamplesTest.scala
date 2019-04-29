@@ -24,23 +24,29 @@ import com.spotify.scio.testing._
 
 class JoinExamplesTest extends PipelineSpec {
 
-  private def eventRow(countryCode: String,
-                       sqlDate: String,
-                       actor1Name: String,
-                       sourceUrl: String) =
-    TableRow("ActionGeo_CountryCode" -> countryCode,
-             "SQLDATE" -> sqlDate,
-             "Actor1Name" -> actor1Name,
-             "SOURCEURL" -> sourceUrl)
+  private def eventRow(
+    countryCode: String,
+    sqlDate: String,
+    actor1Name: String,
+    sourceUrl: String
+  ) =
+    TableRow(
+      "ActionGeo_CountryCode" -> countryCode,
+      "SQLDATE" -> sqlDate,
+      "Actor1Name" -> actor1Name,
+      "SOURCEURL" -> sourceUrl
+    )
 
   private def countryRow(fipscc: String, humanName: String) =
     TableRow("FIPSCC" -> fipscc, "HumanName" -> humanName)
 
-  private def result(countryCode: String,
-                     countryName: String,
-                     date: String,
-                     actor1: String,
-                     url: String) =
+  private def result(
+    countryCode: String,
+    countryName: String,
+    date: String,
+    actor1: String,
+    url: String
+  ) =
     s"Country code: $countryCode, Country name: $countryName, " +
       s"Event info: Date: $date, Actor1: $actor1, url: $url"
 

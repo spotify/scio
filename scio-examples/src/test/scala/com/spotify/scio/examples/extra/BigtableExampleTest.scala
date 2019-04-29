@@ -27,9 +27,11 @@ class BigtableExampleTest extends PipelineSpec {
 
   import BigtableExample._
 
-  val bigtableOptions = Seq("--bigtableProjectId=my-project",
-                            "--bigtableInstanceId=my-instance",
-                            "--bigtableTableId=my-table")
+  val bigtableOptions = Seq(
+    "--bigtableProjectId=my-project",
+    "--bigtableInstanceId=my-instance",
+    "--bigtableTableId=my-table"
+  )
 
   val textIn = Seq("a b c d e", "a b a b")
   val wordCount = Seq(("a", 3L), ("b", 3L), ("c", 1L), ("d", 1L), ("e", 1L))
@@ -50,10 +52,12 @@ class BigtableExampleTest extends PipelineSpec {
   }
 
   def toRow(key: String, value: Long): Row =
-    Rows.newRow(ByteString.copyFromUtf8(key),
-                FAMILY_NAME,
-                COLUMN_QUALIFIER,
-                ByteString.copyFromUtf8(value.toString))
+    Rows.newRow(
+      ByteString.copyFromUtf8(key),
+      FAMILY_NAME,
+      COLUMN_QUALIFIER,
+      ByteString.copyFromUtf8(value.toString)
+    )
 
   val rowsIn = wordCount.map(kv => toRow(kv._1, kv._2))
   val expectedText = wordCount.map(kv => kv._1 + ": " + kv._2)

@@ -35,10 +35,11 @@ import scala.reflect.runtime.universe._
 /**
  * Tap for [[org.apache.avro.generic.GenericRecord GenericRecord]] Avro files.
  */
-final case class GenericRecordTap[T: ClassTag: Coder](path: String,
-                                                      @transient private val
-                                                      schema: Schema)
-    extends Tap[T] {
+final case class GenericRecordTap[T: ClassTag: Coder](
+  path: String,
+  @transient private val
+  schema: Schema
+) extends Tap[T] {
   private lazy val s = Externalizer(schema)
 
   override def value: Iterator[T] = FileStorage(path).avroFile[T](s.get)
@@ -95,7 +96,8 @@ final case class AvroTaps(self: Taps) {
 
   /** Get a `Future[Tap[T]]` for typed Avro source. */
   def typedAvroFile[T <: HasAvroAnnotation: TypeTag: ClassTag: Coder](
-    path: String): Future[Tap[T]] = {
+    path: String
+  ): Future[Tap[T]] = {
     val avroT = AvroType[T]
 
     import scala.concurrent.ExecutionContext.Implicits.global

@@ -53,13 +53,15 @@ private[scio] object ItUtils {
     opts.setProject(project)
     val bucket = DefaultBucket.tryCreateDefaultBucket(
       opts,
-      newCloudResourceManagerClient(opts.as(classOf[CloudResourceManagerOptions])))
+      newCloudResourceManagerClient(opts.as(classOf[CloudResourceManagerOptions]))
+    )
     val uuid = UUID.randomUUID().toString
     s"$bucket/$prefix-$uuid"
   }
 
   private def newCloudResourceManagerClient(
-    options: CloudResourceManagerOptions): CloudResourceManager = {
+    options: CloudResourceManagerOptions
+  ): CloudResourceManager = {
     val credentials = options.getGcpCredential
     if (credentials == null) {
       NullCredentialInitializer.throwNullCredentialException()
@@ -79,12 +81,15 @@ private[scio] object ItUtils {
 
   private def chainHttpRequestInitializer(
     credential: Credentials,
-    httpRequestInitializer: HttpRequestInitializer): HttpRequestInitializer = {
+    httpRequestInitializer: HttpRequestInitializer
+  ): HttpRequestInitializer = {
     if (credential == null) {
       new ChainingHttpRequestInitializer(new NullCredentialInitializer(), httpRequestInitializer)
     } else {
-      new ChainingHttpRequestInitializer(new HttpCredentialsAdapter(credential),
-                                         httpRequestInitializer)
+      new ChainingHttpRequestInitializer(
+        new HttpCredentialsAdapter(credential),
+        httpRequestInitializer
+      )
     }
   }
 }

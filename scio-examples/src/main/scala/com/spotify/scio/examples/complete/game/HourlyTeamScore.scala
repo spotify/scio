@@ -65,7 +65,8 @@ object HourlyTeamScore {
     val stopMin =
       new Instant(
         minFmt
-          .parseMillis(args.getOrElse("stopMin", "2100-01-01-00-00"))).getMillis
+          .parseMillis(args.getOrElse("stopMin", "2100-01-01-00-00"))
+      ).getMillis
     // Minutes to group events by - defaults to 60 minutes if not passed in
     val windowDuration = args.long("windowDuration", 60L)
     // A text file containing data on events

@@ -33,7 +33,8 @@ object OverrideTypeProviderFinder {
       Class
         .forName(System.getProperty("override.type.provider", ""))
         .newInstance()
-        .asInstanceOf[OverrideTypeProvider])
+        .asInstanceOf[OverrideTypeProvider]
+    )
     classInstance match {
       case Success(value)       => value
       case Failure(NonFatal(_)) => new DummyOverrideTypeProvider

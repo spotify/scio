@@ -44,25 +44,31 @@ sealed trait PubsubIO[T] extends ScioIO[T] {
 object PubsubIO {
   final case class ReadParam(isSubscription: Boolean)
 
-  final case class WriteParam(maxBatchSize: Option[Int] = None,
-                              maxBatchBytesSize: Option[Int] = None)
+  final case class WriteParam(
+    maxBatchSize: Option[Int] = None,
+    maxBatchBytesSize: Option[Int] = None
+  )
 
-  def apply[T: ClassTag: Coder](name: String,
-                                idAttribute: String = null,
-                                timestampAttribute: String = null): PubsubIO[T] =
+  def apply[T: ClassTag: Coder](
+    name: String,
+    idAttribute: String = null,
+    timestampAttribute: String = null
+  ): PubsubIO[T] =
     PubsubIOWithoutAttributes[T](name, idAttribute, timestampAttribute)
 
   def withAttributes[T: ClassTag: Coder](
     name: String,
     idAttribute: String = null,
-    timestampAttribute: String = null): PubsubIO[(T, Map[String, String])] =
+    timestampAttribute: String = null
+  ): PubsubIO[(T, Map[String, String])] =
     PubsubIOWithAttributes[T](name, idAttribute, timestampAttribute)
 }
 
-private final case class PubsubIOWithoutAttributes[T: ClassTag: Coder](name: String,
-                                                                       idAttribute: String,
-                                                                       timestampAttribute: String)
-    extends PubsubIO[T] {
+private final case class PubsubIOWithoutAttributes[T: ClassTag: Coder](
+  name: String,
+  idAttribute: String,
+  timestampAttribute: String
+) extends PubsubIO[T] {
   private[this] val cls = ScioUtil.classOf[T]
 
   override def testId: String =
@@ -151,10 +157,11 @@ private final case class PubsubIOWithoutAttributes[T: ClassTag: Coder](name: Str
   }
 }
 
-private final case class PubsubIOWithAttributes[T: ClassTag: Coder](name: String,
-                                                                    idAttribute: String,
-                                                                    timestampAttribute: String)
-    extends PubsubIO[(T, Map[String, String])] {
+private final case class PubsubIOWithAttributes[T: ClassTag: Coder](
+  name: String,
+  idAttribute: String,
+  timestampAttribute: String
+) extends PubsubIO[(T, Map[String, String])] {
   type WithAttributeMap = (T, Map[String, String])
 
   override def testId: String =
@@ -180,7 +187,8 @@ private final case class PubsubIOWithAttributes[T: ClassTag: Coder](name: String
   }
 
   override def readTest(sc: ScioContext, params: ReadP)(
-    implicit coder: Coder[WithAttributeMap]): SCollection[WithAttributeMap] = {
+    implicit coder: Coder[WithAttributeMap]
+  ): SCollection[WithAttributeMap] = {
     val read = sc.parallelize(TestDataManager.getInput(sc.testId.get)(this))
 
     if (timestampAttribute != null) {

@@ -190,12 +190,14 @@ class TapTest extends TapSpec {
 
   it should "support saveAsTableRowJsonFile" in {
     def newTableRow(i: Int): TableRow =
-      TableRow("int_field" -> 1 * i,
-               "long_field" -> 1L * i,
-               "float_field" -> 1F * i,
-               "double_field" -> 1.0 * i,
-               "boolean_field" -> "true",
-               "string_field" -> "hello")
+      TableRow(
+        "int_field" -> 1 * i,
+        "long_field" -> 1L * i,
+        "float_field" -> 1f * i,
+        "double_field" -> 1.0 * i,
+        "boolean_field" -> "true",
+        "string_field" -> "hello"
+      )
 
     val dir = tmpDir
     // Compare .toString versions since TableRow may not round trip
