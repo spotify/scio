@@ -129,7 +129,7 @@ final case class BigQueryTaps(self: Taps) {
             readOptions.getSelectedFieldsList().asScala.toList,
             readOptions.getRowRestriction()
           )
-      )
+        )
     )
 
   def typedBigQueryStorage[T: TypeTag: Coder](
