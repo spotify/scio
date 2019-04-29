@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,10 +52,12 @@ object IndexAdmin {
    * @param index index to be created
    * @param mappingSource a valid json string
    */
-  def ensureIndex(cluster: String,
-                  servers: Iterable[InetSocketAddress],
-                  index: String,
-                  mappingSource: String): Try[CreateIndexResponse] = {
+  def ensureIndex(
+    cluster: String,
+    servers: Iterable[InetSocketAddress],
+    index: String,
+    mappingSource: String
+  ): Try[CreateIndexResponse] = {
     val esOptions = ElasticsearchOptions(cluster, servers.toSeq)
     ensureIndex(esOptions, index, mappingSource)
   }
@@ -67,9 +69,11 @@ object IndexAdmin {
    * @param index index to be created
    * @param mappingSource a valid json string
    */
-  def ensureIndex(esOptions: ElasticsearchOptions,
-                  index: String,
-                  mappingSource: String): Try[CreateIndexResponse] =
+  def ensureIndex(
+    esOptions: ElasticsearchOptions,
+    index: String,
+    mappingSource: String
+  ): Try[CreateIndexResponse] =
     adminClient(esOptions) { client =>
       ensureIndex(index, mappingSource, client)
     }
@@ -80,9 +84,11 @@ object IndexAdmin {
    * @param index index to be created
    * @param mappingSource a valid json string
    */
-  private def ensureIndex(index: String,
-                          mappingSource: String,
-                          client: AdminClient): CreateIndexResponse = {
+  private def ensureIndex(
+    index: String,
+    mappingSource: String,
+    client: AdminClient
+  ): CreateIndexResponse = {
     client
       .indices()
       .prepareCreate(index)

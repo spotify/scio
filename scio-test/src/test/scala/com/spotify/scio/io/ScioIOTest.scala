@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -126,7 +126,8 @@ class ScioIOTest extends ScioIOSpec {
     val xs = (1 to 100).map(x => (x.toString, Map.empty[String, String]))
     val io = (s: String) => PubsubIO[(String, Map[String, String])](s)
     testJobTest(xs)(io)(_.pubsubSubscriptionWithAttributes(_))(
-      _.saveAsPubsubWithAttributes[String](_))
+      _.saveAsPubsubWithAttributes[String](_)
+    )
   }
 
   it should "work with topic and attributes" in {

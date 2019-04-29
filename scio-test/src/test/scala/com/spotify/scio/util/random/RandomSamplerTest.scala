@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,9 +60,11 @@ class RandomSamplerTest extends PipelineSpec {
         ???
     }
 
-  def testSampler(withReplacement: Boolean,
-                  expectedFraction: Double,
-                  actualFraction: Double): Double = {
+  def testSampler(
+    withReplacement: Boolean,
+    expectedFraction: Double,
+    actualFraction: Double
+  ): Double = {
     rngSeed.setSeed(fixedSeed)
     val expected = expectedSamples(withReplacement, expectedFraction)
 
@@ -92,14 +94,18 @@ class RandomSamplerTest extends PipelineSpec {
     testSampler(false, 0.4, 0.6) should be >= D
   }
 
-  def testValueSampler(withReplacement: Boolean,
-                       expectedFraction1: Double,
-                       actualFraction1: Double,
-                       expectedFraction2: Double,
-                       actualFraction2: Double): (Double, Double) = {
+  def testValueSampler(
+    withReplacement: Boolean,
+    expectedFraction1: Double,
+    actualFraction1: Double,
+    expectedFraction2: Double,
+    actualFraction2: Double
+  ): (Double, Double) = {
     rngSeed.setSeed(fixedSeed)
-    val expected = Map("a" -> expectedSamples(withReplacement, expectedFraction1),
-                       "b" -> expectedSamples(withReplacement, expectedFraction2))
+    val expected = Map(
+      "a" -> expectedSamples(withReplacement, expectedFraction1),
+      "b" -> expectedSamples(withReplacement, expectedFraction2)
+    )
 
     val fractions = Map("a" -> actualFraction1, "b" -> actualFraction2)
     val sampler = if (withReplacement) {

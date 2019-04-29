@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,11 +44,13 @@ object SoccoIndex {
 
   def isScala(f: File): Boolean = f.isFile && f.getName.endsWith(".scala")
 
-  case class Source(file: String,
-                    section: String,
-                    title: String,
-                    url: String,
-                    objects: List[String])
+  case class Source(
+    file: String,
+    section: String,
+    title: String,
+    url: String,
+    objects: List[String]
+  )
 
   // Find all source files
   private def sources = {

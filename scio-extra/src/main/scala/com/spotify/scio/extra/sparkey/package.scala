@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,14 +17,13 @@
 
 package com.spotify.scio.extra
 
-import java.util.UUID
+import java.util.{UUID, List => JList}
 
 import com.spotify.scio.ScioContext
-import com.spotify.scio.coders.Coder
-
+import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import com.spotify.scio.values.{SCollection, SideInput}
 import com.spotify.sparkey.SparkeyReader
-import org.apache.beam.sdk.transforms.{DoFn, View}
+import org.apache.beam.sdk.transforms.{DoFn, Reify, View}
 import org.apache.beam.sdk.values.PCollectionView
 import org.slf4j.LoggerFactory
 
@@ -113,7 +112,8 @@ package object sparkey {
     def asSparkey(path: String = null, maxMemoryUsage: Long = -1)(
       implicit w: SparkeyWritable[K, V],
       koder: Coder[K],
-      voder: Coder[V]): SCollection[SparkeyUri] = {
+      voder: Coder[V]
+    ): SCollection[SparkeyUri] = {
       val basePath = if (path == null) {
         val uuid = UUID.randomUUID()
         self.context.options.getTempLocation + s"/sparkey-$uuid"
@@ -124,18 +124,23 @@ package object sparkey {
       val uri = SparkeyUri(basePath, self.context.options)
       require(!uri.exists, s"Sparkey URI ${uri.basePath} already exists")
       logger.info(s"Saving as Sparkey: $uri")
-      self.transform { in =>
-        in.groupBy(_ => ())
-          .map {
-            case (_, xs) =>
-              val writer = new SparkeyWriter(uri, maxMemoryUsage)
-              val it = xs.iterator
-              while (it.hasNext) {
-                val kv = it.next()
-                w.put(writer, kv._1, kv._2)
-              }
-              writer.close()
-              uri
+
+      val coder = CoderMaterializer.beam(self.context, Coder[JList[(K, V)]])
+      self.transform { coll =>
+        coll.context
+          .wrap {
+            val view = coll.applyInternal(View.asList[(K, V)]())
+            coll.internal.getPipeline.apply(Reify.viewInGlobalWindow(view, coder))
+          }
+          .map { xs =>
+            val writer = new SparkeyWriter(uri, maxMemoryUsage)
+            val it = xs.iterator
+            while (it.hasNext) {
+              val kv = it.next()
+              w.put(writer, kv._1, kv._2)
+            }
+            writer.close()
+            uri
           }
       }
     }
@@ -145,9 +150,11 @@ package object sparkey {
      *
      * @return A singleton SCollection containing the [[SparkeyUri]] of the saved files.
      */
-    def asSparkey(implicit w: SparkeyWritable[K, V],
-                  koder: Coder[K],
-                  voder: Coder[V]): SCollection[SparkeyUri] = this.asSparkey()
+    def asSparkey(
+      implicit w: SparkeyWritable[K, V],
+      koder: Coder[K],
+      voder: Coder[V]
+    ): SCollection[SparkeyUri] = this.asSparkey()
 
     /**
      * Convert this SCollection to a SideInput, mapping key-value pairs of each window to a
@@ -155,9 +162,11 @@ package object sparkey {
      * [[com.spotify.scio.values.SCollection.withSideInputs SCollection.withSideInputs]]. It is
      * required that each key of the input be associated with a single value.
      */
-    def asSparkeySideInput(implicit w: SparkeyWritable[K, V],
-                           koder: Coder[K],
-                           voder: Coder[V]): SideInput[SparkeyReader] =
+    def asSparkeySideInput(
+      implicit w: SparkeyWritable[K, V],
+      koder: Coder[K],
+      voder: Coder[V]
+    ): SideInput[SparkeyReader] =
       self.asSparkey.asSparkeySideInput
   }
 

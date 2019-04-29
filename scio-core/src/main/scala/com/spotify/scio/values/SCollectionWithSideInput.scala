@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,10 +34,11 @@ import scala.util.Try
  * An enhanced SCollection that provides access to one or more [[SideInput]]s for some transforms.
  * [[SideInput]]s are accessed via the additional [[SideInputContext]] argument.
  */
-class SCollectionWithSideInput[T: Coder] private[values] (val internal: PCollection[T],
-                                                          val context: ScioContext,
-                                                          sides: Iterable[SideInput[_]])
-    extends PCollectionWrapper[T] {
+class SCollectionWithSideInput[T: Coder] private[values] (
+  val internal: PCollection[T],
+  val context: ScioContext,
+  sides: Iterable[SideInput[_]]
+) extends PCollectionWrapper[T] {
 
   private def parDo[T0, U](fn: DoFn[T0, U]) =
     ParDo.of(fn).withSideInputs(sides.map(_.view).asJava)
@@ -53,7 +54,8 @@ class SCollectionWithSideInput[T: Coder] private[values] (val internal: PCollect
 
   /** [[SCollection.flatMap]] with an additional [[SideInputContext]] argument. */
   def flatMap[U: Coder](
-    f: (T, SideInputContext[T]) => TraversableOnce[U]): SCollectionWithSideInput[U] = {
+    f: (T, SideInputContext[T]) => TraversableOnce[U]
+  ): SCollectionWithSideInput[U] = {
     val o = this
       .pApply(parDo(FunctionsWithSideInput.flatMapFn(f)))
       .internal
@@ -79,9 +81,10 @@ class SCollectionWithSideInput[T: Coder] private[values] (val internal: PCollect
    *
    * @return map of side output to [[SCollection]]
    */
-  private[values] def transformWithSideOutputs(sideOutputs: Seq[SideOutput[T]],
-                                               name: String = "TransformWithSideOutputs")(
-    f: (T, SideInputContext[T]) => SideOutput[T]): Map[SideOutput[T], SCollection[T]] = {
+  private[values] def transformWithSideOutputs(
+    sideOutputs: Seq[SideOutput[T]],
+    name: String = "TransformWithSideOutputs"
+  )(f: (T, SideInputContext[T]) => SideOutput[T]): Map[SideOutput[T], SCollection[T]] = {
     val _mainTag = SideOutput[T]()
     val tagToSide = sideOutputs.map(e => e.tupleTag.getId -> e).toMap +
       (_mainTag.tupleTag.getId -> _mainTag)
@@ -89,8 +92,10 @@ class SCollectionWithSideInput[T: Coder] private[values] (val internal: PCollect
     val sideTags =
       TupleTagList.of(sideOutputs.map(e => e.tupleTag.asInstanceOf[TupleTag[_]]).asJava)
 
-    def transformWithSideOutputsFn(partitions: Seq[SideOutput[T]],
-                                   f: (T, SideInputContext[T]) => SideOutput[T]): DoFn[T, T] =
+    def transformWithSideOutputsFn(
+      partitions: Seq[SideOutput[T]],
+      f: (T, SideInputContext[T]) => SideOutput[T]
+    ): DoFn[T, T] =
       new SideInputDoFn[T, T] {
         val g = ClosureCleaner(f) // defeat closure
 
@@ -116,7 +121,8 @@ class SCollectionWithSideInput[T: Coder] private[values] (val internal: PCollect
         context
           .wrap(_)
           .asInstanceOf[SCollection[T]]
-          .setCoder(internal.getCoder))
+          .setCoder(internal.getCoder)
+      )
       .flatMap { case (tt, col) => Try { tagToSide(tt.getId) -> col }.toOption }
       .toMap
   }

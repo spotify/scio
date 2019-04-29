@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,20 +58,22 @@ object SpannerIOIT {
         .to("bar")
         .build()
     ),
-    Seq(Struct
-          .newBuilder()
-          .set("Key")
-          .to(1L)
-          .set("Value")
-          .to("foo")
-          .build(),
-        Struct
-          .newBuilder()
-          .set("Key")
-          .to(2L)
-          .set("Value")
-          .to("bar")
-          .build())
+    Seq(
+      Struct
+        .newBuilder()
+        .set("Key")
+        .to(1L)
+        .set("Value")
+        .to("foo")
+        .build(),
+      Struct
+        .newBuilder()
+        .set("Key")
+        .to(2L)
+        .set("Value")
+        .to("bar")
+        .build()
+    )
   )
 }
 

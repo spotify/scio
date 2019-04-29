@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -82,7 +82,7 @@ final case class JdbcSelect[T: Coder](readOptions: JdbcReadOptions[T]) extends S
   }
 
   override def write(data: SCollection[T], params: WriteP): Tap[Nothing] =
-    throw new IllegalStateException("jdbc.Select is read-only")
+    throw new UnsupportedOperationException("jdbc.Select is read-only")
 
   override def tap(params: ReadP): Tap[Nothing] =
     EmptyTap
@@ -97,7 +97,7 @@ final case class JdbcWrite[T](writeOptions: JdbcWriteOptions[T]) extends ScioIO[
   override def testId: String = s"JdbcIO(${JdbcIO.jdbcIoId(writeOptions)})"
 
   override def read(sc: ScioContext, params: ReadP): SCollection[T] =
-    throw new IllegalStateException("jdbc.Write is write-only")
+    throw new UnsupportedOperationException("jdbc.Write is write-only")
 
   override def write(data: SCollection[T], params: WriteP): Tap[Nothing] = {
     var transform = beam.JdbcIO

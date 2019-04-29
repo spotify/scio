@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,10 @@ class BigQueryTornadoesTest extends PipelineSpec {
     JobTest[com.spotify.scio.examples.cookbook.BigQueryTornadoes.type]
       .args("--input=publicdata:samples.gsod", "--output=dataset.table")
       .input(BigQueryIO("publicdata:samples.gsod"), inData)
-      .output(BigQueryIO[TableRow]("dataset.table"))(_ should containInAnyOrder(expected))
+      .output(BigQueryIO[TableRow]("dataset.table")) { coll =>
+        coll should containInAnyOrder(expected)
+        ()
+      }
       .run()
   }
 

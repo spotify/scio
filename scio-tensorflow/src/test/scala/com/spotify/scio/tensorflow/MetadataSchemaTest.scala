@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@
 package com.spotify.scio.tensorflow
 
 import com.google.protobuf.ByteString
-import com.spotify.scio.testing.PipelineSpec
 import org.tensorflow.example._
 import org.tensorflow.metadata.v0.{
   FeaturePresence,
@@ -56,7 +55,8 @@ object MetadataSchemaTest {
     "string_list" -> featureList(
       Seq("one", "two", "eighty")
         .map(v => Seq(ByteString.copyFromUtf8(v)))
-        .map(byteStrFeature)),
+        .map(byteStrFeature)
+    ),
     "long_list" -> featureList(Seq(1L, 2L, 3L).map(Seq(_)).map(longFeature)),
     "floats_list" -> featureList(Seq(1.0f, 2.0f, 3.0f).map(Seq(_)).map(floatFeature))
   )
@@ -72,49 +72,56 @@ object MetadataSchemaTest {
         .setName("long")
         .setType(FeatureType.INT)
         .setValueCount(ValueCount.newBuilder().setMin(1).setMax(3))
-        .setPresence(FeaturePresence.newBuilder().setMinCount(2).setMinFraction(1.0)))
+        .setPresence(FeaturePresence.newBuilder().setMinCount(2).setMinFraction(1.0))
+    )
     .addFeature(
       MFeature
         .newBuilder()
         .setName("bytes")
         .setType(FeatureType.BYTES)
         .setShape(FixedShape.newBuilder().addDim(FixedShape.Dim.newBuilder().setSize(3)))
-        .setPresence(FeaturePresence.newBuilder().setMinCount(2).setMinFraction(1.0)))
+        .setPresence(FeaturePresence.newBuilder().setMinCount(2).setMinFraction(1.0))
+    )
     .addFeature(
       MFeature
         .newBuilder()
         .setName("floats")
         .setType(FeatureType.FLOAT)
         .setValueCount(ValueCount.newBuilder().setMin(2).setMax(3))
-        .setPresence(FeaturePresence.newBuilder().setMinCount(2).setMinFraction(1.0)))
+        .setPresence(FeaturePresence.newBuilder().setMinCount(2).setMinFraction(1.0))
+    )
     .addFeature(
       MFeature
         .newBuilder()
         .setName("indices")
         .setType(FeatureType.INT)
         .setValueCount(ValueCount.newBuilder().setMin(2).setMax(3))
-        .setPresence(FeaturePresence.newBuilder().setMinCount(2).setMinFraction(1.0)))
+        .setPresence(FeaturePresence.newBuilder().setMinCount(2).setMinFraction(1.0))
+    )
     .addFeature(
       MFeature
         .newBuilder()
         .setName("values")
         .setType(FeatureType.BYTES)
         .setValueCount(ValueCount.newBuilder().setMin(2).setMax(3))
-        .setPresence(FeaturePresence.newBuilder().setMinCount(2).setMinFraction(1.0)))
+        .setPresence(FeaturePresence.newBuilder().setMinCount(2).setMinFraction(1.0))
+    )
     .addFeature(
       MFeature
         .newBuilder()
         .setName("dense_shape")
         .setType(FeatureType.INT)
         .setShape(FixedShape.newBuilder())
-        .setPresence(FeaturePresence.newBuilder().setMinCount(2).setMinFraction(1.0)))
+        .setPresence(FeaturePresence.newBuilder().setMinCount(2).setMinFraction(1.0))
+    )
     .addFeature(
       MFeature
         .newBuilder()
         .setName("missing_feature")
         .setType(FeatureType.INT)
         .setValueCount(ValueCount.newBuilder().setMin(1).setMax(1))
-        .setPresence(FeaturePresence.newBuilder().setMinCount(1).setMinFraction(0.5)))
+        .setPresence(FeaturePresence.newBuilder().setMinCount(1).setMinFraction(0.5))
+    )
     .build()
 
   private def longFeature(raw: Seq[Long]): Feature = {
@@ -153,26 +160,13 @@ object MetadataSchemaTest {
       .setFeatures(Features.newBuilder().putAllFeature(features.asJava))
       .build
 
-  private def mkSequenceExample(context: Map[String, Feature],
-                                featureList: Map[String, FeatureList]): SequenceExample =
+  private def mkSequenceExample(
+    context: Map[String, Feature],
+    featureList: Map[String, FeatureList]
+  ): SequenceExample =
     SequenceExample
       .newBuilder()
       .setContext(Features.newBuilder().putAllFeature(context.asJava))
       .setFeatureLists(FeatureLists.newBuilder().putAllFeatureList(featureList.asJava))
       .build
-}
-
-class MetadataSchemaTest extends PipelineSpec {
-  import MetadataSchemaTest._
-
-  "Saving example schema" should "work" in {
-    runWithContext { sc =>
-      val schema = sc.parallelize(examples).inferExampleMetadata()
-      schema should satisfy[Schema] { schema =>
-        val actualFeatures = schema.head.getFeatureList.asScala.toSet
-        val expectedFeatures = expectedSchema.getFeatureList.asScala.toSet
-        actualFeatures == expectedFeatures
-      }
-    }
-  }
 }

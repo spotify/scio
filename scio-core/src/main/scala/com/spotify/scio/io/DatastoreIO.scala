@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,9 @@ final case class DatastoreIO(projectId: String) extends ScioIO[Entity] {
           .read()
           .withProjectId(projectId)
           .withNamespace(params.namespace)
-          .withQuery(params.query)))
+          .withQuery(params.query)
+      )
+    )
 
   override def write(data: SCollection[Entity], params: WriteP): Tap[Nothing] = {
     data

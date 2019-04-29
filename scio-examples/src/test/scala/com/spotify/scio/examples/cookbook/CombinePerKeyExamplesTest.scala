@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,10 @@ class CombinePerKeyExamplesTest extends PipelineSpec {
     JobTest[com.spotify.scio.examples.cookbook.CombinePerKeyExamples.type]
       .args("--output=dataset.table")
       .input(BigQueryIO(ExampleData.SHAKESPEARE_TABLE), input)
-      .output(BigQueryIO[TableRow]("dataset.table"))(_ should containInAnyOrder(expected))
+      .output(BigQueryIO[TableRow]("dataset.table")) { coll =>
+        coll should containInAnyOrder(expected)
+        ()
+      }
       .run()
   }
 

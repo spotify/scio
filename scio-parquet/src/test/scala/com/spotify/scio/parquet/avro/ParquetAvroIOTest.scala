@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,7 +45,8 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
     val xs = (1 to 100).map(AvroUtils.newSpecificRecord)
     testTap(xs)(_.saveAsParquetAvroFile(_))(".parquet")
     testJobTest(xs)(ParquetAvroIO(_))(_.parquetAvroFile[TestRecord](_).map(identity))(
-      _.saveAsParquetAvroFile(_))
+      _.saveAsParquetAvroFile(_)
+    )
   }
 
   it should "read specific records with projection" in {

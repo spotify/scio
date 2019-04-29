@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -81,11 +81,13 @@ class PipeDoFnTest extends PipelineSpec {
       tmpDir.deleteOnExit() // teardown happens asynchronously
       val p1 = sc
         .parallelize(input)
-        .pipe("tr '[:lower:]' '[:upper:]'",
-              null,
-              tmpDir,
-              Seq("touch tmp1.txt", s"wc tmp1.txt"),
-              Seq("wc tmp1.txt", s"rm tmp1.txt"))
+        .pipe(
+          "tr '[:lower:]' '[:upper:]'",
+          null,
+          tmpDir,
+          Seq("touch tmp1.txt", s"wc tmp1.txt"),
+          Seq("wc tmp1.txt", s"rm tmp1.txt")
+        )
       val p2 = sc
         .parallelize(input)
         .pipe(

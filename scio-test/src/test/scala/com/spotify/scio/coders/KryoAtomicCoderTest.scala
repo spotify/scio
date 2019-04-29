@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -176,7 +176,7 @@ class KryoAtomicCoderTest extends PipelineSpec {
 
 @KryoRegistrar
 class RecordAKryoRegistrar extends IKryoRegistrar {
-  override def apply(k: Kryo): Unit =
+  override def apply(k: Kryo): Unit = {
     k.forClass(new KSerializer[RecordA] {
       override def write(k: Kryo, output: Output, obj: RecordA): Unit = {
         output.writeString(obj.name)
@@ -186,10 +186,11 @@ class RecordAKryoRegistrar extends IKryoRegistrar {
       override def read(kryo: Kryo, input: Input, tpe: Class[RecordA]): RecordA =
         RecordA(input.readString(), input.readInt() + 10)
     })
+  }
 }
 
 class RecordBKryoRegistrar extends IKryoRegistrar {
-  override def apply(k: Kryo): Unit =
+  override def apply(k: Kryo): Unit = {
     k.forClass(new KSerializer[RecordB] {
       override def write(k: Kryo, output: Output, obj: RecordB): Unit = {
         output.writeString(obj.name)
@@ -199,6 +200,8 @@ class RecordBKryoRegistrar extends IKryoRegistrar {
       override def read(kryo: Kryo, input: Input, tpe: Class[RecordB]): RecordB =
         RecordB(input.readString(), input.readInt() + 10)
     })
+    ()
+  }
 }
 
 // Dummy registrar that when reference tracing disabled requires registration

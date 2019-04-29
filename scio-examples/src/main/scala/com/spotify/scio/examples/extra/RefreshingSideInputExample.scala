@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -93,11 +93,13 @@ object RefreshingSideInputExample {
           val currentWinningNumbers = side(winningLotteryNumbers)
 
           val isWinner = lotteryTicket.numbers == currentWinningNumbers
-          val result = LotteryResult(eventTime,
-                                     Instant.now(),
-                                     isWinner,
-                                     lotteryTicket.numbers,
-                                     currentWinningNumbers)
+          val result = LotteryResult(
+            eventTime,
+            Instant.now(),
+            isWinner,
+            lotteryTicket.numbers,
+            currentWinningNumbers
+          )
 
           logger.info(s"Lottery result: $result")
       } // Can save output to PubSub, BigQuery, etc.

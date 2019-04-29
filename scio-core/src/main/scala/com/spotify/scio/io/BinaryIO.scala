@@ -38,7 +38,7 @@ final case class BinaryIO(path: String) extends ScioIO[Array[Byte]] {
   override def testId: String = s"BinaryIO($path)"
 
   override def read(sc: ScioContext, params: ReadP): SCollection[Array[Byte]] =
-    throw new IllegalStateException("BinaryIO is write-only")
+    throw new UnsupportedOperationException("BinaryIO is write-only")
 
   override def write(data: SCollection[Array[Byte]], params: WriteP): Tap[Nothing] = {
     data.applyInternal(
@@ -48,7 +48,8 @@ final case class BinaryIO(path: String) extends ScioIO[Array[Byte]] {
         .withCompression(params.compression)
         .withNumShards(params.numShards)
         .withSuffix(params.suffix)
-        .to(pathWithShards(path)))
+        .to(pathWithShards(path))
+    )
     EmptyTap
   }
 
@@ -59,9 +60,11 @@ final case class BinaryIO(path: String) extends ScioIO[Array[Byte]] {
 }
 
 object BinaryIO {
-  final case class WriteParam(suffix: String = ".bin",
-                              numShards: Int = 0,
-                              compression: Compression = Compression.UNCOMPRESSED)
+  final case class WriteParam(
+    suffix: String = ".bin",
+    numShards: Int = 0,
+    compression: Compression = Compression.UNCOMPRESSED
+  )
 
   private final class BytesSink extends FileIO.Sink[Array[Byte]] {
     @transient private var channel: OutputStream = _

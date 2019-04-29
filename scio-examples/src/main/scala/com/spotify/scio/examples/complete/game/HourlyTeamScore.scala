@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,7 +65,8 @@ object HourlyTeamScore {
     val stopMin =
       new Instant(
         minFmt
-          .parseMillis(args.getOrElse("stopMin", "2100-01-01-00-00"))).getMillis
+          .parseMillis(args.getOrElse("stopMin", "2100-01-01-00-00"))
+      ).getMillis
     // Minutes to group events by - defaults to 60 minutes if not passed in
     val windowDuration = args.long("windowDuration", 60L)
     // A text file containing data on events

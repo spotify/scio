@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,8 @@ object BigQueryTornadoes {
       List(
         new TableFieldSchema().setName("month").setType("INTEGER"),
         new TableFieldSchema().setName("tornado_count").setType("INTEGER")
-      ).asJava)
+      ).asJava
+    )
 
     // Open a BigQuery table as a `SCollection[TableRow]`
     sc.bigQueryTable(args.getOrElse("input", ExampleData.WEATHER_SAMPLES_TABLE))

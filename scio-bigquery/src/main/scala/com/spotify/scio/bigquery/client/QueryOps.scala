@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,7 +45,8 @@ private[client] object QueryOps {
     destinationTable: TableReference = null,
     flattenResults: Boolean = false,
     writeDisposition: WriteDisposition = WriteDisposition.WRITE_EMPTY,
-    createDisposition: CreateDisposition = CreateDisposition.CREATE_IF_NEEDED)
+    createDisposition: CreateDisposition = CreateDisposition.CREATE_IF_NEEDED
+  )
 
 }
 
@@ -95,11 +96,13 @@ private[client] final class QueryOps(client: Client, tableService: TableOps, job
     writeDisposition: WriteDisposition = WriteDisposition.WRITE_EMPTY,
     createDisposition: CreateDisposition = CreateDisposition.CREATE_IF_NEEDED
   ): Iterator[TableRow] = {
-    val config = QueryJobConfig(sqlQuery,
-                                useLegacySql = isLegacySql(sqlQuery),
-                                flattenResults = flattenResults,
-                                writeDisposition = writeDisposition,
-                                createDisposition = createDisposition)
+    val config = QueryJobConfig(
+      sqlQuery,
+      useLegacySql = isLegacySql(sqlQuery),
+      flattenResults = flattenResults,
+      writeDisposition = writeDisposition,
+      createDisposition = createDisposition
+    )
 
     newQueryJob(config).map { job =>
       jobService.waitForJobs(job)
@@ -110,11 +113,15 @@ private[client] final class QueryOps(client: Client, tableService: TableOps, job
   // =======================================================================
   // Query handling
   // =======================================================================
-  private[scio] def newQueryJob(querySql: String,
-                                flattenResults: Boolean = false): Try[QueryJob] = {
-    val config = QueryJobConfig(querySql,
-                                useLegacySql = isLegacySql(querySql),
-                                flattenResults = flattenResults)
+  private[scio] def newQueryJob(
+    querySql: String,
+    flattenResults: Boolean = false
+  ): Try[QueryJob] = {
+    val config = QueryJobConfig(
+      querySql,
+      useLegacySql = isLegacySql(querySql),
+      flattenResults = flattenResults
+    )
 
     newQueryJob(config)
   }
@@ -163,7 +170,8 @@ private[client] final class QueryOps(client: Client, tableService: TableOps, job
         case NonFatal(_) =>
           val temp = tableService.createTemporary(
             extractLocation(query.sql)
-              .getOrElse(BigQueryConfig.location))
+              .getOrElse(BigQueryConfig.location)
+          )
 
           Logger.info(s"Cache miss for query: `${query.sql}`")
           Logger.info(s"New destination table: ${bq.BigQueryHelpers.toTableSpec(temp)}")
@@ -188,12 +196,15 @@ private[client] final class QueryOps(client: Client, tableService: TableOps, job
     destinationTable: String = null,
     flattenResults: Boolean = false,
     writeDisposition: WriteDisposition = WriteDisposition.WRITE_EMPTY,
-    createDisposition: CreateDisposition = CreateDisposition.CREATE_IF_NEEDED): TableReference = {
-    val query = QueryJobConfig(sqlQuery,
-                               useLegacySql = isLegacySql(sqlQuery),
-                               flattenResults = flattenResults,
-                               writeDisposition = writeDisposition,
-                               createDisposition = createDisposition)
+    createDisposition: CreateDisposition = CreateDisposition.CREATE_IF_NEEDED
+  ): TableReference = {
+    val query = QueryJobConfig(
+      sqlQuery,
+      useLegacySql = isLegacySql(sqlQuery),
+      flattenResults = flattenResults,
+      writeDisposition = writeDisposition,
+      createDisposition = createDisposition
+    )
     val tableReference = if (destinationTable != null) {
       val tableRef = bq.BigQueryHelpers.parseTableSpec(destinationTable)
       delayedQueryJob(query.copy(destinationTable = tableRef)).map { job =>
@@ -261,12 +272,14 @@ private[client] final class QueryOps(client: Client, tableService: TableOps, job
               case Success(_) =>
                 Logger.warn(
                   "Legacy syntax is deprecated, use SQL syntax instead. " +
-                    "See https://cloud.google.com/bigquery/docs/reference/standard-sql/")
+                    "See https://cloud.google.com/bigquery/docs/reference/standard-sql/"
+                )
                 Logger.warn(s"Legacy query: `$sqlQuery`")
                 true
               case Failure(f) =>
                 Logger.error(
-                  s"Tried both standard and legacy syntax, query `$sqlQuery` failed for both!")
+                  s"Tried both standard and legacy syntax, query `$sqlQuery` failed for both!"
+                )
                 Logger.error("Standard syntax failed due to:", e)
                 Logger.error("Legacy syntax failed due to:", f)
                 throw f

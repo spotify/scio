@@ -29,6 +29,8 @@ import org.apache.beam.sdk.schemas.{Schema => BSchema}
 import org.apache.beam.sdk.transforms.Combine.CombineFn
 import org.apache.beam.sdk.transforms.SerializableFunction
 import org.apache.beam.sdk.values.{Row, TupleTag}
+import org.joda.time.{DateTime, Instant}
+import org.joda.time.DateTimeZone.UTC
 import org.scalatest.Assertion
 
 import scala.collection.JavaConverters._
@@ -80,6 +82,18 @@ object TestData {
   val usersWithJList =
     (1 to 10).map { i =>
       UserWithJList(s"user$i", java.util.Arrays.asList(s"user$i@spotify.com", s"user$i@yolo.com"))
+    }.toList
+
+  case class UserWithMap(username: String, contacts: Map[String, String])
+  val usersWithMap =
+    (1 to 10).map { i =>
+      UserWithMap(s"user$i", Map("work" -> s"user$i@spotify.com", "personal" -> s"user$i@yolo.com"))
+    }.toList
+
+  case class UserWithInstant(username: String, created: Instant, dateString: String)
+  val usersWithJoda =
+    (1 to 10).map { i =>
+      UserWithInstant(s"user$i", Instant.now(), "19851026")
     }.toList
 
   class IsOver18UdfFn extends SerializableFunction[Integer, Boolean] {
@@ -250,6 +264,16 @@ class BeamSQLTest extends PipelineSpec {
     r should containInAnyOrder(expected)
   }
 
+  it should "support Map[K, V]" in runWithContext { sc =>
+    val expected = usersWithMap.map { u =>
+      (u.username, u.contacts)
+    }
+    val in = sc.parallelize(usersWithMap)
+    val r =
+      in.queryAs[(String, Map[String, String])]("select username, contacts from SCOLLECTION")
+    r should containInAnyOrder(expected)
+  }
+
   it should "not derive a Schema for non-bean Java classes" in {
     import com.spotify.scio.bean._
     "IsJavaBean[UserBean]" should compile
@@ -261,21 +285,79 @@ class BeamSQLTest extends PipelineSpec {
     "Schema.javaBeanSchema[TypeMismatch]" shouldNot compile
   }
 
+  it should "support joda types" in runWithContext { sc =>
+    val expected = usersWithJoda.map { u =>
+      (u.username, u.created)
+    }
+
+    val r = sc
+      .parallelize(usersWithJoda)
+      .queryAs[(String, Instant)]("select username, created from SCOLLECTION")
+
+    r should containInAnyOrder(expected)
+
+    val expectedCast = usersWithJoda.map { u =>
+      (u.username, new DateTime(1985, 10, 26, 0, 0, UTC).toInstant())
+    }
+
+    val query = """
+    | select username,
+    |        cast(
+    |         substring(trim(dateString) from 1 for 4)
+    |           ||'-'
+    |           ||substring(trim(dateString) from 5 for 2)
+    |           ||'-'
+    |           ||substring(trim(dateString) from 7 for 2) as date)
+    |         from SCOLLECTION
+    """.stripMargin
+
+    val cast = sc
+      .parallelize(usersWithJoda)
+      .queryAs[(String, Instant)](query)
+
+    cast should containInAnyOrder(expectedCast)
+  }
+
   it should "support JOIN" in runWithContext { sc =>
     val a = sc.parallelize(users)
     val b = sc.parallelize(users)
 
     Sql
       .from(a, b)
-      .query("select a.username from B a join A b on a.username = b.username",
-             new TupleTag[User]("A"),
-             new TupleTag[User]("B")) shouldNot beEmpty
+      .query(
+        "select a.username from B a join A b on a.username = b.username",
+        new TupleTag[User]("A"),
+        new TupleTag[User]("B")
+      ) shouldNot beEmpty
 
     Sql
       .from(a, b)
-      .queryAs[String]("select a.username from B a join A b on a.username = b.username",
-                       new TupleTag[User]("A"),
-                       new TupleTag[User]("B")) shouldNot beEmpty
+      .queryAs[String](
+        "select a.username from B a join A b on a.username = b.username",
+        new TupleTag[User]("A"),
+        new TupleTag[User]("B")
+      ) shouldNot beEmpty
+  }
+
+  it should "support sql subqueries" in runWithContext { sc =>
+    val a = sc.parallelize(users)
+    val b = sc.parallelize(users)
+
+    Sql
+      .from(a, b)
+      .queryAs[String](
+        "select username from A where username in (select username from B)",
+        new TupleTag[User]("A"),
+        new TupleTag[User]("B")
+      ) shouldNot beEmpty
+
+    Sql
+      .from(a, b)
+      .queryAs[(String, Boolean)](
+        "select username, username not in (select username from B where username = 'user1') from A",
+        new TupleTag[User]("A"),
+        new TupleTag[User]("B")
+      ) shouldNot beEmpty
   }
 
   it should "properly chain typed queries" in runWithContext { sc =>
@@ -292,7 +374,8 @@ class BeamSQLTest extends PipelineSpec {
       .queryAs[(String, Int)](
         "select a.username, b.age from B a join A b on a.username = b.username",
         new TupleTag[User]("A"),
-        new TupleTag[User]("B"))
+        new TupleTag[User]("B")
+      )
       .queryAs[Int]("select sum(_2) from SCOLLECTION")
 
     r2 should containSingleValue(expected)
@@ -317,9 +400,11 @@ class BeamSQLTest extends PipelineSpec {
       def apply[A: Schema, B: Schema](q: String): Assertion =
         Queries.typecheck(Query[A, B](q)) should be('right)
 
-      def apply[A: Schema, B: Schema, C: Schema](q: String,
-                                                 a: TupleTag[A],
-                                                 b: TupleTag[B]): Assertion =
+      def apply[A: Schema, B: Schema, C: Schema](
+        q: String,
+        a: TupleTag[A],
+        b: TupleTag[B]
+      ): Assertion =
         Queries.typecheck(Query2[A, B, C](q, a, b)) should be('right)
     }
 
@@ -327,9 +412,11 @@ class BeamSQLTest extends PipelineSpec {
       def apply[A: Schema, B: Schema](q: String): Assertion =
         Queries.typecheck(Query[A, B](q)) should be('left)
 
-      def apply[A: Schema, B: Schema, C: Schema](q: String,
-                                                 a: TupleTag[A],
-                                                 b: TupleTag[B]): Assertion =
+      def apply[A: Schema, B: Schema, C: Schema](
+        q: String,
+        a: TupleTag[A],
+        b: TupleTag[B]
+      ): Assertion =
         Queries.typecheck(Query2[A, B, C](q, a, b)) should be('left)
     }
 
@@ -360,7 +447,8 @@ class BeamSQLTest extends PipelineSpec {
     checkNOK[UserBean, Bar]("select name, age from SCOLLECTION")
     // Calcite flattens the row value
     checkOK[UserBean, (Long, Int, String)](
-      "select cast(age AS BIGINT), row(age, name) from SCOLLECTION")
+      "select cast(age AS BIGINT), row(age, name) from SCOLLECTION"
+    )
 
     checkOK[UserBean, List[Int]]("select ARRAY[age] from SCOLLECTION")
     checkOK[UserBean, (String, List[Int])]("select name, ARRAY[age] from SCOLLECTION")
@@ -370,63 +458,13 @@ class BeamSQLTest extends PipelineSpec {
     checkOK[User, User, (String, Int)](
       "select a.username, b.age from A a join B b on a.username = b.username",
       new TupleTag[User]("A"),
-      new TupleTag[User]("B"))
+      new TupleTag[User]("B")
+    )
     checkNOK[User, User, (String, String)](
       "select a.username, b.age from A a join B b on a.username = b.username",
       new TupleTag[User]("A"),
-      new TupleTag[User]("B"))
-  }
-
-  it should "typecheck queries at compile time" in {
-    import Queries.typed
-    // scalastyle:off line.size.limit
-    """typed[Bar, Long]("select l from SCOLLECTION")""" should compile
-    """typed[Bar, Int]("select `SCOLLECTION`.`f`.`i` from SCOLLECTION")""" should compile
-    """typed[Bar, Result]("select `SCOLLECTION`.`f`.`i` from SCOLLECTION")""" should compile
-    """typed[Bar, TestData.Foo]("select f from SCOLLECTION")""" should compile
-    """typed[Bar, (String, Long)]("select `SCOLLECTION`.`f`.`s`, l from SCOLLECTION")""" should compile
-    // st fallback support
-    // XXX: scalac :bomb: this test seems to be problematic under scala 2.11 ...
-//    """tsql[UserWithFallBack, Locale]("select locale from SCOLLECTION")""" should compile
-    """typed[UserWithOption, Option[Int]]("select age from SCOLLECTION")""" should compile
-    """typed[Bar, Long]("select cast(`SCOLLECTION`.`f`.`i` as BIGINT) from SCOLLECTION")""" should compile
-    """typed[UserBean, (String, Int)]("select name, age from SCOLLECTION")""" should compile
-    """typed[UserBean, (Long, Int, String)]("select cast(age AS BIGINT), row(age, name) from SCOLLECTION")""" should compile
-    """typed[UserBean, List[Int]]("select ARRAY[age] from SCOLLECTION")""" should compile
-    """typed[UserBean, (String, List[Int])]("select name, ARRAY[age] from SCOLLECTION")""" should compile
-    """typed[UserWithOption, Int]("select age from SCOLLECTION")""" shouldNot compile
-    """typed[Bar, (String, Long)]("select l from SCOLLECTION")""" shouldNot compile
-    """typed[Bar, String]("select l from SCOLLECTION")""" shouldNot compile
-    """typed[UserBean, (String, Long)]("select name, age from SCOLLECTION")""" shouldNot compile
-    """typed[UserBean, User]("select name, age from SCOLLECTION")""" shouldNot compile
-    """typed[UserBean, (String, Option[Int])]("select name, age from SCOLLECTION")""" shouldNot compile
-    """typed[UserBean, Bar]("select name, age from SCOLLECTION")""" shouldNot compile
-    """typed[UserBean, (String, Int)]("select name, ARRAY[age] from SCOLLECTION")""" shouldNot compile
-    """typed[UserBean, (String, List[Int])]("select name, age from SCOLLECTION")""" shouldNot compile
-
-    // joins
-
-    """
-      |typed[User, User, String]("select a.username from B a join A b on a.username = b.username", new TupleTag[User]("A"), new TupleTag[User]("B"))
-      |""".stripMargin should compile
-    """
-      |typed[User, User, Int]("select a.username from B a join A b on a.username = b.username", new TupleTag[User]("A"), new TupleTag[User]("B"))
-      |""".stripMargin shouldNot compile
-    """
-      |typed[User, User, String]("select a.username from B a join A b on a.username = b.username", new TupleTag[User]("C"), new TupleTag[User]("D"))
-      |""".stripMargin shouldNot compile
-    // scalastyle:on line.size.limit
-  }
-
-  it should "give a clear error message when the query can not be checked at compile time" in {
-    """
-    val q = "select name, age from SCOLLECTION"
-    Queries.typed[UserBean, (String, Int)](q)
-    """ shouldNot compile
-
-    """
-    def functionName(q: String) = Queries.typed[(String, String), String](q)
-    """ shouldNot compile
+      new TupleTag[User]("B")
+    )
   }
 
   it should "support UDFs from SerializableFunctions and classes" in runWithContext { sc =>
@@ -523,12 +561,6 @@ class BeamSQLTest extends PipelineSpec {
     sc.parallelize(avroWithNullable)
       .to[CompatibleAvroTestRecord](To.safe) should containInAnyOrder(expectedAvro)
   }
-
-  it should "typecheck classes compatibilty" in {
-    import TypeConvertionsTestData._
-    """To.safe[TinyTo, From0]""" shouldNot compile
-    """To.safe[From0, CompatibleAvroTestRecord]""" shouldNot compile
-  }
 }
 
 object TypeConvertionsTestData {
@@ -572,8 +604,8 @@ object TypeConvertionsTestData {
   val expectedAvro =
     avroWithNullable.map { r =>
       CompatibleAvroTestRecord(
-        Option(r.getIntField),
-        Option(r.getLongField),
+        Option(r.getIntField.toInt),
+        Option(r.getLongField.toLong),
         Option(r.getStringField).map(_.toString),
         r.getArrayField.asScala.toList.map(_.toString)
       )

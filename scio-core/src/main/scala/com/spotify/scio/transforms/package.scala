@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,31 +48,43 @@ package object transforms {
      * @param batchSize batch size when downloading files
      * @param keep keep downloaded files after processing
      */
-    def mapFile[T: Coder](f: Path => T,
-                          batchSize: Int = 10,
-                          keep: Boolean = false): SCollection[T] =
+    def mapFile[T: Coder](
+      f: Path => T,
+      batchSize: Int = 10,
+      keep: Boolean = false
+    ): SCollection[T] =
       self.applyTransform(
         ParDo.of(
-          new FileDownloadDoFn[T](RemoteFileUtil.create(self.context.options),
-                                  Functions.serializableFn(f),
-                                  batchSize,
-                                  keep)))
+          new FileDownloadDoFn[T](
+            RemoteFileUtil.create(self.context.options),
+            Functions.serializableFn(f),
+            batchSize,
+            keep
+          )
+        )
+      )
 
     /**
      * Download [[java.net.URI URI]] elements and process as local [[java.nio.file.Path Path]]s.
      * @param batchSize batch size when downloading files
      * @param keep keep downloaded files after processing
      */
-    def flatMapFile[T: Coder](f: Path => TraversableOnce[T],
-                              batchSize: Int = 10,
-                              keep: Boolean = false): SCollection[T] =
+    def flatMapFile[T: Coder](
+      f: Path => TraversableOnce[T],
+      batchSize: Int = 10,
+      keep: Boolean = false
+    ): SCollection[T] =
       self
         .applyTransform(
           ParDo.of(
-            new FileDownloadDoFn[TraversableOnce[T]](RemoteFileUtil.create(self.context.options),
-                                                     Functions.serializableFn(f),
-                                                     batchSize,
-                                                     keep)))
+            new FileDownloadDoFn[TraversableOnce[T]](
+              RemoteFileUtil.create(self.context.options),
+              Functions.serializableFn(f),
+              batchSize,
+              keep
+            )
+          )
+        )
         .flatMap(identity)
 
   }
@@ -127,8 +139,9 @@ package object transforms {
      * `parallelism` is the number of concurrent `DoFn`s per worker.
      * @group transform
      */
-    def flatMapWithParallelism[U: Coder](parallelism: Int)(
-      fn: T => TraversableOnce[U]): SCollection[U] =
+    def flatMapWithParallelism[U: Coder](
+      parallelism: Int
+    )(fn: T => TraversableOnce[U]): SCollection[U] =
       self.parDo(parallelFlatMapFn(parallelism)(fn))
 
     /**
@@ -136,8 +149,9 @@ package object transforms {
      * `parallelism` is the number of concurrent `DoFn`s per worker.
      * @group transform
      */
-    def filterWithParallelism(parallelism: Int)(fn: T => Boolean)(
-      implicit coder: Coder[T]): SCollection[T] =
+    def filterWithParallelism(
+      parallelism: Int
+    )(fn: T => Boolean)(implicit coder: Coder[T]): SCollection[T] =
       self.parDo(parallelFilterFn(parallelism)(fn))
 
     /**
@@ -153,8 +167,9 @@ package object transforms {
      * `parallelism` is the number of concurrent `DoFn`s per worker.
      * @group transform
      */
-    def collectWithParallelism[U: Coder](parallelism: Int)(
-      pfn: PartialFunction[T, U]): SCollection[U] =
+    def collectWithParallelism[U: Coder](
+      parallelism: Int
+    )(pfn: PartialFunction[T, U]): SCollection[U] =
       self.parDo(parallelCollectFn(parallelism)(pfn))
   }
 
@@ -171,11 +186,13 @@ package object transforms {
      * @param setupCmds setup commands to be run before processing
      * @param teardownCmds tear down commands to be run after processing
      */
-    def pipe(command: String,
-             environment: Map[String, String] = null,
-             dir: File = null,
-             setupCmds: Seq[String] = null,
-             teardownCmds: Seq[String] = null): SCollection[String] = {
+    def pipe(
+      command: String,
+      environment: Map[String, String] = null,
+      dir: File = null,
+      setupCmds: Seq[String] = null,
+      teardownCmds: Seq[String] = null
+    ): SCollection[String] = {
       val env = if (environment == null) null else environment.asJava
       val sCmds = if (setupCmds == null) null else setupCmds.asJava
       val tCmds = if (teardownCmds == null) null else teardownCmds.asJava
@@ -190,11 +207,13 @@ package object transforms {
      * @param setupCmds setup commands to be run before processing
      * @param teardownCmds tear down commands to be run after processing
      */
-    def pipe(cmdArray: Array[String],
-             environment: Map[String, String],
-             dir: File,
-             setupCmds: Seq[Array[String]],
-             teardownCmds: Seq[Array[String]]): SCollection[String] = {
+    def pipe(
+      cmdArray: Array[String],
+      environment: Map[String, String],
+      dir: File,
+      setupCmds: Seq[Array[String]],
+      teardownCmds: Seq[Array[String]]
+    ): SCollection[String] = {
       val env = if (environment == null) null else environment.asJava
       val sCmds = if (setupCmds == null) null else setupCmds.asJava
       val tCmds = if (teardownCmds == null) null else teardownCmds.asJava
@@ -219,8 +238,9 @@ package object transforms {
      *
      * @group transform
      */
-    def safeFlatMap[U: Coder](f: T => TraversableOnce[U])(
-      implicit coder: Coder[T]): (SCollection[U], SCollection[(T, Throwable)]) = {
+    def safeFlatMap[U: Coder](
+      f: T => TraversableOnce[U]
+    )(implicit coder: Coder[T]): (SCollection[U], SCollection[(T, Throwable)]) = {
       val (mainTag, errorTag) = (new TupleTag[U], new TupleTag[(T, Throwable)])
       val doFn = new NamedDoFn[T, U] {
         val g = ClosureCleaner(f) // defeat closure

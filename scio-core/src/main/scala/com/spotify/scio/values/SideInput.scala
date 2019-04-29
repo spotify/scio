@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -86,7 +86,8 @@ object SideInput {
    * [[PairSCollectionFunctions.asMultiMapSideInput]].
    */
   def wrapMultiMap[K, V](
-    view: PCollectionView[JMap[K, JIterable[V]]]): SideInput[Map[K, Iterable[V]]] =
+    view: PCollectionView[JMap[K, JIterable[V]]]
+  ): SideInput[Map[K, Iterable[V]]] =
     new MultiMapSideInput[K, V](view)
 }
 
@@ -120,8 +121,10 @@ private[values] class MultiMapSideInput[K, V](val view: PCollectionView[JMap[K, 
 }
 
 /** Encapsulate context of one or more [[SideInput]]s in an [[SCollectionWithSideInput]]. */
-class SideInputContext[T] private[scio] (val context: DoFn[T, AnyRef]#ProcessContext,
-                                         val window: BoundedWindow) {
+class SideInputContext[T] private[scio] (
+  val context: DoFn[T, AnyRef]#ProcessContext,
+  val window: BoundedWindow
+) {
 
   /** Extract the value of a given [[SideInput]]. */
   def apply[S](side: SideInput[S]): S = side.getCache(context, window)

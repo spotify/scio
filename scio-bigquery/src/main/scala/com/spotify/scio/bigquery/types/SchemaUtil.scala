@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,17 +34,18 @@ object SchemaUtil {
   // scalastyle:off cyclomatic.complexity
   private def getRawType(tfs: TableFieldSchema, indent: Int): (String, Seq[String]) = {
     val name = tfs.getType match {
-      case "BOOLEAN"   => "Boolean"
-      case "INTEGER"   => "Long"
-      case "FLOAT"     => "Double"
-      case "STRING"    => "String"
-      case "BYTES"     => "ByteString"
-      case "TIMESTAMP" => "Instant"
-      case "DATE"      => "LocalDate"
-      case "TIME"      => "LocalTime"
-      case "DATETIME"  => "LocalDateTime"
-      case "RECORD"    => NameProvider.getUniqueName(tfs.getName)
-      case t           => throw new IllegalArgumentException(s"Type: $t not supported")
+      case "BOOLEAN"           => "Boolean"
+      case "INTEGER" | "INT64" => "Long"
+      case "FLOAT" | "FLOAT64" => "Double"
+      case "STRING"            => "String"
+      case "NUMERIC"           => "BigDecimal"
+      case "BYTES"             => "ByteString"
+      case "TIMESTAMP"         => "Instant"
+      case "DATE"              => "LocalDate"
+      case "TIME"              => "LocalTime"
+      case "DATETIME"          => "LocalDateTime"
+      case "RECORD" | "STRUCT" => NameProvider.getUniqueName(tfs.getName)
+      case t                   => throw new IllegalArgumentException(s"Type: $t not supported")
     }
     if (tfs.getType == "RECORD") {
       val nested = getCaseClass(tfs.getFields, name, indent)

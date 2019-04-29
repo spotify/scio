@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,8 +35,9 @@ import scala.util.Try
 object TableAdmin {
   private val log: Logger = LoggerFactory.getLogger(TableAdmin.getClass)
 
-  private def adminClient[A](bigtableOptions: BigtableOptions)(
-    f: BigtableTableAdminClient => A): Try[A] = {
+  private def adminClient[A](
+    bigtableOptions: BigtableOptions
+  )(f: BigtableTableAdminClient => A): Try[A] = {
     val channel =
       ChannelPoolCreator.createPool(bigtableOptions.getAdminHost)
     val executorService =
@@ -56,8 +57,10 @@ object TableAdmin {
    * @param tablesAndColumnFamilies A map of tables and column families.  Keys are table names.
    *                                Values are a list of column family names.
    */
-  def ensureTables(bigtableOptions: BigtableOptions,
-                   tablesAndColumnFamilies: Map[String, List[String]]): Unit = {
+  def ensureTables(
+    bigtableOptions: BigtableOptions,
+    tablesAndColumnFamilies: Map[String, List[String]]
+  ): Unit = {
     val project = bigtableOptions.getProjectId
     val instance = bigtableOptions.getInstanceId
     val instancePath = s"projects/$project/instances/$instance"
@@ -70,7 +73,8 @@ object TableAdmin {
           ListTablesRequest
             .newBuilder()
             .setParent(instancePath)
-            .build())
+            .build()
+        )
         .getTablesList
         .asScala
         .map(t => t.getName)
@@ -86,7 +90,8 @@ object TableAdmin {
               .newBuilder()
               .setParent(instancePath)
               .setTableId(table)
-              .build())
+              .build()
+          )
         } else {
           log.info("Table {} exists", table)
         }
@@ -104,9 +109,11 @@ object TableAdmin {
    *                  `projects/projectId/instances/instanceId/tables/tableId`
    * @param columnFamilies A list of column family names.
    */
-  private def ensureColumnFamilies(client: BigtableTableAdminClient,
-                                   tablePath: String,
-                                   columnFamilies: List[String]): Unit = {
+  private def ensureColumnFamilies(
+    client: BigtableTableAdminClient,
+    tablePath: String,
+    columnFamilies: List[String]
+  ): Unit = {
 
     val tableInfo =
       client.getTable(GetTableRequest.newBuilder().setName(tablePath).build)
@@ -129,7 +136,8 @@ object TableAdmin {
           .newBuilder()
           .setName(tablePath)
           .addAllModifications(modifications.asJava)
-          .build)
+          .build
+      )
       ()
     }
   }
@@ -157,9 +165,11 @@ object TableAdmin {
    *                  `projects/projectId/instances/instanceId/tables/tableId`
    * @param rowPrefix row key prefix
    */
-  private def dropRowRange(tablePath: String,
-                           rowPrefix: String,
-                           client: BigtableTableAdminClient): Unit = {
+  private def dropRowRange(
+    tablePath: String,
+    rowPrefix: String,
+    client: BigtableTableAdminClient
+  ): Unit = {
     val request = DropRowRangeRequest
       .newBuilder()
       .setName(tablePath)

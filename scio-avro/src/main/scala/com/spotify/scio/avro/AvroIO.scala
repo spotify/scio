@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -133,13 +133,15 @@ object ProtobufIO {
 sealed trait AvroIO[T] extends ScioIO[T] {
   override final val tapT = TapOf[T]
 
-  protected def avroOut[U](sc: SCollection[T],
-                           write: beam.AvroIO.Write[U],
-                           path: String,
-                           numShards: Int,
-                           suffix: String,
-                           codec: CodecFactory,
-                           metadata: Map[String, AnyRef]) =
+  protected def avroOut[U](
+    sc: SCollection[T],
+    write: beam.AvroIO.Write[U],
+    path: String,
+    numShards: Int,
+    suffix: String,
+    codec: CodecFactory,
+    metadata: Map[String, AnyRef]
+  ) =
     write
       .to(ScioUtil.pathWithShards(path))
       .withNumShards(numShards)
@@ -174,7 +176,8 @@ final case class SpecificRecordIO[T <: SpecificRecord: ClassTag: Coder](path: St
     val cls = ScioUtil.classOf[T]
     val t = beam.AvroIO.write(cls)
     data.applyInternal(
-      avroOut(data, t, path, params.numShards, params.suffix, params.codec, params.metadata))
+      avroOut(data, t, path, params.numShards, params.suffix, params.codec, params.metadata)
+    )
     tap(())
   }
 
@@ -208,7 +211,8 @@ final case class GenericRecordIO[T: ClassTag: Coder](path: String, schema: Schem
   override def write(data: SCollection[T], params: WriteP): Tap[T] = {
     val t = beam.AvroIO.writeGenericRecords(schema).asInstanceOf[beam.AvroIO.Write[T]]
     data.applyInternal(
-      avroOut(data, t, path, params.numShards, params.suffix, params.codec, params.metadata))
+      avroOut(data, t, path, params.numShards, params.suffix, params.codec, params.metadata)
+    )
     tap(())
   }
 
@@ -225,10 +229,12 @@ object AvroIO {
     private[avro] val DefaultMetadata: Map[String, AnyRef] = Map.empty
   }
 
-  final case class WriteParam private (numShards: Int = WriteParam.DefaultNumShards,
-                                       private val _suffix: String = WriteParam.DefaultSuffix,
-                                       codec: CodecFactory = WriteParam.DefaultCodec,
-                                       metadata: Map[String, AnyRef] = WriteParam.DefaultMetadata) {
+  final case class WriteParam private (
+    numShards: Int = WriteParam.DefaultNumShards,
+    private val _suffix: String = WriteParam.DefaultSuffix,
+    codec: CodecFactory = WriteParam.DefaultCodec,
+    metadata: Map[String, AnyRef] = WriteParam.DefaultMetadata
+  ) {
     val suffix: String = _suffix + ".avro"
   }
 
@@ -247,13 +253,15 @@ object AvroTyped {
     override type WriteP = avro.AvroIO.WriteParam
     override final val tapT = TapOf[T]
 
-    private def typedAvroOut[U](sc: SCollection[T],
-                                write: beam.AvroIO.TypedWrite[U, Void, GenericRecord],
-                                path: String,
-                                numShards: Int,
-                                suffix: String,
-                                codec: CodecFactory,
-                                metadata: Map[String, AnyRef]) =
+    private def typedAvroOut[U](
+      sc: SCollection[T],
+      write: beam.AvroIO.TypedWrite[U, Void, GenericRecord],
+      path: String,
+      numShards: Int,
+      suffix: String,
+      codec: CodecFactory,
+      metadata: Map[String, AnyRef]
+    ) =
       write
         .to(ScioUtil.pathWithShards(path))
         .withNumShards(numShards)
@@ -289,7 +297,8 @@ object AvroTyped {
         })
         .withSchema(avroT.schema)
       data.applyInternal(
-        typedAvroOut(data, t, path, params.numShards, params.suffix, params.codec, params.metadata))
+        typedAvroOut(data, t, path, params.numShards, params.suffix, params.codec, params.metadata)
+      )
       tap(())
     }
 

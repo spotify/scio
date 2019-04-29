@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -94,9 +94,11 @@ final class SampleOverrideTypeProvider extends OverrideTypeProvider {
     }
   }
 
-  def initializeToTable(c: blackbox.Context)(modifiers: c.universe.Modifiers,
-                                             variableName: c.universe.TermName,
-                                             tpe: c.universe.Tree): Unit = ()
+  def initializeToTable(c: blackbox.Context)(
+    modifiers: c.universe.Modifiers,
+    variableName: c.universe.TermName,
+    tpe: c.universe.Tree
+  ): Unit = ()
 
 }
 

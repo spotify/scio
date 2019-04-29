@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,28 +29,40 @@ class JavaConvertersExampleTest extends PipelineSpec {
   "JavaConverters" should "convert filename prefix String to ResourceId" in {
     JobTest[com.spotify.scio.examples.extra.JavaConvertersExample.type]
       .args(s"--output=$output", "--converter=String#toResourceId")
-      .output(io)(_ should containInAnyOrder(expected))
+      .output(io) { coll =>
+        coll should containInAnyOrder(expected)
+        ()
+      }
       .run()
   }
 
   it should "convert filename prefix String to StaticValueProvider[String]" in {
     JobTest[com.spotify.scio.examples.extra.JavaConvertersExample.type]
       .args(s"--output=$output", "--converter=String#toFilenamePolicy")
-      .output(io)(_ should containInAnyOrder(expected))
+      .output(io) { coll =>
+        coll should containInAnyOrder(expected)
+        ()
+      }
       .run()
   }
 
   it should "convert filename prefix String to DefaultFilenamePolicy" in {
     JobTest[com.spotify.scio.examples.extra.JavaConvertersExample.type]
       .args(s"--output=$output", "--converter=String#toStaticValueProvider")
-      .output(io)(_ should containInAnyOrder(expected))
+      .output(io) { coll =>
+        coll should containInAnyOrder(expected)
+        ()
+      }
       .run()
   }
 
   it should "convert FilenamePolicy case class to DefaultFilenamePolicy" in {
     JobTest[com.spotify.scio.examples.extra.JavaConvertersExample.type]
       .args(s"--output=$output", "--converter=FilenamePolicy#toJava")
-      .output(io)(_ should containInAnyOrder(expected))
+      .output(io) { coll =>
+        coll should containInAnyOrder(expected)
+        ()
+      }
       .run()
   }
 

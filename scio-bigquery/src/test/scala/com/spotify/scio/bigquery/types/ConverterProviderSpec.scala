@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -87,6 +87,7 @@ final class ConverterProviderSpec
       o.dateF.isDefined shouldBe r.containsKey("dateF")
       o.timeF.isDefined shouldBe r.containsKey("timeF")
       o.datetimeF.isDefined shouldBe r.containsKey("datetimeF")
+      o.bigDecimalF.isDefined shouldBe r.containsKey("bigDecimalF")
     }
   }
 

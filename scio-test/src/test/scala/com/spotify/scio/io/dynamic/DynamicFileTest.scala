@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,7 @@ class DynamicFileTest extends PipelineSpec {
       .filterNot(_.toFile.getName.startsWith("."))
       .toSet
     actual shouldBe expected.map(path.resolve).toSet
+    ()
   }
 
   "Dynamic File" should "support text files" in {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,7 +66,7 @@ private[client] object Cache {
   private def cacheFile(key: String, suffix: String): File = {
     val cacheDir = BigQueryConfig.cacheDirectory
     val filename = Hashing.murmur3_128().hashString(key, Charsets.UTF_8).toString + suffix
-    val cacheFile = new File(s"$cacheDir/$filename")
+    val cacheFile = cacheDir.resolve(filename).toFile()
     Files.createParentDirs(cacheFile)
     cacheFile
   }

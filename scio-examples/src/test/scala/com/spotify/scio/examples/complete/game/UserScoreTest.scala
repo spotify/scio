@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,7 +56,10 @@ class UserScoreTest extends PipelineSpec {
     JobTest[com.spotify.scio.examples.complete.game.UserScore.type]
       .args("--input=in.txt", "--output=dataset.table")
       .input(TextIO("in.txt"), inData1)
-      .output(BigQueryIO[UserScoreSums]("dataset.table"))(_ should containInAnyOrder(expected))
+      .output(BigQueryIO[UserScoreSums]("dataset.table")) { coll =>
+        coll should containInAnyOrder(expected)
+        ()
+      }
       .run()
   }
 
@@ -64,7 +67,10 @@ class UserScoreTest extends PipelineSpec {
     JobTest[com.spotify.scio.examples.complete.game.UserScore.type]
       .args("--input=in.txt", "--output=dataset.table")
       .input(TextIO("in.txt"), inData2)
-      .output(BigQueryIO[UserScoreSums]("dataset.table"))(_ should beEmpty)
+      .output(BigQueryIO[UserScoreSums]("dataset.table")) { coll =>
+        coll should beEmpty
+        ()
+      }
       .run()
   }
 

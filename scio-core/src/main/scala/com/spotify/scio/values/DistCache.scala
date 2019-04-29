@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -81,18 +81,20 @@ object MockDistCache {
   def apply[F](initFn: () => F): DistCache[F] = new MockDistCacheFunc[F](initFn)
 }
 
-private[scio] class DistCacheSingle[F](val uri: URI,
-                                       val initFn: File => F,
-                                       options: PipelineOptions)
-    extends FileDistCache[F](options) {
+private[scio] class DistCacheSingle[F](
+  val uri: URI,
+  val initFn: File => F,
+  options: PipelineOptions
+) extends FileDistCache[F](options) {
   verifyUri(uri)
   override protected def init: F = initFn(prepareFiles(Seq(uri)).head)
 }
 
-private[scio] class DistCacheMulti[F](val uris: Seq[URI],
-                                      val initFn: Seq[File] => F,
-                                      options: PipelineOptions)
-    extends FileDistCache[F](options) {
+private[scio] class DistCacheMulti[F](
+  val uris: Seq[URI],
+  val initFn: Seq[File] => F,
+  options: PipelineOptions
+) extends FileDistCache[F](options) {
   uris.foreach(verifyUri)
   override protected def init: F = initFn(prepareFiles(uris))
 }

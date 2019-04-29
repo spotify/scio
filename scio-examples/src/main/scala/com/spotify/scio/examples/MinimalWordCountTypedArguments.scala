@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,12 +33,14 @@ object MinimalWordCountTypedArguments {
   @AppName("Scio Examples")
   @AppVersion(BuildInfo.version)
   @ProgName("com.spotify.scio.examples.MinimalWordCount")
-  case class Arguments(@HelpMessage("Path of the file to read from")
-                       @ExtraName("i")
-                       input: String = ExampleData.KING_LEAR,
-                       @HelpMessage("Path of the file to write to")
-                       @ExtraName("o")
-                       output: String)
+  case class Arguments(
+    @HelpMessage("Path of the file to read from")
+    @ExtraName("i")
+    input: String = ExampleData.KING_LEAR,
+    @HelpMessage("Path of the file to write to")
+    @ExtraName("o")
+    output: String
+  )
 
   def main(cmdlineArgs: Array[String]): Unit = {
     // Parse command line arguments, create `ScioContext` and `Args`.

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,7 +58,8 @@ private[client] object JobOps {
         val outputRows = stats.getLoad.getOutputRows
         Logger.info(
           s"Input file bytes: $inputFileBytes, output bytes: $outputBytes, " +
-            s"output rows: $outputRows")
+            s"output rows: $outputRows"
+        )
 
       case queryJob: QueryJob =>
         Logger.info(s"Query: `${queryJob.query}`")

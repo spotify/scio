@@ -38,7 +38,10 @@ class ValidationJobTest extends PipelineSpec {
       .input(AvroIO[GenericRecord]("reference"), inputs2.values)
       .input(AvroIO[InputClass]("reference2"), inputs3)
       .input(AvroIO[InputClass]("donttouch"), inputs)
-      .output[OutputClass](AvroIO("foo"))(_ should containInAnyOrder(expected))
+      .output[OutputClass](AvroIO("foo")){ coll =>
+coll should containInAnyOrder(expected)
+()
+}
       .run()
   }
 }

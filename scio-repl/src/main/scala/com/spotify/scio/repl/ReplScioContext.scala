@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,8 +34,10 @@ class ReplScioContext(options: PipelineOptions, artifacts: List[String])
 
   /** Ensure an operation is called before the pipeline is closed. */
   override private[scio] def requireNotClosed[T](body: => T): T = {
-    require(!this.isClosed,
-            "ScioContext already closed, use :newScio <[context-name] | sc> to create new context")
+    require(
+      !this.isClosed,
+      "ScioContext already closed, use :newScio <[context-name] | sc> to create new context"
+    )
     super.requireNotClosed(body)
   }
 

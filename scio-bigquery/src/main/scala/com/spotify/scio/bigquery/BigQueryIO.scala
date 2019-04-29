@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import com.spotify.scio.io.{ScioIO, Tap, TapOf, TestIO}
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.extensions.gcp.options.GcpOptions
+import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.TypedRead.Method
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
 import org.apache.beam.sdk.io.gcp.bigquery.SchemaAndRecord
 import org.apache.beam.sdk.io.gcp.{bigquery => beam}
@@ -55,7 +56,8 @@ private object Reads {
   private[scio] def bqReadQuery[T: ClassTag](sc: ScioContext)(
     typedRead: beam.BigQueryIO.TypedRead[T],
     sqlQuery: String,
-    flattenResults: Boolean = false): SCollection[T] = sc.wrap {
+    flattenResults: Boolean = false
+  ): SCollection[T] = sc.wrap {
     val bigQueryClient = client(sc)
     if (bigQueryClient.isCacheEnabled) {
       val read = bigQueryClient.query
@@ -84,6 +86,19 @@ private object Reads {
     }
   }
 
+  private[scio] def bqReadStorage[T: ClassTag](sc: ScioContext)(
+    typedRead: beam.BigQueryIO.TypedRead[T],
+    table: Table,
+    selectedFields: List[String] = Nil,
+    rowRestriction: String = null
+  ): SCollection[T] = sc.wrap {
+    val read = typedRead
+      .from(table.spec)
+      .withMethod(Method.DIRECT_READ)
+      .withReadOptions(StorageUtil.tableReadOptions(selectedFields, rowRestriction))
+    sc.applyInternal(read)
+  }
+
   private[scio] def avroBigQueryRead[T <: HasAnnotation: ClassTag: TypeTag](sc: ScioContext) = {
     val fn = BigQueryType[T].fromAvro
     beam.BigQueryIO
@@ -93,9 +108,9 @@ private object Reads {
       .withCoder(CoderMaterializer.beam(sc, Coder.kryo[T]))
   }
 
-  private[scio] def bqReadTable[T: ClassTag](sc: ScioContext)(
-    typedRead: beam.BigQueryIO.TypedRead[T],
-    table: TableReference): SCollection[T] =
+  private[scio] def bqReadTable[T: ClassTag](
+    sc: ScioContext
+  )(typedRead: beam.BigQueryIO.TypedRead[T], table: TableReference): SCollection[T] =
     sc.wrap(sc.applyInternal(typedRead.from(table)))
 }
 
@@ -129,7 +144,7 @@ final case class BigQuerySelect(sqlQuery: String) extends BigQueryIO[TableRow] {
     Reads.bqReadQuery(sc)(beam.BigQueryIO.readTableRows(), sqlQuery, params.flattenResults)
 
   override def write(data: SCollection[TableRow], params: WriteP): Tap[TableRow] =
-    throw new IllegalStateException("BigQuerySelect is read-only")
+    throw new UnsupportedOperationException("BigQuerySelect is read-only")
 
   override def tap(params: ReadP): Tap[TableRow] =
     BigQueryTap(bqc.query.run(sqlQuery, flattenResults = params.flattenResults))
@@ -146,19 +161,17 @@ object BigQuerySelect {
 /**
  * Get an IO for a BigQuery table.
  */
-final case class BigQueryTable(tableSpec: String) extends BigQueryIO[TableRow] {
+final case class BigQueryTable(table: Table) extends BigQueryIO[TableRow] {
   override type ReadP = Unit
   override type WriteP = BigQueryTable.WriteParam
 
-  private lazy val table = beam.BigQueryHelpers.parseTableSpec(tableSpec)
-
-  override def testId: String = s"BigQueryIO($tableSpec)"
+  override def testId: String = s"BigQueryIO(${table.spec})"
 
   override def read(sc: ScioContext, params: ReadP): SCollection[TableRow] =
-    Reads.bqReadTable(sc)(beam.BigQueryIO.readTableRows(), table)
+    Reads.bqReadTable(sc)(beam.BigQueryIO.readTableRows(), table.ref)
 
   override def write(data: SCollection[TableRow], params: WriteP): Tap[TableRow] = {
-    var transform = beam.BigQueryIO.writeTableRows().to(table)
+    var transform = beam.BigQueryIO.writeTableRows().to(table.ref)
     if (params.schema != null) {
       transform = transform.withSchema(params.schema)
     }
@@ -179,11 +192,11 @@ final case class BigQueryTable(tableSpec: String) extends BigQueryIO[TableRow] {
     if (params.writeDisposition == WriteDisposition.WRITE_APPEND) {
       throw new NotImplementedError("BigQuery future with append not implemented")
     } else {
-      BigQueryTap(table)
+      BigQueryTap(table.ref)
     }
   }
 
-  override def tap(read: ReadP): Tap[TableRow] = BigQueryTap(table)
+  override def tap(read: ReadP): Tap[TableRow] = BigQueryTap(table.ref)
 }
 
 object BigQueryTable {
@@ -200,10 +213,50 @@ object BigQueryTable {
     writeDisposition: WriteDisposition = WriteParam.DefaultWriteDisposition,
     createDisposition: CreateDisposition = WriteParam.DefaultCreateDisposition,
     tableDescription: String = WriteParam.DefaultTableDescription,
-    timePartitioning: TimePartitioning = WriteParam.DefaultTimePartitioning)
+    timePartitioning: TimePartitioning = WriteParam.DefaultTimePartitioning
+  )
 
+  @deprecated("this method will be removed; use apply(Table.Ref(table)) instead", "Scio 0.8")
   @inline final def apply(table: TableReference): BigQueryTable =
-    BigQueryTable(beam.BigQueryHelpers.toTableSpec(table))
+    BigQueryTable(Table.Ref(table))
+
+  @deprecated("this method will be removed; use apply(Table.Spec(table)) instead", "Scio 0.8")
+  @inline final def apply(spec: String): BigQueryTable =
+    BigQueryTable(Table.Spec(spec))
+}
+
+/**
+ * Get an IO for a BigQuery table using the storage API.
+ */
+final case class BigQueryStorage(table: Table) extends BigQueryIO[TableRow] {
+  override type ReadP = BigQueryStorage.ReadParam
+  override type WriteP = Nothing // ReadOnly
+
+  override protected def read(sc: ScioContext, params: ReadP): SCollection[TableRow] =
+    Reads.bqReadStorage(sc)(
+      beam.BigQueryIO.readTableRows(),
+      table,
+      params.selectFields,
+      params.rowRestriction
+    )
+
+  override protected def write(data: SCollection[TableRow], params: WriteP): Tap[TableRow] =
+    throw new UnsupportedOperationException("BigQueryStorage is read-only")
+
+  override def tap(read: ReadP): Tap[TableRow] =
+    throw new NotImplementedError("BigQueryStore Tap not implemented")
+}
+
+object BigQueryStorage {
+  final case class ReadParam(selectFields: List[String], rowRestriction: String)
+
+  @deprecated("this method will be removed; use apply(Table.Ref(table)) instead", "Scio 0.8")
+  @inline final def apply(table: TableReference): BigQueryStorage =
+    BigQueryStorage(Table.Ref(table))
+
+  @deprecated("this method will be removed; use apply(Table.Spec(table)) instead", "Scio 0.8")
+  @inline final def apply(spec: String): BigQueryStorage =
+    BigQueryStorage(Table.Spec(spec))
 }
 
 /**
@@ -235,19 +288,24 @@ object TableRowJsonIO {
     private[bigquery] val DefaultCompression = Compression.UNCOMPRESSED
   }
 
-  final case class WriteParam private (numShards: Int = WriteParam.DefaultNumShards,
-                                       compression: Compression = WriteParam.DefaultCompression)
+  final case class WriteParam private (
+    numShards: Int = WriteParam.DefaultNumShards,
+    compression: Compression = WriteParam.DefaultCompression
+  )
 }
 
 object BigQueryTyped {
+  import com.spotify.scio.bigquery.{Table => STable}
 
   @annotation.implicitNotFound(
     """
     Can't find annotation for type ${T}.
-    Make sure this class is annotated with BigQueryType.fromTable or with BigQueryType.fromQuery
-    Alternatively, use Typed.Query("<sqlQuery>") or Typed.Table("<bigquery table>")
-    to get a ScioIO instance.
-  """)
+    Make sure this class is annotated with BigQueryType.fromStorage, BigQueryType.fromTable or
+    BigQueryType.fromQuery.
+    Alternatively, use BigQueryTyped.Storage("<table>"), BigQueryTyped.Table("<table>"), or
+    BigQueryTyped.Query("<query>") to get a ScioIO instance.
+  """
+  )
   sealed trait IO[T <: HasAnnotation] {
     type F[_ <: HasAnnotation] <: ScioIO[_]
     def impl: F[T]
@@ -259,17 +317,27 @@ object BigQueryTyped {
       IO[T] { type F[A <: HasAnnotation] = F0[A] }
 
     implicit def tableIO[T <: HasAnnotation: ClassTag: TypeTag: Coder](
-      implicit t: BigQueryType.Table[T]): Aux[T, Table] =
+      implicit t: BigQueryType.Table[T]
+    ): Aux[T, Table] =
       new IO[T] {
         type F[A <: HasAnnotation] = Table[A]
-        def impl: Table[T] = Table(t.table)
+        def impl: Table[T] = Table(STable.Spec(t.table))
       }
 
     implicit def queryIO[T <: HasAnnotation: ClassTag: TypeTag: Coder](
-      implicit t: BigQueryType.Query[T]): Aux[T, Select] =
+      implicit t: BigQueryType.Query[T]
+    ): Aux[T, Select] =
       new IO[T] {
         type F[A <: HasAnnotation] = Select[A]
         def impl: Select[T] = Select(t.query)
+      }
+
+    implicit def storageIO[T <: HasAnnotation: ClassTag: TypeTag: Coder](
+      implicit t: BigQueryType.StorageOptions[T]
+    ): Aux[T, Storage] =
+      new IO[T] {
+        type F[A <: HasAnnotation] = Storage[A]
+        def impl: Storage[T] = Storage(STable.Spec(t.table))
       }
   }
   // scalastyle:on structural.type
@@ -278,7 +346,8 @@ object BigQueryTyped {
    * Get a typed SCollection for a BigQuery table or a SELECT query.
    *
    * Note that `T` must be annotated with
-   * [[com.spotify.scio.bigquery.types.BigQueryType.fromTable BigQueryType.fromTable]] or
+   * [[com.spotify.scio.bigquery.types.BigQueryType.fromTable BigQueryType.fromStorage]],
+   * [[com.spotify.scio.bigquery.types.BigQueryType.fromTable BigQueryType.fromTable]], or
    * [[com.spotify.scio.bigquery.types.BigQueryType.fromQuery BigQueryType.fromQuery]]
    *
    * The source (table) specified in the annotation will be used
@@ -287,7 +356,7 @@ object BigQueryTyped {
     t.impl
 
   /**
-   * Get a typed SCollection for a BigQuery SELECT query
+   * Get a typed SCollection for a BigQuery SELECT query.
    *
    * Both [[https://cloud.google.com/bigquery/docs/reference/legacy-sql Legacy SQL]] and
    * [[https://cloud.google.com/bigquery/docs/reference/standard-sql/ Standard SQL]] dialects are
@@ -309,7 +378,7 @@ object BigQueryTyped {
     }
 
     override def write(data: SCollection[T], params: WriteP): Tap[T] =
-      throw new IllegalStateException("Select queries are read-only")
+      throw new UnsupportedOperationException("Select queries are read-only")
 
     override def tap(params: ReadP): Tap[T] =
       com.spotify.scio.bigquery
@@ -321,19 +390,18 @@ object BigQueryTyped {
   /**
    * Get a typed SCollection for a BigQuery table.
    */
-  final case class Table[T <: HasAnnotation: ClassTag: TypeTag: Coder](tableSpec: String)
+  final case class Table[T <: HasAnnotation: ClassTag: TypeTag: Coder](table: STable)
       extends BigQueryIO[T] {
     override type ReadP = Unit
     override type WriteP = Table.WriteParam
 
     private lazy val bqt = BigQueryType[T]
-    private lazy val table = beam.BigQueryHelpers.parseTableSpec(tableSpec)
 
-    override def testId: String = s"BigQueryIO($tableSpec)"
+    override def testId: String = s"BigQueryIO(${table.spec})"
 
     override def read(sc: ScioContext, params: ReadP): SCollection[T] = {
       @inline def typedRead(sc: ScioContext) = Reads.avroBigQueryRead[T](sc)
-      Reads.bqReadTable(sc)(typedRead(sc), table)
+      Reads.bqReadTable(sc)(typedRead(sc), table.ref)
     }
 
     override def write(data: SCollection[T], params: WriteP): Tap[T] = {
@@ -344,11 +412,13 @@ object BigQueryTyped {
           .withName(s"$initialTfName$$Write")
 
       val ps =
-        BigQueryTable.WriteParam(bqt.schema,
-                                 params.writeDisposition,
-                                 params.createDisposition,
-                                 bqt.tableDescription.orNull,
-                                 params.timePartitioning)
+        BigQueryTable.WriteParam(
+          bqt.schema,
+          params.writeDisposition,
+          params.createDisposition,
+          bqt.tableDescription.orNull,
+          params.timePartitioning
+        )
 
       BigQueryTable(table)
         .write(rows, ps)
@@ -371,36 +441,70 @@ object BigQueryTyped {
     final case class WriteParam private (
       writeDisposition: WriteDisposition = WriteParam.DefaultWriteDisposition,
       createDisposition: CreateDisposition = WriteParam.DefaultCreateDisposition,
-      timePartitioning: TimePartitioning = WriteParam.DefaultTimePartitioning)
+      timePartitioning: TimePartitioning = WriteParam.DefaultTimePartitioning
+    )
 
+    @deprecated("this method will be removed; use apply(Table.Ref(table)) instead", "Scio 0.8")
+    @inline
+    final def apply[T <: HasAnnotation: ClassTag: TypeTag: Coder](spec: String): Table[T] =
+      Table[T](STable.Spec(spec))
+
+    @deprecated("this method will be removed; use apply(Table.Spec(table)) instead", "Scio 0.8")
     @inline
     final def apply[T <: HasAnnotation: ClassTag: TypeTag: Coder](table: TableReference): Table[T] =
-      Table[T](beam.BigQueryHelpers.toTableSpec(table))
+      Table[T](STable.Ref(table))
   }
 
+  /**
+   * Get a typed SCollection for a BigQuery table using the storage API.
+   */
+  final case class Storage[T <: HasAnnotation: ClassTag: TypeTag: Coder](table: STable)
+      extends BigQueryIO[T] {
+    override type ReadP = Storage.ReadParam
+    override type WriteP = Nothing // ReadOnly
+
+    override def testId: String = s"BigQueryIO($table.spec)"
+
+    override def read(sc: ScioContext, params: ReadP): SCollection[T] = {
+      @inline def typedRead(sc: ScioContext) = Reads.avroBigQueryRead[T](sc)
+      Reads.bqReadStorage(sc)(typedRead(sc), table, params.selectFields, params.rowRestriction)
+    }
+
+    override def write(data: SCollection[T], params: WriteP): Tap[T] =
+      throw new UnsupportedOperationException("Storage API is read-only")
+
+    override def tap(params: ReadP): Tap[T] =
+      throw new NotImplementedError("BigQueryStore Tap not implemented")
+  }
+
+  object Storage {
+    type ReadParam = BigQueryStorage.ReadParam
+    val ReadParam = BigQueryStorage.ReadParam
+  }
+
+  // scalastyle:off cyclomatic.complexity
   private[scio] def dynamic[T <: HasAnnotation: ClassTag: TypeTag: Coder](
     newSource: String
   ): ScioIO.ReadOnly[T, Unit] = {
     val bqt = BigQueryType[T]
-    lazy val table =
-      scala.util.Try(beam.BigQueryHelpers.parseTableSpec(newSource)).toOption
     newSource match {
       // newSource is missing, T's companion object must have either table or query
       // The case where newSource is null is only there
       // for legacy support and should not exists once
       // BigQueryScioContext.typedBigQuery is removed
       case null if bqt.isTable =>
-        val table = bqt.table.get
-        ScioIO.ro[T](Table(table))
+        val table = STable.Spec(bqt.table.get)
+        ScioIO.ro[T](Table[T](table))
       case null if bqt.isQuery =>
-        val _query = bqt.query.get
-        Select[T](_query)
+        val query = bqt.query.get
+        Select[T](query)
       case null =>
         throw new IllegalArgumentException(s"Missing table or query field in companion object")
-      case _ if table.isDefined =>
-        ScioIO.ro(Table[T](newSource))
+      case _ if scala.util.Try(STable.Spec(newSource).ref).isSuccess =>
+        ScioIO.ro(Table[T](STable.Spec(newSource)))
       case _ =>
         Select[T](newSource)
     }
   }
+  // scalastyle:on cyclomatic.complexity
 }

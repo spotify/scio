@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,8 +76,10 @@ private[bigquery] object BigQueryPartitionUtil {
       val overlaps = tables
         .map(t => getPartitions(bq, t._2))
         .reduce(_ intersect _)
-      require(overlaps.nonEmpty,
-              "Cannot find latest common partition for " + tables.keys.mkString(", "))
+      require(
+        overlaps.nonEmpty,
+        "Cannot find latest common partition for " + tables.keys.mkString(", ")
+      )
       val latest = overlaps.max
       tables.foldLeft(sqlQuery) {
         case (q, (spec, _)) =>

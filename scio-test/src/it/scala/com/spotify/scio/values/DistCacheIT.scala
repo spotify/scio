@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,8 +37,9 @@ class DistCacheIT extends PipelineSpec {
     }
   }
 
-  def runWithDistCache[T: ClassTag](data: Iterable[String])(
-    fn: (ScioContext, DistCache[List[String]]) => T): ScioResult = {
+  def runWithDistCache[T: ClassTag](
+    data: Iterable[String]
+  )(fn: (ScioContext, DistCache[List[String]]) => T): ScioResult = {
     val sc = ScioContext()
     val uri = ItUtils.gcpTempLocation("dist-cache-it")
     val cache = sc.distCache(uri) { f =>

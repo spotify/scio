@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,11 +34,13 @@ import scala.io.Source
 
 private[tensorflow] object TFSavedJob {
 
-  case class Iris(sepalLength: Option[Double],
-                  sepalWidth: Option[Double],
-                  petalLength: Option[Double],
-                  petalWidth: Option[Double],
-                  className: Option[String])
+  case class Iris(
+    sepalLength: Option[Double],
+    sepalWidth: Option[Double],
+    petalLength: Option[Double],
+    petalWidth: Option[Double],
+    className: Option[String]
+  )
 
   val Spec: FeatureSpec[Iris] = FeatureSpec
     .of[Iris]
@@ -75,6 +77,7 @@ private[tensorflow] object TFSavedJob {
       .saveAsTextFile(args("output"))
 
     sc.close().waitUntilDone()
+    ()
   }
 }
 
@@ -86,8 +89,8 @@ class TensorflowSpec extends PipelineSpec {
 
     JobTest[TFSavedJob.type]
       .args(s"--savedModelUri=$resource", s"--settings=$settings", "--output=output")
-      .output(TextIO("output")) {
-        _ should containInAnyOrder(List("0"))
+      .output(TextIO("output")) { out =>
+        out should containInAnyOrder(List("0"))
       }
       .run()
   }

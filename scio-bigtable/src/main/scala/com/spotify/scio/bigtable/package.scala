@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -107,16 +107,19 @@ package object bigtable {
       instanceId: String,
       tableId: String,
       keyRange: ByteKeyRange = BigtableRead.ReadParam.DefaultKeyRange,
-      rowFilter: RowFilter = BigtableRead.ReadParam.DefaultRowFilter): SCollection[Row] = {
+      rowFilter: RowFilter = BigtableRead.ReadParam.DefaultRowFilter
+    ): SCollection[Row] = {
       val parameters = BigtableRead.ReadParam(keyRange, rowFilter)
       self.read(BigtableRead(projectId, instanceId, tableId))(parameters)
     }
 
     /** Get an SCollection for a Bigtable table. */
-    def bigtable(bigtableOptions: BigtableOptions,
-                 tableId: String,
-                 keyRange: ByteKeyRange,
-                 rowFilter: RowFilter): SCollection[Row] = {
+    def bigtable(
+      bigtableOptions: BigtableOptions,
+      tableId: String,
+      keyRange: ByteKeyRange,
+      rowFilter: RowFilter
+    ): SCollection[Row] = {
       val parameters = BigtableRead.ReadParam(keyRange, rowFilter)
       self.read(BigtableRead(bigtableOptions, tableId))(parameters)
     }
@@ -129,10 +132,12 @@ package object bigtable {
      * @param sleepDuration How long to sleep after updating the number of nodes. Google recommends
      *                      at least 20 minutes before the new nodes are fully functional
      */
-    def updateNumberOfBigtableNodes(projectId: String,
-                                    instanceId: String,
-                                    numberOfNodes: Int,
-                                    sleepDuration: Duration = DefaultSleepDuration): Unit = {
+    def updateNumberOfBigtableNodes(
+      projectId: String,
+      instanceId: String,
+      numberOfNodes: Int,
+      sleepDuration: Duration = DefaultSleepDuration
+    ): Unit = {
       val bigtableOptions = new BigtableOptions.Builder()
         .setProjectId(projectId)
         .setInstanceId(instanceId)
@@ -148,9 +153,11 @@ package object bigtable {
      * @param sleepDuration How long to sleep after updating the number of nodes. Google recommends
      *                      at least 20 minutes before the new nodes are fully functional
      */
-    def updateNumberOfBigtableNodes(bigtableOptions: BigtableOptions,
-                                    numberOfNodes: Int,
-                                    sleepDuration: Duration): Unit =
+    def updateNumberOfBigtableNodes(
+      bigtableOptions: BigtableOptions,
+      numberOfNodes: Int,
+      sleepDuration: Duration
+    ): Unit =
       if (!self.isTest) {
         // No need to update the number of nodes in a test
         BigtableUtil.updateNumberOfBigtableNodes(bigtableOptions, numberOfNodes, sleepDuration)
@@ -181,9 +188,11 @@ package object bigtable {
      * @param tablesAndColumnFamilies A map of tables and column families.  Keys are table names.
      *                                Values are a list of column family names.
      */
-    def ensureTables(projectId: String,
-                     instanceId: String,
-                     tablesAndColumnFamilies: Map[String, List[String]]): Unit = {
+    def ensureTables(
+      projectId: String,
+      instanceId: String,
+      tablesAndColumnFamilies: Map[String, List[String]]
+    ): Unit = {
       if (!self.isTest) {
         val bigtableOptions = new BigtableOptions.Builder()
           .setProjectId(projectId)
@@ -201,8 +210,10 @@ package object bigtable {
      * @param tablesAndColumnFamilies A map of tables and column families.  Keys are table names.
      *                                Values are a list of column family names.
      */
-    def ensureTables(bigtableOptions: BigtableOptions,
-                     tablesAndColumnFamilies: Map[String, List[String]]): Unit = {
+    def ensureTables(
+      bigtableOptions: BigtableOptions,
+      tablesAndColumnFamilies: Map[String, List[String]]
+    ): Unit = {
       if (!self.isTest) {
         TableAdmin.ensureTables(bigtableOptions, tablesAndColumnFamilies)
       }
@@ -245,10 +256,12 @@ package object bigtable {
      * Save this SCollection as a Bigtable table. This version supports batching. Note that
      * elements must be of type `Mutation`.
      */
-    def saveAsBigtable(bigtableOptions: BigtableOptions,
-                       tableId: String,
-                       numOfShards: Int,
-                       flushInterval: Duration = BigtableWrite.Bulk.DefaultFlushInterval)(
+    def saveAsBigtable(
+      bigtableOptions: BigtableOptions,
+      tableId: String,
+      numOfShards: Int,
+      flushInterval: Duration = BigtableWrite.Bulk.DefaultFlushInterval
+    )(
       implicit ev: T <:< Mutation,
       coder: Coder[T]
     ): ClosedTap[(ByteString, Iterable[Mutation])] = {

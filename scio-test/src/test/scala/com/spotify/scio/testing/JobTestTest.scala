@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -207,6 +207,7 @@ object JobWithoutClose {
     sc.parallelize(1 to 10)
       .count
       .saveAsObjectFile(args("output"))
+    ()
   }
 }
 
@@ -260,7 +261,10 @@ class JobTestTest extends PipelineSpec {
     JobTest[ObjectFileJob.type]
       .args("--input=in.avro", "--output=out.avro")
       .input(ObjectFileIO[Int]("in.avro"), Seq(1, 2, 3))
-      .output(ObjectFileIO[Int]("out.avro"))(_ should containInAnyOrder(xs))
+      .output(ObjectFileIO[Int]("out.avro")) { coll =>
+        coll should containInAnyOrder(xs)
+        ()
+      }
       .run()
   }
 
@@ -277,7 +281,10 @@ class JobTestTest extends PipelineSpec {
     JobTest[SpecificAvroFileJob.type]
       .args("--input=in.avro", "--output=out.avro")
       .input(AvroIO[TestRecord]("in.avro"), (1 to 3).map(newSpecificRecord))
-      .output(AvroIO[TestRecord]("out.avro"))(_ should containInAnyOrder(xs))
+      .output(AvroIO[TestRecord]("out.avro")) { coll =>
+        coll should containInAnyOrder(xs)
+        ()
+      }
       .run()
   }
 
@@ -299,7 +306,10 @@ class JobTestTest extends PipelineSpec {
     JobTest[GenericAvroFileJob.type]
       .args("--input=in.avro", "--output=out.avro")
       .input(AvroIO[GenericRecord]("in.avro"), (1 to 3).map(newGenericRecord))
-      .output(AvroIO[GenericRecord]("out.avro"))(_ should containInAnyOrder(xs))
+      .output(AvroIO[GenericRecord]("out.avro")) { coll =>
+        coll should containInAnyOrder(xs)
+        ()
+      }
       .run()
   }
 
@@ -322,7 +332,10 @@ class JobTestTest extends PipelineSpec {
     JobTest[BigQueryJob.type]
       .args("--input=table.in", "--output=table.out")
       .input(BigQueryIO[TableRow]("table.in"), (1 to 3).map(newTableRow))
-      .output(BigQueryIO[TableRow]("table.out"))(_ should containInAnyOrder(xs))
+      .output(BigQueryIO[TableRow]("table.out")) { coll =>
+        coll should containInAnyOrder(xs)
+        ()
+      }
       .run()
   }
 
@@ -343,7 +356,10 @@ class JobTestTest extends PipelineSpec {
     JobTest[TableRowJsonJob.type]
       .args("--input=in.json", "--output=out.json")
       .input(TableRowJsonIO("in.json"), (1 to 3).map(newTableRow))
-      .output(TableRowJsonIO("out.json"))(_ should containInAnyOrder(xs))
+      .output(TableRowJsonIO("out.json")) { coll =>
+        coll should containInAnyOrder(xs)
+        ()
+      }
       .run()
   }
 
@@ -371,7 +387,10 @@ class JobTestTest extends PipelineSpec {
     JobTest[DatastoreJob.type]
       .args("--input=store.in", "--output=store.out")
       .input(DatastoreIO("store.in"), (1 to 3).map(newEntity))
-      .output(DatastoreIO("store.out"))(_ should containInAnyOrder(xs))
+      .output(DatastoreIO("store.out")) { coll =>
+        coll should containInAnyOrder(xs)
+        ()
+      }
       .run()
   }
 
@@ -392,7 +411,10 @@ class JobTestTest extends PipelineSpec {
     JobTest[PubsubJob.type]
       .args("--input=in", "--output=out")
       .input(PubsubIO[String]("in"), Seq("a", "b", "c"))
-      .output(PubsubIO[String]("out"))(_ should containInAnyOrder(xs))
+      .output(PubsubIO[String]("out")) { coll =>
+        coll should containInAnyOrder(xs)
+        ()
+      }
       .run()
   }
 
@@ -412,11 +434,16 @@ class JobTestTest extends PipelineSpec {
     val m = Map("a" -> "1", "b" -> "2", "c" -> "3") ++ timestampAttribute
     JobTest[PubsubWithAttributesJob.type]
       .args("--input=in", "--output=out")
-      .input(PubsubIO[(String, M)]("in", null, PubsubWithAttributesJob.timestampAttribute),
-             Seq("a", "b", "c").map((_, m)))
+      .input(
+        PubsubIO[(String, M)]("in", null, PubsubWithAttributesJob.timestampAttribute),
+        Seq("a", "b", "c").map((_, m))
+      )
       .output(
         PubsubIO[(String, M)]("out", null, PubsubWithAttributesJob.timestampAttribute)
-      )(_ should containInAnyOrder(xs.map((_, m))))
+      ) { coll =>
+        coll should containInAnyOrder(xs.map((_, m)))
+        ()
+      }
       .run()
   }
 
@@ -425,7 +452,8 @@ class JobTestTest extends PipelineSpec {
       Map(PubsubWithAttributesJob.timestampAttribute -> new Instant().toString),
       "aX",
       "bX",
-      "cX")
+      "cX"
+    )
   }
 
   it should "fail incorrect PubsubIO with attributes" in {
@@ -433,7 +461,8 @@ class JobTestTest extends PipelineSpec {
       testPubsubWithAttributesJob(
         Map(PubsubWithAttributesJob.timestampAttribute -> new Instant().toString),
         "aX",
-        "bX")
+        "bX"
+      )
     }
     an[AssertionError] should be thrownBy {
       testPubsubWithAttributesJob(
@@ -441,7 +470,8 @@ class JobTestTest extends PipelineSpec {
         "aX",
         "bX",
         "cX",
-        "dX")
+        "dX"
+      )
     }
   }
 
@@ -451,7 +481,8 @@ class JobTestTest extends PipelineSpec {
         Map(PubsubWithAttributesJob.timestampAttribute -> "invalidTimestamp"),
         "aX",
         "bX",
-        "cX")
+        "cX"
+      )
     }
 
     an[PipelineExecutionException] should be thrownBy {
@@ -463,7 +494,10 @@ class JobTestTest extends PipelineSpec {
     JobTest[TextFileJob.type]
       .args("--input=in.txt", "--output=out.txt")
       .input(TextIO("in.txt"), Seq("a", "b", "c"))
-      .output(TextIO("out.txt"))(_ should containInAnyOrder(xs))
+      .output(TextIO("out.txt")) { coll =>
+        coll should containInAnyOrder(xs)
+        ()
+      }
       .run()
   }
 
@@ -483,7 +517,10 @@ class JobTestTest extends PipelineSpec {
       .args("--input=in.txt", "--output=out.txt", "--distCache=dc.txt")
       .input(TextIO("in.txt"), Seq("a", "b"))
       .distCache(DistCacheIO("dc.txt"), Seq("1", "2"))
-      .output(TextIO("out.txt"))(_ should containInAnyOrder(xs))
+      .output(TextIO("out.txt")) { coll =>
+        coll should containInAnyOrder(xs)
+        ()
+      }
       .run()
   }
 
@@ -502,7 +539,10 @@ class JobTestTest extends PipelineSpec {
     JobTest[CustomIOJob.type]
       .args("--input=in.txt", "--output=out.txt")
       .input(CustomIO[String]("TextIn"), Seq(1, 2, 3).map(_.toString))
-      .output(CustomIO[String]("TextOut"))(_ should containInAnyOrder(xs))
+      .output(CustomIO[String]("TextOut")) { coll =>
+        coll should containInAnyOrder(xs)
+        ()
+      }
       .run()
   }
 
@@ -523,7 +563,10 @@ class JobTestTest extends PipelineSpec {
       .input(TextIO("in.txt"), Seq("a", "b"))
       .input(ReadIO("a"), Seq("a1", "a2"))
       .input(ReadIO("b"), Seq("b1", "b2"))
-      .output(TextIO("out.txt"))(_ should containInAnyOrder(xs))
+      .output(TextIO("out.txt")) { coll =>
+        coll should containInAnyOrder(xs)
+        ()
+      }
       .run()
   }
 
@@ -544,7 +587,10 @@ class JobTestTest extends PipelineSpec {
       .input(TextIO("in.txt"), Seq("a", "b"))
       .input(ReadIO("a"), Seq("a1", "a2").map(_.getBytes))
       .input(ReadIO("b"), Seq("b1", "b2").map(_.getBytes))
-      .output(TextIO("out.txt"))(_ should containInAnyOrder(xs))
+      .output(TextIO("out.txt")) { coll =>
+        coll should containInAnyOrder(xs)
+        ()
+      }
       .run()
   }
 
@@ -568,7 +614,10 @@ class JobTestTest extends PipelineSpec {
       JobTest[DistCacheJob.type]
         .args("--input=in.txt", "--output=out.txt", "--distCache=dc.txt")
         .distCache(DistCacheIO("dc.txt"), Seq("1", "2"))
-        .output(TextIO("out.txt"))(_ should containInAnyOrder(Seq("a1", "a2", "b1", "b2")))
+        .output(TextIO("out.txt")) { coll =>
+          coll should containInAnyOrder(Seq("a1", "a2", "b1", "b2"))
+          ()
+        }
         .run()
     } should have message "requirement failed: Missing test input: TextIO(in.txt), available: []"
   }
@@ -579,7 +628,10 @@ class JobTestTest extends PipelineSpec {
         .args("--input=in.txt", "--output=out.txt", "--distCache=dc.txt")
         .input(TextIO("bad-in.txt"), Seq("a", "b"))
         .distCache(DistCacheIO("dc.txt"), Seq("1", "2"))
-        .output(TextIO("out.txt"))(_ should containInAnyOrder(Seq("a1", "a2", "b1", "b2")))
+        .output(TextIO("out.txt")) { coll =>
+          coll should containInAnyOrder(Seq("a1", "a2", "b1", "b2"))
+          ()
+        }
         .run()
     } should have message
       "requirement failed: Missing test input: TextIO(in.txt), available: [TextIO(bad-in.txt)]"
@@ -592,7 +644,10 @@ class JobTestTest extends PipelineSpec {
         .input(TextIO("in.txt"), Seq("a", "b"))
         .input(TextIO("unmatched.txt"), Seq("X", "Y"))
         .distCache(DistCacheIO("dc.txt"), Seq("1", "2"))
-        .output(TextIO("out.txt"))(_ should containInAnyOrder(Seq("a1", "a2", "b1", "b2")))
+        .output(TextIO("out.txt")) { coll =>
+          coll should containInAnyOrder(Seq("a1", "a2", "b1", "b2"))
+          ()
+        }
         .run()
     } should have message "requirement failed: Unmatched test input: TextIO(unmatched.txt)"
   }
@@ -604,7 +659,10 @@ class JobTestTest extends PipelineSpec {
         .input(TextIO("in.txt"), Seq("a", "b"))
         .input(TextIO("in.txt"), Seq("X", "Y"))
         .distCache(DistCacheIO("dc.txt"), Seq("1", "2"))
-        .output(TextIO("out.txt"))(_ should containInAnyOrder(Seq("a1", "a2", "b1", "b2")))
+        .output(TextIO("out.txt")) { coll =>
+          coll should containInAnyOrder(Seq("a1", "a2", "b1", "b2"))
+          ()
+        }
         .run()
     } should have message "requirement failed: Duplicate test input: TextIO(in.txt)"
   }
@@ -624,7 +682,10 @@ class JobTestTest extends PipelineSpec {
       JobTest[DistCacheJob.type]
         .args("--input=in.txt", "--output=out.txt", "--distCache=dc.txt")
         .input(TextIO("in.txt"), Seq("a", "b"))
-        .output(TextIO("bad-out.txt"))(_ should containInAnyOrder(Seq("a1", "a2", "b1", "b2")))
+        .output(TextIO("bad-out.txt")) { coll =>
+          coll should containInAnyOrder(Seq("a1", "a2", "b1", "b2"))
+          ()
+        }
         .distCache(DistCacheIO("dc.txt"), Seq("1", "2"))
         .run()
     } should have message
@@ -637,8 +698,14 @@ class JobTestTest extends PipelineSpec {
         .args("--input=in.txt", "--output=out.txt", "--distCache=dc.txt")
         .input(TextIO("in.txt"), Seq("a", "b"))
         .distCache(DistCacheIO("dc.txt"), Seq("1", "2"))
-        .output(TextIO("out.txt"))(_ should containInAnyOrder(Seq("a1", "a2", "b1", "b2")))
-        .output(TextIO("unmatched.txt"))(_ should containInAnyOrder(Seq("X", "Y")))
+        .output(TextIO("out.txt")) { coll =>
+          coll should containInAnyOrder(Seq("a1", "a2", "b1", "b2"))
+          ()
+        }
+        .output(TextIO("unmatched.txt")) { coll =>
+          coll should containInAnyOrder(Seq("X", "Y"))
+          ()
+        }
         .run()
     } should have message "requirement failed: Unmatched test output: TextIO(unmatched.txt)"
   }
@@ -649,8 +716,14 @@ class JobTestTest extends PipelineSpec {
         .args("--input=in.txt", "--output=out.txt", "--distCache=dc.txt")
         .input(TextIO("in.txt"), Seq("a", "b"))
         .distCache(DistCacheIO("dc.txt"), Seq("1", "2"))
-        .output(TextIO("out.txt"))(_ should containInAnyOrder(Seq("a1", "a2", "b1", "b2")))
-        .output(TextIO("out.txt"))(_ should containInAnyOrder(Seq("X", "Y")))
+        .output(TextIO("out.txt")) { coll =>
+          coll should containInAnyOrder(Seq("a1", "a2", "b1", "b2"))
+          ()
+        }
+        .output(TextIO("out.txt")) { coll =>
+          coll should containInAnyOrder(Seq("X", "Y"))
+          ()
+        }
         .run()
     } should have message "requirement failed: Duplicate test output: TextIO(out.txt)"
   }
@@ -660,7 +733,10 @@ class JobTestTest extends PipelineSpec {
       JobTest[DistCacheJob.type]
         .args("--input=in.txt", "--output=out.txt", "--distCache=dc.txt")
         .input(TextIO("in.txt"), Seq("a", "b"))
-        .output(TextIO("out.txt"))(_ should containInAnyOrder(Seq("a1", "a2", "b1", "b2")))
+        .output(TextIO("out.txt")) { coll =>
+          coll should containInAnyOrder(Seq("a1", "a2", "b1", "b2"))
+          ()
+        }
         .run()
     } should have message
       "requirement failed: Missing test dist cache: DistCacheIO(dc.txt), available: []"
@@ -672,7 +748,10 @@ class JobTestTest extends PipelineSpec {
         .args("--input=in.txt", "--output=out.txt", "--distCache=dc.txt")
         .input(TextIO("in.txt"), Seq("a", "b"))
         .distCache(DistCacheIO("bad-dc.txt"), Seq("1", "2"))
-        .output(TextIO("out.txt"))(_ should containInAnyOrder(Seq("a1", "a2", "b1", "b2")))
+        .output(TextIO("out.txt")) { coll =>
+          coll should containInAnyOrder(Seq("a1", "a2", "b1", "b2"))
+          ()
+        }
         .run()
     } should have message
       "requirement failed: Missing test dist cache: DistCacheIO(dc.txt), available: " +
@@ -686,7 +765,10 @@ class JobTestTest extends PipelineSpec {
         .input(TextIO("in.txt"), Seq("a", "b"))
         .distCache(DistCacheIO("dc.txt"), Seq("1", "2"))
         .distCache(DistCacheIO("unmatched.txt"), Seq("X", "Y"))
-        .output(TextIO("out.txt"))(_ should containInAnyOrder(Seq("a1", "a2", "b1", "b2")))
+        .output(TextIO("out.txt")) { coll =>
+          coll should containInAnyOrder(Seq("a1", "a2", "b1", "b2"))
+          ()
+        }
         .run()
     } should have message
       "requirement failed: Unmatched test dist cache: DistCacheIO(unmatched.txt)"
@@ -699,7 +781,10 @@ class JobTestTest extends PipelineSpec {
         .input(TextIO("in.txt"), Seq("a", "b"))
         .distCache(DistCacheIO("dc.txt"), Seq("1", "2"))
         .distCache(DistCacheIO("dc.txt"), Seq("X", "Y"))
-        .output(TextIO("out.txt"))(_ should containInAnyOrder(Seq("a1", "a2", "b1", "b2")))
+        .output(TextIO("out.txt")) { coll =>
+          coll should containInAnyOrder(Seq("a1", "a2", "b1", "b2"))
+          ()
+        }
         .run()
     } should have message
       "requirement failed: Duplicate test dist cache: DistCacheIO(dc.txt)"
@@ -709,7 +794,10 @@ class JobTestTest extends PipelineSpec {
     JobTest[MaterializeJob.type]
       .args("--input=in.txt", "--output=out.txt")
       .input(TextIO("in.txt"), Seq("a", "b"))
-      .output(TextIO("out.txt"))(_ should containInAnyOrder(Seq("a", "b")))
+      .output(TextIO("out.txt")) { coll =>
+        coll should containInAnyOrder(Seq("a", "b"))
+        ()
+      }
       .run()
   }
 
@@ -717,7 +805,10 @@ class JobTestTest extends PipelineSpec {
     the[IllegalArgumentException] thrownBy {
       JobTest[JobWithoutClose.type]
         .args("--output=out.avro")
-        .output(ObjectFileIO[Long]("out.avro"))(_ should containInAnyOrder(Seq(10L)))
+        .output(ObjectFileIO[Long]("out.avro")) { coll =>
+          coll should containInAnyOrder(Seq(10L))
+          ()
+        }
         .run()
     } should have message
       "requirement failed: ScioContext was not closed. Did you forget close()?"
@@ -732,7 +823,10 @@ class JobTestTest extends PipelineSpec {
       JobTest[ObjectFileJob.type]
         .args("--input=in.avro", "--output=out.avro")
         .input(ObjectFileIO[Int]("in.avro"), Seq(1, 2, 3))
-        .output(ObjectFileIO[Int]("out.avro"))(_ should containInAnyOrder(Seq(1, 2, 3)))
+        .output(ObjectFileIO[Int]("out.avro")) { coll =>
+          coll should containInAnyOrder(Seq(1, 2, 3))
+          ()
+        }
     }
   }
 
@@ -741,7 +835,10 @@ class JobTestTest extends PipelineSpec {
       JobTest("com.spotify.scio.testing.ObjectFileJob")
         .args("--input=in.avro", "--output=out.avro")
         .input(ObjectFileIO[Int]("in.avro"), Seq(1, 2, 3))
-        .output(ObjectFileIO[Int]("out.avro"))(_ should containInAnyOrder(Seq(1, 2, 3)))
+        .output(ObjectFileIO[Int]("out.avro")) { coll =>
+          coll should containInAnyOrder(Seq(1, 2, 3))
+          ()
+        }
     }
   }
 
@@ -750,12 +847,18 @@ class JobTestTest extends PipelineSpec {
       JobTest[ObjectFileJob.type]
         .args("--input=in.avro", "--output=out.avro")
         .input(ObjectFileIO[Int]("in.avro"), Seq(1, 2, 3))
-        .output(ObjectFileIO[Int]("out.avro"))(_ should containInAnyOrder(Seq(1, 2, 3)))
+        .output(ObjectFileIO[Int]("out.avro")) { coll =>
+          coll should containInAnyOrder(Seq(1, 2, 3))
+          ()
+        }
 
       JobTest[ObjectFileJob.type]
         .args("--input=in2.avro", "--output=out2.avro")
         .input(ObjectFileIO[Int]("in2.avro"), Seq(1, 2, 3))
-        .output(ObjectFileIO[Int]("out2.avro"))(_ should containInAnyOrder(Seq(1, 2, 3)))
+        .output(ObjectFileIO[Int]("out2.avro")) { coll =>
+          coll should containInAnyOrder(Seq(1, 2, 3))
+          ()
+        }
     }
   }
 
@@ -765,7 +868,10 @@ class JobTestTest extends PipelineSpec {
       InternalJobTest[ObjectFileJob.type]
         .args("--input=in.avro", "--output=out.avro")
         .input(ObjectFileIO[Int]("in.avro"), Seq(1, 2, 3))
-        .output(ObjectFileIO[Int]("out.avro"))(_ should containInAnyOrder(Seq(1, 2, 3)))
+        .output(ObjectFileIO[Int]("out.avro")) { coll =>
+          coll should containInAnyOrder(Seq(1, 2, 3))
+          ()
+        }
     }
   }
 
@@ -874,7 +980,10 @@ class JobTestTest extends PipelineSpec {
     the[IllegalArgumentException] thrownBy {
       JobTest[JobWithDuplicateOutput.type]
         .args("--output=output")
-        .output(TextIO("output"))(_ should containSingleValue("does not matter"))
+        .output(TextIO("output")) { coll =>
+          coll should containSingleValue("does not matter")
+          ()
+        }
         .run()
     } should have message msg
   }
@@ -885,17 +994,22 @@ class JobTestTest extends PipelineSpec {
 
   it should "pass correct metrics test" in {
     JobTest[MetricsJob.type]
-      .counter(MetricsJob.counter)(_ shouldBe 10)
+      .counter(MetricsJob.counter) { x =>
+        x shouldBe 10
+        ()
+      }
       .distribution(MetricsJob.distribution) { d =>
         d.getCount shouldBe 10
         d.getMin shouldBe 1
         d.getMax shouldBe 10
         d.getSum shouldBe 55
         d.getMean shouldBe 5.5
+        ()
       }
       .gauge(MetricsJob.gauge) { g =>
         g.getValue should be >= 1L
         g.getValue should be <= 10L
+        ()
       }
       .run()
   }
@@ -903,7 +1017,10 @@ class JobTestTest extends PipelineSpec {
   it should "fail incorrect counter test" in {
     the[TestFailedException] thrownBy {
       JobTest[MetricsJob.type]
-        .counter(MetricsJob.counter)(_ shouldBe 100)
+        .counter(MetricsJob.counter) { x =>
+          x shouldBe 100
+          ()
+        }
         .run()
     } should have message "10 was not equal to 100"
   }
@@ -911,7 +1028,10 @@ class JobTestTest extends PipelineSpec {
   it should "fail incorrect distribution test" in {
     the[TestFailedException] thrownBy {
       JobTest[MetricsJob.type]
-        .distribution(MetricsJob.distribution)(_.getMax shouldBe 100)
+        .distribution(MetricsJob.distribution) { x =>
+          x.getMax shouldBe 100
+          ()
+        }
         .run()
     } should have message "10 was not equal to 100"
   }
@@ -919,7 +1039,10 @@ class JobTestTest extends PipelineSpec {
   it should "fail incorrect gauge test" in {
     val e = the[TestFailedException] thrownBy {
       JobTest[MetricsJob.type]
-        .gauge(MetricsJob.gauge)(_.getValue should be >= 100L)
+        .gauge(MetricsJob.gauge) { x =>
+          x.getValue should be >= 100L
+          ()
+        }
         .run()
     }
     e.getMessage should endWith(" was not greater than or equal to 100")

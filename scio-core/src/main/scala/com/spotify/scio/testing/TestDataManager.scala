@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,8 +30,10 @@ private[scio] class TestInput(val m: Map[String, Iterable[_]]) {
 
   def apply[T](io: ScioIO[T]): Iterable[T] = {
     val key = io.testId
-    require(m.contains(key),
-            s"Missing test input: $key, available: ${m.keys.mkString("[", ", ", "]")}")
+    require(
+      m.contains(key),
+      s"Missing test input: $key, available: ${m.keys.mkString("[", ", ", "]")}"
+    )
     require(!s.contains(key), s"Test input $key has already been read from once.")
     s.add(key)
     m(key).asInstanceOf[Iterable[T]]
@@ -50,8 +52,10 @@ private[scio] class TestOutput(val m: Map[String, SCollection[_] => Unit]) {
   def apply[T](io: ScioIO[T]): SCollection[T] => Unit = {
     // TODO: support Materialize outputs, maybe Materialized[T]?
     val key = io.testId
-    require(m.contains(key),
-            s"Missing test output: $key, available: ${m.keys.mkString("[", ", ", "]")}")
+    require(
+      m.contains(key),
+      s"Missing test output: $key, available: ${m.keys.mkString("[", ", ", "]")}"
+    )
     require(!s.contains(key), s"Test output $key has already been written to once.")
     s.add(key)
     m(key)
@@ -66,8 +70,10 @@ private[scio] class TestOutput(val m: Map[String, SCollection[_] => Unit]) {
 private[scio] class TestDistCache(val m: Map[DistCacheIO[_], _]) {
   val s: MSet[DistCacheIO[_]] = MSet.empty
   def apply[T](key: DistCacheIO[T]): () => T = {
-    require(m.contains(key),
-            s"Missing test dist cache: $key, available: ${m.keys.mkString("[", ", ", "]")}")
+    require(
+      m.contains(key),
+      s"Missing test dist cache: $key, available: ${m.keys.mkString("[", ", ", "]")}"
+    )
     s.add(key)
     m(key).asInstanceOf[() => T]
   }
@@ -99,10 +105,12 @@ private[scio] object TestDataManager {
   def getDistCache(testId: String): TestDistCache =
     getValue(testId, distCaches, "using dist cache")
 
-  def setup(testId: String,
-            ins: Map[String, Iterable[_]],
-            outs: Map[String, SCollection[_] => Unit],
-            dcs: Map[DistCacheIO[_], _]): Unit = {
+  def setup(
+    testId: String,
+    ins: Map[String, Iterable[_]],
+    outs: Map[String, SCollection[_] => Unit],
+    dcs: Map[DistCacheIO[_], _]
+  ): Unit = {
     inputs += (testId -> new TestInput(ins))
     outputs += (testId -> new TestOutput(outs))
     distCaches += (testId -> new TestDistCache(dcs))

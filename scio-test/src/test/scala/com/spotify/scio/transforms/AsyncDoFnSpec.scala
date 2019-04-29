@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,9 +61,12 @@ class GuavaAsyncDoFnTester extends AsyncDoFnTester[SettableFuture, ListenableFut
         pending.append((input, p))
         p
       }
-      override def createResource(): Unit = Unit
+      override def createResource(): Unit = ()
     }
-  override def completePromise(p: SettableFuture[String], result: String): Unit = p.set(result)
+  override def completePromise(p: SettableFuture[String], result: String): Unit = {
+    p.set(result)
+    ()
+  }
 }
 
 class JavaAsyncDoFnTester extends AsyncDoFnTester[CompletableFuture, CompletableFuture] {
@@ -75,10 +78,12 @@ class JavaAsyncDoFnTester extends AsyncDoFnTester[CompletableFuture, Completable
         pending.append((input, p))
         p
       }
-      override def createResource(): Unit = Unit
+      override def createResource(): Unit = ()
     }
-  override def completePromise(p: CompletableFuture[String], result: String): Unit =
+  override def completePromise(p: CompletableFuture[String], result: String): Unit = {
     p.complete(result)
+    ()
+  }
 }
 
 class ScalaAsyncDoFnTester extends AsyncDoFnTester[Promise, Future] {
@@ -90,7 +95,7 @@ class ScalaAsyncDoFnTester extends AsyncDoFnTester[Promise, Future] {
         pending.append((input, p))
         p.future
       }
-      override def createResource(): Unit = Unit
+      override def createResource(): Unit = ()
     }
   override def completePromise(p: Promise[String], result: String): Unit =
     p.success(result)
@@ -103,9 +108,11 @@ trait AsyncDoFnCommands extends Commands {
   override type State = AsyncDoFnState
   override type Sut = BaseDoFnTester
 
-  override def canCreateNewSut(newState: State,
-                               initSuts: Traversable[State],
-                               runningSuts: Traversable[Sut]): Boolean = true
+  override def canCreateNewSut(
+    newState: State,
+    initSuts: Traversable[State],
+    runningSuts: Traversable[Sut]
+  ): Boolean = true
   override def destroySut(sut: Sut): Unit = {}
   override def initialPreCondition(state: State): Boolean =
     state == AsyncDoFnState(0, 0)
@@ -113,9 +120,11 @@ trait AsyncDoFnCommands extends Commands {
 
   override def genCommand(state: State): Gen[Command] =
     if (state.pending > 0) {
-      Gen.frequency((60, Gen.const(Request)),
-                    (30, Gen.chooseNum(0, state.pending - 1).map(Complete)),
-                    (10, Gen.const(NextBundle)))
+      Gen.frequency(
+        (60, Gen.const(Request)),
+        (30, Gen.chooseNum(0, state.pending - 1).map(Complete)),
+        (10, Gen.const(NextBundle))
+      )
     } else {
       Gen.frequency((90, Gen.const(Request)), (10, Gen.const(NextBundle)))
     }
@@ -140,10 +149,12 @@ trait AsyncDoFnCommands extends Commands {
     override type Result = Seq[String]
     override def preCondition(state: State): Boolean = true
     override def postCondition(state: State, result: Try[Result]): Prop =
-      Prop.all("size" |: state.total == result.get.size,
-               "content" |: (0 until state.total)
-                 .map(_.toString)
-                 .toSet == result.get.toSet)
+      Prop.all(
+        "size" |: state.total == result.get.size,
+        "content" |: (0 until state.total)
+          .map(_.toString)
+          .toSet == result.get.toSet
+      )
     override def run(sut: Sut): Result = sut.nextBundle()
     override def nextState(state: State): State = AsyncDoFnState(0, 0)
   }
@@ -196,10 +207,12 @@ abstract class AsyncDoFnTester[P[_], F[_]] extends BaseDoFnTester {
 
   private val finishBundleContext = new fn.FinishBundleContext {
     override def getPipelineOptions: PipelineOptions = ???
-    override def output[T](tag: TupleTag[T],
-                           output: T,
-                           timestamp: Instant,
-                           window: BoundedWindow): Unit = ???
+    override def output[T](
+      tag: TupleTag[T],
+      output: T,
+      timestamp: Instant,
+      window: BoundedWindow
+    ): Unit = ???
     override def output(output: String, timestamp: Instant, window: BoundedWindow): Unit =
       outputBuffer.append(output)
   }

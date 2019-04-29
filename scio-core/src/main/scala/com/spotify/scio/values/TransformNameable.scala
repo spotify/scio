@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,8 @@ trait TransformNameable {
   def withName(name: String): this.type = {
     require(
       nameProvider.getClass != classOf[ConstNameProvider],
-      s"withName() has already been used to set '$tfName' as the name for the next transform.")
+      s"withName() has already been used to set '$tfName' as the name for the next transform."
+    )
     nameProvider = new ConstNameProvider(name)
     this
   }

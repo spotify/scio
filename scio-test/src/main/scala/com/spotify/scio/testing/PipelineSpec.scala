@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,7 +48,8 @@ trait PipelineSpec
   private val aliases =
     Map(
       "flink" ->
-        List("runner" -> "FlinkRunner", "flinkMaster" -> "[local]"))
+        List("runner" -> "FlinkRunner", "flinkMaster" -> "[local]")
+    )
 
   private def getBeamOptions(m: ConfigMap): List[String] =
     m.collect { case (Beam(k), v) => k -> v }

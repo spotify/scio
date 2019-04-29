@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,7 +57,8 @@ Cannot find an implicit Coder instance for type:
     - You can check that an instance exists for Coder in the REPL or in your code:
         scala> com.spotify.scio.coders.Coder[Foo]
       And find the missing instance and construct it as needed.
-""")
+"""
+)
 sealed trait Coder[T] extends Serializable
 // scalastyle:on line.size.limit
 final case class Beam[T] private (beam: BCoder[T]) extends Coder[T] {
@@ -69,19 +70,21 @@ final case class Fallback[T] private (ct: ClassTag[T]) extends Coder[T] {
 final case class Transform[A, B] private (c: Coder[A], f: BCoder[A] => Coder[B]) extends Coder[B] {
   override def toString: String = s"Transform($c, $f)"
 }
-final case class Disjunction[T, Id] private (typeName: String,
-                                             idCoder: Coder[Id],
-                                             id: T => Id,
-                                             coder: Map[Id, Coder[T]])
-    extends Coder[T] {
+final case class Disjunction[T, Id] private (
+  typeName: String,
+  idCoder: Coder[Id],
+  id: T => Id,
+  coder: Map[Id, Coder[T]]
+) extends Coder[T] {
   override def toString: String = s"Disjunction($typeName, $coder)"
 }
 
-final case class Record[T] private (typeName: String,
-                                    cs: Array[(String, Coder[Any])],
-                                    construct: Seq[Any] => T,
-                                    destruct: T => Array[Any])
-    extends Coder[T] {
+final case class Record[T] private (
+  typeName: String,
+  cs: Array[(String, Coder[Any])],
+  construct: Seq[Any] => T,
+  destruct: T => Array[Any]
+) extends Coder[T] {
   override def toString: String = {
     val str = cs
       .map {
@@ -96,11 +99,12 @@ final case class KVCoder[K, V] private (koder: Coder[K], voder: Coder[V]) extend
   override def toString: String = s"KVCoder($koder, $voder)"
 }
 
-private final case class DisjunctionCoder[T, Id](typeName: String,
-                                                 idCoder: BCoder[Id],
-                                                 id: T => Id,
-                                                 coders: Map[Id, BCoder[T]])
-    extends AtomicCoder[T] {
+private final case class DisjunctionCoder[T, Id](
+  typeName: String,
+  idCoder: BCoder[Id],
+  id: T => Id,
+  coders: Map[Id, BCoder[T]]
+) extends AtomicCoder[T] {
   def encode(value: T, os: OutputStream): Unit = {
     val i = id(value)
     idCoder.encode(i, os)
@@ -147,10 +151,11 @@ private final case class DisjunctionCoder[T, Id](typeName: String,
     coders.values.forall(_.consistentWithEquals())
 }
 
-final case class CoderException private[coders] (stacktrace: Array[StackTraceElement],
-                                                 cause: Throwable,
-                                                 message: String = "")
-    extends RuntimeException {
+final case class CoderException private[coders] (
+  stacktrace: Array[StackTraceElement],
+  cause: Throwable,
+  message: String = ""
+) extends RuntimeException {
   override def getMessage: String = cause.getMessage
   override def getCause: Throwable = new RuntimeException {
     override def getMessage: String = s"$message - Coder was materialized at"
@@ -186,7 +191,9 @@ private[scio] case class WrappedBCoder[T](u: BCoder[T]) extends BCoder[T] {
   override def toString: String = u.toString
 
   @inline private def catching[A](a: => A) =
-    try { a } catch {
+    try {
+      a
+    } catch {
       case ex: Throwable =>
         throw buildException(ex)
     }
@@ -228,14 +235,17 @@ private object WrappedBCoder {
 // Coder used internally specifically for Magnolia derived coders.
 // It's technically possible to define Product coders only in terms of `Coder.transform`
 // This is just faster
-private[scio] final case class RecordCoder[T](typeName: String,
-                                              cs: Array[(String, BCoder[Any])],
-                                              construct: Seq[Any] => T,
-                                              destruct: T => Array[Any])
-    extends AtomicCoder[T] {
+private[scio] final case class RecordCoder[T](
+  typeName: String,
+  cs: Array[(String, BCoder[Any])],
+  construct: Seq[Any] => T,
+  destruct: T => Array[Any]
+) extends AtomicCoder[T] {
 
   @inline def onErrorMsg[A](msg: => String)(f: => A): A =
-    try { f } catch {
+    try {
+      f
+    } catch {
       case e: Exception =>
         throw new RuntimeException(msg, e)
     }
@@ -248,7 +258,8 @@ private[scio] final case class RecordCoder[T](typeName: String,
       val v = array(i)
       onErrorMsg(
         // scalastyle:off line.size.limit
-        s"Exception while trying to `encode` an instance of $typeName:  Can't encode field $label value $v") {
+        s"Exception while trying to `encode` an instance of $typeName:  Can't encode field $label value $v"
+      ) {
         // scalastyle:on line.size.limit
         c.encode(v, os)
       }
@@ -262,7 +273,8 @@ private[scio] final case class RecordCoder[T](typeName: String,
     while (i < cs.length) {
       val (label, c) = cs(i)
       onErrorMsg(
-        s"Exception while trying to `decode` an instance of $typeName: Can't decode field $label") {
+        s"Exception while trying to `decode` an instance of $typeName: Can't decode field $label"
+      ) {
         vs.update(i, c.decode(is))
       }
       i += 1
@@ -369,10 +381,12 @@ sealed trait CoderGrammar {
     Transform[A, B](c, bc => Coder.beam(toB(bc)))
   }
 
-  private[scio] def record[T](typeName: String,
-                              cs: Array[(String, Coder[Any])],
-                              construct: Seq[Any] => T,
-                              destruct: T => Array[Any]): Coder[T] =
+  private[scio] def record[T](
+    typeName: String,
+    cs: Array[(String, Coder[Any])],
+    construct: Seq[Any] => T,
+    destruct: T => Array[Any]
+  ): Coder[T] =
     Record[T](typeName, cs, construct, destruct)
 }
 

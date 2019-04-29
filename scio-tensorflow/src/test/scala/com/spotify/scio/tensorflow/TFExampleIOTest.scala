@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,12 +29,6 @@ object TFExampleIOTest {
 class TFExampleIOTest extends ScioIOSpec {
 
   import TFExampleIOTest._
-
-  "TFExampleIO" should "work (with schema)" in {
-    val xs = (1 to 100).map(x => recordT.toExample(Record(x, x.toString)))
-    testTap(xs)(_.saveAsTfExampleFileWithSchema(_))(".tfrecords")
-    testJobTest(xs)(TFExampleIO(_))(_.tfRecordExampleFile(_))(_.saveAsTfExampleFileWithSchema(_))
-  }
 
   "TFExampleIO" should "work" in {
     val xs = (1 to 100).map(x => recordT.toExample(Record(x, x.toString)))

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,7 +61,10 @@ class HourlyTeamScoreTest extends PipelineSpec {
     JobTest[com.spotify.scio.examples.complete.game.HourlyTeamScore.type]
       .args("--input=in.txt", "--output=dataset.table")
       .input(TextIO("in.txt"), inData)
-      .output(BigQueryIO[TeamScoreSums]("dataset.table"))(_ should containInAnyOrder(expected))
+      .output(BigQueryIO[TeamScoreSums]("dataset.table")) { coll =>
+        coll should containInAnyOrder(expected)
+        ()
+      }
       .run()
   }
 

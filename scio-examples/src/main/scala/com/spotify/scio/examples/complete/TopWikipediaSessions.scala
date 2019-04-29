@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,8 +44,10 @@ object TopWikipediaSessions {
     ()
   }
 
-  def computeTopSessions(input: SCollection[TableRow],
-                         samplingThreshold: Double): SCollection[String] = {
+  def computeTopSessions(
+    input: SCollection[TableRow],
+    samplingThreshold: Double
+  ): SCollection[String] = {
     input
     // Extract fields from `TableRow` JSON
       .flatMap { row =>

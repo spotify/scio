@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,10 @@ class DoFnExampleTest extends PipelineSpec {
     JobTest[DoFnExample.type]
       .args("--input=in.txt", "--output=out.txt")
       .input(TextIO("in.txt"), inData)
-      .output(TextIO("out.txt"))(_ should containInAnyOrder(outData))
+      .output(TextIO("out.txt")) { coll =>
+        coll should containInAnyOrder(outData)
+        ()
+      }
       .run()
   }
 

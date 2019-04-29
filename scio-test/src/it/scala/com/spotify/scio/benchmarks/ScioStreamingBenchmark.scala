@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,8 +67,10 @@ object ScioStreamingBenchmark {
     .from(Thread.currentThread().getContextClassLoader)
     .getAllClasses
     .asScala
-    .filter(_.getName
-      .matches("com\\.spotify\\.scio\\.benchmarks\\.ScioStreamingBenchmark\\$[\\w]+\\$"))
+    .filter(
+      _.getName
+        .matches("com\\.spotify\\.scio\\.benchmarks\\.ScioStreamingBenchmark\\$[\\w]+\\$")
+    )
     .flatMap { ci =>
       val cls = ci.load()
       if (classOf[StreamingBenchmark] isAssignableFrom cls) {
@@ -122,10 +124,12 @@ object ScioStreamingBenchmark {
           val nested = Nested(uuid.split(""))
           (
             CompoundKey(uuid.charAt(0).toString, Random.nextInt(50000)),
-            SomeObject(uuid,
-                       Random.nextFloat(),
-                       (1L to 10000L).toList,
-                       uuid.split("").map((_, nested)).toMap)
+            SomeObject(
+              uuid,
+              Random.nextFloat(),
+              (1L to 10000L).toList,
+              uuid.split("").map((_, nested)).toMap
+            )
           )
         }
         .groupByKey
@@ -133,12 +137,15 @@ object ScioStreamingBenchmark {
         .flatMap {
           case ((key, grp), ctx) =>
             Some(
-              (key.copy(k2 = key.k2 + Random.nextInt(50000)),
-               (
-                 key.k1,
-                 ctx(sideInput).take(50),
-                 grp.map(obj => obj.copy(key = s"${obj.key}2", list = obj.list.reverse))
-               )))
+              (
+                key.copy(k2 = key.k2 + Random.nextInt(50000)),
+                (
+                  key.k1,
+                  ctx(sideInput).take(50),
+                  grp.map(obj => obj.copy(key = s"${obj.key}2", list = obj.list.reverse))
+                )
+              )
+            )
         }
         .toSCollection
         .minByKey(Ordering.by(_._2.size))
@@ -213,7 +220,8 @@ object ScioStreamingBenchmarkMetrics {
                     gitHash,
                     job.getCreateTime,
                     Dataflow.projects().jobs().getMetrics(projectId, job.getId).execute()
-                  ))
+                  )
+                )
 
               case _ => None
             }

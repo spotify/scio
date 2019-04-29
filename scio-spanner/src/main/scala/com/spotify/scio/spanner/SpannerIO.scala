@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -78,7 +78,7 @@ final case class SpannerRead(config: SpannerConfig) extends SpannerIO[Struct] {
   }
 
   override protected def write(data: SCollection[Struct], params: WriteP): Tap[Nothing] =
-    throw new IllegalStateException("SpannerRead is read-only")
+    throw new UnsupportedOperationException("SpannerRead is read-only")
 
   override def tap(params: ReadP): Tap[Nothing] = EmptyTap
 }
@@ -111,7 +111,7 @@ final case class SpannerWrite(config: SpannerConfig) extends SpannerIO[Mutation]
   }
 
   override protected def read(sc: ScioContext, params: ReadP): SCollection[Mutation] = sc.wrap {
-    throw new IllegalStateException("SpannerWrite is write-only")
+    throw new UnsupportedOperationException("SpannerWrite is write-only")
   }
 
   override def tap(params: ReadP): Tap[Nothing] = EmptyTap

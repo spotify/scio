@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,6 +58,7 @@ class AsyncDoFnTest extends PipelineSpec {
 
     errorMessages(e) should contain("Failed to process futures")
     errorMessages(e) should contain("requirement failed: input must be >= 0")
+    ()
   }
 
   "GuavaAsyncDoFn" should "work" in {
@@ -99,7 +100,9 @@ private class GuavaClient(val numThreads: Int) {
     MoreExecutors.getExitingExecutorService(
       Executors
         .newFixedThreadPool(numThreads)
-        .asInstanceOf[ThreadPoolExecutor]))
+        .asInstanceOf[ThreadPoolExecutor]
+    )
+  )
   def request(input: Int): ListenableFuture[String] =
     es.submit(new Callable[String] {
       override def call(): String = Client.process(input)
@@ -108,7 +111,8 @@ private class GuavaClient(val numThreads: Int) {
 
 private class JavaClient(val numThreads: Int) {
   private val es = MoreExecutors.getExitingExecutorService(
-    Executors.newFixedThreadPool(numThreads).asInstanceOf[ThreadPoolExecutor])
+    Executors.newFixedThreadPool(numThreads).asInstanceOf[ThreadPoolExecutor]
+  )
   def request(input: Int): CompletableFuture[String] =
     CompletableFuture.supplyAsync(new Supplier[String] {
       override def get(): String = Client.process(input)

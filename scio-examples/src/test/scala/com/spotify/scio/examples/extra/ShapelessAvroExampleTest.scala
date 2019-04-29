@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,10 @@ class ShapelessAvroExampleTest extends PipelineSpec {
     JobTest[com.spotify.scio.examples.extra.ShapelessAvroWriteExample.type]
       .args("--input=in.txt", "--output=wc.avro")
       .input(TextIO("in.txt"), textIn)
-      .output(AvroIO[GenericRecord]("wc.avro"))(_ should containInAnyOrder(records))
+      .output(AvroIO[GenericRecord]("wc.avro")) { coll =>
+        coll should containInAnyOrder(records)
+        ()
+      }
       .run()
   }
 
@@ -48,7 +51,10 @@ class ShapelessAvroExampleTest extends PipelineSpec {
     JobTest[com.spotify.scio.examples.extra.ShapelessAvroReadExample.type]
       .args("--input=wc.avro", "--output=out.txt")
       .input(AvroIO[GenericRecord]("wc.avro"), records)
-      .output(TextIO("out.txt"))(_ should containInAnyOrder(textOut))
+      .output(TextIO("out.txt")) { coll =>
+        coll should containInAnyOrder(textOut)
+        ()
+      }
       .run()
   }
 

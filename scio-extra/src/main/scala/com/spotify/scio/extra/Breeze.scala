@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,10 +38,12 @@ import scala.reflect.ClassTag
  */
 object Breeze {
 
-  implicit def breezeSemigroup[M[_], T: ClassTag](implicit
-                                                  add: OpAdd.Impl2[M[T], M[T], M[T]],
-                                                  addInto: OpAdd.InPlaceImpl2[M[T], M[T]],
-                                                  copy: CanCopy[M[T]]): Semigroup[M[T]] =
+  implicit def breezeSemigroup[M[_], T: ClassTag](
+    implicit
+    add: OpAdd.Impl2[M[T], M[T], M[T]],
+    addInto: OpAdd.InPlaceImpl2[M[T], M[T]],
+    copy: CanCopy[M[T]]
+  ): Semigroup[M[T]] =
     new Semigroup[M[T]] {
       override def plus(l: M[T], r: M[T]): M[T] = add(l, r)
       override def sumOption(xs: TraversableOnce[M[T]]): Option[M[T]] = {

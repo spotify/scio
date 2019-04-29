@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -141,7 +141,8 @@ object AvroExample {
         name,
         Schema.createUnion(List(Schema.create(Schema.Type.NULL), Schema.create(tpe)).asJava),
         null: String,
-        null: AnyRef)
+        null: AnyRef
+      )
 
     val s = Schema.createRecord("GenericAccountRecord", null, null, false)
     s.setFields(
@@ -150,7 +151,8 @@ object AvroExample {
         f("amount", Schema.Type.DOUBLE),
         f("name", Schema.Type.STRING),
         f("type", Schema.Type.STRING)
-      ).asJava)
+      ).asJava
+    )
     s
   }
 

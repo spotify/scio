@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  * under the License.
  */
 
-// Example: Handling I/O with Tap and Future
+// Example: Handling I/O with Tap
 package com.spotify.scio.examples.extra
 
 import com.spotify.scio._
@@ -37,13 +37,13 @@ object TapOutputExample {
     val f1 = sc1
       .parallelize(1 to 10)
       .sum
-      // Save data to a temporary location for use later as a `Future[Tap[T]]`
+      // Save data to a temporary location for use later as a `ClosedTap[T]`
       .materialize
     val f2 = sc1
       .parallelize(1 to 100)
       .sum
       .map(_.toString)
-      // Save data for use later as a `Future[Tap[T]]`
+      // Save data for use later as a `ClosedTap[T]`
       .saveAsTextFile(args("output"))
     val scioResult = sc1.close().waitUntilDone()
 

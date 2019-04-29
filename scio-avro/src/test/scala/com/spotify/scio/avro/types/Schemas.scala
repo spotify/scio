@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,61 +21,79 @@ import com.google.protobuf.ByteString
 import org.apache.avro.Schema
 
 object Schemas {
-  case class BasicFields(boolF: Boolean,
-                         intF: Int,
-                         longF: Long,
-                         floatF: Float,
-                         doubleF: Double,
-                         stringF: String,
-                         byteStringF: ByteString)
+  case class BasicFields(
+    boolF: Boolean,
+    intF: Int,
+    longF: Long,
+    floatF: Float,
+    doubleF: Double,
+    stringF: String,
+    byteStringF: ByteString
+  )
 
-  case class OptionalFields(boolF: Option[Boolean],
-                            intF: Option[Int],
-                            longF: Option[Long],
-                            floatF: Option[Float],
-                            doubleF: Option[Double],
-                            stringF: Option[String],
-                            byteStringF: Option[ByteString])
+  case class OptionalFields(
+    boolF: Option[Boolean],
+    intF: Option[Int],
+    longF: Option[Long],
+    floatF: Option[Float],
+    doubleF: Option[Double],
+    stringF: Option[String],
+    byteStringF: Option[ByteString]
+  )
 
-  case class ArrayFields(boolF: List[Boolean],
-                         intF: List[Int],
-                         longF: List[Long],
-                         floatF: List[Float],
-                         doubleF: List[Double],
-                         stringF: List[String],
-                         byteStringF: List[ByteString])
+  case class ArrayFields(
+    boolF: List[Boolean],
+    intF: List[Int],
+    longF: List[Long],
+    floatF: List[Float],
+    doubleF: List[Double],
+    stringF: List[String],
+    byteStringF: List[ByteString]
+  )
 
-  case class MapFields(boolF: Map[String, Boolean],
-                       intF: Map[String, Int],
-                       longF: Map[String, Long],
-                       floatF: Map[String, Float],
-                       doubleF: Map[String, Double],
-                       stringF: Map[String, String],
-                       byteStringF: Map[String, ByteString])
+  case class MapFields(
+    boolF: Map[String, Boolean],
+    intF: Map[String, Int],
+    longF: Map[String, Long],
+    floatF: Map[String, Float],
+    doubleF: Map[String, Double],
+    stringF: Map[String, String],
+    byteStringF: Map[String, ByteString]
+  )
 
-  case class NestedFields(basic: BasicFields,
-                          optional: OptionalFields,
-                          array: ArrayFields,
-                          map: MapFields)
+  case class NestedFields(
+    basic: BasicFields,
+    optional: OptionalFields,
+    array: ArrayFields,
+    map: MapFields
+  )
 
-  case class OptionalNestedFields(basic: Option[BasicFields],
-                                  optional: Option[OptionalFields],
-                                  array: Option[ArrayFields],
-                                  map: Option[MapFields])
+  case class OptionalNestedFields(
+    basic: Option[BasicFields],
+    optional: Option[OptionalFields],
+    array: Option[ArrayFields],
+    map: Option[MapFields]
+  )
 
-  case class ArrayNestedFields(basic: List[BasicFields],
-                               optional: List[OptionalFields],
-                               array: List[ArrayFields],
-                               map: List[MapFields])
+  case class ArrayNestedFields(
+    basic: List[BasicFields],
+    optional: List[OptionalFields],
+    array: List[ArrayFields],
+    map: List[MapFields]
+  )
 
-  case class MapNestedFields(basic: Map[String, BasicFields],
-                             optional: Map[String, OptionalFields],
-                             array: Map[String, ArrayFields],
-                             map: Map[String, MapFields])
+  case class MapNestedFields(
+    basic: Map[String, BasicFields],
+    optional: Map[String, OptionalFields],
+    array: Map[String, ArrayFields],
+    map: Map[String, MapFields]
+  )
 
-  case class ByteArrayFields(required: Array[Byte],
-                             optional: Option[Array[Byte]],
-                             repeated: List[Array[Byte]])
+  case class ByteArrayFields(
+    required: Array[Byte],
+    optional: Option[Array[Byte]],
+    repeated: List[Array[Byte]]
+  )
 
   object FieldMode extends Enumeration {
     type FieldMode = Value

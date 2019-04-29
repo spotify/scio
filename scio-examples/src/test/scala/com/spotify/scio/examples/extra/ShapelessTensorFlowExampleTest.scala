@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,12 +38,16 @@ class ShapelessTensorFlowExampleTest extends PipelineSpec {
             Feature
               .newBuilder()
               .setBytesList(BytesList.newBuilder().addValue(ByteString.copyFromUtf8(kv._1)))
-              .build())
-          .putFeature("count",
-                      Feature
-                        .newBuilder()
-                        .setInt64List(Int64List.newBuilder().addValue(kv._2))
-                        .build()))
+              .build()
+          )
+          .putFeature(
+            "count",
+            Feature
+              .newBuilder()
+              .setInt64List(Int64List.newBuilder().addValue(kv._2))
+              .build()
+          )
+      )
       .build()
   }
   val textOut = wordCount.map(kv => kv._1 + ": " + kv._2)
@@ -62,7 +66,10 @@ class ShapelessTensorFlowExampleTest extends PipelineSpec {
     JobTest[com.spotify.scio.examples.extra.ShapelessTensorFlowReadExample.type]
       .args("--input=wc.tfrecords", "--output=out.txt")
       .input(TFRecordIO("wc.tfrecords"), examples.map(_.toByteArray))
-      .output(TextIO("out.txt"))(_ should containInAnyOrder(textOut))
+      .output(TextIO("out.txt")) { coll =>
+        coll should containInAnyOrder(textOut)
+        ()
+      }
       .run()
   }
 

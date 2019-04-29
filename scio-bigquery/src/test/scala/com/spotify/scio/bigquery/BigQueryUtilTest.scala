@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,21 +43,24 @@ class BigQueryUtilTest extends FlatSpec with Matchers {
         new TableFieldSchema()
           .setName("f4")
           .setMode("RECORD")
-          .setFields(List(
-            new TableFieldSchema()
-              .setName("f5")
-              .setType("BOOLEAN")
-              .setMode("REQUIRED"),
-            new TableFieldSchema()
-              .setName("f6")
-              .setType("STRING")
-              .setMode("NULLABLE"),
-            new TableFieldSchema()
-              .setName("f6")
-              .setType("STRING")
-              .setMode("REPEATED")
-          ).asJava)
-      ).asJava)
+          .setFields(
+            List(
+              new TableFieldSchema()
+                .setName("f5")
+                .setType("BOOLEAN")
+                .setMode("REQUIRED"),
+              new TableFieldSchema()
+                .setName("f6")
+                .setType("STRING")
+                .setMode("NULLABLE"),
+              new TableFieldSchema()
+                .setName("f6")
+                .setType("STRING")
+                .setMode("REPEATED")
+            ).asJava
+          )
+      ).asJava
+    )
     schema.setFactory(new JacksonFactory)
     BigQueryUtil.parseSchema(schema.toString) shouldBe schema
   }

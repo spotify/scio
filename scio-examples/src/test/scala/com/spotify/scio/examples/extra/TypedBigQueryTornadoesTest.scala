@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,12 +24,14 @@ class TypedBigQueryTornadoesTest extends PipelineSpec {
 
   import TypedBigQueryTornadoes.{Result, Row}
 
-  val inData = Seq(Row(Some(true), 1),
-                   Row(Some(false), 1),
-                   Row(Some(false), 2),
-                   Row(Some(true), 3),
-                   Row(Some(true), 4),
-                   Row(Some(true), 4))
+  val inData = Seq(
+    Row(Some(true), 1),
+    Row(Some(false), 1),
+    Row(Some(false), 2),
+    Row(Some(true), 3),
+    Row(Some(true), 4),
+    Row(Some(true), 4)
+  )
 
   val expected = Seq(Result(1, 1), Result(3, 1), Result(4, 2))
 
@@ -37,7 +39,10 @@ class TypedBigQueryTornadoesTest extends PipelineSpec {
     JobTest[com.spotify.scio.examples.extra.TypedBigQueryTornadoes.type]
       .args("--output=dataset.table")
       .input(BigQueryIO(TypedBigQueryTornadoes.Row.query), inData)
-      .output(BigQueryIO[Result]("dataset.table"))(_ should containInAnyOrder(expected))
+      .output(BigQueryIO[Result]("dataset.table")) { coll =>
+        coll should containInAnyOrder(expected)
+        ()
+      }
       .run()
   }
 

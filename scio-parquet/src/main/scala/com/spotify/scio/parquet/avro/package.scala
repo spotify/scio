@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,17 +63,20 @@ package object avro {
     def parquetAvroFile[T <: SpecificRecordBase: ClassTag](
       path: String,
       projection: Schema = null,
-      predicate: FilterPredicate = null): ParquetAvroFile[T] =
+      predicate: FilterPredicate = null
+    ): ParquetAvroFile[T] =
       self.requireNotClosed {
         new ParquetAvroFile[T](self, path, projection, predicate)
       }
 
   }
 
-  class ParquetAvroFile[T: ClassTag] private[avro] (context: ScioContext,
-                                                    path: String,
-                                                    projection: Schema,
-                                                    predicate: FilterPredicate) {
+  class ParquetAvroFile[T: ClassTag] private[avro] (
+    context: ScioContext,
+    path: String,
+    projection: Schema,
+    predicate: FilterPredicate
+  ) {
 
     private val logger = LoggerFactory.getLogger(this.getClass)
 
@@ -102,7 +105,8 @@ package object avro {
         logger.warn(
           "Materializing Parquet Avro records with projection may cause " +
             "NullPointerException. Perform a `map` or `flatMap` immediately after " +
-            "`parquetAvroFile` to map out projected fields.")
+            "`parquetAvroFile` to map out projected fields."
+        )
       }
       this.map(identity)
     }
@@ -113,7 +117,8 @@ package object avro {
     implicit def parquetAvroFileToSCollection[T: Coder](self: ParquetAvroFile[T]): SCollection[T] =
       self.toSCollection
     implicit def parquetAvroFileToParquetAvroSCollection[T: ClassTag: Coder](
-      self: ParquetAvroFile[T]): ParquetAvroSCollection[T] =
+      self: ParquetAvroFile[T]
+    ): ParquetAvroSCollection[T] =
       new ParquetAvroSCollection(self.toSCollection)
   }
 

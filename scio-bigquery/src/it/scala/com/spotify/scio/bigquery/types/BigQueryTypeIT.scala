@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,11 +26,13 @@ import scala.reflect.runtime.universe._
 
 object BigQueryTypeIT {
   @BigQueryType.fromQuery(
-    "SELECT word, word_count FROM [bigquery-public-data:samples.shakespeare] WHERE word = 'Romeo'")
+    "SELECT word, word_count FROM [bigquery-public-data:samples.shakespeare] WHERE word = 'Romeo'"
+  )
   class LegacyT
 
   @BigQueryType.fromQuery(
-    "SELECT word, word_count FROM `bigquery-public-data.samples.shakespeare` WHERE word = 'Romeo'")
+    "SELECT word, word_count FROM `bigquery-public-data.samples.shakespeare` WHERE word = 'Romeo'"
+  )
   class SqlT
 
   @BigQueryType.fromTable("bigquery-public-data:samples.shakespeare")
@@ -38,12 +40,14 @@ object BigQueryTypeIT {
 
   @BigQueryType.fromQuery(
     "SELECT word, word_count FROM [data-integration-test:partition_a.table_%s]",
-    "$LATEST")
+    "$LATEST"
+  )
   class LegacyLatestT
 
   @BigQueryType.fromQuery(
     "SELECT word, word_count FROM `data-integration-test.partition_a.table_%s`",
-    "$LATEST")
+    "$LATEST"
+  )
   class SqlLatestT
 
   @BigQueryType.fromQuery(
@@ -62,9 +66,6 @@ object BigQueryTypeIT {
   @BigQueryType.fromTable("data-integration-test:partition_a.table_%s", "$LATEST")
   class FromTableLatestT
 
-  @BigQueryType.toTable
-  case class ToTableT(word: String, word_count: Int)
-
   class Annotation1 extends StaticAnnotation
   class Annotation2 extends StaticAnnotation
 
@@ -77,23 +78,13 @@ object BigQueryTypeIT {
   @Annotation1
   @Annotation2
   class ShakespeareWithSequentialAnnotations
-
-  // run this to re-populate tables used for this test and BigQueryPartitionUtilIT
-  def main(args: Array[String]): Unit = {
-    val bq = BigQuery.defaultInstance()
-    val data = List(ToTableT("a", 1), ToTableT("b", 2))
-    bq.writeTypedRows("data-integration-test:partition_a.table_20170101", data)
-    bq.writeTypedRows("data-integration-test:partition_a.table_20170102", data)
-    bq.writeTypedRows("data-integration-test:partition_a.table_20170103", data)
-    bq.writeTypedRows("data-integration-test:partition_b.table_20170101", data)
-    bq.writeTypedRows("data-integration-test:partition_b.table_20170102", data)
-    bq.writeTypedRows("data-integration-test:partition_c.table_20170104", data)
-  }
 }
 
+// Run BigQueryITUtil to re-populate tables for integration tests
 class BigQueryTypeIT extends FlatSpec with Matchers {
 
   import BigQueryTypeIT._
+  import BigQueryITUtil._
 
   val bq = BigQuery.defaultInstance()
 

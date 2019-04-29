@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,23 +24,29 @@ import com.spotify.scio.testing._
 
 class JoinExamplesTest extends PipelineSpec {
 
-  private def eventRow(countryCode: String,
-                       sqlDate: String,
-                       actor1Name: String,
-                       sourceUrl: String) =
-    TableRow("ActionGeo_CountryCode" -> countryCode,
-             "SQLDATE" -> sqlDate,
-             "Actor1Name" -> actor1Name,
-             "SOURCEURL" -> sourceUrl)
+  private def eventRow(
+    countryCode: String,
+    sqlDate: String,
+    actor1Name: String,
+    sourceUrl: String
+  ) =
+    TableRow(
+      "ActionGeo_CountryCode" -> countryCode,
+      "SQLDATE" -> sqlDate,
+      "Actor1Name" -> actor1Name,
+      "SOURCEURL" -> sourceUrl
+    )
 
   private def countryRow(fipscc: String, humanName: String) =
     TableRow("FIPSCC" -> fipscc, "HumanName" -> humanName)
 
-  private def result(countryCode: String,
-                     countryName: String,
-                     date: String,
-                     actor1: String,
-                     url: String) =
+  private def result(
+    countryCode: String,
+    countryName: String,
+    date: String,
+    actor1: String,
+    url: String
+  ) =
     s"Country code: $countryCode, Country name: $countryName, " +
       s"Event info: Date: $date, Actor1: $actor1, url: $url"
 
@@ -66,7 +72,10 @@ class JoinExamplesTest extends PipelineSpec {
       .args("--output=out.txt")
       .input(BigQueryIO(ExampleData.EVENT_TABLE), eventData)
       .input(BigQueryIO(ExampleData.COUNTRY_TABLE), countryData)
-      .output(TextIO("out.txt"))(_ should containInAnyOrder(expected))
+      .output(TextIO("out.txt")) { coll =>
+        coll should containInAnyOrder(expected)
+        ()
+      }
       .run()
   }
 
@@ -75,7 +84,10 @@ class JoinExamplesTest extends PipelineSpec {
       .args("--output=out.txt")
       .input(BigQueryIO(ExampleData.EVENT_TABLE), eventData)
       .input(BigQueryIO(ExampleData.COUNTRY_TABLE), countryData)
-      .output(TextIO("out.txt"))(_ should containInAnyOrder(expected))
+      .output(TextIO("out.txt")) { coll =>
+        coll should containInAnyOrder(expected)
+        ()
+      }
       .run()
   }
 
@@ -84,7 +96,10 @@ class JoinExamplesTest extends PipelineSpec {
       .args("--output=out.txt")
       .input(BigQueryIO(ExampleData.EVENT_TABLE), eventData)
       .input(BigQueryIO(ExampleData.COUNTRY_TABLE), countryData)
-      .output(TextIO("out.txt"))(_ should containInAnyOrder(expected))
+      .output(TextIO("out.txt")) { coll =>
+        coll should containInAnyOrder(expected)
+        ()
+      }
       .run()
   }
 

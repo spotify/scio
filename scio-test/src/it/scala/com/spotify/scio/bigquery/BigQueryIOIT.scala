@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,8 @@ object BigQueryIOIT {
   @BigQueryType.fromQuery(
     """
     SELECT word, word_count FROM `bigquery-public-data.samples.shakespeare` LIMIT 10
-  """)
+  """
+  )
   class ShakespeareFromQuery
 
   val tempLocation = ItUtils.gcpTempLocation("bigquery-it")

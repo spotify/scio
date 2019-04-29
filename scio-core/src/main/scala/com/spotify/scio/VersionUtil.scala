@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -91,8 +91,10 @@ private[scio] object VersionUtil {
   def checkRunnerVersion(runner: Class[_ <: PipelineRunner[_ <: PipelineResult]]): Unit = {
     val name = runner.getSimpleName
     val version = ReleaseInfo.getReleaseInfo.getVersion
-    require(version == BuildInfo.beamVersion,
-            s"Mismatched version for $name, expected: ${BuildInfo.beamVersion}, actual: $version")
+    require(
+      version == BuildInfo.beamVersion,
+      s"Mismatched version for $name, expected: ${BuildInfo.beamVersion}, actual: $version"
+    )
   }
 
 }

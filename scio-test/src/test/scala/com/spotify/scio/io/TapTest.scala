@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,6 +44,7 @@ trait TapSpec extends PipelineSpec {
     val sc = ScioContext()
     tap.open(sc) should containInAnyOrder(expected)
     sc.close().waitUntilFinish() // block non-test runner
+    ()
   }
 
   def runWithInMemoryFuture[T](fn: ScioContext => ClosedTap[T]): Tap[T] =
@@ -189,12 +190,14 @@ class TapTest extends TapSpec {
 
   it should "support saveAsTableRowJsonFile" in {
     def newTableRow(i: Int): TableRow =
-      TableRow("int_field" -> 1 * i,
-               "long_field" -> 1L * i,
-               "float_field" -> 1F * i,
-               "double_field" -> 1.0 * i,
-               "boolean_field" -> "true",
-               "string_field" -> "hello")
+      TableRow(
+        "int_field" -> 1 * i,
+        "long_field" -> 1L * i,
+        "float_field" -> 1f * i,
+        "double_field" -> 1.0 * i,
+        "boolean_field" -> "true",
+        "string_field" -> "hello"
+      )
 
     val dir = tmpDir
     // Compare .toString versions since TableRow may not round trip

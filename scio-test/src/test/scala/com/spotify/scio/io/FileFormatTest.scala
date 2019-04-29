@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,8 @@ class FileFormatTest extends PipelineSpec {
         com.google.protobuf.Timestamp.newBuilder
           .setSeconds(x * 1000)
           .setNanos(x)
-          .build)
+          .build
+    )
 
   // Object file is NOT backwards compatible
   "Object file" should "round trip latest file format" in {

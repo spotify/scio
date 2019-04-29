@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,9 +26,11 @@ object CoderMaterializer {
   final def beam[T](sc: ScioContext, c: Coder[T]): BCoder[T] =
     beam(sc.pipeline.getCoderRegistry, sc.options, c)
 
-  final def beamWithDefault[T](coder: Coder[T],
-                               r: CoderRegistry = CoderRegistry.createDefault(),
-                               o: PipelineOptions = PipelineOptionsFactory.create()): BCoder[T] =
+  final def beamWithDefault[T](
+    coder: Coder[T],
+    r: CoderRegistry = CoderRegistry.createDefault(),
+    o: PipelineOptions = PipelineOptionsFactory.create()
+  ): BCoder[T] =
     beam(r, o, coder)
 
   @inline private def nullCoder[T](o: PipelineOptions, c: BCoder[T]) = {
@@ -45,20 +47,30 @@ object CoderMaterializer {
       case Beam(c) =>
         WrappedBCoder.create(nullCoder(o, c))
       case Fallback(ct) =>
-        WrappedBCoder.create(new KryoAtomicCoder[T](KryoOptions(o)))
+        val kryoCoder = new KryoAtomicCoder[T](KryoOptions(o))
+        WrappedBCoder.create(nullCoder(o, kryoCoder))
       case Transform(c, f) =>
         val u = f(beam(r, o, c))
         WrappedBCoder.create(beam(r, o, u))
       case Record(typeName, coders, construct, destruct) =>
         WrappedBCoder.create(
-          new RecordCoder(typeName, coders.map(c => c._1 -> beam(r, o, c._2)), construct, destruct))
+          new RecordCoder(
+            typeName,
+            coders.map(c => c._1 -> nullCoder(o, beam(r, o, c._2))),
+            construct,
+            destruct
+          )
+        )
       case Disjunction(typeName, idCoder, id, coders) =>
         WrappedBCoder.create(
           // `.map(identity) is really needed to make Map serializable.
-          DisjunctionCoder(typeName,
-                           beam(r, o, idCoder),
-                           id,
-                           coders.mapValues(u => beam(r, o, u)).map(identity)))
+          DisjunctionCoder(
+            typeName,
+            beam(r, o, idCoder),
+            id,
+            coders.mapValues(u => beam(r, o, u)).map(identity)
+          )
+        )
       case KVCoder(koder, voder) =>
         WrappedBCoder.create(KvCoder.of(beam(r, o, koder), beam(r, o, voder)))
     }

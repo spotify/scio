@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,11 +32,14 @@ private[scio] object AvroBytesUtil {
     val s = ASchema.createRecord("AvroBytesRecord", null, null, false)
     s.setFields(
       List(
-        new ASchema.Field("bytes",
-                          ASchema.create(ASchema.Type.BYTES),
-                          null,
-                          null.asInstanceOf[Object])
-      ).asJava)
+        new ASchema.Field(
+          "bytes",
+          ASchema.create(ASchema.Type.BYTES),
+          null,
+          null.asInstanceOf[Object]
+        )
+      ).asJava
+    )
     s
   }
 

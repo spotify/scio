@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,9 @@ final class DummyOverrideTypeProvider extends OverrideTypeProvider {
 
   override def getBigQueryType(tpe: universe.Type): String = null
 
-  override def initializeToTable(c: blackbox.Context)(modifiers: c.universe.Modifiers,
-                                                      variableName: c.universe.TermName,
-                                                      tpe: c.universe.Tree): Unit = ()
+  override def initializeToTable(c: blackbox.Context)(
+    modifiers: c.universe.Modifiers,
+    variableName: c.universe.TermName,
+    tpe: c.universe.Tree
+  ): Unit = ()
 }

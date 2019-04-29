@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,9 +43,11 @@ object SideOutput {
 class SideOutputContext[T] private[scio] (val context: DoFn[T, AnyRef]#ProcessContext) {
 
   /** Write a value to a given [[SideOutput]]. */
-  def output[S](sideOutput: SideOutput[S],
-                output: S,
-                timestamp: Instant = null): SideOutputContext[T] = {
+  def output[S](
+    sideOutput: SideOutput[S],
+    output: S,
+    timestamp: Instant = null
+  ): SideOutputContext[T] = {
     if (timestamp == null) {
       context.output(sideOutput.tupleTag, output)
     } else {
@@ -56,8 +58,10 @@ class SideOutputContext[T] private[scio] (val context: DoFn[T, AnyRef]#ProcessCo
 }
 
 /** Encapsulate output of one or more [[SideOutput]]s in an [[SCollectionWithSideOutput]]. */
-class SideOutputCollections private[values] (private val tuple: PCollectionTuple,
-                                             private val context: ScioContext) {
+class SideOutputCollections private[values] (
+  private val tuple: PCollectionTuple,
+  private val context: ScioContext
+) {
 
   /** Extract the [[SCollection]] of a given [[SideOutput]]. */
   def apply[T](sideOutput: SideOutput[T]): SCollection[T] = context.wrap {

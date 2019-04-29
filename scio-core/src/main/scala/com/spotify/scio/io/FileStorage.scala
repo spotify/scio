@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -134,7 +134,8 @@ private[scio] final class FileStorage(protected[scio] val path: String) {
 
   private[scio] def getDirectoryInputStream(
     path: String,
-    wrapperFn: InputStream => InputStream = identity): InputStream = {
+    wrapperFn: InputStream => InputStream = identity
+  ): InputStream = {
     val inputs = listFiles.map(getObjectInputStream).map(wrapperFn).asJava
     new SequenceInputStream(Collections.enumeration(inputs))
   }

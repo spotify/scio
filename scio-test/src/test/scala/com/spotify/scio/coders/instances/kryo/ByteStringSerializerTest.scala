@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ class ByteStringSerializerTest extends FlatSpec with Matchers {
     ser.write(k, new Output(o), bs)
     val back = ser.read(k, new Input(o), null)
     bs shouldEqual back
+    ()
   }
 
   "ByteStringSerializer" should "roundtrip large ByteString" in {

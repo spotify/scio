@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,9 +42,11 @@ abstract class ScalaAsyncDoFn[I, O, R] extends BaseAsyncDoFn[I, O, R, Future[O]]
     ()
   }
 
-  override protected def addCallback(future: Future[O],
-                                     onSuccess: JFunction[O, Void],
-                                     onFailure: JFunction[Throwable, Void]): Future[O] =
+  override protected def addCallback(
+    future: Future[O],
+    onSuccess: JFunction[O, Void],
+    onFailure: JFunction[Throwable, Void]
+  ): Future[O] =
     future.transform(r => { onSuccess(r); r }, t => { onFailure(t); t })
 
 }

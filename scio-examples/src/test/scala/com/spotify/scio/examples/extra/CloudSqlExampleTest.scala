@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,10 +24,12 @@ import com.spotify.scio.testing._
 class CloudSqlExampleTest extends PipelineSpec {
   "CloudSqlExample" should "work" in {
     val args =
-      Array("--cloudSqlUsername=john",
-            "--cloudSqlPassword=secret",
-            "--cloudSqlDb=mydb",
-            "--cloudSqlInstanceConnectionName=project-id:zone:db-instance-name")
+      Array(
+        "--cloudSqlUsername=john",
+        "--cloudSqlPassword=secret",
+        "--cloudSqlDb=mydb",
+        "--cloudSqlInstanceConnectionName=project-id:zone:db-instance-name"
+      )
     val (opts, _) = ScioContext.parseArguments[CloudSqlOptions](args)
     val connOpts = CloudSqlExample.getConnectionOptions(opts)
     val readOpts = CloudSqlExample.getReadOptions(connOpts)
@@ -39,7 +41,10 @@ class CloudSqlExampleTest extends PipelineSpec {
     JobTest[com.spotify.scio.examples.extra.CloudSqlExample.type]
       .args(args: _*)
       .input(JdbcIO(readOpts), input)
-      .output(JdbcIO[(String, Long)](writeOpts))(_ should containInAnyOrder(expected))
+      .output(JdbcIO[(String, Long)](writeOpts)) { coll =>
+        coll should containInAnyOrder(expected)
+        ()
+      }
       .run()
   }
 }

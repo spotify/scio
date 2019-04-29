@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ final case class CassandraIO[T](opts: CassandraOptions) extends ScioIO[T] {
   override val tapT = EmptyTapOf[T]
 
   override def read(sc: ScioContext, params: ReadP): SCollection[T] =
-    throw new IllegalStateException("Can't read from Cassandra")
+    throw new UnsupportedOperationException("Can't read from Cassandra")
 
   /**
    * Save this SCollection as a Cassandra table.
@@ -57,6 +57,8 @@ object CassandraIO {
     private[cassandra] val DefaultPar = 0
   }
 
-  final case class WriteParam[T] private (outputFn: T => Seq[Any],
-                                          parallelism: Int = WriteParam.DefaultPar)
+  final case class WriteParam[T] private (
+    outputFn: T => Seq[Any],
+    parallelism: Int = WriteParam.DefaultPar
+  )
 }

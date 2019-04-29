@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,12 +31,14 @@ import scala.collection.JavaConverters._
 private[cassandra] class BulkOperations(val opts: CassandraOptions, val parallelism: Int)
     extends Serializable {
 
-  case class BulkConfig(protocol: ProtocolVersion,
-                        partitioner: String,
-                        numOfNodes: Int,
-                        tableSchema: String,
-                        partitionKeyIndices: Seq[Int],
-                        dataTypes: Seq[DataTypeExternalizer])
+  case class BulkConfig(
+    protocol: ProtocolVersion,
+    partitioner: String,
+    numOfNodes: Int,
+    tableSchema: String,
+    partitionKeyIndices: Seq[Int],
+    dataTypes: Seq[DataTypeExternalizer]
+  )
 
   private val config = {
     var b = Cluster.builder().addContactPoint(opts.seedNodeHost)
@@ -95,17 +97,16 @@ private[cassandra] class BulkOperations(val opts: CassandraOptions, val parallel
     val (q, mod) = (maxToken - minToken + 1) /% numPartitions
     val rangePerGroup = (if (mod != 0) q + 1 else q).bigInteger
 
-    values: Array[ByteString] =>
-      {
-        val key = if (config.partitionKeyIndices.length == 1) {
-          values(config.partitionKeyIndices.head).asReadOnlyByteBuffer()
-        } else {
-          val keys = config.partitionKeyIndices.map(values).map(_.asReadOnlyByteBuffer())
-          CompositeType.build(keys: _*)
-        }
-        val token = CompatUtil.getToken(config.partitioner, key)
-        token.divide(rangePerGroup).intValue()
+    values: Array[ByteString] => {
+      val key = if (config.partitionKeyIndices.length == 1) {
+        values(config.partitionKeyIndices.head).asReadOnlyByteBuffer()
+      } else {
+        val keys = config.partitionKeyIndices.map(values).map(_.asReadOnlyByteBuffer())
+        CompositeType.build(keys: _*)
       }
+      val token = CompatUtil.getToken(config.partitioner, key)
+      token.divide(rangePerGroup).intValue()
+    }
   }
 
   val writeFn: ((Int, Iterable[Array[ByteString]])) => Unit =
@@ -117,16 +118,18 @@ private[cassandra] class BulkOperations(val opts: CassandraOptions, val parallel
 
   private def newWriter: CqlBulkRecordWriter = {
     val conf = new Configuration()
-    CqlBulkRecordWriterUtil.newWriter(conf,
-                                      opts.seedNodeHost,
-                                      opts.seedNodePort,
-                                      opts.username,
-                                      opts.password,
-                                      opts.keyspace,
-                                      opts.table,
-                                      config.partitioner,
-                                      config.tableSchema,
-                                      opts.cql)
+    CqlBulkRecordWriterUtil.newWriter(
+      conf,
+      opts.seedNodeHost,
+      opts.seedNodePort,
+      opts.username,
+      opts.password,
+      opts.keyspace,
+      opts.table,
+      config.partitioner,
+      config.tableSchema,
+      opts.cql
+    )
   }
 
 }

@@ -118,7 +118,7 @@ Scio exposes a few things to allow easy integration with native Beam Java API, n
 
 - `ScioContext#customInput` to apply a `PTransform[_ >: PBegin, PCollection[T]]` (source) and get a `SCollection[T]`.
 - `SCollection#applyTransform` to apply a `PTransform[_ >: PCollection[T], PCollection[U]]` and get a `SCollection[U]`
-- `SCollection#saveAsCustomOutput` to apply a `PTransform[_ >: PCollection[T], PDone]` (sink) and get a `Future[Tap[T]]`.
+- `SCollection#saveAsCustomOutput` to apply a `PTransform[_ >: PCollection[T], PDone]` (sink) and get a `ClosedTap[T]`.
 
 See @extref[BeamExample.scala](example:BeamExample) for more details. Custom I/O can also be tested via the @scaladoc[`JobTest`](com.spotify.scio.testing.JobTest$) harness.
 
@@ -247,21 +247,6 @@ sc.textFile(...)
 ```
 
 In this example, the `map`'s transform name is "MakeUpper" and the `filter`'s is "BigWords". If we later decided that we want to count 6 letter words as "big" too, then we can change it to `_.length > 5`, and because the transform name is the same the job can be updated on the fly.
-
-#### How do I read Pubsub input in a local pipeline?
-
-You can use a custom @javadoc[`PubsubIO`](org.apache.beam.sdk.io.gcp.pubsub.PubsubIO) transform and specify `maxNumRecord` & `maxReadTime` in order not to blow up local JVM.
-
-```scala
-sc.customInput("ReadFromPubsub",
-  PubsubIO.read()
-    .topic("projects/data-university/topics/data-university")
-    .idLabel("id")
-    .timestampLabel("ts")
-    .withCoder(StringUtf8Coder.of())
-    .maxNumRecords(50)
-    .maxReadTime(Duration.standardMinutes(10))
-```
 
 ### Other IO components
 

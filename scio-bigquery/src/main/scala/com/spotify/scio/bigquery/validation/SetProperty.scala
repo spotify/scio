@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,8 +30,10 @@ private[validation] object SetProperty {
   }
 
   def setSystemProperty(): String =
-    System.setProperty("override.type.provider",
-                       "com.spotify.scio.bigquery.validation.SampleOverrideTypeProvider")
+    System.setProperty(
+      "override.type.provider",
+      "com.spotify.scio.bigquery.validation.SampleOverrideTypeProvider"
+    )
 
   def setPropertyImpl(c: blackbox.Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
     setSystemProperty()

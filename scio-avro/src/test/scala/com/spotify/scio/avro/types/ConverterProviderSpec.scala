@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -92,7 +92,8 @@ class ConverterProviderSpec extends PropSpec with ScalaCheckDrivenPropertyChecks
   property("round trip optional nested types") {
     forAll { r1: OptionalNestedFields =>
       val r2 = AvroType.fromGenericRecord[OptionalNestedFields](
-        AvroType.toGenericRecord[OptionalNestedFields](r1))
+        AvroType.toGenericRecord[OptionalNestedFields](r1)
+      )
       RecordMatcher[OptionalNestedFields](r1, r2) shouldBe true
     }
   }
@@ -111,7 +112,8 @@ class ConverterProviderSpec extends PropSpec with ScalaCheckDrivenPropertyChecks
   property("round trip nested type arrays") {
     forAll { r1: ArrayNestedFields =>
       val r2 = AvroType.fromGenericRecord[ArrayNestedFields](
-        AvroType.toGenericRecord[ArrayNestedFields](r1))
+        AvroType.toGenericRecord[ArrayNestedFields](r1)
+      )
       RecordMatcher[ArrayNestedFields](r1, r2) shouldBe true
     }
   }

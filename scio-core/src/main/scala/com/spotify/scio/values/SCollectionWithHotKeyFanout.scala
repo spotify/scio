@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,17 +30,19 @@ import org.apache.beam.sdk.transforms.{Combine, SerializableFunction}
  */
 class SCollectionWithHotKeyFanout[K: Coder, V: Coder] private[values] (
   private val self: PairSCollectionFunctions[K, V],
-  private val hotKeyFanout: Either[K => Int, Int])
-    extends TransformNameable {
+  private val hotKeyFanout: Either[K => Int, Int]
+) extends TransformNameable {
 
   private def withFanout[K0, I, O](
-    combine: Combine.PerKey[K0, I, O]): PerKeyWithHotKeyFanout[K0, I, O] =
+    combine: Combine.PerKey[K0, I, O]
+  ): PerKeyWithHotKeyFanout[K0, I, O] =
     this.hotKeyFanout match {
       case Left(f) =>
         combine.withHotKeyFanout(
           Functions
             .serializableFn(f)
-            .asInstanceOf[SerializableFunction[K0, java.lang.Integer]])
+            .asInstanceOf[SerializableFunction[K0, java.lang.Integer]]
+        )
       case Right(f) =>
         combine.withHotKeyFanout(f)
     }
@@ -54,10 +56,13 @@ class SCollectionWithHotKeyFanout[K: Coder, V: Coder] private[values] (
    * [[PairSCollectionFunctions.aggregateByKey[U]* PairSCollectionFunctions.aggregateByKey]] with
    * hot key fanout.
    */
-  def aggregateByKey[U: Coder](zeroValue: U)(seqOp: (U, V) => U,
-                                             combOp: (U, U) => U): SCollection[(K, U)] =
-    self.applyPerKey(withFanout(Combine.perKey(Functions.aggregateFn(zeroValue)(seqOp, combOp))),
-                     kvToTuple[K, U])
+  def aggregateByKey[U: Coder](
+    zeroValue: U
+  )(seqOp: (U, V) => U, combOp: (U, U) => U): SCollection[(K, U)] =
+    self.applyPerKey(
+      withFanout(Combine.perKey(Functions.aggregateFn(zeroValue)(seqOp, combOp))),
+      kvToTuple[K, U]
+    )
 
   /**
    * [[PairSCollectionFunctions.aggregateByKey[A,U]* PairSCollectionFunctions.aggregateByKey]]
@@ -72,19 +77,28 @@ class SCollectionWithHotKeyFanout[K: Coder, V: Coder] private[values] (
     }
 
   /** [[PairSCollectionFunctions.combineByKey]] with hot key fanout. */
-  def combineByKey[C: Coder](createCombiner: V => C)(mergeValue: (C, V) => C)(
-    mergeCombiners: (C, C) => C): SCollection[(K, C)] =
+  def combineByKey[C: Coder](
+    createCombiner: V => C
+  )(mergeValue: (C, V) => C)(mergeCombiners: (C, C) => C): SCollection[(K, C)] = {
+    SCollection.logger.warn(
+      "combineByKey/sumByKey does not support default value and may fail in some streaming " +
+        "scenarios. Consider aggregateByKey/foldByKey instead."
+    )
     self.applyPerKey(
       withFanout(Combine.perKey(Functions.combineFn(createCombiner, mergeValue, mergeCombiners))),
-      kvToTuple[K, C])
+      kvToTuple[K, C]
+    )
+  }
 
   /**
    * [[PairSCollectionFunctions.foldByKey(zeroValue:V)* PairSCollectionFunctions.foldByKey]] with
    * hot key fanout.
    */
   def foldByKey(zeroValue: V)(op: (V, V) => V): SCollection[(K, V)] =
-    self.applyPerKey(withFanout(Combine.perKey(Functions.aggregateFn(zeroValue)(op, op))),
-                     kvToTuple[K, V])
+    self.applyPerKey(
+      withFanout(Combine.perKey(Functions.aggregateFn(zeroValue)(op, op))),
+      kvToTuple[K, V]
+    )
 
   /**
    * [[PairSCollectionFunctions.foldByKey(implicit* PairSCollectionFunctions.foldByKey]] with
@@ -98,7 +112,12 @@ class SCollectionWithHotKeyFanout[K: Coder, V: Coder] private[values] (
     self.applyPerKey(withFanout(Combine.perKey(Functions.reduceFn(op))), kvToTuple[K, V])
 
   /** [[PairSCollectionFunctions.sumByKey]] with hot key fanout. */
-  def sumByKey(implicit sg: Semigroup[V]): SCollection[(K, V)] =
+  def sumByKey(implicit sg: Semigroup[V]): SCollection[(K, V)] = {
+    SCollection.logger.warn(
+      "combineByKey/sumByKey does not support default value and may fail in some streaming " +
+        "scenarios. Consider aggregateByKey/foldByKey instead."
+    )
     self.applyPerKey(withFanout(Combine.perKey(Functions.reduceFn(sg))), kvToTuple[K, V])
+  }
 
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -81,7 +81,8 @@ object JobTest {
     distributions: Map[beam.Distribution, beam.DistributionResult => Unit] = Map.empty,
     // scalastyle:on line.size.limit
     gauges: Map[beam.Gauge, beam.GaugeResult => Unit] = Map.empty,
-    wasRunInvoked: Boolean = false)
+    wasRunInvoked: Boolean = false
+  )
 
   class Builder(private var state: BuilderState) {
 
@@ -119,7 +120,8 @@ object JobTest {
       require(!state.output.contains(io.toString), "Duplicate test output: " + io.toString)
       state = state.copy(
         output = state.output + (io.testId -> assertion
-          .asInstanceOf[SCollection[_] => Unit]))
+          .asInstanceOf[SCollection[_] => Unit])
+      )
       this
     }
 
@@ -166,10 +168,13 @@ object JobTest {
      * @param distribution distribution to be evaluated
      * @param assertion assertion for the distribution result's committed value
      */
-    def distribution(distribution: beam.Distribution)(
-      assertion: beam.DistributionResult => Unit): Builder = {
-      require(!state.distributions.contains(distribution),
-              "Duplicate test distribution: " + distribution.getName)
+    def distribution(
+      distribution: beam.Distribution
+    )(assertion: beam.DistributionResult => Unit): Builder = {
+      require(
+        !state.distributions.contains(distribution),
+        "Duplicate test distribution: " + distribution.getName
+      )
       state = state.copy(distributions = state.distributions + (distribution -> assertion))
       this
     }

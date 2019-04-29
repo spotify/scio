@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,8 @@ class VersionUtilTest extends FlatSpec with Matchers {
 
   private def verifySnapshotVersion(oldVer: String, newVerOpt: Option[String]) =
     VersionUtil.checkVersion(oldVer, newVerOpt) shouldBe Seq(
-      s"Using a SNAPSHOT version of Scio: $oldVer")
+      s"Using a SNAPSHOT version of Scio: $oldVer"
+    )
 
   "checkVersion" should "warn about snapshot version" in {
     verifySnapshotVersion("0.1.0-SNAPSHOT", None)
@@ -35,22 +36,26 @@ class VersionUtilTest extends FlatSpec with Matchers {
   it should "warn about release version" in {
     VersionUtil.checkVersion("0.1.0-SNAPSHOT", Some("0.1.0")) shouldBe Seq(
       "Using a SNAPSHOT version of Scio: 0.1.0-SNAPSHOT",
-      "A newer version of Scio is available: 0.1.0-SNAPSHOT -> 0.1.0")
+      "A newer version of Scio is available: 0.1.0-SNAPSHOT -> 0.1.0"
+    )
   }
 
   private def verifyNewVersion(oldVer: String, newVer: String) =
     VersionUtil.checkVersion(oldVer, Some(newVer)) shouldBe Seq(
-      s"A newer version of Scio is available: $oldVer -> $newVer")
+      s"A newer version of Scio is available: $oldVer -> $newVer"
+    )
 
   it should "warn about newer version" in {
-    val versions = Array("0.1.0",
-                         "0.1.1-alpha1",
-                         "0.1.1-alpha2",
-                         "0.1.1-beta1",
-                         "0.1.1-beta2",
-                         "0.1.1-RC1",
-                         "0.1.1-RC2",
-                         "0.1.1")
+    val versions = Array(
+      "0.1.0",
+      "0.1.1-alpha1",
+      "0.1.1-alpha2",
+      "0.1.1-beta1",
+      "0.1.1-beta2",
+      "0.1.1-RC1",
+      "0.1.1-RC2",
+      "0.1.1"
+    )
     for (i <- versions.indices) {
       VersionUtil.checkVersion(versions(i), Some(versions(i))) shouldBe Nil
       for (j <- (i + 1) until versions.length) {

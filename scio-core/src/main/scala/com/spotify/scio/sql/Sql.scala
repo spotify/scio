@@ -115,10 +115,12 @@ final class SqlSCollection2[A: Schema, B: Schema](a: SCollection[A], b: SCollect
     }
   }
 
-  def queryAs[R: Schema](q: String,
-                         aTag: TupleTag[A],
-                         bTag: TupleTag[B],
-                         udfs: Udf*): SCollection[R] =
+  def queryAs[R: Schema](
+    q: String,
+    aTag: TupleTag[A],
+    bTag: TupleTag[B],
+    udfs: Udf*
+  ): SCollection[R] =
     queryAs(Query2(q, aTag, bTag, udfs.toList))
 
   def queryAs[R: Schema](q: Query2[A, B, R]): SCollection[R] =
@@ -131,14 +133,18 @@ final class SqlSCollection2[A: Schema, B: Schema](a: SCollection[A], b: SCollect
 
 }
 
-final case class Query[A, B](query: String,
-                             tag: TupleTag[A] = new TupleTag[A]("SCOLLECTION"),
-                             udfs: List[Udf] = Nil)
+final case class Query[A, B](
+  query: String,
+  tag: TupleTag[A] = new TupleTag[A]("SCOLLECTION"),
+  udfs: List[Udf] = Nil
+)
 
-final case class Query2[A, B, R](query: String,
-                                 aTag: TupleTag[A],
-                                 bTag: TupleTag[B],
-                                 udfs: List[Udf] = Nil)
+final case class Query2[A, B, R](
+  query: String,
+  aTag: TupleTag[A],
+  bTag: TupleTag[B],
+  udfs: List[Udf] = Nil
+)
 
 object Queries {
 
@@ -157,7 +163,7 @@ object Queries {
           SchemaMaterializer.fieldType(Schema[ScalarWrapper[B]]).getRowSchema
       }
 
-    typecheck(q.query, (q.tag.getId, schema) :: Nil, expectedSchema).right.map(_ => q)
+    typecheck(q.query, (q.tag.getId, schema) :: Nil, expectedSchema, q.udfs).right.map(_ => q)
   }
 
   /**
@@ -166,7 +172,8 @@ object Queries {
    * If it fails, a error message is returned in a [[Left]].
    */
   def typecheck[A: Schema, B: Schema, R: Schema](
-    q: Query2[A, B, R]): Either[String, Query2[A, B, R]] = {
+    q: Query2[A, B, R]
+  ): Either[String, Query2[A, B, R]] = {
     val schemaA: BSchema = SchemaMaterializer.fieldType(Schema[A]).getRowSchema
     val schemaB: BSchema = SchemaMaterializer.fieldType(Schema[B]).getRowSchema
     val expectedSchema: BSchema =
@@ -177,20 +184,30 @@ object Queries {
           SchemaMaterializer.fieldType(Schema[ScalarWrapper[R]]).getRowSchema
       }
 
-    typecheck(q.query, List((q.aTag.getId, schemaA), (q.bTag.getId, schemaB)), expectedSchema).right
+    typecheck(
+      q.query,
+      List((q.aTag.getId, schemaA), (q.bTag.getId, schemaB)),
+      expectedSchema,
+      q.udfs
+    ).right
       .map(_ => q)
   }
 
-  def typed[A: Schema, B: Schema](query: String, udfs: Udf*): Query[A, B] =
+  def typed[A: Schema, B: Schema](query: String): Query[A, B] =
     macro QueryMacros.typedImpl[A, B]
 
-  def typed[A: Schema, B: Schema, R: Schema](query: String,
-                                             aTag: TupleTag[A],
-                                             bTag: TupleTag[B],
-                                             udfs: Udf*): Query2[A, B, R] =
+  def typed[A: Schema, B: Schema, R: Schema](
+    query: String,
+    aTag: TupleTag[A],
+    bTag: TupleTag[B]
+  ): Query2[A, B, R] =
     macro QueryMacros.typed2Impl[A, B, R]
 
-  private[this] def parseQuery(query: String, schemas: (String, BSchema)*): Try[BeamRelNode] = Try {
+  private[this] def parseQuery(
+    query: String,
+    schemas: List[(String, BSchema)],
+    udfs: List[Udf]
+  ): Try[BeamRelNode] = Try {
     val tables: Map[String, BeamSqlTable] = schemas.map {
       case (tag, schema) =>
         tag -> new BaseBeamTable(schema) {
@@ -202,17 +219,33 @@ object Queries {
         }
     }.toMap
 
-    BeamSqlEnv.readOnly(Sql.SCollectionTypeName, tables.asJava).parseQuery(query)
+    val env = BeamSqlEnv.readOnly(Sql.SCollectionTypeName, tables.asJava)
+    udfs.foreach {
+      case (x: UdfFromClass[_]) =>
+        env.registerUdf(x.fnName, x.clazz)
+      case (x: UdfFromSerializableFn[_, _]) =>
+        env.registerUdf(x.fnName, x.fn)
+      case (x: UdafFromCombineFn[_, _, _]) =>
+        env.registerUdaf(x.fnName, x.fn)
+    }
+    env.parseQuery(query)
   }
 
-  private[this] def schema(query: String, schemas: (String, BSchema)*): Try[BSchema] =
-    parseQuery(query, schemas: _*).map(n => CalciteUtils.toSchema(n.getRowType))
+  private[this] def schema(
+    query: String,
+    schemas: List[(String, BSchema)],
+    udfs: List[Udf]
+  ): Try[BSchema] =
+    parseQuery(query, schemas, udfs).map(n => CalciteUtils.toSchema(n.getRowType))
 
-  private[this] def typecheck(query: String,
-                              inferredSchemas: List[(String, BSchema)],
-                              expectedSchema: BSchema): Either[String, String] = {
+  private[this] def typecheck(
+    query: String,
+    inferredSchemas: List[(String, BSchema)],
+    expectedSchema: BSchema,
+    udfs: List[Udf]
+  ): Either[String, String] = {
     ScioUtil
-      .toEither(schema(query, inferredSchemas: _*))
+      .toEither(schema(query, inferredSchemas, udfs))
       .left
       .map { ex =>
         val mess = org.apache.commons.lang3.exception.ExceptionUtils.getRootCauseMessage(ex)
@@ -222,9 +255,12 @@ object Queries {
            |Query:
            |$query
            |
-           |PCOLLECTION schema:
-           |${inferredSchemas.map(i => PrettyPrint.prettyPrint(i._2.getFields.asScala.toList))}
-           |Query result schema (infered) is unknown
+           |SCOLLECTION schema:
+           |${inferredSchemas
+             .map(i => PrettyPrint.prettyPrint(i._2.getFields.asScala.toList))
+             .mkString("\n")}
+           |
+           |Query result schema (inferred) is unknown.
            |Expected schema:
            |${PrettyPrint.prettyPrint(expectedSchema.getFields.asScala.toList)}
         """.stripMargin
@@ -232,8 +268,10 @@ object Queries {
       .right
       .flatMap {
         case inferredSchema
-            if SchemaTypes.typesEqual(BSchema.FieldType.row(inferredSchema),
-                                      BSchema.FieldType.row(expectedSchema)) =>
+            if SchemaTypes.equal(
+              BSchema.FieldType.row(inferredSchema),
+              BSchema.FieldType.row(expectedSchema)
+            ) =>
           Right(query)
         case inferredSchema =>
           val message =
@@ -247,8 +285,10 @@ object Queries {
                |${inferredSchemas
                  .map(i => PrettyPrint.prettyPrint(i._2.getFields.asScala.toList))
                  .mkString("\n")}
-               |Query result schema (infered):
+               |
+               |Query result schema (inferred):
                |${PrettyPrint.prettyPrint(inferredSchema.getFields.asScala.toList)}
+               |
                |Expected schema:
                |${PrettyPrint.prettyPrint(expectedSchema.getFields.asScala.toList)}
         """.stripMargin
@@ -261,9 +301,9 @@ object Queries {
 object QueryMacros {
   import scala.reflect.macros.blackbox
 
-  def typedImpl[A, B](c: blackbox.Context)(query: c.Expr[String], udfs: c.Expr[Udf]*)(
-    iSchema: c.Expr[Schema[A]],
-    oSchema: c.Expr[Schema[B]]): c.Expr[Query[A, B]] = {
+  def typedImpl[A, B](c: blackbox.Context)(
+    query: c.Expr[String]
+  )(iSchema: c.Expr[Schema[A]], oSchema: c.Expr[Schema[B]]): c.Expr[Query[A, B]] = {
     import c.universe._
 
     val queryTree = c.untypecheck(query.tree.duplicate)
@@ -285,18 +325,18 @@ object QueryMacros {
       .typecheck(sq)(sIn, sOut)
       .fold(
         err => c.abort(c.enclosingPosition, err), { _ =>
-          c.Expr[Query[A, B]](q"_root_.com.spotify.scio.sql.Query($query, ..$udfs)")
+          c.Expr[Query[A, B]](q"""_root_.com.spotify.scio.sql.Query($query)""")
         }
       )
   }
 
-  def typed2Impl[A, B, R](c: blackbox.Context)(query: c.Expr[String],
-                                               aTag: c.Expr[TupleTag[A]],
-                                               bTag: c.Expr[TupleTag[B]],
-                                               udfs: c.Expr[Udf]*)(
+  def typed2Impl[A, B, R](
+    c: blackbox.Context
+  )(query: c.Expr[String], aTag: c.Expr[TupleTag[A]], bTag: c.Expr[TupleTag[B]])(
     aSchema: c.Expr[Schema[A]],
     bSchema: c.Expr[Schema[B]],
-    oSchema: c.Expr[Schema[R]]): c.Expr[Query2[A, B, R]] = {
+    oSchema: c.Expr[Schema[R]]
+  ): c.Expr[Query2[A, B, R]] = {
     import c.universe._
 
     val queryTree = c.untypecheck(query.tree.duplicate)
@@ -319,7 +359,8 @@ object QueryMacros {
       .typecheck(sq)(sInA, sInB, sOut)
       .fold(
         err => c.abort(c.enclosingPosition, err), { _ =>
-          val out = q"_root_.com.spotify.scio.sql.Query2($query, $aTag, $bTag, ..$udfs)"
+          val out =
+            q"_root_.com.spotify.scio.sql.Query2($query, $aTag, $bTag)"
           c.Expr[Query2[A, B, R]](out)
         }
       )

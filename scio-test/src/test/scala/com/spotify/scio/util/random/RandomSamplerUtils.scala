@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -93,9 +93,11 @@ object RandomSamplerUtils extends Serializable {
   }
 
   // Returns aligned cumulative distributions from two arrays of data
-  def cumulants(d1: Array[Int],
-                d2: Array[Int],
-                ss: Int = sampleSize): (Array[Double], Array[Double]) = {
+  def cumulants(
+    d1: Array[Int],
+    d2: Array[Int],
+    ss: Int = sampleSize
+  ): (Array[Double], Array[Double]) = {
     assert(math.min(d1.length, d2.length) > 0)
     assert(math.min(d1.min, d2.min) >= 0)
     val m = 1 + math.max(d1.max, d2.max)

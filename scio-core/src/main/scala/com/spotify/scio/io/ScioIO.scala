@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,7 +70,8 @@ trait ScioIO[T] {
   def testId: String = this.toString
 
   private[scio] def readWithContext(sc: ScioContext, params: ReadP)(
-    implicit coder: Coder[T]): SCollection[T] =
+    implicit coder: Coder[T]
+  ): SCollection[T] =
     sc.requireNotClosed {
       if (sc.isTest) {
         readTest(sc, params)
@@ -80,7 +81,8 @@ trait ScioIO[T] {
     }
 
   protected def readTest(sc: ScioContext, params: ReadP)(
-    implicit coder: Coder[T]): SCollection[T] = {
+    implicit coder: Coder[T]
+  ): SCollection[T] = {
     sc.parallelize(
       TestDataManager.getInput(sc.testId.get)(this).asInstanceOf[Seq[T]]
     )
@@ -89,7 +91,8 @@ trait ScioIO[T] {
   protected def read(sc: ScioContext, params: ReadP): SCollection[T]
 
   private[scio] def writeWithContext(data: SCollection[T], params: WriteP)(
-    implicit coder: Coder[T]): ClosedTap[tapT.T] = ClosedTap {
+    implicit coder: Coder[T]
+  ): ClosedTap[tapT.T] = ClosedTap {
     if (data.context.isTest) {
       writeTest(data, params)
     } else {
@@ -100,7 +103,8 @@ trait ScioIO[T] {
   protected def write(data: SCollection[T], params: WriteP): Tap[tapT.T]
 
   protected def writeTest(data: SCollection[T], params: WriteP)(
-    implicit coder: Coder[T]): Tap[tapT.T] = {
+    implicit coder: Coder[T]
+  ): Tap[tapT.T] = {
     TestDataManager.getOutput(data.context.testId.get)(this)(data)
     tapT.saveForTest(data)
   }
@@ -135,7 +139,7 @@ object ScioIO {
         io.read(sc, params)
 
       override def write(data: SCollection[T], params: WriteP): Tap[io.tapT.T] =
-        throw new IllegalStateException("read-only IO. This code should be unreachable")
+        throw new UnsupportedOperationException("read-only IO. This code should be unreachable")
 
       override def tap(params: ReadP): Tap[io.tapT.T] = io.tap(params)
 
@@ -149,11 +153,11 @@ trait TestIO[T] extends ScioIO[T] {
   override type WriteP = Nothing
 
   override def read(sc: ScioContext, params: ReadP): SCollection[T] =
-    throw new IllegalStateException(s"$this is for testing purpose only")
+    throw new UnsupportedOperationException(s"$this is for testing purpose only")
   override def write(data: SCollection[T], params: WriteP): Tap[tapT.T] =
-    throw new IllegalStateException(s"$this is for testing purpose only")
+    throw new UnsupportedOperationException(s"$this is for testing purpose only")
   override def tap(params: ReadP): Tap[tapT.T] =
-    throw new IllegalStateException(s"$this is for testing purpose only")
+    throw new UnsupportedOperationException(s"$this is for testing purpose only")
 }
 
 /**

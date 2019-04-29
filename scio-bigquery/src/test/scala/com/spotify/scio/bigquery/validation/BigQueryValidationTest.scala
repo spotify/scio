@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,14 +42,17 @@ class BigQueryValidationTest extends FlatSpec with Matchers with BeforeAndAfterA
       |    {"mode": "REQUIRED", "name": "noCountry", "type": "STRING", "description": "NOCOUNTRY"}
       |  ]
       |}
-    """.stripMargin)
+    """.stripMargin
+  )
   class CountryInput
 
   @SetProperty.setProperty
   @BigQueryType.toTable
-  case class CountryOutput(@description("COUNTRY") country: Country,
-                           countryString: String,
-                           @description("NOCOUNTRY") noCountry: String)
+  case class CountryOutput(
+    @description("COUNTRY") country: Country,
+    countryString: String,
+    @description("NOCOUNTRY") noCountry: String
+  )
 
   "ValidationProvider" should "override types using SampleValidationProvider for fromSchema" in {
     val countryInput = CountryInput(Country("US"), "UK", "No Country")

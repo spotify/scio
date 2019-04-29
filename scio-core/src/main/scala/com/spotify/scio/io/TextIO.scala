@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,7 +45,9 @@ final case class TextIO(path: String) extends ScioIO[String] {
         BTextIO
           .read()
           .from(path)
-          .withCompression(params.compression)))
+          .withCompression(params.compression)
+      )
+    )
 
   override def write(data: SCollection[String], params: WriteP): Tap[String] = {
     data.applyInternal(textOut(path, params))
@@ -62,7 +64,8 @@ final case class TextIO(path: String) extends ScioIO[String] {
       .withSuffix(params.suffix)
       .withNumShards(params.numShards)
       .withWritableByteChannelFactory(
-        FileBasedSink.CompressionType.fromCanonical(params.compression))
+        FileBasedSink.CompressionType.fromCanonical(params.compression)
+      )
 
   private[scio] def pathWithShards(path: String) =
     path.replaceAll("\\/+$", "") + "/part"
@@ -72,9 +75,11 @@ object TextIO {
 
   final case class ReadParam(compression: Compression = Compression.AUTO)
 
-  final case class WriteParam(suffix: String = ".txt",
-                              numShards: Int = 0,
-                              compression: Compression = Compression.UNCOMPRESSED)
+  final case class WriteParam(
+    suffix: String = ".txt",
+    numShards: Int = 0,
+    compression: Compression = Compression.UNCOMPRESSED
+  )
 
   private[scio] def textFile(path: String): Iterator[String] = {
     val factory = new CompressorStreamFactory()
@@ -88,8 +93,10 @@ object TextIO {
     IOUtils.lineIterator(input, Charsets.UTF_8).asScala
   }
 
-  private def getDirectoryInputStream(path: String,
-                                      wrapperFn: InputStream => InputStream): InputStream = {
+  private def getDirectoryInputStream(
+    path: String,
+    wrapperFn: InputStream => InputStream
+  ): InputStream = {
     val inputs = listFiles(path).map(getObjectInputStream).map(wrapperFn).asJava
     new SequenceInputStream(Collections.enumeration(inputs))
   }

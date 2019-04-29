@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,8 @@ object CheckpointMetrics {
 
     val (sc, args) = ContextAndArgs(
       Array(s"--checkpoint=$checkpointArg") ++
-        Option(tempLocation).map(e => s"--tempLocation=$e"))
+        Option(tempLocation).map(e => s"--tempLocation=$e")
+    )
     sc.checkpoint(args("checkpoint")) {
         sc.parallelize(1 to 10)
           .map { x =>

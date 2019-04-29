@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,9 +55,11 @@ object TFRecordIO {
     private[tensorflow] val DefaultNumShards = 0
   }
 
-  final case class WriteParam private (suffix: String = WriteParam.DefaultSuffix,
-                                       compression: Compression = WriteParam.DefaultCompression,
-                                       numShards: Int = WriteParam.DefaultNumShards)
+  final case class WriteParam private (
+    suffix: String = WriteParam.DefaultSuffix,
+    compression: Compression = WriteParam.DefaultCompression,
+    numShards: Int = WriteParam.DefaultNumShards
+  )
 }
 
 final case class TFExampleIO(path: String) extends ScioIO[Example] {
@@ -113,7 +115,9 @@ private object TFRecordMethods {
         beam.TFRecordIO
           .read()
           .from(path)
-          .withCompression(params.compression)))
+          .withCompression(params.compression)
+      )
+    )
 
   def write(data: SCollection[Array[Byte]], path: String, params: TFRecordIO.WriteParam): Unit = {
     data.applyInternal(
@@ -122,7 +126,8 @@ private object TFRecordMethods {
         .to(ScioUtil.pathWithShards(path))
         .withSuffix(params.suffix)
         .withCompression(params.compression)
-        .withNumShards(params.numShards))
+        .withNumShards(params.numShards)
+    )
 
     ()
   }

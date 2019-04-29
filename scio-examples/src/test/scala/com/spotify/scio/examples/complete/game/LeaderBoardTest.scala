@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,9 +35,11 @@ class LeaderBoardTest extends PipelineSpec {
   private val blueOne = TestUser("navy", "blue")
   private val blueTwo = TestUser("sky", "blue")
 
-  private def event(user: TestUser,
-                    score: Int,
-                    baseTimeOffset: Duration): TimestampedValue[GameActionInfo] = {
+  private def event(
+    user: TestUser,
+    score: Int,
+    baseTimeOffset: Duration
+  ): TimestampedValue[GameActionInfo] = {
     val t = baseTime.plus(baseTimeOffset)
     TimestampedValue.of(GameActionInfo(user.user, user.team, score, t.getMillis), t)
   }
@@ -55,8 +57,10 @@ class LeaderBoardTest extends PipelineSpec {
       )
       // The watermark advances slightly, but not past the end of the window
       .advanceWatermarkTo(baseTime.plus(Duration.standardMinutes(3)))
-      .addElements(event(redOne, 1, Duration.standardMinutes(4)),
-                   event(blueOne, 2, Duration.standardSeconds(270)))
+      .addElements(
+        event(redOne, 1, Duration.standardMinutes(4)),
+        event(blueOne, 2, Duration.standardSeconds(270))
+      )
       // The window should close and emit an ON_TIME pane
       .advanceWatermarkToInfinity
 

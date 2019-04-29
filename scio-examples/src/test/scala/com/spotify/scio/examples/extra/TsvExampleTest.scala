@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,10 @@ class TsvExampleTest extends PipelineSpec {
     JobTest[TsvExampleWrite.type]
       .args("--input=in.txt", "--output=out.txt")
       .input(TextIO("in.txt"), inData)
-      .output(CustomIO[String]("out.txt"))(_ should containInAnyOrder(tsvData))
+      .output(CustomIO[String]("out.txt")) { coll =>
+        coll should containInAnyOrder(tsvData)
+        ()
+      }
       .run()
   }
 
@@ -37,7 +40,10 @@ class TsvExampleTest extends PipelineSpec {
     JobTest[TsvExampleRead.type]
       .args("--input=in.txt", "--output=out.txt")
       .input(TextIO("in.txt"), tsvData)
-      .output(TextIO("out.txt"))(_ should containSingleValue("9"))
+      .output(TextIO("out.txt")) { coll =>
+        coll should containSingleValue("9")
+        ()
+      }
       .run()
   }
 

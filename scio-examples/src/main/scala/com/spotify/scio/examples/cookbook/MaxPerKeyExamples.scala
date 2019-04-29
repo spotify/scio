@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,8 +37,11 @@ object MaxPerKeyExamples {
 
     // Schema for result BigQuery table
     val schema = new TableSchema().setFields(
-      List(new TableFieldSchema().setName("month").setType("INTEGER"),
-           new TableFieldSchema().setName("max_mean_temp").setType("FLOAT")).asJava)
+      List(
+        new TableFieldSchema().setName("month").setType("INTEGER"),
+        new TableFieldSchema().setName("max_mean_temp").setType("FLOAT")
+      ).asJava
+    )
 
     // Open a BigQuery table as a `SCollection[TableRow]`
     sc.bigQueryTable(args.getOrElse("input", ExampleData.WEATHER_SAMPLES_TABLE))

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,9 +63,11 @@ class CoderBenchmark {
     SpecializedUserForDerived(userId, "johndoe", "johndoe@spotify.com")
 
   val javaUser =
-    new j.User(new j.UserId(Array[Byte](1, 2, 3, 4).map(x => x: java.lang.Byte)),
-               "johndoe",
-               "johndoe@spotify.com")
+    new j.User(
+      new j.UserId(Array[Byte](1, 2, 3, 4).map(x => x: java.lang.Byte)),
+      "johndoe",
+      "johndoe@spotify.com"
+    )
 
   val tenTimes = List.fill(10)(specializedUserForDerived)
 
@@ -205,9 +207,11 @@ class CoderBenchmark {
   // Compare the performance of Schema Coders vs compile time derived Coder. Run with:
   // jmh:run -f1 -wi 10 -i 20 com.spotify.scio.jmh.CoderBenchmark.(derived|schemaCoder)(De|En)code
   val (specializedUserSchema, specializedTo, specializedFrom) =
-    SchemaMaterializer.materialize(CoderRegistry.createDefault(),
-                                   PipelineOptionsFactory.create(),
-                                   Schema[SpecializedUserForDerived])
+    SchemaMaterializer.materialize(
+      CoderRegistry.createDefault(),
+      PipelineOptionsFactory.create(),
+      Schema[SpecializedUserForDerived]
+    )
 
   val specializedSchemaCoder: BCoder[SpecializedUserForDerived] =
     SchemaCoder.of(specializedUserSchema, specializedTo, specializedFrom)
@@ -227,9 +231,11 @@ class CoderBenchmark {
   // Compare the performance of Schema Coders vs Kryo coder for java class run with:
   // jmh:run -f1 -wi 10 -i 20 com.spotify.scio.jmh.CoderBenchmark.java(Kryo|Schema)CoderEncode
   val (javaUserSchema, javaTo, javaFrom) =
-    SchemaMaterializer.materialize(CoderRegistry.createDefault(),
-                                   PipelineOptionsFactory.create(),
-                                   Schema[j.User])
+    SchemaMaterializer.materialize(
+      CoderRegistry.createDefault(),
+      PipelineOptionsFactory.create(),
+      Schema[j.User]
+    )
 
   val javaSchemaCoder: BCoder[j.User] =
     SchemaCoder.of(javaUserSchema, javaTo, javaFrom)

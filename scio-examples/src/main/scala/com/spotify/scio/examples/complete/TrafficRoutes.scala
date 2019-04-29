@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,10 +39,12 @@ object TrafficRoutes {
   case class RouteInfo(route: String, avgSpeed: Double, slowdownEvent: Boolean)
 
   @BigQueryType.toTable
-  case class Record(route: String,
-                    avg_speed: Double,
-                    slowdown_event: Boolean,
-                    window_timestamp: Instant)
+  case class Record(
+    route: String,
+    avg_speed: Double,
+    slowdown_event: Boolean,
+    window_timestamp: Instant
+  )
 
   private val sdStations =
     Map("1108413" -> "SDRoute1", "1108699" -> "SDRoute2", "1108702" -> "SDRoute3")
@@ -79,8 +81,10 @@ object TrafficRoutes {
         }
       }
       .timestampBy(kv => new Instant(kv._2.timestamp))
-      .withSlidingWindows(Duration.standardMinutes(windowDuration),
-                          Duration.standardMinutes(windowSlideEvery))
+      .withSlidingWindows(
+        Duration.standardMinutes(windowDuration),
+        Duration.standardMinutes(windowSlideEvery)
+      )
       .groupByKey
       .map { kv =>
         var speedSum = 0.0

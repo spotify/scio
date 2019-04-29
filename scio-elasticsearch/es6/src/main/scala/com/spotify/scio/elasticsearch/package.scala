@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import java.net.InetSocketAddress
 import com.spotify.scio.io.ClosedTap
 import com.spotify.scio.values.SCollection
 import com.spotify.scio.coders.Coder
-import com.spotify.scio.elasticsearch.ElasticsearchIO.WriteParam
+import com.spotify.scio.elasticsearch.ElasticsearchIO.{RetryConfig, WriteParam}
 import org.apache.beam.sdk.io.elasticsearch.ElasticsearchIO.Write.BulkExecutionException
 import org.elasticsearch.action.DocWriteRequest
 import org.joda.time.Duration
@@ -51,13 +51,15 @@ package object elasticsearch {
      *                   number of pipeline workers
      * @param errorFn function to handle error when performing Elasticsearch bulk writes
      */
-    def saveAsElasticsearch(esOptions: ElasticsearchOptions,
-                            flushInterval: Duration = WriteParam.DefaultFlushInterval,
-                            numOfShards: Long = WriteParam.DefaultNumShards,
-                            maxBulkRequestSize: Int = WriteParam.DefaultMaxBulkRequestSize,
-                            errorFn: BulkExecutionException => Unit = WriteParam.DefaultErrorFn)(
-      f: T => Iterable[DocWriteRequest[_]])(implicit coder: Coder[T]): ClosedTap[Nothing] = {
-      val param = WriteParam(f, errorFn, flushInterval, numOfShards, maxBulkRequestSize)
+    def saveAsElasticsearch(
+      esOptions: ElasticsearchOptions,
+      flushInterval: Duration = WriteParam.DefaultFlushInterval,
+      numOfShards: Long = WriteParam.DefaultNumShards,
+      maxBulkRequestSize: Int = WriteParam.DefaultMaxBulkRequestSize,
+      errorFn: BulkExecutionException => Unit = WriteParam.DefaultErrorFn,
+      retry: RetryConfig = WriteParam.DefaultRetryConfig
+    )(f: T => Iterable[DocWriteRequest[_]])(implicit coder: Coder[T]): ClosedTap[Nothing] = {
+      val param = WriteParam(f, errorFn, flushInterval, numOfShards, maxBulkRequestSize, retry)
       self.write(ElasticsearchIO[T](esOptions))(param)
     }
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,8 @@ object NearestNeighbor {
   def newLSHBuilder[K: ClassTag, @sp(Double, Int, Float, Long) V: ClassTag: Numeric: Semiring](
     dimension: Int,
     stages: Int,
-    buckets: Int): NearestNeighborBuilder[K, V] =
+    buckets: Int
+  ): NearestNeighborBuilder[K, V] =
     new LSHNNBuilder[K, V](dimension, stages, buckets)
 
   /**
@@ -47,7 +48,8 @@ object NearestNeighbor {
    * @param dimension dimension of input vectors
    */
   def newMatrixBuilder[K: ClassTag, @sp(Double, Int, Float, Long) V: ClassTag: Numeric: Semiring](
-    dimension: Int): NearestNeighborBuilder[K, V] =
+    dimension: Int
+  ): NearestNeighborBuilder[K, V] =
     new MatrixNNBuilder[K, V](dimension)
 
 }
@@ -130,21 +132,27 @@ trait NearestNeighbor[K, @sp(Double, Int, Float, Long) V] extends Serializable {
   @inline protected def getId(key: K): Int = keyToId(key)
 
   /** Lookup nearest neighbors of a vector. The vector should be normalized. */
-  def lookup(vec: DenseVector[V],
-             maxResult: Int,
-             minSimilarity: Double = Double.NegativeInfinity): Iterable[(K, Double)]
+  def lookup(
+    vec: DenseVector[V],
+    maxResult: Int,
+    minSimilarity: Double = Double.NegativeInfinity
+  ): Iterable[(K, Double)]
 
   /** Lookup nearest neighbors of an existing vector. */
-  def lookupKey(key: K,
-                maxResult: Int,
-                minSimilarity: Double = Double.NegativeInfinity): Iterable[(K, Double)] =
+  def lookupKey(
+    key: K,
+    maxResult: Int,
+    minSimilarity: Double = Double.NegativeInfinity
+  ): Iterable[(K, Double)] =
     lookup(vectors(getId(key)), maxResult, minSimilarity)
 
 }
 
 /** Builder for [[MatrixNN]]. */
-private class MatrixNNBuilder[K: ClassTag,
-@sp(Double, Int, Float, Long) V: ClassTag: Numeric: Semiring](override val dimension: Int)
+private class MatrixNNBuilder[
+  K: ClassTag,
+  @sp(Double, Int, Float, Long) V: ClassTag: Numeric: Semiring
+](override val dimension: Int)
     extends NearestNeighborBuilder[K, V] {
 
   /** Add a key->vector pair. The vector should be normalized. */
@@ -155,11 +163,13 @@ private class MatrixNNBuilder[K: ClassTag,
 
   /** Build an immutable NearestNeighbor instance. */
   override def build: NearestNeighbor[K, V] =
-    new MatrixNN(dimension,
-                 keyToId.toMap,
-                 idToKey.toArray,
-                 vectors.toArray,
-                 DenseMatrix(vectors.map(_.toArray): _*))
+    new MatrixNN(
+      dimension,
+      keyToId.toMap,
+      idToKey.toArray,
+      vectors.toArray,
+      DenseMatrix(vectors.map(_.toArray): _*)
+    )
 }
 
 /** Nearest neighbor using vector dot product via matrix multiplication. */
@@ -168,16 +178,18 @@ private class MatrixNN[K, @sp(Double, Int, Float, Long) V: ClassTag: Numeric: Se
   override protected val keyToId: Map[K, Int],
   override protected val idToKey: Array[K],
   override val vectors: Array[DenseVector[V]],
-  private val matrix: Matrix[V])
-    extends NearestNeighbor[K, V] {
+  private val matrix: Matrix[V]
+) extends NearestNeighbor[K, V] {
 
   /** Name of the nearest neighbor method. */
   override val name: String = "Matrix"
 
   /** Lookup nearest neighbors of a vector. The vector should be normalized. */
-  override def lookup(vec: DenseVector[V],
-                      maxResult: Int,
-                      minSimilarity: Double): Iterable[(K, Double)] = {
+  override def lookup(
+    vec: DenseVector[V],
+    maxResult: Int,
+    minSimilarity: Double
+  ): Iterable[(K, Double)] = {
     require(vec.length == dimension, s"Vector dimension ${vec.length} != $dimension")
     require(maxResult > 0, s"maxResult must be > 0")
 
@@ -204,11 +216,10 @@ private class MatrixNN[K, @sp(Double, Int, Float, Long) V: ClassTag: Numeric: Se
 }
 
 /** Builder for [[LSHNN]]. */
-private class LSHNNBuilder[K: ClassTag,
-                           @sp(Double, Int, Float, Long) V: ClassTag: Numeric: Semiring](
-  override val dimension: Int,
-  val stages: Int,
-  val buckets: Int)
+private class LSHNNBuilder[
+  K: ClassTag,
+  @sp(Double, Int, Float, Long) V: ClassTag: Numeric: Semiring
+](override val dimension: Int, val stages: Int, val buckets: Int)
     extends NearestNeighborBuilder[K, V] {
 
   require(stages > 0, "stages must be > 0")
@@ -244,16 +255,18 @@ private class LSHNN[K, @sp(Double, Int, Float, Long) V: ClassTag: Numeric: Semir
   override protected val idToKey: Array[K],
   override val vectors: Array[DenseVector[V]],
   private val lsh: LSHSuperBit,
-  private val bins: Array[Array[Int]])
-    extends NearestNeighbor[K, V] {
+  private val bins: Array[Array[Int]]
+) extends NearestNeighbor[K, V] {
 
   /** Name of the nearest neighbor method. */
   override val name: String = "LSH"
 
   /** Lookup nearest neighbors of a vector. The vector should be normalized. */
-  override def lookup(vec: DenseVector[V],
-                      maxResult: Int,
-                      minSimilarity: Double): Iterable[(K, Double)] = {
+  override def lookup(
+    vec: DenseVector[V],
+    maxResult: Int,
+    minSimilarity: Double
+  ): Iterable[(K, Double)] = {
     require(vec.length == dimension, s"Vector dimension ${vec.length} != $dimension")
     require(maxResult > 0, s"maxResult must be > 0")
 

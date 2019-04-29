@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,14 +36,17 @@ object Mutations {
           .setFamilyName(familyName)
           .setColumnQualifier(columnQualifier)
           .setValue(value)
-          .setTimestampMicros(TimeUnit.MILLISECONDS.toMicros(System.currentTimeMillis())))
+          .setTimestampMicros(TimeUnit.MILLISECONDS.toMicros(System.currentTimeMillis()))
+      )
       .build()
 
   /** New `SetCell` mutation. */
-  def newSetCell(familyName: String,
-                 columnQualifier: ByteString,
-                 value: ByteString,
-                 timestampMicros: Long): Mutation =
+  def newSetCell(
+    familyName: String,
+    columnQualifier: ByteString,
+    value: ByteString,
+    timestampMicros: Long
+  ): Mutation =
     Mutation
       .newBuilder()
       .setSetCell(
@@ -52,14 +55,17 @@ object Mutations {
           .setFamilyName(familyName)
           .setColumnQualifier(columnQualifier)
           .setValue(value)
-          .setTimestampMicros(timestampMicros))
+          .setTimestampMicros(timestampMicros)
+      )
       .build()
 
   /** New `DeleteFromColumn` mutation. */
-  def newDeleteFromColumn(familyName: String,
-                          columnQualifier: ByteString,
-                          startTimestampMicros: Long,
-                          endTimestampMicros: Long): Mutation =
+  def newDeleteFromColumn(
+    familyName: String,
+    columnQualifier: ByteString,
+    startTimestampMicros: Long,
+    endTimestampMicros: Long
+  ): Mutation =
     Mutation
       .newBuilder()
       .setDeleteFromColumn(
@@ -71,7 +77,9 @@ object Mutations {
             TimestampRange
               .newBuilder()
               .setStartTimestampMicros(startTimestampMicros)
-              .setEndTimestampMicros(endTimestampMicros)))
+              .setEndTimestampMicros(endTimestampMicros)
+          )
+      )
       .build()
 
   /** New `DeleteFromFamily` mutation. */
@@ -81,7 +89,8 @@ object Mutations {
       .setDeleteFromFamily(
         DeleteFromFamily
           .newBuilder()
-          .setFamilyName(familyName))
+          .setFamilyName(familyName)
+      )
       .build()
 
   /** New `DeleteFromRow` mutation. */

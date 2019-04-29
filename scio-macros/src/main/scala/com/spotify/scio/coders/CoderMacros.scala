@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,8 +57,9 @@ private[coders] object CoderMacros {
 
   // scalastyle:off method.length
   // scalastyle:off cyclomatic.complexity
-  def issueFallbackWarning[T: c.WeakTypeTag](c: whitebox.Context)(
-    lp: c.Expr[shapeless.LowPriority]): c.Tree = {
+  def issueFallbackWarning[T: c.WeakTypeTag](
+    c: whitebox.Context
+  )(lp: c.Expr[shapeless.LowPriority]): c.Tree = {
     import c.universe._
 
     val show = showWarn(c)
@@ -148,8 +149,10 @@ private[coders] object CoderMacros {
     val wtt = weakTypeOf[T]
 
     if (wtt <:< typeOf[Iterable[_]]) {
-      c.abort(c.enclosingPosition,
-              s"Automatic coder derivation can't derive a Coder for $wtt <: Seq")
+      c.abort(
+        c.enclosingPosition,
+        s"Automatic coder derivation can't derive a Coder for $wtt <: Seq"
+      )
     }
 
     val magTree = MagnoliaMacros.genWithoutAnnotations[T](c)

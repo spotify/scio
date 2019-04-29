@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,19 +29,22 @@ sealed trait BigQueryJob {
 }
 
 /** Extract Job Container */
-private[scio] final case class ExtractJob(destinationUris: List[String],
-                                          jobReference: Option[JobReference],
-                                          table: TableReference)
-    extends BigQueryJob
+private[scio] final case class ExtractJob(
+  destinationUris: List[String],
+  jobReference: Option[JobReference],
+  table: TableReference
+) extends BigQueryJob
 
 /** Load Job Container */
-private[scio] final case class LoadJob(sources: List[String],
-                                       jobReference: Option[JobReference],
-                                       table: TableReference)
-    extends BigQueryJob
+private[scio] final case class LoadJob(
+  sources: List[String],
+  jobReference: Option[JobReference],
+  table: TableReference
+) extends BigQueryJob
 
 /** A query job that may delay execution. */
-private[scio] final case class QueryJob(query: String,
-                                        jobReference: Option[JobReference],
-                                        table: TableReference)
-    extends BigQueryJob
+private[scio] final case class QueryJob(
+  query: String,
+  jobReference: Option[JobReference],
+  table: TableReference
+) extends BigQueryJob

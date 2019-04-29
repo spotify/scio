@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,9 +69,11 @@ private[types] object TypeProvider {
 
   private def readFromFileSystem(file: String): InputStream = {
     val files = FileSystems.`match`(file)
-    assume(files.metadata().size() == 1,
-           s"File argument '$file' must match exactly one file. " +
-             s"We've matched ${files.metadata().size()} files.")
+    assume(
+      files.metadata().size() == 1,
+      s"File argument '$file' must match exactly one file. " +
+        s"We've matched ${files.metadata().size()} files."
+    )
     Channels.newInputStream(FileSystems.open(files.metadata().get(0).resourceId()))
   }
 
@@ -111,8 +113,10 @@ private[types] object TypeProvider {
 
     var reader: DataFileStream[Void] = null
     try {
-      reader = new DataFileStream(Channels.newInputStream(FileSystems.open(avroFile)),
-                                  new GenericDatumReader[Void]())
+      reader = new DataFileStream(
+        Channels.newInputStream(FileSystems.open(avroFile)),
+        new GenericDatumReader[Void]()
+      )
       reader.getSchema
     } finally {
       if (reader != null) {
@@ -127,10 +131,12 @@ private[types] object TypeProvider {
       case gcsGlobPathPattern(pathPrefix) =>
         logger.warn(
           "Matching GCS wildcards may be inefficient if there are many files that " +
-            s"share the prefix '$pathPrefix'.")
+            s"share the prefix '$pathPrefix'."
+        )
         logger.warn(
           s"Macro expansion will be slow and might not even finish before hitting " +
-            "compiler GC limit.")
+            "compiler GC limit."
+        )
         logger.warn("Consider using a more specific path glob.")
       case _ =>
     }
@@ -142,8 +148,8 @@ private[types] object TypeProvider {
 
     val r = annottees.map(_.tree) match {
       case l @ List(
-            q"$mods class $name[..$tparams] $ctorMods(..$fields) extends { ..$earlydefns } with ..$parents { $self => ..$body }")
-          if mods.asInstanceOf[Modifiers].hasFlag(Flag.CASE) =>
+            q"$mods class $name[..$tparams] $ctorMods(..$fields) extends { ..$earlydefns } with ..$parents { $self => ..$body }"
+          ) if mods.asInstanceOf[Modifiers].hasFlag(Flag.CASE) =>
         if (parents.map(_.toString()).toSet != Set("scala.Product", "scala.Serializable")) {
           c.abort(c.enclosingPosition, s"Invalid annotation, don't extend the case class $l")
         }
@@ -169,10 +175,12 @@ private[types] object TypeProvider {
         }
 
         q"""$caseClassTree
-            ${companion(c)(name,
-                           docTrait ++ fnTrait,
-                           schemaMethod ++ docMethod,
-                           fields.asInstanceOf[Seq[c.Tree]])}
+            ${companion(c)(
+          name,
+          docTrait ++ fnTrait,
+          schemaMethod ++ docMethod,
+          fields.asInstanceOf[Seq[c.Tree]]
+        )}
         """
       case t =>
         val error =
@@ -192,8 +200,9 @@ private[types] object TypeProvider {
 
   // scalastyle:off cyclomatic.complexity
   // scalastyle:off method.length
-  private def schemaToType(c: blackbox.Context)(schema: Schema,
-                                                annottees: Seq[c.Expr[Any]]): c.Expr[Any] = {
+  private def schemaToType(
+    c: blackbox.Context
+  )(schema: Schema, annottees: Seq[c.Expr[Any]]): c.Expr[Any] = {
     import c.universe._
     checkMacroEnclosed(c)
 
@@ -203,14 +212,18 @@ private[types] object TypeProvider {
         case UNION =>
           val unionTypes = fieldSchema.getTypes.asScala.map(_.getType).distinct
           if (unionTypes.size != 2 || !unionTypes.contains(NULL)) {
-            c.abort(c.enclosingPosition,
-                    s"type: ${fieldSchema.getType} is not supported. " +
-                      s"Union type needs to contain exactly one 'null' type and one non null type.")
+            c.abort(
+              c.enclosingPosition,
+              s"type: ${fieldSchema.getType} is not supported. " +
+                s"Union type needs to contain exactly one 'null' type and one non null type."
+            )
           }
           val (field, recordClasses) =
-            getField(className,
-                     fieldName,
-                     fieldSchema.getTypes.asScala.filter(_.getType != NULL).head)
+            getField(
+              className,
+              fieldName,
+              fieldSchema.getTypes.asScala.filter(_.getType != NULL).head
+            )
           (tq"_root_.scala.Option[$field]", recordClasses)
         case BOOLEAN =>
           (tq"_root_.scala.Boolean", Nil)
@@ -238,17 +251,21 @@ private[types] object TypeProvider {
           val nestedClassName = s"$className$$${fieldSchema.getName}"
           val (fields, recordClasses) =
             extractFields(nestedClassName, fieldSchema)
-          (q"${Ident(TypeName(nestedClassName))}",
-           Seq(q"case class ${TypeName(nestedClassName)}(..$fields)") ++ recordClasses)
+          (
+            q"${Ident(TypeName(nestedClassName))}",
+            Seq(q"case class ${TypeName(nestedClassName)}(..$fields)") ++ recordClasses
+          )
         case t =>
           c.abort(c.enclosingPosition, s"type: $t not supported")
       }
     }
 
     // Returns: ("fieldName: fieldType", nested case class definitions)
-    def extractField(className: String,
-                     fieldName: String,
-                     fieldSchema: Schema): (Tree, Seq[Tree]) = {
+    def extractField(
+      className: String,
+      fieldName: String,
+      fieldSchema: Schema
+    ): (Tree, Seq[Tree]) = {
       val (fieldType, recordClasses) =
         getField(className, SchemaUtil.unescapeNameIfReserved(fieldName), fieldSchema)
       fieldSchema.getType match {
@@ -267,8 +284,8 @@ private[types] object TypeProvider {
 
     val r = annottees.map(_.tree) match {
       case l @ List(
-            q"$mods class $name[..$tparams] $ctorMods(..$cfields) extends { ..$earlydefns } with ..$parents { $self => ..$body }")
-          if mods.asInstanceOf[Modifiers].flags == NoFlags =>
+            q"$mods class $name[..$tparams] $ctorMods(..$cfields) extends { ..$earlydefns } with ..$parents { $self => ..$body }"
+          ) if mods.asInstanceOf[Modifiers].flags == NoFlags =>
         if (parents.map(_.toString()).toSet != Set("scala.AnyRef")) {
           c.abort(c.enclosingPosition, s"Invalid annotation, don't extend the case class $l")
         }
@@ -305,20 +322,18 @@ private[types] object TypeProvider {
   }
 
   /** Generate a case class. */
-  private def caseClass(c: blackbox.Context)(mods: c.Modifiers,
-                                             name: c.TypeName,
-                                             fields: Seq[c.Tree],
-                                             body: Seq[c.Tree]): c.Tree = {
+  private def caseClass(
+    c: blackbox.Context
+  )(mods: c.Modifiers, name: c.TypeName, fields: Seq[c.Tree], body: Seq[c.Tree]): c.Tree = {
     import c.universe._
     val caseMods = Modifiers(Flag.CASE, typeNames.EMPTY, mods.annotations)
     q"$caseMods class $name(..$fields) extends ${p(c, ScioAvroType)}.HasAvroAnnotation { ..$body }"
   }
 
   /** Generate a companion object. */
-  private def companion(c: blackbox.Context)(name: c.TypeName,
-                                             traits: Seq[c.Tree],
-                                             methods: Seq[c.Tree],
-                                             fields: Seq[c.Tree]): c.Tree = {
+  private def companion(
+    c: blackbox.Context
+  )(name: c.TypeName, traits: Seq[c.Tree], methods: Seq[c.Tree], fields: Seq[c.Tree]): c.Tree = {
     import c.universe._
 
     val tupledMethod =
@@ -375,8 +390,9 @@ private[types] object TypeProvider {
     }
   }
 
-  private def getRecordDocs(c: blackbox.Context)(
-    tree: Seq[c.universe.Tree]): List[c.universe.Tree] = {
+  private def getRecordDocs(
+    c: blackbox.Context
+  )(tree: Seq[c.universe.Tree]): List[c.universe.Tree] = {
     import c.universe._
     tree.head
       .asInstanceOf[ClassDef]
@@ -404,8 +420,9 @@ private[types] object TypeProvider {
     }
   }
 
-  private def pShowCode(c: blackbox.Context)(records: Seq[c.Tree],
-                                             caseClass: c.Tree): Seq[String] = {
+  private def pShowCode(
+    c: blackbox.Context
+  )(records: Seq[c.Tree], caseClass: c.Tree): Seq[String] = {
     // print only records and case class and do it nicely so that we can just inject those
     // in scala plugin.
     import c.universe._
@@ -438,9 +455,9 @@ private[types] object TypeProvider {
       .toString
   }
 
-  private def dumpCodeForScalaPlugin(c: blackbox.Context)(records: Seq[c.universe.Tree],
-                                                          caseClassTree: c.universe.Tree,
-                                                          name: String): Unit = {
+  private def dumpCodeForScalaPlugin(
+    c: blackbox.Context
+  )(records: Seq[c.universe.Tree], caseClassTree: c.universe.Tree, name: String): Unit = {
     val owner = c.internal.enclosingOwner.fullName
     val srcFile = c.macroApplication.pos.source.file.canonicalPath
     val hash = genHashForMacro(owner, srcFile)

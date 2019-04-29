@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,9 +28,11 @@ private object Derived extends Serializable {
         throw new CoderException(stack, e, msg)
     }
 
-  def combineCoder[T](typeName: TypeName,
-                      ps: Seq[Param[Coder, T]],
-                      rawConstruct: Seq[Any] => T): Coder[T] = {
+  def combineCoder[T](
+    typeName: TypeName,
+    ps: Seq[Param[Coder, T]],
+    rawConstruct: Seq[Any] => T
+  ): Coder[T] = {
     val cs = new Array[(String, Coder[Any])](ps.length)
     var i = 0
     while (i < ps.length) {

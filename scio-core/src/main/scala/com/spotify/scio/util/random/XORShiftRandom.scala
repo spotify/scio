@@ -66,7 +66,7 @@ private[random] object XORShiftRandom {
     val bytes = ByteBuffer.allocate(java.lang.Long.SIZE).putLong(seed).array()
     val lowBits = MurmurHash3.bytesHash(bytes)
     val highBits = MurmurHash3.bytesHash(bytes, lowBits)
-    (highBits.toLong << 32) | (lowBits.toLong & 0xFFFFFFFFL)
+    (highBits.toLong << 32) | (lowBits.toLong & 0XFFFFFFFFL)
   }
 
 }

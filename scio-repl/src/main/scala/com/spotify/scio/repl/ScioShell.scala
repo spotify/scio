@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -92,7 +92,8 @@ trait BaseScioShell extends MainGenericRunner {
       command.settings.classpathURLs.toArray ++
         classLoaderURLs(Thread.currentThread().getContextClassLoader),
       null,
-      Thread.currentThread.getContextClassLoader)
+      Thread.currentThread.getContextClassLoader
+    )
 
     val repl = new ScioILoop(scioClassLoader, args.toList)
     scioClassLoader.setRepl(repl)

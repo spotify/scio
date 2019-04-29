@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,10 +34,12 @@ object SchemaUtil {
     getCaseClass(className, schema, indent)
 
   // scalastyle:off cyclomatic.complexity
-  private def getFieldType(className: String,
-                           fieldName: String,
-                           fieldSchema: Schema,
-                           indent: Int): (String, Seq[String]) = {
+  private def getFieldType(
+    className: String,
+    fieldName: String,
+    fieldSchema: Schema,
+    indent: Int
+  ): (String, Seq[String]) = {
     fieldSchema.getType match {
       case BOOLEAN       => ("Boolean", Seq.empty)
       case INT           => ("Int", Seq.empty)
@@ -59,13 +61,16 @@ object SchemaUtil {
         if (unionTypes.size != 2 || !unionTypes.contains(NULL)) {
           throw new IllegalArgumentException(
             s"type: ${fieldSchema.getType} is not supported. " +
-              s"Union type needs to contain exactly one 'null' type and one non null type.")
+              s"Union type needs to contain exactly one 'null' type and one non null type."
+          )
         }
         val (fieldType, nested) =
-          getFieldType(className,
-                       fieldName,
-                       fieldSchema.getTypes.asScala.filter(_.getType != NULL).head,
-                       indent)
+          getFieldType(
+            className,
+            fieldName,
+            fieldSchema.getTypes.asScala.filter(_.getType != NULL).head,
+            indent
+          )
         (s"Option[$fieldType] = None", nested)
       case RECORD =>
         val nestedClassName = s"$className$$${fieldSchema.getName}"

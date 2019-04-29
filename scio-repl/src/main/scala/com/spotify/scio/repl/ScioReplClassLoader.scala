@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -119,9 +119,11 @@ class ScioReplClassLoader(urls: Array[URL], parent: ClassLoader, detachedParent:
    * @param entryPath for classes found in the virtual directory
    * @param jarStream for writing the jar file
    */
-  private def addVirtualDirectoryToJar(dir: VirtualDirectory,
-                                       entryPath: String,
-                                       jarStream: JarOutputStream): Unit = {
+  private def addVirtualDirectoryToJar(
+    dir: VirtualDirectory,
+    entryPath: String,
+    jarStream: JarOutputStream
+  ): Unit = {
     dir.foreach { file =>
       if (file.isDirectory) {
         // Recursively descend into subdirectories, adjusting the package name as we do.

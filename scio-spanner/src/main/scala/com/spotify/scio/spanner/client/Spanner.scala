@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,8 @@ object Spanner {
         config.getProjectId.get(),
         config.getInstanceId.get(),
         config.getDatabaseId.get()
-      ))
+      )
+    )
   }
 
   def adminClient(project: String, instance: Spanner = defaultInstance): DatabaseAdminClient =

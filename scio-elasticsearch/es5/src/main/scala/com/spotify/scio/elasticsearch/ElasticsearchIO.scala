@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ final case class ElasticsearchIO[T](esOptions: ElasticsearchOptions) extends Sci
   override val tapT = EmptyTapOf[T]
 
   override def read(sc: ScioContext, params: ReadP): SCollection[T] =
-    throw new IllegalStateException("Can't read from Elacticsearch")
+    throw new UnsupportedOperationException("Can't read from Elacticsearch")
 
   /**
    * Save this SCollection into Elasticsearch.
@@ -60,10 +60,13 @@ final case class ElasticsearchIO[T](esOptions: ElasticsearchOptions) extends Sci
         .withFlushInterval(params.flushInterval)
         .withNumOfShard(shards)
         .withMaxBulkRequestSize(params.maxBulkRequestSize)
+        .withMaxRetries(params.retry.maxRetries)
+        .withRetryPause(params.retry.retryPause)
         .withError(new beam.ThrowingConsumer[BulkExecutionException] {
           override def accept(t: BulkExecutionException): Unit =
             params.errorFn(t)
-        }))
+        })
+    )
     EmptyTap
   }
 
@@ -78,6 +81,14 @@ object ElasticsearchIO {
     private[elasticsearch] val DefaultFlushInterval = Duration.standardSeconds(1)
     private[elasticsearch] val DefaultNumShards = 0
     private[elasticsearch] val DefaultMaxBulkRequestSize = 3000
+    private[elasticsearch] val DefaultMaxRetries = 3
+    private[elasticsearch] val DefaultRetryPause = Duration.millis(35000)
+    private[elasticsearch] val DefaultRetryConfig =
+      RetryConfig(
+        maxRetries = WriteParam.DefaultMaxRetries,
+        retryPause = WriteParam.DefaultRetryPause
+      )
+
   }
 
   final case class WriteParam[T] private (
@@ -85,5 +96,9 @@ object ElasticsearchIO {
     errorFn: BulkExecutionException => Unit = WriteParam.DefaultErrorFn,
     flushInterval: Duration = WriteParam.DefaultFlushInterval,
     numOfShards: Long = WriteParam.DefaultNumShards,
-    maxBulkRequestSize: Int = WriteParam.DefaultMaxBulkRequestSize)
+    maxBulkRequestSize: Int = WriteParam.DefaultMaxBulkRequestSize,
+    retry: RetryConfig = WriteParam.DefaultRetryConfig
+  )
+
+  final case class RetryConfig(maxRetries: Int, retryPause: Duration)
 }

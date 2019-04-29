@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,11 +66,13 @@ class JsonIOTest extends ScioIOSpec with TapSpec {
   }
 
   it should "handle invalid JSON" in {
-    val badData = Seq("""{"i":1, "s":hello}""",
-                      """{"i":1}""",
-                      """{"s":"hello"}""",
-                      """{"i":1, "s":1}""",
-                      """{"i":"hello", "s":1}""")
+    val badData = Seq(
+      """{"i":1, "s":hello}""",
+      """{"i":1}""",
+      """{"s":"hello"}""",
+      """{"i":1, "s":1}""",
+      """{"i":"hello", "s":1}"""
+    )
     val dir = tmpDir
     runWithFileFuture {
       _.parallelize(badData).saveAsTextFile(dir.getPath)

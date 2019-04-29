@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -81,7 +81,8 @@ private[scio] object ScioUtil {
         Try(context.optionsAs[GcpOptions].getGcpTempLocation) match {
           case Success(l) =>
             log.warn(
-              "Using GCP temporary location as a temporary location to materialize data. " + m)
+              "Using GCP temporary location as a temporary location to materialize data. " + m
+            )
             l
           case Failure(_) =>
             throw new IllegalArgumentException("No temporary location was specified. " + m)

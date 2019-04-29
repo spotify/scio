@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,11 +18,11 @@
 package com.spotify.scio.runners.dataflow
 
 import java.io.File
-import java.net.URLClassLoader
 
 import com.spotify.scio.{CoreSysProps, RunnerContext}
 import org.apache.beam.runners.dataflow.DataflowRunner
 import org.apache.beam.runners.dataflow.options.DataflowPipelineWorkerPoolOptions
+import org.apache.beam.runners.core.construction.PipelineResources
 import org.apache.beam.sdk.options.PipelineOptions
 import org.slf4j.LoggerFactory
 
@@ -45,7 +45,8 @@ case object DataflowContext extends RunnerContext {
   /** Compute list of local files to make available to workers. */
   private def getFilesToStage(extraLocalArtifacts: List[String]): Iterable[String] = {
     val finalLocalArtifacts = detectClassPathResourcesToStage(
-      classOf[DataflowRunner].getClassLoader) ++ extraLocalArtifacts
+      classOf[DataflowRunner].getClassLoader
+    ) ++ extraLocalArtifacts
 
     logger.debug(s"Final list of extra artifacts: ${finalLocalArtifacts.mkString(":")}")
     finalLocalArtifacts
@@ -53,17 +54,13 @@ case object DataflowContext extends RunnerContext {
 
   /** Borrowed from DataflowRunner. */
   private def detectClassPathResourcesToStage(classLoader: ClassLoader): Iterable[String] = {
-    require(classLoader.isInstanceOf[URLClassLoader],
-            "Current ClassLoader is '" + classLoader + "' only URLClassLoaders are supported")
-
     // exclude jars from JAVA_HOME and files from current directory
     val javaHome = new File(CoreSysProps.Home.value).getCanonicalPath
     val userDir = new File(CoreSysProps.UserDir.value).getCanonicalPath
 
-    val classPathJars = classLoader
-      .asInstanceOf[URLClassLoader]
-      .getURLs
-      .map(url => new File(url.toURI).getCanonicalPath)
+    val classPathJars = PipelineResources
+      .detectClassPathResourcesToStage(classLoader)
+      .asScala
       .filter(path => !path.startsWith(javaHome) && path != userDir)
 
     logger.debug(s"Classpath jars: ${classPathJars.mkString(":")}")
