@@ -24,7 +24,7 @@ import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import com.spotify.scio.util._
 import com.spotify.scio.util.random.{BernoulliValueSampler, PoissonValueSampler}
-import com.twitter.algebird.{BloomFilter => _, BloomFilterAggregator => _, _}
+import com.twitter.algebird.{Aggregator, Hash128, Monoid, Semigroup}
 import org.apache.beam.sdk.coders.KvCoder
 import org.apache.beam.sdk.transforms._
 import org.apache.beam.sdk.values.{KV, PCollection, PCollectionView}
@@ -544,7 +544,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
   private[values] def optimalKeysBloomFiltersAsSideInputs(
     thisNumKeys: Long,
     fpProb: Double
-  )(implicit hash: Hash128[K], koder: Coder[K], voder: Coder[V]): Seq[SideInput[BF[K]]] = {
+  )(implicit hash: Hash128[K], koder: Coder[K], voder: Coder[V]): Seq[SideInput[MutableBF[K]]] = {
     val bfSettings = PairSCollectionFunctions.optimalBFSettings(thisNumKeys, fpProb)
 
     val numKeysPerPartition = if (bfSettings.numBFs == 1) thisNumKeys.toInt else bfSettings.capacity
