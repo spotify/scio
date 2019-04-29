@@ -757,50 +757,33 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     computeExact: Boolean = false,
     fpProb: Double = 0.1
   )(implicit koder: Coder[K], voder: Coder[V], hash: Hash128[K]): SCollection[(K, V)] = {
-    val bfSettings =
-      PairSCollectionFunctions.optimalBFSettings(thatNumKeys, fpProb)
-    if (bfSettings.numBFs == 1) {
-      sparseIntersectByKeyImpl(that, thatNumKeys.toInt, computeExact, fpProb)
-    } else {
-      val n = bfSettings.numBFs
-      val thisParts = self.hashPartitionByKey(n)
-      val thatParts = that.hashPartition(n)
-      val joined = thisParts.zip(thatParts).map {
-        case (lhs, rhs) =>
-          lhs.sparseIntersectByKeyImpl(rhs, bfSettings.capacity, computeExact, fpProb)
-      }
-      SCollection.unionAll(joined)
-    }
-  }
+    val rhsBfs = that.map(k => (k, ())).optimalKeysBloomFiltersAsSideInputs(thatNumKeys, fpProb)
+    val n = rhsBfs.size
+    val thisParts = self.hashPartitionByKey(n)
+    val thatParts = that.hashPartition(n)
+    SCollection.unionAll(
+      thisParts
+        .zip(thatParts)
+        .zip(rhsBfs)
+        .map {
+          case ((lhs, rhs), rhsBf) =>
+            val approxResults = lhs
+              .withSideInputs(rhsBf)
+              .filter { case (e, c) => c(rhsBf).maybeContains(e._1) }
+              .toSCollection
 
-  protected def sparseIntersectByKeyImpl(
-    that: SCollection[K],
-    thatNumKeys: Int,
-    computeExact: Boolean = false,
-    fpProb: Double = 0.1
-  )(implicit koder: Coder[K], voder: Coder[V], hash: Hash128[K]): SCollection[(K, V)] = {
-    val width = BloomFilter.optimalWidth(thatNumKeys, fpProb).get
-    val numHashes = BloomFilter.optimalNumHashes(thatNumKeys, width)
-    val bfAggregator = BloomFilterAggregator[K](numHashes, width)
-    val rhsBf = that
-      .aggregate(bfAggregator.monoid.zero)(_ + _, _ ++ _)
-      .asSingletonSideInput(bfAggregator.monoid.zero)
-
-    val approxResults = self
-      .withSideInputs(rhsBf)
-      .filter { case (e, c) => c(rhsBf).maybeContains(e._1) }
-      .toSCollection
-
-    if (computeExact) {
-      approxResults
-        .cogroup(that.map((_, ())))
-        .flatMap { t =>
-          if (t._2._1.nonEmpty && t._2._2.nonEmpty) t._2._1.map((t._1, _))
-          else Seq.empty
+            if (computeExact) {
+              approxResults
+                .cogroup(rhs.map((_, ())))
+                .flatMap { t =>
+                  if (t._2._1.nonEmpty && t._2._2.nonEmpty) t._2._1.map((t._1, _))
+                  else Seq.empty
+                }
+            } else {
+              approxResults
+            }
         }
-    } else {
-      approxResults
-    }
+    )
   }
 
   /**
