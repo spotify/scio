@@ -28,8 +28,10 @@ private[scio] object MagnoliaMacros {
     val wtt = weakTypeOf[T]
 
     if (wtt <:< typeOf[Iterable[_]]) {
-      c.abort(c.enclosingPosition,
-              s"Automatic coder derivation can't derive a Coder for $wtt <: Seq")
+      c.abort(
+        c.enclosingPosition,
+        s"Automatic coder derivation can't derive a Coder for $wtt <: Seq"
+      )
     }
 
     val magTree = magnolia.Magnolia.gen[T](c)
@@ -46,10 +48,14 @@ private[scio] object MagnoliaMacros {
     val removeAnnotations = new Transformer {
       override def transform(tree: Tree): c.universe.Tree = {
         tree match {
-          case Apply(AppliedTypeTree(Select(pack, TypeName("CaseClass")), ps),
-                     List(typeName, isObject, isValueClass, params, annotations)) =>
-            val t2 = Apply(AppliedTypeTree(Select(pack, TypeName("CaseClass")), ps),
-                           List(typeName, isObject, isValueClass, params, q"""Array()"""))
+          case Apply(
+              AppliedTypeTree(Select(pack, TypeName("CaseClass")), ps),
+              List(typeName, isObject, isValueClass, params, annotations)
+              ) =>
+            val t2 = Apply(
+              AppliedTypeTree(Select(pack, TypeName("CaseClass")), ps),
+              List(typeName, isObject, isValueClass, params, q"""Array()""")
+            )
             super.transform(t2)
           case q"""magnolia.Magnolia.param[$tc, $t, $p]($name, $idx, $repeated, $tcParam, $defaultVal, $annotations)""" =>
             val t2 =

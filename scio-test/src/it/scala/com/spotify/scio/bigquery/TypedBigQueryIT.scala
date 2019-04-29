@@ -31,17 +31,19 @@ import scala.util.Random
 
 object TypedBigQueryIT {
   @BigQueryType.toTable
-  case class Record(bool: Boolean,
-                    int: Int,
-                    long: Long,
-                    float: Float,
-                    double: Double,
-                    string: String,
-                    byteString: ByteString,
-                    timestamp: Instant,
-                    date: LocalDate,
-                    time: LocalTime,
-                    datetime: LocalDateTime)
+  case class Record(
+    bool: Boolean,
+    int: Int,
+    long: Long,
+    float: Float,
+    double: Double,
+    string: String,
+    byteString: ByteString,
+    timestamp: Instant,
+    date: LocalDate,
+    time: LocalTime,
+    datetime: LocalDateTime
+  )
 
   // Workaround for millis rounding error
   val epochGen = Gen.chooseNum[Long](0L, 1000000000000L).map(x => x / 1000 * 1000)
@@ -62,8 +64,10 @@ object TypedBigQueryIT {
   }
   private val records = Gen.listOfN(1000, recordGen).sample.get
   private val options = PipelineOptionsFactory
-    .fromArgs("--project=data-integration-test",
-              "--tempLocation=gs://data-integration-test-eu/temp")
+    .fromArgs(
+      "--project=data-integration-test",
+      "--tempLocation=gs://data-integration-test-eu/temp"
+    )
     .create()
 }
 

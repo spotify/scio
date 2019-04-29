@@ -158,7 +158,8 @@ class Args private (private val m: Map[String, List[String]]) extends Serializab
           catch {
             case NonFatal(_) =>
               throw new IllegalArgumentException(s"Invalid value '$value' for '$key'")
-        })
+          }
+      )
       .getOrElse(default)
   }
 

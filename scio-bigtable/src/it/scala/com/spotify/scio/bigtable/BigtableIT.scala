@@ -49,10 +49,12 @@ object BigtableIT {
   val COLUMN_QUALIFIER: ByteString = ByteString.copyFromUtf8("long")
 
   def toWriteMutation(key: String, value: Long): (ByteString, Iterable[Mutation]) = {
-    val m = Mutations.newSetCell(FAMILY_NAME,
-                                 COLUMN_QUALIFIER,
-                                 ByteString.copyFromUtf8(value.toString),
-                                 0L)
+    val m = Mutations.newSetCell(
+      FAMILY_NAME,
+      COLUMN_QUALIFIER,
+      ByteString.copyFromUtf8(value.toString),
+      0L
+    )
     (ByteString.copyFromUtf8(key), Iterable(m))
   }
 
@@ -153,7 +155,8 @@ class BigtableIT extends PipelineSpec {
         GetTableRequest
           .newBuilder()
           .setName(tablePath(table))
-          .build)
+          .build
+      )
       val actualColumnFamilies = tableInfo.getColumnFamiliesMap.asScala.keys
       actualColumnFamilies should contain theSameElementsAs columnFamilies
     }

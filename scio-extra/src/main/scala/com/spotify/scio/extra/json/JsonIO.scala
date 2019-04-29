@@ -65,7 +65,8 @@ final case class JsonIO[T: ClassTag: Encoder: Decoder: Coder](path: String) exte
       .withSuffix(params.suffix)
       .withNumShards(params.numShards)
       .withWritableByteChannelFactory(
-        beam.FileBasedSink.CompressionType.fromCanonical(params.compression))
+        beam.FileBasedSink.CompressionType.fromCanonical(params.compression)
+      )
 
   private[scio] def pathWithShards(path: String) =
     path.replaceAll("\\/+$", "") + "/part"
@@ -73,8 +74,10 @@ final case class JsonIO[T: ClassTag: Encoder: Decoder: Coder](path: String) exte
 }
 
 object JsonIO {
-  final case class WriteParam(suffix: String = ".json",
-                              numShards: Int = 0,
-                              compression: beam.Compression = beam.Compression.UNCOMPRESSED,
-                              printer: Printer = Printer.noSpaces)
+  final case class WriteParam(
+    suffix: String = ".json",
+    numShards: Int = 0,
+    compression: beam.Compression = beam.Compression.UNCOMPRESSED,
+    printer: Printer = Printer.noSpaces
+  )
 }

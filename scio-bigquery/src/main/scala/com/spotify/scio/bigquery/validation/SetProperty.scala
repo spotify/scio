@@ -30,8 +30,10 @@ private[validation] object SetProperty {
   }
 
   def setSystemProperty(): String =
-    System.setProperty("override.type.provider",
-                       "com.spotify.scio.bigquery.validation.SampleOverrideTypeProvider")
+    System.setProperty(
+      "override.type.provider",
+      "com.spotify.scio.bigquery.validation.SampleOverrideTypeProvider"
+    )
 
   def setPropertyImpl(c: blackbox.Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
     setSystemProperty()

@@ -36,8 +36,10 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
    * buffers (which contain [[org.tensorflow.example.Features]] as a field) serialized as bytes.
    * @group input
    */
-  def tfRecordFile(path: String,
-                   compression: Compression = Compression.AUTO): SCollection[Array[Byte]] =
+  def tfRecordFile(
+    path: String,
+    compression: Compression = Compression.AUTO
+  ): SCollection[Array[Byte]] =
     self.read(TFRecordIO(path))(TFRecordIO.ReadParam(compression))
 
   /**
@@ -45,8 +47,10 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
    * encoded as serialized [[org.tensorflow.example.Example]] protocol buffers.
    * @group input
    */
-  def tfRecordExampleFile(path: String,
-                          compression: Compression = Compression.AUTO): SCollection[Example] =
+  def tfRecordExampleFile(
+    path: String,
+    compression: Compression = Compression.AUTO
+  ): SCollection[Example] =
     self.read(TFExampleIO(path))(TFExampleIO.ReadParam(compression))
 
   /**
@@ -56,7 +60,8 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
    */
   def tfRecordSequenceExampleFile(
     path: String,
-    compression: Compression = Compression.AUTO): SCollection[SequenceExample] =
+    compression: Compression = Compression.AUTO
+  ): SCollection[SequenceExample] =
     self.read(TFSequenceExampleIO(path))(TFExampleIO.ReadParam(compression))
 
   /**
@@ -68,7 +73,8 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
   def tfRecordExampleFileWithSchema(
     path: String,
     schemaFilename: String,
-    compression: Compression = Compression.AUTO): (SCollection[Example], DistCache[Schema]) = {
+    compression: Compression = Compression.AUTO
+  ): (SCollection[Example], DistCache[Schema]) = {
 
     val distCache = self.distCache(schemaFilename) { file =>
       Schema.parseFrom(Files.readAllBytes(file.toPath))
@@ -83,10 +89,11 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
    * remotely stored [[org.tensorflow.metadata.v0.Schema]] object available in a DistCache.
    * @group input
    */
-  def tfRecordSequenceExampleFileWithSchema(path: String,
-                                            schemaFilename: String,
-                                            compression: Compression = Compression.AUTO)
-    : (SCollection[SequenceExample], DistCache[Schema]) = {
+  def tfRecordSequenceExampleFileWithSchema(
+    path: String,
+    schemaFilename: String,
+    compression: Compression = Compression.AUTO
+  ): (SCollection[SequenceExample], DistCache[Schema]) = {
 
     val distCache = self.distCache(schemaFilename) { file =>
       Schema.parseFrom(Files.readAllBytes(file.toPath))

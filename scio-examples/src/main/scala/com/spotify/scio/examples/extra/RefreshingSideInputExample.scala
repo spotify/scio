@@ -93,11 +93,13 @@ object RefreshingSideInputExample {
           val currentWinningNumbers = side(winningLotteryNumbers)
 
           val isWinner = lotteryTicket.numbers == currentWinningNumbers
-          val result = LotteryResult(eventTime,
-                                     Instant.now(),
-                                     isWinner,
-                                     lotteryTicket.numbers,
-                                     currentWinningNumbers)
+          val result = LotteryResult(
+            eventTime,
+            Instant.now(),
+            isWinner,
+            lotteryTicket.numbers,
+            currentWinningNumbers
+          )
 
           logger.info(s"Lottery result: $result")
       } // Can save output to PubSub, BigQuery, etc.

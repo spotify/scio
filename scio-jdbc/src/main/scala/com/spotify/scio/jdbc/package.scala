@@ -46,10 +46,12 @@ package object jdbc {
    * @param connectionUrl connection url, i.e "jdbc:mysql://[host]:[port]/db?"
    * @param driverClass   subclass of [[java.sql.Driver]]
    */
-  final case class JdbcConnectionOptions(username: String,
-                                         password: Option[String],
-                                         connectionUrl: String,
-                                         driverClass: Class[_ <: Driver])
+  final case class JdbcConnectionOptions(
+    username: String,
+    password: Option[String],
+    connectionUrl: String,
+    driverClass: Class[_ <: Driver]
+  )
 
   sealed trait JdbcIoOptions
 
@@ -62,12 +64,13 @@ package object jdbc {
    * @param rowMapper           function to map from a SQL [[java.sql.ResultSet]] to `T`
    * @param fetchSize           use apache beam default fetch size if the value is -1
    */
-  final case class JdbcReadOptions[T](connectionOptions: JdbcConnectionOptions,
-                                      query: String,
-                                      statementPreparator: PreparedStatement => Unit = null,
-                                      rowMapper: ResultSet => T,
-                                      fetchSize: Int = USE_BEAM_DEFAULT_FETCH_SIZE)
-      extends JdbcIoOptions
+  final case class JdbcReadOptions[T](
+    connectionOptions: JdbcConnectionOptions,
+    query: String,
+    statementPreparator: PreparedStatement => Unit = null,
+    rowMapper: ResultSet => T,
+    fetchSize: Int = USE_BEAM_DEFAULT_FETCH_SIZE
+  ) extends JdbcIoOptions
 
   /**
    * Options for writing to a JDBC source.
@@ -77,15 +80,16 @@ package object jdbc {
    * @param preparedStatementSetter function to set values in a [[java.sql.PreparedStatement]]
    * @param batchSize               use apache beam default batch size if the value is -1
    */
-  final case class JdbcWriteOptions[T](connectionOptions: JdbcConnectionOptions,
-                                       statement: String,
-                                       preparedStatementSetter: (T, PreparedStatement) => Unit =
-                                         null,
-                                       batchSize: Long = USE_BEAM_DEFAULT_BATCH_SIZE)
-      extends JdbcIoOptions
+  final case class JdbcWriteOptions[T](
+    connectionOptions: JdbcConnectionOptions,
+    statement: String,
+    preparedStatementSetter: (T, PreparedStatement) => Unit = null,
+    batchSize: Long = USE_BEAM_DEFAULT_BATCH_SIZE
+  ) extends JdbcIoOptions
 
   private[jdbc] def getDataSourceConfig(
-    opts: jdbc.JdbcConnectionOptions): beam.JdbcIO.DataSourceConfiguration = {
+    opts: jdbc.JdbcConnectionOptions
+  ): beam.JdbcIO.DataSourceConfiguration = {
     opts.password match {
       case Some(pass) =>
         beam.JdbcIO.DataSourceConfiguration
@@ -111,8 +115,9 @@ package object jdbc {
   implicit class JdbcSCollection[T](@transient private val self: SCollection[T]) extends AnyVal {
 
     /** Save this SCollection as a JDBC database. */
-    def saveAsJdbc(writeOptions: JdbcWriteOptions[T])(
-      implicit coder: Coder[T]): ClosedTap[Nothing] =
+    def saveAsJdbc(
+      writeOptions: JdbcWriteOptions[T]
+    )(implicit coder: Coder[T]): ClosedTap[Nothing] =
       self.write(JdbcWrite(writeOptions))
   }
 

@@ -31,7 +31,8 @@ object Spanner {
         config.getProjectId.get(),
         config.getInstanceId.get(),
         config.getDatabaseId.get()
-      ))
+      )
+    )
   }
 
   def adminClient(project: String, instance: Spanner = defaultInstance): DatabaseAdminClient =

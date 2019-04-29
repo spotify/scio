@@ -28,9 +28,11 @@ private object Derived extends Serializable {
         throw new CoderException(stack, e, msg)
     }
 
-  def combineCoder[T](typeName: TypeName,
-                      ps: Seq[Param[Coder, T]],
-                      rawConstruct: Seq[Any] => T): Coder[T] = {
+  def combineCoder[T](
+    typeName: TypeName,
+    ps: Seq[Param[Coder, T]],
+    rawConstruct: Seq[Any] => T
+  ): Coder[T] = {
     val cs = new Array[(String, Coder[Any])](ps.length)
     var i = 0
     while (i < ps.length) {

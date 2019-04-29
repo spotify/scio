@@ -34,8 +34,10 @@ class ReplScioContext(options: PipelineOptions, artifacts: List[String])
 
   /** Ensure an operation is called before the pipeline is closed. */
   override private[scio] def requireNotClosed[T](body: => T): T = {
-    require(!this.isClosed,
-            "ScioContext already closed, use :newScio <[context-name] | sc> to create new context")
+    require(
+      !this.isClosed,
+      "ScioContext already closed, use :newScio <[context-name] | sc> to create new context"
+    )
     super.requireNotClosed(body)
   }
 

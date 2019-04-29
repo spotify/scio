@@ -65,7 +65,8 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
    * [[com.spotify.scio.avro.types.AvroType AvroType.toSchema]].
    */
   def typedAvroFile[T <: HasAvroAnnotation: ClassTag: TypeTag: Coder](
-    path: String): SCollection[T] =
+    path: String
+  ): SCollection[T] =
     self.read(AvroTyped.AvroIO[T](path))
 
   /**

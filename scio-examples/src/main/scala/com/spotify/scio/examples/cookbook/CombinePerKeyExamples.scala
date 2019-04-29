@@ -43,7 +43,8 @@ object CombinePerKeyExamples {
       List(
         new TableFieldSchema().setName("word").setType("STRING"),
         new TableFieldSchema().setName("all_plays").setType("STRING")
-      ).asJava)
+      ).asJava
+    )
 
     // Open a BigQuery table as a `SCollection[TableRow]`
     sc.bigQueryTable(args.getOrElse("input", ExampleData.SHAKESPEARE_TABLE))

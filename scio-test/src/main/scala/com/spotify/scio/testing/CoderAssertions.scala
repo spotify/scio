@@ -31,8 +31,9 @@ object CoderAssertions {
   private lazy val DefaultPipelineOptions = PipelineOptionsFactory.create()
 
   implicit class CoderAssertionsImplicits[T](private val value: T) extends AnyVal {
-    def coderShould(coderAssertion: CoderAssertion[T])(implicit c: Coder[T],
-                                                       eq: Equality[T]): Assertion =
+    def coderShould(
+      coderAssertion: CoderAssertion[T]
+    )(implicit c: Coder[T], eq: Equality[T]): Assertion =
       coderAssertion.assert(value)
   }
 
@@ -49,7 +50,8 @@ object CoderAssertions {
     }
 
   def roundtripKryo[T: ClassTag](
-    opts: PipelineOptions = DefaultPipelineOptions): CoderAssertion[T] =
+    opts: PipelineOptions = DefaultPipelineOptions
+  ): CoderAssertion[T] =
     new CoderAssertion[T] {
       override def assert(value: T)(implicit c: Coder[T], eq: Equality[T]): Assertion = {
         val kryoCoder = CoderMaterializer.beamWithDefault(Coder.kryo[T], o = opts)
@@ -81,7 +83,8 @@ object CoderAssertions {
     noException should be thrownBy SerializableUtils.ensureSerializable(beamCoder)
 
   private def checkRoundtripWithCoder[T](beamCoder: BCoder[T], value: T)(
-    implicit eq: Equality[T]): Assertion = {
+    implicit eq: Equality[T]
+  ): Assertion = {
     val bytes = CoderUtils.encodeToByteArray(beamCoder, value)
     val result = CoderUtils.decodeFromByteArray(beamCoder, bytes)
 

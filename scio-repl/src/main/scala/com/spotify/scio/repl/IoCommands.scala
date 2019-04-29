@@ -62,9 +62,11 @@ class IoCommands(options: PipelineOptions) {
     IOUtils.lineIterator(inputStream(path), StandardCharsets.UTF_8).asScala
 
   /** Read from a CSV file on local filesystem or GCS. */
-  def readCsv[T: RowDecoder](path: String,
-                             sep: Char = ',',
-                             header: Boolean = false): Iterator[T] = {
+  def readCsv[T: RowDecoder](
+    path: String,
+    sep: Char = ',',
+    header: Boolean = false
+  ): Iterator[T] = {
     import kantan.csv.ops._
     implicit val codec = scala.io.Codec.UTF8
     inputStream(path)
@@ -100,18 +102,22 @@ class IoCommands(options: PipelineOptions) {
 
   /** Write to a text file on local filesystem or GCS. */
   def writeText(path: String, data: Seq[String]): Unit = {
-    IOUtils.writeLines(data.asJava,
-                       IOUtils.LINE_SEPARATOR,
-                       outputStream(path, MimeTypes.TEXT),
-                       StandardCharsets.UTF_8)
+    IOUtils.writeLines(
+      data.asJava,
+      IOUtils.LINE_SEPARATOR,
+      outputStream(path, MimeTypes.TEXT),
+      StandardCharsets.UTF_8
+    )
     logger.info(s"${data.size} record${plural(data)} written to $path")
   }
 
   /** Write to a CSV file on local filesystem or GCS. */
-  def writeCsv[T: RowEncoder](path: String,
-                              data: Seq[T],
-                              sep: Char = ',',
-                              header: Seq[String] = Seq.empty): Unit = {
+  def writeCsv[T: RowEncoder](
+    path: String,
+    data: Seq[T],
+    sep: Char = ',',
+    header: Seq[String] = Seq.empty
+  ): Unit = {
     import kantan.csv.ops._
     implicit val codec = scala.io.Codec.UTF8
     outputStream(path, MimeTypes.TEXT)
@@ -120,10 +126,12 @@ class IoCommands(options: PipelineOptions) {
   }
 
   /** Write to a TSV file on local filesystem or GCS. */
-  def writeTsv[T: RowEncoder](path: String,
-                              data: Seq[T],
-                              sep: Char = '\t',
-                              header: Seq[String] = Seq.empty): Unit =
+  def writeTsv[T: RowEncoder](
+    path: String,
+    data: Seq[T],
+    sep: Char = '\t',
+    header: Seq[String] = Seq.empty
+  ): Unit =
     writeCsv[T](path, data, sep, header)
 
   // =======================================================================
@@ -135,6 +143,7 @@ class IoCommands(options: PipelineOptions) {
 
   private def outputStream(path: String, mimeType: String): OutputStream =
     Channels.newOutputStream(
-      FileSystems.create(FileSystems.matchNewResource(path, false), mimeType))
+      FileSystems.create(FileSystems.matchNewResource(path, false), mimeType)
+    )
 
 }

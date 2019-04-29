@@ -50,11 +50,12 @@ object Iterators {
   private[extra] def upperBound(idx: Long, size: Long, offset: Long): Long =
     if (idx < offset) offset else ((idx - offset) / size + 1) * size + offset
 
-  private class FixedIterator[T](self: Iterator[T],
-                                 timestampFn: T => Long,
-                                 size: Long,
-                                 offset: Long = 0L)
-      extends Iterator[Seq[T]] {
+  private class FixedIterator[T](
+    self: Iterator[T],
+    timestampFn: T => Long,
+    size: Long,
+    offset: Long = 0L
+  ) extends Iterator[Seq[T]] {
     private val bi = self.buffered
     override def hasNext: Boolean = bi.hasNext
     override def next(): Seq[T] = {
@@ -86,12 +87,13 @@ object Iterators {
     }
   }
 
-  private class SlidingIterator[T](self: Iterator[T],
-                                   timestampFn: T => Long,
-                                   size: Long,
-                                   period: Long = 1L,
-                                   offset: Long = 0L)
-      extends Iterator[Seq[T]] {
+  private class SlidingIterator[T](
+    self: Iterator[T],
+    timestampFn: T => Long,
+    size: Long,
+    period: Long = 1L,
+    offset: Long = 0L
+  ) extends Iterator[Seq[T]] {
     private val bi = self.buffered
     private val queue = mutable.Queue[T]()
     fill()
@@ -130,8 +132,10 @@ object Iterators {
   }
 
   /** Iterator for time series data. */
-  class TimeSeriesIterator[T] private[extra] (private val self: Iterator[T],
-                                              private val timestampFn: T => Long) {
+  class TimeSeriesIterator[T] private[extra] (
+    private val self: Iterator[T],
+    private val timestampFn: T => Long
+  ) {
 
     /**
      * Iterator of fixed-size timestamp-based windows.

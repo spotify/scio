@@ -71,9 +71,10 @@ private case object DirectContext extends RunnerContext {
 /** Companion object for [[RunnerContext]]. */
 private object RunnerContext {
   private val mapping =
-    Map("DirectRunner" -> DirectContext.getClass.getName,
-        "DataflowRunner" -> "com.spotify.scio.runners.dataflow.DataflowContext$")
-      .withDefaultValue(NoOpContext.getClass.getName)
+    Map(
+      "DirectRunner" -> DirectContext.getClass.getName,
+      "DataflowRunner" -> "com.spotify.scio.runners.dataflow.DataflowContext$"
+    ).withDefaultValue(NoOpContext.getClass.getName)
 
   // FIXME: this is ugly, is there a better way?
   private def get(options: PipelineOptions): RunnerContext = {
@@ -200,7 +201,7 @@ object ContextAndArgs {
         case Success(Right((_opts, _args))) =>
           (new ScioContext(_opts, Nil), _args.asInstanceOf[T])
         // scalastyle:on regex
-    }
+      }
 
   /** Create [[ScioContext]] and [[Args]] for command line arguments. */
   def apply(args: Array[String]): (ScioContext, Args) =
@@ -243,8 +244,10 @@ object ScioContext {
 
   /** Parse PipelineOptions and application arguments from command line arguments. */
   @tailrec
-  def parseArguments[T <: PipelineOptions: ClassTag](cmdlineArgs: Array[String],
-                                                     withValidation: Boolean = false): (T, Args) = {
+  def parseArguments[T <: PipelineOptions: ClassTag](
+    cmdlineArgs: Array[String],
+    withValidation: Boolean = false
+  ): (T, Args) = {
     val optClass = ScioUtil.classOf[T]
 
     // Extract --pattern of all registered derived types of PipelineOptions
@@ -278,7 +281,8 @@ object ScioContext {
       log.info(s"Appending options from $optionsFile")
       parseArguments(
         cmdlineArgs.filterNot(_.startsWith("--optionsFile=")) ++
-          Source.fromFile(optionsFile).getLines())
+          Source.fromFile(optionsFile).getLines()
+      )
     } else {
       val args = Args(appArgs)
       if (appArgs.nonEmpty) {
@@ -313,8 +317,10 @@ final case class ClosedScioContext private (pipelineResult: PipelineResult, cont
 
   /** Wait until the pipeline finishes. If timeout duration is exceeded and `cancelJob` is set,
    * cancel the internal [[PipelineResult]]. */
-  def waitUntilFinish(duration: Duration = getAwaitDuration,
-                      cancelJob: Boolean = true): ScioResult = {
+  def waitUntilFinish(
+    duration: Duration = getAwaitDuration,
+    cancelJob: Boolean = true
+  ): ScioResult = {
     try {
       val wait = duration match {
         case Duration.Inf => 0
@@ -339,11 +345,13 @@ final case class ClosedScioContext private (pipelineResult: PipelineResult, cont
       }
 
       override def getMetrics: Metrics =
-        Metrics(BuildInfo.version,
-                BuildInfo.scalaVersion,
-                context.optionsAs[ApplicationNameOptions].getAppName,
-                state.toString,
-                getBeamMetrics)
+        Metrics(
+          BuildInfo.version,
+          BuildInfo.scalaVersion,
+          context.optionsAs[ApplicationNameOptions].getAppName,
+          state.toString,
+          getBeamMetrics
+        )
 
       override def isTest: Boolean = context.isTest
     }
@@ -353,8 +361,10 @@ final case class ClosedScioContext private (pipelineResult: PipelineResult, cont
    * Wait until the pipeline finishes with the State `DONE` (as opposed to `CANCELLED` or
    * `FAILED`). Throw exception otherwise.
    */
-  def waitUntilDone(duration: Duration = getAwaitDuration,
-                    cancelJob: Boolean = true): ScioResult = {
+  def waitUntilDone(
+    duration: Duration = getAwaitDuration,
+    cancelJob: Boolean = true
+  ): ScioResult = {
     val result = waitUntilFinish(duration, cancelJob)
     if (!state.equals(State.DONE)) {
       throw new PipelineExecutionException(new Exception(s"Job finished with state $state"))
@@ -414,7 +424,8 @@ class ScioContext private[scio] (val options: PipelineOptions, private var artif
           .map(_.getClassName.split('$').head)
           .exists(_.equals(classOf[App].getName))) {
       logger.warn(
-        "Applications defined within scala.App might not work properly. Please use main method!")
+        "Applications defined within scala.App might not work properly. Please use main method!"
+      )
     }
   }
 
@@ -438,7 +449,8 @@ class ScioContext private[scio] (val options: PipelineOptions, private var artif
       case _: NumberFormatException =>
         throw new IllegalArgumentException(
           s"blockFor param $blockFor cannot be cast to " +
-            s"type scala.concurrent.duration.Duration")
+            s"type scala.concurrent.duration.Duration"
+        )
     }
   }
 
@@ -569,7 +581,8 @@ class ScioContext private[scio] (val options: PipelineOptions, private var artif
   // =======================================================================
 
   private[scio] def applyInternal[Output <: POutput](
-    root: PTransform[_ >: PBegin, Output]): Output =
+    root: PTransform[_ >: PBegin, Output]
+  ): Output =
     pipeline.apply(this.tfName, root)
 
   /**
@@ -579,10 +592,12 @@ class ScioContext private[scio] (val options: PipelineOptions, private var artif
   def datastore(projectId: String, query: Query, namespace: String = null): SCollection[Entity] =
     this.read(DatastoreIO(projectId))(DatastoreIO.ReadParam(query, namespace))
 
-  private def pubsubIn[T: ClassTag: Coder](isSubscription: Boolean,
-                                           name: String,
-                                           idAttribute: String,
-                                           timestampAttribute: String): SCollection[T] = {
+  private def pubsubIn[T: ClassTag: Coder](
+    isSubscription: Boolean,
+    name: String,
+    idAttribute: String,
+    timestampAttribute: String
+  ): SCollection[T] = {
     val io = PubsubIO[T](name, idAttribute, timestampAttribute)
     this.read(io)(PubsubIO.ReadParam(isSubscription))
   }
@@ -591,25 +606,30 @@ class ScioContext private[scio] (val options: PipelineOptions, private var artif
    * Get an SCollection for a Pub/Sub subscription.
    * @group input
    */
-  def pubsubSubscription[T: ClassTag: Coder](sub: String,
-                                             idAttribute: String = null,
-                                             timestampAttribute: String = null): SCollection[T] =
+  def pubsubSubscription[T: ClassTag: Coder](
+    sub: String,
+    idAttribute: String = null,
+    timestampAttribute: String = null
+  ): SCollection[T] =
     pubsubIn(isSubscription = true, sub, idAttribute, timestampAttribute)
 
   /**
    * Get an SCollection for a Pub/Sub topic.
    * @group input
    */
-  def pubsubTopic[T: ClassTag: Coder](topic: String,
-                                      idAttribute: String = null,
-                                      timestampAttribute: String = null): SCollection[T] =
+  def pubsubTopic[T: ClassTag: Coder](
+    topic: String,
+    idAttribute: String = null,
+    timestampAttribute: String = null
+  ): SCollection[T] =
     pubsubIn(isSubscription = false, topic, idAttribute, timestampAttribute)
 
   private def pubsubInWithAttributes[T: ClassTag: Coder](
     isSubscription: Boolean,
     name: String,
     idAttribute: String,
-    timestampAttribute: String): SCollection[(T, Map[String, String])] = {
+    timestampAttribute: String
+  ): SCollection[(T, Map[String, String])] = {
     val io = PubsubIO.withAttributes[T](name, idAttribute, timestampAttribute)
     this.read(io)(PubsubIO.ReadParam(isSubscription))
   }
@@ -621,7 +641,8 @@ class ScioContext private[scio] (val options: PipelineOptions, private var artif
   def pubsubSubscriptionWithAttributes[T: ClassTag: Coder](
     sub: String,
     idAttribute: String = null,
-    timestampAttribute: String = null): SCollection[(T, Map[String, String])] =
+    timestampAttribute: String = null
+  ): SCollection[(T, Map[String, String])] =
     pubsubInWithAttributes[T](isSubscription = true, sub, idAttribute, timestampAttribute)
 
   /**
@@ -631,15 +652,18 @@ class ScioContext private[scio] (val options: PipelineOptions, private var artif
   def pubsubTopicWithAttributes[T: ClassTag: Coder](
     topic: String,
     idAttribute: String = null,
-    timestampAttribute: String = null): SCollection[(T, Map[String, String])] =
+    timestampAttribute: String = null
+  ): SCollection[(T, Map[String, String])] =
     pubsubInWithAttributes[T](isSubscription = false, topic, idAttribute, timestampAttribute)
 
   /**
    * Get an SCollection for a text file.
    * @group input
    */
-  def textFile(path: String,
-               compression: beam.Compression = beam.Compression.AUTO): SCollection[String] =
+  def textFile(
+    path: String,
+    compression: beam.Compression = beam.Compression.AUTO
+  ): SCollection[String] =
     this.read(TextIO(path))(TextIO.ReadParam(compression))
 
   /**
@@ -648,7 +672,8 @@ class ScioContext private[scio] (val options: PipelineOptions, private var artif
    */
   def customInput[T: Coder, I >: PBegin <: PInput](
     name: String,
-    transform: PTransform[I, PCollection[T]]): SCollection[T] =
+    transform: PTransform[I, PCollection[T]]
+  ): SCollection[T] =
     requireNotClosed {
       if (this.isTest) {
         this.parallelize(
@@ -705,15 +730,18 @@ class ScioContext private[scio] (val options: PipelineOptions, private var artif
         this.applyInternal(
           Create
             .of(elems.asJava)
-            .withCoder(coder)))
+            .withCoder(coder)
+        )
+      )
     }
 
   /**
    * Distribute a local Scala `Map` to form an SCollection.
    * @group in_memory
    */
-  def parallelize[K, V](elems: Map[K, V])(implicit koder: Coder[K],
-                                          voder: Coder[V]): SCollection[(K, V)] =
+  def parallelize[K, V](
+    elems: Map[K, V]
+  )(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, V)] =
     requireNotClosed {
       val kvc = CoderMaterializer.kvCoder[K, V](context)
       wrap(this.applyInternal(Create.of(elems.asJava).withCoder(kvc)))
@@ -735,8 +763,10 @@ class ScioContext private[scio] (val options: PipelineOptions, private var artif
    * Distribute a local Scala `Iterable` with timestamps to form an SCollection.
    * @group in_memory
    */
-  def parallelizeTimestamped[T: Coder](elems: Iterable[T],
-                                       timestamps: Iterable[Instant]): SCollection[T] =
+  def parallelizeTimestamped[T: Coder](
+    elems: Iterable[T],
+    timestamps: Iterable[Instant]
+  ): SCollection[T] =
     requireNotClosed {
       val coder = CoderMaterializer.beam(context, Coder[T])
       val v = elems.zip(timestamps).map(t => TimestampedValue.of(t._1, t._2))

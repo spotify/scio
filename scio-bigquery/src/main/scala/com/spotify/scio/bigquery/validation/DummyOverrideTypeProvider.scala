@@ -37,7 +37,9 @@ final class DummyOverrideTypeProvider extends OverrideTypeProvider {
 
   override def getBigQueryType(tpe: universe.Type): String = null
 
-  override def initializeToTable(c: blackbox.Context)(modifiers: c.universe.Modifiers,
-                                                      variableName: c.universe.TermName,
-                                                      tpe: c.universe.Tree): Unit = ()
+  override def initializeToTable(c: blackbox.Context)(
+    modifiers: c.universe.Modifiers,
+    variableName: c.universe.TermName,
+    tpe: c.universe.Tree
+  ): Unit = ()
 }

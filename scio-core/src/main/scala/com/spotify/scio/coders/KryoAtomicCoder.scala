@@ -93,14 +93,20 @@ private final class ScioKryoRegistrar extends IKryoRegistrar {
     k.forClass(new CoderSerializer(TableRowJsonCoder.of()))
     // Java Iterable/Collection are missing proper equality check, use custom CBF as a
     // workaround
-    k.register(classOf[Wrappers.JIterableWrapper[_]],
-               new JTraversableSerializer[Any, Iterable[Any]]()(new JIterableWrapperCBF[Any]))
-    k.register(classOf[Wrappers.JCollectionWrapper[_]],
-               new JTraversableSerializer[Any, Iterable[Any]]()(new JCollectionWrapperCBF[Any]))
+    k.register(
+      classOf[Wrappers.JIterableWrapper[_]],
+      new JTraversableSerializer[Any, Iterable[Any]]()(new JIterableWrapperCBF[Any])
+    )
+    k.register(
+      classOf[Wrappers.JCollectionWrapper[_]],
+      new JTraversableSerializer[Any, Iterable[Any]]()(new JCollectionWrapperCBF[Any])
+    )
     // Wrapped Java collections may have immutable implementations, i.e. Guava, treat them
     // as regular Scala collections as a workaround
-    k.register(classOf[Wrappers.JListWrapper[_]],
-               new JTraversableSerializer[Any, mutable.Buffer[Any]])
+    k.register(
+      classOf[Wrappers.JListWrapper[_]],
+      new JTraversableSerializer[Any, mutable.Buffer[Any]]
+    )
     k.forSubclass[SpecificRecordBase](new SpecificAvroSerializer)
     k.forSubclass[GenericRecord](new GenericAvroSerializer)
     k.forSubclass[Message](new ProtobufSerializer)
@@ -186,7 +192,8 @@ private[scio] final class KryoAtomicCoder[T](private val options: KryoOptions)
             aborted = true
             logger.warn(
               s"Aborting size estimation for ${wrapper.underlying.getClass}, " +
-                s"elapsed: $elapsed ms, count: $count, bytes: $bytes")
+                s"elapsed: $elapsed ms, count: $count, bytes: $bytes"
+            )
             wrapper.underlying match {
               case c: _root_.java.util.Collection[_] =>
                 // extrapolate remaining bytes in the collection
@@ -195,7 +202,8 @@ private[scio] final class KryoAtomicCoder[T](private val options: KryoOptions)
                 observer.update(remaining)
                 logger.warn(
                   s"Extrapolated size estimation for ${wrapper.underlying.getClass} " +
-                    s"count: ${c.size}, bytes: ${bytes + remaining}")
+                    s"count: ${c.size}, bytes: ${bytes + remaining}"
+                )
               case _ =>
                 logger.warn("Can't get size of internal collection, thus can't extrapolate size")
             }
@@ -203,7 +211,8 @@ private[scio] final class KryoAtomicCoder[T](private val options: KryoOptions)
             warned = true
             logger.warn(
               s"Slow size estimation for ${wrapper.underlying.getClass}, " +
-                s"elapsed: $elapsed ms, count: $count, bytes: $bytes")
+                s"elapsed: $elapsed ms, count: $count, bytes: $bytes"
+            )
           }
         }
       case _ =>
@@ -223,9 +232,11 @@ private[scio] final class KryoAtomicCoder[T](private val options: KryoOptions)
 }
 
 /** Used for sharing Kryo instance and buffers. */
-private[scio] final case class KryoState(kryo: Kryo,
-                                         inputChunked: InputChunked,
-                                         outputChunked: OutputChunked)
+private[scio] final case class KryoState(
+  kryo: Kryo,
+  inputChunked: InputChunked,
+  outputChunked: OutputChunked
+)
 
 private[scio] object KryoAtomicCoder {
   private val logger = LoggerFactory.getLogger(this.getClass)
@@ -264,10 +275,12 @@ private[scio] object KryoAtomicCoder {
   }
 }
 
-private[scio] final case class KryoOptions(bufferSize: Int,
-                                           maxBufferSize: Int,
-                                           referenceTracking: Boolean,
-                                           registrationRequired: Boolean)
+private[scio] final case class KryoOptions(
+  bufferSize: Int,
+  maxBufferSize: Int,
+  referenceTracking: Boolean,
+  registrationRequired: Boolean
+)
 
 private[scio] object KryoOptions {
   @inline def apply(): KryoOptions =
@@ -275,9 +288,11 @@ private[scio] object KryoOptions {
 
   def apply(options: PipelineOptions): KryoOptions = {
     val o = options.as(classOf[ScioOptions])
-    KryoOptions(o.getKryoBufferSize,
-                o.getKryoMaxBufferSize,
-                o.getKryoReferenceTracking,
-                o.getKryoRegistrationRequired)
+    KryoOptions(
+      o.getKryoBufferSize,
+      o.getKryoMaxBufferSize,
+      o.getKryoReferenceTracking,
+      o.getKryoRegistrationRequired
+    )
   }
 }

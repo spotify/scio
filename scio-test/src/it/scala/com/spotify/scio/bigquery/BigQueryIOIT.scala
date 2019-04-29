@@ -29,7 +29,8 @@ object BigQueryIOIT {
   @BigQueryType.fromQuery(
     """
     SELECT word, word_count FROM `bigquery-public-data.samples.shakespeare` LIMIT 10
-  """)
+  """
+  )
   class ShakespeareFromQuery
 
   val tempLocation = ItUtils.gcpTempLocation("bigquery-it")

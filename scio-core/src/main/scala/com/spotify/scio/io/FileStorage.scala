@@ -134,7 +134,8 @@ private[scio] final class FileStorage(protected[scio] val path: String) {
 
   private[scio] def getDirectoryInputStream(
     path: String,
-    wrapperFn: InputStream => InputStream = identity): InputStream = {
+    wrapperFn: InputStream => InputStream = identity
+  ): InputStream = {
     val inputs = listFiles.map(getObjectInputStream).map(wrapperFn).asJava
     new SequenceInputStream(Collections.enumeration(inputs))
   }

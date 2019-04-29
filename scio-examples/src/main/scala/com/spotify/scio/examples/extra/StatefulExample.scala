@@ -40,9 +40,11 @@ object StatefulExample {
     @StateId("count") private val count = StateSpecs.value[JInt]()
 
     @ProcessElement
-    def processElement(context: DoFnT#ProcessContext,
-                       // Access state declared earlier
-                       @StateId("count") count: ValueState[JInt]): Unit = {
+    def processElement(
+      context: DoFnT#ProcessContext,
+      // Access state declared earlier
+      @StateId("count") count: ValueState[JInt]
+    ): Unit = {
       // Read and write state
       val c = count.read()
       count.write(c + 1)

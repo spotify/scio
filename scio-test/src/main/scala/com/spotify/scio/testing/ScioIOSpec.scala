@@ -31,8 +31,9 @@ import scala.reflect.ClassTag
 /** Trait for unit testing [[ScioIO]]. */
 trait ScioIOSpec extends PipelineSpec {
 
-  def testTap[T: Coder](xs: Seq[T])(writeFn: (SCollection[T], String) => ClosedTap[T])(
-    suffix: String): Unit = {
+  def testTap[T: Coder](
+    xs: Seq[T]
+  )(writeFn: (SCollection[T], String) => ClosedTap[T])(suffix: String): Unit = {
     val tmpDir = new File(new File(CoreSysProps.TmpDir.value), "scio-test-" + UUID.randomUUID())
 
     val sc = ScioContext()
@@ -50,7 +51,8 @@ trait ScioIOSpec extends PipelineSpec {
   }
 
   def testJobTestInput[T: ClassTag: Coder](xs: Seq[T], in: String = "in")(
-    ioFn: String => ScioIO[T])(readFn: (ScioContext, String) => SCollection[T]): Unit = {
+    ioFn: String => ScioIO[T]
+  )(readFn: (ScioContext, String) => SCollection[T]): Unit = {
     def runMain(args: Array[String]): Unit = {
       val (sc, argz) = ContextAndArgs(args)
       readFn(sc, argz("input")).saveAsTextFile("out")
@@ -87,8 +89,9 @@ trait ScioIOSpec extends PipelineSpec {
     // scalastyle:on no.whitespace.before.left.bracket
   }
 
-  def testJobTestOutput[T: Coder, WT](xs: Seq[T], out: String = "out")(ioFn: String => ScioIO[T])(
-    writeFn: (SCollection[T], String) => ClosedTap[WT]): Unit = {
+  def testJobTestOutput[T: Coder, WT](xs: Seq[T], out: String = "out")(
+    ioFn: String => ScioIO[T]
+  )(writeFn: (SCollection[T], String) => ClosedTap[WT]): Unit = {
     def runMain(args: Array[String]): Unit = {
       val (sc, argz) = ContextAndArgs(args)
       writeFn(sc.parallelize(xs), argz("output"))
@@ -124,8 +127,10 @@ trait ScioIOSpec extends PipelineSpec {
   }
 
   def testJobTest[T: Coder](xs: Seq[T], in: String = "in", out: String = "out")(
-    ioFn: String => ScioIO[T])(readFn: (ScioContext, String) => SCollection[T])(
-    writeFn: (SCollection[T], String) => ClosedTap[_]): Unit = {
+    ioFn: String => ScioIO[T]
+  )(
+    readFn: (ScioContext, String) => SCollection[T]
+  )(writeFn: (SCollection[T], String) => ClosedTap[_]): Unit = {
     def runMain(args: Array[String]): Unit = {
       val (sc, argz) = ContextAndArgs(args)
       val data = readFn(sc, argz("input"))

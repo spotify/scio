@@ -92,7 +92,8 @@ trait BaseScioShell extends MainGenericRunner {
       command.settings.classpathURLs.toArray ++
         classLoaderURLs(Thread.currentThread().getContextClassLoader),
       null,
-      Thread.currentThread.getContextClassLoader)
+      Thread.currentThread.getContextClassLoader
+    )
 
     val repl = new ScioILoop(scioClassLoader, args.toList)
     scioClassLoader.setRepl(repl)

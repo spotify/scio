@@ -107,7 +107,8 @@ class HistogramTest extends PipelineSpec {
   it should "work mixed range with four uneven buckets and NaN" in {
     runWithContext { sc =>
       val p = sc.parallelize(
-        Seq(-0.01, 0.0, 1.0, 2.0, 3.0, 5.0, 6.0, 11.1, 12.0, 199.0, 200.0, 200.1, Double.NaN))
+        Seq(-0.01, 0.0, 1.0, 2.0, 3.0, 5.0, 6.0, 11.1, 12.0, 199.0, 200.0, 200.1, Double.NaN)
+      )
       p.histogram(Array(0.0, 5.0, 11.0, 12.0, 200.0)) should
         containSingleValue(Array(4L, 2L, 1L, 3L))
     }
@@ -116,7 +117,8 @@ class HistogramTest extends PipelineSpec {
   it should "work mixed range with four uneven buckets, NaN and NaN range" in {
     runWithContext { sc =>
       val p = sc.parallelize(
-        Seq(-0.01, 0.0, 1.0, 2.0, 3.0, 5.0, 6.0, 11.1, 12.0, 199.0, 200.0, 200.1, Double.NaN))
+        Seq(-0.01, 0.0, 1.0, 2.0, 3.0, 5.0, 6.0, 11.1, 12.0, 199.0, 200.0, 200.1, Double.NaN)
+      )
       val buckets = Array(0.0, 5.0, 11.0, 12.0, 200.0, Double.NaN)
       p.histogram(buckets) should containSingleValue(Array(4L, 2L, 1L, 2L, 3L))
     }
@@ -125,21 +127,24 @@ class HistogramTest extends PipelineSpec {
   it should "work mixed range with four uneven buckets, NaN, NaN range and infinity" in {
     runWithContext { sc =>
       val p = sc.parallelize(
-        Seq(-0.01,
-            0.0,
-            1.0,
-            2.0,
-            3.0,
-            5.0,
-            6.0,
-            11.1,
-            12.0,
-            199.0,
-            200.0,
-            200.1,
-            Double.PositiveInfinity,
-            Double.NegativeInfinity,
-            Double.NaN))
+        Seq(
+          -0.01,
+          0.0,
+          1.0,
+          2.0,
+          3.0,
+          5.0,
+          6.0,
+          11.1,
+          12.0,
+          199.0,
+          200.0,
+          200.1,
+          Double.PositiveInfinity,
+          Double.NegativeInfinity,
+          Double.NaN
+        )
+      )
       val buckets = Array(0.0, 5.0, 11.0, 12.0, 200.0, Double.NaN)
       p.histogram(buckets) should containSingleValue(Array(4L, 2L, 1L, 2L, 4L))
     }

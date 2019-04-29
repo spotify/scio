@@ -24,12 +24,14 @@ class TypedBigQueryTornadoesTest extends PipelineSpec {
 
   import TypedBigQueryTornadoes.{Result, Row}
 
-  val inData = Seq(Row(Some(true), 1),
-                   Row(Some(false), 1),
-                   Row(Some(false), 2),
-                   Row(Some(true), 3),
-                   Row(Some(true), 4),
-                   Row(Some(true), 4))
+  val inData = Seq(
+    Row(Some(true), 1),
+    Row(Some(false), 1),
+    Row(Some(false), 2),
+    Row(Some(true), 3),
+    Row(Some(true), 4),
+    Row(Some(true), 4)
+  )
 
   val expected = Seq(Result(1, 1), Result(3, 1), Result(4, 2))
 

@@ -218,18 +218,24 @@ object StorageIT {
   @BigQueryType.fromStorage("data-integration-test:storage.repeated")
   class Repeated
 
-  @BigQueryType.fromStorage("data-integration-test:storage.nested",
-                            selectedFields = List("required", "optional.int"))
+  @BigQueryType.fromStorage(
+    "data-integration-test:storage.nested",
+    selectedFields = List("required", "optional.int")
+  )
   class NestedWithFields
 
-  @BigQueryType.fromStorage("data-integration-test:storage.nested",
-                            rowRestriction = "required.int < 5")
+  @BigQueryType.fromStorage(
+    "data-integration-test:storage.nested",
+    rowRestriction = "required.int < 5"
+  )
   class NestedWithRestriction
 
-  @BigQueryType.fromStorage("data-integration-test:storage.%s",
-                            List("nested"),
-                            selectedFields = List("required", "optional.int"),
-                            rowRestriction = "required.int < 5")
+  @BigQueryType.fromStorage(
+    "data-integration-test:storage.%s",
+    List("nested"),
+    selectedFields = List("required", "optional.int"),
+    rowRestriction = "required.int < 5"
+  )
   class NestedWithAll
 
   @BigQueryType.fromTable("data-integration-test:storage.required")

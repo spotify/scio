@@ -38,12 +38,16 @@ class ShapelessTensorFlowExampleTest extends PipelineSpec {
             Feature
               .newBuilder()
               .setBytesList(BytesList.newBuilder().addValue(ByteString.copyFromUtf8(kv._1)))
-              .build())
-          .putFeature("count",
-                      Feature
-                        .newBuilder()
-                        .setInt64List(Int64List.newBuilder().addValue(kv._2))
-                        .build()))
+              .build()
+          )
+          .putFeature(
+            "count",
+            Feature
+              .newBuilder()
+              .setInt64List(Int64List.newBuilder().addValue(kv._2))
+              .build()
+          )
+      )
       .build()
   }
   val textOut = wordCount.map(kv => kv._1 + ": " + kv._2)

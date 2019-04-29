@@ -50,8 +50,10 @@ private final class SlowGenericRecordCoder extends AtomicCoder[GenericRecord] {
 
   // delegate methods for determinism and equality checks
   override def verifyDeterministic(): Unit =
-    throw new NonDeterministicException(this,
-                                        "Coder[GenericRecord] without schema is non-deterministic")
+    throw new NonDeterministicException(
+      this,
+      "Coder[GenericRecord] without schema is non-deterministic"
+    )
   override def consistentWithEquals(): Boolean = false
   override def structuralValue(value: GenericRecord): AnyRef =
     AvroCoder.of(value.getSchema).structuralValue(value)
@@ -59,8 +61,10 @@ private final class SlowGenericRecordCoder extends AtomicCoder[GenericRecord] {
   // delegate methods for byte size estimation
   override def isRegisterByteSizeObserverCheap(value: GenericRecord): Boolean =
     AvroCoder.of(value.getSchema).isRegisterByteSizeObserverCheap(value)
-  override def registerByteSizeObserver(value: GenericRecord,
-                                        observer: ElementByteSizeObserver): Unit =
+  override def registerByteSizeObserver(
+    value: GenericRecord,
+    observer: ElementByteSizeObserver
+  ): Unit =
     AvroCoder.of(value.getSchema).registerByteSizeObserver(value, observer)
 }
 

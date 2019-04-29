@@ -45,7 +45,8 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
     val xs = (1 to 100).map(AvroUtils.newSpecificRecord)
     testTap(xs)(_.saveAsParquetAvroFile(_))(".parquet")
     testJobTest(xs)(ParquetAvroIO(_))(_.parquetAvroFile[TestRecord](_).map(identity))(
-      _.saveAsParquetAvroFile(_))
+      _.saveAsParquetAvroFile(_)
+    )
   }
 
   it should "read specific records with projection" in {

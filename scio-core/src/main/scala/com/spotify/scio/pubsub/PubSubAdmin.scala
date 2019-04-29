@@ -100,9 +100,11 @@ object PubSubAdmin {
    * @return a Subscription if it alreadys exists or has been successfully created, a failure
    * otherwise
    */
-  def ensureSubscription(pubsubOptions: PubsubOptions,
-                         topic: String,
-                         name: String): Try[Subscription] =
+  def ensureSubscription(
+    pubsubOptions: PubsubOptions,
+    topic: String,
+    name: String
+  ): Try[Subscription] =
     GrpcClient.subscriber(pubsubOptions) { client =>
       val sub = Subscription.newBuilder().setTopic(topic).setName(name).build()
       client.createSubscription(sub)

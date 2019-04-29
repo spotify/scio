@@ -33,11 +33,12 @@ import scala.tools.nsc.interpreter.{IR, JPrintWriter}
  * @param scioClassLoader [[ScioReplClassLoader]] used for runtime/in-memory classloading
  * @param args user arguments for Scio REPL
  */
-class ScioILoop(scioClassLoader: ScioReplClassLoader,
-                args: List[String],
-                reader: Option[BufferedReader],
-                out: JPrintWriter)
-    extends ILoopCompat(reader, out) {
+class ScioILoop(
+  scioClassLoader: ScioReplClassLoader,
+  args: List[String],
+  reader: Option[BufferedReader],
+  out: JPrintWriter
+) extends ILoopCompat(reader, out) {
 
   private var scioIsInitialized = false
 
@@ -119,10 +120,12 @@ class ScioILoop(scioClassLoader: ScioReplClassLoader,
     Result.default
   }
 
-  private val newLocalScioCmd = LoopCommand.cmd("newLocalScio",
-                                                "<[context-name] | sc>",
-                                                "get a new local Scio context",
-                                                newLocalScioCmdImpl)
+  private val newLocalScioCmd = LoopCommand.cmd(
+    "newLocalScio",
+    "<[context-name] | sc>",
+    "get a new local Scio context",
+    newLocalScioCmdImpl
+  )
 
   /** REPL magic to show or update Scio options. */
   private def scioOptsCmdImpl(args: String) = {
@@ -195,7 +198,8 @@ class ScioILoop(scioClassLoader: ScioReplClassLoader,
     val p = scala.util.Properties
     echo(
       "Using Scala version %s (%s, Java %s)"
-        .format(BuildInfo.scalaVersion, p.javaVmName, p.javaVersion))
+        .format(BuildInfo.scalaVersion, p.javaVmName, p.javaVersion)
+    )
 
     echo("""
         |Type in expressions to have them evaluated.
@@ -256,7 +260,8 @@ class ScioILoop(scioClassLoader: ScioReplClassLoader,
       sys.error(
         "Could not initialize Scio interpreter - abort." +
           "One possible reason is inconsistent Scala versions. " +
-          "Please use the exact same version of Scala as scio-repl.")
+          "Please use the exact same version of Scala as scio-repl."
+      )
     }
     scioIsInitialized = true
     out.print(prompt)

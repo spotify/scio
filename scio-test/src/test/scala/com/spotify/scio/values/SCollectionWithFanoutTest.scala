@@ -69,7 +69,7 @@ class SCollectionWithFanoutTest extends PipelineSpec {
         sc.parallelize(elems).withFanout(10).sum
       sum(1, 2, 3) should containSingleValue(6)
       sum(1L, 2L, 3L) should containSingleValue(6L)
-      sum(1F, 2F, 3F) should containSingleValue(6F)
+      sum(1f, 2f, 3f) should containSingleValue(6f)
       sum(1.0, 2.0, 3.0) should containSingleValue(6.0)
       sum(1 to 100: _*) should containSingleValue(5050)
     }

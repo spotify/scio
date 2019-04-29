@@ -56,7 +56,8 @@ private object Reads {
   private[scio] def bqReadQuery[T: ClassTag](sc: ScioContext)(
     typedRead: beam.BigQueryIO.TypedRead[T],
     sqlQuery: String,
-    flattenResults: Boolean = false): SCollection[T] = sc.wrap {
+    flattenResults: Boolean = false
+  ): SCollection[T] = sc.wrap {
     val bigQueryClient = client(sc)
     if (bigQueryClient.isCacheEnabled) {
       val read = bigQueryClient.query
@@ -89,7 +90,8 @@ private object Reads {
     typedRead: beam.BigQueryIO.TypedRead[T],
     table: Table,
     selectedFields: List[String] = Nil,
-    rowRestriction: String = null): SCollection[T] = sc.wrap {
+    rowRestriction: String = null
+  ): SCollection[T] = sc.wrap {
     val read = typedRead
       .from(table.spec)
       .withMethod(Method.DIRECT_READ)
@@ -106,9 +108,9 @@ private object Reads {
       .withCoder(CoderMaterializer.beam(sc, Coder.kryo[T]))
   }
 
-  private[scio] def bqReadTable[T: ClassTag](sc: ScioContext)(
-    typedRead: beam.BigQueryIO.TypedRead[T],
-    table: TableReference): SCollection[T] =
+  private[scio] def bqReadTable[T: ClassTag](
+    sc: ScioContext
+  )(typedRead: beam.BigQueryIO.TypedRead[T], table: TableReference): SCollection[T] =
     sc.wrap(sc.applyInternal(typedRead.from(table)))
 }
 
@@ -211,7 +213,8 @@ object BigQueryTable {
     writeDisposition: WriteDisposition = WriteParam.DefaultWriteDisposition,
     createDisposition: CreateDisposition = WriteParam.DefaultCreateDisposition,
     tableDescription: String = WriteParam.DefaultTableDescription,
-    timePartitioning: TimePartitioning = WriteParam.DefaultTimePartitioning)
+    timePartitioning: TimePartitioning = WriteParam.DefaultTimePartitioning
+  )
 
   @deprecated("this method will be removed; use apply(Table.Ref(table)) instead", "Scio 0.8")
   @inline final def apply(table: TableReference): BigQueryTable =
@@ -230,10 +233,12 @@ final case class BigQueryStorage(table: Table) extends BigQueryIO[TableRow] {
   override type WriteP = Nothing // ReadOnly
 
   override protected def read(sc: ScioContext, params: ReadP): SCollection[TableRow] =
-    Reads.bqReadStorage(sc)(beam.BigQueryIO.readTableRows(),
-                            table,
-                            params.selectFields,
-                            params.rowRestriction)
+    Reads.bqReadStorage(sc)(
+      beam.BigQueryIO.readTableRows(),
+      table,
+      params.selectFields,
+      params.rowRestriction
+    )
 
   override protected def write(data: SCollection[TableRow], params: WriteP): Tap[TableRow] =
     throw new UnsupportedOperationException("BigQueryStorage is read-only")
@@ -283,8 +288,10 @@ object TableRowJsonIO {
     private[bigquery] val DefaultCompression = Compression.UNCOMPRESSED
   }
 
-  final case class WriteParam private (numShards: Int = WriteParam.DefaultNumShards,
-                                       compression: Compression = WriteParam.DefaultCompression)
+  final case class WriteParam private (
+    numShards: Int = WriteParam.DefaultNumShards,
+    compression: Compression = WriteParam.DefaultCompression
+  )
 }
 
 object BigQueryTyped {
@@ -297,7 +304,8 @@ object BigQueryTyped {
     BigQueryType.fromQuery.
     Alternatively, use BigQueryTyped.Storage("<table>"), BigQueryTyped.Table("<table>"), or
     BigQueryTyped.Query("<query>") to get a ScioIO instance.
-  """)
+  """
+  )
   sealed trait IO[T <: HasAnnotation] {
     type F[_ <: HasAnnotation] <: ScioIO[_]
     def impl: F[T]
@@ -309,21 +317,24 @@ object BigQueryTyped {
       IO[T] { type F[A <: HasAnnotation] = F0[A] }
 
     implicit def tableIO[T <: HasAnnotation: ClassTag: TypeTag: Coder](
-      implicit t: BigQueryType.Table[T]): Aux[T, Table] =
+      implicit t: BigQueryType.Table[T]
+    ): Aux[T, Table] =
       new IO[T] {
         type F[A <: HasAnnotation] = Table[A]
-        def impl: Table[T] = Table(t.table)
+        def impl: Table[T] = Table(STable.Spec(t.table))
       }
 
     implicit def queryIO[T <: HasAnnotation: ClassTag: TypeTag: Coder](
-      implicit t: BigQueryType.Query[T]): Aux[T, Select] =
+      implicit t: BigQueryType.Query[T]
+    ): Aux[T, Select] =
       new IO[T] {
         type F[A <: HasAnnotation] = Select[A]
         def impl: Select[T] = Select(t.query)
       }
 
     implicit def storageIO[T <: HasAnnotation: ClassTag: TypeTag: Coder](
-      implicit t: BigQueryType.StorageOptions[T]): Aux[T, Storage] =
+      implicit t: BigQueryType.StorageOptions[T]
+    ): Aux[T, Storage] =
       new IO[T] {
         type F[A <: HasAnnotation] = Storage[A]
         def impl: Storage[T] = Storage(STable.Spec(t.table))
@@ -401,11 +412,13 @@ object BigQueryTyped {
           .withName(s"$initialTfName$$Write")
 
       val ps =
-        BigQueryTable.WriteParam(bqt.schema,
-                                 params.writeDisposition,
-                                 params.createDisposition,
-                                 bqt.tableDescription.orNull,
-                                 params.timePartitioning)
+        BigQueryTable.WriteParam(
+          bqt.schema,
+          params.writeDisposition,
+          params.createDisposition,
+          bqt.tableDescription.orNull,
+          params.timePartitioning
+        )
 
       BigQueryTable(table)
         .write(rows, ps)
@@ -428,7 +441,8 @@ object BigQueryTyped {
     final case class WriteParam private (
       writeDisposition: WriteDisposition = WriteParam.DefaultWriteDisposition,
       createDisposition: CreateDisposition = WriteParam.DefaultCreateDisposition,
-      timePartitioning: TimePartitioning = WriteParam.DefaultTimePartitioning)
+      timePartitioning: TimePartitioning = WriteParam.DefaultTimePartitioning
+    )
 
     @deprecated("this method will be removed; use apply(Table.Ref(table)) instead", "Scio 0.8")
     @inline
@@ -479,7 +493,8 @@ object BigQueryTyped {
       // for legacy support and should not exists once
       // BigQueryScioContext.typedBigQuery is removed
       case null if bqt.isTable =>
-        ScioIO.ro[T](Table(STable.Spec(newSource)))
+        val table = STable.Spec(bqt.table.get)
+        ScioIO.ro[T](Table[T](table))
       case null if bqt.isQuery =>
         val query = bqt.query.get
         Select[T](query)

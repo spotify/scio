@@ -29,12 +29,16 @@ import org.apache.beam.sdk.values.ValueInSingleWindow
 
 private[dynamic] object DynamicDestinationsUtil {
 
-  def constant[T](dst: TableDestination,
-                  schema: TableSchema): DynamicDestinations[T, TableDestination] =
+  def constant[T](
+    dst: TableDestination,
+    schema: TableSchema
+  ): DynamicDestinations[T, TableDestination] =
     tableFn(_ => dst, schema)
 
-  def tableFn[T](fn: ValueInSingleWindow[T] => TableDestination,
-                 schema: TableSchema): DynamicDestinations[T, TableDestination] = {
+  def tableFn[T](
+    fn: ValueInSingleWindow[T] => TableDestination,
+    schema: TableSchema
+  ): DynamicDestinations[T, TableDestination] = {
     val jsonSchema = Transport.getJsonFactory.toString(schema)
     new DynamicDestinations[T, TableDestination] {
       @transient private lazy val tableSchema =

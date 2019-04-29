@@ -41,7 +41,8 @@ object BigQueryTornadoes {
       List(
         new TableFieldSchema().setName("month").setType("INTEGER"),
         new TableFieldSchema().setName("tornado_count").setType("INTEGER")
-      ).asJava)
+      ).asJava
+    )
 
     // Open a BigQuery table as a `SCollection[TableRow]`
     sc.bigQueryTable(args.getOrElse("input", ExampleData.WEATHER_SAMPLES_TABLE))

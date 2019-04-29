@@ -45,9 +45,11 @@ object AutoComplete {
   @BigQueryType.toTable
   case class Record(pre: String, tags: List[Tag])
 
-  def computeTopCompletions(input: SCollection[String],
-                            candidatesPerPrefix: Int,
-                            recursive: Boolean): SCollection[(String, Iterable[(String, Long)])] = {
+  def computeTopCompletions(
+    input: SCollection[String],
+    candidatesPerPrefix: Int,
+    recursive: Boolean
+  ): SCollection[(String, Iterable[(String, Long)])] = {
     val candidates = input.countByValue
     if (recursive) {
       SCollection.unionAll(computeTopRecursive(candidates, candidatesPerPrefix, 1))
@@ -56,16 +58,20 @@ object AutoComplete {
     }
   }
 
-  def computeTopFlat(input: SCollection[(String, Long)],
-                     candidatesPerPrefix: Int,
-                     minPrefix: Int): SCollection[(String, Iterable[(String, Long)])] =
+  def computeTopFlat(
+    input: SCollection[(String, Long)],
+    candidatesPerPrefix: Int,
+    minPrefix: Int
+  ): SCollection[(String, Iterable[(String, Long)])] =
     input
       .flatMap(allPrefixes(minPrefix))
       .topByKey(candidatesPerPrefix, Ordering.by(_._2))
 
-  def computeTopRecursive(input: SCollection[(String, Long)],
-                          candidatesPerPrefix: Int,
-                          minPrefix: Int): Seq[SCollection[(String, Iterable[(String, Long)])]] =
+  def computeTopRecursive(
+    input: SCollection[(String, Long)],
+    candidatesPerPrefix: Int,
+    minPrefix: Int
+  ): Seq[SCollection[(String, Iterable[(String, Long)])]] =
     if (minPrefix > 10) {
       computeTopFlat(input, candidatesPerPrefix, minPrefix)
         .partition(2, t => if (t._1.length > minPrefix) 0 else 1)
@@ -81,10 +87,11 @@ object AutoComplete {
 
   def allPrefixes(
     minPrefix: Int,
-    maxPrefix: Int = Int.MaxValue): ((String, Long)) => Iterable[(String, (String, Long))] = {
+    maxPrefix: Int = Int.MaxValue
+  ): ((String, Long)) => Iterable[(String, (String, Long))] = {
     case (word, count) =>
-      (minPrefix to Math.min(word.length, maxPrefix)).map(i =>
-        (word.substring(0, i), (word, count)))
+      (minPrefix to Math.min(word.length, maxPrefix))
+        .map(i => (word.substring(0, i), (word, count)))
   }
 
   def makeEntity(kind: String, kv: (String, Iterable[(String, Long)])): Entity = {
@@ -94,8 +101,9 @@ object AutoComplete {
         Entity
           .newBuilder()
           .putAllProperties(
-            ImmutableMap.of("tag", makeValue(p._1).build(), "count", makeValue(p._2).build())))
-        .build()
+            ImmutableMap.of("tag", makeValue(p._1).build(), "count", makeValue(p._2).build())
+          )
+      ).build()
     }
     Entity
       .newBuilder()

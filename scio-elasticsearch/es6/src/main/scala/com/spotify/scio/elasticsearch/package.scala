@@ -51,13 +51,14 @@ package object elasticsearch {
      *                   number of pipeline workers
      * @param errorFn function to handle error when performing Elasticsearch bulk writes
      */
-    def saveAsElasticsearch(esOptions: ElasticsearchOptions,
-                            flushInterval: Duration = WriteParam.DefaultFlushInterval,
-                            numOfShards: Long = WriteParam.DefaultNumShards,
-                            maxBulkRequestSize: Int = WriteParam.DefaultMaxBulkRequestSize,
-                            errorFn: BulkExecutionException => Unit = WriteParam.DefaultErrorFn,
-                            retry: RetryConfig = WriteParam.DefaultRetryConfig)(
-      f: T => Iterable[DocWriteRequest[_]])(implicit coder: Coder[T]): ClosedTap[Nothing] = {
+    def saveAsElasticsearch(
+      esOptions: ElasticsearchOptions,
+      flushInterval: Duration = WriteParam.DefaultFlushInterval,
+      numOfShards: Long = WriteParam.DefaultNumShards,
+      maxBulkRequestSize: Int = WriteParam.DefaultMaxBulkRequestSize,
+      errorFn: BulkExecutionException => Unit = WriteParam.DefaultErrorFn,
+      retry: RetryConfig = WriteParam.DefaultRetryConfig
+    )(f: T => Iterable[DocWriteRequest[_]])(implicit coder: Coder[T]): ClosedTap[Nothing] = {
       val param = WriteParam(f, errorFn, flushInterval, numOfShards, maxBulkRequestSize, retry)
       self.write(ElasticsearchIO[T](esOptions))(param)
     }

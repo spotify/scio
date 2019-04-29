@@ -49,12 +49,17 @@ object BeamExample {
       .triggering(
         AfterWatermark
           .pastEndOfWindow()
-          .withEarlyFirings(AfterProcessingTime
-            .pastFirstElementInPane()
-            .plusDelayOf(Duration.standardMinutes(5)))
-          .withLateFirings(AfterProcessingTime
-            .pastFirstElementInPane()
-            .plusDelayOf(Duration.standardMinutes(10))))
+          .withEarlyFirings(
+            AfterProcessingTime
+              .pastFirstElementInPane()
+              .plusDelayOf(Duration.standardMinutes(5))
+          )
+          .withLateFirings(
+            AfterProcessingTime
+              .pastFirstElementInPane()
+              .plusDelayOf(Duration.standardMinutes(10))
+          )
+      )
       .accumulatingFiredPanes()
 
   // A Beam native aggregation `PTransform`

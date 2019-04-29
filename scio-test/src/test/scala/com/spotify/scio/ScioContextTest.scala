@@ -149,7 +149,8 @@ class ScioContextTest extends PipelineSpec {
       pw.close()
     }
     val (_, arg) = ScioContext.parseArguments[PipelineOptions](
-      Array(s"--optionsFile=${optionsFile.getAbsolutePath}"))
+      Array(s"--optionsFile=${optionsFile.getAbsolutePath}")
+    )
     arg("foo") shouldBe "bar"
   }
 

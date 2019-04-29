@@ -47,7 +47,8 @@ class SingleGZipFileExampleTest extends PipelineSpec {
     inFOS.close()
     val out = tempDir.resolve("output")
     SingleGZipFileExample.main(
-      Array(s"--input=${in.getAbsolutePath}", s"--output=${out.toFile.getAbsolutePath}"))
+      Array(s"--input=${in.getAbsolutePath}", s"--output=${out.toFile.getAbsolutePath}")
+    )
 
     val outPartFile = out.resolve("part-00000-of-00001.txt.deflate").toFile
     outPartFile.exists() shouldBe true

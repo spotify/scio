@@ -54,15 +54,19 @@ final case class BigQueryTaps(self: Taps) {
 
   /** Get a `Future[Tap[TableRow]]` for BigQuery SELECT query. */
   def bigQuerySelect(sqlQuery: String, flattenResults: Boolean = false): Future[Tap[TableRow]] =
-    mkTap(s"BigQuery SELECT: $sqlQuery",
-          () => isQueryDone(sqlQuery),
-          () => BigQuerySelect(sqlQuery).tap(BigQuerySelect.ReadParam(flattenResults)))
+    mkTap(
+      s"BigQuery SELECT: $sqlQuery",
+      () => isQueryDone(sqlQuery),
+      () => BigQuerySelect(sqlQuery).tap(BigQuerySelect.ReadParam(flattenResults))
+    )
 
   /** Get a `Future[Tap[TableRow]]` for BigQuery table. */
   def bigQueryTable(table: TableReference): Future[Tap[TableRow]] =
-    mkTap(s"BigQuery Table: $table",
-          () => bqc.tables.exists(table),
-          () => BigQueryTable(table).tap(()))
+    mkTap(
+      s"BigQuery Table: $table",
+      () => bqc.tables.exists(table),
+      () => BigQueryTable(table).tap(())
+    )
 
   /** Get a `Future[Tap[TableRow]]` for BigQuery table. */
   def bigQueryTable(tableSpec: String): Future[Tap[TableRow]] =
@@ -70,7 +74,8 @@ final case class BigQueryTaps(self: Taps) {
 
   /** Get a `Future[Tap[T]]` for typed BigQuery source. */
   def typedBigQuery[T <: HasAnnotation: TypeTag: ClassTag: Coder](
-    newSource: String = null): Future[Tap[T]] = {
+    newSource: String = null
+  ): Future[Tap[T]] = {
     val bqt = BigQueryType[T]
     lazy val table =
       scala.util.Try(BigQueryHelpers.parseTableSpec(newSource)).toOption

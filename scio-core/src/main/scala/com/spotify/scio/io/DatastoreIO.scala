@@ -37,7 +37,9 @@ final case class DatastoreIO(projectId: String) extends ScioIO[Entity] {
           .read()
           .withProjectId(projectId)
           .withNamespace(params.namespace)
-          .withQuery(params.query)))
+          .withQuery(params.query)
+      )
+    )
 
   override def write(data: SCollection[Entity], params: WriteP): Tap[Nothing] = {
     data

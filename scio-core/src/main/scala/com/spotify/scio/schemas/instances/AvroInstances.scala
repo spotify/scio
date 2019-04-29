@@ -59,9 +59,11 @@ object AvroInstances {
   }
 
   // Workaround BEAM-6742
-  private def specificRecordtoRow[T <: SpecificRecord](schema: BSchema,
-                                                       avroSchema: SerializableSchema,
-                                                       t: T): Row = {
+  private def specificRecordtoRow[T <: SpecificRecord](
+    schema: BSchema,
+    avroSchema: SerializableSchema,
+    t: T
+  ): Row = {
     val row = Row.withSchema(schema)
     schema.getFields.asScala.zip(avroSchema.get.getFields.asScala).zipWithIndex.foreach {
       case ((f, a), i) =>

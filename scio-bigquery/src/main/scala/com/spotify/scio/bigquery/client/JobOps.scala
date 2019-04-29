@@ -58,7 +58,8 @@ private[client] object JobOps {
         val outputRows = stats.getLoad.getOutputRows
         Logger.info(
           s"Input file bytes: $inputFileBytes, output bytes: $outputBytes, " +
-            s"output rows: $outputRows")
+            s"output rows: $outputRows"
+        )
 
       case queryJob: QueryJob =>
         Logger.info(s"Query: `${queryJob.query}`")

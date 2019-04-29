@@ -30,7 +30,8 @@ import scala.collection.mutable
  * [[org.apache.beam.sdk.util.BufferedElementCountingOutputStream]].
  */
 private[coders] class JTraversableSerializer[T, C <: Traversable[T]](
-  val bufferSize: Int = 64 * 1024)(implicit cbf: CanBuildFrom[C, T, C])
+  val bufferSize: Int = 64 * 1024
+)(implicit cbf: CanBuildFrom[C, T, C])
     extends KSerializer[C] {
 
   override def write(kser: Kryo, out: Output, obj: C): Unit = {

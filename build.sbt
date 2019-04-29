@@ -22,12 +22,12 @@ import com.typesafe.sbt.SbtGit.GitKeys.gitRemoteRepo
 import org.scalafmt.sbt.ScalafmtPlugin.scalafmtConfigSettings
 import bloop.integrations.sbt.BloopDefaults
 
-val beamVersion = "2.11.0"
+val beamVersion = "2.12.0"
 
 val algebirdVersion = "0.13.5"
 val annoy4sVersion = "0.8.0"
 val annoyVersion = "0.2.5"
-val asmVersion = "4.9"
+val asmVersion = "4.13"
 val autoServiceVersion = "1.0-rc2"
 val avroVersion = "1.8.2"
 val breezeVersion = "1.0-RC2"
@@ -145,8 +145,10 @@ val commonSettings = Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
   ).mkString(";"),
   coverageHighlighting := true,
   // Release settings
-  publishTo := Some(if (isSnapshot.value) Opts.resolver.sonatypeSnapshots
-  else Opts.resolver.sonatypeStaging),
+  publishTo := Some(
+    if (isSnapshot.value) Opts.resolver.sonatypeSnapshots
+    else Opts.resolver.sonatypeStaging
+  ),
   releaseCrossBuild := true,
   releasePublishArtifactsAction := PgpKeys.publishSigned.value,
   publishMavenStyle := true,
@@ -155,42 +157,56 @@ val commonSettings = Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
   licenses := Seq("Apache 2" -> url("http://www.apache.org/licenses/LICENSE-2.0.txt")),
   homepage := Some(url("https://github.com/spotify/scio")),
   scmInfo := Some(
-    ScmInfo(url("https://github.com/spotify/scio"), "scm:git:git@github.com:spotify/scio.git")),
+    ScmInfo(url("https://github.com/spotify/scio"), "scm:git:git@github.com:spotify/scio.git")
+  ),
   developers := List(
-    Developer(id = "sinisa_lyh",
-              name = "Neville Li",
-              email = "neville.lyh@gmail.com",
-              url = url("https://twitter.com/sinisa_lyh")),
-    Developer(id = "ravwojdyla",
-              name = "Rafal Wojdyla",
-              email = "ravwojdyla@gmail.com",
-              url = url("https://twitter.com/ravwojdyla")),
-    Developer(id = "andrewsmartin",
-              name = "Andrew Martin",
-              email = "andrewsmartin.mg@gmail.com",
-              url = url("https://twitter.com/andrew_martin92")),
-    Developer(id = "fallonfofallon",
-              name = "Fallon Chen",
-              email = "fallon@spotify.com",
-              url = url("https://twitter.com/fallonfofallon")),
-    Developer(id = "regadas",
-              name = "Filipe Regadas",
-              email = "filiperegadas@gmail.com",
-              url = url("https://twitter.com/regadas")),
-    Developer(id = "jto",
-              name = "Julien Tournay",
-              email = "julient@spotify.com",
-              url = url("https://twitter.com/skaalf")),
-    Developer(id = "clairemcginty",
-              name = "Claire McGinty",
-              email = "clairem@spotify.com",
-              url = url("http://github.com/clairemcginty"))
+    Developer(
+      id = "sinisa_lyh",
+      name = "Neville Li",
+      email = "neville.lyh@gmail.com",
+      url = url("https://twitter.com/sinisa_lyh")
+    ),
+    Developer(
+      id = "ravwojdyla",
+      name = "Rafal Wojdyla",
+      email = "ravwojdyla@gmail.com",
+      url = url("https://twitter.com/ravwojdyla")
+    ),
+    Developer(
+      id = "andrewsmartin",
+      name = "Andrew Martin",
+      email = "andrewsmartin.mg@gmail.com",
+      url = url("https://twitter.com/andrew_martin92")
+    ),
+    Developer(
+      id = "fallonfofallon",
+      name = "Fallon Chen",
+      email = "fallon@spotify.com",
+      url = url("https://twitter.com/fallonfofallon")
+    ),
+    Developer(
+      id = "regadas",
+      name = "Filipe Regadas",
+      email = "filiperegadas@gmail.com",
+      url = url("https://twitter.com/regadas")
+    ),
+    Developer(
+      id = "jto",
+      name = "Julien Tournay",
+      email = "julient@spotify.com",
+      url = url("https://twitter.com/skaalf")
+    ),
+    Developer(
+      id = "clairemcginty",
+      name = "Claire McGinty",
+      email = "clairem@spotify.com",
+      url = url("http://github.com/clairemcginty")
+    )
   ),
   credentials ++= (for {
     username <- sys.env.get("SONATYPE_USERNAME")
     password <- sys.env.get("SONATYPE_PASSWORD")
-  } yield
-    Credentials("Sonatype Nexus Repository Manager", "oss.sonatype.org", username, password)).toSeq,
+  } yield Credentials("Sonatype Nexus Repository Manager", "oss.sonatype.org", username, password)).toSeq,
   buildInfoKeys := Seq[BuildInfoKey](scalaVersion, version, "beamVersion" -> beamVersion),
   buildInfoPackage := "com.spotify.scio"
 ) ++ mimaSettings ++ scalafmtSettings ++ scalafixSettings
@@ -276,8 +292,9 @@ def beamRunnerSettings: Seq[Setting[_]] = Seq(
 
 lazy val protobufSettings = Def.settings(
   version in ProtobufConfig := protobufVersion,
-  protobufRunProtoc in ProtobufConfig := (args =>
-    com.github.os72.protocjar.Protoc.runProtoc("-v3.7.0" +: args.toArray))
+  protobufRunProtoc in ProtobufConfig := (
+    args => com.github.os72.protocjar.Protoc.runProtoc("-v3.7.0" +: args.toArray)
+  )
 )
 
 lazy val root: Project = Project("scio", file("."))
@@ -316,8 +333,10 @@ lazy val scioCore: Project = Project(
 ).settings(
     commonSettings ++ macroSettings ++ itSettings,
     description := "Scio - A Scala API for Apache Beam and Google Cloud Dataflow",
-    resources in Compile ++= Seq((baseDirectory in ThisBuild).value / "build.sbt",
-                                 (baseDirectory in ThisBuild).value / "version.sbt"),
+    resources in Compile ++= Seq(
+      (baseDirectory in ThisBuild).value / "build.sbt",
+      (baseDirectory in ThisBuild).value / "version.sbt"
+    ),
     libraryDependencies ++= Seq(
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
@@ -334,7 +353,7 @@ lazy val scioCore: Project = Project(
       "com.google.guava" % "guava" % guavaVersion,
       "com.google.protobuf" % "protobuf-java" % protobufVersion,
       "me.lyh" %% "protobuf-generic" % protobufGenericVersion,
-      "org.apache.xbean" % "xbean-asm6-shaded" % asmVersion,
+      "org.apache.xbean" % "xbean-asm7-shaded" % asmVersion,
       "io.grpc" % "grpc-all" % grpcVersion exclude ("io.opencensus", "opencensus-api"),
       "com.github.alexarchambault" %% "case-app" % caseappVersion,
       "me.lyh" %% "magnolia" % magnoliaVersion,
@@ -809,11 +828,13 @@ lazy val scioJmh: Project = Project(
 
 lazy val site: Project = project
   .in(file("site"))
-  .enablePlugins(ParadoxSitePlugin,
-                 ParadoxMaterialThemePlugin,
-                 GhpagesPlugin,
-                 ScalaUnidocPlugin,
-                 SiteScaladocPlugin)
+  .enablePlugins(
+    ParadoxSitePlugin,
+    ParadoxMaterialThemePlugin,
+    GhpagesPlugin,
+    ScalaUnidocPlugin,
+    SiteScaladocPlugin
+  )
   .settings(commonSettings)
   .settings(siteSettings)
 
@@ -874,7 +895,9 @@ lazy val siteSettings = Def.settings(
       .map(file(_))
     val jdkMapping = Map(
       bootClasspath.find(_.getPath.endsWith("rt.jar")).get -> url(
-        "http://docs.oracle.com/javase/8/docs/api/"))
+        "http://docs.oracle.com/javase/8/docs/api/"
+      )
+    )
     docMappings.flatMap((mappingFn _).tupled).toMap ++ jdkMapping
   },
   unidocProjectFilter in (ScalaUnidoc, unidoc) := inAnyProject
@@ -942,12 +965,16 @@ val beamMappings = Seq(
   ("org.apache.beam", artifact, s"https://beam.apache.org/documentation/sdks/javadoc/$beamVersion")
 }
 val javaMappings = beamMappings ++ Seq(
-  ("com.google.apis",
-   "google-api-services-bigquery",
-   "https://developers.google.com/resources/api-libraries/documentation/bigquery/v2/java/latest"),
-  ("com.google.apis",
-   "google-api-services-dataflow",
-   "https://developers.google.com/resources/api-libraries/documentation/dataflow/v1b3/java/latest"),
+  (
+    "com.google.apis",
+    "google-api-services-bigquery",
+    "https://developers.google.com/resources/api-libraries/documentation/bigquery/v2/java/latest"
+  ),
+  (
+    "com.google.apis",
+    "google-api-services-dataflow",
+    "https://developers.google.com/resources/api-libraries/documentation/dataflow/v1b3/java/latest"
+  ),
   // FIXME: investigate why joda-time won't link
   ("joda-time", "joda-time", "http://www.joda.org/joda-time/apidocs"),
   ("org.apache.avro", "avro", "https://avro.apache.org/docs/current/api/java"),

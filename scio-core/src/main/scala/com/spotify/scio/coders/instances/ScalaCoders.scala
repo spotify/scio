@@ -49,11 +49,15 @@ private object NothingCoder extends AtomicCoder[Nothing] {
 private final class PairCoder[A, B](ac: BCoder[A], bc: BCoder[B]) extends AtomicCoder[(A, B)] {
 
   @inline def onErrorMsg[T](msg: => (String, String))(f: => T): T =
-    try { f } catch {
+    try {
+      f
+    } catch {
       case e: Exception =>
-        throw new RuntimeException(s"Exception while trying to `${msg._1}` an instance of Tuple2:" +
-                                     s" Can't decode field ${msg._2}",
-                                   e)
+        throw new RuntimeException(
+          s"Exception while trying to `${msg._1}` an instance of Tuple2:" +
+            s" Can't decode field ${msg._2}",
+          e
+        )
     }
 
   override def encode(value: (A, B), os: OutputStream): Unit = {
@@ -110,8 +114,8 @@ private final class PairCoder[A, B](ac: BCoder[A], bc: BCoder[B]) extends Atomic
 }
 
 private abstract class BaseSeqLikeCoder[M[_], T](val elemCoder: BCoder[T])(
-  implicit toSeq: M[T] => TraversableOnce[T])
-    extends AtomicCoder[M[T]] {
+  implicit toSeq: M[T] => TraversableOnce[T]
+) extends AtomicCoder[M[T]] {
   override def getCoderArguments: java.util.List[_ <: BCoder[_]] =
     Collections.singletonList(elemCoder)
 
@@ -137,8 +141,8 @@ private abstract class BaseSeqLikeCoder[M[_], T](val elemCoder: BCoder[T])(
 }
 
 private abstract class SeqLikeCoder[M[_], T](bc: BCoder[T])(
-  implicit toSeq: M[T] => TraversableOnce[T])
-    extends BaseSeqLikeCoder[M, T](bc) {
+  implicit toSeq: M[T] => TraversableOnce[T]
+) extends BaseSeqLikeCoder[M, T](bc) {
   private[this] val lc = VarIntCoder.of()
   override def encode(value: M[T], outStream: OutputStream): Unit = {
     lc.encode(value.size, outStream)
@@ -265,14 +269,18 @@ private class MapCoder[K, V](kc: BCoder[K], vc: BCoder[V]) extends AtomicCoder[M
 
   // delegate methods for determinism and equality checks
   override def verifyDeterministic(): Unit =
-    throw new NonDeterministicException(this,
-                                        "Ordering of entries in a Map may be non-deterministic.")
+    throw new NonDeterministicException(
+      this,
+      "Ordering of entries in a Map may be non-deterministic."
+    )
   override def consistentWithEquals(): Boolean = false
 
   // delegate methods for byte size estimation
   override def isRegisterByteSizeObserverCheap(value: Map[K, V]): Boolean = false
-  override def registerByteSizeObserver(value: Map[K, V],
-                                        observer: ElementByteSizeObserver): Unit = {
+  override def registerByteSizeObserver(
+    value: Map[K, V],
+    observer: ElementByteSizeObserver
+  ): Unit = {
     lc.registerByteSizeObserver(value.size, observer)
     value.foreach {
       case (k, v) =>
@@ -312,14 +320,18 @@ private class MutableMapCoder[K, V](kc: BCoder[K], vc: BCoder[V]) extends Atomic
 
   // delegate methods for determinism and equality checks
   override def verifyDeterministic(): Unit =
-    throw new NonDeterministicException(this,
-                                        "Ordering of entries in a Map may be non-deterministic.")
+    throw new NonDeterministicException(
+      this,
+      "Ordering of entries in a Map may be non-deterministic."
+    )
   override def consistentWithEquals(): Boolean = false
 
   // delegate methods for byte size estimation
   override def isRegisterByteSizeObserverCheap(value: m.Map[K, V]): Boolean = false
-  override def registerByteSizeObserver(value: m.Map[K, V],
-                                        observer: ElementByteSizeObserver): Unit = {
+  override def registerByteSizeObserver(
+    value: m.Map[K, V],
+    observer: ElementByteSizeObserver
+  ): Unit = {
     lc.registerByteSizeObserver(value.size, observer)
     value.foreach {
       case (k, v) =>

@@ -313,7 +313,7 @@ class SCollectionTest extends PipelineSpec {
         sc.parallelize(elems).max
       max(1, 2, 3) should containSingleValue(3)
       max(1L, 2L, 3L) should containSingleValue(3L)
-      max(1F, 2F, 3F) should containSingleValue(3F)
+      max(1f, 2f, 3f) should containSingleValue(3f)
       max(1.0, 2.0, 3.0) should containSingleValue(3.0)
     }
   }
@@ -324,7 +324,7 @@ class SCollectionTest extends PipelineSpec {
         sc.parallelize(elems).mean
       mean(1, 2, 3) should containSingleValue(2.0)
       mean(1L, 2L, 3L) should containSingleValue(2.0)
-      mean(1F, 2F, 3F) should containSingleValue(2.0)
+      mean(1f, 2f, 3f) should containSingleValue(2.0)
       mean(1.0, 2.0, 3.0) should containSingleValue(2.0)
     }
   }
@@ -335,7 +335,7 @@ class SCollectionTest extends PipelineSpec {
         sc.parallelize(elems).min
       min(1, 2, 3) should containSingleValue(1)
       min(1L, 2L, 3L) should containSingleValue(1L)
-      min(1F, 2F, 3F) should containSingleValue(1F)
+      min(1f, 2f, 3f) should containSingleValue(1f)
       min(1.0, 2.0, 3.0) should containSingleValue(1.0)
     }
   }
@@ -429,7 +429,7 @@ class SCollectionTest extends PipelineSpec {
         sc.parallelize(elems).sum
       sum(1, 2, 3) should containSingleValue(6)
       sum(1L, 2L, 3L) should containSingleValue(6L)
-      sum(1F, 2F, 3F) should containSingleValue(6F)
+      sum(1f, 2f, 3f) should containSingleValue(6f)
       sum(1.0, 2.0, 3.0) should containSingleValue(6.0)
       sum(1 to 100: _*) should containSingleValue(5050)
     }
@@ -498,8 +498,10 @@ class SCollectionTest extends PipelineSpec {
   it should "support withSessionWindows()" in {
     runWithContext { sc =>
       val p =
-        sc.parallelizeTimestamped(Seq("a", "b", "c", "d", "e"),
-                                  Seq(0, 5, 10, 44, 55).map(new Instant(_)))
+        sc.parallelizeTimestamped(
+          Seq("a", "b", "c", "d", "e"),
+          Seq(0, 5, 10, 44, 55).map(new Instant(_))
+        )
       val r = p
         .withSessionWindows(Duration.millis(10))
         .top(10)
