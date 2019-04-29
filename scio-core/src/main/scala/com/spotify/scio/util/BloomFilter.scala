@@ -64,7 +64,8 @@ object BloomFilter {
       case None =>
         throw new java.lang.IllegalArgumentException(
           s"BloomFilter cannot guarantee the specified false positive probability " +
-            s"for the number of entries! (numEntries: $numEntries, fpProb: $fpProb)")
+            s"for the number of entries! (numEntries: $numEntries, fpProb: $fpProb)"
+        )
       case Some(width) =>
         val numHashes = optimalNumHashes(numEntries, width)
         BloomFilterMonoid[A](numHashes, width)(hash)
@@ -92,10 +93,12 @@ object BloomFilter {
    * (min, estimate, max) =
    * ((1 - approxWidth) * estimate, estimate, (1 + approxWidth) * estimate)
    */
-  def sizeEstimate(numBits: Int,
-                   numHashes: Int,
-                   width: Int,
-                   approximationWidth: Double = 0.05): Approximate[Long] =
+  def sizeEstimate(
+    numBits: Int,
+    numHashes: Int,
+    width: Int,
+    approximationWidth: Double = 0.05
+  ): Approximate[Long] =
     AlgebirdImmutableBloomFilter.sizeEstimate(numBits, numHashes, width, approximationWidth)
 
 }
@@ -387,9 +390,10 @@ final case class MutableBFInstance[A](hashes: KirMit32Hash[A], bits: util.BitSet
  * bitmap. Also Apache Beam doesn't have a Coder for EWAHCompressedBitmap, and it would fallback
  * to Kryo
  */
-final case class MutableSparseBFInstance[A](hashes: KirMit32Hash[A],
-                                            allHashes: mutable.Buffer[Array[Int]])
-    extends MutableBF[A] {
+final case class MutableSparseBFInstance[A](
+  hashes: KirMit32Hash[A],
+  allHashes: mutable.Buffer[Array[Int]]
+) extends MutableBF[A] {
 
   lazy val numHashes: Int = hashes.numHashes
 

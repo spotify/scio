@@ -104,7 +104,8 @@ class BloomFilterLaws extends CheckProperties {
 
   property(
     "the distance between a filter and an empty filter should be the number of bits" +
-      "set in the existing filter") {
+      "set in the existing filter"
+  ) {
     forAll { (a: MutableBF[String]) =>
       a.hammingDistance(bfMonoid.zero) == a.numBits
     }
