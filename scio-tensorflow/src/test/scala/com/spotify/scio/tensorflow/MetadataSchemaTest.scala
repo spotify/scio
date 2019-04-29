@@ -19,14 +19,6 @@ package com.spotify.scio.tensorflow
 
 import com.google.protobuf.ByteString
 import org.tensorflow.example._
-import org.tensorflow.metadata.v0.{
-  FeaturePresence,
-  FeatureType,
-  FixedShape,
-  Schema,
-  ValueCount,
-  Feature => MFeature
-}
 
 import scala.collection.JavaConverters._
 
@@ -63,66 +55,6 @@ object MetadataSchemaTest {
 
   val examples = Seq(e1Features, e2Features).map(mkExample)
   val sequenceExamples = Seq(e1Features, e2Features).map(m => mkSequenceExample(m, e1FeatureList))
-
-  val expectedSchema = Schema
-    .newBuilder()
-    .addFeature(
-      MFeature
-        .newBuilder()
-        .setName("long")
-        .setType(FeatureType.INT)
-        .setValueCount(ValueCount.newBuilder().setMin(1).setMax(3))
-        .setPresence(FeaturePresence.newBuilder().setMinCount(2).setMinFraction(1.0))
-    )
-    .addFeature(
-      MFeature
-        .newBuilder()
-        .setName("bytes")
-        .setType(FeatureType.BYTES)
-        .setShape(FixedShape.newBuilder().addDim(FixedShape.Dim.newBuilder().setSize(3)))
-        .setPresence(FeaturePresence.newBuilder().setMinCount(2).setMinFraction(1.0))
-    )
-    .addFeature(
-      MFeature
-        .newBuilder()
-        .setName("floats")
-        .setType(FeatureType.FLOAT)
-        .setValueCount(ValueCount.newBuilder().setMin(2).setMax(3))
-        .setPresence(FeaturePresence.newBuilder().setMinCount(2).setMinFraction(1.0))
-    )
-    .addFeature(
-      MFeature
-        .newBuilder()
-        .setName("indices")
-        .setType(FeatureType.INT)
-        .setValueCount(ValueCount.newBuilder().setMin(2).setMax(3))
-        .setPresence(FeaturePresence.newBuilder().setMinCount(2).setMinFraction(1.0))
-    )
-    .addFeature(
-      MFeature
-        .newBuilder()
-        .setName("values")
-        .setType(FeatureType.BYTES)
-        .setValueCount(ValueCount.newBuilder().setMin(2).setMax(3))
-        .setPresence(FeaturePresence.newBuilder().setMinCount(2).setMinFraction(1.0))
-    )
-    .addFeature(
-      MFeature
-        .newBuilder()
-        .setName("dense_shape")
-        .setType(FeatureType.INT)
-        .setShape(FixedShape.newBuilder())
-        .setPresence(FeaturePresence.newBuilder().setMinCount(2).setMinFraction(1.0))
-    )
-    .addFeature(
-      MFeature
-        .newBuilder()
-        .setName("missing_feature")
-        .setType(FeatureType.INT)
-        .setValueCount(ValueCount.newBuilder().setMin(1).setMax(1))
-        .setPresence(FeaturePresence.newBuilder().setMinCount(1).setMinFraction(0.5))
-    )
-    .build()
 
   private def longFeature(raw: Seq[Long]): Feature = {
     val fb = Feature.newBuilder()

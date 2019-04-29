@@ -16,7 +16,6 @@
  */
 
 package com.spotify.scio
-import com.spotify.scio.tensorflow.instances.Instances
 import com.spotify.scio.tensorflow.syntax.Syntax
 
-package object tensorflow extends Instances with Syntax
+package object tensorflow extends Syntax
