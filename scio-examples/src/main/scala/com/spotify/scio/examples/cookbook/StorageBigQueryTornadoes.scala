@@ -21,7 +21,7 @@
 // `sbt runMain "com.spotify.scio.examples.extra.StorageBigQueryTornadoes
 // --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
 // --output=[PROJECT]:[DATASET].[TABLE]"`
-package com.spotify.scio.examples.extra
+package com.spotify.scio.examples.cookbook
 
 import com.spotify.scio.bigquery._
 import com.spotify.scio.ContextAndArgs

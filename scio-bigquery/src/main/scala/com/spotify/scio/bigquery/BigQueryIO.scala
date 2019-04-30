@@ -272,6 +272,8 @@ final case class BigQueryStorage(table: Table) extends BigQueryIO[TableRow] {
   override type ReadP = BigQueryStorage.ReadParam
   override type WriteP = Nothing // ReadOnly
 
+  override def testId: String = s"BigQueryIO(${table.spec})"
+
   override protected def read(sc: ScioContext, params: ReadP): SCollection[TableRow] =
     Reads.bqReadStorage(sc)(
       beam.BigQueryIO.readTableRows(),
@@ -535,7 +537,7 @@ object BigQueryTyped {
     override type ReadP = Storage.ReadParam
     override type WriteP = Nothing // ReadOnly
 
-    override def testId: String = s"BigQueryIO($table.spec)"
+    override def testId: String = s"BigQueryIO(${table.spec})"
 
     override def read(sc: ScioContext, params: ReadP): SCollection[T] = {
       @inline def typedRead(sc: ScioContext) = Reads.avroBigQueryRead[T](sc)
