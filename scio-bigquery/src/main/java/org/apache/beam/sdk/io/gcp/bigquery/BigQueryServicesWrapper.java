@@ -48,30 +48,21 @@ public class BigQueryServicesWrapper {
     bqServices.getDatasetService(bqOptions).createTable(table);
   }
 
-  public boolean isTableEmpty(TableReference tableReference)
-      throws IOException, InterruptedException {
+  public boolean isTableEmpty(TableReference tableReference) throws IOException, InterruptedException {
     return bqServices.getDatasetService(bqOptions).isTableEmpty(tableReference);
   }
 
-  public long insertAll(TableReference ref, List<TableRow> rowList)
-      throws IOException, InterruptedException {
-    List<ValueInSingleWindow<TableRow>> rows = rowList.stream()
-        .map(r ->
-            ValueInSingleWindow.of(
-                r,
-                BoundedWindow.TIMESTAMP_MIN_VALUE,
-                GlobalWindow.INSTANCE,
-                PaneInfo.NO_FIRING))
+  public long insertAll(TableReference ref, List<TableRow> rowList) throws IOException, InterruptedException {
+    List<ValueInSingleWindow<TableRow>> rows = rowList.stream().map(
+        r -> ValueInSingleWindow.of(r, BoundedWindow.TIMESTAMP_MIN_VALUE, GlobalWindow.INSTANCE, PaneInfo.NO_FIRING))
         .collect(Collectors.toList());
-    return bqServices.getDatasetService(bqOptions)
-        .insertAll(ref,
-          rows,
-          null,
-          InsertRetryPolicy.alwaysRetry(),
-          new ArrayList<>(),
-          ErrorContainer.TABLE_ROW_ERROR_CONTAINER,
-          false,
-          false);
+    return bqServices.getDatasetService(bqOptions).insertAll(ref, rows, null, InsertRetryPolicy.alwaysRetry(),
+        new ArrayList<>(), ErrorContainer.TABLE_ROW_ERROR_CONTAINER, false, false);
+  }
+
+  public Table getTable(TableReference tableReference, List<String> selectedFields)
+      throws IOException, InterruptedException {
+    return bqServices.getDatasetService(bqOptions).getTable(tableReference, selectedFields);
   }
 
 }

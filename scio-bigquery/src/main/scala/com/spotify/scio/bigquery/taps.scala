@@ -17,6 +17,7 @@
 
 package com.spotify.scio.bigquery
 
+import com.google.cloud.bigquery.storage.v1beta1.ReadOptions.TableReadOptions
 import com.google.api.services.bigquery.model.TableReference
 import com.spotify.scio.ScioContext
 import com.spotify.scio.bigquery.client.BigQuery
@@ -24,6 +25,7 @@ import com.spotify.scio.coders.Coder
 import com.spotify.scio.io.{FileStorage, Tap, Taps}
 import com.spotify.scio.values.SCollection
 
+import scala.collection.JavaConverters._
 import scala.concurrent.Future
 import scala.language.implicitConversions
 import scala.reflect.ClassTag
@@ -42,6 +44,19 @@ final case class BigQueryTap(table: TableReference) extends Tap[TableRow] {
     BigQuery.defaultInstance().tables.rows(table)
   override def open(sc: ScioContext): SCollection[TableRow] =
     sc.bigQueryTable(table)
+}
+
+/** Tap for BigQuery tables using storage api. */
+final case class BigQueryStorageTap(table: Table, readOptions: TableReadOptions)
+    extends Tap[TableRow] {
+  override def value: Iterator[TableRow] =
+    BigQuery.defaultInstance().tables.storageRows(table, readOptions)
+  override def open(sc: ScioContext): SCollection[TableRow] =
+    sc.bigQueryStorage(
+      table,
+      readOptions.getSelectedFieldsList().asScala.toList,
+      readOptions.getRowRestriction()
+    )
 }
 
 final case class BigQueryTaps(self: Taps) {
@@ -100,6 +115,42 @@ final case class BigQueryTaps(self: Taps) {
   /** Get a `Future[Tap[TableRow]]` for a BigQuery TableRow JSON file. */
   def tableRowJsonFile(path: String): Future[Tap[TableRow]] =
     mkTap(s"TableRowJson: $path", () => self.isPathDone(path), () => TableRowJsonIO(path).tap(()))
+
+  def bigQueryStorage(
+    table: TableReference,
+    readOptions: TableReadOptions
+  ): Future[Tap[TableRow]] =
+    mkTap(
+      s"BigQuery direct read table: $table",
+      () => bqc.tables.exists(table),
+      () =>
+        BigQueryStorage(table).tap(
+          BigQueryStorage.ReadParam(
+            readOptions.getSelectedFieldsList().asScala.toList,
+            readOptions.getRowRestriction()
+          )
+        )
+    )
+
+  def typedBigQueryStorage[T: TypeTag: Coder](
+    table: TableReference,
+    readOptions: TableReadOptions
+  ): Future[Tap[T]] = {
+    val fn = BigQueryType[T].fromTableRow
+    mkTap(
+      s"BigQuery direct read table: $table",
+      () => bqc.tables.exists(table),
+      () =>
+        BigQueryStorage(table)
+          .tap(
+            BigQueryStorage.ReadParam(
+              readOptions.getSelectedFieldsList().asScala.toList,
+              readOptions.getRowRestriction()
+            )
+          )
+          .map(fn)
+    )
+  }
 
   private def isQueryDone(sqlQuery: String): Boolean =
     bqc.query.extractTables(sqlQuery).forall(bqc.tables.exists)

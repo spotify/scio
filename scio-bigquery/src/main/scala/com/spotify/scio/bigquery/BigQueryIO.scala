@@ -20,6 +20,7 @@ package com.spotify.scio.bigquery
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function
 
+import com.google.cloud.bigquery.storage.v1beta1.ReadOptions.TableReadOptions
 import com.google.api.services.bigquery.model.{TableReference, TableSchema}
 import com.spotify.scio.ScioContext
 import com.spotify.scio.bigquery.client.BigQuery
@@ -36,6 +37,7 @@ import org.apache.beam.sdk.io.gcp.{bigquery => beam}
 import org.apache.beam.sdk.io.{Compression, TextIO}
 import org.apache.beam.sdk.transforms.SerializableFunction
 
+import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
 
@@ -243,8 +245,14 @@ final case class BigQueryStorage(table: Table) extends BigQueryIO[TableRow] {
   override protected def write(data: SCollection[TableRow], params: WriteP): Tap[TableRow] =
     throw new UnsupportedOperationException("BigQueryStorage is read-only")
 
-  override def tap(read: ReadP): Tap[TableRow] =
-    throw new NotImplementedError("BigQueryStore Tap not implemented")
+  override def tap(read: ReadP): Tap[TableRow] = {
+    val readOptions = TableReadOptions
+      .newBuilder()
+      .setRowRestriction(read.rowRestriction)
+      .addAllSelectedFields(read.selectFields.asJava)
+      .build()
+    BigQueryStorageTap(table, readOptions)
+  }
 }
 
 object BigQueryStorage {
@@ -473,8 +481,15 @@ object BigQueryTyped {
     override def write(data: SCollection[T], params: WriteP): Tap[T] =
       throw new UnsupportedOperationException("Storage API is read-only")
 
-    override def tap(params: ReadP): Tap[T] =
-      throw new NotImplementedError("BigQueryStore Tap not implemented")
+    override def tap(read: ReadP): Tap[T] = {
+      val fn = BigQueryType[T].fromTableRow
+      val readOptions = TableReadOptions
+        .newBuilder()
+        .setRowRestriction(read.rowRestriction)
+        .addAllSelectedFields(read.selectFields.asJava)
+        .build()
+      BigQueryStorageTap(table, readOptions).map(fn)
+    }
   }
 
   object Storage {

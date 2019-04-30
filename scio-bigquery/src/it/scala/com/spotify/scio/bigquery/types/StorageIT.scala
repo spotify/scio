@@ -18,8 +18,12 @@
 package com.spotify.scio.bigquery.types
 
 import com.google.protobuf.ByteString
+import com.google.cloud.bigquery.storage.v1beta1.ReadOptions.TableReadOptions
 import com.spotify.scio._
+import com.spotify.scio.io.Taps
 import com.spotify.scio.bigquery._
+import com.spotify.scio.bigquery.BigQueryTaps._
+import org.apache.beam.sdk.io.gcp.{bigquery => beam}
 import org.apache.beam.sdk.testing.PAssert
 import org.joda.time.{DateTimeZone, Duration, Instant}
 import org.scalatest._
@@ -205,6 +209,29 @@ class StorageIT extends FlatSpec with Matchers {
     val p = sc.typedBigQuery[FromQuery]().internal
     PAssert.that(p).containsInAnyOrder(expected)
     sc.close()
+  }
+
+  "Tap" should "support read" in {
+    val tableRef = beam.BigQueryHelpers.parseTableSpec("data-integration-test:storage.required")
+    val futureTap = Taps().bigQueryStorage(tableRef, TableReadOptions.newBuilder().build())
+
+    import scala.concurrent.Await
+    import scala.concurrent.duration.Duration
+    val res = Await.result(futureTap, Duration.Inf).value.toList
+
+    res should not be (empty)
+  }
+
+  it should "support typed read" in {
+    val tableRef = beam.BigQueryHelpers.parseTableSpec("data-integration-test:storage.required")
+    val futureTap =
+      Taps().typedBigQueryStorage[Required](tableRef, TableReadOptions.newBuilder().build())
+
+    import scala.concurrent.Await
+    import scala.concurrent.duration.Duration
+    val res = Await.result(futureTap, Duration.Inf).value.toList
+
+    res should not be (empty)
   }
 }
 
