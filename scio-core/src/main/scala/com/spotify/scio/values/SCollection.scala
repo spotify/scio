@@ -1201,11 +1201,18 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     path: String,
     numShards: Int = 0,
     suffix: String = ".bin",
-    compression: Compression = Compression.UNCOMPRESSED
+    compression: Compression = Compression.UNCOMPRESSED,
+    header: Array[Byte] = Array.emptyByteArray,
+    footer: Array[Byte] = Array.emptyByteArray,
+    framePrefix: Array[Byte] => Array[Byte] = _ => Array.emptyByteArray,
+    frameSuffix: Array[Byte] => Array[Byte] = _ => Array.emptyByteArray
   )(implicit ev: T <:< Array[Byte]): ClosedTap[Nothing] =
     this
       .asInstanceOf[SCollection[Array[Byte]]]
-      .write(BinaryIO(path))(BinaryIO.WriteParam(suffix, numShards, compression))
+      .write(BinaryIO(path))(
+        BinaryIO
+          .WriteParam(suffix, numShards, compression, header, footer, framePrefix, frameSuffix)
+      )
 
   /**
    * Save this SCollection with a custom output transform. The transform should have a unique name.
