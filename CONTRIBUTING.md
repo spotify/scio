@@ -17,7 +17,13 @@ If there is already a GitHub issue for the task you are working on, leave a comm
 
 # Contributing documentation
 
-You can contribute to Scio documentation by editing the wiki pages. You can also help us improve the API documentation. Run `SOCCO=true sbt scio-examples/clean scio-examples/compile site/makeSite` in the project root. The generated site is under `target/site/index.html`.
+You can contribute to Scio documentation, and the API documentation.
+
+Run `SOCCO=true sbt clean scio-examples/compile site/makeSite` in the project root. The generated site is under `site/target/site/index.html`.
+
+The examples in the markdown documentation are built using [mdoc](https://scalameta.org/mdoc/).
+Whhile you're writing documentation, you can check that everything compiles by running `mdoc` in the sbt shell.
+You can also run `~run` to automatically build the documentation on save.
 
 # Code of Conduct
 

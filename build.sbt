@@ -835,7 +835,8 @@ lazy val site: Project = project
     ParadoxMaterialThemePlugin,
     GhpagesPlugin,
     ScalaUnidocPlugin,
-    SiteScaladocPlugin
+    SiteScaladocPlugin,
+    MdocPlugin
   )
   .settings(commonSettings)
   .settings(siteSettings)
@@ -870,8 +871,16 @@ lazy val siteSettings = Def.settings(
   mappings in makeSite ++= Seq(
     file("scio-examples/target/site/index.html") -> "examples/index.html"
   ) ++ SoccoIndex.mappings,
+  // pre-compile md using mdoc
+  mdocIn := baseDirectory.value / "src" / "paradox",
+  mdocExtraArguments += "--no-link-hygiene",
+  sourceDirectory in Paradox := mdocOut.value,
+  mdocVariables := Map(
+    "VERSION" -> version.value
+  ),
   makeSite := {
     // Fix JavaDoc links before makeSite
+    mdoc.inputTaskValue
     (doc in ScalaUnidoc).value
     val bases = javaMappings.map(m => m._3 + "/index.html")
     val t = (target in ScalaUnidoc).value
