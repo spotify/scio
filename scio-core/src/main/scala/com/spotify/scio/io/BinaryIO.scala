@@ -44,7 +44,7 @@ final case class BinaryIO(path: String) extends ScioIO[Array[Byte]] {
     data.applyInternal(
       FileIO
         .write[Array[Byte]]
-        .via(new BytesSink())
+        .via(new BytesSink(params.header, params.footer, params.framePrefix, params.frameSuffix))
         .withCompression(params.compression)
         .withNumShards(params.numShards)
         .withSuffix(params.suffix)
@@ -63,20 +63,32 @@ object BinaryIO {
   final case class WriteParam(
     suffix: String = ".bin",
     numShards: Int = 0,
-    compression: Compression = Compression.UNCOMPRESSED
+    compression: Compression = Compression.UNCOMPRESSED,
+    header: Array[Byte] = Array.emptyByteArray,
+    footer: Array[Byte] = Array.emptyByteArray,
+    framePrefix: Array[Byte] => Array[Byte] = _ => Array.emptyByteArray,
+    frameSuffix: Array[Byte] => Array[Byte] = _ => Array.emptyByteArray
   )
 
-  private final class BytesSink extends FileIO.Sink[Array[Byte]] {
+  private final class BytesSink(
+    val header: Array[Byte],
+    val footer: Array[Byte],
+    val framePrefix: Array[Byte] => Array[Byte],
+    val frameSuffix: Array[Byte] => Array[Byte]
+  ) extends FileIO.Sink[Array[Byte]] {
     @transient private var channel: OutputStream = _
 
-    override def open(channel: WritableByteChannel): Unit =
+    override def open(channel: WritableByteChannel): Unit = {
       this.channel = Channels.newOutputStream(channel)
+      this.channel.write(header)
+    }
 
     override def flush(): Unit = {
       if (this.channel == null) {
         throw new IllegalStateException("Trying to flush a BytesSink that has not been opened")
       }
 
+      this.channel.write(footer)
       this.channel.flush()
     }
 
@@ -85,7 +97,9 @@ object BinaryIO {
         throw new IllegalStateException("Trying to write to a BytesSink that has not been opened")
       }
 
+      this.channel.write(framePrefix(datum))
       this.channel.write(datum)
+      this.channel.write(frameSuffix(datum))
     }
   }
 }
