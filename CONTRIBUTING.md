@@ -22,8 +22,8 @@ You can contribute to Scio documentation, and the API documentation.
 Run `SOCCO=true sbt clean scio-examples/compile site/makeSite` in the project root. The generated site is under `site/target/site/index.html`.
 
 The examples in the markdown documentation are built using [mdoc](https://scalameta.org/mdoc/).
-Whhile you're writing documentation, you can check that everything compiles by running `mdoc` in the sbt shell.
-You can also run `~run` to automatically build the documentation on save.
+While you're writing documentation, you can check that everything compiles by running `mdoc` in the sbt shell.
+You can also run `~mdoc` to automatically build the documentation on save.
 
 # Code of Conduct
 

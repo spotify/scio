@@ -838,8 +838,19 @@ lazy val site: Project = project
     SiteScaladocPlugin,
     MdocPlugin
   )
-  .settings(commonSettings)
+  .settings(commonSettings ++ macroSettings)
   .settings(siteSettings)
+  .dependsOn(
+    scioMacros,
+    scioCore,
+    scioAvro,
+    scioBigQuery,
+    scioBigtable,
+    scioParquet,
+    scioHdfs,
+    scioSchemas,
+    scioTest
+  )
 
 // =======================================================================
 // Site settings
@@ -865,6 +876,10 @@ lazy val siteSettings = Def.settings(
   publish / skip := true,
   description := "Scio - Documentation",
   autoAPIMappings := true,
+  libraryDependencies ++= Seq(
+    "org.apache.beam" % "beam-runners-direct-java" % beamVersion,
+    "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion
+  ),
   siteSubdirName in ScalaUnidoc := "api",
   addMappingsToSiteDir(mappings in (ScalaUnidoc, packageDoc), siteSubdirName in ScalaUnidoc),
   gitRemoteRepo := "git@github.com:spotify/scio.git",
@@ -873,11 +888,11 @@ lazy val siteSettings = Def.settings(
   ) ++ SoccoIndex.mappings,
   // pre-compile md using mdoc
   mdocIn := baseDirectory.value / "src" / "paradox",
-  mdocExtraArguments += "--no-link-hygiene",
-  sourceDirectory in Paradox := mdocOut.value,
-  mdocVariables := Map(
-    "VERSION" -> version.value
+  mdocExtraArguments ++= Seq(
+    "--no-link-hygiene",
+    "--scalac-options -Ydelambdafy:inline"
   ),
+  sourceDirectory in Paradox := mdocOut.value,
   makeSite := {
     // Fix JavaDoc links before makeSite
     mdoc.inputTaskValue

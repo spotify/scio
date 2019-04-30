@@ -28,6 +28,8 @@ There are 4 annotations for type safe code generation.
 This expands a class with fields that map to a BigQuery table. Note that `class Row` has no body definition and is expanded by the annotation at compile time based on actual table schema.
 
 ```scala
+import com.spotify.scio.bigquery.types.BigQueryType
+
 @BigQueryType.fromTable("publicdata:samples.gsod")
 class Row
 ```
@@ -37,6 +39,8 @@ class Row
 This expands a class with output fields from a SELECT query. A dry run is executed at compile time to get output schema and does not incur additional cost.
 
 ```scala
+import com.spotify.scio.bigquery.types.BigQueryType
+
 @BigQueryType.fromQuery("SELECT tornado, month FROM [publicdata:samples.gsod]")
 class Row
 ```
@@ -44,6 +48,8 @@ class Row
 The query string may also contain `"%s"`s and additional arguments for parameterized query. This could be handy for log type data.
 
 ```scala
+import com.spotify.scio.bigquery.types.BigQueryType
+
 // generate schema at compile time from a specific date
 @BigQueryType.fromQuery("SELECT user, url FROM [my-project:logs.log_%s]", "20160101")
 class Row
@@ -55,6 +61,8 @@ val newQuery = Row.query.format(args(0))
 There's also a `$LATEST` placeholder for table partitions. The latest common partition for all tables with the placeholder will be used.
 
 ```scala
+import com.spotify.scio.bigquery.types.BigQueryType
+
 // generate schema at compile time from the latest date available in both my-project:log1.log_* and my-project:log2.log_*
 @BigQueryType.fromQuery(
   "SELECT user, url, action FROM [my-project:log1.log_%s] JOIN [my-project:log2.log_%s] USING user",
@@ -70,6 +78,8 @@ val newQuery = Row.query.format(args(0), args(0))
 This annotation gets schema from a string parameter and is useful in tests.
 
 ```scala
+import com.spotify.scio.bigquery.types.BigQueryType
+
 @BigQueryType.fromSchema(
   """
     |{
@@ -90,6 +100,8 @@ class Row
 This annotation works the other way around. Instead of generating class definition from a BigQuery schema, it generates BigQuery schema from a case class definition.
 
 ```scala
+import com.spotify.scio.bigquery.types.BigQueryType
+
 @BigQueryType.toTable
 case class Result(user: String, url: String, time: Long)
 ```
@@ -97,9 +109,12 @@ case class Result(user: String, url: String, time: Long)
 Fields in the case class and the class itself can also be annotated with `@description` which propagates to BigQuery schema.
 
 ```scala
+import com.spotify.scio.bigquery.types.BigQueryType
+import com.spotify.scio.bigquery.description
+
 @BigQueryType.toTable
 @description("A list of users mapped to the urls they visited")
-case class Result(user: String, 
+case class Result(user: String,
                   url: String,
                   @description("Milliseconds since Unix epoch") time: Long)
 ```
@@ -111,6 +126,8 @@ Note that due to the nature of Scala macros, only string literals and multi-line
 These are OK:
 
 ```scala
+import com.spotify.scio.bigquery.types.BigQueryType
+
 @BigQueryType.fromTable("project-id:dataset-id.table-id")
 class Row1
 
@@ -124,7 +141,13 @@ class Row2
 
 And these are not:
 
-```scala
+```scala mdoc:reset:invisible
+val args: Array[String] = Array("", "*", "[project-id:dataset-id.table-id]")
+```
+
+```scala mdoc:fail
+import com.spotify.scio.bigquery.types.BigQueryType
+
 @BigQueryType.fromQuery("SELECT " + args(1) + " FROM [" + args(2) + "]")
 class Row1
 
@@ -142,49 +165,52 @@ Classes annotated with the type safe BigQuery API have a few more convenience me
 - `toTableRow: (T => TableRow)` - case class to `TableRow` converter
 - `toPrettyString(indent: Int = 0)` - pretty string representation of the schema
 
-```
-scio> @BigQueryType.fromTable("publicdata:samples.gsod")
-     | class Row
-defined class Row
-defined object Row
+```scala
+import com.spotify.scio.bigquery.types.BigQueryType
 
-scio> println(Row.toPrettyString(2))
-(
-  station_number: Int,
-  wban_number: Int,
-  year: Int,
-  month: Int,
-  day: Int,
-  mean_temp: Double,
-  num_mean_temp_samples: Int,
-  mean_dew_point: Double,
-  num_mean_dew_point_samples: Int,
-  mean_sealevel_pressure: Double,
-  num_mean_sealevel_pressure_samples: Int,
-  mean_station_pressure: Double,
-  num_mean_station_pressure_samples: Int,
-  mean_visibility: Double,
-  num_mean_visibility_samples: Int,
-  mean_wind_speed: Double,
-  num_mean_wind_speed_samples: Int,
-  max_sustained_wind_speed: Double,
-  max_gust_wind_speed: Double,
-  max_temperature: Double,
-  max_temperature_explicit: Boolean,
-  min_temperature: Double,
-  min_temperature_explicit: Boolean,
-  total_precipitation: Double,
-  snow_depth: Double,
-  fog: Boolean,
-  rain: Boolean,
-  snow: Boolean,
-  hail: Boolean,
-  thunder: Boolean,
-  tornado: Boolean)
+@BigQueryType.fromTable("publicdata:samples.gsod")
+class Row
+
+Row.toPrettyString(2)
+
+// @BigQueryType.toTable
+// case class Row(
+//   station_number: Long,
+//   wban_number: Option[Long],
+//   year: Long,
+//   month: Long,
+//   day: Long,
+//   mean_temp: Option[Double],
+//   num_mean_temp_samples: Option[Long],
+//   mean_dew_point: Option[Double],
+//   num_mean_dew_point_samples: Option[Long],
+//   mean_sealevel_pressure: Option[Double],
+//   num_mean_sealevel_pressure_samples: Option[Long],
+//   mean_station_pressure: Option[Double],
+//   num_mean_station_pressure_samples: Option[Long],
+//   mean_visibility: Option[Double],
+//   num_mean_visibility_samples: Option[Long],
+//   mean_wind_speed: Option[Double],
+//   num_mean_wind_speed_samples: Option[Long],
+//   max_sustained_wind_speed: Option[Double],
+//   max_gust_wind_speed: Option[Double],
+//   max_temperature: Option[Double],
+//   max_temperature_explicit: Option[Boolean],
+//   min_temperature: Option[Double],
+//   min_temperature_explicit: Option[Boolean],
+//   total_precipitation: Option[Double],
+//   snow_depth: Option[Double],
+//   fog: Option[Boolean],
+//   rain: Option[Boolean],
+//   snow: Option[Boolean],
+//   hail: Option[Boolean],
+//   thunder: Option[Boolean],
+//   tornado: Option[Boolean])
 ```
+
 In addition, `BigQueryType.fromTable` and `BigQueryTable.fromQuery` generate `table: String` and `query: String` respectively that refers to parameters in the original annotation.
 
-User defined companion objects may interfere with macro code generation so for now do not provide one to a case class annotated with `@BigQueryType.toTable`, i.e. `object Row`.
+import com.spotify.scio.bigquery.types.BigQueryTypeUser defined companion objects may interfere with macro code generation so for now do not provide one to a case class annotated with `@BigQueryType.toTable`, i.e. `object Row`.
 
 ## Using type safe BigQuery
 
@@ -193,7 +219,9 @@ User defined companion objects may interfere with macro code generation so for n
 To enable type safe BigQuery for `ScioContext`:
 
 ```scala
+import com.spotify.scio._
 import com.spotify.scio.bigquery._
+import com.spotify.scio.bigquery.types.BigQueryType
 
 @BigQueryType.fromQuery("SELECT tornado, month FROM [publicdata:samples.gsod]")
 class Row
@@ -218,11 +246,15 @@ def main(cmdlineArgs: Array[String]): Unit = {
 Annotated classes can be used with the `BigQueryClient` directly too.
 
 ```scala
+import com.spotify.scio.bigquery.types.BigQueryType
 import com.spotify.scio.bigquery.client.BigQuery
 
-val bq = new BigQuery()
-val rows = bq.getTypedRows[Row]()
-bq.writeTypedRows("project-id:dataset-id.table-id", rows.toList)
+@BigQueryType.fromQuery("SELECT tornado, month FROM [publicdata:samples.gsod]")
+class Row
+
+def bq = BigQuery.defaultInstance()
+def rows = bq.getTypedRows[Row]()
+def result = bq.writeTypedRows("project-id:dataset-id.table-id", rows.toList)
 ```
 
 ### Using type safe BigQuery directly with Beam's IO library
@@ -230,23 +262,29 @@ bq.writeTypedRows("project-id:dataset-id.table-id", rows.toList)
 If there are any BigQuery I/O operations supported in the Apache Beam client but not exposed in Scio, you may choose to use the Beam transform directly using Scio's `.saveAsCustomOutput()` option:
 
 ```scala
+import com.spotify.scio.values.SCollection
+import com.spotify.scio.bigquery.types.BigQueryType
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO
 
-val bigQueryType = BigQueryType[Foo]
-val tableRows: SCollection[Foo] = ...
+@BigQueryType.fromQuery("SELECT tornado, month FROM [publicdata:samples.gsod]")
+class Foo
 
-tableRows
-  .map(bigQueryType.toTableRow)
-  .saveAsCustomOutput(
-    "custom bigquery IO",
-    BigQueryIO
-      .writeTableRows()
-      .to("my-project:my-dataset.my-table")
-      .withSchema(bigQueryType.schema)
-      .withCreateDisposition(...)
-      .withWriteDisposition(...)
-      .withFailedInsertRetryPolicy(...)
-    )
+def bigQueryType = BigQueryType[Foo]
+def tableRows: SCollection[Foo] = ???
+
+def result =
+  tableRows
+    .map(bigQueryType.toTableRow)
+    .saveAsCustomOutput(
+      "custom bigquery IO",
+      BigQueryIO
+        .writeTableRows()
+        .to("my-project:my-dataset.my-table")
+        .withSchema(bigQueryType.schema)
+        .withCreateDisposition(???)
+        .withWriteDisposition(???)
+        .withFailedInsertRetryPolicy(???)
+      )
 ```
 
 ### BigQueryType and IntelliJ IDEA
