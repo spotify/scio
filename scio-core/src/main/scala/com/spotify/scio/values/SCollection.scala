@@ -1197,6 +1197,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * Save this SCollection as raw bytes. Note that elements must be of type `Array[Byte]`.
    * @group output
    */
+  // scalastyle:off parameter.number
   def saveAsBinaryFile(
     path: String,
     numShards: Int = 0,
@@ -1213,6 +1214,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
         BinaryIO
           .WriteParam(suffix, numShards, compression, header, footer, framePrefix, frameSuffix)
       )
+  // scalastyle:on parameter.number
 
   /**
    * Save this SCollection with a custom output transform. The transform should have a unique name.
