@@ -157,7 +157,7 @@ private[client] final class TableOps(client: Client) {
     rowRestriction: String = null
   ): Schema =
     Cache.getOrElse(s"""$tableSpec;${selectedFields
-      .mkString(";")};$rowRestriction""", Cache.SchemaCache) {
+      .mkString(",")};$rowRestriction""", Cache.SchemaCache) {
       val tableRef = bq.BigQueryHelpers.parseTableSpec(tableSpec)
       val tableRefProto = TableReferenceProto.TableReference.newBuilder()
       if (tableRef.getProjectId != null) {
