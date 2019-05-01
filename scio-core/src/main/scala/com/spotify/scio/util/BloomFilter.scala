@@ -33,7 +33,7 @@ package com.spotify.scio.util
  * of one SCollection is Sparse in the other. Idempotency of the data structure means that if there
  * are failures in intermediate steps while creating a BloomFilterMonoid, and they are retried, they
  * won't result in an invalid BloomFilter. We also never need to access a BloomFilter which has
- * a limited number of elements from an SCollection. This Bloom Filter should only used to go from
+ * a limited number of elements from an SCollection. This Bloom Filter should only be used to go from
  * SCollection[T] => SCollection[BFMonoid[T]/] with only one BloomFilter.
  *
  */
