@@ -20,7 +20,9 @@ package com.spotify.scio.util
 import java.io.{ByteArrayOutputStream, ObjectOutputStream}
 import java.util
 
-import org.apache.beam.sdk.util.SerializableUtils
+import com.spotify.scio.ScioContext
+import com.spotify.scio.coders.{Coder, CoderMaterializer}
+import org.apache.beam.sdk.util.{MutationDetectors, SerializableUtils}
 import org.scalatest.PropSpec
 import org.scalatest.prop.Checkers
 
@@ -164,11 +166,34 @@ class BloomFilterLaws extends CheckProperties {
     }
   }
 
-  property("a ++ a = a for BF") {
+  property("a ++= a = a for BF") {
     forAll { (a: MutableBF[String]) =>
       Equiv[MutableBF[String]].equiv(a ++= a, a)
     }
   }
+
+  property("MutableBF instances should be serializable by Beam") {
+    forAll { bf: MutableBF[String] =>
+      val s = SerializableUtils.ensureSerializable(bf)
+      Equiv[MutableBF[String]].equiv(bf, s)
+    }
+  }
+
+  property("MutableBF instances should not have illegal mutations") {
+    forAll { bf: MutableBF[String] =>
+      val beamMutationDetector = MutationDetectors
+        .forValueWithCoder(
+          bf,
+          CoderMaterializer
+            .beam(ScioContext.forTest(), Coder[MutableBF[String]]) // Create Coder for MutableBF.
+        )
+
+      beamMutationDetector.verifyUnmodified()
+      // On failure verifyUnmodified throws a RuntimeException (IllegalMutationException)
+      true
+    }
+  }
+
 }
 
 class BFHashIndices extends CheckProperties {
@@ -397,12 +422,6 @@ class BloomFilterTest extends WordSpec with Matchers {
       assert(beforeSize == bf.size)
     }
 
-    "serialize for Beam DoFns" in {
-      val items = (1 until 10).map(_.toString)
-      val bf = BloomFilter[String](10, 0.1).create(items: _*)
-      SerializableUtils.ensureSerializable(bf)
-    }
-
     "not have negative hash values" in {
       val NUM_HASHES = 2
       val WIDTH = 4752800
@@ -411,6 +430,12 @@ class BloomFilterTest extends WordSpec with Matchers {
       val index = bfHash.apply(s).head
 
       assert(index >= 0)
+    }
+
+    "have statically derived deterministic coder" in {
+      CoderMaterializer
+        .beam(ScioContext.forTest(), Coder[MutableBF[String]])
+        .verifyDeterministic()
     }
   }
 
@@ -442,9 +467,9 @@ class BloomFilterTest extends WordSpec with Matchers {
 
   "BloomFilters" should {
 
-    /**
-     *  The distances are different from the immutable bloom filter implementation
-     *  as they use a different method to find the hashes.
+    /*
+     * The distances are different from the immutable bloom filter implementation
+     * as they use a different method to find the hashes.
      */
     "be able to compute Hamming distance to each other" in {
 
