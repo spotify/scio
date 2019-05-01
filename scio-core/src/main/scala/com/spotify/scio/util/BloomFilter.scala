@@ -189,7 +189,7 @@ object MutableBF {
 /**
  * A Mutable Bloom Filter data structure
  */
-sealed abstract class MutableBF[A] extends java.io.Serializable {
+private[scio] sealed abstract class MutableBF[A] extends java.io.Serializable {
   def numHashes: Int
 
   def width: Int
