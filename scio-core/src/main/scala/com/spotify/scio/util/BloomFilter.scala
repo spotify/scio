@@ -176,7 +176,7 @@ private[scio] case class BloomFilterMonoid[A](numHashes: Int, width: Int)(implic
 
 }
 
-object MutableBF {
+private[scio] object MutableBF {
   implicit def equiv[A]: Equiv[MutableBF[A]] =
     new Equiv[MutableBF[A]] {
       def equiv(a: MutableBF[A], b: MutableBF[A]): Boolean =
