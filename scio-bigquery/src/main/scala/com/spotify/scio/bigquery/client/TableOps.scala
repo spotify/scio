@@ -146,7 +146,7 @@ private[client] final class TableOps(client: Client) {
 
   /** Get schema from a table. */
   def schema(tableRef: TableReference): TableSchema =
-    Cache.withCacheKey(bq.BigQueryHelpers.toTableSpec(tableRef))(table(tableRef).getSchema)
+    Cache.getOrElse(bq.BigQueryHelpers.toTableSpec(tableRef))(table(tableRef).getSchema)
 
   /** Get schema from a table using the storage API. */
   def storageReadSchema(

@@ -27,51 +27,91 @@ import com.spotify.scio.bigquery.BigQueryUtil
 import org.apache.beam.sdk.io.gcp.{bigquery => bq}
 
 import scala.util.Try
+import org.apache.avro.Schema
 
 private[client] object Cache {
 
+  sealed trait Show[T] {
+    def show(t: T): String
+  }
+
+  object Show {
+
+    @inline final def apply[T](implicit t: Show[T]): Show[T] = t
+
+    implicit val showTableSchema: Show[TableSchema] = new Show[TableSchema] {
+      override def show(t: TableSchema): String = t.toPrettyString()
+    }
+
+    implicit val showTableRef: Show[TableReference] = new Show[TableReference] {
+      override def show(table: TableReference): String =
+        bq.BigQueryHelpers.toTableSpec(table)
+    }
+
+    implicit val showAvroSchema: Show[Schema] = new Show[Schema] {
+      override def show(t: Schema): String = t.toString()
+    }
+  }
+
+  sealed trait Read[T] {
+    def read(s: String): Option[T]
+  }
+
+  object Read {
+
+    @inline final def apply[T](implicit t: Read[T]): Read[T] = t
+
+    implicit val readTableSchema: Read[TableSchema] = new Read[TableSchema] {
+      override def read(s: String): Option[TableSchema] =
+        Try(BigQueryUtil.parseSchema(s)).toOption
+    }
+
+    implicit val readTableRef: Read[TableReference] = new Read[TableReference] {
+      override def read(table: String): Option[TableReference] =
+        Try(bq.BigQueryHelpers.parseTableSpec(table)).toOption
+    }
+
+    implicit val readAvroSchema: Read[Schema] = new Read[Schema] {
+      override def read(s: String): Option[Schema] =
+        Try {
+          new Schema.Parser().parse(s)
+        }.toOption
+    }
+
+  }
+
   private[this] def isCacheEnabled: Boolean = BigQueryConfig.isCacheEnabled
 
-  def withCacheKey(key: String)(method: => TableSchema): TableSchema =
+  def getOrElse[T: Read: Show](key: String)(method: => T): T =
     if (isCacheEnabled) {
-      getCacheSchema(key) match {
+      get(key, SchemaCache) match {
         case Some(schema) => schema
         case None =>
           val schema = method
-          setCacheSchema(key, schema)
+          set(key, schema, SchemaCache)
           schema
       }
     } else {
       method
     }
 
-  private[this] def setCacheSchema(key: String, schema: TableSchema): Unit =
-    Files.asCharSink(schemaCacheFile(key), Charsets.UTF_8).write(schema.toPrettyString)
-
-  private[this] def getCacheSchema(key: String): Option[TableSchema] =
-    Try {
-      BigQueryUtil.parseSchema(scala.io.Source.fromFile(schemaCacheFile(key)).mkString)
-    }.toOption
-
-  def setCacheDestinationTable(key: String, table: TableReference): Unit =
+  def set[T: Show](key: String, t: T, f: String => File): Unit =
     Files
-      .asCharSink(tableCacheFile(key), Charsets.UTF_8)
-      .write(bq.BigQueryHelpers.toTableSpec(table))
+      .asCharSink(f(key), Charsets.UTF_8)
+      .write(Show[T].show(t))
 
-  def getCacheDestinationTable(key: String): Option[TableReference] =
-    Try {
-      bq.BigQueryHelpers.parseTableSpec(scala.io.Source.fromFile(tableCacheFile(key)).mkString)
-    }.toOption
+  def get[T: Read](key: String, f: String => File): Option[T] =
+    Try(scala.io.Source.fromFile(f(key)).mkString).toOption.flatMap(Read[T].read)
 
-  private def cacheFile(key: String, suffix: String): File = {
+  val SchemaCache: String => File = key => cacheFile(key, ".schema.json")
+
+  val TableCache: String => File = key => cacheFile(key, ".table.txt")
+
+  private[this] def cacheFile(key: String, suffix: String): File = {
     val cacheDir = BigQueryConfig.cacheDirectory
     val filename = Hashing.murmur3_128().hashString(key, Charsets.UTF_8).toString + suffix
     val cacheFile = cacheDir.resolve(filename).toFile()
     Files.createParentDirs(cacheFile)
     cacheFile
   }
-
-  private[this] def schemaCacheFile(key: String): File = cacheFile(key, ".schema.json")
-
-  private[this] def tableCacheFile(key: String): File = cacheFile(key, ".table.txt")
 }

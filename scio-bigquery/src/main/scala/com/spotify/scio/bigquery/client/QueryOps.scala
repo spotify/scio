@@ -54,7 +54,7 @@ private[client] final class QueryOps(client: Client, tableService: TableOps, job
   import QueryOps._
 
   /** Get schema for a query without executing it. */
-  def schema(sqlQuery: String): TableSchema = Cache.withCacheKey(sqlQuery) {
+  def schema(sqlQuery: String): TableSchema = Cache.getOrElse(sqlQuery) {
     if (isLegacySql(sqlQuery)) {
       // Dry-run not supported for legacy query, using view as a work around
       Logger.info("Getting legacy query schema with view")
@@ -146,7 +146,7 @@ private[client] final class QueryOps(client: Client, tableService: TableOps, job
             BigInt(tableService.table(t).getLastModifiedTime)
           }
 
-        val temp = Cache.getCacheDestinationTable(query.sql).get
+        val temp = Cache.get[TableReference](query.sql, Cache.TableCache).get
         val time = BigInt(tableService.table(temp).getLastModifiedTime)
         if (sourceTimes.forall(_ < time)) {
           Logger.info(s"Cache hit for query: `${query.sql}`")
@@ -161,7 +161,7 @@ private[client] final class QueryOps(client: Client, tableService: TableOps, job
 
           Logger.info(s"New destination table: ${bq.BigQueryHelpers.toTableSpec(newTemp)}")
 
-          Cache.setCacheDestinationTable(query.sql, newTemp)
+          Cache.set(query.sql, newTemp, Cache.TableCache)
           delayedQueryJob(query.copy(destinationTable = newTemp))
         }
       }
@@ -176,7 +176,7 @@ private[client] final class QueryOps(client: Client, tableService: TableOps, job
           Logger.info(s"Cache miss for query: `${query.sql}`")
           Logger.info(s"New destination table: ${bq.BigQueryHelpers.toTableSpec(temp)}")
 
-          Cache.setCacheDestinationTable(query.sql, temp)
+          Cache.set(query.sql, temp, Cache.TableCache)
           delayedQueryJob(query.copy(destinationTable = temp))
       }
 
