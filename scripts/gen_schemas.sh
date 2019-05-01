@@ -3,5 +3,8 @@
 set -e
 
 echo "Restoring cached BigQuery schemas"
-mkdir -p .bigquery
-cp -v scripts/bigquery/* .bigquery/
+
+SCHEMAS_DIR=/tmp/scio-bigquery-circleci/.bigquery/
+
+mkdir -p $SCHEMAS_DIR
+cp -v scripts/bigquery/* $SCHEMAS_DIR
