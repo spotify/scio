@@ -54,7 +54,7 @@ private[client] final class QueryOps(client: Client, tableService: TableOps, job
   import QueryOps._
 
   /** Get schema for a query without executing it. */
-  def schema(sqlQuery: String): TableSchema = Cache.getOrElse(sqlQuery) {
+  def schema(sqlQuery: String): TableSchema = Cache.getOrElse(sqlQuery, Cache.SchemaCache) {
     if (isLegacySql(sqlQuery)) {
       // Dry-run not supported for legacy query, using view as a work around
       Logger.info("Getting legacy query schema with view")

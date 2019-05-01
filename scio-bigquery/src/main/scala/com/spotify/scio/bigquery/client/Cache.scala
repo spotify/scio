@@ -82,13 +82,13 @@ private[client] object Cache {
 
   private[this] def isCacheEnabled: Boolean = BigQueryConfig.isCacheEnabled
 
-  def getOrElse[T: Read: Show](key: String)(method: => T): T =
+  def getOrElse[T: Read: Show](key: String, f: String => File)(method: => T): T =
     if (isCacheEnabled) {
-      get(key, SchemaCache) match {
+      get(key, f) match {
         case Some(schema) => schema
         case None =>
           val schema = method
-          set(key, schema, SchemaCache)
+          set(key, schema, f)
           schema
       }
     } else {
