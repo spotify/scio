@@ -117,7 +117,7 @@ private[scio] object BloomFilter {
  * of elements at once and fast.
  *
  */
-case class BloomFilterMonoid[A](numHashes: Int, width: Int)(implicit hash: Hash128[A])
+private[scio] case class BloomFilterMonoid[A](numHashes: Int, width: Int)(implicit hash: Hash128[A])
     extends Monoid[MutableBF[A]]
     with BoundedSemilattice[MutableBF[A]] {
 
