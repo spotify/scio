@@ -155,26 +155,28 @@ private[client] final class TableOps(client: Client) {
     tableSpec: String,
     selectedFields: List[String] = Nil,
     rowRestriction: String = null
-  ): Schema = {
-    val tableRef = bq.BigQueryHelpers.parseTableSpec(tableSpec)
-    val tableRefProto = TableReferenceProto.TableReference.newBuilder()
-    if (tableRef.getProjectId != null) {
-      tableRefProto.setProjectId(tableRef.getProjectId)
-    }
-    tableRefProto
-      .setDatasetId(tableRef.getDatasetId)
-      .setTableId(tableRef.getTableId)
-      .build()
+  ): Schema =
+    Cache.getOrElse(s"""$tableSpec;${selectedFields
+      .mkString(",")};$rowRestriction""", Cache.SchemaCache) {
+      val tableRef = bq.BigQueryHelpers.parseTableSpec(tableSpec)
+      val tableRefProto = TableReferenceProto.TableReference.newBuilder()
+      if (tableRef.getProjectId != null) {
+        tableRefProto.setProjectId(tableRef.getProjectId)
+      }
+      tableRefProto
+        .setDatasetId(tableRef.getDatasetId)
+        .setTableId(tableRef.getTableId)
+        .build()
 
-    val request = CreateReadSessionRequest
-      .newBuilder()
-      .setTableReference(tableRefProto.build())
-      .setReadOptions(StorageUtil.tableReadOptions(selectedFields, rowRestriction))
-      .setParent(s"projects/${client.project}")
-      .build()
-    val session = client.storage.createReadSession(request)
-    new Schema.Parser().parse(session.getAvroSchema.getSchema)
-  }
+      val request = CreateReadSessionRequest
+        .newBuilder()
+        .setTableReference(tableRefProto.build())
+        .setReadOptions(StorageUtil.tableReadOptions(selectedFields, rowRestriction))
+        .setParent(s"projects/${client.project}")
+        .build()
+      val session = client.storage.createReadSession(request)
+      new Schema.Parser().parse(session.getAvroSchema.getSchema)
+    }
 
   /** Get table metadata. */
   def table(tableSpec: String): Table =
