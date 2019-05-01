@@ -277,7 +277,7 @@ private[scio] sealed abstract class MutableBF[A] extends java.io.Serializable {
 /**
  * Empty bloom filter.
  */
-final case class MutableBFZero[A](hashes: KirMit32Hash[A]) extends MutableBF[A] {
+private[scio] final case class MutableBFZero[A](hashes: KirMit32Hash[A]) extends MutableBF[A] {
 
   lazy val toBitSet: util.BitSet = new util.BitSet()
 
