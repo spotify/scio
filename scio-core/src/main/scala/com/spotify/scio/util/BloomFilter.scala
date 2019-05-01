@@ -17,7 +17,7 @@
 
 package com.spotify.scio.util
 
-/**
+/*
  * An implementation of a mutable bloom filter Algebird monoid and aggregator.
  *
  * This is incompatible with Algebird's implementation of BloomFilter, and cannot be converted
