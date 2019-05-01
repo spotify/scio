@@ -57,7 +57,7 @@ import scala.collection.mutable
  * Most implementations for estimations are same as Algebird Immutable Bloom Filters
  * and these functions are aliases for them.
  */
-object BloomFilter {
+private[scio] object BloomFilter {
 
   def apply[A](numEntries: Int, fpProb: Double)(implicit hash: Hash128[A]): BloomFilterMonoid[A] =
     optimalWidth(numEntries, fpProb) match {
