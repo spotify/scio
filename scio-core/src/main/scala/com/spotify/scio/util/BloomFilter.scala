@@ -189,7 +189,7 @@ private[scio] object MutableBF {
 /**
  * A Mutable Bloom Filter data structure
  */
-private[scio] sealed abstract class MutableBF[A] extends java.io.Serializable {
+private[scio] sealed abstract class MutableBF[A] extends Serializable {
   def numHashes: Int
 
   def width: Int
@@ -328,7 +328,7 @@ final case class MutableBFInstance[A](hashes: KirMit32Hash[A], bits: util.BitSet
     require(this.numHashes == other.numHashes)
 
     other match {
-      case MutableBFZero(_)                         => this
+      case _: MutableBFZero                         => this
       case MutableSparseBFInstance(_, otherSetBits) =>
         // This is MutableBFInstance, hence not sparse, so don't convert output to sparse.
         val it = otherSetBits.flatten.iterator
