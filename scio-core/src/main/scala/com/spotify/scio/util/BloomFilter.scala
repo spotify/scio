@@ -362,18 +362,18 @@ private[scio] final case class MutableBFInstance[A](hashes: KirMit32Hash[A], bit
     (this += other, doesContain)
   }
 
-  // scalastyle:off return
   def maybeContains(item: A): Boolean = {
     val il = hashes(item)
     var idx = 0
-    while (idx < il.length) {
-      val i = il(idx)
-      if (!bits.get(i)) return false
+    var found = true
+    while (idx < il.length && found) {
+      if (!bits.get(il(idx))) {
+        found = false
+      }
       idx += 1
     }
-    true
+    found
   }
-  // scalastyle:on return
 
   // use an approximation width of 0.05
   def size: Approximate[Long] =
@@ -507,19 +507,19 @@ private[scio] final case class MutableSparseBFInstance[A](
     (this += other, doesContain)
   }
 
-  // scalastyle:off return
   def maybeContains(item: A): Boolean = {
     val sb = setBits // eval setBits only once.
     val il = hashes(item)
     var idx = 0
-    while (idx < il.length) {
-      val i = il(idx)
-      if (!sb.contains(i)) return false
+    var found = true
+    while (idx < il.length && found) {
+      if (!sb.contains(il(idx))) {
+        found = false
+      }
       idx += 1
     }
-    true
+    found
   }
-  // scalastyle:on return
 
   // use an approximation width of 0.05
   def size: Approximate[Long] =
