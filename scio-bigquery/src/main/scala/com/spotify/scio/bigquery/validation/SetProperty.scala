@@ -17,7 +17,7 @@
 
 package com.spotify.scio.bigquery.validation
 
-import scala.annotation.StaticAnnotation
+import scala.annotation.{StaticAnnotation, compileTimeOnly}
 import scala.language.experimental.macros
 import scala.reflect.macros.blackbox
 
@@ -25,6 +25,7 @@ import scala.reflect.macros.blackbox
 // Intellij can cause issues. The ideal place to set this system property is in your build.sbt file.
 private[validation] object SetProperty {
 
+  @compileTimeOnly("enable macro paradise to expand macro annotations")
   class setProperty extends StaticAnnotation {
     def macroTransform(annottees: Any*): Any = macro setPropertyImpl
   }

@@ -20,7 +20,7 @@ package com.spotify.scio.bigquery.types
 import com.google.api.services.bigquery.model.{TableRow, TableSchema}
 import org.apache.avro.generic.GenericRecord
 
-import scala.annotation.StaticAnnotation
+import scala.annotation.{compileTimeOnly, StaticAnnotation}
 import scala.language.experimental.macros
 import scala.reflect.runtime.universe._
 import scala.util.Try
@@ -176,6 +176,7 @@ object BigQueryType {
    * Also generate a companion object with convenience methods.
    * @group annotation
    */
+  @compileTimeOnly("enable macro paradise to expand macro annotations")
   class fromTable(tableSpec: String, args: String*) extends StaticAnnotation {
     def macroTransform(annottees: Any*): Any = macro TypeProvider.tableImpl
   }
@@ -203,6 +204,7 @@ object BigQueryType {
    * Also generate a companion object with convenience methods.
    * @group annotation
    */
+  @compileTimeOnly("enable macro paradise to expand macro annotations")
   class fromSchema(schema: String) extends StaticAnnotation {
     def macroTransform(annottees: Any*): Any = macro TypeProvider.schemaImpl
   }
@@ -247,6 +249,7 @@ object BigQueryType {
    * Also generate a companion object with convenience methods.
    * @group annotation
    */
+  @compileTimeOnly("enable macro paradise to expand macro annotations")
   class fromStorage(
     tableSpec: String,
     args: List[Any] = Nil,
@@ -290,6 +293,7 @@ object BigQueryType {
    * behavior, start the query string with `#legacysql` or `#standardsql`.
    * @group annotation
    */
+  @compileTimeOnly("enable macro paradise to expand macro annotations")
   class fromQuery(query: String, args: Any*) extends StaticAnnotation {
     def macroTransform(annottees: Any*): Any = macro TypeProvider.queryImpl
   }
@@ -307,6 +311,7 @@ object BigQueryType {
    * }}}
    * @group annotation
    */
+  @compileTimeOnly("enable macro paradise to expand macro annotations")
   class toTable extends StaticAnnotation {
     def macroTransform(annottees: Any*): Any = macro TypeProvider.toTableImpl
   }

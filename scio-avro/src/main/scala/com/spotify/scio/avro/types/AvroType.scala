@@ -20,7 +20,7 @@ package com.spotify.scio.avro.types
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecord
 
-import scala.annotation.StaticAnnotation
+import scala.annotation.{StaticAnnotation, compileTimeOnly}
 import scala.language.experimental.macros
 import scala.reflect.runtime.universe._
 
@@ -80,6 +80,7 @@ object AvroType {
    * Also generate a companion object with convenience methods.
    * @group annotation
    */
+  @compileTimeOnly("enable macro paradise to expand macro annotations")
   class fromSchema(schema: String) extends StaticAnnotation {
     def macroTransform(annottees: Any*): Any = macro TypeProvider.schemaImpl
   }
@@ -120,6 +121,7 @@ object AvroType {
    * Also generate a companion object with convenience methods.
    * @group annotation
    */
+  @compileTimeOnly("enable macro paradise to expand macro annotations")
   class fromPath(folderGlob: String) extends StaticAnnotation {
     def macroTransform(annottees: Any*): Any = macro TypeProvider.pathImpl
   }
@@ -146,6 +148,7 @@ object AvroType {
    * Also generate a companion object with convenience methods.
    * @group annotation
    */
+  @compileTimeOnly("enable macro paradise to expand macro annotations")
   class fromSchemaFile(schemaFile: String) extends StaticAnnotation {
     def macroTransform(annottees: Any*): Any = macro TypeProvider.schemaFileImpl
   }
@@ -170,6 +173,7 @@ object AvroType {
    * Rule of thumb is to only add new fields, without removing the old ones.
    * @group annotation
    */
+  @compileTimeOnly("enable macro paradise to expand macro annotations")
   class toSchema extends StaticAnnotation {
     def macroTransform(annottees: Any*): Any = macro TypeProvider.toSchemaImpl
   }
