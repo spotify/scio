@@ -129,6 +129,9 @@ object TestData {
         )
       new avro.User(i, s"lastname_$i", s"firstname_$i", s"email$i@spotify.com", Nil.asJava, addr)
     }.toList
+
+  case class Order(order_id: Long, price: Long, site_id: Long)
+  val orders = List(Order(1, 2, 2), Order(2, 2, 1), Order(1, 4, 3), Order(3, 2, 1), Order(3, 3, 1))
 }
 
 class BeamSQLTest extends PipelineSpec {
@@ -318,6 +321,12 @@ class BeamSQLTest extends PipelineSpec {
     cast should containInAnyOrder(expectedCast)
   }
 
+  it should "support tags" in runWithContext { sc =>
+    val a = sc.parallelize(users)
+    val q = new Query[User, String]("select username from A", new TupleTag[User]("A"))
+    a.queryAs(q) shouldNot beEmpty
+  }
+
   it should "support JOIN" in runWithContext { sc =>
     val a = sc.parallelize(users)
     val b = sc.parallelize(users)
@@ -398,7 +407,7 @@ class BeamSQLTest extends PipelineSpec {
   it should "provide a typecheck method for tests" in {
     object checkOK {
       def apply[A: Schema, B: Schema](q: String): Assertion =
-        Queries.typecheck(Query[A, B](q)) should be('right)
+        Queries.typecheck(Query[A, B](q, Sql.defaultTag)) should be('right)
 
       def apply[A: Schema, B: Schema, C: Schema](
         q: String,
@@ -410,7 +419,7 @@ class BeamSQLTest extends PipelineSpec {
 
     object checkNOK {
       def apply[A: Schema, B: Schema](q: String): Assertion =
-        Queries.typecheck(Query[A, B](q)) should be('left)
+        Queries.typecheck(Query[A, B](q, Sql.defaultTag)) should be('left)
 
       def apply[A: Schema, B: Schema, C: Schema](
         q: String,
@@ -536,7 +545,10 @@ class BeamSQLTest extends PipelineSpec {
       }
 
     val q =
-      Query[avro.User, (Int, String, String)]("SELECT id, first_name, last_name from SCOLLECTION")
+      Query[avro.User, (Int, String, String)](
+        "SELECT id, first_name, last_name from SCOLLECTION",
+        Sql.defaultTag
+      )
 
     sc.parallelize(avroUsers).queryAs(q) should containInAnyOrder(expected)
   }
@@ -560,6 +572,60 @@ class BeamSQLTest extends PipelineSpec {
 
     sc.parallelize(avroWithNullable)
       .to[CompatibleAvroTestRecord](To.safe) should containInAnyOrder(expectedAvro)
+  }
+
+  "String interpolation" should "support simple queries" in runWithContext { sc =>
+    val expected = users.map { u =>
+      (u.username, u.age)
+    }
+    val in = sc.parallelize(users)
+    val r = sql"select username, age from $in".as[(String, Int)]
+    r should containInAnyOrder(expected)
+  }
+
+  it should "support UDF" in runWithContext { sc =>
+    val in = sc.parallelize(users)
+    val maxUserAge = Udf.fromAggregateFn("maxUserAge", new MaxUserAgeUdafFn())
+    val r = sql"select $maxUserAge(age) as maxUserAge from $in".as[Int]
+    r should containSingleValue(30)
+  }
+
+  it should "support joins" in runWithContext { sc =>
+    val a = sc.parallelize(users)
+    val b = sc.parallelize(users)
+    sql"""
+      SELECT $a.username
+      FROM $a
+      JOIN $b ON $a.username = $b.username
+    """.as[String] shouldNot beEmpty
+
+    val o1 = sc.parallelize(orders)
+    val o2 = sc.parallelize(orders)
+    sql"""
+      SELECT $o1.order_id, $o1.price, $o1.site_id, $o2.order_id, $o2.price, $o2.site_id
+      FROM $o1
+      JOIN $o2
+      ON $o1.order_id = $o2.site_id AND $o2.price = $o1.site_id
+    """.as[(Long, Long, Long, Long, Long, Long)] shouldNot beEmpty
+
+    sql"""
+      SELECT o1.order_id, o1.price, o1.site_id, o2.order_id, o2.price, o2.site_id
+      FROM $o1 o1
+      JOIN $o2 o2
+      ON o1.order_id = o2.site_id AND o2.price = o1.site_id
+    """.as[(Long, Long, Long, Long, Long, Long)] shouldNot beEmpty
+  }
+
+  it should "support joins and UDF in the same query" in runWithContext { sc =>
+    val a = sc.parallelize(users)
+    val b = sc.parallelize(users)
+    val maxUserAge = Udf.fromAggregateFn("maxUserAge", new MaxUserAgeUdafFn())
+    val r =
+      sql"""
+        SELECT $maxUserAge($a.age) FROM $a
+        JOIN $b ON $a.username = $b.username
+      """.as[Int]
+    r should containSingleValue(30)
   }
 }
 

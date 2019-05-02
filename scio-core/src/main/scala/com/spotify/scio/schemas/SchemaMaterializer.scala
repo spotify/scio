@@ -106,6 +106,7 @@ object SchemaMaterializer {
     val vs = v.getValues
     val values = new Array[Any](size)
     var i = 0
+    assert(size == record.schemas.length, s"Record $record and value $v sizes do not match")
     while (i < size) {
       val (_, schema) = record.schemas(i)
       val v = vs.get(i)

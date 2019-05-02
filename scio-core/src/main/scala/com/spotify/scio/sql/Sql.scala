@@ -41,6 +41,8 @@ object Sql {
   private[sql] val BeamProviderName = "beam"
   private[sql] val SCollectionTypeName = "SCOLLECTION"
 
+  private[scio] def defaultTag[A]: TupleTag[A] = new TupleTag[A](SCollectionTypeName)
+
   def from[A: Schema](sc: SCollection[A]): SqlSCollection[A] = new SqlSCollection(sc)
 
   def from[A: Schema, B: Schema](a: SCollection[A], b: SCollection[B]): SqlSCollection2[A, B] =
@@ -70,7 +72,8 @@ object Sql {
 
 final class SqlSCollection[A: Schema](sc: SCollection[A]) {
 
-  def query(q: String, udfs: Udf*): SCollection[Row] = query(Query[A, Row](q, udfs = udfs.toList))
+  def query(q: String, udfs: Udf*): SCollection[Row] =
+    query(Query[A, Row](q, Sql.defaultTag, udfs = udfs.toList))
 
   def query(q: Query[A, Row]): SCollection[Row] = {
     sc.context.wrap {
@@ -85,7 +88,7 @@ final class SqlSCollection[A: Schema](sc: SCollection[A]) {
   }
 
   def queryAs[R: Schema](q: String, udfs: Udf*): SCollection[R] =
-    queryAs(Query[A, R](q, udfs = udfs.toList))
+    queryAs(Query[A, R](q, Sql.defaultTag, udfs = udfs.toList))
 
   def queryAs[R: Schema](q: Query[A, R]): SCollection[R] =
     try {
@@ -135,7 +138,7 @@ final class SqlSCollection2[A: Schema, B: Schema](a: SCollection[A], b: SCollect
 
 final case class Query[A, B](
   query: String,
-  tag: TupleTag[A] = new TupleTag[A]("SCOLLECTION"),
+  tag: TupleTag[A] = Sql.defaultTag[A],
   udfs: List[Udf] = Nil
 )
 
@@ -155,6 +158,7 @@ object Queries {
    */
   def typecheck[A: Schema, B: Schema](q: Query[A, B]): Either[String, Query[A, B]] = {
     val schema: BSchema = SchemaMaterializer.fieldType(Schema[A]).getRowSchema
+    // TODO: add null check on schema. If A is a scalar (Int, String,...) schema will be null
     val expectedSchema: BSchema =
       Schema[B] match {
         case s: Record[B] =>
@@ -193,6 +197,7 @@ object Queries {
       .map(_ => q)
   }
 
+  // TODO: this should support TupleTag
   def typed[A: Schema, B: Schema](query: String): Query[A, B] =
     macro QueryMacros.typedImpl[A, B]
 
@@ -238,6 +243,17 @@ object Queries {
   ): Try[BSchema] =
     parseQuery(query, schemas, udfs).map(n => CalciteUtils.toSchema(n.getRowType))
 
+  private[this] def printInferred(inferredSchemas: List[(String, BSchema)]): String =
+    inferredSchemas
+      .map {
+        case (name, schema) =>
+          s"""
+          |schema of $name:
+          |${PrettyPrint.prettyPrint(schema.getFields.asScala.toList)}
+        """.stripMargin
+      }
+      .mkString("\n")
+
   private[this] def typecheck(
     query: String,
     inferredSchemas: List[(String, BSchema)],
@@ -249,17 +265,14 @@ object Queries {
       .left
       .map { ex =>
         val mess = org.apache.commons.lang3.exception.ExceptionUtils.getRootCauseMessage(ex)
+
         s"""
            |$mess
            |
            |Query:
            |$query
            |
-           |SCOLLECTION schema:
-           |${inferredSchemas
-             .map(i => PrettyPrint.prettyPrint(i._2.getFields.asScala.toList))
-             .mkString("\n")}
-           |
+           |${printInferred(inferredSchemas)}
            |Query result schema (inferred) is unknown.
            |Expected schema:
            |${PrettyPrint.prettyPrint(expectedSchema.getFields.asScala.toList)}
@@ -281,11 +294,7 @@ object Queries {
                |Query:
                |$query
                |
-               |SCOLLECTION schema:
-               |${inferredSchemas
-                 .map(i => PrettyPrint.prettyPrint(i._2.getFields.asScala.toList))
-                 .mkString("\n")}
-               |
+               |${printInferred(inferredSchemas)}
                |Query result schema (inferred):
                |${PrettyPrint.prettyPrint(inferredSchema.getFields.asScala.toList)}
                |
@@ -301,10 +310,33 @@ object Queries {
 object QueryMacros {
   import scala.reflect.macros.blackbox
 
-  def typedImpl[A, B](c: blackbox.Context)(
+  /**
+   * Make sure that A is a concrete type bc. SQL macros can only
+   * materialize Schema[A] is A is concrete
+   */
+  private def assertConcrete[A: c.WeakTypeTag](c: blackbox.Context): Unit = {
+    import c.universe._
+    val wtt = weakTypeOf[A].dealias
+    val isVal = wtt <:< typeOf[AnyVal]
+    val isSealed =
+      if (wtt.typeSymbol.isClass) {
+        wtt.typeSymbol.asClass.isSealed
+      } else false
+    val isAbstract = wtt.typeSymbol.asType.isAbstract
+    if (!isVal && isAbstract && !isSealed) {
+      c.abort(c.enclosingPosition, s"$wtt is an abstract type, expected a concrete type.")
+    } else {
+      ()
+    }
+  }
+
+  def typedImpl[A: c.WeakTypeTag, B: c.WeakTypeTag](c: blackbox.Context)(
     query: c.Expr[String]
   )(iSchema: c.Expr[Schema[A]], oSchema: c.Expr[Schema[B]]): c.Expr[Query[A, B]] = {
     import c.universe._
+
+    assertConcrete[A](c)
+    assertConcrete[B](c)
 
     val queryTree = c.untypecheck(query.tree.duplicate)
     val sInTree = c.untypecheck(iSchema.tree.duplicate)
@@ -324,20 +356,24 @@ object QueryMacros {
     Queries
       .typecheck(sq)(sIn, sOut)
       .fold(
-        err => c.abort(c.enclosingPosition, err), { _ =>
-          c.Expr[Query[A, B]](q"""_root_.com.spotify.scio.sql.Query($query)""")
-        }
+        err => c.abort(c.enclosingPosition, err),
+        _ => c.Expr[Query[A, B]](q"_root_.com.spotify.scio.sql.Query($query)")
       )
   }
 
-  def typed2Impl[A, B, R](
+  def typed2Impl[A: c.WeakTypeTag, B: c.WeakTypeTag, R: c.WeakTypeTag](
     c: blackbox.Context
   )(query: c.Expr[String], aTag: c.Expr[TupleTag[A]], bTag: c.Expr[TupleTag[B]])(
     aSchema: c.Expr[Schema[A]],
     bSchema: c.Expr[Schema[B]],
     oSchema: c.Expr[Schema[R]]
   ): c.Expr[Query2[A, B, R]] = {
+
     import c.universe._
+
+    assertConcrete[A](c)
+    assertConcrete[B](c)
+    assertConcrete[R](c)
 
     val queryTree = c.untypecheck(query.tree.duplicate)
     val sInTreeA = c.untypecheck(aSchema.tree.duplicate)
