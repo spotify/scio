@@ -329,7 +329,7 @@ private[scio] final case class MutableBFInstance[A](hashes: KirMit32Hash[A], bit
     require(this.width == other.width)
     require(this.numHashes == other.numHashes)
 
-    other match {
+    val ret = other match {
       case _: MutableBFZero[A]                      => this
       case MutableSparseBFInstance(_, otherSetBits) =>
         // This is MutableBFInstance, hence not sparse, so don't convert output to sparse.
@@ -343,6 +343,7 @@ private[scio] final case class MutableBFInstance[A](hashes: KirMit32Hash[A], bit
         bits.or(otherBits)
         this
     }
+    ret
   }
 
   def +=(item: A): MutableBF[A] = {
@@ -430,8 +431,14 @@ private[scio] final case class MutableSparseBFInstance[A](
 
   def toBitSet: util.BitSet = {
     val jbitSet = new util.BitSet()
-    allSeenBit // setBits would involve an additional hashing operation to convert to a HashSet.
-      .foreach(jbitSet.set)
+    // We do not call setBits as it would involve an additional hashing operation to convert
+    // to a HashSet.
+    val bits = allSeenBit
+    var idx = 0
+    while (idx < bits.size) {
+      jbitSet.set(bits(idx))
+      idx += 1
+    }
     jbitSet
   }
 
@@ -469,6 +476,9 @@ private[scio] final case class MutableSparseBFInstance[A](
       case MutableBFInstance(_, otherBits) =>
         setIsStale = true
         // since the other is not a sparse BF, the result cannot be sparse.
+
+        // This violates the contract of ++= (it doesn't modify this)
+        // We don't use this anywhere within Scio, and this data struct is private[scio]
         asMutableBFInstance ++= other
     }
   }
