@@ -32,10 +32,12 @@ package object sql {
   }
 
   object SQLBuilder {
-    private[sql] def apply[A](q: String,
-                              ref: SCollectionRef[A],
-                              tag: TupleTag[A],
-                              udfs: List[Udf]): SQLBuilder =
+    private[sql] def apply[A](
+      q: String,
+      ref: SCollectionRef[A],
+      tag: TupleTag[A],
+      udfs: List[Udf]
+    ): SQLBuilder =
       new SQLBuilder {
         def as[B: Schema] =
           Sql
@@ -43,12 +45,14 @@ package object sql {
             .queryAs(new Query[ref._A, B](q, tag, udfs))
       }
 
-    private[sql] def apply[A0, A1](q: String,
-                                   ref0: SCollectionRef[A0],
-                                   ref1: SCollectionRef[A1],
-                                   tag0: TupleTag[A0],
-                                   tag1: TupleTag[A1],
-                                   udfs: List[Udf]): SQLBuilder =
+    private[sql] def apply[A0, A1](
+      q: String,
+      ref0: SCollectionRef[A0],
+      ref1: SCollectionRef[A1],
+      tag0: TupleTag[A0],
+      tag1: TupleTag[A1],
+      udfs: List[Udf]
+    ): SQLBuilder =
       new SQLBuilder {
         def as[B: Schema] =
           Sql
@@ -70,8 +74,9 @@ package object sql {
 
   final implicit class SqlInterpolator(private val sc: StringContext) extends AnyVal {
 
-    private def paramToString(tags: Map[String, (SCollectionRef[_], TupleTag[_])])(
-      p: SqlParam): String =
+    private def paramToString(
+      tags: Map[String, (SCollectionRef[_], TupleTag[_])]
+    )(p: SqlParam): String =
       p match {
         case SCollectionRef(scoll) =>
           tags(scoll.name)._2.getId
@@ -105,7 +110,8 @@ package object sql {
         case ts =>
           throw new IllegalArgumentException(
             "sql interpolation only support JOIN on up to 2 unique " +
-              s"SCollections, found ${ts.length}")
+              s"SCollections, found ${ts.length}"
+          )
       }
     }
 
@@ -128,8 +134,10 @@ package sql {
           ps
         case q"sql.this.`package`.SqlInterpolator(scala.StringContext.apply(..$ps))" => ps
         case tree =>
-          ctx.abort(ctx.enclosingPosition,
-                    s"Implementation error. Expected tsql string interpolation, found $tree")
+          ctx.abort(
+            ctx.enclosingPosition,
+            s"Implementation error. Expected tsql string interpolation, found $tree"
+          )
       }
     }
 
@@ -138,8 +146,10 @@ package sql {
         parts.map {
           case Literal(Constant(s: String)) => s
           case tree =>
-            ctx.abort(ctx.enclosingPosition,
-                      s"Implementation error. Expected Literal(Constant(...)), found $tree")
+            ctx.abort(
+              ctx.enclosingPosition,
+              s"Implementation error. Expected Literal(Constant(...)), found $tree"
+            )
         }
 
       ps2
@@ -148,7 +158,8 @@ package sql {
     }
 
     def inferImplicitSchemas[B: ctx.WeakTypeTag](
-      wttA: Type): (ctx.Tree, ctx.Tree, Schema[_], Schema[_]) = {
+      wttA: Type
+    ): (ctx.Tree, ctx.Tree, Schema[_], Schema[_]) = {
       val wttB = ctx.weakTypeTag[B]
 
       val needA = ctx.typecheck(tq"_root_.com.spotify.scio.schemas.Schema[$wttA]", ctx.TYPEmode).tpe
@@ -168,7 +179,8 @@ package sql {
 
     def inferImplicitSchemas[C: ctx.WeakTypeTag](
       wttA: Type,
-      wttB: Type): (ctx.Tree, ctx.Tree, ctx.Tree, Schema[_], Schema[_], Schema[_]) = {
+      wttB: Type
+    ): (ctx.Tree, ctx.Tree, ctx.Tree, Schema[_], Schema[_], Schema[_]) = {
       val wttC = ctx.weakTypeTag[C]
 
       val needA = ctx.typecheck(tq"_root_.com.spotify.scio.schemas.Schema[$wttA]", ctx.TYPEmode).tpe
@@ -186,7 +198,8 @@ package sql {
       val (scha, schab, schac) =
         ctx.eval(
           ctx
-            .Expr[(Schema[_], Schema[_], Schema[_])](q"($schemaATree, $schemaBTree, $schemaCTree)"))
+            .Expr[(Schema[_], Schema[_], Schema[_])](q"($schemaATree, $schemaBTree, $schemaCTree)")
+        )
       (sa, sb, sc, scha, schab, schac)
     }
 
@@ -254,8 +267,9 @@ package sql {
       c.Expr[SQLBuilder](tree)
     }
 
-    def expand[B: c.WeakTypeTag](c: whitebox.Context)(
-      schB: c.Expr[Schema[B]]): c.Expr[SCollection[B]] = {
+    def expand[B: c.WeakTypeTag](
+      c: whitebox.Context
+    )(schB: c.Expr[Schema[B]]): c.Expr[SCollection[B]] = {
       import c.universe._
 
       val annotationParams =
@@ -274,15 +288,18 @@ package sql {
           case Apply(TypeApply(Select(Select(_, _), TermName("apply")), _), pas) =>
             pas
           case tree =>
-            c.abort(c.enclosingPosition,
-                    s"Failed to extract SQL parts. Expected List(...), found $tree")
+            c.abort(
+              c.enclosingPosition,
+              s"Failed to extract SQL parts. Expected List(...), found $tree"
+            )
         }
 
       tsqlImpl[B](c)(parts, ps: _*)
     }
 
     def tsqlImpl[B: c.WeakTypeTag](
-      c: whitebox.Context)(parts: List[c.Tree], ps: c.Expr[Any]*): c.Expr[SCollection[B]] = {
+      c: whitebox.Context
+    )(parts: List[c.Tree], ps: c.Expr[Any]*): c.Expr[SCollection[B]] = {
       val h = new { val ctx: c.type = c } with SqlInterpolatorMacroHelpers
       import h._
       import c.universe._
@@ -291,8 +308,10 @@ package sql {
         ps.partition(_.actualType.typeSymbol == typeOf[SCollection[Any]].typeSymbol)
 
       other.headOption.foreach { t =>
-        c.abort(c.enclosingPosition,
-                s"tsql interpolation only support arguments of type SCollection. Found $t")
+        c.abort(
+          c.enclosingPosition,
+          s"tsql interpolation only support arguments of type SCollection. Found $t"
+        )
       }
 
       val wttB = c.weakTypeTag[B]
@@ -342,8 +361,10 @@ package sql {
                 .queryAs($q)($implB)""")
         case d =>
           val ns = d.map(_._1).mkString(", ")
-          c.abort(c.enclosingPosition,
-                  s"BeamSQL can only join up to 2 SCollections, found ${d.size}: $ns")
+          c.abort(
+            c.enclosingPosition,
+            s"BeamSQL can only join up to 2 SCollections, found ${d.size}: $ns"
+          )
       }
     }
 

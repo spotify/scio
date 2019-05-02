@@ -136,9 +136,11 @@ final class SqlSCollection2[A: Schema, B: Schema](a: SCollection[A], b: SCollect
 
 }
 
-final case class Query[A, B](query: String,
-                             tag: TupleTag[A] = Sql.defaultTag[A],
-                             udfs: List[Udf] = Nil)
+final case class Query[A, B](
+  query: String,
+  tag: TupleTag[A] = Sql.defaultTag[A],
+  udfs: List[Udf] = Nil
+)
 
 final case class Query2[A, B, R](
   query: String,
@@ -252,10 +254,12 @@ object Queries {
       }
       .mkString("\n")
 
-  private[this] def typecheck(query: String,
-                              inferredSchemas: List[(String, BSchema)],
-                              expectedSchema: BSchema,
-                              udfs: List[Udf]): Either[String, String] = {
+  private[this] def typecheck(
+    query: String,
+    inferredSchemas: List[(String, BSchema)],
+    expectedSchema: BSchema,
+    udfs: List[Udf]
+  ): Either[String, String] = {
     ScioUtil
       .toEither(schema(query, inferredSchemas, udfs))
       .left
@@ -326,9 +330,9 @@ object QueryMacros {
     }
   }
 
-  def typedImpl[A: c.WeakTypeTag, B: c.WeakTypeTag](c: blackbox.Context)(query: c.Expr[String])(
-    iSchema: c.Expr[Schema[A]],
-    oSchema: c.Expr[Schema[B]]): c.Expr[Query[A, B]] = {
+  def typedImpl[A: c.WeakTypeTag, B: c.WeakTypeTag](c: blackbox.Context)(
+    query: c.Expr[String]
+  )(iSchema: c.Expr[Schema[A]], oSchema: c.Expr[Schema[B]]): c.Expr[Query[A, B]] = {
     import c.universe._
 
     assertConcrete[A](c)
@@ -357,12 +361,13 @@ object QueryMacros {
       )
   }
 
-  def typed2Impl[A: c.WeakTypeTag, B: c.WeakTypeTag, R: c.WeakTypeTag](c: blackbox.Context)(
-    query: c.Expr[String],
-    aTag: c.Expr[TupleTag[A]],
-    bTag: c.Expr[TupleTag[B]])(aSchema: c.Expr[Schema[A]],
-                               bSchema: c.Expr[Schema[B]],
-                               oSchema: c.Expr[Schema[R]]): c.Expr[Query2[A, B, R]] = {
+  def typed2Impl[A: c.WeakTypeTag, B: c.WeakTypeTag, R: c.WeakTypeTag](
+    c: blackbox.Context
+  )(query: c.Expr[String], aTag: c.Expr[TupleTag[A]], bTag: c.Expr[TupleTag[B]])(
+    aSchema: c.Expr[Schema[A]],
+    bSchema: c.Expr[Schema[B]],
+    oSchema: c.Expr[Schema[R]]
+  ): c.Expr[Query2[A, B, R]] = {
 
     import c.universe._
 

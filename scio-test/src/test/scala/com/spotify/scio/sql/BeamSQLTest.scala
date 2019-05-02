@@ -545,8 +545,10 @@ class BeamSQLTest extends PipelineSpec {
       }
 
     val q =
-      Query[avro.User, (Int, String, String)]("SELECT id, first_name, last_name from SCOLLECTION",
-                                              Sql.defaultTag)
+      Query[avro.User, (Int, String, String)](
+        "SELECT id, first_name, last_name from SCOLLECTION",
+        Sql.defaultTag
+      )
 
     sc.parallelize(avroUsers).queryAs(q) should containInAnyOrder(expected)
   }
