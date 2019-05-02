@@ -1,0 +1,1 @@
+{"type":"record","name":"__root__","fields":[{"name":"month","type":"long","doc":"The month the data was collected in"},{"name":"tornado","type":["null","boolean"],"doc":"Indicates if a tornado was reported on this day."}]}
