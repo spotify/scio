@@ -310,7 +310,7 @@ private[scio] final case class MutableBFZero[A](hashes: KirMit32Hash[A]) extends
 /**
  * Mutable Bloom filter with multiple values
  */
-final case class MutableBFInstance[A](hashes: KirMit32Hash[A], bits: util.BitSet)
+private[scio] final case class MutableBFInstance[A](hashes: KirMit32Hash[A], bits: util.BitSet)
     extends MutableBF[A] {
 
   def numHashes: Int = hashes.numHashes
@@ -392,7 +392,7 @@ final case class MutableBFInstance[A](hashes: KirMit32Hash[A], bits: util.BitSet
  * bitmap. Also Apache Beam doesn't have a Coder for EWAHCompressedBitmap, and it would fallback
  * to Kryo
  */
-final case class MutableSparseBFInstance[A](
+private[scio] final case class MutableSparseBFInstance[A](
   hashes: KirMit32Hash[A],
   allHashes: mutable.Buffer[Array[Int]]
 ) extends MutableBF[A] {
@@ -517,7 +517,7 @@ final case class MutableSparseBFInstance[A](
 /**
  * Constructors for mutable bloom filters
  */
-object MutableBFInstance {
+private[scio] object MutableBFInstance {
   final def apply[A](hashes: KirMit32Hash[A], firstElement: A): MutableBF[A] = {
     val bf = MutableBFInstance.empty(hashes)
     bf += firstElement
@@ -548,7 +548,9 @@ object MutableBFInstance {
  * We have noticed 2 to 4 times higher throughput when using this approach compared to the
  * implementation in Algebird.
  */
-final case class KirMit32Hash[A](numHashes: Int, width: Int)(implicit hash128: Hash128[A]) {
+private[util] final case class KirMit32Hash[A](numHashes: Int, width: Int)(
+  implicit hash128: Hash128[A]
+) {
   def apply(valueToHash: A): Array[Int] = {
     val (hash64_1, hash_64_2) = hash128.hashWithSeed(numHashes, valueToHash)
     // We just need two 32 bit hashes. So just convert toInt, and ignore the rest.
