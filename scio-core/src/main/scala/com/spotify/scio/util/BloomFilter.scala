@@ -265,7 +265,7 @@ private[scio] sealed abstract class MutableBF[A] extends java.io.Serializable {
       case (x: MutableBF[A], y: MutableBFZero[A])     => x.numBits
 
       // Otherwise compare as bit sets
-      case (_, _) =>
+      case _ =>
         // hammingDistance should not mutate BloomFilter
         val thisCopy = this.toBitSet.clone().asInstanceOf[util.BitSet]
         thisCopy.xor(that.toBitSet)
