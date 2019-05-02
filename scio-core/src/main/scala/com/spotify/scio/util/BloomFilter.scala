@@ -347,7 +347,11 @@ private[scio] final case class MutableBFInstance[A](hashes: KirMit32Hash[A], bit
 
   def +=(item: A): MutableBF[A] = {
     val itemHashes = hashes(item)
-    itemHashes.foreach(bits.set)
+    var idx = 0
+    while (idx < itemHashes.length) {
+      bits.set(itemHashes(idx))
+      idx += 1
+    }
     this
   }
   // scalastyle:on method.name
