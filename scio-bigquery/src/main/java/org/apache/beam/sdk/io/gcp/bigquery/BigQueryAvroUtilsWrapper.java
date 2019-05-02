@@ -15,12 +15,15 @@
  * under the License.
  */
 
-package com.spotify.scio.tensorflow.instances
+package org.apache.beam.sdk.io.gcp.bigquery;
 
-import com.spotify.scio.coders.Coder
+import com.google.api.services.bigquery.model.TableRow;
+import com.google.api.services.bigquery.model.TableSchema;
+import org.apache.avro.generic.GenericRecord;
 
-trait CoderInstances {
+public final class BigQueryAvroUtilsWrapper {
 
-  implicit val featureTypeCoder: Coder[org.tensorflow.metadata.v0.FeatureType] = Coder.kryo
-
+    public static TableRow convertGenericRecordToTableRow(GenericRecord record, TableSchema schema) {
+        return BigQueryAvroUtils.convertGenericRecordToTableRow(record, schema);
+    }
 }

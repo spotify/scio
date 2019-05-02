@@ -20,8 +20,10 @@ package com.spotify.scio.bigquery
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function
 
+import com.google.cloud.bigquery.storage.v1beta1.ReadOptions.TableReadOptions
 import com.google.api.services.bigquery.model.{TableReference, TableSchema}
 import com.spotify.scio.ScioContext
+import com.spotify.scio.bigquery.ExtendedErrorInfo._
 import com.spotify.scio.bigquery.client.BigQuery
 import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
@@ -36,6 +38,7 @@ import org.apache.beam.sdk.io.gcp.{bigquery => beam}
 import org.apache.beam.sdk.io.{Compression, TextIO}
 import org.apache.beam.sdk.transforms.SerializableFunction
 
+import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
 
@@ -187,7 +190,13 @@ final case class BigQueryTable(table: Table) extends BigQueryIO[TableRow] {
     if (params.timePartitioning != null) {
       transform = transform.withTimePartitioning(params.timePartitioning.asJava)
     }
-    data.applyInternal(transform)
+    val wr = data.applyInternal(transform)
+
+    transform = params.extendedErrorInfo match {
+      case Disabled => transform
+      case Enabled  => transform.withExtendedErrorInfo()
+    }
+    params.insertErrorTransform(params.extendedErrorInfo.coll(data.context, wr))
 
     if (params.writeDisposition == WriteDisposition.WRITE_APPEND) {
       throw new NotImplementedError("BigQuery future with append not implemented")
@@ -200,21 +209,52 @@ final case class BigQueryTable(table: Table) extends BigQueryIO[TableRow] {
 }
 
 object BigQueryTable {
+  sealed trait WriteParam {
+    val schema: TableSchema
+    val writeDisposition: WriteDisposition
+    val createDisposition: CreateDisposition
+    val tableDescription: String
+    val timePartitioning: TimePartitioning
+    val extendedErrorInfo: ExtendedErrorInfo
+    val insertErrorTransform: SCollection[extendedErrorInfo.Info] => Unit
+  }
+
   object WriteParam {
     private[bigquery] val DefaultSchema: TableSchema = null
     private[bigquery] val DefaultWriteDisposition: WriteDisposition = null
     private[bigquery] val DefaultCreateDisposition: CreateDisposition = null
     private[bigquery] val DefaultTableDescription: String = null
     private[bigquery] val DefaultTimePartitioning: TimePartitioning = null
-  }
+    private[bigquery] val DefaultExtendedErrorInfo: ExtendedErrorInfo = ExtendedErrorInfo.Disabled
+    private[bigquery] val DefaultInsertErrorTransform
+      : SCollection[DefaultExtendedErrorInfo.Info] => Unit = _ => ()
 
-  final case class WriteParam private (
-    schema: TableSchema = WriteParam.DefaultSchema,
-    writeDisposition: WriteDisposition = WriteParam.DefaultWriteDisposition,
-    createDisposition: CreateDisposition = WriteParam.DefaultCreateDisposition,
-    tableDescription: String = WriteParam.DefaultTableDescription,
-    timePartitioning: TimePartitioning = WriteParam.DefaultTimePartitioning
-  )
+    @inline final def apply(
+      s: TableSchema,
+      wd: WriteDisposition,
+      cd: CreateDisposition,
+      td: String,
+      tp: TimePartitioning,
+      ei: ExtendedErrorInfo
+    )(it: SCollection[ei.Info] => Unit): WriteParam = new WriteParam {
+      val schema: TableSchema = s
+      val writeDisposition: WriteDisposition = wd
+      val createDisposition: CreateDisposition = cd
+      val tableDescription: String = td
+      val timePartitioning: TimePartitioning = tp
+      val extendedErrorInfo: ei.type = ei
+      val insertErrorTransform: SCollection[extendedErrorInfo.Info] => Unit = it
+    }
+
+    @inline final def apply(
+      s: TableSchema = DefaultSchema,
+      wd: WriteDisposition = DefaultWriteDisposition,
+      cd: CreateDisposition = DefaultCreateDisposition,
+      td: String = DefaultTableDescription,
+      tp: TimePartitioning = DefaultTimePartitioning
+    ): WriteParam = apply(s, wd, cd, td, tp, DefaultExtendedErrorInfo)(DefaultInsertErrorTransform)
+
+  }
 
   @deprecated("this method will be removed; use apply(Table.Ref(table)) instead", "Scio 0.8")
   @inline final def apply(table: TableReference): BigQueryTable =
@@ -243,8 +283,14 @@ final case class BigQueryStorage(table: Table) extends BigQueryIO[TableRow] {
   override protected def write(data: SCollection[TableRow], params: WriteP): Tap[TableRow] =
     throw new UnsupportedOperationException("BigQueryStorage is read-only")
 
-  override def tap(read: ReadP): Tap[TableRow] =
-    throw new NotImplementedError("BigQueryStore Tap not implemented")
+  override def tap(read: ReadP): Tap[TableRow] = {
+    val readOptions = TableReadOptions
+      .newBuilder()
+      .setRowRestriction(read.rowRestriction)
+      .addAllSelectedFields(read.selectFields.asJava)
+      .build()
+    BigQueryStorageTap(table, readOptions)
+  }
 }
 
 object BigQueryStorage {
@@ -417,8 +463,9 @@ object BigQueryTyped {
           params.writeDisposition,
           params.createDisposition,
           bqt.tableDescription.orNull,
-          params.timePartitioning
-        )
+          params.timePartitioning,
+          params.extendedErrorInfo
+        )(params.insertErrorTransform)
 
       BigQueryTable(table)
         .write(rows, ps)
@@ -432,17 +479,42 @@ object BigQueryTyped {
   }
 
   object Table {
+
+    sealed trait WriteParam {
+      val writeDisposition: WriteDisposition
+      val createDisposition: CreateDisposition
+      val timePartitioning: TimePartitioning
+      val extendedErrorInfo: ExtendedErrorInfo
+      val insertErrorTransform: SCollection[extendedErrorInfo.Info] => Unit
+    }
+
     object WriteParam {
       private[bigquery] val DefaultWriteDisposition: WriteDisposition = null
       private[bigquery] val DefaultCreateDisposition: CreateDisposition = null
       private[bigquery] val DefaultTimePartitioning: TimePartitioning = null
-    }
+      private[bigquery] val DefaultExtendedErrorInfo: ExtendedErrorInfo = ExtendedErrorInfo.Disabled
+      private[bigquery] val DefaultInsertErrorTransform
+        : SCollection[DefaultExtendedErrorInfo.Info] => Unit = _ => ()
 
-    final case class WriteParam private (
-      writeDisposition: WriteDisposition = WriteParam.DefaultWriteDisposition,
-      createDisposition: CreateDisposition = WriteParam.DefaultCreateDisposition,
-      timePartitioning: TimePartitioning = WriteParam.DefaultTimePartitioning
-    )
+      @inline final def apply(
+        wd: WriteDisposition,
+        cd: CreateDisposition,
+        tp: TimePartitioning,
+        ei: ExtendedErrorInfo
+      )(it: SCollection[ei.Info] => Unit): WriteParam = new WriteParam {
+        val writeDisposition: WriteDisposition = wd
+        val createDisposition: CreateDisposition = cd
+        val timePartitioning: TimePartitioning = tp
+        val extendedErrorInfo: ei.type = ei
+        val insertErrorTransform: SCollection[extendedErrorInfo.Info] => Unit = it
+      }
+
+      @inline final def apply(
+        wd: WriteDisposition = DefaultWriteDisposition,
+        cd: CreateDisposition = DefaultCreateDisposition,
+        tp: TimePartitioning = DefaultTimePartitioning
+      ): WriteParam = apply(wd, cd, tp, DefaultExtendedErrorInfo)(DefaultInsertErrorTransform)
+    }
 
     @deprecated("this method will be removed; use apply(Table.Ref(table)) instead", "Scio 0.8")
     @inline
@@ -473,8 +545,15 @@ object BigQueryTyped {
     override def write(data: SCollection[T], params: WriteP): Tap[T] =
       throw new UnsupportedOperationException("Storage API is read-only")
 
-    override def tap(params: ReadP): Tap[T] =
-      throw new NotImplementedError("BigQueryStore Tap not implemented")
+    override def tap(read: ReadP): Tap[T] = {
+      val fn = BigQueryType[T].fromTableRow
+      val readOptions = TableReadOptions
+        .newBuilder()
+        .setRowRestriction(read.rowRestriction)
+        .addAllSelectedFields(read.selectFields.asJava)
+        .build()
+      BigQueryStorageTap(table, readOptions).map(fn)
+    }
   }
 
   object Storage {

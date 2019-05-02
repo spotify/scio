@@ -19,13 +19,17 @@ package com.spotify.scio.bigquery.client
 
 import com.google.api.client.googleapis.json.GoogleJsonResponseException
 import com.google.api.services.bigquery.model._
-import com.google.cloud.bigquery.storage.v1beta1.Storage.CreateReadSessionRequest
+import com.google.cloud.bigquery.storage.v1beta1.Storage._
 import com.google.cloud.bigquery.storage.v1beta1.TableReferenceProto
+import com.google.cloud.bigquery.storage.v1beta1.ReadOptions.TableReadOptions
 import com.google.cloud.hadoop.util.ApiErrorExtractor
 import com.spotify.scio.bigquery.client.BigQuery.Client
-import com.spotify.scio.bigquery.{StorageUtil, TableRow}
+import com.spotify.scio.bigquery.{StorageUtil, TableRow, Table => STable}
 import org.apache.avro.Schema
+import org.apache.avro.generic.{GenericDatumReader, GenericRecord}
+import org.apache.avro.io.{BinaryDecoder, DecoderFactory}
 import org.apache.beam.sdk.extensions.gcp.options.GcsOptions
+import org.apache.beam.sdk.io.gcp.bigquery.BigQueryAvroUtilsWrapper
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryOptions
 import org.apache.beam.sdk.io.gcp.{bigquery => bq}
@@ -34,6 +38,7 @@ import org.joda.time.Instant
 import org.joda.time.format.DateTimeFormat
 import org.slf4j.LoggerFactory
 
+import scala.collection.mutable.ArrayBuffer
 import scala.collection.JavaConverters._
 import scala.util.Random
 import scala.util.control.NonFatal
@@ -85,13 +90,65 @@ private[client] final class TableOps(client: Client) {
       }
     }
 
+  def storageRows(table: STable, readOptions: TableReadOptions): Iterator[TableRow] =
+    withBigQueryService { bqServices =>
+      val tableRefProto = TableReferenceProto.TableReference
+        .newBuilder()
+        .setDatasetId(table.ref.getDatasetId)
+        .setTableId(table.ref.getTableId)
+      if (table.ref.getProjectId != null) {
+        tableRefProto.setProjectId(table.ref.getProjectId)
+      }
+
+      val request = CreateReadSessionRequest
+        .newBuilder()
+        .setTableReference(tableRefProto)
+        .setReadOptions(readOptions)
+        .setParent(s"projects/${client.project}")
+        .setRequestedStreams(1)
+        .setFormat(DataFormat.AVRO)
+        .build()
+
+      val session = client.storage.createReadSession(request)
+      val readRowsRequest = ReadRowsRequest
+        .newBuilder()
+        .setReadPosition(
+          StreamPosition
+            .newBuilder()
+            .setStream(session.getStreams(0))
+        )
+        .build()
+
+      val schema = new Schema.Parser().parse(session.getAvroSchema().getSchema())
+      val reader = new GenericDatumReader[GenericRecord](schema)
+      val responses = client.storage.readRowsCallable().call(readRowsRequest).asScala
+
+      var decoder: BinaryDecoder = null
+      var gr: GenericRecord = null
+      responses.iterator.flatMap { resp =>
+        val bytes = resp.getAvroRows().getSerializedBinaryRows.toByteArray()
+        decoder = DecoderFactory.get().binaryDecoder(bytes, decoder)
+
+        val res = ArrayBuffer.empty[TableRow]
+        while (!decoder.isEnd()) {
+          gr = reader.read(gr, decoder)
+          val tb = bqServices.getTable(table.ref, readOptions.getSelectedFieldsList())
+          res += BigQueryAvroUtilsWrapper.convertGenericRecordToTableRow(gr, tb.getSchema)
+        }
+
+        res.toIterator
+      }
+    }
+
   /** Get schema from a table. */
   def schema(tableSpec: String): TableSchema =
     schema(bq.BigQueryHelpers.parseTableSpec(tableSpec))
 
   /** Get schema from a table. */
   def schema(tableRef: TableReference): TableSchema =
-    Cache.withCacheKey(bq.BigQueryHelpers.toTableSpec(tableRef))(table(tableRef).getSchema)
+    Cache.getOrElse(bq.BigQueryHelpers.toTableSpec(tableRef), Cache.SchemaCache)(
+      table(tableRef).getSchema
+    )
 
   /** Get schema from a table using the storage API. */
   def storageReadSchema(
