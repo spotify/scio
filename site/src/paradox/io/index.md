@@ -4,7 +4,6 @@
 
 @@@ index
 * [Type safe BigQuery](Type-Safe-BigQuery.md)
-* [HDFS](HDFS.md)
 * [Bigtable](Bigtable.md)
 * [Avro](Avro.md)
 * [Protobuf](Protobuf.md)

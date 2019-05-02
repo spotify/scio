@@ -17,7 +17,7 @@
 
 package com.spotify.scio.bigquery.validation
 
-import scala.annotation.{StaticAnnotation, compileTimeOnly}
+import scala.annotation.{compileTimeOnly, StaticAnnotation}
 import scala.language.experimental.macros
 import scala.reflect.macros.blackbox
 

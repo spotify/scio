@@ -20,7 +20,7 @@ package com.spotify.scio.avro.types
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecord
 
-import scala.annotation.{StaticAnnotation, compileTimeOnly}
+import scala.annotation.{compileTimeOnly, StaticAnnotation}
 import scala.language.experimental.macros
 import scala.reflect.runtime.universe._
 

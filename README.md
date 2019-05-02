@@ -9,7 +9,7 @@ Scio
 
 <img src="https://raw.github.com/spotify/scio/master/site/src/paradox/images/scio.png" alt="Scio Logo" width="250"/>
 
-> Ecclesiastical Latin IPA: /ˈʃi.o/, [ˈʃiː.o], [ˈʃi.i̯o]  
+> Ecclesiastical Latin IPA: /ˈʃi.o/, [ˈʃiː.o], [ˈʃi.i̯o]
 > Verb: I can, know, understand, have knowledge.
 
 Scio is a Scala API for [Apache Beam](http://beam.incubator.apache.org/) and [Google Cloud Dataflow](https://github.com/GoogleCloudPlatform/DataflowJavaSDK) inspired by [Apache Spark](http://spark.apache.org/) and [Scalding](https://github.com/twitter/scalding).
@@ -22,7 +22,7 @@ Scio 0.3.0 and future versions depend on Apache Beam (`org.apache.beam`) while e
 - Unified batch and streaming programming model
 - Fully managed service<sup>*</sup>
 - Integration with Google Cloud products: Cloud Storage, BigQuery, Pub/Sub, Datastore, Bigtable
-- HDFS, JDBC, [TensorFlow](http://tensorflow.org/) TFRecords, Cassandra, Elasticsearch and Parquet I/O
+- JDBC, [TensorFlow](http://tensorflow.org/) TFRecords, Cassandra, Elasticsearch and Parquet I/O
 - Interactive mode with Scio REPL
 - Type safe BigQuery
 - Integration with [Algebird](https://github.com/twitter/algebird) and [Breeze](https://github.com/scalanlp/breeze)
