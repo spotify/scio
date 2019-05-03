@@ -14,9 +14,6 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+package com.spotify.scio.sql.syntax
 
-package com.spotify.scio
-
-import com.spotify.scio.sql.syntax.AllSyntax
-
-package object sql extends AllSyntax
+trait AllSyntax extends SqlInterpolatorSyntax

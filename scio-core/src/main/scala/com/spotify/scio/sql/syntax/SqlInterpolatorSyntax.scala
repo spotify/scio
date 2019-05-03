@@ -14,9 +14,21 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+package com.spotify.scio.sql.syntax
 
-package com.spotify.scio
+import com.spotify.scio.values.SCollection
+import com.spotify.scio.schemas.Schema
+import com.spotify.scio.sql.{SCollectionRef, SqlInterpolator, SqlParam, Udf, UdfRef}
 
-import com.spotify.scio.sql.syntax.AllSyntax
+import scala.language.implicitConversions
 
-package object sql extends AllSyntax
+trait SqlInterpolatorSyntax {
+
+  implicit def sqlToUdfRefOps(udf: Udf): SqlParam = new UdfRef(udf)
+
+  implicit def sqlToSCollectionRefOps[A: Schema](coll: SCollection[A]): SqlParam =
+    new SCollectionRef[A](coll)
+
+  implicit def sqlInterpolatorOps(sc: StringContext): SqlInterpolator = new SqlInterpolator(sc)
+
+}
