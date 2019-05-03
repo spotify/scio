@@ -24,7 +24,7 @@ import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import org.apache.beam.sdk.util.{MutationDetectors, SerializableUtils}
 import org.scalatest.PropSpec
-import org.scalatest.prop.Checkers
+import org.scalatestplus.scalacheck.Checkers
 
 import scala.collection.mutable
 // Do not import algebird classes
@@ -219,7 +219,7 @@ class BFHashIndices extends CheckProperties {
 
 }
 
-class BloomFilterFalsePositives[T: Gen: Hash128](falsePositiveRate: Double)
+private[scio] final class BloomFilterFalsePositives[T: Gen: Hash128](falsePositiveRate: Double)
     extends ApproximateProperty {
 
   type Exact = Set[T]
@@ -254,7 +254,7 @@ class BloomFilterFalsePositives[T: Gen: Hash128](falsePositiveRate: Double)
   def approximateResult(bf: MutableBF[T], t: T): ApproximateBoolean = bf.contains(t)
 }
 
-class BloomFilterCardinality[T: Gen: Hash128] extends ApproximateProperty {
+private[scio] final class BloomFilterCardinality[T: Gen: Hash128] extends ApproximateProperty {
 
   type Exact = Set[T]
   type Approx = MutableBF[T]
