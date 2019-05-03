@@ -100,6 +100,11 @@ class TypedBeamSQLTest extends PipelineSpec {
 
   "String interpolation" should "statically check interpolated queries" in runWithContext { sc =>
     """
+    def coll: SCollection[Int] = sc.parallelize((1 to 10).toList)
+    val r: SCollection[Int] = tsql"SELECT * FROM $coll".as[Int]
+    """ should compile
+
+    """
     def coll: SCollection[(Int, String)] =
       sc.parallelize((1 to 10).toList.map(i => (i, i.toString)))
     val r: SCollection[Int] = tsql"SELECT _1 FROM $coll".as[Int]

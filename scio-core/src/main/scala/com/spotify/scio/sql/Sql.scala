@@ -157,17 +157,14 @@ object Queries {
    * If it fails, a error message is returned in a [[Left]].
    */
   def typecheck[A: Schema, B: Schema](q: Query[A, B]): Either[String, Query[A, B]] = {
-    val schema: BSchema = SchemaMaterializer.fieldType(Schema[A]).getRowSchema
-    // TODO: add null check on schema. If A is a scalar (Int, String,...) schema will be null
-    val expectedSchema: BSchema =
-      Schema[B] match {
-        case s: Record[B] =>
-          SchemaMaterializer.fieldType(s).getRowSchema
-        case _ =>
-          SchemaMaterializer.fieldType(Schema[ScalarWrapper[B]]).getRowSchema
-      }
+    def beamSchema[T](implicit schema: Schema[T]): BSchema = schema match {
+      case s @ (_: Record[T] | _: RawRecord[T]) =>
+        SchemaMaterializer.fieldType(s).getRowSchema
+      case _ =>
+        SchemaMaterializer.fieldType(Schema[ScalarWrapper[T]]).getRowSchema
+    }
 
-    typecheck(q.query, (q.tag.getId, schema) :: Nil, expectedSchema, q.udfs).right.map(_ => q)
+    typecheck(q.query, (q.tag.getId, beamSchema[A]) :: Nil, beamSchema[B], q.udfs).right.map(_ => q)
   }
 
   /**
@@ -245,8 +242,8 @@ object Queries {
 
   private[this] def printInferred(inferredSchemas: List[(String, BSchema)]): String =
     inferredSchemas
-      .map {
-        case (name, schema) =>
+      .collect {
+        case (name: String, schema: BSchema) =>
           s"""
           |schema of $name:
           |${PrettyPrint.prettyPrint(schema.getFields.asScala.toList)}
