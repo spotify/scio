@@ -128,11 +128,9 @@ package sql {
     val ctx: whitebox.Context
     import ctx.universe._
 
-    def partsfromContext: List[Tree] = {
+    def partsFromContext: List[Tree] = {
       ctx.prefix.tree match {
-        case q"com.spotify.scio.sql.`package`.SqlInterpolator(scala.StringContext.apply(..$ps))" =>
-          ps
-        case q"sql.this.`package`.SqlInterpolator(scala.StringContext.apply(..$ps))" => ps
+        case Apply(_, Apply(_, xs: List[_]) :: Nil) => xs
         case tree =>
           ctx.abort(
             ctx.enclosingPosition,
@@ -219,7 +217,7 @@ package sql {
       import h._
       import c.universe._
 
-      val parts = partsfromContext
+      val parts = partsFromContext
 
       val className = TypeName(c.freshName("SQLBuilder"))
       val fakeName = TypeName(c.freshName("FakeImpl"))
