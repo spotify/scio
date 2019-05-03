@@ -253,7 +253,7 @@ object JobTest {
 
   /** Create a new JobTest.Builder instance. */
   def apply[T: ClassTag](implicit bo: BeamOptions): Builder = {
-    val className = ScioUtil.classOf[T].getName.replaceAll("\\$$", "")
+    val className = ScioUtil.classOf[T].getCanonicalName.replaceAll("\\$$", "")
     apply(className).args(bo.opts: _*)
   }
 
