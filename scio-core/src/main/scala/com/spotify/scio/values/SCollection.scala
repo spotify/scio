@@ -29,7 +29,7 @@ import com.spotify.scio.annotations.experimental
 import com.spotify.scio.coders.{AvroBytesUtil, Coder, CoderMaterializer}
 import com.spotify.scio.io._
 import com.spotify.scio.schemas.{Schema, SchemaMaterializer, To}
-import com.spotify.scio.sql.{Sql, SqlSCollection}
+import com.spotify.scio.sql.syntax.{SCollectionSyntax => SqlSCollectionSyntax}
 import com.spotify.scio.testing.TestDataManager
 import com.spotify.scio.util._
 import com.spotify.scio.util.random.{BernoulliSampler, PoissonSampler}
@@ -54,7 +54,7 @@ import scala.reflect.ClassTag
 import scala.util.Try
 
 /** Convenience functions for creating SCollections. */
-object SCollection {
+object SCollection extends SqlSCollectionSyntax {
 
   private[values] val logger = LoggerFactory.getLogger(this.getClass)
 
@@ -93,9 +93,6 @@ object SCollection {
     s: SCollection[(K, V)]
   ): PairSkewedSCollectionFunctions[K, V] =
     new PairSkewedSCollectionFunctions(s)
-
-  implicit def sqlSCollection[A: Schema](sc: SCollection[A]): SqlSCollection[A] =
-    Sql.from(sc)
 
   private[scio] final case class State(postCoGroup: Boolean = false)
 

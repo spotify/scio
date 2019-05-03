@@ -16,4 +16,12 @@
  */
 package com.spotify.scio.sql.syntax
 
-trait AllSyntax extends SqlInterpolatorSyntax with SCollectionSyntax
+import com.spotify.scio.values.SCollection
+import com.spotify.scio.schemas.Schema
+import com.spotify.scio.sql.{Sql, SqlSCollection}
+
+import scala.language.implicitConversions
+
+trait SCollectionSyntax {
+  implicit def sqlSCollectionOps[A: Schema](sc: SCollection[A]): SqlSCollection[A] = Sql.from(sc)
+}
