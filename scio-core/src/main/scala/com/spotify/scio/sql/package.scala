@@ -128,7 +128,7 @@ package sql {
     val ctx: whitebox.Context
     import ctx.universe._
 
-    def partsfromContext: List[Tree] = {
+    def partsFromContext: List[Tree] = {
       ctx.prefix.tree match {
         case Apply(_, Apply(_, xs: List[_]) :: Nil) => xs
         case tree =>
@@ -217,7 +217,7 @@ package sql {
       import h._
       import c.universe._
 
-      val parts = partsfromContext
+      val parts = partsFromContext
 
       val className = TypeName(c.freshName("SQLBuilder"))
       val fakeName = TypeName(c.freshName("FakeImpl"))
