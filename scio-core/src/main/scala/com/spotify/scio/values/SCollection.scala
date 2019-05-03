@@ -29,7 +29,6 @@ import com.spotify.scio.annotations.experimental
 import com.spotify.scio.coders.{AvroBytesUtil, Coder, CoderMaterializer}
 import com.spotify.scio.io._
 import com.spotify.scio.schemas.{Schema, SchemaMaterializer, To}
-import com.spotify.scio.sql.syntax.{SCollectionSyntax => SqlSCollectionSyntax}
 import com.spotify.scio.testing.TestDataManager
 import com.spotify.scio.util._
 import com.spotify.scio.util.random.{BernoulliSampler, PoissonSampler}
@@ -54,7 +53,7 @@ import scala.reflect.ClassTag
 import scala.util.Try
 
 /** Convenience functions for creating SCollections. */
-object SCollection extends SqlSCollectionSyntax {
+object SCollection {
 
   private[values] val logger = LoggerFactory.getLogger(this.getClass)
 
