@@ -130,9 +130,7 @@ package sql {
 
     def partsfromContext: List[Tree] = {
       ctx.prefix.tree match {
-        case q"com.spotify.scio.sql.`package`.SqlInterpolator(scala.StringContext.apply(..$ps))" =>
-          ps
-        case q"sql.this.`package`.SqlInterpolator(scala.StringContext.apply(..$ps))" => ps
+        case Apply(_, Apply(_, xs: List[_]) :: Nil) => xs
         case tree =>
           ctx.abort(
             ctx.enclosingPosition,
