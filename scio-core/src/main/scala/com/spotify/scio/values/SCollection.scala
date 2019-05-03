@@ -53,7 +53,7 @@ import scala.reflect.ClassTag
 import scala.util.Try
 
 /** Convenience functions for creating SCollections. */
-object SCollection extends SqlSCollectionSyntax {
+object SCollection {
 
   private[values] val logger = LoggerFactory.getLogger(this.getClass)
 
