@@ -874,10 +874,7 @@ lazy val siteSettings = Def.settings(
   ) ++ SoccoIndex.mappings,
   // pre-compile md using mdoc
   mdocIn := baseDirectory.value / "src" / "paradox",
-  mdocExtraArguments ++= Seq(
-    "--no-link-hygiene",
-    "--scalac-options -Ydelambdafy:inline"
-  ),
+  mdocExtraArguments ++= Seq("--no-link-hygiene"),
   sourceDirectory in Paradox := mdocOut.value,
   makeSite := {
     // Fix JavaDoc links before makeSite

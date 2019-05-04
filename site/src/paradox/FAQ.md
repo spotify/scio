@@ -109,7 +109,6 @@ You can log in a Scio job with most common logging libraries but `slf4j` is incl
 
 ```scala mdoc:reset:silent
 import com.spotify.scio._
-import com.spotify.scio.values._
 import org.slf4j.LoggerFactory
 
 object MyJob {
@@ -160,9 +159,6 @@ You can wait on the `ScioResult` and call the internal `PipelineResult#cancel()`
 
 ```scala mdoc:reset:silent
 import com.spotify.scio._
-import com.spotify.scio.values._
-import org.slf4j.LoggerFactory
-import scala.util.Try
 import scala.concurrent.duration._
 
 object MyJob {
@@ -207,7 +203,7 @@ Any nullable field in BigQuery is translated to `Option[T]` by the type safe Big
 def doSomething(s: String): Unit = ()
 ```
 
-```scala
+```scala mdoc:silent
 import com.spotify.scio.bigquery.types.BigQueryType
 
 @BigQueryType.fromSchema("""{
@@ -232,7 +228,7 @@ def doSomethingWithRow(row: Row) = {
 ```
 
 For comprehension is a nicer alternative in these cases:
-```scala
+```scala mdoc:silent
 def doSomethingWithRowUsingFor(row: Row) = {
   val e: Option[String] =
     for {
@@ -403,7 +399,24 @@ See @ref[Kryo](internals/Kryo.md) for more.
 
 Define a registrar class that extends `IKryoRegistrar` and annotate it with `@KryoRegistrar`. Note that the class name must ends with `KryoRegistrar`, i.e. `MyKryoRegistrar` for Scio to find it.
 
-```scala
+```scala mdoc:reset:invisible
+trait UserRecord
+trait AccountRecord
+import com.twitter.chill.KSerializer
+import com.esotericsoftware.kryo.Kryo
+import com.esotericsoftware.kryo.io.{Input, Output}
+
+class UserRecordSerializer extends KSerializer[UserRecord] {
+  def read(x$1: Kryo, x$2: Input, x$3: Class[UserRecord]): UserRecord = ???
+  def write(x$1: Kryo, x$2: Output, x$3: UserRecord): Unit = ???
+}
+class AccountRecordSerializer extends KSerializer[AccountRecord] {
+  def read(x$1: Kryo, x$2: Input, x$3: Class[AccountRecord]): AccountRecord = ???
+  def write(x$1: Kryo, x$2: Output, x$3: AccountRecord): Unit = ???
+}
+```
+
+```scala mdoc:silent
 import com.twitter.chill._
 import com.esotericsoftware.kryo.Kryo
 import com.spotify.scio.coders.KryoRegistrar
@@ -423,7 +436,12 @@ class MyKryoRegistrar extends IKryoRegistrar {
 Registering just the classes can also improve Kryo performance. By registering, classes will be serialized as numeric IDs instead of fully qualified class names, hence saving space and network IO while shuffling.
 make
 
-```scala
+```scala mdoc:reset:invisible
+trait MyRecord1
+trait MyRecord2
+```
+
+```scala mdoc:silent
 import com.twitter.chill._
 import com.esotericsoftware.kryo.Kryo
 import com.spotify.scio.coders.KryoRegistrar
@@ -474,27 +492,24 @@ Inside IntelliJ, `Preferences` -> `Plugins` -> `Browse repositories ...` and sea
 
 First start Scio REPL and generate case classes from your query or table.
 
-```scala
-scio> @BigQueryType.fromQuery("SELECT tornado, month FROM [publicdata:samples.gsod]") class Tornado
-defined class Tornado
-defined object Tornado
+```scala mdoc:reset
+import com.spotify.scio.bigquery.types.BigQueryType
+
+@BigQueryType.fromQuery("SELECT tornado, month FROM [publicdata:samples.gsod]")
+class Tornado
 ```
 
 Next print Scala code of the generated classes.
 
-```scala
-scio> Tornado.toPrettyString()
-res1: String =
-@BigQueryType.toTable
-case class Tornado(tornado: Option[Boolean], month: Long)
+```scala mdoc
+Tornado.toPrettyString()
 ```
 
 You can then paste the `@BigQueryType.toTable` code into your pipeline and use it with `sc.typedBigQuery`.
 
-```scala
+```scala mdoc:reset:silent
 import com.spotify.scio._
 import com.spotify.scio.bigquery._
-import com.spotify.scio.values._
 import com.spotify.scio.bigquery.types.BigQueryType
 
 @BigQueryType.toTable
@@ -520,7 +535,7 @@ def saveAsBigQuery(tableSpec: String)(implicit ev: T <:< TableRow)
 
 In the case of `saveAsTypedBigQuery` you might get an `Cannot prove that T <:< com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation.` error message. This API requires an `SCollection[T]` where `T` is a case class annotated with `@BigQueryType.toTable`. For example:
 
-```scala
+```scala mdoc:reset:silent
 import com.spotify.scio._
 import com.spotify.scio.values._
 import com.spotify.scio.bigquery._

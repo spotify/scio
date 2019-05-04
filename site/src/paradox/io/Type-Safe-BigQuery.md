@@ -27,7 +27,7 @@ There are 4 annotations for type safe code generation.
 
 This expands a class with fields that map to a BigQuery table. Note that `class Row` has no body definition and is expanded by the annotation at compile time based on actual table schema.
 
-```scala
+```scala mdoc:reset:silent
 import com.spotify.scio.bigquery.types.BigQueryType
 
 @BigQueryType.fromTable("publicdata:samples.gsod")
@@ -38,7 +38,7 @@ class Row
 
 This expands a class with output fields from a SELECT query. A dry run is executed at compile time to get output schema and does not incur additional cost.
 
-```scala
+```scala mdoc:reset:silent
 import com.spotify.scio.bigquery.types.BigQueryType
 
 @BigQueryType.fromQuery("SELECT tornado, month FROM [publicdata:samples.gsod]")
@@ -77,7 +77,7 @@ val newQuery = Row.query.format(args(0), args(0))
 
 This annotation gets schema from a string parameter and is useful in tests.
 
-```scala
+```scala mdoc:reset:silent
 import com.spotify.scio.bigquery.types.BigQueryType
 
 @BigQueryType.fromSchema(
@@ -99,7 +99,7 @@ class Row
 
 This annotation works the other way around. Instead of generating class definition from a BigQuery schema, it generates BigQuery schema from a case class definition.
 
-```scala
+```scala mdoc:reset:silent
 import com.spotify.scio.bigquery.types.BigQueryType
 
 @BigQueryType.toTable
@@ -108,7 +108,7 @@ case class Result(user: String, url: String, time: Long)
 
 Fields in the case class and the class itself can also be annotated with `@description` which propagates to BigQuery schema.
 
-```scala
+```scala mdoc:reset:silent
 import com.spotify.scio.bigquery.types.BigQueryType
 import com.spotify.scio.bigquery.description
 
@@ -165,47 +165,13 @@ Classes annotated with the type safe BigQuery API have a few more convenience me
 - `toTableRow: (T => TableRow)` - case class to `TableRow` converter
 - `toPrettyString(indent: Int = 0)` - pretty string representation of the schema
 
-```scala
+```scala mdoc:reset
 import com.spotify.scio.bigquery.types.BigQueryType
 
 @BigQueryType.fromTable("publicdata:samples.gsod")
 class Row
 
 Row.toPrettyString(2)
-
-// @BigQueryType.toTable
-// case class Row(
-//   station_number: Long,
-//   wban_number: Option[Long],
-//   year: Long,
-//   month: Long,
-//   day: Long,
-//   mean_temp: Option[Double],
-//   num_mean_temp_samples: Option[Long],
-//   mean_dew_point: Option[Double],
-//   num_mean_dew_point_samples: Option[Long],
-//   mean_sealevel_pressure: Option[Double],
-//   num_mean_sealevel_pressure_samples: Option[Long],
-//   mean_station_pressure: Option[Double],
-//   num_mean_station_pressure_samples: Option[Long],
-//   mean_visibility: Option[Double],
-//   num_mean_visibility_samples: Option[Long],
-//   mean_wind_speed: Option[Double],
-//   num_mean_wind_speed_samples: Option[Long],
-//   max_sustained_wind_speed: Option[Double],
-//   max_gust_wind_speed: Option[Double],
-//   max_temperature: Option[Double],
-//   max_temperature_explicit: Option[Boolean],
-//   min_temperature: Option[Double],
-//   min_temperature_explicit: Option[Boolean],
-//   total_precipitation: Option[Double],
-//   snow_depth: Option[Double],
-//   fog: Option[Boolean],
-//   rain: Option[Boolean],
-//   snow: Option[Boolean],
-//   hail: Option[Boolean],
-//   thunder: Option[Boolean],
-//   tornado: Option[Boolean])
 ```
 
 In addition, `BigQueryType.fromTable` and `BigQueryTable.fromQuery` generate `table: String` and `query: String` respectively that refers to parameters in the original annotation.
@@ -218,7 +184,7 @@ import com.spotify.scio.bigquery.types.BigQueryTypeUser defined companion object
 
 To enable type safe BigQuery for `ScioContext`:
 
-```scala
+```scala mdoc:reset:silent
 import com.spotify.scio._
 import com.spotify.scio.bigquery._
 import com.spotify.scio.bigquery.types.BigQueryType
@@ -245,7 +211,7 @@ def main(cmdlineArgs: Array[String]): Unit = {
 
 Annotated classes can be used with the `BigQueryClient` directly too.
 
-```scala
+```scala mdoc:reset:silent
 import com.spotify.scio.bigquery.types.BigQueryType
 import com.spotify.scio.bigquery.client.BigQuery
 
@@ -261,7 +227,7 @@ def result = bq.writeTypedRows("project-id:dataset-id.table-id", rows.toList)
 
 If there are any BigQuery I/O operations supported in the Apache Beam client but not exposed in Scio, you may choose to use the Beam transform directly using Scio's `.saveAsCustomOutput()` option:
 
-```scala
+```scala mdoc:reset:silent
 import com.spotify.scio.values.SCollection
 import com.spotify.scio.bigquery.types.BigQueryType
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO
