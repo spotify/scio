@@ -58,8 +58,19 @@ class WordCountTest extends PipelineSpec {
       .run()
   }
 
-  "MinimalBeamSqlWordCount" should "work" in {
-    JobTest[com.spotify.scio.examples.MinimalBeamSqlWordCountExample.type]
+  "BeamSqlWordCount" should "work" in {
+    JobTest[com.spotify.scio.examples.BeamSqlWordCount.type]
+      .args("--input=in.txt", "--output=out.txt")
+      .input(TextIO("in.txt"), inData)
+      .output(TextIO("out.txt")) { coll =>
+        coll should containInAnyOrder(expected)
+        ()
+      }
+      .run()
+  }
+
+  "BeamSqlInterpolatorWordCount" should "work" in {
+    JobTest[com.spotify.scio.examples.BeamSqlInterpolatorWordCount.type]
       .args("--input=in.txt", "--output=out.txt")
       .input(TextIO("in.txt"), inData)
       .output(TextIO("out.txt")) { coll =>
