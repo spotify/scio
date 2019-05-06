@@ -82,11 +82,8 @@ trait ScioIO[T] {
 
   protected def readTest(sc: ScioContext, params: ReadP)(
     implicit coder: Coder[T]
-  ): SCollection[T] = {
-    sc.parallelize(
-      TestDataManager.getInput(sc.testId.get)(this).asInstanceOf[Seq[T]]
-    )
-  }
+  ): SCollection[T] =
+    TestDataManager.getInput(sc.testId.get)(this).toSCollection(sc)
 
   protected def read(sc: ScioContext, params: ReadP): SCollection[T]
 

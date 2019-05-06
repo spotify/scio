@@ -17,18 +17,49 @@
 
 package com.spotify.scio.testing
 
-import com.spotify.scio.ScioResult
+import com.spotify.scio.coders.Coder
 import com.spotify.scio.io.ScioIO
 import com.spotify.scio.values.SCollection
+import com.spotify.scio.{ScioContext, ScioResult}
+import org.apache.beam.sdk.transforms.PTransform
+import org.apache.beam.sdk.values.{PBegin, PCollection, PInput}
 
 import scala.collection.concurrent.TrieMap
 import scala.collection.mutable.{Set => MSet}
+import scala.util.{Failure, Try}
 
-/* Inputs are Scala Iterables to be parallelized for TestPipeline */
-private[scio] class TestInput(val m: Map[String, Iterable[_]]) {
+/* Inputs are Scala Iterables to be parallelized for TestPipeline, or PTransforms to be applied */
+private[scio] trait JobInputSource[T] {
+  def toSCollection(sc: ScioContext)(implicit coder: Coder[T]): SCollection[T]
+  val asIterable: Try[Iterable[T]]
+}
+
+private[scio] case class PTransformInputSource[T](
+  transform: PTransform[_ >: PBegin <: PInput, PCollection[T]]
+) extends JobInputSource[T] {
+  override val asIterable = Failure(
+    new UnsupportedOperationException(
+      "PTransformInputType[T] can't be converted back to Iterable[T] as required by this TestIO"
+    )
+  )
+
+  override def toSCollection(sc: ScioContext)(implicit coder: Coder[T]): SCollection[T] =
+    sc.wrap(sc.applyInternal(transform))
+
+  override def toString: String = transform.toString
+}
+
+private[scio] case class IterableInputSource[T](iterable: Iterable[T]) extends JobInputSource[T] {
+  override val asIterable = Try(iterable)
+  override def toSCollection(sc: ScioContext)(implicit coder: Coder[T]): SCollection[T] =
+    sc.parallelize(iterable)
+  override def toString: String = iterable.toString
+}
+
+private[scio] class TestInput(val m: Map[String, JobInputSource[_]]) {
   val s: MSet[String] = MSet.empty
 
-  def apply[T](io: ScioIO[T]): Iterable[T] = {
+  def apply[T](io: ScioIO[T]): JobInputSource[T] = {
     val key = io.testId
     require(
       m.contains(key),
@@ -36,7 +67,7 @@ private[scio] class TestInput(val m: Map[String, Iterable[_]]) {
     )
     require(!s.contains(key), s"Test input $key has already been read from once.")
     s.add(key)
-    m(key).asInstanceOf[Iterable[T]]
+    m(key).asInstanceOf[JobInputSource[T]]
   }
 
   def validate(): Unit = {
@@ -107,7 +138,7 @@ private[scio] object TestDataManager {
 
   def setup(
     testId: String,
-    ins: Map[String, Iterable[_]],
+    ins: Map[String, JobInputSource[_]],
     outs: Map[String, SCollection[_] => Unit],
     dcs: Map[DistCacheIO[_], _]
   ): Unit = {

@@ -23,6 +23,8 @@ import com.spotify.scio.ScioResult
 import com.spotify.scio.io.ScioIO
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
+import org.apache.beam.sdk.transforms.PTransform
+import org.apache.beam.sdk.values.{PBegin, PCollection, PInput}
 import org.apache.beam.sdk.{metrics => beam}
 
 import scala.reflect.ClassTag
@@ -73,7 +75,7 @@ object JobTest {
   private case class BuilderState(
     className: String,
     cmdlineArgs: Array[String] = Array(),
-    input: Map[String, Iterable[_]] = Map.empty,
+    input: Map[String, JobInputSource[_]] = Map.empty,
     output: Map[String, SCollection[_] => Unit] = Map.empty,
     distCaches: Map[DistCacheIO[_], _] = Map.empty,
     counters: Map[beam.Counter, Long => Unit] = Map.empty,
@@ -98,11 +100,24 @@ object JobTest {
     }
 
     /**
-     * Feed an input to the pipeline being tested. Note that `TestIO[T]` must match the one used
-     * inside the pipeline, e.g. `AvroIO[MyRecord]("in.avro")` with
-     * `sc.avroFile[MyRecord]("in.avro")`.
+     * Feed an input in the form of a raw Iterable[T] to the pipeline being tested. Note that
+     * `TestIO[T]` must match the one used inside the pipeline, e.g. `AvroIO[MyRecord]("in.avro")`
+     * with `sc.avroFile[MyRecord]("in.avro")`.
      */
-    def input[T](io: ScioIO[T], value: Iterable[T]): Builder = {
+    def input[T](io: ScioIO[T], value: Iterable[T]): Builder =
+      input(io, IterableInputSource(value))
+
+    /**
+     * Feed an input in the form of a PTransform[PBegin, PCollection[T] to the pipeline being
+     * tested. Note that PTransform inputs may not be supported for all TestIO[T] types.
+     */
+    def pInput[T](
+      io: ScioIO[T],
+      transform: PTransform[_ >: PBegin <: PInput, PCollection[T]]
+    ): Builder =
+      input(io, PTransformInputSource(transform))
+
+    private def input[T](io: ScioIO[T], value: JobInputSource[T]): Builder = {
       require(!state.input.contains(io.toString), "Duplicate test input: " + io.toString)
       state = state.copy(input = state.input + (io.testId -> value))
       this

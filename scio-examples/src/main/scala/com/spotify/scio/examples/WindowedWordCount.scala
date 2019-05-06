@@ -30,14 +30,14 @@ import java.util.concurrent.ThreadLocalRandom
 import com.spotify.scio._
 import com.spotify.scio.examples.common.ExampleData
 import org.apache.beam.sdk.io.FileSystems
-import org.apache.beam.sdk.transforms.windowing.IntervalWindow
+import org.apache.beam.sdk.transforms.windowing.{GlobalWindow, IntervalWindow}
 import org.apache.beam.sdk.util.MimeTypes
 import org.joda.time.format.ISODateTimeFormat
 import org.joda.time.{Duration, Instant}
 
 object WindowedWordCount {
 
-  private val WINDOW_SIZE = 10L
+  private val WINDOW_SIZE = Duration.standardMinutes(10L)
   private val formatter = ISODateTimeFormat.hourMinute
 
   def main(cmdlineArgs: Array[String]): Unit = {
@@ -49,15 +49,17 @@ object WindowedWordCount {
 
     // Parse command line arguments
     val input = args.getOrElse("input", ExampleData.KING_LEAR)
-    val windowSize =
-      Duration.standardMinutes(args.long("windowSize", WINDOW_SIZE))
+    val windowSize = Option(args("windowSize")).map(new Duration(_)).getOrElse(WINDOW_SIZE)
     val minTimestamp =
       args.long("minTimestampMillis", System.currentTimeMillis())
     val maxTimestamp =
       args.long("maxTimestampMillis", minTimestamp + Duration.standardHours(1).getMillis)
 
+    val outputGlobalWindow = args.boolean("outputGlobalWindow", false)
+
     // Open text files as an `SCollection[String]`
-    sc.textFile(input)
+    val wordCounts = sc
+      .textFile(input)
       .transform("random timestamper") {
         // Assign random timestamps to each element
         _.timestampBy { _ =>
@@ -79,8 +81,15 @@ object WindowedWordCount {
           // Group elements by window to get `(IntervalWindow, Iterable[(String, Long)])
           .groupByKey
       }
+
+    if (outputGlobalWindow) {
+      wordCounts
+        .withWindow[GlobalWindow]
+        .flatMap { case ((_, counts), _) => counts }
+        .saveAsTextFile("output.txt")
+    } else {
       // Write values in each group to a separate text file
-      .map {
+      wordCounts.map {
         case (w, vs) =>
           val outputShard =
             "%s-%s-%s".format(args("output"), formatter.print(w.start()), formatter.print(w.end()))
@@ -89,6 +98,7 @@ object WindowedWordCount {
           vs.foreach { case (k, v) => out.write(s"$k: $v\n".getBytes) }
           out.close()
       }
+    }
 
     // Close the context and execute the pipeline
     sc.close()
