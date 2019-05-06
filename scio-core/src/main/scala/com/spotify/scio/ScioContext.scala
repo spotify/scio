@@ -52,6 +52,7 @@ import scala.collection.mutable.{Buffer => MBuffer}
 import scala.concurrent.duration.Duration
 import scala.io.Source
 import scala.reflect.ClassTag
+import scala.util.control.NoStackTrace
 import scala.util.{Failure, Success, Try}
 
 /** Runner specific context. */
@@ -191,16 +192,15 @@ object ContextAndArgs {
   def withParser[T](parser: ArgsParser[Try]): Array[String] => (ScioContext, T) =
     args =>
       parser.parse(args) match {
-        // scalastyle:off regex
         case Failure(exception) =>
-          Console.err.println(exception.getMessage)
-          sys.exit(1)
+          throw exception
         case Success(Left(usageOrHelp)) =>
+          // scalastyle:off regex
           Console.out.println(usageOrHelp)
-          sys.exit(0)
+          // scalastyle:on regex
+          throw new UsageOrHelpException()
         case Success(Right((_opts, _args))) =>
           (new ScioContext(_opts, Nil), _args.asInstanceOf[T])
-        // scalastyle:on regex
       }
 
   /** Create [[ScioContext]] and [[Args]] for command line arguments. */
@@ -210,6 +210,7 @@ object ContextAndArgs {
   def typed[T: Parser: Help](args: Array[String]): (ScioContext, T) =
     withParser(TypedParser[T]()).apply(args)
 
+  class UsageOrHelpException extends Exception with NoStackTrace
 }
 
 /** Companion object for [[ScioContext]]. */

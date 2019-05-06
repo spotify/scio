@@ -18,8 +18,10 @@
 package com.spotify.scio
 
 import caseapp._
-import com.spotify.scio.ContextAndArgs.TypedParser
+import com.spotify.scio.ContextAndArgs.{ArgsParser, TypedParser, UsageOrHelpException}
 import org.scalatest.{FlatSpec, Matchers}
+
+import scala.util.{Failure, Success, Try}
 
 class ArgsTest extends FlatSpec with Matchers {
 
@@ -171,4 +173,24 @@ class ArgsTest extends FlatSpec with Matchers {
     result should be a 'failure
   }
 
+  "ContextAndArgs" should "rethrow parser exception" in {
+    class FailingParserException extends Exception
+    class FailingParser extends ArgsParser[Try] {
+      override type ArgsType = Unit
+      override def parse(args: Array[String]): Try[Result] = Failure(new FailingParserException)
+    }
+    assertThrows[FailingParserException] {
+      ContextAndArgs.withParser(new FailingParser)(Array())
+    }
+  }
+
+  it should "throw UsageOrHelpException on usage or help request" in {
+    class UsageOrHelpParser extends ArgsParser[Try] {
+      override type ArgsType = Unit
+      override def parse(args: Array[String]): Try[Result] = Success(Left("This is usage message"))
+    }
+    assertThrows[UsageOrHelpException] {
+      ContextAndArgs.withParser(new UsageOrHelpParser)(Array())
+    }
+  }
 }
