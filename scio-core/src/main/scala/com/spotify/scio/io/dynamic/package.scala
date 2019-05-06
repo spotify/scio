@@ -26,6 +26,7 @@ import org.apache.avro.file.CodecFactory
 import org.apache.avro.generic.GenericRecord
 import org.apache.avro.specific.SpecificRecordBase
 import org.apache.beam.sdk.coders.{Coder, StringUtf8Coder}
+import org.apache.beam.sdk.io.AvroIO.RecordFormatter
 import org.apache.beam.sdk.io.{Compression, FileIO}
 import org.apache.beam.sdk.transforms.Contextful
 import org.apache.beam.sdk.{io => beam}
@@ -71,7 +72,10 @@ package object dynamic {
             beam.AvroIO.sink(cls)
           } else {
             beam.AvroIO
-              .sinkViaGenericRecords(schema, (element: GenericRecord, _: Schema) => element)
+              .sinkViaGenericRecords(schema, new RecordFormatter[GenericRecord] {
+                override def formatRecord(element: GenericRecord, schema: Schema): GenericRecord =
+                  element
+              })
               .asInstanceOf[beam.AvroIO.Sink[T]]
           }
         }.withCodec(codec)
@@ -121,7 +125,7 @@ package object dynamic {
 
   }
 
-  implicit class DynamicProtoSCollection[T <: Message](private val self: SCollection[T])
+  implicit class DynamicProtobufSCollection[T <: Message](private val self: SCollection[T])
       extends AnyVal {
 
     def saveAsDynamicProtobufFile(
@@ -139,7 +143,10 @@ package object dynamic {
         val sink = beam.AvroIO
           .sinkViaGenericRecords[GenericRecord](
             AvroBytesUtil.schema,
-            (element: GenericRecord, _: Schema) => element
+            new RecordFormatter[GenericRecord] {
+              override def formatRecord(element: GenericRecord, schema: Schema): GenericRecord =
+                element
+            }
           )
           .withCodec(codec)
           .withMetadata(com.google.common.collect.Maps.newHashMap(metadata.asJava))
