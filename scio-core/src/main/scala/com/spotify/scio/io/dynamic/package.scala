@@ -134,7 +134,7 @@ package object dynamic {
       suffix: String = ".protobuf.avro",
       codec: CodecFactory = CodecFactory.deflateCodec(6),
       metadata: Map[String, AnyRef] = Map.empty
-    )(destinationFn: T => String)(implicit ct: ClassTag[T], coder: Coder[T]): Future[Tap[T]] = {
+    )(destinationFn: T => String)(implicit coder: Coder[T]): Future[Tap[T]] = {
       if (self.context.isTest) {
         throw new NotImplementedError(
           "Protobuf file with dynamic destinations cannot be used in a test context"
