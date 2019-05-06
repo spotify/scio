@@ -17,15 +17,17 @@
 
 package com.spotify.scio.io
 
+import com.google.protobuf.Message
+import com.spotify.scio.coders.AvroBytesUtil
 import com.spotify.scio.util.Functions
 import com.spotify.scio.values.SCollection
 import org.apache.avro.Schema
 import org.apache.avro.file.CodecFactory
 import org.apache.avro.generic.GenericRecord
 import org.apache.avro.specific.SpecificRecordBase
-import org.apache.beam.sdk.coders.StringUtf8Coder
-import org.apache.beam.sdk.io.AvroIO.RecordFormatter
+import org.apache.beam.sdk.coders.{Coder, StringUtf8Coder}
 import org.apache.beam.sdk.io.{Compression, FileIO}
+import org.apache.beam.sdk.transforms.Contextful
 import org.apache.beam.sdk.{io => beam}
 
 import scala.collection.JavaConverters._
@@ -69,10 +71,7 @@ package object dynamic {
             beam.AvroIO.sink(cls)
           } else {
             beam.AvroIO
-              .sinkViaGenericRecords(schema, new RecordFormatter[GenericRecord] {
-                override def formatRecord(element: GenericRecord, schema: Schema): GenericRecord =
-                  element
-              })
+              .sinkViaGenericRecords(schema, (element: GenericRecord, _: Schema) => element)
               .asInstanceOf[beam.AvroIO.Sink[T]]
           }
         }.withCodec(codec)
@@ -120,6 +119,46 @@ package object dynamic {
       )
     }
 
+  }
+
+  implicit class DynamicProtoSCollection[T <: Message](private val self: SCollection[T])
+      extends AnyVal {
+
+    def saveAsDynamicProtobufFile(
+      path: String,
+      numShards: Int = 0,
+      suffix: String = ".protobuf.avro",
+      codec: CodecFactory = CodecFactory.deflateCodec(6),
+      metadata: Map[String, AnyRef] = Map.empty
+    )(destinationFn: T => String)(implicit ct: ClassTag[T], coder: Coder[T]): Future[Tap[T]] = {
+      if (self.context.isTest) {
+        throw new NotImplementedError(
+          "Protobuf file with dynamic destinations cannot be used in a test context"
+        )
+      } else {
+        val sink = beam.AvroIO
+          .sinkViaGenericRecords[GenericRecord](
+            AvroBytesUtil.schema,
+            (element: GenericRecord, _: Schema) => element
+          )
+          .withCodec(codec)
+          .withMetadata(com.google.common.collect.Maps.newHashMap(metadata.asJava))
+
+        val write = writeDynamic(path, numShards, suffix, destinationFn)
+          .via(
+            Contextful.fn(
+              Functions.serializableFn[T, GenericRecord](AvroBytesUtil.encode(coder, _))
+            ),
+            sink
+          )
+
+        self.applyInternal(write)
+      }
+
+      Future.failed(
+        new NotImplementedError("Protobuf file future with dynamic destinations not implemented")
+      )
+    }
   }
 
   private def writeDynamic[A](
