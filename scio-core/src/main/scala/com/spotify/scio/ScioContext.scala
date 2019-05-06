@@ -99,7 +99,7 @@ private object RunnerContext {
 /** Convenience object for creating [[ScioContext]] and [[Args]]. */
 object ContextAndArgs {
 
-  sealed trait ArgsParser[F[_]] {
+  trait ArgsParser[F[_]] {
     type ArgsType
     type UsageOrHelp = String
     type Result = Either[UsageOrHelp, (PipelineOptions, ArgsType)]
