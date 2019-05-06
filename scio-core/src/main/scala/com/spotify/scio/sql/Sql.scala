@@ -242,8 +242,10 @@ object Queries {
 
   private[this] def printInferred(inferredSchemas: List[(String, BSchema)]): String =
     inferredSchemas
-      .collect {
-        case (name: String, schema: BSchema) =>
+      .map {
+        case (name, null) =>
+          s"Could not infer schema for $name"
+        case (name, schema) =>
           s"""
           |schema of $name:
           |${PrettyPrint.prettyPrint(schema.getFields.asScala.toList)}
