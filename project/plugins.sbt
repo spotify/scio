@@ -1,5 +1,5 @@
 addSbtCoursier
-addSbtPlugin("com.cavorite" % "sbt-avro-1-8" % "1.1.5")
+addSbtPlugin("com.cavorite" % "sbt-avro-1-8" % "1.1.6")
 addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "0.14.9")
 addSbtPlugin("com.eed3si9n" % "sbt-unidoc" % "0.4.2")
 addSbtPlugin("com.github.gseitz" % "sbt-protobuf" % "0.6.4")
