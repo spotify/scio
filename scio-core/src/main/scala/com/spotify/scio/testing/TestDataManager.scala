@@ -26,7 +26,7 @@ import org.apache.beam.sdk.values.{PBegin, PCollection, PInput}
 
 import scala.collection.concurrent.TrieMap
 import scala.collection.mutable.{Set => MSet}
-import scala.util.{Failure, Try}
+import scala.util.{Failure, Success, Try}
 
 /* Inputs are Scala Iterables to be parallelized for TestPipeline, or PTransforms to be applied */
 private[scio] trait JobInputSource[T] {
@@ -46,11 +46,11 @@ private[scio] case class PTransformInputSource[T](
   override def toSCollection(sc: ScioContext)(implicit coder: Coder[T]): SCollection[T] =
     sc.wrap(sc.applyInternal(transform))
 
-  override def toString: String = transform.toString
+  override def toString: String = transform.getName
 }
 
 private[scio] case class IterableInputSource[T](iterable: Iterable[T]) extends JobInputSource[T] {
-  override val asIterable = Try(iterable)
+  override val asIterable = Success(iterable)
   override def toSCollection(sc: ScioContext)(implicit coder: Coder[T]): SCollection[T] =
     sc.parallelize(iterable)
   override def toString: String = iterable.toString

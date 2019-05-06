@@ -1054,7 +1054,6 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   )(implicit ev: T <:< String): SCollection[U] =
     if (context.isTest) {
       val id = context.testId.get
-
       this
         .asInstanceOf[SCollection[String]]
         .flatMap(s => TestDataManager.getInput(id)(ReadIO(s)).asIterable.get)
