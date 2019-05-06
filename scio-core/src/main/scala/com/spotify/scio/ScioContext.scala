@@ -198,6 +198,7 @@ object ContextAndArgs {
           // scalastyle:off regex
           Console.out.println(usageOrHelp)
           // scalastyle:on regex
+          UsageOrHelpException.attachUncaughtExceptionHandler()
           throw new UsageOrHelpException()
         case Success(Right((_opts, _args))) =>
           (new ScioContext(_opts, Nil), _args.asInstanceOf[T])
@@ -210,7 +211,26 @@ object ContextAndArgs {
   def typed[T: Parser: Help](args: Array[String]): (ScioContext, T) =
     withParser(TypedParser[T]()).apply(args)
 
-  class UsageOrHelpException extends Exception with NoStackTrace
+  private[scio] class UsageOrHelpException extends Exception with NoStackTrace
+
+  private[scio] object UsageOrHelpException {
+    def attachUncaughtExceptionHandler(): Unit = {
+      val currentThread = Thread.currentThread()
+      val originalHandler = currentThread.getUncaughtExceptionHandler
+      currentThread.setUncaughtExceptionHandler(
+        new Thread.UncaughtExceptionHandler {
+          def uncaughtException(thread: Thread, exception: Throwable): Unit = {
+            exception match {
+              case _: UsageOrHelpException =>
+                sys.exit(0)
+              case _ =>
+                originalHandler.uncaughtException(thread, exception)
+            }
+          }
+        }
+      )
+    }
+  }
 }
 
 /** Companion object for [[ScioContext]]. */
