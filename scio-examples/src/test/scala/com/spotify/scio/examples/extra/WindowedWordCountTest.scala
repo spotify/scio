@@ -32,7 +32,7 @@ class WindowedWordCountTest extends PipelineSpec {
         "--outputGlobalWindow=true",
         "--output=output.txt"
       )
-      .pInput(
+      .inputStream(
         TextIO("input.txt"),
         testStreamOf[String]
           .advanceWatermarkTo(baseTime)

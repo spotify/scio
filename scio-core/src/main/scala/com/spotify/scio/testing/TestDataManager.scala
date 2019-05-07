@@ -21,8 +21,7 @@ import com.spotify.scio.coders.Coder
 import com.spotify.scio.io.ScioIO
 import com.spotify.scio.values.SCollection
 import com.spotify.scio.{ScioContext, ScioResult}
-import org.apache.beam.sdk.transforms.PTransform
-import org.apache.beam.sdk.values.{PBegin, PCollection, PInput}
+import org.apache.beam.sdk.testing.TestStream
 
 import scala.collection.concurrent.TrieMap
 import scala.collection.mutable.{Set => MSet}
@@ -34,19 +33,19 @@ private[scio] sealed trait JobInputSource[T] {
   val asIterable: Try[Iterable[T]]
 }
 
-private[scio] final case class PTransformInputSource[T](
-  transform: PTransform[_ >: PBegin <: PInput, PCollection[T]]
+private[scio] final case class TestStreamInputSource[T](
+  stream: TestStream[T]
 ) extends JobInputSource[T] {
   override val asIterable = Failure(
     new UnsupportedOperationException(
-      "PTransformInputType[T] can't be converted back to Iterable[T] as required by this TestIO"
+      s"Test input $this can't be converted to Iterable[T] to test this ScioIO type"
     )
   )
 
   override def toSCollection(sc: ScioContext)(implicit coder: Coder[T]): SCollection[T] =
-    sc.wrap(sc.applyInternal(transform))
+    sc.wrap(sc.applyInternal(stream))
 
-  override def toString: String = transform.getName
+  override def toString: String = s"TestStream(${stream.getEvents})"
 }
 
 private[scio] final case class IterableInputSource[T](

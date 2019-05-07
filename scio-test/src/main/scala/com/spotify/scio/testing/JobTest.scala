@@ -23,8 +23,7 @@ import com.spotify.scio.ScioResult
 import com.spotify.scio.io.ScioIO
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
-import org.apache.beam.sdk.transforms.PTransform
-import org.apache.beam.sdk.values.{PBegin, PCollection, PInput}
+import org.apache.beam.sdk.testing.TestStream
 import org.apache.beam.sdk.{metrics => beam}
 
 import scala.reflect.ClassTag
@@ -111,11 +110,8 @@ object JobTest {
      * Feed an input in the form of a PTransform[PBegin, PCollection[T] to the pipeline being
      * tested. Note that PTransform inputs may not be supported for all TestIO[T] types.
      */
-    def pInput[T](
-      io: ScioIO[T],
-      transform: PTransform[_ >: PBegin <: PInput, PCollection[T]]
-    ): Builder =
-      input(io, PTransformInputSource(transform))
+    def inputStream[T](io: ScioIO[T], stream: TestStream[T]): Builder =
+      input(io, TestStreamInputSource(stream))
 
     private def input[T](io: ScioIO[T], value: JobInputSource[T]): Builder = {
       require(!state.input.contains(io.toString), "Duplicate test input: " + io.toString)

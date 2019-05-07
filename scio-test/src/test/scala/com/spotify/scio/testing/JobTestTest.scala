@@ -432,7 +432,7 @@ class JobTestTest extends PipelineSpec {
   def testPubsubJobWithTestStreamInput(xs: String*): Unit = {
     JobTest[PubsubJob.type]
       .args("--input=in", "--output=out")
-      .pInput(
+      .inputStream(
         PubsubIO[String]("in"),
         testStreamOf[String].addElements("a", "b", "c").advanceWatermarkToInfinity()
       )
@@ -584,7 +584,7 @@ class JobTestTest extends PipelineSpec {
     JobTest[ReadAllJob.type]
       .args("--input=in.txt", "--output=out.txt")
       .input(TextIO("in.txt"), Seq("a", "b"))
-      .input(ReadIO("a"), Seq("a1", "a2"))
+      .input(ReadIO[String]("a"), Seq("a1", "a2"))
       .input(ReadIO("b"), Seq("b1", "b2"))
       .output(TextIO("out.txt")) { coll =>
         coll should containInAnyOrder(xs)
@@ -605,21 +605,22 @@ class JobTestTest extends PipelineSpec {
   }
 
   it should "fail string ReadIO used with TestStream input" in {
+    val testStream = testStreamOf[String]
+      .addElements("a1", "a2")
+      .advanceWatermarkToInfinity()
+
     the[PipelineExecutionException] thrownBy {
       JobTest[ReadAllJob.type]
         .args("--input=in.txt", "--output=out.txt")
         .input(TextIO("in.txt"), Seq("a"))
-        .pInput(
-          ReadIO("a"),
-          testStreamOf[String].addElements("a1", "a2").advanceWatermarkToInfinity()
-        )
+        .inputStream(ReadIO("a"), testStream)
         .output(TextIO("out.txt")) { coll =>
           ()
         }
         .run()
     } should have message
-      "java.lang.UnsupportedOperationException: " +
-        "PTransformInputType[T] can't be converted back to Iterable[T] as required by this TestIO"
+      s"java.lang.UnsupportedOperationException: Test input TestStream(${testStream.getEvents}) " +
+        s"can't be converted to Iterable[T] to test this ScioIO type"
   }
 
   def testReadAllBytesJob(xs: String*): Unit = {
@@ -647,23 +648,22 @@ class JobTestTest extends PipelineSpec {
   }
 
   it should "fail bytes ReadIO used with TestStream input" in {
+    val testStream = testStreamOf[Array[Byte]]
+      .addElements("a1".getBytes, "a2".getBytes)
+      .advanceWatermarkToInfinity()
+
     the[PipelineExecutionException] thrownBy {
       JobTest[ReadAllBytesJob.type]
         .args("--input=in.txt", "--output=out.txt")
         .input(TextIO("in.txt"), Seq("a"))
-        .pInput(
-          ReadIO("a"),
-          testStreamOf[Array[Byte]]
-            .addElements("a1".getBytes, "a2".getBytes)
-            .advanceWatermarkToInfinity()
-        )
+        .inputStream(ReadIO("a"), testStream)
         .output(TextIO("out.txt")) { coll =>
           ()
         }
         .run()
     } should have message
-      "java.lang.UnsupportedOperationException: " +
-        "PTransformInputType[T] can't be converted back to Iterable[T] as required by this TestIO"
+      s"java.lang.UnsupportedOperationException: Test input TestStream(${testStream.getEvents}) " +
+        s"can't be converted to Iterable[T] to test this ScioIO type"
   }
 
   // =======================================================================
