@@ -315,7 +315,6 @@ lazy val root: Project = Project("scio", file("."))
     scioElasticsearch5,
     scioElasticsearch6,
     scioExtra,
-    scioHdfs,
     scioJdbc,
     scioParquet,
     scioTensorFlow,
@@ -616,18 +615,6 @@ lazy val scioExtra: Project = Project(
   )
   .configs(IntegrationTest)
 
-lazy val scioHdfs: Project = Project(
-  "scio-hdfs",
-  file("scio-hdfs")
-).settings(
-  commonSettings,
-  description := "Scio add-on for HDFS",
-  libraryDependencies ++= Seq(
-    "org.apache.beam" % "beam-sdks-java-io-hadoop-file-system" % beamVersion,
-    "org.apache.hadoop" % "hadoop-client" % hadoopVersion
-  )
-)
-
 lazy val scioJdbc: Project = Project(
   "scio-jdbc",
   file("scio-jdbc")
@@ -835,10 +822,21 @@ lazy val site: Project = project
     ParadoxMaterialThemePlugin,
     GhpagesPlugin,
     ScalaUnidocPlugin,
-    SiteScaladocPlugin
+    SiteScaladocPlugin,
+    MdocPlugin
   )
-  .settings(commonSettings)
+  .settings(commonSettings ++ macroSettings)
   .settings(siteSettings)
+  .dependsOn(
+    scioMacros,
+    scioCore,
+    scioAvro,
+    scioBigQuery,
+    scioBigtable,
+    scioParquet,
+    scioSchemas,
+    scioTest
+  )
 
 // =======================================================================
 // Site settings
@@ -864,14 +862,24 @@ lazy val siteSettings = Def.settings(
   publish / skip := true,
   description := "Scio - Documentation",
   autoAPIMappings := true,
+  libraryDependencies ++= Seq(
+    "org.apache.beam" % "beam-runners-direct-java" % beamVersion,
+    "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion
+  ),
   siteSubdirName in ScalaUnidoc := "api",
+  scalacOptions in ScalaUnidoc := Seq(),
   addMappingsToSiteDir(mappings in (ScalaUnidoc, packageDoc), siteSubdirName in ScalaUnidoc),
   gitRemoteRepo := "git@github.com:spotify/scio.git",
   mappings in makeSite ++= Seq(
     file("scio-examples/target/site/index.html") -> "examples/index.html"
   ) ++ SoccoIndex.mappings,
+  // pre-compile md using mdoc
+  mdocIn := baseDirectory.value / "src" / "paradox",
+  mdocExtraArguments ++= Seq("--no-link-hygiene"),
+  sourceDirectory in Paradox := mdocOut.value,
   makeSite := {
     // Fix JavaDoc links before makeSite
+    mdoc.inputTaskValue
     (doc in ScalaUnidoc).value
     val bases = javaMappings.map(m => m._3 + "/index.html")
     val t = (target in ScalaUnidoc).value
@@ -902,11 +910,22 @@ lazy val siteSettings = Def.settings(
     )
     docMappings.flatMap((mappingFn _).tupled).toMap ++ jdkMapping
   },
-  unidocProjectFilter in (ScalaUnidoc, unidoc) := inAnyProject
-    -- inProjects(scioCassandra2)
-    -- inProjects(scioElasticsearch2, scioElasticsearch5)
-    -- inProjects(scioRepl) -- inProjects(scioSchemas) -- inProjects(scioExamples)
-    -- inProjects(scioJmh),
+  unidocProjectFilter in (ScalaUnidoc, unidoc) :=
+    inProjects(
+      scioCore,
+      scioTest,
+      scioAvro,
+      scioBigQuery,
+      scioBigtable,
+      scioCassandra3,
+      scioElasticsearch6,
+      scioExtra,
+      scioJdbc,
+      scioParquet,
+      scioTensorFlow,
+      scioSpanner,
+      scioMacros
+    ),
   // unidoc handles class paths differently than compile and may give older
   // versions high precedence.
   unidocAllClasspaths in (ScalaUnidoc, unidoc) := {

@@ -1,9 +1,9 @@
 <img src="images/scio.png" alt="Scio Logo" width="125"/>
 
-> Ecclesiastical Latin IPA: /ˈʃi.o/, [ˈʃiː.o], [ˈʃi.i̯o]  
+> Ecclesiastical Latin IPA: /ˈʃi.o/, [ˈʃiː.o], [ˈʃi.i̯o]
 > Verb: I can, know, understand, have knowledge.
 
-# Scio 
+# Scio
 
 Scio is a Scala API for [Apache Beam](https://beam.apache.org/) and [Google Cloud Dataflow](https://github.com/GoogleCloudPlatform/DataflowJavaSDK) inspired by [Apache Spark](https://spark.apache.org/) and [Scalding](https://github.com/twitter/scalding).
 
@@ -32,15 +32,14 @@ See @scaladoc[Scio Scaladocs](com.spotify.scio.index)  for current API documenta
 
 ### IO
   - @ref:[Type safe BigQuery](io/Type-Safe-BigQuery.md) - tutorial for the type safe BigQuery API
-  - @ref:[HDFS](io/HDFS.md) - using Scio with HDFS files
   - @ref:[Bigtable](io/Bigtable.md) - using Scio with Bigtable
   - @ref:[Avro](io/Avro.md) - using Scio with Avro files
   - @ref:[Protobuf](io/Protobuf.md) - using Scio with Protobuf
   - @ref:[Parquet](io/Parquet.md) - using Scio with Parquet files
-  
+
 ### Extras
   - @ref:[Algebird](extras/Algebird.md)
-  
+
 ### Internals
   - @ref:[ScioIO](internals/ScioIO.md) - new IO system to simplify implementation and stubbing in `JobTest`
   - @ref:[OverrideTypeProvider](internals/OverrideTypeProvider.md) - custom mappings for type-safe BigQuery
@@ -93,5 +92,5 @@ See @scaladoc[Scio Scaladocs](com.spotify.scio.index)  for current API documenta
 * [Changelog](Changelog.md)
 * [FAQ](FAQ.md)
 * [Powered By](Powered-By.md)
-  
+
 @@@

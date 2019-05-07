@@ -17,7 +17,7 @@
 
 package com.spotify.scio.coders
 
-import scala.annotation.StaticAnnotation
+import scala.annotation.{compileTimeOnly, StaticAnnotation}
 import scala.language.experimental.macros
 import scala.reflect.macros._
 
@@ -26,6 +26,7 @@ import scala.reflect.macros._
  *
  * Annotated class must extend `IKryoRegistrar` and has name that ends with "KryoRegistrar".
  */
+@compileTimeOnly("enable macro paradise to expand macro annotations")
 class KryoRegistrar extends StaticAnnotation {
   def macroTransform(annottees: Any*): Any = macro KryoRegistrarMacro.impl
 }

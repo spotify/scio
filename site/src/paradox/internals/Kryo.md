@@ -8,11 +8,8 @@ By registering your classes at compile time, Kryo can serialize far more efficie
 Add the following class. You can rename it, but its name has to end in `KryoRegistrar`. Also make sure that the [Macro Paradise](https://docs.scala-lang.org/overviews/macros/paradise.html) plugin is enabled for your project.
 
 ````scala
-package x
-
-import com.esotericsoftware.kryo.Kryo
 import com.spotify.scio.coders.KryoRegistrar
-import com.twitter.chill.{AllScalaRegistrar, IKryoRegistrar, toRich}
+import com.twitter.chill._
 
 @KryoRegistrar
 class MyKryoRegistrar extends IKryoRegistrar {
@@ -26,7 +23,7 @@ class MyKryoRegistrar extends IKryoRegistrar {
       classOf[foo.bar.MyClass],
 
       // Class that takes type parameters:
-      classOf[java.util.ArrayList[_]],
+      classOf[_root_.java.util.ArrayList[_]],
       // But you can also explicitly do:
       classOf[Array[Byte]],
 
@@ -47,8 +44,6 @@ _Note:_ since Dataflow may shuffle data at any point, you not only have to inclu
 You can add the following class to your test folder; it will enforce registration of classes during your tests. It only works if you actually run your job in tests, so be sure to include a `JobTest` or so for each pipeline you run.
 
 ````scala
-package x
-
 import com.esotericsoftware.kryo.Kryo
 import com.spotify.scio.coders.KryoRegistrar
 import com.twitter.chill.IKryoRegistrar

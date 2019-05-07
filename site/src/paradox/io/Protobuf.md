@@ -4,12 +4,18 @@
 
 Scio comes with custom and efficient support for reading Protobuf files via `protobufFile` method, for example:
 
+```scala mdoc:reset
+val sc = "yolo"
+println(sc)
+```
+
+
 ```scala
 // FooBarProto is a Protobuf generated class (must be a subclass of Protobuf's `Message`)
 sc.protobufFile[FooBarProto]("gs://path-to-data/lake/part-*.protobuf.avro")
-  .map( message => ... )
+  .map( message => ??? )
 // `message` is of type FooBarProto
-``` 
+```
 
 Important: in most cases the input files should have been previously written by Scio. The reason is that Scio assumes that serialized Protobuf message is stored inside `bytes` Avro record.
 
@@ -21,7 +27,10 @@ Scio comes with custom and efficient support for writing Protobuf files via `sav
 
 ```scala
 // FooBarProto is a Protobuf generated class (must be a subclass of Protobuf's `Message`)
-sc.map(<build a protobuf message>)
+sc.map { x =>
+    // build a protobuf message>
+    ???
+  }
   .saveAsProtobufFile("gs://path-to-data/lake/protos-out")
 ```
 

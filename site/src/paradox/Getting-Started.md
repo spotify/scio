@@ -22,7 +22,7 @@ sbt publishLocal
 
 You can also specify sbt heap size with `-mem`, e.g. `sbt -mem 8192`. Use the `SBT_OPTS` environment variable for more fine grained settings.
 
-```bash 
+```bash
 export SBT_OPTS="-Xmx8G -Xms8G -Xss1M -XX:MaxMetaspaceSize=1G -XX:+CMSClassUnloadingEnabled -XX:ReservedCodeCacheSize=128m"
 ```
 

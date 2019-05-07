@@ -4,8 +4,10 @@ To write Scio unit tests you will need to add the following dependency to your b
 
 ```scala
 libraryDependencies ++= Seq(
-.......
-"com.spotify" %% "scio-test" % scioVersion % Test,
+  // .......
+  "com.spotify" %% "scio-test" % scioVersion % Test,
+  // .......
+)
 ```
 To run the test, you can run the following commands. You can skip the first two lines if you already ran them and are still in the sbt shell.
 
@@ -52,7 +54,7 @@ The run function will run the pipeline.
 ### Test for pipeline with sideinput
 We will use the @github[SideInputJoinExamples](/scio-examples/src/test/scala/com/spotify/scio/examples/cookbook/JoinExamplesTest.scala#L73) test in JoinExamplesTest to illustrate how to write a test for pipelines with sideinputs. The @extref[SideInputJoinExamples](example:JoinExamples) pipeline has two input sources, one for eventsInfo and the other for countryInfo. CountryInfo is used as a sideinput to join with eventInfo.
 
-Since we have two input sources, we have to specify both in the `JobTest`. Note that the injected data type should match one expected by the sink. 
+Since we have two input sources, we have to specify both in the `JobTest`. Note that the injected data type should match one expected by the sink.
 
 ```scala
 "SideInputJoinExamples" should "work" in {
@@ -72,24 +74,22 @@ coll should containInAnyOrder(expected)
 
 ```scala
 "SideInOutExample" should "work" in {
- JobTest[SideInOutExample.type]
- .args("--input=in.txt",
-     "--stopWords=stop.txt",
-     "--output1=out1.txt",
-     "--output2=out2.txt",
-     "--output3=out3.txt",
-     "--output4=out4.txt")
-   .output(TextIO("out1.txt")){ coll =>
-coll should containInAnyOrder(Seq.empty[String])
-()
+  JobTest[SideInOutExample.type]
+    .args("--input=in.txt",
+        "--stopWords=stop.txt",
+        "--output1=out1.txt",
+        "--output2=out2.txt",
+        "--output3=out3.txt",
+        "--output4=out4.txt")
+    .output(TextIO("out1.txt")){ coll =>
+      coll should containInAnyOrder(Seq.empty[String])
+      ()
+    }
+    .output(TextIO("out2.txt")){ coll =>
+      coll should containInAnyOrder(Seq.empty[String])
+      ()
+    }.run()
 }
-   .output(TextIO("out2.txt")){ coll =>
-coll should containInAnyOrder(Seq.empty[String])
-()
-}
-   ………………...
-   }
-   .run()
 ```
 
 ### Test partial pipeline
@@ -106,9 +106,9 @@ val data = Seq(
 )
 
 runWithContext { sc =>
- val r = TriggerExample.extractFlowInfo(sc.parallelize(data))
- r should haveSize(1)
- r should containSingleValue(("94", 29))
+  val r = TriggerExample.extractFlowInfo(sc.parallelize(data))
+  r should haveSize(1)
+  r should containSingleValue(("94", 29))
 }
 ```
 
@@ -118,7 +118,7 @@ We will use the LeaderBoardTest to explain how to test Windowing in Scio. The fu
 * Calculate an early/"speculative" result from partial data, 5 minutes after the first element in our window is processed (withEarlyFiring)
 * Accept late entries (and recalculates based on them) only if they arrive within the allowedLateness duration.
 
-In this test,  we are testing calculateTeamScores for when all of the elements arrive on time, i.e. before the watermark. 
+In this test,  we are testing calculateTeamScores for when all of the elements arrive on time, i.e. before the watermark.
 
 We specify, the fixed window size is set to 20 minutes and allowedLateness is 1 hour.
 private val allowedLateness = Duration.standardHours(1)
@@ -127,7 +127,7 @@ private val teamWindowDuration = Duration.standardMinutes(20)
 First, we have to create an input stream representing an unbounded `SCollection` of type GameActionInfo using the `testStreamOf`. Each element is assigned a timestamp representing when each event occurred. In the code snippet above, we start at epoch equal zero,  by setting watermark to 0 in the advanceWatermarkTo.
 
 We add GameActionInfo elements with varying timestamps, and we advanced the watermark to 3 minutes. At this point, all elements are on time because they came before the watermark advances to 3 minutes.
-  
+
 ```scala
 val stream = testStreamOf[GameActionInfo]
 // Start at the epoch
