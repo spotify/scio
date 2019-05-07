@@ -25,6 +25,7 @@
 package com.spotify.scio.examples
 
 import com.spotify.scio._
+import com.spotify.scio.sql._
 import com.spotify.scio.examples.common.ExampleData
 
 object MinimalBeamSqlWordCountExample {

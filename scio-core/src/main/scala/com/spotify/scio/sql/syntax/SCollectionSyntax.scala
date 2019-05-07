@@ -14,9 +14,14 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+package com.spotify.scio.sql.syntax
 
-package com.spotify.scio
+import com.spotify.scio.values.SCollection
+import com.spotify.scio.schemas.Schema
+import com.spotify.scio.sql.{Sql, SqlSCollection}
 
-import com.spotify.scio.sql.syntax.AllSyntax
+import scala.language.implicitConversions
 
-package object sql extends AllSyntax
+trait SCollectionSyntax {
+  implicit def sqlSCollectionOps[A: Schema](sc: SCollection[A]): SqlSCollection[A] = Sql.from(sc)
+}
