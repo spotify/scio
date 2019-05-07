@@ -584,7 +584,7 @@ class JobTestTest extends PipelineSpec {
     JobTest[ReadAllJob.type]
       .args("--input=in.txt", "--output=out.txt")
       .input(TextIO("in.txt"), Seq("a", "b"))
-      .input(ReadIO[String]("a"), Seq("a1", "a2"))
+      .input(ReadIO("a"), Seq("a1", "a2"))
       .input(ReadIO("b"), Seq("b1", "b2"))
       .output(TextIO("out.txt")) { coll =>
         coll should containInAnyOrder(xs)
