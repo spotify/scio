@@ -271,4 +271,11 @@ object SchemaMaterializer {
         (bschema, toRow, fromRow)
     }
   }
+
+  final def beamSchema[T](implicit schema: Schema[T]): BSchema = schema match {
+    case s @ (_: Record[T] | _: RawRecord[T]) =>
+      SchemaMaterializer.fieldType(s).getRowSchema
+    case _ =>
+      SchemaMaterializer.fieldType(Schema[ScalarWrapper[T]]).getRowSchema
+  }
 }
