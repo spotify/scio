@@ -47,6 +47,6 @@ final class FileStorageOps(private val self: FileStorage) extends AnyVal {
 }
 
 trait FileStorageSyntax {
-  implicit def tensorFlowFileStorageFunctions(s: FileStorage): FileStorageOps =
+  private[scio] implicit def tensorFlowFileStorageFunctions(s: FileStorage): FileStorageOps =
     new FileStorageOps(s)
 }
