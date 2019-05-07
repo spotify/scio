@@ -29,12 +29,12 @@ import scala.collection.mutable.{Set => MSet}
 import scala.util.{Failure, Success, Try}
 
 /* Inputs are Scala Iterables to be parallelized for TestPipeline, or PTransforms to be applied */
-private[scio] trait JobInputSource[T] {
+private[scio] sealed trait JobInputSource[T] {
   def toSCollection(sc: ScioContext)(implicit coder: Coder[T]): SCollection[T]
   val asIterable: Try[Iterable[T]]
 }
 
-private[scio] case class PTransformInputSource[T](
+private[scio] final case class PTransformInputSource[T](
   transform: PTransform[_ >: PBegin <: PInput, PCollection[T]]
 ) extends JobInputSource[T] {
   override val asIterable = Failure(
@@ -49,7 +49,9 @@ private[scio] case class PTransformInputSource[T](
   override def toString: String = transform.getName
 }
 
-private[scio] case class IterableInputSource[T](iterable: Iterable[T]) extends JobInputSource[T] {
+private[scio] final case class IterableInputSource[T](
+  iterable: Iterable[T]
+) extends JobInputSource[T] {
   override val asIterable = Success(iterable)
   override def toSCollection(sc: ScioContext)(implicit coder: Coder[T]): SCollection[T] =
     sc.parallelize(iterable)
