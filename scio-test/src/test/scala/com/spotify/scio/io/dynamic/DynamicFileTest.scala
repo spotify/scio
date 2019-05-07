@@ -177,7 +177,6 @@ class DynamicFileTest extends PipelineSpec {
     val sc1 = ScioContext()
 
     val newProtobuf = (x: Int) => SimplePB.newBuilder().setPlays(x).setTrackId(s"track$x").build()
-
     sc1
       .parallelize(1 to 10)
       .map(newProtobuf)
