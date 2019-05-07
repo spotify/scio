@@ -189,7 +189,7 @@ private final case class PubsubIOWithAttributes[T: ClassTag: Coder](
   override def readTest(sc: ScioContext, params: ReadP)(
     implicit coder: Coder[WithAttributeMap]
   ): SCollection[WithAttributeMap] = {
-    val read = sc.parallelize(TestDataManager.getInput(sc.testId.get)(this))
+    val read = TestDataManager.getInput(sc.testId.get)(this).toSCollection(sc)
 
     if (timestampAttribute != null) {
       read.timestampBy(kv => new Instant(kv._2(timestampAttribute)))

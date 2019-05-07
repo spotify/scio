@@ -697,9 +697,7 @@ class ScioContext private[scio] (val options: PipelineOptions, private var artif
   ): SCollection[T] =
     requireNotClosed {
       if (this.isTest) {
-        this.parallelize(
-          TestDataManager.getInput(testId.get)(CustomIO[T](name)).asInstanceOf[Seq[T]]
-        )
+        TestDataManager.getInput(testId.get)(CustomIO[T](name)).toSCollection(this)
       } else {
         wrap(this.pipeline.apply(name, transform))
       }

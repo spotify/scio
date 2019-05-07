@@ -429,6 +429,29 @@ class JobTestTest extends PipelineSpec {
     }
   }
 
+  def testPubsubJobWithTestStreamInput(xs: String*): Unit = {
+    JobTest[PubsubJob.type]
+      .args("--input=in", "--output=out")
+      .inputStream(
+        PubsubIO[String]("in"),
+        testStreamOf[String].addElements("a", "b", "c").advanceWatermarkToInfinity()
+      )
+      .output(PubsubIO[String]("out")) { coll =>
+        coll should containInAnyOrder(xs)
+        ()
+      }
+      .run()
+  }
+
+  it should "pass correct PubsubIO with TestStream input" in {
+    testPubsubJobWithTestStreamInput("aX", "bX", "cX")
+  }
+
+  it should "fail incorrect PubsubIO with TestStream input" in {
+    an[AssertionError] should be thrownBy testPubsubJobWithTestStreamInput("aX", "bX")
+    an[AssertionError] should be thrownBy testPubsubJobWithTestStreamInput("aX", "bX", "cX", "dX")
+  }
+
   def testPubsubWithAttributesJob(timestampAttribute: Map[String, String], xs: String*): Unit = {
     type M = Map[String, String]
     val m = Map("a" -> "1", "b" -> "2", "c" -> "3") ++ timestampAttribute
@@ -581,6 +604,25 @@ class JobTestTest extends PipelineSpec {
     }
   }
 
+  it should "fail string ReadIO used with TestStream input" in {
+    val testStream = testStreamOf[String]
+      .addElements("a1", "a2")
+      .advanceWatermarkToInfinity()
+
+    the[PipelineExecutionException] thrownBy {
+      JobTest[ReadAllJob.type]
+        .args("--input=in.txt", "--output=out.txt")
+        .input(TextIO("in.txt"), Seq("a"))
+        .inputStream(ReadIO("a"), testStream)
+        .output(TextIO("out.txt")) { coll =>
+          ()
+        }
+        .run()
+    } should have message
+      s"java.lang.UnsupportedOperationException: Test input TestStream(${testStream.getEvents}) " +
+        s"can't be converted to Iterable[T] to test this ScioIO type"
+  }
+
   def testReadAllBytesJob(xs: String*): Unit = {
     JobTest[ReadAllBytesJob.type]
       .args("--input=in.txt", "--output=out.txt")
@@ -603,6 +645,25 @@ class JobTestTest extends PipelineSpec {
     an[AssertionError] should be thrownBy {
       testReadAllBytesJob("a1", "a2", "b1", "b2", "c1")
     }
+  }
+
+  it should "fail bytes ReadIO used with TestStream input" in {
+    val testStream = testStreamOf[Array[Byte]]
+      .addElements("a1".getBytes, "a2".getBytes)
+      .advanceWatermarkToInfinity()
+
+    the[PipelineExecutionException] thrownBy {
+      JobTest[ReadAllBytesJob.type]
+        .args("--input=in.txt", "--output=out.txt")
+        .input(TextIO("in.txt"), Seq("a"))
+        .inputStream(ReadIO("a"), testStream)
+        .output(TextIO("out.txt")) { coll =>
+          ()
+        }
+        .run()
+    } should have message
+      s"java.lang.UnsupportedOperationException: Test input TestStream(${testStream.getEvents}) " +
+        s"can't be converted to Iterable[T] to test this ScioIO type"
   }
 
   // =======================================================================
