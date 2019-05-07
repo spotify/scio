@@ -19,11 +19,10 @@ package com.spotify.scio.io.dynamic
 
 import java.nio.file.{Files, Path}
 
-import com.spotify.scio.ScioContext
+import com.spotify.scio._
 import com.spotify.scio.avro.AvroUtils._
 import com.spotify.scio.avro._
 import com.spotify.scio.coders.Coder
-import com.spotify.scio.coders.Coder._
 import com.spotify.scio.proto.SimpleV2.SimplePB
 import com.spotify.scio.testing.PipelineSpec
 import com.spotify.scio.values.WindowOptions
