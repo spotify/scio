@@ -176,7 +176,6 @@ class DynamicFileTest extends PipelineSpec {
   it should "support Proto files" in {
     val tmpDir = Files.createTempDirectory("dynamic-io-")
     val sc1 = ScioContext()
-    implicit val coder: Coder[SimplePB] = Coder.protoMessageCoder[SimplePB]
 
     val newProtobuf = (x: Int) => SimplePB.newBuilder().setPlays(x).setTrackId(s"track$x").build()
 
