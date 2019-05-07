@@ -19,11 +19,13 @@ package com.spotify.scio.io.dynamic
 
 import java.nio.file.{Files, Path}
 
-import com.spotify.scio._
-import com.spotify.scio.coders.Coder
+import com.spotify.scio.ScioContext
 import com.spotify.scio.avro.AvroUtils._
 import com.spotify.scio.avro._
-import com.spotify.scio.testing._
+import com.spotify.scio.coders.Coder
+import com.spotify.scio.coders.Coder._
+import com.spotify.scio.proto.SimpleV2.SimplePB
+import com.spotify.scio.testing.PipelineSpec
 import com.spotify.scio.values.WindowOptions
 import org.apache.avro.generic.GenericRecord
 import org.apache.beam.sdk.options.PipelineOptionsFactory
@@ -167,6 +169,31 @@ class DynamicFileTest extends PipelineSpec {
       val records = sc2.avroFile[TestRecord](s"$tmpDir/$p/part-$t1-$t2-*.avro")
       records should containSingleValue(newSpecificRecord(x))
     }
+    sc2.close()
+    FileUtils.deleteDirectory(tmpDir.toFile)
+  }
+
+  it should "support Proto files" in {
+    val tmpDir = Files.createTempDirectory("dynamic-io-")
+    val sc1 = ScioContext()
+    implicit val coder: Coder[SimplePB] = Coder.protoMessageCoder[SimplePB]
+
+    val newProtobuf = (x: Int) => SimplePB.newBuilder().setPlays(x).setTrackId(s"track$x").build()
+
+    sc1
+      .parallelize(1 to 10)
+      .map(newProtobuf)
+      .saveAsDynamicProtobufFile(tmpDir.toString) { r =>
+        (r.getPlays % 2).toString
+      }
+    sc1.close()
+    verifyOutput(tmpDir, "0", "1")
+
+    val sc2 = ScioContext()
+    val lines0 = sc2.protobufFile[SimplePB](s"$tmpDir/0/*.protobuf")
+    val lines1 = sc2.protobufFile[SimplePB](s"$tmpDir/1/*.protobuf")
+    lines0 should containInAnyOrder((1 to 10).filter(_ % 2 == 0).map(newProtobuf))
+    lines1 should containInAnyOrder((1 to 10).filter(_ % 2 == 1).map(newProtobuf))
     sc2.close()
     FileUtils.deleteDirectory(tmpDir.toFile)
   }
