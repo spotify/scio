@@ -73,6 +73,25 @@ private[scio] object VersionUtil {
   private[scio] def ignoreVersionCheck: Boolean =
     System.getProperty("scio.ignore.versionWarning").trim == "true"
 
+  // scalastyle:off line.size.limit
+  private def messages(current: SemVer, latest: SemVer): Option[String] =
+    (current, latest) match {
+      case (SemVer(0, minor, _, _), SemVer(0, 7, _, _)) if minor < 7 =>
+        import scala.io.AnsiColor._
+        val mess =
+          s"""
+            | ${YELLOW}>${BOLD} Scio 0.7 introduced breaking changes in the API.${RESET}
+            | ${YELLOW}>${RESET} Follow the migration guide to upgrade: https://spotify.github.io/scio/migrations/v0.7.0-Migration-Guide
+            | ${YELLOW}>${RESET} Scio provides automatic migration rules (See migration guide).
+          """.stripMargin
+        Option(mess)
+      case (SemVer(0, minor, _, _), SemVer(0, 8, _, _)) if minor < 8 =>
+        // TODO: write a migration guide to scio 0.8 and link it here
+        None
+      case _ => None
+    }
+  // scalastyle:on line.size.limit
+
   def checkVersion(
     current: String,
     latest: Option[String],
@@ -90,6 +109,7 @@ private[scio] object VersionUtil {
         val v2 = parseVersion(v)
         if (v2 > v1) {
           b.append(s"A newer version of Scio is available: $current -> $v")
+          messages(v1, v2).foreach(m => b.append(m))
         }
       }
       b
