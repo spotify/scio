@@ -52,6 +52,7 @@ import scala.collection.mutable.{Buffer => MBuffer}
 import scala.concurrent.duration.Duration
 import scala.io.Source
 import scala.reflect.ClassTag
+import scala.util.control.NoStackTrace
 import scala.util.{Failure, Success, Try}
 
 /** Runner specific context. */
@@ -99,7 +100,7 @@ private object RunnerContext {
 /** Convenience object for creating [[ScioContext]] and [[Args]]. */
 object ContextAndArgs {
 
-  sealed trait ArgsParser[F[_]] {
+  trait ArgsParser[F[_]] {
     type ArgsType
     type UsageOrHelp = String
     type Result = Either[UsageOrHelp, (PipelineOptions, ArgsType)]
@@ -191,16 +192,16 @@ object ContextAndArgs {
   def withParser[T](parser: ArgsParser[Try]): Array[String] => (ScioContext, T) =
     args =>
       parser.parse(args) match {
-        // scalastyle:off regex
         case Failure(exception) =>
-          Console.err.println(exception.getMessage)
-          sys.exit(1)
+          throw exception
         case Success(Left(usageOrHelp)) =>
+          // scalastyle:off regex
           Console.out.println(usageOrHelp)
-          sys.exit(0)
+          // scalastyle:on regex
+          UsageOrHelpException.attachUncaughtExceptionHandler()
+          throw new UsageOrHelpException()
         case Success(Right((_opts, _args))) =>
           (new ScioContext(_opts, Nil), _args.asInstanceOf[T])
-        // scalastyle:on regex
       }
 
   /** Create [[ScioContext]] and [[Args]] for command line arguments. */
@@ -210,6 +211,26 @@ object ContextAndArgs {
   def typed[T: Parser: Help](args: Array[String]): (ScioContext, T) =
     withParser(TypedParser[T]()).apply(args)
 
+  private[scio] class UsageOrHelpException extends Exception with NoStackTrace
+
+  private[scio] object UsageOrHelpException {
+    def attachUncaughtExceptionHandler(): Unit = {
+      val currentThread = Thread.currentThread()
+      val originalHandler = currentThread.getUncaughtExceptionHandler
+      currentThread.setUncaughtExceptionHandler(
+        new Thread.UncaughtExceptionHandler {
+          def uncaughtException(thread: Thread, exception: Throwable): Unit = {
+            exception match {
+              case _: UsageOrHelpException =>
+                sys.exit(0)
+              case _ =>
+                originalHandler.uncaughtException(thread, exception)
+            }
+          }
+        }
+      )
+    }
+  }
 }
 
 /** Companion object for [[ScioContext]]. */
