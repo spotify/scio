@@ -99,7 +99,7 @@ object JobTest {
     }
 
     /**
-     * Feed an input in the form of a raw Iterable[T] to the pipeline being tested. Note that
+     * Feed an input in the form of a raw `Iterable[T]` to the pipeline being tested. Note that
      * `TestIO[T]` must match the one used inside the pipeline, e.g. `AvroIO[MyRecord]("in.avro")`
      * with `sc.avroFile[MyRecord]("in.avro")`.
      */
@@ -107,8 +107,8 @@ object JobTest {
       input(io, IterableInputSource(value))
 
     /**
-     * Feed an input in the form of a PTransform[PBegin, PCollection[T] to the pipeline being
-     * tested. Note that PTransform inputs may not be supported for all TestIO[T] types.
+     * Feed an input in the form of a `PTransform[PBegin, PCollection[T]]` to the pipeline being
+     * tested. Note that `PTransform` inputs may not be supported for all `TestIO[T]` types.
      */
     def inputStream[T](io: ScioIO[T], stream: TestStream[T]): Builder =
       input(io, TestStreamInputSource(stream))
