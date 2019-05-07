@@ -70,19 +70,30 @@ private[scio] object VersionUtil {
     SemVer(m.group(1).toInt, m.group(2).toInt, m.group(3).toInt, snapshot)
   }
 
-  def checkVersion(current: String, latest: Option[String]): Seq[String] = {
-    val b = mutable.Buffer.empty[String]
-    val v1 = parseVersion(current)
-    if (v1.suffix == "-SNAPSHOT") {
-      b.append(s"Using a SNAPSHOT version of Scio: $current")
-    }
-    latest.foreach { v =>
-      val v2 = parseVersion(v)
-      if (v2 > v1) {
-        b.append(s"A newer version of Scio is available: $current -> $v")
+  private[scio] def ignoreVersionCheck: Boolean =
+    System.getProperty("scio.ignore.versionWarning").trim == "true"
+
+  def checkVersion(
+    current: String,
+    latest: Option[String],
+    ignore: Boolean = ignoreVersionCheck
+  ): Seq[String] = {
+    if (ignore) {
+      Nil
+    } else {
+      val b = mutable.Buffer.empty[String]
+      val v1 = parseVersion(current)
+      if (v1.suffix == "-SNAPSHOT") {
+        b.append(s"Using a SNAPSHOT version of Scio: $current")
       }
+      latest.foreach { v =>
+        val v2 = parseVersion(v)
+        if (v2 > v1) {
+          b.append(s"A newer version of Scio is available: $current -> $v")
+        }
+      }
+      b
     }
-    b
   }
 
   def checkVersion(): Unit =
