@@ -867,6 +867,7 @@ lazy val siteSettings = Def.settings(
     "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion
   ),
   siteSubdirName in ScalaUnidoc := "api",
+  scalacOptions in ScalaUnidoc := Seq(),
   addMappingsToSiteDir(mappings in (ScalaUnidoc, packageDoc), siteSubdirName in ScalaUnidoc),
   gitRemoteRepo := "git@github.com:spotify/scio.git",
   mappings in makeSite ++= Seq(
@@ -909,11 +910,10 @@ lazy val siteSettings = Def.settings(
     )
     docMappings.flatMap((mappingFn _).tupled).toMap ++ jdkMapping
   },
-  unidocProjectFilter in (ScalaUnidoc, unidoc) := inAnyProject
-    -- inProjects(scioCassandra2)
-    -- inProjects(scioElasticsearch2, scioElasticsearch5)
-    -- inProjects(scioRepl) -- inProjects(scioSchemas) -- inProjects(scioExamples)
-    -- inProjects(scioJmh),
+  unidocProjectFilter in (ScalaUnidoc, unidoc) :=
+    inProjects(
+      scioCore, scioTest, scioAvro, scioBigQuery, scioBigtable, scioCassandra3, scioElasticsearch6,
+      scioExtra, scioJdbc, scioParquet, scioTensorFlow, scioSpanner, scioMacros),
   // unidoc handles class paths differently than compile and may give older
   // versions high precedence.
   unidocAllClasspaths in (ScalaUnidoc, unidoc) := {
