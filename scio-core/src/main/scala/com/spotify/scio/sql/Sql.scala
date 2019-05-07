@@ -156,19 +156,13 @@ object Queries {
    * If the query correctly typechecks, it's simply return as a [[Right]].
    * If it fails, a error message is returned in a [[Left]].
    */
-  def typecheck[A: Schema, B: Schema](q: Query[A, B]): Either[String, Query[A, B]] = {
-    val schema: BSchema = SchemaMaterializer.fieldType(Schema[A]).getRowSchema
-    // TODO: add null check on schema. If A is a scalar (Int, String,...) schema will be null
-    val expectedSchema: BSchema =
-      Schema[B] match {
-        case s: Record[B] =>
-          SchemaMaterializer.fieldType(s).getRowSchema
-        case _ =>
-          SchemaMaterializer.fieldType(Schema[ScalarWrapper[B]]).getRowSchema
-      }
-
-    typecheck(q.query, (q.tag.getId, schema) :: Nil, expectedSchema, q.udfs).right.map(_ => q)
-  }
+  def typecheck[A: Schema, B: Schema](q: Query[A, B]): Either[String, Query[A, B]] =
+    typecheck(
+      q.query,
+      List((q.tag.getId, SchemaMaterializer.beamSchema[A])),
+      SchemaMaterializer.beamSchema[B],
+      q.udfs
+    ).right.map(_ => q)
 
   /**
    * Typecheck [[Query2]] q against the provided schemas.
@@ -177,25 +171,16 @@ object Queries {
    */
   def typecheck[A: Schema, B: Schema, R: Schema](
     q: Query2[A, B, R]
-  ): Either[String, Query2[A, B, R]] = {
-    val schemaA: BSchema = SchemaMaterializer.fieldType(Schema[A]).getRowSchema
-    val schemaB: BSchema = SchemaMaterializer.fieldType(Schema[B]).getRowSchema
-    val expectedSchema: BSchema =
-      Schema[R] match {
-        case s: Record[R] =>
-          SchemaMaterializer.fieldType(s).getRowSchema
-        case _ =>
-          SchemaMaterializer.fieldType(Schema[ScalarWrapper[R]]).getRowSchema
-      }
-
+  ): Either[String, Query2[A, B, R]] =
     typecheck(
       q.query,
-      List((q.aTag.getId, schemaA), (q.bTag.getId, schemaB)),
-      expectedSchema,
+      List(
+        (q.aTag.getId, SchemaMaterializer.beamSchema[A]),
+        (q.bTag.getId, SchemaMaterializer.beamSchema[B])
+      ),
+      SchemaMaterializer.beamSchema[R],
       q.udfs
-    ).right
-      .map(_ => q)
-  }
+    ).right.map(_ => q)
 
   // TODO: this should support TupleTag
   def typed[A: Schema, B: Schema](query: String): Query[A, B] =
@@ -246,6 +231,8 @@ object Queries {
   private[this] def printInferred(inferredSchemas: List[(String, BSchema)]): String =
     inferredSchemas
       .map {
+        case (name, null) =>
+          s"could not infer schema for $name"
         case (name, schema) =>
           s"""
           |schema of $name:
