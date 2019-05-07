@@ -65,8 +65,8 @@ Scio includes the following artifacts:
 
 - `scio-core`: core library
 - `scio-test`: test utilities, add to your project as a "test" dependency
-- `scio-avro`: add-on for Avro, included in `scio-core` but can also be used standalone
-- `scio-bigquery`: add-on for BigQuery, included in `scio-core` but can also be used standalone
+- `scio-avro`: add-on for Avro, can also be used standalone
+- `scio-bigquery`: add-on for BigQuery, can also be used standalone
 - `scio-bigtable`: add-on for Bigtable
 - `scio-cassandra2`: add-on for Cassandra 2.x
 - `scio-cassandra3`: add-on for Cassandra 3.x
