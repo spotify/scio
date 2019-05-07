@@ -26,13 +26,12 @@ import java.sql.{PreparedStatement, ResultSet}
 
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
 
-sealed trait JdbcIO[T] extends TestIO[T] {
-  override final val tapT = EmptyTapOf[T]
-}
+sealed trait JdbcIO[T] extends ScioIO[T]
 
 object JdbcIO {
   final def apply[T](opts: JdbcIoOptions): JdbcIO[T] =
     new JdbcIO[T] with TestIO[T] {
+      override final val tapT = EmptyTapOf[T]
       override def testId: String = s"JdbcIO(${jdbcIoId(opts)})"
     }
 
@@ -47,9 +46,25 @@ object JdbcIO {
       .fold(s"${opts.username}")(password => s"${opts.username}:$password")
     s"$user@${opts.connectionUrl}:$query"
   }
+
+  private[jdbc] def dataSourceConfiguration(
+    opts: JdbcConnectionOptions
+  ): beam.JdbcIO.DataSourceConfiguration = {
+    opts.password match {
+      case Some(pass) =>
+        beam.JdbcIO.DataSourceConfiguration
+          .create(opts.driverClass.getCanonicalName, opts.connectionUrl)
+          .withUsername(opts.username)
+          .withPassword(pass)
+      case None =>
+        beam.JdbcIO.DataSourceConfiguration
+          .create(opts.driverClass.getCanonicalName, opts.connectionUrl)
+          .withUsername(opts.username)
+    }
+  }
 }
 
-final case class JdbcSelect[T: Coder](readOptions: JdbcReadOptions[T]) extends ScioIO[T] {
+final case class JdbcSelect[T: Coder](readOptions: JdbcReadOptions[T]) extends JdbcIO[T] {
 
   override type ReadP = Unit
   override type WriteP = Nothing
@@ -61,7 +76,7 @@ final case class JdbcSelect[T: Coder](readOptions: JdbcReadOptions[T]) extends S
     var transform = beam.JdbcIO
       .read[T]()
       .withCoder(CoderMaterializer.beam(sc, Coder[T]))
-      .withDataSourceConfiguration(getDataSourceConfig(readOptions.connectionOptions))
+      .withDataSourceConfiguration(JdbcIO.dataSourceConfiguration(readOptions.connectionOptions))
       .withQuery(readOptions.query)
       .withRowMapper(new beam.JdbcIO.RowMapper[T] {
         override def mapRow(resultSet: ResultSet): T =
@@ -74,7 +89,7 @@ final case class JdbcSelect[T: Coder](readOptions: JdbcReadOptions[T]) extends S
             readOptions.statementPreparator(preparedStatement)
         })
     }
-    if (readOptions.fetchSize != USE_BEAM_DEFAULT_FETCH_SIZE) {
+    if (readOptions.fetchSize != JdbcIoOptions.BeamDefaultFetchSize) {
       // override default fetch size.
       transform = transform.withFetchSize(readOptions.fetchSize)
     }
@@ -88,7 +103,7 @@ final case class JdbcSelect[T: Coder](readOptions: JdbcReadOptions[T]) extends S
     EmptyTap
 }
 
-final case class JdbcWrite[T](writeOptions: JdbcWriteOptions[T]) extends ScioIO[T] {
+final case class JdbcWrite[T](writeOptions: JdbcWriteOptions[T]) extends JdbcIO[T] {
 
   override type ReadP = Nothing
   override type WriteP = Unit
@@ -102,7 +117,7 @@ final case class JdbcWrite[T](writeOptions: JdbcWriteOptions[T]) extends ScioIO[
   override def write(data: SCollection[T], params: WriteP): Tap[Nothing] = {
     var transform = beam.JdbcIO
       .write[T]()
-      .withDataSourceConfiguration(getDataSourceConfig(writeOptions.connectionOptions))
+      .withDataSourceConfiguration(JdbcIO.dataSourceConfiguration(writeOptions.connectionOptions))
       .withStatement(writeOptions.statement)
     if (writeOptions.preparedStatementSetter != null) {
       transform = transform
@@ -111,7 +126,7 @@ final case class JdbcWrite[T](writeOptions: JdbcWriteOptions[T]) extends ScioIO[
             writeOptions.preparedStatementSetter(element, preparedStatement)
         })
     }
-    if (writeOptions.batchSize != USE_BEAM_DEFAULT_BATCH_SIZE) {
+    if (writeOptions.batchSize != JdbcIoOptions.BeamDefaultFetchSize) {
       // override default batch size.
       transform = transform.withBatchSize(writeOptions.batchSize)
     }

@@ -152,7 +152,7 @@ class JdbcTest extends PipelineSpec {
       .withUsername("user")
       .withPassword("pass")
 
-    getDataSourceConfig(opts).toString shouldBe expected.toString
+    JdbcIO.dataSourceConfiguration(opts).toString shouldBe expected.toString
   }
 
   it should "generate datasource config without password" in {
@@ -166,7 +166,7 @@ class JdbcTest extends PipelineSpec {
       .create(classOf[java.sql.Driver].getCanonicalName, "foo")
       .withUsername("user")
 
-    getDataSourceConfig(opts).toString shouldBe expected.toString
+    JdbcIO.dataSourceConfiguration(opts).toString shouldBe expected.toString
   }
 
 }
