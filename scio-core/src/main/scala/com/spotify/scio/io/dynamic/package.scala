@@ -18,7 +18,7 @@
 package com.spotify.scio.io
 
 import com.google.protobuf.Message
-import com.spotify.scio.coders.AvroBytesUtil
+import com.spotify.scio.coders.{AvroBytesUtil, CoderMaterializer, Coder => ScioCoder}
 import com.spotify.scio.util.Functions
 import com.spotify.scio.values.SCollection
 import org.apache.avro.Schema
@@ -28,7 +28,6 @@ import org.apache.avro.specific.SpecificRecordBase
 import org.apache.beam.sdk.coders.{Coder, StringUtf8Coder}
 import org.apache.beam.sdk.io.AvroIO.RecordFormatter
 import org.apache.beam.sdk.io.{Compression, FileIO}
-import org.apache.beam.sdk.transforms.Contextful
 import org.apache.beam.sdk.{io => beam}
 
 import scala.collection.JavaConverters._
@@ -53,6 +52,7 @@ package object dynamic {
     /**
      * Save this SCollection as Avro files specified by the destination function.
      */
+    // scalastyle:off parameter.number
     def saveAsDynamicAvroFile(
       path: String,
       numShards: Int = 0,
@@ -60,7 +60,10 @@ package object dynamic {
       suffix: String = ".avro",
       codec: CodecFactory = CodecFactory.deflateCodec(6),
       metadata: Map[String, AnyRef] = Map.empty
-    )(destinationFn: T => String)(implicit ct: ClassTag[T]): Future[Tap[T]] = {
+    )(
+      destinationFn: T => String,
+      recordFormatterFn: (T, Schema) => GenericRecord = (t, _) => t.asInstanceOf[GenericRecord]
+    )(implicit ct: ClassTag[T]): Future[Tap[T]] = {
       if (self.context.isTest) {
         throw new NotImplementedError(
           "Avro file with dynamic destinations cannot be used in a test context"
@@ -72,11 +75,10 @@ package object dynamic {
             beam.AvroIO.sink(cls)
           } else {
             beam.AvroIO
-              .sinkViaGenericRecords(schema, new RecordFormatter[GenericRecord] {
-                override def formatRecord(element: GenericRecord, schema: Schema): GenericRecord =
-                  element
+              .sinkViaGenericRecords(schema, new RecordFormatter[T] {
+                override def formatRecord(element: T, schema: Schema): GenericRecord =
+                  recordFormatterFn(element, schema)
               })
-              .asInstanceOf[beam.AvroIO.Sink[T]]
           }
         }.withCodec(codec)
           .withMetadata(
@@ -84,7 +86,9 @@ package object dynamic {
               .newHashMap(metadata.asJava)
           )
         val write =
-          writeDynamic(path, numShards, suffix, destinationFn).via(sink)
+          writeDynamic(path, numShards, suffix, destinationFn)
+            .via(sink)
+
         self.applyInternal(write)
       }
 
@@ -131,41 +135,21 @@ package object dynamic {
     def saveAsDynamicProtobufFile(
       path: String,
       numShards: Int = 0,
-      suffix: String = ".protobuf.avro",
+      suffix: String = ".protobuf",
       codec: CodecFactory = CodecFactory.deflateCodec(6),
       metadata: Map[String, AnyRef] = Map.empty
-    )(destinationFn: T => String)(implicit coder: Coder[T]): Future[Tap[T]] = {
-      if (self.context.isTest) {
-        throw new NotImplementedError(
-          "Protobuf file with dynamic destinations cannot be used in a test context"
-        )
-      } else {
-        val sink = beam.AvroIO
-          .sinkViaGenericRecords[GenericRecord](
-            AvroBytesUtil.schema,
-            new RecordFormatter[GenericRecord] {
-              override def formatRecord(element: GenericRecord, schema: Schema): GenericRecord =
-                element
-            }
-          )
-          .withCodec(codec)
-          .withMetadata(com.google.common.collect.Maps.newHashMap(metadata.asJava))
-
-        val write = writeDynamic(path, numShards, suffix, destinationFn)
-          .via(
-            Contextful.fn(
-              Functions.serializableFn[T, GenericRecord](AvroBytesUtil.encode(coder, _))
-            ),
-            sink
-          )
-
-        self.applyInternal(write)
-      }
-
-      Future.failed(
-        new NotImplementedError("Protobuf file future with dynamic destinations not implemented")
+    )(destinationFn: T => String)(implicit cd: ClassTag[T], coder: ScioCoder[T]): Future[Tap[T]] =
+      self.saveAsDynamicAvroFile(
+        path,
+        numShards,
+        AvroBytesUtil.schema,
+        suffix = suffix,
+        codec,
+        metadata
+      )(
+        destinationFn,
+        (t, _) => AvroBytesUtil.encode(CoderMaterializer.beam(self.context, coder), t)
       )
-    }
   }
 
   private def writeDynamic[A](
