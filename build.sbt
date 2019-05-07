@@ -912,8 +912,20 @@ lazy val siteSettings = Def.settings(
   },
   unidocProjectFilter in (ScalaUnidoc, unidoc) :=
     inProjects(
-      scioCore, scioTest, scioAvro, scioBigQuery, scioBigtable, scioCassandra3, scioElasticsearch6,
-      scioExtra, scioJdbc, scioParquet, scioTensorFlow, scioSpanner, scioMacros),
+      scioCore,
+      scioTest,
+      scioAvro,
+      scioBigQuery,
+      scioBigtable,
+      scioCassandra3,
+      scioElasticsearch6,
+      scioExtra,
+      scioJdbc,
+      scioParquet,
+      scioTensorFlow,
+      scioSpanner,
+      scioMacros
+    ),
   // unidoc handles class paths differently than compile and may give older
   // versions high precedence.
   unidocAllClasspaths in (ScalaUnidoc, unidoc) := {
