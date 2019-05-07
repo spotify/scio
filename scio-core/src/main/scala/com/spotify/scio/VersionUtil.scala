@@ -71,7 +71,9 @@ private[scio] object VersionUtil {
   }
 
   private[scio] def ignoreVersionCheck: Boolean =
-    System.getProperty("scio.ignore.versionWarning").trim == "true"
+    Option(System.getProperty("scio.ignoreVersionWarning"))
+      .map(_.trim == "true")
+      .getOrElse(false)
 
   // scalastyle:off line.size.limit
   private def messages(current: SemVer, latest: SemVer): Option[String] =

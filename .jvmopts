@@ -1,5 +1,5 @@
 -Dfile.encoding=UTF8
--Dscio.ignore.versionWarning=true
+-Dscio.ignoreVersionWarning=true
 -Xms2G
 -Xmx8G
 -XX:ReservedCodeCacheSize=512m
