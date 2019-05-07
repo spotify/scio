@@ -299,7 +299,7 @@ private[client] final class TableOps(client: Client) {
 
   /* Create a staging dataset at a specified location, e.g US */
   private[bigquery] def prepareStagingDataset(location: String): Unit = {
-    val datasetId = StagingDatasetPrefix + location.toLowerCase
+    val datasetId = stagingDatasetId(location)
     try {
       client.underlying.datasets().get(client.project, datasetId).execute()
       Logger.info(s"Staging dataset ${client.project}:$datasetId already exists")
@@ -327,8 +327,11 @@ private[client] final class TableOps(client: Client) {
     val tableId = TablePrefix + "_" + now + "_" + Random.nextInt(Int.MaxValue)
     new TableReference()
       .setProjectId(client.project)
-      .setDatasetId(StagingDatasetPrefix + location.toLowerCase)
+      .setDatasetId(stagingDatasetId(location))
       .setTableId(tableId)
   }
+
+  private def stagingDatasetId(location: String): String =
+    StagingDatasetPrefix + location.toLowerCase.replaceAll("-", "_")
 
 }
