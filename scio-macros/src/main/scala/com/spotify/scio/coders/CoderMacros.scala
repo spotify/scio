@@ -36,7 +36,7 @@ private[coders] object CoderMacros {
     Map(
       "org.apache.avro.generic.GenericRecord" ->
         """
-          |Using a fallback coder for Avro's GenericRecord is discouraged as it is VERY ineficient.
+          |Using a fallback coder for Avro's GenericRecord is discouraged as it is VERY inefficient.
           |It is highly recommended to define a proper Coder[GenericRecord] using:
           |
           |  Coder.avroGenericRecordCoder(schema)
