@@ -70,19 +70,52 @@ private[scio] object VersionUtil {
     SemVer(m.group(1).toInt, m.group(2).toInt, m.group(3).toInt, snapshot)
   }
 
-  def checkVersion(current: String, latest: Option[String]): Seq[String] = {
-    val b = mutable.Buffer.empty[String]
-    val v1 = parseVersion(current)
-    if (v1.suffix == "-SNAPSHOT") {
-      b.append(s"Using a SNAPSHOT version of Scio: $current")
+  private[scio] def ignoreVersionCheck: Boolean =
+    Option(System.getProperty("scio.ignoreVersionWarning"))
+      .map(_.trim == "true")
+      .getOrElse(false)
+
+  // scalastyle:off line.size.limit
+  private def messages(current: SemVer, latest: SemVer): Option[String] =
+    (current, latest) match {
+      case (SemVer(0, minor, _, _), SemVer(0, 7, _, _)) if minor < 7 =>
+        import scala.io.AnsiColor._
+        val mess =
+          s"""
+            | ${YELLOW}>${BOLD} Scio 0.7 introduced breaking changes in the API.${RESET}
+            | ${YELLOW}>${RESET} Follow the migration guide to upgrade: https://spotify.github.io/scio/migrations/v0.7.0-Migration-Guide
+            | ${YELLOW}>${RESET} Scio provides automatic migration rules (See migration guide).
+          """.stripMargin
+        Option(mess)
+      case (SemVer(0, minor, _, _), SemVer(0, 8, _, _)) if minor < 8 =>
+        // TODO: write a migration guide to scio 0.8 and link it here
+        None
+      case _ => None
     }
-    latest.foreach { v =>
-      val v2 = parseVersion(v)
-      if (v2 > v1) {
-        b.append(s"A newer version of Scio is available: $current -> $v")
+  // scalastyle:on line.size.limit
+
+  def checkVersion(
+    current: String,
+    latest: Option[String],
+    ignore: Boolean = ignoreVersionCheck
+  ): Seq[String] = {
+    if (ignore) {
+      Nil
+    } else {
+      val b = mutable.Buffer.empty[String]
+      val v1 = parseVersion(current)
+      if (v1.suffix == "-SNAPSHOT") {
+        b.append(s"Using a SNAPSHOT version of Scio: $current")
       }
+      latest.foreach { v =>
+        val v2 = parseVersion(v)
+        if (v2 > v1) {
+          b.append(s"A newer version of Scio is available: $current -> $v")
+          messages(v1, v2).foreach(m => b.append(m))
+        }
+      }
+      b
     }
-    b
   }
 
   def checkVersion(): Unit =
