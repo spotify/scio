@@ -43,7 +43,7 @@ private[scio] object AvroBytesUtil {
     s
   }
 
-  def encode[T](coder: BCoder[T], obj: T, schema: ASchema = schema): GenericRecord = {
+  def encode[T](coder: BCoder[T], obj: T): GenericRecord = {
     val bytes = CoderUtils.encodeToByteArray(coder, obj)
     val record = new GenericData.Record(schema)
     record.put("bytes", ByteBuffer.wrap(bytes))

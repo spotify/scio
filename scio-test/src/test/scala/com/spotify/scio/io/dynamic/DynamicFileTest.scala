@@ -99,7 +99,7 @@ class DynamicFileTest extends PipelineSpec {
   it should "support generic Avro files" in {
     val tmpDir = Files.createTempDirectory("dynamic-io-")
     val sc1 = ScioContext()
-    implicit val coder: Coder[GenericRecord] = Coder.avroGenericRecordCoder(schema)
+    implicit val coder = Coder.avroGenericRecordCoder(schema)
     sc1
       .parallelize(1 to 10)
       .map(newGenericRecord)

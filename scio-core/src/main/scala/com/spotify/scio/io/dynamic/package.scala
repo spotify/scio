@@ -21,6 +21,7 @@ import com.google.protobuf.Message
 import com.spotify.scio.coders.{AvroBytesUtil, CoderMaterializer, Coder => ScioCoder}
 import com.spotify.scio.util.Functions
 import com.spotify.scio.values.SCollection
+import me.lyh.protobuf.generic
 import org.apache.avro.Schema
 import org.apache.avro.file.CodecFactory
 import org.apache.avro.generic.GenericRecord
@@ -138,21 +139,24 @@ package object dynamic {
       suffix: String = ".protobuf",
       codec: CodecFactory = CodecFactory.deflateCodec(6),
       metadata: Map[String, AnyRef] = Map.empty
-    )(destinationFn: T => String)(implicit cd: ClassTag[T], coder: ScioCoder[T]): Future[Tap[T]] = {
-      val elemCoder = CoderMaterializer.beam(
-        self.context,
-        coder
-      )
+    )(destinationFn: T => String)(implicit ct: ClassTag[T]): Future[Tap[T]] = {
+      val protoCoder =
+        ScioCoder
+          .protoMessageCoder[Message](ct.asInstanceOf[ClassTag[Message]])
+          .asInstanceOf[ScioCoder[T]]
+
+      val elemCoder = CoderMaterializer.beam(self.context, protoCoder)
+      val schemaJson = generic.Schema.of[Message](ct.asInstanceOf[ClassTag[Message]]).toJson
       self.saveAsDynamicAvroFile(
         path,
         numShards,
         AvroBytesUtil.schema,
         suffix,
         codec,
-        metadata + ("protobuf.generic.schema" -> AvroBytesUtil.schema.toString)
+        metadata + ("protobuf.generic.schema" -> schemaJson)
       )(
         destinationFn,
-        (t, s) => AvroBytesUtil.encode(elemCoder, t, s)
+        (t, _) => AvroBytesUtil.encode(elemCoder, t)
       )
     }
   }
