@@ -139,20 +139,17 @@ object To {
 }
 
 object ToMacro {
-  import scala.reflect.macros.blackbox
+  import scala.reflect.macros._
   def safeImpl[I: c.WeakTypeTag, O: c.WeakTypeTag](
-    c: blackbox.Context
+    c: whitebox.Context
   )(iSchema: c.Expr[Schema[I]], oSchema: c.Expr[Schema[O]]): c.Expr[To[I, O]] = {
     import c.universe._
 
     val tpeI = weakTypeOf[I]
     val tpeO = weakTypeOf[O]
 
-    val sInTree = c.untypecheck(iSchema.tree.duplicate)
-    val sOutTree = c.untypecheck(oSchema.tree.duplicate)
-
-    val (sIn, sOut) =
-      c.eval(c.Expr[(Schema[I], Schema[O])](q"($sInTree, $sOutTree)"))
+    val (_, sOut) = SchemaMacroHelpers.inferImplicitSchema(c)(tpeO)
+    val (_, sIn) = SchemaMacroHelpers.inferImplicitSchema(c)(tpeI)
 
     val schemaIn: BSchema = SchemaMaterializer.fieldType(sIn).getRowSchema()
     val schemaOut: BSchema = SchemaMaterializer.fieldType(sOut).getRowSchema()
@@ -162,4 +159,5 @@ object ToMacro {
       }
       .fold(message => c.abort(c.enclosingPosition, message), t => c.Expr[To[I, O]](t))
   }
+
 }

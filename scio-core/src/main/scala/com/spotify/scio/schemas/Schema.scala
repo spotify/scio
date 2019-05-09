@@ -169,3 +169,19 @@ trait LowPrioritySchemaDerivation {
   import com.spotify.scio.MagnoliaMacros
   implicit def gen[T]: Schema[T] = macro MagnoliaMacros.genWithoutAnnotations[T]
 }
+
+private[scio] object SchemaMacroHelpers {
+  import scala.reflect.macros._
+  import scala.language.existentials
+
+  final def inferImplicitSchema(c: whitebox.Context)(t: c.Type): (c.Tree, Schema[_]) = {
+    import c.universe._
+
+    val tp = c.typecheck(tq"_root_.com.spotify.scio.schemas.Schema[$t]", c.TYPEmode).tpe
+    val typedTree = c.inferImplicitValue(tp, silent = false)
+    val untypedTree = c.untypecheck(typedTree.duplicate)
+
+    (typedTree, c.eval(c.Expr[Schema[_]](untypedTree)))
+  }
+
+}
