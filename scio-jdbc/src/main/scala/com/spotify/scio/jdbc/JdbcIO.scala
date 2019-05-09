@@ -126,7 +126,7 @@ final case class JdbcWrite[T](writeOptions: JdbcWriteOptions[T]) extends JdbcIO[
             writeOptions.preparedStatementSetter(element, preparedStatement)
         })
     }
-    if (writeOptions.batchSize != JdbcIoOptions.BeamDefaultFetchSize) {
+    if (writeOptions.batchSize != JdbcIoOptions.BeamDefaultBatchSize) {
       // override default batch size.
       transform = transform.withBatchSize(writeOptions.batchSize)
     }
