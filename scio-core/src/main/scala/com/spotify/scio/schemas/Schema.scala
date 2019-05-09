@@ -172,16 +172,18 @@ trait LowPrioritySchemaDerivation {
 
 private[scio] object SchemaMacroHelpers {
   import scala.reflect.macros._
-  import scala.language.existentials
 
   final def inferImplicitSchema(c: whitebox.Context)(t: c.Type): (c.Tree, Schema[_]) = {
     import c.universe._
 
     val tp = c.typecheck(tq"_root_.com.spotify.scio.schemas.Schema[$t]", c.TYPEmode).tpe
     val typedTree = c.inferImplicitValue(tp, silent = false)
-    val untypedTree = c.untypecheck(typedTree.duplicate)
+    inferImplicitTree(c)(typedTree)
+  }
 
-    (typedTree, c.eval(c.Expr[Schema[_]](untypedTree)))
+  final def inferImplicitTree[T](c: whitebox.Context)(t: c.Tree): (c.Tree, Schema[_]) = {
+    val untypedTree = c.untypecheck(t.duplicate)
+    (t, c.eval(c.Expr[Schema[_]](untypedTree)))
   }
 
 }

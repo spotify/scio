@@ -148,8 +148,8 @@ object ToMacro {
     val tpeI = weakTypeOf[I]
     val tpeO = weakTypeOf[O]
 
-    val (_, sOut) = SchemaMacroHelpers.inferImplicitSchema(c)(tpeO)
-    val (_, sIn) = SchemaMacroHelpers.inferImplicitSchema(c)(tpeI)
+    val (_, sOut) = SchemaMacroHelpers.inferImplicitTree(c)(oSchema.tree)
+    val (_, sIn) = SchemaMacroHelpers.inferImplicitTree(c)(iSchema.tree)
 
     val schemaIn: BSchema = SchemaMaterializer.fieldType(sIn).getRowSchema()
     val schemaOut: BSchema = SchemaMaterializer.fieldType(sOut).getRowSchema()
