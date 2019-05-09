@@ -138,10 +138,10 @@ package object dynamic {
       suffix: String = ".protobuf",
       codec: CodecFactory = CodecFactory.deflateCodec(6),
       metadata: Map[String, AnyRef] = Map.empty
-    )(destinationFn: T => String)(implicit cd: ClassTag[T]): Future[Tap[T]] = {
+    )(destinationFn: T => String)(implicit cd: ClassTag[T], coder: ScioCoder[T]): Future[Tap[T]] = {
       val elemCoder = CoderMaterializer.beam(
         self.context,
-        ScioCoder[T]
+        coder
       )
       self.saveAsDynamicAvroFile(
         path,
@@ -149,10 +149,10 @@ package object dynamic {
         AvroBytesUtil.schema,
         suffix,
         codec,
-        metadata + ("protobuf.generic.schema" -> AvroBytesUtil.schema)
+        metadata + ("protobuf.generic.schema" -> AvroBytesUtil.schema.toString)
       )(
         destinationFn,
-        (t, _) => AvroBytesUtil.encode(elemCoder, t)
+        (t, s) => AvroBytesUtil.encode(elemCoder, t, s)
       )
     }
   }

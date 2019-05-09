@@ -99,7 +99,7 @@ class DynamicFileTest extends PipelineSpec {
   it should "support generic Avro files" in {
     val tmpDir = Files.createTempDirectory("dynamic-io-")
     val sc1 = ScioContext()
-    implicit val coder = Coder.avroGenericRecordCoder(schema)
+    implicit val coder: Coder[GenericRecord] = Coder.avroGenericRecordCoder(schema)
     sc1
       .parallelize(1 to 10)
       .map(newGenericRecord)
@@ -176,10 +176,10 @@ class DynamicFileTest extends PipelineSpec {
     val tmpDir = Files.createTempDirectory("dynamic-io-")
     val sc1 = ScioContext()
 
-    val newProtobuf = (x: Int) => SimplePB.newBuilder().setPlays(x).setTrackId(s"track$x").build()
+    val mkProto = (x: Int) => SimplePB.newBuilder().setPlays(x).setTrackId(s"track$x").build()
     sc1
       .parallelize(1 to 10)
-      .map(newProtobuf)
+      .map(mkProto)
       .saveAsDynamicProtobufFile(tmpDir.toString) { r =>
         (r.getPlays % 2).toString
       }
@@ -189,8 +189,8 @@ class DynamicFileTest extends PipelineSpec {
     val sc2 = ScioContext()
     val lines0 = sc2.protobufFile[SimplePB](s"$tmpDir/0/*.protobuf")
     val lines1 = sc2.protobufFile[SimplePB](s"$tmpDir/1/*.protobuf")
-    lines0 should containInAnyOrder((1 to 10).filter(_ % 2 == 0).map(newProtobuf))
-    lines1 should containInAnyOrder((1 to 10).filter(_ % 2 == 1).map(newProtobuf))
+    lines0 should containInAnyOrder((1 to 10).filter(_ % 2 == 0).map(mkProto))
+    lines1 should containInAnyOrder((1 to 10).filter(_ % 2 == 1).map(mkProto))
     sc2.close()
     FileUtils.deleteDirectory(tmpDir.toFile)
   }
