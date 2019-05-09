@@ -15,15 +15,6 @@
  * under the License.
  */
 
-package com.spotify.scio
+package com.spotify.scio.jdbc.syntax
 
-import com.spotify.scio.jdbc.syntax.AllSyntax
-
-/**
- * Main package for JDBC APIs. Import all.
- *
- * {{{
- * import com.spotify.scio.jdbc._
- * }}}
- */
-package object jdbc extends AllSyntax
+trait AllSyntax extends SCollectionSyntax with ScioContextSyntax
