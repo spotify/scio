@@ -18,7 +18,7 @@
 package com.spotify.scio.io
 
 import com.google.protobuf.Message
-import com.spotify.scio.coders.{AvroBytesUtil, CoderMaterializer, Coder => ScioCoder}
+import com.spotify.scio.coders.{AvroBytesUtil, Coder, CoderMaterializer}
 import com.spotify.scio.util.Functions
 import com.spotify.scio.values.SCollection
 import me.lyh.protobuf.generic
@@ -141,9 +141,9 @@ package object dynamic {
       metadata: Map[String, AnyRef] = Map.empty
     )(destinationFn: T => String)(implicit ct: ClassTag[T]): Future[Tap[T]] = {
       val protoCoder =
-        ScioCoder
+        Coder
           .protoMessageCoder[Message](ct.asInstanceOf[ClassTag[Message]])
-          .asInstanceOf[ScioCoder[T]]
+          .asInstanceOf[Coder[T]]
 
       val elemCoder = CoderMaterializer.beam(self.context, protoCoder)
       val schemaJson = generic.Schema.of[Message](ct.asInstanceOf[ClassTag[Message]]).toJson
