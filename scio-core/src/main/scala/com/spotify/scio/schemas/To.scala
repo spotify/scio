@@ -141,18 +141,17 @@ object To {
 object ToMacro {
   import scala.reflect.macros._
   def safeImpl[I: c.WeakTypeTag, O: c.WeakTypeTag](
-    c: whitebox.Context
+    c: blackbox.Context
   )(iSchema: c.Expr[Schema[I]], oSchema: c.Expr[Schema[O]]): c.Expr[To[I, O]] = {
     val h = new { val ctx: c.type = c } with SchemaMacroHelpers
+    import h._
     import c.universe._
 
     val tpeI = weakTypeOf[I]
     val tpeO = weakTypeOf[O]
 
-    val sOut = c.eval(c.Expr[Schema[O]](c.untypecheck(oSchema.tree.duplicate)))
-    val sIn = c.eval(c.Expr[Schema[I]](c.untypecheck(iSchema.tree.duplicate)))
-    // val sOut = c.eval(inferImplicitSchema(tpeO))
-    // val sIn = c.eval(inferImplicitSchema(tpeI))
+    val sOut = c.eval(inferImplicitSchema(tpeO))
+    val sIn = c.eval(inferImplicitSchema(tpeI))
 
     val schemaOut: BSchema = SchemaMaterializer.fieldType(sOut).getRowSchema()
     val schemaIn: BSchema = SchemaMaterializer.fieldType(sIn).getRowSchema()
