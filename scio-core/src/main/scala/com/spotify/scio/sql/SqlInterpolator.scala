@@ -234,12 +234,12 @@ object SqlInterpolatorMacro {
           )
       }
 
-    tsqlImpl[B](c)(parts, ps: _*)
+    tsqlImpl[B](c)(schB, parts, ps: _*)
   }
 
   def tsqlImpl[B: c.WeakTypeTag](
     c: whitebox.Context
-  )(parts: List[c.Tree], ps: c.Expr[Any]*): c.Expr[SCollection[B]] = {
+  )(schB: c.Expr[Schema[B]], parts: List[c.Tree], ps: c.Expr[Any]*): c.Expr[SCollection[B]] = {
     val h = new { val ctx: c.type = c } with SqlInterpolatorMacroHelpers with SchemaMacroHelpers
     import h._
     import c.universe._
@@ -275,8 +275,8 @@ object SqlInterpolatorMacro {
         val tag0 = tagFor(t0, Sql.SCollectionTypeName)
         val sql = buildSQLString(parts, scs.map(_ => Sql.SCollectionTypeName))
 
-        val needB = c.typecheck(tq"$wttB", ctx.TYPEmode).tpe
-        val implB = inferImplicitSchema(needB)
+        // val needB = c.typecheck(tq"$wttB", ctx.TYPEmode).tpe
+        val implB = c.Expr[Schema[B]](c.untypecheck(schB.tree.duplicate))
         val implA = inferImplicitSchema(t0)
 
         // ... so I put a macro in your macro so you can compile while you compile
@@ -293,8 +293,8 @@ object SqlInterpolatorMacro {
 
         val q = q"_root_.com.spotify.scio.sql.Queries.typed[$t0, $t1, $wttB]($sql, $tag0, $tag1)"
 
-        val needB = c.typecheck(tq"$wttB", ctx.TYPEmode).tpe
-        val implB = inferImplicitSchema(needB)
+        // val needB = c.typecheck(tq"$wttB", ctx.TYPEmode).tpe
+        val implB = c.Expr[Schema[B]](c.untypecheck(schB.tree.duplicate))
         val implA = inferImplicitSchema(t0)
         val implC = inferImplicitSchema(t1)
 

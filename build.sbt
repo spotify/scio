@@ -767,7 +767,7 @@ lazy val scioExamples: Project = Project(
     scioExtra,
     scioSpanner,
     scioTensorFlow,
-    scioTest % "test"
+    scioTest % "compile->test"
   )
 
 lazy val scioRepl: Project = Project(
