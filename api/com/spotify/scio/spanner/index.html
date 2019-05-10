@@ -415,6 +415,38 @@ detects the query's dialect. To override this, start the query with either <code
       </span>
       
       
+    </li><li name="com.spotify.scio.spanner.instances" visbl="pub" class="indented5 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="instances"></a><a id="instances:instances"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/spanner/index.html#instances" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">package</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="instances/index.html"><span class="name">instances</span></a>
+      </span>
+      
+      
+    </li><li name="com.spotify.scio.spanner.syntax" visbl="pub" class="indented5 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="syntax"></a><a id="syntax:syntax"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/spanner/index.html#syntax" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">package</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="syntax/index.html"><span class="name">syntax</span></a>
+      </span>
+      
+      
     </li><li class="current-entities indented4">
                         <span class="separator"></span>
                         <a class="trait" href="SpannerIO.html" title=""></a>
@@ -423,14 +455,6 @@ detects the query's dialect. To override this, start the query with either <code
                         <a class="object" href="SpannerRead$.html" title=""></a>
                         <a class="class" href="SpannerRead.html" title=""></a>
                         <a href="SpannerRead.html" title="">SpannerRead</a>
-                      </li><li class="current-entities indented4">
-                        <span class="separator"></span>
-                        <a class="class" href="package$$SpannerSCollection.html" title=""></a>
-                        <a href="package$$SpannerSCollection.html" title="">SpannerSCollection</a>
-                      </li><li class="current-entities indented4">
-                        <span class="separator"></span>
-                        <a class="class" href="package$$SpannerScioContext.html" title=""></a>
-                        <a href="package$$SpannerScioContext.html" title="">SpannerScioContext</a>
                       </li><li class="current-entities indented4">
                         <a class="object" href="SpannerWrite$.html" title=""></a>
                         <a class="class" href="SpannerWrite.html" title=""></a>
@@ -564,7 +588,7 @@ detects the query's dialect. To override this, start the query with either <code
           <span class="toggle">
             Linear Supertypes
           </span>
-          <div class="superTypes hiddenContent"><a href="http://www.scala-lang.org/api/2.12.8/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a>, <a href="http://www.scala-lang.org/api/2.12.8/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></div>
+          <div class="superTypes hiddenContent"><a href="instances/AllInstances.html" class="extype" name="com.spotify.scio.spanner.instances.AllInstances">AllInstances</a>, <a href="instances/CoderInstances.html" class="extype" name="com.spotify.scio.spanner.instances.CoderInstances">CoderInstances</a>, <a href="syntax/AllSyntax.html" class="extype" name="com.spotify.scio.spanner.syntax.AllSyntax">AllSyntax</a>, <a href="syntax/SCollectionSyntax.html" class="extype" name="com.spotify.scio.spanner.syntax.SCollectionSyntax">SCollectionSyntax</a>, <a href="syntax/ScioContextSyntax.html" class="extype" name="com.spotify.scio.spanner.syntax.ScioContextSyntax">ScioContextSyntax</a>, <span class="extype" name="scala.AnyRef">AnyRef</span>, <span class="extype" name="scala.Any">Any</span></div>
         </div></div>
         
 
@@ -590,7 +614,7 @@ detects the query's dialect. To override this, start the query with either <code
                   <span class="filtertype">Inherited<br />
                   </span>
                   <ol id="linearization">
-                    <li class="in" name="com.spotify.scio.spanner"><span>spanner</span></li><li class="in" name="scala.AnyRef"><span>AnyRef</span></li><li class="in" name="scala.Any"><span>Any</span></li>
+                    <li class="in" name="com.spotify.scio.spanner"><span>spanner</span></li><li class="in" name="com.spotify.scio.spanner.instances.AllInstances"><span>AllInstances</span></li><li class="in" name="com.spotify.scio.spanner.instances.CoderInstances"><span>CoderInstances</span></li><li class="in" name="com.spotify.scio.spanner.syntax.AllSyntax"><span>AllSyntax</span></li><li class="in" name="com.spotify.scio.spanner.syntax.SCollectionSyntax"><span>SCollectionSyntax</span></li><li class="in" name="com.spotify.scio.spanner.syntax.ScioContextSyntax"><span>ScioContextSyntax</span></li><li class="in" name="scala.AnyRef"><span>AnyRef</span></li><li class="in" name="scala.Any"><span>Any</span></li>
                   </ol>
                 </div><div class="ancestors">
               <span class="filtertype"></span>
@@ -640,39 +664,7 @@ detects the query's dialect. To override this, start the query with either <code
         <span class="kind">case class</span>
       </span>
       <span class="symbol">
-        <a title="" href="SpannerRead.html"><span class="name">SpannerRead</span></a><span class="params">(<span name="config">config: <span class="extype" name="org.apache.beam.sdk.io.gcp.spanner.SpannerConfig">SpannerConfig</span></span>)</span><span class="result"> extends <a href="SpannerIO.html" class="extype" name="com.spotify.scio.spanner.SpannerIO">SpannerIO</a>[<span class="extype" name="com.google.cloud.spanner.Struct">Struct</span>] with <a href="http://www.scala-lang.org/api/2.12.8/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.8/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
-      </span>
-      
-      
-    </li><li name="com.spotify.scio.spanner.SpannerSCollection" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="SpannerSCollectionextendsAnyVal"></a><a id="SpannerSCollection:SpannerSCollection"></a>
-      <span class="permalink">
-      <a href="../../../../com/spotify/scio/spanner/index.html#SpannerSCollectionextendsAnyVal" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier">implicit final </span>
-        <span class="kind">class</span>
-      </span>
-      <span class="symbol">
-        <a title="" href="package$$SpannerSCollection.html"><span class="name">SpannerSCollection</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.8/scala/AnyVal.html#scala.AnyVal" class="extype" name="scala.AnyVal">AnyVal</a></span>
-      </span>
-      
-      
-    </li><li name="com.spotify.scio.spanner.SpannerScioContext" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="SpannerScioContextextendsAnyVal"></a><a id="SpannerScioContext:SpannerScioContext"></a>
-      <span class="permalink">
-      <a href="../../../../com/spotify/scio/spanner/index.html#SpannerScioContextextendsAnyVal" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier">implicit final </span>
-        <span class="kind">class</span>
-      </span>
-      <span class="symbol">
-        <a title="" href="package$$SpannerScioContext.html"><span class="name">SpannerScioContext</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.8/scala/AnyVal.html#scala.AnyVal" class="extype" name="scala.AnyVal">AnyVal</a></span>
+        <a title="" href="SpannerRead.html"><span class="name">SpannerRead</span></a><span class="params">(<span name="config">config: <span class="extype" name="org.apache.beam.sdk.io.gcp.spanner.SpannerConfig">SpannerConfig</span></span>)</span><span class="result"> extends <a href="SpannerIO.html" class="extype" name="com.spotify.scio.spanner.SpannerIO">SpannerIO</a>[<span class="extype" name="com.google.cloud.spanner.Struct">Struct</span>] with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
       </span>
       
       
@@ -688,7 +680,7 @@ detects the query's dialect. To override this, start the query with either <code
         <span class="kind">case class</span>
       </span>
       <span class="symbol">
-        <a title="" href="SpannerWrite.html"><span class="name">SpannerWrite</span></a><span class="params">(<span name="config">config: <span class="extype" name="org.apache.beam.sdk.io.gcp.spanner.SpannerConfig">SpannerConfig</span></span>)</span><span class="result"> extends <a href="SpannerIO.html" class="extype" name="com.spotify.scio.spanner.SpannerIO">SpannerIO</a>[<span class="extype" name="com.google.cloud.spanner.Mutation">Mutation</span>] with <a href="http://www.scala-lang.org/api/2.12.8/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.8/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+        <a title="" href="SpannerWrite.html"><span class="name">SpannerWrite</span></a><span class="params">(<span name="config">config: <span class="extype" name="org.apache.beam.sdk.io.gcp.spanner.SpannerConfig">SpannerConfig</span></span>)</span><span class="result"> extends <a href="SpannerIO.html" class="extype" name="com.spotify.scio.spanner.SpannerIO">SpannerIO</a>[<span class="extype" name="com.google.cloud.spanner.Mutation">Mutation</span>] with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
       </span>
       
       
@@ -700,7 +692,7 @@ detects the query's dialect. To override this, start the query with either <code
         <div class="values members">
               <h3>Value Members</h3>
               <ol>
-                <li name="com.spotify.scio.spanner#spannerMutationCoder" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+                <li name="com.spotify.scio.spanner.instances.CoderInstances#spannerMutationCoder" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="spannerMutationCoder:com.spotify.scio.coders.Coder[com.google.cloud.spanner.Mutation]"></a><a id="spannerMutationCoder:Coder[Mutation]"></a>
       <span class="permalink">
       <a href="../../../../com/spotify/scio/spanner/index.html#spannerMutationCoder:com.spotify.scio.coders.Coder[com.google.cloud.spanner.Mutation]" title="Permalink">
@@ -709,14 +701,14 @@ detects the query's dialect. To override this, start the query with either <code
     </span>
       <span class="modifier_kind">
         <span class="modifier">implicit </span>
-        <span class="kind">def</span>
+        <span class="kind">val</span>
       </span>
       <span class="symbol">
         <span class="name">spannerMutationCoder</span><span class="result">: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.google.cloud.spanner.Mutation">Mutation</span>]</span>
       </span>
       
-      
-    </li><li name="com.spotify.scio.spanner#spannerMutationGroupCoder" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="instances/CoderInstances.html" class="extype" name="com.spotify.scio.spanner.instances.CoderInstances">CoderInstances</a></dd></dl></div>
+    </li><li name="com.spotify.scio.spanner.instances.CoderInstances#spannerMutationGroupCoder" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="spannerMutationGroupCoder:com.spotify.scio.coders.Coder[org.apache.beam.sdk.io.gcp.spanner.MutationGroup]"></a><a id="spannerMutationGroupCoder:Coder[MutationGroup]"></a>
       <span class="permalink">
       <a href="../../../../com/spotify/scio/spanner/index.html#spannerMutationGroupCoder:com.spotify.scio.coders.Coder[org.apache.beam.sdk.io.gcp.spanner.MutationGroup]" title="Permalink">
@@ -725,14 +717,14 @@ detects the query's dialect. To override this, start the query with either <code
     </span>
       <span class="modifier_kind">
         <span class="modifier">implicit </span>
-        <span class="kind">def</span>
+        <span class="kind">val</span>
       </span>
       <span class="symbol">
         <span class="name">spannerMutationGroupCoder</span><span class="result">: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="org.apache.beam.sdk.io.gcp.spanner.MutationGroup">MutationGroup</span>]</span>
       </span>
       
-      
-    </li><li name="com.spotify.scio.spanner#spannerReadOperationCoder" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="instances/CoderInstances.html" class="extype" name="com.spotify.scio.spanner.instances.CoderInstances">CoderInstances</a></dd></dl></div>
+    </li><li name="com.spotify.scio.spanner.instances.CoderInstances#spannerReadOperationCoder" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="spannerReadOperationCoder:com.spotify.scio.coders.Coder[org.apache.beam.sdk.io.gcp.spanner.ReadOperation]"></a><a id="spannerReadOperationCoder:Coder[ReadOperation]"></a>
       <span class="permalink">
       <a href="../../../../com/spotify/scio/spanner/index.html#spannerReadOperationCoder:com.spotify.scio.coders.Coder[org.apache.beam.sdk.io.gcp.spanner.ReadOperation]" title="Permalink">
@@ -741,17 +733,17 @@ detects the query's dialect. To override this, start the query with either <code
     </span>
       <span class="modifier_kind">
         <span class="modifier">implicit </span>
-        <span class="kind">def</span>
+        <span class="kind">val</span>
       </span>
       <span class="symbol">
         <span class="name">spannerReadOperationCoder</span><span class="result">: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="org.apache.beam.sdk.io.gcp.spanner.ReadOperation">ReadOperation</span>]</span>
       </span>
       
-      
-    </li><li name="com.spotify.scio.spanner#spannerStructCoder" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="spannerStructCoder:com.spotify.scio.coders.Coder[com.google.cloud.spanner.Struct]"></a><a id="spannerStructCoder:Coder[Struct]"></a>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="instances/CoderInstances.html" class="extype" name="com.spotify.scio.spanner.instances.CoderInstances">CoderInstances</a></dd></dl></div>
+    </li><li name="com.spotify.scio.spanner.syntax.SCollectionSyntax#spannerSCollectionOps" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="spannerSCollectionOps(s:com.spotify.scio.values.SCollection[com.google.cloud.spanner.Mutation]):com.spotify.scio.spanner.syntax.SpannerSCollectionOps"></a><a id="spannerSCollectionOps(SCollection[Mutation]):SpannerSCollectionOps"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/spanner/index.html#spannerStructCoder:com.spotify.scio.coders.Coder[com.google.cloud.spanner.Struct]" title="Permalink">
+      <a href="../../../../com/spotify/scio/spanner/index.html#spannerSCollectionOps(s:com.spotify.scio.values.SCollection[com.google.cloud.spanner.Mutation]):com.spotify.scio.spanner.syntax.SpannerSCollectionOps" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -760,10 +752,42 @@ detects the query's dialect. To override this, start the query with either <code
         <span class="kind">def</span>
       </span>
       <span class="symbol">
+        <span class="name">spannerSCollectionOps</span><span class="params">(<span name="s">s: <a href="../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.google.cloud.spanner.Mutation">Mutation</span>]</span>)</span><span class="result">: <a href="syntax/SpannerSCollectionOps.html" class="extype" name="com.spotify.scio.spanner.syntax.SpannerSCollectionOps">SpannerSCollectionOps</a></span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="syntax/SCollectionSyntax.html" class="extype" name="com.spotify.scio.spanner.syntax.SCollectionSyntax">SCollectionSyntax</a></dd></dl></div>
+    </li><li name="com.spotify.scio.spanner.syntax.ScioContextSyntax#spannerScioContextOps" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="spannerScioContextOps(sc:com.spotify.scio.ScioContext):com.spotify.scio.spanner.syntax.SpannerScioContextOps"></a><a id="spannerScioContextOps(ScioContext):SpannerScioContextOps"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/spanner/index.html#spannerScioContextOps(sc:com.spotify.scio.ScioContext):com.spotify.scio.spanner.syntax.SpannerScioContextOps" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">implicit </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">spannerScioContextOps</span><span class="params">(<span name="sc">sc: <a href="../ScioContext.html" class="extype" name="com.spotify.scio.ScioContext">ScioContext</a></span>)</span><span class="result">: <a href="syntax/SpannerScioContextOps.html" class="extype" name="com.spotify.scio.spanner.syntax.SpannerScioContextOps">SpannerScioContextOps</a></span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="syntax/ScioContextSyntax.html" class="extype" name="com.spotify.scio.spanner.syntax.ScioContextSyntax">ScioContextSyntax</a></dd></dl></div>
+    </li><li name="com.spotify.scio.spanner.instances.CoderInstances#spannerStructCoder" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="spannerStructCoder:com.spotify.scio.coders.Coder[com.google.cloud.spanner.Struct]"></a><a id="spannerStructCoder:Coder[Struct]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/spanner/index.html#spannerStructCoder:com.spotify.scio.coders.Coder[com.google.cloud.spanner.Struct]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">implicit </span>
+        <span class="kind">val</span>
+      </span>
+      <span class="symbol">
         <span class="name">spannerStructCoder</span><span class="result">: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.google.cloud.spanner.Struct">Struct</span>]</span>
       </span>
       
-      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="instances/CoderInstances.html" class="extype" name="com.spotify.scio.spanner.instances.CoderInstances">CoderInstances</a></dd></dl></div>
     </li><li name="com.spotify.scio.spanner.SpannerRead" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="SpannerRead"></a><a id="SpannerRead:SpannerRead"></a>
       <span class="permalink">
@@ -776,7 +800,7 @@ detects the query's dialect. To override this, start the query with either <code
         <span class="kind">object</span>
       </span>
       <span class="symbol">
-        <a title="" href="SpannerRead$.html"><span class="name">SpannerRead</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.8/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+        <a title="" href="SpannerRead$.html"><span class="name">SpannerRead</span></a><span class="result"> extends <span class="extype" name="scala.Serializable">Serializable</span></span>
       </span>
       
       
@@ -792,7 +816,7 @@ detects the query's dialect. To override this, start the query with either <code
         <span class="kind">object</span>
       </span>
       <span class="symbol">
-        <a title="" href="SpannerWrite$.html"><span class="name">SpannerWrite</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.8/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+        <a title="" href="SpannerWrite$.html"><span class="name">SpannerWrite</span></a><span class="result"> extends <span class="extype" name="scala.Serializable">Serializable</span></span>
       </span>
       
       
@@ -806,10 +830,20 @@ detects the query's dialect. To override this, start the query with either <code
         </div>
 
         <div id="inheritedMembers">
-        <div class="parent" name="scala.AnyRef">
-              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.8/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></h3>
+        <div class="parent" name="com.spotify.scio.spanner.instances.AllInstances">
+              <h3>Inherited from <a href="instances/AllInstances.html" class="extype" name="com.spotify.scio.spanner.instances.AllInstances">AllInstances</a></h3>
+            </div><div class="parent" name="com.spotify.scio.spanner.instances.CoderInstances">
+              <h3>Inherited from <a href="instances/CoderInstances.html" class="extype" name="com.spotify.scio.spanner.instances.CoderInstances">CoderInstances</a></h3>
+            </div><div class="parent" name="com.spotify.scio.spanner.syntax.AllSyntax">
+              <h3>Inherited from <a href="syntax/AllSyntax.html" class="extype" name="com.spotify.scio.spanner.syntax.AllSyntax">AllSyntax</a></h3>
+            </div><div class="parent" name="com.spotify.scio.spanner.syntax.SCollectionSyntax">
+              <h3>Inherited from <a href="syntax/SCollectionSyntax.html" class="extype" name="com.spotify.scio.spanner.syntax.SCollectionSyntax">SCollectionSyntax</a></h3>
+            </div><div class="parent" name="com.spotify.scio.spanner.syntax.ScioContextSyntax">
+              <h3>Inherited from <a href="syntax/ScioContextSyntax.html" class="extype" name="com.spotify.scio.spanner.syntax.ScioContextSyntax">ScioContextSyntax</a></h3>
+            </div><div class="parent" name="scala.AnyRef">
+              <h3>Inherited from <span class="extype" name="scala.AnyRef">AnyRef</span></h3>
             </div><div class="parent" name="scala.Any">
-              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.8/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></h3>
+              <h3>Inherited from <span class="extype" name="scala.Any">Any</span></h3>
             </div>
         
         </div>

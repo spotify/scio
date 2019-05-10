@@ -190,7 +190,7 @@
         <span class="kind">object</span>
       </span>
       <span class="symbol">
-        <span class="name">AvroType</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.8/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+        <span class="name">AvroType</span><span class="result"> extends <span class="extype" name="scala.Serializable">Serializable</span></span>
       </span>
       </h4>
 
@@ -210,7 +210,7 @@ RECORD         Nested <span class="kw">case</span> <span class="kw">class</span>
           <span class="toggle">
             Linear Supertypes
           </span>
-          <div class="superTypes hiddenContent"><a href="http://www.scala-lang.org/api/2.12.8/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a>, <a href="http://docs.oracle.com/javase/8/docs/api/java/io/Serializable.html#java.io.Serializable" class="extype" name="java.io.Serializable">Serializable</a>, <a href="http://www.scala-lang.org/api/2.12.8/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a>, <a href="http://www.scala-lang.org/api/2.12.8/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></div>
+          <div class="superTypes hiddenContent"><span class="extype" name="scala.Serializable">Serializable</span>, <span class="extype" name="java.io.Serializable">Serializable</span>, <span class="extype" name="scala.AnyRef">AnyRef</span>, <span class="extype" name="scala.Any">Any</span></div>
         </div></div>
         
 
@@ -270,7 +270,7 @@ RECORD         Nested <span class="kw">case</span> <span class="kw">class</span>
         <span class="kind">trait</span>
       </span>
       <span class="symbol">
-        <a title="Trait for case classes with generated companion objects." href="AvroType$$HasAvroAnnotation.html"><span class="name">HasAvroAnnotation</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.8/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
+        <a title="Trait for case classes with generated companion objects." href="AvroType$$HasAvroAnnotation.html"><span class="name">HasAvroAnnotation</span></a><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
       </span>
       
       <p class="shortcomment cmt">Trait for case classes with generated companion objects.</p>
@@ -286,7 +286,7 @@ RECORD         Nested <span class="kw">case</span> <span class="kw">class</span>
         <span class="kind">trait</span>
       </span>
       <span class="symbol">
-        <a title="Trait for companion objects of case classes generated with docs." href="AvroType$$HasAvroDoc.html"><span class="name">HasAvroDoc</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.8/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
+        <a title="Trait for companion objects of case classes generated with docs." href="AvroType$$HasAvroDoc.html"><span class="name">HasAvroDoc</span></a><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
       </span>
       
       <p class="shortcomment cmt">Trait for companion objects of case classes generated with docs.</p>
@@ -302,7 +302,7 @@ RECORD         Nested <span class="kw">case</span> <span class="kw">class</span>
         <span class="kind">trait</span>
       </span>
       <span class="symbol">
-        <a title="Trait for generated companion objects of case classes." href="AvroType$$HasAvroSchema.html"><span class="name">HasAvroSchema</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.8/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
+        <a title="Trait for generated companion objects of case classes." href="AvroType$$HasAvroSchema.html"><span class="name">HasAvroSchema</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
       </span>
       
       <p class="shortcomment cmt">Trait for generated companion objects of case classes.</p>
@@ -314,11 +314,11 @@ RECORD         Nested <span class="kw">case</span> <span class="kw">class</span>
       </a>
     </span>
       <span class="modifier_kind">
-        <span class="modifier"></span>
+        <span class="modifier">macro </span>
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <a title="Macro annotation for a path containing Avro files." href="AvroType$$fromPath.html"><span class="name">fromPath</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.8/scala/annotation/Annotation.html#scala.annotation.Annotation" class="extype" name="scala.annotation.Annotation">Annotation</a> with <a href="http://www.scala-lang.org/api/2.12.8/scala/annotation/StaticAnnotation.html#scala.annotation.StaticAnnotation" class="extype" name="scala.annotation.StaticAnnotation">StaticAnnotation</a></span>
+        <a title="Macro annotation for a path containing Avro files." href="AvroType$$fromPath.html"><span class="name">fromPath</span></a><span class="result"> extends <span class="extype" name="scala.annotation.Annotation">Annotation</span> with <span class="extype" name="scala.annotation.StaticAnnotation">StaticAnnotation</span></span>
       </span>
       
       <p class="shortcomment cmt">Macro annotation for a path containing Avro files.</p><div class="fullcomment"><div class="comment cmt"><p>Macro annotation for a path containing Avro files.</p><p>Generates case classes from a path which contains Avro files.
@@ -331,7 +331,13 @@ For example:</p><pre>@AvroType.fromPath(<span class="lit">"gs://myBucket/myFolde
     | myLooooooooooooooooongPath/
    "</span><span class="lit">""</span>.stripMargin)
 <span class="kw">class</span> MyRecord</pre><p>Globs are supported as a part of the path. For example:</p><pre>@AvroType.fromPath(<span class="lit">"gs://myBucket`/`*`/`*`/`*`/`"</span>)
-<span class="kw">class</span> MyRecord</pre><p>Also generate a companion object with convenience methods.</p></div></div>
+<span class="kw">class</span> MyRecord</pre><p>Also generate a companion object with convenience methods.</p></div><dl class="attributes block"> <dt>Annotations</dt><dd>
+                <span class="name">@compileTimeOnly</span><span class="args">(<span>
+      
+      <span class="defval" name="&quot;enable macro paradise to expand macro annotations&quot;">...</span>
+    </span>)</span>
+              
+        </dd></dl></div>
     </li><li name="com.spotify.scio.avro.types.AvroType.fromSchema" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="annotation">
       <a id="fromSchemaextendsAnnotationwithStaticAnnotation"></a><a id="fromSchema:fromSchema"></a>
       <span class="permalink">
@@ -340,11 +346,11 @@ For example:</p><pre>@AvroType.fromPath(<span class="lit">"gs://myBucket/myFolde
       </a>
     </span>
       <span class="modifier_kind">
-        <span class="modifier"></span>
+        <span class="modifier">macro </span>
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <a title="Macro annotation for an Avro schema." href="AvroType$$fromSchema.html"><span class="name">fromSchema</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.8/scala/annotation/Annotation.html#scala.annotation.Annotation" class="extype" name="scala.annotation.Annotation">Annotation</a> with <a href="http://www.scala-lang.org/api/2.12.8/scala/annotation/StaticAnnotation.html#scala.annotation.StaticAnnotation" class="extype" name="scala.annotation.StaticAnnotation">StaticAnnotation</a></span>
+        <a title="Macro annotation for an Avro schema." href="AvroType$$fromSchema.html"><span class="name">fromSchema</span></a><span class="result"> extends <span class="extype" name="scala.annotation.Annotation">Annotation</span> with <span class="extype" name="scala.annotation.StaticAnnotation">StaticAnnotation</span></span>
       </span>
       
       <p class="shortcomment cmt">Macro annotation for an Avro schema.</p><div class="fullcomment"><div class="comment cmt"><p>Macro annotation for an Avro schema.</p><p>Generate case classes for an Avro schema. Note that <code>schema</code> must be a single string literal
@@ -365,7 +371,13 @@ of the JSON schema with optional <code>.stripMargin</code> at the end. For examp
       |  ]
       |}
     "</span><span class="lit">""</span>.stripMargin)
-<span class="kw">class</span> MyRecord</pre><p>Also generate a companion object with convenience methods.</p></div></div>
+<span class="kw">class</span> MyRecord</pre><p>Also generate a companion object with convenience methods.</p></div><dl class="attributes block"> <dt>Annotations</dt><dd>
+                <span class="name">@compileTimeOnly</span><span class="args">(<span>
+      
+      <span class="defval" name="&quot;enable macro paradise to expand macro annotations&quot;">...</span>
+    </span>)</span>
+              
+        </dd></dl></div>
     </li><li name="com.spotify.scio.avro.types.AvroType.fromSchemaFile" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="annotation">
       <a id="fromSchemaFileextendsAnnotationwithStaticAnnotation"></a><a id="fromSchemaFile:fromSchemaFile"></a>
       <span class="permalink">
@@ -374,18 +386,24 @@ of the JSON schema with optional <code>.stripMargin</code> at the end. For examp
       </a>
     </span>
       <span class="modifier_kind">
-        <span class="modifier"></span>
+        <span class="modifier">macro </span>
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <a title="Macro annotation for a file which contains Avro schema." href="AvroType$$fromSchemaFile.html"><span class="name">fromSchemaFile</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.8/scala/annotation/Annotation.html#scala.annotation.Annotation" class="extype" name="scala.annotation.Annotation">Annotation</a> with <a href="http://www.scala-lang.org/api/2.12.8/scala/annotation/StaticAnnotation.html#scala.annotation.StaticAnnotation" class="extype" name="scala.annotation.StaticAnnotation">StaticAnnotation</a></span>
+        <a title="Macro annotation for a file which contains Avro schema." href="AvroType$$fromSchemaFile.html"><span class="name">fromSchemaFile</span></a><span class="result"> extends <span class="extype" name="scala.annotation.Annotation">Annotation</span> with <span class="extype" name="scala.annotation.StaticAnnotation">StaticAnnotation</span></span>
       </span>
       
       <p class="shortcomment cmt">Macro annotation for a file which contains Avro schema.</p><div class="fullcomment"><div class="comment cmt"><p>Macro annotation for a file which contains Avro schema.</p><p>Generate case classes for an Avro schema. File can be either local or remote files.
 For example file can be located on Google Cloud Storage (GCS):</p><pre>@AvroType.fromSchemaFile(<span class="lit">"gs://myBucket/myFolder/schema-file.avsc"</span>)
 <span class="kw">class</span> MyRecord</pre><p>For local files, you need to either provide absolute path,
 or path relative to project root directory. For example:</p><pre>@AvroType.fromSchemaFile(<span class="lit">"sub-project/src/main/avro/schema-file.avsc"</span>)
-<span class="kw">class</span> MyRecord</pre><p>Also generate a companion object with convenience methods.</p></div></div>
+<span class="kw">class</span> MyRecord</pre><p>Also generate a companion object with convenience methods.</p></div><dl class="attributes block"> <dt>Annotations</dt><dd>
+                <span class="name">@compileTimeOnly</span><span class="args">(<span>
+      
+      <span class="defval" name="&quot;enable macro paradise to expand macro annotations&quot;">...</span>
+    </span>)</span>
+              
+        </dd></dl></div>
     </li><li name="com.spotify.scio.avro.types.AvroType.toSchema" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="annotation">
       <a id="toSchemaextendsAnnotationwithStaticAnnotation"></a><a id="toSchema:toSchema"></a>
       <span class="permalink">
@@ -394,11 +412,11 @@ or path relative to project root directory. For example:</p><pre>@AvroType.fromS
       </a>
     </span>
       <span class="modifier_kind">
-        <span class="modifier"></span>
+        <span class="modifier">macro </span>
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <a title="Macro annotation for case classes to be saved to Avro files." href="AvroType$$toSchema.html"><span class="name">toSchema</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.8/scala/annotation/Annotation.html#scala.annotation.Annotation" class="extype" name="scala.annotation.Annotation">Annotation</a> with <a href="http://www.scala-lang.org/api/2.12.8/scala/annotation/StaticAnnotation.html#scala.annotation.StaticAnnotation" class="extype" name="scala.annotation.StaticAnnotation">StaticAnnotation</a></span>
+        <a title="Macro annotation for case classes to be saved to Avro files." href="AvroType$$toSchema.html"><span class="name">toSchema</span></a><span class="result"> extends <span class="extype" name="scala.annotation.Annotation">Annotation</span> with <span class="extype" name="scala.annotation.StaticAnnotation">StaticAnnotation</span></span>
       </span>
       
       <p class="shortcomment cmt">Macro annotation for case classes to be saved to Avro files.</p><div class="fullcomment"><div class="comment cmt"><p>Macro annotation for case classes to be saved to Avro files.</p><p>Note that this annotation does not generate case classes, only a companion object with
@@ -407,7 +425,13 @@ example:</p><pre>@AvroType.toSchema
 <span class="kw">case</span> <span class="kw">class</span> Result(name: <span class="std">Option</span>[<span class="std">String</span>] = <span class="std">None</span>, score: <span class="std">Option</span>[<span class="std">Double</span>] = <span class="std">None</span>)</pre><p>It is recommended that you define all of your fields as Option.
 This way you could stop populating them in the future if you notice that you don't need them.</p><p>This macro doesn't help you with schema evolution.
 It's up to you to follow the best practices on how to do evolution of your Avro schemas.
-Rule of thumb is to only add new fields, without removing the old ones.</p></div></div>
+Rule of thumb is to only add new fields, without removing the old ones.</p></div><dl class="attributes block"> <dt>Annotations</dt><dd>
+                <span class="name">@compileTimeOnly</span><span class="args">(<span>
+      
+      <span class="defval" name="&quot;enable macro paradise to expand macro annotations&quot;">...</span>
+    </span>)</span>
+              
+        </dd></dl></div>
     </li></ol>
             </div>
 
@@ -428,7 +452,7 @@ Rule of thumb is to only add new fields, without removing the old ones.</p></div
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span title="gt4s: $bang$eq" class="name">!=</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.8/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+        <span title="gt4s: $bang$eq" class="name">!=</span><span class="params">(<span name="arg0">arg0: <span class="extype" name="scala.Any">Any</span></span>)</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
@@ -444,7 +468,7 @@ Rule of thumb is to only add new fields, without removing the old ones.</p></div
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span title="gt4s: $hash$hash" class="name">##</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>
+        <span title="gt4s: $hash$hash" class="name">##</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Int">Int</span></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
@@ -460,7 +484,7 @@ Rule of thumb is to only add new fields, without removing the old ones.</p></div
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span title="gt4s: $eq$eq" class="name">==</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.8/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+        <span title="gt4s: $eq$eq" class="name">==</span><span class="params">(<span name="arg0">arg0: <span class="extype" name="scala.Any">Any</span></span>)</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
@@ -508,7 +532,7 @@ Rule of thumb is to only add new fields, without removing the old ones.</p></div
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">clone</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
+        <span class="name">clone</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.AnyRef">AnyRef</span></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected[<a href="../../../../../java/lang/index.html" class="extype" name="java.lang">java.lang</a>] </dd><dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -532,7 +556,7 @@ Rule of thumb is to only add new fields, without removing the old ones.</p></div
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">eq</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.8/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+        <span class="name">eq</span><span class="params">(<span name="arg0">arg0: <span class="extype" name="scala.AnyRef">AnyRef</span></span>)</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
@@ -548,7 +572,7 @@ Rule of thumb is to only add new fields, without removing the old ones.</p></div
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">equals</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.8/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+        <span class="name">equals</span><span class="params">(<span name="arg0">arg0: <span class="extype" name="scala.Any">Any</span></span>)</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
@@ -564,7 +588,7 @@ Rule of thumb is to only add new fields, without removing the old ones.</p></div
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">finalize</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+        <span class="name">finalize</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected[<a href="../../../../../java/lang/index.html" class="extype" name="java.lang">java.lang</a>] </dd><dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -586,10 +610,10 @@ Rule of thumb is to only add new fields, without removing the old ones.</p></div
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">fromGenericRecord</span><span class="tparams">[<span name="T">T</span>]</span><span class="result">: (<a href="https://avro.apache.org/docs/current/api/java/org/apache/avro/generic/GenericRecord.html#org.apache.avro.generic.GenericRecord" class="extype" name="org.apache.avro.generic.GenericRecord">GenericRecord</a>) ⇒ <span class="extype" name="com.spotify.scio.avro.types.AvroType.fromGenericRecord.T">T</span></span>
+        <span class="name">fromGenericRecord</span><span class="tparams">[<span name="T">T</span>]</span><span class="result">: (<span class="extype" name="org.apache.avro.generic.GenericRecord">GenericRecord</span>) ⇒ <span class="extype" name="com.spotify.scio.avro.types.AvroType.fromGenericRecord.T">T</span></span>
       </span>
       
-      <p class="shortcomment cmt">Generate a converter function from <a href="https://avro.apache.org/docs/current/api/java/org/apache/avro/generic/GenericRecord.html" class="extype" name="org.apache.avro.generic.GenericRecord">GenericRecord</a>
+      <p class="shortcomment cmt">Generate a converter function from <span class="extype" name="org.apache.avro.generic.GenericRecord">GenericRecord</span>
 to the given case class <code>T</code>.</p>
     </li><li name="scala.AnyRef#getClass" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="getClass():Class[_]"></a>
@@ -603,7 +627,7 @@ to the given case class <code>T</code>.</p>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">getClass</span><span class="params">()</span><span class="result">: <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/Class.html#java.lang.Class" class="extype" name="java.lang.Class">Class</a>[_]</span>
+        <span class="name">getClass</span><span class="params">()</span><span class="result">: <span class="extype" name="java.lang.Class">Class</span>[_]</span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd><dt>Annotations</dt><dd>
@@ -622,7 +646,7 @@ to the given case class <code>T</code>.</p>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">hashCode</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>
+        <span class="name">hashCode</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Int">Int</span></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd><dt>Annotations</dt><dd>
@@ -641,7 +665,7 @@ to the given case class <code>T</code>.</p>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">isInstanceOf</span><span class="tparams">[<span name="T0">T0</span>]</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+        <span class="name">isInstanceOf</span><span class="tparams">[<span name="T0">T0</span>]</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
@@ -657,7 +681,7 @@ to the given case class <code>T</code>.</p>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">ne</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.8/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+        <span class="name">ne</span><span class="params">(<span name="arg0">arg0: <span class="extype" name="scala.AnyRef">AnyRef</span></span>)</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
@@ -673,7 +697,7 @@ to the given case class <code>T</code>.</p>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">notify</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+        <span class="name">notify</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -692,7 +716,7 @@ to the given case class <code>T</code>.</p>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">notifyAll</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+        <span class="name">notifyAll</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -711,10 +735,10 @@ to the given case class <code>T</code>.</p>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">schemaOf</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <span class="extype" name="scala.reflect.api.TypeTags.TypeTag">scala.reflect.api.JavaUniverse.TypeTag</span>[<span class="extype" name="com.spotify.scio.avro.types.AvroType.schemaOf.T">T</span>]</span>)</span><span class="result">: <a href="https://avro.apache.org/docs/current/api/java/org/apache/avro/Schema.html#org.apache.avro.Schema" class="extype" name="org.apache.avro.Schema">Schema</a></span>
+        <span class="name">schemaOf</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <span class="extype" name="scala.reflect.api.TypeTags.TypeTag">scala.reflect.api.JavaUniverse.TypeTag</span>[<span class="extype" name="com.spotify.scio.avro.types.AvroType.schemaOf.T">T</span>]</span>)</span><span class="result">: <span class="extype" name="org.apache.avro.Schema">Schema</span></span>
       </span>
       
-      <p class="shortcomment cmt">Generate <a href="https://avro.apache.org/docs/current/api/java/org/apache/avro/Schema.html" class="extype" name="org.apache.avro.Schema">Schema</a> for a case class.</p>
+      <p class="shortcomment cmt">Generate <span class="extype" name="org.apache.avro.Schema">Schema</span> for a case class.</p>
     </li><li name="scala.AnyRef#synchronized" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="synchronized[T0](x$1:=&gt;T0):T0"></a><a id="synchronized[T0](⇒T0):T0"></a>
       <span class="permalink">
@@ -743,11 +767,11 @@ to the given case class <code>T</code>.</p>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">toGenericRecord</span><span class="tparams">[<span name="T">T</span>]</span><span class="result">: (<span class="extype" name="com.spotify.scio.avro.types.AvroType.toGenericRecord.T">T</span>) ⇒ <a href="https://avro.apache.org/docs/current/api/java/org/apache/avro/generic/GenericRecord.html#org.apache.avro.generic.GenericRecord" class="extype" name="org.apache.avro.generic.GenericRecord">GenericRecord</a></span>
+        <span class="name">toGenericRecord</span><span class="tparams">[<span name="T">T</span>]</span><span class="result">: (<span class="extype" name="com.spotify.scio.avro.types.AvroType.toGenericRecord.T">T</span>) ⇒ <span class="extype" name="org.apache.avro.generic.GenericRecord">GenericRecord</span></span>
       </span>
       
       <p class="shortcomment cmt">Generate a converter function from the given case class <code>T</code> to
-<a href="https://avro.apache.org/docs/current/api/java/org/apache/avro/generic/GenericRecord.html" class="extype" name="org.apache.avro.generic.GenericRecord">GenericRecord</a>.</p>
+<span class="extype" name="org.apache.avro.generic.GenericRecord">GenericRecord</span>.</p>
     </li><li name="scala.AnyRef#toString" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="toString():String"></a>
       <span class="permalink">
@@ -760,7 +784,7 @@ to the given case class <code>T</code>.</p>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">toString</span><span class="params">()</span><span class="result">: <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/String.html#java.lang.String" class="extype" name="java.lang.String">String</a></span>
+        <span class="name">toString</span><span class="params">()</span><span class="result">: <span class="extype" name="java.lang.String">String</span></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
@@ -776,7 +800,7 @@ to the given case class <code>T</code>.</p>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">wait</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+        <span class="name">wait</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -798,7 +822,7 @@ to the given case class <code>T</code>.</p>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.8/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a></span>, <span name="arg1">arg1: <a href="http://www.scala-lang.org/api/2.12.8/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <span class="extype" name="scala.Long">Long</span></span>, <span name="arg1">arg1: <span class="extype" name="scala.Int">Int</span></span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -820,7 +844,7 @@ to the given case class <code>T</code>.</p>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.8/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <span class="extype" name="scala.Long">Long</span></span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -843,13 +867,13 @@ to the given case class <code>T</code>.</p>
 
         <div id="inheritedMembers">
         <div class="parent" name="scala.Serializable">
-              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.8/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></h3>
+              <h3>Inherited from <span class="extype" name="scala.Serializable">Serializable</span></h3>
             </div><div class="parent" name="java.io.Serializable">
-              <h3>Inherited from <a href="http://docs.oracle.com/javase/8/docs/api/java/io/Serializable.html#java.io.Serializable" class="extype" name="java.io.Serializable">Serializable</a></h3>
+              <h3>Inherited from <span class="extype" name="java.io.Serializable">Serializable</span></h3>
             </div><div class="parent" name="scala.AnyRef">
-              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.8/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></h3>
+              <h3>Inherited from <span class="extype" name="scala.AnyRef">AnyRef</span></h3>
             </div><div class="parent" name="scala.Any">
-              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.8/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></h3>
+              <h3>Inherited from <span class="extype" name="scala.Any">Any</span></h3>
             </div>
         
         </div>

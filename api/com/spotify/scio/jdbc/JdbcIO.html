@@ -133,6 +133,22 @@
       </span>
       
       <p class="shortcomment cmt">Main package for JDBC APIs.</p><div class="fullcomment"><div class="comment cmt"><p>Main package for JDBC APIs. Import all.</p><pre><span class="kw">import</span> com.spotify.scio.jdbc._</pre></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../index.html" class="extype" name="com.spotify.scio">scio</a></dd></dl></div>
+    </li><li name="com.spotify.scio.jdbc.syntax" visbl="pub" class="indented5 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="syntax"></a><a id="syntax:syntax"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/jdbc/index.html#syntax" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">package</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="syntax/index.html"><span class="name">syntax</span></a>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="index.html" class="extype" name="com.spotify.scio.jdbc">jdbc</a></dd></dl></div>
     </li><li class="current-entities indented4">
                         <span class="separator"></span>
                         <a class="trait" href="CloudSqlOptions.html" title=""></a>
@@ -143,28 +159,20 @@
                         <a href="CloudSqlOptionsRegistrar.html" title="">CloudSqlOptionsRegistrar</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
-                        <a class="class" href="package$$JdbcConnectionOptions.html" title="Options for a JDBC connection."></a>
-                        <a href="package$$JdbcConnectionOptions.html" title="Options for a JDBC connection.">JdbcConnectionOptions</a>
+                        <a class="class" href="JdbcConnectionOptions.html" title="Options for a JDBC connection."></a>
+                        <a href="JdbcConnectionOptions.html" title="Options for a JDBC connection.">JdbcConnectionOptions</a>
                       </li><li class="current-entities indented4">
                         <a class="object" href="JdbcIO$.html" title=""></a>
                         <a class="trait" href="" title=""></a>
                         <a href="" title="">JdbcIO</a>
                       </li><li class="current-entities indented4">
-                        <span class="separator"></span>
-                        <a class="trait" href="package$$JdbcIoOptions.html" title=""></a>
-                        <a href="package$$JdbcIoOptions.html" title="">JdbcIoOptions</a>
+                        <a class="object" href="JdbcIoOptions$.html" title=""></a>
+                        <a class="trait" href="JdbcIoOptions.html" title=""></a>
+                        <a href="JdbcIoOptions.html" title="">JdbcIoOptions</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
-                        <a class="class" href="package$$JdbcReadOptions.html" title="Options for reading from a JDBC source."></a>
-                        <a href="package$$JdbcReadOptions.html" title="Options for reading from a JDBC source.">JdbcReadOptions</a>
-                      </li><li class="current-entities indented4">
-                        <span class="separator"></span>
-                        <a class="class" href="package$$JdbcSCollection.html" title="Enhanced version of SCollection with JDBC methods."></a>
-                        <a href="package$$JdbcSCollection.html" title="Enhanced version of SCollection with JDBC methods.">JdbcSCollection</a>
-                      </li><li class="current-entities indented4">
-                        <span class="separator"></span>
-                        <a class="class" href="package$$JdbcScioContext.html" title="Enhanced version of ScioContext with JDBC methods."></a>
-                        <a href="package$$JdbcScioContext.html" title="Enhanced version of ScioContext with JDBC methods.">JdbcScioContext</a>
+                        <a class="class" href="JdbcReadOptions.html" title="Options for reading from a JDBC source."></a>
+                        <a href="JdbcReadOptions.html" title="Options for reading from a JDBC source.">JdbcReadOptions</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
                         <a class="class" href="JdbcSelect.html" title=""></a>
@@ -175,8 +183,8 @@
                         <a href="JdbcWrite.html" title="">JdbcWrite</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
-                        <a class="class" href="package$$JdbcWriteOptions.html" title="Options for writing to a JDBC source."></a>
-                        <a href="package$$JdbcWriteOptions.html" title="Options for writing to a JDBC source.">JdbcWriteOptions</a>
+                        <a class="class" href="JdbcWriteOptions.html" title="Options for writing to a JDBC source."></a>
+                        <a href="JdbcWriteOptions.html" title="Options for writing to a JDBC source.">JdbcWriteOptions</a>
                       </li>
               </ul>
             </div>
@@ -202,7 +210,7 @@
         <span class="kind">trait</span>
       </span>
       <span class="symbol">
-        <span class="name">JdbcIO</span><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <a href="../io/TestIO.html" class="extype" name="com.spotify.scio.io.TestIO">TestIO</a>[<span class="extype" name="com.spotify.scio.jdbc.JdbcIO.T">T</span>]</span>
+        <span class="name">JdbcIO</span><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <a href="../io/ScioIO.html" class="extype" name="com.spotify.scio.io.ScioIO">ScioIO</a>[<span class="extype" name="com.spotify.scio.jdbc.JdbcIO.T">T</span>]</span>
       </span>
       </h4>
 
@@ -211,8 +219,13 @@
           <span class="toggle">
             Linear Supertypes
           </span>
-          <div class="superTypes hiddenContent"><a href="../io/TestIO.html" class="extype" name="com.spotify.scio.io.TestIO">TestIO</a>[<span class="extype" name="com.spotify.scio.jdbc.JdbcIO.T">T</span>], <a href="../io/ScioIO.html" class="extype" name="com.spotify.scio.io.ScioIO">ScioIO</a>[<span class="extype" name="com.spotify.scio.jdbc.JdbcIO.T">T</span>], <a href="http://www.scala-lang.org/api/2.12.8/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a>, <a href="http://www.scala-lang.org/api/2.12.8/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></div>
-        </div></div>
+          <div class="superTypes hiddenContent"><a href="../io/ScioIO.html" class="extype" name="com.spotify.scio.io.ScioIO">ScioIO</a>[<span class="extype" name="com.spotify.scio.jdbc.JdbcIO.T">T</span>], <span class="extype" name="scala.AnyRef">AnyRef</span>, <span class="extype" name="scala.Any">Any</span></div>
+        </div><div class="toggleContainer block">
+            <span class="toggle">
+              Known Subclasses
+            </span>
+            <div class="subClasses hiddenContent"><a href="JdbcSelect.html" class="extype" name="com.spotify.scio.jdbc.JdbcSelect">JdbcSelect</a>, <a href="JdbcWrite.html" class="extype" name="com.spotify.scio.jdbc.JdbcWrite">JdbcWrite</a></div>
+          </div></div>
         
 
       <div id="mbrsel">
@@ -237,7 +250,7 @@
                   <span class="filtertype">Inherited<br />
                   </span>
                   <ol id="linearization">
-                    <li class="in" name="com.spotify.scio.jdbc.JdbcIO"><span>JdbcIO</span></li><li class="in" name="com.spotify.scio.io.TestIO"><span>TestIO</span></li><li class="in" name="com.spotify.scio.io.ScioIO"><span>ScioIO</span></li><li class="in" name="scala.AnyRef"><span>AnyRef</span></li><li class="in" name="scala.Any"><span>Any</span></li>
+                    <li class="in" name="com.spotify.scio.jdbc.JdbcIO"><span>JdbcIO</span></li><li class="in" name="com.spotify.scio.io.ScioIO"><span>ScioIO</span></li><li class="in" name="scala.AnyRef"><span>AnyRef</span></li><li class="in" name="scala.Any"><span>Any</span></li>
                   </ol>
                 </div><div class="ancestors">
               <span class="filtertype"></span>
@@ -259,45 +272,112 @@
 
         <div id="types" class="types members">
               <h3>Type Members</h3>
-              <ol><li name="com.spotify.scio.io.TestIO.ReadP" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="ReadP=Nothing"></a><a id="ReadP:ReadP"></a>
+              <ol><li name="com.spotify.scio.io.ScioIO.ReadP" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
+      <a id="ReadP"></a><a id="ReadP:ReadP"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/jdbc/JdbcIO.html#ReadP=Nothing" title="Permalink">
+      <a href="../../../../com/spotify/scio/jdbc/JdbcIO.html#ReadP" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
       <span class="modifier_kind">
-        <span class="modifier"></span>
+        <span class="modifier">abstract </span>
         <span class="kind">type</span>
       </span>
       <span class="symbol">
-        <span class="name">ReadP</span><span class="result alias"> = <a href="http://www.scala-lang.org/api/2.12.8/scala/Nothing.html#scala.Nothing" class="extype" name="scala.Nothing">Nothing</a></span>
+        <span class="name">ReadP</span>
       </span>
       
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../io/TestIO.html" class="extype" name="com.spotify.scio.io.TestIO">TestIO</a> → <a href="../io/ScioIO.html" class="extype" name="com.spotify.scio.io.ScioIO">ScioIO</a></dd></dl></div>
-    </li><li name="com.spotify.scio.io.TestIO.WriteP" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="WriteP=Nothing"></a><a id="WriteP:WriteP"></a>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../io/ScioIO.html" class="extype" name="com.spotify.scio.io.ScioIO">ScioIO</a></dd></dl></div>
+    </li><li name="com.spotify.scio.io.ScioIO.WriteP" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
+      <a id="WriteP"></a><a id="WriteP:WriteP"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/jdbc/JdbcIO.html#WriteP=Nothing" title="Permalink">
+      <a href="../../../../com/spotify/scio/jdbc/JdbcIO.html#WriteP" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
       <span class="modifier_kind">
-        <span class="modifier"></span>
+        <span class="modifier">abstract </span>
         <span class="kind">type</span>
       </span>
       <span class="symbol">
-        <span class="name">WriteP</span><span class="result alias"> = <a href="http://www.scala-lang.org/api/2.12.8/scala/Nothing.html#scala.Nothing" class="extype" name="scala.Nothing">Nothing</a></span>
+        <span class="name">WriteP</span>
       </span>
       
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../io/TestIO.html" class="extype" name="com.spotify.scio.io.TestIO">TestIO</a> → <a href="../io/ScioIO.html" class="extype" name="com.spotify.scio.io.ScioIO">ScioIO</a></dd></dl></div>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../io/ScioIO.html" class="extype" name="com.spotify.scio.io.ScioIO">ScioIO</a></dd></dl></div>
     </li></ol>
             </div>
 
-        
+        <div class="values members">
+              <h3>Abstract Value Members</h3>
+              <ol><li name="com.spotify.scio.io.ScioIO#read" visbl="prt" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
+      <a id="read(sc:com.spotify.scio.ScioContext,params:ScioIO.this.ReadP):com.spotify.scio.values.SCollection[T]"></a><a id="read(ScioContext,ReadP):SCollection[T]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/jdbc/JdbcIO.html#read(sc:com.spotify.scio.ScioContext,params:ScioIO.this.ReadP):com.spotify.scio.values.SCollection[T]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">abstract </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">read</span><span class="params">(<span name="sc">sc: <a href="../ScioContext.html" class="extype" name="com.spotify.scio.ScioContext">ScioContext</a></span>, <span name="params">params: <a href="#ReadP" class="extmbr" name="com.spotify.scio.jdbc.JdbcIO.ReadP">ReadP</a></span>)</span><span class="result">: <a href="../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.jdbc.JdbcIO.T">T</span>]</span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected </dd><dt>Definition Classes</dt><dd><a href="../io/ScioIO.html" class="extype" name="com.spotify.scio.io.ScioIO">ScioIO</a></dd></dl></div>
+    </li><li name="com.spotify.scio.io.ScioIO#tap" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
+      <a id="tap(read:ScioIO.this.ReadP):com.spotify.scio.io.Tap[ScioIO.this.tapT.T]"></a><a id="tap(ReadP):Tap[T]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/jdbc/JdbcIO.html#tap(read:ScioIO.this.ReadP):com.spotify.scio.io.Tap[ScioIO.this.tapT.T]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">abstract </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">tap</span><span class="params">(<span name="read">read: <a href="#ReadP" class="extmbr" name="com.spotify.scio.jdbc.JdbcIO.ReadP">ReadP</a></span>)</span><span class="result">: <a href="../io/Tap.html" class="extype" name="com.spotify.scio.io.Tap">Tap</a>[<a href="../io/TapT.html#T" class="extmbr" name="com.spotify.scio.io.TapT.T">T</a>]</span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../io/ScioIO.html" class="extype" name="com.spotify.scio.io.ScioIO">ScioIO</a></dd></dl></div>
+    </li><li name="com.spotify.scio.io.ScioIO#tapT" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
+      <a id="tapT:com.spotify.scio.io.TapT[T]"></a><a id="tapT:TapT[T]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/jdbc/JdbcIO.html#tapT:com.spotify.scio.io.TapT[T]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">abstract </span>
+        <span class="kind">val</span>
+      </span>
+      <span class="symbol">
+        <span class="name">tapT</span><span class="result">: <a href="../io/TapT.html" class="extype" name="com.spotify.scio.io.TapT">TapT</a>[<span class="extype" name="com.spotify.scio.jdbc.JdbcIO.T">T</span>]</span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../io/ScioIO.html" class="extype" name="com.spotify.scio.io.ScioIO">ScioIO</a></dd></dl></div>
+    </li><li name="com.spotify.scio.io.ScioIO#write" visbl="prt" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
+      <a id="write(data:com.spotify.scio.values.SCollection[T],params:ScioIO.this.WriteP):com.spotify.scio.io.Tap[ScioIO.this.tapT.T]"></a><a id="write(SCollection[T],WriteP):Tap[T]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/jdbc/JdbcIO.html#write(data:com.spotify.scio.values.SCollection[T],params:ScioIO.this.WriteP):com.spotify.scio.io.Tap[ScioIO.this.tapT.T]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">abstract </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">write</span><span class="params">(<span name="data">data: <a href="../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.jdbc.JdbcIO.T">T</span>]</span>, <span name="params">params: <a href="#WriteP" class="extmbr" name="com.spotify.scio.jdbc.JdbcIO.WriteP">WriteP</a></span>)</span><span class="result">: <a href="../io/Tap.html" class="extype" name="com.spotify.scio.io.Tap">Tap</a>[<a href="../io/TapT.html#T" class="extmbr" name="com.spotify.scio.io.TapT.T">T</a>]</span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected </dd><dt>Definition Classes</dt><dd><a href="../io/ScioIO.html" class="extype" name="com.spotify.scio.io.ScioIO">ScioIO</a></dd></dl></div>
+    </li></ol>
+            </div>
 
         <div class="values members">
-              <h3>Value Members</h3>
+              <h3>Concrete Value Members</h3>
               <ol>
                 <li name="scala.AnyRef#!=" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="!=(x$1:Any):Boolean"></a><a id="!=(Any):Boolean"></a>
@@ -311,7 +391,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span title="gt4s: $bang$eq" class="name">!=</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.8/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+        <span title="gt4s: $bang$eq" class="name">!=</span><span class="params">(<span name="arg0">arg0: <span class="extype" name="scala.Any">Any</span></span>)</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
@@ -327,7 +407,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span title="gt4s: $hash$hash" class="name">##</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>
+        <span title="gt4s: $hash$hash" class="name">##</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Int">Int</span></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
@@ -343,7 +423,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span title="gt4s: $eq$eq" class="name">==</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.8/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+        <span title="gt4s: $eq$eq" class="name">==</span><span class="params">(<span name="arg0">arg0: <span class="extype" name="scala.Any">Any</span></span>)</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
@@ -375,7 +455,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">clone</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
+        <span class="name">clone</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.AnyRef">AnyRef</span></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected[<a href="../../../../java/lang/index.html" class="extype" name="java.lang">java.lang</a>] </dd><dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -399,7 +479,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">eq</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.8/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+        <span class="name">eq</span><span class="params">(<span name="arg0">arg0: <span class="extype" name="scala.AnyRef">AnyRef</span></span>)</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
@@ -415,7 +495,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">equals</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.8/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+        <span class="name">equals</span><span class="params">(<span name="arg0">arg0: <span class="extype" name="scala.Any">Any</span></span>)</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
@@ -431,7 +511,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">finalize</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+        <span class="name">finalize</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected[<a href="../../../../java/lang/index.html" class="extype" name="java.lang">java.lang</a>] </dd><dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -453,7 +533,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">getClass</span><span class="params">()</span><span class="result">: <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/Class.html#java.lang.Class" class="extype" name="java.lang.Class">Class</a>[_]</span>
+        <span class="name">getClass</span><span class="params">()</span><span class="result">: <span class="extype" name="java.lang.Class">Class</span>[_]</span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd><dt>Annotations</dt><dd>
@@ -472,7 +552,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">hashCode</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>
+        <span class="name">hashCode</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Int">Int</span></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd><dt>Annotations</dt><dd>
@@ -491,7 +571,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">isInstanceOf</span><span class="tparams">[<span name="T0">T0</span>]</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+        <span class="name">isInstanceOf</span><span class="tparams">[<span name="T0">T0</span>]</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
@@ -507,7 +587,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">ne</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.8/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+        <span class="name">ne</span><span class="params">(<span name="arg0">arg0: <span class="extype" name="scala.AnyRef">AnyRef</span></span>)</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
@@ -523,7 +603,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">notify</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+        <span class="name">notify</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -542,29 +622,13 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">notifyAll</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+        <span class="name">notifyAll</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
                 <span class="name">@native</span><span class="args">()</span>
               
         </dd></dl></div>
-    </li><li name="com.spotify.scio.io.TestIO#read" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="read(sc:com.spotify.scio.ScioContext,params:TestIO.this.ReadP):com.spotify.scio.values.SCollection[T]"></a><a id="read(ScioContext,ReadP):SCollection[T]"></a>
-      <span class="permalink">
-      <a href="../../../../com/spotify/scio/jdbc/JdbcIO.html#read(sc:com.spotify.scio.ScioContext,params:TestIO.this.ReadP):com.spotify.scio.values.SCollection[T]" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">read</span><span class="params">(<span name="sc">sc: <a href="../ScioContext.html" class="extype" name="com.spotify.scio.ScioContext">ScioContext</a></span>, <span name="params">params: <a href="#ReadP=Nothing" class="extmbr" name="com.spotify.scio.jdbc.JdbcIO.ReadP">ReadP</a></span>)</span><span class="result">: <a href="../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.jdbc.JdbcIO.T">T</span>]</span>
-      </span>
-      
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../io/TestIO.html" class="extype" name="com.spotify.scio.io.TestIO">TestIO</a> → <a href="../io/ScioIO.html" class="extype" name="com.spotify.scio.io.ScioIO">ScioIO</a></dd></dl></div>
     </li><li name="com.spotify.scio.io.ScioIO#readTest" visbl="prt" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="readTest(sc:com.spotify.scio.ScioContext,params:ScioIO.this.ReadP)(implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]"></a><a id="readTest(ScioContext,ReadP)(Coder[T]):SCollection[T]"></a>
       <span class="permalink">
@@ -577,7 +641,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">readTest</span><span class="params">(<span name="sc">sc: <a href="../ScioContext.html" class="extype" name="com.spotify.scio.ScioContext">ScioContext</a></span>, <span name="params">params: <a href="#ReadP=Nothing" class="extmbr" name="com.spotify.scio.jdbc.JdbcIO.ReadP">ReadP</a></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="coder">coder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.jdbc.JdbcIO.T">T</span>]</span>)</span><span class="result">: <a href="../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.jdbc.JdbcIO.T">T</span>]</span>
+        <span class="name">readTest</span><span class="params">(<span name="sc">sc: <a href="../ScioContext.html" class="extype" name="com.spotify.scio.ScioContext">ScioContext</a></span>, <span name="params">params: <a href="#ReadP" class="extmbr" name="com.spotify.scio.jdbc.JdbcIO.ReadP">ReadP</a></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="coder">coder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.jdbc.JdbcIO.T">T</span>]</span>)</span><span class="result">: <a href="../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.jdbc.JdbcIO.T">T</span>]</span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected </dd><dt>Definition Classes</dt><dd><a href="../io/ScioIO.html" class="extype" name="com.spotify.scio.io.ScioIO">ScioIO</a></dd></dl></div>
@@ -597,38 +661,6 @@
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
-    </li><li name="com.spotify.scio.io.TestIO#tap" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="tap(params:TestIO.this.ReadP):com.spotify.scio.io.Tap[TestIO.this.tapT.T]"></a><a id="tap(ReadP):Tap[(tapT)#T]"></a>
-      <span class="permalink">
-      <a href="../../../../com/spotify/scio/jdbc/JdbcIO.html#tap(params:TestIO.this.ReadP):com.spotify.scio.io.Tap[TestIO.this.tapT.T]" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">tap</span><span class="params">(<span name="params">params: <a href="#ReadP=Nothing" class="extmbr" name="com.spotify.scio.jdbc.JdbcIO.ReadP">ReadP</a></span>)</span><span class="result">: <a href="../io/Tap.html" class="extype" name="com.spotify.scio.io.Tap">Tap</a>[(<a href="#tapT:com.spotify.scio.io.TapT.Aux[T,Nothing]" class="extmbr" name="com.spotify.scio.jdbc.JdbcIO#tapT">tapT</a>)#<span class="extype" name="com.spotify.scio.io.TapT.&lt;refinement&gt;.T">T</span>]</span>
-      </span>
-      
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../io/TestIO.html" class="extype" name="com.spotify.scio.io.TestIO">TestIO</a> → <a href="../io/ScioIO.html" class="extype" name="com.spotify.scio.io.ScioIO">ScioIO</a></dd></dl></div>
-    </li><li name="com.spotify.scio.jdbc.JdbcIO#tapT" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="tapT:com.spotify.scio.io.TapT.Aux[T,Nothing]"></a><a id="tapT:Aux[T,Nothing]"></a>
-      <span class="permalink">
-      <a href="../../../../com/spotify/scio/jdbc/JdbcIO.html#tapT:com.spotify.scio.io.TapT.Aux[T,Nothing]" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier">final </span>
-        <span class="kind">val</span>
-      </span>
-      <span class="symbol">
-        <span class="name">tapT</span><span class="result">: <a href="../io/TapT$.html#Aux[A,T0]=com.spotify.scio.io.TapT[A]{typeT=T0}" class="extmbr" name="com.spotify.scio.io.TapT.Aux">Aux</a>[<span class="extype" name="com.spotify.scio.jdbc.JdbcIO.T">T</span>, <a href="http://www.scala-lang.org/api/2.12.8/scala/Nothing.html#scala.Nothing" class="extype" name="scala.Nothing">Nothing</a>]</span>
-      </span>
-      
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="" class="extype" name="com.spotify.scio.jdbc.JdbcIO">JdbcIO</a> → <a href="../io/ScioIO.html" class="extype" name="com.spotify.scio.io.ScioIO">ScioIO</a></dd></dl></div>
     </li><li name="com.spotify.scio.io.ScioIO#testId" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="testId:String"></a>
       <span class="permalink">
@@ -657,7 +689,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">toString</span><span class="params">()</span><span class="result">: <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/String.html#java.lang.String" class="extype" name="java.lang.String">String</a></span>
+        <span class="name">toString</span><span class="params">()</span><span class="result">: <span class="extype" name="java.lang.String">String</span></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
@@ -673,7 +705,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">wait</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+        <span class="name">wait</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -695,7 +727,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.8/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a></span>, <span name="arg1">arg1: <a href="http://www.scala-lang.org/api/2.12.8/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <span class="extype" name="scala.Long">Long</span></span>, <span name="arg1">arg1: <span class="extype" name="scala.Int">Int</span></span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -717,7 +749,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.8/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <span class="extype" name="scala.Long">Long</span></span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -729,24 +761,8 @@
     </span>)</span>
               
         </dd></dl></div>
-    </li><li name="com.spotify.scio.io.TestIO#write" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="write(data:com.spotify.scio.values.SCollection[T],params:TestIO.this.WriteP):com.spotify.scio.io.Tap[TestIO.this.tapT.T]"></a><a id="write(SCollection[T],WriteP):Tap[(tapT)#T]"></a>
-      <span class="permalink">
-      <a href="../../../../com/spotify/scio/jdbc/JdbcIO.html#write(data:com.spotify.scio.values.SCollection[T],params:TestIO.this.WriteP):com.spotify.scio.io.Tap[TestIO.this.tapT.T]" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">write</span><span class="params">(<span name="data">data: <a href="../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.jdbc.JdbcIO.T">T</span>]</span>, <span name="params">params: <a href="#WriteP=Nothing" class="extmbr" name="com.spotify.scio.jdbc.JdbcIO.WriteP">WriteP</a></span>)</span><span class="result">: <a href="../io/Tap.html" class="extype" name="com.spotify.scio.io.Tap">Tap</a>[(<a href="#tapT:com.spotify.scio.io.TapT.Aux[T,Nothing]" class="extmbr" name="com.spotify.scio.jdbc.JdbcIO#tapT">tapT</a>)#<span class="extype" name="com.spotify.scio.io.TapT.&lt;refinement&gt;.T">T</span>]</span>
-      </span>
-      
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../io/TestIO.html" class="extype" name="com.spotify.scio.io.TestIO">TestIO</a> → <a href="../io/ScioIO.html" class="extype" name="com.spotify.scio.io.ScioIO">ScioIO</a></dd></dl></div>
     </li><li name="com.spotify.scio.io.ScioIO#writeTest" visbl="prt" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="writeTest(data:com.spotify.scio.values.SCollection[T],params:ScioIO.this.WriteP)(implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.io.Tap[ScioIO.this.tapT.T]"></a><a id="writeTest(SCollection[T],WriteP)(Coder[T]):Tap[(tapT)#T]"></a>
+      <a id="writeTest(data:com.spotify.scio.values.SCollection[T],params:ScioIO.this.WriteP)(implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.io.Tap[ScioIO.this.tapT.T]"></a><a id="writeTest(SCollection[T],WriteP)(Coder[T]):Tap[T]"></a>
       <span class="permalink">
       <a href="../../../../com/spotify/scio/jdbc/JdbcIO.html#writeTest(data:com.spotify.scio.values.SCollection[T],params:ScioIO.this.WriteP)(implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.io.Tap[ScioIO.this.tapT.T]" title="Permalink">
         <i class="material-icons"></i>
@@ -757,7 +773,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">writeTest</span><span class="params">(<span name="data">data: <a href="../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.jdbc.JdbcIO.T">T</span>]</span>, <span name="params">params: <a href="#WriteP=Nothing" class="extmbr" name="com.spotify.scio.jdbc.JdbcIO.WriteP">WriteP</a></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="coder">coder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.jdbc.JdbcIO.T">T</span>]</span>)</span><span class="result">: <a href="../io/Tap.html" class="extype" name="com.spotify.scio.io.Tap">Tap</a>[(<a href="#tapT:com.spotify.scio.io.TapT.Aux[T,Nothing]" class="extmbr" name="com.spotify.scio.jdbc.JdbcIO#tapT">tapT</a>)#<span class="extype" name="com.spotify.scio.io.TapT.&lt;refinement&gt;.T">T</span>]</span>
+        <span class="name">writeTest</span><span class="params">(<span name="data">data: <a href="../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.jdbc.JdbcIO.T">T</span>]</span>, <span name="params">params: <a href="#WriteP" class="extmbr" name="com.spotify.scio.jdbc.JdbcIO.WriteP">WriteP</a></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="coder">coder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.jdbc.JdbcIO.T">T</span>]</span>)</span><span class="result">: <a href="../io/Tap.html" class="extype" name="com.spotify.scio.io.Tap">Tap</a>[<a href="../io/TapT.html#T" class="extmbr" name="com.spotify.scio.io.TapT.T">T</a>]</span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected </dd><dt>Definition Classes</dt><dd><a href="../io/ScioIO.html" class="extype" name="com.spotify.scio.io.ScioIO">ScioIO</a></dd></dl></div>
@@ -771,14 +787,12 @@
         </div>
 
         <div id="inheritedMembers">
-        <div class="parent" name="com.spotify.scio.io.TestIO">
-              <h3>Inherited from <a href="../io/TestIO.html" class="extype" name="com.spotify.scio.io.TestIO">TestIO</a>[<span class="extype" name="com.spotify.scio.jdbc.JdbcIO.T">T</span>]</h3>
-            </div><div class="parent" name="com.spotify.scio.io.ScioIO">
+        <div class="parent" name="com.spotify.scio.io.ScioIO">
               <h3>Inherited from <a href="../io/ScioIO.html" class="extype" name="com.spotify.scio.io.ScioIO">ScioIO</a>[<span class="extype" name="com.spotify.scio.jdbc.JdbcIO.T">T</span>]</h3>
             </div><div class="parent" name="scala.AnyRef">
-              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.8/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></h3>
+              <h3>Inherited from <span class="extype" name="scala.AnyRef">AnyRef</span></h3>
             </div><div class="parent" name="scala.Any">
-              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.8/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></h3>
+              <h3>Inherited from <span class="extype" name="scala.Any">Any</span></h3>
             </div>
         
         </div>

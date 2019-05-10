@@ -663,7 +663,7 @@ detects the query's dialect. To override this, start the query with either <code
         <span class="kind">case class</span>
       </span>
       <span class="symbol">
-        <a title="A ScioIO class for writing raw bytes to files." href="BinaryIO.html"><span class="name">BinaryIO</span></a><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result"> extends <a href="ScioIO.html" class="extype" name="com.spotify.scio.io.ScioIO">ScioIO</a>[<a href="http://www.scala-lang.org/api/2.12.8/scala/Array.html#scala.Array" class="extype" name="scala.Array">Array</a>[<a href="http://www.scala-lang.org/api/2.12.8/scala/Byte.html#scala.Byte" class="extype" name="scala.Byte">Byte</a>]] with <a href="http://www.scala-lang.org/api/2.12.8/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.8/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+        <a title="A ScioIO class for writing raw bytes to files." href="BinaryIO.html"><span class="name">BinaryIO</span></a><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result"> extends <a href="ScioIO.html" class="extype" name="com.spotify.scio.io.ScioIO">ScioIO</a>[<span class="extype" name="scala.Array">Array</span>[<span class="extype" name="scala.Byte">Byte</span>]] with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
       </span>
       
       <p class="shortcomment cmt">A ScioIO class for writing raw bytes to files.</p><div class="fullcomment"><div class="comment cmt"><p>A ScioIO class for writing raw bytes to files.
@@ -680,7 +680,7 @@ Like TextIO, but without newline delimiters and operating over Array[Byte] inste
         <span class="kind">case class</span>
       </span>
       <span class="symbol">
-        <a title="" href="ClosedTap.html"><span class="name">ClosedTap</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.8/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.8/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+        <a title="" href="ClosedTap.html"><span class="name">ClosedTap</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
       </span>
       
       
@@ -696,7 +696,7 @@ Like TextIO, but without newline delimiters and operating over Array[Byte] inste
         <span class="kind">case class</span>
       </span>
       <span class="symbol">
-        <a title="Special version of ScioIO for use with ScioContext.customInput and SCollection.saveAsCustomOutput." href="CustomIO.html"><span class="name">CustomIO</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="id">id: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result"> extends <a href="TestIO.html" class="extype" name="com.spotify.scio.io.TestIO">TestIO</a>[<span class="extype" name="com.spotify.scio.io.CustomIO.T">T</span>] with <a href="http://www.scala-lang.org/api/2.12.8/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.8/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+        <a title="Special version of ScioIO for use with ScioContext.customInput and SCollection.saveAsCustomOutput." href="CustomIO.html"><span class="name">CustomIO</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="id">id: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result"> extends <a href="TestIO.html" class="extype" name="com.spotify.scio.io.TestIO">TestIO</a>[<span class="extype" name="com.spotify.scio.io.CustomIO.T">T</span>] with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
       </span>
       
       <p class="shortcomment cmt">Special version of <a href="ScioIO.html" class="extype" name="com.spotify.scio.io.ScioIO">ScioIO</a> for use with <a href="../ScioContext.html#customInput[T,I&gt;:org.apache.beam.sdk.values.PBegin&lt;:org.apache.beam.sdk.values.PInput](name:String,transform:org.apache.beam.sdk.transforms.PTransform[I,org.apache.beam.sdk.values.PCollection[T]])(implicitevidence$20:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]" class="extmbr" name="com.spotify.scio.ScioContext#customInput">ScioContext.customInput</a> and
@@ -713,7 +713,7 @@ Like TextIO, but without newline delimiters and operating over Array[Byte] inste
         <span class="kind">case class</span>
       </span>
       <span class="symbol">
-        <a title="" href="DatastoreIO.html"><span class="name">DatastoreIO</span></a><span class="params">(<span name="projectId">projectId: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result"> extends <a href="ScioIO.html" class="extype" name="com.spotify.scio.io.ScioIO">ScioIO</a>[<span class="extype" name="com.google.datastore.v1.Entity">Entity</span>] with <a href="http://www.scala-lang.org/api/2.12.8/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.8/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+        <a title="" href="DatastoreIO.html"><span class="name">DatastoreIO</span></a><span class="params">(<span name="projectId">projectId: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result"> extends <a href="ScioIO.html" class="extype" name="com.spotify.scio.io.ScioIO">ScioIO</a>[<span class="extype" name="com.google.datastore.v1.Entity">Entity</span>] with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
       </span>
       
       
@@ -761,7 +761,7 @@ Like TextIO, but without newline delimiters and operating over Array[Byte] inste
         <span class="kind">case class</span>
       </span>
       <span class="symbol">
-        <a title="Special version of ScioIO for use with SCollection.readAll and SCollection.readAllBytes." href="ReadIO.html"><span class="name">ReadIO</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="id">id: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result"> extends <a href="TestIO.html" class="extype" name="com.spotify.scio.io.TestIO">TestIO</a>[<span class="extype" name="com.spotify.scio.io.ReadIO.T">T</span>] with <a href="http://www.scala-lang.org/api/2.12.8/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.8/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+        <a title="Special version of ScioIO for use with SCollection.readAll and SCollection.readAllBytes." href="ReadIO.html"><span class="name">ReadIO</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="id">id: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result"> extends <a href="TestIO.html" class="extype" name="com.spotify.scio.io.TestIO">TestIO</a>[<span class="extype" name="com.spotify.scio.io.ReadIO.T">T</span>] with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
       </span>
       
       <p class="shortcomment cmt">Special version of <a href="ScioIO.html" class="extype" name="com.spotify.scio.io.ScioIO">ScioIO</a> for use with <span class="extype" name="SCollection.readAll">SCollection.readAll</span> and
@@ -778,7 +778,7 @@ Like TextIO, but without newline delimiters and operating over Array[Byte] inste
         <span class="kind">trait</span>
       </span>
       <span class="symbol">
-        <a title="Base trait for all Read/Write IO classes." href="ScioIO.html"><span class="name">ScioIO</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.8/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
+        <a title="Base trait for all Read/Write IO classes." href="ScioIO.html"><span class="name">ScioIO</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
       </span>
       
       <p class="shortcomment cmt">Base trait for all Read/Write IO classes.</p><div class="fullcomment"><div class="comment cmt"><p>Base trait for all Read/Write IO classes. Every IO connector must implement this.
@@ -799,7 +799,7 @@ test logic is necessary.
         <span class="kind">trait</span>
       </span>
       <span class="symbol">
-        <a title="Placeholder to an external data set that can either be load into memory as an iterator or opened in a new ScioContext as an SCollection." href="Tap.html"><span class="name">Tap</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.8/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+        <a title="Placeholder to an external data set that can either be load into memory as an iterator or opened in a new ScioContext as an SCollection." href="Tap.html"><span class="name">Tap</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <span class="extype" name="scala.Serializable">Serializable</span></span>
       </span>
       
       <p class="shortcomment cmt">Placeholder to an external data set that can either be load into memory as an iterator or
@@ -848,7 +848,7 @@ opened in a new <a href="../ScioContext.html" class="extype" name="com.spotify.s
         <span class="kind">trait</span>
       </span>
       <span class="symbol">
-        <a title="" href="TapT.html"><span class="name">TapT</span></a><span class="tparams">[<span name="A">A</span>]</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.8/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+        <a title="" href="TapT.html"><span class="name">TapT</span></a><span class="tparams">[<span name="A">A</span>]</span><span class="result"> extends <span class="extype" name="scala.Serializable">Serializable</span></span>
       </span>
       
       
@@ -864,7 +864,7 @@ opened in a new <a href="../ScioContext.html" class="extype" name="com.spotify.s
         <span class="kind">trait</span>
       </span>
       <span class="symbol">
-        <a title="Utility for managing Future[Tap[T]]s." href="Taps.html"><span class="name">Taps</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.8/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
+        <a title="Utility for managing Future[Tap[T]]s." href="Taps.html"><span class="name">Taps</span></a><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
       </span>
       
       <p class="shortcomment cmt">Utility for managing <code>Future[Tap[T]]</code>s.</p>
@@ -896,7 +896,7 @@ opened in a new <a href="../ScioContext.html" class="extype" name="com.spotify.s
         <span class="kind">case class</span>
       </span>
       <span class="symbol">
-        <a title="" href="TextIO.html"><span class="name">TextIO</span></a><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result"> extends <a href="ScioIO.html" class="extype" name="com.spotify.scio.io.ScioIO">ScioIO</a>[<span class="extype" name="scala.Predef.String">String</span>] with <a href="http://www.scala-lang.org/api/2.12.8/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.8/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+        <a title="" href="TextIO.html"><span class="name">TextIO</span></a><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result"> extends <a href="ScioIO.html" class="extype" name="com.spotify.scio.io.ScioIO">ScioIO</a>[<span class="extype" name="scala.Predef.String">String</span>] with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
       </span>
       
       
@@ -912,7 +912,7 @@ opened in a new <a href="../ScioContext.html" class="extype" name="com.spotify.s
         <span class="kind">case class</span>
       </span>
       <span class="symbol">
-        <a title="Tap for text files on local file system or GCS." href="TextTap.html"><span class="name">TextTap</span></a><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result"> extends <a href="Tap.html" class="extype" name="com.spotify.scio.io.Tap">Tap</a>[<span class="extype" name="scala.Predef.String">String</span>] with <a href="http://www.scala-lang.org/api/2.12.8/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.8/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+        <a title="Tap for text files on local file system or GCS." href="TextTap.html"><span class="name">TextTap</span></a><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result"> extends <a href="Tap.html" class="extype" name="com.spotify.scio.io.Tap">Tap</a>[<span class="extype" name="scala.Predef.String">String</span>] with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
       </span>
       
       <p class="shortcomment cmt">Tap for text files on local file system or GCS.</p>
@@ -936,7 +936,7 @@ opened in a new <a href="../ScioContext.html" class="extype" name="com.spotify.s
         <span class="kind">object</span>
       </span>
       <span class="symbol">
-        <a title="" href="BinaryIO$.html"><span class="name">BinaryIO</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.8/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+        <a title="" href="BinaryIO$.html"><span class="name">BinaryIO</span></a><span class="result"> extends <span class="extype" name="scala.Serializable">Serializable</span></span>
       </span>
       
       
@@ -952,7 +952,7 @@ opened in a new <a href="../ScioContext.html" class="extype" name="com.spotify.s
         <span class="kind">object</span>
       </span>
       <span class="symbol">
-        <a title="" href="DatastoreIO$.html"><span class="name">DatastoreIO</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.8/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+        <a title="" href="DatastoreIO$.html"><span class="name">DatastoreIO</span></a><span class="result"> extends <span class="extype" name="scala.Serializable">Serializable</span></span>
       </span>
       
       
@@ -968,7 +968,7 @@ opened in a new <a href="../ScioContext.html" class="extype" name="com.spotify.s
         <span class="kind">object</span>
       </span>
       <span class="symbol">
-        <a title="" href="EmptyTap$.html"><span class="name">EmptyTap</span></a><span class="result"> extends <a href="Tap.html" class="extype" name="com.spotify.scio.io.Tap">Tap</a>[<a href="http://www.scala-lang.org/api/2.12.8/scala/Nothing.html#scala.Nothing" class="extype" name="scala.Nothing">Nothing</a>] with <a href="http://www.scala-lang.org/api/2.12.8/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.8/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+        <a title="" href="EmptyTap$.html"><span class="name">EmptyTap</span></a><span class="result"> extends <a href="Tap.html" class="extype" name="com.spotify.scio.io.Tap">Tap</a>[<span class="extype" name="scala.Nothing">Nothing</span>] with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
       </span>
       
       
@@ -984,7 +984,7 @@ opened in a new <a href="../ScioContext.html" class="extype" name="com.spotify.s
         <span class="kind">object</span>
       </span>
       <span class="symbol">
-        <a title="" href="EmptyTapOf$.html"><span class="name">EmptyTapOf</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.8/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+        <a title="" href="EmptyTapOf$.html"><span class="name">EmptyTapOf</span></a><span class="result"> extends <span class="extype" name="scala.Serializable">Serializable</span></span>
       </span>
       
       
@@ -1000,7 +1000,7 @@ opened in a new <a href="../ScioContext.html" class="extype" name="com.spotify.s
         <span class="kind">object</span>
       </span>
       <span class="symbol">
-        <a title="" href="MaterializeTap$.html"><span class="name">MaterializeTap</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.8/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+        <a title="" href="MaterializeTap$.html"><span class="name">MaterializeTap</span></a><span class="result"> extends <span class="extype" name="scala.Serializable">Serializable</span></span>
       </span>
       
       
@@ -1048,7 +1048,7 @@ opened in a new <a href="../ScioContext.html" class="extype" name="com.spotify.s
         <span class="kind">object</span>
       </span>
       <span class="symbol">
-        <a title="" href="TapOf$.html"><span class="name">TapOf</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.8/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+        <a title="" href="TapOf$.html"><span class="name">TapOf</span></a><span class="result"> extends <span class="extype" name="scala.Serializable">Serializable</span></span>
       </span>
       
       
@@ -1064,7 +1064,7 @@ opened in a new <a href="../ScioContext.html" class="extype" name="com.spotify.s
         <span class="kind">object</span>
       </span>
       <span class="symbol">
-        <a title="" href="TapT$.html"><span class="name">TapT</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.8/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+        <a title="" href="TapT$.html"><span class="name">TapT</span></a><span class="result"> extends <span class="extype" name="scala.Serializable">Serializable</span></span>
       </span>
       
       
@@ -1115,7 +1115,7 @@ opened in a new <a href="../ScioContext.html" class="extype" name="com.spotify.s
         <span class="kind">object</span>
       </span>
       <span class="symbol">
-        <a title="" href="TextIO$.html"><span class="name">TextIO</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.8/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+        <a title="" href="TextIO$.html"><span class="name">TextIO</span></a><span class="result"> extends <span class="extype" name="scala.Serializable">Serializable</span></span>
       </span>
       
       

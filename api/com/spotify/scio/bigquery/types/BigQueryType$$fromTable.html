@@ -195,6 +195,10 @@ detects the query's dialect. To override this, start the query with either <code
                         <a href="BigQueryType$$HasSchema.html" title="Trait for companion objects of case classes generated with schema.">HasSchema</a>
                       </li><li class="current-entities indented6">
                         <span class="separator"></span>
+                        <a class="trait" href="BigQueryType$$HasStorageOptions.html" title="Trait for companion objects of case classes generated with storage API."></a>
+                        <a href="BigQueryType$$HasStorageOptions.html" title="Trait for companion objects of case classes generated with storage API.">HasStorageOptions</a>
+                      </li><li class="current-entities indented6">
+                        <span class="separator"></span>
                         <a class="trait" href="BigQueryType$$HasTable.html" title="Trait for companion objects of case classes generated with table."></a>
                         <a href="BigQueryType$$HasTable.html" title="Trait for companion objects of case classes generated with table.">HasTable</a>
                       </li><li class="current-entities indented6">
@@ -207,6 +211,10 @@ detects the query's dialect. To override this, start the query with either <code
                         <a href="BigQueryType$$Query.html" title="Trait for companion objects of case classes generated with query.">Query</a>
                       </li><li class="current-entities indented6">
                         <span class="separator"></span>
+                        <a class="trait" href="BigQueryType$$StorageOptions.html" title="Trait for companion objects of case classes generated with storage API."></a>
+                        <a href="BigQueryType$$StorageOptions.html" title="Trait for companion objects of case classes generated with storage API.">StorageOptions</a>
+                      </li><li class="current-entities indented6">
+                        <span class="separator"></span>
                         <a class="trait" href="BigQueryType$$Table.html" title="Trait for companion objects of case classes generated with table."></a>
                         <a href="BigQueryType$$Table.html" title="Trait for companion objects of case classes generated with table.">Table</a>
                       </li><li class="current-entities indented6">
@@ -217,6 +225,10 @@ detects the query's dialect. To override this, start the query with either <code
                         <span class="separator"></span>
                         <a class="class" href="BigQueryType$$fromSchema.html" title="Macro annotation for a BigQuery schema."></a>
                         <a href="BigQueryType$$fromSchema.html" title="Macro annotation for a BigQuery schema.">fromSchema</a>
+                      </li><li class="current-entities indented6">
+                        <span class="separator"></span>
+                        <a class="class" href="BigQueryType$$fromStorage.html" title="Macro annotation for a BigQuery table using the storage API."></a>
+                        <a href="BigQueryType$$fromStorage.html" title="Macro annotation for a BigQuery table using the storage API.">fromStorage</a>
                       </li><li class="current-entities indented6">
                         <span class="separator"></span>
                         <a class="class" href="" title="Macro annotation for a BigQuery table."></a>
@@ -244,11 +256,11 @@ detects the query's dialect. To override this, start the query with either <code
 
       <h4 id="signature" class="signature">
       <span class="modifier_kind">
-        <span class="modifier"></span>
+        <span class="modifier">macro </span>
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <span class="name">fromTable</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.8/scala/annotation/Annotation.html#scala.annotation.Annotation" class="extype" name="scala.annotation.Annotation">Annotation</a> with <a href="http://www.scala-lang.org/api/2.12.8/scala/annotation/StaticAnnotation.html#scala.annotation.StaticAnnotation" class="extype" name="scala.annotation.StaticAnnotation">StaticAnnotation</a></span>
+        <span class="name">fromTable</span><span class="result"> extends <span class="extype" name="scala.annotation.Annotation">Annotation</span> with <span class="extype" name="scala.annotation.StaticAnnotation">StaticAnnotation</span></span>
       </span>
       </h4>
 
@@ -256,11 +268,17 @@ detects the query's dialect. To override this, start the query with either <code
           <div id="comment" class="fullcommenttop"><div class="comment cmt"><p>Macro annotation for a BigQuery table.</p><p>Generate case classes for a BigQuery table. Note that <code>tableSpec</code> must be a string literal in
 the form of <code>project:dataset.table</code> with optional <code>.stripMargin</code> at the end. For example:</p><pre>@BigQueryType.fromTable(<span class="lit">"project:dataset.table"</span>) <span class="kw">class</span> MyRecord</pre><p>String formatting syntax can be used in <code>tableSpec</code> when additional <code>args</code> are supplied. For
 example:</p><pre>@BigQueryType.fromTable(<span class="lit">"project:dataset.%s"</span>, <span class="lit">"table"</span>)</pre><p>&quot;$LATEST&quot; can be used as a placeholder for table partitions. The latest partition available
-will be used. For example:</p><pre>@BigQueryType.fromTable(<span class="lit">"project:dataset.table_%s"</span>, <span class="lit">"$LATEST"</span>)</pre><p>Also generate a companion object with convenience methods.</p></div><div class="toggleContainer block">
+will be used. For example:</p><pre>@BigQueryType.fromTable(<span class="lit">"project:dataset.table_%s"</span>, <span class="lit">"$LATEST"</span>)</pre><p>Also generate a companion object with convenience methods.</p></div><dl class="attributes block"> <dt>Annotations</dt><dd>
+                <span class="name">@compileTimeOnly</span><span class="args">(<span>
+      
+      <span class="defval" name="&quot;enable macro paradise to expand macro annotations&quot;">...</span>
+    </span>)</span>
+              
+        </dd></dl><div class="toggleContainer block">
           <span class="toggle">
             Linear Supertypes
           </span>
-          <div class="superTypes hiddenContent"><a href="http://www.scala-lang.org/api/2.12.8/scala/annotation/StaticAnnotation.html#scala.annotation.StaticAnnotation" class="extype" name="scala.annotation.StaticAnnotation">StaticAnnotation</a>, <a href="http://www.scala-lang.org/api/2.12.8/scala/annotation/Annotation.html#scala.annotation.Annotation" class="extype" name="scala.annotation.Annotation">Annotation</a>, <a href="http://www.scala-lang.org/api/2.12.8/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a>, <a href="http://www.scala-lang.org/api/2.12.8/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></div>
+          <div class="superTypes hiddenContent"><span class="extype" name="scala.annotation.StaticAnnotation">StaticAnnotation</span>, <span class="extype" name="scala.annotation.Annotation">Annotation</span>, <span class="extype" name="scala.AnyRef">AnyRef</span>, <span class="extype" name="scala.Any">Any</span></div>
         </div></div>
         
 
@@ -344,7 +362,7 @@ will be used. For example:</p><pre>@BigQueryType.fromTable(<span class="lit">"pr
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span title="gt4s: $bang$eq" class="name">!=</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.8/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+        <span title="gt4s: $bang$eq" class="name">!=</span><span class="params">(<span name="arg0">arg0: <span class="extype" name="scala.Any">Any</span></span>)</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
@@ -360,7 +378,7 @@ will be used. For example:</p><pre>@BigQueryType.fromTable(<span class="lit">"pr
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span title="gt4s: $hash$hash" class="name">##</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>
+        <span title="gt4s: $hash$hash" class="name">##</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Int">Int</span></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
@@ -376,7 +394,7 @@ will be used. For example:</p><pre>@BigQueryType.fromTable(<span class="lit">"pr
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span title="gt4s: $eq$eq" class="name">==</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.8/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+        <span title="gt4s: $eq$eq" class="name">==</span><span class="params">(<span name="arg0">arg0: <span class="extype" name="scala.Any">Any</span></span>)</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
@@ -408,7 +426,7 @@ will be used. For example:</p><pre>@BigQueryType.fromTable(<span class="lit">"pr
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">clone</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
+        <span class="name">clone</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.AnyRef">AnyRef</span></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected[<a href="../../../../../java/lang/index.html" class="extype" name="java.lang">java.lang</a>] </dd><dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -432,7 +450,7 @@ will be used. For example:</p><pre>@BigQueryType.fromTable(<span class="lit">"pr
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">eq</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.8/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+        <span class="name">eq</span><span class="params">(<span name="arg0">arg0: <span class="extype" name="scala.AnyRef">AnyRef</span></span>)</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
@@ -448,7 +466,7 @@ will be used. For example:</p><pre>@BigQueryType.fromTable(<span class="lit">"pr
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">equals</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.8/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+        <span class="name">equals</span><span class="params">(<span name="arg0">arg0: <span class="extype" name="scala.Any">Any</span></span>)</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
@@ -464,7 +482,7 @@ will be used. For example:</p><pre>@BigQueryType.fromTable(<span class="lit">"pr
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">finalize</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+        <span class="name">finalize</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected[<a href="../../../../../java/lang/index.html" class="extype" name="java.lang">java.lang</a>] </dd><dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -486,7 +504,7 @@ will be used. For example:</p><pre>@BigQueryType.fromTable(<span class="lit">"pr
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">getClass</span><span class="params">()</span><span class="result">: <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/Class.html#java.lang.Class" class="extype" name="java.lang.Class">Class</a>[_]</span>
+        <span class="name">getClass</span><span class="params">()</span><span class="result">: <span class="extype" name="java.lang.Class">Class</span>[_]</span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd><dt>Annotations</dt><dd>
@@ -505,7 +523,7 @@ will be used. For example:</p><pre>@BigQueryType.fromTable(<span class="lit">"pr
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">hashCode</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>
+        <span class="name">hashCode</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Int">Int</span></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd><dt>Annotations</dt><dd>
@@ -524,7 +542,7 @@ will be used. For example:</p><pre>@BigQueryType.fromTable(<span class="lit">"pr
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">isInstanceOf</span><span class="tparams">[<span name="T0">T0</span>]</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+        <span class="name">isInstanceOf</span><span class="tparams">[<span name="T0">T0</span>]</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
@@ -540,7 +558,7 @@ will be used. For example:</p><pre>@BigQueryType.fromTable(<span class="lit">"pr
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">macroTransform</span><span class="params">(<span name="annottees">annottees: <a href="http://www.scala-lang.org/api/2.12.8/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a>*</span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>
+        <span class="name">macroTransform</span><span class="params">(<span name="annottees">annottees: <span class="extype" name="scala.Any">Any</span>*</span>)</span><span class="result">: <span class="extype" name="scala.Any">Any</span></span>
       </span>
       
       
@@ -556,7 +574,7 @@ will be used. For example:</p><pre>@BigQueryType.fromTable(<span class="lit">"pr
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">ne</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.8/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+        <span class="name">ne</span><span class="params">(<span name="arg0">arg0: <span class="extype" name="scala.AnyRef">AnyRef</span></span>)</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
@@ -572,7 +590,7 @@ will be used. For example:</p><pre>@BigQueryType.fromTable(<span class="lit">"pr
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">notify</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+        <span class="name">notify</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -591,7 +609,7 @@ will be used. For example:</p><pre>@BigQueryType.fromTable(<span class="lit">"pr
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">notifyAll</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+        <span class="name">notifyAll</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -626,7 +644,7 @@ will be used. For example:</p><pre>@BigQueryType.fromTable(<span class="lit">"pr
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">toString</span><span class="params">()</span><span class="result">: <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/String.html#java.lang.String" class="extype" name="java.lang.String">String</a></span>
+        <span class="name">toString</span><span class="params">()</span><span class="result">: <span class="extype" name="java.lang.String">String</span></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
@@ -642,7 +660,7 @@ will be used. For example:</p><pre>@BigQueryType.fromTable(<span class="lit">"pr
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">wait</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+        <span class="name">wait</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -664,7 +682,7 @@ will be used. For example:</p><pre>@BigQueryType.fromTable(<span class="lit">"pr
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.8/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a></span>, <span name="arg1">arg1: <a href="http://www.scala-lang.org/api/2.12.8/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <span class="extype" name="scala.Long">Long</span></span>, <span name="arg1">arg1: <span class="extype" name="scala.Int">Int</span></span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -686,7 +704,7 @@ will be used. For example:</p><pre>@BigQueryType.fromTable(<span class="lit">"pr
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.8/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <span class="extype" name="scala.Long">Long</span></span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -709,13 +727,13 @@ will be used. For example:</p><pre>@BigQueryType.fromTable(<span class="lit">"pr
 
         <div id="inheritedMembers">
         <div class="parent" name="scala.annotation.StaticAnnotation">
-              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.8/scala/annotation/StaticAnnotation.html#scala.annotation.StaticAnnotation" class="extype" name="scala.annotation.StaticAnnotation">StaticAnnotation</a></h3>
+              <h3>Inherited from <span class="extype" name="scala.annotation.StaticAnnotation">StaticAnnotation</span></h3>
             </div><div class="parent" name="scala.annotation.Annotation">
-              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.8/scala/annotation/Annotation.html#scala.annotation.Annotation" class="extype" name="scala.annotation.Annotation">Annotation</a></h3>
+              <h3>Inherited from <span class="extype" name="scala.annotation.Annotation">Annotation</span></h3>
             </div><div class="parent" name="scala.AnyRef">
-              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.8/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></h3>
+              <h3>Inherited from <span class="extype" name="scala.AnyRef">AnyRef</span></h3>
             </div><div class="parent" name="scala.Any">
-              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.8/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></h3>
+              <h3>Inherited from <span class="extype" name="scala.Any">Any</span></h3>
             </div>
         
         </div>
