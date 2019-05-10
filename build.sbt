@@ -880,7 +880,7 @@ lazy val siteSettings = Def.settings(
   sourceDirectory in Paradox := mdocOut.value,
   makeSite := {
     // Fix JavaDoc links before makeSite
-    mdoc.inputTaskValue
+    mdoc.toTask("").value
     (doc in ScalaUnidoc).value
     val bases = javaMappings.map(m => m._3 + "/index.html")
     val t = (target in ScalaUnidoc).value
