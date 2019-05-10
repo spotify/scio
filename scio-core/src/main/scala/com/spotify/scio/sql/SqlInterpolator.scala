@@ -275,8 +275,8 @@ object SqlInterpolatorMacro {
         val tag0 = tagFor(t0, Sql.SCollectionTypeName)
         val sql = buildSQLString(parts, scs.map(_ => Sql.SCollectionTypeName))
 
-        // val needB = c.typecheck(tq"$wttB", ctx.TYPEmode).tpe
-        val implB = c.Expr[Schema[B]](c.untypecheck(schB.tree.duplicate))
+        val needB = c.typecheck(tq"$wttB", ctx.TYPEmode).tpe
+        val implB = inferImplicitSchema(needB)
         val implA = inferImplicitSchema(t0)
 
         // ... so I put a macro in your macro so you can compile while you compile
@@ -293,8 +293,8 @@ object SqlInterpolatorMacro {
 
         val q = q"_root_.com.spotify.scio.sql.Queries.typed[$t0, $t1, $wttB]($sql, $tag0, $tag1)"
 
-        // val needB = c.typecheck(tq"$wttB", ctx.TYPEmode).tpe
-        val implB = c.Expr[Schema[B]](c.untypecheck(schB.tree.duplicate))
+        val needB = c.typecheck(tq"$wttB", ctx.TYPEmode).tpe
+        val implB = inferImplicitSchema(needB)
         val implA = inferImplicitSchema(t0)
         val implC = inferImplicitSchema(t1)
 
