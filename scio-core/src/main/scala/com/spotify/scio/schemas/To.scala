@@ -141,7 +141,7 @@ object To {
 object ToMacro {
   import scala.reflect.macros._
   def safeImpl[I: c.WeakTypeTag, O: c.WeakTypeTag](
-    c: blackbox.Context
+    c: whitebox.Context
   )(iSchema: c.Expr[Schema[I]], oSchema: c.Expr[Schema[O]]): c.Expr[To[I, O]] = {
     val h = new { val ctx: c.type = c } with SchemaMacroHelpers
     import h._
