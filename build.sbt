@@ -68,7 +68,7 @@ val tensorFlowVersion = "1.13.1"
 val zoltarVersion = "0.5.3"
 val magnoliaVersion = "0.10.1-jto"
 val grpcVersion = "1.17.1"
-val caseappVersion = "2.0.0-M7"
+val caseappVersion = "2.0.0-M8"
 
 lazy val scalafixSettings = Def.settings(
   addCompilerPlugin(scalafixSemanticdb)
