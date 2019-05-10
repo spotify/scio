@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en" class="no-js">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="x-ua-compatible" content="ie=edge">
+<meta name="description" content="Scio - Documentation">
+<meta name="generator" content="Paradox, paradox-material-theme=0.6.0, mkdocs-material=3.0.3">
+
+<meta name="lang:clipboard.copy" content="Copy to clipboard">
+<meta name="lang:clipboard.copied" content="Copied to clipboard">
+<meta name="lang:search.language" content="">
+<meta name="lang:search.pipeline.stopwords" content="true">
+<meta name="lang:search.pipeline.trimmer" content="true">
+<meta name="lang:search.result.none" content="No matching documents">
+<meta name="lang:search.result.one" content="1 matching document">
+<meta name="lang:search.result.other" content="# matching documents">
+<meta name="lang:search.tokenizer" content="[\s\-]+">
+
+
+<meta name="description" content="Scio - Documentation">
+<link rel="shortcut icon" href="../images/favicon.ico">
+<title>Coder Typeclass · Scio</title>
+<link rel="stylesheet" href="../assets/stylesheets/application.451f80e5.css">
+<link rel="stylesheet" href="../assets/stylesheets/application-palette.22915126.css">
+<link rel="stylesheet" href="../lib/material__tabs/dist/mdc.tabs.min.css">
+<link rel="stylesheet" href="../lib/prettify/prettify.css">
+<script src="../assets/javascripts/modernizr.1aa3b519.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700|Roboto+Mono">
+<style>
+body,input{font-family:"Roboto","Helvetica Neue",Helvetica,Arial,sans-serif}
+code,kbd,pre{font-family:"Roboto Mono","Courier New",Courier,monospace}
+</style>
+<link rel="stylesheet" href="../assets/fonts/font-awesome.css">
+<link rel="stylesheet" href="../assets/fonts/material-icons.css">
+<link rel="stylesheet" href="../assets/stylesheets/paradox-material-theme.css">
+</head>
+<body
+data-md-color-primary="white"
+data-md-color-accent="indigo"
+>
+<input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+<input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+<label class="md-overlay" data-md-component="overlay" for="__drawer"></label>
+<header class="md-header" data-md-component="header">
+<nav class="md-header-nav md-grid">
+<div class="md-flex">
+<div class="md-flex__cell md-flex__cell--shrink">
+<a href="../index.html" title="Scio" class="md-header-nav__button md-logo">
+<img src="../images/logo.png" width="24" height="24">
+</a>
+</div>
+<div class="md-flex__cell md-flex__cell--shrink">
+<label class="md-icon md-icon--menu md-header-nav__button" for="__drawer"></label>
+</div>
+<div class="md-flex__cell md-flex__cell--stretch">
+<div class="md-flex__ellipsis md-header-nav__title" data-md-component="title">
+<span class="md-header-nav__topic">
+Scio
+</span>
+<span class="md-header-nav__topic">
+Coder Typeclass
+</span>
+</div>
+</div>
+<div class="md-flex__cell md-flex__cell--shrink">
+<label class="md-icon md-icon--search md-header-nav__button" for="__search"></label>
+<div class="md-search" data-md-component="search" role="dialog">
+<label class="md-search__overlay" for="__search"></label>
+<div class="md-search__inner" role="search">
+<form class="md-search__form" name="search">
+<input type="text" class="md-search__input" name="query" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="query" data-md-state="active">
+<label class="md-icon md-search__icon" for="__search"></label>
+<button type="reset" class="md-icon md-search__icon" data-md-component="reset" tabindex="-1">&#xE5CD;</button>
+</form>
+<div class="md-search__output">
+<div class="md-search__scrollwrap" data-md-scrollfix>
+<div class="md-search-result" data-md-component="result">
+<div class="md-search-result__meta">
+Type to start searching
+</div>
+<ol class="md-search-result__list"></ol>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+</div>
+<div class="md-flex__cell md-flex__cell--shrink">
+<div class="md-header-nav__source">
+<a href="https://github.com/spotify/scio"
+title="Go to repository"
+class="md-source"
+data-md-source="github">
+<div class="md-source__icon">
+<i class="fa fa-github"></i>
+</div>
+<div class="md-source__repository">
+spotify/scio
+</div>
+</a>
+
+</div>
+</div>
+</div>
+</nav>
+</header>
+
+<div class="md-container">
+<main class="md-main">
+<div class="md-main__inner md-grid" data-md-component="container">
+<div class="md-sidebar md-sidebar--primary" data-md-component="navigation">
+<div class="md-sidebar__scrollwrap">
+<div class="md-sidebar__inner">
+<nav class="md-nav md-nav--primary" data-md-level="0" style="visibility: hidden">
+<label class="md-nav__title md-nav__title--site" for="drawer">
+<a href="../index.html" title="Scio" class="md-nav__button md-logo">
+<span class="md-nav__button md-logo">
+<img src="../images/logo.png" width="24" height="24">
+</a>
+<a href="../index.html" title="Scio">
+Scio
+</a>
+</label>
+<div class="md-nav__source">
+<a href="https://github.com/spotify/scio"
+title="Go to repository"
+class="md-source"
+data-md-source="github">
+<div class="md-source__icon">
+<i class="fa fa-github"></i>
+</div>
+<div class="md-source__repository">
+spotify/scio
+</div>
+</a>
+
+</div>
+<ul>
+  <li><a href="../Getting-Started.html" class="page">Getting Started</a></li>
+  <li><a href="../examples.html" class="page">Examples</a></li>
+  <li><a href="../io/index.html" class="page">IO</a>
+  <ul>
+    <li><a href="../io/Type-Safe-BigQuery.html" class="page">BigQuery</a></li>
+    <li><a href="../io/Bigtable.html" class="page">Bigtable</a></li>
+    <li><a href="../io/Avro.html" class="page">Avro</a></li>
+    <li><a href="../io/Protobuf.html" class="page">Protobuf</a></li>
+    <li><a href="../io/Parquet.html" class="page">Parquet</a></li>
+  </ul></li>
+  <li><a href="../Scio-Unit-Tests.html" class="page">Testing</a></li>
+  <li><a href="../Scio-REPL.html" class="page">REPL</a></li>
+  <li><a href="../internals/index.html" class="page">Internals</a>
+  <ul>
+    <li><a href="../internals/Coders.html" class="active page">Coder Typeclass</a></li>
+    <li><a href="../internals/Kryo.html" class="page">Kryo</a></li>
+    <li><a href="../internals/OverrideTypeProvider.html" class="page">OverrideTypeProvider</a></li>
+    <li><a href="../internals/ScioIO.html" class="page">ScioIO</a></li>
+  </ul></li>
+  <li><a href="../extras/index.html" class="page">Extras</a>
+  <ul>
+    <li><a href="../extras/Algebird.html" class="page">Algebird</a></li>
+  </ul></li>
+  <li><a href="../migrations/index.html" class="page">Migration Guides</a>
+  <ul>
+    <li><a href="../migrations/v0.7.0-Migration-Guide.html" class="page">Scio 0.7.0</a></li>
+  </ul></li>
+  <li><a href="../dev/index.html" class="page">Development</a>
+  <ul>
+    <li><a href="../dev/Style-Guide.html" class="page">Style Guide</a></li>
+    <li><a href="../dev/How-to-Release.html" class="page">How to Release</a></li>
+    <li><a href="../dev/Design-Philosophy.html" class="page">Design Philosophy</a></li>
+  </ul></li>
+  <li><a href="../scaladoc.html" class="page">Scaladoc</a></li>
+  <li><a href="../Scio,-Beam-and-Dataflow.html" class="page">Scio, Beam and Dataflow</a></li>
+  <li><a href="../Scio,-Scalding-and-Spark.html" class="page">Scio, Spark and Scalding</a></li>
+  <li><a href="../Runners.html" class="page">Runners</a></li>
+  <li><a href="../Scio-data-guideline.html" class="page">Data Guidelines</a></li>
+  <li><a href="../Apache-Beam.html" class="page">Versions</a></li>
+  <li><a href="../Changelog.html" class="page">Changelog</a></li>
+  <li><a href="../FAQ.html" class="page">FAQ</a></li>
+  <li><a href="../Powered-By.html" class="page">Powered By</a></li>
+</ul>
+<nav class="md-nav md-nav--secondary">
+<label class="md-nav__title" for="__toc">Table of contents</label>
+<ul>
+  <li><a href="../internals/Coders.html#coder-typeclass" class="header">Coder Typeclass</a>
+  <ul>
+    <li><a href="../internals/Coders.html#coder-in-apache-beam" class="header"><code>Coder</code> in Apache Beam</a></li>
+    <li><a href="../internals/Coders.html#scio-0-7-0" class="header">Scio &lt; <code>0.7.0</code></a></li>
+    <li><a href="../internals/Coders.html#scio-0-7-0" class="header">Scio &gt;= <code>0.7.0</code></a></li>
+    <li><a href="../internals/Coders.html#upgrading-to-v0-7-0-or-above-migrating-to-static-coder" class="header">Upgrading to <code>v0.7.0</code> or above: Migrating to static coder</a></li>
+  </ul></li>
+</ul>
+</nav>
+
+</nav>
+<ul style="display: none">
+<li class="md-nav__item md-version" id="project.version">
+<label class="md-nav__link" for="__version">
+<i class="md-icon" title="Version">label_outline</i> 0.7.5*
+</label>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="md-sidebar md-sidebar--secondary" data-md-component="toc">
+<div class="md-sidebar__scrollwrap">
+<div class="md-sidebar__inner">
+<nav class="md-nav md-nav--secondary">
+<label class="md-nav__title" for="__toc">Table of contents</label>
+<ul>
+  <li><a href="../internals/Coders.html#coder-typeclass" class="header">Coder Typeclass</a>
+  <ul>
+    <li><a href="../internals/Coders.html#coder-in-apache-beam" class="header"><code>Coder</code> in Apache Beam</a></li>
+    <li><a href="../internals/Coders.html#scio-0-7-0" class="header">Scio &lt; <code>0.7.0</code></a></li>
+    <li><a href="../internals/Coders.html#scio-0-7-0" class="header">Scio &gt;= <code>0.7.0</code></a></li>
+    <li><a href="../internals/Coders.html#upgrading-to-v0-7-0-or-above-migrating-to-static-coder" class="header">Upgrading to <code>v0.7.0</code> or above: Migrating to static coder</a></li>
+  </ul></li>
+</ul>
+</nav>
+
+</div>
+</div>
+</div>
+<div class="md-content">
+<article class="md-content__inner md-typeset">
+<div class="md-content__searchable">
+<h1><a href="#coder-typeclass" name="coder-typeclass" class="anchor"><span class="anchor-link"></span></a>Coder Typeclass</h1>
+<p>Starting from Scio 0.7.0,</p>
+<h2><a href="#coder-in-apache-beam" name="coder-in-apache-beam" class="anchor"><span class="anchor-link"></span></a><code>Coder</code> in Apache Beam</h2>
+<p>As per <a href="https://beam.apache.org/documentation/programming-guide/#specifying-coders">Beam&rsquo;s documentation</a></p>
+<blockquote>
+  <p>When Beam runners execute your pipeline, they often need to materialize the intermediate data in your PCollections, which requires converting elements to and from byte strings. The Beam SDKs use objects called Coders to describe how the elements of a given PCollection may be encoded and decoded.</p>
+</blockquote>
+<p>So anytime you create a <code>SCollection[T]</code>, Beam needs to know how to go from an instance of <code>T</code> to an array of bytes, and from that array of bytes to an instance of <code>T</code>.</p>
+<p>The Beam SDK has a class called <code>Coder</code> that roughly looks like this:</p>
+<pre class="prettyprint"><code class="language-java">public abstract class Coder&lt;T&gt; implements Serializable {
+  public abstract void encode(T value, OutputStream outStream);
+  public abstract T decode(InputStream inStream);
+}
+</code></pre>
+<p>Beam provides built-in Coders for various basic Java types (<code>Integer</code>, <code>Long</code>, <code>Double</code>, etc.). But anytime you create a new class, and that class is used in a <code>SCollection</code>, a beam coder needs to be provided.</p>
+<pre class="prettyprint"><code class="language-scala">import com.spotify.scio.values.SCollection
+
+case class Foo(x: Int, s: String)
+def sc: SCollection[Foo] = ??? // Beam will need an org.apache.beam.sdk.coders.Coder[Foo]
+</code></pre>
+<h2><a href="#scio-0-7-0" name="scio-0-7-0" class="anchor"><span class="anchor-link"></span></a>Scio &lt; <code>0.7.0</code></h2>
+<p>In Scio <code>0.6.x</code> and below, Scio would delegate this serialization process to <a href="https://github.com/EsotericSoftware/kryo">Kryo</a>. Kryo&rsquo;s job is to automagically &ldquo;generate&rdquo; the serialization logic for any type. The benefit is you don&rsquo;t really have to care about serialization most of the time when writing pipelines with Scio. Using Beam, you would need to explicitly set the coder every time you use a <code>PTtransform</code>.</p>
+<p>While it saves a lot of work, it also has a few drawbacks:</p>
+<ul>
+  <li><code>Kryo</code> coders can be really inefficient. Especially if you forget to <a href="../FAQ.html#how-do-i-use-custom-kryo-serializers-">register your classes using a custom <code>KryoRegistrar</code></a>.</li>
+  <li>The only way to be sure Kryo coders are correctly registered is to write tests and run them with a specific option: (see <a href="../FAQ.html#what-kryo-tuning-options-are-there-">kryoRegistrationRequired=true</a>).</li>
+  <li>Kryo coders are very dynamic and it can be hard to know exactly which coder is used for a given class.</li>
+  <li>Kryo coders do not always play well with Beam, and sometime can cause weird runtime exceptions. For example, Beam may sometimes throw an <code>IllegalMutationException</code> because of the default Kryo coder implementation.</li>
+</ul>
+<h2><a href="#scio-0-7-0" name="scio-0-7-0" class="anchor"><span class="anchor-link"></span></a>Scio &gt;= <code>0.7.0</code></h2>
+<p>In Scio <code>0.7.0</code> and above, the Scala compiler will try to find the correct instance of <code>Coder</code> at compile time. In most cases, the compiler should be able to either directly find a proper <code>Coder</code> implementation, or derive one automatically.</p>
+<p>Please note that Scio wraps Beam coders in its own <code>Coder</code> definition: <code>com.spotify.scio.coders.Coder</code></p>
+<h3><a href="#built-in-coder-instances" name="built-in-coder-instances" class="anchor"><span class="anchor-link"></span></a>Built-in Coder instances</h3>
+<p>Here&rsquo;s an example REPL session that demonstrate it:</p>
+<pre class="prettyprint"><code class="language-scala">import com.spotify.scio.coders._
+Coder[Int] // Try to find a Coder instance for Int
+// res0: Coder[Int] = Beam(VarIntCoder)
+</code></pre>
+<p>Here the compiler just found a proper Coder for integers.</p>
+<p>Scio also provides Coders for commons collections types:</p>
+<pre class="prettyprint"><code class="language-scala">Coder[List[String]] // Try to find a Coder instance for List[String]
+// res1: Coder[List[String]] = Transform(Beam(StringUtf8Coder), &lt;function1&gt;)
+</code></pre>
+<h3><a href="#automatically-derived-coder-instances" name="automatically-derived-coder-instances" class="anchor"><span class="anchor-link"></span></a>Automatically derived Coder instances</h3>
+<p>If you define a case class, the compiler can automatically derive a <code>Coder</code> for that class</p>
+<pre class="prettyprint"><code class="language-scala">case class Demo(i: Int, s: String, xs: List[Double])
+Coder[Demo]
+// res2: Coder[Demo] = Record(
+//   &quot;repl.Session.App.Demo&quot;,
+//   Array(
+//     (&quot;i&quot;, Beam(VarIntCoder)),
+//     (&quot;s&quot;, Beam(StringUtf8Coder)),
+//     (&quot;xs&quot;, Transform(Beam(DoubleCoder), &lt;function1&gt;))
+//   ),
+//   &lt;function1&gt;,
+//   &lt;function1&gt;
+// )
+</code></pre>
+<p>sealed class hierarchy are also supported:</p>
+<pre class="prettyprint"><code class="language-scala">sealed trait Top
+final case class TA(anInt: Int, aString: String) extends Top
+final case class TB(anDouble: Double) extends Top
+
+Coder[Top]
+// res3: Coder[Top] = Disjunction(
+//   &quot;repl.Session.App.Top&quot;,
+//   Beam(BooleanCoder),
+//   &lt;function1&gt;,
+//   Map(
+//     false -&gt; Record(
+//       &quot;repl.Session.App.TA&quot;,
+//       Array((&quot;anInt&quot;, Beam(VarIntCoder)), (&quot;aString&quot;, Beam(StringUtf8Coder))),
+//       &lt;function1&gt;,
+//       &lt;function1&gt;
+//     ),
+//     true -&gt; Record(
+//       &quot;repl.Session.App.TB&quot;,
+//       Array((&quot;anDouble&quot;, Beam(DoubleCoder))),
+//       &lt;function1&gt;,
+//       &lt;function1&gt;
+//     )
+//   )
+// )
+</code></pre>
+<h3><a href="#coder-fallbacks" name="coder-fallbacks" class="anchor"><span class="anchor-link"></span></a>Coder fallbacks</h3>
+<p>Sometimes, no <code>Coder</code> instance can be found, and it&rsquo;s impossible to automatically derive one. In that case, Scio will fallback to a Kryo coder for that specific type, and if the scalac flag <code>-Xmacro-settings:show-coder-fallback=true</code> is set, a warning message will be displayed <strong>at compile time</strong>. This message should help you fix the warning.</p>
+<p>While compiling the following with <code>-Xmacro-settings:show-coder-fallback=true</code></p>
+<pre class="prettyprint"><code class="language-scala">import com.spotify.scio.coders._
+val localCoder = Coder[java.util.Locale]
+// localCoder: Coder[java.util.Locale] = Fallback(java.util.Locale)
+</code></pre>
+<p>Scalac will output:</p>
+<pre><code>Warning: No implicit Coder found for the following type:
+
+   &gt;&gt; java.util.Locale
+
+ using Kryo fallback instead.
+
+
+  Scio will use a fallback Kryo coder instead.
+
+  If a type is not supported, consider implementing your own implicit Coder for this type.
+  It is recommended to declare this Coder in your class companion object:
+
+       object Locale {
+         import com.spotify.scio.coders.Coder
+         import org.apache.beam.sdk.coders.AtomicCoder
+
+         implicit def coderLocale: Coder[Locale] =
+           Coder.beam(new AtomicCoder[Locale] {
+             def decode(in: InputStream): Locale = ???
+             def encode(ts: Locale, out: OutputStream): Unit = ???
+           })
+       }
+
+  If you do want to use a Kryo coder, be explicit about it:
+
+       implicit def coderLocale: Coder[Locale] = Coder.kryo[Locale]
+
+  Additional info at:
+   - https://spotify.github.io/scio/internals/Coders
+</code></pre>
+<p>Here for example, the compiler could not find a proper instance of <code>Coder[Locale]</code>, and suggest you implement one yourself.</p>
+<p>Note that this message is not limited to direct invocation of fallback. For example, if you declare a case class that uses <code>Locale</code> internally, the compiler will show the same warning:</p>
+<pre class="prettyprint"><code class="language-scala">import com.spotify.scio.coders._
+case class Demo2(i: Int, s: String, xs: List[java.util.Locale])
+val demoCoder = Coder[Demo2]
+// demoCoder: Coder[Demo2] = Record(
+//   &quot;repl.Session.App5.Demo2&quot;,
+//   Array(
+//     (&quot;i&quot;, Beam(VarIntCoder)),
+//     (&quot;s&quot;, Beam(StringUtf8Coder)),
+//     (&quot;xs&quot;, Transform(Fallback(java.util.Locale), &lt;function1&gt;))
+//   ),
+//   &lt;function1&gt;,
+//   &lt;function1&gt;
+// )
+</code></pre>
+<p>Scio will still use a &ldquo;proper&rdquo; Coder for <code>Int</code>, <code>String</code> and <code>List</code>. Only the serialization of <code>Locale</code> instances is delegated to Kryo.</p>
+<h2><a href="#upgrading-to-v0-7-0-or-above-migrating-to-static-coder" name="upgrading-to-v0-7-0-or-above-migrating-to-static-coder" class="anchor"><span class="anchor-link"></span></a>Upgrading to <code>v0.7.0</code> or above: Migrating to static coder</h2>
+<p>Migrating to Scio <code>0.7.x</code> from an older version is likely to break a few things at compile time in your project. See the complete <a href="../migrations/v0.7.0-Migration-Guide.html">v0.7.0 Migration Guide</a> for more information.</p>
+</div>
+<div>
+<a href="https://github.com/spotify/scio/tree/master/site/target/mdoc/internals/Coders.md" title="Edit this page" class="md-source-file md-edit">
+Edit this page
+</a>
+</div>
+<div class="print-only">
+<span class="md-source-file md-version">
+0.7.5*
+</span>
+</div>
+</article>
+</div>
+</div>
+</main>
+<footer class="md-footer">
+<div class="md-footer-nav">
+<nav class="md-footer-nav__inner md-grid">
+<a href="../internals/index.html" title="Internals" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+<div class="md-flex__cell md-flex__cell--shrink">
+<i class="md-icon md-icon--arrow-back md-footer-nav__button"></i>
+</div>
+<div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
+<span class="md-flex__ellipsis">
+<span class="md-footer-nav__direction">
+Previous
+</span>
+Internals
+</span>
+</div>
+</a>
+<a href="../internals/Kryo.html" title="Kryo" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
+<div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
+<span class="md-flex__ellipsis">
+<span class="md-footer-nav__direction">
+Next
+</span>
+Kryo
+</span>
+</div>
+<div class="md-flex__cell md-flex__cell--shrink">
+<i class="md-icon md-icon--arrow-forward md-footer-nav__button"></i>
+</div>
+</a>
+</nav>
+</div>
+<div class="md-footer-meta md-typeset">
+<div class="md-footer-meta__inner md-grid">
+<div class="md-footer-copyright">
+<div class="md-footer-copyright__highlight">
+Copyright (C) 2018 Spotify AB
+</div>
+Powered by
+<a href="https://github.com/lightbend/paradox">Paradox</a>
+and
+<a href="https://jonas.github.io/paradox-material-theme/">Paradox Material Theme</a>
+
+</div>
+<div class="md-footer-social">
+<a href="https://github.com/spotify" class="md-footer-social__link fa fa-github"></a><a href="https://twitter.com/spotifyeng" class="md-footer-social__link fa fa-twitter"></a>
+</div>
+
+</div>
+</div>
+</footer>
+
+</div>
+<script src="../assets/javascripts/application.583bbe55.js"></script>
+<script src="../assets/javascripts/paradox-material-theme.js"></script>
+<script>app.initialize({version:"0.17",url:{base:"../."}})</script>
+<script type="text/javascript" src="../lib/prettify/prettify.js"></script>
+<script type="text/javascript" src="../lib/prettify/lang-scala.js"></script>
+<script type="text/javascript">
+document.addEventListener("DOMContentLoaded", function(event) {
+window.prettyPrint && prettyPrint();
+});
+</script>
+</body>
+</html>

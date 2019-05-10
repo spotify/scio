@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en" class="no-js">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="x-ua-compatible" content="ie=edge">
+<meta name="description" content="Scio - Documentation">
+<meta name="generator" content="Paradox, paradox-material-theme=0.6.0, mkdocs-material=3.0.3">
+
+<meta name="lang:clipboard.copy" content="Copy to clipboard">
+<meta name="lang:clipboard.copied" content="Copied to clipboard">
+<meta name="lang:search.language" content="">
+<meta name="lang:search.pipeline.stopwords" content="true">
+<meta name="lang:search.pipeline.trimmer" content="true">
+<meta name="lang:search.result.none" content="No matching documents">
+<meta name="lang:search.result.one" content="1 matching document">
+<meta name="lang:search.result.other" content="# matching documents">
+<meta name="lang:search.tokenizer" content="[\s\-]+">
+
+
+<meta name="description" content="Scio - Documentation">
+<link rel="shortcut icon" href="../images/favicon.ico">
+<title>ScioIO · Scio</title>
+<link rel="stylesheet" href="../assets/stylesheets/application.451f80e5.css">
+<link rel="stylesheet" href="../assets/stylesheets/application-palette.22915126.css">
+<link rel="stylesheet" href="../lib/material__tabs/dist/mdc.tabs.min.css">
+<link rel="stylesheet" href="../lib/prettify/prettify.css">
+<script src="../assets/javascripts/modernizr.1aa3b519.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700|Roboto+Mono">
+<style>
+body,input{font-family:"Roboto","Helvetica Neue",Helvetica,Arial,sans-serif}
+code,kbd,pre{font-family:"Roboto Mono","Courier New",Courier,monospace}
+</style>
+<link rel="stylesheet" href="../assets/fonts/font-awesome.css">
+<link rel="stylesheet" href="../assets/fonts/material-icons.css">
+<link rel="stylesheet" href="../assets/stylesheets/paradox-material-theme.css">
+</head>
+<body
+data-md-color-primary="white"
+data-md-color-accent="indigo"
+>
+<input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+<input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+<label class="md-overlay" data-md-component="overlay" for="__drawer"></label>
+<header class="md-header" data-md-component="header">
+<nav class="md-header-nav md-grid">
+<div class="md-flex">
+<div class="md-flex__cell md-flex__cell--shrink">
+<a href="../index.html" title="Scio" class="md-header-nav__button md-logo">
+<img src="../images/logo.png" width="24" height="24">
+</a>
+</div>
+<div class="md-flex__cell md-flex__cell--shrink">
+<label class="md-icon md-icon--menu md-header-nav__button" for="__drawer"></label>
+</div>
+<div class="md-flex__cell md-flex__cell--stretch">
+<div class="md-flex__ellipsis md-header-nav__title" data-md-component="title">
+<span class="md-header-nav__topic">
+Scio
+</span>
+<span class="md-header-nav__topic">
+ScioIO
+</span>
+</div>
+</div>
+<div class="md-flex__cell md-flex__cell--shrink">
+<label class="md-icon md-icon--search md-header-nav__button" for="__search"></label>
+<div class="md-search" data-md-component="search" role="dialog">
+<label class="md-search__overlay" for="__search"></label>
+<div class="md-search__inner" role="search">
+<form class="md-search__form" name="search">
+<input type="text" class="md-search__input" name="query" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="query" data-md-state="active">
+<label class="md-icon md-search__icon" for="__search"></label>
+<button type="reset" class="md-icon md-search__icon" data-md-component="reset" tabindex="-1">&#xE5CD;</button>
+</form>
+<div class="md-search__output">
+<div class="md-search__scrollwrap" data-md-scrollfix>
+<div class="md-search-result" data-md-component="result">
+<div class="md-search-result__meta">
+Type to start searching
+</div>
+<ol class="md-search-result__list"></ol>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+</div>
+<div class="md-flex__cell md-flex__cell--shrink">
+<div class="md-header-nav__source">
+<a href="https://github.com/spotify/scio"
+title="Go to repository"
+class="md-source"
+data-md-source="github">
+<div class="md-source__icon">
+<i class="fa fa-github"></i>
+</div>
+<div class="md-source__repository">
+spotify/scio
+</div>
+</a>
+
+</div>
+</div>
+</div>
+</nav>
+</header>
+
+<div class="md-container">
+<main class="md-main">
+<div class="md-main__inner md-grid" data-md-component="container">
+<div class="md-sidebar md-sidebar--primary" data-md-component="navigation">
+<div class="md-sidebar__scrollwrap">
+<div class="md-sidebar__inner">
+<nav class="md-nav md-nav--primary" data-md-level="0" style="visibility: hidden">
+<label class="md-nav__title md-nav__title--site" for="drawer">
+<a href="../index.html" title="Scio" class="md-nav__button md-logo">
+<span class="md-nav__button md-logo">
+<img src="../images/logo.png" width="24" height="24">
+</a>
+<a href="../index.html" title="Scio">
+Scio
+</a>
+</label>
+<div class="md-nav__source">
+<a href="https://github.com/spotify/scio"
+title="Go to repository"
+class="md-source"
+data-md-source="github">
+<div class="md-source__icon">
+<i class="fa fa-github"></i>
+</div>
+<div class="md-source__repository">
+spotify/scio
+</div>
+</a>
+
+</div>
+<ul>
+  <li><a href="../Getting-Started.html" class="page">Getting Started</a></li>
+  <li><a href="../examples.html" class="page">Examples</a></li>
+  <li><a href="../io/index.html" class="page">IO</a>
+  <ul>
+    <li><a href="../io/Type-Safe-BigQuery.html" class="page">BigQuery</a></li>
+    <li><a href="../io/Bigtable.html" class="page">Bigtable</a></li>
+    <li><a href="../io/Avro.html" class="page">Avro</a></li>
+    <li><a href="../io/Protobuf.html" class="page">Protobuf</a></li>
+    <li><a href="../io/Parquet.html" class="page">Parquet</a></li>
+  </ul></li>
+  <li><a href="../Scio-Unit-Tests.html" class="page">Testing</a></li>
+  <li><a href="../Scio-REPL.html" class="page">REPL</a></li>
+  <li><a href="../internals/index.html" class="page">Internals</a>
+  <ul>
+    <li><a href="../internals/Coders.html" class="page">Coder Typeclass</a></li>
+    <li><a href="../internals/Kryo.html" class="page">Kryo</a></li>
+    <li><a href="../internals/OverrideTypeProvider.html" class="page">OverrideTypeProvider</a></li>
+    <li><a href="../internals/ScioIO.html" class="active page">ScioIO</a></li>
+  </ul></li>
+  <li><a href="../extras/index.html" class="page">Extras</a>
+  <ul>
+    <li><a href="../extras/Algebird.html" class="page">Algebird</a></li>
+  </ul></li>
+  <li><a href="../migrations/index.html" class="page">Migration Guides</a>
+  <ul>
+    <li><a href="../migrations/v0.7.0-Migration-Guide.html" class="page">Scio 0.7.0</a></li>
+  </ul></li>
+  <li><a href="../dev/index.html" class="page">Development</a>
+  <ul>
+    <li><a href="../dev/Style-Guide.html" class="page">Style Guide</a></li>
+    <li><a href="../dev/How-to-Release.html" class="page">How to Release</a></li>
+    <li><a href="../dev/Design-Philosophy.html" class="page">Design Philosophy</a></li>
+  </ul></li>
+  <li><a href="../scaladoc.html" class="page">Scaladoc</a></li>
+  <li><a href="../Scio,-Beam-and-Dataflow.html" class="page">Scio, Beam and Dataflow</a></li>
+  <li><a href="../Scio,-Scalding-and-Spark.html" class="page">Scio, Spark and Scalding</a></li>
+  <li><a href="../Runners.html" class="page">Runners</a></li>
+  <li><a href="../Scio-data-guideline.html" class="page">Data Guidelines</a></li>
+  <li><a href="../Apache-Beam.html" class="page">Versions</a></li>
+  <li><a href="../Changelog.html" class="page">Changelog</a></li>
+  <li><a href="../FAQ.html" class="page">FAQ</a></li>
+  <li><a href="../Powered-By.html" class="page">Powered By</a></li>
+</ul>
+<nav class="md-nav md-nav--secondary">
+<label class="md-nav__title" for="__toc">Table of contents</label>
+<ul>
+  <li><a href="../internals/ScioIO.html#scioio" class="header">ScioIO</a>
+  <ul>
+    <li><a href="../internals/ScioIO.html#dependencies" class="header">Dependencies</a></li>
+    <li><a href="../internals/ScioIO.html#scioio-t-for-jobtest" class="header"><code>ScioIO[T]</code> for <code>JobTest</code></a></li>
+    <li><a href="../internals/ScioIO.html#using-scioio-t-directly" class="header">Using <code>ScioIO[T]</code> directly</a></li>
+  </ul></li>
+</ul>
+</nav>
+
+</nav>
+<ul style="display: none">
+<li class="md-nav__item md-version" id="project.version">
+<label class="md-nav__link" for="__version">
+<i class="md-icon" title="Version">label_outline</i> 0.7.5*
+</label>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="md-sidebar md-sidebar--secondary" data-md-component="toc">
+<div class="md-sidebar__scrollwrap">
+<div class="md-sidebar__inner">
+<nav class="md-nav md-nav--secondary">
+<label class="md-nav__title" for="__toc">Table of contents</label>
+<ul>
+  <li><a href="../internals/ScioIO.html#scioio" class="header">ScioIO</a>
+  <ul>
+    <li><a href="../internals/ScioIO.html#dependencies" class="header">Dependencies</a></li>
+    <li><a href="../internals/ScioIO.html#scioio-t-for-jobtest" class="header"><code>ScioIO[T]</code> for <code>JobTest</code></a></li>
+    <li><a href="../internals/ScioIO.html#using-scioio-t-directly" class="header">Using <code>ScioIO[T]</code> directly</a></li>
+  </ul></li>
+</ul>
+</nav>
+
+</div>
+</div>
+</div>
+<div class="md-content">
+<article class="md-content__inner md-typeset">
+<div class="md-content__searchable">
+<h1><a href="#scioio" name="scioio" class="anchor"><span class="anchor-link"></span></a>ScioIO</h1>
+<p>Scio <code>0.7.0</code> introduces a new <a href="https://spotify.github.io/scio/api/com/spotify/scio/io/ScioIO.html"><code>ScioIO[T]</code></a> trait to simplify IO implementation and stubbing in <code>JobTest</code>. This page lists some major changes to this new API.</p>
+<h2><a href="#dependencies" name="dependencies" class="anchor"><span class="anchor-link"></span></a>Dependencies</h2>
+<p>Avro and BigQuery logic was decoupled from <code>scio-core</code> as part of the refactor.</p>
+<ul>
+  <li>Before <code>0.7.0</code></li>
+  <li><code>scio-core</code> depends on <code>scio-avro</code> and <code>scio-bigquery</code></li>
+  <li><code>ScioContext</code> and <code>SCollection[T]</code> include Avro, object, Protobuf and BigQuery IO methods out of the box</li>
+  <li>After <code>0.7.0</code></li>
+  <li><code>scio-core</code> no longer depends on <code>scio-avro</code> and <code>scio-bigquery</code></li>
+  <li>Import <code>com.spotify.scio.avro._</code> to get Avro, object, Protobuf IO methods on <code>ScioContext</code> and <code>SCollection[T]</code></li>
+  <li>Import <code>com.spotify.scio.bigquery._</code> to get BigQuery IO methods on <code>ScioContext</code> and <code>SCollection[T]</code></li>
+</ul>
+<h2><a href="#scioio-t-for-jobtest" name="scioio-t-for-jobtest" class="anchor"><span class="anchor-link"></span></a><code>ScioIO[T]</code> for <code>JobTest</code></h2>
+<p>As part of the refactor <code>TestIO[T]</code> was replaced by <code>ScioIO[T]</code> for <code>JobTest</code>. Some of them were moved to different packages for consistency but most test code should work with minor <code>import</code> changes. Below is a list of <code>ScioIO[T]</code> implementations.</p>
+<ul>
+  <li><code>com.spotify.scio.avro</code></li>
+  <li><code>AvroIO[T]</code></li>
+  <li><code>ObjectFileIO[T]</code></li>
+  <li><code>ProtobufIO[T]</code></li>
+  <li><code>com.spotify.scio.bigquery</code></li>
+  <li><code>BigQueryIO[T]</code></li>
+  <li><code>TableRowJsonIO</code> where <code>T =:= TableRow</code></li>
+  <li><code>com.spotify.scio.io</code></li>
+  <li><code>DatastoreIO</code> where <code>T =:= Entity</code></li>
+  <li><code>PubsubIO[T]</code></li>
+  <li><code>TextIO</code> where <code>T =:= String</code></li>
+  <li><code>CustomIO[T]</code> for use with <code>ScioContext#customInput</code> and <code>SCollection#customOutput</code></li>
+  <li><code>com.spotify.scio.bigtable</code></li>
+  <li><code>BigtableIO[T]</code> where <code>T =:= Row</code> for input and <code>T =:= Mutation</code> for output</li>
+  <li>This replaces <code>BigtableInput</code> and <code>BigtableOutput</code></li>
+  <li><code>com.spotify.scio.cassandra</code></li>
+  <li><code>CassandraIO[T]</code></li>
+  <li><code>com.spotify.scio.elasticsearch</code></li>
+  <li><code>ElasticsearchIO[T]</code></li>
+  <li><code>com.spotify.scio.extra.json</code></li>
+  <li><code>JsonIO[T]</code></li>
+  <li><code>com.spotify.scio.jdbc</code></li>
+  <li><code>JdbcIO[T]</code></li>
+  <li><code>com.spotify.scio.parquet.avro</code></li>
+  <li><code>ParquetAvroIO[T]</code></li>
+  <li><code>com.spotify.scio.spanner</code></li>
+  <li><code>SpannerIO[T]</code></li>
+  <li><code>com.spotify.scio.tensorflow</code></li>
+  <li><code>TFRecordIO</code> where <code>T =:= Array[Byte]</code></li>
+  <li><code>TFExampleIO</code> where <code>T =:= Example</code></li>
+</ul>
+<h2><a href="#using-scioio-t-directly" name="using-scioio-t-directly" class="anchor"><span class="anchor-link"></span></a>Using <code>ScioIO[T]</code> directly</h2>
+<p>2 methods, <code>ScioContext#read</code> and <code>SCollection#write</code> were added to leverage <code>ScioIO[T]</code> directly without needing the extra <code>ScioContext#{textFile,AvroFile,...}</code> and <code>SCollection#saveAs{TextFile,AvroFile,...}</code> syntactic sugar. See <a href="https://spotify.github.io/scio/examples/WordCountScioIO.scala.html">WordCountScioIO</a> and <a href="https://github.com/spotify/scio/tree/master/scio-examples/src/test/scala/com/spotify/scio/examples/extra/WordCountScioIOTest.scala">WordCountScioIOTest</a> for concrete examples.</p>
+</div>
+<div>
+<a href="https://github.com/spotify/scio/tree/master/site/target/mdoc/internals/ScioIO.md" title="Edit this page" class="md-source-file md-edit">
+Edit this page
+</a>
+</div>
+<div class="print-only">
+<span class="md-source-file md-version">
+0.7.5*
+</span>
+</div>
+</article>
+</div>
+</div>
+</main>
+<footer class="md-footer">
+<div class="md-footer-nav">
+<nav class="md-footer-nav__inner md-grid">
+<a href="../internals/OverrideTypeProvider.html" title="OverrideTypeProvider" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+<div class="md-flex__cell md-flex__cell--shrink">
+<i class="md-icon md-icon--arrow-back md-footer-nav__button"></i>
+</div>
+<div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
+<span class="md-flex__ellipsis">
+<span class="md-footer-nav__direction">
+Previous
+</span>
+OverrideTypeProvider
+</span>
+</div>
+</a>
+<a href="../extras/index.html" title="Extras" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
+<div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
+<span class="md-flex__ellipsis">
+<span class="md-footer-nav__direction">
+Next
+</span>
+Extras
+</span>
+</div>
+<div class="md-flex__cell md-flex__cell--shrink">
+<i class="md-icon md-icon--arrow-forward md-footer-nav__button"></i>
+</div>
+</a>
+</nav>
+</div>
+<div class="md-footer-meta md-typeset">
+<div class="md-footer-meta__inner md-grid">
+<div class="md-footer-copyright">
+<div class="md-footer-copyright__highlight">
+Copyright (C) 2018 Spotify AB
+</div>
+Powered by
+<a href="https://github.com/lightbend/paradox">Paradox</a>
+and
+<a href="https://jonas.github.io/paradox-material-theme/">Paradox Material Theme</a>
+
+</div>
+<div class="md-footer-social">
+<a href="https://github.com/spotify" class="md-footer-social__link fa fa-github"></a><a href="https://twitter.com/spotifyeng" class="md-footer-social__link fa fa-twitter"></a>
+</div>
+
+</div>
+</div>
+</footer>
+
+</div>
+<script src="../assets/javascripts/application.583bbe55.js"></script>
+<script src="../assets/javascripts/paradox-material-theme.js"></script>
+<script>app.initialize({version:"0.17",url:{base:"../."}})</script>
+<script type="text/javascript" src="../lib/prettify/prettify.js"></script>
+<script type="text/javascript" src="../lib/prettify/lang-scala.js"></script>
+<script type="text/javascript">
+document.addEventListener("DOMContentLoaded", function(event) {
+window.prettyPrint && prettyPrint();
+});
+</script>
+</body>
+</html>

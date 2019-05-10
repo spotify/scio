@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en" class="no-js">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="x-ua-compatible" content="ie=edge">
+<meta name="description" content="Scio - Documentation">
+<meta name="generator" content="Paradox, paradox-material-theme=0.6.0, mkdocs-material=3.0.3">
+
+<meta name="lang:clipboard.copy" content="Copy to clipboard">
+<meta name="lang:clipboard.copied" content="Copied to clipboard">
+<meta name="lang:search.language" content="">
+<meta name="lang:search.pipeline.stopwords" content="true">
+<meta name="lang:search.pipeline.trimmer" content="true">
+<meta name="lang:search.result.none" content="No matching documents">
+<meta name="lang:search.result.one" content="1 matching document">
+<meta name="lang:search.result.other" content="# matching documents">
+<meta name="lang:search.tokenizer" content="[\s\-]+">
+
+
+<meta name="description" content="Scio - Documentation">
+<link rel="shortcut icon" href="../images/favicon.ico">
+<title>Protobuf · Scio</title>
+<link rel="stylesheet" href="../assets/stylesheets/application.451f80e5.css">
+<link rel="stylesheet" href="../assets/stylesheets/application-palette.22915126.css">
+<link rel="stylesheet" href="../lib/material__tabs/dist/mdc.tabs.min.css">
+<link rel="stylesheet" href="../lib/prettify/prettify.css">
+<script src="../assets/javascripts/modernizr.1aa3b519.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700|Roboto+Mono">
+<style>
+body,input{font-family:"Roboto","Helvetica Neue",Helvetica,Arial,sans-serif}
+code,kbd,pre{font-family:"Roboto Mono","Courier New",Courier,monospace}
+</style>
+<link rel="stylesheet" href="../assets/fonts/font-awesome.css">
+<link rel="stylesheet" href="../assets/fonts/material-icons.css">
+<link rel="stylesheet" href="../assets/stylesheets/paradox-material-theme.css">
+</head>
+<body
+data-md-color-primary="white"
+data-md-color-accent="indigo"
+>
+<input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+<input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+<label class="md-overlay" data-md-component="overlay" for="__drawer"></label>
+<header class="md-header" data-md-component="header">
+<nav class="md-header-nav md-grid">
+<div class="md-flex">
+<div class="md-flex__cell md-flex__cell--shrink">
+<a href="../index.html" title="Scio" class="md-header-nav__button md-logo">
+<img src="../images/logo.png" width="24" height="24">
+</a>
+</div>
+<div class="md-flex__cell md-flex__cell--shrink">
+<label class="md-icon md-icon--menu md-header-nav__button" for="__drawer"></label>
+</div>
+<div class="md-flex__cell md-flex__cell--stretch">
+<div class="md-flex__ellipsis md-header-nav__title" data-md-component="title">
+<span class="md-header-nav__topic">
+Scio
+</span>
+<span class="md-header-nav__topic">
+Protobuf
+</span>
+</div>
+</div>
+<div class="md-flex__cell md-flex__cell--shrink">
+<label class="md-icon md-icon--search md-header-nav__button" for="__search"></label>
+<div class="md-search" data-md-component="search" role="dialog">
+<label class="md-search__overlay" for="__search"></label>
+<div class="md-search__inner" role="search">
+<form class="md-search__form" name="search">
+<input type="text" class="md-search__input" name="query" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="query" data-md-state="active">
+<label class="md-icon md-search__icon" for="__search"></label>
+<button type="reset" class="md-icon md-search__icon" data-md-component="reset" tabindex="-1">&#xE5CD;</button>
+</form>
+<div class="md-search__output">
+<div class="md-search__scrollwrap" data-md-scrollfix>
+<div class="md-search-result" data-md-component="result">
+<div class="md-search-result__meta">
+Type to start searching
+</div>
+<ol class="md-search-result__list"></ol>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+</div>
+<div class="md-flex__cell md-flex__cell--shrink">
+<div class="md-header-nav__source">
+<a href="https://github.com/spotify/scio"
+title="Go to repository"
+class="md-source"
+data-md-source="github">
+<div class="md-source__icon">
+<i class="fa fa-github"></i>
+</div>
+<div class="md-source__repository">
+spotify/scio
+</div>
+</a>
+
+</div>
+</div>
+</div>
+</nav>
+</header>
+
+<div class="md-container">
+<main class="md-main">
+<div class="md-main__inner md-grid" data-md-component="container">
+<div class="md-sidebar md-sidebar--primary" data-md-component="navigation">
+<div class="md-sidebar__scrollwrap">
+<div class="md-sidebar__inner">
+<nav class="md-nav md-nav--primary" data-md-level="0" style="visibility: hidden">
+<label class="md-nav__title md-nav__title--site" for="drawer">
+<a href="../index.html" title="Scio" class="md-nav__button md-logo">
+<span class="md-nav__button md-logo">
+<img src="../images/logo.png" width="24" height="24">
+</a>
+<a href="../index.html" title="Scio">
+Scio
+</a>
+</label>
+<div class="md-nav__source">
+<a href="https://github.com/spotify/scio"
+title="Go to repository"
+class="md-source"
+data-md-source="github">
+<div class="md-source__icon">
+<i class="fa fa-github"></i>
+</div>
+<div class="md-source__repository">
+spotify/scio
+</div>
+</a>
+
+</div>
+<ul>
+  <li><a href="../Getting-Started.html" class="page">Getting Started</a></li>
+  <li><a href="../examples.html" class="page">Examples</a></li>
+  <li><a href="../io/index.html" class="page">IO</a>
+  <ul>
+    <li><a href="../io/Type-Safe-BigQuery.html" class="page">BigQuery</a></li>
+    <li><a href="../io/Bigtable.html" class="page">Bigtable</a></li>
+    <li><a href="../io/Avro.html" class="page">Avro</a></li>
+    <li><a href="../io/Protobuf.html" class="active page">Protobuf</a></li>
+    <li><a href="../io/Parquet.html" class="page">Parquet</a></li>
+  </ul></li>
+  <li><a href="../Scio-Unit-Tests.html" class="page">Testing</a></li>
+  <li><a href="../Scio-REPL.html" class="page">REPL</a></li>
+  <li><a href="../internals/index.html" class="page">Internals</a>
+  <ul>
+    <li><a href="../internals/Coders.html" class="page">Coder Typeclass</a></li>
+    <li><a href="../internals/Kryo.html" class="page">Kryo</a></li>
+    <li><a href="../internals/OverrideTypeProvider.html" class="page">OverrideTypeProvider</a></li>
+    <li><a href="../internals/ScioIO.html" class="page">ScioIO</a></li>
+  </ul></li>
+  <li><a href="../extras/index.html" class="page">Extras</a>
+  <ul>
+    <li><a href="../extras/Algebird.html" class="page">Algebird</a></li>
+  </ul></li>
+  <li><a href="../migrations/index.html" class="page">Migration Guides</a>
+  <ul>
+    <li><a href="../migrations/v0.7.0-Migration-Guide.html" class="page">Scio 0.7.0</a></li>
+  </ul></li>
+  <li><a href="../dev/index.html" class="page">Development</a>
+  <ul>
+    <li><a href="../dev/Style-Guide.html" class="page">Style Guide</a></li>
+    <li><a href="../dev/How-to-Release.html" class="page">How to Release</a></li>
+    <li><a href="../dev/Design-Philosophy.html" class="page">Design Philosophy</a></li>
+  </ul></li>
+  <li><a href="../scaladoc.html" class="page">Scaladoc</a></li>
+  <li><a href="../Scio,-Beam-and-Dataflow.html" class="page">Scio, Beam and Dataflow</a></li>
+  <li><a href="../Scio,-Scalding-and-Spark.html" class="page">Scio, Spark and Scalding</a></li>
+  <li><a href="../Runners.html" class="page">Runners</a></li>
+  <li><a href="../Scio-data-guideline.html" class="page">Data Guidelines</a></li>
+  <li><a href="../Apache-Beam.html" class="page">Versions</a></li>
+  <li><a href="../Changelog.html" class="page">Changelog</a></li>
+  <li><a href="../FAQ.html" class="page">FAQ</a></li>
+  <li><a href="../Powered-By.html" class="page">Powered By</a></li>
+</ul>
+<nav class="md-nav md-nav--secondary">
+<label class="md-nav__title" for="__toc">Table of contents</label>
+<ul>
+  <li><a href="../io/Protobuf.html#protobuf" class="header">Protobuf</a>
+  <ul>
+    <li><a href="../io/Protobuf.html#read-protobuf-files" class="header">Read Protobuf files</a></li>
+    <li><a href="../io/Protobuf.html#write-protobuf-files" class="header">Write Protobuf files</a></li>
+    <li><a href="../io/Protobuf.html#file-format" class="header">File format</a></li>
+    <li><a href="../io/Protobuf.html#common-issues" class="header">Common issues</a></li>
+  </ul></li>
+</ul>
+</nav>
+
+</nav>
+<ul style="display: none">
+<li class="md-nav__item md-version" id="project.version">
+<label class="md-nav__link" for="__version">
+<i class="md-icon" title="Version">label_outline</i> 0.7.5*
+</label>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="md-sidebar md-sidebar--secondary" data-md-component="toc">
+<div class="md-sidebar__scrollwrap">
+<div class="md-sidebar__inner">
+<nav class="md-nav md-nav--secondary">
+<label class="md-nav__title" for="__toc">Table of contents</label>
+<ul>
+  <li><a href="../io/Protobuf.html#protobuf" class="header">Protobuf</a>
+  <ul>
+    <li><a href="../io/Protobuf.html#read-protobuf-files" class="header">Read Protobuf files</a></li>
+    <li><a href="../io/Protobuf.html#write-protobuf-files" class="header">Write Protobuf files</a></li>
+    <li><a href="../io/Protobuf.html#file-format" class="header">File format</a></li>
+    <li><a href="../io/Protobuf.html#common-issues" class="header">Common issues</a></li>
+  </ul></li>
+</ul>
+</nav>
+
+</div>
+</div>
+</div>
+<div class="md-content">
+<article class="md-content__inner md-typeset">
+<div class="md-content__searchable">
+<h1><a href="#protobuf" name="protobuf" class="anchor"><span class="anchor-link"></span></a>Protobuf</h1>
+<h2><a href="#read-protobuf-files" name="read-protobuf-files" class="anchor"><span class="anchor-link"></span></a>Read Protobuf files</h2>
+<p>Scio comes with custom and efficient support for reading Protobuf files via <code>protobufFile</code> method, for example:</p>
+<pre class="prettyprint"><code class="language-scala">val sc = &quot;yolo&quot;
+// sc: String = &quot;yolo&quot;
+println(sc)
+// yolo
+</code></pre>
+<pre class="prettyprint"><code class="language-scala">// FooBarProto is a Protobuf generated class (must be a subclass of Protobuf&#39;s `Message`)
+sc.protobufFile[FooBarProto](&quot;gs://path-to-data/lake/part-*.protobuf.avro&quot;)
+  .map( message =&gt; ??? )
+// `message` is of type FooBarProto
+</code></pre>
+<p>Important: in most cases the input files should have been previously written by Scio. The reason is that Scio assumes that serialized Protobuf message is stored inside <code>bytes</code> Avro record.</p>
+<p>If you want to read serialized protobuf messages directly from a file, one solution is to use <code>textFile</code> followed by a <code>map</code> to parse your messages.</p>
+<h2><a href="#write-protobuf-files" name="write-protobuf-files" class="anchor"><span class="anchor-link"></span></a>Write Protobuf files</h2>
+<p>Scio comes with custom and efficient support for writing Protobuf files via <code>saveAsProtobufFile</code> method, for example:</p>
+<pre class="prettyprint"><code class="language-scala">// FooBarProto is a Protobuf generated class (must be a subclass of Protobuf&#39;s `Message`)
+sc.map { x =&gt;
+    // build a protobuf message&gt;
+    ???
+  }
+  .saveAsProtobufFile(&quot;gs://path-to-data/lake/protos-out&quot;)
+</code></pre>
+<h2><a href="#file-format" name="file-format" class="anchor"><span class="anchor-link"></span></a>File format</h2>
+<p>Scio&rsquo;s Protobuf file is backed by Avro with the following schema:</p>
+<pre class="prettyprint"><code class="language-json">{
+  &quot;type&quot; : &quot;record&quot;,
+  &quot;name&quot; : &quot;AvroBytesRecord&quot;,
+  &quot;fields&quot; : [ {
+    &quot;name&quot; : &quot;bytes&quot;,
+    &quot;type&quot; : &quot;bytes&quot;
+  } ]
+}
+</code></pre>
+<p>Avro gives us a block based file format with compression, split and combine support. Protobuf binary is stored in the <code>bytes</code> field of <code>AvroBytesRecord</code>.</p>
+<p>Starting with Scio 0.2.6, the Protobuf schema also is stored as a JSON string in the Avro file metadata under the key <code>protobuf.generic.schema</code>. You can get the schema or JSON records using the <code>proto-tools</code> command line tool from <a href="https://github.com/spotify/gcs-tools">gcs-tools</a> (available in our homebrew tap). Conversion between Protobuf schema, binary and JSON is done via the <a href="https://github.com/nevillelyh/protobuf-generic">protobuf-generic</a> library.</p>
+<pre><code>brew tap spotify/public
+brew install gcs-proto-tools
+proto-tools getschema data.protobuf.avro
+proto-tools tojson data.protobuf.avro
+</code></pre>
+<h2><a href="#common-issues" name="common-issues" class="anchor"><span class="anchor-link"></span></a>Common issues</h2>
+<h3><a href="#scalapb" name="scalapb" class="anchor"><span class="anchor-link"></span></a>ScalaPB</h3>
+<p>If you end up using <a href="https://github.com/trueaccord/ScalaPB">ScalaPB</a>, make sure to use java based message class as input/output type, Scala based message class does not inherit from Protobuf&rsquo;s Message class. To generate both Scala and Java classes add (to your <code>build.sbt</code>):</p>
+<pre class="prettyprint"><code class="language-scala">import com.trueaccord.scalapb.{ScalaPbPlugin =&gt; PB}
+PB.javaConversions in PB.protobufConfig := true
+</code></pre>
+</div>
+<div>
+<a href="https://github.com/spotify/scio/tree/master/site/target/mdoc/io/Protobuf.md" title="Edit this page" class="md-source-file md-edit">
+Edit this page
+</a>
+</div>
+<div class="print-only">
+<span class="md-source-file md-version">
+0.7.5*
+</span>
+</div>
+</article>
+</div>
+</div>
+</main>
+<footer class="md-footer">
+<div class="md-footer-nav">
+<nav class="md-footer-nav__inner md-grid">
+<a href="../io/Avro.html" title="Avro" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+<div class="md-flex__cell md-flex__cell--shrink">
+<i class="md-icon md-icon--arrow-back md-footer-nav__button"></i>
+</div>
+<div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
+<span class="md-flex__ellipsis">
+<span class="md-footer-nav__direction">
+Previous
+</span>
+Avro
+</span>
+</div>
+</a>
+<a href="../io/Parquet.html" title="Parquet" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
+<div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
+<span class="md-flex__ellipsis">
+<span class="md-footer-nav__direction">
+Next
+</span>
+Parquet
+</span>
+</div>
+<div class="md-flex__cell md-flex__cell--shrink">
+<i class="md-icon md-icon--arrow-forward md-footer-nav__button"></i>
+</div>
+</a>
+</nav>
+</div>
+<div class="md-footer-meta md-typeset">
+<div class="md-footer-meta__inner md-grid">
+<div class="md-footer-copyright">
+<div class="md-footer-copyright__highlight">
+Copyright (C) 2018 Spotify AB
+</div>
+Powered by
+<a href="https://github.com/lightbend/paradox">Paradox</a>
+and
+<a href="https://jonas.github.io/paradox-material-theme/">Paradox Material Theme</a>
+
+</div>
+<div class="md-footer-social">
+<a href="https://github.com/spotify" class="md-footer-social__link fa fa-github"></a><a href="https://twitter.com/spotifyeng" class="md-footer-social__link fa fa-twitter"></a>
+</div>
+
+</div>
+</div>
+</footer>
+
+</div>
+<script src="../assets/javascripts/application.583bbe55.js"></script>
+<script src="../assets/javascripts/paradox-material-theme.js"></script>
+<script>app.initialize({version:"0.17",url:{base:"../."}})</script>
+<script type="text/javascript" src="../lib/prettify/prettify.js"></script>
+<script type="text/javascript" src="../lib/prettify/lang-scala.js"></script>
+<script type="text/javascript">
+document.addEventListener("DOMContentLoaded", function(event) {
+window.prettyPrint && prettyPrint();
+});
+</script>
+</body>
+</html>
