@@ -17,8 +17,11 @@
 
 package com.spotify.scio.io
 
+import com.google.protobuf.Message
+import com.spotify.scio.coders.{AvroBytesUtil, Coder, CoderMaterializer}
 import com.spotify.scio.util.Functions
 import com.spotify.scio.values.SCollection
+import me.lyh.protobuf.generic
 import org.apache.avro.Schema
 import org.apache.avro.file.CodecFactory
 import org.apache.avro.generic.GenericRecord
@@ -50,6 +53,7 @@ package object dynamic {
     /**
      * Save this SCollection as Avro files specified by the destination function.
      */
+    // scalastyle:off parameter.number
     def saveAsDynamicAvroFile(
       path: String,
       numShards: Int = 0,
@@ -57,7 +61,10 @@ package object dynamic {
       suffix: String = ".avro",
       codec: CodecFactory = CodecFactory.deflateCodec(6),
       metadata: Map[String, AnyRef] = Map.empty
-    )(destinationFn: T => String)(implicit ct: ClassTag[T]): Future[Tap[T]] = {
+    )(
+      destinationFn: T => String,
+      recordFormatterFn: (T, Schema) => GenericRecord = (t, _) => t.asInstanceOf[GenericRecord]
+    )(implicit ct: ClassTag[T]): Future[Tap[T]] = {
       if (self.context.isTest) {
         throw new NotImplementedError(
           "Avro file with dynamic destinations cannot be used in a test context"
@@ -69,11 +76,10 @@ package object dynamic {
             beam.AvroIO.sink(cls)
           } else {
             beam.AvroIO
-              .sinkViaGenericRecords(schema, new RecordFormatter[GenericRecord] {
-                override def formatRecord(element: GenericRecord, schema: Schema): GenericRecord =
-                  element
+              .sinkViaGenericRecords(schema, new RecordFormatter[T] {
+                override def formatRecord(element: T, schema: Schema): GenericRecord =
+                  recordFormatterFn(element, schema)
               })
-              .asInstanceOf[beam.AvroIO.Sink[T]]
           }
         }.withCodec(codec)
           .withMetadata(
@@ -81,7 +87,9 @@ package object dynamic {
               .newHashMap(metadata.asJava)
           )
         val write =
-          writeDynamic(path, numShards, suffix, destinationFn).via(sink)
+          writeDynamic(path, numShards, suffix, destinationFn)
+            .via(sink)
+
         self.applyInternal(write)
       }
 
@@ -120,6 +128,37 @@ package object dynamic {
       )
     }
 
+  }
+
+  implicit class DynamicProtobufSCollection[T <: Message](private val self: SCollection[T])
+      extends AnyVal {
+
+    def saveAsDynamicProtobufFile(
+      path: String,
+      numShards: Int = 0,
+      suffix: String = ".protobuf",
+      codec: CodecFactory = CodecFactory.deflateCodec(6),
+      metadata: Map[String, AnyRef] = Map.empty
+    )(destinationFn: T => String)(implicit ct: ClassTag[T]): Future[Tap[T]] = {
+      val protoCoder =
+        Coder
+          .protoMessageCoder[Message](ct.asInstanceOf[ClassTag[Message]])
+          .asInstanceOf[Coder[T]]
+
+      val elemCoder = CoderMaterializer.beam(self.context, protoCoder)
+      val schemaJson = generic.Schema.of[Message](ct.asInstanceOf[ClassTag[Message]]).toJson
+      self.saveAsDynamicAvroFile(
+        path,
+        numShards,
+        AvroBytesUtil.schema,
+        suffix,
+        codec,
+        metadata + ("protobuf.generic.schema" -> schemaJson)
+      )(
+        destinationFn,
+        (t, _) => AvroBytesUtil.encode(elemCoder, t)
+      )
+    }
   }
 
   private def writeDynamic[A](
