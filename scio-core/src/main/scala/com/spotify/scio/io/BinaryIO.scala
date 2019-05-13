@@ -60,14 +60,25 @@ final case class BinaryIO(path: String) extends ScioIO[Array[Byte]] {
 }
 
 object BinaryIO {
+
+  object WriteParam {
+    private[scio] val DefaultSuffix = ".bin"
+    private[scio] val DefaultNumShards = 0
+    private[scio] val DefaultCompression = Compression.UNCOMPRESSED
+    private[scio] val DefaultHeader = Array.emptyByteArray
+    private[scio] val DefaultFooter = Array.emptyByteArray
+    private[scio] val DefaultFramePrefix: Array[Byte] => Array[Byte] = _ => Array.emptyByteArray
+    private[scio] val DefaultFrameSuffix: Array[Byte] => Array[Byte] = _ => Array.emptyByteArray
+  }
+
   final case class WriteParam(
-    suffix: String = ".bin",
-    numShards: Int = 0,
-    compression: Compression = Compression.UNCOMPRESSED,
-    header: Array[Byte] = Array.emptyByteArray,
-    footer: Array[Byte] = Array.emptyByteArray,
-    framePrefix: Array[Byte] => Array[Byte] = _ => Array.emptyByteArray,
-    frameSuffix: Array[Byte] => Array[Byte] = _ => Array.emptyByteArray
+    suffix: String = WriteParam.DefaultSuffix,
+    numShards: Int = WriteParam.DefaultNumShards,
+    compression: Compression = WriteParam.DefaultCompression,
+    header: Array[Byte] = WriteParam.DefaultHeader,
+    footer: Array[Byte] = WriteParam.DefaultFooter,
+    framePrefix: Array[Byte] => Array[Byte] = WriteParam.DefaultFramePrefix,
+    frameSuffix: Array[Byte] => Array[Byte] = WriteParam.DefaultFrameSuffix
   )
 
   private final class BytesSink(
