@@ -124,7 +124,7 @@ class DynamicFileTest extends PipelineSpec {
     sc1
       .parallelize(1 to 10)
       .map(newSpecificRecord)
-      .saveAsDynamicAvroFile(tmpDir.toString, schema = schema) { r =>
+      .saveAsDynamicAvroFile(tmpDir.toString) { r =>
         (r.getIntField % 2).toString
       }
     sc1.close()
@@ -150,7 +150,7 @@ class DynamicFileTest extends PipelineSpec {
       // mysterious "Could not find proxy for val sc1" compiler error
       .timestampBy(x => new Instant(x.getIntField * 60000), Duration.ZERO)
       .withFixedWindows(Duration.standardMinutes(1), Duration.ZERO, WindowOptions())
-      .saveAsDynamicAvroFile(tmpDir.toString, 1, schema)(r => (r.getIntField % 2).toString)
+      .saveAsDynamicAvroFile(tmpDir.toString, 1)(r => (r.getIntField % 2).toString)
     sc1.close()
     verifyOutput(tmpDir, "0", "1")
     Files.list(tmpDir.resolve("0")).iterator().asScala.size shouldBe 5
