@@ -139,27 +139,27 @@ object To {
 }
 
 object ToMacro {
-  import scala.reflect.macros.blackbox
+  import scala.reflect.macros._
   def safeImpl[I: c.WeakTypeTag, O: c.WeakTypeTag](
     c: blackbox.Context
   )(iSchema: c.Expr[Schema[I]], oSchema: c.Expr[Schema[O]]): c.Expr[To[I, O]] = {
+    val h = new { val ctx: c.type = c } with SchemaMacroHelpers
+    import h._
     import c.universe._
 
     val tpeI = weakTypeOf[I]
     val tpeO = weakTypeOf[O]
 
-    val sInTree = c.untypecheck(iSchema.tree.duplicate)
-    val sOutTree = c.untypecheck(oSchema.tree.duplicate)
+    val sOut = c.eval(inferImplicitSchema(tpeO))
+    val sIn = c.eval(inferImplicitSchema(tpeI))
 
-    val (sIn, sOut) =
-      c.eval(c.Expr[(Schema[I], Schema[O])](q"($sInTree, $sOutTree)"))
-
-    val schemaIn: BSchema = SchemaMaterializer.fieldType(sIn).getRowSchema()
     val schemaOut: BSchema = SchemaMaterializer.fieldType(sOut).getRowSchema()
+    val schemaIn: BSchema = SchemaMaterializer.fieldType(sIn).getRowSchema()
 
     To.checkCompatibility(schemaIn, schemaOut) {
         q"""_root_.com.spotify.scio.schemas.To.unchecked[$tpeI, $tpeO]"""
       }
       .fold(message => c.abort(c.enclosingPosition, message), t => c.Expr[To[I, O]](t))
   }
+
 }
