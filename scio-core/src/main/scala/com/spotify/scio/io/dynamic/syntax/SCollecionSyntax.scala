@@ -17,7 +17,7 @@
 package com.spotify.scio.io.dynamic.syntax
 
 import com.google.protobuf.Message
-import com.spotify.scio.io.ClosedTap
+import com.spotify.scio.io.{ClosedTap, EmptyTap}
 import com.spotify.scio.coders.{AvroBytesUtil, Coder, CoderMaterializer}
 import com.spotify.scio.util.Functions
 import com.spotify.scio.values.SCollection
@@ -25,6 +25,7 @@ import me.lyh.protobuf.generic
 import org.apache.avro.Schema
 import org.apache.avro.file.CodecFactory
 import org.apache.avro.generic.GenericRecord
+import org.apache.avro.specific.SpecificRecord
 import org.apache.beam.sdk.coders.StringUtf8Coder
 import org.apache.beam.sdk.io.AvroIO.RecordFormatter
 import org.apache.beam.sdk.io.{Compression, FileIO}
@@ -32,8 +33,7 @@ import org.apache.beam.sdk.{io => beam}
 
 import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
-import com.spotify.scio.io.EmptyTap
-import org.apache.avro.specific.SpecificRecord
+import java.util.{HashMap => JHashMap}
 
 object DynamicSCollectionOps {
   private[syntax] def writeDynamic[A](
@@ -78,13 +78,12 @@ final class DynamicSpecificRecordSCollectionOps[T <: SpecificRecord](
       )
     } else {
       val cls = ct.runtimeClass.asInstanceOf[Class[T]]
+      val nm = new JHashMap[String, AnyRef]()
+      nm.putAll(metadata.asJava)
       val sink = beam.AvroIO
         .sink(cls)
         .withCodec(codec)
-        .withMetadata(
-          com.google.common.collect.Maps
-            .newHashMap(metadata.asJava)
-        )
+        .withMetadata(nm)
       val write =
         writeDynamic(path, numShards, suffix, destinationFn)
           .via(sink)
@@ -124,13 +123,15 @@ final class DynamicGenericRecordSCollectionOps[T <: GenericRecord](private val s
         "Avro file with dynamic destinations cannot be used in a test context"
       )
     } else {
+      val nm = new JHashMap[String, AnyRef]()
+      nm.putAll(metadata.asJava)
       val sink = beam.AvroIO
         .sinkViaGenericRecords(schema, new RecordFormatter[T] {
           override def formatRecord(element: T, schema: Schema): GenericRecord =
             element
         })
         .withCodec(codec)
-        .withMetadata(metadata.asJava)
+        .withMetadata(nm)
       val write =
         writeDynamic(path, numShards, suffix, destinationFn)
           .via(sink)
@@ -198,7 +199,8 @@ final class DynamicProtobufSCollectionOps[T <: Message](private val self: SColle
     val elemCoder = CoderMaterializer.beam(self.context, protoCoder)
     val avroSchema = AvroBytesUtil.schema
     val schemaJson = generic.Schema.of[Message](ct.asInstanceOf[ClassTag[Message]]).toJson
-    val nm = metadata + ("protobuf.generic.schema" -> schemaJson)
+    val nm = new JHashMap[String, AnyRef]()
+    nm.putAll((metadata + ("protobuf.generic.schema" -> schemaJson)).asJava)
 
     if (self.context.isTest) {
       throw new NotImplementedError(
@@ -211,7 +213,7 @@ final class DynamicProtobufSCollectionOps[T <: Message](private val self: SColle
             AvroBytesUtil.encode(elemCoder, element)
         })
         .withCodec(codec)
-        .withMetadata(nm.asJava)
+        .withMetadata(nm)
       val write =
         writeDynamic(path, numShards, suffix, destinationFn)
           .via(sink)
