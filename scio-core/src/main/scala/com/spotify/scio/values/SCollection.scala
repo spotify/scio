@@ -1196,13 +1196,13 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   // scalastyle:off parameter.number
   def saveAsBinaryFile(
     path: String,
-    numShards: Int = 0,
-    suffix: String = ".bin",
-    compression: Compression = Compression.UNCOMPRESSED,
-    header: Array[Byte] = Array.emptyByteArray,
-    footer: Array[Byte] = Array.emptyByteArray,
-    framePrefix: Array[Byte] => Array[Byte] = _ => Array.emptyByteArray,
-    frameSuffix: Array[Byte] => Array[Byte] = _ => Array.emptyByteArray
+    numShards: Int = BinaryIO.WriteParam.DefaultNumShards,
+    suffix: String = BinaryIO.WriteParam.DefaultSuffix,
+    compression: Compression = BinaryIO.WriteParam.DefaultCompression,
+    header: Array[Byte] = BinaryIO.WriteParam.DefaultHeader,
+    footer: Array[Byte] = BinaryIO.WriteParam.DefaultFooter,
+    framePrefix: Array[Byte] => Array[Byte] = BinaryIO.WriteParam.DefaultFramePrefix,
+    frameSuffix: Array[Byte] => Array[Byte] = BinaryIO.WriteParam.DefaultFrameSuffix
   )(implicit ev: T <:< Array[Byte]): ClosedTap[Nothing] =
     this
       .asInstanceOf[SCollection[Array[Byte]]]

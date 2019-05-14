@@ -75,10 +75,15 @@ object TextIO {
 
   final case class ReadParam(compression: Compression = Compression.AUTO)
 
+  object WriteParam {
+    private[scio] val DefaultSuffix = ".txt"
+    private[scio] val DefaultNumShards = 0
+    private[scio] val DefaultCompression = Compression.UNCOMPRESSED
+  }
   final case class WriteParam(
-    suffix: String = ".txt",
-    numShards: Int = 0,
-    compression: Compression = Compression.UNCOMPRESSED
+    suffix: String = WriteParam.DefaultSuffix,
+    numShards: Int = WriteParam.DefaultNumShards,
+    compression: Compression = WriteParam.DefaultCompression
   )
 
   private[scio] def textFile(path: String): Iterator[String] = {
