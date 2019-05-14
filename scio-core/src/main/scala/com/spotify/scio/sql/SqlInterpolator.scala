@@ -234,12 +234,12 @@ object SqlInterpolatorMacro {
           )
       }
 
-    tsqlImpl[B](c)(schB, parts, ps: _*)
+    tsqlImpl[B](c)(parts, ps: _*)
   }
 
   def tsqlImpl[B: c.WeakTypeTag](
     c: whitebox.Context
-  )(schB: c.Expr[Schema[B]], parts: List[c.Tree], ps: c.Expr[Any]*): c.Expr[SCollection[B]] = {
+  )(parts: List[c.Tree], ps: c.Expr[Any]*): c.Expr[SCollection[B]] = {
     val h = new { val ctx: c.type = c } with SqlInterpolatorMacroHelpers with SchemaMacroHelpers
     import h._
     import c.universe._
