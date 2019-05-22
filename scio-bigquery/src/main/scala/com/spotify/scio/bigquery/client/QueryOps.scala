@@ -253,7 +253,7 @@ private[client] final class QueryOps(client: Client, tableService: TableOps, job
   }
 
   private def isInvalidQuery(e: GoogleJsonResponseException): Boolean =
-    e.getDetails.getErrors.get(0).getReason == "invalidQuery"
+    Try(e.getDetails.getErrors.get(0).getReason).map(_ == "invalidQuery").getOrElse(false)
 
   private[scio] def isLegacySql(sqlQuery: String, flattenResults: Boolean = false): Boolean = {
     val dryRun =
