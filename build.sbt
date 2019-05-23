@@ -297,6 +297,13 @@ lazy val protobufSettings = Def.settings(
   )
 )
 
+lazy val scalapbSettings = Def.settings(
+  PB.targets in Compile := Seq(
+    PB.gens.java -> (sourceManaged in Compile).value,
+    scalapb.gen(javaConversions=true) -> (sourceManaged in Compile).value
+  )
+)
+
 lazy val root: Project = Project("scio", file("."))
   .settings(commonSettings)
   .settings(noPublishSettings)
@@ -717,13 +724,19 @@ lazy val scioTensorFlow: Project = Project(
 lazy val scioSchemas: Project = Project(
   "scio-schemas",
   file("scio-schemas")
-).enablePlugins(ProtobufPlugin)
-  .settings(commonSettings)
+).settings(commonSettings)
   .settings(noPublishSettings)
-  .settings(protobufSettings)
+  .settings(scalapbSettings)
   .settings(
+    libraryDependencies ++= Seq(
+      "io.grpc" % "grpc-netty" % grpcVersion,
+      "com.thesamet.scalapb" %% "scalapb-runtime-grpc" % scalapb.compiler.Version.scalapbVersion
+    ),
+    PB.protocVersion := "-v371",
     description := "Avro/Proto schemas for testing",
     version in AvroConfig := avroVersion,
+    scalaSource in ProtobufConfig := sourceManaged.value,
+    javaSource in AvroConfig := sourceManaged.value,
     Compile / sourceDirectories := (Compile / sourceDirectories).value
       .filterNot(_.getPath.endsWith("/src_managed/main")),
     Compile / managedSourceDirectories := (Compile / managedSourceDirectories).value

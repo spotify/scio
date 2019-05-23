@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package com.spotify.scio.proto;
+
+service CustomerOrderService {
+  // Sends customer order requests
+  rpc RequestOrder (CustomerOrderRequest) returns (CustomerOrderReply) {}
+}
+
+// The request message containing the user's id.
+message CustomerOrderRequest {
+  string id = 1;
+}
+
+// The response message containing the order id
+message CustomerOrderReply {
+  string orderId = 1;
+}

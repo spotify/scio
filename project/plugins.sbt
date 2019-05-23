@@ -19,7 +19,9 @@ addSbtPlugin("com.lightbend.paradox" % "sbt-paradox" % "0.5.4")
 addSbtPlugin("io.github.jonas" % "sbt-paradox-material-theme" % "0.6.0")
 addSbtPlugin("ch.epfl.scala" % "sbt-bloop" % "1.2.5")
 addSbtPlugin("org.scalameta" % "sbt-mdoc" % "1.3.0")
+addSbtPlugin("com.thesamet" % "sbt-protoc" % "0.99.20")
 
 libraryDependencies ++= Seq(
-  "com.github.os72" % "protoc-jar" % "3.7.1"
+  "com.github.os72" % "protoc-jar" % "3.7.1",
+  "com.thesamet.scalapb" %% "compilerplugin" % "0.9.0-M5"
 )
