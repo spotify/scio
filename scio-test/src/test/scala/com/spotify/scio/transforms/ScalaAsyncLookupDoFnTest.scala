@@ -74,21 +74,23 @@ object ScalaAsyncLookupDoFnTest {
   val queue: ConcurrentLinkedQueue[Int] = new ConcurrentLinkedQueue[Int]()
 }
 
-class TestScalaAsyncLookupDoFn extends ScalaAsyncLookupDoFn[Int, String, AsyncClient](10) {
-  override def client(): AsyncClient = new AsyncClient
+class TestAsyncClient {}
 
-  override def asyncLookup(client: AsyncClient, input: Int): Future[String] =
+class TestScalaAsyncLookupDoFn extends ScalaAsyncLookupDoFn[Int, String, TestAsyncClient](10) {
+  override def client(): TestAsyncClient = new TestAsyncClient
+
+  override def asyncLookup(client: TestAsyncClient, input: Int): Future[String] =
     Future {
       input.toString
     }
 }
 
 class TestCachingScalaAsyncLookupDoFn
-    extends ScalaAsyncLookupDoFn[Int, String, AsyncClient](10, new TestGuavaCacheSupplier) {
+    extends ScalaAsyncLookupDoFn[Int, String, TestAsyncClient](10, new TestGuavaCacheSupplier) {
 
-  override def client(): AsyncClient = new AsyncClient
+  override def client(): TestAsyncClient = new TestAsyncClient
 
-  override def asyncLookup(client: AsyncClient, input: Int): Future[String] = {
+  override def asyncLookup(client: TestAsyncClient, input: Int): Future[String] = {
     ScalaAsyncLookupDoFnTest.queue.add(input)
     Future {
       input.toString
@@ -96,10 +98,11 @@ class TestCachingScalaAsyncLookupDoFn
   }
 }
 
-class TestFailingScalaAsyncLookupDoFn extends ScalaAsyncLookupDoFn[Int, String, AsyncClient](1) {
-  override def client(): AsyncClient = new AsyncClient
+class TestFailingScalaAsyncLookupDoFn
+    extends ScalaAsyncLookupDoFn[Int, String, TestAsyncClient](1) {
+  override def client(): TestAsyncClient = new TestAsyncClient
 
-  override def asyncLookup(client: AsyncClient, input: Int): Future[String] =
+  override def asyncLookup(client: TestAsyncClient, input: Int): Future[String] =
     if (input % 2 == 0) {
       Future {
         "success" + input
@@ -110,10 +113,10 @@ class TestFailingScalaAsyncLookupDoFn extends ScalaAsyncLookupDoFn[Int, String, 
 }
 
 class TestScalaAsyncLookupListenableFutureDoFn
-    extends ScalaAsyncLookupDoFn[Int, String, AsyncClient](10) {
-  override def client(): AsyncClient = new AsyncClient
+    extends ScalaAsyncLookupDoFn[Int, String, TestAsyncClient](10) {
+  override def client(): TestAsyncClient = new TestAsyncClient
 
-  override def asyncLookup(client: AsyncClient, input: Int): Future[String] = {
+  override def asyncLookup(client: TestAsyncClient, input: Int): Future[String] = {
     import ScalaAsyncLookupDoFn._
     Futures.immediateFuture(input.toString)
   }

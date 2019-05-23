@@ -58,7 +58,7 @@ object ScalaAsyncLookupDoFn {
     p.future
   }
 
-  /** Work around for transform in 2.11 */
+  /** Work around for future.transform in 2.11 to be like in 2.12 */
   def transform[A, B](future: Future[A])(f: Try[A] => Try[B]): Future[B] = {
     val p = Promise[B]()
     future.onComplete { result =>

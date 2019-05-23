@@ -27,6 +27,8 @@ package com.spotify.scio.examples.extra
 import com.google.common.cache.{Cache, CacheBuilder}
 import com.spotify.scio.ContextAndArgs
 import com.spotify.scio.proto.simple_grpc.CustomerOrderRequest
+
+import scala.util.Try
 import com.spotify.scio.proto.simple_grpc.CustomerOrderServiceGrpc.CustomerOrderServiceStub
 import com.spotify.scio.transforms.{GuavaCacheSupplier, ScalaAsyncLookupDoFn}
 import io.grpc.ManagedChannelBuilder
@@ -35,7 +37,7 @@ import org.apache.beam.sdk.values.KV
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-import scala.util.{Failure, Success, Try}
+import scala.util.Success
 
 object GrpcAsyncLookupExample {
   def main(cmdlineArgs: Array[String]): Unit = {
@@ -75,10 +77,15 @@ class GrpcAsyncLookupDoFn(host: String, port: Int)
   ): Future[String] = {
     val request = CustomerOrderRequest(id = input)
     val f = stub.requestOrder(request)
-    f.transform {
-      case Success(res) => Success(res.orderId)
-      case Failure(ex)  => Failure(ex)
-    }
+    f.transform(
+      res => res.orderId,
+      ex => new RuntimeException(ex)
+    )
+    // Should also be able to use transform from Scala 2.12
+    // f.transform {
+    //   case Success(res) => Success(res.orderId)
+    //  case Failure(ex)  => Failure(ex)
+    // }
   }
 }
 
