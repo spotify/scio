@@ -39,6 +39,7 @@ import scala.concurrent.{Await, Future, Promise}
 import scala.concurrent.duration.Duration
 import scala.util.{Failure, Success, Try}
 import scala.language.implicitConversions
+import scala.util.control.NonFatal
 
 object ScalaAsyncLookupDoFn {
   val Client = Maps.newConcurrentMap[UUID, Any]
@@ -54,6 +55,18 @@ object ScalaAsyncLookupDoFn {
       def onSuccess(result: T) = p.success(result)
       def onFailure(t: Throwable) = p.failure(t)
     }, MoreExecutors.directExecutor())
+    p.future
+  }
+
+  /** Work around for transform in 2.11 */
+  def transform[A, B](future: Future[A])(f: Try[A] => Try[B]): Future[B] = {
+    val p = Promise[B]()
+    future.onComplete { result =>
+      try p.complete(f(result))
+      catch {
+        case NonFatal(ex) => p.failure(ex)
+      }
+    }
     p.future
   }
 }
@@ -124,7 +137,7 @@ abstract class ScalaAsyncLookupDoFn[A, B, C](
           throw new RuntimeException("Failed to acquire semaphore", e)
       }
       RequestCount += 1
-      val f = future.transform {
+      val f = ScalaAsyncLookupDoFn.transform(future) {
         case Success(res) => transform(input, Success(res), c.timestamp, window, uuid)
         case Failure(ex) =>
           transform(input, Failure(ex), c.timestamp, window, uuid)
