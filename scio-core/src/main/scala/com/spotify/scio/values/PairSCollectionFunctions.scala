@@ -755,7 +755,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     that: SCollection[K],
     thatNumKeys: Int,
     computeExact: Boolean = false,
-    fpProb: Double = 0.1
+    fpProb: Double = 0.01
   )(implicit koder: Coder[K], voder: Coder[V], hash: Hash128[K]): SCollection[(K, V)] = {
     val rhsBfs = that.map(k => (k, ())).optimalKeysBloomFiltersAsSideInputs(thatNumKeys, fpProb)
     val n = rhsBfs.size
