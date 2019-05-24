@@ -66,7 +66,6 @@ class GrpcAsyncLookupDoFn(host: String, port: Int)
     ) {
 
   override protected def client(): CustomerOrderServiceStub = {
-    // Should only use plain text for testing
     val channel = ManagedChannelBuilder.forAddress(host, port).usePlaintext().build
     new CustomerOrderServiceStub(channel)
   }
