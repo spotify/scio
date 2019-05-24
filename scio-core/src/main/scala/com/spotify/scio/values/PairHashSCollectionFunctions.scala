@@ -147,6 +147,9 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
   /**
    * Return an SCollection with the pairs from `this` whose keys are in `that`
    * given `that` is small enough to fit in memory.
+   *
+   * Unlike [[SCollection.intersection]] this preserves duplicates in `this`.
+   *
    * @group per key
    */
   def hashIntersectByKey(
@@ -156,6 +159,9 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
 
   /**
    * Return an SCollection with the pairs from `this` whose keys are in the SideSet `that`.
+   *
+   * Unlike [[SCollection.intersection]] this preserves duplicates in `this`.
+   *
    * @group per key
    */
   def hashIntersectByKey(

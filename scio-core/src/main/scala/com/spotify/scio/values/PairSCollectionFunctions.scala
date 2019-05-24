@@ -296,8 +296,14 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * concatenated. This is useful for joining historical aggregates with incremental updates.
    * Read more about Bloom Filter: [[com.twitter.algebird.BloomFilter]].
    * @group join
-   * @param thatNumKeys estimated number of keys in `that`
-   * @param fpProb false positive probability when computing the overlap
+   * @param thatNumKeys An estimate of the number of keys in `that`. This estimate is used to find
+   *                    the size and number of BloomFilters that Scio would use to split
+   *                    `this` into overlap and intersection in a "map" step before an exact join.
+   *                    Having a value close to the actual number improves the false positives
+   *                    in intermediate steps which means less shuffle.
+   * @param fpProb A fraction in range (0, 1) which would be the accepted false positive
+   *               probability when computing the overlap.
+   *               Note: having fpProb = 0 doesn't mean that Scio would calculate an exact overlap.
    */
   def sparseOuterJoin[W: Coder](
     that: SCollection[(K, W)],
@@ -324,8 +330,14 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * out before the join.
    * Read more about Bloom Filter: [[com.twitter.algebird.BloomFilter]].
    * @group join
-   * @param thatNumKeys estimated number of keys in `that`
-   * @param fpProb false positive probability when computing the overlap
+   * @param thatNumKeys An estimate of the number of keys in `that`. This estimate is used to find
+   *                    the size and number of BloomFilters that Scio would use to split
+   *                    `this` into overlap and intersection in a "map" step before an exact join.
+   *                    Having a value close to the actual number improves the false positives
+   *                    in intermediate steps which means less shuffle.
+   * @param fpProb A fraction in range (0, 1) which would be the accepted false positive
+   *               probability when computing the overlap.
+   *               Note: having fpProb = 0 doesn't mean that Scio would calculate an exact overlap.
    */
   def sparseJoin[W: Coder](
     that: SCollection[(K, W)],
@@ -347,8 +359,14 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * concatenated. This is useful for joining historical aggregates with incremental updates.
    * Read more about Bloom Filter: [[com.twitter.algebird.BloomFilter]].
    * @group join
-   * @param thatNumKeys estimated number of keys in `that`
-   * @param fpProb false positive probability when computing the overlap
+   * @param thatNumKeys An estimate of the number of keys in `that`. This estimate is used to find
+   *                    the size and number of BloomFilters that Scio would use to split
+   *                    `this` into overlap and intersection in a "map" step before an exact join.
+   *                    Having a value close to the actual number improves the false positives
+   *                    in intermediate steps which means less shuffle.
+   * @param fpProb A fraction in range (0, 1) which would be the accepted false positive
+   *               probability when computing the overlap.
+   *               Note: having fpProb = 0 doesn't mean that Scio would calculate an exact overlap.
    */
   def sparseLeftOuterJoin[W: Coder](
     that: SCollection[(K, W)],
@@ -371,8 +389,14 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * concatenated. This is useful for joining historical aggregates with incremental updates.
    * Read more about Bloom Filter: [[com.twitter.algebird.BloomFilter]].
    * @group join
-   * @param thatNumKeys estimated number of keys in `that`
-   * @param fpProb false positive probability when computing the overlap
+   * @param thatNumKeys An estimate of the number of keys in `that`. This estimate is used to find
+   *                    the size and number of BloomFilters that Scio would use to split
+   *                    `this` into overlap and intersection in a "map" step before an exact join.
+   *                    Having a value close to the actual number improves the false positives
+   *                    in intermediate steps which means less shuffle.
+   * @param fpProb A fraction in range (0, 1) which would be the accepted false positive
+   *               probability when computing the overlap.
+   *               Note: having fpProb = 0 doesn't mean that Scio would calculate an exact overlap.
    */
   def sparseRightOuterJoin[W: Coder](
     that: SCollection[(K, W)],
@@ -386,6 +410,15 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
       }
     )
 
+  /*
+   Internal to PairSCollectionFunctions
+   Split up self into
+   Seq(
+     (KeysUniqueInSelf, KeysOverlappingWithThat, That)
+   )
+   The number of SCollection tuples in the Seq is based on the number of BloomFilters required to
+   maintain the given false positive probability for the split of Self into Unique and Overlap.
+   */
   private def splitSelfUsing[W: Coder](
     that: SCollection[(K, W)],
     thatNumKeys: Long,
@@ -422,11 +455,17 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
   /**
    * Look up values from `that` where `that` is much larger and keys from `this` wont fit in memory,
    * and is sparse in `that`. A Bloom Filter of keys in `this` is used to filter out irrelevant keys
-   * in `that`. This is useful when searching for a limited number of values from one or more vaery
+   * in `that`. This is useful when searching for a limited number of values from one or more very
    * large tables. Read more about Bloom Filter: [[com.twitter.algebird.BloomFilter]].
    * @group join
-   * @param thisNumKeys estimated number of keys in `this`
-   * @param fpProb false positive probability when filtering `that`
+   * @param thisNumKeys An estimate of the number of keys in `this`. This estimate is used to find
+   *                    the size and number of BloomFilters that Scio would use to pre-filter
+   *                    `that` before doing a co-group.
+   *                    Having a value close to the actual number improves the false positives
+   *                    in intermediate steps which means less shuffle.
+   * @param fpProb A fraction in range (0, 1) which would be the accepted false positive
+   *               probability when discarding elements of `that` in the pre-filter step.
+
    */
   def sparseLookup[A: Coder](that: SCollection[(K, A)], thisNumKeys: Long, fpProb: Double)(
     implicit hash: Hash128[K],
@@ -462,10 +501,14 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
   /**
    * Look up values from `that` where `that` is much larger and keys from `this` wont fit in memory,
    * and is sparse in `that`. A Bloom Filter of keys in `this` is used to filter out irrelevant keys
-   * in `that`. This is useful when searching for a limited number of values from one or more vaery
+   * in `that`. This is useful when searching for a limited number of values from one or more very
    * large tables. Read more about Bloom Filter: [[com.twitter.algebird.BloomFilter]].
    * @group join
-   * @param thisNumKeys estimated number of keys in `this`
+   * @param thisNumKeys An estimate of the number of keys in `this`. This estimate is used to find
+   *                    the size and number of BloomFilters that Scio would use to pre-filter
+   *                    `that` before doing a co-group.
+   *                    Having a value close to the actual number improves the false positives
+   *                    in intermediate steps which means less shuffle.
    */
   def sparseLookup[A: Coder](that: SCollection[(K, A)], thisNumKeys: Long)(
     implicit hash: Hash128[K],
@@ -476,11 +519,17 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
   /**
    * Look up values from `that` where `that` is much larger and keys from `this` wont fit in memory,
    * and is sparse in `that`. A Bloom Filter of keys in `this` is used to filter out irrelevant keys
-   * in `that`. This is useful when searching for a limited number of values from one or more vaery
+   * in `that`. This is useful when searching for a limited number of values from one or more very
    * large tables. Read more about Bloom Filter: [[com.twitter.algebird.BloomFilter]].
    * @group join
-   * @param thisNumKeys estimated number of keys in `this`
-   * @param fpProb false positive probability when filtering `that`
+   * @param thisNumKeys An estimate of the number of keys in `this`. This estimate is used to find
+   *                    the size and number of BloomFilters that Scio would use to pre-filter
+   *                    `that1` and `that2` before doing a co-group.
+   *                    Having a value close to the actual number improves the false positives
+   *                    in intermediate steps which means less shuffle.
+   * @param fpProb A fraction in range (0, 1) which would be the accepted false positive
+   *               probability when discarding elements of `that1` and `that2` in the pre-filter
+   *               step.
    */
   def sparseLookup[A: Coder, B: Coder](
     that1: SCollection[(K, A)],
@@ -525,10 +574,14 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
   /**
    * Look up values from `that` where `that` is much larger and keys from `this` wont fit in memory,
    * and is sparse in `that`. A Bloom Filter of keys in `this` is used to filter out irrelevant keys
-   * in `that`. This is useful when searching for a limited number of values from one or more vaery
+   * in `that`. This is useful when searching for a limited number of values from one or more very
    * large tables. Read more about Bloom Filter: [[com.twitter.algebird.BloomFilter]].
    * @group join
-   * @param thisNumKeys estimated number of keys in `this`
+   * @param thisNumKeys An estimate of the number of keys in `this`. This estimate is used to find
+   *                    the size and number of BloomFilters that Scio would use to pre-filter
+   *                    `that` before doing a co-group.
+   *                    Having a value close to the actual number improves the false positives
+   *                    in intermediate steps which means less shuffle.
    */
   def sparseLookup[A: Coder, B: Coder](
     that1: SCollection[(K, A)],
@@ -731,6 +784,9 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
 
   /**
    * Return an SCollection with the pairs from `this` whose keys are in `that`.
+   *
+   * Unlike [[SCollection.intersection]] this preserves duplicates in `this`.
+   *
    * @group per_key
    */
   def intersectByKey(
@@ -746,9 +802,30 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * Return an SCollection with the pairs from `this` whose keys are in `that`
    * when the cardinality of `this` >> `that`, but neither can fit in memory
    * (see [[PairHashSCollectionFunctions.hashIntersectByKey]]).
+   *
+   * Unlike [[SCollection.intersection]] this preserves duplicates in `this`.
+   *
+   * @param thatNumKeys  An estimate of the number of keys in `that`. This estimate is used to find
+   *                     the size and number of BloomFilters that Scio would use to pre-filter
+   *                     `this` in a "map" step before any join.
+   *                     Having a value close to the actual number improves the false positives
+   *                     in output. When `computeExact` is set to true, a more accurate estimate
+   *                     of the number of keys in `that` would mean less shuffle when finding the
+   *                     exact value.
+   *
    * @param computeExact Whether or not to directly pass through bloom filter results (with a small
    *                     false positive rate) or perform an additional inner join to confirm
-   *                     exact result set.
+   *                     exact result set. By default this is set to false.
+   *
+   * @param fpProb       A fraction in range (0, 1) which would be the accepted false positive
+   *                     probability for this transform. By default when `computeExact` is set to
+   *                     `false`, this reflects the probability that an output element is an
+   *                     incorrect intersect (meaning it may not be present in `that`)
+   *                     When `computeExact` is set to `true`, this fraction is used to find the
+   *                     acceptable false positive in the intermediate step before computing exact.
+   *                     Note: having fpProb = 0 doesn't mean an exact computation. This value
+   *                     along with `thatNumKeys` is used for creating a BloomFilter.
+   *
    * @group per key
    */
   def sparseIntersectByKey(
