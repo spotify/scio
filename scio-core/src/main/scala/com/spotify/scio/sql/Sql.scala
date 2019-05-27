@@ -182,8 +182,10 @@ object Queries {
       q.udfs
     ).right.map(_ => q)
 
-  // TODO: this should support TupleTag
   def typed[A: Schema, B: Schema](query: String): Query[A, B] =
+    macro QueryMacros.typedImplDefaultTag[A, B]
+
+  def typed[A: Schema, B: Schema](query: String, aTag: TupleTag[A]): Query[A, B] =
     macro QueryMacros.typedImpl[A, B]
 
   def typed[A: Schema, B: Schema, R: Schema](
@@ -317,8 +319,20 @@ object QueryMacros {
     }
   }
 
-  def typedImpl[A: c.WeakTypeTag, B: c.WeakTypeTag](c: blackbox.Context)(
+  def typedImplDefaultTag[A: c.WeakTypeTag, B: c.WeakTypeTag](c: blackbox.Context)(
     query: c.Expr[String]
+  )(iSchema: c.Expr[Schema[A]], oSchema: c.Expr[Schema[B]]): c.Expr[Query[A, B]] = {
+    val h = new { val ctx: c.type = c } with SchemaMacroHelpers
+    import h._
+    import c.universe._
+
+    val tag = c.Expr[TupleTag[A]](q"${Sql.defaultTag[A]}")
+    typedImpl(c)(query, tag)(iSchema, oSchema)
+  }
+
+  def typedImpl[A: c.WeakTypeTag, B: c.WeakTypeTag](c: blackbox.Context)(
+    query: c.Expr[String],
+    aTag: c.Expr[TupleTag[A]]
   )(iSchema: c.Expr[Schema[A]], oSchema: c.Expr[Schema[B]]): c.Expr[Query[A, B]] = {
     import c.universe._
 
@@ -335,7 +349,7 @@ object QueryMacros {
     val sq =
       queryTree match {
         case Literal(Constant(q: String)) =>
-          Query[A, B](q)
+          Query[A, B](q, tupleTag(c)(aTag))
         case _ =>
           c.abort(c.enclosingPosition, s"Expression $queryTree does not evaluate to a constant")
       }
