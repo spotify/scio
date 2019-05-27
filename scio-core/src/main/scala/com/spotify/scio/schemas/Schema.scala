@@ -188,8 +188,9 @@ private[scio] trait SchemaMacroHelpers {
     ctx.Expr[Schema[_]](untypedTree)
   }
 
-  implicit def liftTupleTag[A: ctx.WeakTypeTag] = Liftable[TupleTag[A]] { x =>
-    q"_root_.org.apache.beam.sdk.values.TupleTag[${weakTypeOf[A]}](${x.getId()})"
+  implicit def liftTupleTag[A: ctx.WeakTypeTag]: Liftable[TupleTag[A]] = Liftable[TupleTag[A]] {
+    x =>
+      q"_root_.org.apache.beam.sdk.values.TupleTag[${weakTypeOf[A]}](${x.getId()})"
   }
 
 }
