@@ -254,8 +254,6 @@ object SqlInterpolatorMacro {
       )
     }
 
-    val wttB = c.weakTypeTag[B]
-
     val scs: List[(Tree, Type)] =
       ss.map { p =>
         val a = p.actualType.typeArgs.head
@@ -271,37 +269,20 @@ object SqlInterpolatorMacro {
     def toSCollectionName(s: Tree) = s.symbol.name.encodedName.toString
 
     distinctSCollections.values.toList match {
-      case (c0, t0) :: Nil =>
-        val tag0 = tagFor(t0, Sql.SCollectionTypeName)
-        val sql = buildSQLString(parts, scs.map(_ => Sql.SCollectionTypeName))
-
-        val needB = c.typecheck(tq"$wttB", ctx.TYPEmode).tpe
-        val implB = inferImplicitSchema(needB)
-        val implA = inferImplicitSchema(t0)
-
-        // ... so I put a macro in your macro so you can compile while you compile
-        val q = q"_root_.com.spotify.scio.sql.Queries.typed[$t0, $wttB]($sql)"
-
-        c.Expr[SCollection[B]](q"""
-            _root_.com.spotify.scio.sql.Sql
-                .from($c0)($implA)
-                .queryAs($q)($implB)""")
-      case (c0, t0) :: (c1, t1) :: Nil =>
-        val tag0 = tagFor(t0, toSCollectionName(c0))
-        val tag1 = tagFor(t1, toSCollectionName(c1))
+      case list if list.size <= 2 =>
+        val colls = list.map(_._1)
+        val types = list.map(_._2)
+        val tags = list.map(x => tagFor(x._2, toSCollectionName(x._1)))
         val sql = buildSQLString(parts, scs.map(x => toSCollectionName(x._1)))
+        val implOut = inferImplicitSchema[B]
+        val implIn = types.map(inferImplicitSchema)
 
-        val q = q"_root_.com.spotify.scio.sql.Queries.typed[$t0, $t1, $wttB]($sql, $tag0, $tag1)"
-
-        val needB = c.typecheck(tq"$wttB", ctx.TYPEmode).tpe
-        val implB = inferImplicitSchema(needB)
-        val implA = inferImplicitSchema(t0)
-        val implC = inferImplicitSchema(t1)
-
+        val q =
+          q"_root_.com.spotify.scio.sql.Queries.typed[..${types :+ weakTypeOf[B]}]($sql, ..$tags)"
         c.Expr[SCollection[B]](q"""
             _root_.com.spotify.scio.sql.Sql
-                .from($c0, $c1)($implA, $implC)
-                .queryAs($q)($implB)""")
+                .from(..$colls)(..$implIn)
+                .queryAs($q)($implOut)""")
       case d =>
         val ns = d.map(_._1).mkString(", ")
         c.abort(

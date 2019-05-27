@@ -27,6 +27,7 @@ import org.apache.beam.sdk.values.{Row, TypeDescriptor}
 
 import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
+import org.apache.beam.sdk.values.TupleTag
 
 object Schema extends AllInstances {
   @inline final def apply[T](implicit c: Schema[T]): Schema[T] = c
@@ -176,12 +177,19 @@ private[scio] trait SchemaMacroHelpers {
   val ctx: blackbox.Context
   import ctx.universe._
 
+  def inferImplicitSchema[A: ctx.WeakTypeTag]: ctx.Expr[Schema[A]] =
+    inferImplicitSchema(weakTypeOf[A]).asInstanceOf[ctx.Expr[Schema[A]]]
+
   def inferImplicitSchema(t: ctx.Type): ctx.Expr[Schema[_]] = {
     val tp = ctx.typecheck(tq"_root_.com.spotify.scio.schemas.Schema[$t]", ctx.TYPEmode).tpe
     val typedTree = ctx.inferImplicitValue(tp, silent = false)
     val untypedTree = ctx.untypecheck(typedTree.duplicate)
 
     ctx.Expr[Schema[_]](untypedTree)
+  }
+
+  implicit def liftTupleTag[A: ctx.WeakTypeTag] = Liftable[TupleTag[A]] { x =>
+    q"_root_.org.apache.beam.sdk.values.TupleTag[${weakTypeOf[A]}](${x.getId()})"
   }
 
 }
