@@ -92,7 +92,7 @@ private[types] object TypeProvider {
     import c.universe._
 
     val (table, args, selectedFields, rowRestriction) = extractStorageArgs(c)
-    val tableSpec = BigQueryPartitionUtil.latestQuery(bigquery, formatString(table :: args))
+    val tableSpec = BigQueryPartitionUtil.latestTable(bigquery, formatString(table :: args))
     val avroSchema = bigquery.tables.storageReadSchema(tableSpec, selectedFields, rowRestriction)
     val schema = StorageUtil.toTableSchema(avroSchema)
 
