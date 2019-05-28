@@ -104,5 +104,5 @@ object TestCustomerOrderServer {
 
   def stop(): Unit = Server.stop()
 
-  val Port = ThreadLocalRandom.current().nextInt(100, 10000)
+  val Port = ThreadLocalRandom.current().nextInt(60000, 65000)
 }
