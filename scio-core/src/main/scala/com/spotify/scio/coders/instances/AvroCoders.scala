@@ -105,6 +105,13 @@ private object SpecificFixedCoder {
 
 trait AvroCoders {
   import language.experimental.macros
+
+  /**
+   * Create a Coder for Avro GenericRecord given the schema of the GenericRecord.
+   *
+   * @param schema AvroSchema for the Coder.
+   * @return Coder[GenericRecord]
+   */
   // TODO: Use a coder that does not serialize the schema
   def avroGenericRecordCoder(schema: Schema): Coder[GenericRecord] =
     Coder.beam(AvroCoder.of(schema))
