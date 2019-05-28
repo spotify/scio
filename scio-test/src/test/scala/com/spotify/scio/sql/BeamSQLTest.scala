@@ -137,199 +137,200 @@ object TestData {
 class BeamSQLTest extends PipelineSpec {
   import TestData._
 
-  "BeamSQL" should "support queries on case classes" in runWithContext { sc =>
-    val schemaRes = BSchema.builder().addStringField("username").build()
-    val expected = users.map { u =>
-      Row.withSchema(schemaRes).addValue(u.username).build()
-    }
-    implicit def coderRowRes: Coder[Row] = Coder.row(schemaRes)
-    val in = sc.parallelize(users)
-    val r = in.query("select username from SCOLLECTION")
-    r should containInAnyOrder(expected)
-  }
+  // "BeamSQL" should "support queries on case classes" in runWithContext { sc =>
+  //   val schemaRes = BSchema.builder().addStringField("username").build()
+  //   val expected = users.map { u =>
+  //     Row.withSchema(schemaRes).addValue(u.username).build()
+  //   }
+  //   implicit def coderRowRes: Coder[Row] = Coder.row(schemaRes)
+  //   val in = sc.parallelize(users)
+  //   val r = in.query("select username from SCOLLECTION")
+  //   r should containInAnyOrder(expected)
+  // }
 
-  it should "support different tag" in runWithContext { sc =>
-    val expected = 255
-    val q = Query[User, Int]("select sum(age) from users", tag = new TupleTag[User]("users"))
-    val r = sc.parallelize(users).queryAs(q)
-    r should containSingleValue(expected)
-  }
+  // it should "support different tag" in runWithContext { sc =>
+  //   val expected = 255
+  //   val q = Query[User, Int]("select sum(age) from users", tag = new TupleTag[User]("users"))
+  //   val r = sc.parallelize(users).queryAs(q)
+  //   r should containSingleValue(expected)
+  // }
 
-  it should "support scalar results" in runWithContext { sc =>
-    val expected = 255
-    val in = sc.parallelize(users)
-    val r = in.queryAs[Int]("select sum(age) from SCOLLECTION")
-    r should containSingleValue(expected)
-  }
+  // it should "support scalar results" in runWithContext { sc =>
+  //   val expected = 255
+  //   val in = sc.parallelize(users)
+  //   val r = in.queryAs[Int]("select sum(age) from SCOLLECTION")
+  //   r should containSingleValue(expected)
+  // }
 
-  it should "support nested case classes" in runWithContext { sc =>
-    val schemaRes =
-      BSchema
-        .builder()
-        .addInt64Field("id")
-        .addStringField("username")
-        .build()
+  // it should "support nested case classes" in runWithContext { sc =>
+  //   val schemaRes =
+  //     BSchema
+  //       .builder()
+  //       .addInt64Field("id")
+  //       .addStringField("username")
+  //       .build()
 
-    val expected = usersWithIds.map { u =>
-      Row
-        .withSchema(schemaRes)
-        .addValue(u.id.id)
-        .addValue(u.username)
-        .build()
-    }
+  //   val expected = usersWithIds.map { u =>
+  //     Row
+  //       .withSchema(schemaRes)
+  //       .addValue(u.id.id)
+  //       .addValue(u.username)
+  //       .build()
+  //   }
 
-    implicit def coderRowRes: Coder[Row] = Coder.row(schemaRes)
-    val in = sc.parallelize(usersWithIds)
-    val r = in.query("select id, username from SCOLLECTION")
-    r should containInAnyOrder(expected)
+  //   implicit def coderRowRes: Coder[Row] = Coder.row(schemaRes)
+  //   val in = sc.parallelize(usersWithIds)
+  //   val r = in.query("select id, username from SCOLLECTION")
+  //   r should containInAnyOrder(expected)
 
-    val in2 = sc.parallelize(usersWithIds)
-    val r2 = in2.query("select `SCOLLECTION`.`id`.`id`, username from SCOLLECTION")
-    r2 should containInAnyOrder(expected)
-  }
+  //   val in2 = sc.parallelize(usersWithIds)
+  //   val r2 = in2.query("select `SCOLLECTION`.`id`.`id`, username from SCOLLECTION")
+  //   r2 should containInAnyOrder(expected)
+  // }
 
-  it should "support fallback coders" in runWithContext { sc =>
-    val schemaRes = BSchema.builder().addStringField("username").build()
-    val expected = usersWithLocale.map { u =>
-      Row.withSchema(schemaRes).addValue(u.username).build()
-    }
-    implicit def coderRowRes: Coder[Row] = Coder.row(schemaRes)
-    val in = sc.parallelize(usersWithLocale)
-    val r = in.query("select username from SCOLLECTION")
-    r should containInAnyOrder(expected)
-  }
+  // it should "support fallback coders" in runWithContext { sc =>
+  //   val schemaRes = BSchema.builder().addStringField("username").build()
+  //   val expected = usersWithLocale.map { u =>
+  //     Row.withSchema(schemaRes).addValue(u.username).build()
+  //   }
+  //   implicit def coderRowRes: Coder[Row] = Coder.row(schemaRes)
+  //   val in = sc.parallelize(usersWithLocale)
+  //   val r = in.query("select username from SCOLLECTION")
+  //   r should containInAnyOrder(expected)
+  // }
 
-  it should "infer the schema of results" in runWithContext { sc =>
-    val schemaRes = BSchema.builder().addStringField("username").build()
-    val expected = users.map { u =>
-      Row.withSchema(schemaRes).addValue(u.username).build()
-    }
-    implicit def coderRowRes: Coder[Row] = Coder.row(schemaRes)
-    val in = sc.parallelize(users)
-    val r = in.query("select username from SCOLLECTION")
-    r should containInAnyOrder(expected)
-  }
+  // it should "infer the schema of results" in runWithContext { sc =>
+  //   val schemaRes = BSchema.builder().addStringField("username").build()
+  //   val expected = users.map { u =>
+  //     Row.withSchema(schemaRes).addValue(u.username).build()
+  //   }
+  //   implicit def coderRowRes: Coder[Row] = Coder.row(schemaRes)
+  //   val in = sc.parallelize(users)
+  //   val r = in.query("select username from SCOLLECTION")
+  //   r should containInAnyOrder(expected)
+  // }
 
-  it should "Automatically convert rows results to Products" in runWithContext { sc =>
-    val expected = users.map { u =>
-      (u.username, u.age)
-    }
-    val in = sc.parallelize(users)
-    val r = in.queryAs[(String, Int)]("select username, age from SCOLLECTION")
-    r should containInAnyOrder(expected)
-  }
+  // it should "Automatically convert rows results to Products" in runWithContext { sc =>
+  //   val expected = users.map { u =>
+  //     (u.username, u.age)
+  //   }
+  //   val in = sc.parallelize(users)
+  //   val r = in.queryAs[(String, Int)]("select username, age from SCOLLECTION")
+  //   r should containInAnyOrder(expected)
+  // }
 
-  it should "support fallback in sql" in runWithContext { sc =>
-    val expected = usersWithLocale.map { u =>
-      (u.username, u.locale)
-    }
-    val in = sc.parallelize(usersWithLocale)
-    val r = in.queryAs[(String, Locale)]("select username, locale from SCOLLECTION")
-    r should containInAnyOrder(expected)
-  }
+  // it should "support fallback in sql" in runWithContext { sc =>
+  //   val expected = usersWithLocale.map { u =>
+  //     (u.username, u.locale)
+  //   }
+  //   val in = sc.parallelize(usersWithLocale)
+  //   val r = in.queryAs[(String, Locale)]("select username, locale from SCOLLECTION")
+  //   r should containInAnyOrder(expected)
+  // }
 
-  it should "support Option" in runWithContext { sc =>
-    val expected = usersWithOption.map { u =>
-      (u.username, u.age)
-    }
-    val in = sc.parallelize(usersWithOption)
-    val r = in.queryAs[(String, Option[Int])]("select username, age from SCOLLECTION")
-    r should containInAnyOrder(expected)
+  // it should "support Option" in runWithContext { sc =>
+  //   val expected = usersWithOption.map { u =>
+  //     (u.username, u.age)
+  //   }
+  //   val in = sc.parallelize(usersWithOption)
+  //   val r = in.queryAs[(String, Option[Int])]("select username, age from SCOLLECTION")
+  //   r should containInAnyOrder(expected)
 
-    val in2 = sc.parallelize(usersWithOption)
-    val r2 = in2.queryAs[Option[Int]]("select age from SCOLLECTION")
-    r2 should containInAnyOrder(expected.map(_._2))
-  }
+  //   val in2 = sc.parallelize(usersWithOption)
+  //   val r2 = in2.queryAs[Option[Int]]("select age from SCOLLECTION")
+  //   r2 should containInAnyOrder(expected.map(_._2))
+  // }
 
-  it should "support scala collections" in runWithContext { sc =>
-    val expected = usersWithList.map { u =>
-      (u.username, u.emails)
-    }
-    val in = sc.parallelize(usersWithList)
-    val r = in.queryAs[(String, List[String])]("select username, emails from SCOLLECTION")
-    r should containInAnyOrder(expected)
-  }
+  // it should "support scala collections" in runWithContext { sc =>
+  //   val expected = usersWithList.map { u =>
+  //     (u.username, u.emails)
+  //   }
+  //   val in = sc.parallelize(usersWithList)
+  //   val r = in.queryAs[(String, List[String])]("select username, emails from SCOLLECTION")
+  //   r should containInAnyOrder(expected)
+  // }
 
-  it should "support javabeans" in runWithContext { sc =>
-    val expected = 255
-    val in = sc.parallelize(users)
-    val r = in.queryAs[Int]("select sum(age) from SCOLLECTION")
-    r should containSingleValue(expected)
-  }
+  // it should "support javabeans" in runWithContext { sc =>
+  //   val expected = 255
+  //   val in = sc.parallelize(users)
+  //   val r = in.queryAs[Int]("select sum(age) from SCOLLECTION")
+  //   r should containSingleValue(expected)
+  // }
 
-  it should "support java collections" in runWithContext { sc =>
-    val expected = usersWithJList.map { u =>
-      (u.username, u.emails.get(0))
-    }
-    val in = sc.parallelize(usersWithJList)
-    val r =
-      in.queryAs[(String, String)]("select username, emails[1] from SCOLLECTION")
-    r should containInAnyOrder(expected)
-  }
+  // it should "support java collections" in runWithContext { sc =>
+  //   val expected = usersWithJList.map { u =>
+  //     (u.username, u.emails.get(0))
+  //   }
+  //   val in = sc.parallelize(usersWithJList)
+  //   val r =
+  //     in.queryAs[(String, String)]("select username, emails[1] from SCOLLECTION")
+  //   r should containInAnyOrder(expected)
+  // }
 
-  it should "support Map[K, V]" in runWithContext { sc =>
-    val expected = usersWithMap.map { u =>
-      (u.username, u.contacts)
-    }
-    val in = sc.parallelize(usersWithMap)
-    val r =
-      in.queryAs[(String, Map[String, String])]("select username, contacts from SCOLLECTION")
-    r should containInAnyOrder(expected)
-  }
+  // it should "support Map[K, V]" in runWithContext { sc =>
+  //   val expected = usersWithMap.map { u =>
+  //     (u.username, u.contacts)
+  //   }
+  //   val in = sc.parallelize(usersWithMap)
+  //   val r =
+  //     in.queryAs[(String, Map[String, String])]("select username, contacts from SCOLLECTION")
+  //   r should containInAnyOrder(expected)
+  // }
 
-  it should "not derive a Schema for non-bean Java classes" in {
-    import com.spotify.scio.bean._
-    "IsJavaBean[UserBean]" should compile
-    "IsJavaBean[NotABean]" shouldNot compile
-    "IsJavaBean[TypeMismatch]" shouldNot compile
+  // it should "not derive a Schema for non-bean Java classes" in {
+  //   import com.spotify.scio.bean._
+  //   "IsJavaBean[UserBean]" should compile
+  //   "IsJavaBean[NotABean]" shouldNot compile
+  //   "IsJavaBean[TypeMismatch]" shouldNot compile
 
-    "Schema.javaBeanSchema[UserBean]" should compile
-    "Schema.javaBeanSchema[NotABean]" shouldNot compile
-    "Schema.javaBeanSchema[TypeMismatch]" shouldNot compile
-  }
+  //   "Schema.javaBeanSchema[UserBean]" should compile
+  //   "Schema.javaBeanSchema[NotABean]" shouldNot compile
+  //   "Schema.javaBeanSchema[TypeMismatch]" shouldNot compile
+  // }
 
-  it should "support joda types" in runWithContext { sc =>
-    val expected = usersWithJoda.map { u =>
-      (u.username, u.created)
-    }
+  // it should "support joda types" in runWithContext { sc =>
+  //   val expected = usersWithJoda.map { u =>
+  //     (u.username, u.created)
+  //   }
 
-    val r = sc
-      .parallelize(usersWithJoda)
-      .queryAs[(String, Instant)]("select username, created from SCOLLECTION")
+  //   val r = sc
+  //     .parallelize(usersWithJoda)
+  //     .queryAs[(String, Instant)]("select username, created from SCOLLECTION")
 
-    r should containInAnyOrder(expected)
+  //   r should containInAnyOrder(expected)
 
-    val expectedCast = usersWithJoda.map { u =>
-      (u.username, new DateTime(1985, 10, 26, 0, 0, UTC).toInstant())
-    }
+  //   val expectedCast = usersWithJoda.map { u =>
+  //     (u.username, new DateTime(1985, 10, 26, 0, 0, UTC).toInstant())
+  //   }
 
-    val query = """
-    | select username,
-    |        cast(
-    |         substring(trim(dateString) from 1 for 4)
-    |           ||'-'
-    |           ||substring(trim(dateString) from 5 for 2)
-    |           ||'-'
-    |           ||substring(trim(dateString) from 7 for 2) as date)
-    |         from SCOLLECTION
-    """.stripMargin
+  //   val query = """
+  //   | select username,
+  //   |        cast(
+  //   |         substring(trim(dateString) from 1 for 4)
+  //   |           ||'-'
+  //   |           ||substring(trim(dateString) from 5 for 2)
+  //   |           ||'-'
+  //   |           ||substring(trim(dateString) from 7 for 2) as date)
+  //   |         from SCOLLECTION
+  //   """.stripMargin
 
-    val cast = sc
-      .parallelize(usersWithJoda)
-      .queryAs[(String, Instant)](query)
+  //   val cast = sc
+  //     .parallelize(usersWithJoda)
+  //     .queryAs[(String, Instant)](query)
 
-    cast should containInAnyOrder(expectedCast)
-  }
+  //   cast should containInAnyOrder(expectedCast)
+  // }
 
-  it should "support tags" in runWithContext { sc =>
-    val a = sc.parallelize(users)
-    val q = new Query[User, String]("select username from A", new TupleTag[User]("A"))
-    a.queryAs(q) shouldNot beEmpty
-  }
+  // it should "support tags" in runWithContext { sc =>
+  //   val a = sc.parallelize(users)
+  //   val q = new Query[User, String]("select username from A", new TupleTag[User]("A"))
+  //   a.queryAs(q) shouldNot beEmpty
+  // }
 
   it should "support JOIN" in runWithContext { sc =>
     val a = sc.parallelize(users)
     val b = sc.parallelize(users)
+    val c = sc.parallelize(users)
 
     Sql
       .from(a, b)
@@ -346,287 +347,296 @@ class BeamSQLTest extends PipelineSpec {
         new TupleTag[User]("A"),
         new TupleTag[User]("B")
       ) shouldNot beEmpty
-  }
-
-  it should "support sql subqueries" in runWithContext { sc =>
-    val a = sc.parallelize(users)
-    val b = sc.parallelize(users)
 
     Sql
-      .from(a, b)
+      .from(a, b, c)
       .queryAs[String](
-        "select username from A where username in (select username from B)",
+        "select a.username from A a join B b on a.username = b.username join C c on a.username = c.username",
         new TupleTag[User]("A"),
-        new TupleTag[User]("B")
-      ) shouldNot beEmpty
-
-    Sql
-      .from(a, b)
-      .queryAs[(String, Boolean)](
-        "select username, username not in (select username from B where username = 'user1') from A",
-        new TupleTag[User]("A"),
-        new TupleTag[User]("B")
-      ) shouldNot beEmpty
+        new TupleTag[User]("B"),
+        new TupleTag[User]("C")
+      ) should containInAnyOrder(users.map(_.username))
   }
 
-  it should "properly chain typed queries" in runWithContext { sc =>
-    val expected = 255
-    val in = sc.parallelize(users)
-    val r1 =
-      in.queryAs[(String, Int)]("select username, age from SCOLLECTION")
-        .queryAs[Int]("select sum(_2) from SCOLLECTION")
-    r1 should containSingleValue(expected)
+  // it should "support sql subqueries" in runWithContext { sc =>
+  //   val a = sc.parallelize(users)
+  //   val b = sc.parallelize(users)
 
-    val inB = sc.parallelize(users)
-    val r2 = Sql
-      .from(in, inB)
-      .queryAs[(String, Int)](
-        "select a.username, b.age from B a join A b on a.username = b.username",
-        new TupleTag[User]("A"),
-        new TupleTag[User]("B")
-      )
-      .queryAs[Int]("select sum(_2) from SCOLLECTION")
+  //   Sql
+  //     .from(a, b)
+  //     .queryAs[String](
+  //       "select username from A where username in (select username from B)",
+  //       new TupleTag[User]("A"),
+  //       new TupleTag[User]("B")
+  //     ) shouldNot beEmpty
 
-    r2 should containSingleValue(expected)
-  }
+  //   Sql
+  //     .from(a, b)
+  //     .queryAs[(String, Boolean)](
+  //       "select username, username not in (select username from B where username = 'user1') from A",
+  //       new TupleTag[User]("A"),
+  //       new TupleTag[User]("B")
+  //     ) shouldNot beEmpty
+  // }
 
-  it should "Support scalar inputs" in runWithContext { sc =>
-    val in = sc.parallelize((1 to 10).toList)
-    val r = in.queryAs[Int]("select sum(`value`) from SCOLLECTION")
-    r should containSingleValue(55)
-  }
+  // it should "properly chain typed queries" in runWithContext { sc =>
+  //   val expected = 255
+  //   val in = sc.parallelize(users)
+  //   val r1 =
+  //     in.queryAs[(String, Int)]("select username, age from SCOLLECTION")
+  //       .queryAs[Int]("select sum(_2) from SCOLLECTION")
+  //   r1 should containSingleValue(expected)
 
-  it should "support applying multiple queries on the same SCollection" in runWithContext { sc =>
-    val in = sc.parallelize(users)
-    val sumAges = in.queryAs[Int]("select sum(age) from SCOLLECTION")
-    sumAges should containSingleValue(255)
-    val usernames = in.queryAs[String]("select username from SCOLLECTION")
-    usernames should containInAnyOrder(users.map(_.username))
-  }
+  //   val inB = sc.parallelize(users)
+  //   val r2 = Sql
+  //     .from(in, inB)
+  //     .queryAs[(String, Int)](
+  //       "select a.username, b.age from B a join A b on a.username = b.username",
+  //       new TupleTag[User]("A"),
+  //       new TupleTag[User]("B")
+  //     )
+  //     .queryAs[Int]("select sum(_2) from SCOLLECTION")
 
-  it should "provide a typecheck method for tests" in {
-    object checkOK {
-      def apply[A: Schema, B: Schema](q: String): Assertion =
-        Queries.typecheck(Query[A, B](q, Sql.defaultTag)) should be('right)
+  //   r2 should containSingleValue(expected)
+  // }
 
-      def apply[A: Schema, B: Schema, C: Schema](
-        q: String,
-        a: TupleTag[A],
-        b: TupleTag[B]
-      ): Assertion =
-        Queries.typecheck(Query2[A, B, C](q, a, b)) should be('right)
-    }
+  // it should "Support scalar inputs" in runWithContext { sc =>
+  //   val in = sc.parallelize((1 to 10).toList)
+  //   val r = in.queryAs[Int]("select sum(`value`) from SCOLLECTION")
+  //   r should containSingleValue(55)
+  // }
 
-    object checkNOK {
-      def apply[A: Schema, B: Schema](q: String): Assertion =
-        Queries.typecheck(Query[A, B](q, Sql.defaultTag)) should be('left)
+  // it should "support applying multiple queries on the same SCollection" in runWithContext { sc =>
+  //   val in = sc.parallelize(users)
+  //   val sumAges = in.queryAs[Int]("select sum(age) from SCOLLECTION")
+  //   sumAges should containSingleValue(255)
+  //   val usernames = in.queryAs[String]("select username from SCOLLECTION")
+  //   usernames should containInAnyOrder(users.map(_.username))
+  // }
 
-      def apply[A: Schema, B: Schema, C: Schema](
-        q: String,
-        a: TupleTag[A],
-        b: TupleTag[B]
-      ): Assertion =
-        Queries.typecheck(Query2[A, B, C](q, a, b)) should be('left)
-    }
+  // it should "provide a typecheck method for tests" in {
+  //   object checkOK {
+  //     def apply[A: Schema, B: Schema](q: String): Assertion =
+  //       Queries.typecheck(Query[A, B](q, Sql.defaultTag)) should be('right)
 
-    checkOK[Bar, Long]("select l from SCOLLECTION")
-    checkOK[Bar, Int]("select `SCOLLECTION`.`f`.`i` from SCOLLECTION")
-    checkOK[Bar, Result]("select `SCOLLECTION`.`f`.`i` from SCOLLECTION")
-    checkOK[Bar, Foo]("select f from SCOLLECTION")
-    checkOK[Bar, (String, Long)]("select `SCOLLECTION`.`f`.`s`, l from SCOLLECTION")
+  //     def apply[A: Schema, B: Schema, C: Schema](
+  //       q: String,
+  //       a: TupleTag[A],
+  //       b: TupleTag[B]
+  //     ): Assertion =
+  //       Queries.typecheck(Query2[A, B, C](q, a, b)) should be('right)
+  //   }
 
-    // test fallback support
-    checkOK[UserWithFallBack, Locale]("select locale from SCOLLECTION")
+  //   object checkNOK {
+  //     def apply[A: Schema, B: Schema](q: String): Assertion =
+  //       Queries.typecheck(Query[A, B](q, Sql.defaultTag)) should be('left)
 
-    checkOK[UserWithOption, Option[Int]]("select age from SCOLLECTION")
-    checkNOK[UserWithOption, Int]("select age from SCOLLECTION")
+  //     def apply[A: Schema, B: Schema, C: Schema](
+  //       q: String,
+  //       a: TupleTag[A],
+  //       b: TupleTag[B]
+  //     ): Assertion =
+  //       Queries.typecheck(Query2[A, B, C](q, a, b)) should be('left)
+  //   }
 
-    checkNOK[Bar, (String, Long)]("select l from SCOLLECTION")
-    checkNOK[Bar, String]("select l from SCOLLECTION")
+  //   checkOK[Bar, Long]("select l from SCOLLECTION")
+  //   checkOK[Bar, Int]("select `SCOLLECTION`.`f`.`i` from SCOLLECTION")
+  //   checkOK[Bar, Result]("select `SCOLLECTION`.`f`.`i` from SCOLLECTION")
+  //   checkOK[Bar, Foo]("select f from SCOLLECTION")
+  //   checkOK[Bar, (String, Long)]("select `SCOLLECTION`.`f`.`s`, l from SCOLLECTION")
 
-    checkOK[Bar, Long]("""
-      select cast(`SCOLLECTION`.`f`.`i` as BIGINT)
-      from SCOLLECTION
-    """)
+  //   // test fallback support
+  //   checkOK[UserWithFallBack, Locale]("select locale from SCOLLECTION")
 
-    checkOK[UserBean, (String, Int)]("select name, age from SCOLLECTION")
-    checkNOK[UserBean, (String, Long)]("select name, age from SCOLLECTION")
-    checkNOK[UserBean, User]("select name, age from SCOLLECTION")
-    checkNOK[UserBean, (String, Option[Int])]("select name, age from SCOLLECTION")
-    checkNOK[UserBean, Bar]("select name, age from SCOLLECTION")
-    // Calcite flattens the row value
-    checkOK[UserBean, (Long, Int, String)](
-      "select cast(age AS BIGINT), row(age, name) from SCOLLECTION"
-    )
+  //   checkOK[UserWithOption, Option[Int]]("select age from SCOLLECTION")
+  //   checkNOK[UserWithOption, Int]("select age from SCOLLECTION")
 
-    checkOK[UserBean, List[Int]]("select ARRAY[age] from SCOLLECTION")
-    checkOK[UserBean, (String, List[Int])]("select name, ARRAY[age] from SCOLLECTION")
-    checkNOK[UserBean, (String, Int)]("select name, ARRAY[age] from SCOLLECTION")
-    checkNOK[UserBean, (String, List[Int])]("select name, age from SCOLLECTION")
+  //   checkNOK[Bar, (String, Long)]("select l from SCOLLECTION")
+  //   checkNOK[Bar, String]("select l from SCOLLECTION")
 
-    checkOK[User, User, (String, Int)](
-      "select a.username, b.age from A a join B b on a.username = b.username",
-      new TupleTag[User]("A"),
-      new TupleTag[User]("B")
-    )
-    checkNOK[User, User, (String, String)](
-      "select a.username, b.age from A a join B b on a.username = b.username",
-      new TupleTag[User]("A"),
-      new TupleTag[User]("B")
-    )
-  }
+  //   checkOK[Bar, Long]("""
+  //     select cast(`SCOLLECTION`.`f`.`i` as BIGINT)
+  //     from SCOLLECTION
+  //   """)
 
-  it should "support UDFs from SerializableFunctions and classes" in runWithContext { sc =>
-    val schemaRes = BSchema
-      .builder()
-      .addStringField("username")
-      .addBooleanField("isOver18")
-      .build()
+  //   checkOK[UserBean, (String, Int)]("select name, age from SCOLLECTION")
+  //   checkNOK[UserBean, (String, Long)]("select name, age from SCOLLECTION")
+  //   checkNOK[UserBean, User]("select name, age from SCOLLECTION")
+  //   checkNOK[UserBean, (String, Option[Int])]("select name, age from SCOLLECTION")
+  //   checkNOK[UserBean, Bar]("select name, age from SCOLLECTION")
+  //   // Calcite flattens the row value
+  //   checkOK[UserBean, (Long, Int, String)](
+  //     "select cast(age AS BIGINT), row(age, name) from SCOLLECTION"
+  //   )
 
-    val expected = users.map { u =>
-      Row.withSchema(schemaRes).addValue(u.username).addValue(true).build()
-    }
-    implicit def coderRowRes: Coder[Row] = Coder.row(schemaRes)
+  //   checkOK[UserBean, List[Int]]("select ARRAY[age] from SCOLLECTION")
+  //   checkOK[UserBean, (String, List[Int])]("select name, ARRAY[age] from SCOLLECTION")
+  //   checkNOK[UserBean, (String, Int)]("select name, ARRAY[age] from SCOLLECTION")
+  //   checkNOK[UserBean, (String, List[Int])]("select name, age from SCOLLECTION")
 
-    val in = sc.parallelize(users)
+  //   checkOK[User, User, (String, Int)](
+  //     "select a.username, b.age from A a join B b on a.username = b.username",
+  //     new TupleTag[User]("A"),
+  //     new TupleTag[User]("B")
+  //   )
+  //   checkNOK[User, User, (String, String)](
+  //     "select a.username, b.age from A a join B b on a.username = b.username",
+  //     new TupleTag[User]("A"),
+  //     new TupleTag[User]("B")
+  //   )
+  // }
 
-    in.query(
-      "select username, isUserOver18(age) as isOver18 from SCOLLECTION",
-      Udf.fromSerializableFn("isUserOver18", new IsOver18UdfFn())
-    ) should containInAnyOrder(expected)
+  // it should "support UDFs from SerializableFunctions and classes" in runWithContext { sc =>
+  //   val schemaRes = BSchema
+  //     .builder()
+  //     .addStringField("username")
+  //     .addBooleanField("isOver18")
+  //     .build()
 
-    in.query(
-      "select username, isUserOver18(age) as isOver18 from SCOLLECTION",
-      Udf.fromClass("isUserOver18", classOf[IsOver18Udf])
-    ) should containInAnyOrder(expected)
-  }
+  //   val expected = users.map { u =>
+  //     Row.withSchema(schemaRes).addValue(u.username).addValue(true).build()
+  //   }
+  //   implicit def coderRowRes: Coder[Row] = Coder.row(schemaRes)
 
-  it should "support UDAFs from CombineFns" in runWithContext { sc =>
-    val schemaRes = BSchema
-      .builder()
-      .addInt32Field("maxUserAge")
-      .build()
+  //   val in = sc.parallelize(users)
 
-    val expected = Seq(Row.withSchema(schemaRes).addValue(30).build())
-    implicit def coderRowRes: Coder[Row] = Coder.row(schemaRes)
+  //   in.query(
+  //     "select username, isUserOver18(age) as isOver18 from SCOLLECTION",
+  //     Udf.fromSerializableFn("isUserOver18", new IsOver18UdfFn())
+  //   ) should containInAnyOrder(expected)
 
-    sc.parallelize(users)
-      .query(
-        "select maxUserAge(age) as maxUserAge from SCOLLECTION",
-        Udf.fromAggregateFn("maxUserAge", new MaxUserAgeUdafFn())
-      ) should containInAnyOrder(expected)
-  }
+  //   in.query(
+  //     "select username, isUserOver18(age) as isOver18 from SCOLLECTION",
+  //     Udf.fromClass("isUserOver18", classOf[IsOver18Udf])
+  //   ) should containInAnyOrder(expected)
+  // }
 
-  it should "automatically convert from compatible classes" in runWithContext { sc =>
-    import TypeConvertionsTestData._
-    sc.parallelize(from)
-      .to[To1](To.unsafe) should containInAnyOrder(to)
+  // it should "support UDAFs from CombineFns" in runWithContext { sc =>
+  //   val schemaRes = BSchema
+  //     .builder()
+  //     .addInt32Field("maxUserAge")
+  //     .build()
 
-    sc.parallelize(javaUsers)
-      .to[JavaCompatibleUser](To.unsafe) should containInAnyOrder(expectedJavaCompatUsers)
+  //   val expected = Seq(Row.withSchema(schemaRes).addValue(30).build())
+  //   implicit def coderRowRes: Coder[Row] = Coder.row(schemaRes)
 
-    sc.parallelize(from)
-      .to[TinyTo](To.unsafe) should containInAnyOrder(tinyTo)
+  //   sc.parallelize(users)
+  //     .query(
+  //       "select maxUserAge(age) as maxUserAge from SCOLLECTION",
+  //       Udf.fromAggregateFn("maxUserAge", new MaxUserAgeUdafFn())
+  //     ) should containInAnyOrder(expected)
+  // }
 
-    sc.parallelize(from)
-      .to[To1](To.safe) should containInAnyOrder(to)
+  // it should "automatically convert from compatible classes" in runWithContext { sc =>
+  //   import TypeConvertionsTestData._
+  //   sc.parallelize(from)
+  //     .to[To1](To.unsafe) should containInAnyOrder(to)
 
-    sc.parallelize(javaUsers)
-      .to[JavaCompatibleUser](To.safe) should containInAnyOrder(expectedJavaCompatUsers)
+  //   sc.parallelize(javaUsers)
+  //     .to[JavaCompatibleUser](To.unsafe) should containInAnyOrder(expectedJavaCompatUsers)
 
-    sc.parallelize(from)
-      .to[TinyTo](To.safe) should containInAnyOrder(tinyTo)
-  }
+  //   sc.parallelize(from)
+  //     .to[TinyTo](To.unsafe) should containInAnyOrder(tinyTo)
 
-  it should "Support queries on Avro generated classes" in runWithContext { sc =>
-    val expected: List[(Int, String, String)] =
-      avroUsers.map { u =>
-        (u.getId.toInt, u.getFirstName.toString, u.getLastName.toString)
-      }
+  //   sc.parallelize(from)
+  //     .to[To1](To.safe) should containInAnyOrder(to)
 
-    val q =
-      Query[avro.User, (Int, String, String)](
-        "SELECT id, first_name, last_name from SCOLLECTION",
-        Sql.defaultTag
-      )
+  //   sc.parallelize(javaUsers)
+  //     .to[JavaCompatibleUser](To.safe) should containInAnyOrder(expectedJavaCompatUsers)
 
-    sc.parallelize(avroUsers).queryAs(q) should containInAnyOrder(expected)
-  }
+  //   sc.parallelize(from)
+  //     .to[TinyTo](To.safe) should containInAnyOrder(tinyTo)
+  // }
 
-  it should "Automatically convert from Avro to Scala" in runWithContext { sc =>
-    import TypeConvertionsTestData._
-    val expected: List[AvroCompatibleUser] =
-      avroUsers.map { u =>
-        AvroCompatibleUser(u.getId.toInt, u.getFirstName.toString, u.getLastName.toString)
-      }
+  // it should "Support queries on Avro generated classes" in runWithContext { sc =>
+  //   val expected: List[(Int, String, String)] =
+  //     avroUsers.map { u =>
+  //       (u.getId.toInt, u.getFirstName.toString, u.getLastName.toString)
+  //     }
 
-    sc.parallelize(avroUsers)
-      .to[AvroCompatibleUser](To.unsafe) should containInAnyOrder(expected)
+  //   val q =
+  //     Query[avro.User, (Int, String, String)](
+  //       "SELECT id, first_name, last_name from SCOLLECTION",
+  //       Sql.defaultTag
+  //     )
 
-    // Test support for nullable fields
-    sc.parallelize(avroWithNullable)
-      .to[CompatibleAvroTestRecord](To.unsafe) should containInAnyOrder(expectedAvro)
+  //   sc.parallelize(avroUsers).queryAs(q) should containInAnyOrder(expected)
+  // }
 
-    sc.parallelize(avroUsers)
-      .to[AvroCompatibleUser](To.safe) should containInAnyOrder(expected)
+  // it should "Automatically convert from Avro to Scala" in runWithContext { sc =>
+  //   import TypeConvertionsTestData._
+  //   val expected: List[AvroCompatibleUser] =
+  //     avroUsers.map { u =>
+  //       AvroCompatibleUser(u.getId.toInt, u.getFirstName.toString, u.getLastName.toString)
+  //     }
 
-    sc.parallelize(avroWithNullable)
-      .to[CompatibleAvroTestRecord](To.safe) should containInAnyOrder(expectedAvro)
-  }
+  //   sc.parallelize(avroUsers)
+  //     .to[AvroCompatibleUser](To.unsafe) should containInAnyOrder(expected)
 
-  "String interpolation" should "support simple queries" in runWithContext { sc =>
-    val expected = users.map { u =>
-      (u.username, u.age)
-    }
-    val in = sc.parallelize(users)
-    val r = sql"select username, age from $in".as[(String, Int)]
-    r should containInAnyOrder(expected)
-  }
+  //   // Test support for nullable fields
+  //   sc.parallelize(avroWithNullable)
+  //     .to[CompatibleAvroTestRecord](To.unsafe) should containInAnyOrder(expectedAvro)
 
-  it should "support UDF" in runWithContext { sc =>
-    val in = sc.parallelize(users)
-    val maxUserAge = Udf.fromAggregateFn("maxUserAge", new MaxUserAgeUdafFn())
-    val r = sql"select $maxUserAge(age) as maxUserAge from $in".as[Int]
-    r should containSingleValue(30)
-  }
+  //   sc.parallelize(avroUsers)
+  //     .to[AvroCompatibleUser](To.safe) should containInAnyOrder(expected)
 
-  it should "support joins" in runWithContext { sc =>
-    val a = sc.parallelize(users)
-    val b = sc.parallelize(users)
-    sql"""
-      SELECT $a.username
-      FROM $a
-      JOIN $b ON $a.username = $b.username
-    """.as[String] shouldNot beEmpty
+  //   sc.parallelize(avroWithNullable)
+  //     .to[CompatibleAvroTestRecord](To.safe) should containInAnyOrder(expectedAvro)
+  // }
 
-    val o1 = sc.parallelize(orders)
-    val o2 = sc.parallelize(orders)
-    sql"""
-      SELECT $o1.order_id, $o1.price, $o1.site_id, $o2.order_id, $o2.price, $o2.site_id
-      FROM $o1
-      JOIN $o2
-      ON $o1.order_id = $o2.site_id AND $o2.price = $o1.site_id
-    """.as[(Long, Long, Long, Long, Long, Long)] shouldNot beEmpty
+  // "String interpolation" should "support simple queries" in runWithContext { sc =>
+  //   val expected = users.map { u =>
+  //     (u.username, u.age)
+  //   }
+  //   val in = sc.parallelize(users)
+  //   val r = sql"select username, age from $in".as[(String, Int)]
+  //   r should containInAnyOrder(expected)
+  // }
 
-    sql"""
-      SELECT o1.order_id, o1.price, o1.site_id, o2.order_id, o2.price, o2.site_id
-      FROM $o1 o1
-      JOIN $o2 o2
-      ON o1.order_id = o2.site_id AND o2.price = o1.site_id
-    """.as[(Long, Long, Long, Long, Long, Long)] shouldNot beEmpty
-  }
+  // it should "support UDF" in runWithContext { sc =>
+  //   val in = sc.parallelize(users)
+  //   val maxUserAge = Udf.fromAggregateFn("maxUserAge", new MaxUserAgeUdafFn())
+  //   val r = sql"select $maxUserAge(age) as maxUserAge from $in".as[Int]
+  //   r should containSingleValue(30)
+  // }
 
-  it should "support joins and UDF in the same query" in runWithContext { sc =>
-    val a = sc.parallelize(users)
-    val b = sc.parallelize(users)
-    val maxUserAge = Udf.fromAggregateFn("maxUserAge", new MaxUserAgeUdafFn())
-    val r =
-      sql"""
-        SELECT $maxUserAge($a.age) FROM $a
-        JOIN $b ON $a.username = $b.username
-      """.as[Int]
-    r should containSingleValue(30)
-  }
+  // it should "support joins" in runWithContext { sc =>
+  //   val a = sc.parallelize(users)
+  //   val b = sc.parallelize(users)
+  //   sql"""
+  //     SELECT $a.username
+  //     FROM $a
+  //     JOIN $b ON $a.username = $b.username
+  //   """.as[String] shouldNot beEmpty
+
+  //   val o1 = sc.parallelize(orders)
+  //   val o2 = sc.parallelize(orders)
+  //   sql"""
+  //     SELECT $o1.order_id, $o1.price, $o1.site_id, $o2.order_id, $o2.price, $o2.site_id
+  //     FROM $o1
+  //     JOIN $o2
+  //     ON $o1.order_id = $o2.site_id AND $o2.price = $o1.site_id
+  //   """.as[(Long, Long, Long, Long, Long, Long)] shouldNot beEmpty
+
+  //   sql"""
+  //     SELECT o1.order_id, o1.price, o1.site_id, o2.order_id, o2.price, o2.site_id
+  //     FROM $o1 o1
+  //     JOIN $o2 o2
+  //     ON o1.order_id = o2.site_id AND o2.price = o1.site_id
+  //   """.as[(Long, Long, Long, Long, Long, Long)] shouldNot beEmpty
+  // }
+
+  // it should "support joins and UDF in the same query" in runWithContext { sc =>
+  //   val a = sc.parallelize(users)
+  //   val b = sc.parallelize(users)
+  //   val maxUserAge = Udf.fromAggregateFn("maxUserAge", new MaxUserAgeUdafFn())
+  //   val r =
+  //     sql"""
+  //       SELECT $maxUserAge($a.age) FROM $a
+  //       JOIN $b ON $a.username = $b.username
+  //     """.as[Int]
+  //   r should containSingleValue(30)
+  // }
 }
 
 object TypeConvertionsTestData {

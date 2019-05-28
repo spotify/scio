@@ -36,7 +36,7 @@ import scala.language.experimental.macros
 import scala.util.Try
 import scala.collection.JavaConverters._
 
-object Sql {
+object Sql extends SqlGen {
 
   private[sql] val BeamProviderName = "beam"
   private[sql] val SCollectionTypeName = "SCOLLECTION"
@@ -44,9 +44,6 @@ object Sql {
   private[scio] def defaultTag[A]: TupleTag[A] = new TupleTag[A](SCollectionTypeName)
 
   def from[A: Schema](sc: SCollection[A]): SqlSCollection[A] = new SqlSCollection(sc)
-
-  def from[A: Schema, B: Schema](a: SCollection[A], b: SCollection[B]): SqlSCollection2[A, B] =
-    new SqlSCollection2(a, b)
 
   private[sql] def registerUdf(t: SqlTransform, udfs: Udf*): SqlTransform =
     udfs.foldLeft(t) {
@@ -100,56 +97,13 @@ final class SqlSCollection[A: Schema](sc: SCollection[A]) {
 
 }
 
-final class SqlSCollection2[A: Schema, B: Schema](a: SCollection[A], b: SCollection[B]) {
-
-  def query(q: String, aTag: TupleTag[A], bTag: TupleTag[B], udfs: Udf*): SCollection[Row] =
-    query(Query2(q, aTag, bTag, udfs.toList))
-
-  def query(q: Query2[A, B, Row]): SCollection[Row] = {
-    a.context.wrap {
-      val collA = Sql.setSchema(a)
-      val collB = Sql.setSchema(b)
-      val sqlTransform = Sql.registerUdf(SqlTransform.query(q.query), q.udfs: _*)
-
-      PCollectionTuple
-        .of(q.aTag, collA.internal)
-        .and(q.bTag, collB.internal)
-        .apply(s"${collA.tfName} join ${collB.tfName}", sqlTransform)
-    }
-  }
-
-  def queryAs[R: Schema](
-    q: String,
-    aTag: TupleTag[A],
-    bTag: TupleTag[B],
-    udfs: Udf*
-  ): SCollection[R] =
-    queryAs(Query2(q, aTag, bTag, udfs.toList))
-
-  def queryAs[R: Schema](q: Query2[A, B, R]): SCollection[R] =
-    try {
-      query(q.query, q.aTag, q.bTag, q.udfs: _*).to(To.unchecked((_, i) => i))
-    } catch {
-      case e: ParseException =>
-        Queries.typecheck(q).fold(err => throw new RuntimeException(err, e), _ => throw e)
-    }
-
-}
-
 final case class Query[A, B](
   query: String,
   tag: TupleTag[A] = Sql.defaultTag[A],
   udfs: List[Udf] = Nil
 )
 
-final case class Query2[A, B, R](
-  query: String,
-  aTag: TupleTag[A],
-  bTag: TupleTag[B],
-  udfs: List[Udf] = Nil
-)
-
-object Queries {
+object Queries extends QueriesGen {
 
   /**
    * Typecheck [[Query]] q against the provided schemas.
@@ -164,36 +118,11 @@ object Queries {
       q.udfs
     ).right.map(_ => q)
 
-  /**
-   * Typecheck [[Query2]] q against the provided schemas.
-   * If the query correctly typechecks, it's simply return as a [[Right]].
-   * If it fails, a error message is returned in a [[Left]].
-   */
-  def typecheck[A: Schema, B: Schema, R: Schema](
-    q: Query2[A, B, R]
-  ): Either[String, Query2[A, B, R]] =
-    typecheck(
-      q.query,
-      List(
-        (q.aTag.getId, SchemaMaterializer.beamSchema[A]),
-        (q.bTag.getId, SchemaMaterializer.beamSchema[B])
-      ),
-      SchemaMaterializer.beamSchema[R],
-      q.udfs
-    ).right.map(_ => q)
-
   def typed[A: Schema, B: Schema](query: String): Query[A, B] =
     macro QueryMacros.typedImplDefaultTag[A, B]
 
   def typed[A: Schema, B: Schema](query: String, aTag: TupleTag[A]): Query[A, B] =
     macro QueryMacros.typedImpl[A, B]
-
-  def typed[A: Schema, B: Schema, R: Schema](
-    query: String,
-    aTag: TupleTag[A],
-    bTag: TupleTag[B]
-  ): Query2[A, B, R] =
-    macro QueryMacros.typed2Impl[A, B, R]
 
   private[this] def parseQuery(
     query: String,
@@ -243,7 +172,7 @@ object Queries {
       }
       .mkString("\n")
 
-  private[this] def typecheck(
+  def typecheck(
     query: String,
     inferredSchemas: List[(String, BSchema)],
     expectedSchema: BSchema,
@@ -296,7 +225,7 @@ object Queries {
 
 }
 
-object QueryMacros {
+object QueryMacros extends QueryMacrosGen {
   import scala.reflect.macros.blackbox
 
   def typedImplDefaultTag[A: c.WeakTypeTag, B: c.WeakTypeTag](c: blackbox.Context)(
@@ -334,34 +263,6 @@ object QueryMacros {
       )
   }
 
-  def typed2Impl[A: c.WeakTypeTag, B: c.WeakTypeTag, R: c.WeakTypeTag](
-    c: blackbox.Context
-  )(query: c.Expr[String], aTag: c.Expr[TupleTag[A]], bTag: c.Expr[TupleTag[B]])(
-    aSchema: c.Expr[Schema[A]],
-    bSchema: c.Expr[Schema[B]],
-    oSchema: c.Expr[Schema[R]]
-  ): c.Expr[Query2[A, B, R]] = {
-    val h = new { val ctx: c.type = c } with SchemaMacroHelpers
-    import h._
-    import c.universe._
-
-    assertConcrete[A](c)
-    assertConcrete[B](c)
-    assertConcrete[R](c)
-
-    val schemas: (Schema[A], Schema[B], Schema[R]) = c.eval(
-      c.Expr(q"(${inferImplicitSchema[A]}, ${inferImplicitSchema[B]}, ${inferImplicitSchema[R]})")
-    )
-
-    val sq = Query2[A, B, R](cons(c)(query), tupleTag(c)(aTag), tupleTag(c)(bTag))
-    Queries
-      .typecheck(sq)(schemas._1, schemas._2, schemas._3)
-      .fold(
-        err => c.abort(c.enclosingPosition, err),
-        _ => c.Expr[Query2[A, B, R]](q"_root_.com.spotify.scio.sql.Query2($query, $aTag, $bTag)")
-      )
-  }
-
   /**
    * Make sure that A is a concrete type bc. SQL macros can only
    * materialize Schema[A] is A is concrete
@@ -392,6 +293,50 @@ object QueryMacros {
   }
 
   private[this] def tupleTag[T](c: blackbox.Context)(e: c.Expr[TupleTag[T]]): TupleTag[T] = {
+    import c.universe._
+
+    e.tree match {
+      case Apply(_, List(Literal(Constant(tag: String)))) => new TupleTag[T](tag)
+      case _ =>
+        c.abort(c.enclosingPosition, s"Expression ${e.tree}")
+    }
+  }
+
+}
+
+object QueryMacrosUtil {
+  import scala.reflect.macros.blackbox
+
+  /**
+   * Make sure that A is a concrete type bc. SQL macros can only
+   * materialize Schema[A] is A is concrete
+   */
+  def assertConcrete[A: c.WeakTypeTag](c: blackbox.Context): Unit = {
+    import c.universe._
+    val wtt = weakTypeOf[A].dealias
+    val isVal = wtt <:< typeOf[AnyVal]
+    val isSealed =
+      if (wtt.typeSymbol.isClass) {
+        wtt.typeSymbol.asClass.isSealed
+      } else false
+    val isAbstract = wtt.typeSymbol.asType.isAbstract
+    if (!isVal && isAbstract && !isSealed) {
+      c.abort(c.enclosingPosition, s"$wtt is an abstract type, expected a concrete type.")
+    } else {
+      ()
+    }
+  }
+
+  def cons[A](c: blackbox.Context)(e: c.Expr[String]): String = {
+    import c.universe._
+    e.tree match {
+      case Literal(Constant(q: String)) => q
+      case _ =>
+        c.abort(c.enclosingPosition, s"Expression ${e.tree} does not evaluate to a constant")
+    }
+  }
+
+  def tupleTag[T](c: blackbox.Context)(e: c.Expr[TupleTag[T]]): TupleTag[T] = {
     import c.universe._
 
     e.tree match {
