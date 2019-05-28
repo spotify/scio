@@ -20,7 +20,7 @@ package com.spotify.scio.coders
 private object Derived extends Serializable {
   import magnolia._
 
-  @inline private def catching[T](msg: => String, stack: Array[StackTraceElement])(v: => T): T =
+  @inline private def catching[T](msg: => String, stack: => Array[StackTraceElement])(v: => T): T =
     try {
       v
     } catch {
@@ -41,7 +41,7 @@ private object Derived extends Serializable {
       i = i + 1
     }
 
-    val stack = CoderException.prepareStackTrace
+    lazy val stack = CoderException.prepareStackTrace
 
     @inline def destruct(v: T): Array[Any] = {
       val arr = new Array[Any](ps.length)
