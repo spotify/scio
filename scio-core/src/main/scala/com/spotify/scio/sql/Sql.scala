@@ -299,26 +299,6 @@ object Queries {
 object QueryMacros {
   import scala.reflect.macros.blackbox
 
-  /**
-   * Make sure that A is a concrete type bc. SQL macros can only
-   * materialize Schema[A] is A is concrete
-   */
-  private def assertConcrete[A: c.WeakTypeTag](c: blackbox.Context): Unit = {
-    import c.universe._
-    val wtt = weakTypeOf[A].dealias
-    val isVal = wtt <:< typeOf[AnyVal]
-    val isSealed =
-      if (wtt.typeSymbol.isClass) {
-        wtt.typeSymbol.asClass.isSealed
-      } else false
-    val isAbstract = wtt.typeSymbol.asType.isAbstract
-    if (!isVal && isAbstract && !isSealed) {
-      c.abort(c.enclosingPosition, s"$wtt is an abstract type, expected a concrete type.")
-    } else {
-      ()
-    }
-  }
-
   def typedImplDefaultTag[A: c.WeakTypeTag, B: c.WeakTypeTag](c: blackbox.Context)(
     query: c.Expr[String]
   )(iSchema: c.Expr[Schema[A]], oSchema: c.Expr[Schema[B]]): c.Expr[Query[A, B]] = {
@@ -334,28 +314,20 @@ object QueryMacros {
     query: c.Expr[String],
     aTag: c.Expr[TupleTag[A]]
   )(iSchema: c.Expr[Schema[A]], oSchema: c.Expr[Schema[B]]): c.Expr[Query[A, B]] = {
+    val h = new { val ctx: c.type = c } with SchemaMacroHelpers
+    import h._
     import c.universe._
 
     assertConcrete[A](c)
     assertConcrete[B](c)
 
-    val queryTree = c.untypecheck(query.tree.duplicate)
-    val sInTree = c.untypecheck(iSchema.tree.duplicate)
-    val sOutTree = c.untypecheck(oSchema.tree.duplicate)
+    val schemas: (Schema[A], Schema[B]) = c.eval(
+      c.Expr(q"(${inferImplicitSchema[A]}, ${inferImplicitSchema[B]})")
+    )
 
-    val (sIn, sOut) =
-      c.eval(c.Expr[(Schema[A], Schema[B])](q"($sInTree, $sOutTree)"))
-
-    val sq =
-      queryTree match {
-        case Literal(Constant(q: String)) =>
-          Query[A, B](q, tupleTag(c)(aTag))
-        case _ =>
-          c.abort(c.enclosingPosition, s"Expression $queryTree does not evaluate to a constant")
-      }
-
+    val sq = Query[A, B](cons(c)(query), tupleTag(c)(aTag))
     Queries
-      .typecheck(sq)(sIn, sOut)
+      .typecheck(sq)(schemas._1, schemas._2)
       .fold(
         err => c.abort(c.enclosingPosition, err),
         _ => c.Expr[Query[A, B]](q"_root_.com.spotify.scio.sql.Query($query, $aTag)")
@@ -369,38 +341,54 @@ object QueryMacros {
     bSchema: c.Expr[Schema[B]],
     oSchema: c.Expr[Schema[R]]
   ): c.Expr[Query2[A, B, R]] = {
-
+    val h = new { val ctx: c.type = c } with SchemaMacroHelpers
+    import h._
     import c.universe._
 
     assertConcrete[A](c)
     assertConcrete[B](c)
     assertConcrete[R](c)
 
-    val queryTree = c.untypecheck(query.tree.duplicate)
-    val sInTreeA = c.untypecheck(aSchema.tree.duplicate)
-    val sInTreeB = c.untypecheck(bSchema.tree.duplicate)
-    val sOutTree = c.untypecheck(oSchema.tree.duplicate)
+    val schemas: (Schema[A], Schema[B], Schema[R]) = c.eval(
+      c.Expr(q"(${inferImplicitSchema[A]}, ${inferImplicitSchema[B]}, ${inferImplicitSchema[R]})")
+    )
 
-    val (sInA, sInB, sOut) =
-      c.eval(c.Expr[(Schema[A], Schema[B], Schema[R])](q"($sInTreeA, $sInTreeB, $sOutTree)"))
-
-    val sq =
-      queryTree match {
-        case Literal(Constant(q: String)) =>
-          Query2[A, B, R](q, tupleTag(c)(aTag), tupleTag(c)(bTag))
-        case _ =>
-          c.abort(c.enclosingPosition, s"Expression $queryTree does not evaluate to a constant")
-      }
-
+    val sq = Query2[A, B, R](cons(c)(query), tupleTag(c)(aTag), tupleTag(c)(bTag))
     Queries
-      .typecheck(sq)(sInA, sInB, sOut)
+      .typecheck(sq)(schemas._1, schemas._2, schemas._3)
       .fold(
-        err => c.abort(c.enclosingPosition, err), { _ =>
-          val out =
-            q"_root_.com.spotify.scio.sql.Query2($query, $aTag, $bTag)"
-          c.Expr[Query2[A, B, R]](out)
-        }
+        err => c.abort(c.enclosingPosition, err),
+        _ => c.Expr[Query2[A, B, R]](q"_root_.com.spotify.scio.sql.Query2($query, $aTag, $bTag)")
       )
+  }
+
+  /**
+   * Make sure that A is a concrete type bc. SQL macros can only
+   * materialize Schema[A] is A is concrete
+   */
+  private[this] def assertConcrete[A: c.WeakTypeTag](c: blackbox.Context): Unit = {
+    import c.universe._
+    val wtt = weakTypeOf[A].dealias
+    val isVal = wtt <:< typeOf[AnyVal]
+    val isSealed =
+      if (wtt.typeSymbol.isClass) {
+        wtt.typeSymbol.asClass.isSealed
+      } else false
+    val isAbstract = wtt.typeSymbol.asType.isAbstract
+    if (!isVal && isAbstract && !isSealed) {
+      c.abort(c.enclosingPosition, s"$wtt is an abstract type, expected a concrete type.")
+    } else {
+      ()
+    }
+  }
+
+  private[this] def cons[A](c: blackbox.Context)(e: c.Expr[String]): String = {
+    import c.universe._
+    e.tree match {
+      case Literal(Constant(q: String)) => q
+      case _ =>
+        c.abort(c.enclosingPosition, s"Expression ${e.tree} does not evaluate to a constant")
+    }
   }
 
   private[this] def tupleTag[T](c: blackbox.Context)(e: c.Expr[TupleTag[T]]): TupleTag[T] = {
