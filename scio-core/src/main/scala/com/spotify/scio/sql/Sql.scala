@@ -358,7 +358,7 @@ object QueryMacros {
       .typecheck(sq)(sIn, sOut)
       .fold(
         err => c.abort(c.enclosingPosition, err),
-        _ => c.Expr[Query[A, B]](q"_root_.com.spotify.scio.sql.Query($query)")
+        _ => c.Expr[Query[A, B]](q"_root_.com.spotify.scio.sql.Query($query, $aTag)")
       )
   }
 
