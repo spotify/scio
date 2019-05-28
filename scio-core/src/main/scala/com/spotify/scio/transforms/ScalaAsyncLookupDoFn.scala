@@ -45,20 +45,19 @@ object ScalaAsyncLookupDoFn {
   val Client = Maps.newConcurrentMap[UUID, Any]
   val Caches = Maps.newConcurrentMap[UUID, Cache[_, _]]
 
-  implicit def toJavaFunction[T, U](f: Function1[T, U]): JFunction[T, U] = new JFunction[T, U] {
-    override def apply(t: T): U = f(t)
+  implicit def toJavaFunction[A, B](f: Function1[A, B]): JFunction[A, B] = new JFunction[A, B] {
+    override def apply(a: A): B = f(a)
   }
 
-  implicit def toScalaFuture[T](lFuture: ListenableFuture[T]): Future[T] = {
-    val p = Promise[T]
-    Futures.addCallback(lFuture, new FutureCallback[T] {
-      def onSuccess(result: T) = p.success(result)
-      def onFailure(t: Throwable) = p.failure(t)
+  implicit def toScalaFuture[A](lFuture: ListenableFuture[A]): Future[A] = {
+    val p = Promise[A]
+    Futures.addCallback(lFuture, new FutureCallback[A] {
+      def onSuccess(result: A): Unit = p.success(result)
+      def onFailure(t: Throwable): Unit = p.failure(t)
     }, MoreExecutors.directExecutor())
     p.future
   }
 
-  /** Work around for future.transform in 2.11 to be like in 2.12 */
   def transform[A, B](future: Future[A])(f: Try[A] => Try[B]): Future[B] = {
     val p = Promise[B]()
     future.onComplete { result =>
@@ -68,6 +67,16 @@ object ScalaAsyncLookupDoFn {
       }
     }
     p.future
+  }
+
+  object Extension {
+    implicit class FutureExtension[A](val future: Future[A]) {
+
+      /** Similar to [[future.transform]] in 2.12 to work with Scala 2.11 */
+      def transformExtension[B](f: Try[A] => Try[B]): Future[B] =
+        ScalaAsyncLookupDoFn.transform(future)(f)
+    }
+
   }
 }
 
@@ -137,7 +146,8 @@ abstract class ScalaAsyncLookupDoFn[A, B, C](
           throw new RuntimeException("Failed to acquire semaphore", e)
       }
       RequestCount += 1
-      val f = ScalaAsyncLookupDoFn.transform(future) {
+      import ScalaAsyncLookupDoFn.Extension._
+      val f = future.transformExtension {
         case Success(res) => transform(input, Success(res), c.timestamp, window, uuid)
         case Failure(ex) =>
           transform(input, Failure(ex), c.timestamp, window, uuid)
