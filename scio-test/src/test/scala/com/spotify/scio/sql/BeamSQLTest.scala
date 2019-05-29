@@ -150,7 +150,7 @@ class BeamSQLTest extends PipelineSpec {
 
   it should "support different tag" in runWithContext { sc =>
     val expected = 255
-    val q = Query[User, Int]("select sum(age) from users", tag = new TupleTag[User]("users"))
+    val q = Query1[User, Int]("select sum(age) from users", tag = new TupleTag[User]("users"))
     val r = sc.parallelize(users).queryAs(q)
     r should containSingleValue(expected)
   }
@@ -323,13 +323,14 @@ class BeamSQLTest extends PipelineSpec {
 
   it should "support tags" in runWithContext { sc =>
     val a = sc.parallelize(users)
-    val q = new Query[User, String]("select username from A", new TupleTag[User]("A"))
+    val q = new Query1[User, String]("select username from A", new TupleTag[User]("A"))
     a.queryAs(q) shouldNot beEmpty
   }
 
   it should "support JOIN" in runWithContext { sc =>
     val a = sc.parallelize(users)
     val b = sc.parallelize(users)
+    val c = sc.parallelize(users)
 
     Sql
       .from(a, b)
@@ -346,6 +347,17 @@ class BeamSQLTest extends PipelineSpec {
         new TupleTag[User]("A"),
         new TupleTag[User]("B")
       ) shouldNot beEmpty
+
+    Sql
+      .from(a, b, c)
+      .queryAs[String](
+        """select a.username
+        from A a join B b on a.username = b.username
+        join C c on a.username = c.username""",
+        new TupleTag[User]("A"),
+        new TupleTag[User]("B"),
+        new TupleTag[User]("C")
+      ) should containInAnyOrder(users.map(_.username))
   }
 
   it should "support sql subqueries" in runWithContext { sc =>
@@ -407,26 +419,26 @@ class BeamSQLTest extends PipelineSpec {
   it should "provide a typecheck method for tests" in {
     object checkOK {
       def apply[A: Schema, B: Schema](q: String): Assertion =
-        Queries.typecheck(Query[A, B](q, Sql.defaultTag)) should be('right)
+        Query1.typecheck(Query1[A, B](q, Sql.defaultTag)) should be('right)
 
       def apply[A: Schema, B: Schema, C: Schema](
         q: String,
         a: TupleTag[A],
         b: TupleTag[B]
       ): Assertion =
-        Queries.typecheck(Query2[A, B, C](q, a, b)) should be('right)
+        Query2.typecheck(Query2[A, B, C](q, a, b)) should be('right)
     }
 
     object checkNOK {
       def apply[A: Schema, B: Schema](q: String): Assertion =
-        Queries.typecheck(Query[A, B](q, Sql.defaultTag)) should be('left)
+        Query1.typecheck(Query1[A, B](q, Sql.defaultTag)) should be('left)
 
       def apply[A: Schema, B: Schema, C: Schema](
         q: String,
         a: TupleTag[A],
         b: TupleTag[B]
       ): Assertion =
-        Queries.typecheck(Query2[A, B, C](q, a, b)) should be('left)
+        Query2.typecheck(Query2[A, B, C](q, a, b)) should be('left)
     }
 
     checkOK[Bar, Long]("select l from SCOLLECTION")
@@ -545,7 +557,7 @@ class BeamSQLTest extends PipelineSpec {
       }
 
     val q =
-      Query[avro.User, (Int, String, String)](
+      Query1[avro.User, (Int, String, String)](
         "SELECT id, first_name, last_name from SCOLLECTION",
         Sql.defaultTag
       )
