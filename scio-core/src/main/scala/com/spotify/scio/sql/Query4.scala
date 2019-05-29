@@ -160,7 +160,7 @@ final class SqlSCollection4[A: Schema, B: Schema, C: Schema, D: Schema](
         .and(q.cTag, collC.internal)
         .and(q.dTag, collD.internal)
         .apply(
-          s"{collA.tfName} join {collB.tfName} join {collC.tfName} join {collD.tfName}",
+          s"${collA.tfName} join ${collB.tfName} join ${collC.tfName} join ${collD.tfName}",
           sqlTransform
         )
 

@@ -72,7 +72,7 @@ def mkPCollectionTuple(n):
     stuff = ".and".join(
         ["(q.{x1}Tag, coll{x2}.internal)".format(x1=x.lower(), x2=x) for x in mkVals(n)]
     )
-    tf_name = " join ".join(["{{coll{}.tfName}}".format(x) for x in mkVals(n)])
+    tf_name = " join ".join(["${{coll{}.tfName}}".format(x) for x in mkVals(n)])
     return """
             PCollectionTuple
             .of{stuff}

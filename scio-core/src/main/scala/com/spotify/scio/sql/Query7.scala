@@ -223,7 +223,7 @@ final class SqlSCollection7[
         .and(q.fTag, collF.internal)
         .and(q.gTag, collG.internal)
         .apply(
-          s"{collA.tfName} join {collB.tfName} join {collC.tfName} join {collD.tfName} join {collE.tfName} join {collF.tfName} join {collG.tfName}",
+          s"${collA.tfName} join ${collB.tfName} join ${collC.tfName} join ${collD.tfName} join ${collE.tfName} join ${collF.tfName} join ${collG.tfName}",
           sqlTransform
         )
 

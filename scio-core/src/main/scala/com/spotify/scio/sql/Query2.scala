@@ -112,7 +112,7 @@ final class SqlSCollection2[A: Schema, B: Schema](a: SCollection[A], b: SCollect
       PCollectionTuple
         .of(q.aTag, collA.internal)
         .and(q.bTag, collB.internal)
-        .apply(s"{collA.tfName} join {collB.tfName}", sqlTransform)
+        .apply(s"${collA.tfName} join ${collB.tfName}", sqlTransform)
 
     }
   }

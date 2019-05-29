@@ -140,7 +140,7 @@ final class SqlSCollection3[A: Schema, B: Schema, C: Schema](
         .of(q.aTag, collA.internal)
         .and(q.bTag, collB.internal)
         .and(q.cTag, collC.internal)
-        .apply(s"{collA.tfName} join {collB.tfName} join {collC.tfName}", sqlTransform)
+        .apply(s"${collA.tfName} join ${collB.tfName} join ${collC.tfName}", sqlTransform)
 
     }
   }

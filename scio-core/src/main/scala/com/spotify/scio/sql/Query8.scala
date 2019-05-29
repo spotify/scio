@@ -256,7 +256,7 @@ final class SqlSCollection8[
         .and(q.gTag, collG.internal)
         .and(q.hTag, collH.internal)
         .apply(
-          s"{collA.tfName} join {collB.tfName} join {collC.tfName} join {collD.tfName} join {collE.tfName} join {collF.tfName} join {collG.tfName} join {collH.tfName}",
+          s"${collA.tfName} join ${collB.tfName} join ${collC.tfName} join ${collD.tfName} join ${collE.tfName} join ${collF.tfName} join ${collG.tfName} join ${collH.tfName}",
           sqlTransform
         )
 

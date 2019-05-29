@@ -294,7 +294,7 @@ final class SqlSCollection10[
         .and(q.iTag, collI.internal)
         .and(q.jTag, collJ.internal)
         .apply(
-          s"{collA.tfName} join {collB.tfName} join {collC.tfName} join {collD.tfName} join {collE.tfName} join {collF.tfName} join {collG.tfName} join {collH.tfName} join {collI.tfName} join {collJ.tfName}",
+          s"${collA.tfName} join ${collB.tfName} join ${collC.tfName} join ${collD.tfName} join ${collE.tfName} join ${collF.tfName} join ${collG.tfName} join ${collH.tfName} join ${collI.tfName} join ${collJ.tfName}",
           sqlTransform
         )
 
