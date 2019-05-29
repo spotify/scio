@@ -955,7 +955,7 @@ any key in memory. If a key has too many values, it can result in an <code>OutOf
       <p class="shortcomment cmt">Partition this SCollection using K.hashCode() into <code>n</code> partitions
 </p><div class="fullcomment"><div class="comment cmt"><p>Partition this SCollection using K.hashCode() into <code>n</code> partitions
 </p></div><dl class="paramcmts block"><dt class="param">numPartitions</dt><dd class="cmt"><p>number of output partitions</p></dd><dt>returns</dt><dd class="cmt"><p>partitioned SCollections in a <code>Seq</code></p></dd></dl></div>
-    </li><li name="com.spotify.scio.values.PairSCollectionFunctions#intersectByKey" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="per_key">
+    </li><li name="com.spotify.scio.values.PairSCollectionFunctions#intersectByKey" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="per_key">
       <a id="intersectByKey(that:com.spotify.scio.values.SCollection[K])(implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SCollection[(K,V)]"></a><a id="intersectByKey(SCollection[K])(Coder[K],Coder[V]):SCollection[(K,V)]"></a>
       <span class="permalink">
       <a href="../../../../com/spotify/scio/values/PairSCollectionFunctions.html#intersectByKey(that:com.spotify.scio.values.SCollection[K])(implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SCollection[(K,V)]" title="Permalink">
@@ -970,7 +970,8 @@ any key in memory. If a key has too many values, it can result in an <code>OutOf
         <span class="name">intersectByKey</span><span class="params">(<span name="that">that: <a href="SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.values.PairSCollectionFunctions.K">K</span>]</span>)</span><span class="params">(<span class="implicit">implicit </span><span name="koder">koder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.PairSCollectionFunctions.K">K</span>]</span>, <span name="voder">voder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.PairSCollectionFunctions.V">V</span>]</span>)</span><span class="result">: <a href="SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[(<span class="extype" name="com.spotify.scio.values.PairSCollectionFunctions.K">K</span>, <span class="extype" name="com.spotify.scio.values.PairSCollectionFunctions.V">V</span>)]</span>
       </span>
       
-      <p class="shortcomment cmt">Return an SCollection with the pairs from <code>this</code> whose keys are in <code>that</code>.</p>
+      <p class="shortcomment cmt">Return an SCollection with the pairs from <code>this</code> whose keys are in <code>that</code>.</p><div class="fullcomment"><div class="comment cmt"><p>Return an SCollection with the pairs from <code>this</code> whose keys are in <code>that</code>.</p><p>Unlike <a href="SCollection.html#intersection(that:com.spotify.scio.values.SCollection[T])(implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]" class="extmbr" name="com.spotify.scio.values.SCollection#intersection">SCollection.intersection</a> this preserves duplicates in <code>this</code>.
+</p></div></div>
     </li><li name="scala.Any#isInstanceOf" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="isInstanceOf[T0]:Boolean"></a>
       <span class="permalink">
@@ -1275,16 +1276,30 @@ of <code>math.ceil(numItems * samplingRate)</code> over all key values.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">sparseIntersectByKey</span><span class="params">(<span name="that">that: <a href="SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.values.PairSCollectionFunctions.K">K</span>]</span>, <span name="thatNumKeys">thatNumKeys: <span class="extype" name="scala.Int">Int</span></span>, <span name="computeExact">computeExact: <span class="extype" name="scala.Boolean">Boolean</span> = <span class="symbol">false</span></span>, <span name="fpProb">fpProb: <span class="extype" name="scala.Double">Double</span> = <span class="symbol">0.1</span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="koder">koder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.PairSCollectionFunctions.K">K</span>]</span>, <span name="voder">voder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.PairSCollectionFunctions.V">V</span>]</span>, <span name="hash">hash: <span class="extype" name="com.twitter.algebird.Hash128">Hash128</span>[<span class="extype" name="com.spotify.scio.values.PairSCollectionFunctions.K">K</span>]</span>)</span><span class="result">: <a href="SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[(<span class="extype" name="com.spotify.scio.values.PairSCollectionFunctions.K">K</span>, <span class="extype" name="com.spotify.scio.values.PairSCollectionFunctions.V">V</span>)]</span>
+        <span class="name">sparseIntersectByKey</span><span class="params">(<span name="that">that: <a href="SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.values.PairSCollectionFunctions.K">K</span>]</span>, <span name="thatNumKeys">thatNumKeys: <span class="extype" name="scala.Int">Int</span></span>, <span name="computeExact">computeExact: <span class="extype" name="scala.Boolean">Boolean</span> = <span class="symbol">false</span></span>, <span name="fpProb">fpProb: <span class="extype" name="scala.Double">Double</span> = <span class="symbol">0.01</span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="koder">koder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.PairSCollectionFunctions.K">K</span>]</span>, <span name="voder">voder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.PairSCollectionFunctions.V">V</span>]</span>, <span name="hash">hash: <span class="extype" name="com.twitter.algebird.Hash128">Hash128</span>[<span class="extype" name="com.spotify.scio.values.PairSCollectionFunctions.K">K</span>]</span>)</span><span class="result">: <a href="SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[(<span class="extype" name="com.spotify.scio.values.PairSCollectionFunctions.K">K</span>, <span class="extype" name="com.spotify.scio.values.PairSCollectionFunctions.V">V</span>)]</span>
       </span>
       
       <p class="shortcomment cmt">Return an SCollection with the pairs from <code>this</code> whose keys are in <code>that</code>
 when the cardinality of <code>this</code> &gt;&gt; <code>that</code>, but neither can fit in memory
 (see <a href="PairHashSCollectionFunctions.html#hashIntersectByKey(that:com.spotify.scio.values.SideSet[K])(implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SCollection[(K,V)]" class="extmbr" name="com.spotify.scio.values.PairHashSCollectionFunctions#hashIntersectByKey">PairHashSCollectionFunctions.hashIntersectByKey</a>).</p><div class="fullcomment"><div class="comment cmt"><p>Return an SCollection with the pairs from <code>this</code> whose keys are in <code>that</code>
 when the cardinality of <code>this</code> &gt;&gt; <code>that</code>, but neither can fit in memory
-(see <a href="PairHashSCollectionFunctions.html#hashIntersectByKey(that:com.spotify.scio.values.SideSet[K])(implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SCollection[(K,V)]" class="extmbr" name="com.spotify.scio.values.PairHashSCollectionFunctions#hashIntersectByKey">PairHashSCollectionFunctions.hashIntersectByKey</a>).</p></div><dl class="paramcmts block"><dt class="param">computeExact</dt><dd class="cmt"><p>Whether or not to directly pass through bloom filter results (with a small
+(see <a href="PairHashSCollectionFunctions.html#hashIntersectByKey(that:com.spotify.scio.values.SideSet[K])(implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SCollection[(K,V)]" class="extmbr" name="com.spotify.scio.values.PairHashSCollectionFunctions#hashIntersectByKey">PairHashSCollectionFunctions.hashIntersectByKey</a>).</p><p>Unlike <a href="SCollection.html#intersection(that:com.spotify.scio.values.SCollection[T])(implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]" class="extmbr" name="com.spotify.scio.values.SCollection#intersection">SCollection.intersection</a> this preserves duplicates in <code>this</code>.
+</p></div><dl class="paramcmts block"><dt class="param">thatNumKeys</dt><dd class="cmt"><p>An estimate of the number of keys in <code>that</code>. This estimate is used to find
+                    the size and number of BloomFilters that Scio would use to pre-filter
+                    <code>this</code> in a &quot;map&quot; step before any join.
+                    Having a value close to the actual number improves the false positives
+                    in output. When <code>computeExact</code> is set to true, a more accurate estimate
+                    of the number of keys in <code>that</code> would mean less shuffle when finding the
+                    exact value.</p></dd><dt class="param">computeExact</dt><dd class="cmt"><p>Whether or not to directly pass through bloom filter results (with a small
                     false positive rate) or perform an additional inner join to confirm
-                    exact result set.</p></dd></dl></div>
+                    exact result set. By default this is set to false.</p></dd><dt class="param">fpProb</dt><dd class="cmt"><p>A fraction in range (0, 1) which would be the accepted false positive
+                    probability for this transform. By default when <code>computeExact</code> is set to
+                    <code>false</code>, this reflects the probability that an output element is an
+                    incorrect intersect (meaning it may not be present in <code>that</code>)
+                    When <code>computeExact</code> is set to <code>true</code>, this fraction is used to find the
+                    acceptable false positive in the intermediate step before computing exact.
+                    Note: having fpProb = 0 doesn't mean an exact computation. This value
+                    along with <code>thatNumKeys</code> is used for creating a BloomFilter.</p></dd></dl></div>
     </li><li name="com.spotify.scio.values.PairSCollectionFunctions#sparseJoin" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="join">
       <a id="sparseJoin[W](that:com.spotify.scio.values.SCollection[(K,W)],thatNumKeys:Long,fpProb:Double)(implicitevidence$21:com.spotify.scio.coders.Coder[W],implicithash:com.twitter.algebird.Hash128[K],implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SCollection[(K,(V,W))]"></a><a id="sparseJoin[W](SCollection[(K,W)],Long,Double)(Coder[W],Hash128[K],Coder[K],Coder[V]):SCollection[(K,(V,W))]"></a>
       <span class="permalink">
@@ -1306,7 +1321,13 @@ but contains a mostly overlapping set of keys as <code>this</code>, i.e. when th
 is sparse in <code>this</code>. A Bloom Filter of keys in <code>that</code> is used to split <code>this</code> into 2
 partitions. Only those with keys in the filter go through the join and the rest are filtered
 out before the join.
-Read more about Bloom Filter: <span class="extype" name="com.twitter.algebird.BloomFilter">com.twitter.algebird.BloomFilter</span>.</p></div><dl class="paramcmts block"><dt class="param">thatNumKeys</dt><dd class="cmt"><p>estimated number of keys in <code>that</code></p></dd><dt class="param">fpProb</dt><dd class="cmt"><p>false positive probability when computing the overlap</p></dd></dl></div>
+Read more about Bloom Filter: <span class="extype" name="com.twitter.algebird.BloomFilter">com.twitter.algebird.BloomFilter</span>.</p></div><dl class="paramcmts block"><dt class="param">thatNumKeys</dt><dd class="cmt"><p>An estimate of the number of keys in <code>that</code>. This estimate is used to find
+                   the size and number of BloomFilters that Scio would use to split
+                   <code>this</code> into overlap and intersection in a &quot;map&quot; step before an exact join.
+                   Having a value close to the actual number improves the false positives
+                   in intermediate steps which means less shuffle.</p></dd><dt class="param">fpProb</dt><dd class="cmt"><p>A fraction in range (0, 1) which would be the accepted false positive
+              probability when computing the overlap.
+              Note: having fpProb = 0 doesn't mean that Scio would calculate an exact overlap.</p></dd></dl></div>
     </li><li name="com.spotify.scio.values.PairSCollectionFunctions#sparseLeftOuterJoin" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="join">
       <a id="sparseLeftOuterJoin[W](that:com.spotify.scio.values.SCollection[(K,W)],thatNumKeys:Long,fpProb:Double)(implicitevidence$22:com.spotify.scio.coders.Coder[W],implicithash:com.twitter.algebird.Hash128[K],implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SCollection[(K,(V,Option[W]))]"></a><a id="sparseLeftOuterJoin[W](SCollection[(K,W)],Long,Double)(Coder[W],Hash128[K],Coder[K],Coder[V]):SCollection[(K,(V,Option[W]))]"></a>
       <span class="permalink">
@@ -1328,7 +1349,13 @@ but contains a mostly overlapping set of keys as <code>this</code>, i.e. when th
 is sparse in <code>this</code>. A Bloom Filter of keys in <code>that</code> is used to split <code>this</code> into 2
 partitions. Only those with keys in the filter go through the join and the rest are
 concatenated. This is useful for joining historical aggregates with incremental updates.
-Read more about Bloom Filter: <span class="extype" name="com.twitter.algebird.BloomFilter">com.twitter.algebird.BloomFilter</span>.</p></div><dl class="paramcmts block"><dt class="param">thatNumKeys</dt><dd class="cmt"><p>estimated number of keys in <code>that</code></p></dd><dt class="param">fpProb</dt><dd class="cmt"><p>false positive probability when computing the overlap</p></dd></dl></div>
+Read more about Bloom Filter: <span class="extype" name="com.twitter.algebird.BloomFilter">com.twitter.algebird.BloomFilter</span>.</p></div><dl class="paramcmts block"><dt class="param">thatNumKeys</dt><dd class="cmt"><p>An estimate of the number of keys in <code>that</code>. This estimate is used to find
+                   the size and number of BloomFilters that Scio would use to split
+                   <code>this</code> into overlap and intersection in a &quot;map&quot; step before an exact join.
+                   Having a value close to the actual number improves the false positives
+                   in intermediate steps which means less shuffle.</p></dd><dt class="param">fpProb</dt><dd class="cmt"><p>A fraction in range (0, 1) which would be the accepted false positive
+              probability when computing the overlap.
+              Note: having fpProb = 0 doesn't mean that Scio would calculate an exact overlap.</p></dd></dl></div>
     </li><li name="com.spotify.scio.values.PairSCollectionFunctions#sparseLookup" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="join">
       <a id="sparseLookup[A,B](that1:com.spotify.scio.values.SCollection[(K,A)],that2:com.spotify.scio.values.SCollection[(K,B)],thisNumKeys:Long)(implicitevidence$29:com.spotify.scio.coders.Coder[A],implicitevidence$30:com.spotify.scio.coders.Coder[B],implicithash:com.twitter.algebird.Hash128[K],implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SCollection[(K,(V,Iterable[A],Iterable[B]))]"></a><a id="sparseLookup[A,B](SCollection[(K,A)],SCollection[(K,B)],Long)(Coder[A],Coder[B],Hash128[K],Coder[K],Coder[V]):SCollection[(K,(V,Iterable[A],Iterable[B]))]"></a>
       <span class="permalink">
@@ -1347,8 +1374,12 @@ Read more about Bloom Filter: <span class="extype" name="com.twitter.algebird.Bl
       <p class="shortcomment cmt">Look up values from <code>that</code> where <code>that</code> is much larger and keys from <code>this</code> wont fit in memory,
 and is sparse in <code>that</code>.</p><div class="fullcomment"><div class="comment cmt"><p>Look up values from <code>that</code> where <code>that</code> is much larger and keys from <code>this</code> wont fit in memory,
 and is sparse in <code>that</code>. A Bloom Filter of keys in <code>this</code> is used to filter out irrelevant keys
-in <code>that</code>. This is useful when searching for a limited number of values from one or more vaery
-large tables. Read more about Bloom Filter: <span class="extype" name="com.twitter.algebird.BloomFilter">com.twitter.algebird.BloomFilter</span>.</p></div><dl class="paramcmts block"><dt class="param">thisNumKeys</dt><dd class="cmt"><p>estimated number of keys in <code>this</code></p></dd></dl></div>
+in <code>that</code>. This is useful when searching for a limited number of values from one or more very
+large tables. Read more about Bloom Filter: <span class="extype" name="com.twitter.algebird.BloomFilter">com.twitter.algebird.BloomFilter</span>.</p></div><dl class="paramcmts block"><dt class="param">thisNumKeys</dt><dd class="cmt"><p>An estimate of the number of keys in <code>this</code>. This estimate is used to find
+                   the size and number of BloomFilters that Scio would use to pre-filter
+                   <code>that</code> before doing a co-group.
+                   Having a value close to the actual number improves the false positives
+                   in intermediate steps which means less shuffle.</p></dd></dl></div>
     </li><li name="com.spotify.scio.values.PairSCollectionFunctions#sparseLookup" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="join">
       <a id="sparseLookup[A,B](that1:com.spotify.scio.values.SCollection[(K,A)],that2:com.spotify.scio.values.SCollection[(K,B)],thisNumKeys:Long,fpProb:Double)(implicitevidence$27:com.spotify.scio.coders.Coder[A],implicitevidence$28:com.spotify.scio.coders.Coder[B],implicithash:com.twitter.algebird.Hash128[K],implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SCollection[(K,(V,Iterable[A],Iterable[B]))]"></a><a id="sparseLookup[A,B](SCollection[(K,A)],SCollection[(K,B)],Long,Double)(Coder[A],Coder[B],Hash128[K],Coder[K],Coder[V]):SCollection[(K,(V,Iterable[A],Iterable[B]))]"></a>
       <span class="permalink">
@@ -1367,8 +1398,14 @@ large tables. Read more about Bloom Filter: <span class="extype" name="com.twitt
       <p class="shortcomment cmt">Look up values from <code>that</code> where <code>that</code> is much larger and keys from <code>this</code> wont fit in memory,
 and is sparse in <code>that</code>.</p><div class="fullcomment"><div class="comment cmt"><p>Look up values from <code>that</code> where <code>that</code> is much larger and keys from <code>this</code> wont fit in memory,
 and is sparse in <code>that</code>. A Bloom Filter of keys in <code>this</code> is used to filter out irrelevant keys
-in <code>that</code>. This is useful when searching for a limited number of values from one or more vaery
-large tables. Read more about Bloom Filter: <span class="extype" name="com.twitter.algebird.BloomFilter">com.twitter.algebird.BloomFilter</span>.</p></div><dl class="paramcmts block"><dt class="param">thisNumKeys</dt><dd class="cmt"><p>estimated number of keys in <code>this</code></p></dd><dt class="param">fpProb</dt><dd class="cmt"><p>false positive probability when filtering <code>that</code></p></dd></dl></div>
+in <code>that</code>. This is useful when searching for a limited number of values from one or more very
+large tables. Read more about Bloom Filter: <span class="extype" name="com.twitter.algebird.BloomFilter">com.twitter.algebird.BloomFilter</span>.</p></div><dl class="paramcmts block"><dt class="param">thisNumKeys</dt><dd class="cmt"><p>An estimate of the number of keys in <code>this</code>. This estimate is used to find
+                   the size and number of BloomFilters that Scio would use to pre-filter
+                   <code>that1</code> and <code>that2</code> before doing a co-group.
+                   Having a value close to the actual number improves the false positives
+                   in intermediate steps which means less shuffle.</p></dd><dt class="param">fpProb</dt><dd class="cmt"><p>A fraction in range (0, 1) which would be the accepted false positive
+              probability when discarding elements of <code>that1</code> and <code>that2</code> in the pre-filter
+              step.</p></dd></dl></div>
     </li><li name="com.spotify.scio.values.PairSCollectionFunctions#sparseLookup" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="join">
       <a id="sparseLookup[A](that:com.spotify.scio.values.SCollection[(K,A)],thisNumKeys:Long)(implicitevidence$26:com.spotify.scio.coders.Coder[A],implicithash:com.twitter.algebird.Hash128[K],implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SCollection[(K,(V,Iterable[A]))]"></a><a id="sparseLookup[A](SCollection[(K,A)],Long)(Coder[A],Hash128[K],Coder[K],Coder[V]):SCollection[(K,(V,Iterable[A]))]"></a>
       <span class="permalink">
@@ -1387,8 +1424,12 @@ large tables. Read more about Bloom Filter: <span class="extype" name="com.twitt
       <p class="shortcomment cmt">Look up values from <code>that</code> where <code>that</code> is much larger and keys from <code>this</code> wont fit in memory,
 and is sparse in <code>that</code>.</p><div class="fullcomment"><div class="comment cmt"><p>Look up values from <code>that</code> where <code>that</code> is much larger and keys from <code>this</code> wont fit in memory,
 and is sparse in <code>that</code>. A Bloom Filter of keys in <code>this</code> is used to filter out irrelevant keys
-in <code>that</code>. This is useful when searching for a limited number of values from one or more vaery
-large tables. Read more about Bloom Filter: <span class="extype" name="com.twitter.algebird.BloomFilter">com.twitter.algebird.BloomFilter</span>.</p></div><dl class="paramcmts block"><dt class="param">thisNumKeys</dt><dd class="cmt"><p>estimated number of keys in <code>this</code></p></dd></dl></div>
+in <code>that</code>. This is useful when searching for a limited number of values from one or more very
+large tables. Read more about Bloom Filter: <span class="extype" name="com.twitter.algebird.BloomFilter">com.twitter.algebird.BloomFilter</span>.</p></div><dl class="paramcmts block"><dt class="param">thisNumKeys</dt><dd class="cmt"><p>An estimate of the number of keys in <code>this</code>. This estimate is used to find
+                   the size and number of BloomFilters that Scio would use to pre-filter
+                   <code>that</code> before doing a co-group.
+                   Having a value close to the actual number improves the false positives
+                   in intermediate steps which means less shuffle.</p></dd></dl></div>
     </li><li name="com.spotify.scio.values.PairSCollectionFunctions#sparseLookup" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="join">
       <a id="sparseLookup[A](that:com.spotify.scio.values.SCollection[(K,A)],thisNumKeys:Long,fpProb:Double)(implicitevidence$25:com.spotify.scio.coders.Coder[A],implicithash:com.twitter.algebird.Hash128[K],implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SCollection[(K,(V,Iterable[A]))]"></a><a id="sparseLookup[A](SCollection[(K,A)],Long,Double)(Coder[A],Hash128[K],Coder[K],Coder[V]):SCollection[(K,(V,Iterable[A]))]"></a>
       <span class="permalink">
@@ -1407,8 +1448,13 @@ large tables. Read more about Bloom Filter: <span class="extype" name="com.twitt
       <p class="shortcomment cmt">Look up values from <code>that</code> where <code>that</code> is much larger and keys from <code>this</code> wont fit in memory,
 and is sparse in <code>that</code>.</p><div class="fullcomment"><div class="comment cmt"><p>Look up values from <code>that</code> where <code>that</code> is much larger and keys from <code>this</code> wont fit in memory,
 and is sparse in <code>that</code>. A Bloom Filter of keys in <code>this</code> is used to filter out irrelevant keys
-in <code>that</code>. This is useful when searching for a limited number of values from one or more vaery
-large tables. Read more about Bloom Filter: <span class="extype" name="com.twitter.algebird.BloomFilter">com.twitter.algebird.BloomFilter</span>.</p></div><dl class="paramcmts block"><dt class="param">thisNumKeys</dt><dd class="cmt"><p>estimated number of keys in <code>this</code></p></dd><dt class="param">fpProb</dt><dd class="cmt"><p>false positive probability when filtering <code>that</code></p></dd></dl></div>
+in <code>that</code>. This is useful when searching for a limited number of values from one or more very
+large tables. Read more about Bloom Filter: <span class="extype" name="com.twitter.algebird.BloomFilter">com.twitter.algebird.BloomFilter</span>.</p></div><dl class="paramcmts block"><dt class="param">thisNumKeys</dt><dd class="cmt"><p>An estimate of the number of keys in <code>this</code>. This estimate is used to find
+                   the size and number of BloomFilters that Scio would use to pre-filter
+                   <code>that</code> before doing a co-group.
+                   Having a value close to the actual number improves the false positives
+                   in intermediate steps which means less shuffle.</p></dd><dt class="param">fpProb</dt><dd class="cmt"><p>A fraction in range (0, 1) which would be the accepted false positive
+              probability when discarding elements of <code>that</code> in the pre-filter step.</p></dd></dl></div>
     </li><li name="com.spotify.scio.values.PairSCollectionFunctions#sparseOuterJoin" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="join">
       <a id="sparseOuterJoin[W](that:com.spotify.scio.values.SCollection[(K,W)],thatNumKeys:Long,fpProb:Double)(implicitevidence$20:com.spotify.scio.coders.Coder[W],implicithash:com.twitter.algebird.Hash128[K],implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SCollection[(K,(Option[V],Option[W]))]"></a><a id="sparseOuterJoin[W](SCollection[(K,W)],Long,Double)(Coder[W],Hash128[K],Coder[K],Coder[V]):SCollection[(K,(Option[V],Option[W]))]"></a>
       <span class="permalink">
@@ -1430,7 +1476,13 @@ but contains a mostly overlapping set of keys as <code>this</code>, i.e. when th
 is sparse in <code>this</code>. A Bloom Filter of keys in <code>that</code> is used to split <code>this</code> into 2
 partitions. Only those with keys in the filter go through the join and the rest are
 concatenated. This is useful for joining historical aggregates with incremental updates.
-Read more about Bloom Filter: <span class="extype" name="com.twitter.algebird.BloomFilter">com.twitter.algebird.BloomFilter</span>.</p></div><dl class="paramcmts block"><dt class="param">thatNumKeys</dt><dd class="cmt"><p>estimated number of keys in <code>that</code></p></dd><dt class="param">fpProb</dt><dd class="cmt"><p>false positive probability when computing the overlap</p></dd></dl></div>
+Read more about Bloom Filter: <span class="extype" name="com.twitter.algebird.BloomFilter">com.twitter.algebird.BloomFilter</span>.</p></div><dl class="paramcmts block"><dt class="param">thatNumKeys</dt><dd class="cmt"><p>An estimate of the number of keys in <code>that</code>. This estimate is used to find
+                   the size and number of BloomFilters that Scio would use to split
+                   <code>this</code> into overlap and intersection in a &quot;map&quot; step before an exact join.
+                   Having a value close to the actual number improves the false positives
+                   in intermediate steps which means less shuffle.</p></dd><dt class="param">fpProb</dt><dd class="cmt"><p>A fraction in range (0, 1) which would be the accepted false positive
+              probability when computing the overlap.
+              Note: having fpProb = 0 doesn't mean that Scio would calculate an exact overlap.</p></dd></dl></div>
     </li><li name="com.spotify.scio.values.PairSCollectionFunctions#sparseRightOuterJoin" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="join">
       <a id="sparseRightOuterJoin[W](that:com.spotify.scio.values.SCollection[(K,W)],thatNumKeys:Long,fpProb:Double)(implicitevidence$23:com.spotify.scio.coders.Coder[W],implicithash:com.twitter.algebird.Hash128[K],implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SCollection[(K,(Option[V],W))]"></a><a id="sparseRightOuterJoin[W](SCollection[(K,W)],Long,Double)(Coder[W],Hash128[K],Coder[K],Coder[V]):SCollection[(K,(Option[V],W))]"></a>
       <span class="permalink">
@@ -1452,7 +1504,13 @@ but contains a mostly overlapping set of keys as <code>this</code>, i.e. when th
 is sparse in <code>this</code>. A Bloom Filter of keys in <code>that</code> is used to split <code>this</code> into 2
 partitions. Only those with keys in the filter go through the join and the rest are
 concatenated. This is useful for joining historical aggregates with incremental updates.
-Read more about Bloom Filter: <span class="extype" name="com.twitter.algebird.BloomFilter">com.twitter.algebird.BloomFilter</span>.</p></div><dl class="paramcmts block"><dt class="param">thatNumKeys</dt><dd class="cmt"><p>estimated number of keys in <code>that</code></p></dd><dt class="param">fpProb</dt><dd class="cmt"><p>false positive probability when computing the overlap</p></dd></dl></div>
+Read more about Bloom Filter: <span class="extype" name="com.twitter.algebird.BloomFilter">com.twitter.algebird.BloomFilter</span>.</p></div><dl class="paramcmts block"><dt class="param">thatNumKeys</dt><dd class="cmt"><p>An estimate of the number of keys in <code>that</code>. This estimate is used to find
+                   the size and number of BloomFilters that Scio would use to split
+                   <code>this</code> into overlap and intersection in a &quot;map&quot; step before an exact join.
+                   Having a value close to the actual number improves the false positives
+                   in intermediate steps which means less shuffle.</p></dd><dt class="param">fpProb</dt><dd class="cmt"><p>A fraction in range (0, 1) which would be the accepted false positive
+              probability when computing the overlap.
+              Note: having fpProb = 0 doesn't mean that Scio would calculate an exact overlap.</p></dd></dl></div>
     </li><li name="com.spotify.scio.values.PairSCollectionFunctions#subtractByKey" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="per_key">
       <a id="subtractByKey(that:com.spotify.scio.values.SCollection[K])(implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SCollection[(K,V)]"></a><a id="subtractByKey(SCollection[K])(Coder[K],Coder[V]):SCollection[(K,V)]"></a>
       <span class="permalink">

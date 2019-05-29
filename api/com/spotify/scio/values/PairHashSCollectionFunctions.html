@@ -541,7 +541,7 @@ through an implicit conversion.
       <p class="shortcomment cmt">Perform a full outer join by replicating <code>that</code> to all workers.</p><div class="fullcomment"><div class="comment cmt"><p>Perform a full outer join by replicating <code>that</code> to all workers. The right side should be tiny
 and fit in memory.
 </p></div></div>
-    </li><li name="com.spotify.scio.values.PairHashSCollectionFunctions#hashIntersectByKey" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="per key">
+    </li><li name="com.spotify.scio.values.PairHashSCollectionFunctions#hashIntersectByKey" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="per key">
       <a id="hashIntersectByKey(that:com.spotify.scio.values.SideSet[K])(implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SCollection[(K,V)]"></a><a id="hashIntersectByKey(SideSet[K])(Coder[K],Coder[V]):SCollection[(K,V)]"></a>
       <span class="permalink">
       <a href="../../../../com/spotify/scio/values/PairHashSCollectionFunctions.html#hashIntersectByKey(that:com.spotify.scio.values.SideSet[K])(implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SCollection[(K,V)]" title="Permalink">
@@ -556,8 +556,9 @@ and fit in memory.
         <span class="name">hashIntersectByKey</span><span class="params">(<span name="that">that: <a href="SideSet.html" class="extype" name="com.spotify.scio.values.SideSet">SideSet</a>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.K">K</span>]</span>)</span><span class="params">(<span class="implicit">implicit </span><span name="koder">koder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.K">K</span>]</span>, <span name="voder">voder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.V">V</span>]</span>)</span><span class="result">: <a href="SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[(<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.K">K</span>, <span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.V">V</span>)]</span>
       </span>
       
-      <p class="shortcomment cmt">Return an SCollection with the pairs from <code>this</code> whose keys are in the SideSet <code>that</code>.</p>
-    </li><li name="com.spotify.scio.values.PairHashSCollectionFunctions#hashIntersectByKey" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="per key">
+      <p class="shortcomment cmt">Return an SCollection with the pairs from <code>this</code> whose keys are in the SideSet <code>that</code>.</p><div class="fullcomment"><div class="comment cmt"><p>Return an SCollection with the pairs from <code>this</code> whose keys are in the SideSet <code>that</code>.</p><p>Unlike <a href="SCollection.html#intersection(that:com.spotify.scio.values.SCollection[T])(implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]" class="extmbr" name="com.spotify.scio.values.SCollection#intersection">SCollection.intersection</a> this preserves duplicates in <code>this</code>.
+</p></div></div>
+    </li><li name="com.spotify.scio.values.PairHashSCollectionFunctions#hashIntersectByKey" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="per key">
       <a id="hashIntersectByKey(that:com.spotify.scio.values.SCollection[K])(implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SCollection[(K,V)]"></a><a id="hashIntersectByKey(SCollection[K])(Coder[K],Coder[V]):SCollection[(K,V)]"></a>
       <span class="permalink">
       <a href="../../../../com/spotify/scio/values/PairHashSCollectionFunctions.html#hashIntersectByKey(that:com.spotify.scio.values.SCollection[K])(implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SCollection[(K,V)]" title="Permalink">
@@ -573,7 +574,9 @@ and fit in memory.
       </span>
       
       <p class="shortcomment cmt">Return an SCollection with the pairs from <code>this</code> whose keys are in <code>that</code>
-given <code>that</code> is small enough to fit in memory.</p>
+given <code>that</code> is small enough to fit in memory.</p><div class="fullcomment"><div class="comment cmt"><p>Return an SCollection with the pairs from <code>this</code> whose keys are in <code>that</code>
+given <code>that</code> is small enough to fit in memory.</p><p>Unlike <a href="SCollection.html#intersection(that:com.spotify.scio.values.SCollection[T])(implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]" class="extmbr" name="com.spotify.scio.values.SCollection#intersection">SCollection.intersection</a> this preserves duplicates in <code>this</code>.
+</p></div></div>
     </li><li name="com.spotify.scio.values.PairHashSCollectionFunctions#hashJoin" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="join">
       <a id="hashJoin[W](that:com.spotify.scio.values.SideMap[K,W])(implicitevidence$2:com.spotify.scio.coders.Coder[W],implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SCollection[(K,(V,W))]"></a><a id="hashJoin[W](SideMap[K,W])(Coder[W],Coder[K],Coder[V]):SCollection[(K,(V,W))]"></a>
       <span class="permalink">

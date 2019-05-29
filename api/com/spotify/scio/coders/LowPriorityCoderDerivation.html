@@ -167,8 +167,8 @@
                         <a href="CoderException.html" title="">CoderException</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
-                        <a class="trait" href="CoderGrammar.html" title=""></a>
-                        <a href="CoderGrammar.html" title="">CoderGrammar</a>
+                        <a class="trait" href="CoderGrammar.html" title="Coder Grammar is used to explicitly specify Coder derivation for types used in pipelines."></a>
+                        <a href="CoderGrammar.html" title="Coder Grammar is used to explicitly specify Coder derivation for types used in pipelines.">CoderGrammar</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
                         <a class="object" href="CoderMaterializer$.html" title=""></a>
@@ -488,7 +488,7 @@
     </span>)</span>
               
         </dd></dl></div>
-    </li><li name="com.spotify.scio.coders.LowPriorityCoderDerivation#gen" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+    </li><li name="com.spotify.scio.coders.LowPriorityCoderDerivation#gen" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="gen[T]:com.spotify.scio.coders.Coder[T]"></a><a id="gen[T]:Coder[T]"></a>
       <span class="permalink">
       <a href="../../../../com/spotify/scio/coders/LowPriorityCoderDerivation.html#gen[T]:com.spotify.scio.coders.Coder[T]" title="Permalink">
@@ -503,7 +503,15 @@
         <span class="name">gen</span><span class="tparams">[<span name="T">T</span>]</span><span class="result">: <a href="Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.coders.LowPriorityCoderDerivation.gen.T">T</span>]</span>
       </span>
       
-      
+      <p class="shortcomment cmt">Derive a Coder for a type T given implicit coders of all parameters in the constructor
+of type T is in scope.</p><div class="fullcomment"><div class="comment cmt"><p>Derive a Coder for a type T given implicit coders of all parameters in the constructor
+of type T is in scope. For sealed trait, implicit coders of parameters of the constructors
+of all sub-types should be in scope.</p><p>In case of a missing <span class="extype" name="shapeless.LowPriority">shapeless.LowPriority</span> implicit error when calling this method as
+<span class="extype" name="Coder.gen[Type]"></span>, it means that Scio is unable to derive a BeamCoder for some parameter
+[P] in the constructor of Type. This happens when no implicit Coder instance for type P is
+in scope. This is fixed by placing an implicit Coder of type P in scope, using
+<span class="extype" name="Coder.kryo[P]"></span> or defining the Coder manually (see also <a href="Coder$.html#xmap[A,B](c:com.spotify.scio.coders.Coder[A])(f:A=&gt;B,t:B=&gt;A):com.spotify.scio.coders.Coder[B]" class="extmbr" name="com.spotify.scio.coders.Coder#xmap">Coder.xmap</a>)
+</p></div></div>
     </li><li name="scala.AnyRef#getClass" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="getClass():Class[_]"></a>
       <span class="permalink">

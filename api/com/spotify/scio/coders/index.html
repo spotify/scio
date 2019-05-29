@@ -257,8 +257,8 @@ detects the query's dialect. To override this, start the query with either <code
                         <a href="CoderException.html" title="">CoderException</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
-                        <a class="trait" href="CoderGrammar.html" title=""></a>
-                        <a href="CoderGrammar.html" title="">CoderGrammar</a>
+                        <a class="trait" href="CoderGrammar.html" title="Coder Grammar is used to explicitly specify Coder derivation for types used in pipelines."></a>
+                        <a href="CoderGrammar.html" title="Coder Grammar is used to explicitly specify Coder derivation for types used in pipelines.">CoderGrammar</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
                         <a class="object" href="CoderMaterializer$.html" title=""></a>
@@ -701,7 +701,7 @@ detects the query's dialect. To override this, start the query with either <code
       </span>
       
       
-    </li><li name="com.spotify.scio.coders.CoderGrammar" visbl="pub" class="indented0 " data-isabs="true" fullComment="no" group="Ungrouped">
+    </li><li name="com.spotify.scio.coders.CoderGrammar" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
       <a id="CoderGrammarextendsAnyRef"></a><a id="CoderGrammar:CoderGrammar"></a>
       <span class="permalink">
       <a href="../../../../com/spotify/scio/coders/index.html#CoderGrammarextendsAnyRef" title="Permalink">
@@ -713,10 +713,13 @@ detects the query's dialect. To override this, start the query with either <code
         <span class="kind">trait</span>
       </span>
       <span class="symbol">
-        <a title="" href="CoderGrammar.html"><span class="name">CoderGrammar</span></a><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
+        <a title="Coder Grammar is used to explicitly specify Coder derivation for types used in pipelines." href="CoderGrammar.html"><span class="name">CoderGrammar</span></a><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
       </span>
       
-      
+      <p class="shortcomment cmt">Coder Grammar is used to explicitly specify Coder derivation for types used in pipelines.</p><div class="fullcomment"><div class="comment cmt"><p>Coder Grammar is used to explicitly specify Coder derivation for types used in pipelines.</p><p>The CoderGrammar can be used as follows:
+- To find the Coder being implicitly derived by Scio. (Debugging)</p><pre><span class="kw">def</span> c: Coder[MyType] = Coder[MyType]</pre><p>- To generate an implicit instance to be in scope for type T, use <a href="Coder$.html#gen[T]:com.spotify.scio.coders.Coder[T]" class="extmbr" name="com.spotify.scio.coders.Coder#gen">Coder.gen</a></p><pre><span class="kw">implicit</span> <span class="kw">def</span> coderT: Coder[T] = Coder.gen[T]</pre><p>  Note: Implicit Coders for all parameters of the constructor of type T should be in scope for
+        <a href="Coder$.html#gen[T]:com.spotify.scio.coders.Coder[T]" class="extmbr" name="com.spotify.scio.coders.Coder#gen">Coder.gen</a> to be able to derive the Coder.</p><p>- To define a Coder of custom type, where the type can be mapped to some other type for which
+  a Coder is known, use <a href="Coder$.html#xmap[A,B](c:com.spotify.scio.coders.Coder[A])(f:A=&gt;B,t:B=&gt;A):com.spotify.scio.coders.Coder[B]" class="extmbr" name="com.spotify.scio.coders.Coder#xmap">Coder.xmap</a></p><p>- To explicitly use kryo Coder use <a href="Coder$.html#kryo[T](implicitct:scala.reflect.ClassTag[T]):com.spotify.scio.coders.Coder[T]" class="extmbr" name="com.spotify.scio.coders.Coder#kryo">Coder.kryo</a></p></div></div>
     </li><li name="com.spotify.scio.coders.Disjunction" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="Disjunction[T,Id]extendsCoder[T]withProductwithSerializable"></a><a id="Disjunction[T,Id]:Disjunction[T,Id]"></a>
       <span class="permalink">

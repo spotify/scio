@@ -167,8 +167,8 @@
                         <a href="CoderException.html" title="">CoderException</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
-                        <a class="trait" href="" title=""></a>
-                        <a href="" title="">CoderGrammar</a>
+                        <a class="trait" href="" title="Coder Grammar is used to explicitly specify Coder derivation for types used in pipelines."></a>
+                        <a href="" title="Coder Grammar is used to explicitly specify Coder derivation for types used in pipelines.">CoderGrammar</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
                         <a class="object" href="CoderMaterializer$.html" title=""></a>
@@ -233,7 +233,10 @@
       </h4>
 
       
-          <div id="comment" class="fullcommenttop"><div class="toggleContainer block">
+          <div id="comment" class="fullcommenttop"><div class="comment cmt"><p>Coder Grammar is used to explicitly specify Coder derivation for types used in pipelines.</p><p>The CoderGrammar can be used as follows:
+- To find the Coder being implicitly derived by Scio. (Debugging)</p><pre><span class="kw">def</span> c: Coder[MyType] = Coder[MyType]</pre><p>- To generate an implicit instance to be in scope for type T, use <a href="Coder$.html#gen[T]:com.spotify.scio.coders.Coder[T]" class="extmbr" name="com.spotify.scio.coders.Coder#gen">Coder.gen</a></p><pre><span class="kw">implicit</span> <span class="kw">def</span> coderT: Coder[T] = Coder.gen[T]</pre><p>  Note: Implicit Coders for all parameters of the constructor of type T should be in scope for
+        <a href="Coder$.html#gen[T]:com.spotify.scio.coders.Coder[T]" class="extmbr" name="com.spotify.scio.coders.Coder#gen">Coder.gen</a> to be able to derive the Coder.</p><p>- To define a Coder of custom type, where the type can be mapped to some other type for which
+  a Coder is known, use <a href="Coder$.html#xmap[A,B](c:com.spotify.scio.coders.Coder[A])(f:A=&gt;B,t:B=&gt;A):com.spotify.scio.coders.Coder[B]" class="extmbr" name="com.spotify.scio.coders.Coder#xmap">Coder.xmap</a></p><p>- To explicitly use kryo Coder use <a href="Coder$.html#kryo[T](implicitct:scala.reflect.ClassTag[T]):com.spotify.scio.coders.Coder[T]" class="extmbr" name="com.spotify.scio.coders.Coder#kryo">Coder.kryo</a></p></div><div class="toggleContainer block">
           <span class="toggle">
             Linear Supertypes
           </span>
@@ -374,7 +377,8 @@
         <span class="name">beam</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="beam">beam: <span class="extype" name="org.apache.beam.sdk.coders.Coder">org.apache.beam.sdk.coders.Coder</span>[<span class="extype" name="com.spotify.scio.coders.CoderGrammar.beam.T">T</span>]</span>)</span><span class="result">: <a href="Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.coders.CoderGrammar.beam.T">T</span>]</span>
       </span>
       
-      
+      <p class="shortcomment cmt">Create a ScioCoder from a Beam Coder
+</p>
     </li><li name="scala.AnyRef#clone" visbl="prt" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="clone():Object"></a><a id="clone():AnyRef"></a>
       <span class="permalink">
@@ -523,7 +527,7 @@
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
-    </li><li name="com.spotify.scio.coders.CoderGrammar#kryo" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+    </li><li name="com.spotify.scio.coders.CoderGrammar#kryo" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="kryo[T](implicitct:scala.reflect.ClassTag[T]):com.spotify.scio.coders.Coder[T]"></a><a id="kryo[T](ClassTag[T]):Coder[T]"></a>
       <span class="permalink">
       <a href="../../../../com/spotify/scio/coders/CoderGrammar.html#kryo[T](implicitct:scala.reflect.ClassTag[T]):com.spotify.scio.coders.Coder[T]" title="Permalink">
@@ -538,7 +542,8 @@
         <span class="name">kryo</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span class="implicit">implicit </span><span name="ct">ct: <span class="extype" name="scala.reflect.ClassTag">ClassTag</span>[<span class="extype" name="com.spotify.scio.coders.CoderGrammar.kryo.T">T</span>]</span>)</span><span class="result">: <a href="Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.coders.CoderGrammar.kryo.T">T</span>]</span>
       </span>
       
-      
+      <p class="shortcomment cmt">Create an instance of Kryo Coder for a given Type.</p><div class="fullcomment"><div class="comment cmt"><p>Create an instance of Kryo Coder for a given Type.</p><p>Eg:
+  A kryo Coder for <span class="extype" name="org.joda.time.Interval">org.joda.time.Interval</span> would look like:</p><pre><span class="kw">implicit</span> <span class="kw">def</span> jiKryo: Coder[Interval] = Coder.kryo[Interval]</pre></div></div>
     </li><li name="com.spotify.scio.coders.CoderGrammar#kv" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="kv[K,V](koder:com.spotify.scio.coders.Coder[K],voder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.coders.Coder[org.apache.beam.sdk.values.KV[K,V]]"></a><a id="kv[K,V](Coder[K],Coder[V]):Coder[KV[K,V]]"></a>
       <span class="permalink">
@@ -725,7 +730,7 @@
     </span>)</span>
               
         </dd></dl></div>
-    </li><li name="com.spotify.scio.coders.CoderGrammar#xmap" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+    </li><li name="com.spotify.scio.coders.CoderGrammar#xmap" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="xmap[A,B](c:com.spotify.scio.coders.Coder[A])(f:A=&gt;B,t:B=&gt;A):com.spotify.scio.coders.Coder[B]"></a><a id="xmap[A,B](Coder[A])((A)⇒B,(B)⇒A):Coder[B]"></a>
       <span class="permalink">
       <a href="../../../../com/spotify/scio/coders/CoderGrammar.html#xmap[A,B](c:com.spotify.scio.coders.Coder[A])(f:A=&gt;B,t:B=&gt;A):com.spotify.scio.coders.Coder[B]" title="Permalink">
@@ -740,7 +745,14 @@
         <span class="name">xmap</span><span class="tparams">[<span name="A">A</span>, <span name="B">B</span>]</span><span class="params">(<span name="c">c: <a href="Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.coders.CoderGrammar.xmap.A">A</span>]</span>)</span><span class="params">(<span name="f">f: (<span class="extype" name="com.spotify.scio.coders.CoderGrammar.xmap.A">A</span>) ⇒ <span class="extype" name="com.spotify.scio.coders.CoderGrammar.xmap.B">B</span></span>, <span name="t">t: (<span class="extype" name="com.spotify.scio.coders.CoderGrammar.xmap.B">B</span>) ⇒ <span class="extype" name="com.spotify.scio.coders.CoderGrammar.xmap.A">A</span></span>)</span><span class="result">: <a href="Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.coders.CoderGrammar.xmap.B">B</span>]</span>
       </span>
       
-      
+      <p class="shortcomment cmt">Given a Coder[A], create a Coder[B] by defining two functions A =&gt; B and B =&gt; A.</p><div class="fullcomment"><div class="comment cmt"><p>Given a Coder[A], create a Coder[B] by defining two functions A =&gt; B and B =&gt; A.
+The Coder[A] can be resolved implicitly by calling Coder[A]</p><p>Eg: Coder for <span class="extype" name="org.joda.time.Interval">org.joda.time.Interval</span> can be defined by having the following implicit in
+    scope. Without this implicit in scope Coder derivation falls back to Kryo.</p><pre><span class="kw">implicit</span> <span class="kw">def</span> jiCoder: Coder[Interval] =
+  Coder.xmap(Coder[(<span class="std">Long</span>, <span class="std">Long</span>)])(t <span class="kw">=&gt;</span> <span class="kw">new</span> Interval(t._1, t._2),
+     i <span class="kw">=&gt;</span> (i.getStartMillis, i.getEndMillis))</pre><p>    In the above example we implicitly derive Coder[(Long, Long)] and we define two functions,
+    one to convert a tuple (Long, Long) to Interval, and a second one to convert an Interval
+    to a tuple of (Long, Long)
+</p></div></div>
     </li>
               </ol>
             </div>
