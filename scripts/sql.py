@@ -233,6 +233,67 @@ def mkMacro(n):
     )
 
 
+def mkSQLBuilderFrom(n):
+    return """
+    private[sql] def from[{types}](q: String, {ref_args}, {tuple_tag_args}, udfs: List[Udf]): SQLBuilder = new SQLBuilder {{
+        def as[R: Schema] =
+        Sql
+            .from({ref_colls})({ref_schemas})
+            .queryAs(new Query{n}[{ref_types}, R](q, {tuple_tags}, udfs))
+    }}
+    """.format(
+        n=n,
+        types=mkTypes(n),
+        ref_args=", ".join(mkValsFmt(n, "ref{upperIdx}: SCollectionRef[{upperIdx}]")),
+        tuple_tag_args=mkTupleTagArgs(n),
+        ref_colls=", ".join(mkValsFmt(n, "ref{upperIdx}.coll")),
+        ref_schemas=", ".join(mkValsFmt(n, "ref{upperIdx}.schema")),
+        ref_types=", ".join(mkValsFmt(n, "ref{upperIdx}._A")),
+        tuple_tags=", ".join(mkValsFmt(n, "{lowerIdx}Tag")),
+    )
+
+
+def mkCases(n):
+    return """
+    case {ref_tuple_tags} :: Nil =>
+        from[{ref_types}](q, {refs}, {tuple_tags}, udfs)
+    """.format(
+        refs=", ".join(mkValsFmt(n, "ref{upperIdx}")),
+        ref_types=", ".join(mkValsFmt(n, "ref{upperIdx}._A")),
+        tuple_tags=", ".join(mkValsFmt(n, "{lowerIdx}Tag")),
+        ref_tuple_tags=" :: ".join(mkValsFmt(n, "(ref{upperIdx}, {lowerIdx}Tag)"))
+    )
+
+
+def mkSQLBuilder(n):
+    return """
+import com.spotify.scio.schemas.Schema
+import org.apache.beam.sdk.values.TupleTag
+
+object SQLBuilders {{
+    {from_methods}
+
+  private[sql] def from(
+    q: String,
+    l: List[(SCollectionRef[Any], TupleTag[Any])],
+    udfs: List[Udf]
+  ): SQLBuilder =
+    l match {{
+      {cases}
+      case ts =>
+        throw new IllegalArgumentException(
+          "sql interpolation only support JOIN on up to {n} unique " +
+            s"SCollections, found ${{ts.length}}"
+        )
+    }}
+}}
+    """.format(
+        n=n,
+        from_methods="\n".join(mkSQLBuilderFrom(i) for i in xrange(1, n + 1)),
+        cases="\n".join(mkCases(i) for i in xrange(1, n + 1)),
+    )
+
+
 header = textwrap.dedent(
     """
 /*
@@ -259,6 +320,7 @@ header = textwrap.dedent(
 
 package com.spotify.scio.sql
 
+// scalastyle:off cyclomatic.complexity
 // scalastyle:off file.size.limit
 // scalastyle:off line.size.limit
 // scalastyle:off method.length
@@ -279,6 +341,7 @@ def main(out):
         sqlCollectionFns(f, i)
         print >> f, textwrap.dedent(
             """
+        // scalastyle:on cyclomatic.complexity
         // scalastyle:on file.size.limit
         // scalastyle:on line.size.limit
         // scalastyle:on method.length
@@ -305,7 +368,8 @@ def main(out):
         )
     )
     print >> f, textwrap.dedent(
-            """
+        """
+        // scalastyle:on cyclomatic.complexity
         // scalastyle:on file.size.limit
         // scalastyle:on line.size.limit
         // scalastyle:on method.length
@@ -314,6 +378,24 @@ def main(out):
         """
     )
     f.close()
+    f = open(
+    "scio-core/src/main/scala/com/spotify/scio/sql/SQLBuilders.scala".format(i),
+    "w",
+    )
+    print >> f, header
+    print >> f, mkSQLBuilder(N)
+    print >> f, textwrap.dedent(
+        """
+        // scalastyle:on cyclomatic.complexity
+        // scalastyle:on file.size.limit
+        // scalastyle:on line.size.limit
+        // scalastyle:on method.length
+        // scalastyle:on number.of.methods
+        // scalastyle:on parameter.number
+        """
+    )
+    f.close()
+
 
 
 if __name__ == "__main__":

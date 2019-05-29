@@ -22,6 +22,7 @@
 
 package com.spotify.scio.sql
 
+// scalastyle:off cyclomatic.complexity
 // scalastyle:off file.size.limit
 // scalastyle:off line.size.limit
 // scalastyle:off method.length
@@ -187,6 +188,7 @@ final class SqlSCollection4[A: Schema, B: Schema, C: Schema, D: Schema](
 
 }
 
+// scalastyle:on cyclomatic.complexity
 // scalastyle:on file.size.limit
 // scalastyle:on line.size.limit
 // scalastyle:on method.length

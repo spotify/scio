@@ -22,6 +22,7 @@
 
 package com.spotify.scio.sql
 
+// scalastyle:off cyclomatic.complexity
 // scalastyle:off file.size.limit
 // scalastyle:off line.size.limit
 // scalastyle:off method.length
@@ -205,12 +206,12 @@ object Query9 {
       schemas._9,
       schemas._10
     ).fold(
-      err => c.abort(c.enclosingPosition, err),
-      _ =>
-        c.Expr[Query9[A, B, C, D, E, F, G, H, I, R]](
-          q"_root_.com.spotify.scio.sql.Query9($query, $aTag, $bTag, $cTag, $dTag, $eTag, $fTag, $gTag, $hTag, $iTag)"
-        )
-    )
+        err => c.abort(c.enclosingPosition, err),
+        _ =>
+          c.Expr[Query9[A, B, C, D, E, F, G, H, I, R]](
+            q"_root_.com.spotify.scio.sql.Query9($query, $aTag, $bTag, $cTag, $dTag, $eTag, $fTag, $gTag, $hTag, $iTag)"
+          )
+      )
   }
 }
 
@@ -319,6 +320,7 @@ final class SqlSCollection9[
 
 }
 
+// scalastyle:on cyclomatic.complexity
 // scalastyle:on file.size.limit
 // scalastyle:on line.size.limit
 // scalastyle:on method.length

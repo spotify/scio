@@ -28,34 +28,6 @@ trait SQLBuilder {
   def as[B: Schema]: SCollection[B]
 }
 
-object SQLBuilder {
-  private[sql] def apply[A](
-    q: String,
-    ref: SCollectionRef[A],
-    tag: TupleTag[A],
-    udfs: List[Udf]
-  ): SQLBuilder = new SQLBuilder {
-    def as[B: Schema] =
-      Sql
-        .from(ref.coll)(ref.schema)
-        .queryAs(new Query1[ref._A, B](q, tag, udfs))
-  }
-
-  private[sql] def apply[A0, A1](
-    q: String,
-    ref0: SCollectionRef[A0],
-    ref1: SCollectionRef[A1],
-    tag0: TupleTag[A0],
-    tag1: TupleTag[A1],
-    udfs: List[Udf]
-  ): SQLBuilder = new SQLBuilder {
-    def as[B: Schema] =
-      Sql
-        .from(ref0.coll, ref1.coll)(ref0.schema, ref1.schema)
-        .queryAs(new Query2[ref0._A, ref1._A, B](q, tag0, tag1, udfs))
-  }
-}
-
 sealed trait SqlParam
 
 final case class SCollectionRef[A: Schema](coll: SCollection[A]) extends SqlParam {
@@ -95,17 +67,7 @@ final class SqlInterpolator(private val sc: StringContext) extends AnyVal {
     val q =
       strings.zipAll(expr, "", "").foldLeft("") { case (a, (x, y)) => s"${a}${x} ${y}" }
 
-    tags.values.toList match {
-      case (ref, tag) :: Nil =>
-        SQLBuilder[ref._A](q, ref, tag, udfs)
-      case (ref0, tag0) :: (ref1, tag1) :: Nil =>
-        SQLBuilder[ref0._A, ref1._A](q, ref0, ref1, tag0, tag1, udfs)
-      case ts =>
-        throw new IllegalArgumentException(
-          "sql interpolation only support JOIN on up to 2 unique " +
-            s"SCollections, found ${ts.length}"
-        )
-    }
+    SQLBuilders.from(q, tags.values.toList, udfs)
   }
 
   def tsql(ps: Any*): SQLBuilder =
@@ -269,7 +231,7 @@ object SqlInterpolatorMacro {
     def toSCollectionName(s: Tree) = s.symbol.name.encodedName.toString
 
     distinctSCollections.values.toList match {
-      case list if list.size <= 2 =>
+      case list if list.size <= 10 =>
         val colls = list.map(_._1)
         val types = list.map(_._2)
         val tags = list.map(x => tagFor(x._2, toSCollectionName(x._1)))
@@ -287,7 +249,7 @@ object SqlInterpolatorMacro {
         val ns = d.map(_._1).mkString(", ")
         c.abort(
           c.enclosingPosition,
-          s"BeamSQL can only join up to 2 SCollections, found ${d.size}: $ns"
+          s"Joins limited up to 10 SCollections, found ${d.size}: $ns"
         )
     }
   }
