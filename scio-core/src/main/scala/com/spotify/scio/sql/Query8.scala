@@ -192,12 +192,12 @@ object Query8 {
       schemas._8,
       schemas._9
     ).fold(
-        err => c.abort(c.enclosingPosition, err),
-        _ =>
-          c.Expr[Query8[A, B, C, D, E, F, G, H, R]](
-            q"_root_.com.spotify.scio.sql.Query8($query, $aTag, $bTag, $cTag, $dTag, $eTag, $fTag, $gTag, $hTag)"
-          )
-      )
+      err => c.abort(c.enclosingPosition, err),
+      _ =>
+        c.Expr[Query8[A, B, C, D, E, F, G, H, R]](
+          q"_root_.com.spotify.scio.sql.Query8($query, $aTag, $bTag, $cTag, $dTag, $eTag, $fTag, $gTag, $hTag)"
+        )
+    )
   }
 }
 
