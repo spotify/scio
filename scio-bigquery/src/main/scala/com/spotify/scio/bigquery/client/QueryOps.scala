@@ -254,8 +254,8 @@ private[client] final class QueryOps(client: Client, tableService: TableOps, job
 
   private def isInvalidQuery(e: GoogleJsonResponseException): Boolean =
     Option(e.getDetails)
-      .flatMap(details => Option(details.getErrors.asScala))
-      .flatMap(errors => errors.headOption)
+      .flatMap(details => Option(details.getErrors))
+      .flatMap(_.asScala.headOption)
       .exists(_.getReason == "invalidQuery")
 
   private[scio] def isLegacySql(sqlQuery: String, flattenResults: Boolean = false): Boolean = {
