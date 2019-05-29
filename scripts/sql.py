@@ -259,6 +259,11 @@ header = textwrap.dedent(
 
 package com.spotify.scio.sql
 
+// scalastyle:off file.size.limit
+// scalastyle:off line.size.limit
+// scalastyle:off method.length
+// scalastyle:off number.of.methods
+// scalastyle:off parameter.number
 """
 ).lstrip("\n")
 
@@ -272,8 +277,20 @@ def main(out):
         )
         print >> f, header
         sqlCollectionFns(f, i)
+        print >> f, textwrap.dedent(
+            """
+        // scalastyle:on file.size.limit
+        // scalastyle:on line.size.limit
+        // scalastyle:on method.length
+        // scalastyle:on number.of.methods
+        // scalastyle:on parameter.number
+        """
+        )
         f.close()
-    f = open("scio-core/src/main/scala/com/spotify/scio/sql/SqlSCollections.scala".format(i), "w")
+    f = open(
+        "scio-core/src/main/scala/com/spotify/scio/sql/SqlSCollections.scala".format(i),
+        "w",
+    )
     print >> f, header
     print >> f, textwrap.dedent(
         """
@@ -283,8 +300,21 @@ def main(out):
         trait SqlSCollections {{
             {from_method}
         }}
-        """.format(from_method="\n".join(mkFrom(n) for n in xrange(1, N + 1)))
+        """.format(
+            from_method="\n".join(mkFrom(n) for n in xrange(1, N + 1))
+        )
     )
+    print >> f, textwrap.dedent(
+            """
+        // scalastyle:on file.size.limit
+        // scalastyle:on line.size.limit
+        // scalastyle:on method.length
+        // scalastyle:on number.of.methods
+        // scalastyle:on parameter.number
+        """
+    )
+    f.close()
+
 
 if __name__ == "__main__":
     main(sys.stdout)

@@ -351,7 +351,9 @@ class BeamSQLTest extends PipelineSpec {
     Sql
       .from(a, b, c)
       .queryAs[String](
-        "select a.username from A a join B b on a.username = b.username join C c on a.username = c.username",
+        """select a.username
+        from A a join B b on a.username = b.username
+        join C c on a.username = c.username""",
         new TupleTag[User]("A"),
         new TupleTag[User]("B"),
         new TupleTag[User]("C")
