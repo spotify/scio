@@ -14,16 +14,6 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+package com.spotify.scio.io.dynamic.syntax
 
-package com.spotify.scio.io
-
-import com.spotify.scio.io.dynamic.syntax.AllSyntax
-
-/**
- * IO package for dynamic destinations. Import All.
- *
- * {{{
- * import com.spotify.scio.io.dynamic._
- * }}}
- */
-package object dynamic extends AllSyntax
+trait AllSyntax extends SCollectionSyntax
