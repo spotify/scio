@@ -101,5 +101,16 @@ trait LowPriorityCoderDerivation {
     }
   }
 
+  /**
+   * Derive a Coder for a type T given implicit coders of all parameters in the constructor
+   * of type T is in scope. For sealed trait, implicit coders of parameters of the constructors
+   * of all sub-types should be in scope.
+   *
+   * In case of a missing [[shapeless.LowPriority]] implicit error when calling this method as
+   * [[Coder.gen[Type] ]], it means that Scio is unable to derive a BeamCoder for some parameter
+   * [P] in the constructor of Type. This happens when no implicit Coder instance for type P is
+   * in scope. This is fixed by placing an implicit Coder of type P in scope, using
+   * [[Coder.kryo[P] ]] or defining the Coder manually (see also [[Coder.xmap]])
+   */
   implicit def gen[T]: Coder[T] = macro CoderMacros.wrappedCoder[T]
 }
