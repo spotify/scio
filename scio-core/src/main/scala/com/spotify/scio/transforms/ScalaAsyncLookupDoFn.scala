@@ -45,9 +45,10 @@ object ScalaAsyncLookupDoFn {
   val Client = Maps.newConcurrentMap[UUID, Any]
   val Caches = Maps.newConcurrentMap[UUID, Cache[_, _]]
 
-  implicit def toJavaFunction[A, B](f: Function1[A, B]): JFunction[A, B] = new JFunction[A, B] {
-    override def apply(a: A): B = f(a)
-  }
+  implicit def toJavaFunction[A, B](f: Function1[A, B]): JFunction[A, B] =
+    new JFunction[A, B] {
+      override def apply(a: A): B = f(a)
+    }
 
   implicit def toScalaFuture[A](lFuture: ListenableFuture[A]): Future[A] = {
     val p = Promise[A]
@@ -58,25 +59,23 @@ object ScalaAsyncLookupDoFn {
     p.future
   }
 
-  def transform[A, B](future: Future[A])(f: Try[A] => Try[B]): Future[B] = {
-    val p = Promise[B]()
-    future.onComplete { result =>
-      try p.complete(f(result))
-      catch {
-        case NonFatal(ex) => p.failure(ex)
-      }
-    }
-    p.future
-  }
-
   object Extension {
     implicit class FutureExtension[A](val future: Future[A]) {
 
       /** Similar to [[future.transform]] in 2.12 to work with Scala 2.11 */
-      def transformExtension[B](f: Try[A] => Try[B]): Future[B] =
-        ScalaAsyncLookupDoFn.transform(future)(f)
+      def transformExtension[B](f: Try[A] => Try[B]): Future[B] = transform(future)(f)
     }
 
+    private def transform[A, B](future: Future[A])(f: Try[A] => Try[B]): Future[B] = {
+      val p = Promise[B]()
+      future.onComplete { result =>
+        try p.complete(f(result))
+        catch {
+          case NonFatal(ex) => p.failure(ex)
+        }
+      }
+      p.future
+    }
   }
 }
 
