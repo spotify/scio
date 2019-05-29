@@ -354,13 +354,17 @@ private[scio] final case class RecordCoder[T](
  *
  * The CoderGrammar can be used as follows:
  * - To find the Coder being implicitly derived by Scio. (Debugging)
+ *   {{{
  *     def c: Coder[MyType] = Coder[MyType]
+ *   }}}
  *
  * - To generate an implicit instance to be in scope for type T, use [[Coder.gen]]
+ *   {{{
  *     implicit def coderT: Coder[T] = Coder.gen[T]
+ *   }}}
  *
  *   Note: Implicit Coders for all parameters of the constructor of type T should be in scope for
- *         Coder.gen to be able to derive the Coder.
+ *         [[Coder.gen]] to be able to derive the Coder.
  *
  * - To define a Coder of custom type, where the type can be mapped to some other type for which
  *   a Coder is known, use [[Coder.xmap]]
@@ -381,8 +385,11 @@ sealed trait CoderGrammar {
   /**
    * Create an instance of Kryo Coder for a given Type.
    *
-   * Eg: A kryo Coder for org.joda.time.Interval would look like:
+   * Eg:
+   *   A kryo Coder for [[org.joda.time.Interval]] would look like:
+   *   {{{
    *     implicit def jiKryo: Coder[Interval] = Coder.kryo[Interval]
+   *   }}}
    */
   def kryo[T](implicit ct: ClassTag[T]): Coder[T] =
     Fallback[T](ct)
@@ -397,12 +404,14 @@ sealed trait CoderGrammar {
    *
    * Eg: Coder for [[org.joda.time.Interval]] can be defined by having the following implicit in
    *     scope. Without this implicit in scope Coder derivation falls back to Kryo.
+   *     {{{
    *       implicit def jiCoder: Coder[Interval] =
    *         Coder.xmap(Coder[(Long, Long)])(t => new Interval(t._1, t._2),
    *            i => (i.getStartMillis, i.getEndMillis))
-   *      In the above example we implicitly derive Coder[(Long, Long)] and we define two functions,
-   *      one to convert a tuple (Long, Long) to Interval, and a second one to convert an Interval
-   *      to a tuple of (Long, Long)
+   *     }}}
+   *     In the above example we implicitly derive Coder[(Long, Long)] and we define two functions,
+   *     one to convert a tuple (Long, Long) to Interval, and a second one to convert an Interval
+   *     to a tuple of (Long, Long)
    */
   def xmap[A, B](c: Coder[A])(f: A => B, t: B => A): Coder[B] = {
     @inline def toB(bc: BCoder[A]) = new AtomicCoder[B] {
