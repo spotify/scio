@@ -92,10 +92,6 @@ object Query1 {
   }
 }
 
-trait SqlSCollection1From {
-  def from[A: Schema](sc: SCollection[A]): SqlSCollection1[A] = new SqlSCollection1(sc)
-}
-
 final class SqlSCollection1[A: Schema](sc: SCollection[A]) {
 
   def query(q: String, udfs: Udf*): SCollection[Row] =
