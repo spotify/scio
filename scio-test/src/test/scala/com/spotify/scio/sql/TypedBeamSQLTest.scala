@@ -26,7 +26,7 @@ class TypedBeamSQLTest extends PipelineSpec {
 
   // scalastyle:off line.size.limit
   "(Typed) BeamSQL" should "typecheck queries at compile time" in {
-    import Queries.typed
+    import Query1._
     typed[Bar, Long]("select l from SCOLLECTION")
     """typed[Bar, Long]("select l from SCOLLECTION")""" should compile
     """typed[Bar, Int]("select `SCOLLECTION`.`f`.`i` from SCOLLECTION")""" should compile
@@ -54,7 +54,7 @@ class TypedBeamSQLTest extends PipelineSpec {
   }
 
   it should "typecheck queries with JOINs" in {
-    import Queries.typed
+    import Query2._
     """
     |typed[User, User, String]("select a.username from B a join A b on a.username = b.username", new TupleTag[User]("A"), new TupleTag[User]("B"))
     |""".stripMargin should compile
@@ -70,16 +70,16 @@ class TypedBeamSQLTest extends PipelineSpec {
   it should "give a clear error message when the query can not be checked at compile time" in {
     """
     val q = "select name, age from SCOLLECTION"
-    Queries.typed[UserBean, (String, Int)](q)
+    Query1.typed[UserBean, (String, Int)](q)
     """ shouldNot compile
 
     """
-    def functionName(q: String) = Queries.typed[(String, String), String](q)
+    def functionName(q: String) = Query1.typed[(String, String), String](q)
     """ shouldNot compile
   }
 
   it should "support type aliases" in {
-    import Queries.typed
+    import Query1._
 
     """
     type R = (String, Long)

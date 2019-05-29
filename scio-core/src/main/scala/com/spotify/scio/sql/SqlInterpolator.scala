@@ -38,7 +38,7 @@ object SQLBuilder {
     def as[B: Schema] =
       Sql
         .from(ref.coll)(ref.schema)
-        .queryAs(new Query[ref._A, B](q, tag, udfs))
+        .queryAs(new Query1[ref._A, B](q, tag, udfs))
   }
 
   private[sql] def apply[A0, A1](
@@ -277,8 +277,8 @@ object SqlInterpolatorMacro {
         val implOut = inferImplicitSchema[B]
         val implIn = types.map(inferImplicitSchema)
 
-        val q =
-          q"_root_.com.spotify.scio.sql.Queries.typed[..${types :+ weakTypeOf[B]}]($sql, ..$tags)"
+        val queryTree = c.parse(s"_root_.com.spotify.scio.sql.Query${types.size}")
+        val q = q"$queryTree.typed[..${types :+ weakTypeOf[B]}]($sql, ..$tags)"
         c.Expr[SCollection[B]](q"""
             _root_.com.spotify.scio.sql.Sql
                 .from(..$colls)(..$implIn)

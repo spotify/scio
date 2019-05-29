@@ -94,7 +94,24 @@ def mkValsFmt(n, fmt):
 
 def sqlCollectionFns(out, idx):
     print >> out, """
+    import com.spotify.scio.schemas._
+    import com.spotify.scio.values.SCollection
+    import org.apache.beam.sdk.extensions.sql.SqlTransform
+    import org.apache.beam.sdk.extensions.sql.impl.ParseException
+    import org.apache.beam.sdk.values._
+
+    import scala.language.experimental.macros
+
     final case class Query{n}[{types}, R](query: String, {tuple_tag_args}, udfs: List[Udf] = Nil)
+
+    object Query{n} {{
+        import scala.reflect.macros.blackbox
+        import QueryMacros._
+
+        {typecheck}
+
+        {macro}
+    }}
 
     final class SqlSCollection{n}[{bounds}]({scollections}) {{
 
@@ -118,7 +135,7 @@ def sqlCollectionFns(out, idx):
         query(q.query, {q_var_tags}, q.udfs: _*).to(To.unchecked((_, i) => i))
         }} catch {{
         case e: ParseException =>
-            QueriesGen.typecheck(q).fold(err => throw new RuntimeException(err, e), _ => throw e)
+            Query{n}.typecheck(q).fold(err => throw new RuntimeException(err, e), _ => throw e)
         }}
 
     }}""".format(
@@ -131,6 +148,8 @@ def sqlCollectionFns(out, idx):
         q_var_tags=mkQVarTag(idx),
         scollections=mkSCollection(idx),
         pcollection_tuple=mkPCollectionTuple(idx),
+        typecheck=mkTypecheck(idx),
+        macro=mkMacro(idx),
     )
 
 
@@ -164,7 +183,7 @@ def mkTypecheck(n):
         ).right.map(_ => q)
 
       def typed[{bounds}, R: Schema](query: String, {tuple_tag_args}): Query{n}[{types}, R] =
-        macro QueryMacrosGen.typed{n}Impl[{types}, R]
+        macro typed{n}Impl[{types}, R]
     """.format(
         n=n,
         types=mkTypes(n),
@@ -189,15 +208,14 @@ def mkMacro(n):
     )
 
     val sq = Query{n}[{types}, R](cons(c)(query), {tuple_tags})
-    QueriesGen
-      .typecheck(sq)({schema_tuple_vals}, schemas._{n_p})
+    typecheck(sq)({schema_tuple_vals}, schemas._{n_p})
       .fold(
         err => c.abort(c.enclosingPosition, err),
         _ => c.Expr[Query{n}[{types}, R]](q"_root_.com.spotify.scio.sql.Query{n}($query, {tag_trees})")
       )
   }}""".format(
         n=n,
-        n_p=n+1,
+        n_p=n + 1,
         types=mkTypes(n),
         weak_bounds=mkBounds(n, "c.WeakTypeTag"),
         schemas=", ".join(mkValsFmt(n, "Schema[{upperIdx}]")),
@@ -215,85 +233,58 @@ def mkMacro(n):
     )
 
 
+header = textwrap.dedent(
+    """
+/*
+    * Copyright 2019 Spotify AB.
+    *
+    * Licensed under the Apache License, Version 2.0 (the "License");
+    * you may not use this file except in compliance with the License.
+    * You may obtain a copy of the License at
+    *
+    *     http://www.apache.org/licenses/LICENSE-2.0
+    *
+    * Unless required by applicable law or agreed to in writing,
+    * software distributed under the License is distributed on an
+    * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+    * KIND, either express or implied.  See the License for the
+    * specific language governing permissions and limitations
+    * under the License.
+    */
+
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+// !! generated with sql.py
+// !! DO NOT EDIT MANUALLY
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+package com.spotify.scio.sql
+
+"""
+).lstrip("\n")
+
+
 def main(out):
-    print >> out, textwrap.dedent(
-        """
-        /*
-         * Copyright 2019 Spotify AB.
-         *
-         * Licensed under the Apache License, Version 2.0 (the "License");
-         * you may not use this file except in compliance with the License.
-         * You may obtain a copy of the License at
-         *
-         *     http://www.apache.org/licenses/LICENSE-2.0
-         *
-         * Unless required by applicable law or agreed to in writing,
-         * software distributed under the License is distributed on an
-         * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-         * KIND, either express or implied.  See the License for the
-         * specific language governing permissions and limitations
-         * under the License.
-         */
-
-        // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        // !! generated with tuplecoders.py
-        // !! DO NOT EDIT MANUALLY
-        // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-        package com.spotify.scio.sql
-
-        import com.spotify.scio.schemas._
-        import com.spotify.scio.values.SCollection
-        import org.apache.beam.sdk.extensions.sql.SqlTransform
-        import org.apache.beam.sdk.extensions.sql.impl.ParseException
-        import org.apache.beam.sdk.values._
-
-        """
-    ).lstrip("\n")
 
     N = 10
-    rg = xrange(2, N + 1)
-    for i in rg:
-        sqlCollectionFns(out, i)
-    from_methods = "\n".join(mkFrom(i) for i in rg)
-    print >> out, textwrap.dedent(
-        """
-        trait SqlGen {{
-            {from_methods}
-        }}
-        object SqlGen extends SqlGen
-        """.format(
-            from_methods=from_methods
+    for i in xrange(2, N + 1):
+        f = open(
+            "scio-core/src/main/scala/com/spotify/scio/sql/Query{}.scala".format(i), "w"
         )
-    )
-    tc_methods = "\n".join(mkTypecheck(i) for i in rg)
-    print >> out, textwrap.dedent(
+        print >> f, header
+        sqlCollectionFns(f, i)
+        f.close()
+    f = open("scio-core/src/main/scala/com/spotify/scio/sql/SqlSCollections.scala".format(i), "w")
+    print >> f, header
+    print >> f, textwrap.dedent(
         """
-        trait QueriesGen {{
-            import scala.language.experimental.macros
+        import com.spotify.scio.schemas._
+        import com.spotify.scio.values.SCollection
 
-            {tc_methods}
+        trait SqlSCollections {{
+            {from_method}
         }}
-        object QueriesGen extends QueriesGen
-        """.format(
-            tc_methods=tc_methods
-        )
+        """.format(from_method="\n".join(mkFrom(n) for n in xrange(1, N + 1)))
     )
-    typed_macros = "\n".join(mkMacro(i) for i in rg)
-    print >> out, textwrap.dedent(
-        """
-        trait QueryMacrosGen {{
-            import scala.reflect.macros.blackbox
-            import QueryMacrosUtil._
-
-            {typed_macros}
-        }}
-        object QueryMacrosGen extends QueryMacrosGen
-        """.format(
-            typed_macros=typed_macros
-        )
-    )
-
 
 if __name__ == "__main__":
     main(sys.stdout)
