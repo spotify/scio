@@ -18,10 +18,7 @@
 package com.spotify.scio.transforms
 
 import java.util.UUID
-import java.util.concurrent.Semaphore
-import java.util.function.{Function => JFunction}
 
-import com.google.common.cache.Cache
 import com.google.common.collect.{Maps, Queues}
 import org.apache.beam.sdk.values.KV
 import org.apache.beam.sdk.transforms.DoFn
@@ -29,8 +26,7 @@ import org.apache.beam.sdk.transforms.DoFn.{FinishBundle, ProcessElement, Setup,
 import org.apache.beam.sdk.transforms.windowing.BoundedWindow
 import org.joda.time.Instant
 import com.google.common.base.Preconditions
-import com.google.common.util.concurrent.{FutureCallback, Futures, ListenableFuture, MoreExecutors}
-import com.spotify.scio.transforms.ScalaAsyncLookupDoFn.Caches
+import com.spotify.scio.transforms.AsyncLookupDoFn.CacheSupplier
 import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConverters._
@@ -38,84 +34,45 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Await, Future, Promise}
 import scala.concurrent.duration.Duration
 import scala.util.{Failure, Success, Try}
-import scala.language.implicitConversions
 import scala.util.control.NonFatal
 
 object ScalaAsyncLookupDoFn {
-  val Client = Maps.newConcurrentMap[UUID, Any]
-  val Caches = Maps.newConcurrentMap[UUID, Cache[_, _]]
+  implicit private class FutureExtension[A](val future: Future[A]) {
 
-  implicit def toJavaFunction[A, B](f: Function1[A, B]): JFunction[A, B] =
-    new JFunction[A, B] {
-      override def apply(a: A): B = f(a)
-    }
-
-  implicit def toScalaFuture[A](lFuture: ListenableFuture[A]): Future[A] = {
-    val p = Promise[A]
-    Futures.addCallback(lFuture, new FutureCallback[A] {
-      def onSuccess(result: A): Unit = p.success(result)
-      def onFailure(t: Throwable): Unit = p.failure(t)
-    }, MoreExecutors.directExecutor())
-    p.future
+    /** Similar to [[future.transform]] in 2.12 to work with Scala 2.11 */
+    def transformExtension[B](f: Try[A] => Try[B]): Future[B] = transform(future)(f)
   }
 
-  object Extension {
-    implicit class FutureExtension[A](val future: Future[A]) {
-
-      /** Similar to [[future.transform]] in 2.12 to work with Scala 2.11 */
-      def transformExtension[B](f: Try[A] => Try[B]): Future[B] = transform(future)(f)
-    }
-
-    private def transform[A, B](future: Future[A])(f: Try[A] => Try[B]): Future[B] = {
-      val p = Promise[B]()
-      future.onComplete { result =>
-        try p.complete(f(result))
-        catch {
-          case NonFatal(ex) => p.failure(ex)
-        }
+  private def transform[A, B](future: Future[A])(f: Try[A] => Try[B]): Future[B] = {
+    val p = Promise[B]()
+    future.onComplete { result =>
+      try p.complete(f(result))
+      catch {
+        case NonFatal(ex) => p.failure(ex)
       }
-      p.future
     }
+    p.future
   }
 }
 
 abstract class ScalaAsyncLookupDoFn[A, B, C](
-  maxPendingRequests: Int,
-  cacheSupplier: GuavaCacheSupplier[A, B, _]
-) extends DoFn[A, KV[A, Try[B]]] {
+  maxPendingRequests: Int = 1000,
+  cacheSupplier: CacheSupplier[A, B, _] = new AsyncLookupDoFn.NoOpCacheSupplier[A, B]
+) extends AsyncDoFn[A, B, C, Try[B], Future[B]](maxPendingRequests, cacheSupplier) {
   private val Log = LoggerFactory.getLogger(classOf[ScalaAsyncLookupDoFn[_, _, _]])
 
-  private val InstanceId: UUID = UUID.randomUUID
-  private val Semaphore = new Semaphore(maxPendingRequests)
   private val Futures = Maps.newConcurrentMap[UUID, Future[Result]]
   private val Results = Queues.newConcurrentLinkedQueue[Result]
-  private var RequestCount: Long = 0L
-  private var ResultCount: Long = 0L
 
-  def this(maxPendingRequests: Int) {
-    this(maxPendingRequests, new NoOpGuavaCacheSupplier[A, B, String])
-  }
-
-  /** Perform asynchronous lookup */
-  protected def asyncLookup(client: C, input: A): Future[B]
-
-  /** Define client */
-  protected def client(): C
-
-  @Setup def setup(): Unit = {
-    import ScalaAsyncLookupDoFn._
-    val clientFunc = (uuid: UUID) => client
-    Client.computeIfAbsent(InstanceId, clientFunc)
-    val cacheFunc = (uuid: UUID) => cacheSupplier.createCache
-    Caches.computeIfAbsent(InstanceId, cacheFunc)
+  @Setup override def setup(): Unit = {
+    super.setup()
     ()
   }
 
-  @StartBundle def startBundle(): Unit = {
+  @StartBundle override def startBundle(): Unit = {
+    super.startBundle()
     Futures.clear()
     Results.clear()
-    RequestCount = 0
-    ResultCount = 0
   }
 
   @ProcessElement def processElement(
@@ -124,19 +81,19 @@ abstract class ScalaAsyncLookupDoFn[A, B, C](
   ): Unit = {
     flush((r: Result) => c.output(KV.of(r.input, r.output)))
     val input: A = c.element
-    val cached: Option[B] = cacheSupplier.get(InstanceId, input)
-    if (cached.nonEmpty) {
-      c.output(KV.of(input, Try[B](cached.get)))
+    val cached: B = cacheSupplier.get(instanceId, input)
+    if (cached != null) {
+      c.output(KV.of(input, Try[B](cached)))
     } else {
       val uuid: UUID = UUID.randomUUID
       var future: Future[B] = null
       try {
-        Semaphore.acquire
-        import ScalaAsyncLookupDoFn._
-        try future = asyncLookup(Client.get(InstanceId).asInstanceOf[C], input)
+        semaphore.acquire
+        import AsyncDoFn._
+        try future = asyncLookup(client.get(instanceId).asInstanceOf[C], input)
         catch {
           case e: Exception =>
-            Semaphore.release
+            semaphore.release
             throw e
         }
       } catch {
@@ -144,28 +101,28 @@ abstract class ScalaAsyncLookupDoFn[A, B, C](
           Log.error("Failed to acquire semaphore", e)
           throw new RuntimeException("Failed to acquire semaphore", e)
       }
-      RequestCount += 1
-      import ScalaAsyncLookupDoFn.Extension._
+      requestCount += 1
+      import ScalaAsyncLookupDoFn._
       val f = future.transformExtension {
-        case Success(res) => transform(input, Success(res), c.timestamp, window, uuid)
+        case Success(res) => transformResult(input, Success(res), c.timestamp, window, uuid)
         case Failure(ex) =>
-          transform(input, Failure(ex), c.timestamp, window, uuid)
+          transformResult(input, Failure(ex), c.timestamp, window, uuid)
       }
       Futures.put(uuid, f)
       ()
     }
   }
 
-  def transform(
+  def transformResult(
     input: A,
     res: Try[B],
     timestamp: Instant,
     window: BoundedWindow,
     uuid: UUID
   ): Try[Result] = {
-    Semaphore.release()
+    semaphore.release()
     if (res.isSuccess) {
-      cacheSupplier.put(InstanceId, input, res.get)
+      cacheSupplier.put(instanceId, input, res.get)
     }
     val r = Result(input, res, timestamp, window)
     Results.add(r)
@@ -184,7 +141,7 @@ abstract class ScalaAsyncLookupDoFn[A, B, C](
     flush((r: Result) => c.output(KV.of(r.input, r.output), r.timestamp, r.window))
 
     // Make sure all requests are processed
-    Preconditions.checkState(RequestCount == ResultCount)
+    Preconditions.checkState(requestCount == resultCount)
   }
 
   // Flush pending errors and results
@@ -192,39 +149,10 @@ abstract class ScalaAsyncLookupDoFn[A, B, C](
     var r = Results.poll
     while (r != null) {
       outputFn.apply(r)
-      ResultCount += 1
+      resultCount += 1
       r = Results.poll
     }
   }
 
   case class Result(input: A, output: Try[B], timestamp: Instant, window: BoundedWindow)
-}
-
-abstract class GuavaCacheSupplier[A, B, K] extends Serializable {
-
-  def createCache: Cache[K, B]
-
-  def getKey(input: A): K
-
-  final def get(instanceId: UUID, item: A): Option[B] = {
-    val c: Cache[K, B] = Caches.get(instanceId).asInstanceOf[Cache[K, B]]
-    if (c == null) {
-      Option.empty
-    } else {
-      Option(c.getIfPresent(getKey(item)))
-    }
-  }
-
-  final def put(instanceId: UUID, item: A, value: B): Unit = {
-    val c: Cache[K, B] = Caches.get(instanceId).asInstanceOf[Cache[K, B]]
-    if (c != null) {
-      c.put(getKey(item), value)
-    }
-  }
-}
-
-final class NoOpGuavaCacheSupplier[A, B, _] extends GuavaCacheSupplier[A, B, String] {
-  override def createCache: Cache[String, B] = null
-
-  override def getKey(input: A): String = null.asInstanceOf[String]
 }

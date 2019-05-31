@@ -19,8 +19,6 @@ package com.spotify.scio.transforms
 
 import java.util.concurrent.ConcurrentLinkedQueue
 
-import com.google.common.cache.{Cache, CacheBuilder}
-import com.google.common.util.concurrent.Futures
 import com.spotify.scio.testing.PipelineSpec
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -60,14 +58,6 @@ class ScalaAsyncLookupDoFnTest extends PipelineSpec {
       (x, prefix + x.toString)
     }
   }
-
-  it should "work with ListenableFuture" in {
-    val fn = new TestScalaAsyncLookupListenableFutureDoFn
-    val output = runWithData(1 to 10)(_.parDo(fn))
-      .map(kv => (kv.getKey, kv.getValue.get))
-    output should contain theSameElementsAs (1 to 10).map(x => (x, x.toString))
-  }
-
 }
 
 object ScalaAsyncLookupDoFnTest {
@@ -76,8 +66,8 @@ object ScalaAsyncLookupDoFnTest {
 
 class TestAsyncClient {}
 
-class TestScalaAsyncLookupDoFn extends ScalaAsyncLookupDoFn[Int, String, TestAsyncClient](10) {
-  override def client(): TestAsyncClient = new TestAsyncClient
+class TestScalaAsyncLookupDoFn extends ScalaAsyncLookupDoFn[Int, String, TestAsyncClient]() {
+  override protected def newClient(): TestAsyncClient = new TestAsyncClient
 
   override def asyncLookup(client: TestAsyncClient, input: Int): Future[String] =
     Future {
@@ -86,9 +76,9 @@ class TestScalaAsyncLookupDoFn extends ScalaAsyncLookupDoFn[Int, String, TestAsy
 }
 
 class TestCachingScalaAsyncLookupDoFn
-    extends ScalaAsyncLookupDoFn[Int, String, TestAsyncClient](10, new TestGuavaCacheSupplier) {
+    extends ScalaAsyncLookupDoFn[Int, String, TestAsyncClient](10, new TestCacheSupplier) {
 
-  override def client(): TestAsyncClient = new TestAsyncClient
+  override protected def newClient(): TestAsyncClient = new TestAsyncClient
 
   override def asyncLookup(client: TestAsyncClient, input: Int): Future[String] = {
     ScalaAsyncLookupDoFnTest.queue.add(input)
@@ -98,9 +88,8 @@ class TestCachingScalaAsyncLookupDoFn
   }
 }
 
-class TestFailingScalaAsyncLookupDoFn
-    extends ScalaAsyncLookupDoFn[Int, String, TestAsyncClient](1) {
-  override def client(): TestAsyncClient = new TestAsyncClient
+class TestFailingScalaAsyncLookupDoFn extends ScalaAsyncLookupDoFn[Int, String, TestAsyncClient]() {
+  override protected def newClient(): TestAsyncClient = new TestAsyncClient
 
   override def asyncLookup(client: TestAsyncClient, input: Int): Future[String] =
     if (input % 2 == 0) {
@@ -110,21 +99,4 @@ class TestFailingScalaAsyncLookupDoFn
     } else {
       Future.failed(new RuntimeException("failure" + input))
     }
-}
-
-class TestScalaAsyncLookupListenableFutureDoFn
-    extends ScalaAsyncLookupDoFn[Int, String, TestAsyncClient](10) {
-  override def client(): TestAsyncClient = new TestAsyncClient
-
-  override def asyncLookup(client: TestAsyncClient, input: Int): Future[String] = {
-    import ScalaAsyncLookupDoFn._
-    Futures.immediateFuture(input.toString)
-  }
-}
-
-class TestGuavaCacheSupplier extends GuavaCacheSupplier[Int, String, java.lang.Long] {
-  override def createCache: Cache[java.lang.Long, String] =
-    CacheBuilder.newBuilder().build[java.lang.Long, String]()
-
-  override def getKey(input: Int): java.lang.Long = input.toLong
 }

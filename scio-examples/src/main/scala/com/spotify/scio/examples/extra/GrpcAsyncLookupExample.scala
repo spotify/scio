@@ -30,7 +30,8 @@ import com.spotify.scio.proto.simple_grpc.CustomerOrderRequest
 
 import scala.util.Try
 import com.spotify.scio.proto.simple_grpc.CustomerOrderServiceGrpc.CustomerOrderServiceStub
-import com.spotify.scio.transforms.{GuavaCacheSupplier, ScalaAsyncLookupDoFn}
+import com.spotify.scio.transforms.AsyncLookupDoFn.CacheSupplier
+import com.spotify.scio.transforms.ScalaAsyncLookupDoFn
 import io.grpc.ManagedChannelBuilder
 import org.apache.beam.sdk.transforms.ParDo
 import org.apache.beam.sdk.values.KV
@@ -65,12 +66,12 @@ class GrpcAsyncLookupDoFn(host: String, port: Int)
       new LookupCacheSupplier
     ) {
 
-  override protected def client(): CustomerOrderServiceStub = {
+  override protected def newClient(): CustomerOrderServiceStub = {
     val channel = ManagedChannelBuilder.forAddress(host, port).usePlaintext().build
     new CustomerOrderServiceStub(channel)
   }
 
-  override protected def asyncLookup(
+  override def asyncLookup(
     stub: CustomerOrderServiceStub,
     input: String
   ): Future[String] = {
@@ -80,15 +81,10 @@ class GrpcAsyncLookupDoFn(host: String, port: Int)
       res => res.orderId,
       ex => new RuntimeException(ex)
     )
-    // Should also be able to use transform from Scala 2.12
-    // f.transform {
-    //   case Success(res) => Success(res.orderId)
-    //  case Failure(ex)  => Failure(ex)
-    // }
   }
 }
 
-class LookupCacheSupplier extends GuavaCacheSupplier[String, String, String] {
+class LookupCacheSupplier extends CacheSupplier[String, String, String] {
   override def createCache: Cache[String, String] =
     CacheBuilder
       .newBuilder()
