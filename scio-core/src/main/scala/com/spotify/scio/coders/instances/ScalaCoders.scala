@@ -148,7 +148,7 @@ private abstract class SeqLikeCoder[M[_], T](bc: BCoder[T])(
     lc.encode(value.size, outStream)
     value.foreach(bc.encode(_, outStream))
   }
-  def decode(inStream: InputStream, builder: scala.collection.mutable.Builder[T, M[T]]): M[T] = {
+  def decode(inStream: InputStream, builder: m.Builder[T, M[T]]): M[T] = {
     val size = lc.decode(inStream)
     var i = 0
     while (i < size) {
@@ -453,6 +453,11 @@ trait ScalaCoders {
 
   implicit def arrayByteCoder: Coder[Array[Byte]] =
     Coder.beam(ByteArrayCoder.of())
+
+  implicit def wrappedArrayCoder[T: Coder: ClassTag](
+    implicit wrap: Array[T] => m.WrappedArray[T]
+  ): Coder[m.WrappedArray[T]] =
+    Coder.xmap(Coder[Array[T]])(wrap, _.array)
 
   implicit def mutableMapCoder[K: Coder, V: Coder]: Coder[m.Map[K, V]] =
     Coder.transform(Coder[K]) { kc =>
