@@ -18,8 +18,8 @@
 package com.spotify.scio.transforms
 
 import java.util.UUID
+import java.util.concurrent.{ConcurrentHashMap, ConcurrentLinkedQueue}
 
-import com.google.common.collect.{Maps, Queues}
 import org.apache.beam.sdk.values.KV
 import org.apache.beam.sdk.transforms.DoFn
 import org.apache.beam.sdk.transforms.DoFn.{FinishBundle, ProcessElement, Setup, StartBundle}
@@ -37,6 +37,9 @@ import scala.util.{Failure, Success, Try}
 import scala.util.control.NonFatal
 
 object ScalaAsyncLookupDoFn {
+
+  private val Logger = LoggerFactory.getLogger(this.getClass)
+
   implicit private class FutureExtension[A](val future: Future[A]) {
 
     /** Similar to [[future.transform]] in 2.12 to work with Scala 2.11 */
@@ -59,10 +62,8 @@ abstract class ScalaAsyncLookupDoFn[A, B, C](
   maxPendingRequests: Int = 1000,
   cacheSupplier: CacheSupplier[A, B, _] = new AsyncLookupDoFn.NoOpCacheSupplier[A, B]
 ) extends AsyncDoFn[A, B, C, Try[B], Future[B]](maxPendingRequests, cacheSupplier) {
-  private val Log = LoggerFactory.getLogger(classOf[ScalaAsyncLookupDoFn[_, _, _]])
-
-  private val Futures = Maps.newConcurrentMap[UUID, Future[Result]]
-  private val Results = Queues.newConcurrentLinkedQueue[Result]
+  private val Futures = new ConcurrentHashMap[UUID, Future[Result]]
+  private val Results = new ConcurrentLinkedQueue[Result]
 
   @Setup override def setup(): Unit = {
     super.setup()
@@ -87,6 +88,7 @@ abstract class ScalaAsyncLookupDoFn[A, B, C](
     } else {
       val uuid: UUID = UUID.randomUUID
       var future: Future[B] = null
+      import ScalaAsyncLookupDoFn._
       try {
         semaphore.acquire
         import AsyncDoFn._
@@ -98,11 +100,10 @@ abstract class ScalaAsyncLookupDoFn[A, B, C](
         }
       } catch {
         case e: InterruptedException =>
-          Log.error("Failed to acquire semaphore", e)
+          Logger.error("Failed to acquire semaphore", e)
           throw new RuntimeException("Failed to acquire semaphore", e)
       }
       requestCount += 1
-      import ScalaAsyncLookupDoFn._
       val f = future.transformExtension {
         case Success(res) => transformResult(input, Success(res), c.timestamp, window, uuid)
         case Failure(ex) =>
