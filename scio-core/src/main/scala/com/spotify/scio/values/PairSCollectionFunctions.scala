@@ -313,14 +313,15 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     implicit hash: Hash128[K],
     koder: Coder[K],
     voder: Coder[V]
-  ): SCollection[(K, (Option[V], Option[W]))] =
+  ): SCollection[(K, (Option[V], Option[W]))] = self.transform { me =>
     SCollection.unionAll(
-      splitSelfUsing(that, thatNumKeys, fpProb).map {
+      splitThisUsingThat(me, that, thatNumKeys, fpProb).map {
         case (lhsUnique, lhsOverlap, rhs) =>
           val unique = lhsUnique.map(kv => (kv._1, (Option(kv._2), Option.empty[W])))
           unique ++ lhsOverlap.fullOuterJoin(rhs)
       }
     )
+  }
 
   /**
    * Inner join for cases when `this` is much larger than `that` which cannot fit in memory,
@@ -344,12 +345,14 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     thatNumKeys: Long,
     fpProb: Double = 0.01
   )(implicit hash: Hash128[K], koder: Coder[K], voder: Coder[V]): SCollection[(K, (V, W))] =
-    SCollection.unionAll(
-      splitSelfUsing(that, thatNumKeys, fpProb).map {
-        case (_, lhsOverlap, rhs) =>
-          lhsOverlap.join(rhs)
-      }
-    )
+    self.transform { me =>
+      SCollection.unionAll(
+        splitThisUsingThat(me, that, thatNumKeys, fpProb).map {
+          case (_, lhsOverlap, rhs) =>
+            lhsOverlap.join(rhs)
+        }
+      )
+    }
 
   /**
    * Left outer join for cases when `this` is much larger than `that` which cannot fit in memory,
@@ -373,13 +376,15 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     thatNumKeys: Long,
     fpProb: Double = 0.01
   )(implicit hash: Hash128[K], koder: Coder[K], voder: Coder[V]): SCollection[(K, (V, Option[W]))] =
-    SCollection.unionAll(
-      splitSelfUsing(that, thatNumKeys, fpProb).map {
-        case (lhsUnique, lhsOverlap, rhs) =>
-          val unique = lhsUnique.map(kv => (kv._1, (kv._2, Option.empty[W])))
-          unique ++ lhsOverlap.leftOuterJoin(rhs)
-      }
-    )
+    self.transform { me =>
+      SCollection.unionAll(
+        splitThisUsingThat(me, that, thatNumKeys, fpProb).map {
+          case (lhsUnique, lhsOverlap, rhs) =>
+            val unique = lhsUnique.map(kv => (kv._1, (kv._2, Option.empty[W])))
+            unique ++ lhsOverlap.leftOuterJoin(rhs)
+        }
+      )
+    }
 
   /**
    * Right outer join for cases when `this` is much larger than `that` which cannot fit in memory,
@@ -403,12 +408,14 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     thatNumKeys: Long,
     fpProb: Double = 0.01
   )(implicit hash: Hash128[K], koder: Coder[K], voder: Coder[V]): SCollection[(K, (Option[V], W))] =
-    SCollection.unionAll(
-      splitSelfUsing(that, thatNumKeys, fpProb).map {
-        case (_, lhsOverlap, rhs) =>
-          lhsOverlap.rightOuterJoin(rhs)
-      }
-    )
+    self.transform { me =>
+      SCollection.unionAll(
+        splitThisUsingThat(me, that, thatNumKeys, fpProb).map {
+          case (_, lhsOverlap, rhs) =>
+            lhsOverlap.rightOuterJoin(rhs)
+        }
+      )
+    }
 
   /*
    Internal to PairSCollectionFunctions
@@ -419,8 +426,9 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    The number of SCollection tuples in the Seq is based on the number of BloomFilters required to
    maintain the given false positive probability for the split of Self into Unique and Overlap.
    */
-  private def splitSelfUsing[W: Coder](
-    that: SCollection[(K, W)],
+  private def splitThisUsingThat[W: Coder](
+    thisSColl: SCollection[(K, V)],
+    thatSColl: SCollection[(K, W)],
     thatNumKeys: Long,
     fpProb: Double
   )(
@@ -429,11 +437,11 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     voder: Coder[V]
   ): Seq[(SCollection[(K, V)], SCollection[(K, V)], SCollection[(K, W)])] = {
 
-    val thatBfSIs = that.optimalKeysBloomFiltersAsSideInputs(thatNumKeys, fpProb)
+    val thatBfSIs = thatSColl.optimalKeysBloomFiltersAsSideInputs(thatNumKeys, fpProb)
     val n = thatBfSIs.size
 
-    val thisParts = self.hashPartitionByKey(n)
-    val thatParts = that.hashPartitionByKey(n)
+    val thisParts = thisSColl.hashPartitionByKey(n)
+    val thatParts = thatSColl.hashPartitionByKey(n)
 
     thisParts.zip(thatParts).zip(thatBfSIs).map {
       case ((lhs, rhs), bfsi) =>
@@ -833,35 +841,36 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     thatNumKeys: Int,
     computeExact: Boolean = false,
     fpProb: Double = 0.01
-  )(implicit koder: Coder[K], voder: Coder[V], hash: Hash128[K]): SCollection[(K, V)] = {
-    val rhsBfs = that.map(k => (k, ())).optimalKeysBloomFiltersAsSideInputs(thatNumKeys, fpProb)
-    val n = rhsBfs.size
-    val thisParts = self.hashPartitionByKey(n)
-    val thatParts = that.hashPartition(n)
-    SCollection.unionAll(
-      thisParts
-        .zip(thatParts)
-        .zip(rhsBfs)
-        .map {
-          case ((lhs, rhs), rhsBf) =>
-            val approxResults = lhs
-              .withSideInputs(rhsBf)
-              .filter { case (e, c) => c(rhsBf).maybeContains(e._1) }
-              .toSCollection
+  )(implicit koder: Coder[K], voder: Coder[V], hash: Hash128[K]): SCollection[(K, V)] =
+    self.transform { me =>
+      val rhsBfs = that.map(k => (k, ())).optimalKeysBloomFiltersAsSideInputs(thatNumKeys, fpProb)
+      val n = rhsBfs.size
+      val thisParts = me.hashPartitionByKey(n)
+      val thatParts = that.hashPartition(n)
+      SCollection.unionAll(
+        thisParts
+          .zip(thatParts)
+          .zip(rhsBfs)
+          .map {
+            case ((lhs, rhs), rhsBf) =>
+              val approxResults = lhs
+                .withSideInputs(rhsBf)
+                .filter { case (e, c) => c(rhsBf).maybeContains(e._1) }
+                .toSCollection
 
-            if (computeExact) {
-              approxResults
-                .cogroup(rhs.map((_, ())))
-                .flatMap { t =>
-                  if (t._2._1.nonEmpty && t._2._2.nonEmpty) t._2._1.map((t._1, _))
-                  else Seq.empty
-                }
-            } else {
-              approxResults
-            }
-        }
-    )
-  }
+              if (computeExact) {
+                approxResults
+                  .cogroup(rhs.map((_, ())))
+                  .flatMap { t =>
+                    if (t._2._1.nonEmpty && t._2._2.nonEmpty) t._2._1.map((t._1, _))
+                    else Seq.empty
+                  }
+              } else {
+                approxResults
+              }
+          }
+      )
+    }
 
   /**
    * Return an SCollection with the keys of each tuple.
