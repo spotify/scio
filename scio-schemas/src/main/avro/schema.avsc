@@ -56,6 +56,6 @@
         {"name": "double_field", "type": ["null", "double"], "default": null},
         {"name": "boolean_field", "type": ["null", "boolean"], "default": null},
         {"name": "string_field", "type": ["null", "string"], "default": null},
-        {"name": "array_field", "type": {"type": "array", "items": "string"}, "default": null}
+        {"name": "array_field", "type": {"type": "array", "items": "string"}, "default": []}
     ]
 }]

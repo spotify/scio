@@ -29,11 +29,12 @@ val annoy4sVersion = "0.8.0"
 val annoyVersion = "0.2.5"
 val asmVersion = "4.13"
 val autoServiceVersion = "1.0-rc2"
-val avroVersion = "1.8.2"
+val avroVersion = "1.9.0"
 val breezeVersion = "1.0-RC2"
 val chillVersion = "0.9.3"
 val circeVersion = "0.11.1"
 val commonsIoVersion = "2.6"
+val commonsTextVersion = "1.6"
 val commonsMath3Version = "3.6.1"
 val elasticsearch2Version = "2.4.6"
 val elasticsearch5Version = "5.6.15"
@@ -430,7 +431,8 @@ lazy val scioAvro: Project = Project(
       "org.slf4j" % "slf4j-simple" % slf4jVersion % "test,it",
       "org.scalatest" %% "scalatest" % scalatestVersion % "test,it",
       "com.github.alexarchambault" %% "scalacheck-shapeless_1.13" % scalacheckShapelessVersion % "test",
-      "me.lyh" %% "shapeless-datatype-core" % shapelessDatatypeVersion % "test"
+      "me.lyh" %% "shapeless-datatype-core" % shapelessDatatypeVersion % "test",
+      "org.apache.commons" % "commons-text" % commonsTextVersion
     ),
     beamSDKIODependencies
   )
