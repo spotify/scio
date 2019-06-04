@@ -315,7 +315,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     voder: Coder[V]
   ): SCollection[(K, (Option[V], Option[W]))] = self.transform { me =>
     SCollection.unionAll(
-      splitThisUsingThat(me, that, thatNumKeys, fpProb).map {
+      split(me, that, thatNumKeys, fpProb).map {
         case (lhsUnique, lhsOverlap, rhs) =>
           val unique = lhsUnique.map(kv => (kv._1, (Option(kv._2), Option.empty[W])))
           unique ++ lhsOverlap.fullOuterJoin(rhs)
@@ -347,7 +347,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
   )(implicit hash: Hash128[K], koder: Coder[K], voder: Coder[V]): SCollection[(K, (V, W))] =
     self.transform { me =>
       SCollection.unionAll(
-        splitThisUsingThat(me, that, thatNumKeys, fpProb).map {
+        split(me, that, thatNumKeys, fpProb).map {
           case (_, lhsOverlap, rhs) =>
             lhsOverlap.join(rhs)
         }
@@ -378,7 +378,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
   )(implicit hash: Hash128[K], koder: Coder[K], voder: Coder[V]): SCollection[(K, (V, Option[W]))] =
     self.transform { me =>
       SCollection.unionAll(
-        splitThisUsingThat(me, that, thatNumKeys, fpProb).map {
+        split(me, that, thatNumKeys, fpProb).map {
           case (lhsUnique, lhsOverlap, rhs) =>
             val unique = lhsUnique.map(kv => (kv._1, (kv._2, Option.empty[W])))
             unique ++ lhsOverlap.leftOuterJoin(rhs)
@@ -410,7 +410,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
   )(implicit hash: Hash128[K], koder: Coder[K], voder: Coder[V]): SCollection[(K, (Option[V], W))] =
     self.transform { me =>
       SCollection.unionAll(
-        splitThisUsingThat(me, that, thatNumKeys, fpProb).map {
+        split(me, that, thatNumKeys, fpProb).map {
           case (_, lhsOverlap, rhs) =>
             lhsOverlap.rightOuterJoin(rhs)
         }
@@ -419,14 +419,15 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
 
   /*
    Internal to PairSCollectionFunctions
-   Split up self into
+   Split up parameter `thisSColl` into
    Seq(
-     (KeysUniqueInSelf, KeysOverlappingWithThat, That)
+     (KeysUniqueInSelf, KeysOverlappingWith`thatSColl`, PartOfThatSColl)
    )
    The number of SCollection tuples in the Seq is based on the number of BloomFilters required to
-   maintain the given false positive probability for the split of Self into Unique and Overlap.
+   maintain the given false positive probability for the split of `thisSColl` into Unique and
+   Overlap. This function is used by Sparse Join transforms.
    */
-  private def splitThisUsingThat[W: Coder](
+  private def split[W: Coder](
     thisSColl: SCollection[(K, V)],
     thatSColl: SCollection[(K, W)],
     thatNumKeys: Long,
