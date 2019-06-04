@@ -24,7 +24,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import com.spotify.scio.ScioContext
 import org.apache.beam.sdk.extensions.gcp.options.GcpOptions
-import org.apache.beam.sdk.util.Transport
+import org.apache.beam.sdk.extensions.gcp.util.Transport
 import org.apache.beam.sdk.{PipelineResult, PipelineRunner}
 import org.slf4j.LoggerFactory
 

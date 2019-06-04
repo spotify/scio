@@ -40,7 +40,7 @@ import org.apache.beam.sdk.transforms.windowing.CalendarWindows;
 import org.apache.beam.sdk.transforms.windowing.IntervalWindow;
 import org.apache.beam.sdk.transforms.windowing.Sessions;
 import org.apache.beam.sdk.transforms.windowing.Window;
-import org.apache.beam.sdk.util.Transport;
+import org.apache.beam.sdk.extensions.gcp.util.Transport;
 import org.apache.beam.sdk.values.KV;
 import org.apache.beam.sdk.values.PCollection;
 import org.joda.time.Duration;
