@@ -1,5 +1,6 @@
 {
   "type": "record",
+  "namespace": "com.spotify.scio.avro.types",
   "name": "Test",
   "fields": [
     {"name": "test", "type": "int"}
