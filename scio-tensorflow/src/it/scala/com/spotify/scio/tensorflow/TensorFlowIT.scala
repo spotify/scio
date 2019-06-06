@@ -26,8 +26,8 @@ import com.spotify.scio.testing.{PipelineSpec, PipelineTestUtils}
 import org.apache.beam.sdk.extensions.gcp.options.GcpOptions
 import org.apache.beam.sdk.io.Compression
 import org.apache.beam.sdk.options.PipelineOptionsFactory
-import org.apache.beam.sdk.util.GcsUtil.GcsUtilFactory
-import org.apache.beam.sdk.util.gcsfs.GcsPath
+import org.apache.beam.sdk.extensions.gcp.util.GcsUtil.GcsUtilFactory
+import org.apache.beam.sdk.extensions.gcp.util.gcsfs.GcsPath
 import org.scalatest.BeforeAndAfterAll
 import org.tensorflow.example._
 import org.tensorflow.example.Feature

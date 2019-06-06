@@ -58,7 +58,7 @@ import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
-import org.apache.beam.sdk.util.BackOffAdapter;
+import org.apache.beam.sdk.extensions.gcp.util.BackOffAdapter;
 import org.apache.beam.sdk.util.FluentBackoff;
 import org.joda.time.Duration;
 import org.joda.time.format.DateTimeFormat;

@@ -22,7 +22,7 @@ import com.typesafe.sbt.SbtGit.GitKeys.gitRemoteRepo
 import org.scalafmt.sbt.ScalafmtPlugin.scalafmtConfigSettings
 import bloop.integrations.sbt.BloopDefaults
 
-val beamVersion = "2.12.0"
+val beamVersion = "2.13.0"
 
 val algebirdVersion = "0.13.5"
 val annoy4sVersion = "0.8.0"
@@ -648,7 +648,7 @@ lazy val scioParquet: Project = Project(
     libraryDependencies ++= Seq(
       "me.lyh" %% "parquet-avro-extra" % parquetAvroExtraVersion,
       "com.google.cloud.bigdataoss" % "gcs-connector" % gcsConnectorVersion,
-      "org.apache.beam" % "beam-sdks-java-io-hadoop-input-format" % beamVersion,
+      "org.apache.beam" % "beam-sdks-java-io-hadoop-format" % beamVersion,
       "org.apache.hadoop" % "hadoop-client" % hadoopVersion,
       "org.apache.parquet" % "parquet-avro" % parquetVersion
     )

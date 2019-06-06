@@ -82,16 +82,17 @@ private object Queries {
         }
     }.toMap
 
-    val env = BeamSqlEnv.readOnly(Sql.SCollectionTypeName, tables.asJava)
+    val tableProvider = new ReadOnlyTableProvider(Sql.SCollectionTypeName, tables.asJava)
+    val env = BeamSqlEnv.builder(tableProvider)
     udfs.foreach {
       case (x: UdfFromClass[_]) =>
-        env.registerUdf(x.fnName, x.clazz)
+        env.addUdf(x.fnName, x.clazz)
       case (x: UdfFromSerializableFn[_, _]) =>
-        env.registerUdf(x.fnName, x.fn)
+        env.addUdf(x.fnName, x.fn)
       case (x: UdafFromCombineFn[_, _, _]) =>
-        env.registerUdaf(x.fnName, x.fn)
+        env.addUdaf(x.fnName, x.fn)
     }
-    env.parseQuery(query)
+    env.build().parseQuery(query)
   }
 
   private[this] def schema(

@@ -24,7 +24,7 @@ import org.apache.beam.sdk.io.gcp.bigquery.{
   TableDestination,
   TableDestinationCoder
 }
-import org.apache.beam.sdk.util.Transport
+import org.apache.beam.sdk.extensions.gcp.util.Transport
 import org.apache.beam.sdk.values.ValueInSingleWindow
 
 private[dynamic] object DynamicDestinationsUtil {

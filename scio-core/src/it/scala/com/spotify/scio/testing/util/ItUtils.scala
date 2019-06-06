@@ -29,7 +29,7 @@ import org.apache.beam.sdk.extensions.gcp.auth.NullCredentialInitializer
 import org.apache.beam.sdk.extensions.gcp.options.GcpOptions.DefaultProjectFactory
 import org.apache.beam.sdk.extensions.gcp.options._
 import org.apache.beam.sdk.options.PipelineOptionsFactory
-import org.apache.beam.sdk.util.{RetryHttpRequestInitializer, Transport}
+import org.apache.beam.sdk.extensions.gcp.util.{RetryHttpRequestInitializer, Transport}
 
 /** Integration test utilities. */
 private[scio] object ItUtils {

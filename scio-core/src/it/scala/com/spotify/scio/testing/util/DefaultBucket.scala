@@ -27,8 +27,9 @@ import com.google.cloud.hadoop.util.{ResilientOperation, RetryDeterminer}
 import com.google.common.base.Strings.isNullOrEmpty
 import org.apache.beam.sdk.extensions.gcp.options.{GcpOptions, GcsOptions}
 import org.apache.beam.sdk.options.PipelineOptions
-import org.apache.beam.sdk.util.gcsfs.GcsPath
-import org.apache.beam.sdk.util.{BackOff, BackOffAdapter, FluentBackoff}
+import org.apache.beam.sdk.extensions.gcp.util.gcsfs.GcsPath
+import org.apache.beam.sdk.extensions.gcp.util.BackOffAdapter
+import org.apache.beam.sdk.util.{BackOff, FluentBackoff}
 import org.joda.time.Duration
 import org.slf4j.{Logger, LoggerFactory}
 
