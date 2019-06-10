@@ -52,11 +52,15 @@ final class SqlInterpolator(private val sc: StringContext) extends AnyVal {
   def sql(p0: SqlParam, ps: SqlParam*): SQLBuilder = {
     val params = p0 :: ps.toList
 
-    val tags =
-      params.zipWithIndex.collect {
-        case (ref @ SCollectionRef(scoll), i) =>
+    val tags = params
+      .collect { case ref @ SCollectionRef(scoll) => (scoll, ref) }
+      .distinct
+      .zipWithIndex
+      .map {
+        case ((scoll, ref), i) =>
           (scoll.name, (ref, new TupleTag[ref._A](s"SCOLLECTION_$i")))
-      }.toMap
+      }
+      .toMap
 
     val udfs = params.collect { case UdfRef(u) => u }
     val strings = sc.parts.iterator
