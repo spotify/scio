@@ -278,6 +278,15 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
     }
   }
 
+  it should "support filterValues()" in {
+    runWithContext { sc =>
+      val p = sc
+        .parallelize(Seq(("a", 1), ("b", 2), ("c", 3), ("d", 4), ("e", 5)))
+        .filterValues(_ % 2 == 0)
+      p should containInAnyOrder(Seq(("b", 2), ("d", 4)))
+    }
+  }
+
   it should "support flatMapValues()" in {
     runWithContext { sc =>
       val p = sc
