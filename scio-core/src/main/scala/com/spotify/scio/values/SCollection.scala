@@ -295,9 +295,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     val partitionKeysIndexed = partitionKeys.toIndexedSeq
 
     partitionKeysIndexed
-      .zip(
-        partition(partitionKeys.size, t => partitionKeysIndexed.indexOf(f(t)))
-      )
+      .zip(partition(partitionKeys.size, t => partitionKeysIndexed.indexOf(f(t))))
       .toMap
   }
 
