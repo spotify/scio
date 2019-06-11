@@ -277,7 +277,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @group collection
    */
   def partition(p: T => Boolean): (SCollection[T], SCollection[T]) = {
-    val Seq(left, right) = partition(2, t => if (p(t)) 0 else 1)
+    val Seq(left, right) = partition(2, (t: T) => if (p(t)) 0 else 1)
     (left, right)
   }
 
@@ -291,11 +291,11 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @return partitioned SCollections in a `Map`
    * @group collection
    */
-  def partitionToMap[U: Coder](partitionKeys: Set[U], f: T => U): Map[U, SCollection[T]] = {
+  def partition[U: Coder](partitionKeys: Set[U], f: T => U): Map[U, SCollection[T]] = {
     val partitionKeysIndexed = partitionKeys.toIndexedSeq
 
     partitionKeysIndexed
-      .zip(partition(partitionKeys.size, t => partitionKeysIndexed.indexOf(f(t))))
+      .zip(partition(partitionKeys.size, (t: T) => partitionKeysIndexed.indexOf(f(t))))
       .toMap
   }
 

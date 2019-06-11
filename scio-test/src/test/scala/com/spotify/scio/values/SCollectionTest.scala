@@ -164,11 +164,11 @@ class SCollectionTest extends PipelineSpec {
     }
   }
 
-  it should "support partitionToMap()" in {
+  it should "support partition() to a map" in {
     runWithContext { sc =>
       val m = sc
         .parallelize(Seq("a1", "a2", "a3", "b4", "b5", "c6"))
-        .partitionToMap(Set("a", "b", "c"), _.substring(0, 1))
+        .partition(Set("a", "b", "c"), _.substring(0, 1))
 
       m("a") should containInAnyOrder(Seq("a1", "a2", "a3"))
       m("b") should containInAnyOrder(Seq("b4", "b5"))
