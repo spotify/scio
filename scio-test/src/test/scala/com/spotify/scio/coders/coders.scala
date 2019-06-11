@@ -450,4 +450,9 @@ class CodersTest extends FlatSpec with Matchers {
     javaUser coderShould roundtrip()
     javaUser coderShould notFallback()
   }
+
+  it should "Serialize WrappedArray using wrappedArrayCoder" in {
+    val wrappedArray: mut.WrappedArray[String] = Array("foo", "bar")
+    wrappedArray coderShould notFallback()
+  }
 }
