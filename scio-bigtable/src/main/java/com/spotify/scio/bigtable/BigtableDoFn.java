@@ -17,20 +17,21 @@
 
 package com.spotify.scio.bigtable;
 
-import java.io.IOException;
-
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.spotify.scio.transforms.AsyncLookupDoFn;
+import com.spotify.scio.transforms.BaseAsyncLookupDoFn;
+import com.spotify.scio.transforms.GuavaAsyncLookupDoFn;
 import org.apache.beam.sdk.transforms.DoFn;
+
+import java.io.IOException;
 
 /**
  * A {@link DoFn} that performs asynchronous lookup using Google Cloud Bigtable.
  * @param <A> input element type.
  * @param <B> Bigtable lookup value type.
  */
-public abstract class BigtableDoFn<A, B> extends AsyncLookupDoFn<A, B, BigtableSession> {
+public abstract class BigtableDoFn<A, B> extends GuavaAsyncLookupDoFn<A, B, BigtableSession> {
 
   private final BigtableOptions options;
 
@@ -55,7 +56,7 @@ public abstract class BigtableDoFn<A, B> extends AsyncLookupDoFn<A, B, BigtableS
    */
   public BigtableDoFn(BigtableOptions options,
                       int maxPendingRequests) {
-    this(options, maxPendingRequests, new AsyncLookupDoFn.NoOpCacheSupplier<>());
+    this(options, maxPendingRequests, new BaseAsyncLookupDoFn.NoOpCacheSupplier<>());
   }
 
   /**
@@ -67,7 +68,7 @@ public abstract class BigtableDoFn<A, B> extends AsyncLookupDoFn<A, B, BigtableS
    */
   public <K> BigtableDoFn(BigtableOptions options,
                           int maxPendingRequests,
-                          AsyncLookupDoFn.CacheSupplier<A, B, K> cacheSupplier) {
+                          CacheSupplier<A, B, K> cacheSupplier) {
     super(maxPendingRequests, cacheSupplier);
     this.options = options;
   }
