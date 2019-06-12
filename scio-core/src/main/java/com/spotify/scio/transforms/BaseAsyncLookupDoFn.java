@@ -1,22 +1,25 @@
+/*
+ * Copyright 2019 Spotify AB.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
 package com.spotify.scio.transforms;
 
-import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.cache.Cache;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Queues;
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.MoreExecutors;
-import java.io.Serializable;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Semaphore;
-import java.util.function.Consumer;
-import javax.annotation.Nullable;
 import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.transforms.windowing.BoundedWindow;
 import org.apache.beam.sdk.values.KV;
@@ -24,14 +27,26 @@ import org.joda.time.Instant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.Serializable;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Semaphore;
+import java.util.function.Consumer;
+
 /**
  * A {@link DoFn} that performs asynchronous lookup using the provided client.
  * @param <A> input element type.
  * @param <B> client lookup value type.
  * @param <C> client type.
+ * @param <F> future type.
+ * @param <T> client lookup value type wrapped in a Try.
  */
-public abstract class AsyncLookupDoFn<A, B, C> extends DoFn<A, KV<A, AsyncLookupDoFn.Try<B>>> {
-  private static final Logger LOG = LoggerFactory.getLogger(AsyncLookupDoFn.class);
+public abstract class BaseAsyncLookupDoFn<A, B, C, F, T>
+    extends DoFn<A, KV<A, T>>
+    implements FutureHandlers.Base<F, B> {
+  private static final Logger LOG = LoggerFactory.getLogger(BaseAsyncLookupDoFn.class);
 
   // DoFn is deserialized once per CPU core. We assign a unique UUID to each DoFn instance upon
   // creation, so that all cloned instances share the same ID. This ensures all cores share the
@@ -44,7 +59,7 @@ public abstract class AsyncLookupDoFn<A, B, C> extends DoFn<A, KV<A, AsyncLookup
 
   // Data structures for handling async requests
   private final Semaphore semaphore;
-  private final ConcurrentMap<UUID, ListenableFuture<B>> futures = Maps.newConcurrentMap();
+  private final ConcurrentMap<UUID, F> futures = Maps.newConcurrentMap();
   private final ConcurrentLinkedQueue<Result> results = Queues.newConcurrentLinkedQueue();
   private long requestCount;
   private long resultCount;
@@ -52,32 +67,37 @@ public abstract class AsyncLookupDoFn<A, B, C> extends DoFn<A, KV<A, AsyncLookup
   /**
    * Perform asynchronous lookup.
    */
-  public abstract ListenableFuture<B> asyncLookup(C client, A input);
+  public abstract F asyncLookup(C client, A input);
+
+  /** Wrap output in a successful Try. */
+  public abstract T success(B output);
+
+  /** Wrap output in a failed Try. */
+  public abstract T failure(Throwable throwable);
 
   /**
-   * Create a {@link AsyncLookupDoFn} instance.
+   * Create a {@link BaseAsyncLookupDoFn} instance.
    */
-  public AsyncLookupDoFn() {
+  public BaseAsyncLookupDoFn() {
     this(1000);
   }
 
   /**
-   * Create a {@link AsyncLookupDoFn} instance.
+   * Create a {@link BaseAsyncLookupDoFn} instance.
    * @param maxPendingRequests maximum number of pending requests to prevent runner from timing out
    *                           and retrying bundles.
    */
-  public AsyncLookupDoFn(int maxPendingRequests) {
+  public BaseAsyncLookupDoFn(int maxPendingRequests) {
     this(maxPendingRequests, new NoOpCacheSupplier<>());
   }
 
   /**
-   * Create a {@link AsyncLookupDoFn} instance.
+   * Create a {@link BaseAsyncLookupDoFn} instance.
    * @param maxPendingRequests maximum number of pending requests to prevent runner from timing out
    *                           and retrying bundles.
    * @param cacheSupplier supplier for lookup cache.
    */
-  public <K> AsyncLookupDoFn(int maxPendingRequests,
-                             CacheSupplier<A, B, K> cacheSupplier) {
+  public <K> BaseAsyncLookupDoFn(int maxPendingRequests, CacheSupplier<A, B, K> cacheSupplier) {
     this.instanceId = UUID.randomUUID();
     this.cacheSupplier = cacheSupplier;
     this.semaphore = new Semaphore(maxPendingRequests);
@@ -107,12 +127,12 @@ public abstract class AsyncLookupDoFn<A, B, C> extends DoFn<A, KV<A, AsyncLookup
     final A input = c.element();
     B cached = cacheSupplier.get(instanceId, input);
     if (cached != null) {
-      c.output(KV.of(input, new Try<>(cached)));
+      c.output(KV.of(input, success(cached)));
       return;
     }
 
     final UUID uuid = UUID.randomUUID();
-    ListenableFuture<B> future;
+    F future;
     try {
       semaphore.acquire();
       try {
@@ -129,37 +149,23 @@ public abstract class AsyncLookupDoFn<A, B, C> extends DoFn<A, KV<A, AsyncLookup
     }
     requestCount++;
 
-    // Handle failure
-    Futures.addCallback(future, new FutureCallback<B>() {
-      @Override
-      public void onSuccess(@Nullable B result) {
-        semaphore.release();
-      }
-
-      @Override
-      public void onFailure(Throwable t) {
-        semaphore.release();
-        results.add(new Result(input, new Try<>(t), c.timestamp(), window));
+    F f = addCallback(future, output -> {
+      semaphore.release();
+      try {
+        cacheSupplier.put(instanceId, input, output);
+        results.add(new Result(input, success(output), c.timestamp(), window));
         futures.remove(uuid);
+      } catch (Exception e) {
+        LOG.error("Failed to cache result", e);
+        throw e;
       }
-    }, MoreExecutors.directExecutor());
-
-    // Handle success
-    ListenableFuture<B> f = Futures.transform(future, new Function<B, B>() {
-      @Nullable
-      @Override
-      public B apply(@Nullable B output) {
-        try {
-          cacheSupplier.put(instanceId, input, output);
-          results.add(new Result(input, new Try<>(output), c.timestamp(), window));
-          futures.remove(uuid);
-          return output;
-        } catch (Exception e) {
-          LOG.error("Failed to cache result", e);
-          throw e;
-        }
-      }
-    }, MoreExecutors.directExecutor());
+      return null;
+    }, throwable -> {
+      semaphore.release();
+      results.add(new Result(input, failure(throwable), c.timestamp(), window));
+      futures.remove(uuid);
+      return null;
+    });
 
     // This `put` may happen after `remove` in the callbacks but it's OK since either the result
     // or the error would've already been pushed to the corresponding queues and we are not losing
@@ -173,14 +179,13 @@ public abstract class AsyncLookupDoFn<A, B, C> extends DoFn<A, KV<A, AsyncLookup
     if (!futures.isEmpty()) {
       try {
         // Block until all pending futures are complete
-        Futures.successfulAsList(futures.values()).get();
+        waitForFutures(futures.values());
       } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
         LOG.error("Failed to process futures", e);
         throw new RuntimeException("Failed to process futures", e);
       } catch (ExecutionException e) {
         LOG.error("Failed to process futures", e);
-        throw new RuntimeException("Failed to process futures", e);
       }
     }
     flush(r -> c.output(KV.of(r.input, r.output), r.timestamp, r.window));
@@ -201,11 +206,11 @@ public abstract class AsyncLookupDoFn<A, B, C> extends DoFn<A, KV<A, AsyncLookup
 
   private class Result {
     private A input;
-    private Try<B> output;
+    private T output;
     private Instant timestamp;
     private BoundedWindow window;
 
-    Result(A input, Try<B> output, Instant timestamp, BoundedWindow window) {
+    Result(A input, T output, Instant timestamp, BoundedWindow window) {
       this.input  = input;
       this.output = output;
       this.timestamp = timestamp;
@@ -250,14 +255,15 @@ public abstract class AsyncLookupDoFn<A, B, C> extends DoFn<A, KV<A, AsyncLookup
   }
 
   /**
-   * Supplier for {@link AsyncLookupDoFn} with caching logic.
+   * Supplier for {@link BaseAsyncLookupDoFn} with caching logic.
    * @param <A> input element type.
    * @param <B> lookup value type.
    * @param <K> key type.
    */
   public static abstract class CacheSupplier<A, B, K> implements Serializable {
     /**
-     * Create a new {@link Cache} instance. This is called once per {@link AsyncLookupDoFn} instance.
+     * Create a new {@link Cache} instance. This is called once per
+     * {@link BaseAsyncLookupDoFn} instance.
      */
     public abstract Cache<K, B> createCache();
 

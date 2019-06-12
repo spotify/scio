@@ -272,7 +272,7 @@ package object transforms {
   }
 
   /** Enhanced version of `AsyncLookupDoFn.Try` with convenience methods. */
-  implicit class RichAsyncLookupDoFnTry[A](private val self: AsyncLookupDoFn.Try[A])
+  implicit class RichAsyncLookupDoFnTry[A](private val self: BaseAsyncLookupDoFn.Try[A])
       extends AnyVal {
 
     /** Convert this `AsyncLookupDoFn.Try` to a Scala `Try`. */
