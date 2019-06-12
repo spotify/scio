@@ -17,36 +17,15 @@
 
 package com.spotify.scio.transforms;
 
-import com.google.common.collect.Iterables;
 import org.apache.beam.sdk.transforms.DoFn;
 
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.function.Function;
 
 /**
  * A {@link DoFn} that handles asynchronous requests to an external service that returns Java 8
  * {@link CompletableFuture}s.
  */
 public abstract class JavaAsyncDoFn<InputT, OutputT, ResourceT>
-    extends BaseAsyncDoFn<InputT, OutputT, ResourceT, CompletableFuture<OutputT>> {
-  @SuppressWarnings("unchecked")
-  @Override
-  protected void waitForFutures(Iterable<CompletableFuture<OutputT>> futures)
-      throws InterruptedException, ExecutionException {
-    CompletableFuture.allOf(Iterables.toArray(futures, CompletableFuture.class)).get();
-  }
-
-  @Override
-  protected CompletableFuture<OutputT> addCallback(CompletableFuture<OutputT> future,
-                                                   Function<OutputT, Void> onSuccess,
-                                                   Function<Throwable, Void> onFailure) {
-    return future.whenComplete((r, t) -> {
-      if (r != null) {
-        onSuccess.apply(r);
-      } else {
-        onFailure.apply(t);
-      }
-    });
-  }
+    extends BaseAsyncDoFn<InputT, OutputT, ResourceT, CompletableFuture<OutputT>>
+    implements FutureHandlers.Java<OutputT> {
 }
