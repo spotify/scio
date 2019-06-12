@@ -97,7 +97,7 @@ private[client] final class JobOps(client: Client) {
             val poll = client.underlying
               .jobs()
               .get(client.project, jobId)
-              .set("location", jobReference.getLocation)
+              .setLocation(jobReference.getLocation)
               .execute()
             val error = poll.getStatus.getErrorResult
             if (error != null) {
