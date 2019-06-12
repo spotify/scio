@@ -94,7 +94,11 @@ private[client] final class JobOps(client: Client) {
         case (bqJob, jobReference) =>
           val jobId = jobReference.getJobId
           try {
-            val poll = client.underlying.jobs().get(client.project, jobId).execute()
+            val poll = client.underlying
+              .jobs()
+              .get(client.project, jobId)
+              .setLocation(jobReference.getLocation)
+              .execute()
             val error = poll.getStatus.getErrorResult
             if (error != null) {
               throw new RuntimeException(s"${bqJob.show} failed with error: $error")
