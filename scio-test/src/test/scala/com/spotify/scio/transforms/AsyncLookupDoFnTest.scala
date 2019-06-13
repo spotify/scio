@@ -17,38 +17,43 @@
 
 package com.spotify.scio.transforms
 
-import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.{CompletableFuture, ConcurrentLinkedQueue}
+import java.util.function.Supplier
 
 import com.google.common.cache.{Cache, CacheBuilder}
 import com.google.common.util.concurrent.{Futures, ListenableFuture}
 import com.spotify.scio.testing._
-import com.spotify.scio.transforms.AsyncLookupDoFn.CacheSupplier
+import com.spotify.scio.transforms.BaseAsyncLookupDoFn.CacheSupplier
 
 import scala.collection.JavaConverters._
-import scala.util.{Failure, Success}
+import scala.concurrent.Future
+import scala.util.{Failure, Success, Try}
 
 class AsyncLookupDoFnTest extends PipelineSpec {
 
-  "AsyncLookupDoFn" should "work" in {
-    val fn = new TestAsyncLookupDoFn
-    val output = runWithData(1 to 10)(_.parDo(fn))
-      .map(kv => (kv.getKey, kv.getValue.get()))
+  private def testDoFn[F, T](
+    doFn: BaseAsyncLookupDoFn[Int, String, AsyncClient, F, T]
+  )(tryFn: T => String): Unit = {
+    val output = runWithData(1 to 10)(_.parDo(doFn))
+      .map(kv => (kv.getKey, tryFn(kv.getValue)))
     output should contain theSameElementsAs (1 to 10).map(x => (x, x.toString))
   }
 
-  it should "work with cache" in {
-    val fn = new TestCachingAsyncLookupDoFn
-    val output = runWithData((1 to 10) ++ (6 to 15))(_.parDo(fn))
-      .map(kv => (kv.getKey, kv.getValue.asScala.get))
+  private def testCache[F, T](
+    doFn: BaseAsyncLookupDoFn[Int, String, AsyncClient, F, T]
+  )(tryFn: T => String)(queue: ConcurrentLinkedQueue[Int]): Unit = {
+    val output = runWithData((1 to 10) ++ (6 to 15))(_.parDo(doFn))
+      .map(kv => (kv.getKey, tryFn(kv.getValue)))
     output should contain theSameElementsAs ((1 to 10) ++ (6 to 15)).map(x => (x, x.toString))
-    AsyncLookupDoFnTest.queue.asScala.toSet should contain theSameElementsAs (1 to 15)
-    AsyncLookupDoFnTest.queue.size() should be <= 20
+    queue.asScala.toSet should contain theSameElementsAs (1 to 15)
+    queue.size() should be <= 20
   }
 
-  it should "work with failures" in {
-    val fn = new TestFailingAsyncLookupDoFn
-    val output = runWithData(1 to 10)(_.parDo(fn)).map { kv =>
-      val r = kv.getValue.asScala match {
+  private def testFailure[F, T](
+    doFn: BaseAsyncLookupDoFn[Int, String, AsyncClient, F, T]
+  )(tryFn: T => Try[String]): Unit = {
+    val output = runWithData(1 to 10)(_.parDo(doFn)).map { kv =>
+      val r = tryFn(kv.getValue) match {
         case Success(v) => v
         case Failure(e) => e.getMessage
       }
@@ -59,30 +64,68 @@ class AsyncLookupDoFnTest extends PipelineSpec {
       (x, prefix + x.toString)
     }
   }
+
+  "GuavaAsyncLookupDoFn" should "work" in {
+    testDoFn(new GuavaLookupDoFn)(_.get())
+  }
+
+  it should "work with cache" in {
+    testCache(new CachingGuavaLookupDoFn)(_.get())(AsyncLookupDoFnTest.guavaQueue)
+  }
+
+  it should "work with failures" in {
+    testFailure(new FailingGuavaLookupDoFn)(_.asScala)
+  }
+
+  "JavaAsyncLookupDoFn" should "work" in {
+    testDoFn(new JavaLookupDoFn)(_.get())
+  }
+
+  it should "work with cache" in {
+    testCache(new CachingJavaLookupDoFn)(_.get())(AsyncLookupDoFnTest.javaQueue)
+  }
+
+  it should "work with failures" in {
+    testFailure(new FailingJavaLookupDoFn)(_.asScala)
+  }
+
+  "ScalaAsyncLookupDoFn" should "work" in {
+    testDoFn(new ScalaLookupDoFn)(_.get)
+  }
+
+  it should "work with cache" in {
+    testCache(new CachingScalaLookupDoFn)(_.get)(AsyncLookupDoFnTest.scalaQueue)
+  }
+
+  it should "work with failures" in {
+    testFailure(new FailingScalaLookupDoFn)(identity)
+  }
 }
 
 object AsyncLookupDoFnTest {
-  val queue: ConcurrentLinkedQueue[Int] = new ConcurrentLinkedQueue[Int]()
+  val guavaQueue: ConcurrentLinkedQueue[Int] = new ConcurrentLinkedQueue[Int]()
+  val javaQueue: ConcurrentLinkedQueue[Int] = new ConcurrentLinkedQueue[Int]()
+  val scalaQueue: ConcurrentLinkedQueue[Int] = new ConcurrentLinkedQueue[Int]()
 }
 
 class AsyncClient {}
 
-class TestAsyncLookupDoFn extends AsyncLookupDoFn[Int, String, AsyncClient]() {
+class GuavaLookupDoFn extends GuavaAsyncLookupDoFn[Int, String, AsyncClient]() {
   override protected def newClient(): AsyncClient = null
   override def asyncLookup(session: AsyncClient, input: Int): ListenableFuture[String] =
     Futures.immediateFuture(input.toString)
 }
 
-class TestCachingAsyncLookupDoFn
-    extends AsyncLookupDoFn[Int, String, AsyncClient](100, new TestCacheSupplier) {
+class CachingGuavaLookupDoFn
+    extends GuavaAsyncLookupDoFn[Int, String, AsyncClient](100, new TestCacheSupplier) {
   override protected def newClient(): AsyncClient = null
   override def asyncLookup(session: AsyncClient, input: Int): ListenableFuture[String] = {
-    AsyncLookupDoFnTest.queue.add(input)
+    AsyncLookupDoFnTest.guavaQueue.add(input)
     Futures.immediateFuture(input.toString)
   }
 }
 
-class TestFailingAsyncLookupDoFn extends AsyncLookupDoFn[Int, String, AsyncClient]() {
+class FailingGuavaLookupDoFn extends GuavaAsyncLookupDoFn[Int, String, AsyncClient]() {
   override protected def newClient(): AsyncClient = null
   override def asyncLookup(session: AsyncClient, input: Int): ListenableFuture[String] =
     if (input % 2 == 0) {
@@ -90,6 +133,68 @@ class TestFailingAsyncLookupDoFn extends AsyncLookupDoFn[Int, String, AsyncClien
     } else {
       Futures.immediateFailedFuture(new RuntimeException("failure" + input))
     }
+}
+
+class JavaLookupDoFn extends JavaAsyncLookupDoFn[Int, String, AsyncClient]() {
+  override protected def newClient(): AsyncClient = null
+  override def asyncLookup(session: AsyncClient, input: Int): CompletableFuture[String] =
+    CompletableFuture.supplyAsync(new Supplier[String] {
+      override def get(): String = input.toString
+    })
+}
+
+class CachingJavaLookupDoFn
+    extends JavaAsyncLookupDoFn[Int, String, AsyncClient](100, new TestCacheSupplier) {
+  override protected def newClient(): AsyncClient = null
+  override def asyncLookup(session: AsyncClient, input: Int): CompletableFuture[String] = {
+    AsyncLookupDoFnTest.javaQueue.add(input)
+    CompletableFuture.supplyAsync(new Supplier[String] {
+      override def get(): String = input.toString
+    })
+  }
+}
+
+class FailingJavaLookupDoFn extends JavaAsyncLookupDoFn[Int, String, AsyncClient]() {
+  override protected def newClient(): AsyncClient = null
+  override def asyncLookup(session: AsyncClient, input: Int): CompletableFuture[String] =
+    if (input % 2 == 0) {
+      CompletableFuture.supplyAsync(new Supplier[String] {
+        override def get(): String = "success" + input
+      })
+    } else {
+      val f = new CompletableFuture[String]()
+      f.completeExceptionally(new RuntimeException("failure" + input))
+      f
+    }
+}
+
+class ScalaLookupDoFn extends ScalaAsyncLookupDoFn[Int, String, AsyncClient]() {
+  import scala.concurrent.ExecutionContext.Implicits.global
+  override protected def newClient(): AsyncClient = null
+  override def asyncLookup(session: AsyncClient, input: Int): Future[String] =
+    Future(input.toString)
+}
+
+class CachingScalaLookupDoFn
+    extends ScalaAsyncLookupDoFn[Int, String, AsyncClient](100, new TestCacheSupplier) {
+  import scala.concurrent.ExecutionContext.Implicits.global
+  override protected def newClient(): AsyncClient = null
+  override def asyncLookup(session: AsyncClient, input: Int): Future[String] = {
+    AsyncLookupDoFnTest.scalaQueue.add(input)
+    Future(input.toString)
+  }
+}
+
+class FailingScalaLookupDoFn extends ScalaAsyncLookupDoFn[Int, String, AsyncClient]() {
+  import scala.concurrent.ExecutionContext.Implicits.global
+  override protected def newClient(): AsyncClient = null
+  override def asyncLookup(session: AsyncClient, input: Int): Future[String] = {
+    if (input % 2 == 0) {
+      Future("success" + input)
+    } else {
+      Future(throw new RuntimeException("failure" + input))
+    }
+  }
 }
 
 class TestCacheSupplier extends CacheSupplier[Int, String, java.lang.Long] {

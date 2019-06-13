@@ -17,49 +17,14 @@
 
 package com.spotify.scio.transforms;
 
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.MoreExecutors;
 import org.apache.beam.sdk.transforms.DoFn;
-
-import javax.annotation.Nullable;
-import java.util.concurrent.ExecutionException;
-import java.util.function.Function;
 
 /**
  * A {@link DoFn} that handles asynchronous requests to an external service that returns Guava
  * {@link ListenableFuture}s.
  */
 public abstract class GuavaAsyncDoFn<InputT, OutputT, ResourceT>
-    extends BaseAsyncDoFn<InputT, OutputT, ResourceT, ListenableFuture<OutputT>> {
-  @Override
-  protected void waitForFutures(Iterable<ListenableFuture<OutputT>> futures)
-      throws InterruptedException, ExecutionException {
-    Futures.allAsList(futures).get();
-  }
-
-  @Override
-  protected ListenableFuture<OutputT> addCallback(ListenableFuture<OutputT> future,
-                                                  Function<OutputT, Void> onSuccess,
-                                                  Function<Throwable, Void> onFailure) {
-    Futures.addCallback(future, new FutureCallback<OutputT>() {
-      @Override
-      public void onSuccess(@Nullable OutputT result) {}
-
-      @Override
-      public void onFailure(Throwable t) {
-        onFailure.apply(t);
-      }
-    }, MoreExecutors.directExecutor());
-
-    return Futures.transform(future, new com.google.common.base.Function<OutputT, OutputT>() {
-      @Nullable
-      @Override
-      public OutputT apply(@Nullable OutputT input) {
-        onSuccess.apply(input);
-        return input;
-      }
-    }, MoreExecutors.directExecutor());
-  }
+    extends BaseAsyncDoFn<InputT, OutputT, ResourceT, ListenableFuture<OutputT>>
+    implements FutureHandlers.Guava<OutputT> {
 }

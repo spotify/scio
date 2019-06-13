@@ -28,7 +28,7 @@ import com.google.common.util.concurrent.{Futures, ListenableFuture, MoreExecuto
 import com.google.protobuf.ByteString
 import com.spotify.scio.benchmarks._
 import com.spotify.scio._
-import com.spotify.scio.transforms.AsyncLookupDoFn
+import com.spotify.scio.transforms.BaseAsyncLookupDoFn
 import org.apache.beam.sdk.io.range.ByteKeyRange
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
 import org.apache.beam.sdk.transforms.{DoFn, ParDo}
@@ -45,7 +45,8 @@ object BigtableBenchmark {
   val MillionElements: Int = 1000000
   val MaxPendingRequests: Int = 10000
 
-  val BigtableOptions: GBigtableOptions = new GBigtableOptions.Builder()
+  val BigtableOptions: GBigtableOptions = GBigtableOptions
+    .builder()
     .setProjectId(ProjectId)
     .setInstanceId(InstanceId)
     .setUserAgent("bigtable-test")
@@ -129,7 +130,7 @@ object BigtableBenchmark {
       )
     }
 
-  def checkResult(kv: KV[String, AsyncLookupDoFn.Try[String]]): (Int, Int) =
+  def checkResult(kv: KV[String, BaseAsyncLookupDoFn.Try[String]]): (Int, Int) =
     kv.getValue.asScala match {
       case Success(value) =>
         val expected = if (kv.getKey.endsWith(PostfixWithOne)) "fallback" else s"val-${kv.getKey}"
@@ -153,8 +154,7 @@ object BigtableBenchmark {
   }
 
   private val benchmarks =
-    ScioBenchmarkSettings
-      .benchmarks("com\\.spotify\\.scio\\.bigtable\\.BigtableBenchmark\\$[\\w]+\\$")
+    Seq(BigtableWrite, BigtableRead, AsyncBigtableDoFnRead, AsyncCachingBigtableDoFnRead)
 
   // Generate 52 million key value pairs
   object BigtableWrite extends Benchmark {
@@ -198,7 +198,7 @@ object BigtableBenchmark {
   // Async key value lookup for 52 millions from Bigtable with caching
   object AsyncCachingBigtableDoFnRead extends Benchmark {
     override def run(sc: ScioContext): Unit = {
-      val cache = new AsyncLookupDoFn.CacheSupplier[String, String, String] {
+      val cache = new BaseAsyncLookupDoFn.CacheSupplier[String, String, String] {
         override def createCache() =
           CacheBuilder
             .newBuilder()

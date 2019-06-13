@@ -14,39 +14,14 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
 package com.spotify.scio.transforms
 
-import java.lang.{Iterable => JIterable}
-import java.util.function.{Function => JFunction}
-
-import scala.collection.JavaConverters._
-import scala.concurrent.duration.Duration
-import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.concurrent.Future
 
 /**
  * A [[org.apache.beam.sdk.transforms.DoFn DoFn]] that handles asynchronous requests to an
  * external service that returns Scala [[Future]]s.
  */
-abstract class ScalaAsyncDoFn[I, O, R] extends BaseAsyncDoFn[I, O, R, Future[O]] {
-
-  @transient
-  private lazy implicit val immediateExecutionContext = new ExecutionContext {
-    override def execute(runnable: Runnable): Unit = runnable.run()
-    override def reportFailure(cause: Throwable): Unit =
-      ExecutionContext.defaultReporter(cause)
-  }
-
-  override protected def waitForFutures(futures: JIterable[Future[O]]): Unit = {
-    Await.ready(Future.sequence(futures.asScala), Duration.Inf)
-    ()
-  }
-
-  override protected def addCallback(
-    future: Future[O],
-    onSuccess: JFunction[O, Void],
-    onFailure: JFunction[Throwable, Void]
-  ): Future[O] =
-    future.transform(r => { onSuccess(r); r }, t => { onFailure(t); t })
-
-}
+abstract class ScalaAsyncDoFn[I, O, R]
+    extends BaseAsyncDoFn[I, O, R, Future[O]]
+    with ScalaFutureHandlers[O] {}

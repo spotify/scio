@@ -40,7 +40,6 @@ import org.joda.time.{DateTimeZone, Instant, LocalDateTime, Seconds}
 import shapeless.datatype.datastore._
 
 import scala.collection.JavaConverters._
-import scala.collection.mutable
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
@@ -90,7 +89,7 @@ object ScioBenchmarkSettings {
     }
   }
 
-  def benchmarks(regex: String): mutable.Set[Benchmark] = {
+  def benchmarks(regex: String): Seq[Benchmark] = {
     ClassPath
       .from(Thread.currentThread().getContextClassLoader)
       .getAllClasses
@@ -104,6 +103,8 @@ object ScioBenchmarkSettings {
           None
         }
       }
+      .toSeq
+      .sortBy(_.name)
   }
 
   def logger[A <: BenchmarkType]: ScioBenchmarkLogger[Try, A] = ScioBenchmarkLogger[Try, A](
@@ -478,7 +479,6 @@ abstract class Benchmark(val extraConfs: Map[String, Array[String]] = Map.empty)
             sc.setAppName(confName)
             sc.setJobName(s"$prefix-$confName-$username".toLowerCase())
             run(sc)
-            sc.close()
             val result = sc.close().waitUntilDone()
             BenchmarkResult.batch(Instant.now(), confName, extraArgs, result)
           }
@@ -550,7 +550,7 @@ object BenchmarkRunner {
   def runParallel(
     args: Array[String],
     benchmarkPrefix: String,
-    benchmarks: mutable.Set[Benchmark]
+    benchmarks: Seq[Benchmark]
   ): Unit = {
     val argz = Args(args)
     val regex = argz.getOrElse("regex", ".*")
@@ -575,7 +575,7 @@ object BenchmarkRunner {
   def runSequentially(
     args: Array[String],
     benchmarkPrefix: String,
-    benchmarks: mutable.Set[Benchmark],
+    benchmarks: Seq[Benchmark],
     pipelineArgs: Array[String]
   ): Unit = {
     val argz = Args(args)

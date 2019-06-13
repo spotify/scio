@@ -22,29 +22,26 @@ import com.google.common.collect.Queues;
 import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.transforms.windowing.BoundedWindow;
 import org.joda.time.Instant;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.UUID;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
-import java.util.function.Function;
 
 /**
  * A {@link DoFn} that handles asynchronous requests to an external service.
  */
 public abstract class BaseAsyncDoFn<InputT, OutputT, ResourceT, FutureT>
-    extends DoFnWithResource<InputT, OutputT, ResourceT> {
+    extends DoFnWithResource<InputT, OutputT, ResourceT>
+    implements FutureHandlers.Base<FutureT, OutputT> {
+  private static final Logger LOG = LoggerFactory.getLogger(BaseAsyncDoFn.class);
 
   /**
    * Process an element asynchronously.
    */
   public abstract FutureT processElement(InputT input);
-
-  protected abstract void waitForFutures(Iterable<FutureT> futures)
-      throws InterruptedException, ExecutionException;
-  protected abstract FutureT addCallback(FutureT future,
-                                         Function<OutputT, Void> onSuccess,
-                                         Function<Throwable, Void> onFailure);
 
   private final ConcurrentMap<UUID, FutureT> futures = Maps.newConcurrentMap();
   private final ConcurrentLinkedQueue<Result> results = Queues.newConcurrentLinkedQueue();
@@ -64,8 +61,10 @@ public abstract class BaseAsyncDoFn<InputT, OutputT, ResourceT, FutureT>
         waitForFutures(futures.values());
       } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
+        LOG.error("Failed to process futures", e);
         throw new RuntimeException("Failed to process futures", e);
       } catch (ExecutionException e) {
+        LOG.error("Failed to process futures", e);
         throw new RuntimeException("Failed to process futures", e);
       }
     }
