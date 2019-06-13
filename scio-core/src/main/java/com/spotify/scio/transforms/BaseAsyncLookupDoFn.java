@@ -255,7 +255,7 @@ public abstract class BaseAsyncLookupDoFn<A, B, C, F, T>
   }
 
   /**
-   * Supplier for {@link BaseAsyncLookupDoFn} with caching logic.
+   * {@link Cache} supplier for {@link BaseAsyncLookupDoFn}.
    * @param <A> input element type.
    * @param <B> lookup value type.
    * @param <K> key type.

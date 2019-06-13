@@ -65,6 +65,7 @@ public abstract class BaseAsyncDoFn<InputT, OutputT, ResourceT, FutureT>
         throw new RuntimeException("Failed to process futures", e);
       } catch (ExecutionException e) {
         LOG.error("Failed to process futures", e);
+        throw new RuntimeException("Failed to process futures", e);
       }
     }
     flush(c);

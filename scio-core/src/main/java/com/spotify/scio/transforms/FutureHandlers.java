@@ -33,27 +33,27 @@ public class FutureHandlers {
   /**
    * Base interface for future handling.
    * @param <F> future type.
-   * @param <T> value type.
+   * @param <V> value type.
    */
-  public interface Base<F, T> {
+  public interface Base<F, V> {
     void waitForFutures(Iterable<F> futures)
             throws InterruptedException, ExecutionException;
-    F addCallback(F future, Function<T, Void> onSuccess, Function<Throwable, Void> onFailure);
+    F addCallback(F future, Function<V, Void> onSuccess, Function<Throwable, Void> onFailure);
   }
 
   /** A {@link Base} implementation for Guava {@link ListenableFuture}. */
-  public interface Guava<T> extends Base<ListenableFuture<T>, T> {
+  public interface Guava<V> extends Base<ListenableFuture<V>, V> {
     @Override
-    default void waitForFutures(Iterable<ListenableFuture<T>> futures)
+    default void waitForFutures(Iterable<ListenableFuture<V>> futures)
             throws InterruptedException, ExecutionException {
       Futures.allAsList(futures).get();
     }
 
     @Override
-    default ListenableFuture<T> addCallback(ListenableFuture<T> future, Function<T, Void> onSuccess, Function<Throwable, Void> onFailure) {
-      Futures.addCallback(future, new FutureCallback<T>() {
+    default ListenableFuture<V> addCallback(ListenableFuture<V> future, Function<V, Void> onSuccess, Function<Throwable, Void> onFailure) {
+      Futures.addCallback(future, new FutureCallback<V>() {
         @Override
-        public void onSuccess(@Nullable T result) {}
+        public void onSuccess(@Nullable V result) {}
 
         @Override
         public void onFailure(Throwable t) {
@@ -61,10 +61,10 @@ public class FutureHandlers {
         }
       }, MoreExecutors.directExecutor());
 
-      return Futures.transform(future, new com.google.common.base.Function<T, T>() {
+      return Futures.transform(future, new com.google.common.base.Function<V, V>() {
         @Nullable
         @Override
-        public T apply(@Nullable T input) {
+        public V apply(@Nullable V input) {
           onSuccess.apply(input);
           return input;
         }
@@ -73,16 +73,16 @@ public class FutureHandlers {
   }
 
   /** A {@link Base} implementation for Java 8 {@link CompletableFuture}. */
-  public interface Java<T> extends Base<CompletableFuture<T>, T> {
+  public interface Java<V> extends Base<CompletableFuture<V>, V> {
     @Override
-    default void waitForFutures(Iterable<CompletableFuture<T>> futures)
+    default void waitForFutures(Iterable<CompletableFuture<V>> futures)
             throws InterruptedException, ExecutionException {
       CompletableFuture.allOf(Iterables.toArray(futures, CompletableFuture.class)).get();
     }
 
     @Override
-    default CompletableFuture<T> addCallback(CompletableFuture<T> future,
-                                             Function<T, Void> onSuccess,
+    default CompletableFuture<V> addCallback(CompletableFuture<V> future,
+                                             Function<V, Void> onSuccess,
                                              Function<Throwable, Void> onFailure) {
       return future.whenComplete((r, t) -> {
         if (r != null) {
