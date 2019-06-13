@@ -538,8 +538,8 @@ private[scio] final case class MutableSparseBFInstance[A](
   Equiv[MutableBF[A]] to compare two instances.
    */
   override def equals(obj: Any): Boolean = {
-    obj.isInstanceOf[MutableSparseBFInstance[A]] && {
-      val that = obj.asInstanceOf[MutableSparseBFInstance[A]]
+    obj.isInstanceOf[MutableBF[A]] && {
+      val that = obj.asInstanceOf[MutableBF[A]]
       implicitly[Equiv[MutableBF[A]]].equiv(this, that)
     }
   }
