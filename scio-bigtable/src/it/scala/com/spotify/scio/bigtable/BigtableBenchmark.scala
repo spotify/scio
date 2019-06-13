@@ -45,7 +45,8 @@ object BigtableBenchmark {
   val MillionElements: Int = 1000000
   val MaxPendingRequests: Int = 10000
 
-  val BigtableOptions: GBigtableOptions = new GBigtableOptions.Builder()
+  val BigtableOptions: GBigtableOptions = GBigtableOptions
+    .builder()
     .setProjectId(ProjectId)
     .setInstanceId(InstanceId)
     .setUserAgent("bigtable-test")
@@ -153,8 +154,7 @@ object BigtableBenchmark {
   }
 
   private val benchmarks =
-    ScioBenchmarkSettings
-      .benchmarks("com\\.spotify\\.scio\\.bigtable\\.BigtableBenchmark\\$[\\w]+\\$")
+    Seq(BigtableWrite, BigtableRead, AsyncBigtableDoFnRead, AsyncCachingBigtableDoFnRead)
 
   // Generate 52 million key value pairs
   object BigtableWrite extends Benchmark {
