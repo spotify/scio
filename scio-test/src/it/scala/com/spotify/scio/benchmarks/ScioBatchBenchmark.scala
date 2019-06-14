@@ -43,7 +43,7 @@ object ScioBatchBenchmark {
   private val Benchmarks = ScioBenchmarkSettings
     .benchmarks("com\\.spotify\\.scio\\.benchmarks\\.ScioBatchBenchmark\\$[\\w]+\\$")
 
-  val BenchmarkNames: Seq[String] = Benchmarks.toSeq.sortBy(_.name).flatMap { b =>
+  val BenchmarkNames: Seq[String] = Benchmarks.sortBy(_.name).flatMap { b =>
     b.name :: Option(b.extraConfs).getOrElse(Map.empty).keys.map(b.name + _).toList
   }
 
