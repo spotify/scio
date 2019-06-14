@@ -107,10 +107,14 @@ object ScioBenchmarkSettings {
       .sortBy(_.name)
   }
 
-  def logger[A <: BenchmarkType]: ScioBenchmarkLogger[Try, A] = ScioBenchmarkLogger[Try, A](
-    ConsoleLogger[A](),
-    new DatastoreLogger[A]()
-  )
+  def logger[A <: BenchmarkType]: ScioBenchmarkLogger[Try, A] = {
+    val loggers = if (CircleCI.isDefined) {
+      Seq(ConsoleLogger[A](), new DatastoreLogger[A]())
+    } else {
+      Seq(ConsoleLogger[A]())
+    }
+    ScioBenchmarkLogger[Try, A](loggers: _*)
+  }
 }
 
 final case class CircleCIEnv(buildNum: Long, gitHash: String)
