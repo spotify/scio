@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package com.spotify.scio.proto;
+
+service TrackService {
+  // Sends customer order requests
+  rpc RequestTrackName (TrackMetadataRequest) returns (TrackMetadataReply) {}
+}
+
+// The request message containing the track id.
+message TrackMetadataRequest {
+  string id = 1;
+}
+
+// The response message containing the track name
+message TrackMetadataReply {
+  string name = 1;
+}

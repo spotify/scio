@@ -297,6 +297,45 @@ lazy val protobufSettings = Def.settings(
   )
 )
 
+lazy val grpcExePath = settingKey[xsbti.api.Lazy[File]]("grpcExePath")
+
+lazy val grpcProtobufSettings = Def.settings(
+  grpcExePath := xsbti.api.SafeLazyProxy {
+    def grpcExeFileName: String = {
+      val os = if (scala.util.Properties.isMac) {
+        "osx-x86_64"
+      } else if (scala.util.Properties.isWin) {
+        "windows-x86_64"
+      } else {
+        "linux-x86_64"
+      }
+      s"protoc-gen-grpc-java-${grpcVersion}-${os}.exe"
+    }
+    val grpcExeUrl =
+      url(
+        s"http://repo1.maven.org/maven2/io/grpc/protoc-gen-grpc-java/" +
+          s"${grpcVersion}/${grpcExeFileName}"
+      )
+    val exe: File = (baseDirectory in ThisBuild).value / ".bin" / grpcExeFileName
+    exe.getParentFile.mkdirs
+    if (!exe.exists) {
+      import scala.sys.process._
+      grpcExeUrl #> exe !
+
+      exe.setExecutable(true)
+    }
+    exe
+  },
+  protobufProtocOptions in ProtobufConfig ++= Seq(
+    s"--plugin=protoc-gen-java_rpc=${grpcExePath.value.get}",
+    s"--java_rpc_out=${((sourceManaged in Compile).value).getAbsolutePath}/compiled_protobuf"
+  ),
+  libraryDependencies ++= Seq(
+    "io.grpc" % "grpc-stub" % grpcVersion,
+    "io.grpc" % "grpc-protobuf" % grpcVersion
+  )
+)
+
 lazy val root: Project = Project("scio", file("."))
   .settings(commonSettings)
   .settings(noPublishSettings)
@@ -721,6 +760,7 @@ lazy val scioSchemas: Project = Project(
   .settings(commonSettings)
   .settings(noPublishSettings)
   .settings(protobufSettings)
+  .settings(grpcProtobufSettings)
   .settings(
     description := "Avro/Proto schemas for testing",
     version in AvroConfig := avroVersion,
