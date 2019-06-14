@@ -164,6 +164,18 @@ class SCollectionTest extends PipelineSpec {
     }
   }
 
+  it should "support partitionByKey()" in {
+    runWithContext { sc =>
+      val m = sc
+        .parallelize(Seq("a1", "a2", "a3", "b4", "b5", "c6"))
+        .partitionByKey(Set("a", "b", "c"))(_.substring(0, 1))
+
+      m("a") should containInAnyOrder(Seq("a1", "a2", "a3"))
+      m("b") should containInAnyOrder(Seq("b4", "b5"))
+      m("c") should containInAnyOrder(Seq("c6"))
+    }
+  }
+
   it should "support hashPartition() based on Object.hashCode()" in {
     runWithContext { sc =>
       val p = sc.parallelize(Seq(-1, 2, -3, 4, -5, 6)).hashPartition(3)

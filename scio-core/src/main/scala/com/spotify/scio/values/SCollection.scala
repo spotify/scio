@@ -282,6 +282,24 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   }
 
   /**
+   * Partition this SCollection into a map from possible key values to an SCollection of
+   * corresponding elements based on the provided function .
+   *
+   * @param partitionKeys The keys for the output partitions
+   * @param f function that assigns an output partition to each element, should be in the range
+   * of `partitionKeys`
+   * @return partitioned SCollections in a `Map`
+   * @group collection
+   */
+  def partitionByKey[U: Coder](partitionKeys: Set[U])(f: T => U): Map[U, SCollection[T]] = {
+    val partitionKeysIndexed = partitionKeys.toIndexedSeq
+
+    partitionKeysIndexed
+      .zip(partition(partitionKeys.size, (t: T) => partitionKeysIndexed.indexOf(f(t))))
+      .toMap
+  }
+
+  /**
    * Partition this SCollection using Object.hashCode() into `n` partitions
    *
    * @param numPartitions number of output partitions
