@@ -38,6 +38,7 @@ package com.spotify.scio.util
  *
  */
 import java.util
+import java.util.Objects
 
 import algebra.BoundedSemilattice
 import com.twitter.algebird.{
@@ -526,6 +527,25 @@ private[scio] final case class MutableSparseBFInstance[A](
     BloomFilter.sizeEstimate(numBits, numHashes, width, 0.05)
 
   def copy: MutableBF[A] = MutableSparseBFInstance(hashes, allHashes.clone)
+
+  /*
+  We override equals and hashCode specifically for MutableSparseBFInstance[A]
+  because this implementation has a delayed initialization, which means hashes
+  for all elements added are kept in a mutable.Buffer[Array[Int]] till contains
+  is called for the first time.
+
+  mutable.Buffer[Array[T]] cannot be compared with equals, hence we use
+  Equiv[MutableBF[A]] to compare two instances.
+   */
+  override def equals(obj: Any): Boolean = {
+    obj.isInstanceOf[MutableBF[A]] && {
+      val that = obj.asInstanceOf[MutableBF[A]]
+      implicitly[Equiv[MutableBF[A]]].equiv(this, that)
+    }
+  }
+
+  // Object.hashCode() is based on the hashing algorithm, and the elements added only.
+  override def hashCode(): Int = Objects.hash(hashes, allHashes)
 }
 
 /**
