@@ -101,8 +101,6 @@ object BigtableBenchmark {
 
   class NonFatalException(msg: String) extends RuntimeException(msg)
 
-  class FatalException(msg: String) extends RuntimeException(msg)
-
   def readFlatRowsAsync(session: BigtableSession, input: String): ListenableFuture[String] =
     if (input.endsWith(PostfixWithOne)) {
       // Simulate a non-fatal exception, to be recovered with a fallback
@@ -137,7 +135,6 @@ object BigtableBenchmark {
         assert(value == expected)
         (1, 0)
       case Failure(exception) =>
-        assert(exception.isInstanceOf[FatalException])
         assert(kv.getKey.endsWith(PostfixWithZeroes))
         assert(kv.getKey == exception.getMessage)
         (0, 1)

@@ -37,13 +37,13 @@ import org.apache.beam.sdk.transforms.DoFn.ProcessElement
 import org.apache.beam.sdk.transforms.{DoFn, ParDo}
 import org.joda.time.format.{DateTimeFormat, ISODateTimeFormat, PeriodFormat}
 import org.joda.time.{DateTimeZone, Instant, LocalDateTime, Seconds}
+import org.slf4j.{Logger, LoggerFactory}
 import shapeless.datatype.datastore._
 
 import scala.collection.JavaConverters._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
-
 import scala.util.{Failure, Random, Success, Try}
 
 /**
@@ -107,10 +107,14 @@ object ScioBenchmarkSettings {
       .sortBy(_.name)
   }
 
-  def logger[A <: BenchmarkType]: ScioBenchmarkLogger[Try, A] = ScioBenchmarkLogger[Try, A](
-    ConsoleLogger[A](),
-    new DatastoreLogger[A]()
-  )
+  def logger[A <: BenchmarkType]: ScioBenchmarkLogger[Try, A] = {
+    val loggers = if (CircleCI.isDefined) {
+      Seq(ConsoleLogger[A](), new DatastoreLogger[A]())
+    } else {
+      Seq(ConsoleLogger[A]())
+    }
+    ScioBenchmarkLogger[Try, A](loggers: _*)
+  }
 }
 
 final case class CircleCIEnv(buildNum: Long, gitHash: String)
@@ -136,6 +140,8 @@ final case class ScioBenchmarkLogger[F[_], A <: BenchmarkType](loggers: Benchmar
 
 object BenchmarkResult {
   import ScioBenchmarkSettings._
+
+  val logger: Logger = LoggerFactory.getLogger(getClass)
 
   sealed trait BenchmarkType
   final case class Batch() extends BenchmarkType
@@ -184,7 +190,16 @@ object BenchmarkResult {
       .getMetrics
       .asScala
       .filter(metric => BatchMetrics.contains(metric.getName.getName))
-      .map(m => Metric(m.getName.getName, m.getScalar.toString.toLong))
+      .map { m =>
+        val scalar = try {
+          m.getScalar.toString.toLong
+        } catch {
+          case e: NumberFormatException =>
+            logger.error(s"Failed to get metric $m", e)
+            0
+        }
+        Metric(m.getName.getName, scalar)
+      }
       .toList
 
     BenchmarkResult[Batch](
@@ -213,7 +228,16 @@ object BenchmarkResult {
   ): BenchmarkResult[Streaming] = {
     val metrics = jobMetrics.getMetrics.asScala
       .filter(metric => StreamingMetrics.contains(metric.getName.getName))
-      .map(m => Metric(m.getName.getName, m.getScalar.toString.toLong))
+      .map { m =>
+        val scalar = try {
+          m.getScalar.toString.toLong
+        } catch {
+          case e: NumberFormatException =>
+            logger.error(s"Failed to get metric $m", e)
+            0
+        }
+        Metric(m.getName.getName, scalar)
+      }
       .toList
 
     BenchmarkResult[Streaming](
