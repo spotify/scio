@@ -68,7 +68,7 @@ public abstract class BigtableDoFn<A, B> extends GuavaAsyncLookupDoFn<A, B, Bigt
    */
   public <K> BigtableDoFn(BigtableOptions options,
                           int maxPendingRequests,
-                          CacheSupplier<A, B, K> cacheSupplier) {
+                          BaseAsyncLookupDoFn.CacheSupplier<A, B, K> cacheSupplier) {
     super(maxPendingRequests, cacheSupplier);
     this.options = options;
   }

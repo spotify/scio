@@ -52,17 +52,18 @@ public abstract class GuavaAsyncLookupDoFn<A, B, C>
    *                           and retrying bundles.
    * @param cacheSupplier supplier for lookup cache.
    */
-  public <K> GuavaAsyncLookupDoFn(int maxPendingRequests, CacheSupplier<A, B, K> cacheSupplier) {
+  public <K> GuavaAsyncLookupDoFn(int maxPendingRequests,
+                                  BaseAsyncLookupDoFn.CacheSupplier<A, B, K> cacheSupplier) {
     super(maxPendingRequests, cacheSupplier);
   }
 
   @Override
-  public Try<B> success(B output) {
+  public BaseAsyncLookupDoFn.Try<B> success(B output) {
     return new Try<>(output);
   }
 
   @Override
-  public Try<B> failure(Throwable throwable) {
+  public BaseAsyncLookupDoFn.Try<B> failure(Throwable throwable) {
     return new Try<>(throwable);
   }
 }
