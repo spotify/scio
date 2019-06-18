@@ -29,6 +29,7 @@ import org.apache.beam.sdk.coders.KvCoder
 import org.apache.beam.sdk.transforms._
 import org.apache.beam.sdk.values.{KV, PCollection, PCollectionView}
 import org.slf4j.LoggerFactory
+import scala.util.Try
 
 private object PairSCollectionFunctions {
 
@@ -104,7 +105,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
           .apply("TupleToKv", toKvTransform)
           .setCoder(CoderMaterializer.kvCoder[K, V](context))
           .apply(t)
-        if (!kv.getCoder.isInstanceOf[KvCoder[_, _]]) {
+        if (!(Try(kv.getCoder.isInstanceOf[KvCoder[_, _]]).getOrElse(false))) {
           kv = kv.setCoder(CoderMaterializer.kvCoder[K, UI](context))
         }
         kv.apply("KvToTuple", ParDo.of(Functions.mapFn[KV[K, UI], (K, UO)](f)))
