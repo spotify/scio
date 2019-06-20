@@ -25,6 +25,7 @@ import org.apache.beam.sdk.util.ReleaseInfo
 import org.apache.beam.sdk.{PipelineResult, PipelineRunner}
 import org.slf4j.LoggerFactory
 
+import scala.collection.JavaConverters._
 import scala.collection.mutable
 import scala.util.Try
 
@@ -57,11 +58,13 @@ private[scio] object VersionUtil {
       })
       .buildGetRequest(new GenericUrl(url))
       .execute()
-      .parseAs(classOf[java.util.List[Object]])
-    val latest =
-      response.iterator().next().asInstanceOf[java.util.Map[String, AnyRef]]
-    latest.get("tag_name").toString
-  }.toOption
+      .parseAs(classOf[java.util.List[java.util.Map[String, AnyRef]]])
+    response.asScala
+      .filter(node => !node.get("prerelease").asInstanceOf[Boolean])
+      .filter(node => !node.get("draft").asInstanceOf[Boolean])
+      .headOption
+      .map(latestNode => latestNode.get("tag_name").asInstanceOf[String])
+  }.toOption.flatten
 
   private def parseVersion(version: String): SemVer = {
     val m = pattern.findFirstMatchIn(version).get
