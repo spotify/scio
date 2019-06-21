@@ -126,8 +126,10 @@ object JobTest {
      *
      * @param assertion assertion for output data. See [[SCollectionMatchers]] for available
      *                  matchers on an [[com.spotify.scio.values.SCollection SCollection]].
+     * @tparam A        type of assertion (discarded) -- will be treated as [[scala.Unit]]
+     *                  (but can be [[org.scalatest.Assertion]])
      */
-    def output[T](io: ScioIO[T])(assertion: SCollection[T] => Unit): Builder = {
+    def output[T, A](io: ScioIO[T])(assertion: SCollection[T] => A): Builder = {
       require(!state.output.contains(io.toString), "Duplicate test output: " + io.toString)
       state = state.copy(
         output = state.output + (io.testId -> assertion
