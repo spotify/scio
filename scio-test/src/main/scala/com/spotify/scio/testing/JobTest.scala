@@ -127,7 +127,7 @@ object JobTest {
      * @param assertion assertion for output data. See [[SCollectionMatchers]] for available
      *                  matchers on an [[com.spotify.scio.values.SCollection SCollection]].
      */
-    def output[T](io: ScioIO[T])(assertion: SCollection[T] => _): Builder = {
+    def output[T](io: ScioIO[T])(assertion: SCollection[T] => Any): Builder = {
       require(!state.output.contains(io.toString), "Duplicate test output: " + io.toString)
       state = state.copy(
         output = state.output + (io.testId -> assertion
