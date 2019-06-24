@@ -25,11 +25,9 @@ import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import com.spotify.scio.util._
 import com.spotify.scio.util.random.{BernoulliValueSampler, PoissonValueSampler}
 import com.twitter.algebird.{Aggregator, Hash128, Monoid, Semigroup}
-import org.apache.beam.sdk.coders.KvCoder
 import org.apache.beam.sdk.transforms._
 import org.apache.beam.sdk.values.{KV, PCollection, PCollectionView}
 import org.slf4j.LoggerFactory
-import scala.util.Try
 
 private object PairSCollectionFunctions {
 
