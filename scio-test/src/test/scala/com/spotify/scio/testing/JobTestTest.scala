@@ -936,6 +936,19 @@ class JobTestTest extends PipelineSpec {
     }
   }
 
+  class JobTestWithNonUnitAssertion extends PipelineSpec {
+    import com.spotify.scio.testing.{JobTest => InternalJobTest}
+    "JobTestWithNonUnitAssertion" should "work" in {
+      InternalJobTest[ObjectFileJob.type]
+        .args("--input=in.avro", "--output=out.avro")
+        .input(ObjectFileIO[Int]("in.avro"), Seq(1, 2, 3))
+        // warns given flag `-Ywarn-value-discard`
+        // if `output` only accepts `SCollection[_] => Unit`
+        // instead of `SCollection[_] => Assertion`
+        .output(ObjectFileIO[Int]("out.avro"))(_ should containInAnyOrder(Seq(1, 2, 3)))
+    }
+  }
+
   // scalastyle:off line.contains.tab
   // scalastyle:off line.size.limit
   private val runMissedMessage =
