@@ -68,7 +68,6 @@ class BigtableExampleTest extends PipelineSpec {
       .input(BigtableIO("my-project", "my-instance", "my-table"), rowsIn)
       .output(TextIO("out.txt")) { coll =>
         coll should containInAnyOrder(expectedText)
-        ()
       }
       .run()
   }

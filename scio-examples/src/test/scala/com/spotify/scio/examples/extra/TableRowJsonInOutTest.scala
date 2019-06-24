@@ -33,7 +33,6 @@ class TableRowJsonInOutTest extends PipelineSpec {
       .input(TableRowJsonIO("in.json"), input)
       .output(TableRowJsonIO("out.json")) { coll =>
         coll should containInAnyOrder(input)
-        ()
       }
       .run()
   }

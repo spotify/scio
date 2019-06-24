@@ -39,7 +39,6 @@ final class TypedStorageBigQueryTornadoesTest extends PipelineSpec {
       .input(BigQueryIO(TypedStorageBigQueryTornadoes.Row.table), inData)
       .output(BigQueryIO[Result]("dataset.table")) { coll =>
         coll should containInAnyOrder(expected)
-        ()
       }
       .run()
   }

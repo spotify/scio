@@ -37,7 +37,6 @@ class TFSequenceExampleTest extends PipelineSpec {
       .args("--output=out")
       .output(TFExampleIO("out")) { coll =>
         coll should haveSize(2)
-        ()
       }
       .run()
   }

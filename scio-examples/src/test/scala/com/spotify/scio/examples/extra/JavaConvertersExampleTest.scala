@@ -31,7 +31,6 @@ class JavaConvertersExampleTest extends PipelineSpec {
       .args(s"--output=$output", "--converter=String#toResourceId")
       .output(io) { coll =>
         coll should containInAnyOrder(expected)
-        ()
       }
       .run()
   }
@@ -41,7 +40,6 @@ class JavaConvertersExampleTest extends PipelineSpec {
       .args(s"--output=$output", "--converter=String#toFilenamePolicy")
       .output(io) { coll =>
         coll should containInAnyOrder(expected)
-        ()
       }
       .run()
   }
@@ -51,7 +49,6 @@ class JavaConvertersExampleTest extends PipelineSpec {
       .args(s"--output=$output", "--converter=String#toStaticValueProvider")
       .output(io) { coll =>
         coll should containInAnyOrder(expected)
-        ()
       }
       .run()
   }
@@ -61,7 +58,6 @@ class JavaConvertersExampleTest extends PipelineSpec {
       .args(s"--output=$output", "--converter=FilenamePolicy#toJava")
       .output(io) { coll =>
         coll should containInAnyOrder(expected)
-        ()
       }
       .run()
   }

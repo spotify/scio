@@ -35,7 +35,6 @@ class TFExampleExampleTest extends PipelineSpec {
       .input(TextIO("in"), input)
       .output(TFExampleIO("out")) { coll =>
         coll should containInAnyOrder(output)
-        ()
       }
       .run()
   }
@@ -46,7 +45,6 @@ class TFExampleExampleTest extends PipelineSpec {
       .input(TextIO("in"), input)
       .output(TFExampleIO("out")) { coll =>
         coll should containInAnyOrder(output)
-        ()
       }
       .run()
   }

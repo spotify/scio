@@ -31,7 +31,6 @@ class WordCountTest extends PipelineSpec {
       .input(TextIO("in.txt"), inData)
       .output(TextIO("out.txt")) { coll =>
         coll should containInAnyOrder(expected)
-        ()
       }
       .run()
   }
@@ -42,7 +41,6 @@ class WordCountTest extends PipelineSpec {
       .input(TextIO("in.txt"), inData)
       .output(TextIO("out.txt")) { coll =>
         coll should containInAnyOrder(expected)
-        ()
       }
       .run()
   }
@@ -53,7 +51,6 @@ class WordCountTest extends PipelineSpec {
       .input(TextIO("in.txt"), inData)
       .output(TextIO("out.txt")) { coll =>
         coll should containInAnyOrder(expected)
-        ()
       }
       .run()
   }
@@ -64,7 +61,6 @@ class WordCountTest extends PipelineSpec {
       .input(TextIO("in.txt"), inData)
       .output(TextIO("out.txt")) { coll =>
         coll should containInAnyOrder(expected)
-        ()
       }
       .run()
   }
@@ -75,7 +71,6 @@ class WordCountTest extends PipelineSpec {
       .input(TextIO("in.txt"), inData)
       .output(TextIO("out.txt")) { coll =>
         coll should containInAnyOrder(expected)
-        ()
       }
       .run()
   }

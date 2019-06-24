@@ -48,7 +48,6 @@ class DistCacheExampleTest extends PipelineSpec {
       .distCache(DistCacheIO("gs://dataflow-samples/samples/misc/months.txt"), distCache)
       .output(TextIO("out.txt")) { coll =>
         coll should containInAnyOrder(expected)
-        ()
       }
       .run()
   }

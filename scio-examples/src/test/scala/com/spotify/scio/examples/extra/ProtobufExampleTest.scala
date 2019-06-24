@@ -40,7 +40,6 @@ class ProtobufExampleTest extends PipelineSpec {
       .input(ProtobufIO[SimplePB]("in.proto"), input)
       .output(ProtobufIO[TrackPB]("out.proto")) { coll =>
         coll should containInAnyOrder(expected)
-        ()
       }
       .run()
   }

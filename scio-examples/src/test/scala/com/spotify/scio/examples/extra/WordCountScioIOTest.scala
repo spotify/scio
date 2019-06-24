@@ -31,7 +31,6 @@ class WordCountScioIOTest extends PipelineSpec {
       .input(TextIO("in.txt"), inData)
       .output[String](TextIO("out.txt")) { coll =>
         coll should containInAnyOrder(expected)
-        ()
       }
       .run()
   }

@@ -68,7 +68,6 @@ class ShapelessTensorFlowExampleTest extends PipelineSpec {
       .input(TFRecordIO("wc.tfrecords"), examples.map(_.toByteArray))
       .output(TextIO("out.txt")) { coll =>
         coll should containInAnyOrder(textOut)
-        ()
       }
       .run()
   }

@@ -58,7 +58,6 @@ class UserScoreTest extends PipelineSpec {
       .input(TextIO("in.txt"), inData1)
       .output(BigQueryIO[UserScoreSums]("dataset.table")) { coll =>
         coll should containInAnyOrder(expected)
-        ()
       }
       .run()
   }
@@ -69,7 +68,6 @@ class UserScoreTest extends PipelineSpec {
       .input(TextIO("in.txt"), inData2)
       .output(BigQueryIO[UserScoreSums]("dataset.table")) { coll =>
         coll should beEmpty
-        ()
       }
       .run()
   }

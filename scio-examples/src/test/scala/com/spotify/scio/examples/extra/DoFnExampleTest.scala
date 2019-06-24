@@ -31,7 +31,6 @@ class DoFnExampleTest extends PipelineSpec {
       .input(TextIO("in.txt"), inData)
       .output(TextIO("out.txt")) { coll =>
         coll should containInAnyOrder(outData)
-        ()
       }
       .run()
   }

@@ -45,7 +45,6 @@ class DistinctByKeyExampleTest extends PipelineSpec {
       .input(BigQueryIO("input.table"), input)
       .output(BigQueryIO[TableRow]("dataset.table")) { coll =>
         coll should containInAnyOrder(expected)
-        ()
       }
       .run()
   }

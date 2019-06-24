@@ -75,7 +75,6 @@ class TFExampleTest extends PipelineSpec {
       .args("--output=out")
       .output(TFExampleIO("out")) { coll =>
         coll should haveSize(2)
-        ()
       }
       .run()
   }
@@ -93,7 +92,6 @@ class TFExampleTest extends PipelineSpec {
           features.contains("class_name_Iris_setosa") &&
           features.size == 5
         }
-        ()
       }
       .run()
   }

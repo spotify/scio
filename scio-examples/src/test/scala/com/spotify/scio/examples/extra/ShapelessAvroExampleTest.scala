@@ -42,7 +42,6 @@ class ShapelessAvroExampleTest extends PipelineSpec {
       .input(TextIO("in.txt"), textIn)
       .output(AvroIO[GenericRecord]("wc.avro")) { coll =>
         coll should containInAnyOrder(records)
-        ()
       }
       .run()
   }
@@ -53,7 +52,6 @@ class ShapelessAvroExampleTest extends PipelineSpec {
       .input(AvroIO[GenericRecord]("wc.avro"), records)
       .output(TextIO("out.txt")) { coll =>
         coll should containInAnyOrder(textOut)
-        ()
       }
       .run()
   }
