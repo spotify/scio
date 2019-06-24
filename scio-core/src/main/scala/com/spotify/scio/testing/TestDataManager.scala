@@ -78,10 +78,10 @@ private[scio] class TestInput(val m: Map[String, JobInputSource[_]]) {
 }
 
 /* Outputs are lambdas that apply assertions on SCollections */
-private[scio] class TestOutput(val m: Map[String, SCollection[_] => Unit]) {
+private[scio] class TestOutput(val m: Map[String, SCollection[_] => Any]) {
   val s: MSet[String] = MSet.empty
 
-  def apply[T](io: ScioIO[T]): SCollection[T] => Unit = {
+  def apply[T](io: ScioIO[T]): SCollection[T] => Any = {
     // TODO: support Materialize outputs, maybe Materialized[T]?
     val key = io.testId
     require(
@@ -140,7 +140,7 @@ private[scio] object TestDataManager {
   def setup(
     testId: String,
     ins: Map[String, JobInputSource[_]],
-    outs: Map[String, SCollection[_] => Unit],
+    outs: Map[String, SCollection[_] => Any],
     dcs: Map[DistCacheIO[_], _]
   ): Unit = {
     inputs += (testId -> new TestInput(ins))

@@ -75,13 +75,11 @@ object JobTest {
     className: String,
     cmdlineArgs: Array[String] = Array(),
     input: Map[String, JobInputSource[_]] = Map.empty,
-    output: Map[String, SCollection[_] => Unit] = Map.empty,
+    output: Map[String, SCollection[_] => Any] = Map.empty,
     distCaches: Map[DistCacheIO[_], _] = Map.empty,
-    counters: Map[beam.Counter, Long => Unit] = Map.empty,
-    // scalastyle:off line.size.limit
-    distributions: Map[beam.Distribution, beam.DistributionResult => Unit] = Map.empty,
-    // scalastyle:on line.size.limit
-    gauges: Map[beam.Gauge, beam.GaugeResult => Unit] = Map.empty,
+    counters: Map[beam.Counter, Long => Any] = Map.empty,
+    distributions: Map[beam.Distribution, beam.DistributionResult => Any] = Map.empty,
+    gauges: Map[beam.Gauge, beam.GaugeResult => Any] = Map.empty,
     wasRunInvoked: Boolean = false
   )
 
@@ -130,8 +128,7 @@ object JobTest {
     def output[T](io: ScioIO[T])(assertion: SCollection[T] => Any): Builder = {
       require(!state.output.contains(io.toString), "Duplicate test output: " + io.toString)
       state = state.copy(
-        output = state.output + (io.testId -> assertion
-          .asInstanceOf[SCollection[_] => Unit])
+        output = state.output + (io.testId -> assertion.asInstanceOf[SCollection[_] => AnyVal])
       )
       this
     }
@@ -167,7 +164,7 @@ object JobTest {
      * @param counter counter to be evaluated
      * @param assertion assertion for the counter result's committed value
      */
-    def counter(counter: beam.Counter)(assertion: Long => Unit): Builder = {
+    def counter(counter: beam.Counter)(assertion: Long => Any): Builder = {
       require(!state.counters.contains(counter), "Duplicate test counter: " + counter.getName)
       state = state.copy(counters = state.counters + (counter -> assertion))
       this
@@ -181,7 +178,7 @@ object JobTest {
      */
     def distribution(
       distribution: beam.Distribution
-    )(assertion: beam.DistributionResult => Unit): Builder = {
+    )(assertion: beam.DistributionResult => Any): Builder = {
       require(
         !state.distributions.contains(distribution),
         "Duplicate test distribution: " + distribution.getName
@@ -195,7 +192,7 @@ object JobTest {
      * @param gauge gauge to be evaluated
      * @param assertion assertion for the gauge result's committed value
      */
-    def gauge(gauge: beam.Gauge)(assertion: beam.GaugeResult => Unit): Builder = {
+    def gauge(gauge: beam.Gauge)(assertion: beam.GaugeResult => Any): Builder = {
       require(!state.gauges.contains(gauge), "Duplicate test gauge: " + gauge.getName)
       state = state.copy(gauges = state.gauges + (gauge -> assertion))
       this
