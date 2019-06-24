@@ -35,7 +35,6 @@ class AvroExampleTest extends PipelineSpec {
       .input(AvroIO[Account]("in.avro"), input)
       .output(TextIO("out.txt")) { coll =>
         coll should containInAnyOrder(expected)
-        ()
       }
       .run()
   }
@@ -56,7 +55,6 @@ class AvroExampleTest extends PipelineSpec {
       .args("--output=out.avro", "--method=specificOut")
       .output(AvroIO[Account]("out.avro")) { coll =>
         coll should containInAnyOrder(expected)
-        ()
       }
       .run()
   }
@@ -74,7 +72,6 @@ class AvroExampleTest extends PipelineSpec {
       .input(AvroIO[AccountFromSchema]("in.avro"), input)
       .output(TextIO("out.txt")) { coll =>
         coll should containInAnyOrder(expected)
-        ()
       }
       .run()
   }
@@ -88,7 +85,6 @@ class AvroExampleTest extends PipelineSpec {
       .args("--output=out.avro", "--method=typedOut")
       .output(AvroIO[AccountToSchema]("out.avro")) { coll =>
         coll should containInAnyOrder(expected)
-        ()
       }
       .run()
   }

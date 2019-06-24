@@ -33,7 +33,6 @@ class TemplateExampleTest extends PipelineSpec {
       .input(CustomIO[String]("input"), inData)
       .output(CustomIO[String]("output")) { coll =>
         coll should containInAnyOrder(inData)
-        ()
       }
       .run()
   }

@@ -41,7 +41,6 @@ class TypedBigQueryTornadoesTest extends PipelineSpec {
       .input(BigQueryIO(TypedBigQueryTornadoes.Row.query), inData)
       .output(BigQueryIO[Result]("dataset.table")) { coll =>
         coll should containInAnyOrder(expected)
-        ()
       }
       .run()
   }

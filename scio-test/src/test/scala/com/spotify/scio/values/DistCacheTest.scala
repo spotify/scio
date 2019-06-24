@@ -131,7 +131,6 @@ class DistCacheTest extends PipelineSpec {
       .distCache(DistCacheIO("dc.txt"), Seq("1", "2"))
       .output(TextIO("out.txt")) { coll =>
         coll should containInAnyOrder(Seq("a1", "a2", "b1", "b2"))
-        ()
       }
       .run()
   }
@@ -165,7 +164,6 @@ class DistCacheTest extends PipelineSpec {
       .distCacheFunc(DistCacheIO("dc.txt"), () => new NonSerializable("foobar"))
       .output(TextIO("out.txt")) { coll =>
         coll should containInAnyOrder(Seq("foobar", "foobar"))
-        ()
       }
       .run()
   }
@@ -191,7 +189,6 @@ class DistCacheTest extends PipelineSpec {
       .distCache(DistCacheIO("data.ann"), annoy)
       .output(ObjectFileIO[Seq[Int]]("out.avro")) { coll =>
         coll should containInAnyOrder(expected)
-        ()
       }
       .run()
   }
@@ -231,7 +228,6 @@ class DistCacheTest extends PipelineSpec {
       .distCache(DistCacheIO(Seq("data.sparkey.spi", "data.sparkey.spl")), sparkey)
       .output(TextIO("out.txt")) { coll =>
         coll should containInAnyOrder(Seq("alpha", "bravo"))
-        ()
       }
       .run()
   }

@@ -43,7 +43,6 @@ class FilterExamplesTest extends PipelineSpec {
       .input(BigQueryIO(ExampleData.WEATHER_SAMPLES_TABLE), input)
       .output(BigQueryIO[TableRow]("dataset.table")) { coll =>
         coll should containInAnyOrder(expected)
-        ()
       }
       .run()
   }

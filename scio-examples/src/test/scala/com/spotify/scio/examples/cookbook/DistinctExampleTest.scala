@@ -42,7 +42,6 @@ class DistinctExampleTest extends PipelineSpec {
       .input(TextIO("in.txt"), input)
       .output(TextIO("out.txt")) { coll =>
         coll should containInAnyOrder(expected)
-        ()
       }
       .run()
   }

@@ -43,7 +43,6 @@ class CloudSqlExampleTest extends PipelineSpec {
       .input(JdbcIO(readOpts), input)
       .output(JdbcIO[(String, Long)](writeOpts)) { coll =>
         coll should containInAnyOrder(expected)
-        ()
       }
       .run()
   }

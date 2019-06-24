@@ -38,7 +38,6 @@ class AvroInOutTest extends PipelineSpec {
       .input(AvroIO[TestRecord]("in.avro"), input)
       .output(AvroIO[Account]("out.avro")) { coll =>
         coll should containInAnyOrder(expected)
-        ()
       }
       .run()
   }

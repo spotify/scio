@@ -38,7 +38,6 @@ final class StorageBigQueryTornadoesTest extends PipelineSpec {
       .input(BigQueryIO("publicdata:samples.gsod"), inData)
       .output(BigQueryIO[TableRow]("dataset.table")) { coll =>
         coll should containInAnyOrder(expected)
-        ()
       }
       .run()
   }

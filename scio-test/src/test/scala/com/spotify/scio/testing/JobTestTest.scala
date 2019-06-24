@@ -263,7 +263,6 @@ class JobTestTest extends PipelineSpec {
       .input(ObjectFileIO[Int]("in.avro"), Seq(1, 2, 3))
       .output(ObjectFileIO[Int]("out.avro")) { coll =>
         coll should containInAnyOrder(xs)
-        ()
       }
       .run()
   }
@@ -283,7 +282,6 @@ class JobTestTest extends PipelineSpec {
       .input(AvroIO[TestRecord]("in.avro"), (1 to 3).map(newSpecificRecord))
       .output(AvroIO[TestRecord]("out.avro")) { coll =>
         coll should containInAnyOrder(xs)
-        ()
       }
       .run()
   }
@@ -308,7 +306,6 @@ class JobTestTest extends PipelineSpec {
       .input(AvroIO[GenericRecord]("in.avro"), (1 to 3).map(newGenericRecord))
       .output(AvroIO[GenericRecord]("out.avro")) { coll =>
         coll should containInAnyOrder(xs)
-        ()
       }
       .run()
   }
@@ -334,7 +331,6 @@ class JobTestTest extends PipelineSpec {
       .input(BigQueryIO[TableRow]("table.in"), (1 to 3).map(newTableRow))
       .output(BigQueryIO[TableRow]("table.out")) { coll =>
         coll should containInAnyOrder(xs)
-        ()
       }
       .run()
   }
@@ -358,7 +354,6 @@ class JobTestTest extends PipelineSpec {
       .input(TableRowJsonIO("in.json"), (1 to 3).map(newTableRow))
       .output(TableRowJsonIO("out.json")) { coll =>
         coll should containInAnyOrder(xs)
-        ()
       }
       .run()
   }
@@ -389,7 +384,6 @@ class JobTestTest extends PipelineSpec {
       .input(DatastoreIO("store.in"), (1 to 3).map(newEntity))
       .output(DatastoreIO("store.out")) { coll =>
         coll should containInAnyOrder(xs)
-        ()
       }
       .run()
   }
@@ -413,7 +407,6 @@ class JobTestTest extends PipelineSpec {
       .input(PubsubIO[String]("in"), Seq("a", "b", "c"))
       .output(PubsubIO[String]("out")) { coll =>
         coll should containInAnyOrder(xs)
-        ()
       }
       .run()
   }
@@ -438,7 +431,6 @@ class JobTestTest extends PipelineSpec {
       )
       .output(PubsubIO[String]("out")) { coll =>
         coll should containInAnyOrder(xs)
-        ()
       }
       .run()
   }
@@ -465,7 +457,6 @@ class JobTestTest extends PipelineSpec {
         PubsubIO[(String, M)]("out", null, PubsubWithAttributesJob.timestampAttribute)
       ) { coll =>
         coll should containInAnyOrder(xs.map((_, m)))
-        ()
       }
       .run()
   }
@@ -519,7 +510,6 @@ class JobTestTest extends PipelineSpec {
       .input(TextIO("in.txt"), Seq("a", "b", "c"))
       .output(TextIO("out.txt")) { coll =>
         coll should containInAnyOrder(xs)
-        ()
       }
       .run()
   }
@@ -542,7 +532,6 @@ class JobTestTest extends PipelineSpec {
       .distCache(DistCacheIO("dc.txt"), Seq("1", "2"))
       .output(TextIO("out.txt")) { coll =>
         coll should containInAnyOrder(xs)
-        ()
       }
       .run()
   }
@@ -564,7 +553,6 @@ class JobTestTest extends PipelineSpec {
       .input(CustomIO[String]("TextIn"), Seq(1, 2, 3).map(_.toString))
       .output(CustomIO[String]("TextOut")) { coll =>
         coll should containInAnyOrder(xs)
-        ()
       }
       .run()
   }
@@ -588,7 +576,6 @@ class JobTestTest extends PipelineSpec {
       .input(ReadIO("b"), Seq("b1", "b2"))
       .output(TextIO("out.txt")) { coll =>
         coll should containInAnyOrder(xs)
-        ()
       }
       .run()
   }
@@ -615,7 +602,6 @@ class JobTestTest extends PipelineSpec {
         .input(TextIO("in.txt"), Seq("a"))
         .inputStream(ReadIO("a"), testStream)
         .output(TextIO("out.txt")) { coll =>
-          ()
         }
         .run()
     } should have message
@@ -631,7 +617,6 @@ class JobTestTest extends PipelineSpec {
       .input(ReadIO("b"), Seq("b1", "b2").map(_.getBytes))
       .output(TextIO("out.txt")) { coll =>
         coll should containInAnyOrder(xs)
-        ()
       }
       .run()
   }
@@ -658,7 +643,6 @@ class JobTestTest extends PipelineSpec {
         .input(TextIO("in.txt"), Seq("a"))
         .inputStream(ReadIO("a"), testStream)
         .output(TextIO("out.txt")) { coll =>
-          ()
         }
         .run()
     } should have message
@@ -677,7 +661,6 @@ class JobTestTest extends PipelineSpec {
         .distCache(DistCacheIO("dc.txt"), Seq("1", "2"))
         .output(TextIO("out.txt")) { coll =>
           coll should containInAnyOrder(Seq("a1", "a2", "b1", "b2"))
-          ()
         }
         .run()
     } should have message "requirement failed: Missing test input: TextIO(in.txt), available: []"
@@ -691,7 +674,6 @@ class JobTestTest extends PipelineSpec {
         .distCache(DistCacheIO("dc.txt"), Seq("1", "2"))
         .output(TextIO("out.txt")) { coll =>
           coll should containInAnyOrder(Seq("a1", "a2", "b1", "b2"))
-          ()
         }
         .run()
     } should have message
@@ -707,7 +689,6 @@ class JobTestTest extends PipelineSpec {
         .distCache(DistCacheIO("dc.txt"), Seq("1", "2"))
         .output(TextIO("out.txt")) { coll =>
           coll should containInAnyOrder(Seq("a1", "a2", "b1", "b2"))
-          ()
         }
         .run()
     } should have message "requirement failed: Unmatched test input: TextIO(unmatched.txt)"
@@ -722,7 +703,6 @@ class JobTestTest extends PipelineSpec {
         .distCache(DistCacheIO("dc.txt"), Seq("1", "2"))
         .output(TextIO("out.txt")) { coll =>
           coll should containInAnyOrder(Seq("a1", "a2", "b1", "b2"))
-          ()
         }
         .run()
     } should have message "requirement failed: Duplicate test input: TextIO(in.txt)"
@@ -745,7 +725,6 @@ class JobTestTest extends PipelineSpec {
         .input(TextIO("in.txt"), Seq("a", "b"))
         .output(TextIO("bad-out.txt")) { coll =>
           coll should containInAnyOrder(Seq("a1", "a2", "b1", "b2"))
-          ()
         }
         .distCache(DistCacheIO("dc.txt"), Seq("1", "2"))
         .run()
@@ -761,11 +740,9 @@ class JobTestTest extends PipelineSpec {
         .distCache(DistCacheIO("dc.txt"), Seq("1", "2"))
         .output(TextIO("out.txt")) { coll =>
           coll should containInAnyOrder(Seq("a1", "a2", "b1", "b2"))
-          ()
         }
         .output(TextIO("unmatched.txt")) { coll =>
           coll should containInAnyOrder(Seq("X", "Y"))
-          ()
         }
         .run()
     } should have message "requirement failed: Unmatched test output: TextIO(unmatched.txt)"
@@ -779,11 +756,9 @@ class JobTestTest extends PipelineSpec {
         .distCache(DistCacheIO("dc.txt"), Seq("1", "2"))
         .output(TextIO("out.txt")) { coll =>
           coll should containInAnyOrder(Seq("a1", "a2", "b1", "b2"))
-          ()
         }
         .output(TextIO("out.txt")) { coll =>
           coll should containInAnyOrder(Seq("X", "Y"))
-          ()
         }
         .run()
     } should have message "requirement failed: Duplicate test output: TextIO(out.txt)"
@@ -796,7 +771,6 @@ class JobTestTest extends PipelineSpec {
         .input(TextIO("in.txt"), Seq("a", "b"))
         .output(TextIO("out.txt")) { coll =>
           coll should containInAnyOrder(Seq("a1", "a2", "b1", "b2"))
-          ()
         }
         .run()
     } should have message
@@ -811,7 +785,6 @@ class JobTestTest extends PipelineSpec {
         .distCache(DistCacheIO("bad-dc.txt"), Seq("1", "2"))
         .output(TextIO("out.txt")) { coll =>
           coll should containInAnyOrder(Seq("a1", "a2", "b1", "b2"))
-          ()
         }
         .run()
     } should have message
@@ -828,7 +801,6 @@ class JobTestTest extends PipelineSpec {
         .distCache(DistCacheIO("unmatched.txt"), Seq("X", "Y"))
         .output(TextIO("out.txt")) { coll =>
           coll should containInAnyOrder(Seq("a1", "a2", "b1", "b2"))
-          ()
         }
         .run()
     } should have message
@@ -844,7 +816,6 @@ class JobTestTest extends PipelineSpec {
         .distCache(DistCacheIO("dc.txt"), Seq("X", "Y"))
         .output(TextIO("out.txt")) { coll =>
           coll should containInAnyOrder(Seq("a1", "a2", "b1", "b2"))
-          ()
         }
         .run()
     } should have message
@@ -857,7 +828,6 @@ class JobTestTest extends PipelineSpec {
       .input(TextIO("in.txt"), Seq("a", "b"))
       .output(TextIO("out.txt")) { coll =>
         coll should containInAnyOrder(Seq("a", "b"))
-        ()
       }
       .run()
   }
@@ -868,7 +838,6 @@ class JobTestTest extends PipelineSpec {
         .args("--output=out.avro")
         .output(ObjectFileIO[Long]("out.avro")) { coll =>
           coll should containInAnyOrder(Seq(10L))
-          ()
         }
         .run()
     } should have message
@@ -886,7 +855,6 @@ class JobTestTest extends PipelineSpec {
         .input(ObjectFileIO[Int]("in.avro"), Seq(1, 2, 3))
         .output(ObjectFileIO[Int]("out.avro")) { coll =>
           coll should containInAnyOrder(Seq(1, 2, 3))
-          ()
         }
     }
   }
@@ -898,7 +866,6 @@ class JobTestTest extends PipelineSpec {
         .input(ObjectFileIO[Int]("in.avro"), Seq(1, 2, 3))
         .output(ObjectFileIO[Int]("out.avro")) { coll =>
           coll should containInAnyOrder(Seq(1, 2, 3))
-          ()
         }
     }
   }
@@ -910,7 +877,6 @@ class JobTestTest extends PipelineSpec {
         .input(ObjectFileIO[Int]("in.avro"), Seq(1, 2, 3))
         .output(ObjectFileIO[Int]("out.avro")) { coll =>
           coll should containInAnyOrder(Seq(1, 2, 3))
-          ()
         }
 
       JobTest[ObjectFileJob.type]
@@ -918,7 +884,6 @@ class JobTestTest extends PipelineSpec {
         .input(ObjectFileIO[Int]("in2.avro"), Seq(1, 2, 3))
         .output(ObjectFileIO[Int]("out2.avro")) { coll =>
           coll should containInAnyOrder(Seq(1, 2, 3))
-          ()
         }
     }
   }
@@ -931,7 +896,6 @@ class JobTestTest extends PipelineSpec {
         .input(ObjectFileIO[Int]("in.avro"), Seq(1, 2, 3))
         .output(ObjectFileIO[Int]("out.avro")) { coll =>
           coll should containInAnyOrder(Seq(1, 2, 3))
-          ()
         }
     }
   }
@@ -1056,7 +1020,6 @@ class JobTestTest extends PipelineSpec {
         .args("--output=output")
         .output(TextIO("output")) { coll =>
           coll should containSingleValue("does not matter")
-          ()
         }
         .run()
     } should have message msg
@@ -1070,7 +1033,6 @@ class JobTestTest extends PipelineSpec {
     JobTest[MetricsJob.type]
       .counter(MetricsJob.counter) { x =>
         x shouldBe 10
-        ()
       }
       .distribution(MetricsJob.distribution) { d =>
         d.getCount shouldBe 10
@@ -1078,12 +1040,10 @@ class JobTestTest extends PipelineSpec {
         d.getMax shouldBe 10
         d.getSum shouldBe 55
         d.getMean shouldBe 5.5
-        ()
       }
       .gauge(MetricsJob.gauge) { g =>
         g.getValue should be >= 1L
         g.getValue should be <= 10L
-        ()
       }
       .run()
   }
@@ -1093,7 +1053,6 @@ class JobTestTest extends PipelineSpec {
       JobTest[MetricsJob.type]
         .counter(MetricsJob.counter) { x =>
           x shouldBe 100
-          ()
         }
         .run()
     } should have message "10 was not equal to 100"
@@ -1104,7 +1063,6 @@ class JobTestTest extends PipelineSpec {
       JobTest[MetricsJob.type]
         .distribution(MetricsJob.distribution) { x =>
           x.getMax shouldBe 100
-          ()
         }
         .run()
     } should have message "10 was not equal to 100"
@@ -1115,7 +1073,6 @@ class JobTestTest extends PipelineSpec {
       JobTest[MetricsJob.type]
         .gauge(MetricsJob.gauge) { x =>
           x.getValue should be >= 100L
-          ()
         }
         .run()
     }

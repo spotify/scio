@@ -28,7 +28,6 @@ class SafeFlatMapExampleTest extends PipelineSpec {
       .input(TextIO("in"), Seq("1 foo 3 bar bar"))
       .output(TextIO("num-sum")) { coll =>
         coll should containSingleValue("13")
-        ()
       }
       .run()
   }

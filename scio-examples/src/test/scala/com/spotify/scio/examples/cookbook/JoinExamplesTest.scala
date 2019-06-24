@@ -74,7 +74,6 @@ class JoinExamplesTest extends PipelineSpec {
       .input(BigQueryIO(ExampleData.COUNTRY_TABLE), countryData)
       .output(TextIO("out.txt")) { coll =>
         coll should containInAnyOrder(expected)
-        ()
       }
       .run()
   }
@@ -86,7 +85,6 @@ class JoinExamplesTest extends PipelineSpec {
       .input(BigQueryIO(ExampleData.COUNTRY_TABLE), countryData)
       .output(TextIO("out.txt")) { coll =>
         coll should containInAnyOrder(expected)
-        ()
       }
       .run()
   }
@@ -98,7 +96,6 @@ class JoinExamplesTest extends PipelineSpec {
       .input(BigQueryIO(ExampleData.COUNTRY_TABLE), countryData)
       .output(TextIO("out.txt")) { coll =>
         coll should containInAnyOrder(expected)
-        ()
       }
       .run()
   }

@@ -42,7 +42,6 @@ class ShapelessDatastoreExampleTest extends PipelineSpec {
       .input(TextIO("in.txt"), textIn)
       .output(DatastoreIO("project")) { coll =>
         coll should containInAnyOrder(entities)
-        ()
       }
       .run()
   }
@@ -53,7 +52,6 @@ class ShapelessDatastoreExampleTest extends PipelineSpec {
       .input(DatastoreIO("project"), entities)
       .output(TextIO("out.txt")) { coll =>
         coll should containInAnyOrder(textOut)
-        ()
       }
       .run()
   }

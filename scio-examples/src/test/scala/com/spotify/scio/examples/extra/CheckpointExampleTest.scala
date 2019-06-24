@@ -35,15 +35,12 @@ class CheckpointExampleTest extends PipelineSpec {
       .input(TextIO("input"), input)
       .output(TextIO("output-max")) { coll =>
         coll should containSingleValue(max)
-        ()
       }
       .output(TextIO("output-words")) { coll =>
         coll should containInAnyOrder(words)
-        ()
       }
       .output(TextIO("output")) { coll =>
         coll should containInAnyOrder(prettyCount)
-        ()
       }
       .run()
   }
@@ -54,15 +51,12 @@ class CheckpointExampleTest extends PipelineSpec {
       .input(CheckpointIO[String]("checkpoint-src"), words)
       .output(TextIO("output-max")) { coll =>
         coll should containSingleValue(max)
-        ()
       }
       .output(TextIO("output-words")) { coll =>
         coll should containInAnyOrder(words)
-        ()
       }
       .output(TextIO("output")) { coll =>
         coll should containInAnyOrder(prettyCount)
-        ()
       }
       .run()
   }
@@ -74,15 +68,12 @@ class CheckpointExampleTest extends PipelineSpec {
       .input(CheckpointIO[(String, Long)]("checkpoint-count"), count)
       .output(TextIO("output-max")) { coll =>
         coll should containSingleValue(max)
-        ()
       }
       .output(TextIO("output-words")) { coll =>
         coll should containInAnyOrder(words)
-        ()
       }
       .output(TextIO("output")) { coll =>
         coll should containInAnyOrder(prettyCount)
-        ()
       }
       .run()
   }

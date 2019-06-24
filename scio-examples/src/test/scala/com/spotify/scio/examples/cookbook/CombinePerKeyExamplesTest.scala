@@ -46,7 +46,6 @@ class CombinePerKeyExamplesTest extends PipelineSpec {
       .input(BigQueryIO(ExampleData.SHAKESPEARE_TABLE), input)
       .output(BigQueryIO[TableRow]("dataset.table")) { coll =>
         coll should containInAnyOrder(expected)
-        ()
       }
       .run()
   }

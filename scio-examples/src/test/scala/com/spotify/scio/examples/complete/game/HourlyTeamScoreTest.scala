@@ -63,7 +63,6 @@ class HourlyTeamScoreTest extends PipelineSpec {
       .input(TextIO("in.txt"), inData)
       .output(BigQueryIO[TeamScoreSums]("dataset.table")) { coll =>
         coll should containInAnyOrder(expected)
-        ()
       }
       .run()
   }
