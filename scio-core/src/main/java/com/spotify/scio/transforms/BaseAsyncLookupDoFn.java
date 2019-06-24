@@ -28,6 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Serializable;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
@@ -252,6 +253,24 @@ public abstract class BaseAsyncLookupDoFn<A, B, C, F, T>
     }
 
     public boolean isFailure() { return !isSuccess; }
+
+    @Override
+    public int hashCode() {
+      return isSuccess ? value.hashCode() : exception.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (obj == this) {
+        return true;
+      }
+      if (!(obj instanceof Try)) {
+        return false;
+      }
+      Try<?> that = (Try<?>) obj;
+      return (this.isSuccess == that.isSuccess) && Objects.equals(this.get(), that.get()) &&
+          Objects.equals(this.getException(), that.getException());
+    }
   }
 
   /**
