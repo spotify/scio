@@ -25,7 +25,6 @@ import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import com.spotify.scio.util._
 import com.spotify.scio.util.random.{BernoulliValueSampler, PoissonValueSampler}
 import com.twitter.algebird.{Aggregator, Hash128, Monoid, Semigroup}
-import org.apache.beam.sdk.coders.KvCoder
 import org.apache.beam.sdk.transforms._
 import org.apache.beam.sdk.values.{KV, PCollection, PCollectionView}
 import org.slf4j.LoggerFactory
@@ -104,9 +103,8 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
           .apply("TupleToKv", toKvTransform)
           .setCoder(CoderMaterializer.kvCoder[K, V](context))
           .apply(t)
-        if (!kv.getCoder.isInstanceOf[KvCoder[_, _]]) {
-          kv = kv.setCoder(CoderMaterializer.kvCoder[K, UI](context))
-        }
+          .setCoder(CoderMaterializer.kvCoder[K, UI](context))
+
         kv.apply("KvToTuple", ParDo.of(Functions.mapFn[KV[K, UI], (K, UO)](f)))
           .setCoder(CoderMaterializer.beam(context, Coder[(K, UO)]))
       }
