@@ -40,7 +40,9 @@ public class ChannelPoolCreator {
     }
   }
 
-  public static ChannelPool createPool(final String host) throws IOException {
-    return new ChannelPool(interceptors, () -> BigtableSession.createNettyChannel(host, options));
+  public static ChannelPool createPool(BigtableOptions options) throws IOException {
+    return new ChannelPool(
+        interceptors,
+        () -> BigtableSession.createNettyChannel(options.getTableAdminHost(), options));
   }
 }

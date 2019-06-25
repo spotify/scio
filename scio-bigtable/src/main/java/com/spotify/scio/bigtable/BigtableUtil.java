@@ -70,7 +70,7 @@ public final class BigtableUtil {
       final Duration sleepDuration
   ) throws IOException, InterruptedException {
     final ChannelPool channelPool =
-        ChannelPoolCreator.createPool(bigtableOptions.getInstanceAdminHost());
+        ChannelPoolCreator.createPool(bigtableOptions);
 
     try {
       final BigtableInstanceClient bigtableInstanceClient = new BigtableInstanceGrpcClient(channelPool);

@@ -42,7 +42,7 @@ object TableAdmin {
   def ensureTables(bigtableOptions: BigtableOptions,
                    tablesAndColumnFamilies: Map[String, List[String]]): Unit = {
 
-    val channel = ChannelPoolCreator.createPool(bigtableOptions.getTableAdminHost)
+    val channel = ChannelPoolCreator.createPool(bigtableOptions)
     val client = new BigtableTableAdminGrpcClient(channel)
     val project = bigtableOptions.getProjectId
     val instance = bigtableOptions.getInstanceId
