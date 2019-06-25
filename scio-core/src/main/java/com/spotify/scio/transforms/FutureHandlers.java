@@ -17,10 +17,7 @@
 package com.spotify.scio.transforms;
 
 import com.google.common.collect.Iterables;
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.MoreExecutors;
+import com.google.common.util.concurrent.*;
 
 import javax.annotation.Nullable;
 import java.util.concurrent.CompletableFuture;
@@ -46,29 +43,32 @@ public class FutureHandlers {
     @Override
     default void waitForFutures(Iterable<ListenableFuture<V>> futures)
             throws InterruptedException, ExecutionException {
-      Futures.allAsList(futures).get();
+      // Futures#allAsList only works if all futures succeed
+      Futures.whenAllComplete(futures).run(() -> {}, MoreExecutors.directExecutor()).get();
     }
 
     @Override
-    default ListenableFuture<V> addCallback(ListenableFuture<V> future, Function<V, Void> onSuccess, Function<Throwable, Void> onFailure) {
+    default ListenableFuture<V> addCallback(ListenableFuture<V> future,
+                                            Function<V, Void> onSuccess,
+                                            Function<Throwable, Void> onFailure) {
+      // Futures#transform doesn't allow onFailure callback while Futures#addCallback doesn't
+      // guarantee that callbacks are called before ListenableFuture#get() unblocks
+      SettableFuture<V> f = SettableFuture.create();
       Futures.addCallback(future, new FutureCallback<V>() {
         @Override
-        public void onSuccess(@Nullable V result) {}
+        public void onSuccess(@Nullable V result) {
+          onSuccess.apply(result);
+          f.set(result);
+        }
 
         @Override
         public void onFailure(Throwable t) {
           onFailure.apply(t);
+          f.setException(t);
         }
       }, MoreExecutors.directExecutor());
 
-      return Futures.transform(future, new com.google.common.base.Function<V, V>() {
-        @Nullable
-        @Override
-        public V apply(@Nullable V input) {
-          onSuccess.apply(input);
-          return input;
-        }
-      }, MoreExecutors.directExecutor());
+      return f;
     }
   }
 
