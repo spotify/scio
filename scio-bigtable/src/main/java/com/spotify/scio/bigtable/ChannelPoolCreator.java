@@ -22,11 +22,9 @@ import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.cloud.bigtable.grpc.io.ChannelPool;
 import com.google.cloud.bigtable.grpc.io.CredentialInterceptorCache;
-import com.google.common.collect.ImmutableList;
 import io.grpc.ClientInterceptor;
 
 import java.io.IOException;
-import java.util.List;
 
 public class ChannelPoolCreator {
   public static final BigtableOptions options = new BigtableOptions.Builder().build();
@@ -41,8 +39,8 @@ public class ChannelPoolCreator {
     }
   }
 
-  public static ChannelPool createPool(final String host) throws IOException {
-    return new ChannelPool(() -> BigtableSession.createNettyChannel(host, options, interceptor),
-        1);
+  public static ChannelPool createPool(final BigtableOptions options) throws IOException {
+    return new ChannelPool(() ->
+        BigtableSession.createNettyChannel(options.getAdminHost(), options, interceptor), 1);
   }
 }
