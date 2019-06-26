@@ -73,7 +73,7 @@ public class ElasticsearchIO {
      * @param nodes addresses for the Elasticsearch cluster
      */
     public static <T> Bound<T> withNodes(HttpHost[] nodes) {
-      return new Bound<T>().withHttpHosts(nodes);
+      return new Bound<T>().withNodes(nodes);
     }
 
     /**
@@ -176,7 +176,7 @@ public class ElasticsearchIO {
         this(null, null, null, 0, CHUNK_SIZE, DEFAULT_RETRIES, DEFAULT_RETRY_PAUSE, defaultErrorHandler());
       }
 
-      public Bound<T> withHttpHosts(HttpHost[] nodes) {
+      public Bound<T> withNodes(HttpHost[] nodes) {
         return new Bound<>(nodes, flushInterval, toDocWriteRequests, numOfShard,
                            maxBulkRequestSize, maxRetries, retryPause, error);
       }
