@@ -74,7 +74,6 @@ Scio includes the following artifacts:
 - `scio-elasticsearch5`: add-on for Elasticsearch 5.x
 - `scio-elasticsearch6`: add-on for Elasticsearch 6.x
 - `scio-extra`: extra utilities for working with collections, Breeze, etc.
-- `scio-hdfs`: add-on for HDFS IO
 - `scio-jdbc`: add-on for JDBC IO
 - `scio-parquet`: add-on for Parquet
 - `scio-tensorflow`: add-on for TensorFlow TFRecords IO and prediction
