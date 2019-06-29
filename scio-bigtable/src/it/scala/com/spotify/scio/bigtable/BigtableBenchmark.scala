@@ -139,9 +139,11 @@ object BigtableBenchmark {
         assert(value == expected)
         (1, 0)
       case Failure(exception) =>
-        assert(exception.isInstanceOf[FatalException], exception)
-        assert(kv.getKey.endsWith(PostfixWithZeroes))
-        assert(kv.getKey == exception.getMessage)
+        // it can also be a real exception, i.e. io.grpc.StatusRuntimeException.
+        if (exception.isInstanceOf[FatalException]) {
+          assert(kv.getKey.endsWith(PostfixWithZeroes))
+          assert(kv.getKey == exception.getMessage)
+        }
         (0, 1)
     }
 
