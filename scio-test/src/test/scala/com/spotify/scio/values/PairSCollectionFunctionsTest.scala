@@ -323,11 +323,10 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
       val nonEmpty = sc
         .parallelize(Seq(("a", 1), ("a", 10), ("b", 2), ("b", 20)))
         .batchByKey(batchSize)
-
-      nonEmpty should containInAnyOrder(Seq(("a", Iterable(1, 10)), ("b", Iterable(2, 20))))
+        .mapValues(_.toSet)
+      nonEmpty should containInAnyOrder(Seq(("a", Set(1, 10)), ("b", Set(2, 20))))
 
       val empty = sc.empty[(String, Int)]().batchByKey(batchSize)
-
       empty should beEmpty
     }
   }
