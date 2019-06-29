@@ -798,6 +798,24 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     this.applyPerKey(GroupByKey.create[K, V](), kvIterableToTuple[K, V])
 
   /**
+   * Batches inputs to a desired batch size. Batches will contain only elements of a single key.
+   *
+   * Elements are buffered until there are batchSize elements buffered, at which point they are
+   * outputed to the output [[SCollection]].
+   *
+   * Windows are preserved (batches contain elements from the same window).
+   * Batches may contain elements from more than one bundle.
+   *
+   * @param batchSize
+   *
+   * @group per_key
+   */
+  def batchByKey(
+    batchSize: Long
+  )(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, Iterable[V])] =
+    this.applyPerKey(GroupIntoBatches.ofSize(batchSize), kvIterableToTuple[K, V])
+
+  /**
    * Return an SCollection with the pairs from `this` whose keys are in `that`.
    *
    * Unlike [[SCollection.intersection]] this preserves duplicates in `this`.
