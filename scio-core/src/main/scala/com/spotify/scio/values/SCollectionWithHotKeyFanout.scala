@@ -59,9 +59,8 @@ class SCollectionWithHotKeyFanout[K: Coder, V: Coder] private[values] (
   def aggregateByKey[U: Coder](
     zeroValue: U
   )(seqOp: (U, V) => U, combOp: (U, U) => U): SCollection[(K, U)] =
-    self.applyPerKey(
-      withFanout(Combine.perKey(Functions.aggregateFn(zeroValue)(seqOp, combOp))),
-      kvToTuple[K, U]
+    self.applyPerKey(withFanout(Combine.perKey(Functions.aggregateFn(zeroValue)(seqOp, combOp))))(
+      kvToTuple
     )
 
   /**
@@ -85,9 +84,8 @@ class SCollectionWithHotKeyFanout[K: Coder, V: Coder] private[values] (
         "scenarios. Consider aggregateByKey/foldByKey instead."
     )
     self.applyPerKey(
-      withFanout(Combine.perKey(Functions.combineFn(createCombiner, mergeValue, mergeCombiners))),
-      kvToTuple[K, C]
-    )
+      withFanout(Combine.perKey(Functions.combineFn(createCombiner, mergeValue, mergeCombiners)))
+    )(kvToTuple)
   }
 
   /**
@@ -96,20 +94,19 @@ class SCollectionWithHotKeyFanout[K: Coder, V: Coder] private[values] (
    */
   def foldByKey(zeroValue: V)(op: (V, V) => V): SCollection[(K, V)] =
     self.applyPerKey(
-      withFanout(Combine.perKey(Functions.aggregateFn(zeroValue)(op, op))),
-      kvToTuple[K, V]
-    )
+      withFanout(Combine.perKey(Functions.aggregateFn(zeroValue)(op, op)))
+    )(kvToTuple)
 
   /**
    * [[PairSCollectionFunctions.foldByKey(implicit* PairSCollectionFunctions.foldByKey]] with
    * hot key fanout.
    */
   def foldByKey(implicit mon: Monoid[V]): SCollection[(K, V)] =
-    self.applyPerKey(withFanout(Combine.perKey(Functions.reduceFn(mon))), kvToTuple[K, V])
+    self.applyPerKey(withFanout(Combine.perKey(Functions.reduceFn(mon))))(kvToTuple)
 
   /** [[PairSCollectionFunctions.reduceByKey]] with hot key fanout. */
   def reduceByKey(op: (V, V) => V): SCollection[(K, V)] =
-    self.applyPerKey(withFanout(Combine.perKey(Functions.reduceFn(op))), kvToTuple[K, V])
+    self.applyPerKey(withFanout(Combine.perKey(Functions.reduceFn(op))))(kvToTuple)
 
   /** [[PairSCollectionFunctions.sumByKey]] with hot key fanout. */
   def sumByKey(implicit sg: Semigroup[V]): SCollection[(K, V)] = {
@@ -117,7 +114,7 @@ class SCollectionWithHotKeyFanout[K: Coder, V: Coder] private[values] (
       "combineByKey/sumByKey does not support default value and may fail in some streaming " +
         "scenarios. Consider aggregateByKey/foldByKey instead."
     )
-    self.applyPerKey(withFanout(Combine.perKey(Functions.reduceFn(sg))), kvToTuple[K, V])
+    self.applyPerKey(withFanout(Combine.perKey(Functions.reduceFn(sg))))(kvToTuple)
   }
 
 }
