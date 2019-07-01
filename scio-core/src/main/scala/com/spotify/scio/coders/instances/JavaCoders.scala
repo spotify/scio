@@ -53,8 +53,8 @@ trait JavaCoders {
   implicit def pathCoder: Coder[java.nio.file.Path] =
     Coder.xmap(Coder.beam(StringUtf8Coder.of()))(s => java.nio.file.Paths.get(s), _.toString)
 
-  import java.lang.{Iterable => jIterable}
-  implicit def jIterableCoder[T](implicit c: Coder[T]): Coder[jIterable[T]] =
+  import java.lang.{Iterable => JIterable}
+  implicit def jIterableCoder[T](implicit c: Coder[T]): Coder[JIterable[T]] =
     Coder.transform(c) { bc =>
       Coder.beam(bcoders.IterableCoder.of(bc))
     }
