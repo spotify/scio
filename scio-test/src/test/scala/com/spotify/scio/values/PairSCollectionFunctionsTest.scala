@@ -317,6 +317,20 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
     }
   }
 
+  it should "support batchByKey" in {
+    runWithContext { sc =>
+      val batchSize = 2
+      val nonEmpty = sc
+        .parallelize(Seq(("a", 1), ("a", 10), ("b", 2), ("b", 20)))
+        .batchByKey(batchSize)
+        .mapValues(_.toSet)
+      nonEmpty should containInAnyOrder(Seq(("a", Set(1, 10)), ("b", Set(2, 20))))
+
+      val empty = sc.empty[(String, Int)]().batchByKey(batchSize)
+      empty should beEmpty
+    }
+  }
+
   it should "support intersectByKey()" in {
     runWithContext { sc =>
       val p1 = sc.parallelize(Seq(("a", 1), ("b", 2), ("c", 3)))
