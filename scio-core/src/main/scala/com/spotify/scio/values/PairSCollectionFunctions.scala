@@ -798,7 +798,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
   def batchByKey(
     batchSize: Long
   )(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, Iterable[V])] =
-    this.applyPerKey(GroupIntoBatches.ofSize(batchSize), kvIterableToTuple[K, V])
+    this.applyPerKey(GroupIntoBatches.ofSize(batchSize))(kvIterableToTuple)
 
   /**
    * Return an SCollection with the pairs from `this` whose keys are in `that`.
