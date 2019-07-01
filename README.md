@@ -68,11 +68,8 @@ Scio includes the following artifacts:
 - `scio-avro`: add-on for Avro, can also be used standalone
 - `scio-bigquery`: add-on for BigQuery, can also be used standalone
 - `scio-bigtable`: add-on for Bigtable
-- `scio-cassandra2`: add-on for Cassandra 2.x
-- `scio-cassandra3`: add-on for Cassandra 3.x
-- `scio-elasticsearch2`: add-on for Elasticsearch 2.x
-- `scio-elasticsearch5`: add-on for Elasticsearch 5.x
-- `scio-elasticsearch6`: add-on for Elasticsearch 6.x
+- `scio-cassandra*`: add-ons for Cassandra
+- `scio-elasticsearch*`: add-ons for Elasticsearch
 - `scio-extra`: extra utilities for working with collections, Breeze, etc.
 - `scio-jdbc`: add-on for JDBC IO
 - `scio-parquet`: add-on for Parquet
