@@ -33,7 +33,7 @@ private object PairSCollectionFunctions {
 
   private val logger = LoggerFactory.getLogger(this.getClass)
 
-  case class BFSettings(width: Int, capacity: Int, numBFs: Int)
+  final case class BFSettings(width: Int, capacity: Int, numBFs: Int)
 
   def optimalBFSettings(numEntries: Long, fpProb: Double): BFSettings = {
     // double to int rounding error happens when numEntries > (1 << 27)
@@ -82,35 +82,26 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
 
   import TupleFunctions._
 
-  private val context: ScioContext = self.context
+  private[this] val context: ScioContext = self.context
 
-  private val toKvTransform =
-    ParDo.of(Functions.mapFn[(K, V), KV[K, V]](kv => KV.of(kv._1, kv._2)))
+  private[this] val toKvTransform =
+    ParDo.of(Functions.mapFn((kv: (K, V)) => KV.of(kv._1, kv._2)))
 
-  private[scio] def toKV(implicit koder: Coder[K], voder: Coder[V]): SCollection[KV[K, V]] = {
-    val coder = CoderMaterializer.kvCoder[K, V](context)
-    val o = self.applyInternal(toKvTransform).setCoder(coder)
-    context.wrap(o)
-  }
+  private[scio] def toKV(implicit koder: Coder[K], voder: Coder[V]): SCollection[KV[K, V]] =
+    self.applyTransform(toKvTransform).setCoder(CoderMaterializer.kvCoder[K, V](context))
 
   private[values] def applyPerKey[UI: Coder, UO: Coder](
-    t: PTransform[PCollection[KV[K, V]], PCollection[KV[K, UI]]],
+    t: PTransform[_ >: PCollection[KV[K, V]], PCollection[KV[K, UI]]]
+  )(
     f: KV[K, UI] => (K, UO)
-  )(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, UO)] = {
-    val o = self.applyInternal(new PTransform[PCollection[(K, V)], PCollection[(K, UO)]](null) {
-      override def expand(input: PCollection[(K, V)]): PCollection[(K, UO)] = {
-        var kv = input
-          .apply("TupleToKv", toKvTransform)
-          .setCoder(CoderMaterializer.kvCoder[K, V](context))
-          .apply(t)
-          .setCoder(CoderMaterializer.kvCoder[K, UI](context))
-
-        kv.apply("KvToTuple", ParDo.of(Functions.mapFn[KV[K, UI], (K, UO)](f)))
-          .setCoder(CoderMaterializer.beam(context, Coder[(K, UO)]))
-      }
-    })
-    context.wrap(o)
-  }
+  )(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, UO)] =
+    self.transform(
+      _.withName("TupleToKv").toKV
+        .applyTransform(t)
+        .setCoder(CoderMaterializer.kvCoder[K, UI](context))
+        .withName("KvToTuple")
+        .map(f)
+    )
 
   /**
    * Apply a [[org.apache.beam.sdk.transforms.DoFn DoFn]] that processes [[KV]]s and wrap the
@@ -119,12 +110,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
   def applyPerKeyDoFn[U: Coder](
     t: DoFn[KV[K, V], KV[K, U]]
   )(implicit koder: Coder[K], vcoder: Coder[V]): SCollection[(K, U)] =
-    this.applyPerKey(
-      ParDo
-        .of(t)
-        .asInstanceOf[PTransform[PCollection[KV[K, V]], PCollection[KV[K, U]]]],
-      TupleFunctions.kvToTuple[K, U]
-    )
+    this.applyPerKey(ParDo.of(t))(kvToTuple)
 
   /**
    * Convert this SCollection to an [[SCollectionWithHotKeyFanout]] that uses an intermediate node
@@ -637,7 +623,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     combOp: (U, U) => U
   )(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, U)] =
     this
-      .applyPerKey(Combine.perKey(Functions.aggregateFn(zeroValue)(seqOp, combOp)), kvToTuple[K, U])
+      .applyPerKey(Combine.perKey(Functions.aggregateFn(zeroValue)(seqOp, combOp)))(kvToTuple)
 
   /**
    * Aggregate the values of each key with [[com.twitter.algebird.Aggregator Aggregator]]. First
@@ -665,7 +651,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     numQuantiles: Int,
     ord: Ordering[V]
   )(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, Iterable[V])] =
-    this.applyPerKey(ApproximateQuantiles.perKey(numQuantiles, ord), kvListToTuple[K, V])
+    this.applyPerKey(ApproximateQuantiles.perKey(numQuantiles, ord))(kvListToTuple)
 
   def approxQuantilesByKey(numQuantiles: Int)(
     implicit ord: Ordering[V],
@@ -697,9 +683,8 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
         "scenarios. Consider aggregateByKey/foldByKey instead."
     )
     this.applyPerKey(
-      Combine.perKey(Functions.combineFn(createCombiner, mergeValue, mergeCombiners)),
-      kvToTuple[K, C]
-    )
+      Combine.perKey(Functions.combineFn(createCombiner, mergeValue, mergeCombiners))
+    )(kvToTuple)
   }
 
   /**
@@ -711,7 +696,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
   def countApproxDistinctByKey(
     sampleSize: Int
   )(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, Long)] =
-    this.applyPerKey(ApproximateUnique.perKey[K, V](sampleSize), klToTuple[K])
+    this.applyPerKey(ApproximateUnique.perKey[K, V](sampleSize))(klToTuple)
 
   /**
    * Count approximate number of distinct values for each key in the SCollection.
@@ -722,7 +707,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
   def countApproxDistinctByKey(
     maximumEstimationError: Double = 0.02
   )(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, Long)] =
-    this.applyPerKey(ApproximateUnique.perKey[K, V](maximumEstimationError), klToTuple[K])
+    this.applyPerKey(ApproximateUnique.perKey[K, V](maximumEstimationError))(klToTuple)
 
   /**
    * Count the number of elements for each key.
@@ -769,7 +754,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
   def foldByKey(
     zeroValue: V
   )(op: (V, V) => V)(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, V)] =
-    this.applyPerKey(Combine.perKey(Functions.aggregateFn(zeroValue)(op, op)), kvToTuple[K, V])
+    this.applyPerKey(Combine.perKey(Functions.aggregateFn(zeroValue)(op, op)))(kvToTuple)
 
   /**
    * Fold by key with [[com.twitter.algebird.Monoid Monoid]], which defines the associative
@@ -778,7 +763,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * @group per_key
    */
   def foldByKey(implicit mon: Monoid[V], koder: Coder[K], voder: Coder[V]): SCollection[(K, V)] =
-    this.applyPerKey(Combine.perKey(Functions.reduceFn(mon)), kvToTuple[K, V])
+    this.applyPerKey(Combine.perKey(Functions.reduceFn(mon)))(kvToTuple)
 
   /**
    * Group the values for each key in the SCollection into a single sequence. The ordering of
@@ -795,7 +780,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * @group per_key
    */
   def groupByKey(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, Iterable[V])] =
-    this.applyPerKey(GroupByKey.create[K, V](), kvIterableToTuple[K, V])
+    this.applyPerKey(GroupByKey.create[K, V]())(kvIterableToTuple)
 
   /**
    * Batches inputs to a desired batch size. Batches will contain only elements of a single key.
@@ -949,7 +934,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * @group per_key
    */
   def reduceByKey(op: (V, V) => V)(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, V)] =
-    this.applyPerKey(Combine.perKey(Functions.reduceFn(op)), kvToTuple[K, V])
+    this.applyPerKey(Combine.perKey(Functions.reduceFn(op)))(kvToTuple)
 
   /**
    * Return a sampled subset of values for each key of this SCollection.
@@ -959,7 +944,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
   def sampleByKey(
     sampleSize: Int
   )(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, Iterable[V])] =
-    this.applyPerKey(Sample.fixedSizePerKey[K, V](sampleSize), kvIterableToTuple[K, V])
+    this.applyPerKey(Sample.fixedSizePerKey[K, V](sampleSize))(kvIterableToTuple)
 
   /**
    * Return a subset of this SCollection sampled by key (via stratified sampling).
@@ -1008,7 +993,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
       "combineByKey/sumByKey does not support default value and may fail in some streaming " +
         "scenarios. Consider aggregateByKey/foldByKey instead."
     )
-    this.applyPerKey(Combine.perKey(Functions.reduceFn(sg)), kvToTuple[K, V])
+    this.applyPerKey(Combine.perKey(Functions.reduceFn(sg)))(kvToTuple)
   }
 
   def sumByKey(
@@ -1042,8 +1027,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     num: Int,
     ord: Ordering[V]
   )(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, Iterable[V])] =
-    this
-      .applyPerKey(Top.perKey[K, V, Ordering[V]](num, ord), kvListToTuple[K, V])
+    this.applyPerKey(Top.perKey[K, V, Ordering[V]](num, ord))(kvListToTuple)
 
   /**
    * Return an SCollection with the values of each tuple.
