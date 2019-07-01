@@ -28,7 +28,7 @@ case class Foo(x: Int, s: String)
 def sc: SCollection[Foo] = ??? // Beam will need an org.apache.beam.sdk.coders.Coder[Foo]
 ```
 
-## Scio < `0.7.0`
+## Scio `0.6.x` and below
 
 In Scio `0.6.x` and below, Scio would delegate this serialization process to [Kryo](https://github.com/EsotericSoftware/kryo). Kryo's job is to automagically "generate" the serialization logic for any type. The benefit is you don't really have to care about serialization most of the time when writing pipelines with Scio. Using Beam, you would need to explicitly set the coder every time you use a `PTtransform`.
 
@@ -39,7 +39,7 @@ While it saves a lot of work, it also has a few drawbacks:
 - Kryo coders are very dynamic and it can be hard to know exactly which coder is used for a given class.
 - Kryo coders do not always play well with Beam, and sometime can cause weird runtime exceptions. For example, Beam may sometimes throw an `IllegalMutationException` because of the default Kryo coder implementation.
 
-## Scio >= `0.7.0`
+## Scio `0.7.0` and above
 
 In Scio `0.7.0` and above, the Scala compiler will try to find the correct instance of `Coder` at compile time.
 In most cases, the compiler should be able to either directly find a proper `Coder` implementation, or derive one automatically.
@@ -74,7 +74,6 @@ Coder[Demo]
 
 sealed class hierarchy are also supported:
 
-
 ```scala mdoc
 sealed trait Top
 final case class TA(anInt: Int, aString: String) extends Top
@@ -89,6 +88,7 @@ Sometimes, no `Coder` instance can be found, and it's impossible to automaticall
 In that case, Scio will fallback to a Kryo coder for that specific type, and if the scalac flag `-Xmacro-settings:show-coder-fallback=true` is set, a warning message will be displayed __at compile time__. This message should help you fix the warning.
 
 While compiling the following with `-Xmacro-settings:show-coder-fallback=true`
+
 ```scala mdoc:reset
 import com.spotify.scio.coders._
 val localCoder = Coder[java.util.Locale]
@@ -131,7 +131,6 @@ Warning: No implicit Coder found for the following type:
 Here for example, the compiler could not find a proper instance of `Coder[Locale]`, and suggest you implement one yourself.
 
 Note that this message is not limited to direct invocation of fallback. For example, if you declare a case class that uses `Locale` internally, the compiler will show the same warning:
-
 
 ```scala mdoc:reset
 import com.spotify.scio.coders._
