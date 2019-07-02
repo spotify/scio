@@ -408,10 +408,6 @@ final case class ClosedScioContext private (pipelineResult: PipelineResult, cont
 class ScioContext private[scio] (val options: PipelineOptions, private var artifacts: List[String])
     extends TransformNameable {
 
-  private implicit val context: ScioContext = this
-
-  private val logger = LoggerFactory.getLogger(this.getClass)
-
   /** Get PipelineOptions as a more specific sub-type. */
   def optionsAs[T <: PipelineOptions: ClassTag]: T =
     options.as(ScioUtil.classOf[T])
@@ -444,7 +440,7 @@ class ScioContext private[scio] (val options: PipelineOptions, private var artif
           .toList
           .map(_.getClassName.split('$').head)
           .exists(_.equals(classOf[App].getName))) {
-      logger.warn(
+      ScioContext.log.warn(
         "Applications defined within scala.App might not work properly. Please use main method!"
       )
     }
@@ -479,7 +475,7 @@ class ScioContext private[scio] (val options: PipelineOptions, private var artif
   // the runner, which may end up with NPE. If not set but user generate new temp dir
   if (ScioUtil.isLocalRunner(options.getRunner) && options.getTempLocation == null) {
     val tmpDir = Files.createTempDirectory("scio-temp-")
-    logger.debug(s"New temp directory at $tmpDir")
+    ScioContext.log.debug(s"New temp directory at $tmpDir")
     options.setTempLocation(tmpDir.toString)
   }
 
@@ -567,7 +563,7 @@ class ScioContext private[scio] (val options: PipelineOptions, private var artif
 
     _isClosed = true
 
-    val closedContext = ClosedScioContext(this.pipeline.run(), context)
+    val closedContext = ClosedScioContext(this.pipeline.run(), this)
 
     if (this.isTest || (this
           .optionsAs[ScioOptions]
@@ -728,7 +724,7 @@ class ScioContext private[scio] (val options: PipelineOptions, private var artif
     scs match {
       case Nil => empty()
       case contents =>
-        context.wrap(
+        wrap(
           PCollectionList
             .of(contents.map(_.internal).asJava)
             .apply(this.tfName, Flatten.pCollections())
@@ -744,7 +740,7 @@ class ScioContext private[scio] (val options: PipelineOptions, private var artif
    */
   def parallelize[T: Coder](elems: Iterable[T]): SCollection[T] =
     requireNotClosed {
-      val coder = CoderMaterializer.beam(context, Coder[T])
+      val coder = CoderMaterializer.beam(this, Coder[T])
       wrap(
         this.applyInternal(
           Create
@@ -762,7 +758,7 @@ class ScioContext private[scio] (val options: PipelineOptions, private var artif
     elems: Map[K, V]
   )(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, V)] =
     requireNotClosed {
-      val kvc = CoderMaterializer.kvCoder[K, V](context)
+      val kvc = CoderMaterializer.kvCoder[K, V](this)
       wrap(this.applyInternal(Create.of(elems.asJava).withCoder(kvc)))
         .map(kv => (kv.getKey, kv.getValue))
     }
@@ -773,7 +769,7 @@ class ScioContext private[scio] (val options: PipelineOptions, private var artif
    */
   def parallelizeTimestamped[T: Coder](elems: Iterable[(T, Instant)]): SCollection[T] =
     requireNotClosed {
-      val coder = CoderMaterializer.beam(context, Coder[T])
+      val coder = CoderMaterializer.beam(this, Coder[T])
       val v = elems.map(t => TimestampedValue.of(t._1, t._2))
       wrap(this.applyInternal(Create.timestamped(v.asJava).withCoder(coder)))
     }
@@ -787,7 +783,7 @@ class ScioContext private[scio] (val options: PipelineOptions, private var artif
     timestamps: Iterable[Instant]
   ): SCollection[T] =
     requireNotClosed {
-      val coder = CoderMaterializer.beam(context, Coder[T])
+      val coder = CoderMaterializer.beam(this, Coder[T])
       val v = elems.zip(timestamps).map(t => TimestampedValue.of(t._1, t._2))
       wrap(this.applyInternal(Create.timestamped(v.asJava).withCoder(coder)))
     }
