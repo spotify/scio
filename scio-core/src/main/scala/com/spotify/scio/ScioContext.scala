@@ -519,6 +519,7 @@ class ScioContext private[scio] (val options: PipelineOptions, private var artif
   private var _isClosed: Boolean = false
   private val _counters: MBuffer[Counter] = MBuffer.empty
   private var _onClose: Unit => Unit = identity
+  private var _onJobStart: ClosedScioContext => Unit = (_ => ())
 
   /** Wrap a [[org.apache.beam.sdk.values.PCollection PCollection]]. */
   def wrap[T](p: PCollection[T]): SCollection[T] =
@@ -529,6 +530,16 @@ class ScioContext private[scio] (val options: PipelineOptions, private var artif
    */
   private[scio] def onClose(f: Unit => Unit): Unit =
     _onClose = _onClose compose f
+
+  /**
+   * Add callbacks calls when the ClosedScioContext is created.
+   * This happens when the job starts.
+   */
+  def onJobStart(f: ClosedScioContext => Unit): Unit =
+    _onJobStart = closedContext => {
+      _onJobStart(closedContext)
+      f(closedContext)
+    }
 
   // =======================================================================
   // States
@@ -564,6 +575,8 @@ class ScioContext private[scio] (val options: PipelineOptions, private var artif
     _isClosed = true
 
     val closedContext = ClosedScioContext(this.pipeline.run(), this)
+
+    _onJobStart(closedContext)
 
     if (this.isTest || (this
           .optionsAs[ScioOptions]
