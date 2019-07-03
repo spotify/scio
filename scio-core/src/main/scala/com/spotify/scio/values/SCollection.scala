@@ -34,7 +34,6 @@ import com.spotify.scio.util._
 import com.spotify.scio.util.random.{BernoulliSampler, PoissonSampler}
 import com.twitter.algebird.{Aggregator, Monoid, Semigroup}
 import org.apache.avro.file.CodecFactory
-import org.apache.avro.generic.GenericRecord
 import org.apache.beam.sdk.coders.{Coder => BCoder}
 import org.apache.beam.sdk.io.{Compression, FileBasedSink}
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
@@ -1120,18 +1119,17 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       saveAsInMemoryTap
     } else {
       val elemCoder = CoderMaterializer.beam(context, coder)
+      val schema = AvroBytesUtil.schema
+      val avroCoder = Coder.avroGenericRecordCoder(schema)
       val write = beam.AvroIO
-        .writeGenericRecords(AvroBytesUtil.schema)
+        .writeGenericRecords(schema)
         .to(ScioUtil.pathWithShards(path))
         .withSuffix(".obj.avro")
         .withCodec(CodecFactory.deflateCodec(6))
         .withMetadata(Map.empty[String, AnyRef].asJava)
+
       this
-        .parDo(new DoFn[T, GenericRecord] {
-          @ProcessElement
-          private[scio] def processElement(c: DoFn[T, GenericRecord]#ProcessContext): Unit =
-            c.output(AvroBytesUtil.encode(elemCoder, c.element()))
-        })
+        .map(c => AvroBytesUtil.encode(elemCoder, c))(avroCoder)
         .applyInternal(write)
       ClosedTap(MaterializeTap[T](path, context))
     }
