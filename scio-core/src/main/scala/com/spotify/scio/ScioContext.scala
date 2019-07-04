@@ -520,6 +520,8 @@ class ScioContext private[scio] (val options: PipelineOptions, private var artif
   private val _counters: MBuffer[Counter] = MBuffer.empty
   private var _onClose: Unit => Unit = identity
   private var _onJobStart: ClosedScioContext => Unit = (_ => ())
+  private var _onJobFinish: (ClosedScioContext, ScioResult) => Unit = ((_, _) => ())
+  private var _hasJobFinishHook: Boolean = false
 
   /** Wrap a [[org.apache.beam.sdk.values.PCollection PCollection]]. */
   def wrap[T](p: PCollection[T]): SCollection[T] =
@@ -540,6 +542,18 @@ class ScioContext private[scio] (val options: PipelineOptions, private var artif
       _onJobStart(closedContext)
       f(closedContext)
     }
+
+  /**
+   * Add callbacks calls when the when the job finishes.
+   * Adding this hook makes the `close` method block.
+   */
+  def onJobFinish(f: (ClosedScioContext, ScioResult) => Unit): Unit = {
+    _hasJobFinishHook = true
+    _onJobFinish = (ClosedScioContext, ScioResult) => {
+      _onJobFinish(ClosedScioContext, ScioResult)
+      f(ClosedScioContext, ScioResult)
+    }
+  }
 
   // =======================================================================
   // States
@@ -577,6 +591,11 @@ class ScioContext private[scio] (val options: PipelineOptions, private var artif
     val closedContext = ClosedScioContext(this.pipeline.run(), this)
 
     _onJobStart(closedContext)
+
+    if (_hasJobFinishHook) {
+      val result = closedContext.waitUntilFinish(closedContext.getAwaitDuration)
+      _onJobFinish(closedContext, result)
+    }
 
     if (this.isTest || (this
           .optionsAs[ScioOptions]
