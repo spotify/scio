@@ -406,6 +406,9 @@ class BigQueryType[T: TypeTag] {
     getField("toTableRow").asInstanceOf[T => TableRow]
 
   /** TableSchema of `T`. */
-  def schema: TableSchema = BigQueryType.schemaOf[T]
+  def schema: TableSchema =
+    Try(getField("schema").asInstanceOf[TableSchema]).toOption.getOrElse {
+      BigQueryType.schemaOf[T]
+    }
 
 }
