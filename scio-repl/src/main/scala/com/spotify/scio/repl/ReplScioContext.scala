@@ -24,7 +24,12 @@ class ReplScioContext(options: PipelineOptions, artifacts: List[String])
     extends ScioContext(options, artifacts) {
 
   this.setAppName("sciorepl")
-  this.setJobName(s"""sciorepl-${CoreSysProps.User.value}-${System.currentTimeMillis()}""")
+
+  /** Overwrite job name to default for REPL session */
+  this.setJobName( "sciorepl-%s-%d".format(
+    CoreSysProps.User.value.replaceAll("[^a-z0-9]", "0"),
+    System.currentTimeMillis()
+  ))
 
   /** Enhanced version that dumps REPL session jar. */
   override def close(): ClosedScioContext = {
