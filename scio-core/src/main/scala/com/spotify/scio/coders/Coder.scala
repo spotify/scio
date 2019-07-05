@@ -17,7 +17,7 @@
 
 package com.spotify.scio.coders
 
-import java.io.{InputStream, OutputStream}
+import java.io.{EOFException, InputStream, OutputStream}
 
 import com.spotify.scio.coders.instances.Implicits
 import org.apache.beam.sdk.coders.Coder.NonDeterministicException
@@ -229,12 +229,32 @@ private[scio] case class WrappedBCoder[T](u: BCoder[T]) extends BCoder[T] {
   private def buildException(cause: Throwable): Exception =
     CoderException(stackTrace, cause)
 
+  private val stackSeparator =
+    new StackTraceElement(
+      "——✂——✂——✂—— Materialization point call stack follows ——✂——✂——✂——",
+      "——✂——✂——✂——",
+      "——✂——✂——✂——",
+      0
+    )
+
+  private val separatedStackTrace = Array(stackSeparator) ++ stackTrace
+
+  private def appendMaterializationStack[T <: Throwable](cause: T): T = {
+    val existingStack = cause.getStackTrace
+    val adjustedStack = existingStack ++ separatedStackTrace
+    cause.setStackTrace(adjustedStack)
+    cause
+  }
+
   override def toString: String = u.toString
 
   @inline private def catching[A](a: => A) =
     try {
       a
     } catch {
+      case ex: EOFException =>
+        /* this is used under Flink for internal signalling, and caught above here. */
+        throw appendMaterializationStack(ex)
       case ex: Throwable =>
         throw buildException(ex)
     }
