@@ -326,12 +326,11 @@ object ScioContext {
 }
 
 case class ClosedScioContext(pipelineResult: PipelineResult, context: ScioContext) {
-
-  /** Get the timeout period of the Scio job. Default to `Duration.Inf`. */
-  def getAwaitDuration: Duration = context.awaitDuration
+  private[this] val DefaultAwaitDuration = context.awaitDuration
+  private[this] val DefaultCancelJob = true
 
   /** Whether the pipeline is completed. */
-  def isCompleted: Boolean = pipelineResult.getState.isTerminal
+  def isCompleted: Boolean = state.isTerminal()
 
   /** Pipeline's current state. */
   def state: State = Try(pipelineResult.getState).getOrElse(State.UNKNOWN)
@@ -339,8 +338,8 @@ case class ClosedScioContext(pipelineResult: PipelineResult, context: ScioContex
   /** Wait until the pipeline finishes. If timeout duration is exceeded and `cancelJob` is set,
    * cancel the internal [[PipelineResult]]. */
   def waitUntilFinish(
-    duration: Duration = getAwaitDuration,
-    cancelJob: Boolean = true
+    duration: Duration = DefaultAwaitDuration,
+    cancelJob: Boolean = DefaultCancelJob
   ): ScioResult = {
     try {
       val wait = duration match {
@@ -383,8 +382,8 @@ case class ClosedScioContext(pipelineResult: PipelineResult, context: ScioContex
    * `FAILED`). Throw exception otherwise.
    */
   def waitUntilDone(
-    duration: Duration = getAwaitDuration,
-    cancelJob: Boolean = true
+    duration: Duration = DefaultAwaitDuration,
+    cancelJob: Boolean = DefaultCancelJob
   ): ScioResult = {
     val result = waitUntilFinish(duration, cancelJob)
     if (!state.equals(State.DONE)) {
