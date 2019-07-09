@@ -550,8 +550,11 @@ class ScioContext private[scio] (val options: PipelineOptions, private var artif
     options.setJobName(name)
   }
 
-  /** Close the context. No operation can be performed once the context is closed. */
-  def close(): ClosedScioContext = requireNotClosed {
+  /**
+   * Runs the uderlying pipeline according to the options used to create this context.
+   * Running closes the context and no operation can be performed once the context is closed.
+   */
+  def run(): ClosedScioContext = requireNotClosed {
     _onClose(())
 
     if (_counters.nonEmpty) {
@@ -565,13 +568,21 @@ class ScioContext private[scio] (val options: PipelineOptions, private var artif
 
     val closedContext = ClosedScioContext(this.pipeline.run(), this)
 
-    if (this.isTest || (this
-          .optionsAs[ScioOptions]
-          .isBlocking && awaitDuration == Duration.Inf)) {
+    if (this.isTest) {
       val result = closedContext.waitUntilDone()
-      if (this.isTest) {
-        TestDataManager.closeTest(testId.get, result)
-      }
+      TestDataManager.closeTest(testId.get, result)
+    }
+
+    closedContext
+  }
+
+  /** Close the context. No operation can be performed once the context is closed. */
+  @deprecated("this method will me removed in next scio version", "Scio 0.8.0")
+  def close(): ClosedScioContext = requireNotClosed {
+    val closedContext = run()
+
+    if (optionsAs[ScioOptions].isBlocking && awaitDuration == Duration.Inf) {
+      closedContext.waitUntilDone()
     }
 
     closedContext
