@@ -21,11 +21,13 @@ import java.nio.ByteBuffer
 
 import com.google.datastore.v1.Entity
 import com.google.datastore.v1.client.DatastoreHelper
+import com.spotify.scio.avro.AvroUtils.schema
 import com.spotify.scio.avro._
-import com.spotify.scio.coders.Coder
 import com.spotify.scio.bigquery._
+import com.spotify.scio.coders.Coder
 import com.spotify.scio.proto.Track.TrackPB
 import com.spotify.scio.testing._
+import org.apache.avro.generic.GenericRecord
 
 object ScioIOTest {
   @AvroType.toSchema
@@ -58,6 +60,18 @@ class ScioIOTest extends ScioIOSpec {
     val io = (s: String) => AvroIO[AvroRecord](s)
     testTap(xs)(_.saveAsTypedAvroFile(_))(".avro")
     testJobTest(xs)(io)(_.typedAvroFile[AvroRecord](_))(_.saveAsTypedAvroFile(_))
+  }
+
+  it should "work with GenericRecord and a parseFn" in {
+    import GenericParseFnAvroFileJob.PartialFieldsAvro
+    val xs = (1 to 100).map(PartialFieldsAvro)
+    // No test for saveAsAvroFile because parseFn is only for i/p
+    testJobTest(xs)(AvroIO(_))(
+      _.avroFile[PartialFieldsAvro](
+        _,
+        (gr: GenericRecord) => PartialFieldsAvro(gr.get("int_field").asInstanceOf[Int])
+      )
+    )(_.saveAsAvroFile(_, schema = schema))
   }
 
   "ObjectFileIO" should "work" in {

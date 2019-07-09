@@ -21,12 +21,11 @@ import com.google.common.collect.ImmutableMap
 import com.google.datastore.v1.Entity
 import com.google.datastore.v1.client.DatastoreHelper.{makeKey, makeValue}
 import com.spotify.scio._
-import com.spotify.scio.coders.Coder
 import com.spotify.scio.avro.AvroUtils.{newGenericRecord, newSpecificRecord}
-import com.spotify.scio.avro._
+import com.spotify.scio.avro.{AvroUtils, _}
 import com.spotify.scio.bigquery._
+import com.spotify.scio.coders.Coder
 import com.spotify.scio.io._
-import com.spotify.scio.avro.{AvroUtils, TestRecord}
 import com.spotify.scio.util.MockedPrintStream
 import org.apache.avro.generic.GenericRecord
 import org.apache.beam.sdk.Pipeline.PipelineExecutionException
@@ -64,6 +63,24 @@ object GenericAvroFileJob {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
     implicit val coder = Coder.avroGenericRecordCoder(AvroUtils.schema)
     sc.avroFile[GenericRecord](args("input"), AvroUtils.schema)
+      .saveAsAvroFile(args("output"), schema = AvroUtils.schema)
+    sc.close()
+    ()
+  }
+}
+
+object GenericParseFnAvroFileJob {
+
+  // A class with some fields from the Avro Record
+  case class PartialFieldsAvro(intField: Int)
+
+  def main(cmdlineArgs: Array[String]): Unit = {
+    val (sc, args) = ContextAndArgs(cmdlineArgs)
+    sc.avroFile[PartialFieldsAvro](
+        args("input"),
+        (gr: GenericRecord) => PartialFieldsAvro(gr.get("int_field").asInstanceOf[Int])
+      )
+      .map(a => AvroUtils.newGenericRecord(a.intField))
       .saveAsAvroFile(args("output"), schema = AvroUtils.schema)
     sc.close()
     ()
@@ -323,6 +340,32 @@ class JobTestTest extends PipelineSpec {
     }
     an[AssertionError] should be thrownBy {
       testGenericAvroFileJob((1 to 4).map(newGenericRecord))
+    }
+  }
+
+  def testGenericParseAvroFileJob(xs: Seq[GenericRecord]): Unit = {
+    import GenericParseFnAvroFileJob.PartialFieldsAvro
+    implicit val coder: Coder[GenericRecord] = Coder.avroGenericRecordCoder
+    JobTest[GenericParseFnAvroFileJob.type]
+      .args("--input=in.avro", "--output=out.avro")
+      .input(AvroIO[PartialFieldsAvro]("in.avro"), (1 to 3).map(PartialFieldsAvro))
+      .output(AvroIO[GenericRecord]("out.avro")) { coll =>
+        coll should containInAnyOrder(xs)
+        ()
+      }
+      .run()
+  }
+
+  it should "pass correct generic parseFn AvroFileIO" in {
+    testGenericParseAvroFileJob((1 to 3).map(newGenericRecord))
+  }
+
+  it should "fail incorrect generic parseFn AvroFileIO" in {
+    an[AssertionError] should be thrownBy {
+      testGenericParseAvroFileJob((1 to 2).map(newGenericRecord))
+    }
+    an[AssertionError] should be thrownBy {
+      testGenericParseAvroFileJob((1 to 4).map(newGenericRecord))
     }
   }
 
