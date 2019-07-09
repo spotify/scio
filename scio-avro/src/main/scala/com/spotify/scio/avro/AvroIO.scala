@@ -242,9 +242,7 @@ final case class GenericRecordParseIO[T](path: String, parseFn: GenericRecord =>
    */
   override protected def read(sc: ScioContext, params: Unit): SCollection[T] = {
     val t = beam.AvroIO
-      .parseGenericRecords(
-        Functions.serializableFn(parseFn)
-      )
+      .parseGenericRecords(Functions.serializableFn(parseFn))
       .from(path)
       .withCoder(CoderMaterializer.beam(sc, coder))
 
