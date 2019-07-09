@@ -17,7 +17,7 @@
 
 package com.spotify.scio.coders
 
-import java.io.{EOFException, InputStream, OutputStream}
+import java.io.{InputStream, OutputStream}
 
 import com.spotify.scio.coders.instances.Implicits
 import org.apache.beam.sdk.coders.Coder.NonDeterministicException
@@ -170,29 +170,6 @@ private final case class DisjunctionCoder[T, Id](
     }
 }
 
-final case class CoderException private[coders] (
-  stacktrace: Array[StackTraceElement],
-  cause: Throwable,
-  message: String = ""
-) extends RuntimeException {
-  override def getMessage: String = cause.getMessage
-  override def getCause: Throwable = new RuntimeException {
-    override def getMessage: String = s"$message - Coder was materialized at"
-    override def getStackTrace: Array[StackTraceElement] = stacktrace
-    override def getCause: Throwable = cause.getCause
-  }
-  override def getStackTrace: Array[StackTraceElement] = cause.getStackTrace
-}
-
-private[coders] object CoderException {
-  def prepareStackTrace: Array[StackTraceElement] =
-    Thread
-      .currentThread()
-      .getStackTrace()
-      .dropWhile(!_.getClassName.contains(CoderMaterializer.getClass.getName))
-      .take(10)
-}
-
 private[scio] final class RefCoder[T](val typeName: String, c: => BCoder[T]) extends BCoder[T] {
   def value: BCoder[T] = c
 
@@ -223,28 +200,8 @@ private[scio] case class WrappedBCoder[T](u: BCoder[T]) extends BCoder[T] {
    * Eagerly compute a stack trace on materialization
    * to provide a helpful stacktrace if an exception happens
    */
-  private val stackTrace: Array[StackTraceElement] =
-    CoderException.prepareStackTrace
-
-  private def buildException(cause: Throwable): Exception =
-    CoderException(stackTrace, cause)
-
-  private val stackSeparator =
-    new StackTraceElement(
-      "——✂——✂——✂—— Materialization point call stack follows ——✂——✂——✂——",
-      "——✂——✂——✂——",
-      "——✂——✂——✂——",
-      0
-    )
-
-  private val separatedStackTrace = Array(stackSeparator) ++ stackTrace
-
-  private def appendMaterializationStack[T <: Throwable](cause: T): T = {
-    val existingStack = cause.getStackTrace
-    val adjustedStack = existingStack ++ separatedStackTrace
-    cause.setStackTrace(adjustedStack)
-    cause
-  }
+  private val materializationStackTrace: Array[StackTraceElement] =
+    WrappedBCoder.prepareStackTrace
 
   override def toString: String = u.toString
 
@@ -252,11 +209,12 @@ private[scio] case class WrappedBCoder[T](u: BCoder[T]) extends BCoder[T] {
     try {
       a
     } catch {
-      case ex: EOFException =>
-        /* this is used under Flink for internal signalling, and caught above here. */
-        throw appendMaterializationStack(ex)
       case ex: Throwable =>
-        throw buildException(ex)
+        /* prior to scio 0.8, a wrapped exception was thrown. It is no longer the case, as some
+        backends (e.g. Flink) use exceptions as a way to signal from the Coder to the layers above
+         here; we therefore must alter the type of exceptions passing through this block.
+         */
+        throw WrappedBCoder.appendMaterializationStack(ex, None, materializationStackTrace)
     }
 
   override def encode(value: T, os: OutputStream): Unit =
@@ -284,12 +242,42 @@ private[scio] case class WrappedBCoder[T](u: BCoder[T]) extends BCoder[T] {
     u.registerByteSizeObserver(value, observer)
 }
 
-private object WrappedBCoder {
+private[scio] object WrappedBCoder {
   def create[T](u: BCoder[T]): BCoder[T] =
     u match {
       case WrappedBCoder(_) => u
       case _                => new WrappedBCoder(u)
     }
+
+  def appendMaterializationStack[X <: Throwable](
+    cause: X,
+    additionalMessage: Option[String],
+    baseStack: Array[StackTraceElement]
+  ): X = {
+    val existingStack = cause.getStackTrace
+    val messageItem =
+      additionalMessage.map(msg => new StackTraceElement("Due to " + msg, "", "", 0)).toArray
+
+    val adjustedStack = messageItem ++ existingStack ++ baseStack
+    cause.setStackTrace(adjustedStack)
+    cause
+  }
+
+  def prepareStackTrace: Array[StackTraceElement] =
+    Array(
+      new StackTraceElement(
+        "——✂——✂——✂—— Materialization point call stack follows ——✂——✂——✂——",
+        "——✂——✂——✂——",
+        "——✂——✂——✂——",
+        0
+      )
+    ) ++
+      Thread
+        .currentThread()
+        .getStackTrace()
+        .dropWhile(!_.getClassName.contains(CoderMaterializer.getClass.getName))
+        .take(10)
+
 }
 
 // Coder used internally specifically for Magnolia derived coders.

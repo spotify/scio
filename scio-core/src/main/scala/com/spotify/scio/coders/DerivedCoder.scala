@@ -25,7 +25,11 @@ private object Derived extends Serializable {
       v
     } catch {
       case e: Exception =>
-        throw new CoderException(stack, e, msg)
+        /* prior to scio 0.8, a wrapped exception was thrown. It is no longer the case, as some
+        backends (e.g. Flink) use exceptions as a way to signal from the Coder to the layers above
+         here; we therefore must alter the type of exceptions passing through this block.
+         */
+        throw WrappedBCoder.appendMaterializationStack(e, Some(msg), stack)
     }
 
   def combineCoder[T](
@@ -41,14 +45,14 @@ private object Derived extends Serializable {
       i = i + 1
     }
 
-    val stack = CoderException.prepareStackTrace
+    val materializationStack = WrappedBCoder.prepareStackTrace
 
     @inline def destruct(v: T): Array[Any] = {
       val arr = new Array[Any](ps.length)
       var i = 0
       while (i < ps.length) {
         val p = ps(i)
-        catching(s"Error while dereferencing parameter ${p.label} in $v", stack) {
+        catching(s"Error while dereferencing parameter ${p.label} in $v", materializationStack) {
           arr.update(i, p.dereference(v))
           i = i + 1
         }
@@ -58,7 +62,9 @@ private object Derived extends Serializable {
 
     val constructor: Seq[Any] => T =
       ps =>
-        catching(s"Error while constructing object from parameters $ps", stack)(rawConstruct(ps))
+        catching(s"Error while constructing object from parameters $ps", materializationStack)(
+          rawConstruct(ps)
+        )
 
     Coder.record[T](typeName.full, cs, constructor, destruct)
   }
