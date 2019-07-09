@@ -233,6 +233,106 @@ object ContextAndArgs {
   }
 }
 
+trait ClosedScioContext {
+  def isCompleted: Boolean
+
+  def state: State
+
+  def waitUntilFinish(): ScioResult
+  def waitUntilFinish(duration: Duration): ScioResult
+  def waitUntilFinish(cancelJob: Boolean): ScioResult
+  def waitUntilFinish(duration: Duration, cancelJob: Boolean): ScioResult
+
+  def waitUntilDone(): ScioResult
+  def waitUntilDone(duration: Duration): ScioResult
+  def waitUntilDone(cancelJob: Boolean): ScioResult
+
+  /**
+   * Wait until the pipeline finishes with the State `DONE` (as opposed to `CANCELLED` or
+   * `FAILED`). Throw exception otherwise.
+   */
+  def waitUntilDone(duration: Duration, cancelJob: Boolean): ScioResult
+}
+
+object ClosedScioContext {
+  def default(pipelineResult: PipelineResult, context: ScioContext) = new ClosedScioContext {
+    private[this] val DefaultAwaitDuration = context.awaitDuration
+    private[this] val DefaultCancelJob = true
+
+    /** Whether the pipeline is completed. */
+    def isCompleted: Boolean = state.isTerminal()
+
+    /** Pipeline's current state. */
+    def state: State = Try(pipelineResult.getState).getOrElse(State.UNKNOWN)
+
+    def waitUntilFinish(): ScioResult =
+      waitUntilFinish(DefaultAwaitDuration, DefaultCancelJob)
+
+    def waitUntilFinish(duration: Duration): ScioResult =
+      waitUntilFinish(duration, DefaultCancelJob)
+
+    def waitUntilFinish(cancelJob: Boolean): ScioResult =
+      waitUntilFinish(DefaultAwaitDuration, cancelJob)
+
+    /** Wait until the pipeline finishes. If timeout duration is exceeded and `cancelJob` is set,
+     * cancel the internal [[PipelineResult]]. */
+    def waitUntilFinish(duration: Duration, cancelJob: Boolean): ScioResult = {
+      try {
+        val wait = duration match {
+          case Duration.Inf => 0
+          case d            => d.toMillis
+        }
+        pipelineResult.waitUntilFinish(time.Duration.millis(wait))
+      } catch {
+        case e: InterruptedException =>
+          val cause = if (cancelJob) {
+            pipelineResult.cancel()
+            new InterruptedException(s"Job cancelled after exceeding timeout value $duration")
+          } else {
+            e
+          }
+          throw new PipelineExecutionException(cause)
+      }
+
+      new ScioResult(pipelineResult) {
+        private val metricsLocation = context.optionsAs[ScioOptions].getMetricsLocation
+        if (metricsLocation != null) {
+          saveMetrics(metricsLocation)
+        }
+
+        override def getMetrics: Metrics =
+          Metrics(
+            BuildInfo.version,
+            BuildInfo.scalaVersion,
+            context.optionsAs[ApplicationNameOptions].getAppName,
+            state.toString,
+            getBeamMetrics
+          )
+
+        override def isTest: Boolean = context.isTest
+      }
+    }
+
+    def waitUntilDone(): ScioResult =
+      waitUntilDone(DefaultAwaitDuration, DefaultCancelJob)
+
+    def waitUntilDone(duration: Duration): ScioResult =
+      waitUntilDone(duration, DefaultCancelJob)
+
+    def waitUntilDone(cancelJob: Boolean): ScioResult =
+      waitUntilDone(DefaultAwaitDuration, cancelJob)
+
+    def waitUntilDone(duration: Duration, cancelJob: Boolean): ScioResult = {
+      val result = waitUntilFinish(duration, cancelJob)
+      if (!state.equals(State.DONE)) {
+        throw new PipelineExecutionException(new Exception(s"Job finished with state $state"))
+      }
+
+      result
+    }
+  }
+}
+
 /** Companion object for [[ScioContext]]. */
 object ScioContext {
 
@@ -323,75 +423,6 @@ object ScioContext {
 
   private def defaultOptions: PipelineOptions = PipelineOptionsFactory.create()
 
-}
-
-case class ClosedScioContext(pipelineResult: PipelineResult, context: ScioContext) {
-  private[this] val DefaultAwaitDuration = context.awaitDuration
-  private[this] val DefaultCancelJob = true
-
-  /** Whether the pipeline is completed. */
-  def isCompleted: Boolean = state.isTerminal()
-
-  /** Pipeline's current state. */
-  def state: State = Try(pipelineResult.getState).getOrElse(State.UNKNOWN)
-
-  /** Wait until the pipeline finishes. If timeout duration is exceeded and `cancelJob` is set,
-   * cancel the internal [[PipelineResult]]. */
-  def waitUntilFinish(
-    duration: Duration = DefaultAwaitDuration,
-    cancelJob: Boolean = DefaultCancelJob
-  ): ScioResult = {
-    try {
-      val wait = duration match {
-        case Duration.Inf => 0
-        case d            => d.toMillis
-      }
-      pipelineResult.waitUntilFinish(time.Duration.millis(wait))
-    } catch {
-      case e: InterruptedException =>
-        val cause = if (cancelJob) {
-          pipelineResult.cancel()
-          new InterruptedException(s"Job cancelled after exceeding timeout value $duration")
-        } else {
-          e
-        }
-        throw new PipelineExecutionException(cause)
-    }
-
-    new ScioResult(pipelineResult) {
-      private val metricsLocation = context.optionsAs[ScioOptions].getMetricsLocation
-      if (metricsLocation != null) {
-        saveMetrics(metricsLocation)
-      }
-
-      override def getMetrics: Metrics =
-        Metrics(
-          BuildInfo.version,
-          BuildInfo.scalaVersion,
-          context.optionsAs[ApplicationNameOptions].getAppName,
-          state.toString,
-          getBeamMetrics
-        )
-
-      override def isTest: Boolean = context.isTest
-    }
-  }
-
-  /**
-   * Wait until the pipeline finishes with the State `DONE` (as opposed to `CANCELLED` or
-   * `FAILED`). Throw exception otherwise.
-   */
-  def waitUntilDone(
-    duration: Duration = DefaultAwaitDuration,
-    cancelJob: Boolean = DefaultCancelJob
-  ): ScioResult = {
-    val result = waitUntilFinish(duration, cancelJob)
-    if (!state.equals(State.DONE)) {
-      throw new PipelineExecutionException(new Exception(s"Job finished with state $state"))
-    }
-
-    result
-  }
 }
 
 /**
@@ -565,7 +596,7 @@ class ScioContext private[scio] (val options: PipelineOptions, private var artif
 
     _isClosed = true
 
-    val closedContext = ClosedScioContext(this.pipeline.run(), this)
+    val closedContext = ClosedScioContext.default(this.pipeline.run(), this)
 
     if (this.isTest) {
       val result = closedContext.waitUntilDone()
