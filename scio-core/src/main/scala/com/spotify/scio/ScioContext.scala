@@ -325,7 +325,7 @@ object ScioContext {
 
 }
 
-final case class ClosedScioContext private (pipelineResult: PipelineResult, context: ScioContext) {
+case class ClosedScioContext(pipelineResult: PipelineResult, context: ScioContext) {
 
   /** Get the timeout period of the Scio job. Default to `Duration.Inf`. */
   def getAwaitDuration: Duration = context.awaitDuration
