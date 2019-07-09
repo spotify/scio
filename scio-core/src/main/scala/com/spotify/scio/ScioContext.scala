@@ -234,13 +234,21 @@ object ContextAndArgs {
 }
 
 trait ClosedScioContext {
+
+  /** Whether the pipeline is completed. */
   def isCompleted: Boolean
 
+  /** Pipeline's current state. */
   def state: State
 
   def waitUntilFinish(): ScioResult
   def waitUntilFinish(duration: Duration): ScioResult
   def waitUntilFinish(cancelJob: Boolean): ScioResult
+
+  /**
+   * Wait until the pipeline finishes. If timeout duration is exceeded and `cancelJob` is set,
+   * cancel the internal [[PipelineResult]].
+   */
   def waitUntilFinish(duration: Duration, cancelJob: Boolean): ScioResult
 
   def waitUntilDone(): ScioResult
@@ -259,24 +267,20 @@ object ClosedScioContext {
     private[this] val DefaultAwaitDuration = context.awaitDuration
     private[this] val DefaultCancelJob = true
 
-    /** Whether the pipeline is completed. */
-    def isCompleted: Boolean = state.isTerminal()
+    override def isCompleted: Boolean = state.isTerminal()
 
-    /** Pipeline's current state. */
-    def state: State = Try(pipelineResult.getState).getOrElse(State.UNKNOWN)
+    override def state: State = Try(pipelineResult.getState).getOrElse(State.UNKNOWN)
 
-    def waitUntilFinish(): ScioResult =
+    override def waitUntilFinish(): ScioResult =
       waitUntilFinish(DefaultAwaitDuration, DefaultCancelJob)
 
-    def waitUntilFinish(duration: Duration): ScioResult =
+    override def waitUntilFinish(duration: Duration): ScioResult =
       waitUntilFinish(duration, DefaultCancelJob)
 
-    def waitUntilFinish(cancelJob: Boolean): ScioResult =
+    override def waitUntilFinish(cancelJob: Boolean): ScioResult =
       waitUntilFinish(DefaultAwaitDuration, cancelJob)
 
-    /** Wait until the pipeline finishes. If timeout duration is exceeded and `cancelJob` is set,
-     * cancel the internal [[PipelineResult]]. */
-    def waitUntilFinish(duration: Duration, cancelJob: Boolean): ScioResult = {
+    override def waitUntilFinish(duration: Duration, cancelJob: Boolean): ScioResult = {
       try {
         val wait = duration match {
           case Duration.Inf => 0
@@ -313,16 +317,16 @@ object ClosedScioContext {
       }
     }
 
-    def waitUntilDone(): ScioResult =
+    override def waitUntilDone(): ScioResult =
       waitUntilDone(DefaultAwaitDuration, DefaultCancelJob)
 
-    def waitUntilDone(duration: Duration): ScioResult =
+    override def waitUntilDone(duration: Duration): ScioResult =
       waitUntilDone(duration, DefaultCancelJob)
 
-    def waitUntilDone(cancelJob: Boolean): ScioResult =
+    override def waitUntilDone(cancelJob: Boolean): ScioResult =
       waitUntilDone(DefaultAwaitDuration, cancelJob)
 
-    def waitUntilDone(duration: Duration, cancelJob: Boolean): ScioResult = {
+    override def waitUntilDone(duration: Duration, cancelJob: Boolean): ScioResult = {
       val result = waitUntilFinish(duration, cancelJob)
       if (!state.equals(State.DONE)) {
         throw new PipelineExecutionException(new Exception(s"Job finished with state $state"))
