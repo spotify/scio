@@ -223,7 +223,7 @@ final case class GenericRecordIO[T: ClassTag: Coder](path: String, schema: Schem
 /**
  * Given a parseFn, read [[org.apache.avro.generic.GenericRecord GenericRecord]]
  * and apply a function mapping [[GenericRecord => T]] before producing output.
- * This IO applies the function at the time to de-serialising Avro GenericRecords.
+ * This IO applies the function at the time of de-serializing Avro GenericRecords.
  *
  * This IO doesn't define write, and should not be used to write Avro GenericRecords.
  */
@@ -243,11 +243,10 @@ final case class GenericRecordParseIO[T](path: String, parseFn: GenericRecord =>
   override protected def read(sc: ScioContext, params: Unit): SCollection[T] = {
     val t = beam.AvroIO
       .parseGenericRecords(
-        Functions
-          .serializableFn(parseFn)
+        Functions.serializableFn(parseFn)
       )
       .from(path)
-      .withCoder(CoderMaterializer.beamWithDefault(coder))
+      .withCoder(CoderMaterializer.beam(sc, coder))
 
     sc.wrap(sc.applyInternal(t))
   }
@@ -256,7 +255,9 @@ final case class GenericRecordParseIO[T](path: String, parseFn: GenericRecord =>
    * Writes are undefined for [[GenericRecordParseIO]] since it is used only for reading.
    */
   override protected def write(data: SCollection[T], params: Nothing): Tap[T] = ???
-  override def tap(read: Unit): Tap[T] = ???
+
+  override def tap(read: Unit): Tap[T] =
+    GenericRecordParseTap[T](ScioUtil.addPartSuffix(path), parseFn)
 }
 
 object AvroIO {

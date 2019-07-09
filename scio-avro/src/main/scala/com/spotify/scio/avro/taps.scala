@@ -59,6 +59,24 @@ final case class SpecificRecordTap[T <: SpecificRecord: ClassTag: Coder](path: S
 }
 
 /**
+ * Tap for reading [[org.apache.avro.generic.GenericRecord GenericRecord]] Avro files and applying
+ * a parseFn to parse it to the given type [[T]]
+ * */
+final case class GenericRecordParseTap[T: Coder](
+  path: String,
+  parseFn: GenericRecord => T
+) extends Tap[T] {
+
+  override def value: Iterator[T] =
+    FileStorage(path)
+    // Read Avro GenericRecords, with the writer specified schema
+      .avroFile[GenericRecord](schema = null)
+      .map(parseFn)
+
+  override def open(sc: ScioContext): SCollection[T] = sc.avroFile(path, parseFn)
+}
+
+/**
  * Tap for object files. Note that serialization is not guaranteed to be compatible across Scio
  * releases.
  */
