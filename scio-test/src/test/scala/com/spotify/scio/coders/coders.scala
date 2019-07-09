@@ -455,4 +455,17 @@ class CodersTest extends FlatSpec with Matchers {
     val wrappedArray: mut.WrappedArray[String] = Array("foo", "bar")
     wrappedArray coderShould notFallback()
   }
+
+  it should "support derivation of recursive types" in {
+    case class SampleField(name: String, fieldType: SampleFieldType)
+    sealed trait SampleFieldType
+    case object IntegerType extends SampleFieldType
+    case object StringType extends SampleFieldType
+    case class RecordType(fields: List[SampleField]) extends SampleFieldType
+
+    "Coder[SampleField]" should compile
+    "Coder[SampleFieldType]" should compile
+
+    SampleField("hello", StringType) coderShould roundtrip()
+  }
 }
