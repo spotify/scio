@@ -43,7 +43,7 @@ final case class BigQueryTap(table: TableReference) extends Tap[TableRow] {
   override def value: Iterator[TableRow] =
     BigQuery.defaultInstance().tables.rows(table)
   override def open(sc: ScioContext): SCollection[TableRow] =
-    sc.bigQueryTable(table)
+    sc.bigQueryTable(Table.Ref(table))
 }
 
 /** Tap for BigQuery tables using storage api. */
@@ -80,7 +80,7 @@ final case class BigQueryTaps(self: Taps) {
     mkTap(
       s"BigQuery Table: $table",
       () => bqc.tables.exists(table),
-      () => BigQueryTable(table).tap(())
+      () => BigQueryTable(Table.Ref(table)).tap(())
     )
 
   /** Get a `Future[Tap[TableRow]]` for BigQuery table. */
@@ -124,7 +124,7 @@ final case class BigQueryTaps(self: Taps) {
       s"BigQuery direct read table: $table",
       () => bqc.tables.exists(table),
       () =>
-        BigQueryStorage(table).tap(
+        BigQueryStorage(Table.Ref(table)).tap(
           BigQueryStorage.ReadParam(
             readOptions.getSelectedFieldsList().asScala.toList,
             readOptions.getRowRestriction()
@@ -141,7 +141,7 @@ final case class BigQueryTaps(self: Taps) {
       s"BigQuery direct read table: $table",
       () => bqc.tables.exists(table),
       () =>
-        BigQueryStorage(table)
+        BigQueryStorage(Table.Ref(table))
           .tap(
             BigQueryStorage.ReadParam(
               readOptions.getSelectedFieldsList().asScala.toList,
