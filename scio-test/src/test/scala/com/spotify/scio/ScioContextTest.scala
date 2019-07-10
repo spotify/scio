@@ -163,13 +163,10 @@ class ScioContextTest extends PipelineSpec {
   it should "parse valid, invalid, and missing blockFor argument passed from command line" in {
     val (validOpts, _) =
       ScioContext.parseArguments[PipelineOptions](Array(s"--blockFor=1h"))
-    ScioContext.apply(validOpts).close().getAwaitDuration shouldBe Duration("1h")
+    ScioContext.apply(validOpts).awaitDuration shouldBe Duration("1h")
 
     val (missingOpts, _) = ScioContext.parseArguments[PipelineOptions](Array())
-    ScioContext
-      .apply(missingOpts)
-      .close()
-      .getAwaitDuration shouldBe Duration.Inf
+    ScioContext.apply(missingOpts).awaitDuration shouldBe Duration.Inf
 
     val (invalidOpts, _) =
       ScioContext.parseArguments[PipelineOptions](Array(s"--blockFor=foo"))

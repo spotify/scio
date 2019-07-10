@@ -18,13 +18,13 @@
 package com.spotify.scio.repl
 
 import org.apache.beam.sdk.options.PipelineOptions
-import com.spotify.scio.{ClosedScioContext, ScioContext}
+import com.spotify.scio.{CoreSysProps, ScioContext, ScioExecutionContext}
 
 class ReplScioContext(options: PipelineOptions, artifacts: List[String])
     extends ScioContext(options, artifacts) {
 
   /** Enhanced version that dumps REPL session jar. */
-  override def close(): ClosedScioContext = {
+  override def close(): ScioExecutionContext = {
     createJar()
     super.close()
   }
