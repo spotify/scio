@@ -27,7 +27,7 @@ import com.spotify.scio.bigquery.ExtendedErrorInfo._
 import com.spotify.scio.bigquery.client.BigQuery
 import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
-import com.spotify.scio.io.{ScioIO, Tap, TapOf, TestIO}
+import com.spotify.scio.io.{ScioIO, Tap, NotImplementedTap, TapOf, TestIO}
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.extensions.gcp.options.GcpOptions
@@ -199,7 +199,7 @@ final case class BigQueryTable(table: Table) extends BigQueryIO[TableRow] {
     params.insertErrorTransform(params.extendedErrorInfo.coll(data.context, wr))
 
     if (params.writeDisposition == WriteDisposition.WRITE_APPEND) {
-      throw new NotImplementedError("BigQuery future with append not implemented")
+      NotImplementedTap("BigQuery with append does not support tap")
     } else {
       BigQueryTap(table.ref)
     }
