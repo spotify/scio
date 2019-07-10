@@ -34,13 +34,7 @@ private[scio] object MagnoliaMacros {
       )
     }
 
-    val magTree = magnolia.Magnolia.gen[T](c)
-
-    def getLazyVal =
-      magTree match {
-        case q"val $name = $body; $rest" =>
-          body
-      }
+    val magnoliaTree = magnolia.Magnolia.gen[T](c)
 
     // Remove annotations from magnolia since they are
     // not serialiazable and we don't use them anyway
@@ -74,7 +68,7 @@ private[scio] object MagnoliaMacros {
       }
     }
     // scalastyle:on line.size.limit
-    removeAnnotations.transform(getLazyVal)
+    removeAnnotations.transform(magnoliaTree)
   }
 
 }

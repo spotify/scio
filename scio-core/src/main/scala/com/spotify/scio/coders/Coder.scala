@@ -60,6 +60,18 @@ Cannot find an implicit Coder instance for type:
 """
 )
 sealed trait Coder[T] extends Serializable
+
+private[scio] final class Ref[T](val typeName: String, c: => Coder[T]) extends Coder[T] {
+  def value: Coder[T] = c
+
+  override def toString(): String = s"""Ref($typeName)"""
+}
+
+private[scio] object Ref {
+  def apply[T](t: String, c: => Coder[T]): Ref[T] = new Ref[T](t, c)
+  def unapply[T](c: Ref[T]): Option[(String, Coder[T])] = Option((c.typeName, c.value))
+}
+
 // scalastyle:on line.size.limit
 final case class Beam[T] private (beam: BCoder[T]) extends Coder[T] {
   override def toString: String = s"Beam($beam)"
@@ -172,6 +184,20 @@ private[coders] object CoderException {
       .getStackTrace()
       .dropWhile(!_.getClassName.contains(CoderMaterializer.getClass.getName))
       .take(10)
+}
+
+private[scio] final class RefCoder[T](val typeName: String, c: => BCoder[T]) extends BCoder[T] {
+  def value: BCoder[T] = c
+
+  def decode(inStream: InputStream): T = c.decode(inStream)
+  def encode(value: T, outStream: OutputStream): Unit = c.encode(value, outStream)
+  def getCoderArguments(): java.util.List[_ <: BCoder[_]] = c.getCoderArguments()
+  def verifyDeterministic(): Unit = c.verifyDeterministic()
+}
+
+private[scio] object RefCoder {
+  def apply[T](t: String, c: => BCoder[T]): RefCoder[T] = new RefCoder[T](t, c)
+  def unapply[T](c: RefCoder[T]): Option[(String, BCoder[T])] = Option((c.typeName, c.value))
 }
 
 // XXX: Workaround a NPE deep down the stack in Beam

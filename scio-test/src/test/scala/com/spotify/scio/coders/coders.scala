@@ -467,5 +467,12 @@ class CodersTest extends FlatSpec with Matchers {
     "Coder[SampleFieldType]" should compile
 
     SampleField("hello", StringType) coderShould roundtrip()
+
+    SampleField(
+      "hello",
+      RecordType(
+        List(SampleField("record", RecordType(List.empty)), SampleField("int", IntegerType))
+      )
+    ) coderShould roundtrip()
   }
 }
