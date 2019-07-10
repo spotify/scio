@@ -28,6 +28,7 @@ private[scio] object InMemorySink {
 
   def save[T: Coder](id: String, data: SCollection[T]): Unit = {
     require(data.context.isTest, "In memory sink can only be used in tests")
+    cache += id -> Nil
     data
       .groupBy(_ => ())
       .values
