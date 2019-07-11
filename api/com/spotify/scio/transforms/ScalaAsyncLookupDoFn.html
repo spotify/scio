@@ -136,12 +136,12 @@
 </p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../index.html" class="extype" name="com.spotify.scio">scio</a></dd></dl></div>
     </li><li class="current-entities indented4">
                         <span class="separator"></span>
-                        <a class="class" href="" title=""></a>
-                        <a href="" title="">AsyncLookupDoFn</a>
-                      </li><li class="current-entities indented4">
-                        <span class="separator"></span>
                         <a class="class" href="BaseAsyncDoFn.html" title=""></a>
                         <a href="BaseAsyncDoFn.html" title="">BaseAsyncDoFn</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
+                        <a class="class" href="BaseAsyncLookupDoFn.html" title=""></a>
+                        <a href="BaseAsyncLookupDoFn.html" title="">BaseAsyncLookupDoFn</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
                         <a class="class" href="package$$CustomParallelismSCollection.html" title="Enhanced version of SCollection with custom parallelism, where parallelism is the number of concurrent DoFn threads per worker (default to number of CPU cores)."></a>
@@ -156,12 +156,24 @@
                         <a href="FileDownloadDoFn.html" title="">FileDownloadDoFn</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
+                        <a class="class" href="FutureHandlers.html" title=""></a>
+                        <a href="FutureHandlers.html" title="">FutureHandlers</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
                         <a class="class" href="GuavaAsyncDoFn.html" title=""></a>
                         <a href="GuavaAsyncDoFn.html" title="">GuavaAsyncDoFn</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
+                        <a class="class" href="GuavaAsyncLookupDoFn.html" title=""></a>
+                        <a href="GuavaAsyncLookupDoFn.html" title="">GuavaAsyncLookupDoFn</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
                         <a class="class" href="JavaAsyncDoFn.html" title=""></a>
                         <a href="JavaAsyncDoFn.html" title="">JavaAsyncDoFn</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
+                        <a class="class" href="JavaAsyncLookupDoFn.html" title=""></a>
+                        <a href="JavaAsyncLookupDoFn.html" title="">JavaAsyncLookupDoFn</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
                         <a class="class" href="PipeDoFn.html" title=""></a>
@@ -184,6 +196,14 @@
                         <a href="ScalaAsyncDoFn.html" title="A DoFn that handles asynchronous requests to an external service that returns Scala Futures.">ScalaAsyncDoFn</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
+                        <a class="class" href="" title="A DoFn that performs asynchronous lookup using the provided client for Scala Future."></a>
+                        <a href="" title="A DoFn that performs asynchronous lookup using the provided client for Scala Future.">ScalaAsyncLookupDoFn</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
+                        <a class="trait" href="ScalaFutureHandlers.html" title="A FutureHandlers.Base implementation for Scala Future."></a>
+                        <a href="ScalaFutureHandlers.html" title="A FutureHandlers.Base implementation for Scala Future.">ScalaFutureHandlers</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
                         <a class="class" href="package$$SpecializedFlatMapSCollection.html" title="Enhanced version of SCollection with specialized versions of flatMap."></a>
                         <a href="package$$SpecializedFlatMapSCollection.html" title="Enhanced version of SCollection with specialized versions of flatMap.">SpecializedFlatMapSCollection</a>
                       </li><li class="current-entities indented4">
@@ -199,8 +219,8 @@
       <div id="definition">
         <div class="big-circle class">c</div>
         <p id="owner"><a href="../../../index.html" class="extype" name="com">com</a>.<a href="../../index.html" class="extype" name="com.spotify">spotify</a>.<a href="../index.html" class="extype" name="com.spotify.scio">scio</a>.<a href="index.html" class="extype" name="com.spotify.scio.transforms">transforms</a></p>
-        <h1>AsyncLookupDoFn<span class="permalink">
-      <a href="../../../../com/spotify/scio/transforms/AsyncLookupDoFn.html" title="Permalink">
+        <h1>ScalaAsyncLookupDoFn<span class="permalink">
+      <a href="../../../../com/spotify/scio/transforms/ScalaAsyncLookupDoFn.html" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span></h1>
@@ -213,22 +233,18 @@
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <span class="name">AsyncLookupDoFn</span><span class="tparams">[<span name="A">A</span>, <span name="B">B</span>, <span name="C">C</span>]</span><span class="result"> extends <span class="extype" name="org.apache.beam.sdk.transforms.DoFn">DoFn</span>[<span class="extype" name="com.spotify.scio.transforms.AsyncLookupDoFn.A">A</span>, <span class="extype" name="org.apache.beam.sdk.values.KV">KV</span>[<span class="extype" name="com.spotify.scio.transforms.AsyncLookupDoFn.A">A</span>, <span class="extype" name="com.spotify.scio.transforms.AsyncLookupDoFn.Try">Try</span>[<span class="extype" name="com.spotify.scio.transforms.AsyncLookupDoFn.B">B</span>]]]</span>
+        <span class="name">ScalaAsyncLookupDoFn</span><span class="tparams">[<span name="A">A</span>, <span name="B">B</span>, <span name="C">C</span>]</span><span class="result"> extends <a href="BaseAsyncLookupDoFn.html" class="extype" name="com.spotify.scio.transforms.BaseAsyncLookupDoFn">BaseAsyncLookupDoFn</a>[<span class="extype" name="com.spotify.scio.transforms.ScalaAsyncLookupDoFn.A">A</span>, <span class="extype" name="com.spotify.scio.transforms.ScalaAsyncLookupDoFn.B">B</span>, <span class="extype" name="com.spotify.scio.transforms.ScalaAsyncLookupDoFn.C">C</span>, <span class="extype" name="scala.concurrent.Future">Future</span>[<span class="extype" name="com.spotify.scio.transforms.ScalaAsyncLookupDoFn.B">B</span>], <span class="extype" name="scala.util.Try">Try</span>[<span class="extype" name="com.spotify.scio.transforms.ScalaAsyncLookupDoFn.B">B</span>]] with <a href="ScalaFutureHandlers.html" class="extype" name="com.spotify.scio.transforms.ScalaFutureHandlers">ScalaFutureHandlers</a>[<span class="extype" name="com.spotify.scio.transforms.ScalaAsyncLookupDoFn.B">B</span>]</span>
       </span>
       </h4>
 
       
-          <div id="comment" class="fullcommenttop"><div class="toggleContainer block">
+          <div id="comment" class="fullcommenttop"><div class="comment cmt"><p>A <span class="extype" name="org.apache.beam.sdk.transforms.DoFn">DoFn</span> that performs asynchronous lookup using the
+provided client for Scala <span class="extype" name="Future">Future</span>.</p></div><dl class="paramcmts block"><dt class="tparam">A</dt><dd class="cmt"><p>input element type.</p></dd><dt class="tparam">B</dt><dd class="cmt"><p>client lookup value type.</p></dd><dt class="tparam">C</dt><dd class="cmt"><p>client type.</p></dd></dl><div class="toggleContainer block">
           <span class="toggle">
             Linear Supertypes
           </span>
-          <div class="superTypes hiddenContent"><span class="extype" name="org.apache.beam.sdk.transforms.DoFn">DoFn</span>[<span class="extype" name="com.spotify.scio.transforms.AsyncLookupDoFn.A">A</span>, <span class="extype" name="org.apache.beam.sdk.values.KV">KV</span>[<span class="extype" name="com.spotify.scio.transforms.AsyncLookupDoFn.A">A</span>, <span class="extype" name="com.spotify.scio.transforms.AsyncLookupDoFn.Try">Try</span>[<span class="extype" name="com.spotify.scio.transforms.AsyncLookupDoFn.B">B</span>]]], <span class="extype" name="org.apache.beam.sdk.transforms.display.HasDisplayData">HasDisplayData</span>, <span class="extype" name="java.io.Serializable">Serializable</span>, <span class="extype" name="scala.AnyRef">AnyRef</span>, <span class="extype" name="scala.Any">Any</span></div>
-        </div><div class="toggleContainer block">
-            <span class="toggle">
-              Known Subclasses
-            </span>
-            <div class="subClasses hiddenContent"><a href="../bigtable/BigtableDoFn.html" class="extype" name="com.spotify.scio.bigtable.BigtableDoFn">BigtableDoFn</a></div>
-          </div></div>
+          <div class="superTypes hiddenContent"><a href="ScalaFutureHandlers.html" class="extype" name="com.spotify.scio.transforms.ScalaFutureHandlers">ScalaFutureHandlers</a>[<span class="extype" name="com.spotify.scio.transforms.ScalaAsyncLookupDoFn.B">B</span>], <a href="BaseAsyncLookupDoFn.html" class="extype" name="com.spotify.scio.transforms.BaseAsyncLookupDoFn">BaseAsyncLookupDoFn</a>[<span class="extype" name="com.spotify.scio.transforms.ScalaAsyncLookupDoFn.A">A</span>, <span class="extype" name="com.spotify.scio.transforms.ScalaAsyncLookupDoFn.B">B</span>, <span class="extype" name="com.spotify.scio.transforms.ScalaAsyncLookupDoFn.C">C</span>, <span class="extype" name="scala.concurrent.Future">Future</span>[<span class="extype" name="com.spotify.scio.transforms.ScalaAsyncLookupDoFn.B">B</span>], <span class="extype" name="scala.util.Try">Try</span>[<span class="extype" name="com.spotify.scio.transforms.ScalaAsyncLookupDoFn.B">B</span>]], <span class="extype" name="com.spotify.scio.transforms.FutureHandlers.Base">Base</span>[<span class="extype" name="scala.concurrent.Future">Future</span>[<span class="extype" name="com.spotify.scio.transforms.ScalaAsyncLookupDoFn.B">B</span>], <span class="extype" name="com.spotify.scio.transforms.ScalaAsyncLookupDoFn.B">B</span>], <span class="extype" name="org.apache.beam.sdk.transforms.DoFn">DoFn</span>[<span class="extype" name="com.spotify.scio.transforms.ScalaAsyncLookupDoFn.A">A</span>, <span class="extype" name="org.apache.beam.sdk.values.KV">KV</span>[<span class="extype" name="com.spotify.scio.transforms.ScalaAsyncLookupDoFn.A">A</span>, <span class="extype" name="scala.util.Try">Try</span>[<span class="extype" name="com.spotify.scio.transforms.ScalaAsyncLookupDoFn.B">B</span>]]], <span class="extype" name="org.apache.beam.sdk.transforms.display.HasDisplayData">HasDisplayData</span>, <span class="extype" name="java.io.Serializable">Serializable</span>, <span class="extype" name="scala.AnyRef">AnyRef</span>, <span class="extype" name="scala.Any">Any</span></div>
+        </div></div>
         
 
       <div id="mbrsel">
@@ -253,7 +269,7 @@
                   <span class="filtertype">Inherited<br />
                   </span>
                   <ol id="linearization">
-                    <li class="in" name="com.spotify.scio.transforms.AsyncLookupDoFn"><span>AsyncLookupDoFn</span></li><li class="in" name="org.apache.beam.sdk.transforms.DoFn"><span>DoFn</span></li><li class="in" name="org.apache.beam.sdk.transforms.display.HasDisplayData"><span>HasDisplayData</span></li><li class="in" name="java.io.Serializable"><span>Serializable</span></li><li class="in" name="scala.AnyRef"><span>AnyRef</span></li><li class="in" name="scala.Any"><span>Any</span></li>
+                    <li class="in" name="com.spotify.scio.transforms.ScalaAsyncLookupDoFn"><span>ScalaAsyncLookupDoFn</span></li><li class="in" name="com.spotify.scio.transforms.ScalaFutureHandlers"><span>ScalaFutureHandlers</span></li><li class="in" name="com.spotify.scio.transforms.BaseAsyncLookupDoFn"><span>BaseAsyncLookupDoFn</span></li><li class="in" name="com.spotify.scio.transforms.FutureHandlers.Base"><span>Base</span></li><li class="in" name="org.apache.beam.sdk.transforms.DoFn"><span>DoFn</span></li><li class="in" name="org.apache.beam.sdk.transforms.display.HasDisplayData"><span>HasDisplayData</span></li><li class="in" name="java.io.Serializable"><span>Serializable</span></li><li class="in" name="scala.AnyRef"><span>AnyRef</span></li><li class="in" name="scala.Any"><span>Any</span></li>
                   </ol>
                 </div><div class="ancestors">
               <span class="filtertype"></span>
@@ -273,10 +289,10 @@
         <div id="allMembers">
         <div id="constructors" class="members">
               <h3>Instance Constructors</h3>
-              <ol><li name="com.spotify.scio.transforms.AsyncLookupDoFn#&lt;init&gt;" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="&lt;init&gt;[K](maxPendingRequests:Int,cacheSupplier:com.spotify.scio.transforms.AsyncLookupDoFn.CacheSupplier[A,B,K]):com.spotify.scio.transforms.AsyncLookupDoFn[A,B,C]"></a><a id="&lt;init&gt;:AsyncLookupDoFn[A,B,C]"></a>
+              <ol><li name="com.spotify.scio.transforms.ScalaAsyncLookupDoFn#&lt;init&gt;" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="&lt;init&gt;(maxPendingRequests:Int):com.spotify.scio.transforms.ScalaAsyncLookupDoFn[A,B,C]"></a><a id="&lt;init&gt;:ScalaAsyncLookupDoFn[A,B,C]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/transforms/AsyncLookupDoFn.html#&lt;init&gt;[K](maxPendingRequests:Int,cacheSupplier:com.spotify.scio.transforms.AsyncLookupDoFn.CacheSupplier[A,B,K]):com.spotify.scio.transforms.AsyncLookupDoFn[A,B,C]" title="Permalink">
+      <a href="../../../../com/spotify/scio/transforms/ScalaAsyncLookupDoFn.html#&lt;init&gt;(maxPendingRequests:Int):com.spotify.scio.transforms.ScalaAsyncLookupDoFn[A,B,C]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -285,14 +301,14 @@
         <span class="kind">new</span>
       </span>
       <span class="symbol">
-        <span class="name">AsyncLookupDoFn</span><span class="params">(<span name="maxPendingRequests">maxPendingRequests: <span class="extype" name="scala.Int">Int</span></span>, <span name="cacheSupplier">cacheSupplier: <span class="extype" name="com.spotify.scio.transforms.AsyncLookupDoFn.CacheSupplier">CacheSupplier</span>[<span class="extype" name="com.spotify.scio.transforms.AsyncLookupDoFn.A">A</span>, <span class="extype" name="com.spotify.scio.transforms.AsyncLookupDoFn.B">B</span>, <span class="extype" name="com.spotify.scio.transforms.AsyncLookupDoFn.&lt;init&gt;.K">K</span>]</span>)</span>
+        <span class="name">ScalaAsyncLookupDoFn</span><span class="params">(<span name="maxPendingRequests">maxPendingRequests: <span class="extype" name="scala.Int">Int</span></span>)</span>
       </span>
       
       
-    </li><li name="com.spotify.scio.transforms.AsyncLookupDoFn#&lt;init&gt;" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="&lt;init&gt;(maxPendingRequests:Int):com.spotify.scio.transforms.AsyncLookupDoFn[A,B,C]"></a><a id="&lt;init&gt;:AsyncLookupDoFn[A,B,C]"></a>
+    </li><li name="com.spotify.scio.transforms.ScalaAsyncLookupDoFn#&lt;init&gt;" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="&lt;init&gt;():com.spotify.scio.transforms.ScalaAsyncLookupDoFn[A,B,C]"></a><a id="&lt;init&gt;:ScalaAsyncLookupDoFn[A,B,C]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/transforms/AsyncLookupDoFn.html#&lt;init&gt;(maxPendingRequests:Int):com.spotify.scio.transforms.AsyncLookupDoFn[A,B,C]" title="Permalink">
+      <a href="../../../../com/spotify/scio/transforms/ScalaAsyncLookupDoFn.html#&lt;init&gt;():com.spotify.scio.transforms.ScalaAsyncLookupDoFn[A,B,C]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -301,14 +317,14 @@
         <span class="kind">new</span>
       </span>
       <span class="symbol">
-        <span class="name">AsyncLookupDoFn</span><span class="params">(<span name="maxPendingRequests">maxPendingRequests: <span class="extype" name="scala.Int">Int</span></span>)</span>
+        <span class="name">ScalaAsyncLookupDoFn</span><span class="params">()</span>
       </span>
       
       
-    </li><li name="com.spotify.scio.transforms.AsyncLookupDoFn#&lt;init&gt;" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="&lt;init&gt;():com.spotify.scio.transforms.AsyncLookupDoFn[A,B,C]"></a><a id="&lt;init&gt;:AsyncLookupDoFn[A,B,C]"></a>
+    </li><li name="com.spotify.scio.transforms.ScalaAsyncLookupDoFn#&lt;init&gt;" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="&lt;init&gt;(maxPendingRequests:Int,cacheSupplier:com.spotify.scio.transforms.BaseAsyncLookupDoFn.CacheSupplier[A,B,_]):com.spotify.scio.transforms.ScalaAsyncLookupDoFn[A,B,C]"></a><a id="&lt;init&gt;:ScalaAsyncLookupDoFn[A,B,C]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/transforms/AsyncLookupDoFn.html#&lt;init&gt;():com.spotify.scio.transforms.AsyncLookupDoFn[A,B,C]" title="Permalink">
+      <a href="../../../../com/spotify/scio/transforms/ScalaAsyncLookupDoFn.html#&lt;init&gt;(maxPendingRequests:Int,cacheSupplier:com.spotify.scio.transforms.BaseAsyncLookupDoFn.CacheSupplier[A,B,_]):com.spotify.scio.transforms.ScalaAsyncLookupDoFn[A,B,C]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -317,10 +333,10 @@
         <span class="kind">new</span>
       </span>
       <span class="symbol">
-        <span class="name">AsyncLookupDoFn</span><span class="params">()</span>
+        <span class="name">ScalaAsyncLookupDoFn</span><span class="params">(<span name="maxPendingRequests">maxPendingRequests: <span class="extype" name="scala.Int">Int</span></span>, <span name="cacheSupplier">cacheSupplier: <span class="extype" name="com.spotify.scio.transforms.BaseAsyncLookupDoFn.CacheSupplier">CacheSupplier</span>[<span class="extype" name="com.spotify.scio.transforms.ScalaAsyncLookupDoFn.A">A</span>, <span class="extype" name="com.spotify.scio.transforms.ScalaAsyncLookupDoFn.B">B</span>, _]</span>)</span>
       </span>
       
-      
+      <p class="shortcomment cmt"></p>
     </li></ol>
             </div>
 
@@ -329,7 +345,7 @@
               <ol><li name="org.apache.beam.sdk.transforms.DoFn.FinishBundleContext" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
       <a id="FinishBundleContextextendsObject"></a><a id="FinishBundleContext:FinishBundleContext"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/transforms/AsyncLookupDoFn.html#FinishBundleContextextendsObject" title="Permalink">
+      <a href="../../../../com/spotify/scio/transforms/ScalaAsyncLookupDoFn.html#FinishBundleContextextendsObject" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -345,7 +361,7 @@
     </li><li name="org.apache.beam.sdk.transforms.DoFn.OnTimerContext" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
       <a id="OnTimerContextextendsDoFn[InputT,OutputT]#WindowedContext"></a><a id="OnTimerContext:OnTimerContext"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/transforms/AsyncLookupDoFn.html#OnTimerContextextendsDoFn[InputT,OutputT]#WindowedContext" title="Permalink">
+      <a href="../../../../com/spotify/scio/transforms/ScalaAsyncLookupDoFn.html#OnTimerContextextendsDoFn[InputT,OutputT]#WindowedContext" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -361,7 +377,7 @@
     </li><li name="org.apache.beam.sdk.transforms.DoFn.ProcessContext" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
       <a id="ProcessContextextendsDoFn[InputT,OutputT]#WindowedContext"></a><a id="ProcessContext:ProcessContext"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/transforms/AsyncLookupDoFn.html#ProcessContextextendsDoFn[InputT,OutputT]#WindowedContext" title="Permalink">
+      <a href="../../../../com/spotify/scio/transforms/ScalaAsyncLookupDoFn.html#ProcessContextextendsDoFn[InputT,OutputT]#WindowedContext" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -377,7 +393,7 @@
     </li><li name="org.apache.beam.sdk.transforms.DoFn.StartBundleContext" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
       <a id="StartBundleContextextendsObject"></a><a id="StartBundleContext:StartBundleContext"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/transforms/AsyncLookupDoFn.html#StartBundleContextextendsObject" title="Permalink">
+      <a href="../../../../com/spotify/scio/transforms/ScalaAsyncLookupDoFn.html#StartBundleContextextendsObject" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -393,7 +409,7 @@
     </li><li name="org.apache.beam.sdk.transforms.DoFn.WindowedContext" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
       <a id="WindowedContextextendsObject"></a><a id="WindowedContext:WindowedContext"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/transforms/AsyncLookupDoFn.html#WindowedContextextendsObject" title="Permalink">
+      <a href="../../../../com/spotify/scio/transforms/ScalaAsyncLookupDoFn.html#WindowedContextextendsObject" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -411,10 +427,10 @@
 
         <div class="values members">
               <h3>Abstract Value Members</h3>
-              <ol><li name="com.spotify.scio.transforms.AsyncLookupDoFn#asyncLookup" visbl="pub" class="indented0 " data-isabs="true" fullComment="no" group="Ungrouped">
-      <a id="asyncLookup(client:C,input:A):com.google.common.util.concurrent.ListenableFuture[B]"></a><a id="asyncLookup(C,A):ListenableFuture[B]"></a>
+              <ol><li name="com.spotify.scio.transforms.BaseAsyncLookupDoFn#asyncLookup" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
+      <a id="asyncLookup(client:C,input:A):F"></a><a id="asyncLookup(C,A):Future[B]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/transforms/AsyncLookupDoFn.html#asyncLookup(client:C,input:A):com.google.common.util.concurrent.ListenableFuture[B]" title="Permalink">
+      <a href="../../../../com/spotify/scio/transforms/ScalaAsyncLookupDoFn.html#asyncLookup(client:C,input:A):F" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -423,14 +439,14 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">asyncLookup</span><span class="params">(<span name="client">client: <span class="extype" name="com.spotify.scio.transforms.AsyncLookupDoFn.C">C</span></span>, <span name="input">input: <span class="extype" name="com.spotify.scio.transforms.AsyncLookupDoFn.A">A</span></span>)</span><span class="result">: <span class="extype" name="com.google.common.util.concurrent.ListenableFuture">ListenableFuture</span>[<span class="extype" name="com.spotify.scio.transforms.AsyncLookupDoFn.B">B</span>]</span>
+        <span class="name">asyncLookup</span><span class="params">(<span name="client">client: <span class="extype" name="com.spotify.scio.transforms.ScalaAsyncLookupDoFn.C">C</span></span>, <span name="input">input: <span class="extype" name="com.spotify.scio.transforms.ScalaAsyncLookupDoFn.A">A</span></span>)</span><span class="result">: <span class="extype" name="scala.concurrent.Future">Future</span>[<span class="extype" name="com.spotify.scio.transforms.ScalaAsyncLookupDoFn.B">B</span>]</span>
       </span>
       
-      
-    </li><li name="com.spotify.scio.transforms.AsyncLookupDoFn#newClient" visbl="prt" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="BaseAsyncLookupDoFn.html" class="extype" name="com.spotify.scio.transforms.BaseAsyncLookupDoFn">BaseAsyncLookupDoFn</a></dd></dl></div>
+    </li><li name="com.spotify.scio.transforms.BaseAsyncLookupDoFn#newClient" visbl="prt" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
       <a id="newClient():C"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/transforms/AsyncLookupDoFn.html#newClient():C" title="Permalink">
+      <a href="../../../../com/spotify/scio/transforms/ScalaAsyncLookupDoFn.html#newClient():C" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -439,14 +455,14 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">newClient</span><span class="params">()</span><span class="result">: <span class="extype" name="com.spotify.scio.transforms.AsyncLookupDoFn.C">C</span></span>
+        <span class="name">newClient</span><span class="params">()</span><span class="result">: <span class="extype" name="com.spotify.scio.transforms.ScalaAsyncLookupDoFn.C">C</span></span>
       </span>
       
-      <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected[<a href="index.html" class="extype" name="com.spotify.scio.transforms">com.spotify.scio.transforms</a>] </dd></dl></div>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected[<a href="index.html" class="extype" name="com.spotify.scio.transforms">com.spotify.scio.transforms</a>] </dd><dt>Definition Classes</dt><dd><a href="BaseAsyncLookupDoFn.html" class="extype" name="com.spotify.scio.transforms.BaseAsyncLookupDoFn">BaseAsyncLookupDoFn</a></dd></dl></div>
     </li><li name="org.apache.beam.sdk.transforms.DoFn.ProcessContext" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
       <a id="ProcessContext"></a><a id="ProcessContext:ProcessContext"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/transforms/AsyncLookupDoFn.html#ProcessContext" title="Permalink">
+      <a href="../../../../com/spotify/scio/transforms/ScalaAsyncLookupDoFn.html#ProcessContext" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -462,7 +478,7 @@
     </li><li name="org.apache.beam.sdk.transforms.DoFn.StartBundleContext" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
       <a id="StartBundleContext"></a><a id="StartBundleContext:StartBundleContext"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/transforms/AsyncLookupDoFn.html#StartBundleContext" title="Permalink">
+      <a href="../../../../com/spotify/scio/transforms/ScalaAsyncLookupDoFn.html#StartBundleContext" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -478,7 +494,7 @@
     </li><li name="org.apache.beam.sdk.transforms.DoFn.WindowedContext" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
       <a id="WindowedContext"></a><a id="WindowedContext:WindowedContext"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/transforms/AsyncLookupDoFn.html#WindowedContext" title="Permalink">
+      <a href="../../../../com/spotify/scio/transforms/ScalaAsyncLookupDoFn.html#WindowedContext" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -500,7 +516,7 @@
                 <li name="scala.AnyRef#!=" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="!=(x$1:Any):Boolean"></a><a id="!=(Any):Boolean"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/transforms/AsyncLookupDoFn.html#!=(x$1:Any):Boolean" title="Permalink">
+      <a href="../../../../com/spotify/scio/transforms/ScalaAsyncLookupDoFn.html#!=(x$1:Any):Boolean" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -516,7 +532,7 @@
     </li><li name="scala.AnyRef###" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="##():Int"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/transforms/AsyncLookupDoFn.html###():Int" title="Permalink">
+      <a href="../../../../com/spotify/scio/transforms/ScalaAsyncLookupDoFn.html###():Int" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -532,7 +548,7 @@
     </li><li name="scala.AnyRef#==" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="==(x$1:Any):Boolean"></a><a id="==(Any):Boolean"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/transforms/AsyncLookupDoFn.html#==(x$1:Any):Boolean" title="Permalink">
+      <a href="../../../../com/spotify/scio/transforms/ScalaAsyncLookupDoFn.html#==(x$1:Any):Boolean" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -545,10 +561,26 @@
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
+    </li><li name="com.spotify.scio.transforms.ScalaFutureHandlers#addCallback" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="addCallback(future:scala.concurrent.Future[T],onSuccess:java.util.function.Function[T,Void],onFailure:java.util.function.Function[Throwable,Void]):scala.concurrent.Future[T]"></a><a id="addCallback(Future[B],Function[B,Void],Function[Throwable,Void]):Future[B]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/transforms/ScalaAsyncLookupDoFn.html#addCallback(future:scala.concurrent.Future[T],onSuccess:java.util.function.Function[T,Void],onFailure:java.util.function.Function[Throwable,Void]):scala.concurrent.Future[T]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">addCallback</span><span class="params">(<span name="future">future: <span class="extype" name="scala.concurrent.Future">Future</span>[<span class="extype" name="com.spotify.scio.transforms.ScalaAsyncLookupDoFn.B">B</span>]</span>, <span name="onSuccess">onSuccess: <span class="extype" name="java.util.function.Function">Function</span>[<span class="extype" name="com.spotify.scio.transforms.ScalaAsyncLookupDoFn.B">B</span>, <span class="extype" name="java.lang.Void">Void</span>]</span>, <span name="onFailure">onFailure: <span class="extype" name="java.util.function.Function">Function</span>[<span class="extype" name="scala.Throwable">Throwable</span>, <span class="extype" name="java.lang.Void">Void</span>]</span>)</span><span class="result">: <span class="extype" name="scala.concurrent.Future">Future</span>[<span class="extype" name="com.spotify.scio.transforms.ScalaAsyncLookupDoFn.B">B</span>]</span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="ScalaFutureHandlers.html" class="extype" name="com.spotify.scio.transforms.ScalaFutureHandlers">ScalaFutureHandlers</a> → Base</dd></dl></div>
     </li><li name="scala.Any#asInstanceOf" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="asInstanceOf[T0]:T0"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/transforms/AsyncLookupDoFn.html#asInstanceOf[T0]:T0" title="Permalink">
+      <a href="../../../../com/spotify/scio/transforms/ScalaAsyncLookupDoFn.html#asInstanceOf[T0]:T0" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -564,7 +596,7 @@
     </li><li name="scala.AnyRef#clone" visbl="prt" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="clone():Object"></a><a id="clone():AnyRef"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/transforms/AsyncLookupDoFn.html#clone():Object" title="Permalink">
+      <a href="../../../../com/spotify/scio/transforms/ScalaAsyncLookupDoFn.html#clone():Object" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -588,7 +620,7 @@
     </li><li name="scala.AnyRef#eq" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="eq(x$1:AnyRef):Boolean"></a><a id="eq(AnyRef):Boolean"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/transforms/AsyncLookupDoFn.html#eq(x$1:AnyRef):Boolean" title="Permalink">
+      <a href="../../../../com/spotify/scio/transforms/ScalaAsyncLookupDoFn.html#eq(x$1:AnyRef):Boolean" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -604,7 +636,7 @@
     </li><li name="scala.AnyRef#equals" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="equals(x$1:Any):Boolean"></a><a id="equals(Any):Boolean"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/transforms/AsyncLookupDoFn.html#equals(x$1:Any):Boolean" title="Permalink">
+      <a href="../../../../com/spotify/scio/transforms/ScalaAsyncLookupDoFn.html#equals(x$1:Any):Boolean" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -617,10 +649,26 @@
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
+    </li><li name="com.spotify.scio.transforms.ScalaAsyncLookupDoFn#failure" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="failure(throwable:Throwable):scala.util.Try[B]"></a><a id="failure(Throwable):Try[B]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/transforms/ScalaAsyncLookupDoFn.html#failure(throwable:Throwable):scala.util.Try[B]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">failure</span><span class="params">(<span name="throwable">throwable: <span class="extype" name="scala.Throwable">Throwable</span></span>)</span><span class="result">: <span class="extype" name="scala.util.Try">Try</span>[<span class="extype" name="com.spotify.scio.transforms.ScalaAsyncLookupDoFn.B">B</span>]</span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="" class="extype" name="com.spotify.scio.transforms.ScalaAsyncLookupDoFn">ScalaAsyncLookupDoFn</a> → <a href="BaseAsyncLookupDoFn.html" class="extype" name="com.spotify.scio.transforms.BaseAsyncLookupDoFn">BaseAsyncLookupDoFn</a></dd></dl></div>
     </li><li name="scala.AnyRef#finalize" visbl="prt" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="finalize():Unit"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/transforms/AsyncLookupDoFn.html#finalize():Unit" title="Permalink">
+      <a href="../../../../com/spotify/scio/transforms/ScalaAsyncLookupDoFn.html#finalize():Unit" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -639,10 +687,10 @@
     </span>)</span>
               
         </dd></dl></div>
-    </li><li name="com.spotify.scio.transforms.AsyncLookupDoFn#finishBundle" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="finishBundle(c:AsyncLookupDoFn.this.FinishBundleContext):Unit"></a><a id="finishBundle(FinishBundleContext):Unit"></a>
+    </li><li name="com.spotify.scio.transforms.BaseAsyncLookupDoFn#finishBundle" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="finishBundle(c:BaseAsyncLookupDoFn.this.FinishBundleContext):Unit"></a><a id="finishBundle(FinishBundleContext):Unit"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/transforms/AsyncLookupDoFn.html#finishBundle(c:AsyncLookupDoFn.this.FinishBundleContext):Unit" title="Permalink">
+      <a href="../../../../com/spotify/scio/transforms/ScalaAsyncLookupDoFn.html#finishBundle(c:BaseAsyncLookupDoFn.this.FinishBundleContext):Unit" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -651,14 +699,14 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">finishBundle</span><span class="params">(<span name="c">c: <a href="#FinishBundleContextextendsObject" class="extmbr" name="com.spotify.scio.transforms.AsyncLookupDoFn.FinishBundleContext">FinishBundleContext</a></span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+        <span class="name">finishBundle</span><span class="params">(<span name="c">c: <a href="#FinishBundleContextextendsObject" class="extmbr" name="com.spotify.scio.transforms.ScalaAsyncLookupDoFn.FinishBundleContext">FinishBundleContext</a></span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
       </span>
       
-      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="BaseAsyncLookupDoFn.html" class="extype" name="com.spotify.scio.transforms.BaseAsyncLookupDoFn">BaseAsyncLookupDoFn</a></dd></dl></div>
     </li><li name="scala.AnyRef#getClass" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="getClass():Class[_]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/transforms/AsyncLookupDoFn.html#getClass():Class[_]" title="Permalink">
+      <a href="../../../../com/spotify/scio/transforms/ScalaAsyncLookupDoFn.html#getClass():Class[_]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -677,7 +725,7 @@
     </li><li name="org.apache.beam.sdk.transforms.DoFn#getInputTypeDescriptor" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="getInputTypeDescriptor():org.apache.beam.sdk.values.TypeDescriptor[InputT]"></a><a id="getInputTypeDescriptor():TypeDescriptor[A]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/transforms/AsyncLookupDoFn.html#getInputTypeDescriptor():org.apache.beam.sdk.values.TypeDescriptor[InputT]" title="Permalink">
+      <a href="../../../../com/spotify/scio/transforms/ScalaAsyncLookupDoFn.html#getInputTypeDescriptor():org.apache.beam.sdk.values.TypeDescriptor[InputT]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -686,14 +734,14 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">getInputTypeDescriptor</span><span class="params">()</span><span class="result">: <span class="extype" name="org.apache.beam.sdk.values.TypeDescriptor">TypeDescriptor</span>[<span class="extype" name="com.spotify.scio.transforms.AsyncLookupDoFn.A">A</span>]</span>
+        <span class="name">getInputTypeDescriptor</span><span class="params">()</span><span class="result">: <span class="extype" name="org.apache.beam.sdk.values.TypeDescriptor">TypeDescriptor</span>[<span class="extype" name="com.spotify.scio.transforms.ScalaAsyncLookupDoFn.A">A</span>]</span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>DoFn</dd></dl></div>
     </li><li name="org.apache.beam.sdk.transforms.DoFn#getOutputTypeDescriptor" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="getOutputTypeDescriptor():org.apache.beam.sdk.values.TypeDescriptor[OutputT]"></a><a id="getOutputTypeDescriptor():TypeDescriptor[KV[A,Try[B]]]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/transforms/AsyncLookupDoFn.html#getOutputTypeDescriptor():org.apache.beam.sdk.values.TypeDescriptor[OutputT]" title="Permalink">
+      <a href="../../../../com/spotify/scio/transforms/ScalaAsyncLookupDoFn.html#getOutputTypeDescriptor():org.apache.beam.sdk.values.TypeDescriptor[OutputT]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -702,14 +750,14 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">getOutputTypeDescriptor</span><span class="params">()</span><span class="result">: <span class="extype" name="org.apache.beam.sdk.values.TypeDescriptor">TypeDescriptor</span>[<span class="extype" name="org.apache.beam.sdk.values.KV">KV</span>[<span class="extype" name="com.spotify.scio.transforms.AsyncLookupDoFn.A">A</span>, <span class="extype" name="com.spotify.scio.transforms.AsyncLookupDoFn.Try">Try</span>[<span class="extype" name="com.spotify.scio.transforms.AsyncLookupDoFn.B">B</span>]]]</span>
+        <span class="name">getOutputTypeDescriptor</span><span class="params">()</span><span class="result">: <span class="extype" name="org.apache.beam.sdk.values.TypeDescriptor">TypeDescriptor</span>[<span class="extype" name="org.apache.beam.sdk.values.KV">KV</span>[<span class="extype" name="com.spotify.scio.transforms.ScalaAsyncLookupDoFn.A">A</span>, <span class="extype" name="scala.util.Try">Try</span>[<span class="extype" name="com.spotify.scio.transforms.ScalaAsyncLookupDoFn.B">B</span>]]]</span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>DoFn</dd></dl></div>
     </li><li name="scala.AnyRef#hashCode" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="hashCode():Int"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/transforms/AsyncLookupDoFn.html#hashCode():Int" title="Permalink">
+      <a href="../../../../com/spotify/scio/transforms/ScalaAsyncLookupDoFn.html#hashCode():Int" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -728,7 +776,7 @@
     </li><li name="scala.Any#isInstanceOf" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="isInstanceOf[T0]:Boolean"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/transforms/AsyncLookupDoFn.html#isInstanceOf[T0]:Boolean" title="Permalink">
+      <a href="../../../../com/spotify/scio/transforms/ScalaAsyncLookupDoFn.html#isInstanceOf[T0]:Boolean" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -744,7 +792,7 @@
     </li><li name="scala.AnyRef#ne" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="ne(x$1:AnyRef):Boolean"></a><a id="ne(AnyRef):Boolean"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/transforms/AsyncLookupDoFn.html#ne(x$1:AnyRef):Boolean" title="Permalink">
+      <a href="../../../../com/spotify/scio/transforms/ScalaAsyncLookupDoFn.html#ne(x$1:AnyRef):Boolean" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -760,7 +808,7 @@
     </li><li name="scala.AnyRef#notify" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="notify():Unit"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/transforms/AsyncLookupDoFn.html#notify():Unit" title="Permalink">
+      <a href="../../../../com/spotify/scio/transforms/ScalaAsyncLookupDoFn.html#notify():Unit" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -779,7 +827,7 @@
     </li><li name="scala.AnyRef#notifyAll" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="notifyAll():Unit"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/transforms/AsyncLookupDoFn.html#notifyAll():Unit" title="Permalink">
+      <a href="../../../../com/spotify/scio/transforms/ScalaAsyncLookupDoFn.html#notifyAll():Unit" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -798,7 +846,7 @@
     </li><li name="org.apache.beam.sdk.transforms.DoFn#populateDisplayData" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="populateDisplayData(builder:org.apache.beam.sdk.transforms.display.DisplayData.Builder):Unit"></a><a id="populateDisplayData(Builder):Unit"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/transforms/AsyncLookupDoFn.html#populateDisplayData(builder:org.apache.beam.sdk.transforms.display.DisplayData.Builder):Unit" title="Permalink">
+      <a href="../../../../com/spotify/scio/transforms/ScalaAsyncLookupDoFn.html#populateDisplayData(builder:org.apache.beam.sdk.transforms.display.DisplayData.Builder):Unit" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -811,10 +859,10 @@
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>DoFn → HasDisplayData</dd></dl></div>
-    </li><li name="com.spotify.scio.transforms.AsyncLookupDoFn#processElement" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="processElement(c:AsyncLookupDoFn.this.ProcessContext,window:org.apache.beam.sdk.transforms.windowing.BoundedWindow):Unit"></a><a id="processElement(ProcessContext,BoundedWindow):Unit"></a>
+    </li><li name="com.spotify.scio.transforms.BaseAsyncLookupDoFn#processElement" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="processElement(c:BaseAsyncLookupDoFn.this.ProcessContext,window:org.apache.beam.sdk.transforms.windowing.BoundedWindow):Unit"></a><a id="processElement(ProcessContext,BoundedWindow):Unit"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/transforms/AsyncLookupDoFn.html#processElement(c:AsyncLookupDoFn.this.ProcessContext,window:org.apache.beam.sdk.transforms.windowing.BoundedWindow):Unit" title="Permalink">
+      <a href="../../../../com/spotify/scio/transforms/ScalaAsyncLookupDoFn.html#processElement(c:BaseAsyncLookupDoFn.this.ProcessContext,window:org.apache.beam.sdk.transforms.windowing.BoundedWindow):Unit" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -823,14 +871,14 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">processElement</span><span class="params">(<span name="c">c: <a href="#ProcessContextextendsDoFn[InputT,OutputT]#WindowedContext" class="extmbr" name="com.spotify.scio.transforms.AsyncLookupDoFn.ProcessContext">ProcessContext</a></span>, <span name="window">window: <span class="extype" name="org.apache.beam.sdk.transforms.windowing.BoundedWindow">BoundedWindow</span></span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+        <span class="name">processElement</span><span class="params">(<span name="c">c: <a href="#ProcessContextextendsDoFn[InputT,OutputT]#WindowedContext" class="extmbr" name="com.spotify.scio.transforms.ScalaAsyncLookupDoFn.ProcessContext">ProcessContext</a></span>, <span name="window">window: <span class="extype" name="org.apache.beam.sdk.transforms.windowing.BoundedWindow">BoundedWindow</span></span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
       </span>
       
-      
-    </li><li name="com.spotify.scio.transforms.AsyncLookupDoFn#setup" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="BaseAsyncLookupDoFn.html" class="extype" name="com.spotify.scio.transforms.BaseAsyncLookupDoFn">BaseAsyncLookupDoFn</a></dd></dl></div>
+    </li><li name="com.spotify.scio.transforms.BaseAsyncLookupDoFn#setup" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="setup():Unit"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/transforms/AsyncLookupDoFn.html#setup():Unit" title="Permalink">
+      <a href="../../../../com/spotify/scio/transforms/ScalaAsyncLookupDoFn.html#setup():Unit" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -842,11 +890,11 @@
         <span class="name">setup</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
       </span>
       
-      
-    </li><li name="com.spotify.scio.transforms.AsyncLookupDoFn#startBundle" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="BaseAsyncLookupDoFn.html" class="extype" name="com.spotify.scio.transforms.BaseAsyncLookupDoFn">BaseAsyncLookupDoFn</a></dd></dl></div>
+    </li><li name="com.spotify.scio.transforms.BaseAsyncLookupDoFn#startBundle" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="startBundle():Unit"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/transforms/AsyncLookupDoFn.html#startBundle():Unit" title="Permalink">
+      <a href="../../../../com/spotify/scio/transforms/ScalaAsyncLookupDoFn.html#startBundle():Unit" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -858,11 +906,27 @@
         <span class="name">startBundle</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
       </span>
       
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="BaseAsyncLookupDoFn.html" class="extype" name="com.spotify.scio.transforms.BaseAsyncLookupDoFn">BaseAsyncLookupDoFn</a></dd></dl></div>
+    </li><li name="com.spotify.scio.transforms.ScalaAsyncLookupDoFn#success" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="success(output:B):scala.util.Try[B]"></a><a id="success(B):Try[B]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/transforms/ScalaAsyncLookupDoFn.html#success(output:B):scala.util.Try[B]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">success</span><span class="params">(<span name="output">output: <span class="extype" name="com.spotify.scio.transforms.ScalaAsyncLookupDoFn.B">B</span></span>)</span><span class="result">: <span class="extype" name="scala.util.Try">Try</span>[<span class="extype" name="com.spotify.scio.transforms.ScalaAsyncLookupDoFn.B">B</span>]</span>
+      </span>
       
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="" class="extype" name="com.spotify.scio.transforms.ScalaAsyncLookupDoFn">ScalaAsyncLookupDoFn</a> → <a href="BaseAsyncLookupDoFn.html" class="extype" name="com.spotify.scio.transforms.BaseAsyncLookupDoFn">BaseAsyncLookupDoFn</a></dd></dl></div>
     </li><li name="scala.AnyRef#synchronized" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="synchronized[T0](x$1:=&gt;T0):T0"></a><a id="synchronized[T0](⇒T0):T0"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/transforms/AsyncLookupDoFn.html#synchronized[T0](x$1:=&gt;T0):T0" title="Permalink">
+      <a href="../../../../com/spotify/scio/transforms/ScalaAsyncLookupDoFn.html#synchronized[T0](x$1:=&gt;T0):T0" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -878,7 +942,7 @@
     </li><li name="scala.AnyRef#toString" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="toString():String"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/transforms/AsyncLookupDoFn.html#toString():String" title="Permalink">
+      <a href="../../../../com/spotify/scio/transforms/ScalaAsyncLookupDoFn.html#toString():String" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -894,7 +958,7 @@
     </li><li name="scala.AnyRef#wait" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="wait():Unit"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/transforms/AsyncLookupDoFn.html#wait():Unit" title="Permalink">
+      <a href="../../../../com/spotify/scio/transforms/ScalaAsyncLookupDoFn.html#wait():Unit" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -916,7 +980,7 @@
     </li><li name="scala.AnyRef#wait" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="wait(x$1:Long,x$2:Int):Unit"></a><a id="wait(Long,Int):Unit"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/transforms/AsyncLookupDoFn.html#wait(x$1:Long,x$2:Int):Unit" title="Permalink">
+      <a href="../../../../com/spotify/scio/transforms/ScalaAsyncLookupDoFn.html#wait(x$1:Long,x$2:Int):Unit" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -938,7 +1002,7 @@
     </li><li name="scala.AnyRef#wait" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="wait(x$1:Long):Unit"></a><a id="wait(Long):Unit"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/transforms/AsyncLookupDoFn.html#wait(x$1:Long):Unit" title="Permalink">
+      <a href="../../../../com/spotify/scio/transforms/ScalaAsyncLookupDoFn.html#wait(x$1:Long):Unit" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -959,6 +1023,22 @@
     </span>)</span>
               
         </dd></dl></div>
+    </li><li name="com.spotify.scio.transforms.ScalaFutureHandlers#waitForFutures" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="waitForFutures(futures:Iterable[scala.concurrent.Future[T]]):Unit"></a><a id="waitForFutures(Iterable[Future[B]]):Unit"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/transforms/ScalaAsyncLookupDoFn.html#waitForFutures(futures:Iterable[scala.concurrent.Future[T]]):Unit" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">waitForFutures</span><span class="params">(<span name="futures">futures: <span class="extype" name="java.lang.Iterable">Iterable</span>[<span class="extype" name="scala.concurrent.Future">Future</span>[<span class="extype" name="com.spotify.scio.transforms.ScalaAsyncLookupDoFn.B">B</span>]]</span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="ScalaFutureHandlers.html" class="extype" name="com.spotify.scio.transforms.ScalaFutureHandlers">ScalaFutureHandlers</a> → Base</dd></dl></div>
     </li>
               </ol>
             </div>
@@ -970,7 +1050,7 @@
               <ol><li name="org.apache.beam.sdk.transforms.DoFn#getAllowedTimestampSkew" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="getAllowedTimestampSkew():org.joda.time.Duration"></a><a id="getAllowedTimestampSkew():Duration"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/transforms/AsyncLookupDoFn.html#getAllowedTimestampSkew():org.joda.time.Duration" title="Permalink">
+      <a href="../../../../com/spotify/scio/transforms/ScalaAsyncLookupDoFn.html#getAllowedTimestampSkew():org.joda.time.Duration" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -991,7 +1071,7 @@
     </li><li name="org.apache.beam.sdk.transforms.DoFn#prepareForProcessing" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="prepareForProcessing():Unit"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/transforms/AsyncLookupDoFn.html#prepareForProcessing():Unit" title="Permalink">
+      <a href="../../../../com/spotify/scio/transforms/ScalaAsyncLookupDoFn.html#prepareForProcessing():Unit" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -1014,8 +1094,14 @@
         </div>
 
         <div id="inheritedMembers">
-        <div class="parent" name="org.apache.beam.sdk.transforms.DoFn">
-              <h3>Inherited from <span class="extype" name="org.apache.beam.sdk.transforms.DoFn">DoFn</span>[<span class="extype" name="com.spotify.scio.transforms.AsyncLookupDoFn.A">A</span>, <span class="extype" name="org.apache.beam.sdk.values.KV">KV</span>[<span class="extype" name="com.spotify.scio.transforms.AsyncLookupDoFn.A">A</span>, <span class="extype" name="com.spotify.scio.transforms.AsyncLookupDoFn.Try">Try</span>[<span class="extype" name="com.spotify.scio.transforms.AsyncLookupDoFn.B">B</span>]]]</h3>
+        <div class="parent" name="com.spotify.scio.transforms.ScalaFutureHandlers">
+              <h3>Inherited from <a href="ScalaFutureHandlers.html" class="extype" name="com.spotify.scio.transforms.ScalaFutureHandlers">ScalaFutureHandlers</a>[<span class="extype" name="com.spotify.scio.transforms.ScalaAsyncLookupDoFn.B">B</span>]</h3>
+            </div><div class="parent" name="com.spotify.scio.transforms.BaseAsyncLookupDoFn">
+              <h3>Inherited from <a href="BaseAsyncLookupDoFn.html" class="extype" name="com.spotify.scio.transforms.BaseAsyncLookupDoFn">BaseAsyncLookupDoFn</a>[<span class="extype" name="com.spotify.scio.transforms.ScalaAsyncLookupDoFn.A">A</span>, <span class="extype" name="com.spotify.scio.transforms.ScalaAsyncLookupDoFn.B">B</span>, <span class="extype" name="com.spotify.scio.transforms.ScalaAsyncLookupDoFn.C">C</span>, <span class="extype" name="scala.concurrent.Future">Future</span>[<span class="extype" name="com.spotify.scio.transforms.ScalaAsyncLookupDoFn.B">B</span>], <span class="extype" name="scala.util.Try">Try</span>[<span class="extype" name="com.spotify.scio.transforms.ScalaAsyncLookupDoFn.B">B</span>]]</h3>
+            </div><div class="parent" name="com.spotify.scio.transforms.FutureHandlers.Base">
+              <h3>Inherited from <span class="extype" name="com.spotify.scio.transforms.FutureHandlers.Base">Base</span>[<span class="extype" name="scala.concurrent.Future">Future</span>[<span class="extype" name="com.spotify.scio.transforms.ScalaAsyncLookupDoFn.B">B</span>], <span class="extype" name="com.spotify.scio.transforms.ScalaAsyncLookupDoFn.B">B</span>]</h3>
+            </div><div class="parent" name="org.apache.beam.sdk.transforms.DoFn">
+              <h3>Inherited from <span class="extype" name="org.apache.beam.sdk.transforms.DoFn">DoFn</span>[<span class="extype" name="com.spotify.scio.transforms.ScalaAsyncLookupDoFn.A">A</span>, <span class="extype" name="org.apache.beam.sdk.values.KV">KV</span>[<span class="extype" name="com.spotify.scio.transforms.ScalaAsyncLookupDoFn.A">A</span>, <span class="extype" name="scala.util.Try">Try</span>[<span class="extype" name="com.spotify.scio.transforms.ScalaAsyncLookupDoFn.B">B</span>]]]</h3>
             </div><div class="parent" name="org.apache.beam.sdk.transforms.display.HasDisplayData">
               <h3>Inherited from <span class="extype" name="org.apache.beam.sdk.transforms.display.HasDisplayData">HasDisplayData</span></h3>
             </div><div class="parent" name="java.io.Serializable">

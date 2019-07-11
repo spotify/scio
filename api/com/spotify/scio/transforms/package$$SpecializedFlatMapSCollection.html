@@ -136,12 +136,12 @@
 </p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../index.html" class="extype" name="com.spotify.scio">scio</a></dd></dl></div>
     </li><li class="current-entities indented4">
                         <span class="separator"></span>
-                        <a class="class" href="AsyncLookupDoFn.html" title=""></a>
-                        <a href="AsyncLookupDoFn.html" title="">AsyncLookupDoFn</a>
-                      </li><li class="current-entities indented4">
-                        <span class="separator"></span>
                         <a class="class" href="BaseAsyncDoFn.html" title=""></a>
                         <a href="BaseAsyncDoFn.html" title="">BaseAsyncDoFn</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
+                        <a class="class" href="BaseAsyncLookupDoFn.html" title=""></a>
+                        <a href="BaseAsyncLookupDoFn.html" title="">BaseAsyncLookupDoFn</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
                         <a class="class" href="package$$CustomParallelismSCollection.html" title="Enhanced version of SCollection with custom parallelism, where parallelism is the number of concurrent DoFn threads per worker (default to number of CPU cores)."></a>
@@ -156,12 +156,24 @@
                         <a href="FileDownloadDoFn.html" title="">FileDownloadDoFn</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
+                        <a class="class" href="FutureHandlers.html" title=""></a>
+                        <a href="FutureHandlers.html" title="">FutureHandlers</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
                         <a class="class" href="GuavaAsyncDoFn.html" title=""></a>
                         <a href="GuavaAsyncDoFn.html" title="">GuavaAsyncDoFn</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
+                        <a class="class" href="GuavaAsyncLookupDoFn.html" title=""></a>
+                        <a href="GuavaAsyncLookupDoFn.html" title="">GuavaAsyncLookupDoFn</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
                         <a class="class" href="JavaAsyncDoFn.html" title=""></a>
                         <a href="JavaAsyncDoFn.html" title="">JavaAsyncDoFn</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
+                        <a class="class" href="JavaAsyncLookupDoFn.html" title=""></a>
+                        <a href="JavaAsyncLookupDoFn.html" title="">JavaAsyncLookupDoFn</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
                         <a class="class" href="PipeDoFn.html" title=""></a>
@@ -182,6 +194,14 @@
                         <span class="separator"></span>
                         <a class="class" href="ScalaAsyncDoFn.html" title="A DoFn that handles asynchronous requests to an external service that returns Scala Futures."></a>
                         <a href="ScalaAsyncDoFn.html" title="A DoFn that handles asynchronous requests to an external service that returns Scala Futures.">ScalaAsyncDoFn</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
+                        <a class="class" href="ScalaAsyncLookupDoFn.html" title="A DoFn that performs asynchronous lookup using the provided client for Scala Future."></a>
+                        <a href="ScalaAsyncLookupDoFn.html" title="A DoFn that performs asynchronous lookup using the provided client for Scala Future.">ScalaAsyncLookupDoFn</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
+                        <a class="trait" href="ScalaFutureHandlers.html" title="A FutureHandlers.Base implementation for Scala Future."></a>
+                        <a href="ScalaFutureHandlers.html" title="A FutureHandlers.Base implementation for Scala Future.">ScalaFutureHandlers</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
                         <a class="class" href="" title="Enhanced version of SCollection with specialized versions of flatMap."></a>
@@ -408,10 +428,10 @@ versions of flatMap.
       </span>
       
       <p class="shortcomment cmt">Latency optimized flavor of
-<a href="../values/SCollection.html#flatMap[U](f:T=&gt;TraversableOnce[U])(implicitevidence$8:com.spotify.scio.coders.Coder[U]):com.spotify.scio.values.SCollection[U]" class="extmbr" name="com.spotify.scio.values.SCollection#flatMap">SCollection.flatMap</a>, it returns a new
+<a href="../values/SCollection.html#flatMap[U](f:T=&gt;TraversableOnce[U])(implicitevidence$9:com.spotify.scio.coders.Coder[U]):com.spotify.scio.values.SCollection[U]" class="extmbr" name="com.spotify.scio.values.SCollection#flatMap">SCollection.flatMap</a>, it returns a new
 SCollection by first applying a function to all elements of this SCollection, and then
 flattening the results.</p><div class="fullcomment"><div class="comment cmt"><p>Latency optimized flavor of
-<a href="../values/SCollection.html#flatMap[U](f:T=&gt;TraversableOnce[U])(implicitevidence$8:com.spotify.scio.coders.Coder[U]):com.spotify.scio.values.SCollection[U]" class="extmbr" name="com.spotify.scio.values.SCollection#flatMap">SCollection.flatMap</a>, it returns a new
+<a href="../values/SCollection.html#flatMap[U](f:T=&gt;TraversableOnce[U])(implicitevidence$9:com.spotify.scio.coders.Coder[U]):com.spotify.scio.values.SCollection[U]" class="extmbr" name="com.spotify.scio.values.SCollection#flatMap">SCollection.flatMap</a>, it returns a new
 SCollection by first applying a function to all elements of this SCollection, and then
 flattening the results. If function throws an exception, instead of retrying, faulty element
 goes into given error side output.

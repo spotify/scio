@@ -176,8 +176,8 @@
                         <a href="JavaAsyncLookupDoFn.html" title="">JavaAsyncLookupDoFn</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
-                        <a class="class" href="" title=""></a>
-                        <a href="" title="">PipeDoFn</a>
+                        <a class="class" href="PipeDoFn.html" title=""></a>
+                        <a href="PipeDoFn.html" title="">PipeDoFn</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
                         <a class="class" href="package$$PipeSCollection.html" title="Enhanced version of SCollection with pipe methods."></a>
@@ -200,8 +200,8 @@
                         <a href="ScalaAsyncLookupDoFn.html" title="A DoFn that performs asynchronous lookup using the provided client for Scala Future.">ScalaAsyncLookupDoFn</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
-                        <a class="trait" href="ScalaFutureHandlers.html" title="A FutureHandlers.Base implementation for Scala Future."></a>
-                        <a href="ScalaFutureHandlers.html" title="A FutureHandlers.Base implementation for Scala Future.">ScalaFutureHandlers</a>
+                        <a class="trait" href="" title="A FutureHandlers.Base implementation for Scala Future."></a>
+                        <a href="" title="A FutureHandlers.Base implementation for Scala Future.">ScalaFutureHandlers</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
                         <a class="class" href="package$$SpecializedFlatMapSCollection.html" title="Enhanced version of SCollection with specialized versions of flatMap."></a>
@@ -215,12 +215,12 @@
             </div>
           </div>
           <div id="content">
-            <body class="class type">
+            <body class="trait type">
       <div id="definition">
-        <div class="big-circle class">c</div>
+        <div class="big-circle trait">t</div>
         <p id="owner"><a href="../../../index.html" class="extype" name="com">com</a>.<a href="../../index.html" class="extype" name="com.spotify">spotify</a>.<a href="../index.html" class="extype" name="com.spotify.scio">scio</a>.<a href="index.html" class="extype" name="com.spotify.scio.transforms">transforms</a></p>
-        <h1>PipeDoFn<span class="permalink">
-      <a href="../../../../com/spotify/scio/transforms/PipeDoFn.html" title="Permalink">
+        <h1>ScalaFutureHandlers<span class="permalink">
+      <a href="../../../../com/spotify/scio/transforms/ScalaFutureHandlers.html" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span></h1>
@@ -230,20 +230,25 @@
       <h4 id="signature" class="signature">
       <span class="modifier_kind">
         <span class="modifier"></span>
-        <span class="kind">class</span>
+        <span class="kind">trait</span>
       </span>
       <span class="symbol">
-        <span class="name">PipeDoFn</span><span class="result"> extends <span class="extype" name="org.apache.beam.sdk.transforms.DoFn">DoFn</span>[<span class="extype" name="java.lang.String">String</span>, <span class="extype" name="java.lang.String">String</span>]</span>
+        <span class="name">ScalaFutureHandlers</span><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <span class="extype" name="com.spotify.scio.transforms.FutureHandlers.Base">Base</span>[<span class="extype" name="scala.concurrent.Future">Future</span>[<span class="extype" name="com.spotify.scio.transforms.ScalaFutureHandlers.T">T</span>], <span class="extype" name="com.spotify.scio.transforms.ScalaFutureHandlers.T">T</span>]</span>
       </span>
       </h4>
 
       
-          <div id="comment" class="fullcommenttop"><div class="toggleContainer block">
+          <div id="comment" class="fullcommenttop"><div class="comment cmt"><p>A <span class="extype" name="FutureHandlers.Base">FutureHandlers.Base</span> implementation for Scala <span class="extype" name="Future">Future</span>.</p></div><div class="toggleContainer block">
           <span class="toggle">
             Linear Supertypes
           </span>
-          <div class="superTypes hiddenContent"><span class="extype" name="org.apache.beam.sdk.transforms.DoFn">DoFn</span>[<span class="extype" name="java.lang.String">String</span>, <span class="extype" name="java.lang.String">String</span>], <span class="extype" name="org.apache.beam.sdk.transforms.display.HasDisplayData">HasDisplayData</span>, <span class="extype" name="java.io.Serializable">Serializable</span>, <span class="extype" name="scala.AnyRef">AnyRef</span>, <span class="extype" name="scala.Any">Any</span></div>
-        </div></div>
+          <div class="superTypes hiddenContent"><span class="extype" name="com.spotify.scio.transforms.FutureHandlers.Base">Base</span>[<span class="extype" name="scala.concurrent.Future">Future</span>[<span class="extype" name="com.spotify.scio.transforms.ScalaFutureHandlers.T">T</span>], <span class="extype" name="com.spotify.scio.transforms.ScalaFutureHandlers.T">T</span>], <span class="extype" name="scala.AnyRef">AnyRef</span>, <span class="extype" name="scala.Any">Any</span></div>
+        </div><div class="toggleContainer block">
+            <span class="toggle">
+              Known Subclasses
+            </span>
+            <div class="subClasses hiddenContent"><a href="ScalaAsyncDoFn.html" class="extype" name="com.spotify.scio.transforms.ScalaAsyncDoFn">ScalaAsyncDoFn</a>, <a href="ScalaAsyncLookupDoFn.html" class="extype" name="com.spotify.scio.transforms.ScalaAsyncLookupDoFn">ScalaAsyncLookupDoFn</a></div>
+          </div></div>
         
 
       <div id="mbrsel">
@@ -268,7 +273,7 @@
                   <span class="filtertype">Inherited<br />
                   </span>
                   <ol id="linearization">
-                    <li class="in" name="com.spotify.scio.transforms.PipeDoFn"><span>PipeDoFn</span></li><li class="in" name="org.apache.beam.sdk.transforms.DoFn"><span>DoFn</span></li><li class="in" name="org.apache.beam.sdk.transforms.display.HasDisplayData"><span>HasDisplayData</span></li><li class="in" name="java.io.Serializable"><span>Serializable</span></li><li class="in" name="scala.AnyRef"><span>AnyRef</span></li><li class="in" name="scala.Any"><span>Any</span></li>
+                    <li class="in" name="com.spotify.scio.transforms.ScalaFutureHandlers"><span>ScalaFutureHandlers</span></li><li class="in" name="com.spotify.scio.transforms.FutureHandlers.Base"><span>Base</span></li><li class="in" name="scala.AnyRef"><span>AnyRef</span></li><li class="in" name="scala.Any"><span>Any</span></li>
                   </ol>
                 </div><div class="ancestors">
               <span class="filtertype"></span>
@@ -286,220 +291,19 @@
 
       <div id="template">
         <div id="allMembers">
-        <div id="constructors" class="members">
-              <h3>Instance Constructors</h3>
-              <ol><li name="com.spotify.scio.transforms.PipeDoFn#&lt;init&gt;" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="&lt;init&gt;(cmdArray:Array[String],environment:java.util.Map[String,String],dir:java.io.File,setupCmds:java.util.List[Array[String]],teardownCmds:java.util.List[Array[String]]):com.spotify.scio.transforms.PipeDoFn"></a><a id="&lt;init&gt;:PipeDoFn"></a>
-      <span class="permalink">
-      <a href="../../../../com/spotify/scio/transforms/PipeDoFn.html#&lt;init&gt;(cmdArray:Array[String],environment:java.util.Map[String,String],dir:java.io.File,setupCmds:java.util.List[Array[String]],teardownCmds:java.util.List[Array[String]]):com.spotify.scio.transforms.PipeDoFn" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">new</span>
-      </span>
-      <span class="symbol">
-        <span class="name">PipeDoFn</span><span class="params">(<span name="cmdArray">cmdArray: <span class="extype" name="scala.Array">Array</span>[<span class="extype" name="java.lang.String">String</span>]</span>, <span name="environment">environment: <span class="extype" name="java.util.Map">Map</span>[<span class="extype" name="java.lang.String">String</span>, <span class="extype" name="java.lang.String">String</span>]</span>, <span name="dir">dir: <span class="extype" name="java.io.File">File</span></span>, <span name="setupCmds">setupCmds: <span class="extype" name="java.util.List">List</span>[<span class="extype" name="scala.Array">Array</span>[<span class="extype" name="java.lang.String">String</span>]]</span>, <span name="teardownCmds">teardownCmds: <span class="extype" name="java.util.List">List</span>[<span class="extype" name="scala.Array">Array</span>[<span class="extype" name="java.lang.String">String</span>]]</span>)</span>
-      </span>
-      
-      
-    </li><li name="com.spotify.scio.transforms.PipeDoFn#&lt;init&gt;" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="&lt;init&gt;(command:String,environment:java.util.Map[String,String],dir:java.io.File,setupCmds:java.util.List[String],teardownCmds:java.util.List[String]):com.spotify.scio.transforms.PipeDoFn"></a><a id="&lt;init&gt;:PipeDoFn"></a>
-      <span class="permalink">
-      <a href="../../../../com/spotify/scio/transforms/PipeDoFn.html#&lt;init&gt;(command:String,environment:java.util.Map[String,String],dir:java.io.File,setupCmds:java.util.List[String],teardownCmds:java.util.List[String]):com.spotify.scio.transforms.PipeDoFn" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">new</span>
-      </span>
-      <span class="symbol">
-        <span class="name">PipeDoFn</span><span class="params">(<span name="command">command: <span class="extype" name="java.lang.String">String</span></span>, <span name="environment">environment: <span class="extype" name="java.util.Map">Map</span>[<span class="extype" name="java.lang.String">String</span>, <span class="extype" name="java.lang.String">String</span>]</span>, <span name="dir">dir: <span class="extype" name="java.io.File">File</span></span>, <span name="setupCmds">setupCmds: <span class="extype" name="java.util.List">List</span>[<span class="extype" name="java.lang.String">String</span>]</span>, <span name="teardownCmds">teardownCmds: <span class="extype" name="java.util.List">List</span>[<span class="extype" name="java.lang.String">String</span>]</span>)</span>
-      </span>
-      
-      
-    </li><li name="com.spotify.scio.transforms.PipeDoFn#&lt;init&gt;" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="&lt;init&gt;(cmdArray:Array[String]):com.spotify.scio.transforms.PipeDoFn"></a><a id="&lt;init&gt;:PipeDoFn"></a>
-      <span class="permalink">
-      <a href="../../../../com/spotify/scio/transforms/PipeDoFn.html#&lt;init&gt;(cmdArray:Array[String]):com.spotify.scio.transforms.PipeDoFn" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">new</span>
-      </span>
-      <span class="symbol">
-        <span class="name">PipeDoFn</span><span class="params">(<span name="cmdArray">cmdArray: <span class="extype" name="scala.Array">Array</span>[<span class="extype" name="java.lang.String">String</span>]</span>)</span>
-      </span>
-      
-      
-    </li><li name="com.spotify.scio.transforms.PipeDoFn#&lt;init&gt;" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="&lt;init&gt;(command:String):com.spotify.scio.transforms.PipeDoFn"></a><a id="&lt;init&gt;:PipeDoFn"></a>
-      <span class="permalink">
-      <a href="../../../../com/spotify/scio/transforms/PipeDoFn.html#&lt;init&gt;(command:String):com.spotify.scio.transforms.PipeDoFn" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">new</span>
-      </span>
-      <span class="symbol">
-        <span class="name">PipeDoFn</span><span class="params">(<span name="command">command: <span class="extype" name="java.lang.String">String</span></span>)</span>
-      </span>
-      
-      
-    </li></ol>
-            </div>
+        
 
-        <div id="types" class="types members">
-              <h3>Type Members</h3>
-              <ol><li name="org.apache.beam.sdk.transforms.DoFn.FinishBundleContext" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
-      <a id="FinishBundleContextextendsObject"></a><a id="FinishBundleContext:FinishBundleContext"></a>
-      <span class="permalink">
-      <a href="../../../../com/spotify/scio/transforms/PipeDoFn.html#FinishBundleContextextendsObject" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier">abstract </span>
-        <span class="kind">class</span>
-      </span>
-      <span class="symbol">
-        <span class="name">FinishBundleContext</span><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
-      </span>
-      
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>DoFn</dd></dl></div>
-    </li><li name="org.apache.beam.sdk.transforms.DoFn.OnTimerContext" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
-      <a id="OnTimerContextextendsDoFn[InputT,OutputT]#WindowedContext"></a><a id="OnTimerContext:OnTimerContext"></a>
-      <span class="permalink">
-      <a href="../../../../com/spotify/scio/transforms/PipeDoFn.html#OnTimerContextextendsDoFn[InputT,OutputT]#WindowedContext" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier">abstract </span>
-        <span class="kind">class</span>
-      </span>
-      <span class="symbol">
-        <span class="name">OnTimerContext</span><span class="result"> extends <span class="extype" name="org.apache.beam.sdk.transforms.DoFn.WindowedContext">WindowedContext</span></span>
-      </span>
-      
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>DoFn</dd></dl></div>
-    </li><li name="org.apache.beam.sdk.transforms.DoFn.ProcessContext" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
-      <a id="ProcessContextextendsDoFn[InputT,OutputT]#WindowedContext"></a><a id="ProcessContext:ProcessContext"></a>
-      <span class="permalink">
-      <a href="../../../../com/spotify/scio/transforms/PipeDoFn.html#ProcessContextextendsDoFn[InputT,OutputT]#WindowedContext" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier">abstract </span>
-        <span class="kind">class</span>
-      </span>
-      <span class="symbol">
-        <span class="name">ProcessContext</span><span class="result"> extends <span class="extype" name="org.apache.beam.sdk.transforms.DoFn.WindowedContext">WindowedContext</span></span>
-      </span>
-      
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>DoFn</dd></dl></div>
-    </li><li name="org.apache.beam.sdk.transforms.DoFn.StartBundleContext" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
-      <a id="StartBundleContextextendsObject"></a><a id="StartBundleContext:StartBundleContext"></a>
-      <span class="permalink">
-      <a href="../../../../com/spotify/scio/transforms/PipeDoFn.html#StartBundleContextextendsObject" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier">abstract </span>
-        <span class="kind">class</span>
-      </span>
-      <span class="symbol">
-        <span class="name">StartBundleContext</span><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
-      </span>
-      
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>DoFn</dd></dl></div>
-    </li><li name="org.apache.beam.sdk.transforms.DoFn.WindowedContext" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
-      <a id="WindowedContextextendsObject"></a><a id="WindowedContext:WindowedContext"></a>
-      <span class="permalink">
-      <a href="../../../../com/spotify/scio/transforms/PipeDoFn.html#WindowedContextextendsObject" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier">abstract </span>
-        <span class="kind">class</span>
-      </span>
-      <span class="symbol">
-        <span class="name">WindowedContext</span><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
-      </span>
-      
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>DoFn</dd></dl></div>
-    </li></ol>
-            </div>
+        
+
+        
 
         <div class="values members">
-              <h3>Abstract Value Members</h3>
-              <ol><li name="org.apache.beam.sdk.transforms.DoFn.ProcessContext" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
-      <a id="ProcessContext"></a><a id="ProcessContext:ProcessContext"></a>
-      <span class="permalink">
-      <a href="../../../../com/spotify/scio/transforms/PipeDoFn.html#ProcessContext" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier">abstract </span>
-        <span class="kind">object</span>
-      </span>
-      <span class="symbol">
-        <span class="name">ProcessContext</span>
-      </span>
-      
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>DoFn</dd></dl></div>
-    </li><li name="org.apache.beam.sdk.transforms.DoFn.StartBundleContext" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
-      <a id="StartBundleContext"></a><a id="StartBundleContext:StartBundleContext"></a>
-      <span class="permalink">
-      <a href="../../../../com/spotify/scio/transforms/PipeDoFn.html#StartBundleContext" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier">abstract </span>
-        <span class="kind">object</span>
-      </span>
-      <span class="symbol">
-        <span class="name">StartBundleContext</span>
-      </span>
-      
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>DoFn</dd></dl></div>
-    </li><li name="org.apache.beam.sdk.transforms.DoFn.WindowedContext" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
-      <a id="WindowedContext"></a><a id="WindowedContext:WindowedContext"></a>
-      <span class="permalink">
-      <a href="../../../../com/spotify/scio/transforms/PipeDoFn.html#WindowedContext" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier">abstract </span>
-        <span class="kind">object</span>
-      </span>
-      <span class="symbol">
-        <span class="name">WindowedContext</span>
-      </span>
-      
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>DoFn</dd></dl></div>
-    </li></ol>
-            </div>
-
-        <div class="values members">
-              <h3>Concrete Value Members</h3>
+              <h3>Value Members</h3>
               <ol>
                 <li name="scala.AnyRef#!=" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="!=(x$1:Any):Boolean"></a><a id="!=(Any):Boolean"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/transforms/PipeDoFn.html#!=(x$1:Any):Boolean" title="Permalink">
+      <a href="../../../../com/spotify/scio/transforms/ScalaFutureHandlers.html#!=(x$1:Any):Boolean" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -515,7 +319,7 @@
     </li><li name="scala.AnyRef###" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="##():Int"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/transforms/PipeDoFn.html###():Int" title="Permalink">
+      <a href="../../../../com/spotify/scio/transforms/ScalaFutureHandlers.html###():Int" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -531,7 +335,7 @@
     </li><li name="scala.AnyRef#==" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="==(x$1:Any):Boolean"></a><a id="==(Any):Boolean"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/transforms/PipeDoFn.html#==(x$1:Any):Boolean" title="Permalink">
+      <a href="../../../../com/spotify/scio/transforms/ScalaFutureHandlers.html#==(x$1:Any):Boolean" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -544,10 +348,26 @@
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
+    </li><li name="com.spotify.scio.transforms.ScalaFutureHandlers#addCallback" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="addCallback(future:scala.concurrent.Future[T],onSuccess:java.util.function.Function[T,Void],onFailure:java.util.function.Function[Throwable,Void]):scala.concurrent.Future[T]"></a><a id="addCallback(Future[T],Function[T,Void],Function[Throwable,Void]):Future[T]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/transforms/ScalaFutureHandlers.html#addCallback(future:scala.concurrent.Future[T],onSuccess:java.util.function.Function[T,Void],onFailure:java.util.function.Function[Throwable,Void]):scala.concurrent.Future[T]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">addCallback</span><span class="params">(<span name="future">future: <span class="extype" name="scala.concurrent.Future">Future</span>[<span class="extype" name="com.spotify.scio.transforms.ScalaFutureHandlers.T">T</span>]</span>, <span name="onSuccess">onSuccess: <span class="extype" name="java.util.function.Function">Function</span>[<span class="extype" name="com.spotify.scio.transforms.ScalaFutureHandlers.T">T</span>, <span class="extype" name="java.lang.Void">Void</span>]</span>, <span name="onFailure">onFailure: <span class="extype" name="java.util.function.Function">Function</span>[<span class="extype" name="scala.Throwable">Throwable</span>, <span class="extype" name="java.lang.Void">Void</span>]</span>)</span><span class="result">: <span class="extype" name="scala.concurrent.Future">Future</span>[<span class="extype" name="com.spotify.scio.transforms.ScalaFutureHandlers.T">T</span>]</span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="" class="extype" name="com.spotify.scio.transforms.ScalaFutureHandlers">ScalaFutureHandlers</a> → Base</dd></dl></div>
     </li><li name="scala.Any#asInstanceOf" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="asInstanceOf[T0]:T0"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/transforms/PipeDoFn.html#asInstanceOf[T0]:T0" title="Permalink">
+      <a href="../../../../com/spotify/scio/transforms/ScalaFutureHandlers.html#asInstanceOf[T0]:T0" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -563,7 +383,7 @@
     </li><li name="scala.AnyRef#clone" visbl="prt" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="clone():Object"></a><a id="clone():AnyRef"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/transforms/PipeDoFn.html#clone():Object" title="Permalink">
+      <a href="../../../../com/spotify/scio/transforms/ScalaFutureHandlers.html#clone():Object" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -587,7 +407,7 @@
     </li><li name="scala.AnyRef#eq" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="eq(x$1:AnyRef):Boolean"></a><a id="eq(AnyRef):Boolean"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/transforms/PipeDoFn.html#eq(x$1:AnyRef):Boolean" title="Permalink">
+      <a href="../../../../com/spotify/scio/transforms/ScalaFutureHandlers.html#eq(x$1:AnyRef):Boolean" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -603,7 +423,7 @@
     </li><li name="scala.AnyRef#equals" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="equals(x$1:Any):Boolean"></a><a id="equals(Any):Boolean"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/transforms/PipeDoFn.html#equals(x$1:Any):Boolean" title="Permalink">
+      <a href="../../../../com/spotify/scio/transforms/ScalaFutureHandlers.html#equals(x$1:Any):Boolean" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -619,7 +439,7 @@
     </li><li name="scala.AnyRef#finalize" visbl="prt" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="finalize():Unit"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/transforms/PipeDoFn.html#finalize():Unit" title="Permalink">
+      <a href="../../../../com/spotify/scio/transforms/ScalaFutureHandlers.html#finalize():Unit" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -638,26 +458,10 @@
     </span>)</span>
               
         </dd></dl></div>
-    </li><li name="com.spotify.scio.transforms.PipeDoFn#finishBundle" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="finishBundle():Unit"></a>
-      <span class="permalink">
-      <a href="../../../../com/spotify/scio/transforms/PipeDoFn.html#finishBundle():Unit" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">finishBundle</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
-      </span>
-      
-      
     </li><li name="scala.AnyRef#getClass" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="getClass():Class[_]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/transforms/PipeDoFn.html#getClass():Class[_]" title="Permalink">
+      <a href="../../../../com/spotify/scio/transforms/ScalaFutureHandlers.html#getClass():Class[_]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -673,42 +477,10 @@
                 <span class="name">@native</span><span class="args">()</span>
               
         </dd></dl></div>
-    </li><li name="org.apache.beam.sdk.transforms.DoFn#getInputTypeDescriptor" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="getInputTypeDescriptor():org.apache.beam.sdk.values.TypeDescriptor[InputT]"></a><a id="getInputTypeDescriptor():TypeDescriptor[String]"></a>
-      <span class="permalink">
-      <a href="../../../../com/spotify/scio/transforms/PipeDoFn.html#getInputTypeDescriptor():org.apache.beam.sdk.values.TypeDescriptor[InputT]" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">getInputTypeDescriptor</span><span class="params">()</span><span class="result">: <span class="extype" name="org.apache.beam.sdk.values.TypeDescriptor">TypeDescriptor</span>[<span class="extype" name="java.lang.String">String</span>]</span>
-      </span>
-      
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>DoFn</dd></dl></div>
-    </li><li name="org.apache.beam.sdk.transforms.DoFn#getOutputTypeDescriptor" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="getOutputTypeDescriptor():org.apache.beam.sdk.values.TypeDescriptor[OutputT]"></a><a id="getOutputTypeDescriptor():TypeDescriptor[String]"></a>
-      <span class="permalink">
-      <a href="../../../../com/spotify/scio/transforms/PipeDoFn.html#getOutputTypeDescriptor():org.apache.beam.sdk.values.TypeDescriptor[OutputT]" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">getOutputTypeDescriptor</span><span class="params">()</span><span class="result">: <span class="extype" name="org.apache.beam.sdk.values.TypeDescriptor">TypeDescriptor</span>[<span class="extype" name="java.lang.String">String</span>]</span>
-      </span>
-      
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>DoFn</dd></dl></div>
     </li><li name="scala.AnyRef#hashCode" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="hashCode():Int"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/transforms/PipeDoFn.html#hashCode():Int" title="Permalink">
+      <a href="../../../../com/spotify/scio/transforms/ScalaFutureHandlers.html#hashCode():Int" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -727,7 +499,7 @@
     </li><li name="scala.Any#isInstanceOf" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="isInstanceOf[T0]:Boolean"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/transforms/PipeDoFn.html#isInstanceOf[T0]:Boolean" title="Permalink">
+      <a href="../../../../com/spotify/scio/transforms/ScalaFutureHandlers.html#isInstanceOf[T0]:Boolean" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -743,7 +515,7 @@
     </li><li name="scala.AnyRef#ne" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="ne(x$1:AnyRef):Boolean"></a><a id="ne(AnyRef):Boolean"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/transforms/PipeDoFn.html#ne(x$1:AnyRef):Boolean" title="Permalink">
+      <a href="../../../../com/spotify/scio/transforms/ScalaFutureHandlers.html#ne(x$1:AnyRef):Boolean" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -759,7 +531,7 @@
     </li><li name="scala.AnyRef#notify" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="notify():Unit"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/transforms/PipeDoFn.html#notify():Unit" title="Permalink">
+      <a href="../../../../com/spotify/scio/transforms/ScalaFutureHandlers.html#notify():Unit" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -778,7 +550,7 @@
     </li><li name="scala.AnyRef#notifyAll" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="notifyAll():Unit"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/transforms/PipeDoFn.html#notifyAll():Unit" title="Permalink">
+      <a href="../../../../com/spotify/scio/transforms/ScalaFutureHandlers.html#notifyAll():Unit" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -794,74 +566,10 @@
                 <span class="name">@native</span><span class="args">()</span>
               
         </dd></dl></div>
-    </li><li name="com.spotify.scio.transforms.PipeDoFn#populateDisplayData" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="populateDisplayData(builder:org.apache.beam.sdk.transforms.display.DisplayData.Builder):Unit"></a><a id="populateDisplayData(Builder):Unit"></a>
-      <span class="permalink">
-      <a href="../../../../com/spotify/scio/transforms/PipeDoFn.html#populateDisplayData(builder:org.apache.beam.sdk.transforms.display.DisplayData.Builder):Unit" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">populateDisplayData</span><span class="params">(<span name="builder">builder: <span class="extype" name="org.apache.beam.sdk.transforms.display.DisplayData.Builder">Builder</span></span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
-      </span>
-      
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="" class="extype" name="com.spotify.scio.transforms.PipeDoFn">PipeDoFn</a> → DoFn → HasDisplayData</dd></dl></div>
-    </li><li name="com.spotify.scio.transforms.PipeDoFn#processElement" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="processElement(c:PipeDoFn.this.ProcessContext):Unit"></a><a id="processElement(ProcessContext):Unit"></a>
-      <span class="permalink">
-      <a href="../../../../com/spotify/scio/transforms/PipeDoFn.html#processElement(c:PipeDoFn.this.ProcessContext):Unit" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">processElement</span><span class="params">(<span name="c">c: <a href="#ProcessContextextendsDoFn[InputT,OutputT]#WindowedContext" class="extmbr" name="com.spotify.scio.transforms.PipeDoFn.ProcessContext">ProcessContext</a></span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
-      </span>
-      
-      
-    </li><li name="com.spotify.scio.transforms.PipeDoFn#setup" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="setup():Unit"></a>
-      <span class="permalink">
-      <a href="../../../../com/spotify/scio/transforms/PipeDoFn.html#setup():Unit" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">setup</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
-      </span>
-      
-      
-    </li><li name="com.spotify.scio.transforms.PipeDoFn#startBundle" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="startBundle():Unit"></a>
-      <span class="permalink">
-      <a href="../../../../com/spotify/scio/transforms/PipeDoFn.html#startBundle():Unit" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">startBundle</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
-      </span>
-      
-      
     </li><li name="scala.AnyRef#synchronized" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="synchronized[T0](x$1:=&gt;T0):T0"></a><a id="synchronized[T0](⇒T0):T0"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/transforms/PipeDoFn.html#synchronized[T0](x$1:=&gt;T0):T0" title="Permalink">
+      <a href="../../../../com/spotify/scio/transforms/ScalaFutureHandlers.html#synchronized[T0](x$1:=&gt;T0):T0" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -874,26 +582,10 @@
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
-    </li><li name="com.spotify.scio.transforms.PipeDoFn#teardown" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="teardown():Unit"></a>
-      <span class="permalink">
-      <a href="../../../../com/spotify/scio/transforms/PipeDoFn.html#teardown():Unit" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">teardown</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
-      </span>
-      
-      
     </li><li name="scala.AnyRef#toString" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="toString():String"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/transforms/PipeDoFn.html#toString():String" title="Permalink">
+      <a href="../../../../com/spotify/scio/transforms/ScalaFutureHandlers.html#toString():String" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -909,7 +601,7 @@
     </li><li name="scala.AnyRef#wait" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="wait():Unit"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/transforms/PipeDoFn.html#wait():Unit" title="Permalink">
+      <a href="../../../../com/spotify/scio/transforms/ScalaFutureHandlers.html#wait():Unit" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -931,7 +623,7 @@
     </li><li name="scala.AnyRef#wait" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="wait(x$1:Long,x$2:Int):Unit"></a><a id="wait(Long,Int):Unit"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/transforms/PipeDoFn.html#wait(x$1:Long,x$2:Int):Unit" title="Permalink">
+      <a href="../../../../com/spotify/scio/transforms/ScalaFutureHandlers.html#wait(x$1:Long,x$2:Int):Unit" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -953,7 +645,7 @@
     </li><li name="scala.AnyRef#wait" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="wait(x$1:Long):Unit"></a><a id="wait(Long):Unit"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/transforms/PipeDoFn.html#wait(x$1:Long):Unit" title="Permalink">
+      <a href="../../../../com/spotify/scio/transforms/ScalaFutureHandlers.html#wait(x$1:Long):Unit" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -974,18 +666,10 @@
     </span>)</span>
               
         </dd></dl></div>
-    </li>
-              </ol>
-            </div>
-
-        
-
-        <div class="values members">
-              <h3>Deprecated Value Members</h3>
-              <ol><li name="org.apache.beam.sdk.transforms.DoFn#getAllowedTimestampSkew" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="getAllowedTimestampSkew():org.joda.time.Duration"></a><a id="getAllowedTimestampSkew():Duration"></a>
+    </li><li name="com.spotify.scio.transforms.ScalaFutureHandlers#waitForFutures" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="waitForFutures(futures:Iterable[scala.concurrent.Future[T]]):Unit"></a><a id="waitForFutures(Iterable[Future[T]]):Unit"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/transforms/PipeDoFn.html#getAllowedTimestampSkew():org.joda.time.Duration" title="Permalink">
+      <a href="../../../../com/spotify/scio/transforms/ScalaFutureHandlers.html#waitForFutures(futures:Iterable[scala.concurrent.Future[T]]):Unit" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -994,47 +678,22 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name deprecated" title="Deprecated: (Since version ) see corresponding Javadoc for more information.">getAllowedTimestampSkew</span><span class="params">()</span><span class="result">: <span class="extype" name="org.joda.time.Duration">Duration</span></span>
+        <span class="name">waitForFutures</span><span class="params">(<span name="futures">futures: <span class="extype" name="java.lang.Iterable">Iterable</span>[<span class="extype" name="scala.concurrent.Future">Future</span>[<span class="extype" name="com.spotify.scio.transforms.ScalaFutureHandlers.T">T</span>]]</span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
       </span>
       
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>DoFn</dd><dt>Annotations</dt><dd>
-                <span class="name">@Deprecated</span>
-              
-                <span class="name">@deprecated</span>
-              
-        </dd><dt>Deprecated</dt><dd class="cmt"><p><i>(Since version )</i> see corresponding Javadoc for more information.</p></dd></dl></div>
-    </li><li name="org.apache.beam.sdk.transforms.DoFn#prepareForProcessing" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="prepareForProcessing():Unit"></a>
-      <span class="permalink">
-      <a href="../../../../com/spotify/scio/transforms/PipeDoFn.html#prepareForProcessing():Unit" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier">final </span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name deprecated" title="Deprecated: (Since version ) see corresponding Javadoc for more information.">prepareForProcessing</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
-      </span>
-      
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>DoFn</dd><dt>Annotations</dt><dd>
-                <span class="name">@Deprecated</span>
-              
-                <span class="name">@deprecated</span>
-              
-        </dd><dt>Deprecated</dt><dd class="cmt"><p><i>(Since version )</i> see corresponding Javadoc for more information.</p></dd></dl></div>
-    </li></ol>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="" class="extype" name="com.spotify.scio.transforms.ScalaFutureHandlers">ScalaFutureHandlers</a> → Base</dd></dl></div>
+    </li>
+              </ol>
             </div>
+
+        
+
+        
         </div>
 
         <div id="inheritedMembers">
-        <div class="parent" name="org.apache.beam.sdk.transforms.DoFn">
-              <h3>Inherited from <span class="extype" name="org.apache.beam.sdk.transforms.DoFn">DoFn</span>[<span class="extype" name="java.lang.String">String</span>, <span class="extype" name="java.lang.String">String</span>]</h3>
-            </div><div class="parent" name="org.apache.beam.sdk.transforms.display.HasDisplayData">
-              <h3>Inherited from <span class="extype" name="org.apache.beam.sdk.transforms.display.HasDisplayData">HasDisplayData</span></h3>
-            </div><div class="parent" name="java.io.Serializable">
-              <h3>Inherited from <span class="extype" name="java.io.Serializable">Serializable</span></h3>
+        <div class="parent" name="com.spotify.scio.transforms.FutureHandlers.Base">
+              <h3>Inherited from <span class="extype" name="com.spotify.scio.transforms.FutureHandlers.Base">Base</span>[<span class="extype" name="scala.concurrent.Future">Future</span>[<span class="extype" name="com.spotify.scio.transforms.ScalaFutureHandlers.T">T</span>], <span class="extype" name="com.spotify.scio.transforms.ScalaFutureHandlers.T">T</span>]</h3>
             </div><div class="parent" name="scala.AnyRef">
               <h3>Inherited from <span class="extype" name="scala.AnyRef">AnyRef</span></h3>
             </div><div class="parent" name="scala.Any">

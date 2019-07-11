@@ -519,6 +519,25 @@ key of the input be associated with a single value.</p><p>Currently, the resulti
 <code>Map[key, Iterable[value]]</code>, to be used with <a href="SCollection.html#withSideInputs(sides:com.spotify.scio.values.SideInput[_]*)(implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollectionWithSideInput[T]" class="extmbr" name="com.spotify.scio.values.SCollection#withSideInputs">SCollection.withSideInputs</a>. In contrast to
 <a href="#asMapSideInput(implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SideInput[Map[K,V]]" class="extmbr" name="com.spotify.scio.values.PairSCollectionFunctions#asMapSideInput">asMapSideInput</a>, it is not required that the keys in the input collection be unique.</p><p>Currently, the resulting map is required to fit into memory.
 </p></div></div>
+    </li><li name="com.spotify.scio.values.PairSCollectionFunctions#batchByKey" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="per_key">
+      <a id="batchByKey(batchSize:Long)(implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SCollection[(K,Iterable[V])]"></a><a id="batchByKey(Long)(Coder[K],Coder[V]):SCollection[(K,Iterable[V])]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/values/PairSCollectionFunctions.html#batchByKey(batchSize:Long)(implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SCollection[(K,Iterable[V])]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">batchByKey</span><span class="params">(<span name="batchSize">batchSize: <span class="extype" name="scala.Long">Long</span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="koder">koder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.PairSCollectionFunctions.K">K</span>]</span>, <span name="voder">voder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.PairSCollectionFunctions.V">V</span>]</span>)</span><span class="result">: <a href="SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[(<span class="extype" name="com.spotify.scio.values.PairSCollectionFunctions.K">K</span>, <span class="extype" name="scala.Iterable">Iterable</span>[<span class="extype" name="com.spotify.scio.values.PairSCollectionFunctions.V">V</span>])]</span>
+      </span>
+      
+      <p class="shortcomment cmt">Batches inputs to a desired batch size.</p><div class="fullcomment"><div class="comment cmt"><p>Batches inputs to a desired batch size. Batches will contain only elements of a single key.</p><p>Elements are buffered until there are batchSize elements buffered, at which point they are
+outputed to the output <a href="SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>.</p><p>Windows are preserved (batches contain elements from the same window).
+Batches may contain elements from more than one bundle.
+</p></div></div>
     </li><li name="scala.AnyRef#clone" visbl="prt" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="clone():Object"></a><a id="clone():AnyRef"></a>
       <span class="permalink">
@@ -716,6 +735,23 @@ The value is taken randomly for each key.
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
+    </li><li name="com.spotify.scio.values.PairSCollectionFunctions#filterValues" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="transform">
+      <a id="filterValues(f:V=&gt;Boolean)(implicitkoder:com.spotify.scio.coders.Coder[K]):com.spotify.scio.values.SCollection[(K,V)]"></a><a id="filterValues((V)⇒Boolean)(Coder[K]):SCollection[(K,V)]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/values/PairSCollectionFunctions.html#filterValues(f:V=&gt;Boolean)(implicitkoder:com.spotify.scio.coders.Coder[K]):com.spotify.scio.values.SCollection[(K,V)]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">filterValues</span><span class="params">(<span name="f">f: (<span class="extype" name="com.spotify.scio.values.PairSCollectionFunctions.V">V</span>) ⇒ <span class="extype" name="scala.Boolean">Boolean</span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="koder">koder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.PairSCollectionFunctions.K">K</span>]</span>)</span><span class="result">: <a href="SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[(<span class="extype" name="com.spotify.scio.values.PairSCollectionFunctions.K">K</span>, <span class="extype" name="com.spotify.scio.values.PairSCollectionFunctions.V">V</span>)]</span>
+      </span>
+      
+      <p class="shortcomment cmt">Pass each value in the key-value pair SCollection through a <code>filter</code> function without
+changing the keys.</p>
     </li><li name="scala.AnyRef#finalize" visbl="prt" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="finalize():Unit"></a>
       <span class="permalink">

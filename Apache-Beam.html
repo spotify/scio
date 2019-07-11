@@ -235,6 +235,7 @@ spotify/scio
 <p>Scio 0.3.x depends on Beam 0.6.0 (last pre-stable release) and Scio 0.4.x depends on Beam 2.0.0 (first stable release). Breaking changes in these releases are documented below.</p>
 <h2><a href="#version-matrices" name="version-matrices" class="anchor"><span class="anchor-link"></span></a>Version matrices</h2>
 <p>Early Scio releases depend on Google Cloud <a href="https://github.com/GoogleCloudPlatform/DataflowJavaSDK">Dataflow Java SDK</a> while later ones depend on <a href="https://github.com/apache/beam">Apache Beam</a>. Check out the <a href="./Changelog.html">Changelog</a> page for migration guides.</p>
+<p>Also check out the <a href="https://cloud.google.com/dataflow/docs/support/sdk-version-support-status">SDK Version Support Status</a> page. Since a Beam release depends on specific version of Dataflow API, a deprecated Beam version is not guaranteed to work correctly or at all. We strongly recommend upgrading before the deprecation date.</p>
 <table>
   <thead>
     <tr>
@@ -286,60 +287,74 @@ spotify/scio
     <tr>
       <th align="center"><strong>Scio Version</strong> </th>
       <th align="center"><strong>Beam Version</strong> </th>
+      <th align="left"><strong>Details</strong> </th>
     </tr>
   </thead>
   <tbody>
     <tr>
       <td align="center">0.7.4 </td>
       <td align="center">2.11.0 </td>
+      <td align="left">This version will be deprecated on March 1, 2020. </td>
     </tr>
     <tr>
       <td align="center">0.7.3 </td>
       <td align="center">2.10.0 </td>
+      <td align="left">This version will be deprecated on February 11, 2020. </td>
     </tr>
     <tr>
       <td align="center">0.7.2 </td>
       <td align="center">2.10.0 </td>
+      <td align="left"> </td>
     </tr>
     <tr>
       <td align="center">0.7.0+ </td>
       <td align="center">2.9.0 </td>
+      <td align="left">This version will be deprecated on December 13, 2019. </td>
     </tr>
     <tr>
       <td align="center">0.6.0 </td>
       <td align="center">2.6.0 </td>
+      <td align="left">This version will be deprecated on August 8, 2019. </td>
     </tr>
     <tr>
       <td align="center">0.5.7 </td>
       <td align="center">2.6.0 </td>
+      <td align="left"> </td>
     </tr>
     <tr>
       <td align="center">0.5.6 </td>
       <td align="center">2.5.0 </td>
+      <td align="left">This version will be deprecated on June 6, 2019. </td>
     </tr>
     <tr>
       <td align="center">0.5.1+ </td>
       <td align="center">2.4.0 </td>
+      <td align="left">Deprecated as of March 20, 2019. </td>
     </tr>
     <tr>
       <td align="center">0.5.0 </td>
       <td align="center">2.2.0 </td>
+      <td align="left">Deprecated as of December 2, 2018. </td>
     </tr>
     <tr>
       <td align="center">0.4.6+ </td>
       <td align="center">2.2.0 </td>
+      <td align="left"> </td>
     </tr>
     <tr>
       <td align="center">0.4.1+ </td>
       <td align="center">2.1.0 </td>
+      <td align="left">Deprecated as of August 23, 2018. </td>
     </tr>
     <tr>
       <td align="center">0.4.0 </td>
       <td align="center">2.0.0 </td>
+      <td align="left">Deprecated as of May 17, 2018. </td>
     </tr>
     <tr>
       <td align="center">0.3.0+ </td>
       <td align="center">0.6.0 </td>
+      <td align="left">Unsupported </td>
     </tr>
   </tbody>
 </table>

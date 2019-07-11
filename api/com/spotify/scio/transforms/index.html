@@ -466,12 +466,12 @@ detects the query's dialect. To override this, start the query with either <code
 </p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../index.html" class="extype" name="com.spotify.scio">scio</a></dd></dl></div>
     </li><li class="current-entities indented4">
                         <span class="separator"></span>
-                        <a class="class" href="AsyncLookupDoFn.html" title=""></a>
-                        <a href="AsyncLookupDoFn.html" title="">AsyncLookupDoFn</a>
-                      </li><li class="current-entities indented4">
-                        <span class="separator"></span>
                         <a class="class" href="BaseAsyncDoFn.html" title=""></a>
                         <a href="BaseAsyncDoFn.html" title="">BaseAsyncDoFn</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
+                        <a class="class" href="BaseAsyncLookupDoFn.html" title=""></a>
+                        <a href="BaseAsyncLookupDoFn.html" title="">BaseAsyncLookupDoFn</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
                         <a class="class" href="package$$CustomParallelismSCollection.html" title="Enhanced version of SCollection with custom parallelism, where parallelism is the number of concurrent DoFn threads per worker (default to number of CPU cores)."></a>
@@ -486,12 +486,24 @@ detects the query's dialect. To override this, start the query with either <code
                         <a href="FileDownloadDoFn.html" title="">FileDownloadDoFn</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
+                        <a class="class" href="FutureHandlers.html" title=""></a>
+                        <a href="FutureHandlers.html" title="">FutureHandlers</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
                         <a class="class" href="GuavaAsyncDoFn.html" title=""></a>
                         <a href="GuavaAsyncDoFn.html" title="">GuavaAsyncDoFn</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
+                        <a class="class" href="GuavaAsyncLookupDoFn.html" title=""></a>
+                        <a href="GuavaAsyncLookupDoFn.html" title="">GuavaAsyncLookupDoFn</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
                         <a class="class" href="JavaAsyncDoFn.html" title=""></a>
                         <a href="JavaAsyncDoFn.html" title="">JavaAsyncDoFn</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
+                        <a class="class" href="JavaAsyncLookupDoFn.html" title=""></a>
+                        <a href="JavaAsyncLookupDoFn.html" title="">JavaAsyncLookupDoFn</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
                         <a class="class" href="PipeDoFn.html" title=""></a>
@@ -512,6 +524,14 @@ detects the query's dialect. To override this, start the query with either <code
                         <span class="separator"></span>
                         <a class="class" href="ScalaAsyncDoFn.html" title="A DoFn that handles asynchronous requests to an external service that returns Scala Futures."></a>
                         <a href="ScalaAsyncDoFn.html" title="A DoFn that handles asynchronous requests to an external service that returns Scala Futures.">ScalaAsyncDoFn</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
+                        <a class="class" href="ScalaAsyncLookupDoFn.html" title="A DoFn that performs asynchronous lookup using the provided client for Scala Future."></a>
+                        <a href="ScalaAsyncLookupDoFn.html" title="A DoFn that performs asynchronous lookup using the provided client for Scala Future.">ScalaAsyncLookupDoFn</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
+                        <a class="trait" href="ScalaFutureHandlers.html" title="A FutureHandlers.Base implementation for Scala Future."></a>
+                        <a href="ScalaFutureHandlers.html" title="A FutureHandlers.Base implementation for Scala Future.">ScalaFutureHandlers</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
                         <a class="class" href="package$$SpecializedFlatMapSCollection.html" title="Enhanced version of SCollection with specialized versions of flatMap."></a>
@@ -597,10 +617,10 @@ detects the query's dialect. To override this, start the query with either <code
 
         <div id="types" class="types members">
               <h3>Type Members</h3>
-              <ol><li name="com.spotify.scio.transforms.AsyncLookupDoFn" visbl="pub" class="indented0 " data-isabs="true" fullComment="no" group="Ungrouped">
-      <a id="AsyncLookupDoFn[A,B,C]extendsDoFn[A,org.apache.beam.sdk.values.KV[A,com.spotify.scio.transforms.AsyncLookupDoFn.Try[B]]]"></a><a id="AsyncLookupDoFn[A,B,C]:AsyncLookupDoFn[A,B,C]"></a>
+              <ol><li name="com.spotify.scio.transforms.BaseAsyncDoFn" visbl="pub" class="indented0 " data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="BaseAsyncDoFn[InputT,OutputT,ResourceT,FutureT]extendsDoFnWithResource[InputT,OutputT,ResourceT]withFutureHandlers.Base[FutureT,OutputT]"></a><a id="BaseAsyncDoFn[InputT,OutputT,ResourceT,FutureT]:BaseAsyncDoFn[InputT,OutputT,ResourceT,FutureT]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/transforms/index.html#AsyncLookupDoFn[A,B,C]extendsDoFn[A,org.apache.beam.sdk.values.KV[A,com.spotify.scio.transforms.AsyncLookupDoFn.Try[B]]]" title="Permalink">
+      <a href="../../../../com/spotify/scio/transforms/index.html#BaseAsyncDoFn[InputT,OutputT,ResourceT,FutureT]extendsDoFnWithResource[InputT,OutputT,ResourceT]withFutureHandlers.Base[FutureT,OutputT]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -609,14 +629,14 @@ detects the query's dialect. To override this, start the query with either <code
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <a title="" href="AsyncLookupDoFn.html"><span class="name">AsyncLookupDoFn</span></a><span class="tparams">[<span name="A">A</span>, <span name="B">B</span>, <span name="C">C</span>]</span><span class="result"> extends <span class="extype" name="org.apache.beam.sdk.transforms.DoFn">DoFn</span>[<span class="extype" name="com.spotify.scio.transforms.AsyncLookupDoFn.A">A</span>, <span class="extype" name="org.apache.beam.sdk.values.KV">KV</span>[<span class="extype" name="com.spotify.scio.transforms.AsyncLookupDoFn.A">A</span>, <span class="extype" name="com.spotify.scio.transforms.AsyncLookupDoFn.Try">Try</span>[<span class="extype" name="com.spotify.scio.transforms.AsyncLookupDoFn.B">B</span>]]]</span>
+        <a title="" href="BaseAsyncDoFn.html"><span class="name">BaseAsyncDoFn</span></a><span class="tparams">[<span name="InputT">InputT</span>, <span name="OutputT">OutputT</span>, <span name="ResourceT">ResourceT</span>, <span name="FutureT">FutureT</span>]</span><span class="result"> extends <a href="DoFnWithResource.html" class="extype" name="com.spotify.scio.transforms.DoFnWithResource">DoFnWithResource</a>[<span class="extype" name="com.spotify.scio.transforms.BaseAsyncDoFn.InputT">InputT</span>, <span class="extype" name="com.spotify.scio.transforms.BaseAsyncDoFn.OutputT">OutputT</span>, <span class="extype" name="com.spotify.scio.transforms.BaseAsyncDoFn.ResourceT">ResourceT</span>] with <span class="extype" name="com.spotify.scio.transforms.FutureHandlers.Base">Base</span>[<span class="extype" name="com.spotify.scio.transforms.BaseAsyncDoFn.FutureT">FutureT</span>, <span class="extype" name="com.spotify.scio.transforms.BaseAsyncDoFn.OutputT">OutputT</span>]</span>
       </span>
       
       
-    </li><li name="com.spotify.scio.transforms.BaseAsyncDoFn" visbl="pub" class="indented0 " data-isabs="true" fullComment="no" group="Ungrouped">
-      <a id="BaseAsyncDoFn[InputT,OutputT,ResourceT,FutureT]extendsDoFnWithResource[InputT,OutputT,ResourceT]"></a><a id="BaseAsyncDoFn[InputT,OutputT,ResourceT,FutureT]:BaseAsyncDoFn[InputT,OutputT,ResourceT,FutureT]"></a>
+    </li><li name="com.spotify.scio.transforms.BaseAsyncLookupDoFn" visbl="pub" class="indented0 " data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="BaseAsyncLookupDoFn[A,B,C,F,T]extendsDoFn[A,org.apache.beam.sdk.values.KV[A,T]]withFutureHandlers.Base[F,B]"></a><a id="BaseAsyncLookupDoFn[A,B,C,F,T]:BaseAsyncLookupDoFn[A,B,C,F,T]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/transforms/index.html#BaseAsyncDoFn[InputT,OutputT,ResourceT,FutureT]extendsDoFnWithResource[InputT,OutputT,ResourceT]" title="Permalink">
+      <a href="../../../../com/spotify/scio/transforms/index.html#BaseAsyncLookupDoFn[A,B,C,F,T]extendsDoFn[A,org.apache.beam.sdk.values.KV[A,T]]withFutureHandlers.Base[F,B]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -625,7 +645,7 @@ detects the query's dialect. To override this, start the query with either <code
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <a title="" href="BaseAsyncDoFn.html"><span class="name">BaseAsyncDoFn</span></a><span class="tparams">[<span name="InputT">InputT</span>, <span name="OutputT">OutputT</span>, <span name="ResourceT">ResourceT</span>, <span name="FutureT">FutureT</span>]</span><span class="result"> extends <a href="DoFnWithResource.html" class="extype" name="com.spotify.scio.transforms.DoFnWithResource">DoFnWithResource</a>[<span class="extype" name="com.spotify.scio.transforms.BaseAsyncDoFn.InputT">InputT</span>, <span class="extype" name="com.spotify.scio.transforms.BaseAsyncDoFn.OutputT">OutputT</span>, <span class="extype" name="com.spotify.scio.transforms.BaseAsyncDoFn.ResourceT">ResourceT</span>]</span>
+        <a title="" href="BaseAsyncLookupDoFn.html"><span class="name">BaseAsyncLookupDoFn</span></a><span class="tparams">[<span name="A">A</span>, <span name="B">B</span>, <span name="C">C</span>, <span name="F">F</span>, <span name="T">T</span>]</span><span class="result"> extends <span class="extype" name="org.apache.beam.sdk.transforms.DoFn">DoFn</span>[<span class="extype" name="com.spotify.scio.transforms.BaseAsyncLookupDoFn.A">A</span>, <span class="extype" name="org.apache.beam.sdk.values.KV">KV</span>[<span class="extype" name="com.spotify.scio.transforms.BaseAsyncLookupDoFn.A">A</span>, <span class="extype" name="com.spotify.scio.transforms.BaseAsyncLookupDoFn.T">T</span>]] with <span class="extype" name="com.spotify.scio.transforms.FutureHandlers.Base">Base</span>[<span class="extype" name="com.spotify.scio.transforms.BaseAsyncLookupDoFn.F">F</span>, <span class="extype" name="com.spotify.scio.transforms.BaseAsyncLookupDoFn.B">B</span>]</span>
       </span>
       
       
@@ -679,10 +699,26 @@ parallelism, where <code>parallelism</code> is the number of concurrent <code>Do
       </span>
       
       
-    </li><li name="com.spotify.scio.transforms.GuavaAsyncDoFn" visbl="pub" class="indented0 " data-isabs="true" fullComment="no" group="Ungrouped">
-      <a id="GuavaAsyncDoFn[InputT,OutputT,ResourceT]extendsBaseAsyncDoFn[InputT,OutputT,ResourceT,com.google.common.util.concurrent.ListenableFuture[OutputT]]"></a><a id="GuavaAsyncDoFn[InputT,OutputT,ResourceT]:GuavaAsyncDoFn[InputT,OutputT,ResourceT]"></a>
+    </li><li name="com.spotify.scio.transforms.FutureHandlers" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="FutureHandlersextendsObject"></a><a id="FutureHandlers:FutureHandlers"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/transforms/index.html#GuavaAsyncDoFn[InputT,OutputT,ResourceT]extendsBaseAsyncDoFn[InputT,OutputT,ResourceT,com.google.common.util.concurrent.ListenableFuture[OutputT]]" title="Permalink">
+      <a href="../../../../com/spotify/scio/transforms/index.html#FutureHandlersextendsObject" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="FutureHandlers.html"><span class="name">FutureHandlers</span></a><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
+      </span>
+      
+      
+    </li><li name="com.spotify.scio.transforms.GuavaAsyncDoFn" visbl="pub" class="indented0 " data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="GuavaAsyncDoFn[InputT,OutputT,ResourceT]extendsBaseAsyncDoFn[InputT,OutputT,ResourceT,com.google.common.util.concurrent.ListenableFuture[OutputT]]withFutureHandlers.Guava[OutputT]"></a><a id="GuavaAsyncDoFn[InputT,OutputT,ResourceT]:GuavaAsyncDoFn[InputT,OutputT,ResourceT]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/transforms/index.html#GuavaAsyncDoFn[InputT,OutputT,ResourceT]extendsBaseAsyncDoFn[InputT,OutputT,ResourceT,com.google.common.util.concurrent.ListenableFuture[OutputT]]withFutureHandlers.Guava[OutputT]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -691,14 +727,30 @@ parallelism, where <code>parallelism</code> is the number of concurrent <code>Do
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <a title="" href="GuavaAsyncDoFn.html"><span class="name">GuavaAsyncDoFn</span></a><span class="tparams">[<span name="InputT">InputT</span>, <span name="OutputT">OutputT</span>, <span name="ResourceT">ResourceT</span>]</span><span class="result"> extends <a href="BaseAsyncDoFn.html" class="extype" name="com.spotify.scio.transforms.BaseAsyncDoFn">BaseAsyncDoFn</a>[<span class="extype" name="com.spotify.scio.transforms.GuavaAsyncDoFn.InputT">InputT</span>, <span class="extype" name="com.spotify.scio.transforms.GuavaAsyncDoFn.OutputT">OutputT</span>, <span class="extype" name="com.spotify.scio.transforms.GuavaAsyncDoFn.ResourceT">ResourceT</span>, <span class="extype" name="com.google.common.util.concurrent.ListenableFuture">ListenableFuture</span>[<span class="extype" name="com.spotify.scio.transforms.GuavaAsyncDoFn.OutputT">OutputT</span>]]</span>
+        <a title="" href="GuavaAsyncDoFn.html"><span class="name">GuavaAsyncDoFn</span></a><span class="tparams">[<span name="InputT">InputT</span>, <span name="OutputT">OutputT</span>, <span name="ResourceT">ResourceT</span>]</span><span class="result"> extends <a href="BaseAsyncDoFn.html" class="extype" name="com.spotify.scio.transforms.BaseAsyncDoFn">BaseAsyncDoFn</a>[<span class="extype" name="com.spotify.scio.transforms.GuavaAsyncDoFn.InputT">InputT</span>, <span class="extype" name="com.spotify.scio.transforms.GuavaAsyncDoFn.OutputT">OutputT</span>, <span class="extype" name="com.spotify.scio.transforms.GuavaAsyncDoFn.ResourceT">ResourceT</span>, <span class="extype" name="com.google.common.util.concurrent.ListenableFuture">ListenableFuture</span>[<span class="extype" name="com.spotify.scio.transforms.GuavaAsyncDoFn.OutputT">OutputT</span>]] with <span class="extype" name="com.spotify.scio.transforms.FutureHandlers.Guava">Guava</span>[<span class="extype" name="com.spotify.scio.transforms.GuavaAsyncDoFn.OutputT">OutputT</span>]</span>
+      </span>
+      
+      
+    </li><li name="com.spotify.scio.transforms.GuavaAsyncLookupDoFn" visbl="pub" class="indented0 " data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="GuavaAsyncLookupDoFn[A,B,C]extendsBaseAsyncLookupDoFn[A,B,C,com.google.common.util.concurrent.ListenableFuture[B],com.spotify.scio.transforms.BaseAsyncLookupDoFn.Try[B]]withFutureHandlers.Guava[B]"></a><a id="GuavaAsyncLookupDoFn[A,B,C]:GuavaAsyncLookupDoFn[A,B,C]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/transforms/index.html#GuavaAsyncLookupDoFn[A,B,C]extendsBaseAsyncLookupDoFn[A,B,C,com.google.common.util.concurrent.ListenableFuture[B],com.spotify.scio.transforms.BaseAsyncLookupDoFn.Try[B]]withFutureHandlers.Guava[B]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">abstract </span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="GuavaAsyncLookupDoFn.html"><span class="name">GuavaAsyncLookupDoFn</span></a><span class="tparams">[<span name="A">A</span>, <span name="B">B</span>, <span name="C">C</span>]</span><span class="result"> extends <a href="BaseAsyncLookupDoFn.html" class="extype" name="com.spotify.scio.transforms.BaseAsyncLookupDoFn">BaseAsyncLookupDoFn</a>[<span class="extype" name="com.spotify.scio.transforms.GuavaAsyncLookupDoFn.A">A</span>, <span class="extype" name="com.spotify.scio.transforms.GuavaAsyncLookupDoFn.B">B</span>, <span class="extype" name="com.spotify.scio.transforms.GuavaAsyncLookupDoFn.C">C</span>, <span class="extype" name="com.google.common.util.concurrent.ListenableFuture">ListenableFuture</span>[<span class="extype" name="com.spotify.scio.transforms.GuavaAsyncLookupDoFn.B">B</span>], <span class="extype" name="com.spotify.scio.transforms.BaseAsyncLookupDoFn.Try">Try</span>[<span class="extype" name="com.spotify.scio.transforms.GuavaAsyncLookupDoFn.B">B</span>]] with <span class="extype" name="com.spotify.scio.transforms.FutureHandlers.Guava">Guava</span>[<span class="extype" name="com.spotify.scio.transforms.GuavaAsyncLookupDoFn.B">B</span>]</span>
       </span>
       
       
     </li><li name="com.spotify.scio.transforms.JavaAsyncDoFn" visbl="pub" class="indented0 " data-isabs="true" fullComment="no" group="Ungrouped">
-      <a id="JavaAsyncDoFn[InputT,OutputT,ResourceT]extendsBaseAsyncDoFn[InputT,OutputT,ResourceT,java.util.concurrent.CompletableFuture[OutputT]]"></a><a id="JavaAsyncDoFn[InputT,OutputT,ResourceT]:JavaAsyncDoFn[InputT,OutputT,ResourceT]"></a>
+      <a id="JavaAsyncDoFn[InputT,OutputT,ResourceT]extendsBaseAsyncDoFn[InputT,OutputT,ResourceT,java.util.concurrent.CompletableFuture[OutputT]]withFutureHandlers.Java[OutputT]"></a><a id="JavaAsyncDoFn[InputT,OutputT,ResourceT]:JavaAsyncDoFn[InputT,OutputT,ResourceT]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/transforms/index.html#JavaAsyncDoFn[InputT,OutputT,ResourceT]extendsBaseAsyncDoFn[InputT,OutputT,ResourceT,java.util.concurrent.CompletableFuture[OutputT]]" title="Permalink">
+      <a href="../../../../com/spotify/scio/transforms/index.html#JavaAsyncDoFn[InputT,OutputT,ResourceT]extendsBaseAsyncDoFn[InputT,OutputT,ResourceT,java.util.concurrent.CompletableFuture[OutputT]]withFutureHandlers.Java[OutputT]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -707,7 +759,23 @@ parallelism, where <code>parallelism</code> is the number of concurrent <code>Do
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <a title="" href="JavaAsyncDoFn.html"><span class="name">JavaAsyncDoFn</span></a><span class="tparams">[<span name="InputT">InputT</span>, <span name="OutputT">OutputT</span>, <span name="ResourceT">ResourceT</span>]</span><span class="result"> extends <a href="BaseAsyncDoFn.html" class="extype" name="com.spotify.scio.transforms.BaseAsyncDoFn">BaseAsyncDoFn</a>[<span class="extype" name="com.spotify.scio.transforms.JavaAsyncDoFn.InputT">InputT</span>, <span class="extype" name="com.spotify.scio.transforms.JavaAsyncDoFn.OutputT">OutputT</span>, <span class="extype" name="com.spotify.scio.transforms.JavaAsyncDoFn.ResourceT">ResourceT</span>, <span class="extype" name="java.util.concurrent.CompletableFuture">CompletableFuture</span>[<span class="extype" name="com.spotify.scio.transforms.JavaAsyncDoFn.OutputT">OutputT</span>]]</span>
+        <a title="" href="JavaAsyncDoFn.html"><span class="name">JavaAsyncDoFn</span></a><span class="tparams">[<span name="InputT">InputT</span>, <span name="OutputT">OutputT</span>, <span name="ResourceT">ResourceT</span>]</span><span class="result"> extends <a href="BaseAsyncDoFn.html" class="extype" name="com.spotify.scio.transforms.BaseAsyncDoFn">BaseAsyncDoFn</a>[<span class="extype" name="com.spotify.scio.transforms.JavaAsyncDoFn.InputT">InputT</span>, <span class="extype" name="com.spotify.scio.transforms.JavaAsyncDoFn.OutputT">OutputT</span>, <span class="extype" name="com.spotify.scio.transforms.JavaAsyncDoFn.ResourceT">ResourceT</span>, <span class="extype" name="java.util.concurrent.CompletableFuture">CompletableFuture</span>[<span class="extype" name="com.spotify.scio.transforms.JavaAsyncDoFn.OutputT">OutputT</span>]] with <span class="extype" name="com.spotify.scio.transforms.FutureHandlers.Java">Java</span>[<span class="extype" name="com.spotify.scio.transforms.JavaAsyncDoFn.OutputT">OutputT</span>]</span>
+      </span>
+      
+      
+    </li><li name="com.spotify.scio.transforms.JavaAsyncLookupDoFn" visbl="pub" class="indented0 " data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="JavaAsyncLookupDoFn[A,B,C]extendsBaseAsyncLookupDoFn[A,B,C,java.util.concurrent.CompletableFuture[B],com.spotify.scio.transforms.BaseAsyncLookupDoFn.Try[B]]withFutureHandlers.Java[B]"></a><a id="JavaAsyncLookupDoFn[A,B,C]:JavaAsyncLookupDoFn[A,B,C]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/transforms/index.html#JavaAsyncLookupDoFn[A,B,C]extendsBaseAsyncLookupDoFn[A,B,C,java.util.concurrent.CompletableFuture[B],com.spotify.scio.transforms.BaseAsyncLookupDoFn.Try[B]]withFutureHandlers.Java[B]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">abstract </span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="JavaAsyncLookupDoFn.html"><span class="name">JavaAsyncLookupDoFn</span></a><span class="tparams">[<span name="A">A</span>, <span name="B">B</span>, <span name="C">C</span>]</span><span class="result"> extends <a href="BaseAsyncLookupDoFn.html" class="extype" name="com.spotify.scio.transforms.BaseAsyncLookupDoFn">BaseAsyncLookupDoFn</a>[<span class="extype" name="com.spotify.scio.transforms.JavaAsyncLookupDoFn.A">A</span>, <span class="extype" name="com.spotify.scio.transforms.JavaAsyncLookupDoFn.B">B</span>, <span class="extype" name="com.spotify.scio.transforms.JavaAsyncLookupDoFn.C">C</span>, <span class="extype" name="java.util.concurrent.CompletableFuture">CompletableFuture</span>[<span class="extype" name="com.spotify.scio.transforms.JavaAsyncLookupDoFn.B">B</span>], <span class="extype" name="com.spotify.scio.transforms.BaseAsyncLookupDoFn.Try">Try</span>[<span class="extype" name="com.spotify.scio.transforms.JavaAsyncLookupDoFn.B">B</span>]] with <span class="extype" name="com.spotify.scio.transforms.FutureHandlers.Java">Java</span>[<span class="extype" name="com.spotify.scio.transforms.JavaAsyncLookupDoFn.B">B</span>]</span>
       </span>
       
       
@@ -776,9 +844,9 @@ parallelism, where <code>parallelism</code> is the number of concurrent <code>Do
       
       <p class="shortcomment cmt">Enhanced version of <code>AsyncLookupDoFn.Try</code> with convenience methods.</p>
     </li><li name="com.spotify.scio.transforms.ScalaAsyncDoFn" visbl="pub" class="indented0 " data-isabs="true" fullComment="no" group="Ungrouped">
-      <a id="ScalaAsyncDoFn[I,O,R]extendsBaseAsyncDoFn[I,O,R,scala.concurrent.Future[O]]"></a><a id="ScalaAsyncDoFn[I,O,R]:ScalaAsyncDoFn[I,O,R]"></a>
+      <a id="ScalaAsyncDoFn[I,O,R]extendsBaseAsyncDoFn[I,O,R,scala.concurrent.Future[O]]withScalaFutureHandlers[O]"></a><a id="ScalaAsyncDoFn[I,O,R]:ScalaAsyncDoFn[I,O,R]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/transforms/index.html#ScalaAsyncDoFn[I,O,R]extendsBaseAsyncDoFn[I,O,R,scala.concurrent.Future[O]]" title="Permalink">
+      <a href="../../../../com/spotify/scio/transforms/index.html#ScalaAsyncDoFn[I,O,R]extendsBaseAsyncDoFn[I,O,R,scala.concurrent.Future[O]]withScalaFutureHandlers[O]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -787,11 +855,45 @@ parallelism, where <code>parallelism</code> is the number of concurrent <code>Do
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <a title="A DoFn that handles asynchronous requests to an external service that returns Scala Futures." href="ScalaAsyncDoFn.html"><span class="name">ScalaAsyncDoFn</span></a><span class="tparams">[<span name="I">I</span>, <span name="O">O</span>, <span name="R">R</span>]</span><span class="result"> extends <a href="BaseAsyncDoFn.html" class="extype" name="com.spotify.scio.transforms.BaseAsyncDoFn">BaseAsyncDoFn</a>[<span class="extype" name="com.spotify.scio.transforms.ScalaAsyncDoFn.I">I</span>, <span class="extype" name="com.spotify.scio.transforms.ScalaAsyncDoFn.O">O</span>, <span class="extype" name="com.spotify.scio.transforms.ScalaAsyncDoFn.R">R</span>, <span class="extype" name="scala.concurrent.Future">Future</span>[<span class="extype" name="com.spotify.scio.transforms.ScalaAsyncDoFn.O">O</span>]]</span>
+        <a title="A DoFn that handles asynchronous requests to an external service that returns Scala Futures." href="ScalaAsyncDoFn.html"><span class="name">ScalaAsyncDoFn</span></a><span class="tparams">[<span name="I">I</span>, <span name="O">O</span>, <span name="R">R</span>]</span><span class="result"> extends <a href="BaseAsyncDoFn.html" class="extype" name="com.spotify.scio.transforms.BaseAsyncDoFn">BaseAsyncDoFn</a>[<span class="extype" name="com.spotify.scio.transforms.ScalaAsyncDoFn.I">I</span>, <span class="extype" name="com.spotify.scio.transforms.ScalaAsyncDoFn.O">O</span>, <span class="extype" name="com.spotify.scio.transforms.ScalaAsyncDoFn.R">R</span>, <span class="extype" name="scala.concurrent.Future">Future</span>[<span class="extype" name="com.spotify.scio.transforms.ScalaAsyncDoFn.O">O</span>]] with <a href="ScalaFutureHandlers.html" class="extype" name="com.spotify.scio.transforms.ScalaFutureHandlers">ScalaFutureHandlers</a>[<span class="extype" name="com.spotify.scio.transforms.ScalaAsyncDoFn.O">O</span>]</span>
       </span>
       
       <p class="shortcomment cmt">A <span class="extype" name="org.apache.beam.sdk.transforms.DoFn">DoFn</span> that handles asynchronous requests to an
 external service that returns Scala <span class="extype" name="Future">Future</span>s.</p>
+    </li><li name="com.spotify.scio.transforms.ScalaAsyncLookupDoFn" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
+      <a id="ScalaAsyncLookupDoFn[A,B,C]extendsBaseAsyncLookupDoFn[A,B,C,scala.concurrent.Future[B],scala.util.Try[B]]withScalaFutureHandlers[B]"></a><a id="ScalaAsyncLookupDoFn[A,B,C]:ScalaAsyncLookupDoFn[A,B,C]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/transforms/index.html#ScalaAsyncLookupDoFn[A,B,C]extendsBaseAsyncLookupDoFn[A,B,C,scala.concurrent.Future[B],scala.util.Try[B]]withScalaFutureHandlers[B]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">abstract </span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a title="A DoFn that performs asynchronous lookup using the provided client for Scala Future." href="ScalaAsyncLookupDoFn.html"><span class="name">ScalaAsyncLookupDoFn</span></a><span class="tparams">[<span name="A">A</span>, <span name="B">B</span>, <span name="C">C</span>]</span><span class="result"> extends <a href="BaseAsyncLookupDoFn.html" class="extype" name="com.spotify.scio.transforms.BaseAsyncLookupDoFn">BaseAsyncLookupDoFn</a>[<span class="extype" name="com.spotify.scio.transforms.ScalaAsyncLookupDoFn.A">A</span>, <span class="extype" name="com.spotify.scio.transforms.ScalaAsyncLookupDoFn.B">B</span>, <span class="extype" name="com.spotify.scio.transforms.ScalaAsyncLookupDoFn.C">C</span>, <span class="extype" name="scala.concurrent.Future">Future</span>[<span class="extype" name="com.spotify.scio.transforms.ScalaAsyncLookupDoFn.B">B</span>], <span class="extype" name="scala.util.Try">Try</span>[<span class="extype" name="com.spotify.scio.transforms.ScalaAsyncLookupDoFn.B">B</span>]] with <a href="ScalaFutureHandlers.html" class="extype" name="com.spotify.scio.transforms.ScalaFutureHandlers">ScalaFutureHandlers</a>[<span class="extype" name="com.spotify.scio.transforms.ScalaAsyncLookupDoFn.B">B</span>]</span>
+      </span>
+      
+      <p class="shortcomment cmt">A <span class="extype" name="org.apache.beam.sdk.transforms.DoFn">DoFn</span> that performs asynchronous lookup using the
+provided client for Scala <span class="extype" name="Future">Future</span>.</p><div class="fullcomment"><div class="comment cmt"><p>A <span class="extype" name="org.apache.beam.sdk.transforms.DoFn">DoFn</span> that performs asynchronous lookup using the
+provided client for Scala <span class="extype" name="Future">Future</span>.</p></div><dl class="paramcmts block"><dt class="tparam">A</dt><dd class="cmt"><p>input element type.</p></dd><dt class="tparam">B</dt><dd class="cmt"><p>client lookup value type.</p></dd><dt class="tparam">C</dt><dd class="cmt"><p>client type.</p></dd></dl></div>
+    </li><li name="com.spotify.scio.transforms.ScalaFutureHandlers" visbl="pub" class="indented0 " data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="ScalaFutureHandlers[T]extendsFutureHandlers.Base[scala.concurrent.Future[T],T]"></a><a id="ScalaFutureHandlers[T]:ScalaFutureHandlers[T]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/transforms/index.html#ScalaFutureHandlers[T]extendsFutureHandlers.Base[scala.concurrent.Future[T],T]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a title="A FutureHandlers.Base implementation for Scala Future." href="ScalaFutureHandlers.html"><span class="name">ScalaFutureHandlers</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <span class="extype" name="com.spotify.scio.transforms.FutureHandlers.Base">Base</span>[<span class="extype" name="scala.concurrent.Future">Future</span>[<span class="extype" name="com.spotify.scio.transforms.ScalaFutureHandlers.T">T</span>], <span class="extype" name="com.spotify.scio.transforms.ScalaFutureHandlers.T">T</span>]</span>
+      </span>
+      
+      <p class="shortcomment cmt">A <span class="extype" name="FutureHandlers.Base">FutureHandlers.Base</span> implementation for Scala <span class="extype" name="Future">Future</span>.</p>
     </li><li name="com.spotify.scio.transforms.SpecializedFlatMapSCollection" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="SpecializedFlatMapSCollection[T]extendsAnyVal"></a><a id="SpecializedFlatMapSCollection[T]:SpecializedFlatMapSCollection[T]"></a>
       <span class="permalink">

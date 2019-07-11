@@ -397,9 +397,9 @@ To be used in a <a href="PipelineSpec.html" class="extype" name="com.spotify.sci
               
         </dd></dl></div>
     </li><li name="com.spotify.scio.testing.JobTest.Builder#counter" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="counter(counter:org.apache.beam.sdk.metrics.Counter)(assertion:Long=&gt;Unit):com.spotify.scio.testing.JobTest.Builder"></a><a id="counter(Counter)((Long)⇒Unit):Builder"></a>
+      <a id="counter(counter:org.apache.beam.sdk.metrics.Counter)(assertion:Long=&gt;Any):com.spotify.scio.testing.JobTest.Builder"></a><a id="counter(Counter)((Long)⇒Any):Builder"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/testing/JobTest$$Builder.html#counter(counter:org.apache.beam.sdk.metrics.Counter)(assertion:Long=&gt;Unit):com.spotify.scio.testing.JobTest.Builder" title="Permalink">
+      <a href="../../../../com/spotify/scio/testing/JobTest$$Builder.html#counter(counter:org.apache.beam.sdk.metrics.Counter)(assertion:Long=&gt;Any):com.spotify.scio.testing.JobTest.Builder" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -408,7 +408,7 @@ To be used in a <a href="PipelineSpec.html" class="extype" name="com.spotify.sci
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">counter</span><span class="params">(<span name="counter">counter: <span class="extype" name="org.apache.beam.sdk.metrics.Counter">Counter</span></span>)</span><span class="params">(<span name="assertion">assertion: (<span class="extype" name="scala.Long">Long</span>) ⇒ <span class="extype" name="scala.Unit">Unit</span></span>)</span><span class="result">: <a href="" class="extype" name="com.spotify.scio.testing.JobTest.Builder">Builder</a></span>
+        <span class="name">counter</span><span class="params">(<span name="counter">counter: <span class="extype" name="org.apache.beam.sdk.metrics.Counter">Counter</span></span>)</span><span class="params">(<span name="assertion">assertion: (<span class="extype" name="scala.Long">Long</span>) ⇒ <span class="extype" name="scala.Any">Any</span></span>)</span><span class="result">: <a href="" class="extype" name="com.spotify.scio.testing.JobTest.Builder">Builder</a></span>
       </span>
       
       <p class="shortcomment cmt">Evaluate a <span class="extype" name="org.apache.beam.sdk.metrics.Counter">Counter</span> in the pipeline being tested.</p><div class="fullcomment"><div class="comment cmt"><p>Evaluate a <span class="extype" name="org.apache.beam.sdk.metrics.Counter">Counter</span> in the pipeline being tested.</p></div><dl class="paramcmts block"><dt class="param">counter</dt><dd class="cmt"><p>counter to be evaluated</p></dd><dt class="param">assertion</dt><dd class="cmt"><p>assertion for the counter result's committed value</p></dd></dl></div>
@@ -451,9 +451,9 @@ match the one used inside the pipeline, e.g. <code>DistCacheIO[Set[String]](&quo
 <code>sc.distCache(&quot;dc.txt&quot;)(f =&gt; scala.io.Source.fromFile(f).getLines().toSet)</code>.
 </p></div><dl class="paramcmts block"><dt class="param">initFn</dt><dd class="cmt"><p>init function, must be serializable.</p></dd></dl></div>
     </li><li name="com.spotify.scio.testing.JobTest.Builder#distribution" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="distribution(distribution:org.apache.beam.sdk.metrics.Distribution)(assertion:org.apache.beam.sdk.metrics.DistributionResult=&gt;Unit):com.spotify.scio.testing.JobTest.Builder"></a><a id="distribution(Distribution)((DistributionResult)⇒Unit):Builder"></a>
+      <a id="distribution(distribution:org.apache.beam.sdk.metrics.Distribution)(assertion:org.apache.beam.sdk.metrics.DistributionResult=&gt;Any):com.spotify.scio.testing.JobTest.Builder"></a><a id="distribution(Distribution)((DistributionResult)⇒Any):Builder"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/testing/JobTest$$Builder.html#distribution(distribution:org.apache.beam.sdk.metrics.Distribution)(assertion:org.apache.beam.sdk.metrics.DistributionResult=&gt;Unit):com.spotify.scio.testing.JobTest.Builder" title="Permalink">
+      <a href="../../../../com/spotify/scio/testing/JobTest$$Builder.html#distribution(distribution:org.apache.beam.sdk.metrics.Distribution)(assertion:org.apache.beam.sdk.metrics.DistributionResult=&gt;Any):com.spotify.scio.testing.JobTest.Builder" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -462,7 +462,7 @@ match the one used inside the pipeline, e.g. <code>DistCacheIO[Set[String]](&quo
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">distribution</span><span class="params">(<span name="distribution">distribution: <span class="extype" name="org.apache.beam.sdk.metrics.Distribution">Distribution</span></span>)</span><span class="params">(<span name="assertion">assertion: (<span class="extype" name="org.apache.beam.sdk.metrics.DistributionResult">DistributionResult</span>) ⇒ <span class="extype" name="scala.Unit">Unit</span></span>)</span><span class="result">: <a href="" class="extype" name="com.spotify.scio.testing.JobTest.Builder">Builder</a></span>
+        <span class="name">distribution</span><span class="params">(<span name="distribution">distribution: <span class="extype" name="org.apache.beam.sdk.metrics.Distribution">Distribution</span></span>)</span><span class="params">(<span name="assertion">assertion: (<span class="extype" name="org.apache.beam.sdk.metrics.DistributionResult">DistributionResult</span>) ⇒ <span class="extype" name="scala.Any">Any</span></span>)</span><span class="result">: <a href="" class="extype" name="com.spotify.scio.testing.JobTest.Builder">Builder</a></span>
       </span>
       
       <p class="shortcomment cmt">Evaluate a <span class="extype" name="org.apache.beam.sdk.metrics.Distribution">Distribution</span> in the pipeline being
@@ -523,9 +523,9 @@ tested.</p></div><dl class="paramcmts block"><dt class="param">distribution</dt>
               
         </dd></dl></div>
     </li><li name="com.spotify.scio.testing.JobTest.Builder#gauge" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="gauge(gauge:org.apache.beam.sdk.metrics.Gauge)(assertion:org.apache.beam.sdk.metrics.GaugeResult=&gt;Unit):com.spotify.scio.testing.JobTest.Builder"></a><a id="gauge(Gauge)((GaugeResult)⇒Unit):Builder"></a>
+      <a id="gauge(gauge:org.apache.beam.sdk.metrics.Gauge)(assertion:org.apache.beam.sdk.metrics.GaugeResult=&gt;Any):com.spotify.scio.testing.JobTest.Builder"></a><a id="gauge(Gauge)((GaugeResult)⇒Any):Builder"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/testing/JobTest$$Builder.html#gauge(gauge:org.apache.beam.sdk.metrics.Gauge)(assertion:org.apache.beam.sdk.metrics.GaugeResult=&gt;Unit):com.spotify.scio.testing.JobTest.Builder" title="Permalink">
+      <a href="../../../../com/spotify/scio/testing/JobTest$$Builder.html#gauge(gauge:org.apache.beam.sdk.metrics.Gauge)(assertion:org.apache.beam.sdk.metrics.GaugeResult=&gt;Any):com.spotify.scio.testing.JobTest.Builder" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -534,7 +534,7 @@ tested.</p></div><dl class="paramcmts block"><dt class="param">distribution</dt>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">gauge</span><span class="params">(<span name="gauge">gauge: <span class="extype" name="org.apache.beam.sdk.metrics.Gauge">Gauge</span></span>)</span><span class="params">(<span name="assertion">assertion: (<span class="extype" name="org.apache.beam.sdk.metrics.GaugeResult">GaugeResult</span>) ⇒ <span class="extype" name="scala.Unit">Unit</span></span>)</span><span class="result">: <a href="" class="extype" name="com.spotify.scio.testing.JobTest.Builder">Builder</a></span>
+        <span class="name">gauge</span><span class="params">(<span name="gauge">gauge: <span class="extype" name="org.apache.beam.sdk.metrics.Gauge">Gauge</span></span>)</span><span class="params">(<span name="assertion">assertion: (<span class="extype" name="org.apache.beam.sdk.metrics.GaugeResult">GaugeResult</span>) ⇒ <span class="extype" name="scala.Any">Any</span></span>)</span><span class="result">: <a href="" class="extype" name="com.spotify.scio.testing.JobTest.Builder">Builder</a></span>
       </span>
       
       <p class="shortcomment cmt">Evaluate a <span class="extype" name="org.apache.beam.sdk.metrics.Gauge">Gauge</span> in the pipeline being tested.</p><div class="fullcomment"><div class="comment cmt"><p>Evaluate a <span class="extype" name="org.apache.beam.sdk.metrics.Gauge">Gauge</span> in the pipeline being tested.</p></div><dl class="paramcmts block"><dt class="param">gauge</dt><dd class="cmt"><p>gauge to be evaluated</p></dd><dt class="param">assertion</dt><dd class="cmt"><p>assertion for the gauge result's committed value</p></dd></dl></div>
@@ -685,9 +685,9 @@ tested. Note that <code>PTransform</code> inputs may not be supported for all <c
               
         </dd></dl></div>
     </li><li name="com.spotify.scio.testing.JobTest.Builder#output" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="output[T](io:com.spotify.scio.io.ScioIO[T])(assertion:com.spotify.scio.values.SCollection[T]=&gt;Unit):com.spotify.scio.testing.JobTest.Builder"></a><a id="output[T](ScioIO[T])((SCollection[T])⇒Unit):Builder"></a>
+      <a id="output[T](io:com.spotify.scio.io.ScioIO[T])(assertion:com.spotify.scio.values.SCollection[T]=&gt;Any):com.spotify.scio.testing.JobTest.Builder"></a><a id="output[T](ScioIO[T])((SCollection[T])⇒Any):Builder"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/testing/JobTest$$Builder.html#output[T](io:com.spotify.scio.io.ScioIO[T])(assertion:com.spotify.scio.values.SCollection[T]=&gt;Unit):com.spotify.scio.testing.JobTest.Builder" title="Permalink">
+      <a href="../../../../com/spotify/scio/testing/JobTest$$Builder.html#output[T](io:com.spotify.scio.io.ScioIO[T])(assertion:com.spotify.scio.values.SCollection[T]=&gt;Any):com.spotify.scio.testing.JobTest.Builder" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -696,7 +696,7 @@ tested. Note that <code>PTransform</code> inputs may not be supported for all <c
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">output</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="io">io: <a href="../io/ScioIO.html" class="extype" name="com.spotify.scio.io.ScioIO">ScioIO</a>[<span class="extype" name="com.spotify.scio.testing.JobTest.Builder.output.T">T</span>]</span>)</span><span class="params">(<span name="assertion">assertion: (<a href="../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.testing.JobTest.Builder.output.T">T</span>]) ⇒ <span class="extype" name="scala.Unit">Unit</span></span>)</span><span class="result">: <a href="" class="extype" name="com.spotify.scio.testing.JobTest.Builder">Builder</a></span>
+        <span class="name">output</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="io">io: <a href="../io/ScioIO.html" class="extype" name="com.spotify.scio.io.ScioIO">ScioIO</a>[<span class="extype" name="com.spotify.scio.testing.JobTest.Builder.output.T">T</span>]</span>)</span><span class="params">(<span name="assertion">assertion: (<a href="../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.testing.JobTest.Builder.output.T">T</span>]) ⇒ <span class="extype" name="scala.Any">Any</span></span>)</span><span class="result">: <a href="" class="extype" name="com.spotify.scio.testing.JobTest.Builder">Builder</a></span>
       </span>
       
       <p class="shortcomment cmt">Evaluate an output of the pipeline being tested.</p><div class="fullcomment"><div class="comment cmt"><p>Evaluate an output of the pipeline being tested. Note that <code>TestIO[T]</code> must match the one

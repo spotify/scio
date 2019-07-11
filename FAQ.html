@@ -294,7 +294,7 @@ spotify/scio
     <li><a href="FAQ.html#how-do-i-fix-invalid-default-bigquery-credentials-" class="header">How do I fix invalid default BigQuery credentials?</a></li>
     <li><a href="FAQ.html#why-are-my-typed-bigquery-case-classes-not-up-to-date-" class="header">Why are my typed BigQuery case classes not up to date?</a></li>
     <li><a href="FAQ.html#how-do-i-fix-with-bigquery-" class="header">How do I fix &ldquo;SocketTimeoutException&rdquo; with BigQuery?</a></li>
-    <li><a href="FAQ.html#why-do-i-see-names-like-in-the-ui-" class="header">Why do I see names like &ldquo;<a href="mailto:&#109;a&#x69;&#x6e;&#x40;&#123;&#78;a&#116;&#105;&#x76;e&#77;&#101;&#116;&#x68;&#111;d&#65;cce&#115;&#x73;&#x6f;&#x72;I&#x6d;pl&#46;&#46;&#46;&#125;">&#109;a&#x69;&#x6e;&#x40;&#123;&#78;a&#116;&#105;&#x76;e&#77;&#101;&#116;&#x68;&#111;d&#65;cce&#115;&#x73;&#x6f;&#x72;I&#x6d;pl&#46;&#46;&#46;&#125;</a>&rdquo; in the UI?</a></li>
+    <li><a href="FAQ.html#why-do-i-see-names-like-in-the-ui-" class="header">Why do I see names like &ldquo;<a href="mailto:&#x6d;a&#105;&#110;@{&#78;&#x61;&#x74;&#x69;&#x76;&#101;&#77;&#x65;&#x74;&#x68;&#x6f;&#x64;A&#99;&#x63;&#x65;&#115;&#115;&#x6f;&#114;Im&#112;&#x6c;.&#46;&#x2e;&#125;">&#x6d;a&#105;&#110;@{&#78;&#x61;&#x74;&#x69;&#x76;&#101;&#77;&#x65;&#x74;&#x68;&#x6f;&#x64;A&#99;&#x63;&#x65;&#115;&#115;&#x6f;&#114;Im&#112;&#x6c;.&#46;&#x2e;&#125;</a>&rdquo; in the UI?</a></li>
     <li><a href="FAQ.html#how-do-i-fix-error-" class="header">How do I fix &ldquo;RESOURCE_EXHAUSTED&rdquo; error?</a></li>
     <li><a href="FAQ.html#can-i-use-trait-instead-of-method-" class="header">Can I use &ldquo;scala.App&rdquo; trait instead of &ldquo;main&rdquo; method?</a></li>
     <li><a href="FAQ.html#how-to-inspect-the-content-of-an-scollection-" class="header">How to inspect the content of an <code>SCollection</code>?</a></li>
@@ -544,7 +544,7 @@ object BQPartitionedJob {
 <ul>
   <li>For Scio version &gt;= <code>0.4.0</code></li>
 </ul>
-<p>Starting from Scio <code>0.4.0</code> you can use Apache Beam&rsquo;s <a href="https://beam.apache.org/releases/javadoc/2.12.0/?org/apache/beam/sdk/io/FileSystems.html">Filesystems</a> abstraction:</p>
+<p>Starting from Scio <code>0.4.0</code> you can use Apache Beam&rsquo;s <a href="https://beam.apache.org/releases/javadoc/2.13.0/?org/apache/beam/sdk/io/FileSystems.html">Filesystems</a> abstraction:</p>
 <pre class="prettyprint"><code class="language-scala">import org.apache.beam.sdk.io.FileSystems
 // the path can be any of the supported Filesystems, e.g. local, GCS, HDFS
 def readmeResource = FileSystems.matchNewResource(&quot;gs://&lt;bucket&gt;/README.md&quot;, isDirectory = false)
@@ -554,7 +554,7 @@ def readme = FileSystems.open(readmeResource)
   <li>For Scio version &lt; <code>0.4.0</code></li>
 </ul><div class="callout note "><div class="callout-title">Note</div>
 <p>This part is GCS specific.</p></div>
-<p>You can get a <a href="https://beam.apache.org/releases/javadoc/2.12.0/?org/apache/beam/sdk/extensions/gcp/options/GcsOptions.html#getGcsUtil--"><code>GcsUtil</code></a> instance from <code>ScioContext</code>, which can be used to open GCS files in read or write mode.</p>
+<p>You can get a <a href="https://beam.apache.org/releases/javadoc/2.13.0/?org/apache/beam/sdk/extensions/gcp/options/GcsOptions.html#getGcsUtil--"><code>GcsUtil</code></a> instance from <code>ScioContext</code>, which can be used to open GCS files in read or write mode.</p>
 <pre class="prettyprint"><code class="language-scala">import com.spotify.scio.ContextAndArgs
 import org.apache.beam.sdk.extensions.gcp.options.GcsOptions
 
@@ -721,7 +721,7 @@ def main(cmdlineArgs: Array[String]): Unit = {
 <p>It can be fixed by increasing the timeout settings (default 20s).</p>
 <pre class="prettyprint"><code class="language-bash">sbt -Dbigquery.connect_timeout=30000 -Dbigquery.read_timeout=30000
 </code></pre>
-<h4><a href="#why-do-i-see-names-like-in-the-ui-" name="why-do-i-see-names-like-in-the-ui-" class="anchor"><span class="anchor-link"></span></a>Why do I see names like &ldquo;<a href="mailto:m&#97;&#105;&#110;&#x40;&#x7b;&#x4e;&#x61;&#116;&#105;v&#x65;&#77;e&#x74;&#x68;o&#100;&#65;&#99;c&#101;&#x73;s&#x6f;&#x72;Imp&#x6c;&#x2e;&#46;.&#125;">m&#97;&#105;&#110;&#x40;&#x7b;&#x4e;&#x61;&#116;&#105;v&#x65;&#77;e&#x74;&#x68;o&#100;&#65;&#99;c&#101;&#x73;s&#x6f;&#x72;Imp&#x6c;&#x2e;&#46;.&#125;</a>&rdquo; in the UI?</h4>
+<h4><a href="#why-do-i-see-names-like-in-the-ui-" name="why-do-i-see-names-like-in-the-ui-" class="anchor"><span class="anchor-link"></span></a>Why do I see names like &ldquo;<a href="mailto:&#x6d;&#x61;&#x69;&#110;@&#123;&#x4e;&#x61;&#116;&#x69;ve&#77;e&#x74;&#104;&#x6f;&#x64;&#x41;c&#99;e&#x73;&#x73;&#111;&#x72;&#73;&#x6d;&#x70;&#x6c;&#46;.&#46;&#x7d;">&#x6d;&#x61;&#x69;&#110;@&#123;&#x4e;&#x61;&#116;&#x69;ve&#77;e&#x74;&#104;&#x6f;&#x64;&#x41;c&#99;e&#x73;&#x73;&#111;&#x72;&#73;&#x6d;&#x70;&#x6c;&#46;.&#46;&#x7d;</a>&rdquo; in the UI?</h4>
 <p>Scio traverses JVM stack trace to figure out the proper name of each transform, i.e. <code>flatMap@{UserAnalysis.scala:30}</code> but may get confused if your jobs are under the <code>com.spotify.scio</code> package. Move them to a different package, e.g. <code>com.spotify.analytics</code> to fix the issue.</p>
 <h4><a href="#how-do-i-fix-error-" name="how-do-i-fix-error-" class="anchor"><span class="anchor-link"></span></a>How do I fix &ldquo;RESOURCE_EXHAUSTED&rdquo; error?</h4>
 <p>You might see errors like <code>RESOURCE_EXHAUSTED: IO error: No space left on disk</code> in a job. They usually indicate that you have allocated insufficient local disk space to process your job. If you are running your job with default settings, your job is running on 3 workers, each with 250 GB of local disk space. Consider modifying the default settings to increase the number of workers available to your job (via <code>--numWorkers</code>), to increase the default disk size per worker (via <code>--diskSizeGb</code>).</p>
@@ -730,7 +730,7 @@ def main(cmdlineArgs: Array[String]): Unit = {
 <h4><a href="#how-to-inspect-the-content-of-an-scollection-" name="how-to-inspect-the-content-of-an-scollection-" class="anchor"><span class="anchor-link"></span></a>How to inspect the content of an <code>SCollection</code>?</h4>
 <p>There is multiple options here: - Use <code>debug()</code> method on an <code>SCollection</code> to print its content as the data flows through the DAG during the execution (after the <code>close</code> or <code>closeAndCollect</code>) - Use a debugger and setup break points - make sure to break inside of your functions to stop control at the execution not the pipeline construction time - In <a href="./Scio-REPL.html">Scio-REPL</a>, use <code>closeAndCollect()</code> to close the context and materialize the content of an <code>SCollection</code></p>
 <h4><a href="#how-do-i-improve-side-input-performance-" name="how-do-i-improve-side-input-performance-" class="anchor"><span class="anchor-link"></span></a>How do I improve side input performance?</h4>
-<p>By default Dataflow workers allocate 100MB (see <a href="https://beam.apache.org/releases/javadoc/2.12.0/?org/apache/beam/runners/dataflow/options/DataflowWorkerHarnessOptions.html#getWorkerCacheMb--">DataflowWorkerHarnessOptions#getWorkerCacheMb</a>) of memory for caching side inputs, and falls back to disk or network. Therefore jobs with large side inputs may be slow. To override this default, register <code>DataflowWorkerHarnessOptions</code> before parsing command line arguments and then pass <code>--workerCacheMb=N</code> when submitting the job.</p>
+<p>By default Dataflow workers allocate 100MB (see <a href="https://beam.apache.org/releases/javadoc/2.13.0/?org/apache/beam/runners/dataflow/options/DataflowWorkerHarnessOptions.html#getWorkerCacheMb--">DataflowWorkerHarnessOptions#getWorkerCacheMb</a>) of memory for caching side inputs, and falls back to disk or network. Therefore jobs with large side inputs may be slow. To override this default, register <code>DataflowWorkerHarnessOptions</code> before parsing command line arguments and then pass <code>--workerCacheMb=N</code> when submitting the job.</p>
 <pre class="prettyprint"><code class="language-scala">import com.spotify.scio._
 import org.apache.beam.sdk.options.PipelineOptionsFactory
 import org.apache.beam.runners.dataflow.options.DataflowWorkerHarnessOptions

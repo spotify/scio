@@ -230,30 +230,67 @@ spotify/scio
 <h1><a href="#avro" name="avro" class="anchor"><span class="anchor-link"></span></a>Avro</h1>
 <h2><a href="#read-avro-files" name="read-avro-files" class="anchor"><span class="anchor-link"></span></a>Read Avro files</h2>
 <p>Scio comes with support for reading Avro files. Avro supports generic or specific records, Scio supports both via the same method (<code>avroFile</code>), but depending on the type parameter.</p>
-<h3><a href="#specific-record-" name="specific-record-" class="anchor"><span class="anchor-link"></span></a>Specific record:</h3>
-<pre><code># SpecificRecordClass is compiled from Avro schema files
-sc.avroFile[SpecificRecordClass](&quot;gs://path-to-data/lake/part-*.avro&quot;)
-  .map(record =&gt; ???)
-# `record` is of your SpecificRecordClass type
+<h3><a href="#read-specific-records" name="read-specific-records" class="anchor"><span class="anchor-link"></span></a>Read Specific records</h3>
+<pre class="prettyprint"><code class="language-scala">import com.spotify.scio.ScioContext
+import com.spotify.scio.avro._
+
+import org.apache.avro.specific.SpecificRecord
+
+def sc: ScioContext = ???
+
+// SpecificRecordClass is compiled from Avro schema files
+def result = sc.avroFile[SpecificRecord](&quot;gs://path-to-data/lake/part-*.avro&quot;)
 </code></pre>
-<h3><a href="#generic-record-" name="generic-record-" class="anchor"><span class="anchor-link"></span></a>Generic record:</h3>
-<pre><code>import org.apache.avro.generic.GenericRecord
-sc.avroFile[GenericRecord](&quot;gs://path-to-data/lake/part-*.avro&quot;, yourAvroSchema)
-  .map(record =&gt; ???)
-# `record` is of GenericRecord type
+<h3><a href="#read-generic-records" name="read-generic-records" class="anchor"><span class="anchor-link"></span></a>Read Generic records</h3>
+<pre class="prettyprint"><code class="language-scala">import com.spotify.scio.ScioContext
+import com.spotify.scio.avro._
+
+import org.apache.avro.generic.GenericRecord
+import org.apache.avro.Schema
+
+def yourAvroSchema: Schema = ???
+
+def sc: ScioContext = ???
+
+def result = sc.avroFile[GenericRecord](&quot;gs://path-to-data/lake/part-*.avro&quot;, yourAvroSchema)
+// `record` is of GenericRecord type
 </code></pre>
 <h2><a href="#write-avro-files" name="write-avro-files" class="anchor"><span class="anchor-link"></span></a>Write Avro files</h2>
 <p>Scio comes with support for writing Avro files. Avro supports generic or specific records, Scio supports both via the same method (<code>saveAsAvroFile</code>), but depending on the type of the content of <code>SCollection</code>.</p>
-<h3><a href="#specific-record-" name="specific-record-" class="anchor"><span class="anchor-link"></span></a>Specific record:</h3>
-<pre><code># type of Avro specific records will hold information about schema,
-# therefor Scio will figure out the schema by itself
-sc.map(&lt;build Avro specific records&gt;)
-  .saveAsAvroFile(&quot;gs://path-to-data/lake/output&quot;)
+<h3><a href="#write-specific-records" name="write-specific-records" class="anchor"><span class="anchor-link"></span></a>Write Specific records</h3>
+<pre class="prettyprint"><code class="language-scala">import com.spotify.scio.values.SCollection
+import com.spotify.scio.avro._
+
+import org.apache.avro.specific.SpecificRecord
+
+case class Foo(x: Int, s: String)
+def sc: SCollection[Foo] = ???
+
+// convert to avro SpecificRecord
+def fn(f: Foo): SpecificRecord = ???
+
+// type of Avro specific records will hold information about schema,
+// therefor Scio will figure out the schema by itself
+
+def result =  sc.map(fn).saveAsAvroFile(&quot;gs://path-to-data/lake/output&quot;)
 </code></pre>
-<h3><a href="#generic-record-" name="generic-record-" class="anchor"><span class="anchor-link"></span></a>Generic record:</h3>
-<pre><code># writing Avro generic records requires additional argument `schema`
-sc.map(&lt;build Avro generic records&gt;)
-  .saveAsAvroFile(&quot;gs://path-to-data/lake/output&quot;, schema = yourAvroSchema)
+<h3><a href="#write-generic-records" name="write-generic-records" class="anchor"><span class="anchor-link"></span></a>Write Generic records</h3>
+<pre class="prettyprint"><code class="language-scala">import com.spotify.scio.values.SCollection
+import com.spotify.scio.avro._
+
+import org.apache.avro.generic.GenericRecord
+import org.apache.avro.Schema
+
+case class Foo(x: Int, s: String)
+def sc: SCollection[Foo] = ???
+
+def yourAvroSchema: Schema = ???
+
+// convert to avro SpecificRecord
+def fn(f: Foo): GenericRecord = ???
+
+// writing Avro generic records requires additional argument `schema`
+def result =  sc.map(fn).saveAsAvroFile(&quot;gs://path-to-data/lake/output&quot;, schema = yourAvroSchema)
 </code></pre>
 <h2><a href="#rules-for-schema-evolution" name="rules-for-schema-evolution" class="anchor"><span class="anchor-link"></span></a>Rules for schema evolution</h2>
 <ul>
