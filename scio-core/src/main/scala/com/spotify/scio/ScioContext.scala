@@ -556,7 +556,7 @@ class ScioContext private[scio] (val options: PipelineOptions, private var artif
 
     if (_counters.nonEmpty) {
       val counters = _counters.toArray
-      this.parallelize(Seq(0)).map { _ =>
+      this.parallelize(Seq(0)).withName("Initialize counters").map { _ =>
         counters.foreach(_.inc(0))
       }
     }
