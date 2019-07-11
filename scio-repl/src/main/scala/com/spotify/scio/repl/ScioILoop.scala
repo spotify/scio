@@ -180,9 +180,12 @@ class ScioILoop(
   // =======================================================================
 
   private def optsFromArgs(args: Seq[String]): String = {
+    val options = args ++ args
+      .find(_.startsWith("--appName"))
+      .fold(Option("--appName=sciorepl"))(_ => Option.empty[String])
     val factory = "org.apache.beam.sdk.options.PipelineOptionsFactory"
-    val argsStr = args.mkString("\"", "\", \"", "\"")
-    s"""$factory.fromArgs($argsStr).create()"""
+    val optionsAsStr = options.mkString("\"", "\", \"", "\"")
+    s"""$factory.fromArgs($optionsAsStr).create()"""
   }
 
   private def welcome(): Unit = {
