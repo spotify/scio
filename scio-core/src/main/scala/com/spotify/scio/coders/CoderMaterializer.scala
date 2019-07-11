@@ -30,8 +30,7 @@ object CoderMaterializer {
     coder: Coder[T],
     r: CoderRegistry = CoderRegistry.createDefault(),
     o: PipelineOptions = PipelineOptionsFactory.create()
-  ): BCoder[T] =
-    beam(r, o, coder)
+  ): BCoder[T] = beam(r, o, coder)
 
   @inline private def nullCoder[T](o: PipelineOptions, c: BCoder[T]) = {
     val nullableCoder = o.as(classOf[com.spotify.scio.options.ScioOptions]).getNullableCoders()
@@ -39,7 +38,18 @@ object CoderMaterializer {
     else c
   }
 
-  final def beam[T](r: CoderRegistry, o: PipelineOptions, coder: Coder[T]): BCoder[T] = {
+  final def beam[T](
+    r: CoderRegistry,
+    o: PipelineOptions,
+    coder: Coder[T]
+  ): BCoder[T] = beamImpl(r, o, coder, Map.empty)
+
+  final private def beamImpl[T](
+    r: CoderRegistry,
+    o: PipelineOptions,
+    coder: Coder[T],
+    refs: Map[String, RefCoder[_]]
+  ): BCoder[T] = {
     coder match {
       // #1734: do not wrap native beam coders
       case Beam(c) if c.getClass.getPackage.getName.startsWith("org.apache.beam") =>
@@ -50,13 +60,13 @@ object CoderMaterializer {
         val kryoCoder = new KryoAtomicCoder[T](KryoOptions(o))
         WrappedBCoder.create(nullCoder(o, kryoCoder))
       case Transform(c, f) =>
-        val u = f(beam(r, o, c))
-        WrappedBCoder.create(beam(r, o, u))
+        val u = f(beamImpl(r, o, c, refs))
+        WrappedBCoder.create(beamImpl(r, o, u, refs))
       case Record(typeName, coders, construct, destruct) =>
         WrappedBCoder.create(
           new RecordCoder(
             typeName,
-            coders.map(c => c._1 -> nullCoder(o, beam(r, o, c._2))),
+            coders.map(c => c._1 -> nullCoder(o, beamImpl(r, o, c._2, refs))),
             construct,
             destruct
           )
@@ -66,13 +76,21 @@ object CoderMaterializer {
           // `.map(identity) is really needed to make Map serializable.
           DisjunctionCoder(
             typeName,
-            beam(r, o, idCoder),
+            beamImpl(r, o, idCoder, refs),
             id,
-            coders.mapValues(u => beam(r, o, u)).map(identity)
+            coders.mapValues(u => beamImpl(r, o, u, refs)).map(identity)
           )
         )
       case KVCoder(koder, voder) =>
-        WrappedBCoder.create(KvCoder.of(beam(r, o, koder), beam(r, o, voder)))
+        WrappedBCoder.create(KvCoder.of(beamImpl(r, o, koder, refs), beamImpl(r, o, voder, refs)))
+      case Ref(t, c) =>
+        refs
+          .get(t)
+          .getOrElse {
+            lazy val bc: BCoder[T] = beamImpl(r, o, c, refs + (t -> RefCoder(t, bc)))
+            bc
+          }
+          .asInstanceOf[BCoder[T]]
     }
   }
 
