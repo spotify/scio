@@ -36,6 +36,7 @@ import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{CreateDisposition, 
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
 import scala.language.implicitConversions
+import com.spotify.scio.bigquery.Table
 
 /** Enhanced version of [[SCollection]] with BigQuery methods. */
 final class SCollectionTableRowOps[T <: TableRow](private val self: SCollection[T]) extends AnyVal {
@@ -60,7 +61,7 @@ final class SCollectionTableRowOps[T <: TableRow](private val self: SCollection[
         tableDescription,
         timePartitioning
       )
-    self.asInstanceOf[SCollection[TableRow]].write(BigQueryTable(table))(param)
+    self.asInstanceOf[SCollection[TableRow]].write(BigQueryTable(Table.Ref(table)))(param)
   }
 
   /**
@@ -85,7 +86,7 @@ final class SCollectionTableRowOps[T <: TableRow](private val self: SCollection[
       )
     self
       .asInstanceOf[SCollection[TableRow]]
-      .write(BigQueryTable(tableSpec))(param)
+      .write(BigQueryTable(Table.Spec(tableSpec)))(param)
   }
 
   /**
@@ -119,7 +120,7 @@ final class SCollectionTypedOps[T <: HasAnnotation](private val self: SCollectio
     val param =
       TableWriteParam(writeDisposition, createDisposition, timePartitioning)
     self
-      .write(BigQueryTyped.Table(table))(param)
+      .write(BigQueryTyped.Table(Table.Ref(table)))(param)
       .asInstanceOf[ClosedTap[T]]
   }
 
@@ -162,7 +163,7 @@ final class SCollectionTypedOps[T <: HasAnnotation](private val self: SCollectio
     val param =
       TableWriteParam(writeDisposition, createDisposition, timePartitioning)
     self
-      .write(BigQueryTyped.Table[T](tableSpec))(param)
+      .write(BigQueryTyped.Table[T](Table.Spec(tableSpec)))(param)
       .asInstanceOf[ClosedTap[T]]
   }
 }
