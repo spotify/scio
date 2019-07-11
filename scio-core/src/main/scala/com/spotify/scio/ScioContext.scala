@@ -627,7 +627,7 @@ class ScioContext private[scio] (val options: PipelineOptions, private var artif
   }
 
   /**
-   * Runs the uderlying pipeline according to the options used to create this context.
+   * Runs the underlying pipeline according to the options used to create this context.
    * Running closes the context and no operation can be performed once the context is closed.
    */
   def run(): ScioExecutionContext = run(ScioRunner.default)
@@ -635,7 +635,7 @@ class ScioContext private[scio] (val options: PipelineOptions, private var artif
   def run(runner: ScioRunner): ScioExecutionContext = runner.run(this)
 
   /** Close the context. No operation can be performed once the context is closed. */
-  @deprecated("this method will me removed in next scio version", "Scio 0.8.0")
+  @deprecated("this method will be removed in next scio version", "Scio 0.8.0")
   def close(): ScioExecutionContext = requireNotClosed {
     val closedContext = run()
 
