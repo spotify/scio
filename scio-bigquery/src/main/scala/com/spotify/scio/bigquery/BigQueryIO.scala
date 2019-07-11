@@ -27,7 +27,7 @@ import com.spotify.scio.bigquery.ExtendedErrorInfo._
 import com.spotify.scio.bigquery.client.BigQuery
 import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
-import com.spotify.scio.io.{ScioIO, Tap, UnsupportedTap, TapOf, TestIO}
+import com.spotify.scio.io.{ScioIO, Tap, TapOf, TestIO, UnsupportedTap}
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.extensions.gcp.options.GcpOptions
