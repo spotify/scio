@@ -51,6 +51,16 @@ object TypeProviderTest {
   @description("Table S4")
   class S4
 
+  @BigQueryType.fromSchema(
+    """
+      |{
+      |  "fields": [
+      |    {"mode": "REPEATED", "name": "f1", "type": "INTEGER", "description": "description"}
+      |  ]
+      |}
+    """.stripMargin
+  )
+  class RecordWithDescription
 }
 
 // TODO: mock BigQueryClient for fromTable and fromQuery
@@ -81,6 +91,10 @@ class TypeProviderTest extends FlatSpec with Matchers {
 
   it should "be serializable" in {
     SerializableUtils.ensureSerializable(S1(1))
+  }
+
+  it should "infer the same schema" in {
+    BigQueryType[RecordWithDescription].schema shouldBe RecordWithDescription.schema
   }
 
   "BigQueryTag" should "be a serializable annotation" in {
