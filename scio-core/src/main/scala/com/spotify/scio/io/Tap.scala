@@ -65,9 +65,9 @@ case object EmptyTap extends Tap[Nothing] {
   override def open(sc: ScioContext): SCollection[Nothing] = sc.empty[Nothing]
 }
 
-case class NotImplementedTap[T](msg: String) extends Tap[T] {
-  override def value: Iterator[T] = throw new NotImplementedError(msg)
-  override def open(sc: ScioContext): SCollection[T] = throw new NotImplementedError(msg)
+case class UnsupportedTap[T](msg: String) extends Tap[T] {
+  override def value: Iterator[T] = throw new UnsupportedOperationException(msg)
+  override def open(sc: ScioContext): SCollection[T] = throw new UnsupportedOperationException(msg)
 }
 
 /** Tap for text files on local file system or GCS. */
