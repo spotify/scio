@@ -54,10 +54,10 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
   /**
    * Get an SCollection of type [[T]] for data stored in Avro format after applying
    * parseFn to map a serialized [[org.apache.avro.generic.GenericRecord GenericRecord]]
-    * to type [[T]].
+   * to type [[T]].
    *
-   * This API should be used with caution as the `parseFn` reads from a `GenericRecord` and hence is
-   * not type checked.
+   * This API should be used with caution as the `parseFn` reads from a `GenericRecord` and hence
+   * is not type checked.
    *
    * This is intended to be used when attempting to read `GenericRecord`s without specifying a
    * schema (hence the writer schema is used to deserialize) and then directly converting
@@ -71,7 +71,7 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
    * {{{
    *   val sColl: SCollection[CaseClass] =
    *     sc.parseAvroFile("gs://.....")(
-   *       g => CaseClass(g.get("id"), g.get("name"))
+   *       g => CaseClass(g.get("id").asInstanceOf[Int], g.get("name").asInstanceOf[String])
    *     )
    * }}}
    *
