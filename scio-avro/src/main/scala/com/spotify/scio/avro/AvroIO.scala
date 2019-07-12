@@ -21,7 +21,7 @@ import com.google.protobuf.Message
 import com.spotify.scio.avro.types.AvroType.HasAvroAnnotation
 import com.spotify.scio.coders.{AvroBytesUtil, Coder, CoderMaterializer}
 import com.spotify.scio.io._
-import com.spotify.scio.util.ScioUtil
+import com.spotify.scio.util.{Functions, ScioUtil}
 import com.spotify.scio.values._
 import com.spotify.scio.{avro, ScioContext}
 import org.apache.avro.Schema
@@ -218,6 +218,44 @@ final case class GenericRecordIO[T: ClassTag: Coder](path: String, schema: Schem
 
   override def tap(read: ReadP): Tap[T] =
     GenericRecordTap[T](ScioUtil.addPartSuffix(path), schema)
+}
+
+/**
+ * Given a parseFn, read [[org.apache.avro.generic.GenericRecord GenericRecord]]
+ * and apply a function mapping [[GenericRecord => T]] before producing output.
+ * This IO applies the function at the time of de-serializing Avro GenericRecords.
+ *
+ * This IO doesn't define write, and should not be used to write Avro GenericRecords.
+ */
+final case class GenericRecordParseIO[T](path: String, parseFn: GenericRecord => T)(
+  implicit coder: Coder[T]
+) extends AvroIO[T] {
+  override type ReadP = Unit
+  override type WriteP = Nothing // Output is not defined for Avro Generic Parse IO.
+
+  override def testId: String = s"AvroIO($path)"
+
+  /**
+   * Get an SCollection[T] by applying the [[parseFn]] on
+   * [[org.apache.avro.generic.GenericRecord GenericRecord]]
+   * from an Avro file.
+   */
+  override protected def read(sc: ScioContext, params: Unit): SCollection[T] = {
+    val t = beam.AvroIO
+      .parseGenericRecords(Functions.serializableFn(parseFn))
+      .from(path)
+      .withCoder(CoderMaterializer.beam(sc, coder))
+
+    sc.wrap(sc.applyInternal(t))
+  }
+
+  /**
+   * Writes are undefined for [[GenericRecordParseIO]] since it is used only for reading.
+   */
+  override protected def write(data: SCollection[T], params: Nothing): Tap[T] = ???
+
+  override def tap(read: Unit): Tap[T] =
+    GenericRecordParseTap[T](ScioUtil.addPartSuffix(path), parseFn)
 }
 
 object AvroIO {
