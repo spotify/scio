@@ -76,8 +76,7 @@ object GenericParseFnAvroFileJob {
 
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
-    sc.avroFile[PartialFieldsAvro](
-        args("input"),
+    sc.parseAvroFile[PartialFieldsAvro](args("input"))(
         (gr: GenericRecord) => PartialFieldsAvro(gr.get("int_field").asInstanceOf[Int])
       )
       .map(a => AvroUtils.newGenericRecord(a.intField))

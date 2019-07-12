@@ -55,7 +55,7 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
    * parseFn to map a serialized [[org.apache.avro.generic.GenericRecord GenericRecord]]
    * to type [[T]]
    */
-  def avroFile[T: Coder](path: String, parseFn: GenericRecord => T): SCollection[T] =
+  def parseAvroFile[T: Coder](path: String)(parseFn: GenericRecord => T): SCollection[T] =
     self.read(GenericRecordParseIO[T](path, parseFn))
 
   /**

@@ -73,7 +73,7 @@ final case class GenericRecordParseTap[T: Coder](
       .avroFile[GenericRecord](schema = null)
       .map(parseFn)
 
-  override def open(sc: ScioContext): SCollection[T] = sc.avroFile(path, parseFn)
+  override def open(sc: ScioContext): SCollection[T] = sc.parseAvroFile(path)(parseFn)
 }
 
 /**

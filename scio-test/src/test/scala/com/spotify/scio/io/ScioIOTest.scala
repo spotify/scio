@@ -67,8 +67,7 @@ class ScioIOTest extends ScioIOSpec {
     val xs = (1 to 100).map(PartialFieldsAvro)
     // No test for saveAsAvroFile because parseFn is only for i/p
     testJobTest(xs)(AvroIO(_))(
-      _.avroFile[PartialFieldsAvro](
-        _,
+      _.parseAvroFile[PartialFieldsAvro](_)(
         (gr: GenericRecord) => PartialFieldsAvro(gr.get("int_field").asInstanceOf[Int])
       )
     )(_.saveAsAvroFile(_, schema = schema))
