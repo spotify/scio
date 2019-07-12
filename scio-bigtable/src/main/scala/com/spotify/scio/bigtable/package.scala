@@ -218,6 +218,41 @@ package object bigtable {
         TableAdmin.ensureTables(bigtableOptions, tablesAndColumnFamilies)
       }
     }
+
+    /**
+     * Set cell expiration.
+     * Adds or modifies a cell expiration rule for the provided tables and column families.
+     *
+     * @param tablesAndColumnFamilies A map of tables and column families.  Keys are table names.
+     *                                Values are a list of column family names.
+     * @param cellExpiration The duration before which garbage collection of a cell may occur.
+     *                       Note: minimum granularity is second.
+     */
+    def setCellExpiration(projectId: String,
+                          instanceId: String,
+                          tablesAndColumnFamilies: Map[String, List[String]],
+                          cellExpiration: Duration): Unit = {
+      val bigtableOptions = new BigtableOptions.Builder()
+        .setProjectId(projectId)
+        .setInstanceId(instanceId)
+        .build
+      TableAdmin.setCellExpiration(bigtableOptions, tablesAndColumnFamilies, cellExpiration)
+    }
+
+    /**
+     * Set cell expiration.
+     * Adds or modifies a cell expiration rule for the provided tables and column families.
+     *
+     * @param tablesAndColumnFamilies A map of tables and column families.  Keys are table names.
+     *                                Values are a list of column family names.
+     * @param cellExpiration The duration before which garbage collection of a cell may occur.
+     *                       Note: minimum granularity is second.
+     */
+    def setCellExpiration(bigtableOptions: BigtableOptions,
+                          tablesAndColumnFamilies: Map[String, List[String]],
+                          cellExpiration: Duration): Unit = {
+      TableAdmin.setCellExpiration(bigtableOptions, tablesAndColumnFamilies, cellExpiration)
+    }
   }
 
   /**

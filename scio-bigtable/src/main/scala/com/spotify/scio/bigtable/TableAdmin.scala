@@ -23,7 +23,8 @@ import com.google.bigtable.admin.v2._
 import com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification
 import com.google.cloud.bigtable.config.BigtableOptions
 import com.google.cloud.bigtable.grpc._
-import com.google.protobuf.ByteString
+import com.google.protobuf.{ByteString, Duration => ProtoDuration}
+import org.joda.time.Duration
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.collection.JavaConverters._
@@ -119,7 +120,7 @@ object TableAdmin {
       client.getTable(GetTableRequest.newBuilder().setName(tablePath).build)
 
     val modifications: List[Modification] = columnFamilies.collect {
-      case (cf) if !tableInfo.containsColumnFamilies(cf) =>
+      case cf if !tableInfo.containsColumnFamilies(cf) =>
         Modification
           .newBuilder()
           .setId(cf)
@@ -139,6 +140,75 @@ object TableAdmin {
           .build
       )
       ()
+    }
+  }
+
+  /**
+   * Set cell expiration.
+   * Adds or modifies a cell expiration rule for the provided tables and column families.
+   *
+   * @param tablesAndColumnFamilies A map of tables and column families.  Keys are table names.
+   *                                Values are a list of column family names.
+   * @param cellExpiration The duration before which garbage collection of a cell may occur.
+   *                       Note: minimum granularity is second.
+   */
+  def setCellExpiration(bigtableOptions: BigtableOptions,
+                        tablesAndColumnFamilies: Map[String, List[String]],
+                        cellExpiration: Duration): Unit = {
+    val protoDuration = ProtoDuration.newBuilder.setSeconds(cellExpiration.getStandardSeconds)
+    val gcRule = GcRule.newBuilder.setMaxAge(protoDuration).build
+    setGcRule(bigtableOptions, tablesAndColumnFamilies, gcRule)
+  }
+
+  /**
+   * Set GcRule.
+   * Adds or modifies a GcRule for the provided tables and column families.
+   *
+   * @param tablesAndColumnFamilies A map of tables and column families.  Keys are table names.
+   *                                Values are a list of column family names.
+   * @param gcRule The gcRule to set on the provided tables and families.
+   */
+  private def setGcRule(bigtableOptions: BigtableOptions,
+                        tablesAndColumnFamilies: Map[String, List[String]],
+                        gcRule: GcRule): Unit = {
+    val project = bigtableOptions.getProjectId
+    val instance = bigtableOptions.getInstanceId
+    val instancePath = s"projects/$project/instances/$instance"
+
+    adminClient(bigtableOptions) { client =>
+      tablesAndColumnFamilies.foreach { case (table, columnFamilies) =>
+        val tablePath = s"$instancePath/tables/$table"
+        val tableInfo = client.getTable(GetTableRequest.newBuilder.setName(tablePath).build)
+
+        val modifications: List[Modification] =
+          columnFamilies
+            .filter { cf =>
+              val exists = tableInfo.containsColumnFamilies(cf)
+              if (!exists)
+                log.info(
+                  s"Skipping modification for non-existent column family $cf in table $tablePath")
+              exists
+            }
+            .map { cf =>
+              Modification
+                .newBuilder()
+                .setId(cf)
+                .setUpdate(ColumnFamily
+                  .newBuilder()
+                  .setGcRule(gcRule))
+                .build()
+            }
+
+        if (modifications.nonEmpty) {
+          log.info(s"Updating gcRule for column families $columnFamilies in $tablePath")
+          client.modifyColumnFamily(
+            ModifyColumnFamiliesRequest
+              .newBuilder()
+              .setName(tablePath)
+              .addAllModifications(modifications.asJava)
+              .build)
+        }
+      }
     }
   }
 
