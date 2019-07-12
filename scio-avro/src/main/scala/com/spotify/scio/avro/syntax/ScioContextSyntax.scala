@@ -70,9 +70,9 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
    *
    * {{{
    *   val sColl: SCollection[CaseClass] =
-   *     sc.parseAvroFile("gs://.....")(
-   *       g => CaseClass(g.get("id").asInstanceOf[Int], g.get("name").asInstanceOf[String])
-   *     )
+   *     sc.parseAvroFile("gs://.....") { g => 
+   *       CaseClass(g.get("id").asInstanceOf[Int], g.get("name").asInstanceOf[String])
+   *     }
    * }}}
    *
    */
