@@ -261,6 +261,8 @@ object ScioRunner {
 
 trait ScioExecutionContext {
 
+  def pipelineResult: PipelineResult
+
   /** Whether the pipeline is completed. */
   def isCompleted: Boolean
 
@@ -289,10 +291,12 @@ trait ScioExecutionContext {
 }
 
 object ScioExecutionContext {
-  private[scio] def default(pipelineResult: PipelineResult, context: ScioContext) =
+  private[scio] def default(pr: PipelineResult, sc: ScioContext) =
     new ScioExecutionContext {
-      private[this] val DefaultAwaitDuration = context.awaitDuration
+      private[this] val DefaultAwaitDuration = sc.awaitDuration
       private[this] val DefaultCancelJob = true
+
+      override def pipelineResult: PipelineResult = pr
 
       override def isCompleted: Boolean = state.isTerminal()
 
@@ -326,7 +330,7 @@ object ScioExecutionContext {
         }
 
         new ScioResult(pipelineResult) {
-          private val metricsLocation = context.optionsAs[ScioOptions].getMetricsLocation
+          private val metricsLocation = sc.optionsAs[ScioOptions].getMetricsLocation
           if (metricsLocation != null) {
             saveMetrics(metricsLocation)
           }
@@ -335,12 +339,12 @@ object ScioExecutionContext {
             Metrics(
               BuildInfo.version,
               BuildInfo.scalaVersion,
-              context.optionsAs[ApplicationNameOptions].getAppName,
+              sc.optionsAs[ApplicationNameOptions].getAppName,
               state.toString,
               getBeamMetrics
             )
 
-          override def isTest: Boolean = context.isTest
+          override def isTest: Boolean = sc.isTest
         }
       }
 
