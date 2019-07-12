@@ -43,7 +43,7 @@ object ObjectFileJob {
     sc.objectFile[Int](args("input"))
       .map(_ * 10)
       .saveAsObjectFile(args("output"))
-    sc.close()
+    sc.run()
     ()
   }
 }
@@ -53,7 +53,7 @@ object SpecificAvroFileJob {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
     sc.avroFile[TestRecord](args("input"))
       .saveAsAvroFile(args("output"))
-    sc.close()
+    sc.run()
     ()
   }
 }
@@ -64,7 +64,7 @@ object GenericAvroFileJob {
     implicit val coder = Coder.avroGenericRecordCoder(AvroUtils.schema)
     sc.avroFile[GenericRecord](args("input"), AvroUtils.schema)
       .saveAsAvroFile(args("output"), schema = AvroUtils.schema)
-    sc.close()
+    sc.run()
     ()
   }
 }
@@ -91,7 +91,7 @@ object BigQueryJob {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
     sc.bigQueryTable(args("input"))
       .saveAsBigQuery(args("output"))
-    sc.close()
+    sc.run()
     ()
   }
 }
@@ -101,7 +101,7 @@ object TableRowJsonJob {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
     sc.tableRowJsonFile(args("input"))
       .saveAsTableRowJsonFile(args("output"))
-    sc.close()
+    sc.run()
     ()
   }
 }
@@ -111,7 +111,7 @@ object DatastoreJob {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
     sc.datastore(args("input"), null, null)
       .saveAsDatastore(args("output"))
-    sc.close()
+    sc.run()
     ()
   }
 }
@@ -122,7 +122,7 @@ object PubsubJob {
     sc.pubsubTopic[String](args("input"))
       .map(_ + "X")
       .saveAsPubsub(args("output"))
-    sc.close()
+    sc.run()
     ()
   }
 }
@@ -135,7 +135,7 @@ object PubsubWithAttributesJob {
     sc.pubsubTopicWithAttributes[String](args("input"), timestampAttribute = timestampAttribute)
       .map(kv => (kv._1 + "X", kv._2))
       .saveAsPubsubWithAttributes[String](args("output"), timestampAttribute = timestampAttribute)
-    sc.close()
+    sc.run()
     ()
   }
 }
@@ -146,7 +146,7 @@ object TextFileJob {
     sc.textFile(args("input"))
       .map(_ + "X")
       .saveAsTextFile(args("output"))
-    sc.close()
+    sc.run()
     ()
   }
 }
@@ -159,7 +159,7 @@ object DistCacheJob {
     sc.textFile(args("input"))
       .flatMap(x => dc().map(x + _))
       .saveAsTextFile(args("output"))
-    sc.close()
+    sc.run()
     ()
   }
 }
@@ -170,7 +170,7 @@ object MaterializeJob {
     val data = sc.textFile(args("input"))
     data.materialize
     data.saveAsTextFile(args("output"))
-    sc.close()
+    sc.run()
     ()
   }
 }
@@ -189,7 +189,7 @@ object CustomIOJob {
       .map(_ * 10)
       .map(_.toString)
       .saveAsCustomOutput("TextOut", outputTransform)
-    sc.close()
+    sc.run()
     ()
   }
 }
@@ -200,7 +200,7 @@ object ReadAllJob {
     sc.textFile(args("input"))
       .readAll(beam.TextIO.readAll())
       .saveAsTextFile(args("output"))
-    sc.close()
+    sc.run()
     ()
   }
 }
@@ -212,7 +212,7 @@ object ReadAllBytesJob {
       .readAllBytes
       .map(new String(_))
       .saveAsTextFile(args("output"))
-    sc.close()
+    sc.run()
     ()
   }
 }
@@ -232,7 +232,7 @@ object JobWithDuplicateInput {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
     sc.textFile(args("input"))
     sc.textFile(args("input"))
-    sc.close()
+    sc.run()
     ()
   }
 }
@@ -246,7 +246,7 @@ object JobWithDuplicateOutput {
     sc.parallelize(1 to 5)
       .saveAsTextFile(args("output"))
 
-    sc.close()
+    sc.run()
     ()
   }
 }
@@ -265,7 +265,7 @@ object MetricsJob {
         gauge.set(x)
         x
       }
-    sc.close()
+    sc.run()
     ()
   }
 }

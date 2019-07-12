@@ -145,7 +145,7 @@ object GameStats {
       .saveAsTypedBigQuery(args("output") + "_sessions")
 
     // Close context and execute the pipeline
-    val result = sc.close()
+    val result = sc.run()
     // Wait to finish processing before exiting when streaming pipeline is canceled during shutdown
     exampleUtils.waitToFinish(result.pipelineResult)
   }

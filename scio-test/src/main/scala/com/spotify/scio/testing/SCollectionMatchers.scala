@@ -68,7 +68,7 @@ trait SCollectionMatchers {
 
   /*
   Wrapper for PAssert statements. PAssert does not perform assertions or throw exceptions until
-  sc.close() is called. So MatchResult should always match true for "a should $Matcher" cases and
+  sc.run() is called. So MatchResult should always match true for "a should $Matcher" cases and
   false for "a shouldNot $Matcher" cases. We also need to run different assertions for positive
   (shouldFn) and negative (shouldNotFn) cases.
    */

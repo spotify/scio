@@ -31,7 +31,7 @@ object JdbcJob {
     sc.jdbcSelect(getReadOptions(opts))
       .map(_ + "J")
       .saveAsJdbc(getWriteOptions(opts))
-    sc.close()
+    sc.run()
     ()
   }
 

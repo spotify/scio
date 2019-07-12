@@ -49,7 +49,7 @@ object AvroInOut {
       .saveAsAvroFile(args("output"))
 
     // Close the context and execute the pipeline
-    sc.close()
+    sc.run()
     ()
   }
 }

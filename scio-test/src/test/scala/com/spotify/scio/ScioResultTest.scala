@@ -34,7 +34,7 @@ class ScioResultTest extends PipelineSpec {
   }
 
   it should "expose Beam metrics" in {
-    val r: ClosedScioContext = runWithContext { sc =>
+    val r: ScioExecutionContext = runWithContext { sc =>
       val c = ScioMetrics.counter("c")
       val d = ScioMetrics.distribution("d")
       val g = ScioMetrics.gauge("g")

@@ -82,7 +82,7 @@ object TfIdf {
       }
       .saveAsTextFile(args("output"))
 
-    sc.close()
+    sc.run()
     ()
   }
 

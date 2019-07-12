@@ -56,7 +56,7 @@ object DistCacheExample {
       .map(kv => dc().getOrElse(kv._1, "unknown") + " " + kv._2)
       .saveAsTextFile(args("output"))
 
-    sc.close()
+    sc.run()
     ()
   }
 }

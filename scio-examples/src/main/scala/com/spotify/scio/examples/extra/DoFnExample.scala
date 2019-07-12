@@ -69,7 +69,7 @@ object DoFnExample {
         private[extra] def teardown(): Unit = ()
       }))
       .saveAsTextFile(args("output"))
-    sc.close()
+    sc.run()
     ()
   }
 }

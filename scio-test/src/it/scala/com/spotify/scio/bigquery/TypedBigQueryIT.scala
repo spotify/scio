@@ -79,14 +79,14 @@ class TypedBigQueryIT extends PipelineSpec with BeforeAndAfterAll {
     val sc = ScioContext(options)
     sc.parallelize(records).saveAsTypedBigQuery(table)
 
-    sc.close()
+    sc.run()
     ()
   }
 
   "TypedBigQuery" should "read records" in {
     val sc = ScioContext(options)
     sc.typedBigQuery[Record](table) should containInAnyOrder(records)
-    sc.close()
+    sc.run()
   }
 
 }

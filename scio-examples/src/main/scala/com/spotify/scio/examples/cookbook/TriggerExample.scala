@@ -141,7 +141,7 @@ object TriggerExample {
       )
       .saveAsTypedBigQuery(args("output"))
 
-    val result = sc.close()
+    val result = sc.run()
     exampleUtils.waitToFinish(result.pipelineResult)
   }
   // scalastyle:on method.length

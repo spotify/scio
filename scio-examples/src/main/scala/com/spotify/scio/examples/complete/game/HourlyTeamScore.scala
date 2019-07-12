@@ -96,7 +96,7 @@ object HourlyTeamScore {
       .saveAsTypedBigQuery(args("output"))
 
     // Close context and execute the pipeline
-    sc.close()
+    sc.run()
     ()
   }
 

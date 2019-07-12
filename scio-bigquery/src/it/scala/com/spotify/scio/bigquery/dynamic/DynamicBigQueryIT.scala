@@ -63,7 +63,7 @@ class DynamicBigQueryIT extends FlatSpec with Matchers {
           val mod = v.getValue.key % 2
           new TableDestination(tableRef(prefix, mod.toString), s"key % 10 == $mod")
         }
-    sc.close()
+    sc.run()
 
     val expected = (1 to 10).map(newRecord).toSet
     val rows0 = bq.getTypedRows[Record](tableRef(prefix, "0").asTableSpec).toSet
@@ -83,7 +83,7 @@ class DynamicBigQueryIT extends FlatSpec with Matchers {
           val mod = v.getValue.get("key").toString.toInt % 2
           new TableDestination(tableRef(prefix, mod.toString), s"key % 10 == $mod")
         }
-    sc.close()
+    sc.run()
 
     val expected = (1 to 10).map(newRecord).toSet
     val rows0 = bq.getTypedRows[Record](tableRef(prefix, "0").asTableSpec).toSet

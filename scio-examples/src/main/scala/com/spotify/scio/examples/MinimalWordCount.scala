@@ -49,7 +49,7 @@ object MinimalWordCount {
       .saveAsTextFile(args("output"))
 
     // Close the context and execute the pipeline
-    sc.close()
+    sc.run()
     ()
   }
 }

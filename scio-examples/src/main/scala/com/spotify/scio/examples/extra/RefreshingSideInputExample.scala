@@ -104,7 +104,7 @@ object RefreshingSideInputExample {
           logger.info(s"Lottery result: $result")
       } // Can save output to PubSub, BigQuery, etc.
 
-    sc.close()
+    sc.run()
     ()
   }
 

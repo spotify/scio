@@ -42,7 +42,7 @@ object DistinctExample {
       .saveAsTextFile(out)
 
     // Close the context and execute the pipeline
-    sc.close()
+    sc.run()
     ()
   }
 }

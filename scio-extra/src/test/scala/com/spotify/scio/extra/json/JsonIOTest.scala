@@ -81,7 +81,7 @@ class JsonIOTest extends ScioIOSpec with TapSpec {
     val sc = ScioContext()
     sc.jsonFile[Record](ScioUtil.addPartSuffix(dir.getPath))
     // scalastyle:off no.whitespace.before.left.bracket
-    a[PipelineExecutionException] should be thrownBy { sc.close() }
+    a[PipelineExecutionException] should be thrownBy { sc.run() }
     // scalastyle:on no.whitespace.before.left.bracket
     FileUtils.deleteDirectory(dir)
   }

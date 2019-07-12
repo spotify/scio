@@ -59,7 +59,7 @@ object AnnoyIndexSaveExample {
     val data = (0 until 100).map(x => (x, Array.fill(40)(Random.nextFloat())))
     sc.parallelize(data).asAnnoy(args("output"), metric, dim, nTrees)
 
-    sc.close()
+    sc.run()
     ()
   }
 }
@@ -98,7 +98,7 @@ object AnnoySideInputExample {
       }
       .toSCollection
       .saveAsTextFile(args("output"))
-    sc.close()
+    sc.run()
     ()
   }
 }

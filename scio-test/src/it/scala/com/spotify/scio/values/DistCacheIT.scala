@@ -52,7 +52,7 @@ class DistCacheIT extends PipelineSpec {
       ch.write(ByteBuffer.wrap(data.mkString("\n").getBytes))
       ch.close()
       fn(sc, cache)
-      sc.close().waitUntilDone()
+      sc.run().waitUntilDone()
     } finally {
       FileSystems.delete(Seq(resourceId).asJava)
     }

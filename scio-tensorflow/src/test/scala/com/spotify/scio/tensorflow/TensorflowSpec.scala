@@ -76,7 +76,7 @@ private[tensorflow] object TFSavedJob {
       .map(_._2)
       .saveAsTextFile(args("output"))
 
-    sc.close().waitUntilDone()
+    sc.run().waitUntilDone()
     ()
   }
 }

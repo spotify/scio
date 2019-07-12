@@ -156,7 +156,7 @@ object AutoComplete {
         .saveAsDatastore(opts.as(classOf[GcpOptions]).getProject)
     }
 
-    val result = sc.close()
+    val result = sc.run()
     exampleUtils.waitToFinish(result.pipelineResult)
   }
 

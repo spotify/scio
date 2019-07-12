@@ -65,7 +65,7 @@ object StatefulExample {
       // Apply a stateful DoFn
       .applyPerKeyDoFn(new StatefulDoFn)
       .debug()
-    sc.close()
+    sc.run()
     ()
   }
 

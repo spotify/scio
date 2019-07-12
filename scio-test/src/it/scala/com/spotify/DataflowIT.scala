@@ -39,7 +39,7 @@ object DataflowIT {
         c.inc()
         true
       }
-    sc.close().waitUntilDone()
+    sc.run().waitUntilDone()
   }
 }
 

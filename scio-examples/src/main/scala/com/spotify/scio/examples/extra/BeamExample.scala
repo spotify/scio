@@ -107,7 +107,7 @@ object BeamExample {
       .saveAsCustomOutput("Output", pubsubOut(args("outputTopic")))
 
     // This calls sc.pipeline.run() under the hood
-    val closedContext = sc.close()
+    val closedContext = sc.run()
 
     // Underlying Beam pipeline result
     val pipelineResult: PipelineResult = closedContext.pipelineResult

@@ -113,7 +113,7 @@ class CassandraIT extends FlatSpec with Matchers with BeforeAndAfterAll {
       val sc = ScioContext()
       sc.parallelize(1 to n)
         .saveAsCassandra(opts)(toValues1)
-      sc.close()
+      sc.run()
 
       val result = cluster.connect().execute("SELECT * FROM scio.table1").asScala
       val expected = (1 to n).map(toValues1)
@@ -137,7 +137,7 @@ class CassandraIT extends FlatSpec with Matchers with BeforeAndAfterAll {
       val sc = ScioContext()
       sc.parallelize(1 to n)
         .saveAsCassandra(opts)(toValues2)
-      sc.close()
+      sc.run()
 
       val result = cluster.connect().execute("SELECT * FROM scio.table2").asScala
       val expected = (1 to n).map(toValues2)

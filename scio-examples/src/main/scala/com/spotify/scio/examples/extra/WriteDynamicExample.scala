@@ -51,7 +51,7 @@ object WriteDynamicExample {
         l.charAt(0).toString.toUpperCase
       }
 
-    sc.close()
+    sc.run()
     ()
   }
 }

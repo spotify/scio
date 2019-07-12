@@ -30,7 +30,7 @@ object SimpleJob {
     val output = args("output")
     sc.parallelize(1 to 5)
       .saveAsTextFile(output)
-    sc.close()
+    sc.run()
     ()
   }
 }

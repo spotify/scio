@@ -45,7 +45,7 @@ object BeamSqlWordCount {
       .saveAsTextFile(args("output"))
 
     // Close the context and execute the pipeline
-    sc.close()
+    sc.run()
     ()
   }
 

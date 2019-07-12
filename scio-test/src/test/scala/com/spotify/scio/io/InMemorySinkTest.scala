@@ -26,7 +26,7 @@ class InMemorySinkTest extends FlatSpec with Matchers {
     val sc = ScioContext.forTest()
     val items = sc.parallelize(List("String1", "String2"))
     val tap = TapOf[String].saveForTest(items)
-    sc.close().waitUntilDone()
+    sc.run().waitUntilDone()
     tap.value.toList should contain allOf ("String1", "String2")
   }
 
@@ -34,7 +34,7 @@ class InMemorySinkTest extends FlatSpec with Matchers {
     val sc = ScioContext.forTest()
     val items = sc.parallelize[String](List())
     val tap = TapOf[String].saveForTest(items)
-    sc.close().waitUntilDone()
+    sc.run().waitUntilDone()
     tap.value shouldBe empty
   }
 

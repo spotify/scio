@@ -17,7 +17,7 @@
 
 package com.spotify.scio.jmh
 
-import com.spotify.scio.{ClosedScioContext, ScioContext}
+import com.spotify.scio.{ScioContext, ScioExecutionContext}
 import com.spotify.scio.avro._
 import com.spotify.scio.coders._
 import org.apache.beam.sdk.coders.{KvCoder, Coder => BCoder}
@@ -60,11 +60,11 @@ class GroupByBenchmark {
   val avroSchema =
     new Schema.Parser().parse(schema)
 
-  private def runWithContext[T](fn: ScioContext => T): ClosedScioContext = {
+  private def runWithContext[T](fn: ScioContext => T): ScioExecutionContext = {
     val opts = PipelineOptionsFactory.as(classOf[PipelineOptions])
     val sc = ScioContext(opts)
     fn(sc)
-    sc.close()
+    sc.run()
   }
 
   val source = "src/test/resources/events-10000-0.avro"
@@ -76,7 +76,7 @@ class GroupByBenchmark {
   val kvCoder: BCoder[KV[Char, Double]] = KvCoder.of(charCoder, doubleCoder)
 
   @Benchmark
-  def testScioGroupByKey: ClosedScioContext =
+  def testScioGroupByKey: ScioExecutionContext =
     runWithContext { sc =>
       sc.avroFile[GenericRecord](source, schema = avroSchema)
         .map { rec =>
@@ -86,7 +86,7 @@ class GroupByBenchmark {
     }
 
   @Benchmark
-  def testBeamGroupByKey: ClosedScioContext =
+  def testBeamGroupByKey: ScioExecutionContext =
     runWithContext { sc =>
       sc.wrap {
           sc.avroFile[GenericRecord](source, schema = avroSchema)

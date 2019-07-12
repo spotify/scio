@@ -40,7 +40,7 @@ object TopWikipediaSessions {
     val input = sc.tableRowJsonFile(args.getOrElse("input", ExampleData.EXPORTED_WIKI_TABLE))
     computeTopSessions(input, samplingThreshold).saveAsTextFile(args("output"))
 
-    sc.close()
+    sc.run()
     ()
   }
 

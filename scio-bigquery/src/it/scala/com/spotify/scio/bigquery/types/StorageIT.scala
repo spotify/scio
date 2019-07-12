@@ -56,7 +56,7 @@ class StorageIT extends FlatSpec with Matchers {
     )
     val p = sc.typedBigQuery[Required]().internal
     PAssert.that(p).containsInAnyOrder(expected)
-    sc.close()
+    sc.run()
   }
 
   it should "work with OPTIONAL fields" in {
@@ -81,7 +81,7 @@ class StorageIT extends FlatSpec with Matchers {
     )
     val p = sc.typedBigQuery[Optional]().internal
     PAssert.that(p).containsInAnyOrder(expected)
-    sc.close()
+    sc.run()
   }
 
   it should "work with REPEATED fields" in {
@@ -106,7 +106,7 @@ class StorageIT extends FlatSpec with Matchers {
     )
     val p = sc.typedBigQuery[Repeated]().internal
     PAssert.that(p).containsInAnyOrder(expected)
-    sc.close()
+    sc.run()
   }
 
   it should "work with selectedFields" in {
@@ -123,7 +123,7 @@ class StorageIT extends FlatSpec with Matchers {
       }
       .internal
     PAssert.that(p).containsInAnyOrder(expected)
-    sc.close()
+    sc.run()
   }
 
   it should "work with rowRestriction" in {
@@ -141,7 +141,7 @@ class StorageIT extends FlatSpec with Matchers {
       }
       .internal
     PAssert.that(p).containsInAnyOrder(expected)
-    sc.close()
+    sc.run()
   }
 
   it should "work with all options" in {
@@ -158,7 +158,7 @@ class StorageIT extends FlatSpec with Matchers {
       }
       .internal
     PAssert.that(p).containsInAnyOrder(expected)
-    sc.close()
+    sc.run()
   }
 
   it should "be consistent with fromTable" in {
@@ -183,7 +183,7 @@ class StorageIT extends FlatSpec with Matchers {
     )
     val p = sc.typedBigQuery[FromTable]().internal
     PAssert.that(p).containsInAnyOrder(expected)
-    sc.close()
+    sc.run()
   }
 
   it should "be consistent with fromQuery" in {
@@ -208,7 +208,7 @@ class StorageIT extends FlatSpec with Matchers {
     )
     val p = sc.typedBigQuery[FromQuery]().internal
     PAssert.that(p).containsInAnyOrder(expected)
-    sc.close()
+    sc.run()
   }
 
   "Tap" should "support read" in {

@@ -37,7 +37,7 @@ class AnnoyTest extends PipelineSpec {
   "SCollection" should "support .asAnnoy with temporary local file" in {
     val sc = ScioContext()
     val closedTap = sc.parallelize(sideData).asAnnoy(metric, dim, nTrees).materialize
-    val scioResult = sc.close().waitUntilFinish()
+    val scioResult = sc.run().waitUntilFinish()
 
     val path = scioResult.tap(closedTap).value.next().path
     val reader = new ANNIndex(dim, path, IndexType.ANGULAR)
@@ -56,7 +56,7 @@ class AnnoyTest extends PipelineSpec {
       .asAnnoy("test.tree", metric, dim, nTrees)
       .materialize
 
-    val scioResult = sc.close().waitUntilFinish()
+    val scioResult = sc.run().waitUntilFinish()
     val path = scioResult.tap(p).value.next().path
 
     val reader = new ANNIndex(dim, path, IndexType.ANGULAR)

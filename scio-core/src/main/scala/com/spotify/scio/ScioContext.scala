@@ -233,6 +233,141 @@ object ContextAndArgs {
   }
 }
 
+trait ScioExecutor {
+  def run(sc: ScioContext): ScioExecutionContext
+}
+
+sealed trait ScioRunner extends ScioExecutor
+
+object ScioRunner {
+  def apply(exec: ScioExecutor): ScioRunner = new ScioRunner {
+    override def run(sc: ScioContext): ScioExecutionContext = {
+      val closedContext = exec.run(sc.prepare())
+
+      if (sc.isTest) {
+        val result = closedContext.waitUntilDone()
+        TestDataManager.closeTest(sc.testId.get, result)
+      }
+
+      closedContext
+    }
+  }
+
+  val default = apply(new ScioExecutor {
+    override def run(sc: ScioContext): ScioExecutionContext =
+      ScioExecutionContext.default(sc.pipeline.run(), sc)
+  })
+}
+
+trait ScioExecutionContext {
+
+  def pipelineResult: PipelineResult
+
+  /** Whether the pipeline is completed. */
+  def isCompleted: Boolean
+
+  /** Pipeline's current state. */
+  def state: State
+
+  def waitUntilFinish(): ScioResult
+  def waitUntilFinish(duration: Duration): ScioResult
+  def waitUntilFinish(cancelJob: Boolean): ScioResult
+
+  /**
+   * Wait until the pipeline finishes. If timeout duration is exceeded and `cancelJob` is set,
+   * cancel the internal [[PipelineResult]].
+   */
+  def waitUntilFinish(duration: Duration, cancelJob: Boolean): ScioResult
+
+  def waitUntilDone(): ScioResult
+  def waitUntilDone(duration: Duration): ScioResult
+  def waitUntilDone(cancelJob: Boolean): ScioResult
+
+  /**
+   * Wait until the pipeline finishes with the State `DONE` (as opposed to `CANCELLED` or
+   * `FAILED`). Throw exception otherwise.
+   */
+  def waitUntilDone(duration: Duration, cancelJob: Boolean): ScioResult
+}
+
+object ScioExecutionContext {
+  private[scio] def default(pr: PipelineResult, sc: ScioContext) =
+    new ScioExecutionContext {
+      private[this] val DefaultAwaitDuration = sc.awaitDuration
+      private[this] val DefaultCancelJob = true
+
+      override def pipelineResult: PipelineResult = pr
+
+      override def isCompleted: Boolean = state.isTerminal()
+
+      override def state: State = Try(pipelineResult.getState).getOrElse(State.UNKNOWN)
+
+      override def waitUntilFinish(): ScioResult =
+        waitUntilFinish(DefaultAwaitDuration, DefaultCancelJob)
+
+      override def waitUntilFinish(duration: Duration): ScioResult =
+        waitUntilFinish(duration, DefaultCancelJob)
+
+      override def waitUntilFinish(cancelJob: Boolean): ScioResult =
+        waitUntilFinish(DefaultAwaitDuration, cancelJob)
+
+      override def waitUntilFinish(duration: Duration, cancelJob: Boolean): ScioResult = {
+        try {
+          val wait = duration match {
+            case Duration.Inf => 0
+            case d            => d.toMillis
+          }
+          pipelineResult.waitUntilFinish(time.Duration.millis(wait))
+        } catch {
+          case e: InterruptedException =>
+            val cause = if (cancelJob) {
+              pipelineResult.cancel()
+              new InterruptedException(s"Job cancelled after exceeding timeout value $duration")
+            } else {
+              e
+            }
+            throw new PipelineExecutionException(cause)
+        }
+
+        new ScioResult(pipelineResult) {
+          private val metricsLocation = sc.optionsAs[ScioOptions].getMetricsLocation
+          if (metricsLocation != null) {
+            saveMetrics(metricsLocation)
+          }
+
+          override def getMetrics: Metrics =
+            Metrics(
+              BuildInfo.version,
+              BuildInfo.scalaVersion,
+              sc.optionsAs[ApplicationNameOptions].getAppName,
+              state.toString,
+              getBeamMetrics
+            )
+
+          override def isTest: Boolean = sc.isTest
+        }
+      }
+
+      override def waitUntilDone(): ScioResult =
+        waitUntilDone(DefaultAwaitDuration, DefaultCancelJob)
+
+      override def waitUntilDone(duration: Duration): ScioResult =
+        waitUntilDone(duration, DefaultCancelJob)
+
+      override def waitUntilDone(cancelJob: Boolean): ScioResult =
+        waitUntilDone(DefaultAwaitDuration, cancelJob)
+
+      override def waitUntilDone(duration: Duration, cancelJob: Boolean): ScioResult = {
+        val result = waitUntilFinish(duration, cancelJob)
+        if (!state.equals(State.DONE)) {
+          throw new PipelineExecutionException(new Exception(s"Job finished with state $state"))
+        }
+
+        result
+      }
+    }
+}
+
 /** Companion object for [[ScioContext]]. */
 object ScioContext {
 
@@ -325,76 +460,6 @@ object ScioContext {
 
 }
 
-final case class ClosedScioContext private (pipelineResult: PipelineResult, context: ScioContext) {
-
-  /** Get the timeout period of the Scio job. Default to `Duration.Inf`. */
-  def getAwaitDuration: Duration = context.awaitDuration
-
-  /** Whether the pipeline is completed. */
-  def isCompleted: Boolean = pipelineResult.getState.isTerminal
-
-  /** Pipeline's current state. */
-  def state: State = Try(pipelineResult.getState).getOrElse(State.UNKNOWN)
-
-  /** Wait until the pipeline finishes. If timeout duration is exceeded and `cancelJob` is set,
-   * cancel the internal [[PipelineResult]]. */
-  def waitUntilFinish(
-    duration: Duration = getAwaitDuration,
-    cancelJob: Boolean = true
-  ): ScioResult = {
-    try {
-      val wait = duration match {
-        case Duration.Inf => 0
-        case d            => d.toMillis
-      }
-      pipelineResult.waitUntilFinish(time.Duration.millis(wait))
-    } catch {
-      case e: InterruptedException =>
-        val cause = if (cancelJob) {
-          pipelineResult.cancel()
-          new InterruptedException(s"Job cancelled after exceeding timeout value $duration")
-        } else {
-          e
-        }
-        throw new PipelineExecutionException(cause)
-    }
-
-    new ScioResult(pipelineResult) {
-      private val metricsLocation = context.optionsAs[ScioOptions].getMetricsLocation
-      if (metricsLocation != null) {
-        saveMetrics(metricsLocation)
-      }
-
-      override def getMetrics: Metrics =
-        Metrics(
-          BuildInfo.version,
-          BuildInfo.scalaVersion,
-          context.optionsAs[ApplicationNameOptions].getAppName,
-          state.toString,
-          getBeamMetrics
-        )
-
-      override def isTest: Boolean = context.isTest
-    }
-  }
-
-  /**
-   * Wait until the pipeline finishes with the State `DONE` (as opposed to `CANCELLED` or
-   * `FAILED`). Throw exception otherwise.
-   */
-  def waitUntilDone(
-    duration: Duration = getAwaitDuration,
-    cancelJob: Boolean = true
-  ): ScioResult = {
-    val result = waitUntilFinish(duration, cancelJob)
-    if (!state.equals(State.DONE)) {
-      throw new PipelineExecutionException(new Exception(s"Job finished with state $state"))
-    }
-
-    result
-  }
-}
-
 /**
  * Main entry point for Scio functionality. A ScioContext represents a pipeline and can be used to
  * create SCollections and distributed caches on that cluster.
@@ -456,7 +521,7 @@ class ScioContext private[scio] (val options: PipelineOptions, private var artif
     }
 
   /** Amount of time to block job for. */
-  private[scio] val awaitDuration: Duration = {
+  val awaitDuration: Duration = {
     val blockFor = optionsAs[ScioOptions].getBlockFor
     try {
       Option(blockFor)
@@ -550,8 +615,7 @@ class ScioContext private[scio] (val options: PipelineOptions, private var artif
     options.setJobName(name)
   }
 
-  /** Close the context. No operation can be performed once the context is closed. */
-  def close(): ClosedScioContext = requireNotClosed {
+  private[scio] def prepare(): ScioContext = requireNotClosed {
     _onClose(())
 
     if (_counters.nonEmpty) {
@@ -563,15 +627,24 @@ class ScioContext private[scio] (val options: PipelineOptions, private var artif
 
     _isClosed = true
 
-    val closedContext = ClosedScioContext(this.pipeline.run(), this)
+    this
+  }
 
-    if (this.isTest || (this
-          .optionsAs[ScioOptions]
-          .isBlocking && awaitDuration == Duration.Inf)) {
-      val result = closedContext.waitUntilDone()
-      if (this.isTest) {
-        TestDataManager.closeTest(testId.get, result)
-      }
+  /**
+   * Runs the underlying pipeline according to the options used to create this context.
+   * Running closes the context and no operation can be performed once the context is closed.
+   */
+  def run(): ScioExecutionContext = run(ScioRunner.default)
+
+  def run(runner: ScioRunner): ScioExecutionContext = runner.run(this)
+
+  /** Close the context. No operation can be performed once the context is closed. */
+  @deprecated("this method will be removed in next scio version", "Scio 0.8.0")
+  def close(): ScioExecutionContext = requireNotClosed {
+    val closedContext = run()
+
+    if (optionsAs[ScioOptions].isBlocking && awaitDuration == Duration.Inf) {
+      closedContext.waitUntilDone()
     }
 
     closedContext
