@@ -17,7 +17,7 @@
 
 package com.spotify.scio.jmh
 
-import com.spotify.scio.{ScioExecutionContext, ScioContext}
+import com.spotify.scio.{ScioContext, ScioExecutionContext}
 import com.spotify.scio.avro._
 import com.spotify.scio.coders._
 import org.apache.beam.sdk.coders.{KvCoder, Coder => BCoder}
