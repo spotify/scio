@@ -19,6 +19,7 @@ package com.spotify.scio.avro.syntax
 
 import com.google.protobuf.Message
 import com.spotify.scio.ScioContext
+import com.spotify.scio.annotations.experimental
 import com.spotify.scio.avro._
 import com.spotify.scio.avro.types.AvroType.HasAvroAnnotation
 import com.spotify.scio.coders.Coder
@@ -54,7 +55,28 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
    * Get an SCollection of type [[T]] for data stored in Avro format after applying
    * parseFn to map a serialized [[org.apache.avro.generic.GenericRecord GenericRecord]]
    * to type [[T]]
+   *
+   * This API should be used with caution as the parseFn reads from a GenericRecord and hence is
+   * not type checked.
+   *
+   * This is intended to be used when attempting to read GenericRecords without specifying a
+   * schema (hence the writer schema is used to deserialize) and then directly converting
+   * to a type [[T]] using a parseFn. This avoids creation of an intermediate
+   * SCollection[GenericRecord] which can be in efficient because Coder[GenericRecord] is
+   * inefficient without a known Avro Schema.
+   *
+   * Example usage:
+   * This code reads Avro fields "id" and "name" and de-serializes only those two into CaseClass
+   *
+   * {{{
+   *   val sColl: SCollection[CaseClass] =
+   *     sc.parseAvroFile("gs://.....")(
+   *       (g: GenericRecord) => CaseClass(g.get("id"), g.get("name"))
+   *     )
+   * }}}
+   *
    */
+  @experimental
   def parseAvroFile[T: Coder](path: String)(parseFn: GenericRecord => T): SCollection[T] =
     self.read(GenericRecordParseIO[T](path, parseFn))
 
