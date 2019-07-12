@@ -218,6 +218,61 @@ package object bigtable {
         TableAdmin.ensureTables(bigtableOptions, tablesAndColumnFamilies)
       }
     }
+
+    /**
+     * Ensure that tables and column families exist.
+     * Checks for existence of tables or creates them if they do not exist.  Also checks for
+     * existence of column families within each table and creates them if they do not exist.
+     *
+     * @param tablesAndColumnFamiliesWithExpiration A map of tables and column families.
+     *                                              Keys are table names. Values are a
+     *                                              list of column family names along with
+     *                                              the desired cell expiration. Cell
+     *                                              expiration is the duration before which
+     *                                              garbage collection of a cell may occur.
+     *                                              Note: minimum granularity is second.
+     */
+    def ensureTablesWithExpiration(
+      projectId: String,
+      instanceId: String,
+      tablesAndColumnFamiliesWithExpiration: Map[String, List[(String, Option[Duration])]]
+    ): Unit = {
+      if (!self.isTest) {
+        val bigtableOptions = new BigtableOptions.Builder()
+          .setProjectId(projectId)
+          .setInstanceId(instanceId)
+          .build
+        TableAdmin.ensureTablesWithExpiration(
+          bigtableOptions,
+          tablesAndColumnFamiliesWithExpiration
+        )
+      }
+    }
+
+    /**
+     * Ensure that tables and column families exist.
+     * Checks for existence of tables or creates them if they do not exist.  Also checks for
+     * existence of column families within each table and creates them if they do not exist.
+     *
+     * @param tablesAndColumnFamiliesWithExpiration A map of tables and column families.
+     *                                              Keys are table names. Values are a
+     *                                              list of column family names along with
+     *                                              the desired cell expiration. Cell
+     *                                              expiration is the duration before which
+     *                                              garbage collection of a cell may occur.
+     *                                              Note: minimum granularity is second.
+     */
+    def ensureTablesWithExpiration(
+      bigtableOptions: BigtableOptions,
+      tablesAndColumnFamiliesWithExpiration: Map[String, List[(String, Option[Duration])]]
+    ): Unit = {
+      if (!self.isTest) {
+        TableAdmin.ensureTablesWithExpiration(
+          bigtableOptions,
+          tablesAndColumnFamiliesWithExpiration
+        )
+      }
+    }
   }
 
   /**
