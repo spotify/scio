@@ -60,7 +60,7 @@ class FileFormatTest extends PipelineSpec {
     val sc = ScioContext()
     val p = sc.protobufFile[Timestamp](getClass.getResource("/protobuf-file.avro").toString)
     p should containInAnyOrder(protobufs)
-    sc.close()
+    sc.run()
   }
 
   it should "round trip latest file format" in {

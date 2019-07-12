@@ -57,7 +57,7 @@ object TypedStorageBigQueryTornadoes {
       // Convert elements from Result to TableRow and save output to BigQuery.
       .saveAsTypedBigQuery(args("output"), WRITE_TRUNCATE, CREATE_IF_NEEDED)
 
-    sc.close()
+    sc.run()
     ()
   }
 

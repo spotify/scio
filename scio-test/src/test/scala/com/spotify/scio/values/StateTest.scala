@@ -36,7 +36,7 @@ class StateTest extends FlatSpec with Matchers {
     val b = sc.parallelize(Seq.empty[(String, Long)])
     val c = sc.parallelize(Seq.empty[(String, String)])
     f(a, b, c)
-    sc.close()
+    sc.run()
     ()
   }
 

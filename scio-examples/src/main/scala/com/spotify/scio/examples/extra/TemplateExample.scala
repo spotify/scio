@@ -83,7 +83,7 @@ object TemplateExample {
       .saveAsCustomOutput("output", outputIO)
 
     // Close the context
-    sc.close()
+    sc.run()
     ()
   }
 }

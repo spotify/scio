@@ -503,7 +503,7 @@ abstract class Benchmark(val extraConfs: Map[String, Array[String]] = Map.empty)
             sc.setAppName(confName)
             sc.setJobName(s"$prefix-$confName-$username".toLowerCase())
             run(sc)
-            val result = sc.close().waitUntilDone()
+            val result = sc.run().waitUntilDone()
             BenchmarkResult.batch(Instant.now(), confName, extraArgs, result)
           }
       }

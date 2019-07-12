@@ -120,7 +120,7 @@ class SpannerIOIT extends FlatSpec with Matchers with BeforeAndAfterAll {
     SpannerWrite(config)
       .writeWithContext(sc.parallelize(writeData.asMutations), SpannerWrite.WriteParam())
 
-    sc.close().waitUntilDone()
+    sc.run().waitUntilDone()
     readOperationResults should contain theSameElementsAs writeData.asStructs
   }
 
@@ -138,7 +138,7 @@ class SpannerIOIT extends FlatSpec with Matchers with BeforeAndAfterAll {
       )
       .materialize
 
-    val scioResult = sc.close().waitUntilDone()
+    val scioResult = sc.run().waitUntilDone()
     scioResult.tap(read).value.toList should contain theSameElementsAs spannerRows.asStructs
   }
 
@@ -156,7 +156,7 @@ class SpannerIOIT extends FlatSpec with Matchers with BeforeAndAfterAll {
       )
       .materialize
 
-    val scioResult = sc.close().waitUntilDone()
+    val scioResult = sc.run().waitUntilDone()
     scioResult.tap(read).value.toList should contain theSameElementsAs spannerRows.asStructs
   }
 }

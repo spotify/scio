@@ -41,7 +41,7 @@ object SimpleDistCacheJob {
     sc.textFile(args("input"))
       .flatMap(x => dc().map(x + _))
       .saveAsTextFile(args("output"))
-    sc.close()
+    sc.run()
     ()
   }
 }
@@ -57,7 +57,7 @@ object NonSerializableDistCacheJob {
     sc.textFile(args("input"))
       .map(_ => dc().noDefaultCntr)
       .saveAsTextFile(args("output"))
-    sc.close()
+    sc.run()
     ()
   }
 }
@@ -73,7 +73,7 @@ object AnnoyDistCacheJob {
         ann.getNearest(ann.getItemVector(id), 5).asScala
       }
       .saveAsObjectFile(args("output"))
-    sc.close()
+    sc.run()
     ()
   }
 }
@@ -86,7 +86,7 @@ object SparkeyDistCacheJob {
     sc.textFile(args("input"))
       .map(dc().getAsString)
       .saveAsTextFile(args("output"))
-    sc.close()
+    sc.run()
     ()
   }
 }

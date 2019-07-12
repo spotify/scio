@@ -37,7 +37,7 @@ object TypedAvroJob {
     sc.parallelize(Seq("a", "b", "c"))
       .map(Record(_))
       .saveAsTypedAvroFile(args("output"))
-    sc.close().waitUntilDone()
+    sc.run().waitUntilDone()
   }
 
   @AvroType.toSchema

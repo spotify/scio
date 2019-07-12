@@ -39,7 +39,7 @@ trait ScioIOSpec extends PipelineSpec {
     val sc = ScioContext()
     val data = sc.parallelize(xs)
     val closedTap = writeFn(data, tmpDir.getAbsolutePath)
-    val scioResult = sc.close().waitUntilDone()
+    val scioResult = sc.run().waitUntilDone()
     val tap = scioResult.tap(closedTap)
 
     tap.value.toSeq should contain theSameElementsAs xs
@@ -56,7 +56,7 @@ trait ScioIOSpec extends PipelineSpec {
     def runMain(args: Array[String]): Unit = {
       val (sc, argz) = ContextAndArgs(args)
       readFn(sc, argz("input")).saveAsTextFile("out")
-      sc.close()
+      sc.run()
       ()
     }
 
@@ -95,7 +95,7 @@ trait ScioIOSpec extends PipelineSpec {
     def runMain(args: Array[String]): Unit = {
       val (sc, argz) = ContextAndArgs(args)
       writeFn(sc.parallelize(xs), argz("output"))
-      sc.close()
+      sc.run()
       ()
     }
 
@@ -135,7 +135,7 @@ trait ScioIOSpec extends PipelineSpec {
       val (sc, argz) = ContextAndArgs(args)
       val data = readFn(sc, argz("input"))
       writeFn(data, argz("output"))
-      sc.close()
+      sc.run()
       ()
     }
 

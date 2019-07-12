@@ -25,7 +25,7 @@ object SequenceExamplesJob {
     val (sc, args) = ContextAndArgs(argv)
     sc.parallelize(MetadataSchemaTest.sequenceExamples)
       .saveAsTfRecordFile(args("output"))
-    sc.close()
+    sc.run()
     ()
   }
 }

@@ -38,7 +38,7 @@ object CloudSqlExample {
       .map(kv => (kv._1.toUpperCase, kv._2))
       // Write to Cloud SQL
       .saveAsJdbc(writeOptions)
-    sc.close()
+    sc.run()
     ()
   }
 

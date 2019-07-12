@@ -58,7 +58,7 @@ object TsvExampleWrite {
       .saveAsCustomOutput(output, transform)
 
     // Close the context
-    sc.close()
+    sc.run()
     ()
   }
 
@@ -96,7 +96,7 @@ object TsvExampleRead {
       // Save result as a text files under the output path
       .saveAsTextFile(args("output"))
     // Close the context
-    sc.close()
+    sc.run()
     ()
   }
 }

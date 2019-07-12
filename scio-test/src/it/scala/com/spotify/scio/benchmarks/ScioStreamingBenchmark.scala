@@ -188,7 +188,7 @@ abstract class StreamingBenchmark extends ScioJob {
 
     run(sc)
 
-    (name, sc.close())
+    (name, sc.run())
   }
 
   def outputTopic(sc: ScioContext): String =

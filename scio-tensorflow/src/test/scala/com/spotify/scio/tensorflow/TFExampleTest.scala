@@ -29,7 +29,7 @@ object ExamplesJobV2 {
     val (sc, args) = ContextAndArgs(argv)
     sc.parallelize(MetadataSchemaTest.examples)
       .saveAsTfRecordFile(args("output"))
-    sc.close()
+    sc.run()
     ()
   }
 }
@@ -62,7 +62,7 @@ object MultiSpecFeatranJob {
       .featureValues[Example]
       .saveAsTfExampleFile(args("output"))
 
-    sc.close()
+    sc.run()
     ()
   }
 

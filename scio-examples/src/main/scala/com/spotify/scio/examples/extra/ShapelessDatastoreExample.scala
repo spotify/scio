@@ -62,7 +62,7 @@ object ShapelessDatastoreWriteExample {
           .build()
       }
       .saveAsDatastore(args("output"))
-    sc.close()
+    sc.run()
     ()
   }
 }
@@ -86,7 +86,7 @@ object ShapelessDatastoreReadExample {
       .flatMap(e => wordCountType.fromEntity(e))
       .map(wc => wc.word + ": " + wc.count)
       .saveAsTextFile(args("output"))
-    sc.close()
+    sc.run()
     ()
   }
 }

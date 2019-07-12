@@ -96,7 +96,7 @@ class ScioContextTest extends PipelineSpec {
     sc.parallelize(Seq("a", "b", "c")).saveAsTextFile(output.toString)
     output.exists() shouldBe false
 
-    sc.close()
+    sc.run()
     output.exists() shouldBe true
     output.delete()
   }
@@ -110,7 +110,7 @@ class ScioContextTest extends PipelineSpec {
     sc.parallelize(Seq("a", "b", "c")).write(textIO)(TextIO.WriteParam())
     output.exists() shouldBe false
 
-    sc.close()
+    sc.run()
     output.exists() shouldBe true
     output.delete()
   }
@@ -121,7 +121,7 @@ class ScioContextTest extends PipelineSpec {
     opts.setRunner(classOf[DirectRunner])
     opts.as(classOf[ScioOptions]).setMetricsLocation(metricsFile.toString)
     val sc = ScioContext(opts)
-    sc.close().waitUntilFinish() // block non-test runner
+    sc.run().waitUntilFinish() // block non-test runner
 
     val mapper = ScioUtil.getScalaJsonMapper
 
@@ -132,9 +132,9 @@ class ScioContextTest extends PipelineSpec {
   // scalastyle:off no.whitespace.before.left.bracket
   it should "fail to close() on closed context" in {
     val sc = ScioContext()
-    sc.close()
+    sc.run()
     the[IllegalArgumentException] thrownBy {
-      sc.close()
+      sc.run()
     } should have message "requirement failed: ScioContext already closed"
   }
   // scalastyle:on no.whitespace.before.left.bracket
@@ -178,7 +178,7 @@ class ScioContextTest extends PipelineSpec {
   it should "initialize Counters which are registered by name" in {
     val sc = ScioContext()
     sc.initCounter(name = "named-counter")
-    val res = sc.close().waitUntilDone()
+    val res = sc.run().waitUntilDone()
 
     val actualCommitedCounterValue = res
       .counter(ScioMetrics.counter(name = "named-counter"))
@@ -190,7 +190,7 @@ class ScioContextTest extends PipelineSpec {
   it should "initialize Counters which are registered by name and namespace" in {
     val sc = ScioContext()
     sc.initCounter(namespace = "ns", name = "name-spaced-counter")
-    val res = sc.close().waitUntilDone()
+    val res = sc.run().waitUntilDone()
 
     val actualCommitedCounterValue = res
       .counter(ScioMetrics.counter(namespace = "ns", name = "name-spaced-counter"))
@@ -203,7 +203,7 @@ class ScioContextTest extends PipelineSpec {
     val scioCounter = ScioMetrics.counter(name = "some-counter")
     val sc = ScioContext()
     sc.initCounter(scioCounter)
-    val res = sc.close().waitUntilDone()
+    val res = sc.run().waitUntilDone()
 
     val actualCommitedCounterValue = res
       .counter(scioCounter)

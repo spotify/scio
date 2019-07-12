@@ -67,7 +67,7 @@ object WordCountOrchestration {
       .flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty))
       .countByValue
       .materialize
-    sc.close().waitUntilDone().tap(f)
+    sc.run().waitUntilDone().tap(f)
   }
 
   // Split out transform for unit testing
@@ -80,7 +80,7 @@ object WordCountOrchestration {
       .map(kv => kv._1 + " " + kv._2)
       .saveAsTextFile(outputPath)
 
-    sc.close().waitUntilDone().tap(f)
+    sc.run().waitUntilDone().tap(f)
   }
 
   // Split out transform for unit testing

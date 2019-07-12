@@ -52,7 +52,7 @@ object TFExampleExample {
       .map { case (s, c) => WordCountFeatures(s.length.toFloat, c.toFloat) }
       .map(featuresType.toExample(_))
       .saveAsTfExampleFile(args("output"))
-    sc.close()
+    sc.run()
     ()
   }
 }

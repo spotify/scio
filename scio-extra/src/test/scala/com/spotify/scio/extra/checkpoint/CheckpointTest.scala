@@ -44,7 +44,7 @@ object CheckpointMetrics {
       .map { x =>
         elemsAfter.inc(); x
       }
-    val r = sc.close().waitUntilDone()
+    val r = sc.run().waitUntilDone()
     (Try(r.counter(elemsBefore).committed.get).getOrElse(0), r.counter(elemsAfter).committed.get)
   }
 }

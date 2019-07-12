@@ -35,7 +35,7 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
     val sc = ScioContext()
     sc.parallelize(specificRecords)
       .saveAsParquetAvroFile(dir.toString)
-    sc.close()
+    sc.run()
     ()
   }
 
@@ -60,7 +60,7 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
       r.getBooleanField == null && r.getStringField == null && r.getArrayField
         .size() == 0
     }
-    sc.close()
+    sc.run()
     ()
   }
 
@@ -70,7 +70,7 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
     val data =
       sc.parquetAvroFile[TestRecord](dir + "/*.parquet", predicate = predicate)
     data.map(identity) should containInAnyOrder(specificRecords.filter(_.getIntField <= 5))
-    sc.close()
+    sc.run()
     ()
   }
 
@@ -86,7 +86,7 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
       r.getBooleanField == null && r.getStringField == null && r.getArrayField
         .size() == 0
     }
-    sc.close()
+    sc.run()
     ()
   }
 
@@ -121,7 +121,7 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
     implicit val coder = Coder.avroGenericRecordCoder(AvroUtils.schema)
     sc.parallelize(genericRecords)
       .saveAsParquetAvroFile(dir.toString, numShards = 1, schema = AvroUtils.schema)
-    sc.close()
+    sc.run()
 
     val files = dir.listFiles()
     files.length shouldBe 1

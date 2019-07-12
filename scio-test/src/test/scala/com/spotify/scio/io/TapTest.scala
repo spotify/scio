@@ -43,7 +43,7 @@ trait TapSpec extends PipelineSpec {
     tap.value.toSet shouldBe expected
     val sc = ScioContext()
     tap.open(sc) should containInAnyOrder(expected)
-    sc.close().waitUntilFinish() // block non-test runner
+    sc.run().waitUntilFinish() // block non-test runner
     ()
   }
 
@@ -55,7 +55,7 @@ trait TapSpec extends PipelineSpec {
 
   def runWithFuture[T](sc: ScioContext)(fn: ScioContext => ClosedTap[T]): Tap[T] = {
     val f = fn(sc)
-    val scioResult = sc.close().waitUntilFinish() // block non-test runner
+    val scioResult = sc.run().waitUntilFinish() // block non-test runner
     scioResult.tap(f)
   }
 
@@ -225,14 +225,14 @@ class TapTest extends TapSpec {
   it should "support waitForResult" in {
     val sc = ScioContext()
     val f = sc.parallelize(1 to 10).materialize
-    val scioResult = sc.close().waitUntilDone()
+    val scioResult = sc.run().waitUntilDone()
     scioResult.tap(f).value.toSet shouldBe (1 to 10).toSet
   }
 
   it should "support nested waitForResult" in {
     val sc = ScioContext()
     val f = sc.parallelize(1 to 10).materialize
-    val scioResult = sc.close().waitUntilDone()
+    val scioResult = sc.run().waitUntilDone()
     scioResult.tap(f).value.toSet shouldBe (1 to 10).toSet
   }
 

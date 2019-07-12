@@ -117,7 +117,7 @@ class BigtableIT extends PipelineSpec {
       val sc = ScioContext()
       sc.parallelize(testData.map(kv => toDeleteMutation(kv._1)))
         .saveAsBigtable(projectId, instanceId, tableId)
-      sc.close().waitUntilFinish()
+      sc.run().waitUntilFinish()
     }
   }
 

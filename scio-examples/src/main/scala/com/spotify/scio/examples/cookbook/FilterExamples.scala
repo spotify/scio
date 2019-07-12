@@ -83,7 +83,7 @@ object FilterExamples {
       .saveAsBigQuery(args("output"), schema, WRITE_TRUNCATE, CREATE_IF_NEEDED)
 
     // Close the context and execute the pipeline
-    sc.close()
+    sc.run()
     ()
   }
 }

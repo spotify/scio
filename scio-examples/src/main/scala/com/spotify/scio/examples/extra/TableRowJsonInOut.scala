@@ -37,7 +37,7 @@ object TableRowJsonInOut {
       .take(100)
       // Save result as text files under the output path
       .saveAsTableRowJsonFile(args("output"))
-    sc.close()
+    sc.run()
     ()
   }
 }

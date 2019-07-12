@@ -161,7 +161,7 @@ class ScioILoop(
   private def runScioCmdImpl(name: String) = {
     scioClassLoader.createReplCodeJar
     val sc = if (name.nonEmpty) name else "sc"
-    intp.interpret(s"$sc.close()")
+    intp.interpret(s"$sc.run()")
     Result.default
   }
 

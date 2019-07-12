@@ -48,7 +48,7 @@ object JavaConvertersExample {
     sc.parallelize(1 to 10)
       .map(_.toString)
       .saveAsCustomOutput(output, transform)
-    sc.close()
+    sc.run()
     ()
   }
 

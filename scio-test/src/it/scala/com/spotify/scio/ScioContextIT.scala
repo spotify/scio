@@ -66,7 +66,7 @@ class ScioContextIT extends FlatSpec with Matchers {
     val s2 = sc.empty[(String, Double)]()
     s1.join(s2)
 
-    noException shouldBe thrownBy { sc.close() }
+    noException shouldBe thrownBy { sc.run() }
   }
 
   it should "register remote file systems in the test context" in {
@@ -74,7 +74,7 @@ class ScioContextIT extends FlatSpec with Matchers {
     noException shouldBe thrownBy {
       FileSystems.matchSingleFileSpec("gs://data-integration-test-eu/shakespeare.json")
     }
-    sc.close()
+    sc.run()
   }
 
   it should "#1734: generate a reasonably sized job graph" in {
