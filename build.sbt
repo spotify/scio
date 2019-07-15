@@ -113,7 +113,7 @@ def previousVersion(currentVersion: String): Option[String] = {
 }
 
 lazy val scalafmtSettings = Seq(
-  scalafmtOnCompile := true
+  scalafmtOnCompile := false
 )
 
 val commonSettings = Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
