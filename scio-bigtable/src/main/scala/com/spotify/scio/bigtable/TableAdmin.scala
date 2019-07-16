@@ -216,23 +216,22 @@ object TableAdmin {
         val tableInfo = client.getTable(GetTableRequest.newBuilder.setName(tablePath).build)
 
         val modifications: List[Modification] =
-          columnFamilies
-            .filter { cf =>
-              val exists = tableInfo.containsColumnFamilies(cf)
-              if (!exists)
+          (columnFamilies.partition { tableInfo.containsColumnFamilies } match {
+            case (cfExists, cfDoesNotExist) =>
+              cfDoesNotExist.foreach { cf =>
                 log.info(
                   s"Skipping modification for non-existent column family $cf in table $tablePath")
-              exists
-            }
-            .map { cf =>
-              Modification
+              }
+              cfExists
+          }).map { cf =>
+            Modification
+              .newBuilder()
+              .setId(cf)
+              .setUpdate(ColumnFamily
                 .newBuilder()
-                .setId(cf)
-                .setUpdate(ColumnFamily
-                  .newBuilder()
-                  .setGcRule(gcRule))
-                .build()
-            }
+                .setGcRule(gcRule))
+              .build()
+          }
 
         if (modifications.nonEmpty) {
           log.info(s"Updating gcRule for column families $columnFamilies in $tablePath")
