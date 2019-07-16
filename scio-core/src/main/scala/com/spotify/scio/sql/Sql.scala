@@ -34,6 +34,7 @@ import org.apache.beam.sdk.extensions.sql.meta.provider.{ReadOnlyTableProvider, 
 
 import scala.util.Try
 import scala.collection.JavaConverters._
+import org.apache.commons.lang3.exception.ExceptionUtils
 
 object Sql extends SqlSCollections {
 
@@ -65,6 +66,8 @@ object Sql extends SqlSCollections {
 }
 
 private object Queries {
+  private[this] val TableNotFound = raw"(SqlValidatorException: Table '(.*)' not found)".r
+  private[this] val UnknownIdentifier = raw"(SqlValidatorException: Unknown identifier '(.*)')".r
 
   private[this] def parseQuery(
     query: String,
@@ -125,7 +128,14 @@ private object Queries {
       .toEither(schema(query, inferredSchemas, udfs))
       .left
       .map { ex =>
-        val mess = org.apache.commons.lang3.exception.ExceptionUtils.getRootCauseMessage(ex)
+        val mess = ExceptionUtils.getRootCauseMessage(ex) match {
+          case TableNotFound(msg, _) =>
+            s"$msg\nHint: incorrect table aliases are being used!"
+          case UnknownIdentifier(msg, _) =>
+            s"$msg\nHint: incorrect table aliases are being used!"
+          case msg =>
+            msg
+        }
 
         s"""
            |$mess
