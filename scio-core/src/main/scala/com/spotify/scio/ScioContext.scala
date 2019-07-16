@@ -234,6 +234,10 @@ object ContextAndArgs {
 }
 
 trait ScioExecutor {
+  def testId(sc: ScioContext): Option[String]
+
+  def isTest(sc: ScioContext): Boolean
+
   def run(sc: ScioContext): ScioExecutionContext
 }
 
@@ -241,12 +245,16 @@ sealed trait ScioRunner extends ScioExecutor
 
 object ScioRunner {
   def apply(exec: ScioExecutor): ScioRunner = new ScioRunner {
+    override def testId(sc: ScioContext): Option[String] = exec.testId(sc)
+
+    override def isTest(sc: ScioContext): Boolean = exec.isTest(sc)
+
     override def run(sc: ScioContext): ScioExecutionContext = {
       val closedContext = exec.run(sc.prepare())
 
       if (sc.isTest) {
         val result = closedContext.waitUntilDone()
-        TestDataManager.closeTest(sc.testId.get, result)
+        TestDataManager.closeTest(testId(sc).get, result)
       }
 
       closedContext
@@ -254,6 +262,18 @@ object ScioRunner {
   }
 
   val default = apply(new ScioExecutor {
+
+    override def testId(sc: ScioContext): Option[String] =
+      Try(sc.optionsAs[ApplicationNameOptions]).toOption.flatMap { o =>
+        if (TestUtil.isTestId(o.getAppName)) {
+          Some(o.getAppName)
+        } else {
+          None
+        }
+      }
+
+    override def isTest(sc: ScioContext): Boolean = testId(sc).isDefined
+
     override def run(sc: ScioContext): ScioExecutionContext =
       ScioExecutionContext.default(sc.pipeline.run(), sc)
   })
@@ -390,6 +410,10 @@ object ScioContext {
   def apply(options: PipelineOptions, artifacts: List[String]): ScioContext =
     new ScioContext(options, artifacts)
 
+  /** Create a new [[ScioContext]] instance. */
+  def apply(options: PipelineOptions, runner: ScioRunner): ScioContext =
+    new ScioContext(options, Nil, runner)
+
   /** Create a new [[ScioContext]] instance for testing. */
   def forTest(): ScioContext = {
     val opts = PipelineOptionsFactory
@@ -470,8 +494,11 @@ object ScioContext {
  * @groupname Ungrouped Other Members
  */
 // scalastyle:off number.of.methods
-class ScioContext private[scio] (val options: PipelineOptions, private var artifacts: List[String])
-    extends TransformNameable {
+class ScioContext private[scio] (
+  val options: PipelineOptions,
+  private var artifacts: List[String],
+  private val scioRunner: ScioRunner = ScioRunner.default
+) extends TransformNameable {
 
   /** Get PipelineOptions as a more specific sub-type. */
   def optionsAs[T <: PipelineOptions: ClassTag]: T =
@@ -511,14 +538,7 @@ class ScioContext private[scio] (val options: PipelineOptions, private var artif
     }
   }
 
-  private[scio] val testId: Option[String] =
-    Try(optionsAs[ApplicationNameOptions]).toOption.flatMap { o =>
-      if (TestUtil.isTestId(o.getAppName)) {
-        Some(o.getAppName)
-      } else {
-        None
-      }
-    }
+  private[scio] val testId: Option[String] = scioRunner.testId(this)
 
   /** Amount of time to block job for. */
   val awaitDuration: Duration = {
@@ -634,7 +654,7 @@ class ScioContext private[scio] (val options: PipelineOptions, private var artif
    * Runs the underlying pipeline according to the options used to create this context.
    * Running closes the context and no operation can be performed once the context is closed.
    */
-  def run(): ScioExecutionContext = run(ScioRunner.default)
+  def run(): ScioExecutionContext = run(scioRunner)
 
   def run(runner: ScioRunner): ScioExecutionContext = runner.run(this)
 
