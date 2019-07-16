@@ -51,6 +51,27 @@ object TableAdmin {
   }
 
   /**
+   * Retrieves a set of tables from the given instancePath.
+   *
+   * @param client Client for calling Bigtable.
+   * @param instancePath String of the form "projects/$project/instances/$instance".
+   * @return
+   */
+  private def fetchTables(client: BigtableTableAdminClient, instancePath: String): Set[String] = {
+    client
+      .listTables(
+        ListTablesRequest
+          .newBuilder()
+          .setParent(instancePath)
+          .build()
+      )
+      .getTablesList
+      .asScala
+      .map(t => t.getName)
+      .toSet
+  }
+
+  /**
    * Ensure that tables and column families exist.
    * Checks for existence of tables or creates them if they do not exist.  Also checks for
    * existence of column families within each table and creates them if they do not exist.
@@ -69,17 +90,7 @@ object TableAdmin {
     log.info("Ensuring tables and column families exist in instance {}", instance)
 
     adminClient(bigtableOptions) { client =>
-      val existingTables = client
-        .listTables(
-          ListTablesRequest
-            .newBuilder()
-            .setParent(instancePath)
-            .build()
-        )
-        .getTablesList
-        .asScala
-        .map(t => t.getName)
-        .toSet
+      val existingTables = fetchTables(client, instancePath)
 
       for ((table, columnFamilies) <- tablesAndColumnFamilies) {
         val tablePath = s"$instancePath/tables/$table"
@@ -175,9 +186,21 @@ object TableAdmin {
     val instance = bigtableOptions.getInstanceId
     val instancePath = s"projects/$project/instances/$instance"
 
+    val tablePathsAndColumnFamilies = tablesAndColumnFamilies.map { case (table, cfs) =>
+      s"$instancePath/tables/$table" -> cfs
+    }
+
     adminClient(bigtableOptions) { client =>
-      tablesAndColumnFamilies.foreach { case (table, columnFamilies) =>
-        val tablePath = s"$instancePath/tables/$table"
+
+      val existingTables = fetchTables(client, instancePath)
+      val nonExistent = tablePathsAndColumnFamilies.keySet.diff(existingTables)
+
+      nonExistent.foreach { table =>
+        log.info(s"Skipping modification for non-existent table $table")
+      }
+
+      (tablePathsAndColumnFamilies -- nonExistent).foreach { case (tablePath, columnFamilies) =>
+
         val tableInfo = client.getTable(GetTableRequest.newBuilder.setName(tablePath).build)
 
         val modifications: List[Modification] =
@@ -209,7 +232,7 @@ object TableAdmin {
               .build)
         }
       }
-    }
+    }.get
   }
 
   /**
