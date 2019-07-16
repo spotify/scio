@@ -410,6 +410,10 @@ object ScioContext {
   def apply(options: PipelineOptions, artifacts: List[String]): ScioContext =
     new ScioContext(options, artifacts)
 
+  /** Create a new [[ScioContext]] instance. */
+  def apply(options: PipelineOptions, runner: ScioRunner): ScioContext =
+    new ScioContext(options, Nil, runner)
+
   /** Create a new [[ScioContext]] instance for testing. */
   def forTest(): ScioContext = {
     val opts = PipelineOptionsFactory
