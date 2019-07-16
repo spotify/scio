@@ -78,14 +78,48 @@ object TableAdmin {
    *
    * @param tablesAndColumnFamilies A map of tables and column families.  Keys are table names.
    *                                Values are a list of column family names.
-   * @param cellExpiration The duration before which garbage collection of a cell may occur.
-   *                       Note: minimum granularity is second.
    */
   def ensureTables(
     bigtableOptions: BigtableOptions,
-    tablesAndColumnFamilies: Map[String, List[String]],
-    cellExpirationDuration: Option[Duration] = None
+    tablesAndColumnFamilies: Map[String, List[String]]
+  ): Unit =
+    ensureTablesImpl(bigtableOptions, tablesAndColumnFamilies).get
+
+  /**
+   * Ensure that tables and column families exist.
+   * Checks for existence of tables or creates them if they do not exist.  Also checks for
+   * existence of column families within each table and creates them if they do not exist.
+   *
+   * @param tablesAndColumnFamiliesWithExpiration A map of tables and column families.
+   *                                              Keys are table names. Values are a
+   *                                              list of column family names along with
+   *                                              the desired cell expiration. Cell
+   *                                              expiration is the duration before which
+   *                                              garbage collection of a cell may occur.
+   *                                              Note: minimum granularity is second.
+   */
+  def ensureTablesWithExpiration(
+    bigtableOptions: BigtableOptions,
+    tablesAndColumnFamiliesWithExpiration: Map[String, List[(String, Option[Duration])]]
   ): Unit = {
+    val tablesAndColumnFamilies = tablesAndColumnFamiliesWithExpiration.mapValues { _.unzip._1 }
+    ensureTablesImpl(bigtableOptions, tablesAndColumnFamilies).flatMap { _ =>
+      setCellExpiration(bigtableOptions, tablesAndColumnFamiliesWithExpiration)
+    }.get
+  }
+
+  /**
+   * Ensure that tables and column families exist.
+   * Checks for existence of tables or creates them if they do not exist.  Also checks for
+   * existence of column families within each table and creates them if they do not exist.
+   *
+   * @param tablesAndColumnFamilies A map of tables and column families.  Keys are table names.
+   *                                Values are a list of column family names.
+   */
+  private def ensureTablesImpl(
+    bigtableOptions: BigtableOptions,
+    tablesAndColumnFamilies: Map[String, List[String]]
+  ): Try[Unit] = {
     val project = bigtableOptions.getProjectId
     val instance = bigtableOptions.getInstanceId
     val instancePath = s"projects/$project/instances/$instance"
@@ -113,13 +147,7 @@ object TableAdmin {
 
         ensureColumnFamilies(client, tablePath, columnFamilies)
       }
-    }.flatMap { _ =>
-      cellExpirationDuration match {
-        case None => Try {}
-        case Some(duration) =>
-          setGcRule(bigtableOptions, tablesAndColumnFamilies, gcRuleFromDuration(duration))
-      }
-    }.get
+    }
   }
 
   /**
@@ -163,39 +191,22 @@ object TableAdmin {
     }
   }
 
-  /**
-   * Set cell expiration.
-   * Adds or modifies a cell expiration rule for the provided tables and column families.
-   *
-   * @param tablesAndColumnFamilies A map of tables and column families.  Keys are table names.
-   *                                Values are a list of column family names.
-   * @param cellExpiration The duration before which garbage collection of a cell may occur.
-   *                       Note: minimum granularity is second.
-   */
-  def setCellExpiration(
-    bigtableOptions: BigtableOptions,
-    tablesAndColumnFamilies: Map[String, List[String]],
-    cellExpiration: Duration
-  ): Unit =
-    setGcRule(bigtableOptions, tablesAndColumnFamilies, gcRuleFromDuration(cellExpiration)).get
-
   private def gcRuleFromDuration(duration: Duration): GcRule = {
     val protoDuration = ProtoDuration.newBuilder.setSeconds(duration.getStandardSeconds)
     GcRule.newBuilder.setMaxAge(protoDuration).build
   }
 
   /**
-   * Set GcRule.
+   * Set cell expiration (aka garbage collection) rule.
    * Adds or modifies a GcRule for the provided tables and column families.
    *
    * @param tablesAndColumnFamilies A map of tables and column families.  Keys are table names.
    *                                Values are a list of column family names.
    * @param gcRule The gcRule to set on the provided tables and families.
    */
-  private def setGcRule(
+  private def setCellExpiration(
     bigtableOptions: BigtableOptions,
-    tablesAndColumnFamilies: Map[String, List[String]],
-    gcRule: GcRule
+    tablesAndColumnFamilies: Map[String, List[(String, Option[Duration])]]
   ): Try[Unit] = {
     val project = bigtableOptions.getProjectId
     val instance = bigtableOptions.getInstanceId
@@ -215,32 +226,43 @@ object TableAdmin {
       }
 
       (tablePathsAndColumnFamilies -- nonExistent).foreach {
-        case (tablePath, columnFamilies) =>
+        case (tablePath, columnFamiliesWithExpiration) =>
           val tableInfo = client.getTable(GetTableRequest.newBuilder.setName(tablePath).build)
 
           val modifications: List[Modification] =
-            (columnFamilies.partition { tableInfo.containsColumnFamilies } match {
+            (columnFamiliesWithExpiration.partition {
+              case (cf, _) =>
+                tableInfo.containsColumnFamilies(cf)
+            } match {
               case (cfExists, cfDoesNotExist) =>
-                cfDoesNotExist.foreach { cf =>
-                  log.info(
-                    s"Skipping modification for non-existent column family $cf in table $tablePath"
-                  )
+                cfDoesNotExist.foreach {
+                  case (cf, _) =>
+                    log.info(
+                      s"Skipping modification for non-existent column family $cf in " +
+                        s"table $tablePath"
+                    )
                 }
                 cfExists
-            }).map { cf =>
-              Modification
-                .newBuilder()
-                .setId(cf)
-                .setUpdate(
-                  ColumnFamily
+            }).flatMap {
+              case (cf, None) => Seq()
+              case (cf, Some(duration)) =>
+                Seq(
+                  Modification
                     .newBuilder()
-                    .setGcRule(gcRule)
+                    .setId(cf)
+                    .setUpdate(
+                      ColumnFamily
+                        .newBuilder()
+                        .setGcRule(gcRuleFromDuration(duration))
+                    )
+                    .build()
                 )
-                .build()
             }
 
           if (modifications.nonEmpty) {
-            log.info(s"Updating gcRule for column families $columnFamilies in $tablePath")
+            log.info(
+              s"Updating gcRules for column families $columnFamiliesWithExpiration in $tablePath"
+            )
             client.modifyColumnFamily(
               ModifyColumnFamiliesRequest
                 .newBuilder()
