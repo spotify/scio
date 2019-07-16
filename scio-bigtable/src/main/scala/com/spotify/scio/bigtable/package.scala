@@ -198,7 +198,32 @@ package object bigtable {
           .setProjectId(projectId)
           .setInstanceId(instanceId)
           .build
-        TableAdmin.ensureTables(bigtableOptions, tablesAndColumnFamilies)
+        TableAdmin.ensureTables(bigtableOptions, tablesAndColumnFamilies, None)
+      }
+    }
+
+    /**
+     * Ensure that tables and column families exist.
+     * Checks for existence of tables or creates them if they do not exist.  Also checks for
+     * existence of column families within each table and creates them if they do not exist.
+     *
+     * @param tablesAndColumnFamilies A map of tables and column families.  Keys are table names.
+     *                                Values are a list of column family names.
+     * @param cellExpiration The duration before which garbage collection of a cell may occur.
+     *                       Note: minimum granularity is second.
+     */
+    def ensureTables(
+      projectId: String,
+      instanceId: String,
+      tablesAndColumnFamilies: Map[String, List[String]],
+      cellExpiration: Option[Duration]
+    ): Unit = {
+      if (!self.isTest) {
+        val bigtableOptions = new BigtableOptions.Builder()
+          .setProjectId(projectId)
+          .setInstanceId(instanceId)
+          .build
+        TableAdmin.ensureTables(bigtableOptions, tablesAndColumnFamilies, cellExpiration)
       }
     }
 
@@ -215,7 +240,27 @@ package object bigtable {
       tablesAndColumnFamilies: Map[String, List[String]]
     ): Unit = {
       if (!self.isTest) {
-        TableAdmin.ensureTables(bigtableOptions, tablesAndColumnFamilies)
+        TableAdmin.ensureTables(bigtableOptions, tablesAndColumnFamilies, None)
+      }
+    }
+
+    /**
+     * Ensure that tables and column families exist.
+     * Checks for existence of tables or creates them if they do not exist.  Also checks for
+     * existence of column families within each table and creates them if they do not exist.
+     *
+     * @param tablesAndColumnFamilies A map of tables and column families.  Keys are table names.
+     *                                Values are a list of column family names.
+     * @param cellExpiration The duration before which garbage collection of a cell may occur.
+     *                       Note: minimum granularity is second.
+     */
+    def ensureTables(
+      bigtableOptions: BigtableOptions,
+      tablesAndColumnFamilies: Map[String, List[String]],
+      cellExpiration: Option[Duration]
+    ): Unit = {
+      if (!self.isTest) {
+        TableAdmin.ensureTables(bigtableOptions, tablesAndColumnFamilies, cellExpiration)
       }
     }
 
@@ -228,10 +273,12 @@ package object bigtable {
      * @param cellExpiration The duration before which garbage collection of a cell may occur.
      *                       Note: minimum granularity is second.
      */
-    def setCellExpiration(projectId: String,
-                          instanceId: String,
-                          tablesAndColumnFamilies: Map[String, List[String]],
-                          cellExpiration: Duration): Unit = {
+    def setCellExpiration(
+      projectId: String,
+      instanceId: String,
+      tablesAndColumnFamilies: Map[String, List[String]],
+      cellExpiration: Duration
+    ): Unit = {
       val bigtableOptions = new BigtableOptions.Builder()
         .setProjectId(projectId)
         .setInstanceId(instanceId)
@@ -248,9 +295,11 @@ package object bigtable {
      * @param cellExpiration The duration before which garbage collection of a cell may occur.
      *                       Note: minimum granularity is second.
      */
-    def setCellExpiration(bigtableOptions: BigtableOptions,
-                          tablesAndColumnFamilies: Map[String, List[String]],
-                          cellExpiration: Duration): Unit = {
+    def setCellExpiration(
+      bigtableOptions: BigtableOptions,
+      tablesAndColumnFamilies: Map[String, List[String]],
+      cellExpiration: Duration
+    ): Unit = {
       TableAdmin.setCellExpiration(bigtableOptions, tablesAndColumnFamilies, cellExpiration)
     }
   }

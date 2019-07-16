@@ -78,10 +78,13 @@ object TableAdmin {
    *
    * @param tablesAndColumnFamilies A map of tables and column families.  Keys are table names.
    *                                Values are a list of column family names.
+   * @param cellExpiration The duration before which garbage collection of a cell may occur.
+   *                       Note: minimum granularity is second.
    */
   def ensureTables(
     bigtableOptions: BigtableOptions,
-    tablesAndColumnFamilies: Map[String, List[String]]
+    tablesAndColumnFamilies: Map[String, List[String]],
+    cellExpirationDuration: Option[Duration] = None
   ): Unit = {
     val project = bigtableOptions.getProjectId
     val instance = bigtableOptions.getInstanceId
@@ -109,6 +112,12 @@ object TableAdmin {
         }
 
         ensureColumnFamilies(client, tablePath, columnFamilies)
+      }
+    }.flatMap { _ =>
+      cellExpirationDuration match {
+        case None => Try {}
+        case Some(duration) =>
+          setGcRule(bigtableOptions, tablesAndColumnFamilies, gcRuleFromDuration(duration))
       }
     }.get
   }
@@ -166,9 +175,12 @@ object TableAdmin {
   def setCellExpiration(bigtableOptions: BigtableOptions,
                         tablesAndColumnFamilies: Map[String, List[String]],
                         cellExpiration: Duration): Unit = {
-    val protoDuration = ProtoDuration.newBuilder.setSeconds(cellExpiration.getStandardSeconds)
-    val gcRule = GcRule.newBuilder.setMaxAge(protoDuration).build
-    setGcRule(bigtableOptions, tablesAndColumnFamilies, gcRule)
+    setGcRule(bigtableOptions, tablesAndColumnFamilies, gcRuleFromDuration(cellExpiration)).get
+  }
+
+  private def gcRuleFromDuration(duration: Duration): GcRule = {
+    val protoDuration = ProtoDuration.newBuilder.setSeconds(duration.getStandardSeconds)
+    GcRule.newBuilder.setMaxAge(protoDuration).build
   }
 
   /**
@@ -181,7 +193,7 @@ object TableAdmin {
    */
   private def setGcRule(bigtableOptions: BigtableOptions,
                         tablesAndColumnFamilies: Map[String, List[String]],
-                        gcRule: GcRule): Unit = {
+                        gcRule: GcRule): Try[Unit] = {
     val project = bigtableOptions.getProjectId
     val instance = bigtableOptions.getInstanceId
     val instancePath = s"projects/$project/instances/$instance"
@@ -232,7 +244,7 @@ object TableAdmin {
               .build)
         }
       }
-    }.get
+    }
   }
 
   /**
