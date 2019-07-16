@@ -172,11 +172,12 @@ object TableAdmin {
    * @param cellExpiration The duration before which garbage collection of a cell may occur.
    *                       Note: minimum granularity is second.
    */
-  def setCellExpiration(bigtableOptions: BigtableOptions,
-                        tablesAndColumnFamilies: Map[String, List[String]],
-                        cellExpiration: Duration): Unit = {
+  def setCellExpiration(
+    bigtableOptions: BigtableOptions,
+    tablesAndColumnFamilies: Map[String, List[String]],
+    cellExpiration: Duration
+  ): Unit =
     setGcRule(bigtableOptions, tablesAndColumnFamilies, gcRuleFromDuration(cellExpiration)).get
-  }
 
   private def gcRuleFromDuration(duration: Duration): GcRule = {
     val protoDuration = ProtoDuration.newBuilder.setSeconds(duration.getStandardSeconds)
@@ -191,19 +192,21 @@ object TableAdmin {
    *                                Values are a list of column family names.
    * @param gcRule The gcRule to set on the provided tables and families.
    */
-  private def setGcRule(bigtableOptions: BigtableOptions,
-                        tablesAndColumnFamilies: Map[String, List[String]],
-                        gcRule: GcRule): Try[Unit] = {
+  private def setGcRule(
+    bigtableOptions: BigtableOptions,
+    tablesAndColumnFamilies: Map[String, List[String]],
+    gcRule: GcRule
+  ): Try[Unit] = {
     val project = bigtableOptions.getProjectId
     val instance = bigtableOptions.getInstanceId
     val instancePath = s"projects/$project/instances/$instance"
 
-    val tablePathsAndColumnFamilies = tablesAndColumnFamilies.map { case (table, cfs) =>
-      s"$instancePath/tables/$table" -> cfs
+    val tablePathsAndColumnFamilies = tablesAndColumnFamilies.map {
+      case (table, cfs) =>
+        s"$instancePath/tables/$table" -> cfs
     }
 
     adminClient(bigtableOptions) { client =>
-
       val existingTables = fetchTables(client, instancePath)
       val nonExistent = tablePathsAndColumnFamilies.keySet.diff(existingTables)
 
@@ -211,37 +214,41 @@ object TableAdmin {
         log.info(s"Skipping modification for non-existent table $table")
       }
 
-      (tablePathsAndColumnFamilies -- nonExistent).foreach { case (tablePath, columnFamilies) =>
+      (tablePathsAndColumnFamilies -- nonExistent).foreach {
+        case (tablePath, columnFamilies) =>
+          val tableInfo = client.getTable(GetTableRequest.newBuilder.setName(tablePath).build)
 
-        val tableInfo = client.getTable(GetTableRequest.newBuilder.setName(tablePath).build)
-
-        val modifications: List[Modification] =
-          (columnFamilies.partition { tableInfo.containsColumnFamilies } match {
-            case (cfExists, cfDoesNotExist) =>
-              cfDoesNotExist.foreach { cf =>
-                log.info(
-                  s"Skipping modification for non-existent column family $cf in table $tablePath")
-              }
-              cfExists
-          }).map { cf =>
-            Modification
-              .newBuilder()
-              .setId(cf)
-              .setUpdate(ColumnFamily
+          val modifications: List[Modification] =
+            (columnFamilies.partition { tableInfo.containsColumnFamilies } match {
+              case (cfExists, cfDoesNotExist) =>
+                cfDoesNotExist.foreach { cf =>
+                  log.info(
+                    s"Skipping modification for non-existent column family $cf in table $tablePath"
+                  )
+                }
+                cfExists
+            }).map { cf =>
+              Modification
                 .newBuilder()
-                .setGcRule(gcRule))
-              .build()
-          }
+                .setId(cf)
+                .setUpdate(
+                  ColumnFamily
+                    .newBuilder()
+                    .setGcRule(gcRule)
+                )
+                .build()
+            }
 
-        if (modifications.nonEmpty) {
-          log.info(s"Updating gcRule for column families $columnFamilies in $tablePath")
-          client.modifyColumnFamily(
-            ModifyColumnFamiliesRequest
-              .newBuilder()
-              .setName(tablePath)
-              .addAllModifications(modifications.asJava)
-              .build)
-        }
+          if (modifications.nonEmpty) {
+            log.info(s"Updating gcRule for column families $columnFamilies in $tablePath")
+            client.modifyColumnFamily(
+              ModifyColumnFamiliesRequest
+                .newBuilder()
+                .setName(tablePath)
+                .addAllModifications(modifications.asJava)
+                .build
+            )
+          }
       }
     }
   }

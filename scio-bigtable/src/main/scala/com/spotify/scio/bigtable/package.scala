@@ -299,9 +299,8 @@ package object bigtable {
       bigtableOptions: BigtableOptions,
       tablesAndColumnFamilies: Map[String, List[String]],
       cellExpiration: Duration
-    ): Unit = {
+    ): Unit =
       TableAdmin.setCellExpiration(bigtableOptions, tablesAndColumnFamilies, cellExpiration)
-    }
   }
 
   /**
