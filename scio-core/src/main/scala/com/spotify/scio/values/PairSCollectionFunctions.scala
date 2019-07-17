@@ -870,11 +870,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
 
               if (computeExact) {
                 approxResults
-                  .cogroup(rhs.map((_, ())))
-                  .flatMap { t =>
-                    if (t._2._1.nonEmpty && t._2._2.nonEmpty) t._2._1.map((t._1, _))
-                    else Seq.empty
-                  }
+                  .intersectByKey(rhs)
               } else {
                 approxResults
               }
