@@ -67,7 +67,7 @@ object TableAdmin {
       )
       .getTablesList
       .asScala
-      .map(t => t.getName)
+      .map(_.getName)
       .toSet
   }
 
