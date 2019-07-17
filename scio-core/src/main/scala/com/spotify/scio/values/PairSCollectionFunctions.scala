@@ -35,7 +35,7 @@ private object PairSCollectionFunctions {
 
   final case class BFSettings(width: Int, capacity: Int, numBFs: Int)
 
-  def optimalBFSettings(numEntries: Long, fpProb: Double): BFSettings = {
+  def optimalBFSettings(tfName: String, numEntries: Long, fpProb: Double): BFSettings = {
     // double to int rounding error happens when numEntries > (1 << 27)
     // set numEntries upper bound to 1 << 27 to avoid high false positive
     def estimateWidth(numEntries: Int, fpProb: Double): Int =
@@ -59,10 +59,39 @@ private object PairSCollectionFunctions {
     val numBFs = (numEntries / capacity).toInt + 1
 
     val totalBytes = width.toLong * numBFs / 8
-    logger.info(s"Optimal Bloom Filter settings for numEntries = $numEntries, fpProb = $fpProb")
-    logger.info(
-      s"BF width = $width, capacity = $capacity, numBFs = $numBFs, total bytes = $totalBytes"
-    )
+    val totalSizeMb = totalBytes / 1024 / 1024
+
+    /*
+     * For sparse transforms, BloomFilters are stored as SideInputs. For some runners, this side
+     * input size might exceed the cache in the worker. We log a warning for the user to take
+     * appropriate action.
+     *
+     * This function is only called from `optimalKeysBloomFiltersAsSideInputs` which is used only
+     * by sparse transforms as of now.
+     *
+     * https://github.com/spotify/scio/issues/2040
+     */
+    val sideInputLogMessage = s"""
+     |Estimated size of BloomFilter(s) for $numEntries with $fpProb in $tfName is $totalSizeMb MB.
+     |Optimal Width of each BloomFilter: $width bits.
+     |Capacity of each BloomFilter: $capacity elements.
+     |Number of BFs: $numBFs
+     |
+     |This might exceed worker caches in some runners.
+     |
+     |Please set runner specific worker memory cache above $totalSizeMb.
+     |More info: https://spotify.github.io/scio/FAQ.html#how-do-i-improve-side-input-performance-
+    """.stripMargin
+
+    // Most runners would not support more than 100 MB worker cache.
+    // Datafow runner limit is 100MB
+    // Spark runner limit is 10MB
+    if (totalSizeMb > 100) {
+      logger.warn(sideInputLogMessage)
+    } else {
+      logger.info(sideInputLogMessage)
+    }
+
     BFSettings(width, capacity, numBFs)
   }
 
@@ -591,7 +620,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     thisNumKeys: Long,
     fpProb: Double
   )(implicit hash: Hash128[K], koder: Coder[K], voder: Coder[V]): Seq[SideInput[MutableBF[K]]] = {
-    val bfSettings = PairSCollectionFunctions.optimalBFSettings(thisNumKeys, fpProb)
+    val bfSettings = PairSCollectionFunctions.optimalBFSettings(self.tfName, thisNumKeys, fpProb)
 
     val numKeysPerPartition = if (bfSettings.numBFs == 1) thisNumKeys.toInt else bfSettings.capacity
     val n = bfSettings.numBFs
