@@ -35,6 +35,20 @@ private object PairSCollectionFunctions {
 
   final case class BFSettings(width: Int, capacity: Int, numBFs: Int)
 
+  /*
+   * This function calculates the width and number of bloom filters that would be optimally
+   * required to maintain the given fpProb.
+   *
+   * For sparse transforms, BloomFilters are stored as SideInputs.
+   * For some runners, this side input size might exceed the cache in the worker.
+   * We log an info or a warning (size > 100MB) for the user to take appropriate action.
+   * The side input cache limit for Dataflow Runner is 100 MB and for Spark runner is 10MB.
+   *
+   * This function is only called from `optimalKeysBloomFiltersAsSideInputs` which is used only
+   * by sparse transforms as of now.
+   *
+   * https://github.com/spotify/scio/issues/2040
+   */
   def optimalBFSettings(tfName: String, numEntries: Long, fpProb: Double): BFSettings = {
     // double to int rounding error happens when numEntries > (1 << 27)
     // set numEntries upper bound to 1 << 27 to avoid high false positive
@@ -59,20 +73,12 @@ private object PairSCollectionFunctions {
     val numBFs = (numEntries / capacity).toInt + 1
 
     val totalBytes = width.toLong * numBFs / 8
-    val totalSizeMb = totalBytes / 1024 / 1024
+    val totalSizeMb = totalBytes / 1024.0 / 1024.0
 
-    /*
-     * For sparse transforms, BloomFilters are stored as SideInputs. For some runners, this side
-     * input size might exceed the cache in the worker. We log a warning for the user to take
-     * appropriate action.
-     *
-     * This function is only called from `optimalKeysBloomFiltersAsSideInputs` which is used only
-     * by sparse transforms as of now.
-     *
-     * https://github.com/spotify/scio/issues/2040
-     */
     val sideInputLogMessage = s"""
-     |Estimated size of BloomFilter(s) for $numEntries with $fpProb in $tfName is $totalSizeMb MB.
+     |Estimated size of BloomFilter(s) for $numEntries elements with false positive probability of
+     |$fpProb in step $tfName is $totalSizeMb MB.
+     |
      |Optimal Width of each BloomFilter: $width bits.
      |Capacity of each BloomFilter: $capacity elements.
      |Number of BFs: $numBFs
@@ -83,9 +89,6 @@ private object PairSCollectionFunctions {
      |More info: https://spotify.github.io/scio/FAQ.html#how-do-i-improve-side-input-performance-
     """.stripMargin
 
-    // Most runners would not support more than 100 MB worker cache.
-    // Datafow runner limit is 100MB
-    // Spark runner limit is 10MB
     if (totalSizeMb > 100) {
       logger.warn(sideInputLogMessage)
     } else {
