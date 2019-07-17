@@ -102,7 +102,7 @@ object TableAdmin {
     bigtableOptions: BigtableOptions,
     tablesAndColumnFamiliesWithExpiration: Map[String, List[(String, Option[Duration])]]
   ): Unit = {
-    val tablesAndColumnFamilies = tablesAndColumnFamiliesWithExpiration.mapValues { _.unzip._1 }
+    val tablesAndColumnFamilies = tablesAndColumnFamiliesWithExpiration.mapValues(_.unzip._1)
     ensureTablesImpl(bigtableOptions, tablesAndColumnFamilies).flatMap { _ =>
       setCellExpiration(bigtableOptions, tablesAndColumnFamiliesWithExpiration)
     }.get
