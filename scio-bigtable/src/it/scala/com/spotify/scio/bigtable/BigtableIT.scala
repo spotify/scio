@@ -97,7 +97,7 @@ class BigtableIT extends PipelineSpec {
       sc1
         .parallelize(testData.map(kv => toWriteMutation(kv._1, kv._2)))
         .saveAsBigtable(projectId, instanceId, tableId)
-      sc1.close().waitUntilFinish()
+      sc1.run().waitUntilFinish()
 
       // Read rows back
       val sc2 = ScioContext()
@@ -109,7 +109,7 @@ class BigtableIT extends PipelineSpec {
       sc2
         .bigtable(projectId, instanceId, tableId, rowFilter = rowFilter)
         .map(fromRow) should containInAnyOrder(testData)
-      sc2.close().waitUntilFinish()
+      sc2.run().waitUntilFinish()
     } catch {
       case e: Throwable => throw e
     } finally {

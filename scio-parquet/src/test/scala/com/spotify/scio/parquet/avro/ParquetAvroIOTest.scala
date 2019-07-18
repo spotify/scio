@@ -99,7 +99,7 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
     sc1
       .parallelize(nestedRecords)
       .saveAsParquetAvroFile(dir.toString)
-    sc1.close()
+    sc1.run()
 
     val sc2 = ScioContext()
     val projection = Projection[Account](_.getName)
@@ -108,7 +108,7 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
     val expected = nestedRecords.map(_.getName.toString)
     data.map(_.getName.toString) should containInAnyOrder(expected)
     data.flatMap(a => Some(a.getName.toString)) should containInAnyOrder(expected)
-    sc2.close()
+    sc2.run()
 
     FileUtils.deleteDirectory(dir)
   }

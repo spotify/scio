@@ -47,12 +47,12 @@ class FileFormatTest extends PipelineSpec {
 
     val sc1 = ScioContext()
     sc1.parallelize(objects).saveAsObjectFile(temp.toString, 1)
-    sc1.close()
+    sc1.run()
 
     val sc2 = ScioContext()
     val p = sc2.objectFile[(Int, Double, Boolean, String)](temp.toString + "/*")
     p should containInAnyOrder(objects)
-    sc2.close()
+    sc2.run()
   }
 
   // Protobuf file IS not backwards compatible
@@ -69,12 +69,12 @@ class FileFormatTest extends PipelineSpec {
 
     val sc1 = ScioContext()
     sc1.parallelize(protobufs).saveAsProtobufFile(temp.toString, 1)
-    sc1.close()
+    sc1.run()
 
     val sc2 = ScioContext()
     val p = sc2.protobufFile[Timestamp](temp.toString + "/*")
     p should containInAnyOrder(protobufs)
-    sc2.close()
+    sc2.run()
   }
 
 }

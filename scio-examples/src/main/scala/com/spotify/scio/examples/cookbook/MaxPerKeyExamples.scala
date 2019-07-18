@@ -44,7 +44,8 @@ object MaxPerKeyExamples {
     )
 
     // Open a BigQuery table as a `SCollection[TableRow]`
-    sc.bigQueryTable(args.getOrElse("input", ExampleData.WEATHER_SAMPLES_TABLE))
+    val table = Table.Spec(args.getOrElse("input", ExampleData.WEATHER_SAMPLES_TABLE))
+    sc.bigQueryTable(table)
       // Extract month and mean temperature as `(Long, Double)` tuples
       .map(row => (row.getLong("month"), row.getDouble("mean_temp")))
       // For multiple values (mean temperatures) of the same key (month), compute the maximum per

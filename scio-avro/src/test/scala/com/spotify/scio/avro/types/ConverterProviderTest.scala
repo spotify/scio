@@ -34,11 +34,11 @@ class ConverterProviderTest extends FlatSpec with Matchers {
 
     val sc1 = ScioContext()
     sc1.parallelize(data).saveAsTypedAvroFile(dir.toString)
-    sc1.close()
+    sc1.run()
 
     val sc2 = ScioContext()
     val t = sc2.typedAvroFile[Record](s"$dir/*.avro").materialize
-    sc2.close()
+    sc2.run()
 
     t.underlying.value.toSeq should contain theSameElementsAs data
 

@@ -81,7 +81,7 @@ object GenericParseFnAvroFileJob {
       )
       .map(a => AvroUtils.newGenericRecord(a.intField))
       .saveAsAvroFile(args("output"), schema = AvroUtils.schema)
-    sc.close()
+    sc.run()
     ()
   }
 }
