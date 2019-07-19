@@ -23,12 +23,14 @@ private[scio] object PrettyPrint {
 
   val header =
     f"""
-    |┌──────────────────────────────────────────┬──────────┬──────────┐
-    |│ NAME                                     │ TYPE     │ NULLABLE │
-    |├──────────────────────────────────────────┼──────────┼──────────┤%n""".stripMargin.drop(1)
+    |┌──────────────────────────────────────────┬─────────────────┬──────────┐
+    |│ NAME                                     │ TYPE            │ NULLABLE │
+    |├──────────────────────────────────────────┼─────────────────┼──────────┤%n"""
+    .stripMargin.drop(1)
   val footer =
     f"""
-    |└──────────────────────────────────────────┴──────────┴──────────┘%n""".stripMargin.trim
+    |└──────────────────────────────────────────┴─────────────────┴──────────┘%n"""
+    .stripMargin.trim
 
   private def printContent(fs: List[BSchema.Field], prefix: String = ""): String = {
     fs.map { f =>
@@ -41,7 +43,7 @@ private[scio] object PrettyPrint {
             case t => t
           }
         val out =
-          f"│ ${prefix + f.getName}%-40s │ ${typename}%-8s │ $nullable%-8s │%n"
+          f"│ ${prefix + f.getName}%-40s │ ${typename}%-15s │ $nullable%-8s │%n"
         val underlying =
           if (f.getType.getTypeName == BSchema.TypeName.ROW)
             printContent(f.getType.getRowSchema.getFields.asScala.toList, s"${prefix}${f.getName}.")
