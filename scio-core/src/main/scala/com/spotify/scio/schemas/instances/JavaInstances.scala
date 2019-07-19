@@ -71,14 +71,16 @@ trait JavaInstances {
     RawRecord[T](new JavaBeanSchema())
 
   implicit def javaEnumSchema[T <: java.lang.Enum[T] : ClassTag]: Schema[T] =
-    Type[T](FieldType.logicalType(new LogicalType[T, Int] {
-      private val clazz = scala.reflect.classTag[T].runtimeClass
+    Type[T](FieldType.logicalType(new LogicalType[T, String] {
+      private val clazz = scala.reflect.classTag[T].runtimeClass.asInstanceOf[Class[T]]
       private val className = clazz.getCanonicalName
-      private val values: Array[T] = clazz.getMethod("values").invoke(null).asInstanceOf[Array[T]]
       override def getIdentifier: String = className
-      override def getBaseType: FieldType = FieldType.INT32
-      override def toBaseType(input: T): Int = input.ordinal()
-      override def toInputType(base: Int): T = values(base)
+      override def getBaseType: FieldType = FieldType.STRING
+      override def toBaseType(input: T): String = input.name()
+      override def toInputType(base: String): T =
+        java.lang.Enum.valueOf[T](clazz, base)
+      override def toString(): String =
+        s"EnumLogicalType($className, String)"
     }))
 
 }

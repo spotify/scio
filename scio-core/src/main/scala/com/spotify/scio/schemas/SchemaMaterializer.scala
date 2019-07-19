@@ -31,6 +31,7 @@ import org.apache.beam.sdk.values.Row
 import org.apache.beam.sdk.options.PipelineOptionsFactory
 import org.apache.beam.sdk.options.PipelineOptions
 import BSchema.{Field => BField, FieldType => BFieldType}
+import org.apache.beam.sdk.schemas.Schema.LogicalType
 
 object SchemaMaterializer {
 
@@ -115,7 +116,18 @@ object SchemaMaterializer {
     }
     record.construct(values)
   }
-  private def decode[A](schema: Type[A])(v: schema.Repr): A = v
+
+  private[scio] def decode[A](schema: Type[A])(v: schema.Repr): A = {
+    schema match {
+      case Type(t) if t.getTypeName() == BSchema.TypeName.LOGICAL_TYPE =>
+        // XXX: The Beam API is not symetrical.
+        // It will happily convert from InputT to base when creating a Row
+        // but won't do the reverse conversion when reading values from a Row...
+        t.getLogicalType().asInstanceOf[LogicalType[A, Object]]
+          .toInputType(v.asInstanceOf[Object])
+      case _ => v
+    }
+  }
 
   private def decode[A](schema: OptionType[A])(v: schema.Repr): Option[A] =
     Option(dispatchDecode(schema.schema)(v))
