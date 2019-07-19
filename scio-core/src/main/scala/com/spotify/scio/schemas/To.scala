@@ -53,7 +53,7 @@ object To {
     }
   }
 
-  private[schemas] def checkCompatibility[T](bsi: BSchema, bso: BSchema)(
+  def checkCompatibility[T](bsi: BSchema, bso: BSchema)(
     t: => T
   ): Either[String, T] =
     if (areCompatible(bsi, bso)) {
