@@ -25,6 +25,7 @@ import com.google.api.services.bigquery.model.TableRow
 import com.spotify.scio.IsJavaBean
 import com.spotify.scio.schemas.Schema
 import com.spotify.scio.coders.Coder
+import com.spotify.scio.util.ScioUtil
 import org.apache.beam.sdk.coders.{Coder => _, _}
 import org.apache.beam.sdk.io.gcp.bigquery.TableRowJsonCoder
 import org.apache.beam.sdk.io.gcp.pubsub.{PubsubMessage, PubsubMessageWithAttributesCoder}
@@ -112,8 +113,8 @@ trait JavaCoders {
   implicit def jInstantCoder: Coder[Instant] =
     Coder.xmap(Coder.jLongCoder)(Instant.ofEpochMilli(_), _.toEpochMilli)
 
-  implicit def coderJEnum[E <: java.lang.Enum[_]: scala.reflect.ClassTag]: Coder[E] =
-    Coder.kryo[E]
+  implicit def coderJEnum[E <: java.lang.Enum[E]: ClassTag]: Coder[E] =
+    Coder.beam(SerializableCoder.of(ScioUtil.classOf[E]))
 
   implicit def javaBeanCoder[T: IsJavaBean: ClassTag]: Coder[T] = {
     val rec = Schema.javaBeanSchema[T]
