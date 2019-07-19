@@ -112,7 +112,7 @@ object To {
    * @see To#safe
    * @see To#unsafe
    */
-  private[scio] def unchecked[I: Schema, O: Schema]: To[I, O] =
+  def unchecked[I: Schema, O: Schema]: To[I, O] =
     new To[I, O] {
       def apply(coll: SCollection[I]): SCollection[O] = {
         val (_, toT, _) = SchemaMaterializer.materialize(coll.context, Schema[I])
