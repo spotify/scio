@@ -21,6 +21,9 @@ import com.spotify.scio.values.SCollection
 import com.spotify.scio.testing.PipelineSpec
 import org.apache.beam.sdk.values.TupleTag
 
+case class FooWithEnum(s: String, l: j.Level)
+case class BarWithEnum(s: String, l: j.Level)
+
 class TypedBeamSQLTest extends PipelineSpec {
   import TestData._
 
@@ -96,6 +99,12 @@ class TypedBeamSQLTest extends PipelineSpec {
     import TypeConvertionsTestData._
     """To.safe[TinyTo, From0]""" shouldNot compile
     """To.safe[From0, CompatibleAvroTestRecord]""" shouldNot compile
+  }
+
+  it should "support java enums" in {
+    import com.spotify.scio.schemas._
+    """Schema[FooWithEnum]""" should compile
+    """To.safe[FooWithEnum, BarWithEnum]""" should compile
   }
 
   "String interpolation" should "statically check interpolated queries" in runWithContext { sc =>

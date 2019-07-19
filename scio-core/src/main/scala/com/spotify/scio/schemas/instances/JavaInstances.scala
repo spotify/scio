@@ -24,6 +24,7 @@ import org.apache.beam.sdk.schemas.JavaBeanSchema
 import org.apache.beam.sdk.schemas.Schema.FieldType
 
 import scala.reflect.ClassTag
+import org.apache.beam.sdk.schemas.Schema.LogicalType
 
 trait JavaInstances {
 
@@ -68,5 +69,16 @@ trait JavaInstances {
 
   implicit def javaBeanSchema[T: IsJavaBean: ClassTag]: RawRecord[T] =
     RawRecord[T](new JavaBeanSchema())
+
+  implicit def javaEnumSchema[T <: java.lang.Enum[T] : ClassTag]: Schema[T] =
+    Type[T](FieldType.logicalType(new LogicalType[T, Int] {
+      private val clazz = scala.reflect.classTag[T].runtimeClass
+      private val className = clazz.getCanonicalName
+      private val values: Array[T] = clazz.getMethod("values").invoke(null).asInstanceOf[Array[T]]
+      override def getIdentifier: String = className
+      override def getBaseType: FieldType = FieldType.INT32
+      override def toBaseType(input: T): Int = input.ordinal()
+      override def toInputType(base: Int): T = values(base)
+    }))
 
 }
