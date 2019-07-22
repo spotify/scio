@@ -23,7 +23,8 @@ import com.google.bigtable.admin.v2._
 import com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification
 import com.google.cloud.bigtable.config.BigtableOptions
 import com.google.cloud.bigtable.grpc._
-import com.google.protobuf.ByteString
+import com.google.protobuf.{ByteString, Duration => ProtoDuration}
+import org.joda.time.Duration
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.collection.JavaConverters._
@@ -50,6 +51,27 @@ object TableAdmin {
   }
 
   /**
+   * Retrieves a set of tables from the given instancePath.
+   *
+   * @param client Client for calling Bigtable.
+   * @param instancePath String of the form "projects/$project/instances/$instance".
+   * @return
+   */
+  private def fetchTables(client: BigtableTableAdminClient, instancePath: String): Set[String] = {
+    client
+      .listTables(
+        ListTablesRequest
+          .newBuilder()
+          .setParent(instancePath)
+          .build()
+      )
+      .getTablesList
+      .asScala
+      .map(_.getName)
+      .toSet
+  }
+
+  /**
    * Ensure that tables and column families exist.
    * Checks for existence of tables or creates them if they do not exist.  Also checks for
    * existence of column families within each table and creates them if they do not exist.
@@ -60,7 +82,40 @@ object TableAdmin {
   def ensureTables(
     bigtableOptions: BigtableOptions,
     tablesAndColumnFamilies: Map[String, List[String]]
-  ): Unit = {
+  ): Unit =
+    ensureTablesImpl(bigtableOptions, tablesAndColumnFamilies.mapValues(l => l.map(_ -> None))).get
+
+  /**
+   * Ensure that tables and column families exist.
+   * Checks for existence of tables or creates them if they do not exist.  Also checks for
+   * existence of column families within each table and creates them if they do not exist.
+   *
+   * @param tablesAndColumnFamiliesWithExpiration A map of tables and column families.
+   *                                              Keys are table names. Values are a
+   *                                              list of column family names along with
+   *                                              the desired cell expiration. Cell
+   *                                              expiration is the duration before which
+   *                                              garbage collection of a cell may occur.
+   *                                              Note: minimum granularity is second.
+   */
+  def ensureTablesWithExpiration(
+    bigtableOptions: BigtableOptions,
+    tablesAndColumnFamilies: Map[String, List[(String, Option[Duration])]]
+  ): Unit =
+    ensureTablesImpl(bigtableOptions, tablesAndColumnFamilies).get
+
+  /**
+   * Ensure that tables and column families exist.
+   * Checks for existence of tables or creates them if they do not exist.  Also checks for
+   * existence of column families within each table and creates them if they do not exist.
+   *
+   * @param tablesAndColumnFamilies A map of tables and column families.  Keys are table names.
+   *                                Values are a list of column family names.
+   */
+  private def ensureTablesImpl(
+    bigtableOptions: BigtableOptions,
+    tablesAndColumnFamilies: Map[String, List[(String, Option[Duration])]]
+  ): Try[Unit] = {
     val project = bigtableOptions.getProjectId
     val instance = bigtableOptions.getInstanceId
     val instancePath = s"projects/$project/instances/$instance"
@@ -68,37 +123,28 @@ object TableAdmin {
     log.info("Ensuring tables and column families exist in instance {}", instance)
 
     adminClient(bigtableOptions) { client =>
-      val existingTables = client
-        .listTables(
-          ListTablesRequest
-            .newBuilder()
-            .setParent(instancePath)
-            .build()
-        )
-        .getTablesList
-        .asScala
-        .map(t => t.getName)
-        .toSet
+      val existingTables = fetchTables(client, instancePath)
 
-      for ((table, columnFamilies) <- tablesAndColumnFamilies) {
-        val tablePath = s"$instancePath/tables/$table"
+      tablesAndColumnFamilies.foreach {
+        case (table, columnFamilies) =>
+          val tablePath = s"$instancePath/tables/$table"
 
-        if (!existingTables.contains(tablePath)) {
-          log.info("Creating table {}", table)
-          client.createTable(
-            CreateTableRequest
-              .newBuilder()
-              .setParent(instancePath)
-              .setTableId(table)
-              .build()
-          )
-        } else {
-          log.info("Table {} exists", table)
-        }
+          if (!existingTables.contains(tablePath)) {
+            log.info("Creating table {}", table)
+            client.createTable(
+              CreateTableRequest
+                .newBuilder()
+                .setParent(instancePath)
+                .setTableId(table)
+                .build()
+            )
+          } else {
+            log.info("Table {} exists", table)
+          }
 
-        ensureColumnFamilies(client, tablePath, columnFamilies)
+          ensureColumnFamilies(client, tablePath, columnFamilies)
       }
-    }.get
+    }
   }
 
   /**
@@ -112,34 +158,50 @@ object TableAdmin {
   private def ensureColumnFamilies(
     client: BigtableTableAdminClient,
     tablePath: String,
-    columnFamilies: List[String]
+    columnFamilies: List[(String, Option[Duration])]
   ): Unit = {
-
     val tableInfo =
       client.getTable(GetTableRequest.newBuilder().setName(tablePath).build)
 
-    val modifications: List[Modification] = columnFamilies.collect {
-      case (cf) if !tableInfo.containsColumnFamilies(cf) =>
-        Modification
-          .newBuilder()
-          .setId(cf)
-          .setCreate(ColumnFamily.newBuilder())
-          .build()
-    }
+    val cfList = columnFamilies
+      .map {
+        case (n, duration) =>
+          val gcRule = duration.map(gcRuleFromDuration).getOrElse(GcRule.getDefaultInstance())
+          val cf = tableInfo
+            .getColumnFamiliesOrDefault(n, ColumnFamily.newBuilder().build())
+            .toBuilder()
+            .setGcRule(gcRule)
+            .build()
 
-    if (modifications.isEmpty) {
-      log.info(s"Column families $columnFamilies exist in $tablePath")
-    } else {
-      log.info(s"Creating column families $columnFamilies in $tablePath")
-      client.modifyColumnFamily(
-        ModifyColumnFamiliesRequest
-          .newBuilder()
-          .setName(tablePath)
-          .addAllModifications(modifications.asJava)
-          .build
-      )
-      ()
-    }
+          (n, cf)
+      }
+
+    val modifications = cfList
+      .map {
+        case (n, cf) =>
+          val mod = Modification.newBuilder().setId(n)
+          if (tableInfo.containsColumnFamilies(n)) {
+            mod.setUpdate(cf)
+          } else {
+            mod.setCreate(cf)
+          }
+
+          mod.build()
+      }
+    log.info("Modifying or updating {} column families for table {}", modifications.size, tablePath)
+    client.modifyColumnFamily(
+      ModifyColumnFamiliesRequest
+        .newBuilder()
+        .setName(tablePath)
+        .addAllModifications(modifications.asJava)
+        .build
+    )
+    ()
+  }
+
+  private def gcRuleFromDuration(duration: Duration): GcRule = {
+    val protoDuration = ProtoDuration.newBuilder.setSeconds(duration.getStandardSeconds)
+    GcRule.newBuilder.setMaxAge(protoDuration).build
   }
 
   /**
