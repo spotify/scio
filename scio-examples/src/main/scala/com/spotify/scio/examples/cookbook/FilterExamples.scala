@@ -51,8 +51,9 @@ object FilterExamples {
     val monthFilter = args.int("monthFilter", 7)
 
     // Open BigQuery table as a `SCollection[TableRow]`
+    val table = Table.Spec(args.getOrElse("input", ExampleData.WEATHER_SAMPLES_TABLE))
     val pipe = sc
-      .bigQueryTable(args.getOrElse("input", ExampleData.WEATHER_SAMPLES_TABLE))
+      .bigQueryTable(table)
       // Map `TableRow`s into `Record`s
       .map { row =>
         val year = row.getLong("year")

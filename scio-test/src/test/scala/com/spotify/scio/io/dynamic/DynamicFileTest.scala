@@ -52,7 +52,7 @@ class DynamicFileTest extends PipelineSpec {
     sc1
       .parallelize(1 to 10)
       .saveAsDynamicTextFile(tmpDir.toString)(s => (s.toInt % 2).toString)
-    sc1.close()
+    sc1.run()
     verifyOutput(tmpDir, "0", "1")
 
     val sc2 = ScioContext()
@@ -60,7 +60,7 @@ class DynamicFileTest extends PipelineSpec {
     val lines1 = sc2.textFile(s"$tmpDir/1/*.txt")
     lines0 should containInAnyOrder((1 to 10).filter(_ % 2 == 0).map(_.toString))
     lines1 should containInAnyOrder((1 to 10).filter(_ % 2 == 1).map(_.toString))
-    sc2.close()
+    sc2.run()
     FileUtils.deleteDirectory(tmpDir.toFile)
   }
 
@@ -75,7 +75,7 @@ class DynamicFileTest extends PipelineSpec {
       .timestampBy(x => new Instant(x * 60000), Duration.ZERO)
       .withFixedWindows(Duration.standardMinutes(1), Duration.ZERO, WindowOptions())
       .saveAsDynamicTextFile(tmpDir.toString, 1)(s => (s.toInt % 2).toString)
-    sc1.close()
+    sc1.run()
     verifyOutput(tmpDir, "0", "1")
     Files.list(tmpDir.resolve("0")).iterator().asScala.size shouldBe 5
     Files.list(tmpDir.resolve("1")).iterator().asScala.size shouldBe 5
@@ -92,7 +92,7 @@ class DynamicFileTest extends PipelineSpec {
       val lines = sc2.textFile(s"$tmpDir/$p/part-$t1-$t2-*.txt")
       lines should containSingleValue(x.toString)
     }
-    sc2.close()
+    sc2.run()
     FileUtils.deleteDirectory(tmpDir.toFile)
   }
 
@@ -106,7 +106,7 @@ class DynamicFileTest extends PipelineSpec {
       .saveAsDynamicAvroFile(tmpDir.toString, schema = schema) { r =>
         (r.get("int_field").toString.toInt % 2).toString
       }
-    sc1.close()
+    sc1.run()
     verifyOutput(tmpDir, "0", "1")
 
     val sc2 = ScioContext()
@@ -114,7 +114,7 @@ class DynamicFileTest extends PipelineSpec {
     val lines1 = sc2.avroFile[GenericRecord](s"$tmpDir/1/*.avro", schema)
     lines0 should containInAnyOrder((1 to 10).filter(_ % 2 == 0).map(newGenericRecord))
     lines1 should containInAnyOrder((1 to 10).filter(_ % 2 == 1).map(newGenericRecord))
-    sc2.close()
+    sc2.run()
     FileUtils.deleteDirectory(tmpDir.toFile)
   }
 
@@ -127,7 +127,7 @@ class DynamicFileTest extends PipelineSpec {
       .saveAsDynamicAvroFile(tmpDir.toString) { r =>
         (r.getIntField % 2).toString
       }
-    sc1.close()
+    sc1.run()
     verifyOutput(tmpDir, "0", "1")
 
     val sc2 = ScioContext()
@@ -135,7 +135,7 @@ class DynamicFileTest extends PipelineSpec {
     val lines1 = sc2.avroFile[TestRecord](s"$tmpDir/1/*.avro")
     lines0 should containInAnyOrder((1 to 10).filter(_ % 2 == 0).map(newSpecificRecord))
     lines1 should containInAnyOrder((1 to 10).filter(_ % 2 == 1).map(newSpecificRecord))
-    sc2.close()
+    sc2.run()
     FileUtils.deleteDirectory(tmpDir.toFile)
   }
 
@@ -151,7 +151,7 @@ class DynamicFileTest extends PipelineSpec {
       .timestampBy(x => new Instant(x.getIntField * 60000), Duration.ZERO)
       .withFixedWindows(Duration.standardMinutes(1), Duration.ZERO, WindowOptions())
       .saveAsDynamicAvroFile(tmpDir.toString, 1)(r => (r.getIntField % 2).toString)
-    sc1.close()
+    sc1.run()
     verifyOutput(tmpDir, "0", "1")
     Files.list(tmpDir.resolve("0")).iterator().asScala.size shouldBe 5
     Files.list(tmpDir.resolve("1")).iterator().asScala.size shouldBe 5
@@ -168,7 +168,7 @@ class DynamicFileTest extends PipelineSpec {
       val records = sc2.avroFile[TestRecord](s"$tmpDir/$p/part-$t1-$t2-*.avro")
       records should containSingleValue(newSpecificRecord(x))
     }
-    sc2.close()
+    sc2.run()
     FileUtils.deleteDirectory(tmpDir.toFile)
   }
 
@@ -183,7 +183,7 @@ class DynamicFileTest extends PipelineSpec {
       .saveAsDynamicProtobufFile(tmpDir.toString) { r =>
         (r.getPlays % 2).toString
       }
-    sc1.close()
+    sc1.run()
     verifyOutput(tmpDir, "0", "1")
 
     val sc2 = ScioContext()
@@ -191,7 +191,7 @@ class DynamicFileTest extends PipelineSpec {
     val lines1 = sc2.protobufFile[SimplePB](s"$tmpDir/1/*.protobuf")
     lines0 should containInAnyOrder((1 to 10).filter(_ % 2 == 0).map(mkProto))
     lines1 should containInAnyOrder((1 to 10).filter(_ % 2 == 1).map(mkProto))
-    sc2.close()
+    sc2.run()
     FileUtils.deleteDirectory(tmpDir.toFile)
   }
 

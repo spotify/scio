@@ -28,7 +28,7 @@ package object repl {
     def closeAndCollect()(implicit c: Coder[T]): Iterator[T] = {
       val closedTap = self.materialize
       self.context
-        .close()
+        .run()
         .waitUntilDone()
         .tap(closedTap)
         .value

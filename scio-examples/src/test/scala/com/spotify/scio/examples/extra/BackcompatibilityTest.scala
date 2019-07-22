@@ -46,14 +46,14 @@ class BackcompatibilityTest extends PipelineSpec {
     val sc = ScioContext()
     val r = sc.read(ProtobufIO[SimplePB](s"${path_07}/*"))
     r should containInAnyOrder(input)
-    sc.close
+    sc.run()
   }
 
   it should "read protobuf files written with Scio 0.6 and below" in {
     val sc = ScioContext()
     val r = sc.read(ProtobufIO[SimplePB](s"${path_06}/*"))
     r should containInAnyOrder(input)
-    sc.close
+    sc.run()
   }
 
 }

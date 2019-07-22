@@ -47,7 +47,8 @@ object DistinctByKeyExample {
     )
 
     // Open a BigQuery table as a `SCollection[TableRow]`
-    sc.bigQueryTable(args.getOrElse("input", ExampleData.SHAKESPEARE_TABLE))
+    val table = Table.Spec(args.getOrElse("input", ExampleData.SHAKESPEARE_TABLE))
+    sc.bigQueryTable(table)
       // Extract words and corresponding play names
       .flatMap { row =>
         val playName = row.getString("corpus")

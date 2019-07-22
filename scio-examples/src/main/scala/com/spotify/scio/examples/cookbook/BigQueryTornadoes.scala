@@ -45,7 +45,8 @@ object BigQueryTornadoes {
     )
 
     // Open a BigQuery table as a `SCollection[TableRow]`
-    sc.bigQueryTable(args.getOrElse("input", ExampleData.WEATHER_SAMPLES_TABLE))
+    val table = Table.Spec(args.getOrElse("input", ExampleData.WEATHER_SAMPLES_TABLE))
+    sc.bigQueryTable(table)
       // Extract months with tornadoes
       .flatMap(r => if (r.getBoolean("tornado")) Some(r.getLong("month")) else None)
       // Count occurrences of each unique month to get `(Long, Long)`

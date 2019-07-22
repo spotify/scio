@@ -76,7 +76,7 @@ final class TensorFlowIT extends PipelineSpec with PipelineTestUtils with Before
       .parallelize(examples)
       .saveAsTfRecordFile(path = outputPath, compression = Compression.UNCOMPRESSED, numShards = 0)
 
-    val tap = sc1.close().waitUntilDone().tap(closedTap)
+    val tap = sc1.run().waitUntilDone().tap(closedTap)
 
     val sc2 = ScioContext(options)
     val data = sc2.tfRecordExampleFile(
@@ -85,6 +85,6 @@ final class TensorFlowIT extends PipelineSpec with PipelineTestUtils with Before
     )
 
     data should containInAnyOrder(tap.value.toSeq)
-    sc2.close().waitUntilDone()
+    sc2.run().waitUntilDone()
   }
 }

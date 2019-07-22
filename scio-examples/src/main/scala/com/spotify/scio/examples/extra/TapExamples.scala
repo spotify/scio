@@ -45,7 +45,7 @@ object TapOutputExample {
       .map(_.toString)
       // Save data for use later as a `ClosedTap[T]`
       .saveAsTextFile(args("output"))
-    val scioResult = sc1.close().waitUntilDone()
+    val scioResult = sc1.run().waitUntilDone()
 
     // Wait for future completions, which should happen when `sc1` finishes
     val t1 = scioResult.tap(f1)
@@ -61,7 +61,7 @@ object TapOutputExample {
     // Re-open taps in new `ScioContext`
     val s = (t1.open(sc2) ++ t2.open(sc2).map(_.toInt)).sum
     // Block until job finishes
-    val result = sc2.close().waitUntilFinish()
+    val result = sc2.run().waitUntilFinish()
 
     println(result.state)
   }
