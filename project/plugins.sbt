@@ -1,4 +1,4 @@
-addSbtPlugin("com.cavorite" % "sbt-avro-1-8" % "1.1.7")
+addSbtPlugin("com.cavorite" % "sbt-avro-1-8" % "1.1.8")
 addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "0.14.10")
 addSbtPlugin("com.eed3si9n" % "sbt-unidoc" % "0.4.2")
 addSbtPlugin("com.github.gseitz" % "sbt-protobuf" % "0.6.5")
