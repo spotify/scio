@@ -200,7 +200,7 @@ object TableAdmin {
           .build
       )
     }
-    
+
     ()
   }
 
