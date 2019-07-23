@@ -188,14 +188,19 @@ object TableAdmin {
 
           mod.build()
       }
+
     log.info("Modifying or updating {} column families for table {}", modifications.size, tablePath)
-    client.modifyColumnFamily(
-      ModifyColumnFamiliesRequest
-        .newBuilder()
-        .setName(tablePath)
-        .addAllModifications(modifications.asJava)
-        .build
-    )
+
+    if (modifications.nonEmpty) {
+      client.modifyColumnFamily(
+        ModifyColumnFamiliesRequest
+          .newBuilder()
+          .setName(tablePath)
+          .addAllModifications(modifications.asJava)
+          .build
+      )
+    }
+
     ()
   }
 
