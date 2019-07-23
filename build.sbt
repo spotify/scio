@@ -223,6 +223,7 @@ lazy val itSettings = Defaults.itSettings ++ Seq(
     }
   }
 ) ++
+  inConfig(IntegrationTest)(fork in run := true) ++
   inConfig(IntegrationTest)(BloopDefaults.configSettings) ++
   inConfig(IntegrationTest)(scalafmtConfigSettings) ++
   inConfig(IntegrationTest)(scalafixConfigSettings(IntegrationTest))
@@ -374,8 +375,10 @@ lazy val scioCore: Project = Project(
 lazy val scioTest: Project = Project(
   "scio-test",
   file("scio-test")
-).settings(
-    commonSettings ++ itSettings ++ macroSettings,
+).settings(commonSettings)
+  .settings(itSettings)
+  .settings(macroSettings)
+  .settings(
     description := "Scio helpers for ScalaTest",
     libraryDependencies ++= Seq(
       "org.apache.beam" % "beam-runners-direct-java" % beamVersion,
@@ -471,8 +474,9 @@ lazy val scioBigQuery: Project = Project(
 lazy val scioBigtable: Project = Project(
   "scio-bigtable",
   file("scio-bigtable")
-).settings(
-    commonSettings ++ itSettings,
+).settings(commonSettings)
+  .settings(itSettings)
+  .settings(
     description := "Scio add-on for Google Cloud Bigtable",
     libraryDependencies ++= Seq(
       "org.scalatest" %% "scalatest" % scalatestVersion % "test",
