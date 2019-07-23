@@ -123,7 +123,8 @@ object SchemaMaterializer {
         // XXX: The Beam API is not symetrical.
         // It will happily convert from InputT to base when creating a Row
         // but won't do the reverse conversion when reading values from a Row...
-        t.getLogicalType().asInstanceOf[LogicalType[A, Object]]
+        t.getLogicalType()
+          .asInstanceOf[LogicalType[A, Object]]
           .toInputType(v.asInstanceOf[Object])
       case _ => v
     }

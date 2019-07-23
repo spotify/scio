@@ -31,7 +31,7 @@ object To {
   @tailrec @inline
   private def getBaseType(t: BSchema.FieldType): BSchema.FieldType = {
     val log = t.getLogicalType()
-    if(log == null) t
+    if (log == null) t
     else getBaseType(log.getBaseType())
   }
 
@@ -48,12 +48,11 @@ object To {
         areCompatible(t0.getCollectionElementType, t1.getCollectionElementType)
       case (BSchema.TypeName.MAP, BSchema.TypeName.MAP, _) =>
         areCompatible(t0.getMapKeyType, t1.getMapKeyType) &&
-        areCompatible(t0.getMapValueType, t1.getMapValueType)
+          areCompatible(t0.getMapValueType, t1.getMapValueType)
       case (_, _, _) =>
         t0.equivalent(t1, BSchema.EquivalenceNullablePolicy.SAME)
     }
   }
-
 
   private def areCompatible(s0: BSchema, s1: BSchema): Boolean = {
     val s0Fields = s0.getFields.asScala.map { x =>
