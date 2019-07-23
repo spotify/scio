@@ -550,6 +550,14 @@ class BeamSQLTest extends PipelineSpec {
       .to[TinyTo](To.safe) should containInAnyOrder(tinyTo)
   }
 
+  it should "Support LogicalTypes" in runWithContext { sc =>
+    val foosWithEnum = List(FooWithEnum("hello", j.Level.LOW), FooWithEnum("hello", j.Level.MEDIUM))
+    val barsWithEnum = List(BarWithEnum("hello", j.Level.LOW), BarWithEnum("hello", j.Level.MEDIUM))
+
+    sc.parallelize(foosWithEnum)
+      .to(To.unsafe[FooWithEnum, BarWithEnum]) should containInAnyOrder(barsWithEnum)
+  }
+
   it should "Support queries on Avro generated classes" in runWithContext { sc =>
     val expected: List[(Int, String, String)] =
       avroUsers.map { u =>

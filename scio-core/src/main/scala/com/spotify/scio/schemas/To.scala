@@ -22,10 +22,22 @@ import org.apache.beam.sdk.values._
 import org.apache.beam.sdk.schemas.{Schema => BSchema, SchemaCoder}
 import scala.collection.JavaConverters._
 import scala.language.experimental.macros
+import scala.annotation.tailrec
 
 sealed trait To[I, O] extends (SCollection[I] => SCollection[O])
 
 object To {
+
+  @tailrec @inline
+  private def getBaseType(t: BSchema.FieldType): BSchema.FieldType = {
+    val log = t.getLogicalType()
+    if(log == null) t
+    else getBaseType(log.getBaseType())
+  }
+
+  /**
+   * Test if Rows with Schema t0 can be safely converted to Rows with Schema t1
+   */
   private def areCompatible(t0: BSchema.FieldType, t1: BSchema.FieldType): Boolean = {
     (t0.getTypeName, t1.getTypeName, t0.getNullable == t1.getNullable) match {
       case (_, _, false) =>
@@ -35,12 +47,13 @@ object To {
       case (BSchema.TypeName.ARRAY, BSchema.TypeName.ARRAY, _) =>
         areCompatible(t0.getCollectionElementType, t1.getCollectionElementType)
       case (BSchema.TypeName.MAP, BSchema.TypeName.MAP, _) =>
-        areCompatible(t0.getMapKeyType, t1.getMapKeyType)
+        areCompatible(t0.getMapKeyType, t1.getMapKeyType) &&
         areCompatible(t0.getMapValueType, t1.getMapValueType)
       case (_, _, _) =>
         t0.equivalent(t1, BSchema.EquivalenceNullablePolicy.SAME)
     }
   }
+
 
   private def areCompatible(s0: BSchema, s1: BSchema): Boolean = {
     val s0Fields = s0.getFields.asScala.map { x =>
@@ -53,7 +66,7 @@ object To {
     }
   }
 
-  private[schemas] def checkCompatibility[T](bsi: BSchema, bso: BSchema)(
+  def checkCompatibility[T](bsi: BSchema, bso: BSchema)(
     t: => T
   ): Either[String, T] =
     if (areCompatible(bsi, bso)) {
@@ -70,6 +83,12 @@ object To {
       Left(message)
     }
 
+  /**
+   * Builds a function that reads a Row and convert it
+   * to a Row in the given Schema.
+   * The input Row needs to be compatible with the given Schema,
+   * that is, it may have more fields, or use LogicalTypes.
+   */
   @inline private def transform(schema: BSchema): Row => Row = { t0 =>
     val iter = schema.getFields.iterator()
     val builder: Row.Builder = Row.withSchema(schema)
@@ -80,7 +99,9 @@ object To {
         case r: Row if f.getType.getTypeName == BSchema.TypeName.ROW =>
           transform(f.getType.getRowSchema)(r)
         case v =>
-          v
+          // See comment in `SchemaMaterializer.decode` implementation
+          // for an explanation on why this is required.
+          SchemaMaterializer.decode(Type(f.getType()))(v)
       }
       builder.addValue(value)
     }
@@ -112,11 +133,15 @@ object To {
    * @see To#safe
    * @see To#unsafe
    */
-  private[scio] def unchecked[I: Schema, O: Schema]: To[I, O] =
+  def unchecked[I: Schema, O: Schema]: To[I, O] =
     new To[I, O] {
       def apply(coll: SCollection[I]): SCollection[O] = {
         val (_, toT, _) = SchemaMaterializer.materialize(coll.context, Schema[I])
-        unchecked[I, O]((s: BSchema, i: I) => transform(s)(toT(i))).apply(coll)
+        val convertRow: (BSchema, I) => Row = { (s, i) =>
+          val row = toT(i)
+          transform(s)(row)
+        }
+        unchecked[I, O](convertRow).apply(coll)
       }
     }
 
@@ -124,7 +149,8 @@ object To {
     new To[I, O] {
       def apply(coll: SCollection[I]): SCollection[O] = {
         val (bso, toO, fromO) = SchemaMaterializer.materialize(coll.context, Schema[O])
-        coll.map[O](f.curried(bso).andThen(fromO(_)))(Coder.beam(SchemaCoder.of(bso, toO, fromO)))
+        val convert: I => O = f.curried(bso).andThen(fromO(_))
+        coll.map[O](convert)(Coder.beam(SchemaCoder.of(bso, toO, fromO)))
       }
     }
 
