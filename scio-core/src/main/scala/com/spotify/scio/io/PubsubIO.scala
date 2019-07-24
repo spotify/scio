@@ -198,7 +198,10 @@ private final case class PubsubIOWithAttributes[T: ClassTag: Coder](
     }
   }
 
-  override protected def write(data: SCollection[WithAttributeMap], params: WriteP): Tap[Nothing] = {
+  override protected def write(
+    data: SCollection[WithAttributeMap],
+    params: WriteP
+  ): Tap[Nothing] = {
     var w = beam.PubsubIO.writeMessages().to(name)
     if (idAttribute != null) {
       w = w.withIdAttribute(idAttribute)

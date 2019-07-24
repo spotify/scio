@@ -98,7 +98,10 @@ final case class TFSequenceExampleIO(path: String) extends ScioIO[SequenceExampl
   override protected def read(sc: ScioContext, params: ReadP): SCollection[SequenceExample] =
     TFRecordMethods.read(sc, path, params).map(SequenceExample.parseFrom)
 
-  override protected def write(data: SCollection[SequenceExample], params: WriteP): Tap[SequenceExample] = {
+  override protected def write(
+    data: SCollection[SequenceExample],
+    params: WriteP
+  ): Tap[SequenceExample] = {
     TFRecordMethods.write(data.map(_.toByteArray), path, params)
     tap(TFExampleIO.ReadParam(params.compression))
   }

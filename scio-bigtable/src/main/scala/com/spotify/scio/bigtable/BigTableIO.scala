@@ -114,12 +114,18 @@ final case class BigtableWrite[T](bigtableOptions: BigtableOptions, tableId: Str
   override def testId: String =
     s"BigtableIO(${bigtableOptions.getProjectId}\t${bigtableOptions.getInstanceId}\t$tableId)"
 
-  override protected def read(sc: ScioContext, params: ReadP): SCollection[(ByteString, Iterable[T])] =
+  override protected def read(
+    sc: ScioContext,
+    params: ReadP
+  ): SCollection[(ByteString, Iterable[T])] =
     throw new UnsupportedOperationException(
       "BigtableWrite is write-only, use Row to read from Bigtable"
     )
 
-  override protected def write(data: SCollection[(ByteString, Iterable[T])], params: WriteP): Tap[Nothing] = {
+  override protected def write(
+    data: SCollection[(ByteString, Iterable[T])],
+    params: WriteP
+  ): Tap[Nothing] = {
     val sink =
       params match {
         case BigtableWrite.Default =>
