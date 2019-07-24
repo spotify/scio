@@ -9,7 +9,7 @@ settings: &settings
   resource_class: xlarge
 
 env: &env
-  GOOGLE_APPLICATION_CREDENTIALS: scripts/data-integration-test.json
+  GOOGLE_APPLICATION_CREDENTIALS: /home/circleci/scio/scripts/data-integration-test.json
   DATASTORE_PROJECT_ID: data-integration-test
 
 executors:
