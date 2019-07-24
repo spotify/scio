@@ -143,10 +143,10 @@ final case class BigQuerySelect(sqlQuery: String) extends BigQueryIO[TableRow] {
 
   override def testId: String = s"BigQueryIO($sqlQuery)"
 
-  override def read(sc: ScioContext, params: ReadP): SCollection[TableRow] =
+  override protected def read(sc: ScioContext, params: ReadP): SCollection[TableRow] =
     Reads.bqReadQuery(sc)(beam.BigQueryIO.readTableRows(), sqlQuery, params.flattenResults)
 
-  override def write(data: SCollection[TableRow], params: WriteP): Tap[TableRow] =
+  override protected def write(data: SCollection[TableRow], params: WriteP): Tap[TableRow] =
     throw new UnsupportedOperationException("BigQuerySelect is read-only")
 
   override def tap(params: ReadP): Tap[TableRow] =
@@ -170,10 +170,10 @@ final case class BigQueryTable(table: Table) extends BigQueryIO[TableRow] {
 
   override def testId: String = s"BigQueryIO(${table.spec})"
 
-  override def read(sc: ScioContext, params: ReadP): SCollection[TableRow] =
+  override protected def read(sc: ScioContext, params: ReadP): SCollection[TableRow] =
     Reads.bqReadTable(sc)(beam.BigQueryIO.readTableRows(), table.ref)
 
-  override def write(data: SCollection[TableRow], params: WriteP): Tap[TableRow] = {
+  override protected def write(data: SCollection[TableRow], params: WriteP): Tap[TableRow] = {
     var transform = beam.BigQueryIO.writeTableRows().to(table.ref)
     if (params.schema != null) {
       transform = transform.withSchema(params.schema)
@@ -315,11 +315,11 @@ final case class TableRowJsonIO(path: String) extends ScioIO[TableRow] {
   override type WriteP = TableRowJsonIO.WriteParam
   override final val tapT = TapOf[TableRow]
 
-  override def read(sc: ScioContext, params: ReadP): SCollection[TableRow] =
+  override protected def read(sc: ScioContext, params: ReadP): SCollection[TableRow] =
     sc.wrap(sc.applyInternal(TextIO.read().from(path)))
       .map(e => ScioUtil.jsonFactory.fromString(e, classOf[TableRow]))
 
-  override def write(data: SCollection[TableRow], params: WriteP): Tap[TableRow] = {
+  override protected def write(data: SCollection[TableRow], params: WriteP): Tap[TableRow] = {
     data
       .map(e => ScioUtil.jsonFactory.toString(e))
       .applyInternal(data.textOut(path, ".json", params.numShards, params.compression))
@@ -420,12 +420,12 @@ object BigQueryTyped {
 
     override def testId: String = s"BigQueryIO($query)"
 
-    override def read(sc: ScioContext, params: ReadP): SCollection[T] = {
+    override protected def read(sc: ScioContext, params: ReadP): SCollection[T] = {
       @inline def typedRead(sc: ScioContext) = Reads.avroBigQueryRead[T](sc)
       Reads.bqReadQuery(sc)(typedRead(sc), query)
     }
 
-    override def write(data: SCollection[T], params: WriteP): Tap[T] =
+    override protected def write(data: SCollection[T], params: WriteP): Tap[T] =
       throw new UnsupportedOperationException("Select queries are read-only")
 
     override def tap(params: ReadP): Tap[T] =
@@ -447,12 +447,12 @@ object BigQueryTyped {
 
     override def testId: String = s"BigQueryIO(${table.spec})"
 
-    override def read(sc: ScioContext, params: ReadP): SCollection[T] = {
+    override protected def read(sc: ScioContext, params: ReadP): SCollection[T] = {
       @inline def typedRead(sc: ScioContext) = Reads.avroBigQueryRead[T](sc)
       Reads.bqReadTable(sc)(typedRead(sc), table.ref)
     }
 
-    override def write(data: SCollection[T], params: WriteP): Tap[T] = {
+    override protected def write(data: SCollection[T], params: WriteP): Tap[T] = {
       val initialTfName = data.tfName
       val rows =
         data
@@ -469,9 +469,7 @@ object BigQueryTyped {
           params.extendedErrorInfo
         )(params.insertErrorTransform)
 
-      BigQueryTable(table)
-        .write(rows, ps)
-        .map(bqt.fromTableRow)
+      rows.write(BigQueryTable(table))(ps).underlying.map(bqt.fromTableRow)
     }
 
     override def tap(read: ReadP): Tap[T] =
@@ -539,12 +537,12 @@ object BigQueryTyped {
 
     override def testId: String = s"BigQueryIO(${table.spec})"
 
-    override def read(sc: ScioContext, params: ReadP): SCollection[T] = {
+    override protected def read(sc: ScioContext, params: ReadP): SCollection[T] = {
       @inline def typedRead(sc: ScioContext) = Reads.avroBigQueryRead[T](sc)
       Reads.bqReadStorage(sc)(typedRead(sc), table, params.selectFields, params.rowRestriction)
     }
 
-    override def write(data: SCollection[T], params: WriteP): Tap[T] =
+    override protected def write(data: SCollection[T], params: WriteP): Tap[T] =
       throw new UnsupportedOperationException("Storage API is read-only")
 
     override def tap(read: ReadP): Tap[T] = {

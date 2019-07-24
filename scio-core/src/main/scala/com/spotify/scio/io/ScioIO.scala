@@ -132,10 +132,10 @@ object ScioIO {
 
       override def testId: String = io.testId
 
-      override def read(sc: ScioContext, params: ReadP): SCollection[T] =
+      override protected def read(sc: ScioContext, params: ReadP): SCollection[T] =
         io.read(sc, params)
 
-      override def write(data: SCollection[T], params: WriteP): Tap[io.tapT.T] =
+      override protected def write(data: SCollection[T], params: WriteP): Tap[io.tapT.T] =
         throw new UnsupportedOperationException("read-only IO. This code should be unreachable")
 
       override def tap(params: ReadP): Tap[io.tapT.T] = io.tap(params)
@@ -149,9 +149,9 @@ trait TestIO[T] extends ScioIO[T] {
   override type ReadP = Nothing
   override type WriteP = Nothing
 
-  override def read(sc: ScioContext, params: ReadP): SCollection[T] =
+  override protected def read(sc: ScioContext, params: ReadP): SCollection[T] =
     throw new UnsupportedOperationException(s"$this is for testing purpose only")
-  override def write(data: SCollection[T], params: WriteP): Tap[tapT.T] =
+  override protected def write(data: SCollection[T], params: WriteP): Tap[tapT.T] =
     throw new UnsupportedOperationException(s"$this is for testing purpose only")
   override def tap(params: ReadP): Tap[tapT.T] =
     throw new UnsupportedOperationException(s"$this is for testing purpose only")

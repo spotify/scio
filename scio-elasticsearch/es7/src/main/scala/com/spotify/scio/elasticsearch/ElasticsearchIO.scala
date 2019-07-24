@@ -36,13 +36,13 @@ final case class ElasticsearchIO[T](esOptions: ElasticsearchOptions) extends Sci
   override type WriteP = ElasticsearchIO.WriteParam[T]
   override val tapT = EmptyTapOf[T]
 
-  override def read(sc: ScioContext, params: ReadP): SCollection[T] =
+  override protected def read(sc: ScioContext, params: ReadP): SCollection[T] =
     throw new UnsupportedOperationException("Can't read from Elasticsearch")
 
   /**
    * Save this SCollection into Elasticsearch.
    */
-  override def write(data: SCollection[T], params: WriteP): Tap[Nothing] = {
+  override protected def write(data: SCollection[T], params: WriteP): Tap[Nothing] = {
     val shards = if (params.numOfShards > 0) {
       params.numOfShards
     } else {

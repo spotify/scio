@@ -27,7 +27,7 @@ final case class CassandraIO[T](opts: CassandraOptions) extends ScioIO[T] {
   override type WriteP = CassandraIO.WriteParam[T]
   override val tapT = EmptyTapOf[T]
 
-  override def read(sc: ScioContext, params: ReadP): SCollection[T] =
+  override protected def read(sc: ScioContext, params: ReadP): SCollection[T] =
     throw new UnsupportedOperationException("Can't read from Cassandra")
 
   /**
@@ -39,7 +39,7 @@ final case class CassandraIO[T](opts: CassandraOptions) extends ScioIO[T] {
    * occur at the end of each window in streaming mode. The bulk writer writes to all nodes in a
    * cluster so remote nodes in a multi-datacenter cluster may become a bottleneck.
    */
-  override def write(data: SCollection[T], params: WriteP): Tap[Nothing] = {
+  override protected def write(data: SCollection[T], params: WriteP): Tap[Nothing] = {
     val bulkOps = new BulkOperations(opts, params.parallelism)
     data
       .map(params.outputFn.andThen(bulkOps.serializeFn))

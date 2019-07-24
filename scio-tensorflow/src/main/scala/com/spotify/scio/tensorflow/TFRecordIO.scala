@@ -30,10 +30,10 @@ final case class TFRecordIO(path: String) extends ScioIO[Array[Byte]] {
   override type WriteP = TFRecordIO.WriteParam
   override val tapT = TapOf[Array[Byte]]
 
-  override def read(sc: ScioContext, params: ReadP): SCollection[Array[Byte]] =
+  override protected def read(sc: ScioContext, params: ReadP): SCollection[Array[Byte]] =
     TFRecordMethods.read(sc, path, params)
 
-  override def write(data: SCollection[Array[Byte]], params: WriteP): Tap[Array[Byte]] = {
+  override protected def write(data: SCollection[Array[Byte]], params: WriteP): Tap[Array[Byte]] = {
     TFRecordMethods.write(data, path, params)
     tap(TFRecordIO.ReadParam(params.compression))
   }
@@ -69,10 +69,10 @@ final case class TFExampleIO(path: String) extends ScioIO[Example] {
 
   override def testId: String = s"TFExampleIO($path)"
 
-  override def read(sc: ScioContext, params: ReadP): SCollection[Example] =
+  override protected def read(sc: ScioContext, params: ReadP): SCollection[Example] =
     TFRecordMethods.read(sc, path, params).map(Example.parseFrom)
 
-  override def write(data: SCollection[Example], params: WriteP): Tap[Example] = {
+  override protected def write(data: SCollection[Example], params: WriteP): Tap[Example] = {
     TFRecordMethods.write(data.map(_.toByteArray), path, params)
     tap(TFExampleIO.ReadParam(params.compression))
   }
@@ -95,10 +95,10 @@ final case class TFSequenceExampleIO(path: String) extends ScioIO[SequenceExampl
 
   override def testId: String = s"TFSequenceExampleIO($path)"
 
-  override def read(sc: ScioContext, params: ReadP): SCollection[SequenceExample] =
+  override protected def read(sc: ScioContext, params: ReadP): SCollection[SequenceExample] =
     TFRecordMethods.read(sc, path, params).map(SequenceExample.parseFrom)
 
-  override def write(data: SCollection[SequenceExample], params: WriteP): Tap[SequenceExample] = {
+  override protected def write(data: SCollection[SequenceExample], params: WriteP): Tap[SequenceExample] = {
     TFRecordMethods.write(data.map(_.toByteArray), path, params)
     tap(TFExampleIO.ReadParam(params.compression))
   }
