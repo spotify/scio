@@ -228,7 +228,8 @@ object BigQueryTable {
     private[bigquery] val DefaultExtendedErrorInfo: ExtendedErrorInfo = ExtendedErrorInfo.Disabled
     private[bigquery] val DefaultInsertErrorTransform
       : SCollection[DefaultExtendedErrorInfo.Info] => Unit =
-      // A NoOp on the extended error output, so that we don't have DropInputs in the pipeline graph.
+      // A NoOp on the extended error output, so that we don't have DropInputs
+      // in the pipeline graph.
       _.withName("Ignore ExtendedErrorInfo").map(_ => ())
 
     @inline final def apply(
