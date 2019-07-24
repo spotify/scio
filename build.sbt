@@ -887,7 +887,8 @@ lazy val siteSettings = Def.settings(
   autoAPIMappings := true,
   libraryDependencies ++= Seq(
     "org.apache.beam" % "beam-runners-direct-java" % beamVersion,
-    "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion
+    "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion,
+    "com.nrinaudo" %% "kantan.csv" % kantanCsvVersion
   ),
   siteSubdirName in ScalaUnidoc := "api",
   scalacOptions in ScalaUnidoc := Seq(),
