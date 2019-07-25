@@ -81,30 +81,56 @@ Projects generated from [scio-template.g8](https://github.com/spotify/scio-templ
 
 Let's start with simple local-mode word count example:
 
-```
-scio> val wordCount = sc.textFile("README.md").flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty)).countByValue.map(_.toString).saveAsTextFile("/tmp/local_wordcount")
-scio> sc.close()
-scio> wordCount.waitForResult().value.take(3).foreach(println)
-(but,4)
-(via,4)
-(Hadoop,6)
+```scala mdoc:invisible
+import com.spotify.scio._
+
+def sc: ScioContext = ???
 ```
 
-Make sure `README.md` is in the current directory. This example counts words in local file using a local runner (@javadoc[`DirectRunner`](org.apache.beam.runners.direct.DirectRunner) and writes result in a local file. The pipeline and actual computation starts on `sc.close()`. The last command take 3 lines from results and prints them.
+```scala mdoc
+def wordCount = sc
+    .textFile("README.md")
+    .flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty))
+    .countByValue
+    .map(_.toString)
+    .saveAsTextFile("/tmp/local_wordcount")
+
+def scioResult = sc.run().waitUntilDone()
+
+def values = scioResult.tap(wordCount).value.take(3)
+```
+
+Make sure `README.md` is in the current directory. This example counts words in local file using a local runner (@javadoc[`DirectRunner`](org.apache.beam.runners.direct.DirectRunner) and writes result in a local file. The pipeline and actual computation starts on `sc.run()`. The last command take 3 lines from results and prints them.
 
 ### Local pipeline ++
 
 In the next example we will spice things up a bit and read data from GCS:
 
 ```
-scio> :newScio
-scio> val shakespeare = sc.textFile("gs://dataflow-samples/shakespeare/hamlet.txt")
-scio> val wordCount = shakespeare.flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty)).countByValue.map(_.toString).saveAsTextFile("/tmp/gcs-wordcount")
-scio> sc.close()
-scio> wordCount.waitForResult().value.take(3).foreach(println)
-(frown'st,1)
-(comfortable,13)
-(diversity,1)
+:newScio
+```
+
+```scala mdoc:reset:invisible
+import com.spotify.scio._
+
+def sc: ScioContext = ???
+```
+
+```scala mdoc
+def shakespeare = sc.textFile("gs://dataflow-samples/shakespeare/hamlet.txt")
+
+def wordCount = shakespeare
+    .flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty))
+    .countByValue
+    .map(_.toString)
+    .saveAsTextFile("/tmp/gcs-wordcount")
+
+def result = sc
+    .run()
+    .waitUntilDone()
+    .tap(wordCount)
+    .value
+    .take(3)
 ```
 
 Each Scio context is associated with one and only one pipeline. The previous instance of `sc` was used for the local pipeline example and cannot be reused anymore. The first magic command, `:newScio` creates a new context as `sc`. The pipeline still performs computation locally, but reads data from Google Cloud Storage (it could also be BigQuery, Datastore, etc). This example may take a bit longer due to additional network overhead.
@@ -131,14 +157,29 @@ Type :help for more information.
 
 BigQuery client available as 'bq'
 Scio context available as 'sc'
+```
 
-scio> val shakespeare = sc.textFile("gs://dataflow-samples/shakespeare/*")
-scio> val wordCount = shakespeare.flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty)).countByValue.map(_.toString).saveAsTextFile("gs://<gcs-output-dir>")
-scio> sc.close()
-scio> wordCount.waitForResult().value.take(3).foreach(println)
-(decreased,1)
-('shall',2)
-(War,4)
+```scala mdoc:reset:invisible
+import com.spotify.scio._
+
+def sc: ScioContext = ???
+```
+
+```scala mdoc
+def shakespeare = sc.textFile("gs://dataflow-samples/shakespeare/*")
+
+def wordCount = shakespeare
+    .flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty))
+    .countByValue
+    .map(_.toString)
+    .saveAsTextFile("gs://<gcs-output-dir>")
+
+def result = sc
+    .run()
+    .waitUntilDone()
+    .tap(wordCount)
+    .value
+    .take(3)
 ```
 
 In this case we are reading data from GCS and performing computation in GCE virtual machines managed by Dataflow service. The last line is an example of reading data from GCS files to local memory after a context is closed. Most write operations in Scio return `Future[Tap[T]]` where a [`Tap[T]`](http://spotify.github.io/scio/api/com/spotify/scio/io/Tap.html) encapsulates some dataset that can be re-opened in another context or directly.
@@ -176,15 +217,30 @@ Type :help for more information.
 
 BigQuery client available as 'bq'
 Scio context available as 'sc'
+```
 
-scio> val tornadoes = sc.bigQuerySelect("SELECT tornado, month FROM [clouddataflow-readonly:samples.weather_stations]")
-scio> val counts = tornadoes.flatMap(r => if (r.getBoolean("tornado")) Seq(r.getLong("month")) else Nil).countByValue.map(kv => TableRow("month" -> kv._1, "tornado_count" -> kv._2))
-scio> val result = counts.take(3).materialize
-scio> sc.close()
-scio> result.waitForResult().value.foreach(println)
-{month=4, tornado_count=5}
-{month=3, tornado_count=6}
-{month=5, tornado_count=6}
+```scala mdoc:reset:invisible
+import com.spotify.scio._
+import com.spotify.scio.bigquery._
+
+def sc: ScioContext = ???
+```
+
+```scala mdoc
+def tornadoes = sc.bigQuerySelect("SELECT tornado, month FROM [clouddataflow-readonly:samples.weather_stations]")
+ 
+def counts = tornadoes
+    .flatMap(r => if (r.getBoolean("tornado")) Seq(r.getLong("month")) else Nil)
+    .countByValue
+    .map(kv => TableRow("month" -> kv._1, "tornado_count" -> kv._2))
+    .take(3)
+    .materialize
+
+def result = sc
+    .run()
+    .waitUntilDone()
+    .tap(counts)
+    .value
 ```
 
 In this example we combine power of BigQuery and flexibility of Dataflow. We first query BigQuery table, perform a couple of transformations and take (`take(3)`) some data back locally (`materialize`) to view the results.
@@ -206,26 +262,29 @@ This means that you can always set `bigquery.project` and it will take precedenc
 
 There are few built-in commands for simple file I/O.
 
-```scala
+```scala mdoc
+import scala.reflect._
+import kantan.csv._
+
 // Read from an Avro, text, CSV or TSV file on local filesystem or GCS.
-def readAvro[T : ClassTag](path: String): Iterator[T]
-def readText(path: String): Iterator[String]
+def readAvro[T : ClassTag](path: String): Iterator[T] = ???
+def readText(path: String): Iterator[String] = ???
 def readCsv[T: RowDecoder](path: String,
                            sep: Char = ',',
-                           header: Boolean = false): Iterator[T]
-def readTsv[T: RowDecoder](path: String
+                           header: Boolean = false): Iterator[T] = ???
+def readTsv[T: RowDecoder](path: String,
                            sep: Char = '\t',
-                           header: Boolean = false): Iterator[T]
+                           header: Boolean = false): Iterator[T] = ???
 
 // Write to an Avro, text, CSV or TSV file on local filesystem or GCS.
-def writeAvro[T: ClassTag](path: String, data: Seq[T]): Unit
-def writeText(path: String, data: Seq[String]): Unit
+def writeAvro[T: ClassTag](path: String, data: Seq[T]): Unit = ???
+def writeText(path: String, data: Seq[String]): Unit = ???
 def writeCsv[T: RowEncoder](path: String, data: Seq[T],
                             sep: Char = ',',
-                            header: Seq[String] = Seq.empty): Unit
+                            header: Seq[String] = Seq.empty): Unit = ???
 def writeTsv[T: RowEncoder](path: String, data: Seq[T],
                             sep: Char = '\t',
-                            header: Seq[String] = Seq.empty): Unit
+                            header: Seq[String] = Seq.empty): Unit = ???
 ```
 
 ## Tips
@@ -235,19 +294,28 @@ def writeTsv[T: RowEncoder](path: String, data: Seq[T],
 While in the REPL, use `:paste` magic command to paste or write multi-line code
 
 ```
-scio> :paste
-// Entering paste mode (ctrl-D to finish)
+:paste
+```
 
-def evenNumber(x: Int) = x % 2 == 0
-val evenNumbers = sc.parallelize(1 to 100).filter(evenNumber)
+```scala mdoc:reset:invisible
+import com.spotify.scio._
+
+def sc: ScioContext = ???
+```
+
+```scala mdoc
+// Entering paste mode (ctrl-D to finish)
+import com.spotify.scio.io.ClosedTap
+import com.spotify.scio.values.SCollection
+
+def evenNumber(x: Int): Boolean = x % 2 == 0
+def evenNumbers: SCollection[Int] = sc.parallelize(1 to 100).filter(evenNumber)
 
 // Exiting paste mode, now interpreting.
 
-evenNumber: (x: Int)Boolean
-evenNumbers: com.spotify.scio.values.SCollection[Int] = com.spotify.scio.values.SCollectionImpl@14fe085b
+def tap: ClosedTap[String] = evenNumbers.saveAsTextFile("/tmp/even")
 
-scio> evenNumbers.saveAsTextFile("/tmp/even")
-scio> sc.close()
+def result = sc.run()
 ```
 
 ### Running jobs asynchronously
@@ -272,19 +340,32 @@ Type :help for more information.
 
 BigQuery client available as 'bq'
 Scio context available as 'sc'
-
-scio> sc.parallelize(1 to 100).map( _.toString ).saveAsTextFile("gs://<output>")
-res0: scala.concurrent.Future[com.spotify.scio.io.Tap[String]] = scala.concurrent.impl.Promise$DefaultPromise@1399ad68
-scio> val result = sc.close()
-[main] INFO org.apache.beam.runners.dataflow.DataflowRunner - Executing pipeline on the Dataflow Service, which will have billing implications related to Google Compute Engine usage and other Google Cloud Services.
-[main] INFO org.apache.beam.runners.dataflow.util.PackageUtil - Uploading 3 files from PipelineOptions.filesToStage to staging location to prepare for execution.
-[main] INFO org.apache.beam.runners.dataflow.util.PackageUtil - Uploading PipelineOptions.filesToStage complete: 2 files newly uploaded, 1 files cached
-Dataflow SDK version: 2.9.0
-scio> result.state
-res1: org.apache.beam.sdk.PipelineResult.State = RUNNING
 ```
 
-Note that now `sc.close()` doesn't block and wait until job completes and gives back control of the REPL right away. Use @scaladoc[`ClosedScioContext`](com.spotify.scio.ClosedScioContext) to check for progress, results and orchestrate jobs.
+```scala mdoc:reset:invisible
+import com.spotify.scio._
+
+def sc: ScioContext = ???
+```
+
+```scala mdoc
+import com.spotify.scio.io.ClosedTap
+
+def closedTap: ClosedTap[String] = sc
+    .parallelize(1 to 100)
+    .map( _.toString )
+    .saveAsTextFile("gs://<output>")
+
+def result = sc.run()
+// [main] INFO org.apache.beam.runners.dataflow.DataflowRunner - Executing pipeline on the Dataflow Service, which will have billing implications related to Google Compute Engine usage and other Google Cloud Services.
+// [main] INFO org.apache.beam.runners.dataflow.util.PackageUtil - Uploading 3 files from PipelineOptions.filesToStage to staging location to prepare for execution.
+// [main] INFO org.apache.beam.runners.dataflow.util.PackageUtil - Uploading PipelineOptions.filesToStage complete: 2 files newly uploaded, 1 files cached
+// Dataflow SDK version: 2.9.0
+
+def state = result.state
+```
+
+Note that now `sc.run()` doesn't block and wait until job completes and gives back control of the REPL right away. Use @scaladoc[`ScioExecutionContext`](com.spotify.scio.ScioExecutionContext) to check for progress, results and orchestrate jobs.
 
 ### Multiple Scio contexts
 
@@ -322,22 +403,42 @@ Type :help for more information.
 
 BigQuery client available as 'bq'
 Scio context available as 'sc'
+```
 
-scio> @BigQueryType.fromQuery("SELECT tornado, month FROM [clouddataflow-readonly:samples.weather_stations]") class Row
-scio> val tornadoes = bq.getTypedRows[Row]()
-scio> tornadoes.next.month
-res0: Option[Long] = Some(5)
-scio> bq.writeTypedRows("project-id:dataset-id.table-id", tornadoes.take(100).toList)
+```scala mdoc:reset:invisible
+import com.spotify.scio.bigquery._
+import com.spotify.scio.bigquery.client._
+
+def bq: BigQuery = ???
+```
+
+```scala mdoc
+@BigQueryType.fromQuery("SELECT tornado, month FROM [clouddataflow-readonly:samples.weather_stations]") class Row
+
+def tornadoes = bq.getTypedRows[Row]()
+
+def result = tornadoes.next.month
+
+def write = bq.writeTypedRows("project-id:dataset-id.table-id", tornadoes.take(100).toList)
 ```
 
 ### Out of memory exception
 
 In case of OOM exceptions, like for example:
 
+```scala mdoc:reset:invisible
+import com.spotify.scio._
+import com.spotify.scio.io._
+
+def sc: ScioContext = ???
 ```
-scio> res1.waitForResult().value.next
-Exception in thread "main"
-Exception: java.lang.OutOfMemoryError thrown from the UncaughtExceptionHandler in thread "main"
+
+```scala mdoc
+def closedTap: ClosedTap[String] = ???
+
+def result = sc.run().waitUntilDone().tap(closedTap).value.next
+// Exception in thread "main"
+// Exception: java.lang.OutOfMemoryError thrown from the UncaughtExceptionHandler in thread "main"
 ```
 
 simply increase the size of the heap - be reasonable about the amount of data and heap size though.
@@ -361,13 +462,16 @@ Type :help for more information.
 BigQuery client available as 'bq'
 Scio context available as 'sc'
 
-scio> Runtime.getRuntime().maxMemory();
-res1: Long = 1908932608
+```
+
+``` scala
+Runtime.getRuntime().maxMemory()
+// res1: Long = 1908932608
 ```
 
 ### What is the type of an expression?
 
-Use build in `:t` magic, `:t` displays the type of an expression without evaluating it. Example:
+Use the built in `:t`! `:t` displays the type of an expression without evaluating it. Example:
 
 ```
 scio> :t sc.textFile("README").flatMap(_.split("[^a-zA-Z']+")).filter(_.nonEmpty).map(_.length)
