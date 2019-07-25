@@ -140,12 +140,29 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
   ): SCollection[T] = {
     val bqt = BigQueryType[T]
     if (bqt.isStorage) {
-      val table = if (newSource != null) newSource else bqt.table.get
-      val params = BigQueryTyped.Storage.ReadParam(bqt.selectedFields.get, bqt.rowRestriction.get)
-      self.read(BigQueryTyped.Storage(Table.Spec(table)))(params)
+      typedBigQueryStorage(newSource)
     } else {
       self.read(BigQueryTyped.dynamic[T](newSource))
     }
+  }
+
+  /**
+   * Get a typed SCollection for a BigQuery storage API.
+   *
+   * Note that `T` must be annotated with
+   * [[com.spotify.scio.bigquery.types.BigQueryType.fromSchema BigQueryType.fromStorage]].
+   *
+   * Similar to [[typedBigQuery]] but allows `rowRestriction` to be overridden.
+   */
+  def typedBigQueryStorage[T <: HasAnnotation: ClassTag: TypeTag: Coder](
+    newSource: String = null,
+    rowRestriction: String = null
+  ): SCollection[T] = {
+    val bqt = BigQueryType[T]
+    val table = if (newSource != null) newSource else bqt.table.get
+    val rr = if (rowRestriction != null) rowRestriction else bqt.rowRestriction.get
+    val params = BigQueryTyped.Storage.ReadParam(bqt.selectedFields.get, rr)
+    self.read(BigQueryTyped.Storage[T](Table.Spec(table)))(params)
   }
 
   /**
