@@ -233,52 +233,53 @@ object ContextAndArgs {
   }
 }
 
+/**
+ * Represents a new state of the underlying [[ScioContext]].
+ * It means that the underlying [[ScioContext]] is ready to be [[ScioContext#run]].
+ */
+sealed trait PreparedScioContext {
+  def underlying: ScioContext
+}
+
+/**
+ * ScioExecutor defines how [[ScioContext]] should run.
+ * It requires a [[PreparedScioContext]] to actually run the underlying pipeline.
+ */
 trait ScioExecutor {
-  def testId(sc: ScioContext): Option[String]
 
-  def isTest(sc: ScioContext): Boolean
+  /** Defines a test ID for this execution. This is necessary if the execution is a test */
+  def testId(options: PipelineOptions): Option[String]
 
-  def run(sc: ScioContext): ScioExecutionContext
+  /** Defines that the execution will be in test mode */
+  def isTest(options: PipelineOptions): Boolean
+
+  /** Starts the pipeline execution */
+  def run(sc: PreparedScioContext): ScioExecutionContext
 }
 
-sealed trait ScioRunner extends ScioExecutor
+object ScioExecutor {
+  val DefaultExecutor = new ScioExecutor {
+    override def testId(opts: PipelineOptions): Option[String] =
+      Try(opts.as(classOf[ApplicationNameOptions])).toOption
+        .map(_.getAppName)
+        .filter(TestUtil.isTestId)
 
-object ScioRunner {
-  def apply(exec: ScioExecutor): ScioRunner = new ScioRunner {
-    override def testId(sc: ScioContext): Option[String] = exec.testId(sc)
+    override def isTest(opts: PipelineOptions): Boolean = testId(opts).isDefined
 
-    override def isTest(sc: ScioContext): Boolean = exec.isTest(sc)
-
-    override def run(sc: ScioContext): ScioExecutionContext = {
-      val closedContext = exec.run(sc.prepare())
-
-      if (sc.isTest) {
-        val result = closedContext.waitUntilDone()
-        TestDataManager.closeTest(testId(sc).get, result)
-      }
-
-      closedContext
-    }
+    override def run(preparedContext: PreparedScioContext): ScioExecutionContext =
+      ScioExecutionContext.default(
+        preparedContext.underlying.pipeline.run(),
+        preparedContext.underlying
+      )
   }
-
-  val default = apply(new ScioExecutor {
-
-    override def testId(sc: ScioContext): Option[String] =
-      Try(sc.optionsAs[ApplicationNameOptions]).toOption.flatMap { o =>
-        if (TestUtil.isTestId(o.getAppName)) {
-          Some(o.getAppName)
-        } else {
-          None
-        }
-      }
-
-    override def isTest(sc: ScioContext): Boolean = testId(sc).isDefined
-
-    override def run(sc: ScioContext): ScioExecutionContext =
-      ScioExecutionContext.default(sc.pipeline.run(), sc)
-  })
 }
 
+/**
+ * ScioExecutionContext is the result of [[ScioContext#run()]].
+ *
+ * This is a handle to the underlying running job and allows getting the state,
+ * checking if it's completed and to wait for it's execution.
+ */
 trait ScioExecutionContext {
 
   def pipelineResult: PipelineResult
@@ -289,47 +290,47 @@ trait ScioExecutionContext {
   /** Pipeline's current state. */
   def state: State
 
-  def waitUntilFinish(): ScioResult
-  def waitUntilFinish(duration: Duration): ScioResult
-  def waitUntilFinish(cancelJob: Boolean): ScioResult
+  /** default await duration when using [[waitUntilFinish]] or [[waitUntilDone]] */
+  def awaitDuration: Duration
+
+  /** default cancel job option when using [[waitUntilFinish]] or [[waitUntilDone]] */
+  def cancelJob: Boolean
 
   /**
    * Wait until the pipeline finishes. If timeout duration is exceeded and `cancelJob` is set,
    * cancel the internal [[PipelineResult]].
    */
-  def waitUntilFinish(duration: Duration, cancelJob: Boolean): ScioResult
-
-  def waitUntilDone(): ScioResult
-  def waitUntilDone(duration: Duration): ScioResult
-  def waitUntilDone(cancelJob: Boolean): ScioResult
+  def waitUntilFinish(
+    duration: Duration = awaitDuration,
+    cancelJob: Boolean = cancelJob
+  ): ScioResult
 
   /**
    * Wait until the pipeline finishes with the State `DONE` (as opposed to `CANCELLED` or
    * `FAILED`). Throw exception otherwise.
    */
-  def waitUntilDone(duration: Duration, cancelJob: Boolean): ScioResult
+  def waitUntilDone(
+    duration: Duration = awaitDuration,
+    cancelJob: Boolean = cancelJob
+  ): ScioResult
 }
 
 object ScioExecutionContext {
+
+  /**
+   * Default implementation of execution context.
+   */
   private[scio] def default(pr: PipelineResult, sc: ScioContext) =
     new ScioExecutionContext {
-      private[this] val DefaultAwaitDuration = sc.awaitDuration
-      private[this] val DefaultCancelJob = true
-
-      override def pipelineResult: PipelineResult = pr
+      override val pipelineResult: PipelineResult = pr
 
       override def isCompleted: Boolean = state.isTerminal()
 
       override def state: State = Try(pipelineResult.getState).getOrElse(State.UNKNOWN)
 
-      override def waitUntilFinish(): ScioResult =
-        waitUntilFinish(DefaultAwaitDuration, DefaultCancelJob)
+      override val cancelJob: Boolean = true
 
-      override def waitUntilFinish(duration: Duration): ScioResult =
-        waitUntilFinish(duration, DefaultCancelJob)
-
-      override def waitUntilFinish(cancelJob: Boolean): ScioResult =
-        waitUntilFinish(DefaultAwaitDuration, cancelJob)
+      override val awaitDuration: Duration = sc.awaitDuration
 
       override def waitUntilFinish(duration: Duration, cancelJob: Boolean): ScioResult = {
         try {
@@ -369,15 +370,6 @@ object ScioExecutionContext {
         }
       }
 
-      override def waitUntilDone(): ScioResult =
-        waitUntilDone(DefaultAwaitDuration, DefaultCancelJob)
-
-      override def waitUntilDone(duration: Duration): ScioResult =
-        waitUntilDone(duration, DefaultCancelJob)
-
-      override def waitUntilDone(cancelJob: Boolean): ScioResult =
-        waitUntilDone(DefaultAwaitDuration, cancelJob)
-
       override def waitUntilDone(duration: Duration, cancelJob: Boolean): ScioResult = {
         val result = waitUntilFinish(duration, cancelJob)
         if (!state.equals(State.DONE)) {
@@ -412,8 +404,8 @@ object ScioContext {
     new ScioContext(options, artifacts)
 
   /** Create a new [[ScioContext]] instance. */
-  def apply(options: PipelineOptions, runner: ScioRunner): ScioContext =
-    new ScioContext(options, Nil, runner)
+  def apply(options: PipelineOptions, executor: ScioExecutor): ScioContext =
+    new ScioContext(options, Nil, executor)
 
   /** Create a new [[ScioContext]] instance for testing. */
   def forTest(): ScioContext = {
@@ -498,7 +490,7 @@ object ScioContext {
 class ScioContext private[scio] (
   val options: PipelineOptions,
   private var artifacts: List[String],
-  private val scioRunner: ScioRunner = ScioRunner.default
+  private val executor: ScioExecutor = ScioExecutor.DefaultExecutor
 ) extends TransformNameable {
 
   /** Get PipelineOptions as a more specific sub-type. */
@@ -539,7 +531,7 @@ class ScioContext private[scio] (
     }
   }
 
-  private[scio] val testId: Option[String] = scioRunner.testId(this)
+  private[scio] val testId: Option[String] = executor.testId(options)
 
   /** Amount of time to block job for. */
   val awaitDuration: Duration = {
@@ -636,7 +628,7 @@ class ScioContext private[scio] (
     options.setJobName(name)
   }
 
-  private[scio] def prepare(): ScioContext = requireNotClosed {
+  private[scio] def prepare(): PreparedScioContext = requireNotClosed {
     _onClose(())
 
     if (_counters.nonEmpty) {
@@ -648,7 +640,10 @@ class ScioContext private[scio] (
 
     _isClosed = true
 
-    this
+    val that = this
+    new PreparedScioContext {
+      override def underlying: ScioContext = that
+    }
   }
 
   /**
@@ -659,7 +654,7 @@ class ScioContext private[scio] (
    *
    * @return the [[ScioExecutionContext]] for the underlying job execution.
    */
-  def run(): ScioExecutionContext = run(scioRunner)
+  def run(): ScioExecutionContext = run(executor)
 
   /**
    * Runs the underlying pipeline.
@@ -667,11 +662,20 @@ class ScioContext private[scio] (
    * Running closes the context and no further transformations can be applied to the
    * pipeline once the context is closed.
    *
-   * @param runner [[ScioRunner]] responsible for the execution for this context.
+   * @param executor [[ScioExecutor]] responsible for the execution for this context.
    *
    * @return the [[ScioExecutionContext]] for the underlying job execution.
    */
-  def run(runner: ScioRunner): ScioExecutionContext = runner.run(this)
+  def run(executor: ScioExecutor): ScioExecutionContext = {
+    val context = executor.run(prepare())
+
+    testId.foreach { id =>
+      val result = context.waitUntilDone()
+      TestDataManager.closeTest(id, result)
+    }
+
+    context
+  }
 
   /**
    * Close the context. No operation can be performed once the context is closed.
