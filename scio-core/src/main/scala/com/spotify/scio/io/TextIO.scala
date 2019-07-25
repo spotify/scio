@@ -39,7 +39,7 @@ final case class TextIO(path: String) extends ScioIO[String] {
   override type WriteP = TextIO.WriteParam
   override final val tapT = TapOf[String]
 
-  override def read(sc: ScioContext, params: ReadP): SCollection[String] =
+  override protected def read(sc: ScioContext, params: ReadP): SCollection[String] =
     sc.wrap(
       sc.applyInternal(
         BTextIO
@@ -49,7 +49,7 @@ final case class TextIO(path: String) extends ScioIO[String] {
       )
     )
 
-  override def write(data: SCollection[String], params: WriteP): Tap[String] = {
+  override protected def write(data: SCollection[String], params: WriteP): Tap[String] = {
     data.applyInternal(textOut(path, params))
     tap(TextIO.ReadParam())
   }

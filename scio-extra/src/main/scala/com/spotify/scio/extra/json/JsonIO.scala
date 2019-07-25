@@ -36,10 +36,10 @@ final case class JsonIO[T: ClassTag: Encoder: Decoder: Coder](path: String) exte
   override type WriteP = JsonIO.WriteParam
   override final val tapT = TapOf[T]
 
-  override def read(sc: ScioContext, params: ReadP): SCollection[T] =
+  override protected def read(sc: ScioContext, params: ReadP): SCollection[T] =
     sc.wrap(sc.applyInternal(beam.TextIO.read().from(path))).map(decodeJson)
 
-  override def write(data: SCollection[T], params: WriteP): Tap[T] = {
+  override protected def write(data: SCollection[T], params: WriteP): Tap[T] = {
     data
       .map(x => params.printer.pretty(x.asJson))
       .applyInternal(jsonOut(path, params))

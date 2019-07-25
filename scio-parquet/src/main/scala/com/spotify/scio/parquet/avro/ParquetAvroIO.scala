@@ -52,7 +52,7 @@ final case class ParquetAvroIO[T: ClassTag: Coder](path: String) extends ScioIO[
 
   private val cls = ScioUtil.classOf[T]
 
-  override def read(sc: ScioContext, params: ReadP): SCollection[T] = {
+  override protected def read(sc: ScioContext, params: ReadP): SCollection[T] = {
     val job = Job.getInstance()
     setInputPaths(sc, job, path)
     job.setInputFormatClass(classOf[AvroParquetInputFormat[T]])
@@ -74,7 +74,7 @@ final case class ParquetAvroIO[T: ClassTag: Coder](path: String) extends ScioIO[
     sc.wrap(sc.applyInternal(source)).map(_.getValue)
   }
 
-  override def write(data: SCollection[T], params: WriteP): Tap[T] = {
+  override protected def write(data: SCollection[T], params: WriteP): Tap[T] = {
     val job = Job.getInstance()
     if (ScioUtil.isLocalRunner(data.context.options.getRunner)) {
       GcsConnectorUtil.setCredentials(job)

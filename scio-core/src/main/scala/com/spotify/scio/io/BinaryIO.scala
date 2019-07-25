@@ -37,10 +37,10 @@ final case class BinaryIO(path: String) extends ScioIO[Array[Byte]] {
 
   override def testId: String = s"BinaryIO($path)"
 
-  override def read(sc: ScioContext, params: ReadP): SCollection[Array[Byte]] =
+  override protected def read(sc: ScioContext, params: ReadP): SCollection[Array[Byte]] =
     throw new UnsupportedOperationException("BinaryIO is write-only")
 
-  override def write(data: SCollection[Array[Byte]], params: WriteP): Tap[Nothing] = {
+  override protected def write(data: SCollection[Array[Byte]], params: WriteP): Tap[Nothing] = {
     data.applyInternal(
       FileIO
         .write[Array[Byte]]

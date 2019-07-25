@@ -72,7 +72,7 @@ final case class JdbcSelect[T: Coder](readOptions: JdbcReadOptions[T]) extends J
 
   override def testId: String = s"JdbcIO(${JdbcIO.jdbcIoId(readOptions)})"
 
-  override def read(sc: ScioContext, params: ReadP): SCollection[T] = {
+  override protected def read(sc: ScioContext, params: ReadP): SCollection[T] = {
     var transform = beam.JdbcIO
       .read[T]()
       .withCoder(CoderMaterializer.beam(sc, Coder[T]))
@@ -96,7 +96,7 @@ final case class JdbcSelect[T: Coder](readOptions: JdbcReadOptions[T]) extends J
     sc.wrap(sc.applyInternal(transform))
   }
 
-  override def write(data: SCollection[T], params: WriteP): Tap[Nothing] =
+  override protected def write(data: SCollection[T], params: WriteP): Tap[Nothing] =
     throw new UnsupportedOperationException("jdbc.Select is read-only")
 
   override def tap(params: ReadP): Tap[Nothing] =
@@ -111,10 +111,10 @@ final case class JdbcWrite[T](writeOptions: JdbcWriteOptions[T]) extends JdbcIO[
 
   override def testId: String = s"JdbcIO(${JdbcIO.jdbcIoId(writeOptions)})"
 
-  override def read(sc: ScioContext, params: ReadP): SCollection[T] =
+  override protected def read(sc: ScioContext, params: ReadP): SCollection[T] =
     throw new UnsupportedOperationException("jdbc.Write is write-only")
 
-  override def write(data: SCollection[T], params: WriteP): Tap[Nothing] = {
+  override protected def write(data: SCollection[T], params: WriteP): Tap[Nothing] = {
     var transform = beam.JdbcIO
       .write[T]()
       .withDataSourceConfiguration(JdbcIO.dataSourceConfiguration(writeOptions.connectionOptions))

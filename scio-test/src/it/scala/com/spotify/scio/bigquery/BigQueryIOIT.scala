@@ -46,7 +46,7 @@ class BigQueryIOIT extends PipelineSpec {
 
   "Select" should "read typed values from a SQL query" in
     runWithRealContext(options) { sc =>
-      val scoll = BigQueryTyped[ShakespeareFromQuery].read(sc, ())
+      val scoll = sc.read(BigQueryTyped[ShakespeareFromQuery])
       scoll should haveSize(10)
       scoll should satisfy[ShakespeareFromQuery] {
         _.forall(_.getClass == classOf[ShakespeareFromQuery])
@@ -55,7 +55,7 @@ class BigQueryIOIT extends PipelineSpec {
 
   "TableRef" should "read typed values from table" in
     runWithRealContext(options) { sc =>
-      val scoll = BigQueryTyped[ShakespeareFromTable].read(sc, ())
+      val scoll = sc.read(BigQueryTyped[ShakespeareFromTable])
       scoll.take(10) should haveSize(10)
       scoll should satisfy[ShakespeareFromTable] {
         _.forall(_.getClass == classOf[ShakespeareFromTable])

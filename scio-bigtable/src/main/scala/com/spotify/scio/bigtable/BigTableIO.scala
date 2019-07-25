@@ -52,7 +52,7 @@ final case class BigtableRead(bigtableOptions: BigtableOptions, tableId: String)
   override def testId: String =
     s"BigtableIO(${bigtableOptions.getProjectId}\t${bigtableOptions.getInstanceId}\t$tableId)"
 
-  override def read(sc: ScioContext, params: ReadP): SCollection[Row] = {
+  override protected def read(sc: ScioContext, params: ReadP): SCollection[Row] = {
     val opts = bigtableOptions // defeat closure
     var read = beam.BigtableIO
       .read()
@@ -74,7 +74,7 @@ final case class BigtableRead(bigtableOptions: BigtableOptions, tableId: String)
     sc.wrap(sc.applyInternal(read))
   }
 
-  override def write(data: SCollection[Row], params: WriteP): Tap[Nothing] =
+  override protected def write(data: SCollection[Row], params: WriteP): Tap[Nothing] =
     throw new UnsupportedOperationException(
       "BigtableRead is read-only, use Mutation to write to Bigtable"
     )
@@ -114,12 +114,18 @@ final case class BigtableWrite[T](bigtableOptions: BigtableOptions, tableId: Str
   override def testId: String =
     s"BigtableIO(${bigtableOptions.getProjectId}\t${bigtableOptions.getInstanceId}\t$tableId)"
 
-  override def read(sc: ScioContext, params: ReadP): SCollection[(ByteString, Iterable[T])] =
+  override protected def read(
+    sc: ScioContext,
+    params: ReadP
+  ): SCollection[(ByteString, Iterable[T])] =
     throw new UnsupportedOperationException(
       "BigtableWrite is write-only, use Row to read from Bigtable"
     )
 
-  override def write(data: SCollection[(ByteString, Iterable[T])], params: WriteP): Tap[Nothing] = {
+  override protected def write(
+    data: SCollection[(ByteString, Iterable[T])],
+    params: WriteP
+  ): Tap[Nothing] = {
     val sink =
       params match {
         case BigtableWrite.Default =>

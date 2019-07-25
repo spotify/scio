@@ -74,7 +74,7 @@ private final case class PubsubIOWithoutAttributes[T: ClassTag: Coder](
   override def testId: String =
     s"PubsubIO($name, $idAttribute, $timestampAttribute)"
 
-  override def read(sc: ScioContext, params: ReadP): SCollection[T] = {
+  override protected def read(sc: ScioContext, params: ReadP): SCollection[T] = {
     def setup[U](read: beam.PubsubIO.Read[U]) = {
       var r = read
       r = if (params.isSubscription) {
@@ -113,7 +113,7 @@ private final case class PubsubIOWithoutAttributes[T: ClassTag: Coder](
     }
   }
 
-  override def write(data: SCollection[T], params: WriteP): Tap[Nothing] = {
+  override protected def write(data: SCollection[T], params: WriteP): Tap[Nothing] = {
     def setup[U](write: beam.PubsubIO.Write[U]) = {
       var w = write.to(name)
       if (idAttribute != null) {
@@ -167,7 +167,7 @@ private final case class PubsubIOWithAttributes[T: ClassTag: Coder](
   override def testId: String =
     s"PubsubIO($name, $idAttribute, $timestampAttribute)"
 
-  override def read(sc: ScioContext, params: ReadP): SCollection[WithAttributeMap] = {
+  override protected def read(sc: ScioContext, params: ReadP): SCollection[WithAttributeMap] = {
     var r = beam.PubsubIO.readMessagesWithAttributes()
     r = if (params.isSubscription) r.fromSubscription(name) else r.fromTopic(name)
     if (idAttribute != null) {
@@ -198,7 +198,10 @@ private final case class PubsubIOWithAttributes[T: ClassTag: Coder](
     }
   }
 
-  override def write(data: SCollection[WithAttributeMap], params: WriteP): Tap[Nothing] = {
+  override protected def write(
+    data: SCollection[WithAttributeMap],
+    params: WriteP
+  ): Tap[Nothing] = {
     var w = beam.PubsubIO.writeMessages().to(name)
     if (idAttribute != null) {
       w = w.withIdAttribute(idAttribute)
