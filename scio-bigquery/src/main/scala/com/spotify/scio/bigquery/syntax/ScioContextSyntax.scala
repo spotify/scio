@@ -140,9 +140,7 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
   ): SCollection[T] = {
     val bqt = BigQueryType[T]
     if (bqt.isStorage) {
-      val table = if (newSource != null) newSource else bqt.table.get
-      val params = BigQueryTyped.Storage.ReadParam(bqt.selectedFields.get, bqt.rowRestriction.get)
-      self.read(BigQueryTyped.Storage(Table.Spec(table)))(params)
+      typedBigQueryStorage(newSource)
     } else {
       self.read(BigQueryTyped.dynamic[T](newSource))
     }
