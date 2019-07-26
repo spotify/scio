@@ -334,7 +334,8 @@ object ScioExecutionContext {
       override def waitUntilFinish(duration: Duration, cancelJob: Boolean): ScioResult = {
         try {
           val wait = duration match {
-            case Duration.Inf => 0
+            // according to PipelineResult values <= 1 ms mean `Duration.Inf`
+            case Duration.Inf => -1
             case d            => d.toMillis
           }
           pipelineResult.waitUntilFinish(time.Duration.millis(wait))
