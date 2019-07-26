@@ -653,13 +653,31 @@ class ScioContext private[scio] (
   /**
    * Runs the underlying pipeline according to the options used to create this context.
    * Running closes the context and no operation can be performed once the context is closed.
+   *
+   * No operation can be performed once the context is closed.
+   *
+   * @return the [[ScioExecutionContext]] for the underlying job execution.
    */
   def run(): ScioExecutionContext = run(scioRunner)
 
+  /**
+   * Runs the underlying pipeline according to the options used to create this context.
+   * Running closes the context and no operation can be performed once the context is closed.
+   *
+   * No operation can be performed once the context is closed.
+   *
+   * @param runner [[ScioRunner]] responsible for the execution for this context.
+   *
+   * @return the [[ScioExecutionContext]] for the underlying job execution.
+   */
   def run(runner: ScioRunner): ScioExecutionContext = runner.run(this)
 
-  /** Close the context. No operation can be performed once the context is closed. */
-  @deprecated("this method will be removed in next scio version", "Scio 0.8.0")
+  /**
+   * Close the context. No operation can be performed once the context is closed.
+   *
+   * This method is @deprecated. Use [[ScioContext#run]]
+   */
+  @deprecated("this method will be removed in next scio version; use run() instead.", "Scio 0.8.0")
   def close(): ScioExecutionContext = requireNotClosed {
     val closedContext = run()
 
