@@ -96,7 +96,7 @@ object BigtableRead {
   )
 
   final def apply(projectId: String, instanceId: String, tableId: String): BigtableRead = {
-    val bigtableOptions = new BigtableOptions.Builder()
+    val bigtableOptions = BigtableOptions.builder()
       .setProjectId(projectId)
       .setInstanceId(instanceId)
       .build
@@ -173,7 +173,7 @@ object BigtableWrite {
   final def apply[T](projectId: String, instanceId: String, tableId: String)(
     implicit ev: T <:< Mutation
   ): BigtableWrite[T] = {
-    val bigtableOptions = new BigtableOptions.Builder()
+    val bigtableOptions = BigtableOptions.builder()
       .setProjectId(projectId)
       .setInstanceId(instanceId)
       .build

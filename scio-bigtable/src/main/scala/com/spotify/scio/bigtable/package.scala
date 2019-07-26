@@ -138,7 +138,7 @@ package object bigtable {
       numberOfNodes: Int,
       sleepDuration: Duration = DefaultSleepDuration
     ): Unit = {
-      val bigtableOptions = new BigtableOptions.Builder()
+      val bigtableOptions = BigtableOptions.builder()
         .setProjectId(projectId)
         .setInstanceId(instanceId)
         .build
@@ -194,7 +194,7 @@ package object bigtable {
       tablesAndColumnFamilies: Map[String, List[String]]
     ): Unit = {
       if (!self.isTest) {
-        val bigtableOptions = new BigtableOptions.Builder()
+        val bigtableOptions = BigtableOptions.builder()
           .setProjectId(projectId)
           .setInstanceId(instanceId)
           .build
@@ -238,7 +238,7 @@ package object bigtable {
       tablesAndColumnFamiliesWithExpiration: Map[String, List[(String, Option[Duration])]]
     ): Unit = {
       if (!self.isTest) {
-        val bigtableOptions = new BigtableOptions.Builder()
+        val bigtableOptions = BigtableOptions.builder()
           .setProjectId(projectId)
           .setInstanceId(instanceId)
           .build

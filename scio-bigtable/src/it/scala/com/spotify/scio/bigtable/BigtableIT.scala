@@ -40,7 +40,7 @@ object BigtableIT {
   val uuid = UUID.randomUUID().toString.substring(0, 8)
   val testData = Seq((s"$uuid-key1", 1L), (s"$uuid-key2", 2L), (s"$uuid-key3", 3L))
 
-  val bigtableOptions = new BigtableOptions.Builder()
+  val bigtableOptions = BigtableOptions.builder()
     .setProjectId(projectId)
     .setInstanceId(instanceId)
     .build
