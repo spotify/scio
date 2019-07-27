@@ -652,15 +652,45 @@ class ScioContext private[scio] (
   }
 
   /**
-   * Runs the underlying pipeline according to the options used to create this context.
-   * Running closes the context and no operation can be performed once the context is closed.
+   * Runs the underlying pipeline.
+   *
+   * Running closes the context and no further transformations can be applied to the
+   * pipeline once the context is closed.
+   *
+   * @return the [[ScioExecutionContext]] for the underlying job execution.
    */
   def run(): ScioExecutionContext = run(scioRunner)
 
+  /**
+   * Runs the underlying pipeline.
+   *
+   * Running closes the context and no further transformations can be applied to the
+   * pipeline once the context is closed.
+   *
+   * @param runner [[ScioRunner]] responsible for the execution for this context.
+   *
+   * @return the [[ScioExecutionContext]] for the underlying job execution.
+   */
   def run(runner: ScioRunner): ScioExecutionContext = runner.run(this)
 
-  /** Close the context. No operation can be performed once the context is closed. */
-  @deprecated("this method will be removed in next scio version", "Scio 0.8.0")
+  /**
+   * Close the context. No operation can be performed once the context is closed.
+   *
+   * This method is deprecated and with it the `--blocking` flag.
+   *
+   * Use [[ScioContext#run]].
+   *
+   * To achieve the same behaviour when `--blocking` was enabled use:
+   *
+   * {{{
+   * val sc: ScioContext = ???
+   *
+   * sc.run().waitUntilDone(Duration.Inf)
+   * }}}
+   *
+   * @see [[ScioContext#run]]
+   */
+  @deprecated("this method will be removed in next scio version; use run() instead.", "Scio 0.8.0")
   def close(): ScioExecutionContext = requireNotClosed {
     val closedContext = run()
 
