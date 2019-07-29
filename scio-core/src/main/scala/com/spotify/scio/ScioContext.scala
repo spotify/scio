@@ -42,6 +42,7 @@ import org.apache.beam.sdk.options._
 import org.apache.beam.sdk.transforms._
 import org.apache.beam.sdk.values._
 import org.apache.beam.sdk.{Pipeline, PipelineResult, io => beam}
+import org.apache.beam.runners.core.construction.PipelineResources
 import org.joda.time
 import org.joda.time.Instant
 import org.slf4j.LoggerFactory
@@ -71,6 +72,8 @@ private case object DirectContext extends RunnerContext {
 
 /** Companion object for [[RunnerContext]]. */
 private object RunnerContext {
+  private val logger = LoggerFactory.getLogger(this.getClass)
+  
   private val mapping =
     Map(
       "DirectRunner" -> DirectContext.getClass.getName,
@@ -95,6 +98,34 @@ private object RunnerContext {
 
   def prepareOptions(options: PipelineOptions, artifacts: List[String]): Unit =
     get(options).prepareOptions(options, artifacts)
+
+  // =======================================================================
+  // Extra artifacts - jars/files etc
+  // =======================================================================
+
+  /** Compute list of local files to make available to workers. */
+  def filesToStage(classLoader: ClassLoader, extraLocalArtifacts: List[String]): Iterable[String] = {
+    val finalLocalArtifacts = detectClassPathResourcesToStage(classLoader) ++ extraLocalArtifacts
+
+    logger.debug(s"Final list of extra artifacts: ${finalLocalArtifacts.mkString(":")}")
+    finalLocalArtifacts
+  }
+
+  /** Borrowed from DataflowRunner. */
+  def detectClassPathResourcesToStage(classLoader: ClassLoader): Iterable[String] = {
+    // exclude jars from JAVA_HOME and files from current directory
+    val javaHome = new File(CoreSysProps.Home.value).getCanonicalPath
+    val userDir = new File(CoreSysProps.UserDir.value).getCanonicalPath
+
+    val classPathJars = PipelineResources
+      .detectClassPathResourcesToStage(classLoader)
+      .asScala
+      .filter(path => !path.startsWith(javaHome) && path != userDir)
+
+    logger.debug(s"Classpath jars: ${classPathJars.mkString(":")}")
+
+    classPathJars
+  }
 }
 
 /** Convenience object for creating [[ScioContext]] and [[Args]]. */
