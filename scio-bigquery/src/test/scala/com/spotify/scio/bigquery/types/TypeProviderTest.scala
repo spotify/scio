@@ -555,5 +555,22 @@ class TypeProviderTest extends FlatSpec with Matchers {
     noException should be thrownBy
       BigQueryType[TypeProviderTest.RefinedClass with BigQueryType.HasAnnotation]
   }
+
+
+  @BigQueryType.fromSchema(
+    """
+      |{"fields": [{"mode": "REQUIRED", "name": "f1", "type": "GEOGRAPHY"}]}
+    """.stripMargin)
+  class GeoRecordFrom
+
+  @BigQueryType.toTable
+  case class GeoRecordTo(f1: Geography)
+
+  it should "#1882: support GEOGRAPHY type" in {
+    val wkt = "POINT (30 10)"
+    val cc = GeoRecordFrom(Geography(wkt))
+    cc.f1 shouldBe Geography(wkt)
+    GeoRecordTo(Geography(wkt))
+  }
 }
 // scalastyle:on number.of.types
