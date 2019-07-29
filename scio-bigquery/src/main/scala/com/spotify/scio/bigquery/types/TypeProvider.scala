@@ -187,6 +187,14 @@ private[types] object TypeProvider {
         val traits = (if (fields.size <= 22) Seq(fnTrait) else Seq()) ++ defTblDesc
           .map(_ => tq"${p(c, SType)}.HasTableDescription")
         val taggedFields = fields.map {
+          case q"$m val $n: com.spotify.scio.bigquery.types.Geography = $rhs" =>
+            provider.initializeToTable(c)(m, n, tq"_root_.java.lang.String")
+            c.universe.ValDef(
+              c.universe.Modifiers(m.flags, m.privateWithin, m.annotations),
+              n,
+              tq"_root_.java.lang.String @${typeOf[BigQueryTag]}",
+              q"{$rhs}.wkt"
+            )
           case ValDef(m, n, tpt, rhs) =>
             provider.initializeToTable(c)(m, n, tpt)
             c.universe.ValDef(
@@ -256,6 +264,8 @@ private[types] object TypeProvider {
         case "DATE"              => (tq"_root_.org.joda.time.LocalDate", Nil)
         case "TIME"              => (tq"_root_.org.joda.time.LocalTime", Nil)
         case "DATETIME"          => (tq"_root_.org.joda.time.LocalDateTime", Nil)
+        case "GEOGRAPHY"         =>
+          (tq"_root_.com.spotify.scio.bigquery.types.Geography", Nil)
         case "RECORD" | "STRUCT" =>
           val name = NameProvider.getUniqueName(tfs.getName)
           val (fields, records) = toFields(tfs.getFields)

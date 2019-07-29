@@ -33,4 +33,7 @@ package object types {
    * }}}
    */
   final class description(value: String) extends StaticAnnotation with Serializable
+
+  // scalastyle:on class.name
+  case class Geography(wkt: String)
 }
