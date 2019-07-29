@@ -407,7 +407,11 @@ private[types] object TypeProvider {
   }
 
   private def formatString(xs: List[Any]): String =
-    xs.head.asInstanceOf[String].format(xs.tail: _*)
+    xs match {
+      case (head: String) :: Nil  => head
+      case (head: String) :: tail => head.format(tail: _*)
+      case _                      => ""
+    }
 
   /** Generate a case class. */
   private def caseClass(

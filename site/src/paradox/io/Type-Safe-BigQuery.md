@@ -55,7 +55,7 @@ import com.spotify.scio.bigquery.types.BigQueryType
 class Row
 
 // generate new query strings at runtime
-val newQuery = Row.query.format(args(0))
+val newQuery = Row.query(args(0))
 ```
 
 There's also a `$LATEST` placeholder for table partitions. The latest common partition for all tables with the placeholder will be used.
@@ -70,7 +70,7 @@ import com.spotify.scio.bigquery.types.BigQueryType
 class Row
 
 // generate new query strings at runtime
-val newQuery = Row.query.format(args(0), args(0))
+val newQuery = Row.query(args(0), args(0))
 ```
 
 ### BigQueryType.fromSchema
