@@ -264,7 +264,7 @@ private[types] object TypeProvider {
         case "DATE"              => (tq"_root_.org.joda.time.LocalDate", Nil)
         case "TIME"              => (tq"_root_.org.joda.time.LocalTime", Nil)
         case "DATETIME"          => (tq"_root_.org.joda.time.LocalDateTime", Nil)
-        case "GEOGRAPHY"         =>
+        case "GEOGRAPHY" =>
           (tq"_root_.com.spotify.scio.bigquery.types.Geography", Nil)
         case "RECORD" | "STRUCT" =>
           val name = NameProvider.getUniqueName(tfs.getName)

@@ -561,10 +561,7 @@ class TypeProviderTest extends AnyFlatSpec with Matchers {
     noException should be thrownBy
       BigQueryType[TypeProviderTest.RefinedClass with BigQueryType.HasAnnotation]
   }
-
-
-  @BigQueryType.fromSchema(
-    """
+  @BigQueryType.fromSchema("""
       |{"fields": [{"mode": "REQUIRED", "name": "f1", "type": "GEOGRAPHY"}]}
     """.stripMargin)
   class GeoRecordFrom

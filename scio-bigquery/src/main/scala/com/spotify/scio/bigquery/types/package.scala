@@ -36,11 +36,11 @@ package object types {
 
   // scalastyle:on class.name
   /**
-    * Case class to serve as raw type for Geography instances to distinguish them from Strings.
-    *
-    * See also https://cloud.google.com/bigquery/docs/gis-data
-    *
-    * @param wkt Well Known Text formatted string that BigQuery displays for Geography
-    */
+   * Case class to serve as raw type for Geography instances to distinguish them from Strings.
+   *
+   * See also https://cloud.google.com/bigquery/docs/gis-data
+   *
+   * @param wkt Well Known Text formatted string that BigQuery displays for Geography
+   */
   case class Geography(wkt: String)
 }
