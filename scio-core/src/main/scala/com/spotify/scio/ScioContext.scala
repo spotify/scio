@@ -419,8 +419,11 @@ class ScioContext private[scio] (
     }
   }
 
+  private[scio] val testId: Option[String] =
+    Try(optionsAs[ApplicationNameOptions]).toOption.map(_.getAppName).filter(TestUtil.isTestId)
+
   /** Amount of time to block job for. */
-  val awaitDuration: Duration = {
+  private[scio] val awaitDuration: Duration = {
     val blockFor = optionsAs[ScioOptions].getBlockFor
     try {
       Option(blockFor)
@@ -648,9 +651,6 @@ class ScioContext private[scio] (
   // =======================================================================
   // Test wiring
   // =======================================================================
-
-  private[scio] val testId: Option[String] =
-    Try(optionsAs[ApplicationNameOptions]).toOption.map(_.getAppName).filter(TestUtil.isTestId)
 
   /**  Whether this is a test context. */
   def isTest: Boolean = testId.isDefined
