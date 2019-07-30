@@ -35,6 +35,7 @@ val chillVersion = "0.9.3"
 val circeVersion = "0.11.1"
 val commonsIoVersion = "2.6"
 val commonsMath3Version = "3.6.1"
+val commonsTextVersion = "1.7"
 val elasticsearch2Version = "2.4.6"
 val elasticsearch5Version = "5.6.16"
 val elasticsearch6Version = "6.8.1"
@@ -800,6 +801,7 @@ lazy val scioRepl: Project = Project(
     libraryDependencies ++= Seq(
       "org.apache.beam" % "beam-runners-direct-java" % beamVersion,
       "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion,
+      "org.apache.commons" % "commons-text" % commonsTextVersion,
       "org.slf4j" % "slf4j-simple" % slf4jVersion,
       "jline" % "jline" % jlineVersion,
       "org.scala-lang" % "scala-compiler" % scalaVersion.value,

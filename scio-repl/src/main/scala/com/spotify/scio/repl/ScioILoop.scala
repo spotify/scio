@@ -23,7 +23,7 @@ import org.apache.beam.sdk.options.PipelineOptionsFactory
 import com.spotify.scio.bigquery.BigQuerySysProps
 import com.spotify.scio.BuildInfo
 import org.apache.beam.sdk.extensions.gcp.options.GcpOptions.DefaultProjectFactory
-import org.apache.commons.lang.StringEscapeUtils
+import org.apache.commons.text.StringEscapeUtils
 
 import scala.tools.nsc.GenericRunnerSettings
 import scala.tools.nsc.interpreter.{IR, JPrintWriter}
