@@ -35,14 +35,16 @@ lazy val `input-0_8` =
   project.settings(
     skip in publish := true,
     libraryDependencies += "com.spotify" %% "scio-core" % Scio.`0.7`,
-    libraryDependencies += "com.spotify" %% "scio-test" % Scio.`0.7`
+    libraryDependencies += "com.spotify" %% "scio-test" % Scio.`0.7`,
+    libraryDependencies += "com.spotify" %% "scio-jdbc" % Scio.`0.7`
   )
 
 lazy val `output-0_8` =
   project.settings(
     skip in publish := true,
     libraryDependencies += "com.spotify" %% "scio-core" % Scio.`0.8`,
-    libraryDependencies += "com.spotify" %% "scio-test" % Scio.`0.8`
+    libraryDependencies += "com.spotify" %% "scio-test" % Scio.`0.8`,
+    libraryDependencies += "com.spotify" %% "scio-jdbc" % Scio.`0.8`
   )
 
 lazy val tests = project
