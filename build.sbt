@@ -70,6 +70,7 @@ val zoltarVersion = "0.5.4"
 val magnoliaVersion = "0.10.1-jto"
 val grpcVersion = "1.17.1"
 val caseappVersion = "2.0.0-M9"
+val sparkVersion = "2.4.3"
 
 lazy val scalafixSettings = Def.settings(
   addCompilerPlugin(scalafixSemanticdb)
@@ -265,10 +266,19 @@ lazy val macroSettings = Seq(
   addCompilerPlugin(paradiseDependency)
 )
 
-lazy val directRunnerDependency =
+lazy val directRunnerDependencies = Seq(
   "org.apache.beam" % "beam-runners-direct-java" % beamVersion
-lazy val dataflowRunnerDependency =
+)
+lazy val dataflowRunnerDependencies = Seq(
   "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion
+)
+lazy val sparkRunnerDependencies = Seq(
+  "org.apache.beam" % "beam-runners-spark" % beamVersion exclude (
+    "com.fasterxml.jackson.module", "jackson-module-scala_2.11"
+  ),
+  "org.apache.spark" %% "spark-core" % sparkVersion,
+  "org.apache.spark" %% "spark-streaming" % sparkVersion
+)
 lazy val beamRunners = settingKey[String]("beam runners")
 lazy val beamRunnersEval = settingKey[Seq[ModuleID]]("beam runners")
 
@@ -282,12 +292,13 @@ def beamRunnerSettings: Seq[Setting[_]] = Seq(
       .map(_.split(","))
       .map {
         _.flatMap {
-          case "DirectRunner"   => Some(directRunnerDependency)
-          case "DataflowRunner" => Some(dataflowRunnerDependency)
-          case unkown           => None
+          case "DirectRunner"   => directRunnerDependencies
+          case "DataflowRunner" => dataflowRunnerDependencies
+          case "SparkRunner"    => sparkRunnerDependencies
+          case unkown           => Nil
         }.toSeq
       }
-      .getOrElse(Seq(directRunnerDependency))
+      .getOrElse(directRunnerDependencies)
   },
   libraryDependencies ++= beamRunnersEval.value
 )
@@ -343,6 +354,9 @@ lazy val scioCore: Project = Project(
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
       "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion % Provided,
+      "org.apache.beam" % "beam-runners-spark" % beamVersion % Provided exclude (
+        "com.fasterxml.jackson.module", "jackson-module-scala_2.11"
+      ),
       "com.twitter" %% "algebird-core" % algebirdVersion,
       "com.twitter" %% "chill" % chillVersion,
       "com.twitter" %% "chill-algebird" % chillVersion,
@@ -825,11 +839,10 @@ lazy val scioJmh: Project = Project(
     sourceDirectory in Jmh := (sourceDirectory in Test).value,
     classDirectory in Jmh := (classDirectory in Test).value,
     dependencyClasspath in Jmh := (dependencyClasspath in Test).value,
-    libraryDependencies ++= Seq(
+    libraryDependencies ++= directRunnerDependencies ++ Seq(
       "junit" % "junit" % junitVersion % "test",
       "org.hamcrest" % "hamcrest-all" % hamcrestVersion % "test",
-      "org.slf4j" % "slf4j-nop" % slf4jVersion,
-      directRunnerDependency
+      "org.slf4j" % "slf4j-nop" % slf4jVersion
     )
   )
   .dependsOn(

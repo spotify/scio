@@ -73,11 +73,12 @@ private case object DirectContext extends RunnerContext {
 /** Companion object for [[RunnerContext]]. */
 private object RunnerContext {
   private val logger = LoggerFactory.getLogger(this.getClass)
-  
+
   private val mapping =
     Map(
       "DirectRunner" -> DirectContext.getClass.getName,
-      "DataflowRunner" -> "com.spotify.scio.runners.dataflow.DataflowContext$"
+      "DataflowRunner" -> "com.spotify.scio.runners.dataflow.DataflowContext$",
+      "SparkRunner" -> "com.spotify.scio.runners.spark.SparkContext$"
     ).withDefaultValue(NoOpContext.getClass.getName)
 
   // FIXME: this is ugly, is there a better way?
@@ -104,7 +105,10 @@ private object RunnerContext {
   // =======================================================================
 
   /** Compute list of local files to make available to workers. */
-  def filesToStage(classLoader: ClassLoader, extraLocalArtifacts: List[String]): Iterable[String] = {
+  def filesToStage(
+    classLoader: ClassLoader,
+    extraLocalArtifacts: List[String]
+  ): Iterable[String] = {
     val finalLocalArtifacts = detectClassPathResourcesToStage(classLoader) ++ extraLocalArtifacts
 
     logger.debug(s"Final list of extra artifacts: ${finalLocalArtifacts.mkString(":")}")

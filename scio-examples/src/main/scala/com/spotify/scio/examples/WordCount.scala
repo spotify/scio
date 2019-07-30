@@ -75,7 +75,8 @@ object WordCount {
       .saveAsTextFile(output)
 
     // Close the context, execute the pipeline and block until it finishes
-    val result = sc.run().waitUntilFinish()
+    import scala.concurrent.duration._
+    val result = sc.run().waitUntilFinish(10000000.seconds)
 
     // Retrieve metric values
     logger.info("Max: " + result.distribution(lineDist).committed.map(_.getMax))

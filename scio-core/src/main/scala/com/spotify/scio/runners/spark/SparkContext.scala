@@ -15,23 +15,22 @@
  * under the License.
  */
 
-package com.spotify.scio.runners.dataflow
+package com.spotify.scio.runners.spark
 
 import com.spotify.scio.RunnerContext
-import org.apache.beam.runners.dataflow.DataflowRunner
-import org.apache.beam.runners.dataflow.options.DataflowPipelineWorkerPoolOptions
+import org.apache.beam.runners.spark.{SparkPipelineOptions, SparkRunner}
 import org.apache.beam.sdk.options.PipelineOptions
 
 import scala.collection.JavaConverters._
 
-/** Dataflow runner specific context. */
-case object DataflowContext extends RunnerContext {
+/** Spark runner specific context. */
+case object SparkContext extends RunnerContext {
   override def prepareOptions(options: PipelineOptions, artifacts: List[String]): Unit = {
-    val classLoader = classOf[DataflowRunner].getClassLoader
+    val classLoader = classOf[SparkRunner].getClassLoader
     val filesToStage = RunnerContext.filesToStage(classLoader, artifacts)
 
     options
-      .as(classOf[DataflowPipelineWorkerPoolOptions])
+      .as(classOf[SparkPipelineOptions])
       .setFilesToStage(filesToStage.toList.asJava)
   }
 }
