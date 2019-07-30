@@ -189,7 +189,11 @@ private[types] object ConverterProvider {
         case t if t =:= typeOf[LocalDateTime] =>
           q"_root_.com.spotify.scio.bigquery.DateTime.parse($s)"
 
-        case t if isCaseClass(c)(t) =>
+        case t if t =:= typeOf[Geography] =>
+          // different than nested record match below, even though this is a case class
+          q"_root_.com.spotify.scio.bigquery.types.Geography($s)"
+
+        case t if isCaseClass(c)(t) => // nested records
           val fn = TermName("r" + t.typeSymbol.name)
           q"""{
                 val $fn = $tree.asInstanceOf[_root_.java.util.Map[String, AnyRef]]
@@ -289,7 +293,11 @@ private[types] object ConverterProvider {
         case t if t =:= typeOf[LocalDateTime] =>
           q"_root_.com.spotify.scio.bigquery.DateTime($tree)"
 
-        case t if isCaseClass(c)(t) =>
+        case t if t =:= typeOf[Geography] =>
+          // different than nested record match below, even though this is a case class
+          q"$tree.wkt"
+
+        case t if isCaseClass(c)(t) => // nested records
           val fn = TermName("r" + t.typeSymbol.name)
           q"""{
                 val $fn = $tree

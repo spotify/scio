@@ -187,7 +187,7 @@ private[types] object TypeProvider {
         val traits = (if (fields.size <= 22) Seq(fnTrait) else Seq()) ++ defTblDesc
           .map(_ => tq"${p(c, SType)}.HasTableDescription")
         val taggedFields = fields.map {
-          case q"$m val $n: com.spotify.scio.bigquery.types.Geography = $rhs" =>
+          case q"$m val $n: _root_.com.spotify.scio.bigquery.types.Geography = $rhs" =>
             provider.initializeToTable(c)(m, n, tq"_root_.java.lang.String")
             c.universe.ValDef(
               c.universe.Modifiers(m.flags, m.privateWithin, m.annotations),
