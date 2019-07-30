@@ -525,7 +525,7 @@ class ScioContext private[scio] (
    *
    * @return the [[ScioExecutionContext]] for the underlying job execution.
    */
-  def run(): ScioExecutionContext = {
+  def run(): ScioExecutionContext = requireNotClosed {
     _onClose(())
 
     if (_counters.nonEmpty) {
