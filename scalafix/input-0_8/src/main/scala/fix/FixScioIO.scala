@@ -35,7 +35,7 @@ class OtherScioIO extends ScioIO[Integer] {
     sc: ScioContext,
     endpoint: String): SCollection[Integer] = ???
 
-  override protected def write(
+  override def write(
     data: SCollection[Integer],
     params: WriteP): Future[Tap[tapT.T]] = throw new IllegalStateException("🤡")
 

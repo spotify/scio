@@ -55,28 +55,14 @@ private class FixScioIO extends SemanticRule("FixScioIO") {
 
   override def fix(implicit doc: SemanticDocument): Patch = {
     doc.tree.collect {
-      // force modifiers to be `override protected`
       // fix return type (No Future 🤘)
       case t @ q"""..$mods def write(
                       $sName: SCollection[$sTpe],
                       $psName: $psTpe): $ret = $impl""" if isScioIOMember(t) =>
-        val returnTpePatch =
-          ret match {
-            case Some(Type.Apply(Type.Name("Future"), List(tapTpe))) =>
-              Patch.replaceTree(ret.get, tapTpe.syntax)
-            case _ => Patch.empty
-          }
-
-        Patch.removeTokens(mods.flatMap(_.tokens)) +
-        Patch.addLeft(t, "override protected") +
-        returnTpePatch
-
-      // force modifiers to be `override protected`
-      case t @ q"""..$mods def read(
-                      $scName: ScioContext,
-                      $psName: $psTpe): SCollection[$sTpe] = $impl""" if isScioIOMember(t) =>
-        Patch.removeTokens(mods.flatMap(_.tokens)) +
-        Patch.addLeft(t, "override protected")
+        ret.collect {
+          case r @ Type.Apply(Type.Name("Future"), List(tapTpe)) =>
+            Patch.replaceTree(r, tapTpe.syntax)
+        }.asPatch
     }.asPatch
   }
 }
@@ -131,9 +117,7 @@ private class FixSyntaxImports extends SemanticRule("FixSyntaxImports") {
 
 class MigrateV0_8 extends SemanticRule("MigrateV0_8") {
   override def fix(implicit doc: SemanticDocument): Patch = {
-    val fixes = List(new FixRunWithContext(), new FixSyntaxImports(), new FixScioIO())
-    val patches = fixes.map(_.fix(doc))
-    // patches.foreach(x => println(s">>>>>> $x"))
-    patches.reduceLeft(_ + _)
+    val fixes = List(new FixScioIO(), new FixRunWithContext(), new FixSyntaxImports())
+    fixes.map(_.fix(doc)).reduceLeft(_ + _)
   }
 }
