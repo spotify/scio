@@ -230,7 +230,7 @@ object BigQueryTable {
       : SCollection[DefaultExtendedErrorInfo.Info] => Unit =
       // A NoOp on the extended error output, so that we don't have DropInputs
       // in the pipeline graph.
-      _.withName("Ignore ExtendedErrorInfo").map(_ => ())
+      _.withName("DropFailedInserts").map(_ => ())
 
     @inline final def apply(
       s: TableSchema,
