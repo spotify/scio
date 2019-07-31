@@ -880,7 +880,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    */
   def sparseIntersectByKey(
     that: SCollection[K],
-    thatNumKeys: Int,
+    thatNumKeys: Long,
     computeExact: Boolean = false,
     fpProb: Double = 0.01
   )(implicit koder: Coder[K], voder: Coder[V], hash: Hash128[K]): SCollection[(K, V)] =
