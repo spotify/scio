@@ -115,9 +115,29 @@ private class FixSyntaxImports extends SemanticRule("FixSyntaxImports") {
   }
 }
 
+private class FixWaitForResult extends SemanticRule("FixWaitForResult") {
+  override def fix(implicit doc: SemanticDocument): Patch = {
+    doc.tree.collect {
+      case t @ q"$x.waitForResult()" =>
+        x.symbol.info.get.signature match {
+          // XXX: Hackish wait to check the type of x
+          case ValueSignature(tpe) if tpe.toString.startsWith("WaitableFutureTap") =>
+            Patch.replaceTree(t, x.syntax)
+          case _ =>
+            Patch.empty
+        }
+    }.asPatch
+  }
+}
+
 class MigrateV0_8 extends SemanticRule("MigrateV0_8") {
   override def fix(implicit doc: SemanticDocument): Patch = {
-    val fixes = List(new FixScioIO(), new FixRunWithContext(), new FixSyntaxImports())
-    fixes.map(_.fix(doc)).reduceLeft(_ + _)
+    val fixes =
+      List(
+        new FixScioIO,
+        new FixRunWithContext,
+        new FixSyntaxImports,
+        new FixWaitForResult)
+    fixes.map(_.fix(doc)).asPatch
   }
 }
