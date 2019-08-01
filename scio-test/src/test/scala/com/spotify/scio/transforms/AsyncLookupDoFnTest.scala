@@ -37,15 +37,16 @@ class AsyncLookupDoFnTest extends PipelineSpec {
   implicit val tryCoder: Coder[BaseAsyncLookupDoFn.Try[String]] =
     Coder.beam(SerializableCoder.of(classOf[BaseAsyncLookupDoFn.Try[String]]))
 
-  private def testDoFn[F, T](
+  private def testDoFn[F, T: Coder](
     doFn: BaseAsyncLookupDoFn[Int, String, AsyncClient, F, T]
   )(tryFn: T => String): Unit = {
     val output = runWithData(1 to 10)(_.parDo(doFn))
       .map(kv => (kv.getKey, tryFn(kv.getValue)))
     output should contain theSameElementsAs (1 to 10).map(x => (x, x.toString))
+    ()
   }
 
-  private def testCache[F, T](
+  private def testCache[F, T: Coder](
     doFn: BaseAsyncLookupDoFn[Int, String, AsyncClient, F, T]
   )(tryFn: T => String)(queue: ConcurrentLinkedQueue[Int]): Unit = {
     val output = runWithData((1 to 10) ++ (6 to 15))(_.parDo(doFn))
@@ -53,6 +54,7 @@ class AsyncLookupDoFnTest extends PipelineSpec {
     output should contain theSameElementsAs ((1 to 10) ++ (6 to 15)).map(x => (x, x.toString))
     queue.asScala.toSet should contain theSameElementsAs (1 to 15)
     queue.size() should be <= 20
+    ()
   }
 
   private def testFailure[F, T: Coder](
@@ -69,6 +71,7 @@ class AsyncLookupDoFnTest extends PipelineSpec {
       val prefix = if (x % 2 == 0) "success" else "failure"
       (x, prefix + x.toString)
     }
+    ()
   }
 
   "GuavaAsyncLookupDoFn" should "work" in {

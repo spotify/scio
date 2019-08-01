@@ -186,6 +186,7 @@ class RecordAKryoRegistrar extends IKryoRegistrar {
       override def read(kryo: Kryo, input: Input, tpe: Class[RecordA]): RecordA =
         RecordA(input.readString(), input.readInt() + 10)
     })
+    ()
   }
 }
 
