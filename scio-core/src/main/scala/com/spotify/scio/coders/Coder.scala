@@ -230,12 +230,6 @@ private[scio] case class WrappedBCoder[T](u: BCoder[T]) extends BCoder[T] {
   override def decode(is: InputStream): T =
     catching { u.decode(is) }
 
-  override def decode(inStream: InputStream, context: BCoder.Context): T =
-    catching { u.decode(inStream, context) }
-
-  override def encode(value: T, outStream: OutputStream, context: BCoder.Context): Unit =
-    catching { u.encode(value, outStream, context) }
-
   override def getCoderArguments: java.util.List[_ <: BCoder[_]] = u.getCoderArguments
 
   // delegate methods for determinism and equality checks
