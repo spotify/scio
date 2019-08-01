@@ -131,7 +131,7 @@ object SchemaMaterializer {
   }
 
   private def decode[A](schema: OptionType[A])(v: schema.Repr): Option[A] =
-    Option(dispatchDecode(schema.schema)(v))
+    Option(v).map(dispatchDecode(schema.schema))
 
   private def decode[F[_], A: ClassTag](schema: ArrayType[F, A])(v: schema.Repr): F[A] = {
     val values = new Array[A](v.size)
