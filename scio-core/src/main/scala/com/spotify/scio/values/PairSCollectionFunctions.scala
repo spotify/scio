@@ -82,7 +82,9 @@ private object PairSCollectionFunctions {
      |Optimal Width of each BloomFilter: $width bits.
      |Capacity of each BloomFilter: $capacity elements.
      |Number of BFs: $numBFs
-     |
+    """.stripMargin
+
+    val sideInputWarnMessage = s"""
      |This might exceed worker caches in some runners.
      |
      |Please set runner specific worker memory cache above $totalSizeMb.
@@ -90,9 +92,9 @@ private object PairSCollectionFunctions {
     """.stripMargin
 
     if (totalSizeMb > 100) {
-      logger.warn(sideInputLogMessage)
+      logger.warn(sideInputLogMessage + sideInputWarnMessage)
     } else {
-      logger.info(sideInputLogMessage)
+      logger.debug(sideInputLogMessage)
     }
 
     BFSettings(width, capacity, numBFs)
