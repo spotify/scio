@@ -72,10 +72,6 @@ val magnoliaVersion = "0.10.1-jto"
 val grpcVersion = "1.17.1"
 val caseappVersion = "2.0.0-M9"
 
-lazy val scalafixSettings = Def.settings(
-  addCompilerPlugin(scalafixSemanticdb)
-)
-
 lazy val mimaSettings = Seq(
   mimaPreviousArtifacts :=
     previousVersion(version.value)
@@ -211,7 +207,7 @@ val commonSettings = Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
   } yield Credentials("Sonatype Nexus Repository Manager", "oss.sonatype.org", username, password)).toSeq,
   buildInfoKeys := Seq[BuildInfoKey](scalaVersion, version, "beamVersion" -> beamVersion),
   buildInfoPackage := "com.spotify.scio"
-) ++ mimaSettings ++ scalafmtSettings ++ scalafixSettings
+) ++ mimaSettings ++ scalafmtSettings
 
 lazy val itSettings = Defaults.itSettings ++ Seq(
   scalastyleSources in Compile ++= (unmanagedSourceDirectories in IntegrationTest).value,
