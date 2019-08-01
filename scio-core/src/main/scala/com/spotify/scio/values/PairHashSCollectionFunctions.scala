@@ -119,7 +119,7 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
         }
         .toSCollection
 
-      val commonKeys = leftHashed.filter(_._3).map(_._1).aggregate(MSet.empty[K])(_ +=_, _ ++= _)
+      val commonKeys = leftHashed.filter(_._3).map(_._1).aggregate(MSet.empty[K])(_ += _, _ ++= _)
       // append an empty set in case commonKeys is empty #2109
       val rightHashed = (commonKeys ++ in.context.parallelize(Seq(MSet.empty[K])))
         .reduce(_ ++ _)
