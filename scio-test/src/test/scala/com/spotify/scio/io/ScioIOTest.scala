@@ -106,39 +106,54 @@ class ScioIOTest extends ScioIOSpec {
     testJobTest(xs)(BigQueryIO(_))(_.typedBigQuery(_))(_.saveAsTypedBigQuery(_))
   }
 
-  it should "not have unconsumed errors" in {
-    /*
-    The `BigQueryIO`'s write, runs a Beam's BQ IO which creates a `Read` Transform to return the
-    failed inserts or insert errors.
+  /*
+  The `BigQueryIO`'s write, runs Beam's BQ IO which creates a `Read` Transform to return the
+  insert errors.
 
-    The `saveAsBigQuery` in Scio is designed to return a `ClosedTap` and by default drops insert
-    errors.
+  The `saveAsBigQuery` or `saveAsTypedBigQuery` in Scio is designed to return a `ClosedTap`
+  and by default drops insert errors.
 
-    This test makes sure that the dropped insert errors do not appear as an unconsumed read
-    outside the transform writing to Big Query.
-     */
-
+  The following tests make sure that the dropped insert errors do not appear as an unconsumed read
+  outside the transform writing to Big Query.
+   */
+  it should "not have unconsumed errors with saveAsBigQuery" in {
     val xs = (1 to 100).map(x => TableRow("x" -> x.toString))
 
-    // We create a BigQuery write.
     val context = ScioContext()
     context
       .parallelize(xs)
       .saveAsBigQuery(tableSpec = "project:dataset.dummy", createDisposition = CREATE_NEVER)
-
     // We want to validate on the job graph, and we need not actually execute the pipeline.
 
-    /*
-     To make sure there are no dangling reads transforms, we visit all PTransforms,
-     and find the inputs at each stage, and mark those inputs as consumed by putting them
-     in consumedOutputs. We also check if each transform is a `Read` and if so we extract them
-     as well.
+    verifyAllReadsConsumed(context)
+  }
 
-     This is copied from Beam's test for UnconsumedReads.
-     */
+  it should "not have unconsumed errors with saveAsTypedBigQuery" in {
+    val xs = (1 to 100).map(x => BQRecord(x, x.toString, (1 to x).map(_.toString).toList))
+
+    val context = ScioContext()
+    context
+      .parallelize(xs)
+      .saveAsTypedBigQuery(tableSpec = "project:dataset.dummy", createDisposition = CREATE_NEVER)
+    // We want to validate on the job graph, and we need not actually execute the pipeline.
+
+    verifyAllReadsConsumed(context)
+  }
+
+  /*
+  Verify that there are no `Read` Transforms that do not have another transform using it as an
+  input.
+
+  To do this, we visit all PTransforms, and find the inputs at each stage, and mark those inputs
+  as consumed by putting them in `consumedOutputs`. We also check if each transform is a `Read`
+  and if so we extract them as well.
+
+  This is copied from Beam's test for UnconsumedReads.
+   */
+  private def verifyAllReadsConsumed(context: ScioContext): Unit = {
     val consumedOutputs = mutable.HashSet[PValue]()
-
     val allReads = mutable.HashSet[PValue]()
+
     context.pipeline.traverseTopologically(
       new PipelineVisitor.Defaults {
 
@@ -149,9 +164,10 @@ class ScioIOTest extends ScioIOSpec {
           value: PValue,
           producer: TransformHierarchy#Node
         ): Unit = {
-          if (producer.getTransform.isInstanceOf[Read.Bounded[_]] ||
-              producer.getTransform.isInstanceOf[Read.Unbounded[_]]) {
-            allReads += value
+          producer.getTransform match {
+            case _: Read.Bounded[_] | _: Read.Unbounded[_] =>
+              allReads += value
+            case _ =>
           }
         }
       }
