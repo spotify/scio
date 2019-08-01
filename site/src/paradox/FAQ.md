@@ -166,8 +166,8 @@ object MyJob {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
 
     // ...
-    val closedSc: ClosedScioContext = sc.close()
-    val result: ScioResult = closedSc.waitUntilFinish(1 minute, cancelJob = true)
+    val closedSc: ScioExecutionContext = sc.run()
+    val result: ScioResult = closedSc.waitUntilFinish(1.minute, cancelJob = true)
   }
 }
 
@@ -175,7 +175,7 @@ object MyJob {
 
 #### Why can't I have an SCollection inside another SCollection?
 
-You cannot have an SCollection inside another SCollection, i.e. anything with type `SCollection[SCollection[T]]`. To explain this we have to go back to the relationship between `ScioContext` and `SCollection`. Every `ScioContext` represents a unique pipeline and every `SCollection` represents a stage in the pipeline execution, i.e. the state of the pipeline after some transforms has be applied. We start a pipeline code with `val sc = ...`, create new `SCollection`s with methods on `sc`, e.g. `sc.textFile`, and transform them with methods like `.map`, `.filter`, `.join`. Therefore each `SCollection` can trace its root to one single `sc`. The pipeline is submitted for execution when we call `sc.close()`. Hence we cannot have an `SCollection` inside another `SCollection` just as we cannot have a pipeline inside another pipeline.
+You cannot have an SCollection inside another SCollection, i.e. anything with type `SCollection[SCollection[T]]`. To explain this we have to go back to the relationship between `ScioContext` and `SCollection`. Every `ScioContext` represents a unique pipeline and every `SCollection` represents a stage in the pipeline execution, i.e. the state of the pipeline after some transforms has be applied. We start a pipeline code with `val sc = ...`, create new `SCollection`s with methods on `sc`, e.g. `sc.textFile`, and transform them with methods like `.map`, `.filter`, `.join`. Therefore each `SCollection` can trace its root to one single `sc`. The pipeline is submitted for execution when we call `sc.run()`. Hence we cannot have an `SCollection` inside another `SCollection` just as we cannot have a pipeline inside another pipeline.
 
 ### BigQuery questions
 
@@ -289,7 +289,7 @@ object BQPartitionedJob {
           .withCreateDisposition(CreateDisposition.CREATE_NEVER)
       )
 
-    sc.close()
+    sc.run()
   }
 }
 ```
@@ -379,10 +379,10 @@ def main(cmdlineArgs: Array[String]): Unit = {
   val data: SCollection[(ByteString, Iterable[Mutation])] = ???
 
   val btOptions =
-    new BigtableOptions.Builder()
+    BigtableOptions.builder()
       .setProjectId(btProjectId)
       .setInstanceId(btInstanceId)
-      .setBulkOptions(new BulkOptions.Builder()
+      .setBulkOptions(BulkOptions.builder()
         .enableBulkMutationThrottling()
         .setBulkMutationRpcTargetMs(10) // lower latency threshold, default is 100
         .build())

@@ -16,7 +16,7 @@ scio> val words = sc.textFile("README.md").
      | filter(_.nonEmpty).
      | aggregate(CMS.aggregator[String](0.001, 1E-10, 1)).
      | materialize
-scio> sc.close()
+scio> sc.run()
 scio> val cms = words.waitForResult().value.next
 scio> cms.frequency("scio").estimate
 res2: Long = 19
