@@ -21,11 +21,10 @@ import org.scalatest.{FlatSpec, Matchers}
 
 import scala.util.Random
 
-class ArrayMonoidTest extends FlatSpec with Matchers {
+class ArraySemigroupTest extends FlatSpec with Matchers {
 
   val dimension = 10
-  val mon = doubleArrayMon
-  val zero = mon.zero
+  val sg = doubleArraySg
   def nextArray: Array[Double] = Array.fill(dimension)(Random.nextDouble)
 
   def plus(l: Array[Double], r: Array[Double]): Array[Double] =
@@ -34,25 +33,17 @@ class ArrayMonoidTest extends FlatSpec with Matchers {
   "ArrayMonoid" should "support plus" in {
     val l = nextArray
     val r = nextArray
-    mon.plus(l, r) shouldBe plus(l, r)
-    mon.plus(l, zero) shouldBe l
-    mon.plus(zero, r) shouldBe r
-    mon.plus(zero, zero) shouldBe zero
+    sg.plus(l, r) shouldBe plus(l, r)
   }
 
   it should "support sumOption" in {
-    mon.sumOption(Seq.empty[Array[Double]]) shouldBe None
+    sg.sumOption(Seq.empty[Array[Double]]) shouldBe None
 
     val a = nextArray
-    mon.sumOption(Seq(a)).get shouldBe a
+    sg.sumOption(Seq(a)).get shouldBe a
 
     val xs = (1 to 100).map(_ => nextArray)
-    mon.sumOption(xs).get shouldBe xs.reduce(plus)
-
-    mon.sumOption(zero +: xs).get shouldBe xs.reduce(plus)
-    mon.sumOption(xs :+ zero).get shouldBe xs.reduce(plus)
-    mon.sumOption(xs.take(50) ++ Seq(zero) ++ xs.takeRight(50)).get shouldBe xs
-      .reduce(plus)
+    sg.sumOption(xs).get shouldBe xs.reduce(plus)
   }
 
 }
