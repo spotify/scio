@@ -102,8 +102,18 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
   def hashFullOuterJoin[W: Coder](
     that: SCollection[(K, W)]
   )(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, (Option[V], Option[W]))] =
+    hashFullOuterJoin(SideMap(combineAsMapSideInput(that)))
+
+  /**
+   * Perform a full outer join with a SideMap.
+   *
+   * @group join
+   */
+  def hashFullOuterJoin[W: Coder](
+    that: SideMap[K, W]
+  )(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, (Option[V], Option[W]))] =
     self.transform { in =>
-      val side = SideMap(combineAsMapSideInput(that)).side
+      val side = that.side
 
       val leftHashed = in
         .withSideInputs(side)
