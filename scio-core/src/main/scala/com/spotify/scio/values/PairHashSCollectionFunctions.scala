@@ -194,6 +194,7 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
             case (k, vs) => left.getOrElseUpdate(k, ArrayBuffer.empty[W]) ++= vs
           }
           left
-      }.asSingletonSideInput(MMap.empty[K, ArrayBuffer[W]])
+      }
+      .asSingletonSideInput(MMap.empty[K, ArrayBuffer[W]])
   }
 }
