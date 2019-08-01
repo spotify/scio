@@ -132,6 +132,37 @@ object TestData {
 
   case class Order(order_id: Long, price: Long, site_id: Long)
   val orders = List(Order(1, 2, 2), Order(2, 2, 1), Order(1, 4, 3), Order(3, 2, 1), Order(3, 3, 1))
+
+  // Schemas
+  implicit def schemaFoo = Schema.gen[Foo]
+  implicit def schemaBar = Schema.gen[Bar]
+  implicit def schemaResult = Schema.gen[Result]
+  implicit def schemaUser = Schema.gen[User]
+  implicit def schemaUserId = Schema.gen[UserId]
+  implicit def schemaUserWithId = Schema.gen[UserWithId]
+  implicit def schemaUserWithFallBack = Schema.gen[UserWithFallBack]
+  implicit def schemaUserWithOption = Schema.gen[UserWithOption]
+  implicit def schemaUserWithList = Schema.gen[UserWithList]
+  implicit def schemaUserWithJList = Schema.gen[UserWithJList]
+  implicit def schemaUserWithMap = Schema.gen[UserWithMap]
+  implicit def schemaUserWithInstant = Schema.gen[UserWithInstant]
+  implicit def schemaOrder = Schema.gen[Order]
+
+  // Coders
+  implicit def coderLocale = Coder.kryo[Locale]
+  implicit def coderFoo = Coder.gen[Foo]
+  implicit def coderBar = Coder.gen[Bar]
+  implicit def coderResult = Coder.gen[Result]
+  implicit def coderUser = Coder.gen[User]
+  implicit def coderUserId = Coder.gen[UserId]
+  implicit def coderUserWithId = Coder.gen[UserWithId]
+  implicit def coderUserWithFallBack = Coder.gen[UserWithFallBack]
+  implicit def coderUserWithOption = Coder.gen[UserWithOption]
+  implicit def coderUserWithList = Coder.gen[UserWithList]
+  implicit def coderUserWithJList = Coder.gen[UserWithJList]
+  implicit def coderUserWithMap = Coder.gen[UserWithMap]
+  implicit def coderUserWithInstant = Coder.gen[UserWithInstant]
+  implicit def coderOrder = Coder.gen[Order]
 }
 
 class BeamSQLTest extends PipelineSpec {
