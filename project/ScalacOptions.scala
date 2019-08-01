@@ -21,7 +21,6 @@ object Scalac {
 
   // see: https://tpolecat.github.io/2017/04/25/scalac-flags.html
   val baseOptions = List(
-    "-Yrangepos",
     "-Xmax-classfile-name",
     "100",
     "-target:jvm-1.8",

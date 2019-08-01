@@ -102,7 +102,7 @@ jobs:
               sbt -v $SBT_OPTS \
                 scalastyle \
                 scalafmtCheckAll scalafmtSbtCheck \
-                "; scalafix --check; test:scalafix --check; it:scalafix --check"
+                "; scalafixEnable; scalafix --check; test:scalafix --check; it:scalafix --check"
 
   build_211:
     executor: scala_211
