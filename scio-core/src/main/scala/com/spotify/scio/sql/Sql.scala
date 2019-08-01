@@ -160,7 +160,7 @@ private object Queries {
         case inferredSchema =>
           val message =
             s"""
-               |Infered schema for query is not compatible with the expected schema.
+               |Inferred schema for query is not compatible with the expected schema.
                |
                |Query:
                |$query
