@@ -61,6 +61,7 @@ class SCollectionWithFanout[T: Coder] private[values] (
     this.pApply(
       Combine
         .globally(Functions.combineFn(createCombiner, mergeValue, mergeCombiners))
+        .withoutDefaults()
         .withFanout(fanout)
     )
   }
@@ -79,7 +80,7 @@ class SCollectionWithFanout[T: Coder] private[values] (
 
   /** [[SCollection.reduce]] with fan out. */
   def reduce(op: (T, T) => T): SCollection[T] =
-    this.pApply(Combine.globally(Functions.reduceFn(op)).withFanout(fanout))
+    this.pApply(Combine.globally(Functions.reduceFn(op)).withoutDefaults().withFanout(fanout))
 
   /** [[SCollection.sum]] with fan out. */
   def sum(implicit sg: Semigroup[T]): SCollection[T] = {
@@ -87,7 +88,7 @@ class SCollectionWithFanout[T: Coder] private[values] (
       "combine/sum does not support default value and may fail in some streaming scenarios. " +
         "Consider aggregate/fold instead."
     )
-    this.pApply(Combine.globally(Functions.reduceFn(sg)).withFanout(fanout))
+    this.pApply(Combine.globally(Functions.reduceFn(sg)).withoutDefaults().withFanout(fanout))
   }
 
 }

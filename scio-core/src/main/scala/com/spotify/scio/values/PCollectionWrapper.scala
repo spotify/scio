@@ -20,7 +20,7 @@ package com.spotify.scio.values
 import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import org.apache.beam.sdk.transforms.{Combine, DoFn, PTransform, ParDo}
-import org.apache.beam.sdk.values.{PCollection, POutput}
+import org.apache.beam.sdk.values.{PCollection, POutput, WindowingStrategy}
 
 private[values] trait PCollectionWrapper[T] extends TransformNameable {
 
@@ -42,7 +42,8 @@ private[values] trait PCollectionWrapper[T] extends TransformNameable {
     transform: PTransform[_ >: PCollection[T], PCollection[U]]
   ): SCollection[U] = {
     val t =
-      if (classOf[Combine.Globally[T, U]] isAssignableFrom transform.getClass) {
+      if ((classOf[Combine.Globally[T, U]] isAssignableFrom transform.getClass)
+        && internal.getWindowingStrategy != WindowingStrategy.globalDefault()) {
         // In case PCollection is windowed
         transform.asInstanceOf[Combine.Globally[T, U]].withoutDefaults()
       } else {

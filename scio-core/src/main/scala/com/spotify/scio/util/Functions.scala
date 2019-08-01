@@ -114,6 +114,7 @@ private[scio] object Functions {
         Fns.reduce(accumulators) { case (a, b) => (c(fold(a), fold(b)), empty) }
       }
 
+      override def defaultValue(): U = zeroValue
     }
 
   def combineFn[T: Coder, C: Coder](
@@ -318,6 +319,8 @@ private[scio] object Functions {
 
       override def reduceOption(accumulator: JIterable[T]): Option[T] =
         Fns.reduceOption(accumulator)(_mon.plus(_, _)).orElse(Some(_mon.zero))
+
+      override def defaultValue(): T = mon.zero
     }
 
 }
