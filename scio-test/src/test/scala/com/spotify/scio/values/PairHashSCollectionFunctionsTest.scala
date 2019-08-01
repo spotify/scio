@@ -21,7 +21,7 @@ import com.spotify.scio.testing.PipelineSpec
 
 class PairHashSCollectionFunctionsTest extends PipelineSpec {
 
-  it should "support hashJoin()" in {
+  "PairSCollection" should "support hashJoin()" in {
     runWithContext { sc =>
       val p1 = sc.parallelize(Seq(("a", 1), ("b", 2), ("c", 3)))
       val p2 = sc.parallelize(Seq(("a", 11), ("b", 12), ("d", 14)))
@@ -122,6 +122,15 @@ class PairHashSCollectionFunctionsTest extends PipelineSpec {
           ("d", (None, Some(14)))
         )
       )
+    }
+  }
+
+  it should "support hashFullOuterJoin() with no overlap" in {
+    runWithContext { sc =>
+      val p1 = sc.parallelize(Seq(("a", 1)))
+      val p2 = sc.parallelize(Seq(("b", 2)))
+      val p = p1.hashFullOuterJoin(p2)
+      p should containInAnyOrder(Seq(("a", (Some(1), None)), ("b", (None, Some(2)))))
     }
   }
 

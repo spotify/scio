@@ -18,7 +18,8 @@
 package com.spotify.scio.values
 
 import com.spotify.scio.coders.Coder
-import scala.collection.mutable.{ArrayBuffer, Map => MMap}
+
+import scala.collection.mutable.{ArrayBuffer, Map => MMap, Set => MSet}
 
 /**
  * Extra functions available on SCollections of (key, value) pairs for hash based joins
@@ -101,18 +102,8 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
   def hashFullOuterJoin[W: Coder](
     that: SCollection[(K, W)]
   )(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, (Option[V], Option[W]))] =
-    hashFullOuterJoin(SideMap(combineAsMapSideInput(that)))
-
-  /**
-   * Perform a full outer join with a SideMap.
-   *
-   * @group join
-   */
-  def hashFullOuterJoin[W: Coder](
-    that: SideMap[K, W]
-  )(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, (Option[V], Option[W]))] =
     self.transform { in =>
-      val side = that.side
+      val side = SideMap(combineAsMapSideInput(that)).side
 
       val leftHashed = in
         .withSideInputs(side)
@@ -128,15 +119,14 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
         }
         .toSCollection
 
-      val rightHashed = leftHashed
-        .map(x => (x._1, x._3))
-        .filter(_._2)
-        .keys
-        .combine(List(_))(_ ++ List(_))(_ ++ _)
+      val commonKeys = leftHashed.filter(_._3).map(_._1).aggregate(MSet.empty[K])(_ +=_, _ ++= _)
+      // append an empty set in case commonKeys is empty #2109
+      val rightHashed = (commonKeys ++ in.context.parallelize(Seq(MSet.empty[K])))
+        .reduce(_ ++ _)
         .withSideInputs(side)
         .flatMap { (mk, s) =>
           val m = s(side)
-          (m.keySet diff mk.toSet)
+          (m.keySet diff mk)
             .flatMap(k => m(k).iterator.map[(K, (Option[V], Option[W]))](w => (k, (None, Some(w)))))
         }
         .toSCollection
