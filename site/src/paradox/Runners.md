@@ -1,7 +1,5 @@
 # Runners
 
-## Runner dependency
-
 Starting Scio 0.4.4, Beam runner is completely decoupled from `scio-core`, which no longer depend on any Beam runner now. Add runner dependencies to enable execution on specific backends. For example, when using Scio 0.4.7 which depends on Beam 2.2.0, you should add the following dependencies to run pipelines locally and on Google Cloud Dataflow.
 
 ```scala
@@ -16,7 +14,7 @@ libraryDependencies ++= Seq(
 Dataflow specific logic, e.g. job ID, metrics, were also removed from `ScioResult`. You can convert between the generic `ScioResult` and runner specific result types like the example below. Note that currently only `DataflowResult` is implemented.
 
 ```scala mdoc:silent
-import com.spotify.scio.{ScioContext, ClosedScioContext, ScioResult}
+import com.spotify.scio.{ScioContext, ScioExecutionContext, ScioResult}
 
 object SuperAwesomeJob {
   def main(cmdlineArgs: Array[String]): Unit = {
@@ -27,7 +25,7 @@ object SuperAwesomeJob {
     // ...
 
     // Generic result only
-    val closedContext: ClosedScioContext = sc.close()
+    val closedContext: ScioExecutionContext = sc.run()
     val scioResult: ScioResult = closedContext.waitUntilFinish()
 
     // Convert to Dataflow specific result

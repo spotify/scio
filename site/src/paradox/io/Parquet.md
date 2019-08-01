@@ -26,7 +26,7 @@ object ParquetJob {
       // Map out projected fields right after reading
       .map(r => (r.getIntField, r.getStringField, r.getBooleanField))
 
-    sc.close()
+    sc.run()
     ()
   }
 }
@@ -55,7 +55,7 @@ object ParquetJob {
       // filter natively with the same logic in case of mock input in `JobTest`
       .filter(predicate.native)
 
-    sc.close()
+    sc.run()
     ()
   }
 }
