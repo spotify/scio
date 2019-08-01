@@ -228,6 +228,7 @@ abstract class AsyncDoFnTester[P[_], F[_]] extends BaseDoFnTester {
     val (input, promise) = pending(n)
     completePromise(promise, input.toString)
     pending.remove(n)
+    ()
   }
 
   // finish bundle and start new one
