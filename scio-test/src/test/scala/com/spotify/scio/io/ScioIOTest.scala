@@ -21,6 +21,7 @@ import java.nio.ByteBuffer
 
 import com.google.datastore.v1.Entity
 import com.google.datastore.v1.client.DatastoreHelper
+import com.spotify.scio.ScioContext
 import com.spotify.scio.avro.AvroUtils.schema
 import com.spotify.scio.avro._
 import com.spotify.scio.bigquery._
@@ -28,6 +29,13 @@ import com.spotify.scio.coders.Coder
 import com.spotify.scio.proto.Track.TrackPB
 import com.spotify.scio.testing._
 import org.apache.avro.generic.GenericRecord
+import org.apache.beam.sdk.Pipeline.PipelineVisitor
+import org.apache.beam.sdk.io.Read
+import org.apache.beam.sdk.runners.TransformHierarchy
+import org.apache.beam.sdk.values.PValue
+
+import scala.collection.mutable
+import scala.collection.JavaConverters._
 
 object ScioIOTest {
   @AvroType.toSchema
@@ -96,6 +104,78 @@ class ScioIOTest extends ScioIOSpec {
   it should "work with typed BigQuery" in {
     val xs = (1 to 100).map(x => BQRecord(x, x.toString, (1 to x).map(_.toString).toList))
     testJobTest(xs)(BigQueryIO(_))(_.typedBigQuery(_))(_.saveAsTypedBigQuery(_))
+  }
+
+  /**
+   * The `BigQueryIO`'s write, runs Beam's BQ IO which creates a `Read` Transform to return the
+   * insert errors.
+   *
+   * The `saveAsBigQuery` or `saveAsTypedBigQuery` in Scio is designed to return a `ClosedTap`
+   * and by default drops insert errors.
+   *
+   * The following tests make sure that the dropped insert errors do not appear as an unconsumed
+   * read outside the transform writing to Big Query.
+   */
+  it should "not have unconsumed errors with saveAsBigQuery" in {
+    val xs = (1 to 100).map(x => TableRow("x" -> x.toString))
+
+    val context = ScioContext()
+    context
+      .parallelize(xs)
+      .saveAsBigQuery(tableSpec = "project:dataset.dummy", createDisposition = CREATE_NEVER)
+    // We want to validate on the job graph, and we need not actually execute the pipeline.
+
+    verifyAllReadsConsumed(context)
+  }
+
+  it should "not have unconsumed errors with saveAsTypedBigQuery" in {
+    val xs = (1 to 100).map(x => BQRecord(x, x.toString, (1 to x).map(_.toString).toList))
+
+    val context = ScioContext()
+    context
+      .parallelize(xs)
+      .saveAsTypedBigQuery(tableSpec = "project:dataset.dummy", createDisposition = CREATE_NEVER)
+    // We want to validate on the job graph, and we need not actually execute the pipeline.
+
+    verifyAllReadsConsumed(context)
+  }
+
+  /**
+   * Verify that there are no `Read` Transforms that do not have another transform using it as an
+   * input.
+   *
+   * To do this, we visit all PTransforms, and find the inputs at each stage, and mark those inputs
+   * as consumed by putting them in `consumedOutputs`. We also check if each transform is a `Read`
+   * and if so we extract them as well.
+   *
+   * This is copied from Beam's test for UnconsumedReads.
+   */
+  private def verifyAllReadsConsumed(context: ScioContext): Unit = {
+    val consumedOutputs = mutable.HashSet[PValue]()
+    val allReads = mutable.HashSet[PValue]()
+
+    context.pipeline.traverseTopologically(
+      new PipelineVisitor.Defaults {
+
+        override def visitPrimitiveTransform(node: TransformHierarchy#Node): Unit =
+          consumedOutputs ++= node.getInputs.values().asScala
+
+        override def visitValue(
+          value: PValue,
+          producer: TransformHierarchy#Node
+        ): Unit = {
+          producer.getTransform match {
+            case _: Read.Bounded[_] | _: Read.Unbounded[_] =>
+              allReads += value
+            case _ =>
+          }
+        }
+      }
+    )
+
+    val unconsumedReads = allReads -- consumedOutputs
+
+    unconsumedReads shouldBe empty
   }
 
   "TableRowJsonIO" should "work" in {
