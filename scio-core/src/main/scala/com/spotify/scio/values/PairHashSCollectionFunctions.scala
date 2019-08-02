@@ -132,7 +132,7 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
       val rightHashed = leftHashed
         .filter(_._3)
         .map(_._1)
-        .aggregate(MSet.empty[K])(_ += _, _ ++= _)
+        .aggregate(Set.empty[K])(_ + _, _ ++ _)
         .withSideInputs(side)
         .flatMap { (mk, s) =>
           val m = s(side)

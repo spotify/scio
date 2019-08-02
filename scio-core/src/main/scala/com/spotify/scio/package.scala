@@ -59,16 +59,11 @@ package object scio {
     }
 
     override def plus(l: Array[T], r: Array[T]): Array[T] = {
-      if (l.length == 0) {
-        r
-      } else if (r.length == 0) {
-        l
-      } else {
-        val s = Array.fill[T](l.length)(num.zero)
-        plusI(s, l)
-        plusI(s, r)
-        s
-      }
+      require(l.length == r.length,  "Array lengths must be the same")
+      val s = Array.fill[T](l.length)(num.zero)
+      plusI(s, l)
+      plusI(s, r)
+      s
     }
 
     override def sumOption(xs: TraversableOnce[Array[T]]): Option[Array[T]] = {
