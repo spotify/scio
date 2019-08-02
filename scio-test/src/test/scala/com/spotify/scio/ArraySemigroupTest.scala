@@ -30,7 +30,7 @@ class ArraySemigroupTest extends FlatSpec with Matchers {
   def plus(l: Array[Double], r: Array[Double]): Array[Double] =
     l.zip(r).map(p => p._1 + p._2)
 
-  "ArrayMonoid" should "support plus" in {
+  "ArraySemigroup" should "support plus" in {
     val l = nextArray
     val r = nextArray
     sg.plus(l, r) shouldBe plus(l, r)
