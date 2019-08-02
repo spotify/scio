@@ -274,8 +274,7 @@ class HistogramTest extends PipelineSpec {
 
     the[RuntimeException] thrownBy {
       runWithContext { _.parallelize[Double](Seq.empty).histogram(1) }
-    } should have message
-      "java.util.NoSuchElementException: Empty PCollection accessed as a singleton view."
+    } should have message msg
   }
   // scalastyle:on no.whitespace.before.left.bracket
 

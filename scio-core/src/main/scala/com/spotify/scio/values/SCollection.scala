@@ -372,7 +372,11 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       "combine/sum does not support default value and may fail in some streaming scenarios. " +
         "Consider aggregate/fold instead."
     )
-    this.pApply(Combine.globally(Functions.combineFn(createCombiner, mergeValue, mergeCombiners)))
+    this.pApply(
+      Combine
+        .globally(Functions.combineFn(createCombiner, mergeValue, mergeCombiners))
+        .withoutDefaults()
+    )
   }
 
   /**
@@ -640,7 +644,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @group transform
    */
   def reduce(op: (T, T) => T)(implicit coder: Coder[T]): SCollection[T] =
-    this.pApply(Combine.globally(Functions.reduceFn(op)))
+    this.pApply(Combine.globally(Functions.reduceFn(op)).withoutDefaults())
 
   /**
    * Return a sampled subset of this SCollection.
@@ -684,7 +688,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       "combine/sum does not support default value and may fail in some streaming scenarios. " +
         "Consider aggregate/fold instead."
     )
-    this.pApply(Combine.globally(Functions.reduceFn(sg)))
+    this.pApply(Combine.globally(Functions.reduceFn(sg)).withoutDefaults())
   }
 
   /**

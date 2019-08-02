@@ -219,6 +219,10 @@ private class SetCoder[T](bc: BCoder[T]) extends SeqLikeCoder[Set, T](bc) {
   override def decode(inStream: InputStream): Set[T] = decode(inStream, Set.newBuilder[T])
 }
 
+private class MutableSetCoder[T](bc: BCoder[T]) extends SeqLikeCoder[m.Set, T](bc) {
+  override def decode(inStream: InputStream): m.Set[T] = decode(inStream, m.Set.newBuilder[T])
+}
+
 private class SortedSetCoder[T: Ordering](bc: BCoder[T]) extends SeqLikeCoder[SortedSet, T](bc) {
   override def decode(inStream: InputStream): SortedSet[T] =
     decode(inStream, SortedSet.newBuilder[T])
@@ -426,6 +430,11 @@ trait ScalaCoders {
   implicit def setCoder[T: Coder]: Coder[Set[T]] =
     Coder.transform(Coder[T]) { bc =>
       Coder.beam(new SetCoder[T](bc))
+    }
+
+  implicit def mutableSetCoder[T: Coder]: Coder[m.Set[T]] =
+    Coder.transform(Coder[T]) { bc =>
+      Coder.beam(new MutableSetCoder[T](bc))
     }
 
   implicit def vectorCoder[T: Coder]: Coder[Vector[T]] =

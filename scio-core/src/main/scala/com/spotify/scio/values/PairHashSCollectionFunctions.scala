@@ -18,6 +18,7 @@
 package com.spotify.scio.values
 
 import com.spotify.scio.coders.Coder
+
 import scala.collection.mutable.{ArrayBuffer, Map => MMap}
 
 /**
@@ -129,14 +130,13 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
         .toSCollection
 
       val rightHashed = leftHashed
-        .map(x => (x._1, x._3))
-        .filter(_._2)
-        .keys
-        .combine(List(_))(_ ++ List(_))(_ ++ _)
+        .filter(_._3)
+        .map(_._1)
+        .aggregate(Set.empty[K])(_ + _, _ ++ _)
         .withSideInputs(side)
         .flatMap { (mk, s) =>
           val m = s(side)
-          (m.keySet diff mk.toSet)
+          (m.keySet diff mk)
             .flatMap(k => m(k).iterator.map[(K, (Option[V], Option[W]))](w => (k, (None, Some(w)))))
         }
         .toSCollection

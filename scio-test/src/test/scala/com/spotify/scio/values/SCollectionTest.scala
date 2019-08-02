@@ -658,4 +658,15 @@ class SCollectionTest extends PipelineSpec {
     Files.readAllLines(outFile, Charsets.UTF_8) should contain theSameElementsAs Seq("1", "2", "3")
   }
 
+  it should "support Combine.globally() with default value" in {
+    runWithContext { sc =>
+      val p = sc.parallelize(Seq.empty[Int])
+      val p1 = p.aggregate(0)(_ + _, _ + _)
+      val p2 = p.fold
+      val p3 = p.fold(0)(_ + _)
+      p1 should containSingleValue(0)
+      p2 should containSingleValue(0)
+      p3 should containSingleValue(0)
+    }
+  }
 }
