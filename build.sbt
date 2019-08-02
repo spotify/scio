@@ -22,7 +22,7 @@ import com.typesafe.sbt.SbtGit.GitKeys.gitRemoteRepo
 import org.scalafmt.sbt.ScalafmtPlugin.scalafmtConfigSettings
 import bloop.integrations.sbt.BloopDefaults
 
-val beamVersion = "2.13.0"
+val beamVersion = "2.14.0"
 
 val algebirdVersion = "0.13.5"
 val annoy4sVersion = "0.8.0"
@@ -36,6 +36,7 @@ val circeVersion = "0.11.1"
 val commonsIoVersion = "2.6"
 val commonsMath3Version = "3.6.1"
 val commonsTextVersion = "1.7"
+val commonsCompress = "1.18"
 val elasticsearch2Version = "2.4.6"
 val elasticsearch5Version = "5.6.16"
 val elasticsearch6Version = "6.8.2"
@@ -711,6 +712,7 @@ lazy val scioTensorFlow: Project = Project(
     libraryDependencies ++= Seq(
       "org.tensorflow" % "tensorflow" % tensorFlowVersion,
       "org.tensorflow" % "proto" % tensorFlowVersion,
+      "org.apache.commons" % "commons-compress" % commonsCompress,
       "me.lyh" %% "shapeless-datatype-tensorflow" % shapelessDatatypeVersion,
       "com.spotify" %% "featran-core" % featranVersion,
       "com.spotify" %% "featran-scio" % featranVersion,
