@@ -17,7 +17,6 @@
 
 package com.spotify.scio.values
 
-import com.spotify.scio._
 import com.spotify.scio.util.StatCounter
 
 /**
@@ -155,7 +154,15 @@ class DoubleSCollectionFunctions(self: SCollection[Double]) {
           b(bin) = count
           b
       }
-      .sum
+      .reduce { (x, y) =>
+        val r = x.clone()
+        var i = 0
+        while (i < x.length) {
+          r(i) += y(i)
+          i += 1
+        }
+        r
+      }
 
     // Workaround since hist may be empty
     val bSide = bucketSize.asSingletonSideInput
