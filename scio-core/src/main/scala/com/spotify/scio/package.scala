@@ -17,7 +17,7 @@
 
 package com.spotify
 
-import com.twitter.algebird.Semigroup
+import com.twitter.algebird.Monoid
 
 import scala.reflect.ClassTag
 
@@ -30,20 +30,20 @@ import scala.reflect.ClassTag
  */
 package object scio {
 
-  /** [[com.twitter.algebird.Semigroup Semigroup]] for `Array[Int]`. */
-  implicit val intArraySg: Semigroup[Array[Int]] = new ArraySemigroup[Int]
+  /** [[com.twitter.algebird.Monoid Monoid]] for `Array[Int]`. */
+  implicit val intArrayMon: Monoid[Array[Int]] = new ArrayMonoid[Int]
 
-  /** [[com.twitter.algebird.Semigroup Semigroup]] for `Array[Long]`. */
-  implicit val longArraySg: Semigroup[Array[Long]] = new ArraySemigroup[Long]
+  /** [[com.twitter.algebird.Monoid Monoid]] for `Array[Long]`. */
+  implicit val longArrayMon: Monoid[Array[Long]] = new ArrayMonoid[Long]
 
-  /** [[com.twitter.algebird.Semigroup Semigroup]] for `Array[Float]`. */
-  implicit val floatArraySg: Semigroup[Array[Float]] = new ArraySemigroup[Float]
+  /** [[com.twitter.algebird.Monoid Monoid]] for `Array[Float]`. */
+  implicit val floatArrayMon: Monoid[Array[Float]] = new ArrayMonoid[Float]
 
-  /** [[com.twitter.algebird.Semigroup Semigroup]] for `Array[Double]`. */
-  implicit val doubleArraySg: Semigroup[Array[Double]] = new ArraySemigroup[Double]
+  /** [[com.twitter.algebird.Monoid Monoid]] for `Array[Double]`. */
+  implicit val doubleArrayMon: Monoid[Array[Double]] = new ArrayMonoid[Double]
 
-  private class ArraySemigroup[@specialized(Int, Long, Float, Double) T: ClassTag: Numeric]
-      extends Semigroup[Array[T]] {
+  private class ArrayMonoid[@specialized(Int, Long, Float, Double) T: ClassTag: Numeric]
+      extends Monoid[Array[T]] {
 
     private val num = implicitly[Numeric[T]]
 
@@ -58,12 +58,18 @@ package object scio {
       l
     }
 
+    override val zero: Array[T] = Array.empty[T]
     override def plus(l: Array[T], r: Array[T]): Array[T] = {
-      require(l.length == r.length,  "Array lengths must be the same")
-      val s = Array.fill[T](l.length)(num.zero)
-      plusI(s, l)
-      plusI(s, r)
-      s
+      if (l.length == 0) {
+        r
+      } else if (r.length == 0) {
+        l
+      } else {
+        val s = Array.fill[T](l.length)(num.zero)
+        plusI(s, l)
+        plusI(s, r)
+        s
+      }
     }
 
     override def sumOption(xs: TraversableOnce[Array[T]]): Option[Array[T]] = {
