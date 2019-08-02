@@ -24,10 +24,8 @@ import java.util.zip.GZIPInputStream
 
 import com.google.common.hash.Hashing
 import com.google.common.primitives.Ints
-// scalastyle:off line.size.limit
-import org.apache.beam.repackaged.beam_sdks_java_core.org.apache.commons.compress.compressors.deflate._
-// scalastyle:on line.size.limit
 import org.apache.beam.sdk.io.Compression
+import org.apache.commons.compress.compressors.deflate._
 import org.apache.commons.compress.compressors.gzip._
 
 private object TFRecordCodec {
