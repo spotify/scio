@@ -25,7 +25,7 @@ import com.spotify.scio._
 
 // Usage:
 
-// `sbt runMain "com.spotify.scio.examples.extra.TapOutExample
+// `sbt runMain "com.spotify.scio.examples.extra.TapOutputExample
 // --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
 // --output=gs://[OUTPUT] --method=[METHOD]"`
 object TapOutputExample {
@@ -34,12 +34,12 @@ object TapOutputExample {
 
     // First job and its associated `ScioContext`
     val (sc1, args) = ContextAndArgs(cmdlineArgs)
-    val f1 = sc1
+    val closedTap1 = sc1
       .parallelize(1 to 10)
       .sum
       // Save data to a temporary location for use later as a `ClosedTap[T]`
       .materialize
-    val f2 = sc1
+    val closedTap2 = sc1
       .parallelize(1 to 100)
       .sum
       .map(_.toString)
@@ -47,9 +47,9 @@ object TapOutputExample {
       .saveAsTextFile(args("output"))
     val scioResult = sc1.run().waitUntilDone()
 
-    // Wait for future completions, which should happen when `sc1` finishes
-    val t1 = scioResult.tap(f1)
-    val t2 = scioResult.tap(f2)
+    // Get taps from ScioResult which is available after the ScioContext has finished
+    val t1 = scioResult.tap(closedTap1)
+    val t2 = scioResult.tap(closedTap2)
 
     // scalastyle:off regex
     // Fetch `Tap` values directly
