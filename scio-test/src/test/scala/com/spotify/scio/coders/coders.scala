@@ -97,6 +97,7 @@ class CodersTest extends FlatSpec with Matchers {
 
   "Coders" should "support primitives" in {
     1 coderShould roundtrip()
+    'a' coderShould roundtrip()
     "yolo" coderShould roundtrip()
     4.5 coderShould roundtrip()
   }

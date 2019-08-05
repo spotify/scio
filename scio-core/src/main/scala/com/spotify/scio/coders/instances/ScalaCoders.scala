@@ -351,6 +351,8 @@ private class MutableMapCoder[K, V](kc: BCoder[K], vc: BCoder[V]) extends Atomic
 // scalastyle:off number.of.methods
 trait ScalaCoders {
 
+  implicit def charCoder: Coder[Char] =
+    Coder.xmap(Coder.beam(ByteCoder.of()))(_.toChar, _.toByte)
   implicit def byteCoder: Coder[Byte] =
     Coder.beam(ByteCoder.of().asInstanceOf[BCoder[Byte]])
   implicit def stringCoder: Coder[String] =
