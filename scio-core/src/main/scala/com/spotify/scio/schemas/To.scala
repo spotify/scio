@@ -175,8 +175,8 @@ object ToMacro {
     val tpeI = weakTypeOf[I]
     val tpeO = weakTypeOf[O]
 
-    val sOut = c.eval(inferImplicitSchema(tpeO))
-    val sIn = c.eval(inferImplicitSchema(tpeI))
+    val sOut = materializeImplicitSchema[O]
+    val sIn = materializeImplicitSchema[I]
 
     val schemaOut: BSchema = SchemaMaterializer.fieldType(sOut).getRowSchema()
     val schemaIn: BSchema = SchemaMaterializer.fieldType(sIn).getRowSchema()

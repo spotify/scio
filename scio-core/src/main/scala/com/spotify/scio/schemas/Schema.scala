@@ -189,6 +189,13 @@ private[scio] trait SchemaMacroHelpers {
     ctx.Expr[Schema[_]](q"$untypedTree.value")
   }
 
+  private val cache = scala.collection.concurrent.TrieMap.empty[String, Schema[_]]
+
+  def materializeImplicitSchema[A: ctx.WeakTypeTag]: Schema[A] = {
+    val key = weakTypeTag[A].tpe.dealias.toString()
+    cache.getOrElseUpdate(key, ctx.eval(inferImplicitSchema[A])).asInstanceOf[Schema[A]]
+  }
+
   implicit def liftTupleTag[A: ctx.WeakTypeTag]: Liftable[TupleTag[A]] = Liftable[TupleTag[A]] {
     x =>
       q"new _root_.org.apache.beam.sdk.values.TupleTag[${weakTypeOf[A]}](${x.getId()})"
