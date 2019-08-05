@@ -181,11 +181,12 @@ private[scio] trait SchemaMacroHelpers {
     inferImplicitSchema(weakTypeOf[A]).asInstanceOf[ctx.Expr[Schema[A]]]
 
   def inferImplicitSchema(t: ctx.Type): ctx.Expr[Schema[_]] = {
-    val tp = ctx.typecheck(tq"_root_.com.spotify.scio.schemas.Schema[$t]", ctx.TYPEmode).tpe
+    val tp = ctx.typecheck(
+      tq"_root_.shapeless.Cached[_root_.com.spotify.scio.schemas.Schema[$t]]", ctx.TYPEmode).tpe
     val typedTree = ctx.inferImplicitValue(tp, silent = false)
     val untypedTree = ctx.untypecheck(typedTree.duplicate)
 
-    ctx.Expr[Schema[_]](untypedTree)
+    ctx.Expr[Schema[_]](q"$untypedTree.value")
   }
 
   implicit def liftTupleTag[A: ctx.WeakTypeTag]: Liftable[TupleTag[A]] = Liftable[TupleTag[A]] {
