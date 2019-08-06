@@ -116,7 +116,7 @@ lazy val scalafmtSettings = Seq(
 
 val commonSettings = Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
   organization := "com.spotify",
-  scalaVersion := "2.12.8",
+  scalaVersion := "2.12.9",
   crossScalaVersions := Seq("2.11.12", scalaVersion.value),
   scalacOptions ++= Scalac.commonsOptions.value,
   scalacOptions in (Compile, doc) ++= Scalac.compileDocOptions.value,
@@ -255,12 +255,16 @@ lazy val assemblySettings = Seq(
   }
 )
 
-lazy val paradiseDependency =
-  "org.scalamacros" % "paradise" % scalaMacrosVersion cross CrossVersion.full
-
-lazy val macroSettings = Seq(
+lazy val macroSettings = Def.settings(
   libraryDependencies += "org.scala-lang" % "scala-reflect" % scalaVersion.value,
-  addCompilerPlugin(paradiseDependency)
+  libraryDependencies += {
+    val sv = scalaVersion.value match {
+      case "2.12.9" => "2.12.8"
+      case x => x
+    }
+
+    compilerPlugin("org.scalamacros" % "paradise" % scalaMacrosVersion cross CrossVersion.constant(sv))
+  }
 )
 
 lazy val directRunnerDependency =
@@ -756,8 +760,12 @@ lazy val scioSchemas: Project = Project(
 lazy val scioExamples: Project = Project(
   "scio-examples",
   file("scio-examples")
-).settings(
-    commonSettings ++ noPublishSettings ++ soccoSettings ++ beamRunnerSettings,
+).settings(commonSettings)
+  .settings(noPublishSettings)
+  .settings(soccoSettings)
+  .settings(beamRunnerSettings)
+  .settings(macroSettings)
+  .settings(
     libraryDependencies ++= Seq(
       "me.lyh" %% "shapeless-datatype-avro" % shapelessDatatypeVersion,
       "me.lyh" %% "shapeless-datatype-datastore_1.3" % shapelessDatatypeVersion,
@@ -768,7 +776,6 @@ lazy val scioExamples: Project = Project(
       "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test",
       "org.apache.beam" % "beam-sdks-java-extensions-sql" % beamVersion
     ),
-    addCompilerPlugin(paradiseDependency),
     // exclude problematic sources if we don't have GCP credentials
     excludeFilter in unmanagedSources := {
       if (BuildCredentials.exists) {
@@ -794,8 +801,9 @@ lazy val scioExamples: Project = Project(
 lazy val scioRepl: Project = Project(
   "scio-repl",
   file("scio-repl")
-).settings(
-    commonSettings ++ macroSettings,
+).settings(commonSettings)
+  .settings(macroSettings)
+  .settings(
     libraryDependencies ++= Seq(
       "org.apache.beam" % "beam-runners-direct-java" % beamVersion,
       "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion,
@@ -804,8 +812,7 @@ lazy val scioRepl: Project = Project(
       "jline" % "jline" % jlineVersion,
       "org.scala-lang" % "scala-compiler" % scalaVersion.value,
       "org.scala-lang" % "scala-reflect" % scalaVersion.value,
-      "com.nrinaudo" %% "kantan.csv" % kantanCsvVersion,
-      paradiseDependency
+      "com.nrinaudo" %% "kantan.csv" % kantanCsvVersion
     ),
     assemblyJarName in assembly := s"scio-repl-${version.value}.jar"
   )
@@ -818,10 +825,11 @@ lazy val scioRepl: Project = Project(
 lazy val scioJmh: Project = Project(
   "scio-jmh",
   file("scio-jmh")
-).settings(
-    commonSettings ++ noPublishSettings,
+).settings(commonSettings)
+  .settings(macroSettings)
+  .settings(noPublishSettings)
+  .settings(
     description := "Scio JMH Microbenchmarks",
-    addCompilerPlugin(paradiseDependency),
     sourceDirectory in Jmh := (sourceDirectory in Test).value,
     classDirectory in Jmh := (classDirectory in Test).value,
     dependencyClasspath in Jmh := (dependencyClasspath in Test).value,
