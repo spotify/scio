@@ -25,15 +25,18 @@ import com.google.api.services.bigquery.model.TableRow
 import com.spotify.scio.IsJavaBean
 import com.spotify.scio.schemas.Schema
 import com.spotify.scio.coders.Coder
+import com.spotify.scio.transforms.BaseAsyncLookupDoFn
 import com.spotify.scio.util.ScioUtil
 import org.apache.beam.sdk.coders.{Coder => _, _}
 import org.apache.beam.sdk.io.gcp.bigquery.TableRowJsonCoder
 import org.apache.beam.sdk.io.gcp.pubsub.{PubsubMessage, PubsubMessageWithAttributesCoder}
-import org.apache.beam.sdk.schemas.{Schema => BSchema, SchemaCoder}
+import org.apache.beam.sdk.schemas.{SchemaCoder, Schema => BSchema}
 import org.apache.beam.sdk.transforms.windowing.{BoundedWindow, IntervalWindow, PaneInfo}
 import org.apache.beam.sdk.values.{KV, Row}
 import org.apache.beam.sdk.{coders => bcoders}
+
 import scala.reflect.ClassTag
+import scala.util.{Failure, Success, Try}
 
 private object VoidCoder extends AtomicCoder[Void] {
   override def encode(value: Void, outStream: OutputStream): Unit = ()
@@ -74,6 +77,15 @@ trait JavaCoders {
         Coder.beam(bcoders.MapCoder.of(bk, bv))
       }
     }
+
+  implicit def jTryCoder[A](implicit c: Coder[Try[A]]): Coder[BaseAsyncLookupDoFn.Try[A]] =
+    Coder.xmap(c)(
+      {
+        case Success(value)     => new BaseAsyncLookupDoFn.Try(value)
+        case Failure(exception) => new BaseAsyncLookupDoFn.Try[A](exception)
+      },
+      t => if (t.isSuccess) Success(t.get()) else Failure(t.getException)
+    )
 
   implicit def jBitSetCoder: Coder[java.util.BitSet] = Coder.beam(BitSetCoder.of())
 
