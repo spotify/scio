@@ -90,6 +90,8 @@ val bigQueryStorageVersion = "0.79.0-alpha"
 val httpCoreVersion = "4.4.11"
 val googleCloudSpannerVersion = "1.6.0"
 val datastoreV1ProtoClientVersion = "1.6.0"
+val catsVersion = "2.0.0"
+val kindProjectorVersion = "0.11.0"
 
 lazy val mimaSettings = Seq(
   mimaPreviousArtifacts :=
@@ -368,7 +370,8 @@ lazy val root: Project = Project("scio", file("."))
     `scio-repl`,
     `scio-jmh`,
     `scio-macros`,
-    `scio-smb`
+    `scio-smb`,
+    `scio-algebra`
   )
 
 lazy val `scio-core`: Project = project
@@ -448,6 +451,25 @@ lazy val `scio-sql`: Project = Project(
     `scio-core`,
     `scio-schemas` % "test->test",
     `scio-macros`
+  )
+
+lazy val `scio-algebra`: Project = Project(
+  "scio-algebra",
+  file("scio-algebra")
+).settings(commonSettings)
+  .settings(
+    description := "Scio additional algebra syntax",
+    libraryDependencies ++= Seq(
+      "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
+      "org.typelevel" %% "cats-core" % catsVersion,
+      compilerPlugin(
+        "org.typelevel" % "kind-projector" % kindProjectorVersion cross CrossVersion.full
+      )
+    )
+  )
+  .dependsOn(
+    `scio-core`,
+    `scio-test` % "test"
   )
 
 lazy val `scio-test`: Project = project

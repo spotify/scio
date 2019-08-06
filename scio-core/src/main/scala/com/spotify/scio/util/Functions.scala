@@ -37,7 +37,7 @@ import scala.collection.JavaConverters._
 private[scio] object Functions {
   private[this] val BufferSize = 20
 
-  private object Fns {
+  object Fns {
     def fold[A, B](accumulator: A, list: JIterable[B])(f: (A, B) => A): A = {
       val iter = list.iterator()
       var acc: A = accumulator
@@ -74,7 +74,7 @@ private[scio] object Functions {
     }
   }
 
-  abstract private class CombineFn[VI, VA, VO] extends BCombineFn[VI, VA, VO] with NamedFn {
+  abstract class CombineFn[VI, VA, VO] extends BCombineFn[VI, VA, VO] with NamedFn {
     val vacoder: Coder[VA]
     val vocoder: Coder[VO]
 
@@ -269,7 +269,8 @@ private[scio] object Functions {
       override def partitionFor(elem: T, numPartitions: Int): Int = g(elem)
     }
 
-  abstract private class ReduceFn[T: Coder] extends CombineFn[T, JList[T], T] {
+  abstract class ReduceFn[T: Coder] extends CombineFn[T, JList[T], T] {
+
     override def createAccumulator(): JList[T] = new JArrayList[T]()
 
     override def addInput(accumulator: JList[T], input: T): JList[T] = {
