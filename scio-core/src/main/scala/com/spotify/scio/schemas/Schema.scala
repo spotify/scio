@@ -18,6 +18,7 @@ package com.spotify.scio.schemas
 
 import java.util.{List => jList, Map => jMap}
 
+import com.spotify.scio.{MacroSettings, FeatureFlag}
 import com.spotify.scio.schemas.instances.AllInstances
 import com.spotify.scio.util.ScioUtil
 import org.apache.beam.sdk.schemas.Schema.FieldType
@@ -177,12 +178,21 @@ private[scio] trait SchemaMacroHelpers {
   val ctx: blackbox.Context
   import ctx.universe._
 
+  val cacheImplicitSchemas = MacroSettings.cacheImplicitSchemas(ctx)
+
   def inferImplicitSchema[A: ctx.WeakTypeTag]: ctx.Expr[Schema[A]] =
     inferImplicitSchema(weakTypeOf[A]).asInstanceOf[ctx.Expr[Schema[A]]]
 
   def inferImplicitSchema(t: ctx.Type): ctx.Expr[Schema[_]] = {
-    val tp = ctx.typecheck(
-      tq"_root_.shapeless.Cached[_root_.com.spotify.scio.schemas.Schema[$t]]", ctx.TYPEmode).tpe
+    val tpe =
+      cacheImplicitSchemas match {
+        case FeatureFlag.Enable =>
+          tq"_root_.shapeless.Cached[_root_.com.spotify.scio.schemas.Schema[$t]]"
+        case _ =>
+          tq"_root_.com.spotify.scio.schemas.Schema[$t]"
+      }
+
+    val tp = ctx.typecheck(tpe, ctx.TYPEmode).tpe
     val typedTree = ctx.inferImplicitValue(tp, silent = false)
     val untypedTree = ctx.untypecheck(typedTree.duplicate)
 
@@ -191,10 +201,14 @@ private[scio] trait SchemaMacroHelpers {
 
   private val cache = scala.collection.concurrent.TrieMap.empty[String, Schema[_]]
 
-  def materializeImplicitSchema[A: ctx.WeakTypeTag]: Schema[A] = {
-    val key = weakTypeTag[A].tpe.dealias.toString()
-    cache.getOrElseUpdate(key, ctx.eval(inferImplicitSchema[A])).asInstanceOf[Schema[A]]
-  }
+  def materializeImplicitSchema[A: ctx.WeakTypeTag]: Schema[A] =
+    cacheImplicitSchemas match {
+      case FeatureFlag.Enable =>
+        val key = weakTypeTag[A].tpe.dealias.toString()
+        cache.getOrElseUpdate(key, ctx.eval(inferImplicitSchema[A])).asInstanceOf[Schema[A]]
+      case _ =>
+        ctx.eval(inferImplicitSchema[A])
+    }
 
   implicit def liftTupleTag[A: ctx.WeakTypeTag]: Liftable[TupleTag[A]] = Liftable[TupleTag[A]] {
     x =>
