@@ -21,7 +21,7 @@ import scala.reflect.macros.{blackbox, whitebox}
 
 private[scio] sealed trait FeatureFlag
 private[scio] object FeatureFlag {
-  case object Enable  extends FeatureFlag
+  case object Enable extends FeatureFlag
   case object Disable extends FeatureFlag
 }
 
@@ -31,20 +31,25 @@ private[scio] final object MacroSettings {
     val ss: Map[String, String] =
       settings
         .map(_.split("="))
-        .map { case Array(k, v) =>
-          (k.trim, v.trim)
-        }.toMap
+        .map {
+          case Array(k, v) =>
+            (k.trim, v.trim)
+        }
+        .toMap
 
-    ss.get(name).map {
-      case "true" =>
-        FeatureFlag.Enable
-      case "false" =>
-        FeatureFlag.Disable
-      case v =>
-        throw new IllegalArgumentException(
-          s"""Invalid value for setting -Xmacro-settings:$name,""" +
-            s"""expected "true" or "false", got $v""")
-    }.getOrElse(default)
+    ss.get(name)
+      .map {
+        case "true" =>
+          FeatureFlag.Enable
+        case "false" =>
+          FeatureFlag.Disable
+        case v =>
+          throw new IllegalArgumentException(
+            s"""Invalid value for setting -Xmacro-settings:$name,""" +
+              s"""expected "true" or "false", got $v"""
+          )
+      }
+      .getOrElse(default)
   }
 
   /**

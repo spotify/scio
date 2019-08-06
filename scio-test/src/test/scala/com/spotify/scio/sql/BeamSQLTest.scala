@@ -134,19 +134,19 @@ object TestData {
   val orders = List(Order(1, 2, 2), Order(2, 2, 1), Order(1, 4, 3), Order(3, 2, 1), Order(3, 3, 1))
 
   // Coders
-  implicit def coderLocale = Coder.kryo[Locale]
-  implicit def coderFoo = Coder.gen[Foo]
-  implicit def coderResult = Coder.gen[Result]
-  implicit def coderUser = Coder.gen[User]
-  implicit def coderUserId = Coder.gen[UserId]
-  implicit def coderUserWithId = Coder.gen[UserWithId]
-  implicit def coderUserWithFallBack = Coder.gen[UserWithFallBack]
-  implicit def coderUserWithOption = Coder.gen[UserWithOption]
-  implicit def coderUserWithList = Coder.gen[UserWithList]
-  implicit def coderUserWithJList = Coder.gen[UserWithJList]
-  implicit def coderUserWithMap = Coder.gen[UserWithMap]
-  implicit def coderUserWithInstant = Coder.gen[UserWithInstant]
-  implicit def coderOrder = Coder.gen[Order]
+  implicit def coderLocale: Coder[Locale] = Coder.kryo[Locale]
+  implicit def coderFoo: Coder[Foo] = Coder.gen[Foo]
+  implicit def coderResult: Coder[Result] = Coder.gen[Result]
+  implicit def coderUser: Coder[User] = Coder.gen[User]
+  implicit def coderUserId: Coder[UserId] = Coder.gen[UserId]
+  implicit def coderUserWithId: Coder[UserWithId] = Coder.gen[UserWithId]
+  implicit def coderUserWithFallBack: Coder[UserWithFallBack] = Coder.gen[UserWithFallBack]
+  implicit def coderUserWithOption: Coder[UserWithOption] = Coder.gen[UserWithOption]
+  implicit def coderUserWithList: Coder[UserWithList] = Coder.gen[UserWithList]
+  implicit def coderUserWithJList: Coder[UserWithJList] = Coder.gen[UserWithJList]
+  implicit def coderUserWithMap: Coder[UserWithMap] = Coder.gen[UserWithMap]
+  implicit def coderUserWithInstant: Coder[UserWithInstant] = Coder.gen[UserWithInstant]
+  implicit def coderOrder: Coder[Order] = Coder.gen[Order]
 }
 
 class BeamSQLTest extends PipelineSpec {

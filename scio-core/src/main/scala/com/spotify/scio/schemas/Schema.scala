@@ -18,7 +18,7 @@ package com.spotify.scio.schemas
 
 import java.util.{List => jList, Map => jMap}
 
-import com.spotify.scio.{MacroSettings, FeatureFlag}
+import com.spotify.scio.{FeatureFlag, MacroSettings}
 import com.spotify.scio.schemas.instances.AllInstances
 import com.spotify.scio.util.ScioUtil
 import org.apache.beam.sdk.schemas.Schema.FieldType

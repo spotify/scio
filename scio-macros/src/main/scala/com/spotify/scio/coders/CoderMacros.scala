@@ -17,7 +17,7 @@
 
 package com.spotify.scio.coders
 
-import com.spotify.scio.{MagnoliaMacros, MacroSettings, FeatureFlag}
+import com.spotify.scio.{FeatureFlag, MacroSettings, MagnoliaMacros}
 
 import scala.reflect.macros._
 
