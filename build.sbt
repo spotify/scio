@@ -260,10 +260,12 @@ lazy val macroSettings = Def.settings(
   libraryDependencies += {
     val sv = scalaVersion.value match {
       case "2.12.9" => "2.12.8"
-      case x => x
+      case x        => x
     }
 
-    compilerPlugin("org.scalamacros" % "paradise" % scalaMacrosVersion cross CrossVersion.constant(sv))
+    compilerPlugin(
+      "org.scalamacros" % "paradise" % scalaMacrosVersion cross CrossVersion.constant(sv)
+    )
   }
 )
 
