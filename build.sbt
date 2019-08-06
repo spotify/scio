@@ -257,16 +257,10 @@ lazy val assemblySettings = Seq(
 
 lazy val macroSettings = Def.settings(
   libraryDependencies += "org.scala-lang" % "scala-reflect" % scalaVersion.value,
-  libraryDependencies += {
-    val sv = scalaVersion.value match {
-      case "2.12.9" => "2.12.8"
-      case x        => x
-    }
-
+  libraryDependencies +=
     compilerPlugin(
-      "org.scalamacros" % "paradise" % scalaMacrosVersion cross CrossVersion.constant(sv)
+      "org.scalamacros" % "paradise" % scalaMacrosVersion cross CrossVersion.full
     )
-  }
 )
 
 lazy val directRunnerDependency =
@@ -813,7 +807,6 @@ lazy val scioRepl: Project = Project(
       "org.slf4j" % "slf4j-simple" % slf4jVersion,
       "jline" % "jline" % jlineVersion,
       "org.scala-lang" % "scala-compiler" % scalaVersion.value,
-      "org.scala-lang" % "scala-reflect" % scalaVersion.value,
       "com.nrinaudo" %% "kantan.csv" % kantanCsvVersion
     ),
     assemblyJarName in assembly := s"scio-repl-${version.value}.jar"
