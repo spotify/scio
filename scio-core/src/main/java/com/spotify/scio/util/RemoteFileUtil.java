@@ -204,7 +204,7 @@ public class RemoteFileUtil implements Serializable {
     // gs://bucket/path/data.spl -> /tmp/fd-gs-a1b2c3d4/data.spl
     String path = src.toString();
     int idx = path.lastIndexOf('/');
-    String hash = Hashing.sha1()
+    String hash = Hashing.murmur3_128()
         .hashString(path.substring(0, idx), Charsets.UTF_8).toString()
         .substring(0, HASH_LENGTH);
     String filename = path.substring(idx + 1);

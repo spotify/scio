@@ -97,6 +97,7 @@ class CassandraIT extends FlatSpec with Matchers with BeforeAndAfterAll {
         cluster.close()
         throw e
     }
+    ()
   }
 
   ignore should "work with single key" in {

@@ -52,40 +52,54 @@ object ScioBatchBenchmark {
   // 100M items, into a set of 1000 unique items
 
   object Reduce extends Benchmark {
-    override def run(sc: ScioContext): Unit =
+    override def run(sc: ScioContext): Unit = {
       randomUUIDs(sc, 100 * M).map(_.hashCode % 1000).map(Set(_)).reduce(_ ++ _)
+      ()
+    }
   }
 
   object Sum extends Benchmark {
-    override def run(sc: ScioContext): Unit =
+    override def run(sc: ScioContext): Unit = {
       randomUUIDs(sc, 100 * M).map(_.hashCode % 1000).map(Set(_)).sum
+      ()
+    }
   }
 
   object Fold extends Benchmark {
-    override def run(sc: ScioContext): Unit =
+    override def run(sc: ScioContext): Unit = {
       randomUUIDs(sc, 100 * M).map(_.hashCode % 1000).map(Set(_)).fold(Set.empty[Int])(_ ++ _)
+      ()
+    }
   }
 
   object FoldMonoid extends Benchmark {
-    override def run(sc: ScioContext): Unit =
+    override def run(sc: ScioContext): Unit = {
       randomUUIDs(sc, 100 * M).map(_.hashCode % 1000).map(Set(_)).fold
+      ()
+    }
   }
 
   object Aggregate extends Benchmark {
-    override def run(sc: ScioContext): Unit =
+    override def run(sc: ScioContext): Unit =  {
       randomUUIDs(sc, 100 * M).map(_.hashCode % 1000).aggregate(Set.empty[Int])(_ + _, _ ++ _)
+      ()
+    }
   }
 
   object AggregateAggregator extends Benchmark {
-    override def run(sc: ScioContext): Unit =
+    override def run(sc: ScioContext): Unit = {
       randomUUIDs(sc, 100 * M)
         .map(_.hashCode % 1000)
         .aggregate(Aggregator.fromMonoid[Set[Int]].composePrepare[Int](Set(_)))
+      ()
+    }
   }
 
   object Combine extends Benchmark {
-    override def run(sc: ScioContext): Unit =
+    override def run(sc: ScioContext): Unit = {
       randomUUIDs(sc, 100 * M).map(_.hashCode % 1000).combine(Set(_))(_ + _)(_ ++ _)
+      ()
+    }
   }
 
   // ===== CombineByKey =====
@@ -93,81 +107,99 @@ object ScioBatchBenchmark {
   // 100M items, 10K keys, into a set of 1000 unique items per key
 
   object ReduceByKey extends Benchmark {
-    override def run(sc: ScioContext): Unit =
+    override def run(sc: ScioContext): Unit = {
       randomUUIDs(sc, 100 * M)
         .transform("Assign random key")(withRandomKey[Elem[String]](10 * K))
         .mapValues(_.hashCode % 1000)
         .mapValues(Set(_))
         .reduceByKey(_ ++ _)
+      ()
+    }
   }
 
   object SumByKey extends Benchmark {
-    override def run(sc: ScioContext): Unit =
+    override def run(sc: ScioContext): Unit = {
       randomUUIDs(sc, 100 * M)
         .transform("Assign random key")(withRandomKey[Elem[String]](10 * K))
         .mapValues(_.hashCode % 1000)
         .mapValues(Set(_))
         .sumByKey
+      ()
+    }
   }
 
   object FoldByKey extends Benchmark {
-    override def run(sc: ScioContext): Unit =
+    override def run(sc: ScioContext): Unit = {
       randomUUIDs(sc, 100 * M)
         .transform("Assign random key")(withRandomKey[Elem[String]](10 * K))
         .mapValues(_.hashCode % 1000)
         .mapValues(Set(_))
         .foldByKey(Set.empty[Int])(_ ++ _)
+      ()
+    }
   }
 
   object FoldByKeyMonoid extends Benchmark {
-    override def run(sc: ScioContext): Unit =
+    override def run(sc: ScioContext): Unit = {
       randomUUIDs(sc, 100 * M)
         .transform("Assign random key")(withRandomKey[Elem[String]](10 * K))
         .mapValues(_.hashCode % 1000)
         .mapValues(Set(_))
         .foldByKey
+      ()
+    }
   }
 
   object AggregateByKey extends Benchmark {
-    override def run(sc: ScioContext): Unit =
+    override def run(sc: ScioContext): Unit = {
       randomUUIDs(sc, 100 * M)
         .transform("Assign random key")(withRandomKey[Elem[String]](10 * K))
         .mapValues(_.hashCode % 1000)
         .aggregateByKey(Set.empty[Int])(_ + _, _ ++ _)
+      ()
+    }
   }
 
   object AggregateByKeyAggregator extends Benchmark {
-    override def run(sc: ScioContext): Unit =
+    override def run(sc: ScioContext): Unit = {
       randomUUIDs(sc, 100 * M)
         .transform("Assign random key")(withRandomKey[Elem[String]](10 * K))
         .mapValues(_.hashCode % 1000)
         .aggregateByKey(Aggregator.fromMonoid[Set[Int]].composePrepare[Int](Set(_)))
+      ()
+    }
   }
 
   object CombineByKey extends Benchmark {
-    override def run(sc: ScioContext): Unit =
+    override def run(sc: ScioContext): Unit = {
       randomUUIDs(sc, 100 * M)
         .transform("Assign random key")(withRandomKey[Elem[String]](10 * K))
         .mapValues(_.hashCode % 1000)
         .combineByKey(Set(_))(_ + _)(_ ++ _)
+      ()
+    }
   }
 
   // ===== GroupByKey =====
 
   // 100M items, 10K keys, average 10K values per key
   object GroupByKey extends Benchmark(ShuffleConf) {
-    override def run(sc: ScioContext): Unit =
+    override def run(sc: ScioContext): Unit = {
       randomUUIDs(sc, 100 * M)
         .transform("Assign random key")(withRandomKey[Elem[String]](10 * K))
         .groupByKey
         .values
         .map(_.size)
+      ()
+    }
   }
 
   // 10M items, 1 key
   object GroupAll extends Benchmark(ShuffleConf) {
-    override def run(sc: ScioContext): Unit =
+    override def run(sc: ScioContext): Unit = {
       randomUUIDs(sc, 10 * M).groupBy(_ => 0).values.map(_.size)
+      ()
+    }
   }
 
   // ===== Join =====
@@ -175,22 +207,28 @@ object ScioBatchBenchmark {
   // LHS: 100M items, 10M keys, average 10 values per key
   // RHS: 50M items, 5M keys, average 10 values per key
   object Join extends Benchmark(ShuffleConf) {
-    override def run(sc: ScioContext): Unit =
+    override def run(sc: ScioContext): Unit = {
       randomKVs(sc, 100 * M, 10 * M) join randomKVs(sc, 50 * M, 5 * M)
+      ()
+    }
   }
 
   // LHS: 100M items, 10M keys, average 1 values per key
   // RHS: 50M items, 5M keys, average 1 values per key
   object JoinOne extends Benchmark(ShuffleConf) {
-    override def run(sc: ScioContext): Unit =
+    override def run(sc: ScioContext): Unit = {
       randomKVs(sc, 100 * M, 100 * M) join randomKVs(sc, 50 * M, 50 * M)
+      ()
+    }
   }
 
   // LHS: 100M items, 10M keys, average 10 values per key
   // RHS: 1M items, 100K keys, average 10 values per key
   object HashJoin extends Benchmark {
-    override def run(sc: ScioContext): Unit =
+    override def run(sc: ScioContext): Unit = {
       randomKVs(sc, 100 * M, 10 * M) hashJoin randomKVs(sc, M, 100 * K)
+      ()
+    }
   }
 
   // ===== SideInput =====
@@ -202,6 +240,7 @@ object ScioBatchBenchmark {
       val main = randomUUIDs(sc, 100 * M)
       val side = randomUUIDs(sc, 1 * M).map(Set(_)).sum.asSingletonSideInput
       main.withSideInputs(side).map { case (x, s) => (x, s(side).size) }
+      ()
     }
   }
 
@@ -210,6 +249,7 @@ object ScioBatchBenchmark {
       val main = randomUUIDs(sc, 100 * M)
       val side = randomUUIDs(sc, 1 * M).asIterableSideInput
       main.withSideInputs(side).map { case (x, s) => (x, s(side).head) }
+      ()
     }
   }
 
@@ -220,6 +260,7 @@ object ScioBatchBenchmark {
       main
         .withSideInputs(side)
         .map { case (x, s) => (x, s(side).head) }
+      ()
     }
   }
 
@@ -233,6 +274,7 @@ object ScioBatchBenchmark {
         .map((_, UUID.randomUUID().toString))
         .asMapSideInput
       main.withSideInputs(side).map { case (x, s) => s(side).get(x) }
+      ()
     }
   }
 
@@ -244,6 +286,7 @@ object ScioBatchBenchmark {
         .map((_, UUID.randomUUID().toString))
         .asMultiMapSideInput
       main.withSideInputs(side).map { case (x, s) => s(side).get(x) }
+      ()
     }
   }
 

@@ -585,6 +585,7 @@ object BenchmarkRunner {
       .flatMap(_.run(projectId, prefix, ScioBenchmarkSettings.commonArgs()))
     val future = Future.sequence(results.map(_.map(ScioBenchmarkSettings.logger.log(_))))
     Await.result(future, Duration.Inf)
+    ()
   }
 
   private def createPrefix(args: Args, benchmarkPrefix: String) = {
