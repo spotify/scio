@@ -17,6 +17,7 @@
 
 package com.spotify.scio.util
 
+import com.spotify.scio.ScioContext
 import com.twitter.algebird.{Monoid, Semigroup}
 import org.apache.beam.sdk.transforms.Combine.CombineFn
 import org.scalatest._
@@ -36,17 +37,17 @@ class FunctionsTest extends FlatSpec with Matchers {
   }
 
   "Functions" should "work with aggregateFn" in {
-    testFn(Functions.aggregateFn[Int, Int](0)(_ + _, _ + _))
+    testFn(Functions.aggregateFn[Int, Int](ScioContext(), 0)(_ + _, _ + _))
   }
 
   it should "work with combineFn" in {
-    testFn(Functions.combineFn[Int, Int](identity, _ + _, _ + _))
+    testFn(Functions.combineFn[Int, Int](ScioContext(), identity, _ + _, _ + _))
   }
 
   it should "work with reduceFn" in {
-    testFn(Functions.reduceFn(Semigroup.intSemigroup.plus _))
-    testFn(Functions.reduceFn(Semigroup.intSemigroup))
-    testFn(Functions.reduceFn(Monoid.intMonoid))
+    testFn(Functions.reduceFn(ScioContext(), Semigroup.intSemigroup.plus _))
+    testFn(Functions.reduceFn(ScioContext(), Semigroup.intSemigroup))
+    testFn(Functions.reduceFn(ScioContext(), Monoid.intMonoid))
   }
 
 }

@@ -657,7 +657,9 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     combOp: (U, U) => U
   )(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, U)] =
     this
-      .applyPerKey(Combine.perKey(Functions.aggregateFn(zeroValue)(seqOp, combOp)))(kvToTuple)
+      .applyPerKey(
+        Combine.perKey(Functions.aggregateFn(context, zeroValue)(seqOp, combOp))
+      )(kvToTuple)
 
   /**
    * Aggregate the values of each key with [[com.twitter.algebird.Aggregator Aggregator]]. First
@@ -717,7 +719,9 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
         "scenarios. Consider aggregateByKey/foldByKey instead."
     )
     this.applyPerKey(
-      Combine.perKey(Functions.combineFn(createCombiner, mergeValue, mergeCombiners))
+      Combine.perKey(
+        Functions.combineFn(context, createCombiner, mergeValue, mergeCombiners)
+      )
     )(kvToTuple)
   }
 
@@ -788,7 +792,9 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
   def foldByKey(
     zeroValue: V
   )(op: (V, V) => V)(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, V)] =
-    this.applyPerKey(Combine.perKey(Functions.aggregateFn(zeroValue)(op, op)))(kvToTuple)
+    this.applyPerKey(Combine.perKey(Functions.aggregateFn(context, zeroValue)(op, op)))(
+      kvToTuple
+    )
 
   /**
    * Fold by key with [[com.twitter.algebird.Monoid Monoid]], which defines the associative
@@ -797,7 +803,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * @group per_key
    */
   def foldByKey(implicit mon: Monoid[V], koder: Coder[K], voder: Coder[V]): SCollection[(K, V)] =
-    this.applyPerKey(Combine.perKey(Functions.reduceFn(mon)))(kvToTuple)
+    this.applyPerKey(Combine.perKey(Functions.reduceFn(context, mon)))(kvToTuple)
 
   /**
    * Group the values for each key in the SCollection into a single sequence. The ordering of
@@ -964,7 +970,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * @group per_key
    */
   def reduceByKey(op: (V, V) => V)(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, V)] =
-    this.applyPerKey(Combine.perKey(Functions.reduceFn(op)))(kvToTuple)
+    this.applyPerKey(Combine.perKey(Functions.reduceFn(context, op)))(kvToTuple)
 
   /**
    * Return a sampled subset of values for each key of this SCollection.
@@ -1023,7 +1029,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
       "combineByKey/sumByKey does not support default value and may fail in some streaming " +
         "scenarios. Consider aggregateByKey/foldByKey instead."
     )
-    this.applyPerKey(Combine.perKey(Functions.reduceFn(sg)))(kvToTuple)
+    this.applyPerKey(Combine.perKey(Functions.reduceFn(context, sg)))(kvToTuple)
   }
 
   def sumByKey(

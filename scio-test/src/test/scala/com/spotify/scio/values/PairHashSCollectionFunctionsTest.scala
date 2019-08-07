@@ -17,6 +17,7 @@
 
 package com.spotify.scio.values
 
+import com.spotify.scio.options.ScioOptions
 import com.spotify.scio.testing.PipelineSpec
 
 class PairHashSCollectionFunctionsTest extends PipelineSpec {
@@ -27,6 +28,20 @@ class PairHashSCollectionFunctionsTest extends PipelineSpec {
       val p2 = sc.parallelize(Seq(("a", 11), ("b", 12), ("d", 14)))
       val p = p1.hashJoin(p2)
       p should containInAnyOrder(Seq(("a", (1, 11)), ("b", (2, 12))))
+    }
+  }
+
+  it should "support hashJoin() with nulls" in {
+    runWithContext { sc =>
+      sc.optionsAs[ScioOptions].setNullableCoders(true)
+
+      val p1 = sc.parallelize(Seq((null, "1"), (null, "2"), ("b", "3")))
+      val p2 = sc.parallelize(Seq((null, "11"), ("b", null), ("b", "13")))
+      val p = p1.hashJoin(p2)
+      p should
+        containInAnyOrder(
+          Seq((null, ("1", "11")), (null, ("2", "11")), ("b", ("3", null)), ("b", ("3", "13")))
+        )
     }
   }
 

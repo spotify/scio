@@ -327,7 +327,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   def aggregate[U: Coder](
     zeroValue: U
   )(seqOp: (U, T) => U, combOp: (U, U) => U)(implicit coder: Coder[T]): SCollection[U] =
-    this.pApply(Combine.globally(Functions.aggregateFn(zeroValue)(seqOp, combOp)))
+    this.pApply(Combine.globally(Functions.aggregateFn(context, zeroValue)(seqOp, combOp)))
 
   /**
    * Aggregate with [[com.twitter.algebird.Aggregator Aggregator]]. First each item `T` is mapped
@@ -374,7 +374,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     )
     this.pApply(
       Combine
-        .globally(Functions.combineFn(createCombiner, mergeValue, mergeCombiners))
+        .globally(Functions.combineFn(context, createCombiner, mergeValue, mergeCombiners))
         .withoutDefaults()
     )
   }
@@ -467,7 +467,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @group transform
    */
   def fold(zeroValue: T)(op: (T, T) => T)(implicit coder: Coder[T]): SCollection[T] =
-    this.pApply(Combine.globally(Functions.aggregateFn(zeroValue)(op, op)))
+    this.pApply(Combine.globally(Functions.aggregateFn(context, zeroValue)(op, op)))
 
   /**
    * Fold with [[com.twitter.algebird.Monoid Monoid]], which defines the associative function and
@@ -475,7 +475,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @group transform
    */
   def fold(implicit mon: Monoid[T], coder: Coder[T]): SCollection[T] =
-    this.pApply(Combine.globally(Functions.reduceFn(mon)))
+    this.pApply(Combine.globally(Functions.reduceFn(context, mon)))
 
   /**
    * Return an SCollection of grouped items. Each group consists of a key and a sequence of
@@ -644,7 +644,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @group transform
    */
   def reduce(op: (T, T) => T)(implicit coder: Coder[T]): SCollection[T] =
-    this.pApply(Combine.globally(Functions.reduceFn(op)).withoutDefaults())
+    this.pApply(Combine.globally(Functions.reduceFn(context, op)).withoutDefaults())
 
   /**
    * Return a sampled subset of this SCollection.
@@ -688,7 +688,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       "combine/sum does not support default value and may fail in some streaming scenarios. " +
         "Consider aggregate/fold instead."
     )
-    this.pApply(Combine.globally(Functions.reduceFn(sg)).withoutDefaults())
+    this.pApply(Combine.globally(Functions.reduceFn(context, sg)).withoutDefaults())
   }
 
   /**
