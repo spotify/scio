@@ -161,26 +161,38 @@ object Query9 {
     assertConcrete[I](c)
     assertConcrete[R](c)
 
-    val schemas: (
-      Schema[A],
-      Schema[B],
-      Schema[C],
-      Schema[D],
-      Schema[E],
-      Schema[F],
-      Schema[G],
-      Schema[H],
-      Schema[I],
-      Schema[R]
-    ) = c.eval(
-      c.Expr(
-        q"(${inferImplicitSchema[A]}, ${inferImplicitSchema[B]}, ${inferImplicitSchema[C]}, ${inferImplicitSchema[
-          D
-        ]}, ${inferImplicitSchema[E]}, ${inferImplicitSchema[F]}, ${inferImplicitSchema[G]}, ${inferImplicitSchema[
-          H
-        ]}, ${inferImplicitSchema[I]}, ${inferImplicitSchema[R]})"
+    val (
+      schemas1,
+      schemas2,
+      schemas3,
+      schemas4,
+      schemas5,
+      schemas6,
+      schemas7,
+      schemas8,
+      schemas9,
+      schemas10
+    ) =
+      c.eval(
+        c.Expr[
+          (
+            Schema[A],
+            Schema[B],
+            Schema[C],
+            Schema[D],
+            Schema[E],
+            Schema[F],
+            Schema[G],
+            Schema[H],
+            Schema[I],
+            Schema[R]
+          )
+        ](
+          q"(${untyped(aSchema)}, ${untyped(bSchema)}, ${untyped(cSchema)}, ${untyped(dSchema)}, ${untyped(
+            eSchema
+          )}, ${untyped(fSchema)}, ${untyped(gSchema)}, ${untyped(hSchema)}, ${untyped(iSchema)}, ${untyped(rSchema)})"
+        )
       )
-    )
 
     val sq = Query9[A, B, C, D, E, F, G, H, I, R](
       cons(c)(query),
@@ -195,16 +207,16 @@ object Query9 {
       tupleTag(c)(iTag)
     )
     typecheck(sq)(
-      schemas._1,
-      schemas._2,
-      schemas._3,
-      schemas._4,
-      schemas._5,
-      schemas._6,
-      schemas._7,
-      schemas._8,
-      schemas._9,
-      schemas._10
+      schemas1,
+      schemas2,
+      schemas3,
+      schemas4,
+      schemas5,
+      schemas6,
+      schemas7,
+      schemas8,
+      schemas9,
+      schemas10
     ).fold(
       err => c.abort(c.enclosingPosition, err),
       _ =>

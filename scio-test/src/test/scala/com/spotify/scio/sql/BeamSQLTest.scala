@@ -603,10 +603,10 @@ class BeamSQLTest extends PipelineSpec {
       .to[CompatibleAvroTestRecord](To.unsafe) should containInAnyOrder(expectedAvro)
 
     sc.parallelize(avroUsers)
-      .to[AvroCompatibleUser](To.safe) should containInAnyOrder(expected)
+      .to(To.safe[avro.User, AvroCompatibleUser]) should containInAnyOrder(expected)
 
     sc.parallelize(avroWithNullable)
-      .to[CompatibleAvroTestRecord](To.safe) should containInAnyOrder(expectedAvro)
+      .to(To.safe[avro.TestRecord, CompatibleAvroTestRecord]) should containInAnyOrder(expectedAvro)
   }
 
   "String interpolation" should "support simple queries" in runWithContext { sc =>

@@ -113,13 +113,12 @@ object Query5 {
     assertConcrete[E](c)
     assertConcrete[R](c)
 
-    val schemas: (Schema[A], Schema[B], Schema[C], Schema[D], Schema[E], Schema[R]) = c.eval(
-      c.Expr(
-        q"(${inferImplicitSchema[A]}, ${inferImplicitSchema[B]}, ${inferImplicitSchema[C]}, ${inferImplicitSchema[
-          D
-        ]}, ${inferImplicitSchema[E]}, ${inferImplicitSchema[R]})"
+    val (schemas1, schemas2, schemas3, schemas4, schemas5, schemas6) =
+      c.eval(
+        c.Expr[(Schema[A], Schema[B], Schema[C], Schema[D], Schema[E], Schema[R])](
+          q"(${untyped(aSchema)}, ${untyped(bSchema)}, ${untyped(cSchema)}, ${untyped(dSchema)}, ${untyped(eSchema)}, ${untyped(rSchema)})"
+        )
       )
-    )
 
     val sq = Query5[A, B, C, D, E, R](
       cons(c)(query),
@@ -129,7 +128,7 @@ object Query5 {
       tupleTag(c)(dTag),
       tupleTag(c)(eTag)
     )
-    typecheck(sq)(schemas._1, schemas._2, schemas._3, schemas._4, schemas._5, schemas._6)
+    typecheck(sq)(schemas1, schemas2, schemas3, schemas4, schemas5, schemas6)
       .fold(
         err => c.abort(c.enclosingPosition, err),
         _ =>

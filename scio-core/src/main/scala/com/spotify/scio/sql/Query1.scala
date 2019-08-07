@@ -79,12 +79,11 @@ object Query1 {
     assertConcrete[A](c)
     assertConcrete[B](c)
 
-    val schemas: (Schema[A], Schema[B]) = c.eval(
-      c.Expr(q"(${inferImplicitSchema[A]}, ${inferImplicitSchema[B]})")
-    )
+    val (sIn, sOut) =
+      c.eval(c.Expr[(Schema[A], Schema[B])](q"(${untyped(iSchema)}, ${untyped(oSchema)})"))
 
     val sq = Query1[A, B](cons(c)(query), tupleTag(c)(aTag))
-    typecheck(sq)(schemas._1, schemas._2)
+    typecheck(sq)(sIn, sOut)
       .fold(
         err => c.abort(c.enclosingPosition, err),
         _ => c.Expr[Query1[A, B]](q"_root_.com.spotify.scio.sql.Query1($query, $aTag)")
