@@ -72,7 +72,9 @@ object Scalac {
       "-Xlint:constant", // Evaluation of a constant arithmetic expression results in an error.
       "-Ywarn-unused:imports", // Warn if an import selector is not referenced.
       "-Ywarn-extra-implicit", // Warn when more than one implicit parameter section is defined.,
-      "-Ydelambdafy:inline" // Set the strategy used for translating lambdas into JVM code to "inline"
+      "-Ydelambdafy:inline", // Set the strategy used for translating lambdas into JVM code to "inline"
+      "-Ybackend-parallelism",
+      "8"
     )
   }
 
