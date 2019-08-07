@@ -25,7 +25,6 @@ import com.spotify.scio.options.ScioOptions
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import com.twitter.algebird.{Monoid, Semigroup}
 import org.apache.beam.sdk.coders.{CoderRegistry, Coder => BCoder}
-import org.apache.beam.sdk.options.PipelineOptions
 import org.apache.beam.sdk.options.PipelineOptionsFactory
 import org.apache.beam.sdk.transforms.Combine.{CombineFn => BCombineFn}
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
