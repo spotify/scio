@@ -173,14 +173,17 @@ object BigtableBenchmark {
           (key, Iterable(m))
         }
         .saveAsBigtable(BigtableOptions, TableId)
+      ()
     }
   }
 
   // Read 52 million records from BigTable
   object BigtableRead extends Benchmark {
-    override def run(sc: ScioContext): Unit =
+    override def run(sc: ScioContext): Unit = {
       sc.bigtable(BigtableOptions, TableId, ByteKeyRange.ALL_KEYS, RowFilter.getDefaultInstance)
         .count
+      ()
+    }
   }
 
   // Async key value lookup 52 million reads
@@ -196,6 +199,7 @@ object BigtableBenchmark {
         )
         .map(checkResult)
         .sum
+      ()
     }
   }
 
@@ -223,6 +227,7 @@ object BigtableBenchmark {
         )
         .map(checkResult)
         .sum
+      ()
     }
   }
 }

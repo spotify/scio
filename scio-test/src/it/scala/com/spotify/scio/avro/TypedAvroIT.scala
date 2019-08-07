@@ -38,6 +38,7 @@ object TypedAvroJob {
       .map(Record(_))
       .saveAsTypedAvroFile(args("output"))
     sc.run().waitUntilDone()
+    ()
   }
 
   @AvroType.toSchema

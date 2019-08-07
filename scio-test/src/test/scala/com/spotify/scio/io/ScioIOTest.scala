@@ -176,6 +176,7 @@ class ScioIOTest extends ScioIOSpec {
     val unconsumedReads = allReads -- consumedOutputs
 
     unconsumedReads shouldBe empty
+    ()
   }
 
   "TableRowJsonIO" should "work" in {

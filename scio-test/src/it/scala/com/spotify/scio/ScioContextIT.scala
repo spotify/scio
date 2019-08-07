@@ -53,6 +53,7 @@ class ScioContextIT extends FlatSpec with Matchers {
     gcpTempLocation should not be null
     tempLocation shouldBe gcpTempLocation
     ScioUtil.isRemoteUri(new URI(gcpTempLocation)) shouldBe true
+    ()
   }
 
   it should "#1323: generate unique SCollection names" in {

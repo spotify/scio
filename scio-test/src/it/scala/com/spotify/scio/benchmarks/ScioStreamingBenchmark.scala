@@ -61,6 +61,7 @@ object ScioStreamingBenchmark {
     Benchmarks
       .filter(_.name.matches(regex))
       .map(_.run(projectId, prefix, commonArgs("n1-highmem-8")))
+    ()
   }
 
   private val Benchmarks = ClassPath
@@ -151,6 +152,7 @@ object ScioStreamingBenchmark {
         .minByKey(Ordering.by(_._2.size))
         .map(_ => 1) // keep message size small to minimize pub/sub cost
         .saveAsPubsub(pubsubOut)
+      ()
     }
   }
 
@@ -171,7 +173,7 @@ abstract class StreamingBenchmark extends ScioJob {
   val name: String = this.getClass.getSimpleName.replaceAll("\\$$", "")
   val logger: Logger = LoggerFactory.getLogger(getClass)
 
-  def run(
+  override def run(
     projectId: String,
     prefix: String,
     args: Array[String]
@@ -246,5 +248,6 @@ object ScioStreamingBenchmarkMetrics {
         s"${benchmark.buildNum}[+${"%02d".format(hourOffset)}h]"
       }
     }.log(hourlyMetrics)
+    ()
   }
 }

@@ -56,16 +56,20 @@ object ScioIOBenchmark {
 
   // Reads 823,280 records
   object AvroIORead extends Benchmark {
-    override def run(sc: ScioContext): Unit =
+    override def run(sc: ScioContext): Unit = {
       sc.typedAvroFile[Shakespeare](AvroGcsPath)
         .map(s => s.word + ": " + s.word_count)
+      ()
+    }
   }
 
   // Reads 55,250 records
   object TextIORead extends Benchmark {
-    override def run(sc: ScioContext): Unit =
+    override def run(sc: ScioContext): Unit = {
       sc.textFile(TextGcsPath)
         .map(_.split("\t"))
+      ()
+    }
   }
 
   // Writes 10,000,000 records
@@ -76,13 +80,16 @@ object ScioIOBenchmark {
         .transform("Assign random key")(withRandomKey[Elem[String]](10 * 1000))
         .map(e => Words(e._1, e._2.elem))
         .saveAsTypedBigQuery(table, WRITE_TRUNCATE, CREATE_IF_NEEDED)
+      ()
     }
   }
 
   // Reads 10,000,000 records
   object BigQueryRead extends Benchmark {
-    override def run(sc: ScioContext): Unit =
+    override def run(sc: ScioContext): Unit = {
       sc.typedBigQuery[Row]()
         .map(r => (r.key, r.word))
+      ()
+    }
   }
 }

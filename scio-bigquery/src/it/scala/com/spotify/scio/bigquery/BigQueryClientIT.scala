@@ -224,8 +224,10 @@ class BigQueryClientIT extends FlatSpec with Matchers {
     def exists(bucket: String, prefix: String): Boolean =
       list(bucket, prefix).nonEmpty
 
-    def remove(bucket: String, prefix: String): Unit =
+    def remove(bucket: String, prefix: String): Unit = {
       storage.delete(list(bucket, prefix).map(_.getBlobId).toSeq: _*)
+      ()
+    }
   }
 
 }
