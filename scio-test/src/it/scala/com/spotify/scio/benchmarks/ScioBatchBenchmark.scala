@@ -80,7 +80,7 @@ object ScioBatchBenchmark {
   }
 
   object Aggregate extends Benchmark {
-    override def run(sc: ScioContext): Unit =  {
+    override def run(sc: ScioContext): Unit = {
       randomUUIDs(sc, 100 * M).map(_.hashCode % 1000).aggregate(Set.empty[Int])(_ + _, _ ++ _)
       ()
     }
