@@ -23,7 +23,6 @@ import java.util.concurrent.TimeUnit
 import com.spotify.scio.ScioContext
 import com.spotify.scio.util.Functions
 import com.twitter.algebird.{Monoid, Semigroup}
-import org.apache.beam.sdk.options.PipelineOptionsFactory
 import org.apache.beam.sdk.testing.CombineFnTester
 import org.apache.beam.sdk.transforms.Combine.CombineFn
 import org.openjdk.jmh.annotations._
