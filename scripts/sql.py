@@ -204,7 +204,7 @@ def mkMacro(n):
     assertConcrete[R](c)
 
     val ({schema_tuple_vals}, schemas{n_p}) =
-        c.eval(
+        FastEval(c)(
             c.Expr[({schemas}, Schema[R])](
                 q"({infer_schemas}, ${{untyped(rSchema)}})"))
 

@@ -97,7 +97,7 @@ object Query3 {
     assertConcrete[R](c)
 
     val (schemas1, schemas2, schemas3, schemas4) =
-      c.eval(
+      FastEval(c)(
         c.Expr[(Schema[A], Schema[B], Schema[C], Schema[R])](
           q"(${untyped(aSchema)}, ${untyped(bSchema)}, ${untyped(cSchema)}, ${untyped(rSchema)})"
         )

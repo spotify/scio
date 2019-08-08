@@ -185,7 +185,7 @@ object Query10 {
       schemas10,
       schemas11
     ) =
-      c.eval(
+      FastEval(c)(
         c.Expr[
           (
             Schema[A],

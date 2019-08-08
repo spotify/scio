@@ -153,7 +153,7 @@ object Query8 {
     assertConcrete[R](c)
 
     val (schemas1, schemas2, schemas3, schemas4, schemas5, schemas6, schemas7, schemas8, schemas9) =
-      c.eval(
+      FastEval(c)(
         c.Expr[
           (
             Schema[A],
