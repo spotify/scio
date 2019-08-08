@@ -67,7 +67,7 @@ object Implicits extends ToTableRow with ToTableSchema {
         WriteParam(toTableSchema(schema), writeDisposition, createDisposition, tableDescription)
       self
         .map(toTableRow(_))
-        .write(BigQueryTable(table))(params)
+        .write(BigQueryTable(Table.Ref(table)))(params)
     }
   }
 

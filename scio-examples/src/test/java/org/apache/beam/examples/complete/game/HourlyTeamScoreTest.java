@@ -47,6 +47,7 @@ import org.junit.runners.JUnit4;
  * modularity for testing. See our testing documentation for better ideas:
  * https://beam.apache.org/documentation/pipelines/test-your-pipeline/
  */
+@SuppressWarnings("unchecked")
 @RunWith(JUnit4.class)
 public class HourlyTeamScoreTest implements Serializable {
 

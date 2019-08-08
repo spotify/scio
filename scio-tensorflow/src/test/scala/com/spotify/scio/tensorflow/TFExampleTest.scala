@@ -60,7 +60,7 @@ object MultiSpecFeatranJob {
     spec
       .extract(collection)
       .featureValues[Example]
-      .saveAsTfExampleFile(args("output"))
+      .saveAsTfRecordFile(args("output"))
 
     sc.run()
     ()

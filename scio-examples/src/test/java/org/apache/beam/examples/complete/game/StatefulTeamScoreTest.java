@@ -44,6 +44,7 @@ import org.junit.runners.JUnit4;
 /**
  * Tests for {@link StatefulTeamScore}.
  */
+@SuppressWarnings("unchecked")
 @RunWith(JUnit4.class)
 public class StatefulTeamScoreTest {
 
