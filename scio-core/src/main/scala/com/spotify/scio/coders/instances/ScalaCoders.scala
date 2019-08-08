@@ -378,7 +378,7 @@ trait ScalaCoders {
   implicit def bigDecimalCoder: Coder[BigDecimal] =
     Coder.xmap(Coder.beam(BigDecimalCoder.of()))(BigDecimal.apply, _.bigDecimal)
 
-  implicit def tryCoder[A: Coder, B: Coder]: Coder[Try[A]] =
+  implicit def tryCoder[A: Coder]: Coder[Try[A]] =
     Coder.gen[Try[A]]
 
   implicit def eitherCoder[A: Coder, B: Coder]: Coder[Either[A, B]] =
