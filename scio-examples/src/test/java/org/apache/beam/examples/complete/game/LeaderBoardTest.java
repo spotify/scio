@@ -49,6 +49,7 @@ import org.junit.runners.JUnit4;
  * Tests for {@link LeaderBoard}.
  */
 @RunWith(JUnit4.class)
+@SuppressWarnings("unchecked")
 public class LeaderBoardTest implements Serializable {
   private static final Duration ALLOWED_LATENESS = Duration.standardHours(1);
   private static final Duration TEAM_WINDOW_DURATION = Duration.standardMinutes(20);

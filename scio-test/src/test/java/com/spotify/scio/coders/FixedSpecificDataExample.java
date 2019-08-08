@@ -4,7 +4,7 @@
  * DO NOT EDIT DIRECTLY
  */
 package com.spotify.scio.coders;
-@SuppressWarnings("all")
+@SuppressWarnings("unchecked")
 @org.apache.avro.specific.FixedSize(16)
 @org.apache.avro.specific.AvroGenerated
 public class FixedSpecificDataExample extends org.apache.avro.specific.SpecificFixed {
