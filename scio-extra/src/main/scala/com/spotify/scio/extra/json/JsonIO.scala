@@ -42,7 +42,7 @@ final case class JsonIO[T: ClassTag: Encoder: Decoder: Coder](path: String) exte
   override protected def write(data: SCollection[T], params: WriteP): Tap[T] = {
     data
       .map(x => params.printer.pretty(x.asJson))
-      .applyInternal(jsonOut(path, params))
+      .write(TextIO(path))(TextIO.WriteParam(params.suffix, params.numShards, params.compression))
     tap(())
   }
 
@@ -57,19 +57,6 @@ final case class JsonIO[T: ClassTag: Encoder: Decoder: Coder](path: String) exte
     case Left(e)  => throw e
     case Right(t) => t
   }
-
-  private def jsonOut(path: String, params: WriteP) =
-    beam.TextIO
-      .write()
-      .to(pathWithShards(path))
-      .withSuffix(params.suffix)
-      .withNumShards(params.numShards)
-      .withWritableByteChannelFactory(
-        beam.FileBasedSink.CompressionType.fromCanonical(params.compression)
-      )
-
-  private[scio] def pathWithShards(path: String) =
-    path.replaceAll("\\/+$", "") + "/part"
 
 }
 
