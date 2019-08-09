@@ -242,9 +242,10 @@ class CodersTest extends FlatSpec with Matchers {
   it should "Serialize java's Instant" in {
     import java.time.{Instant => jInstant}
 
-    // Both thow exceptions but they should be unusual enough to not be an issue
-    // jInstant.MIN coderShould notFallback()
-    // jInstant.MAX coderShould notFallback()
+    // Support full nano range
+    jInstant.ofEpochSecond(0, 123123123) coderShould notFallback()
+    jInstant.MIN coderShould notFallback()
+    jInstant.MAX coderShould notFallback()
     jInstant.EPOCH coderShould notFallback()
     jInstant.now coderShould notFallback()
   }
