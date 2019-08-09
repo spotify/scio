@@ -25,8 +25,6 @@ import io.circe.Printer
 import io.circe.generic.AutoDerivation
 import org.apache.beam.sdk.io.Compression
 
-import scala.reflect.ClassTag
-
 /**
  * Main package for JSON APIs. Import all.
  *
@@ -56,7 +54,7 @@ package object json extends AutoDerivation {
 
   /** Enhanced version of [[ScioContext]] with JSON methods. */
   implicit final class JsonScioContext(private val self: ScioContext) extends AnyVal {
-    def jsonFile[T: ClassTag: Decoder: Coder](
+    def jsonFile[T: Decoder: Coder](
       path: String,
       compression: Compression = Compression.AUTO
     ): SCollection[T] = {
