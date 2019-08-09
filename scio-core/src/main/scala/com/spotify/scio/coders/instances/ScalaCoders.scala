@@ -131,6 +131,7 @@ private abstract class BaseSeqLikeCoder[M[_], T](val elemCoder: BCoder[T])(
       value.asInstanceOf[AnyRef]
     } else {
       val b = Seq.newBuilder[AnyRef]
+      b.sizeHint(value.size)
       value.foreach(v => b += elemCoder.structuralValue(v))
       b.result()
     }
@@ -157,6 +158,7 @@ private abstract class SeqLikeCoder[M[_], T](bc: BCoder[T])(
   }
   def decode(inStream: InputStream, builder: m.Builder[T, M[T]]): M[T] = {
     val size = lc.decode(inStream)
+    builder.sizeHint(size)
     var i = 0
     while (i < size) {
       builder += bc.decode(inStream)
@@ -241,6 +243,7 @@ private class BitSetCoder extends AtomicCoder[BitSet] {
   def decode(in: InputStream): BitSet = {
     val l = lc.decode(in)
     val builder = BitSet.newBuilder
+    builder.sizeHint(l)
     (1 to l).foreach(_ => builder += lc.decode(in))
 
     builder.result()
@@ -268,6 +271,7 @@ private class MapCoder[K, V](kc: BCoder[K], vc: BCoder[V]) extends AtomicCoder[M
   override def decode(is: InputStream): Map[K, V] = {
     val l = lc.decode(is)
     val builder = Map.newBuilder[K, V]
+    builder.sizeHint(l)
     var i = 0
     while (i < l) {
       val k = kc.decode(is)
@@ -291,6 +295,7 @@ private class MapCoder[K, V](kc: BCoder[K], vc: BCoder[V]) extends AtomicCoder[M
       value
     } else {
       val b = Map.newBuilder[Any, Any]
+      b.sizeHint(value.size)
       value.foreach {
         case (k, v) =>
           b += kc.structuralValue(k) -> vc.structuralValue(v)
@@ -332,6 +337,7 @@ private class MutableMapCoder[K, V](kc: BCoder[K], vc: BCoder[V]) extends Atomic
   override def decode(is: InputStream): m.Map[K, V] = {
     val l = lc.decode(is)
     val builder = m.Map.newBuilder[K, V]
+    builder.sizeHint(l)
     var i = 0
     while (i < l) {
       val k = kc.decode(is)
@@ -355,6 +361,7 @@ private class MutableMapCoder[K, V](kc: BCoder[K], vc: BCoder[V]) extends Atomic
       value
     } else {
       val b = m.Map.newBuilder[Any, Any]
+      b.sizeHint(value.size)
       value.foreach {
         case (k, v) =>
           b += kc.structuralValue(k) -> vc.structuralValue(v)
