@@ -161,6 +161,9 @@ private final case class DisjunctionCoder[T, Id](
 
   override def consistentWithEquals(): Boolean =
     coders.values.forall(_.consistentWithEquals())
+
+  override def structuralValue(value: T): AnyRef =
+    coders(id(value)).structuralValue(value)
 }
 
 final case class CoderException private[coders] (
@@ -193,6 +196,9 @@ private[scio] final class RefCoder[T](val typeName: String, c: => BCoder[T]) ext
   def encode(value: T, outStream: OutputStream): Unit = c.encode(value, outStream)
   def getCoderArguments(): java.util.List[_ <: BCoder[_]] = c.getCoderArguments()
   def verifyDeterministic(): Unit = c.verifyDeterministic()
+
+  override def consistentWithEquals(): Boolean = c.consistentWithEquals()
+  override def structuralValue(value: T): AnyRef = c.structuralValue(value)
 }
 
 private[scio] object RefCoder {

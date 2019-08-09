@@ -39,9 +39,13 @@ import scala.reflect.ClassTag
 import scala.util.{Failure, Success, Try}
 
 private object VoidCoder extends AtomicCoder[Void] {
+  private val STRUCTURAL_VOID_VALUE = new AnyRef
+
   override def encode(value: Void, outStream: OutputStream): Unit = ()
 
   override def decode(inStream: InputStream): Void = ???
+
+  override def structuralValue(value: Void): AnyRef =   STRUCTURAL_VOID_VALUE
 }
 
 //
