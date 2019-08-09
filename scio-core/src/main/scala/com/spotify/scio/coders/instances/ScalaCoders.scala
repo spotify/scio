@@ -277,7 +277,19 @@ private class MapCoder[K, V](kc: BCoder[K], vc: BCoder[V]) extends AtomicCoder[M
       this,
       "Ordering of entries in a Map may be non-deterministic."
     )
-  override def consistentWithEquals(): Boolean = false
+  override def consistentWithEquals(): Boolean =
+    kc.consistentWithEquals() && vc.consistentWithEquals()
+  override def structuralValue(value: Map[K, V]): AnyRef = {
+    if (consistentWithEquals()) {
+      value
+    } else {
+      val b = Map.newBuilder[Any, Any]
+      value.foreach { case (k, v) =>
+        b += kc.structuralValue(k) -> vc.structuralValue(v)
+      }
+      b.result()
+    }
+  }
 
   // delegate methods for byte size estimation
   override def isRegisterByteSizeObserverCheap(value: Map[K, V]): Boolean = false
@@ -328,7 +340,19 @@ private class MutableMapCoder[K, V](kc: BCoder[K], vc: BCoder[V]) extends Atomic
       this,
       "Ordering of entries in a Map may be non-deterministic."
     )
-  override def consistentWithEquals(): Boolean = false
+  override def consistentWithEquals(): Boolean =
+    kc.consistentWithEquals() && vc.consistentWithEquals()
+  override def structuralValue(value: m.Map[K, V]): AnyRef = {
+    if (consistentWithEquals()) {
+      value
+    } else {
+      val b = m.Map.newBuilder[Any, Any]
+      value.foreach { case (k, v) =>
+        b += kc.structuralValue(k) -> vc.structuralValue(v)
+      }
+      b.result()
+    }
+  }
 
   // delegate methods for byte size estimation
   override def isRegisterByteSizeObserverCheap(value: m.Map[K, V]): Boolean = false
