@@ -20,6 +20,7 @@ package com.spotify.scio.jmh
 import java.util
 import java.util.concurrent.TimeUnit
 
+import com.spotify.scio.ScioContext
 import com.spotify.scio.util.Functions
 import com.twitter.algebird.{Monoid, Semigroup}
 import org.apache.beam.sdk.testing.CombineFnTester
@@ -38,11 +39,13 @@ class FunctionsBenchmark {
   val input = new util.ArrayList((1 to 100).map(Set(_)).asJava)
   val output = (1 to 100).toSet
 
-  val aggregateFn = Functions.aggregateFn[T, T](Set.empty[Int])(_ ++ _, _ ++ _)
-  val combineFn = Functions.combineFn[T, T](identity, _ ++ _, _ ++ _)
-  val reduceFn = Functions.reduceFn((x: T, y: T) => x ++ y)
-  val sgFn = Functions.reduceFn(Semigroup.setSemigroup[Int])
-  val monFn = Functions.reduceFn(Monoid.setMonoid[Int])
+  val aggregateFn =
+    Functions.aggregateFn[T, T](ScioContext(), Set.empty[Int])(_ ++ _, _ ++ _)
+  val combineFn =
+    Functions.combineFn[T, T](ScioContext(), identity, _ ++ _, _ ++ _)
+  val reduceFn = Functions.reduceFn(ScioContext(), (x: T, y: T) => x ++ y)
+  val sgFn = Functions.reduceFn(ScioContext(), Semigroup.setSemigroup[Int])
+  val monFn = Functions.reduceFn(ScioContext(), Monoid.setMonoid[Int])
 
   def test(fn: CombineFn[T, _, T], input: java.util.List[T], output: T): T = {
     CombineFnTester.testCombineFn(fn, input, output)

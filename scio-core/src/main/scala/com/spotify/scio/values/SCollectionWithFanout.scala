@@ -38,7 +38,7 @@ class SCollectionWithFanout[T: Coder] private[values] (
   def aggregate[U: Coder](zeroValue: U)(seqOp: (U, T) => U, combOp: (U, U) => U): SCollection[U] =
     this.pApply(
       Combine
-        .globally(Functions.aggregateFn(zeroValue)(seqOp, combOp))
+        .globally(Functions.aggregateFn(context, zeroValue)(seqOp, combOp))
         .withFanout(fanout)
     )
 
@@ -60,7 +60,7 @@ class SCollectionWithFanout[T: Coder] private[values] (
     )
     this.pApply(
       Combine
-        .globally(Functions.combineFn(createCombiner, mergeValue, mergeCombiners))
+        .globally(Functions.combineFn(context, createCombiner, mergeValue, mergeCombiners))
         .withoutDefaults()
         .withFanout(fanout)
     )
@@ -70,17 +70,19 @@ class SCollectionWithFanout[T: Coder] private[values] (
   def fold(zeroValue: T)(op: (T, T) => T): SCollection[T] =
     this.pApply(
       Combine
-        .globally(Functions.aggregateFn(zeroValue)(op, op))
+        .globally(Functions.aggregateFn(context, zeroValue)(op, op))
         .withFanout(fanout)
     )
 
   /** [[SCollection.fold(implicit* SCollection.fold]] with fan out. */
   def fold(implicit mon: Monoid[T]): SCollection[T] =
-    this.pApply(Combine.globally(Functions.reduceFn(mon)).withFanout(fanout))
+    this.pApply(Combine.globally(Functions.reduceFn(context, mon)).withFanout(fanout))
 
   /** [[SCollection.reduce]] with fan out. */
   def reduce(op: (T, T) => T): SCollection[T] =
-    this.pApply(Combine.globally(Functions.reduceFn(op)).withoutDefaults().withFanout(fanout))
+    this.pApply(
+      Combine.globally(Functions.reduceFn(context, op)).withoutDefaults().withFanout(fanout)
+    )
 
   /** [[SCollection.sum]] with fan out. */
   def sum(implicit sg: Semigroup[T]): SCollection[T] = {
@@ -88,7 +90,9 @@ class SCollectionWithFanout[T: Coder] private[values] (
       "combine/sum does not support default value and may fail in some streaming scenarios. " +
         "Consider aggregate/fold instead."
     )
-    this.pApply(Combine.globally(Functions.reduceFn(sg)).withoutDefaults().withFanout(fanout))
+    this.pApply(
+      Combine.globally(Functions.reduceFn(context, sg)).withoutDefaults().withFanout(fanout)
+    )
   }
 
 }

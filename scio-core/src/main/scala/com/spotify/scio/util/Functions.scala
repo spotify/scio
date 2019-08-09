@@ -20,9 +20,12 @@ package com.spotify.scio.util
 import java.lang.{Iterable => JIterable}
 import java.util.{ArrayList => JArrayList, List => JList}
 
+import com.spotify.scio.ScioContext
+import com.spotify.scio.options.ScioOptions
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import com.twitter.algebird.{Monoid, Semigroup}
 import org.apache.beam.sdk.coders.{CoderRegistry, Coder => BCoder}
+import org.apache.beam.sdk.options.PipelineOptionsFactory
 import org.apache.beam.sdk.transforms.Combine.{CombineFn => BCombineFn}
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
 import org.apache.beam.sdk.transforms.Partition.PartitionFn
@@ -63,27 +66,48 @@ private[scio] object Functions {
     }
   }
 
+  final case class CombineContext(useNullableCoders: Boolean)
+  object CombineContext {
+    final def apply(sc: ScioContext): CombineContext = {
+      val useNullableCoders = sc.optionsAs[ScioOptions].getNullableCoders
+      CombineContext(useNullableCoders)
+    }
+  }
+
   private abstract class CombineFn[VI, VA, VO] extends BCombineFn[VI, VA, VO] with NamedFn {
     val vacoder: Coder[VA]
     val vocoder: Coder[VO]
 
-    override def getAccumulatorCoder(registry: CoderRegistry, inputCoder: BCoder[VI]): BCoder[VA] =
-      CoderMaterializer.beamWithDefault(vacoder, registry)
+    val context: CombineContext
+
+    override def getAccumulatorCoder(
+      registry: CoderRegistry,
+      inputCoder: BCoder[VI]
+    ): BCoder[VA] = {
+      val options = PipelineOptionsFactory.create()
+      options.as(classOf[ScioOptions]).setNullableCoders(context.useNullableCoders)
+      CoderMaterializer.beamWithDefault(vacoder, registry, options)
+    }
 
     override def getDefaultOutputCoder(
       registry: CoderRegistry,
       inputCoder: BCoder[VI]
-    ): BCoder[VO] =
-      CoderMaterializer.beamWithDefault(vocoder, registry)
+    ): BCoder[VO] = {
+      val options = PipelineOptionsFactory.create()
+      options.as(classOf[ScioOptions]).setNullableCoders(context.useNullableCoders)
+      CoderMaterializer.beamWithDefault(vocoder, registry, options)
+    }
   }
 
   def aggregateFn[T: Coder, U: Coder](
+    sc: ScioContext,
     zeroValue: U
   )(seqOp: (U, T) => U, combOp: (U, U) => U): BCombineFn[T, (U, JList[T]), U] =
     new CombineFn[T, (U, JList[T]), U] {
 
-      val vacoder = Coder[(U, JList[T])]
-      val vocoder = Coder[U]
+      override val vacoder = Coder[(U, JList[T])]
+      override val vocoder = Coder[U]
+      override val context: CombineContext = CombineContext(sc)
 
       // defeat closure
       private[this] val s = ClosureCleaner(seqOp)
@@ -118,14 +142,16 @@ private[scio] object Functions {
     }
 
   def combineFn[T: Coder, C: Coder](
+    sc: ScioContext,
     createCombiner: T => C,
     mergeValue: (C, T) => C,
     mergeCombiners: (C, C) => C
   ): BCombineFn[T, (Option[C], JList[T]), C] =
     new CombineFn[T, (Option[C], JList[T]), C] {
 
-      val vacoder = Coder[(Option[C], JList[T])]
-      val vocoder = Coder[C]
+      override val vacoder = Coder[(Option[C], JList[T])]
+      override val vocoder = Coder[C]
+      override val context: CombineContext = CombineContext(sc)
 
       // defeat closure
       private[this] val cc = ClosureCleaner(createCombiner)
@@ -278,20 +304,22 @@ private[scio] object Functions {
 
   }
 
-  def reduceFn[T: Coder](f: (T, T) => T): BCombineFn[T, JList[T], T] =
+  def reduceFn[T: Coder](sc: ScioContext, f: (T, T) => T): BCombineFn[T, JList[T], T] =
     new ReduceFn[T] {
       val vacoder = Coder[JList[T]]
       val vocoder = Coder[T]
+      override val context: CombineContext = CombineContext(sc)
       private[this] val g = ClosureCleaner(f) // defeat closure
 
       override def reduceOption(accumulator: JIterable[T]): Option[T] =
         Fns.reduceOption(accumulator)(g)
     }
 
-  def reduceFn[T: Coder](sg: Semigroup[T]): BCombineFn[T, JList[T], T] =
+  def reduceFn[T: Coder](sc: ScioContext, sg: Semigroup[T]): BCombineFn[T, JList[T], T] =
     new ReduceFn[T] {
       val vacoder = Coder[JList[T]]
       val vocoder = Coder[T]
+      override val context: CombineContext = CombineContext(sc)
       private[this] val _sg = ClosureCleaner(sg) // defeat closure
 
       override def mergeAccumulators(accumulators: JIterable[JList[T]]): JList[T] = {
@@ -311,10 +339,12 @@ private[scio] object Functions {
         Fns.reduceOption(accumulator)(_sg.plus(_, _))
     }
 
-  def reduceFn[T: Coder](mon: Monoid[T]): BCombineFn[T, JList[T], T] =
+  def reduceFn[T: Coder](sc: ScioContext, mon: Monoid[T]): BCombineFn[T, JList[T], T] =
     new ReduceFn[T] {
       val vacoder = Coder[JList[T]]
       val vocoder = Coder[T]
+      override val context: CombineContext = CombineContext(sc)
+
       private[this] val _mon = ClosureCleaner(mon) // defeat closure
 
       override def reduceOption(accumulator: JIterable[T]): Option[T] =

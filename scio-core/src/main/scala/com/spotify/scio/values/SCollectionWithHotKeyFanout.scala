@@ -17,6 +17,7 @@
 
 package com.spotify.scio.values
 
+import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.util.Functions
 import com.spotify.scio.util.TupleFunctions._
@@ -29,6 +30,7 @@ import org.apache.beam.sdk.transforms.{Combine, SerializableFunction}
  * performing the full combine.
  */
 class SCollectionWithHotKeyFanout[K: Coder, V: Coder] private[values] (
+  private val context: ScioContext,
   private val self: PairSCollectionFunctions[K, V],
   private val hotKeyFanout: Either[K => Int, Int]
 ) extends TransformNameable {
@@ -59,7 +61,9 @@ class SCollectionWithHotKeyFanout[K: Coder, V: Coder] private[values] (
   def aggregateByKey[U: Coder](
     zeroValue: U
   )(seqOp: (U, V) => U, combOp: (U, U) => U): SCollection[(K, U)] =
-    self.applyPerKey(withFanout(Combine.perKey(Functions.aggregateFn(zeroValue)(seqOp, combOp))))(
+    self.applyPerKey(
+      withFanout(Combine.perKey(Functions.aggregateFn(context, zeroValue)(seqOp, combOp)))
+    )(
       kvToTuple
     )
 
@@ -84,7 +88,10 @@ class SCollectionWithHotKeyFanout[K: Coder, V: Coder] private[values] (
         "scenarios. Consider aggregateByKey/foldByKey instead."
     )
     self.applyPerKey(
-      withFanout(Combine.perKey(Functions.combineFn(createCombiner, mergeValue, mergeCombiners)))
+      withFanout(
+        Combine
+          .perKey(Functions.combineFn(context, createCombiner, mergeValue, mergeCombiners))
+      )
     )(kvToTuple)
   }
 
@@ -94,7 +101,7 @@ class SCollectionWithHotKeyFanout[K: Coder, V: Coder] private[values] (
    */
   def foldByKey(zeroValue: V)(op: (V, V) => V): SCollection[(K, V)] =
     self.applyPerKey(
-      withFanout(Combine.perKey(Functions.aggregateFn(zeroValue)(op, op)))
+      withFanout(Combine.perKey(Functions.aggregateFn(context, zeroValue)(op, op)))
     )(kvToTuple)
 
   /**
@@ -102,11 +109,13 @@ class SCollectionWithHotKeyFanout[K: Coder, V: Coder] private[values] (
    * hot key fanout.
    */
   def foldByKey(implicit mon: Monoid[V]): SCollection[(K, V)] =
-    self.applyPerKey(withFanout(Combine.perKey(Functions.reduceFn(mon))))(kvToTuple)
+    self.applyPerKey(withFanout(Combine.perKey(Functions.reduceFn(context, mon))))(
+      kvToTuple
+    )
 
   /** [[PairSCollectionFunctions.reduceByKey]] with hot key fanout. */
   def reduceByKey(op: (V, V) => V): SCollection[(K, V)] =
-    self.applyPerKey(withFanout(Combine.perKey(Functions.reduceFn(op))))(kvToTuple)
+    self.applyPerKey(withFanout(Combine.perKey(Functions.reduceFn(context, op))))(kvToTuple)
 
   /** [[PairSCollectionFunctions.sumByKey]] with hot key fanout. */
   def sumByKey(implicit sg: Semigroup[V]): SCollection[(K, V)] = {
@@ -114,7 +123,7 @@ class SCollectionWithHotKeyFanout[K: Coder, V: Coder] private[values] (
       "combineByKey/sumByKey does not support default value and may fail in some streaming " +
         "scenarios. Consider aggregateByKey/foldByKey instead."
     )
-    self.applyPerKey(withFanout(Combine.perKey(Functions.reduceFn(sg))))(kvToTuple)
+    self.applyPerKey(withFanout(Combine.perKey(Functions.reduceFn(context, sg))))(kvToTuple)
   }
 
 }
