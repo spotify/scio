@@ -123,7 +123,10 @@ trait JavaCoders {
   implicit def beamKVCoder[K: Coder, V: Coder]: Coder[KV[K, V]] = Coder.kv(Coder[K], Coder[V])
 
   implicit def jInstantCoder: Coder[Instant] =
-    Coder.xmap(Coder.jLongCoder)(Instant.ofEpochMilli(_), _.toEpochMilli)
+    Coder.xmap(Coder.pairCoder(jLongCoder, jIntegerCoder))(
+      pair => Instant.ofEpochSecond(pair._1, pair._2.toLong),
+      instant => (instant.getEpochSecond, instant.getNano)
+    )
 
   implicit def coderJEnum[E <: java.lang.Enum[E]: ClassTag]: Coder[E] =
     Coder.beam(SerializableCoder.of(ScioUtil.classOf[E]))
