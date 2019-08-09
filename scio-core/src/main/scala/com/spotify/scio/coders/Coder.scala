@@ -163,7 +163,11 @@ private final case class DisjunctionCoder[T, Id](
     coders.values.forall(_.consistentWithEquals())
 
   override def structuralValue(value: T): AnyRef =
-    coders(id(value)).structuralValue(value)
+    if (consistentWithEquals()) {
+      value.asInstanceOf[AnyRef]
+    } else {
+      coders(id(value)).structuralValue(value)
+    }
 }
 
 final case class CoderException private[coders] (
@@ -198,7 +202,12 @@ private[scio] final class RefCoder[T](val typeName: String, c: => BCoder[T]) ext
   def verifyDeterministic(): Unit = c.verifyDeterministic()
 
   override def consistentWithEquals(): Boolean = c.consistentWithEquals()
-  override def structuralValue(value: T): AnyRef = c.structuralValue(value)
+  override def structuralValue(value: T): AnyRef =
+    if (consistentWithEquals()) {
+      value.asInstanceOf[AnyRef]
+    } else {
+      c.structuralValue(value)
+    }
 }
 
 private[scio] object RefCoder {
@@ -241,7 +250,12 @@ private[scio] case class WrappedBCoder[T](u: BCoder[T]) extends BCoder[T] {
   // delegate methods for determinism and equality checks
   override def verifyDeterministic(): Unit = u.verifyDeterministic()
   override def consistentWithEquals(): Boolean = u.consistentWithEquals()
-  override def structuralValue(value: T): AnyRef = u.structuralValue(value)
+  override def structuralValue(value: T): AnyRef =
+    if (consistentWithEquals()) {
+      value.asInstanceOf[AnyRef]
+    } else {
+      u.structuralValue(value)
+    }
 
   // delegate methods for byte size estimation
   override def isRegisterByteSizeObserverCheap(value: T): Boolean =
@@ -337,20 +351,23 @@ private[scio] final case class RecordCoder[T](
   }
 
   override def consistentWithEquals(): Boolean = cs.forall(_._2.consistentWithEquals())
-  override def structuralValue(value: T): AnyRef = {
-    val b = Seq.newBuilder[AnyRef]
-    var i = 0
-    val array = destruct(value)
-    while (i < cs.length) {
-      val (label, c) = cs(i)
-      val v = array(i)
-      onErrorMsg(s"Exception while trying to `encode` field $label with value $v") {
-        b += c.structuralValue(v)
+  override def structuralValue(value: T): AnyRef =
+    if (consistentWithEquals()) {
+      value.asInstanceOf[AnyRef]
+    } else {
+      val b = Seq.newBuilder[AnyRef]
+      var i = 0
+      val array = destruct(value)
+      while (i < cs.length) {
+        val (label, c) = cs(i)
+        val v = array(i)
+        onErrorMsg(s"Exception while trying to `encode` field $label with value $v") {
+          b += c.structuralValue(v)
+        }
+        i += 1
       }
-      i += 1
+      b.result()
     }
-    b.result()
-  }
 
   // delegate methods for byte size estimation
   override def isRegisterByteSizeObserverCheap(value: T): Boolean = {
@@ -449,7 +466,12 @@ sealed trait CoderGrammar {
       // delegate methods for determinism and equality checks
       override def verifyDeterministic(): Unit = bc.verifyDeterministic()
       override def consistentWithEquals(): Boolean = bc.consistentWithEquals()
-      override def structuralValue(value: B): AnyRef = bc.structuralValue(t(value))
+      override def structuralValue(value: B): AnyRef =
+        if (consistentWithEquals()) {
+          value.asInstanceOf[AnyRef]
+        } else {
+          bc.structuralValue(t(value))
+        }
 
       // delegate methods for byte size estimation
       override def isRegisterByteSizeObserverCheap(value: B): Boolean =

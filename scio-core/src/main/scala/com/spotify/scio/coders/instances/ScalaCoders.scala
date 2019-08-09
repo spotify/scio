@@ -101,7 +101,11 @@ private final class PairCoder[A, B](ac: BCoder[A], bc: BCoder[B]) extends Atomic
     ac.consistentWithEquals() && bc.consistentWithEquals()
 
   override def structuralValue(value: (A, B)): AnyRef =
-    (ac.structuralValue(value._1), bc.structuralValue(value._2))
+    if (consistentWithEquals()) {
+      value.asInstanceOf[AnyRef]
+    } else {
+      (ac.structuralValue(value._1), bc.structuralValue(value._2))
+    }
 
   // delegate methods for byte size estimation
   override def isRegisterByteSizeObserverCheap(value: (A, B)): Boolean =
@@ -122,11 +126,14 @@ private abstract class BaseSeqLikeCoder[M[_], T](val elemCoder: BCoder[T])(
   // delegate methods for determinism and equality checks
   override def verifyDeterministic(): Unit = elemCoder.verifyDeterministic()
   override def consistentWithEquals(): Boolean = elemCoder.consistentWithEquals()
-  override def structuralValue(value: M[T]): AnyRef = {
-    val b = Seq.newBuilder[AnyRef]
-    value.foreach(v => b += elemCoder.structuralValue(v))
-    b.result()
-  }
+  override def structuralValue(value: M[T]): AnyRef =
+    if (consistentWithEquals()) {
+      value.asInstanceOf[AnyRef]
+    } else {
+      val b = Seq.newBuilder[AnyRef]
+      value.foreach(v => b += elemCoder.structuralValue(v))
+      b.result()
+    }
 
   // delegate methods for byte size estimation
   override def isRegisterByteSizeObserverCheap(value: M[T]): Boolean = false
