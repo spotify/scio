@@ -284,8 +284,9 @@ private class MapCoder[K, V](kc: BCoder[K], vc: BCoder[V]) extends AtomicCoder[M
       value
     } else {
       val b = Map.newBuilder[Any, Any]
-      value.foreach { case (k, v) =>
-        b += kc.structuralValue(k) -> vc.structuralValue(v)
+      value.foreach {
+        case (k, v) =>
+          b += kc.structuralValue(k) -> vc.structuralValue(v)
       }
       b.result()
     }
@@ -347,8 +348,9 @@ private class MutableMapCoder[K, V](kc: BCoder[K], vc: BCoder[V]) extends Atomic
       value
     } else {
       val b = m.Map.newBuilder[Any, Any]
-      value.foreach { case (k, v) =>
-        b += kc.structuralValue(k) -> vc.structuralValue(v)
+      value.foreach {
+        case (k, v) =>
+          b += kc.structuralValue(k) -> vc.structuralValue(v)
       }
       b.result()
     }

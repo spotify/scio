@@ -45,7 +45,7 @@ private object VoidCoder extends AtomicCoder[Void] {
 
   override def decode(inStream: InputStream): Void = ???
 
-  override def structuralValue(value: Void): AnyRef =   STRUCTURAL_VOID_VALUE
+  override def structuralValue(value: Void): AnyRef = STRUCTURAL_VOID_VALUE
 }
 
 //
