@@ -25,18 +25,12 @@ import com.google.common.util.concurrent.{Futures, ListenableFuture}
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.testing._
 import com.spotify.scio.transforms.BaseAsyncLookupDoFn.CacheSupplier
-import org.apache.beam.sdk.coders.SerializableCoder
 
 import scala.collection.JavaConverters._
 import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
 
 class AsyncLookupDoFnTest extends PipelineSpec {
-
-  // FIXME: KryoAtomicCoder trips up mutation detector by adding stacktrace
-  implicit val tryCoder: Coder[BaseAsyncLookupDoFn.Try[String]] =
-    Coder.beam(SerializableCoder.of(classOf[BaseAsyncLookupDoFn.Try[String]]))
-
   private def testDoFn[F, T: Coder](
     doFn: BaseAsyncLookupDoFn[Int, String, AsyncClient, F, T]
   )(tryFn: T => String): Unit = {
