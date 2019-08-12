@@ -26,7 +26,7 @@ val beamVersion = "2.14.0"
 
 val algebirdVersion = "0.13.5"
 val annoy4sVersion = "0.8.0"
-val annoyVersion = "0.2.5"
+val annoyVersion = "0.2.6"
 val asmVersion = "4.13"
 val autoServiceVersion = "1.0-rc2"
 val avroVersion = "1.8.2"
