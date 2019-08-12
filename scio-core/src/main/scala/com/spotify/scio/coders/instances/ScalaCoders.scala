@@ -18,18 +18,19 @@
 package com.spotify.scio.coders.instances
 
 import java.io.{InputStream, OutputStream}
+import java.util
 import java.util.Collections
 
 import com.spotify.scio.coders.Coder
 import org.apache.beam.sdk.coders.Coder.NonDeterministicException
 import org.apache.beam.sdk.coders.{Coder => BCoder, _}
+import org.apache.beam.sdk.util.CoderUtils
 import org.apache.beam.sdk.util.common.ElementByteSizeObserver
 
 import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
 import scala.collection.{BitSet, SortedSet, TraversableOnce, mutable => m}
 import scala.collection.convert.Wrappers
-
 import scala.util.Try
 
 private object UnitCoder extends AtomicCoder[Unit] {
@@ -388,6 +389,36 @@ private class MutableMapCoder[K, V](kc: BCoder[K], vc: BCoder[V]) extends Atomic
     s"MutableMapCoder($kc, $vc)"
 }
 
+private object SFloatCoder extends BCoder[Float] {
+  private val bc = FloatCoder.of()
+
+  override def encode(value: Float, outStream: OutputStream): Unit = bc.encode(value, outStream)
+  override def decode(inStream: InputStream): Float = bc.decode(inStream)
+  override def getCoderArguments: util.List[_ <: BCoder[_]] = bc.getCoderArguments
+  override def verifyDeterministic(): Unit = bc.verifyDeterministic()
+  override def structuralValue(value: Float): AnyRef =
+    if (value.isNaN) {
+      new StructuralByteArray(CoderUtils.encodeToByteArray(bc, value: java.lang.Float))
+    } else {
+      java.lang.Float.valueOf(value)
+    }
+}
+
+private object SDoubleCoder extends BCoder[Double] {
+  private val bc = DoubleCoder.of()
+
+  override def encode(value: Double, outStream: OutputStream): Unit = bc.encode(value, outStream)
+  override def decode(inStream: InputStream): Double = bc.decode(inStream)
+  override def getCoderArguments: util.List[_ <: BCoder[_]] = bc.getCoderArguments
+  override def verifyDeterministic(): Unit = bc.verifyDeterministic()
+  override def structuralValue(value: Double): AnyRef =
+    if (value.isNaN) {
+      new StructuralByteArray(CoderUtils.encodeToByteArray(bc, value: java.lang.Double))
+    } else {
+      java.lang.Double.valueOf(value)
+    }
+}
+
 // scalastyle:off number.of.methods
 trait ScalaCoders {
 
@@ -403,10 +434,9 @@ trait ScalaCoders {
     Coder.beam(VarIntCoder.of().asInstanceOf[BCoder[Int]])
   implicit def longCoder: Coder[Long] =
     Coder.beam(BigEndianLongCoder.of().asInstanceOf[BCoder[Long]])
-  implicit def floatCoder: Coder[Float] =
-    Coder.beam(FloatCoder.of().asInstanceOf[BCoder[Float]])
-  implicit def doubleCoder: Coder[Double] =
-    Coder.beam(DoubleCoder.of().asInstanceOf[BCoder[Double]])
+  implicit def floatCoder: Coder[Float] = Coder.beam(SFloatCoder)
+  implicit def doubleCoder: Coder[Double] = Coder.beam(SDoubleCoder)
+
   implicit def booleanCoder: Coder[Boolean] =
     Coder.beam(BooleanCoder.of().asInstanceOf[BCoder[Boolean]])
   implicit def unitCoder: Coder[Unit] = Coder.beam(UnitCoder)
