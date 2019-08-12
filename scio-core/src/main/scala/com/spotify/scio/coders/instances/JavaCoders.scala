@@ -42,6 +42,8 @@ private object VoidCoder extends AtomicCoder[Void] {
   override def encode(value: Void, outStream: OutputStream): Unit = ()
 
   override def decode(inStream: InputStream): Void = ???
+
+  override def structuralValue(value: Void): AnyRef = AnyRef
 }
 
 //

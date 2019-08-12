@@ -101,7 +101,11 @@ private final class PairCoder[A, B](ac: BCoder[A], bc: BCoder[B]) extends Atomic
     ac.consistentWithEquals() && bc.consistentWithEquals()
 
   override def structuralValue(value: (A, B)): AnyRef =
-    (ac.structuralValue(value._1), bc.structuralValue(value._2))
+    if (consistentWithEquals()) {
+      value.asInstanceOf[AnyRef]
+    } else {
+      (ac.structuralValue(value._1), bc.structuralValue(value._2))
+    }
 
   // delegate methods for byte size estimation
   override def isRegisterByteSizeObserverCheap(value: (A, B)): Boolean =
@@ -122,11 +126,15 @@ private abstract class BaseSeqLikeCoder[M[_], T](val elemCoder: BCoder[T])(
   // delegate methods for determinism and equality checks
   override def verifyDeterministic(): Unit = elemCoder.verifyDeterministic()
   override def consistentWithEquals(): Boolean = elemCoder.consistentWithEquals()
-  override def structuralValue(value: M[T]): AnyRef = {
-    val b = Seq.newBuilder[AnyRef]
-    value.foreach(v => b += elemCoder.structuralValue(v))
-    b.result()
-  }
+  override def structuralValue(value: M[T]): AnyRef =
+    if (consistentWithEquals()) {
+      value.asInstanceOf[AnyRef]
+    } else {
+      val b = Seq.newBuilder[AnyRef]
+      b.sizeHint(value.size)
+      value.foreach(v => b += elemCoder.structuralValue(v))
+      b.result()
+    }
 
   // delegate methods for byte size estimation
   override def isRegisterByteSizeObserverCheap(value: M[T]): Boolean = false
@@ -150,6 +158,7 @@ private abstract class SeqLikeCoder[M[_], T](bc: BCoder[T])(
   }
   def decode(inStream: InputStream, builder: m.Builder[T, M[T]]): M[T] = {
     val size = lc.decode(inStream)
+    builder.sizeHint(size)
     var i = 0
     while (i < size) {
       builder += bc.decode(inStream)
@@ -234,6 +243,7 @@ private class BitSetCoder extends AtomicCoder[BitSet] {
   def decode(in: InputStream): BitSet = {
     val l = lc.decode(in)
     val builder = BitSet.newBuilder
+    builder.sizeHint(l)
     (1 to l).foreach(_ => builder += lc.decode(in))
 
     builder.result()
@@ -261,6 +271,7 @@ private class MapCoder[K, V](kc: BCoder[K], vc: BCoder[V]) extends AtomicCoder[M
   override def decode(is: InputStream): Map[K, V] = {
     val l = lc.decode(is)
     val builder = Map.newBuilder[K, V]
+    builder.sizeHint(l)
     var i = 0
     while (i < l) {
       val k = kc.decode(is)
@@ -277,7 +288,21 @@ private class MapCoder[K, V](kc: BCoder[K], vc: BCoder[V]) extends AtomicCoder[M
       this,
       "Ordering of entries in a Map may be non-deterministic."
     )
-  override def consistentWithEquals(): Boolean = false
+  override def consistentWithEquals(): Boolean =
+    kc.consistentWithEquals() && vc.consistentWithEquals()
+  override def structuralValue(value: Map[K, V]): AnyRef = {
+    if (consistentWithEquals()) {
+      value
+    } else {
+      val b = Map.newBuilder[Any, Any]
+      b.sizeHint(value.size)
+      value.foreach {
+        case (k, v) =>
+          b += kc.structuralValue(k) -> vc.structuralValue(v)
+      }
+      b.result()
+    }
+  }
 
   // delegate methods for byte size estimation
   override def isRegisterByteSizeObserverCheap(value: Map[K, V]): Boolean = false
@@ -312,6 +337,7 @@ private class MutableMapCoder[K, V](kc: BCoder[K], vc: BCoder[V]) extends Atomic
   override def decode(is: InputStream): m.Map[K, V] = {
     val l = lc.decode(is)
     val builder = m.Map.newBuilder[K, V]
+    builder.sizeHint(l)
     var i = 0
     while (i < l) {
       val k = kc.decode(is)
@@ -328,7 +354,21 @@ private class MutableMapCoder[K, V](kc: BCoder[K], vc: BCoder[V]) extends Atomic
       this,
       "Ordering of entries in a Map may be non-deterministic."
     )
-  override def consistentWithEquals(): Boolean = false
+  override def consistentWithEquals(): Boolean =
+    kc.consistentWithEquals() && vc.consistentWithEquals()
+  override def structuralValue(value: m.Map[K, V]): AnyRef = {
+    if (consistentWithEquals()) {
+      value
+    } else {
+      val b = m.Map.newBuilder[Any, Any]
+      b.sizeHint(value.size)
+      value.foreach {
+        case (k, v) =>
+          b += kc.structuralValue(k) -> vc.structuralValue(v)
+      }
+      b.result()
+    }
+  }
 
   // delegate methods for byte size estimation
   override def isRegisterByteSizeObserverCheap(value: m.Map[K, V]): Boolean = false
