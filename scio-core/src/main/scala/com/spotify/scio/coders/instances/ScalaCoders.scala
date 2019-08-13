@@ -152,7 +152,7 @@ private abstract class BaseSeqLikeCoder[M[_], T](val elemCoder: BCoder[T])(
 private abstract class SeqLikeCoder[M[_], T](bc: BCoder[T])(
   implicit toSeq: M[T] => TraversableOnce[T]
 ) extends BaseSeqLikeCoder[M, T](bc) {
-  private[this] val lc = VarIntCoder.of()
+  protected val lc = VarIntCoder.of()
   override def encode(value: M[T], outStream: OutputStream): Unit = {
     lc.encode(value.size, outStream)
     value.foreach(bc.encode(_, outStream))
@@ -212,8 +212,20 @@ private class VectorCoder[T](bc: BCoder[T]) extends SeqLikeCoder[Vector, T](bc) 
   override def decode(inStream: InputStream): Vector[T] = decode(inStream, Vector.newBuilder[T])
 }
 
-private class ArrayCoder[T: ClassTag](bc: BCoder[T]) extends SeqLikeCoder[Array, T](bc) {
-  override def decode(inStream: InputStream): Array[T] = decode(inStream, Array.newBuilder[T])
+private class ArrayCoder[@specialized(Short, Int, Long, Float, Double, Boolean, Char) T: ClassTag](
+  bc: BCoder[T]
+) extends SeqLikeCoder[Array, T](bc) {
+  override def decode(inStream: InputStream): Array[T] = {
+    val size = lc.decode(inStream)
+    val arr = new Array[T](size)
+    var i = 0
+    while (i < size) {
+      arr(i) = bc.decode(inStream)
+      i += 1
+    }
+    arr
+  }
+  override def consistentWithEquals(): Boolean = false
 }
 
 private class ArrayBufferCoder[T](bc: BCoder[T]) extends SeqLikeCoder[m.ArrayBuffer, T](bc) {
