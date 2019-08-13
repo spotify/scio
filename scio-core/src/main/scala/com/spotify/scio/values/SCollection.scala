@@ -385,7 +385,14 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @group transform
    */
   def count: SCollection[Long] =
-    this.pApply(Count.globally[T]()).asInstanceOf[SCollection[Long]]
+    context
+      .unionAll(
+        List(
+          context.parallelize(List(0L)),
+          this.pApply(Count.globally[T]()).asInstanceOf[SCollection[Long]]
+        )
+      )
+      .sum
 
   /**
    * Count approximate number of distinct elements in the SCollection.
