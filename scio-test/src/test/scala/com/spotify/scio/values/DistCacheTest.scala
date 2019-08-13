@@ -259,12 +259,13 @@ class MockAnnoy(
   private val nearest: Map[Seq[Float], List[Int]]
 ) extends AnnoyIndex
     with Serializable {
-  override def getNodeVector(nodeOffset: Int, v: Array[Float]): Unit = ???
+  override def getNodeVector(nodeOffset: Long, v: Array[Float]): Unit = ???
   override def getItemVector(itemIndex: Int, v: Array[Float]): Unit = ???
   override def getItemVector(itemIndex: Int): Array[Float] =
     itemVectors(itemIndex)
   override def getNearest(queryVector: Array[Float], nResults: Int): java.util.List[Integer] =
     nearest(queryVector.toSeq).asJava.asInstanceOf[java.util.List[Integer]]
+  override def close(): Unit = ()
 }
 
 // Mock SparkeyReader with fake data and serializable
