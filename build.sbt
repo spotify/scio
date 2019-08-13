@@ -261,7 +261,9 @@ lazy val macroSettings = Def.settings(
   libraryDependencies +=
     compilerPlugin(
       "org.scalamacros" % "paradise" % scalaMacrosVersion cross CrossVersion.full
-    )
+    ),
+  // see MacroSettings.scala
+  scalacOptions += "-Xmacro-settings:cache-implicit-schemas=true"
 )
 
 lazy val directRunnerDependencies = Seq(

@@ -23,6 +23,7 @@ import org.apache.beam.sdk.schemas.{Schema => BSchema, SchemaCoder}
 import scala.collection.JavaConverters._
 import scala.language.experimental.macros
 import scala.annotation.tailrec
+import scala.tools.reflect.ToolBox
 
 sealed trait To[I, O] extends (SCollection[I] => SCollection[O])
 
@@ -163,6 +164,48 @@ object To {
     macro ToMacro.safeImpl[I, O]
 }
 
+import scala.reflect.macros._
+import reflect.runtime.{universe => u}
+
+private[scio] final class FastEval(evalToolBox: ToolBox[u.type]) {
+
+  def eval[T](ctx: blackbox.Context)(expr: ctx.Expr[T]): T = {
+    import ctx.universe._
+
+    //scalastyle:off
+    val evalImporter =
+      u.internal
+        .createImporter(ctx.universe)
+        .asInstanceOf[u.Importer { val from: ctx.universe.type }]
+    //scalastyle:on
+
+    expr.tree match {
+      case Literal(Constant(value)) =>
+        ctx.eval[T](expr)
+      case _ =>
+        val imported = evalImporter.importTree(expr.tree)
+        evalToolBox.eval(imported).asInstanceOf[T]
+    }
+  }
+}
+
+/**
+ * Provide faster evaluation of tree by reusing the same toolbox
+ * This is faster bc. resusing the same toolbox also meas reusing the same classloader,
+ * which saves disks IOs since we don't load the same classes from disk multiple times
+ */
+private[scio] final object FastEval {
+  import scala.tools.reflect._
+
+  private lazy val tl: ToolBox[u.type] = {
+    val evalMirror = scala.reflect.runtime.currentMirror
+    evalMirror.mkToolBox()
+  }
+
+  def apply[T](ctx: blackbox.Context)(expr: ctx.Expr[T]): T =
+    new FastEval(tl).eval(ctx)(expr)
+}
+
 object ToMacro {
   import scala.reflect.macros._
   def safeImpl[I: c.WeakTypeTag, O: c.WeakTypeTag](
@@ -175,8 +218,8 @@ object ToMacro {
     val tpeI = weakTypeOf[I]
     val tpeO = weakTypeOf[O]
 
-    val sOut = c.eval(inferImplicitSchema(tpeO))
-    val sIn = c.eval(inferImplicitSchema(tpeI))
+    val expr = c.Expr[(Schema[I], Schema[O])](q"(${untyped(iSchema)}, ${untyped(oSchema)})")
+    val (sIn, sOut) = FastEval(c)(expr)
 
     val schemaOut: BSchema = SchemaMaterializer.fieldType(sOut).getRowSchema()
     val schemaIn: BSchema = SchemaMaterializer.fieldType(sIn).getRowSchema()

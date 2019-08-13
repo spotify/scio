@@ -152,23 +152,24 @@ object Query8 {
     assertConcrete[H](c)
     assertConcrete[R](c)
 
-    val schemas: (
-      Schema[A],
-      Schema[B],
-      Schema[C],
-      Schema[D],
-      Schema[E],
-      Schema[F],
-      Schema[G],
-      Schema[H],
-      Schema[R]
-    ) = c.eval(
-      c.Expr(
-        q"(${inferImplicitSchema[A]}, ${inferImplicitSchema[B]}, ${inferImplicitSchema[C]}, ${inferImplicitSchema[D]}, ${inferImplicitSchema[
-          E
-        ]}, ${inferImplicitSchema[F]}, ${inferImplicitSchema[G]}, ${inferImplicitSchema[H]}, ${inferImplicitSchema[R]})"
+    val (schemas1, schemas2, schemas3, schemas4, schemas5, schemas6, schemas7, schemas8, schemas9) =
+      FastEval(c)(
+        c.Expr[
+          (
+            Schema[A],
+            Schema[B],
+            Schema[C],
+            Schema[D],
+            Schema[E],
+            Schema[F],
+            Schema[G],
+            Schema[H],
+            Schema[R]
+          )
+        ](q"(${untyped(aSchema)}, ${untyped(bSchema)}, ${untyped(cSchema)}, ${untyped(dSchema)}, ${untyped(
+          eSchema
+        )}, ${untyped(fSchema)}, ${untyped(gSchema)}, ${untyped(hSchema)}, ${untyped(rSchema)})")
       )
-    )
 
     val sq = Query8[A, B, C, D, E, F, G, H, R](
       cons(c)(query),
@@ -182,15 +183,15 @@ object Query8 {
       tupleTag(c)(hTag)
     )
     typecheck(sq)(
-      schemas._1,
-      schemas._2,
-      schemas._3,
-      schemas._4,
-      schemas._5,
-      schemas._6,
-      schemas._7,
-      schemas._8,
-      schemas._9
+      schemas1,
+      schemas2,
+      schemas3,
+      schemas4,
+      schemas5,
+      schemas6,
+      schemas7,
+      schemas8,
+      schemas9
     ).fold(
       err => c.abort(c.enclosingPosition, err),
       _ =>

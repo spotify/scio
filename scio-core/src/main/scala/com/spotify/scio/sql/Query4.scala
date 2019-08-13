@@ -106,11 +106,12 @@ object Query4 {
     assertConcrete[D](c)
     assertConcrete[R](c)
 
-    val schemas: (Schema[A], Schema[B], Schema[C], Schema[D], Schema[R]) = c.eval(
-      c.Expr(
-        q"(${inferImplicitSchema[A]}, ${inferImplicitSchema[B]}, ${inferImplicitSchema[C]}, ${inferImplicitSchema[D]}, ${inferImplicitSchema[R]})"
+    val (schemas1, schemas2, schemas3, schemas4, schemas5) =
+      FastEval(c)(
+        c.Expr[(Schema[A], Schema[B], Schema[C], Schema[D], Schema[R])](
+          q"(${untyped(aSchema)}, ${untyped(bSchema)}, ${untyped(cSchema)}, ${untyped(dSchema)}, ${untyped(rSchema)})"
+        )
       )
-    )
 
     val sq = Query4[A, B, C, D, R](
       cons(c)(query),
@@ -119,7 +120,7 @@ object Query4 {
       tupleTag(c)(cTag),
       tupleTag(c)(dTag)
     )
-    typecheck(sq)(schemas._1, schemas._2, schemas._3, schemas._4, schemas._5)
+    typecheck(sq)(schemas1, schemas2, schemas3, schemas4, schemas5)
       .fold(
         err => c.abort(c.enclosingPosition, err),
         _ =>

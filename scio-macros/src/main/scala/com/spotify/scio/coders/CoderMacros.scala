@@ -17,7 +17,7 @@
 
 package com.spotify.scio.coders
 
-import com.spotify.scio.MagnoliaMacros
+import com.spotify.scio.{FeatureFlag, MacroSettings, MagnoliaMacros}
 
 import scala.reflect.macros._
 
@@ -26,9 +26,6 @@ private[coders] object CoderMacros {
   private[this] var verbose = true
   private[this] val reported: scala.collection.mutable.Set[(String, String)] =
     scala.collection.mutable.Set.empty
-
-  private[this] val ShowWarnDefault = false
-  private[this] val ShowWarnSettingRegex = "show-coder-fallback=(true|false)".r
 
   private[this] val BlacklistedTypes = List("org.apache.beam.sdk.values.Row")
 
@@ -43,18 +40,6 @@ private[coders] object CoderMacros {
         """.stripMargin
     )
 
-  /**
-   * Makes it possible to configure fallback warnings by passing
-   * "-Xmacro-settings:show-coder-fallback=true" as a Scalac option.
-   */
-  private[this] def showWarn(c: whitebox.Context) =
-    c.settings
-      .collectFirst {
-        case ShowWarnSettingRegex(value) =>
-          value.toBoolean
-      }
-      .getOrElse(ShowWarnDefault)
-
   // scalastyle:off method.length
   // scalastyle:off cyclomatic.complexity
   def issueFallbackWarning[T: c.WeakTypeTag](
@@ -62,7 +47,7 @@ private[coders] object CoderMacros {
   )(lp: c.Expr[shapeless.LowPriority]): c.Tree = {
     import c.universe._
 
-    val show = showWarn(c)
+    val show = MacroSettings.showCoderFallback(c) == FeatureFlag.Enable
 
     val wtt = weakTypeOf[T]
     val TypeRef(_, sym, args) = wtt

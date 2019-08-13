@@ -203,12 +203,13 @@ def mkMacro(n):
     {assert_concrete}
     assertConcrete[R](c)
 
-    val schemas: ({schemas}, Schema[R]) = c.eval(
-      c.Expr(q"({infer_schemas}, ${{inferImplicitSchema[R]}})")
-    )
+    val ({schema_tuple_vals}, schemas{n_p}) =
+        FastEval(c)(
+            c.Expr[({schemas}, Schema[R])](
+                q"({infer_schemas}, ${{untyped(rSchema)}})"))
 
     val sq = Query{n}[{types}, R](cons(c)(query), {tuple_tags})
-    typecheck(sq)({schema_tuple_vals}, schemas._{n_p})
+    typecheck(sq)({schema_tuple_vals}, schemas{n_p})
       .fold(
         err => c.abort(c.enclosingPosition, err),
         _ => c.Expr[Query{n}[{types}, R]](q"_root_.com.spotify.scio.sql.Query{n}($query, {tag_trees})")
@@ -219,8 +220,8 @@ def mkMacro(n):
         types=mkTypes(n),
         weak_bounds=mkBounds(n, "c.WeakTypeTag"),
         schemas=", ".join(mkValsFmt(n, "Schema[{upperIdx}]")),
-        schema_tuple_vals=", ".join(mkValsFmt(n, "schemas._{idx}")),
-        infer_schemas=", ".join(mkValsFmt(n, "${{inferImplicitSchema[{upperIdx}]}}")),
+        schema_tuple_vals=", ".join(mkValsFmt(n, "schemas{idx}")),
+        infer_schemas=", ".join(mkValsFmt(n, "${{untyped({lowerIdx}Schema)}}")),
         expr_tuple_tag=", ".join(
             mkValsFmt(n, "{lowerIdx}Tag: c.Expr[TupleTag[{upperIdx}]]")
         ),

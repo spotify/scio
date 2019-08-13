@@ -132,6 +132,21 @@ object TestData {
 
   case class Order(order_id: Long, price: Long, site_id: Long)
   val orders = List(Order(1, 2, 2), Order(2, 2, 1), Order(1, 4, 3), Order(3, 2, 1), Order(3, 3, 1))
+
+  // Coders
+  implicit def coderLocale: Coder[Locale] = Coder.kryo[Locale]
+  implicit def coderFoo: Coder[Foo] = Coder.gen[Foo]
+  implicit def coderResult: Coder[Result] = Coder.gen[Result]
+  implicit def coderUser: Coder[User] = Coder.gen[User]
+  implicit def coderUserId: Coder[UserId] = Coder.gen[UserId]
+  implicit def coderUserWithId: Coder[UserWithId] = Coder.gen[UserWithId]
+  implicit def coderUserWithFallBack: Coder[UserWithFallBack] = Coder.gen[UserWithFallBack]
+  implicit def coderUserWithOption: Coder[UserWithOption] = Coder.gen[UserWithOption]
+  implicit def coderUserWithList: Coder[UserWithList] = Coder.gen[UserWithList]
+  implicit def coderUserWithJList: Coder[UserWithJList] = Coder.gen[UserWithJList]
+  implicit def coderUserWithMap: Coder[UserWithMap] = Coder.gen[UserWithMap]
+  implicit def coderUserWithInstant: Coder[UserWithInstant] = Coder.gen[UserWithInstant]
+  implicit def coderOrder: Coder[Order] = Coder.gen[Order]
 }
 
 class BeamSQLTest extends PipelineSpec {
@@ -541,13 +556,13 @@ class BeamSQLTest extends PipelineSpec {
       .to[TinyTo](To.unsafe) should containInAnyOrder(tinyTo)
 
     sc.parallelize(from)
-      .to[To1](To.safe) should containInAnyOrder(to)
+      .to(To.safe[From0, To1]) should containInAnyOrder(to)
 
     sc.parallelize(javaUsers)
-      .to[JavaCompatibleUser](To.safe) should containInAnyOrder(expectedJavaCompatUsers)
+      .to(To.safe[UserBean, JavaCompatibleUser]) should containInAnyOrder(expectedJavaCompatUsers)
 
     sc.parallelize(from)
-      .to[TinyTo](To.safe) should containInAnyOrder(tinyTo)
+      .to(To.safe[From0, TinyTo]) should containInAnyOrder(tinyTo)
   }
 
   it should "Support LogicalTypes" in runWithContext { sc =>
@@ -588,10 +603,10 @@ class BeamSQLTest extends PipelineSpec {
       .to[CompatibleAvroTestRecord](To.unsafe) should containInAnyOrder(expectedAvro)
 
     sc.parallelize(avroUsers)
-      .to[AvroCompatibleUser](To.safe) should containInAnyOrder(expected)
+      .to(To.safe[avro.User, AvroCompatibleUser]) should containInAnyOrder(expected)
 
     sc.parallelize(avroWithNullable)
-      .to[CompatibleAvroTestRecord](To.safe) should containInAnyOrder(expectedAvro)
+      .to(To.safe[avro.TestRecord, CompatibleAvroTestRecord]) should containInAnyOrder(expectedAvro)
   }
 
   "String interpolation" should "support simple queries" in runWithContext { sc =>
