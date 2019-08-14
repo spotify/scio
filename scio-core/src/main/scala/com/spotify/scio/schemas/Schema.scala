@@ -199,7 +199,12 @@ private[scio] trait SchemaMacroHelpers {
     val typedTree = ctx.inferImplicitValue(tp, silent = false)
     val untypedTree = ctx.untypecheck(typedTree.duplicate)
 
-    ctx.Expr[Schema[_]](q"$untypedTree.value")
+    cacheImplicitSchemas match {
+      case FeatureFlag.Enable =>
+        ctx.Expr[Schema[_]](q"$untypedTree.value")
+      case _ =>
+        ctx.Expr[Schema[_]](untypedTree)
+    }
   }
 
   implicit def liftTupleTag[A: ctx.WeakTypeTag]: Liftable[TupleTag[A]] = Liftable[TupleTag[A]] {
