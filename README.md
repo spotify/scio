@@ -33,21 +33,27 @@ Scio 0.3.0 and future versions depend on Apache Beam (`org.apache.beam`) while e
 
 # Quick Start
 
-Use our [giter8 template](https://github.com/spotify/scio.g8) to quickly setup a project:
+Use our [giter8 template](https://github.com/spotify/scio.g8) to quickly create a new Scio job repository:
 
 `sbt new spotify/scio.g8`
 
-Compile it:
+Switch to the new repo (default `scio-job`) and build it:
 
-`sbt pack`
+```
+cd scio-job
+sbt pack
+```
 
 Run the included word count example:
 
 `target/pack/bin/word-count --output=wc`
 
-Inspect the results:
+List result files and inspect content:
 
-`cat wc/part-00000-of-00001.txt`
+```
+ls -l wc
+cat wc/part-00000-of-00001.txt
+```
 
 # Documentation
 
