@@ -32,32 +32,28 @@ Scio 0.3.0 and future versions depend on Apache Beam (`org.apache.beam`) while e
 <sup>*</sup> provided by Google Cloud Dataflow
 
 # Quick Start
-You don't need to clone `scio` git repository.  
-Use our [giter8 template](https://github.com/spotify/scio.g8) to quickly setup a project:
+
+Use our [giter8 template](https://github.com/spotify/scio.g8) to quickly create a new Scio job repository:
 
 `sbt new spotify/scio.g8`
 
-You will be asked a project name (default: `scio job`). Switch to this new project directory.
+Switch to the new repo (default `scio-job`) and build it:
 
-`cd $yourNewProjectName`
- 
-Compile it:
-
-`sbt pack`
+```
+cd scio-job
+sbt pack
+```
 
 Run the included word count example:
 
 `target/pack/bin/word-count --output=wc`
 
-###Inspect the results.
+List result files and inspect content:
 
-View a list of result files
-
-`ls -l wc`
-
-Select one of files from the list: 
-
-`cat wc/part-00000-of-00001.txt`
+```
+ls -l wc
+cat wc/part-00000-of-00001.txt
+```
 
 # Documentation
 
