@@ -35,7 +35,7 @@ import scala.reflect.runtime.universe._
 /**
  * Tap for [[org.apache.avro.generic.GenericRecord GenericRecord]] Avro files.
  */
-final case class GenericRecordTap[T: ClassTag: Coder](
+final case class GenericRecordTap[T: Coder](
   path: String,
   @transient private val
   schema: Schema

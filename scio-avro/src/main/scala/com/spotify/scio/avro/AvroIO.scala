@@ -184,7 +184,7 @@ final case class SpecificRecordIO[T <: SpecificRecord: ClassTag: Coder](path: St
     SpecificRecordTap[T](ScioUtil.addPartSuffix(path))
 }
 
-final case class GenericRecordIO[T: ClassTag: Coder](val path: String, val schema: Schema)
+final case class GenericRecordIO[T: Coder](path: String, schema: Schema)
     extends AvroIO[T] {
   override type ReadP = Unit
   override type WriteP = AvroIO.WriteParam
