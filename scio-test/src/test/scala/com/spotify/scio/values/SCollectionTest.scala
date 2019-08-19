@@ -669,4 +669,12 @@ class SCollectionTest extends PipelineSpec {
       p3 should containSingleValue(0)
     }
   }
+
+  it should "emit 0 instead of an empty SCollection when counting an empty SCollection" in {
+    runWithContext { sc =>
+      val count = sc.parallelize(List[String]()).count
+      count should containSingleValue(0L)
+    }
+  }
+
 }
