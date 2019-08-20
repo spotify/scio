@@ -62,7 +62,7 @@ object To {
     s1.getFields.asScala.forall { f =>
       s0Fields
         .get(f.getName)
-        .exists(other => areCompatible(f.getType, other.getType))
+        .exists(other => areCompatible(other.getType, f.getType))
     }
   }
 
