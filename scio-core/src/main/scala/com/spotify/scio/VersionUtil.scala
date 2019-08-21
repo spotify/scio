@@ -99,7 +99,7 @@ private[scio] object VersionUtil {
 
   def checkVersion(
     current: String,
-    latest: Option[String],
+    latestOverride: Option[String] = None,
     ignore: Boolean = ignoreVersionCheck
   ): Seq[String] = {
     if (ignore) {
@@ -110,7 +110,7 @@ private[scio] object VersionUtil {
       if (v1.suffix == "-SNAPSHOT") {
         b.append(s"Using a SNAPSHOT version of Scio: $current")
       }
-      latest.foreach { v =>
+      latestOverride.orElse(latest).foreach { v =>
         val v2 = parseVersion(v)
         if (v2 > v1) {
           b.append(s"A newer version of Scio is available: $current -> $v")
@@ -122,7 +122,7 @@ private[scio] object VersionUtil {
   }
 
   def checkVersion(): Unit =
-    checkVersion(BuildInfo.version, latest).foreach(logger.warn)
+    checkVersion(BuildInfo.version).foreach(logger.warn)
 
   def checkRunnerVersion(runner: Class[_ <: PipelineRunner[_ <: PipelineResult]]): Unit = {
     val name = runner.getSimpleName
