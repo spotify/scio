@@ -27,7 +27,6 @@ class VersionUtilTest extends FlatSpec with Matchers {
     )
 
   "checkVersion" should "warn about snapshot version" in {
-    verifySnapshotVersion("0.1.0-SNAPSHOT", None)
     verifySnapshotVersion("0.1.0-SNAPSHOT", Some("0.1.0-alpha"))
     verifySnapshotVersion("0.1.0-SNAPSHOT", Some("0.1.0-beta"))
     verifySnapshotVersion("0.1.0-SNAPSHOT", Some("0.1.0-RC"))
