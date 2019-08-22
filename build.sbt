@@ -22,7 +22,7 @@ import com.typesafe.sbt.SbtGit.GitKeys.gitRemoteRepo
 import org.scalafmt.sbt.ScalafmtPlugin.scalafmtConfigSettings
 import bloop.integrations.sbt.BloopDefaults
 
-val beamVersion = "2.14.0"
+val beamVersion = "2.15.0"
 
 val algebirdVersion = "0.13.5"
 val annoy4sVersion = "0.8.0"
