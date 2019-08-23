@@ -24,12 +24,14 @@ class FixAvroIO extends SemanticRule("FixAvroIO") {
   val builder = Symbol("com/spotify/scio/testing/JobTest.Builder#")
 
   private def isJobTest(t: Term)(implicit doc: SemanticDocument) =
-    t.symbol.info.get.signature.asInstanceOf[MethodSignature].returnType match {
-      case TypeRef(prefix, `builder`, args) =>
-        true
-      case t =>
-        false
-    }
+    t.symbol.info.map {
+      _.signature.asInstanceOf[MethodSignature].returnType match {
+        case TypeRef(prefix, `builder`, args) =>
+          true
+        case t =>
+          false
+      }
+    }.getOrElse(false)
 
   override def fix(implicit doc: SemanticDocument): Patch = {
     doc.tree.collect {
