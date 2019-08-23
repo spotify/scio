@@ -119,6 +119,7 @@ class BigtableIT extends PipelineSpec {
       sc.parallelize(testData.map(kv => toDeleteMutation(kv._1)))
         .saveAsBigtable(projectId, instanceId, tableId)
       sc.run().waitUntilFinish()
+      ()
     }
   }
 
