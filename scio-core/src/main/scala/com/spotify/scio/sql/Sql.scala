@@ -31,6 +31,7 @@ import org.apache.beam.sdk.extensions.sql.impl.BeamSqlEnv
 import org.apache.beam.sdk.extensions.sql.impl.schema.{BaseBeamTable, BeamPCollectionTable}
 import org.apache.beam.sdk.extensions.sql.impl.utils.CalciteUtils
 import org.apache.beam.sdk.extensions.sql.meta.provider.{ReadOnlyTableProvider, TableProvider}
+import org.apache.beam.sdk.options.PipelineOptionsFactory
 
 import scala.util.Try
 import scala.collection.JavaConverters._
@@ -86,7 +87,7 @@ private object Queries {
     }.toMap
 
     val tableProvider = new ReadOnlyTableProvider(Sql.SCollectionTypeName, tables.asJava)
-    val env = BeamSqlEnv.builder(tableProvider)
+    val env = BeamSqlEnv.builder(tableProvider).setPipelineOptions(PipelineOptionsFactory.create())
     udfs.foreach {
       case (x: UdfFromClass[_]) =>
         env.addUdf(x.fnName, x.clazz)
