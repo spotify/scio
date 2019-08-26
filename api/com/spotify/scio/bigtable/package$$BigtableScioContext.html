@@ -8,17 +8,17 @@
           <meta name="keywords" content="" />
           <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
           
+      
       <link href="../../../../lib/index.css" media="screen" type="text/css" rel="stylesheet" />
       <link href="../../../../lib/template.css" media="screen" type="text/css" rel="stylesheet" />
       <link href="../../../../lib/diagrams.css" media="screen" type="text/css" rel="stylesheet" id="diagrams-css" />
-      <script type="text/javascript" src="../../../../lib/jquery.js"></script>
+      <script type="text/javascript" src="../../../../lib/jquery.min.js"></script>
       <script type="text/javascript" src="../../../../lib/jquery.panzoom.min.js"></script>
       <script type="text/javascript" src="../../../../lib/jquery.mousewheel.min.js"></script>
       <script type="text/javascript" src="../../../../lib/index.js"></script>
       <script type="text/javascript" src="../../../../index.js"></script>
       <script type="text/javascript" src="../../../../lib/scheduler.js"></script>
       <script type="text/javascript" src="../../../../lib/template.js"></script>
-      <script type="text/javascript" src="../../../../lib/tools.tooltip.js"></script>
       
       <script type="text/javascript">
         /* this variable can be used by the JS to determine the path to the root document */
@@ -56,7 +56,7 @@
                 <li name="_root_.root" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="_root_"></a><a id="root:_root_"></a>
       <span class="permalink">
-      <a href="index.html#_root_" title="Permalink">
+      <a href="../../../../index.html" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -72,7 +72,7 @@
     </li><li name="_root_.com" visbl="pub" class="indented1 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="com"></a><a id="com:com"></a>
       <span class="permalink">
-      <a href="index.html#com" title="Permalink">
+      <a href="../../../../com/index.html" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -88,7 +88,7 @@
     </li><li name="com.spotify" visbl="pub" class="indented2 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="spotify"></a><a id="spotify:spotify"></a>
       <span class="permalink">
-      <a href="../com/index.html#spotify" title="Permalink">
+      <a href="../../../../com/spotify/index.html" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -104,7 +104,7 @@
     </li><li name="com.spotify.scio" visbl="pub" class="indented3 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="scio"></a><a id="scio:scio"></a>
       <span class="permalink">
-      <a href="../../com/spotify/index.html#scio" title="Permalink">
+      <a href="../../../../com/spotify/scio/index.html" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -120,7 +120,7 @@
     </li><li name="com.spotify.scio.bigtable" visbl="pub" class="indented4 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="bigtable"></a><a id="bigtable:bigtable"></a>
       <span class="permalink">
-      <a href="../../../com/spotify/scio/index.html#bigtable" title="Permalink">
+      <a href="../../../../com/spotify/scio/bigtable/index.html" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -425,6 +425,56 @@ Checks for existence of tables or creates them if they do not exist.  Also check
 existence of column families within each table and creates them if they do not exist.
 </p></div><dl class="paramcmts block"><dt class="param">tablesAndColumnFamilies</dt><dd class="cmt"><p>A map of tables and column families.  Keys are table names.
                                Values are a list of column family names.</p></dd></dl></div>
+    </li><li name="com.spotify.scio.bigtable.BigtableScioContext#ensureTablesWithExpiration" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="ensureTablesWithExpiration(bigtableOptions:com.google.cloud.bigtable.config.BigtableOptions,tablesAndColumnFamiliesWithExpiration:Map[String,List[(String,Option[org.joda.time.Duration])]]):Unit"></a><a id="ensureTablesWithExpiration(BigtableOptions,Map[String,List[(String,Option[Duration])]]):Unit"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/bigtable/package$$BigtableScioContext.html#ensureTablesWithExpiration(bigtableOptions:com.google.cloud.bigtable.config.BigtableOptions,tablesAndColumnFamiliesWithExpiration:Map[String,List[(String,Option[org.joda.time.Duration])]]):Unit" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">ensureTablesWithExpiration</span><span class="params">(<span name="bigtableOptions">bigtableOptions: <span class="extype" name="com.google.cloud.bigtable.config.BigtableOptions">BigtableOptions</span></span>, <span name="tablesAndColumnFamiliesWithExpiration">tablesAndColumnFamiliesWithExpiration: <span class="extype" name="scala.Predef.Map">Map</span>[<span class="extype" name="scala.Predef.String">String</span>, <span class="extype" name="scala.List">List</span>[(<span class="extype" name="scala.Predef.String">String</span>, <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="org.joda.time.Duration">Duration</span>])]]</span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      
+      <p class="shortcomment cmt">Ensure that tables and column families exist.</p><div class="fullcomment"><div class="comment cmt"><p>Ensure that tables and column families exist.
+Checks for existence of tables or creates them if they do not exist.  Also checks for
+existence of column families within each table and creates them if they do not exist.
+</p></div><dl class="paramcmts block"><dt class="param">tablesAndColumnFamiliesWithExpiration</dt><dd class="cmt"><p>A map of tables and column families.
+                                             Keys are table names. Values are a
+                                             list of column family names along with
+                                             the desired cell expiration. Cell
+                                             expiration is the duration before which
+                                             garbage collection of a cell may occur.
+                                             Note: minimum granularity is second.</p></dd></dl></div>
+    </li><li name="com.spotify.scio.bigtable.BigtableScioContext#ensureTablesWithExpiration" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="ensureTablesWithExpiration(projectId:String,instanceId:String,tablesAndColumnFamiliesWithExpiration:Map[String,List[(String,Option[org.joda.time.Duration])]]):Unit"></a><a id="ensureTablesWithExpiration(String,String,Map[String,List[(String,Option[Duration])]]):Unit"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/bigtable/package$$BigtableScioContext.html#ensureTablesWithExpiration(projectId:String,instanceId:String,tablesAndColumnFamiliesWithExpiration:Map[String,List[(String,Option[org.joda.time.Duration])]]):Unit" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">ensureTablesWithExpiration</span><span class="params">(<span name="projectId">projectId: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="instanceId">instanceId: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="tablesAndColumnFamiliesWithExpiration">tablesAndColumnFamiliesWithExpiration: <span class="extype" name="scala.Predef.Map">Map</span>[<span class="extype" name="scala.Predef.String">String</span>, <span class="extype" name="scala.List">List</span>[(<span class="extype" name="scala.Predef.String">String</span>, <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="org.joda.time.Duration">Duration</span>])]]</span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      
+      <p class="shortcomment cmt">Ensure that tables and column families exist.</p><div class="fullcomment"><div class="comment cmt"><p>Ensure that tables and column families exist.
+Checks for existence of tables or creates them if they do not exist.  Also checks for
+existence of column families within each table and creates them if they do not exist.
+</p></div><dl class="paramcmts block"><dt class="param">tablesAndColumnFamiliesWithExpiration</dt><dd class="cmt"><p>A map of tables and column families.
+                                             Keys are table names. Values are a
+                                             list of column family names along with
+                                             the desired cell expiration. Cell
+                                             expiration is the duration before which
+                                             garbage collection of a cell may occur.
+                                             Note: minimum granularity is second.</p></dd></dl></div>
     </li><li name="com.spotify.scio.bigtable.BigtableScioContext#getBigtableClusterSizes" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="getBigtableClusterSizes(projectId:String,instanceId:String):Map[String,Int]"></a><a id="getBigtableClusterSizes(String,String):Map[String,Int]"></a>
       <span class="permalink">

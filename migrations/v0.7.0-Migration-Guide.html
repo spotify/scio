@@ -164,9 +164,11 @@ spotify/scio
   <li><a href="../migrations/index.html" class="page">Migration Guides</a>
   <ul>
     <li><a href="../migrations/v0.7.0-Migration-Guide.html" class="active page">Scio 0.7.0</a></li>
+    <li><a href="../migrations/v0.8.0.html" class="page">Scio v0.8.0</a></li>
   </ul></li>
   <li><a href="../dev/index.html" class="page">Development</a>
   <ul>
+    <li><a href="../dev/build.html" class="page">Build</a></li>
     <li><a href="../dev/Style-Guide.html" class="page">Style Guide</a></li>
     <li><a href="../dev/How-to-Release.html" class="page">How to Release</a></li>
     <li><a href="../dev/Design-Philosophy.html" class="page">Design Philosophy</a></li>
@@ -362,6 +364,29 @@ class MyScioJobTest extends PipelineSpec {
 <p>In Scio &lt;= <code>0.6.x</code> this works, but in Scio <code>0.7.x</code>, you&rsquo;ll need to be explicit about the types. For example in that case:</p>
 <pre class="prettyprint"><code class="language-scala">.input(AvroIO[GenericRecord](inputUri), inputs)
 </code></pre>
+<h3><a href="#bigquery-client" name="bigquery-client" class="anchor"><span class="anchor-link"></span></a>BigQuery client</h3>
+<p>Client was renamed from <code>BigQueryClient</code> to <code>BigQuery</code>and relocated! Now you need to:</p>
+<pre class="prettyprint"><code class="language-scala">import com.spotify.scio.bigquery.client.BigQuery
+</code></pre>
+<p>The new client offers now methods namespaced according to their resposabilities.</p>
+<p>Methods typically fall into 4 categories of operations query, table, export and load. i.e:</p>
+<pre class="prettyprint"><code class="language-diff">-client.extractLocation
++client.query.extracLocation
+
+-client.getQuerySchema(...)
++client.query.schema(...)
+
+-client.getTableRows(...)
++client.table.rows(...)
+
+// the same thing applies for the other formats
+-client.loadTableFromCsv(...)
++client.load.csv(...)
+
+// the same thing applies for the other formats
+-client.exportTableAsCsv(...)
++client.export.asCsv(...)
+</code></pre>
 <h3><a href="#not-enough-arguments-for-method-top-topbykey-approxquantilesbykey-implicit-ord-ordering-" name="not-enough-arguments-for-method-top-topbykey-approxquantilesbykey-implicit-ord-ordering-" class="anchor"><span class="anchor-link"></span></a>Not enough arguments for method (top|topByKey|approxQuantilesByKey): (implicit ord: Ordering[&hellip;])</h3>
 <p>Explicit <code>Ordering</code> functions for <code>SCollection</code> reducers are no longer curried. Methods that used to look like:</p>
 <pre class="prettyprint"><code class="language-scala">.top(10)(Ordering.by(...)
@@ -527,13 +552,13 @@ Migration Guides
 </span>
 </div>
 </a>
-<a href="../dev/index.html" title="Development" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
+<a href="../migrations/v0.8.0.html" title="Scio v0.8.0" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
 <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
 <span class="md-flex__ellipsis">
 <span class="md-footer-nav__direction">
 Next
 </span>
-Development
+Scio v0.8.0
 </span>
 </div>
 <div class="md-flex__cell md-flex__cell--shrink">

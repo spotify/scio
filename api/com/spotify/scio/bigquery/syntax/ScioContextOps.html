@@ -8,17 +8,17 @@
           <meta name="keywords" content="" />
           <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
           
+      
       <link href="../../../../../lib/index.css" media="screen" type="text/css" rel="stylesheet" />
       <link href="../../../../../lib/template.css" media="screen" type="text/css" rel="stylesheet" />
       <link href="../../../../../lib/diagrams.css" media="screen" type="text/css" rel="stylesheet" id="diagrams-css" />
-      <script type="text/javascript" src="../../../../../lib/jquery.js"></script>
+      <script type="text/javascript" src="../../../../../lib/jquery.min.js"></script>
       <script type="text/javascript" src="../../../../../lib/jquery.panzoom.min.js"></script>
       <script type="text/javascript" src="../../../../../lib/jquery.mousewheel.min.js"></script>
       <script type="text/javascript" src="../../../../../lib/index.js"></script>
       <script type="text/javascript" src="../../../../../index.js"></script>
       <script type="text/javascript" src="../../../../../lib/scheduler.js"></script>
       <script type="text/javascript" src="../../../../../lib/template.js"></script>
-      <script type="text/javascript" src="../../../../../lib/tools.tooltip.js"></script>
       
       <script type="text/javascript">
         /* this variable can be used by the JS to determine the path to the root document */
@@ -56,7 +56,7 @@
                 <li name="_root_.root" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="_root_"></a><a id="root:_root_"></a>
       <span class="permalink">
-      <a href="index.html#_root_" title="Permalink">
+      <a href="../../../../../index.html" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -72,7 +72,7 @@
     </li><li name="_root_.com" visbl="pub" class="indented1 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="com"></a><a id="com:com"></a>
       <span class="permalink">
-      <a href="index.html#com" title="Permalink">
+      <a href="../../../../../com/index.html" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -88,7 +88,7 @@
     </li><li name="com.spotify" visbl="pub" class="indented2 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="spotify"></a><a id="spotify:spotify"></a>
       <span class="permalink">
-      <a href="../com/index.html#spotify" title="Permalink">
+      <a href="../../../../../com/spotify/index.html" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -104,7 +104,7 @@
     </li><li name="com.spotify.scio" visbl="pub" class="indented3 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="scio"></a><a id="scio:scio"></a>
       <span class="permalink">
-      <a href="../../com/spotify/index.html#scio" title="Permalink">
+      <a href="../../../../../com/spotify/scio/index.html" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -120,7 +120,7 @@
     </li><li name="com.spotify.scio.bigquery" visbl="pub" class="indented4 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="bigquery"></a><a id="bigquery:bigquery"></a>
       <span class="permalink">
-      <a href="../../../com/spotify/scio/index.html#bigquery" title="Permalink">
+      <a href="../../../../../com/spotify/scio/bigquery/index.html" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -146,7 +146,7 @@ detects the query's dialect. To override this, start the query with either <code
     </li><li name="com.spotify.scio.bigquery.syntax" visbl="pub" class="indented5 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="syntax"></a><a id="syntax:syntax"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/bigquery/index.html#syntax" title="Permalink">
+      <a href="../../../../../com/spotify/scio/bigquery/syntax/index.html" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -409,7 +409,7 @@ behavior, start the query string with <code>#legacysql</code> or <code>#standard
                       sub-fields in the field will be selected.</p></dd><dt class="param">rowRestriction</dt><dd class="cmt"><p>SQL text filtering statement, similar ti a WHERE clause in a query.
                       Currently, we support combinations of predicates that are a comparison
                       between a column and a constant value in SQL statement. Aggregates are
-                      not supported. For example:</p><pre><span class="lit">"a > DATE '2014-09-27' AND (b > 5 AND c LIKE 'date')"</span></pre></dd></dl></div>
+                      not supported. For example:</p><pre><span class="lit">"a &gt; DATE '2014-09-27' AND (b &gt; 5 AND c LIKE 'date')"</span></pre></dd></dl></div>
     </li><li name="com.spotify.scio.bigquery.syntax.ScioContextOps#bigQueryTable" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="bigQueryTable(table:com.spotify.scio.bigquery.Table):com.spotify.scio.values.SCollection[com.spotify.scio.bigquery.TableRow]"></a><a id="bigQueryTable(Table):SCollection[TableRow]"></a>
       <span class="permalink">
@@ -525,6 +525,24 @@ sc.typedBigQuery[Row](<span class="lit">"SELECT * FROM [publicdata:samples.gsod]
 <a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/" target="_blank">Standard SQL</a> dialects are
 supported. By default the query dialect will be automatically detected. To override this
 behavior, start the query string with <code>#legacysql</code> or <code>#standardsql</code>.
+</p></div></div>
+    </li><li name="com.spotify.scio.bigquery.syntax.ScioContextOps#typedBigQueryStorage" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="typedBigQueryStorage[T&lt;:com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation](newSource:String,rowRestriction:String)(implicitevidence$4:scala.reflect.ClassTag[T],implicitevidence$5:reflect.runtime.universe.TypeTag[T],implicitevidence$6:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]"></a><a id="typedBigQueryStorage[T&lt;:HasAnnotation](String,String)(ClassTag[T],scala.reflect.api.JavaUniverse.TypeTag[T],Coder[T]):SCollection[T]"></a>
+      <span class="permalink">
+      <a href="../../../../../com/spotify/scio/bigquery/syntax/ScioContextOps.html#typedBigQueryStorage[T&lt;:com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation](newSource:String,rowRestriction:String)(implicitevidence$4:scala.reflect.ClassTag[T],implicitevidence$5:reflect.runtime.universe.TypeTag[T],implicitevidence$6:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">typedBigQueryStorage</span><span class="tparams">[<span name="T">T &lt;: <a href="../types/BigQueryType$$HasAnnotation.html" class="extype" name="com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation">HasAnnotation</a></span>]</span><span class="params">(<span name="newSource">newSource: <span class="extype" name="scala.Predef.String">String</span> = <span class="symbol">null</span></span>, <span name="rowRestriction">rowRestriction: <span class="extype" name="scala.Predef.String">String</span> = <span class="symbol">null</span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <span class="extype" name="scala.reflect.ClassTag">ClassTag</span>[<span class="extype" name="com.spotify.scio.bigquery.syntax.ScioContextOps.typedBigQueryStorage.T">T</span>]</span>, <span name="arg1">arg1: <span class="extype" name="scala.reflect.api.TypeTags.TypeTag">scala.reflect.api.JavaUniverse.TypeTag</span>[<span class="extype" name="com.spotify.scio.bigquery.syntax.ScioContextOps.typedBigQueryStorage.T">T</span>]</span>, <span name="arg2">arg2: <a href="../../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.bigquery.syntax.ScioContextOps.typedBigQueryStorage.T">T</span>]</span>)</span><span class="result">: <a href="../../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.bigquery.syntax.ScioContextOps.typedBigQueryStorage.T">T</span>]</span>
+      </span>
+      
+      <p class="shortcomment cmt">Get a typed SCollection for a BigQuery storage API.</p><div class="fullcomment"><div class="comment cmt"><p>Get a typed SCollection for a BigQuery storage API.</p><p>Note that <code>T</code> must be annotated with
+<a href="../types/BigQueryType$$fromSchema.html" class="extype" name="com.spotify.scio.bigquery.types.BigQueryType.fromSchema">BigQueryType.fromStorage</a>.</p><p>Similar to <a href="#typedBigQuery[T&lt;:com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation](newSource:String)(implicitevidence$1:scala.reflect.ClassTag[T],implicitevidence$2:reflect.runtime.universe.TypeTag[T],implicitevidence$3:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]" class="extmbr" name="com.spotify.scio.bigquery.syntax.ScioContextOps#typedBigQuery">typedBigQuery</a> but allows <code>rowRestriction</code> to be overridden.
 </p></div></div>
     </li>
               </ol>

@@ -8,17 +8,17 @@
           <meta name="keywords" content="" />
           <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
           
+      
       <link href="../../../../../lib/index.css" media="screen" type="text/css" rel="stylesheet" />
       <link href="../../../../../lib/template.css" media="screen" type="text/css" rel="stylesheet" />
       <link href="../../../../../lib/diagrams.css" media="screen" type="text/css" rel="stylesheet" id="diagrams-css" />
-      <script type="text/javascript" src="../../../../../lib/jquery.js"></script>
+      <script type="text/javascript" src="../../../../../lib/jquery.min.js"></script>
       <script type="text/javascript" src="../../../../../lib/jquery.panzoom.min.js"></script>
       <script type="text/javascript" src="../../../../../lib/jquery.mousewheel.min.js"></script>
       <script type="text/javascript" src="../../../../../lib/index.js"></script>
       <script type="text/javascript" src="../../../../../index.js"></script>
       <script type="text/javascript" src="../../../../../lib/scheduler.js"></script>
       <script type="text/javascript" src="../../../../../lib/template.js"></script>
-      <script type="text/javascript" src="../../../../../lib/tools.tooltip.js"></script>
       
       <script type="text/javascript">
         /* this variable can be used by the JS to determine the path to the root document */
@@ -56,7 +56,7 @@
                 <li name="_root_.root" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="_root_"></a><a id="root:_root_"></a>
       <span class="permalink">
-      <a href="index.html#_root_" title="Permalink">
+      <a href="../../../../../index.html" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -72,7 +72,7 @@
     </li><li name="_root_.com" visbl="pub" class="indented1 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="com"></a><a id="com:com"></a>
       <span class="permalink">
-      <a href="index.html#com" title="Permalink">
+      <a href="../../../../../com/index.html" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -88,7 +88,7 @@
     </li><li name="com.spotify" visbl="pub" class="indented2 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="spotify"></a><a id="spotify:spotify"></a>
       <span class="permalink">
-      <a href="../com/index.html#spotify" title="Permalink">
+      <a href="../../../../../com/spotify/index.html" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -104,7 +104,7 @@
     </li><li name="com.spotify.scio" visbl="pub" class="indented3 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="scio"></a><a id="scio:scio"></a>
       <span class="permalink">
-      <a href="../../com/spotify/index.html#scio" title="Permalink">
+      <a href="../../../../../com/spotify/scio/index.html" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -120,7 +120,7 @@
     </li><li name="com.spotify.scio.extra" visbl="pub" class="indented4 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="extra"></a><a id="extra:extra"></a>
       <span class="permalink">
-      <a href="../../../com/spotify/scio/index.html#extra" title="Permalink">
+      <a href="../../../../../com/spotify/scio/extra/index.html" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -136,7 +136,7 @@
     </li><li name="com.spotify.scio.extra.sparkey" visbl="pub" class="indented5 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="sparkey"></a><a id="sparkey:sparkey"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/extra/index.html#sparkey" title="Permalink">
+      <a href="../../../../../com/spotify/scio/extra/sparkey/index.html" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -154,10 +154,10 @@
 <span class="kw">val</span> s1: SCollection[SparkeyUri] = s.asSparkey
 
 <span class="cmt">// specific location</span>
-<span class="kw">val</span> s1: SCollection[SparkeyUri] = s.asSparkey(<span class="lit">"gs://<bucket>/<path>/<sparkey-prefix>"</span>)</pre><p>The result <code>SCollection[SparkeyUri]</code> can be converted to a side input:</p><pre><span class="kw">val</span> s: SCollection[SparkeyUri] = sc.parallelize(<span class="std">Seq</span>(<span class="lit">"a"</span> -&gt; <span class="lit">"one"</span>, <span class="lit">"b"</span> -&gt; <span class="lit">"two"</span>)).asSparkey
+<span class="kw">val</span> s1: SCollection[SparkeyUri] = s.asSparkey(<span class="lit">"gs://&lt;bucket&gt;/&lt;path&gt;/&lt;sparkey-prefix&gt;"</span>)</pre><p>The result <code>SCollection[SparkeyUri]</code> can be converted to a side input:</p><pre><span class="kw">val</span> s: SCollection[SparkeyUri] = sc.parallelize(<span class="std">Seq</span>(<span class="lit">"a"</span> -&gt; <span class="lit">"one"</span>, <span class="lit">"b"</span> -&gt; <span class="lit">"two"</span>)).asSparkey
 <span class="kw">val</span> side: SideInput[SparkeyReader] = s.asSparkeySideInput</pre><p>These two steps can be done with a syntactic sugar:</p><pre><span class="kw">val</span> side: SideInput[SparkeyReader] = sc
   .parallelize(<span class="std">Seq</span>(<span class="lit">"a"</span> -&gt; <span class="lit">"one"</span>, <span class="lit">"b"</span> -&gt; <span class="lit">"two"</span>))
-  .asSparkeySideInput</pre><p>An existing Sparkey file can also be converted to a side input directly:</p><pre>sc.sparkeySideInput(<span class="lit">"gs://<bucket>/<path>/<sparkey-prefix>"</span>)</pre><p><code>SparkeyReader</code> can be used like a lookup table in a side input operation:</p><pre><span class="kw">val</span> main: SCollection[<span class="std">String</span>] = sc.parallelize(<span class="std">Seq</span>(<span class="lit">"a"</span>, <span class="lit">"b"</span>, <span class="lit">"c"</span>))
+  .asSparkeySideInput</pre><p>An existing Sparkey file can also be converted to a side input directly:</p><pre>sc.sparkeySideInput(<span class="lit">"gs://&lt;bucket&gt;/&lt;path&gt;/&lt;sparkey-prefix&gt;"</span>)</pre><p><code>SparkeyReader</code> can be used like a lookup table in a side input operation:</p><pre><span class="kw">val</span> main: SCollection[<span class="std">String</span>] = sc.parallelize(<span class="std">Seq</span>(<span class="lit">"a"</span>, <span class="lit">"b"</span>, <span class="lit">"c"</span>))
 <span class="kw">val</span> side: SideInput[SparkeyReader] = sc
   .parallelize(<span class="std">Seq</span>(<span class="lit">"a"</span> -&gt; <span class="lit">"one"</span>, <span class="lit">"b"</span> -&gt; <span class="lit">"two"</span>))
   .asSparkeySideInput
@@ -394,13 +394,13 @@ a base path representing two files - &lt;sparkey-prefix&gt;.spi and &lt;sparkey-
         <span class="name">clone</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.AnyRef">AnyRef</span></span>
       </span>
       
-      <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected[<a href="../../../../../java/lang/index.html" class="extype" name="java.lang">java.lang</a>] </dd><dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
-                <span class="name">@native</span><span class="args">()</span>
-              
+      <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected[<span class="extype" name="java.lang">lang</span>] </dd><dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
                 <span class="name">@throws</span><span class="args">(<span>
       
       <span class="defval" name="classOf[java.lang.CloneNotSupportedException]">...</span>
     </span>)</span>
+              
+                <span class="name">@native</span><span class="args">()</span>
               
         </dd></dl></div>
     </li><li name="scala.AnyRef#eq" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
@@ -450,7 +450,7 @@ a base path representing two files - &lt;sparkey-prefix&gt;.spi and &lt;sparkey-
         <span class="name">finalize</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
       </span>
       
-      <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected[<a href="../../../../../java/lang/index.html" class="extype" name="java.lang">java.lang</a>] </dd><dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected[<span class="extype" name="java.lang">lang</span>] </dd><dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
                 <span class="name">@throws</span><span class="args">(<span>
       
       <span class="symbol">classOf[java.lang.Throwable]</span>
@@ -657,12 +657,12 @@ a base path representing two files - &lt;sparkey-prefix&gt;.spi and &lt;sparkey-
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
-                <span class="name">@native</span><span class="args">()</span>
-              
                 <span class="name">@throws</span><span class="args">(<span>
       
       <span class="defval" name="classOf[java.lang.InterruptedException]">...</span>
     </span>)</span>
+              
+                <span class="name">@native</span><span class="args">()</span>
               
         </dd></dl></div>
     </li>

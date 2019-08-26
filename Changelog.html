@@ -164,9 +164,11 @@ spotify/scio
   <li><a href="migrations/index.html" class="page">Migration Guides</a>
   <ul>
     <li><a href="migrations/v0.7.0-Migration-Guide.html" class="page">Scio 0.7.0</a></li>
+    <li><a href="migrations/v0.8.0.html" class="page">Scio v0.8.0</a></li>
   </ul></li>
   <li><a href="dev/index.html" class="page">Development</a>
   <ul>
+    <li><a href="dev/build.html" class="page">Build</a></li>
     <li><a href="dev/Style-Guide.html" class="page">Style Guide</a></li>
     <li><a href="dev/How-to-Release.html" class="page">How to Release</a></li>
     <li><a href="dev/Design-Philosophy.html" class="page">Design Philosophy</a></li>
@@ -258,7 +260,7 @@ spotify/scio
   <li>Java 7 is dropped and Java 8+ is required</li>
   <li><code>DataflowPipelineRunner</code> is renamed to <code>DataflowRunner</code></li>
   <li><code>DirectPipelineRunner</code> is renamed to <code>DirectRunner</code></li>
-  <li><code>BlockingDataflowPipelineRunner</code> is removed and <code>ScioContext#close()</code> will not block execution; use <code>sc.close().waitUntilDone()</code> to retain the blocking behavior, i.e. if you launch job from an orchestration engine like <a href="https://airflow.apache.org/">Airflow</a> or <a href="https://github.com/spotify/luigi">Luigi</a></li>
+  <li><code>BlockingDataflowPipelineRunner</code> is removed and <code>ScioContext#close()</code> will not block execution; use <code>sc.run().waitUntilDone()</code> to retain the blocking behavior, i.e. if you launch job from an orchestration engine like <a href="https://airflow.apache.org/">Airflow</a> or <a href="https://github.com/spotify/luigi">Luigi</a></li>
   <li>You should set <code>tempLocation</code> instead of <code>stagingLocation</code> regardless of runner; set it to a local path for <code>DirectRunner</code> or a GCS path for <code>DataflowRunner</code>; if not set, <code>DataflowRunner</code> will create a default bucket for the project</li>
   <li>Type safe BigQuery is now stable API; use <code>import com.spotify.scio.bigquery._</code> instead of <code>import com.spotify.scio.experimental._</code></li>
   <li><code>scio-bigtable</code> no longer depends on HBase and uses Protobuf based Bigtable API; check out the updated <a href="https://spotify.github.io/scio/examples/BigtableExample.scala.html">example</a></li>

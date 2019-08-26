@@ -8,17 +8,17 @@
           <meta name="keywords" content="" />
           <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
           
+      
       <link href="../../../../../lib/index.css" media="screen" type="text/css" rel="stylesheet" />
       <link href="../../../../../lib/template.css" media="screen" type="text/css" rel="stylesheet" />
       <link href="../../../../../lib/diagrams.css" media="screen" type="text/css" rel="stylesheet" id="diagrams-css" />
-      <script type="text/javascript" src="../../../../../lib/jquery.js"></script>
+      <script type="text/javascript" src="../../../../../lib/jquery.min.js"></script>
       <script type="text/javascript" src="../../../../../lib/jquery.panzoom.min.js"></script>
       <script type="text/javascript" src="../../../../../lib/jquery.mousewheel.min.js"></script>
       <script type="text/javascript" src="../../../../../lib/index.js"></script>
       <script type="text/javascript" src="../../../../../index.js"></script>
       <script type="text/javascript" src="../../../../../lib/scheduler.js"></script>
       <script type="text/javascript" src="../../../../../lib/template.js"></script>
-      <script type="text/javascript" src="../../../../../lib/tools.tooltip.js"></script>
       
       <script type="text/javascript">
         /* this variable can be used by the JS to determine the path to the root document */
@@ -56,7 +56,7 @@
                 <li name="_root_.root" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="_root_"></a><a id="root:_root_"></a>
       <span class="permalink">
-      <a href="index.html#_root_" title="Permalink">
+      <a href="../../../../../index.html" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -72,7 +72,7 @@
     </li><li name="_root_.com" visbl="pub" class="indented1 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="com"></a><a id="com:com"></a>
       <span class="permalink">
-      <a href="index.html#com" title="Permalink">
+      <a href="../../../../../com/index.html" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -88,7 +88,7 @@
     </li><li name="com.spotify" visbl="pub" class="indented2 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="spotify"></a><a id="spotify:spotify"></a>
       <span class="permalink">
-      <a href="../com/index.html#spotify" title="Permalink">
+      <a href="../../../../../com/spotify/index.html" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -104,7 +104,7 @@
     </li><li name="com.spotify.scio" visbl="pub" class="indented3 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="scio"></a><a id="scio:scio"></a>
       <span class="permalink">
-      <a href="../../com/spotify/index.html#scio" title="Permalink">
+      <a href="../../../../../com/spotify/scio/index.html" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -120,7 +120,7 @@
     </li><li name="com.spotify.scio.extra" visbl="pub" class="indented4 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="extra"></a><a id="extra:extra"></a>
       <span class="permalink">
-      <a href="../../../com/spotify/scio/index.html#extra" title="Permalink">
+      <a href="../../../../../com/spotify/scio/extra/index.html" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -136,7 +136,7 @@
     </li><li name="com.spotify.scio.extra.annoy" visbl="pub" class="indented5 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="annoy"></a><a id="annoy:annoy"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/extra/index.html#annoy" title="Permalink">
+      <a href="../../../../../com/spotify/scio/extra/annoy/index.html" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -148,10 +148,10 @@
         <a title="Main package for Annoy side input APIs." href="index.html"><span class="name">annoy</span></a>
       </span>
       
-      <p class="shortcomment cmt">Main package for Annoy side input APIs.</p><div class="fullcomment"><div class="comment cmt"><p>Main package for Annoy side input APIs. Import all.</p><pre><span class="kw">import</span> com.spotify.scio.extra.annoy._</pre><p>Two metrics are available, Angular and Euclidean.</p><p>To save an <code>SCollection[(Int, Array[Float])]</code> to an Annoy file:</p><pre><span class="kw">val</span> s = sc.parallelize(<span class="std">Seq</span>( <span class="num">1</span>-&gt; <span class="std">Array</span>(<span class="num">1.2</span>f, <span class="num">3.4</span>f), <span class="num">2</span> -&gt; <span class="std">Array</span>(<span class="num">2.2</span>f, <span class="num">1.2</span>f)))</pre><p>Save to a temporary location:</p><pre><span class="kw">val</span> s1 = s.asAnnoy(Angular, <span class="num">40</span>, <span class="num">10</span>)</pre><p>Save to a specific location:</p><pre><span class="kw">val</span> s1 = s.asAnnoy(Angular, <span class="num">40</span>, <span class="num">10</span>, <span class="lit">"gs://<bucket>/<path>"</span>)</pre><p><code>SCollection[AnnoyUri]</code> can be converted into a side input:</p><pre><span class="kw">val</span> s = sc.parallelize(<span class="std">Seq</span>( <span class="num">1</span>-&gt; <span class="std">Array</span>(<span class="num">1.2</span>f, <span class="num">3.4</span>f), <span class="num">2</span> -&gt; <span class="std">Array</span>(<span class="num">2.2</span>f, <span class="num">1.2</span>f)))
+      <p class="shortcomment cmt">Main package for Annoy side input APIs.</p><div class="fullcomment"><div class="comment cmt"><p>Main package for Annoy side input APIs. Import all.</p><pre><span class="kw">import</span> com.spotify.scio.extra.annoy._</pre><p>Two metrics are available, Angular and Euclidean.</p><p>To save an <code>SCollection[(Int, Array[Float])]</code> to an Annoy file:</p><pre><span class="kw">val</span> s = sc.parallelize(<span class="std">Seq</span>( <span class="num">1</span>-&gt; <span class="std">Array</span>(<span class="num">1.2</span>f, <span class="num">3.4</span>f), <span class="num">2</span> -&gt; <span class="std">Array</span>(<span class="num">2.2</span>f, <span class="num">1.2</span>f)))</pre><p>Save to a temporary location:</p><pre><span class="kw">val</span> s1 = s.asAnnoy(Angular, <span class="num">40</span>, <span class="num">10</span>)</pre><p>Save to a specific location:</p><pre><span class="kw">val</span> s1 = s.asAnnoy(Angular, <span class="num">40</span>, <span class="num">10</span>, <span class="lit">"gs://&lt;bucket&gt;/&lt;path&gt;"</span>)</pre><p><code>SCollection[AnnoyUri]</code> can be converted into a side input:</p><pre><span class="kw">val</span> s = sc.parallelize(<span class="std">Seq</span>( <span class="num">1</span>-&gt; <span class="std">Array</span>(<span class="num">1.2</span>f, <span class="num">3.4</span>f), <span class="num">2</span> -&gt; <span class="std">Array</span>(<span class="num">2.2</span>f, <span class="num">1.2</span>f)))
 <span class="kw">val</span> side = s.asAnnoySideInput(metric, dimension, numTrees)</pre><p>There's syntactic sugar for saving an SCollection and converting it to a side input:</p><pre><span class="kw">val</span> s = sc
   .parallelize(<span class="std">Seq</span>( <span class="num">1</span>-&gt; <span class="std">Array</span>(<span class="num">1.2</span>f, <span class="num">3.4</span>f), <span class="num">2</span> -&gt; <span class="std">Array</span>(<span class="num">2.2</span>f, <span class="num">1.2</span>f)))
-  .asAnnoySideInput(metric, dimension, numTrees)</pre><p>An existing Annoy file can be converted to a side input directly:</p><pre>sc.annoySideInput(metric, dimension, numTrees, <span class="lit">"gs://<bucket>/<path>"</span>)</pre><p><code>AnnoyReader</code> provides nearest neighbor lookups by vector as well as item lookups:</p><pre><span class="kw">val</span> data = (<span class="num">0</span> until <span class="num">1000</span>).map(x <span class="kw">=&gt;</span> (x, <span class="std">Array</span>.fill(<span class="num">40</span>)(r.nextFloat())))
+  .asAnnoySideInput(metric, dimension, numTrees)</pre><p>An existing Annoy file can be converted to a side input directly:</p><pre>sc.annoySideInput(metric, dimension, numTrees, <span class="lit">"gs://&lt;bucket&gt;/&lt;path&gt;"</span>)</pre><p><code>AnnoyReader</code> provides nearest neighbor lookups by vector as well as item lookups:</p><pre><span class="kw">val</span> data = (<span class="num">0</span> until <span class="num">1000</span>).map(x <span class="kw">=&gt;</span> (x, <span class="std">Array</span>.fill(<span class="num">40</span>)(r.nextFloat())))
 <span class="kw">val</span> main = sc.parallelize(data)
 <span class="kw">val</span> side = main.asAnnoySideInput(metric, dimension, numTrees)
 
@@ -367,13 +367,13 @@ Supports vector lookup by item  as well as nearest neighbor lookup by vector.
         <span class="name">clone</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.AnyRef">AnyRef</span></span>
       </span>
       
-      <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected[<a href="../../../../../java/lang/index.html" class="extype" name="java.lang">java.lang</a>] </dd><dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
-                <span class="name">@native</span><span class="args">()</span>
-              
+      <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected[<span class="extype" name="java.lang">lang</span>] </dd><dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
                 <span class="name">@throws</span><span class="args">(<span>
       
       <span class="defval" name="classOf[java.lang.CloneNotSupportedException]">...</span>
     </span>)</span>
+              
+                <span class="name">@native</span><span class="args">()</span>
               
         </dd></dl></div>
     </li><li name="scala.AnyRef#eq" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
@@ -423,7 +423,7 @@ Supports vector lookup by item  as well as nearest neighbor lookup by vector.
         <span class="name">finalize</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
       </span>
       
-      <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected[<a href="../../../../../java/lang/index.html" class="extype" name="java.lang">java.lang</a>] </dd><dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected[<span class="extype" name="java.lang">lang</span>] </dd><dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
                 <span class="name">@throws</span><span class="args">(<span>
       
       <span class="symbol">classOf[java.lang.Throwable]</span>
@@ -678,12 +678,12 @@ Supports vector lookup by item  as well as nearest neighbor lookup by vector.
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
-                <span class="name">@native</span><span class="args">()</span>
-              
                 <span class="name">@throws</span><span class="args">(<span>
       
       <span class="defval" name="classOf[java.lang.InterruptedException]">...</span>
     </span>)</span>
+              
+                <span class="name">@native</span><span class="args">()</span>
               
         </dd></dl></div>
     </li>

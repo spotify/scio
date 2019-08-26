@@ -164,9 +164,11 @@ spotify/scio
   <li><a href="../migrations/index.html" class="page">Migration Guides</a>
   <ul>
     <li><a href="../migrations/v0.7.0-Migration-Guide.html" class="page">Scio 0.7.0</a></li>
+    <li><a href="../migrations/v0.8.0.html" class="page">Scio v0.8.0</a></li>
   </ul></li>
   <li><a href="../dev/index.html" class="page">Development</a>
   <ul>
+    <li><a href="../dev/build.html" class="page">Build</a></li>
     <li><a href="../dev/Style-Guide.html" class="page">Style Guide</a></li>
     <li><a href="../dev/How-to-Release.html" class="page">How to Release</a></li>
     <li><a href="../dev/Design-Philosophy.html" class="page">Design Philosophy</a></li>
@@ -245,7 +247,7 @@ object ParquetJob {
       // Map out projected fields right after reading
       .map(r =&gt; (r.getIntField, r.getStringField, r.getBooleanField))
 
-    sc.close()
+    sc.run()
     ()
   }
 }
@@ -270,7 +272,7 @@ object ParquetJob {
       // filter natively with the same logic in case of mock input in `JobTest`
       .filter(predicate.native)
 
-    sc.close()
+    sc.run()
     ()
   }
 }

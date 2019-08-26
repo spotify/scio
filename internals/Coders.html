@@ -164,9 +164,11 @@ spotify/scio
   <li><a href="../migrations/index.html" class="page">Migration Guides</a>
   <ul>
     <li><a href="../migrations/v0.7.0-Migration-Guide.html" class="page">Scio 0.7.0</a></li>
+    <li><a href="../migrations/v0.8.0.html" class="page">Scio v0.8.0</a></li>
   </ul></li>
   <li><a href="../dev/index.html" class="page">Development</a>
   <ul>
+    <li><a href="../dev/build.html" class="page">Build</a></li>
     <li><a href="../dev/Style-Guide.html" class="page">Style Guide</a></li>
     <li><a href="../dev/How-to-Release.html" class="page">How to Release</a></li>
     <li><a href="../dev/Design-Philosophy.html" class="page">Design Philosophy</a></li>
@@ -291,25 +293,7 @@ final case class TA(anInt: Int, aString: String) extends Top
 final case class TB(anDouble: Double) extends Top
 
 Coder[Top]
-// res3: Coder[Top] = Disjunction(
-//   &quot;repl.Session.App.Top&quot;,
-//   Beam(BooleanCoder),
-//   &lt;function1&gt;,
-//   Map(
-//     false -&gt; Record(
-//       &quot;repl.Session.App.TA&quot;,
-//       Array((&quot;anInt&quot;, Beam(VarIntCoder)), (&quot;aString&quot;, Beam(StringUtf8Coder))),
-//       &lt;function1&gt;,
-//       &lt;function1&gt;
-//     ),
-//     true -&gt; Record(
-//       &quot;repl.Session.App.TB&quot;,
-//       Array((&quot;anDouble&quot;, Beam(DoubleCoder))),
-//       &lt;function1&gt;,
-//       &lt;function1&gt;
-//     )
-//   )
-// )
+// res3: Coder[Top] = Ref(repl.Session.App.Top)
 </code></pre>
 <h3><a href="#coder-fallbacks" name="coder-fallbacks" class="anchor"><span class="anchor-link"></span></a>Coder fallbacks</h3>
 <p>Sometimes, no <code>Coder</code> instance can be found, and it&rsquo;s impossible to automatically derive one. In that case, Scio will fallback to a Kryo coder for that specific type, and if the scalac flag <code>-Xmacro-settings:show-coder-fallback=true</code> is set, a warning message will be displayed <strong>at compile time</strong>. This message should help you fix the warning.</p>

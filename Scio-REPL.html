@@ -164,9 +164,11 @@ spotify/scio
   <li><a href="migrations/index.html" class="page">Migration Guides</a>
   <ul>
     <li><a href="migrations/v0.7.0-Migration-Guide.html" class="page">Scio 0.7.0</a></li>
+    <li><a href="migrations/v0.8.0.html" class="page">Scio v0.8.0</a></li>
   </ul></li>
   <li><a href="dev/index.html" class="page">Development</a>
   <ul>
+    <li><a href="dev/build.html" class="page">Build</a></li>
     <li><a href="dev/Style-Guide.html" class="page">Style Guide</a></li>
     <li><a href="dev/How-to-Release.html" class="page">How to Release</a></li>
     <li><a href="dev/Design-Philosophy.html" class="page">Design Philosophy</a></li>
@@ -284,24 +286,36 @@ $ sbt scio-repl/assembly
 <h2><a href="#tutorial" name="tutorial" class="anchor"><span class="anchor-link"></span></a>Tutorial</h2>
 <h3><a href="#local-pipeline" name="local-pipeline" class="anchor"><span class="anchor-link"></span></a>Local pipeline</h3>
 <p>Let&rsquo;s start with simple local-mode word count example:</p>
-<pre><code>scio&gt; val wordCount = sc.textFile(&quot;README.md&quot;).flatMap(_.split(&quot;[^a-zA-Z&#39;]+&quot;).filter(_.nonEmpty)).countByValue.map(_.toString).saveAsTextFile(&quot;/tmp/local_wordcount&quot;)
-scio&gt; sc.close()
-scio&gt; wordCount.waitForResult().value.take(3).foreach(println)
-(but,4)
-(via,4)
-(Hadoop,6)
+<pre class="prettyprint"><code class="language-scala">def wordCount = sc
+    .textFile(&quot;README.md&quot;)
+    .flatMap(_.split(&quot;[^a-zA-Z&#39;]+&quot;).filter(_.nonEmpty))
+    .countByValue
+    .map(_.toString)
+    .saveAsTextFile(&quot;/tmp/local_wordcount&quot;)
+
+def scioResult = sc.run().waitUntilDone()
+
+def values = scioResult.tap(wordCount).value.take(3)
 </code></pre>
-<p>Make sure <code>README.md</code> is in the current directory. This example counts words in local file using a local runner (<a href="https://beam.apache.org/releases/javadoc/2.13.0/?org/apache/beam/runners/direct/DirectRunner.html"><code>DirectRunner</code></a> and writes result in a local file. The pipeline and actual computation starts on <code>sc.close()</code>. The last command take 3 lines from results and prints them.</p>
+<p>Make sure <code>README.md</code> is in the current directory. This example counts words in local file using a local runner (<a href="https://beam.apache.org/releases/javadoc/2.15.0/?org/apache/beam/runners/direct/DirectRunner.html"><code>DirectRunner</code></a> and writes result in a local file. The pipeline and actual computation starts on <code>sc.run()</code>. The last command take 3 lines from results and prints them.</p>
 <h3><a href="#local-pipeline-" name="local-pipeline-" class="anchor"><span class="anchor-link"></span></a>Local pipeline ++</h3>
 <p>In the next example we will spice things up a bit and read data from GCS:</p>
-<pre><code>scio&gt; :newScio
-scio&gt; val shakespeare = sc.textFile(&quot;gs://dataflow-samples/shakespeare/hamlet.txt&quot;)
-scio&gt; val wordCount = shakespeare.flatMap(_.split(&quot;[^a-zA-Z&#39;]+&quot;).filter(_.nonEmpty)).countByValue.map(_.toString).saveAsTextFile(&quot;/tmp/gcs-wordcount&quot;)
-scio&gt; sc.close()
-scio&gt; wordCount.waitForResult().value.take(3).foreach(println)
-(frown&#39;st,1)
-(comfortable,13)
-(diversity,1)
+<pre><code>:newScio
+</code></pre>
+<pre class="prettyprint"><code class="language-scala">def shakespeare = sc.textFile(&quot;gs://dataflow-samples/shakespeare/hamlet.txt&quot;)
+
+def wordCount = shakespeare
+    .flatMap(_.split(&quot;[^a-zA-Z&#39;]+&quot;).filter(_.nonEmpty))
+    .countByValue
+    .map(_.toString)
+    .saveAsTextFile(&quot;/tmp/gcs-wordcount&quot;)
+
+def result = sc
+    .run()
+    .waitUntilDone()
+    .tap(wordCount)
+    .value
+    .take(3)
 </code></pre>
 <p>Each Scio context is associated with one and only one pipeline. The previous instance of <code>sc</code> was used for the local pipeline example and cannot be reused anymore. The first magic command, <code>:newScio</code> creates a new context as <code>sc</code>. The pipeline still performs computation locally, but reads data from Google Cloud Storage (it could also be BigQuery, Datastore, etc). This example may take a bit longer due to additional network overhead.</p>
 <h3><a href="#dataflow-service-pipeline" name="dataflow-service-pipeline" class="anchor"><span class="anchor-link"></span></a>Dataflow service pipeline</h3>
@@ -323,14 +337,21 @@ Type :help for more information.
 
 BigQuery client available as &#39;bq&#39;
 Scio context available as &#39;sc&#39;
+</code></pre>
+<pre class="prettyprint"><code class="language-scala">def shakespeare = sc.textFile(&quot;gs://dataflow-samples/shakespeare/*&quot;)
 
-scio&gt; val shakespeare = sc.textFile(&quot;gs://dataflow-samples/shakespeare/*&quot;)
-scio&gt; val wordCount = shakespeare.flatMap(_.split(&quot;[^a-zA-Z&#39;]+&quot;).filter(_.nonEmpty)).countByValue.map(_.toString).saveAsTextFile(&quot;gs://&lt;gcs-output-dir&gt;&quot;)
-scio&gt; sc.close()
-scio&gt; wordCount.waitForResult().value.take(3).foreach(println)
-(decreased,1)
-(&#39;shall&#39;,2)
-(War,4)
+def wordCount = shakespeare
+    .flatMap(_.split(&quot;[^a-zA-Z&#39;]+&quot;).filter(_.nonEmpty))
+    .countByValue
+    .map(_.toString)
+    .saveAsTextFile(&quot;gs://&lt;gcs-output-dir&gt;&quot;)
+
+def result = sc
+    .run()
+    .waitUntilDone()
+    .tap(wordCount)
+    .value
+    .take(3)
 </code></pre>
 <p>In this case we are reading data from GCS and performing computation in GCE virtual machines managed by Dataflow service. The last line is an example of reading data from GCS files to local memory after a context is closed. Most write operations in Scio return <code>Future[Tap[T]]</code> where a <a href="http://spotify.github.io/scio/api/com/spotify/scio/io/Tap.html"><code>Tap[T]</code></a> encapsulates some dataset that can be re-opened in another context or directly.</p>
 <p>Use <code>:scioOpts</code> to view or update Dataflow options inside the REPL. New options will be applied the next time you create a context.</p>
@@ -358,15 +379,21 @@ Type :help for more information.
 
 BigQuery client available as &#39;bq&#39;
 Scio context available as &#39;sc&#39;
+</code></pre>
+<pre class="prettyprint"><code class="language-scala">def tornadoes = sc.bigQuerySelect(&quot;SELECT tornado, month FROM [clouddataflow-readonly:samples.weather_stations]&quot;)
+ 
+def counts = tornadoes
+    .flatMap(r =&gt; if (r.getBoolean(&quot;tornado&quot;)) Seq(r.getLong(&quot;month&quot;)) else Nil)
+    .countByValue
+    .map(kv =&gt; TableRow(&quot;month&quot; -&gt; kv._1, &quot;tornado_count&quot; -&gt; kv._2))
+    .take(3)
+    .materialize
 
-scio&gt; val tornadoes = sc.bigQuerySelect(&quot;SELECT tornado, month FROM [clouddataflow-readonly:samples.weather_stations]&quot;)
-scio&gt; val counts = tornadoes.flatMap(r =&gt; if (r.getBoolean(&quot;tornado&quot;)) Seq(r.getLong(&quot;month&quot;)) else Nil).countByValue.map(kv =&gt; TableRow(&quot;month&quot; -&gt; kv._1, &quot;tornado_count&quot; -&gt; kv._2))
-scio&gt; val result = counts.take(3).materialize
-scio&gt; sc.close()
-scio&gt; result.waitForResult().value.foreach(println)
-{month=4, tornado_count=5}
-{month=3, tornado_count=6}
-{month=5, tornado_count=6}
+def result = sc
+    .run()
+    .waitUntilDone()
+    .tap(counts)
+    .value
 </code></pre>
 <p>In this example we combine power of BigQuery and flexibility of Dataflow. We first query BigQuery table, perform a couple of transformations and take (<code>take(3)</code>) some data back locally (<code>materialize</code>) to view the results.</p>
 <h3><a href="#bigquery-project-id" name="bigquery-project-id" class="anchor"><span class="anchor-link"></span></a>BigQuery project id</h3>
@@ -382,45 +409,49 @@ scio&gt; result.waitForResult().value.foreach(println)
 <p>This means that you can always set <code>bigquery.project</code> and it will take precedence over other configurations. Read more about gcloud configuration <a href="https://cloud.google.com/sdk/gcloud/reference/config/">here</a>.</p>
 <h3><a href="#i-o-commands" name="i-o-commands" class="anchor"><span class="anchor-link"></span></a>I/O Commands</h3>
 <p>There are few built-in commands for simple file I/O.</p>
-<pre class="prettyprint"><code class="language-scala">// Read from an Avro, text, CSV or TSV file on local filesystem or GCS.
-def readAvro[T : ClassTag](path: String): Iterator[T]
-def readText(path: String): Iterator[String]
+<pre class="prettyprint"><code class="language-scala">import scala.reflect._
+import kantan.csv._
+
+// Read from an Avro, text, CSV or TSV file on local filesystem or GCS.
+def readAvro[T : ClassTag](path: String): Iterator[T] = ???
+def readText(path: String): Iterator[String] = ???
 def readCsv[T: RowDecoder](path: String,
                            sep: Char = &#39;,&#39;,
-                           header: Boolean = false): Iterator[T]
-def readTsv[T: RowDecoder](path: String
+                           header: Boolean = false): Iterator[T] = ???
+def readTsv[T: RowDecoder](path: String,
                            sep: Char = &#39;\t&#39;,
-                           header: Boolean = false): Iterator[T]
+                           header: Boolean = false): Iterator[T] = ???
 
 // Write to an Avro, text, CSV or TSV file on local filesystem or GCS.
-def writeAvro[T: ClassTag](path: String, data: Seq[T]): Unit
-def writeText(path: String, data: Seq[String]): Unit
+def writeAvro[T: ClassTag](path: String, data: Seq[T]): Unit = ???
+def writeText(path: String, data: Seq[String]): Unit = ???
 def writeCsv[T: RowEncoder](path: String, data: Seq[T],
                             sep: Char = &#39;,&#39;,
-                            header: Seq[String] = Seq.empty): Unit
+                            header: Seq[String] = Seq.empty): Unit = ???
 def writeTsv[T: RowEncoder](path: String, data: Seq[T],
                             sep: Char = &#39;\t&#39;,
-                            header: Seq[String] = Seq.empty): Unit
+                            header: Seq[String] = Seq.empty): Unit = ???
 </code></pre>
 <h2><a href="#tips" name="tips" class="anchor"><span class="anchor-link"></span></a>Tips</h2>
 <h3><a href="#multi-line-code" name="multi-line-code" class="anchor"><span class="anchor-link"></span></a>Multi-line code</h3>
 <p>While in the REPL, use <code>:paste</code> magic command to paste or write multi-line code</p>
-<pre><code>scio&gt; :paste
-// Entering paste mode (ctrl-D to finish)
+<pre><code>:paste
+</code></pre>
+<pre class="prettyprint"><code class="language-scala">// Entering paste mode (ctrl-D to finish)
+import com.spotify.scio.io.ClosedTap
+import com.spotify.scio.values.SCollection
 
-def evenNumber(x: Int) = x % 2 == 0
-val evenNumbers = sc.parallelize(1 to 100).filter(evenNumber)
+def evenNumber(x: Int): Boolean = x % 2 == 0
+def evenNumbers: SCollection[Int] = sc.parallelize(1 to 100).filter(evenNumber)
 
 // Exiting paste mode, now interpreting.
 
-evenNumber: (x: Int)Boolean
-evenNumbers: com.spotify.scio.values.SCollection[Int] = com.spotify.scio.values.SCollectionImpl@14fe085b
+def tap: ClosedTap[String] = evenNumbers.saveAsTextFile(&quot;/tmp/even&quot;)
 
-scio&gt; evenNumbers.saveAsTextFile(&quot;/tmp/even&quot;)
-scio&gt; sc.close()
+def result = sc.run()
 </code></pre>
 <h3><a href="#running-jobs-asynchronously" name="running-jobs-asynchronously" class="anchor"><span class="anchor-link"></span></a>Running jobs asynchronously</h3>
-<p>When using REPL and Dataflow service consider using the non-blocking <a href="https://beam.apache.org/releases/javadoc/2.13.0/?org/apache/beam/runners/dataflow/DataflowRunner.html"><code>DataflowRunner</code></a> for a more interactive experience. To start:</p>
+<p>When using REPL and Dataflow service consider using the non-blocking <a href="https://beam.apache.org/releases/javadoc/2.15.0/?org/apache/beam/runners/dataflow/DataflowRunner.html"><code>DataflowRunner</code></a> for a more interactive experience. To start:</p>
 <pre><code>java -jar scio-repl-0.7.0.jar \
 &gt; --project=&lt;project-id&gt; \
 &gt; --stagingLocation=&lt;stagin-dir&gt; \
@@ -438,18 +469,23 @@ Type :help for more information.
 
 BigQuery client available as &#39;bq&#39;
 Scio context available as &#39;sc&#39;
-
-scio&gt; sc.parallelize(1 to 100).map( _.toString ).saveAsTextFile(&quot;gs://&lt;output&gt;&quot;)
-res0: scala.concurrent.Future[com.spotify.scio.io.Tap[String]] = scala.concurrent.impl.Promise$DefaultPromise@1399ad68
-scio&gt; val result = sc.close()
-[main] INFO org.apache.beam.runners.dataflow.DataflowRunner - Executing pipeline on the Dataflow Service, which will have billing implications related to Google Compute Engine usage and other Google Cloud Services.
-[main] INFO org.apache.beam.runners.dataflow.util.PackageUtil - Uploading 3 files from PipelineOptions.filesToStage to staging location to prepare for execution.
-[main] INFO org.apache.beam.runners.dataflow.util.PackageUtil - Uploading PipelineOptions.filesToStage complete: 2 files newly uploaded, 1 files cached
-Dataflow SDK version: 2.9.0
-scio&gt; result.state
-res1: org.apache.beam.sdk.PipelineResult.State = RUNNING
 </code></pre>
-<p>Note that now <code>sc.close()</code> doesn&rsquo;t block and wait until job completes and gives back control of the REPL right away. Use <a href="https://spotify.github.io/scio/api/com/spotify/scio/ClosedScioContext.html"><code>ClosedScioContext</code></a> to check for progress, results and orchestrate jobs.</p>
+<pre class="prettyprint"><code class="language-scala">import com.spotify.scio.io.ClosedTap
+
+def closedTap: ClosedTap[String] = sc
+    .parallelize(1 to 100)
+    .map( _.toString )
+    .saveAsTextFile(&quot;gs://&lt;output&gt;&quot;)
+
+def result = sc.run()
+// [main] INFO org.apache.beam.runners.dataflow.DataflowRunner - Executing pipeline on the Dataflow Service, which will have billing implications related to Google Compute Engine usage and other Google Cloud Services.
+// [main] INFO org.apache.beam.runners.dataflow.util.PackageUtil - Uploading 3 files from PipelineOptions.filesToStage to staging location to prepare for execution.
+// [main] INFO org.apache.beam.runners.dataflow.util.PackageUtil - Uploading PipelineOptions.filesToStage complete: 2 files newly uploaded, 1 files cached
+// Dataflow SDK version: 2.9.0
+
+def state = result.state
+</code></pre>
+<p>Note that now <code>sc.run()</code> doesn&rsquo;t block and wait until job completes and gives back control of the REPL right away. Use <a href="https://spotify.github.io/scio/api/com/spotify/scio/ScioExecutionContext.html"><code>ScioExecutionContext</code></a> to check for progress, results and orchestrate jobs.</p>
 <h3><a href="#multiple-scio-contexts" name="multiple-scio-contexts" class="anchor"><span class="anchor-link"></span></a>Multiple Scio contexts</h3>
 <p>You can use multiple Scio context objects to work with several pipelines at the same time, simply use magic <code>:newScio &lt;context name&gt;</code>, for example:</p>
 <pre><code>scio&gt; :newScio c1
@@ -476,18 +512,20 @@ Type :help for more information.
 
 BigQuery client available as &#39;bq&#39;
 Scio context available as &#39;sc&#39;
+</code></pre>
+<pre class="prettyprint"><code class="language-scala">@BigQueryType.fromQuery(&quot;SELECT tornado, month FROM [clouddataflow-readonly:samples.weather_stations]&quot;) class Row
 
-scio&gt; @BigQueryType.fromQuery(&quot;SELECT tornado, month FROM [clouddataflow-readonly:samples.weather_stations]&quot;) class Row
-scio&gt; val tornadoes = bq.getTypedRows[Row]()
-scio&gt; tornadoes.next.month
-res0: Option[Long] = Some(5)
-scio&gt; bq.writeTypedRows(&quot;project-id:dataset-id.table-id&quot;, tornadoes.take(100).toList)
+def tornadoes = bq.getTypedRows[Row]()
+
+def result = tornadoes.next.month
+
+def write = bq.writeTypedRows(&quot;project-id:dataset-id.table-id&quot;, tornadoes.take(100).toList)
 </code></pre>
 <h3><a href="#out-of-memory-exception" name="out-of-memory-exception" class="anchor"><span class="anchor-link"></span></a>Out of memory exception</h3>
 <p>In case of OOM exceptions, like for example:</p>
-<pre><code>scio&gt; res1.waitForResult().value.next
-Exception in thread &quot;main&quot;
-Exception: java.lang.OutOfMemoryError thrown from the UncaughtExceptionHandler in thread &quot;main&quot;
+<pre class="prettyprint"><code class="language-scala">def closedTap: ClosedTap[String] = ???
+
+def result = sc.run().waitUntilDone().tap(closedTap).value.next
 </code></pre>
 <p>simply increase the size of the heap - be reasonable about the amount of data and heap size though.</p>
 <p>Example of REPL startup with 2GiB of heap size:</p>
@@ -507,11 +545,12 @@ Type :help for more information.
 BigQuery client available as &#39;bq&#39;
 Scio context available as &#39;sc&#39;
 
-scio&gt; Runtime.getRuntime().maxMemory();
-res1: Long = 1908932608
+</code></pre>
+<pre class="prettyprint"><code class="language-scala">Runtime.getRuntime().maxMemory()
+// res1: Long = 1908932608
 </code></pre>
 <h3><a href="#what-is-the-type-of-an-expression-" name="what-is-the-type-of-an-expression-" class="anchor"><span class="anchor-link"></span></a>What is the type of an expression?</h3>
-<p>Use build in <code>:t</code> magic, <code>:t</code> displays the type of an expression without evaluating it. Example:</p>
+<p>Use the built in <code>:t</code>! <code>:t</code> displays the type of an expression without evaluating it. Example:</p>
 <pre><code>scio&gt; :t sc.textFile(&quot;README&quot;).flatMap(_.split(&quot;[^a-zA-Z&#39;]+&quot;)).filter(_.nonEmpty).map(_.length)
 com.spotify.scio.values.SCollection[Int]
 </code></pre>

@@ -164,9 +164,11 @@ spotify/scio
   <li><a href="../migrations/index.html" class="page">Migration Guides</a>
   <ul>
     <li><a href="../migrations/v0.7.0-Migration-Guide.html" class="page">Scio 0.7.0</a></li>
+    <li><a href="../migrations/v0.8.0.html" class="page">Scio v0.8.0</a></li>
   </ul></li>
   <li><a href="../dev/index.html" class="page">Development</a>
   <ul>
+    <li><a href="../dev/build.html" class="page">Build</a></li>
     <li><a href="../dev/Style-Guide.html" class="page">Style Guide</a></li>
     <li><a href="../dev/How-to-Release.html" class="page">How to Release</a></li>
     <li><a href="../dev/Design-Philosophy.html" class="page">Design Philosophy</a></li>
@@ -232,7 +234,7 @@ scio&gt; val words = sc.textFile(&quot;README.md&quot;).
      | filter(_.nonEmpty).
      | aggregate(CMS.aggregator[String](0.001, 1E-10, 1)).
      | materialize
-scio&gt; sc.close()
+scio&gt; sc.run()
 scio&gt; val cms = words.waitForResult().value.next
 scio&gt; cms.frequency(&quot;scio&quot;).estimate
 res2: Long = 19
