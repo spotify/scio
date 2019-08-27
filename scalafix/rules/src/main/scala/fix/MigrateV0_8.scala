@@ -4,7 +4,7 @@ package v0_8_0
 import scalafix.v1._
 import scala.meta._
 
-private class FixRunWithContext extends SemanticRule("FixRunWithContext") {
+final class FixRunWithContext extends SemanticRule("FixRunWithContext") {
 
   private def fixSubtree(name: String)(doc: SyntacticDocument): Patch = {
     doc.tree.collect {
@@ -44,7 +44,7 @@ private class FixRunWithContext extends SemanticRule("FixRunWithContext") {
   }
 }
 
-private class FixScioIO extends SemanticRule("FixScioIO") {
+final class FixScioIO extends SemanticRule("FixScioIO") {
 
   // Check that the method is a member of an implementation of ScioIO
   private def isScioIOMember(t: Tree)(implicit doc: SemanticDocument) =
@@ -69,7 +69,7 @@ private class FixScioIO extends SemanticRule("FixScioIO") {
   }
 }
 
-private class FixSyntaxImports extends SemanticRule("FixSyntaxImports") {
+final class FixSyntaxImports extends SemanticRule("FixSyntaxImports") {
   private val imports =
     scala.collection.mutable.ArrayBuffer.empty[(String, String)]
 
@@ -117,7 +117,7 @@ private class FixSyntaxImports extends SemanticRule("FixSyntaxImports") {
   }
 }
 
-private class FixContextClose extends SemanticRule("FixContextClose") {
+final class FixContextClose extends SemanticRule("FixContextClose") {
   override def fix(implicit doc: SemanticDocument): Patch = {
     doc.tree.collect {
       case t @ q"$x.close()" =>
@@ -129,18 +129,5 @@ private class FixContextClose extends SemanticRule("FixContextClose") {
             Patch.empty
         }
     }.asPatch
-  }
-}
-
-class MigrateV0_8 extends SemanticRule("MigrateV0_8") {
-  override def fix(implicit doc: SemanticDocument): Patch = {
-    val fixes =
-      List(
-        new FixScioIO,
-        new FixRunWithContext,
-        new FixSyntaxImports,
-        new FixContextClose
-      )
-    fixes.map(_.fix(doc)).asPatch
   }
 }
