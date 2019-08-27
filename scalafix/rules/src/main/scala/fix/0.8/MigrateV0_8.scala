@@ -14,11 +14,11 @@ private class FixRunWithContext extends SemanticRule("FixRunWithContext") {
         Patch.empty
       case t @ Term.Select(Term.Name(`name`), x) =>
         Patch.replaceTree(t, s"$name.waitUntilFinish.$x")
-      case t @ Term.Apply(tn, ps) if ps.find(x => x.toString == name).isDefined =>
+      case t @ Term.Apply(tn, ps) if ps.exists(x => x.toString == name) =>
         val ps2 =
           ps.map {
-            case t if t.toString == name => q"$t.waitUntilFinish"
-            case t => t
+            case t if t.toString == name => q"$t.waitUntilFinish()"
+            case t                       => t
           }
         Patch.replaceTree(t, Term.Apply(tn, ps2).toString)
     }.asPatch
@@ -37,7 +37,7 @@ private class FixRunWithContext extends SemanticRule("FixRunWithContext") {
         }.asPatch
       // Convert ScioExecutionContext to ScioResult in methods that return a ScioResult
       case t @ q"def $fn(..$ps): ScioResult = {$body}" =>
-        Patch.addRight(t, ".waitUntilFinish")
+        Patch.addRight(t, ".waitUntilFinish()")
       case t =>
         Patch.empty
     }.asPatch
@@ -48,10 +48,12 @@ private class FixScioIO extends SemanticRule("FixScioIO") {
 
   // Check that the method is a member of an implementation of ScioIO
   private def isScioIOMember(t: Tree)(implicit doc: SemanticDocument) =
-    t.parent.collect {
-      case p @ Template(_) =>
-        p.inits.exists(_.tpe.symbol == Symbol("com/spotify/scio/io/ScioIO#"))
-    }.getOrElse(false)
+    t.parent
+      .collect {
+        case p @ Template(_) =>
+          p.inits.exists(_.tpe.symbol == Symbol("com/spotify/scio/io/ScioIO#"))
+      }
+      .getOrElse(false)
 
   override def fix(implicit doc: SemanticDocument): Patch = {
     doc.tree.collect {
@@ -72,12 +74,12 @@ private class FixSyntaxImports extends SemanticRule("FixSyntaxImports") {
     scala.collection.mutable.ArrayBuffer.empty[(String, String)]
 
   // Check that the package is not imported multiple times in the same file
-  def addImport(p: Position, i: Importer) = {
+  private def addImport(p: Position, i: Importer): Patch = {
     val Importer(s) = i
     val Input.VirtualFile(path, _) = p.input
 
     val t = (s.toString, path)
-    if(!imports.contains(t)) {
+    if (!imports.contains(t)) {
       imports += t
       Patch.addGlobalImport(i)
     } else Patch.empty
@@ -115,14 +117,14 @@ private class FixSyntaxImports extends SemanticRule("FixSyntaxImports") {
   }
 }
 
-private class FixWaitForResult extends SemanticRule("FixWaitForResult") {
+private class FixContextClose extends SemanticRule("FixContextClose") {
   override def fix(implicit doc: SemanticDocument): Patch = {
     doc.tree.collect {
-      case t @ q"$x.waitForResult()" =>
+      case t @ q"$x.close()" =>
         x.symbol.info.get.signature match {
-          // XXX: Hackish wait to check the type of x
-          case ValueSignature(tpe) if tpe.toString.startsWith("WaitableFutureTap") =>
-            Patch.replaceTree(t, x.syntax)
+          case ValueSignature(TypeRef(_, tpe, _))
+              if tpe == Symbol("com/spotify/scio/ScioContext#") =>
+            Patch.replaceTree(t, q"$x.run()".syntax)
           case _ =>
             Patch.empty
         }
@@ -137,7 +139,8 @@ class MigrateV0_8 extends SemanticRule("MigrateV0_8") {
         new FixScioIO,
         new FixRunWithContext,
         new FixSyntaxImports,
-        new FixWaitForResult)
+        new FixContextClose
+      )
     fixes.map(_.fix(doc)).asPatch
   }
 }

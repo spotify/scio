@@ -1,6 +1,6 @@
 /*
 rule = MigrateV0_8
-*/
+ */
 package fix
 package v0_8_0
 
@@ -22,18 +22,18 @@ class ValidateInvoicePaymentsJobTest extends PipelineSpec {
     doSomething(r)
     doSomethingElse(r, "hello") shouldBe ()
     doSomethingElse(r, "hello") should
-      be ()
+      be()
 
-    val r2 = runWithContext {
-      sc => {
+    val r2 = runWithContext { sc =>
+      {
         ()
       }
     }
-    maybeReturnAnInt(r2, "yolo") should be (Some(1))
+    maybeReturnAnInt(r2, "yolo") should be(Some(1))
 
     def scioResultFn(s: String): ScioResult = {
-      runWithContext {
-        sc => {
+      runWithContext { sc =>
+        {
           ()
         }
       }

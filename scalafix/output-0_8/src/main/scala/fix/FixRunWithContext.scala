@@ -16,25 +16,25 @@ class ValidateInvoicePaymentsJobTest extends PipelineSpec {
     val r = runWithContext(_.parallelize(Seq(1, 2, 3)))
     r.isCompleted shouldBe true
     r.state shouldBe State.DONE
-    doSomething(r.waitUntilFinish)
-    doSomethingElse(r.waitUntilFinish, "hello") shouldBe ()
-    doSomethingElse(r.waitUntilFinish, "hello") should
-      be ()
+    doSomething(r.waitUntilFinish())
+    doSomethingElse(r.waitUntilFinish(), "hello") shouldBe ()
+    doSomethingElse(r.waitUntilFinish(), "hello") should
+      be()
 
-    val r2 = runWithContext {
-      sc => {
+    val r2 = runWithContext { sc =>
+      {
         ()
       }
     }
-    maybeReturnAnInt(r2.waitUntilFinish, "yolo") should be (Some(1))
+    maybeReturnAnInt(r2.waitUntilFinish(), "yolo") should be(Some(1))
 
     def scioResultFn(s: String): ScioResult = {
-      runWithContext {
-        sc => {
+      runWithContext { sc =>
+        {
           ()
         }
       }
-    }.waitUntilFinish
+    }.waitUntilFinish()
   }
 
   it should "test something else" in runWithContext { sc =>
