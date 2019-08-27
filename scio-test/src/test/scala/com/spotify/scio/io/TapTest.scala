@@ -204,7 +204,7 @@ class TapTest extends TapSpec {
 
     val sc = ScioContext()
     sc.protobufFile[SimplePBV3](dir + "/*.avro") should containInAnyOrder(expected)
-    sc.close()
+    sc.run()
 
     FileUtils.deleteDirectory(dir)
   }
@@ -223,7 +223,7 @@ class TapTest extends TapSpec {
     val sc = ScioContext()
     sc.optionsAs[ScioOptions].setNullableCoders(true)
     sc.protobufFile[SimplePBV3](dir + "/*.avro") should containInAnyOrder(expected)
-    sc.close()
+    sc.run()
 
     FileUtils.deleteDirectory(dir)
   }
