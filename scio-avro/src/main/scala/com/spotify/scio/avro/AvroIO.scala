@@ -48,7 +48,7 @@ final case class ObjectFileIO[T: Coder](path: String) extends ScioIO[T] {
    * serialization is not guaranteed to be compatible across Scio releases.
    */
   override protected def read(sc: ScioContext, params: ReadP): SCollection[T] = {
-    val coder = CoderMaterializer.beam(sc, Coder[T])
+    val coder = CoderMaterializer.beamWithDefault(Coder[T])
     implicit val bcoder = Coder.avroGenericRecordCoder(AvroBytesUtil.schema)
     sc.read(GenericRecordIO[GenericRecord](path, AvroBytesUtil.schema))
       .parDo(new DoFn[GenericRecord, T] {
@@ -65,7 +65,7 @@ final case class ObjectFileIO[T: Coder](path: String) extends ScioIO[T] {
    * serialization is not guaranteed to be compatible across Scio releases.
    */
   override protected def write(data: SCollection[T], params: WriteP): Tap[T] = {
-    val elemCoder = CoderMaterializer.beam(data.context, Coder[T])
+    val elemCoder = CoderMaterializer.beamWithDefault(Coder[T])
     implicit val bcoder = Coder.avroGenericRecordCoder(AvroBytesUtil.schema)
     data
       .parDo(new DoFn[T, GenericRecord] {
