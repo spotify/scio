@@ -1,11 +1,9 @@
 /*
-rule = MigrateV0_8
+rule = FixContextClose
  */
 package fix
 
 import com.spotify.scio._
-import com.spotify.scio.testing.PipelineSpec
-import org.apache.beam.sdk.PipelineResult.State
 
 object FixContextCloseExample {
   def getReminders(sc: ScioContext, input: String) = {

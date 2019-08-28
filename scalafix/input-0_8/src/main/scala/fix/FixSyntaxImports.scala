@@ -1,5 +1,5 @@
 /*
-rule = MigrateV0_8
+rule = FixSyntaxImports
 */
 package fix
 package v0_8_0
