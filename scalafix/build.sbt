@@ -23,7 +23,8 @@ def scio(version: String) =
     "com.spotify" %% "scio-avro",
     "com.spotify" %% "scio-bigquery",
     "com.spotify" %% "scio-test",
-    "com.spotify" %% "scio-jdbc"
+    "com.spotify" %% "scio-jdbc",
+    "com.spotify" %% "scio-tensorflow"
   ).map(_ % version)
 
 lazy val input = project.settings(
@@ -53,19 +54,22 @@ lazy val tests = project
     skip in publish := true,
     libraryDependencies += "ch.epfl.scala" % "scalafix-testkit" % V.scalafixVersion % Test cross CrossVersion.full,
     compile.in(Compile) :=
-      compile.in(Compile).dependsOn(
-        compile.in(input, Compile),
-        compile.in(`input-0_8`, Compile)
-      ).value,
+      compile
+        .in(Compile)
+        .dependsOn(
+          compile.in(input, Compile),
+          compile.in(`input-0_8`, Compile)
+        )
+        .value,
     scalafixTestkitOutputSourceDirectories :=
       sourceDirectories.in(output, Compile).value ++
-      sourceDirectories.in(`output-0_8`, Compile).value,
+        sourceDirectories.in(`output-0_8`, Compile).value,
     scalafixTestkitInputSourceDirectories :=
       sourceDirectories.in(`input-0_8`, Compile).value ++
-      sourceDirectories.in(input, Compile).value,
+        sourceDirectories.in(input, Compile).value,
     scalafixTestkitInputClasspath :=
       fullClasspath.in(input, Compile).value ++
-      fullClasspath.in(`input-0_8`, Compile).value,
+        fullClasspath.in(`input-0_8`, Compile).value
   )
   .dependsOn(rules)
   .enablePlugins(ScalafixTestkitPlugin)

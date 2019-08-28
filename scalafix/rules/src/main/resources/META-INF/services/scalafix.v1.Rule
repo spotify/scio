@@ -6,3 +6,4 @@ fix.v0_8_0.FixContextClose
 fix.v0_8_0.FixRunWithContext
 fix.v0_8_0.FixScioIO
 fix.v0_8_0.FixSyntaxImports
+fix.v0_8_0.FixTensorflow
