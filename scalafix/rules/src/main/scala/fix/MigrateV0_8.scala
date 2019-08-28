@@ -131,3 +131,12 @@ final class FixContextClose extends SemanticRule("FixContextClose") {
     }.asPatch
   }
 }
+
+final class FixTensorflow extends SemanticRule("FixTensorflow") {
+  override def fix(implicit doc: SemanticDocument): Patch = {
+    doc.tree.collect {
+      case t @ Term.Select(s, Term.Name("saveAsTfExampleFile")) =>
+        Patch.replaceTree(t, q"$s.saveAsTfRecordFile".syntax)
+    }.asPatch
+  }
+}
