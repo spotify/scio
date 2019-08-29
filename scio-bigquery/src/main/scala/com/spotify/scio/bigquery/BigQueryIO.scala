@@ -122,16 +122,15 @@ private object Reads {
   }
 }
 
-object Writes {
+private[bigquery] object Writes {
   trait WriteParamDefauls {
-    private[bigquery] val DefaultSchema: TableSchema = null
-    private[bigquery] val DefaultWriteDisposition: WriteDisposition = null
-    private[bigquery] val DefaultCreateDisposition: CreateDisposition = null
-    private[bigquery] val DefaultTableDescription: String = null
-    private[bigquery] val DefaultTimePartitioning: TimePartitioning = null
-    private[bigquery] val DefaultExtendedErrorInfo: ExtendedErrorInfo = ExtendedErrorInfo.Disabled
-    private[bigquery] val DefaultInsertErrorTransform
-      : SCollection[DefaultExtendedErrorInfo.Info] => Unit = sc => {
+    val DefaultSchema: TableSchema = null
+    val DefaultWriteDisposition: WriteDisposition = null
+    val DefaultCreateDisposition: CreateDisposition = null
+    val DefaultTableDescription: String = null
+    val DefaultTimePartitioning: TimePartitioning = null
+    val DefaultExtendedErrorInfo: ExtendedErrorInfo = ExtendedErrorInfo.Disabled
+    val DefaultInsertErrorTransform: SCollection[DefaultExtendedErrorInfo.Info] => Unit = sc => {
       // A NoOp on the failed inserts, so that we don't have DropInputs (UnconsumedReads)
       // in the pipeline graph.
       sc.withName("DropFailedInserts").map(_ => ())
