@@ -27,9 +27,10 @@ import com.spotify.scio.ScioContext
 import com.spotify.scio.bigquery.ExtendedErrorInfo._
 import com.spotify.scio.bigquery.client.BigQuery
 import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
-import com.spotify.scio.coders.{Coder, CoderMaterializer}
-import com.spotify.scio.io.{ScioIO, Tap, TapOf, TestIO, UnsupportedTap}
-import com.spotify.scio.util.ScioUtil
+import com.spotify.scio.coders._
+import com.spotify.scio.io.{ScioIO, Tap, TapOf, TestIO}
+import com.spotify.scio.schemas.{Schema, SchemaMaterializer}
+import com.spotify.scio.util.{ClosureCleaner, ScioUtil}
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.extensions.gcp.options.GcpOptions
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.TypedRead.Method
@@ -37,6 +38,7 @@ import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{CreateDisposition, 
 import org.apache.beam.sdk.io.gcp.bigquery.SchemaAndRecord
 import org.apache.beam.sdk.io.gcp.{bigquery => beam}
 import org.apache.beam.sdk.io.{Compression, TextIO}
+import org.apache.beam.sdk.schemas.utils.AvroUtils
 import org.apache.beam.sdk.transforms.SerializableFunction
 
 import scala.collection.JavaConverters._
@@ -103,19 +105,39 @@ private object Reads {
     sc.applyInternal(read)
   }
 
-  private[scio] def avroBigQueryRead[T <: HasAnnotation: ClassTag: TypeTag](sc: ScioContext) = {
-    val fn = BigQueryType[T].fromAvro
-    beam.BigQueryIO
-      .read(new SerializableFunction[SchemaAndRecord, T] {
-        override def apply(input: SchemaAndRecord): T = fn(input.getRecord)
-      })
-      .withCoder(CoderMaterializer.beam(sc, Coder.kryo[T]))
-  }
-
-  private[scio] def bqReadTable[T: ClassTag](
+  private[scio] def bqReadTable[T](
     sc: ScioContext
   )(typedRead: beam.BigQueryIO.TypedRead[T], table: TableReference): SCollection[T] =
-    sc.wrap(sc.applyInternal(typedRead.from(table)))
+    sc.wrap(sc.pipeline.apply(s"Read BQ table $table", typedRead.from(table)))
+
+  private[scio] def readParseFn[T: Coder](
+    sc: ScioContext
+  )(parseFn: SchemaAndRecord => T) = {
+    val fn = ClosureCleaner(parseFn)
+    beam.BigQueryIO
+      .read(new SerializableFunction[SchemaAndRecord, T] {
+        override def apply(input: SchemaAndRecord): T = fn(input)
+      })
+      .withCoder(CoderMaterializer.beam(sc, Coder[T]))
+  }
+}
+
+object Writes {
+  trait WriteParamDefauls {
+    private[bigquery] val DefaultSchema: TableSchema = null
+    private[bigquery] val DefaultWriteDisposition: WriteDisposition = null
+    private[bigquery] val DefaultCreateDisposition: CreateDisposition = null
+    private[bigquery] val DefaultTableDescription: String = null
+    private[bigquery] val DefaultTimePartitioning: TimePartitioning = null
+    private[bigquery] val DefaultExtendedErrorInfo: ExtendedErrorInfo = ExtendedErrorInfo.Disabled
+    private[bigquery] val DefaultInsertErrorTransform
+      : SCollection[DefaultExtendedErrorInfo.Info] => Unit = sc => {
+      // A NoOp on the failed inserts, so that we don't have DropInputs (UnconsumedReads)
+      // in the pipeline graph.
+      sc.withName("DropFailedInserts").map(_ => ())
+      ()
+    }
+  }
 }
 
 sealed trait BigQueryIO[T] extends ScioIO[T] {
@@ -202,6 +224,8 @@ final case class BigQueryTable(table: Table) extends BigQueryIO[TableRow] {
 
   override def testId: String = s"BigQueryIO(${table.spec})"
 
+  override def tap(read: ReadP): Tap[TableRow] = BigQueryTap(table.ref)
+
   override protected def read(sc: ScioContext, params: ReadP): SCollection[TableRow] =
     Reads.bqReadTable(sc)(beam.BigQueryIO.readTableRows(), table.ref)
 
@@ -222,26 +246,20 @@ final case class BigQueryTable(table: Table) extends BigQueryIO[TableRow] {
     if (params.timePartitioning != null) {
       transform = transform.withTimePartitioning(params.timePartitioning.asJava)
     }
-    val wr = data.applyInternal(transform)
-
     transform = params.extendedErrorInfo match {
       case Disabled => transform
       case Enabled  => transform.withExtendedErrorInfo()
     }
-    params.insertErrorTransform(params.extendedErrorInfo.coll(data.context, wr))
 
-    if (params.writeDisposition == WriteDisposition.WRITE_APPEND) {
-      UnsupportedTap("BigQuery with append does not support tap")
-    } else {
-      BigQueryTap(table.ref)
-    }
+    val wr = data.applyInternal(transform)
+    params.insertErrorTransform(params.extendedErrorInfo.coll(data.context, wr))
+    tap(())
   }
 
-  override def tap(read: ReadP): Tap[TableRow] = BigQueryTap(table.ref)
 }
 
 object BigQueryTable {
-  sealed trait WriteParam {
+  trait WriteParam {
     val schema: TableSchema
     val writeDisposition: WriteDisposition
     val createDisposition: CreateDisposition
@@ -251,21 +269,7 @@ object BigQueryTable {
     val insertErrorTransform: SCollection[extendedErrorInfo.Info] => Unit
   }
 
-  object WriteParam {
-    private[bigquery] val DefaultSchema: TableSchema = null
-    private[bigquery] val DefaultWriteDisposition: WriteDisposition = null
-    private[bigquery] val DefaultCreateDisposition: CreateDisposition = null
-    private[bigquery] val DefaultTableDescription: String = null
-    private[bigquery] val DefaultTimePartitioning: TimePartitioning = null
-    private[bigquery] val DefaultExtendedErrorInfo: ExtendedErrorInfo = ExtendedErrorInfo.Disabled
-    private[bigquery] val DefaultInsertErrorTransform
-      : SCollection[DefaultExtendedErrorInfo.Info] => Unit = sc => {
-      // A NoOp on the failed inserts, so that we don't have DropInputs (UnconsumedReads)
-      // in the pipeline graph.
-      sc.withName("DropFailedInserts").map(_ => ())
-      ()
-    }
-
+  object WriteParam extends Writes.WriteParamDefauls {
     @inline final def apply(
       s: TableSchema,
       wd: WriteDisposition,
@@ -290,7 +294,6 @@ object BigQueryTable {
       td: String = DefaultTableDescription,
       tp: TimePartitioning = DefaultTimePartitioning
     ): WriteParam = apply(s, wd, cd, td, tp, DefaultExtendedErrorInfo)(DefaultInsertErrorTransform)
-
   }
 
   @deprecated("this method will be removed; use apply(Table.Ref(table)) instead", "Scio 0.8")
@@ -509,17 +512,12 @@ object BigQueryTyped {
     override def testId: String = s"BigQueryIO(${table.spec})"
 
     override protected def read(sc: ScioContext, params: ReadP): SCollection[T] = {
-      @inline def typedRead(sc: ScioContext) = Reads.avroBigQueryRead[T](sc)
-      Reads.bqReadTable(sc)(typedRead(sc), table.ref)
+      val fn = Reads.readParseFn(sc)(i => bqt.fromAvro(i.getRecord))(Coder.kryo[T])
+      Reads.bqReadTable(sc)(fn, table.ref)
     }
 
     override protected def write(data: SCollection[T], params: WriteP): Tap[T] = {
       val initialTfName = data.tfName
-      val rows =
-        data
-          .map(bqt.toTableRow)
-          .withName(s"$initialTfName$$Write")
-
       val ps =
         BigQueryTable.WriteParam(
           bqt.schema,
@@ -530,7 +528,12 @@ object BigQueryTyped {
           params.extendedErrorInfo
         )(params.insertErrorTransform)
 
-      rows.write(BigQueryTable(table))(ps).underlying.map(bqt.fromTableRow)
+      data
+        .map(bqt.toTableRow)
+        .withName(s"$initialTfName$$Write")
+        .write(BigQueryTable(table))(ps)
+
+      tap(())
     }
 
     override def tap(read: ReadP): Tap[T] =
@@ -540,7 +543,6 @@ object BigQueryTyped {
   }
 
   object Table {
-
     sealed trait WriteParam {
       val writeDisposition: WriteDisposition
       val createDisposition: CreateDisposition
@@ -549,19 +551,7 @@ object BigQueryTyped {
       val insertErrorTransform: SCollection[extendedErrorInfo.Info] => Unit
     }
 
-    object WriteParam {
-      private[bigquery] val DefaultWriteDisposition: WriteDisposition = null
-      private[bigquery] val DefaultCreateDisposition: CreateDisposition = null
-      private[bigquery] val DefaultTimePartitioning: TimePartitioning = null
-      private[bigquery] val DefaultExtendedErrorInfo: ExtendedErrorInfo = ExtendedErrorInfo.Disabled
-      private[bigquery] val DefaultInsertErrorTransform
-        : SCollection[DefaultExtendedErrorInfo.Info] => Unit = sc => {
-        // A NoOp on the failed inserts, so that we don't have DropInputs (UnconsumedReads)
-        // in the pipeline graph.
-        sc.withName("DropFailedInserts").map(_ => ())
-        ()
-      }
-
+    object WriteParam extends Writes.WriteParamDefauls {
       @inline final def apply(
         wd: WriteDisposition,
         cd: CreateDisposition,
@@ -593,19 +583,110 @@ object BigQueryTyped {
       Table[T](STable.Ref(table))
   }
 
+  object BeamSchema {
+    trait WriteParam {
+      val writeDisposition: WriteDisposition
+      val createDisposition: CreateDisposition
+      val tableDescription: String
+      val timePartitioning: TimePartitioning
+      val extendedErrorInfo: ExtendedErrorInfo
+      val insertErrorTransform: SCollection[extendedErrorInfo.Info] => Unit
+    }
+
+    object WriteParam extends Writes.WriteParamDefauls {
+      @inline final def apply(
+        wd: WriteDisposition,
+        cd: CreateDisposition,
+        td: String,
+        tp: TimePartitioning,
+        ei: ExtendedErrorInfo
+      )(it: SCollection[ei.Info] => Unit): WriteParam = new WriteParam {
+        val writeDisposition: WriteDisposition = wd
+        val createDisposition: CreateDisposition = cd
+        val tableDescription: String = td
+        val timePartitioning: TimePartitioning = tp
+        val extendedErrorInfo: ei.type = ei
+        val insertErrorTransform: SCollection[extendedErrorInfo.Info] => Unit = it
+      }
+
+      @inline final def apply(
+        wd: WriteDisposition = DefaultWriteDisposition,
+        cd: CreateDisposition = DefaultCreateDisposition,
+        td: String = DefaultTableDescription,
+        tp: TimePartitioning = DefaultTimePartitioning
+      ): WriteParam = apply(wd, cd, td, tp, DefaultExtendedErrorInfo)(DefaultInsertErrorTransform)
+    }
+
+    def defaultParseFn[T: Schema]: SchemaAndRecord => T = {
+      val (_, _, fromRow) = SchemaMaterializer.materializeWithDefault(Schema[T])
+
+      input => {
+        val bs = AvroUtils.toBeamSchema(input.getRecord.getSchema)
+        val row = AvroUtils.toBeamRowStrict(input.getRecord, bs)
+        fromRow(row)
+      }
+    }
+
+    def apply[T: Schema: Coder](table: STable): BeamSchema[T] =
+      new BeamSchema(table, defaultParseFn)
+  }
+
+  final case class BeamSchema[T: Schema: Coder](
+    table: STable,
+    parseFn: SchemaAndRecord => T
+  ) extends BigQueryIO[T] {
+    override type ReadP = Unit
+    override type WriteP = BeamSchema.WriteParam
+
+    override def testId: String = s"BigQueryIO(${table.spec})"
+
+    override protected def read(sc: ScioContext, params: ReadP): SCollection[T] = {
+      val fn = ClosureCleaner(parseFn)
+      Reads.bqReadTable(sc)(Reads.readParseFn(sc)(fn), table.ref)
+    }
+
+    override protected def write(data: SCollection[T], params: WriteP): Tap[T] = {
+      var transform = beam.BigQueryIO.write[T]().to(table.ref)
+      if (params.createDisposition != null) {
+        transform = transform.withCreateDisposition(params.createDisposition)
+      }
+      if (params.writeDisposition != null) {
+        transform = transform.withWriteDisposition(params.writeDisposition)
+      }
+      if (params.tableDescription != null) {
+        transform = transform.withTableDescription(params.tableDescription)
+      }
+      if (params.timePartitioning != null) {
+        transform = transform.withTimePartitioning(params.timePartitioning.asJava)
+      }
+      transform = params.extendedErrorInfo match {
+        case Disabled => transform
+        case Enabled  => transform.withExtendedErrorInfo()
+      }
+
+      val wr = data.applyInternal(transform)
+      params.insertErrorTransform(params.extendedErrorInfo.coll(data.context, wr))
+      tap(())
+    }
+
+    override def tap(read: ReadP): Tap[T] = BigQueryTypedTap(table)
+  }
+
   /**
    * Get a typed SCollection for a BigQuery table using the storage API.
    */
   final case class Storage[T <: HasAnnotation: ClassTag: TypeTag: Coder](table: STable)
       extends BigQueryIO[T] {
+    private[this] lazy val bqt = BigQueryType[T]
+
     override type ReadP = Storage.ReadParam
     override type WriteP = Nothing // ReadOnly
 
     override def testId: String = s"BigQueryIO(${table.spec})"
 
     override protected def read(sc: ScioContext, params: ReadP): SCollection[T] = {
-      @inline def typedRead(sc: ScioContext) = Reads.avroBigQueryRead[T](sc)
-      Reads.bqReadStorage(sc)(typedRead(sc), table, params.selectFields, params.rowRestriction)
+      val fn = Reads.readParseFn(sc)(i => bqt.fromAvro(i.getRecord))(Coder.kryo[T])
+      Reads.bqReadStorage(sc)(fn, table, params.selectFields, params.rowRestriction)
     }
 
     override protected def write(data: SCollection[T], params: WriteP): Tap[T] =

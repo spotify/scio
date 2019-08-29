@@ -32,6 +32,7 @@ import com.spotify.scio.bigquery.{
 }
 import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
 import com.spotify.scio.coders.Coder
+import com.spotify.scio.schemas.Schema
 import com.spotify.scio.values._
 
 import scala.language.implicitConversions
@@ -154,6 +155,9 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
       self.read(BigQueryTyped.dynamic[T](newSource))
     }
   }
+
+  def typedBigQueryTable[T: Schema: Coder](table: Table): SCollection[T] =
+    self.read(BigQueryTyped.BeamSchema(table))
 
   /**
    * Get a typed SCollection for a BigQuery storage API.
