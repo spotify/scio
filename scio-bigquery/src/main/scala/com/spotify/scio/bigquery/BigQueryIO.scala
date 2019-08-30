@@ -15,7 +15,6 @@
  * under the License.
  */
 
-// scalastyle:off number.of.types
 package com.spotify.scio.bigquery
 
 import java.util.concurrent.ConcurrentHashMap
@@ -35,7 +34,7 @@ import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.extensions.gcp.options.GcpOptions
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.TypedRead.Method
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
-import org.apache.beam.sdk.io.gcp.bigquery.SchemaAndRecord
+import org.apache.beam.sdk.io.gcp.bigquery.{SchemaAndRecord, WriteResult}
 import org.apache.beam.sdk.io.gcp.{bigquery => beam}
 import org.apache.beam.sdk.io.{Compression, TextIO}
 import org.apache.beam.sdk.schemas.utils.AvroUtils
@@ -137,6 +136,44 @@ private[bigquery] object Writes {
       ()
     }
   }
+
+  // scalastyle:off
+  def bqTableWrite[T](writer: beam.BigQueryIO.Write[T], table: Table)(
+    schema: TableSchema,
+    writeDisposition: WriteDisposition,
+    createDisposition: CreateDisposition,
+    tableDescription: String,
+    timePartitioning: TimePartitioning,
+    extendedErrorInfo: ExtendedErrorInfo
+  )(
+    insertErrorTransform: SCollection[extendedErrorInfo.Info] => Unit
+  ): SCollection[T] => WriteResult = data => {
+    var transform = writer.to(table.ref)
+    if (schema != null) {
+      transform = transform.withSchema(schema)
+    }
+    if (createDisposition != null) {
+      transform = transform.withCreateDisposition(createDisposition)
+    }
+    if (writeDisposition != null) {
+      transform = transform.withWriteDisposition(writeDisposition)
+    }
+    if (tableDescription != null) {
+      transform = transform.withTableDescription(tableDescription)
+    }
+    if (timePartitioning != null) {
+      transform = transform.withTimePartitioning(timePartitioning.asJava)
+    }
+    transform = extendedErrorInfo match {
+      case Disabled => transform
+      case Enabled  => transform.withExtendedErrorInfo()
+    }
+
+    val wr = data.applyInternal(transform)
+    insertErrorTransform(extendedErrorInfo.coll(data.context, wr))
+    wr
+  }
+  //scalastyle:on
 }
 
 sealed trait BigQueryIO[T] extends ScioIO[T] {
@@ -229,29 +266,17 @@ final case class BigQueryTable(table: Table) extends BigQueryIO[TableRow] {
     Reads.bqReadTable(sc)(beam.BigQueryIO.readTableRows(), table.ref)
 
   override protected def write(data: SCollection[TableRow], params: WriteP): Tap[TableRow] = {
-    var transform = beam.BigQueryIO.writeTableRows().to(table.ref)
-    if (params.schema != null) {
-      transform = transform.withSchema(params.schema)
-    }
-    if (params.createDisposition != null) {
-      transform = transform.withCreateDisposition(params.createDisposition)
-    }
-    if (params.writeDisposition != null) {
-      transform = transform.withWriteDisposition(params.writeDisposition)
-    }
-    if (params.tableDescription != null) {
-      transform = transform.withTableDescription(params.tableDescription)
-    }
-    if (params.timePartitioning != null) {
-      transform = transform.withTimePartitioning(params.timePartitioning.asJava)
-    }
-    transform = params.extendedErrorInfo match {
-      case Disabled => transform
-      case Enabled  => transform.withExtendedErrorInfo()
-    }
+    Writes.bqTableWrite(beam.BigQueryIO.writeTableRows(), table)(
+      params.schema,
+      params.writeDisposition,
+      params.createDisposition,
+      params.tableDescription,
+      params.timePartitioning,
+      params.extendedErrorInfo
+    )(
+      params.insertErrorTransform
+    )(data)
 
-    val wr = data.applyInternal(transform)
-    params.insertErrorTransform(params.extendedErrorInfo.coll(data.context, wr))
     tap(())
   }
 
@@ -645,26 +670,16 @@ object BigQueryTyped {
     }
 
     override protected def write(data: SCollection[T], params: WriteP): Tap[T] = {
-      var transform = beam.BigQueryIO.write[T]().to(table.ref)
-      if (params.createDisposition != null) {
-        transform = transform.withCreateDisposition(params.createDisposition)
-      }
-      if (params.writeDisposition != null) {
-        transform = transform.withWriteDisposition(params.writeDisposition)
-      }
-      if (params.tableDescription != null) {
-        transform = transform.withTableDescription(params.tableDescription)
-      }
-      if (params.timePartitioning != null) {
-        transform = transform.withTimePartitioning(params.timePartitioning.asJava)
-      }
-      transform = params.extendedErrorInfo match {
-        case Disabled => transform
-        case Enabled  => transform.withExtendedErrorInfo()
-      }
-
-      val wr = data.applyInternal(transform)
-      params.insertErrorTransform(params.extendedErrorInfo.coll(data.context, wr))
+      Writes.bqTableWrite(beam.BigQueryIO.write[T](), table)(
+        null,
+        params.writeDisposition,
+        params.createDisposition,
+        params.tableDescription,
+        params.timePartitioning,
+        params.extendedErrorInfo
+      )(
+        params.insertErrorTransform
+      )(data)
       tap(())
     }
 
@@ -760,4 +775,3 @@ object BigQueryTyped {
   }
   // scalastyle:on cyclomatic.complexity
 }
-// scalastyle:on number.of.types
