@@ -1,1 +1,1 @@
-resolvers in ThisBuild += "apache-snapshots" at "http://repository.apache.org/snapshots/"
+resolvers in ThisBuild += "apache-snapshots" at "https://repository.apache.org/snapshots/"
