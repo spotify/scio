@@ -23,9 +23,7 @@ import com.spotify.scio.ScioContext
 import com.spotify.scio.bigquery.client.BigQuery
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.io.{FileStorage, Tap, Taps}
-import com.spotify.scio.schemas.{Schema, SchemaMaterializer}
 import com.spotify.scio.values.SCollection
-import org.apache.beam.sdk.io.gcp.bigquery.BigQueryUtils
 
 import scala.collection.JavaConverters._
 import scala.concurrent.Future
@@ -40,22 +38,11 @@ final case class TableRowJsonTap(path: String) extends Tap[TableRow] {
     sc.tableRowJsonFile(path)
 }
 
-final case class BigQueryTypedTap[T: Schema: Coder](
-  table: Table
-) extends Tap[T] {
-  override def value: Iterator[T] = {
-    val (s, _, fromRow) = SchemaMaterializer.materializeWithDefault(Schema[T])
-    val fn = BigQueryUtils.tableRowToBeamRow().apply(s)
-    BigQuery
-      .defaultInstance()
-      .tables
-      .rows(table.ref)
-      .map(fn.apply)
-      .map(fromRow.apply)
-  }
-
+final case class BigQueryTypedTap[T: Coder](table: Table, fn: TableRow => T) extends Tap[T] {
+  override def value: Iterator[T] =
+    BigQueryTap(table.ref).value.map(fn)
   override def open(sc: ScioContext): SCollection[T] =
-    sc.typedBigQueryTable(table)
+    BigQueryTap(table.ref).open(sc).map(fn)
 }
 
 /** Tap for BigQuery tables. */
