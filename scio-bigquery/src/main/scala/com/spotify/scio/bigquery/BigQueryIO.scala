@@ -243,16 +243,22 @@ object BigQueryTypedTable {
   }
 
   def apply[T: Coder](
-    parseFn: SchemaAndRecord => T,
-    writer: beam.BigQueryIO.Write[T],
-    table: Table,
-    tableRowFn: TableRow => T
+    readerFn: SchemaAndRecord => T,
+    writerFn: T => TableRow,
+    tableRowFn: TableRow => T,
+    table: Table
   ): BigQueryTypedTable[T] = {
-    val readerFn = ClosureCleaner(parseFn)
-    val fn = beam.BigQueryIO.read(new SerializableFunction[SchemaAndRecord, T] {
-      override def apply(input: SchemaAndRecord): T = readerFn(input)
+    val rFn = ClosureCleaner(readerFn)
+    val wFn = ClosureCleaner(writerFn)
+    val reader = beam.BigQueryIO.read(new SerializableFunction[SchemaAndRecord, T] {
+      override def apply(input: SchemaAndRecord): T = rFn(input)
     })
-    BigQueryTypedTable(fn, writer, table, tableRowFn)
+    val writer = beam.BigQueryIO
+      .write[T]()
+      .withFormatFunction(new SerializableFunction[T, TableRow] {
+        override def apply(input: T): TableRow = wFn(input)
+      })
+    BigQueryTypedTable(reader, writer, table, tableRowFn)
   }
 
 }
@@ -309,18 +315,18 @@ final case class BigQueryTypedTable[T: Coder](
  * Get an IO for a BigQuery table.
  */
 final case class BigQueryTable(table: Table) extends BigQueryIO[TableRow] {
-  override type ReadP = Unit
-  override type WriteP = BigQueryTable.WriteParam
-
-  override def testId: String = s"BigQueryIO(${table.spec})"
-
-  private[this] lazy val underlying =
+  private[this] val underlying =
     BigQueryTypedTable(
       beam.BigQueryIO.readTableRows(),
       beam.BigQueryIO.writeTableRows(),
       table,
       (tr: TableRow) => tr
     )
+
+  override type ReadP = Unit
+  override type WriteP = BigQueryTable.WriteParam
+
+  override def testId: String = s"BigQueryIO(${table.spec})"
 
   override protected def read(sc: ScioContext, params: ReadP): SCollection[TableRow] =
     sc.read(underlying)
@@ -555,32 +561,27 @@ object BigQueryTyped {
    */
   final case class Table[T <: HasAnnotation: ClassTag: TypeTag: Coder](table: STable)
       extends BigQueryIO[T] {
+    private[this] val underlying = {
+      val readerFn = BigQueryType[T].fromAvro
+      val toTableRow = BigQueryType[T].toTableRow
+      val fromTableRow = BigQueryType[T].fromTableRow
+      BigQueryTypedTable[T](
+        (i: SchemaAndRecord) => readerFn(i.getRecord),
+        toTableRow,
+        fromTableRow,
+        table
+      )(Coder.kryo[T])
+    }
+
     override type ReadP = Unit
     override type WriteP = Table.WriteParam
 
     override def testId: String = s"BigQueryIO(${table.spec})"
 
-    private[this] lazy val underlying: BigQueryTypedTable[T] = {
-      val readerFn = BigQueryType[T].fromAvro
-      val writerFn = BigQueryType[T].toTableRow
-      val tapFn = BigQueryType[T].fromTableRow
-      BigQueryTypedTable[T](
-        (i: SchemaAndRecord) => readerFn(i.getRecord),
-        beam.BigQueryIO
-          .write[T]()
-          .withFormatFunction(new SerializableFunction[T, TableRow] {
-            override def apply(input: T): TableRow = writerFn(input)
-          }),
-        table,
-        tapFn
-      )(Coder.kryo[T])
-    }
-
     override protected def read(sc: ScioContext, params: ReadP): SCollection[T] =
       sc.read(underlying)
 
     override protected def write(data: SCollection[T], params: WriteP): Tap[T] = {
-      val initialTfName = data.tfName
       val ps =
         BigQueryTypedTable.WriteParam(
           BigQueryType[T].schema,
@@ -592,7 +593,7 @@ object BigQueryTyped {
         )(params.insertErrorTransform)
 
       data
-        .withName(s"$initialTfName$$Write")
+        .withName(s"${data.tfName}$$Write")
         .write(underlying)(ps)
 
       tap(())
@@ -700,12 +701,12 @@ object BigQueryTyped {
     override def testId: String = s"BigQueryIO(${table.spec})"
 
     private[this] lazy val underlying: BigQueryTypedTable[T] = {
-      val (s, _, fromRow) = SchemaMaterializer.materializeWithDefault(Schema[T])
+      val (s, toRow, fromRow) = SchemaMaterializer.materializeWithDefault(Schema[T])
       BigQueryTypedTable[T](
         parseFn,
-        beam.BigQueryIO.write[T]().useBeamSchema(),
-        table,
-        (tr: TableRow) => fromRow(BigQueryUtils.toBeamRow(s, tr))
+        (t: T) => BigQueryUtils.toTableRow(toRow(t)),
+        (tr: TableRow) => fromRow(BigQueryUtils.toBeamRow(s, tr)),
+        table
       )
     }
 
@@ -722,7 +723,9 @@ object BigQueryTyped {
         params.extendedErrorInfo
       )(params.insertErrorTransform)
 
-      data.setSchema(Schema[T]).write(underlying)(ps)
+      data
+        .setSchema(Schema[T])
+        .write(underlying.copy(writer = underlying.writer.useBeamSchema()))(ps)
       tap(())
     }
 
@@ -740,7 +743,7 @@ object BigQueryTyped {
     override def testId: String = s"BigQueryIO(${table.spec})"
 
     override protected def read(sc: ScioContext, params: ReadP): SCollection[T] = {
-      val fromAvro = ClosureCleaner(BigQueryType[T].fromAvro)
+      val fromAvro = BigQueryType[T].fromAvro
       val fn = Reads.readParseFn(sc)(i => fromAvro(i.getRecord))(Coder.kryo[T])
       Reads.bqReadStorage(sc)(fn, table, params.selectFields, params.rowRestriction)
     }
