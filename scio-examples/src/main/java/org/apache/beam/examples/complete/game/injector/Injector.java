@@ -20,16 +20,13 @@ package org.apache.beam.examples.complete.game.injector;
 import com.google.api.services.pubsub.Pubsub;
 import com.google.api.services.pubsub.model.PublishRequest;
 import com.google.api.services.pubsub.model.PubsubMessage;
-import com.google.common.collect.ImmutableMap;
 import java.io.BufferedOutputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
+
 import org.apache.beam.examples.complete.game.utils.GameConstants;
 
 /**
@@ -322,8 +319,8 @@ class Injector {
       PubsubMessage pubsubMessage = new PubsubMessage()
               .encodeData(message.getBytes("UTF-8"));
       pubsubMessage.setAttributes(
-          ImmutableMap.of(GameConstants.TIMESTAMP_ATTRIBUTE,
-              Long.toString((currTime - delayInMillis) / 1000 * 1000)));
+              Collections.singletonMap(GameConstants.TIMESTAMP_ATTRIBUTE,
+                      Long.toString((currTime - delayInMillis) / 1000 * 1000)));
       if (delayInMillis != 0) {
         System.out.println(pubsubMessage.getAttributes());
         System.out.println("late data for: " + message);

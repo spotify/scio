@@ -21,8 +21,11 @@ package org.apache.beam.examples.complete.game;
 import static org.hamcrest.Matchers.hasItem;
 import static org.junit.Assert.assertThat;
 
-import com.google.common.collect.ImmutableMap;
 import java.io.Serializable;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.apache.beam.examples.complete.game.LeaderBoard.CalculateTeamScores;
 import org.apache.beam.examples.complete.game.LeaderBoard.CalculateUserScores;
 import org.apache.beam.examples.complete.game.UserScore.GameActionInfo;
@@ -248,12 +251,14 @@ public class LeaderBoardTest implements Serializable {
               assertThat(input, hasItem(KV.of(redTeam, 27)));
               return null;
             });
+
+    final Map<String, Integer> expected = new HashMap<>();
+    expected.put(redTeam, 7);
+    expected.put(blueTeam, 11);
     PAssert.thatMap(teamScores)
         // The closing behavior of CalculateTeamScores precludes an inFinalPane matcher
         .inOnTimePane(window)
-        .isEqualTo(ImmutableMap.<String, Integer>builder().put(redTeam, 7)
-            .put(blueTeam, 11)
-            .build());
+        .isEqualTo(expected);
 
     // No final pane is emitted for the blue team, as all of their updates have been taken into
     // account in earlier panes

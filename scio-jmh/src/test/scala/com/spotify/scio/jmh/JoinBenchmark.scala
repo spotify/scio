@@ -21,7 +21,6 @@ import java.lang.{Iterable => JIterable}
 import java.util.concurrent.TimeUnit
 
 import com.google.common.collect.AbstractIterator
-import com.google.common.collect.Lists
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.Blackhole
 
@@ -34,7 +33,7 @@ import scala.collection.JavaConverters._
 class JoinBenchmark {
 
   private def genIterable(n: Int): JIterable[Int] = {
-    val l = Lists.newArrayList[Int]()
+    val l = List.empty[Int].asJava
     (1 to n).foreach(l.add)
     l
   }

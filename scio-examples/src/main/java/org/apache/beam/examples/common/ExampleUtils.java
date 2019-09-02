@@ -35,8 +35,6 @@ import com.google.auth.Credentials;
 import com.google.auth.http.HttpCredentialsAdapter;
 import com.google.cloud.hadoop.util.ChainingHttpRequestInitializer;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.Uninterruptibles;
 import java.io.IOException;
 import java.util.Collection;
@@ -77,8 +75,8 @@ public class ExampleUtils {
   private final PipelineOptions options;
   private Bigquery bigQueryClient = null;
   private Pubsub pubsubClient = null;
-  private Set<PipelineResult> pipelinesToCancel = Sets.newHashSet();
-  private List<String> pendingMessages = Lists.newArrayList();
+  private Set<PipelineResult> pipelinesToCancel = new java.util.HashSet<>();
+  private List<String> pendingMessages = new java.util.ArrayList<>();
 
   /**
    * Do resources and runner options setup.

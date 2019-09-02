@@ -17,7 +17,7 @@
  */
 package org.apache.beam.examples.subprocess.utils;
 
-import com.google.common.collect.Sets;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -40,7 +40,7 @@ public class CallingSubProcessUtils {
 
   // Allow multiple subclasses to create files, but only one thread per subclass can add the file to
   // the worker
-  private static final Set<String> downloadedFiles = Sets.<String>newConcurrentHashSet();
+  private static final Set<String> downloadedFiles = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
   // Limit the number of threads able to do work
   private static Map<String, Semaphore> semaphores = new ConcurrentHashMap<String, Semaphore>();

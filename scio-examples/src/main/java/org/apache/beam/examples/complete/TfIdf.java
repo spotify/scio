@@ -17,12 +17,12 @@
  */
 package org.apache.beam.examples.complete;
 
-import com.google.common.base.Optional;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.coders.KvCoder;
@@ -121,7 +121,7 @@ public class TfIdf {
     Set<URI> uris = new HashSet<>();
     if ("file".equals(absoluteUri.getScheme())) {
       File directory = new File(absoluteUri);
-      for (String entry : Optional.fromNullable(directory.list()).or(new String[] {})) {
+      for (String entry : Optional.ofNullable(directory.list()).orElse(new String[] {})) {
         File path = new File(directory, entry);
         uris.add(path.toURI());
       }

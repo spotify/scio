@@ -17,14 +17,13 @@
 
 package com.spotify.scio.testing.util
 
-import java.util.UUID
+import java.util.{Collections, UUID}
 
 import com.google.api.client.http.HttpRequestInitializer
 import com.google.api.services.cloudresourcemanager.CloudResourceManager
 import com.google.auth.Credentials
 import com.google.auth.http.HttpCredentialsAdapter
 import com.google.cloud.hadoop.util.ChainingHttpRequestInitializer
-import com.google.common.collect.ImmutableList
 import org.apache.beam.sdk.extensions.gcp.auth.NullCredentialInitializer
 import org.apache.beam.sdk.extensions.gcp.options.GcpOptions.DefaultProjectFactory
 import org.apache.beam.sdk.extensions.gcp.options._
@@ -72,7 +71,7 @@ private[scio] object ItUtils {
       chainHttpRequestInitializer(
         credentials,
         // Do not log 404. It clutters the output and is possibly even required by the caller.
-        new RetryHttpRequestInitializer(ImmutableList.of(404))
+        new RetryHttpRequestInitializer(Collections.singletonList(404))
       )
     ).setApplicationName(options.getAppName)
       .setGoogleClientRequestInitializer(options.getGoogleApiTrace)

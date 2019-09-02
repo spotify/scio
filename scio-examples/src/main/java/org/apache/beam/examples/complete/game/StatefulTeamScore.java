@@ -19,7 +19,6 @@ package org.apache.beam.examples.complete.game;
 
 import static com.google.common.base.MoreObjects.firstNonNull;
 
-import com.google.common.annotations.VisibleForTesting;
 import java.util.HashMap;
 import java.util.Map;
 import org.apache.beam.examples.common.ExampleUtils;
@@ -162,7 +161,6 @@ public class StatefulTeamScore extends LeaderBoard {
    *       outputting when a team's score passes a given threshold.</li>
    * </ul>
    */
-  @VisibleForTesting
   public static class UpdateTeamScoreFn
       extends DoFn<KV<String, GameActionInfo>, KV<String, Integer>> {
 

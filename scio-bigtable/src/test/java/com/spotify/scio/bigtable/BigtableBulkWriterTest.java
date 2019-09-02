@@ -21,11 +21,10 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 
 import com.google.bigtable.v2.Mutation;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
 import com.google.protobuf.ByteString;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import org.apache.beam.sdk.coders.Coder;
 import org.apache.beam.sdk.testing.PAssert;
@@ -127,10 +126,10 @@ public class BigtableBulkWriterTest {
     Instant timestamp = baseTime.plus(baseTimeOffset);
     ByteString rowKey = ByteString.copyFromUtf8(key);
     Iterable<Mutation> mutations =
-        ImmutableList.of(
-            Mutation.newBuilder()
-                .setSetCell(Mutation.SetCell.newBuilder().setValue(ByteString.copyFromUtf8(value)))
-                .build());
+        Collections.singletonList(
+                Mutation.newBuilder()
+                        .setSetCell(Mutation.SetCell.newBuilder().setValue(ByteString.copyFromUtf8(value)))
+                        .build());
     return TimestampedValue.of(KV.of(rowKey, mutations), timestamp);
   }
 
@@ -155,7 +154,7 @@ public class BigtableBulkWriterTest {
       return null;
     }
 
-    private Iterable<KV<String, Iterable<Mutation>>> convertExpected(
+    private List<KV<String, Iterable<Mutation>>> convertExpected(
         final Iterable<KV<ByteString, Iterable<Mutation>>> input) {
       List<KV<String, Iterable<Mutation>>> mutations = new ArrayList<>();
       for (KV<ByteString, Iterable<Mutation>> kv : input) {
@@ -165,7 +164,7 @@ public class BigtableBulkWriterTest {
       return mutations;
     }
 
-    private Iterable<KV<String, Iterable<Mutation>>> convertActual(
+    private List<KV<String, Iterable<Mutation>>> convertActual(
         final Iterable<Iterable<KV<ByteString, Iterable<Mutation>>>> input) {
       List<KV<String, Iterable<Mutation>>> mutations = new ArrayList<>();
       for (Iterable<KV<ByteString, Iterable<Mutation>>> kv : input) {
@@ -179,10 +178,10 @@ public class BigtableBulkWriterTest {
 
     private void verify(final Iterable<Iterable<KV<ByteString, Iterable<Mutation>>>> input,
                         final Iterable<KV<ByteString, Iterable<Mutation>>> expected) {
-      final Iterable<KV<String, Iterable<Mutation>>> actual = convertActual(input);
-      final Iterable<KV<String, Iterable<Mutation>>> expectedValues = convertExpected(expected);
+      final List<KV<String, Iterable<Mutation>>> actual = convertActual(input);
+      final List<KV<String, Iterable<Mutation>>> expectedValues = convertExpected(expected);
 
-      final KV[] kvs = Iterables.toArray(expectedValues, KV.class);
+      final KV[] kvs = expectedValues.toArray(new KV[0]);
 
       assertThat(actual, containsInAnyOrder(kvs));
     }

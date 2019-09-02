@@ -21,7 +21,6 @@ import com.google.api.services.bigquery.model.TableFieldSchema;
 import com.google.api.services.bigquery.model.TableReference;
 import com.google.api.services.bigquery.model.TableRow;
 import com.google.api.services.bigquery.model.TableSchema;
-import com.google.common.collect.Lists;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -223,7 +222,8 @@ public class TrafficRoutes {
       int speedCount = 0;
       int speedups = 0;
       int slowdowns = 0;
-      List<StationSpeed> infoList = Lists.newArrayList(c.element().getValue());
+      List<StationSpeed> infoList = new ArrayList<>();
+      c.element().getValue().forEach(infoList::add);
       // StationSpeeds sort by embedded timestamp.
       Collections.sort(infoList);
       Map<String, Double> prevSpeeds = new HashMap<>();
