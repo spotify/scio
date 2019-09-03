@@ -15,6 +15,7 @@
  * under the License.
  */
 
+// scalastyle:off number.of.types
 package com.spotify.scio.bigquery
 
 import java.util.concurrent.ConcurrentHashMap
@@ -679,3 +680,4 @@ object BigQueryTyped {
   }
   // scalastyle:on cyclomatic.complexity
 }
+// scalastyle:on number.of.types
