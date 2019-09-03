@@ -32,11 +32,8 @@ import scala.collection.JavaConverters._
 @State(Scope.Thread)
 class JoinBenchmark {
 
-  private def genIterable(n: Int): JIterable[Int] = {
-    val l = List.empty[Int].asJava
-    (1 to n).foreach(l.add)
-    l
-  }
+  private def genIterable(n: Int): JIterable[Int] =
+    new java.util.ArrayList[Int]((1 to n).asJava)
 
   private val i1 = genIterable(1)
   private val i10 = genIterable(10)
