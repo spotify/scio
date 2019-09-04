@@ -179,6 +179,33 @@ class StorageIT extends FlatSpec with Matchers {
     sc.run()
   }
 
+  it should "work with query" in {
+    val t = new Instant(0)
+    val dt = t.toDateTime(DateTimeZone.UTC)
+    val expected = (0 until 10).map { i =>
+      FromQuery(
+        Some(true),
+        Some(i),
+        Some(i),
+        Some(BigDecimal(i)),
+        Some(s"s$i"),
+        Some(ByteString.copyFromUtf8(s"s$i")),
+        Some(t.plus(Duration.millis(i))),
+        Some(dt.toLocalDate.plusDays(i)),
+        Some(dt.toLocalTime.plusMillis(i)),
+        Some(dt.toLocalDateTime.plusMillis(i))
+      )
+    }.asJava
+    val (sc, _) = ContextAndArgs(
+      Array("--project=data-integration-test", "--tempLocation=gs://data-integration-test-eu/temp")
+    )
+
+    val p = sc.typedBigQueryStorage[FromQuery]().internal
+    PAssert.that(p).containsInAnyOrder(expected)
+
+    sc.run()
+  }
+
   it should "be consistent with fromTable" in {
     val t = new Instant(0)
     val dt = t.toDateTime(DateTimeZone.UTC)

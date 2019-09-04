@@ -22,6 +22,7 @@ import com.spotify.scio.ScioContext
 import com.spotify.scio.bigquery.{
   BigQuerySelect,
   BigQueryStorage,
+  BigQueryStorageSelect,
   BigQueryTable,
   BigQueryType,
   BigQueryTyped,
@@ -104,11 +105,19 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
     )
 
   /**
+   * Get an SCollection for a BigQuery SELECT query using the storage API.
+   *
+   * @param query SQL query
+   */
+  def bigQueryStorage(query: String): SCollection[TableRow] =
+    self.read(BigQueryStorageSelect(query))
+
+  /**
    * Get a typed SCollection for a BigQuery SELECT query, table or storage.
    *
    * Note that `T` must be annotated with
    * [[com.spotify.scio.bigquery.types.BigQueryType.fromSchema BigQueryType.fromSchema]],
-   * [[com.spotify.scio.bigquery.types.BigQueryType.fromSchema BigQueryType.fromStorage]],
+   * [[com.spotify.scio.bigquery.types.BigQueryType.fromStorage BigQueryType.fromStorage]],
    * [[com.spotify.scio.bigquery.types.BigQueryType.fromTable BigQueryType.fromTable]],
    * [[com.spotify.scio.bigquery.types.BigQueryType.fromQuery BigQueryType.fromQuery]], or
    * [[com.spotify.scio.bigquery.types.BigQueryType.toTable BigQueryType.toTable]].
@@ -150,19 +159,27 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
    * Get a typed SCollection for a BigQuery storage API.
    *
    * Note that `T` must be annotated with
-   * [[com.spotify.scio.bigquery.types.BigQueryType.fromSchema BigQueryType.fromStorage]].
-   *
-   * Similar to [[typedBigQuery]] but allows `rowRestriction` to be overridden.
+   * [[com.spotify.scio.bigquery.types.BigQueryType.fromSchema BigQueryType.fromStorage]] or
+   * [[com.spotify.scio.bigquery.types.BigQueryType.fromQuery BigQueryType.fromQuery]]
    */
   def typedBigQueryStorage[T <: HasAnnotation: ClassTag: TypeTag: Coder](
     newSource: String = null,
     rowRestriction: String = null
   ): SCollection[T] = {
     val bqt = BigQueryType[T]
-    val table = if (newSource != null) newSource else bqt.table.get
-    val rr = if (rowRestriction != null) rowRestriction else bqt.rowRestriction.get
-    val params = BigQueryTyped.Storage.ReadParam(bqt.selectedFields.get, rr)
-    self.read(BigQueryTyped.Storage[T](Table.Spec(table)))(params)
+    if (bqt.isQuery) {
+      require(newSource == null, "`newSource` was set; only applies if `fromStorage` is used")
+      require(
+        rowRestriction == null,
+        "`rowRestriction` was set; only applies if `fromStorage` is used"
+      )
+      self.read(BigQueryTyped.StorageQuery[T](bqt.query.get))
+    } else {
+      val table = if (newSource != null) newSource else bqt.table.get
+      val rr = if (rowRestriction != null) rowRestriction else bqt.rowRestriction.get
+      val params = BigQueryTyped.Storage.ReadParam(bqt.selectedFields.get, rr)
+      self.read(BigQueryTyped.Storage[T](Table.Spec(table)))(params)
+    }
   }
 
   /**
