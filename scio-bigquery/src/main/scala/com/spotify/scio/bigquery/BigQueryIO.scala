@@ -120,7 +120,7 @@ private[bigquery] object Writes {
     val DefaultTableDescription: String = null
     val DefaultTimePartitioning: TimePartitioning = null
     val DefaultExtendedErrorInfo: ExtendedErrorInfo = ExtendedErrorInfo.Disabled
-    val DefaultInsertErrorTransform: SCollection[DefaultExtendedErrorInfo.Info] => Unit = sc => {
+    def defaultInsertErrorTransform[T <: ExtendedErrorInfo#Info]: SCollection[T] => Unit = sc => {
       // A NoOp on the failed inserts, so that we don't have DropInputs (UnconsumedReads)
       // in the pipeline graph.
       sc.withName("DropFailedInserts").map(_ => ())
@@ -239,7 +239,7 @@ object BigQueryTypedTable {
       cd: CreateDisposition = DefaultCreateDisposition,
       td: String = DefaultTableDescription,
       tp: TimePartitioning = DefaultTimePartitioning
-    ): WriteParam = apply(s, wd, cd, td, tp, DefaultExtendedErrorInfo)(DefaultInsertErrorTransform)
+    ): WriteParam = apply(s, wd, cd, td, tp, DefaultExtendedErrorInfo)(defaultInsertErrorTransform)
   }
 
   def apply[T: Coder](
@@ -630,7 +630,7 @@ object BigQueryTyped {
         wd: WriteDisposition = DefaultWriteDisposition,
         cd: CreateDisposition = DefaultCreateDisposition,
         tp: TimePartitioning = DefaultTimePartitioning
-      ): WriteParam = apply(wd, cd, tp, DefaultExtendedErrorInfo)(DefaultInsertErrorTransform)
+      ): WriteParam = apply(wd, cd, tp, DefaultExtendedErrorInfo)(defaultInsertErrorTransform)
     }
 
     @deprecated("this method will be removed; use apply(Table.Ref(table)) instead", "Scio 0.8")
@@ -675,7 +675,7 @@ object BigQueryTyped {
         cd: CreateDisposition = DefaultCreateDisposition,
         td: String = DefaultTableDescription,
         tp: TimePartitioning = DefaultTimePartitioning
-      ): WriteParam = apply(wd, cd, td, tp, DefaultExtendedErrorInfo)(DefaultInsertErrorTransform)
+      ): WriteParam = apply(wd, cd, td, tp, DefaultExtendedErrorInfo)(defaultInsertErrorTransform)
     }
 
     def defaultParseFn[T: Schema]: SchemaAndRecord => T = {
