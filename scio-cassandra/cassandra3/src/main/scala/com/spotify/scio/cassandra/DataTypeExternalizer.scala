@@ -18,10 +18,10 @@
 package com.spotify.scio.cassandra
 
 import java.lang.{Iterable => JIterable}
-import java.util.{Collection => JCollection}
+import java.util.{ArrayList => JArrayList, Collection => JCollection}
 
 import com.datastax.driver.core.DataType
-import com.google.common.collect.{ImmutableList, ImmutableSet, Lists}
+import com.google.common.collect.{ImmutableList, ImmutableSet}
 import com.twitter.chill._
 
 import scala.collection.JavaConverters._
@@ -51,7 +51,7 @@ private final class DataTypeKryoInstantiator extends EmptyScalaKryoInstantiator 
 private trait ImmutableCollectionSerializer[M] extends KSerializer[M] {
   def readList[T](kser: Kryo, in: Input): JCollection[T] = {
     val size = in.readInt(true)
-    val list = Lists.newArrayList[T]()
+    val list = new JArrayList[T]()
     (1 to size).foreach(_ => list.add(kser.readClassAndObject(in).asInstanceOf[T]))
     list
   }

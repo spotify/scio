@@ -19,7 +19,6 @@ package com.spotify.scio.transforms;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.MoreExecutors;
 import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.transforms.display.DisplayData;
@@ -39,10 +38,8 @@ import java.util.concurrent.*;
 public class PipeDoFn extends DoFn<String, String> {
 
   private static final Logger LOG = LoggerFactory.getLogger(PipeDoFn.class);
-  private static final ConcurrentMap<UUID, Optional<RuntimeException>> setupMap =
-      Maps.newConcurrentMap();
-  private static final ConcurrentMap<UUID, Optional<RuntimeException>> teardownMap =
-      Maps.newConcurrentMap();
+  private static final ConcurrentMap<UUID, Optional<RuntimeException>> setupMap = new ConcurrentHashMap<>();
+  private static final ConcurrentMap<UUID, Optional<RuntimeException>> teardownMap = new ConcurrentHashMap<>();
 
   private final UUID uuid;
   private final String[] cmdArray;

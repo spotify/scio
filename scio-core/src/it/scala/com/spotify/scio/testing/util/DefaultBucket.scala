@@ -24,7 +24,6 @@ import com.google.api.client.util.Sleeper
 import com.google.api.services.cloudresourcemanager.CloudResourceManager
 import com.google.api.services.storage.model.Bucket
 import com.google.cloud.hadoop.util.{ResilientOperation, RetryDeterminer}
-import com.google.common.base.Strings.isNullOrEmpty
 import org.apache.beam.sdk.extensions.gcp.options.{GcpOptions, GcsOptions}
 import org.apache.beam.sdk.options.PipelineOptions
 import org.apache.beam.sdk.extensions.gcp.util.gcsfs.GcsPath
@@ -34,6 +33,7 @@ import org.joda.time.Duration
 import org.slf4j.{Logger, LoggerFactory}
 
 private object DefaultBucket {
+  private[this] val isNullOrEmpty: String => Boolean = s => !Option(s).exists(_.nonEmpty)
 
   def tryCreateDefaultBucket(options: PipelineOptions, crmClient: CloudResourceManager): String = {
     val gcpOptions = options.as(classOf[GcsOptions])

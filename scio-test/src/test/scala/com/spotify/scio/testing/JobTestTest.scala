@@ -17,7 +17,8 @@
 
 package com.spotify.scio.testing
 
-import com.google.common.collect.ImmutableMap
+import java.util.Collections
+
 import com.google.datastore.v1.Entity
 import com.google.datastore.v1.client.DatastoreHelper.{makeKey, makeValue}
 import com.spotify.scio._
@@ -429,7 +430,7 @@ class JobTestTest extends PipelineSpec {
     Entity
       .newBuilder()
       .setKey(makeKey())
-      .putAllProperties(ImmutableMap.of("int_field", makeValue(i).build()))
+      .putAllProperties(Collections.singletonMap("int_field", makeValue(i).build()))
       .build()
 
   def testDatastore(xs: Seq[Entity]): Unit = {

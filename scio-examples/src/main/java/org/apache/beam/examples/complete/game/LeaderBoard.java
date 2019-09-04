@@ -17,7 +17,6 @@
  */
 package org.apache.beam.examples.complete.game;
 
-import com.google.common.annotations.VisibleForTesting;
 import java.util.HashMap;
 import java.util.Map;
 import org.apache.beam.examples.common.ExampleOptions;
@@ -245,7 +244,6 @@ public class LeaderBoard extends HourlyTeamScore {
    */
   // [START DocInclude_WindowAndTrigger]
   // Extract team/score pairs from the event stream, using hour-long windows by default.
-  @VisibleForTesting
   static class CalculateTeamScores
       extends PTransform<PCollection<GameActionInfo>, PCollection<KV<String, Integer>>> {
     private final Duration teamWindowDuration;
@@ -280,7 +278,6 @@ public class LeaderBoard extends HourlyTeamScore {
    * Extract user/score pairs from the event stream using processing time, via global windowing.
    * Get periodic updates on all users' running scores.
    */
-  @VisibleForTesting
   static class CalculateUserScores
       extends PTransform<PCollection<GameActionInfo>, PCollection<KV<String, Integer>>> {
     private final Duration allowedLateness;

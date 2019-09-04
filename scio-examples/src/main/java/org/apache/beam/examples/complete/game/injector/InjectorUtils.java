@@ -17,8 +17,7 @@
  */
 package org.apache.beam.examples.complete.game.injector;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
+import static java.util.Objects.requireNonNull;
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.client.googleapis.util.Utils;
@@ -41,8 +40,8 @@ class InjectorUtils {
   public static Pubsub getClient(final HttpTransport httpTransport,
                                  final JsonFactory jsonFactory)
            throws IOException {
-      checkNotNull(httpTransport);
-      checkNotNull(jsonFactory);
+      requireNonNull(httpTransport);
+      requireNonNull(jsonFactory);
       GoogleCredential credential =
           GoogleCredential.getApplicationDefault(httpTransport, jsonFactory);
       if (credential.createScopedRequired()) {

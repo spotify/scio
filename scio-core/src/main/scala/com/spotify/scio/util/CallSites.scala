@@ -17,9 +17,8 @@
 
 package com.spotify.scio.util
 
+import java.util.concurrent.ConcurrentHashMap
 import java.util.function.BiFunction
-
-import com.google.common.collect.Maps
 
 private[scio] object CallSites {
 
@@ -27,7 +26,7 @@ private[scio] object CallSites {
   private val beamNs = "org.apache.beam."
 
   private val methodMap = Map("$plus$plus" -> "++")
-  private val nameCache = Maps.newConcurrentMap[String, Int]()
+  private val nameCache = new ConcurrentHashMap[String, Int]()
 
   private def isExternalClass(c: String): Boolean =
     // Not in our code base or an interpreter

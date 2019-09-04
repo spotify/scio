@@ -20,7 +20,6 @@ package com.spotify.scio
 import java.io.PrintWriter
 import java.nio.file.Files
 
-import com.google.common.collect.Lists
 import com.spotify.scio.io.TextIO
 import com.spotify.scio.metrics.Metrics
 import com.spotify.scio.options.ScioOptions
@@ -32,13 +31,14 @@ import org.apache.beam.sdk.testing.PAssert
 import org.apache.beam.sdk.transforms.Create
 
 import scala.concurrent.duration.Duration
+import scala.collection.JavaConverters._
 
 class ScioContextTest extends PipelineSpec {
 
   "ScioContext" should "support pipeline" in {
     val pipeline = ScioContext().pipeline
-    val p = pipeline.apply(Create.of(Lists.newArrayList(1, 2, 3)))
-    PAssert.that(p).containsInAnyOrder(Lists.newArrayList(1, 2, 3))
+    val p = pipeline.apply(Create.of(List(1, 2, 3).asJava))
+    PAssert.that(p).containsInAnyOrder(List(1, 2, 3).asJava)
     pipeline.run()
   }
 

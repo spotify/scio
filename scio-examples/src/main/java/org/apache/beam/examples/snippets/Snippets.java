@@ -26,6 +26,8 @@ import com.google.common.collect.ImmutableList;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.coders.AvroCoder;
@@ -192,9 +194,11 @@ public class Snippets {
       }
 
       // [START BigQuerySchemaObject]
-      TableSchema tableSchema = new TableSchema().setFields(ImmutableList.of(
+      List<TableFieldSchema> fields = Stream.of(
           new TableFieldSchema().setName("source").setType("STRING").setMode("NULLABLE"),
-          new TableFieldSchema().setName("quote").setType("STRING").setMode("REQUIRED")));
+          new TableFieldSchema().setName("quote").setType("STRING").setMode("REQUIRED"))
+          .collect(Collectors.toList());
+      TableSchema tableSchema = new TableSchema().setFields(fields);
       // [END BigQuerySchemaObject]
 
       // [START BigQueryWriteInput]

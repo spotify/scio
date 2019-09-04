@@ -20,7 +20,6 @@ package com.spotify.scio.util
 import java.lang.{Iterable => JIterable}
 import java.util.{Iterator => JIterator}
 
-import com.google.common.collect.Iterators
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.options.ScioOptions
 import com.spotify.scio.options.ScioOptions.CheckEnabled
@@ -157,9 +156,7 @@ private[scio] object ArtisanJoin {
 
   private def toOptions[A](xs: JIterator[A]): JIterator[Option[A]] =
     if (xs.hasNext) {
-      Iterators.transform(xs, new com.google.common.base.Function[A, Option[A]] {
-        override def apply(input: A) = Some(input)
-      })
+      xs.asScala.map(Option(_)).asJava
     } else {
       emptyList.iterator().asInstanceOf[JIterator[Option[A]]]
     }

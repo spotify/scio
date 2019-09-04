@@ -17,8 +17,7 @@
  */
 package org.apache.beam.examples.complete.game.injector;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
+import static java.util.Objects.requireNonNull;
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.client.http.HttpBackOffIOExceptionHandler;
 import com.google.api.client.http.HttpBackOffUnsuccessfulResponseHandler;
@@ -27,6 +26,7 @@ import com.google.api.client.http.HttpRequestInitializer;
 import com.google.api.client.http.HttpUnsuccessfulResponseHandler;
 import com.google.api.client.util.ExponentialBackOff;
 import com.google.api.client.util.Sleeper;
+
 import java.util.logging.Logger;
 
 /**
@@ -79,7 +79,7 @@ public class RetryHttpInitializerWrapper implements HttpRequestInitializer {
      */
     RetryHttpInitializerWrapper(
             final Credential wrappedCredential, final Sleeper sleeper) {
-        this.wrappedCredential = checkNotNull(wrappedCredential);
+        this.wrappedCredential = requireNonNull(wrappedCredential);
         this.sleeper = sleeper;
     }
 
