@@ -373,8 +373,7 @@ lazy val scioCore: Project = Project(
       "io.grpc" % "grpc-all" % grpcVersion exclude ("io.opencensus", "opencensus-api"),
       "com.github.alexarchambault" %% "case-app" % caseappVersion,
       "me.lyh" %% "magnolia" % magnoliaVersion,
-      "org.scalatest" %% "scalatest" % scalatestVersion % Test,
-      "org.apache.beam" % "beam-sdks-java-extensions-sql" % beamVersion
+      "org.scalatest" %% "scalatest" % scalatestVersion % Test
     )
   )
   .dependsOn(
@@ -385,6 +384,24 @@ lazy val scioCore: Project = Project(
     IntegrationTest
   )
   .enablePlugins(BuildInfoPlugin)
+
+lazy val scioSql: Project = Project(
+  "scio-sql",
+  file("scio-sql")
+).settings(commonSettings)
+  .settings(macroSettings)
+  .settings(
+    description := "Scio - SQL extension",
+    libraryDependencies ++= Seq(
+      "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
+      "org.apache.beam" % "beam-sdks-java-extensions-sql" % beamVersion
+    )
+  )
+  .dependsOn(
+    scioCore,
+    scioSchemas % "test->test",
+    scioMacros
+  )
 
 lazy val scioTest: Project = Project(
   "scio-test",
@@ -420,6 +437,7 @@ lazy val scioTest: Project = Project(
     scioCore % "test->test;compile->compile;it->it",
     scioSchemas % "test,it",
     scioAvro % "compile->test,it->it",
+    scioSql % "compile->test,it->it",
     scioBigQuery % "compile->test,it->it"
   )
 
@@ -785,8 +803,7 @@ lazy val scioExamples: Project = Project(
       "mysql" % "mysql-connector-java" % "8.0.17",
       "com.google.cloud.sql" % "mysql-socket-factory" % "1.0.15",
       "org.slf4j" % "slf4j-simple" % slf4jVersion,
-      "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test",
-      "org.apache.beam" % "beam-sdks-java-extensions-sql" % beamVersion
+      "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test"
     ),
     // exclude problematic sources if we don't have GCP credentials
     excludeFilter in unmanagedSources := {
@@ -807,6 +824,7 @@ lazy val scioExamples: Project = Project(
     scioExtra,
     scioSpanner,
     scioTensorFlow,
+    scioSql,
     scioTest % "compile->test"
   )
 
