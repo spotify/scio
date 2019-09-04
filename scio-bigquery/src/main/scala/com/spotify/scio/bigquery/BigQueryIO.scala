@@ -16,6 +16,7 @@
  */
 
 //scalastyle:off number.of.types
+//scalastyle:off file.size.limit
 package com.spotify.scio.bigquery
 
 import java.util.concurrent.ConcurrentHashMap
@@ -816,3 +817,4 @@ object BigQueryTyped {
   // scalastyle:on cyclomatic.complexity
 }
 //scalastyle:on number.of.types
+//scalastyle:on file.size.limit
