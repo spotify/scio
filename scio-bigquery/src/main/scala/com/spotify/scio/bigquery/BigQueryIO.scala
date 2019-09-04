@@ -101,15 +101,6 @@ private object Reads {
       .withReadOptions(StorageUtil.tableReadOptions(selectedFields, rowRestriction))
     sc.applyInternal(read)
   }
-
-  private[scio] def readParseFn[T: Coder](sc: ScioContext)(parseFn: SchemaAndRecord => T) = {
-    val fn = ClosureCleaner(parseFn)
-    beam.BigQueryIO
-      .read(new SerializableFunction[SchemaAndRecord, T] {
-        override def apply(input: SchemaAndRecord): T = fn(input)
-      })
-      .withCoder(CoderMaterializer.beam(sc, Coder[T]))
-  }
 }
 
 private[bigquery] object Writes {
@@ -744,8 +735,12 @@ object BigQueryTyped {
 
     override protected def read(sc: ScioContext, params: ReadP): SCollection[T] = {
       val fromAvro = BigQueryType[T].fromAvro
-      val fn = Reads.readParseFn(sc)(i => fromAvro(i.getRecord))(Coder.kryo[T])
-      Reads.bqReadStorage(sc)(fn, table, params.selectFields, params.rowRestriction)
+      val reader = beam.BigQueryIO
+        .read(new SerializableFunction[SchemaAndRecord, T] {
+          override def apply(input: SchemaAndRecord): T = fromAvro(input.getRecord)
+        })
+        .withCoder(CoderMaterializer.beam(sc, Coder.kryo[T]))
+      Reads.bqReadStorage(sc)(reader, table, params.selectFields, params.rowRestriction)
     }
 
     override protected def write(data: SCollection[T], params: WriteP): Tap[T] =
