@@ -140,3 +140,16 @@ final class FixTensorflow extends SemanticRule("FixTensorflow") {
     }.asPatch
   }
 }
+
+final class FixBigQueryDeprecations extends SemanticRule("FixBigQueryDeprecations") {
+  override def fix(implicit doc: SemanticDocument): Patch =
+    doc.tree.collect {
+      case t @ Term.Apply(Term.Select(s, Term.Name("bigQueryTable")), x :: xs) =>
+        val term = x.symbol.info match {
+          case None => q"Table.Spec($x)"
+          case _    => q"Table.Ref($x)"
+        }
+        val syntax = Term.Apply(Term.Select(s, Term.Name("bigQueryTable")), term :: xs).syntax
+        Patch.replaceTree(t, syntax)
+    }.asPatch
+}
