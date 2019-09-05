@@ -46,6 +46,14 @@ executors:
       <<: *env
       SCALA_VERSION: 2.12.8
 
+setup_dependencies_key: &setup_dependencies_key
+  run:
+    name: Generate cache key
+    command: |
+      shasum build.sbt \
+        project/plugins.sbt \
+        project/build.properties > /tmp/dependencies.cache.tmp
+
 commands:
   build:
     parameters:
@@ -55,10 +63,11 @@ commands:
         default: []
     steps:
     - checkout
+    - *setup_dependencies_key
     - restore_cache:
         keys:
-        - v6-dependencies-{{ .Environment.CIRCLE_JOB }}-{{ checksum "build.sbt" }}
-        - v6-dependencies-
+        - v7-dependencies-{{ .Environment.CIRCLE_JOB }}-{{ checksum "/tmp/dependencies.cache.tmp" }}
+        - v7-dependencies-
     - run: ./scripts/gen_schemas.sh
     - run:
         name: setup
@@ -80,7 +89,7 @@ commands:
     - run: if [ "$CIRCLE_BRANCH" == "beam-master" ]; then ./scripts/circleci_snapshot.sh; fi
     - steps: << parameters.build-steps >>
     - save_cache:
-        key: v6-dependencies-{{ .Environment.CIRCLE_JOB }}-{{ checksum "build.sbt" }}
+        key: v7-dependencies-{{ .Environment.CIRCLE_JOB }}-{{ checksum "/tmp/dependencies.cache.tmp" }}
         paths:
         - "~/.ivy2/cache"
         - "~/.sbt"
