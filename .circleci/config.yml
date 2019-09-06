@@ -130,6 +130,13 @@ jobs:
         - run: ./scripts/circleci_repl.sh
         - run: bash <(curl -s https://codecov.io/bash)
 
+  build_scalafix_212:
+    executor: scala_212
+    steps:
+      - build:
+          build-steps:
+            - run: cd scalafix; sbt -v $SBT_OPTS ++$SCALA_VERSION test
+
   build_it_211: &build_it_211
     executor: scala_211
     steps:
@@ -258,6 +265,12 @@ workflows:
           filters:
             branches:
               ignore: /^pull.*/
+      - build_scalafix_212:
+          requires:
+            - checks
+          filters:
+            tags:
+              only: /^v.*/
       - deploy:
           requires:
             - build_211
