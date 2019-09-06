@@ -36,10 +36,11 @@ import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.extensions.gcp.options.GcpOptions
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.TypedRead.Method
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
+import org.apache.beam.sdk.io.gcp.bigquery.BigQueryUtils.ConversionOptions
+import org.apache.beam.sdk.io.gcp.bigquery.BigQueryUtils.ConversionOptions.TruncateTimestamps
 import org.apache.beam.sdk.io.gcp.bigquery.{BigQueryUtils, SchemaAndRecord}
 import org.apache.beam.sdk.io.gcp.{bigquery => beam}
 import org.apache.beam.sdk.io.{Compression, TextIO}
-import org.apache.beam.sdk.schemas.utils.AvroUtils
 import org.apache.beam.sdk.transforms.SerializableFunction
 
 import scala.collection.JavaConverters._
@@ -671,12 +672,15 @@ object BigQueryTyped {
     }
 
     def defaultParseFn[T: Schema]: SchemaAndRecord => T = {
-      val (_, _, fromRow) = SchemaMaterializer.materializeWithDefault(Schema[T])
-      input => {
-        val bs = AvroUtils.toBeamSchema(input.getRecord.getSchema)
-        val row = AvroUtils.toBeamRowStrict(input.getRecord, bs)
-        fromRow(row)
-      }
+      val (schema, _, fromRow) = SchemaMaterializer.materializeWithDefault(Schema[T])
+      input =>
+        fromRow {
+          BigQueryUtils.toBeamRow(
+            input.getRecord,
+            schema,
+            ConversionOptions.builder().setTruncateTimestamps(TruncateTimestamps.TRUNCATE).build()
+          )
+        }
     }
 
     def apply[T: Schema: Coder](table: STable): BeamSchema[T] =
