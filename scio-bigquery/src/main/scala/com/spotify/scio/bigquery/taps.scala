@@ -72,7 +72,7 @@ final case class BigQueryTaps(self: Taps) {
     mkTap(
       s"BigQuery SELECT: $sqlQuery",
       () => isQueryDone(sqlQuery),
-      () => BigQuerySelect(sqlQuery).tap(BigQuerySelect.ReadParam(flattenResults))
+      () => BigQuerySelect(Query(sqlQuery)).tap(BigQuerySelect.ReadParam(flattenResults))
     )
 
   /** Get a `Future[Tap[TableRow]]` for BigQuery table. */
