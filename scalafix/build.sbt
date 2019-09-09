@@ -6,11 +6,10 @@ inThisBuild(
     addCompilerPlugin(scalafixSemanticdb),
     scalacOptions ++= List(
       "-Yrangepos"
-    )
+    ),
+    skip in publish := true
   )
 )
-
-skip in publish := true
 
 lazy val rules = project.settings(
   moduleName := "scalafix",
@@ -28,30 +27,23 @@ def scio(version: String) =
   ).map(_ % version)
 
 lazy val input = project.settings(
-  skip in publish := true,
   libraryDependencies ++= scio(Scio.`0.6`)
 )
 
 lazy val output = project.settings(
-  skip in publish := true,
   libraryDependencies ++= scio(Scio.`0.7`)
 )
 
-lazy val `input-0_8` =
-  project.settings(
-    skip in publish := true,
-    libraryDependencies ++= scio(Scio.`0.7`)
-  )
+lazy val `input-0_8` = project.settings(
+  libraryDependencies ++= scio(Scio.`0.7`)
+)
 
-lazy val `output-0_8` =
-  project.settings(
-    skip in publish := true,
-    libraryDependencies ++= scio(Scio.`0.8`)
-  )
+lazy val `output-0_8` = project.settings(
+  libraryDependencies ++= scio(Scio.`0.8`)
+)
 
 lazy val tests = project
   .settings(
-    skip in publish := true,
     libraryDependencies += "ch.epfl.scala" % "scalafix-testkit" % V.scalafixVersion % Test cross CrossVersion.full,
     compile.in(Compile) :=
       compile
