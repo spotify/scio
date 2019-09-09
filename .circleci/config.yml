@@ -130,7 +130,7 @@ jobs:
         - run: ./scripts/circleci_repl.sh
         - run: bash <(curl -s https://codecov.io/bash)
 
-  build_scalafix_212:
+  build_scalafix_rules_212:
     executor: scala_212
     steps:
       - build:
@@ -265,7 +265,7 @@ workflows:
           filters:
             branches:
               ignore: /^pull.*/
-      - build_scalafix_212:
+      - build_scalafix_rules_212:
           requires:
             - checks
           filters:
