@@ -20,9 +20,10 @@ package com.spotify.scio.bigquery
 import java.util.regex.Pattern
 
 import com.google.api.services.bigquery.model.TableReference
-import com.google.common.primitives.Longs
 import com.spotify.scio.bigquery.client.BigQuery
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryHelpers
+
+import scala.util.Try
 
 private[bigquery] object BigQueryPartitionUtil {
 
@@ -64,7 +65,7 @@ private[bigquery] object BigQueryPartitionUtil {
       .toSet
       // get all table with prefix and filter only the day/date partitioned tables. Current
       // format for date partition is YYYYMMDD, thus all numeric.
-      .filter(e => Longs.tryParse(e) != null)
+      .filter(e => Try(e.toLong).isSuccess)
   }
 
   def latestQuery(bq: BigQuery, sqlQuery: String): String = {
