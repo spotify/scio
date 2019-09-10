@@ -28,7 +28,6 @@ package com.spotify.scio.util
 
 import com.spotify.scio.coders.Coder
 
-
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.transforms.join.{CoGroupByKey, KeyedPCollectionTuple}
 import org.apache.beam.sdk.values.TupleTag
