@@ -16,13 +16,13 @@
  */
 package com.spotify.scio.transforms;
 
-import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.*;
 
 import javax.annotation.Nullable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
+import java.util.stream.StreamSupport;
 
 /** Utility to abstract away Guava, Java 8 and Scala future handling. */
 public class FutureHandlers {
@@ -77,7 +77,9 @@ public class FutureHandlers {
     @Override
     default void waitForFutures(Iterable<CompletableFuture<V>> futures)
             throws InterruptedException, ExecutionException {
-      CompletableFuture.allOf(Iterables.toArray(futures, CompletableFuture.class)).get();
+      CompletableFuture[] array = StreamSupport.stream(futures.spliterator(), false)
+          .toArray(CompletableFuture[]::new);
+      CompletableFuture.allOf(array).get();
     }
 
     @Override

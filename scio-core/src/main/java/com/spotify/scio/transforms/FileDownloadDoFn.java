@@ -17,7 +17,6 @@
 
 package com.spotify.scio.transforms;
 
-import com.google.common.collect.Lists;
 import com.spotify.scio.util.RemoteFileUtil;
 import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.transforms.SerializableFunction;
@@ -29,6 +28,7 @@ import org.slf4j.LoggerFactory;
 
 import java.net.URI;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -67,7 +67,7 @@ public class FileDownloadDoFn<OutputT> extends DoFn<URI, OutputT> {
                           int batchSize, boolean keep) {
     this.remoteFileUtil = remoteFileUtil;
     this.fn = fn;
-    this.batch = Lists.newArrayList();
+    this.batch = new ArrayList<>();
     this.batchSize = batchSize;
     this.keep = keep;
   }
