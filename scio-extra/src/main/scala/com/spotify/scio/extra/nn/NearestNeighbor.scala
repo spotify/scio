@@ -19,8 +19,8 @@ package com.spotify.scio.extra.nn
 
 import breeze.linalg._
 import breeze.math._
-import com.google.common.collect.MinMaxPriorityQueue
 import info.debatty.java.lsh.LSHSuperBit
+import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.MinMaxPriorityQueue
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable.{Buffer => MBuffer, Map => MMap, Set => MSet}

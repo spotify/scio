@@ -20,13 +20,13 @@ package com.spotify.scio.benchmarks
 import java.util.UUID
 
 import com.google.api.services.dataflow.model.Job
-import com.google.common.reflect.ClassPath
 import com.spotify.scio._
 import com.spotify.scio.benchmarks.BenchmarkResult.Streaming
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.extensions.gcp.options.GcpOptions
 import org.apache.beam.sdk.io.GenerateSequence
 import org.apache.beam.sdk.options.StreamingOptions
+import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.reflect.ClassPath
 import org.joda.time._
 import org.joda.time.format.{DateTimeFormat, ISODateTimeFormat}
 import org.slf4j.{Logger, LoggerFactory}

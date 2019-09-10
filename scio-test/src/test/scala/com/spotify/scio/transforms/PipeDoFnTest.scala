@@ -19,9 +19,9 @@ package com.spotify.scio.transforms
 
 import java.nio.file.Files
 
-import com.google.common.base.Charsets
-import com.google.common.io.{Files => GFiles}
 import com.spotify.scio.testing._
+import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Charsets
+import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.io.{Files => GFiles}
 
 class PipeDoFnTest extends PipelineSpec {
 

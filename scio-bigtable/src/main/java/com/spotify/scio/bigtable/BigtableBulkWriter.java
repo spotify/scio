@@ -19,10 +19,9 @@ package com.spotify.scio.bigtable;
 
 import com.google.bigtable.v2.Mutation;
 import com.google.cloud.bigtable.config.BigtableOptions;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ThreadLocalRandom;
@@ -39,6 +38,7 @@ import org.apache.beam.sdk.transforms.windowing.Window;
 import org.apache.beam.sdk.values.KV;
 import org.apache.beam.sdk.values.PCollection;
 import org.apache.beam.sdk.values.PDone;
+import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.annotations.VisibleForTesting;
 import org.joda.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -165,7 +165,7 @@ public class BigtableBulkWriter
 
       StringBuilder logEntry = new StringBuilder();
       int i = 0;
-      List<BigtableWriteException> suppressed = Lists.newArrayList();
+      List<BigtableWriteException> suppressed = new ArrayList<>();
       for (; i < 10 && !failures.isEmpty(); ++i) {
         BigtableWriteException exc = failures.remove();
         logEntry.append("\n").append(exc.getMessage());

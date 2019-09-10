@@ -17,7 +17,7 @@
 
 package com.spotify.scio.extra
 
-import com.google.common.collect.MinMaxPriorityQueue
+import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.MinMaxPriorityQueue
 
 import scala.collection.JavaConverters._
 
