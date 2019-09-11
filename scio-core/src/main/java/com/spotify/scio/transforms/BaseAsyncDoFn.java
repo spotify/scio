@@ -17,8 +17,6 @@
 
 package com.spotify.scio.transforms;
 
-import com.google.common.collect.Maps;
-import com.google.common.collect.Queues;
 import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.transforms.windowing.BoundedWindow;
 import org.joda.time.Instant;
@@ -26,6 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
@@ -43,9 +42,9 @@ public abstract class BaseAsyncDoFn<InputT, OutputT, ResourceT, FutureT>
    */
   public abstract FutureT processElement(InputT input);
 
-  private final ConcurrentMap<UUID, FutureT> futures = Maps.newConcurrentMap();
-  private final ConcurrentLinkedQueue<Result> results = Queues.newConcurrentLinkedQueue();
-  private final ConcurrentLinkedQueue<Throwable> errors = Queues.newConcurrentLinkedQueue();
+  private final ConcurrentMap<UUID, FutureT> futures = new ConcurrentHashMap<>();
+  private final ConcurrentLinkedQueue<Result> results = new ConcurrentLinkedQueue<>();
+  private final ConcurrentLinkedQueue<Throwable> errors = new ConcurrentLinkedQueue<>();
 
   @StartBundle
   public void startBundle() {

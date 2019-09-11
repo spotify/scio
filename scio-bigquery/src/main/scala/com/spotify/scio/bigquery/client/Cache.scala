@@ -20,11 +20,11 @@ package com.spotify.scio.bigquery.client
 import java.io.File
 
 import com.google.api.services.bigquery.model.{TableReference, TableSchema}
-import com.google.common.base.Charsets
-import com.google.common.hash.Hashing
-import com.google.common.io.Files
 import com.spotify.scio.bigquery.BigQueryUtil
 import org.apache.beam.sdk.io.gcp.{bigquery => bq}
+import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Charsets
+import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.hash.Hashing
+import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.io.Files
 
 import scala.util.Try
 import org.apache.avro.Schema

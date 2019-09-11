@@ -20,7 +20,7 @@ package com.spotify.scio.jmh
 import java.lang.{Iterable => JIterable}
 import java.util.concurrent.TimeUnit
 
-import com.google.common.collect.AbstractIterator
+import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.AbstractIterator
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.Blackhole
 

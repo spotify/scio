@@ -156,7 +156,7 @@ def outer(out, n):
 def main(out):
     print >> out, textwrap.dedent('''
         /*
-         * Copyright 2016 Spotify AB.
+         * Copyright 2019 Spotify AB.
          *
          * Licensed under the Apache License, Version 2.0 (the "License");
          * you may not use this file except in compliance with the License.
@@ -184,15 +184,12 @@ def main(out):
         package com.spotify.scio.util
 
         import com.spotify.scio.coders.Coder
-        import com.spotify.scio.coders.Implicits._
 
-        import com.google.common.collect.Lists
         import com.spotify.scio.values.SCollection
         import org.apache.beam.sdk.transforms.join.{CoGroupByKey, KeyedPCollectionTuple}  # NOQA
         import org.apache.beam.sdk.values.TupleTag
 
         import scala.collection.JavaConverters._
-        import scala.reflect.ClassTag
 
         trait MultiJoin extends Serializable {
 

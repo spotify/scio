@@ -18,10 +18,9 @@
 package com.spotify.scio.tensorflow
 
 import java.time.Duration
-import java.util.concurrent.ConcurrentMap
+import java.util.concurrent.{ConcurrentHashMap, ConcurrentMap}
 import java.util.function.Function
 
-import com.google.common.collect.Maps
 import com.spotify.scio.transforms.DoFnWithResource
 import com.spotify.scio.transforms.DoFnWithResource.ResourceType
 import com.spotify.zoltar.tf.{TensorFlowGraphModel, TensorFlowModel}
@@ -80,7 +79,7 @@ private[this] abstract class PredictDoFn[T, V, M <: Model[_]](
   }
 
   override def createResource(): ConcurrentMap[String, M] =
-    Maps.newConcurrentMap[String, M]()
+    new ConcurrentHashMap[String, M]()
 
 }
 

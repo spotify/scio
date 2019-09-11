@@ -19,10 +19,10 @@ package com.spotify.scio.extra.bigquery
 
 import java.nio.ByteBuffer
 
-import com.google.common.io.BaseEncoding
 import com.google.protobuf.ByteString
 import com.spotify.scio.bigquery.TableRow
 import org.apache.avro.generic.GenericData
+import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.io.BaseEncoding
 import org.scalatest.{FlatSpec, Matchers}
 
 import scala.collection.JavaConverters._

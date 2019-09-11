@@ -20,11 +20,11 @@ package com.spotify.scio.extra.bigquery
 import java.nio.ByteBuffer
 import java.util
 
-import com.google.common.io.BaseEncoding
 import com.spotify.scio.bigquery.TableRow
 import com.spotify.scio.extra.bigquery.Implicits.AvroConversionException
 import org.apache.avro.Schema
 import org.apache.avro.generic.{GenericFixed, IndexedRecord}
+import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.io.BaseEncoding
 
 import scala.collection.JavaConverters._
 

@@ -17,7 +17,7 @@
 
 package com.spotify.scio
 
-import com.google.common.reflect.ClassPath
+import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.reflect.ClassPath
 
 final case class SysProp(flag: String, description: String) {
   def value(default: => String): String = sys.props.getOrElse(flag, default)

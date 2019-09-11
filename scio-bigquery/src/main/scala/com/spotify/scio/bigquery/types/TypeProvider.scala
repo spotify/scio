@@ -22,9 +22,6 @@ import java.util.{List => JList}
 
 import com.google.api.client.json.jackson2.JacksonFactory
 import com.google.api.services.bigquery.model.{TableFieldSchema, TableSchema}
-import com.google.common.base.Charsets
-import com.google.common.hash.Hashing
-import com.google.common.io.Files
 import com.spotify.scio.CoreSysProps
 import com.spotify.scio.bigquery.client.BigQuery
 import com.spotify.scio.bigquery.types.MacroUtil._
@@ -35,6 +32,9 @@ import com.spotify.scio.bigquery.{
   BigQueryUtil,
   StorageUtil
 }
+import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Charsets
+import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.hash.Hashing
+import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.io.Files
 import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConverters._

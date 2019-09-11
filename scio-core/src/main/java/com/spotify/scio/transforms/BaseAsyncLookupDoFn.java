@@ -16,13 +16,11 @@
  */
 package com.spotify.scio.transforms;
 
-import com.google.common.base.Preconditions;
 import com.google.common.cache.Cache;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Queues;
 import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.transforms.windowing.BoundedWindow;
 import org.apache.beam.sdk.values.KV;
+import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions;
 import org.joda.time.Instant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,6 +28,7 @@ import org.slf4j.LoggerFactory;
 import java.io.Serializable;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
@@ -52,16 +51,16 @@ public abstract class BaseAsyncLookupDoFn<A, B, C, F, T>
   // DoFn is deserialized once per CPU core. We assign a unique UUID to each DoFn instance upon
   // creation, so that all cloned instances share the same ID. This ensures all cores share the
   // same Client and Cache.
-  private static final ConcurrentMap<UUID, Object> client = Maps.newConcurrentMap();
-  private static final ConcurrentMap<UUID, Cache> cache = Maps.newConcurrentMap();
+  private static final ConcurrentMap<UUID, Object> client = new ConcurrentHashMap<>();
+  private static final ConcurrentMap<UUID, Cache> cache = new ConcurrentHashMap<>();
   private final UUID instanceId;
 
   private final CacheSupplier<A, B, ?> cacheSupplier;
 
   // Data structures for handling async requests
   private final Semaphore semaphore;
-  private final ConcurrentMap<UUID, F> futures = Maps.newConcurrentMap();
-  private final ConcurrentLinkedQueue<Result> results = Queues.newConcurrentLinkedQueue();
+  private final ConcurrentMap<UUID, F> futures = new ConcurrentHashMap<>();
+  private final ConcurrentLinkedQueue<Result> results = new ConcurrentLinkedQueue<>();
   private long requestCount;
   private long resultCount;
 

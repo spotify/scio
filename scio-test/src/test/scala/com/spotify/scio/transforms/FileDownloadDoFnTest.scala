@@ -19,9 +19,9 @@ package com.spotify.scio.transforms
 
 import java.nio.file.{Files, Path}
 
-import com.google.common.base.Charsets
-import com.google.common.io.{Files => GFiles}
 import com.spotify.scio.testing._
+import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Charsets
+import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.io.{Files => GFiles}
 
 import scala.collection.JavaConverters._
 

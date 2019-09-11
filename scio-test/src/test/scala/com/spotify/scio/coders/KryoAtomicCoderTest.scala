@@ -20,7 +20,6 @@ package com.spotify.scio.coders
 import java.{lang => jl, util => ju}
 
 import com.google.api.services.bigquery.model.TableRow
-import com.google.common.collect.ImmutableList
 import com.spotify.scio.ScioContext
 import com.spotify.scio.avro.AvroUtils._
 import com.spotify.scio.coders.CoderTestUtils._
@@ -67,7 +66,7 @@ class KryoAtomicCoderTest extends PipelineSpec {
 
   it should "support wrapped iterables" in {
     // handle immutable underlying Java collections
-    val list = ImmutableList.of(1, 2, 3)
+    val list = List(1, 2, 3).asJava
 
     // Iterable/Collection should have proper equality
     list.asInstanceOf[jl.Iterable[Int]].asScala coderShould roundtripKryo()
@@ -101,7 +100,7 @@ class KryoAtomicCoderTest extends PipelineSpec {
   }
 
   it should "support TableRow" in {
-    val r = new TableRow().set("repeated_field", ImmutableList.of("a", "b"))
+    val r = new TableRow().set("repeated_field", List("a", "b").asJava)
     r coderShould roundtripKryo()
   }
 

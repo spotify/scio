@@ -17,7 +17,6 @@
 
 package com.spotify.scio.transforms;
 
-import com.google.common.collect.Maps;
 import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.transforms.ParDo;
 import org.apache.beam.sdk.transforms.display.DisplayData;
@@ -25,6 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 /**
@@ -33,7 +33,7 @@ import java.util.concurrent.ConcurrentMap;
 public abstract class DoFnWithResource<InputT, OutputT, ResourceT> extends DoFn<InputT, OutputT> {
 
   private static final Logger LOG = LoggerFactory.getLogger(DoFnWithResource.class);
-  private static final ConcurrentMap<String, Object> resources = Maps.newConcurrentMap();
+  private static final ConcurrentMap<String, Object> resources = new ConcurrentHashMap<>();
 
   private final String instanceId;
   private String resourceId = null;

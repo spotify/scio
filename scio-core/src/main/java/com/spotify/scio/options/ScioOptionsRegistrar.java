@@ -18,14 +18,15 @@
 package com.spotify.scio.options;
 
 import com.google.auto.service.AutoService;
-import com.google.common.collect.ImmutableList;
 import org.apache.beam.sdk.options.PipelineOptions;
 import org.apache.beam.sdk.options.PipelineOptionsRegistrar;
+
+import java.util.Collections;
 
 @AutoService(PipelineOptionsRegistrar.class)
 public class ScioOptionsRegistrar implements PipelineOptionsRegistrar {
   @Override
   public Iterable<Class<? extends PipelineOptions>> getPipelineOptions() {
-    return ImmutableList.<Class<? extends PipelineOptions>>of(ScioOptions.class);
+    return Collections.singleton(ScioOptions.class);
   }
 }

@@ -22,9 +22,9 @@ import java.nio.channels.Channels
 import java.nio.{ByteBuffer, ByteOrder}
 import java.util.zip.GZIPInputStream
 
-import com.google.common.hash.Hashing
-import com.google.common.primitives.Ints
 import org.apache.beam.sdk.io.Compression
+import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.hash.Hashing
+import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.primitives.Ints
 import org.apache.commons.compress.compressors.deflate._
 import org.apache.commons.compress.compressors.gzip._
 
