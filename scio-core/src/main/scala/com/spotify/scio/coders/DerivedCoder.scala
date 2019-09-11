@@ -29,7 +29,7 @@ private object Derived extends Serializable {
         backends (e.g. Flink) use exceptions as a way to signal from the Coder to the layers above
          here; we therefore must alter the type of exceptions passing through this block.
          */
-        throw WrappedBCoder.appendMaterializationStack(e, Some(msg), stack)
+        throw CoderStackTrace.append(e, Some(msg), stack)
     }
 
   def combineCoder[T](
@@ -45,7 +45,7 @@ private object Derived extends Serializable {
       i = i + 1
     }
 
-    val materializationStack = WrappedBCoder.prepareStackTrace
+    val materializationStack = CoderStackTrace.prepare
 
     @inline def destruct(v: T): Array[Any] = {
       val arr = new Array[Any](ps.length)

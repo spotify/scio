@@ -200,8 +200,8 @@ private[scio] case class WrappedBCoder[T](u: BCoder[T]) extends BCoder[T] {
    * Eagerly compute a stack trace on materialization
    * to provide a helpful stacktrace if an exception happens
    */
-  private val materializationStackTrace: Array[StackTraceElement] =
-    WrappedBCoder.prepareStackTrace
+  private[this] val materializationStackTrace: Array[StackTraceElement] =
+    CoderStackTrace.prepare
 
   override def toString: String = u.toString
 
@@ -210,11 +210,10 @@ private[scio] case class WrappedBCoder[T](u: BCoder[T]) extends BCoder[T] {
       a
     } catch {
       case ex: Throwable =>
-        /* prior to scio 0.8, a wrapped exception was thrown. It is no longer the case, as some
-        backends (e.g. Flink) use exceptions as a way to signal from the Coder to the layers above
-         here; we therefore must alter the type of exceptions passing through this block.
-         */
-        throw WrappedBCoder.appendMaterializationStack(ex, None, materializationStackTrace)
+        // prior to scio 0.8, a wrapped exception was thrown. It is no longer the case, as some
+        // backends (e.g. Flink) use exceptions as a way to signal from the Coder to the layers
+        // above here; we therefore must alter the type of exceptions passing through this block.
+        throw CoderStackTrace.append(ex, None, materializationStackTrace)
     }
 
   override def encode(value: T, os: OutputStream): Unit =
@@ -248,36 +247,6 @@ private[scio] object WrappedBCoder {
       case WrappedBCoder(_) => u
       case _                => new WrappedBCoder(u)
     }
-
-  def appendMaterializationStack[X <: Throwable](
-    cause: X,
-    additionalMessage: Option[String],
-    baseStack: Array[StackTraceElement]
-  ): X = {
-    val existingStack = cause.getStackTrace
-    val messageItem =
-      additionalMessage.map(msg => new StackTraceElement("Due to " + msg, "", "", 0)).toArray
-
-    val adjustedStack = messageItem ++ existingStack ++ baseStack
-    cause.setStackTrace(adjustedStack)
-    cause
-  }
-
-  def prepareStackTrace: Array[StackTraceElement] =
-    Array(
-      new StackTraceElement(
-        "——✂——✂——✂—— Materialization point call stack follows ——✂——✂——✂——",
-        "——✂——✂——✂——",
-        "——✂——✂——✂——",
-        0
-      )
-    ) ++
-      Thread
-        .currentThread()
-        .getStackTrace()
-        .dropWhile(!_.getClassName.contains(CoderMaterializer.getClass.getName))
-        .take(10)
-
 }
 
 // Coder used internally specifically for Magnolia derived coders.
@@ -501,4 +470,36 @@ sealed trait CoderGrammar {
 
 object Coder extends CoderGrammar with Implicits {
   @inline final def apply[T](implicit c: Coder[T]): Coder[T] = c
+}
+
+private[coders] object CoderStackTrace {
+  val CoderStackElemMarker = new StackTraceElement(
+    "### Coder materialization stack ###",
+    "",
+    "",
+    0
+  )
+
+  def prepare: Array[StackTraceElement] =
+    CoderStackElemMarker +: Thread
+      .currentThread()
+      .getStackTrace
+      .dropWhile(!_.getClassName.contains(CoderMaterializer.getClass.getName))
+      .take(10)
+
+  def append[T <: Throwable](
+    cause: T,
+    additionalMessage: Option[String],
+    baseStack: Array[StackTraceElement]
+  ): T = {
+    cause.printStackTrace()
+    val messageItem = additionalMessage.map { msg =>
+      new StackTraceElement(s"Due to $msg", "", "", 0)
+    }
+
+    val adjustedStack = messageItem ++ cause.getStackTrace ++ baseStack
+    cause.setStackTrace(adjustedStack.toArray)
+    cause
+  }
+
 }
