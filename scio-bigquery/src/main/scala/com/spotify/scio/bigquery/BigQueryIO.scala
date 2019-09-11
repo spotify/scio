@@ -127,6 +127,14 @@ object BigQueryIO {
     new BigQueryIO[T] with TestIO[T] {
       override def testId: String = s"BigQueryIO($id)"
     }
+
+  @inline final def apply[T](source: Source): BigQueryIO[T] =
+    new BigQueryIO[T] with TestIO[T] {
+      override def testId: String = source match {
+        case t: Table => s"BigQueryIO(${t.spec})"
+        case q: Query => s"BigQueryIO(${q.underlying})"
+      }
+    }
 }
 object BigQueryTypedSelect {
   object ReadParam {
@@ -138,17 +146,17 @@ object BigQueryTypedSelect {
 
 final case class BigQueryTypedSelect[T: Coder](
   reader: beam.BigQueryIO.TypedRead[T],
-  sqlQuery: String,
+  sqlQuery: Query,
   fromTableRow: TableRow => T
 ) extends BigQueryIO[T] {
   override type ReadP = BigQueryTypedSelect.ReadParam
   override type WriteP = Nothing // ReadOnly
 
-  override def testId: String = s"BigQueryIO($sqlQuery)"
+  override def testId: String = s"BigQueryIO(${sqlQuery.underlying})"
 
   override protected def read(sc: ScioContext, params: ReadP): SCollection[T] = {
     val rc = reader.withCoder(CoderMaterializer.beam(sc, Coder[T]))
-    Reads.bqReadQuery(sc)(rc, sqlQuery, params.flattenResults)
+    Reads.bqReadQuery(sc)(rc, sqlQuery.underlying, params.flattenResults)
   }
 
   override protected def write(data: SCollection[T], params: WriteP): Tap[T] =
@@ -158,7 +166,7 @@ final case class BigQueryTypedSelect[T: Coder](
     val tableReference = BigQuery
       .defaultInstance()
       .query
-      .run(sqlQuery, flattenResults = params.flattenResults)
+      .run(sqlQuery.underlying, flattenResults = params.flattenResults)
     BigQueryTap(tableReference).map(fromTableRow)
   }
 }
@@ -170,14 +178,14 @@ final case class BigQueryTypedSelect[T: Coder](
  * supported. By default the query dialect will be automatically detected. To override this
  * behavior, start the query string with `#legacysql` or `#standardsql`.
  */
-final case class BigQuerySelect(sqlQuery: String) extends BigQueryIO[TableRow] {
+final case class BigQuerySelect(sqlQuery: Query) extends BigQueryIO[TableRow] {
   override type ReadP = BigQuerySelect.ReadParam
   override type WriteP = Nothing // ReadOnly
 
   private[this] lazy val underlying =
     BigQueryTypedSelect(beam.BigQueryIO.readTableRows(), sqlQuery, identity)
 
-  override def testId: String = s"BigQueryIO($sqlQuery)"
+  override def testId: String = s"BigQueryIO(${sqlQuery.underlying})"
 
   override protected def read(sc: ScioContext, params: ReadP): SCollection[TableRow] =
     sc.read(underlying)(params)
@@ -191,6 +199,8 @@ final case class BigQuerySelect(sqlQuery: String) extends BigQueryIO[TableRow] {
 object BigQuerySelect {
   type ReadParam = BigQueryTypedSelect.ReadParam
   val ReadParam = BigQueryTypedSelect.ReadParam
+
+  @inline final def apply(sqlQuery: String): BigQuerySelect = new BigQuerySelect(Query(sqlQuery))
 }
 
 /**
@@ -344,7 +354,7 @@ object BigQueryStorage {
     BigQueryStorage(Table.Spec(spec))
 }
 
-final case class BigQueryStorageSelect(sqlQuery: String) extends BigQueryIO[TableRow] {
+final case class BigQueryStorageSelect(sqlQuery: Query) extends BigQueryIO[TableRow] {
   override type ReadP = Unit
   override type WriteP = Nothing // ReadOnly
 
@@ -355,7 +365,7 @@ final case class BigQueryStorageSelect(sqlQuery: String) extends BigQueryIO[Tabl
       identity
     )
 
-  override def testId: String = s"BigQueryIO($sqlQuery)"
+  override def testId: String = s"BigQueryIO(${sqlQuery.underlying})"
 
   override protected def read(sc: ScioContext, params: ReadP): SCollection[TableRow] =
     sc.read(underlying)(BigQueryTypedSelect.ReadParam())
@@ -436,7 +446,7 @@ object BigQueryTyped {
     ): Aux[T, Select] =
       new IO[T] {
         type F[A <: HasAnnotation] = Select[A]
-        def impl: Select[T] = Select(t.query)
+        def impl: Select[T] = Select(Query(t.query))
       }
 
     implicit def storageIO[T <: HasAnnotation: ClassTag: TypeTag: Coder](
@@ -470,7 +480,7 @@ object BigQueryTyped {
    * supported. By default the query dialect will be automatically detected. To override this
    * behavior, start the query string with `#legacysql` or `#standardsql`.
    */
-  final case class Select[T <: HasAnnotation: ClassTag: TypeTag: Coder](query: String)
+  final case class Select[T <: HasAnnotation: ClassTag: TypeTag: Coder](query: Query)
       extends BigQueryIO[T] {
     override type ReadP = Unit
     override type WriteP = Nothing // ReadOnly
@@ -485,7 +495,7 @@ object BigQueryTyped {
       BigQueryTypedSelect(reader, query, fromTableRow)(Coder.kryo[T])
     }
 
-    override def testId: String = s"BigQueryIO($query)"
+    override def testId: String = s"BigQueryIO(${query.underlying})"
 
     override protected def read(sc: ScioContext, params: ReadP): SCollection[T] =
       sc.read(underlying)(BigQueryTypedSelect.ReadParam())
@@ -494,6 +504,12 @@ object BigQueryTyped {
       throw new UnsupportedOperationException("Select queries are read-only")
 
     override def tap(params: ReadP): Tap[T] = underlying.tap(BigQueryTypedSelect.ReadParam())
+  }
+
+  object Select {
+    @inline final def apply[T <: HasAnnotation: ClassTag: TypeTag: Coder](
+      query: String
+    ): Select[T] = new Select[T](Query(query))
   }
 
   /**
@@ -622,7 +638,7 @@ object BigQueryTyped {
     }
   }
 
-  final case class StorageQuery[T <: HasAnnotation: ClassTag: TypeTag: Coder](sqlQuery: String)
+  final case class StorageQuery[T <: HasAnnotation: ClassTag: TypeTag: Coder](sqlQuery: Query)
       extends BigQueryIO[T] {
     override type ReadP = Unit
     override type WriteP = Nothing // ReadOnly
@@ -656,7 +672,7 @@ object BigQueryTyped {
 
   // scalastyle:off cyclomatic.complexity
   private[scio] def dynamic[T <: HasAnnotation: ClassTag: TypeTag: Coder](
-    newSource: String
+    newSource: Option[Source]
   ): ScioIO.ReadOnly[T, Unit] = {
     val bqt = BigQueryType[T]
     newSource match {
@@ -664,18 +680,18 @@ object BigQueryTyped {
       // The case where newSource is null is only there
       // for legacy support and should not exists once
       // BigQueryScioContext.typedBigQuery is removed
-      case null if bqt.isTable =>
+      case None if bqt.isTable =>
         val table = STable.Spec(bqt.table.get)
         ScioIO.ro[T](Table[T](table))
-      case null if bqt.isQuery =>
-        val query = bqt.query.get
+      case None if bqt.isQuery =>
+        val query = Query(bqt.query.get)
         Select[T](query)
-      case null =>
-        throw new IllegalArgumentException(s"Missing table or query field in companion object")
-      case _ if scala.util.Try(STable.Spec(newSource).ref).isSuccess =>
-        ScioIO.ro(Table[T](STable.Spec(newSource)))
+      case Some(s: STable) =>
+        ScioIO.ro(Table[T](s))
+      case Some(s: Query) =>
+        Select[T](s)
       case _ =>
-        Select[T](newSource)
+        throw new IllegalArgumentException(s"Missing table or query field in companion object")
     }
   }
   // scalastyle:on cyclomatic.complexity

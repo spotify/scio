@@ -38,7 +38,11 @@ import org.joda.time.format.{DateTimeFormat, DateTimeFormatterBuilder}
 import org.joda.time.{DateTimeZone, Instant, LocalDate, LocalDateTime, LocalTime}
 import org.joda.time.{Instant, LocalDate, LocalDateTime, LocalTime}
 
-sealed trait Table {
+sealed trait Source
+
+final case class Query(underlying: String) extends Source
+
+sealed trait Table extends Source {
   def spec: String
 
   def ref: GTableReference

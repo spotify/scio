@@ -26,6 +26,8 @@ import com.spotify.scio.bigquery.{
   BigQueryTable,
   BigQueryType,
   BigQueryTyped,
+  Query,
+  Source,
   Table,
   TableRow,
   TableRowJsonIO
@@ -37,6 +39,7 @@ import com.spotify.scio.values._
 import scala.language.implicitConversions
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
+import scala.util.Try
 
 /** Enhanced version of [[ScioContext]] with BigQuery methods. */
 final class ScioContextOps(private val self: ScioContext) extends AnyVal {
@@ -48,9 +51,26 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
    * supported. By default the query dialect will be automatically detected. To override this
    * behavior, start the query string with `#legacysql` or `#standardsql`.
    */
+  @deprecated(
+    "this method will be removed; use bigQuery(Query(sql), flattenResults) instead",
+    "Scio 0.8"
+  )
   def bigQuerySelect(
     sqlQuery: String,
     flattenResults: Boolean = BigQuerySelect.ReadParam.DefaultFlattenResults
+  ): SCollection[TableRow] =
+    bigQuerySelect(Query(sqlQuery), flattenResults)
+
+  /**
+   * Get an SCollection for a BigQuery SELECT query.
+   * Both [[https://cloud.google.com/bigquery/docs/reference/legacy-sql Legacy SQL]] and
+   * [[https://cloud.google.com/bigquery/docs/reference/standard-sql/ Standard SQL]] dialects are
+   * supported. By default the query dialect will be automatically detected. To override this
+   * behavior, start the query string with `#legacysql` or `#standardsql`.
+   */
+  def bigQuerySelect(
+    sqlQuery: Query,
+    flattenResults: Boolean
   ): SCollection[TableRow] =
     self.read(BigQuerySelect(sqlQuery))(BigQuerySelect.ReadParam(flattenResults))
 
@@ -109,7 +129,7 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
    *
    * @param query SQL query
    */
-  def bigQueryStorage(query: String): SCollection[TableRow] =
+  def bigQueryStorage(query: Query): SCollection[TableRow] =
     self.read(BigQueryStorageSelect(query))
 
   /**
@@ -144,14 +164,27 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
    * supported. By default the query dialect will be automatically detected. To override this
    * behavior, start the query string with `#legacysql` or `#standardsql`.
    */
+  @deprecated(
+    "this method will be removed; use typedBigQuery(Source) instead",
+    "Scio 0.8"
+  )
   def typedBigQuery[T <: HasAnnotation: ClassTag: TypeTag: Coder](
     newSource: String = null
+  ): SCollection[T] = {
+    val src = Option(newSource).map { s =>
+      Try(Table.Spec(s)).getOrElse(Query(s))
+    }.orNull
+    typedBigQuery(src)
+  }
+
+  def typedBigQuery[T <: HasAnnotation: ClassTag: TypeTag: Coder](
+    newSource: Source
   ): SCollection[T] = {
     val bqt = BigQueryType[T]
     if (bqt.isStorage) {
       typedBigQueryStorage(newSource)
     } else {
-      self.read(BigQueryTyped.dynamic[T](newSource))
+      self.read(BigQueryTyped.dynamic[T](Option(newSource)))
     }
   }
 
@@ -163,7 +196,7 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
    * [[com.spotify.scio.bigquery.types.BigQueryType.fromQuery BigQueryType.fromQuery]]
    */
   def typedBigQueryStorage[T <: HasAnnotation: ClassTag: TypeTag: Coder](
-    newSource: String = null,
+    newSource: Source = null,
     rowRestriction: String = null
   ): SCollection[T] = {
     val bqt = BigQueryType[T]
@@ -173,12 +206,16 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
         rowRestriction == null,
         "`rowRestriction` was set; only applies if `fromStorage` is used"
       )
-      self.read(BigQueryTyped.StorageQuery[T](bqt.query.get))
+      self.read(BigQueryTyped.StorageQuery[T](Query(bqt.query.get)))
     } else {
-      val table = if (newSource != null) newSource else bqt.table.get
+      val table: Table = Option(newSource) match {
+        case None           => Table.Spec(bqt.table.get)
+        case Some(s: Table) => s
+        case _              => throw new IllegalArgumentException("Unsupported source")
+      }
       val rr = if (rowRestriction != null) rowRestriction else bqt.rowRestriction.get
       val params = BigQueryTyped.Storage.ReadParam(bqt.selectedFields.get, rr)
-      self.read(BigQueryTyped.Storage[T](Table.Spec(table)))(params)
+      self.read(BigQueryTyped.Storage[T](table))(params)
     }
   }
 
