@@ -18,6 +18,7 @@
 package com.spotify.scio
 
 import org.scalatest._
+import scala.io.AnsiColor._
 
 class VersionUtilTest extends FlatSpec with Matchers {
 
@@ -35,13 +36,19 @@ class VersionUtilTest extends FlatSpec with Matchers {
   it should "warn about release version" in {
     VersionUtil.checkVersion("0.1.0-SNAPSHOT", Some("0.1.0"), ignore = false) shouldBe Seq(
       "Using a SNAPSHOT version of Scio: 0.1.0-SNAPSHOT",
-      "A newer version of Scio is available: 0.1.0-SNAPSHOT -> 0.1.0"
+      s"""
+       | $YELLOW>$BOLD A newer version of Scio is available: 0.1.0-SNAPSHOT -> 0.1.0 $RESET
+       | $YELLOW>$RESET Use `-Dscio.ignoreVersionWarning=true` to disable this check. $RESET
+       |""".stripMargin
     )
   }
 
   private def verifyNewVersion(oldVer: String, newVer: String) =
     VersionUtil.checkVersion(oldVer, Some(newVer), ignore = false) shouldBe Seq(
-      s"A newer version of Scio is available: $oldVer -> $newVer"
+      s"""
+        | $YELLOW>$BOLD A newer version of Scio is available: $oldVer -> $newVer $RESET
+        | $YELLOW>$RESET Use `-Dscio.ignoreVersionWarning=true` to disable this check. $RESET
+        |""".stripMargin
     )
 
   it should "warn about newer version" in {

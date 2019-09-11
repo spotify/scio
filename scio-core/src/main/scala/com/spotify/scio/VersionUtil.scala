@@ -25,6 +25,7 @@ import org.apache.beam.sdk.util.ReleaseInfo
 import org.apache.beam.sdk.{PipelineResult, PipelineRunner}
 import org.slf4j.LoggerFactory
 
+import scala.io.AnsiColor._
 import scala.collection.JavaConverters._
 import scala.collection.mutable
 import scala.util.Try
@@ -32,70 +33,65 @@ import scala.util.Try
 private[scio] object VersionUtil {
 
   case class SemVer(major: Int, minor: Int, rev: Int, suffix: String) extends Ordered[SemVer] {
-    def compare(that: SemVer): Int = {
-      implicit val revStringOrder = Ordering[String]
-      implicitly[Ordering[(Int, Int, Int, String)]]
-        .compare(SemVer.unapply(this).get, SemVer.unapply(that).get)
-    }
+    def compare(that: SemVer): Int =
+      Ordering[(Int, Int, Int, String)].compare(SemVer.unapply(this).get, SemVer.unapply(that).get)
   }
 
-  private val TIMEOUT = 3000
-  private val url = "https://api.github.com/repos/spotify/scio/releases"
-  private val pattern = """v?(\d+)\.(\d+).(\d+)(-\w+)?""".r
-  private val logger = LoggerFactory.getLogger(this.getClass)
+  private[this] val Timeout = 3000
+  private[this] val Url = "https://api.github.com/repos/spotify/scio/releases"
+  private[this] val Pattern = """v?(\d+)\.(\d+).(\d+)(-\w+)?""".r
+  private[this] val Logger = LoggerFactory.getLogger(this.getClass)
+
+  private[this] val MessagePattern: (String, String) => String = (version, url) => s"""
+       | ${YELLOW}>${BOLD} Scio $version some breaking changes in the API.${RESET}
+       | ${YELLOW}>${RESET} Follow the migration guide to upgrade: $url
+       | ${YELLOW}>${RESET} Scio provides automatic migration rules (See migration guide).
+      """.stripMargin
+  private[this] val NewerVersionPattern: (String, String) => String = (current, v) => s"""
+      | $YELLOW>$BOLD A newer version of Scio is available: $current -> $v $RESET
+      | $YELLOW>$RESET Use `-Dscio.ignoreVersionWarning=true` to disable this check. $RESET
+      |""".stripMargin
 
   private lazy val latest: Option[String] = Try {
     val transport = new NetHttpTransport()
     val response = transport
       .createRequestFactory(new HttpRequestInitializer {
         override def initialize(request: HttpRequest): Unit = {
-          request.setConnectTimeout(TIMEOUT)
-          request.setReadTimeout(TIMEOUT)
+          request.setConnectTimeout(Timeout)
+          request.setReadTimeout(Timeout)
           request.setParser(new JsonObjectParser(new JacksonFactory))
 
           ()
         }
       })
-      .buildGetRequest(new GenericUrl(url))
+      .buildGetRequest(new GenericUrl(Url))
       .execute()
       .parseAs(classOf[java.util.List[java.util.Map[String, AnyRef]]])
     response.asScala
       .filter(node => !node.get("prerelease").asInstanceOf[Boolean])
-      .filter(node => !node.get("draft").asInstanceOf[Boolean])
-      .headOption
+      .find(node => !node.get("draft").asInstanceOf[Boolean])
       .map(latestNode => latestNode.get("tag_name").asInstanceOf[String])
   }.toOption.flatten
 
   private def parseVersion(version: String): SemVer = {
-    val m = pattern.findFirstMatchIn(version).get
+    val m = Pattern.findFirstMatchIn(version).get
     // higher value for no "-SNAPSHOT"
     val snapshot = if (m.group(4) != null) m.group(4).toUpperCase else "\uffff"
     SemVer(m.group(1).toInt, m.group(2).toInt, m.group(3).toInt, snapshot)
   }
 
   private[scio] def ignoreVersionCheck: Boolean =
-    Option(System.getProperty("scio.ignoreVersionWarning"))
-      .map(_.trim == "true")
-      .getOrElse(false)
+    Option(System.getProperty("scio.ignoreVersionWarning")).exists(_.trim == "true")
 
-  // scalastyle:off line.size.limit
-  private def messages(current: SemVer, latest: SemVer): Option[String] =
-    (current, latest) match {
-      case (SemVer(0, minor, _, _), SemVer(0, 7, _, _)) if minor < 7 =>
-        import scala.io.AnsiColor._
-        val mess =
-          s"""
-            | ${YELLOW}>${BOLD} Scio 0.7 introduced breaking changes in the API.${RESET}
-            | ${YELLOW}>${RESET} Follow the migration guide to upgrade: https://spotify.github.io/scio/migrations/v0.7.0-Migration-Guide
-            | ${YELLOW}>${RESET} Scio provides automatic migration rules (See migration guide).
-          """.stripMargin
-        Option(mess)
-      case (SemVer(0, minor, _, _), SemVer(0, 8, _, _)) if minor < 8 =>
-        // TODO: write a migration guide to scio 0.8 and link it here
-        None
-      case _ => None
-    }
-  // scalastyle:on line.size.limit
+  private def messages(current: SemVer, latest: SemVer): Option[String] = (current, latest) match {
+    case (SemVer(0, minor, _, _), SemVer(0, 7, _, _)) if minor < 7 =>
+      Some(
+        MessagePattern("0.7", "https://spotify.github.io/scio/migrations/v0.7.0-Migration-Guide")
+      )
+    case (SemVer(0, minor, _, _), SemVer(0, 8, _, _)) if minor < 8 =>
+      Some(MessagePattern("0.8", "https://spotify.github.io/scio/migrations/v0.8.0"))
+    case _ => None
+  }
 
   def checkVersion(
     current: String,
@@ -105,24 +101,23 @@ private[scio] object VersionUtil {
     if (ignore) {
       Nil
     } else {
-      val b = mutable.Buffer.empty[String]
+      val buffer = mutable.Buffer.empty[String]
       val v1 = parseVersion(current)
       if (v1.suffix == "-SNAPSHOT") {
-        b.append(s"Using a SNAPSHOT version of Scio: $current")
+        buffer.append(s"Using a SNAPSHOT version of Scio: $current")
       }
       latestOverride.orElse(latest).foreach { v =>
         val v2 = parseVersion(v)
         if (v2 > v1) {
-          b.append(s"A newer version of Scio is available: $current -> $v")
-          messages(v1, v2).foreach(m => b.append(m))
+          buffer.append(NewerVersionPattern(current, v))
+          messages(v1, v2).foreach(buffer.append(_))
         }
       }
-      b
+      buffer
     }
   }
 
-  def checkVersion(): Unit =
-    checkVersion(BuildInfo.version).foreach(logger.warn)
+  def checkVersion(): Unit = checkVersion(BuildInfo.version).foreach(Logger.warn)
 
   def checkRunnerVersion(runner: Class[_ <: PipelineRunner[_ <: PipelineResult]]): Unit = {
     val name = runner.getSimpleName
