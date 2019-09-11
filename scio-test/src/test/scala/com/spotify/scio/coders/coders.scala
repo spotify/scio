@@ -413,7 +413,7 @@ class CodersTest extends FlatSpec with Matchers {
 
     val noopObserver =
       new org.apache.beam.sdk.util.common.ElementByteSizeObserver {
-        def reportElementSize(s: Long) = ()
+        def reportElementSize(s: Long): Unit = ()
       }
 
     nullBCoder.registerByteSizeObserver(nullExample1, noopObserver)
@@ -433,14 +433,12 @@ class CodersTest extends FlatSpec with Matchers {
     val ok: (String, String) = ("foo", "bar")
     val nok: (String, String) = (null, "bar")
     ok coderShould roundtrip()
-    val caught =
-      intercept[RuntimeException] {
-        nok coderShould roundtrip()
-      }
+    val caught = intercept[RuntimeException] {
+      nok coderShould roundtrip()
+    }
 
-    caught.getStackTrace.find(_.getClassName.contains(classOf[CodersTest].getName)) shouldNot be(
-      None
-    )
+    assert(caught.getStackTrace.contains(CoderStackTrace.CoderStackElemMarker))
+    assert(caught.getStackTrace.exists(_.getClassName.contains(classOf[CodersTest].getName)))
   }
 
   it should "#1651: remove all anotations from derived coders" in {

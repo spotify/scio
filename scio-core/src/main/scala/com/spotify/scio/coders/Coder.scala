@@ -170,29 +170,6 @@ private final case class DisjunctionCoder[T, Id](
     }
 }
 
-final case class CoderException private[coders] (
-  stacktrace: Array[StackTraceElement],
-  cause: Throwable,
-  message: String = ""
-) extends RuntimeException {
-  override def getMessage: String = cause.getMessage
-  override def getCause: Throwable = new RuntimeException {
-    override def getMessage: String = s"$message - Coder was materialized at"
-    override def getStackTrace: Array[StackTraceElement] = stacktrace
-    override def getCause: Throwable = cause.getCause
-  }
-  override def getStackTrace: Array[StackTraceElement] = cause.getStackTrace
-}
-
-private[coders] object CoderException {
-  def prepareStackTrace: Array[StackTraceElement] =
-    Thread
-      .currentThread()
-      .getStackTrace()
-      .dropWhile(!_.getClassName.contains(CoderMaterializer.getClass.getName))
-      .take(10)
-}
-
 private[scio] final class RefCoder[T](val typeName: String, c: => BCoder[T]) extends BCoder[T] {
   def value: BCoder[T] = c
 
@@ -223,11 +200,8 @@ private[scio] case class WrappedBCoder[T](u: BCoder[T]) extends BCoder[T] {
    * Eagerly compute a stack trace on materialization
    * to provide a helpful stacktrace if an exception happens
    */
-  private val stackTrace: Array[StackTraceElement] =
-    CoderException.prepareStackTrace
-
-  private def buildException(cause: Throwable): Exception =
-    CoderException(stackTrace, cause)
+  private[this] val materializationStackTrace: Array[StackTraceElement] =
+    CoderStackTrace.prepare
 
   override def toString: String = u.toString
 
@@ -236,7 +210,10 @@ private[scio] case class WrappedBCoder[T](u: BCoder[T]) extends BCoder[T] {
       a
     } catch {
       case ex: Throwable =>
-        throw buildException(ex)
+        // prior to scio 0.8, a wrapped exception was thrown. It is no longer the case, as some
+        // backends (e.g. Flink) use exceptions as a way to signal from the Coder to the layers
+        // above here; we therefore must alter the type of exceptions passing through this block.
+        throw CoderStackTrace.append(ex, None, materializationStackTrace)
     }
 
   override def encode(value: T, os: OutputStream): Unit =
@@ -264,7 +241,7 @@ private[scio] case class WrappedBCoder[T](u: BCoder[T]) extends BCoder[T] {
     u.registerByteSizeObserver(value, observer)
 }
 
-private object WrappedBCoder {
+private[scio] object WrappedBCoder {
   def create[T](u: BCoder[T]): BCoder[T] =
     u match {
       case WrappedBCoder(_) => u
@@ -493,4 +470,36 @@ sealed trait CoderGrammar {
 
 object Coder extends CoderGrammar with Implicits {
   @inline final def apply[T](implicit c: Coder[T]): Coder[T] = c
+}
+
+private[coders] object CoderStackTrace {
+  val CoderStackElemMarker = new StackTraceElement(
+    "### Coder materialization stack ###",
+    "",
+    "",
+    0
+  )
+
+  def prepare: Array[StackTraceElement] =
+    CoderStackElemMarker +: Thread
+      .currentThread()
+      .getStackTrace
+      .dropWhile(!_.getClassName.contains(CoderMaterializer.getClass.getName))
+      .take(10)
+
+  def append[T <: Throwable](
+    cause: T,
+    additionalMessage: Option[String],
+    baseStack: Array[StackTraceElement]
+  ): T = {
+    cause.printStackTrace()
+    val messageItem = additionalMessage.map { msg =>
+      new StackTraceElement(s"Due to $msg", "", "", 0)
+    }
+
+    val adjustedStack = messageItem ++ cause.getStackTrace ++ baseStack
+    cause.setStackTrace(adjustedStack.toArray)
+    cause
+  }
+
 }
