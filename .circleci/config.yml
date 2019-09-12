@@ -144,19 +144,19 @@ jobs:
         build-steps:
         - run: sbt -v $SBT_OPTS ++$SCALA_VERSION it:test
 
-  build_it_212:
+  build_it_212: &build_it_212
     <<: [*build_it_211]
     executor: scala_212
 
-  build_211-jdk11: &build_211-jdk11
-    executor: scala_211_jdk11
-    steps:
-    - build:
-        build-steps:
-        - run: sbt -v $SBT_OPTS ++$SCALA_VERSION test
-
   build_212-jdk11:
-    <<: [*build_211-jdk11]
+    executor: scala_212_jdk11
+    steps:
+      - build:
+          build-steps:
+            - run: sbt -v $SBT_OPTS ++$SCALA_VERSION test
+
+  build_212-it-jdk11:
+    <<: [*build_it_212]
     executor: scala_212_jdk11
 
   deploy:
@@ -270,18 +270,18 @@ workflows:
           filters:
             tags:
               only: /^v.*/
-      - build_211-jdk11:
-          requires:
-            - checks
-          filters:
-            tags:
-              only: /^v.*/
       - build_212-jdk11:
           requires:
             - checks
           filters:
             tags:
               only: /^v.*/
+      - build_212-it-jdk11:
+          requires:
+            - checks
+          filters:
+            branches:
+              ignore: /^pull.*/
       - deploy:
           requires:
             - build_211
@@ -317,7 +317,6 @@ workflows:
     jobs:
       - build_211
       - build_212
-      - build_211-jdk11
       - build_212-jdk11
 
   # Nightly benchmarks
