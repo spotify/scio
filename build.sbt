@@ -745,7 +745,6 @@ lazy val scioTensorFlow: Project = Project(
       "org.tensorflow" % "tensorflow" % tensorFlowVersion,
       "org.tensorflow" % "proto" % tensorFlowVersion,
       "org.apache.commons" % "commons-compress" % commonsCompress,
-      "me.lyh" %% "shapeless-datatype-tensorflow" % shapelessDatatypeVersion,
       "com.spotify" %% "featran-core" % featranVersion,
       "com.spotify" %% "featran-scio" % featranVersion,
       "com.spotify" %% "featran-tensorflow" % featranVersion,
