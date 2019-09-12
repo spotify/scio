@@ -68,6 +68,7 @@ val shapelessDatatypeVersion = "0.1.10"
 val slf4jVersion = "1.7.28"
 val sparkeyVersion = "3.0.0"
 val tensorFlowVersion = "1.13.1"
+val tfexampleDeriveVersion = "0.2.3"
 val zoltarVersion = "0.5.4"
 val magnoliaVersion = "0.10.1-jto"
 val grpcVersion = "1.17.1"
@@ -748,6 +749,7 @@ lazy val scioTensorFlow: Project = Project(
       "com.spotify" %% "featran-core" % featranVersion,
       "com.spotify" %% "featran-scio" % featranVersion,
       "com.spotify" %% "featran-tensorflow" % featranVersion,
+      "com.spotify" %% "tfexample-derive" % tfexampleDeriveVersion,
       "com.spotify" % "zoltar-api" % zoltarVersion,
       "com.spotify" % "zoltar-tensorflow" % zoltarVersion
     ),

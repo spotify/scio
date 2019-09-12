@@ -22,6 +22,7 @@ import com.spotify.featran.transformers.{OneHotEncoder, StandardScaler}
 import com.spotify.scio._
 import com.spotify.scio.tensorflow.TFSavedJob.Iris
 import com.spotify.scio.testing._
+import com.spotify.tfexample.derive.ExampleConverter
 import org.tensorflow.example.Example
 
 object ExamplesJobV2 {
@@ -68,6 +69,18 @@ object MultiSpecFeatranJob {
 
 }
 
+object ReadAndSaveIrisJob {
+  def main(argv: Array[String]): Unit = {
+    val (sc, args) = ContextAndArgs(argv)
+
+    sc.tfRecordFileAsObject[Iris](args("input"))
+      .saveAsTfRecordFile(args("output"))
+
+    sc.run()
+    ()
+  }
+}
+
 class TFExampleTest extends PipelineSpec {
 
   "ExamplesJobV2" should "work" in {
@@ -96,4 +109,16 @@ class TFExampleTest extends PipelineSpec {
       .run()
   }
 
+  "ReadAndSaveIrisJob" should "work" in {
+    val testInput = List(Iris(Some(5.1), Some(3.5), Some(1.4), Some(0.2), Some("Iris-setosa")))
+        .map(ExampleConverter[Iris].toExample)
+
+    JobTest[ReadAndSaveIrisJob.type]
+      .args("--input=in", "--output=out")
+      .input(TFExampleIO("in"), testInput)
+      .output(TFExampleIO("out")) { out =>
+        out should containInAnyOrder(testInput)
+      }
+      .run()
+  }
 }

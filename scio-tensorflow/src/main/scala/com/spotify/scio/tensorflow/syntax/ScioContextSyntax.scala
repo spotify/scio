@@ -20,8 +20,10 @@ package com.spotify.scio.tensorflow.syntax
 import java.nio.file.Files
 
 import com.spotify.scio.ScioContext
+import com.spotify.scio.coders.Coder
 import com.spotify.scio.tensorflow.{TFExampleIO, TFRecordIO, TFSequenceExampleIO}
 import com.spotify.scio.values.{DistCache, SCollection}
+import com.spotify.tfexample.derive.ExampleConverter
 import org.apache.beam.sdk.io.Compression
 import org.tensorflow.example.{Example, SequenceExample}
 import org.tensorflow.metadata.v0._
@@ -101,6 +103,18 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
 
     (tfRecordSequenceExampleFile(path, compression), distCache)
   }
+
+  /**
+   * Get an SCollection of type `T` from a TensorFlow TFRecord file encoded as serialized
+   * [[org.tensorflow.example.Example]] protocol buffers, using
+   * [[com.spotify.tfexample.derive.ExampleConverter]] to convert to `T`.
+   * @group input
+   */
+  def tfRecordFileAsObject[T: Coder](
+    path: String,
+    compression: Compression = Compression.AUTO
+  )(implicit converter: ExampleConverter[T]): SCollection[T] =
+    tfRecordExampleFile(path, compression).flatMap(converter.fromExample)
 }
 
 trait ScioContextSyntax {

@@ -18,12 +18,12 @@
 package com.spotify.scio.tensorflow
 
 import com.spotify.scio.testing._
-import shapeless.datatype.tensorflow._
+import com.spotify.tfexample.derive.ExampleConverter
 
 object TFExampleIOTest {
   case class Record(i: Int, s: String)
 
-  val recordT: TensorFlowType[Record] = TensorFlowType[Record]
+  val recordT: ExampleConverter[Record] = ExampleConverter[Record]
 }
 
 class TFExampleIOTest extends ScioIOSpec {

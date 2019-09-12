@@ -26,6 +26,7 @@ import com.spotify.scio.tensorflow.{
 }
 import com.spotify.scio.io.ClosedTap
 import com.spotify.scio.values.SCollection
+import com.spotify.tfexample.derive.ExampleConverter
 import com.spotify.zoltar.tf.TensorFlowModel
 import org.apache.beam.sdk.io.Compression
 import org.tensorflow._
@@ -90,6 +91,23 @@ final class ExampleSCollectionOps[T <: Example](private val self: SCollection[T]
     self.asInstanceOf[SCollection[Example]].write(TFExampleIO(path))(param)
   }
 
+}
+
+final class ExampleConverterSCollectionOps[T](private val self: SCollection[T]) {
+
+  /**
+   * Saves this SCollection as TensorFlow TFRecord files, by first converting each element to a
+   * [[org.tensorflow.example.Example]] using [[com.spotify.tfexample.derive.ExampleConverter]].
+   * @return
+   */
+  def saveAsTfRecordFile(
+    path: String,
+    suffix: String = TFExampleIO.WriteParam.DefaultSuffix,
+    compression: Compression = TFExampleIO.WriteParam.DefaultCompression,
+    numShards: Int = TFExampleIO.WriteParam.DefaultNumShards
+  )(implicit conv: ExampleConverter[T]): ClosedTap[Example] =
+    new ExampleSCollectionOps(self.map(conv.toExample))
+      .saveAsTfRecordFile(path, suffix, compression, numShards)
 }
 
 object SeqExampleSCollectionOps {
@@ -203,6 +221,10 @@ trait SCollectionSyntax {
   implicit def tensorFlowExampleSCollectionOps[T <: Example](
     s: SCollection[T]
   ): ExampleSCollectionOps[T] = new ExampleSCollectionOps(s)
+
+  implicit def tensorflowExampleConverterSCollectionOps[T](
+    s: SCollection[T]
+  ): ExampleConverterSCollectionOps[T] = new ExampleConverterSCollectionOps[T](s)
 
   /**
    * Implicit conversion from [[com.spotify.scio.values.SCollection SCollection]] to
