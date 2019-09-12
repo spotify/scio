@@ -154,7 +154,6 @@ jobs:
     - build:
         build-steps:
         - run: sbt -v $SBT_OPTS ++$SCALA_VERSION test
-        - run: ./scripts/circleci_repl.sh
 
   build_212-jdk11:
     <<: [*build_211-jdk11]
@@ -271,6 +270,18 @@ workflows:
           filters:
             tags:
               only: /^v.*/
+      - build_211-jdk11:
+          requires:
+            - checks
+          filters:
+            tags:
+              only: /^v.*/
+      - build_212-jdk11:
+          requires:
+            - checks
+          filters:
+            tags:
+              only: /^v.*/
       - deploy:
           requires:
             - build_211
@@ -294,18 +305,6 @@ workflows:
       - publish_211
       - publish_212
 
-  build-jdk11:
-    triggers:
-      - schedule:
-          cron: "0 0 * * *"
-          filters:
-            branches:
-              only:
-                - master
-    jobs:
-      - build_211-jdk11
-      - build_212-jdk11
-
   # Nightly build with latest Beam SNAPSHOTs
   snapshot:
     triggers:
@@ -318,6 +317,8 @@ workflows:
     jobs:
       - build_211
       - build_212
+      - build_211-jdk11
+      - build_212-jdk11
 
   # Nightly benchmarks
   bench:
