@@ -111,7 +111,7 @@ class TFExampleTest extends PipelineSpec {
 
   "ReadAndSaveIrisJob" should "work" in {
     val testInput = List(Iris(Some(5.1), Some(3.5), Some(1.4), Some(0.2), Some("Iris-setosa")))
-        .map(ExampleConverter[Iris].toExample)
+      .map(ExampleConverter[Iris].toExample)
 
     JobTest[ReadAndSaveIrisJob.type]
       .args("--input=in", "--output=out")
