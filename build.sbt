@@ -64,7 +64,7 @@ val scalacheckVersion = "1.14.0"
 val scalaMacrosVersion = "2.1.1"
 val scalatestVersion = "3.0.8"
 val shapelessVersion = "2.3.3"
-val shapelessDatatypeVersion = "0.1.10"
+val shapelessDatatypeVersion = "0.2.0"
 val slf4jVersion = "1.7.28"
 val sparkeyVersion = "3.0.0"
 val tensorFlowVersion = "1.13.1"
@@ -417,7 +417,7 @@ lazy val scioTest: Project = Project(
       "org.scalatest" %% "scalatest" % scalatestVersion,
       "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test,it",
       "com.github.alexarchambault" %% "scalacheck-shapeless_1.13" % scalacheckShapelessVersion % "test,it",
-      "me.lyh" %% "shapeless-datatype-datastore_1.3" % shapelessDatatypeVersion % "test,it",
+      "me.lyh" %% "shapeless-datatype-datastore" % shapelessDatatypeVersion % "test,it",
       // DataFlow testing requires junit and hamcrest
       "org.hamcrest" % "hamcrest-all" % hamcrestVersion,
       "com.spotify" % "annoy" % annoyVersion % "test",
@@ -795,7 +795,7 @@ lazy val scioExamples: Project = Project(
   .settings(
     libraryDependencies ++= Seq(
       "me.lyh" %% "shapeless-datatype-avro" % shapelessDatatypeVersion,
-      "me.lyh" %% "shapeless-datatype-datastore_1.3" % shapelessDatatypeVersion,
+      "me.lyh" %% "shapeless-datatype-datastore" % shapelessDatatypeVersion,
       "me.lyh" %% "shapeless-datatype-tensorflow" % shapelessDatatypeVersion,
       "mysql" % "mysql-connector-java" % "8.0.17",
       "com.google.cloud.sql" % "mysql-socket-factory" % "1.0.15",
