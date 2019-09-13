@@ -24,7 +24,6 @@
 // --outputToBigqueryTable=true --outputToDatastore=false --output=[DATASET].auto_complete"`
 package com.spotify.scio.examples.complete
 
-import com.google.common.collect.ImmutableMap
 import com.google.datastore.v1.Entity
 import com.google.datastore.v1.client.DatastoreHelper.{makeKey, makeValue}
 import com.spotify.scio._
@@ -101,14 +100,14 @@ object AutoComplete {
         Entity
           .newBuilder()
           .putAllProperties(
-            ImmutableMap.of("tag", makeValue(p._1).build(), "count", makeValue(p._2).build())
+            Map("tag" -> makeValue(p._1).build(), "count" -> makeValue(p._2).build()).asJava
           )
       ).build()
     }
     Entity
       .newBuilder()
       .setKey(key)
-      .putAllProperties(ImmutableMap.of("candidates", makeValue(candidates.asJava).build()))
+      .putAllProperties(Map("candidates" -> makeValue(candidates.asJava).build()).asJava)
       .build()
   }
 
