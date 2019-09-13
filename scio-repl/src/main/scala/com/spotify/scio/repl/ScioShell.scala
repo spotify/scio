@@ -27,7 +27,21 @@ import scala.tools.nsc.{GenericRunnerCommand, MainGenericRunner}
  * A entry-point/runner for a Scala REPL providing functionality extensions specific to working with
  * Scio.
  */
+object BaseScioShell {
+  val isJDK9OrHigher: Boolean = !sys.props("java.version").startsWith("1.")
+
+  def currentClassLoader: ClassLoader =
+    Thread.currentThread.getContextClassLoader
+
+  def classLoaderURLs(cl: ClassLoader): Array[java.net.URL] = cl match {
+    case null                       => Array.empty
+    case u: java.net.URLClassLoader => u.getURLs ++ classLoaderURLs(cl.getParent)
+    case _                          => classLoaderURLs(cl.getParent)
+  }
+}
+
 trait BaseScioShell extends MainGenericRunner {
+  import BaseScioShell._
 
   /**
    * The main entry point for executing the REPL.
@@ -39,26 +53,17 @@ trait BaseScioShell extends MainGenericRunner {
    * @param args passed from the command line
    * @return `true` if execution was successful, `false` otherwise
    */
-  // scalastyle:off method.length
   override def process(args: Array[String]): Boolean = {
     // Process command line arguments into a settings object, and use that to start the REPL.
     // We ignore params we don't care about - hence error function is empty
     val command = new GenericRunnerCommand(args.toList, _ => ())
 
-    // For scala 2.10 - usejavacp
-    if (scala.util.Properties.versionString.contains("2.10.")) {
-      command.settings.classpath.append(System.getProperty("java.class.path"))
+    if (isJDK9OrHigher) {
+      command.settings.classpath.append(sys.props("java.class.path"))
       command.settings.usejavacp.value = true
     }
 
-    def classLoaderURLs(cl: ClassLoader): Array[java.net.URL] = cl match {
-      case null => Array()
-      case u: java.net.URLClassLoader =>
-        u.getURLs ++ classLoaderURLs(cl.getParent)
-      case _ => classLoaderURLs(cl.getParent)
-    }
-
-    classLoaderURLs(Thread.currentThread().getContextClassLoader)
+    classLoaderURLs(currentClassLoader)
       .foreach(u => command.settings.classpath.append(u.getPath))
 
     // We have to make sure that scala macros are expandable. paradise plugin has to be added to
@@ -89,10 +94,9 @@ trait BaseScioShell extends MainGenericRunner {
     command.settings.Yreplclassbased.value = true
 
     val scioClassLoader = new ScioReplClassLoader(
-      command.settings.classpathURLs.toArray ++
-        classLoaderURLs(Thread.currentThread().getContextClassLoader),
+      command.settings.classpathURLs.toArray ++ classLoaderURLs(currentClassLoader),
       null,
-      Thread.currentThread.getContextClassLoader
+      currentClassLoader
     )
 
     val repl = new ScioILoop(scioClassLoader, args.toList)
@@ -105,7 +109,6 @@ trait BaseScioShell extends MainGenericRunner {
 
     repl.process(command.settings)
   }
-  // scalastyle:on method.length
 
   /** Runs an instance of the shell. */
   def main(args: Array[String]): Unit = {
