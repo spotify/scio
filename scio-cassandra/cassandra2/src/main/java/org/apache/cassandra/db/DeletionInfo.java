@@ -24,9 +24,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
 
-import com.google.common.base.Objects;
-import com.google.common.collect.Iterators;
-
+import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Objects;
 import org.apache.cassandra.cache.IMeasurableMemory;
 import org.apache.cassandra.db.composites.CType;
 import org.apache.cassandra.db.composites.Composite;
