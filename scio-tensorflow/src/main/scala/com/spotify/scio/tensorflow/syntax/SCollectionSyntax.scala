@@ -105,8 +105,8 @@ final class ExampleConverterSCollectionOps[T](private val self: SCollection[T]) 
     suffix: String = TFExampleIO.WriteParam.DefaultSuffix,
     compression: Compression = TFExampleIO.WriteParam.DefaultCompression,
     numShards: Int = TFExampleIO.WriteParam.DefaultNumShards
-  )(implicit conv: ExampleConverter[T]): ClosedTap[Example] =
-    new ExampleSCollectionOps(self.map(conv.toExample))
+  )(implicit converter: ExampleConverter[T]): ClosedTap[Example] =
+    new ExampleSCollectionOps(self.map(converter.toExample))
       .saveAsTfRecordFile(path, suffix, compression, numShards)
 }
 
