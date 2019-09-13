@@ -117,7 +117,7 @@ lazy val scalafmtSettings = Seq(
 
 val commonSettings = Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
   organization := "com.spotify",
-  scalaVersion := "2.12.9",
+  scalaVersion := "2.12.10",
   crossScalaVersions := Seq("2.11.12", scalaVersion.value),
   scalacOptions ++= Scalac.commonsOptions.value,
   scalacOptions in (Compile, doc) ++= Scalac.compileDocOptions.value,
