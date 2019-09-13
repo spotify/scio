@@ -69,7 +69,7 @@ val slf4jVersion = "1.7.28"
 val sparkeyVersion = "3.0.0"
 val tensorFlowVersion = "1.13.1"
 val zoltarVersion = "0.5.4"
-val magnoliaVersion = "0.10.1-jto"
+val magnoliaVersion = "0.11.0"
 val grpcVersion = "1.17.1"
 val caseappVersion = "2.0.0-M9"
 val sparkVersion = "2.4.3"
@@ -101,6 +101,16 @@ val beamSDKIODependencies = Def.settings(
   ),
   dependencyOverrides ++= Seq(
     "com.google.guava" % "guava" % guavaVersion
+  )
+)
+
+val magnoliaDependencies = Def.settings(
+  libraryDependencies ++= Seq(
+    if (scalaBinaryVersion.value == "2.11") {
+      "me.lyh" %% "magnolia" % "0.10.1-jto"
+    } else {
+      "com.propensive" %% "magnolia" % magnoliaVersion
+    }
   )
 )
 
@@ -369,9 +379,9 @@ lazy val scioCore: Project = Project(
       "org.apache.xbean" % "xbean-asm7-shaded" % asmVersion,
       "io.grpc" % "grpc-all" % grpcVersion exclude ("io.opencensus", "opencensus-api"),
       "com.github.alexarchambault" %% "case-app" % caseappVersion,
-      "me.lyh" %% "magnolia" % magnoliaVersion,
       "org.scalatest" %% "scalatest" % scalatestVersion % Test
-    )
+    ),
+    magnoliaDependencies
   )
   .dependsOn(
     scioSchemas % "test->test",
@@ -445,11 +455,11 @@ lazy val scioMacros: Project = Project(
   commonSettings ++ macroSettings,
   description := "Scio macros",
   libraryDependencies ++= Seq(
-    "me.lyh" %% "magnolia" % magnoliaVersion,
     "com.chuusai" %% "shapeless" % shapelessVersion,
     "com.esotericsoftware" % "kryo-shaded" % kryoVersion,
     "org.apache.beam" % "beam-sdks-java-extensions-sql" % beamVersion
-  )
+  ),
+  magnoliaDependencies
 )
 
 lazy val scioAvro: Project = Project(
