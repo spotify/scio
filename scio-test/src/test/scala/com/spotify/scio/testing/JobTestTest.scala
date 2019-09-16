@@ -30,15 +30,16 @@ import com.spotify.scio.io._
 import com.spotify.scio.util.MockedPrintStream
 import org.apache.avro.generic.GenericRecord
 import org.apache.beam.sdk.Pipeline.PipelineExecutionException
+import org.apache.beam.sdk.io.FileIO
+import org.apache.beam.sdk.io.FileIO.ReadMatches.DirectoryTreatment
+import org.apache.beam.sdk.metrics.DistributionResult
+import org.apache.beam.sdk.transforms.PTransform
+import org.apache.beam.sdk.values.PCollection
 import org.apache.beam.sdk.{io => beam}
 import org.joda.time.Instant
 import org.scalatest.exceptions.TestFailedException
 
 import scala.io.Source
-import org.apache.beam.sdk.transforms.PTransform
-import org.apache.beam.sdk.values.PCollection
-import org.apache.beam.sdk.io.FileIO
-import org.apache.beam.sdk.io.FileIO.ReadMatches.DirectoryTreatment
 
 // scalastyle:off file.size.limit
 
@@ -1089,6 +1090,7 @@ class JobTestTest extends PipelineSpec {
       .counter(MetricsJob.counter) { x =>
         x shouldBe 10
       }
+      .counters(_ should contain(MetricsJob.counter.getName -> 10))
       .distribution(MetricsJob.distribution) { d =>
         d.getCount shouldBe 10
         d.getMin shouldBe 1
@@ -1096,10 +1098,21 @@ class JobTestTest extends PipelineSpec {
         d.getSum shouldBe 55
         d.getMean shouldBe 5.5
       }
+      .distributions(
+        _ should contain(
+          MetricsJob.distribution.getName ->
+            DistributionResult.create(55, 10, 1, 10)
+        )
+      )
       .gauge(MetricsJob.gauge) { g =>
         g.getValue should be >= 1L
         g.getValue should be <= 10L
       }
+      .gauges(_.map {
+        case (_, result) =>
+          result.getValue should be >= 1L
+          result.getValue should be <= 10L
+      })
       .run()
   }
 
