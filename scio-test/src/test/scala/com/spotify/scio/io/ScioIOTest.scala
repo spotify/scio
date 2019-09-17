@@ -18,6 +18,7 @@
 package com.spotify.scio.io
 
 import java.nio.ByteBuffer
+import java.nio.file.Files
 
 import com.google.datastore.v1.Entity
 import com.google.datastore.v1.client.DatastoreHelper
@@ -33,6 +34,7 @@ import org.apache.beam.sdk.Pipeline.PipelineVisitor
 import org.apache.beam.sdk.io.Read
 import org.apache.beam.sdk.runners.TransformHierarchy
 import org.apache.beam.sdk.values.PValue
+import org.apache.commons.io.FileUtils
 
 import scala.collection.mutable
 import scala.collection.JavaConverters._
@@ -194,6 +196,24 @@ class ScioIOTest extends ScioIOSpec {
   "BinaryIO" should "work" in {
     val xs = (1 to 100).map(i => ByteBuffer.allocate(4).putInt(i).array)
     testJobTestOutput(xs)(BinaryIO(_))(_.saveAsBinaryFile(_))
+  }
+
+  "BinaryIO" should "output files to $prefix/part-*" in {
+    val tmpDir = Files.createTempDirectory("binary-io-")
+
+    val sc = ScioContext()
+    sc.parallelize(Seq(ByteBuffer.allocate(4).putInt(1).array)).saveAsBinaryFile(tmpDir.toString)
+    sc.run()
+
+    Files
+      .list(tmpDir)
+      .iterator()
+      .asScala
+      .filterNot(_.toFile.getName.startsWith("."))
+      .map(_.toFile.getName)
+      .toSet shouldBe Set("part-00000-of-00001.bin")
+
+    FileUtils.deleteDirectory(tmpDir.toFile)
   }
 
   "DatastoreIO" should "work" in {
