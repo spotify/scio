@@ -23,10 +23,12 @@ import java.nio.file.Files
 import com.spotify.scio.io.TextIO
 import com.spotify.scio.metrics.Metrics
 import com.spotify.scio.options.ScioOptions
+import com.spotify.scio.testing.util.ItUtils
 import com.spotify.scio.testing.{PipelineSpec, TestValidationOptions}
 import com.spotify.scio.util.ScioUtil
 import org.apache.beam.runners.direct.DirectRunner
-import org.apache.beam.sdk.options.{PipelineOptions, PipelineOptionsFactory}
+import org.apache.beam.sdk.extensions.gcp.options.GcpOptions
+import org.apache.beam.sdk.options.{ApplicationNameOptions, PipelineOptions, PipelineOptionsFactory}
 import org.apache.beam.sdk.testing.PAssert
 import org.apache.beam.sdk.transforms.Create
 
@@ -210,5 +212,17 @@ class ScioContextTest extends PipelineSpec {
       .committed
 
     actualCommitedCounterValue shouldBe Some(0)
+  }
+
+  it should "#1323: generate unique SCollection names" in {
+    val options = PipelineOptionsFactory.create()
+    options.setStableUniqueNames(PipelineOptions.CheckEnabled.ERROR)
+    val sc = ScioContext(options)
+
+    val s1 = sc.empty[(String, Int)]()
+    val s2 = sc.empty[(String, Double)]()
+    s1.join(s2)
+
+    noException shouldBe thrownBy { sc.run() }
   }
 }

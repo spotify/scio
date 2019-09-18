@@ -24,7 +24,7 @@ import com.spotify.scio.util.ScioUtil
 import org.apache.beam.runners.dataflow.DataflowRunner
 import org.apache.beam.sdk.extensions.gcp.options.GcpOptions
 import org.apache.beam.sdk.io.FileSystems
-import org.apache.beam.sdk.options.{ApplicationNameOptions, PipelineOptions, PipelineOptionsFactory}
+import org.apache.beam.sdk.options.{PipelineOptions, PipelineOptionsFactory}
 import org.scalatest._
 
 class ScioContextIT extends FlatSpec with Matchers {
@@ -54,20 +54,6 @@ class ScioContextIT extends FlatSpec with Matchers {
     tempLocation shouldBe gcpTempLocation
     ScioUtil.isRemoteUri(new URI(gcpTempLocation)) shouldBe true
     ()
-  }
-
-  it should "#1323: generate unique SCollection names" in {
-    val options = PipelineOptionsFactory.create()
-    options.setRunner(classOf[DataflowRunner])
-    options.as(classOf[ApplicationNameOptions]).setAppName("ScioContextIT")
-    options.as(classOf[GcpOptions]).setProject(ItUtils.project)
-    val sc = ScioContext(options)
-
-    val s1 = sc.empty[(String, Int)]()
-    val s2 = sc.empty[(String, Double)]()
-    s1.join(s2)
-
-    noException shouldBe thrownBy { sc.run() }
   }
 
   it should "register remote file systems in the test context" in {
