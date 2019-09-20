@@ -17,6 +17,7 @@
 
 package com.spotify.scio
 
+import com.google.bigtable.admin.v2.GcRule
 import com.google.bigtable.v2._
 import com.google.cloud.bigtable.config.BigtableOptions
 import com.google.protobuf.ByteString
@@ -273,6 +274,58 @@ package object bigtable {
         TableAdmin.ensureTablesWithExpiration(
           bigtableOptions,
           tablesAndColumnFamiliesWithExpiration
+        )
+      }
+    }
+
+    /**
+     * Ensure that tables and column families exist.
+     * Checks for existence of tables or creates them if they do not exist.  Also checks for
+     * existence of column families within each table and creates them if they do not exist.
+     *
+     * @param tablesAndColumnFamiliesWithGcRules A map of tables and column families. Keys are
+     *                                           table names. Values are a list of column family
+     *                                           names along with the desired GcRule.
+     */
+    def ensureTablesWithGcRules(
+      projectId: String,
+      instanceId: String,
+      tablesAndColumnFamiliesWithGcRules: Map[String, List[(String, Option[GcRule])]]
+    ): Unit = {
+      if (!self.isTest) {
+        val bigtableOptions = BigtableOptions
+          .builder()
+          .setProjectId(projectId)
+          .setInstanceId(instanceId)
+          .build
+        TableAdmin.ensureTablesWithGcRules(
+          bigtableOptions,
+          tablesAndColumnFamiliesWithGcRules
+        )
+      }
+    }
+
+    /**
+     * Ensure that tables and column families exist.
+     * Checks for existence of tables or creates them if they do not exist.  Also checks for
+     * existence of column families within each table and creates them if they do not exist.
+     *
+     * @param tablesAndColumnFamiliesWithGcRule A map of tables and column families.
+     *                                          Keys are table names. Values are a
+     *                                          list of column family names along with
+     *                                          the desired cell expiration. Cell
+     *                                          expiration is the duration before which
+     *                                          garbage collection of a cell may occur.
+     *                                          Note: minimum granularity is second.
+     */
+    def ensureTablesWithGcRules(
+      bigtableOptions: BigtableOptions,
+      tablesAndColumnFamiliesWithGcRule: Map[String, List[(String, Option[GcRule])]]
+    ): Unit = {
+      if (!self.isTest) {
+        TableAdmin.ensureTablesWithGcRules(
+          bigtableOptions,
+          tablesAndColumnFamiliesWithGcRule
         )
       }
     }
