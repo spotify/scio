@@ -383,13 +383,26 @@ object ScioContext {
     } else {
       val args = Args(appArgs)
       if (appArgs.nonEmpty) {
+        val argString = args.toString("", ", ", "")
+        val sanitizedArgString =
+          if (argString.length > appArgStringMaxLength) {
+            log.warn("Truncating long app arguments")
+            argString.substring(0, appArgStringMaxLength) + " [...]"
+          } else {
+            argString
+          }
+
         pipelineOpts
           .as(classOf[ScioOptions])
-          .setAppArguments(args.toString("", ", ", ""))
+          .setAppArguments(sanitizedArgString)
       }
       (pipelineOpts, args)
     }
   }
+
+  // Used to trim app args for UI if too long to avoid
+  // contributing to an exceeded upload size limit.
+  private val appArgStringMaxLength = 50000
 
   import scala.language.implicitConversions
 

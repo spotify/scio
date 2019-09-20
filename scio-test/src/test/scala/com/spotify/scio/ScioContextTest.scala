@@ -19,17 +19,16 @@ package com.spotify.scio
 
 import java.io.PrintWriter
 import java.nio.file.Files
-
 import com.spotify.scio.io.TextIO
 import com.spotify.scio.metrics.Metrics
 import com.spotify.scio.options.ScioOptions
 import com.spotify.scio.testing.{PipelineSpec, TestValidationOptions}
 import com.spotify.scio.util.ScioUtil
+import java.nio.charset.StandardCharsets
 import org.apache.beam.runners.direct.DirectRunner
 import org.apache.beam.sdk.options.{PipelineOptions, PipelineOptionsFactory}
 import org.apache.beam.sdk.testing.PAssert
 import org.apache.beam.sdk.transforms.Create
-
 import scala.concurrent.duration.Duration
 import scala.collection.JavaConverters._
 
@@ -172,6 +171,15 @@ class ScioContextTest extends PipelineSpec {
       ScioContext.parseArguments[PipelineOptions](Array(s"--blockFor=foo"))
     the[IllegalArgumentException] thrownBy { ScioContext.apply(invalidOpts) } should have message
       s"blockFor param foo cannot be cast to type scala.concurrent.duration.Duration"
+  }
+
+  it should "truncate app arguments when they are overly long" in {
+    val longArg = "--argument=" + ("a" * 55000)
+    val (opts, _) = ScioContext.parseArguments[ScioOptions](Array(longArg))
+    def numBytes(s: String): Int = s.getBytes(StandardCharsets.UTF_8.name).length
+    val expectedNumBytes = 50000 + numBytes(" [...]")
+
+    numBytes(opts.getAppArguments) shouldBe expectedNumBytes
   }
 
   behavior of "Counter initialization in ScioContext"
