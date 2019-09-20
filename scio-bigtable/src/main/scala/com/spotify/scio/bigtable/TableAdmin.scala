@@ -101,6 +101,27 @@ object TableAdmin {
   def ensureTablesWithExpiration(
     bigtableOptions: BigtableOptions,
     tablesAndColumnFamilies: Map[String, List[(String, Option[Duration])]]
+  ): Unit = {
+    // Convert Duration to GcRule
+    val x = tablesAndColumnFamilies.mapValues(_.map {
+      case (columnFamily, duration) => (columnFamily, duration.map(gcRuleFromDuration))
+    })
+
+    ensureTablesImpl(bigtableOptions, x).get
+  }
+
+  /**
+   * Ensure that tables and column families exist.
+   * Checks for existence of tables or creates them if they do not exist.  Also checks for
+   * existence of column families within each table and creates them if they do not exist.
+   *
+   * @param tablesAndColumnFamilies A map of tables and column families. Keys are table names.
+   *                                Values are a list of column family names along with the desired
+   *                                GcRule.
+   */
+  def ensureTablesWithGcRules(
+    bigtableOptions: BigtableOptions,
+    tablesAndColumnFamilies: Map[String, List[(String, Option[GcRule])]]
   ): Unit =
     ensureTablesImpl(bigtableOptions, tablesAndColumnFamilies).get
 
@@ -114,7 +135,7 @@ object TableAdmin {
    */
   private def ensureTablesImpl(
     bigtableOptions: BigtableOptions,
-    tablesAndColumnFamilies: Map[String, List[(String, Option[Duration])]]
+    tablesAndColumnFamilies: Map[String, List[(String, Option[GcRule])]]
   ): Try[Unit] = {
     val project = bigtableOptions.getProjectId
     val instance = bigtableOptions.getInstanceId
@@ -158,19 +179,18 @@ object TableAdmin {
   private def ensureColumnFamilies(
     client: BigtableTableAdminClient,
     tablePath: String,
-    columnFamilies: List[(String, Option[Duration])]
+    columnFamilies: List[(String, Option[GcRule])]
   ): Unit = {
     val tableInfo =
       client.getTable(GetTableRequest.newBuilder().setName(tablePath).build)
 
     val cfList = columnFamilies
       .map {
-        case (n, duration) =>
-          val gcRule = duration.map(gcRuleFromDuration).getOrElse(GcRule.getDefaultInstance())
+        case (n, gcRule) =>
           val cf = tableInfo
             .getColumnFamiliesOrDefault(n, ColumnFamily.newBuilder().build())
-            .toBuilder()
-            .setGcRule(gcRule)
+            .toBuilder
+            .setGcRule(gcRule.getOrElse(GcRule.getDefaultInstance))
             .build()
 
           (n, cf)
