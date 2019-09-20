@@ -235,7 +235,6 @@ package object bigtable {
      *                                              garbage collection of a cell may occur.
      *                                              Note: minimum granularity is second.
      */
-    @deprecated("this method will be removed; use ensureTablesWithGcRules instead", "Scio 0.8")
     def ensureTablesWithExpiration(
       projectId: String,
       instanceId: String,
