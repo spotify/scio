@@ -219,4 +219,16 @@ class ScioContextTest extends PipelineSpec {
 
     actualCommitedCounterValue shouldBe Some(0)
   }
+
+  it should "#1323: generate unique SCollection names" in {
+    val options = PipelineOptionsFactory.create()
+    options.setStableUniqueNames(PipelineOptions.CheckEnabled.ERROR)
+    val sc = ScioContext(options)
+
+    val s1 = sc.empty[(String, Int)]()
+    val s2 = sc.empty[(String, Double)]()
+    s1.join(s2)
+
+    noException shouldBe thrownBy { sc.run() }
+  }
 }
