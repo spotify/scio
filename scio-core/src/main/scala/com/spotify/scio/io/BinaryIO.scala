@@ -47,6 +47,7 @@ final case class BinaryIO(path: String) extends ScioIO[Array[Byte]] {
         .via(new BytesSink(params.header, params.footer, params.framePrefix, params.frameSuffix))
         .withCompression(params.compression)
         .withNumShards(params.numShards)
+        .withPrefix(BinaryIO.WriteParam.DefaultPrefix)
         .withSuffix(params.suffix)
         .to(pathWithShards(path))
     )
@@ -56,12 +57,13 @@ final case class BinaryIO(path: String) extends ScioIO[Array[Byte]] {
   override def tap(params: Nothing): Tap[Nothing] = EmptyTap
 
   private[scio] def pathWithShards(path: String) =
-    path.replaceAll("\\/+$", "") + "/part"
+    path.replaceAll("\\/+$", "")
 }
 
 object BinaryIO {
 
   object WriteParam {
+    private[scio] val DefaultPrefix = "part"
     private[scio] val DefaultSuffix = ".bin"
     private[scio] val DefaultNumShards = 0
     private[scio] val DefaultCompression = Compression.UNCOMPRESSED
