@@ -23,6 +23,7 @@ import java.util.UUID
 
 import com.esotericsoftware.kryo.KryoException
 import com.esotericsoftware.kryo.io.{InputChunked, OutputChunked}
+import com.esotericsoftware.kryo.serializers.JavaSerializer
 import com.google.protobuf.{ByteString, Message}
 import com.spotify.scio.coders.instances.kryo._
 import com.spotify.scio.options.ScioOptions
@@ -120,6 +121,7 @@ private final class ScioKryoRegistrar extends IKryoRegistrar {
     k.forSubclass[Path](new JPathSerializer)
     k.forSubclass[ByteString](new ByteStringSerializer)
     k.forClass(new KVSerializer)
+    k.addDefaultSerializer(classOf[Throwable], new JavaSerializer())
     ()
   }
 }
