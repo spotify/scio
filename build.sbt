@@ -848,7 +848,8 @@ lazy val scioRepl: Project = Project(
       "org.slf4j" % "slf4j-simple" % slf4jVersion,
       "jline" % "jline" % jlineVersion,
       "org.scala-lang" % "scala-compiler" % scalaVersion.value,
-      "com.nrinaudo" %% "kantan.csv" % kantanCsvVersion
+      "com.nrinaudo" %% "kantan.csv" % kantanCsvVersion,
+      "org.scalamacros" % "paradise" % scalaMacrosVersion cross CrossVersion.full
     ),
     assemblyJarName in assembly := s"scio-repl-${version.value}.jar"
   )
