@@ -279,7 +279,16 @@ private[types] object TypeProvider {
     def extractFields(className: String, schema: Schema): (Seq[Tree], Seq[Tree]) = {
       val f = schema.getFields.asScala
         .map(f => extractField(className, f.name, f.schema))
-      (f.map(_._1), f.flatMap(_._2))
+
+      val fields = f.map(_._1)
+
+      val recordClasses = f
+        .flatMap(_._2)
+        .groupBy(_.asInstanceOf[ClassDef].name)
+        .map { case (_, cDefs) => cDefs.head } // Don't generate duplicate case classes
+        .toSeq
+
+      (fields, recordClasses)
     }
 
     val r = annottees.map(_.tree) match {
