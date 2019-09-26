@@ -25,6 +25,7 @@ import org.apache.beam.sdk.coders.Coder.NonDeterministicException
 import org.apache.beam.sdk.options.{PipelineOptions, PipelineOptionsFactory}
 import org.scalactic.Equality
 import org.scalatest.{FlatSpec, Matchers}
+import org.apache.beam.sdk.util.SerializableUtils
 
 import scala.collection.JavaConverters._
 import scala.collection.{mutable => mut}
@@ -461,6 +462,9 @@ final class CoderTest extends FlatSpec with Matchers {
     case object IntegerType extends SampleFieldType
     case object StringType extends SampleFieldType
     case class RecordType(fields: List[SampleField]) extends SampleFieldType
+
+    noException should be thrownBy SerializableUtils.serializeToByteArray(CoderMaterializer.beamWithDefault(implicitly[Coder[Top]]))
+    noException should be thrownBy SerializableUtils.serializeToByteArray(CoderMaterializer.beamWithDefault(implicitly[Coder[SampleFieldType]]))
 
     "Coder[SampleField]" should compile
     // deriving this coder under 2.11 will fail
