@@ -25,6 +25,16 @@ The examples in the markdown documentation are built using [mdoc](https://scalam
 While you're writing documentation, you can check that everything compiles by running `mdoc` in the sbt shell.
 You can also run `~mdoc` to automatically build the documentation on save.
 
+# Building locally
+
+Some example and test code in Scio depends on Google Cloud Platform access for BigQuery schemas, Cloud Dataflow service, etc. To build Scio locally without a GCP credential, first run the following script to generate BigQuery schema cache.
+
+```bash
+./scripts/gen_schemas.sh
+```
+
+When opening the project in IntelliJ IDEA, tick "Use sbt shell:" both "for imports" and "for builds".
+
 # Code of Conduct
 
 This project adheres to the [Spotify FOSS Code of Conduct][code-of-conduct]. By participating, you are expected to honor this code.
