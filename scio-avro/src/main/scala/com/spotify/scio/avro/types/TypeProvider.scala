@@ -285,6 +285,8 @@ private[types] object TypeProvider {
       val recordClasses = f
         .flatMap(_._2)
         .groupBy(_.asInstanceOf[ClassDef].name)
+        // note that if there are conflicting definitions of a nested record type, the Avro schema
+        // parser itself will catch it before getting to this step.
         .map { case (_, cDefs) => cDefs.head } // Don't generate duplicate case classes
         .toSeq
 
