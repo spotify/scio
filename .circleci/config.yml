@@ -68,7 +68,6 @@ commands:
         keys:
         - v7-dependencies-{{ .Environment.CIRCLE_JOB }}-{{ checksum "/tmp/dependencies.cache.tmp" }}
         - v7-dependencies-
-    - run: ./scripts/gen_schemas.sh
     - run:
         name: setup
         command: |
@@ -81,7 +80,7 @@ commands:
 
           if [ -n "$CIRCLE_PR_USERNAME" ]; then
             echo "Scala $SCALA_VERSION, forked PR #$CIRCLE_PR_NUMBER from $CIRCLE_PR_USERNAME/$CIRCLE_PR_REPONAME"
-            echo 'export SBT_OPTS="-Dbigquery.project=dummy-project"' >> $BASH_ENV
+            ./scripts/bootstrap.sh
           else
             echo "Scala $SCALA_VERSION, branch: $CIRCLE_BRANCH"
             echo 'export SBT_OPTS="-Dbigquery.project=data-integration-test -Dbigquery.secret=$GOOGLE_APPLICATION_CREDENTIALS"' >> $BASH_ENV
