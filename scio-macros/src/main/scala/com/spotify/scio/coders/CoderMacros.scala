@@ -64,7 +64,7 @@ private[coders] object CoderMacros {
     val alreadyReported = reported.contains(toReport)
     if (!alreadyReported) reported += toReport
 
-    def shortMessage =
+    val shortMessage =
       s"""
       | Warning: No implicit Coder found for the following type:
       |
@@ -73,7 +73,7 @@ private[coders] object CoderMacros {
       | using Kryo fallback instead.
       """
 
-    def longMessage =
+    val longMessage =
       shortMessage +
         s"""
         |
@@ -109,10 +109,8 @@ private[coders] object CoderMacros {
         val msg =
           s"Can't use a Kryo coder for ${wtt}. You need to explicitly set the Coder for this type"
         c.abort(c.enclosingPosition, msg)
-      case _ if Warnings.get(wtt.toString).isDefined =>
-        Warnings.get(wtt.toString).foreach { m =>
-          c.echo(c.enclosingPosition, m)
-        }
+      case _ if Warnings.contains(wtt.toString) =>
+        c.echo(c.enclosingPosition, Warnings(wtt.toString))
         fallback
       case (false, false) =>
         if (show) c.echo(c.enclosingPosition, shortMessage.stripMargin)
@@ -142,7 +140,7 @@ private[coders] object CoderMacros {
 
     val magTree = MagnoliaMacros.genWithoutAnnotations[T](c)
 
-    val isPrivateContructor =
+    val isPrivateConstructor =
       wtt.decls
         .collectFirst {
           case m: MethodSymbol if m.isConstructor =>
@@ -151,7 +149,7 @@ private[coders] object CoderMacros {
         .getOrElse(false)
 
     val tree: c.Tree =
-      if (isPrivateContructor) {
+      if (isPrivateConstructor) {
         // Magnolia does not support classes with a private constructor.
         // Workaround the limitation by using a fallback in that case
         q"""_root_.com.spotify.scio.coders.Coder.fallback[$wtt](null)"""
