@@ -18,6 +18,7 @@ package com.spotify.scio.bigquery.syntax
 
 import com.google.api.services.bigquery.model.{TableReference, TableSchema}
 import com.spotify.scio.bigquery.BigQueryTyped.Table.{WriteParam => TableWriteParam}
+import com.spotify.scio.bigquery.BigQueryTyped.BeamSchema.{WriteParam => TypedWriteParam}
 import com.spotify.scio.bigquery.TableRowJsonIO.{WriteParam => TableRowJsonWriteParam}
 import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
 import com.spotify.scio.bigquery.{
@@ -37,6 +38,7 @@ import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
 import scala.language.implicitConversions
 import com.spotify.scio.bigquery.Table
+import com.spotify.scio.schemas.Schema
 
 /** Enhanced version of [[SCollection]] with BigQuery methods. */
 final class SCollectionTableRowOps[T <: TableRow](private val self: SCollection[T]) extends AnyVal {
@@ -101,6 +103,29 @@ final class SCollectionTableRowOps[T <: TableRow](private val self: SCollection[
     val param = TableRowJsonWriteParam(numShards, compression)
     self.asInstanceOf[SCollection[TableRow]].write(TableRowJsonIO(path))(param)
   }
+}
+
+final class SCollectionBeamSchemaOps[T](private val self: SCollection[T]) extends AnyVal {
+
+  def saveAsBigQuery(
+    table: Table,
+    writeDisposition: WriteDisposition = TypedWriteParam.DefaultWriteDisposition,
+    createDisposition: CreateDisposition = TypedWriteParam.DefaultCreateDisposition,
+    tableDescription: String = TypedWriteParam.DefaultTableDescription,
+    timePartitioning: TimePartitioning = TypedWriteParam.DefaultTimePartitioning
+  )(implicit schema: Schema[T], coder: Coder[T]): ClosedTap[T] = {
+    val param =
+      TypedWriteParam(
+        writeDisposition,
+        createDisposition,
+        tableDescription,
+        timePartitioning
+      )
+    self
+      .write(BigQueryTyped.BeamSchema(table))(param)
+      .asInstanceOf[ClosedTap[T]]
+  }
+
 }
 
 /** Enhanced version of [[SCollection]] with BigQuery methods. */
@@ -174,6 +199,11 @@ trait SCollectionSyntax {
     sc: SCollection[T]
   ): SCollectionTableRowOps[T] =
     new SCollectionTableRowOps[T](sc)
+
+  implicit def bigQuerySCollectionBeamSchemaOps[T](
+    sc: SCollection[T]
+  ): SCollectionBeamSchemaOps[T] =
+    new SCollectionBeamSchemaOps[T](sc)
 
   implicit def bigQuerySCollectionTypedOps[T <: HasAnnotation](
     sc: SCollection[T]

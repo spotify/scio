@@ -38,6 +38,13 @@ final case class TableRowJsonTap(path: String) extends Tap[TableRow] {
     sc.tableRowJsonFile(path)
 }
 
+final case class BigQueryTypedTap[T: Coder](table: Table, fn: TableRow => T) extends Tap[T] {
+  override def value: Iterator[T] =
+    BigQueryTap(table.ref).value.map(fn)
+  override def open(sc: ScioContext): SCollection[T] =
+    BigQueryTap(table.ref).open(sc).map(fn)
+}
+
 /** Tap for BigQuery tables. */
 final case class BigQueryTap(table: TableReference) extends Tap[TableRow] {
   override def value: Iterator[TableRow] =
