@@ -27,13 +27,7 @@ You can also run `~mdoc` to automatically build the documentation on save.
 
 # Building locally
 
-Some example and test code in Scio depends on Google Cloud Platform access for BigQuery schemas, Cloud Dataflow service, etc. To build Scio locally without a GCP credential, first run the following script to generate BigQuery schema cache.
-
-```bash
-./scripts/gen_schemas.sh
-```
-
-When opening the project in IntelliJ IDEA, tick "Use sbt shell:" both "for imports" and "for builds".
+See [this page](https://spotify.github.io/scio/dev/build.html) for building Scio locally.
 
 # Code of Conduct
 
