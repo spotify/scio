@@ -51,7 +51,7 @@ Unlike Hadoop, Scio or Dataflow input should be file patterns and not directorie
 Use the @javadoc[`DataflowRunner`](org.apache.beam.runners.dataflow.DataflowRunner) to execute pipelines on Google Cloud Dataflow service using managed resources in the Google Cloud Platform.
 
 ```
-neville@localhost scio $ sbt -Dbigquery.project=<BILLING_PROJECT>
+neville@localhost scio $ sbt
 [info] ...
 > project scio-examples
 [info] ...
