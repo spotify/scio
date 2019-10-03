@@ -17,8 +17,10 @@
 
 package com.spotify.scio.extra
 
+import java.nio.charset.Charset
 import java.util.{UUID, List => JList}
 
+import com.github.benmanes.caffeine.cache.Cache
 import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import com.spotify.scio.values.{SCollection, SideInput}
@@ -83,15 +85,28 @@ package object sparkey {
   /** Enhanced version of [[ScioContext]] with Sparkey methods. */
   implicit class SparkeyScioContext(private val self: ScioContext) extends AnyVal {
 
+    private def viewOf(basePath: String): PCollectionView[SparkeyUri] =
+      self.parallelize(Seq(SparkeyUri(basePath, self.options))).applyInternal(View.asSingleton())
+
     /**
      * Create a SideInput of `SparkeyReader` from a [[SparkeyUri]] base path, to be used with
      * [[com.spotify.scio.values.SCollection.withSideInputs SCollection.withSideInputs]].
      */
-    def sparkeySideInput(basePath: String): SideInput[SparkeyReader] = {
-      val uri = SparkeyUri(basePath, self.options)
-      val view = self.parallelize(Seq(uri)).applyInternal(View.asSingleton())
-      new SparkeySideInput(view)
-    }
+    def sparkeySideInput(basePath: String): SideInput[SparkeyReader] =
+      new SparkeySideInput(viewOf(basePath))
+
+    /**
+     * Create a SideInput of `TypedSparkeyReader` from a [[SparkeyUri]] base path, to be used with
+     * [[com.spotify.scio.values.SCollection.withSideInputs SCollection.withSideInputs]].
+     * The provided decoder function will map from the underlying byte array to a JVM type, and
+     * the optional [[Cache]] object can be used to cache reads in memory after decoding.
+     */
+    def typedSparkeySideInput[T >: Null <: AnyRef](
+      basePath: String,
+      decoder: Array[Byte] => T,
+      cache: Cache[String, T] = null
+    ): SideInput[TypedSparkeyReader[T]] =
+      new TypedSparkeySideInput[T](viewOf(basePath), decoder, cache)
   }
 
   /**
@@ -168,6 +183,23 @@ package object sparkey {
       voder: Coder[V]
     ): SideInput[SparkeyReader] =
       self.asSparkey.asSparkeySideInput
+
+    /**
+     * Convert this SCollection to a SideInput, mapping key-value pairs of each window to a
+     * `SparkeyReader`, to be used with
+     * [[com.spotify.scio.values.SCollection.withSideInputs SCollection.withSideInputs]]. It is
+     * required that each key of the input be associated with a single value. The provided
+     * [[Cache]] will be used to cache reads from the resulting [[SparkeyReader]].
+     */
+    def asTypedSparkeySideInput[T >: Null <: AnyRef](
+      decoder: Array[Byte] => T,
+      cache: Cache[String, T] = null
+    )(
+      implicit w: SparkeyWritable[K, V],
+      koder: Coder[K],
+      voder: Coder[V]
+    ): SideInput[TypedSparkeyReader[T]] =
+      self.asSparkey.asTypedSparkeySideInput[T](decoder, cache)
   }
 
   /**
@@ -182,6 +214,20 @@ package object sparkey {
     def asSparkeySideInput: SideInput[SparkeyReader] = {
       val view = self.applyInternal(View.asSingleton())
       new SparkeySideInput(view)
+    }
+
+    /**
+     * Convert this SCollection to a SideInput of `SparkeyReader`, to be used with
+     * [[com.spotify.scio.values.SCollection.withSideInputs SCollection.withSideInputs]].
+     * The provided decoder function will map from the underlying byte array to a JVM type, and
+     * the optional [[Cache]] object can be used to cache reads in memory after decoding.
+     */
+    def asTypedSparkeySideInput[T >: Null <: AnyRef](
+      decoder: Array[Byte] => T,
+      cache: Cache[String, T] = null
+    ): SideInput[TypedSparkeyReader[T]] = {
+      val view = self.applyInternal(View.asSingleton())
+      new TypedSparkeySideInput[T](view, decoder, cache)
     }
   }
 
@@ -205,6 +251,64 @@ package object sparkey {
     override def updateCacheOnGlobalWindow: Boolean = false
     override def get[I, O](context: DoFn[I, O]#ProcessContext): SparkeyReader =
       context.sideInput(view).getReader
+  }
+
+  /**
+   * A wrapper around `SparkeyReader` that includes both a decoder (to map from each byte array
+   * to a JVM type) and an optional in-memory cache.
+   */
+  class TypedSparkeyReader[T >: Null <: AnyRef](
+    val sparkey: SparkeyReader,
+    val decoder: Array[Byte] => T,
+    val cache: Cache[String, T] = null
+  ) extends Map[String, T] {
+
+    lazy val cacheOpt = Option(cache)
+
+    private def stringKeyToBytes(key: String): Array[Byte] = key.getBytes(Charset.defaultCharset())
+
+    private def loadValueFromSparkey(key: String): Option[T] = {
+      val value = sparkey.getAsByteArray(stringKeyToBytes(key))
+      if (value == null) {
+        None
+      } else {
+        Some(decoder(value))
+      }
+    }
+
+    override def get(key: String): Option[T] =
+      cacheOpt
+        .map(cache => Option(cache.get(key, k => loadValueFromSparkey(k).orNull)))
+        .getOrElse(loadValueFromSparkey(key))
+
+    override def iterator: Iterator[(String, T)] =
+      sparkey.iterator.asScala.map(e => {
+        val key = e.getKeyAsString
+        val value = Option(cache.getIfPresent(key)).getOrElse(decoder(e.getValue))
+        (key, value)
+      })
+
+    //scalastyle:off method.name
+    override def +[B1 >: T](kv: (String, B1)): Map[String, B1] =
+      throw new NotImplementedError("Sparkey-backed map; operation not supported.")
+    override def -(key: String): Map[String, T] =
+      throw new NotImplementedError("Sparkey-backed map; operation not supported.")
+    //scalastyle:on method.name
+
+    def close(): Unit = {
+      sparkey.close()
+      cache.invalidateAll()
+    }
+  }
+
+  private class TypedSparkeySideInput[T >: Null <: AnyRef](
+    val view: PCollectionView[SparkeyUri],
+    val decoder: Array[Byte] => T,
+    val cache: Cache[String, T] = null
+  ) extends SideInput[TypedSparkeyReader[T]] {
+    override def updateCacheOnGlobalWindow: Boolean = false
+    override def get[I, O](context: DoFn[I, O]#ProcessContext): TypedSparkeyReader[T] =
+      context.sideInput(view).getTypedReader(decoder, cache)
   }
 
   sealed trait SparkeyWritable[K, V] extends Serializable {

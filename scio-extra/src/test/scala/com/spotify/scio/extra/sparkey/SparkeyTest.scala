@@ -87,4 +87,91 @@ class SparkeyTest extends PipelineSpec {
     }
   }
 
+  it should "support .asSparkeySideInput" in {
+    val sc = ScioContext()
+
+    val input = Seq("a", "b", "a", "b")
+
+    val sparkey = sc.parallelize(sideData).asSparkey
+    val sparkeyMaterialized = sparkey.materialize
+    val si = sparkey.asSparkeySideInput
+    val result = sc
+      .parallelize(input)
+      .withSideInputs(si)
+      .map((x, sic) => sic(si)(x))
+      .toSCollection
+      .materialize
+
+    val scioResult = sc.run().waitUntilFinish()
+
+    scioResult.tap(result).value.toList.sorted shouldBe input.map(sideData.toMap).sorted
+
+    val basePath = scioResult.tap(sparkeyMaterialized).value.next().basePath
+    for (ext <- Seq(".spi", ".spl")) new File(basePath + ext).delete()
+  }
+
+  it should "support .asTypedSparkeySideInput" in {
+    val sc = ScioContext()
+
+    val input = Seq("a", "b", "c", "d")
+    val typedSideData = Seq(("a", Seq(1, 2)), ("b", Seq(2, 3)), ("c", Seq(3, 4)))
+    val typedSideDataMap = typedSideData.toMap
+
+    val sparkey = sc.parallelize(typedSideData).mapValues(_.map(_.toString).mkString(",")).asSparkey
+    val sparkeyMaterialized = sparkey.materialize
+
+    val si = sparkey.asTypedSparkeySideInput[Seq[Int]](new String(_).split(",").toSeq.map(_.toInt))
+
+    val result = sc
+      .parallelize(input)
+      .withSideInputs(si)
+      .flatMap((x, sic) => sic(si).get(x))
+      .toSCollection
+      .materialize
+
+    val scioResult = sc.run().waitUntilFinish()
+    val expectedOutput = input.flatMap(typedSideDataMap.get)
+
+    scioResult.tap(result).value.toList should contain theSameElementsAs expectedOutput
+
+    val basePath = scioResult.tap(sparkeyMaterialized).value.next().basePath
+    for (ext <- Seq(".spi", ".spl")) new File(basePath + ext).delete()
+  }
+
+  it should "support .asTypedSparkeySideInput with a cache" in {
+    val sc = ScioContext()
+
+    val input = Seq("a", "b", "c", "d")
+    val typedSideData = Seq(("a", Seq(1, 2)), ("b", Seq(2, 3)), ("c", Seq(3, 4)))
+    val typedSideDataMap = typedSideData.toMap
+
+    MockCache.reset()
+
+    val sparkey = sc.parallelize(typedSideData).mapValues(_.mkString(",")).asSparkey
+    val sparkeyMaterialized = sparkey.materialize
+
+    val si = sparkey.asTypedSparkeySideInput[Object](
+      bytes => new String(bytes).split(",").map(_.toInt).toSeq,
+      MockCache.getInstance
+    )
+
+    val result = sc
+      .parallelize(input)
+      .withSideInputs(si)
+      .flatMap((x, sic) => sic(si).get(x))
+      .toSCollection
+      .materialize
+
+    val scioResult = sc.run().waitUntilFinish()
+    val expectedOutput = input.flatMap(typedSideDataMap.get)
+
+    scioResult.tap(result).value.toList should contain theSameElementsAs expectedOutput
+
+    MockCache.getStats.requestCount shouldBe input.size
+    MockCache.getStats.loadCount shouldBe input.toSet.size
+
+    val basePath = scioResult.tap(sparkeyMaterialized).value.next().basePath
+    for (ext <- Seq(".spi", ".spl")) new File(basePath + ext).delete()
+  }
+
 }
