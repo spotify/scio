@@ -817,7 +817,7 @@ lazy val scioExamples: Project = Project(
       if (BuildCredentials.exists) {
         HiddenFileFilter
       } else {
-        HiddenFileFilter || "TypedBigQueryTornadoes*.scala"
+        HiddenFileFilter || "TypedBigQueryTornadoes*.scala" || "TypedStorageBigQueryTornadoes*.scala"
       }
     },
     sources in doc in Compile := List()
