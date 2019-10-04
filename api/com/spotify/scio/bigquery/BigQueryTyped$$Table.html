@@ -160,17 +160,25 @@ detects the query's dialect. To override this, start the query with either <code
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="index.html" class="extype" name="com.spotify.scio.bigquery">bigquery</a></dd></dl></div>
     </li><li class="current-entities indented5">
+                        <a class="object" href="BigQueryTyped$$BeamSchema$.html" title=""></a>
+                        <a class="class" href="BigQueryTyped$$BeamSchema.html" title=""></a>
+                        <a href="BigQueryTyped$$BeamSchema.html" title="">BeamSchema</a>
+                      </li><li class="current-entities indented5">
                         <a class="object" href="BigQueryTyped$$IO$.html" title=""></a>
                         <a class="trait" href="BigQueryTyped$$IO.html" title=""></a>
                         <a href="BigQueryTyped$$IO.html" title="">IO</a>
                       </li><li class="current-entities indented5">
-                        <span class="separator"></span>
+                        <a class="object" href="BigQueryTyped$$Select$.html" title=""></a>
                         <a class="class" href="BigQueryTyped$$Select.html" title="Get a typed SCollection for a BigQuery SELECT query."></a>
                         <a href="BigQueryTyped$$Select.html" title="Get a typed SCollection for a BigQuery SELECT query.">Select</a>
                       </li><li class="current-entities indented5">
                         <a class="object" href="BigQueryTyped$$Storage$.html" title=""></a>
                         <a class="class" href="BigQueryTyped$$Storage.html" title="Get a typed SCollection for a BigQuery table using the storage API."></a>
                         <a href="BigQueryTyped$$Storage.html" title="Get a typed SCollection for a BigQuery table using the storage API.">Storage</a>
+                      </li><li class="current-entities indented5">
+                        <span class="separator"></span>
+                        <a class="class" href="BigQueryTyped$$StorageQuery.html" title=""></a>
+                        <a href="BigQueryTyped$$StorageQuery.html" title="">StorageQuery</a>
                       </li><li class="current-entities indented5">
                         <a class="object" href="BigQueryTyped$$Table$.html" title=""></a>
                         <a class="class" href="" title="Get a typed SCollection for a BigQuery table."></a>
@@ -200,7 +208,7 @@ detects the query's dialect. To override this, start the query with either <code
         <span class="kind">case class</span>
       </span>
       <span class="symbol">
-        <span class="name">Table</span><span class="tparams">[<span name="T">T &lt;: <a href="types/BigQueryType$$HasAnnotation.html" class="extype" name="com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation">HasAnnotation</a></span>]</span><span class="params">(<span name="table">table: <a href="Table.html" class="extype" name="com.spotify.scio.bigquery.Table">bigquery.Table</a></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="evidence$20">evidence$20: <span class="extype" name="scala.reflect.ClassTag">ClassTag</span>[<span class="extype" name="com.spotify.scio.bigquery.BigQueryTyped.Table.T">T</span>]</span>, <span name="evidence$21">evidence$21: <span class="extype" name="scala.reflect.api.TypeTags.TypeTag">scala.reflect.api.JavaUniverse.TypeTag</span>[<span class="extype" name="com.spotify.scio.bigquery.BigQueryTyped.Table.T">T</span>]</span>, <span name="evidence$22">evidence$22: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.bigquery.BigQueryTyped.Table.T">T</span>]</span>)</span><span class="result"> extends <a href="BigQueryIO.html" class="extype" name="com.spotify.scio.bigquery.BigQueryIO">BigQueryIO</a>[<span class="extype" name="com.spotify.scio.bigquery.BigQueryTyped.Table.T">T</span>] with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+        <span class="name">Table</span><span class="tparams">[<span name="T">T &lt;: <a href="types/BigQueryType$$HasAnnotation.html" class="extype" name="com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation">HasAnnotation</a></span>]</span><span class="params">(<span name="table">table: <a href="Table.html" class="extype" name="com.spotify.scio.bigquery.Table">bigquery.Table</a></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="evidence$22">evidence$22: <span class="extype" name="scala.reflect.ClassTag">ClassTag</span>[<span class="extype" name="com.spotify.scio.bigquery.BigQueryTyped.Table.T">T</span>]</span>, <span name="evidence$23">evidence$23: <span class="extype" name="scala.reflect.api.TypeTags.TypeTag">scala.reflect.api.JavaUniverse.TypeTag</span>[<span class="extype" name="com.spotify.scio.bigquery.BigQueryTyped.Table.T">T</span>]</span>, <span name="evidence$24">evidence$24: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.bigquery.BigQueryTyped.Table.T">T</span>]</span>)</span><span class="result"> extends <a href="BigQueryIO.html" class="extype" name="com.spotify.scio.bigquery.BigQueryIO">BigQueryIO</a>[<span class="extype" name="com.spotify.scio.bigquery.BigQueryTyped.Table.T">T</span>] with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
       </span>
       </h4>
 
@@ -257,9 +265,9 @@ detects the query's dialect. To override this, start the query with either <code
         <div id="constructors" class="members">
               <h3>Instance Constructors</h3>
               <ol><li name="com.spotify.scio.bigquery.BigQueryTyped.Table#&lt;init&gt;" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="&lt;init&gt;(table:com.spotify.scio.bigquery.Table)(implicitevidence$20:scala.reflect.ClassTag[T],implicitevidence$21:reflect.runtime.universe.TypeTag[T],implicitevidence$22:com.spotify.scio.coders.Coder[T]):com.spotify.scio.bigquery.BigQueryTyped.Table[T]"></a><a id="&lt;init&gt;:Table[T]"></a>
+      <a id="&lt;init&gt;(table:com.spotify.scio.bigquery.Table)(implicitevidence$22:scala.reflect.ClassTag[T],implicitevidence$23:reflect.runtime.universe.TypeTag[T],implicitevidence$24:com.spotify.scio.coders.Coder[T]):com.spotify.scio.bigquery.BigQueryTyped.Table[T]"></a><a id="&lt;init&gt;:Table[T]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/bigquery/BigQueryTyped$$Table.html#&lt;init&gt;(table:com.spotify.scio.bigquery.Table)(implicitevidence$20:scala.reflect.ClassTag[T],implicitevidence$21:reflect.runtime.universe.TypeTag[T],implicitevidence$22:com.spotify.scio.coders.Coder[T]):com.spotify.scio.bigquery.BigQueryTyped.Table[T]" title="Permalink">
+      <a href="../../../../com/spotify/scio/bigquery/BigQueryTyped$$Table.html#&lt;init&gt;(table:com.spotify.scio.bigquery.Table)(implicitevidence$22:scala.reflect.ClassTag[T],implicitevidence$23:reflect.runtime.universe.TypeTag[T],implicitevidence$24:com.spotify.scio.coders.Coder[T]):com.spotify.scio.bigquery.BigQueryTyped.Table[T]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>

@@ -190,6 +190,7 @@ spotify/scio
   <ul>
     <li><a href="../dev/build.html#getting-the-source" class="header">Getting the source</a></li>
     <li><a href="../dev/build.html#compiling" class="header">Compiling</a></li>
+    <li><a href="../dev/build.html#intellij-idea" class="header">IntelliJ IDEA</a></li>
   </ul></li>
 </ul>
 </nav>
@@ -215,6 +216,7 @@ spotify/scio
   <ul>
     <li><a href="../dev/build.html#getting-the-source" class="header">Getting the source</a></li>
     <li><a href="../dev/build.html#compiling" class="header">Compiling</a></li>
+    <li><a href="../dev/build.html#intellij-idea" class="header">IntelliJ IDEA</a></li>
   </ul></li>
 </ul>
 </nav>
@@ -230,12 +232,20 @@ spotify/scio
 <pre class="prettyprint"><code class="language-bash">git clone https://github.com/spotify/scio.git
 </code></pre>
 <h2><a href="#compiling" name="compiling" class="anchor"><span class="anchor-link"></span></a>Compiling</h2>
-<p>Copy the pre generated BigQuery schemas:</p>
-<pre class="prettyprint"><code class="language-bash">cp -r scripts/bigquery .bigquery
+<p>Build and test the code.</p>
+<pre class="prettyprint"><code class="language-bash">cd scio
+sbt test
 </code></pre>
-<p>Define <code>bigquery.project</code> as a system property. You can use any value since we will be using the pre generated schemas.</p>
-<pre class="prettyprint"><code class="language-bash">sbt -Dbigquery.project=dummy compile
+<p>Some examples depend on Google Cloud Platform and are excluded by default if GCP credentials are missing. To enable them, authenticate yourself for GCP, set up default credentials and restart sbt.</p>
+<pre class="prettyprint"><code class="language-bash">gcloud auth application-default login
+sbt test
 </code></pre>
+<p>Alternatively you can populate pre-generated cache for BigQuery schemas to bypass GCP access. Define <code>bigquery.project</code> as a system property. The value can by anything since we&rsquo;ll hit cache instead.</p>
+<pre class="prettyprint"><code class="language-bash">./scripts/gen_schemas.sh
+sbt -Dbigquery.project=dummy-project test
+</code></pre>
+<h2><a href="#intellij-idea" name="intellij-idea" class="anchor"><span class="anchor-link"></span></a>IntelliJ IDEA</h2>
+<p>When opening the project in IntelliJ IDEA, tick &ldquo;Use sbt shell:&rdquo; both &ldquo;for imports&rdquo; and &ldquo;for builds&rdquo;.</p>
 </div>
 <div>
 <a href="https://github.com/spotify/scio/tree/master/site/target/mdoc/dev/build.md" title="Edit this page" class="md-source-file md-edit">

@@ -282,7 +282,6 @@ hr {
 --outputToBigqueryTable=true --outputToDatastore=false --output=[DATASET].auto_complete&quot;</code></p></p></div>
                 <div class="code "><span class="keyword">package</span> <span class="identifier">com</span>.<span class="identifier">spotify</span>.<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/index.html" data-tooltip="<span>com.spotify.scio</span>">scio</a></span>.<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/examples/index.html" data-tooltip="<span>com.spotify.scio.examples</span>">examples</a></span>.<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/examples/complete/index.html" data-tooltip="<span>com.spotify.scio.examples.complete</span>">complete</a></span>
 
-<span class="keyword">import</span> <span class="identifier">com</span>.<span class="identifier">google</span>.<span class="identifier">common</span>.<span class="identifier">collect</span>.<span class="identifier">ImmutableMap</span>
 <span class="keyword">import</span> <span class="identifier">com</span>.<span class="identifier">google</span>.<span class="identifier">datastore</span>.<span class="identifier">v1</span>.<span class="identifier">Entity</span>
 <span class="keyword">import</span> <span class="identifier">com</span>.<span class="identifier">google</span>.<span class="identifier">datastore</span>.<span class="identifier">v1</span>.<span class="identifier">client</span>.<span class="identifier">DatastoreHelper</span>.{<span class="identifier">makeKey</span>, <span class="identifier">makeValue</span>}
 <span class="keyword">import</span> <span class="identifier">com</span>.<span class="identifier">spotify</span>.<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/index.html" data-tooltip="<span>com.spotify.scio</span>">scio</a></span>._
@@ -359,14 +358,14 @@ hr {
         <span class="identifier">Entity</span>
           .<span class="identifier">newBuilder</span>()
           .<span class="identifier">putAllProperties</span>(
-            <span class="identifier">ImmutableMap</span>.<span class="identifier">of</span>(<span class="string">"tag"</span>, <span class="identifier">makeValue</span>(<span class="identifier">p</span>.<span class="identifier">_1</span>).<span class="identifier">build</span>(), <span class="string">"count"</span>, <span class="identifier">makeValue</span>(<span class="identifier">p</span>.<span class="identifier">_2</span>).<span class="identifier">build</span>())
+            <span class="identifier">Map</span>(<span class="string">"tag"</span> <span class="identifier">-></span> <span class="identifier">makeValue</span>(<span class="identifier">p</span>.<span class="identifier">_1</span>).<span class="identifier">build</span>(), <span class="string">"count"</span> <span class="identifier">-></span> <span class="identifier">makeValue</span>(<span class="identifier">p</span>.<span class="identifier">_2</span>).<span class="identifier">build</span>()).<span class="identifier">asJava</span>
           )
       ).<span class="identifier">build</span>()
     }
     <span class="identifier">Entity</span>
       .<span class="identifier">newBuilder</span>()
       .<span class="identifier">setKey</span>(<span class="identifier">key</span>)
-      .<span class="identifier">putAllProperties</span>(<span class="identifier">ImmutableMap</span>.<span class="identifier">of</span>(<span class="string">"candidates"</span>, <span class="identifier">makeValue</span>(<span class="identifier">candidates</span>.<span class="identifier">asJava</span>).<span class="identifier">build</span>()))
+      .<span class="identifier">putAllProperties</span>(<span class="identifier">Map</span>(<span class="string">"candidates"</span> <span class="identifier">-></span> <span class="identifier">makeValue</span>(<span class="identifier">candidates</span>.<span class="identifier">asJava</span>).<span class="identifier">build</span>()).<span class="identifier">asJava</span>)
       .<span class="identifier">build</span>()
   }
 

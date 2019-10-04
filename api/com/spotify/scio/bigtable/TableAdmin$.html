@@ -415,6 +415,27 @@ existence of column families within each table and creates them if they do not e
 Checks for existence of tables or creates them if they do not exist.  Also checks for
 existence of column families within each table and creates them if they do not exist.
 </p></div></div>
+    </li><li name="com.spotify.scio.bigtable.TableAdmin#ensureTablesWithGcRules" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="ensureTablesWithGcRules(bigtableOptions:com.google.cloud.bigtable.config.BigtableOptions,tablesAndColumnFamilies:Map[String,List[(String,Option[com.google.bigtable.admin.v2.GcRule])]]):Unit"></a><a id="ensureTablesWithGcRules(BigtableOptions,Map[String,List[(String,Option[GcRule])]]):Unit"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/bigtable/TableAdmin$.html#ensureTablesWithGcRules(bigtableOptions:com.google.cloud.bigtable.config.BigtableOptions,tablesAndColumnFamilies:Map[String,List[(String,Option[com.google.bigtable.admin.v2.GcRule])]]):Unit" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">ensureTablesWithGcRules</span><span class="params">(<span name="bigtableOptions">bigtableOptions: <span class="extype" name="com.google.cloud.bigtable.config.BigtableOptions">BigtableOptions</span></span>, <span name="tablesAndColumnFamilies">tablesAndColumnFamilies: <span class="extype" name="scala.Predef.Map">Map</span>[<span class="extype" name="scala.Predef.String">String</span>, <span class="extype" name="scala.List">List</span>[(<span class="extype" name="scala.Predef.String">String</span>, <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="com.google.bigtable.admin.v2.GcRule">GcRule</span>])]]</span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      
+      <p class="shortcomment cmt">Ensure that tables and column families exist.</p><div class="fullcomment"><div class="comment cmt"><p>Ensure that tables and column families exist.
+Checks for existence of tables or creates them if they do not exist.  Also checks for
+existence of column families within each table and creates them if they do not exist.
+</p></div><dl class="paramcmts block"><dt class="param">tablesAndColumnFamilies</dt><dd class="cmt"><p>A map of tables and column families. Keys are table names.
+                               Values are a list of column family names along with the desired
+                               GcRule.</p></dd></dl></div>
     </li><li name="scala.AnyRef#eq" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="eq(x$1:AnyRef):Boolean"></a><a id="eq(AnyRef):Boolean"></a>
       <span class="permalink">

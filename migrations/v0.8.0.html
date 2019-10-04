@@ -453,8 +453,8 @@ def safe: SCollection[ToExample] = examples.to[ToExample](To.safe)
 </code></pre>
 <h2><a href="#deprecations-and-breaking-changes" name="deprecations-and-breaking-changes" class="anchor"><span class="anchor-link"></span></a>Deprecations and Breaking changes</h2>
 <h3><a href="#scala-concurrent-future-removed-from-scioios" name="scala-concurrent-future-removed-from-scioios" class="anchor"><span class="anchor-link"></span></a>scala.concurrent.Future removed from ScioIO&rsquo;s</h3>
-<p>The removal of <a href="http://www.scala-lang.org/api/2.12.9/scala/concurrent/Future.html">Future</a> led to some semantic and behaviour changes.</p>
-<p><code>ScioIO</code>&rsquo;s no longer return <a href="http://www.scala-lang.org/api/2.12.9/scala/concurrent/Future.html">Future</a></p>
+<p>The removal of <a href="http://www.scala-lang.org/api/2.12.10/scala/concurrent/Future.html">Future</a> led to some semantic and behaviour changes.</p>
+<p><code>ScioIO</code>&rsquo;s no longer return <a href="http://www.scala-lang.org/api/2.12.10/scala/concurrent/Future.html">Future</a></p>
 <pre class="prettyprint"><code class="language-diff">trait ScioIO[T] {
   ....
 - protected def write(data: SCollection[T], params: WriteP): Future[Tap[tapT.T]]

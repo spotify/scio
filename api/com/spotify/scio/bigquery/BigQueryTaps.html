@@ -237,6 +237,10 @@ detects the query's dialect. To override this, start the query with either <code
                         <a href="BigQueryStorage.html" title="Get an IO for a BigQuery table using the storage API.">BigQueryStorage</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
+                        <a class="class" href="BigQueryStorageSelect.html" title=""></a>
+                        <a href="BigQueryStorageSelect.html" title="">BigQueryStorageSelect</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
                         <a class="class" href="BigQueryStorageTap.html" title="Tap for BigQuery tables using storage api."></a>
                         <a href="BigQueryStorageTap.html" title="Tap for BigQuery tables using storage api.">BigQueryStorageTap</a>
                       </li><li class="current-entities indented4">
@@ -259,6 +263,18 @@ detects the query's dialect. To override this, start the query with either <code
                         <span class="separator"></span>
                         <a class="object" href="BigQueryTyped$.html" title=""></a>
                         <a href="BigQueryTyped$.html" title="">BigQueryTyped</a>
+                      </li><li class="current-entities indented4">
+                        <a class="object" href="BigQueryTypedSelect$.html" title=""></a>
+                        <a class="class" href="BigQueryTypedSelect.html" title=""></a>
+                        <a href="BigQueryTypedSelect.html" title="">BigQueryTypedSelect</a>
+                      </li><li class="current-entities indented4">
+                        <a class="object" href="BigQueryTypedTable$.html" title=""></a>
+                        <a class="class" href="BigQueryTypedTable.html" title=""></a>
+                        <a href="BigQueryTypedTable.html" title="">BigQueryTypedTable</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
+                        <a class="class" href="BigQueryTypedTap.html" title=""></a>
+                        <a href="BigQueryTypedTap.html" title="">BigQueryTypedTap</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
                         <a class="object" href="BigQueryUtil$.html" title="Utility for BigQuery data types."></a>
@@ -287,6 +303,14 @@ detects the query's dialect. To override this, start the query with either <code
                         <span class="separator"></span>
                         <a class="object" href="Numeric$.html" title=""></a>
                         <a href="Numeric$.html" title="">Numeric</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
+                        <a class="class" href="Query.html" title=""></a>
+                        <a href="Query.html" title="">Query</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
+                        <a class="trait" href="Source.html" title=""></a>
+                        <a href="Source.html" title="">Source</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
                         <a class="object" href="StorageUtil$.html" title="Utility for BigQuery Storage API."></a>
@@ -753,9 +777,9 @@ detects the query's dialect. To override this, start the query with either <code
       
       <p class="shortcomment cmt">Get a <code>Future[Tap[TableRow]]</code> for a BigQuery TableRow JSON file.</p>
     </li><li name="com.spotify.scio.bigquery.BigQueryTaps#typedBigQuery" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="typedBigQuery[T&lt;:com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation](newSource:String)(implicitevidence$1:reflect.runtime.universe.TypeTag[T],implicitevidence$2:scala.reflect.ClassTag[T],implicitevidence$3:com.spotify.scio.coders.Coder[T]):scala.concurrent.Future[com.spotify.scio.io.Tap[T]]"></a><a id="typedBigQuery[T&lt;:HasAnnotation](String)(scala.reflect.api.JavaUniverse.TypeTag[T],ClassTag[T],Coder[T]):Future[Tap[T]]"></a>
+      <a id="typedBigQuery[T&lt;:com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation](newSource:String)(implicitevidence$2:reflect.runtime.universe.TypeTag[T],implicitevidence$3:scala.reflect.ClassTag[T],implicitevidence$4:com.spotify.scio.coders.Coder[T]):scala.concurrent.Future[com.spotify.scio.io.Tap[T]]"></a><a id="typedBigQuery[T&lt;:HasAnnotation](String)(scala.reflect.api.JavaUniverse.TypeTag[T],ClassTag[T],Coder[T]):Future[Tap[T]]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/bigquery/BigQueryTaps.html#typedBigQuery[T&lt;:com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation](newSource:String)(implicitevidence$1:reflect.runtime.universe.TypeTag[T],implicitevidence$2:scala.reflect.ClassTag[T],implicitevidence$3:com.spotify.scio.coders.Coder[T]):scala.concurrent.Future[com.spotify.scio.io.Tap[T]]" title="Permalink">
+      <a href="../../../../com/spotify/scio/bigquery/BigQueryTaps.html#typedBigQuery[T&lt;:com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation](newSource:String)(implicitevidence$2:reflect.runtime.universe.TypeTag[T],implicitevidence$3:scala.reflect.ClassTag[T],implicitevidence$4:com.spotify.scio.coders.Coder[T]):scala.concurrent.Future[com.spotify.scio.io.Tap[T]]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -769,9 +793,9 @@ detects the query's dialect. To override this, start the query with either <code
       
       <p class="shortcomment cmt">Get a <code>Future[Tap[T]]</code> for typed BigQuery source.</p>
     </li><li name="com.spotify.scio.bigquery.BigQueryTaps#typedBigQueryStorage" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="typedBigQueryStorage[T](table:com.google.api.services.bigquery.model.TableReference,readOptions:com.google.cloud.bigquery.storage.v1beta1.ReadOptions.TableReadOptions)(implicitevidence$4:reflect.runtime.universe.TypeTag[T],implicitevidence$5:com.spotify.scio.coders.Coder[T]):scala.concurrent.Future[com.spotify.scio.io.Tap[T]]"></a><a id="typedBigQueryStorage[T](TableReference,TableReadOptions)(scala.reflect.api.JavaUniverse.TypeTag[T],Coder[T]):Future[Tap[T]]"></a>
+      <a id="typedBigQueryStorage[T](table:com.google.api.services.bigquery.model.TableReference,readOptions:com.google.cloud.bigquery.storage.v1beta1.ReadOptions.TableReadOptions)(implicitevidence$5:reflect.runtime.universe.TypeTag[T],implicitevidence$6:com.spotify.scio.coders.Coder[T]):scala.concurrent.Future[com.spotify.scio.io.Tap[T]]"></a><a id="typedBigQueryStorage[T](TableReference,TableReadOptions)(scala.reflect.api.JavaUniverse.TypeTag[T],Coder[T]):Future[Tap[T]]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/bigquery/BigQueryTaps.html#typedBigQueryStorage[T](table:com.google.api.services.bigquery.model.TableReference,readOptions:com.google.cloud.bigquery.storage.v1beta1.ReadOptions.TableReadOptions)(implicitevidence$4:reflect.runtime.universe.TypeTag[T],implicitevidence$5:com.spotify.scio.coders.Coder[T]):scala.concurrent.Future[com.spotify.scio.io.Tap[T]]" title="Permalink">
+      <a href="../../../../com/spotify/scio/bigquery/BigQueryTaps.html#typedBigQueryStorage[T](table:com.google.api.services.bigquery.model.TableReference,readOptions:com.google.cloud.bigquery.storage.v1beta1.ReadOptions.TableReadOptions)(implicitevidence$5:reflect.runtime.universe.TypeTag[T],implicitevidence$6:com.spotify.scio.coders.Coder[T]):scala.concurrent.Future[com.spotify.scio.io.Tap[T]]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>

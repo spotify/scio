@@ -260,7 +260,7 @@ sbt publishLocal
 </code></pre><div class="callout note "><div class="callout-title">Note</div>
 <p>Unlike Hadoop, Scio or Dataflow input should be file patterns and not directories, i.e. <code>gs://bucket/path/part-*.txt</code> and not <code>gs://bucket/path</code>. Output on the other hand should be directories just like Hadoop, so <code>gs://bucket/path</code> will produce files like <code>gs://bucket/path/part-00000-of-00005.txt</code>.</p></div>
 <p>Use the <a href="https://beam.apache.org/releases/javadoc/2.15.0/?org/apache/beam/runners/dataflow/DataflowRunner.html"><code>DataflowRunner</code></a> to execute pipelines on Google Cloud Dataflow service using managed resources in the Google Cloud Platform.</p>
-<pre><code>neville@localhost scio $ sbt -Dbigquery.project=&lt;BILLING_PROJECT&gt;
+<pre><code>neville@localhost scio $ sbt
 [info] ...
 &gt; project scio-examples
 [info] ...

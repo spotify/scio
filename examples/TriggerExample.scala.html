@@ -349,7 +349,7 @@ hr {
       <span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/values/WindowOptions$.html#apply(trigger:org.apache.beam.sdk.transforms.windowing.Trigger,accumulationMode:org.apache.beam.sdk.values.WindowingStrategy.AccumulationMode,allowedLateness:org.joda.time.Duration,closingBehavior:org.apache.beam.sdk.transforms.windowing.Window.ClosingBehavior,timestampCombiner:org.apache.beam.sdk.transforms.windowing.TimestampCombiner):com.spotify.scio.values.WindowOptions" data-tooltip="<span>com.spotify.scio.values.WindowOptions.apply(trigger: org.apache.beam.sdk.transforms.windowing.Trigger, accumulationMode: org.apache.beam.sdk.values.WindowingStrategy.AccumulationMode, allowedLateness: org.joda.time.Duration, closingBehavior: org.apache.beam.sdk.transforms.windowing.Window.ClosingBehavior, timestampCombiner: org.apache.beam.sdk.transforms.windowing.TimestampCombiner): com.spotify.scio.values.WindowOptions</span>">WindowOptions</a></span>(
         <span class="identifier">allowedLateness</span> = <span class="identifier">Duration</span>.<span class="identifier">ZERO</span>,
         <span class="identifier">trigger</span> = <span class="identifier">Repeatedly</span>.<span class="identifier">forever</span>(<span class="identifier">AfterWatermark</span>.<span class="identifier">pastEndOfWindow</span>()),
-        <span class="identifier">accumulationMode</span> = <span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/streaming/index.html#DISCARDING_FIRED_PANES:org.apache.beam.sdk.values.WindowingStrategy.AccumulationMode" data-tooltip="<span>com.spotify.scio.streaming.DISCARDING_FIRED_PANES: org.apache.beam.sdk.values.WindowingStrategy.AccumulationMode</span>">DISCARDING_FIRED_PANES</a></span>
+        <span class="identifier">accumulationMode</span> = <span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/streaming/package$.html#DISCARDING_FIRED_PANES:org.apache.beam.sdk.values.WindowingStrategy.AccumulationMode" data-tooltip="<span>com.spotify.scio.streaming.DISCARDING_FIRED_PANES: org.apache.beam.sdk.values.WindowingStrategy.AccumulationMode</span>">DISCARDING_FIRED_PANES</a></span>
       )
     )
 
@@ -358,7 +358,7 @@ hr {
       <span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/values/WindowOptions$.html#apply(trigger:org.apache.beam.sdk.transforms.windowing.Trigger,accumulationMode:org.apache.beam.sdk.values.WindowingStrategy.AccumulationMode,allowedLateness:org.joda.time.Duration,closingBehavior:org.apache.beam.sdk.transforms.windowing.Window.ClosingBehavior,timestampCombiner:org.apache.beam.sdk.transforms.windowing.TimestampCombiner):com.spotify.scio.values.WindowOptions" data-tooltip="<span>com.spotify.scio.values.WindowOptions.apply(trigger: org.apache.beam.sdk.transforms.windowing.Trigger, accumulationMode: org.apache.beam.sdk.values.WindowingStrategy.AccumulationMode, allowedLateness: org.joda.time.Duration, closingBehavior: org.apache.beam.sdk.transforms.windowing.Window.ClosingBehavior, timestampCombiner: org.apache.beam.sdk.transforms.windowing.TimestampCombiner): com.spotify.scio.values.WindowOptions</span>">WindowOptions</a></span>(
         <span class="identifier">allowedLateness</span> = <span class="identifier">ONE_DAY</span>,
         <span class="identifier">trigger</span> = <span class="identifier">Repeatedly</span>.<span class="identifier">forever</span>(<span class="identifier">AfterWatermark</span>.<span class="identifier">pastEndOfWindow</span>()),
-        <span class="identifier">accumulationMode</span> = <span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/streaming/index.html#DISCARDING_FIRED_PANES:org.apache.beam.sdk.values.WindowingStrategy.AccumulationMode" data-tooltip="<span>com.spotify.scio.streaming.DISCARDING_FIRED_PANES: org.apache.beam.sdk.values.WindowingStrategy.AccumulationMode</span>">DISCARDING_FIRED_PANES</a></span>
+        <span class="identifier">accumulationMode</span> = <span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/streaming/package$.html#DISCARDING_FIRED_PANES:org.apache.beam.sdk.values.WindowingStrategy.AccumulationMode" data-tooltip="<span>com.spotify.scio.streaming.DISCARDING_FIRED_PANES: org.apache.beam.sdk.values.WindowingStrategy.AccumulationMode</span>">DISCARDING_FIRED_PANES</a></span>
       )
     )
 
@@ -371,7 +371,7 @@ hr {
             .<span class="identifier">pastFirstElementInPane</span>()
             .<span class="identifier">plusDelayOf</span>(<span class="identifier">ONE_MINUTE</span>)
         ),
-        <span class="identifier">accumulationMode</span> = <span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/streaming/index.html#ACCUMULATING_FIRED_PANES:org.apache.beam.sdk.values.WindowingStrategy.AccumulationMode" data-tooltip="<span>com.spotify.scio.streaming.ACCUMULATING_FIRED_PANES: org.apache.beam.sdk.values.WindowingStrategy.AccumulationMode</span>">ACCUMULATING_FIRED_PANES</a></span>
+        <span class="identifier">accumulationMode</span> = <span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/streaming/package$.html#ACCUMULATING_FIRED_PANES:org.apache.beam.sdk.values.WindowingStrategy.AccumulationMode" data-tooltip="<span>com.spotify.scio.streaming.ACCUMULATING_FIRED_PANES: org.apache.beam.sdk.values.WindowingStrategy.AccumulationMode</span>">ACCUMULATING_FIRED_PANES</a></span>
       )
     )
 
@@ -393,7 +393,7 @@ hr {
               .<span class="identifier">plusDelayOf</span>(<span class="identifier">FIVE_MINUTES</span>)
           )
         ),
-        <span class="identifier">accumulationMode</span> = <span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/streaming/index.html#ACCUMULATING_FIRED_PANES:org.apache.beam.sdk.values.WindowingStrategy.AccumulationMode" data-tooltip="<span>com.spotify.scio.streaming.ACCUMULATING_FIRED_PANES: org.apache.beam.sdk.values.WindowingStrategy.AccumulationMode</span>">ACCUMULATING_FIRED_PANES</a></span>
+        <span class="identifier">accumulationMode</span> = <span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/streaming/package$.html#ACCUMULATING_FIRED_PANES:org.apache.beam.sdk.values.WindowingStrategy.AccumulationMode" data-tooltip="<span>com.spotify.scio.streaming.ACCUMULATING_FIRED_PANES: org.apache.beam.sdk.values.WindowingStrategy.AccumulationMode</span>">ACCUMULATING_FIRED_PANES</a></span>
       )
     )
 

@@ -237,6 +237,10 @@ detects the query's dialect. To override this, start the query with either <code
                         <a href="BigQueryStorage.html" title="Get an IO for a BigQuery table using the storage API.">BigQueryStorage</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
+                        <a class="class" href="BigQueryStorageSelect.html" title=""></a>
+                        <a href="BigQueryStorageSelect.html" title="">BigQueryStorageSelect</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
                         <a class="class" href="BigQueryStorageTap.html" title="Tap for BigQuery tables using storage api."></a>
                         <a href="BigQueryStorageTap.html" title="Tap for BigQuery tables using storage api.">BigQueryStorageTap</a>
                       </li><li class="current-entities indented4">
@@ -259,6 +263,18 @@ detects the query's dialect. To override this, start the query with either <code
                         <span class="separator"></span>
                         <a class="object" href="BigQueryTyped$.html" title=""></a>
                         <a href="BigQueryTyped$.html" title="">BigQueryTyped</a>
+                      </li><li class="current-entities indented4">
+                        <a class="object" href="BigQueryTypedSelect$.html" title=""></a>
+                        <a class="class" href="BigQueryTypedSelect.html" title=""></a>
+                        <a href="BigQueryTypedSelect.html" title="">BigQueryTypedSelect</a>
+                      </li><li class="current-entities indented4">
+                        <a class="object" href="BigQueryTypedTable$.html" title=""></a>
+                        <a class="class" href="BigQueryTypedTable.html" title=""></a>
+                        <a href="BigQueryTypedTable.html" title="">BigQueryTypedTable</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
+                        <a class="class" href="BigQueryTypedTap.html" title=""></a>
+                        <a href="BigQueryTypedTap.html" title="">BigQueryTypedTap</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
                         <a class="object" href="BigQueryUtil$.html" title="Utility for BigQuery data types."></a>
@@ -287,6 +303,14 @@ detects the query's dialect. To override this, start the query with either <code
                         <span class="separator"></span>
                         <a class="object" href="Numeric$.html" title=""></a>
                         <a href="Numeric$.html" title="">Numeric</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
+                        <a class="class" href="Query.html" title=""></a>
+                        <a href="Query.html" title="">Query</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
+                        <a class="trait" href="Source.html" title=""></a>
+                        <a href="Source.html" title="">Source</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
                         <a class="object" href="StorageUtil$.html" title="Utility for BigQuery Storage API."></a>
@@ -402,18 +426,18 @@ detects the query's dialect. To override this, start the query with either <code
         <div id="types" class="types members">
               <h3>Type Members</h3>
               <ol><li name="com.spotify.scio.bigquery.BigQuerySelect.ReadParam" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="ReadParamextendsProductwithSerializable"></a><a id="ReadParam:ReadParam"></a>
+      <a id="ReadParam=com.spotify.scio.bigquery.BigQueryTypedSelect.ReadParam"></a><a id="ReadParam:ReadParam"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/bigquery/BigQuerySelect$$ReadParam.html" title="Permalink">
+      <a href="../../../../com/spotify/scio/bigquery/BigQuerySelect$.html#ReadParam=com.spotify.scio.bigquery.BigQueryTypedSelect.ReadParam" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
       <span class="modifier_kind">
-        <span class="modifier">final </span>
-        <span class="kind">case class</span>
+        <span class="modifier"></span>
+        <span class="kind">type</span>
       </span>
       <span class="symbol">
-        <a title="" href="BigQuerySelect$$ReadParam.html"><span class="name">ReadParam</span></a><span class="result"> extends <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+        <span class="name">ReadParam</span><span class="result alias"> = <a href="BigQueryTypedSelect$$ReadParam.html" class="extype" name="com.spotify.scio.bigquery.BigQueryTypedSelect.ReadParam">BigQueryTypedSelect.ReadParam</a></span>
       </span>
       
       
@@ -473,6 +497,41 @@ detects the query's dialect. To override this, start the query with either <code
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
+    </li><li name="com.spotify.scio.bigquery.BigQuerySelect#ReadParam" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="ReadParam:com.spotify.scio.bigquery.BigQueryTypedSelect.ReadParam.type"></a><a id="ReadParam:BigQueryTypedSelect.ReadParam.type"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/bigquery/BigQuerySelect$.html#ReadParam:com.spotify.scio.bigquery.BigQueryTypedSelect.ReadParam.type" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">val</span>
+      </span>
+      <span class="symbol">
+        <span class="name">ReadParam</span><span class="result">: <a href="BigQueryTypedSelect$$ReadParam$.html" class="extype" name="com.spotify.scio.bigquery.BigQueryTypedSelect.ReadParam">BigQueryTypedSelect.ReadParam</a>.type</span>
+      </span>
+      
+      
+    </li><li name="com.spotify.scio.bigquery.BigQuerySelect#apply" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="apply(sqlQuery:String):com.spotify.scio.bigquery.BigQuerySelect"></a><a id="apply(String):BigQuerySelect"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/bigquery/BigQuerySelect$.html#apply(sqlQuery:String):com.spotify.scio.bigquery.BigQuerySelect" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">apply</span><span class="params">(<span name="sqlQuery">sqlQuery: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <a href="BigQuerySelect.html" class="extype" name="com.spotify.scio.bigquery.BigQuerySelect">BigQuerySelect</a></span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Annotations</dt><dd>
+                <span class="name">@inline</span><span class="args">()</span>
+              
+        </dd></dl></div>
     </li><li name="scala.Any#asInstanceOf" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="asInstanceOf[T0]:T0"></a>
       <span class="permalink">
@@ -775,22 +834,6 @@ detects the query's dialect. To override this, start the query with either <code
                 <span class="name">@native</span><span class="args">()</span>
               
         </dd></dl></div>
-    </li><li name="com.spotify.scio.bigquery.BigQuerySelect.ReadParam" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="ReadParam"></a><a id="ReadParam:ReadParam"></a>
-      <span class="permalink">
-      <a href="../../../../com/spotify/scio/bigquery/BigQuerySelect$$ReadParam$.html" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">object</span>
-      </span>
-      <span class="symbol">
-        <a title="" href="BigQuerySelect$$ReadParam$.html"><span class="name">ReadParam</span></a><span class="result"> extends <span class="extype" name="scala.Serializable">Serializable</span></span>
-      </span>
-      
-      
     </li>
               </ol>
             </div>

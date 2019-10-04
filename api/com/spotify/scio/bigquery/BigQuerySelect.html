@@ -237,6 +237,10 @@ detects the query's dialect. To override this, start the query with either <code
                         <a href="BigQueryStorage.html" title="Get an IO for a BigQuery table using the storage API.">BigQueryStorage</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
+                        <a class="class" href="BigQueryStorageSelect.html" title=""></a>
+                        <a href="BigQueryStorageSelect.html" title="">BigQueryStorageSelect</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
                         <a class="class" href="BigQueryStorageTap.html" title="Tap for BigQuery tables using storage api."></a>
                         <a href="BigQueryStorageTap.html" title="Tap for BigQuery tables using storage api.">BigQueryStorageTap</a>
                       </li><li class="current-entities indented4">
@@ -259,6 +263,18 @@ detects the query's dialect. To override this, start the query with either <code
                         <span class="separator"></span>
                         <a class="object" href="BigQueryTyped$.html" title=""></a>
                         <a href="BigQueryTyped$.html" title="">BigQueryTyped</a>
+                      </li><li class="current-entities indented4">
+                        <a class="object" href="BigQueryTypedSelect$.html" title=""></a>
+                        <a class="class" href="BigQueryTypedSelect.html" title=""></a>
+                        <a href="BigQueryTypedSelect.html" title="">BigQueryTypedSelect</a>
+                      </li><li class="current-entities indented4">
+                        <a class="object" href="BigQueryTypedTable$.html" title=""></a>
+                        <a class="class" href="BigQueryTypedTable.html" title=""></a>
+                        <a href="BigQueryTypedTable.html" title="">BigQueryTypedTable</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
+                        <a class="class" href="BigQueryTypedTap.html" title=""></a>
+                        <a href="BigQueryTypedTap.html" title="">BigQueryTypedTap</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
                         <a class="object" href="BigQueryUtil$.html" title="Utility for BigQuery data types."></a>
@@ -287,6 +303,14 @@ detects the query's dialect. To override this, start the query with either <code
                         <span class="separator"></span>
                         <a class="object" href="Numeric$.html" title=""></a>
                         <a href="Numeric$.html" title="">Numeric</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
+                        <a class="class" href="Query.html" title=""></a>
+                        <a href="Query.html" title="">Query</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
+                        <a class="trait" href="Source.html" title=""></a>
+                        <a href="Source.html" title="">Source</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
                         <a class="object" href="StorageUtil$.html" title="Utility for BigQuery Storage API."></a>
@@ -344,7 +368,7 @@ detects the query's dialect. To override this, start the query with either <code
         <span class="kind">case class</span>
       </span>
       <span class="symbol">
-        <span class="name">BigQuerySelect</span><span class="params">(<span name="sqlQuery">sqlQuery: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result"> extends <a href="BigQueryIO.html" class="extype" name="com.spotify.scio.bigquery.BigQueryIO">BigQueryIO</a>[<a href="index.html#TableRow=com.google.api.services.bigquery.model.TableRow" class="extmbr" name="com.spotify.scio.bigquery.TableRow">TableRow</a>] with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+        <span class="name">BigQuerySelect</span><span class="params">(<span name="sqlQuery">sqlQuery: <a href="Query.html" class="extype" name="com.spotify.scio.bigquery.Query">Query</a></span>)</span><span class="result"> extends <a href="BigQueryIO.html" class="extype" name="com.spotify.scio.bigquery.BigQueryIO">BigQueryIO</a>[<a href="index.html#TableRow=com.google.api.services.bigquery.model.TableRow" class="extmbr" name="com.spotify.scio.bigquery.TableRow">TableRow</a>] with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
       </span>
       </h4>
 
@@ -405,9 +429,9 @@ behavior, start the query string with <code>#legacysql</code> or <code>#standard
         <div id="constructors" class="members">
               <h3>Instance Constructors</h3>
               <ol><li name="com.spotify.scio.bigquery.BigQuerySelect#&lt;init&gt;" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="&lt;init&gt;(sqlQuery:String):com.spotify.scio.bigquery.BigQuerySelect"></a><a id="&lt;init&gt;:BigQuerySelect"></a>
+      <a id="&lt;init&gt;(sqlQuery:com.spotify.scio.bigquery.Query):com.spotify.scio.bigquery.BigQuerySelect"></a><a id="&lt;init&gt;:BigQuerySelect"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/bigquery/BigQuerySelect.html#&lt;init&gt;(sqlQuery:String):com.spotify.scio.bigquery.BigQuerySelect" title="Permalink">
+      <a href="../../../../com/spotify/scio/bigquery/BigQuerySelect.html#&lt;init&gt;(sqlQuery:com.spotify.scio.bigquery.Query):com.spotify.scio.bigquery.BigQuerySelect" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -416,7 +440,7 @@ behavior, start the query string with <code>#legacysql</code> or <code>#standard
         <span class="kind">new</span>
       </span>
       <span class="symbol">
-        <span class="name">BigQuerySelect</span><span class="params">(<span name="sqlQuery">sqlQuery: <span class="extype" name="scala.Predef.String">String</span></span>)</span>
+        <span class="name">BigQuerySelect</span><span class="params">(<span name="sqlQuery">sqlQuery: <a href="Query.html" class="extype" name="com.spotify.scio.bigquery.Query">Query</a></span>)</span>
       </span>
       
       
@@ -437,7 +461,7 @@ behavior, start the query string with <code>#legacysql</code> or <code>#standard
         <span class="kind">type</span>
       </span>
       <span class="symbol">
-        <span class="name">ReadP</span><span class="result alias"> = <a href="BigQuerySelect$$ReadParam.html" class="extype" name="com.spotify.scio.bigquery.BigQuerySelect.ReadParam">ReadParam</a></span>
+        <span class="name">ReadP</span><span class="result alias"> = <a href="BigQueryTypedSelect$$ReadParam.html" class="extype" name="com.spotify.scio.bigquery.BigQueryTypedSelect.ReadParam">ReadParam</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="" class="extype" name="com.spotify.scio.bigquery.BigQuerySelect">BigQuerySelect</a> → <a href="../io/ScioIO.html" class="extype" name="com.spotify.scio.io.ScioIO">ScioIO</a></dd></dl></div>
@@ -713,9 +737,9 @@ behavior, start the query string with <code>#legacysql</code> or <code>#standard
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected </dd><dt>Definition Classes</dt><dd><a href="../io/ScioIO.html" class="extype" name="com.spotify.scio.io.ScioIO">ScioIO</a></dd></dl></div>
     </li><li name="com.spotify.scio.bigquery.BigQuerySelect#sqlQuery" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="sqlQuery:String"></a>
+      <a id="sqlQuery:com.spotify.scio.bigquery.Query"></a><a id="sqlQuery:Query"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/bigquery/BigQuerySelect.html#sqlQuery:String" title="Permalink">
+      <a href="../../../../com/spotify/scio/bigquery/BigQuerySelect.html#sqlQuery:com.spotify.scio.bigquery.Query" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -724,7 +748,7 @@ behavior, start the query string with <code>#legacysql</code> or <code>#standard
         <span class="kind">val</span>
       </span>
       <span class="symbol">
-        <span class="name">sqlQuery</span><span class="result">: <span class="extype" name="scala.Predef.String">String</span></span>
+        <span class="name">sqlQuery</span><span class="result">: <a href="Query.html" class="extype" name="com.spotify.scio.bigquery.Query">Query</a></span>
       </span>
       
       

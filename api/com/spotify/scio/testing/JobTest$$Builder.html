@@ -412,6 +412,22 @@ To be used in a <a href="PipelineSpec.html" class="extype" name="com.spotify.sci
       </span>
       
       <p class="shortcomment cmt">Evaluate a <span class="extype" name="org.apache.beam.sdk.metrics.Counter">Counter</span> in the pipeline being tested.</p><div class="fullcomment"><div class="comment cmt"><p>Evaluate a <span class="extype" name="org.apache.beam.sdk.metrics.Counter">Counter</span> in the pipeline being tested.</p></div><dl class="paramcmts block"><dt class="param">counter</dt><dd class="cmt"><p>counter to be evaluated</p></dd><dt class="param">assertion</dt><dd class="cmt"><p>assertion for the counter result's committed value</p></dd></dl></div>
+    </li><li name="com.spotify.scio.testing.JobTest.Builder#counters" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="counters(assertion:Map[org.apache.beam.sdk.metrics.MetricName,Long]=&gt;Any):com.spotify.scio.testing.JobTest.Builder"></a><a id="counters((Map[MetricName,Long])⇒Any):Builder"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/testing/JobTest$$Builder.html#counters(assertion:Map[org.apache.beam.sdk.metrics.MetricName,Long]=&gt;Any):com.spotify.scio.testing.JobTest.Builder" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">counters</span><span class="params">(<span name="assertion">assertion: (<span class="extype" name="scala.Predef.Map">Map</span>[<span class="extype" name="org.apache.beam.sdk.metrics.MetricName">MetricName</span>, <span class="extype" name="scala.Long">Long</span>]) ⇒ <span class="extype" name="scala.Any">Any</span></span>)</span><span class="result">: <a href="" class="extype" name="com.spotify.scio.testing.JobTest.Builder">Builder</a></span>
+      </span>
+      
+      <p class="shortcomment cmt">Evaluate all <span class="extype" name="org.apache.beam.sdk.metrics.Counter">Counters</span> in the pipeline being tested.</p><div class="fullcomment"><div class="comment cmt"><p>Evaluate all <span class="extype" name="org.apache.beam.sdk.metrics.Counter">Counters</span> in the pipeline being tested.</p></div><dl class="paramcmts block"><dt class="param">assertion</dt><dd class="cmt"><p>assertion on the collection of all job counters' committed values</p></dd></dl></div>
     </li><li name="com.spotify.scio.testing.JobTest.Builder#distCache" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="distCache[T](key:com.spotify.scio.testing.DistCacheIO[T],value:T):com.spotify.scio.testing.JobTest.Builder"></a><a id="distCache[T](DistCacheIO[T],T):Builder"></a>
       <span class="permalink">
@@ -468,6 +484,25 @@ match the one used inside the pipeline, e.g. <code>DistCacheIO[Set[String]](&quo
       <p class="shortcomment cmt">Evaluate a <span class="extype" name="org.apache.beam.sdk.metrics.Distribution">Distribution</span> in the pipeline being
 tested.</p><div class="fullcomment"><div class="comment cmt"><p>Evaluate a <span class="extype" name="org.apache.beam.sdk.metrics.Distribution">Distribution</span> in the pipeline being
 tested.</p></div><dl class="paramcmts block"><dt class="param">distribution</dt><dd class="cmt"><p>distribution to be evaluated</p></dd><dt class="param">assertion</dt><dd class="cmt"><p>assertion for the distribution result's committed value</p></dd></dl></div>
+    </li><li name="com.spotify.scio.testing.JobTest.Builder#distributions" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="distributions(assertion:Map[org.apache.beam.sdk.metrics.MetricName,org.apache.beam.sdk.metrics.DistributionResult]=&gt;Any):com.spotify.scio.testing.JobTest.Builder"></a><a id="distributions((Map[MetricName,DistributionResult])⇒Any):Builder"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/testing/JobTest$$Builder.html#distributions(assertion:Map[org.apache.beam.sdk.metrics.MetricName,org.apache.beam.sdk.metrics.DistributionResult]=&gt;Any):com.spotify.scio.testing.JobTest.Builder" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">distributions</span><span class="params">(<span name="assertion">assertion: (<span class="extype" name="scala.Predef.Map">Map</span>[<span class="extype" name="org.apache.beam.sdk.metrics.MetricName">MetricName</span>, <span class="extype" name="org.apache.beam.sdk.metrics.DistributionResult">DistributionResult</span>]) ⇒ <span class="extype" name="scala.Any">Any</span></span>)</span><span class="result">: <a href="" class="extype" name="com.spotify.scio.testing.JobTest.Builder">Builder</a></span>
+      </span>
+      
+      <p class="shortcomment cmt">Evaluate all <span class="extype" name="org.apache.beam.sdk.metrics.Distribution">Distributions</span> in the
+pipeline being tested.</p><div class="fullcomment"><div class="comment cmt"><p>Evaluate all <span class="extype" name="org.apache.beam.sdk.metrics.Distribution">Distributions</span> in the
+pipeline being tested.</p></div><dl class="paramcmts block"><dt class="param">assertion</dt><dd class="cmt"><p>assertion on the collection of all job distribution results'
+                 committed values</p></dd></dl></div>
     </li><li name="scala.AnyRef#eq" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="eq(x$1:AnyRef):Boolean"></a><a id="eq(AnyRef):Boolean"></a>
       <span class="permalink">
@@ -538,6 +573,22 @@ tested.</p></div><dl class="paramcmts block"><dt class="param">distribution</dt>
       </span>
       
       <p class="shortcomment cmt">Evaluate a <span class="extype" name="org.apache.beam.sdk.metrics.Gauge">Gauge</span> in the pipeline being tested.</p><div class="fullcomment"><div class="comment cmt"><p>Evaluate a <span class="extype" name="org.apache.beam.sdk.metrics.Gauge">Gauge</span> in the pipeline being tested.</p></div><dl class="paramcmts block"><dt class="param">gauge</dt><dd class="cmt"><p>gauge to be evaluated</p></dd><dt class="param">assertion</dt><dd class="cmt"><p>assertion for the gauge result's committed value</p></dd></dl></div>
+    </li><li name="com.spotify.scio.testing.JobTest.Builder#gauges" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="gauges(assertion:Map[org.apache.beam.sdk.metrics.MetricName,org.apache.beam.sdk.metrics.GaugeResult]=&gt;Any):com.spotify.scio.testing.JobTest.Builder"></a><a id="gauges((Map[MetricName,GaugeResult])⇒Any):Builder"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/testing/JobTest$$Builder.html#gauges(assertion:Map[org.apache.beam.sdk.metrics.MetricName,org.apache.beam.sdk.metrics.GaugeResult]=&gt;Any):com.spotify.scio.testing.JobTest.Builder" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">gauges</span><span class="params">(<span name="assertion">assertion: (<span class="extype" name="scala.Predef.Map">Map</span>[<span class="extype" name="org.apache.beam.sdk.metrics.MetricName">MetricName</span>, <span class="extype" name="org.apache.beam.sdk.metrics.GaugeResult">GaugeResult</span>]) ⇒ <span class="extype" name="scala.Any">Any</span></span>)</span><span class="result">: <a href="" class="extype" name="com.spotify.scio.testing.JobTest.Builder">Builder</a></span>
+      </span>
+      
+      <p class="shortcomment cmt">Evaluate all <span class="extype" name="org.apache.beam.sdk.metrics.Gauge">Gauges</span> in the pipeline being tested.</p><div class="fullcomment"><div class="comment cmt"><p>Evaluate all <span class="extype" name="org.apache.beam.sdk.metrics.Gauge">Gauges</span> in the pipeline being tested.</p></div><dl class="paramcmts block"><dt class="param">assertion</dt><dd class="cmt"><p>assertion on the collection of all job gauge results' committed values</p></dd></dl></div>
     </li><li name="scala.AnyRef#getClass" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="getClass():Class[_]"></a>
       <span class="permalink">

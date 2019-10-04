@@ -269,6 +269,10 @@ detects the query's dialect. To override this, start the query with either <code
                         <a href="BigQueryStorage.html" title="Get an IO for a BigQuery table using the storage API.">BigQueryStorage</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
+                        <a class="class" href="BigQueryStorageSelect.html" title=""></a>
+                        <a href="BigQueryStorageSelect.html" title="">BigQueryStorageSelect</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
                         <a class="class" href="BigQueryStorageTap.html" title="Tap for BigQuery tables using storage api."></a>
                         <a href="BigQueryStorageTap.html" title="Tap for BigQuery tables using storage api.">BigQueryStorageTap</a>
                       </li><li class="current-entities indented4">
@@ -291,6 +295,18 @@ detects the query's dialect. To override this, start the query with either <code
                         <span class="separator"></span>
                         <a class="object" href="BigQueryTyped$.html" title=""></a>
                         <a href="BigQueryTyped$.html" title="">BigQueryTyped</a>
+                      </li><li class="current-entities indented4">
+                        <a class="object" href="BigQueryTypedSelect$.html" title=""></a>
+                        <a class="class" href="BigQueryTypedSelect.html" title=""></a>
+                        <a href="BigQueryTypedSelect.html" title="">BigQueryTypedSelect</a>
+                      </li><li class="current-entities indented4">
+                        <a class="object" href="BigQueryTypedTable$.html" title=""></a>
+                        <a class="class" href="BigQueryTypedTable.html" title=""></a>
+                        <a href="BigQueryTypedTable.html" title="">BigQueryTypedTable</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
+                        <a class="class" href="BigQueryTypedTap.html" title=""></a>
+                        <a href="BigQueryTypedTap.html" title="">BigQueryTypedTap</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
                         <a class="object" href="BigQueryUtil$.html" title="Utility for BigQuery data types."></a>
@@ -319,6 +335,14 @@ detects the query's dialect. To override this, start the query with either <code
                         <span class="separator"></span>
                         <a class="object" href="Numeric$.html" title=""></a>
                         <a href="Numeric$.html" title="">Numeric</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
+                        <a class="class" href="Query.html" title=""></a>
+                        <a href="Query.html" title="">Query</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
+                        <a class="trait" href="Source.html" title=""></a>
+                        <a href="Source.html" title="">Source</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
                         <a class="object" href="StorageUtil$.html" title="Utility for BigQuery Storage API."></a>
@@ -575,22 +599,6 @@ detects the query's dialect. To override this, start the query with either <code
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../index.html" class="extype" name="com.spotify.scio">scio</a></dd></dl></div>
-    </li><li name="com.spotify.scio.sql" visbl="pub" class="indented4 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="sql"></a><a id="sql:sql"></a>
-      <span class="permalink">
-      <a href="../../../../com/spotify/scio/sql/index.html" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">package</span>
-      </span>
-      <span class="symbol">
-        <a title="" href="../sql/index.html"><span class="name">sql</span></a>
-      </span>
-      
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../index.html" class="extype" name="com.spotify.scio">scio</a></dd></dl></div>
     </li><li name="com.spotify.scio.tensorflow" visbl="pub" class="indented4 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="tensorflow"></a><a id="tensorflow:tensorflow"></a>
       <span class="permalink">
@@ -790,7 +798,7 @@ detects the query's dialect. To override this, start the query with either <code
         <span class="kind">case class</span>
       </span>
       <span class="symbol">
-        <a title="Get an SCollection for a BigQuery SELECT query." href="BigQuerySelect.html"><span class="name">BigQuerySelect</span></a><span class="params">(<span name="sqlQuery">sqlQuery: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result"> extends <a href="BigQueryIO.html" class="extype" name="com.spotify.scio.bigquery.BigQueryIO">BigQueryIO</a>[<a href="#TableRow=com.google.api.services.bigquery.model.TableRow" class="extmbr" name="com.spotify.scio.bigquery.TableRow">TableRow</a>] with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+        <a title="Get an SCollection for a BigQuery SELECT query." href="BigQuerySelect.html"><span class="name">BigQuerySelect</span></a><span class="params">(<span name="sqlQuery">sqlQuery: <a href="Query.html" class="extype" name="com.spotify.scio.bigquery.Query">Query</a></span>)</span><span class="result"> extends <a href="BigQueryIO.html" class="extype" name="com.spotify.scio.bigquery.BigQueryIO">BigQueryIO</a>[<a href="#TableRow=com.google.api.services.bigquery.model.TableRow" class="extmbr" name="com.spotify.scio.bigquery.TableRow">TableRow</a>] with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
       </span>
       
       <p class="shortcomment cmt">Get an SCollection for a BigQuery SELECT query.</p><div class="fullcomment"><div class="comment cmt"><p>Get an SCollection for a BigQuery SELECT query.
@@ -815,6 +823,22 @@ behavior, start the query string with <code>#legacysql</code> or <code>#standard
       </span>
       
       <p class="shortcomment cmt">Get an IO for a BigQuery table using the storage API.</p>
+    </li><li name="com.spotify.scio.bigquery.BigQueryStorageSelect" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="BigQueryStorageSelectextendsBigQueryIO[com.spotify.scio.bigquery.TableRow]withProductwithSerializable"></a><a id="BigQueryStorageSelect:BigQueryStorageSelect"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/bigquery/BigQueryStorageSelect.html" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="BigQueryStorageSelect.html"><span class="name">BigQueryStorageSelect</span></a><span class="params">(<span name="sqlQuery">sqlQuery: <a href="Query.html" class="extype" name="com.spotify.scio.bigquery.Query">Query</a></span>)</span><span class="result"> extends <a href="BigQueryIO.html" class="extype" name="com.spotify.scio.bigquery.BigQueryIO">BigQueryIO</a>[<a href="#TableRow=com.google.api.services.bigquery.model.TableRow" class="extmbr" name="com.spotify.scio.bigquery.TableRow">TableRow</a>] with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      
+      
     </li><li name="com.spotify.scio.bigquery.BigQueryStorageTap" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="BigQueryStorageTapextendsTap[com.spotify.scio.bigquery.TableRow]withProductwithSerializable"></a><a id="BigQueryStorageTap:BigQueryStorageTap"></a>
       <span class="permalink">
@@ -895,6 +919,54 @@ behavior, start the query string with <code>#legacysql</code> or <code>#standard
       </span>
       
       
+    </li><li name="com.spotify.scio.bigquery.BigQueryTypedSelect" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="BigQueryTypedSelect[T]extendsBigQueryIO[T]withProductwithSerializable"></a><a id="BigQueryTypedSelect[T]:BigQueryTypedSelect[T]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/bigquery/BigQueryTypedSelect.html" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="BigQueryTypedSelect.html"><span class="name">BigQueryTypedSelect</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="reader">reader: <span class="extype" name="org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.TypedRead">TypedRead</span>[<span class="extype" name="com.spotify.scio.bigquery.BigQueryTypedSelect.T">T</span>]</span>, <span name="sqlQuery">sqlQuery: <a href="Query.html" class="extype" name="com.spotify.scio.bigquery.Query">Query</a></span>, <span name="fromTableRow">fromTableRow: (<a href="#TableRow=com.google.api.services.bigquery.model.TableRow" class="extmbr" name="com.spotify.scio.bigquery.TableRow">TableRow</a>) ⇒ <span class="extype" name="com.spotify.scio.bigquery.BigQueryTypedSelect.T">T</span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="evidence$2">evidence$2: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.bigquery.BigQueryTypedSelect.T">T</span>]</span>)</span><span class="result"> extends <a href="BigQueryIO.html" class="extype" name="com.spotify.scio.bigquery.BigQueryIO">BigQueryIO</a>[<span class="extype" name="com.spotify.scio.bigquery.BigQueryTypedSelect.T">T</span>] with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      
+      
+    </li><li name="com.spotify.scio.bigquery.BigQueryTypedTable" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="BigQueryTypedTable[T]extendsBigQueryIO[T]withProductwithSerializable"></a><a id="BigQueryTypedTable[T]:BigQueryTypedTable[T]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/bigquery/BigQueryTypedTable.html" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="BigQueryTypedTable.html"><span class="name">BigQueryTypedTable</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="reader">reader: <span class="extype" name="org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.TypedRead">TypedRead</span>[<span class="extype" name="com.spotify.scio.bigquery.BigQueryTypedTable.T">T</span>]</span>, <span name="writer">writer: <span class="extype" name="org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write">Write</span>[<span class="extype" name="com.spotify.scio.bigquery.BigQueryTypedTable.T">T</span>]</span>, <span name="table">table: <a href="Table.html" class="extype" name="com.spotify.scio.bigquery.Table">Table</a></span>, <span name="fn">fn: (<a href="#TableRow=com.google.api.services.bigquery.model.TableRow" class="extmbr" name="com.spotify.scio.bigquery.TableRow">TableRow</a>) ⇒ <span class="extype" name="com.spotify.scio.bigquery.BigQueryTypedTable.T">T</span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="evidence$4">evidence$4: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.bigquery.BigQueryTypedTable.T">T</span>]</span>)</span><span class="result"> extends <a href="BigQueryIO.html" class="extype" name="com.spotify.scio.bigquery.BigQueryIO">BigQueryIO</a>[<span class="extype" name="com.spotify.scio.bigquery.BigQueryTypedTable.T">T</span>] with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      
+      
+    </li><li name="com.spotify.scio.bigquery.BigQueryTypedTap" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="BigQueryTypedTap[T]extendsTap[T]withProductwithSerializable"></a><a id="BigQueryTypedTap[T]:BigQueryTypedTap[T]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/bigquery/BigQueryTypedTap.html" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="BigQueryTypedTap.html"><span class="name">BigQueryTypedTap</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="table">table: <a href="Table.html" class="extype" name="com.spotify.scio.bigquery.Table">Table</a></span>, <span name="fn">fn: (<a href="#TableRow=com.google.api.services.bigquery.model.TableRow" class="extmbr" name="com.spotify.scio.bigquery.TableRow">TableRow</a>) ⇒ <span class="extype" name="com.spotify.scio.bigquery.BigQueryTypedTap.T">T</span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="evidence$1">evidence$1: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.bigquery.BigQueryTypedTap.T">T</span>]</span>)</span><span class="result"> extends <a href="../io/Tap.html" class="extype" name="com.spotify.scio.io.Tap">Tap</a>[<span class="extype" name="com.spotify.scio.bigquery.BigQueryTypedTap.T">T</span>] with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      
+      
     </li><li name="com.spotify.scio.bigquery.ExtendedErrorInfo" visbl="pub" class="indented0 " data-isabs="true" fullComment="no" group="Ungrouped">
       <a id="ExtendedErrorInfoextendsAnyRef"></a><a id="ExtendedErrorInfo:ExtendedErrorInfo"></a>
       <span class="permalink">
@@ -945,8 +1017,40 @@ behavior, start the query string with <code>#legacysql</code> or <code>#standard
       </span>
       
       <p class="shortcomment cmt">A BigQuery table being mocked for test.</p>
+    </li><li name="com.spotify.scio.bigquery.Query" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="QueryextendsSourcewithProductwithSerializable"></a><a id="Query:Query"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/bigquery/Query.html" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="Query.html"><span class="name">Query</span></a><span class="params">(<span name="underlying">underlying: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result"> extends <a href="Source.html" class="extype" name="com.spotify.scio.bigquery.Source">Source</a> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      
+      
+    </li><li name="com.spotify.scio.bigquery.Source" visbl="pub" class="indented0 " data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="SourceextendsAnyRef"></a><a id="Source:Source"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/bigquery/Source.html" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">sealed </span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="Source.html"><span class="name">Source</span></a><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
+      </span>
+      
+      
     </li><li name="com.spotify.scio.bigquery.Table" visbl="pub" class="indented0 " data-isabs="true" fullComment="no" group="Ungrouped">
-      <a id="TableextendsAnyRef"></a><a id="Table:Table"></a>
+      <a id="TableextendsSource"></a><a id="Table:Table"></a>
       <span class="permalink">
       <a href="../../../../com/spotify/scio/bigquery/Table.html" title="Permalink">
         <i class="material-icons"></i>
@@ -957,7 +1061,7 @@ behavior, start the query string with <code>#legacysql</code> or <code>#standard
         <span class="kind">trait</span>
       </span>
       <span class="symbol">
-        <a title="" href="Table.html"><span class="name">Table</span></a><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
+        <a title="" href="Table.html"><span class="name">Table</span></a><span class="result"> extends <a href="Source.html" class="extype" name="com.spotify.scio.bigquery.Source">Source</a></span>
       </span>
       
       
@@ -1145,6 +1249,22 @@ behavior, start the query string with <code>#legacysql</code> or <code>#standard
       </span>
       
       <p class="shortcomment cmt">Alias for BigQuery <code>WriteDisposition</code>.</p>
+    </li><li name="com.spotify.scio.bigquery.syntax.SCollectionSyntax#bigQuerySCollectionBeamSchemaOps" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="bigQuerySCollectionBeamSchemaOps[T](sc:com.spotify.scio.values.SCollection[T]):com.spotify.scio.bigquery.syntax.SCollectionBeamSchemaOps[T]"></a><a id="bigQuerySCollectionBeamSchemaOps[T](SCollection[T]):SCollectionBeamSchemaOps[T]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/bigquery/index.html#bigQuerySCollectionBeamSchemaOps[T](sc:com.spotify.scio.values.SCollection[T]):com.spotify.scio.bigquery.syntax.SCollectionBeamSchemaOps[T]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">implicit </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">bigQuerySCollectionBeamSchemaOps</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="sc">sc: <a href="../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.bigquery.syntax.SCollectionSyntax.bigQuerySCollectionBeamSchemaOps.T">T</span>]</span>)</span><span class="result">: <a href="syntax/SCollectionBeamSchemaOps.html" class="extype" name="com.spotify.scio.bigquery.syntax.SCollectionBeamSchemaOps">SCollectionBeamSchemaOps</a>[<span class="extype" name="com.spotify.scio.bigquery.syntax.SCollectionSyntax.bigQuerySCollectionBeamSchemaOps.T">T</span>]</span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="syntax/SCollectionSyntax.html" class="extype" name="com.spotify.scio.bigquery.syntax.SCollectionSyntax">SCollectionSyntax</a></dd></dl></div>
     </li><li name="com.spotify.scio.bigquery.syntax.SCollectionSyntax#bigQuerySCollectionTableRowOps" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="bigQuerySCollectionTableRowOps[T&lt;:com.spotify.scio.bigquery.TableRow](sc:com.spotify.scio.values.SCollection[T]):com.spotify.scio.bigquery.syntax.SCollectionTableRowOps[T]"></a><a id="bigQuerySCollectionTableRowOps[T&lt;:TableRow](SCollection[T]):SCollectionTableRowOps[T]"></a>
       <span class="permalink">
@@ -1337,6 +1457,38 @@ behavior, start the query string with <code>#legacysql</code> or <code>#standard
       </span>
       <span class="symbol">
         <a title="" href="BigQueryTyped$.html"><span class="name">BigQueryTyped</span></a>
+      </span>
+      
+      
+    </li><li name="com.spotify.scio.bigquery.BigQueryTypedSelect" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="BigQueryTypedSelect"></a><a id="BigQueryTypedSelect:BigQueryTypedSelect"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/bigquery/BigQueryTypedSelect$.html" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="BigQueryTypedSelect$.html"><span class="name">BigQueryTypedSelect</span></a><span class="result"> extends <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      
+      
+    </li><li name="com.spotify.scio.bigquery.BigQueryTypedTable" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="BigQueryTypedTable"></a><a id="BigQueryTypedTable:BigQueryTypedTable"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/bigquery/BigQueryTypedTable$.html" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="BigQueryTypedTable$.html"><span class="name">BigQueryTypedTable</span></a><span class="result"> extends <span class="extype" name="scala.Serializable">Serializable</span></span>
       </span>
       
       
