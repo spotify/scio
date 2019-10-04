@@ -337,11 +337,9 @@ package object sparkey {
       extends RichStringSparkeyReader(sparkey) {
 
     override def get(key: String): Option[String] =
-      Option(cache.get(
-        key,
-        new JFunction[String, String] {
-          override def apply(k: String): String = sparkey.getAsString(k)
-        }))
+      Option(cache.get(key, new JFunction[String, String] {
+        override def apply(k: String): String = sparkey.getAsString(k)
+      }))
 
     def close(): Unit = {
       sparkey.close()

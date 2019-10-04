@@ -206,7 +206,6 @@ class SparkeyTest extends PipelineSpec {
     for (ext <- Seq(".spi", ".spl")) new File(basePath + ext).delete()
   }
 
-
   it should "support iteration with .asTypedSparkeySideInput" in {
     val sc = ScioContext()
 
