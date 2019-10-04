@@ -19,6 +19,7 @@ package com.spotify.scio.extra
 
 import java.nio.charset.Charset
 import java.util.{UUID, List => JList}
+import java.util.function.{Function => JFunction}
 
 import com.github.benmanes.caffeine.cache.Cache
 import com.spotify.scio.ScioContext
@@ -336,7 +337,11 @@ package object sparkey {
       extends RichStringSparkeyReader(sparkey) {
 
     override def get(key: String): Option[String] =
-      Option(cache.get(key, sparkey.getAsString(_)))
+      Option(cache.get(
+        key,
+        new JFunction[String, String] {
+          override def apply(k: String): String = sparkey.getAsString(k)
+        }))
 
     def close(): Unit = {
       sparkey.close()
@@ -365,14 +370,13 @@ package object sparkey {
       }
     }
 
-    val fetchFromSparkey: java.util.function.Function[String, T] =
-      (k: String) => loadValueFromSparkey(k)
-
     override def get(key: String): Option[T] =
       Option(if (cache == null) {
         loadValueFromSparkey(key)
       } else {
-        cache.get(key, fetchFromSparkey)
+        cache.get(key, new JFunction[String, T] {
+          override def apply(k: String): T = loadValueFromSparkey(k)
+        })
       })
 
     override def iterator: Iterator[(String, T)] =
