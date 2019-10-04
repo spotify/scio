@@ -316,7 +316,7 @@ package object sparkey {
       extends RichStringSparkeyReader(sparkey) {
 
     override def get(key: String): Option[String] =
-      Option(cache.get(key, k => sparkey.getAsString(k)))
+      Option(cache.get(key, sparkey.getAsString))
 
     def close(): Unit = {
       sparkey.close()
@@ -349,7 +349,7 @@ package object sparkey {
 
     override def get(key: String): Option[T] =
       cacheOpt
-        .map(cache => Option(cache.get(key, k => loadValueFromSparkey(k).orNull)))
+        .map(cache => Option(cache.get(key, (k: String) => loadValueFromSparkey(k).orNull)))
         .getOrElse(loadValueFromSparkey(key))
 
     override def iterator: Iterator[(String, T)] =
