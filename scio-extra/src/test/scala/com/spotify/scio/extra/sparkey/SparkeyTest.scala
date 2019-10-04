@@ -21,6 +21,7 @@ import java.io.File
 import java.nio.file.Files
 import java.util.Arrays
 
+import com.github.benmanes.caffeine.cache.Cache
 import com.spotify.scio._
 import com.spotify.scio.testing._
 import com.spotify.sparkey._
@@ -105,6 +106,36 @@ class SparkeyTest extends PipelineSpec {
     val scioResult = sc.run().waitUntilFinish()
 
     scioResult.tap(result).value.toList.sorted shouldBe input.map(sideData.toMap).sorted
+
+    val basePath = scioResult.tap(sparkeyMaterialized).value.next().basePath
+    for (ext <- Seq(".spi", ".spl")) new File(basePath + ext).delete()
+  }
+
+  it should "support .asCachedStringSparkeySideInput" in {
+    val sc = ScioContext()
+
+    val input = Seq("a", "b", "a", "b")
+
+    MockCache.reset()
+
+    val sparkey = sc.parallelize(sideData).asSparkey
+    val sparkeyMaterialized = sparkey.materialize
+    val si = sparkey.asCachedStringSparkeySideInput(
+      MockCache.getInstance.asInstanceOf[Cache[String, String]]
+    )
+    val result = sc
+      .parallelize(input)
+      .withSideInputs(si)
+      .map((x, sic) => sic(si)(x))
+      .toSCollection
+      .materialize
+
+    val scioResult = sc.run().waitUntilFinish()
+
+    scioResult.tap(result).value.toList.sorted shouldBe input.map(sideData.toMap).sorted
+
+    MockCache.getStats.requestCount shouldBe input.size
+    MockCache.getStats.loadCount shouldBe input.toSet.size
 
     val basePath = scioResult.tap(sparkeyMaterialized).value.next().basePath
     for (ext <- Seq(".spi", ".spl")) new File(basePath + ext).delete()

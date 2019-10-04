@@ -23,10 +23,13 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * underlying Caffeine cache.)
  */
 public class MockCache implements Cache<String, Object>, Externalizable {
-  private final static Cache<String, Object> cache =
-      Caffeine.newBuilder().recordStats().build();
+  private static Cache<String, Object> cache = null;
 
-  public static void reset() { cache.invalidateAll(); }
+  static {
+    reset();
+  }
+
+  public static void reset() { cache = Caffeine.newBuilder().recordStats().build(); }
 
   public static MockCache getInstance() { return new MockCache(); }
 
