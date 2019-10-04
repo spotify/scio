@@ -151,7 +151,9 @@ class SparkeyTest extends PipelineSpec {
     val sparkey = sc.parallelize(typedSideData).mapValues(_.map(_.toString).mkString(",")).asSparkey
     val sparkeyMaterialized = sparkey.materialize
 
-    val si = sparkey.asTypedSparkeySideInput[Seq[Int]](new String(_).split(",").toSeq.map(_.toInt))
+    val si = sparkey.asTypedSparkeySideInput[Seq[Int]] { b: Array[Byte] =>
+      new String(b).split(",").toSeq.map(_.toInt)
+    }
 
     val result = sc
       .parallelize(input)
@@ -181,10 +183,9 @@ class SparkeyTest extends PipelineSpec {
     val sparkey = sc.parallelize(typedSideData).mapValues(_.mkString(",")).asSparkey
     val sparkeyMaterialized = sparkey.materialize
 
-    val si = sparkey.asTypedSparkeySideInput[Object](
-      bytes => new String(bytes).split(",").map(_.toInt).toSeq,
-      MockCache.getInstance
-    )
+    val si = sparkey.asTypedSparkeySideInput[Object](MockCache.getInstance) { b: Array[Byte] =>
+      new String(b).split(",").map(_.toInt).toSeq
+    }
 
     val result = sc
       .parallelize(input)

@@ -125,11 +125,11 @@ private[values] class MultiMapSideInput[K, V](val view: PCollectionView[JMap[K, 
     JMapWrapper.ofMultiMap(context.sideInput(view))
 }
 
-private[scio] class DelegatingSideInput[A, B](val si: SideInput[A], val mapper: A => B)
+private[values] class DelegatingSideInput[A, B](val si: SideInput[A], val mapper: A => B)
     extends SideInput[B] {
   override def get[I, O](context: DoFn[I, O]#ProcessContext): B = mapper(si.get(context))
 
-  val view: PCollectionView[_] = si.view
+  private[values] val view: PCollectionView[_] = si.view
 }
 
 /** Encapsulate context of one or more [[SideInput]]s in an [[SCollectionWithSideInput]]. */

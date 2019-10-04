@@ -44,7 +44,7 @@ public class MockCache implements Cache<String, Object>, Externalizable {
   @Nullable
   @Override
   public Object get(@NonNull final String key,
-                       @NonNull final Function<? super String, ? extends Object> mappingFunction) {
+                    @NonNull final Function<? super String, ? extends Object> mappingFunction) {
     return cache.get(key, mappingFunction);
   }
 
