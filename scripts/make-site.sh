@@ -1,9 +1,23 @@
 #!/bin/bash
 
-# generate new site locally
-# target/site/index.html
-# using scala 2.12.8 due to https://github.com/criteo/socco/pull/6
-SOCCO=true sbt ++2.12.8 scio-examples/clean scio-examples/compile site/makeSite
+set -o errexit
+set -o nounset
+set -o pipefail
 
-# generate new site and push to GitHub
-#SOCCO=true sbt scio-examples/clean scio-examples/compile site/ghpagesPushSite
+# generate new site locally
+# /site/target/site/index.html
+# using scala 2.12.8 for annotated examples due to https://github.com/criteo/socco/pull/6
+SOCCO=true sbt ++2.12.8 scio-examples/clean scio-examples/compile
+# using latest scala for scaladoc due to
+# https://github.com/scala/bug/issues/11635
+sbt site/makeSite
+
+# push to GitHub
+while true; do
+    read -p "Push site to GitHub? (y/n)" yn
+    case $yn in
+        [Yy]* ) echo sbt site/ghpagesPushSite; break;;
+        [Nn]* ) exit;;
+        * ) echo "Please answer yes or no.";;
+    esac
+done
