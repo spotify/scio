@@ -310,9 +310,9 @@ class SCollectionWithSideInputTest extends PipelineSpec {
     runWithContext { sc =>
       val p1 = sc.parallelize(Seq(1))
       val p2 = sc.parallelize(sideData).asListSideInput
-      val p3 = p2.map(seq => seq.map { case (k, v) => (k, v * 2) })
+      val p3 = p2.map(seq => seq.map { case (k, v) => (k, v * 2) }.toSet)
       val s = p1.withSideInputs(p3).map((i, s) => (i, s(p3))).toSCollection
-      s should containSingleValue((1, sideData.map { case (k, v) => (k, v * 2) }))
+      s should containSingleValue((1, sideData.map { case (k, v) => (k, v * 2) }.toSet))
     }
   }
 
@@ -328,7 +328,7 @@ class SCollectionWithSideInputTest extends PipelineSpec {
         .asListSideInput
         .map(seq => seq.map(_ * 2))
       val s = p1.withSideInputs(p2).map((x, s) => (x, s(p2))).toSCollection
-      s should forAll[(Int, Seq[Int])](t => (1 to t._1).toSet == t._2.map(_ * 2).toSet)
+      s should forAll[(Int, Seq[Int])](t => (1 to t._1).map(_ * 2).toSet == t._2.toSet)
     }
   }
 }
