@@ -29,7 +29,7 @@ export SBT_OPTS="-Xmx8G -Xms8G -Xss1M -XX:MaxMetaspaceSize=1G -XX:+CMSClassUnloa
 To ensure the project loads and builds successfully, run the following sbt command so that all custom tasks are executed
 
 ```bash
-sbt compile test:compile it:compile
+sbt compile test:compile
 ```
 
 ## Running the Examples
