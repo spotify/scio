@@ -16,7 +16,7 @@ addSbtPlugin("ch.epfl.scala" % "sbt-scalafix" % "0.9.7")
 addSbtPlugin("com.typesafe.sbt" % "sbt-site" % "1.3.3")
 addSbtPlugin("com.lightbend.paradox" % "sbt-paradox" % "0.6.5")
 addSbtPlugin("io.github.jonas" % "sbt-paradox-material-theme" % "0.6.0")
-addSbtPlugin("ch.epfl.scala" % "sbt-bloop" % "1.3.3")
+addSbtPlugin("ch.epfl.scala" % "sbt-bloop" % "1.3.4")
 addSbtPlugin("org.scalameta" % "sbt-mdoc" % "1.3.2")
 
 libraryDependencies ++= Seq(
