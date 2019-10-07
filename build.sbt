@@ -73,6 +73,7 @@ val magnoliaVersion = "0.11.0"
 val grpcVersion = "1.17.1"
 val caseappVersion = "2.0.0-M9"
 val sparkVersion = "2.4.3"
+val caffeineVersion = "2.8.0"
 
 lazy val mimaSettings = Seq(
   mimaPreviousArtifacts :=
@@ -650,6 +651,7 @@ lazy val scioExtra: Project = Project(
       "info.debatty" % "java-lsh" % javaLshVersion,
       "net.pishen" %% "annoy4s" % annoy4sVersion,
       "org.scalanlp" %% "breeze" % breezeVersion,
+      "com.github.ben-manes.caffeine" % "caffeine" % caffeineVersion,
       "org.scalatest" %% "scalatest" % scalatestVersion % "test",
       "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test"
     ),
