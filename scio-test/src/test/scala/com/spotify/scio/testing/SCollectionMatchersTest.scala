@@ -17,6 +17,7 @@
 
 package com.spotify.scio.testing
 
+import com.spotify.scio.coders.Coder
 import com.spotify.scio.streaming.ACCUMULATING_FIRED_PANES
 import com.spotify.scio.values.WindowOptions
 import org.apache.beam.sdk.Pipeline.PipelineExecutionException
@@ -28,8 +29,18 @@ import org.apache.beam.sdk.transforms.windowing.{
 import org.apache.beam.sdk.values.TimestampedValue
 import org.joda.time.{Duration, Instant}
 
+// intentionally not serializable to test lambda ser/de
+class TestRecord(val x: Int) {
+  override def hashCode(): Int = x
+  override def equals(obj: Any): Boolean =
+    obj.isInstanceOf[TestRecord] && x == obj.asInstanceOf[TestRecord].x
+}
+
 // scalastyle:off no.whitespace.before.left.bracket
 class SCollectionMatchersTest extends PipelineSpec {
+
+  implicit val coder = Coder.kryo[TestRecord]
+  private def newTR(x: Int) = new TestRecord(x)
 
   "SCollectionMatchers" should "support containInAnyOrder" in {
     // should cases
@@ -61,6 +72,10 @@ class SCollectionMatchersTest extends PipelineSpec {
         _.parallelize(1 to 100) shouldNot containInAnyOrder(1 to 100)
       }
     }
+
+    // lambda ser/de
+    runWithContext { _.parallelize(Seq(newTR(1))) should containInAnyOrder(Seq(newTR(1))) }
+    runWithContext { _.parallelize(Seq(newTR(1))) shouldNot containInAnyOrder(Seq(newTR(2))) }
   }
 
   it should "support containSingleValue" in {
@@ -93,6 +108,10 @@ class SCollectionMatchersTest extends PipelineSpec {
         _.parallelize(Seq.empty[Int]) shouldNot containSingleValue(1)
       }
     }
+
+    // lambda ser/de
+    runWithContext { _.parallelize(Seq(newTR(1))) should containSingleValue(newTR(1)) }
+    runWithContext { _.parallelize(Seq(newTR(1))) shouldNot containSingleValue(newTR(2)) }
   }
 
   it should "support containValue" in {
@@ -102,6 +121,7 @@ class SCollectionMatchersTest extends PipelineSpec {
     an[AssertionError] should be thrownBy {
       runWithContext { _.parallelize(Seq(1)) should containValue(10) }
     }
+
     // shouldNot cases
     runWithContext { _.parallelize(Seq(1, 2, 3)) shouldNot containValue(4) }
 
@@ -114,6 +134,10 @@ class SCollectionMatchersTest extends PipelineSpec {
     an[AssertionError] should be thrownBy {
       runWithContext { _.parallelize(Seq(1, 2, 3)) should not(containValue(1)) }
     }
+
+    // lambda ser/de
+    runWithContext { _.parallelize(Seq(newTR(1), newTR(2))) should containValue(newTR(1)) }
+    runWithContext { _.parallelize(Seq(newTR(1), newTR(2))) shouldNot containValue(newTR(3)) }
   }
 
   it should "support beEmpty" in {
@@ -231,6 +255,11 @@ class SCollectionMatchersTest extends PipelineSpec {
         _.parallelize(Seq.empty[(String, Int)]) shouldNot equalMapOf(Map.empty[String, Int])
       }
     }
+
+    // lambda ser/de
+    val s2 = Seq("a" -> newTR(1), "b" -> newTR(2))
+    runWithContext { _.parallelize(s2) should equalMapOf(s2.toMap) }
+    runWithContext { _.parallelize(s2) shouldNot equalMapOf((s2 :+ "c" -> newTR(3)).toMap) }
   }
 
   it should "support satisfy" in {
@@ -254,6 +283,15 @@ class SCollectionMatchersTest extends PipelineSpec {
       runWithContext {
         _.parallelize(1 to 100) shouldNot satisfy[Int](_.sum == 5050)
       }
+    }
+
+    // lambda ser/de
+    // FIXME: these will fail if TR in predicate is pulled in via closure, not sure if fixable
+    runWithContext {
+      _.parallelize(Seq(newTR(1))) should satisfy[TestRecord](_.toList.contains(newTR(1)))
+    }
+    runWithContext {
+      _.parallelize(Seq(newTR(1))) shouldNot satisfy[TestRecord](_.toList.contains(newTR(2)))
     }
   }
 
@@ -299,6 +337,15 @@ class SCollectionMatchersTest extends PipelineSpec {
         _.parallelize(Seq.empty[Int]) shouldNot satisfySingleValue[Int](_ == 1)
       }
     }
+
+    // lambda ser/de
+    // FIXME: these will fail if TR in predicate is pulled in via closure, not sure if fixable
+    runWithContext {
+      _.parallelize(Seq(newTR(1))) should satisfySingleValue[TestRecord](_ == newTR(1))
+    }
+    runWithContext {
+      _.parallelize(Seq(newTR(1))) shouldNot satisfySingleValue[TestRecord](_ == newTR(2))
+    }
   }
 
   it should "support forAll" in {
@@ -315,6 +362,11 @@ class SCollectionMatchersTest extends PipelineSpec {
     an[AssertionError] should be thrownBy {
       runWithContext { _.parallelize(1 to 100) shouldNot forAll[Int](_ > 0) }
     }
+
+    // lambda ser/de
+    // FIXME: these will fail if TR in predicate is pulled in via closure, not sure if fixable
+    runWithContext { _.parallelize(Seq(newTR(1))) should forAll[TestRecord](_ == newTR(1)) }
+    runWithContext { _.parallelize(Seq(newTR(1))) shouldNot forAll[TestRecord](_ == newTR(2)) }
   }
 
   it should "support tolerance" in {
@@ -385,6 +437,11 @@ class SCollectionMatchersTest extends PipelineSpec {
     an[AssertionError] should be thrownBy {
       runWithContext { _.parallelize(1 to 100) shouldNot exist[Int](_ > 99) }
     }
+
+    // lambda ser/de
+    // FIXME: these will fail if TR in predicate is pulled in via closure, not sure if fixable
+    runWithContext { _.parallelize(Seq(newTR(1))) should exist[TestRecord](_ == newTR(1)) }
+    runWithContext { _.parallelize(Seq(newTR(1))) shouldNot exist[TestRecord](_ == newTR(2)) }
   }
 
   it should "support windowing" in {

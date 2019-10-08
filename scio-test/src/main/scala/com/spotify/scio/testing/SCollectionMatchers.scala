@@ -20,9 +20,9 @@ package com.spotify.scio.testing
 import java.lang.{Iterable => JIterable}
 import java.util.{Map => JMap}
 
+import com.spotify.scio.ScioContext
 import com.spotify.scio.util.ClosureCleaner
-import com.spotify.scio.coders.Coder
-
+import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.testing.PAssert
 import org.apache.beam.sdk.testing.PAssert.{IterableAssert, SingletonAssert}
@@ -180,11 +180,11 @@ trait SCollectionMatchers {
       override def matcher(builder: AssertBuilder): Matcher[SCollection[T]] =
         new Matcher[SCollection[T]] {
           override def apply(left: SCollection[T]): MatchResult = {
-            val v = value // defeat closure
+            val v = new Externalizer(left.context, value) // defeat closure
             val f = makeFn[T] { in =>
               import org.hamcrest.Matchers
               import org.junit.Assert
-              Assert.assertThat(in, Matchers.not(Matchers.containsInAnyOrder(v.toSeq: _*)))
+              Assert.assertThat(in, Matchers.not(Matchers.containsInAnyOrder(v.value.toSeq: _*)))
             }
             m(
               () =>
@@ -222,16 +222,16 @@ trait SCollectionMatchers {
       override def matcher(builder: AssertBuilder): Matcher[SCollection[T]] =
         new Matcher[SCollection[T]] {
           override def apply(left: SCollection[T]): MatchResult = {
-            val v = value // defeat closure
+            val v = new Externalizer(left.context, value) // defeat closure
             val (should, shouldNot) = {
               import org.hamcrest.Matchers
               import org.junit.Assert
               (
                 makeFn[T] { in =>
-                  Assert.assertThat(in, Matchers.hasItem(v))
+                  Assert.assertThat(in, Matchers.hasItem(v.value))
                 },
                 makeFn[T] { in =>
-                  Assert.assertThat(in, Matchers.not(Matchers.hasItem(v)))
+                  Assert.assertThat(in, Matchers.not(Matchers.hasItem(v.value)))
                 }
               )
             }
@@ -361,4 +361,11 @@ trait SCollectionMatchers {
     satisfy(_.exists(f))
   }
 
+}
+
+/** Helper class to ensure test data survives lambda serialization. */
+private class Externalizer[T: Coder](sc: ScioContext, original: T) extends Serializable {
+  private val coder = CoderMaterializer.beam(sc, implicitly[Coder[T]])
+  private val bytes = CoderUtils.encodeToByteArray(coder, original)
+  def value: T = CoderUtils.decodeFromByteArray(coder, bytes)
 }
