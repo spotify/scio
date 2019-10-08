@@ -109,9 +109,14 @@ private final case class PubsubIOWithoutAttributes[T: ClassTag: Coder](
       sc.wrap(sc.applyInternal(t)).asInstanceOf[SCollection[T]]
     } else {
       val coder = CoderMaterializer.beam(sc, Coder[T])
-      val t = setup(beam.PubsubIO.readMessages())
+      val t = setup(
+        beam.PubsubIO.readMessagesWithCoderAndParseFn(
+          coder,
+          Functions.simpleFn(m => CoderUtils.decodeFromByteArray(coder, m.getPayload))
+        )
+      )
+
       sc.wrap(sc.applyInternal(t))
-        .map(m => CoderUtils.decodeFromByteArray(coder, m.getPayload))
     }
   }
 

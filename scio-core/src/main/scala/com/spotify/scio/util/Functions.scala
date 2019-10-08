@@ -29,7 +29,7 @@ import org.apache.beam.sdk.options.PipelineOptionsFactory
 import org.apache.beam.sdk.transforms.Combine.{CombineFn => BCombineFn}
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
 import org.apache.beam.sdk.transforms.Partition.PartitionFn
-import org.apache.beam.sdk.transforms.{DoFn, ProcessFunction, SerializableFunction}
+import org.apache.beam.sdk.transforms.{DoFn, ProcessFunction, SerializableFunction, SimpleFunction}
 
 import scala.collection.JavaConverters._
 
@@ -248,6 +248,12 @@ private[scio] object Functions {
 
   def serializableFn[T, U](f: T => U): SerializableFunction[T, U] =
     new NamedSerializableFn[T, U] {
+      private[this] val g = ClosureCleaner(f) // defeat closure
+      override def apply(input: T): U = g(input)
+    }
+
+  def simpleFn[T, U](f: T => U): SimpleFunction[T, U] =
+    new NamedSimpleFn[T, U] {
       private[this] val g = ClosureCleaner(f) // defeat closure
       override def apply(input: T): U = g(input)
     }
