@@ -27,11 +27,11 @@ import org.apache.beam.sdk.values._
 import org.apache.beam.sdk.schemas.{SchemaCoder, Schema => BSchema}
 import com.spotify.scio.util.ScioUtil
 import org.apache.beam.sdk.extensions.sql.impl.rel.BeamRelNode
-import org.apache.beam.sdk.extensions.sql.impl.BeamSqlEnv
+import org.apache.beam.sdk.extensions.sql.impl.{BeamSqlEnv, BeamTableStatistics}
 import org.apache.beam.sdk.extensions.sql.impl.schema.{BaseBeamTable, BeamPCollectionTable}
 import org.apache.beam.sdk.extensions.sql.impl.utils.CalciteUtils
 import org.apache.beam.sdk.extensions.sql.meta.provider.{ReadOnlyTableProvider, TableProvider}
-import org.apache.beam.sdk.options.PipelineOptionsFactory
+import org.apache.beam.sdk.options.{PipelineOptions, PipelineOptionsFactory}
 
 import scala.util.Try
 import scala.collection.JavaConverters._
@@ -83,6 +83,9 @@ private object Queries {
           override def buildIOWriter(input: PCollection[Row]): POutput = ???
 
           override def isBounded: PCollection.IsBounded = PCollection.IsBounded.BOUNDED
+
+          override def getTableStatistics(options: PipelineOptions): BeamTableStatistics =
+            BeamTableStatistics.BOUNDED_UNKNOWN
         }
     }.toMap
 
