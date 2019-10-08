@@ -152,7 +152,6 @@ private final case class PubsubIOWithoutAttributes[T: ClassTag: Coder](
     } else {
       val coder = CoderMaterializer.beam(data.context, Coder[T])
       val t = setup(beam.PubsubIO.writeMessages())
-
       data
         .map { record =>
           val payload = CoderUtils.encodeToByteArray(coder, record)
