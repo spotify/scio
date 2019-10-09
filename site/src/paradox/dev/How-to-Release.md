@@ -18,9 +18,7 @@ credentials ++= Seq(
 ## Release procedure
 - Run the slow integration tests with `SLOW=true sbt it:test`
 - Run `release skip-tests` in sbt console and follow the instructions
-- Release: Run `sonatypeBundleRelease` or manually:
-    - Run `; sonatypePrepare; sonatypeBundleUpload;`
-    - Go to [oss.sonatype.org](https://oss.sonatype.org/), find the staging repository, "close" and "release"
+- Go to [oss.sonatype.org](https://oss.sonatype.org/), find the staging repository, "close" and "release"
 - Run `./scripts/make-site.sh` to update documentation
 - Pick a release name from [here](https://en.wikipedia.org/wiki/List_of_Latin_phrases_%28full%29), [here](https://en.wikipedia.org/wiki/List_of_songs_with_Latin_lyrics) or other interesting sources<sup>*</sup>
 - Update the list of release names below

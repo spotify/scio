@@ -156,7 +156,10 @@ val commonSettings = Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
   ).mkString(";"),
   coverageHighlighting := true,
   // Release settings
-  publishTo := sonatypePublishToBundle.value,
+  publishTo := Some(
+    if (isSnapshot.value) Opts.resolver.sonatypeSnapshots
+    else Opts.resolver.sonatypeStaging
+  ),
   releaseCrossBuild := true,
   releasePublishArtifactsAction := PgpKeys.publishSigned.value,
   publishMavenStyle := true,
