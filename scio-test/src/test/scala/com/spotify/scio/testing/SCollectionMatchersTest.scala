@@ -29,16 +29,19 @@ import org.apache.beam.sdk.transforms.windowing.{
 import org.apache.beam.sdk.values.TimestampedValue
 import org.joda.time.{Duration, Instant}
 
-// intentionally not serializable to test lambda ser/de
-class TestRecord(val x: Int) {
-  override def hashCode(): Int = x
-  override def equals(obj: Any): Boolean =
-    obj.isInstanceOf[TestRecord] && x == obj.asInstanceOf[TestRecord].x
+object SCollectionMatchersTest {
+  // intentionally not serializable to test lambda ser/de
+  class TestRecord(val x: Int) {
+    override def hashCode(): Int = x
+    override def equals(obj: Any): Boolean =
+      obj.isInstanceOf[TestRecord] && x == obj.asInstanceOf[TestRecord].x
+  }
 }
 
 // scalastyle:off no.whitespace.before.left.bracket
 class SCollectionMatchersTest extends PipelineSpec {
 
+  import SCollectionMatchersTest.TestRecord
   implicit val coder = Coder.kryo[TestRecord]
   private def newTR(x: Int) = new TestRecord(x)
 
