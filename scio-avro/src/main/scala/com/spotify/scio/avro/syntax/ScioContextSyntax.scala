@@ -32,6 +32,30 @@ import scala.language.implicitConversions
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
 
+sealed trait AvroFileImpl[T] {
+  def apply(self: ScioContext)(path: String, schema: Schema): SCollection[T]
+}
+
+sealed trait LowPriorityAvroFileImpl {
+  @deprecated(
+    "The use of reflective records is discouraged. Consider reading GenericRecord explicitly",
+    "0.8.0"
+  )
+  implicit def avroFile[T: Coder]: AvroFileImpl[T] = new AvroFileImpl[T] {
+    def apply(self: ScioContext)(path: String, schema: Schema): SCollection[T] =
+      self.read(ReflectiveRecordIO[T](path, schema))
+  }
+}
+object AvroFileImpl extends LowPriorityAvroFileImpl {
+  implicit def genericRecordRead: AvroFileImpl[GenericRecord] =
+    new AvroFileImpl[GenericRecord] {
+      def apply(self: ScioContext)(path: String, schema: Schema): SCollection[GenericRecord] = {
+        val coder = Coder.avroGenericRecordCoder(schema)
+        self.read(GenericRecordIO(path, schema))(coder)
+      }
+    }
+}
+
 /** Enhanced version of [[ScioContext]] with Avro methods. */
 final class ScioContextOps(private val self: ScioContext) extends AnyVal {
 
@@ -44,12 +68,10 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
   def objectFile[T: Coder](path: String): SCollection[T] =
     self.read(ObjectFileIO[T](path))
 
-  /**
-   * Get an SCollection of type [[org.apache.avro.generic.GenericRecord GenericRecord]] for an Avro
-   * file.
-   */
-  def avroFile[T: Coder](path: String, schema: Schema): SCollection[T] =
-    self.read(GenericRecordIO[T](path, schema))
+  def avroFile[T: Coder](path: String, schema: Schema)(
+    implicit impl: AvroFileImpl[T]
+  ): SCollection[T] =
+    impl(self)(path, schema)
 
   /**
    * Get an SCollection of type [[T]] for data stored in Avro format after applying
