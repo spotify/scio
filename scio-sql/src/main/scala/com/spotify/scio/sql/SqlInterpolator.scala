@@ -21,7 +21,7 @@ import com.spotify.scio.schemas.Schema
 import org.apache.beam.sdk.values.TupleTag
 
 import scala.language.experimental.macros
-import scala.reflect.macros.whitebox
+import scala.reflect.macros.{blackbox, whitebox}
 import com.spotify.scio.schemas.SchemaMacroHelpers
 
 trait SQLBuilder {
@@ -79,7 +79,7 @@ final class SqlInterpolator(private val sc: StringContext) extends AnyVal {
 }
 
 private trait SqlInterpolatorMacroHelpers {
-  val ctx: whitebox.Context
+  val ctx: blackbox.Context
   import ctx.universe._
 
   def partsFromContext: List[Tree] = {
@@ -120,6 +120,7 @@ object SqlInterpolatorMacro {
    */
   final class SqlParts(parts: List[String], ps: Any*) extends scala.annotation.StaticAnnotation
 
+  // For some reason this method needs to be a whitebox macro
   def builder(c: whitebox.Context)(ps: c.Expr[Any]*): c.Expr[SQLBuilder] = {
     val h = new { val ctx: c.type = c } with SqlInterpolatorMacroHelpers
     import h._
@@ -163,7 +164,7 @@ object SqlInterpolatorMacro {
             import scala.language.experimental.macros
 
             @_root_.com.spotify.scio.sql.SqlInterpolatorMacro.SqlParts(List(..$parts),..$ps)
-            def as[B: Schema]: SCollection[B] =
+            override def as[B: Schema]: SCollection[B] =
               macro _root_.com.spotify.scio.sql.SqlInterpolatorMacro.expand[B]
           }
           new $className
@@ -174,7 +175,7 @@ object SqlInterpolatorMacro {
   }
 
   def expand[B: c.WeakTypeTag](
-    c: whitebox.Context
+    c: blackbox.Context
   )(schB: c.Expr[Schema[B]]): c.Expr[SCollection[B]] = {
     import c.universe._
 
@@ -204,7 +205,7 @@ object SqlInterpolatorMacro {
   }
 
   def tsqlImpl[B: c.WeakTypeTag](
-    c: whitebox.Context
+    c: blackbox.Context
   )(parts: List[c.Tree], ps: c.Expr[Any]*): c.Expr[SCollection[B]] = {
     val h = new { val ctx: c.type = c } with SqlInterpolatorMacroHelpers with SchemaMacroHelpers
     import h._

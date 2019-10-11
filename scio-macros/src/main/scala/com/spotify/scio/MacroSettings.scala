@@ -17,7 +17,7 @@
 
 package com.spotify.scio
 
-import scala.reflect.macros.{blackbox, whitebox}
+import scala.reflect.macros.blackbox
 
 private[scio] sealed trait FeatureFlag
 private[scio] object FeatureFlag {
@@ -56,7 +56,7 @@ private[scio] final object MacroSettings {
    * Makes it possible to configure fallback warnings by passing
    * "-Xmacro-settings:show-coder-fallback=true" as a Scalac option.
    */
-  def showCoderFallback(c: whitebox.Context): FeatureFlag =
+  def showCoderFallback(c: blackbox.Context): FeatureFlag =
     getFlag(c.settings)("show-coder-fallback", FeatureFlag.Disable)
 
   /**
