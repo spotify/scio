@@ -138,7 +138,7 @@ private[coders] object CoderMacros {
       )
     }
 
-    val magTree = MagnoliaMacros.genWithoutAnnotations[T](c)
+    def magTree = MagnoliaMacros.genWithoutAnnotations[T](c)
 
     val isPrivateConstructor =
       wtt.decls

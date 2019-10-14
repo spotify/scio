@@ -61,7 +61,6 @@ val parquetAvroExtraVersion = "0.2.3"
 val parquetVersion = "1.10.1"
 val protobufGenericVersion = "0.2.5"
 val protobufVersion = "3.7.1"
-val scalacheckShapelessVersion = "1.1.8"
 val scalacheckVersion = "1.14.0"
 val scalaMacrosVersion = "2.1.1"
 val scalatestVersion = "3.0.8"
@@ -433,7 +432,6 @@ lazy val scioTest: Project = Project(
       "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
       "org.scalatest" %% "scalatest" % scalatestVersion,
       "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test,it",
-      "com.github.alexarchambault" %% "scalacheck-shapeless_1.13" % scalacheckShapelessVersion % "test,it",
       "me.lyh" %% "shapeless-datatype-datastore" % shapelessDatatypeVersion % "test,it",
       // DataFlow testing requires junit and hamcrest
       "org.hamcrest" % "hamcrest-all" % hamcrestVersion,
@@ -482,7 +480,7 @@ lazy val scioAvro: Project = Project(
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       "org.slf4j" % "slf4j-simple" % slf4jVersion % "test,it",
       "org.scalatest" %% "scalatest" % scalatestVersion % "test,it",
-      "com.github.alexarchambault" %% "scalacheck-shapeless_1.13" % scalacheckShapelessVersion % "test",
+      "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test,it",
       "me.lyh" %% "shapeless-datatype-core" % shapelessDatatypeVersion % "test"
     ),
     beamSDKIODependencies
@@ -508,8 +506,9 @@ lazy val scioBigQuery: Project = Project(
       "com.google.cloud" % "google-cloud-storage" % gcsVersion % "test,it",
       // DataFlow testing requires junit and hamcrest
       "org.hamcrest" % "hamcrest-all" % hamcrestVersion % "test,it",
-      "com.github.alexarchambault" %% "scalacheck-shapeless_1.13" % scalacheckShapelessVersion % "test,it",
-      "me.lyh" %% "shapeless-datatype-core" % shapelessDatatypeVersion % "test"
+      "me.lyh" %% "shapeless-datatype-core" % shapelessDatatypeVersion % "test",
+      // Our BloomFilters are Algebird Monoids and hence uses tests from Algebird Test
+      "com.twitter" %% "algebird-test" % algebirdVersion % "test"
     )
   )
   .dependsOn(

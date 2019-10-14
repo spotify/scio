@@ -24,7 +24,6 @@ import org.apache.beam.sdk.options.PipelineOptionsFactory
 import org.joda.time.format.DateTimeFormat
 import org.joda.time.{Instant, LocalDate, LocalDateTime, LocalTime}
 import org.scalacheck._
-import org.scalacheck.ScalacheckShapeless._
 import org.scalatest._
 
 import scala.util.Random
@@ -47,15 +46,26 @@ object TypedBigQueryIT {
 
   // Workaround for millis rounding error
   val epochGen = Gen.chooseNum[Long](0L, 1000000000000L).map(x => x / 1000 * 1000)
-  implicit val arbByteString = Arbitrary(Gen.alphaStr.map(ByteString.copyFromUtf8))
-  implicit val arbInstant = Arbitrary(epochGen.map(new Instant(_)))
-  implicit val arbDate = Arbitrary(epochGen.map(new LocalDate(_)))
-  implicit val arbTime = Arbitrary(epochGen.map(new LocalTime(_)))
-  implicit val arbDatetime = Arbitrary(epochGen.map(new LocalDateTime(_)))
+  private val bsGen = Gen.alphaStr.map(ByteString.copyFromUtf8)
+  private val genInstant = epochGen.map(new Instant(_))
+  private val genDate = epochGen.map(new LocalDate(_))
+  private val genTime = epochGen.map(new LocalTime(_))
+  private val genDatetime = epochGen.map(new LocalDateTime(_))
 
-  private val recordGen = {
-    implicitly[Arbitrary[Record]].arbitrary
-  }
+  private val recordGen =
+    for {
+      b <- Gen.oneOf(true, false)
+      i <- Gen.chooseNum(Integer.MIN_VALUE, Integer.MAX_VALUE)
+      l <- Gen.chooseNum(Long.MinValue, Long.MaxValue)
+      f <- Gen.chooseNum(Float.MinValue, Float.MaxValue)
+      d <- Gen.chooseNum(Double.MinValue, Double.MaxValue)
+      s <- Gen.alphaNumStr
+      bs <- bsGen
+      ins <- genInstant
+      dat <- genDate
+      tim <- genTime
+      dtt <- genDatetime
+    } yield Record(b, i, l, f, d, s, bs, ins, dat, tim, dtt)
 
   private val table = {
     val TIME_FORMATTER = DateTimeFormat.forPattern("yyyyMMddHHmmss")

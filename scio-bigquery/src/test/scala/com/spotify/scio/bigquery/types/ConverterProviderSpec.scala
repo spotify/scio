@@ -21,12 +21,108 @@ import java.math.MathContext
 
 import com.google.protobuf.ByteString
 import org.joda.time.{Instant, LocalDate, LocalDateTime, LocalTime}
-import org.scalacheck.ScalacheckShapeless._
 import org.scalacheck._
 import org.scalatest._
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import shapeless.datatype.record._
 import com.spotify.scio.bigquery.Numeric
+
+// Manual implementation of the required Gen instances.
+// Technically, those can be derived automatically using scalacheck-shapeless,
+// but automatic derivation takes forever.
+private object Generators {
+  import Schemas._
+
+  private val bsGen = Gen.alphaStr.map(ByteString.copyFromUtf8)
+  private val bytesGen: Gen[Array[Byte]] = bsGen.map(_.toByteArray())
+  implicit def arb[T](implicit gen: Gen[T]): Arbitrary[T] = Arbitrary.apply(gen)
+
+  private val genByteArray = Gen.alphaStr.map(_.getBytes)
+  private val genByteString = Gen.alphaStr.map(ByteString.copyFromUtf8)
+  private val genInstant = Gen.const(Instant.now())
+  private val genDate = Gen.const(LocalDate.now())
+  private val genTime = Gen.const(LocalTime.now())
+  private val genDatetime = Gen.const(LocalDateTime.now())
+  private val genNumericBigDecimal =
+    for {
+      bd <- Arbitrary.arbitrary[BigDecimal]
+    } yield {
+      val rounded = BigDecimal(bd.toString(), new MathContext(Numeric.MaxNumericPrecision))
+      Numeric(rounded)
+    }
+
+  implicit val genRequired: Gen[Required] =
+    for {
+      b <- Gen.oneOf(true, false)
+      i <- Gen.chooseNum(Integer.MIN_VALUE, Integer.MAX_VALUE)
+      l <- Gen.chooseNum(Long.MinValue, Long.MaxValue)
+      f <- Gen.chooseNum(Float.MinValue, Float.MaxValue)
+      d <- Gen.chooseNum(Double.MinValue, Double.MaxValue)
+      s <- Gen.alphaNumStr
+      by <- bytesGen
+      bs <- bsGen
+      ins <- genInstant
+      dat <- genDate
+      tim <- genTime
+      dtt <- genDatetime
+      big <- genNumericBigDecimal
+    } yield Required(b, i, l, f, d, s, by, bs, ins, dat, tim, dtt, big)
+
+  implicit val genOptional: Gen[Optional] =
+    for {
+      b <- Gen.option(Gen.oneOf(true, false))
+      i <- Gen.option(Gen.chooseNum(Integer.MIN_VALUE, Integer.MAX_VALUE))
+      l <- Gen.option(Gen.chooseNum(Long.MinValue, Long.MaxValue))
+      f <- Gen.option(Gen.chooseNum(Float.MinValue, Float.MaxValue))
+      d <- Gen.option(Gen.chooseNum(Double.MinValue, Double.MaxValue))
+      s <- Gen.option(Gen.alphaNumStr)
+      by <- Gen.option(bytesGen)
+      bs <- Gen.option(bsGen)
+      ins <- Gen.option(genInstant)
+      dat <- Gen.option(genDate)
+      tim <- Gen.option(genTime)
+      dtt <- Gen.option(genDatetime)
+      big <- Gen.option(genNumericBigDecimal)
+    } yield Optional(b, i, l, f, d, s, by, bs, ins, dat, tim, dtt, big)
+
+  implicit val genRepeated: Gen[Repeated] =
+    for {
+      b <- Gen.listOf(Gen.oneOf(true, false))
+      i <- Gen.listOf(Gen.chooseNum(Integer.MIN_VALUE, Integer.MAX_VALUE))
+      l <- Gen.listOf(Gen.chooseNum(Long.MinValue, Long.MaxValue))
+      f <- Gen.listOf(Gen.chooseNum(Float.MinValue, Float.MaxValue))
+      d <- Gen.listOf(Gen.chooseNum(Double.MinValue, Double.MaxValue))
+      s <- Gen.listOf(Gen.alphaNumStr)
+      by <- Gen.listOf(bytesGen)
+      bs <- Gen.listOf(bsGen)
+      ins <- Gen.listOf(genInstant)
+      dat <- Gen.listOf(genDate)
+      tim <- Gen.listOf(genTime)
+      dtt <- Gen.listOf(genDatetime)
+      big <- Gen.listOf(genNumericBigDecimal)
+    } yield Repeated(b, i, l, f, d, s, by, bs, ins, dat, tim, dtt, big)
+
+  implicit val genNested: Gen[RequiredNested] =
+    for {
+      r <- genRequired
+      o <- genOptional
+      rs <- genRepeated
+    } yield RequiredNested(r, o, rs)
+
+  implicit val genOptionalNested: Gen[OptionalNested] =
+    for {
+      r <- Gen.option(genRequired)
+      o <- Gen.option(genOptional)
+      rs <- Gen.option(genRepeated)
+    } yield OptionalNested(r, o, rs)
+
+  implicit val genRepeatedNested: Gen[RepeatedNested] =
+    for {
+      r <- Gen.listOf(genRequired)
+      o <- Gen.listOf(genOptional)
+      rs <- Gen.listOf(genRepeated)
+    } yield RepeatedNested(r, o, rs)
+}
 
 final class ConverterProviderSpec
     extends PropSpec
@@ -38,21 +134,7 @@ final class ConverterProviderSpec
     PropertyCheckConfiguration(minSuccessful = 100)
 
   import Schemas._
-
-  implicit val arbByteArray = Arbitrary(Gen.alphaStr.map(_.getBytes))
-  implicit val arbByteString = Arbitrary(Gen.alphaStr.map(ByteString.copyFromUtf8))
-  implicit val arbInstant = Arbitrary(Gen.const(Instant.now()))
-  implicit val arbDate = Arbitrary(Gen.const(LocalDate.now()))
-  implicit val arbTime = Arbitrary(Gen.const(LocalTime.now()))
-  implicit val arbDatetime = Arbitrary(Gen.const(LocalDateTime.now()))
-  implicit val arbNumericBigDecimal = Arbitrary {
-    for {
-      bd <- Arbitrary.arbitrary[BigDecimal]
-    } yield {
-      val rounded = BigDecimal(bd.toString(), new MathContext(Numeric.MaxNumericPrecision))
-      Numeric(rounded)
-    }
-  }
+  import Generators._
 
   implicit def compareByteArrays(x: Array[Byte], y: Array[Byte]): Boolean =
     ByteString.copyFrom(x) == ByteString.copyFrom(y)

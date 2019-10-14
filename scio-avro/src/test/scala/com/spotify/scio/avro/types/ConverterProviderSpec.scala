@@ -18,11 +18,115 @@
 package com.spotify.scio.avro.types
 
 import com.google.protobuf.ByteString
-import org.scalacheck.ScalacheckShapeless._
 import org.scalacheck._
 import org.scalatest._
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import shapeless.datatype.record._
+
+// Manual implementation of the required Gen instances.
+// Technically, those can be derived automatically using scalacheck-shapeless,
+// but automatic derivation takes forever.
+private object Generators {
+  import Schemas._
+
+  private val bsGen = Gen.alphaStr.map(ByteString.copyFromUtf8)
+
+  implicit val genBasicFields: Gen[BasicFields] =
+    for {
+      b <- Gen.oneOf(true, false)
+      i <- Gen.chooseNum(Integer.MIN_VALUE, Integer.MAX_VALUE)
+      l <- Gen.chooseNum(Long.MinValue, Long.MaxValue)
+      f <- Gen.chooseNum(Float.MinValue, Float.MaxValue)
+      d <- Gen.chooseNum(Double.MinValue, Double.MaxValue)
+      s <- Gen.alphaNumStr
+      bs <- bsGen
+    } yield BasicFields(b, i, l, f, d, s, bs)
+
+  implicit val genOptionalFields: Gen[OptionalFields] =
+    for {
+      b <- Gen.option(Gen.oneOf(true, false))
+      i <- Gen.option(Gen.chooseNum(Integer.MIN_VALUE, Integer.MAX_VALUE))
+      l <- Gen.option(Gen.chooseNum(Long.MinValue, Long.MaxValue))
+      f <- Gen.option(Gen.chooseNum(Float.MinValue, Float.MaxValue))
+      d <- Gen.option(Gen.chooseNum(Double.MinValue, Double.MaxValue))
+      s <- Gen.option(Gen.alphaNumStr)
+      bs <- Gen.option(bsGen)
+    } yield OptionalFields(b, i, l, f, d, s, bs)
+
+  implicit val genArrayFields: Gen[ArrayFields] =
+    for {
+      b <- Gen.listOf(Gen.oneOf(true, false))
+      i <- Gen.listOf(Gen.chooseNum(Integer.MIN_VALUE, Integer.MAX_VALUE))
+      l <- Gen.listOf(Gen.chooseNum(Long.MinValue, Long.MaxValue))
+      f <- Gen.listOf(Gen.chooseNum(Float.MinValue, Float.MaxValue))
+      d <- Gen.listOf(Gen.chooseNum(Double.MinValue, Double.MaxValue))
+      s <- Gen.listOf(Gen.alphaNumStr)
+      bs <- Gen.listOf(bsGen)
+    } yield ArrayFields(b, i, l, f, d, s, bs)
+
+  private def map[T](g: Gen[T]): Gen[Map[String, T]] = {
+    val genKV =
+      for {
+        k <- Gen.alphaNumStr
+        v <- g
+      } yield (k, v)
+    Gen.mapOf(genKV)
+  }
+
+  implicit val genMapFields: Gen[MapFields] =
+    for {
+      b <- map(Gen.oneOf(true, false))
+      i <- map(Gen.chooseNum(Integer.MIN_VALUE, Integer.MAX_VALUE))
+      l <- map(Gen.chooseNum(Long.MinValue, Long.MaxValue))
+      f <- map(Gen.chooseNum(Float.MinValue, Float.MaxValue))
+      d <- map(Gen.chooseNum(Double.MinValue, Double.MaxValue))
+      s <- map(Gen.alphaNumStr)
+      bs <- map(bsGen)
+    } yield MapFields(b, i, l, f, d, s, bs)
+
+  implicit val genNestedFields: Gen[NestedFields] =
+    for {
+      b <- genBasicFields
+      o <- genOptionalFields
+      a <- genArrayFields
+      m <- genMapFields
+    } yield NestedFields(b, o, a, m)
+
+  implicit val genOptionalNestedFields: Gen[OptionalNestedFields] =
+    for {
+      b <- Gen.option(genBasicFields)
+      o <- Gen.option(genOptionalFields)
+      a <- Gen.option(genArrayFields)
+      m <- Gen.option(genMapFields)
+    } yield OptionalNestedFields(b, o, a, m)
+
+  implicit val genArrayNestedFields: Gen[ArrayNestedFields] =
+    for {
+      b <- Gen.listOf(genBasicFields)
+      o <- Gen.listOf(genOptionalFields)
+      a <- Gen.listOf(genArrayFields)
+      m <- Gen.listOf(genMapFields)
+    } yield ArrayNestedFields(b, o, a, m)
+
+  implicit val genMapNestedFields: Gen[MapNestedFields] =
+    for {
+      b <- map(genBasicFields)
+      o <- map(genOptionalFields)
+      a <- map(genArrayFields)
+      m <- map(genMapFields)
+    } yield MapNestedFields(b, o, a, m)
+
+  private val bytesGen: Gen[Array[Byte]] = bsGen.map(_.toByteArray())
+
+  implicit val genByteArrayFields: Gen[ByteArrayFields] =
+    for {
+      r <- bytesGen
+      o <- Gen.option(bytesGen)
+      l <- Gen.listOf(bytesGen)
+    } yield ByteArrayFields(r, o, l)
+
+  implicit def arb[T](implicit gen: Gen[T]): Arbitrary[T] = Arbitrary.apply(gen)
+}
 
 class ConverterProviderSpec extends PropSpec with ScalaCheckDrivenPropertyChecks with Matchers {
 
@@ -31,9 +135,7 @@ class ConverterProviderSpec extends PropSpec with ScalaCheckDrivenPropertyChecks
     PropertyCheckConfiguration(minSuccessful = 100)
 
   import Schemas._
-
-  implicit val arbByteArray = Arbitrary(Gen.alphaStr.map(_.getBytes))
-  implicit val arbByteString = Arbitrary(Gen.alphaStr.map(ByteString.copyFromUtf8))
+  import Generators._
 
   implicit def compareByteArrays(x: Array[Byte], y: Array[Byte]): Boolean =
     ByteString.copyFrom(x) == ByteString.copyFrom(y)

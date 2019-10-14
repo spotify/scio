@@ -37,7 +37,7 @@ private[scio] object MagnoliaMacros {
     val magnoliaTree = magnolia.Magnolia.gen[T](c)
 
     // Remove annotations from magnolia since they are
-    // not serialiazable and we don't use them anyway
+    // not serializable and we don't use them anyway
     // scalastyle:off line.size.limit
     val removeAnnotations = new Transformer {
       override def transform(tree: Tree): c.universe.Tree = {
