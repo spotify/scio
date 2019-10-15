@@ -223,6 +223,19 @@ val commonSettings = Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
   buildInfoPackage := "com.spotify.scio"
 ) ++ mimaSettings ++ scalafmtSettings
 
+// See: https://www.scala-lang.org/blog/2018/06/04/scalac-profiling.html
+// compiler profiler config. Add this to the project
+// to be profiled with `.settings(scalacProfilingSettings)`
+lazy val scalacProfilingSettings = Seq(
+  addCompilerPlugin("ch.epfl.scala" %% "scalac-profiling" % "1.0.0"),
+  scalacOptions ++=
+    List(
+      "-Ycache-plugin-class-loader:last-modified",
+      "-P:scalac-profiling:no-profiledb",
+      "-P:scalac-profiling:show-profiles"
+    )
+)
+
 lazy val itSettings = Defaults.itSettings ++ Seq(
   IntegrationTest / classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.Flat,
   scalastyleSources in Compile ++= (unmanagedSourceDirectories in IntegrationTest).value,
