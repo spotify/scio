@@ -50,7 +50,7 @@ final case class ObjectFileIO[T: Coder](path: String) extends ScioIO[T] {
   override protected def read(sc: ScioContext, params: ReadP): SCollection[T] = {
     val coder = CoderMaterializer.beamWithDefault(Coder[T])
     implicit val bcoder = Coder.avroGenericRecordCoder(AvroBytesUtil.schema)
-    sc.read(GenericRecordIO[GenericRecord](path, AvroBytesUtil.schema))
+    sc.read(GenericRecordIO(path, AvroBytesUtil.schema))
       .parDo(new DoFn[GenericRecord, T] {
         @ProcessElement
         private[scio] def processElement(c: DoFn[GenericRecord, T]#ProcessContext): Unit =
@@ -73,7 +73,7 @@ final case class ObjectFileIO[T: Coder](path: String) extends ScioIO[T] {
         private[scio] def processElement(c: DoFn[T, GenericRecord]#ProcessContext): Unit =
           c.output(AvroBytesUtil.encode(elemCoder, c.element()))
       })
-      .write(GenericRecordIO[GenericRecord](path, AvroBytesUtil.schema))(params)
+      .write(GenericRecordIO(path, AvroBytesUtil.schema))(params)
     tap(())
   }
 
@@ -184,16 +184,18 @@ final case class SpecificRecordIO[T <: SpecificRecord: ClassTag: Coder](path: St
     SpecificRecordTap[T](ScioUtil.addPartSuffix(path))
 }
 
-final case class GenericRecordIO[T: Coder](path: String, schema: Schema) extends AvroIO[T] {
+@deprecated(
+  "The use of reflective records is discouraged. Consider converting to GenericRecord explicitly",
+  "0.8.0"
+)
+final case class ReflectiveRecordIO[T: Coder](path: String, schema: Schema) extends AvroIO[T] {
   override type ReadP = Unit
   override type WriteP = AvroIO.WriteParam
 
   override def testId: String = s"AvroIO($path)"
 
   /**
-   * Get an SCollection of [[org.apache.avro.generic.GenericRecord GenericRecord]] from an Avro
-   * file.
-   *
+   * Get an SCollection of [[T]] from an Avro file using reflection.
    */
   override protected def read(sc: ScioContext, params: ReadP): SCollection[T] = {
     val t = beam.AvroIO
@@ -204,7 +206,7 @@ final case class GenericRecordIO[T: Coder](path: String, schema: Schema) extends
   }
 
   /**
-   * Save this SCollection [[org.apache.avro.generic.GenericRecord GenericRecord]] as a Avro file.
+   * Save this SCollection [[T]] as a Avro file using reflection.
    */
   override protected def write(data: SCollection[T], params: WriteP): Tap[T] = {
     val t = beam.AvroIO.writeGenericRecords(schema).asInstanceOf[beam.AvroIO.Write[T]]
@@ -215,7 +217,43 @@ final case class GenericRecordIO[T: Coder](path: String, schema: Schema) extends
   }
 
   override def tap(read: ReadP): Tap[T] =
-    GenericRecordTap[T](ScioUtil.addPartSuffix(path), schema)
+    ReflectiveRecordTap(ScioUtil.addPartSuffix(path), schema)
+}
+
+final case class GenericRecordIO(path: String, schema: Schema) extends AvroIO[GenericRecord] {
+  override type ReadP = Unit
+  override type WriteP = AvroIO.WriteParam
+
+  override def testId: String = s"AvroIO($path)"
+
+  /**
+   * Get an SCollection of [[org.apache.avro.generic.GenericRecord GenericRecord]] from an Avro
+   * file.
+   *
+   */
+  override protected def read(sc: ScioContext, params: ReadP): SCollection[GenericRecord] = {
+    val t = beam.AvroIO
+      .readGenericRecords(schema)
+      .from(path)
+    sc.wrap(sc.applyInternal(t))
+  }
+
+  /**
+   * Save this SCollection [[org.apache.avro.generic.GenericRecord GenericRecord]] as a Avro file.
+   */
+  override protected def write(
+    data: SCollection[GenericRecord],
+    params: WriteP
+  ): Tap[GenericRecord] = {
+    val t = beam.AvroIO.writeGenericRecords(schema)
+    data.applyInternal(
+      avroOut(data, t, path, params.numShards, params.suffix, params.codec, params.metadata)
+    )
+    tap(())
+  }
+
+  override def tap(read: ReadP): Tap[GenericRecord] =
+    GenericRecordTap(ScioUtil.addPartSuffix(path), schema)
 }
 
 /**
@@ -340,8 +378,8 @@ object AvroTyped {
 
     override def tap(read: ReadP): Tap[T] = {
       val avroT = AvroType[T]
-      implicit val bcoder = Coder.avroGenericRecordCoder(avroT.schema)
-      GenericRecordTap[GenericRecord](ScioUtil.addPartSuffix(path), avroT.schema)
+      val bcoder = Coder.avroGenericRecordCoder(avroT.schema)
+      GenericRecordTap(ScioUtil.addPartSuffix(path), avroT.schema)
         .map(avroT.fromGenericRecord)
     }
   }

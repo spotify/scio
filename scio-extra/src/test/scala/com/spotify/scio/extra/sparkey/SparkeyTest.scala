@@ -21,6 +21,7 @@ import java.io.File
 import java.nio.file.Files
 import java.util.Arrays
 
+import com.github.benmanes.caffeine.cache.Cache
 import com.spotify.scio._
 import com.spotify.scio.testing._
 import com.spotify.sparkey._
@@ -85,6 +86,187 @@ class SparkeyTest extends PipelineSpec {
     for (ext <- Seq(".spi", ".spl")) {
       new File(basePath + ext).delete()
     }
+  }
+
+  it should "support .asSparkeySideInput" in {
+    val sc = ScioContext()
+
+    val input = Seq("a", "b", "a", "b")
+
+    val sparkey = sc.parallelize(sideData).asSparkey
+    val sparkeyMaterialized = sparkey.materialize
+    val si = sparkey.asSparkeySideInput
+    val result = sc
+      .parallelize(input)
+      .withSideInputs(si)
+      .map((x, sic) => sic(si)(x))
+      .toSCollection
+      .materialize
+
+    val scioResult = sc.run().waitUntilFinish()
+
+    scioResult.tap(result).value.toList.sorted shouldBe input.map(sideData.toMap).sorted
+
+    val basePath = scioResult.tap(sparkeyMaterialized).value.next().basePath
+    for (ext <- Seq(".spi", ".spl")) new File(basePath + ext).delete()
+  }
+
+  it should "support .asCachedStringSparkeySideInput" in {
+    val sc = ScioContext()
+
+    val input = Seq("a", "b", "a", "b")
+
+    MockCache.reset()
+
+    val sparkey = sc.parallelize(sideData).asSparkey
+    val sparkeyMaterialized = sparkey.materialize
+    val si = sparkey.asCachedStringSparkeySideInput(
+      MockCache.getInstance.asInstanceOf[Cache[String, String]]
+    )
+    val result = sc
+      .parallelize(input)
+      .withSideInputs(si)
+      .map((x, sic) => sic(si)(x))
+      .toSCollection
+      .materialize
+
+    val scioResult = sc.run().waitUntilFinish()
+
+    scioResult.tap(result).value.toList.sorted shouldBe input.map(sideData.toMap).sorted
+
+    MockCache.getStats.requestCount shouldBe input.size
+    MockCache.getStats.loadCount shouldBe input.toSet.size
+
+    val basePath = scioResult.tap(sparkeyMaterialized).value.next().basePath
+    for (ext <- Seq(".spi", ".spl")) new File(basePath + ext).delete()
+  }
+
+  it should "support .asTypedSparkeySideInput" in {
+    val sc = ScioContext()
+
+    val input = Seq("a", "b", "c", "d")
+    val typedSideData = Seq(("a", Seq(1, 2)), ("b", Seq(2, 3)), ("c", Seq(3, 4)))
+    val typedSideDataMap = typedSideData.toMap
+
+    val sparkey = sc.parallelize(typedSideData).mapValues(_.map(_.toString).mkString(",")).asSparkey
+    val sparkeyMaterialized = sparkey.materialize
+
+    val si = sparkey.asTypedSparkeySideInput[Seq[Int]] { b: Array[Byte] =>
+      new String(b).split(",").toSeq.map(_.toInt)
+    }
+
+    val result = sc
+      .parallelize(input)
+      .withSideInputs(si)
+      .flatMap((x, sic) => sic(si).get(x))
+      .toSCollection
+      .materialize
+
+    val scioResult = sc.run().waitUntilFinish()
+    val expectedOutput = input.flatMap(typedSideDataMap.get)
+
+    scioResult.tap(result).value.toList should contain theSameElementsAs expectedOutput
+
+    val basePath = scioResult.tap(sparkeyMaterialized).value.next().basePath
+    for (ext <- Seq(".spi", ".spl")) new File(basePath + ext).delete()
+  }
+
+  it should "support .asTypedSparkeySideInput with a cache" in {
+    val sc = ScioContext()
+
+    val input = Seq("a", "b", "c", "d")
+    val typedSideData = Seq(("a", Seq(1, 2)), ("b", Seq(2, 3)), ("c", Seq(3, 4)))
+    val typedSideDataMap = typedSideData.toMap
+
+    MockCache.reset()
+
+    val sparkey = sc.parallelize(typedSideData).mapValues(_.mkString(",")).asSparkey
+    val sparkeyMaterialized = sparkey.materialize
+
+    val si = sparkey.asTypedSparkeySideInput[Object](MockCache.getInstance) { b: Array[Byte] =>
+      new String(b).split(",").map(_.toInt).toSeq
+    }
+
+    val result = sc
+      .parallelize(input)
+      .withSideInputs(si)
+      .flatMap((x, sic) => sic(si).get(x))
+      .toSCollection
+      .materialize
+
+    val scioResult = sc.run().waitUntilFinish()
+    val expectedOutput = input.flatMap(typedSideDataMap.get)
+
+    scioResult.tap(result).value.toList should contain theSameElementsAs expectedOutput
+
+    MockCache.getStats.requestCount shouldBe input.size
+    MockCache.getStats.loadCount shouldBe input.toSet.size
+
+    val basePath = scioResult.tap(sparkeyMaterialized).value.next().basePath
+    for (ext <- Seq(".spi", ".spl")) new File(basePath + ext).delete()
+  }
+
+  it should "support iteration with .asTypedSparkeySideInput" in {
+    val sc = ScioContext()
+
+    val input = Seq("1")
+    val typedSideData = Seq(("a", Seq(1, 2)), ("b", Seq(2, 3)), ("c", Seq(3, 4)))
+
+    val sparkey = sc.parallelize(typedSideData).mapValues(_.map(_.toString).mkString(",")).asSparkey
+    val sparkeyMaterialized = sparkey.materialize
+
+    val si = sparkey.asTypedSparkeySideInput[Seq[Int]] { b: Array[Byte] =>
+      new String(b).split(",").toSeq.map(_.toInt)
+    }
+
+    val result = sc
+      .parallelize(input)
+      .withSideInputs(si)
+      .flatMap((_, sic) => sic(si).iterator.toList.sortBy(_._1).map(_._2))
+      .toSCollection
+      .materialize
+
+    val scioResult = sc.run().waitUntilFinish()
+    val expectedOutput = typedSideData.map(_._2)
+
+    scioResult.tap(result).value.toList should contain theSameElementsAs expectedOutput
+
+    val basePath = scioResult.tap(sparkeyMaterialized).value.next().basePath
+    for (ext <- Seq(".spi", ".spl")) new File(basePath + ext).delete()
+  }
+
+  it should "support iteration .asTypedSparkeySideInput with a cache" in {
+    val sc = ScioContext()
+
+    val input = Seq("1")
+    val typedSideData = Seq(("a", Seq(1, 2)), ("b", Seq(2, 3)), ("c", Seq(3, 4)))
+
+    MockCache.reset()
+
+    val sparkey = sc.parallelize(typedSideData).mapValues(_.mkString(",")).asSparkey
+    val sparkeyMaterialized = sparkey.materialize
+
+    val si = sparkey.asTypedSparkeySideInput[Object](MockCache.getInstance) { b: Array[Byte] =>
+      new String(b).split(",").map(_.toInt).toSeq
+    }
+
+    val result = sc
+      .parallelize(input)
+      .withSideInputs(si)
+      .flatMap((_, sic) => sic(si).iterator.toList.sortBy(_._1).map(_._2))
+      .toSCollection
+      .materialize
+
+    val scioResult = sc.run().waitUntilFinish()
+    val expectedOutput = typedSideData.map(_._2)
+
+    scioResult.tap(result).value.toList should contain theSameElementsAs expectedOutput
+
+    MockCache.getStats.requestCount shouldBe typedSideData.size
+    MockCache.getStats.loadCount shouldBe 0
+
+    val basePath = scioResult.tap(sparkeyMaterialized).value.next().basePath
+    for (ext <- Seq(".spi", ".spl")) new File(basePath + ext).delete()
   }
 
 }

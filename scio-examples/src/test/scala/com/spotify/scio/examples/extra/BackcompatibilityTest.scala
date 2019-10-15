@@ -17,6 +17,8 @@
 
 package com.spotify.scio.examples.extra
 
+import java.nio.file.Paths
+
 import com.spotify.scio.avro.ProtobufIO
 import com.spotify.scio.ScioContext
 import com.spotify.scio.proto.SimpleV2.SimplePB
@@ -29,6 +31,7 @@ class BackcompatibilityTest extends PipelineSpec {
     SimplePB.newBuilder().setPlays(2).setTrackId("track2").build()
   )
 
+  val pwd = Paths.get(".").toAbsolutePath.toString
   val path_07 = "scio-examples/src/test/resources/scio-0.7-protobuf"
   val path_06 = "scio-examples/src/test/resources/scio-0.6-protobuf"
   // The protobuf files for that tests were generated using
@@ -44,14 +47,14 @@ class BackcompatibilityTest extends PipelineSpec {
   // sc.close
   "saveAsProtobuf" should "read protobuf files written with Scio 0.7 and above" in {
     val sc = ScioContext()
-    val r = sc.read(ProtobufIO[SimplePB](s"${path_07}/*"))
+    val r = sc.read(ProtobufIO[SimplePB](s"$pwd/$path_07/*"))
     r should containInAnyOrder(input)
     sc.run()
   }
 
   it should "read protobuf files written with Scio 0.6 and below" in {
     val sc = ScioContext()
-    val r = sc.read(ProtobufIO[SimplePB](s"${path_06}/*"))
+    val r = sc.read(ProtobufIO[SimplePB](s"$pwd/$path_06/*"))
     r should containInAnyOrder(input)
     sc.run()
   }

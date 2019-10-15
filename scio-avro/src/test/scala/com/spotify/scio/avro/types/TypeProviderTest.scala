@@ -584,6 +584,34 @@ class TypeProviderTest extends FlatSpec with Matchers {
     Artisanal1Field.getClass.getMethods
       .map(_.getName) should not contain "tupled"
   }
+
+  @AvroType.fromSchema("""
+     |{
+     |  "type": "record",
+     |  "name": "Record",
+     |  "fields": [
+     |    {
+     |      "name": "a",
+     |      "type": {
+     |        "type": "record",
+     |        "name": "ReusedRecord",
+     |        "fields": [
+     |          {"name": "f1", "type": "int"}
+     |        ]
+     |      }
+     |  },
+     |  {"name": "b", "type": "ReusedRecord"}
+     |]}""".stripMargin)
+  class RecordWithReusedRecordType
+
+  it should "support re-used record definitions" in {
+    val nested1 = RecordWithReusedRecordType$ReusedRecord(1)
+    val nested2 = RecordWithReusedRecordType$ReusedRecord(2)
+    val record = RecordWithReusedRecordType(nested1, nested2)
+    record.a shouldBe nested1
+    record.b shouldBe nested2
+  }
+
   @AvroType.toSchema
   case class ToSchema(
     boolF: Boolean,

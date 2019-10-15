@@ -29,7 +29,7 @@ export SBT_OPTS="-Xmx8G -Xms8G -Xss1M -XX:MaxMetaspaceSize=1G -XX:+CMSClassUnloa
 To ensure the project loads and builds successfully, run the following sbt command so that all custom tasks are executed
 
 ```bash
-sbt compile test:compile it:compile
+sbt compile test:compile
 ```
 
 ## Running the Examples
@@ -51,7 +51,7 @@ Unlike Hadoop, Scio or Dataflow input should be file patterns and not directorie
 Use the @javadoc[`DataflowRunner`](org.apache.beam.runners.dataflow.DataflowRunner) to execute pipelines on Google Cloud Dataflow service using managed resources in the Google Cloud Platform.
 
 ```
-neville@localhost scio $ sbt -Dbigquery.project=<BILLING_PROJECT>
+neville@localhost scio $ sbt
 [info] ...
 > project scio-examples
 [info] ...

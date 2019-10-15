@@ -21,12 +21,14 @@ import com.google.protobuf.Message
 import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import com.spotify.scio.testing.TestDataManager
-import com.spotify.scio.util.{JMapWrapper, ScioUtil}
+import com.spotify.scio.util.{Functions, JMapWrapper, ScioUtil}
 import com.spotify.scio.values.SCollection
 import org.apache.avro.specific.SpecificRecordBase
-import org.apache.beam.sdk.io.gcp.pubsub.PubsubMessage
+import org.apache.beam.sdk.io.gcp.pubsub.PubsubMessageWithAttributesCoder
 import org.apache.beam.sdk.io.gcp.{pubsub => beam}
+import org.apache.beam.sdk.transforms.{PTransform, ParDo}
 import org.apache.beam.sdk.util.CoderUtils
+import org.apache.beam.sdk.values.{PCollection, PDone}
 import org.joda.time.Instant
 
 import scala.collection.JavaConverters._
@@ -102,14 +104,19 @@ private final case class PubsubIOWithoutAttributes[T: ClassTag: Coder](
     } else if (classOf[Message] isAssignableFrom cls) {
       val t = setup(beam.PubsubIO.readProtos(cls.asSubclass(classOf[Message])))
       sc.wrap(sc.applyInternal(t)).asInstanceOf[SCollection[T]]
-    } else if (classOf[PubsubMessage] isAssignableFrom cls) {
+    } else if (classOf[beam.PubsubMessage] isAssignableFrom cls) {
       val t = setup(beam.PubsubIO.readMessages())
       sc.wrap(sc.applyInternal(t)).asInstanceOf[SCollection[T]]
     } else {
       val coder = CoderMaterializer.beam(sc, Coder[T])
-      val t = setup(beam.PubsubIO.readMessages())
+      val t = setup(
+        beam.PubsubIO.readMessagesWithCoderAndParseFn(
+          coder,
+          Functions.simpleFn(m => CoderUtils.decodeFromByteArray(coder, m.getPayload))
+        )
+      )
+
       sc.wrap(sc.applyInternal(t))
-        .map(m => CoderUtils.decodeFromByteArray(coder, m.getPayload))
     }
   }
 
@@ -139,9 +146,9 @@ private final case class PubsubIOWithoutAttributes[T: ClassTag: Coder](
     } else if (classOf[Message] isAssignableFrom cls) {
       val t = setup(beam.PubsubIO.writeProtos(cls.asInstanceOf[Class[Message]]))
       data.asInstanceOf[SCollection[Message]].applyInternal(t)
-    } else if (classOf[PubsubMessage] isAssignableFrom cls) {
+    } else if (classOf[beam.PubsubMessage] isAssignableFrom cls) {
       val t = setup(beam.PubsubIO.writeMessages())
-      data.asInstanceOf[SCollection[PubsubMessage]].applyInternal(t)
+      data.asInstanceOf[SCollection[beam.PubsubMessage]].applyInternal(t)
     } else {
       val coder = CoderMaterializer.beam(data.context, Coder[T])
       val t = setup(beam.PubsubIO.writeMessages())
@@ -210,13 +217,21 @@ private final case class PubsubIOWithAttributes[T: ClassTag: Coder](
       w = w.withTimestampAttribute(timestampAttribute)
     }
     val coder = CoderMaterializer.beam(data.context, Coder[T])
-    data
-      .map { kv =>
-        val payload = CoderUtils.encodeToByteArray(coder, kv._1)
-        val attributes = kv._2.asJava
-        new beam.PubsubMessage(payload, attributes)
-      }
-      .applyInternal(w)
+
+    data.applyInternal(new PTransform[PCollection[WithAttributeMap], PDone]() {
+      override def expand(input: PCollection[WithAttributeMap]): PDone =
+        input
+          .apply(
+            "Encode Pubsub message and attributes",
+            ParDo.of(Functions.mapFn[WithAttributeMap, beam.PubsubMessage] { kv =>
+              val payload = CoderUtils.encodeToByteArray(coder, kv._1)
+              val attributes = kv._2.asJava
+              new beam.PubsubMessage(payload, attributes)
+            })
+          )
+          .setCoder(PubsubMessageWithAttributesCoder.of())
+          .apply("Write to Pubsub", w)
+    })
 
     EmptyTap
   }

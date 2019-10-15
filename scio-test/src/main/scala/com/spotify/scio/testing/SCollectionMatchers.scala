@@ -22,8 +22,8 @@ import java.util.{Map => JMap}
 
 import com.spotify.scio.util.ClosureCleaner
 import com.spotify.scio.coders.Coder
-
 import com.spotify.scio.values.SCollection
+import com.twitter.chill.Externalizer
 import org.apache.beam.sdk.testing.PAssert
 import org.apache.beam.sdk.testing.PAssert.{IterableAssert, SingletonAssert}
 import org.apache.beam.sdk.transforms.SerializableFunction
@@ -180,11 +180,11 @@ trait SCollectionMatchers {
       override def matcher(builder: AssertBuilder): Matcher[SCollection[T]] =
         new Matcher[SCollection[T]] {
           override def apply(left: SCollection[T]): MatchResult = {
-            val v = value // defeat closure
+            val v = Externalizer(value) // defeat closure
             val f = makeFn[T] { in =>
               import org.hamcrest.Matchers
               import org.junit.Assert
-              Assert.assertThat(in, Matchers.not(Matchers.containsInAnyOrder(v.toSeq: _*)))
+              Assert.assertThat(in, Matchers.not(Matchers.containsInAnyOrder(v.get.toSeq: _*)))
             }
             m(
               () =>
@@ -222,16 +222,16 @@ trait SCollectionMatchers {
       override def matcher(builder: AssertBuilder): Matcher[SCollection[T]] =
         new Matcher[SCollection[T]] {
           override def apply(left: SCollection[T]): MatchResult = {
-            val v = value // defeat closure
+            val v = Externalizer(value) // defeat closure
             val (should, shouldNot) = {
               import org.hamcrest.Matchers
               import org.junit.Assert
               (
                 makeFn[T] { in =>
-                  Assert.assertThat(in, Matchers.hasItem(v))
+                  Assert.assertThat(in, Matchers.hasItem(v.get))
                 },
                 makeFn[T] { in =>
-                  Assert.assertThat(in, Matchers.not(Matchers.hasItem(v)))
+                  Assert.assertThat(in, Matchers.not(Matchers.hasItem(v.get)))
                 }
               )
             }

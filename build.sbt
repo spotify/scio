@@ -22,7 +22,7 @@ import com.typesafe.sbt.SbtGit.GitKeys.gitRemoteRepo
 import org.scalafmt.sbt.ScalafmtPlugin.scalafmtConfigSettings
 import bloop.integrations.sbt.BloopDefaults
 
-val beamVersion = "2.15.0"
+val beamVersion = "2.16.0"
 
 val algebirdVersion = "0.13.5"
 val annoy4sVersion = "0.9.0"
@@ -40,8 +40,8 @@ val commonsCompress = "1.19"
 val elasticsearch2Version = "2.4.6"
 val elasticsearch5Version = "5.6.16"
 val elasticsearch6Version = "6.8.3"
-val elasticsearch7Version = "7.4.0"
-val featranVersion = "0.3.0"
+val elasticsearch7Version = "7.3.2"
+val featranVersion = "0.4.0"
 val gcsConnectorVersion = "hadoop2-1.9.16"
 val gcsVersion = "1.8.0"
 val guavaVersion = "25.1-jre"
@@ -73,6 +73,7 @@ val magnoliaVersion = "0.11.0"
 val grpcVersion = "1.17.1"
 val caseappVersion = "2.0.0-M9"
 val sparkVersion = "2.4.3"
+val caffeineVersion = "2.8.0"
 
 lazy val mimaSettings = Seq(
   mimaPreviousArtifacts :=
@@ -155,7 +156,10 @@ val commonSettings = Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
   ).mkString(";"),
   coverageHighlighting := true,
   // Release settings
-  publishTo := sonatypePublishToBundle.value,
+  publishTo := Some(
+    if (isSnapshot.value) Opts.resolver.sonatypeSnapshots
+    else Opts.resolver.sonatypeStaging
+  ),
   releaseCrossBuild := true,
   releasePublishArtifactsAction := PgpKeys.publishSigned.value,
   publishMavenStyle := true,
@@ -650,6 +654,7 @@ lazy val scioExtra: Project = Project(
       "info.debatty" % "java-lsh" % javaLshVersion,
       "net.pishen" %% "annoy4s" % annoy4sVersion,
       "org.scalanlp" %% "breeze" % breezeVersion,
+      "com.github.ben-manes.caffeine" % "caffeine" % caffeineVersion,
       "org.scalatest" %% "scalatest" % scalatestVersion % "test",
       "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test"
     ),
@@ -807,7 +812,7 @@ lazy val scioExamples: Project = Project(
       "me.lyh" %% "shapeless-datatype-avro" % shapelessDatatypeVersion,
       "me.lyh" %% "shapeless-datatype-datastore" % shapelessDatatypeVersion,
       "me.lyh" %% "shapeless-datatype-tensorflow" % shapelessDatatypeVersion,
-      "mysql" % "mysql-connector-java" % "8.0.17",
+      "mysql" % "mysql-connector-java" % "8.0.18",
       "com.google.cloud.sql" % "mysql-socket-factory" % "1.0.15",
       "org.slf4j" % "slf4j-simple" % slf4jVersion,
       "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test"
@@ -817,7 +822,7 @@ lazy val scioExamples: Project = Project(
       if (BuildCredentials.exists) {
         HiddenFileFilter
       } else {
-        HiddenFileFilter || "TypedBigQueryTornadoes*.scala"
+        HiddenFileFilter || "TypedBigQueryTornadoes*.scala" || "TypedStorageBigQueryTornadoes*.scala"
       }
     },
     sources in doc in Compile := List()

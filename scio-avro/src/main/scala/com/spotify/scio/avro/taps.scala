@@ -35,7 +35,7 @@ import scala.reflect.runtime.universe._
 /**
  * Tap for [[org.apache.avro.generic.GenericRecord GenericRecord]] Avro files.
  */
-final case class GenericRecordTap[T: Coder](
+final case class ReflectiveRecordTap[T: Coder](
   path: String,
   @transient private val
   schema: Schema
@@ -44,7 +44,26 @@ final case class GenericRecordTap[T: Coder](
 
   override def value: Iterator[T] = FileStorage(path).avroFile[T](s.get)
 
-  override def open(sc: ScioContext): SCollection[T] = sc.avroFile[T](path, s.get)
+  override def open(sc: ScioContext): SCollection[T] =
+    sc.read(ReflectiveRecordIO[T](path, s.get))
+}
+
+/**
+ * Tap for [[org.apache.avro.generic.GenericRecord GenericRecord]] Avro files.
+ */
+final case class GenericRecordTap(
+  path: String,
+  @transient private val
+  schema: Schema
+) extends Tap[GenericRecord] {
+  private lazy val s = Externalizer(schema)
+
+  override def value: Iterator[GenericRecord] = FileStorage(path).avroFile[GenericRecord](s.get)
+
+  override def open(sc: ScioContext): SCollection[GenericRecord] = {
+    implicit val coder = Coder.avroGenericRecordCoder(s.get)
+    sc.read(GenericRecordIO(path, s.get))
+  }
 }
 
 /**
@@ -104,7 +123,11 @@ final case class AvroTaps(self: Taps) {
    * file.
    */
   def avroFile[T: ClassTag: Coder](path: String, schema: Schema): Future[Tap[T]] =
-    self.mkTap(s"Avro: $path", () => self.isPathDone(path), () => GenericRecordTap[T](path, schema))
+    self.mkTap(
+      s"Avro: $path",
+      () => self.isPathDone(path),
+      () => ReflectiveRecordTap[T](path, schema)
+    )
 
   /** Get a `Future[Tap[T]]` for
    * [[org.apache.avro.specific.SpecificRecord SpecificRecord]] Avro file.
