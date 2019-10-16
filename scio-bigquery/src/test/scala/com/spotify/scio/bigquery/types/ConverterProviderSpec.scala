@@ -24,8 +24,8 @@ import org.joda.time.{Instant, LocalDate, LocalDateTime, LocalTime}
 import org.scalacheck._
 import org.scalatest._
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
-import shapeless.datatype.record._
 import com.spotify.scio.bigquery.Numeric
+import org.scalactic.Equality
 
 // Manual implementation of the required Gen instances.
 // Technically, those can be derived automatically using scalacheck-shapeless,
@@ -124,6 +124,125 @@ private object Generators {
     } yield RepeatedNested(r, o, rs)
 }
 
+object Equalities {
+  import Schemas._
+
+  // Scalatest Equality trait is rubbish so we use cats instead
+  import cats.kernel.Eq
+
+  implicit val equalityArrayByte =
+    new Eq[Array[Byte]] {
+      def eqv(x: Array[Byte], y: Array[Byte]): Boolean =
+        ByteString.copyFrom(x) == ByteString.copyFrom(y)
+    }
+
+  implicit def equalityOption[A: Eq] =
+    new Eq[Option[A]] {
+      def eqv(a: Option[A], b: Option[A]): Boolean =
+        (a, b) match {
+          case (None, None)       => true
+          case (Some(a), Some(b)) => Eq[A].eqv(a, b)
+          case _                  => false
+        }
+    }
+
+  implicit def equalityList[A: Eq] =
+    new Eq[List[A]] {
+      def eqv(as: List[A], bs: List[A]): Boolean =
+        (as.length == bs.length) &&
+          as.zip(bs).forall { case (a, b) => Eq[A].eqv(a, b) }
+    }
+
+  implicit val equalityRequired =
+    new Eq[Required] {
+      def eqv(a: Required, b: Required): Boolean = {
+        a.boolF == b.boolF &&
+        a.intF == b.intF &&
+        a.longF == b.longF &&
+        a.floatF == b.floatF &&
+        a.doubleF == b.doubleF &&
+        a.stringF == b.stringF &&
+        Eq[Array[Byte]].eqv(a.byteArrayF, b.byteArrayF) &&
+        a.byteStringF == b.byteStringF &&
+        a.timestampF == b.timestampF &&
+        a.dateF == b.dateF &&
+        a.timeF == b.timeF &&
+        a.datetimeF == b.datetimeF &&
+        a.bigDecimalF == b.bigDecimalF
+      }
+    }
+
+  implicit val equalityOptional =
+    new Eq[Optional] {
+      def eqv(a: Optional, b: Optional): Boolean = {
+        a.boolF == b.boolF &&
+        a.intF == b.intF &&
+        a.longF == b.longF &&
+        a.floatF == b.floatF &&
+        a.doubleF == b.doubleF &&
+        a.stringF == b.stringF &&
+        Eq[Option[Array[Byte]]].eqv(a.byteArrayF, b.byteArrayF) &&
+        a.byteStringF == b.byteStringF &&
+        a.timestampF == b.timestampF &&
+        a.dateF == b.dateF &&
+        a.timeF == b.timeF &&
+        a.datetimeF == b.datetimeF &&
+        a.bigDecimalF == b.bigDecimalF
+      }
+    }
+
+  implicit val equalityRepeated =
+    new Eq[Repeated] {
+      def eqv(a: Repeated, b: Repeated): Boolean = {
+        a.boolF == b.boolF &&
+        a.intF == b.intF &&
+        a.longF == b.longF &&
+        a.floatF == b.floatF &&
+        a.doubleF == b.doubleF &&
+        a.stringF == b.stringF &&
+        Eq[List[Array[Byte]]].eqv(a.byteArrayF, b.byteArrayF) &&
+        a.byteStringF == b.byteStringF &&
+        a.timestampF == b.timestampF &&
+        a.dateF == b.dateF &&
+        a.timeF == b.timeF &&
+        a.datetimeF == b.datetimeF &&
+        a.bigDecimalF == b.bigDecimalF
+      }
+    }
+
+  implicit val equalityRequiredNested =
+    new Eq[RequiredNested] {
+      def eqv(a: RequiredNested, b: RequiredNested): Boolean = {
+        Eq[Required].eqv(a.required, b.required) &&
+        Eq[Optional].eqv(a.optional, b.optional) &&
+        Eq[Repeated].eqv(a.repeated, b.repeated)
+      }
+    }
+
+  implicit val equalityOptionalNested =
+    new Eq[OptionalNested] {
+      def eqv(a: OptionalNested, b: OptionalNested): Boolean =
+        Eq[Option[Required]].eqv(a.required, b.required) &&
+          Eq[Option[Optional]].eqv(a.optional, b.optional) &&
+          Eq[Option[Repeated]].eqv(a.repeated, b.repeated)
+    }
+
+  implicit val equalityRepeatedNested =
+    new Eq[RepeatedNested] {
+      def eqv(a: RepeatedNested, b: RepeatedNested): Boolean =
+        Eq[List[Required]].eqv(a.required, b.required) &&
+          Eq[List[Optional]].eqv(a.optional, b.optional) &&
+          Eq[List[Repeated]].eqv(a.repeated, b.repeated)
+    }
+
+
+  implicit def catsEquality[A: Eq]: Equality[A] =
+    new Equality[A] {
+      def areEqual(a: A, b: Any): Boolean =
+        b.isInstanceOf[A @unchecked] && Eq[A].eqv(a, b.asInstanceOf[A])
+    }
+}
+
 final class ConverterProviderSpec
     extends PropSpec
     with ScalaCheckDrivenPropertyChecks
@@ -135,6 +254,7 @@ final class ConverterProviderSpec
 
   import Schemas._
   import Generators._
+  import Equalities._
 
   implicit def compareByteArrays(x: Array[Byte], y: Array[Byte]): Boolean =
     ByteString.copyFrom(x) == ByteString.copyFrom(y)
@@ -142,14 +262,14 @@ final class ConverterProviderSpec
   property("round trip required primitive types") {
     forAll { r1: Required =>
       val r2 = BigQueryType.fromTableRow[Required](BigQueryType.toTableRow[Required](r1))
-      RecordMatcher[Required](r1, r2) shouldBe true
+      r1 should ===(r2)
     }
   }
 
   property("round trip optional primitive types") {
     forAll { r1: Optional =>
       val r2 = BigQueryType.fromTableRow[Optional](BigQueryType.toTableRow[Optional](r1))
-      RecordMatcher[Optional](r1, r2) shouldBe true
+      r1 should ===(r2)
     }
   }
 
@@ -176,7 +296,7 @@ final class ConverterProviderSpec
   property("round trip repeated primitive types") {
     forAll { r1: Repeated =>
       val r2 = BigQueryType.fromTableRow[Repeated](BigQueryType.toTableRow[Repeated](r1))
-      RecordMatcher[Repeated](r1, r2) shouldBe true
+      r1 should ===(r2)
     }
   }
 
@@ -184,7 +304,7 @@ final class ConverterProviderSpec
     forAll { r1: RequiredNested =>
       val r2 =
         BigQueryType.fromTableRow[RequiredNested](BigQueryType.toTableRow[RequiredNested](r1))
-      RecordMatcher[RequiredNested](r1, r2) shouldBe true
+      r1 should ===(r2)
     }
   }
 
@@ -192,7 +312,7 @@ final class ConverterProviderSpec
     forAll { r1: OptionalNested =>
       val r2 =
         BigQueryType.fromTableRow[OptionalNested](BigQueryType.toTableRow[OptionalNested](r1))
-      RecordMatcher[OptionalNested](r1, r2) shouldBe true
+      r1 should ===(r2)
     }
   }
 
@@ -210,7 +330,7 @@ final class ConverterProviderSpec
     forAll { r1: RepeatedNested =>
       val r2 =
         BigQueryType.fromTableRow[RepeatedNested](BigQueryType.toTableRow[RepeatedNested](r1))
-      RecordMatcher[RepeatedNested](r1, r2) shouldBe true
+      r1 should ===(r2)
     }
   }
 

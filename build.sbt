@@ -519,7 +519,6 @@ lazy val scioBigQuery: Project = Project(
       "com.google.cloud" % "google-cloud-storage" % gcsVersion % "test,it",
       // DataFlow testing requires junit and hamcrest
       "org.hamcrest" % "hamcrest-all" % hamcrestVersion % "test,it",
-      "me.lyh" %% "shapeless-datatype-core" % shapelessDatatypeVersion % "test",
       // Our BloomFilters are Algebird Monoids and hence uses tests from Algebird Test
       "com.twitter" %% "algebird-test" % algebirdVersion % "test"
     )
