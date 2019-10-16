@@ -21,7 +21,7 @@ import com.spotify.scio.schemas.Schema
 import org.apache.beam.sdk.values.TupleTag
 
 import scala.language.experimental.macros
-import scala.reflect.macros.blackbox
+import scala.reflect.macros.{blackbox, whitebox}
 import com.spotify.scio.schemas.SchemaMacroHelpers
 
 trait SQLBuilder {
@@ -120,7 +120,8 @@ object SqlInterpolatorMacro {
    */
   final class SqlParts(parts: List[String], ps: Any*) extends scala.annotation.StaticAnnotation
 
-  def builder(c: blackbox.Context)(ps: c.Expr[Any]*): c.Expr[SQLBuilder] = {
+  // For some reason this method needs to be a whitebox macro
+  def builder(c: whitebox.Context)(ps: c.Expr[Any]*): c.Expr[SQLBuilder] = {
     val h = new { val ctx: c.type = c } with SqlInterpolatorMacroHelpers
     import h._
     import c.universe._
