@@ -140,7 +140,7 @@ object Equalities {
         ByteString.copyFrom(x) == ByteString.copyFrom(y)
     }
 
-  implicit def equalityOption[A: Eq] =
+  implicit def equalityOption[A: Eq]: Eq[Option[A]] =
     new Eq[Option[A]] {
       def eqv(a: Option[A], b: Option[A]): Boolean =
         (a, b) match {
@@ -150,7 +150,7 @@ object Equalities {
         }
     }
 
-  implicit def equalityList[A: Eq] =
+  implicit def equalityList[A: Eq]: Eq[List[A]] =
     new Eq[List[A]] {
       def eqv(as: List[A], bs: List[A]): Boolean =
         (as.length == bs.length) &&
