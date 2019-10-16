@@ -21,7 +21,7 @@ import com.google.protobuf.ByteString
 import org.scalacheck._
 import org.scalatest._
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
-import shapeless.datatype.record._
+import org.scalactic.Equality
 
 // Manual implementation of the required Gen instances.
 // Technically, those can be derived automatically using scalacheck-shapeless,
@@ -128,6 +128,51 @@ private object Generators {
   implicit def arb[T](implicit gen: Gen[T]): Arbitrary[T] = Arbitrary.apply(gen)
 }
 
+object Equalities {
+  import Schemas._
+
+  // Scalatest Equality trait is rubbish so we use cats instead
+  import cats.kernel.Eq
+
+  implicit val equalityArrayByte =
+    new Eq[Array[Byte]] {
+      def eqv(x: Array[Byte], y: Array[Byte]): Boolean =
+        ByteString.copyFrom(x) == ByteString.copyFrom(y)
+    }
+
+  implicit def equalityOption[A: Eq] =
+    new Eq[Option[A]] {
+      def eqv(a: Option[A], b: Option[A]): Boolean =
+        (a, b) match {
+          case (None, None)       => true
+          case (Some(a), Some(b)) => Eq[A].eqv(a, b)
+          case _                  => false
+        }
+    }
+
+  implicit def equalityList[A: Eq] =
+    new Eq[List[A]] {
+      def eqv(as: List[A], bs: List[A]): Boolean =
+        (as.length == bs.length) &&
+          as.zip(bs).forall { case (a, b) => Eq[A].eqv(a, b) }
+    }
+
+  implicit val eqByteArrayFields =
+    new Eq[ByteArrayFields] {
+      def eqv(a: ByteArrayFields, b: ByteArrayFields): Boolean =
+        Eq[Array[Byte]].eqv(a.required, b.required) &&
+        Eq[Option[Array[Byte]]].eqv(a.optional, b.optional) &&
+        Eq[List[Array[Byte]]].eqv(a.repeated, b.repeated)
+    }
+
+  implicit def catsEquality[A: Eq]: Equality[A] =
+    new Equality[A] {
+      def areEqual(a: A, b: Any): Boolean =
+        b.isInstanceOf[A @unchecked] && Eq[A].eqv(a, b.asInstanceOf[A])
+    }
+
+}
+
 class ConverterProviderSpec extends PropSpec with ScalaCheckDrivenPropertyChecks with Matchers {
 
   // TODO: remove this once https://github.com/scalatest/scalatest/issues/1090 is addressed
@@ -136,6 +181,7 @@ class ConverterProviderSpec extends PropSpec with ScalaCheckDrivenPropertyChecks
 
   import Schemas._
   import Generators._
+  import Equalities._
 
   implicit def compareByteArrays(x: Array[Byte], y: Array[Byte]): Boolean =
     ByteString.copyFrom(x) == ByteString.copyFrom(y)
@@ -143,7 +189,7 @@ class ConverterProviderSpec extends PropSpec with ScalaCheckDrivenPropertyChecks
   property("round trip basic primitive types") {
     forAll { r1: BasicFields =>
       val r2 = AvroType.fromGenericRecord[BasicFields](AvroType.toGenericRecord[BasicFields](r1))
-      RecordMatcher[BasicFields](r1, r2) shouldBe true
+      r1 should ===(r2)
     }
   }
 
@@ -151,7 +197,7 @@ class ConverterProviderSpec extends PropSpec with ScalaCheckDrivenPropertyChecks
     forAll { r1: OptionalFields =>
       val r2 =
         AvroType.fromGenericRecord[OptionalFields](AvroType.toGenericRecord[OptionalFields](r1))
-      RecordMatcher[OptionalFields](r1, r2) shouldBe true
+      r1 should ===(r2)
     }
   }
 
@@ -172,7 +218,7 @@ class ConverterProviderSpec extends PropSpec with ScalaCheckDrivenPropertyChecks
   property("round trip primitive type arrays") {
     forAll { r1: ArrayFields =>
       val r2 = AvroType.fromGenericRecord[ArrayFields](AvroType.toGenericRecord[ArrayFields](r1))
-      RecordMatcher[ArrayFields](r1, r2) shouldBe true
+      r1 should ===(r2)
     }
   }
 
@@ -180,14 +226,14 @@ class ConverterProviderSpec extends PropSpec with ScalaCheckDrivenPropertyChecks
     forAll { r1: MapFields =>
       val r2 = AvroType.fromGenericRecord[MapFields](AvroType.toGenericRecord[MapFields](r1))
 
-      RecordMatcher[MapFields](r1, r2) shouldBe true
+      r1 should ===(r2)
     }
   }
 
   property("round trip required nested types") {
     forAll { r1: NestedFields =>
       val r2 = AvroType.fromGenericRecord[NestedFields](AvroType.toGenericRecord[NestedFields](r1))
-      RecordMatcher[NestedFields](r1, r2) shouldBe true
+      r1 should ===(r2)
     }
   }
 
@@ -196,7 +242,7 @@ class ConverterProviderSpec extends PropSpec with ScalaCheckDrivenPropertyChecks
       val r2 = AvroType.fromGenericRecord[OptionalNestedFields](
         AvroType.toGenericRecord[OptionalNestedFields](r1)
       )
-      RecordMatcher[OptionalNestedFields](r1, r2) shouldBe true
+      r1 should ===(r2)
     }
   }
 
@@ -216,7 +262,7 @@ class ConverterProviderSpec extends PropSpec with ScalaCheckDrivenPropertyChecks
       val r2 = AvroType.fromGenericRecord[ArrayNestedFields](
         AvroType.toGenericRecord[ArrayNestedFields](r1)
       )
-      RecordMatcher[ArrayNestedFields](r1, r2) shouldBe true
+      r1 should ===(r2)
     }
   }
 
@@ -224,7 +270,7 @@ class ConverterProviderSpec extends PropSpec with ScalaCheckDrivenPropertyChecks
     forAll { r1: MapNestedFields =>
       val r2 =
         AvroType.fromGenericRecord[MapNestedFields](AvroType.toGenericRecord[MapNestedFields](r1))
-      RecordMatcher[MapNestedFields](r1, r2) shouldBe true
+      r1 should ===(r2)
     }
   }
 
@@ -232,7 +278,7 @@ class ConverterProviderSpec extends PropSpec with ScalaCheckDrivenPropertyChecks
     forAll { r1: ByteArrayFields =>
       val r2 =
         AvroType.fromGenericRecord[ByteArrayFields](AvroType.toGenericRecord[ByteArrayFields](r1))
-      RecordMatcher[ByteArrayFields](r1, r2) shouldBe true
+      r1 should ===(r2)
     }
   }
 

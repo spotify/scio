@@ -493,8 +493,7 @@ lazy val scioAvro: Project = Project(
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       "org.slf4j" % "slf4j-simple" % slf4jVersion % "test,it",
       "org.scalatest" %% "scalatest" % scalatestVersion % "test,it",
-      "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test,it",
-      "me.lyh" %% "shapeless-datatype-core" % shapelessDatatypeVersion % "test"
+      "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test,it"
     ),
     beamSDKIODependencies
   )
