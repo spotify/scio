@@ -237,7 +237,6 @@ object Equalities {
           Eq[List[Repeated]].eqv(a.repeated, b.repeated)
     }
 
-
   implicit def catsEquality[A: Eq]: Equality[A] =
     new Equality[A] {
       def areEqual(a: A, b: Any): Boolean =

@@ -161,8 +161,8 @@ object Equalities {
     new Eq[ByteArrayFields] {
       def eqv(a: ByteArrayFields, b: ByteArrayFields): Boolean =
         Eq[Array[Byte]].eqv(a.required, b.required) &&
-        Eq[Option[Array[Byte]]].eqv(a.optional, b.optional) &&
-        Eq[List[Array[Byte]]].eqv(a.repeated, b.repeated)
+          Eq[Option[Array[Byte]]].eqv(a.optional, b.optional) &&
+          Eq[List[Array[Byte]]].eqv(a.repeated, b.repeated)
     }
 
   implicit def catsEquality[A: Eq]: Equality[A] =
