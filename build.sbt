@@ -504,9 +504,7 @@ lazy val scioBigQuery: Project = Project(
       // DataFlow testing requires junit and hamcrest
       "org.hamcrest" % "hamcrest-all" % hamcrestVersion % "test,it",
       "com.github.alexarchambault" %% "scalacheck-shapeless_1.13" % scalacheckShapelessVersion % "test,it",
-      "me.lyh" %% "shapeless-datatype-core" % shapelessDatatypeVersion % "test",
-      // Our BloomFilters are Algebird Monoids and hence uses tests from Algebird Test
-      "com.twitter" %% "algebird-test" % algebirdVersion % "test"
+      "me.lyh" %% "shapeless-datatype-core" % shapelessDatatypeVersion % "test"
     )
   )
   .dependsOn(
