@@ -4,7 +4,7 @@ Scio
 [![Build Status](https://img.shields.io/circleci/project/github/spotify/scio/master.svg)](https://circleci.com/gh/spotify/scio)
 [![codecov.io](https://codecov.io/github/spotify/scio/coverage.svg?branch=master)](https://codecov.io/github/spotify/scio?branch=master)
 [![GitHub license](https://img.shields.io/github/license/spotify/scio.svg)](./LICENSE)
-[![Maven Central](https://img.shields.io/maven-central/v/com.spotify/scio-core_2.11.svg)](https://maven-badges.herokuapp.com/maven-central/com.spotify/scio-core_2.11)
+[![Maven Central](https://img.shields.io/maven-central/v/com.spotify/scio-core_2.12.svg)](https://maven-badges.herokuapp.com/maven-central/com.spotify/scio-core_2.12)
 [![Join the chat at https://gitter.im/spotify/scio](https://badges.gitter.im/spotify/scio.svg)](https://gitter.im/spotify/scio)
 
 <img src="https://raw.github.com/spotify/scio/master/site/src/paradox/images/scio.png" alt="Scio Logo" width="250"/>
