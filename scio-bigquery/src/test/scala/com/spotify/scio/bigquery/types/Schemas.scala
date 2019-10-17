@@ -19,6 +19,7 @@ package com.spotify.scio.bigquery.types
 
 import com.google.protobuf.ByteString
 import org.joda.time.{Instant, LocalDate, LocalDateTime, LocalTime}
+import com.spotify.scio.coders.Coder
 
 object Schemas {
 
@@ -38,6 +39,8 @@ object Schemas {
     datetimeF: LocalDateTime,
     bigDecimalF: BigDecimal
   )
+
+  implicit val coderRequired = Coder.gen[Required]
   case class Optional(
     boolF: Option[Boolean],
     intF: Option[Int],
@@ -53,6 +56,8 @@ object Schemas {
     datetimeF: Option[LocalDateTime],
     bigDecimalF: Option[BigDecimal]
   )
+
+  implicit val coderOptional = Coder.gen[Optional]
   case class Repeated(
     boolF: List[Boolean],
     intF: List[Int],
@@ -69,22 +74,32 @@ object Schemas {
     bigDecimalF: List[BigDecimal]
   )
 
+  implicit val coderRepeated = Coder.gen[Repeated]
+
   // records
   case class RequiredNested(required: Required, optional: Optional, repeated: Repeated)
+
+  implicit val coderRequiredNested = Coder.gen[RequiredNested]
   case class OptionalNested(
     required: Option[Required],
     optional: Option[Optional],
     repeated: Option[Repeated]
   )
+
+  implicit val coderOptionalNested = Coder.gen[OptionalNested]
   case class RepeatedNested(
     required: List[Required],
     optional: List[Optional],
     repeated: List[Repeated]
   )
 
+  implicit val coderRepeatedNested = Coder.gen[RepeatedNested]
+
   case class User(@description("user name") name: String, @description("user age") age: Int)
   case class Account(
     @description("account user") user: User,
     @description("in USD") balance: Double
   )
+
+  implicit val coderAccount = Coder.gen[Account]
 }

@@ -23,6 +23,7 @@ import com.spotify.scio._
 import com.spotify.scio.avro._
 import org.apache.commons.io.FileUtils
 import org.scalatest._
+import com.spotify.scio.coders.Coder
 
 class ConverterProviderTest extends FlatSpec with Matchers {
 
@@ -49,4 +50,6 @@ class ConverterProviderTest extends FlatSpec with Matchers {
 object ConverterProviderTest {
   @AvroType.toSchema
   case class Record(a: Map[String, Int], b: Option[Map[String, Int]], c: List[Map[String, Int]])
+
+  implicit val coderRecord = Coder.gen[Record]
 }

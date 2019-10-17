@@ -19,6 +19,7 @@ package com.spotify.scio.avro.types
 
 import com.google.protobuf.ByteString
 import org.apache.avro.Schema
+import com.spotify.scio.coders.Coder
 
 object Schemas {
   case class BasicFields(
@@ -31,6 +32,8 @@ object Schemas {
     byteStringF: ByteString
   )
 
+  implicit val coderBasicFields = Coder.gen[BasicFields]
+
   case class OptionalFields(
     boolF: Option[Boolean],
     intF: Option[Int],
@@ -40,6 +43,8 @@ object Schemas {
     stringF: Option[String],
     byteStringF: Option[ByteString]
   )
+
+  implicit val coderOptionalFields = Coder.gen[OptionalFields]
 
   case class ArrayFields(
     boolF: List[Boolean],
@@ -51,6 +56,8 @@ object Schemas {
     byteStringF: List[ByteString]
   )
 
+  implicit val coderArrayFields = Coder.gen[ArrayFields]
+
   case class MapFields(
     boolF: Map[String, Boolean],
     intF: Map[String, Int],
@@ -61,12 +68,16 @@ object Schemas {
     byteStringF: Map[String, ByteString]
   )
 
+  implicit val coderMapFields = Coder.gen[MapFields]
+
   case class NestedFields(
     basic: BasicFields,
     optional: OptionalFields,
     array: ArrayFields,
     map: MapFields
   )
+
+  implicit val coderNestedFields = Coder.gen[NestedFields]
 
   case class OptionalNestedFields(
     basic: Option[BasicFields],
@@ -75,12 +86,16 @@ object Schemas {
     map: Option[MapFields]
   )
 
+  implicit val coderOptionalNestedFields = Coder.gen[OptionalNestedFields]
+
   case class ArrayNestedFields(
     basic: List[BasicFields],
     optional: List[OptionalFields],
     array: List[ArrayFields],
     map: List[MapFields]
   )
+
+  implicit val coderArrayNestedFields = Coder.gen[ArrayNestedFields]
 
   case class MapNestedFields(
     basic: Map[String, BasicFields],
@@ -89,11 +104,15 @@ object Schemas {
     map: Map[String, MapFields]
   )
 
+  implicit val coderMapNestedFields = Coder.gen[MapNestedFields]
+
   case class ByteArrayFields(
     required: Array[Byte],
     optional: Option[Array[Byte]],
     repeated: List[Array[Byte]]
   )
+
+  implicit val coderByteArrayFields = Coder.gen[ByteArrayFields]
 
   object FieldMode extends Enumeration {
     type FieldMode = Value
