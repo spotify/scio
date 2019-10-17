@@ -434,6 +434,8 @@ lazy val scioTest: Project = Project(
       "me.lyh" %% "shapeless-datatype-datastore" % shapelessDatatypeVersion % "test,it",
       // DataFlow testing requires junit and hamcrest
       "org.hamcrest" % "hamcrest-all" % hamcrestVersion,
+      // Our BloomFilters are Algebird Monoids and hence uses tests from Algebird Test
+      "com.twitter" %% "algebird-test" % algebirdVersion % "test",
       "com.spotify" % "annoy" % annoyVersion % "test",
       "com.spotify.sparkey" % "sparkey" % sparkeyVersion % "test",
       "com.novocode" % "junit-interface" % junitInterfaceVersion,
