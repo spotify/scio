@@ -839,7 +839,9 @@ lazy val scioExamples: Project = Project(
       }
     },
     sources in doc in Compile := List(),
-    run / classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.Flat
+    run / classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.Flat,
+    // if parallelExecution := true, SBT hangs after running `test`
+    parallelExecution in Test := false
   )
   .dependsOn(
     scioCore,
