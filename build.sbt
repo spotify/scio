@@ -225,6 +225,7 @@ val commonSettings = Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
 ) ++ mimaSettings ++ scalafmtSettings
 
 lazy val itSettings = Defaults.itSettings ++ Seq(
+  IntegrationTest / classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.Flat,
   scalastyleSources in Compile ++= (unmanagedSourceDirectories in IntegrationTest).value,
   // exclude all sources if we don't have GCP credentials
   (excludeFilter in unmanagedSources) in IntegrationTest := {
@@ -235,7 +236,6 @@ lazy val itSettings = Defaults.itSettings ++ Seq(
     }
   }
 ) ++
-  inConfig(IntegrationTest)(fork in run := true) ++
   inConfig(IntegrationTest)(BloopDefaults.configSettings) ++
   inConfig(IntegrationTest)(scalafmtConfigSettings) ++
   inConfig(IntegrationTest)(scalafixConfigSettings(IntegrationTest))
