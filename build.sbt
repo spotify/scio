@@ -22,6 +22,8 @@ import com.typesafe.sbt.SbtGit.GitKeys.gitRemoteRepo
 import org.scalafmt.sbt.ScalafmtPlugin.scalafmtConfigSettings
 import bloop.integrations.sbt.BloopDefaults
 
+ThisBuild / turbo := true
+
 val beamVersion = "2.16.0"
 
 val algebirdVersion = "0.13.5"
