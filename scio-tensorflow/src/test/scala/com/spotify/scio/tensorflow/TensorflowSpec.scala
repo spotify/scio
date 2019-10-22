@@ -114,7 +114,7 @@ private[tensorflow] object TFSavedExampleJob {
       .predict(
         savedModelUri = args("savedModelUri"),
         options = options,
-        exampleInputTensorName = "linear/head/predictions/class_ids"
+        exampleInputOp = "linear/head/predictions/class_ids"
       ){ (r, o) =>
         (r, o.map {
           case (a, outTensor) =>

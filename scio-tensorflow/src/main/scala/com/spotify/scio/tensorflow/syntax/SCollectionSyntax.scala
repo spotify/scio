@@ -91,16 +91,28 @@ final class ExampleSCollectionOps[T <: Example](private val self: SCollection[T]
     self.asInstanceOf[SCollection[Example]].write(TFExampleIO(path))(param)
   }
 
+  /**
+   * Predict/infer/forward-pass on a TensorFlow Saved Model.
+   *
+   * @param savedModelUri  URI of Saved TensorFlow model
+   * @param options        configuration parameters for the session specified as a
+   *                       `com.spotify.zoltar.tf.TensorFlowModel.Options`.
+   * @param exampleInputOp name of [[org.tensorflow.Operation]]s to feed an example.
+   * @param signatureName  name of [[org.tensorflow.framework.SignatureDef]]s to be used to run the prediction.
+   * @param outFn          translates output of prediction from map of output-operation ->
+   *                       [[org.tensorflow.Tensor Tensor]], to elements of V. This method takes
+   *                       ownership of the [[org.tensorflow.Tensor Tensor]]s.
+   */
   def predict[V: Coder](
     savedModelUri: String,
     options: TensorFlowModel.Options,
-    exampleInputTensorName: String = "inputs",
+    exampleInputOp: String = "inputs",
     signatureName: String = "serving_default"
   )(outFn: (T, Map[String, Tensor[_]]) => V): SCollection[V] =
     self.parDo(
       SavedBundlePredictDoFn.forTensorflowExample[T, V](
         savedModelUri,
-        exampleInputTensorName,
+        exampleInputOp,
         signatureName,
         options,
         outFn
