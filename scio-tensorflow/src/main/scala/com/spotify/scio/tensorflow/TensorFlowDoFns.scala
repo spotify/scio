@@ -18,31 +18,31 @@
 package com.spotify.scio.tensorflow
 
 import java.time.Duration
-import java.util.concurrent.{ConcurrentHashMap, ConcurrentMap}
-import java.util.function.Function
-
-import com.spotify.scio.transforms.DoFnWithResource
-import com.spotify.scio.transforms.DoFnWithResource.ResourceType
-import com.spotify.zoltar.tf.TensorFlowModel
-import com.spotify.zoltar.{Model, Models}
-import org.apache.beam.sdk.transforms.DoFn
-import org.apache.beam.sdk.transforms.DoFn.{ProcessElement, Teardown}
-import org.tensorflow._
-import org.slf4j.LoggerFactory
+import javax.annotation.Nullable
 
 import scala.collection.JavaConverters._
 
-private[this] abstract class PredictDoFn[T, V, M <: Model[_]](
-  fetchOp: Seq[String],
-  inFn: T => Map[String, Tensor[_]],
-  outFn: (T, Map[String, Tensor[_]]) => V
-) extends DoFnWithResource[T, V, ConcurrentMap[String, M]] {
+import org.apache.beam.sdk.transforms.DoFn
+import org.apache.beam.sdk.transforms.DoFn.{ProcessElement, Setup, Teardown}
+import org.slf4j.LoggerFactory
+import org.tensorflow._
+import org.tensorflow.example.Example
+import org.tensorflow.framework.{ConfigProto, MetaGraphDef, SignatureDef}
+
+import com.spotify.zoltar.tf.{TensorFlowGraphModel, TensorFlowModel}
+import com.spotify.zoltar.{Model, Models}
+
+private[this] abstract class PredictDoFn[T, V, M <: Model[_]] extends DoFn[T, V] {
   @transient private lazy val log = LoggerFactory.getLogger(this.getClass)
+  protected var model: M = _
 
   def withRunner(f: Session#Runner => V): V
 
-  override def getResourceType: DoFnWithResource.ResourceType =
-    ResourceType.PER_CLASS
+  def extractInput(input: T): Map[String, Tensor[_]]
+
+  def extractOutput(input: T, out: Map[String, Tensor[_]]): V
+
+  def outputTensorNames: Seq[String]
 
   /**
    * Process an element asynchronously.
@@ -51,16 +51,16 @@ private[this] abstract class PredictDoFn[T, V, M <: Model[_]](
   def processElement(c: DoFn[T, V]#ProcessContext): Unit = {
     val result = withRunner { runner =>
       val input = c.element()
-      val i = inFn(input)
+      val i = extractInput(input)
       var result: V = null.asInstanceOf[V]
 
       try {
         i.foreach { case (op, t) => runner.feed(op, t) }
-        fetchOp.foreach(runner.fetch)
+        outputTensorNames.foreach(runner.fetch)
         val outTensors = runner.run()
         try {
           import scala.collection.breakOut
-          result = outFn(input, (fetchOp zip outTensors.asScala)(breakOut))
+          result = extractOutput(input, (outputTensorNames zip outTensors.asScala)(breakOut))
         } finally {
           log.debug("Closing down output tensors")
           outTensors.asScala.foreach(_.close())
@@ -80,33 +80,70 @@ private[this] abstract class PredictDoFn[T, V, M <: Model[_]](
     new ConcurrentHashMap[String, M]()
 }
 
-private[tensorflow] class SavedBundlePredictDoFn[T, V](
+private[tensorflow] abstract class SavedBundlePredictDoFn[T, V](
   uri: String,
-  options: TensorFlowModel.Options,
-  fetchOp: Seq[String],
-  inFn: T => Map[String, Tensor[_]],
-  outFn: (T, Map[String, Tensor[_]]) => V
-) extends PredictDoFn[T, V, TensorFlowModel](fetchOp, inFn, outFn) {
+  options: TensorFlowModel.Options
+) extends PredictDoFn[T, V, TensorFlowModel] {
   @transient private lazy val log = LoggerFactory.getLogger(this.getClass)
 
-  override def withRunner(f: Session#Runner => V): V = {
-    val model = getResource
-      .computeIfAbsent(
-        uri,
-        new Function[String, TensorFlowModel] {
-          override def apply(t: String): TensorFlowModel =
-            Models
-              .tensorFlow(uri, options)
-              .get(Duration.ofDays(Integer.MAX_VALUE))
-        }
-      )
+  @Setup
+  def setup(): Unit =
+    model = Models
+      .tensorFlow(uri, options)
+      .get(Duration.ofDays(Integer.MAX_VALUE))
 
-    f(model.instance().session().runner())
-  }
+  override def withRunner(f: Session#Runner => V): V = f(model.instance().session().runner())
 
   @Teardown
   def teardown(): Unit = {
     log.info(s"Tearing down predict DoFn $this")
-    getResource.get(uri).close()
+    model.close()
+    model = null
+  }
+}
+
+object SavedBundlePredictDoFn {
+  def forTensorflowExample[T <: Example, V](
+    uri: String,
+    exampleTensorName: String,
+    signatureName: String,
+    options: TensorFlowModel.Options,
+    outFn: (T, Map[String, Tensor[_]]) => V
+  ): SavedBundlePredictDoFn[T, V] = new SavedBundlePredictDoFn[T, V](uri, options) {
+    var signatureDef: SignatureDef = _
+
+    override def setup(): Unit = {
+      super.setup()
+      val metaGraphDef = MetaGraphDef.parseFrom(model.instance().metaGraphDef())
+      signatureDef = metaGraphDef.getSignatureDefOrDefault(
+        signatureName,
+        SignatureDef.getDefaultInstance
+      )
+    }
+
+    override def outputTensorNames: Seq[String] =
+      signatureDef.getOutputsMap.values().asScala.toList.map(_.getName)
+
+    override def extractInput(input: T): Map[String, Tensor[_]] = {
+      val i = signatureDef.getInputsMap.get(exampleTensorName).getName
+      Map(i -> Tensors.create(input.toByteArray))
+    }
+
+    override def extractOutput(input: T, out: Map[String, Tensor[_]]): V =
+      outFn(input, out)
+  }
+
+  def forInput[T, V](
+    uri: String,
+    options: TensorFlowModel.Options,
+    fetchOp: Seq[String],
+    inFn: T => Map[String, Tensor[_]],
+    outFn: (T, Map[String, Tensor[_]]) => V
+  ): SavedBundlePredictDoFn[T, V] = new SavedBundlePredictDoFn[T, V](uri, options) {
+    override def extractInput(input: T): Map[String, Tensor[_]] = inFn(input)
+
+    override def extractOutput(input: T, out: Map[String, Tensor[_]]): V = outFn(input, out)
+
+    override def outputTensorNames: Seq[String] = fetchOp
   }
 }

@@ -17,21 +17,23 @@
 
 package com.spotify.scio.tensorflow.syntax
 
+import scala.language.implicitConversions
+import scala.reflect.ClassTag
+
+import org.apache.beam.sdk.io.Compression
+import org.tensorflow._
+import org.tensorflow.example.{Example, SequenceExample}
+
 import com.spotify.scio.coders.Coder
+import com.spotify.scio.io.ClosedTap
 import com.spotify.scio.tensorflow.{
   SavedBundlePredictDoFn,
   TFExampleIO,
   TFRecordIO,
   TFSequenceExampleIO
 }
-import com.spotify.scio.io.ClosedTap
 import com.spotify.scio.values.SCollection
 import com.spotify.zoltar.tf.TensorFlowModel
-import org.apache.beam.sdk.io.Compression
-import org.tensorflow._
-import org.tensorflow.example.{Example, SequenceExample}
-
-import scala.reflect.ClassTag
 
 /**
  * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with TensorFlow methods.
@@ -57,7 +59,7 @@ final class PredictSCollectionOps[T: ClassTag](private val self: SCollection[T])
     fetchOps: Seq[String],
     options: TensorFlowModel.Options
   )(inFn: T => Map[String, Tensor[_]])(outFn: (T, Map[String, Tensor[_]]) => V): SCollection[V] =
-    self.parDo(new SavedBundlePredictDoFn[T, V](savedModelUri, options, fetchOps, inFn, outFn))
+    self.parDo(SavedBundlePredictDoFn.forInput[T, V](savedModelUri, options, fetchOps, inFn, outFn))
 }
 
 final class ExampleSCollectionOps[T <: Example](private val self: SCollection[T]) extends AnyVal {
@@ -88,6 +90,22 @@ final class ExampleSCollectionOps[T <: Example](private val self: SCollection[T]
     val param = TFExampleIO.WriteParam(suffix, compression, numShards)
     self.asInstanceOf[SCollection[Example]].write(TFExampleIO(path))(param)
   }
+
+  def predict[V: Coder](
+    savedModelUri: String,
+    options: TensorFlowModel.Options,
+    exampleInputTensorName: String = "inputs",
+    signatureName: String = "serving_default"
+  )(outFn: (T, Map[String, Tensor[_]]) => V): SCollection[V] =
+    self.parDo(
+      SavedBundlePredictDoFn.forTensorflowExample[T, V](
+        savedModelUri,
+        exampleInputTensorName,
+        signatureName,
+        options,
+        outFn
+      )
+    )
 }
 
 object SeqExampleSCollectionOps {

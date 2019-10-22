@@ -80,6 +80,57 @@ private[tensorflow] object TFSavedJob {
   }
 }
 
+private[tensorflow] object TFSavedExampleJob {
+
+  case class Iris(
+    sepalLength: Option[Double],
+    sepalWidth: Option[Double],
+    petalLength: Option[Double],
+    petalWidth: Option[Double],
+    className: Option[String]
+  )
+
+  val Spec: FeatureSpec[Iris] = FeatureSpec
+    .of[Iris]
+    .optional(_.petalLength)(StandardScaler("petal_length", withMean = true))
+    .optional(_.petalWidth)(StandardScaler("petal_width", withMean = true))
+    .optional(_.sepalLength)(StandardScaler("sepal_length", withMean = true))
+    .optional(_.sepalWidth)(StandardScaler("sepal_width", withMean = true))
+
+  def main(argv: Array[String]): Unit = {
+    val (sc, args) = ContextAndArgs(argv)
+    val options = TensorFlowModel.Options.builder
+      .tags(Collections.singletonList("serve"))
+      .build
+    val settings =
+      sc.parallelize(List(Source.fromURL(args("settings")).getLines.mkString))
+
+    val collection =
+      sc.parallelize(List(Iris(Some(5.1), Some(3.5), Some(1.4), Some(0.2), Some("Iris-setosa"))))
+
+    Spec
+      .extractWithSettings(collection, settings)
+      .featureValues[Example]
+      .predict(
+        savedModelUri = args("savedModelUri"),
+        options = options,
+        exampleInputTensorName = "linear/head/predictions/class_ids"
+      ){ (r, o) =>
+        (r, o.map {
+          case (a, outTensor) =>
+            val output = Array.ofDim[Long](1)
+            outTensor.copyTo(output)
+            output(0)
+        }.head)
+      }
+      .map(_._2)
+      .saveAsTextFile(args("output"))
+
+    sc.run().waitUntilDone()
+    ()
+  }
+}
+
 class TensorflowSpec extends PipelineSpec {
   it should "allow saved model prediction" in {
     val resource = getClass.getResource("/trained_model")
@@ -92,4 +143,20 @@ class TensorflowSpec extends PipelineSpec {
       }
       .run()
   }
+<<<<<<< HEAD
+=======
+
+  it should "allow saved model prediction with tf example" in {
+    val resource = getClass.getResource("/trained_model")
+    val settings = getClass.getResource("/settings.json")
+
+    JobTest[TFSavedExampleJob.type]
+      .args(s"--savedModelUri=$resource", s"--settings=$settings", "--output=output")
+      .output(TextIO("output")) { out =>
+        out should containInAnyOrder(List("0"))
+      }
+      .run()
+  }
+
+>>>>>>> Add predict function for tf example
 }
