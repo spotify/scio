@@ -450,10 +450,10 @@ lazy val scioTest: Project = Project(
   )
   .dependsOn(
     scioCore % "test->test;compile->compile;it->it",
-    scioSchemas % "test,it",
-    scioAvro % "compile->test,it->it",
-    scioSql % "compile->test,it->it",
-    scioBigQuery % "compile->test,it->it"
+    scioSchemas % "test;it",
+    scioAvro % "compile->test;it->it",
+    scioSql % "compile->test;it->it",
+    scioBigQuery % "compile->test;it->it"
   )
 
 lazy val scioMacros: Project = Project(
@@ -487,7 +487,7 @@ lazy val scioAvro: Project = Project(
     beamSDKIODependencies
   )
   .dependsOn(
-    scioCore % "compile,it->it"
+    scioCore % "compile;it->it"
   )
   .configs(IntegrationTest)
 
@@ -512,7 +512,7 @@ lazy val scioBigQuery: Project = Project(
     )
   )
   .dependsOn(
-    scioCore % "compile,it->it"
+    scioCore % "compile;it->it"
   )
   .configs(IntegrationTest)
 
@@ -534,7 +534,7 @@ lazy val scioBigtable: Project = Project(
   )
   .dependsOn(
     scioCore,
-    scioTest % "test,it->it"
+    scioTest % "test;it->it"
   )
   .configs(IntegrationTest)
 
@@ -554,7 +554,7 @@ lazy val scioCassandra2: Project = Project(
   )
   .dependsOn(
     scioCore,
-    scioTest % "test,it"
+    scioTest % "test;it"
   )
   .configs(IntegrationTest)
 
@@ -575,7 +575,7 @@ lazy val scioCassandra3: Project = Project(
   )
   .dependsOn(
     scioCore,
-    scioTest % "test,it"
+    scioTest % "test;it"
   )
   .configs(IntegrationTest)
 
