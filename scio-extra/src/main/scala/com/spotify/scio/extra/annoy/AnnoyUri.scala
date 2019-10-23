@@ -92,7 +92,7 @@ private[annoy] class AnnoyWriter(metric: AnnoyMetric, dim: Int, nTrees: Int) {
 
   private val annoy4sIndex = metric match {
     case Angular   => AnnoyWriter.lib.createAngular(dim)
-    case Euclidean => AnnoyWriter.lib.createAngular(dim)
+    case Euclidean => AnnoyWriter.lib.createEuclidean(dim)
   }
 
   def addItem(item: Int, w: Array[Float]): Unit = {
