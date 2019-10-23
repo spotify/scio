@@ -827,7 +827,8 @@ lazy val scioExamples: Project = Project(
         HiddenFileFilter || "TypedBigQueryTornadoes*.scala" || "TypedStorageBigQueryTornadoes*.scala"
       }
     },
-    sources in doc in Compile := List()
+    sources in doc in Compile := List(),
+    run / classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.Flat
   )
   .dependsOn(
     scioCore,
