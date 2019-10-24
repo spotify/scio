@@ -100,7 +100,8 @@ private object Reads {
     val read = typedRead
       .from(table.spec)
       .withMethod(Method.DIRECT_READ)
-      .withReadOptions(StorageUtil.tableReadOptions(selectedFields, rowRestriction))
+      .withSelectedFields(selectedFields.asJava)
+      .withRowRestriction(rowRestriction)
     sc.applyInternal(read)
   }
 }
