@@ -27,13 +27,21 @@ import io.grpc.ClientInterceptor;
 import java.io.IOException;
 
 public class ChannelPoolCreator {
-  public static final BigtableOptions options = new BigtableOptions.Builder().build();
-  public static ClientInterceptor interceptor;
+  private static final BigtableOptions options = BigtableOptions.builder().build();
+  private static ClientInterceptor[] interceptors;
 
   static {
     try {
-      interceptor = CredentialInterceptorCache.getInstance()
-              .getCredentialsInterceptor(options.getCredentialOptions(), options.getRetryOptions());
+      final ClientInterceptor interceptor = CredentialInterceptorCache
+        .getInstance()
+        .getCredentialsInterceptor(options.getCredentialOptions(), options.getRetryOptions());
+
+      // If credentials are unset (i.e. via local emulator), CredentialsInterceptor will return null
+      if (interceptor == null) {
+        interceptors = new ClientInterceptor[] {};
+      } else {
+        interceptors = new ClientInterceptor[] { interceptor };
+      }
     } catch (Exception e) {
       e.printStackTrace();
     }
@@ -41,6 +49,6 @@ public class ChannelPoolCreator {
 
   public static ChannelPool createPool(final BigtableOptions options) throws IOException {
     return new ChannelPool(() ->
-        BigtableSession.createNettyChannel(options.getAdminHost(), options, interceptor), 1);
+        BigtableSession.createNettyChannel(options.getAdminHost(), options, interceptors), 1);
   }
 }
