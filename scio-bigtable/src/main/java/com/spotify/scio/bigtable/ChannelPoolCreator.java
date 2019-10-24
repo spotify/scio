@@ -27,7 +27,7 @@ import io.grpc.ClientInterceptor;
 import java.io.IOException;
 
 public class ChannelPoolCreator {
-  public static final BigtableOptions options = new BigtableOptions.Builder().build();
+  private static final BigtableOptions options = BigtableOptions.builder().build();
   private static ClientInterceptor[] interceptors;
 
   static {
