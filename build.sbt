@@ -110,7 +110,7 @@ val beamSDKIODependencies = Def.settings(
 val magnoliaDependencies = Def.settings(
   libraryDependencies ++= Seq(
     if (scalaBinaryVersion.value == "2.11") {
-      "me.lyh" %% "magnolia" % "0.10.1-jto"
+      "me.lyh" %% "magnolia" % "0.12.1.0-b575bf3"
     } else {
       "com.propensive" %% "magnolia" % magnoliaVersion
     }
