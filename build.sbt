@@ -82,6 +82,10 @@ val generatedGrpcGaVersion = "1.43.0"
 val generatedGrpcBetaVersion = "0.44.0"
 val googleClientsVersion = "1.27.0"
 val googleApiServicesBigQuery = "v2-rev20181104-1.27.0"
+val bigdataossVersion = "1.9.16"
+val gaxVersion = "1.38.0"
+val googleAuthVersion = "0.12.0"
+val bigQueryStorageVersion = "0.79.0-alpha"
 
 lazy val mimaSettings = Seq(
   mimaPreviousArtifacts :=
@@ -519,6 +523,21 @@ lazy val scioBigQuery: Project = Project(
     commonSettings ++ macroSettings ++ itSettings ++ beamRunnerSettings,
     description := "Scio add-on for Google BigQuery",
     libraryDependencies ++= Seq(
+      "com.google.protobuf" % "protobuf-java" % protobufVersion,
+      "org.apache.avro" % "avro" % avroVersion,
+      "com.google.cloud.bigdataoss" % "util" % bigdataossVersion,
+      "com.google.api" % "gax" % gaxVersion,
+      "com.google.api-client" % "google-api-client" % googleClientsVersion,
+      "com.google.apis" % "google-api-services-bigquery" % googleApiServicesBigQuery,
+      "com.google.api.grpc" % "proto-google-cloud-bigquerystorage-v1beta1" % generatedGrpcBetaVersion,
+      "com.google.http-client" % "google-http-client" % googleClientsVersion,
+      "com.google.http-client" % "google-http-client-jackson2" % googleClientsVersion,
+      "com.google.auth" % "google-auth-library-credentials" % googleAuthVersion,
+      "com.google.auth" % "google-auth-library-oauth2-http" % googleAuthVersion,
+      "com.google.cloud" % "google-cloud-bigquerystorage" % bigQueryStorageVersion,
+      "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
+      "org.apache.beam" % "beam-sdks-java-extensions-google-cloud-platform-core" % beamVersion,
+      "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
       "commons-io" % "commons-io" % commonsIoVersion,
       "joda-time" % "joda-time" % jodaTimeVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
