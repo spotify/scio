@@ -545,10 +545,15 @@ lazy val scioBigtable: Project = Project(
   .settings(
     description := "Scio add-on for Google Cloud Bigtable",
     libraryDependencies ++= Seq(
+      "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
+      "joda-time" % "joda-time" % jodaTimeVersion,
+      "com.google.protobuf" % "protobuf-java" % protobufVersion,
+      "com.google.cloud.bigtable" % "bigtable-client-core" % bigtableClientVersion,
+      "com.google.api.grpc" % "proto-google-cloud-bigtable-v2" % generatedGrpcBetaVersion,
+      "com.novocode" % "junit-interface" % junitInterfaceVersion,
+      "org.apache.beam" % "beam-runners-direct-java" % beamVersion % "test",
       "org.scalatest" %% "scalatest" % scalatestVersion % "test",
       "org.hamcrest" % "hamcrest-all" % hamcrestVersion % "test",
-      "org.apache.beam" % "beam-runners-direct-java" % beamVersion % "test",
-      "com.novocode" % "junit-interface" % junitInterfaceVersion,
       "junit" % "junit" % junitVersion % "test"
     ),
     beamSDKIODependencies
