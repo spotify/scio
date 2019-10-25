@@ -504,6 +504,9 @@ lazy val scioAvro: Project = Project(
     commonSettings ++ macroSettings ++ itSettings,
     description := "Scio add-on for working with Avro",
     libraryDependencies ++= Seq(
+      "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
+      "com.twitter" %% "chill" % chillVersion,
+      "com.google.protobuf" % "protobuf-java" % protobufVersion,
       "org.apache.avro" % "avro" % avroVersion exclude ("com.thoughtworks.paranamer", "paranamer"),
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       "org.slf4j" % "slf4j-simple" % slf4jVersion % "test,it",
