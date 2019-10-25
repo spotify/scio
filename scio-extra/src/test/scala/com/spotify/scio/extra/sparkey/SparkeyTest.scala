@@ -55,7 +55,8 @@ class SparkeyTest extends PipelineSpec {
 
     val sc2 = ScioContext()
     val sparkey = sc2.sparkeySideInput(basePath)
-    val contents = sc2.parallelize(Seq(1))
+    val contents = sc2
+      .parallelize(Seq(1))
       .withSideInputs(sparkey)
       .flatMap { case (_, sic) => sic(sparkey).toList }
       .toSCollection
@@ -72,14 +73,15 @@ class SparkeyTest extends PipelineSpec {
   "SCollection" should "support reading in an existing sharded Sparkey collection" in {
     // Create a temporary Sparkey file pair
     val sc = ScioContext()
-    val p = sc.parallelize(sideData).asSparkey(numShards=2).materialize
+    val p = sc.parallelize(sideData).asSparkey(numShards = 2).materialize
     val scioResult = sc.run().waitUntilFinish()
     val sparkeyUri = scioResult.tap(p).value.next().asInstanceOf[ShardedSparkeyUri]
     val globExpression = sparkeyUri.globExpression
 
     val sc2 = ScioContext()
     val sparkey = sc2.sparkeySideInput(globExpression)
-    val contents = sc2.parallelize(Seq(1))
+    val contents = sc2
+      .parallelize(Seq(1))
       .withSideInputs(sparkey)
       .flatMap { case (_, sic) => sic(sparkey).toList }
       .toSCollection
@@ -93,12 +95,13 @@ class SparkeyTest extends PipelineSpec {
 
   "SCollection" should "support .asSparkey with shards" in {
     val sc = ScioContext()
-    val p = sc.parallelize(sideData).asSparkey(numShards=2).materialize
+    val p = sc.parallelize(sideData).asSparkey(numShards = 2).materialize
     val scioResult = sc.run().waitUntilFinish()
 
     val sparkeyUri = scioResult.tap(p).value.next().asInstanceOf[LocalShardedSparkeyUri]
 
-    val allSparkeyFiles = FileSystems.`match`(sparkeyUri.globExpression)
+    val allSparkeyFiles = FileSystems
+      .`match`(sparkeyUri.globExpression)
       .metadata
       .asScala
       .map(_.resourceId.toString)
@@ -185,7 +188,7 @@ class SparkeyTest extends PipelineSpec {
 
     val input = Seq("a", "b", "a", "b")
 
-    val sparkey = sc.parallelize(sideData).asSparkey(numShards=2)
+    val sparkey = sc.parallelize(sideData).asSparkey(numShards = 2)
     val sparkeyMaterialized = sparkey.materialize
     val si = sparkey.asSparkeySideInput
     val result = sc
@@ -241,7 +244,7 @@ class SparkeyTest extends PipelineSpec {
 
     MockCache.reset()
 
-    val sparkey = sc.parallelize(sideData).asSparkey(numShards=2)
+    val sparkey = sc.parallelize(sideData).asSparkey(numShards = 2)
     val sparkeyMaterialized = sparkey.materialize
     val si = sparkey.asCachedStringSparkeySideInput(
       MockCache.getInstance.asInstanceOf[Cache[String, String]]
@@ -401,7 +404,7 @@ class SparkeyTest extends PipelineSpec {
 
     MockCache.reset()
 
-    val sparkey = sc.parallelize(typedSideData).mapValues(_.mkString(",")).asSparkey(numShards=2)
+    val sparkey = sc.parallelize(typedSideData).mapValues(_.mkString(",")).asSparkey(numShards = 2)
     val sparkeyMaterialized = sparkey.materialize
 
     val si = sparkey.asTypedSparkeySideInput[Object](MockCache.getInstance) { b: Array[Byte] =>
