@@ -491,7 +491,8 @@ lazy val scioMacros: Project = Project(
   libraryDependencies ++= Seq(
     "com.chuusai" %% "shapeless" % shapelessVersion,
     "com.esotericsoftware" % "kryo-shaded" % kryoVersion,
-    "org.apache.beam" % "beam-sdks-java-extensions-sql" % beamVersion
+    "org.apache.beam" % "beam-sdks-java-extensions-sql" % beamVersion,
+    "org.apache.avro" % "avro" % avroVersion
   ),
   magnoliaDependencies
 )
