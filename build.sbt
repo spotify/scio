@@ -40,7 +40,6 @@ val commonsMath3Version = "3.6.1"
 val commonsLang3Version = "3.6"
 val commonsCompressVersion = "1.19"
 val commonsTextVersion = "1.8"
-val commonsCompress = "1.19"
 val elasticsearch2Version = "2.4.6"
 val elasticsearch5Version = "5.6.16"
 val elasticsearch6Version = "6.8.3"
@@ -842,20 +841,18 @@ lazy val scioTensorFlow: Project = Project(
     Compile / managedSourceDirectories := (Compile / managedSourceDirectories).value
       .filterNot(_.getPath.endsWith("/src_managed/main")),
     libraryDependencies ++= Seq(
+      "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.tensorflow" % "tensorflow" % tensorFlowVersion,
       "org.tensorflow" % "proto" % tensorFlowVersion,
-      "org.apache.commons" % "commons-compress" % commonsCompress,
+      "org.apache.commons" % "commons-compress" % commonsCompressVersion,
       "com.spotify" %% "featran-core" % featranVersion,
       "com.spotify" %% "featran-scio" % featranVersion,
       "com.spotify" %% "featran-tensorflow" % featranVersion,
       "com.spotify" % "zoltar-api" % zoltarVersion,
-      "com.spotify" % "zoltar-tensorflow" % zoltarVersion
+      "com.spotify" % "zoltar-tensorflow" % zoltarVersion,
+      "org.slf4j" % "slf4j-api" % slf4jVersion,
+      "me.lyh" %% "shapeless-datatype-tensorflow" % shapelessDatatypeVersion % Test
     ),
-    libraryDependencies ++= Seq(
-      "io.circe" %% "circe-core",
-      "io.circe" %% "circe-generic",
-      "io.circe" %% "circe-parser"
-    ).map(_ % circeVersion),
     javaOptions += "-Dscio.ignoreVersionWarning=true"
   )
   .dependsOn(
