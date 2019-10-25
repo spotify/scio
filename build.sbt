@@ -37,6 +37,7 @@ val chillVersion = "0.9.3"
 val circeVersion = "0.11.1"
 val commonsIoVersion = "2.6"
 val commonsMath3Version = "3.6.1"
+val commonsCompressVersion = "1.19"
 val commonsTextVersion = "1.8"
 val commonsCompress = "1.19"
 val elasticsearch2Version = "2.4.6"
@@ -49,7 +50,7 @@ val gcsVersion = "1.8.0"
 val guavaVersion = "25.1-jre"
 val hadoopVersion = "2.7.7"
 val hamcrestVersion = "1.3"
-val jacksonScalaModuleVersion = "2.9.10"
+val jacksonVersion = "2.9.10"
 val javaLshVersion = "0.12"
 val jlineVersion = "2.14.6"
 val jodaTimeVersion = "2.10.5"
@@ -76,6 +77,11 @@ val grpcVersion = "1.17.1"
 val caseappVersion = "2.0.0-M9"
 val sparkVersion = "2.4.3"
 val caffeineVersion = "2.8.0"
+val bigtableClientVersion = "1.8.0"
+val generatedGrpcGaVersion = "1.43.0"
+val generatedGrpcBetaVersion = "0.44.0"
+val googleClientsVersion = "1.27.0"
+val googleApiServicesBigQuery = "v2-rev20181104-1.27.0"
 
 lazy val mimaSettings = Seq(
   mimaPreviousArtifacts :=
@@ -372,23 +378,34 @@ lazy val scioCore: Project = Project(
       "org.apache.beam" % "beam-runners-spark" % beamVersion % Provided exclude (
         "com.fasterxml.jackson.module", "jackson-module-scala_2.11"
       ),
+      "com.chuusai" %% "shapeless" % shapelessVersion,
       "com.twitter" %% "algebird-core" % algebirdVersion,
       "com.twitter" %% "chill" % chillVersion,
       "com.twitter" %% "chill-algebird" % chillVersion,
       "com.twitter" % "chill-protobuf" % chillVersion,
       "com.esotericsoftware" % "kryo-shaded" % kryoVersion,
       "commons-io" % "commons-io" % commonsIoVersion,
+      "org.apache.avro" % "avro" % avroVersion,
       "org.apache.commons" % "commons-math3" % commonsMath3Version,
-      "com.fasterxml.jackson.module" %% "jackson-module-scala" % jacksonScalaModuleVersion,
+      "org.apache.commons" % "commons-compress" % commonsCompressVersion,
+      "com.fasterxml.jackson.module" %% "jackson-module-scala" % jacksonVersion,
+      "com.fasterxml.jackson.core" % "jackson-databind" % jacksonVersion,
+      "me.lyh" %% "protobuf-generic" % protobufGenericVersion,
+      "org.apache.xbean" % "xbean-asm7-shaded" % asmVersion,
       "com.google.auto.service" % "auto-service" % autoServiceVersion,
       "com.google.guava" % "guava" % guavaVersion,
       "com.google.protobuf" % "protobuf-java" % protobufVersion,
-      "me.lyh" %% "protobuf-generic" % protobufGenericVersion,
-      "org.apache.xbean" % "xbean-asm7-shaded" % asmVersion,
+      "com.google.apis" % "google-api-services-bigquery" % googleApiServicesBigQuery,
+      "com.google.api.grpc" % "grpc-google-cloud-pubsub-v1" % generatedGrpcGaVersion,
+      "com.google.api.grpc" % "proto-google-cloud-datastore-v1" % generatedGrpcBetaVersion,
+      "com.google.http-client" % "google-http-client" % googleClientsVersion,
+      "com.google.http-client" % "google-http-client-jackson2" % googleClientsVersion,
       "io.grpc" % "grpc-core" % grpcVersion,
       "io.grpc" % "grpc-auth" % grpcVersion,
       "io.grpc" % "grpc-netty" % grpcVersion,
       "com.github.alexarchambault" %% "case-app" % caseappVersion,
+      "joda-time" % "joda-time" % jodaTimeVersion,
+      "org.slf4j" % "slf4j-api" % slf4jVersion,
       "org.scalatest" %% "scalatest" % scalatestVersion % Test
     ),
     magnoliaDependencies
