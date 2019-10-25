@@ -21,7 +21,6 @@ import java.nio.charset.Charset
 import java.util
 import java.util.{UUID, List => JList}
 import java.util.function.{Function => JFunction}
-import java.util.zip.CRC32
 
 import com.github.benmanes.caffeine.cache.Cache
 import com.spotify.scio.ScioContext
@@ -33,6 +32,7 @@ import org.apache.beam.sdk.values.PCollectionView
 import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConverters._
+import scala.util.hashing.MurmurHash3
 
 /**
  * Main package for Sparkey side input APIs. Import all.
@@ -52,7 +52,7 @@ import scala.collection.JavaConverters._
  * val s1: SCollection[SparkeyUri] = s.asSparkey("gs://<bucket>/<path>/<sparkey-prefix>")
  * }}}
  *
- * // with multiple shards, sharded by CRC32 of the key - will save in "/part-0000*-of-00002.sp[il]"
+ * // with multiple shards, sharded by MurmurHash3 of the key
  * val s1: SCollection[SparkeyUri] = s.asSparkey("gs://<bucket>/<path>/<sparkey-dir>", numShards=2)
  * }}}
  *
@@ -204,7 +204,7 @@ package object sparkey {
      *                       the index file
      * @param numShards (optional) the number of shards to split this dataset into before writing.
      *                  One pair of Sparkey files will be written for each shard, sharded
-     *                  by CRC32 of the key mod the number of shards.
+     *                  by MurmurHash3 of the key mod the number of shards.
      * @return A singleton SCollection containing the [[SparkeyUri]] of the saved files.
      */
     def asSparkey(
@@ -247,7 +247,7 @@ package object sparkey {
 
           self.transform { collection =>
             collection
-              .groupBy { case (k, _) => (w.crc32(k) % shardCount).toShort }
+              .groupBy { case (k, _) => (w.shardHash(k) % shardCount).toShort }
               .map {
                 case (shard, xs) =>
                   writeToSparkey(
@@ -399,17 +399,13 @@ package object sparkey {
 
   /**
    * A wrapper class around SparkeyReader that allows the reading of multiple Sparkey files,
-   * sharded by their keys (via CRC32). At most 32,768 Sparkey files are supported.
+   * sharded by their keys (via MurmurHash3). At most 32,768 Sparkey files are supported.
    * @param sparkeys a map of shard ID to sparkey reader
    * @param numShards the total count of shards used (needed for keying as some shards may be empty)
    */
   class ShardedSparkeyReader(val sparkeys: Map[Short, SparkeyReader], val numShards: Short)
       extends SparkeyReader {
-    def hashKey(arr: Array[Byte]): Short = {
-      val crc = new CRC32()
-      crc.update(arr)
-      (crc.getValue % numShards).toShort
-    }
+    def hashKey(arr: Array[Byte]): Short = (MurmurHash3.bytesHash(arr, 1) % numShards).toShort
 
     def hashKey(str: String): Short = hashKey(str.getBytes)
 
@@ -536,18 +532,14 @@ package object sparkey {
 
   sealed trait SparkeyWritable[K, V] extends Serializable {
     private[sparkey] def put(w: SparkeyWriter, key: K, value: V): Unit
-    private[sparkey] def crc32(key: K): Long
+    private[sparkey] def shardHash(key: K): Int
   }
 
   implicit val stringSparkeyWritable = new SparkeyWritable[String, String] {
     def put(w: SparkeyWriter, key: String, value: String): Unit =
       w.put(key, value)
 
-    def crc32(key: String): Long = {
-      val crc = new CRC32()
-      crc.update(key.getBytes)
-      crc.getValue
-    }
+    def shardHash(key: String): Int = MurmurHash3.stringHash(key, 1)
   }
 
   implicit val ByteArraySparkeyWritable =
@@ -555,11 +547,7 @@ package object sparkey {
       def put(w: SparkeyWriter, key: Array[Byte], value: Array[Byte]): Unit =
         w.put(key, value)
 
-      def crc32(key: Array[Byte]): Long = {
-        val crc = new CRC32()
-        crc.update(key)
-        crc.getValue
-      }
+      def shardHash(key: Array[Byte]): Int = MurmurHash3.bytesHash(key, 1)
     }
 
 }
