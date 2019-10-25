@@ -39,6 +39,7 @@ import scala.collection.JavaConverters._
 trait SparkeyUri extends Serializable {
   val basePath: String
   def getReader: SparkeyReader
+
   private[sparkey] def exists: Boolean
   override def toString: String = basePath
 }
@@ -62,9 +63,10 @@ private class LocalSparkeyUri(val basePath: String) extends SparkeyUri {
     SparkeyUri.extensions.map(e => new File(basePath + e)).exists(_.exists)
 }
 
-private class RemoteSparkeyUri(val basePath: String, options: PipelineOptions) extends SparkeyUri {
+private class RemoteSparkeyUri(val basePath: String, val rfu: RemoteFileUtil) extends SparkeyUri {
 
-  val rfu: RemoteFileUtil = RemoteFileUtil.create(options)
+  def this(basePath: String, options: PipelineOptions) =
+    this(basePath, RemoteFileUtil.create(options))
 
   override def getReader: SparkeyReader = {
     val uris = SparkeyUri.extensions.map(e => new URI(basePath + e))
@@ -84,7 +86,11 @@ private[sparkey] class SparkeyWriter(val uri: SparkeyUri, maxMemoryUsage: Long =
       Files.createTempDirectory("sparkey-").resolve("data").toString
   }
 
-  private lazy val delegate = Sparkey.createNew(new File(localFile))
+  private lazy val delegate = {
+    val file = new File(localFile)
+    Files.createDirectories(file.getParentFile.toPath)
+    Sparkey.createNew(file)
+  }
 
   def put(key: String, value: String): Unit = delegate.put(key, value)
 
