@@ -37,6 +37,7 @@ val chillVersion = "0.9.3"
 val circeVersion = "0.11.1"
 val commonsIoVersion = "2.6"
 val commonsMath3Version = "3.6.1"
+val commonsLang3Version = "3.6"
 val commonsCompressVersion = "1.19"
 val commonsTextVersion = "1.8"
 val commonsCompress = "1.19"
@@ -432,7 +433,8 @@ lazy val scioSql: Project = Project(
     description := "Scio - SQL extension",
     libraryDependencies ++= Seq(
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
-      "org.apache.beam" % "beam-sdks-java-extensions-sql" % beamVersion
+      "org.apache.beam" % "beam-sdks-java-extensions-sql" % beamVersion,
+      "org.apache.commons" % "commons-lang3" % commonsLang3Version
     )
   )
   .dependsOn(
