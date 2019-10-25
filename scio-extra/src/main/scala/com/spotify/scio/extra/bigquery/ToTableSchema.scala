@@ -20,9 +20,9 @@ package com.spotify.scio.extra.bigquery
 import com.google.api.services.bigquery.model.{TableFieldSchema, TableSchema}
 import com.spotify.scio.annotations.experimental
 import com.spotify.scio.extra.bigquery.Implicits.AvroConversionException
-import org.apache.avro.Schema
 import org.apache.avro.Schema.Type
 import org.apache.avro.Schema.Type._
+import org.apache.avro.{LogicalType, Schema}
 
 import scala.collection.JavaConverters._
 
@@ -84,8 +84,13 @@ trait ToTableSchema {
       field.setMode("REQUIRED")
     }
 
-    avroToBQTypes.get(schemaType).foreach { bqType =>
-      field.setType(bqType)
+    val logicalType = schema.getLogicalType
+    if (logicalType != null) {
+      field.setType(typeFromLogicalType(logicalType))
+    } else {
+      avroToBQTypes.get(schemaType).foreach { bqType =>
+        field.setType(bqType)
+      }
     }
 
     schemaType match {
@@ -154,4 +159,15 @@ trait ToTableSchema {
     field.setFields(List(keyField, valueField).asJava)
     ()
   }
+
+  import org.apache.avro.LogicalTypes._
+  private def typeFromLogicalType(logicalType: LogicalType): String = logicalType match {
+    case _: Date            => "DATE"
+    case _: TimeMillis      => "TIME"
+    case _: TimeMicros      => "TIME"
+    case _: TimestampMillis => "TIMESTAMP"
+    case _: TimestampMicros => "TIMESTAMP"
+    case _  => throw new IllegalStateException(s"Uknown Logical Type: ${logicalType.getName}")
+  }
+
 }

@@ -100,4 +100,60 @@ class ToTableSchemaTest extends AnyFlatSpec with Matchers with ToTableSchema {
         ).asJava
       )
   }
+
+  "toTableSchema" should "convert an Avro Schema with Logical Types to a BigQuery TableSchema" in {
+    toTableSchema(AvroExampleWithLogicalType.SCHEMA$) shouldEqual
+      new TableSchema().setFields(
+        List(
+          new TableFieldSchema()
+            .setName("intField")
+            .setType("INTEGER")
+            .setMode("REQUIRED"),
+          new TableFieldSchema()
+            .setName("stringField")
+            .setType("STRING")
+            .setMode("REQUIRED"),
+          new TableFieldSchema()
+            .setName("booleanField")
+            .setType("BOOLEAN")
+            .setMode("REQUIRED"),
+          new TableFieldSchema()
+            .setName("longField")
+            .setType("INTEGER")
+            .setMode("REQUIRED"),
+          new TableFieldSchema()
+            .setName("doubleField")
+            .setType("FLOAT")
+            .setMode("REQUIRED"),
+          new TableFieldSchema()
+            .setName("floatField")
+            .setType("FLOAT")
+            .setMode("REQUIRED"),
+          new TableFieldSchema()
+            .setName("bytesField")
+            .setType("BYTES")
+            .setMode("REQUIRED"),
+          new TableFieldSchema()
+            .setName("dateField")
+            .setType("DATE")
+            .setMode("REQUIRED"),
+          new TableFieldSchema()
+            .setName("timeMillisField")
+            .setType("TIME")
+            .setMode("REQUIRED"),
+          new TableFieldSchema()
+            .setName("timeMicrosField")
+            .setType("TIME")
+            .setMode("REQUIRED"),
+          new TableFieldSchema()
+            .setName("timestampMillisField")
+            .setType("TIMESTAMP")
+            .setMode("REQUIRED"),
+          new TableFieldSchema()
+            .setName("timestampMicrosField")
+            .setType("TIMESTAMP")
+            .setMode("REQUIRED")
+        ).asJava
+      )
+  }
 }

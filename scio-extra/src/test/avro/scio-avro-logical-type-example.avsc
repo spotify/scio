@@ -1,0 +1,19 @@
+{
+  "type": "record",
+  "namespace": "com.spotify.scio.extra.bigquery",
+  "name": "AvroExampleWithLogicalType",
+  "fields": [
+    {"name": "intField", "type": "int"},
+    {"name": "stringField", "type": "string"},
+    {"name": "booleanField", "type": "boolean"},
+    {"name": "longField", "type": "long"},
+    {"name": "doubleField", "type": "double"},
+    {"name": "floatField", "type": "float"},
+    {"name": "bytesField", "type": "bytes"},
+    {"name": "dateField", "type": { "type":  "int", "logicalType":  "date" }},
+    {"name": "timeMillisField", "type":{ "type":  "int", "logicalType":  "time-millis"}},
+    {"name": "timeMicrosField", "type": { "type":  "long", "logicalType":  "time-micros"}},
+    {"name": "timestampMillisField", "type": { "type":  "long", "logicalType":  "timestamp-millis"}},
+    {"name": "timestampMicrosField", "type": { "type":  "long", "logicalType":  "timestamp-micros"}}
+  ]
+}

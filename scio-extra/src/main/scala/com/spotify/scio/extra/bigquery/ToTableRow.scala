@@ -26,6 +26,7 @@ import com.spotify.scio.extra.bigquery.Implicits.AvroConversionException
 import org.apache.avro.Schema
 import org.apache.avro.generic.{GenericFixed, IndexedRecord}
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.io.BaseEncoding
+import org.joda.time.{DateTime, LocalDate, LocalTime}
 
 import scala.collection.JavaConverters._
 
@@ -62,6 +63,9 @@ trait ToTableRow {
       case x: util.Map[_, _]        => toTableRowFromMap(x.asScala, field)
       case x: java.lang.Iterable[_] => toTableRowFromIterable(x.asScala, field)
       case x: IndexedRecord         => toTableRow(x)
+      case x: LocalDate             => x
+      case x: LocalTime             => x
+      case x: DateTime              => x
       case _ =>
         throw AvroConversionException(
           s"ToTableRow conversion failed:" +
