@@ -106,7 +106,7 @@ class SparkeyTest extends PipelineSpec {
     val basePaths = allSparkeyFiles.map(_.replaceAll("\\.sp[il]$", "")).toSet
 
     val readers = basePaths.map(basePath => Sparkey.open(new File(basePath)))
-    readers.map(_.toMap).reduce(_ ++ _) shouldBe sideData.toMap
+    readers.map(_.toMap.toList.toMap).reduce(_ ++ _) shouldBe sideData.toMap
 
     FileUtils.deleteDirectory(new File(sparkeyUri.basePath))
   }
