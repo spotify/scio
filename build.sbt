@@ -88,6 +88,7 @@ val googleAuthVersion = "0.12.0"
 val bigQueryStorageVersion = "0.79.0-alpha"
 val httpCoreVersion = "4.4.11"
 val googleCloudSpannerVersion = "1.6.0"
+val datastoreV1ProtoClientVersion = "1.6.0"
 
 lazy val mimaSettings = Seq(
   mimaPreviousArtifacts :=
@@ -890,14 +891,25 @@ lazy val scioExamples: Project = Project(
   .settings(macroSettings)
   .settings(
     libraryDependencies ++= Seq(
+      "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
+      "org.apache.beam" % "beam-sdks-java-extensions-google-cloud-platform-core" % beamVersion,
+      "org.apache.avro" % "avro" % avroVersion,
+      "com.google.cloud.datastore" % "datastore-v1-proto-client" % datastoreV1ProtoClientVersion,
+      "com.google.api.grpc" % "proto-google-cloud-datastore-v1" % generatedGrpcBetaVersion,
+      "com.google.api.grpc" % "proto-google-cloud-bigtable-v2" % generatedGrpcBetaVersion,
+      "com.google.cloud.sql" % "mysql-socket-factory" % "1.0.15",
+      "com.google.apis" % "google-api-services-bigquery" % googleApiServicesBigQuery,
+      "org.tensorflow" % "proto" % tensorFlowVersion,
       "me.lyh" %% "shapeless-datatype-avro" % shapelessDatatypeVersion,
       "me.lyh" %% "shapeless-datatype-datastore" % shapelessDatatypeVersion,
       "me.lyh" %% "shapeless-datatype-tensorflow" % shapelessDatatypeVersion,
       "mysql" % "mysql-connector-java" % "8.0.18",
-      "com.google.cloud.sql" % "mysql-socket-factory" % "1.0.15",
+      "joda-time" % "joda-time" % jodaTimeVersion,
+      "com.github.alexarchambault" %% "case-app" % caseappVersion,
       "org.slf4j" % "slf4j-simple" % slf4jVersion,
       "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test"
     ),
+    beamSDKIODependencies,
     // exclude problematic sources if we don't have GCP credentials
     excludeFilter in unmanagedSources := {
       if (BuildCredentials.exists) {
