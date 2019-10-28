@@ -72,8 +72,10 @@ trait ShardedSparkeyUri extends SparkeyUri {
         val basePaths = indexPaths.map(_.replaceAll("\\.spi$", ""))
 
         (basePaths, numShards)
-      case _ => throw new InvalidShards(
-        s"Expected all .spi files to end with the same shard count, but found: $distinctNumShards.")
+      case _ =>
+        throw new InvalidShards(
+          s"Expected all .spi files to end with the same shard count, but found: $distinctNumShards."
+        )
     }
   }
 
@@ -98,14 +100,12 @@ private[sparkey] object ShardedSparkeyUri {
   private[sparkey] def localReadersByShard(
     localBasePaths: Iterable[String]
   ): Map[Short, SparkeyReader] =
-    localBasePaths
-      .iterator
-      .map(
-        path => {
-          val shardIndex = ShardedSparkeyUri.shardIndexFromPath(path)
-          val reader = new ThreadLocalSparkeyReader(new File(path + ".spi"))
-          (shardIndex, reader)
-        })
+    localBasePaths.iterator
+      .map(path => {
+        val shardIndex = ShardedSparkeyUri.shardIndexFromPath(path)
+        val reader = new ThreadLocalSparkeyReader(new File(path + ".spi"))
+        (shardIndex, reader)
+      })
       .toMap
 }
 
