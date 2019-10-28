@@ -112,4 +112,3 @@ private[tensorflow] class SavedBundlePredictDoFn[T, V](
   }
 
 }
-
