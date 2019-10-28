@@ -52,7 +52,7 @@ val hamcrestVersion = "1.3"
 val jacksonScalaModuleVersion = "2.9.10"
 val javaLshVersion = "0.12"
 val jlineVersion = "2.14.6"
-val jodaTimeVersion = "2.10.4"
+val jodaTimeVersion = "2.10.5"
 val junitInterfaceVersion = "0.11"
 val junitVersion = "4.12"
 val kantanCsvVersion = "0.5.1"
@@ -69,7 +69,7 @@ val shapelessVersion = "2.3.3"
 val shapelessDatatypeVersion = "0.2.0"
 val slf4jVersion = "1.7.28"
 val sparkeyVersion = "3.0.0"
-val tensorFlowVersion = "1.13.1"
+val tensorFlowVersion = "1.15.0"
 val zoltarVersion = "0.5.6"
 val magnoliaVersion = "0.12.0"
 val grpcVersion = "1.17.1"
@@ -236,6 +236,7 @@ lazy val itSettings = Defaults.itSettings ++ Seq(
     }
   }
 ) ++
+  inConfig(IntegrationTest)(run / fork := true) ++
   inConfig(IntegrationTest)(BloopDefaults.configSettings) ++
   inConfig(IntegrationTest)(scalafmtConfigSettings) ++
   inConfig(IntegrationTest)(scalafixConfigSettings(IntegrationTest))
@@ -347,6 +348,7 @@ lazy val root: Project = Project("scio", file("."))
     scioTensorFlow,
     scioSchemas,
     scioSpanner,
+    scioSql,
     scioExamples,
     scioRepl,
     scioJmh,

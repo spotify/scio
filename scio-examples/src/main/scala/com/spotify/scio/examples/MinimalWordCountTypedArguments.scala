@@ -59,7 +59,6 @@ object MinimalWordCountTypedArguments {
       }
       // Map `(String, Long)` tuples into strings
       .map(t => t._1 + ": " + t._2)
-
       // Save result as text files under the output path
       .saveAsTextFile(args.output)
 
