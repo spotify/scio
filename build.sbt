@@ -348,6 +348,7 @@ lazy val root: Project = Project("scio", file("."))
     scioTensorFlow,
     scioSchemas,
     scioSpanner,
+    scioSql,
     scioExamples,
     scioRepl,
     scioJmh,
