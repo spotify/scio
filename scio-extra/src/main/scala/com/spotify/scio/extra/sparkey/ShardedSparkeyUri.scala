@@ -74,7 +74,7 @@ trait ShardedSparkeyUri extends SparkeyUri {
         (basePaths, numShards)
       case _ =>
         throw new InvalidShards(
-          s"Expected all .spi files to end with the same shard count, but found: $distinctNumShards."
+          s"Expected .spi files to end with the same shard count, got: $distinctNumShards."
         )
     }
   }
