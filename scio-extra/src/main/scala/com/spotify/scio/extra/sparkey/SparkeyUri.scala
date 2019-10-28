@@ -21,6 +21,7 @@ import java.io.File
 import java.net.URI
 import java.nio.file.{Files, Paths}
 
+import com.spotify.scio.coders.Coder
 import com.spotify.scio.util.{RemoteFileUtil, ScioUtil}
 import com.spotify.sparkey.extra.ThreadLocalSparkeyReader
 import com.spotify.sparkey.{Sparkey, SparkeyReader}
@@ -48,9 +49,11 @@ private[sparkey] object SparkeyUri {
     if (ScioUtil.isLocalUri(new URI(basePath))) {
       LocalSparkeyUri(basePath)
     } else {
-      new RemoteSparkeyUri(basePath, opts)
+      RemoteSparkeyUri(basePath, opts)
     }
   def extensions: Seq[String] = Seq(".spi", ".spl")
+
+  implicit def coderSparkeyURI: Coder[SparkeyUri] = Coder.kryo[SparkeyUri]
 }
 
 private case class LocalSparkeyUri(basePath: String) extends SparkeyUri {
@@ -60,10 +63,12 @@ private case class LocalSparkeyUri(basePath: String) extends SparkeyUri {
     SparkeyUri.extensions.map(e => new File(basePath + e)).exists(_.exists)
 }
 
-private case class RemoteSparkeyUri(basePath: String, rfu: RemoteFileUtil) extends SparkeyUri {
+private object RemoteSparkeyUri {
+  def apply(basePath: String, options: PipelineOptions): RemoteSparkeyUri =
+    RemoteSparkeyUri(basePath, RemoteFileUtil.create(options))
+}
 
-  def this(basePath: String, options: PipelineOptions) =
-    this(basePath, RemoteFileUtil.create(options))
+private case class RemoteSparkeyUri(basePath: String, rfu: RemoteFileUtil) extends SparkeyUri {
 
   override def getReader: SparkeyReader = {
     val uris = SparkeyUri.extensions.map(e => new URI(basePath + e))

@@ -20,6 +20,7 @@ package com.spotify.scio.extra.sparkey
 import java.io.File
 import java.net.URI
 
+import com.spotify.scio.coders.Coder
 import com.spotify.scio.util.{RemoteFileUtil, ScioUtil}
 import com.spotify.sparkey.SparkeyReader
 import com.spotify.sparkey.extra.ThreadLocalSparkeyReader
@@ -34,17 +35,19 @@ import scala.collection.JavaConverters._
  */
 trait ShardedSparkeyUri extends SparkeyUri {
   val basePath: String
-  def getReader: ShardedSparkeyReader
+  override def getReader: ShardedSparkeyReader
 
   private[sparkey] def exists: Boolean
   override def toString: String = basePath
+
+  implicit def coderSparkeyURI: Coder[ShardedSparkeyUri] = Coder.kryo[ShardedSparkeyUri]
 
   def basePathForShard(shardIndex: Short, numShards: Short): String =
     f"$basePath/part-$shardIndex%05d-of-$numShards%05d"
 
   def sparkeyUriForShard(shardIndex: Short, numShards: Short): SparkeyUri
 
-  lazy val globExpression = s"$basePath/part-*"
+  val globExpression = s"$basePath/part-*"
 
   private[sparkey] def basePathsAndCount(): (Seq[String], Short) = {
     val matchResult: MatchResult = FileSystems.`match`(globExpression)
@@ -54,29 +57,28 @@ trait ShardedSparkeyUri extends SparkeyUri {
     val allStartParts = indexPaths.map(ShardedSparkeyUri.shardIndexFromPath)
     val allEndParts = indexPaths.map(ShardedSparkeyUri.numShardsFromPath)
 
-    val distinctNumShards = allEndParts.toSet
-    if (distinctNumShards.isEmpty) {
-      (Seq.empty[String], 0)
-    } else {
-      require(
-        distinctNumShards.size == 1,
-        s"Expected all .spi files to end with the same shard count, but found: $distinctNumShards."
-      )
+    val distinctNumShards = allEndParts.distinct.toList
 
-      val numShards = distinctNumShards.iterator.next
+    distinctNumShards match {
+      case Nil => (Seq.empty[String], 0)
+      case numShards :: Nil =>
+        val numShardFiles = allStartParts.toSet.size
+        require(
+          numShardFiles <= numShards,
+          "Expected the number of Sparkey shards to be less than or equal to the " +
+            s"total shard count ($numShards), but found $numShardFiles"
+        )
 
-      val numShardFiles = allStartParts.toSet.size
-      require(
-        numShardFiles <= numShards,
-        "Expected the number of Sparkey shards to be less than or equal to the " +
-          s"total shard count ($numShards), but found $numShardFiles"
-      )
+        val basePaths = indexPaths.map(_.replaceAll("\\.spi$", ""))
 
-      val basePaths = indexPaths.map(_.replaceAll("\\.spi$", ""))
-
-      (basePaths, numShards)
+        (basePaths, numShards)
+      case _ => throw new InvalidShards(
+        s"Expected all .spi files to end with the same shard count, but found: $distinctNumShards.")
     }
   }
+
+  case class InvalidShards(str: String) extends RuntimeException(str)
+
 }
 
 private[sparkey] object ShardedSparkeyUri {
@@ -95,17 +97,16 @@ private[sparkey] object ShardedSparkeyUri {
 
   private[sparkey] def localReadersByShard(
     localBasePaths: Iterable[String]
-  ): Map[Short, SparkeyReader] = {
+  ): Map[Short, SparkeyReader] =
     localBasePaths
+      .iterator
       .map(
-        path =>
-          (
-            ShardedSparkeyUri.shardIndexFromPath(path),
-            new ThreadLocalSparkeyReader(new File(path + ".spi"))
-          )
-      )
+        path => {
+          val shardIndex = ShardedSparkeyUri.shardIndexFromPath(path)
+          val reader = new ThreadLocalSparkeyReader(new File(path + ".spi"))
+          (shardIndex, reader)
+        })
       .toMap
-  }
 }
 
 private case class LocalShardedSparkeyUri(basePath: String) extends ShardedSparkeyUri {
@@ -120,7 +121,7 @@ private case class LocalShardedSparkeyUri(basePath: String) extends ShardedSpark
       .exists(path => SparkeyUri.extensions.map(e => new File(path + e)).exists(_.exists))
 
   override def sparkeyUriForShard(shardIndex: Short, numShards: Short): LocalSparkeyUri =
-    new LocalSparkeyUri(basePathForShard(shardIndex, numShards))
+    LocalSparkeyUri(basePathForShard(shardIndex, numShards))
 }
 
 private case class RemoteShardedSparkeyUri(basePath: String, rfu: RemoteFileUtil)
@@ -149,7 +150,7 @@ private case class RemoteShardedSparkeyUri(basePath: String, rfu: RemoteFileUtil
   }
 
   override def sparkeyUriForShard(shardIndex: Short, numShards: Short): RemoteSparkeyUri =
-    new RemoteSparkeyUri(basePathForShard(shardIndex, numShards), rfu)
+    RemoteSparkeyUri(basePathForShard(shardIndex, numShards), rfu)
 
   override private[sparkey] def exists: Boolean =
     basePathsAndCount()._1

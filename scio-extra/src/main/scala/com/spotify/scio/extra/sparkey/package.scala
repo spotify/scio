@@ -171,8 +171,8 @@ package object sparkey {
       sparkeySideInput(basePath).map(reader => new CachedStringSparkeyReader(reader, cache))
   }
 
-  private val DEFAULT_NUM_SHARDS: Short = 1
-  private val DEFAULT_SIDE_INPUT_NUM_SHARDS: Short = 64
+  private val DefaultNumShards: Short = 1
+  private val DefaultSideInputNumShards: Short = 64
 
   private def writeToSparkey[K, V](
     uri: SparkeyUri,
@@ -210,7 +210,7 @@ package object sparkey {
     def asSparkey(
       path: String = null,
       maxMemoryUsage: Long = -1,
-      numShards: Short = DEFAULT_NUM_SHARDS
+      numShards: Short = DefaultNumShards
     )(
       implicit w: SparkeyWritable[K, V],
       koder: Coder[K],
@@ -257,7 +257,7 @@ package object sparkey {
                   )
               }
               .groupBy(_ => Unit)
-              .map(_ => uri)
+              .map(_ => uri: SparkeyUri)
           }
       }
     }
@@ -281,7 +281,7 @@ package object sparkey {
      *
      * @param numShards the number of shards to use when writing the Sparkey file(s).
      */
-    def asSparkeySideInput(numShards: Short = DEFAULT_SIDE_INPUT_NUM_SHARDS)(
+    def asSparkeySideInput(numShards: Short = DefaultSideInputNumShards)(
       implicit w: SparkeyWritable[K, V],
       koder: Coder[K],
       voder: Coder[V]
@@ -324,7 +324,7 @@ package object sparkey {
      */
     def asTypedSparkeySideInput[T](
       cache: Cache[String, T],
-      numShards: Short = DEFAULT_SIDE_INPUT_NUM_SHARDS
+      numShards: Short = DefaultSideInputNumShards
     )(
       decoder: Array[Byte] => T
     )(
@@ -341,7 +341,7 @@ package object sparkey {
      */
     def asCachedStringSparkeySideInput(
       cache: Cache[String, String],
-      numShards: Short = DEFAULT_SIDE_INPUT_NUM_SHARDS
+      numShards: Short = DefaultSideInputNumShards
     )(
       implicit w: SparkeyWritable[K, V],
       koder: Coder[K],
