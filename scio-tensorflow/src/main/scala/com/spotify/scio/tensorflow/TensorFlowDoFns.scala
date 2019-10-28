@@ -23,14 +23,12 @@ import java.util.function.Function
 
 import com.spotify.scio.transforms.DoFnWithResource
 import com.spotify.scio.transforms.DoFnWithResource.ResourceType
-import com.spotify.zoltar.tf.{TensorFlowGraphModel, TensorFlowModel}
+import com.spotify.zoltar.tf.TensorFlowModel
 import com.spotify.zoltar.{Model, Models}
-import javax.annotation.Nullable
 import org.apache.beam.sdk.transforms.DoFn
 import org.apache.beam.sdk.transforms.DoFn.{ProcessElement, Teardown}
-import org.slf4j.LoggerFactory
 import org.tensorflow._
-import org.tensorflow.framework.ConfigProto
+import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConverters._
 
@@ -113,37 +111,4 @@ private[tensorflow] class SavedBundlePredictDoFn[T, V](
     getResource.get(uri).close()
   }
 
-}
-
-private[tensorflow] class GraphPredictDoFn[T, V](
-  uri: String,
-  fetchOp: Seq[String],
-  @Nullable config: Array[Byte],
-  inFn: T => Map[String, Tensor[_]],
-  outFn: (T, Map[String, Tensor[_]]) => V
-) extends PredictDoFn[T, V, TensorFlowGraphModel](fetchOp, inFn, outFn) {
-  @transient private lazy val log = LoggerFactory.getLogger(this.getClass)
-
-  override def withRunner(f: Session#Runner => V): V = {
-    val model = getResource
-      .computeIfAbsent(
-        uri,
-        new Function[String, TensorFlowGraphModel] {
-          override def apply(t: String): TensorFlowGraphModel = {
-            val configOpt = Option(config).map(ConfigProto.parseFrom)
-            Models
-              .tensorFlowGraph(uri, configOpt.orNull, null)
-              .get(Duration.ofDays(Integer.MAX_VALUE))
-          }
-        }
-      )
-
-    f(model.instance().runner())
-  }
-
-  @Teardown
-  def teardown(): Unit = {
-    log.info(s"Tearing down predict DoFn $this")
-    getResource.get(uri).close()
-  }
 }
