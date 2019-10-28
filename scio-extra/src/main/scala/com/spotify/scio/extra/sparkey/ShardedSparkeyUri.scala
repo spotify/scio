@@ -20,11 +20,9 @@ package com.spotify.scio.extra.sparkey
 import java.io.File
 import java.net.URI
 
-import com.spotify.scio.coders.Coder
-import com.spotify.scio.extra.sparkey
 import com.spotify.scio.util.{RemoteFileUtil, ScioUtil}
-import com.spotify.sparkey.extra.ThreadLocalSparkeyReader
 import com.spotify.sparkey.SparkeyReader
+import com.spotify.sparkey.extra.ThreadLocalSparkeyReader
 import org.apache.beam.sdk.io.FileSystems
 import org.apache.beam.sdk.io.fs.MatchResult
 import org.apache.beam.sdk.options.PipelineOptions
@@ -84,9 +82,9 @@ trait ShardedSparkeyUri extends SparkeyUri {
 private[sparkey] object ShardedSparkeyUri {
   def apply(basePath: String, options: PipelineOptions): ShardedSparkeyUri =
     if (ScioUtil.isLocalUri(new URI(basePath))) {
-      new LocalShardedSparkeyUri(basePath)
+      LocalShardedSparkeyUri(basePath)
     } else {
-      new RemoteShardedSparkeyUri(basePath, RemoteFileUtil.create(options))
+      RemoteShardedSparkeyUri(basePath, RemoteFileUtil.create(options))
     }
 
   private[sparkey] def numShardsFromPath(path: String): Short =
@@ -108,12 +106,9 @@ private[sparkey] object ShardedSparkeyUri {
       )
       .toMap
   }
-
-  implicit def coderSparkeyURI: Coder[sparkey.ShardedSparkeyUri] =
-    Coder.kryo[sparkey.ShardedSparkeyUri]
 }
 
-private class LocalShardedSparkeyUri(val basePath: String) extends ShardedSparkeyUri {
+private case class LocalShardedSparkeyUri(basePath: String) extends ShardedSparkeyUri {
 
   override def getReader: ShardedSparkeyReader = {
     val (basePaths, numShards) = basePathsAndCount()
@@ -128,7 +123,7 @@ private class LocalShardedSparkeyUri(val basePath: String) extends ShardedSparke
     new LocalSparkeyUri(basePathForShard(shardIndex, numShards))
 }
 
-private class RemoteShardedSparkeyUri(val basePath: String, val rfu: RemoteFileUtil)
+private case class RemoteShardedSparkeyUri(basePath: String, rfu: RemoteFileUtil)
     extends ShardedSparkeyUri {
   override def getReader: ShardedSparkeyReader = {
     val (basePaths, numShards) = basePathsAndCount()

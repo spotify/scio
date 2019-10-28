@@ -21,7 +21,6 @@ import java.io.File
 import java.net.URI
 import java.nio.file.{Files, Paths}
 
-import com.spotify.scio.coders.Coder
 import com.spotify.scio.util.{RemoteFileUtil, ScioUtil}
 import com.spotify.sparkey.extra.ThreadLocalSparkeyReader
 import com.spotify.sparkey.{Sparkey, SparkeyReader}
@@ -47,23 +46,21 @@ trait SparkeyUri extends Serializable {
 private[sparkey] object SparkeyUri {
   def apply(basePath: String, opts: PipelineOptions): SparkeyUri =
     if (ScioUtil.isLocalUri(new URI(basePath))) {
-      new LocalSparkeyUri(basePath)
+      LocalSparkeyUri(basePath)
     } else {
       new RemoteSparkeyUri(basePath, opts)
     }
   def extensions: Seq[String] = Seq(".spi", ".spl")
-
-  implicit def coderSparkeyURI: Coder[SparkeyUri] = Coder.kryo[SparkeyUri]
 }
 
-private class LocalSparkeyUri(val basePath: String) extends SparkeyUri {
+private case class LocalSparkeyUri(basePath: String) extends SparkeyUri {
   override def getReader: SparkeyReader =
     new ThreadLocalSparkeyReader(new File(basePath))
   override private[sparkey] def exists: Boolean =
     SparkeyUri.extensions.map(e => new File(basePath + e)).exists(_.exists)
 }
 
-private class RemoteSparkeyUri(val basePath: String, val rfu: RemoteFileUtil) extends SparkeyUri {
+private case class RemoteSparkeyUri(basePath: String, rfu: RemoteFileUtil) extends SparkeyUri {
 
   def this(basePath: String, options: PipelineOptions) =
     this(basePath, RemoteFileUtil.create(options))
