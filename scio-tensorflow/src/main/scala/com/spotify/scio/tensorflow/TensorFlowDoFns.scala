@@ -53,7 +53,6 @@ private[this] abstract class PredictDoFn[T, V, M <: Model[_]](
       val input = c.element()
       val i = inFn(input)
       var result: V = null.asInstanceOf[V]
-
       try {
         i.foreach { case (op, t) => runner.feed(op, t) }
         fetchOp.foreach(runner.fetch)
@@ -111,4 +110,101 @@ private[tensorflow] class SavedBundlePredictDoFn[T, V](
     getResource.get(uri).close()
   }
 
+}
+
+/**
+ * Uses sigDef from the graph to translate input and output tensors according to exported signature.
+ * For example:
+ *
+ * input:
+ *  age -> input_tensor:0
+ *  lang -> input_tensor:1
+ *
+ * output:
+ *  probabilities -> softmax:0
+ *
+ * Caller:
+ *  input: (age -> 50, lang -> SE)
+ *  fetchOps: probabilities
+ *
+ * At prediction time, age and lang will be translated to their graph tensor names.
+ * And the fetch op for probabilities will also be mapped accordingly.
+ *
+ * Note: right now this only loads the default sigDef from tensorflow.
+ */
+private[tensorflow] class SavedBundlePredictWithSignatureTranslationDoFn[T, V](
+  uri: String,
+  options: TensorFlowModel.Options,
+  fetchOp: Seq[String],
+  inFn: T => Map[String, Tensor[_]],
+  outFn: (T, Map[String, Tensor[_]]) => V
+) extends PredictDoFn[T, V, TensorFlowModel](fetchOp, inFn, outFn) {
+  @transient private lazy val log = LoggerFactory.getLogger(this.getClass)
+
+  private lazy val loadModel = new Function[String, TensorFlowModel] {
+    override def apply(t: String): TensorFlowModel =
+      Models
+        .tensorFlow(uri, options)
+        .get(Duration.ofDays(Integer.MAX_VALUE))
+  }
+
+  private lazy val inputMap: Map[String, String] = {
+    val model = getResource
+      .computeIfAbsent(uri, loadModel)
+    model.inputsNameMap().asScala.toMap
+  }
+
+  private lazy val outputMap: Map[String, String] = {
+    val model = getResource
+      .computeIfAbsent(uri, loadModel)
+    model.outputsNameMap().asScala.toMap
+  }
+
+  override def withRunner(f: Session#Runner => V): V = {
+    val model = getResource
+      .computeIfAbsent(uri, loadModel)
+    f(model.instance().session().runner())
+  }
+
+  /**
+   * Process an element asynchronously.
+   */
+  @ProcessElement
+  override def processElement(c: DoFn[T, V]#ProcessContext): Unit = {
+    val result = withRunner { runner =>
+      val input = c.element()
+      val i = inFn(input).map {
+        case (sigName, tensor) =>
+          (inputMap(sigName), tensor)
+      }
+      var result: V = null.asInstanceOf[V]
+
+      try {
+        i.foreach { case (op, t) => runner.feed(op, t) }
+        val fetchOpGraph = fetchOp.map(outputMap(_))
+        fetchOpGraph.foreach(runner.fetch)
+        val outTensors = runner.run()
+        try {
+          import scala.collection.breakOut
+          result = outFn(input, (fetchOp zip outTensors.asScala)(breakOut))
+        } finally {
+          log.debug("Closing down output tensors")
+          outTensors.asScala.foreach(_.close())
+        }
+      } finally {
+        log.debug("Closing down input tensors")
+        i.foreach { case (_, t) => t.close() }
+      }
+
+      result
+    }
+
+    c.output(result)
+  }
+
+  @Teardown
+  def teardown(): Unit = {
+    log.info(s"Tearing down predict DoFn $this")
+    getResource.get(uri).close()
+  }
 }

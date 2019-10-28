@@ -20,6 +20,7 @@ package com.spotify.scio.tensorflow.syntax
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.tensorflow.{
   SavedBundlePredictDoFn,
+  SavedBundlePredictWithSignatureTranslationDoFn,
   TFExampleIO,
   TFRecordIO,
   TFSequenceExampleIO
@@ -30,7 +31,6 @@ import com.spotify.zoltar.tf.TensorFlowModel
 import org.apache.beam.sdk.io.Compression
 import org.tensorflow._
 import org.tensorflow.example.{Example, SequenceExample}
-
 import scala.language.implicitConversions
 import scala.reflect.ClassTag
 
@@ -59,6 +59,37 @@ final class PredictSCollectionOps[T: ClassTag](private val self: SCollection[T])
     options: TensorFlowModel.Options
   )(inFn: T => Map[String, Tensor[_]])(outFn: (T, Map[String, Tensor[_]]) => V): SCollection[V] =
     self.parDo(new SavedBundlePredictDoFn[T, V](savedModelUri, options, fetchOps, inFn, outFn))
+
+  /**
+   * Predict/infer/forward-pass on a TensorFlow Saved Model.
+   *
+   * Uses loaded SignatureDef from tensorflow to translate input and output tensors.
+   * Note: this loads the default SigDef from the model.
+   * @param savedModelUri URI of Saved TensorFlow model
+   * @param fetchOps names of [[org.tensorflow.Operation]]s to fetch the results from
+   * @param options   configuration parameters for the session specified as a
+   *                 `com.spotify.zoltar.tf.TensorFlowModel.Options`.
+   * @param inFn     translates input elements of T to map of input-operation ->
+   *                 [[org.tensorflow.Tensor Tensor]]. This method takes ownership of the
+   *                 [[org.tensorflow.Tensor Tensor]]s.
+   * @param outFn    translates output of prediction from map of output-operation ->
+   *                 [[org.tensorflow.Tensor Tensor]], to elements of V. This method takes
+   *                 ownership of the [[org.tensorflow.Tensor Tensor]]s.
+   */
+  def predictWithSigDef[V: Coder, W](
+    savedModelUri: String,
+    fetchOps: Seq[String],
+    options: TensorFlowModel.Options
+  )(inFn: T => Map[String, Tensor[_]])(outFn: (T, Map[String, Tensor[_]]) => V): SCollection[V] =
+    self.parDo(
+      new SavedBundlePredictWithSignatureTranslationDoFn[T, V](
+        savedModelUri,
+        options,
+        fetchOps,
+        inFn,
+        outFn
+      )
+    )
 }
 
 final class ExampleSCollectionOps[T <: Example](private val self: SCollection[T]) extends AnyVal {
