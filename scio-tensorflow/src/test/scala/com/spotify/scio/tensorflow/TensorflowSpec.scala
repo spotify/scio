@@ -115,7 +115,7 @@ private[tensorflow] object TFSavedExampleJob {
         savedModelUri = args("savedModelUri"),
         options = options,
         exampleInputOp = "linear/head/predictions/class_ids"
-      ){ (r, o) =>
+      ) { (r, o) =>
         (r, o.map {
           case (a, outTensor) =>
             val output = Array.ofDim[Long](1)
