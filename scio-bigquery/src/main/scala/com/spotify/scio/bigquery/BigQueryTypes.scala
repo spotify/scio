@@ -53,7 +53,7 @@ object Table {
     override lazy val spec: String = BigQueryHelpers.toTableSpec(ref)
   }
   final case class Spec(spec: String) extends Table {
-    override lazy val ref: GTableReference = BigQueryHelpers.parseTableSpec(spec)
+    override val ref: GTableReference = BigQueryHelpers.parseTableSpec(spec)
   }
 }
 
