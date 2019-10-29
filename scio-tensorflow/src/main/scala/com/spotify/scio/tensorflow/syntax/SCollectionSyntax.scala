@@ -98,7 +98,8 @@ final class ExampleSCollectionOps[T <: Example](private val self: SCollection[T]
    * @param options        configuration parameters for the session specified as a
    *                       `com.spotify.zoltar.tf.TensorFlowModel.Options`.
    * @param exampleInputOp name of [[org.tensorflow.Operation]]s to feed an example.
-   * @param signatureName  name of [[org.tensorflow.framework.SignatureDef]]s to be used to run the prediction.
+   * @param signatureName  name of [[org.tensorflow.framework.SignatureDef]]s to be used
+   *                       to run the prediction.
    * @param outFn          translates output of prediction from map of output-operation ->
    *                       [[org.tensorflow.Tensor Tensor]], to elements of V. This method takes
    *                       ownership of the [[org.tensorflow.Tensor Tensor]]s.
@@ -110,7 +111,7 @@ final class ExampleSCollectionOps[T <: Example](private val self: SCollection[T]
     signatureName: String = "serving_default"
   )(outFn: (T, Map[String, Tensor[_]]) => V): SCollection[V] =
     self.parDo(
-      SavedBundlePredictDoFn.forTensorflowExample[T, V](
+      SavedBundlePredictDoFn.forTensorFlowExample[T, V](
         savedModelUri,
         exampleInputOp,
         signatureName,

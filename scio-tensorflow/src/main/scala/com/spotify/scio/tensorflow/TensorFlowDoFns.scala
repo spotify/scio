@@ -18,19 +18,17 @@
 package com.spotify.scio.tensorflow
 
 import java.time.Duration
-import javax.annotation.Nullable
 
-import scala.collection.JavaConverters._
-
+import com.spotify.zoltar.tf.{TensorFlowLoader, TensorFlowModel}
+import com.spotify.zoltar.{Model, Models}
 import org.apache.beam.sdk.transforms.DoFn
 import org.apache.beam.sdk.transforms.DoFn.{ProcessElement, Setup, Teardown}
 import org.slf4j.LoggerFactory
 import org.tensorflow._
 import org.tensorflow.example.Example
-import org.tensorflow.framework.{ConfigProto, MetaGraphDef, SignatureDef}
+import scala.collection.JavaConverters._
 
-import com.spotify.zoltar.tf.{TensorFlowGraphModel, TensorFlowModel}
-import com.spotify.zoltar.{Model, Models}
+import com.spotify.zoltar.Model.Id
 
 private[this] abstract class PredictDoFn[T, V, M <: Model[_]] extends DoFn[T, V] {
   @transient private lazy val log = LoggerFactory.getLogger(this.getClass)
@@ -75,9 +73,6 @@ private[this] abstract class PredictDoFn[T, V, M <: Model[_]] extends DoFn[T, V]
 
     c.output(result)
   }
-
-  override def createResource(): ConcurrentMap[String, M] =
-    new ConcurrentHashMap[String, M]()
 }
 
 private[tensorflow] abstract class SavedBundlePredictDoFn[T, V](
@@ -103,36 +98,6 @@ private[tensorflow] abstract class SavedBundlePredictDoFn[T, V](
 }
 
 object SavedBundlePredictDoFn {
-  def forTensorflowExample[T <: Example, V](
-    uri: String,
-    exampleTensorName: String,
-    signatureName: String,
-    options: TensorFlowModel.Options,
-    outFn: (T, Map[String, Tensor[_]]) => V
-  ): SavedBundlePredictDoFn[T, V] = new SavedBundlePredictDoFn[T, V](uri, options) {
-    var signatureDef: SignatureDef = _
-
-    override def setup(): Unit = {
-      super.setup()
-      val metaGraphDef = MetaGraphDef.parseFrom(model.instance().metaGraphDef())
-      signatureDef = metaGraphDef.getSignatureDefOrDefault(
-        signatureName,
-        SignatureDef.getDefaultInstance
-      )
-    }
-
-    override def outputTensorNames: Seq[String] =
-      signatureDef.getOutputsMap.values().asScala.toList.map(_.getName)
-
-    override def extractInput(input: T): Map[String, Tensor[_]] = {
-      val i = signatureDef.getInputsMap.get(exampleTensorName).getName
-      Map(i -> Tensors.create(input.toByteArray))
-    }
-
-    override def extractOutput(input: T, out: Map[String, Tensor[_]]): V =
-      outFn(input, out)
-  }
-
   def forInput[T, V](
     uri: String,
     options: TensorFlowModel.Options,
@@ -145,5 +110,34 @@ object SavedBundlePredictDoFn {
     override def extractOutput(input: T, out: Map[String, Tensor[_]]): V = outFn(input, out)
 
     override def outputTensorNames: Seq[String] = fetchOp
+  }
+
+  def forTensorFlowExample[T <: Example, V](
+    uri: String,
+    exampleTensorName: String,
+    signatureName: String,
+    options: TensorFlowModel.Options,
+    outFn: (T, Map[String, Tensor[_]]) => V
+  ): SavedBundlePredictDoFn[T, V] = new SavedBundlePredictDoFn[T, V](uri, options) {
+
+    var fetchOps: Seq[String] = _
+
+    override def setup(): Unit = {
+      model = TensorFlowLoader
+        .create(Id.create("tensorflow"), uri, options, signatureName)
+        .get(Duration.ofDays(Integer.MAX_VALUE))
+      fetchOps = model.outputsNameMap().values().asScala.toList
+    }
+
+    override def outputTensorNames: Seq[String] = fetchOps
+
+
+    override def extractInput(input: T): Map[String, Tensor[_]] = {
+      val i = model.inputsNameMap().get(exampleTensorName)
+      Map(i -> Tensors.create(input.toByteArray))
+    }
+
+    override def extractOutput(input: T, out: Map[String, Tensor[_]]): V =
+      outFn(input, out)
   }
 }
