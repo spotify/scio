@@ -100,13 +100,11 @@ private[sparkey] object ShardedSparkeyUri {
   private[sparkey] def localReadersByShard(
     localBasePaths: Iterable[String]
   ): Map[Short, SparkeyReader] =
-    localBasePaths.iterator
-      .map(path => {
-        val shardIndex = ShardedSparkeyUri.shardIndexFromPath(path)
-        val reader = new ThreadLocalSparkeyReader(new File(path + ".spi"))
-        (shardIndex, reader)
-      })
-      .toMap
+    localBasePaths.iterator.map { path =>
+      val shardIndex = ShardedSparkeyUri.shardIndexFromPath(path)
+      val reader = new ThreadLocalSparkeyReader(new File(path + ".spi"))
+      (shardIndex, reader)
+    }.toMap
 }
 
 private case class LocalShardedSparkeyUri(basePath: String) extends ShardedSparkeyUri {

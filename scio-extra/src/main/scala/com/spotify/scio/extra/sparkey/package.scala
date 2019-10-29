@@ -21,6 +21,7 @@ import java.nio.charset.Charset
 import java.util
 import java.util.{UUID, List => JList}
 import java.util.function.{Function => JFunction}
+import java.lang.{Iterable => JIterable}
 
 import com.github.benmanes.caffeine.cache.Cache
 import com.spotify.scio.ScioContext
@@ -177,7 +178,7 @@ package object sparkey {
   private def writeToSparkey[K, V](
     uri: SparkeyUri,
     maxMemoryUsage: Long,
-    elements: java.lang.Iterable[(K, V)]
+    elements: JIterable[(K, V)]
   )(implicit w: SparkeyWritable[K, V], koder: Coder[K], voder: Coder[V]): SparkeyUri = {
     val writer = new SparkeyWriter(uri, maxMemoryUsage)
     val it = elements.iterator
