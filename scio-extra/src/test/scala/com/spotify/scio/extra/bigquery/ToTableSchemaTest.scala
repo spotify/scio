@@ -143,7 +143,7 @@ class ToTableSchemaTest extends AnyFlatSpec with Matchers with ToTableSchema {
             .setMode("REQUIRED"),
           new TableFieldSchema()
             .setName("timeMicrosField")
-            .setType("TIME")
+            .setType("INTEGER")
             .setMode("REQUIRED"),
           new TableFieldSchema()
             .setName("timestampMillisField")
@@ -151,7 +151,7 @@ class ToTableSchemaTest extends AnyFlatSpec with Matchers with ToTableSchema {
             .setMode("REQUIRED"),
           new TableFieldSchema()
             .setName("timestampMicrosField")
-            .setType("TIMESTAMP")
+            .setType("INTEGER")
             .setMode("REQUIRED")
         ).asJava
       )

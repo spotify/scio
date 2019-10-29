@@ -26,6 +26,7 @@ import com.spotify.scio.extra.bigquery.Implicits.AvroConversionException
 import org.apache.avro.Schema
 import org.apache.avro.generic.{GenericFixed, IndexedRecord}
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.io.BaseEncoding
+import org.joda.time.format.DateTimeFormat
 import org.joda.time.{DateTime, LocalDate, LocalTime}
 
 import scala.collection.JavaConverters._
@@ -51,6 +52,17 @@ trait ToTableRow {
 
     row
   }
+  // YYYY-[M]M-[D]D
+  private[this] val localDateFormatter =
+    DateTimeFormat.forPattern("yyyy-MM-dd").withZoneUTC()
+
+  // YYYY-[M]M-[D]D[( |T)[H]H:[M]M:[S]S[.DDDDDD]]
+  private[this] val localTimeFormatter =
+    DateTimeFormat.forPattern("HH:mm:ss.SSSSSS")
+
+  // YYYY-[M]M-[D]D[( |T)[H]H:[M]M:[S]S[.DDDDDD]][time zone]
+  private[this] val timestampFormatter =
+    DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSS")
 
   private def toTableRowField(fieldValue: Any, field: Schema.Field): Any =
     fieldValue match {
@@ -63,9 +75,9 @@ trait ToTableRow {
       case x: util.Map[_, _]        => toTableRowFromMap(x.asScala, field)
       case x: java.lang.Iterable[_] => toTableRowFromIterable(x.asScala, field)
       case x: IndexedRecord         => toTableRow(x)
-      case x: LocalDate             => x
-      case x: LocalTime             => x
-      case x: DateTime              => x
+      case x: LocalDate             => localDateFormatter.print(x)
+      case x: LocalTime             => localTimeFormatter.print(x)
+      case x: DateTime              => timestampFormatter.print(x)
       case _ =>
         throw AvroConversionException(
           s"ToTableRow conversion failed:" +

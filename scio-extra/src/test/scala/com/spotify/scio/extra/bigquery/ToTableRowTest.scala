@@ -95,24 +95,24 @@ class ToTableRowTest extends AnyFlatSpec with Matchers with ToTableRow {
     toTableRow(genericRecord) shouldEqual expectedOutput
   }
 
-  val date = LocalDate.now()
-  val timeMillis: LocalTime = LocalTime.now()
+  val date = LocalDate.parse("2019-10-29")
+  val timeMillis: LocalTime = LocalTime.parse("01:24:52.211")
   val timeMicros = 1234L
-  val timestampMillis: DateTime = DateTime.now()
+  val timestampMillis: DateTime = DateTime.parse("2019-10-29T05:24:52.215")
   val timestampMicros = 4325L
 
   val expectedLogicalTypeOutput = new TableRow()
-    .set("booleanField", true)
     .set("intField", 1)
     .set("stringField", "someString")
+    .set("booleanField", true)
     .set("longField", 1L)
     .set("doubleField", 1.0)
     .set("floatField", 1f)
     .set("bytesField", BaseEncoding.base64Url().encode("someBytes".getBytes))
-    .set("dateField", date)
-    .set("timeMillisField", timeMillis)
+    .set("dateField", "2019-10-29")
+    .set("timeMillisField", "01:24:52.211000")
     .set("timeMicrosField", timeMicros)
-    .set("timestampMillisField", timestampMillis)
+    .set("timestampMillisField", "2019-10-29T05:24:52.215000")
     .set("timestampMicrosField", timestampMicros)
 
   "ToTableRowWithLogicalType" should "convert a SpecificRecord with Logical Types to TableRow" in {

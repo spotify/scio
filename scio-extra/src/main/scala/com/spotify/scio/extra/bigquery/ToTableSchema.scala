@@ -161,13 +161,19 @@ trait ToTableSchema {
   }
 
   import org.apache.avro.LogicalTypes._
+  /**
+   * This uses avro logical type to Converted BigQuery mapping in the following table
+   * https://cloud.google.com/bigquery/docs/loading-data-cloud-storage-avro#logical_types
+   * Joda time library doesn't support microsecond level precision, therefore
+   * time-micros map to 'INTEGER' instead of 'TIME', for the same reason
+   * timestamp-micros map to 'INTEGER' instead of 'TIMESTAMP'
+   */
   private def typeFromLogicalType(logicalType: LogicalType): String = logicalType match {
     case _: Date            => "DATE"
     case _: TimeMillis      => "TIME"
-    case _: TimeMicros      => "TIME"
+    case _: TimeMicros      => "INTEGER"
     case _: TimestampMillis => "TIMESTAMP"
-    case _: TimestampMicros => "TIMESTAMP"
-    case _  => throw new IllegalStateException(s"Uknown Logical Type: ${logicalType.getName}")
+    case _: TimestampMicros => "INTEGER"
+    case _  => throw new IllegalStateException(s"Unknown Logical Type: [${logicalType.getName}]")
   }
-
 }
