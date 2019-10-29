@@ -548,7 +548,7 @@ lazy val scioCassandra2: Project = Project(
     description := "Scio add-on for Apache Cassandra 2.x",
     libraryDependencies ++= Seq(
       "com.datastax.cassandra" % "cassandra-driver-core" % "3.7.2",
-      ("org.apache.cassandra" % "cassandra-all" % "2.2.14")
+      ("org.apache.cassandra" % "cassandra-all" % "2.2.15")
         .exclude("ch.qos.logback", "logback-classic")
         .exclude("org.slf4j", "log4j-over-slf4j"),
       "org.apache.hadoop" % "hadoop-client" % hadoopVersion
