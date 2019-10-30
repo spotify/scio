@@ -31,6 +31,7 @@ import com.spotify.scio.benchmarks.BenchmarkResult.{Batch, BenchmarkType, Metric
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.runners.dataflow.DataflowResult
 import com.spotify.scio.values.SCollection
+import magnolify.datastore._
 import org.apache.beam.sdk.PipelineResult.State
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
 import org.apache.beam.sdk.transforms.{DoFn, ParDo}
@@ -38,7 +39,6 @@ import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.reflect.ClassPat
 import org.joda.time.format.{DateTimeFormat, ISODateTimeFormat, PeriodFormat}
 import org.joda.time.{DateTimeZone, Instant, LocalDateTime, Seconds}
 import org.slf4j.{Logger, LoggerFactory}
-import shapeless.datatype.datastore._
 
 import scala.collection.JavaConverters._
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -314,14 +314,17 @@ class DatastoreLogger[A <: BenchmarkType] extends BenchmarkLogger[Try, A] {
   // Save metrics to integration testing Datastore instance. Can't make this into a
   // transaction because DS limit is 25 entities per transaction.
   def log(benchmarks: Iterable[BenchmarkResult[A]]): Try[Unit] = {
-    val dt = DatastoreType[BenchmarkResult[A]]
+    implicit val efInstant = EntityField.efTimestamp.imap(i => new Instant(i.toEpochMilli))(
+      i => java.time.Instant.ofEpochMilli(i.getMillis)
+    )
+    val dt = EntityType[BenchmarkResult[A]]
 
     val commits = benchmarks.map { benchmark =>
       Try {
         latestBenchmark(benchmark.name).foreach(printMetricsComparison(_, benchmark))
 
         val entity = dt
-          .toEntityBuilder(benchmark)
+          .to(benchmark)
           .setKey(
             DatastoreHelper
               .makeKey(s"${Kind}_${benchmark.name}", dsKeyId(benchmark))
@@ -359,7 +362,11 @@ class DatastoreLogger[A <: BenchmarkType] extends BenchmarkLogger[Try, A] {
     benchmarkName: String,
     buildNums: List[Long]
   ): List[BenchmarkResult[A]] = {
-    val dt = DatastoreType[BenchmarkResult[A]]
+    implicit val efInstant = EntityField.efTimestamp.imap(i => new Instant(i.toEpochMilli))(
+      i => java.time.Instant.ofEpochMilli(i.getMillis)
+    )
+    val dt = EntityType[BenchmarkResult[A]]
+
     val query: String => RunQueryRequest = q =>
       RunQueryRequest
         .newBuilder()
@@ -383,7 +390,7 @@ class DatastoreLogger[A <: BenchmarkType] extends BenchmarkLogger[Try, A] {
       .flatMap(_.getBatch.getEntityResultsList.asScala)
       .sortBy(_.getEntity.getKey.getPath(0).getName)
       .map(_.getEntity)
-      .flatMap(dt.fromEntity(_))
+      .map(dt.from)
   }
 
   def printMetricsComparison(previous: BenchmarkResult[A], current: BenchmarkResult[A]): Unit = {

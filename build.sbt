@@ -434,7 +434,7 @@ lazy val scioTest: Project = Project(
       "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
       "org.scalatest" %% "scalatest" % scalatestVersion,
       "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test,it",
-      "me.lyh" %% "shapeless-datatype-datastore" % shapelessDatatypeVersion % "it",
+      "com.spotify" %% "magnolify-datastore" % magnolifyVersion % "it",
       // DataFlow testing requires junit and hamcrest
       "org.hamcrest" % "hamcrest-all" % hamcrestVersion,
       // Our BloomFilters are Algebird Monoids and hence uses tests from Algebird Test
