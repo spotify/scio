@@ -100,12 +100,16 @@ class ScioIOTest extends ScioIOSpec {
 
   "BigQueryIO" should "work with TableRow" in {
     val xs = (1 to 100).map(x => TableRow("x" -> x.toString))
-    testJobTest(xs)(BigQueryIO(_))((sc, s) => sc.bigQueryTable(Table.Spec(s)))(_.saveAsBigQuery(_))
+    testJobTest(xs, in = "project:dataset.in_table", out = "project:dataset.out_table")(
+      BigQueryIO(_)
+    )((sc, s) => sc.bigQueryTable(Table.Spec(s)))(_.saveAsBigQuery(_))
   }
 
   it should "work with typed BigQuery" in {
     val xs = (1 to 100).map(x => BQRecord(x, x.toString, (1 to x).map(_.toString).toList))
-    testJobTest(xs)(BigQueryIO(_))(_.typedBigQuery(_))(_.saveAsTypedBigQuery(_))
+    testJobTest(xs, in = "project:dataset.in_table", out = "project:dataset.out_table")(
+      BigQueryIO(_)
+    )(_.typedBigQuery(_))(_.saveAsTypedBigQuery(_))
   }
 
   /**
