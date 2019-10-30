@@ -20,18 +20,13 @@ import java.math.MathContext
 import java.nio.ByteBuffer
 
 import com.spotify.scio.ScioContext
-import org.apache.beam.sdk.io.gcp.bigquery.BigQueryInsertError
-import com.spotify.scio.ScioContext
-import org.apache.beam.sdk.io.gcp.bigquery.WriteResult
-import com.spotify.scio.values.SCollection
-import org.apache.beam.sdk.io.gcp.bigquery.WriteResult
 import com.spotify.scio.values.SCollection
 import com.google.api.services.bigquery.model.{
   TableRow => GTableRow,
   TimePartitioning => GTimePartitioning,
   TableReference => GTableReference
 }
-import org.apache.beam.sdk.io.gcp.bigquery.BigQueryHelpers
+import org.apache.beam.sdk.io.gcp.bigquery.{BigQueryHelpers, BigQueryInsertError, WriteResult}
 import org.apache.avro.Conversions.DecimalConversion
 import org.apache.avro.LogicalTypes
 import org.joda.time.format.{DateTimeFormat, DateTimeFormatterBuilder}

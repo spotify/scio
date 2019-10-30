@@ -25,10 +25,8 @@ package com.spotify.scio.examples.cookbook
 
 import com.spotify.scio.bigquery._
 import com.spotify.scio.ContextAndArgs
-import com.google.api.services.bigquery.model.{TableFieldSchema, TableSchema}
-import com.spotify.scio._
-import com.spotify.scio.bigquery._
 import com.spotify.scio.examples.common.ExampleData
+import com.google.api.services.bigquery.model.{TableFieldSchema, TableSchema}
 
 import scala.collection.JavaConverters._
 
