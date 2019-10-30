@@ -775,7 +775,6 @@ lazy val scioTensorFlow: Project = Project(
       "io.circe" %% "circe-generic",
       "io.circe" %% "circe-parser"
     ).map(_ % circeVersion),
-    Test / fork := true,
     javaOptions += "-Dscio.ignoreVersionWarning=true"
   )
   .dependsOn(
