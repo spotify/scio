@@ -61,8 +61,7 @@ val parquetAvroExtraVersion = "0.2.3"
 val parquetVersion = "1.10.1"
 val protobufGenericVersion = "0.2.5"
 val protobufVersion = "3.7.1"
-val scalacheckShapelessVersion = "1.1.8"
-val scalacheckVersion = "1.14.0"
+val scalacheckVersion = "1.14.2"
 val scalaMacrosVersion = "2.1.1"
 val scalatestVersion = "3.0.8"
 val shapelessVersion = "2.3.3"
@@ -72,6 +71,7 @@ val sparkeyVersion = "3.0.0"
 val tensorFlowVersion = "1.15.0"
 val zoltarVersion = "0.5.6"
 val magnoliaVersion = "0.12.0"
+val magnolifyVersion = "0.1.0"
 val grpcVersion = "1.17.1"
 val caseappVersion = "2.0.0-M9"
 val sparkVersion = "2.4.3"
@@ -434,8 +434,7 @@ lazy val scioTest: Project = Project(
       "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
       "org.scalatest" %% "scalatest" % scalatestVersion,
       "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test,it",
-      "com.github.alexarchambault" %% "scalacheck-shapeless_1.13" % scalacheckShapelessVersion % "test,it",
-      "me.lyh" %% "shapeless-datatype-datastore" % shapelessDatatypeVersion % "test,it",
+      "com.spotify" %% "magnolify-datastore" % magnolifyVersion % "it",
       // DataFlow testing requires junit and hamcrest
       "org.hamcrest" % "hamcrest-all" % hamcrestVersion,
       // Our BloomFilters are Algebird Monoids and hence uses tests from Algebird Test
@@ -483,8 +482,9 @@ lazy val scioAvro: Project = Project(
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       "org.slf4j" % "slf4j-simple" % slf4jVersion % "test,it",
       "org.scalatest" %% "scalatest" % scalatestVersion % "test,it",
-      "com.github.alexarchambault" %% "scalacheck-shapeless_1.13" % scalacheckShapelessVersion % "test",
-      "me.lyh" %% "shapeless-datatype-core" % shapelessDatatypeVersion % "test"
+      "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test,it",
+      "com.spotify" %% "magnolify-cats" % magnolifyVersion % "test",
+      "com.spotify" %% "magnolify-scalacheck" % magnolifyVersion % "test"
     ),
     beamSDKIODependencies
   )
@@ -506,11 +506,11 @@ lazy val scioBigQuery: Project = Project(
       "org.slf4j" % "slf4j-simple" % slf4jVersion % "test,it",
       "org.scalatest" %% "scalatest" % scalatestVersion % "test,it",
       "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test,it",
+      "com.spotify" %% "magnolify-cats" % magnolifyVersion % "test",
+      "com.spotify" %% "magnolify-scalacheck" % magnolifyVersion % "test",
       "com.google.cloud" % "google-cloud-storage" % gcsVersion % "test,it",
       // DataFlow testing requires junit and hamcrest
-      "org.hamcrest" % "hamcrest-all" % hamcrestVersion % "test,it",
-      "com.github.alexarchambault" %% "scalacheck-shapeless_1.13" % scalacheckShapelessVersion % "test,it",
-      "me.lyh" %% "shapeless-datatype-core" % shapelessDatatypeVersion % "test"
+      "org.hamcrest" % "hamcrest-all" % hamcrestVersion % "test,it"
     )
   )
   .dependsOn(
@@ -763,7 +763,6 @@ lazy val scioTensorFlow: Project = Project(
       "org.tensorflow" % "tensorflow" % tensorFlowVersion,
       "org.tensorflow" % "proto" % tensorFlowVersion,
       "org.apache.commons" % "commons-compress" % commonsCompress,
-      "me.lyh" %% "shapeless-datatype-tensorflow" % shapelessDatatypeVersion,
       "com.spotify" %% "featran-core" % featranVersion,
       "com.spotify" %% "featran-scio" % featranVersion,
       "com.spotify" %% "featran-tensorflow" % featranVersion,
