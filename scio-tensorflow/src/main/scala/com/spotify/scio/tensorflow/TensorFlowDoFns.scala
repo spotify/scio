@@ -28,11 +28,12 @@ import org.tensorflow._
 import org.tensorflow.example.Example
 import scala.collection.JavaConverters._
 
+import com.spotify.scio.transforms.DoFnWithResource
+import com.spotify.scio.transforms.DoFnWithResource.ResourceType
 import com.spotify.zoltar.Model.Id
 
-private[this] abstract class PredictDoFn[T, V, M <: Model[_]] extends DoFn[T, V] {
+sealed trait PredictDoFn[T, V, M <: Model[_]] extends DoFnWithResource[T, V, M] {
   @transient private lazy val log = LoggerFactory.getLogger(this.getClass)
-  protected var model: M = _
 
   def withRunner(f: Session#Runner => V): V
 
@@ -41,6 +42,10 @@ private[this] abstract class PredictDoFn[T, V, M <: Model[_]] extends DoFn[T, V]
   def extractOutput(input: T, out: Map[String, Tensor[_]]): V
 
   def outputTensorNames: Seq[String]
+
+  override def createResource(): M
+
+  override def getResourceType: DoFnWithResource.ResourceType = ResourceType.PER_CLASS
 
   /**
    * Process an element asynchronously.
@@ -57,8 +62,10 @@ private[this] abstract class PredictDoFn[T, V, M <: Model[_]] extends DoFn[T, V]
         outputTensorNames.foreach(runner.fetch)
         val outTensors = runner.run()
         try {
-          import scala.collection.breakOut
-          result = extractOutput(input, (outputTensorNames zip outTensors.asScala)(breakOut))
+          result = extractOutput(
+            input,
+            outputTensorNames.iterator.zip(outTensors.iterator().asScala).toMap
+          )
         } finally {
           log.debug("Closing down output tensors")
           outTensors.asScala.foreach(_.close())
@@ -81,19 +88,17 @@ private[tensorflow] abstract class SavedBundlePredictDoFn[T, V](
 ) extends PredictDoFn[T, V, TensorFlowModel] {
   @transient private lazy val log = LoggerFactory.getLogger(this.getClass)
 
-  @Setup
-  def setup(): Unit =
-    model = Models
+  override def createResource(): TensorFlowModel =
+    Models
       .tensorFlow(uri, options)
       .get(Duration.ofDays(Integer.MAX_VALUE))
 
-  override def withRunner(f: Session#Runner => V): V = f(model.instance().session().runner())
+  override def withRunner(f: Session#Runner => V): V = f(getResource.instance().session().runner())
 
   @Teardown
   def teardown(): Unit = {
     log.info(s"Tearing down predict DoFn $this")
-    model.close()
-    model = null
+    getResource.close()
   }
 }
 
@@ -110,6 +115,7 @@ object SavedBundlePredictDoFn {
     override def extractOutput(input: T, out: Map[String, Tensor[_]]): V = outFn(input, out)
 
     override def outputTensorNames: Seq[String] = fetchOp
+
   }
 
   def forTensorFlowExample[T <: Example, V](
@@ -122,17 +128,20 @@ object SavedBundlePredictDoFn {
 
     var fetchOps: Seq[String] = _
 
-    override def setup(): Unit = {
-      model = TensorFlowLoader
+    override def createResource(): TensorFlowModel = {
+      val model = TensorFlowLoader
         .create(Id.create("tensorflow"), uri, options, signatureName)
         .get(Duration.ofDays(Integer.MAX_VALUE))
+      // by doing it here we make sure we only do it once
       fetchOps = model.outputsNameMap().values().asScala.toList
+
+      model
     }
 
     override def outputTensorNames: Seq[String] = fetchOps
 
     override def extractInput(input: T): Map[String, Tensor[_]] = {
-      val i = model.inputsNameMap().get(exampleTensorName)
+      val i = getResource.inputsNameMap().get(exampleTensorName)
       Map(i -> Tensors.create(input.toByteArray))
     }
 
