@@ -22,7 +22,7 @@ import java.time.Duration
 import com.spotify.zoltar.tf.{TensorFlowLoader, TensorFlowModel}
 import com.spotify.zoltar.{Model, Models}
 import org.apache.beam.sdk.transforms.DoFn
-import org.apache.beam.sdk.transforms.DoFn.{ProcessElement, Setup, Teardown}
+import org.apache.beam.sdk.transforms.DoFn.{ProcessElement, Teardown}
 import org.slf4j.LoggerFactory
 import org.tensorflow._
 import org.tensorflow.example.Example
