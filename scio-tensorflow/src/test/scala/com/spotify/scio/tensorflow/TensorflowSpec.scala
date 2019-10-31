@@ -113,17 +113,16 @@ private[tensorflow] object TFSavedExampleJob {
       .featureValues[Example]
       .predict(
         savedModelUri = args("savedModelUri"),
-        options = options,
-        exampleInputOp = "linear/head/predictions/class_ids"
-      ) { (r, o) =>
-        (r, o.map {
-          case (a, outTensor) =>
-            val output = Array.ofDim[Long](1)
-            outTensor.copyTo(output)
-            output(0)
-        }.head)
+        options = options
+      ) { (_, o) =>
+        val classes = Array.ofDim[Array[Byte]](1, 3)
+        o("classes").copyTo(classes)
+        val scores = Array.ofDim[Float](1, 3)
+        o("scores").copyTo(scores)
+
+        // get the highest probability class
+        new String(classes(0).toList.zip(scores(0).toList).maxBy(_._2)._1)
       }
-      .map(_._2)
       .saveAsTextFile(args("output"))
 
     sc.run().waitUntilDone()
@@ -143,8 +142,6 @@ class TensorflowSpec extends PipelineSpec {
       }
       .run()
   }
-<<<<<<< HEAD
-=======
 
   it should "allow saved model prediction with tf example" in {
     val resource = getClass.getResource("/trained_model")
@@ -157,6 +154,4 @@ class TensorflowSpec extends PipelineSpec {
       }
       .run()
   }
-
->>>>>>> Add predict function for tf example
 }

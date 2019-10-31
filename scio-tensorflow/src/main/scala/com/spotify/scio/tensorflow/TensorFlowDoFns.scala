@@ -118,34 +118,35 @@ object SavedBundlePredictDoFn {
 
   }
 
-  def forTensorFlowExample[T <: Example, V](
+  def forTensorFlowExample[T, V](
     uri: String,
     exampleTensorName: String,
     signatureName: String,
     options: TensorFlowModel.Options,
     outFn: (T, Map[String, Tensor[_]]) => V
-  ): SavedBundlePredictDoFn[T, V] = new SavedBundlePredictDoFn[T, V](uri, options) {
+  )(implicit ev: T <:< Example): SavedBundlePredictDoFn[T, V] =
+    new SavedBundlePredictDoFn[T, V](uri, options) {
 
-    var fetchOps: Seq[String] = _
+      var fetchOps: Map[String, String] = _
 
-    override def createResource(): TensorFlowModel = {
-      val model = TensorFlowLoader
-        .create(Id.create("tensorflow"), uri, options, signatureName)
-        .get(Duration.ofDays(Integer.MAX_VALUE))
-      // by doing it here we make sure we only do it once
-      fetchOps = model.outputsNameMap().values().asScala.toList
+      override def createResource(): TensorFlowModel = {
+        val model = TensorFlowLoader
+          .create(Id.create("tensorflow"), uri, options, signatureName)
+          .get(Duration.ofDays(Integer.MAX_VALUE))
+        // by doing it here we make sure we only do it once
+        fetchOps = model.outputsNameMap().asScala.toMap
 
-      model
+        model
+      }
+
+      override def outputTensorNames: Seq[String] = fetchOps.values.toSeq
+
+      override def extractInput(input: T): Map[String, Tensor[_]] = {
+        val i = getResource.inputsNameMap().get(exampleTensorName)
+        Map(i -> Tensors.create(Array(input.toByteArray)))
+      }
+
+      override def extractOutput(input: T, out: Map[String, Tensor[_]]): V =
+        outFn(input, fetchOps.mapValues(out(_)))
     }
-
-    override def outputTensorNames: Seq[String] = fetchOps
-
-    override def extractInput(input: T): Map[String, Tensor[_]] = {
-      val i = getResource.inputsNameMap().get(exampleTensorName)
-      Map(i -> Tensors.create(input.toByteArray))
-    }
-
-    override def extractOutput(input: T, out: Map[String, Tensor[_]]): V =
-      outFn(input, out)
-  }
 }

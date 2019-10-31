@@ -60,36 +60,6 @@ final class PredictSCollectionOps[T: ClassTag](private val self: SCollection[T])
     options: TensorFlowModel.Options
   )(inFn: T => Map[String, Tensor[_]])(outFn: (T, Map[String, Tensor[_]]) => V): SCollection[V] =
     self.parDo(SavedBundlePredictDoFn.forInput[T, V](savedModelUri, options, fetchOps, inFn, outFn))
-}
-
-final class ExampleSCollectionOps[T <: Example](private val self: SCollection[T]) extends AnyVal {
-
-  /**
-   * Saves this SCollection of `org.tensorflow.example.Example` as a TensorFlow TFRecord file.
-   * @return
-   */
-  @deprecated("saveAsTfExampleFile is deprecated: use saveAsTfRecordFile instead", "0.7.4")
-  def saveAsTfExampleFile(
-    path: String,
-    suffix: String = TFExampleIO.WriteParam.DefaultSuffix,
-    compression: Compression = TFExampleIO.WriteParam.DefaultCompression,
-    numShards: Int = TFExampleIO.WriteParam.DefaultNumShards
-  ): ClosedTap[Example] =
-    saveAsTfRecordFile(path, suffix = suffix, compression = compression, numShards = numShards)
-
-  /**
-   * Saves this SCollection of `org.tensorflow.example.Example` as a TensorFlow TFRecord file.
-   * @return
-   */
-  def saveAsTfRecordFile(
-    path: String,
-    suffix: String = TFExampleIO.WriteParam.DefaultSuffix,
-    compression: Compression = TFExampleIO.WriteParam.DefaultCompression,
-    numShards: Int = TFExampleIO.WriteParam.DefaultNumShards
-  ): ClosedTap[Example] = {
-    val param = TFExampleIO.WriteParam(suffix, compression, numShards)
-    self.asInstanceOf[SCollection[Example]].write(TFExampleIO(path))(param)
-  }
 
   /**
    * Predict/infer/forward-pass on a TensorFlow Saved Model.
@@ -109,7 +79,7 @@ final class ExampleSCollectionOps[T <: Example](private val self: SCollection[T]
     options: TensorFlowModel.Options,
     exampleInputOp: String = "inputs",
     signatureName: String = "serving_default"
-  )(outFn: (T, Map[String, Tensor[_]]) => V): SCollection[V] =
+  )(outFn: (T, Map[String, Tensor[_]]) => V)(implicit ev: T <:< Example): SCollection[V] =
     self.parDo(
       SavedBundlePredictDoFn.forTensorFlowExample[T, V](
         savedModelUri,
@@ -119,6 +89,38 @@ final class ExampleSCollectionOps[T <: Example](private val self: SCollection[T]
         outFn
       )
     )
+}
+
+final class ExampleSCollectionOps[T <: Example](private val self: SCollection[T]) extends AnyVal {
+
+  /**
+   * Saves this SCollection of `org.tensorflow.example.Example` as a TensorFlow TFRecord file.
+   *
+   * @return
+   */
+  @deprecated("saveAsTfExampleFile is deprecated: use saveAsTfRecordFile instead", "0.7.4")
+  def saveAsTfExampleFile(
+    path: String,
+    suffix: String = TFExampleIO.WriteParam.DefaultSuffix,
+    compression: Compression = TFExampleIO.WriteParam.DefaultCompression,
+    numShards: Int = TFExampleIO.WriteParam.DefaultNumShards
+  ): ClosedTap[Example] =
+    saveAsTfRecordFile(path, suffix = suffix, compression = compression, numShards = numShards)
+
+  /**
+   * Saves this SCollection of `org.tensorflow.example.Example` as a TensorFlow TFRecord file.
+   *
+   * @return
+   */
+  def saveAsTfRecordFile(
+    path: String,
+    suffix: String = TFExampleIO.WriteParam.DefaultSuffix,
+    compression: Compression = TFExampleIO.WriteParam.DefaultCompression,
+    numShards: Int = TFExampleIO.WriteParam.DefaultNumShards
+  ): ClosedTap[Example] = {
+    val param = TFExampleIO.WriteParam(suffix, compression, numShards)
+    self.asInstanceOf[SCollection[Example]].write(TFExampleIO(path))(param)
+  }
 }
 
 object SeqExampleSCollectionOps {
