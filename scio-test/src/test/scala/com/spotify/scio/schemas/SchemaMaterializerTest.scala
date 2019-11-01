@@ -21,6 +21,7 @@ import org.apache.beam.sdk.schemas.Schema.{Field, FieldType}
 import org.scalatest._
 import scala.collection.JavaConverters._
 import org.apache.beam.sdk.values.Row
+import scala.collection.mutable
 
 final class SchemaMaterializerTest extends FlatSpec with Matchers {
 
@@ -79,6 +80,44 @@ final class SchemaMaterializerTest extends FlatSpec with Matchers {
       FieldType.map(FieldType.STRING, FieldType.STRING)
     )
 
+    // More Collections
+    fieldTypes(Schema[Set[String]]).headOption.map(_.getType) shouldBe Some(
+      FieldType.array(FieldType.STRING)
+    )
+
+    fieldTypes(Schema[TraversableOnce[String]]).headOption.map(_.getType) shouldBe Some(
+      FieldType.array(FieldType.STRING)
+    )
+
+    fieldTypes(Schema[mutable.ArrayBuffer[String]]).headOption.map(_.getType) shouldBe Some(
+      FieldType.array(FieldType.STRING)
+    )
+
+    fieldTypes(Schema[mutable.Set[String]]).headOption.map(_.getType) shouldBe Some(
+      FieldType.array(FieldType.STRING)
+    )
+
+    fieldTypes(Schema[Vector[String]]).headOption.map(_.getType) shouldBe Some(
+      FieldType.array(FieldType.STRING)
+    )
+
+    fieldTypes(Schema[mutable.ArrayBuffer[String]]).headOption.map(_.getType) shouldBe Some(
+      FieldType.array(FieldType.STRING)
+    )
+  }
+
+  it should "support logical types" in {
+    import java.net.URI
+
+    val uriSchema = Schema.logicalType(
+      Type(org.apache.beam.sdk.schemas.Schema.FieldType.STRING)
+    )(toBase = (_: URI).toString, fromBase = (s: String) => new URI(s))
+
+    val (schema, toRow, fromRow) = SchemaMaterializer.materializeWithDefault[URI](uriSchema)
+    val uri = URI.create("https://spotify.com")
+    val row = Row.withSchema(schema).addValue(uri).build()
+    toRow(uri) shouldBe row
+    fromRow(toRow(uri)) shouldBe uri
   }
 
   it should "Support Optional fields when reading a Row" in {

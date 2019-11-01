@@ -21,6 +21,8 @@ import org.apache.beam.sdk.schemas.Schema.FieldType
 
 import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
+import scala.collection.mutable
+import scala.collection.SortedSet
 
 trait ScalaInstances {
 
@@ -63,7 +65,45 @@ trait ScalaInstances {
   implicit def listSchema[T](implicit s: Schema[T]): Schema[List[T]] =
     ArrayType(s, _.asJava, _.asScala.toList)
 
+  implicit def seqSchema[T](implicit s: Schema[T]): Schema[Seq[T]] =
+    ArrayType(s, _.asJava, _.asScala.toList)
+
+  implicit def traversableOnceSchema[T](implicit s: Schema[T]): Schema[TraversableOnce[T]] =
+    ArrayType(s, _.toList.asJava, _.asScala.toList)
+
+  implicit def iterableSchema[T](implicit s: Schema[T]): Schema[Iterable[T]] =
+    ArrayType(s, _.toList.asJava, _.asScala.toList)
+
+  implicit def arrayBufferSchema[T](implicit s: Schema[T]): Schema[mutable.ArrayBuffer[T]] =
+    ArrayType(s, _.toList.asJava, xs => mutable.ArrayBuffer(xs.asScala: _*))
+
+  implicit def bufferSchema[T](implicit s: Schema[T]): Schema[mutable.Buffer[T]] =
+    ArrayType(s, _.toList.asJava, xs => mutable.Buffer(xs.asScala: _*))
+
+  implicit def setSchema[T](implicit s: Schema[T]): Schema[Set[T]] =
+    ArrayType(s, _.toList.asJava, _.asScala.toSet)
+
+  implicit def mutableSetSchema[T](implicit s: Schema[T]): Schema[mutable.Set[T]] =
+    ArrayType(s, _.toList.asJava, xs => mutable.Set(xs.asScala: _*))
+
+  implicit def sortedSetSchema[T: Ordering](implicit s: Schema[T]): Schema[SortedSet[T]] =
+    ArrayType(s, _.toList.asJava, xs => SortedSet(xs.asScala: _*))
+
+  implicit def listBufferSchema[T](implicit s: Schema[T]): Schema[mutable.ListBuffer[T]] =
+    ArrayType(s, _.toList.asJava, xs => mutable.ListBuffer.apply(xs.asScala: _*))
+
+  implicit def vectorSchema[T](implicit s: Schema[T]): Schema[Vector[T]] =
+    ArrayType(s, _.toList.asJava, _.asScala.toVector)
+
   implicit def mapSchema[K, V](implicit k: Schema[K], v: Schema[V]): Schema[Map[K, V]] =
     MapType(k, v, _.asJava, _.asScala.toMap)
+
+  // TODO: WrappedArray ?
+
+  implicit def mutableMapSchema[K, V](
+    implicit k: Schema[K],
+    v: Schema[V]
+  ): Schema[mutable.Map[K, V]] =
+    MapType(k, v, _.asJava, _.asScala)
 
 }
