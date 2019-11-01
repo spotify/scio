@@ -22,7 +22,6 @@ import com.spotify.scio.testing._
 import com.spotify.scio.testing.util.ItUtils
 
 object BigQueryIOIT {
-
   @BigQueryType.fromTable("bigquery-public-data:samples.shakespeare")
   class ShakespeareFromTable
 

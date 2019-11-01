@@ -30,7 +30,6 @@ import org.apache.beam.sdk.util.common.ElementByteSizeObserver
 import scala.reflect.{classTag, ClassTag}
 
 private final class SlowGenericRecordCoder extends AtomicCoder[GenericRecord] {
-
   // TODO: can we find something more efficient than String ?
   private[this] val sc = StringUtf8Coder.of()
 

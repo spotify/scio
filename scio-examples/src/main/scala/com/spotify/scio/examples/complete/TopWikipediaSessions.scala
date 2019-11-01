@@ -92,5 +92,4 @@ object TopWikipediaSessions {
       // End of windowed operation, convert back to a regular `SCollection`
       .toSCollection
   }
-
 }

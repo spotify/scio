@@ -29,7 +29,6 @@ import org.elasticsearch.transport.client.PreBuiltTransportClient
 import scala.util.Try
 
 object IndexAdmin {
-
   private def adminClient[A](esOptions: ElasticsearchOptions)(f: AdminClient => A): Try[A] = {
     val settings: Settings =
       Settings.builder.put("cluster.name", esOptions.clusterName).build
@@ -95,5 +94,4 @@ object IndexAdmin {
       .setSource(mappingSource, XContentType.JSON)
       .get()
   }
-
 }

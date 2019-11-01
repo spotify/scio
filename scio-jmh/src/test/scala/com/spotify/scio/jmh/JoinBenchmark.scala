@@ -31,7 +31,6 @@ import scala.collection.JavaConverters._
 @OutputTimeUnit(TimeUnit.NANOSECONDS)
 @State(Scope.Thread)
 class JoinBenchmark {
-
   private def genIterable(n: Int): JIterable[Int] =
     new java.util.ArrayList[Int]((1 to n).asJava)
 
@@ -218,7 +217,6 @@ class JoinBenchmark {
     override def output(x: T): Unit = b += x
     override def result: Seq[T] = b.result()
   }
-
 }
 
 private class CartesianIterator[A, B](as: JIterable[A], bs: JIterable[B])

@@ -21,7 +21,6 @@ import com.spotify.scio.io.CustomIO
 import com.spotify.scio.testing._
 
 class JavaConvertersExampleTest extends PipelineSpec {
-
   val output = "gs://bucket/path/to/file"
   val expected: List[String] = (1 to 10).toList.map(_.toString)
   val io = CustomIO[String](output)
@@ -61,5 +60,4 @@ class JavaConvertersExampleTest extends PipelineSpec {
       }
       .run()
   }
-
 }

@@ -28,7 +28,6 @@ import scala.concurrent.Await
 import scala.concurrent.duration._
 
 class TapsTest extends FlatSpec with Matchers {
-
   val data = Seq("a", "b", "c")
 
   private def tmpFile: Path =
@@ -87,5 +86,4 @@ class TapsTest extends FlatSpec with Matchers {
 
     Await.ready(future, 10.seconds)
   }
-
 }

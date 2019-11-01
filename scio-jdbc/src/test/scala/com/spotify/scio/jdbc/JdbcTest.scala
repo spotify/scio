@@ -24,7 +24,6 @@ import org.apache.beam.sdk.io.{jdbc => beam}
 import com.spotify.scio.testing._
 
 object JdbcJob {
-
   def main(cmdlineArgs: Array[String]): Unit = {
     val (opts, _) = ScioContext.parseArguments[CloudSqlOptions](cmdlineArgs)
     val sc = ScioContext(opts)
@@ -60,11 +59,9 @@ object JdbcJob {
       connectionUrl = connectionUrl(opts),
       classOf[java.sql.Driver]
     )
-
 }
 
 class JdbcTest extends PipelineSpec {
-
   def testJdbc(xs: String*): Unit = {
     val args = Array(
       "--cloudSqlUsername=john",
@@ -166,5 +163,4 @@ class JdbcTest extends PipelineSpec {
 
     JdbcIO.dataSourceConfiguration(opts).toString shouldBe expected.toString
   }
-
 }

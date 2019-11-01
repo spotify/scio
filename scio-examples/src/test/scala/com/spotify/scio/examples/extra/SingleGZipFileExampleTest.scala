@@ -24,7 +24,6 @@ import com.spotify.scio.io._
 import com.spotify.scio.testing._
 
 class SingleGZipFileExampleTest extends PipelineSpec {
-
   private val inData = Seq("a b c d e", "a b a b", "")
   private val expected = Seq("a: 3", "b: 3", "c: 1", "d: 1", "e: 1")
 
@@ -55,5 +54,4 @@ class SingleGZipFileExampleTest extends PipelineSpec {
     Files.deleteIfExists(outPartFile.toPath)
     Files.deleteIfExists(out)
   }
-
 }

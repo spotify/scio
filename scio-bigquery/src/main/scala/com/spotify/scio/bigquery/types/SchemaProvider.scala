@@ -27,7 +27,6 @@ import scala.collection.JavaConverters._
 import scala.reflect.runtime.universe._
 
 private[types] object SchemaProvider {
-
   def schemaOf[T: TypeTag]: TableSchema = {
     val fields = typeOf[T].erasure match {
       case t if isCaseClass(t) => toFields(t)
@@ -116,5 +115,4 @@ private[types] object SchemaProvider {
         }
     }
   }
-
 }

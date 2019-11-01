@@ -28,7 +28,6 @@ object IteratorsSpec {
 }
 
 class IteratorsSpec extends PropertySpec {
-
   import IteratorsSpec._
 
   val maxInterval = 10L
@@ -90,5 +89,4 @@ class IteratorsSpec extends PropertySpec {
         uppers.forall(p => p._2 - p._1 >= period)
     }
   }
-
 }

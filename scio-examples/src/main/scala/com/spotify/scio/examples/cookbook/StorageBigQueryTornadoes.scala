@@ -31,7 +31,6 @@ import com.google.api.services.bigquery.model.{TableFieldSchema, TableSchema}
 import scala.collection.JavaConverters._
 
 object StorageBigQueryTornadoes {
-
   def main(cmdlineArgs: Array[String]): Unit = {
     // Create `ScioContext` and `Args`
     val (sc, args) = ContextAndArgs(cmdlineArgs)
@@ -63,5 +62,4 @@ object StorageBigQueryTornadoes {
     sc.run()
     ()
   }
-
 }

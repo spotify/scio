@@ -22,7 +22,6 @@ import com.spotify.scio.examples.common.ExampleData
 import com.spotify.scio.testing._
 
 class FilterExamplesTest extends PipelineSpec {
-
   private def gsodRow(year: Int, month: Int, day: Int, meanTemp: Double) =
     TableRow("year" -> year, "month" -> month, "day" -> day, "mean_temp" -> meanTemp)
 
@@ -46,5 +45,4 @@ class FilterExamplesTest extends PipelineSpec {
       }
       .run()
   }
-
 }

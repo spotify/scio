@@ -39,7 +39,6 @@ class SCollectionWithSideInput[T: Coder] private[values] (
   val context: ScioContext,
   sides: Iterable[SideInput[_]]
 ) extends PCollectionWrapper[T] {
-
   private def parDo[T0, U](fn: DoFn[T0, U]) =
     ParDo.of(fn).withSideInputs(sides.map(_.view).asJava)
 
@@ -129,5 +128,4 @@ class SCollectionWithSideInput[T: Coder] private[values] (
 
   /** Convert back to a basic SCollection. */
   def toSCollection: SCollection[T] = context.wrap(internal)
-
 }

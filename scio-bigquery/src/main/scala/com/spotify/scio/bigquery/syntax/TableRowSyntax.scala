@@ -27,7 +27,6 @@ import scala.util.Try
 
 /** Enhanced version of [[TableRow]] with typed getters. */
 final class TableRowOps(private val r: TableRow) extends AnyVal {
-
   def getBoolean(name: AnyRef): Boolean =
     this.getValue(name, _.toString.toBoolean, false)
 
@@ -96,7 +95,6 @@ final class TableRowOps(private val r: TableRow) extends AnyVal {
       Try(fn(o)).toOption
     }
   }
-
 }
 
 trait TableRowSyntax {

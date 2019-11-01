@@ -82,7 +82,6 @@ object BigQueryTypeIT {
 
 // Run BigQueryITUtil to re-populate tables for integration tests
 class BigQueryTypeIT extends FlatSpec with Matchers {
-
   import BigQueryTypeIT._
   import BigQueryITUtil._
 
@@ -221,5 +220,4 @@ class BigQueryTypeIT extends FlatSpec with Matchers {
     fields.map(_.getType) shouldBe Seq("STRING", "INTEGER")
     fields.map(_.getMode) shouldBe Seq("REQUIRED", "REQUIRED")
   }
-
 }

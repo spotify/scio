@@ -43,7 +43,6 @@ import scala.collection.mutable
  * }}}
  */
 object Iterators {
-
   private[extra] def lowerBound(idx: Long, size: Long, offset: Long): Long =
     if (idx < offset) offset - size else ((idx - offset) / size) * size + offset
 
@@ -136,7 +135,6 @@ object Iterators {
     private val self: Iterator[T],
     private val timestampFn: T => Long
   ) {
-
     /**
      * Iterator of fixed-size timestamp-based windows.
      * Partitions the timestamp space into half-open intervals of the form
@@ -169,12 +167,10 @@ object Iterators {
       require(offset < size, "offset must be < size")
       new SlidingIterator[T](self, timestampFn, size, period, offset)
     }
-
   }
 
   /** Enhance Iterator by adding a `timeSeries` method. */
   implicit class RichIterator[T](private val self: Iterator[T]) extends AnyVal {
-
     /**
      * Convert this iterator to a [[TimeSeriesIterator]].
      * @param timestampFn function to extract timestamp.
@@ -182,5 +178,4 @@ object Iterators {
     def timeSeries(timestampFn: T => Long): TimeSeriesIterator[T] =
       new TimeSeriesIterator(self, timestampFn)
   }
-
 }

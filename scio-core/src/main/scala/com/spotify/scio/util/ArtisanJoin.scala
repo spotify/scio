@@ -33,7 +33,6 @@ import org.slf4j.LoggerFactory
 import scala.collection.JavaConverters._
 
 private[scio] object ArtisanJoin {
-
   private val log = LoggerFactory.getLogger(this.getClass)
 
   // scalastyle:off line.size.limit
@@ -160,5 +159,4 @@ private[scio] object ArtisanJoin {
     } else {
       emptyList.iterator().asInstanceOf[JIterator[Option[A]]]
     }
-
 }

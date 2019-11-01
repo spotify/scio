@@ -267,7 +267,6 @@ object BigQueryTypedTable {
       })
     BigQueryTypedTable(reader, writer, table, tableRowFn)
   }
-
 }
 
 final case class BigQueryTypedTable[T: Coder](
@@ -315,7 +314,6 @@ final case class BigQueryTypedTable[T: Coder](
   }
 
   override def tap(read: ReadP): Tap[T] = BigQueryTypedTap(table, fn)
-
 }
 
 /**
@@ -353,7 +351,6 @@ final case class BigQueryTable(table: Table) extends BigQueryIO[TableRow] {
   }
 
   override def tap(read: ReadP): Tap[TableRow] = BigQueryTap(table.ref)
-
 }
 
 object BigQueryTable {

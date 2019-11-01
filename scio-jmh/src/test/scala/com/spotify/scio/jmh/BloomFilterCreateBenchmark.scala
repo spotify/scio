@@ -44,13 +44,11 @@ object BloomFilterCreateBenchmark {
     @Setup(Level.Trial)
     def setup(): Unit =
       randomStrings = createRandomString(nbrOfElements, 10)
-
   }
 }
 
 @State(Scope.Benchmark)
 class BloomFilterCreateBenchmark {
-
   import BloomFilterCreateBenchmark._
 
   /**
@@ -66,5 +64,4 @@ class BloomFilterCreateBenchmark {
     val sBf = bloomFilterState.randomStrings.aggregate(bfAggregator.monoid.zero)(_ += _, _ ++= _)
     sBf
   }
-
 }

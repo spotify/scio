@@ -82,7 +82,6 @@ final case class FirstImplementationWithAnnotation(s: String) extends TraitWithA
 final case class SecondImplementationWithAnnotation(i: Int) extends TraitWithAnnotation
 
 class CodersTest extends FlatSpec with Matchers {
-
   val userId = UserId(Array[Byte](1, 2, 3, 4))
   val user = User(userId, "johndoe", "johndoe@spotify.com")
 

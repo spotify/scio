@@ -48,7 +48,6 @@ private object NothingCoder extends AtomicCoder[Nothing] {
  * performance reasons given that pairs are really common and used in groupBy operations.
  */
 private final class PairCoder[A, B](ac: BCoder[A], bc: BCoder[B]) extends AtomicCoder[(A, B)] {
-
   @inline def onErrorMsg[T](msg: => (String, String))(f: => T): T =
     try {
       f
@@ -435,7 +434,6 @@ private object SDoubleCoder extends BCoder[Double] {
 
 // scalastyle:off number.of.methods
 trait ScalaCoders {
-
   implicit def charCoder: Coder[Char] =
     Coder.xmap(Coder.beam(ByteCoder.of()))(_.toChar, _.toByte)
   implicit def byteCoder: Coder[Byte] =

@@ -30,13 +30,11 @@ import scala.reflect.runtime.universe._
 
 /** Companion object for [[MockBigQuery]]. */
 object MockBigQuery {
-
   /** Create a new MockBigQuery instance. */
   def apply(): MockBigQuery = new MockBigQuery(BigQuery.defaultInstance())
 
   /** Create a new MockBigQuery instance with the given BigQueryClient. */
   def apply(bq: BigQuery): MockBigQuery = new MockBigQuery(bq)
-
 }
 
 /**
@@ -46,7 +44,6 @@ object MockBigQuery {
  * [[queryResult]] to query them.
  */
 class MockBigQuery private (private val bq: BigQuery) {
-
   private val mapping = MMap.empty[TableReference, TableReference]
 
   /**
@@ -109,7 +106,6 @@ class MockBigQuery private (private val bq: BigQuery) {
     } else {
       s"`${table.getProjectId}.${table.getDatasetId}.${table.getTableId}`"
     }
-
 }
 
 /**
@@ -121,7 +117,6 @@ class MockTable(
   private val original: TableReference,
   private val temp: TableReference
 ) {
-
   private var mocked: Boolean = false
 
   private def ensureUnique(): Unit = {
@@ -178,5 +173,4 @@ class MockTable(
     writeRows(rows)
     ()
   }
-
 }

@@ -20,7 +20,6 @@ package com.spotify.scio.examples.extra
 import com.spotify.scio.testing.PipelineSpec
 
 class WordCountOrchestrationTest extends PipelineSpec {
-
   "countWords" should "count words" in {
     runWithContext { sc =>
       val in = Seq("a b", "a b c d", "", "d e")
@@ -40,5 +39,4 @@ class WordCountOrchestrationTest extends PipelineSpec {
       out should containInAnyOrder(expected)
     }
   }
-
 }

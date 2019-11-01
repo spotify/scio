@@ -37,10 +37,8 @@ import scala.collection.JavaConverters._
  * }}}
  */
 package object bigtable {
-
   /** Enhanced version of `Row` with convenience methods. */
   implicit class RichRow(private val self: Row) extends AnyVal {
-
     /** Return the `Cell`s for the specific column. */
     def getColumnCells(familyName: String, columnQualifier: ByteString): List[Cell] =
       (for {
@@ -94,14 +92,12 @@ package object bigtable {
         f <- self.getFamiliesList.asScala.find(_.getName == familyName)
         c <- f.getColumnsList.asScala.find(_.getQualifier == columnQualifier)
       } yield c.getCells(0).getValue
-
   }
 
   private[this] val DefaultSleepDuration = Duration.standardMinutes(20)
 
   /** Enhanced version of [[ScioContext]] with Bigtable methods. */
   implicit class BigtableScioContext(private val self: ScioContext) extends AnyVal {
-
     /** Get an SCollection for a Bigtable table. */
     def bigtable(
       projectId: String,
@@ -336,7 +332,6 @@ package object bigtable {
    */
   implicit class BigtableSCollection[T](private val self: SCollection[(ByteString, Iterable[T])])
       extends AnyVal {
-
     /**
      * Save this SCollection as a Bigtable table. Note that elements must be of type `Mutation`.
      */
@@ -382,5 +377,4 @@ package object bigtable {
         .asInstanceOf[ClosedTap[(ByteString, Iterable[Mutation])]]
     }
   }
-
 }

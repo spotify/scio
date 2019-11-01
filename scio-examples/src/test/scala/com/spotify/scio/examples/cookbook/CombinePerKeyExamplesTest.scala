@@ -22,7 +22,6 @@ import com.spotify.scio.examples.common.ExampleData
 import com.spotify.scio.testing._
 
 class CombinePerKeyExamplesTest extends PipelineSpec {
-
   val input = Seq(
     ("c1", "verylongword1"),
     ("c2", "verylongword1"),
@@ -49,5 +48,4 @@ class CombinePerKeyExamplesTest extends PipelineSpec {
       }
       .run()
   }
-
 }

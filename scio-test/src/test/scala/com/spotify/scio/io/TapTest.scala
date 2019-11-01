@@ -65,7 +65,6 @@ trait TapSpec extends PipelineSpec {
 }
 
 class TapTest extends TapSpec {
-
   val schema = newGenericRecord(1).getSchema
   implicit val coder = Coder.avroGenericRecordCoder(schema)
 
@@ -275,5 +274,4 @@ class TapTest extends TapSpec {
     val scioResult = sc.run().waitUntilDone()
     scioResult.tap(f).value.toSet shouldBe (1 to 10).toSet
   }
-
 }

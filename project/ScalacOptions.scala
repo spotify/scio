@@ -18,7 +18,6 @@
 import sbt._, Keys._
 
 object Scalac {
-
   // see: https://tpolecat.github.io/2017/04/25/scalac-flags.html
   val baseOptions = List(
     "-Xmax-classfile-name",
@@ -89,5 +88,4 @@ object Scalac {
       (if (scalaBinaryVersion.value == "2.12") List("-no-java-comments")
        else Nil)
   }
-
 }

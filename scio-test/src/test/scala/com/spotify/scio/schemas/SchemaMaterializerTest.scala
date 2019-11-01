@@ -23,7 +23,6 @@ import scala.collection.JavaConverters._
 import org.apache.beam.sdk.values.Row
 
 final class SchemaMaterializerTest extends FlatSpec with Matchers {
-
   "SchemaMaterializer" should "materialize correct FieldType" in {
     def fieldTypes[T](s: Schema[T]): List[Field] =
       SchemaMaterializer.materializeWithDefault(s)._1.getFields().asScala.toList
@@ -78,7 +77,6 @@ final class SchemaMaterializerTest extends FlatSpec with Matchers {
     fieldTypes(Schema[java.util.Map[String, String]]).headOption.map(_.getType) shouldBe Some(
       FieldType.map(FieldType.STRING, FieldType.STRING)
     )
-
   }
 
   it should "Support Optional fields when reading a Row" in {
@@ -93,5 +91,4 @@ final class SchemaMaterializerTest extends FlatSpec with Matchers {
         .build()
     from(row) shouldBe Foo("Hello", None)
   }
-
 }

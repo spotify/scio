@@ -31,7 +31,6 @@ object SequenceExamplesJob {
 }
 
 class TFSequenceExampleTest extends PipelineSpec {
-
   "SequenceExamplesJob" should "work" in {
     JobTest[ExamplesJobV2.type]
       .args("--output=out")

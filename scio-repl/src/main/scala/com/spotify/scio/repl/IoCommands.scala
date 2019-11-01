@@ -37,7 +37,6 @@ import scala.reflect.ClassTag
 
 /** Commands for simple file I/O in the REPL. */
 class IoCommands(options: PipelineOptions) {
-
   private val logger = LoggerFactory.getLogger(this.getClass)
 
   FileSystems.setDefaultPipelineOptions(options)
@@ -145,5 +144,4 @@ class IoCommands(options: PipelineOptions) {
     Channels.newOutputStream(
       FileSystems.create(FileSystems.matchNewResource(path, false), mimeType)
     )
-
 }

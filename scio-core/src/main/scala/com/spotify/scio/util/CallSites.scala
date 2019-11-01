@@ -21,7 +21,6 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.function.BiFunction
 
 private[scio] object CallSites {
-
   private val scioNs = "com.spotify.scio."
   private val beamNs = "org.apache.beam."
 
@@ -85,5 +84,4 @@ private[scio] object CallSites {
     val line = stack(pExt).getLineNumber
     s"$method@{$file:$line}"
   }
-
 }

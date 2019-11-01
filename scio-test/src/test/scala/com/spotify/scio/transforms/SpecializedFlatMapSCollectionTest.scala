@@ -20,7 +20,6 @@ package com.spotify.scio.transforms
 import com.spotify.scio.testing.PipelineSpec
 
 class SpecializedFlatMapSCollectionTest extends PipelineSpec {
-
   "SpecializedFlatMapSCollectionTest" should "support safeFlatMap()" in {
     val errorMsg = "String contains 'a'"
     runWithContext { sc =>

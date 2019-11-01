@@ -24,13 +24,11 @@ import org.apache.commons.io.FileUtils
 import shapeless.datatype.tensorflow._
 
 class TFTapTest extends TapSpec {
-
   object TestFeatureSpec {
     val featuresType: TensorFlowType[TestFeatures] =
       TensorFlowType[TestFeatures]
 
     case class TestFeatures(f1: Float, f2: Float)
-
   }
 
   "SCollection" should "support saveAsTFRecordFile" in {
@@ -47,5 +45,4 @@ class TFTapTest extends TapSpec {
       FileUtils.deleteDirectory(dir)
     }
   }
-
 }

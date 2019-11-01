@@ -21,7 +21,6 @@ import com.spotify.scio._
 import com.spotify.scio.testing._
 
 class MetricsExampleTest extends PipelineSpec {
-
   "MetricsExample" should "work" in {
     JobTest[com.spotify.scio.examples.extra.MetricsExample.type]
     // static metrics
@@ -67,5 +66,4 @@ class MetricsExampleTest extends PipelineSpec {
       }
       .run()
   }
-
 }

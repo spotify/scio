@@ -21,7 +21,6 @@ import org.scalatest.Inspectors.forAll
 import org.scalatest._
 
 object BigQueryIT {
-
   val tableRef = "bigquery-public-data:samples.shakespeare"
   val legacyQuery =
     "SELECT word, word_count FROM [bigquery-public-data:samples.shakespeare] LIMIT 10"
@@ -35,11 +34,9 @@ object BigQueryIT {
     "SELECT word, word_count FROM `bigquery-public-data.samples.shakespeare` LIMIT 10"
   )
   class WordCount
-
 }
 
 class BigQueryIT extends FlatSpec with Matchers {
-
   import BigQueryIT._
 
   // =======================================================================
@@ -149,5 +146,4 @@ class BigQueryIT extends FlatSpec with Matchers {
       "404 Not Found, this is most likely caused by missing source table or mock data"
   }
   // scalastyle:on no.whitespace.before.left.bracket
-
 }

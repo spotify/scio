@@ -35,7 +35,6 @@ import org.apache.beam.sdk.io.gcp.pubsub.PubsubOptions
 import scala.util.Try
 
 object PubSubAdmin {
-
   private object GrpcClient {
     private def newChannel: ManagedChannel = {
       NettyChannelBuilder

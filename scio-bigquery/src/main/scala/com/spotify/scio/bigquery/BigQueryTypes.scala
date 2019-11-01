@@ -60,7 +60,6 @@ sealed trait ExtendedErrorInfo {
 
 object ExtendedErrorInfo {
   final case object Enabled extends ExtendedErrorInfo {
-
     override type Info = BigQueryInsertError
 
     override private[scio] def coll(sc: ScioContext, wr: WriteResult): SCollection[Info] =
@@ -130,7 +129,6 @@ object Timestamp {
     case t: Long => new Instant(t / 1000)
     case _       => parse(timestamp.toString)
   }
-
 }
 
 /** Utility for BigQuery `DATE` type. */

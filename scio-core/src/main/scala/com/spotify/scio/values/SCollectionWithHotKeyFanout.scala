@@ -34,7 +34,6 @@ class SCollectionWithHotKeyFanout[K: Coder, V: Coder] private[values] (
   private val self: PairSCollectionFunctions[K, V],
   private val hotKeyFanout: Either[K => Int, Int]
 ) extends TransformNameable {
-
   private def withFanout[K0, I, O](
     combine: Combine.PerKey[K0, I, O]
   ): PerKeyWithHotKeyFanout[K0, I, O] =
@@ -125,5 +124,4 @@ class SCollectionWithHotKeyFanout[K: Coder, V: Coder] private[values] (
     )
     self.applyPerKey(withFanout(Combine.perKey(Functions.reduceFn(context, sg))))(kvToTuple)
   }
-
 }

@@ -27,7 +27,6 @@ import org.joda.time.{Instant, LocalDate, LocalDateTime, LocalTime}
 import scala.reflect.macros._
 
 private[types] object ConverterProvider {
-
   def fromAvroImpl[T: c.WeakTypeTag](c: blackbox.Context): c.Expr[GenericRecord => T] = {
     import c.universe._
     val tpe = implicitly[c.WeakTypeTag[T]].tpe
@@ -358,7 +357,6 @@ private[types] object ConverterProvider {
   }
   // scalastyle:on cyclomatic.complexity
   // scalastyle:on method.length
-
 }
 
 object ConverterUtil {

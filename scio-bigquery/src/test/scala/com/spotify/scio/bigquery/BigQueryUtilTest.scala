@@ -24,7 +24,6 @@ import org.scalatest.{FlatSpec, Matchers}
 import scala.collection.JavaConverters._
 
 class BigQueryUtilTest extends FlatSpec with Matchers {
-
   "parseSchema" should "work" in {
     val schema = new TableSchema().setFields(
       List(
@@ -64,5 +63,4 @@ class BigQueryUtilTest extends FlatSpec with Matchers {
     schema.setFactory(new JacksonFactory)
     BigQueryUtil.parseSchema(schema.toString) shouldBe schema
   }
-
 }

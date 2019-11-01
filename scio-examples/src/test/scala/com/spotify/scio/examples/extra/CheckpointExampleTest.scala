@@ -22,7 +22,6 @@ import com.spotify.scio.io._
 import com.spotify.scio.testing._
 
 class CheckpointExampleTest extends PipelineSpec {
-
   private val input = Seq("foo bar foo", "var")
   private val words = Seq("foo", "foo", "bar", "var")
   private val max = "(foo,2)"
@@ -77,5 +76,4 @@ class CheckpointExampleTest extends PipelineSpec {
       }
       .run()
   }
-
 }

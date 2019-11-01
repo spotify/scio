@@ -49,7 +49,6 @@ private[annoy] object AnnoyUri {
 }
 
 private class LocalAnnoyUri(val path: String) extends AnnoyUri {
-
   override private[annoy] def getReader(metric: AnnoyMetric, dim: Int): AnnoyReader =
     new AnnoyReader(path, metric, dim)
   override private[annoy] def saveAndClose(w: AnnoyWriter): Unit = {
@@ -61,11 +60,9 @@ private class LocalAnnoyUri(val path: String) extends AnnoyUri {
     }
   }
   override private[annoy] def exists: Boolean = new File(path).exists()
-
 }
 
 private class RemoteAnnoyUri(val path: String, options: PipelineOptions) extends AnnoyUri {
-
   private[this] val rfu: RemoteFileUtil = RemoteFileUtil.create(options)
 
   override private[annoy] def getReader(metric: AnnoyMetric, dim: Int): AnnoyReader = {
@@ -84,11 +81,9 @@ private class RemoteAnnoyUri(val path: String, options: PipelineOptions) extends
     Files.delete(tempFile)
   }
   override private[annoy] def exists: Boolean = rfu.remoteExists(new URI(path))
-
 }
 
 private[annoy] class AnnoyWriter(metric: AnnoyMetric, dim: Int, nTrees: Int) {
-
   private[this] val annoy4sIndex = metric match {
     case Angular   => Annoy.annoyLib.createAngular(dim)
     case Euclidean => Annoy.annoyLib.createEuclidean(dim)

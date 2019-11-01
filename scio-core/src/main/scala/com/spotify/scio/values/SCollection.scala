@@ -53,7 +53,6 @@ import scala.util.Try
 
 /** Convenience functions for creating SCollections. */
 object SCollection {
-
   private[values] val logger = LoggerFactory.getLogger(this.getClass)
 
   /**
@@ -93,7 +92,6 @@ object SCollection {
     new PairSkewedSCollectionFunctions(s)
 
   private[scio] final case class State(postCoGroup: Boolean = false)
-
 }
 
 // scalastyle:off number.of.methods
@@ -1271,7 +1269,6 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   def write(io: ScioIO[T] { type WriteP = Unit })(implicit coder: Coder[T]): ClosedTap[io.tapT.T] =
     io.writeWithContext(this, ())
   // scalastyle:on structural.type
-
 }
 // scalastyle:on number.of.methods
 

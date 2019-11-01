@@ -23,7 +23,6 @@ import org.joda.time.{DateTimeZone, Duration, Instant, LocalDate, LocalDateTime,
 
 // Run this to re-populate tables for integration tests
 object BigQueryITUtil {
-
   @BigQueryType.toTable
   case class ToTableT(word: String, word_count: Int)
 

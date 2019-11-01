@@ -31,7 +31,6 @@ import scala.collection.JavaConverters._
 import scala.util.Success
 
 class BigQueryClientIT extends FlatSpec with Matchers {
-
   val bq = BigQuery.defaultInstance()
 
   val legacyQuery =
@@ -211,7 +210,6 @@ class BigQueryClientIT extends FlatSpec with Matchers {
   }
 
   object GcsUtils {
-
     private val storage = StorageOptions.getDefaultInstance.getService
 
     private def list(bucket: String, prefix: String): Iterable[Blob] = {
@@ -229,5 +227,4 @@ class BigQueryClientIT extends FlatSpec with Matchers {
       ()
     }
   }
-
 }

@@ -27,7 +27,6 @@ object TFExampleIOTest {
 }
 
 class TFExampleIOTest extends ScioIOSpec {
-
   import TFExampleIOTest._
 
   "TFExampleIO" should "work" in {
@@ -35,5 +34,4 @@ class TFExampleIOTest extends ScioIOSpec {
     testTap(xs)(_.saveAsTfRecordFile(_))(".tfrecords")
     testJobTest(xs)(TFExampleIO(_))(_.tfRecordExampleFile(_))(_.saveAsTfRecordFile(_))
   }
-
 }

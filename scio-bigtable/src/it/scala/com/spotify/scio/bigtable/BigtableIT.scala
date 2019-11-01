@@ -31,7 +31,6 @@ import org.joda.time.Duration
 import scala.collection.JavaConverters._
 
 object BigtableIT {
-
   val projectId = "data-integration-test"
   val instanceId = "scio-bigtable-it"
   val clusterId = "scio-bigtable-it-cluster"
@@ -75,7 +74,6 @@ object BigtableIT {
 }
 
 class BigtableIT extends PipelineSpec {
-
   import BigtableIT._
 
   // "Update number of bigtable nodes" should "work" in {
@@ -166,5 +164,4 @@ class BigtableIT extends PipelineSpec {
     // Clean up and delete
     tables.keys.foreach(deleteTable)
   }
-
 }

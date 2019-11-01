@@ -25,7 +25,6 @@ import org.scalatest._
 import scala.collection.JavaConverters._
 
 class FunctionsTest extends FlatSpec with Matchers {
-
   private def testFn[VA](fn: CombineFn[Int, VA, Int]) = {
     var a1 = fn.createAccumulator()
     var a2 = fn.createAccumulator()
@@ -49,5 +48,4 @@ class FunctionsTest extends FlatSpec with Matchers {
     testFn(Functions.reduceFn(ScioContext(), Semigroup.intSemigroup))
     testFn(Functions.reduceFn(ScioContext(), Monoid.intMonoid))
   }
-
 }

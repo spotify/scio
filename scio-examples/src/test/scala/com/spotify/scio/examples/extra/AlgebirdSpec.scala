@@ -38,7 +38,6 @@ class AlgebirdSpec extends PropSpec with ScalaCheckDrivenPropertyChecks with Mat
    * ScalaCheck properties.
    */
   class SColl[T](val internal: List[T]) {
-
     /** Sum with an implicit Semigroup. */
     def sum(implicit sg: Semigroup[T]): T = internal.reduce(sg.plus)
 
@@ -58,7 +57,6 @@ class AlgebirdSpec extends PropSpec with ScalaCheckDrivenPropertyChecks with Mat
     def map[U](f: T => U): SColl[U] = new SColl(internal.map(f))
 
     override def toString: String = internal.mkString("[", ", ", "]")
-
   }
 
   // Generator for non-empty SColl[T]
@@ -394,5 +392,4 @@ class AlgebirdSpec extends PropSpec with ScalaCheckDrivenPropertyChecks with Mat
       actual shouldBe expected +- 1e-3
     }
   }
-
 }

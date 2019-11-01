@@ -28,7 +28,6 @@ import io.circe.syntax._
 import org.apache.beam.sdk.{io => beam}
 
 final case class JsonIO[T: Encoder: Decoder: Coder](path: String) extends ScioIO[T] {
-
   override type ReadP = JsonIO.ReadParam
   override type WriteP = JsonIO.WriteParam
   override final val tapT = TapOf[T]
@@ -52,7 +51,6 @@ final case class JsonIO[T: Encoder: Decoder: Coder](path: String) extends ScioIO
 
   private def decodeJson(json: String): T =
     decode[T](json).fold(throw _, identity)
-
 }
 
 object JsonIO {

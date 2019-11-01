@@ -26,7 +26,6 @@ import org.apache.beam.sdk.metrics.MetricResults
 import org.joda.time
 
 class ScioResultTest extends PipelineSpec {
-
   "ScioContextResult" should "reflect pipeline state" in {
     val r = runWithContext(_.parallelize(Seq(1, 2, 3)))
     r.isCompleted shouldBe true
@@ -72,7 +71,6 @@ class ScioResultTest extends PipelineSpec {
 }
 
 object ScioResultTest {
-
   private val mockPipeline: PipelineResult = new PipelineResult {
     private var state = State.RUNNING
     override def cancel(): State = {
@@ -89,5 +87,4 @@ object ScioResultTest {
   private val mockScioResult = new ScioResult(mockPipeline) {
     override def getMetrics: metrics.Metrics = null
   }
-
 }

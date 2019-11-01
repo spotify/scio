@@ -30,13 +30,11 @@ import scala.util.Try
 import org.apache.avro.Schema
 
 private[client] object Cache {
-
   sealed trait Show[T] {
     def show(t: T): String
   }
 
   object Show {
-
     @inline final def apply[T](implicit t: Show[T]): Show[T] = t
 
     implicit val showTableSchema: Show[TableSchema] = new Show[TableSchema] {
@@ -58,7 +56,6 @@ private[client] object Cache {
   }
 
   object Read {
-
     @inline final def apply[T](implicit t: Read[T]): Read[T] = t
 
     implicit val readTableSchema: Read[TableSchema] = new Read[TableSchema] {
@@ -77,7 +74,6 @@ private[client] object Cache {
           new Schema.Parser().parse(s)
         }.toOption
     }
-
   }
 
   private[this] def isCacheEnabled: Boolean = BigQueryConfig.isCacheEnabled

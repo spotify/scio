@@ -29,7 +29,6 @@ import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
 
 class DistCacheIT extends PipelineSpec {
-
   "GCS DistCache" should "work" in {
     runWithDistCache(Seq("name1", "name2")) { (sc, dc) =>
       val p = sc.parallelize(Seq(0, 1)).map(i => (i, dc()(i)))
@@ -57,5 +56,4 @@ class DistCacheIT extends PipelineSpec {
       FileSystems.delete(Seq(resourceId).asJava)
     }
   }
-
 }

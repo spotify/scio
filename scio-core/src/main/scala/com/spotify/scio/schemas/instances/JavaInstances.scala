@@ -27,7 +27,6 @@ import scala.reflect.ClassTag
 import org.apache.beam.sdk.schemas.Schema.LogicalType
 
 trait JavaInstances {
-
   implicit val jByteSchema: Type[java.lang.Byte] =
     Type[java.lang.Byte](FieldType.BYTE)
 
@@ -82,5 +81,4 @@ trait JavaInstances {
       override def toString(): String =
         s"EnumLogicalType($className, String)"
     }))
-
 }

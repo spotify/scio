@@ -31,7 +31,6 @@ import com.spotify.scio.examples.common.ExampleData
 import scala.collection.JavaConverters._
 
 object DistinctByKeyExample {
-
   def main(cmdlineArgs: Array[String]): Unit = {
     // Create `ScioContext` and `Args`
     val (sc, args) = ContextAndArgs(cmdlineArgs)

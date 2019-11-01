@@ -23,7 +23,6 @@ import com.spotify.scio.testing._
 import org.apache.avro.generic.{GenericData, GenericRecord}
 
 class ShapelessAvroExampleTest extends PipelineSpec {
-
   import ShapelessAvroExample._
 
   val textIn = Seq("a b c d e", "a b a b")
@@ -55,5 +54,4 @@ class ShapelessAvroExampleTest extends PipelineSpec {
       }
       .run()
   }
-
 }

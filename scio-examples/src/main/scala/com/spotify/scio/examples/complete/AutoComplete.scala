@@ -38,7 +38,6 @@ import org.joda.time.Duration
 import scala.collection.JavaConverters._
 
 object AutoComplete {
-
   case class Tag(tag: String, count: Long)
 
   @BigQueryType.toTable
@@ -158,5 +157,4 @@ object AutoComplete {
     val result = sc.run()
     exampleUtils.waitToFinish(result.pipelineResult)
   }
-
 }

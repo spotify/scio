@@ -31,7 +31,6 @@ import org.apache.beam.sdk.transforms.DoFn.ProcessElement
 private[scio] abstract class ParallelLimitedFn[T, U](maxDoFns: Int)
     extends DoFnWithResource[T, U, Semaphore]
     with NamedFn {
-
   def getResourceType: ResourceType = ResourceType.PER_CLASS
 
   def createResource: Semaphore = new Semaphore(maxDoFns, true)

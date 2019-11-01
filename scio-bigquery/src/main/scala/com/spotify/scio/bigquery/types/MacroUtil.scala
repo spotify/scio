@@ -24,7 +24,6 @@ import scala.reflect.macros._
 import scala.reflect.runtime.universe._
 
 private[types] object MacroUtil {
-
   private[this] val logger = LoggerFactory.getLogger(this.getClass)
 
   // Case class helpers for runtime reflection
@@ -84,5 +83,4 @@ private[types] object MacroUtil {
   val SUtil = s"$SBQ.BigQueryUtil"
 
   def p(c: blackbox.Context, code: String): c.Tree = c.parse(code)
-
 }

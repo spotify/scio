@@ -147,7 +147,6 @@ sealed trait AvroIO[T] extends ScioIO[T] {
       .withSuffix(suffix)
       .withCodec(codec)
       .withMetadata(metadata.asJava)
-
 }
 
 final case class SpecificRecordIO[T <: SpecificRecord: ClassTag: Coder](path: String)
@@ -295,7 +294,6 @@ final case class GenericRecordParseIO[T](path: String, parseFn: GenericRecord =>
 }
 
 object AvroIO {
-
   object WriteParam {
     private[avro] val DefaultNumShards = 0
     private[avro] val DefaultSuffix = ""
@@ -319,10 +317,8 @@ object AvroIO {
 }
 
 object AvroTyped {
-
   final case class AvroIO[T <: HasAvroAnnotation: ClassTag: TypeTag: Coder](path: String)
       extends ScioIO[T] {
-
     override type ReadP = Unit
     override type WriteP = avro.AvroIO.WriteParam
     override final val tapT = TapOf[T]
@@ -383,5 +379,4 @@ object AvroTyped {
         .map(avroT.fromGenericRecord)
     }
   }
-
 }

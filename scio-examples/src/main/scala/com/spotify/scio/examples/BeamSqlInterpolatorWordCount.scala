@@ -30,7 +30,6 @@ import com.spotify.scio.sql._
 import com.spotify.scio.examples.common.ExampleData
 
 object BeamSqlInterpolatorWordCount {
-
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
     val coll = sc
@@ -50,5 +49,4 @@ object BeamSqlInterpolatorWordCount {
     sc.run()
     ()
   }
-
 }

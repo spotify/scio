@@ -23,7 +23,6 @@ import com.spotify.scio.util.StatCounter
  * Extra functions available on SCollections of `Double`s through an implicit conversion.
  */
 class DoubleSCollectionFunctions(self: SCollection[Double]) {
-
   /**
    * Return an SCollection with a single
    * [[com.spotify.scio.util.StatCounter StatCounter]] object that captures the mean, variance and
@@ -180,7 +179,6 @@ class DoubleSCollectionFunctions(self: SCollection[Double]) {
       }
       .toSCollection
   }
-
 }
 
 private object BucketFunctions {

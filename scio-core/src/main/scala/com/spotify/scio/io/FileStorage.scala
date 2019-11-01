@@ -42,7 +42,6 @@ private[scio] object FileStorage {
 }
 
 private[scio] final class FileStorage(protected[scio] val path: String) {
-
   private def listFiles: Seq[Metadata] =
     FileSystems.`match`(path).metadata().asScala
 
@@ -137,5 +136,4 @@ private[scio] final class FileStorage(protected[scio] val path: String) {
     val inputs = listFiles.map(getObjectInputStream).map(wrapperFn).asJava
     new SequenceInputStream(Collections.enumeration(inputs))
   }
-
 }

@@ -48,7 +48,6 @@ object ScioIOTest {
 }
 
 class ScioIOTest extends ScioIOSpec {
-
   import ScioIOTest._
 
   "AvroIO" should "work with SpecificRecord" in {
@@ -162,7 +161,6 @@ class ScioIOTest extends ScioIOSpec {
 
     context.pipeline.traverseTopologically(
       new PipelineVisitor.Defaults {
-
         override def visitPrimitiveTransform(node: TransformHierarchy#Node): Unit =
           consumedOutputs ++= node.getInputs.values().asScala
 
@@ -253,5 +251,4 @@ class ScioIOTest extends ScioIOSpec {
     val io = (s: String) => PubsubIO[(String, Map[String, String])](s)
     testJobTest(xs)(io)(_.pubsubTopicWithAttributes(_))(_.saveAsPubsubWithAttributes[String](_))
   }
-
 }

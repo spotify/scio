@@ -34,7 +34,6 @@ import org.joda.time.{Duration, Instant}
 import scala.util.control.NonFatal
 
 object TrafficMaxLaneFlow {
-
   case class LaneInfo(
     stationId: String,
     lane: String,
@@ -135,5 +134,4 @@ object TrafficMaxLaneFlow {
     exampleUtils.waitToFinish(result.pipelineResult)
   }
   // scalastyle:on method.length
-
 }

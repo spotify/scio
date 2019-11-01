@@ -21,7 +21,6 @@ import com.spotify.scio.io._
 import com.spotify.scio.testing._
 
 class SafeFlatMapExampleTest extends PipelineSpec {
-
   "SafeFlatMapExample" should "work" in {
     JobTest[SafeFlatMapExample.type]
       .args("--input=in", "--num-sum=num-sum")

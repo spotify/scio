@@ -23,7 +23,6 @@ import com.spotify.scio.extra.PropertySpec
 import org.scalacheck._
 
 class NearestNeighborSpec extends PropertySpec {
-
   val dimension = 40
   private def randVec = DenseVector.rand[Double](dimension)
   val vector = Gen.resultOf { _: Int =>
@@ -91,5 +90,4 @@ class NearestNeighborSpec extends PropertySpec {
     minRecall should be >= minRecall
     f1 should be >= minF1
   }
-
 }

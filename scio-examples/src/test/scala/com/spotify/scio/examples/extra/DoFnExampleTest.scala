@@ -21,7 +21,6 @@ import com.spotify.scio.io._
 import com.spotify.scio.testing._
 
 class DoFnExampleTest extends PipelineSpec {
-
   private val inData = Seq("a bbb", "cc")
   private val outData = Seq(1, 3, 2).map(_.toString)
 
@@ -34,5 +33,4 @@ class DoFnExampleTest extends PipelineSpec {
       }
       .run()
   }
-
 }

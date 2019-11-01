@@ -23,7 +23,6 @@ import com.spotify.scio.testing._
 import scala.collection.JavaConverters._
 
 class AvroInOutTest extends PipelineSpec {
-
   val input = Seq(
     new TestRecord(1, 0L, 0f, 1000.0, false, "Alice", List[CharSequence]("a").asJava),
     new TestRecord(2, 0L, 0f, 1500.0, false, "Bob", List[CharSequence]("b").asJava)
@@ -41,5 +40,4 @@ class AvroInOutTest extends PipelineSpec {
       }
       .run()
   }
-
 }

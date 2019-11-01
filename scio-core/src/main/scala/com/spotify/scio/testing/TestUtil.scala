@@ -20,7 +20,6 @@ package com.spotify.scio.testing
 import java.util.UUID
 
 private[scio] object TestUtil {
-
   def newTestId(className: String = "TestClass"): String = {
     val uuid = UUID.randomUUID().toString.replaceAll("-", "")
     s"JobTest-$className-$uuid"
@@ -28,5 +27,4 @@ private[scio] object TestUtil {
 
   def isTestId(appName: String): Boolean =
     "JobTest-[^-]+-[a-z0-9]+".r.pattern.matcher(appName).matches()
-
 }

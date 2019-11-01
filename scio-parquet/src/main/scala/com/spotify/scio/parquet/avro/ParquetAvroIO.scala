@@ -45,7 +45,6 @@ import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
 
 final case class ParquetAvroIO[T: ClassTag: Coder](path: String) extends ScioIO[T] {
-
   override type ReadP = ParquetAvroIO.ReadParam[_, T]
   override type WriteP = ParquetAvroIO.WriteParam
   override val tapT = TapOf[T]

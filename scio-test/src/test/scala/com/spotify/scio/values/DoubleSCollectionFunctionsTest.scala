@@ -21,7 +21,6 @@ import com.spotify.scio.testing.PipelineSpec
 import com.spotify.scio.util.StatCounter
 
 class DoubleSCollectionFunctionsTest extends PipelineSpec {
-
   val ints = 1 to 100
   val longs = ints.map(_.toLong)
   val floats = ints.map(_.toFloat)
@@ -65,5 +64,4 @@ class DoubleSCollectionFunctionsTest extends PipelineSpec {
     test(runWithData(floats)(_.variance), e)
     test(runWithData(doubles)(_.variance), e)
   }
-
 }

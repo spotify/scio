@@ -490,6 +490,5 @@ private[types] object TypeProvider {
       .setContextClassLoader(getClass.getClassLoader)
     FileSystems.setDefaultPipelineOptions(PipelineOptionsFactory.create())
   }
-
 }
 // scalastyle:on line.size.limit

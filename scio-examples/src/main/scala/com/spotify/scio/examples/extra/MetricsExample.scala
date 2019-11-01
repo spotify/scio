@@ -28,7 +28,6 @@ package com.spotify.scio.examples.extra
 import com.spotify.scio._
 
 object MetricsExample {
-
   // ## Creating metrics
 
   // Create counters to be incremented inside the pipeline
@@ -123,5 +122,4 @@ object MetricsExample {
           println(name.getName + ": " + value.committed.get)
       }
   }
-
 }

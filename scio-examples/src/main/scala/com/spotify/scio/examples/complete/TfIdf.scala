@@ -35,7 +35,6 @@ import scala.collection.JavaConverters._
 import scala.io.Source
 
 object TfIdf {
-
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
 
@@ -128,5 +127,4 @@ object TfIdf {
       // Compute `(term, (doc, TF-IDF))`
       .map { case (t, ((d, tf), df)) => (t, (d, tf * math.log(1 / df))) }
   }
-
 }

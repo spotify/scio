@@ -21,7 +21,6 @@ import com.spotify.scio.bigquery._
 import com.spotify.scio.testing._
 
 final class StorageBigQueryTornadoesTest extends PipelineSpec {
-
   val inData = Seq(
     (1, true),
     (3, true),
@@ -41,5 +40,4 @@ final class StorageBigQueryTornadoesTest extends PipelineSpec {
       }
       .run()
   }
-
 }

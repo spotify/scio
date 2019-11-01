@@ -21,7 +21,6 @@ import com.spotify.scio.io._
 import com.spotify.scio.testing._
 
 class DistinctExampleTest extends PipelineSpec {
-
   val input = Seq(
     "word1",
     "word1",
@@ -45,5 +44,4 @@ class DistinctExampleTest extends PipelineSpec {
       }
       .run()
   }
-
 }

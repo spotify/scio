@@ -41,7 +41,6 @@ import scala.collection.JavaConverters._
 import com.spotify.scio.coders.Coder
 
 class SCollectionTest extends PipelineSpec {
-
   import com.spotify.scio.testing.TestingUtils._
 
   "SCollection" should "support applyTransform()" in {
@@ -676,5 +675,4 @@ class SCollectionTest extends PipelineSpec {
       count should containSingleValue(0L)
     }
   }
-
 }

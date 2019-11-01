@@ -32,7 +32,6 @@ import org.apache.beam.sdk.options.PipelineOptions
 import scala.concurrent.Future
 
 object WordCountOrchestration {
-
   def main(cmdlineArgs: Array[String]): Unit = {
     import scala.concurrent.ExecutionContext.Implicits.global
     val (opts, args) = ScioContext.parseArguments[PipelineOptions](cmdlineArgs)
@@ -86,5 +85,4 @@ object WordCountOrchestration {
   // Split out transform for unit testing
   def mergeCounts(ins: Seq[SCollection[(String, Long)]]): SCollection[(String, Long)] =
     SCollection.unionAll(ins).sumByKey
-
 }

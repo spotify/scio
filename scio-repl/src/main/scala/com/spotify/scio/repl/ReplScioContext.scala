@@ -22,7 +22,6 @@ import com.spotify.scio.{ScioContext, ScioExecutionContext}
 
 class ReplScioContext(options: PipelineOptions, artifacts: List[String])
     extends ScioContext(options, artifacts) {
-
   /** Enhanced version that dumps REPL session jar. */
   override def run(): ScioExecutionContext = {
     createJar()
@@ -47,5 +46,4 @@ class ReplScioContext(options: PipelineOptions, artifacts: List[String])
     ()
     // scalastyle:on structural.type
   }
-
 }

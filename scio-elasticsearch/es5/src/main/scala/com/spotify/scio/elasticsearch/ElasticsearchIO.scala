@@ -31,7 +31,6 @@ import org.joda.time.Duration
 import scala.collection.JavaConverters._
 
 final case class ElasticsearchIO[T](esOptions: ElasticsearchOptions) extends ScioIO[T] {
-
   override type ReadP = Nothing
   override type WriteP = ElasticsearchIO.WriteParam[T]
   override val tapT = EmptyTapOf[T]
@@ -75,7 +74,6 @@ final case class ElasticsearchIO[T](esOptions: ElasticsearchOptions) extends Sci
 }
 
 object ElasticsearchIO {
-
   object WriteParam {
     private[elasticsearch] val DefaultErrorFn: BulkExecutionException => Unit = m => throw m
     private[elasticsearch] val DefaultFlushInterval = Duration.standardSeconds(1)
@@ -88,7 +86,6 @@ object ElasticsearchIO {
         maxRetries = WriteParam.DefaultMaxRetries,
         retryPause = WriteParam.DefaultRetryPause
       )
-
   }
 
   final case class WriteParam[T] private (

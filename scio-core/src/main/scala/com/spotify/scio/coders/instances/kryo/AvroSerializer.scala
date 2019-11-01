@@ -29,7 +29,6 @@ import scala.collection.mutable.{Map => MMap}
 import scala.util.Try
 
 private[coders] class GenericAvroSerializer extends KSerializer[GenericRecord] {
-
   private lazy val cache: MMap[String, AvroCoder[GenericRecord]] = MMap()
 
   private def getCoder(schemaStr: String): AvroCoder[GenericRecord] =
@@ -49,11 +48,9 @@ private[coders] class GenericAvroSerializer extends KSerializer[GenericRecord] {
     val coder = this.getCoder(in.readString())
     coder.decode(in)
   }
-
 }
 
 private[coders] class SpecificAvroSerializer[T <: SpecificRecordBase] extends KSerializer[T] {
-
   private lazy val cache: MMap[Class[T], AvroCoder[T]] = MMap()
 
   private def getCoder(cls: Class[T]): AvroCoder[T] =
@@ -69,5 +66,4 @@ private[coders] class SpecificAvroSerializer[T <: SpecificRecordBase] extends KS
 
   override def read(kser: Kryo, in: Input, cls: Class[T]): T =
     this.getCoder(cls).decode(in)
-
 }

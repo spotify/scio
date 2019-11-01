@@ -29,7 +29,6 @@ class TapNotAvailableException(msg: String) extends Exception(msg)
 
 /** Utility for managing `Future[Tap[T]]`s. */
 trait Taps {
-
   /** Get a `Future[Tap[String]]` for a text file. */
   def textFile(path: String): Future[Tap[String]] =
     mkTap(s"Text: $path", () => isPathDone(path), () => TextTap(path))
@@ -48,7 +47,6 @@ trait Taps {
     readyFn: () => Boolean,
     tapFn: () => Tap[T]
   ): Future[Tap[T]]
-
 }
 
 /** Taps implementation that fails immediately if tap not available. */
@@ -120,7 +118,6 @@ private final class PollingTaps(private[this] val backOff: BackOff) extends Taps
 
       p.future.asInstanceOf[Future[Tap[T]]]
     }
-
 }
 
 /** Companion object for [[Taps]]. */
@@ -178,12 +175,10 @@ object Taps extends {
       case t => throw new IllegalArgumentException(s"Unsupported Taps $t")
     }
   }
-
 }
 
 @registerSysProps
 object TapsSysProps {
-
   val Algorithm = SysProp("taps.algorithm", "System property key for taps algorithm")
   val PollingMaximumInterval = SysProp(
     "taps.polling.maximum_interval",
@@ -198,5 +193,4 @@ object TapsSysProps {
     "System property key for polling taps maximum number of attempts, unlimited if <= 0. " +
       "Default is 0"
   )
-
 }

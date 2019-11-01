@@ -23,7 +23,6 @@ import com.spotify.scio.coders.Coder
 import scala.collection.concurrent.TrieMap
 
 private[scio] object InMemorySink {
-
   private val cache: TrieMap[String, Iterable[Any]] = TrieMap.empty
 
   def save[T: Coder](id: String, data: SCollection[T]): Unit = {
@@ -41,5 +40,4 @@ private[scio] object InMemorySink {
   }
 
   def get[T](id: String): Iterable[T] = cache(id).asInstanceOf[Iterable[T]]
-
 }

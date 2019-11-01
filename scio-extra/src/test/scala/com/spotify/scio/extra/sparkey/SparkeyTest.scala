@@ -31,7 +31,6 @@ import org.apache.commons.io.FileUtils
 import scala.collection.JavaConverters._
 
 class SparkeyTest extends PipelineSpec {
-
   val sideData = Seq(("a", "1"), ("b", "2"), ("c", "3"))
 
   "SCollection" should "support .asSparkey with temporary local file" in {
@@ -429,5 +428,4 @@ class SparkeyTest extends PipelineSpec {
     val basePath = scioResult.tap(sparkeyMaterialized).value.next().basePath
     FileUtils.deleteDirectory(new File(basePath))
   }
-
 }

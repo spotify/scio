@@ -16,7 +16,6 @@
  */
 
 object SoccoIndex {
-
   import java.io.{File, PrintWriter}
 
   val baseUrl = "https://github.com/spotify/scio/blob/master/"

@@ -22,7 +22,6 @@ import com.spotify.scio.{FeatureFlag, MacroSettings, MagnoliaMacros}
 import scala.reflect.macros._
 
 private[coders] object CoderMacros {
-
   private[this] var verbose = true
   private[this] val reported: scala.collection.mutable.Set[(String, String)] =
     scala.collection.mutable.Set.empty
@@ -161,5 +160,4 @@ private[coders] object CoderMacros {
     tree
   }
   // scalastyle:on method.length
-
 }

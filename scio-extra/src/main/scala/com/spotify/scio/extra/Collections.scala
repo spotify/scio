@@ -36,7 +36,6 @@ import scala.collection.JavaConverters._
  * }}}
  */
 object Collections {
-
   private def topImpl[T](xs: Iterable[T], num: Int, ord: Ordering[T]): Iterable[T] = {
     require(num > 0, "num must be > 0")
     if (xs.isEmpty) {
@@ -102,5 +101,4 @@ object Collections {
     def topByKey(num: Int)(implicit ord: Ordering[V]): Map[K, Iterable[V]] =
       topByKeyImpl(self, num, ord)
   }
-
 }

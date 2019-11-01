@@ -21,7 +21,6 @@ import scala.reflect.macros._
 import scala.reflect.runtime.universe._
 
 private[types] object MacroUtil {
-
   // Case class helpers for runtime reflection
 
   def isCaseClass(t: Type): Boolean =
@@ -53,5 +52,4 @@ private[types] object MacroUtil {
   val ScioAvroType = s"$ScioAvro.types.AvroType"
 
   def p(c: blackbox.Context, code: String): c.Tree = c.parse(code)
-
 }

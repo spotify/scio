@@ -27,7 +27,6 @@ import org.joda.time.Duration
 
 // This depends on APIs from `scio-bigtable` and imports from `com.spotify.scio.bigtable._`.
 object BigtableExample {
-
   val FAMILY_NAME: String = "count"
   val COLUMN_QUALIFIER: ByteString = ByteString.copyFromUtf8("long")
 
@@ -48,7 +47,6 @@ object BigtableExample {
       .getValue(FAMILY_NAME, COLUMN_QUALIFIER)
       .get
       .toStringUtf8
-
 }
 
 // ## Bigtable Write example

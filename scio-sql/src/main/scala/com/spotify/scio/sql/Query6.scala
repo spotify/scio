@@ -157,7 +157,6 @@ final class SqlSCollection6[A: Schema, B: Schema, C: Schema, D: Schema, E: Schem
   e: SCollection[E],
   f: SCollection[F]
 ) {
-
   def query(
     q: String,
     aTag: TupleTag[A],
@@ -191,7 +190,6 @@ final class SqlSCollection6[A: Schema, B: Schema, C: Schema, D: Schema, E: Schem
           s"${collA.tfName} join ${collB.tfName} join ${collC.tfName} join ${collD.tfName} join ${collE.tfName} join ${collF.tfName}",
           sqlTransform
         )
-
     }
   }
 
@@ -215,7 +213,6 @@ final class SqlSCollection6[A: Schema, B: Schema, C: Schema, D: Schema, E: Schem
       case e: ParseException =>
         Query6.typecheck(q).fold(err => throw new RuntimeException(err, e), _ => throw e)
     }
-
 }
 
 // scalastyle:on cyclomatic.complexity

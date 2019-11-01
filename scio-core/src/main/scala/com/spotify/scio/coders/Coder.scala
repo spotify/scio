@@ -195,7 +195,6 @@ private[scio] object RefCoder {
 // XXX: Workaround a NPE deep down the stack in Beam
 // info]   java.lang.NullPointerException: null value in entry: T=null
 private[scio] case class WrappedBCoder[T](u: BCoder[T]) extends BCoder[T] {
-
   /**
    * Eagerly compute a stack trace on materialization
    * to provide a helpful stacktrace if an exception happens
@@ -258,7 +257,6 @@ private[scio] final case class RecordCoder[T](
   construct: Seq[Any] => T,
   destruct: T => Array[Any]
 ) extends AtomicCoder[T] {
-
   @inline def onErrorMsg[A](msg: => String)(f: => A): A =
     try {
       f
@@ -393,7 +391,6 @@ private[scio] final case class RecordCoder[T](
  *
  */
 sealed trait CoderGrammar {
-
   /**
    * Create a ScioCoder from a Beam Coder
    */
@@ -501,5 +498,4 @@ private[coders] object CoderStackTrace {
     cause.setStackTrace(adjustedStack.toArray)
     cause
   }
-
 }

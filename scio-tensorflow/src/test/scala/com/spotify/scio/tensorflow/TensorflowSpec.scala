@@ -33,7 +33,6 @@ import org.tensorflow.example.Example
 import scala.io.Source
 
 private[tensorflow] object TFSavedJob {
-
   case class Iris(
     sepalLength: Option[Double],
     sepalWidth: Option[Double],
@@ -82,7 +81,6 @@ private[tensorflow] object TFSavedJob {
 }
 
 class TensorflowSpec extends PipelineSpec {
-
   it should "allow saved model prediction" in {
     val resource = getClass.getResource("/trained_model")
     val settings = getClass.getResource("/settings.json")
@@ -94,5 +92,4 @@ class TensorflowSpec extends PipelineSpec {
       }
       .run()
   }
-
 }

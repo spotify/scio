@@ -265,5 +265,4 @@ object TableAdmin {
 
     client.dropRowRange(request)
   }
-
 }

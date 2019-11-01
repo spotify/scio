@@ -47,7 +47,6 @@ private[client] object QueryOps {
     writeDisposition: WriteDisposition = WriteDisposition.WRITE_EMPTY,
     createDisposition: CreateDisposition = CreateDisposition.CREATE_IF_NEEDED
   )
-
 }
 
 private[client] final class QueryOps(client: Client, tableService: TableOps, jobService: JobOps) {
@@ -290,7 +289,6 @@ private[client] final class QueryOps(client: Client, tableService: TableOps, job
           case Failure(e) => throw e
         }
     }
-
   }
 
   /** Extract tables to be accessed by a query. */
@@ -315,5 +313,4 @@ private[client] final class QueryOps(client: Client, tableService: TableOps, job
     require(locations.size <= 1, "Tables in the query must be in the same location")
     locations.headOption
   }
-
 }

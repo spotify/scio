@@ -27,7 +27,6 @@ import scala.reflect.{classTag, ClassTag}
 // Protobuf Coders
 //
 trait ProtobufCoders {
-
   implicit def bytestringCoder: Coder[ByteString] =
     Coder.beam(ByteStringCoder.of())
 

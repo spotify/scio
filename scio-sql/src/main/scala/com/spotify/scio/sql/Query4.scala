@@ -137,7 +137,6 @@ final class SqlSCollection4[A: Schema, B: Schema, C: Schema, D: Schema](
   c: SCollection[C],
   d: SCollection[D]
 ) {
-
   def query(
     q: String,
     aTag: TupleTag[A],
@@ -165,7 +164,6 @@ final class SqlSCollection4[A: Schema, B: Schema, C: Schema, D: Schema](
           s"${collA.tfName} join ${collB.tfName} join ${collC.tfName} join ${collD.tfName}",
           sqlTransform
         )
-
     }
   }
 
@@ -186,7 +184,6 @@ final class SqlSCollection4[A: Schema, B: Schema, C: Schema, D: Schema](
       case e: ParseException =>
         Query4.typecheck(q).fold(err => throw new RuntimeException(err, e), _ => throw e)
     }
-
 }
 
 // scalastyle:on cyclomatic.complexity

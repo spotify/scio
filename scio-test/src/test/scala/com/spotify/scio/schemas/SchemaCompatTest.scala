@@ -34,7 +34,6 @@ object SchemaCompatTest {
 }
 
 class SchemaCompatTest extends FlatSpec with Matchers {
-
   import com.spotify.scio.schemas.SchemaCompatTest._
 
   private def check[A: Schema, B: Schema]: Either[String, Unit] = {

@@ -25,7 +25,6 @@ import org.apache.beam.sdk.options.PipelineOptionsFactory
 import org.scalatest._
 
 class StateTest extends FlatSpec with Matchers {
-
   type KV[V] = SCollection[(String, V)]
 
   private def testCogroup[T](f: (KV[Int], KV[Long], KV[String]) => T): Unit = {
@@ -89,5 +88,4 @@ class StateTest extends FlatSpec with Matchers {
     }
   }
   // scalastyle:on no.whitespace.before.left.bracket
-
 }
