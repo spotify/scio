@@ -28,5 +28,4 @@ class MockedPrintStream extends PrintStream("/dev/null") with Serializable {
     super.write(buf, off, len)
     message += new String(buf, off, len)
   }
-
 }

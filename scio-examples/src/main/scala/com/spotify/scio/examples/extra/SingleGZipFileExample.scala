@@ -43,7 +43,6 @@ object SingleGZipFileExample {
       .countByValue
       // Map `(String, Long)` tuples into strings
       .map(t => t._1 + ": " + t._2)
-
       // Save result as a single text files under the output path, with deflate compression
       .saveAsTextFile(args("output"), numShards = 1, compression = Compression.DEFLATE)
 

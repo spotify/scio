@@ -23,7 +23,6 @@ import org.scalatest.{FlatSpec, Matchers}
 import scala.reflect.ClassTag
 
 class JTraversableSerializerTest extends FlatSpec with Matchers {
-
   private def testRoundTrip[T: ClassTag, C <: Iterable[T]](
     ser: JTraversableSerializer[T, C],
     elems: C
@@ -49,5 +48,4 @@ class JTraversableSerializerTest extends FlatSpec with Matchers {
     val input = Seq("o" * 3)
     testRoundTrip(ser, input)
   }
-
 }

@@ -34,7 +34,6 @@ import scala.collection.JavaConverters._
 import scala.util.Try
 
 final case class TextIO(path: String) extends ScioIO[String] {
-
   override type ReadP = TextIO.ReadParam
   override type WriteP = TextIO.WriteParam
   override final val tapT = TapOf[String]
@@ -72,7 +71,6 @@ final case class TextIO(path: String) extends ScioIO[String] {
 }
 
 object TextIO {
-
   final case class ReadParam(compression: Compression = Compression.AUTO)
 
   object WriteParam {

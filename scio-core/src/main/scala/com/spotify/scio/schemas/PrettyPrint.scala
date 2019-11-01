@@ -21,7 +21,6 @@ import org.apache.beam.sdk.schemas.{Schema => BSchema}
 
 // scalastyle:off line.size.limit
 private[scio] object PrettyPrint {
-
   val header =
     f"""
     |┌──────────────────────────────────────────┬──────────────────────┬──────────┐

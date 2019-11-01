@@ -37,7 +37,6 @@ class SCollectionWithSideOutput[T] private[values] (
   val context: ScioContext,
   sides: Iterable[SideOutput[_]]
 ) extends PCollectionWrapper[T] {
-
   private val sideTags = TupleTagList.of(sides.map(_.tupleTag).toList.asJava)
 
   private def apply[U: Coder](f: DoFn[T, U]): (SCollection[U], SideOutputCollections) = {
@@ -75,5 +74,4 @@ class SCollectionWithSideOutput[T] private[values] (
    */
   def map[U: Coder](f: (T, SideOutputContext[T]) => U): (SCollection[U], SideOutputCollections) =
     apply[U](FunctionsWithSideOutput.mapFn(f))
-
 }

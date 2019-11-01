@@ -21,8 +21,6 @@ import org.apache.beam.sdk.schemas.Schema.FieldType
 import org.joda.time.ReadableInstant
 
 trait JodaInstances {
-
   implicit def jodaReadableInstantSchema[T <: ReadableInstant]: Type[T] =
     Type[T](FieldType.DATETIME)
-
 }

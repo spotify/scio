@@ -33,7 +33,6 @@ import scala.concurrent.duration.Duration
 import scala.collection.JavaConverters._
 
 class ScioContextTest extends PipelineSpec {
-
   "ScioContext" should "support pipeline" in {
     val pipeline = ScioContext().pipeline
     val p = pipeline.apply(Create.of(List(1, 2, 3).asJava))

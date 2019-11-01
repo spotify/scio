@@ -80,7 +80,6 @@ object AnnoyDistCacheJob {
 
 object SparkeyDistCacheJob {
   def main(cmdlineArgs: Array[String]): Unit = {
-
     val (sc, args) = ContextAndArgs(cmdlineArgs)
     val dc = sc.distCache(Seq(".spi", ".spl").map(args("sparkey") + _))(fs => Sparkey.open(fs.head))
     sc.textFile(args("input"))
@@ -96,7 +95,6 @@ object SparkeyDistCacheJob {
 // =======================================================================
 
 object DistCacheTest {
-
   def simpleTransform(in: SCollection[String], dc: DistCache[Seq[String]]): SCollection[String] =
     in.flatMap(x => dc().map(x + _))
 
@@ -109,7 +107,6 @@ object DistCacheTest {
 
   def sparkeyTransform(in: SCollection[String], dc: DistCache[SparkeyReader]): SCollection[String] =
     in.map(dc().getAsString)
-
 }
 
 // =======================================================================
@@ -117,7 +114,6 @@ object DistCacheTest {
 // =======================================================================
 
 class DistCacheTest extends PipelineSpec {
-
   import DistCacheTest._
 
   // =======================================================================
@@ -246,7 +242,6 @@ class DistCacheTest extends PipelineSpec {
       _.map(dc().getAsString)
     } should contain theSameElementsAs Seq("alpha", "bravo")
   }
-
 }
 
 // =======================================================================

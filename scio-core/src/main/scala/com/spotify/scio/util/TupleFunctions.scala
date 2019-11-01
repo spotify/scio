@@ -25,7 +25,6 @@ import org.apache.beam.sdk.values.KV
 import scala.collection.JavaConverters._
 
 private[scio] object TupleFunctions {
-
   def kvToTuple[K, V](kv: KV[K, V]): (K, V) = (kv.getKey, kv.getValue)
 
   // specialized version of a common version of kvToTuple
@@ -37,5 +36,4 @@ private[scio] object TupleFunctions {
 
   def kvListToTuple[K, V](kv: KV[K, JList[V]]): (K, Iterable[V]) =
     (kv.getKey, kv.getValue.asInstanceOf[JIterable[V]].asScala)
-
 }

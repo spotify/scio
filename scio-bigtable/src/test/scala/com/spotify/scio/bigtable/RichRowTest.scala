@@ -25,7 +25,6 @@ import scala.collection.JavaConverters._
 import scala.collection.immutable.ListMap
 
 class RichRowTest extends FlatSpec with Matchers {
-
   def bs(s: String): ByteString = ByteString.copyFromUtf8(s)
 
   val FAMILY_NAME = "family"
@@ -102,5 +101,4 @@ class RichRowTest extends FlatSpec with Matchers {
       row.getValue(FAMILY_NAME, q) shouldBe Some(cs.head._2)
     }
   }
-
 }

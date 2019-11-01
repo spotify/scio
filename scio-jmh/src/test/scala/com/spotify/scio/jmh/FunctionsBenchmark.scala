@@ -33,7 +33,6 @@ import scala.collection.JavaConverters._
 @OutputTimeUnit(TimeUnit.NANOSECONDS)
 @State(Scope.Thread)
 class FunctionsBenchmark {
-
   type T = Set[Int]
 
   val input = new util.ArrayList((1 to 100).map(Set(_)).asJava)
@@ -57,5 +56,4 @@ class FunctionsBenchmark {
   @Benchmark def benchReduce: T = test(reduceFn, input, output)
   @Benchmark def benchSemigroup: T = test(sgFn, input, output)
   @Benchmark def benchMonoid: T = test(monFn, input, output)
-
 }

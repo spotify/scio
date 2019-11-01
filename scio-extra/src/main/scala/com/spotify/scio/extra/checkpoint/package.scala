@@ -34,7 +34,6 @@ import org.apache.beam.sdk.io.FileSystems
  * }}}
  */
 package object checkpoint {
-
   // scalastyle:off line.size.limit
   /**
    * For use in testing, see [[https://github.com/spotify/scio/blob/master/scio-examples/src/test/scala/com/spotify/scio/examples/extra/CheckpointExampleTest.scala CheckpointExampleTest]].
@@ -44,7 +43,6 @@ package object checkpoint {
   val CheckpointIO = ObjectFileIO
 
   implicit class CheckpointScioContext(private val self: ScioContext) extends AnyVal {
-
     /**
      * Checkpoints are useful for debugging one part of a long flow, when you would otherwise have
      * to run many steps to get to the one you care about. To enable checkpoints, sprinkle calls to
@@ -81,5 +79,4 @@ package object checkpoint {
       }
     }
   }
-
 }

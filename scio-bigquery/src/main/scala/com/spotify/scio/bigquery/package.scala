@@ -40,7 +40,6 @@ import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write
  * `#standardsql` comment line.
  */
 package object bigquery extends AllSyntax {
-
   /** Alias for BigQuery `CreateDisposition`. */
   val CREATE_IF_NEEDED = Write.CreateDisposition.CREATE_IF_NEEDED
 
@@ -69,5 +68,4 @@ package object bigquery extends AllSyntax {
 
   /** Alias for BigQuery `TableRow`. */
   type TableRow = GTableRow
-
 }

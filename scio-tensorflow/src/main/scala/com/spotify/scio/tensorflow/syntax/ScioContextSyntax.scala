@@ -29,7 +29,6 @@ import org.tensorflow.metadata.v0._
 import scala.language.implicitConversions
 
 final class ScioContextOps(private val self: ScioContext) extends AnyVal {
-
   /**
    * Get an SCollection for a TensorFlow TFRecord file. Note that TFRecord files are not
    * splittable. The recommended record encoding is [[org.tensorflow.example.Example]] protocol
@@ -75,7 +74,6 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
     schemaFilename: String,
     compression: Compression = Compression.AUTO
   ): (SCollection[Example], DistCache[Schema]) = {
-
     val distCache = self.distCache(schemaFilename) { file =>
       Schema.parseFrom(Files.readAllBytes(file.toPath))
     }
@@ -94,7 +92,6 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
     schemaFilename: String,
     compression: Compression = Compression.AUTO
   ): (SCollection[SequenceExample], DistCache[Schema]) = {
-
     val distCache = self.distCache(schemaFilename) { file =>
       Schema.parseFrom(Files.readAllBytes(file.toPath))
     }
@@ -104,7 +101,6 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
 }
 
 trait ScioContextSyntax {
-
   /** Implicit conversion from [[ScioContext]] to [[ScioContextOps]]. */
   implicit def tensorFlowScioContextFunctions(s: ScioContext): ScioContextOps =
     new ScioContextOps(s)

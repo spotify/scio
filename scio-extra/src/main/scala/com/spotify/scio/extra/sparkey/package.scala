@@ -18,19 +18,22 @@
 package com.spotify.scio.extra
 
 import java.nio.charset.Charset
+import java.util
 import java.util.{UUID, List => JList}
 import java.util.function.{Function => JFunction}
+import java.lang.{Iterable => JIterable}
 
 import com.github.benmanes.caffeine.cache.Cache
 import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import com.spotify.scio.values.{SCollection, SideInput}
-import com.spotify.sparkey.SparkeyReader
+import com.spotify.sparkey.{IndexHeader, LogHeader, SparkeyReader}
 import org.apache.beam.sdk.transforms.{DoFn, Reify, View}
 import org.apache.beam.sdk.values.PCollectionView
 import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConverters._
+import scala.util.hashing.MurmurHash3
 
 /**
  * Main package for Sparkey side input APIs. Import all.
@@ -39,7 +42,7 @@ import scala.collection.JavaConverters._
  * import com.spotify.scio.extra.sparkey._
  * }}}
  *
- * To save an `SCollection[(String, String)]` to a Sparkey file:
+ * To save an `SCollection[(String, String)]` to a Sparkey fileset:
  * {{{
  * val s = sc.parallelize(Seq("a" -> "one", "b" -> "two"))
  *
@@ -48,6 +51,10 @@ import scala.collection.JavaConverters._
  *
  * // specific location
  * val s1: SCollection[SparkeyUri] = s.asSparkey("gs://<bucket>/<path>/<sparkey-prefix>")
+ * }}}
+ *
+ * // with multiple shards, sharded by MurmurHash3 of the key
+ * val s1: SCollection[SparkeyUri] = s.asSparkey("gs://<bucket>/<path>/<sparkey-dir>", numShards=2)
  * }}}
  *
  * The result `SCollection[SparkeyUri]` can be converted to a side input:
@@ -66,6 +73,11 @@ import scala.collection.JavaConverters._
  * An existing Sparkey file can also be converted to a side input directly:
  * {{{
  * sc.sparkeySideInput("gs://<bucket>/<path>/<sparkey-prefix>")
+ * }}}
+ *
+ * A sharded collection of Sparkey files can also be used as a side input by specifying a glob path:
+ * {{{
+ * sc.sparkeySideInput("gs://<bucket>/<path>/<sparkey-dir>/part-*")
  * }}}
  *
  * `SparkeyReader` can be used like a lookup table in a side input operation:
@@ -107,19 +119,32 @@ import scala.collection.JavaConverters._
  * }}}
  */
 package object sparkey {
-
   /** Enhanced version of [[ScioContext]] with Sparkey methods. */
   implicit class SparkeyScioContext(private val self: ScioContext) extends AnyVal {
-
-    private def viewOf(basePath: String): PCollectionView[SparkeyUri] =
+    private def singleViewOf(basePath: String): PCollectionView[SparkeyUri] =
       self.parallelize(Seq(SparkeyUri(basePath, self.options))).applyInternal(View.asSingleton())
+
+    private def shardedViewOf(basePath: String): PCollectionView[SparkeyUri] =
+      self
+        .parallelize(Seq[SparkeyUri](ShardedSparkeyUri(basePath, self.options)))
+        .applyInternal(View.asSingleton())
 
     /**
      * Create a SideInput of `SparkeyReader` from a [[SparkeyUri]] base path, to be used with
      * [[com.spotify.scio.values.SCollection.withSideInputs SCollection.withSideInputs]].
+     * If the provided base path ends with "*", it will be treated as a sharded collection of
+     * Sparkey files.
      */
-    def sparkeySideInput(basePath: String): SideInput[SparkeyReader] =
-      new SparkeySideInput(viewOf(basePath))
+    def sparkeySideInput(basePath: String): SideInput[SparkeyReader] = {
+      val view = if (basePath.endsWith("*")) {
+        val basePathWithoutGlobPart = basePath.split("/").dropRight(1).mkString("/")
+        shardedViewOf(basePathWithoutGlobPart)
+      } else {
+        singleViewOf(basePath)
+      }
+
+      new SparkeySideInput(view)
+    }
 
     /**
      * Create a SideInput of `TypedSparkeyReader` from a [[SparkeyUri]] base path, to be used with
@@ -145,11 +170,28 @@ package object sparkey {
       sparkeySideInput(basePath).map(reader => new CachedStringSparkeyReader(reader, cache))
   }
 
+  private val DefaultNumShards: Short = 1
+  private val DefaultSideInputNumShards: Short = 64
+
+  private def writeToSparkey[K, V](
+    uri: SparkeyUri,
+    maxMemoryUsage: Long,
+    elements: JIterable[(K, V)]
+  )(implicit w: SparkeyWritable[K, V], koder: Coder[K], voder: Coder[V]): SparkeyUri = {
+    val writer = new SparkeyWriter(uri, maxMemoryUsage)
+    val it = elements.iterator
+    while (it.hasNext) {
+      val kv = it.next()
+      w.put(writer, kv._1, kv._2)
+    }
+    writer.close()
+    uri
+  }
+
   /**
    * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with Sparkey methods.
    */
   implicit class SparkeyPairSCollection[K, V](@transient private val self: SCollection[(K, V)]) {
-
     private val logger = LoggerFactory.getLogger(this.getClass)
 
     /**
@@ -158,9 +200,16 @@ package object sparkey {
      * @param path where to write the sparkey files. Defaults to a temporary location.
      * @param maxMemoryUsage (optional) how much memory (in bytes) is allowed for writing
      *                       the index file
+     * @param numShards (optional) the number of shards to split this dataset into before writing.
+     *                  One pair of Sparkey files will be written for each shard, sharded
+     *                  by MurmurHash3 of the key mod the number of shards.
      * @return A singleton SCollection containing the [[SparkeyUri]] of the saved files.
      */
-    def asSparkey(path: String = null, maxMemoryUsage: Long = -1)(
+    def asSparkey(
+      path: String = null,
+      maxMemoryUsage: Long = -1,
+      numShards: Short = DefaultNumShards
+    )(
       implicit w: SparkeyWritable[K, V],
       koder: Coder[K],
       voder: Coder[V]
@@ -172,26 +221,41 @@ package object sparkey {
         path
       }
 
-      val uri = SparkeyUri(basePath, self.context.options)
-      require(!uri.exists, s"Sparkey URI ${uri.basePath} already exists")
-      logger.info(s"Saving as Sparkey: $uri")
-
       val coder = CoderMaterializer.beam(self.context, Coder[JList[(K, V)]])
-      self.transform { coll =>
-        coll.context
-          .wrap {
-            val view = coll.applyInternal(View.asList[(K, V)]())
-            coll.internal.getPipeline.apply(Reify.viewInGlobalWindow(view, coder))
+      require(numShards > 0, s"numShards must be greater than 0, found $numShards")
+
+      numShards match {
+        case 1 =>
+          val uri = SparkeyUri(basePath, self.context.options)
+          require(!uri.exists, s"Sparkey URI $uri already exists")
+          logger.info(s"Saving as Sparkey: $uri")
+
+          self.transform { coll =>
+            coll.context
+              .wrap {
+                val view = coll.applyInternal(View.asList[(K, V)]())
+                coll.internal.getPipeline.apply(Reify.viewInGlobalWindow(view, coder))
+              }
+              .map(writeToSparkey(uri, maxMemoryUsage, _))
           }
-          .map { xs =>
-            val writer = new SparkeyWriter(uri, maxMemoryUsage)
-            val it = xs.iterator
-            while (it.hasNext) {
-              val kv = it.next()
-              w.put(writer, kv._1, kv._2)
-            }
-            writer.close()
-            uri
+        case shardCount =>
+          val uri = ShardedSparkeyUri(basePath, self.context.options)
+          require(!uri.exists, s"Sparkey URI $uri already exists")
+          logger.info(s"Saving as Sparkey with $shardCount shards: $uri")
+
+          self.transform { collection =>
+            collection
+              .groupBy { case (k, _) => (w.shardHash(k) % shardCount).toShort }
+              .map {
+                case (shard, xs) =>
+                  writeToSparkey(
+                    uri.sparkeyUriForShard(shard, shardCount),
+                    maxMemoryUsage,
+                    xs.asJava
+                  )
+              }
+              .groupBy(_ => Unit)
+              .map(_ => uri: SparkeyUri)
           }
       }
     }
@@ -212,13 +276,28 @@ package object sparkey {
      * `SparkeyReader`, to be used with
      * [[com.spotify.scio.values.SCollection.withSideInputs SCollection.withSideInputs]]. It is
      * required that each key of the input be associated with a single value.
+     *
+     * @param numShards the number of shards to use when writing the Sparkey file(s).
+     */
+    def asSparkeySideInput(numShards: Short = DefaultSideInputNumShards)(
+      implicit w: SparkeyWritable[K, V],
+      koder: Coder[K],
+      voder: Coder[V]
+    ): SideInput[SparkeyReader] =
+      self.asSparkey(numShards = numShards).asSparkeySideInput
+
+    /**
+     * Convert this SCollection to a SideInput, mapping key-value pairs of each window to a
+     * `SparkeyReader`, to be used with
+     * [[com.spotify.scio.values.SCollection.withSideInputs SCollection.withSideInputs]]. It is
+     * required that each key of the input be associated with a single value.
      */
     def asSparkeySideInput(
       implicit w: SparkeyWritable[K, V],
       koder: Coder[K],
       voder: Coder[V]
     ): SideInput[SparkeyReader] =
-      self.asSparkey.asSparkeySideInput
+      self.asSparkeySideInput()
 
     /**
      * Convert this SCollection to a SideInput, mapping key-value pairs of each window to a
@@ -241,31 +320,38 @@ package object sparkey {
      * required that each key of the input be associated with a single value. The provided
      * [[Cache]] will be used to cache reads from the resulting [[SparkeyReader]].
      */
-    def asTypedSparkeySideInput[T](cache: Cache[String, T])(decoder: Array[Byte] => T)(
+    def asTypedSparkeySideInput[T](
+      cache: Cache[String, T],
+      numShards: Short = DefaultSideInputNumShards
+    )(
+      decoder: Array[Byte] => T
+    )(
       implicit w: SparkeyWritable[K, V],
       koder: Coder[K],
       voder: Coder[V]
     ): SideInput[TypedSparkeyReader[T]] =
-      self.asSparkey.asTypedSparkeySideInput[T](cache)(decoder)
+      self.asSparkey(numShards = numShards).asTypedSparkeySideInput[T](cache)(decoder)
 
     /**
      * Convert this SCollection to a SideInput, mapping key-value pairs of each window to a
      * `CachedStringSparkeyReader`, to be used with
      * [[com.spotify.scio.values.SCollection.withSideInputs SCollection.withSideInputs]].
      */
-    def asCachedStringSparkeySideInput(cache: Cache[String, String])(
+    def asCachedStringSparkeySideInput(
+      cache: Cache[String, String],
+      numShards: Short = DefaultSideInputNumShards
+    )(
       implicit w: SparkeyWritable[K, V],
       koder: Coder[K],
       voder: Coder[V]
     ): SideInput[CachedStringSparkeyReader] =
-      self.asSparkey.asCachedStringSparkeySideInput(cache)
+      self.asSparkey(numShards = numShards).asCachedStringSparkeySideInput(cache)
   }
 
   /**
    * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with Sparkey methods.
    */
   implicit class SparkeySCollection(private val self: SCollection[SparkeyUri]) extends AnyVal {
-
     /**
      * Convert this SCollection to a SideInput of `SparkeyReader`, to be used with
      * [[com.spotify.scio.values.SCollection.withSideInputs SCollection.withSideInputs]].
@@ -308,6 +394,41 @@ package object sparkey {
         .map(reader => new CachedStringSparkeyReader(reader, cache))
   }
 
+  /**
+   * A wrapper class around SparkeyReader that allows the reading of multiple Sparkey files,
+   * sharded by their keys (via MurmurHash3). At most 32,768 Sparkey files are supported.
+   * @param sparkeys a map of shard ID to sparkey reader
+   * @param numShards the total count of shards used (needed for keying as some shards may be empty)
+   */
+  class ShardedSparkeyReader(val sparkeys: Map[Short, SparkeyReader], val numShards: Short)
+      extends SparkeyReader {
+    def hashKey(arr: Array[Byte]): Short = (MurmurHash3.bytesHash(arr, 1) % numShards).toShort
+
+    def hashKey(str: String): Short = hashKey(str.getBytes)
+
+    override def getAsString(key: String): String = sparkeys(hashKey(key)).getAsString(key)
+
+    override def getAsByteArray(key: Array[Byte]): Array[Byte] =
+      sparkeys(hashKey(key)).getAsByteArray(key)
+
+    override def getAsEntry(key: Array[Byte]): SparkeyReader.Entry =
+      sparkeys(hashKey(key)).getAsEntry(key)
+
+    override def getIndexHeader: IndexHeader =
+      throw new NotImplementedError("ShardedSparkeyReader does not support getIndexHeader.")
+
+    override def getLogHeader: LogHeader =
+      throw new NotImplementedError("ShardedSparkeyReader does not support getLogHeader.")
+
+    override def duplicate(): SparkeyReader =
+      new ShardedSparkeyReader(sparkeys.map { case (k, v) => (k, v.duplicate) }, numShards)
+
+    override def close(): Unit = sparkeys.values.foreach(_.close())
+
+    override def iterator(): util.Iterator[SparkeyReader.Entry] =
+      sparkeys.values.map(_.iterator.asScala).reduce(_ ++ _).asJava
+  }
+
   /** Enhanced version of `SparkeyReader` that mimics a `Map`. */
   implicit class RichStringSparkeyReader(val self: SparkeyReader) extends Map[String, String] {
     override def get(key: String): Option[String] =
@@ -335,7 +456,6 @@ package object sparkey {
    */
   class CachedStringSparkeyReader(val sparkey: SparkeyReader, val cache: Cache[String, String])
       extends RichStringSparkeyReader(sparkey) {
-
     override def get(key: String): Option[String] =
       Option(cache.get(key, new JFunction[String, String] {
         override def apply(k: String): String = sparkey.getAsString(k)
@@ -356,7 +476,6 @@ package object sparkey {
     val decoder: Array[Byte] => T,
     val cache: Cache[String, T] = null
   ) extends Map[String, T] {
-
     private def stringKeyToBytes(key: String): Array[Byte] = key.getBytes(Charset.defaultCharset())
 
     private def loadValueFromSparkey(key: String): T = {
@@ -408,17 +527,21 @@ package object sparkey {
 
   sealed trait SparkeyWritable[K, V] extends Serializable {
     private[sparkey] def put(w: SparkeyWriter, key: K, value: V): Unit
+    private[sparkey] def shardHash(key: K): Int
   }
 
   implicit val stringSparkeyWritable = new SparkeyWritable[String, String] {
     def put(w: SparkeyWriter, key: String, value: String): Unit =
       w.put(key, value)
+
+    def shardHash(key: String): Int = MurmurHash3.stringHash(key, 1)
   }
 
   implicit val ByteArraySparkeyWritable =
     new SparkeyWritable[Array[Byte], Array[Byte]] {
       def put(w: SparkeyWriter, key: Array[Byte], value: Array[Byte]): Unit =
         w.put(key, value)
-    }
 
+      def shardHash(key: Array[Byte]): Int = MurmurHash3.bytesHash(key, 1)
+    }
 }

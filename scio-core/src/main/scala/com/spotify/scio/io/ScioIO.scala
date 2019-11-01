@@ -139,7 +139,6 @@ object ScioIO {
         throw new UnsupportedOperationException("read-only IO. This code should be unreachable")
 
       override def tap(params: ReadP): Tap[io.tapT.T] = io.tap(params)
-
     }
   // scalastyle:on structural.type
 }

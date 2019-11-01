@@ -32,7 +32,6 @@ import org.apache.beam.sdk.extensions.gcp.util.{RetryHttpRequestInitializer, Tra
 
 /** Integration test utilities. */
 private[scio] object ItUtils {
-
   // XXX: Copied from BigQueryClient
   val PROJECT_KEY: String = "bigquery.project"
 

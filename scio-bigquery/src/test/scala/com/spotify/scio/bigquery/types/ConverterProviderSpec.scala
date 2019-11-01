@@ -19,23 +19,23 @@ package com.spotify.scio.bigquery.types
 
 import java.math.MathContext
 
+import cats.Eq
+import cats.instances.all._
 import com.google.protobuf.ByteString
+import magnolify.cats.semiauto.EqDerivation
+import magnolify.scalacheck.auto._
 import org.joda.time.{Instant, LocalDate, LocalDateTime, LocalTime}
-import org.scalacheck.ScalacheckShapeless._
 import org.scalacheck._
 import org.scalatest._
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
-import shapeless.datatype.record._
 import com.spotify.scio.bigquery.Numeric
 
 final class ConverterProviderSpec
     extends PropSpec
     with ScalaCheckDrivenPropertyChecks
     with Matchers {
-
-  // TODO: remove this once https://github.com/scalatest/scalatest/issues/1090 is addressed
-  override implicit val generatorDrivenConfig: PropertyCheckConfiguration =
-    PropertyCheckConfiguration(minSuccessful = 100)
+  // Default minSuccessful is 10 instead of 100 in ScalaCheck but that should be enough
+  // https://github.com/scalatest/scalatest/issues/1090 is addressed
 
   import Schemas._
 
@@ -53,21 +53,24 @@ final class ConverterProviderSpec
       Numeric(rounded)
     }
   }
-
-  implicit def compareByteArrays(x: Array[Byte], y: Array[Byte]): Boolean =
-    ByteString.copyFrom(x) == ByteString.copyFrom(y)
+  implicit val eqByteArrays = Eq.instance[Array[Byte]](_.toList == _.toList)
+  implicit val eqByteString = Eq.instance[ByteString](_ == _)
+  implicit val eqInstant = Eq.instance[Instant](_ == _)
+  implicit val eqDate = Eq.instance[LocalDate](_ == _)
+  implicit val eqTime = Eq.instance[LocalTime](_ == _)
+  implicit val eqDateTime = Eq.instance[LocalDateTime](_ == _)
 
   property("round trip required primitive types") {
     forAll { r1: Required =>
       val r2 = BigQueryType.fromTableRow[Required](BigQueryType.toTableRow[Required](r1))
-      RecordMatcher[Required](r1, r2) shouldBe true
+      EqDerivation[Required].eqv(r1, r2) shouldBe true
     }
   }
 
   property("round trip optional primitive types") {
     forAll { r1: Optional =>
       val r2 = BigQueryType.fromTableRow[Optional](BigQueryType.toTableRow[Optional](r1))
-      RecordMatcher[Optional](r1, r2) shouldBe true
+      EqDerivation[Optional].eqv(r1, r2) shouldBe true
     }
   }
 
@@ -94,7 +97,7 @@ final class ConverterProviderSpec
   property("round trip repeated primitive types") {
     forAll { r1: Repeated =>
       val r2 = BigQueryType.fromTableRow[Repeated](BigQueryType.toTableRow[Repeated](r1))
-      RecordMatcher[Repeated](r1, r2) shouldBe true
+      EqDerivation[Repeated].eqv(r1, r2) shouldBe true
     }
   }
 
@@ -102,7 +105,7 @@ final class ConverterProviderSpec
     forAll { r1: RequiredNested =>
       val r2 =
         BigQueryType.fromTableRow[RequiredNested](BigQueryType.toTableRow[RequiredNested](r1))
-      RecordMatcher[RequiredNested](r1, r2) shouldBe true
+      EqDerivation[RequiredNested].eqv(r1, r2) shouldBe true
     }
   }
 
@@ -110,7 +113,7 @@ final class ConverterProviderSpec
     forAll { r1: OptionalNested =>
       val r2 =
         BigQueryType.fromTableRow[OptionalNested](BigQueryType.toTableRow[OptionalNested](r1))
-      RecordMatcher[OptionalNested](r1, r2) shouldBe true
+      EqDerivation[OptionalNested].eqv(r1, r2) shouldBe true
     }
   }
 
@@ -128,8 +131,7 @@ final class ConverterProviderSpec
     forAll { r1: RepeatedNested =>
       val r2 =
         BigQueryType.fromTableRow[RepeatedNested](BigQueryType.toTableRow[RepeatedNested](r1))
-      RecordMatcher[RepeatedNested](r1, r2) shouldBe true
+      EqDerivation[RepeatedNested].eqv(r1, r2) shouldBe true
     }
   }
-
 }

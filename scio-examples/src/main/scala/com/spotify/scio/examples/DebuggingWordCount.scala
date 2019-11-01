@@ -34,7 +34,6 @@ import org.slf4j.LoggerFactory
 import scala.collection.JavaConverters._
 
 object DebuggingWordCount {
-
   // Logger is an object instance, i.e. statically initialized and thus can be used safely in an
   // anonymous function without serialization issue
   private val logger = LoggerFactory.getLogger(this.getClass)
@@ -82,5 +81,4 @@ object DebuggingWordCount {
     require(result.counter(matchedWords).committed.get == 2)
     require(result.counter(unmatchedWords).committed.get > 100)
   }
-
 }

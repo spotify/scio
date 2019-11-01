@@ -68,7 +68,6 @@ import scala.util.control.NonFatal
  * }}}
  */
 object JobTest {
-
   case class BeamOptions(opts: List[String])
 
   private case class BuilderState(
@@ -94,7 +93,6 @@ object JobTest {
   ) extends MetricsAssertion[M, V]
 
   class Builder(private var state: BuilderState) {
-
     /** Test ID for input and output wiring. */
     val testId: String = TestUtil.newTestId(state.className)
 
@@ -345,7 +343,6 @@ object JobTest {
           |\targs: ${state.cmdlineArgs.mkString(" ")}
           |\tdistCache: ${state.distCaches}
           |\tinputs: ${state.input.mkString(", ")}""".stripMargin
-
   }
 
   /** Create a new JobTest.Builder instance. */
@@ -358,5 +355,4 @@ object JobTest {
     val className = ScioUtil.classOf[T].getName.replaceAll("\\$$", "")
     apply(className).args(bo.opts: _*)
   }
-
 }

@@ -21,7 +21,6 @@ import com.spotify.scio.bigquery._
 import com.spotify.scio.testing._
 
 class DistinctByKeyExampleTest extends PipelineSpec {
-
   val input = Seq(
     ("c1", "verylongword1"),
     ("c1", "verylongword1"),
@@ -48,5 +47,4 @@ class DistinctByKeyExampleTest extends PipelineSpec {
       }
       .run()
   }
-
 }

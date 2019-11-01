@@ -23,7 +23,6 @@ import org.apache.commons.math3.distribution.PoissonDistribution
 
 // Ported from org.apache.spark.util.random.RandomSamplerSuite
 object RandomSamplerUtils extends Serializable {
-
   val populationSize = 10000
 
   /**
@@ -144,5 +143,4 @@ object RandomSamplerUtils extends Serializable {
     val s = if (withReplacement) sampleWR(i, fraction) else sample(i, fraction)
     s.toArray
   }
-
 }

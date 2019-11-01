@@ -24,7 +24,6 @@ import com.spotify.scio.testing._
 import org.tensorflow.example._
 
 class ShapelessTensorFlowExampleTest extends PipelineSpec {
-
   val textIn = Seq("a b c d e", "a b a b")
   val wordCount = Seq(("a", 3L), ("b", 3L), ("c", 1L), ("d", 1L), ("e", 1L))
   val examples = wordCount.map { kv =>
@@ -71,5 +70,4 @@ class ShapelessTensorFlowExampleTest extends PipelineSpec {
       }
       .run()
   }
-
 }

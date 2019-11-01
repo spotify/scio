@@ -47,7 +47,6 @@ trait Tap[T] extends Serializable { self =>
 
   /** Map items from `T` to `U`. */
   def map[U: Coder](f: T => U): Tap[U] = new Tap[U] {
-
     /** Parent of this Tap before [[map]]. */
     override val parent: Option[Tap[_]] = Option(self)
 
@@ -57,7 +56,6 @@ trait Tap[T] extends Serializable { self =>
     /** Open data set as an [[com.spotify.scio.values.SCollection SCollection]]. */
     override def open(sc: ScioContext): SCollection[U] = self.open(sc).map(f)
   }
-
 }
 
 case object EmptyTap extends Tap[Nothing] {

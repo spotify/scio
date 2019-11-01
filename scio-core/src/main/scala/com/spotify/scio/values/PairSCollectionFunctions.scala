@@ -30,7 +30,6 @@ import org.apache.beam.sdk.values.{KV, PCollection, PCollectionView}
 import org.slf4j.LoggerFactory
 
 private object PairSCollectionFunctions {
-
   private val logger = LoggerFactory.getLogger(this.getClass)
 
   final case class BFSettings(width: Int, capacity: Int, numBFs: Int)
@@ -99,7 +98,6 @@ private object PairSCollectionFunctions {
 
     BFSettings(width, capacity, numBFs)
   }
-
 }
 
 // scalastyle:off number.of.methods
@@ -113,7 +111,6 @@ private object PairSCollectionFunctions {
  * @groupname transform Transformations
  */
 class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
-
   import TupleFunctions._
 
   private[this] val context: ScioContext = self.context
@@ -455,7 +452,6 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     koder: Coder[K],
     voder: Coder[V]
   ): Seq[(SCollection[(K, V)], SCollection[(K, V)], SCollection[(K, W)])] = {
-
     val thatBfSIs = thatSColl.optimalKeysBloomFiltersAsSideInputs(thatNumKeys, fpProb)
     val n = thatBfSIs.size
 
@@ -476,7 +472,6 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
           }
         (partitionedLhs(lhsUnique), partitionedLhs(lhsOverlap), rhs)
     }
-
   }
 
   /**
@@ -1126,7 +1121,6 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     )
     new MultiMapSideInput[K, V](o)
   }
-
 }
 // scalastyle:on number.of.methods
 // scalastyle:on file.size.limit

@@ -49,7 +49,6 @@ import scala.reflect.runtime.universe._
  * @groupname Ungrouped Other Members
  */
 object AvroType {
-
   /**
    * Macro annotation for an Avro schema.
    *
@@ -229,7 +228,6 @@ object AvroType {
 
   /** Create a new AvroType instance. */
   def apply[T: TypeTag]: AvroType[T] = new AvroType[T]
-
 }
 
 /**
@@ -238,7 +236,6 @@ object AvroType {
  * This decouples generated fields and methods from macro expansion to keep core macro free.
  */
 class AvroType[T: TypeTag] extends Serializable {
-
   private val instance = runtimeMirror(getClass.getClassLoader)
     .reflectModule(typeOf[T].typeSymbol.companion.asModule)
     .instance
@@ -257,5 +254,4 @@ class AvroType[T: TypeTag] extends Serializable {
   /** Schema of `T`. */
   def schema: Schema =
     getField("schema").asInstanceOf[Schema]
-
 }

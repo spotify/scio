@@ -36,7 +36,6 @@ import com.twitter.algebird.Max
  * }}}
  */
 package object libsvm {
-
   private def parseLibSVMRecord(line: String): (Double, Array[Int], Array[Double]) = {
     val items = line.split(' ')
     val label = items.head.toDouble
@@ -100,7 +99,6 @@ package object libsvm {
   }
 
   implicit class SVMReader(@transient private val self: ScioContext) extends AnyVal {
-
     /**
      * Loads labeled data in the LIBSVM format into an SCollection[(Double, SparseVector)].
      * The LIBSVM format is a text-based format used by LIBSVM and LIBLINEAR.
@@ -122,5 +120,4 @@ package object libsvm {
     ): SCollection[(Double, SparseVector[Double])] =
       libSVMCollection(self.textFile(path), numFeatures)
   }
-
 }

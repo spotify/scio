@@ -26,7 +26,6 @@ import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.io.{Files => GFi
 import scala.collection.JavaConverters._
 
 class FileDownloadDoFnTest extends PipelineSpec {
-
   "FileDownloadDoFn" should "work" in {
     val tmpDir = Files.createTempDirectory("filedofn-")
     val files = createFiles(tmpDir, 100)
@@ -82,5 +81,4 @@ class FileDownloadDoFnTest extends PipelineSpec {
 
   private def fn(input: Path) =
     Files.readAllLines(input).asScala.map((_, input))
-
 }

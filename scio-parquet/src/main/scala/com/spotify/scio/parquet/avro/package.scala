@@ -40,7 +40,6 @@ import scala.reflect.ClassTag
  * }}}
  */
 package object avro {
-
   /** Alias for `me.lyh.parquet.avro.Projection`. */
   val Projection = me.lyh.parquet.avro.Projection
 
@@ -49,7 +48,6 @@ package object avro {
 
   /** Enhanced version of [[ScioContext]] with Parquet Avro methods. */
   implicit class ParquetAvroScioContext(@transient private val self: ScioContext) extends AnyVal {
-
     /**
      * Get an SCollection for a Parquet file as Avro records. Since Avro records produced by
      * Parquet column projection may be incomplete and may fail serialization, you must
@@ -68,7 +66,6 @@ package object avro {
       self.requireNotClosed {
         new ParquetAvroFile[T](self, path, projection, predicate)
       }
-
   }
 
   class ParquetAvroFile[T: ClassTag] private[avro] (
@@ -77,7 +74,6 @@ package object avro {
     projection: Schema,
     predicate: FilterPredicate
   ) {
-
     private val logger = LoggerFactory.getLogger(this.getClass)
 
     /**
@@ -110,7 +106,6 @@ package object avro {
       }
       this.map(identity)
     }
-
   }
 
   object ParquetAvroFile {
@@ -127,7 +122,6 @@ package object avro {
    * methods.
    */
   implicit class ParquetAvroSCollection[T](private val self: SCollection[T]) extends AnyVal {
-
     /**
      * Save this SCollection of Avro records as a Parquet file.
      * @param schema must be not null if `T` is of type
@@ -170,5 +164,4 @@ package object avro {
       job.getConfiguration.unset("fs.gs.auth.client.secret")
     }
   }
-
 }

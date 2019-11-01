@@ -40,7 +40,6 @@ trait PipelineSpec
     with SCollectionMatchers
     with PipelineTestUtils
     with RunEnforcementJobTest {
-
   private val Beam = """beam\.(.*)""".r
 
   private var beamOpts: BeamOptions = _
@@ -68,5 +67,4 @@ trait PipelineSpec
     }
     super.run(testName, args)
   }
-
 }

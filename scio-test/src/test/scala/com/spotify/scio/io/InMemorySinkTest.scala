@@ -21,7 +21,6 @@ import com.spotify.scio.ScioContext
 import org.scalatest.{FlatSpec, Matchers}
 
 class InMemorySinkTest extends FlatSpec with Matchers {
-
   "InMemoryTap" should "return containing items as iterable" in {
     val sc = ScioContext.forTest()
     val items = sc.parallelize(List("String1", "String2"))
@@ -37,5 +36,4 @@ class InMemorySinkTest extends FlatSpec with Matchers {
     sc.run().waitUntilDone()
     tap.value shouldBe empty
   }
-
 }

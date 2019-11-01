@@ -23,7 +23,6 @@ import com.google.protobuf.ByteString
 import com.spotify.scio.testing._
 
 class BigtableIOTest extends ScioIOSpec {
-
   val projectId = "project"
   val instanceId = "instance"
 
@@ -47,5 +46,4 @@ class BigtableIOTest extends ScioIOSpec {
       _.saveAsBigtable(projectId, instanceId, _)
     )
   }
-
 }

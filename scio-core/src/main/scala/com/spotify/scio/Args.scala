@@ -29,7 +29,6 @@ import scala.util.control.NonFatal
  * Arguments can be either properties (`--key=value1,value2,...`) or booleans (`--test`).
  */
 object Args {
-
   /** Parse arguments. */
   def apply(args: Array[String]): Args = {
     val (properties, booleans) = args
@@ -60,12 +59,10 @@ object Args {
 
     new Args(m)
   }
-
 }
 
 /** Encapsulate parsed commandline arguments. */
 class Args private (private val m: Map[String, List[String]]) extends Serializable {
-
   /** All arguments as a map. */
   def asMap: Map[String, List[String]] = m
 
@@ -171,5 +168,4 @@ class Args private (private val m: Map[String, List[String]]) extends Serializab
         throw new IllegalArgumentException(s"Invalid value '$value' for '$key'")
     }
   }
-
 }

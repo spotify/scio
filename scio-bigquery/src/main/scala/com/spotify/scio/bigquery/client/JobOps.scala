@@ -29,7 +29,6 @@ import org.slf4j.LoggerFactory
 import scala.collection.JavaConverters._
 
 private[client] object JobOps {
-
   private val Logger = LoggerFactory.getLogger(this.getClass)
 
   private val PeriodFormatter = new PeriodFormatterBuilder()
@@ -73,7 +72,6 @@ private[client] object JobOps {
     val execution = PeriodFormatter.print(new Period(stats.getEndTime - stats.getStartTime))
     Logger.info(s"Elapsed: $elapsed, pending: $pending, execution: $execution")
   }
-
 }
 
 private[client] final class JobOps(client: Client) {

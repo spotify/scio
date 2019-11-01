@@ -21,7 +21,6 @@ import org.scalatest._
 import scala.io.AnsiColor._
 
 class VersionUtilTest extends FlatSpec with Matchers {
-
   private def verifySnapshotVersion(oldVer: String, newVerOpt: Option[String]) =
     VersionUtil.checkVersion(oldVer, newVerOpt, ignore = false) shouldBe Seq(
       s"Using a SNAPSHOT version of Scio: $oldVer"
@@ -69,5 +68,4 @@ class VersionUtilTest extends FlatSpec with Matchers {
       }
     }
   }
-
 }

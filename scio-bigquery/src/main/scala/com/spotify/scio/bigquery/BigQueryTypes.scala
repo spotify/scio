@@ -20,18 +20,13 @@ import java.math.MathContext
 import java.nio.ByteBuffer
 
 import com.spotify.scio.ScioContext
-import org.apache.beam.sdk.io.gcp.bigquery.BigQueryInsertError
-import com.spotify.scio.ScioContext
-import org.apache.beam.sdk.io.gcp.bigquery.WriteResult
-import com.spotify.scio.values.SCollection
-import org.apache.beam.sdk.io.gcp.bigquery.WriteResult
 import com.spotify.scio.values.SCollection
 import com.google.api.services.bigquery.model.{
   TableRow => GTableRow,
   TimePartitioning => GTimePartitioning,
   TableReference => GTableReference
 }
-import org.apache.beam.sdk.io.gcp.bigquery.BigQueryHelpers
+import org.apache.beam.sdk.io.gcp.bigquery.{BigQueryHelpers, BigQueryInsertError, WriteResult}
 import org.apache.avro.Conversions.DecimalConversion
 import org.apache.avro.LogicalTypes
 import org.joda.time.format.{DateTimeFormat, DateTimeFormatterBuilder}
@@ -53,7 +48,7 @@ object Table {
     override lazy val spec: String = BigQueryHelpers.toTableSpec(ref)
   }
   final case class Spec(spec: String) extends Table {
-    override lazy val ref: GTableReference = BigQueryHelpers.parseTableSpec(spec)
+    override val ref: GTableReference = BigQueryHelpers.parseTableSpec(spec)
   }
 }
 
@@ -65,7 +60,6 @@ sealed trait ExtendedErrorInfo {
 
 object ExtendedErrorInfo {
   final case object Enabled extends ExtendedErrorInfo {
-
     override type Info = BigQueryInsertError
 
     override private[scio] def coll(sc: ScioContext, wr: WriteResult): SCollection[Info] =
@@ -135,7 +129,6 @@ object Timestamp {
     case t: Long => new Instant(t / 1000)
     case _       => parse(timestamp.toString)
   }
-
 }
 
 /** Utility for BigQuery `DATE` type. */

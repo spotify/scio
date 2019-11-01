@@ -24,7 +24,6 @@ import com.spotify.scio.io._
 import com.spotify.scio.testing._
 
 class BigtableExampleTest extends PipelineSpec {
-
   import BigtableExample._
 
   val bigtableOptions = Seq(
@@ -71,5 +70,4 @@ class BigtableExampleTest extends PipelineSpec {
       }
       .run()
   }
-
 }

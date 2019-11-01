@@ -50,7 +50,6 @@ private object VoidCoder extends AtomicCoder[Void] {
 // Java Coders
 //
 trait JavaCoders {
-
   implicit def voidCoder: Coder[Void] = Coder.beam[Void](VoidCoder)
 
   implicit def uriCoder: Coder[java.net.URI] =

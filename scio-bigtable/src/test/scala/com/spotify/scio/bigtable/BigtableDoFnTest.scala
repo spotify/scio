@@ -29,7 +29,6 @@ import scala.collection.JavaConverters._
 import scala.util.{Failure, Success}
 
 class BigtableDoFnTest extends PipelineSpec {
-
   "BigtableDoFn" should "work" in {
     val fn = new TestBigtableDoFn
     val output = runWithData(1 to 10)(_.parDo(fn))

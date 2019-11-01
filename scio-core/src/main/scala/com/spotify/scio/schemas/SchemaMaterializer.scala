@@ -34,7 +34,6 @@ import BSchema.{Field => BField, FieldType => BFieldType}
 import org.apache.beam.sdk.schemas.Schema.LogicalType
 
 object SchemaMaterializer {
-
   @inline private[scio] def fieldType[A](schema: Schema[A]): BFieldType =
     schema match {
       case Record(schemas, _, _) =>

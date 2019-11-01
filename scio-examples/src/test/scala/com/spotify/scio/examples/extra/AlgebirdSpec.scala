@@ -22,11 +22,10 @@ import org.scalacheck._
 import org.scalatest._
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
+@Ignore
 class AlgebirdSpec extends PropSpec with ScalaCheckDrivenPropertyChecks with Matchers {
-
-  // TODO: remove this once https://github.com/scalatest/scalatest/issues/1090 is addressed
-  override implicit val generatorDrivenConfig: PropertyCheckConfiguration =
-    PropertyCheckConfiguration(minSuccessful = 100)
+  // Default minSuccessful is 10 instead of 100 in ScalaCheck but that should be enough
+  // https://github.com/scalatest/scalatest/issues/1090 is addressed
 
   // =======================================================================
   // Utilities
@@ -39,7 +38,6 @@ class AlgebirdSpec extends PropSpec with ScalaCheckDrivenPropertyChecks with Mat
    * ScalaCheck properties.
    */
   class SColl[T](val internal: List[T]) {
-
     /** Sum with an implicit Semigroup. */
     def sum(implicit sg: Semigroup[T]): T = internal.reduce(sg.plus)
 
@@ -59,7 +57,6 @@ class AlgebirdSpec extends PropSpec with ScalaCheckDrivenPropertyChecks with Mat
     def map[U](f: T => U): SColl[U] = new SColl(internal.map(f))
 
     override def toString: String = internal.mkString("[", ", ", "]")
-
   }
 
   // Generator for non-empty SColl[T]
@@ -395,5 +392,4 @@ class AlgebirdSpec extends PropSpec with ScalaCheckDrivenPropertyChecks with Mat
       actual shouldBe expected +- 1e-3
     }
   }
-
 }

@@ -29,7 +29,6 @@ import com.spotify.scio.examples.common.ExampleData
 
 // ## Utilities used in all examples
 object JoinUtil {
-
   // Function to extract event information from BigQuery `TableRow`s
   def extractEventInfo(row: TableRow): Seq[(String, String)] = {
     val countryCode = row.getString("ActionGeo_CountryCode")
@@ -52,7 +51,6 @@ object JoinUtil {
   // Function to format output string
   def formatOutput(countryCode: String, countryName: String, eventInfo: String): String =
     s"Country code: $countryCode, Country name: $countryName, Event info: $eventInfo"
-
 }
 
 // ## Regular shuffle-based join

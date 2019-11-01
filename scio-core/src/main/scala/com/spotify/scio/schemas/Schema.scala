@@ -80,7 +80,6 @@ final case class RawRecord[T](
 }
 
 object RawRecord {
-
   final def apply[T: ClassTag](provider: SchemaProvider): RawRecord[T] = {
     val td = TypeDescriptor.of(ScioUtil.classOf[T])
     val schema = provider.schemaFor(td)
@@ -88,7 +87,6 @@ object RawRecord {
     def fromRow = provider.fromRowFunction(td)
     RawRecord(schema, fromRow, toRow)
   }
-
 }
 
 final case class Type[T](fieldType: FieldType) extends Schema[T] {
@@ -129,7 +127,6 @@ final case class MapType[F[_, _], K, V](
 private[scio] case class ScalarWrapper[T](value: T) extends AnyVal
 
 private[scio] object SchemaTypes {
-
   private[this] def compareRows(s1: BSchema.FieldType, s2: BSchema.FieldType): Boolean = {
     val s1Types = s1.getRowSchema.getFields.asScala.map(_.getType)
     val s2Types = s2.getRowSchema.getFields.asScala.map(_.getType)
@@ -148,7 +145,6 @@ private[scio] object SchemaTypes {
       case _ if s1.getNullable == s2.getNullable => true
       case _                                     => false
     })
-
 }
 
 private object Derived extends Serializable {
@@ -227,5 +223,4 @@ private[scio] trait SchemaMacroHelpers {
     x =>
       q"new _root_.org.apache.beam.sdk.values.TupleTag[${weakTypeOf[A]}](${x.getId()})"
   }
-
 }

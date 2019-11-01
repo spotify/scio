@@ -103,7 +103,6 @@ object Query2 {
 }
 
 final class SqlSCollection2[A: Schema, B: Schema](a: SCollection[A], b: SCollection[B]) {
-
   def query(q: String, aTag: TupleTag[A], bTag: TupleTag[B], udfs: Udf*): SCollection[Row] =
     query(Query2(q, aTag, bTag, udfs.toList))
 
@@ -117,7 +116,6 @@ final class SqlSCollection2[A: Schema, B: Schema](a: SCollection[A], b: SCollect
         .of(q.aTag, collA.internal)
         .and(q.bTag, collB.internal)
         .apply(s"${collA.tfName} join ${collB.tfName}", sqlTransform)
-
     }
   }
 
@@ -136,7 +134,6 @@ final class SqlSCollection2[A: Schema, B: Schema](a: SCollection[A], b: SCollect
       case e: ParseException =>
         Query2.typecheck(q).fold(err => throw new RuntimeException(err, e), _ => throw e)
     }
-
 }
 
 // scalastyle:on cyclomatic.complexity

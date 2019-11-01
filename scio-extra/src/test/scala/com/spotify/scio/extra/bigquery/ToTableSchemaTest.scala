@@ -23,7 +23,6 @@ import org.scalatest.{FlatSpec, Matchers}
 import scala.collection.JavaConverters._
 
 class ToTableSchemaTest extends FlatSpec with Matchers with ToTableSchema {
-
   "toTableSchema" should "convert an Avro Schema to a BigQuery TableSchema" in {
     toTableSchema(AvroExample.SCHEMA$) shouldEqual
       new TableSchema().setFields(

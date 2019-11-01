@@ -25,7 +25,6 @@ import org.elasticsearch.common.xcontent.XContentType
 import scala.util.Try
 
 object IndexAdmin {
-
   private def indicesClient[A](esOptions: ElasticsearchOptions)(f: IndicesClient => A): Try[A] = {
     val client = new RestHighLevelClient(RestClient.builder(esOptions.nodes: _*))
 
@@ -82,5 +81,4 @@ object IndexAdmin {
       RequestOptions.DEFAULT
     )
   }
-
 }

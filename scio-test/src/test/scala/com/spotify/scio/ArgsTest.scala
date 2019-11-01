@@ -24,7 +24,6 @@ import org.scalatest.{FlatSpec, Matchers}
 import scala.util.{Failure, Success, Try}
 
 class ArgsTest extends FlatSpec with Matchers {
-
   "Args" should "support String" in {
     Args("--str=value".split(" "))("str") shouldBe "value"
   }

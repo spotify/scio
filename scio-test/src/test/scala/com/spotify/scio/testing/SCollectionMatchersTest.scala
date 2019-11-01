@@ -40,7 +40,6 @@ object SCollectionMatchersTest {
 
 // scalastyle:off no.whitespace.before.left.bracket
 class SCollectionMatchersTest extends PipelineSpec {
-
   import SCollectionMatchersTest.TestRecord
   implicit val coder = Coder.kryo[TestRecord]
   private def newTR(x: Int) = new TestRecord(x)
@@ -516,7 +515,6 @@ class SCollectionMatchersTest extends PipelineSpec {
           case (_, seq) => seq.nonEmpty
         }
       }
-
     }
 
     runWithContext { sc =>
@@ -547,9 +545,7 @@ class SCollectionMatchersTest extends PipelineSpec {
       windowedStream.sum shouldNot inEarlyGlobalWindowPanes {
         beEmpty
       }
-
     }
   }
-
 }
 // scalastyle:on no.whitespace.before.left.bracket

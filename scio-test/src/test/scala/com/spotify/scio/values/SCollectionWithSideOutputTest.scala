@@ -20,7 +20,6 @@ package com.spotify.scio.values
 import com.spotify.scio.testing.PipelineSpec
 
 class SCollectionWithSideOutputTest extends PipelineSpec {
-
   "SCollectionWithSideOutput" should "support map()" in {
     runWithContext { sc =>
       val p1 = sc.parallelize(Seq("a", "b", "c"))
@@ -65,5 +64,4 @@ class SCollectionWithSideOutputTest extends PipelineSpec {
 
     even should containInAnyOrder(expected)
   }
-
 }

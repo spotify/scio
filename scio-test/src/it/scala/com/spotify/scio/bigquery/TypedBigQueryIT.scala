@@ -20,11 +20,11 @@ package com.spotify.scio.bigquery
 import com.google.protobuf.ByteString
 import com.spotify.scio._
 import com.spotify.scio.testing._
+import magnolify.scalacheck.auto._
 import org.apache.beam.sdk.options.PipelineOptionsFactory
 import org.joda.time.format.DateTimeFormat
 import org.joda.time.{Instant, LocalDate, LocalDateTime, LocalTime}
 import org.scalacheck._
-import org.scalacheck.ScalacheckShapeless._
 import org.scalatest._
 
 import scala.util.Random
@@ -72,7 +72,6 @@ object TypedBigQueryIT {
 }
 
 class TypedBigQueryIT extends PipelineSpec with BeforeAndAfterAll {
-
   import TypedBigQueryIT._
 
   override protected def beforeAll(): Unit = {
@@ -88,5 +87,4 @@ class TypedBigQueryIT extends PipelineSpec with BeforeAndAfterAll {
     sc.typedBigQuery[Record](table) should containInAnyOrder(records)
     sc.run()
   }
-
 }

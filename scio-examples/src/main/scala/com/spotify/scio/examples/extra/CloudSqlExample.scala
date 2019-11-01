@@ -23,7 +23,6 @@ import com.spotify.scio.jdbc._
 
 // Read from Google Cloud SQL database table and write to a different table in the same database
 object CloudSqlExample {
-
   def main(cmdlineArgs: Array[String]): Unit = {
     // Parse database connection details as `CloudSqlOptions`
     val (opts, _) = ScioContext.parseArguments[CloudSqlOptions](cmdlineArgs)
@@ -85,5 +84,4 @@ object CloudSqlExample {
         s.setLong(2, kv._2)
       }
     )
-
 }

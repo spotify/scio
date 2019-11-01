@@ -24,7 +24,6 @@ import org.apache.beam.sdk.values.Row
 import scala.collection.mutable
 
 final class SchemaMaterializerTest extends FlatSpec with Matchers {
-
   "SchemaMaterializer" should "materialize correct FieldType" in {
     def fieldTypes[T](s: Schema[T]): List[Field] =
       SchemaMaterializer.materializeWithDefault(s)._1.getFields().asScala.toList
@@ -132,5 +131,4 @@ final class SchemaMaterializerTest extends FlatSpec with Matchers {
         .build()
     from(row) shouldBe Foo("Hello", None)
   }
-
 }

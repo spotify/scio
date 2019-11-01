@@ -134,7 +134,6 @@ private object RunnerContext {
 
 /** Convenience object for creating [[ScioContext]] and [[Args]]. */
 object ContextAndArgs {
-
   trait ArgsParser[F[_]] {
     type ArgsType
     type UsageOrHelp = String
@@ -275,7 +274,6 @@ object ContextAndArgs {
  * checking if it's completed and to wait for it's execution.
  */
 trait ScioExecutionContext {
-
   def pipelineResult: PipelineResult
 
   /** Whether the pipeline is completed. */
@@ -311,7 +309,6 @@ trait ScioExecutionContext {
 
 /** Companion object for [[ScioContext]]. */
 object ScioContext {
-
   private val log = LoggerFactory.getLogger(this.getClass)
 
   import org.apache.beam.sdk.options.PipelineOptionsFactory
@@ -411,7 +408,6 @@ object ScioContext {
     new DistCacheScioContext(self)
 
   private def defaultOptions: PipelineOptions = PipelineOptionsFactory.create()
-
 }
 
 /**
@@ -428,7 +424,6 @@ class ScioContext private[scio] (
   val options: PipelineOptions,
   private var artifacts: List[String]
 ) extends TransformNameable {
-
   /** Get PipelineOptions as a more specific sub-type. */
   def optionsAs[T <: PipelineOptions: ClassTag]: T =
     options.as(ScioUtil.classOf[T])
@@ -926,7 +921,6 @@ class ScioContext private[scio] (
 
 /** An enhanced ScioContext with distributed cache features. */
 class DistCacheScioContext private[scio] (self: ScioContext) {
-
   private[scio] def testDistCache: TestDistCache =
     TestDataManager.getDistCache(self.testId.get)
 
@@ -973,7 +967,6 @@ class DistCacheScioContext private[scio] (self: ScioContext) {
         new DistCacheMulti(uris.map(new URI(_)), initFn, self.optionsAs[GcsOptions])
       }
     }
-
 }
 
 // scalastyle:on file.size.limit

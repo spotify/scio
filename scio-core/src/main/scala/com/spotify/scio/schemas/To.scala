@@ -28,7 +28,6 @@ import scala.tools.reflect.ToolBox
 sealed trait To[I, O] extends (SCollection[I] => SCollection[O])
 
 object To {
-
   @tailrec @inline
   private def getBaseType(t: BSchema.FieldType): BSchema.FieldType = {
     val log = t.getLogicalType()
@@ -168,7 +167,6 @@ import scala.reflect.macros._
 import reflect.runtime.{universe => u}
 
 private[scio] final class FastEval(evalToolBox: ToolBox[u.type]) {
-
   def eval[T](ctx: blackbox.Context)(expr: ctx.Expr[T]): T = {
     import ctx.universe._
 
@@ -229,5 +227,4 @@ object ToMacro {
       }
       .fold(message => c.abort(c.enclosingPosition, message), t => c.Expr[To[I, O]](t))
   }
-
 }

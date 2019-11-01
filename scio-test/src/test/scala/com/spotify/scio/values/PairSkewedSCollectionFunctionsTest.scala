@@ -20,7 +20,6 @@ package com.spotify.scio.values
 import com.spotify.scio.testing.PipelineSpec
 
 class PairSkewedSCollectionFunctionsTest extends PipelineSpec {
-
   val (skewSeed, skewEps) = (42, 0.001d)
 
   it should "support skewedJoin() without hotkeys and no duplicate keys" in {

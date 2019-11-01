@@ -39,7 +39,6 @@ import scala.reflect.ClassTag
  * [[com.spotify.scio.values.SCollection SCollection]]s.
  */
 trait SCollectionMatchers {
-
   sealed trait MatcherBuilder[T] {
     _: Matcher[T] =>
 
@@ -360,5 +359,4 @@ trait SCollectionMatchers {
     val f = ClosureCleaner(predicate)
     satisfy(_.exists(f))
   }
-
 }

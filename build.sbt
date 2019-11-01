@@ -22,6 +22,8 @@ import com.typesafe.sbt.SbtGit.GitKeys.gitRemoteRepo
 import org.scalafmt.sbt.ScalafmtPlugin.scalafmtConfigSettings
 import bloop.integrations.sbt.BloopDefaults
 
+ThisBuild / turbo := true
+
 val beamVersion = "2.16.0"
 
 val algebirdVersion = "0.13.5"
@@ -40,17 +42,17 @@ val commonsCompress = "1.19"
 val elasticsearch2Version = "2.4.6"
 val elasticsearch5Version = "5.6.16"
 val elasticsearch6Version = "6.8.3"
-val elasticsearch7Version = "7.3.2"
-val featranVersion = "0.3.0"
+val elasticsearch7Version = "7.4.2"
+val featranVersion = "0.4.0"
 val gcsConnectorVersion = "hadoop2-1.9.16"
 val gcsVersion = "1.8.0"
 val guavaVersion = "25.1-jre"
 val hadoopVersion = "2.7.7"
 val hamcrestVersion = "1.3"
-val jacksonScalaModuleVersion = "2.10.0"
+val jacksonScalaModuleVersion = "2.9.10"
 val javaLshVersion = "0.12"
 val jlineVersion = "2.14.6"
-val jodaTimeVersion = "2.10.4"
+val jodaTimeVersion = "2.10.5"
 val junitInterfaceVersion = "0.11"
 val junitVersion = "4.12"
 val kantanCsvVersion = "0.5.1"
@@ -59,17 +61,17 @@ val parquetAvroExtraVersion = "0.2.3"
 val parquetVersion = "1.10.1"
 val protobufGenericVersion = "0.2.5"
 val protobufVersion = "3.7.1"
-val scalacheckShapelessVersion = "1.1.8"
-val scalacheckVersion = "1.14.0"
+val scalacheckVersion = "1.14.2"
 val scalaMacrosVersion = "2.1.1"
 val scalatestVersion = "3.0.8"
 val shapelessVersion = "2.3.3"
 val shapelessDatatypeVersion = "0.2.0"
-val slf4jVersion = "1.7.28"
+val slf4jVersion = "1.7.29"
 val sparkeyVersion = "3.0.0"
-val tensorFlowVersion = "1.13.1"
-val zoltarVersion = "0.5.4"
-val magnoliaVersion = "0.11.0"
+val tensorFlowVersion = "1.15.0"
+val zoltarVersion = "0.5.6"
+val magnoliaVersion = "0.12.0"
+val magnolifyVersion = "0.1.0"
 val grpcVersion = "1.17.1"
 val caseappVersion = "2.0.0-M9"
 val sparkVersion = "2.4.3"
@@ -156,7 +158,10 @@ val commonSettings = Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
   ).mkString(";"),
   coverageHighlighting := true,
   // Release settings
-  publishTo := sonatypePublishToBundle.value,
+  publishTo := Some(
+    if (isSnapshot.value) Opts.resolver.sonatypeSnapshots
+    else Opts.resolver.sonatypeStaging
+  ),
   releaseCrossBuild := true,
   releasePublishArtifactsAction := PgpKeys.publishSigned.value,
   publishMavenStyle := true,
@@ -220,6 +225,7 @@ val commonSettings = Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
 ) ++ mimaSettings ++ scalafmtSettings
 
 lazy val itSettings = Defaults.itSettings ++ Seq(
+  IntegrationTest / classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.Flat,
   scalastyleSources in Compile ++= (unmanagedSourceDirectories in IntegrationTest).value,
   // exclude all sources if we don't have GCP credentials
   (excludeFilter in unmanagedSources) in IntegrationTest := {
@@ -230,7 +236,7 @@ lazy val itSettings = Defaults.itSettings ++ Seq(
     }
   }
 ) ++
-  inConfig(IntegrationTest)(fork in run := true) ++
+  inConfig(IntegrationTest)(run / fork := true) ++
   inConfig(IntegrationTest)(BloopDefaults.configSettings) ++
   inConfig(IntegrationTest)(scalafmtConfigSettings) ++
   inConfig(IntegrationTest)(scalafixConfigSettings(IntegrationTest))
@@ -342,6 +348,7 @@ lazy val root: Project = Project("scio", file("."))
     scioTensorFlow,
     scioSchemas,
     scioSpanner,
+    scioSql,
     scioExamples,
     scioRepl,
     scioJmh,
@@ -427,10 +434,11 @@ lazy val scioTest: Project = Project(
       "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
       "org.scalatest" %% "scalatest" % scalatestVersion,
       "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test,it",
-      "com.github.alexarchambault" %% "scalacheck-shapeless_1.13" % scalacheckShapelessVersion % "test,it",
-      "me.lyh" %% "shapeless-datatype-datastore" % shapelessDatatypeVersion % "test,it",
+      "com.spotify" %% "magnolify-datastore" % magnolifyVersion % "it",
       // DataFlow testing requires junit and hamcrest
       "org.hamcrest" % "hamcrest-all" % hamcrestVersion,
+      // Our BloomFilters are Algebird Monoids and hence uses tests from Algebird Test
+      "com.twitter" %% "algebird-test" % algebirdVersion % "test",
       "com.spotify" % "annoy" % annoyVersion % "test",
       "com.spotify.sparkey" % "sparkey" % sparkeyVersion % "test",
       "com.novocode" % "junit-interface" % junitInterfaceVersion,
@@ -443,10 +451,10 @@ lazy val scioTest: Project = Project(
   )
   .dependsOn(
     scioCore % "test->test;compile->compile;it->it",
-    scioSchemas % "test,it",
-    scioAvro % "compile->test,it->it",
-    scioSql % "compile->test,it->it",
-    scioBigQuery % "compile->test,it->it"
+    scioSchemas % "test;it",
+    scioAvro % "compile->test;it->it",
+    scioSql % "compile->test;it->it",
+    scioBigQuery % "compile->test;it->it"
   )
 
 lazy val scioMacros: Project = Project(
@@ -474,13 +482,14 @@ lazy val scioAvro: Project = Project(
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       "org.slf4j" % "slf4j-simple" % slf4jVersion % "test,it",
       "org.scalatest" %% "scalatest" % scalatestVersion % "test,it",
-      "com.github.alexarchambault" %% "scalacheck-shapeless_1.13" % scalacheckShapelessVersion % "test",
-      "me.lyh" %% "shapeless-datatype-core" % shapelessDatatypeVersion % "test"
+      "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test,it",
+      "com.spotify" %% "magnolify-cats" % magnolifyVersion % "test",
+      "com.spotify" %% "magnolify-scalacheck" % magnolifyVersion % "test"
     ),
     beamSDKIODependencies
   )
   .dependsOn(
-    scioCore % "compile,it->it"
+    scioCore % "compile;it->it"
   )
   .configs(IntegrationTest)
 
@@ -497,17 +506,15 @@ lazy val scioBigQuery: Project = Project(
       "org.slf4j" % "slf4j-simple" % slf4jVersion % "test,it",
       "org.scalatest" %% "scalatest" % scalatestVersion % "test,it",
       "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test,it",
+      "com.spotify" %% "magnolify-cats" % magnolifyVersion % "test",
+      "com.spotify" %% "magnolify-scalacheck" % magnolifyVersion % "test",
       "com.google.cloud" % "google-cloud-storage" % gcsVersion % "test,it",
       // DataFlow testing requires junit and hamcrest
-      "org.hamcrest" % "hamcrest-all" % hamcrestVersion % "test,it",
-      "com.github.alexarchambault" %% "scalacheck-shapeless_1.13" % scalacheckShapelessVersion % "test,it",
-      "me.lyh" %% "shapeless-datatype-core" % shapelessDatatypeVersion % "test",
-      // Our BloomFilters are Algebird Monoids and hence uses tests from Algebird Test
-      "com.twitter" %% "algebird-test" % algebirdVersion % "test"
+      "org.hamcrest" % "hamcrest-all" % hamcrestVersion % "test,it"
     )
   )
   .dependsOn(
-    scioCore % "compile,it->it"
+    scioCore % "compile;it->it"
   )
   .configs(IntegrationTest)
 
@@ -529,7 +536,7 @@ lazy val scioBigtable: Project = Project(
   )
   .dependsOn(
     scioCore,
-    scioTest % "test,it->it"
+    scioTest % "test;it->it"
   )
   .configs(IntegrationTest)
 
@@ -540,8 +547,8 @@ lazy val scioCassandra2: Project = Project(
     commonSettings ++ itSettings,
     description := "Scio add-on for Apache Cassandra 2.x",
     libraryDependencies ++= Seq(
-      "com.datastax.cassandra" % "cassandra-driver-core" % "3.7.2",
-      ("org.apache.cassandra" % "cassandra-all" % "2.2.14")
+      "com.datastax.cassandra" % "cassandra-driver-core" % "3.8.0",
+      ("org.apache.cassandra" % "cassandra-all" % "2.2.15")
         .exclude("ch.qos.logback", "logback-classic")
         .exclude("org.slf4j", "log4j-over-slf4j"),
       "org.apache.hadoop" % "hadoop-client" % hadoopVersion
@@ -549,7 +556,7 @@ lazy val scioCassandra2: Project = Project(
   )
   .dependsOn(
     scioCore,
-    scioTest % "test,it"
+    scioTest % "test;it"
   )
   .configs(IntegrationTest)
 
@@ -560,8 +567,8 @@ lazy val scioCassandra3: Project = Project(
     commonSettings ++ itSettings,
     description := "Scio add-on for Apache Cassandra 3.x",
     libraryDependencies ++= Seq(
-      "com.datastax.cassandra" % "cassandra-driver-core" % "3.7.2",
-      ("org.apache.cassandra" % "cassandra-all" % "3.11.4")
+      "com.datastax.cassandra" % "cassandra-driver-core" % "3.8.0",
+      ("org.apache.cassandra" % "cassandra-all" % "3.11.5")
         .exclude("ch.qos.logback", "logback-classic")
         .exclude("org.slf4j", "log4j-over-slf4j"),
       "org.apache.hadoop" % "hadoop-client" % hadoopVersion,
@@ -570,7 +577,7 @@ lazy val scioCassandra3: Project = Project(
   )
   .dependsOn(
     scioCore,
-    scioTest % "test,it"
+    scioTest % "test;it"
   )
   .configs(IntegrationTest)
 
@@ -756,7 +763,6 @@ lazy val scioTensorFlow: Project = Project(
       "org.tensorflow" % "tensorflow" % tensorFlowVersion,
       "org.tensorflow" % "proto" % tensorFlowVersion,
       "org.apache.commons" % "commons-compress" % commonsCompress,
-      "me.lyh" %% "shapeless-datatype-tensorflow" % shapelessDatatypeVersion,
       "com.spotify" %% "featran-core" % featranVersion,
       "com.spotify" %% "featran-scio" % featranVersion,
       "com.spotify" %% "featran-tensorflow" % featranVersion,
@@ -768,7 +774,6 @@ lazy val scioTensorFlow: Project = Project(
       "io.circe" %% "circe-generic",
       "io.circe" %% "circe-parser"
     ).map(_ % circeVersion),
-    Test / fork := true,
     javaOptions += "-Dscio.ignoreVersionWarning=true"
   )
   .dependsOn(
@@ -822,7 +827,8 @@ lazy val scioExamples: Project = Project(
         HiddenFileFilter || "TypedBigQueryTornadoes*.scala" || "TypedStorageBigQueryTornadoes*.scala"
       }
     },
-    sources in doc in Compile := List()
+    sources in doc in Compile := List(),
+    run / classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.Flat
   )
   .dependsOn(
     scioCore,

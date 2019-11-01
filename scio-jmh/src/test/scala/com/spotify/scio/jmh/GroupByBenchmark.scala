@@ -37,7 +37,6 @@ import scala.collection.JavaConverters._
 @OutputTimeUnit(TimeUnit.SECONDS)
 @State(Scope.Thread)
 class GroupByBenchmark {
-
   val schema =
     """
       {

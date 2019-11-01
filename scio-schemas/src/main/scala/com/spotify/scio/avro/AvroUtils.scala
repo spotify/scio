@@ -23,7 +23,6 @@ import org.apache.avro.generic.{GenericData, GenericRecord}
 import scala.collection.JavaConverters._
 
 object AvroUtils {
-
   private def f(name: String, tpe: Schema.Type) =
     new Schema.Field(
       name,
@@ -70,5 +69,4 @@ object AvroUtils {
       "hello",
       List[CharSequence]("a", "b", "c").asJava
     )
-
 }

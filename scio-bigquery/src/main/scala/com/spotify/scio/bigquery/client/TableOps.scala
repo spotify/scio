@@ -333,5 +333,4 @@ private[client] final class TableOps(client: Client) {
 
   private def stagingDatasetId(location: String): String =
     StagingDatasetPrefix + location.toLowerCase.replaceAll("-", "_")
-
 }

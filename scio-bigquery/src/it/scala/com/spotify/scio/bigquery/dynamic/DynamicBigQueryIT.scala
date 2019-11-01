@@ -44,7 +44,6 @@ object DynamicBigQueryIT {
 }
 
 class DynamicBigQueryIT extends FlatSpec with Matchers {
-
   import DynamicBigQueryIT._
 
   private val bq = BigQuery.defaultInstance()
@@ -91,5 +90,4 @@ class DynamicBigQueryIT extends FlatSpec with Matchers {
     rows0 shouldBe expected.filter(_.key % 2 == 0)
     rows1 shouldBe expected.filter(_.key % 2 == 1)
   }
-
 }

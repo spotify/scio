@@ -32,7 +32,6 @@ import com.spotify.scio.examples.common.ExampleData
 import scala.util.Try
 
 object UserScore {
-
   // Case class containing all the fields within an event, for internal model
   case class GameActionInfo(user: String, team: String, score: Int, timestamp: Long)
 
@@ -69,5 +68,4 @@ object UserScore {
     sc.run()
     ()
   }
-
 }

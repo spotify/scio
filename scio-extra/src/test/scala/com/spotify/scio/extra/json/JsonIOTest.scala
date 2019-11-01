@@ -35,7 +35,6 @@ object JsonIOTest {
 }
 
 class JsonIOTest extends ScioIOSpec with TapSpec {
-
   import JsonIOTest._
 
   private val xs = (1 to 100).map(x => Record(x, x.toString, if (x % 2 == 0) Some(x) else None))
@@ -85,5 +84,4 @@ class JsonIOTest extends ScioIOSpec with TapSpec {
     // scalastyle:on no.whitespace.before.left.bracket
     FileUtils.deleteDirectory(dir)
   }
-
 }

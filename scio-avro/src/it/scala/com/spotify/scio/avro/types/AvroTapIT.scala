@@ -57,5 +57,4 @@ final class AvroTapIT extends FlatSpec with Matchers {
 
     result.value.hasNext shouldBe true
   }
-
 }

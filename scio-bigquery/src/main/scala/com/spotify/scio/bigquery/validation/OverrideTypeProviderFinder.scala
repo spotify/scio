@@ -22,7 +22,6 @@ import scala.util.{Failure, Success, Try}
 
 /** Common finder for the proper [[OverrideTypeProvider]]. */
 object OverrideTypeProviderFinder {
-
   var typeProvider: String = System.getProperty("override.type.provider", "")
 
   var provider: OverrideTypeProvider = instance()

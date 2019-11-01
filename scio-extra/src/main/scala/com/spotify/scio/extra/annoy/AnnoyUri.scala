@@ -24,7 +24,6 @@ import java.nio.file.{Files, Paths}
 import annoy4s._
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.util.{RemoteFileUtil, ScioUtil}
-import com.sun.jna.Native
 import org.apache.beam.sdk.options.PipelineOptions
 
 /**
@@ -50,7 +49,6 @@ private[annoy] object AnnoyUri {
 }
 
 private class LocalAnnoyUri(val path: String) extends AnnoyUri {
-
   override private[annoy] def getReader(metric: AnnoyMetric, dim: Int): AnnoyReader =
     new AnnoyReader(path, metric, dim)
   override private[annoy] def saveAndClose(w: AnnoyWriter): Unit = {
@@ -62,11 +60,9 @@ private class LocalAnnoyUri(val path: String) extends AnnoyUri {
     }
   }
   override private[annoy] def exists: Boolean = new File(path).exists()
-
 }
 
 private class RemoteAnnoyUri(val path: String, options: PipelineOptions) extends AnnoyUri {
-
   private[this] val rfu: RemoteFileUtil = RemoteFileUtil.create(options)
 
   override private[annoy] def getReader(metric: AnnoyMetric, dim: Int): AnnoyReader = {
@@ -85,33 +81,24 @@ private class RemoteAnnoyUri(val path: String, options: PipelineOptions) extends
     Files.delete(tempFile)
   }
   override private[annoy] def exists: Boolean = rfu.remoteExists(new URI(path))
-
 }
 
 private[annoy] class AnnoyWriter(metric: AnnoyMetric, dim: Int, nTrees: Int) {
-
-  private val annoy4sIndex = metric match {
-    case Angular   => AnnoyWriter.lib.createAngular(dim)
-    case Euclidean => AnnoyWriter.lib.createAngular(dim)
+  private[this] val annoy4sIndex = metric match {
+    case Angular   => Annoy.annoyLib.createAngular(dim)
+    case Euclidean => Annoy.annoyLib.createEuclidean(dim)
   }
 
   def addItem(item: Int, w: Array[Float]): Unit = {
-    AnnoyWriter.lib.addItem(annoy4sIndex, item, w)
+    Annoy.annoyLib.addItem(annoy4sIndex, item, w)
     ()
   }
   def save(filename: String): Unit = {
-    AnnoyWriter.lib.save(annoy4sIndex, filename)
+    Annoy.annoyLib.save(annoy4sIndex, filename)
     ()
   }
-  def build(): Unit = AnnoyWriter.lib.build(annoy4sIndex, nTrees)
-  def free(): Unit = AnnoyWriter.lib.deleteIndex(annoy4sIndex)
-  def size: Int = AnnoyWriter.lib.getNItems(annoy4sIndex)
-  def verbose(b: Boolean): Unit = AnnoyWriter.lib.verbose(annoy4sIndex, b)
-
-}
-
-private[annoy] object AnnoyWriter {
-  private val lib = Native
-    .loadLibrary("annoy", classOf[AnnoyLibrary])
-    .asInstanceOf[AnnoyLibrary]
+  def build(): Unit = Annoy.annoyLib.build(annoy4sIndex, nTrees)
+  def free(): Unit = Annoy.annoyLib.deleteIndex(annoy4sIndex)
+  def size: Int = Annoy.annoyLib.getNItems(annoy4sIndex)
+  def verbose(b: Boolean): Unit = Annoy.annoyLib.verbose(annoy4sIndex, b)
 }

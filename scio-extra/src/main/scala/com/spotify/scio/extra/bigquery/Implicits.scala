@@ -31,14 +31,12 @@ import scala.reflect.ClassTag
 
 /** Provides implicit helpers for SCollections interacting with BigQuery. */
 object Implicits extends ToTableRow with ToTableSchema {
-
   final case class AvroConversionException(
     private val message: String,
     private val cause: Throwable = null
   ) extends Exception(message, cause)
 
   implicit class AvroImplicits[T](private val self: SCollection[T]) {
-
     /**
      * Saves the provided SCollection[T] to BigQuery where T is a subtype of Indexed Record,
      * automatically converting T's [[org.apache.avro.Schema AvroSchema]] to BigQuery's
@@ -70,5 +68,4 @@ object Implicits extends ToTableRow with ToTableSchema {
         .write(BigQueryTable(Table.Ref(table)))(params)
     }
   }
-
 }

@@ -26,7 +26,6 @@ import scala.reflect.io.File
 import scala.util.Try
 
 object CheckpointMetrics {
-
   def runJob(checkpointArg: String, tempLocation: String = null): (Long, Long) = {
     val elemsBefore = ScioMetrics.counter("elemsBefore")
     val elemsAfter = ScioMetrics.counter("elemsAfter")
@@ -69,5 +68,4 @@ class CheckpointTest extends FlatSpec with Matchers {
     File(s"$tempLocation/$checkpointName").deleteRecursively()
     runJob(checkpointName, tempLocation) shouldBe ((10L, 10L))
   }
-
 }

@@ -34,7 +34,6 @@ import org.joda.time.{Duration, Instant}
 import scala.util.control.NonFatal
 
 object TrafficRoutes {
-
   case class StationSpeed(stationId: String, avgSpeed: Double, timestamp: Long)
   case class RouteInfo(route: String, avgSpeed: Double, slowdownEvent: Boolean)
 
@@ -120,5 +119,4 @@ object TrafficRoutes {
     exampleUtils.waitToFinish(result.pipelineResult)
   }
   // scalastyle:on method.length
-
 }

@@ -15,22 +15,12 @@
  * under the License.
  */
 
-package com.spotify.scio.examples.extra
+package com.spotify.scio.bigquery
 
-import com.spotify.scio.io._
-import com.spotify.scio.testing._
+import org.scalatest._
 
-class DoFnExampleTest extends PipelineSpec {
-  private val inData = Seq("a bbb", "cc")
-  private val outData = Seq(1, 3, 2).map(_.toString)
-
-  "DoFnExample" should "work" in {
-    JobTest[DoFnExample.type]
-      .args("--input=in.txt", "--output=out.txt")
-      .input(TextIO("in.txt"), inData)
-      .output(TextIO("out.txt")) { coll =>
-        coll should containInAnyOrder(outData)
-      }
-      .run()
+class BigQueryTypesTest extends FlatSpec with Matchers {
+  "Table.Spec" should "fail malformed spec" in {
+    an[IllegalArgumentException] shouldBe thrownBy { Table.Spec("bad spec") }
   }
 }

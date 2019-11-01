@@ -25,8 +25,7 @@ private[scio] object FeatureFlag {
   case object Disable extends FeatureFlag
 }
 
-private[scio] final object MacroSettings {
-
+private[scio] object MacroSettings {
   private def getFlag(settings: List[String])(name: String, default: FeatureFlag): FeatureFlag = {
     val ss: Map[String, String] =
       settings

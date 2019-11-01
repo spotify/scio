@@ -36,7 +36,6 @@ import org.joda.time.format.ISODateTimeFormat
 import org.joda.time.{Duration, Instant}
 
 object WindowedWordCount {
-
   private val WINDOW_SIZE = Duration.standardMinutes(10L)
   private val formatter = ISODateTimeFormat.hourMinute
 
@@ -104,5 +103,4 @@ object WindowedWordCount {
     sc.run()
     ()
   }
-
 }

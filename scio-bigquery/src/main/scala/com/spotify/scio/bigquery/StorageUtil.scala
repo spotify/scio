@@ -26,7 +26,6 @@ import scala.collection.JavaConverters._
 
 /** Utility for BigQuery Storage API. */
 object StorageUtil {
-
   def tableReadOptions(
     selectedFields: List[String] = Nil,
     rowRestriction: String = null
@@ -115,5 +114,4 @@ object StorageUtil {
     ()
   }
   // scalastyle:on cyclomatic.complexity
-
 }

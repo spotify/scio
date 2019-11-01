@@ -38,7 +38,6 @@ import org.joda.time.{DateTimeZone, Duration, Instant}
 import org.joda.time.format.DateTimeFormat
 
 object HourlyTeamScore {
-
   // The schema for the BigQuery table to write output to is defined as an annotated case class
   @BigQueryType.toTable
   case class TeamScoreSums(user: String, total_score: Int, window_start: String)
@@ -99,5 +98,4 @@ object HourlyTeamScore {
     sc.run()
     ()
   }
-
 }

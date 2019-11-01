@@ -30,7 +30,6 @@ import scala.reflect.ClassTag
 
 /** Trait for unit testing [[ScioIO]]. */
 trait ScioIOSpec extends PipelineSpec {
-
   def testTap[T: Coder](
     xs: Seq[T]
   )(writeFn: (SCollection[T], String) => ClosedTap[T])(suffix: String): Unit = {
@@ -181,5 +180,4 @@ trait ScioIOSpec extends PipelineSpec {
     ()
     // scalastyle:on no.whitespace.before.left.bracket
   }
-
 }

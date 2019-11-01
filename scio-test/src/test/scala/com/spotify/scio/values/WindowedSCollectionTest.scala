@@ -21,7 +21,6 @@ import com.spotify.scio.testing.PipelineSpec
 import org.joda.time.Instant
 
 class WindowedSCollectionTest extends PipelineSpec {
-
   "WindowedSCollection" should "support filter()" in {
     runWithContext { sc =>
       val p =
@@ -68,5 +67,4 @@ class WindowedSCollectionTest extends PipelineSpec {
       r should containInAnyOrder(Seq("a1", "b2"))
     }
   }
-
 }

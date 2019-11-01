@@ -23,7 +23,6 @@ import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.io.gcp.{datastore => beam}
 
 final case class DatastoreIO(projectId: String) extends ScioIO[Entity] {
-
   override type ReadP = DatastoreIO.ReadParam
   override type WriteP = Unit
 

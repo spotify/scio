@@ -26,7 +26,6 @@ import com.google.api.services.bigquery.model.TableSchema
 
 /** Utility for BigQuery data types. */
 object BigQueryUtil {
-
   private lazy val jsonObjectParser = new JsonObjectParser(new JacksonFactory)
 
   /** Parse a schema string. */
@@ -37,5 +36,4 @@ object BigQueryUtil {
   /* Generates job ID */
   def generateJobId(projectId: String): String =
     projectId + "-" + UUID.randomUUID().toString
-
 }

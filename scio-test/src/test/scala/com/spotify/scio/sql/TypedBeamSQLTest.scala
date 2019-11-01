@@ -143,7 +143,6 @@ class TypedBeamSQLTest extends PipelineSpec {
     val r: SCollection[Int] =
       tsql"SELECT $a.username FROM $a JOIN $b ON $a.username = $b.username".as[Int]
     """ shouldNot compile
-
   }
 
   it should "support inline scollection definition" in runWithContext { sc =>

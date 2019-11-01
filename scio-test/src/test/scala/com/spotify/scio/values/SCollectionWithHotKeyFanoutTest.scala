@@ -21,7 +21,6 @@ import com.spotify.scio.testing.PipelineSpec
 import com.twitter.algebird.Aggregator
 
 class SCollectionWithHotKeyFanoutTest extends PipelineSpec {
-
   "SCollectionWithHotKeyFanout" should "support aggregateByKey()" in {
     runWithContext { sc =>
       val p = sc.parallelize(1 to 100).map(("a", _)) ++ sc
@@ -94,5 +93,4 @@ class SCollectionWithHotKeyFanoutTest extends PipelineSpec {
       r2 should containInAnyOrder(Seq(("a", 1), ("b", 4), ("c", 5050)))
     }
   }
-
 }

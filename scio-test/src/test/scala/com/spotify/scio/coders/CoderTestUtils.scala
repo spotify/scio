@@ -23,7 +23,6 @@ import org.apache.avro.generic.GenericRecord
 import org.apache.beam.sdk.util.CoderUtils
 
 object CoderTestUtils {
-
   case class Pair(name: String, size: Int)
   case class CaseClassWithGenericRecord(name: String, size: Int, record: GenericRecord)
   case class CaseClassWithSpecificRecord(name: String, size: Int, record: TestRecord)
@@ -36,5 +35,4 @@ object CoderTestUtils {
     val result = CoderUtils.decodeFromByteArray(reader, bytes)
     result == value
   }
-
 }

@@ -41,7 +41,6 @@ case class RecordA(name: String, value: Int)
 case class RecordB(name: String, value: Int)
 
 class KryoAtomicCoderTest extends PipelineSpec {
-
   import com.spotify.scio.testing.TestingUtils._
 
   type CoderFactory = () => BCoder[Any]
@@ -170,7 +169,6 @@ class KryoAtomicCoderTest extends PipelineSpec {
     val msg = "Class is not registered: com.spotify.scio.coders.RecordB"
     e.getCause.getMessage should startWith(msg)
   }
-
 }
 
 @KryoRegistrar

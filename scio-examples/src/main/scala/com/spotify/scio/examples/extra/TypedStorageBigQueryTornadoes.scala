@@ -27,7 +27,6 @@ import com.spotify.scio.bigquery._
 import com.spotify.scio.ContextAndArgs
 
 object TypedStorageBigQueryTornadoes {
-
   // Annotate input class with schema inferred.
   // Class `Row` will be expanded into a case class with selected fields. A companion
   // object will also be generated to provide easy access to original table from annotation,
@@ -60,5 +59,4 @@ object TypedStorageBigQueryTornadoes {
     sc.run()
     ()
   }
-
 }

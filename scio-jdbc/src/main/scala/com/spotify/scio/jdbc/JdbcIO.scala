@@ -65,7 +65,6 @@ object JdbcIO {
 }
 
 final case class JdbcSelect[T: Coder](readOptions: JdbcReadOptions[T]) extends JdbcIO[T] {
-
   override type ReadP = Unit
   override type WriteP = Nothing
   override final val tapT = EmptyTapOf[T]
@@ -104,7 +103,6 @@ final case class JdbcSelect[T: Coder](readOptions: JdbcReadOptions[T]) extends J
 }
 
 final case class JdbcWrite[T](writeOptions: JdbcWriteOptions[T]) extends JdbcIO[T] {
-
   override type ReadP = Nothing
   override type WriteP = Unit
   override final val tapT = EmptyTapOf[T]

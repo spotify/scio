@@ -93,7 +93,6 @@ final class DynamicSpecificRecordSCollectionOps[T <: SpecificRecord](
 
     ClosedTap[Nothing](EmptyTap)
   }
-
 }
 
 /**
@@ -177,7 +176,6 @@ final class DynamicSCollectionOps[T](private val self: SCollection[T]) extends A
 
     ClosedTap[Nothing](EmptyTap)
   }
-
 }
 
 final class DynamicProtobufSCollectionOps[T <: Message](private val self: SCollection[T])

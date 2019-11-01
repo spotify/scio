@@ -37,7 +37,6 @@ import org.joda.time.{DateTimeConstants, Duration, Instant}
 import scala.util.Try
 
 object TriggerExample {
-
   @BigQueryType.toTable
   case class Record(
     trigger_type: String,
@@ -206,5 +205,4 @@ object TriggerExample {
       )
       wv.withValue(newValue)
     }.toSCollection
-
 }

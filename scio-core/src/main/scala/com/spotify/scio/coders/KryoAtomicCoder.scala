@@ -233,7 +233,6 @@ private[scio] final class KryoAtomicCoder[T](private val options: KryoOptions)
       output.flush()
       s.getCount + VarInt.getLength(s.getCount)
     }
-
 }
 
 /** Used for sharing Kryo instance and buffers. */

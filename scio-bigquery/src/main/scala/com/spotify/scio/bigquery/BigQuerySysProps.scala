@@ -21,7 +21,6 @@ import com.spotify.scio.{registerSysProps, SysProp}
 
 @registerSysProps
 object BigQuerySysProps {
-
   val Debug = SysProp("bigquery.types.debug", "debug")
 
   val DisableDump = SysProp("bigquery.plugin.disable.dump", "disable class dump")
@@ -53,5 +52,4 @@ object BigQuerySysProps {
     "Timeout in milliseconds to read data from an established connection. " +
       "Default is 20000 (20 seconds). 0 for an infinite timeout."
   )
-
 }

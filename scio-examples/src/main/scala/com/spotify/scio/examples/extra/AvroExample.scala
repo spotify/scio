@@ -155,5 +155,4 @@ object AvroExample {
     )
     s
   }
-
 }

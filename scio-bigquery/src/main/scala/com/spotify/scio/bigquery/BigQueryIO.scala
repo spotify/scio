@@ -97,10 +97,14 @@ private object Reads {
     selectedFields: List[String] = Nil,
     rowRestriction: String = null
   ): SCollection[T] = sc.wrap {
-    val read = typedRead
+    var read = typedRead
       .from(table.spec)
       .withMethod(Method.DIRECT_READ)
-      .withReadOptions(StorageUtil.tableReadOptions(selectedFields, rowRestriction))
+      .withSelectedFields(selectedFields.asJava)
+
+    if (rowRestriction != null) {
+      read = read.withRowRestriction(rowRestriction)
+    }
     sc.applyInternal(read)
   }
 }
@@ -263,7 +267,6 @@ object BigQueryTypedTable {
       })
     BigQueryTypedTable(reader, writer, table, tableRowFn)
   }
-
 }
 
 final case class BigQueryTypedTable[T: Coder](
@@ -311,7 +314,6 @@ final case class BigQueryTypedTable[T: Coder](
   }
 
   override def tap(read: ReadP): Tap[T] = BigQueryTypedTap(table, fn)
-
 }
 
 /**
@@ -349,7 +351,6 @@ final case class BigQueryTable(table: Table) extends BigQueryIO[TableRow] {
   }
 
   override def tap(read: ReadP): Tap[TableRow] = BigQueryTap(table.ref)
-
 }
 
 object BigQueryTable {

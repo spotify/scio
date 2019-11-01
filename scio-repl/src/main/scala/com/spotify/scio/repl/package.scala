@@ -21,9 +21,7 @@ import com.spotify.scio.values.SCollection
 import com.spotify.scio.coders.Coder
 
 package object repl {
-
   implicit class ReplSCollection[T](private val self: SCollection[T]) extends AnyVal {
-
     /** Convenience method to close the current [[ScioContext]] and collect elements. */
     def closeAndCollect()(implicit c: Coder[T]): Iterator[T] = {
       val closedTap = self.materialize
@@ -34,5 +32,4 @@ package object repl {
         .value
     }
   }
-
 }

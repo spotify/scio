@@ -23,7 +23,6 @@ import com.spotify.scio.io._
 import com.spotify.scio.testing._
 
 class JoinExamplesTest extends PipelineSpec {
-
   private def eventRow(
     countryCode: String,
     sqlDate: String,
@@ -99,5 +98,4 @@ class JoinExamplesTest extends PipelineSpec {
       }
       .run()
   }
-
 }

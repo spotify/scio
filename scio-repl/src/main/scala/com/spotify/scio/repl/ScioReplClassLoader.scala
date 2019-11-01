@@ -39,7 +39,6 @@ object ScioReplClassLoader {
  */
 class ScioReplClassLoader(urls: Array[URL], parent: ClassLoader)
     extends URLClassLoader(urls, parent) {
-
   import ScioReplClassLoader.Logger
 
   private val replJarName = "scio-repl-session.jar"

@@ -22,7 +22,6 @@ import org.scalacheck._
 import org.scalatest._
 
 class CollectionsSpec extends PropertySpec {
-
   val posInts = Gen.posNum[Int]
   val intLists = Arbitrary.arbitrary[List[Int]]
   val tupleLists = Arbitrary.arbitrary[List[(String, Int)]]
@@ -64,5 +63,4 @@ class CollectionsSpec extends PropertySpec {
       verify(xs.toVector.topByKey(num), maxExpected)
     }
   }
-
 }

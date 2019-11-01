@@ -31,7 +31,6 @@ import org.apache.beam.sdk.transforms.DoFn.{ProcessElement, StateId}
 import org.apache.beam.sdk.values.KV
 
 object StatefulExample {
-
   // States are persisted on a per-key-and-window basis
   type DoFnT = DoFn[KV[String, Int], KV[String, (Int, Int)]]
 
@@ -68,5 +67,4 @@ object StatefulExample {
     sc.run()
     ()
   }
-
 }

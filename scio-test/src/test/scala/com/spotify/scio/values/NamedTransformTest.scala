@@ -36,7 +36,6 @@ object SimpleJob {
 }
 
 class NamedTransformTest extends PipelineSpec {
-
   "ScioContext" should "support custom transform name" in {
     runWithContext { sc =>
       val p = sc.withName("ReadInput").parallelize(Seq("a", "b", "c"))
@@ -225,5 +224,4 @@ class NamedTransformTest extends PipelineSpec {
       }
     }
   }
-
 }

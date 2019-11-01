@@ -27,7 +27,6 @@ import scala.collection.JavaConverters._
 import scala.util.Try
 
 class JodaSerializerTest extends FlatSpec with Checkers {
-
   // TODO: remove this once https://github.com/scalatest/scalatest/issues/1090 is addressed
   override implicit val generatorDrivenConfig: PropertyCheckConfiguration =
     PropertyCheckConfiguration(minSuccessful = 100)
@@ -85,5 +84,4 @@ class JodaSerializerTest extends FlatSpec with Checkers {
   it should "roundtrip DateTime" in {
     check(roundTripProp[DateTime] _)
   }
-
 }

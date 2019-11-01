@@ -23,7 +23,6 @@ import org.apache.beam.sdk.transforms.DoFn.ProcessElement
 import org.apache.beam.sdk.transforms.windowing.BoundedWindow
 
 private[scio] object FunctionsWithWindowedValue {
-
   def filterFn[T, U](f: WindowedValue[T] => Boolean): DoFn[T, T] =
     new NamedDoFn[T, T] {
       val g = ClosureCleaner(f) // defeat closure
@@ -66,5 +65,4 @@ private[scio] object FunctionsWithWindowedValue {
         c.outputWithTimestamp(wv.value, wv.timestamp)
       }
     }
-
 }

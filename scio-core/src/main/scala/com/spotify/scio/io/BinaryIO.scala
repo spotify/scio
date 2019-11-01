@@ -61,7 +61,6 @@ final case class BinaryIO(path: String) extends ScioIO[Array[Byte]] {
 }
 
 object BinaryIO {
-
   object WriteParam {
     private[scio] val DefaultPrefix = "part"
     private[scio] val DefaultSuffix = ".bin"

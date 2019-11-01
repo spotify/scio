@@ -25,15 +25,12 @@ package com.spotify.scio.examples.cookbook
 
 import com.spotify.scio.bigquery._
 import com.spotify.scio.ContextAndArgs
-import com.google.api.services.bigquery.model.{TableFieldSchema, TableSchema}
-import com.spotify.scio._
-import com.spotify.scio.bigquery._
 import com.spotify.scio.examples.common.ExampleData
+import com.google.api.services.bigquery.model.{TableFieldSchema, TableSchema}
 
 import scala.collection.JavaConverters._
 
 object StorageBigQueryTornadoes {
-
   def main(cmdlineArgs: Array[String]): Unit = {
     // Create `ScioContext` and `Args`
     val (sc, args) = ContextAndArgs(cmdlineArgs)
@@ -65,5 +62,4 @@ object StorageBigQueryTornadoes {
     sc.run()
     ()
   }
-
 }

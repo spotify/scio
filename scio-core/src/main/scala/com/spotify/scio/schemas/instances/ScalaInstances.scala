@@ -25,7 +25,6 @@ import scala.collection.mutable
 import scala.collection.SortedSet
 
 trait ScalaInstances {
-
   implicit val stringSchema: Type[String] =
     Type[String](FieldType.STRING)
 
@@ -105,5 +104,4 @@ trait ScalaInstances {
     v: Schema[V]
   ): Schema[mutable.Map[K, V]] =
     MapType(k, v, _.asJava, _.asScala)
-
 }

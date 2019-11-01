@@ -26,13 +26,37 @@ import com.spotify.scio.values._
 import org.apache.avro.Schema
 import org.apache.avro.file.CodecFactory
 import org.apache.avro.specific.SpecificRecord
+import org.apache.avro.generic.GenericRecord
 
 import scala.language.implicitConversions
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
 
-final class GenericRecordSCollectionOps[T](private val self: SCollection[T]) extends AnyVal {
+final class UnsafeReflectiveRecordSCollectionOps[T: Coder](private val self: SCollection[T]) {
+  /**
+   * Save this SCollection of type
+   * [[org.apache.avro.specific.SpecificRecord SpecificRecord]] as an Avro file.
+   */
+  // scalastyle:off parameter.number
+  @deprecated(
+    "The use of reflective records is discouraged. Consider converting to GenericRecord explicitly",
+    "0.8.0"
+  )
+  def saveAsAvroFile(
+    path: String,
+    numShards: Int = AvroIO.WriteParam.DefaultNumShards,
+    schema: Schema,
+    suffix: String = AvroIO.WriteParam.DefaultSuffix,
+    codec: CodecFactory = AvroIO.WriteParam.DefaultCodec,
+    metadata: Map[String, AnyRef] = AvroIO.WriteParam.DefaultMetadata
+  ): ClosedTap[T] = {
+    val param = AvroIO.WriteParam(numShards, suffix, codec, metadata)
+    self.write(ReflectiveRecordIO(path, schema))(param)
+  }
+}
 
+final class GenericRecordSCollectionOps(private val self: SCollection[GenericRecord])
+    extends AnyVal {
   /**
    * Save this SCollection of type
    * [[org.apache.avro.specific.SpecificRecord SpecificRecord]] as an Avro file.
@@ -45,11 +69,14 @@ final class GenericRecordSCollectionOps[T](private val self: SCollection[T]) ext
     suffix: String = AvroIO.WriteParam.DefaultSuffix,
     codec: CodecFactory = AvroIO.WriteParam.DefaultCodec,
     metadata: Map[String, AnyRef] = AvroIO.WriteParam.DefaultMetadata
-  )(implicit coder: Coder[T]): ClosedTap[T] = {
+  ): ClosedTap[GenericRecord] = {
     val param = AvroIO.WriteParam(numShards, suffix, codec, metadata)
-    self.write(GenericRecordIO[T](path, schema))(param)
+    val coder = Coder.avroGenericRecordCoder(schema)
+    self.write(GenericRecordIO(path, schema))(param)(coder)
   }
+}
 
+final class ObjectFileSCollectionOps[T](private val self: SCollection[T]) extends AnyVal {
   /**
    * Save this SCollection as an object file using default serialization.
    *
@@ -64,13 +91,12 @@ final class GenericRecordSCollectionOps[T](private val self: SCollection[T]) ext
     metadata: Map[String, AnyRef] = AvroIO.WriteParam.DefaultMetadata
   )(implicit coder: Coder[T]): ClosedTap[T] = {
     val param = ObjectFileIO.WriteParam(numShards, suffix, codec, metadata)
-    self.write(ObjectFileIO[T](path))(param)
+    self.write(ObjectFileIO(path))(param)
   }
 }
 
 final class SpecificRecordSCollectionOps[T <: SpecificRecord](private val self: SCollection[T])
     extends AnyVal {
-
   /**
    * Save this SCollection of type
    * [[org.apache.avro.specific.SpecificRecord SpecificRecord]] as an Avro file.
@@ -90,7 +116,6 @@ final class SpecificRecordSCollectionOps[T <: SpecificRecord](private val self: 
 
 final class TypedAvroSCollectionOps[T <: HasAvroAnnotation](private val self: SCollection[T])
     extends AnyVal {
-
   /**
    * Save this SCollection as an Avro file. Note that element type `T` must be a case class
    * annotated with [[com.spotify.scio.avro.types.AvroType AvroType.toSchema]].
@@ -107,11 +132,9 @@ final class TypedAvroSCollectionOps[T <: HasAvroAnnotation](private val self: SC
     self.write(AvroTyped.AvroIO[T](path))(param)
   }
   // scalastyle:on parameter.number
-
 }
 
 final class ProtobufSCollectionOps[T <: Message](private val self: SCollection[T]) extends AnyVal {
-
   /**
    * Save this SCollection as a Protobuf file.
    *
@@ -128,14 +151,21 @@ final class ProtobufSCollectionOps[T <: Message](private val self: SCollection[T
     val param = ProtobufIO.WriteParam(numShards, suffix, codec, metadata)
     self.write(ProtobufIO[T](path))(param)
   }
-
 }
 
 /** Enhanced with Avro methods. */
 trait SCollectionSyntax {
-  implicit def avroGenericRecordSCollectionOps[T](
+  implicit def unsafeAvroReflectiveRecordSCollectionOps[T: Coder](
     c: SCollection[T]
-  ): GenericRecordSCollectionOps[T] = new GenericRecordSCollectionOps[T](c)
+  ): UnsafeReflectiveRecordSCollectionOps[T] = new UnsafeReflectiveRecordSCollectionOps[T](c)
+
+  implicit def avroGenericRecordSCollectionOps(
+    c: SCollection[GenericRecord]
+  ): GenericRecordSCollectionOps = new GenericRecordSCollectionOps(c)
+
+  implicit def avroObjectFileSCollectionOps[T](
+    c: SCollection[T]
+  ): ObjectFileSCollectionOps[T] = new ObjectFileSCollectionOps[T](c)
 
   implicit def avroSpecificRecordSCollectionOps[T <: SpecificRecord](
     c: SCollection[T]

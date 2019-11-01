@@ -25,7 +25,6 @@ import com.spotify.scio.proto.SimpleV2.SimplePB
 import com.spotify.scio.testing._
 
 class BackcompatibilityTest extends PipelineSpec {
-
   val input = Seq(
     SimplePB.newBuilder().setPlays(1).setTrackId("track1").build(),
     SimplePB.newBuilder().setPlays(2).setTrackId("track2").build()
@@ -58,5 +57,4 @@ class BackcompatibilityTest extends PipelineSpec {
     r should containInAnyOrder(input)
     sc.run()
   }
-
 }

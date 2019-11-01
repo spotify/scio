@@ -41,7 +41,6 @@ import org.joda.time.format.DateTimeFormat
 import org.joda.time.{DateTimeZone, Duration, Instant}
 
 object GameStats {
-
   // The schemas for the BigQuery tables to write output to are defined as annotated case classes
   @BigQueryType.toTable
   case class TeamScoreSums(
@@ -168,5 +167,4 @@ object GameStats {
       // Keys are the (user, sumScore) tuples
       .keys
   }
-
 }
