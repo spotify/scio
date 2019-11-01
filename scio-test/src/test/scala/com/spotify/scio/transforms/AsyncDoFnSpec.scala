@@ -102,7 +102,6 @@ class ScalaAsyncDoFnTester extends AsyncDoFnTester[Promise, Future] {
 }
 
 trait AsyncDoFnCommands extends Commands {
-
   case class AsyncDoFnState(total: Int, pending: Int)
 
   override type State = AsyncDoFnState
@@ -158,7 +157,6 @@ trait AsyncDoFnCommands extends Commands {
     override def run(sut: Sut): Result = sut.nextBundle()
     override def nextState(state: State): State = AsyncDoFnState(0, 0)
   }
-
 }
 
 trait BaseDoFnTester {
@@ -168,7 +166,6 @@ trait BaseDoFnTester {
 }
 
 abstract class AsyncDoFnTester[P[_], F[_]] extends BaseDoFnTester {
-
   private var nextElement = 0
   protected val pending: MBuffer[(Int, P[String])] = MBuffer.empty
   private val outputBuffer = MBuffer.empty[String]
@@ -247,5 +244,4 @@ abstract class AsyncDoFnTester[P[_], F[_]] extends BaseDoFnTester {
 
     result
   }
-
 }

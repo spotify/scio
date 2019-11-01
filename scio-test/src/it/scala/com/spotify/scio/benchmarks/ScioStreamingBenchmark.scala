@@ -198,7 +198,6 @@ abstract class StreamingBenchmark extends ScioJob {
 }
 
 object ScioStreamingBenchmarkMetrics {
-
   import DataflowProvider._
   import ScioBenchmarkSettings._
 

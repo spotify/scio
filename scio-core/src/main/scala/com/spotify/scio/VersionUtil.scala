@@ -31,7 +31,6 @@ import scala.collection.mutable
 import scala.util.Try
 
 private[scio] object VersionUtil {
-
   case class SemVer(major: Int, minor: Int, rev: Int, suffix: String) extends Ordered[SemVer] {
     def compare(that: SemVer): Int =
       Ordering[(Int, Int, Int, String)].compare(SemVer.unapply(this).get, SemVer.unapply(that).get)
@@ -127,5 +126,4 @@ private[scio] object VersionUtil {
       s"Mismatched version for $name, expected: ${BuildInfo.beamVersion}, actual: $version"
     )
   }
-
 }

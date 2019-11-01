@@ -23,7 +23,6 @@ import com.spotify.scio.io._
 import com.spotify.scio.testing._
 
 class ShapelessDatastoreExampleTest extends PipelineSpec {
-
   val textIn = Seq("a b c d e", "a b a b")
   val wordCount = Seq(("a", 3L), ("b", 3L), ("c", 1L), ("d", 1L), ("e", 1L))
   val entities = wordCount.map { kv =>
@@ -55,5 +54,4 @@ class ShapelessDatastoreExampleTest extends PipelineSpec {
       }
       .run()
   }
-
 }

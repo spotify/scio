@@ -24,7 +24,6 @@ import org.apache.avro.generic.GenericRecord
 import scala.reflect.macros._
 
 private[types] object ConverterProvider {
-
   def fromGenericRecordImpl[T: c.WeakTypeTag](c: blackbox.Context): c.Expr[(GenericRecord => T)] = {
     val tpe = implicitly[c.WeakTypeTag[T]].tpe
     val r = fromGenericRecordInternal(c)(tpe)

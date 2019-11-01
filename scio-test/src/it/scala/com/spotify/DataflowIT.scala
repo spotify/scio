@@ -44,7 +44,6 @@ object DataflowIT {
 }
 
 class DataflowIT extends FlatSpec with Matchers {
-
   private lazy val scioResult = DataflowIT.run()
   private lazy val dfResult = scioResult.as[DataflowResult]
 
@@ -73,5 +72,4 @@ class DataflowIT extends FlatSpec with Matchers {
     r.asScioResult.getMetrics shouldBe scioResult.getMetrics
     r.asScioResult.allCountersAtSteps shouldBe scioResult.allCountersAtSteps
   }
-
 }

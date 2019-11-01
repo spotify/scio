@@ -23,12 +23,10 @@ import com.spotify.scio.sql.{SCollectionRef, SqlInterpolator, SqlParam, Udf, Udf
 import scala.language.implicitConversions
 
 trait SqlInterpolatorSyntax {
-
   implicit def sqlToUdfRefOps(udf: Udf): SqlParam = new UdfRef(udf)
 
   implicit def sqlToSCollectionRefOps[A: Schema](coll: SCollection[A]): SqlParam =
     new SCollectionRef[A](coll)
 
   implicit def sqlInterpolatorOps(sc: StringContext): SqlInterpolator = new SqlInterpolator(sc)
-
 }

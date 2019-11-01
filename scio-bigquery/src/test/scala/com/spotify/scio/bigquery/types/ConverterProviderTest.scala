@@ -21,7 +21,6 @@ import com.spotify.scio.bigquery._
 import org.scalatest._
 
 class ConverterProviderTest extends FlatSpec with Matchers {
-
   import ConverterProviderTest._
 
   // scalastyle:off no.whitespace.before.left.bracket
@@ -41,7 +40,6 @@ class ConverterProviderTest extends FlatSpec with Matchers {
     } should have message """REPEATED field "a" is null"""
   }
   // scalastyle:on no.whitespace.before.left.bracket
-
 }
 
 object ConverterProviderTest {

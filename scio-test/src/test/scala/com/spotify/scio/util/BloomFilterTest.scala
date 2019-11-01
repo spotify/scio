@@ -44,13 +44,11 @@ import org.scalatest.{Matchers, WordSpec}
  * Check Properties is copied from Algebird Tests.
  */
 trait CheckProperties extends PropSpec with Checkers {
-
   def property(testName: String, testTags: org.scalatest.Tag*)(testFun: org.scalacheck.Prop): Unit =
     super.property(testName, testTags: _*) { check { testFun } }
 }
 
 class BloomFilterLaws extends CheckProperties {
-
   import com.twitter.algebird.BaseProperties._
 
   val NUM_HASHES = 6
@@ -193,11 +191,9 @@ class BloomFilterLaws extends CheckProperties {
       true
     }
   }
-
 }
 
 class BFHashIndices extends CheckProperties {
-
   val NUM_HASHES = 10
   val WIDTH = 4752800
 
@@ -216,12 +212,10 @@ class BFHashIndices extends CheckProperties {
       }
     }
   }
-
 }
 
 private[scio] final class BloomFilterFalsePositives[T: Gen: Hash128](falsePositiveRate: Double)
     extends ApproximateProperty {
-
   type Exact = Set[T]
   type Approx = MutableBF[T]
 
@@ -255,7 +249,6 @@ private[scio] final class BloomFilterFalsePositives[T: Gen: Hash128](falsePositi
 }
 
 private[scio] final class BloomFilterCardinality[T: Gen: Hash128] extends ApproximateProperty {
-
   type Exact = Set[T]
   type Approx = MutableBF[T]
 
@@ -301,11 +294,9 @@ class BloomFilterProperties extends ApproximateProperties("BloomFilter") {
 }
 
 class BloomFilterTest extends WordSpec with Matchers {
-
   val RAND = new scala.util.Random
 
   "MutableBloomFilter" should {
-
     "be possible to create from an iterator" in {
       val bfMonoid = new BloomFilterMonoid[String](RAND.nextInt(5) + 1, RAND.nextInt(64) + 32)
       val entries = (0 until 100).map(_ => RAND.nextInt.toString)
@@ -440,7 +431,6 @@ class BloomFilterTest extends WordSpec with Matchers {
   }
 
   "BloomFilter method `checkAndAdd`" should {
-
     "be identical to method `+=`" in {
       (0 to 100).foreach { _ =>
         val bfMonoid = new BloomFilterMonoid[String](RAND.nextInt(5) + 1, RAND.nextInt(64) + 32)
@@ -466,13 +456,11 @@ class BloomFilterTest extends WordSpec with Matchers {
   }
 
   "BloomFilters" should {
-
     /*
      * The distances are different from the immutable bloom filter implementation
      * as they use a different method to find the hashes.
      */
     "be able to compute Hamming distance to each other" in {
-
       def createBFWithItems(entries: Seq[String]): MutableBF[String] = {
         val numOfHashes = 3
         val width = 64
@@ -495,8 +483,6 @@ class BloomFilterTest extends WordSpec with Matchers {
       val emptyBloomFilter = createBFWithItems(List())
       val distanceToEmpty = thirdBloomFilter.hammingDistance(emptyBloomFilter)
       assert(distanceToEmpty === thirdBloomFilter.numBits)
-
     }
   }
-
 }

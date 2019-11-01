@@ -38,7 +38,6 @@ final case class SCollectionRef[A: Schema](coll: SCollection[A]) extends SqlPara
 final case class UdfRef(udf: Udf) extends SqlParam
 
 final class SqlInterpolator(private val sc: StringContext) extends AnyVal {
-
   private def paramToString(
     tags: Map[String, (SCollectionRef[_], TupleTag[_])]
   )(p: SqlParam): String =
@@ -114,7 +113,6 @@ private trait SqlInterpolatorMacroHelpers {
 }
 
 object SqlInterpolatorMacro {
-
   /**
    * This static annotation is used to pass (static) parameters to SqlInterpolatorMacro.expand
    */
@@ -258,5 +256,4 @@ object SqlInterpolatorMacro {
         )
     }
   }
-
 }

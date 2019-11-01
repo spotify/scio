@@ -24,7 +24,6 @@ import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Charsets
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.io.{Files => GFiles}
 
 class PipeDoFnTest extends PipelineSpec {
-
   private val input = Seq("a", "b", "c")
 
   "PipeDoFn" should "work" in {
@@ -156,5 +155,4 @@ class PipeDoFnTest extends PipelineSpec {
 
   private def errorMessages(t: Throwable): List[String] =
     if (t == null) Nil else t.getMessage :: errorMessages(t.getCause)
-
 }

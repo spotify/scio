@@ -221,7 +221,6 @@ final class SqlSCollection8[
   g: SCollection[G],
   h: SCollection[H]
 ) {
-
   def query(
     q: String,
     aTag: TupleTag[A],
@@ -261,7 +260,6 @@ final class SqlSCollection8[
           s"${collA.tfName} join ${collB.tfName} join ${collC.tfName} join ${collD.tfName} join ${collE.tfName} join ${collF.tfName} join ${collG.tfName} join ${collH.tfName}",
           sqlTransform
         )
-
     }
   }
 
@@ -287,7 +285,6 @@ final class SqlSCollection8[
       case e: ParseException =>
         Query8.typecheck(q).fold(err => throw new RuntimeException(err, e), _ => throw e)
     }
-
 }
 
 // scalastyle:on cyclomatic.complexity

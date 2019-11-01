@@ -78,7 +78,6 @@ private[this] abstract class PredictDoFn[T, V, M <: Model[_]](
 
   override def createResource(): ConcurrentMap[String, M] =
     new ConcurrentHashMap[String, M]()
-
 }
 
 private[tensorflow] class SavedBundlePredictDoFn[T, V](
@@ -110,5 +109,4 @@ private[tensorflow] class SavedBundlePredictDoFn[T, V](
     log.info(s"Tearing down predict DoFn $this")
     getResource.get(uri).close()
   }
-
 }

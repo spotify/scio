@@ -26,7 +26,6 @@ import org.apache.beam.sdk.io.gcp.bigquery.BigQueryHelpers
 import scala.util.Try
 
 private[bigquery] object BigQueryPartitionUtil {
-
   // Ported from com.google.cloud.dataflow.sdk.io.BigQueryHelpers
 
   private[this] val PROJECT_ID_REGEXP = "[a-z][-a-z0-9:.]{4,61}[a-z0-9]"
@@ -99,5 +98,4 @@ private[bigquery] object BigQueryPartitionUtil {
       tableSpec
     }
   }
-
 }

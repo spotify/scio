@@ -37,7 +37,6 @@ import org.apache.beam.sdk.{Pipeline, PipelineResult}
 import org.joda.time.Duration
 
 object BeamExample {
-
   // A Beam native source `PTransform` where the input type is `PBegin`
   def pubsubIn(topic: String): PTransform[PBegin, PCollection[Account]] =
     PubsubIO.readAvros(classOf[Account]).fromTopic(topic)
@@ -112,5 +111,4 @@ object BeamExample {
     // Underlying Beam pipeline result
     val pipelineResult: PipelineResult = closedContext.pipelineResult
   }
-
 }

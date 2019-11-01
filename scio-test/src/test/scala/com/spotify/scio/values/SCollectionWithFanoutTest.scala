@@ -23,7 +23,6 @@ import com.twitter.algebird.{Aggregator, Semigroup}
 import com.spotify.scio.coders.Coder
 
 class SCollectionWithFanoutTest extends PipelineSpec {
-
   "SCollectionWithFanout" should "support aggregate()" in {
     runWithContext { sc =>
       val p = sc.parallelize(1 to 100).withFanout(10)
@@ -74,5 +73,4 @@ class SCollectionWithFanoutTest extends PipelineSpec {
       sum(1 to 100: _*) should containSingleValue(5050)
     }
   }
-
 }

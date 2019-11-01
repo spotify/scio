@@ -28,7 +28,6 @@ import org.apache.beam.sdk.extensions.gcp.util.Transport
 import org.apache.beam.sdk.values.ValueInSingleWindow
 
 private[dynamic] object DynamicDestinationsUtil {
-
   def constant[T](
     dst: TableDestination,
     schema: TableSchema
@@ -57,5 +56,4 @@ private[dynamic] object DynamicDestinationsUtil {
         TableDestinationCoder.of
     }
   }
-
 }

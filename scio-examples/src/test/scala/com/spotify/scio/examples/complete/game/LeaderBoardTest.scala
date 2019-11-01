@@ -24,7 +24,6 @@ import org.apache.beam.sdk.values.TimestampedValue
 import org.joda.time.{Duration, Instant}
 
 class LeaderBoardTest extends PipelineSpec {
-
   private val allowedLateness = Duration.standardHours(1)
   private val teamWindowDuration = Duration.standardMinutes(20)
   private val baseTime = new Instant(0)
@@ -74,5 +73,4 @@ class LeaderBoardTest extends PipelineSpec {
       }
     }
   }
-
 }

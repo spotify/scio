@@ -72,7 +72,6 @@ object TypedBigQueryIT {
 }
 
 class TypedBigQueryIT extends PipelineSpec with BeforeAndAfterAll {
-
   import TypedBigQueryIT._
 
   override protected def beforeAll(): Unit = {
@@ -88,5 +87,4 @@ class TypedBigQueryIT extends PipelineSpec with BeforeAndAfterAll {
     sc.typedBigQuery[Record](table) should containInAnyOrder(records)
     sc.run()
   }
-
 }

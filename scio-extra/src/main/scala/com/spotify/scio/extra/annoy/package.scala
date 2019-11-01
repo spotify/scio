@@ -93,7 +93,6 @@ import scala.collection.JavaConverters._
  * }}}
  */
 package object annoy {
-
   sealed trait AnnoyMetric
   case object Angular extends AnnoyMetric
   case object Euclidean extends AnnoyMetric
@@ -109,7 +108,6 @@ package object annoy {
    * @param dim Number of dimensions in vectors
    */
   class AnnoyReader private[annoy] (path: String, metric: AnnoyMetric, dim: Int) {
-
     require(dim > 0, "Vector dimension should be > 0")
 
     import com.spotify.annoy._
@@ -137,12 +135,10 @@ package object annoy {
      */
     def getNearest(v: Array[Float], maxNumResults: Int): Seq[Int] =
       index.getNearest(v, maxNumResults).asScala.asInstanceOf[Seq[Int]]
-
   }
 
   /** Enhanced version of [[ScioContext]] with Annoy methods. */
   implicit class AnnoyScioContext(private val self: ScioContext) extends AnyVal {
-
     /**
      * Create a SideInput of [[AnnoyReader]] from an [[AnnoyUri]] base path, to be used with
      * [[com.spotify.scio.values.SCollection.withSideInputs SCollection.withSideInputs]]
@@ -159,7 +155,6 @@ package object annoy {
 
   implicit class AnnoyPairSCollection(@transient private val self: SCollection[(Int, Array[Float])])
       extends AnyVal {
-
     /**
      * Write the key-value pairs of this SCollection as an Annoy file to a specific location,
      * building the trees in the index according to the parameters provided.
@@ -241,7 +236,6 @@ package object annoy {
    */
   implicit class AnnoySCollection(@transient private val self: SCollection[AnnoyUri])
       extends AnyVal {
-
     /**
      * Load Annoy index stored at [[AnnoyUri]] in this
      * [[com.spotify.scio.values.SCollection SCollection]].

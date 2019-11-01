@@ -37,7 +37,6 @@ import scala.reflect.ClassTag
  * }}}
  */
 object Breeze {
-
   implicit def breezeSemigroup[M[_], T: ClassTag](
     implicit
     add: OpAdd.Impl2[M[T], M[T], M[T]],
@@ -60,5 +59,4 @@ object Breeze {
         Option(s)
       }
     }
-
 }

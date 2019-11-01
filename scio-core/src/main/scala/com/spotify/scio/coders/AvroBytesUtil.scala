@@ -27,7 +27,6 @@ import org.apache.beam.sdk.util.CoderUtils
 import scala.collection.JavaConverters._
 
 private[scio] object AvroBytesUtil {
-
   val schema: ASchema = {
     val s = ASchema.createRecord("AvroBytesRecord", null, null, false)
     s.setFields(
@@ -56,5 +55,4 @@ private[scio] object AvroBytesUtil {
       java.util.Arrays.copyOfRange(bb.array(), bb.position(), bb.limit())
     CoderUtils.decodeFromByteArray(coder, bytes)
   }
-
 }

@@ -111,7 +111,6 @@ final case class TFSequenceExampleIO(path: String) extends ScioIO[SequenceExampl
 }
 
 private object TFRecordMethods {
-
   def read(sc: ScioContext, path: String, params: TFRecordIO.ReadParam): SCollection[Array[Byte]] =
     sc.wrap(
       sc.applyInternal(
@@ -137,5 +136,4 @@ private object TFRecordMethods {
 
   def tap(read: TFRecordIO.ReadParam, path: String): Tap[Array[Byte]] =
     TFRecordFileTap(ScioUtil.addPartSuffix(path))
-
 }

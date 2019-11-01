@@ -76,7 +76,6 @@ object GenericAvroFileJob {
 }
 
 object GenericParseFnAvroFileJob {
-
   // A class with some fields from the Avro Record
   case class PartialFieldsAvro(intField: Int)
 
@@ -286,7 +285,6 @@ object MetricsJob {
 
 // scalastyle:off no.whitespace.before.left.bracket
 class JobTestTest extends PipelineSpec {
-
   def testObjectFileJob(xs: Int*): Unit = {
     JobTest[ObjectFileJob.type]
       .args("--input=in.avro", "--output=out.avro")
@@ -1146,7 +1144,6 @@ class JobTestTest extends PipelineSpec {
     }
     e.getMessage should endWith(" was not greater than or equal to 100")
   }
-
 }
 // scalastyle:on no.whitespace.before.left.bracket
 // scalastyle:on file.size.limit

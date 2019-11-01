@@ -50,13 +50,11 @@ import scala.util.Try
  * @groupname Ungrouped Other Members
  */
 object BigQueryType {
-
   /**
    * Trait for companion objects of case classes generated with table.
    * @group trait
    */
   trait HasTable {
-
     /** Table for case class schema. */
     def table: String
   }
@@ -74,7 +72,6 @@ object BigQueryType {
    * @group trait
    */
   trait HasSchema[T] {
-
     /** Case class schema. */
     def schema: TableSchema
 
@@ -96,7 +93,6 @@ object BigQueryType {
    * @group trait
    */
   trait HasStorageOptions {
-
     /** Table for case class schema. */
     def table: String
 
@@ -120,7 +116,6 @@ object BigQueryType {
    * @group trait
    */
   trait HasQuery {
-
     /** SELECT query for case class schema. */
     def query: String
   }
@@ -138,7 +133,6 @@ object BigQueryType {
    * @group trait
    */
   trait HasTableDescription {
-
     /** Case class table description. */
     def tableDescription: String
   }
@@ -342,7 +336,6 @@ object BigQueryType {
 
   /** Create a new BigQueryType instance. */
   @inline final def apply[T: TypeTag]: BigQueryType[T] = new BigQueryType[T]
-
 }
 
 /**
@@ -351,7 +344,6 @@ object BigQueryType {
  * This decouples generated fields and methods from macro expansion to keep core macro free.
  */
 class BigQueryType[T: TypeTag] {
-
   private[this] val bases = typeOf[T].companion.baseClasses
 
   private[this] val instance = runtimeMirror(getClass.getClassLoader)
@@ -410,5 +402,4 @@ class BigQueryType[T: TypeTag] {
     Try(getField("schema").asInstanceOf[TableSchema]).toOption.getOrElse {
       BigQueryType.schemaOf[T]
     }
-
 }

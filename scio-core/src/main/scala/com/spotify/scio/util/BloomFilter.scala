@@ -59,7 +59,6 @@ import scala.collection.mutable
  * and these functions are aliases for them.
  */
 private[scio] object BloomFilter {
-
   def apply[A](numEntries: Int, fpProb: Double)(implicit hash: Hash128[A]): BloomFilterMonoid[A] =
     optimalWidth(numEntries, fpProb) match {
       case None =>
@@ -101,7 +100,6 @@ private[scio] object BloomFilter {
     approximationWidth: Double = 0.05
   ): Approximate[Long] =
     AlgebirdImmutableBloomFilter.sizeEstimate(numBits, numHashes, width, approximationWidth)
-
 }
 
 /**
@@ -121,7 +119,6 @@ private[scio] object BloomFilter {
 private[scio] case class BloomFilterMonoid[A](numHashes: Int, width: Int)(implicit hash: Hash128[A])
     extends Monoid[MutableBF[A]]
     with BoundedSemilattice[MutableBF[A]] {
-
   val hashes: KirMit32Hash[A] = KirMit32Hash[A](numHashes, width)(hash)
 
   val zero: MutableBF[A] = MutableBFZero[A](hashes)
@@ -175,7 +172,6 @@ private[scio] case class BloomFilterMonoid[A](numHashes: Int, width: Int)(implic
     }
     outputInstance
   }
-
 }
 
 private[scio] object MutableBF {
@@ -274,14 +270,12 @@ private[scio] sealed abstract class MutableBF[A] extends Serializable {
         thisCopy.xor(that.toBitSet)
         thisCopy.cardinality()
     }
-
 }
 
 /**
  * Empty bloom filter.
  */
 private[scio] final case class MutableBFZero[A](hashes: KirMit32Hash[A]) extends MutableBF[A] {
-
   def toBitSet: util.BitSet = new util.BitSet()
 
   def numHashes: Int = hashes.numHashes
@@ -313,7 +307,6 @@ private[scio] final case class MutableBFZero[A](hashes: KirMit32Hash[A]) extends
  */
 private[scio] final case class MutableBFInstance[A](hashes: KirMit32Hash[A], bits: util.BitSet)
     extends MutableBF[A] {
-
   def numHashes: Int = hashes.numHashes
 
   /**
@@ -402,7 +395,6 @@ private[scio] final case class MutableSparseBFInstance[A](
   hashes: KirMit32Hash[A],
   allHashes: mutable.Buffer[Array[Int]]
 ) extends MutableBF[A] {
-
   def numHashes: Int = hashes.numHashes
 
   /**
@@ -611,7 +603,6 @@ private[scio] final case class BloomFilterAggregator[A](bfMonoid: BloomFilterMon
 }
 
 private[scio] object BloomFilterAggregator {
-
   @inline
   final def apply[A](numHashes: Int, width: Int)(
     implicit hash: Hash128[A]

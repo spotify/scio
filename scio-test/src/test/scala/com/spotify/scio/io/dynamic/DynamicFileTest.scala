@@ -34,7 +34,6 @@ import org.joda.time.{Duration, Instant}
 import scala.collection.JavaConverters._
 
 class DynamicFileTest extends PipelineSpec {
-
   private def verifyOutput(path: Path, expected: String*): Unit = {
     val actual = Files
       .list(path)
@@ -194,5 +193,4 @@ class DynamicFileTest extends PipelineSpec {
     sc2.run()
     FileUtils.deleteDirectory(tmpDir.toFile)
   }
-
 }

@@ -24,7 +24,6 @@ import org.tensorflow.example._
 import scala.collection.JavaConverters._
 
 object TFSequenceExampleIOTest {
-
   case class Record(i: Int, ss: Seq[String])
 
   def toSequenceExample(r: Record): SequenceExample = {
@@ -62,7 +61,6 @@ object TFSequenceExampleIOTest {
 }
 
 class TFSequenceExampleIOTest extends ScioIOSpec {
-
   import TFSequenceExampleIOTest._
 
   "TFSequenceExampleIO" should "work" in {
@@ -72,5 +70,4 @@ class TFSequenceExampleIOTest extends ScioIOSpec {
       _.saveAsTfRecordFile(_)
     )
   }
-
 }

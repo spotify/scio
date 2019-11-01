@@ -131,7 +131,6 @@ private[client] final class LoadOps(client: Client, jobService: JobOps) {
     ignoreUnknownValues: Option[Boolean] = None,
     encoding: Option[String] = None
   ): Try[TableReference] = Try {
-
     val tableRef = bq.BigQueryHelpers.parseTableSpec(destinationTable)
 
     val jobConfigLoad = new JobConfigurationLoad()
@@ -171,6 +170,5 @@ private[client] final class LoadOps(client: Client, jobService: JobOps) {
   }
 
   // scalastyle:on method.length
-
 }
 // scalastyle:on parameter.number

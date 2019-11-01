@@ -25,7 +25,6 @@ import scala.reflect.runtime.universe._
 
 // A sample implementation to override types under certain conditions
 final class SampleOverrideTypeProvider extends OverrideTypeProvider {
-
   private def getByTypeString(tfs: TableFieldSchema): Option[Class[_]] =
     Option(tfs.getDescription)
       .flatMap(overrideType => Index.getIndexClass.get(overrideType))
@@ -99,13 +98,11 @@ final class SampleOverrideTypeProvider extends OverrideTypeProvider {
     variableName: c.universe.TermName,
     tpe: c.universe.Tree
   ): Unit = ()
-
 }
 
 class Country(val data: String) extends AnyVal
 
 object Country {
-
   def apply(data: String): Country = {
     if (!isValid(data)) {
       throw new IllegalArgumentException("Not valid")
@@ -120,7 +117,6 @@ object Country {
   def stringType: String = "COUNTRY"
 
   def bigQueryType: String = "STRING"
-
 }
 
 // Internal index to keep track of class mappings this can be done in a number of ways
@@ -135,5 +131,4 @@ object Index {
 
   def getIndexRuntimeTypes: mutable.Map[Type, Class[_]] =
     mutable.Map[Type, Class[_]](typeOf[Country] -> classOf[Country])
-
 }

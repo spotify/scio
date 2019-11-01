@@ -38,7 +38,6 @@ import scala.collection.JavaConverters._
 import org.apache.commons.lang3.exception.ExceptionUtils
 
 object Sql extends SqlSCollections {
-
   private[sql] val BeamProviderName = "beam"
   private[sql] val SCollectionTypeName = "SCOLLECTION"
 
@@ -179,7 +178,6 @@ private object Queries {
           Left(message)
       }
   }
-
 }
 
 private object QueryMacros {
@@ -223,5 +221,4 @@ private object QueryMacros {
         c.abort(c.enclosingPosition, s"Expression ${e.tree}")
     }
   }
-
 }

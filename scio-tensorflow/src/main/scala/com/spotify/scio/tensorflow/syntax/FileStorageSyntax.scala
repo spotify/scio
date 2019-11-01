@@ -27,7 +27,6 @@ import scala.language.implicitConversions
 
 /** File storage functions for Tensorflow TFRecord files. */
 final class FileStorageOps(private val self: FileStorage) extends AnyVal {
-
   def tfRecordFile: Iterator[Array[Byte]] = {
     new Iterator[Array[Byte]] {
       private def wrapInputStream(in: InputStream) =
@@ -43,7 +42,6 @@ final class FileStorageOps(private val self: FileStorage) extends AnyVal {
       }
     }
   }
-
 }
 
 trait FileStorageSyntax {

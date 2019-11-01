@@ -39,7 +39,6 @@ class ScioILoop(
   reader: Option[BufferedReader],
   out: JPrintWriter
 ) extends ILoopCompat(reader, out) {
-
   private var scioIsInitialized = false
 
   welcome()
@@ -270,5 +269,4 @@ class ScioILoop(
     out.print(prompt)
     out.flush()
   }
-
 }

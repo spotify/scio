@@ -40,7 +40,6 @@ object WordCountFeatureSpec {
 }
 
 object TFExampleExample {
-
   def main(cmdlineArgs: Array[String]): Unit = {
     import WordCountFeatureSpec._
 

@@ -25,7 +25,6 @@ import com.spotify.scio.avro._
 import com.spotify.scio.testing.PipelineSpec
 
 class FileFormatTest extends PipelineSpec {
-
   // Legacy files generated with 0.3.0-beta1, the last release before the
   // BufferedPrefix{Input,Output}Stream change.
 
@@ -76,5 +75,4 @@ class FileFormatTest extends PipelineSpec {
     p should containInAnyOrder(protobufs)
     sc2.run()
   }
-
 }

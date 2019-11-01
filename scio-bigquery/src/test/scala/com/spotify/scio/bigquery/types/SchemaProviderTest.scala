@@ -22,7 +22,6 @@ import org.apache.beam.sdk.util.SerializableUtils
 import org.scalatest.{FlatSpec, Matchers}
 
 class SchemaProviderTest extends FlatSpec with Matchers {
-
   import Schemas._
 
   private def basicFields(mode: String) =
@@ -107,5 +106,4 @@ class SchemaProviderTest extends FlatSpec with Matchers {
     // The description annotation should be serializable.
     SerializableUtils.ensureSerializable(new description(value = "this a field description"))
   }
-
 }

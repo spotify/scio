@@ -35,12 +35,10 @@ import org.joda.time.Duration
  * }}}
  */
 package object elasticsearch {
-
   final case class ElasticsearchOptions(clusterName: String, servers: Seq[InetSocketAddress])
 
   implicit class ElasticsearchSCollection[T](@transient private val self: SCollection[T])
       extends AnyVal {
-
     /**
      * Save this SCollection into Elasticsearch.
      *
@@ -63,5 +61,4 @@ package object elasticsearch {
       self.write(ElasticsearchIO[T](esOptions))(param)
     }
   }
-
 }

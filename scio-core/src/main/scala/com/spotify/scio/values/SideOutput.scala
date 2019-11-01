@@ -31,7 +31,6 @@ sealed trait SideOutput[T] extends Serializable {
 
 /** Companion object for [[SideOutput]]. */
 object SideOutput {
-
   /** Create a new [[SideOutput]] instance. */
   def apply[T: Coder](): SideOutput[T] = new SideOutput[T] {
     override private[scio] val tupleTag: TupleTag[T] = new TupleTag[T]()
@@ -41,7 +40,6 @@ object SideOutput {
 
 /** Encapsulate context of one or more [[SideOutput]]s in an [[SCollectionWithSideOutput]]. */
 class SideOutputContext[T] private[scio] (val context: DoFn[T, AnyRef]#ProcessContext) {
-
   /** Write a value to a given [[SideOutput]]. */
   def output[S](
     sideOutput: SideOutput[S],
@@ -62,7 +60,6 @@ class SideOutputCollections private[values] (
   private val tuple: PCollectionTuple,
   private val context: ScioContext
 ) {
-
   /** Extract the [[SCollection]] of a given [[SideOutput]]. */
   def apply[T](sideOutput: SideOutput[T]): SCollection[T] = context.wrap {
     tuple.get(sideOutput.tupleTag)

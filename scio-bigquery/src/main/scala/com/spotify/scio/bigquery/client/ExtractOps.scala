@@ -106,7 +106,6 @@ private[client] final class ExtractOps(client: Client, jobService: JobOps) {
     fieldDelimiter: Option[String] = None,
     printHeader: Option[Boolean] = None
   ): Unit = {
-
     val tableRef = bq.BigQueryHelpers.parseTableSpec(sourceTable)
 
     val jobConfigExtract = new JobConfigurationExtract()

@@ -71,7 +71,6 @@ final case class GenericRecordTap(
  */
 final case class SpecificRecordTap[T <: SpecificRecord: ClassTag: Coder](path: String)
     extends Tap[T] {
-
   override def value: Iterator[T] = FileStorage(path).avroFile[T]()
 
   override def open(sc: ScioContext): SCollection[T] = sc.avroFile[T](path)
@@ -85,7 +84,6 @@ final case class GenericRecordParseTap[T: Coder](
   path: String,
   parseFn: GenericRecord => T
 ) extends Tap[T] {
-
   override def value: Iterator[T] =
     FileStorage(path)
     // Read Avro GenericRecords, with the writer specified schema
@@ -110,7 +108,6 @@ case class ObjectFileTap[T: Coder](path: String) extends Tap[T] {
 }
 
 final case class AvroTaps(self: Taps) {
-
   /** Get a `Future[Tap[T]]` of a Protobuf file. */
   def protobufFile[T: ClassTag: Coder](path: String)(implicit ev: T <:< Message): Future[Tap[T]] =
     self.mkTap(s"Protobuf: $path", () => self.isPathDone(path), () => ObjectFileTap[T](path))

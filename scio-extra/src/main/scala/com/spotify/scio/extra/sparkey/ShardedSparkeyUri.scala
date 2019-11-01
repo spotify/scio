@@ -80,7 +80,6 @@ trait ShardedSparkeyUri extends SparkeyUri {
   }
 
   case class InvalidShards(str: String) extends RuntimeException(str)
-
 }
 
 private[sparkey] object ShardedSparkeyUri {
@@ -108,7 +107,6 @@ private[sparkey] object ShardedSparkeyUri {
 }
 
 private case class LocalShardedSparkeyUri(basePath: String) extends ShardedSparkeyUri {
-
   override def getReader: ShardedSparkeyReader = {
     val (basePaths, numShards) = basePathsAndCount()
     new ShardedSparkeyReader(ShardedSparkeyUri.localReadersByShard(basePaths), numShards)

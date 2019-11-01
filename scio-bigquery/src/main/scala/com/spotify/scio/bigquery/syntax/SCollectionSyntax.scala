@@ -42,7 +42,6 @@ import com.spotify.scio.schemas.Schema
 
 /** Enhanced version of [[SCollection]] with BigQuery methods. */
 final class SCollectionTableRowOps[T <: TableRow](private val self: SCollection[T]) extends AnyVal {
-
   /**
    * Save this SCollection as a BigQuery table. Note that elements must be of type
    * [[com.google.api.services.bigquery.model.TableRow TableRow]].
@@ -106,7 +105,6 @@ final class SCollectionTableRowOps[T <: TableRow](private val self: SCollection[
 }
 
 final class SCollectionBeamSchemaOps[T](private val self: SCollection[T]) extends AnyVal {
-
   def saveAsBigQuery(
     table: Table,
     writeDisposition: WriteDisposition = TypedWriteParam.DefaultWriteDisposition,
@@ -125,13 +123,11 @@ final class SCollectionBeamSchemaOps[T](private val self: SCollection[T]) extend
       .write(BigQueryTyped.BeamSchema(table))(param)
       .asInstanceOf[ClosedTap[T]]
   }
-
 }
 
 /** Enhanced version of [[SCollection]] with BigQuery methods. */
 final class SCollectionTypedOps[T <: HasAnnotation](private val self: SCollection[T])
     extends AnyVal {
-
   /**
    * Save this SCollection as a BigQuery table. Note that element type `T` must be a case class
    * annotated with [[com.spotify.scio.bigquery.types.BigQueryType.toTable BigQueryType.toTable]].
@@ -194,7 +190,6 @@ final class SCollectionTypedOps[T <: HasAnnotation](private val self: SCollectio
 }
 
 trait SCollectionSyntax {
-
   implicit def bigQuerySCollectionTableRowOps[T <: TableRow](
     sc: SCollection[T]
   ): SCollectionTableRowOps[T] =
@@ -209,5 +204,4 @@ trait SCollectionSyntax {
     sc: SCollection[T]
   ): SCollectionTypedOps[T] =
     new SCollectionTypedOps[T](sc)
-
 }

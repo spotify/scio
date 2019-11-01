@@ -22,7 +22,6 @@ import com.spotify.scio.ScioContext
 import com.spotify.scio.io.{EmptyTap, EmptyTapOf, ScioIO, Tap}
 
 final case class CassandraIO[T](opts: CassandraOptions) extends ScioIO[T] {
-
   override type ReadP = Nothing
   override type WriteP = CassandraIO.WriteParam[T]
   override val tapT = EmptyTapOf[T]

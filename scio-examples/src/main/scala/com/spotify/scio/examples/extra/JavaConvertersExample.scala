@@ -51,5 +51,4 @@ object JavaConvertersExample {
     sc.run()
     ()
   }
-
 }

@@ -92,7 +92,6 @@ object Query1 {
 }
 
 final class SqlSCollection1[A: Schema](sc: SCollection[A]) {
-
   def query(q: String, udfs: Udf*): SCollection[Row] =
     query(Query1[A, Row](q, Sql.defaultTag, udfs = udfs.toList))
 
@@ -118,5 +117,4 @@ final class SqlSCollection1[A: Schema](sc: SCollection[A]) {
       case e: ParseException =>
         Query1.typecheck(q).fold(err => throw new RuntimeException(err, e), _ => throw e)
     }
-
 }

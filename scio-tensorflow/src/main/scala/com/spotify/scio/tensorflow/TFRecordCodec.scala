@@ -29,7 +29,6 @@ import org.apache.commons.compress.compressors.deflate._
 import org.apache.commons.compress.compressors.gzip._
 
 private object TFRecordCodec {
-
   private val headerLength: Int =
     (java.lang.Long.SIZE + java.lang.Integer.SIZE) / java.lang.Byte.SIZE
   private val footerLength: Int = java.lang.Integer.SIZE / java.lang.Byte.SIZE
@@ -113,5 +112,4 @@ private object TFRecordCodec {
     if (b1 != -1) pushback.unread(b1)
     (b1 != -1 && b2 != -1) && (b1 == 0x78 && (b1 * 256 + b2) % 31 == 0)
   }
-
 }

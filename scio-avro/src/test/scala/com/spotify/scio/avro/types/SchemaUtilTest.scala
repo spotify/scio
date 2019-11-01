@@ -26,7 +26,6 @@ import org.scalatest.{FlatSpec, Matchers}
 import scala.collection.JavaConverters._
 
 class SchemaUtilTest extends FlatSpec with Matchers {
-
   "toPrettyString()" should "support primitive types" in {
     SchemaUtil.toPrettyString1(parseSchema(s"${basicFields()}")) shouldBe
       "case class BasicFields(boolF: Boolean, intF: Int, longF: Long, floatF: Float, doubleF: Double, stringF: String, byteStringF: ByteString)"
@@ -162,6 +161,5 @@ class SchemaUtilTest extends FlatSpec with Matchers {
       )
     SchemaUtil.toPrettyString1(schema) shouldBe s"case class Row($expectedFields)"
   }
-
 }
 // scalastyle:on line.size.limit

@@ -28,7 +28,6 @@ import scala.collection.JavaConverters._
 import scala.util.Random
 
 class AnnoyIT extends PipelineSpec {
-
   val dim = 40
   val seed = 42
   val r = new Random(seed)

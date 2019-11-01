@@ -22,7 +22,6 @@ import com.google.protobuf.ByteString
 
 /** Helper methods for `Row`. */
 object Rows {
-
   private def newCell(value: ByteString): Cell =
     Cell.newBuilder().setValue(value).build()
 
@@ -73,5 +72,4 @@ object Rows {
     timestampMicros: Long
   ): Row =
     newRow(key, familyName, columnQualifier, newCell(value, timestampMicros))
-
 }

@@ -45,7 +45,6 @@ object BigtableIO {
 
 final case class BigtableRead(bigtableOptions: BigtableOptions, tableId: String)
     extends BigtableIO[Row] {
-
   override type ReadP = BigtableRead.ReadParam
   override type WriteP = Nothing
 
@@ -84,7 +83,6 @@ final case class BigtableRead(bigtableOptions: BigtableOptions, tableId: String)
 }
 
 object BigtableRead {
-
   object ReadParam {
     private[bigtable] val DefaultKeyRange: ByteKeyRange = null
     private[bigtable] val DefaultRowFilter: RowFilter = null
@@ -108,7 +106,6 @@ object BigtableRead {
 final case class BigtableWrite[T](bigtableOptions: BigtableOptions, tableId: String)(
   implicit ev: T <:< Mutation
 ) extends BigtableIO[(ByteString, Iterable[T])] {
-
   override type ReadP = Nothing
   override type WriteP = BigtableWrite.WriteParam
 

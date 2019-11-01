@@ -23,7 +23,6 @@ import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
 
 trait ScalaInstances {
-
   implicit val stringSchema: Type[String] =
     Type[String](FieldType.STRING)
 
@@ -65,5 +64,4 @@ trait ScalaInstances {
 
   implicit def mapSchema[K, V](implicit k: Schema[K], v: Schema[V]): Schema[Map[K, V]] =
     MapType(k, v, _.asJava, _.asScala.toMap)
-
 }

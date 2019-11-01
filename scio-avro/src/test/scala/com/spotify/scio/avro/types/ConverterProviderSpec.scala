@@ -132,5 +132,4 @@ class ConverterProviderSpec extends PropSpec with ScalaCheckDrivenPropertyChecks
       EqDerivation[ByteArrayFields].eqv(r1, r2) shouldBe true
     }
   }
-
 }

@@ -27,7 +27,6 @@ import scala.collection.JavaConverters._
 import scala.reflect.{classTag, ClassTag}
 
 trait AvroInstances {
-
   implicit def avroSchema[T <: SpecificRecord: ClassTag]: Schema[T] = {
     // TODO: broken because of a bug upstream https://issues.apache.org/jira/browse/BEAM-6742
     // RawRecord[T](new AvroRecordSchema())
@@ -48,7 +47,6 @@ trait AvroInstances {
       }
     RawRecord[T](schema, fromRow, toRow)
   }
-
 }
 
 object AvroInstances {

@@ -134,5 +134,4 @@ final class ConverterProviderSpec
       EqDerivation[RepeatedNested].eqv(r1, r2) shouldBe true
     }
   }
-
 }

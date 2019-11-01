@@ -178,7 +178,6 @@ object BenchmarkResult {
     extraArgs: Array[String],
     scioResult: ScioResult
   ): BenchmarkResult[Batch] = {
-
     val job: Job = scioResult.as[DataflowResult].getJob
     val startTime: LocalDateTime = DateTimeParser.parseLocalDateTime(job.getCreateTime)
     val finishTime: LocalDateTime = DateTimeParser.parseLocalDateTime(job.getCurrentStateTime)
@@ -271,7 +270,6 @@ case class BenchmarkResult[A <: BenchmarkType](
   scioVersion: String,
   beamVersion: String
 ) {
-
   def compareMetrics(other: BenchmarkResult[A]): List[(Option[Metric], Option[Metric], Double)] = {
     val otherMetrics = other.metrics.map(m => (m.name, m)).toMap
     val thisMetrics = metrics.map(m => (m.name, m)).toMap
@@ -306,7 +304,6 @@ object DatastoreLogger {
 }
 
 class DatastoreLogger[A <: BenchmarkType] extends BenchmarkLogger[Try, A] {
-
   import DatastoreLogger._
 
   def dsKeyId(benchmark: BenchmarkResult[A]): String = benchmark.buildNum.toString
@@ -471,7 +468,6 @@ private[this] object PrettyPrint {
 // sbt scio-test/it:runMain com.spotify.ScioBatchBenchmarkResult $buildNum1 $buildNum2...
 // where $buildNum1 and $buildNum2 are build number of "bench" jobs in CircleCI
 object ScioBatchBenchmarkResult {
-
   def main(args: Array[String]): Unit =
     new DatastoreLogger()
       .printMetricsComparison(ScioBatchBenchmark.BenchmarkNames, args.map(_.toLong).toList)
@@ -577,7 +573,6 @@ object Benchmark {
 }
 
 object BenchmarkRunner {
-
   def runParallel(
     args: Array[String],
     benchmarkPrefix: String,

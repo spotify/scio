@@ -22,7 +22,6 @@ import java.nio.file.Files
 import org.scalatest.{FlatSpec, Matchers}
 
 class FileStorageTest extends FlatSpec with Matchers {
-
   "FileStorage.isDone" should "return true on an empty directory" in {
     val dir = Files.createTempDirectory("file-storage-")
     dir.toFile.deleteOnExit()
@@ -44,5 +43,4 @@ class FileStorageTest extends FlatSpec with Matchers {
     f2.toFile.deleteOnExit()
     FileStorage(dir.toFile.getAbsolutePath + "/*.avro").isDone shouldBe true
   }
-
 }

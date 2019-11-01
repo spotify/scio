@@ -27,7 +27,6 @@ import org.apache.commons.io.FileUtils
 import org.scalatest._
 
 class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
-
   private val dir = tmpDir
   private val specificRecords = (1 to 10).map(AvroUtils.newSpecificRecord)
 

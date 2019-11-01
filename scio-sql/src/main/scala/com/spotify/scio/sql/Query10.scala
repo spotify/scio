@@ -265,7 +265,6 @@ final class SqlSCollection10[
   i: SCollection[I],
   j: SCollection[J]
 ) {
-
   def query(
     q: String,
     aTag: TupleTag[A],
@@ -311,7 +310,6 @@ final class SqlSCollection10[
           s"${collA.tfName} join ${collB.tfName} join ${collC.tfName} join ${collD.tfName} join ${collE.tfName} join ${collF.tfName} join ${collG.tfName} join ${collH.tfName} join ${collI.tfName} join ${collJ.tfName}",
           sqlTransform
         )
-
     }
   }
 
@@ -351,7 +349,6 @@ final class SqlSCollection10[
       case e: ParseException =>
         Query10.typecheck(q).fold(err => throw new RuntimeException(err, e), _ => throw e)
     }
-
 }
 
 // scalastyle:on cyclomatic.complexity

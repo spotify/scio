@@ -30,7 +30,6 @@ import org.scalatest._
 import scala.collection.JavaConverters._
 
 class CassandraIT extends FlatSpec with Matchers with BeforeAndAfterAll {
-
   import CassandraIT._
 
   private val n = 1000
@@ -148,11 +147,9 @@ class CassandraIT extends FlatSpec with Matchers with BeforeAndAfterAll {
       CassandraUtil.cleanup()
     }
   }
-
 }
 
 object CassandraIT {
-
   private val u1: UUID = UUID.randomUUID()
   private val u2: UUID = UUIDs.timeBased()
   private val date = LocalDate.fromMillisSinceEpoch(System.currentTimeMillis())
@@ -218,5 +215,4 @@ object CassandraIT {
       r.getInt("v2"),
       r.getFloat("v3")
     )
-
 }

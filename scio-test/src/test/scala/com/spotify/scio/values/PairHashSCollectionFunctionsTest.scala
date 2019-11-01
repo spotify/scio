@@ -21,7 +21,6 @@ import com.spotify.scio.options.ScioOptions
 import com.spotify.scio.testing.PipelineSpec
 
 class PairHashSCollectionFunctionsTest extends PipelineSpec {
-
   "PairSCollection" should "support hashJoin()" in {
     runWithContext { sc =>
       val p1 = sc.parallelize(Seq(("a", 1), ("b", 2), ("c", 3)))

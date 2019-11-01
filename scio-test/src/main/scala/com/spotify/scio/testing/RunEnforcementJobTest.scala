@@ -71,5 +71,4 @@ trait RunEnforcementJobTest extends FlatSpec { this: PipelineSpec =>
       outcome
     }
   }
-
 }

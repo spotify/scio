@@ -43,7 +43,6 @@ import scala.reflect.macros._
 
 // scalastyle:off line.size.limit
 private[types] object TypeProvider {
-
   private[this] val logger = LoggerFactory.getLogger(this.getClass)
   private lazy val bigquery: BigQuery = BigQuery.defaultInstance()
 
@@ -555,12 +554,10 @@ private[types] object TypeProvider {
     Files.createParentDirs(genSrcFile)
     Files.asCharSink(genSrcFile, Charsets.UTF_8).write(prettyCode)
   }
-
 }
 // scalastyle:on line.size.limit
 
 private[types] object NameProvider {
-
   private val m = MMap.empty[String, Int].withDefaultValue(0)
 
   /**
@@ -579,5 +576,4 @@ private[types] object NameProvider {
       .filter(_.nonEmpty)
       .map(t => t(0).toUpper + t.drop(1).toLowerCase)
       .mkString("")
-
 }

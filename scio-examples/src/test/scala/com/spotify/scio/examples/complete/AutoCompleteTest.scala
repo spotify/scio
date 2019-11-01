@@ -21,7 +21,6 @@ import com.spotify.scio.testing._
 import org.joda.time.{Duration, Instant}
 
 class AutoCompleteTest extends PipelineSpec {
-
   "AutoComplete" should "work" in {
     val data = Seq(
       "apple",
@@ -106,5 +105,4 @@ class AutoCompleteTest extends PipelineSpec {
       }
     }
   }
-
 }

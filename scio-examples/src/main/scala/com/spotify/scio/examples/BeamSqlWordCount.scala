@@ -29,7 +29,6 @@ import com.spotify.scio.sql._
 import com.spotify.scio.examples.common.ExampleData
 
 object BeamSqlWordCount {
-
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
     sc.textFile(args.getOrElse("input", ExampleData.KING_LEAR))
@@ -48,5 +47,4 @@ object BeamSqlWordCount {
     sc.run()
     ()
   }
-
 }

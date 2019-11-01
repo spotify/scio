@@ -21,7 +21,6 @@ import org.joda.time.Instant
 
 /** This package contains the schema types for metrics collected during a pipeline run. */
 package object metrics {
-
   /**
    * Contains the aggregated value of a metric. See [[ScioResult.allCounters]],
    * [[ScioResult.allDistributions]] and [[ScioResult.allGauges]].
@@ -50,5 +49,4 @@ package object metrics {
   final case class BeamMetric[T](namespace: String, name: String, value: MetricValue[T])
   final case class BeamDistribution(sum: Long, count: Long, min: Long, max: Long, mean: Double)
   final case class BeamGauge(value: Long, timestamp: Instant)
-
 }

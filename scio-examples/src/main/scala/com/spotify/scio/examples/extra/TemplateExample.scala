@@ -49,7 +49,6 @@ import org.apache.beam.sdk.options.{
 import org.apache.beam.sdk.options.Validation.Required
 
 object TemplateExample {
-
   trait Options extends PipelineOptions with StreamingOptions {
     @Description("The Cloud Pub/Sub subscription to read from")
     @Required

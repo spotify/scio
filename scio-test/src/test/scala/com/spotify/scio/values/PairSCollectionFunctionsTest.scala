@@ -23,7 +23,6 @@ import com.twitter.algebird.Aggregator
 
 // scalastyle:off file.size.limit
 class PairSCollectionFunctionsTest extends PipelineSpec {
-
   import com.spotify.scio.testing.TestingUtils._
 
   "PairSCollection" should "support cogroup()" in {
@@ -831,6 +830,5 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
       p should containInAnyOrder(expected)
     }
   }
-
 }
 // scalastyle:on file.size.limit

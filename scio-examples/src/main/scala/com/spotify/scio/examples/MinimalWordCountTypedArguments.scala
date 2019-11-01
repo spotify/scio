@@ -29,7 +29,6 @@ import com.spotify.scio.examples.common.ExampleData
 import caseapp._
 
 object MinimalWordCountTypedArguments {
-
   @AppName("Scio Examples")
   @AppVersion(BuildInfo.version)
   @ProgName("com.spotify.scio.examples.MinimalWordCount")

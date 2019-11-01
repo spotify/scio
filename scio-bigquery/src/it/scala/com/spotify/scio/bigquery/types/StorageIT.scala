@@ -321,5 +321,4 @@ object StorageIT {
 
   @BigQueryType.fromQuery("SELECT * FROM `data-integration-test.storage.required`")
   class FromQuery
-
 }

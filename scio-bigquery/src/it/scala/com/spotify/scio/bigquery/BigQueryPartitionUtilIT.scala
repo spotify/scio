@@ -21,7 +21,6 @@ import com.spotify.scio.bigquery.client.BigQuery
 import org.scalatest._
 
 class BigQueryPartitionUtilIT extends FlatSpec with Matchers {
-
   val bq = BigQuery.defaultInstance()
 
   "latestQuery" should "work with legacy syntax" in {
@@ -122,5 +121,4 @@ class BigQueryPartitionUtilIT extends FlatSpec with Matchers {
     } should have message msg
     // scalastyle:on no.whitespace.before.left.bracket
   }
-
 }

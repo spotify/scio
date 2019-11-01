@@ -25,7 +25,6 @@ import scala.language.implicitConversions
  * Enhanced version of [[com.google.api.services.bigquery.model.TableReference TableReference]].
  */
 final class TableReferenceOps(private val r: TableReference) extends AnyVal {
-
   /**
    * Return table specification in the form of "[project_id]:[dataset_id].[table_id]" or
    * "[dataset_id].[table_id]".

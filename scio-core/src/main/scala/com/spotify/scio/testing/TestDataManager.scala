@@ -116,7 +116,6 @@ private[scio] class TestDistCache(val m: Map[DistCacheIO[_], _]) {
 }
 
 private[scio] object TestDataManager {
-
   private val inputs = TrieMap.empty[String, TestInput]
   private val outputs = TrieMap.empty[String, TestOutput]
   private val distCaches = TrieMap.empty[String, TestDistCache]
@@ -168,7 +167,6 @@ private[scio] object TestDataManager {
     require(closed(testId), "ScioContext was not closed. Did you forget close()?")
     closed -= testId
   }
-
 }
 
 case class DistCacheIO[T](uri: String)

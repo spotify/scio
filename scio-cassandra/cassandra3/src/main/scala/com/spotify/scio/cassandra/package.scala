@@ -29,7 +29,6 @@ import com.spotify.scio.coders.Coder
  * }}}
  */
 package object cassandra {
-
   case class CassandraOptions(
     keyspace: String,
     table: String,
@@ -46,7 +45,6 @@ package object cassandra {
    */
   implicit class CassandraSCollection[T](@transient private val self: SCollection[T])
       extends AnyVal {
-
     /**
      * Save this SCollection as a Cassandra table.
      *

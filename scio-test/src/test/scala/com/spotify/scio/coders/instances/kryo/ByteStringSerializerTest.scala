@@ -22,7 +22,6 @@ import com.twitter.chill.{Kryo, KryoSerializer}
 import org.scalatest.{FlatSpec, Matchers}
 
 class ByteStringSerializerTest extends FlatSpec with Matchers {
-
   private def testRoundTrip(ser: ByteStringSerializer, bs: ByteString): Unit = {
     val k: Kryo = KryoSerializer.registered.newKryo()
     val o = new Array[Byte](bs.size() * 2)

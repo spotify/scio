@@ -30,7 +30,6 @@ import scala.collection.JavaConverters._
 
 private[cassandra] class BulkOperations(val opts: CassandraOptions, val parallelism: Int)
     extends Serializable {
-
   case class BulkConfig(
     protocol: ProtocolVersion,
     partitioner: String,
@@ -131,7 +130,6 @@ private[cassandra] class BulkOperations(val opts: CassandraOptions, val parallel
       opts.cql
     )
   }
-
 }
 
 private[cassandra] object CassandraUtil {

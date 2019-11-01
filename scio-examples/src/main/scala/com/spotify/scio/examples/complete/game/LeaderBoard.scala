@@ -42,7 +42,6 @@ import org.joda.time.format.DateTimeFormat
 import org.joda.time.{DateTimeZone, Duration, Instant}
 
 object LeaderBoard {
-
   // The schemas for the BigQuery tables to write output to are defined as annotated case classes
   @BigQueryType.toTable
   case class TeamScoreSums(
@@ -174,5 +173,4 @@ object LeaderBoard {
       .map(i => (i.team, i.score))
       // Sum the scores across the defined window, using "team" as the key to sum by
       .sumByKey
-
 }

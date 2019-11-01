@@ -21,7 +21,6 @@ import com.spotify.scio.bigquery.TableRow
 import com.spotify.scio.testing._
 
 class TopWikipediaSessionsTest extends PipelineSpec {
-
   "TopWikipediaSessions.computeTopSessions" should "work" in {
     val data = Seq(
       TableRow("timestamp" -> 0, "contributor_username" -> "user1"),

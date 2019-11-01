@@ -20,7 +20,6 @@ package com.spotify.scio.values
 import com.spotify.scio.testing.PipelineSpec
 
 class ClosureTest extends PipelineSpec {
-
   "SCollection" should "support lambda" in {
     runWithContext { sc =>
       val p = sc.parallelize(Seq(1, 2, 3))

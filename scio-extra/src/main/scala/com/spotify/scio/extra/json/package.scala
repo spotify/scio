@@ -45,7 +45,6 @@ import org.apache.beam.sdk.io.Compression
  * }}}
  */
 package object json extends AutoDerivation {
-
   type Encoder[T] = io.circe.Encoder[T]
   type Decoder[T] = io.circe.Decoder[T]
 
@@ -79,5 +78,4 @@ package object json extends AutoDerivation {
     ): ClosedTap[T] =
       self.write(JsonIO[T](path))(JsonIO.WriteParam(suffix, numShards, compression, printer))
   }
-
 }

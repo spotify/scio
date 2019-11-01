@@ -20,7 +20,6 @@ package com.spotify.scio.avro
 import scala.annotation.StaticAnnotation
 
 package object types {
-
   /**
    * Case class and argument annotation to get Avro field and record docs.
    *
@@ -38,5 +37,4 @@ package object types {
   // scalastyle:off class.name
   class doc(value: String) extends StaticAnnotation
   // scalastyle:on class.name
-
 }

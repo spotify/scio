@@ -65,11 +65,9 @@ object MultiSpecFeatranJob {
     sc.run()
     ()
   }
-
 }
 
 class TFExampleTest extends PipelineSpec {
-
   "ExamplesJobV2" should "work" in {
     JobTest[ExamplesJobV2.type]
       .args("--output=out")
@@ -95,5 +93,4 @@ class TFExampleTest extends PipelineSpec {
       }
       .run()
   }
-
 }

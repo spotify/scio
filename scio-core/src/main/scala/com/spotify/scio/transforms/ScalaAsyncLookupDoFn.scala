@@ -33,7 +33,6 @@ abstract class ScalaAsyncLookupDoFn[A, B, C](
   cacheSupplier: CacheSupplier[A, B, _]
 ) extends BaseAsyncLookupDoFn[A, B, C, Future[B], Try[B]](maxPendingRequests, cacheSupplier)
     with ScalaFutureHandlers[B] {
-
   def this() {
     this(1000, new NoOpCacheSupplier[A, B])
   }

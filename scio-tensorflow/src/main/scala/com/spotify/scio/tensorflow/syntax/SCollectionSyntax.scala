@@ -38,7 +38,6 @@ import scala.reflect.ClassTag
  * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with TensorFlow methods.
  */
 final class PredictSCollectionOps[T: ClassTag](private val self: SCollection[T]) {
-
   /**
    * Predict/infer/forward-pass on a TensorFlow Saved Model.
    *
@@ -62,7 +61,6 @@ final class PredictSCollectionOps[T: ClassTag](private val self: SCollection[T])
 }
 
 final class ExampleSCollectionOps[T <: Example](private val self: SCollection[T]) extends AnyVal {
-
   /**
    * Saves this SCollection of `org.tensorflow.example.Example` as a TensorFlow TFRecord file.
    * @return
@@ -89,19 +87,15 @@ final class ExampleSCollectionOps[T <: Example](private val self: SCollection[T]
     val param = TFExampleIO.WriteParam(suffix, compression, numShards)
     self.asInstanceOf[SCollection[Example]].write(TFExampleIO(path))(param)
   }
-
 }
 
 object SeqExampleSCollectionOps {
-
   private val mergeExamples: Seq[Example] => Example =
     _.foldLeft(Example.newBuilder)((b, i) => b.mergeFrom(i)).build()
-
 }
 
 final class SeqExampleSCollectionOps[T <: Example](private val self: SCollection[Seq[T]])
     extends AnyVal {
-
   def mergeExamples(e: Seq[Example]): Example = SeqExampleSCollectionOps.mergeExamples(e)
 
   /**
@@ -133,12 +127,10 @@ final class SeqExampleSCollectionOps[T <: Example](private val self: SCollection
   ): ClosedTap[Example] =
     new ExampleSCollectionOps(self.map(SeqExampleSCollectionOps.mergeExamples))
       .saveAsTfRecordFile(path, suffix, compression, numShards)
-
 }
 
 final class TFRecordSCollectionOps[T <: Array[Byte]](private val self: SCollection[T])
     extends AnyVal {
-
   /**
    * Save this SCollection as a TensorFlow TFRecord file. Note that elements must be of type
    * `Array[Byte]`. The recommended record encoding is `org.tensorflow.example.Example` protocol
@@ -155,12 +147,10 @@ final class TFRecordSCollectionOps[T <: Array[Byte]](private val self: SCollecti
     val param = TFRecordIO.WriteParam(suffix, compression, numShards)
     self.asInstanceOf[SCollection[Array[Byte]]].write(TFRecordIO(path))(param)
   }
-
 }
 
 final class SequenceExampleSCollectionOps[T <: SequenceExample](private val self: SCollection[T])
     extends AnyVal {
-
   /**
    * Saves this SCollection of `org.tensorflow.example.SequenceExample` as a TensorFlow
    * TFRecord file.
@@ -179,7 +169,6 @@ final class SequenceExampleSCollectionOps[T <: SequenceExample](private val self
 }
 
 trait SCollectionSyntax {
-
   /**
    * Implicit conversion from [[com.spotify.scio.values.SCollection SCollection]] to
    * [[PredictSCollectionOps]].

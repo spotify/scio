@@ -23,7 +23,6 @@ import org.apache.beam.sdk.transforms.DoFn.ProcessElement
 import org.apache.beam.sdk.transforms.windowing.BoundedWindow
 
 private[scio] object FunctionsWithSideInput {
-
   trait SideInputDoFn[T, U] extends NamedDoFn[T, U] {
     def sideInputContext(c: DoFn[T, U]#ProcessContext, w: BoundedWindow): SideInputContext[T] =
       // Workaround for type inference limit
@@ -57,5 +56,4 @@ private[scio] object FunctionsWithSideInput {
       private[scio] def processElement(c: DoFn[T, U]#ProcessContext, w: BoundedWindow): Unit =
         c.output(g(c.element(), sideInputContext(c, w)))
     }
-
 }

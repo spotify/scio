@@ -23,7 +23,6 @@ package com.spotify.scio.values
 import com.spotify.scio.testing.PipelineSpec
 
 class HistogramTest extends PipelineSpec {
-
   "DoubleSCollectionFunctions.histogram" should "work on empty input" in {
     runWithContext { sc =>
       val p = sc.parallelize[Double](Seq.empty)
@@ -277,5 +276,4 @@ class HistogramTest extends PipelineSpec {
     } should have message msg
   }
   // scalastyle:on no.whitespace.before.left.bracket
-
 }

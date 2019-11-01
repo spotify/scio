@@ -33,7 +33,6 @@ import com.spotify.scio.schemas.Schema
 import org.apache.beam.sdk.values.TupleTag
 
 object SQLBuilders {
-
   private[sql] def from[A](
     q: String,
     refA: SCollectionRef[A],
@@ -409,7 +408,6 @@ object SQLBuilders {
     udfs: List[Udf]
   ): SQLBuilder =
     l match {
-
       case (refA, aTag) :: Nil =>
         from[refA._A](q, refA, aTag, udfs)
 

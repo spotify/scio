@@ -156,7 +156,6 @@ final class BigQuery private (client: Client) {
 
 /** Companion object for [[BigQuery]]. */
 object BigQuery {
-
   private lazy val instance: BigQuery =
     BigQuerySysProps.Project.valueOption.map(BigQuery(_)).getOrElse {
       Option(new DefaultProjectFactory().create(null))

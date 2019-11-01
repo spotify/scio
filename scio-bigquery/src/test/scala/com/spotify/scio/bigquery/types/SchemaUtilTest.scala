@@ -24,7 +24,6 @@ import org.scalatest.{FlatSpec, Matchers}
 import scala.collection.JavaConverters._
 
 class SchemaUtilTest extends FlatSpec with Matchers {
-
   def newSchema(mode: String): TableSchema =
     new TableSchema().setFields(
       List(
@@ -154,6 +153,5 @@ class SchemaUtilTest extends FlatSpec with Matchers {
           |case class Row($expectedFields)""".stripMargin
     )
   }
-
 }
 // scalastyle:on line.size.limit

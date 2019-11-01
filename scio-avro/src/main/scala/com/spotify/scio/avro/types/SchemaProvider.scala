@@ -31,7 +31,6 @@ import scala.reflect.runtime.universe
 import scala.reflect.runtime.universe._
 
 private[types] object SchemaProvider {
-
   private[this] val m: ConcurrentHashMap[Type, Schema] =
     new ConcurrentHashMap[Type, Schema]()
 

@@ -34,7 +34,6 @@ import org.apache.beam.sdk.transforms.{DoFn, ProcessFunction, SerializableFuncti
 import scala.collection.JavaConverters._
 
 private[scio] object Functions {
-
   private[this] val BufferSize = 20
 
   private object Fns {
@@ -104,7 +103,6 @@ private[scio] object Functions {
     zeroValue: U
   )(seqOp: (U, T) => U, combOp: (U, U) => U): BCombineFn[T, (U, JList[T]), U] =
     new CombineFn[T, (U, JList[T]), U] {
-
       override val vacoder = Coder[(U, JList[T])]
       override val vocoder = Coder[U]
       override val context: CombineContext = CombineContext(sc)
@@ -148,7 +146,6 @@ private[scio] object Functions {
     mergeCombiners: (C, C) => C
   ): BCombineFn[T, (Option[C], JList[T]), C] =
     new CombineFn[T, (Option[C], JList[T]), C] {
-
       override val vacoder = Coder[(Option[C], JList[T])]
       override val vocoder = Coder[C]
       override val context: CombineContext = CombineContext(sc)
@@ -272,7 +269,6 @@ private[scio] object Functions {
     }
 
   private abstract class ReduceFn[T: Coder] extends CombineFn[T, JList[T], T] {
-
     override def createAccumulator(): JList[T] = new JArrayList[T]()
 
     override def addInput(accumulator: JList[T], input: T): JList[T] = {
@@ -307,7 +303,6 @@ private[scio] object Functions {
     }
 
     def reduceOption(accumulator: JIterable[T]): Option[T]
-
   }
 
   def reduceFn[T: Coder](sc: ScioContext, f: (T, T) => T): BCombineFn[T, JList[T], T] =
@@ -358,5 +353,4 @@ private[scio] object Functions {
 
       override def defaultValue(): T = mon.zero
     }
-
 }

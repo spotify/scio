@@ -32,7 +32,6 @@ import scala.reflect.ClassTag
 import scala.util.{Failure, Success, Try}
 
 private[scio] object ScioUtil {
-
   // Try.toEither does not exists in Scala 2.11
   def toEither[T](t: Try[T]): Either[Throwable, T] =
     t match {
@@ -94,5 +93,4 @@ private[scio] object ScioUtil {
 
   def pathWithShards(path: String): String =
     path.replaceAll("\\/+$", "") + "/part"
-
 }

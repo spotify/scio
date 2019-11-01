@@ -69,7 +69,6 @@ private object RemoteSparkeyUri {
 }
 
 private case class RemoteSparkeyUri(basePath: String, rfu: RemoteFileUtil) extends SparkeyUri {
-
   override def getReader: SparkeyReader = {
     val uris = SparkeyUri.extensions.map(e => new URI(basePath + e))
     val paths = rfu.download(uris.asJava).asScala
@@ -81,7 +80,6 @@ private case class RemoteSparkeyUri(basePath: String, rfu: RemoteFileUtil) exten
 }
 
 private[sparkey] class SparkeyWriter(val uri: SparkeyUri, maxMemoryUsage: Long = -1) {
-
   private val localFile = uri match {
     case u: LocalSparkeyUri => u.basePath
     case _: RemoteSparkeyUri =>
@@ -116,5 +114,4 @@ private[sparkey] class SparkeyWriter(val uri: SparkeyUri, maxMemoryUsage: Long =
       case _ => ()
     }
   }
-
 }

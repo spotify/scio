@@ -33,7 +33,6 @@ class SCollectionWithFanout[T: Coder] private[values] (
   val context: ScioContext,
   private val fanout: Int
 ) extends PCollectionWrapper[T] {
-
   /** [[SCollection.aggregate[U]* SCollection.aggregate]] with fan out. */
   def aggregate[U: Coder](zeroValue: U)(seqOp: (U, T) => U, combOp: (U, U) => U): SCollection[U] =
     this.pApply(
@@ -94,5 +93,4 @@ class SCollectionWithFanout[T: Coder] private[values] (
       Combine.globally(Functions.reduceFn(context, sg)).withoutDefaults().withFanout(fanout)
     )
   }
-
 }

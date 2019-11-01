@@ -119,10 +119,8 @@ import scala.util.hashing.MurmurHash3
  * }}}
  */
 package object sparkey {
-
   /** Enhanced version of [[ScioContext]] with Sparkey methods. */
   implicit class SparkeyScioContext(private val self: ScioContext) extends AnyVal {
-
     private def singleViewOf(basePath: String): PCollectionView[SparkeyUri] =
       self.parallelize(Seq(SparkeyUri(basePath, self.options))).applyInternal(View.asSingleton())
 
@@ -194,7 +192,6 @@ package object sparkey {
    * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with Sparkey methods.
    */
   implicit class SparkeyPairSCollection[K, V](@transient private val self: SCollection[(K, V)]) {
-
     private val logger = LoggerFactory.getLogger(this.getClass)
 
     /**
@@ -355,7 +352,6 @@ package object sparkey {
    * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with Sparkey methods.
    */
   implicit class SparkeySCollection(private val self: SCollection[SparkeyUri]) extends AnyVal {
-
     /**
      * Convert this SCollection to a SideInput of `SparkeyReader`, to be used with
      * [[com.spotify.scio.values.SCollection.withSideInputs SCollection.withSideInputs]].
@@ -460,7 +456,6 @@ package object sparkey {
    */
   class CachedStringSparkeyReader(val sparkey: SparkeyReader, val cache: Cache[String, String])
       extends RichStringSparkeyReader(sparkey) {
-
     override def get(key: String): Option[String] =
       Option(cache.get(key, new JFunction[String, String] {
         override def apply(k: String): String = sparkey.getAsString(k)
@@ -481,7 +476,6 @@ package object sparkey {
     val decoder: Array[Byte] => T,
     val cache: Cache[String, T] = null
   ) extends Map[String, T] {
-
     private def stringKeyToBytes(key: String): Array[Byte] = key.getBytes(Charset.defaultCharset())
 
     private def loadValueFromSparkey(key: String): T = {
@@ -550,5 +544,4 @@ package object sparkey {
 
       def shardHash(key: Array[Byte]): Int = MurmurHash3.bytesHash(key, 1)
     }
-
 }

@@ -21,7 +21,6 @@ import com.spotify.scio.io._
 import com.spotify.scio.testing._
 
 class SideInOutExampleTest extends PipelineSpec {
-
   val inData = Seq("The quick brown fox jumps over the lazy dog.")
 
   "SideInOutExample" should "work" in {
@@ -50,5 +49,4 @@ class SideInOutExampleTest extends PipelineSpec {
       }
       .run()
   }
-
 }

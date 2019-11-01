@@ -29,10 +29,8 @@ import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider
  * }}}
  */
 object JavaConverters {
-
   /** Enhanced version of [[String]] with Beam Java SDK converter methods. */
   implicit class RichString(private val s: String) extends AnyVal {
-
     /** Convert the string to a [[ResourceId]]. */
     def toResourceId: ResourceId =
       FileBasedSink.convertToFileResourceIfPossible(s)
@@ -53,7 +51,6 @@ object JavaConverters {
     templateSuffix: String = null,
     windowedWrites: Boolean = false
   ) {
-
     /**
      * Convert the filename policy to a
      * [[org.apache.beam.sdk.io.DefaultFilenamePolicy DefaultFilenamePolicy]].
@@ -69,7 +66,6 @@ object JavaConverters {
 
   /** Enhanced version of [[Any]] with Beam Java SDK converter methods. */
   implicit class RichAny[T](private val value: T) extends AnyVal {
-
     /**
      * Convert the value to a
      * [[org.apache.beam.sdk.options.ValueProvider.StaticValueProvider StaticValueProvider]].
@@ -77,5 +73,4 @@ object JavaConverters {
     def toStaticValueProvider: StaticValueProvider[T] =
       StaticValueProvider.of(value)
   }
-
 }

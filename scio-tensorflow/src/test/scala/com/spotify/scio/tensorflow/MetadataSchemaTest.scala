@@ -23,7 +23,6 @@ import org.tensorflow.example._
 import scala.collection.JavaConverters._
 
 object MetadataSchemaTest {
-
   // Keep byte list the same length across examples to be parsed as a fixed shape.
   val e1Features = Map[String, Feature](
     "long" -> longFeature(Seq(1, 2, 3)),

@@ -21,11 +21,9 @@ import com.spotify.scio.{registerSysProps, SysProp}
 
 @registerSysProps
 object AvroSysProps {
-
   val Debug = SysProp("avro.types.debug", "debug")
 
   val DisableDump = SysProp("avro.plugin.disable.dump", "disable class dump")
 
   val ClassCacheDirectory = SysProp("generated.class.cache.directory", "class cache directory")
-
 }

@@ -33,7 +33,6 @@ private[coders] class JTraversableSerializer[T, C <: Traversable[T]](
   val bufferSize: Int = 64 * 1024
 )(implicit cbf: CanBuildFrom[C, T, C])
     extends KSerializer[C] {
-
   override def write(kser: Kryo, out: Output, obj: C): Unit = {
     val i = obj.toIterator
     val chunked = new OutputChunked(out, bufferSize)
@@ -54,7 +53,6 @@ private[coders] class JTraversableSerializer[T, C <: Traversable[T]](
     }
     b.result()
   }
-
 }
 
 // workaround for Java Iterable/Collection missing proper equality check

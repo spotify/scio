@@ -27,11 +27,9 @@ import org.apache.beam.sdk.values.WindowingStrategy.AccumulationMode
  * }}}
  */
 package object streaming {
-
   /** Alias for WindowingStrategy `AccumulationMode.ACCUMULATING_FIRED_PANES`. */
   val ACCUMULATING_FIRED_PANES = AccumulationMode.ACCUMULATING_FIRED_PANES
 
   /** Alias for WindowingStrategy `AccumulationMode.DISCARDING_FIRED_PANES`. */
   val DISCARDING_FIRED_PANES = AccumulationMode.DISCARDING_FIRED_PANES
-
 }

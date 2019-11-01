@@ -121,7 +121,6 @@ final class SqlSCollection3[A: Schema, B: Schema, C: Schema](
   b: SCollection[B],
   c: SCollection[C]
 ) {
-
   def query(
     q: String,
     aTag: TupleTag[A],
@@ -143,7 +142,6 @@ final class SqlSCollection3[A: Schema, B: Schema, C: Schema](
         .and(q.bTag, collB.internal)
         .and(q.cTag, collC.internal)
         .apply(s"${collA.tfName} join ${collB.tfName} join ${collC.tfName}", sqlTransform)
-
     }
   }
 
@@ -163,7 +161,6 @@ final class SqlSCollection3[A: Schema, B: Schema, C: Schema](
       case e: ParseException =>
         Query3.typecheck(q).fold(err => throw new RuntimeException(err, e), _ => throw e)
     }
-
 }
 
 // scalastyle:on cyclomatic.complexity

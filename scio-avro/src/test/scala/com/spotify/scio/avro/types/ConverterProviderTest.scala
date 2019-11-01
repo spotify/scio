@@ -25,7 +25,6 @@ import org.apache.commons.io.FileUtils
 import org.scalatest._
 
 class ConverterProviderTest extends FlatSpec with Matchers {
-
   import ConverterProviderTest._
 
   "ConverterProvider" should "#1831: handle Avro map" in {

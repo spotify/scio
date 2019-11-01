@@ -27,10 +27,8 @@ import org.openjdk.jmh.annotations._
  * Querying for elements from a BloomFilter.
  */
 object BloomFilterQueryBenchmark {
-
   @State(Scope.Benchmark)
   class BloomFilterState {
-
     @Param(Array("100", "1000", "10000"))
     var nbrOfElements: Int = 0
 

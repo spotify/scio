@@ -18,7 +18,6 @@
 package com.spotify.scio.examples.common
 
 object ExampleData {
-
   val SHAKESPEARE_ALL = "gs://apache-beam-samples/shakespeare/*"
   val KING_LEAR = "gs://apache-beam-samples/shakespeare/kinglear.txt"
   val OTHELLO = "gs://apache-beam-samples/shakespeare/othello.txt"
@@ -33,5 +32,4 @@ object ExampleData {
   val SHAKESPEARE_TABLE = "publicdata:samples.shakespeare"
   val EVENT_TABLE = "clouddataflow-readonly:samples.gdelt_sample"
   val COUNTRY_TABLE = "gdelt-bq:full.crosswalk_geocountrycodetohuman"
-
 }

@@ -24,7 +24,6 @@ import com.spotify.scio.values.SCollection
 
 /** Trait with utility methods for unit testing pipelines. */
 trait PipelineTestUtils {
-
   /**
    * Test pipeline components with a [[ScioContext]].
    * @param fn code that tests the components and verifies the result
@@ -159,5 +158,4 @@ trait PipelineTestUtils {
     val result: ScioResult = sc.run().waitUntilFinish() // block non-test runner
     (result, result.tap(f).value.toSeq)
   }
-
 }

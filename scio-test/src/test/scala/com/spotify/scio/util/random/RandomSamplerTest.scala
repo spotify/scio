@@ -27,7 +27,6 @@ import org.joda.time.Instant
 import scala.collection.mutable.{Buffer => MBuffer}
 
 class RandomSamplerTest extends PipelineSpec {
-
   import RandomSamplerUtils._
 
   private def test[T](sampler: RandomSampler[T, _], xs: Seq[T]): Seq[T] = {
@@ -162,5 +161,4 @@ class RandomSamplerTest extends PipelineSpec {
     r4._1 should be >= D
     r4._2 should be >= D
   }
-
 }

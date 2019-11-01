@@ -21,7 +21,6 @@ import com.google.protobuf.ByteString
 import org.joda.time.{Instant, LocalDate, LocalDateTime, LocalTime}
 
 object Schemas {
-
   // primitives
   case class Required(
     boolF: Boolean,
