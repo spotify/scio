@@ -21,7 +21,8 @@ import java.io.File
 import java.nio.file.Files
 import java.util.Arrays
 
-import com.github.benmanes.caffeine.cache.Cache
+import com.spotify.scio.util._
+import com.github.benmanes.caffeine.cache.{Caffeine, Cache => CCache}
 import com.spotify.scio._
 import com.spotify.scio.testing._
 import com.spotify.sparkey._
@@ -29,6 +30,33 @@ import org.apache.beam.sdk.io.FileSystems
 import org.apache.commons.io.FileUtils
 
 import scala.collection.JavaConverters._
+
+final case class TestCache[K, V](testId: String) extends CacheT[K, V, CCache[K, V]] {
+  @transient private lazy val cache =
+    TestCache.caches
+      .get(testId, Cache.caffeine(Caffeine.newBuilder().recordStats().build()))
+      .asInstanceOf[CacheT[K, V, CCache[K, V]]]
+
+  override def get(k: K): Option[V] = cache.get(k)
+
+  override def get(k: K, default: => V): V = cache.get(k, default)
+
+  override def put(k: K, value: V): Unit = {
+    cache.put(k, value)
+    ()
+  }
+
+  override def invalidateAll(): Unit = cache.invalidateAll()
+
+  override def underlying: CCache[K, V] = cache.underlying
+}
+
+object TestCache {
+  private val caches = Cache.concurrentHashMap[String, AnyRef]
+
+  @inline def apply[K, V](): TestCache[K, V] =
+    TestCache[K, V](scala.util.Random.nextString(5))
+}
 
 class SparkeyTest extends PipelineSpec {
   val sideData = Seq(("a", "1"), ("b", "2"), ("c", "3"))
@@ -210,13 +238,11 @@ class SparkeyTest extends PipelineSpec {
 
     val input = Seq("a", "b", "a", "b")
 
-    MockCache.reset()
+    val cache = TestCache[String, String]()
 
     val sparkey = sc.parallelize(sideData).asSparkey
     val sparkeyMaterialized = sparkey.materialize
-    val si = sparkey.asCachedStringSparkeySideInput(
-      MockCache.getInstance.asInstanceOf[Cache[String, String]]
-    )
+    val si = sparkey.asCachedStringSparkeySideInput(cache)
 
     val result = sc
       .parallelize(input)
@@ -229,8 +255,8 @@ class SparkeyTest extends PipelineSpec {
 
     scioResult.tap(result).value.toList.sorted shouldBe input.map(sideData.toMap).sorted
 
-    MockCache.getStats.requestCount shouldBe input.size
-    MockCache.getStats.loadCount shouldBe input.toSet.size
+    cache.underlying.stats().requestCount shouldBe input.size
+    cache.underlying.stats().loadCount shouldBe input.toSet.size
 
     val basePath = scioResult.tap(sparkeyMaterialized).value.next().basePath
     for (ext <- Seq(".spi", ".spl")) new File(basePath + ext).delete()
@@ -241,13 +267,11 @@ class SparkeyTest extends PipelineSpec {
 
     val input = Seq("a", "b", "a", "b")
 
-    MockCache.reset()
+    val cache = TestCache[String, String]()
 
     val sparkey = sc.parallelize(sideData).asSparkey(numShards = 2)
     val sparkeyMaterialized = sparkey.materialize
-    val si = sparkey.asCachedStringSparkeySideInput(
-      MockCache.getInstance.asInstanceOf[Cache[String, String]]
-    )
+    val si = sparkey.asCachedStringSparkeySideInput(cache)
 
     val result = sc
       .parallelize(input)
@@ -260,8 +284,8 @@ class SparkeyTest extends PipelineSpec {
 
     scioResult.tap(result).value.toList.sorted shouldBe input.map(sideData.toMap).sorted
 
-    MockCache.getStats.requestCount shouldBe input.size
-    MockCache.getStats.loadCount shouldBe input.toSet.size
+    cache.underlying.stats().requestCount shouldBe input.size
+    cache.underlying.stats().loadCount shouldBe input.toSet.size
 
     val basePath = scioResult.tap(sparkeyMaterialized).value.next().basePath
     FileUtils.deleteDirectory(new File(basePath))
@@ -304,12 +328,12 @@ class SparkeyTest extends PipelineSpec {
     val typedSideData = Seq(("a", Seq(1, 2)), ("b", Seq(2, 3)), ("c", Seq(3, 4)))
     val typedSideDataMap = typedSideData.toMap
 
-    MockCache.reset()
+    val cache = TestCache[String, AnyRef]()
 
     val sparkey = sc.parallelize(typedSideData).mapValues(_.mkString(",")).asSparkey
     val sparkeyMaterialized = sparkey.materialize
 
-    val si = sparkey.asTypedSparkeySideInput[Object](MockCache.getInstance) { b: Array[Byte] =>
+    val si = sparkey.asTypedSparkeySideInput[Object](cache) { b: Array[Byte] =>
       new String(b).split(",").map(_.toInt).toSeq
     }
 
@@ -325,8 +349,8 @@ class SparkeyTest extends PipelineSpec {
 
     scioResult.tap(result).value.toList should contain theSameElementsAs expectedOutput
 
-    MockCache.getStats.requestCount shouldBe input.size
-    MockCache.getStats.loadCount shouldBe input.toSet.size
+    cache.underlying.stats().requestCount shouldBe input.size
+    cache.underlying.stats().loadCount shouldBe input.toSet.size
 
     val basePath = scioResult.tap(sparkeyMaterialized).value.next().basePath
     for (ext <- Seq(".spi", ".spl")) new File(basePath + ext).delete()
@@ -367,12 +391,12 @@ class SparkeyTest extends PipelineSpec {
     val input = Seq("1")
     val typedSideData = Seq(("a", Seq(1, 2)), ("b", Seq(2, 3)), ("c", Seq(3, 4)))
 
-    MockCache.reset()
+    val cache = TestCache[String, AnyRef]()
 
     val sparkey = sc.parallelize(typedSideData).mapValues(_.mkString(",")).asSparkey
     val sparkeyMaterialized = sparkey.materialize
 
-    val si = sparkey.asTypedSparkeySideInput[Object](MockCache.getInstance) { b: Array[Byte] =>
+    val si = sparkey.asTypedSparkeySideInput[Object](cache) { b: Array[Byte] =>
       new String(b).split(",").map(_.toInt).toSeq
     }
 
@@ -388,8 +412,8 @@ class SparkeyTest extends PipelineSpec {
 
     scioResult.tap(result).value.toList should contain theSameElementsAs expectedOutput
 
-    MockCache.getStats.requestCount shouldBe typedSideData.size
-    MockCache.getStats.loadCount shouldBe 0
+    cache.underlying.stats().requestCount shouldBe typedSideData.size
+    cache.underlying.stats().loadCount shouldBe 0
 
     val basePath = scioResult.tap(sparkeyMaterialized).value.next().basePath
     for (ext <- Seq(".spi", ".spl")) new File(basePath + ext).delete()
@@ -401,12 +425,12 @@ class SparkeyTest extends PipelineSpec {
     val input = Seq("1")
     val typedSideData = Seq(("a", Seq(1, 2)), ("b", Seq(2, 3)), ("c", Seq(3, 4)))
 
-    MockCache.reset()
+    val cache = TestCache[String, AnyRef]()
 
     val sparkey = sc.parallelize(typedSideData).mapValues(_.mkString(",")).asSparkey(numShards = 2)
     val sparkeyMaterialized = sparkey.materialize
 
-    val si = sparkey.asTypedSparkeySideInput[Object](MockCache.getInstance) { b: Array[Byte] =>
+    val si = sparkey.asTypedSparkeySideInput[Object](cache) { b: Array[Byte] =>
       new String(b).split(",").map(_.toInt).toSeq
     }
 
@@ -422,8 +446,8 @@ class SparkeyTest extends PipelineSpec {
 
     scioResult.tap(result).value.toList should contain theSameElementsAs expectedOutput
 
-    MockCache.getStats.requestCount shouldBe typedSideData.size
-    MockCache.getStats.loadCount shouldBe 0
+    cache.underlying.stats().requestCount shouldBe typedSideData.size
+    cache.underlying.stats().loadCount shouldBe 0
 
     val basePath = scioResult.tap(sparkeyMaterialized).value.next().basePath
     FileUtils.deleteDirectory(new File(basePath))

@@ -387,6 +387,7 @@ lazy val scioCore: Project = Project(
       "org.apache.xbean" % "xbean-asm7-shaded" % asmVersion,
       "io.grpc" % "grpc-all" % grpcVersion exclude ("io.opencensus", "opencensus-api"),
       "com.github.alexarchambault" %% "case-app" % caseappVersion,
+      "com.github.ben-manes.caffeine" % "caffeine" % caffeineVersion,
       "org.scalatest" %% "scalatest" % scalatestVersion % Test
     ),
     magnoliaDependencies
