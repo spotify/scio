@@ -20,7 +20,7 @@ package com.spotify.scio.tensorflow
 import java.time.Duration
 
 import com.spotify.zoltar.tf.{TensorFlowLoader, TensorFlowModel}
-import com.spotify.zoltar.{Model, Models}
+import com.spotify.zoltar.Model
 import org.apache.beam.sdk.transforms.DoFn
 import org.apache.beam.sdk.transforms.DoFn.{ProcessElement, Teardown}
 import org.slf4j.LoggerFactory
@@ -45,7 +45,7 @@ sealed trait PredictDoFn[T, V, M <: Model[_]] extends DoFnWithResource[T, V, M] 
 
   override def createResource(): M
 
-  override def getResourceType: DoFnWithResource.ResourceType = ResourceType.PER_CLASS
+  override def getResourceType: DoFnWithResource.ResourceType = ResourceType.PER_INSTANCE
 
   /**
    * Process an element asynchronously.
@@ -84,16 +84,15 @@ sealed trait PredictDoFn[T, V, M <: Model[_]] extends DoFnWithResource[T, V, M] 
 
 private[tensorflow] abstract class SavedBundlePredictDoFn[T, V](
   uri: String,
+  signatureName: String,
   options: TensorFlowModel.Options
 ) extends PredictDoFn[T, V, TensorFlowModel] {
   @transient private lazy val log = LoggerFactory.getLogger(this.getClass)
 
-  override def createResource(): TensorFlowModel =
-    Models
-      .tensorFlow(uri, options)
-      .get(Duration.ofDays(Integer.MAX_VALUE))
-
   override def withRunner(f: Session#Runner => V): V = f(getResource.instance().session().runner())
+
+  def id(): String =
+    (Seq("tf", uri, signatureName) ++ options.tags.asScala.mkString(";")).mkString(":")
 
   @Teardown
   def teardown(): Unit = {
@@ -105,41 +104,85 @@ private[tensorflow] abstract class SavedBundlePredictDoFn[T, V](
 object SavedBundlePredictDoFn {
   def forInput[T, V](
     uri: String,
+    fetchOps: Option[Seq[String]],
     options: TensorFlowModel.Options,
-    fetchOp: Seq[String],
+    signatureName: String,
     inFn: T => Map[String, Tensor[_]],
     outFn: (T, Map[String, Tensor[_]]) => V
-  ): SavedBundlePredictDoFn[T, V] = new SavedBundlePredictDoFn[T, V](uri, options) {
-    override def extractInput(input: T): Map[String, Tensor[_]] = inFn(input)
+  ): SavedBundlePredictDoFn[T, V] = new SavedBundlePredictDoFn[T, V](uri, signatureName, options) {
+    var exportedFetchOps: Map[String, String] = _
 
-    override def extractOutput(input: T, out: Map[String, Tensor[_]]): V = outFn(input, out)
+    private def requestedFetchOps: Map[String, String] = {
+      fetchOps
+        .map { tensorIds =>
+          tensorIds.map { tensorId =>
+            tensorId -> exportedFetchOps(tensorId)
+          }.toMap
+        }
+        .getOrElse(exportedFetchOps)
+    }
 
-    override def outputTensorNames: Seq[String] = fetchOp
+    override def createResource(): TensorFlowModel = {
+      val model = TensorFlowLoader
+        .create(Id.create(id), uri, options, signatureName)
+        .get(Duration.ofDays(Integer.MAX_VALUE))
+      // by doing it here we make sure we only do it once
+      exportedFetchOps = model.outputsNameMap().asScala.toMap
 
+      model
+    }
+
+    override def extractInput(input: T): Map[String, Tensor[_]] = {
+      val extractedInput = inFn(input)
+      extractedInput.map {
+        case (tensorId, tensor) =>
+          getResource.inputsNameMap().get(tensorId) -> tensor
+      }.toMap
+    }
+
+    override def extractOutput(input: T, out: Map[String, Tensor[_]]): V =
+      outFn(input, requestedFetchOps.mapValues(out(_)))
+
+    override def outputTensorNames: Seq[String] = requestedFetchOps.values.toSeq
   }
 
+  /**
+   * Note: if fetchOps isn't provided, then all outputs defined in the signature of the model
+   * are retrieved. This can be expensive and unwanted, depending on the model.
+   */
   def forTensorFlowExample[T, V](
     uri: String,
     exampleTensorName: String,
-    signatureName: String,
+    fetchOps: Option[Seq[String]],
     options: TensorFlowModel.Options,
+    signatureName: String,
     outFn: (T, Map[String, Tensor[_]]) => V
   )(implicit ev: T <:< Example): SavedBundlePredictDoFn[T, V] =
-    new SavedBundlePredictDoFn[T, V](uri, options) {
+    new SavedBundlePredictDoFn[T, V](uri, signatureName, options) {
+      var exportedFetchOps: Map[String, String] = _
 
-      var fetchOps: Map[String, String] = _
+      /* tensorId refers to the public/export name of the tensor */
+      private def requestedFetchOps: Map[String, String] = {
+        fetchOps
+          .map { tensorIds =>
+            tensorIds.map { tensorId =>
+              tensorId -> exportedFetchOps(tensorId)
+            }.toMap
+          }
+          .getOrElse(exportedFetchOps)
+      }
 
       override def createResource(): TensorFlowModel = {
         val model = TensorFlowLoader
-          .create(Id.create("tensorflow"), uri, options, signatureName)
+          .create(Id.create(id), uri, options, signatureName)
           .get(Duration.ofDays(Integer.MAX_VALUE))
         // by doing it here we make sure we only do it once
-        fetchOps = model.outputsNameMap().asScala.toMap
+        exportedFetchOps = model.outputsNameMap().asScala.toMap
 
         model
       }
 
-      override def outputTensorNames: Seq[String] = fetchOps.values.toSeq
+      override def outputTensorNames: Seq[String] = requestedFetchOps.values.toSeq
 
       override def extractInput(input: T): Map[String, Tensor[_]] = {
         val i = getResource.inputsNameMap().get(exampleTensorName)
@@ -147,6 +190,6 @@ object SavedBundlePredictDoFn {
       }
 
       override def extractOutput(input: T, out: Map[String, Tensor[_]]): V =
-        outFn(input, fetchOps.mapValues(out(_)))
+        outFn(input, requestedFetchOps.mapValues(out(_)))
     }
 }
