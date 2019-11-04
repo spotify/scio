@@ -104,6 +104,28 @@ private[tensorflow] abstract class SavedBundlePredictDoFn[T, V](
 }
 
 object SavedBundlePredictDoFn {
+  def forRaw[T, V](
+    uri: String,
+    fetchOps: Seq[String],
+    options: TensorFlowModel.Options,
+    signatureName: String,
+    inFn: T => Map[String, Tensor[_]],
+    outFn: (T, Map[String, Tensor[_]]) => V
+  ): SavedBundlePredictDoFn[T, V] = new SavedBundlePredictDoFn[T, V](uri, signatureName, options) {
+    override def createResource(): TensorFlowModel = {
+      val model = TensorFlowLoader
+        .create(Id.create(id), uri, options, signatureName)
+        .get(Duration.ofDays(Integer.MAX_VALUE))
+      model
+    }
+
+    override def extractInput(input: T): Map[String, Tensor[_]] = inFn(input)
+
+    override def extractOutput(input: T, out: Map[String, Tensor[_]]): V = outFn(input, out)
+
+    override def outputTensorNames: Seq[String] = fetchOps
+  }
+
   def forInput[T, V](
     uri: String,
     fetchOps: Option[Seq[String]],

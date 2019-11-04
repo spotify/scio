@@ -49,6 +49,37 @@ private[tensorflow] object TFSavedSpec {
     .optional(_.sepalWidth)(StandardScaler("sepal_width", withMean = true))
 }
 
+object TFSavedRawJob {
+  def main(argv: Array[String]): Unit = {
+    val (sc, args) = ContextAndArgs(argv)
+    val options = TensorFlowModel.Options.builder
+      .tags(Collections.singletonList("serve"))
+      .build
+    val settings =
+      sc.parallelize(List(Source.fromURL(args("settings")).getLines.mkString))
+
+    val collection =
+      sc.parallelize(
+        List(TFSavedSpec.Iris(Some(5.1), Some(3.5), Some(1.4), Some(0.2), Some("Iris-setosa")))
+      )
+
+    TFSavedSpec.Spec
+      .extractWithSettings(collection, settings)
+      .featureValues[Example]
+      .predict(args("savedModelUri"), Seq("linear/head/predictions/class_ids"), options) { e =>
+        Map("input_example_tensor" -> Tensors.create(Array(e.toByteArray)))
+      } { (_, o) =>
+        val clazz = Array.ofDim[Long](1)
+        o("linear/head/predictions/class_ids").copyTo(clazz)
+        clazz(0).toString
+      }
+      .saveAsTextFile(args("output"))
+
+    sc.run().waitUntilDone()
+    ()
+  }
+}
+
 object TFSavedTensorsMapInputDefaultSigDefJob {
   def main(argv: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(argv)
@@ -66,7 +97,7 @@ object TFSavedTensorsMapInputDefaultSigDefJob {
     TFSavedSpec.Spec
       .extractWithSettings(collection, settings)
       .featureValues[Example]
-      .predict(args("savedModelUri"), options) { e =>
+      .predictWithSigDef(args("savedModelUri"), options) { e =>
         Map("inputs" -> Tensors.create(Array(e.toByteArray)))
       } { (_, o) =>
         val classes = Array.ofDim[Array[Byte]](1, 3)
@@ -101,7 +132,7 @@ object TFSavedTensorsMapInputPredictSigDefJob {
     TFSavedSpec.Spec
       .extractWithSettings(collection, settings)
       .featureValues[Example]
-      .predict(args("savedModelUri"), options, signatureName = "predict") { e =>
+      .predictWithSigDef(args("savedModelUri"), options, signatureName = "predict") { e =>
         Map("examples" -> Tensors.create(Array(e.toByteArray)))
       } { (_, o) =>
         val classes = Array.ofDim[Array[Byte]](1, 1)
@@ -133,7 +164,7 @@ object TFSavedTensorsMapInputPredictSigDefSpecifiedFetchOpsJob {
     TFSavedSpec.Spec
       .extractWithSettings(collection, settings)
       .featureValues[Example]
-      .predict(
+      .predictWithSigDef(
         args("savedModelUri"),
         options,
         fetchOps = Some(Seq("classes")),
@@ -258,8 +289,19 @@ object TFSavedExampleInputPredictSigDefSpecifiedFetchOpsJob {
   }
 }
 
-/* Tests that load the same tf graph (i.e. signature-def) cannot run in parallel */
 class TensorflowSpec extends PipelineSpec {
+  it should "allow saved model prediction with raw inputs and outputs" in {
+    val resource = getClass.getResource("/trained_model")
+    val settings = getClass.getResource("/settings.json")
+
+    JobTest[TFSavedRawJob.type]
+      .args(s"--savedModelUri=$resource", s"--settings=$settings", "--output=output")
+      .output(TextIO("output")) { out =>
+        out should containInAnyOrder(List("0"))
+      }
+      .run()
+  }
+
   it should "allow saved model prediction with feature tensors" in {
     val resource = getClass.getResource("/trained_model")
     val settings = getClass.getResource("/settings.json")
