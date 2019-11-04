@@ -110,24 +110,21 @@ object SavedBundlePredictDoFn {
     inFn: T => Map[String, Tensor[_]],
     outFn: (T, Map[String, Tensor[_]]) => V
   ): SavedBundlePredictDoFn[T, V] = new SavedBundlePredictDoFn[T, V](uri, signatureName, options) {
-    var exportedFetchOps: Map[String, String] = _
-
-    private def requestedFetchOps: Map[String, String] = {
-      fetchOps
-        .map { tensorIds =>
-          tensorIds.map { tensorId =>
-            tensorId -> exportedFetchOps(tensorId)
-          }.toMap
-        }
-        .getOrElse(exportedFetchOps)
-    }
+    var requestedFetchOps: Map[String, String] = _
 
     override def createResource(): TensorFlowModel = {
       val model = TensorFlowLoader
         .create(Id.create(id), uri, options, signatureName)
         .get(Duration.ofDays(Integer.MAX_VALUE))
       // by doing it here we make sure we only do it once
-      exportedFetchOps = model.outputsNameMap().asScala.toMap
+      val exportedFetchOps = model.outputsNameMap().asScala.toMap
+      requestedFetchOps = fetchOps
+        .map { tensorIds =>
+          tensorIds.map { tensorId =>
+            tensorId -> exportedFetchOps(tensorId)
+          }.toMap
+        }
+        .getOrElse(exportedFetchOps)
 
       model
     }
@@ -159,25 +156,21 @@ object SavedBundlePredictDoFn {
     outFn: (T, Map[String, Tensor[_]]) => V
   )(implicit ev: T <:< Example): SavedBundlePredictDoFn[T, V] =
     new SavedBundlePredictDoFn[T, V](uri, signatureName, options) {
-      var exportedFetchOps: Map[String, String] = _
-
-      /* tensorId refers to the public/export name of the tensor */
-      private def requestedFetchOps: Map[String, String] = {
-        fetchOps
-          .map { tensorIds =>
-            tensorIds.map { tensorId =>
-              tensorId -> exportedFetchOps(tensorId)
-            }.toMap
-          }
-          .getOrElse(exportedFetchOps)
-      }
+      var requestedFetchOps: Map[String, String] = _
 
       override def createResource(): TensorFlowModel = {
         val model = TensorFlowLoader
           .create(Id.create(id), uri, options, signatureName)
           .get(Duration.ofDays(Integer.MAX_VALUE))
         // by doing it here we make sure we only do it once
-        exportedFetchOps = model.outputsNameMap().asScala.toMap
+        val exportedFetchOps = model.outputsNameMap().asScala.toMap
+        requestedFetchOps = fetchOps
+          .map { tensorIds =>
+            tensorIds.map { tensorId =>
+              tensorId -> exportedFetchOps(tensorId)
+            }.toMap
+          }
+          .getOrElse(exportedFetchOps)
 
         model
       }
