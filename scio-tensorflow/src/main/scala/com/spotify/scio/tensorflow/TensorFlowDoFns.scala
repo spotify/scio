@@ -91,8 +91,10 @@ private[tensorflow] abstract class SavedBundlePredictDoFn[T, V](
 
   override def withRunner(f: Session#Runner => V): V = f(getResource.instance().session().runner())
 
-  def id(): String =
-    (Seq("tf", uri, signatureName) ++ options.tags.asScala.mkString(";")).mkString(":")
+  def id(): String = {
+    val tokens = Seq("tf", uri, signatureName) ++ Seq(options.tags.asScala.mkString(";"))
+    tokens.mkString(":")
+  }
 
   @Teardown
   def teardown(): Unit = {
