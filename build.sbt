@@ -88,7 +88,7 @@ val googleAuthVersion = "0.12.0"
 val bigQueryStorageVersion = "0.79.0-alpha"
 val httpCoreVersion = "4.4.11"
 val googleCloudSpannerVersion = "1.6.0"
-val datastoreV1ProtoClientVersion = "1.6.0"
+val datastoreV1ProtoClientVersion = "1.6.2"
 
 lazy val mimaSettings = Seq(
   mimaPreviousArtifacts :=
