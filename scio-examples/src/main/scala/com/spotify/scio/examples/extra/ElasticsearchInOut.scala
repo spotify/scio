@@ -62,10 +62,15 @@ object ElasticsearchInOut {
   }
 
   private val indexer = (index: String) => (message: String) => {
+
     val request = new IndexRequest(index)
-    request.id("1")
-    val jsonString: String = "{" + "\"message\":\"" + message.substring(0, 5) + "}"
-    Iterable(request.source(jsonString, XContentType.JSON))
+      .id("1")
+      .source("user", "example",
+        "postDate", new java.util.Date(),
+        "messsage", message.substring(0,10)
+      )
+
+    Iterable(request)
   }
 
 }
