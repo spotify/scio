@@ -52,7 +52,7 @@ object ElasticsearchInOut {
     // Provide an elasticsearch writer to transform collections to es documents
     val indexWriter = indexer(index)
 
-    // Read a simple text file and write it to an elasticsearch document
+    // Read a simple text file and write the first 10 characters to an elasticsearch document
     ElasticsearchSCollection(sc.textFile(input))
       .saveAsElasticsearch(clusterOpts)(indexWriter)
 
