@@ -837,6 +837,7 @@ lazy val scioExamples: Project = Project(
     scioSchemas,
     scioJdbc,
     scioExtra,
+    scioElasticsearch7,
     scioSpanner,
     scioTensorFlow,
     scioSql,
