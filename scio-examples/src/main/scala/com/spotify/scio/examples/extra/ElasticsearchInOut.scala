@@ -28,10 +28,8 @@ import com.spotify.scio.elasticsearch._
 
 import org.apache.http.HttpHost
 import org.elasticsearch.action.index.IndexRequest
-import org.elasticsearch.common.xcontent.XContentType
 
 object ElasticsearchInOut {
-
   def main(cliArgs: Array[String]): Unit = {
     // Create `ScioContext` and `Args`
     val (sc, args) = ContextAndArgs(cliArgs)
@@ -58,20 +56,21 @@ object ElasticsearchInOut {
 
     // Run pipeline
     val result = sc.run().waitUntilFinish()
-
   }
 
-  private val indexer = (index: String) => (message: String) => {
+  private val indexer = (index: String) =>
+    (message: String) => {
+      val request = new IndexRequest(index)
+        .id("1")
+        .source(
+          "user",
+          "example",
+          "postDate",
+          new java.util.Date(),
+          "message",
+          message.substring(0, 10)
+        )
 
-    val request = new IndexRequest(index)
-      .id("1")
-      .source("user", "example",
-        "postDate", new java.util.Date(),
-        "messsage", message.substring(0,10)
-      )
-
-    Iterable(request)
-  }
-
+      Iterable(request)
+    }
 }
-
