@@ -25,7 +25,7 @@ import org.apache.beam.sdk.options.PipelineOptions
 import org.apache.beam.sdk.transforms.windowing.{BoundedWindow, PaneInfo}
 import org.apache.beam.sdk.values.{PCollectionView, TupleTag}
 import org.joda.time.Instant
-import org.scalacheck.Prop.BooleanOperators
+import org.scalacheck.Prop.propBoolean
 import org.scalacheck._
 import org.scalacheck.commands.Commands
 
