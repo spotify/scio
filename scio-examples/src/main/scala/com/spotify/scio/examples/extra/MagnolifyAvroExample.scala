@@ -15,11 +15,10 @@
  * under the License.
  */
 
-// Example: Shapeless Avro examples
-// Avro examples using shapeless-datatype to seamlessly convert between case classes and Avro
-// generic records.
+// Example: Handling Avro GenericRecord Types with Magnolify
 
-// See: https://github.com/nevillelyh/shapeless-datatype
+// Using [Magnolify](https://github.com/spotify/magnolify) to seamlessly convert between case
+// classes and Avro `GenericRecord`s.
 package com.spotify.scio.examples.extra
 
 import com.spotify.scio._
@@ -28,53 +27,56 @@ import com.spotify.scio.avro._
 import com.spotify.scio.examples.common.ExampleData
 import org.apache.avro.generic.GenericRecord
 
-object ShapelessAvroExample {
+object MagnolifyAvroExample {
   // limit import scope to avoid polluting namespace
-  import shapeless.datatype.avro._
+  import magnolify.avro._
 
   val wordCountType = AvroType[WordCount]
-  val wordCountSchema = AvroSchema[WordCount]
   case class WordCount(word: String, count: Long)
 }
 
-// ## Count words and save result to Avro
+// ## Magnolify Avro Write Example
+// Count words and save result to Avro
 
 // Usage:
-// `sbt runMain "com.spotify.scio.examples.extra.ShapelessAvroWriteExample
+
+// `sbt runMain "com.spotify.scio.examples.extra.MagnolifyAvroWriteExample
 // --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
 // --input=gs://apache-beam-samples/shakespeare/kinglear.txt
 // --output=gs://[BUCKET]/[PATH]/wordcount-avro"`
-object ShapelessAvroWriteExample {
+object MagnolifyAvroWriteExample {
   def main(cmdlineArgs: Array[String]): Unit = {
-    import ShapelessAvroExample._
+    import MagnolifyAvroExample._
 
     val (sc, args) = ContextAndArgs(cmdlineArgs)
-    implicit def genericCoder = Coder.avroGenericRecordCoder(wordCountSchema)
+    implicit def genericCoder = Coder.avroGenericRecordCoder(wordCountType.schema)
     sc.textFile(args.getOrElse("input", ExampleData.KING_LEAR))
       .flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty))
       .countByValue
-      .map(t => wordCountType.toGenericRecord(WordCount.tupled(t)))
-      .saveAsAvroFile(args("output"), schema = wordCountSchema)
+      .map(t => wordCountType(WordCount.tupled(t)))
+      .saveAsAvroFile(args("output"), schema = wordCountType.schema)
     sc.run()
     ()
   }
 }
 
-// ## Read word count result back from Avro
+// ## Magnolify Avro Read Example
+// Read word count result back from Avro
+
 // Usage:
 
-// `sbt runMain "com.spotify.scio.examples.extra.ShapelessAvroReadExample
+// `sbt runMain "com.spotify.scio.examples.extra.MagnolifyAvroReadExample
 // --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
 // --input=gs://[BUCKET]/[PATH]/wordcount-avro
 // --output=gs://[BUCKET]/[PATH]/wordcount"`
-object ShapelessAvroReadExample {
+object MagnolifyAvroReadExample {
   def main(cmdlineArgs: Array[String]): Unit = {
-    import ShapelessAvroExample._
+    import MagnolifyAvroExample._
 
     val (sc, args) = ContextAndArgs(cmdlineArgs)
-    implicit def genericCoder = Coder.avroGenericRecordCoder(wordCountSchema)
-    sc.avroFile[GenericRecord](args("input"), wordCountSchema)
-      .flatMap(e => wordCountType.fromGenericRecord(e))
+    implicit def genericCoder = Coder.avroGenericRecordCoder(wordCountType.schema)
+    sc.avroFile[GenericRecord](args("input"), wordCountType.schema)
+      .map(e => wordCountType(e))
       .map(wc => wc.word + ": " + wc.count)
       .saveAsTextFile(args("output"))
     sc.run()
