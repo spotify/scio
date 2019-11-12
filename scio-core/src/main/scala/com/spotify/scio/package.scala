@@ -30,6 +30,7 @@ package object scio {
   import scala.concurrent.Await
   import com.spotify.scio.io.Tap
 
+  // scalastyle:off line.size.limit
   @deprecated(
     "waitForResult is deprecated since Scio 0.8 does not rely on Future anymore." +
       " see https://spotify.github.io/scio/migrations/v0.8.0.html#scala-concurrent-future-removed-from-scioios for more information",
@@ -64,4 +65,5 @@ package object scio {
     def waitForResult(atMost: Duration = Duration.Inf): Tap[T] =
       Await.result(self.flatMap(identity), atMost)
   }
+  // scalastyle:on line.size.limit
 }

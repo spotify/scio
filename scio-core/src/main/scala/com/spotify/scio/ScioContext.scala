@@ -867,6 +867,7 @@ class ScioContext private[scio] (
       )
     }
 
+  // scalastyle:off line.size.limit
   @deprecated(
     "\n⛔" +
       "\n⛔️  makeFuture is PRIVATE and you should NOT be using it" +
@@ -878,6 +879,7 @@ class ScioContext private[scio] (
       "\n⛔️",
     since = "0.8.0"
   )
+  // scalastyle:on line.size.limit
   private[scio] def makeFuture[T](value: Tap[T]): Future[Tap[T]] =
     Future.successful(value)
 
