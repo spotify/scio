@@ -28,6 +28,7 @@ import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
 import org.apache.beam.sdk.transforms.{DoFn, ParDo}
 import org.apache.beam.sdk.values.{TupleTag, TupleTagList}
+import com.google.common.util.concurrent.ListenableFuture
 
 import scala.collection.JavaConverters._
 import scala.util.{Failure, Success, Try}
@@ -36,6 +37,25 @@ import scala.util.{Failure, Success, Try}
  * Main package for transforms APIs. Import all.
  */
 package object transforms {
+  @deprecated(
+    "Class AsyncLookupDoFn was renamed to BaseAsyncLookupDoFn." +
+      "see https://spotify.github.io/scio/migrations/v0.8.0.html#async-dofns for more information",
+    "0.8.0"
+  )
+  type AsyncLookupDoFn[A, B, C] =
+    BaseAsyncLookupDoFn[A, B, C, ListenableFuture[_], BaseAsyncLookupDoFn.Try[B]]
+
+  @deprecated(
+    "Class AsyncLookupDoFn was renamed to BaseAsyncLookupDoFn." +
+      "see https://spotify.github.io/scio/migrations/v0.8.0.html#async-dofns for more information",
+    "0.8.0"
+  )
+  object AsyncLookupDoFn {
+    type Try[T] = BaseAsyncLookupDoFn.Try[T]
+    type CacheSupplier[A, B, K] = BaseAsyncLookupDoFn.CacheSupplier[A, B, K]
+    type NoOpCacheSupplier[A, B] = BaseAsyncLookupDoFn.NoOpCacheSupplier[A, B]
+  }
+
   /**
    * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with
    * [[java.net.URI URI]] methods.
