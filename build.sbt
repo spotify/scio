@@ -66,13 +66,12 @@ val scalacheckVersion = "1.14.2"
 val scalaMacrosVersion = "2.1.1"
 val scalatestVersion = "3.0.8"
 val shapelessVersion = "2.3.3"
-val shapelessDatatypeVersion = "0.2.0"
 val slf4jVersion = "1.7.29"
 val sparkeyVersion = "3.0.0"
 val tensorFlowVersion = "1.15.0"
 val zoltarVersion = "0.5.6"
 val magnoliaVersion = "0.12.0"
-val magnolifyVersion = "0.1.0"
+val magnolifyVersion = "0.1.1"
 val grpcVersion = "1.17.1"
 val caseappVersion = "2.0.0-M9"
 val sparkVersion = "2.4.3"
@@ -852,7 +851,7 @@ lazy val scioTensorFlow: Project = Project(
       "com.spotify" % "zoltar-api" % zoltarVersion,
       "com.spotify" % "zoltar-tensorflow" % zoltarVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
-      "me.lyh" %% "shapeless-datatype-tensorflow" % shapelessDatatypeVersion % Test
+      "com.spotify" %% "magnolify-tensorflow" % magnolifyVersion % Test
     ),
     javaOptions += "-Dscio.ignoreVersionWarning=true"
   )
@@ -900,9 +899,9 @@ lazy val scioExamples: Project = Project(
       "com.google.cloud.sql" % "mysql-socket-factory" % "1.0.15",
       "com.google.apis" % "google-api-services-bigquery" % googleApiServicesBigQuery,
       "org.tensorflow" % "proto" % tensorFlowVersion,
-      "me.lyh" %% "shapeless-datatype-avro" % shapelessDatatypeVersion,
-      "me.lyh" %% "shapeless-datatype-datastore" % shapelessDatatypeVersion,
-      "me.lyh" %% "shapeless-datatype-tensorflow" % shapelessDatatypeVersion,
+      "com.spotify" %% "magnolify-avro" % magnolifyVersion,
+      "com.spotify" %% "magnolify-datastore" % magnolifyVersion,
+      "com.spotify" %% "magnolify-tensorflow" % magnolifyVersion,
       "mysql" % "mysql-connector-java" % "8.0.18",
       "joda-time" % "joda-time" % jodaTimeVersion,
       "com.github.alexarchambault" %% "case-app" % caseappVersion,
