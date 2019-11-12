@@ -62,6 +62,12 @@ abstract class ScioResult private[scio] (val internal: PipelineResult) {
   def isTest: Boolean = false
 
   @deprecated(
+    "ScioResult is guaranteed to com completed in Scio > 0.8.0",
+    since = "0.8.0"
+  )
+  def isCompleted: Boolean = true
+
+  @deprecated(
     "Scio 0.8 does not use Futures anymore. You can simply use the 'state' directly to get a State",
     since = "0.8.0"
   )
