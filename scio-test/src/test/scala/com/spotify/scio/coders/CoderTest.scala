@@ -457,14 +457,15 @@ final class CoderTest extends FlatSpec with Matchers {
   }
 
   it should "support derivation of recursive types" in {
-    case class SampleField(name: String, fieldType: SampleFieldType)
-    sealed trait SampleFieldType
-    case object IntegerType extends SampleFieldType
-    case object StringType extends SampleFieldType
-    case class RecordType(fields: List[SampleField]) extends SampleFieldType
+    import RecursiveCase._
 
-    noException should be thrownBy SerializableUtils.serializeToByteArray(CoderMaterializer.beamWithDefault(implicitly[Coder[Top]]))
-    noException should be thrownBy SerializableUtils.serializeToByteArray(CoderMaterializer.beamWithDefault(implicitly[Coder[SampleFieldType]]))
+    noException should be thrownBy
+      SerializableUtils.serializeToByteArray(CoderMaterializer.beamWithDefault(Coder[Top]))
+
+    noException should be thrownBy
+      SerializableUtils.serializeToByteArray(
+        CoderMaterializer.beamWithDefault(Coder[SampleFieldType])
+      )
 
     "Coder[SampleField]" should compile
     // deriving this coder under 2.11 will fail
@@ -481,4 +482,14 @@ final class CoderTest extends FlatSpec with Matchers {
       )
     ) coderShould roundtrip()
   }
+}
+
+object RecursiveCase {
+  case class SampleField(name: String, fieldType: SampleFieldType)
+  sealed trait SampleFieldType
+  case object IntegerType extends SampleFieldType
+  case object StringType extends SampleFieldType
+  case class RecordType(fields: List[SampleField]) extends SampleFieldType
+
+  implicit val coderSampleFieldType = Coder.gen[SampleField]
 }
