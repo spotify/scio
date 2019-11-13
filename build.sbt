@@ -410,6 +410,7 @@ lazy val scioCore: Project = Project(
       "io.grpc" % "grpc-auth" % grpcVersion,
       "io.grpc" % "grpc-netty" % grpcVersion,
       "com.github.alexarchambault" %% "case-app" % caseappVersion,
+      "com.github.ben-manes.caffeine" % "caffeine" % caffeineVersion,
       "joda-time" % "joda-time" % jodaTimeVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       "org.scalatest" %% "scalatest" % scalatestVersion % Test
