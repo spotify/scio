@@ -15,67 +15,72 @@
  * under the License.
  */
 
-// Example: Handling TensorFlow Example Types with Shapeless
+// Example: Handling TensorFlow Example Types with Magnolify
 
 // TensorFlow `Example` is a Protobuf type and very verbose. By using
-// [shapeless-datatype](https://github.com/nevillelyh/shapeless-datatype), one can seamlessly
+// [Magnolify](https://github.com/spotify/magnolify), one can seamlessly
 // convert between case classes and TensorFlow `Example`s.
 package com.spotify.scio.examples.extra
 
+import com.google.protobuf.ByteString
 import com.spotify.scio._
 import com.spotify.scio.examples.common.ExampleData
 import com.spotify.scio.tensorflow._
 import org.tensorflow.example.Example
-import shapeless.datatype.tensorflow._
+import magnolify.tensorflow._
 
-object ShapelessTensorFlowExample {
+object MagnolifyTensorFlowExample {
   // Define case class representation of TensorFlow `Example`
   case class WordCount(word: String, count: Long)
+  // `Example` type doesn't support `String` natively, derive one from `ByteString`
+  implicit val efString = ExampleField.from[ByteString](_.toStringUtf8)(ByteString.copyFromUtf8)
   // `TensorFlowType` provides mapping between case classes and TensorFlow `Example`
-  val wordCountType = TensorFlowType[WordCount]
+  val wordCountType = ExampleType[WordCount]
 }
 
-// ## Shapeless Tensorflow Write Example
+// ## Magnolify Tensorflow Write Example
 // Count words and save result as `TFRecord`s
+
 // Usage:
 
-// `sbt runMain "com.spotify.scio.examples.extra.ShapelessTensorFlowWriteExample
+// `sbt runMain "com.spotify.scio.examples.extra.MagnolifyTensorFlowWriteExample
 // --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
 // --input=gs://apache-beam-samples/shakespeare/kinglear.txt
 // --output=gs://[BUCKET]/[PATH]/wordcount-tf"`
-object ShapelessTensorFlowWriteExample {
+object MagnolifyTensorFlowWriteExample {
   def main(cmdlineArgs: Array[String]): Unit = {
-    import ShapelessTensorFlowExample._
+    import MagnolifyTensorFlowExample._
 
     val (sc, args) = ContextAndArgs(cmdlineArgs)
     sc.textFile(args.getOrElse("input", ExampleData.KING_LEAR))
       .flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty))
       .countByValue
       // Convert case class to `Example` and then serialize as `Array[Byte]`
-      .map(t => wordCountType.toExample(WordCount.tupled(t)).toByteArray)
+      .map(t => wordCountType(WordCount.tupled(t)).toByteArray)
       .saveAsTfRecordFile(args("output"))
     sc.run()
     ()
   }
 }
 
-// ## Shapeless Tensorflow Read Example
+// ## Magnolify Tensorflow Read Example
 // Read word count result back from `TFRecord`
+
 // Usage:
 
-// `sbt runMain "com.spotify.scio.examples.extra.ShapelessTensorFlowReadExample
+// `sbt runMain "com.spotify.scio.examples.extra.MagnolifyTensorFlowReadExample
 // --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
 // --input=gs://[BUCKET]/[PATH]/wordcount-tf
 // --output=gs://[BUCKET]/[PATH]/wordcount"`
-object ShapelessTensorFlowReadExample {
+object Magnolify {
   def main(cmdlineArgs: Array[String]): Unit = {
-    import ShapelessTensorFlowExample._
+    import MagnolifyTensorFlowExample._
 
     val (sc, args) = ContextAndArgs(cmdlineArgs)
     sc.tfRecordFile(args("input"))
-      .flatMap { b =>
+      .map { b =>
         // Deserialize `Array[Byte]` as `Example` and then convert to case class
-        wordCountType.fromExample(Example.parseFrom(b))
+        wordCountType(Example.parseFrom(b))
       }
       .map(wc => wc.word + ": " + wc.count)
       .saveAsTextFile(args("output"))

@@ -17,20 +17,23 @@
 
 package com.spotify.scio.tensorflow
 
+import com.google.protobuf.ByteString
 import com.spotify.scio.testing._
-import shapeless.datatype.tensorflow._
+import magnolify.tensorflow._
 
 object TFExampleIOTest {
   case class Record(i: Int, s: String)
 
-  val recordT: TensorFlowType[Record] = TensorFlowType[Record]
+  implicit val efInt = ExampleField.from[Long](_.toInt)(_.toLong)
+  implicit val efString = ExampleField.from[ByteString](_.toStringUtf8)(ByteString.copyFromUtf8)
+  val recordT: ExampleType[Record] = ExampleType[Record]
 }
 
 class TFExampleIOTest extends ScioIOSpec {
   import TFExampleIOTest._
 
   "TFExampleIO" should "work" in {
-    val xs = (1 to 100).map(x => recordT.toExample(Record(x, x.toString)))
+    val xs = (1 to 100).map(x => recordT(Record(x, x.toString)))
     testTap(xs)(_.saveAsTfRecordFile(_))(".tfrecords")
     testJobTest(xs)(TFExampleIO(_))(_.tfRecordExampleFile(_))(_.saveAsTfRecordFile(_))
   }

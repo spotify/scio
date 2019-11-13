@@ -23,7 +23,7 @@ import com.spotify.scio.tensorflow.TFRecordIO
 import com.spotify.scio.testing._
 import org.tensorflow.example._
 
-class ShapelessTensorFlowExampleTest extends PipelineSpec {
+class MagnolifyTensorFlowExampleTest extends PipelineSpec {
   val textIn = Seq("a b c d e", "a b a b")
   val wordCount = Seq(("a", 3L), ("b", 3L), ("c", 1L), ("d", 1L), ("e", 1L))
   val examples = wordCount.map { kv =>
@@ -51,8 +51,8 @@ class ShapelessTensorFlowExampleTest extends PipelineSpec {
   }
   val textOut = wordCount.map(kv => kv._1 + ": " + kv._2)
 
-  "ShapelessTensorFlowWriteExample" should "work" in {
-    JobTest[com.spotify.scio.examples.extra.ShapelessTensorFlowWriteExample.type]
+  "MagnolifyTensorFlowWriteExample" should "work" in {
+    JobTest[com.spotify.scio.examples.extra.MagnolifyTensorFlowWriteExample.type]
       .args("--input=in.txt", "--output=wc.tfrecords")
       .input(TextIO("in.txt"), textIn)
       .output(TFRecordIO("wc.tfrecords")) {
@@ -61,8 +61,8 @@ class ShapelessTensorFlowExampleTest extends PipelineSpec {
       .run()
   }
 
-  "ShapelessTensorFlowReadExample" should "work" in {
-    JobTest[com.spotify.scio.examples.extra.ShapelessTensorFlowReadExample.type]
+  "MagnolifyTensorFlowReadExample" should "work" in {
+    JobTest[com.spotify.scio.examples.extra.Magnolify.type]
       .args("--input=wc.tfrecords", "--output=out.txt")
       .input(TFRecordIO("wc.tfrecords"), examples.map(_.toByteArray))
       .output(TextIO("out.txt")) { coll =>
