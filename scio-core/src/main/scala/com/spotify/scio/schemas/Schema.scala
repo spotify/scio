@@ -29,9 +29,25 @@ import org.apache.beam.sdk.values.{Row, TypeDescriptor}
 import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
 import org.apache.beam.sdk.values.TupleTag
+import org.apache.beam.sdk.schemas.Schema.LogicalType
 
 object Schema extends AllInstances {
   @inline final def apply[T](implicit c: Schema[T]): Schema[T] = c
+
+  final def logicalType[U, T: ClassTag](
+    underlying: Type[U]
+  )(toBase: T => U, fromBase: U => T): Schema[T] = {
+    Type[T](FieldType.logicalType(new LogicalType[T, U] {
+      private val clazz = scala.reflect.classTag[T].runtimeClass.asInstanceOf[Class[T]]
+      private val className = clazz.getCanonicalName
+      override def getIdentifier: String = className
+      override def getBaseType: FieldType = underlying.fieldType
+      override def toBaseType(input: T): U = toBase(input)
+      override def toInputType(base: U): T = fromBase(base)
+      override def toString(): String =
+        s"LogicalType($className, ${underlying.fieldType.getTypeName()})"
+    }))
+  }
 }
 
 sealed trait Schema[T] {
