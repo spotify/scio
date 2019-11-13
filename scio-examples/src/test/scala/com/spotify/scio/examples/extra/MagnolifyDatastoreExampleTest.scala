@@ -22,21 +22,21 @@ import com.google.datastore.v1.Entity
 import com.spotify.scio.io._
 import com.spotify.scio.testing._
 
-class ShapelessDatastoreExampleTest extends PipelineSpec {
+class MagnolifyDatastoreExampleTest extends PipelineSpec {
   val textIn = Seq("a b c d e", "a b a b")
   val wordCount = Seq(("a", 3L), ("b", 3L), ("c", 1L), ("d", 1L), ("e", 1L))
   val entities = wordCount.map { kv =>
     Entity
       .newBuilder()
-      .setKey(makeKey(ShapelessDatastoreExample.kind, kv._1))
+      .setKey(makeKey(MagnolifyDatastoreExample.kind, kv._1))
       .putProperties("word", makeValue(kv._1).build())
       .putProperties("count", makeValue(kv._2).build())
       .build()
   }
   val textOut = wordCount.map(kv => kv._1 + ": " + kv._2)
 
-  "ShapelessDatastoreWriteExample" should "work" in {
-    JobTest[com.spotify.scio.examples.extra.ShapelessDatastoreWriteExample.type]
+  "MagnolifyDatastoreWriteExample" should "work" in {
+    JobTest[com.spotify.scio.examples.extra.MagnolifyDatastoreWriteExample.type]
       .args("--input=in.txt", "--output=project")
       .input(TextIO("in.txt"), textIn)
       .output(DatastoreIO("project")) { coll =>
@@ -45,8 +45,8 @@ class ShapelessDatastoreExampleTest extends PipelineSpec {
       .run()
   }
 
-  "ShapelessDatastoreReadExample" should "work" in {
-    JobTest[com.spotify.scio.examples.extra.ShapelessDatastoreReadExample.type]
+  "MagnolifyDatastoreReadExample" should "work" in {
+    JobTest[com.spotify.scio.examples.extra.MagnolifyDatastoreReadExample.type]
       .args("--input=project", "--output=out.txt")
       .input(DatastoreIO("project"), entities)
       .output(TextIO("out.txt")) { coll =>

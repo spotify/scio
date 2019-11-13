@@ -311,7 +311,7 @@ class DatastoreLogger[A <: BenchmarkType] extends BenchmarkLogger[Try, A] {
   // Save metrics to integration testing Datastore instance. Can't make this into a
   // transaction because DS limit is 25 entities per transaction.
   def log(benchmarks: Iterable[BenchmarkResult[A]]): Try[Unit] = {
-    implicit val efInstant = EntityField.efTimestamp.imap(i => new Instant(i.toEpochMilli))(
+    implicit val efInstant = EntityField.from[java.time.Instant](i => new Instant(i.toEpochMilli))(
       i => java.time.Instant.ofEpochMilli(i.getMillis)
     )
     val dt = EntityType[BenchmarkResult[A]]
@@ -359,7 +359,7 @@ class DatastoreLogger[A <: BenchmarkType] extends BenchmarkLogger[Try, A] {
     benchmarkName: String,
     buildNums: List[Long]
   ): List[BenchmarkResult[A]] = {
-    implicit val efInstant = EntityField.efTimestamp.imap(i => new Instant(i.toEpochMilli))(
+    implicit val efInstant = EntityField.from[java.time.Instant](i => new Instant(i.toEpochMilli))(
       i => java.time.Instant.ofEpochMilli(i.getMillis)
     )
     val dt = EntityType[BenchmarkResult[A]]
