@@ -19,7 +19,7 @@ package com.spotify.scio.io
 
 import java.util.UUID
 
-import com.spotify.scio.ScioContext
+import com.spotify.scio.{ScioContext, ScioResult}
 import com.spotify.scio.coders.AvroBytesUtil
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
@@ -110,4 +110,11 @@ object MaterializeTap {
     new MaterializeTap(path, CoderMaterializer.beam(context, Coder[T]))
 }
 
-final case class ClosedTap[T] private (private[scio] val underlying: Tap[T])
+final case class ClosedTap[T] private (private[scio] val underlying: Tap[T]) {
+  /**
+   * Get access to the underlying Tap. The ScioContext has to be ran before.
+   * An instance of ScioResult is returned by ScioContext when the context is closed.
+   * @see ScioContext.run
+   */
+  def get(result: ScioResult): Tap[T] = result.tap(this)
+}
