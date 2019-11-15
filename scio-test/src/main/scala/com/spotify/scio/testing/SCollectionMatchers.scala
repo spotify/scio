@@ -91,16 +91,24 @@ trait SCollectionMatchers {
 
   private def makeFn[T](f: JIterable[T] => Unit): SerializableFunction[JIterable[T], Void] =
     new SerializableFunction[JIterable[T], Void] {
+      // delegate serialization to Kryo to avoid serialization issues in tests
+      // when a non-serializable object is captured by the closure
+      val impl = Externalizer(f)
+
       override def apply(input: JIterable[T]) = {
-        f(input)
+        impl.get(input)
         null
       }
     }
 
   private def makeFnSingle[T](f: T => Unit): SerializableFunction[T, Void] =
     new SerializableFunction[T, Void] {
+      // delegate serialization to Kryo to avoid serialization issues in tests
+      // when a non-serializable object is captured by the closure
+      val impl = Externalizer(f)
+
       override def apply(input: T) = {
-        f(input)
+        impl.get(input)
         null
       }
     }
@@ -336,6 +344,7 @@ trait SCollectionMatchers {
             val p = ClosureCleaner(predicate)
             val f = makeFnSingle[T](in => assert(p(in)))
             val g = makeFnSingle[T](in => assert(!p(in)))
+
             m(
               () =>
                 builder(PAssert.thatSingleton(serDeCycle(left).internal))
