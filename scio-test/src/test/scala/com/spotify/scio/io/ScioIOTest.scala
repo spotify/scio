@@ -101,14 +101,18 @@ class ScioIOTest extends ScioIOSpec {
     val xs = (1 to 100).map(x => TableRow("x" -> x.toString))
     testJobTest(xs, in = "project:dataset.in_table", out = "project:dataset.out_table")(
       BigQueryIO(_)
-    )((sc, s) => sc.bigQueryTable(Table.Spec(s)))(_.saveAsBigQuery(_))
+    )((sc, s) => sc.bigQueryTable(Table.Spec(s)))(
+      (coll, s) => coll.saveAsBigQueryTable(Table.Spec(s))
+    )
   }
 
   it should "work with typed BigQuery" in {
     val xs = (1 to 100).map(x => BQRecord(x, x.toString, (1 to x).map(_.toString).toList))
     testJobTest(xs, in = "project:dataset.in_table", out = "project:dataset.out_table")(
       BigQueryIO(_)
-    )(_.typedBigQuery(_))(_.saveAsTypedBigQuery(_))
+    )((sc, s) => sc.typedBigQueryTable(Table.Spec(s)))(
+      (coll, s) => coll.saveAsTypedBigQueryTable(Table.Spec(s))
+    )
   }
 
   /**
@@ -127,7 +131,7 @@ class ScioIOTest extends ScioIOSpec {
     val context = ScioContext()
     context
       .parallelize(xs)
-      .saveAsBigQuery(tableSpec = "project:dataset.dummy", createDisposition = CREATE_NEVER)
+      .saveAsBigQueryTable(Table.Spec("project:dataset.dummy"), createDisposition = CREATE_NEVER)
     // We want to validate on the job graph, and we need not actually execute the pipeline.
 
     verifyAllReadsConsumed(context)
@@ -139,7 +143,10 @@ class ScioIOTest extends ScioIOSpec {
     val context = ScioContext()
     context
       .parallelize(xs)
-      .saveAsTypedBigQuery(tableSpec = "project:dataset.dummy", createDisposition = CREATE_NEVER)
+      .saveAsTypedBigQueryTable(
+        Table.Spec("project:dataset.dummy"),
+        createDisposition = CREATE_NEVER
+      )
     // We want to validate on the job graph, and we need not actually execute the pipeline.
 
     verifyAllReadsConsumed(context)

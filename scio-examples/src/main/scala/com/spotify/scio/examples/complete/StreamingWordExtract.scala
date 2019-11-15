@@ -49,7 +49,7 @@ object StreamingWordExtract {
       .flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty))
       .map(_.toUpperCase)
       .map(s => TableRow("string_field" -> s))
-      .saveAsBigQuery(args("output"), schema)
+      .saveAsBigQueryTable(Table.Spec(args("output")), schema)
 
     val result = sc.run()
     exampleUtils.waitToFinish(result.pipelineResult)

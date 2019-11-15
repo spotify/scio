@@ -92,7 +92,7 @@ object HourlyTeamScore {
           TeamScoreSums(team, score, start)
       }
       // Save to the BigQuery table defined by "output" in the arguments passed in
-      .saveAsTypedBigQuery(args("output"))
+      .saveAsTypedBigQueryTable(Table.Spec(args("output")))
 
     // Close context and execute the pipeline
     sc.run()

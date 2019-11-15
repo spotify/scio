@@ -138,7 +138,7 @@ object TriggerExample {
           sequentialResults
         )
       )
-      .saveAsTypedBigQuery(args("output"))
+      .saveAsTypedBigQueryTable(Table.Spec(args("output")))
 
     val result = sc.run()
     exampleUtils.waitToFinish(result.pipelineResult)

@@ -54,7 +54,11 @@ object TypedStorageBigQueryTornadoes {
       .countByValue
       .map(kv => Result(kv._1, kv._2))
       // Convert elements from Result to TableRow and save output to BigQuery.
-      .saveAsTypedBigQuery(args("output"), WRITE_TRUNCATE, CREATE_IF_NEEDED)
+      .saveAsTypedBigQueryTable(
+        Table.Spec(args("output")),
+        writeDisposition = WRITE_TRUNCATE,
+        createDisposition = CREATE_IF_NEEDED
+      )
 
     sc.run()
     ()

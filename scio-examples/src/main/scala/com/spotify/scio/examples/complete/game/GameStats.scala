@@ -111,7 +111,7 @@ object GameStats {
       // Done using windowing information, convert back to regular `SCollection`
       .toSCollection
       // Save to the BigQuery table defined by "output" in the arguments passed in + "_team" suffix
-      .saveAsTypedBigQuery(args("output") + "_team")
+      .saveAsTypedBigQueryTable(Table.Spec(args("output") + "_team"))
 
     userEvents
     // Window over a variable length of time - sessions end after sessionGap minutes no activity
@@ -141,7 +141,7 @@ object GameStats {
           AvgSessionLength(mean, fmt.print(w.start()))
       }
       // Save to the BigQuery table defined by "output" + "_sessions" suffix
-      .saveAsTypedBigQuery(args("output") + "_sessions")
+      .saveAsTypedBigQueryTable(Table.Spec(args("output") + "_sessions"))
 
     // Close context and execute the pipeline
     val result = sc.run()

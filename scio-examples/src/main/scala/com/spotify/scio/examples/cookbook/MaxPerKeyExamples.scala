@@ -54,7 +54,7 @@ object MaxPerKeyExamples {
       // Map `(Long, Double)` tuples into result `TableRow`s
       .map(kv => TableRow("month" -> kv._1, "max_mean_temp" -> kv._2))
       // Save result as a BigQuery table
-      .saveAsBigQuery(args("output"), schema, WRITE_TRUNCATE, CREATE_IF_NEEDED)
+      .saveAsBigQueryTable(Table.Spec(args("output")), schema, WRITE_TRUNCATE, CREATE_IF_NEEDED)
 
     // Close the context and execute the pipeline
     sc.run()
