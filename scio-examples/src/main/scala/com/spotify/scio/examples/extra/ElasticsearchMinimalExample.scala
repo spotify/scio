@@ -15,7 +15,11 @@
  * under the License.
  */
 
-// Example: Elasticsearch Input and Output
+// Example: Elasticsearch minimal example
+
+// Open a connection to an ES cluster and index
+// an arbitrary input text string
+
 // Usage:
 
 // `sbt runMain "com.spotify.scio.examples.extra.ElasticsearchInOut
@@ -29,7 +33,7 @@ import com.spotify.scio.elasticsearch._
 import org.apache.http.HttpHost
 import org.elasticsearch.action.index.IndexRequest
 
-object ElasticsearchInOut {
+object ElasticsearchMinimalExample {
   def main(cliArgs: Array[String]): Unit = {
     // Create `ScioContext` and `Args`
     val (sc, args) = ContextAndArgs(cliArgs)
@@ -48,11 +52,11 @@ object ElasticsearchInOut {
     val clusterOpts = ElasticsearchOptions(servers)
 
     // Provide an elasticsearch writer to transform collections to es documents
-    val indexWriter = indexer(index)
+    val indexRequestBuilder = indexer(index)
 
     // Read a simple text file and write the first 10 characters to an elasticsearch document
-    ElasticsearchSCollection(sc.textFile(input))
-      .saveAsElasticsearch(clusterOpts)(indexWriter)
+    sc.textFile(input)
+      .saveAsElasticsearch(clusterOpts)(indexRequestBuilder)
 
     // Run pipeline
     val result = sc.run().waitUntilFinish()
