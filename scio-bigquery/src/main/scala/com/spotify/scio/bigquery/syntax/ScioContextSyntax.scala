@@ -170,13 +170,16 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
     "Scio 0.8"
   )
   def typedBigQuery[T <: HasAnnotation: ClassTag: TypeTag: Coder](
-    newSource: String = null
+    newSource: String
   ): SCollection[T] = {
     val src = Option(newSource).map { s =>
       Try(Table.Spec(s)).getOrElse(Query(s))
     }.orNull
     typedBigQuery(src)
   }
+
+  def typedBigQuery[T <: HasAnnotation: ClassTag: TypeTag: Coder](): SCollection[T] =
+    self.read(BigQueryTyped.dynamic[T](None))
 
   def typedBigQuery[T <: HasAnnotation: ClassTag: TypeTag: Coder](
     newSource: Source
