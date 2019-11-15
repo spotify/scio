@@ -20,10 +20,9 @@ package com.spotify.scio.extra
 import java.nio.charset.Charset
 import java.util
 import java.util.{UUID, List => JList}
-import java.util.function.{Function => JFunction}
 import java.lang.{Iterable => JIterable}
 
-import com.github.benmanes.caffeine.cache.Cache
+import com.spotify.scio.util.Cache
 import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import com.spotify.scio.values.{SCollection, SideInput}
@@ -381,7 +380,7 @@ package object sparkey {
      */
     def asTypedSparkeySideInput[T](decoder: Array[Byte] => T): SideInput[TypedSparkeyReader[T]] =
       asSparkeySideInput
-        .map(reader => new TypedSparkeyReader[T](reader, decoder, cache = null))
+        .map(reader => new TypedSparkeyReader[T](reader, decoder, Cache.noOp))
 
     /**
      * Convert this SCollection to a SideInput of `CachedStringSparkeyReader`, to be used with
@@ -457,9 +456,7 @@ package object sparkey {
   class CachedStringSparkeyReader(val sparkey: SparkeyReader, val cache: Cache[String, String])
       extends RichStringSparkeyReader(sparkey) {
     override def get(key: String): Option[String] =
-      Option(cache.get(key, new JFunction[String, String] {
-        override def apply(k: String): String = sparkey.getAsString(k)
-      }))
+      Option(cache.get(key, sparkey.getAsString(key)))
 
     def close(): Unit = {
       sparkey.close()
@@ -474,7 +471,7 @@ package object sparkey {
   class TypedSparkeyReader[T](
     val sparkey: SparkeyReader,
     val decoder: Array[Byte] => T,
-    val cache: Cache[String, T] = null
+    val cache: Cache[String, T] = Cache.noOp
   ) extends Map[String, T] {
     private def stringKeyToBytes(key: String): Array[Byte] = key.getBytes(Charset.defaultCharset())
 
@@ -488,29 +485,14 @@ package object sparkey {
     }
 
     override def get(key: String): Option[T] =
-      Option(if (cache == null) {
-        loadValueFromSparkey(key)
-      } else {
-        cache.get(key, new JFunction[String, T] {
-          override def apply(k: String): T = loadValueFromSparkey(k)
-        })
-      })
+      Option(cache.get(key, loadValueFromSparkey(key)))
 
     override def iterator: Iterator[(String, T)] =
-      sparkey.iterator.asScala.map(e => {
+      sparkey.iterator.asScala.map { e =>
         val key = e.getKeyAsString
-        val value = if (cache == null) {
-          decoder(e.getValue)
-        } else {
-          val possibleValue = cache.getIfPresent(key)
-          if (possibleValue == null) {
-            decoder(e.getValue)
-          } else {
-            possibleValue
-          }
-        }
+        val value = cache.get(key).getOrElse(decoder(e.getValue))
         (key, value)
-      })
+      }
 
     //scalastyle:off method.name
     override def +[B1 >: T](kv: (String, B1)): Map[String, B1] =
@@ -521,7 +503,7 @@ package object sparkey {
 
     def close(): Unit = {
       sparkey.close()
-      if (cache != null) cache.invalidateAll()
+      cache.invalidateAll()
     }
   }
 

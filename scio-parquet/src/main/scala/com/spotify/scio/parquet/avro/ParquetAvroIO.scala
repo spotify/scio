@@ -88,7 +88,7 @@ final case class ParquetAvroIO[T: ClassTag: Coder](path: String) extends ScioIO[
       FileBasedSink.convertToFileResourceIfPossible(ScioUtil.pathWithShards(path))
     val prefix = StaticValueProvider.of(resource)
     val usedFilenamePolicy =
-      DefaultFilenamePolicy.fromStandardParameters(prefix, null, ".parquet", false)
+      DefaultFilenamePolicy.fromStandardParameters(prefix, null, params.suffix, false)
     val destinations = DynamicFileDestinations.constant[T](usedFilenamePolicy)
     val sink = new ParquetAvroSink[T](
       prefix,
@@ -157,7 +157,7 @@ object ParquetAvroIO {
   object WriteParam {
     private[avro] val DefaultSchema = null
     private[avro] val DefaultNumShards = 0
-    private[avro] val DefaultSuffix = ""
+    private[avro] val DefaultSuffix = ".parquet"
     private[avro] val DefaultCompression = CompressionCodecName.SNAPPY
   }
 

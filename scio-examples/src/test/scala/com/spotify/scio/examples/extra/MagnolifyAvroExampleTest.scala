@@ -22,21 +22,21 @@ import com.spotify.scio.io._
 import com.spotify.scio.testing._
 import org.apache.avro.generic.{GenericData, GenericRecord}
 
-class ShapelessAvroExampleTest extends PipelineSpec {
-  import ShapelessAvroExample._
+class MagnolifyAvroExampleTest extends PipelineSpec {
+  import MagnolifyAvroExample._
 
   val textIn = Seq("a b c d e", "a b a b")
   val wordCount = Seq(("a", 3L), ("b", 3L), ("c", 1L), ("d", 1L), ("e", 1L))
   val records: Seq[GenericRecord] = wordCount.map { kv =>
-    val r = new GenericData.Record(wordCountSchema)
+    val r = new GenericData.Record(wordCountType.schema)
     r.put("word", kv._1)
     r.put("count", kv._2)
     r
   }
   val textOut = wordCount.map(kv => kv._1 + ": " + kv._2)
 
-  "ShapelessAvroWriteExample" should "work" in {
-    JobTest[com.spotify.scio.examples.extra.ShapelessAvroWriteExample.type]
+  "MagnolifyAvroWriteExample" should "work" in {
+    JobTest[com.spotify.scio.examples.extra.MagnolifyAvroWriteExample.type]
       .args("--input=in.txt", "--output=wc.avro")
       .input(TextIO("in.txt"), textIn)
       .output(AvroIO[GenericRecord]("wc.avro")) { coll =>
@@ -45,8 +45,8 @@ class ShapelessAvroExampleTest extends PipelineSpec {
       .run()
   }
 
-  "ShapelessAvroReadExample" should "work" in {
-    JobTest[com.spotify.scio.examples.extra.ShapelessAvroReadExample.type]
+  "MagnolifyAvroReadExample" should "work" in {
+    JobTest[com.spotify.scio.examples.extra.MagnolifyAvroReadExample.type]
       .args("--input=wc.avro", "--output=out.txt")
       .input(AvroIO[GenericRecord]("wc.avro"), records)
       .output(TextIO("out.txt")) { coll =>

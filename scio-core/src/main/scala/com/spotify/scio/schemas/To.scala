@@ -35,40 +35,90 @@ object To {
     else getBaseType(log.getBaseType())
   }
 
+  // Position API
+  private case class Location(p: List[String])
+  private case class Positional[T](location: Location, value: T)
+
+  private def merge(p0: Location, p1: Location): Location =
+    Location(p0.p ++ p1.p)
+
+  sealed trait Nullable
+  case object `NOT NULLABLE` extends Nullable
+  case object NULLABLE extends Nullable
+  private object NullableBuilder {
+    def fromBoolean(isNullable: Boolean): Nullable =
+      if (isNullable) NULLABLE else `NOT NULLABLE`
+  }
+
+  // Error API
+  private sealed trait Error
+  private case class NullableError(got: Nullable, expected: Nullable) extends Error
+  private case class TypeError(got: BSchema.FieldType, expected: BSchema.FieldType) extends Error
+  private case object FieldNotFound extends Error
+
+  private type Errors = List[Positional[Error]]
+
   /**
    * Test if Rows with Schema t0 can be safely converted to Rows with Schema t1
    */
-  private def areCompatible(t0: BSchema.FieldType, t1: BSchema.FieldType): Boolean = {
+  private def areCompatible(
+    context: Location
+  )(t0: BSchema.FieldType, t1: BSchema.FieldType): Errors = {
     (t0.getTypeName, t1.getTypeName, t0.getNullable == t1.getNullable) match {
       case (_, _, false) =>
-        false
+        val expected = NullableBuilder.fromBoolean(t1.getNullable())
+        val got = NullableBuilder.fromBoolean(t0.getNullable())
+        List(Positional(context, NullableError(got, expected)))
       case (BSchema.TypeName.ROW, BSchema.TypeName.ROW, _) =>
-        areCompatible(t0.getRowSchema, t1.getRowSchema)
+        areCompatible(t0.getRowSchema, t1.getRowSchema).map { e =>
+          Positional(merge(context, e.location), e.value)
+        }
       case (BSchema.TypeName.ARRAY, BSchema.TypeName.ARRAY, _) =>
-        areCompatible(t0.getCollectionElementType, t1.getCollectionElementType)
+        areCompatible(context)(t0.getCollectionElementType, t1.getCollectionElementType)
       case (BSchema.TypeName.MAP, BSchema.TypeName.MAP, _) =>
-        areCompatible(t0.getMapKeyType, t1.getMapKeyType) &&
-          areCompatible(t0.getMapValueType, t1.getMapValueType)
+        areCompatible(context)(t0.getMapKeyType, t1.getMapKeyType) ++
+          areCompatible(context)(t0.getMapValueType, t1.getMapValueType)
       case (_, _, _) =>
-        t0.equivalent(t1, BSchema.EquivalenceNullablePolicy.SAME)
+        if (t0.equivalent(t1, BSchema.EquivalenceNullablePolicy.SAME)) Nil
+        else List(Positional(context, TypeError(t0, t1)))
     }
   }
 
-  private def areCompatible(s0: BSchema, s1: BSchema): Boolean = {
-    val s0Fields = s0.getFields.asScala.map { x =>
-      (x.getName, x)
-    }.toMap
-    s1.getFields.asScala.forall { f =>
+  private def areCompatible(s0: BSchema, s1: BSchema): Errors = {
+    val s0Fields =
+      s0.getFields.asScala.map { x =>
+        (x.getName, x)
+      }.toMap
+
+    s1.getFields.asScala.toList.flatMap { f =>
+      val name = f.getName
+      val loc = Location(List(name))
       s0Fields
-        .get(f.getName)
-        .exists(other => areCompatible(other.getType, f.getType))
+        .get(name)
+        .map { other =>
+          areCompatible(loc)(other.getType, f.getType)
+        }
+        .getOrElse[Errors](List(Positional(loc, FieldNotFound)))
     }
   }
+
+  private def mkPath(p: Location): String = p.p.mkString(".")
+
+  private def messageFor(err: Positional[Error]): String =
+    err match {
+      case Positional(p, NullableError(got, expected)) =>
+        s"⨯ Field ${mkPath(p)} has incompatible NULLABLE. Got: $got expected: $expected"
+      case Positional(p, TypeError(got, expected)) =>
+        s"⨯ Field ${mkPath(p)} has incompatible types." +
+          s" Got: ${got.getTypeName} expected: ${expected.getTypeName}"
+      case Positional(p, FieldNotFound) => s"⨯ Field ${mkPath(p)} was not found"
+    }
 
   def checkCompatibility[T](bsi: BSchema, bso: BSchema)(
     t: => T
-  ): Either[String, T] =
-    if (areCompatible(bsi, bso)) {
+  ): Either[String, T] = {
+    val errors = areCompatible(bsi, bso)
+    if (errors.isEmpty) {
       Right(t)
     } else {
       val message =
@@ -78,9 +128,12 @@ object To {
         |FROM schema:
         |${PrettyPrint.prettyPrint(bsi.getFields.asScala.toList)}
         |TO schema:
-        |${PrettyPrint.prettyPrint(bso.getFields.asScala.toList)}""".stripMargin
-      Left(message)
+        |${PrettyPrint.prettyPrint(bso.getFields.asScala.toList)}
+        |""".stripMargin
+      val errorsMsg = errors.map(messageFor).mkString("\n")
+      Left(message ++ errorsMsg)
     }
+  }
 
   /**
    * Builds a function that reads a Row and convert it

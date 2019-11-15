@@ -354,7 +354,7 @@ def main(cmdlineArgs: Array[String]): Unit = {
 
 #### How do I reduce Datastore boilerplate?
 
-Datastore `Entity` class is actually generated from @github[Protobuf](/scio-examples/src/test/scala/com/spotify/scio/examples/extra/ShapelessDatastoreExampleTest.scala) which uses the builder pattern and very boilerplate heavy. You can use the [shapeless-datatype](https://github.com/nevillelyh/shapeless-datatype#datastoretype) library to seamlessly convert bewteen case classes and `Entity`s. See @extref[ShapelessDatastoreExample.scala](example:ShapelessDatastoreExample) for an example job and @github[ShapelessDatastoreExampleTest.scala](/scio-examples/src/test/scala/com/spotify/scio/examples/extra/ShapelessDatastoreExampleTest.scala) for tests.
+Datastore `Entity` class is actually generated from @github[Protobuf](/scio-examples/src/test/scala/com/spotify/scio/examples/extra/MagnolifyDatastoreExampleTest.scala) which uses the builder pattern and very boilerplate heavy. You can use the [Magnolify](https://github.com/spotify/magnolify) library to seamlessly convert bewteen case classes and `Entity`s. See @extref[MagnolifyDatastoreExample.scala](example:MagnolifyDatastoreExample) for an example job and @github[MagnolifyDatastoreExampleTest.scala](/scio-examples/src/test/scala/com/spotify/scio/examples/extra/MagnolifyDatastoreExampleTest.scala) for tests.
 
 #### How do I throttle Bigtable writes?
 
