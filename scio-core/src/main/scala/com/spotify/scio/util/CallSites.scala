@@ -69,7 +69,7 @@ private[scio] object CallSites {
     }
   }
 
-  /** Get current call site name in the form of "method@{file:line}". */
+  /** Get current call site name in the form of "(method, file:line, isNested)". */
   def getCurrentName: (String, String, Boolean) = {
     val stack = Thread.currentThread().getStackTrace.drop(1)
     val firstExtIdx = stack.indexWhere(e => isExternalClass(e.getClassName))
