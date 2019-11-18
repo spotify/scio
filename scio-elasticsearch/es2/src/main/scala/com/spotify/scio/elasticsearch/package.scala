@@ -49,6 +49,7 @@ package object elasticsearch {
      *                   number of pipeline workers
      * @param errorFn function to handle error when performing Elasticsearch bulk writes
      */
+    @deprecated("scio-elasticsearch2 will be removed", "0.8.0")
     def saveAsElasticsearch(
       esOptions: ElasticsearchOptions,
       flushInterval: Duration = WriteParam.DefaultFlushInterval,
