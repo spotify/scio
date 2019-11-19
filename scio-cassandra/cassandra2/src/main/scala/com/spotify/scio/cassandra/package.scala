@@ -61,6 +61,7 @@ package object cassandra {
      * @param parallelism number of concurrent bulk writers, default to number of Cassandra nodes
      * @param f function to convert input data to values for the CQL statement
      */
+    @deprecated("scio-cassandra2 will be removed", "0.8.0")
     def saveAsCassandra(
       opts: CassandraOptions,
       parallelism: Int = CassandraIO.WriteParam.DefaultPar

@@ -30,6 +30,7 @@ import org.joda.time.Duration
 
 import scala.collection.JavaConverters._
 
+@deprecated("scio-elasticsearch2 will be removed", "0.8.0")
 final case class ElasticsearchIO[T](esOptions: ElasticsearchOptions) extends ScioIO[T] {
   override type ReadP = Nothing
   override type WriteP = ElasticsearchIO.WriteParam[T]
