@@ -410,7 +410,7 @@ lazy val scioCore: Project = Project(
       "io.grpc" % "grpc-auth" % grpcVersion,
       "io.grpc" % "grpc-netty" % grpcVersion,
       "com.github.alexarchambault" %% "case-app" % caseappVersion,
-      "com.github.ben-manes.caffeine" % "caffeine" % caffeineVersion % Provided,
+      "com.github.ben-manes.caffeine" % "caffeine" % caffeineVersion % "provided",
       "joda-time" % "joda-time" % jodaTimeVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       "org.scalatest" %% "scalatest" % scalatestVersion % Test
@@ -735,7 +735,7 @@ lazy val scioExtra: Project = Project(
       "info.debatty" % "java-lsh" % javaLshVersion,
       "net.pishen" %% "annoy4s" % annoy4sVersion,
       "org.scalanlp" %% "breeze" % breezeVersion,
-      "com.github.ben-manes.caffeine" % "caffeine" % caffeineVersion % Test,
+      "com.github.ben-manes.caffeine" % "caffeine" % caffeineVersion % "test",
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       "org.scalatest" %% "scalatest" % scalatestVersion % "test",
       "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test"
@@ -756,7 +756,7 @@ lazy val scioExtra: Project = Project(
     compileOrder := CompileOrder.JavaThenScala
   )
   .dependsOn(
-    scioCore,
+    scioCore % "compile->compile;provided->provided",
     scioTest % "it->it;test->test",
     scioAvro,
     scioBigQuery,
