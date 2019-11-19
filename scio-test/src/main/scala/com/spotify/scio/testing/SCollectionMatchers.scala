@@ -20,7 +20,6 @@ package com.spotify.scio.testing
 import java.lang.{Iterable => JIterable}
 import java.util.{Map => JMap}
 
-import com.spotify.scio.util.ClosureCleaner
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.values.SCollection
 import com.twitter.chill.Externalizer
@@ -33,6 +32,7 @@ import org.scalatest.matchers.{MatchResult, Matcher}
 
 import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
+import com.twitter.chill.ClosureCleaner
 
 /**
  * Trait with ScalaTest [[org.scalatest.matchers.Matcher Matcher]]s for
@@ -313,7 +313,7 @@ trait SCollectionMatchers {
       override def matcher(builder: AssertBuilder): Matcher[SCollection[T]] =
         new Matcher[SCollection[T]] {
           override def apply(left: SCollection[T]): MatchResult = {
-            val p = ClosureCleaner(predicate)
+            val p = ClosureCleaner.clean(predicate)
             val f = makeFn[T](in => assert(p(in.asScala)))
             val g = makeFn[T](in => assert(!p(in.asScala)))
             m(
@@ -333,7 +333,7 @@ trait SCollectionMatchers {
       override def matcher(builder: AssertBuilder): Matcher[SCollection[T]] =
         new Matcher[SCollection[T]] {
           override def apply(left: SCollection[T]): MatchResult = {
-            val p = ClosureCleaner(predicate)
+            val p = ClosureCleaner.clean(predicate)
             val f = makeFnSingle[T](in => assert(p(in)))
             val g = makeFnSingle[T](in => assert(!p(in)))
             m(
@@ -350,13 +350,13 @@ trait SCollectionMatchers {
 
   /** Assert that all elements of the SCollection in question satisfy the provided function. */
   def forAll[T: Coder](predicate: T => Boolean): IterableMatcher[SCollection[T], T] = {
-    val f = ClosureCleaner(predicate)
+    val f = ClosureCleaner.clean(predicate)
     satisfy(_.forall(f))
   }
 
   /** Assert that some elements of the SCollection in question satisfy the provided function. */
   def exist[T: Coder](predicate: T => Boolean): IterableMatcher[SCollection[T], T] = {
-    val f = ClosureCleaner(predicate)
+    val f = ClosureCleaner.clean(predicate)
     satisfy(_.exists(f))
   }
 }

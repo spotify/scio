@@ -25,6 +25,7 @@ import com.spotify.scio.util._
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
 
 import com.spotify.scio.values.SCollection
+import com.twitter.chill.ClosureCleaner
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
 import org.apache.beam.sdk.transforms.{DoFn, ParDo}
 import org.apache.beam.sdk.values.{TupleTag, TupleTagList}
@@ -115,8 +116,8 @@ package object transforms {
       extends AnyVal {
     private def parallelCollectFn[U](parallelism: Int)(pfn: PartialFunction[T, U]): DoFn[T, U] =
       new ParallelLimitedFn[T, U](parallelism) {
-        val isDefined = ClosureCleaner(pfn.isDefinedAt(_)) // defeat closure
-        val g = ClosureCleaner(pfn) // defeat closure
+        val isDefined = ClosureCleaner.clean(pfn.isDefinedAt(_)) // defeat closure
+        val g = ClosureCleaner.clean(pfn) // defeat closure
         def parallelProcessElement(c: DoFn[T, U]#ProcessContext): Unit = {
           if (isDefined(c.element())) {
             c.output(g(c.element()))
@@ -126,7 +127,7 @@ package object transforms {
 
     private def parallelFilterFn(parallelism: Int)(f: T => Boolean): DoFn[T, T] =
       new ParallelLimitedFn[T, T](parallelism) {
-        val g = ClosureCleaner(f) // defeat closure
+        val g = ClosureCleaner.clean(f) // defeat closure
         def parallelProcessElement(c: DoFn[T, T]#ProcessContext): Unit = {
           if (g(c.element())) {
             c.output(c.element())
@@ -136,14 +137,14 @@ package object transforms {
 
     private def parallelMapFn[U](parallelism: Int)(f: T => U): DoFn[T, U] =
       new ParallelLimitedFn[T, U](parallelism) {
-        val g = ClosureCleaner(f) // defeat closure
+        val g = ClosureCleaner.clean(f) // defeat closure
         def parallelProcessElement(c: DoFn[T, U]#ProcessContext): Unit =
           c.output(g(c.element()))
       }
 
     private def parallelFlatMapFn[U](parallelism: Int)(f: T => TraversableOnce[U]): DoFn[T, U] =
       new ParallelLimitedFn[T, U](parallelism: Int) {
-        val g = ClosureCleaner(f) // defeat closure
+        val g = ClosureCleaner.clean(f) // defeat closure
         def parallelProcessElement(c: DoFn[T, U]#ProcessContext): Unit = {
           val i = g(c.element()).toIterator
           while (i.hasNext) c.output(i.next())
@@ -257,7 +258,7 @@ package object transforms {
     )(implicit coder: Coder[T]): (SCollection[U], SCollection[(T, Throwable)]) = {
       val (mainTag, errorTag) = (new TupleTag[U], new TupleTag[(T, Throwable)])
       val doFn = new NamedDoFn[T, U] {
-        val g = ClosureCleaner(f) // defeat closure
+        val g = ClosureCleaner.clean(f) // defeat closure
         @ProcessElement
         private[scio] def processElement(c: DoFn[T, U]#ProcessContext): Unit = {
           val i = try {
