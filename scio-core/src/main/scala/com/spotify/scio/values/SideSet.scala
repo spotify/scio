@@ -16,4 +16,5 @@
  */
 package com.spotify.scio.values
 
+@deprecated("Use .asSetSingletonSideInput instead", "0.8.0")
 case class SideSet[T](side: SideInput[Set[T]])

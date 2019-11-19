@@ -48,6 +48,7 @@ import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConverters._
 import scala.collection.immutable.TreeMap
+import scala.collection.{mutable => m}
 import scala.reflect.ClassTag
 import scala.util.Try
 
@@ -812,6 +813,15 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   def asIterableSideInput: SideInput[Iterable[T]] =
     new IterableSideInput[T](this.applyInternal(View.asIterable()))
 
+  def asSetSingletonSideInput(implicit coder: Coder[T]): SideInput[Set[T]] =
+    self
+      .aggregate(m.Set[T]())(_ += _, _ ++= _) // Use mutable sets during aggregation
+      .map(_.toSet) // switch to immutable set for output
+      .asSingletonSideInput
+
+  @deprecated("Use asSetSingletonSideInput instead", "0.8.0")
+  def toSideSet(implicit coder: Coder[T]): SideSet[T] = SideSet(asSetSingletonSideInput)
+
   /**
    * Convert this SCollection to an [[SCollectionWithSideInput]] with one or more [[SideInput]]s,
    * similar to Spark broadcast variables. Call [[SCollectionWithSideInput.toSCollection]] when
@@ -826,13 +836,15 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * val side1 = s1.asSingletonSideInput
    * val side2 = s2.asIterableSideInput
    * val side3 = s3.asMapSideInput
+   * val side4 = s4.asMultiMapSideInput
    *
    * val p: SCollection[MyRecord] = // ...
    * p.withSideInputs(side1, side2, side3).map { (x, s) =>
    *   // Extract side inputs from context
    *   val s1: Int = s(side1)
    *   val s2: Iterable[String] = s(side2)
-   *   val s3: Map[String, Iterable[Double]] = s(side3)
+   *   val s3: Map[String, Double] = s(side3)
+   *   val s4: Map[String, Iterable[Double]] = s(side4)
    *   // ...
    * }
    * }}}
@@ -1046,12 +1058,6 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
         .of(Functions.serializableFn(f))
         .withAllowedTimestampSkew(allowedTimestampSkew)
     )
-
-  def toSideSet(implicit coder: Coder[T]): SideSet[T] = SideSet(combineAsSet(self))
-
-  private def combineAsSet[A: Coder](c: SCollection[A]): SideInput[Set[A]] =
-    c.aggregate[Set[A], Set[A]](Aggregator.prepareSemigroup(x => Set(x)))
-      .asSingletonSideInput(Set[A]())
 
   // =======================================================================
   // Read operations
