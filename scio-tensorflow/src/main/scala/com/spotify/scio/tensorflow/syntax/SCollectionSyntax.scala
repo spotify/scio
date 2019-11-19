@@ -65,7 +65,7 @@ final class ExampleSCollectionOps[T <: Example](private val self: SCollection[T]
    * Saves this SCollection of `org.tensorflow.example.Example` as a TensorFlow TFRecord file.
    * @return
    */
-  @deprecated("saveAsTfExampleFile is deprecated: use saveAsTfRecordFile instead", "Scio 0.7.4")
+  @deprecated("saveAsTfExampleFile is deprecated: use saveAsTfRecordFile instead", "0.7.4")
   def saveAsTfExampleFile(
     path: String,
     suffix: String = TFExampleIO.WriteParam.DefaultSuffix,
@@ -104,7 +104,7 @@ final class SeqExampleSCollectionOps[T <: Example](private val self: SCollection
    *
    * @group output
    */
-  @deprecated("saveAsTfExampleFile is deprecated: use saveAsTfRecordFile instead", "Scio 0.7.4")
+  @deprecated("saveAsTfExampleFile is deprecated: use saveAsTfRecordFile instead", "0.7.4")
   def saveAsTfExampleFile(
     path: String,
     suffix: String = TFExampleIO.WriteParam.DefaultSuffix,

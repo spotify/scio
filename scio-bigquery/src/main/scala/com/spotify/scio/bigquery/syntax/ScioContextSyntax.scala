@@ -54,7 +54,7 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
    */
   @deprecated(
     "this method will be removed; use bigQuery(Query(sql), flattenResults) instead",
-    "Scio 0.8"
+    "0.8.0"
   )
   def bigQuerySelect(
     sqlQuery: String,
@@ -80,7 +80,7 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
    */
   @deprecated(
     "this method will be removed; use bigQueryTable(Table.Ref(table)) instead",
-    "Scio 0.8"
+    "0.8.0"
   )
   def bigQueryTable(table: TableReference): SCollection[TableRow] =
     bigQueryTable(Table.Ref(table))
@@ -90,7 +90,7 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
    */
   @deprecated(
     "this method will be removed; use bigQueryTable(Table.Spec(table)) instead",
-    "Scio 0.8"
+    "0.8.0"
   )
   def bigQueryTable(tableSpec: String): SCollection[TableRow] =
     bigQueryTable(Table.Spec(tableSpec))
@@ -167,7 +167,7 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
    */
   @deprecated(
     "this method will be removed; use typedBigQuery(Source) instead",
-    "Scio 0.8"
+    "0.8.0"
   )
   def typedBigQuery[T <: HasAnnotation: ClassTag: TypeTag: Coder](
     newSource: String = null
