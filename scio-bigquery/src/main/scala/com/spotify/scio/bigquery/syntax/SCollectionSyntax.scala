@@ -48,7 +48,7 @@ final class SCollectionTableRowOps[T <: TableRow](private val self: SCollection[
    */
   @deprecated(
     "this method will be removed; use saveAsBigQuery(Table.Ref(table)) instead",
-    "Scio 0.8"
+    "0.8.0"
   )
   def saveAsBigQuery(
     table: TableReference,
