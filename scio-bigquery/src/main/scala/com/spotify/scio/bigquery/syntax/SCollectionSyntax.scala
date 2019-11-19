@@ -211,7 +211,7 @@ final class SCollectionTypedOps[T <: HasAnnotation](private val self: SCollectio
    */
   @deprecated(
     "this method will be removed; use saveAsBigQuery(Table.Ref(table)) instead",
-    "Scio 0.8"
+    "0.8.0"
   )
   def saveAsTypedBigQuery(
     tableSpec: String,
