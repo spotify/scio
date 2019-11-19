@@ -546,7 +546,7 @@ object BigQueryTyped {
         .read(new SerializableFunction[SchemaAndRecord, T] {
           override def apply(input: SchemaAndRecord): T = fromAvro(input.getRecord)
         })
-      BigQueryTypedSelect(reader, query, fromTableRow)(Coder.kryo[T])
+      BigQueryTypedSelect(reader, query, fromTableRow)
     }
 
     override def testId: String = s"BigQueryIO(${query.underlying})"
@@ -580,7 +580,7 @@ object BigQueryTyped {
         toTableRow,
         fromTableRow,
         table
-      )(Coder.kryo[T])
+      )
     }
 
     override type ReadP = Unit
@@ -761,7 +761,7 @@ object BigQueryTyped {
         .read(new SerializableFunction[SchemaAndRecord, T] {
           override def apply(input: SchemaAndRecord): T = fromAvro(input.getRecord)
         })
-        .withCoder(CoderMaterializer.beam(sc, Coder.kryo[T]))
+        .withCoder(CoderMaterializer.beam(sc, Coder[T]))
       Reads.bqReadStorage(sc)(reader, table, params.selectFields, params.rowRestriction)
     }
 
@@ -792,7 +792,7 @@ object BigQueryTyped {
           override def apply(input: SchemaAndRecord): T = fromAvro(input.getRecord)
         })
         .withMethod(Method.DIRECT_READ)
-      BigQueryTypedSelect(reader, sqlQuery, fromTableRow)(Coder.kryo[T])
+      BigQueryTypedSelect(reader, sqlQuery, fromTableRow)
     }
 
     override def testId: String = s"BigQueryIO($sqlQuery)"
