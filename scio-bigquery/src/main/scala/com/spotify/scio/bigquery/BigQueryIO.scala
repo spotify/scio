@@ -357,11 +357,11 @@ object BigQueryTable {
   type WriteParam = BigQueryTypedTable.WriteParam
   val WriteParam = BigQueryTypedTable.WriteParam
 
-  @deprecated("this method will be removed; use apply(Table.Ref(table)) instead", "Scio 0.8")
+  @deprecated("this method will be removed; use apply(Table.Ref(table)) instead", "0.8.0")
   @inline final def apply(table: TableReference): BigQueryTable =
     BigQueryTable(Table.Ref(table))
 
-  @deprecated("this method will be removed; use apply(Table.Spec(table)) instead", "Scio 0.8")
+  @deprecated("this method will be removed; use apply(Table.Spec(table)) instead", "0.8.0")
   @inline final def apply(spec: String): BigQueryTable =
     BigQueryTable(Table.Spec(spec))
 }
@@ -399,11 +399,11 @@ final case class BigQueryStorage(table: Table) extends BigQueryIO[TableRow] {
 object BigQueryStorage {
   final case class ReadParam(selectFields: List[String], rowRestriction: String)
 
-  @deprecated("this method will be removed; use apply(Table.Ref(table)) instead", "Scio 0.8")
+  @deprecated("this method will be removed; use apply(Table.Ref(table)) instead", "0.8.0")
   @inline final def apply(table: TableReference): BigQueryStorage =
     BigQueryStorage(Table.Ref(table))
 
-  @deprecated("this method will be removed; use apply(Table.Spec(table)) instead", "Scio 0.8")
+  @deprecated("this method will be removed; use apply(Table.Spec(table)) instead", "0.8.0")
   @inline final def apply(spec: String): BigQueryStorage =
     BigQueryStorage(Table.Spec(spec))
 }
@@ -643,12 +643,12 @@ object BigQueryTyped {
       ): WriteParam = apply(wd, cd, tp, DefaultExtendedErrorInfo)(defaultInsertErrorTransform)
     }
 
-    @deprecated("this method will be removed; use apply(Table.Ref(table)) instead", "Scio 0.8")
+    @deprecated("this method will be removed; use apply(Table.Ref(table)) instead", "0.8.0")
     @inline
     final def apply[T <: HasAnnotation: ClassTag: TypeTag: Coder](spec: String): Table[T] =
       Table[T](STable.Spec(spec))
 
-    @deprecated("this method will be removed; use apply(Table.Spec(table)) instead", "Scio 0.8")
+    @deprecated("this method will be removed; use apply(Table.Spec(table)) instead", "0.8.0")
     @inline
     final def apply[T <: HasAnnotation: ClassTag: TypeTag: Coder](table: TableReference): Table[T] =
       Table[T](STable.Ref(table))

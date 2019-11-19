@@ -683,7 +683,7 @@ class ScioContext private[scio] (
    *
    * @see [[ScioContext#run]]
    */
-  @deprecated("this method will be removed in next scio version; use run() instead.", "Scio 0.8.0")
+  @deprecated("this method will be removed in next scio version; use run() instead.", "0.8.0")
   def close(): ScioExecutionContext = requireNotClosed {
     val closedContext = run()
 
