@@ -111,7 +111,7 @@ private[types] object ConverterProvider {
       q"if ($tree == null) None else Some(${cast(tree, tpe)})"
 
     def list(tree: Tree, tpe: Type): Tree = {
-      val jl = tq"_root_.org.apache.avro.generic.GenericData.Array[AnyRef]"
+      val jl = tq"_root_.java.util.List[AnyRef]"
       val bo = q"_root_.scala.collection.breakOut"
       q"$tree.asInstanceOf[$jl].asScala.map(x => ${cast(q"x", tpe)})($bo)"
     }
