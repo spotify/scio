@@ -428,6 +428,10 @@ class ScioContext private[scio] (
   val options: PipelineOptions,
   private var artifacts: List[String]
 ) extends TransformNameable {
+  // var _pipeline member is lazily initialized, this makes sure that file systems are registered
+  // before any IO
+  FileSystems.setDefaultPipelineOptions(options)
+
   /** Get PipelineOptions as a more specific sub-type. */
   def optionsAs[T <: PipelineOptions: ClassTag]: T =
     options.as(ScioUtil.classOf[T])
