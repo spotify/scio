@@ -95,7 +95,7 @@ object BigQueryJob {
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
     sc.bigQueryTable(Table.Spec(args("input")))
-      .saveAsBigQuery(args("output"))
+      .saveAsBigQueryTable(Table.Spec(args("output")))
     sc.run()
     ()
   }

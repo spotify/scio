@@ -81,7 +81,7 @@ object FilterExamples {
         TableRow("year" -> r.year, "month" -> r.month, "day" -> r.day, "mean_temp" -> r.meanTemp)
       }
       // Save result as a BigQuery table
-      .saveAsBigQuery(args("output"), schema, WRITE_TRUNCATE, CREATE_IF_NEEDED)
+      .saveAsBigQueryTable(Table.Spec(args("output")), schema, WRITE_TRUNCATE, CREATE_IF_NEEDED)
 
     // Close the context and execute the pipeline
     sc.run()

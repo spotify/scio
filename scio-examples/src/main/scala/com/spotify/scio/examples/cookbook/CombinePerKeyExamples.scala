@@ -64,7 +64,7 @@ object CombinePerKeyExamples {
       // Map `(String, String)` tuples into result `TableRow`s
       .map(kv => TableRow("word" -> kv._1, "all_plays" -> kv._2))
       // Save result as a BigQuery table
-      .saveAsBigQuery(args("output"), schema, WRITE_TRUNCATE, CREATE_IF_NEEDED)
+      .saveAsBigQueryTable(Table.Spec(args("output")), schema, WRITE_TRUNCATE, CREATE_IF_NEEDED)
 
     // Close the context and execute the pipeline
     sc.run()
