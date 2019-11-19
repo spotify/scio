@@ -38,6 +38,9 @@ private[client] object QueryOps {
 
   private val Priority = if (isInteractive) "INTERACTIVE" else "BATCH"
 
+  private[scio] def isDML(sqlQuery: String): Boolean =
+    sqlQuery.toUpperCase().matches("(UPDATE|MERGE|INSERT|DELETE).*")
+
   private[scio] final case class QueryJobConfig(
     sql: String,
     useLegacySql: Boolean,
@@ -46,9 +49,7 @@ private[client] object QueryOps {
     flattenResults: Boolean = false,
     writeDisposition: WriteDisposition = WriteDisposition.WRITE_EMPTY,
     createDisposition: CreateDisposition = CreateDisposition.CREATE_IF_NEEDED
-  ) {
-    val isDML: Boolean = sql.toUpperCase().matches("(UPDATE|MERGE|INSERT|DELETE).*")
-  }
+  )
 }
 
 private[client] final class QueryOps(client: Client, tableService: TableOps, jobService: JobOps) {
@@ -238,7 +239,7 @@ private[client] final class QueryOps(client: Client, tableService: TableOps, job
         .map(_.name)
         .foreach(queryConfig.setWriteDisposition)
 
-      if (!config.dryRun && !config.isDML) {
+      if (!config.dryRun && !isDML(config.sql)) {
         queryConfig.setAllowLargeResults(true).setDestinationTable(config.destinationTable)
       }
 
