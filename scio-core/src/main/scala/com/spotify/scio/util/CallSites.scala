@@ -21,67 +21,70 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.function.BiFunction
 
 private[scio] object CallSites {
-  private val scioNs = "com.spotify.scio."
-  private val beamNs = "org.apache.beam."
+  private val scioNs = "com.spotify.scio"
+  private val beamNs = "org.apache.beam"
 
   private val methodMap = Map("$plus$plus" -> "++")
-  private val nameCache = new ConcurrentHashMap[String, Int]()
+  private val nameCache = new ConcurrentHashMap[(String, String, Boolean), Int]()
 
   private def isExternalClass(c: String): Boolean =
     // Not in our code base or an interpreter
     (!c.startsWith(scioNs) && !c.startsWith("scala.") && !c.startsWith(beamNs)) ||
-      c.startsWith(scioNs + "examples.") || // unless if it's in examples
-      c.startsWith(scioNs + "values.ClosureTest") || // or this test
+      c.startsWith(s"$scioNs.examples.") || // unless if it's in examples
+      c.startsWith(s"$scioNs.values.NamedTransformTest") || // or this test
+      c.startsWith(s"$scioNs.values.SimpleJob") || // or this test
+      c.startsWith(s"$scioNs.values.ClosureTest") || // or this test
       // or benchmarks/ITs
       (c.startsWith(scioNs) && (c.contains("Benchmark$") || c.contains("IT")))
 
   private def isTransform(e: StackTraceElement): Boolean =
-    e.getClassName == scioNs + "values.SCollectionImpl" && e.getMethodName == "transform"
+    e.getClassName == s"$scioNs.values.SCollectionImpl" && e.getMethodName == "transform"
+
+  private def isPCollectionApply(e: StackTraceElement): Boolean =
+    e.getClassName == s"$beamNs.sdk.values.PCollection" && e.getMethodName == "apply"
 
   def getAppName: String = {
     Thread
       .currentThread()
       .getStackTrace
       .drop(1)
-      .find(e => isExternalClass(e.getClassName))
       .map(_.getClassName)
+      .find(isExternalClass)
       .getOrElse("unknown")
       .split("\\.")
       .last
       .replaceAll("\\$$", "")
   }
 
-  /** Get a unique identifier for the current call site. */
   def getCurrent: String = {
-    val name = getCurrentName
-
-    val n = nameCache.merge(name, 1, new BiFunction[Int, Int, Int] {
+    val (method, location, nested) = getCurrentName
+    val idx = nameCache.merge((method, location, nested), 1, new BiFunction[Int, Int, Int] {
       override def apply(t: Int, u: Int): Int = t + u
     })
-    if (n == 1) name else name + n
+
+    if (nested) {
+      s"$method:$idx"
+    } else {
+      s"$method@{$location}:$idx"
+    }
   }
 
-  /** Get current call site name in the form of "method@{file:line}". */
-  def getCurrentName: String = {
-    val stack = new Exception().getStackTrace.drop(1)
+  /** Get current call site name in the form of "(method, file:line, isNested)". */
+  def getCurrentName: (String, String, Boolean) = {
+    val stack = Thread.currentThread().getStackTrace.drop(1)
+    val firstExtIdx = stack.indexWhere(e => isExternalClass(e.getClassName))
+    val scioMethod = stack(firstExtIdx - 1).getMethodName
+    val method = methodMap.getOrElse(scioMethod, scioMethod)
 
     // find first stack outside of Scio or SDK
-    var pExt = stack.indexWhere(e => isExternalClass(e.getClassName))
+    val externalCall = stack(firstExtIdx)
+    val location = s"${externalCall.getFileName}:${externalCall.getLineNumber}"
+    // check if transform is nested
+    val transformIdx = stack.indexWhere(isTransform)
+    val pApplyIdx = stack.indexWhere(isPCollectionApply)
+    val isNested = transformIdx > 0 && pApplyIdx > 0
+    val collIdx = stack.lastIndexWhere(_.getClassName.contains("SCollectionImpl"), pApplyIdx)
 
-    val pTransform = stack.indexWhere(isTransform)
-    if (pTransform < pExt && pTransform > 0) {
-      val m = stack(pExt - 1).getMethodName // method implemented with transform
-      val _p =
-        stack.take(pTransform).indexWhere(e => e.getClassName.contains(m))
-      if (_p > 0) {
-        pExt = _p
-      }
-    }
-
-    val k = stack(pExt - 1).getMethodName
-    val method = methodMap.getOrElse(k, k)
-    val file = stack(pExt).getFileName
-    val line = stack(pExt).getLineNumber
-    s"$method@{$file:$line}"
+    (stack.lift(collIdx).fold(method)(_.getMethodName), location, isNested)
   }
 }
