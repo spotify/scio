@@ -38,6 +38,38 @@ class BigQueryClientIT extends FlatSpec with Matchers {
   val sqlQuery =
     "SELECT word, word_count FROM `bigquery-public-data.samples.shakespeare` LIMIT 10"
 
+  "QueryService.run" should "run DML queries" in {
+    val schema =
+      BigQueryUtil.parseSchema("""
+      |{
+      |  "fields": [
+      |    {"mode": "NULLABLE", "name": "word", "type": "STRING"},
+      |    {"mode": "NULLABLE", "name": "word_count", "type": "INTEGER"},
+      |    {"mode": "NULLABLE", "name": "corpus", "type": "STRING"},
+      |    {"mode": "NULLABLE", "name": "corpus_date", "type": "INTEGER"}
+      |  ]
+      |}
+    """.stripMargin)
+    val sources = List("gs://data-integration-test-eu/shakespeare-sample-10.json")
+    val table = bq.tables.createTemporary(location = "EU")
+    val tableRef = bq.load.json(sources, table.asTableSpec, schema = Some(schema))
+    tableRef.map { ref =>
+      val insertQuery = s"insert into `${ref.asTableSpec}` values (1603, 'alien', 9000, 'alien')"
+      bq.query.run(
+        insertQuery,
+        createDisposition = null,
+        writeDisposition = null
+      )
+
+      val deleteQuery = s"delete from `${ref.asTableSpec}` where word = 'alien'"
+      bq.query.run(
+        insertQuery,
+        createDisposition = null,
+        writeDisposition = null
+      )
+    }
+  }
+
   "QueryService.extractLocation" should "work with legacy syntax" in {
     val query = "SELECT word FROM [data-integration-test:samples_%s.shakespeare]"
     bq.query.extractLocation(query.format("eu")) shouldBe Some("EU")
