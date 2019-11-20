@@ -15,8 +15,6 @@
  * under the License.
  */
 
-// scalastyle:off file.size.limit
-
 package com.spotify.scio.values
 
 import java.io.PrintStream
@@ -94,7 +92,6 @@ object SCollection {
   private[scio] final case class State(postCoGroup: Boolean = false)
 }
 
-// scalastyle:off number.of.methods
 /**
  * A Scala wrapper for [[org.apache.beam.sdk.values.PCollection PCollection]]. Represents an
  * immutable, partitioned collection of elements that can be operated on in parallel. This class
@@ -212,9 +209,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * multiple times (use [[distinct]] to eliminate them).
    * @group collection
    */
-  // scalastyle:off method.name
   def ++(that: SCollection[T]): SCollection[T] = this.union(that)
-  // scalastyle:on method.name
 
   /**
    * Return the union of this SCollection and another one. Any identical elements will appear
@@ -758,9 +753,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   ): SCollection[T] =
     if (enabled) {
       this.filter { e =>
-        // scalastyle:off regex
         out().println(prefix + e)
-        // scalastyle:on regex
+
         // filter that never removes
         true
       }
@@ -1211,7 +1205,6 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * Save this SCollection as raw bytes. Note that elements must be of type `Array[Byte]`.
    * @group output
    */
-  // scalastyle:off parameter.number
   def saveAsBinaryFile(
     path: String,
     numShards: Int = BinaryIO.WriteParam.DefaultNumShards,
@@ -1228,7 +1221,6 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
         BinaryIO
           .WriteParam(suffix, numShards, compression, header, footer, framePrefix, frameSuffix)
       )
-  // scalastyle:on parameter.number
 
   /**
    * Save this SCollection with a custom output transform. The transform should have a unique name.
@@ -1265,14 +1257,9 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   def write(io: ScioIO[T])(params: io.WriteP)(implicit coder: Coder[T]): ClosedTap[io.tapT.T] =
     io.writeWithContext(this, params)
 
-  // scalastyle:off structural.type
   def write(io: ScioIO[T] { type WriteP = Unit })(implicit coder: Coder[T]): ClosedTap[io.tapT.T] =
     io.writeWithContext(this, ())
-  // scalastyle:on structural.type
 }
-// scalastyle:on number.of.methods
 
 private[scio] class SCollectionImpl[T](val internal: PCollection[T], val context: ScioContext)
     extends SCollection[T] {}
-
-// scalastyle:on file.size.limit

@@ -70,7 +70,6 @@ trait ScioIOSpec extends PipelineSpec {
     runMain(Array(s"--input=$in") :+ s"--appName=${builder.testId}")
     builder.tearDown()
 
-    // scalastyle:off no.whitespace.before.left.bracket
     the[IllegalArgumentException] thrownBy {
       val builder = com.spotify.scio.testing
         .JobTest("null")
@@ -85,7 +84,6 @@ trait ScioIOSpec extends PipelineSpec {
     } should have message s"requirement failed: Missing test input: ${ioFn(in).testId}, " +
       s"available: [CustomIO($in)]"
     ()
-    // scalastyle:on no.whitespace.before.left.bracket
   }
 
   def testJobTestOutput[T: Coder, WT](xs: Seq[T], out: String = "out")(
@@ -108,7 +106,6 @@ trait ScioIOSpec extends PipelineSpec {
     runMain(Array(s"--output=$out") :+ s"--appName=${builder.testId}")
     builder.tearDown()
 
-    // scalastyle:off no.whitespace.before.left.bracket
     the[IllegalArgumentException] thrownBy {
       val builder = com.spotify.scio.testing
         .JobTest("null")
@@ -122,7 +119,6 @@ trait ScioIOSpec extends PipelineSpec {
     } should have message s"requirement failed: Missing test output: ${ioFn(out).testId}, " +
       s"available: [CustomIO($out)]"
     ()
-    // scalastyle:on no.whitespace.before.left.bracket
   }
 
   def testJobTest[T: Coder](xs: Seq[T], in: String = "in", out: String = "out")(
@@ -149,7 +145,6 @@ trait ScioIOSpec extends PipelineSpec {
     runMain(Array(s"--input=$in", s"--output=$out") :+ s"--appName=${builder.testId}")
     builder.tearDown()
 
-    // scalastyle:off no.whitespace.before.left.bracket
     the[IllegalArgumentException] thrownBy {
       val builder = com.spotify.scio.testing
         .JobTest("null")
@@ -178,6 +173,5 @@ trait ScioIOSpec extends PipelineSpec {
     } should have message s"requirement failed: Missing test output: ${ioFn(out).testId}, " +
       s"available: [CustomIO($out)]"
     ()
-    // scalastyle:on no.whitespace.before.left.bracket
   }
 }

@@ -71,13 +71,13 @@ class AnnoyTest extends PipelineSpec {
     val tmpDir = Files.createTempDirectory("annoy-test-")
     val path = tmpDir.resolve("annoy.tree")
     Files.createFile(path)
-    // scalastyle:off no.whitespace.before.left.bracket
+
     the[IllegalArgumentException] thrownBy {
       runWithContext {
         _.parallelize(sideData).asAnnoy(path.toString, Angular, 40, 10)
       }
     } should have message s"requirement failed: Annoy URI $path already exists"
-    // scalastyle:on no.whitespace.before.left.bracket
+
     Files.delete(path)
   }
 }

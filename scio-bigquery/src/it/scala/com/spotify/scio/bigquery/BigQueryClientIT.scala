@@ -82,7 +82,6 @@ class BigQueryClientIT extends FlatSpec with Matchers {
     bq.query.schema(sqlQuery) shouldBe expected
   }
 
-  // scalastyle:off no.whitespace.before.left.bracket
   it should "fail invalid legacy syntax" in {
     (the[GoogleJsonResponseException] thrownBy {
       bq.query.schema("SELECT word, count FROM [bigquery-public-data:samples.shakespeare]")
@@ -94,7 +93,6 @@ class BigQueryClientIT extends FlatSpec with Matchers {
       bq.query.schema("SELECT word, count FROM `bigquery-public-data.samples.shakespeare`")
     }).getDetails.getCode shouldBe 400
   }
-  // scalastyle:on no.whitespace.before.left.bracket
 
   "QueryService.getRows" should "work with legacy syntax" in {
     val rows = bq.query.rows(legacyQuery).toList

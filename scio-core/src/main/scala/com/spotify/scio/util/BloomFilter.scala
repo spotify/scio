@@ -202,11 +202,9 @@ private[scio] sealed abstract class MutableBF[A] extends Serializable {
    */
   def density: Double = numBits.toDouble / width
 
-  // scalastyle:off method.name
   def ++=(other: MutableBF[A]): MutableBF[A]
 
   def +=(other: A): MutableBF[A]
-  // scalastyle:on method.name
 
   def checkAndAdd(item: A): (MutableBF[A], ApproximateBoolean)
 
@@ -284,11 +282,9 @@ private[scio] final case class MutableBFZero[A](hashes: KirMit32Hash[A]) extends
 
   def numBits: Int = 0
 
-  // scalastyle:off method.name
   def ++=(other: MutableBF[A]): MutableBF[A] = other
 
   def +=(other: A): MutableBF[A] = MutableBFInstance[A](hashes, other)
-  // scalastyle:on method.name
 
   def checkAndAdd(other: A): (MutableBF[A], ApproximateBoolean) =
     (this += other, ApproximateBoolean.exactFalse)
@@ -318,7 +314,6 @@ private[scio] final case class MutableBFInstance[A](hashes: KirMit32Hash[A], bit
 
   def toBitSet: util.BitSet = bits
 
-  // scalastyle:off method.name
   def ++=(other: MutableBF[A]): MutableBF[A] = {
     require(this.width == other.width)
     require(this.numHashes == other.numHashes)
@@ -349,7 +344,6 @@ private[scio] final case class MutableBFInstance[A](hashes: KirMit32Hash[A], bit
     }
     this
   }
-  // scalastyle:on method.name
 
   def checkAndAdd(other: A): (MutableBF[A], ApproximateBoolean) = {
     val doesContain = contains(other)
@@ -452,7 +446,6 @@ private[scio] final case class MutableSparseBFInstance[A](
    *
    * Return a new [[MutableBFInstance]] if we should no longer stay sparse.
    */
-  // scalastyle:off method.name
   def ++=(other: MutableBF[A]): MutableBF[A] = {
     other match {
       case _: MutableBFZero[A] => this
@@ -493,7 +486,6 @@ private[scio] final case class MutableSparseBFInstance[A](
       asMutableBFInstance
     }
   }
-  // scalastyle:on method.name
 
   def checkAndAdd(other: A): (MutableBF[A], ApproximateBoolean) = {
     val doesContain = contains(other)

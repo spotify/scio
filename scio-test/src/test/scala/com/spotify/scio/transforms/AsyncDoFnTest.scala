@@ -40,13 +40,11 @@ class AsyncDoFnTest extends PipelineSpec {
     }
 
   private def testFailure(doFn: DoFn[Int, String]): Unit = {
-    // scalastyle:off no.whitespace.before.left.bracket
     val e = the[PipelineExecutionException] thrownBy {
       runWithContext {
         _.parallelize(Seq(1, 2, -1, -2)).applyTransform(ParDo.of(doFn))
       }
     }
-    // scalastyle:on no.whitespace.before.left.bracket
 
     def errorMessages(t: Throwable): List[String] =
       if (t == null) {

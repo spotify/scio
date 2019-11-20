@@ -52,7 +52,6 @@ final case class DoesNotSerialize(val a: String, val b: Int) extends Serializabl
     throw new NotSerializableException("DoesNotSerialize can't be serialized")
 }
 
-// scalastyle:off no.whitespace.before.left.bracket
 class SCollectionMatchersTest extends PipelineSpec {
   import SCollectionMatchersTest.TestRecord
   implicit val coder = Coder.kryo[TestRecord]
@@ -582,4 +581,3 @@ class SCollectionMatchersTest extends PipelineSpec {
     }
   }
 }
-// scalastyle:on no.whitespace.before.left.bracket

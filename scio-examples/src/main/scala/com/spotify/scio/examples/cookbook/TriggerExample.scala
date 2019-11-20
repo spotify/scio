@@ -51,7 +51,6 @@ object TriggerExample {
     processing_time: Instant
   )
 
-  // scalastyle:off method.length
   def main(cmdlineArgs: Array[String]): Unit = {
     // set up example wiring
     val (opts, args) = ScioContext.parseArguments[ExampleOptions](cmdlineArgs)
@@ -143,7 +142,6 @@ object TriggerExample {
     val result = sc.run()
     exampleUtils.waitToFinish(result.pipelineResult)
   }
-  // scalastyle:on method.length
 
   private val THRESHOLD = 0.001
   private val MIN_DELAY = 1

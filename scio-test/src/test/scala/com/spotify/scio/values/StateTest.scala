@@ -46,7 +46,6 @@ class StateTest extends FlatSpec with Matchers {
     }
   }
 
-  // scalastyle:off no.whitespace.before.left.bracket
   it should "fail chained cogroups" in {
     testCogroup {
       case (a, b, c) =>
@@ -87,5 +86,4 @@ class StateTest extends FlatSpec with Matchers {
         }
     }
   }
-  // scalastyle:on no.whitespace.before.left.bracket
 }

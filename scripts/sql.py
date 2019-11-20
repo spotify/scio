@@ -321,12 +321,12 @@ header = textwrap.dedent(
 
 package com.spotify.scio.sql
 
-// scalastyle:off cyclomatic.complexity
-// scalastyle:off file.size.limit
-// scalastyle:off line.size.limit
-// scalastyle:off method.length
-// scalastyle:off number.of.methods
-// scalastyle:off parameter.number
+
+
+
+
+
+
 """
 ).lstrip("\n")
 
@@ -342,12 +342,12 @@ def main(out):
         sqlCollectionFns(f, i)
         print >> f, textwrap.dedent(
             """
-        // scalastyle:on cyclomatic.complexity
-        // scalastyle:on file.size.limit
-        // scalastyle:on line.size.limit
-        // scalastyle:on method.length
-        // scalastyle:on number.of.methods
-        // scalastyle:on parameter.number
+        
+        
+        
+        
+        
+        
         """
         )
         f.close()
@@ -370,12 +370,12 @@ def main(out):
     )
     print >> f, textwrap.dedent(
         """
-        // scalastyle:on cyclomatic.complexity
-        // scalastyle:on file.size.limit
-        // scalastyle:on line.size.limit
-        // scalastyle:on method.length
-        // scalastyle:on number.of.methods
-        // scalastyle:on parameter.number
+        
+        
+        
+        
+        
+        
         """
     )
     f.close()
@@ -387,12 +387,12 @@ def main(out):
     print >> f, mkSQLBuilder(N)
     print >> f, textwrap.dedent(
         """
-        // scalastyle:on cyclomatic.complexity
-        // scalastyle:on file.size.limit
-        // scalastyle:on line.size.limit
-        // scalastyle:on method.length
-        // scalastyle:on number.of.methods
-        // scalastyle:on parameter.number
+        
+        
+        
+        
+        
+        
         """
     )
     f.close()

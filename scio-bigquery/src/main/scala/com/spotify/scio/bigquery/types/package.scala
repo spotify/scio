@@ -31,7 +31,5 @@ package object types {
    *                 @description("user age") age: Int)
    * }}}
    */
-  // scalastyle:off class.name
   final class description(value: String) extends StaticAnnotation with Serializable
-  // scalastyle:on class.name
 }

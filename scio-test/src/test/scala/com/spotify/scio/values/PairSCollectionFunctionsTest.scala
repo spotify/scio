@@ -21,7 +21,6 @@ import com.spotify.scio.testing.PipelineSpec
 import com.spotify.scio.util.random.RandomSamplerUtils
 import com.twitter.algebird.Aggregator
 
-// scalastyle:off file.size.limit
 class PairSCollectionFunctionsTest extends PipelineSpec {
   import com.spotify.scio.testing.TestingUtils._
 
@@ -831,4 +830,3 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
     }
   }
 }
-// scalastyle:on file.size.limit

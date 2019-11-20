@@ -15,7 +15,6 @@
  * under the License.
  */
 
-// scalastyle:off line.size.limit
 package com.spotify.scio.avro.types
 
 import com.spotify.scio.avro.types.Schemas._
@@ -162,4 +161,3 @@ class SchemaUtilTest extends FlatSpec with Matchers {
     SchemaUtil.toPrettyString1(schema) shouldBe s"case class Row($expectedFields)"
   }
 }
-// scalastyle:on line.size.limit

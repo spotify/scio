@@ -1,4 +1,3 @@
-// scalastyle:off header.matches
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -15,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-// scalastyle:on header.matches
+
 /* Ported from org.apache.spark.rdd.DoubleRDDSuite */
 
 package com.spotify.scio.values
@@ -157,7 +156,6 @@ class HistogramTest extends PipelineSpec {
     }
   }
 
-  // scalastyle:off no.whitespace.before.left.bracket
   it should "fail on invalid bucket array" in {
     val msg = "java.lang.IllegalArgumentException: requirement failed: " +
       "buckets array must have at least two elements"
@@ -169,7 +167,6 @@ class HistogramTest extends PipelineSpec {
       runWithContext { _.parallelize(Seq(1.0)).histogram(Array(1.0)) }
     } should have message msg
   }
-  // scalastyle:on no.whitespace.before.left.bracket
 
   it should "work without buckets, basic" in {
     runWithContext { sc =>
@@ -257,7 +254,6 @@ class HistogramTest extends PipelineSpec {
     }
   }
 
-  // scalastyle:off no.whitespace.before.left.bracket
   it should "fail on invalid SCollections" in {
     val msg = "java.lang.UnsupportedOperationException: " +
       "Histogram on either an empty SCollection or SCollection containing +/-infinity or NaN"
@@ -275,5 +271,4 @@ class HistogramTest extends PipelineSpec {
       runWithContext { _.parallelize[Double](Seq.empty).histogram(1) }
     } should have message msg
   }
-  // scalastyle:on no.whitespace.before.left.bracket
 }

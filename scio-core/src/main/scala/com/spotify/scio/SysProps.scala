@@ -26,10 +26,8 @@ final case class SysProp(flag: String, description: String) {
 
   def valueOption: Option[String] = sys.props.get(flag)
 
-  // scalastyle:off method.name
   def value_=(str: String): Unit =
     sys.props(flag) = str
-  // scalastyle:on method.name
 
   def show: String =
     s"-D$flag=<String>\n\t$description"

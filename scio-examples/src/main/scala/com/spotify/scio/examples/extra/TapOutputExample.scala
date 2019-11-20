@@ -51,7 +51,6 @@ object TapOutputExample {
     val t1 = scioResult.tap(closedTap1)
     val t2 = scioResult.tap(closedTap2)
 
-    // scalastyle:off regex
     // Fetch `Tap` values directly
     println(t1.value.mkString(", "))
     println(t2.value.mkString(", "))

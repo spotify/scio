@@ -30,29 +30,23 @@ trait RunEnforcementJobTest extends FlatSpec { this: PipelineSpec =>
 
   private val tests = ArrayBuffer.empty[InnerJobTest.Builder]
 
-  // scalastyle:off method.name
   def JobTest[T: ClassTag]: InnerJobTest.Builder = {
     val jt = InnerJobTest[T]
     tests += jt
     jt
   }
-  // scalastyle:on method.name
 
-  // scalastyle:off method.name
   private[testing] def JobTest[T: ClassTag](enforceRun: Boolean = true): InnerJobTest.Builder = {
     val jt = InnerJobTest[T]
     if (enforceRun) tests += jt
     jt
   }
-  // scalastyle:on method.name
 
-  // scalastyle:off method.name
   def JobTest(className: String): InnerJobTest.Builder = {
     val jt = InnerJobTest(className)
     tests += jt
     jt
   }
-  // scalastyle:on method.name
 
   override protected def withFixture(test: NoArgTest): Outcome = {
     // Tests within Suites are executed sequentially, thus we need to clear the tests, if

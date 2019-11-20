@@ -68,12 +68,12 @@ private[coders] abstract class JWrapperCBF[T] extends CanBuildFrom[Iterable[T], 
 
   class JIterableWrapperBuilder extends mutable.Builder[T, Iterable[T]] {
     private val xs = new java.util.ArrayList[T]()
-    // scalastyle:off method.name
+
     override def +=(elem: T): this.type = {
       xs.add(elem)
       this
     }
-    // scalastyle:on method.name
+
     override def clear(): Unit = xs.clear()
     override def result(): Iterable[T] = asScala(xs)
   }
