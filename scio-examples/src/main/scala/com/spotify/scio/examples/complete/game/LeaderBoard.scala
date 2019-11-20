@@ -55,7 +55,6 @@ object LeaderBoard {
   @BigQueryType.toTable
   case class UserScoreSums(user: String, total_score: Int, processing_time: String)
 
-  // scalastyle:off method.length
   def main(cmdlineArgs: Array[String]): Unit = {
     // Create `ScioContext` and `Args`
     val (opts, args) = ScioContext.parseArguments[ExampleOptions](cmdlineArgs)
@@ -131,7 +130,6 @@ object LeaderBoard {
     // Wait to finish processing before exiting when streaming pipeline is canceled during shutdown
     exampleUtils.waitToFinish(result.pipelineResult)
   }
-  // scalastyle:on method.length
 
   def calculateTeamScores(
     infos: SCollection[GameActionInfo],

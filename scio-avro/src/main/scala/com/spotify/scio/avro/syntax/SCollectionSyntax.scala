@@ -37,7 +37,7 @@ final class UnsafeReflectiveRecordSCollectionOps[T: Coder](private val self: SCo
    * Save this SCollection of type
    * [[org.apache.avro.specific.SpecificRecord SpecificRecord]] as an Avro file.
    */
-  // scalastyle:off parameter.number
+
   @deprecated(
     "The use of reflective records is discouraged. Consider converting to GenericRecord explicitly",
     "0.8.0"
@@ -61,7 +61,6 @@ final class GenericRecordSCollectionOps(private val self: SCollection[GenericRec
    * Save this SCollection of type
    * [[org.apache.avro.specific.SpecificRecord SpecificRecord]] as an Avro file.
    */
-  // scalastyle:off parameter.number
   def saveAsAvroFile(
     path: String,
     numShards: Int = AvroIO.WriteParam.DefaultNumShards,
@@ -120,7 +119,6 @@ final class TypedAvroSCollectionOps[T <: HasAvroAnnotation](private val self: SC
    * Save this SCollection as an Avro file. Note that element type `T` must be a case class
    * annotated with [[com.spotify.scio.avro.types.AvroType AvroType.toSchema]].
    */
-  // scalastyle:off parameter.number
   def saveAsTypedAvroFile(
     path: String,
     numShards: Int = AvroIO.WriteParam.DefaultNumShards,
@@ -131,7 +129,6 @@ final class TypedAvroSCollectionOps[T <: HasAvroAnnotation](private val self: SC
     val param = AvroIO.WriteParam(numShards, suffix, codec, metadata)
     self.write(AvroTyped.AvroIO[T](path))(param)
   }
-  // scalastyle:on parameter.number
 }
 
 final class ProtobufSCollectionOps[T <: Message](private val self: SCollection[T]) extends AnyVal {

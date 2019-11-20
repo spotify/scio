@@ -70,12 +70,12 @@ def main(out):
         // !! DO NOT EDIT MANUALLY
         // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-        // scalastyle:off cyclomatic.complexity
-        // scalastyle:off file.size.limit
-        // scalastyle:off line.size.limit
-        // scalastyle:off method.length
-        // scalastyle:off number.of.methods
-        // scalastyle:off parameter.number
+        
+        
+        
+        
+        
+        
 
         package com.spotify.scio.coders.instances
 
@@ -91,12 +91,12 @@ def main(out):
 
     print >> out, '}'
     print >> out, textwrap.dedent('''
-        // scalastyle:on cyclomatic.complexity
-        // scalastyle:on file.size.limit
-        // scalastyle:on line.size.limit
-        // scalastyle:on method.length
-        // scalastyle:on number.of.methods
-        // scalastyle:on parameter.number''')
+        
+        
+        
+        
+        
+        
 
 if __name__ == '__main__':
     main(sys.stdout)

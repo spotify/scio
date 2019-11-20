@@ -15,10 +15,6 @@
  * under the License.
  */
 
-// scalastyle:off file.size.limit
-// scalastyle:off number.of.methods
-// scalastyle:off number.of.types
-
 package com.spotify.scio.avro.types
 
 import com.google.protobuf.ByteString
@@ -833,13 +829,10 @@ class TypeProviderTest extends FlatSpec with Matchers {
       |scio-avro-test.avsc
     """.stripMargin)
   class FromResourceMultiLine
-
-  // scalastyle:off line.size.limit
   @AvroType.fromSchemaFile(
     "https://raw.githubusercontent.com/spotify/scio/master/scio-avro/src/test/avro/scio-avro-test.avsc"
   )
   class FromResource
-  // scalastyle:on line.size.limit
 
   "AvroType.fromSchemaFile" should "support reading schema from multiline resource" in {
     val r = FromResourceMultiLine(1)
@@ -858,28 +851,22 @@ class TypeProviderTest extends FlatSpec with Matchers {
     typeOf[T].typeSymbol.annotations
       .map(_.tree.tpe)
       .containsSlice(Seq(typeOf[Annotation1], typeOf[Annotation2])) shouldBe true
-
-  // scalastyle:off line.size.limit
   @Annotation1
   @AvroType.fromSchemaFile(
     "https://raw.githubusercontent.com/spotify/scio/master/scio-avro/src/test/avro/scio-avro-test.avsc"
   )
   @Annotation2
   class FromResourceWithSurroundingAnnotations
-  // scalastyle:on line.size.limit
 
   it should "preserve surrounding user defined annotations" in {
     containsAllAnnotTypes[FromResourceWithSurroundingAnnotations]
   }
-
-  // scalastyle:off line.size.limit
   @AvroType.fromSchemaFile(
     "https://raw.githubusercontent.com/spotify/scio/master/scio-avro/src/test/avro/scio-avro-test.avsc"
   )
   @Annotation1
   @Annotation2
   class FromResourceWithSequentialAnnotations
-  // scalastyle:on line.size.limit
 
   it should "preserve sequential user defined annotations" in {
     containsAllAnnotTypes[FromResourceWithSequentialAnnotations]
@@ -925,7 +912,3 @@ class TypeProviderTest extends FlatSpec with Matchers {
     containsAllAnnotTypes[RecordWithSequentialAnnotations]
   }
 }
-
-// scalastyle:on file.size.limit
-// scalastyle:on number.of.methods
-// scalastyle:on number.of.types

@@ -38,12 +38,10 @@ class ReplScioContext(options: PipelineOptions, artifacts: List[String])
   }
 
   private def createJar(): Unit = {
-    // scalastyle:off structural.type
     import scala.language.reflectiveCalls
     this.getClass.getClassLoader
       .asInstanceOf[{ def createReplCodeJar: String }]
       .createReplCodeJar
     ()
-    // scalastyle:on structural.type
   }
 }

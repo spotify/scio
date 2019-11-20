@@ -22,13 +22,6 @@
 
 package com.spotify.scio.sql
 
-// scalastyle:off cyclomatic.complexity
-// scalastyle:off file.size.limit
-// scalastyle:off line.size.limit
-// scalastyle:off method.length
-// scalastyle:off number.of.methods
-// scalastyle:off parameter.number
-
 import com.spotify.scio.schemas._
 import com.spotify.scio.values.SCollection
 
@@ -127,9 +120,3 @@ trait SqlSCollections {
   ): SqlSCollection10[A, B, C, D, E, F, G, H, I, J] =
     new SqlSCollection10(a, b, c, d, e, f, g, h, i, j)
 }
-// scalastyle:on cyclomatic.complexity
-// scalastyle:on file.size.limit
-// scalastyle:on line.size.limit
-// scalastyle:on method.length
-// scalastyle:on number.of.methods
-// scalastyle:on parameter.number

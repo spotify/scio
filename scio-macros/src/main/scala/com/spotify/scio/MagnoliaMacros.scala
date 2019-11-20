@@ -37,7 +37,7 @@ private[scio] object MagnoliaMacros {
 
     // Remove annotations from magnolia since they are
     // not serialiazable and we don't use them anyway
-    // scalastyle:off line.size.limit
+
     val removeAnnotations = new Transformer {
       override def transform(tree: Tree): c.universe.Tree = {
         tree match {
@@ -66,7 +66,7 @@ private[scio] object MagnoliaMacros {
         }
       }
     }
-    // scalastyle:on line.size.limit
+
     removeAnnotations.transform(magnoliaTree)
   }
 }

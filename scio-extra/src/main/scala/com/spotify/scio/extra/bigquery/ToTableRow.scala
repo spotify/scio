@@ -49,7 +49,6 @@ trait ToTableRow {
     row
   }
 
-  // scalastyle:off cyclomatic.complexity
   private def toTableRowField(fieldValue: Any, field: Schema.Field): Any = {
     fieldValue match {
       case x: CharSequence          => x.toString
@@ -68,8 +67,6 @@ trait ToTableRow {
         )
     }
   }
-
-  // scalastyle:on cyclomatic.complexity
 
   private def toTableRowFromIterable(iterable: Iterable[Any], field: Schema.Field): util.List[_] = {
     iterable

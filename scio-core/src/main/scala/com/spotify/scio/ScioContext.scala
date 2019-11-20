@@ -15,8 +15,6 @@
  * under the License.
  */
 
-// scalastyle:off file.size.limit
-
 package com.spotify.scio
 
 import java.beans.Introspector
@@ -169,8 +167,6 @@ object ContextAndArgs {
       case _ => arg
     }
 
-    // scalastyle:off regex
-    // scalastyle:off cyclomatic.complexity
     override def parse(args: Array[String]): Try[Result] = {
       // limit the options passed to case-app
       // to options supported in T
@@ -220,8 +216,6 @@ object ContextAndArgs {
           Failure(new Exception(error.message))
       }
     }
-    // scalastyle:on regex
-    // scalastyle:on cyclomatic.complexity
   }
 
   def withParser[T](parser: ArgsParser[Try]): Array[String] => (ScioContext, T) =
@@ -230,9 +224,8 @@ object ContextAndArgs {
         case Failure(exception) =>
           throw exception
         case Success(Left(usageOrHelp)) =>
-          // scalastyle:off regex
           Console.out.println(usageOrHelp)
-          // scalastyle:on regex
+
           UsageOrHelpException.attachUncaughtExceptionHandler()
           throw new UsageOrHelpException()
         case Success(Right((_opts, _args))) =>
@@ -431,7 +424,6 @@ object ScioContext {
  * @groupname input Input Sources
  * @groupname Ungrouped Other Members
  */
-// scalastyle:off number.of.methods
 class ScioContext private[scio] (
   val options: PipelineOptions,
   private var artifacts: List[String]
@@ -827,10 +819,8 @@ class ScioContext private[scio] (
   def read[T: Coder](io: ScioIO[T])(params: io.ReadP): SCollection[T] =
     io.readWithContext(this, params)
 
-  // scalastyle:off structural.type
   def read[T: Coder](io: ScioIO[T] { type ReadP = Unit }): SCollection[T] =
     io.readWithContext(this, ())
-  // scalastyle:on structural.type
 
   // =======================================================================
   // In-memory collections
@@ -866,8 +856,6 @@ class ScioContext private[scio] (
         )
       )
     }
-
-  // scalastyle:off line.size.limit
   @deprecated(
     "\n⛔" +
       "\n⛔️  makeFuture is PRIVATE and you should NOT be using it" +
@@ -879,7 +867,6 @@ class ScioContext private[scio] (
       "\n⛔️",
     since = "0.8.0"
   )
-  // scalastyle:on line.size.limit
   private[scio] def makeFuture[T](value: Tap[T]): Future[Tap[T]] =
     Future.successful(value)
 
@@ -945,7 +932,6 @@ class ScioContext private[scio] (
     counters
   }
 }
-// scalastyle:on number.of.methods
 
 /** An enhanced ScioContext with distributed cache features. */
 class DistCacheScioContext private[scio] (self: ScioContext) {
@@ -996,5 +982,3 @@ class DistCacheScioContext private[scio] (self: ScioContext) {
       }
     }
 }
-
-// scalastyle:on file.size.limit

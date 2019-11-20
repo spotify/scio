@@ -15,8 +15,6 @@
  * under the License.
  */
 
-//scalastyle:off number.of.types
-//scalastyle:off file.size.limit
 package com.spotify.scio.bigquery
 
 import java.util.concurrent.ConcurrentHashMap
@@ -483,7 +481,6 @@ object BigQueryTyped {
     def impl: F[T]
   }
 
-  // scalastyle:off structural.type
   object IO {
     type Aux[T <: HasAnnotation, F0[_ <: HasAnnotation] <: ScioIO[_]] =
       IO[T] { type F[A <: HasAnnotation] = F0[A] }
@@ -512,7 +509,6 @@ object BigQueryTyped {
         def impl: Storage[T] = Storage(STable.Spec(t.table))
       }
   }
-  // scalastyle:on structural.type
 
   /**
    * Get a typed SCollection for a BigQuery table or a SELECT query.
@@ -812,7 +808,6 @@ object BigQueryTyped {
     val ReadParam = BigQueryStorage.ReadParam
   }
 
-  // scalastyle:off cyclomatic.complexity
   private[scio] def dynamic[T <: HasAnnotation: ClassTag: TypeTag: Coder](
     newSource: Option[Source]
   ): ScioIO.ReadOnly[T, Unit] = {
@@ -836,7 +831,4 @@ object BigQueryTyped {
         throw new IllegalArgumentException(s"Missing table or query field in companion object")
     }
   }
-  // scalastyle:on cyclomatic.complexity
 }
-//scalastyle:on number.of.types
-//scalastyle:on file.size.limit

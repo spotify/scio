@@ -452,15 +452,9 @@ final case class ConsoleLogger[A <: BenchmarkType]() extends BenchmarkLogger[Try
 
 private[this] object PrettyPrint {
   @inline def printSeparator(numChars: Int = 80): Unit =
-    // scalastyle:off regex
     println("=" * numChars)
-  // scalastyle:on regex
-
   @inline def print(k: String, v: String): Unit =
-    // scalastyle:off regex
     println("%-30s: %s".format(k, v))
-
-  // scalastyle:on regex
 }
 
 // Usage:

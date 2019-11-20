@@ -28,8 +28,6 @@ import org.apache.beam.sdk.values.KV
 import scala.annotation.implicitNotFound
 import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
-
-// scalastyle:off line.size.limit
 @implicitNotFound(
   """
 Cannot find an implicit Coder instance for type:
@@ -72,7 +70,6 @@ private[scio] object Ref {
   def unapply[T](c: Ref[T]): Option[(String, Coder[T])] = Option((c.typeName, c.value))
 }
 
-// scalastyle:on line.size.limit
 final case class Beam[T] private (beam: BCoder[T]) extends Coder[T] {
   override def toString: String = s"Beam($beam)"
 }
@@ -272,10 +269,8 @@ private[scio] final case class RecordCoder[T](
       val (label, c) = cs(i)
       val v = array(i)
       onErrorMsg(
-        // scalastyle:off line.size.limit
         s"Exception while trying to `encode` an instance of $typeName:  Can't encode field $label value $v"
       ) {
-        // scalastyle:on line.size.limit
         c.encode(v, os)
       }
       i += 1

@@ -151,7 +151,6 @@ val commonSettings = Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
   // protobuf-lite is an older subset of protobuf-java and causes issues
   excludeDependencies += "com.google.protobuf" % "protobuf-lite",
   resolvers += Resolver.sonatypeRepo("public"),
-  scalastyleSources in Compile ++= (unmanagedSourceDirectories in Test).value,
   testOptions in Test += Tests.Argument("-oD"),
   testOptions += Tests.Argument(TestFrameworks.JUnit, "-q", "-v"),
   testOptions ++= {
@@ -238,7 +237,6 @@ val commonSettings = Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
 
 lazy val itSettings = Defaults.itSettings ++ Seq(
   IntegrationTest / classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.Flat,
-  scalastyleSources in Compile ++= (unmanagedSourceDirectories in IntegrationTest).value,
   // exclude all sources if we don't have GCP credentials
   (excludeFilter in unmanagedSources) in IntegrationTest := {
     if (BuildCredentials.exists) {

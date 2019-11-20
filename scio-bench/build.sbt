@@ -38,8 +38,8 @@ lazy val root: Project = project
 
 def sysProp(name: String, error: String): String =
   sys.props.get(name).getOrElse {
-    //scalastyle:off
+    
     System.err.println(error)
-    //scalastyle:on
+    
     sys.exit(1)
   }

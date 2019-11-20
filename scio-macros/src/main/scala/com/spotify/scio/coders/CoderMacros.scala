@@ -39,8 +39,6 @@ private[coders] object CoderMacros {
         """.stripMargin
     )
 
-  // scalastyle:off method.length
-  // scalastyle:off cyclomatic.complexity
   def issueFallbackWarning[T: c.WeakTypeTag](
     c: whitebox.Context
   )(lp: c.Expr[shapeless.LowPriority]): c.Tree = {
@@ -122,7 +120,6 @@ private[coders] object CoderMacros {
         fallback
     }
   }
-  // scalastyle:on cyclomatic.complexity
 
   // Add a level of indirection to prevent the macro from capturing
   // $outer which would make the Coder serialization fail
@@ -159,5 +156,4 @@ private[coders] object CoderMacros {
 
     tree
   }
-  // scalastyle:on method.length
 }

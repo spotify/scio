@@ -25,7 +25,6 @@ import org.scalatest.{Assertion, FlatSpec, Matchers}
 import scala.annotation.StaticAnnotation
 import scala.reflect.runtime.universe._
 
-// scalastyle:off number.of.types
 object TypeProviderTest {
   @BigQueryType.toTable
   case class RefinedClass(a1: Int)
@@ -555,4 +554,3 @@ class TypeProviderTest extends FlatSpec with Matchers {
       BigQueryType[TypeProviderTest.RefinedClass with BigQueryType.HasAnnotation]
   }
 }
-// scalastyle:on number.of.types

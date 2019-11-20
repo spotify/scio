@@ -28,7 +28,6 @@ import com.twitter.algebird.Aggregator
  * This file is symlinked to scio-bench/src/main/scala/com/spotify/ScioBatchBenchmark.scala so
  * that it can run with past Scio releases.
  */
-// scalastyle:off number.of.methods
 object ScioBatchBenchmark {
   import Benchmark._
   import ScioBenchmarkSettings._

@@ -127,7 +127,6 @@ class ScioContextTest extends PipelineSpec {
     metrics.version shouldBe BuildInfo.version
   }
 
-  // scalastyle:off no.whitespace.before.left.bracket
   it should "fail to close() on closed context" in {
     val sc = ScioContext()
     sc.run()
@@ -135,7 +134,6 @@ class ScioContextTest extends PipelineSpec {
       sc.run()
     } should have message "requirement failed: ScioContext already closed"
   }
-  // scalastyle:on no.whitespace.before.left.bracket
 
   it should "support options from optionsFile" in {
     val optionsFile = Files.createTempFile("scio-options-", ".txt").toFile

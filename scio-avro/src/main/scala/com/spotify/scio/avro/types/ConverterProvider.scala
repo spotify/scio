@@ -38,8 +38,6 @@ private[types] object ConverterProvider {
     c.Expr[(T => GenericRecord)](r)
   }
 
-  // scalastyle:off cyclomatic.complexity
-  // scalastyle:off method.length
   private def fromGenericRecordInternal(c: blackbox.Context)(tpe: c.Type): c.Tree = {
     import c.universe._
 
@@ -90,12 +88,10 @@ private[types] object ConverterProvider {
       q"$tree.asInstanceOf[$jl].asScala.map(x => ${cast(q"x", tpe)})($bo)"
     }
 
-    // scalastyle:off line.size.limit
     def map(tree: Tree, tpe: Type): Tree = {
       val jm = tq"_root_.java.util.Map[AnyRef, AnyRef]"
       q"$tree.asInstanceOf[$jm].asScala.iterator.map(kv => (kv._1.toString, ${cast(q"kv._2", tpe)})).toMap"
     }
-    // scalastyle:on line.size.limit
 
     def field(symbol: Symbol, fn: TermName): Tree = {
       val name = symbol.name.toString
@@ -129,11 +125,7 @@ private[types] object ConverterProvider {
         }
     """
   }
-  // scalastyle:on cyclomatic.complexity
-  // scalastyle:on method.length
 
-  // scalastyle:off cyclomatic.complexity
-  // scalastyle:off method.length
   private def toGenericRecordInternal(c: blackbox.Context)(tpe: c.Type): c.Tree = {
     import c.universe._
 
@@ -203,9 +195,7 @@ private[types] object ConverterProvider {
         q"val result = new ${p(c, ApacheAvro)}.generic.GenericData.Record($schemaOf)"
       val body = sets.map {
         case (fieldName, value) =>
-          // scalastyle:off line.size.limit
           q"if (${p(c, ScioAvro)}.types.ConverterUtil.notNull($value)) result.put($fieldName, $value)"
-        // scalastyle:on line.size.limit
       }
       val footer = q"result"
       q"{$header; ..$body; $footer}"
@@ -222,8 +212,6 @@ private[types] object ConverterProvider {
         }
     """
   }
-  // scalastyle:on cyclomatic.complexity
-  // scalastyle:on method.length
 }
 
 object ConverterUtil {

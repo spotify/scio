@@ -19,7 +19,6 @@ package com.spotify.scio.schemas
 import scala.collection.JavaConverters._
 import org.apache.beam.sdk.schemas.{Schema => BSchema}
 
-// scalastyle:off line.size.limit
 private[scio] object PrettyPrint {
   val header =
     f"""
@@ -58,4 +57,3 @@ private[scio] object PrettyPrint {
   def prettyPrint(fs: List[BSchema.Field]): String =
     header + printContent(fs) + footer
 }
-// scalastyle:on line.size.limit

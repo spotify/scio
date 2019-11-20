@@ -62,39 +62,39 @@ commands:
         type: steps
         default: []
     steps:
-    - checkout
-    - *setup_dependencies_key
-    - restore_cache:
-        keys:
-        - v7-dependencies-{{ .Environment.CIRCLE_JOB }}-{{ checksum "/tmp/dependencies.cache.tmp" }}
-        - v7-dependencies-
-    - run: ./scripts/gen_schemas.sh
-    - run:
-        name: setup
-        command: |
-          if [ -n "$ENCRYPTION_KEY" ]; then
-            openssl aes-256-cbc -d \
-              -in "$GOOGLE_APPLICATION_CREDENTIALS.enc" \
-              -out $GOOGLE_APPLICATION_CREDENTIALS \
-              -k $ENCRYPTION_KEY
-          fi
+      - checkout
+      - *setup_dependencies_key
+      - restore_cache:
+          keys:
+            - v7-dependencies-{{ .Environment.CIRCLE_JOB }}-{{ checksum "/tmp/dependencies.cache.tmp" }}
+            - v7-dependencies-
+      - run: ./scripts/gen_schemas.sh
+      - run:
+          name: setup
+          command: |
+            if [ -n "$ENCRYPTION_KEY" ]; then
+              openssl aes-256-cbc -d \
+                -in "$GOOGLE_APPLICATION_CREDENTIALS.enc" \
+                -out $GOOGLE_APPLICATION_CREDENTIALS \
+                -k $ENCRYPTION_KEY
+            fi
 
-          if [ -n "$CIRCLE_PR_USERNAME" ]; then
-            echo "Scala $SCALA_VERSION, forked PR #$CIRCLE_PR_NUMBER from $CIRCLE_PR_USERNAME/$CIRCLE_PR_REPONAME"
-            echo 'export SBT_OPTS="-Dbigquery.project=dummy-project"' >> $BASH_ENV
-          else
-            echo "Scala $SCALA_VERSION, branch: $CIRCLE_BRANCH"
-            echo 'export SBT_OPTS="-Dbigquery.project=data-integration-test -Dbigquery.secret=$GOOGLE_APPLICATION_CREDENTIALS"' >> $BASH_ENV
-          fi
-    - run: if [ "$CIRCLE_BRANCH" == "beam-master" ]; then ./scripts/circleci_snapshot.sh; fi
-    - steps: << parameters.build-steps >>
-    - save_cache:
-        key: v7-dependencies-{{ .Environment.CIRCLE_JOB }}-{{ checksum "/tmp/dependencies.cache.tmp" }}
-        paths:
-        - "~/.ivy2/cache"
-        - "~/.sbt"
-        - "~/.m2"
-        - "~/.cache/coursier"
+            if [ -n "$CIRCLE_PR_USERNAME" ]; then
+              echo "Scala $SCALA_VERSION, forked PR #$CIRCLE_PR_NUMBER from $CIRCLE_PR_USERNAME/$CIRCLE_PR_REPONAME"
+              echo 'export SBT_OPTS="-Dbigquery.project=dummy-project"' >> $BASH_ENV
+            else
+              echo "Scala $SCALA_VERSION, branch: $CIRCLE_BRANCH"
+              echo 'export SBT_OPTS="-Dbigquery.project=data-integration-test -Dbigquery.secret=$GOOGLE_APPLICATION_CREDENTIALS"' >> $BASH_ENV
+            fi
+      - run: if [ "$CIRCLE_BRANCH" == "beam-master" ]; then ./scripts/circleci_snapshot.sh; fi
+      - steps: << parameters.build-steps >>
+      - save_cache:
+          key: v7-dependencies-{{ .Environment.CIRCLE_JOB }}-{{ checksum "/tmp/dependencies.cache.tmp" }}
+          paths:
+            - "~/.ivy2/cache"
+            - "~/.sbt"
+            - "~/.m2"
+            - "~/.cache/coursier"
 
 ####################
 # Jobs
@@ -104,31 +104,30 @@ jobs:
   checks:
     executor: scala_212
     steps:
-    - build:
-        build-steps:
-        - run:
-            command: |
-              sbt -v $SBT_OPTS \
-                scalastyle \
-                scalafmtCheckAll scalafmtSbtCheck \
-                "; scalafixEnable; scalafix --check; test:scalafix --check; it:scalafix --check"
+      - build:
+          build-steps:
+            - run:
+                command: |
+                  sbt -v $SBT_OPTS \
+                    scalafmtCheckAll scalafmtSbtCheck \
+                    "; scalafixEnable; scalafix --check; test:scalafix --check; it:scalafix --check"
 
   build_211:
     executor: scala_211
     steps:
       - build:
           build-steps:
-          - run: sbt -v $SBT_OPTS ++$SCALA_VERSION test
-          - run: ./scripts/circleci_repl.sh
+            - run: sbt -v $SBT_OPTS ++$SCALA_VERSION test
+            - run: ./scripts/circleci_repl.sh
 
   build_212:
     executor: scala_212
     steps:
-    - build:
-        build-steps:
-        - run: sbt -v $SBT_OPTS ++$SCALA_VERSION coverage test coverageReport coverageAggregate
-        - run: ./scripts/circleci_repl.sh
-        - run: bash <(curl -s https://codecov.io/bash)
+      - build:
+          build-steps:
+            - run: sbt -v $SBT_OPTS ++$SCALA_VERSION coverage test coverageReport coverageAggregate
+            - run: ./scripts/circleci_repl.sh
+            - run: bash <(curl -s https://codecov.io/bash)
 
   build_scalafix_rules_212:
     executor: scala_212
@@ -140,9 +139,9 @@ jobs:
   build_it_211: &build_it_211
     executor: scala_211
     steps:
-    - build:
-        build-steps:
-        - run: sbt -v $SBT_OPTS ++$SCALA_VERSION it:test
+      - build:
+          build-steps:
+            - run: sbt -v $SBT_OPTS ++$SCALA_VERSION it:test
 
   build_it_212: &build_it_212
     <<: [*build_it_211]
@@ -163,20 +162,20 @@ jobs:
   deploy:
     executor: deploy
     steps:
-    - build:
-        build-steps:
-        - run: curl --silent --show-error --location --fail --retry 3 --output /tmp/sbt.tgz https://circle-downloads.s3.amazonaws.com/circleci-images/cache/linux-amd64/sbt-latest.tgz
-        - run: tar xzf /tmp/sbt.tgz
-        - run: ./sbt/bin/sbt -v $SBT_OPTS ++$SCALA_VERSION scio-repl/assembly
-        - run: go get -u github.com/tcnksm/ghr
-        - run: ghr -u spotify -draft $CIRCLE_TAG scio-repl/target/scala-*/scio-repl-*.jar
+      - build:
+          build-steps:
+            - run: curl --silent --show-error --location --fail --retry 3 --output /tmp/sbt.tgz https://circle-downloads.s3.amazonaws.com/circleci-images/cache/linux-amd64/sbt-latest.tgz
+            - run: tar xzf /tmp/sbt.tgz
+            - run: ./sbt/bin/sbt -v $SBT_OPTS ++$SCALA_VERSION scio-repl/assembly
+            - run: go get -u github.com/tcnksm/ghr
+            - run: ghr -u spotify -draft $CIRCLE_TAG scio-repl/target/scala-*/scio-repl-*.jar
 
   publish_211: &publish_211
     executor: scala_211
     steps:
-    - build:
-        build-steps:
-          - run: sbt -v $SBT_OPTS ++$SCALA_VERSION publish
+      - build:
+          build-steps:
+            - run: sbt -v $SBT_OPTS ++$SCALA_VERSION publish
 
   publish_212:
     <<: [*publish_211]
@@ -185,47 +184,47 @@ jobs:
   bench_io:
     executor: scala_212
     steps:
-    - build:
-        build-steps:
-        - run:
-            command: sbt -v $SBT_OPTS ++$SCALA_VERSION "scio-test/it:runMain com.spotify.scio.benchmarks.ScioIOBenchmark --name=ci"
-            no_output_timeout: 30m
+      - build:
+          build-steps:
+            - run:
+                command: sbt -v $SBT_OPTS ++$SCALA_VERSION "scio-test/it:runMain com.spotify.scio.benchmarks.ScioIOBenchmark --name=ci"
+                no_output_timeout: 30m
 
   bench_bigtable:
     executor: scala_212
     steps:
-    - build:
-        build-steps:
-        - run:
-            command: sbt -v $SBT_OPTS ++$SCALA_VERSION "scio-bigtable/it:runMain com.spotify.scio.bigtable.BigtableBenchmark --name=ci"
-            no_output_timeout: 30m
+      - build:
+          build-steps:
+            - run:
+                command: sbt -v $SBT_OPTS ++$SCALA_VERSION "scio-bigtable/it:runMain com.spotify.scio.bigtable.BigtableBenchmark --name=ci"
+                no_output_timeout: 30m
 
   bench_batch:
     executor: scala_212
     steps:
-    - build:
-        build-steps:
-        - run:
-            command: sbt -v $SBT_OPTS ++$SCALA_VERSION "scio-test/it:runMain com.spotify.scio.benchmarks.ScioBatchBenchmark --name=ci"
-            no_output_timeout: 30m
+      - build:
+          build-steps:
+            - run:
+                command: sbt -v $SBT_OPTS ++$SCALA_VERSION "scio-test/it:runMain com.spotify.scio.benchmarks.ScioBatchBenchmark --name=ci"
+                no_output_timeout: 30m
 
   bench_streaming:
     executor: scala_212
     steps:
-    - build:
-        build-steps:
-        - run:
-            command: sbt -v $SBT_OPTS ++$SCALA_VERSION "scio-test/it:runMain com.spotify.scio.benchmarks.ScioStreamingBenchmark --name=ci"
-            no_output_timeout: 30m
+      - build:
+          build-steps:
+            - run:
+                command: sbt -v $SBT_OPTS ++$SCALA_VERSION "scio-test/it:runMain com.spotify.scio.benchmarks.ScioStreamingBenchmark --name=ci"
+                no_output_timeout: 30m
 
   bench_streaming_metrics:
     executor: scala_212
     steps:
-    - build:
-        build-steps:
-        - run:
-            command: sbt -v $SBT_OPTS ++$SCALA_VERSION "scio-test/it:runMain com.spotify.scio.benchmarks.ScioStreamingBenchmarkMetrics --name=ci"
-            no_output_timeout: 30m
+      - build:
+          build-steps:
+            - run:
+                command: sbt -v $SBT_OPTS ++$SCALA_VERSION "scio-test/it:runMain com.spotify.scio.benchmarks.ScioStreamingBenchmarkMetrics --name=ci"
+                no_output_timeout: 30m
 
 ####################
 # Workflows
@@ -319,7 +318,6 @@ workflows:
       - build_211
       - build_212
       - build_212-jdk11
-
   # Nightly benchmarks
 #  bench:
 #    triggers:

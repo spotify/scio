@@ -31,8 +31,6 @@ import org.apache.avro.generic.GenericRecord
 import org.openjdk.jmh.annotations._
 
 import scala.collection.JavaConverters._
-
-// scalastyle:off number.of.methods
 @BenchmarkMode(Array(Mode.AverageTime))
 @OutputTimeUnit(TimeUnit.SECONDS)
 @State(Scope.Thread)

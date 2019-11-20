@@ -34,11 +34,9 @@ import org.apache.beam.sdk.io.FileSystems
  * }}}
  */
 package object checkpoint {
-  // scalastyle:off line.size.limit
   /**
    * For use in testing, see [[https://github.com/spotify/scio/blob/master/scio-examples/src/test/scala/com/spotify/scio/examples/extra/CheckpointExampleTest.scala CheckpointExampleTest]].
    */
-  // scalastyle:on line.size.limit
   type CheckpointIO[T] = ObjectFileIO[T]
   val CheckpointIO = ObjectFileIO
 

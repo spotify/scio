@@ -30,7 +30,6 @@ object SchemaUtil {
     "@BigQueryType.toTable\n" +
       getCaseClass(schema.getFields, name, indent)
 
-  // scalastyle:off cyclomatic.complexity
   private def getRawType(tfs: TableFieldSchema, indent: Int): (String, Seq[String]) = {
     val name = tfs.getType match {
       case "BOOLEAN"           => "Boolean"
@@ -53,7 +52,6 @@ object SchemaUtil {
       (name, Seq.empty)
     }
   }
-  // scalastyle:on cyclomatic.complexity
 
   private def getFieldType(tfs: TableFieldSchema, indent: Int): (String, Seq[String]) = {
     val (rawType, nested) = getRawType(tfs, indent)

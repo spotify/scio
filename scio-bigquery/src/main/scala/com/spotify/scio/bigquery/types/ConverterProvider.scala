@@ -56,8 +56,6 @@ private[types] object ConverterProvider {
 
   // =======================================================================
 
-  // scalastyle:off cyclomatic.complexity
-  // scalastyle:off method.length
   private def fromAvroInternal(c: blackbox.Context)(tpe: c.Type): c.Tree = {
     import c.universe._
 
@@ -150,13 +148,9 @@ private[types] object ConverterProvider {
         }
     """
   }
-  // scalastyle:on cyclomatic.complexity
-  // scalastyle:on method.length
 
   // =======================================================================
 
-  // scalastyle:off cyclomatic.complexity
-  // scalastyle:off method.length
   private def fromTableRowInternal(c: blackbox.Context)(tpe: c.Type): c.Tree = {
     import c.universe._
 
@@ -257,13 +251,9 @@ private[types] object ConverterProvider {
         }
     """
   }
-  // scalastyle:on cyclomatic.complexity
-  // scalastyle:on method.length
 
   // =======================================================================
 
-  // scalastyle:off cyclomatic.complexity
-  // scalastyle:off method.length
   private def toTableRowInternal(c: blackbox.Context)(tpe: c.Type): c.Tree = {
     import c.universe._
 
@@ -355,8 +345,6 @@ private[types] object ConverterProvider {
         }
     """
   }
-  // scalastyle:on cyclomatic.complexity
-  // scalastyle:on method.length
 }
 
 object ConverterUtil {
