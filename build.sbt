@@ -26,7 +26,7 @@ ThisBuild / turbo := true
 
 val beamVersion = "2.16.0"
 
-val algebirdVersion = "0.13.5"
+val algebirdVersion = "0.13.6"
 val annoy4sVersion = "0.9.0"
 val annoyVersion = "0.2.6"
 val asmVersion = "4.13"
