@@ -31,7 +31,7 @@ import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
 import com.spotify.scio.coders._
 import com.spotify.scio.io.{ScioIO, Tap, TapOf, TestIO}
 import com.spotify.scio.schemas.{Schema, SchemaMaterializer}
-import com.spotify.scio.util.{ClosureCleaner, ScioUtil}
+import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.extensions.gcp.options.GcpOptions
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.TypedRead.Method
@@ -46,6 +46,7 @@ import org.apache.beam.sdk.transforms.SerializableFunction
 import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
+import com.twitter.chill.ClosureCleaner
 
 private object Reads {
   private[this] val cache = new ConcurrentHashMap[ScioContext, BigQuery]()
@@ -255,8 +256,8 @@ object BigQueryTypedTable {
     tableRowFn: TableRow => T,
     table: Table
   ): BigQueryTypedTable[T] = {
-    val rFn = ClosureCleaner(readerFn)
-    val wFn = ClosureCleaner(writerFn)
+    val rFn = ClosureCleaner.clean(readerFn)
+    val wFn = ClosureCleaner.clean(writerFn)
     val reader = beam.BigQueryIO.read(new SerializableFunction[SchemaAndRecord, T] {
       override def apply(input: SchemaAndRecord): T = rFn(input)
     })
