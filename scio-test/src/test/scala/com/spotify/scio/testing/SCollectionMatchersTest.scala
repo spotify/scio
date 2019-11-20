@@ -17,7 +17,7 @@
 
 package com.spotify.scio.testing
 
-import com.spotify.scio.coders.Coder
+import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import com.spotify.scio.streaming.ACCUMULATING_FIRED_PANES
 import com.spotify.scio.values.WindowOptions
 import org.apache.beam.sdk.Pipeline.PipelineExecutionException
@@ -28,6 +28,11 @@ import org.apache.beam.sdk.transforms.windowing.{
 }
 import org.apache.beam.sdk.values.TimestampedValue
 import org.joda.time.{Duration, Instant}
+import java.io.ObjectOutputStream
+import scala.util.Try
+import java.io.ObjectInputStream
+import java.io.IOException
+import java.io.NotSerializableException
 
 object SCollectionMatchersTest {
   // intentionally not serializable to test lambda ser/de
@@ -36,6 +41,15 @@ object SCollectionMatchersTest {
     override def equals(obj: Any): Boolean =
       obj.isInstanceOf[TestRecord] && x == obj.asInstanceOf[TestRecord].x
   }
+}
+
+final case class DoesNotSerialize(val a: String, val b: Int) extends Serializable {
+  @throws(classOf[IOException])
+  private def writeObject(o: ObjectOutputStream): Unit =
+    throw new NotSerializableException("DoesNotSerialize can't be serialized")
+  @throws(classOf[IOException])
+  private def readObject(o: ObjectInputStream): Unit =
+    throw new NotSerializableException("DoesNotSerialize can't be serialized")
 }
 
 // scalastyle:off no.whitespace.before.left.bracket
@@ -347,6 +361,26 @@ class SCollectionMatchersTest extends PipelineSpec {
     }
     runWithContext {
       _.parallelize(Seq(newTR(1))) shouldNot satisfySingleValue[TestRecord](_ == newTR(2))
+    }
+  }
+
+  it should "support satisfy when the closure does not serialize" in {
+    runWithContext { ctx =>
+      import CoderAssertions._
+      import org.apache.beam.sdk.util.SerializableUtils
+
+      val v = new DoesNotSerialize("foo", 42)
+      val coder = CoderMaterializer.beam(ctx, Coder[DoesNotSerialize])
+
+      assume(Try(SerializableUtils.ensureSerializable(v)).isFailure)
+      assume(Try(SerializableUtils.ensureSerializableByCoder(coder, v, "?")).isSuccess)
+
+      v coderShould roundtrip()
+      coderIsSerializable[DoesNotSerialize]
+
+      val coll = ctx.parallelize(List(v))
+      coll shouldNot beEmpty // just make sure the SCollection can be built
+      coll should satisfySingleValue[DoesNotSerialize](_.a == v.a)
     }
   }
 
