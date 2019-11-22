@@ -115,7 +115,9 @@ val beamSDKIODependencies = Def.settings(
     "io.grpc" % "grpc-stub" % grpcVersion
   ),
   dependencyOverrides ++= Seq(
-    "com.google.guava" % "guava" % guavaVersion
+    "com.google.guava" % "guava" % guavaVersion,
+    "com.google.api" % "gax" % gaxVersion,
+    "com.google.api" % "gax-grpc" % gaxVersion
   )
 )
 
