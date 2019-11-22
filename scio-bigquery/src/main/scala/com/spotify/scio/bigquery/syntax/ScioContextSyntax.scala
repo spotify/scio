@@ -190,7 +190,10 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
   ): SCollection[T] = {
     val bqt = BigQueryType[T]
     if (bqt.isStorage) {
-      typedBigQueryStorage(newSource.orNull)
+      newSource
+        .asInstanceOf[Option[Table]]
+        .map(typedBigQueryStorage(_))
+        .getOrElse(typedBigQueryStorage())
     } else {
       self.read(BigQueryTyped.dynamic[T](newSource))
     }
@@ -212,29 +215,51 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
    * [[com.spotify.scio.bigquery.types.BigQueryType.fromSchema BigQueryType.fromStorage]] or
    * [[com.spotify.scio.bigquery.types.BigQueryType.fromQuery BigQueryType.fromQuery]]
    */
-  def typedBigQueryStorage[T <: HasAnnotation: ClassTag: TypeTag: Coder](
-    newSource: Source = null,
-    rowRestriction: String = null
-  ): SCollection[T] = {
+  def typedBigQueryStorage[T <: HasAnnotation: ClassTag: TypeTag: Coder](): SCollection[T] = {
     val bqt = BigQueryType[T]
     if (bqt.isQuery) {
-      require(newSource == null, "`newSource` was set; only applies if `fromStorage` is used")
-      require(
-        rowRestriction == null,
-        "`rowRestriction` was set; only applies if `fromStorage` is used"
-      )
       self.read(BigQueryTyped.StorageQuery[T](Query(bqt.query.get)))
     } else {
-      val table: Table = Option(newSource) match {
-        case None           => Table.Spec(bqt.table.get)
-        case Some(s: Table) => s
-        case _              => throw new IllegalArgumentException("Unsupported source")
-      }
-      val rr = if (rowRestriction != null) rowRestriction else bqt.rowRestriction.get
+      val table = Table.Spec(bqt.table.get)
+      val rr = bqt.rowRestriction.get
       val params = BigQueryTyped.Storage.ReadParam(bqt.selectedFields.get, rr)
       self.read(BigQueryTyped.Storage[T](table))(params)
     }
   }
+
+  def typedBigQueryStorage[T <: HasAnnotation: ClassTag: TypeTag: Coder](
+    table: Table
+  ): SCollection[T] =
+    self.read(BigQueryTyped.Storage[T](table))(
+      BigQueryTyped.Storage.ReadParam(
+        BigQueryType[T].selectedFields.get,
+        BigQueryType[T].rowRestriction.get
+      )
+    )
+
+  def typedBigQueryStorage[T <: HasAnnotation: ClassTag: TypeTag: Coder](
+    rowRestriction: String
+  ): SCollection[T] = {
+    val bqt = BigQueryType[T]
+    val table = Table.Spec(bqt.table.get)
+    self.read(BigQueryTyped.Storage[T](table))(
+      BigQueryTyped.Storage.ReadParam(
+        bqt.selectedFields.get,
+        rowRestriction
+      )
+    )
+  }
+
+  def typedBigQueryStorage[T <: HasAnnotation: ClassTag: TypeTag: Coder](
+    table: Table,
+    rowRestriction: String
+  ): SCollection[T] =
+    self.read(BigQueryTyped.Storage[T](table))(
+      BigQueryTyped.Storage.ReadParam(
+        BigQueryType[T].selectedFields.get,
+        rowRestriction
+      )
+    )
 
   /**
    * Get an SCollection for a BigQuery TableRow JSON file.
