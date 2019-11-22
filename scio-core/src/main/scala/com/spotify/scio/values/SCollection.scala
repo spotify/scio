@@ -46,7 +46,6 @@ import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConverters._
 import scala.collection.immutable.TreeMap
-import scala.collection.{mutable => m}
 import scala.reflect.ClassTag
 import scala.util.Try
 
