@@ -842,7 +842,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
           .values
           .map(_.toSet)
       )
-      .asSingletonSideInput
+      .asSingletonSideInput(Set.empty[T])
 
   @deprecated("Use SCollection[T]#asSetSingletonSideInput instead", "0.8.0")
   def toSideSet(implicit coder: Coder[T]): SideSet[T] = SideSet(asSetSingletonSideInput)
