@@ -179,7 +179,7 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
   }
 
   def typedBigQuery[T <: HasAnnotation: ClassTag: TypeTag: Coder](): SCollection[T] =
-    typedBigQuery[T](None)
+    typedBigQuery(None)
 
   def typedBigQuery[T <: HasAnnotation: ClassTag: TypeTag: Coder](
     newSource: Source
