@@ -22,7 +22,7 @@ import java.nio.channels.{Channels, SeekableByteChannel}
 
 import com.spotify.scio.ScioContext
 import com.spotify.scio.io.{ScioIO, Tap, TapOf}
-import com.spotify.scio.util.{ClosureCleaner, ScioUtil}
+import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import org.apache.avro.Schema
@@ -43,6 +43,7 @@ import org.apache.parquet.io.{DelegatingSeekableInputStream, InputFile, Seekable
 
 import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
+import com.twitter.chill.ClosureCleaner
 
 final case class ParquetAvroIO[T: ClassTag: Coder](path: String) extends ScioIO[T] {
   override type ReadP = ParquetAvroIO.ReadParam[_, T]
@@ -135,7 +136,7 @@ object ParquetAvroIO {
     }
 
     val read: HadoopFormatIO.Read[JBoolean, T] = {
-      val g = ClosureCleaner(projectionFn) // defeat closure
+      val g = ClosureCleaner.clean(projectionFn) // defeat closure
       val aCls = avroClass
       val oCls = ScioUtil.classOf[T]
       HadoopFormatIO

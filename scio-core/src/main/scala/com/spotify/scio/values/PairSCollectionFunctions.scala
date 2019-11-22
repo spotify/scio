@@ -100,8 +100,6 @@ private object PairSCollectionFunctions {
   }
 }
 
-// scalastyle:off number.of.methods
-// scalastyle:off file.size.limit
 /**
  * Extra functions available on SCollections of (key, value) pairs through an implicit conversion.
  *
@@ -1122,5 +1120,3 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     new MultiMapSideInput[K, V](o)
   }
 }
-// scalastyle:on number.of.methods
-// scalastyle:on file.size.limit

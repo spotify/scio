@@ -52,7 +52,6 @@ object GameStats {
   @BigQueryType.toTable
   case class AvgSessionLength(mean_duration: Double, window_start: String)
 
-  // scalastyle:off method.length
   def main(cmdlineArgs: Array[String]): Unit = {
     // Create `ScioContext` and `Args`
     val (opts, args) = ScioContext.parseArguments[ExampleOptions](cmdlineArgs)
@@ -148,7 +147,6 @@ object GameStats {
     // Wait to finish processing before exiting when streaming pipeline is canceled during shutdown
     exampleUtils.waitToFinish(result.pipelineResult)
   }
-  // scalastyle:on method.length
 
   def calculateSpammyUsers(userScores: SCollection[(String, Int)]): SCollection[(String, Int)] = {
     // Sum of scores by user

@@ -41,8 +41,6 @@ import org.scalatest.exceptions.TestFailedException
 
 import scala.io.Source
 
-// scalastyle:off file.size.limit
-
 object ObjectFileJob {
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
@@ -283,7 +281,6 @@ object MetricsJob {
   }
 }
 
-// scalastyle:off no.whitespace.before.left.bracket
 class JobTestTest extends PipelineSpec {
   def testObjectFileJob(xs: Int*): Unit = {
     JobTest[ObjectFileJob.type]
@@ -967,8 +964,6 @@ class JobTestTest extends PipelineSpec {
     }
   }
 
-  // scalastyle:off line.contains.tab
-  // scalastyle:off line.size.limit
   private val runMissedMessage =
     """|- should work \*\*\* FAILED \*\*\*
                                     |  Did you forget run\(\)\?
@@ -976,8 +971,6 @@ class JobTestTest extends PipelineSpec {
                                     |  	args: --input=in.avro --output=out.avro
                                     |  	distCache: Map\(\)
                                     |  	inputs: ObjectFileIO\(in.avro\) -> List\(1, 2, 3\) \(JobTestTest.scala:.*\)""".stripMargin
-  // scalastyle:on line.size.limit
-  // scalastyle:on line.contains.tab
 
   it should "enforce run() on JobTest from class type" in {
     val stdOutMock = new MockedPrintStream
@@ -993,8 +986,7 @@ class JobTestTest extends PipelineSpec {
     Console.withOut(stdOutMock) {
       new MultiJobTest().execute("MultiJobTest should work", color = false)
     }
-    // scalastyle:off line.contains.tab
-    // scalastyle:off line.size.limit
+
     val msg =
       """|- should work \*\*\* FAILED \*\*\*
                  |  Did you forget run\(\)\?
@@ -1006,8 +998,7 @@ class JobTestTest extends PipelineSpec {
                  |  	args: --input=in2.avro --output=out2.avro
                  |  	distCache: Map\(\)
                  |  	inputs: ObjectFileIO\(in2.avro\) -> List\(1, 2, 3\) \(JobTestTest.scala:.*\)""".stripMargin
-    // scalastyle:on line.size.limit
-    // scalastyle:on line.contains.tab
+
     stdOutMock.message.mkString("") should include regex msg
   }
 
@@ -1145,5 +1136,3 @@ class JobTestTest extends PipelineSpec {
     e.getMessage should endWith(" was not greater than or equal to 100")
   }
 }
-// scalastyle:on no.whitespace.before.left.bracket
-// scalastyle:on file.size.limit

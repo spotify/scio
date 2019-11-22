@@ -26,7 +26,7 @@ ThisBuild / turbo := true
 
 val beamVersion = "2.16.0"
 
-val algebirdVersion = "0.13.5"
+val algebirdVersion = "0.13.6"
 val annoy4sVersion = "0.9.0"
 val annoyVersion = "0.2.6"
 val asmVersion = "4.13"
@@ -42,7 +42,7 @@ val commonsCompressVersion = "1.19"
 val commonsTextVersion = "1.8"
 val elasticsearch2Version = "2.4.6"
 val elasticsearch5Version = "5.6.16"
-val elasticsearch6Version = "6.8.4"
+val elasticsearch6Version = "6.8.5"
 val elasticsearch7Version = "7.4.2"
 val featranVersion = "0.4.0"
 val gcsConnectorVersion = "hadoop2-1.9.16"
@@ -115,7 +115,9 @@ val beamSDKIODependencies = Def.settings(
     "io.grpc" % "grpc-stub" % grpcVersion
   ),
   dependencyOverrides ++= Seq(
-    "com.google.guava" % "guava" % guavaVersion
+    "com.google.guava" % "guava" % guavaVersion,
+    "com.google.api" % "gax" % gaxVersion,
+    "com.google.api" % "gax-grpc" % gaxVersion
   )
 )
 
@@ -151,7 +153,6 @@ val commonSettings = Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
   // protobuf-lite is an older subset of protobuf-java and causes issues
   excludeDependencies += "com.google.protobuf" % "protobuf-lite",
   resolvers += Resolver.sonatypeRepo("public"),
-  scalastyleSources in Compile ++= (unmanagedSourceDirectories in Test).value,
   testOptions in Test += Tests.Argument("-oD"),
   testOptions += Tests.Argument(TestFrameworks.JUnit, "-q", "-v"),
   testOptions ++= {
@@ -238,7 +239,6 @@ val commonSettings = Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
 
 lazy val itSettings = Defaults.itSettings ++ Seq(
   IntegrationTest / classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.Flat,
-  scalastyleSources in Compile ++= (unmanagedSourceDirectories in IntegrationTest).value,
   // exclude all sources if we don't have GCP credentials
   (excludeFilter in unmanagedSources) in IntegrationTest := {
     if (BuildCredentials.exists) {
@@ -343,35 +343,36 @@ lazy val root: Project = Project("scio", file("."))
     aggregate in assembly := false
   )
   .aggregate(
-    scioCore,
-    scioTest,
-    scioAvro,
-    scioBigQuery,
-    scioBigtable,
-    scioCassandra2,
-    scioCassandra3,
-    scioElasticsearch2,
-    scioElasticsearch5,
-    scioElasticsearch6,
-    scioElasticsearch7,
-    scioExtra,
-    scioJdbc,
-    scioParquet,
-    scioTensorFlow,
-    scioSchemas,
-    scioSpanner,
-    scioSql,
-    scioExamples,
-    scioRepl,
-    scioJmh,
-    scioMacros
+    `scio-core`,
+    `scio-test`,
+    `scio-avro`,
+    `scio-bigquery`,
+    `scio-bigtable`,
+    `scio-cassandra2`,
+    `scio-cassandra3`,
+    `scio-elasticsearch2`,
+    `scio-elasticsearch5`,
+    `scio-elasticsearch6`,
+    `scio-elasticsearch7`,
+    `scio-extra`,
+    `scio-jdbc`,
+    `scio-parquet`,
+    `scio-tensorflow`,
+    `scio-schemas`,
+    `scio-spanner`,
+    `scio-sql`,
+    `scio-examples`,
+    `scio-repl`,
+    `scio-jmh`,
+    `scio-macros`
   )
 
-lazy val scioCore: Project = Project(
-  "scio-core",
-  file("scio-core")
-).settings(
-    commonSettings ++ macroSettings ++ itSettings,
+lazy val `scio-core`: Project = project
+  .in(file("scio-core"))
+  .settings(commonSettings)
+  .settings(macroSettings)
+  .settings(itSettings)
+  .settings(
     description := "Scio - A Scala API for Apache Beam and Google Cloud Dataflow",
     resources in Compile ++= Seq(
       (baseDirectory in ThisBuild).value / "build.sbt",
@@ -418,15 +419,15 @@ lazy val scioCore: Project = Project(
     magnoliaDependencies
   )
   .dependsOn(
-    scioSchemas % "test->test",
-    scioMacros
+    `scio-schemas` % "test->test",
+    `scio-macros`
   )
   .configs(
     IntegrationTest
   )
   .enablePlugins(BuildInfoPlugin)
 
-lazy val scioSql: Project = Project(
+lazy val `scio-sql`: Project = Project(
   "scio-sql",
   file("scio-sql")
 ).settings(commonSettings)
@@ -440,15 +441,14 @@ lazy val scioSql: Project = Project(
     )
   )
   .dependsOn(
-    scioCore,
-    scioSchemas % "test->test",
-    scioMacros
+    `scio-core`,
+    `scio-schemas` % "test->test",
+    `scio-macros`
   )
 
-lazy val scioTest: Project = Project(
-  "scio-test",
-  file("scio-test")
-).settings(commonSettings)
+lazy val `scio-test`: Project = project
+  .in(file("scio-test"))
+  .settings(commonSettings)
   .settings(itSettings)
   .settings(macroSettings)
   .settings(
@@ -477,33 +477,34 @@ lazy val scioTest: Project = Project(
     IntegrationTest
   )
   .dependsOn(
-    scioCore % "test->test;compile->compile;it->it",
-    scioSchemas % "test;it",
-    scioAvro % "compile->test;it->it",
-    scioSql % "compile->test;it->it",
-    scioBigQuery % "compile->test;it->it"
+    `scio-core` % "test->test;compile->compile;it->it",
+    `scio-schemas` % "test;it",
+    `scio-avro` % "compile->test;it->it",
+    `scio-sql` % "compile->test;it->it",
+    `scio-bigquery` % "compile->test;it->it"
   )
 
-lazy val scioMacros: Project = Project(
-  "scio-macros",
-  file("scio-macros")
-).settings(
-  commonSettings ++ macroSettings,
-  description := "Scio macros",
-  libraryDependencies ++= Seq(
-    "com.chuusai" %% "shapeless" % shapelessVersion,
-    "com.esotericsoftware" % "kryo-shaded" % kryoVersion,
-    "org.apache.beam" % "beam-sdks-java-extensions-sql" % beamVersion,
-    "org.apache.avro" % "avro" % avroVersion
-  ),
-  magnoliaDependencies
-)
+lazy val `scio-macros`: Project = project
+  .in(file("scio-macros"))
+  .settings(commonSettings)
+  .settings(macroSettings)
+  .settings(
+    description := "Scio macros",
+    libraryDependencies ++= Seq(
+      "com.chuusai" %% "shapeless" % shapelessVersion,
+      "com.esotericsoftware" % "kryo-shaded" % kryoVersion,
+      "org.apache.beam" % "beam-sdks-java-extensions-sql" % beamVersion,
+      "org.apache.avro" % "avro" % avroVersion
+    ),
+    magnoliaDependencies
+  )
 
-lazy val scioAvro: Project = Project(
-  "scio-avro",
-  file("scio-avro")
-).settings(
-    commonSettings ++ macroSettings ++ itSettings,
+lazy val `scio-avro`: Project = project
+  .in(file("scio-avro"))
+  .settings(commonSettings)
+  .settings(macroSettings)
+  .settings(itSettings)
+  .settings(
     description := "Scio add-on for working with Avro",
     libraryDependencies ++= Seq(
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
@@ -520,15 +521,17 @@ lazy val scioAvro: Project = Project(
     beamSDKIODependencies
   )
   .dependsOn(
-    scioCore % "compile;it->it"
+    `scio-core` % "compile;it->it"
   )
   .configs(IntegrationTest)
 
-lazy val scioBigQuery: Project = Project(
-  "scio-bigquery",
-  file("scio-bigquery")
-).settings(
-    commonSettings ++ macroSettings ++ itSettings ++ beamRunnerSettings,
+lazy val `scio-bigquery`: Project = project
+  .in(file("scio-bigquery"))
+  .settings(commonSettings)
+  .settings(macroSettings)
+  .settings(itSettings)
+  .settings(beamRunnerSettings)
+  .settings(
     description := "Scio add-on for Google BigQuery",
     libraryDependencies ++= Seq(
       "com.google.protobuf" % "protobuf-java" % protobufVersion,
@@ -560,14 +563,13 @@ lazy val scioBigQuery: Project = Project(
     )
   )
   .dependsOn(
-    scioCore % "compile;it->it"
+    `scio-core` % "compile;it->it"
   )
   .configs(IntegrationTest)
 
-lazy val scioBigtable: Project = Project(
-  "scio-bigtable",
-  file("scio-bigtable")
-).settings(commonSettings)
+lazy val `scio-bigtable`: Project = project
+  .in(file("scio-bigtable"))
+  .settings(commonSettings)
   .settings(itSettings)
   .settings(
     description := "Scio add-on for Google Cloud Bigtable",
@@ -586,16 +588,16 @@ lazy val scioBigtable: Project = Project(
     beamSDKIODependencies
   )
   .dependsOn(
-    scioCore,
-    scioTest % "test;it->it"
+    `scio-core`,
+    `scio-test` % "test;it->it"
   )
   .configs(IntegrationTest)
 
-lazy val scioCassandra2: Project = Project(
-  "scio-cassandra2",
-  file("scio-cassandra/cassandra2")
-).settings(
-    commonSettings ++ itSettings,
+lazy val `scio-cassandra2`: Project = project
+  .in(file("scio-cassandra/cassandra2"))
+  .settings(commonSettings)
+  .settings(itSettings)
+  .settings(
     description := "Scio add-on for Apache Cassandra 2.x",
     libraryDependencies ++= Seq(
       "com.google.protobuf" % "protobuf-java" % protobufVersion,
@@ -610,16 +612,16 @@ lazy val scioCassandra2: Project = Project(
     )
   )
   .dependsOn(
-    scioCore,
-    scioTest % "test;it"
+    `scio-core`,
+    `scio-test` % "test;it"
   )
   .configs(IntegrationTest)
 
-lazy val scioCassandra3: Project = Project(
-  "scio-cassandra3",
-  file("scio-cassandra/cassandra3")
-).settings(
-    commonSettings ++ itSettings,
+lazy val `scio-cassandra3`: Project = project
+  .in(file("scio-cassandra/cassandra3"))
+  .settings(commonSettings)
+  .settings(itSettings)
+  .settings(
     description := "Scio add-on for Apache Cassandra 3.x",
     libraryDependencies ++= Seq(
       "com.google.protobuf" % "protobuf-java" % protobufVersion,
@@ -636,16 +638,15 @@ lazy val scioCassandra3: Project = Project(
     )
   )
   .dependsOn(
-    scioCore,
-    scioTest % "test;it"
+    `scio-core`,
+    `scio-test` % "test;it"
   )
   .configs(IntegrationTest)
 
-lazy val scioElasticsearch2: Project = Project(
-  "scio-elasticsearch2",
-  file("scio-elasticsearch/es2")
-).settings(
-    commonSettings,
+lazy val `scio-elasticsearch2`: Project = project
+  .in(file("scio-elasticsearch/es2"))
+  .settings(commonSettings)
+  .settings(
     description := "Scio add-on for writing to Elasticsearch",
     libraryDependencies ++= Seq(
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
@@ -655,15 +656,14 @@ lazy val scioElasticsearch2: Project = Project(
     )
   )
   .dependsOn(
-    scioCore,
-    scioTest % "test"
+    `scio-core`,
+    `scio-test` % "test"
   )
 
-lazy val scioElasticsearch5: Project = Project(
-  "scio-elasticsearch5",
-  file("scio-elasticsearch/es5")
-).settings(
-    commonSettings,
+lazy val `scio-elasticsearch5`: Project = project
+  .in(file("scio-elasticsearch/es5"))
+  .settings(commonSettings)
+  .settings(
     description := "Scio add-on for writing to Elasticsearch",
     libraryDependencies ++= Seq(
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
@@ -674,15 +674,14 @@ lazy val scioElasticsearch5: Project = Project(
     )
   )
   .dependsOn(
-    scioCore,
-    scioTest % "test"
+    `scio-core`,
+    `scio-test` % "test"
   )
 
-lazy val scioElasticsearch6: Project = Project(
-  "scio-elasticsearch6",
-  file("scio-elasticsearch/es6")
-).settings(
-    commonSettings,
+lazy val `scio-elasticsearch6`: Project = project
+  .in(file("scio-elasticsearch/es6"))
+  .settings(commonSettings)
+  .settings(
     description := "Scio add-on for writing to Elasticsearch",
     libraryDependencies ++= Seq(
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
@@ -694,15 +693,14 @@ lazy val scioElasticsearch6: Project = Project(
     )
   )
   .dependsOn(
-    scioCore,
-    scioTest % "test"
+    `scio-core`,
+    `scio-test` % "test"
   )
 
-lazy val scioElasticsearch7: Project = Project(
-  "scio-elasticsearch7",
-  file("scio-elasticsearch/es7")
-).settings(
-    commonSettings,
+lazy val `scio-elasticsearch7`: Project = project
+  .in(file("scio-elasticsearch/es7"))
+  .settings(commonSettings)
+  .settings(
     description := "Scio add-on for writing to Elasticsearch",
     libraryDependencies ++= Seq(
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
@@ -715,15 +713,15 @@ lazy val scioElasticsearch7: Project = Project(
     )
   )
   .dependsOn(
-    scioCore,
-    scioTest % "test"
+    `scio-core`,
+    `scio-test` % "test"
   )
 
-lazy val scioExtra: Project = Project(
-  "scio-extra",
-  file("scio-extra")
-).settings(
-    commonSettings ++ itSettings,
+lazy val `scio-extra`: Project = project
+  .in(file("scio-extra"))
+  .settings(commonSettings)
+  .settings(itSettings)
+  .settings(
     description := "Scio extra utilities",
     libraryDependencies ++= Seq(
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
@@ -756,36 +754,34 @@ lazy val scioExtra: Project = Project(
     compileOrder := CompileOrder.JavaThenScala
   )
   .dependsOn(
-    scioCore % "compile->compile;provided->provided",
-    scioTest % "it->it;test->test",
-    scioAvro,
-    scioBigQuery,
-    scioMacros
+    `scio-core` % "compile->compile;provided->provided",
+    `scio-test` % "it->it;test->test",
+    `scio-avro`,
+    `scio-bigquery`,
+    `scio-macros`
   )
   .configs(IntegrationTest)
 
-lazy val scioJdbc: Project = Project(
-  "scio-jdbc",
-  file("scio-jdbc")
-).settings(
-    commonSettings,
+lazy val `scio-jdbc`: Project = project
+  .in(file("scio-jdbc"))
+  .settings(commonSettings)
+  .settings(
     description := "Scio add-on for JDBC",
     libraryDependencies ++= Seq(
       "org.apache.beam" % "beam-sdks-java-io-jdbc" % beamVersion
     )
   )
   .dependsOn(
-    scioCore,
-    scioTest % "test"
+    `scio-core`,
+    `scio-test` % "test"
   )
 
 val ensureSourceManaged = taskKey[Unit]("ensureSourceManaged")
 
-lazy val scioParquet: Project = Project(
-  "scio-parquet",
-  file("scio-parquet")
-).settings(
-    commonSettings,
+lazy val `scio-parquet`: Project = project
+  .in(file("scio-parquet"))
+  .settings(commonSettings)
+  .settings(
     // change annotation processor output directory so IntelliJ can pick them up
     ensureSourceManaged := IO.createDirectory(sourceManaged.value / "main"),
     (compile in Compile) := Def.task {
@@ -803,17 +799,18 @@ lazy val scioParquet: Project = Project(
     )
   )
   .dependsOn(
-    scioCore,
-    scioAvro,
-    scioSchemas % "test",
-    scioTest % "test->test"
+    `scio-core`,
+    `scio-avro`,
+    `scio-schemas` % "test",
+    `scio-test` % "test->test"
   )
 
-lazy val scioSpanner: Project = Project(
-  "scio-spanner",
-  file("scio-spanner")
-).settings(
-    commonSettings ++ itSettings ++ beamRunnerSettings,
+lazy val `scio-spanner`: Project = project
+  .in(file("scio-spanner"))
+  .settings(commonSettings)
+  .settings(itSettings)
+  .settings(beamRunnerSettings)
+  .settings(
     description := "Scio add-on for Google Cloud Spanner",
     libraryDependencies ++= Seq(
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
@@ -823,15 +820,13 @@ lazy val scioSpanner: Project = Project(
     beamSDKIODependencies
   )
   .dependsOn(
-    scioCore,
-    scioTest % "test"
+    `scio-core`,
+    `scio-test` % "test"
   )
   .configs(IntegrationTest)
 
-lazy val scioTensorFlow: Project = Project(
-  "scio-tensorflow",
-  file("scio-tensorflow")
-).enablePlugins(ProtobufPlugin)
+lazy val `scio-tensorflow`: Project = project
+  .in(file("scio-tensorflow"))
   .settings(commonSettings)
   .settings(itSettings)
   .settings(protobufSettings)
@@ -857,16 +852,15 @@ lazy val scioTensorFlow: Project = Project(
     javaOptions += "-Dscio.ignoreVersionWarning=true"
   )
   .dependsOn(
-    scioAvro,
-    scioCore,
-    scioTest % "it->it;test->test"
+    `scio-avro`,
+    `scio-core`,
+    `scio-test` % "it->it;test->test"
   )
   .configs(IntegrationTest)
+  .enablePlugins(ProtobufPlugin)
 
-lazy val scioSchemas: Project = Project(
-  "scio-schemas",
-  file("scio-schemas")
-).enablePlugins(ProtobufPlugin)
+lazy val `scio-schemas`: Project = project
+  .in(file("scio-schemas"))
   .settings(commonSettings)
   .settings(noPublishSettings)
   .settings(protobufSettings)
@@ -880,11 +874,11 @@ lazy val scioSchemas: Project = Project(
     sources in doc in Compile := List(), // suppress warnings
     compileOrder := CompileOrder.JavaThenScala
   )
+  .enablePlugins(ProtobufPlugin)
 
-lazy val scioExamples: Project = Project(
-  "scio-examples",
-  file("scio-examples")
-).settings(commonSettings)
+lazy val `scio-examples`: Project = project
+  .in(file("scio-examples"))
+  .settings(commonSettings)
   .settings(noPublishSettings)
   .settings(soccoSettings)
   .settings(beamRunnerSettings)
@@ -923,22 +917,21 @@ lazy val scioExamples: Project = Project(
     run / classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.Flat
   )
   .dependsOn(
-    scioCore,
-    scioBigQuery,
-    scioBigtable,
-    scioSchemas,
-    scioJdbc,
-    scioExtra,
-    scioSpanner,
-    scioTensorFlow,
-    scioSql,
-    scioTest % "compile->test"
+    `scio-core`,
+    `scio-bigquery`,
+    `scio-bigtable`,
+    `scio-schemas`,
+    `scio-jdbc`,
+    `scio-extra`,
+    `scio-spanner`,
+    `scio-tensorflow`,
+    `scio-sql`,
+    `scio-test` % "compile->test"
   )
 
-lazy val scioRepl: Project = Project(
-  "scio-repl",
-  file("scio-repl")
-).settings(commonSettings)
+lazy val `scio-repl`: Project = project
+  .in(file("scio-repl"))
+  .settings(commonSettings)
   .settings(macroSettings)
   .settings(
     libraryDependencies ++= Seq(
@@ -959,15 +952,14 @@ lazy val scioRepl: Project = Project(
     assemblyJarName in assembly := s"scio-repl-${version.value}.jar"
   )
   .dependsOn(
-    scioCore,
-    scioBigQuery,
-    scioExtra
+    `scio-core`,
+    `scio-bigquery`,
+    `scio-extra`
   )
 
-lazy val scioJmh: Project = Project(
-  "scio-jmh",
-  file("scio-jmh")
-).settings(commonSettings)
+lazy val `scio-jmh`: Project = project
+  .in(file("scio-jmh"))
+  .settings(commonSettings)
   .settings(macroSettings)
   .settings(noPublishSettings)
   .settings(
@@ -982,13 +974,16 @@ lazy val scioJmh: Project = Project(
     )
   )
   .dependsOn(
-    scioCore,
-    scioAvro
+    `scio-core`,
+    `scio-avro`
   )
   .enablePlugins(JmhPlugin)
 
 lazy val site: Project = project
   .in(file("site"))
+  .settings(commonSettings)
+  .settings(macroSettings)
+  .settings(siteSettings)
   .enablePlugins(
     ParadoxSitePlugin,
     ParadoxMaterialThemePlugin,
@@ -997,17 +992,15 @@ lazy val site: Project = project
     SiteScaladocPlugin,
     MdocPlugin
   )
-  .settings(commonSettings ++ macroSettings)
-  .settings(siteSettings)
   .dependsOn(
-    scioMacros,
-    scioCore,
-    scioAvro,
-    scioBigQuery,
-    scioBigtable,
-    scioParquet,
-    scioSchemas,
-    scioTest
+    `scio-macros`,
+    `scio-core`,
+    `scio-avro`,
+    `scio-bigquery`,
+    `scio-bigtable`,
+    `scio-parquet`,
+    `scio-schemas`,
+    `scio-test`
   )
 
 // =======================================================================
@@ -1085,19 +1078,19 @@ lazy val siteSettings = Def.settings(
   },
   unidocProjectFilter in (ScalaUnidoc, unidoc) :=
     inProjects(
-      scioCore,
-      scioTest,
-      scioAvro,
-      scioBigQuery,
-      scioBigtable,
-      scioCassandra3,
-      scioElasticsearch6,
-      scioExtra,
-      scioJdbc,
-      scioParquet,
-      scioTensorFlow,
-      scioSpanner,
-      scioMacros
+      `scio-core`,
+      `scio-test`,
+      `scio-avro`,
+      `scio-bigquery`,
+      `scio-bigtable`,
+      `scio-cassandra3`,
+      `scio-elasticsearch6`,
+      `scio-extra`,
+      `scio-jdbc`,
+      `scio-parquet`,
+      `scio-tensorflow`,
+      `scio-spanner`,
+      `scio-macros`
     ),
   // unidoc handles class paths differently than compile and may give older
   // versions high precedence.

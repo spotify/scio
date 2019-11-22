@@ -32,7 +32,6 @@ object SchemaUtil {
   def toPrettyString(className: String, schema: Schema, indent: Int): String =
     getCaseClass(className, schema, indent)
 
-  // scalastyle:off cyclomatic.complexity
   private def getFieldType(
     className: String,
     fieldName: String,
@@ -79,7 +78,6 @@ object SchemaUtil {
       case t => throw new IllegalArgumentException(s"Type: $t not supported")
     }
   }
-  // scalastyle:on cyclomatic.complexity
 
   private def getCaseClass(className: String, schema: Schema, indent: Int): String = {
     val xs = schema.getFields.asScala

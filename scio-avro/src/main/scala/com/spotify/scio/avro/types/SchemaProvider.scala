@@ -46,7 +46,6 @@ private[types] object SchemaProvider {
     })
   }
 
-  // scalastyle:off cyclomatic.complexity
   private def toSchema(tpe: Type): (Schema, Any) = tpe match {
     case t if t =:= typeOf[Boolean] =>
       (Schema.create(Schema.Type.BOOLEAN), null)
@@ -81,7 +80,6 @@ private[types] object SchemaProvider {
 
     case _ => throw new RuntimeException(s"Unsupported type: $tpe")
   }
-  // scalastyle:on cyclomatic.complexity
 
   private def toField(f: (Symbol, Option[String])): Field = {
     val (symbol, doc) = f

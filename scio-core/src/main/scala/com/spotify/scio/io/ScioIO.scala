@@ -28,9 +28,7 @@ sealed trait TapT[A] extends Serializable {
 }
 
 object TapT {
-  // scalastyle:off structural.type
   type Aux[A, T0] = TapT[A] { type T = T0 }
-  // scalastyle:on structural.type
 }
 
 final class EmptyTapOf[A] private extends TapT[A] {
@@ -110,7 +108,6 @@ trait ScioIO[T] {
 }
 
 object ScioIO {
-  // scalastyle:off structural.type
   type ReadOnly[T, R] =
     ScioIO[T] {
       type ReadP = R
@@ -140,7 +137,6 @@ object ScioIO {
 
       override def tap(params: ReadP): Tap[io.tapT.T] = io.tap(params)
     }
-  // scalastyle:on structural.type
 }
 
 /** Base trait for [[ScioIO]] without business logic, for stubbing mock data with `JobTest`. */

@@ -108,7 +108,6 @@ class BigQueryIT extends FlatSpec with Matchers {
   it should "fail insufficient sample data" in {
     val t = "clouddataflow-readonly:samples.weather_stations"
 
-    // scalastyle:off no.whitespace.before.left.bracket
     the[IllegalArgumentException] thrownBy {
       val mbq = MockBigQuery()
       mbq.mockTable(t).withSample(2000)
@@ -145,5 +144,4 @@ class BigQueryIT extends FlatSpec with Matchers {
     } should have message
       "404 Not Found, this is most likely caused by missing source table or mock data"
   }
-  // scalastyle:on no.whitespace.before.left.bracket
 }

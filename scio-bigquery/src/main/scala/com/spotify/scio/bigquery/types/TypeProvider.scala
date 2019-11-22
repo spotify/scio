@@ -41,7 +41,6 @@ import scala.collection.JavaConverters._
 import scala.collection.mutable.{Buffer => MBuffer, Map => MMap}
 import scala.reflect.macros._
 
-// scalastyle:off line.size.limit
 private[types] object TypeProvider {
   private[this] val logger = LoggerFactory.getLogger(this.getClass)
   private lazy val bigquery: BigQuery = BigQuery.defaultInstance()
@@ -118,7 +117,6 @@ private[types] object TypeProvider {
     schemaToType(c)(schema, annottees, traits, overrides ++ ta)
   }
 
-  // scalastyle:off cyclomatic.complexity
   def queryImpl(c: blackbox.Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
     import c.universe._
 
@@ -158,7 +156,6 @@ private[types] object TypeProvider {
 
     schemaToType(c)(schema, annottees, traits, overrides)
   }
-  // scalastyle:on cyclomatic.complexity
 
   private def getTableDescription(
     c: blackbox.Context
@@ -234,8 +231,6 @@ private[types] object TypeProvider {
     c.Expr[Any](r)
   }
 
-  // scalastyle:off cyclomatic.complexity
-  // scalastyle:off method.length
   private def schemaToType(c: blackbox.Context)(
     schema: TableSchema,
     annottees: Seq[c.Expr[Any]],
@@ -340,8 +335,6 @@ private[types] object TypeProvider {
 
     c.Expr[Any](r)
   }
-  // scalastyle:on cyclomatic.complexity
-  // scalastyle:on method.length
 
   /** Extract string from annotation. */
   private def extractArgs(c: blackbox.Context): List[(Any, c.universe.Type)] = {
@@ -498,7 +491,6 @@ private[types] object TypeProvider {
     }
   }
 
-  // scalastyle:off line.size.limit
   private def pShowCode(
     c: blackbox.Context
   )(records: Seq[c.Tree], caseClass: c.Tree): Seq[String] = {
@@ -526,7 +518,6 @@ private[types] object TypeProvider {
       case _ => ""
     }
   }
-  // scalastyle:on line.size.limit
 
   private def genHashForMacro(owner: String, srcFile: String): String = {
     Hashing
@@ -555,7 +546,6 @@ private[types] object TypeProvider {
     Files.asCharSink(genSrcFile, Charsets.UTF_8).write(prettyCode)
   }
 }
-// scalastyle:on line.size.limit
 
 private[types] object NameProvider {
   private val m = MMap.empty[String, Int].withDefaultValue(0)

@@ -223,12 +223,10 @@ private[scio] final class FastEval(evalToolBox: ToolBox[u.type]) {
   def eval[T](ctx: blackbox.Context)(expr: ctx.Expr[T]): T = {
     import ctx.universe._
 
-    //scalastyle:off
     val evalImporter =
       u.internal
         .createImporter(ctx.universe)
         .asInstanceOf[u.Importer { val from: ctx.universe.type }]
-    //scalastyle:on
 
     expr.tree match {
       case Literal(Constant(value)) =>

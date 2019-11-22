@@ -15,9 +15,6 @@
  * under the License.
  */
 
-// scalastyle:off method.length
-// scalastyle:off regex
-
 // Example: Metrics Example
 // Usage:
 

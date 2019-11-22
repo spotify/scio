@@ -21,7 +21,7 @@ import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
 
 import com.spotify.scio.util.FunctionsWithSideInput.SideInputDoFn
-import com.spotify.scio.util.{ClosureCleaner, FunctionsWithSideInput}
+import com.spotify.scio.util.FunctionsWithSideInput
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
 import org.apache.beam.sdk.transforms.windowing.BoundedWindow
 import org.apache.beam.sdk.transforms.{DoFn, ParDo}
@@ -29,6 +29,7 @@ import org.apache.beam.sdk.values.{PCollection, TupleTag, TupleTagList}
 
 import scala.collection.JavaConverters._
 import scala.util.Try
+import com.twitter.chill.ClosureCleaner
 
 /**
  * An enhanced SCollection that provides access to one or more [[SideInput]]s for some transforms.
@@ -96,7 +97,7 @@ class SCollectionWithSideInput[T: Coder] private[values] (
       f: (T, SideInputContext[T]) => SideOutput[T]
     ): DoFn[T, T] =
       new SideInputDoFn[T, T] {
-        val g = ClosureCleaner(f) // defeat closure
+        val g = ClosureCleaner.clean(f) // defeat closure
 
         @ProcessElement
         private[scio] def processElement(c: DoFn[T, T]#ProcessContext, w: BoundedWindow): Unit = {

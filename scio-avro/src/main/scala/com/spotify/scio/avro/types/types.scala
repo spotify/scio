@@ -34,7 +34,5 @@ package object types {
    *                 @doc("user age") age: Int)
    * }}}
    */
-  // scalastyle:off class.name
   class doc(value: String) extends StaticAnnotation
-  // scalastyle:on class.name
 }

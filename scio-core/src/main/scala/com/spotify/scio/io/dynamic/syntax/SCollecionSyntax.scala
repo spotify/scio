@@ -62,7 +62,6 @@ final class DynamicSpecificRecordSCollectionOps[T <: SpecificRecord](
   /**
    * Save this SCollection as Avro files specified by the destination function.
    */
-  // scalastyle:off parameter.number
   def saveAsDynamicAvroFile(
     path: String,
     numShards: Int = 0,
@@ -106,7 +105,6 @@ final class DynamicGenericRecordSCollectionOps[T <: GenericRecord](private val s
   /**
    * Save this SCollection as Avro files specified by the destination function.
    */
-  // scalastyle:off parameter.number
   def saveAsDynamicAvroFile(
     path: String,
     schema: Schema,

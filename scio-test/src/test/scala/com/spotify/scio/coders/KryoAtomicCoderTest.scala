@@ -145,9 +145,7 @@ class KryoAtomicCoderTest extends PipelineSpec {
 
     sc.parallelize(1 to 10).map(x => RecordB(x.toString, x))
 
-    // scalastyle:off no.whitespace.before.left.bracket
     val e = the[PipelineExecutionException] thrownBy { sc.run() }
-    // scalastyle:on no.whitespace.before.left.bracket
 
     val msg = "Class is not registered: com.spotify.scio.coders.RecordB"
     e.getCause.getMessage should startWith(msg)
@@ -162,9 +160,7 @@ class KryoAtomicCoderTest extends PipelineSpec {
     val sc = ScioContext(options)
     sc.parallelize(1 to 10).map(x => RecordB(x.toString, x))
 
-    // scalastyle:off no.whitespace.before.left.bracket
     val e = the[PipelineExecutionException] thrownBy { sc.run() }
-    // scalastyle:on no.whitespace.before.left.bracket
 
     val msg = "Class is not registered: com.spotify.scio.coders.RecordB"
     e.getCause.getMessage should startWith(msg)

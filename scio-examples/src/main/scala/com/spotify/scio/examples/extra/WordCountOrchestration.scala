@@ -52,11 +52,9 @@ object WordCountOrchestration {
       t2 <- f2
     } yield merge(opts, Seq(t1, t2), output)
 
-    // scalastyle:off regex
     // Block process and wait for last future
     println("Tap:")
     f.value.take(10).foreach(println)
-    // scalastyle:on regex
   }
 
   def count(opts: PipelineOptions, inputPath: String): Tap[(String, Long)] = {

@@ -101,7 +101,6 @@ class PipeDoFnTest extends PipelineSpec {
     }
   }
 
-  // scalastyle:off no.whitespace.before.left.bracket
   it should "fail if command fails" in {
     // the exception thrown could be UncheckedIOException for broken pipe or IllegalStateException
     // for non-zero exit code, depending on which happens first
@@ -151,7 +150,6 @@ class PipeDoFnTest extends PipelineSpec {
       }
     } should have message "java.lang.Exception: Exceptions thrown while tearing down DoFns"
   }
-  // scalastyle:on no.whitespace.before.left.bracket
 
   private def errorMessages(t: Throwable): List[String] =
     if (t == null) Nil else t.getMessage :: errorMessages(t.getCause)

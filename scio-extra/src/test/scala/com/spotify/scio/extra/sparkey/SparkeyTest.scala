@@ -159,13 +159,13 @@ class SparkeyTest extends PipelineSpec {
     val basePath = tmpDir.resolve("sparkey").toString
     val index = new File(basePath + ".spi")
     Files.createFile(index.toPath)
-    // scalastyle:off no.whitespace.before.left.bracket
+
     the[IllegalArgumentException] thrownBy {
       runWithContext {
         _.parallelize(sideData).asSparkey(basePath)
       }
     } should have message s"requirement failed: Sparkey URI $basePath already exists"
-    // scalastyle:on no.whitespace.before.left.bracket
+
     index.delete()
   }
 

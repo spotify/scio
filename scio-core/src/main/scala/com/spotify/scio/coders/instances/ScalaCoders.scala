@@ -432,7 +432,6 @@ private object SDoubleCoder extends BCoder[Double] {
   override def toString: String = "DoubleCoder"
 }
 
-// scalastyle:off number.of.methods
 trait ScalaCoders {
   implicit def charCoder: Coder[Char] =
     Coder.xmap(Coder.beam(ByteCoder.of()))(_.toChar, _.toByte)

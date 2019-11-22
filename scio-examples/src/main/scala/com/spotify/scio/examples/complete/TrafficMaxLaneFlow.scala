@@ -60,7 +60,6 @@ object TrafficMaxLaneFlow {
     window_timestamp: Instant
   )
 
-  // scalastyle:off method.length
   def main(cmdlineArgs: Array[String]): Unit = {
     // set up example wiring
     val (opts, args) = ScioContext.parseArguments[ExampleOptions](cmdlineArgs)
@@ -133,5 +132,4 @@ object TrafficMaxLaneFlow {
     val result = sc.run()
     exampleUtils.waitToFinish(result.pipelineResult)
   }
-  // scalastyle:on method.length
 }

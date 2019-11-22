@@ -42,7 +42,6 @@ import scala.collection.JavaConverters._
 import scala.reflect.macros._
 import scala.util.Try
 
-// scalastyle:off line.size.limit
 private[types] object TypeProvider {
   private val logger = LoggerFactory.getLogger(this.getClass)
 
@@ -86,7 +85,6 @@ private[types] object TypeProvider {
     schemaToType(c)(schema, annottees)
   }
 
-  // scalastyle:off
   private def schemaFromGcsFolder(path: String): Schema = {
     val p = path.trim.replaceAll("\n", "")
     emitWarningIfGcsGlobPath(p)
@@ -198,8 +196,6 @@ private[types] object TypeProvider {
     c.Expr[Any](r)
   }
 
-  // scalastyle:off cyclomatic.complexity
-  // scalastyle:off method.length
   private def schemaToType(
     c: blackbox.Context
   )(schema: Schema, annottees: Seq[c.Expr[Any]]): c.Expr[Any] = {
@@ -491,4 +487,3 @@ private[types] object TypeProvider {
     FileSystems.setDefaultPipelineOptions(PipelineOptionsFactory.create())
   }
 }
-// scalastyle:on line.size.limit

@@ -15,8 +15,6 @@
  * under the License.
  */
 
-// scalastyle:off method.length
-
 // Example: Side Input and Output Example
 // Usage:
 

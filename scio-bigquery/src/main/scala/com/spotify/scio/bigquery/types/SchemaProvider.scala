@@ -55,7 +55,6 @@ private[types] object SchemaProvider {
 
   val provider: OverrideTypeProvider = OverrideTypeProviderFinder.getProvider
 
-  // scalastyle:off cyclomatic.complexity
   private def rawType(tpe: Type): (String, Iterable[TableFieldSchema]) =
     tpe match {
       case t if provider.shouldOverrideType(t) =>
@@ -79,7 +78,6 @@ private[types] object SchemaProvider {
       case t if isCaseClass(t) => ("RECORD", toFields(t))
       case _                   => throw new RuntimeException(s"Unsupported type: $tpe")
     }
-  // scalastyle:on cyclomatic.complexity
 
   private def toField(f: (Symbol, Option[String])): TableFieldSchema = {
     val (symbol, desc) = f

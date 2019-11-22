@@ -64,7 +64,6 @@ object StorageUtil {
     tableField
   }
 
-  // scalastyle:off cyclomatic.complexity
   private def setRawType(tableField: TableFieldSchema, schema: Schema): Unit = {
     val tpe = schema.getType match {
       case Type.BOOLEAN => "BOOLEAN"
@@ -113,5 +112,4 @@ object StorageUtil {
     tableField.setType(tpe)
     ()
   }
-  // scalastyle:on cyclomatic.complexity
 }

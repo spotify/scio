@@ -31,7 +31,6 @@ private[client] object LoadOps {
   private val Logger = LoggerFactory.getLogger(this.getClass)
 }
 
-// scalastyle:off parameter.number
 private[client] final class LoadOps(client: Client, jobService: JobOps) {
   import LoadOps._
 
@@ -113,7 +112,6 @@ private[client] final class LoadOps(client: Client, jobService: JobOps) {
       encoding = encoding
     )
 
-  // scalastyle:off method.length
   private def execute(
     sources: List[String],
     sourceFormat: String,
@@ -168,7 +166,4 @@ private[client] final class LoadOps(client: Client, jobService: JobOps) {
 
     tableRef
   }
-
-  // scalastyle:on method.length
 }
-// scalastyle:on parameter.number

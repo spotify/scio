@@ -33,7 +33,6 @@ private final case class Partitions[K, V](hot: SCollection[(K, V)], chill: SColl
  * @groupname transform Transformations
  */
 class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
-  // scalastyle:off parameter.number
   /**
    * N to 1 skew-proof flavor of [[PairSCollectionFunctions.join]].
    *
@@ -99,7 +98,6 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
       leftSideKeys.withName("Compute CMS of LHS keys").aggregate(keyAggregator)
     self.skewedJoin(that, hotKeyThreshold, cms)
   }
-  // scalastyle:on parameter.number
 
   /**
    * N to 1 skew-proof flavor of [[PairSCollectionFunctions.join]].
@@ -149,7 +147,6 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     hotJoined.withName("Union hot and chill join results") ++ chillJoined
   }
 
-  // scalastyle:off parameter.number
   /**
    * N to 1 skew-proof flavor of [[PairSCollectionFunctions.leftOuterJoin]].
    *
@@ -219,7 +216,6 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
       leftSideKeys.withName("Compute CMS of LHS keys").aggregate(keyAggregator)
     self.skewedLeftJoin(that, hotKeyThreshold, cms)
   }
-  // scalastyle:on parameter.number
 
   /**
    * N to 1 skew-proof flavor of [[PairSCollectionFunctions.leftOuterJoin]].
@@ -268,7 +264,6 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     hotJoined.withName("Union hot and chill join results") ++ chillJoined
   }
 
-  // scalastyle:off parameter.number
   /**
    * N to 1 skew-proof flavor of [[PairSCollectionFunctions.fullOuterJoin]].
    *
@@ -392,10 +387,10 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     cms: SCollection[CMS[K]]
   )(implicit koder: Coder[K], voder: Coder[V]): (Partitions[K, V], Partitions[K, W]) = {
     val (hotSelf, chillSelf) = (SideOutput[(K, V)](), SideOutput[(K, V)]())
-    // scalastyle:off line.size.limit
+
     // Use asIterableSideInput as workaround for:
     // http://stackoverflow.com/questions/37126729/ismsinkwriter-expects-keys-to-be-written-in-strictly-increasing-order
-    // scalastyle:on line.size.limit
+
     val keyCMS = cms.asIterableSideInput
     val error = cms
       .withName("Compute CMS error bound")

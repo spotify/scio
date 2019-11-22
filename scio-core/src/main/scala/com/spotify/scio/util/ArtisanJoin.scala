@@ -35,7 +35,6 @@ import scala.collection.JavaConverters._
 private[scio] object ArtisanJoin {
   private val log = LoggerFactory.getLogger(this.getClass)
 
-  // scalastyle:off line.size.limit
   private def cogroupImpl[KEY: Coder, A: Coder, B: Coder, A1: Coder, B1: Coder](
     name: String,
     a: SCollection[(KEY, A)],
@@ -89,7 +88,6 @@ private[scio] object ArtisanJoin {
       }))
       .withState(_.copy(postCoGroup = true))
   }
-  // scalastyle:oon line.size.limit
 
   private def joinImpl[KEY: Coder, A: Coder, B: Coder, A1: Coder, B1: Coder](
     name: String,
