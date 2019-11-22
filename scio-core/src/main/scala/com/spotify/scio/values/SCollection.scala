@@ -813,10 +813,25 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   def asIterableSideInput: SideInput[Iterable[T]] =
     new IterableSideInput[T](this.applyInternal(View.asIterable()))
 
+  /**
+   * Convert this SCollection to a [[SideInput]], mapping each window to a `Set[T]`, to be used
+   * with [[withSideInputs]].
+   *
+   * The resulting [[SideInput]] is a one element singleton which is a `Set` of all elements in
+   * the SCollection for the given window. The complete Set must fit in memory of the worker.
+   *
+   * @group side
+   */
+  // Find the distinct elements in parallel and then convert to a Set and SingletonSideInput.
+  // This is preferred over aggregating as we want to map each window to a Set.
   def asSetSingletonSideInput(implicit coder: Coder[T]): SideInput[Set[T]] =
     self
-      .aggregate(m.Set[T]())(_ += _, _ ++= _) // Use mutable sets during aggregation
-      .map(_.toSet) // switch to immutable set for output
+      .transform(
+        _.distinct
+          .groupBy(_ => ())
+          .values
+          .map(_.toSet)
+      )
       .asSingletonSideInput
 
   @deprecated("Use SCollection[T]#asSetSingletonSideInput instead", "0.8.0")

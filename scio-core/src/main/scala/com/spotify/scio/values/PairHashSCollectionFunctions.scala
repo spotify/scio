@@ -76,7 +76,6 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    *
    * @group join
    */
-  // TODO should we have thatSide as SideInput[Map[K, W] ] along with this one?
   def hashJoin[W: Coder](
     thatSide: SideInput[Map[K, Iterable[W]]]
   )(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, (V, W))] =
@@ -247,7 +246,10 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    *
    * @group per key
    */
-  @deprecated("Use SCollection[(K, V)]#hashIntersectByKey(that.asSetSingletonSideInput) instead", "0.8.0")
+  @deprecated(
+    "Use SCollection[(K, V)]#hashIntersectByKey(that.asSetSingletonSideInput) instead",
+    "0.8.0"
+  )
   def hashIntersectByKey(
     that: SideSet[K]
   )(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, V)] =
@@ -268,7 +270,7 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
       .filter { case ((k, v), s) => s(that).contains(k) }
       .toSCollection
 
-  @deprecated("use SCollection[(K, V)]#asMultiMapSideInput instead", "0.8.0")
+  @deprecated("Use SCollection[(K, V)]#asMultiMapSideInput instead", "0.8.0")
   def toSideMap(implicit koder: Coder[K], voder: Coder[V]): SideMap[K, V] =
     SideMap[K, V](combineAsMapSideInput(self))
 
