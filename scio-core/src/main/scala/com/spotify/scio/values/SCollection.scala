@@ -190,6 +190,23 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       })
     }
 
+  /**
+   * Go from an SCollection of type [[T]] to an SCollection of [[U]]
+   * given the Schemas of both types [[T]] and [[U]].
+   *
+   * There are two constructors for [[To]]:
+   *
+   * Type safe (Schema compatibility is verified during compilation)
+   * {{{
+   *   SCollection[T]#to(To.safe[T, U])
+   * }}}
+   *
+   * Unsafe conversion from [[T]] to [[U]]. Schema compatibility is not checked
+   * during compile time.
+   * {{{
+   *   SCollection[T]#to[U](To.unsafe)
+   * }}}
+   */
   def to[U](to: To[T, U]): SCollection[U] = transform(to)
 
   // =======================================================================
