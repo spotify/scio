@@ -38,6 +38,9 @@ private[client] object QueryOps {
 
   private val Priority = if (isInteractive) "INTERACTIVE" else "BATCH"
 
+  private[scio] def isDML(sqlQuery: String): Boolean =
+    sqlQuery.toUpperCase().matches("(UPDATE|MERGE|INSERT|DELETE).*")
+
   private[scio] final case class QueryJobConfig(
     sql: String,
     useLegacySql: Boolean,
@@ -228,11 +231,18 @@ private[client] final class QueryOps(client: Client, tableService: TableOps, job
         .setUseLegacySql(config.useLegacySql)
         .setFlattenResults(config.flattenResults)
         .setPriority(Priority)
-        .setCreateDisposition(config.createDisposition.name)
-        .setWriteDisposition(config.writeDisposition.name)
-      if (!config.dryRun) {
+
+      Option(config.createDisposition)
+        .map(_.name)
+        .foreach(queryConfig.setCreateDisposition)
+      Option(config.writeDisposition)
+        .map(_.name)
+        .foreach(queryConfig.setWriteDisposition)
+
+      if (!config.dryRun && !isDML(config.sql)) {
         queryConfig.setAllowLargeResults(true).setDestinationTable(config.destinationTable)
       }
+
       val jobConfig = new JobConfiguration().setQuery(queryConfig).setDryRun(config.dryRun)
       val fullJobId = BigQueryUtil.generateJobId(client.project)
       val jobReference = new JobReference().setProjectId(client.project).setJobId(fullJobId)
@@ -259,7 +269,14 @@ private[client] final class QueryOps(client: Client, tableService: TableOps, job
 
   private[scio] def isLegacySql(sqlQuery: String, flattenResults: Boolean = false): Boolean = {
     val dryRun =
-      QueryJobConfig(sqlQuery, dryRun = true, useLegacySql = false, flattenResults = flattenResults)
+      QueryJobConfig(
+        sqlQuery,
+        dryRun = true,
+        useLegacySql = false,
+        flattenResults = flattenResults,
+        createDisposition = null,
+        writeDisposition = null
+      )
 
     sqlQuery.trim.split("\n")(0).trim.toLowerCase match {
       case "#legacysql"   => true
