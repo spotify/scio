@@ -77,12 +77,12 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * @group join
    */
   def hashJoin[W: Coder](
-    thatSideInput: SideInput[Map[K, Iterable[W]]]
+    sideInput: SideInput[Map[K, Iterable[W]]]
   )(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, (V, W))] =
     self.transform { in =>
-      in.withSideInputs(thatSideInput)
+      in.withSideInputs(sideInput)
         .flatMap[(K, (V, W))] { (kv, sideInputCtx) =>
-          sideInputCtx(thatSideInput)
+          sideInputCtx(sideInput)
             .getOrElse(kv._1, Iterable.empty[W])
             .iterator
             .map(w => (kv._1, (kv._2, w)))
@@ -135,13 +135,13 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * @group join
    */
   def hashLeftJoin[W: Coder](
-    thatSide: SideInput[Map[K, Iterable[W]]]
+    sideInput: SideInput[Map[K, Iterable[W]]]
   )(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, (V, Option[W]))] = self.transform {
     in =>
-      in.withSideInputs(thatSide)
+      in.withSideInputs(sideInput)
         .flatMap[(K, (V, Option[W]))] {
           case ((k, v), sideInputCtx) =>
-            val thatSideMap = sideInputCtx(thatSide)
+            val thatSideMap = sideInputCtx(sideInput)
             if (thatSideMap.contains(k)) thatSideMap(k).iterator.map(w => (k, (v, Some(w))))
             else Iterator((k, (v, None)))
         }
@@ -177,9 +177,9 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     "0.8.0"
   )
   def hashFullOuterJoin[W: Coder](
-    that: SideMap[K, W]
+    sideMap: SideMap[K, W]
   )(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, (Option[V], Option[W]))] =
-    hashFullOuterJoin(that.asImmutableSideInput)
+    hashFullOuterJoin(sideMap.asImmutableSideInput)
 
   /**
    * Perform a full outer join with a SideMap.
@@ -194,14 +194,14 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * @group join
    */
   def hashFullOuterJoin[W: Coder](
-    thatSide: SideInput[Map[K, Iterable[W]]]
+    sideInput: SideInput[Map[K, Iterable[W]]]
   )(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, (Option[V], Option[W]))] =
     self.transform { in =>
       val leftHashed = in
-        .withSideInputs(thatSide)
+        .withSideInputs(sideInput)
         .flatMap {
           case ((k, v), sideInputCtx) =>
-            val thatSideMap = sideInputCtx(thatSide)
+            val thatSideMap = sideInputCtx(sideInput)
             if (thatSideMap.contains(k)) {
               thatSideMap(k).iterator
                 .map[(K, (Option[V], Option[W]), Boolean)](w => (k, (Some(v), Some(w)), true))
@@ -215,9 +215,9 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
         .filter(_._3)
         .map(_._1)
         .aggregate(Set.empty[K])(_ + _, _ ++ _)
-        .withSideInputs(thatSide)
+        .withSideInputs(sideInput)
         .flatMap { (mk, sideInputCtx) =>
-          val m = sideInputCtx(thatSide)
+          val m = sideInputCtx(sideInput)
           (m.keySet diff mk)
             .flatMap(k => m(k).iterator.map[(K, (Option[V], Option[W]))](w => (k, (None, Some(w)))))
         }
@@ -251,9 +251,9 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     "0.8.0"
   )
   def hashIntersectByKey(
-    thatSideSet: SideSet[K]
+    sideSet: SideSet[K]
   )(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, V)] =
-    hashIntersectByKey(thatSideSet.side)
+    hashIntersectByKey(sideSet.side)
 
   /**
    * Return an SCollection with the pairs from `this` whose keys are in the SideSet `that`.
@@ -263,11 +263,11 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * @group per key
    */
   def hashIntersectByKey(
-    thatSideInput: SideInput[Set[K]]
+    sideInput: SideInput[Set[K]]
   )(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, V)] =
     self
-      .withSideInputs(thatSideInput)
-      .filter { case ((k, _), sideInputCtx) => sideInputCtx(thatSideInput).contains(k) }
+      .withSideInputs(sideInput)
+      .filter { case ((k, _), sideInputCtx) => sideInputCtx(sideInput).contains(k) }
       .toSCollection
 
   @deprecated("Use SCollection[(K, V)]#asMultiMapSideInput instead", "0.8.0")
