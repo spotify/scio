@@ -21,5 +21,5 @@ import scala.collection.mutable.{ArrayBuffer, Map => MMap}
 @deprecated("Use SCollection[(K, V)]#asMultiMapSideInput instead", "0.8.0")
 case class SideMap[K, V](side: SideInput[MMap[K, ArrayBuffer[V]]]) {
   private[values] def asImmutableSideInput: SideInput[Map[K, Iterable[V]]] =
-    side.map(_.mapValues(_.toIterable).toMap)
+    side.map(_.iterator.mapValues(_.toIterable).toMap)
 }
