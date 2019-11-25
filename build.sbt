@@ -31,6 +31,7 @@ val annoy4sVersion = "0.9.0"
 val annoyVersion = "0.2.6"
 val asmVersion = "4.13"
 val autoServiceVersion = "1.0-rc2"
+val autoValueVersion = "1.7"
 val avroVersion = "1.8.2"
 val breezeVersion = "1.0"
 val chillVersion = "0.9.4"
@@ -364,7 +365,8 @@ lazy val root: Project = Project("scio", file("."))
     `scio-examples`,
     `scio-repl`,
     `scio-jmh`,
-    `scio-macros`
+    `scio-macros`,
+    `scio-smb`
   )
 
 lazy val `scio-core`: Project = project
@@ -978,6 +980,34 @@ lazy val `scio-jmh`: Project = project
     `scio-avro`
   )
   .enablePlugins(JmhPlugin)
+
+lazy val `scio-smb`: Project = project
+  .in(file("scio-smb"))
+  .settings(commonSettings)
+  .settings(itSettings)
+  .settings(beamRunnerSettings)
+  .settings(
+    description := "Sort Merge Bucket source/sink implementations for Apache Beam",
+    libraryDependencies ++= Seq(
+      "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
+      "org.apache.beam" % "beam-sdks-java-core" % "it,test" classifier "tests",
+      "org.apache.beam" % "beam-sdks-java-extensions-sorter" % beamVersion,
+      "org.apache.beam" % "beam-sdks-java-extensions-protobuf" % beamVersion,
+      "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
+      "com.google.apis" % "google-api-services-bigquery" % googleApiServicesBigQuery,
+      "org.tensorflow" % "proto" % tensorFlowVersion,
+      "com.google.auto.value" % "auto-value-annotations" % autoValueVersion,
+      "com.google.auto.value" % "auto-value" % autoValueVersion,
+      "javax.annotation" % "javax.annotation-api" % "1.3.2",
+      "org.hamcrest" % "hamcrest-all" % hamcrestVersion % Test,
+      "com.novocode" % "junit-interface" % "0.11" % Test,
+      "junit" % "junit" % "4.13-beta-1" % Test
+    ),
+    Test / classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.Flat
+  )
+  .configs(
+    IntegrationTest
+  )
 
 lazy val site: Project = project
   .in(file("site"))
