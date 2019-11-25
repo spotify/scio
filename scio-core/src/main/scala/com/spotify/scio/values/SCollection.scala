@@ -50,7 +50,7 @@ import scala.reflect.ClassTag
 import scala.util.Try
 
 /** Convenience functions for creating SCollections. */
-object SCollection {
+object SCollection extends ApproxFilterSCollectionSyntax {
   private[values] val logger = LoggerFactory.getLogger(this.getClass)
 
   /**

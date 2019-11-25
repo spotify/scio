@@ -24,6 +24,7 @@ trait Implicits
     with ProtobufCoders
     with JavaCoders
     with AlgebirdCoders
+    with GuavaCoders
     with JodaCoders
     with Serializable
     with LowPriorityFallbackCoder
