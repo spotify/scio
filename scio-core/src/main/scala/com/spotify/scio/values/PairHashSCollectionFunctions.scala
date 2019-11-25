@@ -104,7 +104,7 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
   /**
    * Perform a left outer join with a [[SideMap]].
    *
-   * SideMaps are deprecated in favour of `SideInput[Map[K, Iterable[W]]]`.
+   * SideMaps are deprecated in favor of `SideInput[Map[K, Iterable[W]]]`.
    * Example replacement:
    * {{{
    *   val si = pairSCollRight.asMultiMapSideInput
@@ -267,7 +267,7 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
   )(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, V)] =
     self
       .withSideInputs(that)
-      .filter { case ((k, v), s) => s(that).contains(k) }
+      .filter { case ((k, _), s) => s(that).contains(k) }
       .toSCollection
 
   @deprecated("Use SCollection[(K, V)]#asMultiMapSideInput instead", "0.8.0")
