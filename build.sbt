@@ -1001,7 +1001,7 @@ lazy val `scio-smb`: Project = project
       "javax.annotation" % "javax.annotation-api" % "1.3.2",
       "org.hamcrest" % "hamcrest-all" % hamcrestVersion % Test,
       "com.novocode" % "junit-interface" % "0.11" % Test,
-      "junit" % "junit" % "4.13-beta-1" % Test
+      "junit" % "junit" % "4.13-rc-1" % Test
     ),
     Test / classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.Flat
   )
