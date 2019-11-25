@@ -139,10 +139,11 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
   )(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, (V, Option[W]))] = self.transform {
     in =>
       in.withSideInputs(thatSide)
-        .flatMap[(K, (V, Option[W]))] { case ( (k, v), sideInputCtx) =>
-          val thatSideMap = sideInputCtx(thatSide)
-          if (thatSideMap.contains(k)) thatSideMap(k).iterator.map(w => (k, (v, Some(w))))
-          else Iterator((k, (v, None)))
+        .flatMap[(K, (V, Option[W]))] {
+          case ((k, v), sideInputCtx) =>
+            val thatSideMap = sideInputCtx(thatSide)
+            if (thatSideMap.contains(k)) thatSideMap(k).iterator.map(w => (k, (v, Some(w))))
+            else Iterator((k, (v, None)))
         }
         .toSCollection
   }
