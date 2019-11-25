@@ -824,6 +824,30 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     new IterableSideInput[T](this.applyInternal(View.asIterable()))
 
   /**
+   * Convert this SCollection to a [[SideInput]], mapping each window to a `Set[T]`, to be used
+   * with [[withSideInputs]].
+   *
+   * The resulting [[SideInput]] is a one element singleton which is a `Set` of all elements in
+   * the SCollection for the given window. The complete Set must fit in memory of the worker.
+   *
+   * @group side
+   */
+  // Find the distinct elements in parallel and then convert to a Set and SingletonSideInput.
+  // This is preferred over aggregating as we want to map each window to a Set.
+  def asSetSingletonSideInput(implicit coder: Coder[T]): SideInput[Set[T]] =
+    self
+      .transform(
+        _.distinct
+          .groupBy(_ => ())
+          .values
+          .map(_.toSet)
+      )
+      .asSingletonSideInput(Set.empty[T])
+
+  @deprecated("Use SCollection[T]#asSetSingletonSideInput instead", "0.8.0")
+  def toSideSet(implicit coder: Coder[T]): SideSet[T] = SideSet(asSetSingletonSideInput)
+
+  /**
    * Convert this SCollection to an [[SCollectionWithSideInput]] with one or more [[SideInput]]s,
    * similar to Spark broadcast variables. Call [[SCollectionWithSideInput.toSCollection]] when
    * done with side inputs.
@@ -837,13 +861,15 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * val side1 = s1.asSingletonSideInput
    * val side2 = s2.asIterableSideInput
    * val side3 = s3.asMapSideInput
+   * val side4 = s4.asMultiMapSideInput
    *
    * val p: SCollection[MyRecord] = // ...
    * p.withSideInputs(side1, side2, side3).map { (x, s) =>
    *   // Extract side inputs from context
    *   val s1: Int = s(side1)
    *   val s2: Iterable[String] = s(side2)
-   *   val s3: Map[String, Iterable[Double]] = s(side3)
+   *   val s3: Map[String, Double] = s(side3)
+   *   val s4: Map[String, Iterable[Double]] = s(side4)
    *   // ...
    * }
    * }}}
@@ -1057,12 +1083,6 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
         .of(Functions.serializableFn(f))
         .withAllowedTimestampSkew(allowedTimestampSkew)
     )
-
-  def toSideSet(implicit coder: Coder[T]): SideSet[T] = SideSet(combineAsSet(self))
-
-  private def combineAsSet[A: Coder](c: SCollection[A]): SideInput[Set[A]] =
-    c.aggregate[Set[A], Set[A]](Aggregator.prepareSemigroup(x => Set(x)))
-      .asSingletonSideInput(Set[A]())
 
   // =======================================================================
   // Read operations

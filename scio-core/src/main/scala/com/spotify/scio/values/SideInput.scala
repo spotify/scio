@@ -48,7 +48,7 @@ trait SideInput[T] extends Serializable {
   }
 
   /**
-   * Create a new [[SideInput]] by applying a wrapping this SideInput with a mapper.
+   * Create a new [[SideInput]] by applying a function on the elements wrapped in this SideInput.
    */
   def map[B](f: T => B): SideInput[B] = new DelegatingSideInput[T, B](this, f)
 
