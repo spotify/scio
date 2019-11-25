@@ -143,7 +143,7 @@ public class AvroSortedBucketIO {
     }
 
     @Override
-    protected BucketedInput<?, T> toBucketedInput() {
+    public BucketedInput<?, T> toBucketedInput() {
       @SuppressWarnings("unchecked")
       final AvroFileOperations<T> fileOperations =
           getRecordClass() == null

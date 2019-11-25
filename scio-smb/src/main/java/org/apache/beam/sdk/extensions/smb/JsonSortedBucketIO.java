@@ -108,7 +108,7 @@ public class JsonSortedBucketIO {
     }
 
     @Override
-    protected BucketedInput<?, TableRow> toBucketedInput() {
+    public BucketedInput<?, TableRow> toBucketedInput() {
       return new BucketedInput<>(
           getTupleTag(),
           getInputDirectory(),

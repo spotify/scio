@@ -116,7 +116,7 @@ public class TensorFlowBucketIO {
     }
 
     @Override
-    protected BucketedInput<?, Example> toBucketedInput() {
+    public BucketedInput<?, Example> toBucketedInput() {
       return new BucketedInput<>(
           getTupleTag(),
           getInputDirectory(),

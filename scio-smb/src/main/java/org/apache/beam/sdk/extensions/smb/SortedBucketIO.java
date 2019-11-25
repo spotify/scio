@@ -93,6 +93,6 @@ public class SortedBucketIO {
 
   /** Represents a single sorted-bucket source written using {@link SortedBucketSink}. */
   public abstract static class Read<V> {
-    protected abstract BucketedInput<?, V> toBucketedInput();
+    public abstract BucketedInput<?, V> toBucketedInput();
   }
 }

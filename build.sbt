@@ -1015,6 +1015,10 @@ lazy val `scio-smb`: Project = project
   )
   .configs(
     IntegrationTest
+  ).dependsOn(
+    `scio-core`,
+    `scio-avro`,
+    `scio-test`
   )
 
 lazy val site: Project = project
