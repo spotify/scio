@@ -234,7 +234,7 @@ class PairHashSCollectionFunctionsTest extends PipelineSpec {
     }
   }
 
-  it should "support hashIntersectByKey() with SideInput[Set[_]]" in {
+  it should "support hashIntersectByKey() with asSetSingletonSideInput" in {
     runWithContext { sc =>
       val p1 = sc.parallelize(Seq(("a", 1), ("b", 2), ("c", 3), ("b", 4)))
       val p2 = sc.parallelize(Seq[String]("a", "b", "d")).asSetSingletonSideInput
