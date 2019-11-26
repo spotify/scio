@@ -729,7 +729,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
 
   def top(num: Int, ord: Ordering[T])(implicit coder: Coder[T]): SCollection[Iterable[T]] =
     this.transform {
-      _.pApply(Top.of(num, ord)).map(_.asInstanceOf[JIterable[T]].asScala)
+      _.pApply(Top.of(num, ord)).map((l: JIterable[T]) => l.asScala)
     }
 
   // =======================================================================
