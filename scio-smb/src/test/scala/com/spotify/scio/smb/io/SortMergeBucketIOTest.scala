@@ -50,7 +50,7 @@ object SortMergeBucketIOTestJob {
       )
       .map { case (k, (l, r)) =>
         toGenericRecord(k, l.getFavoriteColor, r.get("favorite_number").asInstanceOf[Int])
-      }.saveAsSortedBucket[String]("output", schemaOut, "key", HashType.MURMUR3_32, 1)
+      }.saveAsSortedBucket(classOf[String], "output", schemaOut, "key", HashType.MURMUR3_32, 1)
 
     sc.run().waitUntilDone()
   }

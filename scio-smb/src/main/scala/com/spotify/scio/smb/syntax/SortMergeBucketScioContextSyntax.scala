@@ -51,16 +51,16 @@ trait SortMergeBucketScioContextSyntax {
 
   // Can't use Beam's FileSystems API in init since file might not exist yet (i.e. in test context)
   private def stripFilepattern(path: String): String = {
-    val globPattern = "^(.*)/(.*)$".r
+    val globPattern = "^(.*)\\/(.+\\.(.+))?$".r
 
     path match {
-      case globPattern(dir, _) => dir
-      case _                   => path
+      case globPattern(dir, _, _) => dir
+      case _                      => path
     }
   }
 }
 
-final class SortedBucketScioContext(private val self: ScioContext) {
+final class SortedBucketScioContext(@transient private val self: ScioContext) {
   def sortMergeJoin[K: Coder, L: Coder, R: Coder](
     keyClass: Class[K],
     lhs: SortedBucketIO.Read[L],
@@ -92,20 +92,21 @@ final class SortedBucketScioContext(private val self: ScioContext) {
 
       readA.cogroup(readB)
     } else {
+      val t = SortedBucketIO.read(keyClass).of(a).and(b)
+      val (tupleTagA, tupleTagB) = (
+        a.toBucketedInput.getTupleTag,
+        b.toBucketedInput.getTupleTag
+      )
       self
-        .wrap(
-          self.applyInternal(
-            SortedBucketIO.read(keyClass).of(a).and(b)
-          )
-        )
+        .wrap(self.applyInternal(t))
         .map { kv =>
           val cgbkResult = kv.getValue
 
           (
             kv.getKey,
             (
-              cgbkResult.getAll(a.toBucketedInput.getTupleTag).asScala,
-              cgbkResult.getAll(b.toBucketedInput.getTupleTag).asScala
+              cgbkResult.getAll(tupleTagA).asScala,
+              cgbkResult.getAll(tupleTagB).asScala
             )
           )
         }

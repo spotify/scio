@@ -30,7 +30,7 @@ import scala.reflect.ClassTag
 
 trait SortMergeBucketSCollectionSyntax {
   implicit def toGenericAvroCollection(
-    data: SCollection[_ <: GenericRecord]
+    data: SCollection[GenericRecord]
   ): SortedBucketGenericAvroSCollection =
     new SortedBucketGenericAvroSCollection(data.asInstanceOf[SCollection[GenericRecord]])
 
@@ -53,7 +53,8 @@ final class SortedBucketGenericAvroSCollection(private val self: SCollection[Gen
   import org.apache.avro.Schema
   import org.apache.avro.file.CodecFactory
 
-  def saveAsSortedBucket[K: Coder: ClassTag](
+  def saveAsSortedBucket[K: Coder](
+    keyClass: Class[K],
     outputDirectory: String,
     schema: Schema,
     keyField: String,
@@ -69,7 +70,7 @@ final class SortedBucketGenericAvroSCollection(private val self: SCollection[Gen
     } else {
       self.applyInternal(
         AvroSortedBucketIO
-          .write(ScioUtil.classOf[K], keyField, schema)
+          .write(keyClass, keyField, schema)
           .to(outputDirectory)
           .withTempDirectory(self.context.options.getTempLocation)
           .withCodec(codec)
@@ -90,10 +91,11 @@ final class SortedBucketSpecificAvroSCollection[T <: SpecificRecordBase: ClassTa
   import com.spotify.scio.smb.syntax.SortMergeBucketSCollectionSyntax._
   import org.apache.avro.file.CodecFactory
 
-  def saveAsSortedBucket[K: Coder: ClassTag](
+  def saveAsSortedBucket[K: Coder](
+    keyClass: Class[K],
     outputDirectory: String,
     keyField: String,
-    hashType: String,
+    hashType: HashType,
     numBuckets: Int,
     numShards: Int = 1,
     codec: CodecFactory = CodecFactory.snappyCodec()
@@ -105,10 +107,11 @@ final class SortedBucketSpecificAvroSCollection[T <: SpecificRecordBase: ClassTa
     } else {
       self.applyInternal[SortedBucketSink.WriteResult](
         AvroSortedBucketIO
-          .write[K, T](ScioUtil.classOf[K], keyField, ScioUtil.classOf[T])
+          .write[K, T](keyClass, keyField, ScioUtil.classOf[T])
           .to(outputDirectory)
           .withTempDirectory(self.context.options.getTempLocation)
           .withCodec(codec)
+          .withHashType(hashType)
           .withNumBuckets(numBuckets)
           .withNumShards(numShards)
       )
