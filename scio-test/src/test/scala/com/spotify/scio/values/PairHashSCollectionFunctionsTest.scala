@@ -251,4 +251,22 @@ class PairHashSCollectionFunctionsTest extends PipelineSpec {
       p should containInAnyOrder(Seq(("a", 1), ("b", 2), ("b", 4)))
     }
   }
+
+  it should "support hashFilter() with asSetSingletonSideInput" in {
+    runWithContext { sc =>
+      val p1 = sc.parallelize(Seq("a", "b", "c", "b"))
+      val p2 = sc.parallelize(Seq[String]("a", "a", "b", "e")).asSetSingletonSideInput
+      val p = p1.hashFilter(p2)
+      p should containInAnyOrder(Seq("a", "b", "b"))
+    }
+  }
+
+  it should "support hashFilter() with SideSet" in {
+    runWithContext { sc =>
+      val p1 = sc.parallelize(Seq("a", "b", "c", "b"))
+      val p2 = sc.parallelize(Seq[String]("a", "a", "b", "e")).toSideSet
+      val p = p1.hashFilter(p2)
+      p should containInAnyOrder(Seq("a", "b", "b"))
+    }
+  }
 }
