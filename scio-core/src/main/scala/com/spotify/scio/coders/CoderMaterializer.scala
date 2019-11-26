@@ -19,6 +19,7 @@ package com.spotify.scio.coders
 
 import org.apache.beam.sdk.coders.{CoderRegistry, KvCoder, NullableCoder, Coder => BCoder}
 import org.apache.beam.sdk.options.{PipelineOptions, PipelineOptionsFactory}
+import scala.collection.concurrent.TrieMap
 
 object CoderMaterializer {
   import com.spotify.scio.ScioContext
@@ -42,13 +43,13 @@ object CoderMaterializer {
     r: CoderRegistry,
     o: PipelineOptions,
     coder: Coder[T]
-  ): BCoder[T] = beamImpl(r, o, coder, Map.empty)
+  ): BCoder[T] = beamImpl(r, o, coder, TrieMap.empty)
 
   final private def beamImpl[T](
     r: CoderRegistry,
     o: PipelineOptions,
     coder: Coder[T],
-    refs: Map[String, RefCoder[_]]
+    refs: TrieMap[String, RefCoder[_]]
   ): BCoder[T] = {
     coder match {
       // #1734: do not wrap native beam coders
@@ -87,7 +88,11 @@ object CoderMaterializer {
         refs
           .get(t)
           .getOrElse {
-            lazy val bc: BCoder[T] = beamImpl(r, o, c, refs + (t -> RefCoder(t, bc)))
+            // #2269: _REALLY_ support recursive ADTs
+            val bc = RefCoder[T](t, null) // placeholder
+            refs.put(t, bc)
+            val actualImpl = beamImpl(r, o, c, refs)
+            bc.setImpl(actualImpl)
             bc
           }
           .asInstanceOf[BCoder[T]]

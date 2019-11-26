@@ -167,26 +167,31 @@ private final case class DisjunctionCoder[T, Id](
     }
 }
 
-private[scio] final class RefCoder[T](val typeName: String, c: => BCoder[T]) extends BCoder[T] {
-  def value: BCoder[T] = c
+private[scio] final case class RefCoder[T](val typeName: String, var coder: BCoder[T])
+    extends BCoder[T] {
+  def setImpl(_c: BCoder[T]): Unit = coder = _c
 
-  def decode(inStream: InputStream): T = c.decode(inStream)
-  def encode(value: T, outStream: OutputStream): Unit = c.encode(value, outStream)
-  def getCoderArguments(): java.util.List[_ <: BCoder[_]] = c.getCoderArguments()
-  def verifyDeterministic(): Unit = c.verifyDeterministic()
+  private def check[A](t: => A): A = {
+    require(coder != null, s"Coder implementation should not be null in ${this}")
+    t
+  }
 
-  override def consistentWithEquals(): Boolean = c.consistentWithEquals()
-  override def structuralValue(value: T): AnyRef =
+  def decode(inStream: InputStream): T = check { coder.decode(inStream) }
+  def encode(value: T, outStream: OutputStream): Unit = check { coder.encode(value, outStream) }
+  def getCoderArguments(): java.util.List[_ <: BCoder[_]] = check { coder.getCoderArguments() }
+  def verifyDeterministic(): Unit = check { coder.verifyDeterministic() }
+
+  override def consistentWithEquals(): Boolean = check { coder.consistentWithEquals() }
+  override def structuralValue(value: T): AnyRef = check {
     if (consistentWithEquals()) {
       value.asInstanceOf[AnyRef]
     } else {
-      c.structuralValue(value)
+      coder.structuralValue(value)
     }
-}
+  }
 
-private[scio] object RefCoder {
-  def apply[T](t: String, c: => BCoder[T]): RefCoder[T] = new RefCoder[T](t, c)
-  def unapply[T](c: RefCoder[T]): Option[(String, BCoder[T])] = Option((c.typeName, c.value))
+  override def toString(): String =
+    s"RefCoder($typeName, ${if (coder == null) "null" else "<coder ref>"})"
 }
 
 // XXX: Workaround a NPE deep down the stack in Beam
