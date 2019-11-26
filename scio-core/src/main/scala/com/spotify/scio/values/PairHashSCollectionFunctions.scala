@@ -67,7 +67,7 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * The right side is tiny and fits in memory. The SideInput can be used reused for
    * multiple joins.
    *
-   * Example:
+   * @example
    * {{{
    *   val si = pairSCollRight.asMultiMapSideInput
    *   val joined1 = pairSColl1Left.hashJoin(si)
@@ -94,7 +94,7 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * Perform a left outer join by replicating `that` to all workers. The right side should be tiny
    * and fit in memory.
    *
-   * Example:
+   * @example
    * {{{
    *   val si = pairSCollRight  // Should be tiny
    *   val joined = pairSColl1Left.hashLeftOuterJoin(pairSCollRight)
@@ -111,12 +111,13 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * Perform a left outer join by replicating `that` to all workers. The right side should be tiny
    * and fit in memory.
    *
-   * Example:
+   * @example
    * {{{
    *   val si = pairSCollRight  // Should be tiny
    *   val joined = pairSColl1Left.hashLeftOuterJoin(pairSCollRight)
    * }}}
    * @group join
+   * @param that The tiny SCollection[(K, W)] treated as right side of the join.
    */
   def hashLeftOuterJoin[W: Coder](
     that: SCollection[(K, W)]
@@ -148,7 +149,7 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
   /**
    * Perform a left outer join with a MultiMap `SideInput[Map[K, Iterable[V]]`
    *
-   * Example:
+   * @example
    * {{{
    *   val si = pairSCollRight.asMultiMapSideInput
    *   val joined1 = pairSColl1Left.hashLeftOuterJoin(si)
@@ -206,7 +207,7 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
   /**
    * Perform a full outer join with a SideMap.
    *
-   * Example:
+   * @example
    * {{{
    *   val si = pairSCollRight.asMultiMapSideInput
    *   val joined1 = pairSColl1Left.hashFullOuterJoin(si)
