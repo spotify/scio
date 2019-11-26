@@ -37,11 +37,15 @@ import scala.util.Random
 
 object SortMergeBucketExample {
   lazy val UserDataSchema: Schema = Schema.createRecord(
-    "UserData", "doc", "com.spotify.scio.examples.extra", false,
+    "UserData",
+    "doc",
+    "com.spotify.scio.examples.extra",
+    false,
     List(
       new Field("userId", Schema.create(Schema.Type.INT), "doc", ""),
       new Field("age", Schema.create(Schema.Type.INT), "doc", -1)
-    ).asJava)
+    ).asJava
+  )
 
   def user(id: Int, age: Int): GenericRecord = {
     val gr = new GenericData.Record(UserDataSchema)
@@ -52,7 +56,8 @@ object SortMergeBucketExample {
   }
 
   def account(id: Int, name: String, `type`: String, amount: Double): Account = {
-    Account.newBuilder()
+    Account
+      .newBuilder()
       .setId(id)
       .setName(name)
       .setType(`type`)
@@ -73,7 +78,9 @@ object SortMergeBucketWriteExample {
       Coder.avroGenericRecordCoder(SortMergeBucketExample.UserDataSchema)
 
     sc.parallelize(1 to 500)
-      .map { i => SortMergeBucketExample.user(i, Random.nextInt(100)) }
+      .map { i =>
+        SortMergeBucketExample.user(i, Random.nextInt(100))
+      }
       .saveAsSortedBucket(
         classOf[Integer],
         outputL,
@@ -84,9 +91,14 @@ object SortMergeBucketWriteExample {
       )
 
     sc.parallelize(250 to 750)
-      .map { i => SortMergeBucketExample.account(
-        i, s"user$i", s"type${i % 5}", Random.nextDouble() * 1000
-      ) }
+      .map { i =>
+        SortMergeBucketExample.account(
+          i,
+          s"user$i",
+          s"type${i % 5}",
+          Random.nextDouble() * 1000
+        )
+      }
       .saveAsSortedBucket(
         classOf[Integer],
         outputR,
@@ -113,12 +125,15 @@ object SortMergeBucketJoinExample {
       Coder.avroGenericRecordCoder(SortMergeBucketExample.UserDataSchema)
 
     sc.sortMergeJoin(
-      classOf[Integer],
-      GenericRecordIO(inputL, SortMergeBucketExample.UserDataSchema),
-      SpecificRecordIO[Account](inputR)
-    ).map { case (userId, (userData, account)) =>
-        s"$userId\t${userData.get("age")}\t${account.getAmount}"
-    }.saveAsTextFile(output)
+        classOf[Integer],
+        GenericRecordIO(inputL, SortMergeBucketExample.UserDataSchema),
+        SpecificRecordIO[Account](inputR)
+      )
+      .map {
+        case (userId, (userData, account)) =>
+          s"$userId\t${userData.get("age")}\t${account.getAmount}"
+      }
+      .saveAsTextFile(output)
 
     sc.run().waitUntilDone()
     ()

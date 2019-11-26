@@ -18,6 +18,7 @@
 package com.spotify.scio.smb.syntax
 
 import com.spotify.scio.coders.Coder
+import com.spotify.scio.io.ClosedTap
 import com.spotify.scio.testing.TestDataManager
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values._
@@ -42,9 +43,9 @@ trait SortMergeBucketSCollectionSyntax {
 
 private[smb] object SortMergeBucketSCollectionSyntax {
   // Adapted from ScioUtil
-  private[smb] def toPathFragment(path: String): String =
+  def toPathFragment(path: String): String =
     if (path.endsWith("/")) s"${path}bucket-*-shard-*.avro"
-    else s"$path/bucket-*.avro"
+    else s"$path/bucket-*-shard-*.avro"
 }
 
 final class SortedBucketGenericAvroSCollection(private val self: SCollection[GenericRecord]) {
@@ -62,11 +63,11 @@ final class SortedBucketGenericAvroSCollection(private val self: SCollection[Gen
     numBuckets: Int,
     numShards: Int = 1,
     codec: CodecFactory = CodecFactory.snappyCodec()
-  ): GenericRecordTap = {
-    if (self.context.isTest) {
-      TestDataManager.getOutput(self.context.testId.get)(
-        GenericRecordIO(outputDirectory, schema)
-      )(self)
+  ): ClosedTap[GenericRecord] = {
+    val tap = if (self.context.isTest) {
+      val testIO = GenericRecordIO(outputDirectory, schema)
+      TestDataManager.getOutput(self.context.testId.get)(testIO)(self)
+      testIO.tapT.saveForTest(self)
     } else {
       self.applyInternal(
         AvroSortedBucketIO
@@ -78,9 +79,11 @@ final class SortedBucketGenericAvroSCollection(private val self: SCollection[Gen
           .withNumBuckets(numBuckets)
           .withNumShards(numShards)
       )
+
+      GenericRecordTap(toPathFragment(outputDirectory), schema)
     }
 
-    GenericRecordTap(toPathFragment(outputDirectory), schema)
+    ClosedTap(tap)
   }
 }
 
@@ -99,11 +102,11 @@ final class SortedBucketSpecificAvroSCollection[T <: SpecificRecordBase: ClassTa
     numBuckets: Int,
     numShards: Int = 1,
     codec: CodecFactory = CodecFactory.snappyCodec()
-  ): SpecificRecordTap[T] = {
-    if (self.context.isTest) {
-      TestDataManager.getOutput(self.context.testId.get)(
-        SpecificRecordIO[T](outputDirectory)
-      )(self)
+  ): ClosedTap[T] = {
+    val tap = if (self.context.isTest) {
+      val testIO = SpecificRecordIO[T](outputDirectory)
+      TestDataManager.getOutput(self.context.testId.get)(testIO)(self)
+      testIO.tapT.saveForTest(self)
     } else {
       self.applyInternal[SortedBucketSink.WriteResult](
         AvroSortedBucketIO
@@ -115,8 +118,9 @@ final class SortedBucketSpecificAvroSCollection[T <: SpecificRecordBase: ClassTa
           .withNumBuckets(numBuckets)
           .withNumShards(numShards)
       )
+      SpecificRecordTap[T](toPathFragment(outputDirectory))
     }
 
-    SpecificRecordTap[T](toPathFragment(outputDirectory))
+    ClosedTap[T](tap)
   }
 }

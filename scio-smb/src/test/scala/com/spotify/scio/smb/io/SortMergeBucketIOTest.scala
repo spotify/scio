@@ -42,7 +42,7 @@ object SortMergeBucketIOTestJob {
   def main(cmdLineArgs: Array[String]): Unit = {
     val (sc, _) = ContextAndArgs(cmdLineArgs)
 
-    sc
+    val smbTap = sc
       .sortMergeJoin(
         classOf[String],
         SpecificRecordIO[AvroGeneratedUser]("lhsPath"),
@@ -50,9 +50,12 @@ object SortMergeBucketIOTestJob {
       )
       .map { case (k, (l, r)) =>
         toGenericRecord(k, l.getFavoriteColor, r.get("favorite_number").asInstanceOf[Int])
-      }.saveAsSortedBucket(classOf[String], "output", schemaOut, "key", HashType.MURMUR3_32, 1)
+      }
+      .saveAsSortedBucket(classOf[String], "output", schemaOut, "key", HashType.MURMUR3_32, 1)
 
     sc.run().waitUntilDone()
+      .tap(smbTap)
+      .value
   }
 
   def toGenericRecord(key: String, color: String, number: Int): GenericRecord = {
