@@ -33,11 +33,13 @@ import org.scalatest.Matchers
 import scala.collection.JavaConverters._
 
 object SortMergeBucketIOTestJob {
-  val schemaOut: Schema = Schema.createRecord(List(
-    new Field("key", Schema.create(Schema.Type.STRING), "", "unknown"),
-    new Field("color", Schema.create(Schema.Type.STRING), "", "unknown"),
-    new Field("number", Schema.create(Schema.Type.INT), "", -1)
-  ).asJava)
+  val schemaOut: Schema = Schema.createRecord(
+    List(
+      new Field("key", Schema.create(Schema.Type.STRING), "", "unknown"),
+      new Field("color", Schema.create(Schema.Type.STRING), "", "unknown"),
+      new Field("number", Schema.create(Schema.Type.INT), "", -1)
+    ).asJava
+  )
 
   def main(cmdLineArgs: Array[String]): Unit = {
     val (sc, _) = ContextAndArgs(cmdLineArgs)
@@ -48,12 +50,14 @@ object SortMergeBucketIOTestJob {
         SpecificRecordIO[AvroGeneratedUser]("lhsPath"),
         GenericRecordIO("rhsPath", AvroGeneratedUser.SCHEMA$)
       )
-      .map { case (k, (l, r)) =>
-        toGenericRecord(k, l.getFavoriteColor, r.get("favorite_number").asInstanceOf[Int])
+      .map {
+        case (k, (l, r)) =>
+          toGenericRecord(k, l.getFavoriteColor, r.get("favorite_number").asInstanceOf[Int])
       }
       .saveAsSortedBucket(classOf[String], "output", schemaOut, "key", HashType.MURMUR3_32, 1)
 
-    sc.run().waitUntilDone()
+    sc.run()
+      .waitUntilDone()
       .tap(smbTap)
       .value
   }
@@ -79,35 +83,39 @@ class SmbIOTest extends PipelineSpec with Matchers {
       .run()
   }
 
-  private val userA = AvroGeneratedUser.newBuilder()
+  private val userA = AvroGeneratedUser
+    .newBuilder()
     .setName("a")
     .setFavoriteColor("red")
     .setFavoriteNumber(1)
     .build()
 
-  private val userB = AvroGeneratedUser.newBuilder()
+  private val userB = AvroGeneratedUser
+    .newBuilder()
     .setName("b")
     .setFavoriteColor("blue")
     .setFavoriteNumber(2)
     .build()
 
-  private val userC = AvroGeneratedUser.newBuilder()
+  private val userC = AvroGeneratedUser
+    .newBuilder()
     .setName("c")
     .setFavoriteColor("green")
     .setFavoriteNumber(3)
     .build()
 
-  private val userD = AvroGeneratedUser.newBuilder()
+  private val userD = AvroGeneratedUser
+    .newBuilder()
     .setName("d")
     .setFavoriteColor("cyan")
     .setFavoriteNumber(4)
     .build()
 
-  private val metadataL: BucketMetadata[String, AvroGeneratedUser] = new AvroBucketMetadata(
-    1, 1, classOf[String], HashType.MURMUR3_32, "name")
+  private val metadataL: BucketMetadata[String, AvroGeneratedUser] =
+    new AvroBucketMetadata(1, 1, classOf[String], HashType.MURMUR3_32, "name")
 
-  private val metadataR: BucketMetadata[String, GenericRecord] = new AvroBucketMetadata(
-    1, 1, classOf[String], HashType.MURMUR3_32, "name")
+  private val metadataR: BucketMetadata[String, GenericRecord] =
+    new AvroBucketMetadata(1, 1, classOf[String], HashType.MURMUR3_32, "name")
 
   private val lhs = Seq(userA, userB, userC)
   private val rhs = Seq(userB, userC, userD)
