@@ -22,8 +22,9 @@ object ScalableBloomFilter {
 
   /**
    * Use Beam Coders explicitly because of private constructor.
+   * // TODO write this after complete implementation
    */
-//  implicit def coder[T: Funnel]: Coder[ScalableBloomFilter[T]] = Coder.kryo[ScalableBloomFilter[T]]
+  implicit def coder[T: Funnel]: Coder[ScalableBloomFilter[T]] = Coder.kryo[ScalableBloomFilter[T]]
 //    Coder.xmap(Coder[(Double, Int, Int, Double, List[gBloomFilter[T]])])(
 //      ScalableBloomFilter[T].tupled,
 //      ScalableBloomFilter.unapply(_).get
@@ -37,7 +38,7 @@ object ScalableBloomFilter {
 
 }
 
-case class ScalableBloomFilterBuilder[T: Coder: Funnel] private[values] (
+case class ScalableBloomFilterBuilder[T: Funnel] private[values] (
   fpProb: Double,
   initialCapacity: Int,
   growthRate: Int,

@@ -1,6 +1,5 @@
 package com.spotify.scio.values
 import com.google.common.hash.Funnel
-import com.spotify.scio.annotations.experimental
 import com.spotify.scio.coders.Coder
 
 import scala.language.implicitConversions
@@ -10,25 +9,17 @@ class ApproxFilterSCollectionOps[T: Coder](self: SCollection[T]) {
   /**
    * Converts the SCollection to an ApproxFilter using the specified Builder.
    *
-   * Generic `to`
+   * Generic `to` for all [[ApproxFilter]] collections.
    **/
-  @experimental
   def to[C[B] <: ApproxFilter[B]](
     builder: ApproxFilterBuilder[T, C]
   )(implicit coder: Coder[C[T]]): SCollection[C[T]] =
     builder.build(self)
 
-  // FIXME may be we don't need this. the above one is sufficient
-  @experimental
-  def toBloomFilter(bfBuilder: ApproxFilterBuilder[T, BloomFilter])(
-    implicit coder: Coder[BloomFilter[T]]): SCollection[BloomFilter[T]] =
-    bfBuilder.build(self)
-
-  // Single threaded group all builder.
   def toBloomFilter(
-    fpp: Double
+    fpProb: Double
   )(implicit f: Funnel[T], coder: Coder[BloomFilter[T]]): SCollection[BloomFilter[T]] =
-    to(BloomFilter(fpp))
+    to(BloomFilter(fpProb))
 
   /**
    * Goes from a `SCollection[T]` to an singleton `SCollection[BloomFilter[T]]`
@@ -51,10 +42,16 @@ class ApproxFilterSCollectionOps[T: Coder](self: SCollection[T]) {
     }
   }
 
+  /**
+   * Create a `SideInput[BloomFilter[T]]` with the expected false positive probability to be used with
+   * `SCollection[U]#withSideInputs`.
+   *
+   * @param fpPorb expected false positive probability
+   */
   def asBloomFilterSingletonSideInput(
-    fpp: Double
+    fpPorb: Double
   )(implicit f: Funnel[T], coder: Coder[BloomFilter[T]]): SideInput[BloomFilter[T]] =
-    to(BloomFilter(fpp)).asSingletonSideInput
+    to(BloomFilter(fpPorb)).asSingletonSideInput
 }
 
 trait ApproxFilterSCollectionSyntax {
@@ -63,21 +60,26 @@ trait ApproxFilterSCollectionSyntax {
 }
 
 class ApproxPairSCollectionOps[K: Coder, V: Coder](self: SCollection[(K, V)]) {
-  // Single threaded group all builder.
+
+  // TODO should we have a `to` for each key like we have for global SCollection
+
+  /**
+   * Construct a [[BloomFilter]] of the values of each key in the current SCollection.
+   */
   def toBloomFilterPerKey(
-    fpp: Double
+    fpProb: Double
   )(implicit f: Funnel[V]): SCollection[(K, BloomFilter[V])] =
     self.groupByKey
-    // TODO Coder derivation for BF wrapper is failing
-      .mapValues(BloomFilter(_, fpp))(BloomFilter.coder[V], Coder[K])
+      .mapValues(BloomFilter(_, fpProb))(BloomFilter.coder[V], // Work around false Kryo warning
+                                         Coder[K])
 
   def toScalableBloomFilterPerKey(
-                           fpp: Double
-                         )(implicit f: Funnel[V]): SCollection[(K, BloomFilter[V])] =
+    fpp: Double
+  )(implicit f: Funnel[V]): SCollection[(K, BloomFilter[V])] =
     ???
 }
 
-// What the user facing API can look like.
+// FIXME What the user facing API can look like.
 object Example extends GuavaFunnelInstances {
   val sc = new ApproxFilterSCollectionOps[Int](null)
 

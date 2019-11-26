@@ -53,12 +53,16 @@ object BloomFilter {
    */
   def apply[T](
     iterable: Iterable[T],
-    fpp: Double
+    fpProb: Double
   )(
     implicit f: Funnel[T]
   ): BloomFilter[T] = {
-    // TODO require put a limit on size
-    val bf = gBloomFilter.create[T](f, iterable.size, fpp)
+    val numElements = iterable.size
+    val settings = BloomFilter.optimalBFSettings(numElements, fpProb)
+    require(settings.numBFs == 1,
+      s"BloomFilter overflow: $numElements elements found, max allowed: ${settings.capacity}")
+
+    val bf = gBloomFilter.create[T](f, iterable.size, fpProb)
     val it = iterable.iterator
     while (it.hasNext) {
       bf.put(it.next())

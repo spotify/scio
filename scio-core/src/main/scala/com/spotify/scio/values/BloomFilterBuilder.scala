@@ -5,20 +5,15 @@ import com.google.common.hash.{Funnel, BloomFilter => gBloomFilter}
 import com.spotify.scio.coders.Coder
 
 /**
- * Builders for Bloom Filters.
+ * Builders for [[BloomFilter]]
  *
  * These builders define the various ways in which a BloomFilter can be constructed from
- * a SCollection
+ * a SCollection. Internally a builder can choose to use any implementation (mutable / immutable)
+ * to create a [[BloomFilter]]
  */
 class BloomFilterBuilder[T: Funnel](fpProb: Double) extends ApproxFilterBuilder[T, BloomFilter] {
 
-  override def build(it: Iterable[T]): BloomFilter[T] = {
-    val numElements = it.size
-    val settings = BloomFilter.optimalBFSettings(numElements, fpProb)
-    require(settings.numBFs == 1,
-            s"BloomFilter overflow: $numElements elements found, max allowed: ${settings.capacity}")
-    BloomFilter.apply(it, fpProb)
-  }
+  override def build(it: Iterable[T]): BloomFilter[T] = BloomFilter(it, fpProb)
 
   override def fromBytes(serializedBytes: Array[Byte]): BloomFilter[T] = {
     val inStream = new ByteArrayInputStream(serializedBytes)
@@ -30,7 +25,7 @@ class BloomFilterBuilder[T: Funnel](fpProb: Double) extends ApproxFilterBuilder[
 /**
  * Build [[BloomFilter]] in parallel from an [[SCollection]]
  *
- * Useful when we know an approxNumber of Elements.
+ * Useful when we know an approxNumber of Elements
  */
 class BloomFilterParallelBuilder[T: Funnel] private[values] (
   numElements: Long,
