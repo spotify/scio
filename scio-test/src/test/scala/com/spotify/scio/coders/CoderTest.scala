@@ -81,7 +81,7 @@ final case class FirstImplementationWithAnnotation(s: String) extends TraitWithA
 @SerialVersionUID(3)
 final case class SecondImplementationWithAnnotation(i: Int) extends TraitWithAnnotation
 
-class CodersTest extends FlatSpec with Matchers {
+final class CoderTest extends FlatSpec with Matchers {
   val userId = UserId(Array[Byte](1, 2, 3, 4))
   val user = User(userId, "johndoe", "johndoe@spotify.com")
 
@@ -437,7 +437,7 @@ class CodersTest extends FlatSpec with Matchers {
     }
 
     assert(caught.getStackTrace.contains(CoderStackTrace.CoderStackElemMarker))
-    assert(caught.getStackTrace.exists(_.getClassName.contains(classOf[CodersTest].getName)))
+    assert(caught.getStackTrace.exists(_.getClassName.contains(classOf[CoderTest].getName)))
   }
 
   it should "#1651: remove all anotations from derived coders" in {
