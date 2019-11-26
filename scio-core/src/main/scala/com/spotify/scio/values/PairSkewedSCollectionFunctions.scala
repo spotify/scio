@@ -254,7 +254,7 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     // Use hash join for hot keys
     val hotJoined = selfPartitions.hot
       .withName("Hash left join hot partitions")
-      .hashLeftJoin(thatPartitions.hot)
+      .hashLeftOuterJoin(thatPartitions.hot)
 
     // Use regular join for the rest of the keys
     val chillJoined = selfPartitions.chill

@@ -94,12 +94,34 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * Perform a left outer join by replicating `that` to all workers. The right side should be tiny
    * and fit in memory.
    *
+   * Example:
+   * {{{
+   *   val si = pairSCollRight  // Should be tiny
+   *   val joined = pairSColl1Left.hashLeftOuterJoin(pairSCollRight)
+   * }}}
    * @group join
    */
+  @deprecated("Use SCollection[(K, V)]#hashLeftOuterJoin(pairSColl) instead.", "0.8.0")
   def hashLeftJoin[W: Coder](
     that: SCollection[(K, W)]
   )(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, (V, Option[W]))] =
-    hashLeftJoin(that.asMultiMapSideInput)
+    hashLeftOuterJoin(that)
+
+  /**
+   * Perform a left outer join by replicating `that` to all workers. The right side should be tiny
+   * and fit in memory.
+   *
+   * Example:
+   * {{{
+   *   val si = pairSCollRight  // Should be tiny
+   *   val joined = pairSColl1Left.hashLeftOuterJoin(pairSCollRight)
+   * }}}
+   * @group join
+   */
+  def hashLeftOuterJoin[W: Coder](
+    that: SCollection[(K, W)]
+  )(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, (V, Option[W]))] =
+    hashLeftOuterJoin(that.asMultiMapSideInput)
 
   /**
    * Perform a left outer join with a [[SideMap]].
@@ -108,20 +130,20 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * Example replacement:
    * {{{
    *   val si = pairSCollRight.asMultiMapSideInput
-   *   val joined1 = pairSColl1Left.hashLeftJoin(si)
-   *   val joined2 = pairSColl2Left.hashLeftJoin(si)
+   *   val joined1 = pairSColl1Left.hashLeftOuterJoin(si)
+   *   val joined2 = pairSColl2Left.hashLeftOuterJoin(si)
    * }}}
    *
    * @group join
    */
   @deprecated(
-    "Use SCollection[(K, V)]#hashLeftJoin(that) or SCollection[(K, V)]#hashLeftJoin(that.asMultiMapSideInput) instead.",
+    "Use SCollection[(K, V)]#hashLeftOuterJoin(pairSColl) or SCollection[(K, V)]#hashLeftOuterJoin(pairSColl.asMultiMapSideInput) instead.",
     "0.8.0"
   )
   def hashLeftJoin[W: Coder](
     sideMap: SideMap[K, W]
   )(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, (V, Option[W]))] =
-    hashLeftJoin(sideMap.asImmutableSideInput)
+    hashLeftOuterJoin(sideMap.asImmutableSideInput)
 
   /**
    * Perform a left outer join with a MultiMap `SideInput[Map[K, Iterable[V]]`
@@ -129,12 +151,12 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * Example:
    * {{{
    *   val si = pairSCollRight.asMultiMapSideInput
-   *   val joined1 = pairSColl1Left.hashLeftJoin(si)
-   *   val joined2 = pairSColl2Left.hashLeftJoin(si)
+   *   val joined1 = pairSColl1Left.hashLeftOuterJoin(si)
+   *   val joined2 = pairSColl2Left.hashLeftOuterJoin(si)
    * }}}
    * @group join
    */
-  def hashLeftJoin[W: Coder](
+  def hashLeftOuterJoin[W: Coder](
     sideInput: SideInput[Map[K, Iterable[W]]]
   )(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, (V, Option[W]))] = self.transform {
     in =>
