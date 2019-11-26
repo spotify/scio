@@ -514,8 +514,17 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    *
    * @group transform
    */
+  @deprecated("use SCollection[T]#hashFilter(right.asSetSingletonSideInput) instead", "0.8.0")
   def hashFilter(that: SideSet[T])(implicit coder: Coder[T]): SCollection[T] =
-    self.map((_, ())).hashIntersectByKey(that).keys
+    self.map((_, ())).hashIntersectByKey(that.side).keys
+
+  /**
+   * Return a new SCollection containing only the elements that also exist in the `SideInput`.
+   *
+   * @group transform
+   */
+  def hashFilter(sideInput: SideInput[Set[T]])(implicit coder: Coder[T]): SCollection[T] =
+    self.map((_, ())).hashIntersectByKey(sideInput).keys
 
   /**
    * Create tuples of the elements in this SCollection by applying `f`.
