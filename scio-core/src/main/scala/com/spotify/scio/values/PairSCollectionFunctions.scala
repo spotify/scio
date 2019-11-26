@@ -302,16 +302,18 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     ArtisanJoin.right(self.tfName, self, that)
 
   /**
-   * Full outer join for cases when `this` is much larger than `that` which cannot fit in memory,
-   * but contains a mostly overlapping set of keys as `this`, i.e. when the intersection of keys
-   * is sparse in `this`. A Bloom Filter of keys in `that` is used to split `this` into 2
+   * Full outer join for cases when the left collection (`this`) is much larger than the right
+   * collection (`that`) which cannot fit in memory, but contains a mostly overlapping set of keys
+   * as the left collection, i.e. when the intersection of keys is sparse in the left collection.
+   * A Bloom Filter of keys from the right collection (`that`) is used to split `this` into 2
    * partitions. Only those with keys in the filter go through the join and the rest are
    * concatenated. This is useful for joining historical aggregates with incremental updates.
    * Read more about Bloom Filter: [[com.twitter.algebird.BloomFilter]].
    * @group join
-   * @param thatNumKeys An estimate of the number of keys in `that`. This estimate is used to find
-   *                    the size and number of BloomFilters that Scio would use to split
-   *                    `this` into overlap and intersection in a "map" step before an exact join.
+   * @param thatNumKeys An estimate of the number of keys in the right collection `that`.
+   *                    This estimate is used to find the size and number of BloomFilters that Scio
+   *                    would use to split the left collection (`this`) into overlap and
+   *                    intersection in a "map" step before an exact join.
    *                    Having a value close to the actual number improves the false positives
    *                    in intermediate steps which means less shuffle.
    * @param fpProb A fraction in range (0, 1) which would be the accepted false positive
@@ -337,16 +339,18 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
   }
 
   /**
-   * Full outer join for cases when `this` is much larger than `that` which cannot fit in memory,
-   * but contains a mostly overlapping set of keys as `this`, i.e. when the intersection of keys
-   * is sparse in `this`. A Bloom Filter of keys in `that` is used to split `this` into 2
+   * Full outer join for cases when the left collection (`this`) is much larger than the right
+   * collection (`that`) which cannot fit in memory, but contains a mostly overlapping set of keys
+   * as the left collection, i.e. when the intersection of keys is sparse in the left collection.
+   * A Bloom Filter of keys from the right collection (`that`) is used to split `this` into 2
    * partitions. Only those with keys in the filter go through the join and the rest are
    * concatenated. This is useful for joining historical aggregates with incremental updates.
    * Read more about Bloom Filter: [[com.twitter.algebird.BloomFilter]].
    * @group join
-   * @param thatNumKeys An estimate of the number of keys in `that`. This estimate is used to find
-   *                    the size and number of BloomFilters that Scio would use to split
-   *                    `this` into overlap and intersection in a "map" step before an exact join.
+   * @param thatNumKeys An estimate of the number of keys in the right collection `that`.
+   *                    This estimate is used to find the size and number of BloomFilters that Scio
+   *                    would use to split the left collection (`this`) into overlap and
+   *                    intersection in a "map" step before an exact join.
    *                    Having a value close to the actual number improves the false positives
    *                    in intermediate steps which means less shuffle.
    * @param fpProb A fraction in range (0, 1) which would be the accepted false positive
@@ -366,16 +370,18 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     sparseFullOuterJoin(that, thatNumKeys, fpProb)
 
   /**
-   * Inner join for cases when `this` is much larger than `that` which cannot fit in memory,
-   * but contains a mostly overlapping set of keys as `this`, i.e. when the intersection of keys
-   * is sparse in `this`. A Bloom Filter of keys in `that` is used to split `this` into 2
+   * Inner join for cases when the left collection (`this`) is much larger than the right
+   * collection (`that`) which cannot fit in memory, but contains a mostly overlapping set of keys
+   * as the left collection, i.e. when the intersection of keys is sparse in the left collection.
+   * A Bloom Filter of keys from the right collection (`that`) is used to split `this` into 2
    * partitions. Only those with keys in the filter go through the join and the rest are filtered
    * out before the join.
    * Read more about Bloom Filter: [[com.twitter.algebird.BloomFilter]].
    * @group join
-   * @param thatNumKeys An estimate of the number of keys in `that`. This estimate is used to find
-   *                    the size and number of BloomFilters that Scio would use to split
-   *                    `this` into overlap and intersection in a "map" step before an exact join.
+   * @param thatNumKeys An estimate of the number of keys in the right collection `that`.
+   *                    This estimate is used to find the size and number of BloomFilters that Scio
+   *                    would use to split the left collection (`this`) into overlap and
+   *                    intersection in a "map" step before an exact join.
    *                    Having a value close to the actual number improves the false positives
    *                    in intermediate steps which means less shuffle.
    * @param fpProb A fraction in range (0, 1) which would be the accepted false positive
@@ -397,16 +403,18 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     }
 
   /**
-   * Left outer join for cases when `this` is much larger than `that` which cannot fit in memory,
-   * but contains a mostly overlapping set of keys as `this`, i.e. when the intersection of keys
-   * is sparse in `this`. A Bloom Filter of keys in `that` is used to split `this` into 2
+   * Left outer join for cases when the left collection (`this`) is much larger than the right
+   * collection (`that`) which cannot fit in memory, but contains a mostly overlapping set of keys
+   * as the left collection, i.e. when the intersection of keys is sparse in the left collection.
+   * A Bloom Filter of keys from the right collection (`that`) is used to split `this` into 2
    * partitions. Only those with keys in the filter go through the join and the rest are
    * concatenated. This is useful for joining historical aggregates with incremental updates.
    * Read more about Bloom Filter: [[com.twitter.algebird.BloomFilter]].
    * @group join
-   * @param thatNumKeys An estimate of the number of keys in `that`. This estimate is used to find
-   *                    the size and number of BloomFilters that Scio would use to split
-   *                    `this` into overlap and intersection in a "map" step before an exact join.
+   * @param thatNumKeys An estimate of the number of keys in the right collection `that`.
+   *                    This estimate is used to find the size and number of BloomFilters that Scio
+   *                    would use to split the left collection (`this`) into overlap and
+   *                    intersection in a "map" step before an exact join.
    *                    Having a value close to the actual number improves the false positives
    *                    in intermediate steps which means less shuffle.
    * @param fpProb A fraction in range (0, 1) which would be the accepted false positive
@@ -429,16 +437,18 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     }
 
   /**
-   * Right outer join for cases when `this` is much larger than `that` which cannot fit in memory,
-   * but contains a mostly overlapping set of keys as `this`, i.e. when the intersection of keys
-   * is sparse in `this`. A Bloom Filter of keys in `that` is used to split `this` into 2
+   * Right outer join for cases when the left collection (`this`) is much larger than the right
+   * collection (`that`) which cannot fit in memory, but contains a mostly overlapping set of keys
+   * as the left collection, i.e. when the intersection of keys is sparse in the left collection.
+   * A Bloom Filter of keys from the right collection (`that`) is used to split `this` into 2
    * partitions. Only those with keys in the filter go through the join and the rest are
    * concatenated. This is useful for joining historical aggregates with incremental updates.
    * Read more about Bloom Filter: [[com.twitter.algebird.BloomFilter]].
    * @group join
-   * @param thatNumKeys An estimate of the number of keys in `that`. This estimate is used to find
-   *                    the size and number of BloomFilters that Scio would use to split
-   *                    `this` into overlap and intersection in a "map" step before an exact join.
+   * @param thatNumKeys An estimate of the number of keys in the right collection `that`.
+   *                    This estimate is used to find the size and number of BloomFilters that Scio
+   *                    would use to split the left collection (`this`) into overlap and
+   *                    intersection in a "map" step before an exact join.
    *                    Having a value close to the actual number improves the false positives
    *                    in intermediate steps which means less shuffle.
    * @param fpProb A fraction in range (0, 1) which would be the accepted false positive
@@ -514,7 +524,6 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    *                    in intermediate steps which means less shuffle.
    * @param fpProb A fraction in range (0, 1) which would be the accepted false positive
    *               probability when discarding elements of `that` in the pre-filter step.
-
    */
   def sparseLookup[A: Coder](that: SCollection[(K, A)], thisNumKeys: Long, fpProb: Double)(
     implicit hash: Hash128[K],
