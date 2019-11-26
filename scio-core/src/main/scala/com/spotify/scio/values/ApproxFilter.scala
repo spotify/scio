@@ -1,4 +1,5 @@
 package com.spotify.scio.values
+import com.spotify.scio.annotations.experimental
 
 /**
  * A read only container for collections which can be used to check for presence of an element.
@@ -15,6 +16,7 @@ trait ApproxFilter[-T] extends (T => Boolean) {
 /**
  * A Builder is used to create [[ApproxFilter]]s from a given [[SCollection]]
  */
+@experimental
 trait ApproxFilterBuilder[T, To[B >: T] <: ApproxFilter[B]] {
 
   /**

@@ -3,10 +3,12 @@ package com.spotify.scio.values
 import com.google.common.hash.{Funnel, BloomFilter => gBloomFilter}
 import com.spotify.scio.coders.Coder
 
+import scala.collection.mutable
+
 case class ScalableBloomFilter[T] private (
   // When changing the order of the types, change the implicit Coder in companion object
   fpProb: Double,
-  headCapacity: Int,
+  initialCapacity: Int,
   growthRate: Int,
   tighteningRatio: Double,
   private val filters: List[gBloomFilter[T]]
@@ -37,14 +39,32 @@ object ScalableBloomFilter {
 
 case class ScalableBloomFilterBuilder[T: Coder: Funnel] private[values] (
   fpProb: Double,
-  headCapacity: Int,
+  initialCapacity: Int,
   growthRate: Int,
   tighteningRatio: Double
 ) extends ApproxFilterBuilder[T, ScalableBloomFilter] {
 
   override def build(sc: SCollection[T]): SCollection[ScalableBloomFilter[T]] = {
-
-    ???
+    sc.groupBy(_ => ())
+      .values
+      .map { iterable =>
+        val it = iterable.iterator
+        val filters = mutable.ListBuffer.empty[gBloomFilter[T]]
+        var numInserted = 0
+        var capacity = initialCapacity
+        var currentFpProb = fpProb
+        while (it.hasNext && numInserted < capacity) {
+          val f = gBloomFilter.create(implicitly[Funnel[T]], capacity, currentFpProb)
+          while (it.hasNext && numInserted < capacity) {
+            f.put(it.next())
+            numInserted += 1
+          }
+          filters.insert(0, f)
+          capacity *= growthRate
+          currentFpProb *= tighteningRatio
+        }
+        ScalableBloomFilter(fpProb, initialCapacity, growthRate, tighteningRatio, filters.toList)
+      }
   }
 
   override def fromBytes(serializedBytes: Array[Byte]): ScalableBloomFilter[T] = ???
