@@ -44,27 +44,23 @@ case class ScalableBloomFilterBuilder[T: Coder: Funnel] private[values] (
   tighteningRatio: Double
 ) extends ApproxFilterBuilder[T, ScalableBloomFilter] {
 
-  override def build(sc: SCollection[T]): SCollection[ScalableBloomFilter[T]] = {
-    sc.groupBy(_ => ())
-      .values
-      .map { iterable =>
-        val it = iterable.iterator
-        val filters = mutable.ListBuffer.empty[gBloomFilter[T]]
-        var numInserted = 0
-        var capacity = initialCapacity
-        var currentFpProb = fpProb
-        while (it.hasNext && numInserted < capacity) {
-          val f = gBloomFilter.create(implicitly[Funnel[T]], capacity, currentFpProb)
-          while (it.hasNext && numInserted < capacity) {
-            f.put(it.next())
-            numInserted += 1
-          }
-          filters.insert(0, f)
-          capacity *= growthRate
-          currentFpProb *= tighteningRatio
-        }
-        ScalableBloomFilter(fpProb, initialCapacity, growthRate, tighteningRatio, filters.toList)
+  override def build(iterable: Iterable[T]): ScalableBloomFilter[T] = {
+    val it = iterable.iterator
+    val filters = mutable.ListBuffer.empty[gBloomFilter[T]]
+    var numInserted = 0
+    var capacity = initialCapacity
+    var currentFpProb = fpProb
+    while (it.hasNext && numInserted < capacity) {
+      val f = gBloomFilter.create[T](implicitly[Funnel[T]], capacity, currentFpProb)
+      while (it.hasNext && numInserted < capacity) {
+        f.put(it.next())
+        numInserted += 1
       }
+      filters.insert(0, f)
+      capacity *= growthRate
+      currentFpProb *= tighteningRatio
+    }
+    ScalableBloomFilter(fpProb, initialCapacity, growthRate, tighteningRatio, filters.toList)
   }
 
   override def fromBytes(serializedBytes: Array[Byte]): ScalableBloomFilter[T] = ???

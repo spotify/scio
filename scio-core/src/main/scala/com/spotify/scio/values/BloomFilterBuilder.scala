@@ -10,8 +10,15 @@ import com.spotify.scio.coders.Coder
  * These builders define the various ways in which a BloomFilter can be constructed from
  * a SCollection
  */
-private[values] abstract class BloomFilterBuilder[T: Funnel]
-    extends ApproxFilterBuilder[T, BloomFilter] {
+class BloomFilterBuilder[T: Funnel](fpProb: Double) extends ApproxFilterBuilder[T, BloomFilter] {
+
+  override def build(it: Iterable[T]): BloomFilter[T] = {
+    val numElements = it.size
+    val settings = BloomFilter.optimalBFSettings(numElements, fpProb)
+    require(settings.numBFs == 1,
+            s"BloomFilter overflow: $numElements elements found, max allowed: ${settings.capacity}")
+    BloomFilter.apply(it, fpProb)
+  }
 
   override def fromBytes(serializedBytes: Array[Byte]): BloomFilter[T] = {
     val inStream = new ByteArrayInputStream(serializedBytes)
@@ -20,39 +27,25 @@ private[values] abstract class BloomFilterBuilder[T: Funnel]
 
 }
 
-case class SingleThreadedBloomFilterBuilder[T: Funnel: Coder] private[values] (fpp: Double)
-    extends BloomFilterBuilder[T] {
-
-  override def build(sc: SCollection[T]): SCollection[BloomFilter[T]] =
-    sc.groupBy(_ => ())
-      .values
-      .map { it =>
-        val numElements = it.size
-        val settings = BloomFilter.optimalBFSettings(numElements, fpp)
-        require(
-          settings.numBFs == 1,
-          s"BloomFilter overflow: $numElements elements found, max allowed: ${settings.capacity}")
-        BloomFilter.apply(it, fpp)
-      }(BloomFilter.coder[T])
-}
-
 /**
  * Build [[BloomFilter]] in parallel from an [[SCollection]]
  *
  * Useful when we know an approxNumber of Elements.
  */
-case class BloomFilterParallelBuilder[T: Funnel: Coder] private[values] (
+class BloomFilterParallelBuilder[T: Funnel] private[values] (
   numElements: Long,
-  fpp: Double
-) extends BloomFilterBuilder[T] {
+  fpProb: Double
+) extends BloomFilterBuilder[T](fpProb) {
 
   require(
-    BloomFilter.optimalBFSettings(numElements, fpp).numBFs == 1,
+    BloomFilter.optimalBFSettings(numElements, fpProb).numBFs == 1,
     s"Cannot store $numElements elements in one BloomFilter"
   )
 
-  override def build(sc: SCollection[T]): SCollection[BloomFilter[T]] = {
-    sc.aggregate(zeroValue = gBloomFilter.create(implicitly[Funnel[T]], numElements, fpp))(
+  override def build(sc: SCollection[T])(
+    implicit coder: Coder[T],
+    approxFilterCoder: Coder[BloomFilter[T]]): SCollection[BloomFilter[T]] = {
+    sc.aggregate(zeroValue = gBloomFilter.create(implicitly[Funnel[T]], numElements, fpProb))(
         seqOp = (gbf, t) => {
           gbf.put(t)
           gbf
@@ -62,6 +55,6 @@ case class BloomFilterParallelBuilder[T: Funnel: Coder] private[values] (
           bf1
         }
       )
-      .map(BloomFilter(_))(BloomFilter.coder[T])
+      .map(BloomFilter(_))
   }
 }

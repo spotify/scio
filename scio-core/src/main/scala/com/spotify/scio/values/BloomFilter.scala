@@ -13,8 +13,7 @@ import org.apache.beam.sdk.coders.AtomicCoder
  *
  * @see companion object [[BloomFilter]]
  */
-case class BloomFilter[T] private (
-  private val internal: gBloomFilter[T]
+case class BloomFilter[T] private (private val internal: gBloomFilter[T]
 ) extends ApproxFilter[T] {
 
   def expectedFpp: Double = internal.expectedFpp()
@@ -68,20 +67,20 @@ object BloomFilter {
   }
 
   /**
-   * Constructor for [[SingleThreadedBloomFilterBuilder]]
+   * Constructor for [[BloomFilterBuilder]]
    *
-   * A [[SingleThreadedBloomFilterBuilder]] is useful for building [[BloomFilter]]s from [[SCollection]]
+   * A [[BloomFilterBuilder]] is useful for building [[BloomFilter]]s from [[SCollection]]
    *
    * @param fpp expected false positive probability
    */
-  def apply[T: Funnel: Coder](fpp: Double): SingleThreadedBloomFilterBuilder[T] =
-    SingleThreadedBloomFilterBuilder(fpp)
+  def apply[T: Funnel](fpp: Double): BloomFilterBuilder[T] =
+    new BloomFilterBuilder(fpp)
 
   /**
    * Build the bloom filter in parallel (using a monoid aggregator)
    */
   def par[T: Funnel: Coder](numElements: Int, fpp: Double): BloomFilterParallelBuilder[T] =
-    BloomFilterParallelBuilder(numElements, fpp)
+    new BloomFilterParallelBuilder(numElements, fpp)
 
 
   private[values] final case class BFSettings(width: Int, capacity: Int, numBFs: Int)

@@ -15,18 +15,19 @@ class ApproxFilterSCollectionOps[T: Coder](self: SCollection[T]) {
   @experimental
   def to[C[B] <: ApproxFilter[B]](
     builder: ApproxFilterBuilder[T, C]
-  ): SCollection[C[T]] =
+  )(implicit coder: Coder[C[T]]): SCollection[C[T]] =
     builder.build(self)
 
   // FIXME may be we don't need this. the above one is sufficient
   @experimental
-  def toBloomFilter(bfBuilder: ApproxFilterBuilder[T, BloomFilter]): SCollection[BloomFilter[T]] =
+  def toBloomFilter(bfBuilder: ApproxFilterBuilder[T, BloomFilter])(
+    implicit coder: Coder[BloomFilter[T]]): SCollection[BloomFilter[T]] =
     bfBuilder.build(self)
 
   // Single threaded group all builder.
   def toBloomFilter(
     fpp: Double
-  )(implicit f: Funnel[T]): SCollection[BloomFilter[T]] =
+  )(implicit f: Funnel[T], coder: Coder[BloomFilter[T]]): SCollection[BloomFilter[T]] =
     to(BloomFilter(fpp))
 
   /**
@@ -38,7 +39,7 @@ class ApproxFilterSCollectionOps[T: Coder](self: SCollection[T]) {
   def toBloomFilter(
     numElems: Int,
     fpp: Double
-  )(implicit f: Funnel[T]): SCollection[BloomFilter[T]] = {
+  )(implicit f: Funnel[T], coder: Coder[BloomFilter[T]]): SCollection[BloomFilter[T]] = {
     val settings = BloomFilter.optimalBFSettings(numElems, fpp)
     require(settings.numBFs == 1,
             s"One Bloom filter can only store up to ${settings.capacity} elements")
@@ -52,7 +53,7 @@ class ApproxFilterSCollectionOps[T: Coder](self: SCollection[T]) {
 
   def asBloomFilterSingletonSideInput(
     fpp: Double
-  )(implicit f: Funnel[T]): SideInput[BloomFilter[T]] =
+  )(implicit f: Funnel[T], coder: Coder[BloomFilter[T]]): SideInput[BloomFilter[T]] =
     to(BloomFilter(fpp)).asSingletonSideInput
 }
 
@@ -61,7 +62,7 @@ trait ApproxFilterSCollectionSyntax {
     new ApproxFilterSCollectionOps[T](sc)
 }
 
-class ApproxPairSCollectionFunctions[K: Coder, V: Coder](self: SCollection[(K, V)]) {
+class ApproxPairSCollectionOps[K: Coder, V: Coder](self: SCollection[(K, V)]) {
   // Single threaded group all builder.
   def toBloomFilterPerKey(
     fpp: Double
@@ -69,6 +70,11 @@ class ApproxPairSCollectionFunctions[K: Coder, V: Coder](self: SCollection[(K, V
     self.groupByKey
     // TODO Coder derivation for BF wrapper is failing
       .mapValues(BloomFilter(_, fpp))(BloomFilter.coder[V], Coder[K])
+
+  def toScalableBloomFilterPerKey(
+                           fpp: Double
+                         )(implicit f: Funnel[V]): SCollection[(K, BloomFilter[V])] =
+    ???
 }
 
 // What the user facing API can look like.
