@@ -153,3 +153,13 @@ final class FixBigQueryDeprecations extends SemanticRule("FixBigQueryDeprecation
         Patch.replaceTree(t, syntax)
     }.asPatch
 }
+
+final class ConsistenceJoinNames  extends SemanticRule ("ConsistenceJoinNames") {
+  override def fix(implicit doc: _root_.scalafix.v1.SemanticDocument): Patch = {
+    doc.tree.collect{
+      case t @ Term.Name("hashLeftJoin") => Patch.replaceTree(t, "hashLeftOuterJoin")
+      case t @ Term.Name("skewedLeftJoin") => Patch.replaceTree(t, "skewedLeftOuterJoin")
+      case t @ Term.Name("sparseOuterJoin") => Patch.replaceTree(t, "sparseFullOuterJoin")
+    }
+    }.asPatch
+}
