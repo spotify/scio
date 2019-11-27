@@ -475,9 +475,11 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
   /**
    * Partitions this SCollection by keys and the given partitioner for the keys
    */
-  private[values] def partitionUsingKey(numPartitions: Int, partitioner: K => Int): Seq[SCollection[(K, V)]] = {
-    self.partition(numPartitions, {case (key, _) => partitioner(key)})
-  }
+  private[values] def partitionUsingKey(
+    numPartitions: Int,
+    partitioner: K => Int
+  ): Seq[SCollection[(K, V)]] =
+    self.partition(numPartitions, { case (key, _) => partitioner(key) })
 
   /**
    * Partitioner function for Sparse Transforms. This provides a deterministic hash function
@@ -485,7 +487,10 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    *
    * This is a workaround for https://github.com/spotify/scio/issues/2450
    */
-  private def sparseTransformPartitioner[T](fallBackHash: Hash128[T], numPartitions: Int): T => Int = {
+  private def sparseTransformPartitioner[T](
+    fallBackHash: Hash128[T],
+    numPartitions: Int
+  ): T => Int = {
     case t @ (_: String | _: Char | _: Byte | _: Short | _: Int | _: Long | _: Float | _: Double |
         _: Boolean) =>
       Math.floorMod(t.##, numPartitions)
