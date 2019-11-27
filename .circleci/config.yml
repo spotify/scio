@@ -241,44 +241,30 @@ workflows:
             tags:
               only: /^v.*/
       - build_211:
-          requires:
-            - checks
           filters:
             tags:
               only: /^v.*/
       - build_it_211:
-          requires:
-            - checks
           filters:
             branches:
               ignore: /^pull.*/
       - build_212:
-          requires:
-            - checks
           filters:
             tags:
               only: /^v.*/
       - build_it_212:
-          requires:
-            - checks
           filters:
             branches:
               ignore: /^pull.*/
       - build_scalafix_rules_212:
-          requires:
-            - checks
           filters:
             tags:
               only: /^v.*/
       - build_212-jdk11:
-          requires:
-            - checks
           filters:
             tags:
               only: /^v.*/
       - build_212-it-jdk11:
-          requires:
-            - checks
           filters:
             branches:
               ignore: /^pull.*/
