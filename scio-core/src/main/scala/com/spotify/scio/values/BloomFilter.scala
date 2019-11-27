@@ -13,7 +13,7 @@ import org.apache.beam.sdk.coders.AtomicCoder
  *
  * @see companion object [[BloomFilter]]
  */
-case class BloomFilter[T] private (private val internal: gBloomFilter[T]
+final case class BloomFilter[T] private (private val internal: gBloomFilter[T]
 ) extends ApproxFilter[T] {
 
   def expectedFpp: Double = internal.expectedFpp()

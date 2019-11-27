@@ -40,9 +40,11 @@ trait ApproxFilterBuilder[T, To[B >: T] <: ApproxFilter[B]] {
    */
   def build(sc: SCollection[T])(implicit coder: Coder[T],
                                 filterCoder: Coder[To[T]]): SCollection[To[T]] =
-    sc.groupBy(_ => ())
+    sc.transform("Create Approx Filter")(
+      _.groupBy(_ => ())
       .values
       .map(build)
+    )
 
   /**
    * Read from serialized bytes to this filter.
