@@ -150,35 +150,31 @@ final class FixBigQueryDeprecations extends SemanticRule("FixBigQueryDeprecation
 }
 
 final class ConsistenceJoinNames extends SemanticRule("ConsistenceJoinNames") {
-  private val pairedHashScol = "com/spotify/scio/values/PairHashSCollectionFunctions#"
-  private val pairedSkewedScol = "com/spotify/scio/values/PairSkewedSCollectionFunctions#"
-  private val pairedScol = "com/spotify/scio/values/PairSCollectionFunctions#"
-
-  override def fix(implicit doc: SemanticDocument): Patch = {
+  override def fix(implicit doc: _root_.scalafix.v1.SemanticDocument): Patch = {
     doc.tree.collect {
-      case Term.Apply(fun, _) =>
+      case t @ Term.Apply(fun, args) =>
         fun match {
-          case Term.Select(qual, name) =>
+          case t2 @ Term.Select(qual, name) =>
             name match {
-              case t @ Term.Name("hashLeftJoin") if (expectedType(qual, pairedHashScol)) =>
-                Patch.replaceTree(t, "hashLeftOuterJoin")
-              case t @ Term.Name("skewedLeftJoin") if (expectedType(qual, pairedSkewedScol)) =>
-                Patch.replaceTree(t, "skewedLeftOuterJoin")
-              case t @ Term.Name("sparseOuterJoin") if (expectedType(qual, pairedScol)) =>
-                Patch.replaceTree(t, "sparseFullOuterJoin")
+              case t3 @ Term.Name("hashLeftJoin") =>
+                Patch.replaceTree(t3, "hashLeftOuterJoin") + renameNamedArgs(args)
+              case t3 @ Term.Name("skewedLeftJoin") =>
+                Patch.replaceTree(t3, "skewedLeftOuterJoin") + renameNamedArgs(args)
+              case t3 @ Term.Name("sparseOuterJoin") =>
+                Patch.replaceTree(t3, "sparseFullOuterJoin") + renameNamedArgs(args)
               case _ => Patch.empty
             }
-          case _ => Patch.empty
         }
     }
   }.asPatch
 
-  private def expectedType(qual: Term, typStr: String)(implicit doc: SemanticDocument): Boolean =
-    qual.symbol.info.get.signature match {
-      case MethodSignature(_, _, TypeRef(_, typ, _)) =>
-        typ == Symbol(typStr)
-      case ValueSignature(AnnotatedType(_, TypeRef(_, typ, _))) =>
-        typ == Symbol(typStr)
-      case _ => false
-    }
+  private def renameNamedArgs(args: List[Term]): Patch =
+    args.collect {
+      case Term.Assign(lhs, rhs) =>
+        lhs match {
+          case t2 @ Term.Name("that") => Patch.replaceTree(t2, "right")
+          case _                      => Patch.empty
+        }
+      case _ => Patch.empty
+    }.asPatch
 }

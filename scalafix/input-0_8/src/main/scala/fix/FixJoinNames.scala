@@ -11,23 +11,20 @@ object FixJoinNames {
     lhs: SCollection[(Int, String)],
     rhs: SCollection[(Int, String)]
   ): SCollection[(Int, (String, Option[String]))] = {
+    lhs.leftOuterJoin(rhs)
     lhs.hashLeftJoin(rhs)
     lhs.sparseOuterJoin(rhs, 3)
     lhs.skewedLeftJoin(rhs)
   }
 
-  def example(): Unit = {
-    def hashLeftJoin(a: String): Int =
-      a.length
-
-    def sparseOuterJoin(a: String): Int =
-      a.length
-
-    def skewedLeftJoin(that: String): Int =
-      that.length
-
-    hashLeftJoin("test")
-    sparseOuterJoin("test")
-    skewedLeftJoin("test")
+  def changeNamesAndArgs(
+    lhs: SCollection[(Int, String)],
+    rhs: SCollection[(Int, String)]
+  ): SCollection[(Int, (String, Option[String]))] = {
+    lhs.leftOuterJoin(that = rhs)
+    lhs.hashLeftJoin(that = rhs)
+    lhs.sparseOuterJoin(that = rhs, 3)
+    lhs.sparseOuterJoin(that = rhs, thatNumKeys = 3)
+    lhs.skewedLeftJoin(that = rhs)
   }
 }
