@@ -572,3 +572,5 @@ trait ScalaCoders {
 
   // implicit def enumerationCoder[E <: Enumeration]: Coder[E#Value] = ???
 }
+
+private[coders] object ScalaCoders extends ScalaCoders
