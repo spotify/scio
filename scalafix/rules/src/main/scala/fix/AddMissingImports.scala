@@ -14,7 +14,7 @@ class AddMissingImports extends SyntacticRule("AddMissingImports") {
     val Input.VirtualFile(path, _) = p.input
 
     val t = (s.toString, path)
-    if(!imports.contains(t)) {
+    if (!imports.contains(t)) {
       imports += t
       Patch.addGlobalImport(i)
     } else Patch.empty
@@ -23,7 +23,7 @@ class AddMissingImports extends SyntacticRule("AddMissingImports") {
   object Avro {
     val fns =
       List("objectFile", "avroFile", "typedAvroFile", "protobufFile") ++
-      List("saveAsAvroFile", "saveAsTypedAvroFile", "saveAsObjectFile", "saveAsProtobufFile")
+        List("saveAsAvroFile", "saveAsTypedAvroFile", "saveAsObjectFile", "saveAsProtobufFile")
 
     val `import` = importer"com.spotify.scio.avro._"
   }
@@ -31,7 +31,13 @@ class AddMissingImports extends SyntacticRule("AddMissingImports") {
   object BQ {
     val fns =
       List("bigQuerySelect", "bigQueryTable", "bigQueryTable", "typedBigQuery", "tableRowJsonFile") ++
-      List("saveAsBigQuery", "saveAsBigQuery", "saveAsTypedBigQuery", "saveAsTypedBigQuery", "saveAsTableRowJsonFile")
+        List(
+          "saveAsBigQuery",
+          "saveAsBigQuery",
+          "saveAsTypedBigQuery",
+          "saveAsTypedBigQuery",
+          "saveAsTableRowJsonFile"
+        )
 
     val `import` = importer"com.spotify.scio.bigquery._"
   }

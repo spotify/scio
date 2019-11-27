@@ -66,4 +66,19 @@ object FixJoinNames {
     sparseOuterJoin("test")
     skewedLeftJoin("test")
   }
+
+  def example(): Unit = {
+    def hashLeftJoin(a: String): Int =
+      a.length
+
+    def sparseOuterJoin(a: String): Int =
+      a.length
+
+    def skewedLeftJoin(that: String): Int =
+      that.length
+
+    hashLeftJoin("test")
+    sparseOuterJoin("test")
+    skewedLeftJoin("test")
+  }
 }
