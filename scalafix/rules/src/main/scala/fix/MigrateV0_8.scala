@@ -6,7 +6,7 @@ import scala.meta._
 
 final class FixRunWithContext extends SemanticRule("FixRunWithContext") {
 
-  private def fixSubtree(name: String)(doc: SyntacticDocument): Patch = {
+  private def fixSubtree(name: String)(doc: SyntacticDocument): Patch =
     doc.tree.collect {
       case t @ Term.Select(Term.Name(`name`), Term.Name("isCompleted")) =>
         Patch.empty
@@ -22,9 +22,8 @@ final class FixRunWithContext extends SemanticRule("FixRunWithContext") {
           }
         Patch.replaceTree(t, Term.Apply(tn, ps2).toString)
     }.asPatch
-  }
 
-  override def fix(implicit doc: SemanticDocument): Patch = {
+  override def fix(implicit doc: SemanticDocument): Patch =
     doc.tree.collect {
       // Convert val`x` of type ScioExecutionContext to ScioResult
       // when `x` is passed to a method oo
@@ -41,7 +40,6 @@ final class FixRunWithContext extends SemanticRule("FixRunWithContext") {
       case t =>
         Patch.empty
     }.asPatch
-  }
 }
 
 final class FixScioIO extends SemanticRule("FixScioIO") {
@@ -55,7 +53,7 @@ final class FixScioIO extends SemanticRule("FixScioIO") {
       }
       .getOrElse(false)
 
-  override def fix(implicit doc: SemanticDocument): Patch = {
+  override def fix(implicit doc: SemanticDocument): Patch =
     doc.tree.collect {
       // fix return type (No Future 🤘)
       case t @ q"""..$mods def write(
@@ -66,7 +64,6 @@ final class FixScioIO extends SemanticRule("FixScioIO") {
             Patch.replaceTree(r, tapTpe.syntax)
         }.asPatch
     }.asPatch
-  }
 }
 
 final class FixSyntaxImports extends SemanticRule("FixSyntaxImports") {
@@ -118,7 +115,7 @@ final class FixSyntaxImports extends SemanticRule("FixSyntaxImports") {
 }
 
 final class FixContextClose extends SemanticRule("FixContextClose") {
-  override def fix(implicit doc: SemanticDocument): Patch = {
+  override def fix(implicit doc: SemanticDocument): Patch =
     doc.tree.collect {
       case t @ q"$x.close()" =>
         x.symbol.info.get.signature match {
@@ -129,16 +126,14 @@ final class FixContextClose extends SemanticRule("FixContextClose") {
             Patch.empty
         }
     }.asPatch
-  }
 }
 
 final class FixTensorflow extends SemanticRule("FixTensorflow") {
-  override def fix(implicit doc: SemanticDocument): Patch = {
+  override def fix(implicit doc: SemanticDocument): Patch =
     doc.tree.collect {
       case t @ Term.Select(s, Term.Name("saveAsTfExampleFile")) =>
         Patch.replaceTree(t, q"$s.saveAsTfRecordFile".syntax)
     }.asPatch
-  }
 }
 
 final class FixBigQueryDeprecations extends SemanticRule("FixBigQueryDeprecations") {
@@ -154,20 +149,20 @@ final class FixBigQueryDeprecations extends SemanticRule("FixBigQueryDeprecation
     }.asPatch
 }
 
-final class ConsistenceJoinNames  extends SemanticRule ("ConsistenceJoinNames") {
+final class ConsistenceJoinNames extends SemanticRule("ConsistenceJoinNames") {
   private val pairedHashScol = "com/spotify/scio/values/PairHashSCollectionFunctions#"
-  private val pairedSkewedScol ="com/spotify/scio/values/PairSkewedSCollectionFunctions#"
+  private val pairedSkewedScol = "com/spotify/scio/values/PairSkewedSCollectionFunctions#"
   private val pairedScol = "com/spotify/scio/values/PairSCollectionFunctions#"
 
   override def fix(implicit doc: SemanticDocument): Patch = {
-    doc.tree.collect{
+    doc.tree.collect {
       case Term.Apply(fun, _) =>
         fun match {
           case Term.Select(qual, name) =>
             name match {
-              case t @ Term.Name("hashLeftJoin") if(expectedType(qual, pairedHashScol)) =>
+              case t @ Term.Name("hashLeftJoin") if (expectedType(qual, pairedHashScol)) =>
                 Patch.replaceTree(t, "hashLeftOuterJoin")
-              case t @ Term.Name("skewedLeftJoin") if(expectedType(qual, pairedSkewedScol))=>
+              case t @ Term.Name("skewedLeftJoin") if (expectedType(qual, pairedSkewedScol)) =>
                 Patch.replaceTree(t, "skewedLeftOuterJoin")
               case t @ Term.Name("sparseOuterJoin") if (expectedType(qual, pairedScol)) =>
                 Patch.replaceTree(t, "sparseFullOuterJoin")
@@ -176,9 +171,9 @@ final class ConsistenceJoinNames  extends SemanticRule ("ConsistenceJoinNames") 
           case _ => Patch.empty
         }
     }
-    }.asPatch
+  }.asPatch
 
-  private def expectedType(qual: Term, typStr: String)(implicit doc: SemanticDocument): Boolean = {
+  private def expectedType(qual: Term, typStr: String)(implicit doc: SemanticDocument): Boolean =
     qual.symbol.info.get.signature match {
       case MethodSignature(_, _, TypeRef(_, typ, _)) =>
         typ == Symbol(typStr)
@@ -186,5 +181,4 @@ final class ConsistenceJoinNames  extends SemanticRule ("ConsistenceJoinNames") 
         typ == Symbol(typStr)
       case _ => false
     }
-  }
 }
