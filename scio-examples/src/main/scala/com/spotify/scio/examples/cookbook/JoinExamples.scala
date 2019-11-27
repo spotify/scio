@@ -132,7 +132,7 @@ object HashJoinExamples {
 
     eventsInfo
     // Hash join uses side input under the hood and is a drop-in replacement for regular join
-      .hashLeftJoin(countryInfo)
+      .hashLeftOuterJoin(countryInfo)
       .map { t =>
         val (countryCode, (eventInfo, countryNameOpt)) = t
         val countryName = countryNameOpt.getOrElse("none")
