@@ -823,7 +823,7 @@ class ScioContext private[scio] (
       if (this.isTest) {
         TestDataManager.getInput(testId.get)(CustomIO[T](this.tfName)).toSCollection(this)
       } else {
-        wrap(this.applyInternal(name, transform))
+        wrap(this.applyInternal(transform))
       }
     }
 

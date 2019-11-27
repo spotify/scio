@@ -1295,7 +1295,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     if (context.isTest) {
       TestDataManager.getOutput(context.testId.get)(CustomIO[T](this.tfName))(this)
     } else {
-      this.applyInternal(name, transform)
+      this.applyInternal(transform)
     }
 
     ClosedTap[Nothing](EmptyTap)
