@@ -453,8 +453,8 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     val thatBfSIs = thatSColl.optimalKeysBloomFiltersAsSideInputs(thatNumKeys, fpProb)
     val n = thatBfSIs.size
 
-    val thisParts = thisSColl.hashPartitionByKey(n)
-    val thatParts = thatSColl.hashPartitionByKey(n)
+    val thisParts = thisSColl.partitionUsingKey(n, sparseTransformPartitioner(hash, n))
+    val thatParts = thatSColl.partitionUsingKey(n, sparseTransformPartitioner(hash, n))
 
     thisParts.zip(thatParts).zip(thatBfSIs).map {
       case ((lhs, rhs), bfsi) =>
@@ -470,6 +470,33 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
           }
         (partitionedLhs(lhsUnique), partitionedLhs(lhsOverlap), rhs)
     }
+  }
+
+  /**
+   * Partitions this SCollection by keys and the given partitioner for the keys
+   */
+  private[values] def partitionUsingKey(numPartitions: Int, partitioner: K => Int): Seq[SCollection[(K, V)]] = {
+    self.partition(numPartitions, {case (key, _) => partitioner(key)})
+  }
+
+  /**
+   * Partitioner function for Sparse Transforms. This provides a deterministic hash function
+   * using Hash128 only when needed and ## for primitive types.
+   *
+   * This is a workaround for https://github.com/spotify/scio/issues/2450
+   */
+  private def sparseTransformPartitioner[T](fallBackHash: Hash128[T], numPartitions: Int): T => Int = {
+    case t @ (_: String | _: Char | _: Byte | _: Short | _: Int | _: Long | _: Float | _: Double |
+        _: Boolean) =>
+      Math.floorMod(t.##, numPartitions)
+    case t =>
+      // com.spotify.scio.util.BloomFilter uses the 2nd and the 4th set of 32 bits
+      // for creating the Hash functions form the 128 bit hash.
+      // We use the first 32 bits to partition the SCollection so that it doesn't artificially
+      // increase hash collisions in the BloomFilter.
+      // Note: This function can return negative.
+      val hash: Int = (fallBackHash.hash(t)._1 >> 32).toInt
+      math.abs(hash % numPartitions) // math.abs on the output of % would never be negative.
   }
 
   /**
@@ -495,8 +522,8 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     val selfBfSideInputs = sColl.optimalKeysBloomFiltersAsSideInputs(thisNumKeys, fpProb)
     val n = selfBfSideInputs.size
 
-    val thisParts = sColl.hashPartitionByKey(n)
-    val thatParts = that.hashPartitionByKey(n)
+    val thisParts = sColl.partitionUsingKey(n, sparseTransformPartitioner(hash, n))
+    val thatParts = that.partitionUsingKey(n, sparseTransformPartitioner(hash, n))
 
     SCollection.unionAll(
       thisParts
@@ -564,9 +591,9 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     val selfBfSideInputs = sColl.optimalKeysBloomFiltersAsSideInputs(thisNumKeys, fpProb)
     val n = selfBfSideInputs.size
 
-    val thisParts = sColl.hashPartitionByKey(n)
-    val that1Parts = that1.hashPartitionByKey(n)
-    val that2Parts = that2.hashPartitionByKey(n)
+    val thisParts = sColl.partitionUsingKey(n, sparseTransformPartitioner(hash, n))
+    val that1Parts = that1.partitionUsingKey(n, sparseTransformPartitioner(hash, n))
+    val that2Parts = that2.partitionUsingKey(n, sparseTransformPartitioner(hash, n))
 
     SCollection.unionAll(
       thisParts.zip(selfBfSideInputs).zip(that1Parts).zip(that2Parts).map {
@@ -626,7 +653,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     val numHashes = BloomFilter.optimalNumHashes(numKeysPerPartition, width)
     val bfAggregator = BloomFilterAggregator[K](numHashes, width)
     self.keys
-      .hashPartition(n)
+      .partition(n, sparseTransformPartitioner(hash, n))
       .map { me =>
         me.aggregate(bfAggregator.monoid.zero)(_ += _, _ ++= _)
           .asSingletonSideInput(bfAggregator.monoid.zero)
@@ -888,8 +915,8 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     self.transform { me =>
       val rhsBfs = that.map(k => (k, ())).optimalKeysBloomFiltersAsSideInputs(thatNumKeys, fpProb)
       val n = rhsBfs.size
-      val thisParts = me.hashPartitionByKey(n)
-      val thatParts = that.hashPartition(n)
+      val thisParts = me.partitionUsingKey(n, sparseTransformPartitioner(hash, n))
+      val thatParts = that.partition(n, sparseTransformPartitioner(hash, n))
       SCollection.unionAll(
         thisParts
           .zip(thatParts)
