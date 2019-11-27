@@ -165,7 +165,7 @@ final class ConsistenceJoinNames extends SemanticRule("ConsistenceJoinNames") {
               case t @ Term.Name("skewedLeftJoin") if (expectedType(qual, pairedSkewedScol)) =>
                 Patch.replaceTree(t, "skewedLeftOuterJoin") + renameNamedArgs(args)
               case t @ Term.Name("sparseOuterJoin") if (expectedType(qual, pairedScol)) =>
-                Patch.replaceTree(t, "sparseFullOuterJoin") + renameNamedArgs(args)
+                Patch.replaceTree(t, "sparseFullOuterJoin")
               case _ => Patch.empty
             }
           case _ => Patch.empty
