@@ -23,4 +23,22 @@ object FixJoinNames {
     lhs.sparseOuterJoin(that = rhs, thatNumKeys = 3)
     lhs.skewedLeftJoin(that = rhs)
   }
+
+  def example(): Unit = {
+    def hashLeftJoin(a: String): Int =  {
+      a.length
+    }
+
+    def sparseOuterJoin(a: String): Int = {
+      a.length
+    }
+
+    def skewedLeftJoin(that: String): Int = {
+      that.length
+    }
+
+    hashLeftJoin("test")
+    sparseOuterJoin("test")
+    skewedLeftJoin("test")
+  }
 }
