@@ -110,7 +110,7 @@ object MaterializeTap {
     new MaterializeTap(path, CoderMaterializer.beam(context, Coder[T]))
 }
 
-final case class ClosedTap[T] private (private[scio] val underlying: Tap[T]) {
+final case class ClosedTap[T] (private[scio] val underlying: Tap[T]) {
   /**
    * Get access to the underlying Tap. The ScioContext has to be ran before.
    * An instance of ScioResult is returned by ScioContext when the context is closed.

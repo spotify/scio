@@ -813,6 +813,21 @@ class ScioContext private[scio] (
     }
 
   /**
+   * Get an SCollection with a custom input transform.
+   * @group input
+   */
+  def customInput[T: Coder, I >: PBegin <: PInput](
+    transform: PTransform[I, PCollection[T]]
+  ): SCollection[T] =
+    requireNotClosed {
+      if (this.isTest) {
+        TestDataManager.getInput(testId.get)(CustomIO[T](this.tfName)).toSCollection(this)
+      } else {
+        wrap(this.applyInternal(name, transform))
+      }
+    }
+
+  /**
    * Generic read method for all `ScioIO[T]` implementations, which will invoke the provided IO's
    * [[com.spotify.scio.io.ScioIO[T]#readWithContext]] method along with read configurations
    * passed in. The IO class can delegate test-specific behavior if necessary.

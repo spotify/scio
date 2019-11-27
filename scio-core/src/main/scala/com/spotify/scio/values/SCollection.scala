@@ -1285,6 +1285,22 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     ClosedTap[Nothing](EmptyTap)
   }
 
+  /**
+   * Save this SCollection with a custom output transform.
+   * @group output
+   */
+  def saveAsCustomOutput[O <: POutput](
+    transform: PTransform[PCollection[T], O]
+  ): ClosedTap[Nothing] = {
+    if (context.isTest) {
+      TestDataManager.getOutput(context.testId.get)(CustomIO[T](this.tfName))(this)
+    } else {
+      this.applyInternal(name, transform)
+    }
+
+    ClosedTap[Nothing](EmptyTap)
+  }
+
   private[scio] def saveAsInMemoryTap(implicit coder: Coder[T]): ClosedTap[T] = {
     val tap = new InMemoryTap[T]
     InMemorySink.save(tap.id, this)
