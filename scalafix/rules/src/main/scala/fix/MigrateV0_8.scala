@@ -157,9 +157,30 @@ final class FixBigQueryDeprecations extends SemanticRule("FixBigQueryDeprecation
 final class ConsistenceJoinNames  extends SemanticRule ("ConsistenceJoinNames") {
   override def fix(implicit doc: _root_.scalafix.v1.SemanticDocument): Patch = {
     doc.tree.collect{
-      case t @ Term.Name("hashLeftJoin") => Patch.replaceTree(t, "hashLeftOuterJoin")
-      case t @ Term.Name("skewedLeftJoin") => Patch.replaceTree(t, "skewedLeftOuterJoin")
-      case t @ Term.Name("sparseOuterJoin") => Patch.replaceTree(t, "sparseFullOuterJoin")
+      case t @ Term.Apply(fun, args) =>
+        fun match {
+          case t2 @ Term.Select(qual, name) =>
+            name match {
+              case t3 @ Term.Name("hashLeftJoin") =>
+                Patch.replaceTree(t3, "hashLeftOuterJoin") + renameNamedArgs(args)
+              case t3 @ Term.Name("skewedLeftJoin") =>
+                Patch.replaceTree(t3, "skewedLeftOuterJoin") + renameNamedArgs(args)
+              case t3 @ Term.Name("sparseOuterJoin") =>
+                Patch.replaceTree(t3, "sparseFullOuterJoin") + renameNamedArgs(args)
+              case _ => Patch.empty
+            }
+        }
     }
     }.asPatch
+
+  private def renameNamedArgs(args: List[Term]): Patch = {
+   args.collect{
+     case Term.Assign(lhs, rhs) =>
+       lhs match {
+         case t2 @ Term.Name("that") => Patch.replaceTree(t2, "right")
+         case _ => Patch.empty
+       }
+     case _ => Patch.empty
+   }.asPatch
+  }
 }
