@@ -592,7 +592,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     implicit coder: Coder[T]
   ): SCollection[Iterable[T]] = this.transform {
     _.pApply(ApproximateQuantiles.globally(numQuantiles, ord))
-      .map(_.asInstanceOf[JIterable[T]].asScala)
+      .map((_: JIterable[T]).asScala)
   }
 
   /**
