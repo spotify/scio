@@ -19,7 +19,7 @@ package com.spotify.scio.values
 
 import com.spotify.scio.testing.PipelineSpec
 import com.spotify.scio.util.random.RandomSamplerUtils
-import com.twitter.algebird.Aggregator
+import com.twitter.algebird.{Aggregator, Hash128}
 
 class PairSCollectionFunctionsTest extends PipelineSpec {
   import com.spotify.scio.testing.TestingUtils._
@@ -659,6 +659,20 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
       val p2 = sc.parallelize(sparseRhs)
       val p = p1.sparseJoin(p2, 1000000000L)
       p should containInAnyOrder(sparseJoinExpected)
+    }
+  }
+
+  // https://github.com/spotify/scio/issues/2450
+  it should "support sparseJoin() with Array keys and partitions" in {
+    runWithContext { sc =>
+      // Wrap the keys in an Array.
+      val p1 = sc.parallelize(sparseLhs).map{case (k, v) => (Array(k), v)}
+      val p2 = sc.parallelize(sparseRhs).map{case (k, v) => (Array(k), v)}
+      implicit val arrayHash: Hash128[Array[String]] =
+        Hash128.arrayByteHash.contramap(s=> s.flatMap(_.getBytes))
+      val p = p1.sparseJoin(p2, 1000000000L) // Force partitioning
+      // Unwrap the array to get the only element.
+      p.map{case (k, v) => (k(0), v)} should containInAnyOrder(sparseJoinExpected)
     }
   }
 
