@@ -156,16 +156,16 @@ final class ConsistenceJoinNames extends SemanticRule("ConsistenceJoinNames") {
 
   override def fix(implicit doc: SemanticDocument): Patch = {
     doc.tree.collect {
-      case t @ Term.Apply(fun, args) =>
+      case Term.Apply(fun, args) =>
         fun match {
-          case t2 @ Term.Select(qual, name) =>
+          case Term.Select(qual, name) =>
             name match {
-              case t3 @ Term.Name("hashLeftJoin") if (expectedType(qual, pairedHashScol)) =>
-                Patch.replaceTree(t3, "hashLeftOuterJoin") + renameNamedArgs(args)
-              case t3 @ Term.Name("skewedLeftJoin") if (expectedType(qual, pairedSkewedScol)) =>
-                Patch.replaceTree(t3, "skewedLeftOuterJoin") + renameNamedArgs(args)
-              case t3 @ Term.Name("sparseOuterJoin") if (expectedType(qual, pairedScol)) =>
-                Patch.replaceTree(t3, "sparseFullOuterJoin") + renameNamedArgs(args)
+              case t @ Term.Name("hashLeftJoin") if (expectedType(qual, pairedHashScol)) =>
+                Patch.replaceTree(t, "hashLeftOuterJoin") + renameNamedArgs(args)
+              case t @ Term.Name("skewedLeftJoin") if (expectedType(qual, pairedSkewedScol)) =>
+                Patch.replaceTree(t, "skewedLeftOuterJoin") + renameNamedArgs(args)
+              case t @ Term.Name("sparseOuterJoin") if (expectedType(qual, pairedScol)) =>
+                Patch.replaceTree(t, "sparseFullOuterJoin") + renameNamedArgs(args)
               case _ => Patch.empty
             }
           case _ => Patch.empty
@@ -189,10 +189,7 @@ final class ConsistenceJoinNames extends SemanticRule("ConsistenceJoinNames") {
         typ == Symbol(typStr)
       case ValueSignature(AnnotatedType(_, TypeRef(_, typ, _))) =>
         typ == Symbol(typStr)
-      case str =>
-        println(s"typStr: [$typStr]")
-        println(s"Str: [${str.structure}]")
-        false
+      case _ => false
     }
 
   private def renameNamedArgs(args: List[Term]): Patch =
