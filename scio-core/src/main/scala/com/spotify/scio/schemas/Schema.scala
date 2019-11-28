@@ -16,12 +16,10 @@
  */
 package com.spotify.scio.schemas
 
-import java.util
 import java.util.{List => jList, Map => jMap}
 
 import com.spotify.scio.{FeatureFlag, IsJavaBean, MacroSettings}
 import com.spotify.scio.schemas.instances.{
-  AllInstances,
   AvroInstances,
   JavaInstances,
   JodaInstances,
@@ -30,7 +28,7 @@ import com.spotify.scio.schemas.instances.{
 }
 import com.spotify.scio.util.ScioUtil
 import org.apache.beam.sdk.schemas.Schema.FieldType
-import org.apache.beam.sdk.schemas.{JavaBeanSchema, SchemaProvider, Schema => BSchema}
+import org.apache.beam.sdk.schemas.{SchemaProvider, Schema => BSchema}
 import org.apache.beam.sdk.transforms.SerializableFunction
 import org.apache.beam.sdk.values.{Row, TypeDescriptor}
 
