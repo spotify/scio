@@ -33,6 +33,8 @@ import org.joda.time.Instant
 
 import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
+import com.spotify.scio.io.PubsubIO.Subscription
+import com.spotify.scio.io.PubsubIO.Topic
 
 sealed trait PubsubIO[T] extends ScioIO[T] {
   override type ReadP = PubsubIO.ReadParam
@@ -44,19 +46,95 @@ sealed trait PubsubIO[T] extends ScioIO[T] {
 }
 
 object PubsubIO {
-  final case class ReadParam(isSubscription: Boolean)
+  sealed trait ReadType
+  case object Subscription extends ReadType
+  case object Topic extends ReadType
+
+  final case class ReadParam(readType: ReadType) {
+    val isSubscription = readType match {
+      case Subscription => true
+      case _            => false
+    }
+  }
+  object ReadParam {
+    // required for back compatibility
+    def apply(isSubscription: Boolean): ReadParam =
+      if (isSubscription) ReadParam(Subscription) else ReadParam(Topic)
+  }
 
   final case class WriteParam(
     maxBatchSize: Option[Int] = None,
     maxBatchBytesSize: Option[Int] = None
   )
 
+  // The following method is unsafe and exists to preserve compatibility with
+  // the previous implementation while the underlying `PubsubIO` implementations
+  // have been refactored and are more type safe.
+  @deprecated(
+    "Use readString, readAvro, readProto, readPubsub or readCoder instead.",
+    since = "0.8.0"
+  )
   def apply[T: ClassTag: Coder](
     name: String,
     idAttribute: String = null,
     timestampAttribute: String = null
+  ): PubsubIO[T] = ScioUtil.classOf[T] match {
+    case cls if classOf[String] isAssignableFrom cls =>
+      StringPubsubIOWithoutAttributes(name, idAttribute, timestampAttribute)
+        .asInstanceOf[PubsubIO[T]]
+    case cls if classOf[SpecificRecordBase] isAssignableFrom cls =>
+      type X = T with SpecificRecordBase
+      AvroPubsubIOWithoutAttributes[X](name, idAttribute, timestampAttribute)(
+        cls.asInstanceOf[ClassTag[X]]
+      ).asInstanceOf[PubsubIO[T]]
+    case cls if classOf[Message] isAssignableFrom cls =>
+      type X = T with Message
+      MessagePubsubIOWithoutAttributes[X](name, idAttribute, timestampAttribute)(
+        cls.asInstanceOf[ClassTag[X]]
+      ).asInstanceOf[PubsubIO[T]]
+    case cls if classOf[beam.PubsubMessage] isAssignableFrom cls =>
+      type X = T with beam.PubsubMessage
+      PubSubMessagePubsubIOWithoutAttributes[X](name, idAttribute, timestampAttribute)(
+        cls.asInstanceOf[ClassTag[X]]
+      ).asInstanceOf[PubsubIO[T]]
+    case _ =>
+      FallbackPubsubIOWithoutAttributes[T](name, idAttribute, timestampAttribute)
+  }
+
+  def readString(
+    name: String,
+    idAttribute: String = null,
+    timestampAttribute: String = null
+  ): PubsubIO[String] =
+    StringPubsubIOWithoutAttributes(name, idAttribute, timestampAttribute)
+
+  def readAvro[T <: SpecificRecordBase: ClassTag](
+    name: String,
+    idAttribute: String = null,
+    timestampAttribute: String = null
   ): PubsubIO[T] =
-    PubsubIOWithoutAttributes[T](name, idAttribute, timestampAttribute)
+    AvroPubsubIOWithoutAttributes[T](name, idAttribute, timestampAttribute)
+
+  def readProto[T <: Message: ClassTag](
+    name: String,
+    idAttribute: String = null,
+    timestampAttribute: String = null
+  ): PubsubIO[T] =
+    MessagePubsubIOWithoutAttributes[T](name, idAttribute, timestampAttribute)
+
+  def readPubsub[T <: beam.PubsubMessage: ClassTag](
+    name: String,
+    idAttribute: String = null,
+    timestampAttribute: String = null
+  ): PubsubIO[T] =
+    PubSubMessagePubsubIOWithoutAttributes[T](name, idAttribute, timestampAttribute)
+
+  def readCoder[T: Coder: ClassTag](
+    name: String,
+    idAttribute: String = null,
+    timestampAttribute: String = null
+  ): PubsubIO[T] =
+    FallbackPubsubIOWithoutAttributes[T](name, idAttribute, timestampAttribute)
 
   def withAttributes[T: ClassTag: Coder](
     name: String,
@@ -64,102 +142,174 @@ object PubsubIO {
     timestampAttribute: String = null
   ): PubsubIO[(T, Map[String, String])] =
     PubsubIOWithAttributes[T](name, idAttribute, timestampAttribute)
+
+  private[io] def setAttrs[T](
+    r: beam.PubsubIO.Read[T]
+  )(idAttribute: String, timestampAttribute: String): beam.PubsubIO.Read[T] = {
+    val r0 = Option(idAttribute)
+      .map { att =>
+        r.withIdAttribute(att)
+      }
+      .getOrElse(r)
+
+    Option(timestampAttribute)
+      .map { att =>
+        r0.withTimestampAttribute(att)
+      }
+      .getOrElse(r0)
+  }
+
+  private[io] def setAttrs[T](
+    r: beam.PubsubIO.Write[T]
+  )(idAttribute: String, timestampAttribute: String): beam.PubsubIO.Write[T] = {
+    val r0 = Option(idAttribute)
+      .map { att =>
+        r.withIdAttribute(att)
+      }
+      .getOrElse(r)
+
+    Option(timestampAttribute)
+      .map { att =>
+        r0.withTimestampAttribute(att)
+      }
+      .getOrElse(r0)
+  }
 }
 
-private final case class PubsubIOWithoutAttributes[T: ClassTag: Coder](
-  name: String,
-  idAttribute: String,
-  timestampAttribute: String
-) extends PubsubIO[T] {
-  private[this] val cls = ScioUtil.classOf[T]
+private sealed trait PubsubIOWithoutAttributes[T] extends PubsubIO[T] {
+  def name: String
+  def idAttribute: String
+  def timestampAttribute: String
 
   override def testId: String =
     s"PubsubIO($name, $idAttribute, $timestampAttribute)"
 
+  protected def setup[U](
+    read: beam.PubsubIO.Read[U],
+    params: PubsubIO.ReadParam
+  ): beam.PubsubIO.Read[U] = {
+    val r =
+      params.readType match {
+        case Subscription => read.fromSubscription(name)
+        case Topic        => read.fromTopic(name)
+      }
+
+    PubsubIO.setAttrs(r)(idAttribute, timestampAttribute)
+  }
+
+  protected def setup[U](write: beam.PubsubIO.Write[U], params: PubsubIO.WriteParam) = {
+    val w = PubsubIO.setAttrs(write.to(name))(idAttribute, timestampAttribute)
+    params.maxBatchBytesSize.foreach(w.withMaxBatchBytesSize)
+    params.maxBatchSize.foreach(w.withMaxBatchSize)
+    w
+  }
+}
+
+private final case class StringPubsubIOWithoutAttributes(
+  name: String,
+  idAttribute: String,
+  timestampAttribute: String
+) extends PubsubIOWithoutAttributes[String] {
+  override protected def read(sc: ScioContext, params: ReadP): SCollection[String] = {
+    val t = setup(beam.PubsubIO.readStrings(), params)
+    sc.wrap(sc.applyInternal(t))
+  }
+
+  override protected def write(data: SCollection[String], params: WriteP): Tap[Nothing] = {
+    val t = setup(beam.PubsubIO.writeStrings(), params)
+    data
+      .asInstanceOf[SCollection[String]]
+      .applyInternal(t)
+    EmptyTap
+  }
+}
+
+private final case class AvroPubsubIOWithoutAttributes[T <: SpecificRecordBase: ClassTag](
+  name: String,
+  idAttribute: String,
+  timestampAttribute: String
+) extends PubsubIOWithoutAttributes[T] {
+  private[this] val cls = ScioUtil.classOf[T]
+
   override protected def read(sc: ScioContext, params: ReadP): SCollection[T] = {
-    def setup[U](read: beam.PubsubIO.Read[U]) = {
-      var r = read
-      r = if (params.isSubscription) {
-        r.fromSubscription(name)
-      } else {
-        r.fromTopic(name)
-      }
-
-      if (idAttribute != null) {
-        r = r.withIdAttribute(idAttribute)
-      }
-      if (timestampAttribute != null) {
-        r = r.withTimestampAttribute(timestampAttribute)
-      }
-
-      r
-    }
-
-    if (classOf[String] isAssignableFrom cls) {
-      val t = setup(beam.PubsubIO.readStrings())
-      sc.wrap(sc.applyInternal(t)).asInstanceOf[SCollection[T]]
-    } else if (classOf[SpecificRecordBase] isAssignableFrom cls) {
-      val t = setup(beam.PubsubIO.readAvros(cls))
-      sc.wrap(sc.applyInternal(t))
-    } else if (classOf[Message] isAssignableFrom cls) {
-      val t = setup(beam.PubsubIO.readProtos(cls.asSubclass(classOf[Message])))
-      sc.wrap(sc.applyInternal(t)).asInstanceOf[SCollection[T]]
-    } else if (classOf[beam.PubsubMessage] isAssignableFrom cls) {
-      val t = setup(beam.PubsubIO.readMessages())
-      sc.wrap(sc.applyInternal(t)).asInstanceOf[SCollection[T]]
-    } else {
-      val coder = CoderMaterializer.beam(sc, Coder[T])
-      val t = setup(
-        beam.PubsubIO.readMessagesWithCoderAndParseFn(
-          coder,
-          Functions.simpleFn(m => CoderUtils.decodeFromByteArray(coder, m.getPayload))
-        )
-      )
-
-      sc.wrap(sc.applyInternal(t))
-    }
+    val t = setup(beam.PubsubIO.readAvros(cls), params)
+    sc.wrap(sc.applyInternal(t))
   }
 
   override protected def write(data: SCollection[T], params: WriteP): Tap[Nothing] = {
-    def setup[U](write: beam.PubsubIO.Write[U]) = {
-      var w = write.to(name)
-      if (idAttribute != null) {
-        w = w.withIdAttribute(idAttribute)
+    val t = setup(beam.PubsubIO.writeAvros(cls), params)
+    data.applyInternal(t)
+    EmptyTap
+  }
+}
+
+private final case class MessagePubsubIOWithoutAttributes[T <: Message: ClassTag](
+  name: String,
+  idAttribute: String,
+  timestampAttribute: String
+) extends PubsubIOWithoutAttributes[T] {
+  private[this] val cls = ScioUtil.classOf[T]
+
+  override protected def read(sc: ScioContext, params: ReadP): SCollection[T] = {
+    val t = setup(beam.PubsubIO.readProtos(cls.asSubclass(classOf[Message])), params)
+    sc.wrap(sc.applyInternal(t)).asInstanceOf[SCollection[T]]
+  }
+
+  override protected def write(data: SCollection[T], params: WriteP): Tap[Nothing] = {
+    val t = setup(beam.PubsubIO.writeProtos(cls.asInstanceOf[Class[Message]]), params)
+    data.asInstanceOf[SCollection[Message]].applyInternal(t)
+    EmptyTap
+  }
+}
+
+private final case class PubSubMessagePubsubIOWithoutAttributes[T <: beam.PubsubMessage: ClassTag](
+  name: String,
+  idAttribute: String,
+  timestampAttribute: String
+) extends PubsubIOWithoutAttributes[T] {
+  private[this] val cls = ScioUtil.classOf[T]
+
+  override protected def read(sc: ScioContext, params: ReadP): SCollection[T] = {
+    val t = setup(beam.PubsubIO.readMessages(), params)
+    sc.wrap(sc.applyInternal(t)).asInstanceOf[SCollection[T]]
+  }
+
+  override protected def write(data: SCollection[T], params: WriteP): Tap[Nothing] = {
+    val t = setup(beam.PubsubIO.writeMessages(), params)
+    data.asInstanceOf[SCollection[beam.PubsubMessage]].applyInternal(t)
+    EmptyTap
+  }
+}
+
+private final case class FallbackPubsubIOWithoutAttributes[T: ClassTag: Coder](
+  name: String,
+  idAttribute: String,
+  timestampAttribute: String
+) extends PubsubIOWithoutAttributes[T] {
+  private[this] val cls = ScioUtil.classOf[T]
+
+  override protected def read(sc: ScioContext, params: ReadP): SCollection[T] = {
+    val coder = CoderMaterializer.beam(sc, Coder[T])
+    val t = setup(
+      beam.PubsubIO.readMessagesWithCoderAndParseFn(
+        coder,
+        Functions.simpleFn(m => CoderUtils.decodeFromByteArray(coder, m.getPayload))
+      ),
+      params
+    )
+
+    sc.wrap(sc.applyInternal(t))
+  }
+
+  override protected def write(data: SCollection[T], params: WriteP): Tap[Nothing] = {
+    val coder = CoderMaterializer.beam(data.context, Coder[T])
+    val t = setup(beam.PubsubIO.writeMessages(), params)
+    data
+      .map { record =>
+        val payload = CoderUtils.encodeToByteArray(coder, record)
+        new beam.PubsubMessage(payload, Map.empty[String, String].asJava)
       }
-      if (timestampAttribute != null) {
-        w = w.withTimestampAttribute(timestampAttribute)
-      }
-
-      params.maxBatchBytesSize.foreach(w.withMaxBatchBytesSize)
-      params.maxBatchSize.foreach(w.withMaxBatchSize)
-
-      w
-    }
-    if (classOf[String] isAssignableFrom cls) {
-      val t = setup(beam.PubsubIO.writeStrings())
-      data
-        .asInstanceOf[SCollection[String]]
-        .applyInternal(t)
-    } else if (classOf[SpecificRecordBase] isAssignableFrom cls) {
-      val t = setup(beam.PubsubIO.writeAvros(cls))
-      data.applyInternal(t)
-    } else if (classOf[Message] isAssignableFrom cls) {
-      val t = setup(beam.PubsubIO.writeProtos(cls.asInstanceOf[Class[Message]]))
-      data.asInstanceOf[SCollection[Message]].applyInternal(t)
-    } else if (classOf[beam.PubsubMessage] isAssignableFrom cls) {
-      val t = setup(beam.PubsubIO.writeMessages())
-      data.asInstanceOf[SCollection[beam.PubsubMessage]].applyInternal(t)
-    } else {
-      val coder = CoderMaterializer.beam(data.context, Coder[T])
-      val t = setup(beam.PubsubIO.writeMessages())
-      data
-        .map { record =>
-          val payload = CoderUtils.encodeToByteArray(coder, record)
-          new beam.PubsubMessage(payload, Map.empty[String, String].asJava)
-        }
-        .applyInternal(t)
-    }
-
+      .applyInternal(t)
     EmptyTap
   }
 }
@@ -176,13 +326,11 @@ private final case class PubsubIOWithAttributes[T: ClassTag: Coder](
 
   override protected def read(sc: ScioContext, params: ReadP): SCollection[WithAttributeMap] = {
     var r = beam.PubsubIO.readMessagesWithAttributes()
-    r = if (params.isSubscription) r.fromSubscription(name) else r.fromTopic(name)
-    if (idAttribute != null) {
-      r = r.withIdAttribute(idAttribute)
+    r = params.readType match {
+      case Subscription => r.fromSubscription(name)
+      case Topic        => r.fromTopic(name)
     }
-    if (timestampAttribute != null) {
-      r = r.withTimestampAttribute(timestampAttribute)
-    }
+    r = PubsubIO.setAttrs(r)(idAttribute, timestampAttribute)
 
     val coder = CoderMaterializer.beam(sc, Coder[T])
     sc.wrap(sc.applyInternal(r))
@@ -198,24 +346,20 @@ private final case class PubsubIOWithAttributes[T: ClassTag: Coder](
   ): SCollection[WithAttributeMap] = {
     val read = TestDataManager.getInput(sc.testId.get)(this).toSCollection(sc)
 
-    if (timestampAttribute != null) {
-      read.timestampBy(kv => new Instant(kv._2(timestampAttribute)))
-    } else {
-      read
-    }
+    Option(timestampAttribute)
+      .map { att =>
+        read.timestampBy(kv => new Instant(kv._2(att)))
+      }
+      .getOrElse(read)
   }
 
   override protected def write(
     data: SCollection[WithAttributeMap],
     params: WriteP
   ): Tap[Nothing] = {
-    var w = beam.PubsubIO.writeMessages().to(name)
-    if (idAttribute != null) {
-      w = w.withIdAttribute(idAttribute)
-    }
-    if (timestampAttribute != null) {
-      w = w.withTimestampAttribute(timestampAttribute)
-    }
+    val w =
+      PubsubIO.setAttrs(beam.PubsubIO.writeMessages().to(name))(idAttribute, timestampAttribute)
+
     val coder = CoderMaterializer.beam(data.context, Coder[T])
 
     data.applyInternal(new PTransform[PCollection[WithAttributeMap], PDone]() {
