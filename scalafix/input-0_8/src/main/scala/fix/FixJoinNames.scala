@@ -16,15 +16,13 @@ object FixJoinNames {
     lhs.skewedLeftJoin(rhs)
   }
 
-  def changeNamesAndArgs(
-    lhs: SCollection[(Int, String)],
-    rhs: SCollection[(Int, String)]
+  def changeNamesAndArgs(lhs: SCollection[(Int, String)], rightHS: SCollection[(Int, String)]
   ): SCollection[(Int, (String, Option[String]))] = {
-    lhs.leftOuterJoin(that = rhs)
-    lhs.hashLeftJoin(that = rhs)
-    lhs.sparseOuterJoin(that = rhs, 3)
-    lhs.sparseOuterJoin(that = rhs, thatNumKeys = 3)
-    lhs.skewedLeftJoin(that = rhs)
+    lhs.leftOuterJoin(that = rightHS)
+    lhs.hashLeftJoin(that = rightHS)
+    lhs.sparseOuterJoin(that = rightHS, 3)
+    lhs.sparseOuterJoin(that = rightHS, thatNumKeys = 3)
+    lhs.skewedLeftJoin(that = rightHS)
   }
 
   def example(): Unit = {
