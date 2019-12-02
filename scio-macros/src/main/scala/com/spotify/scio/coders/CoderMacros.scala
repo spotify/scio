@@ -127,15 +127,6 @@ private[coders] object CoderMacros {
     import c.universe._
     val wtt = weakTypeOf[T]
 
-    if (wtt <:< typeOf[Iterable[_]]) {
-      c.abort(
-        c.enclosingPosition,
-        s"Automatic coder derivation can't derive a Coder for $wtt <: Seq"
-      )
-    }
-
-    val magTree = MagnoliaMacros.genWithoutAnnotations[T](c)
-
     val isPrivateConstructor =
       wtt.decls
         .collectFirst {
@@ -151,7 +142,7 @@ private[coders] object CoderMacros {
         q"""_root_.com.spotify.scio.coders.Coder.fallback[$wtt](null)"""
       } else {
         //XXX: find a way to get rid of $outer references at compile time
-        magTree
+        MagnoliaMacros.genWithoutAnnotations[T](c)
       }
 
     tree

@@ -82,3 +82,5 @@ trait JavaInstances {
         s"EnumLogicalType($className, String)"
     }))
 }
+
+private[schemas] object JavaInstances extends JavaInstances
