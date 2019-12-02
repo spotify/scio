@@ -21,22 +21,20 @@ import java.lang.{Iterable => JIterable}
 import java.util.{Map => JMap}
 
 import com.spotify.scio.coders.Coder
-import com.spotify.scio.schemas.{Schema, SchemaMaterializer}
-import com.spotify.scio.testing.util.{SCollectionPrettifier, TypedPrettifier}
+import com.spotify.scio.testing.util.TypedPrettifier
 import com.spotify.scio.values.SCollection
-import com.twitter.chill.Externalizer
+import com.twitter.chill.{ClosureCleaner, Externalizer}
 import org.apache.beam.sdk.testing.PAssert
 import org.apache.beam.sdk.testing.PAssert.{IterableAssert, SingletonAssert}
 import org.apache.beam.sdk.transforms.SerializableFunction
 import org.apache.beam.sdk.transforms.windowing.BoundedWindow
 import org.apache.beam.sdk.util.CoderUtils
+import org.scalactic.{Equality, Prettifier}
+import org.scalatest
 import org.scalatest.matchers.{MatchResult, Matcher}
 
 import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
-import com.twitter.chill.ClosureCleaner
-import org.scalactic.Prettifier
-import org.scalatest
 
 /**
  * Trait with ScalaTest [[org.scalatest.matchers.Matcher Matcher]]s for

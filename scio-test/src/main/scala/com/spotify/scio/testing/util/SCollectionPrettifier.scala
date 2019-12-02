@@ -13,8 +13,8 @@ object SCollectionPrettifier {
       override def apply(o: Any): String = {
         val (bSchema, toRow, _) = SchemaMaterializer.materializeWithDefault(schema) // TODO pass scio context
         o match {
-          case i: Iterable[_] =>
-            prettifyLevelOne(i.map(_.asInstanceOf[T]).map(toRow(_)), bSchema, Prettifier.default)
+          case i: Traversable[_] if i.isInstanceOf[Traversable[T]] =>
+            prettifyLevelOne(i.map(_.asInstanceOf[T]).map(toRow(_)), bSchema, fallbackPrettifier)
           case _ =>
             fallbackPrettifier.apply(o)
         }
@@ -22,7 +22,7 @@ object SCollectionPrettifier {
     }
 
   private def prettifyLevelOne(
-    records: Iterable[Row],
+    records: Traversable[Row],
     schema: BSchema,
     levelTwoFallback: Prettifier
   ): String = {
@@ -63,13 +63,6 @@ object SCollectionPrettifier {
 
 object PrettyMeTest {
   def main(args: Array[String]): Unit = {
-    //    val expected = Seq(
-    //      new AdStudioPayment("w2017-01-02T03:04:05.001Z", "US", "USD", "9.99", "0.00", "12345", "c1", "1111100001-1", "adyen", "cards", "123456001")
-    //    )
-
-    //    val p = prettifyLevelOne(expected ++ expected)
-    //    println(p)
-
     println(
       SCollectionPrettifier
         .getPrettifier[SchemaBasedPrettifier](

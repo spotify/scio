@@ -21,7 +21,11 @@ import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import com.spotify.scio.streaming.ACCUMULATING_FIRED_PANES
 import com.spotify.scio.values.WindowOptions
 import org.apache.beam.sdk.Pipeline.PipelineExecutionException
-import org.apache.beam.sdk.transforms.windowing.{AfterProcessingTime, AfterWatermark, IntervalWindow}
+import org.apache.beam.sdk.transforms.windowing.{
+  AfterProcessingTime,
+  AfterWatermark,
+  IntervalWindow
+}
 import org.apache.beam.sdk.values.TimestampedValue
 import org.joda.time.{Duration, Instant}
 import java.io.ObjectOutputStream
@@ -30,9 +34,6 @@ import scala.util.Try
 import java.io.ObjectInputStream
 import java.io.IOException
 import java.io.NotSerializableException
-
-import com.spotify.scio.avro.TestRecord
-import com.spotify.scio.testing.util.{SCollectionPrettifier, TypedPrettifier}
 
 object SCollectionMatchersTest {
   // intentionally not serializable to test lambda ser/de
@@ -68,26 +69,6 @@ class SCollectionMatchersTest extends PipelineSpec {
         _.parallelize(1 to 200) should containInAnyOrder(1 to 100)
       }
     }
-
-    val thrown = intercept[AssertionError] {
-      runWithContext {
-        _.parallelize(
-          (1 to 200).map(a => TestRecord.newBuilder().setIntField(a).build())
-        ) should containInAnyOrder(
-          (1 to 100).map(a => TestRecord.newBuilder().setIntField(a).build())
-        )
-      }
-    }
-    // Test to make sure that our specialized prettifier is being used
-    val expected100 = implicitly[TypedPrettifier[Int]].apply.apply(
-      (1 to 100).map(a => TestRecord.newBuilder().setIntField(a).build())
-    )
-    thrown.getMessage should include(expected100)
-    // TODO ordering matters
-//    val expected200 = SchemaCollectionPrettifier.scalacticAvroPrettifier(
-//      (1 to 200).map(a => TestRecord.newBuilder().setIntField(a).build())
-//    )
-//    thrown.getMessage should include(expected200)
 
     an[AssertionError] should be thrownBy {
       runWithContext {
