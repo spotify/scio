@@ -95,5 +95,3 @@ case class SchemaBasedPrettifier(
   arr: Array[Int] = Array(1, 2)
 )
 
-// FIXME diesnt work
-//  case class SchemaBasedPrettifier(a: Int, b: Int, rec: SchemaBasedPrettifier = SchemaBasedPrettifier(10, 20))
