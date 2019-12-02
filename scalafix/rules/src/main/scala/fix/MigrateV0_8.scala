@@ -166,6 +166,23 @@ final class ConsistenceJoinNames extends SemanticRule("ConsistenceJoinNames") {
                 Patch.replaceTree(t, "skewedLeftOuterJoin") + renameNamedArgs(args)
               case t @ Term.Name("sparseOuterJoin") if (expectedType(qual, pairedScol)) =>
                 Patch.replaceTree(t, "sparseFullOuterJoin") + renameNamedArgs(args)
+              case _ @ (Term.Name("join") |
+                   Term.Name("fullOuterJoin") |
+                   Term.Name("leftOuterJoin") |
+                   Term.Name("rightOuterJoin") |
+                   Term.Name("sparseLeftOuterJoin") |
+                   Term.Name("sparseRightOuterJoin") |
+                   Term.Name("cogroup") |
+                   Term.Name("groupWith") |
+                   Term.Name("sparseLookup")) if (expectedType(qual, pairedScol)) =>
+                renameNamedArgs(args)
+              case _ @ (Term.Name("skewedJoin") |
+                   Term.Name("skewedFullOuterJoin")) if (expectedType(qual, pairedSkewedScol)) =>
+                renameNamedArgs(args)
+              case _ @ (Term.Name("hashJoin") |
+                   Term.Name("hashFullOuterJoin") |
+                   Term.Name("hashIntersectByKey")) if (expectedType(qual, pairedHashScol)) =>
+                renameNamedArgs(args)
               case _ => Patch.empty
             }
           case _ => Patch.empty
@@ -202,7 +219,9 @@ final class ConsistenceJoinNames extends SemanticRule("ConsistenceJoinNames") {
          case t2 @ Term.Name("that2") => Patch.replaceTree(t2, "rhs2")
          case t2 @ Term.Name("that3") => Patch.replaceTree(t2, "rhs3")
          case t2 @ Term.Name("thatNumKeys") => Patch.replaceTree(t2, "rhsNumKeys")
-         case _ => Patch.empty
+         case s =>
+           println(s)
+           Patch.empty
        }
      case _ => Patch.empty
    }.asPatch
