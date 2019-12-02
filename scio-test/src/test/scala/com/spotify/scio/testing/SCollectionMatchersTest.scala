@@ -29,7 +29,6 @@ import org.apache.beam.sdk.transforms.windowing.{
 import org.apache.beam.sdk.values.TimestampedValue
 import org.joda.time.{Duration, Instant}
 import java.io.ObjectOutputStream
-
 import scala.util.Try
 import java.io.ObjectInputStream
 import java.io.IOException
@@ -69,7 +68,6 @@ class SCollectionMatchersTest extends PipelineSpec {
         _.parallelize(1 to 200) should containInAnyOrder(1 to 100)
       }
     }
-
     an[AssertionError] should be thrownBy {
       runWithContext {
         _.parallelize(1 to 100) should containInAnyOrder(1 to 200)
