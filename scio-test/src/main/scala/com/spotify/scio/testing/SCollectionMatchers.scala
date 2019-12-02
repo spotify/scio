@@ -21,6 +21,8 @@ import java.lang.{Iterable => JIterable}
 import java.util.{Map => JMap}
 
 import com.spotify.scio.coders.Coder
+import com.spotify.scio.schemas.{Schema, SchemaMaterializer}
+import com.spotify.scio.testing.util.{SCollectionPrettifier, TypedPrettifier}
 import com.spotify.scio.values.SCollection
 import com.twitter.chill.Externalizer
 import org.apache.beam.sdk.testing.PAssert
@@ -33,6 +35,8 @@ import org.scalatest.matchers.{MatchResult, Matcher}
 import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
 import com.twitter.chill.ClosureCleaner
+import org.scalactic.Prettifier
+import org.scalatest
 
 /**
  * Trait with ScalaTest [[org.scalatest.matchers.Matcher Matcher]]s for
@@ -182,24 +186,40 @@ trait SCollectionMatchers {
     matcher.matcher(_.inEarlyGlobalWindowPanes)
 
   /** Assert that the SCollection in question contains the provided elements. */
-  def containInAnyOrder[T: Coder](value: Iterable[T]): IterableMatcher[SCollection[T], T] =
+  def containInAnyOrder[T: Coder](value: Iterable[T])(
+    implicit
+    typedPrettifier: TypedPrettifier[T]
+  ): IterableMatcher[SCollection[T], T] =
     new IterableMatcher[SCollection[T], T] {
       override def matcher(builder: AssertBuilder): Matcher[SCollection[T]] =
         new Matcher[SCollection[T]] {
           override def apply(left: SCollection[T]): MatchResult = {
             val v = Externalizer(value) // defeat closure
-            val f = makeFn[T] { in =>
+            val p = Externalizer(typedPrettifier) // defeat closure
+
+            val shouldFn = makeFn[T] {
+              new (JIterable[T] => Unit) with scalatest.Matchers {
+                override def apply(jit: JIterable[T]): Unit = {
+                  implicit val prettifier: Prettifier = p.get.apply
+                  jit.asScala.should(contain).theSameElementsAs(v.get)
+                  ()
+                }
+              }
+            }
+
+            val shouldNotFn = makeFn[T] { in =>
               import org.hamcrest.Matchers
               import org.junit.Assert
               Assert.assertThat(in, Matchers.not(Matchers.containsInAnyOrder(v.get.toSeq: _*)))
             }
+
             m(
               () =>
                 builder(PAssert.that(serDeCycle(left).internal))
-                  .containsInAnyOrder(value.asJava),
+                  .satisfies(shouldFn),
               () =>
                 builder(PAssert.that(serDeCycle(left).internal))
-                  .satisfies(f)
+                  .satisfies(shouldNotFn)
             )
           }
         }
