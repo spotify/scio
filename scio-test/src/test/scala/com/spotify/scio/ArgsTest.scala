@@ -19,11 +19,12 @@ package com.spotify.scio
 
 import caseapp._
 import com.spotify.scio.ContextAndArgs.{ArgsParser, TypedParser, UsageOrHelpException}
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import scala.util.{Failure, Success, Try}
 
-class ArgsTest extends FlatSpec with Matchers {
+class ArgsTest extends AnyFlatSpec with Matchers {
   "Args" should "support String" in {
     Args("--str=value".split(" "))("str") shouldBe "value"
   }

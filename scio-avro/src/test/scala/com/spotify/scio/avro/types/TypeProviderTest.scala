@@ -21,12 +21,14 @@ import com.google.protobuf.ByteString
 import com.spotify.scio.avro.types.AvroType.HasAvroDoc
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecord
-import org.scalatest.{Assertion, FlatSpec, Matchers}
+import org.scalatest.Assertion
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import scala.annotation.StaticAnnotation
 import scala.reflect.runtime.universe._
 
-class TypeProviderTest extends FlatSpec with Matchers {
+class TypeProviderTest extends AnyFlatSpec with Matchers {
   @AvroType.fromSchema(
     """{"type":"record","name": "Record","fields":[{"name":"f1","type":"int"}]}"""
   )

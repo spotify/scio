@@ -25,7 +25,8 @@ import com.spotify.scio.bigquery._
 import com.spotify.scio.bigquery.client.BigQuery
 import org.apache.beam.sdk.io.gcp.bigquery.TableDestination
 import org.apache.beam.sdk.options.PipelineOptionsFactory
-import org.scalatest._
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 object DynamicBigQueryIT {
   val projectId = "data-integration-test"
@@ -43,7 +44,7 @@ object DynamicBigQueryIT {
   def newRecord(x: Int): Record = Record(x, x.toString)
 }
 
-class DynamicBigQueryIT extends FlatSpec with Matchers {
+class DynamicBigQueryIT extends AnyFlatSpec with Matchers {
   import DynamicBigQueryIT._
 
   private val bq = BigQuery.defaultInstance()

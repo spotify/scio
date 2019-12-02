@@ -22,9 +22,10 @@ import java.nio.file.Files
 import com.spotify.scio._
 import com.spotify.scio.avro._
 import org.apache.commons.io.FileUtils
-import org.scalatest._
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
-class ConverterProviderTest extends FlatSpec with Matchers {
+class ConverterProviderTest extends AnyFlatSpec with Matchers {
   import ConverterProviderTest._
 
   "ConverterProvider" should "#1831: handle Avro map" in {

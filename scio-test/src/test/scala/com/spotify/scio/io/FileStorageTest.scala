@@ -19,9 +19,10 @@ package com.spotify.scio.io
 
 import java.nio.file.Files
 
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
-class FileStorageTest extends FlatSpec with Matchers {
+class FileStorageTest extends AnyFlatSpec with Matchers {
   "FileStorage.isDone" should "return true on an empty directory" in {
     val dir = Files.createTempDirectory("file-storage-")
     dir.toFile.deleteOnExit()

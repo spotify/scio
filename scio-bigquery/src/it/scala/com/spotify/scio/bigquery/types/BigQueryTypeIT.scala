@@ -18,7 +18,9 @@
 package com.spotify.scio.bigquery.types
 
 import com.spotify.scio.bigquery.client.BigQuery
-import org.scalatest.{Assertion, FlatSpec, Matchers}
+import org.scalatest.Assertion
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import scala.annotation.StaticAnnotation
 import scala.collection.JavaConverters._
@@ -81,7 +83,7 @@ object BigQueryTypeIT {
 }
 
 // Run BigQueryITUtil to re-populate tables for integration tests
-class BigQueryTypeIT extends FlatSpec with Matchers {
+class BigQueryTypeIT extends AnyFlatSpec with Matchers {
   import BigQueryTypeIT._
   import BigQueryITUtil._
 

@@ -24,7 +24,7 @@ import com.spotify.scio.io.TapSpec
 import com.spotify.scio.testing._
 import org.apache.avro.generic.GenericRecord
 import org.apache.commons.io.FileUtils
-import org.scalatest._
+import org.scalatest.BeforeAndAfterAll
 
 class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
   private val dir = tmpDir

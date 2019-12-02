@@ -18,11 +18,11 @@ package com.spotify.scio.testing
 
 import com.spotify.scio.testing.{JobTest => InnerJobTest}
 import org.scalactic.source.Position
-import org.scalatest._
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.{Failed, Outcome}
 
 import scala.collection.mutable.ArrayBuffer
 import scala.reflect.ClassTag
-import org.scalatest.flatspec.AnyFlatSpec
 
 /**
  * Trait that enforces [[JobTest.Builder.run]] is called.

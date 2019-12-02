@@ -23,11 +23,12 @@ import com.google.protobuf.ByteString
 import com.spotify.scio.bigquery.TableRow
 import org.apache.avro.generic.GenericData
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.io.BaseEncoding
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import scala.collection.JavaConverters._
 
-class ToTableRowTest extends FlatSpec with Matchers with ToTableRow {
+class ToTableRowTest extends AnyFlatSpec with Matchers with ToTableRow {
   val expectedOutput: TableRow = new TableRow()
     .set("booleanField", true)
     .set("intField", 1)

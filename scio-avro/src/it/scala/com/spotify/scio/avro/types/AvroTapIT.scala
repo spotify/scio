@@ -22,12 +22,13 @@ import org.apache.avro.Schema.Parser
 import org.apache.avro.generic.GenericRecord
 import org.apache.beam.sdk.io.FileSystems
 import org.apache.beam.sdk.options.PipelineOptionsFactory
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 
-final class AvroTapIT extends FlatSpec with Matchers {
+final class AvroTapIT extends AnyFlatSpec with Matchers {
   private val schema = new Parser().parse("""{
                                                     |  "type" : "record",
                                                     |  "name" : "Root",
