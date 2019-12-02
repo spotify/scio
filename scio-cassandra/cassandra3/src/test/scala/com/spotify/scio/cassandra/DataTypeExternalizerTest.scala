@@ -19,9 +19,10 @@ package com.spotify.scio.cassandra
 
 import com.datastax.driver.core.DataType
 import org.apache.beam.sdk.util.SerializableUtils
-import org.scalatest._
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
 
-class DataTypeExternalizerTest extends FlatSpec with Matchers {
+class DataTypeExternalizerTest extends AnyFlatSpec with Matchers {
   "DataTypeExternalizer" should "support ImmutableList" in {
     val dt = DataType.list(DataType.text())
     SerializableUtils

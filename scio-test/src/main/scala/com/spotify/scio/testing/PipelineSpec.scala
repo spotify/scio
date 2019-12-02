@@ -17,8 +17,10 @@
 
 package com.spotify.scio.testing
 
-import org.scalatest.{Args, ConfigMap, FlatSpec, Matchers, Status}
+import org.scalatest.{Args, ConfigMap, Status}
 import JobTest.BeamOptions
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 /**
  * Trait for unit testing pipelines.
@@ -35,7 +37,7 @@ import JobTest.BeamOptions
  * }}}
  */
 trait PipelineSpec
-    extends FlatSpec
+    extends AnyFlatSpec
     with Matchers
     with SCollectionMatchers
     with PipelineTestUtils

@@ -22,11 +22,12 @@ import org.scalatest._
 
 import scala.collection.mutable.ArrayBuffer
 import scala.reflect.ClassTag
+import org.scalatest.flatspec.AnyFlatSpec
 
 /**
  * Trait that enforces [[JobTest.Builder.run]] is called.
  */
-trait RunEnforcementJobTest extends FlatSpec { this: PipelineSpec =>
+trait RunEnforcementJobTest extends AnyFlatSpec { this: PipelineSpec =>
 
   private val tests = ArrayBuffer.empty[InnerJobTest.Builder]
 

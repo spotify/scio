@@ -17,9 +17,10 @@
 
 package com.spotify.scio.bigquery
 
-import org.scalatest._
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
 
-class BigQueryTypesTest extends FlatSpec with Matchers {
+class BigQueryTypesTest extends AnyFlatSpec with Matchers {
   "Table.Spec" should "fail malformed spec" in {
     an[IllegalArgumentException] shouldBe thrownBy { Table.Spec("bad spec") }
   }

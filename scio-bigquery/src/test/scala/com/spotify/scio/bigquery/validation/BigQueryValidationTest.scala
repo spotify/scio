@@ -19,11 +19,13 @@ package com.spotify.scio.bigquery.validation
 
 import com.spotify.scio.bigquery.types.BigQueryType
 import com.spotify.scio.bigquery.{description, TableRow}
-import org.scalatest.{BeforeAndAfterAll, FlatSpec, Matchers}
+import org.scalatest.BeforeAndAfterAll
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
 
 // This test shows how you can utilize the `SampleOverrideTypeProvider` to override types using
 // properties on the individual field level processing data
-class BigQueryValidationTest extends FlatSpec with Matchers with BeforeAndAfterAll {
+class BigQueryValidationTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll {
   override def beforeAll(): Unit = {
     // We need this at runtime as well and tests are run in a fork
     SetProperty.setSystemProperty()
