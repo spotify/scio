@@ -25,6 +25,7 @@ import java.util.{Date, UUID}
 import com.datastax.driver.core.utils.UUIDs
 import com.datastax.driver.core.{Cluster, LocalDate, Row}
 import com.spotify.scio._
+import org.scalatest.BeforeAndAfterAll
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 

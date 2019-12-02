@@ -25,8 +25,7 @@ import org.apache.beam.sdk.options.PipelineOptionsFactory
 import org.joda.time.format.DateTimeFormat
 import org.joda.time.{Instant, LocalDate, LocalDateTime, LocalTime}
 import org.scalacheck._
-import org.scalatest.flatspec.AnyFlatSpec
-import org.scalatest.matchers.should.Matchers
+import org.scalatest.BeforeAndAfterAll
 
 import scala.util.Random
 
