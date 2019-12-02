@@ -205,10 +205,14 @@ trait SCollectionMatchers {
               }
             }
 
-            val shouldNotFn = makeFn[T] { in =>
-              import org.hamcrest.Matchers
-              import org.junit.Assert
-              Assert.assertThat(in, Matchers.not(Matchers.containsInAnyOrder(v.get.toSeq: _*)))
+            val shouldNotFn = makeFn[T] {
+              new (JIterable[T] => Unit) with scalatest.Matchers {
+                override def apply(jit: JIterable[T]): Unit = {
+                  implicit val prettifier: Prettifier = p.get.apply
+                  jit.asScala.shouldNot(contain).theSameElementsAs(v.get)
+                  ()
+                }
+              }
             }
 
             m(
