@@ -17,9 +17,10 @@
 
 package com.spotify.scio.bigquery
 
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
 
-class TimestampTest extends FlatSpec with Matchers {
+class TimestampTest extends AnyFlatSpec with Matchers {
   "Timestamp" should "round trip Instant" in {
     val t = Timestamp.parse("2016-01-01T00:00:00.000000 UTC")
     Timestamp.parse(Timestamp(t)) shouldBe t

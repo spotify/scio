@@ -23,7 +23,6 @@ import java.util
 import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import org.apache.beam.sdk.util.{MutationDetectors, SerializableUtils}
-import org.scalatest.PropSpec
 import org.scalatestplus.scalacheck.Checkers
 
 import scala.collection.mutable
@@ -38,12 +37,14 @@ import com.twitter.algebird.{
 }
 import org.scalacheck.Prop._
 import org.scalacheck.{Arbitrary, Gen}
-import org.scalatest.{Matchers, WordSpec}
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.propspec.AnyPropSpec
+import org.scalatest.wordspec.AnyWordSpec
 
 /**
  * Check Properties is copied from Algebird Tests.
  */
-trait CheckProperties extends PropSpec with Checkers {
+trait CheckProperties extends AnyPropSpec with Checkers {
   def property(testName: String, testTags: org.scalatest.Tag*)(testFun: org.scalacheck.Prop): Unit =
     super.property(testName, testTags: _*) { check { testFun } }
 }
@@ -293,7 +294,7 @@ class BloomFilterProperties extends ApproximateProperties("BloomFilter") {
   }
 }
 
-class BloomFilterTest extends WordSpec with Matchers {
+class BloomFilterTest extends AnyWordSpec with Matchers {
   val RAND = new scala.util.Random
 
   "MutableBloomFilter" should {

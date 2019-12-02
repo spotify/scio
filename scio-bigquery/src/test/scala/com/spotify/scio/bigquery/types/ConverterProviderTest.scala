@@ -18,9 +18,10 @@
 package com.spotify.scio.bigquery.types
 
 import com.spotify.scio.bigquery._
-import org.scalatest._
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
 
-class ConverterProviderTest extends FlatSpec with Matchers {
+class ConverterProviderTest extends AnyFlatSpec with Matchers {
   import ConverterProviderTest._
 
   "ConverterProvider" should "throw NPE with meaningful message for null in REQUIRED field" in {

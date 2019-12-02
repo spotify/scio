@@ -20,7 +20,9 @@ package com.spotify.scio.bigquery.types
 import com.google.api.services.bigquery.model.TableRow
 import org.apache.beam.sdk.util.SerializableUtils
 import org.joda.time.Instant
-import org.scalatest.{Assertion, FlatSpec, Matchers}
+import org.scalatest.Assertion
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
 
 import scala.annotation.StaticAnnotation
 import scala.reflect.runtime.universe._
@@ -63,7 +65,7 @@ object TypeProviderTest {
 }
 
 // TODO: mock BigQueryClient for fromTable and fromQuery
-class TypeProviderTest extends FlatSpec with Matchers {
+class TypeProviderTest extends AnyFlatSpec with Matchers {
   val NOW = Instant.now()
 
   import TypeProviderTest._

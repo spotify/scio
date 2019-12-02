@@ -19,11 +19,12 @@ package com.spotify.scio.bigquery
 
 import com.google.api.client.json.jackson2.JacksonFactory
 import com.google.api.services.bigquery.model.{TableFieldSchema, TableSchema}
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
 
 import scala.collection.JavaConverters._
 
-class BigQueryUtilTest extends FlatSpec with Matchers {
+class BigQueryUtilTest extends AnyFlatSpec with Matchers {
   "parseSchema" should "work" in {
     val schema = new TableSchema().setFields(
       List(

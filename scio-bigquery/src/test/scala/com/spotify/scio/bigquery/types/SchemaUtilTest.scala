@@ -18,11 +18,12 @@
 package com.spotify.scio.bigquery.types
 
 import com.google.api.services.bigquery.model.{TableFieldSchema, TableSchema}
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
 
 import scala.collection.JavaConverters._
 
-class SchemaUtilTest extends FlatSpec with Matchers {
+class SchemaUtilTest extends AnyFlatSpec with Matchers {
   def newSchema(mode: String): TableSchema =
     new TableSchema().setFields(
       List(

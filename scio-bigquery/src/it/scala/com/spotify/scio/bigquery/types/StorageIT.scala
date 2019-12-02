@@ -26,12 +26,13 @@ import com.spotify.scio.bigquery.BigQueryTaps._
 import org.apache.beam.sdk.io.gcp.{bigquery => beam}
 import org.apache.beam.sdk.testing.PAssert
 import org.joda.time.{DateTimeZone, Duration, Instant}
-import org.scalatest._
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import scala.collection.JavaConverters._
 
 // Run BigQueryITUtil to re-populate tables for integration tests
-class StorageIT extends FlatSpec with Matchers {
+class StorageIT extends AnyFlatSpec with Matchers {
   import StorageIT._
 
   "fromStorage" should "work with REQUIRED fields" in {

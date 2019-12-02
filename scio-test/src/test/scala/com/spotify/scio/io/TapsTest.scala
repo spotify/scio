@@ -22,12 +22,13 @@ import java.nio.file.{Files, Path}
 import java.util.UUID
 
 import com.spotify.scio.CoreSysProps
-import org.scalatest._
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
 
-class TapsTest extends FlatSpec with Matchers {
+class TapsTest extends AnyFlatSpec with Matchers {
   val data = Seq("a", "b", "c")
 
   private def tmpFile: Path =

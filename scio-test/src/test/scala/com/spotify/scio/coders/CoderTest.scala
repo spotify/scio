@@ -24,7 +24,8 @@ import org.apache.beam.sdk.coders.{Coder => BCoder, CoderRegistry}
 import org.apache.beam.sdk.coders.Coder.NonDeterministicException
 import org.apache.beam.sdk.options.{PipelineOptions, PipelineOptionsFactory}
 import org.scalactic.Equality
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 import org.apache.beam.sdk.util.SerializableUtils
 
 import scala.collection.JavaConverters._
@@ -82,7 +83,7 @@ final case class FirstImplementationWithAnnotation(s: String) extends TraitWithA
 @SerialVersionUID(3)
 final case class SecondImplementationWithAnnotation(i: Int) extends TraitWithAnnotation
 
-final class CoderTest extends FlatSpec with Matchers {
+final class CoderTest extends AnyFlatSpec with Matchers {
   val userId = UserId(Array[Byte](1, 2, 3, 4))
   val user = User(userId, "johndoe", "johndoe@spotify.com")
 

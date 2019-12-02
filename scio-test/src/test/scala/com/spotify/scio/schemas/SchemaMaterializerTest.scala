@@ -18,12 +18,13 @@ package com.spotify.scio.schemas
 
 import org.apache.beam.sdk.schemas.Schema.{Field, FieldType}
 
-import org.scalatest._
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 import scala.collection.JavaConverters._
 import org.apache.beam.sdk.values.Row
 import scala.collection.mutable
 
-final class SchemaMaterializerTest extends FlatSpec with Matchers {
+final class SchemaMaterializerTest extends AnyFlatSpec with Matchers {
   "SchemaMaterializer" should "materialize correct FieldType" in {
     def fieldTypes[T](s: Schema[T]): List[Field] =
       SchemaMaterializer.materializeWithDefault(s)._1.getFields().asScala.toList

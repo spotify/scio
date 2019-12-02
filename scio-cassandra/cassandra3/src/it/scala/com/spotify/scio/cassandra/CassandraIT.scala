@@ -25,11 +25,12 @@ import java.util.{Date, UUID}
 import com.datastax.driver.core.utils.UUIDs
 import com.datastax.driver.core.{Cluster, LocalDate, Row}
 import com.spotify.scio._
-import org.scalatest._
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import scala.collection.JavaConverters._
 
-class CassandraIT extends FlatSpec with Matchers with BeforeAndAfterAll {
+class CassandraIT extends AnyFlatSpec with Matchers with BeforeAndAfterAll {
   import CassandraIT._
 
   private val n = 1000

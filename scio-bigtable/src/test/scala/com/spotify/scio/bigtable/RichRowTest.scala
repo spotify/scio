@@ -19,12 +19,13 @@ package com.spotify.scio.bigtable
 
 import com.google.bigtable.v2.{Cell, Column, Family, Row}
 import com.google.protobuf.ByteString
-import org.scalatest._
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
 
 import scala.collection.JavaConverters._
 import scala.collection.immutable.ListMap
 
-class RichRowTest extends FlatSpec with Matchers {
+class RichRowTest extends AnyFlatSpec with Matchers {
   def bs(s: String): ByteString = ByteString.copyFromUtf8(s)
 
   val FAMILY_NAME = "family"
