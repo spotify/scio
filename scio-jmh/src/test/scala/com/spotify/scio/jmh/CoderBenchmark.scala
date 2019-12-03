@@ -207,8 +207,6 @@ class CoderBenchmark {
   // jmh:run -f1 -wi 10 -i 20 com.spotify.scio.jmh.CoderBenchmark.(derived|schemaCoder)(De|En)code
   val (specializedUserSchema, specializedTo, specializedFrom) =
     SchemaMaterializer.materialize(
-      CoderRegistry.createDefault(),
-      PipelineOptionsFactory.create(),
       Schema[SpecializedUserForDerived]
     )
 
@@ -231,8 +229,6 @@ class CoderBenchmark {
   // jmh:run -f1 -wi 10 -i 20 com.spotify.scio.jmh.CoderBenchmark.java(Kryo|Schema)CoderEncode
   val (javaUserSchema, javaTo, javaFrom) =
     SchemaMaterializer.materialize(
-      CoderRegistry.createDefault(),
-      PipelineOptionsFactory.create(),
       Schema[j.User]
     )
 

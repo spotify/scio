@@ -166,10 +166,6 @@ final case class OptionType[T](schema: Schema[T]) extends Schema[Option[T]] {
   type Repr = schema.Repr
 }
 
-final case class Fallback[F[_], T](coder: F[T]) extends Schema[T] {
-  type Repr = Array[Byte]
-}
-
 final case class ArrayType[F[_], T](
   schema: Schema[T],
   toList: F[T] => jList[T],
@@ -194,6 +190,10 @@ final case class MapType[F[_, _], K, V](
 }
 
 private[scio] case class ScalarWrapper[T](value: T) extends AnyVal
+object ScalarWrapper {
+  implicit def schemaScalarWrapper[T: Schema]: Schema[ScalarWrapper[T]] =
+    Schema.gen[ScalarWrapper[T]]
+}
 
 private[scio] object SchemaTypes {
   private[this] def compareRows(s1: BSchema.FieldType, s2: BSchema.FieldType): Boolean = {
@@ -214,41 +214,6 @@ private[scio] object SchemaTypes {
       case _ if s1.getNullable == s2.getNullable => true
       case _                                     => false
     })
-}
-
-private object Derived extends Serializable {
-  import magnolia._
-  def combineSchema[T](ps: Seq[Param[Schema, T]], rawConstruct: Seq[Any] => T): Record[T] = {
-    @inline def destruct(v: T): Array[Any] = {
-      val arr = new Array[Any](ps.length)
-      var i = 0
-      while (i < ps.length) {
-        val p = ps(i)
-        arr.update(i, p.dereference(v))
-        i = i + 1
-      }
-      arr
-    }
-    val schemas = ps.iterator.map { p =>
-      p.label -> p.typeclass.asInstanceOf[Schema[Any]]
-    }.toArray
-
-    Record(schemas, rawConstruct, destruct)
-  }
-}
-
-trait LowPrioritySchemaDerivation {
-  import magnolia._
-
-  type Typeclass[T] = Schema[T]
-
-  def combine[T](ctx: CaseClass[Schema, T]): Record[T] = {
-    val ps = ctx.parameters
-    Derived.combineSchema(ps, ctx.rawConstruct)
-  }
-
-  import com.spotify.scio.MagnoliaMacros
-  implicit def gen[T]: Schema[T] = macro MagnoliaMacros.genWithoutAnnotations[T]
 }
 
 private[scio] trait SchemaMacroHelpers {

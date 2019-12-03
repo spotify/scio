@@ -27,7 +27,7 @@ import scala.collection.mutable
 final class SchemaMaterializerTest extends AnyFlatSpec with Matchers {
   "SchemaMaterializer" should "materialize correct FieldType" in {
     def fieldTypes[T](s: Schema[T]): List[Field] =
-      SchemaMaterializer.materializeWithDefault(s)._1.getFields().asScala.toList
+      SchemaMaterializer.materialize(s)._1.getFields().asScala.toList
 
     fieldTypes(Schema[Short]).headOption.map(_.getType) shouldBe Some(FieldType.INT16)
     fieldTypes(Schema[Int]).headOption.map(_.getType) shouldBe Some(FieldType.INT32)
@@ -113,7 +113,7 @@ final class SchemaMaterializerTest extends AnyFlatSpec with Matchers {
       Type(org.apache.beam.sdk.schemas.Schema.FieldType.STRING)
     )(toBase = (_: URI).toString, fromBase = (s: String) => new URI(s))
 
-    val (schema, toRow, fromRow) = SchemaMaterializer.materializeWithDefault[URI](uriSchema)
+    val (schema, toRow, fromRow) = SchemaMaterializer.materialize[URI](uriSchema)
     val uri = URI.create("https://spotify.com")
     val row = Row.withSchema(schema).addValue(uri).build()
     toRow(uri) shouldBe row
@@ -123,7 +123,7 @@ final class SchemaMaterializerTest extends AnyFlatSpec with Matchers {
   it should "Support Optional fields when reading a Row" in {
     case class Bar(s: String, x: Int)
     case class Foo(a: String, b: Option[Bar])
-    val (schema, to, from) = SchemaMaterializer.materializeWithDefault[Foo](Schema[Foo])
+    val (schema, to, from) = SchemaMaterializer.materialize[Foo](Schema[Foo])
     val row =
       Row
         .withSchema(schema)

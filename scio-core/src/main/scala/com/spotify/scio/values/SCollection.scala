@@ -136,7 +136,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
 
   def setSchema(schema: Schema[T]): SCollection[T] = {
     if (!internal.hasSchema) {
-      val (s, to, from) = SchemaMaterializer.materialize(this.context, schema)
+      val (s, to, from) = SchemaMaterializer.materialize(schema)
       context.wrap(internal.setSchema(s, to, from))
     } else this
   }
