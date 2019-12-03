@@ -10,9 +10,7 @@ import com.spotify.scio.coders.Coder
  *
  * Constructors for [[ApproxFilter]] are defined using [[ApproxFilterBuilder]]
  */
-trait ApproxFilter[-T] extends (T => Boolean) {
-
-  override def apply(t: T): Boolean = mayBeContains(t)
+trait ApproxFilter[-T] extends Serializable {
 
   /**
    * Check if the filter may contain a given element.
