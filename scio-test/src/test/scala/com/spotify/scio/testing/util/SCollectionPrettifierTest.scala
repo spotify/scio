@@ -1,4 +1,5 @@
 package com.spotify.scio.testing.util
+import com.spotify.scio.avro.TestRecord
 import org.scalactic.Prettifier
 import org.scalatest.{FlatSpec, Matchers}
 
@@ -8,12 +9,43 @@ class NoSchemaAvailable() extends Serializable {
 }
 
 class SCollectionPrettifierTest extends FlatSpec with Matchers {
+
+  private val avroRecods: Iterable[TestRecord] = (1 to 5).map(
+    i =>
+      TestRecord
+        .newBuilder()
+        .setIntField(i)
+        .setStringField(i.toString)
+        .setBooleanField(false)
+        .setDoubleField(i / 2.0)
+        .build()
+  )
+
   case class NestedRecord(p: String)
   case class Something(a: Int, b: NestedRecord)
 
   behavior of "SCollectionPrettifier"
 
-  it should "prettify an SCollection with Schema" in {
+  it should "prettify AvroRecords" in {
+    val prettyString =
+      implicitly[TypedPrettifier[TestRecord]].apply(avroRecods)
+
+    val expected =
+      """
+        |┌──────────────────────────────┬──────────────────────────────┬──────────────────────────────┬──────────────────────────────┬──────────────────────────────┬──────────────────────────────┬──────────────────────────────┐
+        |│int_field                     │long_field                    │float_field                   │double_field                  │boolean_field                 │string_field                  │array_field                   │
+        |├──────────────────────────────┼──────────────────────────────┼──────────────────────────────┼──────────────────────────────┼──────────────────────────────┼──────────────────────────────┼──────────────────────────────┤
+        |│1                             │null                          │null                          │0.5                           │false                         │"1"                           │[]                            │
+        |│2                             │null                          │null                          │1.0                           │false                         │"2"                           │[]                            │
+        |│3                             │null                          │null                          │1.5                           │false                         │"3"                           │[]                            │
+        |│4                             │null                          │null                          │2.0                           │false                         │"4"                           │[]                            │
+        |│5                             │null                          │null                          │2.5                           │false                         │"5"                           │[]                            │
+        |└──────────────────────────────┴──────────────────────────────┴──────────────────────────────┴──────────────────────────────┴──────────────────────────────┴──────────────────────────────┴──────────────────────────────┘
+        |""".stripMargin
+    prettyString should be(expected)
+  }
+
+  ignore should "prettify an SCollection with Schema" in {
     val prettyString =
       implicitly[TypedPrettifier[Something]].apply(Seq(Something(1, NestedRecord("one"))))
 
@@ -29,7 +61,15 @@ class SCollectionPrettifierTest extends FlatSpec with Matchers {
     prettyString should be(expected)
   }
 
-  it should "use default Prettifier if Schema is not available" in {
+  it should "use default Prettifier for non-avro records" in {
+    val prettyString =
+      implicitly[TypedPrettifier[Something]].apply(Seq(Something(1, NestedRecord("one"))))
+
+    val expected = "List(Something(1,NestedRecord(one)))"
+    prettyString should be(expected)
+  }
+
+  it should "use default default scalactic prettifier if Schema is not available" in {
     val prettyString =
       implicitly[TypedPrettifier[NoSchemaAvailable]].apply(Seq(new NoSchemaAvailable()))
 
@@ -46,14 +86,7 @@ class SCollectionPrettifierTest extends FlatSpec with Matchers {
     val prettyString =
       implicitly[TypedPrettifier[Something]].apply(Seq(Something(1, NestedRecord("one"))))
 
-    val expected =
-      """
-        |┌──────────────────────────────┬──────────────────────────────┐
-        |│a                             │b                             │
-        |├──────────────────────────────┼──────────────────────────────┤
-        |│user - defined                │user - defined                │
-        |└──────────────────────────────┴──────────────────────────────┘
-        |""".stripMargin
+    val expected = "user - defined"
 
     prettyString should be(expected)
   }

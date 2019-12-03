@@ -118,7 +118,7 @@ object SCollectionPrettifier {
       val fieldNames = schemaFields.map(_.name())
 
       val prettyRecords = records.map { record =>
-        toPrettyRecord((1 to numFields).map { idx =>
+        toPrettyRecord((0 until numFields).map { idx =>
           levelTwoFallback.apply(record.get(idx))
         })
       }
