@@ -41,8 +41,6 @@ case class RecordA(name: String, value: Int)
 case class RecordB(name: String, value: Int)
 
 class KryoAtomicCoderTest extends PipelineSpec {
-  import com.spotify.scio.testing.TestingUtils._
-
   type CoderFactory = () => BCoder[Any]
   val cf = () => new KryoAtomicCoder[Any](KryoOptions())
 
@@ -104,7 +102,7 @@ class KryoAtomicCoderTest extends PipelineSpec {
   }
 
   it should "support large objects" in {
-    val vs = iterable((1 to 1000000).map("value-%08d".format(_)): _*)
+    val vs = Iterable((1 to 1000000).map("value-%08d".format(_)): _*)
     val kv = ("key", vs)
     kv coderShould roundtripKryo()
   }
