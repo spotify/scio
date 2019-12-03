@@ -920,7 +920,8 @@ lazy val `scio-examples`: Project = project
       }
     },
     sources in doc in Compile := List(),
-    run / classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.Flat
+    run / classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.Flat,
+    Test / classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.Flat
   )
   .dependsOn(
     `scio-core`,

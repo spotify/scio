@@ -80,7 +80,7 @@ object SortMergeBucketWriteExample {
     implicit val coder: Coder[GenericRecord] =
       Coder.avroGenericRecordCoder(SortMergeBucketExample.UserDataSchema)
 
-    sc.parallelize(1 to 500)
+    sc.parallelize(0 to 499)
       .map { i =>
         SortMergeBucketExample.user(i, Random.nextInt(100))
       }
@@ -95,7 +95,7 @@ object SortMergeBucketWriteExample {
           .withNumShards(1)
       )
 
-    sc.parallelize(250 to 750)
+    sc.parallelize(250 to 749)
       .map { i =>
         SortMergeBucketExample.account(
           i,
@@ -118,6 +118,10 @@ object SortMergeBucketWriteExample {
     sc.run().waitUntilDone()
     ()
   }
+}
+
+case class UserAccountData(userId: Int, age: Int, balance: Double) {
+  override def toString: String = s"${userId}\t${age}\t${balance}"
 }
 
 object SortMergeBucketJoinExample {
@@ -143,7 +147,7 @@ object SortMergeBucketJoinExample {
       )
       .map {
         case (userId, (userData, account)) =>
-          s"$userId\t${userData.get("age")}\t${account.getAmount}"
+          UserAccountData(userId, userData.get("age").toString.toInt, account.getAmount)
       }
       .saveAsTextFile(output)
 
