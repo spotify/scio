@@ -41,8 +41,6 @@ case class RecordA(name: String, value: Int)
 case class RecordB(name: String, value: Int)
 
 class KryoAtomicCoderTest extends PipelineSpec {
-  import com.spotify.scio.testing.TestingUtils._
-
   type CoderFactory = () => BCoder[Any]
   val cf = () => new KryoAtomicCoder[Any](KryoOptions())
 
