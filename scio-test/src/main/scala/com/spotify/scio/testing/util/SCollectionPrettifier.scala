@@ -1,24 +1,36 @@
 package com.spotify.scio.testing.util
 
-import com.spotify.scio.schemas.{Schema, SchemaMaterializer}
+import com.spotify.scio.schemas.{Fallback, Schema, SchemaMaterializer}
 import org.apache.beam.sdk.schemas.{Schema => BSchema}
 import org.apache.beam.sdk.values.Row
 import org.scalactic.Prettifier
 
 import scala.collection.JavaConverters._
 
+/**
+ * Scalactic [[Prettifier]]s for `SCollection[T]`when we have a `Schema[T]` in scope.
+ *
+ * These prettifiers are used by [[TypedPrettifier]]
+ */
 object SCollectionPrettifier {
   def getPrettifier[T](schema: Schema[T], fallbackPrettifier: Prettifier): Prettifier =
-    new Prettifier {
-      override def apply(o: Any): String = {
-        val (bSchema, toRow, _) = SchemaMaterializer.materializeWithDefault(schema) // TODO pass scio context
-        o match {
-          case i: Traversable[_] if i.isInstanceOf[Traversable[T]] =>
-            prettifyLevelOne(i.map(_.asInstanceOf[T]).map(toRow(_)), bSchema, fallbackPrettifier)
-          case _ =>
-            fallbackPrettifier.apply(o)
+    schema match {
+      // We prettify only when the Schema derivation is successful
+      case Fallback(_) => fallbackPrettifier
+      case _ =>
+        new Prettifier {
+          override def apply(o: Any): String = {
+            val (bSchema, toRow, _) = SchemaMaterializer.materializeWithDefault(schema) // TODO pass scio context
+            o match {
+              case i: Traversable[_] =>
+                prettifyLevelOne(i.map(_.asInstanceOf[T]).map(toRow(_)),
+                                 bSchema,
+                                 fallbackPrettifier)
+              case _ =>
+                fallbackPrettifier.apply(o)
+            }
+          }
         }
-      }
     }
 
   private def prettifyLevelOne(
@@ -60,38 +72,3 @@ object SCollectionPrettifier {
     }
   }
 }
-
-object PrettyMeTest {
-  def main(args: Array[String]): Unit = {
-    println(
-      SCollectionPrettifier
-        .getPrettifier[SchemaBasedPrettifier](
-          implicitly[Schema[SchemaBasedPrettifier]],
-          Prettifier.default
-        )
-        .apply(
-          Iterable(SchemaBasedPrettifier(1, 2), SchemaBasedPrettifier(3, 4))
-        )
-    )
-
-    println(
-      SCollectionPrettifier
-        .getPrettifier[SchemaBasedPrettifier](
-          implicitly[Schema[SchemaBasedPrettifier]],
-          Prettifier.default
-        )
-        .apply(
-          Iterable.empty[SchemaBasedPrettifier]
-        )
-    )
-  }
-}
-
-case class Nested(a: Int)
-case class SchemaBasedPrettifier(
-  a: Int,
-  b: Int,
-  rec: Nested = Nested(10),
-  arr: Array[Int] = Array(1, 2)
-)
-
