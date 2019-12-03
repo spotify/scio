@@ -32,7 +32,6 @@ import org.apache.beam.sdk.values.ValueInSingleWindow
 import com.spotify.scio.bigquery.ExtendedErrorInfo
 
 import scala.reflect.runtime.universe._
-import scala.language.implicitConversions
 
 /**
  * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with dynamic

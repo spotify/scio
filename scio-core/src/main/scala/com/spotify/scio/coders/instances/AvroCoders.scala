@@ -103,8 +103,6 @@ private object SpecificFixedCoder {
 }
 
 trait AvroCoders {
-  import language.experimental.macros
-
   /**
    * Create a Coder for Avro GenericRecord given the schema of the GenericRecord.
    *

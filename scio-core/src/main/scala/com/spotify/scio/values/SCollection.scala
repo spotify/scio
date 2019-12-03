@@ -61,8 +61,6 @@ object SCollection {
   def unionAll[T: Coder](scs: Iterable[SCollection[T]]): SCollection[T] =
     scs.head.context.unionAll(scs)
 
-  import scala.language.implicitConversions
-
   /** Implicit conversion from SCollection to DoubleSCollectionFunctions. */
   implicit def makeDoubleSCollectionFunctions(s: SCollection[Double]): DoubleSCollectionFunctions =
     new DoubleSCollectionFunctions(s)

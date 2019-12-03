@@ -29,7 +29,6 @@ import org.apache.parquet.filter2.predicate.FilterPredicate
 import org.apache.parquet.hadoop.metadata.CompressionCodecName
 import org.slf4j.LoggerFactory
 
-import scala.language.implicitConversions
 import scala.reflect.ClassTag
 
 /**

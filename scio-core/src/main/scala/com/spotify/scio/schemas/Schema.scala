@@ -240,8 +240,6 @@ private object Derived extends Serializable {
 trait LowPrioritySchemaDerivation {
   import magnolia._
 
-  import language.experimental.macros
-
   type Typeclass[T] = Schema[T]
 
   def combine[T](ctx: CaseClass[Schema, T]): Record[T] = {

@@ -23,8 +23,6 @@ import com.spotify.scio.spanner.SpannerWrite
 import org.apache.beam.sdk.io.gcp.spanner.SpannerConfig
 import org.apache.beam.sdk.io.gcp.spanner.SpannerIO.FailureMode
 
-import scala.language.implicitConversions
-
 final class SpannerSCollectionOps(private val self: SCollection[Mutation]) extends AnyVal {
   import SpannerWrite.WriteParam._
 

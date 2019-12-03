@@ -20,8 +20,6 @@ import com.spotify.scio.values.SCollection
 import com.spotify.scio.schemas.Schema
 import com.spotify.scio.sql.{Sql, SqlSCollection1}
 
-import scala.language.implicitConversions
-
 trait SCollectionSyntax {
   implicit def sqlSCollectionOps[A: Schema](sc: SCollection[A]): SqlSCollection1[A] = Sql.from(sc)
 }

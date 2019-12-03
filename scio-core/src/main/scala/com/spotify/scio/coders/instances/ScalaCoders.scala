@@ -77,7 +77,7 @@ private final class PairCoder[A, B](ac: BCoder[A], bc: BCoder[B]) extends Atomic
 
   override def verifyDeterministic(): Unit = {
     val cs = List("_1" -> ac, "_2" -> bc)
-    val problems = cs.toList.flatMap {
+    val problems = cs.flatMap {
       case (label, c) =>
         try {
           c.verifyDeterministic()

@@ -22,8 +22,6 @@ import com.spotify.scio.coders.Coder
 import com.spotify.scio.io.ClosedTap
 import com.spotify.scio.jdbc.JdbcWrite
 
-import scala.language.implicitConversions
-
 /** Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with JDBC methods. */
 final class JdbcSCollectionOps[T](private val self: SCollection[T]) extends AnyVal {
   /** Save this SCollection as a JDBC database. */
