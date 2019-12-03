@@ -16,7 +16,9 @@ object FixJoinNames {
     lhs.skewedLeftJoin(rhs)
   }
 
-  def changeNamesAndArgs(lhs: SCollection[(Int, String)], rightHS: SCollection[(Int, String)]
+  def changeNamesAndArgs(
+    lhs: SCollection[(Int, String)],
+    rightHS: SCollection[(Int, String)]
   ): SCollection[(Int, (String, Option[String]))] = {
     lhs.hashLeftJoin(that = rightHS)
     lhs.sparseOuterJoin(that = rightHS, 3)
@@ -24,8 +26,7 @@ object FixJoinNames {
     lhs.skewedLeftJoin(that = rightHS)
   }
 
-  def changeArgs(lhs: SCollection[(Int, String)], rightHS: SCollection[(Int, String)]
-  ): Unit = {
+  def changeArgs(lhs: SCollection[(Int, String)], rightHS: SCollection[(Int, String)]): Unit = {
     lhs.join(that = rightHS)
     lhs.fullOuterJoin(that = rightHS)
     lhs.leftOuterJoin(that = rightHS)
@@ -53,10 +54,10 @@ object FixJoinNames {
   }
 
   def example(lhs: SCollection[(Int, String)], right: SCollection[String]): Unit = {
-    def hashLeftJoin(lhs: SCollection[(Int, String)]
-    ): SCollection[(Int, (String, Option[String]))]  =  {
+    def hashLeftJoin(
+      lhs: SCollection[(Int, String)]
+    ): SCollection[(Int, (String, Option[String]))] =
       lhs.hashLeftJoin(that = right.map(a => (a.length, a)))
-    }
 
     def sparseOuterJoin(a: String): Int =
       a.length
