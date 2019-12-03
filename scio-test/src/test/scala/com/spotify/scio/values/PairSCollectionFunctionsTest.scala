@@ -22,8 +22,6 @@ import com.spotify.scio.util.random.RandomSamplerUtils
 import com.twitter.algebird.Aggregator
 
 class PairSCollectionFunctionsTest extends PipelineSpec {
-  import com.spotify.scio.testing.TestingUtils._
-
   "PairSCollection" should "support cogroup()" in {
     runWithContext { sc =>
       val p1 = sc.parallelize(Seq(("a", 1), ("b", 2), ("c", 3)))
@@ -31,10 +29,10 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
       val r1 = p1.cogroup(p2)
       val r2 = p1.groupWith(p2)
       val expected = Seq(
-        ("a", (iterable(1), iterable(11L))),
-        ("b", (iterable(2), iterable(12L))),
-        ("c", (iterable(3), iterable())),
-        ("d", (iterable(), iterable(14L)))
+        ("a", (Iterable(1), Iterable(11L))),
+        ("b", (Iterable(2), Iterable(12L))),
+        ("c", (Iterable(3), Iterable())),
+        ("d", (Iterable(), Iterable(14L)))
       )
       r1 should containInAnyOrder(expected)
       r2 should containInAnyOrder(expected)
@@ -70,11 +68,11 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
       val r1 = p1.cogroup(p2, p3)
       val r2 = p1.groupWith(p2, p3)
       val expected = Seq(
-        ("a", (iterable(1), iterable(11L), iterable(21f))),
-        ("b", (iterable(2), iterable(12L), iterable(22f))),
-        ("c", (iterable(3), iterable(), iterable())),
-        ("d", (iterable(), iterable(14L), iterable())),
-        ("e", (iterable(), iterable(), iterable(25f)))
+        ("a", (Iterable(1), Iterable(11L), Iterable(21f))),
+        ("b", (Iterable(2), Iterable(12L), Iterable(22f))),
+        ("c", (Iterable(3), Iterable(), Iterable())),
+        ("d", (Iterable(), Iterable(14L), Iterable())),
+        ("e", (Iterable(), Iterable(), Iterable(25f)))
       )
       r1 should containInAnyOrder(expected)
       r2 should containInAnyOrder(expected)
@@ -90,12 +88,12 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
       val r1 = p1.cogroup(p2, p3, p4)
       val r2 = p1.groupWith(p2, p3, p4)
       val expected = Seq(
-        ("a", (iterable(1), iterable(11L), iterable(21f), iterable(31.0))),
-        ("b", (iterable(2), iterable(12L), iterable(22f), iterable(32.0))),
-        ("c", (iterable(3), iterable(), iterable(), iterable())),
-        ("d", (iterable(), iterable(14L), iterable(), iterable())),
-        ("e", (iterable(), iterable(), iterable(25f), iterable())),
-        ("f", (iterable(), iterable(), iterable(), iterable(36.0)))
+        ("a", (Iterable(1), Iterable(11L), Iterable(21f), Iterable(31.0))),
+        ("b", (Iterable(2), Iterable(12L), Iterable(22f), Iterable(32.0))),
+        ("c", (Iterable(3), Iterable(), Iterable(), Iterable())),
+        ("d", (Iterable(), Iterable(14L), Iterable(), Iterable())),
+        ("e", (Iterable(), Iterable(), Iterable(25f), Iterable())),
+        ("f", (Iterable(), Iterable(), Iterable(), Iterable(36.0)))
       )
       r1 should containInAnyOrder(expected)
       r2 should containInAnyOrder(expected)
@@ -217,7 +215,7 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
       val p1 = sc.parallelize(0 to 100).map(("a", _))
       val p2 = sc.parallelize(0 to 10).map(("b", _))
       val p = (p1 ++ p2).approxQuantilesByKey(3)
-      p should containInAnyOrder(Seq(("a", iterable(0, 50, 100)), ("b", iterable(0, 5, 10))))
+      p should containInAnyOrder(Seq(("a", Iterable(0, 50, 100)), ("b", Iterable(0, 5, 10))))
     }
   }
 
@@ -463,7 +461,7 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
       val p = sc
         .parallelize(Seq(("a", 1), ("b", 2), ("b", 2), ("c", 3), ("c", 3), ("c", 3)))
         .sampleByKey(1)
-      p should containInAnyOrder(Seq(("a", iterable(1)), ("b", iterable(2)), ("c", iterable(3))))
+      p should containInAnyOrder(Seq(("a", Iterable(1)), ("b", Iterable(2)), ("c", Iterable(3))))
     }
   }
 
@@ -551,21 +549,24 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
       val r1 = p.topByKey(1)
       val r2 = p.topByKey(1, Ordering.by(-_))
       r1 should
-        containInAnyOrder(Seq(("a", iterable(1)), ("b", iterable(12)), ("c", iterable(23))))
+        containInAnyOrder(Seq(("a", Iterable(1)), ("b", Iterable(12)), ("c", Iterable(23))))
       r2 should
-        containInAnyOrder(Seq(("a", iterable(1)), ("b", iterable(11)), ("c", iterable(21))))
+        containInAnyOrder(Seq(("a", Iterable(1)), ("b", Iterable(11)), ("c", Iterable(21))))
     }
   }
 
-  it should "support topByKey() with Iterable" in {
+  // TODO explain this test case
+  // Kept for backward compat
+  it should "support topByKey() with JavaWrappedIterables" in {
+    import com.spotify.scio.testing.TestingUtils.iterable
     runWithContext { sc =>
       val p = sc.parallelize(Seq(("a", 1), ("b", 11), ("b", 12), ("c", 21), ("c", 22), ("c", 23)))
       val r1 = p.topByKey(1)
       val r2 = p.topByKey(1, Ordering.by(-_))
       r1 should
-        containInAnyOrder(Seq(("a", Iterable(1)), ("b", Iterable(12)), ("c", Iterable(23))))
+        containInAnyOrder(Seq(("a", iterable(1)), ("b", iterable(12)), ("c", iterable(23))))
       r2 should
-        containInAnyOrder(Seq(("a", Iterable(1)), ("b", Iterable(11)), ("c", Iterable(21))))
+        containInAnyOrder(Seq(("a", iterable(1)), ("b", Iterable(11)), ("c", iterable(21))))
     }
   }
 

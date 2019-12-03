@@ -41,8 +41,6 @@ import scala.collection.JavaConverters._
 import com.spotify.scio.coders.Coder
 
 class SCollectionTest extends PipelineSpec {
-  import com.spotify.scio.testing.TestingUtils._
-
   "SCollection" should "support applyTransform()" in {
     runWithContext { sc =>
       val p =
@@ -354,7 +352,7 @@ class SCollectionTest extends PipelineSpec {
   it should "support quantilesApprox()" in {
     runWithContext { sc =>
       val p = sc.parallelize(0 to 100).quantilesApprox(5)
-      p should containSingleValue(iterable(0, 25, 50, 75, 100))
+      p should containSingleValue(Iterable(0, 25, 50, 75, 100))
     }
   }
 
@@ -393,8 +391,8 @@ class SCollectionTest extends PipelineSpec {
       val p = sc.parallelize(Seq(1, 1, 1, 1, 1))
       val r1 = p.sample(1)
       val r2 = p.sample(5)
-      r1 should containSingleValue(iterable(1))
-      r2 should containSingleValue(iterable(1, 1, 1, 1, 1))
+      r1 should containSingleValue(Iterable(1))
+      r2 should containSingleValue(Iterable(1, 1, 1, 1, 1))
     }
   }
 
@@ -459,8 +457,8 @@ class SCollectionTest extends PipelineSpec {
       val p = sc.parallelize(Seq(1, 2, 3, 4, 5))
       val r1 = p.top(3)
       val r2 = p.top(3, Ordering.by(-_))
-      r1 should containSingleValue(iterable(5, 4, 3))
-      r2 should containSingleValue(iterable(1, 2, 3))
+      r1 should containSingleValue(Iterable(5, 4, 3))
+      r2 should containSingleValue(Iterable(1, 2, 3))
     }
   }
 

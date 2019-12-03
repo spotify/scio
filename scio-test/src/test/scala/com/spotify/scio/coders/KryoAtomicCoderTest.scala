@@ -104,7 +104,7 @@ class KryoAtomicCoderTest extends PipelineSpec {
   }
 
   it should "support large objects" in {
-    val vs = iterable((1 to 1000000).map("value-%08d".format(_)): _*)
+    val vs = Iterable((1 to 1000000).map("value-%08d".format(_)): _*)
     val kv = ("key", vs)
     kv coderShould roundtripKryo()
   }
