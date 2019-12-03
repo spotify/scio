@@ -338,12 +338,8 @@ package object bigtable {
     def saveAsBigtable(projectId: String, instanceId: String, tableId: String)(
       implicit ev: T <:< Mutation,
       coder: Coder[T]
-    ): ClosedTap[(ByteString, Iterable[Mutation])] = {
-      val param = BigtableWrite.Default
-      self
-        .write(BigtableWrite[T](projectId, instanceId, tableId))(param)
-        .asInstanceOf[ClosedTap[(ByteString, Iterable[Mutation])]]
-    }
+    ): ClosedTap[Nothing] =
+      self.write(BigtableWrite[T](projectId, instanceId, tableId))(BigtableWrite.Default)
 
     /**
      * Save this SCollection as a Bigtable table. Note that elements must be of type `Mutation`.
@@ -351,12 +347,8 @@ package object bigtable {
     def saveAsBigtable(bigtableOptions: BigtableOptions, tableId: String)(
       implicit ev: T <:< Mutation,
       coder: Coder[T]
-    ): ClosedTap[(ByteString, Iterable[Mutation])] = {
-      val param = BigtableWrite.Default
-      self
-        .write(BigtableWrite[T](bigtableOptions, tableId))(param)
-        .asInstanceOf[ClosedTap[(ByteString, Iterable[Mutation])]]
-    }
+    ): ClosedTap[Nothing] =
+      self.write(BigtableWrite[T](bigtableOptions, tableId))(BigtableWrite.Default)
 
     /**
      * Save this SCollection as a Bigtable table. This version supports batching. Note that
@@ -370,11 +362,9 @@ package object bigtable {
     )(
       implicit ev: T <:< Mutation,
       coder: Coder[T]
-    ): ClosedTap[(ByteString, Iterable[Mutation])] = {
-      val param = BigtableWrite.Bulk(numOfShards, flushInterval)
-      self
-        .write(BigtableWrite[T](bigtableOptions, tableId))(param)
-        .asInstanceOf[ClosedTap[(ByteString, Iterable[Mutation])]]
-    }
+    ): ClosedTap[Nothing] =
+      self.write(BigtableWrite[T](bigtableOptions, tableId))(
+        BigtableWrite.Bulk(numOfShards, flushInterval)
+      )
   }
 }
