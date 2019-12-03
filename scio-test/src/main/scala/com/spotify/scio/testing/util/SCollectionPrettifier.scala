@@ -23,9 +23,11 @@ object SCollectionPrettifier {
             val (bSchema, toRow, _) = SchemaMaterializer.materializeWithDefault(schema) // TODO pass scio context
             o match {
               case i: Traversable[_] =>
-                prettifyLevelOne(i.map(_.asInstanceOf[T]).map(toRow(_)),
-                                 bSchema,
-                                 fallbackPrettifier)
+                prettifyLevelOne(
+                  i.map(_.asInstanceOf[T]).map(toRow(_)),
+                  bSchema,
+                  fallbackPrettifier
+                )
               case _ =>
                 fallbackPrettifier.apply(o)
             }

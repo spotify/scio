@@ -20,19 +20,16 @@ import org.scalactic.Prettifier
  * representation of SCollections in error messages when an assertion fails in the test.
  */
 trait TypedPrettifier[T] extends Serializable {
-
   /**
    * The scalatic prettifier wrapped for the given type T.
    */
   def apply: Prettifier
-
 }
 
 /**
  * A low priority fall back [[TypedPrettifier]] which delegates Scalactic's Prettifier.
  */
 trait LowPriorityFallbackTypedPrettifier {
-
   /**
    * Visible when we fail to have a [[Schema]]
    *
@@ -47,7 +44,6 @@ trait LowPriorityFallbackTypedPrettifier {
 }
 
 object TypedPrettifier extends LowPriorityFallbackTypedPrettifier {
-
   /**
    * An instance of [[TypedPrettifier]] when we have a [[Schema]] available
    * for our type. We use the Schema to create a table representation of

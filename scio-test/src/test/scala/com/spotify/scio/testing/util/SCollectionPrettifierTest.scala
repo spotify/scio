@@ -18,7 +18,7 @@ class SCollectionPrettifierTest extends FlatSpec with Matchers {
       implicitly[TypedPrettifier[Something]].apply(Seq(Something(1, NestedRecord("one"))))
 
     val expected =
-    """
+      """
       |┌──────────────────────────────┬──────────────────────────────┐
       |│a                             │b                             │
       |├──────────────────────────────┼──────────────────────────────┤
@@ -27,7 +27,6 @@ class SCollectionPrettifierTest extends FlatSpec with Matchers {
       |""".stripMargin
 
     prettyString should be(expected)
-
   }
 
   it should "use default Prettifier if Schema is not available" in {
