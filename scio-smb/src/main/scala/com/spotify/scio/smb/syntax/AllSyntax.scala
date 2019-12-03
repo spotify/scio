@@ -17,7 +17,4 @@
 
 package com.spotify.scio.smb.syntax
 
-trait AllSyntax
-    extends SortMergeBucketSCollectionSyntax
-    with SortMergeBucketScioContextSyntax
-    with SortedBucketJobTestSyntax
+trait AllSyntax extends SortMergeBucketSCollectionSyntax with SortMergeBucketScioContextSyntax

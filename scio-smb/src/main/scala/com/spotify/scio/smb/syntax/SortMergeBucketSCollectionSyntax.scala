@@ -18,109 +18,32 @@
 package com.spotify.scio.smb.syntax
 
 import com.spotify.scio.coders.Coder
-import com.spotify.scio.io.ClosedTap
-import com.spotify.scio.testing.TestDataManager
-import com.spotify.scio.util.ScioUtil
+import com.spotify.scio.io.{ClosedTap, EmptyTap}
 import com.spotify.scio.values._
-import org.apache.avro.generic.GenericRecord
-import org.apache.avro.specific.SpecificRecordBase
-import org.apache.beam.sdk.extensions.smb.BucketMetadata.HashType
-import org.apache.beam.sdk.extensions.smb.{AvroSortedBucketIO, SortedBucketSink}
-
-import scala.reflect.ClassTag
+import org.apache.beam.sdk.extensions.smb.SortedBucketSink
+import org.apache.beam.sdk.transforms.PTransform
+import org.apache.beam.sdk.values.PCollection
 
 trait SortMergeBucketSCollectionSyntax {
-  implicit def toGenericAvroCollection(
-    data: SCollection[GenericRecord]
-  ): SortedBucketGenericAvroSCollection =
-    new SortedBucketGenericAvroSCollection(data.asInstanceOf[SCollection[GenericRecord]])
-
-  implicit def toSpecificAvroCollection[T <: SpecificRecordBase: ClassTag: Coder](
+  implicit def toSortMergeBucketSCollection[T: Coder](
     data: SCollection[T]
-  ): SortedBucketSpecificAvroSCollection[T] =
-    new SortedBucketSpecificAvroSCollection[T](data)
+  ): SortedBucketSCollection[T] =
+    new SortedBucketSCollection(data)
 }
 
 private[smb] object SortMergeBucketSCollectionSyntax {
   // Adapted from ScioUtil
-  def toPathFragment(path: String): String =
-    if (path.endsWith("/")) s"${path}bucket-*-shard-*.avro"
-    else s"$path/bucket-*-shard-*.avro"
+  def toPathFragment(path: String, suffix: String): String =
+    if (path.endsWith("/")) s"${path}bucket-*-shard-*${suffix}"
+    else s"$path/bucket-*-shard-${suffix}"
 }
 
-final class SortedBucketGenericAvroSCollection(private val self: SCollection[GenericRecord]) {
-  import com.spotify.scio.avro.{GenericRecordIO, GenericRecordTap}
-  import com.spotify.scio.smb.syntax.SortMergeBucketSCollectionSyntax._
-  import org.apache.avro.Schema
-  import org.apache.avro.file.CodecFactory
+final class SortedBucketSCollection[T: Coder](private val self: SCollection[T]) {
+  type Write = PTransform[PCollection[T], SortedBucketSink.WriteResult]
 
-  def saveAsSortedBucket[K: Coder](
-    keyClass: Class[K],
-    outputDirectory: String,
-    schema: Schema,
-    keyField: String,
-    hashType: HashType,
-    numBuckets: Int,
-    numShards: Int = 1,
-    codec: CodecFactory = CodecFactory.snappyCodec()
-  ): ClosedTap[GenericRecord] = {
-    val tap = if (self.context.isTest) {
-      val testIO = GenericRecordIO(outputDirectory, schema)
-      TestDataManager.getOutput(self.context.testId.get)(testIO)(self)
-      testIO.tapT.saveForTest(self)
-    } else {
-      self.applyInternal(
-        AvroSortedBucketIO
-          .write(keyClass, keyField, schema)
-          .to(outputDirectory)
-          .withTempDirectory(self.context.options.getTempLocation)
-          .withCodec(codec)
-          .withHashType(hashType)
-          .withNumBuckets(numBuckets)
-          .withNumShards(numShards)
-      )
-
-      GenericRecordTap(toPathFragment(outputDirectory), schema)
-    }
-
-    ClosedTap(tap)
-  }
-}
-
-final class SortedBucketSpecificAvroSCollection[T <: SpecificRecordBase: ClassTag: Coder](
-  private val self: SCollection[T]
-) {
-  import com.spotify.scio.avro.{SpecificRecordIO, SpecificRecordTap}
-  import com.spotify.scio.smb.syntax.SortMergeBucketSCollectionSyntax._
-  import org.apache.avro.file.CodecFactory
-
-  def saveAsSortedBucket[K: Coder](
-    keyClass: Class[K],
-    outputDirectory: String,
-    keyField: String,
-    hashType: HashType,
-    numBuckets: Int,
-    numShards: Int = 1,
-    codec: CodecFactory = CodecFactory.snappyCodec()
-  ): ClosedTap[T] = {
-    val tap = if (self.context.isTest) {
-      val testIO = SpecificRecordIO[T](outputDirectory)
-      TestDataManager.getOutput(self.context.testId.get)(testIO)(self)
-      testIO.tapT.saveForTest(self)
-    } else {
-      self.applyInternal[SortedBucketSink.WriteResult](
-        AvroSortedBucketIO
-          .write[K, T](keyClass, keyField, ScioUtil.classOf[T])
-          .to(outputDirectory)
-          .withTempDirectory(self.context.options.getTempLocation)
-          .withCodec(codec)
-          .withHashType(hashType)
-          .withNumBuckets(numBuckets)
-          .withNumShards(numShards)
-      )
-      SpecificRecordTap[T](toPathFragment(outputDirectory))
-    }
-
-    ClosedTap[T](tap)
+  // @Todo: Implement taps for metadata/bucket elements
+  def saveAsSortedBucket(write: Write): ClosedTap[Nothing] = {
+    self.applyInternal(write)
+    ClosedTap[Nothing](EmptyTap)
   }
 }

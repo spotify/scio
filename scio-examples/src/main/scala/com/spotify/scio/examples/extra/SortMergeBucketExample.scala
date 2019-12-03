@@ -25,12 +25,15 @@
 package com.spotify.scio.examples.extra
 
 import com.spotify.scio.ContextAndArgs
-import com.spotify.scio.avro.{Account, GenericRecordIO, SpecificRecordIO}
+import com.spotify.scio.avro.Account
 import com.spotify.scio.coders.Coder
 import org.apache.avro.Schema
 import org.apache.avro.Schema.Field
+import org.apache.avro.file.CodecFactory
 import org.apache.avro.generic.{GenericData, GenericRecord}
+import org.apache.beam.sdk.extensions.smb.AvroSortedBucketIO
 import org.apache.beam.sdk.extensions.smb.BucketMetadata.HashType
+import org.apache.beam.sdk.values.TupleTag
 
 import scala.collection.JavaConverters._
 import scala.util.Random
@@ -82,12 +85,14 @@ object SortMergeBucketWriteExample {
         SortMergeBucketExample.user(i, Random.nextInt(100))
       }
       .saveAsSortedBucket(
-        classOf[Integer],
-        outputL,
-        SortMergeBucketExample.UserDataSchema,
-        "userId",
-        HashType.MURMUR3_32,
-        1
+        AvroSortedBucketIO
+          .write(classOf[Integer], "userId", SortMergeBucketExample.UserDataSchema)
+          .to(outputL)
+          .withTempDirectory(sc.options.getTempLocation)
+          .withCodec(CodecFactory.snappyCodec())
+          .withHashType(HashType.MURMUR3_32)
+          .withNumBuckets(2)
+          .withNumShards(1)
       )
 
     sc.parallelize(250 to 750)
@@ -100,11 +105,14 @@ object SortMergeBucketWriteExample {
         )
       }
       .saveAsSortedBucket(
-        classOf[Integer],
-        outputR,
-        "id",
-        HashType.MURMUR3_32,
-        1
+        AvroSortedBucketIO
+          .write[Integer, Account](classOf[Integer], "id", classOf[Account])
+          .to(outputR)
+          .withTempDirectory(sc.options.getTempLocation)
+          .withCodec(CodecFactory.snappyCodec())
+          .withHashType(HashType.MURMUR3_32)
+          .withNumBuckets(1)
+          .withNumShards(1)
       )
 
     sc.run().waitUntilDone()
@@ -126,8 +134,12 @@ object SortMergeBucketJoinExample {
 
     sc.sortMergeJoin(
         classOf[Integer],
-        GenericRecordIO(inputL, SortMergeBucketExample.UserDataSchema),
-        SpecificRecordIO[Account](inputR)
+        AvroSortedBucketIO
+          .read(new TupleTag[GenericRecord](inputL), SortMergeBucketExample.UserDataSchema)
+          .from(inputL),
+        AvroSortedBucketIO
+          .read(new TupleTag[Account](inputR), classOf[Account])
+          .from(inputR)
       )
       .map {
         case (userId, (userData, account)) =>

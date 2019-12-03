@@ -18,46 +18,15 @@
 package com.spotify.scio.smb.syntax
 
 import com.spotify.scio.ScioContext
-import com.spotify.scio.avro.{GenericRecordIO, SpecificRecordIO}
 import com.spotify.scio.coders.Coder
-import com.spotify.scio.smb.io.SortMergeBucketRead
-import com.spotify.scio.testing.TestDataManager
-import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values._
-import org.apache.avro.generic.GenericRecord
-import org.apache.avro.specific.SpecificRecordBase
-import org.apache.beam.sdk.extensions.smb.{AvroSortedBucketIO, SortedBucketIO}
-import org.apache.beam.sdk.values.TupleTag
+import org.apache.beam.sdk.extensions.smb.SortedBucketIO
 
 import scala.collection.JavaConverters._
-import scala.reflect.ClassTag
 
 trait SortMergeBucketScioContextSyntax {
   implicit def asSMBScioContext(sc: ScioContext): SortedBucketScioContext =
     new SortedBucketScioContext(sc)
-
-  // Implicits converting between supported Scio IOs and the SMB Java API
-  implicit def fromSRAvro[T <: SpecificRecordBase: ClassTag: Coder](
-    io: SpecificRecordIO[T]
-  ): SortedBucketIO.Read[T] = {
-    val path = stripFilepattern(io.path)
-    AvroSortedBucketIO.read[T](new TupleTag[T](io.path), ScioUtil.classOf[T]).from(path)
-  }
-
-  implicit def fromGRAvro(io: GenericRecordIO): SortedBucketIO.Read[GenericRecord] = {
-    val path = stripFilepattern(io.path)
-    AvroSortedBucketIO.read(new TupleTag[GenericRecord](io.path), io.schema).from(path)
-  }
-
-  // Can't use Beam's FileSystems API in init since file might not exist yet (i.e. in test context)
-  private def stripFilepattern(path: String): String = {
-    val globPattern = "^(.*)\\/(.+\\.(.+))?$".r
-
-    path match {
-      case globPattern(dir, _, _) => dir
-      case _                      => path
-    }
-  }
 }
 
 final class SortedBucketScioContext(@transient private val self: ScioContext) {
@@ -81,36 +50,24 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) {
     a: SortedBucketIO.Read[A],
     b: SortedBucketIO.Read[B]
   ): SCollection[(K, (Iterable[A], Iterable[B]))] = {
-    if (self.isTest) {
-      val testInputs = TestDataManager.getInput(self.testId.get)
-      val (readA, readB) = (
-        testInputs(SortMergeBucketRead[K, A](a.toBucketedInput.getTupleTag.getId))
-          .toSCollection(self),
-        testInputs(SortMergeBucketRead[K, B](b.toBucketedInput.getTupleTag.getId))
-          .toSCollection(self)
-      )
+    val t = SortedBucketIO.read(keyClass).of(a).and(b)
+    val (tupleTagA, tupleTagB) = (
+      a.toBucketedInput.getTupleTag,
+      b.toBucketedInput.getTupleTag
+    )
+    self
+      .wrap(self.applyInternal(t))
+      .map { kv =>
+        val cgbkResult = kv.getValue
 
-      readA.cogroup(readB)
-    } else {
-      val t = SortedBucketIO.read(keyClass).of(a).and(b)
-      val (tupleTagA, tupleTagB) = (
-        a.toBucketedInput.getTupleTag,
-        b.toBucketedInput.getTupleTag
-      )
-      self
-        .wrap(self.applyInternal(t))
-        .map { kv =>
-          val cgbkResult = kv.getValue
-
+        (
+          kv.getKey,
           (
-            kv.getKey,
-            (
-              cgbkResult.getAll(tupleTagA).asScala,
-              cgbkResult.getAll(tupleTagB).asScala
-            )
+            cgbkResult.getAll(tupleTagA).asScala,
+            cgbkResult.getAll(tupleTagB).asScala
           )
-        }
-    }
+        )
+      }
   }
 
   def sortMergeCoGroup[K: Coder, A: Coder, B: Coder, C: Coder](
@@ -119,37 +76,25 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) {
     b: SortedBucketIO.Read[B],
     c: SortedBucketIO.Read[C]
   ): SCollection[(K, (Iterable[A], Iterable[B], Iterable[C]))] = {
-    if (self.isTest) {
-      val testInputs = TestDataManager.getInput(self.testId.get)
-      val (readA, readB, readC) = (
-        testInputs(SortMergeBucketRead[K, A](a.toBucketedInput.getTupleTag.getId))
-          .toSCollection(self),
-        testInputs(SortMergeBucketRead[K, B](b.toBucketedInput.getTupleTag.getId))
-          .toSCollection(self),
-        testInputs(SortMergeBucketRead[K, C](c.toBucketedInput.getTupleTag.getId))
-          .toSCollection(self)
-      )
+    val t = SortedBucketIO.read(keyClass).of(a).and(b).and(c)
+    val (tupleTagA, tupleTagB, tupleTagC) = (
+      a.toBucketedInput.getTupleTag,
+      b.toBucketedInput.getTupleTag,
+      c.toBucketedInput.getTupleTag
+    )
+    self
+      .wrap(self.applyInternal(t))
+      .map { kv =>
+        val cgbkResult = kv.getValue
 
-      readA.cogroup(readB, readC)
-    } else {
-      self
-        .wrap(
-          self.applyInternal(
-            SortedBucketIO.read(keyClass).of(a).and(b).and(c)
+        (
+          kv.getKey,
+          (
+            cgbkResult.getAll(tupleTagA).asScala,
+            cgbkResult.getAll(tupleTagB).asScala,
+            cgbkResult.getAll(tupleTagC).asScala
           )
         )
-        .map { kv =>
-          val cgbkResult = kv.getValue
-
-          (
-            kv.getKey,
-            (
-              cgbkResult.getAll(a.toBucketedInput.getTupleTag).asScala,
-              cgbkResult.getAll(b.toBucketedInput.getTupleTag).asScala,
-              cgbkResult.getAll(c.toBucketedInput.getTupleTag).asScala
-            )
-          )
-        }
-    }
+      }
   }
 }
