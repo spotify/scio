@@ -1,4 +1,6 @@
 package com.spotify.scio.values
+import java.io.{ByteArrayInputStream, ByteArrayOutputStream, InputStream, OutputStream}
+
 import com.spotify.scio.annotations.experimental
 import com.spotify.scio.coders.Coder
 
@@ -20,7 +22,16 @@ trait ApproxFilter[-T] extends (T => Boolean) {
   /**
    * Serialize the Filter to an Array[Byte]
    */
-  def serialize: Array[Byte]
+  def toBytes: Array[Byte] = {
+    val ba = new ByteArrayOutputStream()
+    writeTo(ba)
+    ba.toByteArray
+  }
+
+  /**
+   * Serialize the filter to the given [[OutputStream]]
+   */
+  def writeTo(out: OutputStream): Unit
 }
 
 /**
@@ -49,7 +60,11 @@ trait ApproxFilterBuilder[T, To[B >: T] <: ApproxFilter[B]] {
   /**
    * Read from serialized bytes to this filter.
    *
-   * The serialization is done using `ApproxFilter[T]#serialize`
+   * The serialization is done using `ApproxFilter[T]#toBytes`
    */
-  def fromBytes(serializedBytes: Array[Byte]): To[T]
+  def fromBytes(serializedBytes: Array[Byte]): To[T] = {
+    readFrom(new ByteArrayInputStream(serializedBytes))
+  }
+
+  def readFrom(in: InputStream): To[T]
 }

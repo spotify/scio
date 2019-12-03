@@ -1,5 +1,5 @@
 package com.spotify.scio.values
-import java.io.ByteArrayInputStream
+import java.io.InputStream
 
 import com.google.common.hash.{Funnel, BloomFilter => gBloomFilter}
 import com.spotify.scio.coders.Coder
@@ -15,10 +15,10 @@ class BloomFilterBuilder[T: Funnel](fpProb: Double) extends ApproxFilterBuilder[
 
   override def build(it: Iterable[T]): BloomFilter[T] = BloomFilter(it, fpProb)
 
-  override def fromBytes(serializedBytes: Array[Byte]): BloomFilter[T] = {
-    val inStream = new ByteArrayInputStream(serializedBytes)
-    BloomFilter(gBloomFilter.readFrom(inStream, implicitly[Funnel[T]]))
-  }
+  override def readFrom(
+    in: InputStream
+  ): BloomFilter[T] =
+    BloomFilter(gBloomFilter.readFrom(in, implicitly[Funnel[T]]))
 
 }
 

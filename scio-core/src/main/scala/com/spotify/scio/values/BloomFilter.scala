@@ -16,16 +16,11 @@ import org.apache.beam.sdk.coders.AtomicCoder
 final case class BloomFilter[T] private (private val internal: gBloomFilter[T]
 ) extends ApproxFilter[T] {
 
-  def expectedFpp: Double = internal.expectedFpp()
+  val expectedFpp: Double = internal.expectedFpp()
 
   def mayBeContains(t: T): Boolean = internal.mightContain(t)
 
-  override def serialize: Array[Byte] = {
-    val ba = new ByteArrayOutputStream()
-    internal.writeTo(ba)
-    ba.toByteArray
-  }
-
+  override def writeTo(out: OutputStream): Unit = internal.writeTo(out)
 }
 
 object BloomFilter {

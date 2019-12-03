@@ -1,5 +1,7 @@
 package com.spotify.scio.values
 
+import java.io.{InputStream, OutputStream}
+
 import com.google.common.hash.{Funnel, BloomFilter => gBloomFilter}
 import com.spotify.scio.coders.Coder
 
@@ -15,7 +17,11 @@ case class ScalableBloomFilter[T] private (
 ) extends ApproxFilter[T] {
 
   override def mayBeContains(t: T): Boolean = filters.exists(_.mightContain(t))
-  override def serialize: Array[Byte] = ???
+
+  /**
+   * Serialize the filter to the given [[OutputStream]]
+   */
+  override def writeTo(out: OutputStream): Unit = ???
 }
 
 object ScalableBloomFilter {
@@ -64,5 +70,5 @@ case class ScalableBloomFilterBuilder[T: Funnel] private[values] (
     ScalableBloomFilter(fpProb, initialCapacity, growthRate, tighteningRatio, filters.toList)
   }
 
-  override def fromBytes(serializedBytes: Array[Byte]): ScalableBloomFilter[T] = ???
+  override def readFrom(in: InputStream): ScalableBloomFilter[T] = ???
 }
