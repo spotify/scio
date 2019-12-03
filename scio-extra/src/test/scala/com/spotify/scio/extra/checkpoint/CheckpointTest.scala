@@ -20,7 +20,8 @@ package com.spotify.scio.extra.checkpoint
 import java.nio.file.Files
 
 import com.spotify.scio.{ContextAndArgs, ScioMetrics}
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import scala.reflect.io.File
 import scala.util.Try
@@ -48,7 +49,7 @@ object CheckpointMetrics {
   }
 }
 
-class CheckpointTest extends FlatSpec with Matchers {
+class CheckpointTest extends AnyFlatSpec with Matchers {
   import CheckpointMetrics._
 
   "checkpoint" should "work on path" in {

@@ -18,7 +18,8 @@
 package com.spotify.scio.bigquery
 
 import org.scalatest.Inspectors.forAll
-import org.scalatest._
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
 
 object BigQueryIT {
   val tableRef = "bigquery-public-data:samples.shakespeare"
@@ -36,7 +37,7 @@ object BigQueryIT {
   class WordCount
 }
 
-class BigQueryIT extends FlatSpec with Matchers {
+class BigQueryIT extends AnyFlatSpec with Matchers {
   import BigQueryIT._
 
   // =======================================================================

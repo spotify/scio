@@ -29,15 +29,15 @@ import scala.collection.mutable.{ArrayBuffer, Map => MMap}
  */
 class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
   /**
-   * Perform an inner join by replicating `that` to all workers. The right side should be tiny and
+   * Perform an inner join by replicating `rhs` to all workers. The right side should be tiny and
    * fit in memory.
    *
    * @group join
    */
   def hashJoin[W: Coder](
-    that: SCollection[(K, W)]
+    rhs: SCollection[(K, W)]
   )(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, (V, W))] =
-    hashJoin(that.asMultiMapSideInput)
+    hashJoin(rhs.asMultiMapSideInput)
 
   /**
    * Perform an inner join with a [[SideMap]].
@@ -53,7 +53,7 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * @group join
    */
   @deprecated(
-    "Use SCollection[(K, V)]#hashJoin(that) or SCollection[(K, V)]#hashJoin(that.asMultiMapSideInput) instead.",
+    "Use SCollection[(K, V)]#hashJoin(rhs) or SCollection[(K, V)]#hashJoin(rhs.asMultiMapSideInput) instead.",
     "0.8.0"
   )
   def hashJoin[W: Coder](
@@ -91,7 +91,7 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     }
 
   /**
-   * Perform a left outer join by replicating `that` to all workers. The right side should be tiny
+   * Perform a left outer join by replicating `rhs` to all workers. The right side should be tiny
    * and fit in memory.
    *
    * @example
@@ -103,12 +103,12 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    */
   @deprecated("Use SCollection[(K, V)]#hashLeftOuterJoin(pairSColl) instead.", "0.8.0")
   def hashLeftJoin[W: Coder](
-    that: SCollection[(K, W)]
+    rhs: SCollection[(K, W)]
   )(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, (V, Option[W]))] =
-    hashLeftOuterJoin(that)
+    hashLeftOuterJoin(rhs)
 
   /**
-   * Perform a left outer join by replicating `that` to all workers. The right side should be tiny
+   * Perform a left outer join by replicating `rhs` to all workers. The right side should be tiny
    * and fit in memory.
    *
    * @example
@@ -117,12 +117,12 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    *   val joined = pairSColl1Left.hashLeftOuterJoin(pairSCollRight)
    * }}}
    * @group join
-   * @param that The tiny SCollection[(K, W)] treated as right side of the join.
+   * @param rhs The tiny SCollection[(K, W)] treated as right side of the join.
    */
   def hashLeftOuterJoin[W: Coder](
-    that: SCollection[(K, W)]
+    rhs: SCollection[(K, W)]
   )(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, (V, Option[W]))] =
-    hashLeftOuterJoin(that.asMultiMapSideInput)
+    hashLeftOuterJoin(rhs.asMultiMapSideInput)
 
   /**
    * Perform a left outer join with a [[SideMap]].
@@ -164,23 +164,23 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
       in.withSideInputs(sideInput)
         .flatMap[(K, (V, Option[W]))] {
           case ((k, v), sideInputCtx) =>
-            val thatSideMap = sideInputCtx(sideInput)
-            if (thatSideMap.contains(k)) thatSideMap(k).iterator.map(w => (k, (v, Some(w))))
+            val rhsSideMap = sideInputCtx(sideInput)
+            if (rhsSideMap.contains(k)) rhsSideMap(k).iterator.map(w => (k, (v, Some(w))))
             else Iterator((k, (v, None)))
         }
         .toSCollection
   }
 
   /**
-   * Perform a full outer join by replicating `that` to all workers. The right side should be tiny
+   * Perform a full outer join by replicating `rhs` to all workers. The right side should be tiny
    * and fit in memory.
    *
    * @group join
    */
   def hashFullOuterJoin[W: Coder](
-    that: SCollection[(K, W)]
+    rhs: SCollection[(K, W)]
   )(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, (Option[V], Option[W]))] =
-    hashFullOuterJoin(that.asMultiMapSideInput)
+    hashFullOuterJoin(rhs.asMultiMapSideInput)
 
   /**
    * Perform a full outer join with a [[SideMap]].
@@ -196,7 +196,7 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * @group join
    */
   @deprecated(
-    "Use SCollection[(K, V)]#hashFullOuterJoin(that) or SCollection[(K, V)]#hashFullOuterJoin(that.asMultiMapSideInput) instead.",
+    "Use SCollection[(K, V)]#hashFullOuterJoin(rhs) or SCollection[(K, V)]#hashFullOuterJoin(rhs.asMultiMapSideInput) instead.",
     "0.8.0"
   )
   def hashFullOuterJoin[W: Coder](
@@ -224,9 +224,9 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
         .withSideInputs(sideInput)
         .flatMap {
           case ((k, v), sideInputCtx) =>
-            val thatSideMap = sideInputCtx(sideInput)
-            if (thatSideMap.contains(k)) {
-              thatSideMap(k).iterator
+            val rhsSideMap = sideInputCtx(sideInput)
+            if (rhsSideMap.contains(k)) {
+              rhsSideMap(k).iterator
                 .map[(K, (Option[V], Option[W]), Boolean)](w => (k, (Some(v), Some(w)), true))
             } else {
               Iterator((k, (Some(v), None), false))
@@ -250,27 +250,27 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     }
 
   /**
-   * Return an SCollection with the pairs from `this` whose keys are in `that`
-   * given `that` is small enough to fit in memory.
+   * Return an SCollection with the pairs from `this` whose keys are in `rhs`
+   * given `rhs` is small enough to fit in memory.
    *
    * Unlike [[SCollection.intersection]] this preserves duplicates in `this`.
    *
    * @group per key
    */
   def hashIntersectByKey(
-    that: SCollection[K]
+    rhs: SCollection[K]
   )(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, V)] =
-    hashIntersectByKey(that.asSetSingletonSideInput)
+    hashIntersectByKey(rhs.asSetSingletonSideInput)
 
   /**
-   * Return an SCollection with the pairs from `this` whose keys are in the SideSet `that`.
+   * Return an SCollection with the pairs from `this` whose keys are in the SideSet `rhs`.
    *
    * Unlike [[SCollection.intersection]] this preserves duplicates in `this`.
    *
    * @group per key
    */
   @deprecated(
-    "Use SCollection[(K, V)]#hashIntersectByKey(that.asSetSingletonSideInput) instead",
+    "Use SCollection[(K, V)]#hashIntersectByKey(rhs.asSetSingletonSideInput) instead",
     "0.8.0"
   )
   def hashIntersectByKey(
@@ -279,7 +279,7 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     hashIntersectByKey(sideSet.side)
 
   /**
-   * Return an SCollection with the pairs from `this` whose keys are in the SideSet `that`.
+   * Return an SCollection with the pairs from `this` whose keys are in the SideSet `rhs`.
    *
    * Unlike [[SCollection.intersection]] this preserves duplicates in `this`.
    *
@@ -298,9 +298,9 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     SideMap[K, V](combineAsMapSideInput(self))
 
   private def combineAsMapSideInput[W: Coder](
-    that: SCollection[(K, W)]
+    rhs: SCollection[(K, W)]
   )(implicit koder: Coder[K]): SideInput[MMap[K, ArrayBuffer[W]]] = {
-    that
+    rhs
       .combine {
         case (k, v) =>
           MMap(k -> ArrayBuffer(v))

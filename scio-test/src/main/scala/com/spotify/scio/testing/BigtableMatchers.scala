@@ -25,7 +25,6 @@ import com.spotify.scio.coders.Coder
 
 import org.scalatest.matchers.{MatchResult, Matcher}
 
-import scala.language.implicitConversions
 import scala.reflect.ClassTag
 
 /**

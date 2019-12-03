@@ -23,11 +23,12 @@ import com.spotify.scio.coders.Coder
 import com.spotify.scio.testing.CoderAssertions._
 import org.apache.beam.sdk.coders.{AtomicCoder, StringUtf8Coder}
 import org.scalatest.exceptions.TestFailedException
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 case class Foo(id: String)
 
-class CoderAssertionsTest extends FlatSpec with Matchers {
+class CoderAssertionsTest extends AnyFlatSpec with Matchers {
   // A coder which roundtrips incorrectly
   private def incorrectCoder: Coder[Foo] =
     Coder.beam(new AtomicCoder[Foo] {

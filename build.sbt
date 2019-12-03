@@ -44,9 +44,9 @@ val commonsTextVersion = "1.8"
 val elasticsearch2Version = "2.4.6"
 val elasticsearch5Version = "5.6.16"
 val elasticsearch6Version = "6.8.5"
-val elasticsearch7Version = "7.4.2"
+val elasticsearch7Version = "7.5.0"
 val featranVersion = "0.4.0"
-val gcsConnectorVersion = "hadoop2-1.9.17"
+val gcsConnectorVersion = "hadoop2-2.0.0"
 val gcsVersion = "1.8.0"
 val guavaVersion = "25.1-jre"
 val hadoopVersion = "2.7.7"
@@ -62,17 +62,18 @@ val kryoVersion = "4.0.2" // explicitly depend on 4.0.1+ due to https://github.c
 val parquetAvroExtraVersion = "0.2.3"
 val parquetVersion = "1.10.1"
 val protobufGenericVersion = "0.2.5"
-val protobufVersion = "3.11.0"
+val protobufVersion = "3.11.1"
 val scalacheckVersion = "1.14.2"
 val scalaMacrosVersion = "2.1.1"
-val scalatestVersion = "3.0.8"
+val scalatestVersion = "3.1.0"
+val scalatestplusVersion = "3.1.0.0-RC2"
 val shapelessVersion = "2.3.3"
 val slf4jVersion = "1.7.29"
 val sparkeyVersion = "3.0.0"
 val tensorFlowVersion = "1.15.0"
 val zoltarVersion = "0.5.6"
-val magnoliaVersion = "0.12.0"
-val magnolifyVersion = "0.1.2"
+val magnoliaVersion = "0.12.2"
+val magnolifyVersion = "0.1.3"
 val grpcVersion = "1.17.1"
 val caseappVersion = "2.0.0-M9"
 val sparkVersion = "2.4.3"
@@ -462,6 +463,7 @@ lazy val `scio-test`: Project = project
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion % "test" classifier "tests",
       "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
       "org.scalatest" %% "scalatest" % scalatestVersion,
+      "org.scalatestplus" %% "scalatestplus-scalacheck" % scalatestplusVersion % "test,it",
       "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test,it",
       "com.spotify" %% "magnolify-datastore" % magnolifyVersion % "it",
       // DataFlow testing requires junit and hamcrest
@@ -516,6 +518,7 @@ lazy val `scio-avro`: Project = project
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       "org.slf4j" % "slf4j-simple" % slf4jVersion % "test,it",
       "org.scalatest" %% "scalatest" % scalatestVersion % "test,it",
+      "org.scalatestplus" %% "scalatestplus-scalacheck" % scalatestplusVersion % "test,it",
       "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test,it",
       "com.spotify" %% "magnolify-cats" % magnolifyVersion % "test",
       "com.spotify" %% "magnolify-scalacheck" % magnolifyVersion % "test"
@@ -556,6 +559,7 @@ lazy val `scio-bigquery`: Project = project
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       "org.slf4j" % "slf4j-simple" % slf4jVersion % "test,it",
       "org.scalatest" %% "scalatest" % scalatestVersion % "test,it",
+      "org.scalatestplus" %% "scalatestplus-scalacheck" % scalatestplusVersion % "test,it",
       "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test,it",
       "com.spotify" %% "magnolify-cats" % magnolifyVersion % "test",
       "com.spotify" %% "magnolify-scalacheck" % magnolifyVersion % "test",
@@ -1003,6 +1007,10 @@ lazy val `scio-smb`: Project = project
       "com.novocode" % "junit-interface" % "0.11" % Test,
       "junit" % "junit" % "4.13-rc-2" % Test
     ),
+    javacOptions ++= {
+      (Compile / sourceManaged).value.mkdirs()
+      Seq("-s", (Compile / sourceManaged).value.getAbsolutePath)
+    },
     Test / classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.Flat
   )
   .configs(

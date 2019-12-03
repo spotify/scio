@@ -31,7 +31,6 @@ import org.apache.beam.sdk.io.Compression
 import org.tensorflow._
 import org.tensorflow.example.{Example, SequenceExample}
 
-import scala.language.implicitConversions
 import scala.reflect.ClassTag
 
 /**

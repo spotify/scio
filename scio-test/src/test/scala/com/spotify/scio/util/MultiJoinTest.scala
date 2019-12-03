@@ -20,18 +20,16 @@ package com.spotify.scio.util
 import com.spotify.scio.testing.PipelineSpec
 
 class MultiJoinTest extends PipelineSpec {
-  import com.spotify.scio.testing.TestingUtils._
-
   "MultiJoin" should "support cogroup()" in {
     runWithContext { sc =>
       val p1 = sc.parallelize(Seq(("a", 1), ("b", 2), ("c", 3)))
       val p2 = sc.parallelize(Seq(("a", 11L), ("b", 12L), ("d", 14L)))
       val r = MultiJoin.cogroup(p1, p2)
       val expected = Seq(
-        ("a", (iterable(1), iterable(11L))),
-        ("b", (iterable(2), iterable(12L))),
-        ("c", (iterable(3), iterable())),
-        ("d", (iterable(), iterable(14L)))
+        ("a", (Iterable(1), Iterable(11L))),
+        ("b", (Iterable(2), Iterable(12L))),
+        ("c", (Iterable(3), Iterable())),
+        ("d", (Iterable(), Iterable(14L)))
       )
       r should containInAnyOrder(expected)
     }

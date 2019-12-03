@@ -23,10 +23,11 @@ import com.google.protobuf.ByteString
 import magnolify.cats.semiauto.EqDerivation
 import magnolify.scalacheck.auto._
 import org.scalacheck._
-import org.scalatest._
+import org.scalatest.propspec.AnyPropSpec
+import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
-class ConverterProviderSpec extends PropSpec with ScalaCheckDrivenPropertyChecks with Matchers {
+class ConverterProviderSpec extends AnyPropSpec with ScalaCheckDrivenPropertyChecks with Matchers {
   // Default minSuccessful is 10 instead of 100 in ScalaCheck but that should be enough
   // https://github.com/scalatest/scalatest/issues/1090 is addressed
 

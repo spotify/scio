@@ -105,3 +105,5 @@ trait ScalaInstances {
   ): Schema[mutable.Map[K, V]] =
     MapType(k, v, _.asJava, _.asScala)
 }
+
+private[schemas] object ScalaInstances extends ScalaInstances

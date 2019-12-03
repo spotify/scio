@@ -18,7 +18,8 @@ package com.spotify.scio.testing
 
 import com.spotify.scio.testing.{JobTest => InnerJobTest}
 import org.scalactic.source.Position
-import org.scalatest._
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.{Failed, Outcome}
 
 import scala.collection.mutable.ArrayBuffer
 import scala.reflect.ClassTag
@@ -26,7 +27,7 @@ import scala.reflect.ClassTag
 /**
  * Trait that enforces [[JobTest.Builder.run]] is called.
  */
-trait RunEnforcementJobTest extends FlatSpec { this: PipelineSpec =>
+trait RunEnforcementJobTest extends AnyFlatSpec { this: PipelineSpec =>
 
   private val tests = ArrayBuffer.empty[InnerJobTest.Builder]
 

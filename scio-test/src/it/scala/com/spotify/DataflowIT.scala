@@ -19,7 +19,8 @@ package com.spotify
 
 import com.spotify.scio._
 import com.spotify.scio.runners.dataflow._
-import org.scalatest._
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 import org.scalatest.tagobjects.Slow
 
 import scala.collection.JavaConverters._
@@ -43,7 +44,7 @@ object DataflowIT {
   }
 }
 
-class DataflowIT extends FlatSpec with Matchers {
+class DataflowIT extends AnyFlatSpec with Matchers {
   private lazy val scioResult = DataflowIT.run()
   private lazy val dfResult = scioResult.as[DataflowResult]
 

@@ -25,12 +25,13 @@ import com.google.cloud.storage.Storage.BlobListOption
 import com.google.cloud.storage.{Blob, StorageOptions}
 import com.spotify.scio.bigquery.client.BigQuery
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryHelpers
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
 
 import scala.collection.JavaConverters._
 import scala.util.Success
 
-class BigQueryClientIT extends FlatSpec with Matchers {
+class BigQueryClientIT extends AnyFlatSpec with Matchers {
   val bq = BigQuery.defaultInstance()
 
   val legacyQuery =

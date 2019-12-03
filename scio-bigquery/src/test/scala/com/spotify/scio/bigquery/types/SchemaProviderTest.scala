@@ -19,9 +19,10 @@ package com.spotify.scio.bigquery.types
 
 import com.spotify.scio.bigquery.BigQueryUtil.parseSchema
 import org.apache.beam.sdk.util.SerializableUtils
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
 
-class SchemaProviderTest extends FlatSpec with Matchers {
+class SchemaProviderTest extends AnyFlatSpec with Matchers {
   import Schemas._
 
   private def basicFields(mode: String) =

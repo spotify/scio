@@ -18,11 +18,12 @@ package com.spotify.scio.coders.instances.kryo
 
 import com.esotericsoftware.kryo.io.{Input, Output}
 import com.twitter.chill.{Kryo, KryoSerializer}
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import scala.reflect.ClassTag
 
-class JTraversableSerializerTest extends FlatSpec with Matchers {
+class JTraversableSerializerTest extends AnyFlatSpec with Matchers {
   private def testRoundTrip[T: ClassTag, C <: Iterable[T]](
     ser: JTraversableSerializer[T, C],
     elems: C
