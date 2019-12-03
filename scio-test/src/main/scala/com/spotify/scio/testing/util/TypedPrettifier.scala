@@ -1,5 +1,6 @@
 package com.spotify.scio.testing.util
 import com.spotify.scio.schemas.Schema
+import org.apache.avro.generic.IndexedRecord
 import org.scalactic.Prettifier
 
 /**
@@ -45,10 +46,25 @@ trait LowPriorityFallbackTypedPrettifier {
 
 object TypedPrettifier extends LowPriorityFallbackTypedPrettifier {
   /**
-   * An instance of [[TypedPrettifier]] when we have a [[Schema]] available
-   * for our type. We use the Schema to create a table representation of
+   * An instance of TypedPrettifier when we have an AvroRecord.
+   * We use the Avro Schema to create an table representation of
    * the SCollection[T]
    */
+  implicit def avroPrettifier[T <: IndexedRecord](
+    implicit scalacticFallback: Prettifier
+  ): TypedPrettifier[T] = {
+    new TypedPrettifier[T] {
+      override def apply: Prettifier =
+        SCollectionPrettifier.getAvroRecordPrettifier(scalacticFallback)
+    }
+  }
+
+  /*
+  /**
+ * An instance of [[TypedPrettifier]] when we have a [[Schema]] available
+ * for our type. We use the Schema to create a table representation of
+ * the SCollection[T]
+ */
   implicit def schemaPrettifier[T: Schema](
     implicit schema: Schema[T],
     scalactic: Prettifier
@@ -57,4 +73,5 @@ object TypedPrettifier extends LowPriorityFallbackTypedPrettifier {
       override def apply: Prettifier =
         SCollectionPrettifier.getPrettifier[T](schema, scalactic)
     }
+ */
 }
