@@ -18,25 +18,21 @@ package com.spotify.scio.spanner.syntax
 
 import com.google.cloud.spanner.Mutation
 import com.spotify.scio.io.ClosedTap
-import com.spotify.scio.values.SCollection
 import com.spotify.scio.spanner.SpannerWrite
+import com.spotify.scio.spanner.instances.coders._
+import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.io.gcp.spanner.SpannerConfig
 import org.apache.beam.sdk.io.gcp.spanner.SpannerIO.FailureMode
 
 final class SpannerSCollectionOps(private val self: SCollection[Mutation]) extends AnyVal {
-  import SpannerWrite.WriteParam._
+  import SpannerWrite._
 
   def saveAsSpanner(
     spannerConfig: SpannerConfig,
-    failureMode: FailureMode = DefaultFailureMode,
-    batchSizeBytes: Long = DefaultBatchSizeBytes
-  ): ClosedTap[Nothing] = {
-    val params = SpannerWrite.WriteParam(failureMode, batchSizeBytes)
-
-    self
-      .asInstanceOf[SCollection[Mutation]]
-      .write(SpannerWrite(spannerConfig))(params)
-  }
+    failureMode: FailureMode = WriteParam.DefaultFailureMode,
+    batchSizeBytes: Long = WriteParam.DefaultBatchSizeBytes
+  ): ClosedTap[Nothing] =
+    self.write(SpannerWrite(spannerConfig))(WriteParam(failureMode, batchSizeBytes))
 }
 
 trait SCollectionSyntax {
