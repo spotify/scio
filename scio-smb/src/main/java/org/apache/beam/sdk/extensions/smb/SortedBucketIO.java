@@ -27,6 +27,7 @@ import org.apache.beam.sdk.transforms.join.CoGbkResult;
 import org.apache.beam.sdk.values.KV;
 import org.apache.beam.sdk.values.PBegin;
 import org.apache.beam.sdk.values.PCollection;
+import org.apache.beam.sdk.values.TupleTag;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ImmutableList;
 
 /**
@@ -93,6 +94,8 @@ public class SortedBucketIO {
 
   /** Represents a single sorted-bucket source written using {@link SortedBucketSink}. */
   public abstract static class Read<V> {
-    public abstract BucketedInput<?, V> toBucketedInput();
+    public abstract TupleTag<V> getTupleTag();
+
+    protected abstract BucketedInput<?, V> toBucketedInput();
   }
 }

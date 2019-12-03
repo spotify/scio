@@ -52,8 +52,8 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) {
   ): SCollection[(K, (Iterable[A], Iterable[B]))] = {
     val t = SortedBucketIO.read(keyClass).of(a).and(b)
     val (tupleTagA, tupleTagB) = (
-      a.toBucketedInput.getTupleTag,
-      b.toBucketedInput.getTupleTag
+      a.getTupleTag,
+      b.getTupleTag
     )
     self
       .wrap(self.applyInternal(t))
@@ -78,9 +78,9 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) {
   ): SCollection[(K, (Iterable[A], Iterable[B], Iterable[C]))] = {
     val t = SortedBucketIO.read(keyClass).of(a).and(b).and(c)
     val (tupleTagA, tupleTagB, tupleTagC) = (
-      a.toBucketedInput.getTupleTag,
-      b.toBucketedInput.getTupleTag,
-      c.toBucketedInput.getTupleTag
+      a.getTupleTag,
+      b.getTupleTag,
+      c.getTupleTag
     )
     self
       .wrap(self.applyInternal(t))

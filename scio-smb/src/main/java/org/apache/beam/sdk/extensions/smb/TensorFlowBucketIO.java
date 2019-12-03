@@ -79,8 +79,6 @@ public class TensorFlowBucketIO {
    */
   @AutoValue
   public abstract static class Read extends SortedBucketIO.Read<Example> {
-    abstract TupleTag<Example> getTupleTag();
-
     @Nullable
     abstract ResourceId getInputDirectory();
 
@@ -116,7 +114,7 @@ public class TensorFlowBucketIO {
     }
 
     @Override
-    public BucketedInput<?, Example> toBucketedInput() {
+    protected BucketedInput<?, Example> toBucketedInput() {
       return new BucketedInput<>(
           getTupleTag(),
           getInputDirectory(),
