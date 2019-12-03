@@ -26,7 +26,6 @@ import org.apache.commons.io.FileUtils
 import org.scalatest.{FlatSpec, Matchers}
 
 class SortMergeBucketExampleTest extends FlatSpec with Matchers {
-
   def withTempFolders(testCode: (File, File, File) => Unit): Unit = {
     val tempFolder = Files.createTempDirectory("smb")
     try {
@@ -41,30 +40,31 @@ class SortMergeBucketExampleTest extends FlatSpec with Matchers {
   }
 
   "SortMergeBucketExample" should "join user and account data" in withTempFolders {
-    (userDir, accountDir, joinOutputDir) => {
-      SortMergeBucketWriteExample.main(
-        Array(
-          s"--outputL=$userDir",
-          s"--outputR=$accountDir"
+    (userDir, accountDir, joinOutputDir) =>
+      {
+        SortMergeBucketWriteExample.main(
+          Array(
+            s"--outputL=$userDir",
+            s"--outputR=$accountDir"
+          )
         )
-      )
 
-      GenericRecordTap(
-        s"$userDir/*.avro",
-        SortMergeBucketExample.UserDataSchema
-      ).value.size shouldBe 500
+        GenericRecordTap(
+          s"$userDir/*.avro",
+          SortMergeBucketExample.UserDataSchema
+        ).value.size shouldBe 500
 
-      SpecificRecordTap[Account](s"$accountDir/*.avro").value.size shouldBe 500
+        SpecificRecordTap[Account](s"$accountDir/*.avro").value.size shouldBe 500
 
-      SortMergeBucketJoinExample.main(
-        Array(
-          s"--inputL=$userDir",
-          s"--inputR=$accountDir",
-          s"--output=$joinOutputDir"
+        SortMergeBucketJoinExample.main(
+          Array(
+            s"--inputL=$userDir",
+            s"--inputR=$accountDir",
+            s"--output=$joinOutputDir"
+          )
         )
-      )
 
-      TextTap(s"$joinOutputDir/*.txt").value.size shouldBe 250
-    }
+        TextTap(s"$joinOutputDir/*.txt").value.size shouldBe 250
+      }
   }
 }
