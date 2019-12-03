@@ -302,7 +302,6 @@ trait ScioExecutionContext {
 }
 
 object ScioExecutionContext {
-  import scala.language.implicitConversions
   @deprecated(
     "ScioContext.close now returns a ScioExecutionContext instead of a ScioResult." +
       " See https://spotify.github.io/scio/migrations/v0.8.0.html#sciocontext",
@@ -405,8 +404,6 @@ object ScioContext {
   // Used to trim app args for UI if too long to avoid
   // contributing to an exceeded upload size limit.
   private val appArgStringMaxLength = 50000
-
-  import scala.language.implicitConversions
 
   /** Implicit conversion from ScioContext to DistCacheScioContext. */
   implicit def makeDistCacheScioContext(self: ScioContext): DistCacheScioContext =

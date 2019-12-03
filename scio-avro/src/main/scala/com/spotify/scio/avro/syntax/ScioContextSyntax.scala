@@ -28,7 +28,6 @@ import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecord
 import org.apache.avro.specific.SpecificRecord
 
-import scala.language.implicitConversions
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
 

@@ -102,10 +102,9 @@ final case class Record[T] private (
   destruct: T => Array[Any]
 ) extends Coder[T] {
   override def toString: String = {
-    val str = cs
-      .map {
-        case (k, v) => s"($k, $v)"
-      }
+    val str = cs.map {
+      case (k, v) => s"($k, $v)"
+    }
     s"Record($typeName, ${str.mkString(", ")})"
   }
 }
@@ -139,8 +138,7 @@ private final case class DisjunctionCoder[T, Id](
         Nil
       } catch {
         case e: NonDeterministicException =>
-          val reason = s"case $label is using non-deterministic $c"
-          List(reason -> e)
+          List(s"case $label is using non-deterministic $c" -> e)
       }
     }
 

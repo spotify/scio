@@ -23,8 +23,6 @@ import com.spotify.scio.io.FileStorage
 import com.spotify.scio.tensorflow.TFRecordCodec
 import org.apache.beam.sdk.io.Compression
 
-import scala.language.implicitConversions
-
 /** File storage functions for Tensorflow TFRecord files. */
 final class FileStorageOps(private val self: FileStorage) extends AnyVal {
   def tfRecordFile: Iterator[Array[Byte]] = {

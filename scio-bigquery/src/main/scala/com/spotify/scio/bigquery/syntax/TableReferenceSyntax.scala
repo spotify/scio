@@ -19,8 +19,6 @@ package com.spotify.scio.bigquery.syntax
 
 import com.google.api.services.bigquery.model.TableReference
 
-import scala.language.implicitConversions
-
 /**
  * Enhanced version of [[com.google.api.services.bigquery.model.TableReference TableReference]].
  */

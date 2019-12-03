@@ -38,7 +38,6 @@ import com.spotify.scio.schemas.Schema
 import com.spotify.scio.values._
 import org.apache.beam.sdk.io.gcp.bigquery.SchemaAndRecord
 
-import scala.language.implicitConversions
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
 import scala.util.Try

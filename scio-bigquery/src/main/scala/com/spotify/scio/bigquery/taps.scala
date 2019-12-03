@@ -27,7 +27,7 @@ import com.spotify.scio.values.SCollection
 
 import scala.collection.JavaConverters._
 import scala.concurrent.Future
-import scala.language.implicitConversions
+
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
 

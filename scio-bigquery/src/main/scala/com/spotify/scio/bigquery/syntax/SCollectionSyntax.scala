@@ -36,7 +36,7 @@ import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{CreateDisposition, 
 
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
-import scala.language.implicitConversions
+
 import com.spotify.scio.bigquery.Table
 import com.spotify.scio.schemas.Schema
 
