@@ -1007,6 +1007,10 @@ lazy val `scio-smb`: Project = project
       "com.novocode" % "junit-interface" % "0.11" % Test,
       "junit" % "junit" % "4.13-rc-2" % Test
     ),
+    javacOptions ++= {
+      (Compile / sourceManaged).value.mkdirs()
+      Seq("-s", (Compile / sourceManaged).value.getAbsolutePath)
+    },
     Test / classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.Flat
   )
   .configs(
