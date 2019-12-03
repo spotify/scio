@@ -32,6 +32,11 @@ trait ApproxFilter[-T] extends (T => Boolean) {
    * Serialize the filter to the given [[OutputStream]]
    */
   def writeTo(out: OutputStream): Unit
+
+  /**
+   * An estimated serialized size of the filter in bytes.
+   */
+  def estimatedSizeInBytes: Int = toBytes.length
 }
 
 /**
@@ -62,9 +67,8 @@ trait ApproxFilterBuilder[T, To[B >: T] <: ApproxFilter[B]] {
    *
    * The serialization is done using `ApproxFilter[T]#toBytes`
    */
-  def fromBytes(serializedBytes: Array[Byte]): To[T] = {
+  def fromBytes(serializedBytes: Array[Byte]): To[T] =
     readFrom(new ByteArrayInputStream(serializedBytes))
-  }
 
   def readFrom(in: InputStream): To[T]
 }
