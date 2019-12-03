@@ -30,6 +30,25 @@ trait SortMergeBucketScioContextSyntax {
 }
 
 final class SortedBucketScioContext(@transient private val self: ScioContext) {
+  /**
+   * Return an SCollection containing all pairs of elements with matching keys in `lhs` and
+   * `rhs`. Each pair of elements will be returned as a (k, (v1, v2)) tuple, where (k, v1) is in
+   * `lhs` and (k, v2) is in `rhs`.
+   *
+   * Unlike a regular [[PairSCollectionFunctions.join()]], the key information (namely, how to
+   * extract a comparable `K` from `L` and `R`) is remotely encoded in a
+   * [[org.apache.beam.sdk.extensions.smb.BucketMetadata]] file in the same directory as the
+   * input records. This transform requires a filesystem lookup to ensure that the metadata for
+   * each source are compatible.
+   *
+   * @group join
+
+   * @param keyClass join key class. Must have a Coder in Beam's default
+   *                 [[org.apache.beam.sdk.coders.CoderRegistry]] as custom key coders are not
+   *                 supported yet.
+   * @param lhs
+   * @param rhs
+   */
   def sortMergeJoin[K: Coder, L: Coder, R: Coder](
     keyClass: Class[K],
     lhs: SortedBucketIO.Read[L],
@@ -44,7 +63,19 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) {
           } yield (k, (i, j))
       }
 
-  // @Todo: expand signatures in the style of multijoin.py
+  /**
+   * For each key K in `a` or `b` return a resulting SCollection that contains a tuple with the
+   * list of values for that key in `a`, and `b`.
+   *
+   * See note on [[SortedBucketScioContext.sortMergeJoin() for information on how an SMB cogroup
+   * differs from a regular [[org.apache.beam.sdk.schemas.transforms.CoGroup]] operation.
+   *
+   * @group cogroup
+
+   * @param keyClass cogroup key class. Must have a Coder in Beam's default
+   *                 [[org.apache.beam.sdk.coders.CoderRegistry]] as custom key coders are not
+   *                 supported yet.
+   */
   def sortMergeCoGroup[K: Coder, A: Coder, B: Coder](
     keyClass: Class[K],
     a: SortedBucketIO.Read[A],
@@ -70,6 +101,19 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) {
       }
   }
 
+  /**
+   * For each key K in `a` or `b` or `c`, return a resulting SCollection that contains a tuple
+   * with the list of values for that key in `a`, `b` and `c`.
+   *
+   * See note on [[SortedBucketScioContext.sortMergeJoin() for information on how an SMB cogroup
+   * differs from a regular [[org.apache.beam.sdk.schemas.transforms.CoGroup]] operation.
+   *
+   * @group cogroup
+
+   * @param keyClass cogroup key class. Must have a Coder in Beam's default
+   *                 [[org.apache.beam.sdk.coders.CoderRegistry]] as custom key coders are not
+   *                 supported yet.
+   */
   def sortMergeCoGroup[K: Coder, A: Coder, B: Coder, C: Coder](
     keyClass: Class[K],
     a: SortedBucketIO.Read[A],

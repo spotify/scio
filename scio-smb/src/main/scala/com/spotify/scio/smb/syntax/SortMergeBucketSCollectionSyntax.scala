@@ -27,23 +27,25 @@ import org.apache.beam.sdk.values.PCollection
 trait SortMergeBucketSCollectionSyntax {
   implicit def toSortMergeBucketSCollection[T: Coder](
     data: SCollection[T]
-  ): SortedBucketSCollection[T] =
-    new SortedBucketSCollection(data)
-}
-
-private[smb] object SortMergeBucketSCollectionSyntax {
-  // Adapted from ScioUtil
-  def toPathFragment(path: String, suffix: String): String =
-    if (path.endsWith("/")) s"${path}bucket-*-shard-*${suffix}"
-    else s"$path/bucket-*-shard-${suffix}"
+  ): SortedBucketSCollection[T] = new SortedBucketSCollection(data)
 }
 
 final class SortedBucketSCollection[T: Coder](private val self: SCollection[T]) {
   type Write = PTransform[PCollection[T], SortedBucketSink.WriteResult]
 
-  // @Todo: Implement taps for metadata/bucket elements
+  /**
+   * Save an `SCollection[T]` to a filesystem, where each file represents a bucket
+   * whose records are lexicographically sorted by some key specified in the
+   * [[org.apache.beam.sdk.extensions.smb.BucketMetadata]] corresponding to the provided
+   * [[SortedBucketSink]] transform.
+   *
+   * @param write the [[PTransform]] that applies a [[SortedBucketSink]] transform to the input
+   *              data. It contains information about key function, bucket and shard size, etc.
+   */
   def saveAsSortedBucket(write: Write): ClosedTap[Nothing] = {
     self.applyInternal(write)
+
+    // @Todo: Implement taps for metadata/bucket elements
     ClosedTap[Nothing](EmptyTap)
   }
 }
