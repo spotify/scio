@@ -35,5 +35,7 @@ private[scio] object TupleFunctions {
     (kv.getKey, kv.getValue.asScala)
 
   def kvListToTuple[K, V](kv: KV[K, JList[V]]): (K, Iterable[V]) =
-    (kv.getKey, kv.getValue.asInstanceOf[JIterable[V]].asScala)
+    (kv.getKey, new Iterable[V] {
+      override def iterator: Iterator[V] = kv.getValue.iterator().asScala
+    })
 }
