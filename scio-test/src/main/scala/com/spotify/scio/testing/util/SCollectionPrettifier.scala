@@ -82,7 +82,7 @@ object SCollectionPrettifier {
     new Prettifier {
       override def apply(o: Any): String = {
         o match {
-          case i: Traversable[_] =>
+          case i: Traversable[_] => // TODO get type of the inner type.
             prettifyAvroLevelOne(
               i.map(_.asInstanceOf[IndexedRecord]),
               fallbackPrettifier
