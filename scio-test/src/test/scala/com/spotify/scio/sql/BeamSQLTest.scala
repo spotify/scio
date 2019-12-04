@@ -22,7 +22,7 @@ import java.lang.{Iterable => JIterable}
 import com.spotify.scio.IsJavaBean
 import com.spotify.scio.bean.UserBean
 import com.spotify.scio.coders.Coder
-import com.spotify.scio.schemas.{Schema, To, Type}
+import com.spotify.scio.schemas.{Schema, To}
 import com.spotify.scio.testing.PipelineSpec
 import org.apache.beam.sdk.extensions.sql.BeamSqlUdf
 import org.apache.beam.sdk.schemas.{Schema => BSchema}
@@ -38,11 +38,14 @@ import com.spotify.scio.avro
 
 object Schemas {
   // test logical type support
-  implicit def localeSchema: Schema[Locale] =
-    Schema.logicalType[String, Locale](Type(BSchema.FieldType.STRING))(
+  implicit val localeSchema: Schema[Locale] =
+    Schema.logicalType[Locale, String](
+      BSchema.FieldType.STRING,
       l => l.toLanguageTag(),
       s => Locale.forLanguageTag(s)
     )
+
+  org.apache.beam.sdk.util.SerializableUtils.ensureSerializable(localeSchema)
 }
 
 import Schemas._
@@ -248,7 +251,7 @@ class BeamSQLTest extends PipelineSpec {
     r should containInAnyOrder(expected)
   }
 
-  it should "support fallback in sql" in runWithContext { sc =>
+  it should "support logical type in sql" in runWithContext { sc =>
     val expected = usersWithLocale.map { u =>
       (u.username, u.locale)
     }

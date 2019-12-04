@@ -108,14 +108,14 @@ final class SchemaMaterializerTest extends AnyFlatSpec with Matchers {
 
   it should "support logical types" in {
     import java.net.URI
-
-    val uriSchema = Schema.logicalType(
-      Type(org.apache.beam.sdk.schemas.Schema.FieldType.STRING)
-    )(toBase = (_: URI).toString, fromBase = (s: String) => new URI(s))
-
+    val uriSchema = Schema.logicalType[URI, String](
+      org.apache.beam.sdk.schemas.Schema.FieldType.STRING,
+      _.toString,
+      s => new URI(s)
+    )
     val (schema, toRow, fromRow) = SchemaMaterializer.materialize[URI](uriSchema)
     val uri = URI.create("https://spotify.com")
-    val row = Row.withSchema(schema).addValue(uri).build()
+    val row = Row.withSchema(schema).addValue(uri.toString).build()
     toRow(uri) shouldBe row
     fromRow(toRow(uri)) shouldBe uri
   }

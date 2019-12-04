@@ -25,7 +25,6 @@ import org.apache.beam.sdk.schemas.{Schema => BSchema}
 import org.apache.beam.sdk.transforms.SerializableFunction
 import org.apache.beam.sdk.values.Row
 import BSchema.{Field => BField, FieldType => BFieldType}
-import org.apache.beam.sdk.schemas.Schema.LogicalType
 
 object SchemaMaterializer {
   @inline private[scio] def fieldType[A](schema: Schema[A]): BFieldType =
@@ -39,6 +38,7 @@ object SchemaMaterializer {
           i = i + 1
         }
         BFieldType.row(BSchema.of(out: _*))
+      case LogicalType(u) => u
       case RawRecord(bschema, _, _) =>
         BFieldType.row(bschema)
       case Type(t)               => t
@@ -47,39 +47,13 @@ object SchemaMaterializer {
       case OptionType(s)         => fieldType(s).withNullable(true)
     }
 
-  /**
-   * Convert the Scio coders that may be embeded in this schema
-   * to proper beam coders
-   */
-  private def materializeSchema[A](
-    schema: Schema[A]
-  ): Schema[A] =
-    schema match {
-      case Record(schemas, construct, destruct) =>
-        val schemasMat = schemas.map {
-          case (n, s) => (n, materializeSchema(s))
-        }
-        Record[A](schemasMat, construct, destruct)
-      case r @ RawRecord(_, _, _) =>
-        r
-      case t @ Type(_) =>
-        t
-      case OptionType(s) =>
-        OptionType(materializeSchema(s))
-      case a @ ArrayType(s, t, f) =>
-        ArrayType[a._F, a._T](materializeSchema(s), t, f)
-      case m @ MapType(ks, vs, t, f) =>
-        val mk = materializeSchema(ks)
-        val mv = materializeSchema(vs)
-        MapType[m._F, m._K, m._V](mk, mv, t, f)
-    }
-
   // XXX: scalac can't unify schema.Repr with s.Repr
   private def dispatchDecode[A](schema: Schema[A]): schema.Decode =
     schema match {
       case s @ Record(_, _, _)      => (decode(s)(_)).asInstanceOf[schema.Repr => A]
       case RawRecord(_, fromRow, _) => (fromRow.apply _).asInstanceOf[schema.Repr => A]
       case s @ Type(_)              => (decode(s)(_)).asInstanceOf[schema.Repr => A]
+      case s @ LogicalType(_)       => (decode(s)(_)).asInstanceOf[schema.Repr => A]
       case s @ OptionType(_)        => (decode(s)(_)).asInstanceOf[schema.Repr => A]
       case s @ ArrayType(_, _, _)   => (decode[s._F, s._T](s)(_)).asInstanceOf[schema.Repr => A]
       case s @ MapType(_, _, _, _) =>
@@ -108,7 +82,7 @@ object SchemaMaterializer {
         // It will happily convert from InputT to base when creating a Row
         // but won't do the reverse conversion when reading values from a Row...
         t.getLogicalType()
-          .asInstanceOf[LogicalType[A, Object]]
+          .asInstanceOf[BSchema.LogicalType[A, Object]]
           .toInputType(v.asInstanceOf[Object])
       case _ => v
     }
@@ -116,6 +90,9 @@ object SchemaMaterializer {
 
   private def decode[A](schema: OptionType[A])(v: schema.Repr): Option[A] =
     Option(v).map(dispatchDecode(schema.schema))
+
+  private def decode[A](schema: LogicalType[A])(v: schema.Repr): A =
+    schema.fromBase(v).asInstanceOf[A]
 
   private def decode[F[_], A: ClassTag](schema: ArrayType[F, A])(v: schema.Repr): F[A] = {
     val values = new Array[A](v.size)
@@ -146,6 +123,7 @@ object SchemaMaterializer {
       case s @ Record(_, _, _)    => (encode(s, fieldType)(_)).asInstanceOf[A => schema.Repr]
       case RawRecord(_, _, toRow) => (toRow.apply _).asInstanceOf[A => schema.Repr]
       case s @ Type(_)            => (encode(s)(_)).asInstanceOf[A => schema.Repr]
+      case s @ LogicalType(_)     => (encode(s)(_)).asInstanceOf[A => schema.Repr]
       case s @ OptionType(_)      => (encode(s, fieldType)(_)).asInstanceOf[A => schema.Repr]
       case s @ ArrayType(_, _, _) =>
         (encode[s._F, s._T](s, fieldType)(_)).asInstanceOf[A => schema.Repr]
@@ -167,6 +145,9 @@ object SchemaMaterializer {
     }
     builder.build()
   }
+
+  private def encode[A](schema: LogicalType[A])(v: A): schema.Repr =
+    schema.toBase(v).asInstanceOf[schema.Repr]
 
   private def encode[A](schema: Type[A])(v: A): schema.Repr = v
 
@@ -210,21 +191,20 @@ object SchemaMaterializer {
     schema match {
       case RawRecord(bschema, fromRow, toRow) =>
         (bschema, toRow, fromRow)
-      case Record(_, _, _) =>
+      case record @ Record(_, _, _) =>
         val ft = fieldType(schema)
         val bschema = ft.getRowSchema
-        val schemaMat = materializeSchema(schema).asInstanceOf[Record[T]]
 
         def fromRow =
           new SerializableFunction[Row, T] {
             def apply(r: Row): T =
-              decode[T](schemaMat)(r)
+              decode[T](record)(r)
           }
 
         def toRow =
           new SerializableFunction[T, Row] {
             def apply(t: T): Row =
-              encode[T](schemaMat, ft)(t)
+              encode[T](record, ft)(t)
           }
 
         (bschema, toRow, fromRow)

@@ -31,31 +31,16 @@ import org.apache.beam.sdk.schemas.Schema.FieldType
 import org.apache.beam.sdk.schemas.{SchemaProvider, Schema => BSchema}
 import org.apache.beam.sdk.transforms.SerializableFunction
 import org.apache.beam.sdk.values.{Row, TypeDescriptor}
+import com.twitter.chill.ClosureCleaner
 
 import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
 import org.apache.beam.sdk.values.TupleTag
-import org.apache.beam.sdk.schemas.Schema.LogicalType
 
 import scala.collection.{mutable, SortedSet}
 
 object Schema extends JodaInstances with AvroInstances with LowPriorityFallbackInstances {
   @inline final def apply[T](implicit c: Schema[T]): Schema[T] = c
-
-  final def logicalType[U, T: ClassTag](
-    underlying: Type[U]
-  )(toBase: T => U, fromBase: U => T): Schema[T] = {
-    Type[T](FieldType.logicalType(new LogicalType[T, U] {
-      private val clazz = scala.reflect.classTag[T].runtimeClass.asInstanceOf[Class[T]]
-      private val className = clazz.getCanonicalName
-      override def getIdentifier: String = className
-      override def getBaseType: FieldType = underlying.fieldType
-      override def toBaseType(input: T): U = toBase(input)
-      override def toInputType(base: U): T = fromBase(base)
-      override def toString(): String =
-        s"LogicalType($className, ${underlying.fieldType.getTypeName()})"
-    }))
-  }
 
   implicit val jByteSchema: Type[java.lang.Byte] = JavaInstances.jByteSchema
   implicit val jBytesSchema: Type[Array[java.lang.Byte]] = JavaInstances.jBytesSchema
@@ -117,12 +102,50 @@ object Schema extends JodaInstances with AvroInstances with LowPriorityFallbackI
     ScalaInstances.mapSchema
   implicit def mutableMapSchema[K: Schema, V: Schema]: Schema[mutable.Map[K, V]] =
     ScalaInstances.mutableMapSchema
+
+  final def logicalType[T, U](
+    underlying: BSchema.FieldType,
+    toBase: T => U,
+    fromBase: U => T
+  ): Schema[T] =
+    LogicalType[T, U](underlying, toBase, fromBase)
 }
 
-sealed trait Schema[T] {
+sealed trait Schema[T] extends Serializable {
   type Repr
   type Decode = Repr => T
   type Encode = T => Repr
+}
+
+// Scio specific implementation of LogicalTypes
+// Workarounds https://issues.apache.org/jira/browse/BEAM-8888
+// Scio's Logical types are materialized to beam built-in types
+
+sealed trait LogicalType[T] extends Schema[T] {
+  def underlying: BSchema.FieldType
+  def toBase(v: T): Repr
+  def fromBase(base: Repr): T
+  override def toString(): String = s"LogicalType($underlying)"
+}
+
+object LogicalType {
+  def apply[T, U](u: BSchema.FieldType, t: T => U, f: U => T) = {
+    val ct = ClosureCleaner.clean(t)
+    val cf = ClosureCleaner.clean(f)
+    require(
+      u.getTypeName() != BSchema.TypeName.LOGICAL_TYPE,
+      "Beam's logical types are not supported"
+    )
+    new LogicalType[T] {
+      type Repr = U
+      val underlying = u
+      def toBase(v: T): U = ct(v)
+      def fromBase(u: U): T = cf(u)
+    }
+  }
+
+  def unapply[T](logicalType: LogicalType[T]): Option[BSchema.FieldType] =
+    Some(logicalType.underlying)
 }
 
 final case class Record[T] private (
