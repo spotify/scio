@@ -141,4 +141,48 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) {
         )
       }
   }
+
+  /**
+   * For each key K in `a` or `b` or `c` or `d`, return a resulting SCollection that contains a
+   * tuple with the list of values for that key in `a`, `b`, `c` and `d`.
+   *
+   * See note on [[SortedBucketScioContext.sortMergeJoin() for information on how an SMB cogroup
+   * differs from a regular [[org.apache.beam.sdk.schemas.transforms.CoGroup]] operation.
+   *
+   * @group cogroup
+
+   * @param keyClass cogroup key class. Must have a Coder in Beam's default
+   *                 [[org.apache.beam.sdk.coders.CoderRegistry]] as custom key coders are not
+   *                 supported yet.
+   */
+  def sortMergeCoGroup[K: Coder, A: Coder, B: Coder, C: Coder, D: Coder](
+    keyClass: Class[K],
+    a: SortedBucketIO.Read[A],
+    b: SortedBucketIO.Read[B],
+    c: SortedBucketIO.Read[C],
+    d: SortedBucketIO.Read[D]
+  ): SCollection[(K, (Iterable[A], Iterable[B], Iterable[C], Iterable[D]))] = {
+    val t = SortedBucketIO.read(keyClass).of(a).and(b).and(c).and(d)
+    val (tupleTagA, tupleTagB, tupleTagC, tupleTagD) = (
+      a.getTupleTag,
+      b.getTupleTag,
+      c.getTupleTag,
+      d.getTupleTag
+    )
+    self
+      .wrap(self.applyInternal(t))
+      .map { kv =>
+        val cgbkResult = kv.getValue
+
+        (
+          kv.getKey,
+          (
+            cgbkResult.getAll(tupleTagA).asScala,
+            cgbkResult.getAll(tupleTagB).asScala,
+            cgbkResult.getAll(tupleTagC).asScala,
+            cgbkResult.getAll(tupleTagD).asScala
+          )
+        )
+      }
+  }
 }

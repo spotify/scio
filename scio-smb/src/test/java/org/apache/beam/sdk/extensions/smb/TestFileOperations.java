@@ -51,7 +51,7 @@ class TestFileOperations extends FileOperations<String> {
       }
 
       @Override
-      String readNext() throws NoSuchElementException {
+      public String readNext() throws NoSuchElementException {
         if (next == null) {
           throw new NoSuchElementException();
         }
@@ -59,7 +59,7 @@ class TestFileOperations extends FileOperations<String> {
       }
 
       @Override
-      boolean hasNextElement() throws IOException {
+      public boolean hasNextElement() throws IOException {
         next = reader.readLine();
         return next != null;
       }

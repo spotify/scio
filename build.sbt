@@ -1020,8 +1020,7 @@ lazy val `scio-smb`: Project = project
   )
   .dependsOn(
     `scio-core`,
-    `scio-avro`,
-    `scio-test`
+    `scio-test` % Test
   )
 
 lazy val site: Project = project

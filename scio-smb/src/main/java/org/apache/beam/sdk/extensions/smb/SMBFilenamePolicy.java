@@ -58,7 +58,7 @@ public final class SMBFilenamePolicy implements Serializable {
     this.filenameSuffix = filenameSuffix;
   }
 
-  FileAssignment forDestination() {
+  public FileAssignment forDestination() {
     return new FileAssignment(directory, filenameSuffix, false);
   }
 
@@ -101,7 +101,7 @@ public final class SMBFilenamePolicy implements Serializable {
       this.doTimestampFiles = doTimestampFiles;
     }
 
-    ResourceId forBucket(BucketShardId id, BucketMetadata<?, ?> metadata) {
+    public ResourceId forBucket(BucketShardId id, BucketMetadata<?, ?> metadata) {
       Preconditions.checkArgument(
           id.getBucketId() < metadata.getNumBuckets(),
           "Can't assign a filename for bucketShardId %s: max number of buckets is %s",
@@ -130,7 +130,7 @@ public final class SMBFilenamePolicy implements Serializable {
       return filenamePrefix.resolve(timestamp + filename, StandardResolveOptions.RESOLVE_FILE);
     }
 
-    ResourceId forMetadata() {
+    public ResourceId forMetadata() {
       String timestamp = doTimestampFiles ? Instant.now().toString(TEMPFILE_TIMESTAMP) : "";
       return filenamePrefix.resolve(
           timestamp + METADATA_FILENAME, StandardResolveOptions.RESOLVE_FILE);

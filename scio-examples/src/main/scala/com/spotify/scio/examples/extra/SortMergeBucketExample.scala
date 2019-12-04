@@ -80,7 +80,7 @@ object SortMergeBucketWriteExample {
     implicit val coder: Coder[GenericRecord] =
       Coder.avroGenericRecordCoder(SortMergeBucketExample.UserDataSchema)
 
-    sc.parallelize(0 to 499)
+    sc.parallelize(0 until 500)
       .map { i =>
         SortMergeBucketExample.user(i, Random.nextInt(100))
       }
@@ -95,7 +95,7 @@ object SortMergeBucketWriteExample {
           .withNumShards(1)
       )
 
-    sc.parallelize(250 to 749)
+    sc.parallelize(250 until 750)
       .map { i =>
         SortMergeBucketExample.account(
           i,
