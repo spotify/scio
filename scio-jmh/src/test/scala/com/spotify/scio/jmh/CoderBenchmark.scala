@@ -26,7 +26,6 @@ import com.spotify.scio.coders._
 import com.spotify.scio.schemas._
 import com.twitter.chill.IKryoRegistrar
 import org.apache.beam.sdk.coders.{
-  CoderRegistry,
   AtomicCoder,
   ByteArrayCoder,
   SerializableCoder,
@@ -35,7 +34,6 @@ import org.apache.beam.sdk.coders.{
 }
 import org.apache.beam.sdk.util.CoderUtils
 import org.apache.beam.sdk.schemas.SchemaCoder
-import org.apache.beam.sdk.options.PipelineOptionsFactory
 import org.openjdk.jmh.annotations._
 
 final case class UserId(bytes: Array[Byte])
