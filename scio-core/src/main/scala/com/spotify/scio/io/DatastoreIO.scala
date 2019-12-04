@@ -41,9 +41,7 @@ final case class DatastoreIO(projectId: String) extends ScioIO[Entity] {
     )
 
   override protected def write(data: SCollection[Entity], params: WriteP): Tap[Nothing] = {
-    data
-      .asInstanceOf[SCollection[Entity]]
-      .applyInternal(beam.DatastoreIO.v1.write.withProjectId(projectId))
+    data.applyInternal(beam.DatastoreIO.v1.write.withProjectId(projectId))
     EmptyTap
   }
 
