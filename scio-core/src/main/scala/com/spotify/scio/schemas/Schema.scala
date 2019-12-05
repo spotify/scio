@@ -130,12 +130,12 @@ sealed trait LogicalType[T] extends Schema[T] {
 
 object LogicalType {
   def apply[T, U](u: BSchema.FieldType, t: T => U, f: U => T) = {
-    val ct = ClosureCleaner.clean(t)
-    val cf = ClosureCleaner.clean(f)
     require(
       u.getTypeName() != BSchema.TypeName.LOGICAL_TYPE,
       "Beam's logical types are not supported"
     )
+    val ct = ClosureCleaner.clean(t)
+    val cf = ClosureCleaner.clean(f)
     new LogicalType[T] {
       type Repr = U
       val underlying = u

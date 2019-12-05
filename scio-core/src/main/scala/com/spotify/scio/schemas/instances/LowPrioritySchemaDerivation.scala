@@ -42,15 +42,10 @@ private object Derived extends Serializable {
 
 trait LowPrioritySchemaDerivation {
   import magnolia._
-
-  import language.experimental.macros
-
   type Typeclass[T] = Schema[T]
 
-  def combine[T](ctx: CaseClass[Schema, T]): Record[T] = {
-    val ps = ctx.parameters
-    Derived.combineSchema(ps, ctx.rawConstruct)
-  }
+  def combine[T](ctx: CaseClass[Schema, T]): Record[T] =
+    Derived.combineSchema(ctx.parameters, ctx.rawConstruct)
 
   import com.spotify.scio.MagnoliaMacros
   implicit def gen[T]: Schema[T] = macro MagnoliaMacros.genWithoutAnnotations[T]
