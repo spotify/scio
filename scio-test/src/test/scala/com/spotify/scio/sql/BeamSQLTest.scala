@@ -22,7 +22,7 @@ import java.lang.{Iterable => JIterable}
 import com.spotify.scio.IsJavaBean
 import com.spotify.scio.bean.UserBean
 import com.spotify.scio.coders.Coder
-import com.spotify.scio.schemas.{Schema, To}
+import com.spotify.scio.schemas.{LogicalType, Schema, To}
 import com.spotify.scio.testing.PipelineSpec
 import org.apache.beam.sdk.extensions.sql.BeamSqlUdf
 import org.apache.beam.sdk.schemas.{Schema => BSchema}
@@ -39,13 +39,11 @@ import com.spotify.scio.avro
 object Schemas {
   // test logical type support
   implicit val localeSchema: Schema[Locale] =
-    Schema.logicalType[Locale, String](
+    LogicalType[Locale, String](
       BSchema.FieldType.STRING,
       l => l.toLanguageTag(),
       s => Locale.forLanguageTag(s)
     )
-
-  org.apache.beam.sdk.util.SerializableUtils.ensureSerializable(localeSchema)
 }
 
 import Schemas._

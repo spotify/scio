@@ -102,13 +102,6 @@ object Schema extends JodaInstances with AvroInstances with LowPrioritySchemaDer
     ScalaInstances.mapSchema
   implicit def mutableMapSchema[K: Schema, V: Schema]: Schema[mutable.Map[K, V]] =
     ScalaInstances.mutableMapSchema
-
-  final def logicalType[T, U](
-    underlying: BSchema.FieldType,
-    toBase: T => U,
-    fromBase: U => T
-  ): Schema[T] =
-    LogicalType[T, U](underlying, toBase, fromBase)
 }
 
 sealed trait Schema[T] extends Serializable {
@@ -129,7 +122,7 @@ sealed trait LogicalType[T] extends Schema[T] {
 }
 
 object LogicalType {
-  def apply[T, U](u: BSchema.FieldType, t: T => U, f: U => T) = {
+  def apply[T, U](u: BSchema.FieldType, t: T => U, f: U => T): LogicalType[T] = {
     require(
       u.getTypeName() != BSchema.TypeName.LOGICAL_TYPE,
       "Beam's logical types are not supported"

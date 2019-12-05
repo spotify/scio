@@ -38,13 +38,12 @@ object SchemaMaterializer {
           i = i + 1
         }
         BFieldType.row(BSchema.of(out: _*))
-      case LogicalType(u) => u
-      case RawRecord(bschema, _, _) =>
-        BFieldType.row(bschema)
-      case Type(t)               => t
-      case ArrayType(s, _, _)    => BFieldType.array(fieldType(s))
-      case MapType(ks, vs, _, _) => BFieldType.map(fieldType(ks), fieldType(vs))
-      case OptionType(s)         => fieldType(s).withNullable(true)
+      case LogicalType(u)           => u
+      case RawRecord(bschema, _, _) => BFieldType.row(bschema)
+      case Type(t)                  => t
+      case ArrayType(s, _, _)       => BFieldType.array(fieldType(s))
+      case MapType(ks, vs, _, _)    => BFieldType.map(fieldType(ks), fieldType(vs))
+      case OptionType(s)            => fieldType(s).withNullable(true)
     }
 
   // XXX: scalac can't unify schema.Repr with s.Repr
