@@ -100,7 +100,7 @@ class JsonFileOperations extends FileOperations<TableRow> {
     }
 
     @Override
-    TableRow readNext() throws IOException, NoSuchElementException {
+    public TableRow readNext() throws IOException, NoSuchElementException {
       if (next == null) {
         throw new NoSuchElementException();
       }
@@ -108,7 +108,7 @@ class JsonFileOperations extends FileOperations<TableRow> {
     }
 
     @Override
-    boolean hasNextElement() throws IOException {
+    public boolean hasNextElement() throws IOException {
       next = reader.readLine();
       return next != null;
     }

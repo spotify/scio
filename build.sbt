@@ -920,7 +920,8 @@ lazy val `scio-examples`: Project = project
       }
     },
     sources in doc in Compile := List(),
-    run / classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.Flat
+    run / classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.Flat,
+    Test / classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.Flat
   )
   .dependsOn(
     `scio-core`,
@@ -932,7 +933,8 @@ lazy val `scio-examples`: Project = project
     `scio-spanner`,
     `scio-tensorflow`,
     `scio-sql`,
-    `scio-test` % "compile->test"
+    `scio-test` % "compile->test",
+    `scio-smb`
   )
 
 lazy val `scio-repl`: Project = project
@@ -1015,6 +1017,10 @@ lazy val `scio-smb`: Project = project
   )
   .configs(
     IntegrationTest
+  )
+  .dependsOn(
+    `scio-core`,
+    `scio-test` % Test
   )
 
 lazy val site: Project = project

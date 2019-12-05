@@ -72,7 +72,7 @@ class AvroBucketMetadata<K, V extends GenericRecord> extends BucketMetadata<K, V
   }
 
   @Override
-  protected Map<Class<?>, Coder<?>> coderOverrides() {
+  public Map<Class<?>, Coder<?>> coderOverrides() {
     return ImmutableMap.of(
         ByteBuffer.class, ByteBufferCoder.of(),
         CharSequence.class, CharSequenceCoder.of());
