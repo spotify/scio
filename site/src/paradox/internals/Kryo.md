@@ -7,7 +7,7 @@ By registering your classes at compile time, Kryo can serialize far more efficie
 ## How to enable KryoRegistrar
 Add the following class. You can rename it, but its name has to end in `KryoRegistrar`. Also make sure that the [Macro Paradise](https://docs.scala-lang.org/overviews/macros/paradise.html) plugin is enabled for your project.
 
-````scala
+```scala
 import com.spotify.scio.coders.KryoRegistrar
 import com.twitter.chill._
 

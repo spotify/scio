@@ -72,25 +72,27 @@ See @scaladoc[Scio Scaladocs](com.spotify.scio.index)  for current API documenta
   - [datasplash](https://github.com/ngrunwald/datasplash) - A Clojure API for Google Cloud Dataflow
 
 
+@@toc { depth=1 }
+
 @@@ index
 
-* [Getting Started](Getting-Started.md)
-* [Examples](examples.md)
-* [IO](io/index.md)
-* [Testing](Scio-Unit-Tests.md)
-* [REPL](Scio-REPL.md)
-* [Internals](internals/index.md)
-* [Extras](extras/index.md)
-* [Migration guides](migrations/index.md)
-* [Development](dev/index.md)
-* [Scaladoc](scaladoc.md)
-* [Scio, Beam and Dataflow](Scio,-Beam-and-Dataflow.md)
-* [Scio, Scalding and Spark](Scio,-Scalding-and-Spark.md)
-* [Runners](Runners.md)
-* [Data guideline](Scio-data-guideline.md)
-* [Versions](Apache-Beam.md)
-* [Changelog](Changelog.md)
-* [FAQ](FAQ.md)
-* [Powered By](Powered-By.md)
+* @ref:[Getting Started](Getting-Started.md)
+* @ref:[Examples](examples.md)
+* @ref:[IO](io/index.md)
+* @ref:[Testing](Scio-Unit-Tests.md)
+* @ref:[REPL](Scio-REPL.md)
+* @ref:[Internals](internals/index.md)
+* @ref:[Extras](extras/index.md)
+* @ref:[Migration guides](migrations/index.md)
+* @ref:[Development](dev/index.md)
+* @ref:[Scaladoc](scaladoc.md)
+* @ref:[Scio, Beam and Dataflow](Scio,-Beam-and-Dataflow.md)
+* @ref:[Scio, Scalding and Spark](Scio,-Scalding-and-Spark.md)
+* @ref:[Runners](Runners.md)
+* @ref:[Data guideline](Scio-data-guideline.md)
+* @ref:[Versions](Apache-Beam.md)
+* @ref:[Changelog](Changelog.md)
+* @ref:[FAQ](FAQ.md)
+* @ref:[Powered By](Powered-By.md)
 
 @@@

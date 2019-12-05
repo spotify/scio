@@ -21,7 +21,7 @@ We also want to avoid custom settings as much as possible to make on-boarding ne
 - Set _Code Style &rarr; Scala &rarr; Formatter &rarr; scalafmt_
 - Under _Copyright &rarr; Copyright Profiles_, add the following template.
 
-  ```
+```
   Copyright $today.year Spotify AB.
 
   Licensed under the Apache License, Version 2.0 (the "License");
@@ -36,7 +36,7 @@ We also want to avoid custom settings as much as possible to make on-boarding ne
   KIND, either express or implied.  See the License for the
   specific language governing permissions and limitations
   under the License.
-  ```
+```
 
 ### ScalaStyle
 

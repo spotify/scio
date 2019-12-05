@@ -44,6 +44,7 @@ class LeaderBoardTest extends PipelineSpec {
   }
 
   "LeaderBoard.calculateTeamScores" should "work with on time elements" in {
+    // #LeaderBoardTest_example_1
     val stream = testStreamOf[GameActionInfo]
     // Start at the epoch
       .advanceWatermarkTo(baseTime)
@@ -54,6 +55,8 @@ class LeaderBoardTest extends PipelineSpec {
         event(redTwo, 3, Duration.standardSeconds(22)),
         event(blueTwo, 5, Duration.standardSeconds(3))
       )
+    // #LeaderBoardTest_example_1
+    // #LeaderBoardTest_example_2
       // The watermark advances slightly, but not past the end of the window
       .advanceWatermarkTo(baseTime.plus(Duration.standardMinutes(3)))
       .addElements(
@@ -62,7 +65,9 @@ class LeaderBoardTest extends PipelineSpec {
       )
       // The window should close and emit an ON_TIME pane
       .advanceWatermarkToInfinity
+    // #LeaderBoardTest_example_2
 
+    // #LeaderBoardTest_example_3
     runWithContext { sc =>
       val teamScores =
         LeaderBoard.calculateTeamScores(sc.testStream(stream), teamWindowDuration, allowedLateness)
@@ -72,5 +77,6 @@ class LeaderBoardTest extends PipelineSpec {
         containInAnyOrder(Seq((blueOne.team, 12), (redOne.team, 4)))
       }
     }
+    // #LeaderBoardTest_example_3
   }
 }

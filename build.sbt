@@ -1087,9 +1087,9 @@ lazy val siteSettings = Def.settings(
   mdocIn := baseDirectory.value / "src" / "paradox",
   mdocExtraArguments ++= Seq("--no-link-hygiene"),
   sourceDirectory in Paradox := mdocOut.value,
+  makeSite := makeSite.dependsOn(mdoc.toTask("")).value,
   makeSite := {
     // Fix JavaDoc links before makeSite
-    mdoc.toTask("").value
     (doc in ScalaUnidoc).value
     val bases = javaMappings.map(m => m._3 + "/index.html")
     val t = (target in ScalaUnidoc).value
@@ -1134,7 +1134,8 @@ lazy val siteSettings = Def.settings(
       `scio-parquet`,
       `scio-tensorflow`,
       `scio-spanner`,
-      `scio-macros`
+      `scio-macros`,
+      `scio-smb`
     ),
   // unidoc handles class paths differently than compile and may give older
   // versions high precedence.
@@ -1158,7 +1159,7 @@ lazy val siteSettings = Def.settings(
       .withFavicon("images/favicon.ico")
       .withColor("white", "indigo")
       .withLogo("images/logo.png")
-      .withCopyright("Copyright (C) 2018 Spotify AB")
+      .withCopyright("Copyright (C) 2019 Spotify AB")
       .withRepository(uri("https://github.com/spotify/scio"))
       .withSocial(uri("https://github.com/spotify"), uri("https://twitter.com/spotifyeng"))
   }
