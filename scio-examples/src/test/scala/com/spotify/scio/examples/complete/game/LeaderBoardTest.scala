@@ -55,8 +55,8 @@ class LeaderBoardTest extends PipelineSpec {
         event(redTwo, 3, Duration.standardSeconds(22)),
         event(blueTwo, 5, Duration.standardSeconds(3))
       )
-    // #LeaderBoardTest_example_1
-    // #LeaderBoardTest_example_2
+      // #LeaderBoardTest_example_1
+      // #LeaderBoardTest_example_2
       // The watermark advances slightly, but not past the end of the window
       .advanceWatermarkTo(baseTime.plus(Duration.standardMinutes(3)))
       .addElements(

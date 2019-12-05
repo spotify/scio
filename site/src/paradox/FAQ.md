@@ -310,17 +310,16 @@ By default Scio runs BigQuery jobs with `BATCH` priority except when in the REPL
 
 Dataflow allows streaming jobs to be updated on the fly by specifying `--update`, along with `--jobName=[your_job]` on the command line. See https://cloud.google.com/dataflow/pipelines/updating-a-pipeline for detailed docs. Note that for this to work, Dataflow needs to be able to identify which transformations from the original job map to those in the replacement job. The easiest way to do so is to give unique names to transforms in the code itself. In Scio, this can be achieved by calling `.withName()` before applying the transform. For example:
 
-```scala mdoc:reset:invisible
+
+```scala mdoc:reset
 import com.spotify.scio._
 
-val inputPath: String = ""
-val (sc, _) = ContextAndArgs(Array())
-```
-
-```scala mdoc
-sc.textFile(inputPath)
-   .withName("MakeUpper").map(_.toUpperCase)
-   .withName("BigWords").filter(_.length > 6)
+def main(cmdlineArgs: Array[String]): Unit = {
+  val (sc, args) = ContextAndArgs(cmdlineArgs)
+  sc.textFile(args("input"))
+    .withName("MakeUpper").map(_.toUpperCase)
+    .withName("BigWords").filter(_.length > 6)
+}
 ```
 
 In this example, the `map`'s transform name is "MakeUpper" and the `filter`'s is "BigWords". If we later decided that we want to count 6 letter words as "big" too, then we can change it to `_.length > 5`, and because the transform name is the same the job can be updated on the fly.

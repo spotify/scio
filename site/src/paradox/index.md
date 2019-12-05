@@ -72,8 +72,6 @@ See @scaladoc[Scio Scaladocs](com.spotify.scio.index)  for current API documenta
   - [datasplash](https://github.com/ngrunwald/datasplash) - A Clojure API for Google Cloud Dataflow
 
 
-@@toc { depth=1 }
-
 @@@ index
 
 * @ref:[Getting Started](Getting-Started.md)
