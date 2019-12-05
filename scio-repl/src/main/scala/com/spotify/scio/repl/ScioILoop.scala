@@ -76,14 +76,18 @@ class ScioILoop(
   // Hidden magics/helpers for REPL session jars.
 
   private val createJarCmd =
-    LoopCommand.nullary("createJar", "create a Scio REPL runtime jar", () => {
-      Result.resultFromString(scioClassLoader.createReplCodeJar)
-    })
+    LoopCommand.nullary(
+      "createJar",
+      "create a Scio REPL runtime jar",
+      () => Result.resultFromString(scioClassLoader.createReplCodeJar)
+    )
 
   private val getNextJarCmd =
-    LoopCommand.nullary("nextJar", "get the path of the next Scio REPL runtime jar", () => {
-      Result.resultFromString(scioClassLoader.getNextReplCodeJarPath)
-    })
+    LoopCommand.nullary(
+      "nextJar",
+      "get the path of the next Scio REPL runtime jar",
+      () => Result.resultFromString(scioClassLoader.getNextReplCodeJarPath)
+    )
 
   /**
    * REPL magic to get a new Scio context using arguments from the command line or :scioOpts.

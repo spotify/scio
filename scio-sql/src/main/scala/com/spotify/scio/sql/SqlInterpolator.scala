@@ -113,6 +113,7 @@ private trait SqlInterpolatorMacroHelpers {
 }
 
 object SqlInterpolatorMacro {
+
   /**
    * This static annotation is used to pass (static) parameters to SqlInterpolatorMacro.expand
    */

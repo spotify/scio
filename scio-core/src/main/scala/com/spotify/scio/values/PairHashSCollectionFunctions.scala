@@ -28,6 +28,7 @@ import scala.collection.mutable.{ArrayBuffer, Map => MMap}
  * @groupname join Join Operations
  */
 class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
+
   /**
    * Perform an inner join by replicating `rhs` to all workers. The right side should be tiny and
    * fit in memory.

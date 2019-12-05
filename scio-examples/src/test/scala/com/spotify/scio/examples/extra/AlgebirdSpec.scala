@@ -40,6 +40,7 @@ class AlgebirdSpec extends AnyPropSpec with ScalaCheckDrivenPropertyChecks with 
    * ScalaCheck properties.
    */
   class SColl[T](val internal: List[T]) {
+
     /** Sum with an implicit Semigroup. */
     def sum(implicit sg: Semigroup[T]): T = internal.reduce(sg.plus)
 

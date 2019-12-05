@@ -25,6 +25,7 @@ import scala.collection.JavaConverters._
 
 /** Utility for BigQuery schemas. */
 object SchemaUtil {
+
   /** Convert schema to case class definitions. */
   def toPrettyString(schema: TableSchema, name: String, indent: Int): String =
     "@BigQueryType.toTable\n" +

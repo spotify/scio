@@ -47,6 +47,7 @@ trait Tap[T] extends Serializable { self =>
 
   /** Map items from `T` to `U`. */
   def map[U: Coder](f: T => U): Tap[U] = new Tap[U] {
+
     /** Parent of this Tap before [[map]]. */
     override val parent: Option[Tap[_]] = Option(self)
 
@@ -111,6 +112,7 @@ object MaterializeTap {
 }
 
 final case class ClosedTap[T] private (private[scio] val underlying: Tap[T]) {
+
   /**
    * Get access to the underlying Tap. The ScioContext has to be ran before.
    * An instance of ScioResult is returned by ScioContext when the context is closed.

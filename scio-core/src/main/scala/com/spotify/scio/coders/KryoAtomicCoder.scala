@@ -67,16 +67,17 @@ private object KryoRegistrarLoader {
       .toSeq
       .filter(_.getName.endsWith("KryoRegistrar"))
       .flatMap { clsInfo =>
-        val optCls: Option[IKryoRegistrar] = try {
-          val cls = clsInfo.load()
-          if (classOf[AnnotatedKryoRegistrar] isAssignableFrom cls) {
-            Some(cls.newInstance().asInstanceOf[IKryoRegistrar])
-          } else {
-            None
+        val optCls: Option[IKryoRegistrar] =
+          try {
+            val cls = clsInfo.load()
+            if (classOf[AnnotatedKryoRegistrar] isAssignableFrom cls) {
+              Some(cls.newInstance().asInstanceOf[IKryoRegistrar])
+            } else {
+              None
+            }
+          } catch {
+            case _: Throwable => None
           }
-        } catch {
-          case _: Throwable => None
-        }
         optCls
       }
   }

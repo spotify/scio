@@ -36,12 +36,14 @@ import scala.concurrent.Future
 
 /** Represent a Beam runner specific result. */
 trait RunnerResult {
+
   /** Get a generic [[ScioResult]]. */
   def asScioResult: ScioResult
 }
 
 /** Represent a Scio pipeline result. */
 abstract class ScioResult private[scio] (val internal: PipelineResult) {
+
   /** Get a Beam runner specific result. */
   def as[T <: RunnerResult: ClassTag]: T = {
     val cls = ScioUtil.classOf[T]

@@ -24,6 +24,7 @@ import scala.reflect.runtime.universe._
 
 /** Interface for all custom type providers. */
 trait OverrideTypeProvider {
+
   /**
    * Returns true if we should override default mapping.
    * Uses schema directly from BigQuery loading.

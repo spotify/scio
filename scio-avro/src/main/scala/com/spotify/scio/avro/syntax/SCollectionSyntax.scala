@@ -32,6 +32,7 @@ import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
 
 final class UnsafeReflectiveRecordSCollectionOps[T: Coder](private val self: SCollection[T]) {
+
   /**
    * Save this SCollection of type
    * [[org.apache.avro.specific.SpecificRecord SpecificRecord]] as an Avro file.
@@ -56,6 +57,7 @@ final class UnsafeReflectiveRecordSCollectionOps[T: Coder](private val self: SCo
 
 final class GenericRecordSCollectionOps(private val self: SCollection[GenericRecord])
     extends AnyVal {
+
   /**
    * Save this SCollection of type
    * [[org.apache.avro.specific.SpecificRecord SpecificRecord]] as an Avro file.
@@ -75,6 +77,7 @@ final class GenericRecordSCollectionOps(private val self: SCollection[GenericRec
 }
 
 final class ObjectFileSCollectionOps[T](private val self: SCollection[T]) extends AnyVal {
+
   /**
    * Save this SCollection as an object file using default serialization.
    *
@@ -95,6 +98,7 @@ final class ObjectFileSCollectionOps[T](private val self: SCollection[T]) extend
 
 final class SpecificRecordSCollectionOps[T <: SpecificRecord](private val self: SCollection[T])
     extends AnyVal {
+
   /**
    * Save this SCollection of type
    * [[org.apache.avro.specific.SpecificRecord SpecificRecord]] as an Avro file.
@@ -114,6 +118,7 @@ final class SpecificRecordSCollectionOps[T <: SpecificRecord](private val self: 
 
 final class TypedAvroSCollectionOps[T <: HasAvroAnnotation](private val self: SCollection[T])
     extends AnyVal {
+
   /**
    * Save this SCollection as an Avro file. Note that element type `T` must be a case class
    * annotated with [[com.spotify.scio.avro.types.AvroType AvroType.toSchema]].
@@ -131,6 +136,7 @@ final class TypedAvroSCollectionOps[T <: HasAvroAnnotation](private val self: SC
 }
 
 final class ProtobufSCollectionOps[T <: Message](private val self: SCollection[T]) extends AnyVal {
+
   /**
    * Save this SCollection as a Protobuf file.
    *

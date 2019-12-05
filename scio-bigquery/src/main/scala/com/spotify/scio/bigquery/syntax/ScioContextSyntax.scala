@@ -44,6 +44,7 @@ import scala.util.Try
 
 /** Enhanced version of [[ScioContext]] with BigQuery methods. */
 final class ScioContextOps(private val self: ScioContext) extends AnyVal {
+
   /**
    * Get an SCollection for a BigQuery SELECT query.
    * Both [[https://cloud.google.com/bigquery/docs/reference/legacy-sql Legacy SQL]] and

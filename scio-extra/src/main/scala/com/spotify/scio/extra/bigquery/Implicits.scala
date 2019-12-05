@@ -37,6 +37,7 @@ object Implicits extends ToTableRow with ToTableSchema {
   ) extends Exception(message, cause)
 
   implicit class AvroImplicits[T](private val self: SCollection[T]) {
+
     /**
      * Saves the provided SCollection[T] to BigQuery where T is a subtype of Indexed Record,
      * automatically converting T's [[org.apache.avro.Schema AvroSchema]] to BigQuery's

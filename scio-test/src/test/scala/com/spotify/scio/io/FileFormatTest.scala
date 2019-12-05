@@ -31,12 +31,11 @@ class FileFormatTest extends PipelineSpec {
   private val objects =
     (1 to 100).map(x => (x, x.toDouble, x % 2 == 0, "s" + x))
   private val protobufs = (1 to 100)
-    .map(
-      x =>
-        com.google.protobuf.Timestamp.newBuilder
-          .setSeconds(x * 1000)
-          .setNanos(x)
-          .build
+    .map(x =>
+      com.google.protobuf.Timestamp.newBuilder
+        .setSeconds(x * 1000)
+        .setNanos(x)
+        .build
     )
 
   // Object file is NOT backwards compatible
