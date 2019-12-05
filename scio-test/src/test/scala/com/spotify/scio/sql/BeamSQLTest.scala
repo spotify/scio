@@ -22,7 +22,7 @@ import java.lang.{Iterable => JIterable}
 import com.spotify.scio.IsJavaBean
 import com.spotify.scio.bean.UserBean
 import com.spotify.scio.coders.Coder
-import com.spotify.scio.schemas.{Schema, To}
+import com.spotify.scio.schemas.{LogicalType, Schema, To}
 import com.spotify.scio.testing.PipelineSpec
 import org.apache.beam.sdk.extensions.sql.BeamSqlUdf
 import org.apache.beam.sdk.schemas.{Schema => BSchema}
@@ -35,6 +35,18 @@ import org.scalatest.Assertion
 
 import scala.collection.JavaConverters._
 import com.spotify.scio.avro
+
+object Schemas {
+  // test logical type support
+  implicit val localeSchema: Schema[Locale] =
+    LogicalType[Locale, String](
+      BSchema.FieldType.STRING,
+      l => l.toLanguageTag(),
+      s => Locale.forLanguageTag(s)
+    )
+}
+
+import Schemas._
 
 object TestData {
   case class Foo(i: Int, s: String)
@@ -55,10 +67,13 @@ object TestData {
       UserWithId(UserId(i), s"user$i", s"user$i@spotify.com", 20 + i)
     }.toList
 
-  case class UserWithFallBack(id: Long, username: String, locale: Locale)
+  case class UserWithLogicalType(id: Long, username: String, locale: Locale)
+  object UserWithLogicalType {
+    implicit def userWithLogicalTypeSchema = Schema.gen[UserWithLogicalType]
+  }
   val usersWithLocale =
     (1 to 10).map { i =>
-      UserWithFallBack(i, s"user$i", Locale.FRANCE)
+      UserWithLogicalType(i, s"user$i", Locale.FRANCE)
     }.toList
 
   case class UserWithOption(username: String, email: String, age: Option[Int])
@@ -140,7 +155,7 @@ object TestData {
   implicit def coderUser: Coder[User] = Coder.gen[User]
   implicit def coderUserId: Coder[UserId] = Coder.gen[UserId]
   implicit def coderUserWithId: Coder[UserWithId] = Coder.gen[UserWithId]
-  implicit def coderUserWithFallBack: Coder[UserWithFallBack] = Coder.gen[UserWithFallBack]
+  implicit def coderUserWithLogicalType: Coder[UserWithLogicalType] = Coder.gen[UserWithLogicalType]
   implicit def coderUserWithOption: Coder[UserWithOption] = Coder.gen[UserWithOption]
   implicit def coderUserWithList: Coder[UserWithList] = Coder.gen[UserWithList]
   implicit def coderUserWithJList: Coder[UserWithJList] = Coder.gen[UserWithJList]
@@ -203,7 +218,7 @@ class BeamSQLTest extends PipelineSpec {
     r2 should containInAnyOrder(expected)
   }
 
-  it should "support fallback coders" in runWithContext { sc =>
+  it should "support logical types" in runWithContext { sc =>
     val schemaRes = BSchema.builder().addStringField("username").build()
     val expected = usersWithLocale.map { u =>
       Row.withSchema(schemaRes).addValue(u.username).build()
@@ -234,7 +249,7 @@ class BeamSQLTest extends PipelineSpec {
     r should containInAnyOrder(expected)
   }
 
-  it should "support fallback in sql" in runWithContext { sc =>
+  it should "support logical type in sql" in runWithContext { sc =>
     val expected = usersWithLocale.map { u =>
       (u.username, u.locale)
     }
@@ -462,8 +477,7 @@ class BeamSQLTest extends PipelineSpec {
     checkOK[Bar, Foo]("select f from SCOLLECTION")
     checkOK[Bar, (String, Long)]("select `SCOLLECTION`.`f`.`s`, l from SCOLLECTION")
 
-    // test fallback support
-    checkOK[UserWithFallBack, Locale]("select locale from SCOLLECTION")
+    checkOK[UserWithLogicalType, Locale]("select locale from SCOLLECTION")
 
     checkOK[UserWithOption, Option[Int]]("select age from SCOLLECTION")
     checkNOK[UserWithOption, Int]("select age from SCOLLECTION")

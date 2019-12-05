@@ -172,8 +172,8 @@ object To {
   private[scio] def unsafe[I: Schema, O: Schema](to: To[I, O]): To[I, O] =
     new To[I, O] {
       def apply(coll: SCollection[I]): SCollection[O] = {
-        val (bst, _, _) = SchemaMaterializer.materialize(coll.context, Schema[I])
-        val (bso, _, _) = SchemaMaterializer.materialize(coll.context, Schema[O])
+        val (bst, _, _) = SchemaMaterializer.materialize(Schema[I])
+        val (bso, _, _) = SchemaMaterializer.materialize(Schema[O])
 
         checkCompatibility(bst, bso)(to)
           .fold(message => throw new IllegalArgumentException(message), _.apply(coll))
@@ -188,7 +188,7 @@ object To {
   def unchecked[I: Schema, O: Schema]: To[I, O] =
     new To[I, O] {
       def apply(coll: SCollection[I]): SCollection[O] = {
-        val (_, toT, _) = SchemaMaterializer.materialize(coll.context, Schema[I])
+        val (_, toT, _) = SchemaMaterializer.materialize(Schema[I])
         val convertRow: (BSchema, I) => Row = { (s, i) =>
           val row = toT(i)
           transform(s)(row)
@@ -200,7 +200,7 @@ object To {
   private[scio] def unchecked[I, O: Schema](f: (BSchema, I) => Row): To[I, O] =
     new To[I, O] {
       def apply(coll: SCollection[I]): SCollection[O] = {
-        val (bso, toO, fromO) = SchemaMaterializer.materialize(coll.context, Schema[O])
+        val (bso, toO, fromO) = SchemaMaterializer.materialize(Schema[O])
         val convert: I => O = f.curried(bso).andThen(fromO(_))
         coll.map[O](convert)(Coder.beam(SchemaCoder.of(bso, toO, fromO)))
       }
