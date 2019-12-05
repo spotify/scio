@@ -20,6 +20,7 @@ package com.spotify.scio.bigquery
 import scala.annotation.StaticAnnotation
 
 package object types {
+
   /**
    * Case class field annotation for BigQuery field description.
    *

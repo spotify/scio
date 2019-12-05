@@ -30,6 +30,7 @@ import scala.collection.JavaConverters._
  * distributed cache.
  */
 sealed trait DistCache[F] extends Serializable {
+
   /** Extract the underlying data. */
   def apply(): F
 }
@@ -62,6 +63,7 @@ private[scio] class MockDistCacheFunc[F](val value: () => F) extends DistCache[F
 }
 
 object MockDistCache {
+
   /**
    * Mock distCache by returning given value.
    *

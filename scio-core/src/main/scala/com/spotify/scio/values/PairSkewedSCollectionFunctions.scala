@@ -33,6 +33,7 @@ private final case class Partitions[K, V](hot: SCollection[(K, V)], chill: SColl
  * @groupname transform Transformations
  */
 class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
+
   /**
    * N to 1 skew-proof flavor of [[PairSCollectionFunctions.join]].
    *

@@ -99,6 +99,7 @@ package object libsvm {
   }
 
   implicit class SVMReader(@transient private val self: ScioContext) extends AnyVal {
+
     /**
      * Loads labeled data in the LIBSVM format into an SCollection[(Double, SparseVector)].
      * The LIBSVM format is a text-based format used by LIBSVM and LIBLINEAR.

@@ -38,6 +38,7 @@ import scala.reflect.runtime.universe._
  * destinations methods.
  */
 final class DynamicBigQueryOps[T](private val self: SCollection[T]) extends AnyVal {
+
   /**
    * Save this SCollection to dynamic BigQuery tables using the table and schema specified by the
    * [[org.apache.beam.sdk.io.gcp.bigquery.DynamicDestinations DynamicDestinations]].
@@ -104,6 +105,7 @@ final class DynamicBigQueryOps[T](private val self: SCollection[T]) extends AnyV
  */
 final class DynamicTableRowBigQueryOps[T <: TableRow](private val self: SCollection[T])
     extends AnyVal {
+
   /**
    * Save this SCollection to dynamic BigQuery tables using the specified table function.
    * Note that elements must be of type
@@ -128,6 +130,7 @@ final class DynamicTableRowBigQueryOps[T <: TableRow](private val self: SCollect
  */
 final class DynamicTypedBigQueryOps[T <: HasAnnotation](private val self: SCollection[T])
     extends AnyVal {
+
   /**
    * Save this SCollection to dynamic BigQuery tables using the specified table function.
    * Note that element type `T` must be annotated with

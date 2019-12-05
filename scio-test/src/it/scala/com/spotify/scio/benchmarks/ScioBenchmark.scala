@@ -190,13 +190,14 @@ object BenchmarkResult {
       .asScala
       .filter(metric => BatchMetrics.contains(metric.getName.getName))
       .map { m =>
-        val scalar = try {
-          m.getScalar.toString.toLong
-        } catch {
-          case e: NumberFormatException =>
-            logger.error(s"Failed to get metric $m", e)
-            0
-        }
+        val scalar =
+          try {
+            m.getScalar.toString.toLong
+          } catch {
+            case e: NumberFormatException =>
+              logger.error(s"Failed to get metric $m", e)
+              0
+          }
         Metric(m.getName.getName, scalar)
       }
       .toList
@@ -228,13 +229,14 @@ object BenchmarkResult {
     val metrics = jobMetrics.getMetrics.asScala
       .filter(metric => StreamingMetrics.contains(metric.getName.getName))
       .map { m =>
-        val scalar = try {
-          m.getScalar.toString.toLong
-        } catch {
-          case e: NumberFormatException =>
-            logger.error(s"Failed to get metric $m", e)
-            0
-        }
+        val scalar =
+          try {
+            m.getScalar.toString.toLong
+          } catch {
+            case e: NumberFormatException =>
+              logger.error(s"Failed to get metric $m", e)
+              0
+          }
         Metric(m.getName.getName, scalar)
       }
       .toList
@@ -311,9 +313,10 @@ class DatastoreLogger[A <: BenchmarkType] extends BenchmarkLogger[Try, A] {
   // Save metrics to integration testing Datastore instance. Can't make this into a
   // transaction because DS limit is 25 entities per transaction.
   def log(benchmarks: Iterable[BenchmarkResult[A]]): Try[Unit] = {
-    implicit val efInstant = EntityField.from[java.time.Instant](i => new Instant(i.toEpochMilli))(
-      i => java.time.Instant.ofEpochMilli(i.getMillis)
-    )
+    implicit val efInstant =
+      EntityField.from[java.time.Instant](i => new Instant(i.toEpochMilli))(i =>
+        java.time.Instant.ofEpochMilli(i.getMillis)
+      )
     val dt = EntityType[BenchmarkResult[A]]
 
     val commits = benchmarks.map { benchmark =>
@@ -359,9 +362,10 @@ class DatastoreLogger[A <: BenchmarkType] extends BenchmarkLogger[Try, A] {
     benchmarkName: String,
     buildNums: List[Long]
   ): List[BenchmarkResult[A]] = {
-    implicit val efInstant = EntityField.from[java.time.Instant](i => new Instant(i.toEpochMilli))(
-      i => java.time.Instant.ofEpochMilli(i.getMillis)
-    )
+    implicit val efInstant =
+      EntityField.from[java.time.Instant](i => new Instant(i.toEpochMilli))(i =>
+        java.time.Instant.ofEpochMilli(i.getMillis)
+      )
     val dt = EntityType[BenchmarkResult[A]]
 
     val query: String => RunQueryRequest = q =>
@@ -604,11 +608,11 @@ object BenchmarkRunner {
     val projectId = argz.getOrElse("project", ScioBenchmarkSettings.DefaultProjectId)
     benchmarks
       .filter(_.name.matches(regex))
-      .foreach(j => {
+      .foreach { j =>
         val prefix = createPrefix(argz, benchmarkPrefix)
         val results = j.run(projectId, prefix, pipelineArgs)
         val future = Future.sequence(results.map(_.map(ScioBenchmarkSettings.logger.log(_))))
         Await.result(future, Duration.Inf)
-      })
+      }
   }
 }

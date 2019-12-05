@@ -75,6 +75,7 @@ class DataflowResult(val internal: DataflowPipelineJob) extends RunnerResult {
 
 /** Companion object for [[DataflowResult]]. */
 object DataflowResult {
+
   /** Create a new [[DataflowResult]] instance. */
   def apply(projectId: String, region: String, jobId: String): DataflowResult = {
     val options = getOptions(projectId, region)

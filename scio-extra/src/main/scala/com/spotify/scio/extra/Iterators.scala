@@ -135,6 +135,7 @@ object Iterators {
     private val self: Iterator[T],
     private val timestampFn: T => Long
   ) {
+
     /**
      * Iterator of fixed-size timestamp-based windows.
      * Partitions the timestamp space into half-open intervals of the form
@@ -171,6 +172,7 @@ object Iterators {
 
   /** Enhance Iterator by adding a `timeSeries` method. */
   implicit class RichIterator[T](private val self: Iterator[T]) extends AnyVal {
+
     /**
      * Convert this iterator to a [[TimeSeriesIterator]].
      * @param timestampFn function to extract timestamp.

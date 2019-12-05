@@ -118,10 +118,9 @@ trait SCollectionMatchers {
   private def serDeCycle[T: Coder](scollection: SCollection[T]): SCollection[T] = {
     val coder = scollection.internal.getCoder
     scollection
-      .map(
-        e =>
-          CoderUtils
-            .decodeFromByteArray(coder, CoderUtils.encodeToByteArray(coder, e))
+      .map(e =>
+        CoderUtils
+          .decodeFromByteArray(coder, CoderUtils.encodeToByteArray(coder, e))
       )
   }
 
