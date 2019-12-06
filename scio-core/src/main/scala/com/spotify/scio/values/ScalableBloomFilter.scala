@@ -31,14 +31,53 @@ final case class ScalableBloomFilter[T] private (
   initialCapacity: Int,
   growthRate: Int,
   tighteningRatio: Double,
-  private val filters: List[gBloomFilter[T]]
+  private val filters: ::[gBloomFilter[T]] // This is a NonEmptyList
 ) extends ApproxFilter[T] {
-  def numFilters: Int = filters.size
-
   /**
    * Check if the filter may contain a given element.
    */
   override def mayBeContains(t: T): Boolean = filters.exists(_.mightContain(t))
+
+  def numFilters: Int = filters.size // Explain why min in always 1
+
+  def approximateElementCount: Long = filters.map(_.approximateElementCount()).sum
+
+  /**
+   * Add more elements, and create a new [[ScalableBloomFilter]]
+   */
+  def putAll(
+    moreElements: Iterable[T]
+  )(implicit funnel: Funnel[T]): ScalableBloomFilter[T] = {
+    val initial: ScalableBloomFilter[T] = this
+
+    var numInsertedInCurrentFilter = initial.filters.head.approximateElementCount()
+    var currentCapacity = initial.initialCapacity * (growthRate * initial.numFilters)
+    var currentFpProb = initial.fpProb * (tighteningRatio * initial.numFilters)
+
+    val it = moreElements.iterator
+    // create a copy
+    val newFilters = initial.filters.to[mutable.ListBuffer]
+
+    while (it.hasNext) {
+      while (it.hasNext && numInsertedInCurrentFilter < currentCapacity) {
+        newFilters.head.put(it.next())
+        numInsertedInCurrentFilter += 1
+      }
+
+      if (it.hasNext) {
+        // We have more elements to insert
+        currentCapacity *= growthRate
+        currentFpProb *= tighteningRatio
+        numInsertedInCurrentFilter = 0
+        val f = gBloomFilter.create[T](funnel, currentCapacity, currentFpProb)
+        newFilters.insert(0, f)
+      }
+    }
+
+    initial.copy(
+      filters = new ::(newFilters.head, newFilters.tail.toList)
+    )
+  }
 
   /**
    * Serialize the filter to the given [[OutputStream]]
@@ -59,12 +98,9 @@ final case class ScalableBloomFilter[T] private (
     dout.writeInt(filters.size)
     filters.foreach(_.writeTo(dout))
   }
-
-  def put(elements: Iterable[T]): ScalableBloomFilter[T] =
-    ???
 }
 
-object ScalableBloomFilter {
+object ScalableBloomFilter extends ApproxFilterCompanion[ScalableBloomFilter] {
   /**
    * An implicit deserializer available when we know a Funnel instance for the
    * Filter's type.
@@ -82,14 +118,15 @@ object ScalableBloomFilter {
         val growthRate = din.readInt()
         val tighteningRatio = din.readDouble()
         val numFilters = din.readInt()
-        val filters = 1 to numFilters map (i => gBloomFilter.readFrom[T](in, implicitly[Funnel[T]]))
+        val filters =
+          (1 to numFilters).map(_ => gBloomFilter.readFrom[T](in, implicitly[Funnel[T]])).toList
 
         ScalableBloomFilter[T](
           fpProb,
           initialCapacity,
           growthRate,
           tighteningRatio,
-          filters.toList
+          new ::(filters.head, filters.tail) // This is a NonEmptyList
         )
       }
     }
@@ -99,8 +136,21 @@ object ScalableBloomFilter {
     headCapacity: Int,
     growthRate: Int,
     tighteningRatio: Double
-  ) =
+  ): ScalableBloomFilterBuilder[T] =
     ScalableBloomFilterBuilder(fpProb, headCapacity, growthRate, tighteningRatio)
+
+  def empty[T: Funnel](
+    fpProb: Double,
+    initialCapacity: Int,
+    growthRate: Int,
+    tighteningRatio: Double
+  ): ScalableBloomFilter[T] = ScalableBloomFilter(
+    fpProb,
+    initialCapacity,
+    growthRate,
+    tighteningRatio,
+    new ::(gBloomFilter.create[T](implicitly[Funnel[T]], initialCapacity, fpProb), Nil)
+  )
 }
 
 final case class ScalableBloomFilterBuilder[T: Funnel] private[values] (
@@ -109,22 +159,14 @@ final case class ScalableBloomFilterBuilder[T: Funnel] private[values] (
   growthRate: Int,
   tighteningRatio: Double
 ) extends ApproxFilterBuilder[T, ScalableBloomFilter] {
-  override def build(iterable: Iterable[T]): ScalableBloomFilter[T] = {
-    val it = iterable.iterator
-    val filters = mutable.ListBuffer.empty[gBloomFilter[T]]
-    var numInserted = 0
-    var capacity = initialCapacity
-    var currentFpProb = fpProb
-    while (it.hasNext && numInserted < capacity) {
-      val f = gBloomFilter.create[T](implicitly[Funnel[T]], capacity, currentFpProb)
-      while (it.hasNext && numInserted < capacity) {
-        f.put(it.next())
-        numInserted += 1
-      }
-      filters.insert(0, f)
-      capacity *= growthRate
-      currentFpProb *= tighteningRatio
-    }
-    ScalableBloomFilter(fpProb, initialCapacity, growthRate, tighteningRatio, filters.toList)
-  }
+  override def build(iterable: Iterable[T]): ScalableBloomFilter[T] =
+    // create an empty Filter and then add all the elements to that.
+    ScalableBloomFilter
+      .empty(
+        fpProb,
+        initialCapacity,
+        growthRate,
+        tighteningRatio
+      )
+      .putAll(iterable)
 }
