@@ -16,7 +16,7 @@ sbt site/makeSite
 while true; do
     read -p "Push site to GitHub? (y/n)" yn
     case $yn in
-        [Yy]* ) echo sbt site/ghpagesPushSite; break;;
+        [Yy]* ) sbt site/ghpagesPushSite; break;;
         [Nn]* ) exit;;
         * ) echo "Please answer yes or no.";;
     esac
