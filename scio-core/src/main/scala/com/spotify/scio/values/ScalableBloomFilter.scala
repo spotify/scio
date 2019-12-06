@@ -15,17 +15,17 @@ case class ScalableBloomFilter[T] private (
   tighteningRatio: Double,
   private val filters: List[gBloomFilter[T]]
 ) extends ApproxFilter[T] {
-
   override def mayBeContains(t: T): Boolean = filters.exists(_.mightContain(t))
 
   /**
    * Serialize the filter to the given [[OutputStream]]
    */
   override def writeTo(out: OutputStream): Unit = ???
+
+  def numFilters: Int = filters.size
 }
 
 object ScalableBloomFilter {
-
   /**
    * Use Beam Coders explicitly because of private constructor.
    * // TODO write this after complete implementation
@@ -36,12 +36,13 @@ object ScalableBloomFilter {
 //      ScalableBloomFilter.unapply(_).get
 //    )
 
-  def par[T: Coder: Funnel](fpProb: Double,
-                            headCapacity: Int,
-                            growthRate: Int,
-                            tighteningRatio: Double) =
+  def par[T: Coder: Funnel](
+    fpProb: Double,
+    headCapacity: Int,
+    growthRate: Int,
+    tighteningRatio: Double
+  ) =
     ScalableBloomFilterBuilder(fpProb, headCapacity, growthRate, tighteningRatio)
-
 }
 
 case class ScalableBloomFilterBuilder[T: Funnel] private[values] (
@@ -50,7 +51,6 @@ case class ScalableBloomFilterBuilder[T: Funnel] private[values] (
   growthRate: Int,
   tighteningRatio: Double
 ) extends ApproxFilterBuilder[T, ScalableBloomFilter] {
-
   override def build(iterable: Iterable[T]): ScalableBloomFilter[T] = {
     val it = iterable.iterator
     val filters = mutable.ListBuffer.empty[gBloomFilter[T]]
@@ -70,5 +70,5 @@ case class ScalableBloomFilterBuilder[T: Funnel] private[values] (
     ScalableBloomFilter(fpProb, initialCapacity, growthRate, tighteningRatio, filters.toList)
   }
 
-  override def readFrom(in: InputStream): ScalableBloomFilter[T] = ???
+  def readFrom(in: InputStream): ScalableBloomFilter[T] = ???
 }
