@@ -71,7 +71,7 @@ private object KryoRegistrarLoader {
           try {
             val cls = clsInfo.load()
             if (classOf[AnnotatedKryoRegistrar] isAssignableFrom cls) {
-              Some(cls.newInstance().asInstanceOf[IKryoRegistrar])
+              Some(cls.getConstructor().newInstance().asInstanceOf[IKryoRegistrar])
             } else {
               None
             }
