@@ -24,6 +24,7 @@ class WordCountTest extends PipelineSpec {
   val inData = Seq("a b c d e", "a b a b", "")
   val expected = Seq("a: 3", "b: 3", "c: 1", "d: 1", "e: 1")
 
+  // #WordCountTest_example
   "WordCount" should "work" in {
     JobTest[com.spotify.scio.examples.WordCount.type]
       .args("--input=in.txt", "--output=out.txt")
@@ -33,6 +34,7 @@ class WordCountTest extends PipelineSpec {
       }
       .run()
   }
+  // #WordCountTest_example
 
   "MinimalWordCount" should "work" in {
     JobTest[com.spotify.scio.examples.MinimalWordCount.type]
