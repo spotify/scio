@@ -15,15 +15,6 @@
  * under the License.
  */
 
-package com.spotify.scio
+package com.spotify.scio.bigtable.syntax
 
-import com.spotify.scio.bigtable.syntax.AllSyntax
-
-/**
- * Main package for Bigtable APIs. Import all.
- *
- * {{{
- * import com.spotify.scio.bigtable._
- * }}}
- */
-package object bigtable extends AllSyntax
+trait AllSyntax extends SCollectionSyntax with ScioContextSyntax with RowSyntax
