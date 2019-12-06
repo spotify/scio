@@ -23,9 +23,10 @@ import java.nio.file.Files
 import com.spotify.scio.avro.{Account, GenericRecordTap, SpecificRecordTap}
 import com.spotify.scio.io.TextTap
 import org.apache.commons.io.FileUtils
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
 
-class SortMergeBucketExampleTest extends FlatSpec with Matchers {
+class SortMergeBucketExampleTest extends AnyFlatSpec with Matchers {
   def withTempFolders(testCode: (File, File, File) => Unit): Unit = {
     val tempFolder = Files.createTempDirectory("smb")
     try {
