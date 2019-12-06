@@ -76,6 +76,18 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
     self.read(BigQuerySelect(sqlQuery))(BigQuerySelect.ReadParam(flattenResults))
 
   /**
+   * Get an SCollection for a BigQuery SELECT query.
+   * Both [[https://cloud.google.com/bigquery/docs/reference/legacy-sql Legacy SQL]] and
+   * [[https://cloud.google.com/bigquery/docs/reference/standard-sql/ Standard SQL]] dialects are
+   * supported. By default the query dialect will be automatically detected. To override this
+   * behavior, start the query string with `#legacysql` or `#standardsql`.
+   */
+  def bigQuerySelect(
+    sqlQuery: Query
+  ): SCollection[TableRow] =
+    bigQuerySelect(sqlQuery, BigQuerySelect.ReadParam.DefaultFlattenResults)
+
+  /**
    * Get an SCollection for a BigQuery table.
    */
   @deprecated(
