@@ -255,7 +255,7 @@ object ExactFilterUsageExample {
     val asBytes: SCollection[Array[Byte]] = filter.map(_.toBytes)
 
     // Deserialize from bytes into a filter
-    val deserialized: SCollection[ExactFilter[Int]] = asBytes.map(ExactFilter.readFrom[Int](_))
+    val deserialized: SCollection[ExactFilter[Int]] = asBytes.map(ExactFilter.fromBytes[Int](_))
 
     // Check for membership
     val mayBeOne: SCollection[Boolean] = deserialized.map(_.mayBeContains(1))
