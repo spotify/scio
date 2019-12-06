@@ -25,7 +25,7 @@ import com.spotify.scio._
 
 // Usage:
 
-// `sbt runMain "com.spotify.scio.examples.extra.TapOutputExample
+// `sbt "runMain com.spotify.scio.examples.extra.TapOutputExample
 // --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
 // --output=gs://[OUTPUT] --method=[METHOD]"`
 object TapOutputExample {

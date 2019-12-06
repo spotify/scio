@@ -18,7 +18,7 @@
 // Example: Protocol Buffer Input and Output
 // Usage:
 
-// `sbt runMain "com.spotify.scio.examples.extra.ProtobufExample
+// `sbt "runMain com.spotify.scio.examples.extra.ProtobufExample
 // --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
 // --input=gs://[INPUT].proto --output=gs://[OUTPUT].avro"`
 package com.spotify.scio.examples.extra

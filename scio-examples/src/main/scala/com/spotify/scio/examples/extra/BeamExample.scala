@@ -18,7 +18,7 @@
 // Example: Mix Beam Java SDK and Scio Code
 // Usage:
 
-// `sbt runMain "com.spotify.scio.examples.extra.BeamExample
+// `sbt "runMain com.spotify.scio.examples.extra.BeamExample
 // --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
 // --inputTopic=[TOPIC] --outputTopic=[TOPIC]"`
 package com.spotify.scio.examples.extra

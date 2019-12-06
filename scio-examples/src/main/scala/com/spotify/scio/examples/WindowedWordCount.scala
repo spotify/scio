@@ -18,7 +18,7 @@
 // Example: Word Count Example with Windowing
 // Usage:
 
-// `sbt runMain "com.spotify.scio.examples.WindowedWordCount
+// `sbt "runMain com.spotify.scio.examples.WindowedWordCount
 // --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
 // --input=gs://apache-beam-samples/shakespeare/kinglear.txt
 // --output=gs://[BUCKET]/[PATH]/wordcount"`
