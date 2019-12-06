@@ -75,7 +75,7 @@ object ScioStreamingBenchmark {
     .flatMap { ci =>
       val cls = ci.load()
       if (classOf[StreamingBenchmark] isAssignableFrom cls) {
-        Some(cls.newInstance().asInstanceOf[StreamingBenchmark])
+        Some(cls.getConstructor().newInstance().asInstanceOf[StreamingBenchmark])
       } else {
         None
       }
