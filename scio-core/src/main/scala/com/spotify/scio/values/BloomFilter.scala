@@ -22,7 +22,6 @@ import java.io.{InputStream, OutputStream}
 import com.google.common.hash.{Funnel, BloomFilter => gBloomFilter}
 import com.spotify.scio.annotations.experimental
 import com.spotify.scio.coders.Coder
-import org.apache.beam.sdk.coders.AtomicCoder
 
 /**
  * Bloom Filter - a probabilistic data structure to test approximate presence of an element.

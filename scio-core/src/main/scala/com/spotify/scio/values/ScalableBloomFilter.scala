@@ -20,7 +20,6 @@ package com.spotify.scio.values
 import java.io.{DataInputStream, DataOutputStream, InputStream, OutputStream}
 
 import com.google.common.hash.{Funnel, BloomFilter => gBloomFilter}
-import com.spotify.scio.coders.Coder
 
 import scala.collection.mutable
 
@@ -131,7 +130,7 @@ object ScalableBloomFilter extends ApproxFilterCompanion[ScalableBloomFilter] {
       }
     }
 
-  def par[T: Coder: Funnel](
+  def apply[T: Funnel](
     fpProb: Double,
     headCapacity: Int,
     growthRate: Int,
