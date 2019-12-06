@@ -53,7 +53,7 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
    * behavior, start the query string with `#legacysql` or `#standardsql`.
    */
   @deprecated(
-    "this method will be removed; use bigQuery(Query(sql), flattenResults) instead",
+    "this method will be removed; use bigQuerySelect(Query(sql), flattenResults) instead",
     "0.8.0"
   )
   def bigQuerySelect(
