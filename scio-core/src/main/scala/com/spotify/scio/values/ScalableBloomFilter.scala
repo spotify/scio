@@ -20,6 +20,7 @@ package com.spotify.scio.values
 import java.io.{DataInputStream, DataOutputStream, InputStream, OutputStream}
 
 import com.google.common.hash.{Funnel, BloomFilter => gBloomFilter}
+import com.spotify.scio.values.ScalableBloomFilter.Nel
 
 import scala.collection.mutable
 
@@ -30,7 +31,7 @@ final case class ScalableBloomFilter[T] private (
   initialCapacity: Int,
   growthRate: Int,
   tighteningRatio: Double,
-  private val filters: ::[gBloomFilter[T]] // This is a NonEmptyList
+  private val filters: Nel[gBloomFilter[T]]
 ) extends ApproxFilter[T] {
   /**
    * Check if the filter may contain a given element.
@@ -74,7 +75,7 @@ final case class ScalableBloomFilter[T] private (
     }
 
     initial.copy(
-      filters = new ::(newFilters.head, newFilters.tail.toList)
+      filters = new Nel(newFilters.head, newFilters.tail.toList)
     )
   }
 
@@ -100,6 +101,9 @@ final case class ScalableBloomFilter[T] private (
 }
 
 object ScalableBloomFilter extends ApproxFilterCompanion[ScalableBloomFilter] {
+  // Type alias a Non Empty List
+  private type Nel[A] = ::[A]
+
   /**
    * An implicit deserializer available when we know a Funnel instance for the
    * Filter's type.
@@ -125,7 +129,7 @@ object ScalableBloomFilter extends ApproxFilterCompanion[ScalableBloomFilter] {
           initialCapacity,
           growthRate,
           tighteningRatio,
-          new ::(filters.head, filters.tail) // This is a NonEmptyList
+          new Nel(filters.head, filters.tail) // This is a NonEmptyList
         )
       }
     }
@@ -136,7 +140,12 @@ object ScalableBloomFilter extends ApproxFilterCompanion[ScalableBloomFilter] {
     growthRate: Int,
     tighteningRatio: Double
   ): ScalableBloomFilterBuilder[T] =
-    ScalableBloomFilterBuilder(fpProb, headCapacity, growthRate, tighteningRatio)
+    ScalableBloomFilterBuilder(
+      fpProb,
+      headCapacity,
+      growthRate,
+      tighteningRatio
+    )
 
   def empty[T: Funnel](
     fpProb: Double,
@@ -148,7 +157,7 @@ object ScalableBloomFilter extends ApproxFilterCompanion[ScalableBloomFilter] {
     initialCapacity,
     growthRate,
     tighteningRatio,
-    new ::(gBloomFilter.create[T](implicitly[Funnel[T]], initialCapacity, fpProb), Nil)
+    new Nel(gBloomFilter.create[T](implicitly[Funnel[T]], initialCapacity, fpProb), Nil)
   )
 }
 

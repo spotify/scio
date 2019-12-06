@@ -32,6 +32,7 @@ class ApproxFilterSCollectionOps[T: Coder](self: SCollection[T]) {
   )(implicit coder: Coder[C[T]]): SCollection[C[T]] =
     builder.build(self)
 
+  // FIXME once we move this to the main SCollection class we can use `to`
   def to_[C[B] <: ApproxFilter[B]](
     builder: ApproxFilterBuilder[T, C]
   )(implicit coder: Coder[C[T]]): SCollection[C[T]] =
@@ -83,8 +84,6 @@ trait ApproxFilterSCollectionSyntax {
 }
 
 class ApproxPairSCollectionOps[K: Coder, V: Coder](self: SCollection[(K, V)]) {
-  // TODO should we have a `to` for each key like we have for global SCollection
-
   /**
    * Construct a [[BloomFilter]] of the values of each key in the current SCollection.
    */
@@ -98,20 +97,23 @@ class ApproxPairSCollectionOps[K: Coder, V: Coder](self: SCollection[(K, V)]) {
       )
 
   def toScalableBloomFilterPerKey(
-    fpp: Double
-  )(implicit f: Funnel[V]): SCollection[(K, BloomFilter[V])] =
-    ???
-}
-
-// FIXME What the user facing API can look like.
-object Example extends GuavaFunnelInstances {
-  val sc = new ApproxFilterSCollectionOps[Int](null)
-
-  val x: SCollection[BloomFilter[Int]] = sc.to(BloomFilter.par[Int](1, 0.01))
-
-  val si: SideInput[BloomFilter[Int]] =
-    sc.to(BloomFilter.par[Int](1, 0.01)).asSingletonSideInput
-
-  val bf: SideInput[BloomFilter[Int]] =
-    sc.to(BloomFilter(0.01)).asSingletonSideInput
+    fpProb: Double,
+    headCapacity: Int,
+    growthRate: Int,
+    tighteningRatio: Double
+  )(
+    implicit f: Funnel[V],
+    coder: Coder[ScalableBloomFilter[V]]
+  ): SCollection[(K, ScalableBloomFilter[V])] =
+    self.transform(
+      _.groupByKey
+        .mapValues(
+          ScalableBloomFilter(
+            fpProb,
+            headCapacity,
+            growthRate,
+            tighteningRatio
+          ).build(_)
+        )
+    )
 }

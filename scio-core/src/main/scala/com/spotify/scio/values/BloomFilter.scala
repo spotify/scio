@@ -153,6 +153,20 @@ object BloomFilter extends ApproxFilterCompanion[BloomFilter] {
     new BloomFilterBuilder(fpProb)
 
   /**
+   * Constructor for an empty [[BloomFilter]]
+   *
+   * An empty BloomFilter is particularly useful when used with
+   * [[SCollection.asSetSingletonSideInput(defaultValue)]]
+   *
+   * @param numElements The number of elements that we might later want to insert using
+   *                    [[BloomFilter.put]] to create a new [[BloomFilter]]
+   * @param fpProb Expected false positive probability of the resulting [[BloomFilter]]
+   *               Default 0.01 (1 %)
+   */
+  def empty[T: Funnel](numElements: Int, fpProb: Double = 0.01) =
+    BloomFilter(gBloomFilter.create[T](implicitly[Funnel[T]], numElements, fpProb))
+
+  /**
    * An alternative [[BloomFilterBuilder]] which uses a monoid aggregator to build
    * the [[BloomFilter]] in parallel, this works better when there are a large number of
    * elements required to be put inside one [[BloomFilter]]
