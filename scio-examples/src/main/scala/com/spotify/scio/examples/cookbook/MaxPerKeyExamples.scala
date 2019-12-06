@@ -18,7 +18,7 @@
 // Example: Max Per Key Example
 // Usage:
 
-// `sbt runMain "com.spotify.scio.examples.cookbook.MaxPerKeyExamples
+// `sbt "runMain com.spotify.scio.examples.cookbook.MaxPerKeyExamples
 // --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
 // --output=[DATASET].max_per_key_examples"`
 package com.spotify.scio.examples.cookbook

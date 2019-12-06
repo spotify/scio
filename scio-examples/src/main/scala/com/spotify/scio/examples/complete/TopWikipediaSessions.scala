@@ -18,7 +18,7 @@
 // Example: Top Wikipedia Sessions
 // Usage:
 
-// `sbt runMain "com.spotify.scio.examples.complete.TopWikipediaSessions
+// `sbt "runMain com.spotify.scio.examples.complete.TopWikipediaSessions
 // --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
 // --input=gs://apache-beam-samples/wikipedia_edits/wiki_data-*.json
 // --output=gs://[BUCKET]/[PATH]/top_wikipedia_sessions"`

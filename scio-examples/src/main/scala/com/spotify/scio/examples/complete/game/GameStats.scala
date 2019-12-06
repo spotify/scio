@@ -19,7 +19,7 @@
 
 // Usage:
 
-// `sbt runMain "com.spotify.scio.examples.complete.game.GameStats
+// `sbt "runMain com.spotify.scio.examples.complete.game.GameStats
 // --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
 // --fixedWindowDuration=60
 // --sessionGap=5

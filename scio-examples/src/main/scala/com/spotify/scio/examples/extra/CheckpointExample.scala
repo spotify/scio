@@ -18,7 +18,7 @@
 // Example: Use Checkpoints to debug a long workflow
 // Usage:
 
-// `sbt runMain "com.spotify.scio.examples.extra.CheckpointExample
+// `sbt "runMain com.spotify.scio.examples.extra.CheckpointExample
 // --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
 // --checkpoint=gs://[CHECKPOINT_FILE] --output=[OUTPUT]"`
 package com.spotify.scio.examples.extra

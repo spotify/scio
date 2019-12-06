@@ -18,7 +18,7 @@
 // Example: Distinct With RepresentativeValue Example
 // Usage:
 
-// `sbt runMain "com.spotify.scio.examples.cookbook.DistinctWithRepresentativeValueFnExample
+// `sbt "runMain com.spotify.scio.examples.cookbook.DistinctWithRepresentativeValueFnExample
 // --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
 // --output=[DATASET].distinct_by_key_example"`
 package com.spotify.scio.examples.cookbook

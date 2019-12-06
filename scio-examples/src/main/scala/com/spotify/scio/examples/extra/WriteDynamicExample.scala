@@ -18,7 +18,7 @@
 // Example: Demonstrates saveAsDynamic* methods
 // Usage:
 
-// `sbt runMain "com.spotify.scio.examples.extra.WriteDynamicExample
+// `sbt "runMain com.spotify.scio.examples.extra.WriteDynamicExample
 // --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
 // --input=gs://apache-beam-samples/shakespeare/kinglear.txt
 // --output=gs://[OUTPUT]"`
