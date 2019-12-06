@@ -89,7 +89,7 @@ object ApproxFilterExamples {
     val asBytes: SCollection[Array[Byte]] = bf.map(_.toBytes)
 
     // Deserialize from bytes into a filter
-    val deserialized: SCollection[BloomFilter[Int]] = asBytes.map(BloomFilter.readFrom[Int](_))
+    val deserialized: SCollection[BloomFilter[Int]] = asBytes.map(BloomFilter.fromBytes[Int](_))
 
     // Check for membership
     val mayBeOne: SCollection[Boolean] = deserialized.map(_.mayBeContains(1))

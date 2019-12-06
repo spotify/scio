@@ -78,7 +78,6 @@ class ApproxFilterSCollectionOps[T: Coder](self: SCollection[T]) {
     to(BloomFilter(fpPorb)).asSingletonSideInput
 }
 
-
 class ApproxPairSCollectionOps[K: Coder, V: Coder](self: SCollection[(K, V)]) {
   /**
    * Construct a [[BloomFilter]] of the values of each key in the current SCollection.
@@ -114,12 +113,12 @@ class ApproxPairSCollectionOps[K: Coder, V: Coder](self: SCollection[(K, V)]) {
     )
 }
 
-
 trait ApproxFilterSCollectionSyntax {
   implicit def toApproxSColl[T: Coder](sc: SCollection[T]): ApproxFilterSCollectionOps[T] =
     new ApproxFilterSCollectionOps[T](sc)
 
-  implicit def toApproxSColl[K: Coder, V: Coder](sc: SCollection[(K, V)]):
-  ApproxPairSCollectionOps[K, V] =
+  implicit def toApproxSColl[K: Coder, V: Coder](
+    sc: SCollection[(K, V)]
+  ): ApproxPairSCollectionOps[K, V] =
     new ApproxPairSCollectionOps[K, V](sc)
 }
