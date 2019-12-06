@@ -20,6 +20,7 @@ import java.io.{ByteArrayInputStream, ByteArrayOutputStream, InputStream, Output
 
 import com.spotify.scio.annotations.experimental
 import com.spotify.scio.coders.Coder
+import org.apache.beam.sdk.coders.AtomicCoder
 
 /**
  * An [[ApproxFilter]] is an abstraction over various Approximate / Probabilistic
@@ -165,4 +166,21 @@ trait ApproxFilterCompanion[AF[_] <: ApproxFilter[_]] {
    */
   def readFrom[T](in: InputStream)(implicit deser: ApproxFilterDeserializer[T, AF]): AF[T] =
     deser.readFrom(in)
+
+  /**
+   * [[Coder]] for [[ApproxFilter]]
+   *
+   * A coder can be created when we have an implicit [[ApproxFilterDeserializer]]
+   *
+   * An [[ApproxFilterDeserializer]] is defined in the companion object and might pull in
+   * other implicit type classes as needed to create an [[ApproxFilter]]
+   */
+  implicit def coder[T](implicit deser: ApproxFilterDeserializer[T, AF]): Coder[AF[T]] = {
+    Coder.beam {
+      new AtomicCoder[AF[T]] {
+        override def encode(value: AF[T], outStream: OutputStream): Unit = value.writeTo(outStream)
+        override def decode(inStream: InputStream): AF[T] = deser.readFrom(inStream)
+      }
+    }
+  }
 }

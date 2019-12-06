@@ -36,6 +36,7 @@ import org.apache.beam.sdk.coders.AtomicCoder
  *
  * Implemented as an immutable wrapper over Guava's Bloom Filter.
  */
+@SerialVersionUID(1L)
 final case class BloomFilter[T] private (private val internal: gBloomFilter[T])
     extends ApproxFilter[T] {
   /**
@@ -104,21 +105,6 @@ object BloomFilter extends ApproxFilterCompanion[BloomFilter] {
       override def readFrom(in: InputStream): BloomFilter[T] =
         BloomFilter(gBloomFilter.readFrom(in, implicitly[Funnel[T]]))
     }
-
-  /**
-   * [[Coder]] for [[BloomFilter]]
-   *
-   * Available only when we have an implicit [[Funnel]] available for the given [[T]].
-   * Without a funnel the coder falls back to Kryo
-   */
-  implicit def coder[T: Funnel]: Coder[BloomFilter[T]] =
-    Coder.beam(
-      new AtomicCoder[BloomFilter[T]] {
-        override def encode(value: BloomFilter[T], outStream: OutputStream): Unit =
-          value.writeTo(outStream)
-        override def decode(in: InputStream): BloomFilter[T] = deserializer[T].readFrom(in)
-      }
-    )
 
   /**
    * Constructor for [[BloomFilter]]
