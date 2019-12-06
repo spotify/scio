@@ -98,7 +98,7 @@ object ScioBenchmarkSettings {
       .flatMap { ci =>
         val cls = ci.load()
         if (classOf[Benchmark] isAssignableFrom cls) {
-          Some(cls.getConstructor().newInstance()().asInstanceOf[Benchmark])
+          Some(cls.getConstructor().newInstance().asInstanceOf[Benchmark])
         } else {
           None
         }
