@@ -18,7 +18,7 @@
 // Example: Read using typed BigQuery Storage API with annotated case classes
 // Usage:
 
-// `sbt runMain "com.spotify.scio.examples.extra.TypedStorageBigQueryTornadoes
+// `sbt "runMain com.spotify.scio.examples.extra.TypedStorageBigQueryTornadoes
 // --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
 // --output=[PROJECT]:[DATASET].[TABLE]"`
 package com.spotify.scio.examples.extra

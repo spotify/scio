@@ -18,7 +18,7 @@
 // Example: BigQuery TableRow JSON Input and Output
 // Usage:
 
-// `sbt runMain "com.spotify.scio.examples.extra.TableRowJsonInOut
+// `sbt "runMain com.spotify.scio.examples.extra.TableRowJsonInOut
 // --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
 // --input=gs://apache-beam-samples/wikipedia_edits/wiki_data-*.json
 // --output=gs://[BUCKET]/[PATH]/wikipedia"`

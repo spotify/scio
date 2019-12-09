@@ -18,7 +18,7 @@
 // Example: Avro Input and Output
 // Usage:
 
-// `sbt runMain "com.spotify.scio.examples.extra.AvroInOut
+// `sbt "runMain com.spotify.scio.examples.extra.AvroInOut
 // --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
 // --input=[INPUT].avro --output=[OUTPUT].avro --method=[METHOD]"`
 package com.spotify.scio.examples.extra

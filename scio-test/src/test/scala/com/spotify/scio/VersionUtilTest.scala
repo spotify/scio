@@ -17,10 +17,11 @@
 
 package com.spotify.scio
 
-import org.scalatest._
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 import scala.io.AnsiColor._
 
-class VersionUtilTest extends FlatSpec with Matchers {
+class VersionUtilTest extends AnyFlatSpec with Matchers {
   private def verifySnapshotVersion(oldVer: String, newVerOpt: Option[String]) =
     VersionUtil.checkVersion(oldVer, newVerOpt, ignore = false) shouldBe Seq(
       s"Using a SNAPSHOT version of Scio: $oldVer"

@@ -23,7 +23,7 @@ import org.apache.beam.sdk.options.{PipelineOptions, PipelineOptionsFactory}
 import org.apache.beam.sdk.util.{CoderUtils, SerializableUtils}
 import org.scalactic.Equality
 import org.scalatest.Assertion
-import org.scalatest.Matchers._
+import org.scalatest.matchers.should.Matchers._
 
 import scala.reflect.ClassTag
 

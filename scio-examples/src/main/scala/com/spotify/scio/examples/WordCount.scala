@@ -18,7 +18,7 @@
 // Example: Word Count Example with Metrics
 // Usage:
 
-// `sbt runMain "com.spotify.scio.examples.WordCount
+// `sbt "runMain com.spotify.scio.examples.WordCount
 // --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
 // --input=gs://apache-beam-samples/shakespeare/kinglear.txt
 // --output=gs://[BUCKET]/[PATH]/wordcount"`

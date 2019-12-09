@@ -18,8 +18,12 @@
 package com.spotify.scio.coders
 
 import java.io.{InputStream, OutputStream}
+import java.lang.{Iterable => JIterable}
+import java.math.{BigDecimal => JBigDecimal, BigInteger => JBigInteger}
+import java.time.Instant
 
-import com.spotify.scio.coders.instances.Implicits
+import com.spotify.scio.coders.instances._
+import com.spotify.scio.transforms.BaseAsyncLookupDoFn
 import org.apache.beam.sdk.coders.Coder.NonDeterministicException
 import org.apache.beam.sdk.coders.{AtomicCoder, Coder => BCoder}
 import org.apache.beam.sdk.util.common.ElementByteSizeObserver
@@ -27,7 +31,10 @@ import org.apache.beam.sdk.values.KV
 
 import scala.annotation.implicitNotFound
 import scala.collection.JavaConverters._
+import scala.collection.{BitSet, SortedSet, TraversableOnce, mutable => m}
 import scala.reflect.ClassTag
+import scala.util.Try
+
 @implicitNotFound(
   """
 Cannot find an implicit Coder instance for type:
@@ -95,10 +102,9 @@ final case class Record[T] private (
   destruct: T => Array[Any]
 ) extends Coder[T] {
   override def toString: String = {
-    val str = cs
-      .map {
-        case (k, v) => s"($k, $v)"
-      }
+    val str = cs.map {
+      case (k, v) => s"($k, $v)"
+    }
     s"Record($typeName, ${str.mkString(", ")})"
   }
 }
@@ -132,8 +138,7 @@ private final case class DisjunctionCoder[T, Id](
         Nil
       } catch {
         case e: NonDeterministicException =>
-          val reason = s"case $label is using non-deterministic $c"
-          List(reason -> e)
+          List(s"case $label is using non-deterministic $c" -> e)
       }
     }
 
@@ -167,31 +172,37 @@ private final case class DisjunctionCoder[T, Id](
     }
 }
 
-private[scio] final class RefCoder[T](val typeName: String, c: => BCoder[T]) extends BCoder[T] {
-  def value: BCoder[T] = c
+private[scio] final case class RefCoder[T](val typeName: String, var coder: BCoder[T])
+    extends BCoder[T] {
+  def setImpl(_c: BCoder[T]): Unit = coder = _c
 
-  def decode(inStream: InputStream): T = c.decode(inStream)
-  def encode(value: T, outStream: OutputStream): Unit = c.encode(value, outStream)
-  def getCoderArguments(): java.util.List[_ <: BCoder[_]] = c.getCoderArguments()
-  def verifyDeterministic(): Unit = c.verifyDeterministic()
+  private def check[A](t: => A): A = {
+    require(coder != null, s"Coder implementation should not be null in ${this}")
+    t
+  }
 
-  override def consistentWithEquals(): Boolean = c.consistentWithEquals()
-  override def structuralValue(value: T): AnyRef =
+  def decode(inStream: InputStream): T = check { coder.decode(inStream) }
+  def encode(value: T, outStream: OutputStream): Unit = check { coder.encode(value, outStream) }
+  def getCoderArguments(): java.util.List[_ <: BCoder[_]] = check { coder.getCoderArguments() }
+  def verifyDeterministic(): Unit = check { coder.verifyDeterministic() }
+
+  override def consistentWithEquals(): Boolean = check { coder.consistentWithEquals() }
+  override def structuralValue(value: T): AnyRef = check {
     if (consistentWithEquals()) {
       value.asInstanceOf[AnyRef]
     } else {
-      c.structuralValue(value)
+      coder.structuralValue(value)
     }
-}
+  }
 
-private[scio] object RefCoder {
-  def apply[T](t: String, c: => BCoder[T]): RefCoder[T] = new RefCoder[T](t, c)
-  def unapply[T](c: RefCoder[T]): Option[(String, BCoder[T])] = Option((c.typeName, c.value))
+  override def toString(): String =
+    s"RefCoder($typeName, ${if (coder == null) "null" else "<coder ref>"})"
 }
 
 // XXX: Workaround a NPE deep down the stack in Beam
 // info]   java.lang.NullPointerException: null value in entry: T=null
 private[scio] case class WrappedBCoder[T](u: BCoder[T]) extends BCoder[T] {
+
   /**
    * Eagerly compute a stack trace on materialization
    * to provide a helpful stacktrace if an exception happens
@@ -386,6 +397,7 @@ private[scio] final case class RecordCoder[T](
  *
  */
 sealed trait CoderGrammar {
+
   /**
    * Create a ScioCoder from a Beam Coder
    */
@@ -460,8 +472,82 @@ sealed trait CoderGrammar {
     Record[T](typeName, cs, construct, destruct)
 }
 
-object Coder extends CoderGrammar with Implicits {
+object Coder
+    extends CoderGrammar
+    with TupleCoders
+    with AvroCoders
+    with ProtobufCoders
+    with AlgebirdCoders
+    with JodaCoders
+    with JavaBeanCoders
+    with BeamTypeCoders
+    with LowPriorityFallbackCoder {
   @inline final def apply[T](implicit c: Coder[T]): Coder[T] = c
+
+  implicit val charCoder: Coder[Char] = ScalaCoders.charCoder
+  implicit val byteCoder: Coder[Byte] = ScalaCoders.byteCoder
+  implicit val stringCoder: Coder[String] = ScalaCoders.stringCoder
+  implicit val shortCoder: Coder[Short] = ScalaCoders.shortCoder
+  implicit val intCoder: Coder[Int] = ScalaCoders.intCoder
+  implicit val longCoder: Coder[Long] = ScalaCoders.longCoder
+  implicit val floatCoder: Coder[Float] = ScalaCoders.floatCoder
+  implicit val doubleCoder: Coder[Double] = ScalaCoders.doubleCoder
+  implicit val booleanCoder: Coder[Boolean] = ScalaCoders.booleanCoder
+  implicit val unitCoder: Coder[Unit] = ScalaCoders.unitCoder
+  implicit val nothingCoder: Coder[Nothing] = ScalaCoders.nothingCoder
+  implicit val bigIntCoder: Coder[BigInt] = ScalaCoders.bigIntCoder
+  implicit val bigDecimalCoder: Coder[BigDecimal] = ScalaCoders.bigDecimalCoder
+  implicit def tryCoder[A: Coder]: Coder[Try[A]] = ScalaCoders.tryCoder
+  implicit def eitherCoder[A: Coder, B: Coder]: Coder[Either[A, B]] = ScalaCoders.eitherCoder
+  implicit def optionCoder[T: Coder, S[_] <: Option[_]]: Coder[S[T]] = ScalaCoders.optionCoder
+  implicit val noneCoder: Coder[None.type] = ScalaCoders.noneCoder
+  implicit val bitSetCoder: Coder[BitSet] = ScalaCoders.bitSetCoder
+  implicit def seqCoder[T: Coder]: Coder[Seq[T]] = ScalaCoders.seqCoder
+  import shapeless.Strict
+  implicit def pairCoder[A, B](implicit CA: Strict[Coder[A]], CB: Strict[Coder[B]]): Coder[(A, B)] =
+    ScalaCoders.pairCoder
+  implicit def iterableCoder[T: Coder]: Coder[Iterable[T]] = ScalaCoders.iterableCoder
+  implicit def throwableCoder[T <: Throwable: ClassTag]: Coder[T] = ScalaCoders.throwableCoder
+  implicit def listCoder[T: Coder]: Coder[List[T]] = ScalaCoders.listCoder
+  implicit def traversableOnceCoder[T: Coder]: Coder[TraversableOnce[T]] =
+    ScalaCoders.traversableOnceCoder
+  implicit def setCoder[T: Coder]: Coder[Set[T]] = ScalaCoders.setCoder
+  implicit def mutableSetCoder[T: Coder]: Coder[m.Set[T]] = ScalaCoders.mutableSetCoder
+  implicit def vectorCoder[T: Coder]: Coder[Vector[T]] = ScalaCoders.vectorCoder
+  implicit def arrayBufferCoder[T: Coder]: Coder[m.ArrayBuffer[T]] = ScalaCoders.arrayBufferCoder
+  implicit def bufferCoder[T: Coder]: Coder[m.Buffer[T]] = ScalaCoders.bufferCoder
+  implicit def listBufferCoder[T: Coder]: Coder[m.ListBuffer[T]] = ScalaCoders.listBufferCoder
+  implicit def arrayCoder[T: Coder: ClassTag]: Coder[Array[T]] = ScalaCoders.arrayCoder
+  implicit val arrayByteCoder: Coder[Array[Byte]] = ScalaCoders.arrayByteCoder
+  implicit def wrappedArrayCoder[T: Coder: ClassTag](
+    implicit wrap: Array[T] => m.WrappedArray[T]
+  ): Coder[m.WrappedArray[T]] = ScalaCoders.wrappedArrayCoder
+  implicit def mutableMapCoder[K: Coder, V: Coder]: Coder[m.Map[K, V]] = ScalaCoders.mutableMapCoder
+  implicit def mapCoder[K: Coder, V: Coder]: Coder[Map[K, V]] = ScalaCoders.mapCoder
+  implicit def sortedSetCoder[T: Coder: Ordering]: Coder[SortedSet[T]] = ScalaCoders.sortedSetCoder
+
+  implicit val voidCoder: Coder[Void] = JavaCoders.voidCoder
+  implicit val uriCoder: Coder[java.net.URI] = JavaCoders.uriCoder
+  implicit val pathCoder: Coder[java.nio.file.Path] = JavaCoders.pathCoder
+  implicit def jIterableCoder[T: Coder]: Coder[JIterable[T]] = JavaCoders.jIterableCoder
+  implicit def jlistCoder[T: Coder]: Coder[java.util.List[T]] = JavaCoders.jlistCoder
+  implicit def jArrayListCoder[T: Coder]: Coder[java.util.ArrayList[T]] = JavaCoders.jArrayListCoder
+  implicit def jMapCoder[K: Coder, V: Coder]: Coder[java.util.Map[K, V]] = JavaCoders.jMapCoder
+  implicit def jTryCoder[A](implicit c: Coder[Try[A]]): Coder[BaseAsyncLookupDoFn.Try[A]] =
+    JavaCoders.jTryCoder
+  implicit val jBitSetCoder: Coder[java.util.BitSet] = JavaCoders.jBitSetCoder
+  implicit val jShortCoder: Coder[java.lang.Short] = JavaCoders.jShortCoder
+  implicit val jByteCoder: Coder[java.lang.Byte] = JavaCoders.jByteCoder
+  implicit val jIntegerCoder: Coder[java.lang.Integer] = JavaCoders.jIntegerCoder
+  implicit val jLongCoder: Coder[java.lang.Long] = JavaCoders.jLongCoder
+  implicit val jFloatCoder: Coder[java.lang.Float] = JavaCoders.jFloatCoder
+  implicit val jDoubleCoder: Coder[java.lang.Double] = JavaCoders.jDoubleCoder
+  implicit val jBooleanCoder: Coder[java.lang.Boolean] = JavaCoders.jBooleanCoder
+  implicit val jBigIntegerCoder: Coder[JBigInteger] = JavaCoders.jBigIntegerCoder
+  implicit val jBigDecimalCoder: Coder[JBigDecimal] = JavaCoders.jBigDecimalCoder
+  implicit val serializableCoder: Coder[Serializable] = Coder.kryo[Serializable]
+  implicit val jInstantCoder: Coder[Instant] = JavaCoders.jInstantCoder
+  implicit def coderJEnum[E <: java.lang.Enum[E]: ClassTag]: Coder[E] = JavaCoders.coderJEnum
 }
 
 private[coders] object CoderStackTrace {

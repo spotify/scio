@@ -53,7 +53,7 @@ class ScioIOTest extends ScioIOSpec {
   "AvroIO" should "work with SpecificRecord" in {
     val xs = (1 to 100).map(AvroUtils.newSpecificRecord)
     testTap(xs)(_.saveAsAvroFile(_))(".avro")
-    testJobTest(xs)(AvroIO(_))(_.avroFile(_))(_.saveAsAvroFile(_))
+    testJobTest(xs)(AvroIO[TestRecord](_))(_.avroFile(_))(_.saveAsAvroFile(_))
   }
 
   it should "work with GenericRecord" in {
@@ -76,8 +76,8 @@ class ScioIOTest extends ScioIOSpec {
     val xs = (1 to 100).map(PartialFieldsAvro)
     // No test for saveAsAvroFile because parseFn is only for i/p
     testJobTest(xs)(AvroIO(_))(
-      _.parseAvroFile[PartialFieldsAvro](_)(
-        (gr: GenericRecord) => PartialFieldsAvro(gr.get("int_field").asInstanceOf[Int])
+      _.parseAvroFile[PartialFieldsAvro](_)((gr: GenericRecord) =>
+        PartialFieldsAvro(gr.get("int_field").asInstanceOf[Int])
       )
     )(_.saveAsAvroFile(_, schema = schema))
   }
@@ -86,7 +86,9 @@ class ScioIOTest extends ScioIOSpec {
     import ScioIOTest._
     val xs = (1 to 100).map(x => AvroRecord(x, x.toString, (1 to x).map(_.toString).toList))
     testTap(xs)(_.saveAsObjectFile(_))(".obj.avro")
-    testJobTest[AvroRecord](xs)(ObjectFileIO(_))(_.objectFile(_))(_.saveAsObjectFile(_))
+    testJobTest[AvroRecord](xs)(ObjectFileIO[AvroRecord](_))(_.objectFile[AvroRecord](_))(
+      _.saveAsObjectFile(_)
+    )
   }
 
   "ProtobufIO" should "work" in {
@@ -101,8 +103,8 @@ class ScioIOTest extends ScioIOSpec {
     val xs = (1 to 100).map(x => TableRow("x" -> x.toString))
     testJobTest(xs, in = "project:dataset.in_table", out = "project:dataset.out_table")(
       BigQueryIO(_)
-    )((sc, s) => sc.bigQueryTable(Table.Spec(s)))(
-      (coll, s) => coll.saveAsBigQueryTable(Table.Spec(s))
+    )((sc, s) => sc.bigQueryTable(Table.Spec(s)))((coll, s) =>
+      coll.saveAsBigQueryTable(Table.Spec(s))
     )
   }
 
@@ -110,8 +112,8 @@ class ScioIOTest extends ScioIOSpec {
     val xs = (1 to 100).map(x => BQRecord(x, x.toString, (1 to x).map(_.toString).toList))
     testJobTest(xs, in = "project:dataset.in_table", out = "project:dataset.out_table")(
       BigQueryIO(_)
-    )((sc, s) => sc.typedBigQueryTable(Table.Spec(s)))(
-      (coll, s) => coll.saveAsTypedBigQueryTable(Table.Spec(s))
+    )((sc, s) => sc.typedBigQueryTable[BQRecord](Table.Spec(s)))((coll, s) =>
+      coll.saveAsTypedBigQueryTable(Table.Spec(s))
     )
   }
 

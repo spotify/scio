@@ -57,6 +57,7 @@ trait SideInput[T] extends Serializable {
 
 /** Companion object of [[SideInput]]. */
 object SideInput {
+
   /**
    * Wrap a view of a singleton as a [[SideInput]]. In most cases you want to use
    * [[SCollection.asSingletonSideInput(*]].
@@ -136,6 +137,7 @@ class SideInputContext[T] private[scio] (
   val context: DoFn[T, AnyRef]#ProcessContext,
   val window: BoundedWindow
 ) {
+
   /** Extract the value of a given [[SideInput]]. */
   def apply[S](side: SideInput[S]): S = side.getCache(context, window)
 }

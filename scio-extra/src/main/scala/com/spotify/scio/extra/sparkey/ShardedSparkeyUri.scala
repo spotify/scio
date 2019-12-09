@@ -129,9 +129,8 @@ private case class RemoteShardedSparkeyUri(basePath: String, rfu: RemoteFileUtil
     val paths = rfu
       .download(
         basePaths
-          .flatMap(
-            shardBasePath =>
-              SparkeyUri.extensions.map(extension => new URI(s"$shardBasePath$extension"))
+          .flatMap(shardBasePath =>
+            SparkeyUri.extensions.map(extension => new URI(s"$shardBasePath$extension"))
           )
           .toList
           .asJava

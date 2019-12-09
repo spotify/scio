@@ -61,7 +61,10 @@ object Cache {
           override def apply(key: K): V = default
         })
 
-      override def put(k: K, value: V): Unit = chm.put(k, value)
+      override def put(k: K, value: V): Unit = {
+        chm.put(k, value)
+        ()
+      }
 
       override def invalidateAll(): Unit = chm.clear()
     }

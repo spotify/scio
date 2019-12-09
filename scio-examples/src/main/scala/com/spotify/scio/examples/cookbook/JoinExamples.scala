@@ -18,7 +18,7 @@
 // Example: Different Types of Joins
 // Usage:
 
-// `sbt runMain "com.spotify.scio.examples.cookbook.JoinExamples
+// `sbt "runMain com.spotify.scio.examples.cookbook.JoinExamples
 // --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
 // --output=gs://[BUCKET]/[PATH]/join_examples"`
 package com.spotify.scio.examples.cookbook
@@ -132,7 +132,7 @@ object HashJoinExamples {
 
     eventsInfo
     // Hash join uses side input under the hood and is a drop-in replacement for regular join
-      .hashLeftJoin(countryInfo)
+      .hashLeftOuterJoin(countryInfo)
       .map { t =>
         val (countryCode, (eventInfo, countryNameOpt)) = t
         val countryName = countryNameOpt.getOrElse("none")

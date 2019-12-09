@@ -21,18 +21,13 @@ import java.io.{InputStream, OutputStream}
 import java.math.{BigDecimal, BigInteger}
 import java.time.Instant
 
-import com.google.api.services.bigquery.model.TableRow
 import com.spotify.scio.IsJavaBean
-import com.spotify.scio.schemas.Schema
 import com.spotify.scio.coders.Coder
+import com.spotify.scio.schemas.Schema
 import com.spotify.scio.transforms.BaseAsyncLookupDoFn
 import com.spotify.scio.util.ScioUtil
 import org.apache.beam.sdk.coders.{Coder => _, _}
-import org.apache.beam.sdk.io.gcp.bigquery.TableRowJsonCoder
-import org.apache.beam.sdk.io.gcp.pubsub.{PubsubMessage, PubsubMessageWithAttributesCoder}
-import org.apache.beam.sdk.schemas.{SchemaCoder, Schema => BSchema}
-import org.apache.beam.sdk.transforms.windowing.{BoundedWindow, IntervalWindow, PaneInfo}
-import org.apache.beam.sdk.values.{KV, Row}
+import org.apache.beam.sdk.schemas.SchemaCoder
 import org.apache.beam.sdk.{coders => bcoders}
 
 import scala.reflect.ClassTag
@@ -49,7 +44,7 @@ private object VoidCoder extends AtomicCoder[Void] {
 //
 // Java Coders
 //
-trait JavaCoders {
+trait JavaCoders extends JavaBeanCoders {
   implicit def voidCoder: Coder[Void] = Coder.beam[Void](VoidCoder)
 
   implicit def uriCoder: Coder[java.net.URI] =
@@ -106,22 +101,7 @@ trait JavaCoders {
 
   implicit def jBigDecimalCoder: Coder[BigDecimal] = Coder.beam(BigDecimalCoder.of())
 
-  implicit def intervalWindowCoder: Coder[IntervalWindow] = Coder.beam(IntervalWindow.getCoder)
-
-  implicit def boundedWindowCoder: Coder[BoundedWindow] = Coder.kryo[BoundedWindow]
-
   implicit def serializableCoder: Coder[Serializable] = Coder.kryo[Serializable]
-
-  implicit def paneInfoCoder: Coder[PaneInfo] = Coder.beam(PaneInfo.PaneInfoCoder.of())
-
-  implicit def tableRowCoder: Coder[TableRow] = Coder.beam(TableRowJsonCoder.of())
-
-  def row(schema: BSchema): Coder[Row] = Coder.beam(RowCoder.of(schema))
-
-  implicit def messageCoder: Coder[PubsubMessage] =
-    Coder.beam(PubsubMessageWithAttributesCoder.of())
-
-  implicit def beamKVCoder[K: Coder, V: Coder]: Coder[KV[K, V]] = Coder.kv(Coder[K], Coder[V])
 
   implicit def jInstantCoder: Coder[Instant] =
     Coder.xmap(Coder.pairCoder(jLongCoder, jIntegerCoder))(
@@ -131,9 +111,13 @@ trait JavaCoders {
 
   implicit def coderJEnum[E <: java.lang.Enum[E]: ClassTag]: Coder[E] =
     Coder.beam(SerializableCoder.of(ScioUtil.classOf[E]))
+}
 
+trait JavaBeanCoders {
   implicit def javaBeanCoder[T: IsJavaBean: ClassTag]: Coder[T] = {
     val rec = Schema.javaBeanSchema[T]
     Coder.beam(SchemaCoder.of(rec.schema, rec.toRow, rec.fromRow))
   }
 }
+
+private[coders] object JavaCoders extends JavaCoders

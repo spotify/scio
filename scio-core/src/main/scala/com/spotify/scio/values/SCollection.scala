@@ -61,8 +61,6 @@ object SCollection extends ApproxFilterSCollectionSyntax {
   def unionAll[T: Coder](scs: Iterable[SCollection[T]]): SCollection[T] =
     scs.head.context.unionAll(scs)
 
-  import scala.language.implicitConversions
-
   /** Implicit conversion from SCollection to DoubleSCollectionFunctions. */
   implicit def makeDoubleSCollectionFunctions(s: SCollection[Double]): DoubleSCollectionFunctions =
     new DoubleSCollectionFunctions(s)
@@ -138,7 +136,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
 
   def setSchema(schema: Schema[T]): SCollection[T] = {
     if (!internal.hasSchema) {
-      val (s, to, from) = SchemaMaterializer.materialize(this.context, schema)
+      val (s, to, from) = SchemaMaterializer.materialize(schema)
       context.wrap(internal.setSchema(s, to, from))
     } else this
   }
@@ -300,7 +298,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @return partitioned SCollections in a `Map`
    * @group collection
    */
-  def partitionByKey[U: Coder](partitionKeys: Set[U])(f: T => U): Map[U, SCollection[T]] = {
+  def partitionByKey[U](partitionKeys: Set[U])(f: T => U): Map[U, SCollection[T]] = {
     val partitionKeysIndexed = partitionKeys.toIndexedSeq
 
     partitionKeysIndexed
@@ -514,8 +512,17 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    *
    * @group transform
    */
+  @deprecated("use SCollection[T]#hashFilter(right.asSetSingletonSideInput) instead", "0.8.0")
   def hashFilter(that: SideSet[T])(implicit coder: Coder[T]): SCollection[T] =
-    self.map((_, ())).hashIntersectByKey(that).keys
+    self.map((_, ())).hashIntersectByKey(that.side).keys
+
+  /**
+   * Return a new SCollection containing only the elements that also exist in the `SideInput`.
+   *
+   * @group transform
+   */
+  def hashFilter(sideInput: SideInput[Set[T]])(implicit coder: Coder[T]): SCollection[T] =
+    self.map((_, ())).hashIntersectByKey(sideInput).keys
 
   /**
    * Create tuples of the elements in this SCollection by applying `f`.
@@ -583,7 +590,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     implicit coder: Coder[T]
   ): SCollection[Iterable[T]] = this.transform {
     _.pApply(ApproximateQuantiles.globally(numQuantiles, ord))
-      .map(_.asInstanceOf[JIterable[T]].asScala)
+      .map((_: JIterable[T]).asScala)
   }
 
   /**
@@ -720,7 +727,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
 
   def top(num: Int, ord: Ordering[T])(implicit coder: Coder[T]): SCollection[Iterable[T]] =
     this.transform {
-      _.pApply(Top.of(num, ord)).map(_.asInstanceOf[JIterable[T]].asScala)
+      _.pApply(Top.of(num, ord)).map((l: JIterable[T]) => l.asScala)
     }
 
   // =======================================================================

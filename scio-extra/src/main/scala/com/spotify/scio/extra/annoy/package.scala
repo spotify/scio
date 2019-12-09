@@ -139,6 +139,7 @@ package object annoy {
 
   /** Enhanced version of [[ScioContext]] with Annoy methods. */
   implicit class AnnoyScioContext(private val self: ScioContext) extends AnyVal {
+
     /**
      * Create a SideInput of [[AnnoyReader]] from an [[AnnoyUri]] base path, to be used with
      * [[com.spotify.scio.values.SCollection.withSideInputs SCollection.withSideInputs]]
@@ -155,6 +156,7 @@ package object annoy {
 
   implicit class AnnoyPairSCollection(@transient private val self: SCollection[(Int, Array[Float])])
       extends AnyVal {
+
     /**
      * Write the key-value pairs of this SCollection as an Annoy file to a specific location,
      * building the trees in the index according to the parameters provided.
@@ -236,6 +238,7 @@ package object annoy {
    */
   implicit class AnnoySCollection(@transient private val self: SCollection[AnnoyUri])
       extends AnyVal {
+
     /**
      * Load Annoy index stored at [[AnnoyUri]] in this
      * [[com.spotify.scio.values.SCollection SCollection]].

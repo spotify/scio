@@ -18,7 +18,7 @@
 // Example: Minimal Word Count Example
 // Usage:
 
-// `sbt runMain "com.spotify.scio.examples.MinimalWordCount
+// `sbt "runMain com.spotify.scio.examples.MinimalWordCount
 // --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
 // --input=gs://apache-beam-samples/shakespeare/kinglear.txt
 // --output=gs://[BUCKET]/[PATH]/minimal_wordcount"`

@@ -27,6 +27,7 @@ import com.spotify.scio.avro.syntax.Syntax
  * }}}
  */
 package object avro extends Syntax {
+
   /** Typed Avro annotations and converters. */
   val AvroType = com.spotify.scio.avro.types.AvroType
 

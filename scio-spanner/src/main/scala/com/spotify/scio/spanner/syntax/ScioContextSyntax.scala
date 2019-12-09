@@ -23,8 +23,6 @@ import com.spotify.scio.spanner.SpannerRead
 import com.spotify.scio.spanner.instances.coders._
 import org.apache.beam.sdk.io.gcp.spanner.SpannerConfig
 
-import scala.language.implicitConversions
-
 final class SpannerScioContextOps(private val self: ScioContext) extends AnyVal {
   import SpannerRead.ReadParam._
 

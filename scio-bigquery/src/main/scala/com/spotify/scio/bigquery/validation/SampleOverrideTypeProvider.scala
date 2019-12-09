@@ -32,17 +32,17 @@ final class SampleOverrideTypeProvider extends OverrideTypeProvider {
   private def getByTypeObject(c: blackbox.Context)(tpe: c.Type): Option[(c.Type, Class[_])] = {
     Index
       .getIndexCompileTimeTypes(c)
-      .find(a => {
+      .find { a =>
         val (compileTimeType, _) = a
         compileTimeType =:= tpe
-      })
+      }
   }
 
   private def getByTypeObject(tpe: Type): Option[(Type, Class[_])] = {
-    Index.getIndexRuntimeTypes.find(a => {
+    Index.getIndexRuntimeTypes.find { a =>
       val (runtimeType, _) = a
       runtimeType =:= tpe
-    })
+    }
   }
 
   def shouldOverrideType(tfs: TableFieldSchema): Boolean =

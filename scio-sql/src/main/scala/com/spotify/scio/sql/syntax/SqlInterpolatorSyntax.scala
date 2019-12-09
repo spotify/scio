@@ -20,8 +20,6 @@ import com.spotify.scio.values.SCollection
 import com.spotify.scio.schemas.Schema
 import com.spotify.scio.sql.{SCollectionRef, SqlInterpolator, SqlParam, Udf, UdfRef}
 
-import scala.language.implicitConversions
-
 trait SqlInterpolatorSyntax {
   implicit def sqlToUdfRefOps(udf: Udf): SqlParam = new UdfRef(udf)
 

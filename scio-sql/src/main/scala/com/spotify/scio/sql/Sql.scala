@@ -60,7 +60,7 @@ object Sql extends SqlSCollections {
 
   private[sql] def setSchema[T: Schema](c: SCollection[T]): SCollection[T] =
     c.transform { x =>
-      val (schema, to, from) = SchemaMaterializer.materialize(c.context, Schema[T])
+      val (schema, to, from) = SchemaMaterializer.materialize(Schema[T])
       x.map(identity)(Coder.beam(SchemaCoder.of(schema, to, from)))
     }
 }

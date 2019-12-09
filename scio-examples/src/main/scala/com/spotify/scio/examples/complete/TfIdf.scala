@@ -18,7 +18,7 @@
 // Example: Compute TF-IDF from a Text Corpus
 // Usage:
 
-// `sbt runMain "com.spotify.scio.examples.complete.TfIdf
+// `sbt "runMain com.spotify.scio.examples.complete.TfIdf
 // --project=[PROJECT] --runner=DataflowPRunner --zone=[ZONE]
 // --input=gs://apache-beam-samples/shakespeare/?*.txt
 // --output=gs://[BUCKET]/[PATH]/tf_idf"`

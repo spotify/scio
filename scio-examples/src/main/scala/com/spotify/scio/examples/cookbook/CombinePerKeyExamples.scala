@@ -18,7 +18,7 @@
 // Example: Combine Per Key Example
 // Usage:
 
-// `sbt runMain "com.spotify.scio.examples.cookbook.CombinePerKeyExamples
+// `sbt "runMain com.spotify.scio.examples.cookbook.CombinePerKeyExamples
 // --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
 // --output=[DATASET].combine_per_key_examples"`
 package com.spotify.scio.examples.cookbook

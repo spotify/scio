@@ -77,7 +77,7 @@ sbt new spotify/scio-template.g8
 
 Or add the following to your `build.sbt`. Replace the direct and Dataflow runner with ones you wish to use. The compiler plugin dependency is only needed for the type safe BigQuery API.
 
-```scala
+```sbt
 libraryDependencies ++= Seq(
   "com.spotify" %% "scio-core" % "0.6.1",
   "com.spotify" %% "scio-test" % "0.6.1" % "test",
@@ -120,7 +120,7 @@ The defaults should work well for most cases but we sometimes tune the following
 
 More Dataflow pipeline specific options available can be found in @javadoc[`DataflowPipelineOptions`](org.apache.beam.runners.dataflow.options.DataflowPipelineOptions) and super interfaces. Some more useful ones are from @javadoc[`DataflowPipelineWorkerPoolOptions`](org.apache.beam.runners.dataflow.options.DataflowPipelineWorkerPoolOptions).
 
-@javadoc[`DataflowWorkerHarnessOptions#getWorkerCacheMb`](org.apache.beam.runners.dataflow.options.DataflowWorkerHarnessOptions#getWorkerCacheMb--) affects side input performance but needs an extra step to enable. See this @ref[FAQ item](FAQ.md#how-do-i-improve-side-input-performance-).
+@javadoc[`DataflowWorkerHarnessOptions#getWorkerCacheMb`](org.apache.beam.runners.dataflow.options.DataflowWorkerHarnessOptions#getWorkerCacheMb--) affects side input performance but needs an extra step to enable. See this @ref:[FAQ item](FAQ.md#how-do-i-improve-side-input-performance-).
 
 There are a few more experimental settings that might help specific scenarios:
 - `--experiments=shuffle_mode=service` - use external [shuffle service](https://cloud.google.com/dataflow/service/dataflow-service-desc#cloud-dataflow-shuffle) instead of local disk

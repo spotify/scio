@@ -18,42 +18,127 @@ package com.spotify.scio.schemas
 
 import java.util.{List => jList, Map => jMap}
 
-import com.spotify.scio.{FeatureFlag, MacroSettings}
-import com.spotify.scio.schemas.instances.AllInstances
+import com.spotify.scio.{FeatureFlag, IsJavaBean, MacroSettings}
+import com.spotify.scio.schemas.instances.{
+  AvroInstances,
+  JavaInstances,
+  JodaInstances,
+  LowPrioritySchemaDerivation,
+  ScalaInstances
+}
 import com.spotify.scio.util.ScioUtil
 import org.apache.beam.sdk.schemas.Schema.FieldType
 import org.apache.beam.sdk.schemas.{SchemaProvider, Schema => BSchema}
 import org.apache.beam.sdk.transforms.SerializableFunction
 import org.apache.beam.sdk.values.{Row, TypeDescriptor}
+import com.twitter.chill.ClosureCleaner
 
 import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
 import org.apache.beam.sdk.values.TupleTag
-import org.apache.beam.sdk.schemas.Schema.LogicalType
 
-object Schema extends AllInstances {
+import scala.collection.{mutable, SortedSet}
+
+object Schema extends JodaInstances with AvroInstances with LowPrioritySchemaDerivation {
   @inline final def apply[T](implicit c: Schema[T]): Schema[T] = c
 
-  final def logicalType[U, T: ClassTag](
-    underlying: Type[U]
-  )(toBase: T => U, fromBase: U => T): Schema[T] = {
-    Type[T](FieldType.logicalType(new LogicalType[T, U] {
-      private val clazz = scala.reflect.classTag[T].runtimeClass.asInstanceOf[Class[T]]
-      private val className = clazz.getCanonicalName
-      override def getIdentifier: String = className
-      override def getBaseType: FieldType = underlying.fieldType
-      override def toBaseType(input: T): U = toBase(input)
-      override def toInputType(base: U): T = fromBase(base)
-      override def toString(): String =
-        s"LogicalType($className, ${underlying.fieldType.getTypeName()})"
-    }))
-  }
+  implicit val jByteSchema: Type[java.lang.Byte] = JavaInstances.jByteSchema
+  implicit val jBytesSchema: Type[Array[java.lang.Byte]] = JavaInstances.jBytesSchema
+  implicit val jShortSchema: Type[java.lang.Short] = JavaInstances.jShortSchema
+  implicit val jIntegerSchema: Type[java.lang.Integer] = JavaInstances.jIntegerSchema
+  implicit val jLongSchema: Type[java.lang.Long] = JavaInstances.jLongSchema
+  implicit val jFloatSchema: Type[java.lang.Float] = JavaInstances.jFloatSchema
+  implicit val jDoubleSchema: Type[java.lang.Double] = JavaInstances.jDoubleSchema
+  implicit val jBigDecimalSchema: Type[java.math.BigDecimal] = JavaInstances.jBigDecimalSchema
+  implicit val jBooleanSchema: Type[java.lang.Boolean] = JavaInstances.jBooleanSchema
+  implicit def jListSchema[T: Schema]: Schema[java.util.List[T]] =
+    JavaInstances.jListSchema
+  implicit def jArrayListSchema[T: Schema]: Schema[java.util.ArrayList[T]] =
+    JavaInstances.jArrayListSchema
+  implicit def jMapSchema[K: Schema, V: Schema]: Schema[java.util.Map[K, V]] =
+    JavaInstances.jMapSchema
+  implicit def javaBeanSchema[T: IsJavaBean: ClassTag]: RawRecord[T] =
+    JavaInstances.javaBeanSchema
+  implicit def javaEnumSchema[T <: java.lang.Enum[T]: ClassTag]: Schema[T] =
+    JavaInstances.javaEnumSchema
+
+  implicit val stringSchema: Type[String] = ScalaInstances.stringSchema
+  implicit val byteSchema: Type[Byte] = ScalaInstances.byteSchema
+  implicit val bytesSchema: Type[Array[Byte]] = ScalaInstances.bytesSchema
+  implicit val sortSchema: Type[Short] = ScalaInstances.sortSchema
+  implicit val intSchema: Type[Int] = ScalaInstances.intSchema
+  implicit val longSchema: Type[Long] = ScalaInstances.longSchema
+  implicit val floatSchema: Type[Float] = ScalaInstances.floatSchema
+  implicit val doubleSchema: Type[Double] = ScalaInstances.doubleSchema
+  implicit val bigDecimalSchema: Type[BigDecimal] = ScalaInstances.bigDecimalSchema
+  implicit val booleanSchema: Type[Boolean] = ScalaInstances.booleanSchema
+  implicit def optionSchema[T: Schema]: Schema[Option[T]] =
+    ScalaInstances.optionSchema
+  implicit def arraySchema[T: Schema: ClassTag]: Schema[Array[T]] =
+    ScalaInstances.arraySchema
+  implicit def listSchema[T: Schema]: Schema[List[T]] =
+    ScalaInstances.listSchema
+  implicit def seqSchema[T: Schema]: Schema[Seq[T]] =
+    ScalaInstances.seqSchema
+  implicit def traversableOnceSchema[T: Schema]: Schema[TraversableOnce[T]] =
+    ScalaInstances.traversableOnceSchema
+  implicit def iterableSchema[T: Schema]: Schema[Iterable[T]] =
+    ScalaInstances.iterableSchema
+  implicit def arrayBufferSchema[T: Schema]: Schema[mutable.ArrayBuffer[T]] =
+    ScalaInstances.arrayBufferSchema
+  implicit def bufferSchema[T: Schema]: Schema[mutable.Buffer[T]] =
+    ScalaInstances.bufferSchema
+  implicit def setSchema[T: Schema]: Schema[Set[T]] =
+    ScalaInstances.setSchema
+  implicit def mutableSetSchema[T: Schema]: Schema[mutable.Set[T]] =
+    ScalaInstances.mutableSetSchema
+  implicit def sortedSetSchema[T: Schema: Ordering]: Schema[SortedSet[T]] =
+    ScalaInstances.sortedSetSchema
+  implicit def listBufferSchema[T: Schema]: Schema[mutable.ListBuffer[T]] =
+    ScalaInstances.listBufferSchema
+  implicit def vectorSchema[T: Schema]: Schema[Vector[T]] =
+    ScalaInstances.vectorSchema
+  implicit def mapSchema[K: Schema, V: Schema]: Schema[Map[K, V]] =
+    ScalaInstances.mapSchema
+  implicit def mutableMapSchema[K: Schema, V: Schema]: Schema[mutable.Map[K, V]] =
+    ScalaInstances.mutableMapSchema
 }
 
-sealed trait Schema[T] {
+sealed trait Schema[T] extends Serializable {
   type Repr
   type Decode = Repr => T
   type Encode = T => Repr
+}
+
+// Scio specific implementation of LogicalTypes
+// Workarounds https://issues.apache.org/jira/browse/BEAM-8888
+// Scio's Logical types are materialized to beam built-in types
+
+sealed trait LogicalType[T] extends Schema[T] {
+  def underlying: BSchema.FieldType
+  def toBase(v: T): Repr
+  def fromBase(base: Repr): T
+  override def toString(): String = s"LogicalType($underlying)"
+}
+
+object LogicalType {
+  def apply[T, U](u: BSchema.FieldType, t: T => U, f: U => T): LogicalType[T] = {
+    require(
+      u.getTypeName() != BSchema.TypeName.LOGICAL_TYPE,
+      "Beam's logical types are not supported"
+    )
+    val ct = ClosureCleaner.clean(t)
+    val cf = ClosureCleaner.clean(f)
+    new LogicalType[T] {
+      type Repr = U
+      val underlying = u
+      def toBase(v: T): U = ct(v)
+      def fromBase(u: U): T = cf(u)
+    }
+  }
+
+  def unapply[T](logicalType: LogicalType[T]): Option[BSchema.FieldType] =
+    Some(logicalType.underlying)
 }
 
 final case class Record[T] private (
@@ -97,10 +182,6 @@ final case class OptionType[T](schema: Schema[T]) extends Schema[Option[T]] {
   type Repr = schema.Repr
 }
 
-final case class Fallback[F[_], T](coder: F[T]) extends Schema[T] {
-  type Repr = Array[Byte]
-}
-
 final case class ArrayType[F[_], T](
   schema: Schema[T],
   toList: F[T] => jList[T],
@@ -125,6 +206,10 @@ final case class MapType[F[_, _], K, V](
 }
 
 private[scio] case class ScalarWrapper[T](value: T) extends AnyVal
+object ScalarWrapper {
+  implicit def schemaScalarWrapper[T: Schema]: Schema[ScalarWrapper[T]] =
+    Schema.gen[ScalarWrapper[T]]
+}
 
 private[scio] object SchemaTypes {
   private[this] def compareRows(s1: BSchema.FieldType, s2: BSchema.FieldType): Boolean = {
@@ -145,43 +230,6 @@ private[scio] object SchemaTypes {
       case _ if s1.getNullable == s2.getNullable => true
       case _                                     => false
     })
-}
-
-private object Derived extends Serializable {
-  import magnolia._
-  def combineSchema[T](ps: Seq[Param[Schema, T]], rawConstruct: Seq[Any] => T): Record[T] = {
-    @inline def destruct(v: T): Array[Any] = {
-      val arr = new Array[Any](ps.length)
-      var i = 0
-      while (i < ps.length) {
-        val p = ps(i)
-        arr.update(i, p.dereference(v))
-        i = i + 1
-      }
-      arr
-    }
-    val schemas = ps.iterator.map { p =>
-      p.label -> p.typeclass.asInstanceOf[Schema[Any]]
-    }.toArray
-
-    Record(schemas, rawConstruct, destruct)
-  }
-}
-
-trait LowPrioritySchemaDerivation {
-  import magnolia._
-
-  import language.experimental.macros
-
-  type Typeclass[T] = Schema[T]
-
-  def combine[T](ctx: CaseClass[Schema, T]): Record[T] = {
-    val ps = ctx.parameters
-    Derived.combineSchema(ps, ctx.rawConstruct)
-  }
-
-  import com.spotify.scio.MagnoliaMacros
-  implicit def gen[T]: Schema[T] = macro MagnoliaMacros.genWithoutAnnotations[T]
 }
 
 private[scio] trait SchemaMacroHelpers {

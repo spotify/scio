@@ -50,11 +50,13 @@ import scala.util.Try
  * @groupname Ungrouped Other Members
  */
 object BigQueryType {
+
   /**
    * Trait for companion objects of case classes generated with table.
    * @group trait
    */
   trait HasTable {
+
     /** Table for case class schema. */
     def table: String
   }
@@ -72,6 +74,7 @@ object BigQueryType {
    * @group trait
    */
   trait HasSchema[T] {
+
     /** Case class schema. */
     def schema: TableSchema
 
@@ -93,6 +96,7 @@ object BigQueryType {
    * @group trait
    */
   trait HasStorageOptions {
+
     /** Table for case class schema. */
     def table: String
 
@@ -116,6 +120,7 @@ object BigQueryType {
    * @group trait
    */
   trait HasQuery {
+
     /** SELECT query for case class schema. */
     def query: String
   }
@@ -133,6 +138,7 @@ object BigQueryType {
    * @group trait
    */
   trait HasTableDescription {
+
     /** Case class table description. */
     def tableDescription: String
   }

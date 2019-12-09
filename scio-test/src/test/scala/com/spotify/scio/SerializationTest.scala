@@ -19,11 +19,12 @@ package com.spotify.scio
 
 import com.spotify.scio.values.SideOutput
 import org.apache.beam.sdk.util.SerializableUtils
-import org.scalatest._
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import scala.io.Source
 
-class SerializationTest extends FlatSpec with Matchers {
+class SerializationTest extends AnyFlatSpec with Matchers {
   "Args" should "be serializable" in {
     SerializableUtils.ensureSerializable(Args(Array("--key=value")))
   }

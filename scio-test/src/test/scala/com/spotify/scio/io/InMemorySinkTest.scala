@@ -18,9 +18,10 @@
 package com.spotify.scio.io
 
 import com.spotify.scio.ScioContext
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
-class InMemorySinkTest extends FlatSpec with Matchers {
+class InMemorySinkTest extends AnyFlatSpec with Matchers {
   "InMemoryTap" should "return containing items as iterable" in {
     val sc = ScioContext.forTest()
     val items = sc.parallelize(List("String1", "String2"))

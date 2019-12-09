@@ -31,13 +31,13 @@ import org.apache.beam.sdk.io.Compression
 import org.tensorflow._
 import org.tensorflow.example.{Example, SequenceExample}
 
-import scala.language.implicitConversions
 import scala.reflect.ClassTag
 
 /**
  * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with TensorFlow methods.
  */
 final class PredictSCollectionOps[T: ClassTag](private val self: SCollection[T]) {
+
   /**
    * Predict/infer/forward-pass on a TensorFlow Saved Model.
    *
@@ -61,6 +61,7 @@ final class PredictSCollectionOps[T: ClassTag](private val self: SCollection[T])
 }
 
 final class ExampleSCollectionOps[T <: Example](private val self: SCollection[T]) extends AnyVal {
+
   /**
    * Saves this SCollection of `org.tensorflow.example.Example` as a TensorFlow TFRecord file.
    * @return
@@ -131,6 +132,7 @@ final class SeqExampleSCollectionOps[T <: Example](private val self: SCollection
 
 final class TFRecordSCollectionOps[T <: Array[Byte]](private val self: SCollection[T])
     extends AnyVal {
+
   /**
    * Save this SCollection as a TensorFlow TFRecord file. Note that elements must be of type
    * `Array[Byte]`. The recommended record encoding is `org.tensorflow.example.Example` protocol
@@ -151,6 +153,7 @@ final class TFRecordSCollectionOps[T <: Array[Byte]](private val self: SCollecti
 
 final class SequenceExampleSCollectionOps[T <: SequenceExample](private val self: SCollection[T])
     extends AnyVal {
+
   /**
    * Saves this SCollection of `org.tensorflow.example.SequenceExample` as a TensorFlow
    * TFRecord file.
@@ -169,6 +172,7 @@ final class SequenceExampleSCollectionOps[T <: SequenceExample](private val self
 }
 
 trait SCollectionSyntax {
+
   /**
    * Implicit conversion from [[com.spotify.scio.values.SCollection SCollection]] to
    * [[PredictSCollectionOps]].

@@ -23,7 +23,6 @@ import java.util
 import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import org.apache.beam.sdk.util.{MutationDetectors, SerializableUtils}
-import org.scalatest.PropSpec
 import org.scalatestplus.scalacheck.Checkers
 
 import scala.collection.mutable
@@ -38,12 +37,14 @@ import com.twitter.algebird.{
 }
 import org.scalacheck.Prop._
 import org.scalacheck.{Arbitrary, Gen}
-import org.scalatest.{Matchers, WordSpec}
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.propspec.AnyPropSpec
+import org.scalatest.wordspec.AnyWordSpec
 
 /**
  * Check Properties is copied from Algebird Tests.
  */
-trait CheckProperties extends PropSpec with Checkers {
+trait CheckProperties extends AnyPropSpec with Checkers {
   def property(testName: String, testTags: org.scalatest.Tag*)(testFun: org.scalacheck.Prop): Unit =
     super.property(testName, testTags: _*) { check { testFun } }
 }
@@ -293,7 +294,7 @@ class BloomFilterProperties extends ApproximateProperties("BloomFilter") {
   }
 }
 
-class BloomFilterTest extends WordSpec with Matchers {
+class BloomFilterTest extends AnyWordSpec with Matchers {
   val RAND = new scala.util.Random
 
   "MutableBloomFilter" should {
@@ -313,15 +314,13 @@ class BloomFilterTest extends WordSpec with Matchers {
 
     "identify all true positives" in {
       (0 to 100).foreach { _ =>
-        {
-          val bfMonoid = new BloomFilterMonoid[String](RAND.nextInt(5) + 1, RAND.nextInt(64) + 32)
-          val numEntries = 5
-          val entries = (0 until numEntries).map(_ => RAND.nextInt.toString)
-          val bf = bfMonoid.create(entries: _*)
+        val bfMonoid = new BloomFilterMonoid[String](RAND.nextInt(5) + 1, RAND.nextInt(64) + 32)
+        val numEntries = 5
+        val entries = (0 until numEntries).map(_ => RAND.nextInt.toString)
+        val bf = bfMonoid.create(entries: _*)
 
-          entries.foreach { i =>
-            assert(bf.contains(i.toString).isTrue)
-          }
+        entries.foreach { i =>
+          assert(bf.contains(i.toString).isTrue)
         }
       }
     }
@@ -330,30 +329,26 @@ class BloomFilterTest extends WordSpec with Matchers {
       val iter = 10000
 
       Seq(0.1, 0.01, 0.005).foreach { fpProb =>
-        {
-          val fps = (0 until iter).par.map { _ =>
-            {
-              val numEntries = RAND.nextInt(10) + 1
+        val fps = (0 until iter).par.map { _ =>
+          val numEntries = RAND.nextInt(10) + 1
 
-              val bfMonoid = BloomFilter[String](numEntries, fpProb)
+          val bfMonoid = BloomFilter[String](numEntries, fpProb)
 
-              val entries = RAND
-                .shuffle((0 until 1000).toList)
-                .take(numEntries + 1)
-                .map(_.toString)
-              val bf = bfMonoid.create(entries.drop(1): _*)
+          val entries = RAND
+            .shuffle((0 until 1000).toList)
+            .take(numEntries + 1)
+            .map(_.toString)
+          val bf = bfMonoid.create(entries.drop(1): _*)
 
-              if (bf.contains(entries(0)).isTrue) 1.0 else 0.0
-            }
-          }
-
-          val observedFpProb = fps.sum / fps.size
-
-          // the 5 is a fudge factor to make the probability of it relatively low
-          // in tests - This is different from the immutable implementation
-          // as the underlying hash functions are different.
-          assert(observedFpProb <= 5 * fpProb)
+          if (bf.contains(entries(0)).isTrue) 1.0 else 0.0
         }
+
+        val observedFpProb = fps.sum / fps.size
+
+        // the 5 is a fudge factor to make the probability of it relatively low
+        // in tests - This is different from the immutable implementation
+        // as the underlying hash functions are different.
+        assert(observedFpProb <= 5 * fpProb)
       }
     }
 
@@ -372,15 +367,13 @@ class BloomFilterTest extends WordSpec with Matchers {
 
     "work as an Aggregator" in {
       (0 to 10).foreach { _ =>
-        {
-          val aggregator = BloomFilterAggregator[String](RAND.nextInt(5) + 1, RAND.nextInt(64) + 32)
-          val numEntries = 5
-          val entries = (0 until numEntries).map(_ => RAND.nextInt.toString)
-          val bf = aggregator(entries)
+        val aggregator = BloomFilterAggregator[String](RAND.nextInt(5) + 1, RAND.nextInt(64) + 32)
+        val numEntries = 5
+        val entries = (0 until numEntries).map(_ => RAND.nextInt.toString)
+        val bf = aggregator(entries)
 
-          entries.foreach { i =>
-            assert(bf.contains(i.toString).isTrue)
-          }
+        entries.foreach { i =>
+          assert(bf.contains(i.toString).isTrue)
         }
       }
     }

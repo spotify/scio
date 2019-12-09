@@ -10,14 +10,14 @@ addSbtPlugin("org.xerial.sbt" % "sbt-sonatype" % "3.8.1")
 addSbtPlugin("pl.project13.scala" % "sbt-jmh" % "0.3.7")
 addSbtPlugin("com.typesafe" % "sbt-mima-plugin" % "0.6.1")
 addSbtPlugin("com.eed3si9n" % "sbt-buildinfo" % "0.9.0")
-addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.2.1")
-addSbtPlugin("ch.epfl.scala" % "sbt-scalafix" % "0.9.8")
+addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.3.0")
+addSbtPlugin("ch.epfl.scala" % "sbt-scalafix" % "0.9.11")
 addSbtPlugin("com.typesafe.sbt" % "sbt-site" % "1.3.3")
-addSbtPlugin("com.lightbend.paradox" % "sbt-paradox" % "0.6.7")
+addSbtPlugin("com.lightbend.paradox" % "sbt-paradox" % "0.6.8")
 addSbtPlugin("io.github.jonas" % "sbt-paradox-material-theme" % "0.6.0")
 addSbtPlugin("ch.epfl.scala" % "sbt-bloop" % "1.3.5")
-addSbtPlugin("org.scalameta" % "sbt-mdoc" % "2.0.2")
+addSbtPlugin("org.scalameta" % "sbt-mdoc" % "2.0.3")
 
 libraryDependencies ++= Seq(
-  "com.github.os72" % "protoc-jar" % "3.7.1"
+  "com.github.os72" % "protoc-jar" % "3.11.1"
 )

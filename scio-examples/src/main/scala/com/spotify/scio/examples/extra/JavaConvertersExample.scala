@@ -18,7 +18,7 @@
 // Example: Java converters for various output formats
 // Usage:
 
-// `sbt runMain "com.spotify.scio.examples.extra.JavaConvertersExample
+// `sbt "runMain com.spotify.scio.examples.extra.JavaConvertersExample
 // --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
 // --output=gs://[OUTPUT] --converter=[CONVERTER]"`
 package com.spotify.scio.examples.extra

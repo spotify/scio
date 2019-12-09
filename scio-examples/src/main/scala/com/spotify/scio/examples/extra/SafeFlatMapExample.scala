@@ -18,7 +18,7 @@
 // Example: SafeFlatMap usage
 
 // Usage:
-// `sbt runMain "com.spotify.scio.examples.extra.SafeFlatMapExample
+// `sbt "runMain com.spotify.scio.examples.extra.SafeFlatMapExample
 //  --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
 //  --input=gs://apache-beam-samples/shakespeare/kinglear.txt
 //  --output=gs://[BUCKET]/[PATH]/safe_flat_map"`

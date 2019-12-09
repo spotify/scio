@@ -20,11 +20,12 @@ package com.spotify.scio.util
 import com.spotify.scio.ScioContext
 import com.twitter.algebird.{Monoid, Semigroup}
 import org.apache.beam.sdk.transforms.Combine.CombineFn
-import org.scalatest._
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import scala.collection.JavaConverters._
 
-class FunctionsTest extends FlatSpec with Matchers {
+class FunctionsTest extends AnyFlatSpec with Matchers {
   private def testFn[VA](fn: CombineFn[Int, VA, Int]) = {
     var a1 = fn.createAccumulator()
     var a2 = fn.createAccumulator()

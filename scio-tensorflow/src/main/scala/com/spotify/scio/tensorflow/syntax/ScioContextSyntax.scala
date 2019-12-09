@@ -26,9 +26,8 @@ import org.apache.beam.sdk.io.Compression
 import org.tensorflow.example.{Example, SequenceExample}
 import org.tensorflow.metadata.v0._
 
-import scala.language.implicitConversions
-
 final class ScioContextOps(private val self: ScioContext) extends AnyVal {
+
   /**
    * Get an SCollection for a TensorFlow TFRecord file. Note that TFRecord files are not
    * splittable. The recommended record encoding is [[org.tensorflow.example.Example]] protocol
@@ -101,6 +100,7 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
 }
 
 trait ScioContextSyntax {
+
   /** Implicit conversion from [[ScioContext]] to [[ScioContextOps]]. */
   implicit def tensorFlowScioContextFunctions(s: ScioContext): ScioContextOps =
     new ScioContextOps(s)

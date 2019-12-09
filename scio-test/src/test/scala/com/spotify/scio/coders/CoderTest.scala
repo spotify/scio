@@ -24,7 +24,9 @@ import org.apache.beam.sdk.coders.{Coder => BCoder, CoderRegistry}
 import org.apache.beam.sdk.coders.Coder.NonDeterministicException
 import org.apache.beam.sdk.options.{PipelineOptions, PipelineOptionsFactory}
 import org.scalactic.Equality
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
+import org.apache.beam.sdk.util.SerializableUtils
 
 import scala.collection.JavaConverters._
 import scala.collection.{mutable => mut}
@@ -81,7 +83,7 @@ final case class FirstImplementationWithAnnotation(s: String) extends TraitWithA
 @SerialVersionUID(3)
 final case class SecondImplementationWithAnnotation(i: Int) extends TraitWithAnnotation
 
-class CodersTest extends FlatSpec with Matchers {
+final class CoderTest extends AnyFlatSpec with Matchers {
   val userId = UserId(Array[Byte](1, 2, 3, 4))
   val user = User(userId, "johndoe", "johndoe@spotify.com")
 
@@ -437,7 +439,7 @@ class CodersTest extends FlatSpec with Matchers {
     }
 
     assert(caught.getStackTrace.contains(CoderStackTrace.CoderStackElemMarker))
-    assert(caught.getStackTrace.exists(_.getClassName.contains(classOf[CodersTest].getName)))
+    assert(caught.getStackTrace.exists(_.getClassName.contains(classOf[CoderTest].getName)))
   }
 
   it should "#1651: remove all anotations from derived coders" in {
@@ -456,11 +458,15 @@ class CodersTest extends FlatSpec with Matchers {
   }
 
   it should "support derivation of recursive types" in {
-    case class SampleField(name: String, fieldType: SampleFieldType)
-    sealed trait SampleFieldType
-    case object IntegerType extends SampleFieldType
-    case object StringType extends SampleFieldType
-    case class RecordType(fields: List[SampleField]) extends SampleFieldType
+    import RecursiveCase._
+
+    noException should be thrownBy
+      SerializableUtils.serializeToByteArray(CoderMaterializer.beamWithDefault(Coder[Top]))
+
+    noException should be thrownBy
+      SerializableUtils.serializeToByteArray(
+        CoderMaterializer.beamWithDefault(Coder[SampleFieldType])
+      )
 
     "Coder[SampleField]" should compile
     // deriving this coder under 2.11 will fail
@@ -477,4 +483,14 @@ class CodersTest extends FlatSpec with Matchers {
       )
     ) coderShould roundtrip()
   }
+}
+
+object RecursiveCase {
+  case class SampleField(name: String, fieldType: SampleFieldType)
+  sealed trait SampleFieldType
+  case object IntegerType extends SampleFieldType
+  case object StringType extends SampleFieldType
+  case class RecordType(fields: List[SampleField]) extends SampleFieldType
+
+  implicit val coderSampleFieldType = Coder.gen[SampleField]
 }

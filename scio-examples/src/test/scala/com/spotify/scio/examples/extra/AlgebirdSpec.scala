@@ -19,11 +19,13 @@ package com.spotify.scio.examples.extra
 
 import com.twitter.algebird._
 import org.scalacheck._
-import org.scalatest._
+import org.scalatest.Ignore
+import org.scalatest.propspec.AnyPropSpec
+import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 @Ignore
-class AlgebirdSpec extends PropSpec with ScalaCheckDrivenPropertyChecks with Matchers {
+class AlgebirdSpec extends AnyPropSpec with ScalaCheckDrivenPropertyChecks with Matchers {
   // Default minSuccessful is 10 instead of 100 in ScalaCheck but that should be enough
   // https://github.com/scalatest/scalatest/issues/1090 is addressed
 
@@ -38,6 +40,7 @@ class AlgebirdSpec extends PropSpec with ScalaCheckDrivenPropertyChecks with Mat
    * ScalaCheck properties.
    */
   class SColl[T](val internal: List[T]) {
+
     /** Sum with an implicit Semigroup. */
     def sum(implicit sg: Semigroup[T]): T = internal.reduce(sg.plus)
 

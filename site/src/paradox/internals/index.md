@@ -1,12 +1,12 @@
 # Internals
 
-@@toc { depth=2 }
+@@toc { depth=1 }
 
 @@@ index
 
-* [Coders](Coders.md)
-* [Kryo](Kryo.md)
-* [OverrideTypeProvider](OverrideTypeProvider.md)
-* [ScioIO](ScioIO.md)
+* @ref:[Coders](Coders.md)
+* @ref:[Kryo](Kryo.md)
+* @ref:[OverrideTypeProvider](OverrideTypeProvider.md)
+* @ref:[ScioIO](ScioIO.md)
 
 @@@

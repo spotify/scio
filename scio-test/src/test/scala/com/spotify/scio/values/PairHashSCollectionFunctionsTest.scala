@@ -93,31 +93,46 @@ class PairHashSCollectionFunctionsTest extends PipelineSpec {
     }
   }
 
-  it should "support hashLeftJoin()" in {
+  it should "support hashLeftOuterJoin()" in {
     runWithContext { sc =>
       val p1 = sc.parallelize(Seq(("a", 1), ("b", 2), ("c", 3)))
       val p2 = sc.parallelize(Seq(("a", 11), ("b", 12), ("d", 14)))
-      val p = p1.hashLeftJoin(p2)
+      val p = p1.hashLeftOuterJoin(p2)
+      val pd = p1.hashLeftJoin(p2)
       p should containInAnyOrder(Seq(("a", (1, Some(11))), ("b", (2, Some(12))), ("c", (3, None))))
+      pd should containInAnyOrder(Seq(("a", (1, Some(11))), ("b", (2, Some(12))), ("c", (3, None))))
     }
   }
 
-  it should "support hashLeftJoin() with empty RHS" in {
+  it should "support hashLeftOuterJoin() with empty RHS" in {
     runWithContext { sc =>
       val p1 = sc.parallelize(Seq(("a", 1), ("b", 2), ("c", 3)))
       val p2 = sc.parallelize(Seq.empty[(String, Int)])
-      val p = p1.hashLeftJoin(p2)
+      val p = p1.hashLeftOuterJoin(p2)
+      val pd = p1.hashLeftJoin(p2)
       val empty = Option.empty[Int]
       p should containInAnyOrder(Seq(("a", (1, empty)), ("b", (2, empty)), ("c", (3, empty))))
+      pd should containInAnyOrder(Seq(("a", (1, empty)), ("b", (2, empty)), ("c", (3, empty))))
     }
   }
 
-  it should "support hashLeftJoin() with duplicate keys" in {
+  it should "support hashLeftOuterJoin() with duplicate keys" in {
     runWithContext { sc =>
       val p1 = sc.parallelize(Seq(("a", 1), ("a", 2), ("b", 3), ("c", 4)))
       val p2 = sc.parallelize(Seq(("a", 11), ("b", 12), ("b", 13)))
-      val p = p1.hashLeftJoin(p2)
+      val p = p1.hashLeftOuterJoin(p2)
+      val pd = p1.hashLeftJoin(p2) // Test deprecated method.
       p should containInAnyOrder(
+        Seq(
+          ("a", (1, Some(11))),
+          ("a", (2, Some(11))),
+          ("b", (3, Some(12))),
+          ("b", (3, Some(13))),
+          ("c", (4, None))
+        )
+      )
+
+      pd should containInAnyOrder(
         Seq(
           ("a", (1, Some(11))),
           ("a", (2, Some(11))),
@@ -129,10 +144,19 @@ class PairHashSCollectionFunctionsTest extends PipelineSpec {
     }
   }
 
-  it should "support hashLeftJoin() with asMultiMapSideInput" in {
+  it should "support hashLeftOuterJoin() with asMultiMapSideInput" in {
     runWithContext { sc =>
       val p1 = sc.parallelize(Seq(("a", 1), ("b", 2), ("c", 3)))
       val p2 = sc.parallelize(Seq(("a", 11), ("b", 12), ("d", 14))).asMultiMapSideInput
+      val p = p1.hashLeftOuterJoin(p2)
+      p should containInAnyOrder(Seq(("a", (1, Some(11))), ("b", (2, Some(12))), ("c", (3, None))))
+    }
+  }
+
+  it should "support hashLeftOuterJoin() with SideMap" in {
+    runWithContext { sc =>
+      val p1 = sc.parallelize(Seq(("a", 1), ("b", 2), ("c", 3)))
+      val p2 = sc.parallelize(Seq(("a", 11), ("b", 12), ("d", 14))).toSideMap
       val p = p1.hashLeftJoin(p2)
       p should containInAnyOrder(Seq(("a", (1, Some(11))), ("b", (2, Some(12))), ("c", (3, None))))
     }
@@ -249,6 +273,24 @@ class PairHashSCollectionFunctionsTest extends PipelineSpec {
       val p2 = sc.parallelize(Seq[String]("a", "b", "d")).toSideSet
       val p = p1.hashIntersectByKey(p2)
       p should containInAnyOrder(Seq(("a", 1), ("b", 2), ("b", 4)))
+    }
+  }
+
+  it should "support hashFilter() with asSetSingletonSideInput" in {
+    runWithContext { sc =>
+      val p1 = sc.parallelize(Seq("a", "b", "c", "b"))
+      val p2 = sc.parallelize(Seq[String]("a", "a", "b", "e")).asSetSingletonSideInput
+      val p = p1.hashFilter(p2)
+      p should containInAnyOrder(Seq("a", "b", "b"))
+    }
+  }
+
+  it should "support hashFilter() with SideSet" in {
+    runWithContext { sc =>
+      val p1 = sc.parallelize(Seq("a", "b", "c", "b"))
+      val p2 = sc.parallelize(Seq[String]("a", "a", "b", "e")).toSideSet
+      val p = p1.hashFilter(p2)
+      p should containInAnyOrder(Seq("a", "b", "b"))
     }
   }
 }

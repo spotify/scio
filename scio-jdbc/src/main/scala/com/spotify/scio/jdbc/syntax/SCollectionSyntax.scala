@@ -24,10 +24,9 @@ import scala.reflect.ClassTag
 import com.spotify.scio.ScioContext
 import com.spotify.scio.jdbc.{JdbcReadOptions, JdbcSelect}
 
-import scala.language.implicitConversions
-
 /** Enhanced version of [[ScioContext]] with JDBC methods. */
 final class JdbcScioContextOps(private val self: ScioContext) extends AnyVal {
+
   /** Get an SCollection for a JDBC query. */
   def jdbcSelect[T: ClassTag: Coder](readOptions: JdbcReadOptions[T]): SCollection[T] =
     self.read(JdbcSelect(readOptions))

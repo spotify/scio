@@ -22,7 +22,7 @@ import com.spotify.scio.bigquery.{Date, DateTime, TableRow, Time, Timestamp}
 import org.joda.time.{Instant, LocalDate, LocalDateTime, LocalTime}
 
 import scala.collection.JavaConverters._
-import scala.language.implicitConversions
+
 import scala.util.Try
 
 /** Enhanced version of [[TableRow]] with typed getters. */

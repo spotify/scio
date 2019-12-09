@@ -19,7 +19,7 @@
 
 // Usage:
 
-// `sbt runMain "com.spotify.scio.examples.complete.game.HourlyTeamScore
+// `sbt "runMain com.spotify.scio.examples.complete.game.HourlyTeamScore
 // --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
 // --windowDuration=60
 // --startMin=2018-05-13-00-00

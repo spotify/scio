@@ -112,7 +112,7 @@ public abstract class BucketMetadata<K, V> implements Serializable, HasDisplayDa
   }
 
   @JsonIgnore
-  protected Map<Class<?>, Coder<?>> coderOverrides() {
+  public Map<Class<?>, Coder<?>> coderOverrides() {
     return Collections.emptyMap();
   }
 

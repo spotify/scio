@@ -222,8 +222,6 @@ final class DynamicProtobufSCollectionOps[T <: Message](private val self: SColle
 }
 
 trait SCollectionSyntax {
-  import scala.language.implicitConversions
-
   implicit def dynamicSpecificRecordSCollectionOps[T <: SpecificRecord](
     sc: SCollection[T]
   ): DynamicSpecificRecordSCollectionOps[T] =

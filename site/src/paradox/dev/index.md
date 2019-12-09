@@ -1,12 +1,12 @@
 # Development
 
-@@toc { depth=2 }
+@@toc { depth=1 }
 
 @@@ index
 
-* [Build](build.md)
-* [Style Guide](Style-Guide.md)
-* [How to Release](How-to-Release.md)
-* [Design Philosophy](Design-Philosophy.md)
+* @ref:[Build](build.md)
+* @ref:[Style Guide](Style-Guide.md)
+* @ref:[How to Release](How-to-Release.md)
+* @ref:[Design Philosophy](Design-Philosophy.md)
 
 @@@

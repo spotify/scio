@@ -35,5 +35,13 @@ private[scio] object TupleFunctions {
     (kv.getKey, kv.getValue.asScala)
 
   def kvListToTuple[K, V](kv: KV[K, JList[V]]): (K, Iterable[V]) =
-    (kv.getKey, kv.getValue.asInstanceOf[JIterable[V]].asScala)
+    (
+      kv.getKey,
+      // We do not use getValue.asInstanceOf[JIterable[V]].asScala
+      // this way we do not return a JIterableWrapper. This helps maintain
+      // equality for `Iterable`s. See also: https://github.com/spotify/scio/pull/2483
+      new Iterable[V] {
+        override def iterator: Iterator[V] = kv.getValue.iterator().asScala
+      }
+    )
 }
