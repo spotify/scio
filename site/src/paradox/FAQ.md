@@ -511,20 +511,17 @@ Next print Scala code of the generated classes.
 Tornado.toPrettyString()
 ```
 
-You can then paste the `@BigQueryType.toTable` code into your pipeline and use it with `sc.typedBigQuery`.
+You can then paste the `@BigQueryType.fromQuery` code into your pipeline and use it with `sc.typedBigQuery`.
 
-```scala mdoc:reset:silent
+```scala mdoc:silent
 import com.spotify.scio._
+import com.spotify.scio.values._
 import com.spotify.scio.bigquery._
-import com.spotify.scio.bigquery.types.BigQueryType
-
-@BigQueryType.toTable
-case class Tornado(tornado: Option[Boolean], month: Long)
 
 def main(cmdlineArgs: Array[String]): Unit = {
   val (sc, args) = ContextAndArgs(cmdlineArgs)
 
-  sc.typedBigQuery[Tornado]("SELECT tornado, month FROM [publicdata:samples.gsod]")
+  val data: SCollection[Tornado] = sc.typedBigQuery[Tornado]
   // ...
 }
 ```
