@@ -68,7 +68,7 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) {
    * For each key K in `a` or `b` return a resulting SCollection that contains a tuple with the
    * list of values for that key in `a`, and `b`.
    *
-   * See note on [[SortedBucketScioContext.sortMergeJoin() for information on how an SMB cogroup
+   * See note on [[SortedBucketScioContext.sortMergeJoin()]] for information on how an SMB cogroup
    * differs from a regular [[org.apache.beam.sdk.schemas.transforms.CoGroup]] operation.
    *
    * @group cogroup
@@ -106,7 +106,7 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) {
    * For each key K in `a` or `b` or `c`, return a resulting SCollection that contains a tuple
    * with the list of values for that key in `a`, `b` and `c`.
    *
-   * See note on [[SortedBucketScioContext.sortMergeJoin() for information on how an SMB cogroup
+   * See note on [[SortedBucketScioContext.sortMergeJoin()]] for information on how an SMB cogroup
    * differs from a regular [[org.apache.beam.sdk.schemas.transforms.CoGroup]] operation.
    *
    * @group cogroup
@@ -147,7 +147,7 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) {
    * For each key K in `a` or `b` or `c` or `d`, return a resulting SCollection that contains a
    * tuple with the list of values for that key in `a`, `b`, `c` and `d`.
    *
-   * See note on [[SortedBucketScioContext.sortMergeJoin() for information on how an SMB cogroup
+   * See note on [[SortedBucketScioContext.sortMergeJoin()]] for information on how an SMB cogroup
    * differs from a regular [[org.apache.beam.sdk.schemas.transforms.CoGroup]] operation.
    *
    * @group cogroup
