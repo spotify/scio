@@ -36,14 +36,14 @@ class MyKryoRegistrar extends IKryoRegistrar {
     ))
   }
 }
-````
+```
 
 _Note:_ since Dataflow may shuffle data at any point, you not only have to include classes that are explicitly shuffled (through join or groupBy), but also those returned by map, flatMap, etc.
 
 ## Verifying it works
 You can add the following class to your test folder; it will enforce registration of classes during your tests. It only works if you actually run your job in tests, so be sure to include a `JobTest` or so for each pipeline you run.
 
-````scala
+```scala
 import com.esotericsoftware.kryo.Kryo
 import com.spotify.scio.coders.KryoRegistrar
 import com.twitter.chill.IKryoRegistrar
@@ -55,7 +55,7 @@ class TestKryoRegistrar extends IKryoRegistrar {
     k.setRegistrationRequired(true)
   }
 }
-````
+```
 
 If you missed registering any classes, you'll get an error that looks like this:
 
@@ -63,4 +63,5 @@ If you missed registering any classes, you'll get an error that looks like this:
 [info]   java.lang.IllegalArgumentException: Class is not registered: org.apache.avro.generic.GenericData$Record
 [info] Note: To register this class use: kryo.register(org.apache.avro.generic.GenericData$Record.class);
 ```
+
 Which you solve by adding `classOf[GenericData.Record]` or `Class.forName("org.apache.avro.generic.GenericData$Record")` in `MyKryoRegistrar`.
