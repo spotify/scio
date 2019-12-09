@@ -601,7 +601,7 @@ class SCollectionMatchersTest extends PipelineSpec {
     // is being used by containInAnyOrder
     val prettifier =
       SCollectionPrettifier.getPrettifier(
-        Schema[TestRecord],
+        Schema[com.spotify.scio.avro.TestRecord],
         fallbackPrettifier = Prettifier.default
       )
 
@@ -623,7 +623,7 @@ class SCollectionMatchersTest extends PipelineSpec {
     // is being used by containInAnyOrder
     val prettifier =
       SCollectionPrettifier.getPrettifier(
-        Schema[TestRecord],
+        Schema[com.spotify.scio.avro.TestRecord],
         fallbackPrettifier = Prettifier.default
       )
 

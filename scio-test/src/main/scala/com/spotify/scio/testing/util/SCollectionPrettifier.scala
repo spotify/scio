@@ -1,6 +1,6 @@
 package com.spotify.scio.testing.util
 
-import com.spotify.scio.schemas.{Fallback, Schema, SchemaMaterializer}
+import com.spotify.scio.schemas.{Schema, SchemaMaterializer}
 import org.apache.avro.generic.IndexedRecord
 import org.apache.beam.sdk.schemas.{Schema => BSchema}
 import org.apache.beam.sdk.values.Row
@@ -18,25 +18,20 @@ object SCollectionPrettifier {
     schema: Schema[T],
     fallbackPrettifier: Prettifier
   ): Prettifier =
-    schema match {
-      // We prettify only when the Schema derivation is successful
-      case Fallback(_) => fallbackPrettifier
-      case _ =>
-        new Prettifier {
-          override def apply(o: Any): String = {
-            val (bSchema, toRow, _) = SchemaMaterializer.materializeWithDefault(schema) // TODO pass scio context
-            o match {
-              case i: Traversable[_] =>
-                prettifyLevelOne(
-                  i.map(_.asInstanceOf[T]).map(toRow(_)),
-                  bSchema,
-                  fallbackPrettifier
-                )
-              case _ =>
-                fallbackPrettifier.apply(o)
-            }
-          }
+    new Prettifier {
+      override def apply(o: Any): String = {
+        val (bSchema, toRow, _) = SchemaMaterializer.materialize(schema)
+        o match {
+          case i: Traversable[_] =>
+            prettifyLevelOne(
+              i.map(_.asInstanceOf[T]).map(toRow(_)),
+              bSchema,
+              fallbackPrettifier
+            )
+          case _ =>
+            fallbackPrettifier.apply(o)
         }
+      }
     }
 
   private def prettifyLevelOne(
