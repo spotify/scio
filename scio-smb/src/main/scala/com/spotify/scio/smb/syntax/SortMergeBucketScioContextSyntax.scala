@@ -21,6 +21,10 @@ import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.values._
 import org.apache.beam.sdk.extensions.smb.SortedBucketIO
+import org.apache.beam.sdk.transforms.DoFn.ProcessElement
+import org.apache.beam.sdk.transforms.join.CoGbkResult
+import org.apache.beam.sdk.transforms.{DoFn, ParDo}
+import org.apache.beam.sdk.values.KV
 
 import scala.collection.JavaConverters._
 
@@ -43,7 +47,6 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) {
    * each source are compatible.
    *
    * @group join
-
    * @param keyClass join key class. Must have a Coder in Beam's default
    *                 [[org.apache.beam.sdk.coders.CoderRegistry]] as custom key coders are not
    *                 supported yet.
@@ -54,15 +57,33 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) {
     keyClass: Class[K],
     lhs: SortedBucketIO.Read[L],
     rhs: SortedBucketIO.Read[R]
-  ): SCollection[(K, (L, R))] =
-    sortMergeCoGroup(keyClass, lhs, rhs)
-      .flatMap {
-        case (k, (l, r)) =>
-          for {
-            i <- l
-            j <- r
-          } yield (k, (i, j))
-      }
+  ): SCollection[(K, (L, R))] = {
+    val t = SortedBucketIO.read(keyClass).of(lhs).and(rhs)
+    val (tupleTagA, tupleTagB) = (lhs.getTupleTag, rhs.getTupleTag)
+
+    self
+      .wrap(self.applyInternal(t))
+      .applyTransform(ParDo.of(new DoFn[KV[K, CoGbkResult], (K, (L, R))] {
+        @ProcessElement
+        private[smb] def processElement(
+          c: DoFn[KV[K, CoGbkResult], (K, (L, R))]#ProcessContext
+        ): Unit = {
+          val cgbkResult = c.element().getValue
+          val (resA, resB) = (cgbkResult.getAll(tupleTagA), cgbkResult.getAll(tupleTagB))
+          val itB = resB.iterator()
+          val key = c.element().getKey
+
+          while (itB.hasNext) {
+            val b = itB.next()
+            val ai = resA.iterator()
+            while (ai.hasNext) {
+              val a = ai.next()
+              c.output((key, (a, b)))
+            }
+          }
+        }
+      }))
+  }
 
   /**
    * For each key K in `a` or `b` return a resulting SCollection that contains a tuple with the
