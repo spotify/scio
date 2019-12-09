@@ -19,5 +19,5 @@ addSbtPlugin("ch.epfl.scala" % "sbt-bloop" % "1.3.5")
 addSbtPlugin("org.scalameta" % "sbt-mdoc" % "2.0.3")
 
 libraryDependencies ++= Seq(
-  "com.github.os72" % "protoc-jar" % "3.10.1"
+  "com.github.os72" % "protoc-jar" % "3.11.1"
 )
