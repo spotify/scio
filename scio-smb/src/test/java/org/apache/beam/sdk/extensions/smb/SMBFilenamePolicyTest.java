@@ -68,6 +68,18 @@ public class SMBFilenamePolicyTest {
         fileAssignment.forBucket(BucketShardId.ofNullKey(1), metadata),
         resolveFile(destination, "bucket-null-keys-shard-00001-of-00003", SUFFIX));
 
+    // Test single-shard combinations
+    final BucketMetadata singleShardMetadata =
+        new TestBucketMetadata(8, 1, HashType.MURMUR3_32);
+
+    Assert.assertEquals(
+        fileAssignment.forBucket(BucketShardId.of(5, 0), singleShardMetadata),
+        resolveFile(destination, "bucket-00005-of-00008", SUFFIX));
+
+    Assert.assertEquals(
+        fileAssignment.forBucket(BucketShardId.ofNullKey(0), singleShardMetadata),
+        resolveFile(destination, "bucket-null-keys", SUFFIX));
+
     // Test invalid shard-bucket combinations
     Assert.assertThrows(
         IllegalArgumentException.class,
@@ -109,6 +121,20 @@ public class SMBFilenamePolicyTest {
             .matches(
                 tmpFileRegex(
                     tmpDstResource, "bucket-00005-of-00008-shard-00001-of-00003", SUFFIX)));
+
+    // Test single-shard combination
+    final BucketMetadata singleShardMetadata =
+        new TestBucketMetadata(8, 1, HashType.MURMUR3_32);
+
+    Assert.assertTrue(
+        policy
+            .forTempFiles(tmpDstResource)
+            .forBucket(BucketShardId.of(5, 0), singleShardMetadata)
+            .toString()
+            .matches(
+                tmpFileRegex(
+                    tmpDstResource, "bucket-00005-of-00008", SUFFIX)));
+
 
     // Test invalid shard-bucket combinations
     Assert.assertThrows(

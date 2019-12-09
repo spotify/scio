@@ -86,6 +86,7 @@ public final class SMBFilenamePolicy implements Serializable {
 
     private static final String NULL_KEYS_BUCKET_TEMPLATE = "null-keys";
     private static final String NUMERIC_BUCKET_TEMPLATE = "%05d-of-%05d";
+    private static final String BUCKET_ONLY_TEMPLATE = "bucket-%s%s";
     private static final String BUCKET_SHARD_TEMPLATE = "bucket-%s-shard-%05d-of-%05d%s";
     private static final String METADATA_FILENAME = "metadata.json";
     private static final DateTimeFormatter TEMPFILE_TIMESTAMP =
@@ -120,13 +121,15 @@ public final class SMBFilenamePolicy implements Serializable {
               : String.format(NUMERIC_BUCKET_TEMPLATE, id.getBucketId(), metadata.getNumBuckets());
 
       final String timestamp = doTimestampFiles ? Instant.now().toString(TEMPFILE_TIMESTAMP) : "";
-      String filename =
+      String filename = metadata.getNumShards() == 1 ?
+          String.format(BUCKET_ONLY_TEMPLATE, bucketName, filenameSuffix) :
           String.format(
               BUCKET_SHARD_TEMPLATE,
               bucketName,
               id.getShardId(),
               metadata.getNumShards(),
               filenameSuffix);
+
       return filenamePrefix.resolve(timestamp + filename, StandardResolveOptions.RESOLVE_FILE);
     }
 
