@@ -54,13 +54,14 @@ class ScioReplClassLoader(urls: Array[URL], parent: ClassLoader)
     if (name.contains("$line")) {
       Logger.debug(s"Trying to load $name")
       // Don't want to use Try{} cause nonFatal handling
-      val clazz: Class[_] = try {
-        scioREPL.classLoader.loadClass(name)
-      } catch {
-        case e: Exception =>
-          Logger.error(s"Could not find $name in REPL classloader", e)
-          null
-      }
+      val clazz: Class[_] =
+        try {
+          scioREPL.classLoader.loadClass(name)
+        } catch {
+          case e: Exception =>
+            Logger.error(s"Could not find $name in REPL classloader", e)
+            null
+        }
       if (clazz != null) {
         Logger.debug(s"Found $name in REPL classloader ${scioREPL.classLoader}")
         clazz

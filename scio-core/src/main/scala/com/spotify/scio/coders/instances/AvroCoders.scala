@@ -103,6 +103,7 @@ private object SpecificFixedCoder {
 }
 
 trait AvroCoders {
+
   /**
    * Create a Coder for Avro GenericRecord given the schema of the GenericRecord.
    *

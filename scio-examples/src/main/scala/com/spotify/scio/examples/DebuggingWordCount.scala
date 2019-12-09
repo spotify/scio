@@ -18,7 +18,7 @@
 // Example: Word Count Example with Assertions
 // Usage:
 
-// `sbt runMain "com.spotify.scio.examples.DebuggingWordCount
+// `sbt "runMain com.spotify.scio.examples.DebuggingWordCount
 // --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
 // --input=gs://apache-beam-samples/shakespeare/kinglear.txt
 // --output=gs://[BUCKET]/[PATH]/wordcount"`

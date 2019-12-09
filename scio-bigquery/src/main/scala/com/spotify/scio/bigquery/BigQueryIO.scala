@@ -686,7 +686,7 @@ object BigQueryTyped {
     }
 
     def defaultParseFn[T: Schema]: SchemaAndRecord => T = {
-      val (schema, _, fromRow) = SchemaMaterializer.materializeWithDefault(Schema[T])
+      val (schema, _, fromRow) = SchemaMaterializer.materialize(Schema[T])
       input =>
         fromRow {
           BigQueryUtils.toBeamRow(
@@ -711,7 +711,7 @@ object BigQueryTyped {
     override def testId: String = s"BigQueryIO(${table.spec})"
 
     private[this] lazy val underlying: BigQueryTypedTable[T] = {
-      val (s, toRow, fromRow) = SchemaMaterializer.materializeWithDefault(Schema[T])
+      val (s, toRow, fromRow) = SchemaMaterializer.materialize(Schema[T])
       BigQueryTypedTable[T](
         parseFn,
         (t: T) => BigQueryUtils.toTableRow(toRow(t)),

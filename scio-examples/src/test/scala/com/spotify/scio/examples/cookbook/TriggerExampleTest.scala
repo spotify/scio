@@ -21,6 +21,7 @@ import com.spotify.scio.testing._
 import org.joda.time.{Duration, Instant}
 
 class TriggerExampleTest extends PipelineSpec {
+  // #TriggerExampleTest_example
   "TriggerExample.extractFlowInfo" should "work" in {
     val data = Seq(
       "01/01/2010 00:00:00,1108302,94,E,ML,36,100,29,0.0065,66,9,1,0.001,74.8,1,9,3,0.0028,71,1,9,"
@@ -34,6 +35,7 @@ class TriggerExampleTest extends PipelineSpec {
       r should containSingleValue(("94", 29))
     }
   }
+  // #TriggerExampleTest_example
 
   "TriggerExample.totalFlow" should "work" in {
     val data = Seq(

@@ -24,6 +24,7 @@ import scala.collection.JavaConverters._
 
 /** Utility for Avro schemas. */
 object SchemaUtil {
+
   /** Convert schema to case class definitions. */
   def toPrettyString1(schema: Schema, indent: Int = 0): String =
     toPrettyString(schema.getName, schema, indent)

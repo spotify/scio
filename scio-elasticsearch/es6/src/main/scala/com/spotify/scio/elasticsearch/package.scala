@@ -39,6 +39,7 @@ package object elasticsearch {
 
   implicit class ElasticsearchSCollection[T](@transient private val self: SCollection[T])
       extends AnyVal {
+
     /**
      * Save this SCollection into Elasticsearch.
      *

@@ -21,6 +21,7 @@ import org.joda.time.Instant
 
 /** This package contains the schema types for metrics collected during a pipeline run. */
 package object metrics {
+
   /**
    * Contains the aggregated value of a metric. See [[ScioResult.allCounters]],
    * [[ScioResult.allDistributions]] and [[ScioResult.allGauges]].

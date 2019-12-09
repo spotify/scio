@@ -77,6 +77,7 @@ class JoinExamplesTest extends PipelineSpec {
       .run()
   }
 
+  // #JoinExamplesTest_example
   "SideInputJoinExamples" should "work" in {
     JobTest[com.spotify.scio.examples.cookbook.SideInputJoinExamples.type]
       .args("--output=out.txt")
@@ -87,6 +88,7 @@ class JoinExamplesTest extends PipelineSpec {
       }
       .run()
   }
+  // #JoinExamplesTest_example
 
   "HashJoinExamples" should "work" in {
     JobTest[com.spotify.scio.examples.cookbook.HashJoinExamples.type]

@@ -93,6 +93,7 @@ object JobTest {
   ) extends MetricsAssertion[M, V]
 
   class Builder(private var state: BuilderState) {
+
     /** Test ID for input and output wiring. */
     val testId: String = TestUtil.newTestId(state.className)
 

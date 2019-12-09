@@ -18,7 +18,7 @@
 // Example: Gzip File write
 // Usage:
 
-// `sbt runMain "com.spotify.scio.examples.extra.SingleGZipFileExample
+// `sbt "runMain com.spotify.scio.examples.extra.SingleGZipFileExample
 // --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
 // --input=[INPUT.txt] --output=[OUTPUT]"`
 package com.spotify.scio.examples.extra

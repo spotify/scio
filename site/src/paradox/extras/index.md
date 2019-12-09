@@ -1,9 +1,9 @@
 # Extras
 
-@@toc { depth=2 }
+@@toc { depth=1 }
 
 @@@ index
 
-* [Algebird](Algebird.md)
+* @ref:[Algebird](Algebird.md)
 
 @@@

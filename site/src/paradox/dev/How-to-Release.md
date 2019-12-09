@@ -23,7 +23,7 @@ credentials ++= Seq(
 - Pick a release name from [here](https://en.wikipedia.org/wiki/List_of_Latin_phrases_%28full%29), [here](https://en.wikipedia.org/wiki/List_of_songs_with_Latin_lyrics) or other interesting sources<sup>*</sup>
 - Update the list of release names below
 - When the tag build completes, update release notes with name and change log
-- If the release includes a Beam version bump, update the @ref[version matrix](../Apache-Beam.md)
+- If the release includes a Beam version bump, update the @ref:[version matrix](../Apache-Beam.md)
 - Run @github[scripts/bump_scio.sh](/scripts/bump_scio.sh) to update [homebrew formula](https://github.com/spotify/homebrew-public/blob/master/scio.rb) and `scioVersion` in downstream repos including [scio.g8](https://github.com/spotify/scio.g8), [featran](https://github.com/spotify/featran), etc.
 - Bump version in the internal `scio-cookie` and monorepo
 - Send internal announcement to scio-users@spotify.com and flatmap-announce@spotify.com

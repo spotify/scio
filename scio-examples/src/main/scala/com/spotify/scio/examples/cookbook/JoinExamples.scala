@@ -18,7 +18,7 @@
 // Example: Different Types of Joins
 // Usage:
 
-// `sbt runMain "com.spotify.scio.examples.cookbook.JoinExamples
+// `sbt "runMain com.spotify.scio.examples.cookbook.JoinExamples
 // --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
 // --output=gs://[BUCKET]/[PATH]/join_examples"`
 package com.spotify.scio.examples.cookbook

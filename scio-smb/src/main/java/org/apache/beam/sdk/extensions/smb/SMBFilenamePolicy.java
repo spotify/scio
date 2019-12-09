@@ -58,7 +58,7 @@ public final class SMBFilenamePolicy implements Serializable {
     this.filenameSuffix = filenameSuffix;
   }
 
-  FileAssignment forDestination() {
+  public FileAssignment forDestination() {
     return new FileAssignment(directory, filenameSuffix, false);
   }
 
@@ -86,6 +86,7 @@ public final class SMBFilenamePolicy implements Serializable {
 
     private static final String NULL_KEYS_BUCKET_TEMPLATE = "null-keys";
     private static final String NUMERIC_BUCKET_TEMPLATE = "%05d-of-%05d";
+    private static final String BUCKET_ONLY_TEMPLATE = "bucket-%s%s";
     private static final String BUCKET_SHARD_TEMPLATE = "bucket-%s-shard-%05d-of-%05d%s";
     private static final String METADATA_FILENAME = "metadata.json";
     private static final DateTimeFormatter TEMPFILE_TIMESTAMP =
@@ -101,7 +102,7 @@ public final class SMBFilenamePolicy implements Serializable {
       this.doTimestampFiles = doTimestampFiles;
     }
 
-    ResourceId forBucket(BucketShardId id, BucketMetadata<?, ?> metadata) {
+    public ResourceId forBucket(BucketShardId id, BucketMetadata<?, ?> metadata) {
       Preconditions.checkArgument(
           id.getBucketId() < metadata.getNumBuckets(),
           "Can't assign a filename for bucketShardId %s: max number of buckets is %s",
@@ -120,17 +121,19 @@ public final class SMBFilenamePolicy implements Serializable {
               : String.format(NUMERIC_BUCKET_TEMPLATE, id.getBucketId(), metadata.getNumBuckets());
 
       final String timestamp = doTimestampFiles ? Instant.now().toString(TEMPFILE_TIMESTAMP) : "";
-      String filename =
+      String filename = metadata.getNumShards() == 1 ?
+          String.format(BUCKET_ONLY_TEMPLATE, bucketName, filenameSuffix) :
           String.format(
               BUCKET_SHARD_TEMPLATE,
               bucketName,
               id.getShardId(),
               metadata.getNumShards(),
               filenameSuffix);
+
       return filenamePrefix.resolve(timestamp + filename, StandardResolveOptions.RESOLVE_FILE);
     }
 
-    ResourceId forMetadata() {
+    public ResourceId forMetadata() {
       String timestamp = doTimestampFiles ? Instant.now().toString(TEMPFILE_TIMESTAMP) : "";
       return filenamePrefix.resolve(
           timestamp + METADATA_FILENAME, StandardResolveOptions.RESOLVE_FILE);

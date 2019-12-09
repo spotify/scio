@@ -18,7 +18,7 @@
 // Example: Read and Write specific and generic Avro records
 // Usage:
 
-// `sbt runMain "com.spotify.scio.examples.extra.AvroExample
+// `sbt "runMain com.spotify.scio.examples.extra.AvroExample
 // --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
 // --input=[INPUT].avro --output=[OUTPUT].avro --method=[METHOD]"`
 package com.spotify.scio.examples.extra

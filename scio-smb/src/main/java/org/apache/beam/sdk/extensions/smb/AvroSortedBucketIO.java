@@ -96,8 +96,6 @@ public class AvroSortedBucketIO {
   /** Reads from Avro sorted-bucket files, to be used with {@link SortedBucketIO.CoGbk}. */
   @AutoValue
   public abstract static class Read<T extends GenericRecord> extends SortedBucketIO.Read<T> {
-    abstract TupleTag<T> getTupleTag();
-
     @Nullable
     abstract ResourceId getInputDirectory();
 

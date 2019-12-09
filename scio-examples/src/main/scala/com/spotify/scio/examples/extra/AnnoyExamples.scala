@@ -47,7 +47,7 @@ object AnnoyExamples {
 
 // Usage:
 
-// `sbt runMain "com.spotify.scio.examples.extra.AnnoyIndexSaveExample
+// `sbt "runMain com.spotify.scio.examples.extra.AnnoyIndexSaveExample
 // --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
 //--output=gs://[BUCKET]/[PATH]/annoy.tree"`
 object AnnoyIndexSaveExample {
@@ -68,7 +68,7 @@ object AnnoyIndexSaveExample {
 
 // Usage:
 
-// `sbt runMain "com.spotify.scio.examples.extra.AnnoySideInputExample
+// `sbt "runMain com.spotify.scio.examples.extra.AnnoySideInputExample
 // --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
 // --input=gs://[BUCKET]/[PATH]/annoy.tree
 // --output=gs://[BUCKET]/[PATH]/otuput"`

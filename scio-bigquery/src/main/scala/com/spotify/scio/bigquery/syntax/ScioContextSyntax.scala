@@ -44,6 +44,7 @@ import scala.util.Try
 
 /** Enhanced version of [[ScioContext]] with BigQuery methods. */
 final class ScioContextOps(private val self: ScioContext) extends AnyVal {
+
   /**
    * Get an SCollection for a BigQuery SELECT query.
    * Both [[https://cloud.google.com/bigquery/docs/reference/legacy-sql Legacy SQL]] and
@@ -52,7 +53,7 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
    * behavior, start the query string with `#legacysql` or `#standardsql`.
    */
   @deprecated(
-    "this method will be removed; use bigQuery(Query(sql), flattenResults) instead",
+    "this method will be removed; use bigQuerySelect(Query(sql), flattenResults) instead",
     "0.8.0"
   )
   def bigQuerySelect(
@@ -73,6 +74,18 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
     flattenResults: Boolean
   ): SCollection[TableRow] =
     self.read(BigQuerySelect(sqlQuery))(BigQuerySelect.ReadParam(flattenResults))
+
+  /**
+   * Get an SCollection for a BigQuery SELECT query.
+   * Both [[https://cloud.google.com/bigquery/docs/reference/legacy-sql Legacy SQL]] and
+   * [[https://cloud.google.com/bigquery/docs/reference/standard-sql/ Standard SQL]] dialects are
+   * supported. By default the query dialect will be automatically detected. To override this
+   * behavior, start the query string with `#legacysql` or `#standardsql`.
+   */
+  def bigQuerySelect(
+    sqlQuery: Query
+  ): SCollection[TableRow] =
+    bigQuerySelect(sqlQuery, BigQuerySelect.ReadParam.DefaultFlattenResults)
 
   /**
    * Get an SCollection for a BigQuery table.

@@ -45,7 +45,7 @@ val elasticsearch2Version = "2.4.6"
 val elasticsearch5Version = "5.6.16"
 val elasticsearch6Version = "6.8.5"
 val elasticsearch7Version = "7.5.0"
-val featranVersion = "0.4.0"
+val featranVersion = "0.5.0"
 val gcsConnectorVersion = "hadoop2-2.0.0"
 val gcsVersion = "1.8.0"
 val guavaVersion = "25.1-jre"
@@ -920,7 +920,8 @@ lazy val `scio-examples`: Project = project
       }
     },
     sources in doc in Compile := List(),
-    run / classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.Flat
+    run / classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.Flat,
+    Test / classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.Flat
   )
   .dependsOn(
     `scio-core`,
@@ -932,7 +933,8 @@ lazy val `scio-examples`: Project = project
     `scio-spanner`,
     `scio-tensorflow`,
     `scio-sql`,
-    `scio-test` % "compile->test"
+    `scio-test` % "compile->test",
+    `scio-smb`
   )
 
 lazy val `scio-repl`: Project = project
@@ -1016,6 +1018,10 @@ lazy val `scio-smb`: Project = project
   .configs(
     IntegrationTest
   )
+  .dependsOn(
+    `scio-core`,
+    `scio-test` % Test
+  )
 
 lazy val site: Project = project
   .in(file("site"))
@@ -1081,9 +1087,9 @@ lazy val siteSettings = Def.settings(
   mdocIn := baseDirectory.value / "src" / "paradox",
   mdocExtraArguments ++= Seq("--no-link-hygiene"),
   sourceDirectory in Paradox := mdocOut.value,
+  makeSite := makeSite.dependsOn(mdoc.toTask("")).value,
   makeSite := {
     // Fix JavaDoc links before makeSite
-    mdoc.toTask("").value
     (doc in ScalaUnidoc).value
     val bases = javaMappings.map(m => m._3 + "/index.html")
     val t = (target in ScalaUnidoc).value
@@ -1128,7 +1134,8 @@ lazy val siteSettings = Def.settings(
       `scio-parquet`,
       `scio-tensorflow`,
       `scio-spanner`,
-      `scio-macros`
+      `scio-macros`,
+      `scio-smb`
     ),
   // unidoc handles class paths differently than compile and may give older
   // versions high precedence.
@@ -1152,7 +1159,7 @@ lazy val siteSettings = Def.settings(
       .withFavicon("images/favicon.ico")
       .withColor("white", "indigo")
       .withLogo("images/logo.png")
-      .withCopyright("Copyright (C) 2018 Spotify AB")
+      .withCopyright("Copyright (C) 2019 Spotify AB")
       .withRepository(uri("https://github.com/spotify/scio"))
       .withSocial(uri("https://github.com/spotify"), uri("https://twitter.com/spotifyeng"))
   }

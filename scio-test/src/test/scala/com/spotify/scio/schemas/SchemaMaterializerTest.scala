@@ -22,12 +22,14 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import scala.collection.JavaConverters._
 import org.apache.beam.sdk.values.Row
+import org.apache.beam.sdk.schemas.{Schema => BSchema, SchemaCoder}
+import org.apache.beam.sdk.util.SerializableUtils.ensureSerializable
 import scala.collection.mutable
 
 final class SchemaMaterializerTest extends AnyFlatSpec with Matchers {
   "SchemaMaterializer" should "materialize correct FieldType" in {
     def fieldTypes[T](s: Schema[T]): List[Field] =
-      SchemaMaterializer.materializeWithDefault(s)._1.getFields().asScala.toList
+      SchemaMaterializer.materialize(s)._1.getFields().asScala.toList
 
     fieldTypes(Schema[Short]).headOption.map(_.getType) shouldBe Some(FieldType.INT16)
     fieldTypes(Schema[Int]).headOption.map(_.getType) shouldBe Some(FieldType.INT32)
@@ -108,22 +110,53 @@ final class SchemaMaterializerTest extends AnyFlatSpec with Matchers {
 
   it should "support logical types" in {
     import java.net.URI
-
-    val uriSchema = Schema.logicalType(
-      Type(org.apache.beam.sdk.schemas.Schema.FieldType.STRING)
-    )(toBase = (_: URI).toString, fromBase = (s: String) => new URI(s))
-
-    val (schema, toRow, fromRow) = SchemaMaterializer.materializeWithDefault[URI](uriSchema)
+    val uriSchema = LogicalType[URI, String](
+      org.apache.beam.sdk.schemas.Schema.FieldType.STRING,
+      _.toString,
+      s => new URI(s)
+    )
+    val (schema, toRow, fromRow) = SchemaMaterializer.materialize[URI](uriSchema)
     val uri = URI.create("https://spotify.com")
-    val row = Row.withSchema(schema).addValue(uri).build()
+    val row = Row.withSchema(schema).addValue(uri.toString).build()
     toRow(uri) shouldBe row
     fromRow(toRow(uri)) shouldBe uri
+  }
+
+  it should "Generate serializable Schemas and SchemaCoders" in {
+    import java.util.Locale
+
+    case class Bar(s: String, x: Int)
+    case class Foo(a: String, b: Option[Bar])
+    case class Baz(a: Foo, b: Locale)
+
+    implicit val localeSchema: Schema[Locale] =
+      LogicalType[Locale, String](
+        BSchema.FieldType.STRING,
+        l => l.toLanguageTag(),
+        s => Locale.forLanguageTag(s)
+      )
+
+    val schemas =
+      List(
+        SchemaMaterializer.beamSchema[Locale],
+        SchemaMaterializer.beamSchema[Foo],
+        SchemaMaterializer.beamSchema[Baz],
+        SchemaMaterializer.beamSchema[List[Foo]],
+        SchemaMaterializer.beamSchema[Map[String, Foo]]
+      )
+
+    for (s <- schemas) {
+      ensureSerializable(s)
+      // Coerce to Serializable to skip coder equality check
+      val coder: java.io.Serializable = SchemaCoder.of(s)
+      ensureSerializable(coder)
+    }
   }
 
   it should "Support Optional fields when reading a Row" in {
     case class Bar(s: String, x: Int)
     case class Foo(a: String, b: Option[Bar])
-    val (schema, to, from) = SchemaMaterializer.materializeWithDefault[Foo](Schema[Foo])
+    val (schema, to, from) = SchemaMaterializer.materialize[Foo](Schema[Foo])
     val row =
       Row
         .withSchema(schema)

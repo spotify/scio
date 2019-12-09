@@ -49,6 +49,7 @@ import scala.reflect.runtime.universe._
  * @groupname Ungrouped Other Members
  */
 object AvroType {
+
   /**
    * Macro annotation for an Avro schema.
    *

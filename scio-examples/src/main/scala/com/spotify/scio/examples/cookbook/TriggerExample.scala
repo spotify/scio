@@ -18,7 +18,7 @@
 // Example: Trigger example
 // Usage:
 
-// `sbt runMain "com.spotify.scio.examples.cookbook.TriggerExample
+// `sbt "runMain com.spotify.scio.examples.cookbook.TriggerExample
 // --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
 // --input=gs://apache-beam-samples/traffic_sensor/Freeways-5Minaa2010-01-01_to_2010-02-15_test2.csv
 // --output=[DATASET].trigger_example"`

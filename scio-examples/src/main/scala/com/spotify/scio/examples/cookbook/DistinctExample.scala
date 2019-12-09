@@ -18,7 +18,7 @@
 // Example: Distinct Example
 // Usage:
 
-// `sbt runMain "com.spotify.scio.examples.cookbook.DistinctExample
+// `sbt "runMain com.spotify.scio.examples.cookbook.DistinctExample
 // --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
 // --output=gs://[BUCKET]/output/path"`
 package com.spotify.scio.examples.cookbook

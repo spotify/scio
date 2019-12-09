@@ -22,12 +22,14 @@ import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.testing.TestStream
 
 package object testing {
+
   /** Create a `TestStream.Builder` instance. */
   def testStreamOf[T: Coder]: TestStream.Builder[T] =
     TestStream.create(CoderMaterializer.beamWithDefault(Coder[T]))
 
   /** Enhanced version of [[ScioContext]] with streaming methods. */
   implicit class TestStreamScioContext(private val self: ScioContext) extends AnyVal {
+
     /** Distribute a local `TestStream` to form an SCollection. */
     def testStream[T](ts: TestStream[T]): SCollection[T] =
       self.wrap(self.pipeline.apply(ts.toString, ts))

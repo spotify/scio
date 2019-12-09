@@ -29,6 +29,7 @@ import scala.{specialized => sp}
 
 /** Utilities for creating [[NearestNeighborBuilder]] instances. */
 object NearestNeighbor {
+
   /**
    * Create a new builder for LSH based [[NearestNeighbor]].
    * @param dimension dimension of input vectors
@@ -54,6 +55,7 @@ object NearestNeighbor {
 
 /** Builder for immutable [[NearestNeighbor]] instances. */
 trait NearestNeighborBuilder[K, @sp(Double, Int, Float, Long) V] extends Serializable {
+
   /** Dimension of item vectors. */
   protected val dimension: Int
 
@@ -108,6 +110,7 @@ trait NearestNeighborBuilder[K, @sp(Double, Int, Float, Long) V] extends Seriali
  * }}
  */
 trait NearestNeighbor[K, @sp(Double, Int, Float, Long) V] extends Serializable {
+
   /** Name of the nearest neighbor method. */
   val name: String
 
@@ -148,6 +151,7 @@ private class MatrixNNBuilder[
   @sp(Double, Int, Float, Long) V: ClassTag: Numeric: Semiring
 ](override val dimension: Int)
     extends NearestNeighborBuilder[K, V] {
+
   /** Add a key->vector pair. The vector should be normalized. */
   override def add(key: K, vec: DenseVector[V]): Unit = {
     addVector(key, vec)
@@ -173,6 +177,7 @@ private class MatrixNN[K, @sp(Double, Int, Float, Long) V: ClassTag: Numeric: Se
   override val vectors: Array[DenseVector[V]],
   private val matrix: Matrix[V]
 ) extends NearestNeighbor[K, V] {
+
   /** Name of the nearest neighbor method. */
   override val name: String = "Matrix"
 
@@ -246,6 +251,7 @@ private class LSHNN[K, @sp(Double, Int, Float, Long) V: ClassTag: Numeric: Semir
   private val lsh: LSHSuperBit,
   private val bins: Array[Array[Int]]
 ) extends NearestNeighbor[K, V] {
+
   /** Name of the nearest neighbor method. */
   override val name: String = "LSH"
 

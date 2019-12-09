@@ -18,7 +18,7 @@
 // Example: Traffic routes based on traffic sensor data
 // Usage
 
-// `sbt runMain "com.spotify.scio.examples.complete.TrafficRoutes
+// `sbt "runMain com.spotify.scio.examples.complete.TrafficRoutes
 // --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
 // --input=gs://apache-beam-samples/traffic_sensor/Freeways-5Minaa2010-01-01_to_2010-02-15_test2.csv
 // --output=[DATASET].traffic_routes"`

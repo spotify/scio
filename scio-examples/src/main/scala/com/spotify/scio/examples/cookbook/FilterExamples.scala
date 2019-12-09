@@ -18,7 +18,7 @@
 // Example: Filter Example
 // Usage:
 
-// `sbt runMain "com.spotify.scio.examples.cookbook.FilterExamples
+// `sbt "runMain com.spotify.scio.examples.cookbook.FilterExamples
 // --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
 // --output=[DATASET].filter_examples"`
 package com.spotify.scio.examples.cookbook

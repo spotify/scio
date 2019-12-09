@@ -22,6 +22,7 @@ import org.apache.avro.specific.SpecificRecordBase
 import scala.reflect.macros.blackbox
 
 private[coders] object AvroCoderMacros {
+
   /**
    * Generate a coder which does not serialize the schema and relies exclusively on types.
    */

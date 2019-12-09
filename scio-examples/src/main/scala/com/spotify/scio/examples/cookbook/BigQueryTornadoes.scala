@@ -18,7 +18,7 @@
 // Example: BigQuery Tornadoes Example
 // Usage:
 
-// `sbt runMain "com.spotify.scio.examples.cookbook.BigQueryTornadoes
+// `sbt "runMain com.spotify.scio.examples.cookbook.BigQueryTornadoes
 // --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
 // --input=clouddataflow-readonly:samples.weather_stations
 // --output=[DATASET].bigquery_tornadoes"`

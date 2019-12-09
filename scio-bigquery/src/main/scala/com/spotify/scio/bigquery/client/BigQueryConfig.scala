@@ -27,6 +27,7 @@ import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.TypedRead.QueryPriority
 import scala.util.Try
 
 object BigQueryConfig {
+
   /** Default cache directory. */
   private[this] val CacheDirectoryDefault: Path = Paths
     .get(CoreSysProps.TmpDir.value)

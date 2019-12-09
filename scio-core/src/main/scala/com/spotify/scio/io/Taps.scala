@@ -29,6 +29,7 @@ class TapNotAvailableException(msg: String) extends Exception(msg)
 
 /** Utility for managing `Future[Tap[T]]`s. */
 trait Taps {
+
   /** Get a `Future[Tap[String]]` for a text file. */
   def textFile(path: String): Future[Tap[String]] =
     mkTap(s"Text: $path", () => isPathDone(path), () => TextTap(path))

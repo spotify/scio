@@ -31,6 +31,7 @@ object OverrideTypeProviderFinder {
     val classInstance = Try(
       Class
         .forName(System.getProperty("override.type.provider", ""))
+        .getConstructor()
         .newInstance()
         .asInstanceOf[OverrideTypeProvider]
     )

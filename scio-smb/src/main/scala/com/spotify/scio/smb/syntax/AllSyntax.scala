@@ -14,12 +14,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package com.spotify.scio.schemas.instances
 
-import com.spotify.scio.coders.Coder
-import com.spotify.scio.schemas.{Fallback, LowPrioritySchemaDerivation, Schema}
+package com.spotify.scio.smb.syntax
 
-trait LowPriorityFallbackInstances extends LowPrioritySchemaDerivation {
-  def fallback[A: Coder]: Schema[A] =
-    Fallback[Coder, A](Coder[A]) // ¯\_(ツ)_/¯
-}
+trait AllSyntax extends SortMergeBucketSCollectionSyntax with SortMergeBucketScioContextSyntax

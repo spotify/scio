@@ -71,8 +71,6 @@ public class JsonSortedBucketIO {
    */
   @AutoValue
   public abstract static class Read extends SortedBucketIO.Read<TableRow> {
-    abstract TupleTag<TableRow> getTupleTag();
-
     @Nullable
     abstract ResourceId getInputDirectory();
 

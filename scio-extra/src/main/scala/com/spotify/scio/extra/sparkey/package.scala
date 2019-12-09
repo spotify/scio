@@ -118,6 +118,7 @@ import scala.util.hashing.MurmurHash3
  * }}}
  */
 package object sparkey {
+
   /** Enhanced version of [[ScioContext]] with Sparkey methods. */
   implicit class SparkeyScioContext(private val self: ScioContext) extends AnyVal {
     private def singleViewOf(basePath: String): PCollectionView[SparkeyUri] =
@@ -351,6 +352,7 @@ package object sparkey {
    * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with Sparkey methods.
    */
   implicit class SparkeySCollection(private val self: SCollection[SparkeyUri]) extends AnyVal {
+
     /**
      * Convert this SCollection to a SideInput of `SparkeyReader`, to be used with
      * [[com.spotify.scio.values.SCollection.withSideInputs SCollection.withSideInputs]].
