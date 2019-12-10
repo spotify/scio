@@ -35,6 +35,7 @@ import org.scalatest.Assertion
 
 import scala.collection.JavaConverters._
 import com.spotify.scio.avro
+import org.apache.avro.generic.GenericRecord
 
 object Schemas {
   // test logical type support
@@ -604,9 +605,36 @@ class BeamSQLTest extends PipelineSpec {
 
   it should "Automatically convert from Avro to Scala" in runWithContext { sc =>
     import TypeConvertionsTestData._
+
+    val avroSchema =
+      """
+        {
+          "type": "record",
+          "name": "User",
+          "namespace": "com.spotify.scio.avro",
+          "doc": "Record for a user",
+          "fields": [
+              {"name": "id", "type": "int"},
+              {"name": "last_name", "type": "string"},
+              {"name": "first_name", "type": "string"}
+            ]
+        }
+      """
+
+    val schema = new org.apache.avro.Schema.Parser().parse(avroSchema)
+
     val expected: List[AvroCompatibleUser] =
       avroUsers.map { u =>
         AvroCompatibleUser(u.getId.toInt, u.getFirstName.toString, u.getLastName.toString)
+      }
+
+    val genericRecords: List[GenericRecord] =
+      avroUsers.map { u =>
+        val record = new org.apache.avro.generic.GenericData.Record(schema)
+        record.put("id", u.id)
+        record.put("first_name", u.first_name)
+        record.put("last_name", u.last_name)
+        record
       }
 
     sc.parallelize(avroUsers)
@@ -621,6 +649,14 @@ class BeamSQLTest extends PipelineSpec {
 
     sc.parallelize(avroWithNullable)
       .to(To.safe[avro.TestRecord, CompatibleAvroTestRecord]) should containInAnyOrder(expectedAvro)
+
+    implicit val genericRecordSchema = Schema.fromAvroSchema(schema)
+
+    sc.parallelize(avroUsers.map(_.asInstanceOf[GenericRecord]))
+      .to(To.unsafe[GenericRecord, AvroCompatibleUser]) should containInAnyOrder(expected)
+
+    sc.parallelize(expected)
+      .to(To.unsafe[AvroCompatibleUser, GenericRecord]) should containInAnyOrder(genericRecords)
   }
 
   "String interpolation" should "support simple queries" in runWithContext { sc =>
