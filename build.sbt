@@ -804,7 +804,7 @@ lazy val `scio-parquet`: Project = project
       "org.apache.parquet" % "parquet-avro" % parquetVersion
     ),
     dependencyOverrides ++= Seq(
-      "org.apache.avro" % "avro" % avroVersion,
+      "org.apache.avro" % "avro" % avroVersion
     )
   )
   .dependsOn(
