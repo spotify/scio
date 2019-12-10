@@ -60,9 +60,11 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) {
   ): SCollection[(K, (L, R))] = {
     val t = SortedBucketIO.read(keyClass).of(lhs).and(rhs)
     val (tupleTagA, tupleTagB) = (lhs.getTupleTag, rhs.getTupleTag)
+    val tfName = self.tfName
 
     self
-      .wrap(self.applyInternal(t))
+      .wrap(self.pipeline.apply(s"SMB CoGroupByKey@$tfName", t))
+      .withName(tfName)
       .applyTransform(ParDo.of(new DoFn[KV[K, CoGbkResult], (K, (L, R))] {
         @ProcessElement
         private[smb] def processElement(
@@ -108,8 +110,11 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) {
       a.getTupleTag,
       b.getTupleTag
     )
+    val tfName = self.tfName
+
     self
-      .wrap(self.applyInternal(t))
+      .wrap(self.pipeline.apply(s"SMB CoGroupByKey@$tfName", t))
+      .withName(tfName)
       .map { kv =>
         val cgbkResult = kv.getValue
 
@@ -148,8 +153,11 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) {
       b.getTupleTag,
       c.getTupleTag
     )
+    val tfName = self.tfName
+
     self
-      .wrap(self.applyInternal(t))
+      .wrap(self.pipeline.apply(s"SMB CoGroupByKey@$tfName", t))
+      .withName(tfName)
       .map { kv =>
         val cgbkResult = kv.getValue
 
@@ -191,8 +199,11 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) {
       c.getTupleTag,
       d.getTupleTag
     )
+    val tfName = self.tfName
+
     self
-      .wrap(self.applyInternal(t))
+      .wrap(self.pipeline.apply(s"SMB CoGroupByKey@$tfName", t))
+      .withName(tfName)
       .map { kv =>
         val cgbkResult = kv.getValue
 
