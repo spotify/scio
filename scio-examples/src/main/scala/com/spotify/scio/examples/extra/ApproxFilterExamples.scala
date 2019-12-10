@@ -27,6 +27,7 @@ import java.io.{DataOutputStream, InputStream, OutputStream}
 
 import com.google.common.hash.{Funnel, Funnels}
 import com.spotify.scio._
+import com.spotify.scio.coders.Coder
 import com.spotify.scio.values._
 
 // TODO add an example with case class / tuple and magnolify derivation of funnel
@@ -104,7 +105,10 @@ object ApproxFilterExamples {
     // Single threaded build.
     val sbf: SCollection[ScalableBloomFilter[Int]] = elements
       .to_(
-        ScalableBloomFilter(fpProb = 0.1, headCapacity = 100, growthRate = 2, tighteningRatio = 0.1)
+        ScalableBloomFilter(fpProb = 0.1,
+                            initialCapacity = 100,
+                            growthRate = 2,
+                            tighteningRatio = 0.1)
       )
 
     // A ScalableBloomFilter per key
@@ -115,7 +119,7 @@ object ApproxFilterExamples {
         .mapValues(
           ScalableBloomFilter(
             fpProb = 0.1,
-            headCapacity = 100,
+            initialCapacity = 100,
             growthRate = 2,
             tighteningRatio = 0.1
           ).build(_)
@@ -170,6 +174,9 @@ object ApproxFilterExamples {
 final case class ExactFilter[T] private (private val internal: Set[T]) extends ApproxFilter[T] {
   val fpProb: Double = 0.0
 
+  override type Param = Unit
+  override type Typeclass[_] = Coder[T]
+
   /**
    * Check if the filter may contain a given element.
    */
@@ -177,9 +184,6 @@ final case class ExactFilter[T] private (private val internal: Set[T]) extends A
 
   /**
    * Serialize the filter to the given [[OutputStream]]
-   *
-   * Deserializers are defined by [[ApproxFilterDeserializer]] available as an implicit
-   * in the [[ApproxFilterCompanion]] object.
    */
   override def writeTo(out: OutputStream): Unit = {
     // Write the number of elements
@@ -195,21 +199,25 @@ final case class ExactFilter[T] private (private val internal: Set[T]) extends A
  * returns a [[ApproxFilterBuilder]].
  */
 object ExactFilter extends ApproxFilterCompanion[ExactFilter] {
-  implicit def deserializer[T]: ApproxFilterDeserializer[T, ExactFilter] =
-    new ApproxFilterDeserializer[T, ExactFilter] {
-      /**
-       * Deserialize a [[ApproxFilter]] from an [[InputStream]]
-       *
-       * Serialization is done using `ApproxFilter[T]#writeTo`
-       */
-      override def readFrom(in: InputStream): ExactFilter[T] = ??? // TODO
-    }
+
+  /**
+   * Deserialize a [[ApproxFilter]] from an [[InputStream]]
+   *
+   * Serialization is done using `ApproxFilter[T]#writeTo`
+   */
+  override def readFrom[T](in: InputStream)(implicit coder: Coder[T]): ExactFilter[T] = ??? // TODO
 
   /** Constructor that returns a Builder which can be used to create an ExactFilter. */
   def apply[T]: ExactFilterBuilder[T] = ExactFilterBuilder()
 
   /** An empty filter. */
   def empty[T]: ExactFilter[T] = ExactFilter(Set.empty[T])
+
+  def apply[T](param: Unit)(implicit tc: Coder[T]): ApproxFilterBuilder[T, ExactFilter] =
+    ExactFilterBuilder()
+
+  override def apply[T](param: Unit, items: Iterable[T])(implicit tc: Coder[T]): ExactFilter[T] =
+    ExactFilter(items.toSet)
 }
 
 /**

@@ -32,12 +32,18 @@ import org.apache.beam.sdk.coders.AtomicCoder
  * / algorithms defined using the [[ApproxFilterBuilder]] interface.
  *
  * Constructors for [[ApproxFilter]] are defined using [[ApproxFilterBuilder]]
- * and deserializers are defined using [[ApproxFilterDeserializer]].
  *
  * For example usage see [[BloomFilter]]
  */
 @experimental
 trait ApproxFilter[-T] extends Serializable {
+
+  // Parameters or configurations for an ApproxFilter.
+  type Param
+
+  // A Typeclass required for a filter to be created
+  type Typeclass[_]
+
   /**
    * Check if the filter may contain a given element.
    */
@@ -58,9 +64,6 @@ trait ApproxFilter[-T] extends Serializable {
 
   /**
    * Serialize the filter to the given [[OutputStream]]
-   *
-   * Deserializers are defined by [[ApproxFilterDeserializer]] available as an implicit
-   * in the [[ApproxFilterCompanion]] object.
    */
   def writeTo(out: OutputStream): Unit
 
@@ -110,22 +113,26 @@ trait ApproxFilterBuilder[T, To[B >: T] <: ApproxFilter[B]] extends Serializable
 }
 
 /**
- * Defines how to deserialize an [[ApproxFilter]].
+ * This trait provides helpers to the [[ApproxFilter]] companion object.
  *
- * This is defined as in implicit in the companion object of the [[ApproxFilter]]
- * A deserializer doesn't need any configurations / parameters from the user to
- * deserialize an [[ApproxFilter]]. Since this is available as an implicit, it might
- * summon other implicit type class instances before being able to successfully provide
- * a deserializer instance.
+ * This allows the user to directly user the [[ApproxFilter]] to deserialize from
+ * an `InputStream` or `Array[Byte]`
  */
 @experimental
-trait ApproxFilterDeserializer[T, To[_] <: ApproxFilter[_]] extends Serializable {
+trait ApproxFilterCompanion[AF[_] <: ApproxFilter[_]] {
+
+  // FIXME figure out variance for the builder, or just move away from this
+  // FIXME Alternative constructor in companion object with scollection as input.
+//  def apply[T](param: AF[T]#Param)(implicit tc: AF[T]#Typeclass[T]): ApproxFilterBuilder[T, AF]
+
+  def apply[T](param: AF[T]#Param, items: Iterable[T])(implicit tc: AF[T]#Typeclass[T]): AF[T]
+
   /**
    * Read from serialized bytes to this filter.
    *
    * Serialization is done using `ApproxFilter[T]#toBytes`
    */
-  def fromBytes(serializedBytes: Array[Byte]): To[T] =
+  def fromBytes[T](serializedBytes: Array[Byte])(implicit tc: AF[T]#Typeclass[T]): AF[T] =
     readFrom(new ByteArrayInputStream(serializedBytes))
 
   /**
@@ -133,53 +140,16 @@ trait ApproxFilterDeserializer[T, To[_] <: ApproxFilter[_]] extends Serializable
    *
    * Serialization is done using `ApproxFilter[T]#writeTo`
    */
-  def readFrom(in: InputStream): To[T]
-}
-
-/**
- * This trait provides helpers to the [[ApproxFilter]] companion object.
- *
- * This allows the user to directly user the [[ApproxFilter]] to deserialize from
- * an `InputStream` or `Array[Byte]`
- *
- * The implicit [[ApproxFilterDeserializer]] summons an instance of the deserializer.
- * While summoning the implicit, it might try to search for other implicit type classes.
- */
-@experimental
-trait ApproxFilterCompanion[AF[_] <: ApproxFilter[_]] {
-  /**
-   * Read from serialized bytes to this filter.
-   *
-   * Serialization is done using `ApproxFilter[T]#toBytes`
-   *
-   * The deserialization logic is defined implicitly using a [[ApproxFilterDeserializer]]
-   */
-  def fromBytes[T](in: Array[Byte])(implicit deser: ApproxFilterDeserializer[T, AF]): AF[T] =
-    deser.fromBytes(in)
-
-  /**
-   * Deserialize a [[ApproxFilter]] from an [[InputStream]]
-   *
-   * Serialization is done using `ApproxFilter[T]#writeTo`
-   *
-   * The deserialization logic is defined implicitly using a [[ApproxFilterDeserializer]]
-   */
-  def readFrom[T](in: InputStream)(implicit deser: ApproxFilterDeserializer[T, AF]): AF[T] =
-    deser.readFrom(in)
+  def readFrom[T](in: InputStream)(implicit tc: AF[T]#Typeclass[T]): AF[T]
 
   /**
    * [[Coder]] for [[ApproxFilter]]
-   *
-   * A coder can be created when we have an implicit [[ApproxFilterDeserializer]]
-   *
-   * An [[ApproxFilterDeserializer]] is defined in the companion object and might pull in
-   * other implicit type classes as needed to create an [[ApproxFilter]]
    */
-  implicit def coder[T](implicit deser: ApproxFilterDeserializer[T, AF]): Coder[AF[T]] = {
+  implicit def coder[T](implicit tc: AF[T]#Typeclass[T]): Coder[AF[T]] = {
     Coder.beam {
       new AtomicCoder[AF[T]] {
         override def encode(value: AF[T], outStream: OutputStream): Unit = value.writeTo(outStream)
-        override def decode(inStream: InputStream): AF[T] = deser.readFrom(inStream)
+        override def decode(inStream: InputStream): AF[T] = readFrom(inStream)
       }
     }
   }

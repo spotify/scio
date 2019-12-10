@@ -38,6 +38,10 @@ import com.spotify.scio.coders.Coder
 @SerialVersionUID(1L)
 final case class BloomFilter[T] private (private val internal: gBloomFilter[T])
     extends ApproxFilter[T] {
+
+  override type Param = (Int, Double) // TODO use a case class instead
+  override type Typeclass[_] = Funnel[T]
+
   /**
    * Returns the probability that [[mayBeContains(t: T)]] will erroneously return `true`
    * for an element that was not actually present the colleciton from which this [[BloomFilter]]
@@ -92,18 +96,35 @@ final case class BloomFilter[T] private (private val internal: gBloomFilter[T])
  * For specific constructors see [[BloomFilter#apply]] and [[BloomFilter#par]]
  */
 object BloomFilter extends ApproxFilterCompanion[BloomFilter] {
-  /**
-   * An implicit deserializer available when we know a Funnel instance for the
-   * Filter's type.
-   *
-   * A deserialization doesn't require specifying any parameters like `fpProb`
-   * and `numElements` and hence is available as in implicit.
-   */
-  implicit def deserializer[T: Funnel]: ApproxFilterDeserializer[T, BloomFilter] =
-    new ApproxFilterDeserializer[T, BloomFilter] {
-      override def readFrom(in: InputStream): BloomFilter[T] =
-        BloomFilter(gBloomFilter.readFrom(in, implicitly[Funnel[T]]))
+
+  def apply[T](param: (Int, Double))( // We don't need 2 params.
+    implicit tc: Funnel[T]): BloomFilterBuilder[T] = new BloomFilterBuilder(param._2)
+
+  override def apply[T](param: (Int, Double), items: Iterable[T])(
+    implicit tc: Funnel[T]): BloomFilter[T] = {
+    val numElements = items.size
+    val settings = BloomFilter.optimalBFSettings(numElements, param._2)
+    require(
+      settings.numBFs == 1,
+      s"BloomFilter overflow: $numElements elements found, max allowed: ${settings.capacity}"
+    )
+
+    val bf = gBloomFilter.create[T](tc, numElements, param._2)
+    val it = items.iterator
+    while (it.hasNext) {
+      bf.put(it.next())
     }
+    BloomFilter(bf)
+  }
+
+  /**
+   * Deserialize a [[ApproxFilter]] from an [[InputStream]]
+   *
+   * Serialization is done using `ApproxFilter[T]#writeTo`
+   */
+  override def readFrom[T](in: InputStream)(implicit tc: Funnel[T]): BloomFilter[T] =
+    BloomFilter(gBloomFilter.readFrom(in, implicitly[Funnel[T]]))
+
 
   /**
    * Constructor for [[BloomFilter]]

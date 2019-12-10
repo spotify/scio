@@ -26,13 +26,16 @@ import scala.collection.mutable
 
 @SerialVersionUID(1L)
 final case class ScalableBloomFilter[T] private (
-  // When changing the order of the types, change the implicit Coder in companion object
-  fpProb: Double,
-  initialCapacity: Int,
-  growthRate: Int,
-  tighteningRatio: Double,
+  private val params: ScalableBloomFilter.SBFParams,
   private val filters: Nel[gBloomFilter[T]]
 ) extends ApproxFilter[T] {
+
+  override type Param = ScalableBloomFilter.SBFParams
+
+  override type Typeclass[_] = Funnel[T]
+
+  import params._
+
   /**
    * Check if the filter may contain a given element.
    */
@@ -49,10 +52,11 @@ final case class ScalableBloomFilter[T] private (
     moreElements: Iterable[T]
   )(implicit funnel: Funnel[T]): ScalableBloomFilter[T] = {
     val initial: ScalableBloomFilter[T] = this
+    import initial.params._
 
     var numInsertedInCurrentFilter = initial.filters.head.approximateElementCount()
-    var currentCapacity = initial.initialCapacity * (growthRate * initial.numFilters)
-    var currentFpProb = initial.fpProb * (tighteningRatio * initial.numFilters)
+    var currentCapacity = initial.params.initialCapacity * (growthRate * initial.numFilters)
+    var currentFpProb = initial.params.fpProb * (tighteningRatio * initial.numFilters)
 
     val it = moreElements.iterator
     // create a copy
@@ -81,9 +85,6 @@ final case class ScalableBloomFilter[T] private (
 
   /**
    * Serialize the filter to the given [[OutputStream]]
-   *
-   * Deserializers are defined by [[ApproxFilterDeserializer]] available as an implicit
-   * in the [[ApproxFilterCompanion]] object.
    */
   override def writeTo(out: OutputStream): Unit = {
     // Serial form:
@@ -101,6 +102,12 @@ final case class ScalableBloomFilter[T] private (
 }
 
 object ScalableBloomFilter extends ApproxFilterCompanion[ScalableBloomFilter] {
+
+  case class SBFParams(fpProb: Double,
+                       initialCapacity: Int,
+                       growthRate: Int,
+                       tighteningRatio: Double)
+
   // Type alias a Non Empty List
   private type Nel[A] = ::[A]
 
@@ -111,38 +118,36 @@ object ScalableBloomFilter extends ApproxFilterCompanion[ScalableBloomFilter] {
    * A deserialization doesn't require specifying any parameters like `fpProb`
    * and `numElements` and hence is available as in implicit.
    */
-  implicit def deserializer[T: Funnel]: ApproxFilterDeserializer[T, ScalableBloomFilter] =
-    new ApproxFilterDeserializer[T, ScalableBloomFilter] {
-      override def readFrom(in: InputStream): ScalableBloomFilter[T] = {
-        val din = new DataInputStream(in)
+  override def readFrom[T](in: InputStream)(implicit tc: Funnel[T]): ScalableBloomFilter[T] = {
+    val din = new DataInputStream(in)
 
-        val fpProb = din.readDouble()
-        val initialCapacity = din.readInt()
-        val growthRate = din.readInt()
-        val tighteningRatio = din.readDouble()
-        val numFilters = din.readInt()
-        val filters =
-          (1 to numFilters).map(_ => gBloomFilter.readFrom[T](in, implicitly[Funnel[T]])).toList
+    val fpProb = din.readDouble()
+    val initialCapacity = din.readInt()
+    val growthRate = din.readInt()
+    val tighteningRatio = din.readDouble()
+    val numFilters = din.readInt()
+    val filters =
+      (1 to numFilters).map(_ => gBloomFilter.readFrom[T](in, implicitly[Funnel[T]])).toList
 
-        ScalableBloomFilter[T](
-          fpProb,
-          initialCapacity,
-          growthRate,
-          tighteningRatio,
-          new Nel(filters.head, filters.tail) // This is a NonEmptyList
-        )
-      }
-    }
+    ScalableBloomFilter[T](
+      SBFParams(fpProb, initialCapacity, growthRate, tighteningRatio),
+      new Nel(filters.head, filters.tail) // This is a NonEmptyList
+    )
+  }
+
+  def apply[T](param: SBFParams)(
+    implicit tc: Funnel[T]): ScalableBloomFilterBuilder[T] =
+    apply(param.fpProb, param.initialCapacity, param.growthRate, param.tighteningRatio)
 
   def apply[T: Funnel](
     fpProb: Double,
-    headCapacity: Int,
+    initialCapacity: Int,
     growthRate: Int,
     tighteningRatio: Double
   ): ScalableBloomFilterBuilder[T] =
     ScalableBloomFilterBuilder(
       fpProb,
-      headCapacity,
+      initialCapacity,
       growthRate,
       tighteningRatio
     )
@@ -153,12 +158,14 @@ object ScalableBloomFilter extends ApproxFilterCompanion[ScalableBloomFilter] {
     growthRate: Int,
     tighteningRatio: Double
   ): ScalableBloomFilter[T] = ScalableBloomFilter(
-    fpProb,
-    initialCapacity,
-    growthRate,
-    tighteningRatio,
+    SBFParams(fpProb, initialCapacity, growthRate, tighteningRatio),
     new Nel(gBloomFilter.create[T](implicitly[Funnel[T]], initialCapacity, fpProb), Nil)
   )
+
+  override def apply[T](param: SBFParams, items: Iterable[T])(
+    implicit tc: Funnel[T]): ScalableBloomFilter[T] =
+    empty(param.fpProb, param.initialCapacity, param.growthRate, param.tighteningRatio)
+      .putAll(items)
 }
 
 final case class ScalableBloomFilterBuilder[T: Funnel] private[values] (
