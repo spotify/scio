@@ -127,24 +127,21 @@ private[coders] object CoderMacros {
     import c.universe._
     val wtt = weakTypeOf[T]
 
-    val isPrivateConstructor =
-      wtt.decls
-        .collectFirst {
-          case m: MethodSymbol if m.isConstructor =>
-            m.isPrivate
-        }
-        .getOrElse(false)
-
-    val tree: c.Tree =
-      if (isPrivateConstructor) {
-        // Magnolia does not support classes with a private constructor.
-        // Workaround the limitation by using a fallback in that case
-        q"""_root_.com.spotify.scio.coders.Coder.fallback[$wtt](null)"""
-      } else {
-        //XXX: find a way to get rid of $outer references at compile time
-        MagnoliaMacros.genWithoutAnnotations[T](c)
-      }
-
-    tree
+    if (privateConstructor(c)(wtt).isDefined && companionImplicit(c)(wtt).isEmpty) {
+      // Magnolia does not support classes with a private constructor.
+      // Workaround the limitation by using a fallback in that case
+      q"_root_.com.spotify.scio.coders.Coder.fallback[$wtt](null)"
+    } else {
+      MagnoliaMacros.genWithoutAnnotations[T](c)
+    }
   }
+
+  private[this] def companionImplicit(c: whitebox.Context)(tpe: c.Type): Option[c.Symbol] = {
+    import c.universe._
+    val tp = c.typecheck(tq"_root_.com.spotify.scio.coders.Coder[$tpe]", c.TYPEmode).tpe
+    tpe.companion.members.iterator.filter(_.isImplicit).find(_.info.resultType =:= tp)
+  }
+
+  private[this] def privateConstructor(c: whitebox.Context)(tpe: c.Type): Option[c.Symbol] =
+    tpe.decls.find(m => m.isConstructor && m.isPrivate)
 }
