@@ -16,8 +16,9 @@
  */
 
 package com.spotify.scio.values
-import java.io.{ByteArrayInputStream, ByteArrayOutputStream, InputStream, OutputStream}
+import java.io._
 
+import com.google.common.io.{ByteStreams, CountingOutputStream}
 import com.spotify.scio.annotations.experimental
 import com.spotify.scio.coders.Coder
 import org.apache.beam.sdk.coders.AtomicCoder
@@ -38,118 +39,48 @@ import org.apache.beam.sdk.coders.AtomicCoder
 @experimental
 trait ApproxFilter[-T] extends Serializable {
 
-  // Parameters or configurations for an ApproxFilter.
-  type Param
-
-  // A Typeclass required for a filter to be created
-  type Typeclass[_]
-
   /**
    * Check if the filter may contain a given element.
    */
   def mayBeContains(t: T): Boolean
 
   /**
-   * Serialize the Filter to an Array[Byte]
-   *
-   * The serialized bytes should be used to persist the filter
-   * and deserialize using [[ApproxFilter#fromBytes]] in the companion
-   * object.
-   */
-  def toBytes: Array[Byte] = {
-    val ba = new ByteArrayOutputStream()
-    writeTo(ba)
-    ba.toByteArray
-  }
-
-  /**
-   * Serialize the filter to the given [[OutputStream]]
-   */
-  def writeTo(out: OutputStream): Unit
-
-  /**
    * The serialized size of the filter in bytes.
    */
-  def sizeInBytes: Int = toBytes.length
+  def sizeInBytes: Int = {
+    val cos = new CountingOutputStream(ByteStreams.nullOutputStream())
+    new ObjectOutputStream(cos).writeObject(this)
+    cos.getCount.toInt
+  }
 }
 
 /**
- * An `ApproxFilterBuilder[T, To]` is used to create [[ApproxFilter]] of type [[To]]
- * from various source collections which contain elements of type [T]
+ * This trait provides an implicit [[Coder]] and other helpers to the [[ApproxFilter]]
+ * companion object.
  *
- * These are implemented for each ApproxFilter and are used for creating the filters.
- * Different instances of an [[ApproxFilterBuilder]] are available via constructors
- * in the [[ApproxFilter]]'s companion object. The constructor can require multiple
- * runtime parameters and configurations like expected insertions / false positive
- * probabilities to define a builder. Hence a Builder is not available as an implicit.
- * However the constructors might summon other implicit type class instances before
- * providing a Builder.
+ * It doesn't enforce the user to implement anything.
  */
 @experimental
-trait ApproxFilterBuilder[T, To[B >: T] <: ApproxFilter[B]] extends Serializable {
-  /**
-   * The name of this builder.
-   * This name shows up nicely as a transform name for the pipeline.
-   */
-  def name: String = this.getClass.getSimpleName
+trait ApproxFilterCompanion {
 
-  /** Build from an Iterable */
-  def build(it: Iterable[T]): To[T]
-
-  /**
-   * Build a `SCollection[To[T]]` from an SCollection[T]
-   *
-   * By default groups all elements and builds the [[To]]
-   */
-  def build(
-    sc: SCollection[T]
-  )(implicit coder: Coder[T], filterCoder: Coder[To[T]]): SCollection[To[T]] =
-    sc.transform(name)(
-      _.distinct
-        .groupBy(_ => ())
-        .values
-        .map(build)
-    )
-}
-
-/**
- * This trait provides helpers to the [[ApproxFilter]] companion object.
- *
- * This allows the user to directly user the [[ApproxFilter]] to deserialize from
- * an `InputStream` or `Array[Byte]`
- */
-@experimental
-trait ApproxFilterCompanion[AF[_] <: ApproxFilter[_]] {
-
-  // FIXME figure out variance for the builder, or just move away from this
-  // FIXME Alternative constructor in companion object with scollection as input.
-//  def apply[T](param: AF[T]#Param)(implicit tc: AF[T]#Typeclass[T]): ApproxFilterBuilder[T, AF]
-
-  def apply[T](param: AF[T]#Param, items: Iterable[T])(implicit tc: AF[T]#Typeclass[T]): AF[T]
-
-  /**
-   * Read from serialized bytes to this filter.
-   *
-   * Serialization is done using `ApproxFilter[T]#toBytes`
-   */
-  def fromBytes[T](serializedBytes: Array[Byte])(implicit tc: AF[T]#Typeclass[T]): AF[T] =
-    readFrom(new ByteArrayInputStream(serializedBytes))
-
-  /**
-   * Deserialize a [[ApproxFilter]] from an [[InputStream]]
-   *
-   * Serialization is done using `ApproxFilter[T]#writeTo`
-   */
-  def readFrom[T](in: InputStream)(implicit tc: AF[T]#Typeclass[T]): AF[T]
+  // Helper for setting values when deserializing.
+  // This is used by the
+  private[values] def setField(name: String, value: Any): Unit = {
+    val f = getClass.getDeclaredField(name)
+    f.setAccessible(true)
+    f.set(this, value)
+  }
 
   /**
    * [[Coder]] for [[ApproxFilter]]
    */
-  implicit def coder[T](implicit tc: AF[T]#Typeclass[T]): Coder[AF[T]] = {
+  implicit def coder[T, AF[_] <: ApproxFilter[T]]: Coder[AF[T]] = {
     Coder.beam {
       new AtomicCoder[AF[T]] {
-        override def encode(value: AF[T], outStream: OutputStream): Unit = value.writeTo(outStream)
-        override def decode(inStream: InputStream): AF[T] = readFrom(inStream)
+        override def encode(value: AF[T], outStream: OutputStream): Unit =
+          new ObjectOutputStream(outStream).writeObject(value)
+        override def decode(inStream: InputStream): AF[T] =
+          new ObjectInputStream(inStream).readObject().asInstanceOf[AF[T]]
       }
     }
   }

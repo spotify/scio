@@ -17,7 +17,7 @@
 
 package com.spotify.scio.values
 
-import java.io.{InputStream, OutputStream}
+import java.io._
 
 import com.google.common.hash.{Funnel, BloomFilter => gBloomFilter}
 import com.spotify.scio.annotations.experimental
@@ -36,11 +36,10 @@ import com.spotify.scio.coders.Coder
  * Implemented as an immutable wrapper over Guava's Bloom Filter.
  */
 @SerialVersionUID(1L)
-final case class BloomFilter[T] private (private val internal: gBloomFilter[T])
-    extends ApproxFilter[T] {
-
-  override type Param = (Int, Double) // TODO use a case class instead
-  override type Typeclass[_] = Funnel[T]
+final case class BloomFilter[T] private (
+  private val internal: gBloomFilter[T],
+  private val funnel: Funnel[T]
+) extends ApproxFilter[T] {
 
   /**
    * Returns the probability that [[mayBeContains(t: T)]] will erroneously return `true`
@@ -68,12 +67,18 @@ final case class BloomFilter[T] private (private val internal: gBloomFilter[T])
    */
   def mayBeContains(t: T): Boolean = internal.mightContain(t)
 
-  /**
-   * Writes this [[BloomFilter]] to an output stream
-   *
-   * The filter can be deserialized using [[BloomFilter.readFrom(InputStream)]]
-   */
-  override def writeTo(out: OutputStream): Unit = internal.writeTo(out)
+  // Java Serialization
+  private def writeObject(out: ObjectOutputStream): Unit = {
+    out.writeObject(funnel)
+    internal.writeTo(out)
+  }
+
+  private def readObject(in: ObjectInputStream): Unit = {
+    val funnel = in.readObject().asInstanceOf[Funnel[T]]
+    val internal = gBloomFilter.readFrom(in, funnel)
+    BloomFilter.setField("funnel", funnel)
+    BloomFilter.setField("internal", internal)
+  }
 
   /**
    * Add an element to this [[BloomFilter]]. It creates a copy of the underlying
@@ -84,47 +89,30 @@ final case class BloomFilter[T] private (private val internal: gBloomFilter[T])
    */
   @experimental
   def put(t: T): BloomFilter[T] = {
-    val copy = internal.copy()
-    copy.put(t)
-    BloomFilter(copy)
-  }
-}
-
-/**
- * Constructors and implicit coders / deserializers for [[BloomFilter]]
- *
- * For specific constructors see [[BloomFilter#apply]] and [[BloomFilter#par]]
- */
-object BloomFilter extends ApproxFilterCompanion[BloomFilter] {
-
-  def apply[T](param: (Int, Double))( // We don't need 2 params.
-    implicit tc: Funnel[T]): BloomFilterBuilder[T] = new BloomFilterBuilder(param._2)
-
-  override def apply[T](param: (Int, Double), items: Iterable[T])(
-    implicit tc: Funnel[T]): BloomFilter[T] = {
-    val numElements = items.size
-    val settings = BloomFilter.optimalBFSettings(numElements, param._2)
-    require(
-      settings.numBFs == 1,
-      s"BloomFilter overflow: $numElements elements found, max allowed: ${settings.capacity}"
-    )
-
-    val bf = gBloomFilter.create[T](tc, numElements, param._2)
-    val it = items.iterator
-    while (it.hasNext) {
-      bf.put(it.next())
-    }
-    BloomFilter(bf)
+    val copyOfInternal = internal.copy()
+    copyOfInternal.put(t)
+    this.copy(internal = copyOfInternal)
   }
 
   /**
-   * Deserialize a [[ApproxFilter]] from an [[InputStream]]
+   * Add an Itearable of elements to this [[BloomFilter]]. It creates a copy of the underlying
+   * structure.
    *
-   * Serialization is done using `ApproxFilter[T]#writeTo`
+   * For creating BloomFilters from large collections, use [[BloomFilter#apply(Iterable)]]
+   * instead.
    */
-  override def readFrom[T](in: InputStream)(implicit tc: Funnel[T]): BloomFilter[T] =
-    BloomFilter(gBloomFilter.readFrom(in, implicitly[Funnel[T]]))
+  @experimental
+  def putAll(elements: Iterable[T]): BloomFilter[T] = {
+    val copyOfInternal = internal.copy()
+    val it = elements.iterator
+    while (it.hasNext) {
+      copyOfInternal.put(it.next())
+    }
+    this.copy(internal = copyOfInternal)
+  }
+}
 
+object BloomFilter extends ApproxFilterCompanion {
 
   /**
    * Constructor for [[BloomFilter]]
@@ -152,7 +140,7 @@ object BloomFilter extends ApproxFilterCompanion[BloomFilter] {
     while (it.hasNext) {
       bf.put(it.next())
     }
-    BloomFilter(bf)
+    BloomFilter(bf, f)
   }
 
   /**
@@ -184,8 +172,10 @@ object BloomFilter extends ApproxFilterCompanion[BloomFilter] {
    * @param fpProb Expected false positive probability of the resulting [[BloomFilter]]
    *               Default 0.01 (1 %)
    */
-  def empty[T: Funnel](numElements: Int, fpProb: Double = 0.01) =
-    BloomFilter(gBloomFilter.create[T](implicitly[Funnel[T]], numElements, fpProb))
+  def empty[T: Funnel](numElements: Int, fpProb: Double = 0.01): BloomFilter[T] = {
+    val f = implicitly[Funnel[T]]
+    BloomFilter(gBloomFilter.create[T](f, numElements, fpProb), f)
+  }
 
   /**
    * An alternative [[BloomFilterBuilder]] which uses a monoid aggregator to build

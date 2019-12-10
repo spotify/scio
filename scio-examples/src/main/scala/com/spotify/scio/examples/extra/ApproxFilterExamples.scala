@@ -23,11 +23,11 @@
 // --method=[METHOD]"`
 package com.spotify.scio.examples.extra
 
-import java.io.{DataOutputStream, InputStream, OutputStream}
+import java.io.ByteArrayOutputStream
 
 import com.google.common.hash.{Funnel, Funnels}
 import com.spotify.scio._
-import com.spotify.scio.coders.Coder
+import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import com.spotify.scio.values._
 
 // TODO add an example with case class / tuple and magnolify derivation of funnel
@@ -131,7 +131,7 @@ object ApproxFilterExamples {
         .keyBy(_ % 2) // Create a KV pair SCollection
         .toScalableBloomFilterPerKey(
           fpProb = 0.1,
-          headCapacity = 100,
+          initialCapacity = 100,
           growthRate = 2,
           tighteningRatio = 0.1
         )
@@ -149,17 +149,17 @@ object ApproxFilterExamples {
           oldSbf.putAll(moreElements) // Creates a new ScalableBloomFilter
       }
 
-    // Serialize as bytes for persisting
-    val asBytes: SCollection[(Int, Array[Byte])] = scaledUpBf.mapValues(_.toBytes)
-
-    // Deserialize from bytes into a filter
-    val deserialized: SCollection[(Int, ScalableBloomFilter[Int])] = asBytes.mapValues {
-      serializedBytes =>
-        ScalableBloomFilter.fromBytes[Int](serializedBytes)
-    }
+//    // Serialize as bytes for persisting
+//    val asBytes: SCollection[(Int, Array[Byte])] = scaledUpBf.mapValues(_.toBytes)
+//
+//    // Deserialize from bytes into a filter
+//    val deserialized: SCollection[(Int, ScalableBloomFilter[Int])] = asBytes.mapValues {
+//      serializedBytes =>
+//        ScalableBloomFilter.fromBytes[Int](serializedBytes)
+//    }
 
     // Check for membership
-    val mayBeOne: SCollection[(Int, Boolean)] = deserialized.mapValues(_.mayBeContains(1))
+//    val mayBeOne: SCollection[(Int, Boolean)] = deserialized.mapValues(_.mayBeContains(1))
   }
 }
 // End of BloomFilter and ScalableBloomFilter Example
@@ -171,104 +171,78 @@ object ApproxFilterExamples {
  * negative probability.
  */
 @SerialVersionUID(1L)
-final case class ExactFilter[T] private (private val internal: Set[T]) extends ApproxFilter[T] {
-  val fpProb: Double = 0.0
-
-  override type Param = Unit
-  override type Typeclass[_] = Coder[T]
+final case class ExactFilter[T] private (private val internal: Set[T], coder: Coder[Set[T]])
+    extends ApproxFilter[T] {
 
   /**
    * Check if the filter may contain a given element.
    */
   override def mayBeContains(t: T): Boolean = internal.contains(t)
-
-  /**
-   * Serialize the filter to the given [[OutputStream]]
-   */
-  override def writeTo(out: OutputStream): Unit = {
-    // Write the number of elements
-    // Write the elements itself
-    val dout = new DataOutputStream(out)
-    dout.writeInt(internal.size)
-    // TODO
-  }
 }
 
 /**
  * Companion object to define implicit deserializer, and constructor that
  * returns a [[ApproxFilterBuilder]].
  */
-object ExactFilter extends ApproxFilterCompanion[ExactFilter] {
+object ExactFilter extends ApproxFilterCompanion {
 
-  /**
-   * Deserialize a [[ApproxFilter]] from an [[InputStream]]
-   *
-   * Serialization is done using `ApproxFilter[T]#writeTo`
-   */
-  override def readFrom[T](in: InputStream)(implicit coder: Coder[T]): ExactFilter[T] = ??? // TODO
-
-  /** Constructor that returns a Builder which can be used to create an ExactFilter. */
-  def apply[T]: ExactFilterBuilder[T] = ExactFilterBuilder()
+//  /** Constructor that returns a Builder which can be used to create an ExactFilter. */
+//  def apply[T]: ExactFilterBuilder[T] = ExactFilterBuilder()
 
   /** An empty filter. */
-  def empty[T]: ExactFilter[T] = ExactFilter(Set.empty[T])
+  def empty[T: Coder]: ExactFilter[T] = ExactFilter(Set.empty[T], implicitly[Coder[Set[T]]])
 
-  def apply[T](param: Unit)(implicit tc: Coder[T]): ApproxFilterBuilder[T, ExactFilter] =
-    ExactFilterBuilder()
-
-  override def apply[T](param: Unit, items: Iterable[T])(implicit tc: Coder[T]): ExactFilter[T] =
-    ExactFilter(items.toSet)
 }
 
-/**
- * An [[ApproxFilterBuilder]] defines how an [[ApproxFilter]] can be created.
- *
- * It can define how the filter is constructed from `Iterable` / `SCollection`.
- *
- * This allows us to separate the creation of an [[ApproxFilter]] compared to using it.
- * Hence we can have multiple optimized creation algorithms that are different from
- * the way the filter is being read.
- */
-final case class ExactFilterBuilder[T]() extends ApproxFilterBuilder[T, ExactFilter] {
-  /** Build from an Iterable */
-  override def build(it: Iterable[T]): ExactFilter[T] =
-    ExactFilter(it.toSet) // Create a Set from all elements of the iterable.
-}
+///**
+// * An [[ApproxFilterBuilder]] defines how an [[ApproxFilter]] can be created.
+// *
+// * It can define how the filter is constructed from `Iterable` / `SCollection`.
+// *
+// * This allows us to separate the creation of an [[ApproxFilter]] compared to using it.
+// * Hence we can have multiple optimized creation algorithms that are different from
+// * the way the filter is being read.
+// */
+//final case class ExactFilterBuilder[T]() extends ApproxFilterBuilder[T, ExactFilter] {
+//  /** Build from an Iterable */
+//  override def build(it: Iterable[T]): ExactFilter[T] =
+//    ExactFilter(it.toSet) // Create a Set from all elements of the iterable.
+//}
 
-/**
- * Now that we have our [[ApproxFilter]] defined, lets use it in an example pipeline.
- */
-object ExactFilterUsageExample {
-  def main(cmdlineArgs: Array[String]): Unit = {
-    val (sc, args) = ContextAndArgs(cmdlineArgs)
-
-    // Take an SCollection
-    val elements: SCollection[Int] = sc.parallelize(1 to 100)
-
-    // Create an ExactFilter from it.
-    val filter: SCollection[ExactFilter[Int]] = elements.to_(ExactFilter[Int])
-
-    // Create a per-key filter
-    val perKeyFilter: SCollection[(Int, ExactFilter[Int])] =
-      elements
-        .keyBy(_ % 2) // Create a KV pair SCollection
-        .groupByKey // Bring all elements per key,
-        .mapValues(ExactFilter[Int].build(_))
-
-    // Use the exact filter as a SideInput.
-    val filterSideInput: SideInput[ExactFilter[Int]] =
-      filter.asSingletonSideInput(ExactFilter.empty)
-
-    // Serialize as bytes for persisting
-    val asBytes: SCollection[Array[Byte]] = filter.map(_.toBytes)
-
-    // Deserialize from bytes into a filter
-    val deserialized: SCollection[ExactFilter[Int]] = asBytes.map(ExactFilter.fromBytes[Int](_))
-
-    // Check for membership
-    val mayBeOne: SCollection[Boolean] = deserialized.map(_.mayBeContains(1))
-
-    val sr: ScioResult = sc.run().waitUntilDone()
-  }
-}
+///**
+// * Now that we have our [[ApproxFilter]] defined, lets use it in an example pipeline.
+// */
+//object ExactFilterUsageExample {
+//  def main(cmdlineArgs: Array[String]): Unit = {
+//    val (sc, args) = ContextAndArgs(cmdlineArgs)
+//
+//    // Take an SCollection
+//    val elements: SCollection[Int] = sc.parallelize(1 to 100)
+//
+//    // Create an ExactFilter from it.
+//    val filter: SCollection[ExactFilter[Int]] = elements.to_(ExactFilter[Int])
+//
+//    // Create a per-key filter
+//    val perKeyFilter: SCollection[(Int, ExactFilter[Int])] =
+//      elements
+//        .keyBy(_ % 2) // Create a KV pair SCollection
+//        .groupByKey // Bring all elements per key,
+//        .mapValues(ExactFilter[Int].build(_))
+//
+//    // Use the exact filter as a SideInput.
+//    val filterSideInput: SideInput[ExactFilter[Int]] =
+//      filter.asSingletonSideInput(ExactFilter.empty)
+//
+//    // Serialize as bytes for persisting
+//    val asBytes: SCollection[Array[Byte]] = filter.map(_.toBytes)
+//
+//    // Deserialize from bytes into a filter
+//    val deserialized: SCollection[ExactFilter[Int]] = asBytes.map(ExactFilter.fromBytes[Int](_))
+//
+//    // Check for membership
+//    val mayBeOne: SCollection[Boolean] = deserialized.map(_.mayBeContains(1))
+//
+//    val sr: ScioResult = sc.run().waitUntilDone()
+//  }
+//}
 // End of ExactFilter Example
