@@ -59,13 +59,13 @@ object TypedPrettifier extends LowPriorityFallbackTypedPrettifier {
     }
   }
 
-  /*
+
   /**
- * An instance of [[TypedPrettifier]] when we have a [[Schema]] available
- * for our type. We use the Schema to create a table representation of
- * the SCollection[T]
- */
-  implicit def schemaPrettifier[T: Schema](
+   * An instance of [[TypedPrettifier]] when we have a [[Schema]] available
+   * for our type. We use the Schema to create a table representation of
+   * the SCollection[T]
+   */
+  def schemaPrettifier[T: Schema](
     implicit schema: Schema[T],
     scalactic: Prettifier
   ): TypedPrettifier[T] =
@@ -73,5 +73,4 @@ object TypedPrettifier extends LowPriorityFallbackTypedPrettifier {
       override def apply: Prettifier =
         SCollectionPrettifier.getPrettifier[T](schema, scalactic)
     }
- */
 }
