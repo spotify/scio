@@ -863,9 +863,8 @@ lazy val `scio-tensorflow`: Project = project
   .dependsOn(
     `scio-avro`,
     `scio-core`,
-    `scio-test` % "it->it;test->test"
+    `scio-test` % "test->test"
   )
-  .configs(IntegrationTest)
   .enablePlugins(ProtobufPlugin)
 
 lazy val `scio-schemas`: Project = project
