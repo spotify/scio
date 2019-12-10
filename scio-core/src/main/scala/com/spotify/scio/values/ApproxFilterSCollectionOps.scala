@@ -86,14 +86,11 @@ class ApproxPairSCollectionOps[K: Coder, V: Coder](self: SCollection[(K, V)]) {
     fpProb: Double
   )(implicit f: Funnel[V]): SCollection[(K, BloomFilter[V])] =
     self.groupByKey
-      .mapValues(BloomFilter(_, fpProb))(
-        BloomFilter.coder[V], // Work around false Kryo warning
-        Coder[K]
-      )
+      .mapValues(BloomFilter(_, fpProb))
 
   def toScalableBloomFilterPerKey(
     fpProb: Double,
-    headCapacity: Int,
+    initialCapacity: Int,
     growthRate: Int,
     tighteningRatio: Double
   )(
@@ -105,7 +102,7 @@ class ApproxPairSCollectionOps[K: Coder, V: Coder](self: SCollection[(K, V)]) {
         .mapValues(
           ScalableBloomFilter(
             fpProb,
-            headCapacity,
+            initialCapacity,
             growthRate,
             tighteningRatio
           ).build(_)
