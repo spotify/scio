@@ -126,13 +126,17 @@ private[coders] object CoderMacros {
   def wrappedCoder[T: c.WeakTypeTag](c: whitebox.Context): c.Tree = {
     import c.universe._
     val wtt = weakTypeOf[T]
+    val imp = c.openImplicits match {
+      case Nil => None
+      case _   => companionImplicit(c)(wtt)
+    }
 
-    if (privateConstructor(c)(wtt).isDefined && companionImplicit(c)(wtt).isEmpty) {
+    imp.map(_ => EmptyTree).getOrElse {
       // Magnolia does not support classes with a private constructor.
       // Workaround the limitation by using a fallback in that case
-      q"_root_.com.spotify.scio.coders.Coder.fallback[$wtt](null)"
-    } else {
-      MagnoliaMacros.genWithoutAnnotations[T](c)
+      privateConstructor(c)(wtt).fold(MagnoliaMacros.genWithoutAnnotations[T](c)) { _ =>
+        q"_root_.com.spotify.scio.coders.Coder.fallback[$wtt](null)"
+      }
     }
   }
 
