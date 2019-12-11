@@ -206,7 +206,7 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     hashFullOuterJoin(sideMap.asImmutableSideInput)
 
   /**
-   * Perform a full outer join with a `SideInput[ Map [ K, Iterable[W] ] ]`.
+   * Perform a full outer join with a `SideInput[Map[K, Iterable[W]]]`.
    *
    * @example
    * {{{
