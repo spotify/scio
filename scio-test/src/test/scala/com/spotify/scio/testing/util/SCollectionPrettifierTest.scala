@@ -1,24 +1,24 @@
 package com.spotify.scio.testing.util
 import com.spotify.scio.avro.TestRecord
 import org.scalactic.Prettifier
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 // A class which Scio's Schema derivation will use fallback
 class NoSchemaAvailable() extends Serializable {
   override def toString: String = "ClassWithNoSchemaAvailable"
 }
 
-class SCollectionPrettifierTest extends FlatSpec with Matchers {
+class SCollectionPrettifierTest extends AnyFlatSpec with Matchers {
 
-  private val avroRecods: Iterable[TestRecord] = (1 to 5).map(
-    i =>
-      TestRecord
-        .newBuilder()
-        .setIntField(i)
-        .setStringField(i.toString)
-        .setBooleanField(false)
-        .setDoubleField(i / 2.0)
-        .build()
+  private val avroRecods: Iterable[TestRecord] = (1 to 5).map(i =>
+    TestRecord
+      .newBuilder()
+      .setIntField(i)
+      .setStringField(i.toString)
+      .setBooleanField(false)
+      .setDoubleField(i / 2.0)
+      .build()
   )
 
   case class NestedRecord(p: String)

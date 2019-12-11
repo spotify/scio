@@ -29,8 +29,9 @@ import org.apache.beam.sdk.testing.PAssert.{IterableAssert, SingletonAssert}
 import org.apache.beam.sdk.transforms.SerializableFunction
 import org.apache.beam.sdk.transforms.windowing.BoundedWindow
 import org.apache.beam.sdk.util.CoderUtils
-import org.scalactic.{Equality, Prettifier}
+import org.scalactic.Prettifier
 import org.scalatest
+import org.scalatest.exceptions.TestFailedException
 import org.scalatest.matchers.{MatchResult, Matcher}
 
 import scala.collection.JavaConverters._
@@ -195,22 +196,32 @@ trait SCollectionMatchers {
             val p = Externalizer(typedPrettifier) // defeat closure
 
             val shouldFn = makeFn[T] {
-              new (JIterable[T] => Unit) with scalatest.Matchers {
-                override def apply(jit: JIterable[T]): Unit = {
-                  implicit val prettifier: Prettifier = p.get.apply
-                  jit.asScala.should(contain).theSameElementsAs(v.get)
-                  ()
+              import scalatest.matchers.should.Matchers._
+              jit: JIterable[T] => {
+                implicit val prettifier: Prettifier = p.get.apply
+                try jit.asScala.should(contain).theSameElementsAs(v.get)
+                catch {
+                  case e: TestFailedException =>
+                    // Throw AssertionError / maintains backward compatibility
+                    // as Beam / Hamcrest throws AssertionError
+                    // + shows diff viewer in IntelliJ by using the text `was not equal to`
+                    // + keep the original error as is from Scalatest
+                    throw new AssertionError(
+                      s"${prettifier(v.get)} was not equal to ${prettifier(jit.asScala)}\n",
+                      e
+                    )
+                  case x: Exception => throw x // Unexpected, but we throw it anyway.
                 }
+                ()
               }
             }
 
             val shouldNotFn = makeFn[T] {
-              new (JIterable[T] => Unit) with scalatest.Matchers {
-                override def apply(jit: JIterable[T]): Unit = {
-                  implicit val prettifier: Prettifier = p.get.apply
-                  jit.asScala.shouldNot(contain).theSameElementsAs(v.get)
-                  ()
-                }
+              import scalatest.matchers.should.Matchers._
+              jit: JIterable[T] => {
+                implicit val prettifier: Prettifier = p.get.apply
+                jit.asScala.shouldNot(contain).theSameElementsAs(v.get)
+                ()
               }
             }
 

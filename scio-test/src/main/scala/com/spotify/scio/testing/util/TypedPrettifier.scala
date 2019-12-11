@@ -21,6 +21,7 @@ import org.scalactic.Prettifier
  * representation of SCollections in error messages when an assertion fails in the test.
  */
 trait TypedPrettifier[T] extends Serializable {
+
   /**
    * The scalatic prettifier wrapped for the given type T.
    */
@@ -31,12 +32,13 @@ trait TypedPrettifier[T] extends Serializable {
  * A low priority fall back [[TypedPrettifier]] which delegates Scalactic's Prettifier.
  */
 trait LowPriorityFallbackTypedPrettifier {
+
   /**
    * Visible when we fail to have a [[Schema]]
    *
    * This `TypedPrettifier` fallsback to the default scalactic Prettifier.
    */
-  implicit def noSchemaPrettifier[T](
+  implicit def default[T](
     implicit scalactic: Prettifier
   ): TypedPrettifier[T] =
     new TypedPrettifier[T] {
@@ -45,6 +47,7 @@ trait LowPriorityFallbackTypedPrettifier {
 }
 
 object TypedPrettifier extends LowPriorityFallbackTypedPrettifier {
+
   /**
    * An instance of TypedPrettifier when we have an AvroRecord.
    * We use the Avro Schema to create an table representation of
@@ -58,7 +61,6 @@ object TypedPrettifier extends LowPriorityFallbackTypedPrettifier {
         SCollectionPrettifier.getAvroRecordPrettifier(scalacticFallback)
     }
   }
-
 
   /**
    * An instance of [[TypedPrettifier]] when we have a [[Schema]] available

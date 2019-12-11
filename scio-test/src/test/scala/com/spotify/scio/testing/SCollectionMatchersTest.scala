@@ -631,4 +631,15 @@ class SCollectionMatchersTest extends PipelineSpec {
 
     thrown.getMessage should include(expectedStringInErrorMessage)
   }
+
+  it should "containInAnyOrder should show diff viewer" in {
+    val actual = (1 to 3).map(a => TestRecord.newBuilder().setIntField(a).build())
+    val unExpected = (1 to 5).map(a => TestRecord.newBuilder().setIntField(a).build())
+    val thrown = intercept[AssertionError] {
+      runWithContext {
+        _.parallelize(actual) should containInAnyOrder(unExpected)
+      }
+    }
+    thrown.getMessage should include("was not equal to") // IntelliJ check
+  }
 }
