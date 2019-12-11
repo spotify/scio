@@ -164,7 +164,7 @@ private[scio] object TestDataManager {
   }
 
   def ensureClosed(testId: String): Unit = {
-    require(closed(testId), "ScioContext was not closed. Did you forget close()?")
+    require(closed(testId), "ScioContext was not executed. Did you forget .run()?")
     closed -= testId
   }
 }

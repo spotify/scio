@@ -64,7 +64,7 @@ object UserScore {
       // Save to the BigQuery table defined by "output" in the arguments passed in
       .saveAsTypedBigQueryTable(Table.Spec(args("output")))
 
-    // Close context and execute the pipeline
+    // Execute the pipeline
     sc.run()
     ()
   }

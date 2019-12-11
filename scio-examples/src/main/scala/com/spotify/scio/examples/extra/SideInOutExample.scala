@@ -101,7 +101,7 @@ object SideInOutExample {
     sideOutputs(twoLetter).map(toString).saveAsTextFile(args("output2"))
     sideOutputs(threeLetter).map(toString).saveAsTextFile(args("output3"))
 
-    // Close the context and execute the pipeline
+    // Execute the pipeline
     sc.run()
     ()
   }

@@ -81,7 +81,7 @@ object TemplateExample {
     sc.customInput("input", inputIO)
       .saveAsCustomOutput("output", outputIO)
 
-    // Close the context
+    // Execute the pipeline
     sc.run()
     ()
   }

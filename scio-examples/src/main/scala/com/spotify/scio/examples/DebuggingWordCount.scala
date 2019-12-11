@@ -74,7 +74,7 @@ object DebuggingWordCount {
       .that(filteredWords.internal)
       .containsInAnyOrder(List(("Flourish", 3L), ("stomach", 1L)).asJava)
 
-    // Close the context, execute the pipeline and block until it finishes
+    // Execute the pipeline and block until it finishes
     val result = sc.run().waitUntilFinish()
 
     // Retrieve metric values

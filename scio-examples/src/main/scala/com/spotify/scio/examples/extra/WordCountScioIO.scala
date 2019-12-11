@@ -75,7 +75,7 @@ object WordCountScioIO {
       // Save result as text files under the output path by passing write params
       .write(outputTextIO)(TextIO.WriteParam())
 
-    // Close the context, execute the pipeline and block until it finishes
+    // Execute the pipeline and block until it finishes
     val result = sc.run().waitUntilFinish()
 
     // Retrieve metric values

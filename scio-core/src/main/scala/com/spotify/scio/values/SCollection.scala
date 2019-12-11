@@ -1144,7 +1144,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   /**
    * Extract data from this SCollection as a closed [[Tap]]. The Tap will be available
    * once the pipeline completes successfully. `.materialize()` must be called before
-   * the `ScioContext` is closed, as its implementation modifies the current pipeline graph.
+   * the `ScioContext` is run, as its implementation modifies the current pipeline graph.
    *
    * {{{
    * val closedTap = sc.parallelize(1 to 10).materialize

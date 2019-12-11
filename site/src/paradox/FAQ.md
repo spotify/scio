@@ -608,9 +608,9 @@ Your Scio applications should define a `main` method instead of extending `scala
 #### How to inspect the content of an `SCollection`?
 
 There is multiple options here:
-- Use `debug()` method on an `SCollection` to print its content as the data flows through the DAG during the execution (after the `close` or `closeAndCollect`)
+- Use `debug()` method on an `SCollection` to print its content as the data flows through the DAG during the execution (after the `run` or `runAndCollect`)
 - Use a debugger and setup break points - make sure to break inside of your functions to stop control at the execution not the pipeline construction time
-- In [[Scio-REPL]], use `closeAndCollect()` to close the context and materialize the content of an `SCollection`
+- In [[Scio-REPL]], use `runAndCollect()` to execute the pipeline and materialize the contents of an `SCollection`
 
 #### How do I improve side input performance?
 

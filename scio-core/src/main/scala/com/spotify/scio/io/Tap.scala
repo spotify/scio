@@ -96,7 +96,7 @@ private[scio] class MaterializeTap[T: Coder] private (val path: String, coder: B
     } else {
       throw new RuntimeException(
         "Tap failed to materialize to filesystem. Did you " +
-          "call .materialize before the ScioContext was closed?"
+          "call .materialize before the ScioContext was run?"
       )
     }
   }
@@ -123,7 +123,7 @@ final case class ClosedTap[T] private (private[scio] val underlying: Tap[T]) {
 
   /**
    * Get access to the underlying Tap. The ScioContext has to be ran before.
-   * An instance of ScioResult is returned by ScioContext when the context is closed.
+   * An instance of ScioResult is returned by ScioContext after the context is run.
    * @see ScioContext.run
    */
   def get(result: ScioResult): Tap[T] = result.tap(this)

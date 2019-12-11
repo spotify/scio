@@ -99,7 +99,7 @@ object WindowedWordCount {
       }
     }
 
-    // Close the context and execute the pipeline
+    // Execute the pipeline
     sc.run()
     ()
   }

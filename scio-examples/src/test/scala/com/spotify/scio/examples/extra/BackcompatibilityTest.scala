@@ -43,7 +43,7 @@ class BackcompatibilityTest extends PipelineSpec {
   //   SimplePB.newBuilder().setPlays(2).setTrackId("track2").build()
   // )
   // sc.parallelize(input).saveAsProtobufFile(path_07)
-  // sc.close
+  // sc.run()
   "saveAsProtobuf" should "read protobuf files written with Scio 0.7 and above" in {
     val sc = ScioContext()
     val r = sc.read(ProtobufIO[SimplePB](s"$pwd/$path_07/*"))

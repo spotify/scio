@@ -127,12 +127,12 @@ class ScioContextTest extends PipelineSpec {
     metrics.version shouldBe BuildInfo.version
   }
 
-  it should "fail to close() on closed context" in {
+  it should "fail to run() on closed context" in {
     val sc = ScioContext()
     sc.run()
     the[IllegalArgumentException] thrownBy {
       sc.run()
-    } should have message "requirement failed: ScioContext already closed"
+    } should have message "requirement failed: Pipeline cannot be modified once ScioContext has been executed"
   }
 
   it should "support options from optionsFile" in {
