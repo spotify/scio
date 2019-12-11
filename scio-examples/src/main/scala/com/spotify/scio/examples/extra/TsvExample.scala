@@ -57,7 +57,7 @@ object TsvExampleWrite {
       // Save result as a text files under the output path
       .saveAsCustomOutput(output, transform)
 
-    // Close the context
+    // Execute the pipeline
     sc.run()
     ()
   }
@@ -95,7 +95,7 @@ object TsvExampleRead {
       .sum
       // Save result as a text files under the output path
       .saveAsTextFile(args("output"))
-    // Close the context
+    // Execute the pipeline
     sc.run()
     ()
   }

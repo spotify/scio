@@ -125,7 +125,7 @@ object LeaderBoard {
       // Save to the BigQuery table defined by "output" in the arguments passed in + "_user" suffix
       .saveAsTypedBigQueryTable(Table.Spec(args("output") + "_user"))
 
-    // Close context and execute the pipeline
+    // Execute the pipeline
     val result = sc.run()
     // Wait to finish processing before exiting when streaming pipeline is canceled during shutdown
     exampleUtils.waitToFinish(result.pipelineResult)

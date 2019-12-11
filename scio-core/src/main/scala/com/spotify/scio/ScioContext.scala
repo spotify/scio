@@ -690,9 +690,9 @@ class ScioContext private[scio] (
   /** Whether the context is closed. */
   def isClosed: Boolean = _isClosed
 
-  /** Ensure an operation is called before the pipeline is closed. */
+  /** Ensure an operation is called before the pipeline has already been executed. */
   private[scio] def requireNotClosed[T](body: => T): T = {
-    require(!this.isClosed, "ScioContext already closed")
+    require(!this.isClosed, "Pipeline cannot be modified once ScioContext has been executed")
     body
   }
 

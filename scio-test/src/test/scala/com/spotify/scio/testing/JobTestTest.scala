@@ -892,7 +892,7 @@ class JobTestTest extends PipelineSpec {
         }
         .run()
     } should have message
-      "requirement failed: ScioContext was not closed. Did you forget close()?"
+      "requirement failed: ScioContext was not executed. Did you forget .run()?"
   }
 
   // =======================================================================

@@ -41,7 +41,7 @@ object DistinctExample {
       // Save result as text files under the output path
       .saveAsTextFile(out)
 
-    // Close the context and execute the pipeline
+    // Execute the pipeline
     sc.run()
     ()
   }

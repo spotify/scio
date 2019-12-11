@@ -73,7 +73,7 @@ object WordCount {
       // Save result as text files under the output path
       .saveAsTextFile(output)
 
-    // Close the context, execute the pipeline and block until it finishes
+    // Execute the pipeline and block until it finishes
     val result = sc.run().waitUntilFinish()
 
     // Retrieve metric values

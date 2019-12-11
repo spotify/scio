@@ -46,7 +46,7 @@ object SingleGZipFileExample {
       // Save result as a single text files under the output path, with deflate compression
       .saveAsTextFile(args("output"), numShards = 1, compression = Compression.DEFLATE)
 
-    // Close the context and execute the pipeline
+    // Execute the pipeline
     sc.run()
     ()
   }

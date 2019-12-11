@@ -41,7 +41,7 @@ object ProtobufExample {
       // Save result as Protobuf files
       .saveAsProtobufFile(args("output"))
 
-    // Close the context and execute the pipeline
+    // Execute the pipeline
     sc.run()
     ()
   }
