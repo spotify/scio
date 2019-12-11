@@ -148,16 +148,18 @@
         <a title="Main package for Sparkey side input APIs." href="index.html"><span class="name">sparkey</span></a>
       </span>
       
-      <p class="shortcomment cmt">Main package for Sparkey side input APIs.</p><div class="fullcomment"><div class="comment cmt"><p>Main package for Sparkey side input APIs. Import all.</p><pre><span class="kw">import</span> com.spotify.scio.extra.sparkey._</pre><p>To save an <code>SCollection[(String, String)]</code> to a Sparkey file:</p><pre><span class="kw">val</span> s = sc.parallelize(<span class="std">Seq</span>(<span class="lit">"a"</span> -&gt; <span class="lit">"one"</span>, <span class="lit">"b"</span> -&gt; <span class="lit">"two"</span>))
+      <p class="shortcomment cmt">Main package for Sparkey side input APIs.</p><div class="fullcomment"><div class="comment cmt"><p>Main package for Sparkey side input APIs. Import all.</p><pre><span class="kw">import</span> com.spotify.scio.extra.sparkey._</pre><p>To save an <code>SCollection[(String, String)]</code> to a Sparkey fileset:</p><pre><span class="kw">val</span> s = sc.parallelize(<span class="std">Seq</span>(<span class="lit">"a"</span> -&gt; <span class="lit">"one"</span>, <span class="lit">"b"</span> -&gt; <span class="lit">"two"</span>))
 
 <span class="cmt">// temporary location</span>
 <span class="kw">val</span> s1: SCollection[SparkeyUri] = s.asSparkey
 
 <span class="cmt">// specific location</span>
-<span class="kw">val</span> s1: SCollection[SparkeyUri] = s.asSparkey(<span class="lit">"gs://&lt;bucket&gt;/&lt;path&gt;/&lt;sparkey-prefix&gt;"</span>)</pre><p>The result <code>SCollection[SparkeyUri]</code> can be converted to a side input:</p><pre><span class="kw">val</span> s: SCollection[SparkeyUri] = sc.parallelize(<span class="std">Seq</span>(<span class="lit">"a"</span> -&gt; <span class="lit">"one"</span>, <span class="lit">"b"</span> -&gt; <span class="lit">"two"</span>)).asSparkey
+<span class="kw">val</span> s1: SCollection[SparkeyUri] = s.asSparkey(<span class="lit">"gs://&lt;bucket&gt;/&lt;path&gt;/&lt;sparkey-prefix&gt;"</span>)</pre><p>// with multiple shards, sharded by MurmurHash3 of the key
+val s1: SCollection[SparkeyUri] = s.asSparkey(&quot;gs://&lt;bucket&gt;/&lt;path&gt;/&lt;sparkey-dir&gt;&quot;, numShards=2)
+}}}</p><p>The result <code>SCollection[SparkeyUri]</code> can be converted to a side input:</p><pre><span class="kw">val</span> s: SCollection[SparkeyUri] = sc.parallelize(<span class="std">Seq</span>(<span class="lit">"a"</span> -&gt; <span class="lit">"one"</span>, <span class="lit">"b"</span> -&gt; <span class="lit">"two"</span>)).asSparkey
 <span class="kw">val</span> side: SideInput[SparkeyReader] = s.asSparkeySideInput</pre><p>These two steps can be done with a syntactic sugar:</p><pre><span class="kw">val</span> side: SideInput[SparkeyReader] = sc
   .parallelize(<span class="std">Seq</span>(<span class="lit">"a"</span> -&gt; <span class="lit">"one"</span>, <span class="lit">"b"</span> -&gt; <span class="lit">"two"</span>))
-  .asSparkeySideInput</pre><p>An existing Sparkey file can also be converted to a side input directly:</p><pre>sc.sparkeySideInput(<span class="lit">"gs://&lt;bucket&gt;/&lt;path&gt;/&lt;sparkey-prefix&gt;"</span>)</pre><p><code>SparkeyReader</code> can be used like a lookup table in a side input operation:</p><pre><span class="kw">val</span> main: SCollection[<span class="std">String</span>] = sc.parallelize(<span class="std">Seq</span>(<span class="lit">"a"</span>, <span class="lit">"b"</span>, <span class="lit">"c"</span>))
+  .asSparkeySideInput</pre><p>An existing Sparkey file can also be converted to a side input directly:</p><pre>sc.sparkeySideInput(<span class="lit">"gs://&lt;bucket&gt;/&lt;path&gt;/&lt;sparkey-prefix&gt;"</span>)</pre><p>A sharded collection of Sparkey files can also be used as a side input by specifying a glob path:</p><pre>sc.sparkeySideInput(<span class="lit">"gs://&lt;bucket&gt;/&lt;path&gt;/&lt;sparkey-dir&gt;/part-*"</span>)</pre><p><code>SparkeyReader</code> can be used like a lookup table in a side input operation:</p><pre><span class="kw">val</span> main: SCollection[<span class="std">String</span>] = sc.parallelize(<span class="std">Seq</span>(<span class="lit">"a"</span>, <span class="lit">"b"</span>, <span class="lit">"c"</span>))
 <span class="kw">val</span> side: SideInput[SparkeyReader] = sc
   .parallelize(<span class="std">Seq</span>(<span class="lit">"a"</span> -&gt; <span class="lit">"one"</span>, <span class="lit">"b"</span> -&gt; <span class="lit">"two"</span>))
   .asSparkeySideInput
@@ -165,11 +167,38 @@
 main.withSideInputs(side)
   .map { (x, s) <span class="kw">=&gt;</span>
     s(side).getOrElse(x, <span class="lit">"unknown"</span>)
-  }</pre></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../index.html" class="extype" name="com.spotify.scio.extra">extra</a></dd></dl></div>
+  }</pre><p>A <code>TypedSparkeyReader</code> can be used to do automatic decoding of JVM types from byte values:</p><pre><span class="kw">val</span> main: SCollection[<span class="std">String</span>] = sc.parallelize(<span class="std">Seq</span>(<span class="lit">"a"</span>, <span class="lit">"b"</span>, <span class="lit">"c"</span>))
+<span class="kw">val</span> side: SideInput[TypedSparkeyReader[MyObject]] = sc
+  .typedSparkeySideInput(<span class="lit">"gs://&lt;bucket&gt;/&lt;path&gt;/&lt;sparkey-prefix&gt;"</span>, MyObject.decode)
+
+<span class="kw">val</span> objects: SCollection[MyObject] = main
+  .withSideInputs(side)
+  .map { (x, s) <span class="kw">=&gt;</span> s(side).get(x) }
+  .toSCollection</pre><p>A <code>TypedSparkeyReader</code> can also accept a Caffeine cache to reduce IO and deserialization load:</p><pre><span class="kw">val</span> main: SCollection[<span class="std">String</span>] = sc.parallelize(<span class="std">Seq</span>(<span class="lit">"a"</span>, <span class="lit">"b"</span>, <span class="lit">"c"</span>))
+<span class="kw">val</span> cache: Cache[<span class="std">String</span>, MyObject] = ...
+<span class="kw">val</span> side: SideInput[TypedSparkeyReader[MyObject]] = sc
+  .typedSparkeySideInput(<span class="lit">"gs://&lt;bucket&gt;/&lt;path&gt;/&lt;sparkey-prefix&gt;"</span>, MyObject.decode, cache)
+
+<span class="kw">val</span> objects: SCollection[MyObject] = main
+  .withSideInputs(side)
+  .map { (x, s) <span class="kw">=&gt;</span> s(side).get(x) }
+  .toSCollection</pre></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../index.html" class="extype" name="com.spotify.scio.extra">extra</a></dd></dl></div>
     </li><li class="current-entities indented5">
+                        <span class="separator"></span>
+                        <a class="class" href="package$$CachedStringSparkeyReader.html" title="A wrapper around SparkeyReader that includes an in-memory Caffeine cache."></a>
+                        <a href="package$$CachedStringSparkeyReader.html" title="A wrapper around SparkeyReader that includes an in-memory Caffeine cache.">CachedStringSparkeyReader</a>
+                      </li><li class="current-entities indented5">
                         <span class="separator"></span>
                         <a class="class" href="package$$RichStringSparkeyReader.html" title="Enhanced version of SparkeyReader that mimics a Map."></a>
                         <a href="package$$RichStringSparkeyReader.html" title="Enhanced version of SparkeyReader that mimics a Map.">RichStringSparkeyReader</a>
+                      </li><li class="current-entities indented5">
+                        <span class="separator"></span>
+                        <a class="class" href="package$$ShardedSparkeyReader.html" title="A wrapper class around SparkeyReader that allows the reading of multiple Sparkey files, sharded by their keys (via MurmurHash3)."></a>
+                        <a href="package$$ShardedSparkeyReader.html" title="A wrapper class around SparkeyReader that allows the reading of multiple Sparkey files, sharded by their keys (via MurmurHash3).">ShardedSparkeyReader</a>
+                      </li><li class="current-entities indented5">
+                        <span class="separator"></span>
+                        <a class="trait" href="ShardedSparkeyUri.html" title="Sharded Sparkey support"></a>
+                        <a href="ShardedSparkeyUri.html" title="Sharded Sparkey support">ShardedSparkeyUri</a>
                       </li><li class="current-entities indented5">
                         <span class="separator"></span>
                         <a class="class" href="" title="Enhanced version of SCollection with Sparkey methods."></a>
@@ -190,6 +219,10 @@ main.withSideInputs(side)
                         <span class="separator"></span>
                         <a class="trait" href="package$$SparkeyWritable.html" title=""></a>
                         <a href="package$$SparkeyWritable.html" title="">SparkeyWritable</a>
+                      </li><li class="current-entities indented5">
+                        <span class="separator"></span>
+                        <a class="class" href="package$$TypedSparkeyReader.html" title="A wrapper around SparkeyReader that includes both a decoder (to map from each byte array to a JVM type) and an optional in-memory cache."></a>
+                        <a href="package$$TypedSparkeyReader.html" title="A wrapper around SparkeyReader that includes both a decoder (to map from each byte array to a JVM type) and an optional in-memory cache.">TypedSparkeyReader</a>
                       </li>
               </ul>
             </div>
@@ -343,6 +376,24 @@ main.withSideInputs(side)
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
+    </li><li name="com.spotify.scio.extra.sparkey.SparkeyPairSCollection#asCachedStringSparkeySideInput" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="asCachedStringSparkeySideInput(cache:com.spotify.scio.util.Cache[String,String],numShards:Short)(implicitw:com.spotify.scio.extra.sparkey.package.SparkeyWritable[K,V],implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SideInput[com.spotify.scio.extra.sparkey.package.CachedStringSparkeyReader]"></a><a id="asCachedStringSparkeySideInput(Cache[String,String],Short)(SparkeyWritable[K,V],Coder[K],Coder[V]):SideInput[CachedStringSparkeyReader]"></a>
+      <span class="permalink">
+      <a href="../../../../../com/spotify/scio/extra/sparkey/package$$SparkeyPairSCollection.html#asCachedStringSparkeySideInput(cache:com.spotify.scio.util.Cache[String,String],numShards:Short)(implicitw:com.spotify.scio.extra.sparkey.package.SparkeyWritable[K,V],implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SideInput[com.spotify.scio.extra.sparkey.package.CachedStringSparkeyReader]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">asCachedStringSparkeySideInput</span><span class="params">(<span name="cache">cache: <a href="../../util/Cache.html" class="extype" name="com.spotify.scio.util.Cache">Cache</a>[<span class="extype" name="scala.Predef.String">String</span>, <span class="extype" name="scala.Predef.String">String</span>]</span>, <span name="numShards">numShards: <span class="extype" name="scala.Short">Short</span> = <span class="symbol">DefaultSideInputNumShards</span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="w">w: <a href="package$$SparkeyWritable.html" class="extype" name="com.spotify.scio.extra.sparkey.SparkeyWritable">SparkeyWritable</a>[<span class="extype" name="com.spotify.scio.extra.sparkey.SparkeyPairSCollection.K">K</span>, <span class="extype" name="com.spotify.scio.extra.sparkey.SparkeyPairSCollection.V">V</span>]</span>, <span name="koder">koder: <a href="../../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.extra.sparkey.SparkeyPairSCollection.K">K</span>]</span>, <span name="voder">voder: <a href="../../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.extra.sparkey.SparkeyPairSCollection.V">V</span>]</span>)</span><span class="result">: <a href="../../values/SideInput.html" class="extype" name="com.spotify.scio.values.SideInput">SideInput</a>[<a href="package$$CachedStringSparkeyReader.html" class="extype" name="com.spotify.scio.extra.sparkey.CachedStringSparkeyReader">CachedStringSparkeyReader</a>]</span>
+      </span>
+      
+      <p class="shortcomment cmt">Convert this SCollection to a SideInput, mapping key-value pairs of each window to a
+<code>CachedStringSparkeyReader</code>, to be used with
+<a href="../../values/SCollection.html#withSideInputs(sides:com.spotify.scio.values.SideInput[_]*)(implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollectionWithSideInput[T]" class="extmbr" name="com.spotify.scio.values.SCollection#withSideInputs">SCollection.withSideInputs</a>.</p>
     </li><li name="scala.Any#asInstanceOf" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="asInstanceOf[T0]:T0"></a>
       <span class="permalink">
@@ -377,9 +428,9 @@ main.withSideInputs(side)
       <p class="shortcomment cmt">Write the key-value pairs of this SCollection as a Sparkey file to a temporary location.</p><div class="fullcomment"><div class="comment cmt"><p>Write the key-value pairs of this SCollection as a Sparkey file to a temporary location.
 </p></div><dl class="paramcmts block"><dt>returns</dt><dd class="cmt"><p>A singleton SCollection containing the <a href="SparkeyUri.html" class="extype" name="com.spotify.scio.extra.sparkey.SparkeyUri">SparkeyUri</a> of the saved files.</p></dd></dl></div>
     </li><li name="com.spotify.scio.extra.sparkey.SparkeyPairSCollection#asSparkey" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="asSparkey(path:String,maxMemoryUsage:Long)(implicitw:com.spotify.scio.extra.sparkey.package.SparkeyWritable[K,V],implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SCollection[com.spotify.scio.extra.sparkey.SparkeyUri]"></a><a id="asSparkey(String,Long)(SparkeyWritable[K,V],Coder[K],Coder[V]):SCollection[SparkeyUri]"></a>
+      <a id="asSparkey(path:String,maxMemoryUsage:Long,numShards:Short)(implicitw:com.spotify.scio.extra.sparkey.package.SparkeyWritable[K,V],implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SCollection[com.spotify.scio.extra.sparkey.SparkeyUri]"></a><a id="asSparkey(String,Long,Short)(SparkeyWritable[K,V],Coder[K],Coder[V]):SCollection[SparkeyUri]"></a>
       <span class="permalink">
-      <a href="../../../../../com/spotify/scio/extra/sparkey/package$$SparkeyPairSCollection.html#asSparkey(path:String,maxMemoryUsage:Long)(implicitw:com.spotify.scio.extra.sparkey.package.SparkeyWritable[K,V],implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SCollection[com.spotify.scio.extra.sparkey.SparkeyUri]" title="Permalink">
+      <a href="../../../../../com/spotify/scio/extra/sparkey/package$$SparkeyPairSCollection.html#asSparkey(path:String,maxMemoryUsage:Long,numShards:Short)(implicitw:com.spotify.scio.extra.sparkey.package.SparkeyWritable[K,V],implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SCollection[com.spotify.scio.extra.sparkey.SparkeyUri]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -388,12 +439,14 @@ main.withSideInputs(side)
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">asSparkey</span><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span> = <span class="symbol">null</span></span>, <span name="maxMemoryUsage">maxMemoryUsage: <span class="extype" name="scala.Long">Long</span> = <span class="symbol">-1</span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="w">w: <a href="package$$SparkeyWritable.html" class="extype" name="com.spotify.scio.extra.sparkey.SparkeyWritable">SparkeyWritable</a>[<span class="extype" name="com.spotify.scio.extra.sparkey.SparkeyPairSCollection.K">K</span>, <span class="extype" name="com.spotify.scio.extra.sparkey.SparkeyPairSCollection.V">V</span>]</span>, <span name="koder">koder: <a href="../../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.extra.sparkey.SparkeyPairSCollection.K">K</span>]</span>, <span name="voder">voder: <a href="../../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.extra.sparkey.SparkeyPairSCollection.V">V</span>]</span>)</span><span class="result">: <a href="../../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<a href="SparkeyUri.html" class="extype" name="com.spotify.scio.extra.sparkey.SparkeyUri">SparkeyUri</a>]</span>
+        <span class="name">asSparkey</span><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span> = <span class="symbol">null</span></span>, <span name="maxMemoryUsage">maxMemoryUsage: <span class="extype" name="scala.Long">Long</span> = <span class="symbol">-1</span></span>, <span name="numShards">numShards: <span class="extype" name="scala.Short">Short</span> = <span class="symbol">DefaultNumShards</span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="w">w: <a href="package$$SparkeyWritable.html" class="extype" name="com.spotify.scio.extra.sparkey.SparkeyWritable">SparkeyWritable</a>[<span class="extype" name="com.spotify.scio.extra.sparkey.SparkeyPairSCollection.K">K</span>, <span class="extype" name="com.spotify.scio.extra.sparkey.SparkeyPairSCollection.V">V</span>]</span>, <span name="koder">koder: <a href="../../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.extra.sparkey.SparkeyPairSCollection.K">K</span>]</span>, <span name="voder">voder: <a href="../../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.extra.sparkey.SparkeyPairSCollection.V">V</span>]</span>)</span><span class="result">: <a href="../../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<a href="SparkeyUri.html" class="extype" name="com.spotify.scio.extra.sparkey.SparkeyUri">SparkeyUri</a>]</span>
       </span>
       
       <p class="shortcomment cmt">Write the key-value pairs of this SCollection as a Sparkey file to a specific location.</p><div class="fullcomment"><div class="comment cmt"><p>Write the key-value pairs of this SCollection as a Sparkey file to a specific location.
 </p></div><dl class="paramcmts block"><dt class="param">path</dt><dd class="cmt"><p>where to write the sparkey files. Defaults to a temporary location.</p></dd><dt class="param">maxMemoryUsage</dt><dd class="cmt"><p>(optional) how much memory (in bytes) is allowed for writing
-                      the index file</p></dd><dt>returns</dt><dd class="cmt"><p>A singleton SCollection containing the <a href="SparkeyUri.html" class="extype" name="com.spotify.scio.extra.sparkey.SparkeyUri">SparkeyUri</a> of the saved files.</p></dd></dl></div>
+                      the index file</p></dd><dt class="param">numShards</dt><dd class="cmt"><p>(optional) the number of shards to split this dataset into before writing.
+                 One pair of Sparkey files will be written for each shard, sharded
+                 by MurmurHash3 of the key mod the number of shards.</p></dd><dt>returns</dt><dd class="cmt"><p>A singleton SCollection containing the <a href="SparkeyUri.html" class="extype" name="com.spotify.scio.extra.sparkey.SparkeyUri">SparkeyUri</a> of the saved files.</p></dd></dl></div>
     </li><li name="com.spotify.scio.extra.sparkey.SparkeyPairSCollection#asSparkeySideInput" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="asSparkeySideInput(implicitw:com.spotify.scio.extra.sparkey.package.SparkeyWritable[K,V],implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SideInput[com.spotify.sparkey.SparkeyReader]"></a><a id="asSparkeySideInput(SparkeyWritable[K,V],Coder[K],Coder[V]):SideInput[SparkeyReader]"></a>
       <span class="permalink">
@@ -415,6 +468,74 @@ main.withSideInputs(side)
 <code>SparkeyReader</code>, to be used with
 <a href="../../values/SCollection.html#withSideInputs(sides:com.spotify.scio.values.SideInput[_]*)(implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollectionWithSideInput[T]" class="extmbr" name="com.spotify.scio.values.SCollection#withSideInputs">SCollection.withSideInputs</a>. It is
 required that each key of the input be associated with a single value.
+</p></div></div>
+    </li><li name="com.spotify.scio.extra.sparkey.SparkeyPairSCollection#asSparkeySideInput" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="asSparkeySideInput(numShards:Short)(implicitw:com.spotify.scio.extra.sparkey.package.SparkeyWritable[K,V],implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SideInput[com.spotify.sparkey.SparkeyReader]"></a><a id="asSparkeySideInput(Short)(SparkeyWritable[K,V],Coder[K],Coder[V]):SideInput[SparkeyReader]"></a>
+      <span class="permalink">
+      <a href="../../../../../com/spotify/scio/extra/sparkey/package$$SparkeyPairSCollection.html#asSparkeySideInput(numShards:Short)(implicitw:com.spotify.scio.extra.sparkey.package.SparkeyWritable[K,V],implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SideInput[com.spotify.sparkey.SparkeyReader]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">asSparkeySideInput</span><span class="params">(<span name="numShards">numShards: <span class="extype" name="scala.Short">Short</span> = <span class="symbol">DefaultSideInputNumShards</span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="w">w: <a href="package$$SparkeyWritable.html" class="extype" name="com.spotify.scio.extra.sparkey.SparkeyWritable">SparkeyWritable</a>[<span class="extype" name="com.spotify.scio.extra.sparkey.SparkeyPairSCollection.K">K</span>, <span class="extype" name="com.spotify.scio.extra.sparkey.SparkeyPairSCollection.V">V</span>]</span>, <span name="koder">koder: <a href="../../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.extra.sparkey.SparkeyPairSCollection.K">K</span>]</span>, <span name="voder">voder: <a href="../../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.extra.sparkey.SparkeyPairSCollection.V">V</span>]</span>)</span><span class="result">: <a href="../../values/SideInput.html" class="extype" name="com.spotify.scio.values.SideInput">SideInput</a>[<span class="extype" name="com.spotify.sparkey.SparkeyReader">SparkeyReader</span>]</span>
+      </span>
+      
+      <p class="shortcomment cmt">Convert this SCollection to a SideInput, mapping key-value pairs of each window to a
+<code>SparkeyReader</code>, to be used with
+<a href="../../values/SCollection.html#withSideInputs(sides:com.spotify.scio.values.SideInput[_]*)(implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollectionWithSideInput[T]" class="extmbr" name="com.spotify.scio.values.SCollection#withSideInputs">SCollection.withSideInputs</a>.</p><div class="fullcomment"><div class="comment cmt"><p>Convert this SCollection to a SideInput, mapping key-value pairs of each window to a
+<code>SparkeyReader</code>, to be used with
+<a href="../../values/SCollection.html#withSideInputs(sides:com.spotify.scio.values.SideInput[_]*)(implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollectionWithSideInput[T]" class="extmbr" name="com.spotify.scio.values.SCollection#withSideInputs">SCollection.withSideInputs</a>. It is
+required that each key of the input be associated with a single value.
+</p></div><dl class="paramcmts block"><dt class="param">numShards</dt><dd class="cmt"><p>the number of shards to use when writing the Sparkey file(s).</p></dd></dl></div>
+    </li><li name="com.spotify.scio.extra.sparkey.SparkeyPairSCollection#asTypedSparkeySideInput" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="asTypedSparkeySideInput[T](cache:com.spotify.scio.util.Cache[String,T],numShards:Short)(decoder:Array[Byte]=&gt;T)(implicitw:com.spotify.scio.extra.sparkey.package.SparkeyWritable[K,V],implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SideInput[com.spotify.scio.extra.sparkey.package.TypedSparkeyReader[T]]"></a><a id="asTypedSparkeySideInput[T](Cache[String,T],Short)((Array[Byte])⇒T)(SparkeyWritable[K,V],Coder[K],Coder[V]):SideInput[TypedSparkeyReader[T]]"></a>
+      <span class="permalink">
+      <a href="../../../../../com/spotify/scio/extra/sparkey/package$$SparkeyPairSCollection.html#asTypedSparkeySideInput[T](cache:com.spotify.scio.util.Cache[String,T],numShards:Short)(decoder:Array[Byte]=&gt;T)(implicitw:com.spotify.scio.extra.sparkey.package.SparkeyWritable[K,V],implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SideInput[com.spotify.scio.extra.sparkey.package.TypedSparkeyReader[T]]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">asTypedSparkeySideInput</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="cache">cache: <a href="../../util/Cache.html" class="extype" name="com.spotify.scio.util.Cache">Cache</a>[<span class="extype" name="scala.Predef.String">String</span>, <span class="extype" name="com.spotify.scio.extra.sparkey.SparkeyPairSCollection.asTypedSparkeySideInput.T">T</span>]</span>, <span name="numShards">numShards: <span class="extype" name="scala.Short">Short</span> = <span class="symbol">DefaultSideInputNumShards</span></span>)</span><span class="params">(<span name="decoder">decoder: (<span class="extype" name="scala.Array">Array</span>[<span class="extype" name="scala.Byte">Byte</span>]) ⇒ <span class="extype" name="com.spotify.scio.extra.sparkey.SparkeyPairSCollection.asTypedSparkeySideInput.T">T</span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="w">w: <a href="package$$SparkeyWritable.html" class="extype" name="com.spotify.scio.extra.sparkey.SparkeyWritable">SparkeyWritable</a>[<span class="extype" name="com.spotify.scio.extra.sparkey.SparkeyPairSCollection.K">K</span>, <span class="extype" name="com.spotify.scio.extra.sparkey.SparkeyPairSCollection.V">V</span>]</span>, <span name="koder">koder: <a href="../../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.extra.sparkey.SparkeyPairSCollection.K">K</span>]</span>, <span name="voder">voder: <a href="../../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.extra.sparkey.SparkeyPairSCollection.V">V</span>]</span>)</span><span class="result">: <a href="../../values/SideInput.html" class="extype" name="com.spotify.scio.values.SideInput">SideInput</a>[<a href="package$$TypedSparkeyReader.html" class="extype" name="com.spotify.scio.extra.sparkey.TypedSparkeyReader">TypedSparkeyReader</a>[<span class="extype" name="com.spotify.scio.extra.sparkey.SparkeyPairSCollection.asTypedSparkeySideInput.T">T</span>]]</span>
+      </span>
+      
+      <p class="shortcomment cmt">Convert this SCollection to a SideInput, mapping key-value pairs of each window to a
+<code>SparkeyReader</code>, to be used with
+<a href="../../values/SCollection.html#withSideInputs(sides:com.spotify.scio.values.SideInput[_]*)(implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollectionWithSideInput[T]" class="extmbr" name="com.spotify.scio.values.SCollection#withSideInputs">SCollection.withSideInputs</a>.</p><div class="fullcomment"><div class="comment cmt"><p>Convert this SCollection to a SideInput, mapping key-value pairs of each window to a
+<code>SparkeyReader</code>, to be used with
+<a href="../../values/SCollection.html#withSideInputs(sides:com.spotify.scio.values.SideInput[_]*)(implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollectionWithSideInput[T]" class="extmbr" name="com.spotify.scio.values.SCollection#withSideInputs">SCollection.withSideInputs</a>. It is
+required that each key of the input be associated with a single value. The provided
+<span class="extype" name="Cache">Cache</span> will be used to cache reads from the resulting <span class="extype" name="SparkeyReader">SparkeyReader</span>.
+</p></div></div>
+    </li><li name="com.spotify.scio.extra.sparkey.SparkeyPairSCollection#asTypedSparkeySideInput" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="asTypedSparkeySideInput[T](decoder:Array[Byte]=&gt;T)(implicitw:com.spotify.scio.extra.sparkey.package.SparkeyWritable[K,V],implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SideInput[com.spotify.scio.extra.sparkey.package.TypedSparkeyReader[T]]"></a><a id="asTypedSparkeySideInput[T]((Array[Byte])⇒T)(SparkeyWritable[K,V],Coder[K],Coder[V]):SideInput[TypedSparkeyReader[T]]"></a>
+      <span class="permalink">
+      <a href="../../../../../com/spotify/scio/extra/sparkey/package$$SparkeyPairSCollection.html#asTypedSparkeySideInput[T](decoder:Array[Byte]=&gt;T)(implicitw:com.spotify.scio.extra.sparkey.package.SparkeyWritable[K,V],implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SideInput[com.spotify.scio.extra.sparkey.package.TypedSparkeyReader[T]]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">asTypedSparkeySideInput</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="decoder">decoder: (<span class="extype" name="scala.Array">Array</span>[<span class="extype" name="scala.Byte">Byte</span>]) ⇒ <span class="extype" name="com.spotify.scio.extra.sparkey.SparkeyPairSCollection.asTypedSparkeySideInput.T">T</span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="w">w: <a href="package$$SparkeyWritable.html" class="extype" name="com.spotify.scio.extra.sparkey.SparkeyWritable">SparkeyWritable</a>[<span class="extype" name="com.spotify.scio.extra.sparkey.SparkeyPairSCollection.K">K</span>, <span class="extype" name="com.spotify.scio.extra.sparkey.SparkeyPairSCollection.V">V</span>]</span>, <span name="koder">koder: <a href="../../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.extra.sparkey.SparkeyPairSCollection.K">K</span>]</span>, <span name="voder">voder: <a href="../../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.extra.sparkey.SparkeyPairSCollection.V">V</span>]</span>)</span><span class="result">: <a href="../../values/SideInput.html" class="extype" name="com.spotify.scio.values.SideInput">SideInput</a>[<a href="package$$TypedSparkeyReader.html" class="extype" name="com.spotify.scio.extra.sparkey.TypedSparkeyReader">TypedSparkeyReader</a>[<span class="extype" name="com.spotify.scio.extra.sparkey.SparkeyPairSCollection.asTypedSparkeySideInput.T">T</span>]]</span>
+      </span>
+      
+      <p class="shortcomment cmt">Convert this SCollection to a SideInput, mapping key-value pairs of each window to a
+<code>SparkeyReader</code>, to be used with
+<a href="../../values/SCollection.html#withSideInputs(sides:com.spotify.scio.values.SideInput[_]*)(implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollectionWithSideInput[T]" class="extmbr" name="com.spotify.scio.values.SCollection#withSideInputs">SCollection.withSideInputs</a>.</p><div class="fullcomment"><div class="comment cmt"><p>Convert this SCollection to a SideInput, mapping key-value pairs of each window to a
+<code>SparkeyReader</code>, to be used with
+<a href="../../values/SCollection.html#withSideInputs(sides:com.spotify.scio.values.SideInput[_]*)(implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollectionWithSideInput[T]" class="extmbr" name="com.spotify.scio.values.SCollection#withSideInputs">SCollection.withSideInputs</a>. It is
+required that each key of the input be associated with a single value. The provided
+<span class="extype" name="Cache">Cache</span> will be used to cache reads from the resulting <span class="extype" name="SparkeyReader">SparkeyReader</span>.
 </p></div></div>
     </li><li name="scala.AnyRef#clone" visbl="prt" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="clone():Object"></a><a id="clone():AnyRef"></a>

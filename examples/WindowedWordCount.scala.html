@@ -276,7 +276,7 @@ hr {
               </section>
             
               <section class="">
-                <div class="comment "><p><code>sbt runMain &quot;com.spotify.scio.examples.WindowedWordCount
+                <div class="comment "><p><code>sbt &quot;runMain com.spotify.scio.examples.WindowedWordCount
 --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
 --input=gs://apache-beam-samples/shakespeare/kinglear.txt
 --output=gs://[BUCKET]/[PATH]/wordcount&quot;</code></p></p></div>
@@ -294,7 +294,6 @@ hr {
 <span class="keyword">import</span> <span class="identifier">org</span>.<span class="identifier">joda</span>.<span class="identifier">time</span>.{<span class="identifier">Duration</span>, <span class="identifier">Instant</span>}
 
 <span class="keyword">object</span> <span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/examples/WindowedWordCount$.html" data-tooltip="<span>com.spotify.scio.examples.WindowedWordCount</span>">WindowedWordCount</a></span> {
-
   <span class="keyword">private</span> <span class="keyword">val</span> <span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/examples/WindowedWordCount$.html#WINDOW_SIZE:org.joda.time.Duration" data-tooltip="<span>com.spotify.scio.examples.WindowedWordCount.WINDOW_SIZE: org.joda.time.Duration</span>">WINDOW_SIZE</a></span> = <span class="identifier">Duration</span>.<span class="identifier">standardMinutes</span>(<span class="number">10L</span>)
   <span class="keyword">private</span> <span class="keyword">val</span> <span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/examples/WindowedWordCount$.html#formatter:org.joda.time.format.DateTimeFormatter" data-tooltip="<span>com.spotify.scio.examples.WindowedWordCount.formatter: org.joda.time.format.DateTimeFormatter</span>">formatter</a></span> = <span class="identifier">ISODateTimeFormat</span>.<span class="identifier">hourMinute</span>
 
@@ -349,7 +348,7 @@ hr {
             
               <section class="">
                 <div class="comment "><p>Split input lines, filter out empty tokens and expand into a collection of tokens</p></p></div>
-                <div class="code ">          .<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#flatMap[U](f:T=>TraversableOnce[U])(implicitevidence$9:com.spotify.scio.coders.Coder[U]):com.spotify.scio.values.SCollection[U]" data-tooltip="<span>com.spotify.scio.values.SCollection.flatMap[U](f: T => TraversableOnce[U])(implicit evidence$9: com.spotify.scio.coders.Coder[U]): com.spotify.scio.values.SCollection[U]</span>">flatMap</a></span>(_.<span class="identifier">split</span>(<span class="string">"[^a-zA-Z']+"</span>).<span class="identifier">filter</span>(_.<span class="identifier">nonEmpty</span>))&nbsp;</div>
+                <div class="code ">          .<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#flatMap[U](f:T=>TraversableOnce[U])(implicitevidence$8:com.spotify.scio.coders.Coder[U]):com.spotify.scio.values.SCollection[U]" data-tooltip="<span>com.spotify.scio.values.SCollection.flatMap[U](f: T => TraversableOnce[U])(implicit evidence$8: com.spotify.scio.coders.Coder[U]): com.spotify.scio.values.SCollection[U]</span>">flatMap</a></span>(_.<span class="identifier">split</span>(<span class="string">"[^a-zA-Z']+"</span>).<span class="identifier">filter</span>(_.<span class="identifier">nonEmpty</span>))&nbsp;</div>
               </section>
             
               <section class="">
@@ -376,14 +375,14 @@ hr {
     <span class="keyword">if</span> (<span class="identifier">outputGlobalWindow</span>) {
       <span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html" data-tooltip="<span>com.spotify.scio.values.SCollection[(org.apache.beam.sdk.transforms.windowing.IntervalWindow, Iterable[(String, Long)])]</span>">wordCounts</a></span>
         .<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#withWindow[W<:org.apache.beam.sdk.transforms.windowing.BoundedWindow](implicittcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[(T,W)]" data-tooltip="<span>com.spotify.scio.values.SCollection.withWindow[W <: org.apache.beam.sdk.transforms.windowing.BoundedWindow](implicit tcoder: com.spotify.scio.coders.Coder[T])com.spotify.scio.values.SCollection[(T, W)]</span>">withWindow</a></span>[<span class="identifier">GlobalWindow</span>]
-        .<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#flatMap[U](f:T=>TraversableOnce[U])(implicitevidence$9:com.spotify.scio.coders.Coder[U]):com.spotify.scio.values.SCollection[U]" data-tooltip="<span>com.spotify.scio.values.SCollection.flatMap[U](f: T => TraversableOnce[U])(implicit evidence$9: com.spotify.scio.coders.Coder[U]): com.spotify.scio.values.SCollection[U]</span>">flatMap</a></span> { <span class="keyword">case</span> ((_, <span class="identifier">counts</span>), _) => <span class="identifier">counts</span> }
+        .<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#flatMap[U](f:T=>TraversableOnce[U])(implicitevidence$8:com.spotify.scio.coders.Coder[U]):com.spotify.scio.values.SCollection[U]" data-tooltip="<span>com.spotify.scio.values.SCollection.flatMap[U](f: T => TraversableOnce[U])(implicit evidence$8: com.spotify.scio.coders.Coder[U]): com.spotify.scio.values.SCollection[U]</span>">flatMap</a></span> { <span class="keyword">case</span> ((_, <span class="identifier">counts</span>), _) => <span class="identifier">counts</span> }
         .<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#saveAsTextFile(path:String,numShards:Int,suffix:String,compression:org.apache.beam.sdk.io.Compression)(implicitct:scala.reflect.ClassTag[T]):com.spotify.scio.io.ClosedTap[String]" data-tooltip="<span>com.spotify.scio.values.SCollection.saveAsTextFile(path: String, numShards: Int, suffix: String, compression: org.apache.beam.sdk.io.Compression)(implicit ct: scala.reflect.ClassTag[T]): com.spotify.scio.io.ClosedTap[String]</span>">saveAsTextFile</a></span>(<span class="string">"output.txt"</span>)
     } <span class="keyword">else</span> {&nbsp;</div>
               </section>
             
               <section class="">
                 <div class="comment "><p>Write values in each group to a separate text file</p></p></div>
-                <div class="code ">      <span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html" data-tooltip="<span>com.spotify.scio.values.SCollection[(org.apache.beam.sdk.transforms.windowing.IntervalWindow, Iterable[(String, Long)])]</span>">wordCounts</a></span>.<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#map[U](f:T=>U)(implicitevidence$10:com.spotify.scio.coders.Coder[U]):com.spotify.scio.values.SCollection[U]" data-tooltip="<span>com.spotify.scio.values.SCollection.map[U](f: T => U)(implicit evidence$10: com.spotify.scio.coders.Coder[U]): com.spotify.scio.values.SCollection[U]</span>">map</a></span> {
+                <div class="code ">      <span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html" data-tooltip="<span>com.spotify.scio.values.SCollection[(org.apache.beam.sdk.transforms.windowing.IntervalWindow, Iterable[(String, Long)])]</span>">wordCounts</a></span>.<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#map[U](f:T=>U)(implicitevidence$9:com.spotify.scio.coders.Coder[U]):com.spotify.scio.values.SCollection[U]" data-tooltip="<span>com.spotify.scio.values.SCollection.map[U](f: T => U)(implicit evidence$9: com.spotify.scio.coders.Coder[U]): com.spotify.scio.values.SCollection[U]</span>">map</a></span> {
         <span class="keyword">case</span> (<span class="identifier">w</span>, <span class="identifier">vs</span>) =>
           <span class="keyword">val</span> <span class="identifier">outputShard</span> =
             <span class="string">"%s-%s-%s"</span>.<span class="identifier">format</span>(<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/Args.html#apply(key:String):String" data-tooltip="<span>com.spotify.scio.Args.apply(key: String): String</span>">args</a></span>(<span class="string">"output"</span>), <span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/examples/WindowedWordCount$.html#formatter:org.joda.time.format.DateTimeFormatter" data-tooltip="<span>com.spotify.scio.examples.WindowedWordCount.formatter: org.joda.time.format.DateTimeFormatter</span>">formatter</a></span>.<span class="identifier">print</span>(<span class="identifier">w</span>.<span class="identifier">start</span>()), <span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/examples/WindowedWordCount$.html#formatter:org.joda.time.format.DateTimeFormatter" data-tooltip="<span>com.spotify.scio.examples.WindowedWordCount.formatter: org.joda.time.format.DateTimeFormatter</span>">formatter</a></span>.<span class="identifier">print</span>(<span class="identifier">w</span>.<span class="identifier">end</span>()))
@@ -397,11 +396,10 @@ hr {
               </section>
             
               <section class="">
-                <div class="comment "><p>Close the context and execute the pipeline</p></p></div>
+                <div class="comment "><p>Execute the pipeline</p></p></div>
                 <div class="code ">    <span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/ScioContext.html" data-tooltip="<span>com.spotify.scio.ScioContext</span>">sc</a></span>.<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/ScioContext.html#run():com.spotify.scio.ScioExecutionContext" data-tooltip="<span>com.spotify.scio.ScioContext.run(): com.spotify.scio.ScioExecutionContext</span>">run</a></span>()
     ()
   }
-
 }&nbsp;</div>
               </section>
             

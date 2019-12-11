@@ -256,7 +256,7 @@ spotify/scio
 </ul>
 <h2><a href="#streaming" name="streaming" class="anchor"><span class="anchor-link"></span></a>Streaming</h2>
 <ul>
-  <li>For streaming jobs with periodically updated state, i.e. log decoration with metadata, keep (and update) states in Bigtable, and do look ups from the streaming job (read more about <a href="io/Bigtable.html#key-structure">Bigtable key structure</a>). Also see <a href="https://spotify.github.io/scio/api/com/spotify/scio/bigtable/BigtableDoFn.html">BigtableDoFn</a> for an abstraction that handles asynchronous Bigtable requests.</li>
+  <li>For streaming jobs with periodically updated state, i.e. log decoration with metadata, keep (and update) states in Bigtable, and do look ups from the streaming job (read more about <a href="io/Bigtable.html#key-structure">Bigtable key structure</a>). Also see <a href="https://spotify.github.io/scio/api/com/spotify/scio/bigtable/BigtableDoFn.html" title="com.spotify.scio.bigtable.BigtableDoFn"><code>BigtableDoFn</code></a> for an abstraction that handles asynchronous Bigtable requests.</li>
   <li>For streaming, larger worker machine types and SSD for <a href="https://cloud.google.com/compute/docs/reference/latest/diskTypes"><code>workerDiskType</code></a> might be more suitable. A typical job with 5 x n1-standard-4 and 100GB SSDs can handle ~30k peak events per second. Also see this article on <a href="https://cloud.google.com/compute/docs/disks/performance">disk performance</a>.</li>
 </ul>
 </div>
@@ -309,7 +309,7 @@ Versions
 <div class="md-footer-meta__inner md-grid">
 <div class="md-footer-copyright">
 <div class="md-footer-copyright__highlight">
-Copyright (C) 2018 Spotify AB
+Copyright (C) 2019 Spotify AB
 </div>
 Powered by
 <a href="https://github.com/lightbend/paradox">Paradox</a>

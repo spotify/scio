@@ -404,13 +404,9 @@ detects the query's dialect. To override this, start the query with either <code
                         <a class="class" href="ArrayType.html" title=""></a>
                         <a href="ArrayType.html" title="">ArrayType</a>
                       </li><li class="current-entities indented4">
-                        <span class="separator"></span>
-                        <a class="class" href="Fallback.html" title=""></a>
-                        <a href="Fallback.html" title="">Fallback</a>
-                      </li><li class="current-entities indented4">
-                        <span class="separator"></span>
-                        <a class="trait" href="LowPrioritySchemaDerivation.html" title=""></a>
-                        <a href="LowPrioritySchemaDerivation.html" title="">LowPrioritySchemaDerivation</a>
+                        <a class="object" href="LogicalType$.html" title=""></a>
+                        <a class="trait" href="LogicalType.html" title=""></a>
+                        <a href="LogicalType.html" title="">LogicalType</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
                         <a class="class" href="MapType.html" title=""></a>
@@ -447,7 +443,23 @@ detects the query's dialect. To override this, start the query with either <code
                         <span class="separator"></span>
                         <a class="class" href="Type.html" title=""></a>
                         <a href="Type.html" title="">Type</a>
-                      </li><li name="com.spotify.scio.spanner" visbl="pub" class="indented4 " data-isabs="false" fullComment="yes" group="Ungrouped">
+                      </li><li name="com.spotify.scio.smb" visbl="pub" class="indented4 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="smb"></a><a id="smb:smb"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/smb/index.html" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">package</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="../smb/index.html"><span class="name">smb</span></a>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../index.html" class="extype" name="com.spotify.scio">scio</a></dd></dl></div>
+    </li><li name="com.spotify.scio.spanner" visbl="pub" class="indented4 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="spanner"></a><a id="spanner:spanner"></a>
       <span class="permalink">
       <a href="../../../../com/spotify/scio/spanner/index.html" title="Permalink">
@@ -623,35 +635,19 @@ detects the query's dialect. To override this, start the query with either <code
       </span>
       
       
-    </li><li name="com.spotify.scio.schemas.Fallback" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="Fallback[F[_],T]extendsSchema[T]withProductwithSerializable"></a><a id="Fallback[F[_],T]:Fallback[F,T]"></a>
+    </li><li name="com.spotify.scio.schemas.LogicalType" visbl="pub" class="indented0 " data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="LogicalType[T]extendsSchema[T]"></a><a id="LogicalType[T]:LogicalType[T]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/schemas/Fallback.html" title="Permalink">
+      <a href="../../../../com/spotify/scio/schemas/LogicalType.html" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
       <span class="modifier_kind">
-        <span class="modifier">final </span>
-        <span class="kind">case class</span>
-      </span>
-      <span class="symbol">
-        <a title="" href="Fallback.html"><span class="name">Fallback</span></a><span class="tparams">[<span name="F">F<span class="tparams">[<span name="_">_</span>]</span></span>, <span name="T">T</span>]</span><span class="params">(<span name="coder">coder: <span class="extype" name="com.spotify.scio.schemas.Fallback.F">F</span>[<span class="extype" name="com.spotify.scio.schemas.Fallback.T">T</span>]</span>)</span><span class="result"> extends <a href="Schema.html" class="extype" name="com.spotify.scio.schemas.Schema">Schema</a>[<span class="extype" name="com.spotify.scio.schemas.Fallback.T">T</span>] with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
-      </span>
-      
-      
-    </li><li name="com.spotify.scio.schemas.LowPrioritySchemaDerivation" visbl="pub" class="indented0 " data-isabs="true" fullComment="no" group="Ungrouped">
-      <a id="LowPrioritySchemaDerivationextendsAnyRef"></a><a id="LowPrioritySchemaDerivation:LowPrioritySchemaDerivation"></a>
-      <span class="permalink">
-      <a href="../../../../com/spotify/scio/schemas/LowPrioritySchemaDerivation.html" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
+        <span class="modifier">sealed </span>
         <span class="kind">trait</span>
       </span>
       <span class="symbol">
-        <a title="" href="LowPrioritySchemaDerivation.html"><span class="name">LowPrioritySchemaDerivation</span></a><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
+        <a title="" href="LogicalType.html"><span class="name">LogicalType</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <a href="Schema.html" class="extype" name="com.spotify.scio.schemas.Schema">Schema</a>[<span class="extype" name="com.spotify.scio.schemas.LogicalType.T">T</span>]</span>
       </span>
       
       
@@ -720,7 +716,7 @@ detects the query's dialect. To override this, start the query with either <code
       
       
     </li><li name="com.spotify.scio.schemas.Schema" visbl="pub" class="indented0 " data-isabs="true" fullComment="no" group="Ungrouped">
-      <a id="Schema[T]extendsAnyRef"></a><a id="Schema[T]:Schema[T]"></a>
+      <a id="Schema[T]extendsSerializable"></a><a id="Schema[T]:Schema[T]"></a>
       <span class="permalink">
       <a href="../../../../com/spotify/scio/schemas/Schema.html" title="Permalink">
         <i class="material-icons"></i>
@@ -731,12 +727,12 @@ detects the query's dialect. To override this, start the query with either <code
         <span class="kind">trait</span>
       </span>
       <span class="symbol">
-        <a title="" href="Schema.html"><span class="name">Schema</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
+        <a title="" href="Schema.html"><span class="name">Schema</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <span class="extype" name="scala.Serializable">Serializable</span></span>
       </span>
       
       
     </li><li name="com.spotify.scio.schemas.To" visbl="pub" class="indented0 " data-isabs="true" fullComment="no" group="Ungrouped">
-      <a id="To[I,O]extendscom.spotify.scio.values.SCollection[I]=&gt;com.spotify.scio.values.SCollection[O]"></a><a id="To[I,O]:To[I,O]"></a>
+      <a id="To[I,O]extendscom.spotify.scio.values.SCollection[I]=&gt;com.spotify.scio.values.SCollection[O]withSerializable"></a><a id="To[I,O]:To[I,O]"></a>
       <span class="permalink">
       <a href="../../../../com/spotify/scio/schemas/To.html" title="Permalink">
         <i class="material-icons"></i>
@@ -747,7 +743,7 @@ detects the query's dialect. To override this, start the query with either <code
         <span class="kind">trait</span>
       </span>
       <span class="symbol">
-        <a title="" href="To.html"><span class="name">To</span></a><span class="tparams">[<span name="I">I</span>, <span name="O">O</span>]</span><span class="result"> extends (<a href="../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.schemas.To.I">I</span>]) ⇒ <a href="../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.schemas.To.O">O</span>]</span>
+        <a title="" href="To.html"><span class="name">To</span></a><span class="tparams">[<span name="I">I</span>, <span name="O">O</span>]</span><span class="result"> extends (<a href="../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.schemas.To.I">I</span>]) ⇒ <a href="../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.schemas.To.O">O</span>] with <span class="extype" name="scala.Serializable">Serializable</span></span>
       </span>
       
       
@@ -775,7 +771,23 @@ detects the query's dialect. To override this, start the query with either <code
         <div class="values members">
               <h3>Value Members</h3>
               <ol>
-                <li name="com.spotify.scio.schemas.RawRecord" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+                <li name="com.spotify.scio.schemas.LogicalType" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="LogicalType"></a><a id="LogicalType:LogicalType"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/schemas/LogicalType$.html" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="LogicalType$.html"><span class="name">LogicalType</span></a><span class="result"> extends <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      
+      
+    </li><li name="com.spotify.scio.schemas.RawRecord" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="RawRecord"></a><a id="RawRecord:RawRecord"></a>
       <span class="permalink">
       <a href="../../../../com/spotify/scio/schemas/RawRecord$.html" title="Permalink">
@@ -819,7 +831,7 @@ detects the query's dialect. To override this, start the query with either <code
         <span class="kind">object</span>
       </span>
       <span class="symbol">
-        <a title="" href="Schema$.html"><span class="name">Schema</span></a><span class="result"> extends <a href="instances/AllInstances.html" class="extype" name="com.spotify.scio.schemas.instances.AllInstances">AllInstances</a></span>
+        <a title="" href="Schema$.html"><span class="name">Schema</span></a><span class="result"> extends <a href="instances/JodaInstances.html" class="extype" name="com.spotify.scio.schemas.instances.JodaInstances">JodaInstances</a> with <a href="instances/AvroInstances.html" class="extype" name="com.spotify.scio.schemas.instances.AvroInstances">AvroInstances</a> with <a href="instances/LowPrioritySchemaDerivation.html" class="extype" name="com.spotify.scio.schemas.instances.LowPrioritySchemaDerivation">LowPrioritySchemaDerivation</a> with <span class="extype" name="scala.Serializable">Serializable</span></span>
       </span>
       
       
@@ -851,7 +863,7 @@ detects the query's dialect. To override this, start the query with either <code
         <span class="kind">object</span>
       </span>
       <span class="symbol">
-        <a title="" href="To$.html"><span class="name">To</span></a>
+        <a title="" href="To$.html"><span class="name">To</span></a><span class="result"> extends <span class="extype" name="scala.Serializable">Serializable</span></span>
       </span>
       
       

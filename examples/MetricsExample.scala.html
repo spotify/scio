@@ -276,14 +276,13 @@ hr {
               </section>
             
               <section class="">
-                <div class="comment "><p><code>sbt runMain &quot;com.spotify.scio.examples.extra.MetricsExample
+                <div class="comment "><p><code>sbt &quot;runMain com.spotify.scio.examples.extra.MetricsExample
 --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]&quot;</code></p></p></div>
                 <div class="code "><span class="keyword">package</span> <span class="identifier">com</span>.<span class="identifier">spotify</span>.<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/index.html" data-tooltip="<span>com.spotify.scio</span>">scio</a></span>.<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/examples/index.html" data-tooltip="<span>com.spotify.scio.examples</span>">examples</a></span>.<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/examples/extra/index.html" data-tooltip="<span>com.spotify.scio.examples.extra</span>">extra</a></span>
 
 <span class="keyword">import</span> <span class="identifier">com</span>.<span class="identifier">spotify</span>.<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/index.html" data-tooltip="<span>com.spotify.scio</span>">scio</a></span>._
 
-<span class="keyword">object</span> <span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/examples/extra/MetricsExample$.html" data-tooltip="<span>com.spotify.scio.examples.extra.MetricsExample</span>">MetricsExample</a></span> {
-&nbsp;</div>
+<span class="keyword">object</span> <span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/examples/extra/MetricsExample$.html" data-tooltip="<span>com.spotify.scio.examples.extra.MetricsExample</span>">MetricsExample</a></span> {&nbsp;</div>
               </section>
             
               <section class="">
@@ -337,7 +336,7 @@ hr {
         <span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/examples/extra/MetricsExample$.html#gauge:org.apache.beam.sdk.metrics.Gauge" data-tooltip="<span>com.spotify.scio.examples.extra.MetricsExample.gauge: org.apache.beam.sdk.metrics.Gauge</span>">gauge</a></span>.<span class="identifier">set</span>(<span class="identifier">i</span>)
         <span class="identifier">i</span> <span class="identifier">&lt;=</span> <span class="number">50</span>
       }
-      .<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#map[U](f:T=>U)(implicitevidence$10:com.spotify.scio.coders.Coder[U]):com.spotify.scio.values.SCollection[U]" data-tooltip="<span>com.spotify.scio.values.SCollection.map[U](f: T => U)(implicit evidence$10: com.spotify.scio.coders.Coder[U]): com.spotify.scio.values.SCollection[U]</span>">map</a></span> { <span class="identifier">i</span> =>
+      .<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#map[U](f:T=>U)(implicitevidence$9:com.spotify.scio.coders.Coder[U]):com.spotify.scio.values.SCollection[U]" data-tooltip="<span>com.spotify.scio.values.SCollection.map[U](f: T => U)(implicit evidence$9: com.spotify.scio.coders.Coder[U]): com.spotify.scio.values.SCollection[U]</span>">map</a></span> { <span class="identifier">i</span> =>
         <span class="keyword">if</span> (<span class="identifier">i</span> <span class="identifier">%</span> <span class="number">2</span> <span class="identifier">==</span> <span class="number">0</span>) {&nbsp;</div>
               </section>
             
@@ -426,7 +425,6 @@ hr {
           <span class="identifier">println</span>(<span class="identifier">name</span>.<span class="identifier">getName</span> <span class="identifier">+</span> <span class="string">": "</span> <span class="identifier">+</span> <span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/metrics/package$$MetricValue.html" data-tooltip="<span>com.spotify.scio.metrics.MetricValue[Long]</span>">value</a></span>.<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/metrics/package$$MetricValue.html#committed:Option[T]" data-tooltip="<span>com.spotify.scio.metrics.MetricValue.committed: Option[T]</span>">committed</a></span>.<span class="identifier">get</span>)
       }
   }
-
 }&nbsp;</div>
               </section>
             

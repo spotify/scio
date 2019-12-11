@@ -276,7 +276,7 @@ hr {
               </section>
             
               <section class="">
-                <div class="comment "><p><code>sbt runMain &quot;com.spotify.scio.examples.MinimalWordCount
+                <div class="comment "><p><code>sbt &quot;runMain com.spotify.scio.examples.MinimalWordCount
 --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
 --input=gs://apache-beam-samples/shakespeare/kinglear.txt
 --output=gs://[BUCKET]/[PATH]/minimal_wordcount&quot;</code></p></p></div>
@@ -287,7 +287,6 @@ hr {
 <span class="keyword">import</span> <span class="identifier">caseapp</span>._
 
 <span class="keyword">object</span> <span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/examples/MinimalWordCountTypedArguments$.html" data-tooltip="<span>com.spotify.scio.examples.MinimalWordCountTypedArguments</span>">MinimalWordCountTypedArguments</a></span> {
-
   @<span class="identifier">AppName</span>(<span class="string">"Scio Examples"</span>)
   @<span class="identifier">AppVersion</span>(<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/BuildInfo$.html" data-tooltip="<span>com.spotify.scio.BuildInfo</span>">BuildInfo</a></span>.<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/BuildInfo$.html#version:String" data-tooltip="<span>com.spotify.scio.BuildInfo.version: String</span>">version</a></span>)
   @<span class="identifier">ProgName</span>(<span class="string">"com.spotify.scio.examples.MinimalWordCount"</span>)
@@ -320,7 +319,7 @@ wildcard matching multiple files.</p></p></div>
             
               <section class="">
                 <div class="comment "><p>Split input lines, filter out empty tokens and expand into a collection of tokens</p></p></div>
-                <div class="code ">        _.<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#flatMap[U](f:T=>TraversableOnce[U])(implicitevidence$9:com.spotify.scio.coders.Coder[U]):com.spotify.scio.values.SCollection[U]" data-tooltip="<span>com.spotify.scio.values.SCollection.flatMap[U](f: T => TraversableOnce[U])(implicit evidence$9: com.spotify.scio.coders.Coder[U]): com.spotify.scio.values.SCollection[U]</span>">flatMap</a></span>(_.<span class="identifier">split</span>(<span class="string">"[^a-zA-Z']+"</span>).<span class="identifier">filter</span>(_.<span class="identifier">nonEmpty</span>))&nbsp;</div>
+                <div class="code ">        _.<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#flatMap[U](f:T=>TraversableOnce[U])(implicitevidence$8:com.spotify.scio.coders.Coder[U]):com.spotify.scio.values.SCollection[U]" data-tooltip="<span>com.spotify.scio.values.SCollection.flatMap[U](f: T => TraversableOnce[U])(implicit evidence$8: com.spotify.scio.coders.Coder[U]): com.spotify.scio.values.SCollection[U]</span>">flatMap</a></span>(_.<span class="identifier">split</span>(<span class="string">"[^a-zA-Z']+"</span>).<span class="identifier">filter</span>(_.<span class="identifier">nonEmpty</span>))&nbsp;</div>
               </section>
             
               <section class="">
@@ -331,8 +330,7 @@ wildcard matching multiple files.</p></p></div>
             
               <section class="">
                 <div class="comment "><p>Map <code>(String, Long)</code> tuples into strings</p></p></div>
-                <div class="code ">      .<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#map[U](f:T=>U)(implicitevidence$10:com.spotify.scio.coders.Coder[U]):com.spotify.scio.values.SCollection[U]" data-tooltip="<span>com.spotify.scio.values.SCollection.map[U](f: T => U)(implicit evidence$10: com.spotify.scio.coders.Coder[U]): com.spotify.scio.values.SCollection[U]</span>">map</a></span>(<span class="identifier">t</span> => <span class="identifier">t</span>.<span class="identifier">_1</span> <span class="identifier">+</span> <span class="string">": "</span> <span class="identifier">+</span> <span class="identifier">t</span>.<span class="identifier">_2</span>)
-&nbsp;</div>
+                <div class="code ">      .<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#map[U](f:T=>U)(implicitevidence$9:com.spotify.scio.coders.Coder[U]):com.spotify.scio.values.SCollection[U]" data-tooltip="<span>com.spotify.scio.values.SCollection.map[U](f: T => U)(implicit evidence$9: com.spotify.scio.coders.Coder[U]): com.spotify.scio.values.SCollection[U]</span>">map</a></span>(<span class="identifier">t</span> => <span class="identifier">t</span>.<span class="identifier">_1</span> <span class="identifier">+</span> <span class="string">": "</span> <span class="identifier">+</span> <span class="identifier">t</span>.<span class="identifier">_2</span>)&nbsp;</div>
               </section>
             
               <section class="">
@@ -342,7 +340,7 @@ wildcard matching multiple files.</p></p></div>
               </section>
             
               <section class="">
-                <div class="comment "><p>Close the context and execute the pipeline</p></p></div>
+                <div class="comment "><p>Execute the pipeline</p></p></div>
                 <div class="code ">    <span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/ScioContext.html" data-tooltip="<span>com.spotify.scio.ScioContext</span>">sc</a></span>.<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/ScioContext.html#run():com.spotify.scio.ScioExecutionContext" data-tooltip="<span>com.spotify.scio.ScioContext.run(): com.spotify.scio.ScioExecutionContext</span>">run</a></span>()
     ()
   }

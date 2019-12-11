@@ -154,13 +154,9 @@
                         <a class="class" href="ArrayType.html" title=""></a>
                         <a href="ArrayType.html" title="">ArrayType</a>
                       </li><li class="current-entities indented4">
-                        <span class="separator"></span>
-                        <a class="class" href="Fallback.html" title=""></a>
-                        <a href="Fallback.html" title="">Fallback</a>
-                      </li><li class="current-entities indented4">
-                        <span class="separator"></span>
-                        <a class="trait" href="LowPrioritySchemaDerivation.html" title=""></a>
-                        <a href="LowPrioritySchemaDerivation.html" title="">LowPrioritySchemaDerivation</a>
+                        <a class="object" href="LogicalType$.html" title=""></a>
+                        <a class="trait" href="LogicalType.html" title=""></a>
+                        <a href="LogicalType.html" title="">LogicalType</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
                         <a class="class" href="MapType.html" title=""></a>
@@ -495,9 +491,9 @@
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
     </li><li name="com.spotify.scio.schemas.SchemaMaterializer#materialize" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="materialize[T](reg:org.apache.beam.sdk.coders.CoderRegistry,opt:org.apache.beam.sdk.options.PipelineOptions,schema:com.spotify.scio.schemas.Schema[T]):(org.apache.beam.sdk.schemas.Schema,org.apache.beam.sdk.transforms.SerializableFunction[T,org.apache.beam.sdk.values.Row],org.apache.beam.sdk.transforms.SerializableFunction[org.apache.beam.sdk.values.Row,T])"></a><a id="materialize[T](CoderRegistry,PipelineOptions,Schema[T]):(org.apache.beam.sdk.schemas.Schema,SerializableFunction[T,Row],SerializableFunction[Row,T])"></a>
+      <a id="materialize[T](schema:com.spotify.scio.schemas.Schema[T]):(org.apache.beam.sdk.schemas.Schema,org.apache.beam.sdk.transforms.SerializableFunction[T,org.apache.beam.sdk.values.Row],org.apache.beam.sdk.transforms.SerializableFunction[org.apache.beam.sdk.values.Row,T])"></a><a id="materialize[T](Schema[T]):(org.apache.beam.sdk.schemas.Schema,SerializableFunction[T,Row],SerializableFunction[Row,T])"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/schemas/SchemaMaterializer$.html#materialize[T](reg:org.apache.beam.sdk.coders.CoderRegistry,opt:org.apache.beam.sdk.options.PipelineOptions,schema:com.spotify.scio.schemas.Schema[T]):(org.apache.beam.sdk.schemas.Schema,org.apache.beam.sdk.transforms.SerializableFunction[T,org.apache.beam.sdk.values.Row],org.apache.beam.sdk.transforms.SerializableFunction[org.apache.beam.sdk.values.Row,T])" title="Permalink">
+      <a href="../../../../com/spotify/scio/schemas/SchemaMaterializer$.html#materialize[T](schema:com.spotify.scio.schemas.Schema[T]):(org.apache.beam.sdk.schemas.Schema,org.apache.beam.sdk.transforms.SerializableFunction[T,org.apache.beam.sdk.values.Row],org.apache.beam.sdk.transforms.SerializableFunction[org.apache.beam.sdk.values.Row,T])" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -506,39 +502,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">materialize</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="reg">reg: <span class="extype" name="org.apache.beam.sdk.coders.CoderRegistry">CoderRegistry</span></span>, <span name="opt">opt: <span class="extype" name="org.apache.beam.sdk.options.PipelineOptions">PipelineOptions</span></span>, <span name="schema">schema: <a href="Schema.html" class="extype" name="com.spotify.scio.schemas.Schema">Schema</a>[<span class="extype" name="com.spotify.scio.schemas.SchemaMaterializer.materialize.T">T</span>]</span>)</span><span class="result">: (<span class="extype" name="org.apache.beam.sdk.schemas.Schema">org.apache.beam.sdk.schemas.Schema</span>, <span class="extype" name="org.apache.beam.sdk.transforms.SerializableFunction">SerializableFunction</span>[<span class="extype" name="com.spotify.scio.schemas.SchemaMaterializer.materialize.T">T</span>, <span class="extype" name="org.apache.beam.sdk.values.Row">Row</span>], <span class="extype" name="org.apache.beam.sdk.transforms.SerializableFunction">SerializableFunction</span>[<span class="extype" name="org.apache.beam.sdk.values.Row">Row</span>, <span class="extype" name="com.spotify.scio.schemas.SchemaMaterializer.materialize.T">T</span>])</span>
-      </span>
-      
-      
-    </li><li name="com.spotify.scio.schemas.SchemaMaterializer#materialize" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="materialize[T](sc:com.spotify.scio.ScioContext,schema:com.spotify.scio.schemas.Schema[T]):(org.apache.beam.sdk.schemas.Schema,org.apache.beam.sdk.transforms.SerializableFunction[T,org.apache.beam.sdk.values.Row],org.apache.beam.sdk.transforms.SerializableFunction[org.apache.beam.sdk.values.Row,T])"></a><a id="materialize[T](ScioContext,Schema[T]):(org.apache.beam.sdk.schemas.Schema,SerializableFunction[T,Row],SerializableFunction[Row,T])"></a>
-      <span class="permalink">
-      <a href="../../../../com/spotify/scio/schemas/SchemaMaterializer$.html#materialize[T](sc:com.spotify.scio.ScioContext,schema:com.spotify.scio.schemas.Schema[T]):(org.apache.beam.sdk.schemas.Schema,org.apache.beam.sdk.transforms.SerializableFunction[T,org.apache.beam.sdk.values.Row],org.apache.beam.sdk.transforms.SerializableFunction[org.apache.beam.sdk.values.Row,T])" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier">final </span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">materialize</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="sc">sc: <a href="../ScioContext.html" class="extype" name="com.spotify.scio.ScioContext">ScioContext</a></span>, <span name="schema">schema: <a href="Schema.html" class="extype" name="com.spotify.scio.schemas.Schema">Schema</a>[<span class="extype" name="com.spotify.scio.schemas.SchemaMaterializer.materialize.T">T</span>]</span>)</span><span class="result">: (<span class="extype" name="org.apache.beam.sdk.schemas.Schema">org.apache.beam.sdk.schemas.Schema</span>, <span class="extype" name="org.apache.beam.sdk.transforms.SerializableFunction">SerializableFunction</span>[<span class="extype" name="com.spotify.scio.schemas.SchemaMaterializer.materialize.T">T</span>, <span class="extype" name="org.apache.beam.sdk.values.Row">Row</span>], <span class="extype" name="org.apache.beam.sdk.transforms.SerializableFunction">SerializableFunction</span>[<span class="extype" name="org.apache.beam.sdk.values.Row">Row</span>, <span class="extype" name="com.spotify.scio.schemas.SchemaMaterializer.materialize.T">T</span>])</span>
-      </span>
-      
-      
-    </li><li name="com.spotify.scio.schemas.SchemaMaterializer#materializeWithDefault" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="materializeWithDefault[T](schema:com.spotify.scio.schemas.Schema[T]):(org.apache.beam.sdk.schemas.Schema,org.apache.beam.sdk.transforms.SerializableFunction[T,org.apache.beam.sdk.values.Row],org.apache.beam.sdk.transforms.SerializableFunction[org.apache.beam.sdk.values.Row,T])"></a><a id="materializeWithDefault[T](Schema[T]):(org.apache.beam.sdk.schemas.Schema,SerializableFunction[T,Row],SerializableFunction[Row,T])"></a>
-      <span class="permalink">
-      <a href="../../../../com/spotify/scio/schemas/SchemaMaterializer$.html#materializeWithDefault[T](schema:com.spotify.scio.schemas.Schema[T]):(org.apache.beam.sdk.schemas.Schema,org.apache.beam.sdk.transforms.SerializableFunction[T,org.apache.beam.sdk.values.Row],org.apache.beam.sdk.transforms.SerializableFunction[org.apache.beam.sdk.values.Row,T])" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier">final </span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">materializeWithDefault</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="schema">schema: <a href="Schema.html" class="extype" name="com.spotify.scio.schemas.Schema">Schema</a>[<span class="extype" name="com.spotify.scio.schemas.SchemaMaterializer.materializeWithDefault.T">T</span>]</span>)</span><span class="result">: (<span class="extype" name="org.apache.beam.sdk.schemas.Schema">org.apache.beam.sdk.schemas.Schema</span>, <span class="extype" name="org.apache.beam.sdk.transforms.SerializableFunction">SerializableFunction</span>[<span class="extype" name="com.spotify.scio.schemas.SchemaMaterializer.materializeWithDefault.T">T</span>, <span class="extype" name="org.apache.beam.sdk.values.Row">Row</span>], <span class="extype" name="org.apache.beam.sdk.transforms.SerializableFunction">SerializableFunction</span>[<span class="extype" name="org.apache.beam.sdk.values.Row">Row</span>, <span class="extype" name="com.spotify.scio.schemas.SchemaMaterializer.materializeWithDefault.T">T</span>])</span>
+        <span class="name">materialize</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="schema">schema: <a href="Schema.html" class="extype" name="com.spotify.scio.schemas.Schema">Schema</a>[<span class="extype" name="com.spotify.scio.schemas.SchemaMaterializer.materialize.T">T</span>]</span>)</span><span class="result">: (<span class="extype" name="org.apache.beam.sdk.schemas.Schema">org.apache.beam.sdk.schemas.Schema</span>, <span class="extype" name="org.apache.beam.sdk.transforms.SerializableFunction">SerializableFunction</span>[<span class="extype" name="com.spotify.scio.schemas.SchemaMaterializer.materialize.T">T</span>, <span class="extype" name="org.apache.beam.sdk.values.Row">Row</span>], <span class="extype" name="org.apache.beam.sdk.transforms.SerializableFunction">SerializableFunction</span>[<span class="extype" name="org.apache.beam.sdk.values.Row">Row</span>, <span class="extype" name="com.spotify.scio.schemas.SchemaMaterializer.materialize.T">T</span>])</span>
       </span>
       
       

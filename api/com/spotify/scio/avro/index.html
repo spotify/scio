@@ -227,6 +227,14 @@
                         <a href="ProtobufIO.html" title="">ProtobufIO</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
+                        <a class="class" href="ReflectiveRecordIO.html" title=""></a>
+                        <a href="ReflectiveRecordIO.html" title="">ReflectiveRecordIO</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
+                        <a class="class" href="ReflectiveRecordTap.html" title="Tap for GenericRecord Avro files."></a>
+                        <a href="ReflectiveRecordTap.html" title="Tap for GenericRecord Avro files.">ReflectiveRecordTap</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
                         <a class="class" href="SpecificRecordIO.html" title=""></a>
                         <a href="SpecificRecordIO.html" title="">SpecificRecordIO</a>
                       </li><li class="current-entities indented4">
@@ -467,6 +475,22 @@ detects the query's dialect. To override this, start the query with either <code
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../index.html" class="extype" name="com.spotify.scio">scio</a></dd></dl></div>
+    </li><li name="com.spotify.scio.smb" visbl="pub" class="indented4 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="smb"></a><a id="smb:smb"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/smb/index.html" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">package</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="../smb/index.html"><span class="name">smb</span></a>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../index.html" class="extype" name="com.spotify.scio">scio</a></dd></dl></div>
     </li><li name="com.spotify.scio.spanner" visbl="pub" class="indented4 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="spanner"></a><a id="spanner:spanner"></a>
       <span class="permalink">
@@ -677,7 +701,7 @@ detects the query's dialect. To override this, start the query with either <code
       
       
     </li><li name="com.spotify.scio.avro.GenericRecordIO" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="GenericRecordIO[T]extendsAvroIO[T]withProductwithSerializable"></a><a id="GenericRecordIO[T]:GenericRecordIO[T]"></a>
+      <a id="GenericRecordIOextendsAvroIO[org.apache.avro.generic.GenericRecord]withProductwithSerializable"></a><a id="GenericRecordIO:GenericRecordIO"></a>
       <span class="permalink">
       <a href="../../../../com/spotify/scio/avro/GenericRecordIO.html" title="Permalink">
         <i class="material-icons"></i>
@@ -688,7 +712,7 @@ detects the query's dialect. To override this, start the query with either <code
         <span class="kind">case class</span>
       </span>
       <span class="symbol">
-        <a title="" href="GenericRecordIO.html"><span class="name">GenericRecordIO</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="schema">schema: <span class="extype" name="org.apache.avro.Schema">Schema</span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="evidence$5">evidence$5: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.avro.GenericRecordIO.T">T</span>]</span>)</span><span class="result"> extends <a href="AvroIO.html" class="extype" name="com.spotify.scio.avro.AvroIO">AvroIO</a>[<span class="extype" name="com.spotify.scio.avro.GenericRecordIO.T">T</span>] with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+        <a title="" href="GenericRecordIO.html"><span class="name">GenericRecordIO</span></a><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="schema">schema: <span class="extype" name="org.apache.avro.Schema">Schema</span></span>)</span><span class="result"> extends <a href="AvroIO.html" class="extype" name="com.spotify.scio.avro.AvroIO">AvroIO</a>[<span class="extype" name="org.apache.avro.generic.GenericRecord">GenericRecord</span>] with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
       </span>
       
       
@@ -731,7 +755,7 @@ This IO applies the function at the time of de-serializing Avro GenericRecords.<
 a parseFn to parse it to the given type <span class="extype" name="T">T</span>
 </p>
     </li><li name="com.spotify.scio.avro.GenericRecordTap" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="GenericRecordTap[T]extendsTap[T]withProductwithSerializable"></a><a id="GenericRecordTap[T]:GenericRecordTap[T]"></a>
+      <a id="GenericRecordTapextendsTap[org.apache.avro.generic.GenericRecord]withProductwithSerializable"></a><a id="GenericRecordTap:GenericRecordTap"></a>
       <span class="permalink">
       <a href="../../../../com/spotify/scio/avro/GenericRecordTap.html" title="Permalink">
         <i class="material-icons"></i>
@@ -742,7 +766,7 @@ a parseFn to parse it to the given type <span class="extype" name="T">T</span>
         <span class="kind">case class</span>
       </span>
       <span class="symbol">
-        <a title="Tap for GenericRecord Avro files." href="GenericRecordTap.html"><span class="name">GenericRecordTap</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="schema">schema: <span class="extype" name="org.apache.avro.Schema">Schema</span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="evidence$1">evidence$1: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.avro.GenericRecordTap.T">T</span>]</span>)</span><span class="result"> extends <a href="../io/Tap.html" class="extype" name="com.spotify.scio.io.Tap">Tap</a>[<span class="extype" name="com.spotify.scio.avro.GenericRecordTap.T">T</span>] with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+        <a title="Tap for GenericRecord Avro files." href="GenericRecordTap.html"><span class="name">GenericRecordTap</span></a><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="schema">schema: <span class="extype" name="org.apache.avro.Schema">Schema</span></span>)</span><span class="result"> extends <a href="../io/Tap.html" class="extype" name="com.spotify.scio.io.Tap">Tap</a>[<span class="extype" name="org.apache.avro.generic.GenericRecord">GenericRecord</span>] with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
       </span>
       
       <p class="shortcomment cmt">Tap for <span class="extype" name="org.apache.avro.generic.GenericRecord">GenericRecord</span> Avro files.</p>
@@ -796,6 +820,22 @@ releases.
       </span>
       
       
+    </li><li name="com.spotify.scio.avro.ReflectiveRecordTap" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="ReflectiveRecordTap[T]extendsTap[T]withProductwithSerializable"></a><a id="ReflectiveRecordTap[T]:ReflectiveRecordTap[T]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/avro/ReflectiveRecordTap.html" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a title="Tap for GenericRecord Avro files." href="ReflectiveRecordTap.html"><span class="name">ReflectiveRecordTap</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="schema">schema: <span class="extype" name="org.apache.avro.Schema">Schema</span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="evidence$1">evidence$1: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.avro.ReflectiveRecordTap.T">T</span>]</span>)</span><span class="result"> extends <a href="../io/Tap.html" class="extype" name="com.spotify.scio.io.Tap">Tap</a>[<span class="extype" name="com.spotify.scio.avro.ReflectiveRecordTap.T">T</span>] with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      
+      <p class="shortcomment cmt">Tap for <span class="extype" name="org.apache.avro.generic.GenericRecord">GenericRecord</span> Avro files.</p>
     </li><li name="com.spotify.scio.avro.SpecificRecordIO" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="SpecificRecordIO[T&lt;:org.apache.avro.specific.SpecificRecord]extendsAvroIO[T]withProductwithSerializable"></a><a id="SpecificRecordIO[T&lt;:SpecificRecord]:SpecificRecordIO[T]"></a>
       <span class="permalink">
@@ -844,6 +884,25 @@ releases.
       </span>
       
       <p class="shortcomment cmt">Annotation for Avro field and record documentation.</p>
+    </li><li name="com.spotify.scio.avro.ReflectiveRecordIO" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="ReflectiveRecordIO[T]extendsAvroIO[T]withProductwithSerializable"></a><a id="ReflectiveRecordIO[T]:ReflectiveRecordIO[T]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/avro/ReflectiveRecordIO.html" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="ReflectiveRecordIO.html"><span class="name deprecated" title="Deprecated: (Since version 0.8.0) The use of reflective records is discouraged. Consider converting to GenericRecord explicitly">ReflectiveRecordIO</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="schema">schema: <span class="extype" name="org.apache.avro.Schema">Schema</span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="evidence$5">evidence$5: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.avro.ReflectiveRecordIO.T">T</span>]</span>)</span><span class="result"> extends <a href="AvroIO.html" class="extype" name="com.spotify.scio.avro.AvroIO">AvroIO</a>[<span class="extype" name="com.spotify.scio.avro.ReflectiveRecordIO.T">T</span>] with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Annotations</dt><dd>
+                <span class="name">@deprecated</span>
+              
+        </dd><dt>Deprecated</dt><dd class="cmt"><p><i>(Since version 0.8.0)</i> The use of reflective records is discouraged. Consider converting to GenericRecord explicitly</p></dd></dl></div>
     </li></ol>
             </div>
 
@@ -869,9 +928,9 @@ releases.
       
       <p class="shortcomment cmt">Typed Avro annotations and converters.</p>
     </li><li name="com.spotify.scio.avro.syntax.SCollectionSyntax#avroGenericRecordSCollectionOps" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="avroGenericRecordSCollectionOps[T](c:com.spotify.scio.values.SCollection[T]):com.spotify.scio.avro.syntax.GenericRecordSCollectionOps[T]"></a><a id="avroGenericRecordSCollectionOps[T](SCollection[T]):GenericRecordSCollectionOps[T]"></a>
+      <a id="avroGenericRecordSCollectionOps(c:com.spotify.scio.values.SCollection[org.apache.avro.generic.GenericRecord]):com.spotify.scio.avro.syntax.GenericRecordSCollectionOps"></a><a id="avroGenericRecordSCollectionOps(SCollection[GenericRecord]):GenericRecordSCollectionOps"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/avro/index.html#avroGenericRecordSCollectionOps[T](c:com.spotify.scio.values.SCollection[T]):com.spotify.scio.avro.syntax.GenericRecordSCollectionOps[T]" title="Permalink">
+      <a href="../../../../com/spotify/scio/avro/index.html#avroGenericRecordSCollectionOps(c:com.spotify.scio.values.SCollection[org.apache.avro.generic.GenericRecord]):com.spotify.scio.avro.syntax.GenericRecordSCollectionOps" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -880,7 +939,23 @@ releases.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">avroGenericRecordSCollectionOps</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="c">c: <a href="../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.avro.syntax.SCollectionSyntax.avroGenericRecordSCollectionOps.T">T</span>]</span>)</span><span class="result">: <a href="syntax/GenericRecordSCollectionOps.html" class="extype" name="com.spotify.scio.avro.syntax.GenericRecordSCollectionOps">GenericRecordSCollectionOps</a>[<span class="extype" name="com.spotify.scio.avro.syntax.SCollectionSyntax.avroGenericRecordSCollectionOps.T">T</span>]</span>
+        <span class="name">avroGenericRecordSCollectionOps</span><span class="params">(<span name="c">c: <a href="../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="org.apache.avro.generic.GenericRecord">GenericRecord</span>]</span>)</span><span class="result">: <a href="syntax/GenericRecordSCollectionOps.html" class="extype" name="com.spotify.scio.avro.syntax.GenericRecordSCollectionOps">GenericRecordSCollectionOps</a></span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="syntax/SCollectionSyntax.html" class="extype" name="com.spotify.scio.avro.syntax.SCollectionSyntax">SCollectionSyntax</a></dd></dl></div>
+    </li><li name="com.spotify.scio.avro.syntax.SCollectionSyntax#avroObjectFileSCollectionOps" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="avroObjectFileSCollectionOps[T](c:com.spotify.scio.values.SCollection[T]):com.spotify.scio.avro.syntax.ObjectFileSCollectionOps[T]"></a><a id="avroObjectFileSCollectionOps[T](SCollection[T]):ObjectFileSCollectionOps[T]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/avro/index.html#avroObjectFileSCollectionOps[T](c:com.spotify.scio.values.SCollection[T]):com.spotify.scio.avro.syntax.ObjectFileSCollectionOps[T]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">implicit </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">avroObjectFileSCollectionOps</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="c">c: <a href="../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.avro.syntax.SCollectionSyntax.avroObjectFileSCollectionOps.T">T</span>]</span>)</span><span class="result">: <a href="syntax/ObjectFileSCollectionOps.html" class="extype" name="com.spotify.scio.avro.syntax.ObjectFileSCollectionOps">ObjectFileSCollectionOps</a>[<span class="extype" name="com.spotify.scio.avro.syntax.SCollectionSyntax.avroObjectFileSCollectionOps.T">T</span>]</span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="syntax/SCollectionSyntax.html" class="extype" name="com.spotify.scio.avro.syntax.SCollectionSyntax">SCollectionSyntax</a></dd></dl></div>
@@ -945,6 +1020,22 @@ releases.
       </span>
       <span class="symbol">
         <span class="name">avroTypedAvroSCollectionOps</span><span class="tparams">[<span name="T">T &lt;: <a href="types/AvroType$$HasAvroAnnotation.html" class="extype" name="com.spotify.scio.avro.types.AvroType.HasAvroAnnotation">HasAvroAnnotation</a></span>]</span><span class="params">(<span name="c">c: <a href="../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.avro.syntax.SCollectionSyntax.avroTypedAvroSCollectionOps.T">T</span>]</span>)</span><span class="result">: <a href="syntax/TypedAvroSCollectionOps.html" class="extype" name="com.spotify.scio.avro.syntax.TypedAvroSCollectionOps">TypedAvroSCollectionOps</a>[<span class="extype" name="com.spotify.scio.avro.syntax.SCollectionSyntax.avroTypedAvroSCollectionOps.T">T</span>]</span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="syntax/SCollectionSyntax.html" class="extype" name="com.spotify.scio.avro.syntax.SCollectionSyntax">SCollectionSyntax</a></dd></dl></div>
+    </li><li name="com.spotify.scio.avro.syntax.SCollectionSyntax#unsafeAvroReflectiveRecordSCollectionOps" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="unsafeAvroReflectiveRecordSCollectionOps[T](c:com.spotify.scio.values.SCollection[T])(implicitevidence$2:com.spotify.scio.coders.Coder[T]):com.spotify.scio.avro.syntax.UnsafeReflectiveRecordSCollectionOps[T]"></a><a id="unsafeAvroReflectiveRecordSCollectionOps[T](SCollection[T])(Coder[T]):UnsafeReflectiveRecordSCollectionOps[T]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/avro/index.html#unsafeAvroReflectiveRecordSCollectionOps[T](c:com.spotify.scio.values.SCollection[T])(implicitevidence$2:com.spotify.scio.coders.Coder[T]):com.spotify.scio.avro.syntax.UnsafeReflectiveRecordSCollectionOps[T]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">implicit </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">unsafeAvroReflectiveRecordSCollectionOps</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="c">c: <a href="../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.avro.syntax.SCollectionSyntax.unsafeAvroReflectiveRecordSCollectionOps.T">T</span>]</span>)</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.avro.syntax.SCollectionSyntax.unsafeAvroReflectiveRecordSCollectionOps.T">T</span>]</span>)</span><span class="result">: <a href="syntax/UnsafeReflectiveRecordSCollectionOps.html" class="extype" name="com.spotify.scio.avro.syntax.UnsafeReflectiveRecordSCollectionOps">UnsafeReflectiveRecordSCollectionOps</a>[<span class="extype" name="com.spotify.scio.avro.syntax.SCollectionSyntax.unsafeAvroReflectiveRecordSCollectionOps.T">T</span>]</span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="syntax/SCollectionSyntax.html" class="extype" name="com.spotify.scio.avro.syntax.SCollectionSyntax">SCollectionSyntax</a></dd></dl></div>

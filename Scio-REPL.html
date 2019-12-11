@@ -255,7 +255,7 @@ Scio context available as &#39;sc&#39;
 
 scio&gt;
 </code></pre>
-<p>A <a href="https://spotify.github.io/scio/api/com/spotify/scio/ScioContext.html"><code>ScioContext</code></a> is created on REPL startup as <code>sc</code> and a starting point to most operations. Use <code>tab</code> completion, history and other REPL goodies to play around.</p>
+<p>A <a href="https://spotify.github.io/scio/api/com/spotify/scio/ScioContext.html" title="com.spotify.scio.ScioContext"><code>`ScioContext`</code></a> is created on REPL startup as <code>sc</code> and a starting point to most operations. Use <code>tab</code> completion, history and other REPL goodies to play around.</p>
 <h3><a href="#start-from-sbt-console-scala-2-11-x-only-" name="start-from-sbt-console-scala-2-11-x-only-" class="anchor"><span class="anchor-link"></span></a>Start from SBT console (Scala <code>2.11.x</code>+ only)</h3>
 <pre><code>$ git clone git@github.com:spotify/scio.git
 Cloning into &#39;scio&#39;...
@@ -297,7 +297,7 @@ def scioResult = sc.run().waitUntilDone()
 
 def values = scioResult.tap(wordCount).value.take(3)
 </code></pre>
-<p>Make sure <code>README.md</code> is in the current directory. This example counts words in local file using a local runner (<a href="https://beam.apache.org/releases/javadoc/2.15.0/?org/apache/beam/runners/direct/DirectRunner.html"><code>DirectRunner</code></a> and writes result in a local file. The pipeline and actual computation starts on <code>sc.run()</code>. The last command take 3 lines from results and prints them.</p>
+<p>Make sure <code>README.md</code> is in the current directory. This example counts words in local file using a local runner (<a href="https://beam.apache.org/releases/javadoc/2.16.0/?org/apache/beam/runners/direct/DirectRunner.html" title="org.apache.beam.runners.direct.DirectRunner"><code>`DirectRunner`</code></a> and writes result in a local file. The pipeline and actual computation starts on <code>sc.run()</code>. The last command take 3 lines from results and prints them.</p>
 <h3><a href="#local-pipeline-" name="local-pipeline-" class="anchor"><span class="anchor-link"></span></a>Local pipeline ++</h3>
 <p>In the next example we will spice things up a bit and read data from GCS:</p>
 <pre><code>:newScio
@@ -451,7 +451,7 @@ def tap: ClosedTap[String] = evenNumbers.saveAsTextFile(&quot;/tmp/even&quot;)
 def result = sc.run()
 </code></pre>
 <h3><a href="#running-jobs-asynchronously" name="running-jobs-asynchronously" class="anchor"><span class="anchor-link"></span></a>Running jobs asynchronously</h3>
-<p>When using REPL and Dataflow service consider using the non-blocking <a href="https://beam.apache.org/releases/javadoc/2.15.0/?org/apache/beam/runners/dataflow/DataflowRunner.html"><code>DataflowRunner</code></a> for a more interactive experience. To start:</p>
+<p>When using REPL and Dataflow service consider using the non-blocking <a href="https://beam.apache.org/releases/javadoc/2.16.0/?org/apache/beam/runners/dataflow/DataflowRunner.html" title="org.apache.beam.runners.dataflow.DataflowRunner"><code>`DataflowRunner`</code></a> for a more interactive experience. To start:</p>
 <pre><code>java -jar scio-repl-0.7.0.jar \
 &gt; --project=&lt;project-id&gt; \
 &gt; --stagingLocation=&lt;stagin-dir&gt; \
@@ -485,7 +485,7 @@ def result = sc.run()
 
 def state = result.state
 </code></pre>
-<p>Note that now <code>sc.run()</code> doesn&rsquo;t block and wait until job completes and gives back control of the REPL right away. Use <a href="https://spotify.github.io/scio/api/com/spotify/scio/ScioExecutionContext.html"><code>ScioExecutionContext</code></a> to check for progress, results and orchestrate jobs.</p>
+<p>Note that now <code>sc.run()</code> doesn&rsquo;t block and wait until job completes and gives back control of the REPL right away. Use <a href="https://spotify.github.io/scio/api/com/spotify/scio/ScioExecutionContext.html" title="com.spotify.scio.ScioExecutionContext"><code>`ScioExecutionContext`</code></a> to check for progress, results and orchestrate jobs.</p>
 <h3><a href="#multiple-scio-contexts" name="multiple-scio-contexts" class="anchor"><span class="anchor-link"></span></a>Multiple Scio contexts</h3>
 <p>You can use multiple Scio context objects to work with several pipelines at the same time, simply use magic <code>:newScio &lt;context name&gt;</code>, for example:</p>
 <pre><code>scio&gt; :newScio c1
@@ -497,7 +497,7 @@ Scio context available as &#39;lc&#39;
 </code></pre>
 <p>You can use those in combination with <code>DataflowRunner</code> to run multiple pipelines in the same session or wire them with for comprehension over futures.</p>
 <h3><a href="#bigquery-client" name="bigquery-client" class="anchor"><span class="anchor-link"></span></a>BigQuery client</h3>
-<p>Whenever possible leverage BigQuery! <a href="https://spotify.github.io/scio/api/com/spotify/scio/bigquery/types/BigQueryType.html"><code>@BigQueryType</code></a> annotations enable type safe and civilized integration with BigQuery inside Scio. Here is example of using the annotations and BigQuery client to read and write typed data directly without Scio context.</p>
+<p>Whenever possible leverage BigQuery! <a href="https://spotify.github.io/scio/api/com/spotify/scio/bigquery/types/BigQueryType.html" title="com.spotify.scio.bigquery.types.BigQueryType"><code>`@BigQueryType`</code></a> annotations enable type safe and civilized  integration with BigQuery inside Scio. Here is example of using the annotations and BigQuery client to read and write typed data directly without Scio context.</p>
 <pre><code>$ java -jar -Dbigquery.project=&lt;project-id&gt; scio-repl-0.7.0.jar
 Welcome to
                  _____
@@ -544,7 +544,6 @@ Type :help for more information.
 
 BigQuery client available as &#39;bq&#39;
 Scio context available as &#39;sc&#39;
-
 </code></pre>
 <pre class="prettyprint"><code class="language-scala">Runtime.getRuntime().maxMemory()
 // res1: Long = 1908932608
@@ -605,7 +604,7 @@ Internals
 <div class="md-footer-meta__inner md-grid">
 <div class="md-footer-copyright">
 <div class="md-footer-copyright__highlight">
-Copyright (C) 2018 Spotify AB
+Copyright (C) 2019 Spotify AB
 </div>
 Powered by
 <a href="https://github.com/lightbend/paradox">Paradox</a>

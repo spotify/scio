@@ -383,6 +383,22 @@ detects the query's dialect. To override this, start the query with either <code
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="index.html" class="extype" name="com.spotify.scio">scio</a></dd></dl></div>
+    </li><li name="com.spotify.scio.smb" visbl="pub" class="indented4 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="smb"></a><a id="smb:smb"></a>
+      <span class="permalink">
+      <a href="../../../com/spotify/scio/smb/index.html" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">package</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="smb/index.html"><span class="name">smb</span></a>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="index.html" class="extype" name="com.spotify.scio">scio</a></dd></dl></div>
     </li><li name="com.spotify.scio.spanner" visbl="pub" class="indented4 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="spanner"></a><a id="spanner:spanner"></a>
       <span class="permalink">
@@ -521,7 +537,7 @@ detects the query's dialect. To override this, start the query with either <code
                         <a class="class" href="ScioContext.html" title="Main entry point for Scio functionality."></a>
                         <a href="ScioContext.html" title="Main entry point for Scio functionality.">ScioContext</a>
                       </li><li class="current-entities indented3">
-                        <span class="separator"></span>
+                        <a class="object" href="ScioExecutionContext$.html" title=""></a>
                         <a class="trait" href="ScioExecutionContext.html" title="ScioExecutionContext is the result of ScioContext#run()."></a>
                         <a href="ScioExecutionContext.html" title="ScioExecutionContext is the result of ScioContext#run().">ScioExecutionContext</a>
                       </li><li class="current-entities indented3">
@@ -540,6 +556,18 @@ detects the query's dialect. To override this, start the query with either <code
                         <a class="object" href="SysProps$.html" title=""></a>
                         <a class="trait" href="SysProps.html" title=""></a>
                         <a href="SysProps.html" title="">SysProps</a>
+                      </li><li class="current-entities indented3">
+                        <span class="separator"></span>
+                        <a class="class" href="package$$WaitableClosedTap.html" title=""></a>
+                        <a href="package$$WaitableClosedTap.html" title="">WaitableClosedTap</a>
+                      </li><li class="current-entities indented3">
+                        <span class="separator"></span>
+                        <a class="class" href="package$$WaitableFutureTap.html" title=""></a>
+                        <a href="package$$WaitableFutureTap.html" title="">WaitableFutureTap</a>
+                      </li><li class="current-entities indented3">
+                        <span class="separator"></span>
+                        <a class="class" href="package$$WaitableNestedFutureTap.html" title="Wait for nested Tap to be available, flatten result and get Tap reference from Future."></a>
+                        <a href="package$$WaitableNestedFutureTap.html" title="Wait for nested Tap to be available, flatten result and get Tap reference from Future.">WaitableNestedFutureTap</a>
                       </li><li class="current-entities indented3">
                         <span class="separator"></span>
                         <a class="class" href="registerSysProps.html" title=""></a>
@@ -1308,7 +1336,48 @@ detects the query's dialect. To override this, start the query with either <code
 
         
 
-        
+        <div class="values members">
+              <h3>Deprecated Value Members</h3>
+              <ol><li name="com.spotify.scio.ScioResult#finalState" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="finalState:scala.concurrent.Future[org.apache.beam.sdk.PipelineResult.State]"></a><a id="finalState:Future[State]"></a>
+      <span class="permalink">
+      <a href="../../../com/spotify/scio/ScioResult.html#finalState:scala.concurrent.Future[org.apache.beam.sdk.PipelineResult.State]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name deprecated" title="Deprecated: (Since version 0.8.0) Scio 0.8 does not use Futures anymore. You can simply use the 'state' directly to get a State">finalState</span><span class="result">: <span class="extype" name="scala.concurrent.Future">Future</span>[<span class="extype" name="org.apache.beam.sdk.PipelineResult.State">State</span>]</span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Annotations</dt><dd>
+                <span class="name">@deprecated</span>
+              
+        </dd><dt>Deprecated</dt><dd class="cmt"><p><i>(Since version 0.8.0)</i> Scio 0.8 does not use Futures anymore. You can simply use the 'state' directly to get a State</p></dd></dl></div>
+    </li><li name="com.spotify.scio.ScioResult#isCompleted" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="isCompleted:Boolean"></a>
+      <span class="permalink">
+      <a href="../../../com/spotify/scio/ScioResult.html#isCompleted:Boolean" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name deprecated" title="Deprecated: (Since version 0.8.0) ScioResult is guaranteed to be completed in Scio &gt; 0.8.0">isCompleted</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Annotations</dt><dd>
+                <span class="name">@deprecated</span>
+              
+        </dd><dt>Deprecated</dt><dd class="cmt"><p><i>(Since version 0.8.0)</i> ScioResult is guaranteed to be completed in Scio &gt; 0.8.0</p></dd></dl></div>
+    </li></ol>
+            </div>
         </div>
 
         <div id="inheritedMembers">

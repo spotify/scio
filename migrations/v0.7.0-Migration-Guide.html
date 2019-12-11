@@ -244,7 +244,7 @@ spotify/scio
 <h2><a href="#automated-migration" name="automated-migration" class="anchor"><span class="anchor-link"></span></a>Automated migration</h2>
 <p>Scio <code>0.7</code> comes with a set of <a href="https://scalacenter.github.io/scalafix/">scalafix</a> rules that will do most of the heavy lifting automatically. Before you go through any manual step, we recommend you start by applying those rules.</p>
 <p>Start by adding the scalafix sbt plugin to your <code>project/plugins.sbt</code> file</p>
-<pre class="prettyprint"><code class="language-scala">addSbtPlugin(&quot;ch.epfl.scala&quot; % &quot;sbt-scalafix&quot; % &quot;0.9.0&quot;)
+<pre class="prettyprint"><code class="language-sbt">addSbtPlugin(&quot;ch.epfl.scala&quot; % &quot;sbt-scalafix&quot; % &quot;0.9.0&quot;)
 </code></pre>
 <p>launch sbt and run <code>scalafixEnable</code></p>
 <pre><code>&gt; scalafixEnable
@@ -309,11 +309,11 @@ spotify/scio
 <h4><a href="#you-may-need-to-explicitly-add-a-dependency-one-of-scios-subprojects-in-your-build-file" name="you-may-need-to-explicitly-add-a-dependency-one-of-scios-subprojects-in-your-build-file" class="anchor"><span class="anchor-link"></span></a>You may need to explicitly add a dependency one of Scio&rsquo;s subprojects in your build file</h4>
 <p>For example, Scio used to pull dependencies on BigQuery IOs even if your pipeline did not use BigQuery at all. With the new IOs, Scio will limit its dependencies to packages you actually use.</p>
 <p>If your pipeline is using BigQuery, you now need to add <code>scio-bigquery</code> as a dependency of your project:</p>
-<pre class="prettyprint"><code class="language-scala">libraryDependencies += &quot;com.spotify&quot; %% &quot;scio-bigquery&quot; % scioVersion
+<pre class="prettyprint"><code class="language-sbt">libraryDependencies += &quot;com.spotify&quot; %% &quot;scio-bigquery&quot; % scioVersion
 </code></pre>
 <h4><a href="#youll-need-to-import-the-appropriate-package-to-gain-access-to-the-io-methods-" name="youll-need-to-import-the-appropriate-package-to-gain-access-to-the-io-methods-" class="anchor"><span class="anchor-link"></span></a>You&rsquo;ll need to import the appropriate package to gain access to the IO methods.</h4>
 <p>For example while migrating a job that reads data from an Avro file, you may see the following compiler error:</p>
-<pre><code>[error] value avroFile is not a member of com.spotify.scio.ScioContext
+<pre class="prettyprint"><code class="language-bash">[error] value avroFile is not a member of com.spotify.scio.ScioContext
 [error]     val coll = sc.avroFile[SomeType](uri)
 [error]                            ^
 </code></pre>
@@ -503,7 +503,7 @@ def doSomething(coll: SCollection[String]): SCollection[java.util.Locale] =
 - Throw
 </code></pre>
 <p>If you use <code>sbt-wartremover</code>, you can disable them in your build like this:</p>
-<pre class="prettyprint"><code class="language-scala">wartremoverErrors in (Compile, compile) := {
+<pre class="prettyprint"><code class="language-sbt">wartremoverErrors in (Compile, compile) := {
   val disableWarts = Set(
     Wart.Any,
     Wart.IsInstanceOf,
@@ -571,7 +571,7 @@ Scio v0.8.0
 <div class="md-footer-meta__inner md-grid">
 <div class="md-footer-copyright">
 <div class="md-footer-copyright__highlight">
-Copyright (C) 2018 Spotify AB
+Copyright (C) 2019 Spotify AB
 </div>
 Powered by
 <a href="https://github.com/lightbend/paradox">Paradox</a>

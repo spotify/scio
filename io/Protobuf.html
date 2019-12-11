@@ -232,12 +232,9 @@ spotify/scio
 <h1><a href="#protobuf" name="protobuf" class="anchor"><span class="anchor-link"></span></a>Protobuf</h1>
 <h2><a href="#read-protobuf-files" name="read-protobuf-files" class="anchor"><span class="anchor-link"></span></a>Read Protobuf files</h2>
 <p>Scio comes with custom and efficient support for reading Protobuf files via <code>protobufFile</code> method, for example:</p>
-<pre class="prettyprint"><code class="language-scala">val sc = &quot;yolo&quot;
-// sc: String = &quot;yolo&quot;
-println(sc)
-// yolo
-</code></pre>
-<pre class="prettyprint"><code class="language-scala">// FooBarProto is a Protobuf generated class (must be a subclass of Protobuf&#39;s `Message`)
+<pre class="prettyprint"><code class="language-scala">import com.spotify.scio.avro._
+
+// FooBarProto is a Protobuf generated class (must be a subclass of Protobuf&#39;s `Message`)
 sc.protobufFile[FooBarProto](&quot;gs://path-to-data/lake/part-*.protobuf.avro&quot;)
   .map( message =&gt; ??? )
 // `message` is of type FooBarProto
@@ -247,11 +244,8 @@ sc.protobufFile[FooBarProto](&quot;gs://path-to-data/lake/part-*.protobuf.avro&q
 <h2><a href="#write-protobuf-files" name="write-protobuf-files" class="anchor"><span class="anchor-link"></span></a>Write Protobuf files</h2>
 <p>Scio comes with custom and efficient support for writing Protobuf files via <code>saveAsProtobufFile</code> method, for example:</p>
 <pre class="prettyprint"><code class="language-scala">// FooBarProto is a Protobuf generated class (must be a subclass of Protobuf&#39;s `Message`)
-sc.map { x =&gt;
-    // build a protobuf message&gt;
-    ???
-  }
-  .saveAsProtobufFile(&quot;gs://path-to-data/lake/protos-out&quot;)
+val data: SCollection[FooBarProto] = ???
+data.saveAsProtobufFile(&quot;gs://path-to-data/lake/protos-out&quot;)
 </code></pre>
 <h2><a href="#file-format" name="file-format" class="anchor"><span class="anchor-link"></span></a>File format</h2>
 <p>Scio&rsquo;s Protobuf file is backed by Avro with the following schema:</p>
@@ -266,7 +260,7 @@ sc.map { x =&gt;
 </code></pre>
 <p>Avro gives us a block based file format with compression, split and combine support. Protobuf binary is stored in the <code>bytes</code> field of <code>AvroBytesRecord</code>.</p>
 <p>Starting with Scio 0.2.6, the Protobuf schema also is stored as a JSON string in the Avro file metadata under the key <code>protobuf.generic.schema</code>. You can get the schema or JSON records using the <code>proto-tools</code> command line tool from <a href="https://github.com/spotify/gcs-tools">gcs-tools</a> (available in our homebrew tap). Conversion between Protobuf schema, binary and JSON is done via the <a href="https://github.com/nevillelyh/protobuf-generic">protobuf-generic</a> library.</p>
-<pre><code>brew tap spotify/public
+<pre class="prettyprint"><code class="language-bash">brew tap spotify/public
 brew install gcs-proto-tools
 proto-tools getschema data.protobuf.avro
 proto-tools tojson data.protobuf.avro
@@ -327,7 +321,7 @@ Parquet
 <div class="md-footer-meta__inner md-grid">
 <div class="md-footer-copyright">
 <div class="md-footer-copyright__highlight">
-Copyright (C) 2018 Spotify AB
+Copyright (C) 2019 Spotify AB
 </div>
 Powered by
 <a href="https://github.com/lightbend/paradox">Paradox</a>

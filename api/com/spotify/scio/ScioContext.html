@@ -383,6 +383,22 @@ detects the query's dialect. To override this, start the query with either <code
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="index.html" class="extype" name="com.spotify.scio">scio</a></dd></dl></div>
+    </li><li name="com.spotify.scio.smb" visbl="pub" class="indented4 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="smb"></a><a id="smb:smb"></a>
+      <span class="permalink">
+      <a href="../../../com/spotify/scio/smb/index.html" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">package</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="smb/index.html"><span class="name">smb</span></a>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="index.html" class="extype" name="com.spotify.scio">scio</a></dd></dl></div>
     </li><li name="com.spotify.scio.spanner" visbl="pub" class="indented4 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="spanner"></a><a id="spanner:spanner"></a>
       <span class="permalink">
@@ -521,7 +537,7 @@ detects the query's dialect. To override this, start the query with either <code
                         <a class="class" href="" title="Main entry point for Scio functionality."></a>
                         <a href="" title="Main entry point for Scio functionality.">ScioContext</a>
                       </li><li class="current-entities indented3">
-                        <span class="separator"></span>
+                        <a class="object" href="ScioExecutionContext$.html" title=""></a>
                         <a class="trait" href="ScioExecutionContext.html" title="ScioExecutionContext is the result of ScioContext#run()."></a>
                         <a href="ScioExecutionContext.html" title="ScioExecutionContext is the result of ScioContext#run().">ScioExecutionContext</a>
                       </li><li class="current-entities indented3">
@@ -540,6 +556,18 @@ detects the query's dialect. To override this, start the query with either <code
                         <a class="object" href="SysProps$.html" title=""></a>
                         <a class="trait" href="SysProps.html" title=""></a>
                         <a href="SysProps.html" title="">SysProps</a>
+                      </li><li class="current-entities indented3">
+                        <span class="separator"></span>
+                        <a class="class" href="package$$WaitableClosedTap.html" title=""></a>
+                        <a href="package$$WaitableClosedTap.html" title="">WaitableClosedTap</a>
+                      </li><li class="current-entities indented3">
+                        <span class="separator"></span>
+                        <a class="class" href="package$$WaitableFutureTap.html" title=""></a>
+                        <a href="package$$WaitableFutureTap.html" title="">WaitableFutureTap</a>
+                      </li><li class="current-entities indented3">
+                        <span class="separator"></span>
+                        <a class="class" href="package$$WaitableNestedFutureTap.html" title="Wait for nested Tap to be available, flatten result and get Tap reference from Future."></a>
+                        <a href="package$$WaitableNestedFutureTap.html" title="Wait for nested Tap to be available, flatten result and get Tap reference from Future.">WaitableNestedFutureTap</a>
                       </li><li class="current-entities indented3">
                         <span class="separator"></span>
                         <a class="class" href="registerSysProps.html" title=""></a>
@@ -1461,7 +1489,7 @@ pipeline once the context is closed.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name deprecated" title="Deprecated: (Since version Scio 0.8.0) this method will be removed in next scio version; use run() instead.">close</span><span class="params">()</span><span class="result">: <a href="ScioExecutionContext.html" class="extype" name="com.spotify.scio.ScioExecutionContext">ScioExecutionContext</a></span>
+        <span class="name deprecated" title="Deprecated: (Since version 0.8.0) this method will be removed in next scio version; use run() instead.">close</span><span class="params">()</span><span class="result">: <a href="ScioExecutionContext.html" class="extype" name="com.spotify.scio.ScioExecutionContext">ScioExecutionContext</a></span>
       </span>
       
       <p class="shortcomment cmt">Close the context.</p><div class="fullcomment"><div class="comment cmt"><p>Close the context. No operation can be performed once the context is closed.</p><p>This method is deprecated and with it the <code>--blocking</code> flag.</p><p>Use <a href="#run():com.spotify.scio.ScioExecutionContext" class="extmbr" name="com.spotify.scio.ScioContext#run">ScioContext#run</a>.</p><p>To achieve the same behaviour when <code>--blocking</code> was enabled use:</p><pre><span class="kw">val</span> sc: ScioContext = ???
@@ -1469,7 +1497,7 @@ pipeline once the context is closed.
 sc.run().waitUntilDone(Duration.Inf)</pre></div><dl class="attributes block"> <dt>Annotations</dt><dd>
                 <span class="name">@deprecated</span>
               
-        </dd><dt>Deprecated</dt><dd class="cmt"><p><i>(Since version Scio 0.8.0)</i> this method will be removed in next scio version; use run() instead.</p></dd><dt>See also</dt><dd><span class="cmt"><p><a href="#run():com.spotify.scio.ScioExecutionContext" class="extmbr" name="com.spotify.scio.ScioContext#run">ScioContext#run</a></p></span></dd></dl></div>
+        </dd><dt>Deprecated</dt><dd class="cmt"><p><i>(Since version 0.8.0)</i> this method will be removed in next scio version; use run() instead.</p></dd><dt>See also</dt><dd><span class="cmt"><p><a href="#run():com.spotify.scio.ScioExecutionContext" class="extmbr" name="com.spotify.scio.ScioContext#run">ScioContext#run</a></p></span></dd></dl></div>
     </li></ol>
             </div>
         </div>

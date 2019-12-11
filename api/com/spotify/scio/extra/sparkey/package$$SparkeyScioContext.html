@@ -148,16 +148,18 @@
         <a title="Main package for Sparkey side input APIs." href="index.html"><span class="name">sparkey</span></a>
       </span>
       
-      <p class="shortcomment cmt">Main package for Sparkey side input APIs.</p><div class="fullcomment"><div class="comment cmt"><p>Main package for Sparkey side input APIs. Import all.</p><pre><span class="kw">import</span> com.spotify.scio.extra.sparkey._</pre><p>To save an <code>SCollection[(String, String)]</code> to a Sparkey file:</p><pre><span class="kw">val</span> s = sc.parallelize(<span class="std">Seq</span>(<span class="lit">"a"</span> -&gt; <span class="lit">"one"</span>, <span class="lit">"b"</span> -&gt; <span class="lit">"two"</span>))
+      <p class="shortcomment cmt">Main package for Sparkey side input APIs.</p><div class="fullcomment"><div class="comment cmt"><p>Main package for Sparkey side input APIs. Import all.</p><pre><span class="kw">import</span> com.spotify.scio.extra.sparkey._</pre><p>To save an <code>SCollection[(String, String)]</code> to a Sparkey fileset:</p><pre><span class="kw">val</span> s = sc.parallelize(<span class="std">Seq</span>(<span class="lit">"a"</span> -&gt; <span class="lit">"one"</span>, <span class="lit">"b"</span> -&gt; <span class="lit">"two"</span>))
 
 <span class="cmt">// temporary location</span>
 <span class="kw">val</span> s1: SCollection[SparkeyUri] = s.asSparkey
 
 <span class="cmt">// specific location</span>
-<span class="kw">val</span> s1: SCollection[SparkeyUri] = s.asSparkey(<span class="lit">"gs://&lt;bucket&gt;/&lt;path&gt;/&lt;sparkey-prefix&gt;"</span>)</pre><p>The result <code>SCollection[SparkeyUri]</code> can be converted to a side input:</p><pre><span class="kw">val</span> s: SCollection[SparkeyUri] = sc.parallelize(<span class="std">Seq</span>(<span class="lit">"a"</span> -&gt; <span class="lit">"one"</span>, <span class="lit">"b"</span> -&gt; <span class="lit">"two"</span>)).asSparkey
+<span class="kw">val</span> s1: SCollection[SparkeyUri] = s.asSparkey(<span class="lit">"gs://&lt;bucket&gt;/&lt;path&gt;/&lt;sparkey-prefix&gt;"</span>)</pre><p>// with multiple shards, sharded by MurmurHash3 of the key
+val s1: SCollection[SparkeyUri] = s.asSparkey(&quot;gs://&lt;bucket&gt;/&lt;path&gt;/&lt;sparkey-dir&gt;&quot;, numShards=2)
+}}}</p><p>The result <code>SCollection[SparkeyUri]</code> can be converted to a side input:</p><pre><span class="kw">val</span> s: SCollection[SparkeyUri] = sc.parallelize(<span class="std">Seq</span>(<span class="lit">"a"</span> -&gt; <span class="lit">"one"</span>, <span class="lit">"b"</span> -&gt; <span class="lit">"two"</span>)).asSparkey
 <span class="kw">val</span> side: SideInput[SparkeyReader] = s.asSparkeySideInput</pre><p>These two steps can be done with a syntactic sugar:</p><pre><span class="kw">val</span> side: SideInput[SparkeyReader] = sc
   .parallelize(<span class="std">Seq</span>(<span class="lit">"a"</span> -&gt; <span class="lit">"one"</span>, <span class="lit">"b"</span> -&gt; <span class="lit">"two"</span>))
-  .asSparkeySideInput</pre><p>An existing Sparkey file can also be converted to a side input directly:</p><pre>sc.sparkeySideInput(<span class="lit">"gs://&lt;bucket&gt;/&lt;path&gt;/&lt;sparkey-prefix&gt;"</span>)</pre><p><code>SparkeyReader</code> can be used like a lookup table in a side input operation:</p><pre><span class="kw">val</span> main: SCollection[<span class="std">String</span>] = sc.parallelize(<span class="std">Seq</span>(<span class="lit">"a"</span>, <span class="lit">"b"</span>, <span class="lit">"c"</span>))
+  .asSparkeySideInput</pre><p>An existing Sparkey file can also be converted to a side input directly:</p><pre>sc.sparkeySideInput(<span class="lit">"gs://&lt;bucket&gt;/&lt;path&gt;/&lt;sparkey-prefix&gt;"</span>)</pre><p>A sharded collection of Sparkey files can also be used as a side input by specifying a glob path:</p><pre>sc.sparkeySideInput(<span class="lit">"gs://&lt;bucket&gt;/&lt;path&gt;/&lt;sparkey-dir&gt;/part-*"</span>)</pre><p><code>SparkeyReader</code> can be used like a lookup table in a side input operation:</p><pre><span class="kw">val</span> main: SCollection[<span class="std">String</span>] = sc.parallelize(<span class="std">Seq</span>(<span class="lit">"a"</span>, <span class="lit">"b"</span>, <span class="lit">"c"</span>))
 <span class="kw">val</span> side: SideInput[SparkeyReader] = sc
   .parallelize(<span class="std">Seq</span>(<span class="lit">"a"</span> -&gt; <span class="lit">"one"</span>, <span class="lit">"b"</span> -&gt; <span class="lit">"two"</span>))
   .asSparkeySideInput
@@ -165,11 +167,38 @@
 main.withSideInputs(side)
   .map { (x, s) <span class="kw">=&gt;</span>
     s(side).getOrElse(x, <span class="lit">"unknown"</span>)
-  }</pre></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../index.html" class="extype" name="com.spotify.scio.extra">extra</a></dd></dl></div>
+  }</pre><p>A <code>TypedSparkeyReader</code> can be used to do automatic decoding of JVM types from byte values:</p><pre><span class="kw">val</span> main: SCollection[<span class="std">String</span>] = sc.parallelize(<span class="std">Seq</span>(<span class="lit">"a"</span>, <span class="lit">"b"</span>, <span class="lit">"c"</span>))
+<span class="kw">val</span> side: SideInput[TypedSparkeyReader[MyObject]] = sc
+  .typedSparkeySideInput(<span class="lit">"gs://&lt;bucket&gt;/&lt;path&gt;/&lt;sparkey-prefix&gt;"</span>, MyObject.decode)
+
+<span class="kw">val</span> objects: SCollection[MyObject] = main
+  .withSideInputs(side)
+  .map { (x, s) <span class="kw">=&gt;</span> s(side).get(x) }
+  .toSCollection</pre><p>A <code>TypedSparkeyReader</code> can also accept a Caffeine cache to reduce IO and deserialization load:</p><pre><span class="kw">val</span> main: SCollection[<span class="std">String</span>] = sc.parallelize(<span class="std">Seq</span>(<span class="lit">"a"</span>, <span class="lit">"b"</span>, <span class="lit">"c"</span>))
+<span class="kw">val</span> cache: Cache[<span class="std">String</span>, MyObject] = ...
+<span class="kw">val</span> side: SideInput[TypedSparkeyReader[MyObject]] = sc
+  .typedSparkeySideInput(<span class="lit">"gs://&lt;bucket&gt;/&lt;path&gt;/&lt;sparkey-prefix&gt;"</span>, MyObject.decode, cache)
+
+<span class="kw">val</span> objects: SCollection[MyObject] = main
+  .withSideInputs(side)
+  .map { (x, s) <span class="kw">=&gt;</span> s(side).get(x) }
+  .toSCollection</pre></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../index.html" class="extype" name="com.spotify.scio.extra">extra</a></dd></dl></div>
     </li><li class="current-entities indented5">
+                        <span class="separator"></span>
+                        <a class="class" href="package$$CachedStringSparkeyReader.html" title="A wrapper around SparkeyReader that includes an in-memory Caffeine cache."></a>
+                        <a href="package$$CachedStringSparkeyReader.html" title="A wrapper around SparkeyReader that includes an in-memory Caffeine cache.">CachedStringSparkeyReader</a>
+                      </li><li class="current-entities indented5">
                         <span class="separator"></span>
                         <a class="class" href="package$$RichStringSparkeyReader.html" title="Enhanced version of SparkeyReader that mimics a Map."></a>
                         <a href="package$$RichStringSparkeyReader.html" title="Enhanced version of SparkeyReader that mimics a Map.">RichStringSparkeyReader</a>
+                      </li><li class="current-entities indented5">
+                        <span class="separator"></span>
+                        <a class="class" href="package$$ShardedSparkeyReader.html" title="A wrapper class around SparkeyReader that allows the reading of multiple Sparkey files, sharded by their keys (via MurmurHash3)."></a>
+                        <a href="package$$ShardedSparkeyReader.html" title="A wrapper class around SparkeyReader that allows the reading of multiple Sparkey files, sharded by their keys (via MurmurHash3).">ShardedSparkeyReader</a>
+                      </li><li class="current-entities indented5">
+                        <span class="separator"></span>
+                        <a class="trait" href="ShardedSparkeyUri.html" title="Sharded Sparkey support"></a>
+                        <a href="ShardedSparkeyUri.html" title="Sharded Sparkey support">ShardedSparkeyUri</a>
                       </li><li class="current-entities indented5">
                         <span class="separator"></span>
                         <a class="class" href="package$$SparkeyPairSCollection.html" title="Enhanced version of SCollection with Sparkey methods."></a>
@@ -190,6 +219,10 @@ main.withSideInputs(side)
                         <span class="separator"></span>
                         <a class="trait" href="package$$SparkeyWritable.html" title=""></a>
                         <a href="package$$SparkeyWritable.html" title="">SparkeyWritable</a>
+                      </li><li class="current-entities indented5">
+                        <span class="separator"></span>
+                        <a class="class" href="package$$TypedSparkeyReader.html" title="A wrapper around SparkeyReader that includes both a decoder (to map from each byte array to a JVM type) and an optional in-memory cache."></a>
+                        <a href="package$$TypedSparkeyReader.html" title="A wrapper around SparkeyReader that includes both a decoder (to map from each byte array to a JVM type) and an optional in-memory cache.">TypedSparkeyReader</a>
                       </li>
               </ul>
             </div>
@@ -358,6 +391,23 @@ main.withSideInputs(side)
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
+    </li><li name="com.spotify.scio.extra.sparkey.SparkeyScioContext#cachedStringSparkeySideInput" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="cachedStringSparkeySideInput[T](basePath:String,cache:com.spotify.scio.util.Cache[String,String]):com.spotify.scio.values.SideInput[com.spotify.scio.extra.sparkey.package.CachedStringSparkeyReader]"></a><a id="cachedStringSparkeySideInput[T](String,Cache[String,String]):SideInput[CachedStringSparkeyReader]"></a>
+      <span class="permalink">
+      <a href="../../../../../com/spotify/scio/extra/sparkey/package$$SparkeyScioContext.html#cachedStringSparkeySideInput[T](basePath:String,cache:com.spotify.scio.util.Cache[String,String]):com.spotify.scio.values.SideInput[com.spotify.scio.extra.sparkey.package.CachedStringSparkeyReader]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">cachedStringSparkeySideInput</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="basePath">basePath: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="cache">cache: <a href="../../util/Cache.html" class="extype" name="com.spotify.scio.util.Cache">Cache</a>[<span class="extype" name="scala.Predef.String">String</span>, <span class="extype" name="scala.Predef.String">String</span>]</span>)</span><span class="result">: <a href="../../values/SideInput.html" class="extype" name="com.spotify.scio.values.SideInput">SideInput</a>[<a href="package$$CachedStringSparkeyReader.html" class="extype" name="com.spotify.scio.extra.sparkey.CachedStringSparkeyReader">CachedStringSparkeyReader</a>]</span>
+      </span>
+      
+      <p class="shortcomment cmt">Create a SideInput of <code>CachedStringSparkeyReader</code> from a <a href="SparkeyUri.html" class="extype" name="com.spotify.scio.extra.sparkey.SparkeyUri">SparkeyUri</a> base path, to be used
+with <a href="../../values/SCollection.html#withSideInputs(sides:com.spotify.scio.values.SideInput[_]*)(implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollectionWithSideInput[T]" class="extmbr" name="com.spotify.scio.values.SCollection#withSideInputs">SCollection.withSideInputs</a>.</p>
     </li><li name="scala.AnyVal#getClass" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="getClass():Class[_&lt;:AnyVal]"></a>
       <span class="permalink">
@@ -390,7 +440,7 @@ main.withSideInputs(side)
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
-    </li><li name="com.spotify.scio.extra.sparkey.SparkeyScioContext#sparkeySideInput" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+    </li><li name="com.spotify.scio.extra.sparkey.SparkeyScioContext#sparkeySideInput" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="sparkeySideInput(basePath:String):com.spotify.scio.values.SideInput[com.spotify.sparkey.SparkeyReader]"></a><a id="sparkeySideInput(String):SideInput[SparkeyReader]"></a>
       <span class="permalink">
       <a href="../../../../../com/spotify/scio/extra/sparkey/package$$SparkeyScioContext.html#sparkeySideInput(basePath:String):com.spotify.scio.values.SideInput[com.spotify.sparkey.SparkeyReader]" title="Permalink">
@@ -406,7 +456,11 @@ main.withSideInputs(side)
       </span>
       
       <p class="shortcomment cmt">Create a SideInput of <code>SparkeyReader</code> from a <a href="SparkeyUri.html" class="extype" name="com.spotify.scio.extra.sparkey.SparkeyUri">SparkeyUri</a> base path, to be used with
-<a href="../../values/SCollection.html#withSideInputs(sides:com.spotify.scio.values.SideInput[_]*)(implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollectionWithSideInput[T]" class="extmbr" name="com.spotify.scio.values.SCollection#withSideInputs">SCollection.withSideInputs</a>.</p>
+<a href="../../values/SCollection.html#withSideInputs(sides:com.spotify.scio.values.SideInput[_]*)(implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollectionWithSideInput[T]" class="extmbr" name="com.spotify.scio.values.SCollection#withSideInputs">SCollection.withSideInputs</a>.</p><div class="fullcomment"><div class="comment cmt"><p>Create a SideInput of <code>SparkeyReader</code> from a <a href="SparkeyUri.html" class="extype" name="com.spotify.scio.extra.sparkey.SparkeyUri">SparkeyUri</a> base path, to be used with
+<a href="../../values/SCollection.html#withSideInputs(sides:com.spotify.scio.values.SideInput[_]*)(implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollectionWithSideInput[T]" class="extmbr" name="com.spotify.scio.values.SCollection#withSideInputs">SCollection.withSideInputs</a>.
+If the provided base path ends with &quot;*&quot;, it will be treated as a sharded collection of
+Sparkey files.
+</p></div></div>
     </li><li name="scala.Any#toString" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="toString():String"></a>
       <span class="permalink">
@@ -423,6 +477,27 @@ main.withSideInputs(side)
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
+    </li><li name="com.spotify.scio.extra.sparkey.SparkeyScioContext#typedSparkeySideInput" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="typedSparkeySideInput[T](basePath:String,decoder:Array[Byte]=&gt;T,cache:com.spotify.scio.util.Cache[String,T]):com.spotify.scio.values.SideInput[com.spotify.scio.extra.sparkey.package.TypedSparkeyReader[T]]"></a><a id="typedSparkeySideInput[T](String,(Array[Byte])⇒T,Cache[String,T]):SideInput[TypedSparkeyReader[T]]"></a>
+      <span class="permalink">
+      <a href="../../../../../com/spotify/scio/extra/sparkey/package$$SparkeyScioContext.html#typedSparkeySideInput[T](basePath:String,decoder:Array[Byte]=&gt;T,cache:com.spotify.scio.util.Cache[String,T]):com.spotify.scio.values.SideInput[com.spotify.scio.extra.sparkey.package.TypedSparkeyReader[T]]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">typedSparkeySideInput</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="basePath">basePath: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="decoder">decoder: (<span class="extype" name="scala.Array">Array</span>[<span class="extype" name="scala.Byte">Byte</span>]) ⇒ <span class="extype" name="com.spotify.scio.extra.sparkey.SparkeyScioContext.typedSparkeySideInput.T">T</span></span>, <span name="cache">cache: <a href="../../util/Cache.html" class="extype" name="com.spotify.scio.util.Cache">Cache</a>[<span class="extype" name="scala.Predef.String">String</span>, <span class="extype" name="com.spotify.scio.extra.sparkey.SparkeyScioContext.typedSparkeySideInput.T">T</span>] = <span class="symbol">null</span></span>)</span><span class="result">: <a href="../../values/SideInput.html" class="extype" name="com.spotify.scio.values.SideInput">SideInput</a>[<a href="package$$TypedSparkeyReader.html" class="extype" name="com.spotify.scio.extra.sparkey.TypedSparkeyReader">TypedSparkeyReader</a>[<span class="extype" name="com.spotify.scio.extra.sparkey.SparkeyScioContext.typedSparkeySideInput.T">T</span>]]</span>
+      </span>
+      
+      <p class="shortcomment cmt">Create a SideInput of <code>TypedSparkeyReader</code> from a <a href="SparkeyUri.html" class="extype" name="com.spotify.scio.extra.sparkey.SparkeyUri">SparkeyUri</a> base path, to be used with
+<a href="../../values/SCollection.html#withSideInputs(sides:com.spotify.scio.values.SideInput[_]*)(implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollectionWithSideInput[T]" class="extmbr" name="com.spotify.scio.values.SCollection#withSideInputs">SCollection.withSideInputs</a>.</p><div class="fullcomment"><div class="comment cmt"><p>Create a SideInput of <code>TypedSparkeyReader</code> from a <a href="SparkeyUri.html" class="extype" name="com.spotify.scio.extra.sparkey.SparkeyUri">SparkeyUri</a> base path, to be used with
+<a href="../../values/SCollection.html#withSideInputs(sides:com.spotify.scio.values.SideInput[_]*)(implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollectionWithSideInput[T]" class="extmbr" name="com.spotify.scio.values.SCollection#withSideInputs">SCollection.withSideInputs</a>.
+The provided decoder function will map from the underlying byte array to a JVM type, and
+the optional <span class="extype" name="Cache">Cache</span> object can be used to cache reads in memory after decoding.
+</p></div></div>
     </li>
               </ol>
             </div>

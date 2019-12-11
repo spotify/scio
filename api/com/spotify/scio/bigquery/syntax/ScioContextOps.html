@@ -372,6 +372,27 @@ detects the query's dialect. To override this, start the query with either <code
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
     </li><li name="com.spotify.scio.bigquery.syntax.ScioContextOps#bigQuerySelect" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="bigQuerySelect(sqlQuery:com.spotify.scio.bigquery.Query):com.spotify.scio.values.SCollection[com.spotify.scio.bigquery.TableRow]"></a><a id="bigQuerySelect(Query):SCollection[TableRow]"></a>
+      <span class="permalink">
+      <a href="../../../../../com/spotify/scio/bigquery/syntax/ScioContextOps.html#bigQuerySelect(sqlQuery:com.spotify.scio.bigquery.Query):com.spotify.scio.values.SCollection[com.spotify.scio.bigquery.TableRow]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">bigQuerySelect</span><span class="params">(<span name="sqlQuery">sqlQuery: <a href="../Query.html" class="extype" name="com.spotify.scio.bigquery.Query">Query</a></span>)</span><span class="result">: <a href="../../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<a href="../index.html#TableRow=com.google.api.services.bigquery.model.TableRow" class="extmbr" name="com.spotify.scio.bigquery.TableRow">TableRow</a>]</span>
+      </span>
+      
+      <p class="shortcomment cmt">Get an SCollection for a BigQuery SELECT query.</p><div class="fullcomment"><div class="comment cmt"><p>Get an SCollection for a BigQuery SELECT query.
+Both <a href="https://cloud.google.com/bigquery/docs/reference/legacy-sql" target="_blank">Legacy SQL</a> and
+<a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/" target="_blank">Standard SQL</a> dialects are
+supported. By default the query dialect will be automatically detected. To override this
+behavior, start the query string with <code>#legacysql</code> or <code>#standardsql</code>.
+</p></div></div>
+    </li><li name="com.spotify.scio.bigquery.syntax.ScioContextOps#bigQuerySelect" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="bigQuerySelect(sqlQuery:com.spotify.scio.bigquery.Query,flattenResults:Boolean):com.spotify.scio.values.SCollection[com.spotify.scio.bigquery.TableRow]"></a><a id="bigQuerySelect(Query,Boolean):SCollection[TableRow]"></a>
       <span class="permalink">
       <a href="../../../../../com/spotify/scio/bigquery/syntax/ScioContextOps.html#bigQuerySelect(sqlQuery:com.spotify.scio.bigquery.Query,flattenResults:Boolean):com.spotify.scio.values.SCollection[com.spotify.scio.bigquery.TableRow]" title="Permalink">
@@ -512,9 +533,25 @@ behavior, start the query string with <code>#legacysql</code> or <code>#standard
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
     </li><li name="com.spotify.scio.bigquery.syntax.ScioContextOps#typedBigQuery" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="typedBigQuery[T&lt;:com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation](newSource:com.spotify.scio.bigquery.Source)(implicitevidence$4:scala.reflect.ClassTag[T],implicitevidence$5:reflect.runtime.universe.TypeTag[T],implicitevidence$6:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]"></a><a id="typedBigQuery[T&lt;:HasAnnotation](Source)(ClassTag[T],scala.reflect.api.JavaUniverse.TypeTag[T],Coder[T]):SCollection[T]"></a>
+      <a id="typedBigQuery[T&lt;:com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation](newSource:Option[com.spotify.scio.bigquery.Source])(implicitevidence$10:scala.reflect.ClassTag[T],implicitevidence$11:reflect.runtime.universe.TypeTag[T],implicitevidence$12:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]"></a><a id="typedBigQuery[T&lt;:HasAnnotation](Option[Source])(ClassTag[T],scala.reflect.api.JavaUniverse.TypeTag[T],Coder[T]):SCollection[T]"></a>
       <span class="permalink">
-      <a href="../../../../../com/spotify/scio/bigquery/syntax/ScioContextOps.html#typedBigQuery[T&lt;:com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation](newSource:com.spotify.scio.bigquery.Source)(implicitevidence$4:scala.reflect.ClassTag[T],implicitevidence$5:reflect.runtime.universe.TypeTag[T],implicitevidence$6:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]" title="Permalink">
+      <a href="../../../../../com/spotify/scio/bigquery/syntax/ScioContextOps.html#typedBigQuery[T&lt;:com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation](newSource:Option[com.spotify.scio.bigquery.Source])(implicitevidence$10:scala.reflect.ClassTag[T],implicitevidence$11:reflect.runtime.universe.TypeTag[T],implicitevidence$12:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">typedBigQuery</span><span class="tparams">[<span name="T">T &lt;: <a href="../types/BigQueryType$$HasAnnotation.html" class="extype" name="com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation">HasAnnotation</a></span>]</span><span class="params">(<span name="newSource">newSource: <span class="extype" name="scala.Option">Option</span>[<a href="../Source.html" class="extype" name="com.spotify.scio.bigquery.Source">Source</a>]</span>)</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <span class="extype" name="scala.reflect.ClassTag">ClassTag</span>[<span class="extype" name="com.spotify.scio.bigquery.syntax.ScioContextOps.typedBigQuery.T">T</span>]</span>, <span name="arg1">arg1: <span class="extype" name="scala.reflect.api.TypeTags.TypeTag">scala.reflect.api.JavaUniverse.TypeTag</span>[<span class="extype" name="com.spotify.scio.bigquery.syntax.ScioContextOps.typedBigQuery.T">T</span>]</span>, <span name="arg2">arg2: <a href="../../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.bigquery.syntax.ScioContextOps.typedBigQuery.T">T</span>]</span>)</span><span class="result">: <a href="../../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.bigquery.syntax.ScioContextOps.typedBigQuery.T">T</span>]</span>
+      </span>
+      
+      
+    </li><li name="com.spotify.scio.bigquery.syntax.ScioContextOps#typedBigQuery" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="typedBigQuery[T&lt;:com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation](newSource:com.spotify.scio.bigquery.Source)(implicitevidence$7:scala.reflect.ClassTag[T],implicitevidence$8:reflect.runtime.universe.TypeTag[T],implicitevidence$9:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]"></a><a id="typedBigQuery[T&lt;:HasAnnotation](Source)(ClassTag[T],scala.reflect.api.JavaUniverse.TypeTag[T],Coder[T]):SCollection[T]"></a>
+      <span class="permalink">
+      <a href="../../../../../com/spotify/scio/bigquery/syntax/ScioContextOps.html#typedBigQuery[T&lt;:com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation](newSource:com.spotify.scio.bigquery.Source)(implicitevidence$7:scala.reflect.ClassTag[T],implicitevidence$8:reflect.runtime.universe.TypeTag[T],implicitevidence$9:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -527,10 +564,10 @@ behavior, start the query string with <code>#legacysql</code> or <code>#standard
       </span>
       
       
-    </li><li name="com.spotify.scio.bigquery.syntax.ScioContextOps#typedBigQueryStorage" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="typedBigQueryStorage[T&lt;:com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation](newSource:com.spotify.scio.bigquery.Source,rowRestriction:String)(implicitevidence$11:scala.reflect.ClassTag[T],implicitevidence$12:reflect.runtime.universe.TypeTag[T],implicitevidence$13:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]"></a><a id="typedBigQueryStorage[T&lt;:HasAnnotation](Source,String)(ClassTag[T],scala.reflect.api.JavaUniverse.TypeTag[T],Coder[T]):SCollection[T]"></a>
+    </li><li name="com.spotify.scio.bigquery.syntax.ScioContextOps#typedBigQuery" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="typedBigQuery[T&lt;:com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation]()(implicitevidence$4:scala.reflect.ClassTag[T],implicitevidence$5:reflect.runtime.universe.TypeTag[T],implicitevidence$6:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]"></a><a id="typedBigQuery[T&lt;:HasAnnotation]()(ClassTag[T],scala.reflect.api.JavaUniverse.TypeTag[T],Coder[T]):SCollection[T]"></a>
       <span class="permalink">
-      <a href="../../../../../com/spotify/scio/bigquery/syntax/ScioContextOps.html#typedBigQueryStorage[T&lt;:com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation](newSource:com.spotify.scio.bigquery.Source,rowRestriction:String)(implicitevidence$11:scala.reflect.ClassTag[T],implicitevidence$12:reflect.runtime.universe.TypeTag[T],implicitevidence$13:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]" title="Permalink">
+      <a href="../../../../../com/spotify/scio/bigquery/syntax/ScioContextOps.html#typedBigQuery[T&lt;:com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation]()(implicitevidence$4:scala.reflect.ClassTag[T],implicitevidence$5:reflect.runtime.universe.TypeTag[T],implicitevidence$6:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -539,7 +576,71 @@ behavior, start the query string with <code>#legacysql</code> or <code>#standard
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">typedBigQueryStorage</span><span class="tparams">[<span name="T">T &lt;: <a href="../types/BigQueryType$$HasAnnotation.html" class="extype" name="com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation">HasAnnotation</a></span>]</span><span class="params">(<span name="newSource">newSource: <a href="../Source.html" class="extype" name="com.spotify.scio.bigquery.Source">Source</a> = <span class="symbol">null</span></span>, <span name="rowRestriction">rowRestriction: <span class="extype" name="scala.Predef.String">String</span> = <span class="symbol">null</span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <span class="extype" name="scala.reflect.ClassTag">ClassTag</span>[<span class="extype" name="com.spotify.scio.bigquery.syntax.ScioContextOps.typedBigQueryStorage.T">T</span>]</span>, <span name="arg1">arg1: <span class="extype" name="scala.reflect.api.TypeTags.TypeTag">scala.reflect.api.JavaUniverse.TypeTag</span>[<span class="extype" name="com.spotify.scio.bigquery.syntax.ScioContextOps.typedBigQueryStorage.T">T</span>]</span>, <span name="arg2">arg2: <a href="../../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.bigquery.syntax.ScioContextOps.typedBigQueryStorage.T">T</span>]</span>)</span><span class="result">: <a href="../../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.bigquery.syntax.ScioContextOps.typedBigQueryStorage.T">T</span>]</span>
+        <span class="name">typedBigQuery</span><span class="tparams">[<span name="T">T &lt;: <a href="../types/BigQueryType$$HasAnnotation.html" class="extype" name="com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation">HasAnnotation</a></span>]</span><span class="params">()</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <span class="extype" name="scala.reflect.ClassTag">ClassTag</span>[<span class="extype" name="com.spotify.scio.bigquery.syntax.ScioContextOps.typedBigQuery.T">T</span>]</span>, <span name="arg1">arg1: <span class="extype" name="scala.reflect.api.TypeTags.TypeTag">scala.reflect.api.JavaUniverse.TypeTag</span>[<span class="extype" name="com.spotify.scio.bigquery.syntax.ScioContextOps.typedBigQuery.T">T</span>]</span>, <span name="arg2">arg2: <a href="../../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.bigquery.syntax.ScioContextOps.typedBigQuery.T">T</span>]</span>)</span><span class="result">: <a href="../../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.bigquery.syntax.ScioContextOps.typedBigQuery.T">T</span>]</span>
+      </span>
+      
+      
+    </li><li name="com.spotify.scio.bigquery.syntax.ScioContextOps#typedBigQueryStorage" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="typedBigQueryStorage[T&lt;:com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation](table:com.spotify.scio.bigquery.Table,rowRestriction:String)(implicitevidence$26:scala.reflect.ClassTag[T],implicitevidence$27:reflect.runtime.universe.TypeTag[T],implicitevidence$28:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]"></a><a id="typedBigQueryStorage[T&lt;:HasAnnotation](Table,String)(ClassTag[T],scala.reflect.api.JavaUniverse.TypeTag[T],Coder[T]):SCollection[T]"></a>
+      <span class="permalink">
+      <a href="../../../../../com/spotify/scio/bigquery/syntax/ScioContextOps.html#typedBigQueryStorage[T&lt;:com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation](table:com.spotify.scio.bigquery.Table,rowRestriction:String)(implicitevidence$26:scala.reflect.ClassTag[T],implicitevidence$27:reflect.runtime.universe.TypeTag[T],implicitevidence$28:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">typedBigQueryStorage</span><span class="tparams">[<span name="T">T &lt;: <a href="../types/BigQueryType$$HasAnnotation.html" class="extype" name="com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation">HasAnnotation</a></span>]</span><span class="params">(<span name="table">table: <a href="../Table.html" class="extype" name="com.spotify.scio.bigquery.Table">Table</a></span>, <span name="rowRestriction">rowRestriction: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <span class="extype" name="scala.reflect.ClassTag">ClassTag</span>[<span class="extype" name="com.spotify.scio.bigquery.syntax.ScioContextOps.typedBigQueryStorage.T">T</span>]</span>, <span name="arg1">arg1: <span class="extype" name="scala.reflect.api.TypeTags.TypeTag">scala.reflect.api.JavaUniverse.TypeTag</span>[<span class="extype" name="com.spotify.scio.bigquery.syntax.ScioContextOps.typedBigQueryStorage.T">T</span>]</span>, <span name="arg2">arg2: <a href="../../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.bigquery.syntax.ScioContextOps.typedBigQueryStorage.T">T</span>]</span>)</span><span class="result">: <a href="../../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.bigquery.syntax.ScioContextOps.typedBigQueryStorage.T">T</span>]</span>
+      </span>
+      
+      
+    </li><li name="com.spotify.scio.bigquery.syntax.ScioContextOps#typedBigQueryStorage" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="typedBigQueryStorage[T&lt;:com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation](rowRestriction:String)(implicitevidence$23:scala.reflect.ClassTag[T],implicitevidence$24:reflect.runtime.universe.TypeTag[T],implicitevidence$25:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]"></a><a id="typedBigQueryStorage[T&lt;:HasAnnotation](String)(ClassTag[T],scala.reflect.api.JavaUniverse.TypeTag[T],Coder[T]):SCollection[T]"></a>
+      <span class="permalink">
+      <a href="../../../../../com/spotify/scio/bigquery/syntax/ScioContextOps.html#typedBigQueryStorage[T&lt;:com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation](rowRestriction:String)(implicitevidence$23:scala.reflect.ClassTag[T],implicitevidence$24:reflect.runtime.universe.TypeTag[T],implicitevidence$25:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">typedBigQueryStorage</span><span class="tparams">[<span name="T">T &lt;: <a href="../types/BigQueryType$$HasAnnotation.html" class="extype" name="com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation">HasAnnotation</a></span>]</span><span class="params">(<span name="rowRestriction">rowRestriction: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <span class="extype" name="scala.reflect.ClassTag">ClassTag</span>[<span class="extype" name="com.spotify.scio.bigquery.syntax.ScioContextOps.typedBigQueryStorage.T">T</span>]</span>, <span name="arg1">arg1: <span class="extype" name="scala.reflect.api.TypeTags.TypeTag">scala.reflect.api.JavaUniverse.TypeTag</span>[<span class="extype" name="com.spotify.scio.bigquery.syntax.ScioContextOps.typedBigQueryStorage.T">T</span>]</span>, <span name="arg2">arg2: <a href="../../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.bigquery.syntax.ScioContextOps.typedBigQueryStorage.T">T</span>]</span>)</span><span class="result">: <a href="../../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.bigquery.syntax.ScioContextOps.typedBigQueryStorage.T">T</span>]</span>
+      </span>
+      
+      
+    </li><li name="com.spotify.scio.bigquery.syntax.ScioContextOps#typedBigQueryStorage" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="typedBigQueryStorage[T&lt;:com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation](table:com.spotify.scio.bigquery.Table)(implicitevidence$20:scala.reflect.ClassTag[T],implicitevidence$21:reflect.runtime.universe.TypeTag[T],implicitevidence$22:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]"></a><a id="typedBigQueryStorage[T&lt;:HasAnnotation](Table)(ClassTag[T],scala.reflect.api.JavaUniverse.TypeTag[T],Coder[T]):SCollection[T]"></a>
+      <span class="permalink">
+      <a href="../../../../../com/spotify/scio/bigquery/syntax/ScioContextOps.html#typedBigQueryStorage[T&lt;:com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation](table:com.spotify.scio.bigquery.Table)(implicitevidence$20:scala.reflect.ClassTag[T],implicitevidence$21:reflect.runtime.universe.TypeTag[T],implicitevidence$22:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">typedBigQueryStorage</span><span class="tparams">[<span name="T">T &lt;: <a href="../types/BigQueryType$$HasAnnotation.html" class="extype" name="com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation">HasAnnotation</a></span>]</span><span class="params">(<span name="table">table: <a href="../Table.html" class="extype" name="com.spotify.scio.bigquery.Table">Table</a></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <span class="extype" name="scala.reflect.ClassTag">ClassTag</span>[<span class="extype" name="com.spotify.scio.bigquery.syntax.ScioContextOps.typedBigQueryStorage.T">T</span>]</span>, <span name="arg1">arg1: <span class="extype" name="scala.reflect.api.TypeTags.TypeTag">scala.reflect.api.JavaUniverse.TypeTag</span>[<span class="extype" name="com.spotify.scio.bigquery.syntax.ScioContextOps.typedBigQueryStorage.T">T</span>]</span>, <span name="arg2">arg2: <a href="../../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.bigquery.syntax.ScioContextOps.typedBigQueryStorage.T">T</span>]</span>)</span><span class="result">: <a href="../../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.bigquery.syntax.ScioContextOps.typedBigQueryStorage.T">T</span>]</span>
+      </span>
+      
+      
+    </li><li name="com.spotify.scio.bigquery.syntax.ScioContextOps#typedBigQueryStorage" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="typedBigQueryStorage[T&lt;:com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation]()(implicitevidence$17:scala.reflect.ClassTag[T],implicitevidence$18:reflect.runtime.universe.TypeTag[T],implicitevidence$19:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]"></a><a id="typedBigQueryStorage[T&lt;:HasAnnotation]()(ClassTag[T],scala.reflect.api.JavaUniverse.TypeTag[T],Coder[T]):SCollection[T]"></a>
+      <span class="permalink">
+      <a href="../../../../../com/spotify/scio/bigquery/syntax/ScioContextOps.html#typedBigQueryStorage[T&lt;:com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation]()(implicitevidence$17:scala.reflect.ClassTag[T],implicitevidence$18:reflect.runtime.universe.TypeTag[T],implicitevidence$19:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">typedBigQueryStorage</span><span class="tparams">[<span name="T">T &lt;: <a href="../types/BigQueryType$$HasAnnotation.html" class="extype" name="com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation">HasAnnotation</a></span>]</span><span class="params">()</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <span class="extype" name="scala.reflect.ClassTag">ClassTag</span>[<span class="extype" name="com.spotify.scio.bigquery.syntax.ScioContextOps.typedBigQueryStorage.T">T</span>]</span>, <span name="arg1">arg1: <span class="extype" name="scala.reflect.api.TypeTags.TypeTag">scala.reflect.api.JavaUniverse.TypeTag</span>[<span class="extype" name="com.spotify.scio.bigquery.syntax.ScioContextOps.typedBigQueryStorage.T">T</span>]</span>, <span name="arg2">arg2: <a href="../../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.bigquery.syntax.ScioContextOps.typedBigQueryStorage.T">T</span>]</span>)</span><span class="result">: <a href="../../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.bigquery.syntax.ScioContextOps.typedBigQueryStorage.T">T</span>]</span>
       </span>
       
       <p class="shortcomment cmt">Get a typed SCollection for a BigQuery storage API.</p><div class="fullcomment"><div class="comment cmt"><p>Get a typed SCollection for a BigQuery storage API.</p><p>Note that <code>T</code> must be annotated with
@@ -547,9 +648,9 @@ behavior, start the query string with <code>#legacysql</code> or <code>#standard
 <a href="../types/BigQueryType$$fromQuery.html" class="extype" name="com.spotify.scio.bigquery.types.BigQueryType.fromQuery">BigQueryType.fromQuery</a>
 </p></div></div>
     </li><li name="com.spotify.scio.bigquery.syntax.ScioContextOps#typedBigQueryTable" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="typedBigQueryTable[T](table:com.spotify.scio.bigquery.Table,parseFn:org.apache.beam.sdk.io.gcp.bigquery.SchemaAndRecord=&gt;T)(implicitevidence$9:com.spotify.scio.schemas.Schema[T],implicitevidence$10:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]"></a><a id="typedBigQueryTable[T](Table,(SchemaAndRecord)⇒T)(Schema[T],Coder[T]):SCollection[T]"></a>
+      <a id="typedBigQueryTable[T](table:com.spotify.scio.bigquery.Table,parseFn:org.apache.beam.sdk.io.gcp.bigquery.SchemaAndRecord=&gt;T)(implicitevidence$15:com.spotify.scio.schemas.Schema[T],implicitevidence$16:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]"></a><a id="typedBigQueryTable[T](Table,(SchemaAndRecord)⇒T)(Schema[T],Coder[T]):SCollection[T]"></a>
       <span class="permalink">
-      <a href="../../../../../com/spotify/scio/bigquery/syntax/ScioContextOps.html#typedBigQueryTable[T](table:com.spotify.scio.bigquery.Table,parseFn:org.apache.beam.sdk.io.gcp.bigquery.SchemaAndRecord=&gt;T)(implicitevidence$9:com.spotify.scio.schemas.Schema[T],implicitevidence$10:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]" title="Permalink">
+      <a href="../../../../../com/spotify/scio/bigquery/syntax/ScioContextOps.html#typedBigQueryTable[T](table:com.spotify.scio.bigquery.Table,parseFn:org.apache.beam.sdk.io.gcp.bigquery.SchemaAndRecord=&gt;T)(implicitevidence$15:com.spotify.scio.schemas.Schema[T],implicitevidence$16:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -563,9 +664,9 @@ behavior, start the query string with <code>#legacysql</code> or <code>#standard
       
       
     </li><li name="com.spotify.scio.bigquery.syntax.ScioContextOps#typedBigQueryTable" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="typedBigQueryTable[T](table:com.spotify.scio.bigquery.Table)(implicitevidence$7:com.spotify.scio.schemas.Schema[T],implicitevidence$8:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]"></a><a id="typedBigQueryTable[T](Table)(Schema[T],Coder[T]):SCollection[T]"></a>
+      <a id="typedBigQueryTable[T](table:com.spotify.scio.bigquery.Table)(implicitevidence$13:com.spotify.scio.schemas.Schema[T],implicitevidence$14:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]"></a><a id="typedBigQueryTable[T](Table)(Schema[T],Coder[T]):SCollection[T]"></a>
       <span class="permalink">
-      <a href="../../../../../com/spotify/scio/bigquery/syntax/ScioContextOps.html#typedBigQueryTable[T](table:com.spotify.scio.bigquery.Table)(implicitevidence$7:com.spotify.scio.schemas.Schema[T],implicitevidence$8:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]" title="Permalink">
+      <a href="../../../../../com/spotify/scio/bigquery/syntax/ScioContextOps.html#typedBigQueryTable[T](table:com.spotify.scio.bigquery.Table)(implicitevidence$13:com.spotify.scio.schemas.Schema[T],implicitevidence$14:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -598,7 +699,7 @@ behavior, start the query string with <code>#legacysql</code> or <code>#standard
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name deprecated" title="Deprecated: (Since version Scio 0.8) this method will be removed; use bigQuery(Query(sql), flattenResults) instead">bigQuerySelect</span><span class="params">(<span name="sqlQuery">sqlQuery: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="flattenResults">flattenResults: <span class="extype" name="scala.Boolean">Boolean</span> = <span class="defval" name='<span class="name"><a href="../../../../index.html">BigQuerySelect.ReadParam.DefaultFlattenResults</a></span>'>...</span></span>)</span><span class="result">: <a href="../../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<a href="../index.html#TableRow=com.google.api.services.bigquery.model.TableRow" class="extmbr" name="com.spotify.scio.bigquery.TableRow">TableRow</a>]</span>
+        <span class="name deprecated" title="Deprecated: (Since version 0.8.0) this method will be removed; use bigQuerySelect(Query(sql), flattenResults) instead">bigQuerySelect</span><span class="params">(<span name="sqlQuery">sqlQuery: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="flattenResults">flattenResults: <span class="extype" name="scala.Boolean">Boolean</span> = <span class="defval" name='<span class="name"><a href="../../../../index.html">BigQuerySelect.ReadParam.DefaultFlattenResults</a></span>'>...</span></span>)</span><span class="result">: <a href="../../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<a href="../index.html#TableRow=com.google.api.services.bigquery.model.TableRow" class="extmbr" name="com.spotify.scio.bigquery.TableRow">TableRow</a>]</span>
       </span>
       
       <p class="shortcomment cmt">Get an SCollection for a BigQuery SELECT query.</p><div class="fullcomment"><div class="comment cmt"><p>Get an SCollection for a BigQuery SELECT query.
@@ -609,7 +710,7 @@ behavior, start the query string with <code>#legacysql</code> or <code>#standard
 </p></div><dl class="attributes block"> <dt>Annotations</dt><dd>
                 <span class="name">@deprecated</span>
               
-        </dd><dt>Deprecated</dt><dd class="cmt"><p><i>(Since version Scio 0.8)</i> this method will be removed; use bigQuery(Query(sql), flattenResults) instead</p></dd></dl></div>
+        </dd><dt>Deprecated</dt><dd class="cmt"><p><i>(Since version 0.8.0)</i> this method will be removed; use bigQuerySelect(Query(sql), flattenResults) instead</p></dd></dl></div>
     </li><li name="com.spotify.scio.bigquery.syntax.ScioContextOps#bigQueryTable" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="bigQueryTable(tableSpec:String):com.spotify.scio.values.SCollection[com.spotify.scio.bigquery.TableRow]"></a><a id="bigQueryTable(String):SCollection[TableRow]"></a>
       <span class="permalink">
@@ -622,14 +723,14 @@ behavior, start the query string with <code>#legacysql</code> or <code>#standard
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name deprecated" title="Deprecated: (Since version Scio 0.8) this method will be removed; use bigQueryTable(Table.Spec(table)) instead">bigQueryTable</span><span class="params">(<span name="tableSpec">tableSpec: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <a href="../../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<a href="../index.html#TableRow=com.google.api.services.bigquery.model.TableRow" class="extmbr" name="com.spotify.scio.bigquery.TableRow">TableRow</a>]</span>
+        <span class="name deprecated" title="Deprecated: (Since version 0.8.0) this method will be removed; use bigQueryTable(Table.Spec(table)) instead">bigQueryTable</span><span class="params">(<span name="tableSpec">tableSpec: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <a href="../../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<a href="../index.html#TableRow=com.google.api.services.bigquery.model.TableRow" class="extmbr" name="com.spotify.scio.bigquery.TableRow">TableRow</a>]</span>
       </span>
       
       <p class="shortcomment cmt">Get an SCollection for a BigQuery table.</p><div class="fullcomment"><div class="comment cmt"><p>Get an SCollection for a BigQuery table.
 </p></div><dl class="attributes block"> <dt>Annotations</dt><dd>
                 <span class="name">@deprecated</span>
               
-        </dd><dt>Deprecated</dt><dd class="cmt"><p><i>(Since version Scio 0.8)</i> this method will be removed; use bigQueryTable(Table.Spec(table)) instead</p></dd></dl></div>
+        </dd><dt>Deprecated</dt><dd class="cmt"><p><i>(Since version 0.8.0)</i> this method will be removed; use bigQueryTable(Table.Spec(table)) instead</p></dd></dl></div>
     </li><li name="com.spotify.scio.bigquery.syntax.ScioContextOps#bigQueryTable" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="bigQueryTable(table:com.google.api.services.bigquery.model.TableReference):com.spotify.scio.values.SCollection[com.spotify.scio.bigquery.TableRow]"></a><a id="bigQueryTable(TableReference):SCollection[TableRow]"></a>
       <span class="permalink">
@@ -642,14 +743,14 @@ behavior, start the query string with <code>#legacysql</code> or <code>#standard
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name deprecated" title="Deprecated: (Since version Scio 0.8) this method will be removed; use bigQueryTable(Table.Ref(table)) instead">bigQueryTable</span><span class="params">(<span name="table">table: <span class="extype" name="com.google.api.services.bigquery.model.TableReference">TableReference</span></span>)</span><span class="result">: <a href="../../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<a href="../index.html#TableRow=com.google.api.services.bigquery.model.TableRow" class="extmbr" name="com.spotify.scio.bigquery.TableRow">TableRow</a>]</span>
+        <span class="name deprecated" title="Deprecated: (Since version 0.8.0) this method will be removed; use bigQueryTable(Table.Ref(table)) instead">bigQueryTable</span><span class="params">(<span name="table">table: <span class="extype" name="com.google.api.services.bigquery.model.TableReference">TableReference</span></span>)</span><span class="result">: <a href="../../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<a href="../index.html#TableRow=com.google.api.services.bigquery.model.TableRow" class="extmbr" name="com.spotify.scio.bigquery.TableRow">TableRow</a>]</span>
       </span>
       
       <p class="shortcomment cmt">Get an SCollection for a BigQuery table.</p><div class="fullcomment"><div class="comment cmt"><p>Get an SCollection for a BigQuery table.
 </p></div><dl class="attributes block"> <dt>Annotations</dt><dd>
                 <span class="name">@deprecated</span>
               
-        </dd><dt>Deprecated</dt><dd class="cmt"><p><i>(Since version Scio 0.8)</i> this method will be removed; use bigQueryTable(Table.Ref(table)) instead</p></dd></dl></div>
+        </dd><dt>Deprecated</dt><dd class="cmt"><p><i>(Since version 0.8.0)</i> this method will be removed; use bigQueryTable(Table.Ref(table)) instead</p></dd></dl></div>
     </li><li name="com.spotify.scio.bigquery.syntax.ScioContextOps#typedBigQuery" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="typedBigQuery[T&lt;:com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation](newSource:String)(implicitevidence$1:scala.reflect.ClassTag[T],implicitevidence$2:reflect.runtime.universe.TypeTag[T],implicitevidence$3:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]"></a><a id="typedBigQuery[T&lt;:HasAnnotation](String)(ClassTag[T],scala.reflect.api.JavaUniverse.TypeTag[T],Coder[T]):SCollection[T]"></a>
       <span class="permalink">
@@ -662,7 +763,7 @@ behavior, start the query string with <code>#legacysql</code> or <code>#standard
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name deprecated" title="Deprecated: (Since version Scio 0.8) this method will be removed; use typedBigQuery(Source) instead">typedBigQuery</span><span class="tparams">[<span name="T">T &lt;: <a href="../types/BigQueryType$$HasAnnotation.html" class="extype" name="com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation">HasAnnotation</a></span>]</span><span class="params">(<span name="newSource">newSource: <span class="extype" name="scala.Predef.String">String</span> = <span class="symbol">null</span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <span class="extype" name="scala.reflect.ClassTag">ClassTag</span>[<span class="extype" name="com.spotify.scio.bigquery.syntax.ScioContextOps.typedBigQuery.T">T</span>]</span>, <span name="arg1">arg1: <span class="extype" name="scala.reflect.api.TypeTags.TypeTag">scala.reflect.api.JavaUniverse.TypeTag</span>[<span class="extype" name="com.spotify.scio.bigquery.syntax.ScioContextOps.typedBigQuery.T">T</span>]</span>, <span name="arg2">arg2: <a href="../../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.bigquery.syntax.ScioContextOps.typedBigQuery.T">T</span>]</span>)</span><span class="result">: <a href="../../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.bigquery.syntax.ScioContextOps.typedBigQuery.T">T</span>]</span>
+        <span class="name deprecated" title="Deprecated: (Since version 0.8.0) this method will be removed; use typedBigQuery(Source) instead">typedBigQuery</span><span class="tparams">[<span name="T">T &lt;: <a href="../types/BigQueryType$$HasAnnotation.html" class="extype" name="com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation">HasAnnotation</a></span>]</span><span class="params">(<span name="newSource">newSource: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <span class="extype" name="scala.reflect.ClassTag">ClassTag</span>[<span class="extype" name="com.spotify.scio.bigquery.syntax.ScioContextOps.typedBigQuery.T">T</span>]</span>, <span name="arg1">arg1: <span class="extype" name="scala.reflect.api.TypeTags.TypeTag">scala.reflect.api.JavaUniverse.TypeTag</span>[<span class="extype" name="com.spotify.scio.bigquery.syntax.ScioContextOps.typedBigQuery.T">T</span>]</span>, <span name="arg2">arg2: <a href="../../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.bigquery.syntax.ScioContextOps.typedBigQuery.T">T</span>]</span>)</span><span class="result">: <a href="../../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.bigquery.syntax.ScioContextOps.typedBigQuery.T">T</span>]</span>
       </span>
       
       <p class="shortcomment cmt">Get a typed SCollection for a BigQuery SELECT query, table or storage.</p><div class="fullcomment"><div class="comment cmt"><p>Get a typed SCollection for a BigQuery SELECT query, table or storage.</p><p>Note that <code>T</code> must be annotated with
@@ -688,7 +789,7 @@ behavior, start the query string with <code>#legacysql</code> or <code>#standard
 </p></div><dl class="attributes block"> <dt>Annotations</dt><dd>
                 <span class="name">@deprecated</span>
               
-        </dd><dt>Deprecated</dt><dd class="cmt"><p><i>(Since version Scio 0.8)</i> this method will be removed; use typedBigQuery(Source) instead</p></dd></dl></div>
+        </dd><dt>Deprecated</dt><dd class="cmt"><p><i>(Since version 0.8.0)</i> this method will be removed; use typedBigQuery(Source) instead</p></dd></dl></div>
     </li></ol>
             </div>
         </div>

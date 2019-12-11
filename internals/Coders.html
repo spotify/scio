@@ -299,8 +299,8 @@ Coder[Top]
 <p>Sometimes, no <code>Coder</code> instance can be found, and it&rsquo;s impossible to automatically derive one. In that case, Scio will fallback to a Kryo coder for that specific type, and if the scalac flag <code>-Xmacro-settings:show-coder-fallback=true</code> is set, a warning message will be displayed <strong>at compile time</strong>. This message should help you fix the warning.</p>
 <p>While compiling the following with <code>-Xmacro-settings:show-coder-fallback=true</code></p>
 <pre class="prettyprint"><code class="language-scala">import com.spotify.scio.coders._
-val localCoder = Coder[java.util.Locale]
-// localCoder: Coder[java.util.Locale] = Fallback(java.util.Locale)
+val localeCoder = Coder[java.util.Locale]
+// localeCoder: Coder[java.util.Locale] = Fallback(java.util.Locale)
 </code></pre>
 <p>Scalac will output:</p>
 <pre><code>Warning: No implicit Coder found for the following type:
@@ -402,7 +402,7 @@ Kryo
 <div class="md-footer-meta__inner md-grid">
 <div class="md-footer-copyright">
 <div class="md-footer-copyright__highlight">
-Copyright (C) 2018 Spotify AB
+Copyright (C) 2019 Spotify AB
 </div>
 Powered by
 <a href="https://github.com/lightbend/paradox">Paradox</a>

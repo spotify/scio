@@ -277,16 +277,18 @@ sc.libSVMFile(<span class="lit">"input.svm"</span>)</pre></div><dl class="attrib
         <span class="name">sparkey</span>
       </span>
       
-      <p class="shortcomment cmt">Main package for Sparkey side input APIs.</p><div class="fullcomment"><div class="comment cmt"><p>Main package for Sparkey side input APIs. Import all.</p><pre><span class="kw">import</span> com.spotify.scio.extra.sparkey._</pre><p>To save an <code>SCollection[(String, String)]</code> to a Sparkey file:</p><pre><span class="kw">val</span> s = sc.parallelize(<span class="std">Seq</span>(<span class="lit">"a"</span> -&gt; <span class="lit">"one"</span>, <span class="lit">"b"</span> -&gt; <span class="lit">"two"</span>))
+      <p class="shortcomment cmt">Main package for Sparkey side input APIs.</p><div class="fullcomment"><div class="comment cmt"><p>Main package for Sparkey side input APIs. Import all.</p><pre><span class="kw">import</span> com.spotify.scio.extra.sparkey._</pre><p>To save an <code>SCollection[(String, String)]</code> to a Sparkey fileset:</p><pre><span class="kw">val</span> s = sc.parallelize(<span class="std">Seq</span>(<span class="lit">"a"</span> -&gt; <span class="lit">"one"</span>, <span class="lit">"b"</span> -&gt; <span class="lit">"two"</span>))
 
 <span class="cmt">// temporary location</span>
 <span class="kw">val</span> s1: SCollection[SparkeyUri] = s.asSparkey
 
 <span class="cmt">// specific location</span>
-<span class="kw">val</span> s1: SCollection[SparkeyUri] = s.asSparkey(<span class="lit">"gs://&lt;bucket&gt;/&lt;path&gt;/&lt;sparkey-prefix&gt;"</span>)</pre><p>The result <code>SCollection[SparkeyUri]</code> can be converted to a side input:</p><pre><span class="kw">val</span> s: SCollection[SparkeyUri] = sc.parallelize(<span class="std">Seq</span>(<span class="lit">"a"</span> -&gt; <span class="lit">"one"</span>, <span class="lit">"b"</span> -&gt; <span class="lit">"two"</span>)).asSparkey
+<span class="kw">val</span> s1: SCollection[SparkeyUri] = s.asSparkey(<span class="lit">"gs://&lt;bucket&gt;/&lt;path&gt;/&lt;sparkey-prefix&gt;"</span>)</pre><p>// with multiple shards, sharded by MurmurHash3 of the key
+val s1: SCollection[SparkeyUri] = s.asSparkey(&quot;gs://&lt;bucket&gt;/&lt;path&gt;/&lt;sparkey-dir&gt;&quot;, numShards=2)
+}}}</p><p>The result <code>SCollection[SparkeyUri]</code> can be converted to a side input:</p><pre><span class="kw">val</span> s: SCollection[SparkeyUri] = sc.parallelize(<span class="std">Seq</span>(<span class="lit">"a"</span> -&gt; <span class="lit">"one"</span>, <span class="lit">"b"</span> -&gt; <span class="lit">"two"</span>)).asSparkey
 <span class="kw">val</span> side: SideInput[SparkeyReader] = s.asSparkeySideInput</pre><p>These two steps can be done with a syntactic sugar:</p><pre><span class="kw">val</span> side: SideInput[SparkeyReader] = sc
   .parallelize(<span class="std">Seq</span>(<span class="lit">"a"</span> -&gt; <span class="lit">"one"</span>, <span class="lit">"b"</span> -&gt; <span class="lit">"two"</span>))
-  .asSparkeySideInput</pre><p>An existing Sparkey file can also be converted to a side input directly:</p><pre>sc.sparkeySideInput(<span class="lit">"gs://&lt;bucket&gt;/&lt;path&gt;/&lt;sparkey-prefix&gt;"</span>)</pre><p><code>SparkeyReader</code> can be used like a lookup table in a side input operation:</p><pre><span class="kw">val</span> main: SCollection[<span class="std">String</span>] = sc.parallelize(<span class="std">Seq</span>(<span class="lit">"a"</span>, <span class="lit">"b"</span>, <span class="lit">"c"</span>))
+  .asSparkeySideInput</pre><p>An existing Sparkey file can also be converted to a side input directly:</p><pre>sc.sparkeySideInput(<span class="lit">"gs://&lt;bucket&gt;/&lt;path&gt;/&lt;sparkey-prefix&gt;"</span>)</pre><p>A sharded collection of Sparkey files can also be used as a side input by specifying a glob path:</p><pre>sc.sparkeySideInput(<span class="lit">"gs://&lt;bucket&gt;/&lt;path&gt;/&lt;sparkey-dir&gt;/part-*"</span>)</pre><p><code>SparkeyReader</code> can be used like a lookup table in a side input operation:</p><pre><span class="kw">val</span> main: SCollection[<span class="std">String</span>] = sc.parallelize(<span class="std">Seq</span>(<span class="lit">"a"</span>, <span class="lit">"b"</span>, <span class="lit">"c"</span>))
 <span class="kw">val</span> side: SideInput[SparkeyReader] = sc
   .parallelize(<span class="std">Seq</span>(<span class="lit">"a"</span> -&gt; <span class="lit">"one"</span>, <span class="lit">"b"</span> -&gt; <span class="lit">"two"</span>))
   .asSparkeySideInput
@@ -294,11 +296,38 @@ sc.libSVMFile(<span class="lit">"input.svm"</span>)</pre></div><dl class="attrib
 main.withSideInputs(side)
   .map { (x, s) <span class="kw">=&gt;</span>
     s(side).getOrElse(x, <span class="lit">"unknown"</span>)
-  }</pre></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../index.html" class="extype" name="com.spotify.scio.extra">extra</a></dd></dl></div>
+  }</pre><p>A <code>TypedSparkeyReader</code> can be used to do automatic decoding of JVM types from byte values:</p><pre><span class="kw">val</span> main: SCollection[<span class="std">String</span>] = sc.parallelize(<span class="std">Seq</span>(<span class="lit">"a"</span>, <span class="lit">"b"</span>, <span class="lit">"c"</span>))
+<span class="kw">val</span> side: SideInput[TypedSparkeyReader[MyObject]] = sc
+  .typedSparkeySideInput(<span class="lit">"gs://&lt;bucket&gt;/&lt;path&gt;/&lt;sparkey-prefix&gt;"</span>, MyObject.decode)
+
+<span class="kw">val</span> objects: SCollection[MyObject] = main
+  .withSideInputs(side)
+  .map { (x, s) <span class="kw">=&gt;</span> s(side).get(x) }
+  .toSCollection</pre><p>A <code>TypedSparkeyReader</code> can also accept a Caffeine cache to reduce IO and deserialization load:</p><pre><span class="kw">val</span> main: SCollection[<span class="std">String</span>] = sc.parallelize(<span class="std">Seq</span>(<span class="lit">"a"</span>, <span class="lit">"b"</span>, <span class="lit">"c"</span>))
+<span class="kw">val</span> cache: Cache[<span class="std">String</span>, MyObject] = ...
+<span class="kw">val</span> side: SideInput[TypedSparkeyReader[MyObject]] = sc
+  .typedSparkeySideInput(<span class="lit">"gs://&lt;bucket&gt;/&lt;path&gt;/&lt;sparkey-prefix&gt;"</span>, MyObject.decode, cache)
+
+<span class="kw">val</span> objects: SCollection[MyObject] = main
+  .withSideInputs(side)
+  .map { (x, s) <span class="kw">=&gt;</span> s(side).get(x) }
+  .toSCollection</pre></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../index.html" class="extype" name="com.spotify.scio.extra">extra</a></dd></dl></div>
     </li><li class="current-entities indented5">
+                        <span class="separator"></span>
+                        <a class="class" href="package$$CachedStringSparkeyReader.html" title="A wrapper around SparkeyReader that includes an in-memory Caffeine cache."></a>
+                        <a href="package$$CachedStringSparkeyReader.html" title="A wrapper around SparkeyReader that includes an in-memory Caffeine cache.">CachedStringSparkeyReader</a>
+                      </li><li class="current-entities indented5">
                         <span class="separator"></span>
                         <a class="class" href="package$$RichStringSparkeyReader.html" title="Enhanced version of SparkeyReader that mimics a Map."></a>
                         <a href="package$$RichStringSparkeyReader.html" title="Enhanced version of SparkeyReader that mimics a Map.">RichStringSparkeyReader</a>
+                      </li><li class="current-entities indented5">
+                        <span class="separator"></span>
+                        <a class="class" href="package$$ShardedSparkeyReader.html" title="A wrapper class around SparkeyReader that allows the reading of multiple Sparkey files, sharded by their keys (via MurmurHash3)."></a>
+                        <a href="package$$ShardedSparkeyReader.html" title="A wrapper class around SparkeyReader that allows the reading of multiple Sparkey files, sharded by their keys (via MurmurHash3).">ShardedSparkeyReader</a>
+                      </li><li class="current-entities indented5">
+                        <span class="separator"></span>
+                        <a class="trait" href="ShardedSparkeyUri.html" title="Sharded Sparkey support"></a>
+                        <a href="ShardedSparkeyUri.html" title="Sharded Sparkey support">ShardedSparkeyUri</a>
                       </li><li class="current-entities indented5">
                         <span class="separator"></span>
                         <a class="class" href="package$$SparkeyPairSCollection.html" title="Enhanced version of SCollection with Sparkey methods."></a>
@@ -319,6 +348,10 @@ main.withSideInputs(side)
                         <span class="separator"></span>
                         <a class="trait" href="package$$SparkeyWritable.html" title=""></a>
                         <a href="package$$SparkeyWritable.html" title="">SparkeyWritable</a>
+                      </li><li class="current-entities indented5">
+                        <span class="separator"></span>
+                        <a class="class" href="package$$TypedSparkeyReader.html" title="A wrapper around SparkeyReader that includes both a decoder (to map from each byte array to a JVM type) and an optional in-memory cache."></a>
+                        <a href="package$$TypedSparkeyReader.html" title="A wrapper around SparkeyReader that includes both a decoder (to map from each byte array to a JVM type) and an optional in-memory cache.">TypedSparkeyReader</a>
                       </li>
               </ul>
             </div>
@@ -347,16 +380,18 @@ main.withSideInputs(side)
       </h4>
 
       
-          <div id="comment" class="fullcommenttop"><div class="comment cmt"><p>Main package for Sparkey side input APIs. Import all.</p><pre><span class="kw">import</span> com.spotify.scio.extra.sparkey._</pre><p>To save an <code>SCollection[(String, String)]</code> to a Sparkey file:</p><pre><span class="kw">val</span> s = sc.parallelize(<span class="std">Seq</span>(<span class="lit">"a"</span> -&gt; <span class="lit">"one"</span>, <span class="lit">"b"</span> -&gt; <span class="lit">"two"</span>))
+          <div id="comment" class="fullcommenttop"><div class="comment cmt"><p>Main package for Sparkey side input APIs. Import all.</p><pre><span class="kw">import</span> com.spotify.scio.extra.sparkey._</pre><p>To save an <code>SCollection[(String, String)]</code> to a Sparkey fileset:</p><pre><span class="kw">val</span> s = sc.parallelize(<span class="std">Seq</span>(<span class="lit">"a"</span> -&gt; <span class="lit">"one"</span>, <span class="lit">"b"</span> -&gt; <span class="lit">"two"</span>))
 
 <span class="cmt">// temporary location</span>
 <span class="kw">val</span> s1: SCollection[SparkeyUri] = s.asSparkey
 
 <span class="cmt">// specific location</span>
-<span class="kw">val</span> s1: SCollection[SparkeyUri] = s.asSparkey(<span class="lit">"gs://&lt;bucket&gt;/&lt;path&gt;/&lt;sparkey-prefix&gt;"</span>)</pre><p>The result <code>SCollection[SparkeyUri]</code> can be converted to a side input:</p><pre><span class="kw">val</span> s: SCollection[SparkeyUri] = sc.parallelize(<span class="std">Seq</span>(<span class="lit">"a"</span> -&gt; <span class="lit">"one"</span>, <span class="lit">"b"</span> -&gt; <span class="lit">"two"</span>)).asSparkey
+<span class="kw">val</span> s1: SCollection[SparkeyUri] = s.asSparkey(<span class="lit">"gs://&lt;bucket&gt;/&lt;path&gt;/&lt;sparkey-prefix&gt;"</span>)</pre><p>// with multiple shards, sharded by MurmurHash3 of the key
+val s1: SCollection[SparkeyUri] = s.asSparkey(&quot;gs://&lt;bucket&gt;/&lt;path&gt;/&lt;sparkey-dir&gt;&quot;, numShards=2)
+}}}</p><p>The result <code>SCollection[SparkeyUri]</code> can be converted to a side input:</p><pre><span class="kw">val</span> s: SCollection[SparkeyUri] = sc.parallelize(<span class="std">Seq</span>(<span class="lit">"a"</span> -&gt; <span class="lit">"one"</span>, <span class="lit">"b"</span> -&gt; <span class="lit">"two"</span>)).asSparkey
 <span class="kw">val</span> side: SideInput[SparkeyReader] = s.asSparkeySideInput</pre><p>These two steps can be done with a syntactic sugar:</p><pre><span class="kw">val</span> side: SideInput[SparkeyReader] = sc
   .parallelize(<span class="std">Seq</span>(<span class="lit">"a"</span> -&gt; <span class="lit">"one"</span>, <span class="lit">"b"</span> -&gt; <span class="lit">"two"</span>))
-  .asSparkeySideInput</pre><p>An existing Sparkey file can also be converted to a side input directly:</p><pre>sc.sparkeySideInput(<span class="lit">"gs://&lt;bucket&gt;/&lt;path&gt;/&lt;sparkey-prefix&gt;"</span>)</pre><p><code>SparkeyReader</code> can be used like a lookup table in a side input operation:</p><pre><span class="kw">val</span> main: SCollection[<span class="std">String</span>] = sc.parallelize(<span class="std">Seq</span>(<span class="lit">"a"</span>, <span class="lit">"b"</span>, <span class="lit">"c"</span>))
+  .asSparkeySideInput</pre><p>An existing Sparkey file can also be converted to a side input directly:</p><pre>sc.sparkeySideInput(<span class="lit">"gs://&lt;bucket&gt;/&lt;path&gt;/&lt;sparkey-prefix&gt;"</span>)</pre><p>A sharded collection of Sparkey files can also be used as a side input by specifying a glob path:</p><pre>sc.sparkeySideInput(<span class="lit">"gs://&lt;bucket&gt;/&lt;path&gt;/&lt;sparkey-dir&gt;/part-*"</span>)</pre><p><code>SparkeyReader</code> can be used like a lookup table in a side input operation:</p><pre><span class="kw">val</span> main: SCollection[<span class="std">String</span>] = sc.parallelize(<span class="std">Seq</span>(<span class="lit">"a"</span>, <span class="lit">"b"</span>, <span class="lit">"c"</span>))
 <span class="kw">val</span> side: SideInput[SparkeyReader] = sc
   .parallelize(<span class="std">Seq</span>(<span class="lit">"a"</span> -&gt; <span class="lit">"one"</span>, <span class="lit">"b"</span> -&gt; <span class="lit">"two"</span>))
   .asSparkeySideInput
@@ -364,7 +399,22 @@ main.withSideInputs(side)
 main.withSideInputs(side)
   .map { (x, s) <span class="kw">=&gt;</span>
     s(side).getOrElse(x, <span class="lit">"unknown"</span>)
-  }</pre></div><div class="toggleContainer block">
+  }</pre><p>A <code>TypedSparkeyReader</code> can be used to do automatic decoding of JVM types from byte values:</p><pre><span class="kw">val</span> main: SCollection[<span class="std">String</span>] = sc.parallelize(<span class="std">Seq</span>(<span class="lit">"a"</span>, <span class="lit">"b"</span>, <span class="lit">"c"</span>))
+<span class="kw">val</span> side: SideInput[TypedSparkeyReader[MyObject]] = sc
+  .typedSparkeySideInput(<span class="lit">"gs://&lt;bucket&gt;/&lt;path&gt;/&lt;sparkey-prefix&gt;"</span>, MyObject.decode)
+
+<span class="kw">val</span> objects: SCollection[MyObject] = main
+  .withSideInputs(side)
+  .map { (x, s) <span class="kw">=&gt;</span> s(side).get(x) }
+  .toSCollection</pre><p>A <code>TypedSparkeyReader</code> can also accept a Caffeine cache to reduce IO and deserialization load:</p><pre><span class="kw">val</span> main: SCollection[<span class="std">String</span>] = sc.parallelize(<span class="std">Seq</span>(<span class="lit">"a"</span>, <span class="lit">"b"</span>, <span class="lit">"c"</span>))
+<span class="kw">val</span> cache: Cache[<span class="std">String</span>, MyObject] = ...
+<span class="kw">val</span> side: SideInput[TypedSparkeyReader[MyObject]] = sc
+  .typedSparkeySideInput(<span class="lit">"gs://&lt;bucket&gt;/&lt;path&gt;/&lt;sparkey-prefix&gt;"</span>, MyObject.decode, cache)
+
+<span class="kw">val</span> objects: SCollection[MyObject] = main
+  .withSideInputs(side)
+  .map { (x, s) <span class="kw">=&gt;</span> s(side).get(x) }
+  .toSCollection</pre></div><div class="toggleContainer block">
           <span class="toggle">
             Linear Supertypes
           </span>
@@ -416,7 +466,23 @@ main.withSideInputs(side)
 
         <div id="types" class="types members">
               <h3>Type Members</h3>
-              <ol><li name="com.spotify.scio.extra.sparkey.RichStringSparkeyReader" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+              <ol><li name="com.spotify.scio.extra.sparkey.CachedStringSparkeyReader" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="CachedStringSparkeyReaderextendspackage.RichStringSparkeyReader"></a><a id="CachedStringSparkeyReader:CachedStringSparkeyReader"></a>
+      <span class="permalink">
+      <a href="../../../../../com/spotify/scio/extra/sparkey/package$$CachedStringSparkeyReader.html" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a title="A wrapper around SparkeyReader that includes an in-memory Caffeine cache." href="package$$CachedStringSparkeyReader.html"><span class="name">CachedStringSparkeyReader</span></a><span class="result"> extends <a href="package$$RichStringSparkeyReader.html" class="extype" name="com.spotify.scio.extra.sparkey.RichStringSparkeyReader">RichStringSparkeyReader</a></span>
+      </span>
+      
+      <p class="shortcomment cmt">A wrapper around <code>SparkeyReader</code> that includes an in-memory Caffeine cache.</p>
+    </li><li name="com.spotify.scio.extra.sparkey.RichStringSparkeyReader" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="RichStringSparkeyReaderextendsMap[String,String]"></a><a id="RichStringSparkeyReader:RichStringSparkeyReader"></a>
       <span class="permalink">
       <a href="../../../../../com/spotify/scio/extra/sparkey/package$$RichStringSparkeyReader.html" title="Permalink">
@@ -432,6 +498,41 @@ main.withSideInputs(side)
       </span>
       
       <p class="shortcomment cmt">Enhanced version of <code>SparkeyReader</code> that mimics a <code>Map</code>.</p>
+    </li><li name="com.spotify.scio.extra.sparkey.ShardedSparkeyReader" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="ShardedSparkeyReaderextendsSparkeyReader"></a><a id="ShardedSparkeyReader:ShardedSparkeyReader"></a>
+      <span class="permalink">
+      <a href="../../../../../com/spotify/scio/extra/sparkey/package$$ShardedSparkeyReader.html" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a title="A wrapper class around SparkeyReader that allows the reading of multiple Sparkey files, sharded by their keys (via MurmurHash3)." href="package$$ShardedSparkeyReader.html"><span class="name">ShardedSparkeyReader</span></a><span class="result"> extends <span class="extype" name="com.spotify.sparkey.SparkeyReader">SparkeyReader</span></span>
+      </span>
+      
+      <p class="shortcomment cmt">A wrapper class around SparkeyReader that allows the reading of multiple Sparkey files,
+sharded by their keys (via MurmurHash3).</p><div class="fullcomment"><div class="comment cmt"><p>A wrapper class around SparkeyReader that allows the reading of multiple Sparkey files,
+sharded by their keys (via MurmurHash3). At most 32,768 Sparkey files are supported.</p></div></div>
+    </li><li name="com.spotify.scio.extra.sparkey.ShardedSparkeyUri" visbl="pub" class="indented0 " data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="ShardedSparkeyUriextendsSparkeyUri"></a><a id="ShardedSparkeyUri:ShardedSparkeyUri"></a>
+      <span class="permalink">
+      <a href="../../../../../com/spotify/scio/extra/sparkey/ShardedSparkeyUri.html" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a title="Sharded Sparkey support" href="ShardedSparkeyUri.html"><span class="name">ShardedSparkeyUri</span></a><span class="result"> extends <a href="SparkeyUri.html" class="extype" name="com.spotify.scio.extra.sparkey.SparkeyUri">SparkeyUri</a></span>
+      </span>
+      
+      <p class="shortcomment cmt">Sharded Sparkey support
+</p>
     </li><li name="com.spotify.scio.extra.sparkey.SparkeyPairSCollection" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="SparkeyPairSCollection[K,V]extendsAnyRef"></a><a id="SparkeyPairSCollection[K,V]:SparkeyPairSCollection[K,V]"></a>
       <span class="permalink">
@@ -518,6 +619,23 @@ a base path representing two files - &lt;sparkey-prefix&gt;.spi and &lt;sparkey-
       </span>
       
       
+    </li><li name="com.spotify.scio.extra.sparkey.TypedSparkeyReader" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="TypedSparkeyReader[T]extendsMap[String,T]"></a><a id="TypedSparkeyReader[T]:TypedSparkeyReader[T]"></a>
+      <span class="permalink">
+      <a href="../../../../../com/spotify/scio/extra/sparkey/package$$TypedSparkeyReader.html" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a title="A wrapper around SparkeyReader that includes both a decoder (to map from each byte array to a JVM type) and an optional in-memory cache." href="package$$TypedSparkeyReader.html"><span class="name">TypedSparkeyReader</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <span class="extype" name="scala.Predef.Map">Map</span>[<span class="extype" name="scala.Predef.String">String</span>, <span class="extype" name="com.spotify.scio.extra.sparkey.TypedSparkeyReader.T">T</span>]</span>
+      </span>
+      
+      <p class="shortcomment cmt">A wrapper around <code>SparkeyReader</code> that includes both a decoder (to map from each byte array
+to a JVM type) and an optional in-memory cache.</p>
     </li></ol>
             </div>
 

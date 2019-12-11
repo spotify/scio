@@ -154,13 +154,9 @@
                         <a class="class" href="ArrayType.html" title=""></a>
                         <a href="ArrayType.html" title="">ArrayType</a>
                       </li><li class="current-entities indented4">
-                        <span class="separator"></span>
-                        <a class="class" href="Fallback.html" title=""></a>
-                        <a href="Fallback.html" title="">Fallback</a>
-                      </li><li class="current-entities indented4">
-                        <span class="separator"></span>
-                        <a class="trait" href="LowPrioritySchemaDerivation.html" title=""></a>
-                        <a href="LowPrioritySchemaDerivation.html" title="">LowPrioritySchemaDerivation</a>
+                        <a class="object" href="LogicalType$.html" title=""></a>
+                        <a class="trait" href="LogicalType.html" title=""></a>
+                        <a href="LogicalType.html" title="">LogicalType</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
                         <a class="class" href="MapType.html" title=""></a>
@@ -222,7 +218,7 @@
         <span class="kind">object</span>
       </span>
       <span class="symbol">
-        <span class="name">To</span>
+        <span class="name">To</span><span class="result"> extends <span class="extype" name="scala.Serializable">Serializable</span></span>
       </span>
       </h4>
 
@@ -231,7 +227,7 @@
           <span class="toggle">
             Linear Supertypes
           </span>
-          <div class="superTypes hiddenContent"><span class="extype" name="scala.AnyRef">AnyRef</span>, <span class="extype" name="scala.Any">Any</span></div>
+          <div class="superTypes hiddenContent"><span class="extype" name="scala.Serializable">Serializable</span>, <span class="extype" name="java.io.Serializable">Serializable</span>, <span class="extype" name="scala.AnyRef">AnyRef</span>, <span class="extype" name="scala.Any">Any</span></div>
         </div></div>
         
 
@@ -257,7 +253,7 @@
                   <span class="filtertype">Inherited<br />
                   </span>
                   <ol id="linearization">
-                    <li class="in" name="com.spotify.scio.schemas.To"><span>To</span></li><li class="in" name="scala.AnyRef"><span>AnyRef</span></li><li class="in" name="scala.Any"><span>Any</span></li>
+                    <li class="in" name="com.spotify.scio.schemas.To"><span>To</span></li><li class="in" name="scala.Serializable"><span>Serializable</span></li><li class="in" name="java.io.Serializable"><span>Serializable</span></li><li class="in" name="scala.AnyRef"><span>AnyRef</span></li><li class="in" name="scala.Any"><span>Any</span></li>
                   </ol>
                 </div><div class="ancestors">
               <span class="filtertype"></span>
@@ -277,7 +273,26 @@
         <div id="allMembers">
         
 
-        
+        <div id="types" class="types members">
+              <h3>Type Members</h3>
+              <ol><li name="com.spotify.scio.schemas.To.Nullable" visbl="pub" class="indented0 " data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="NullableextendsAnyRef"></a><a id="Nullable:Nullable"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/schemas/To$$Nullable.html" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">sealed </span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="To$$Nullable.html"><span class="name">Nullable</span></a><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
+      </span>
+      
+      
+    </li></ol>
+            </div>
 
         
 
@@ -704,6 +719,38 @@ The compatibility of the 2 schemas is NOT checked at compile time, so the execut
                 <span class="name">@native</span><span class="args">()</span>
               
         </dd></dl></div>
+    </li><li name="com.spotify.scio.schemas.To.NOT NULLABLE" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="NOTNULLABLE"></a><a id="NOTNULLABLE:NOTNULLABLE"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/schemas/To$$NOT$u0020NULLABLE$.html" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="To$$NOT$u0020NULLABLE$.html"><span title="gt4s: NOT$u0020NULLABLE" class="name">NOT NULLABLE</span></a><span class="result"> extends <a href="To$$Nullable.html" class="extype" name="com.spotify.scio.schemas.To.Nullable">Nullable</a> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      
+      
+    </li><li name="com.spotify.scio.schemas.To.NULLABLE" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="NULLABLE"></a><a id="NULLABLE:NULLABLE"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/schemas/To$$NULLABLE$.html" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="To$$NULLABLE$.html"><span class="name">NULLABLE</span></a><span class="result"> extends <a href="To$$Nullable.html" class="extype" name="com.spotify.scio.schemas.To.Nullable">Nullable</a> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      
+      
     </li>
               </ol>
             </div>
@@ -714,7 +761,11 @@ The compatibility of the 2 schemas is NOT checked at compile time, so the execut
         </div>
 
         <div id="inheritedMembers">
-        <div class="parent" name="scala.AnyRef">
+        <div class="parent" name="scala.Serializable">
+              <h3>Inherited from <span class="extype" name="scala.Serializable">Serializable</span></h3>
+            </div><div class="parent" name="java.io.Serializable">
+              <h3>Inherited from <span class="extype" name="java.io.Serializable">Serializable</span></h3>
+            </div><div class="parent" name="scala.AnyRef">
               <h3>Inherited from <span class="extype" name="scala.AnyRef">AnyRef</span></h3>
             </div><div class="parent" name="scala.Any">
               <h3>Inherited from <span class="extype" name="scala.Any">Any</span></h3>

@@ -225,7 +225,7 @@ spotify/scio
 <div class="md-content__searchable">
 <h1><a href="#runners" name="runners" class="anchor"><span class="anchor-link"></span></a>Runners</h1>
 <p>Starting Scio 0.4.4, Beam runner is completely decoupled from <code>scio-core</code>, which no longer depend on any Beam runner now. Add runner dependencies to enable execution on specific backends. For example, when using Scio 0.4.7 which depends on Beam 2.2.0, you should add the following dependencies to run pipelines locally and on Google Cloud Dataflow.</p>
-<pre class="prettyprint"><code class="language-scala">libraryDependencies ++= Seq(
+<pre class="prettyprint"><code class="language-sbt">libraryDependencies ++= Seq(
   &quot;org.apache.beam&quot; % &quot;beam-runners-direct-java&quot; % &quot;2.2.0&quot;,
   &quot;org.apache.beam&quot; % &quot;beam-runners-google-cloud-dataflow-java&quot; % &quot;2.2.0&quot;
 )
@@ -319,7 +319,7 @@ Data Guidelines
 <div class="md-footer-meta__inner md-grid">
 <div class="md-footer-copyright">
 <div class="md-footer-copyright__highlight">
-Copyright (C) 2018 Spotify AB
+Copyright (C) 2019 Spotify AB
 </div>
 Powered by
 <a href="https://github.com/lightbend/paradox">Paradox</a>

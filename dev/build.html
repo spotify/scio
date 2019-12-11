@@ -244,6 +244,7 @@ sbt test
 <pre class="prettyprint"><code class="language-bash">./scripts/gen_schemas.sh
 sbt -Dbigquery.project=dummy-project test
 </code></pre>
+<p>Tasks within the &lsquo;it&rsquo; (integration testing) configuration <code>it:{compile,test}</code> currently require access to datasets hosted in an internal Spotify project. External users must authenticate against their own GCP project, through the steps outlined in <a href="https://spotify.github.io/scio/Getting-Started.html">Getting Started</a>.</p>
 <h2><a href="#intellij-idea" name="intellij-idea" class="anchor"><span class="anchor-link"></span></a>IntelliJ IDEA</h2>
 <p>When opening the project in IntelliJ IDEA, tick &ldquo;Use sbt shell:&rdquo; both &ldquo;for imports&rdquo; and &ldquo;for builds&rdquo;.</p>
 </div>
@@ -296,7 +297,7 @@ Style Guide
 <div class="md-footer-meta__inner md-grid">
 <div class="md-footer-copyright">
 <div class="md-footer-copyright__highlight">
-Copyright (C) 2018 Spotify AB
+Copyright (C) 2019 Spotify AB
 </div>
 Powered by
 <a href="https://github.com/lightbend/paradox">Paradox</a>

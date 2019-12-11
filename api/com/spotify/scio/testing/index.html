@@ -383,6 +383,22 @@ detects the query's dialect. To override this, start the query with either <code
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../index.html" class="extype" name="com.spotify.scio">scio</a></dd></dl></div>
+    </li><li name="com.spotify.scio.smb" visbl="pub" class="indented4 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="smb"></a><a id="smb:smb"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/smb/index.html" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">package</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="../smb/index.html"><span class="name">smb</span></a>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../index.html" class="extype" name="com.spotify.scio">scio</a></dd></dl></div>
     </li><li name="com.spotify.scio.spanner" visbl="pub" class="indented4 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="spanner"></a><a id="spanner:spanner"></a>
       <span class="permalink">
@@ -634,7 +650,7 @@ detects the query's dialect. To override this, start the query with either <code
       
       
     </li><li name="com.spotify.scio.testing.PipelineSpec" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
-      <a id="PipelineSpecextendsFlatSpecwithMatcherswithSCollectionMatcherswithPipelineTestUtilswithRunEnforcementJobTest"></a><a id="PipelineSpec:PipelineSpec"></a>
+      <a id="PipelineSpecextendsAnyFlatSpecwithMatcherswithSCollectionMatcherswithPipelineTestUtilswithRunEnforcementJobTest"></a><a id="PipelineSpec:PipelineSpec"></a>
       <span class="permalink">
       <a href="../../../../com/spotify/scio/testing/PipelineSpec.html" title="Permalink">
         <i class="material-icons"></i>
@@ -645,7 +661,7 @@ detects the query's dialect. To override this, start the query with either <code
         <span class="kind">trait</span>
       </span>
       <span class="symbol">
-        <a title="Trait for unit testing pipelines." href="PipelineSpec.html"><span class="name">PipelineSpec</span></a><span class="result"> extends <span class="extype" name="org.scalatest.FlatSpec">FlatSpec</span> with <span class="extype" name="org.scalatest.Matchers">Matchers</span> with <a href="SCollectionMatchers.html" class="extype" name="com.spotify.scio.testing.SCollectionMatchers">SCollectionMatchers</a> with <a href="PipelineTestUtils.html" class="extype" name="com.spotify.scio.testing.PipelineTestUtils">PipelineTestUtils</a> with <a href="RunEnforcementJobTest.html" class="extype" name="com.spotify.scio.testing.RunEnforcementJobTest">RunEnforcementJobTest</a></span>
+        <a title="Trait for unit testing pipelines." href="PipelineSpec.html"><span class="name">PipelineSpec</span></a><span class="result"> extends <span class="extype" name="org.scalatest.flatspec.AnyFlatSpec">AnyFlatSpec</span> with <span class="extype" name="org.scalatest.matchers.should.Matchers">Matchers</span> with <a href="SCollectionMatchers.html" class="extype" name="com.spotify.scio.testing.SCollectionMatchers">SCollectionMatchers</a> with <a href="PipelineTestUtils.html" class="extype" name="com.spotify.scio.testing.PipelineTestUtils">PipelineTestUtils</a> with <a href="RunEnforcementJobTest.html" class="extype" name="com.spotify.scio.testing.RunEnforcementJobTest">RunEnforcementJobTest</a></span>
       </span>
       
       <p class="shortcomment cmt">Trait for unit testing pipelines.</p><div class="fullcomment"><div class="comment cmt"><p>Trait for unit testing pipelines.</p><p>A simple test might look like this:</p><pre><span class="kw">class</span> SimplePipelineTest <span class="kw">extends</span> PipelineSpec {
@@ -672,7 +688,7 @@ detects the query's dialect. To override this, start the query with either <code
       
       <p class="shortcomment cmt">Trait with utility methods for unit testing pipelines.</p>
     </li><li name="com.spotify.scio.testing.RunEnforcementJobTest" visbl="pub" class="indented0 " data-isabs="true" fullComment="no" group="Ungrouped">
-      <a id="RunEnforcementJobTestextendsFlatSpec"></a><a id="RunEnforcementJobTest:RunEnforcementJobTest"></a>
+      <a id="RunEnforcementJobTestextendsAnyFlatSpec"></a><a id="RunEnforcementJobTest:RunEnforcementJobTest"></a>
       <span class="permalink">
       <a href="../../../../com/spotify/scio/testing/RunEnforcementJobTest.html" title="Permalink">
         <i class="material-icons"></i>
@@ -683,7 +699,7 @@ detects the query's dialect. To override this, start the query with either <code
         <span class="kind">trait</span>
       </span>
       <span class="symbol">
-        <a title="Trait that enforces JobTest.Builder.run is called." href="RunEnforcementJobTest.html"><span class="name">RunEnforcementJobTest</span></a><span class="result"> extends <span class="extype" name="org.scalatest.FlatSpec">FlatSpec</span></span>
+        <a title="Trait that enforces JobTest.Builder.run is called." href="RunEnforcementJobTest.html"><span class="name">RunEnforcementJobTest</span></a><span class="result"> extends <span class="extype" name="org.scalatest.flatspec.AnyFlatSpec">AnyFlatSpec</span></span>
       </span>
       
       <p class="shortcomment cmt">Trait that enforces <a href="JobTest$$Builder.html#run():Unit" class="extmbr" name="com.spotify.scio.testing.JobTest.Builder#run">JobTest.Builder.run</a> is called.</p>
@@ -705,7 +721,7 @@ detects the query's dialect. To override this, start the query with either <code
       <p class="shortcomment cmt">Trait with ScalaTest <span class="extype" name="org.scalatest.matchers.Matcher">Matcher</span>s for
 <a href="../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>s.</p>
     </li><li name="com.spotify.scio.testing.ScioIOSpec" visbl="pub" class="indented0 " data-isabs="true" fullComment="no" group="Ungrouped">
-      <a id="ScioIOSpecextendsFlatSpecwithPipelineSpec"></a><a id="ScioIOSpec:ScioIOSpec"></a>
+      <a id="ScioIOSpecextendsAnyFlatSpecwithPipelineSpec"></a><a id="ScioIOSpec:ScioIOSpec"></a>
       <span class="permalink">
       <a href="../../../../com/spotify/scio/testing/ScioIOSpec.html" title="Permalink">
         <i class="material-icons"></i>
@@ -716,7 +732,7 @@ detects the query's dialect. To override this, start the query with either <code
         <span class="kind">trait</span>
       </span>
       <span class="symbol">
-        <a title="Trait for unit testing ScioIO." href="ScioIOSpec.html"><span class="name">ScioIOSpec</span></a><span class="result"> extends <span class="extype" name="org.scalatest.FlatSpec">FlatSpec</span> with <a href="PipelineSpec.html" class="extype" name="com.spotify.scio.testing.PipelineSpec">PipelineSpec</a></span>
+        <a title="Trait for unit testing ScioIO." href="ScioIOSpec.html"><span class="name">ScioIOSpec</span></a><span class="result"> extends <span class="extype" name="org.scalatest.flatspec.AnyFlatSpec">AnyFlatSpec</span> with <a href="PipelineSpec.html" class="extype" name="com.spotify.scio.testing.PipelineSpec">PipelineSpec</a></span>
       </span>
       
       <p class="shortcomment cmt">Trait for unit testing <span class="extype" name="ScioIO">ScioIO</span>.</p>

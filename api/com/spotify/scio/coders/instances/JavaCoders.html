@@ -159,8 +159,16 @@
                         <a href="AvroCoders.html" title="">AvroCoders</a>
                       </li><li class="current-entities indented5">
                         <span class="separator"></span>
+                        <a class="trait" href="BeamTypeCoders.html" title=""></a>
+                        <a href="BeamTypeCoders.html" title="">BeamTypeCoders</a>
+                      </li><li class="current-entities indented5">
+                        <span class="separator"></span>
                         <a class="trait" href="Implicits.html" title=""></a>
                         <a href="Implicits.html" title="">Implicits</a>
+                      </li><li class="current-entities indented5">
+                        <span class="separator"></span>
+                        <a class="trait" href="JavaBeanCoders.html" title=""></a>
+                        <a href="JavaBeanCoders.html" title="">JavaBeanCoders</a>
                       </li><li class="current-entities indented5">
                         <span class="separator"></span>
                         <a class="trait" href="" title=""></a>
@@ -208,7 +216,7 @@
         <span class="kind">trait</span>
       </span>
       <span class="symbol">
-        <span class="name">JavaCoders</span><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
+        <span class="name">JavaCoders</span><span class="result"> extends <a href="JavaBeanCoders.html" class="extype" name="com.spotify.scio.coders.instances.JavaBeanCoders">JavaBeanCoders</a></span>
       </span>
       </h4>
 
@@ -217,12 +225,12 @@
           <span class="toggle">
             Linear Supertypes
           </span>
-          <div class="superTypes hiddenContent"><span class="extype" name="scala.AnyRef">AnyRef</span>, <span class="extype" name="scala.Any">Any</span></div>
+          <div class="superTypes hiddenContent"><a href="JavaBeanCoders.html" class="extype" name="com.spotify.scio.coders.instances.JavaBeanCoders">JavaBeanCoders</a>, <span class="extype" name="scala.AnyRef">AnyRef</span>, <span class="extype" name="scala.Any">Any</span></div>
         </div><div class="toggleContainer block">
             <span class="toggle">
               Known Subclasses
             </span>
-            <div class="subClasses hiddenContent"><a href="../Coder$.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>, <a href="Implicits.html" class="extype" name="com.spotify.scio.coders.instances.Implicits">Implicits</a></div>
+            <div class="subClasses hiddenContent"><a href="Implicits.html" class="extype" name="com.spotify.scio.coders.instances.Implicits">Implicits</a></div>
           </div></div>
         
 
@@ -248,7 +256,7 @@
                   <span class="filtertype">Inherited<br />
                   </span>
                   <ol id="linearization">
-                    <li class="in" name="com.spotify.scio.coders.instances.JavaCoders"><span>JavaCoders</span></li><li class="in" name="scala.AnyRef"><span>AnyRef</span></li><li class="in" name="scala.Any"><span>Any</span></li>
+                    <li class="in" name="com.spotify.scio.coders.instances.JavaCoders"><span>JavaCoders</span></li><li class="in" name="com.spotify.scio.coders.instances.JavaBeanCoders"><span>JavaBeanCoders</span></li><li class="in" name="scala.AnyRef"><span>AnyRef</span></li><li class="in" name="scala.Any"><span>Any</span></li>
                   </ol>
                 </div><div class="ancestors">
               <span class="filtertype"></span>
@@ -339,38 +347,6 @@
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
-    </li><li name="com.spotify.scio.coders.instances.JavaCoders#beamKVCoder" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="beamKVCoder[K,V](implicitevidence$1:com.spotify.scio.coders.Coder[K],implicitevidence$2:com.spotify.scio.coders.Coder[V]):com.spotify.scio.coders.Coder[org.apache.beam.sdk.values.KV[K,V]]"></a><a id="beamKVCoder[K,V](Coder[K],Coder[V]):Coder[KV[K,V]]"></a>
-      <span class="permalink">
-      <a href="../../../../../com/spotify/scio/coders/instances/JavaCoders.html#beamKVCoder[K,V](implicitevidence$1:com.spotify.scio.coders.Coder[K],implicitevidence$2:com.spotify.scio.coders.Coder[V]):com.spotify.scio.coders.Coder[org.apache.beam.sdk.values.KV[K,V]]" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier">implicit </span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">beamKVCoder</span><span class="tparams">[<span name="K">K</span>, <span name="V">V</span>]</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="../Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.coders.instances.JavaCoders.beamKVCoder.K">K</span>]</span>, <span name="arg1">arg1: <a href="../Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.coders.instances.JavaCoders.beamKVCoder.V">V</span>]</span>)</span><span class="result">: <a href="../Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="org.apache.beam.sdk.values.KV">KV</span>[<span class="extype" name="com.spotify.scio.coders.instances.JavaCoders.beamKVCoder.K">K</span>, <span class="extype" name="com.spotify.scio.coders.instances.JavaCoders.beamKVCoder.V">V</span>]]</span>
-      </span>
-      
-      
-    </li><li name="com.spotify.scio.coders.instances.JavaCoders#boundedWindowCoder" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="boundedWindowCoder:com.spotify.scio.coders.Coder[org.apache.beam.sdk.transforms.windowing.BoundedWindow]"></a><a id="boundedWindowCoder:Coder[BoundedWindow]"></a>
-      <span class="permalink">
-      <a href="../../../../../com/spotify/scio/coders/instances/JavaCoders.html#boundedWindowCoder:com.spotify.scio.coders.Coder[org.apache.beam.sdk.transforms.windowing.BoundedWindow]" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier">implicit </span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">boundedWindowCoder</span><span class="result">: <a href="../Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="org.apache.beam.sdk.transforms.windowing.BoundedWindow">BoundedWindow</span>]</span>
-      </span>
-      
-      
     </li><li name="scala.AnyRef#clone" visbl="prt" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="clone():Object"></a><a id="clone():AnyRef"></a>
       <span class="permalink">
@@ -396,9 +372,9 @@
               
         </dd></dl></div>
     </li><li name="com.spotify.scio.coders.instances.JavaCoders#coderJEnum" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="coderJEnum[E&lt;:Enum[E]](implicitevidence$3:scala.reflect.ClassTag[E]):com.spotify.scio.coders.Coder[E]"></a><a id="coderJEnum[E&lt;:Enum[E]](ClassTag[E]):Coder[E]"></a>
+      <a id="coderJEnum[E&lt;:Enum[E]](implicitevidence$1:scala.reflect.ClassTag[E]):com.spotify.scio.coders.Coder[E]"></a><a id="coderJEnum[E&lt;:Enum[E]](ClassTag[E]):Coder[E]"></a>
       <span class="permalink">
-      <a href="../../../../../com/spotify/scio/coders/instances/JavaCoders.html#coderJEnum[E&lt;:Enum[E]](implicitevidence$3:scala.reflect.ClassTag[E]):com.spotify.scio.coders.Coder[E]" title="Permalink">
+      <a href="../../../../../com/spotify/scio/coders/instances/JavaCoders.html#coderJEnum[E&lt;:Enum[E]](implicitevidence$1:scala.reflect.ClassTag[E]):com.spotify.scio.coders.Coder[E]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -503,22 +479,6 @@
                 <span class="name">@native</span><span class="args">()</span>
               
         </dd></dl></div>
-    </li><li name="com.spotify.scio.coders.instances.JavaCoders#intervalWindowCoder" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="intervalWindowCoder:com.spotify.scio.coders.Coder[org.apache.beam.sdk.transforms.windowing.IntervalWindow]"></a><a id="intervalWindowCoder:Coder[IntervalWindow]"></a>
-      <span class="permalink">
-      <a href="../../../../../com/spotify/scio/coders/instances/JavaCoders.html#intervalWindowCoder:com.spotify.scio.coders.Coder[org.apache.beam.sdk.transforms.windowing.IntervalWindow]" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier">implicit </span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">intervalWindowCoder</span><span class="result">: <a href="../Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="org.apache.beam.sdk.transforms.windowing.IntervalWindow">IntervalWindow</span>]</span>
-      </span>
-      
-      
     </li><li name="scala.Any#isInstanceOf" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="isInstanceOf[T0]:Boolean"></a>
       <span class="permalink">
@@ -775,10 +735,10 @@
       </span>
       
       
-    </li><li name="com.spotify.scio.coders.instances.JavaCoders#javaBeanCoder" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="javaBeanCoder[T](implicitevidence$4:com.spotify.scio.IsJavaBean[T],implicitevidence$5:scala.reflect.ClassTag[T]):com.spotify.scio.coders.Coder[T]"></a><a id="javaBeanCoder[T](IsJavaBean[T],ClassTag[T]):Coder[T]"></a>
+    </li><li name="com.spotify.scio.coders.instances.JavaBeanCoders#javaBeanCoder" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="javaBeanCoder[T](implicitevidence$2:com.spotify.scio.IsJavaBean[T],implicitevidence$3:scala.reflect.ClassTag[T]):com.spotify.scio.coders.Coder[T]"></a><a id="javaBeanCoder[T](IsJavaBean[T],ClassTag[T]):Coder[T]"></a>
       <span class="permalink">
-      <a href="../../../../../com/spotify/scio/coders/instances/JavaCoders.html#javaBeanCoder[T](implicitevidence$4:com.spotify.scio.IsJavaBean[T],implicitevidence$5:scala.reflect.ClassTag[T]):com.spotify.scio.coders.Coder[T]" title="Permalink">
+      <a href="../../../../../com/spotify/scio/coders/instances/JavaCoders.html#javaBeanCoder[T](implicitevidence$2:com.spotify.scio.IsJavaBean[T],implicitevidence$3:scala.reflect.ClassTag[T]):com.spotify.scio.coders.Coder[T]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -787,10 +747,10 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">javaBeanCoder</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="../../IsJavaBean.html" class="extype" name="com.spotify.scio.IsJavaBean">IsJavaBean</a>[<span class="extype" name="com.spotify.scio.coders.instances.JavaCoders.javaBeanCoder.T">T</span>]</span>, <span name="arg1">arg1: <span class="extype" name="scala.reflect.ClassTag">ClassTag</span>[<span class="extype" name="com.spotify.scio.coders.instances.JavaCoders.javaBeanCoder.T">T</span>]</span>)</span><span class="result">: <a href="../Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.coders.instances.JavaCoders.javaBeanCoder.T">T</span>]</span>
+        <span class="name">javaBeanCoder</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="../../IsJavaBean.html" class="extype" name="com.spotify.scio.IsJavaBean">IsJavaBean</a>[<span class="extype" name="com.spotify.scio.coders.instances.JavaBeanCoders.javaBeanCoder.T">T</span>]</span>, <span name="arg1">arg1: <span class="extype" name="scala.reflect.ClassTag">ClassTag</span>[<span class="extype" name="com.spotify.scio.coders.instances.JavaBeanCoders.javaBeanCoder.T">T</span>]</span>)</span><span class="result">: <a href="../Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.coders.instances.JavaBeanCoders.javaBeanCoder.T">T</span>]</span>
       </span>
       
-      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="JavaBeanCoders.html" class="extype" name="com.spotify.scio.coders.instances.JavaBeanCoders">JavaBeanCoders</a></dd></dl></div>
     </li><li name="com.spotify.scio.coders.instances.JavaCoders#jlistCoder" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="jlistCoder[T](implicitc:com.spotify.scio.coders.Coder[T]):com.spotify.scio.coders.Coder[java.util.List[T]]"></a><a id="jlistCoder[T](Coder[T]):Coder[List[T]]"></a>
       <span class="permalink">
@@ -804,22 +764,6 @@
       </span>
       <span class="symbol">
         <span class="name">jlistCoder</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span class="implicit">implicit </span><span name="c">c: <a href="../Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.coders.instances.JavaCoders.jlistCoder.T">T</span>]</span>)</span><span class="result">: <a href="../Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="java.util.List">List</span>[<span class="extype" name="com.spotify.scio.coders.instances.JavaCoders.jlistCoder.T">T</span>]]</span>
-      </span>
-      
-      
-    </li><li name="com.spotify.scio.coders.instances.JavaCoders#messageCoder" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="messageCoder:com.spotify.scio.coders.Coder[org.apache.beam.sdk.io.gcp.pubsub.PubsubMessage]"></a><a id="messageCoder:Coder[PubsubMessage]"></a>
-      <span class="permalink">
-      <a href="../../../../../com/spotify/scio/coders/instances/JavaCoders.html#messageCoder:com.spotify.scio.coders.Coder[org.apache.beam.sdk.io.gcp.pubsub.PubsubMessage]" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier">implicit </span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">messageCoder</span><span class="result">: <a href="../Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="org.apache.beam.sdk.io.gcp.pubsub.PubsubMessage">PubsubMessage</span>]</span>
       </span>
       
       
@@ -877,22 +821,6 @@
                 <span class="name">@native</span><span class="args">()</span>
               
         </dd></dl></div>
-    </li><li name="com.spotify.scio.coders.instances.JavaCoders#paneInfoCoder" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="paneInfoCoder:com.spotify.scio.coders.Coder[org.apache.beam.sdk.transforms.windowing.PaneInfo]"></a><a id="paneInfoCoder:Coder[PaneInfo]"></a>
-      <span class="permalink">
-      <a href="../../../../../com/spotify/scio/coders/instances/JavaCoders.html#paneInfoCoder:com.spotify.scio.coders.Coder[org.apache.beam.sdk.transforms.windowing.PaneInfo]" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier">implicit </span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">paneInfoCoder</span><span class="result">: <a href="../Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="org.apache.beam.sdk.transforms.windowing.PaneInfo">PaneInfo</span>]</span>
-      </span>
-      
-      
     </li><li name="com.spotify.scio.coders.instances.JavaCoders#pathCoder" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="pathCoder:com.spotify.scio.coders.Coder[java.nio.file.Path]"></a><a id="pathCoder:Coder[Path]"></a>
       <span class="permalink">
@@ -906,22 +834,6 @@
       </span>
       <span class="symbol">
         <span class="name">pathCoder</span><span class="result">: <a href="../Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="java.nio.file.Path">Path</span>]</span>
-      </span>
-      
-      
-    </li><li name="com.spotify.scio.coders.instances.JavaCoders#row" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="row(schema:org.apache.beam.sdk.schemas.Schema):com.spotify.scio.coders.Coder[org.apache.beam.sdk.values.Row]"></a><a id="row(Schema):Coder[Row]"></a>
-      <span class="permalink">
-      <a href="../../../../../com/spotify/scio/coders/instances/JavaCoders.html#row(schema:org.apache.beam.sdk.schemas.Schema):com.spotify.scio.coders.Coder[org.apache.beam.sdk.values.Row]" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">row</span><span class="params">(<span name="schema">schema: <span class="extype" name="org.apache.beam.sdk.schemas.Schema">Schema</span></span>)</span><span class="result">: <a href="../Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="org.apache.beam.sdk.values.Row">Row</span>]</span>
       </span>
       
       
@@ -957,22 +869,6 @@
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
-    </li><li name="com.spotify.scio.coders.instances.JavaCoders#tableRowCoder" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="tableRowCoder:com.spotify.scio.coders.Coder[com.google.api.services.bigquery.model.TableRow]"></a><a id="tableRowCoder:Coder[TableRow]"></a>
-      <span class="permalink">
-      <a href="../../../../../com/spotify/scio/coders/instances/JavaCoders.html#tableRowCoder:com.spotify.scio.coders.Coder[com.google.api.services.bigquery.model.TableRow]" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier">implicit </span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">tableRowCoder</span><span class="result">: <a href="../Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.google.api.services.bigquery.model.TableRow">TableRow</span>]</span>
-      </span>
-      
-      
     </li><li name="scala.AnyRef#toString" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="toString():String"></a>
       <span class="permalink">
@@ -1099,7 +995,9 @@
         </div>
 
         <div id="inheritedMembers">
-        <div class="parent" name="scala.AnyRef">
+        <div class="parent" name="com.spotify.scio.coders.instances.JavaBeanCoders">
+              <h3>Inherited from <a href="JavaBeanCoders.html" class="extype" name="com.spotify.scio.coders.instances.JavaBeanCoders">JavaBeanCoders</a></h3>
+            </div><div class="parent" name="scala.AnyRef">
               <h3>Inherited from <span class="extype" name="scala.AnyRef">AnyRef</span></h3>
             </div><div class="parent" name="scala.Any">
               <h3>Inherited from <span class="extype" name="scala.Any">Any</span></h3>

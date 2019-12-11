@@ -418,9 +418,9 @@ multiple times (use <a href="#distinct:com.spotify.scio.values.SCollection[T]" c
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
     </li><li name="com.spotify.scio.values.SCollection#aggregate" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="transform">
-      <a id="aggregate[A,U](aggregator:com.twitter.algebird.Aggregator[T,A,U])(implicitevidence$5:com.spotify.scio.coders.Coder[A],implicitevidence$6:com.spotify.scio.coders.Coder[U],implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[U]"></a><a id="aggregate[A,U](Aggregator[T,A,U])(Coder[A],Coder[U],Coder[T]):SCollection[U]"></a>
+      <a id="aggregate[A,U](aggregator:com.twitter.algebird.Aggregator[T,A,U])(implicitevidence$4:com.spotify.scio.coders.Coder[A],implicitevidence$5:com.spotify.scio.coders.Coder[U],implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[U]"></a><a id="aggregate[A,U](Aggregator[T,A,U])(Coder[A],Coder[U],Coder[T]):SCollection[U]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/values/SCollection.html#aggregate[A,U](aggregator:com.twitter.algebird.Aggregator[T,A,U])(implicitevidence$5:com.spotify.scio.coders.Coder[A],implicitevidence$6:com.spotify.scio.coders.Coder[U],implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[U]" title="Permalink">
+      <a href="../../../../com/spotify/scio/values/SCollection.html#aggregate[A,U](aggregator:com.twitter.algebird.Aggregator[T,A,U])(implicitevidence$4:com.spotify.scio.coders.Coder[A],implicitevidence$5:com.spotify.scio.coders.Coder[U],implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[U]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -437,9 +437,9 @@ to <code>A</code>, then we reduce with a <span class="extype" name="com.twitter.
 finally we present the results as <code>U</code>. This could be more powerful and better optimized in
 some cases.</p></div></div>
     </li><li name="com.spotify.scio.values.SCollection#aggregate" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="transform">
-      <a id="aggregate[U](zeroValue:U)(seqOp:(U,T)=&gt;U,combOp:(U,U)=&gt;U)(implicitevidence$4:com.spotify.scio.coders.Coder[U],implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[U]"></a><a id="aggregate[U](U)((U,T)⇒U,(U,U)⇒U)(Coder[U],Coder[T]):SCollection[U]"></a>
+      <a id="aggregate[U](zeroValue:U)(seqOp:(U,T)=&gt;U,combOp:(U,U)=&gt;U)(implicitevidence$3:com.spotify.scio.coders.Coder[U],implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[U]"></a><a id="aggregate[U](U)((U,T)⇒U,(U,U)⇒U)(Coder[U],Coder[T]):SCollection[U]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/values/SCollection.html#aggregate[U](zeroValue:U)(seqOp:(U,T)=&gt;U,combOp:(U,U)=&gt;U)(implicitevidence$4:com.spotify.scio.coders.Coder[U],implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[U]" title="Permalink">
+      <a href="../../../../com/spotify/scio/values/SCollection.html#aggregate[U](zeroValue:U)(seqOp:(U,T)=&gt;U,combOp:(U,U)=&gt;U)(implicitevidence$3:com.spotify.scio.coders.Coder[U],implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[U]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -547,6 +547,26 @@ caching is desired, use <a href="#asListSideInput:com.spotify.scio.values.SideIn
       <p class="shortcomment cmt">Convert this SCollection to a <a href="SideInput.html" class="extype" name="com.spotify.scio.values.SideInput">SideInput</a>, mapping each window to a <code>Seq</code>, to be used with
 <a href="#withSideInputs(sides:com.spotify.scio.values.SideInput[_]*)(implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollectionWithSideInput[T]" class="extmbr" name="com.spotify.scio.values.SCollection#withSideInputs">withSideInputs</a>.</p><div class="fullcomment"><div class="comment cmt"><p>Convert this SCollection to a <a href="SideInput.html" class="extype" name="com.spotify.scio.values.SideInput">SideInput</a>, mapping each window to a <code>Seq</code>, to be used with
 <a href="#withSideInputs(sides:com.spotify.scio.values.SideInput[_]*)(implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollectionWithSideInput[T]" class="extmbr" name="com.spotify.scio.values.SCollection#withSideInputs">withSideInputs</a>.</p><p>The resulting <code>Seq</code> is required to fit in memory.</p></div></div>
+    </li><li name="com.spotify.scio.values.SCollection#asSetSingletonSideInput" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="side">
+      <a id="asSetSingletonSideInput(implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SideInput[Set[T]]"></a><a id="asSetSingletonSideInput(Coder[T]):SideInput[Set[T]]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/values/SCollection.html#asSetSingletonSideInput(implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SideInput[Set[T]]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">asSetSingletonSideInput</span><span class="params">(<span class="implicit">implicit </span><span name="coder">coder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.SCollection.T">T</span>]</span>)</span><span class="result">: <a href="SideInput.html" class="extype" name="com.spotify.scio.values.SideInput">SideInput</a>[<span class="extype" name="scala.Predef.Set">Set</span>[<span class="extype" name="com.spotify.scio.values.SCollection.T">T</span>]]</span>
+      </span>
+      
+      <p class="shortcomment cmt">Convert this SCollection to a <a href="SideInput.html" class="extype" name="com.spotify.scio.values.SideInput">SideInput</a>, mapping each window to a <code>Set[T]</code>, to be used
+with <a href="#withSideInputs(sides:com.spotify.scio.values.SideInput[_]*)(implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollectionWithSideInput[T]" class="extmbr" name="com.spotify.scio.values.SCollection#withSideInputs">withSideInputs</a>.</p><div class="fullcomment"><div class="comment cmt"><p>Convert this SCollection to a <a href="SideInput.html" class="extype" name="com.spotify.scio.values.SideInput">SideInput</a>, mapping each window to a <code>Set[T]</code>, to be used
+with <a href="#withSideInputs(sides:com.spotify.scio.values.SideInput[_]*)(implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollectionWithSideInput[T]" class="extmbr" name="com.spotify.scio.values.SCollection#withSideInputs">withSideInputs</a>.</p><p>The resulting <a href="SideInput.html" class="extype" name="com.spotify.scio.values.SideInput">SideInput</a> is a one element singleton which is a <code>Set</code> of all elements in
+the SCollection for the given window. The complete Set must fit in memory of the worker.
+</p></div></div>
     </li><li name="com.spotify.scio.values.SCollection#asSingletonSideInput" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="side">
       <a id="asSingletonSideInput(defaultValue:T):com.spotify.scio.values.SideInput[T]"></a><a id="asSingletonSideInput(T):SideInput[T]"></a>
       <span class="permalink">
@@ -606,9 +626,9 @@ to be used with <a href="#withSideInputs(sides:com.spotify.scio.values.SideInput
               
         </dd></dl></div>
     </li><li name="com.spotify.scio.values.SCollection#collect" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="transform">
-      <a id="collect[U](pfn:PartialFunction[T,U])(implicitevidence$7:com.spotify.scio.coders.Coder[U]):com.spotify.scio.values.SCollection[U]"></a><a id="collect[U](PartialFunction[T,U])(Coder[U]):SCollection[U]"></a>
+      <a id="collect[U](pfn:PartialFunction[T,U])(implicitevidence$6:com.spotify.scio.coders.Coder[U]):com.spotify.scio.values.SCollection[U]"></a><a id="collect[U](PartialFunction[T,U])(Coder[U]):SCollection[U]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/values/SCollection.html#collect[U](pfn:PartialFunction[T,U])(implicitevidence$7:com.spotify.scio.coders.Coder[U]):com.spotify.scio.values.SCollection[U]" title="Permalink">
+      <a href="../../../../com/spotify/scio/values/SCollection.html#collect[U](pfn:PartialFunction[T,U])(implicitevidence$6:com.spotify.scio.coders.Coder[U]):com.spotify.scio.values.SCollection[U]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -622,9 +642,9 @@ to be used with <a href="#withSideInputs(sides:com.spotify.scio.values.SideInput
       
       <p class="shortcomment cmt">Filter the elements for which the given <code>PartialFunction</code> is defined, and then map.</p>
     </li><li name="com.spotify.scio.values.SCollection#combine" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="transform">
-      <a id="combine[C](createCombiner:T=&gt;C)(mergeValue:(C,T)=&gt;C)(mergeCombiners:(C,C)=&gt;C)(implicitevidence$8:com.spotify.scio.coders.Coder[C],implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[C]"></a><a id="combine[C]((T)⇒C)((C,T)⇒C)((C,C)⇒C)(Coder[C],Coder[T]):SCollection[C]"></a>
+      <a id="combine[C](createCombiner:T=&gt;C)(mergeValue:(C,T)=&gt;C)(mergeCombiners:(C,C)=&gt;C)(implicitevidence$7:com.spotify.scio.coders.Coder[C],implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[C]"></a><a id="combine[C]((T)⇒C)((C,T)⇒C)((C,C)⇒C)(Coder[C],Coder[T]):SCollection[C]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/values/SCollection.html#combine[C](createCombiner:T=&gt;C)(mergeValue:(C,T)=&gt;C)(mergeCombiners:(C,C)=&gt;C)(implicitevidence$8:com.spotify.scio.coders.Coder[C],implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[C]" title="Permalink">
+      <a href="../../../../com/spotify/scio/values/SCollection.html#combine[C](createCombiner:T=&gt;C)(mergeValue:(C,T)=&gt;C)(mergeCombiners:(C,C)=&gt;C)(implicitevidence$7:com.spotify.scio.coders.Coder[C],implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[C]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -707,9 +727,9 @@ more accurate the estimate will be; should be <code>&gt;= 16</code></p></dd></dl
       
       <p class="shortcomment cmt">Count of each unique value in this SCollection as an SCollection of (value, count) pairs.</p>
     </li><li name="com.spotify.scio.values.SCollection#cross" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="hash">
-      <a id="cross[U](that:com.spotify.scio.values.SCollection[U])(implicitevidence$11:com.spotify.scio.coders.Coder[U],implicittcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[(T,U)]"></a><a id="cross[U](SCollection[U])(Coder[U],Coder[T]):SCollection[(T,U)]"></a>
+      <a id="cross[U](that:com.spotify.scio.values.SCollection[U])(implicitevidence$10:com.spotify.scio.coders.Coder[U],implicittcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[(T,U)]"></a><a id="cross[U](SCollection[U])(Coder[U],Coder[T]):SCollection[(T,U)]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/values/SCollection.html#cross[U](that:com.spotify.scio.values.SCollection[U])(implicitevidence$11:com.spotify.scio.coders.Coder[U],implicittcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[(T,U)]" title="Permalink">
+      <a href="../../../../com/spotify/scio/values/SCollection.html#cross[U](that:com.spotify.scio.values.SCollection[U])(implicitevidence$10:com.spotify.scio.coders.Coder[U],implicittcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[(T,U)]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -847,9 +867,9 @@ representative value for each input element.
               
         </dd></dl></div>
     </li><li name="com.spotify.scio.values.SCollection#flatMap" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="transform">
-      <a id="flatMap[U](f:T=&gt;TraversableOnce[U])(implicitevidence$9:com.spotify.scio.coders.Coder[U]):com.spotify.scio.values.SCollection[U]"></a><a id="flatMap[U]((T)⇒TraversableOnce[U])(Coder[U]):SCollection[U]"></a>
+      <a id="flatMap[U](f:T=&gt;TraversableOnce[U])(implicitevidence$8:com.spotify.scio.coders.Coder[U]):com.spotify.scio.values.SCollection[U]"></a><a id="flatMap[U]((T)⇒TraversableOnce[U])(Coder[U]):SCollection[U]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/values/SCollection.html#flatMap[U](f:T=&gt;TraversableOnce[U])(implicitevidence$9:com.spotify.scio.coders.Coder[U]):com.spotify.scio.values.SCollection[U]" title="Permalink">
+      <a href="../../../../com/spotify/scio/values/SCollection.html#flatMap[U](f:T=&gt;TraversableOnce[U])(implicitevidence$8:com.spotify.scio.coders.Coder[U]):com.spotify.scio.values.SCollection[U]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -953,7 +973,7 @@ allocation; however, it should not modify t2.</p></div></div>
 elements mapping to that key. The ordering of elements within each group is not guaranteed,
 and may even differ each time the resulting SCollection is evaluated.</p><p>Note: This operation may be very expensive. If you are grouping in order to perform an
 aggregation (such as a sum or average) over each key, using
-<a href="PairSCollectionFunctions.html#aggregateByKey[U](zeroValue:U)(seqOp:(U,V)=&gt;U,combOp:(U,U)=&gt;U)(implicitevidence$31:com.spotify.scio.coders.Coder[U],implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SCollection[(K,U)]" class="extmbr" name="com.spotify.scio.values.PairSCollectionFunctions#aggregateByKey">PairSCollectionFunctions.aggregateByKey</a> or
+<a href="PairSCollectionFunctions.html#aggregateByKey[U](zeroValue:U)(seqOp:(U,V)=&gt;U,combOp:(U,U)=&gt;U)(implicitevidence$32:com.spotify.scio.coders.Coder[U],implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SCollection[(K,U)]" class="extmbr" name="com.spotify.scio.values.PairSCollectionFunctions#aggregateByKey">PairSCollectionFunctions.aggregateByKey</a> or
 <a href="PairSCollectionFunctions.html#reduceByKey(op:(V,V)=&gt;V)(implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SCollection[(K,V)]" class="extmbr" name="com.spotify.scio.values.PairSCollectionFunctions#reduceByKey">PairSCollectionFunctions.reduceByKey</a> will provide much better performance.</p></div></div>
     </li><li name="scala.AnyRef#hashCode" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="hashCode():Int"></a>
@@ -975,9 +995,9 @@ aggregation (such as a sum or average) over each key, using
               
         </dd></dl></div>
     </li><li name="com.spotify.scio.values.SCollection#hashFilter" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="transform">
-      <a id="hashFilter(that:com.spotify.scio.values.SideSet[T])(implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]"></a><a id="hashFilter(SideSet[T])(Coder[T]):SCollection[T]"></a>
+      <a id="hashFilter(sideInput:com.spotify.scio.values.SideInput[Set[T]])(implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]"></a><a id="hashFilter(SideInput[Set[T]])(Coder[T]):SCollection[T]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/values/SCollection.html#hashFilter(that:com.spotify.scio.values.SideSet[T])(implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]" title="Permalink">
+      <a href="../../../../com/spotify/scio/values/SCollection.html#hashFilter(sideInput:com.spotify.scio.values.SideInput[Set[T]])(implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -986,14 +1006,14 @@ aggregation (such as a sum or average) over each key, using
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">hashFilter</span><span class="params">(<span name="that">that: <a href="SideSet.html" class="extype" name="com.spotify.scio.values.SideSet">SideSet</a>[<span class="extype" name="com.spotify.scio.values.SCollection.T">T</span>]</span>)</span><span class="params">(<span class="implicit">implicit </span><span name="coder">coder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.SCollection.T">T</span>]</span>)</span><span class="result">: <a href="" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.values.SCollection.T">T</span>]</span>
+        <span class="name">hashFilter</span><span class="params">(<span name="sideInput">sideInput: <a href="SideInput.html" class="extype" name="com.spotify.scio.values.SideInput">SideInput</a>[<span class="extype" name="scala.Predef.Set">Set</span>[<span class="extype" name="com.spotify.scio.values.SCollection.T">T</span>]]</span>)</span><span class="params">(<span class="implicit">implicit </span><span name="coder">coder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.SCollection.T">T</span>]</span>)</span><span class="result">: <a href="" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.values.SCollection.T">T</span>]</span>
       </span>
       
-      <p class="shortcomment cmt">Return a new SCollection containing only the elements that also exist in the SideSet.</p>
+      <p class="shortcomment cmt">Return a new SCollection containing only the elements that also exist in the <code>SideInput</code>.</p>
     </li><li name="com.spotify.scio.values.SCollection#hashLookup" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="hash">
-      <a id="hashLookup[V](that:com.spotify.scio.values.SCollection[(T,V)])(implicitevidence$12:com.spotify.scio.coders.Coder[V],implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[(T,Iterable[V])]"></a><a id="hashLookup[V](SCollection[(T,V)])(Coder[V],Coder[T]):SCollection[(T,Iterable[V])]"></a>
+      <a id="hashLookup[V](that:com.spotify.scio.values.SCollection[(T,V)])(implicitevidence$11:com.spotify.scio.coders.Coder[V],implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[(T,Iterable[V])]"></a><a id="hashLookup[V](SCollection[(T,V)])(Coder[V],Coder[T]):SCollection[(T,Iterable[V])]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/values/SCollection.html#hashLookup[V](that:com.spotify.scio.values.SCollection[(T,V)])(implicitevidence$12:com.spotify.scio.coders.Coder[V],implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[(T,Iterable[V])]" title="Permalink">
+      <a href="../../../../com/spotify/scio/values/SCollection.html#hashLookup[V](that:com.spotify.scio.values.SCollection[(T,V)])(implicitevidence$11:com.spotify.scio.coders.Coder[V],implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[(T,Iterable[V])]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -1076,9 +1096,9 @@ duplicate elements, even if the input SCollections did.</p><p>Note that this met
       
       <p class="shortcomment cmt">Create tuples of the elements in this SCollection by applying <code>f</code>.</p>
     </li><li name="com.spotify.scio.values.SCollection#map" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="transform">
-      <a id="map[U](f:T=&gt;U)(implicitevidence$10:com.spotify.scio.coders.Coder[U]):com.spotify.scio.values.SCollection[U]"></a><a id="map[U]((T)⇒U)(Coder[U]):SCollection[U]"></a>
+      <a id="map[U](f:T=&gt;U)(implicitevidence$9:com.spotify.scio.coders.Coder[U]):com.spotify.scio.values.SCollection[U]"></a><a id="map[U]((T)⇒U)(Coder[U]):SCollection[U]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/values/SCollection.html#map[U](f:T=&gt;U)(implicitevidence$10:com.spotify.scio.coders.Coder[U]):com.spotify.scio.values.SCollection[U]" title="Permalink">
+      <a href="../../../../com/spotify/scio/values/SCollection.html#map[U](f:T=&gt;U)(implicitevidence$9:com.spotify.scio.coders.Coder[U]):com.spotify.scio.values.SCollection[U]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -1106,8 +1126,10 @@ duplicate elements, even if the input SCollections did.</p><p>Note that this met
         <span class="name">materialize</span><span class="params">(<span class="implicit">implicit </span><span name="coder">coder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.SCollection.T">T</span>]</span>)</span><span class="result">: <a href="../io/ClosedTap.html" class="extype" name="com.spotify.scio.io.ClosedTap">ClosedTap</a>[<span class="extype" name="com.spotify.scio.values.SCollection.T">T</span>]</span>
       </span>
       
-      <p class="shortcomment cmt">Extract data from this SCollection as a <code>Future</code>.</p><div class="fullcomment"><div class="comment cmt"><p>Extract data from this SCollection as a <code>Future</code>. The <code>Future</code> will be completed once the
-pipeline completes successfully.</p></div></div>
+      <p class="shortcomment cmt">Extract data from this SCollection as a closed <span class="extype" name="Tap">Tap</span>.</p><div class="fullcomment"><div class="comment cmt"><p>Extract data from this SCollection as a closed <span class="extype" name="Tap">Tap</span>. The Tap will be available
+once the pipeline completes successfully. <code>.materialize()</code> must be called before
+the <code>ScioContext</code> is run, as its implementation modifies the current pipeline graph.</p><pre><span class="kw">val</span> closedTap = sc.parallelize(<span class="num">1</span> to <span class="num">10</span>).materialize
+sc.run().waitUntilDone().tap(closedTap)</pre></div></div>
     </li><li name="com.spotify.scio.values.SCollection#max" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="max(ord:Ordering[T])(implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]"></a><a id="max(Ordering[T])(Coder[T]):SCollection[T]"></a>
       <span class="permalink">
@@ -1311,9 +1333,9 @@ the predicate p and the second consists of all element that do not.</p></dd></dl
 </p></div><dl class="paramcmts block"><dt class="param">numPartitions</dt><dd class="cmt"><p>number of output partitions</p></dd><dt class="param">f</dt><dd class="cmt"><p>function that assigns an output partition to each element, should be in the range
 <code>[0, numPartitions - 1]</code></p></dd><dt>returns</dt><dd class="cmt"><p>partitioned SCollections in a <code>Seq</code></p></dd></dl></div>
     </li><li name="com.spotify.scio.values.SCollection#partitionByKey" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="collection">
-      <a id="partitionByKey[U](partitionKeys:Set[U])(f:T=&gt;U)(implicitevidence$3:com.spotify.scio.coders.Coder[U]):Map[U,com.spotify.scio.values.SCollection[T]]"></a><a id="partitionByKey[U](Set[U])((T)⇒U)(Coder[U]):Map[U,SCollection[T]]"></a>
+      <a id="partitionByKey[U](partitionKeys:Set[U])(f:T=&gt;U):Map[U,com.spotify.scio.values.SCollection[T]]"></a><a id="partitionByKey[U](Set[U])((T)⇒U):Map[U,SCollection[T]]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/values/SCollection.html#partitionByKey[U](partitionKeys:Set[U])(f:T=&gt;U)(implicitevidence$3:com.spotify.scio.coders.Coder[U]):Map[U,com.spotify.scio.values.SCollection[T]]" title="Permalink">
+      <a href="../../../../com/spotify/scio/values/SCollection.html#partitionByKey[U](partitionKeys:Set[U])(f:T=&gt;U):Map[U,com.spotify.scio.values.SCollection[T]]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -1322,7 +1344,7 @@ the predicate p and the second consists of all element that do not.</p></dd></dl
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">partitionByKey</span><span class="tparams">[<span name="U">U</span>]</span><span class="params">(<span name="partitionKeys">partitionKeys: <span class="extype" name="scala.Predef.Set">Set</span>[<span class="extype" name="com.spotify.scio.values.SCollection.partitionByKey.U">U</span>]</span>)</span><span class="params">(<span name="f">f: (<span class="extype" name="com.spotify.scio.values.SCollection.T">T</span>) ⇒ <span class="extype" name="com.spotify.scio.values.SCollection.partitionByKey.U">U</span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.SCollection.partitionByKey.U">U</span>]</span>)</span><span class="result">: <span class="extype" name="scala.Predef.Map">Map</span>[<span class="extype" name="com.spotify.scio.values.SCollection.partitionByKey.U">U</span>, <a href="" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.values.SCollection.T">T</span>]]</span>
+        <span class="name">partitionByKey</span><span class="tparams">[<span name="U">U</span>]</span><span class="params">(<span name="partitionKeys">partitionKeys: <span class="extype" name="scala.Predef.Set">Set</span>[<span class="extype" name="com.spotify.scio.values.SCollection.partitionByKey.U">U</span>]</span>)</span><span class="params">(<span name="f">f: (<span class="extype" name="com.spotify.scio.values.SCollection.T">T</span>) ⇒ <span class="extype" name="com.spotify.scio.values.SCollection.partitionByKey.U">U</span></span>)</span><span class="result">: <span class="extype" name="scala.Predef.Map">Map</span>[<span class="extype" name="com.spotify.scio.values.SCollection.partitionByKey.U">U</span>, <a href="" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.values.SCollection.T">T</span>]]</span>
       </span>
       
       <p class="shortcomment cmt">Partition this SCollection into a map from possible key values to an SCollection of
@@ -1416,9 +1438,9 @@ Note: <code>0 &lt; weightA + weightB &lt; 1</code>
       <p class="shortcomment cmt">Randomly splits this SCollection with the provided weights.</p><div class="fullcomment"><div class="comment cmt"><p>Randomly splits this SCollection with the provided weights.
 </p></div><dl class="paramcmts block"><dt class="param">weights</dt><dd class="cmt"><p>weights for splits, will be normalized if they don't sum to 1</p></dd><dt>returns</dt><dd class="cmt"><p>split SCollections in an array</p></dd></dl></div>
     </li><li name="com.spotify.scio.values.SCollection#readAll" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="readAll[U](read:org.apache.beam.sdk.transforms.PTransform[org.apache.beam.sdk.values.PCollection[String],org.apache.beam.sdk.values.PCollection[U]])(implicitevidence$14:com.spotify.scio.coders.Coder[U],implicitev:T&lt;:&lt;String):com.spotify.scio.values.SCollection[U]"></a><a id="readAll[U](PTransform[PCollection[String],PCollection[U]])(Coder[U],&lt;:&lt;[T,String]):SCollection[U]"></a>
+      <a id="readAll[U](read:org.apache.beam.sdk.transforms.PTransform[org.apache.beam.sdk.values.PCollection[String],org.apache.beam.sdk.values.PCollection[U]])(implicitevidence$12:com.spotify.scio.coders.Coder[U],implicitev:T&lt;:&lt;String):com.spotify.scio.values.SCollection[U]"></a><a id="readAll[U](PTransform[PCollection[String],PCollection[U]])(Coder[U],&lt;:&lt;[T,String]):SCollection[U]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/values/SCollection.html#readAll[U](read:org.apache.beam.sdk.transforms.PTransform[org.apache.beam.sdk.values.PCollection[String],org.apache.beam.sdk.values.PCollection[U]])(implicitevidence$14:com.spotify.scio.coders.Coder[U],implicitev:T&lt;:&lt;String):com.spotify.scio.values.SCollection[U]" title="Permalink">
+      <a href="../../../../com/spotify/scio/values/SCollection.html#readAll[U](read:org.apache.beam.sdk.transforms.PTransform[org.apache.beam.sdk.values.PCollection[String],org.apache.beam.sdk.values.PCollection[U]])(implicitevidence$12:com.spotify.scio.coders.Coder[U],implicitev:T&lt;:&lt;String):com.spotify.scio.values.SCollection[U]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -1561,9 +1583,9 @@ binary operator.</p>
       
       <p class="shortcomment cmt">Save this SCollection as a Pub/Sub topic.</p>
     </li><li name="com.spotify.scio.values.SCollection#saveAsPubsubWithAttributes" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="output">
-      <a id="saveAsPubsubWithAttributes[V](topic:String,idAttribute:String,timestampAttribute:String,maxBatchSize:Option[Int],maxBatchBytesSize:Option[Int])(implicitevidence$15:scala.reflect.ClassTag[V],implicitevidence$16:com.spotify.scio.coders.Coder[V],implicitev:T&lt;:&lt;(V,Map[String,String])):com.spotify.scio.io.ClosedTap[Nothing]"></a><a id="saveAsPubsubWithAttributes[V](String,String,String,Option[Int],Option[Int])(ClassTag[V],Coder[V],&lt;:&lt;[T,(V,Map[String,String])]):ClosedTap[Nothing]"></a>
+      <a id="saveAsPubsubWithAttributes[V](topic:String,idAttribute:String,timestampAttribute:String,maxBatchSize:Option[Int],maxBatchBytesSize:Option[Int])(implicitevidence$13:scala.reflect.ClassTag[V],implicitevidence$14:com.spotify.scio.coders.Coder[V],implicitev:T&lt;:&lt;(V,Map[String,String])):com.spotify.scio.io.ClosedTap[Nothing]"></a><a id="saveAsPubsubWithAttributes[V](String,String,String,Option[Int],Option[Int])(ClassTag[V],Coder[V],&lt;:&lt;[T,(V,Map[String,String])]):ClosedTap[Nothing]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/values/SCollection.html#saveAsPubsubWithAttributes[V](topic:String,idAttribute:String,timestampAttribute:String,maxBatchSize:Option[Int],maxBatchBytesSize:Option[Int])(implicitevidence$15:scala.reflect.ClassTag[V],implicitevidence$16:com.spotify.scio.coders.Coder[V],implicitev:T&lt;:&lt;(V,Map[String,String])):com.spotify.scio.io.ClosedTap[Nothing]" title="Permalink">
+      <a href="../../../../com/spotify/scio/values/SCollection.html#saveAsPubsubWithAttributes[V](topic:String,idAttribute:String,timestampAttribute:String,maxBatchSize:Option[Int],maxBatchBytesSize:Option[Int])(implicitevidence$13:scala.reflect.ClassTag[V],implicitevidence$14:com.spotify.scio.coders.Coder[V],implicitev:T&lt;:&lt;(V,Map[String,String])):com.spotify.scio.io.ClosedTap[Nothing]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -1706,7 +1728,7 @@ better optimized than <a href="#reduce(op:(T,T)=&gt;T)(implicitcoder:com.spotify
       
       <p class="shortcomment cmt">Assign timestamps to values.</p><div class="fullcomment"><div class="comment cmt"><p>Assign timestamps to values.
 With a optional skew</p></div></div>
-    </li><li name="com.spotify.scio.values.SCollection#to" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+    </li><li name="com.spotify.scio.values.SCollection#to" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="to[U](to:com.spotify.scio.schemas.To[T,U]):com.spotify.scio.values.SCollection[U]"></a><a id="to[U](To[T,U]):SCollection[U]"></a>
       <span class="permalink">
       <a href="../../../../com/spotify/scio/values/SCollection.html#to[U](to:com.spotify.scio.schemas.To[T,U]):com.spotify.scio.values.SCollection[U]" title="Permalink">
@@ -1721,23 +1743,10 @@ With a optional skew</p></div></div>
         <span class="name">to</span><span class="tparams">[<span name="U">U</span>]</span><span class="params">(<span name="to">to: <a href="../schemas/To.html" class="extype" name="com.spotify.scio.schemas.To">To</a>[<span class="extype" name="com.spotify.scio.values.SCollection.T">T</span>, <span class="extype" name="com.spotify.scio.values.SCollection.to.U">U</span>]</span>)</span><span class="result">: <a href="" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.values.SCollection.to.U">U</span>]</span>
       </span>
       
-      
-    </li><li name="com.spotify.scio.values.SCollection#toSideSet" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="toSideSet(implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SideSet[T]"></a><a id="toSideSet(Coder[T]):SideSet[T]"></a>
-      <span class="permalink">
-      <a href="../../../../com/spotify/scio/values/SCollection.html#toSideSet(implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SideSet[T]" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">toSideSet</span><span class="params">(<span class="implicit">implicit </span><span name="coder">coder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.SCollection.T">T</span>]</span>)</span><span class="result">: <a href="SideSet.html" class="extype" name="com.spotify.scio.values.SideSet">SideSet</a>[<span class="extype" name="com.spotify.scio.values.SCollection.T">T</span>]</span>
-      </span>
-      
-      
+      <p class="shortcomment cmt">Go from an SCollection of type <span class="extype" name="T">T</span> to an SCollection of <span class="extype" name="U">U</span>
+given the Schemas of both types <span class="extype" name="T">T</span> and <span class="extype" name="U">U</span>.</p><div class="fullcomment"><div class="comment cmt"><p>Go from an SCollection of type <span class="extype" name="T">T</span> to an SCollection of <span class="extype" name="U">U</span>
+given the Schemas of both types <span class="extype" name="T">T</span> and <span class="extype" name="U">U</span>.</p><p>There are two constructors for <span class="extype" name="To">To</span>:</p><p>Type safe (Schema compatibility is verified during compilation)</p><pre>SCollection[T]#to(To.safe[T, U])</pre><p>Unsafe conversion from <span class="extype" name="T">T</span> to <span class="extype" name="U">U</span>. Schema compatibility is not checked
+during compile time.</p><pre>SCollection[T]#to[U](To.unsafe)</pre></div></div>
     </li><li name="scala.AnyRef#toString" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="toString():String"></a>
       <span class="permalink">
@@ -2115,13 +2124,15 @@ done with side inputs.</p><pre><span class="kw">val</span> s1: SCollection[<span
 <span class="kw">val</span> side1 = s1.asSingletonSideInput
 <span class="kw">val</span> side2 = s2.asIterableSideInput
 <span class="kw">val</span> side3 = s3.asMapSideInput
+<span class="kw">val</span> side4 = s4.asMultiMapSideInput
 
 <span class="kw">val</span> p: SCollection[MyRecord] = <span class="cmt">// ...</span>
 p.withSideInputs(side1, side2, side3).map { (x, s) <span class="kw">=&gt;</span>
   <span class="cmt">// Extract side inputs from context</span>
   <span class="kw">val</span> s1: <span class="std">Int</span> = s(side1)
   <span class="kw">val</span> s2: Iterable[<span class="std">String</span>] = s(side2)
-  <span class="kw">val</span> s3: <span class="std">Map</span>[<span class="std">String</span>, Iterable[<span class="std">Double</span>]] = s(side3)
+  <span class="kw">val</span> s3: <span class="std">Map</span>[<span class="std">String</span>, <span class="std">Double</span>] = s(side3)
+  <span class="kw">val</span> s4: <span class="std">Map</span>[<span class="std">String</span>, Iterable[<span class="std">Double</span>]] = s(side4)
   <span class="cmt">// ...</span>
 }</pre></div></div>
     </li><li name="com.spotify.scio.values.SCollection#withSideOutputs" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="side">
@@ -2265,7 +2276,49 @@ with write configurations passed by.
 
         
 
-        
+        <div class="values members">
+              <h3>Deprecated Value Members</h3>
+              <ol><li name="com.spotify.scio.values.SCollection#hashFilter" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="transform">
+      <a id="hashFilter(that:com.spotify.scio.values.SideSet[T])(implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]"></a><a id="hashFilter(SideSet[T])(Coder[T]):SCollection[T]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/values/SCollection.html#hashFilter(that:com.spotify.scio.values.SideSet[T])(implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name deprecated" title="Deprecated: (Since version 0.8.0) use SCollection[T]#hashFilter(right.asSetSingletonSideInput) instead">hashFilter</span><span class="params">(<span name="that">that: <a href="SideSet.html" class="extype" name="com.spotify.scio.values.SideSet">SideSet</a>[<span class="extype" name="com.spotify.scio.values.SCollection.T">T</span>]</span>)</span><span class="params">(<span class="implicit">implicit </span><span name="coder">coder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.SCollection.T">T</span>]</span>)</span><span class="result">: <a href="" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.values.SCollection.T">T</span>]</span>
+      </span>
+      
+      <p class="shortcomment cmt">Return a new SCollection containing only the elements that also exist in the SideSet.</p><div class="fullcomment"><div class="comment cmt"><p>Return a new SCollection containing only the elements that also exist in the SideSet.
+</p></div><dl class="attributes block"> <dt>Annotations</dt><dd>
+                <span class="name">@deprecated</span>
+              
+        </dd><dt>Deprecated</dt><dd class="cmt"><p><i>(Since version 0.8.0)</i> use SCollection[T]#hashFilter(right.asSetSingletonSideInput) instead</p></dd></dl></div>
+    </li><li name="com.spotify.scio.values.SCollection#toSideSet" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="toSideSet(implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SideSet[T]"></a><a id="toSideSet(Coder[T]):SideSet[T]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/values/SCollection.html#toSideSet(implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SideSet[T]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name deprecated" title="Deprecated: (Since version 0.8.0) Use SCollection[T]#asSetSingletonSideInput instead">toSideSet</span><span class="params">(<span class="implicit">implicit </span><span name="coder">coder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.SCollection.T">T</span>]</span>)</span><span class="result">: <a href="SideSet.html" class="extype" name="com.spotify.scio.values.SideSet">SideSet</a>[<span class="extype" name="com.spotify.scio.values.SCollection.T">T</span>]</span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Annotations</dt><dd>
+                <span class="name">@deprecated</span>
+              
+        </dd><dt>Deprecated</dt><dd class="cmt"><p><i>(Since version 0.8.0)</i> Use SCollection[T]#asSetSingletonSideInput instead</p></dd></dl></div>
+    </li></ol>
+            </div>
         </div>
 
         <div id="inheritedMembers">

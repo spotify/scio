@@ -150,9 +150,21 @@
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../index.html" class="extype" name="com.spotify.scio.avro">avro</a></dd></dl></div>
     </li><li class="current-entities indented5">
+                        <a class="object" href="AvroFileImpl$.html" title=""></a>
+                        <a class="trait" href="AvroFileImpl.html" title=""></a>
+                        <a href="AvroFileImpl.html" title="">AvroFileImpl</a>
+                      </li><li class="current-entities indented5">
                         <span class="separator"></span>
                         <a class="class" href="" title=""></a>
                         <a href="" title="">GenericRecordSCollectionOps</a>
+                      </li><li class="current-entities indented5">
+                        <span class="separator"></span>
+                        <a class="trait" href="LowPriorityAvroFileImpl.html" title=""></a>
+                        <a href="LowPriorityAvroFileImpl.html" title="">LowPriorityAvroFileImpl</a>
+                      </li><li class="current-entities indented5">
+                        <span class="separator"></span>
+                        <a class="class" href="ObjectFileSCollectionOps.html" title=""></a>
+                        <a href="ObjectFileSCollectionOps.html" title="">ObjectFileSCollectionOps</a>
                       </li><li class="current-entities indented5">
                         <span class="separator"></span>
                         <a class="class" href="ProtobufSCollectionOps.html" title=""></a>
@@ -181,6 +193,10 @@
                         <span class="separator"></span>
                         <a class="class" href="TypedAvroSCollectionOps.html" title=""></a>
                         <a href="TypedAvroSCollectionOps.html" title="">TypedAvroSCollectionOps</a>
+                      </li><li class="current-entities indented5">
+                        <span class="separator"></span>
+                        <a class="class" href="UnsafeReflectiveRecordSCollectionOps.html" title=""></a>
+                        <a href="UnsafeReflectiveRecordSCollectionOps.html" title="">UnsafeReflectiveRecordSCollectionOps</a>
                       </li>
               </ul>
             </div>
@@ -204,7 +220,7 @@
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <span class="name">GenericRecordSCollectionOps</span><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <span class="extype" name="scala.AnyVal">AnyVal</span></span>
+        <span class="name">GenericRecordSCollectionOps</span><span class="result"> extends <span class="extype" name="scala.AnyVal">AnyVal</span></span>
       </span>
       </h4>
 
@@ -260,9 +276,9 @@
         <div id="constructors" class="members">
               <h3>Instance Constructors</h3>
               <ol><li name="com.spotify.scio.avro.syntax.GenericRecordSCollectionOps#&lt;init&gt;" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="&lt;init&gt;(self:com.spotify.scio.values.SCollection[T]):com.spotify.scio.avro.syntax.GenericRecordSCollectionOps[T]"></a><a id="&lt;init&gt;:GenericRecordSCollectionOps[T]"></a>
+      <a id="&lt;init&gt;(self:com.spotify.scio.values.SCollection[org.apache.avro.generic.GenericRecord]):com.spotify.scio.avro.syntax.GenericRecordSCollectionOps"></a><a id="&lt;init&gt;:GenericRecordSCollectionOps"></a>
       <span class="permalink">
-      <a href="../../../../../com/spotify/scio/avro/syntax/GenericRecordSCollectionOps.html#&lt;init&gt;(self:com.spotify.scio.values.SCollection[T]):com.spotify.scio.avro.syntax.GenericRecordSCollectionOps[T]" title="Permalink">
+      <a href="../../../../../com/spotify/scio/avro/syntax/GenericRecordSCollectionOps.html#&lt;init&gt;(self:com.spotify.scio.values.SCollection[org.apache.avro.generic.GenericRecord]):com.spotify.scio.avro.syntax.GenericRecordSCollectionOps" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -271,7 +287,7 @@
         <span class="kind">new</span>
       </span>
       <span class="symbol">
-        <span class="name">GenericRecordSCollectionOps</span><span class="params">(<span name="self">self: <a href="../../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.avro.syntax.GenericRecordSCollectionOps.T">T</span>]</span>)</span>
+        <span class="name">GenericRecordSCollectionOps</span><span class="params">(<span name="self">self: <a href="../../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="org.apache.avro.generic.GenericRecord">GenericRecord</span>]</span>)</span>
       </span>
       
       
@@ -382,9 +398,9 @@
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
     </li><li name="com.spotify.scio.avro.syntax.GenericRecordSCollectionOps#saveAsAvroFile" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="saveAsAvroFile(path:String,numShards:Int,schema:org.apache.avro.Schema,suffix:String,codec:org.apache.avro.file.CodecFactory,metadata:Map[String,AnyRef])(implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.io.ClosedTap[T]"></a><a id="saveAsAvroFile(String,Int,Schema,String,CodecFactory,Map[String,AnyRef])(Coder[T]):ClosedTap[T]"></a>
+      <a id="saveAsAvroFile(path:String,numShards:Int,schema:org.apache.avro.Schema,suffix:String,codec:org.apache.avro.file.CodecFactory,metadata:Map[String,AnyRef]):com.spotify.scio.io.ClosedTap[org.apache.avro.generic.GenericRecord]"></a><a id="saveAsAvroFile(String,Int,Schema,String,CodecFactory,Map[String,AnyRef]):ClosedTap[GenericRecord]"></a>
       <span class="permalink">
-      <a href="../../../../../com/spotify/scio/avro/syntax/GenericRecordSCollectionOps.html#saveAsAvroFile(path:String,numShards:Int,schema:org.apache.avro.Schema,suffix:String,codec:org.apache.avro.file.CodecFactory,metadata:Map[String,AnyRef])(implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.io.ClosedTap[T]" title="Permalink">
+      <a href="../../../../../com/spotify/scio/avro/syntax/GenericRecordSCollectionOps.html#saveAsAvroFile(path:String,numShards:Int,schema:org.apache.avro.Schema,suffix:String,codec:org.apache.avro.file.CodecFactory,metadata:Map[String,AnyRef]):com.spotify.scio.io.ClosedTap[org.apache.avro.generic.GenericRecord]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -393,29 +409,11 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">saveAsAvroFile</span><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="numShards">numShards: <span class="extype" name="scala.Int">Int</span> = <span class="symbol"><span class="name"><a href="../../../../index.html">AvroIO.WriteParam.DefaultNumShards</a></span></span></span>, <span name="schema">schema: <span class="extype" name="org.apache.avro.Schema">Schema</span></span>, <span name="suffix">suffix: <span class="extype" name="scala.Predef.String">String</span> = <span class="symbol"><span class="name"><a href="../../../../index.html">AvroIO.WriteParam.DefaultSuffix</a></span></span></span>, <span name="codec">codec: <span class="extype" name="org.apache.avro.file.CodecFactory">CodecFactory</span> = <span class="symbol"><span class="name"><a href="../../../../index.html">AvroIO.WriteParam.DefaultCodec</a></span></span></span>, <span name="metadata">metadata: <span class="extype" name="scala.Predef.Map">Map</span>[<span class="extype" name="scala.Predef.String">String</span>, <span class="extype" name="scala.AnyRef">AnyRef</span>] = <span class="symbol"><span class="name"><a href="../../../../index.html">AvroIO.WriteParam.DefaultMetadata</a></span></span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="coder">coder: <a href="../../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.avro.syntax.GenericRecordSCollectionOps.T">T</span>]</span>)</span><span class="result">: <a href="../../io/ClosedTap.html" class="extype" name="com.spotify.scio.io.ClosedTap">ClosedTap</a>[<span class="extype" name="com.spotify.scio.avro.syntax.GenericRecordSCollectionOps.T">T</span>]</span>
+        <span class="name">saveAsAvroFile</span><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="numShards">numShards: <span class="extype" name="scala.Int">Int</span> = <span class="symbol"><span class="name"><a href="../../../../index.html">AvroIO.WriteParam.DefaultNumShards</a></span></span></span>, <span name="schema">schema: <span class="extype" name="org.apache.avro.Schema">Schema</span></span>, <span name="suffix">suffix: <span class="extype" name="scala.Predef.String">String</span> = <span class="symbol"><span class="name"><a href="../../../../index.html">AvroIO.WriteParam.DefaultSuffix</a></span></span></span>, <span name="codec">codec: <span class="extype" name="org.apache.avro.file.CodecFactory">CodecFactory</span> = <span class="symbol"><span class="name"><a href="../../../../index.html">AvroIO.WriteParam.DefaultCodec</a></span></span></span>, <span name="metadata">metadata: <span class="extype" name="scala.Predef.Map">Map</span>[<span class="extype" name="scala.Predef.String">String</span>, <span class="extype" name="scala.AnyRef">AnyRef</span>] = <span class="symbol"><span class="name"><a href="../../../../index.html">AvroIO.WriteParam.DefaultMetadata</a></span></span></span>)</span><span class="result">: <a href="../../io/ClosedTap.html" class="extype" name="com.spotify.scio.io.ClosedTap">ClosedTap</a>[<span class="extype" name="org.apache.avro.generic.GenericRecord">GenericRecord</span>]</span>
       </span>
       
       <p class="shortcomment cmt">Save this SCollection of type
 <span class="extype" name="org.apache.avro.specific.SpecificRecord">SpecificRecord</span> as an Avro file.</p>
-    </li><li name="com.spotify.scio.avro.syntax.GenericRecordSCollectionOps#saveAsObjectFile" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="saveAsObjectFile(path:String,numShards:Int,suffix:String,codec:org.apache.avro.file.CodecFactory,metadata:Map[String,AnyRef])(implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.io.ClosedTap[T]"></a><a id="saveAsObjectFile(String,Int,String,CodecFactory,Map[String,AnyRef])(Coder[T]):ClosedTap[T]"></a>
-      <span class="permalink">
-      <a href="../../../../../com/spotify/scio/avro/syntax/GenericRecordSCollectionOps.html#saveAsObjectFile(path:String,numShards:Int,suffix:String,codec:org.apache.avro.file.CodecFactory,metadata:Map[String,AnyRef])(implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.io.ClosedTap[T]" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">saveAsObjectFile</span><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="numShards">numShards: <span class="extype" name="scala.Int">Int</span> = <span class="symbol"><span class="name"><a href="../../../../index.html">AvroIO.WriteParam.DefaultNumShards</a></span></span></span>, <span name="suffix">suffix: <span class="extype" name="scala.Predef.String">String</span> = <span class="symbol">&quot;.obj&quot;</span></span>, <span name="codec">codec: <span class="extype" name="org.apache.avro.file.CodecFactory">CodecFactory</span> = <span class="symbol"><span class="name"><a href="../../../../index.html">AvroIO.WriteParam.DefaultCodec</a></span></span></span>, <span name="metadata">metadata: <span class="extype" name="scala.Predef.Map">Map</span>[<span class="extype" name="scala.Predef.String">String</span>, <span class="extype" name="scala.AnyRef">AnyRef</span>] = <span class="symbol"><span class="name"><a href="../../../../index.html">AvroIO.WriteParam.DefaultMetadata</a></span></span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="coder">coder: <a href="../../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.avro.syntax.GenericRecordSCollectionOps.T">T</span>]</span>)</span><span class="result">: <a href="../../io/ClosedTap.html" class="extype" name="com.spotify.scio.io.ClosedTap">ClosedTap</a>[<span class="extype" name="com.spotify.scio.avro.syntax.GenericRecordSCollectionOps.T">T</span>]</span>
-      </span>
-      
-      <p class="shortcomment cmt">Save this SCollection as an object file using default serialization.</p><div class="fullcomment"><div class="comment cmt"><p>Save this SCollection as an object file using default serialization.</p><p>Serialized objects are stored in Avro files to leverage Avro's block file format. Note that
-serialization is not guaranteed to be compatible across Scio releases.
-</p></div></div>
     </li><li name="scala.Any#toString" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="toString():String"></a>
       <span class="permalink">

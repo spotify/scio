@@ -277,16 +277,18 @@ sc.libSVMFile(<span class="lit">"input.svm"</span>)</pre></div><dl class="attrib
         <a title="Main package for Sparkey side input APIs." href="sparkey/index.html"><span class="name">sparkey</span></a>
       </span>
       
-      <p class="shortcomment cmt">Main package for Sparkey side input APIs.</p><div class="fullcomment"><div class="comment cmt"><p>Main package for Sparkey side input APIs. Import all.</p><pre><span class="kw">import</span> com.spotify.scio.extra.sparkey._</pre><p>To save an <code>SCollection[(String, String)]</code> to a Sparkey file:</p><pre><span class="kw">val</span> s = sc.parallelize(<span class="std">Seq</span>(<span class="lit">"a"</span> -&gt; <span class="lit">"one"</span>, <span class="lit">"b"</span> -&gt; <span class="lit">"two"</span>))
+      <p class="shortcomment cmt">Main package for Sparkey side input APIs.</p><div class="fullcomment"><div class="comment cmt"><p>Main package for Sparkey side input APIs. Import all.</p><pre><span class="kw">import</span> com.spotify.scio.extra.sparkey._</pre><p>To save an <code>SCollection[(String, String)]</code> to a Sparkey fileset:</p><pre><span class="kw">val</span> s = sc.parallelize(<span class="std">Seq</span>(<span class="lit">"a"</span> -&gt; <span class="lit">"one"</span>, <span class="lit">"b"</span> -&gt; <span class="lit">"two"</span>))
 
 <span class="cmt">// temporary location</span>
 <span class="kw">val</span> s1: SCollection[SparkeyUri] = s.asSparkey
 
 <span class="cmt">// specific location</span>
-<span class="kw">val</span> s1: SCollection[SparkeyUri] = s.asSparkey(<span class="lit">"gs://&lt;bucket&gt;/&lt;path&gt;/&lt;sparkey-prefix&gt;"</span>)</pre><p>The result <code>SCollection[SparkeyUri]</code> can be converted to a side input:</p><pre><span class="kw">val</span> s: SCollection[SparkeyUri] = sc.parallelize(<span class="std">Seq</span>(<span class="lit">"a"</span> -&gt; <span class="lit">"one"</span>, <span class="lit">"b"</span> -&gt; <span class="lit">"two"</span>)).asSparkey
+<span class="kw">val</span> s1: SCollection[SparkeyUri] = s.asSparkey(<span class="lit">"gs://&lt;bucket&gt;/&lt;path&gt;/&lt;sparkey-prefix&gt;"</span>)</pre><p>// with multiple shards, sharded by MurmurHash3 of the key
+val s1: SCollection[SparkeyUri] = s.asSparkey(&quot;gs://&lt;bucket&gt;/&lt;path&gt;/&lt;sparkey-dir&gt;&quot;, numShards=2)
+}}}</p><p>The result <code>SCollection[SparkeyUri]</code> can be converted to a side input:</p><pre><span class="kw">val</span> s: SCollection[SparkeyUri] = sc.parallelize(<span class="std">Seq</span>(<span class="lit">"a"</span> -&gt; <span class="lit">"one"</span>, <span class="lit">"b"</span> -&gt; <span class="lit">"two"</span>)).asSparkey
 <span class="kw">val</span> side: SideInput[SparkeyReader] = s.asSparkeySideInput</pre><p>These two steps can be done with a syntactic sugar:</p><pre><span class="kw">val</span> side: SideInput[SparkeyReader] = sc
   .parallelize(<span class="std">Seq</span>(<span class="lit">"a"</span> -&gt; <span class="lit">"one"</span>, <span class="lit">"b"</span> -&gt; <span class="lit">"two"</span>))
-  .asSparkeySideInput</pre><p>An existing Sparkey file can also be converted to a side input directly:</p><pre>sc.sparkeySideInput(<span class="lit">"gs://&lt;bucket&gt;/&lt;path&gt;/&lt;sparkey-prefix&gt;"</span>)</pre><p><code>SparkeyReader</code> can be used like a lookup table in a side input operation:</p><pre><span class="kw">val</span> main: SCollection[<span class="std">String</span>] = sc.parallelize(<span class="std">Seq</span>(<span class="lit">"a"</span>, <span class="lit">"b"</span>, <span class="lit">"c"</span>))
+  .asSparkeySideInput</pre><p>An existing Sparkey file can also be converted to a side input directly:</p><pre>sc.sparkeySideInput(<span class="lit">"gs://&lt;bucket&gt;/&lt;path&gt;/&lt;sparkey-prefix&gt;"</span>)</pre><p>A sharded collection of Sparkey files can also be used as a side input by specifying a glob path:</p><pre>sc.sparkeySideInput(<span class="lit">"gs://&lt;bucket&gt;/&lt;path&gt;/&lt;sparkey-dir&gt;/part-*"</span>)</pre><p><code>SparkeyReader</code> can be used like a lookup table in a side input operation:</p><pre><span class="kw">val</span> main: SCollection[<span class="std">String</span>] = sc.parallelize(<span class="std">Seq</span>(<span class="lit">"a"</span>, <span class="lit">"b"</span>, <span class="lit">"c"</span>))
 <span class="kw">val</span> side: SideInput[SparkeyReader] = sc
   .parallelize(<span class="std">Seq</span>(<span class="lit">"a"</span> -&gt; <span class="lit">"one"</span>, <span class="lit">"b"</span> -&gt; <span class="lit">"two"</span>))
   .asSparkeySideInput
@@ -294,7 +296,22 @@ sc.libSVMFile(<span class="lit">"input.svm"</span>)</pre></div><dl class="attrib
 main.withSideInputs(side)
   .map { (x, s) <span class="kw">=&gt;</span>
     s(side).getOrElse(x, <span class="lit">"unknown"</span>)
-  }</pre></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="index.html" class="extype" name="com.spotify.scio.extra">extra</a></dd></dl></div>
+  }</pre><p>A <code>TypedSparkeyReader</code> can be used to do automatic decoding of JVM types from byte values:</p><pre><span class="kw">val</span> main: SCollection[<span class="std">String</span>] = sc.parallelize(<span class="std">Seq</span>(<span class="lit">"a"</span>, <span class="lit">"b"</span>, <span class="lit">"c"</span>))
+<span class="kw">val</span> side: SideInput[TypedSparkeyReader[MyObject]] = sc
+  .typedSparkeySideInput(<span class="lit">"gs://&lt;bucket&gt;/&lt;path&gt;/&lt;sparkey-prefix&gt;"</span>, MyObject.decode)
+
+<span class="kw">val</span> objects: SCollection[MyObject] = main
+  .withSideInputs(side)
+  .map { (x, s) <span class="kw">=&gt;</span> s(side).get(x) }
+  .toSCollection</pre><p>A <code>TypedSparkeyReader</code> can also accept a Caffeine cache to reduce IO and deserialization load:</p><pre><span class="kw">val</span> main: SCollection[<span class="std">String</span>] = sc.parallelize(<span class="std">Seq</span>(<span class="lit">"a"</span>, <span class="lit">"b"</span>, <span class="lit">"c"</span>))
+<span class="kw">val</span> cache: Cache[<span class="std">String</span>, MyObject] = ...
+<span class="kw">val</span> side: SideInput[TypedSparkeyReader[MyObject]] = sc
+  .typedSparkeySideInput(<span class="lit">"gs://&lt;bucket&gt;/&lt;path&gt;/&lt;sparkey-prefix&gt;"</span>, MyObject.decode, cache)
+
+<span class="kw">val</span> objects: SCollection[MyObject] = main
+  .withSideInputs(side)
+  .map { (x, s) <span class="kw">=&gt;</span> s(side).get(x) }
+  .toSCollection</pre></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="index.html" class="extype" name="com.spotify.scio.extra">extra</a></dd></dl></div>
     </li><li class="current-entities indented4">
                         <span class="separator"></span>
                         <a class="object" href="" title="Utilities for Breeze."></a>

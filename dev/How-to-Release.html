@@ -232,24 +232,21 @@ spotify/scio
 <ul>
   <li>Sign up for a Sonatype account <a href="https://issues.sonatype.org/secure/Signup!default.jspa">here</a></li>
   <li>Ask for permissions to push to com.spotify domain like in this <a href="https://issues.sonatype.org/browse/OSSRH-20689">ticket</a></li>
-  <li>Add Sonatype credentials to <code>~/.sbt/1.0/credentials.sbt</code></li>
-</ul>
-<pre><code>credentials ++= Seq(
+  <li>
+  <p>Add Sonatype credentials to <code>~/.sbt/1.0/credentials.sbt</code></p>
+  <pre><code>credentials ++= Seq(
   Credentials(
-    &quot;Sonatype Nexus Repository Manager&quot;,
-    &quot;oss.sonatype.org&quot;,
-    &quot;$USERNAME&quot;,
-    &quot;$PASSWORD&quot;))
-</code></pre>
-<ul>
+&quot;Sonatype Nexus Repository Manager&quot;,
+&quot;oss.sonatype.org&quot;,
+&quot;$USERNAME&quot;,
+&quot;$PASSWORD&quot;))
+</code></pre></li>
   <li>Create a PGP key, for example on <a href="https://keybase.io/">keybase.io</a>, and <a href="https://www.gnupg.org/gph/en/manual/x457.html">distribute</a> it to a public keyserver</li>
 </ul>
 <h2><a href="#release-procedure" name="release-procedure" class="anchor"><span class="anchor-link"></span></a>Release procedure</h2>
 <ul>
   <li>Run the slow integration tests with <code>SLOW=true sbt it:test</code></li>
   <li>Run <code>release skip-tests</code> in sbt console and follow the instructions</li>
-  <li>Release: Run <code>sonatypeBundleRelease</code> or manually:</li>
-  <li>Run <code>; sonatypePrepare; sonatypeBundleUpload;</code></li>
   <li>Go to <a href="https://oss.sonatype.org/">oss.sonatype.org</a>, find the staging repository, &ldquo;close&rdquo; and &ldquo;release&rdquo;</li>
   <li>Run <code>./scripts/make-site.sh</code> to update documentation</li>
   <li>Pick a release name from <a href="https://en.wikipedia.org/wiki/List_of_Latin_phrases_%28full%29">here</a>, <a href="https://en.wikipedia.org/wiki/List_of_songs_with_Latin_lyrics">here</a> or other interesting sources<sup>*</sup></li>
@@ -398,7 +395,7 @@ Design Philosophy
 <div class="md-footer-meta__inner md-grid">
 <div class="md-footer-copyright">
 <div class="md-footer-copyright__highlight">
-Copyright (C) 2018 Spotify AB
+Copyright (C) 2019 Spotify AB
 </div>
 Powered by
 <a href="https://github.com/lightbend/paradox">Paradox</a>

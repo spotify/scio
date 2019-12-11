@@ -507,26 +507,10 @@ through an implicit conversion.
                 <span class="name">@native</span><span class="args">()</span>
               
         </dd></dl></div>
-    </li><li name="com.spotify.scio.values.PairHashSCollectionFunctions#hashFullOuterJoin" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="join">
-      <a id="hashFullOuterJoin[W](that:com.spotify.scio.values.SideMap[K,W])(implicitevidence$6:com.spotify.scio.coders.Coder[W],implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SCollection[(K,(Option[V],Option[W]))]"></a><a id="hashFullOuterJoin[W](SideMap[K,W])(Coder[W],Coder[K],Coder[V]):SCollection[(K,(Option[V],Option[W]))]"></a>
-      <span class="permalink">
-      <a href="../../../../com/spotify/scio/values/PairHashSCollectionFunctions.html#hashFullOuterJoin[W](that:com.spotify.scio.values.SideMap[K,W])(implicitevidence$6:com.spotify.scio.coders.Coder[W],implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SCollection[(K,(Option[V],Option[W]))]" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">hashFullOuterJoin</span><span class="tparams">[<span name="W">W</span>]</span><span class="params">(<span name="that">that: <a href="SideMap.html" class="extype" name="com.spotify.scio.values.SideMap">SideMap</a>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.K">K</span>, <span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.hashFullOuterJoin.W">W</span>]</span>)</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.hashFullOuterJoin.W">W</span>]</span>, <span name="koder">koder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.K">K</span>]</span>, <span name="voder">voder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.V">V</span>]</span>)</span><span class="result">: <a href="SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[(<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.K">K</span>, (<span class="extype" name="scala.Option">Option</span>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.V">V</span>], <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.hashFullOuterJoin.W">W</span>]))]</span>
-      </span>
-      
-      <p class="shortcomment cmt">Perform a full outer join with a SideMap.</p>
     </li><li name="com.spotify.scio.values.PairHashSCollectionFunctions#hashFullOuterJoin" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="join">
-      <a id="hashFullOuterJoin[W](that:com.spotify.scio.values.SCollection[(K,W)])(implicitevidence$5:com.spotify.scio.coders.Coder[W],implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SCollection[(K,(Option[V],Option[W]))]"></a><a id="hashFullOuterJoin[W](SCollection[(K,W)])(Coder[W],Coder[K],Coder[V]):SCollection[(K,(Option[V],Option[W]))]"></a>
+      <a id="hashFullOuterJoin[W](sideInput:com.spotify.scio.values.SideInput[Map[K,Iterable[W]]])(implicitevidence$10:com.spotify.scio.coders.Coder[W],implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SCollection[(K,(Option[V],Option[W]))]"></a><a id="hashFullOuterJoin[W](SideInput[Map[K,Iterable[W]]])(Coder[W],Coder[K],Coder[V]):SCollection[(K,(Option[V],Option[W]))]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/values/PairHashSCollectionFunctions.html#hashFullOuterJoin[W](that:com.spotify.scio.values.SCollection[(K,W)])(implicitevidence$5:com.spotify.scio.coders.Coder[W],implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SCollection[(K,(Option[V],Option[W]))]" title="Permalink">
+      <a href="../../../../com/spotify/scio/values/PairHashSCollectionFunctions.html#hashFullOuterJoin[W](sideInput:com.spotify.scio.values.SideInput[Map[K,Iterable[W]]])(implicitevidence$10:com.spotify.scio.coders.Coder[W],implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SCollection[(K,(Option[V],Option[W]))]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -535,16 +519,37 @@ through an implicit conversion.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">hashFullOuterJoin</span><span class="tparams">[<span name="W">W</span>]</span><span class="params">(<span name="that">that: <a href="SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[(<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.K">K</span>, <span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.hashFullOuterJoin.W">W</span>)]</span>)</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.hashFullOuterJoin.W">W</span>]</span>, <span name="koder">koder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.K">K</span>]</span>, <span name="voder">voder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.V">V</span>]</span>)</span><span class="result">: <a href="SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[(<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.K">K</span>, (<span class="extype" name="scala.Option">Option</span>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.V">V</span>], <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.hashFullOuterJoin.W">W</span>]))]</span>
+        <span class="name">hashFullOuterJoin</span><span class="tparams">[<span name="W">W</span>]</span><span class="params">(<span name="sideInput">sideInput: <a href="SideInput.html" class="extype" name="com.spotify.scio.values.SideInput">SideInput</a>[<span class="extype" name="scala.Predef.Map">Map</span>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.K">K</span>, <span class="extype" name="scala.Iterable">Iterable</span>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.hashFullOuterJoin.W">W</span>]]]</span>)</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.hashFullOuterJoin.W">W</span>]</span>, <span name="koder">koder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.K">K</span>]</span>, <span name="voder">voder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.V">V</span>]</span>)</span><span class="result">: <a href="SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[(<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.K">K</span>, (<span class="extype" name="scala.Option">Option</span>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.V">V</span>], <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.hashFullOuterJoin.W">W</span>]))]</span>
       </span>
       
-      <p class="shortcomment cmt">Perform a full outer join by replicating <code>that</code> to all workers.</p><div class="fullcomment"><div class="comment cmt"><p>Perform a full outer join by replicating <code>that</code> to all workers. The right side should be tiny
+      <p class="shortcomment cmt">Perform a full outer join with a <code>SideInput[Map[K, Iterable[W]]]</code>.</p><div class="fullcomment"><div class="comment cmt"><p>Perform a full outer join with a <code>SideInput[Map[K, Iterable[W]]]</code>.
+</p></div><dl class="attributes block"> <div class="block">Example:
+               <ol><li class="cmt"><p></p><pre><span class="kw">val</span> si = pairSCollRight.asMultiMapSideInput
+<span class="kw">val</span> joined1 = pairSColl1Left.hashFullOuterJoin(si)
+<span class="kw">val</span> joined2 = pairSColl2Left.hashFullOuterJoin(si)</pre></li></ol>
+            </div></dl></div>
+    </li><li name="com.spotify.scio.values.PairHashSCollectionFunctions#hashFullOuterJoin" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="join">
+      <a id="hashFullOuterJoin[W](rhs:com.spotify.scio.values.SCollection[(K,W)])(implicitevidence$8:com.spotify.scio.coders.Coder[W],implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SCollection[(K,(Option[V],Option[W]))]"></a><a id="hashFullOuterJoin[W](SCollection[(K,W)])(Coder[W],Coder[K],Coder[V]):SCollection[(K,(Option[V],Option[W]))]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/values/PairHashSCollectionFunctions.html#hashFullOuterJoin[W](rhs:com.spotify.scio.values.SCollection[(K,W)])(implicitevidence$8:com.spotify.scio.coders.Coder[W],implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SCollection[(K,(Option[V],Option[W]))]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">hashFullOuterJoin</span><span class="tparams">[<span name="W">W</span>]</span><span class="params">(<span name="rhs">rhs: <a href="SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[(<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.K">K</span>, <span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.hashFullOuterJoin.W">W</span>)]</span>)</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.hashFullOuterJoin.W">W</span>]</span>, <span name="koder">koder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.K">K</span>]</span>, <span name="voder">voder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.V">V</span>]</span>)</span><span class="result">: <a href="SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[(<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.K">K</span>, (<span class="extype" name="scala.Option">Option</span>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.V">V</span>], <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.hashFullOuterJoin.W">W</span>]))]</span>
+      </span>
+      
+      <p class="shortcomment cmt">Perform a full outer join by replicating <code>rhs</code> to all workers.</p><div class="fullcomment"><div class="comment cmt"><p>Perform a full outer join by replicating <code>rhs</code> to all workers. The right side should be tiny
 and fit in memory.
 </p></div></div>
     </li><li name="com.spotify.scio.values.PairHashSCollectionFunctions#hashIntersectByKey" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="per key">
-      <a id="hashIntersectByKey(that:com.spotify.scio.values.SideSet[K])(implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SCollection[(K,V)]"></a><a id="hashIntersectByKey(SideSet[K])(Coder[K],Coder[V]):SCollection[(K,V)]"></a>
+      <a id="hashIntersectByKey(sideInput:com.spotify.scio.values.SideInput[Set[K]])(implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SCollection[(K,V)]"></a><a id="hashIntersectByKey(SideInput[Set[K]])(Coder[K],Coder[V]):SCollection[(K,V)]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/values/PairHashSCollectionFunctions.html#hashIntersectByKey(that:com.spotify.scio.values.SideSet[K])(implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SCollection[(K,V)]" title="Permalink">
+      <a href="../../../../com/spotify/scio/values/PairHashSCollectionFunctions.html#hashIntersectByKey(sideInput:com.spotify.scio.values.SideInput[Set[K]])(implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SCollection[(K,V)]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -553,15 +558,15 @@ and fit in memory.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">hashIntersectByKey</span><span class="params">(<span name="that">that: <a href="SideSet.html" class="extype" name="com.spotify.scio.values.SideSet">SideSet</a>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.K">K</span>]</span>)</span><span class="params">(<span class="implicit">implicit </span><span name="koder">koder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.K">K</span>]</span>, <span name="voder">voder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.V">V</span>]</span>)</span><span class="result">: <a href="SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[(<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.K">K</span>, <span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.V">V</span>)]</span>
+        <span class="name">hashIntersectByKey</span><span class="params">(<span name="sideInput">sideInput: <a href="SideInput.html" class="extype" name="com.spotify.scio.values.SideInput">SideInput</a>[<span class="extype" name="scala.Predef.Set">Set</span>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.K">K</span>]]</span>)</span><span class="params">(<span class="implicit">implicit </span><span name="koder">koder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.K">K</span>]</span>, <span name="voder">voder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.V">V</span>]</span>)</span><span class="result">: <a href="SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[(<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.K">K</span>, <span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.V">V</span>)]</span>
       </span>
       
-      <p class="shortcomment cmt">Return an SCollection with the pairs from <code>this</code> whose keys are in the SideSet <code>that</code>.</p><div class="fullcomment"><div class="comment cmt"><p>Return an SCollection with the pairs from <code>this</code> whose keys are in the SideSet <code>that</code>.</p><p>Unlike <a href="SCollection.html#intersection(that:com.spotify.scio.values.SCollection[T])(implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]" class="extmbr" name="com.spotify.scio.values.SCollection#intersection">SCollection.intersection</a> this preserves duplicates in <code>this</code>.
+      <p class="shortcomment cmt">Return an SCollection with the pairs from <code>this</code> whose keys are in the SideSet <code>rhs</code>.</p><div class="fullcomment"><div class="comment cmt"><p>Return an SCollection with the pairs from <code>this</code> whose keys are in the SideSet <code>rhs</code>.</p><p>Unlike <a href="SCollection.html#intersection(that:com.spotify.scio.values.SCollection[T])(implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]" class="extmbr" name="com.spotify.scio.values.SCollection#intersection">SCollection.intersection</a> this preserves duplicates in <code>this</code>.
 </p></div></div>
     </li><li name="com.spotify.scio.values.PairHashSCollectionFunctions#hashIntersectByKey" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="per key">
-      <a id="hashIntersectByKey(that:com.spotify.scio.values.SCollection[K])(implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SCollection[(K,V)]"></a><a id="hashIntersectByKey(SCollection[K])(Coder[K],Coder[V]):SCollection[(K,V)]"></a>
+      <a id="hashIntersectByKey(rhs:com.spotify.scio.values.SCollection[K])(implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SCollection[(K,V)]"></a><a id="hashIntersectByKey(SCollection[K])(Coder[K],Coder[V]):SCollection[(K,V)]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/values/PairHashSCollectionFunctions.html#hashIntersectByKey(that:com.spotify.scio.values.SCollection[K])(implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SCollection[(K,V)]" title="Permalink">
+      <a href="../../../../com/spotify/scio/values/PairHashSCollectionFunctions.html#hashIntersectByKey(rhs:com.spotify.scio.values.SCollection[K])(implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SCollection[(K,V)]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -570,33 +575,17 @@ and fit in memory.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">hashIntersectByKey</span><span class="params">(<span name="that">that: <a href="SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.K">K</span>]</span>)</span><span class="params">(<span class="implicit">implicit </span><span name="koder">koder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.K">K</span>]</span>, <span name="voder">voder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.V">V</span>]</span>)</span><span class="result">: <a href="SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[(<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.K">K</span>, <span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.V">V</span>)]</span>
+        <span class="name">hashIntersectByKey</span><span class="params">(<span name="rhs">rhs: <a href="SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.K">K</span>]</span>)</span><span class="params">(<span class="implicit">implicit </span><span name="koder">koder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.K">K</span>]</span>, <span name="voder">voder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.V">V</span>]</span>)</span><span class="result">: <a href="SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[(<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.K">K</span>, <span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.V">V</span>)]</span>
       </span>
       
-      <p class="shortcomment cmt">Return an SCollection with the pairs from <code>this</code> whose keys are in <code>that</code>
-given <code>that</code> is small enough to fit in memory.</p><div class="fullcomment"><div class="comment cmt"><p>Return an SCollection with the pairs from <code>this</code> whose keys are in <code>that</code>
-given <code>that</code> is small enough to fit in memory.</p><p>Unlike <a href="SCollection.html#intersection(that:com.spotify.scio.values.SCollection[T])(implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]" class="extmbr" name="com.spotify.scio.values.SCollection#intersection">SCollection.intersection</a> this preserves duplicates in <code>this</code>.
+      <p class="shortcomment cmt">Return an SCollection with the pairs from <code>this</code> whose keys are in <code>rhs</code>
+given <code>rhs</code> is small enough to fit in memory.</p><div class="fullcomment"><div class="comment cmt"><p>Return an SCollection with the pairs from <code>this</code> whose keys are in <code>rhs</code>
+given <code>rhs</code> is small enough to fit in memory.</p><p>Unlike <a href="SCollection.html#intersection(that:com.spotify.scio.values.SCollection[T])(implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]" class="extmbr" name="com.spotify.scio.values.SCollection#intersection">SCollection.intersection</a> this preserves duplicates in <code>this</code>.
 </p></div></div>
-    </li><li name="com.spotify.scio.values.PairHashSCollectionFunctions#hashJoin" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="join">
-      <a id="hashJoin[W](that:com.spotify.scio.values.SideMap[K,W])(implicitevidence$2:com.spotify.scio.coders.Coder[W],implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SCollection[(K,(V,W))]"></a><a id="hashJoin[W](SideMap[K,W])(Coder[W],Coder[K],Coder[V]):SCollection[(K,(V,W))]"></a>
-      <span class="permalink">
-      <a href="../../../../com/spotify/scio/values/PairHashSCollectionFunctions.html#hashJoin[W](that:com.spotify.scio.values.SideMap[K,W])(implicitevidence$2:com.spotify.scio.coders.Coder[W],implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SCollection[(K,(V,W))]" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">hashJoin</span><span class="tparams">[<span name="W">W</span>]</span><span class="params">(<span name="that">that: <a href="SideMap.html" class="extype" name="com.spotify.scio.values.SideMap">SideMap</a>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.K">K</span>, <span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.hashJoin.W">W</span>]</span>)</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.hashJoin.W">W</span>]</span>, <span name="koder">koder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.K">K</span>]</span>, <span name="voder">voder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.V">V</span>]</span>)</span><span class="result">: <a href="SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[(<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.K">K</span>, (<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.V">V</span>, <span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.hashJoin.W">W</span>))]</span>
-      </span>
-      
-      <p class="shortcomment cmt">Perform an inner join with a SideMap.</p>
     </li><li name="com.spotify.scio.values.PairHashSCollectionFunctions#hashJoin" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="join">
-      <a id="hashJoin[W](that:com.spotify.scio.values.SCollection[(K,W)])(implicitevidence$1:com.spotify.scio.coders.Coder[W],implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SCollection[(K,(V,W))]"></a><a id="hashJoin[W](SCollection[(K,W)])(Coder[W],Coder[K],Coder[V]):SCollection[(K,(V,W))]"></a>
+      <a id="hashJoin[W](sideInput:com.spotify.scio.values.SideInput[Map[K,Iterable[W]]])(implicitevidence$3:com.spotify.scio.coders.Coder[W],implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SCollection[(K,(V,W))]"></a><a id="hashJoin[W](SideInput[Map[K,Iterable[W]]])(Coder[W],Coder[K],Coder[V]):SCollection[(K,(V,W))]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/values/PairHashSCollectionFunctions.html#hashJoin[W](that:com.spotify.scio.values.SCollection[(K,W)])(implicitevidence$1:com.spotify.scio.coders.Coder[W],implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SCollection[(K,(V,W))]" title="Permalink">
+      <a href="../../../../com/spotify/scio/values/PairHashSCollectionFunctions.html#hashJoin[W](sideInput:com.spotify.scio.values.SideInput[Map[K,Iterable[W]]])(implicitevidence$3:com.spotify.scio.coders.Coder[W],implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SCollection[(K,(V,W))]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -605,16 +594,38 @@ given <code>that</code> is small enough to fit in memory.</p><p>Unlike <a href="
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">hashJoin</span><span class="tparams">[<span name="W">W</span>]</span><span class="params">(<span name="that">that: <a href="SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[(<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.K">K</span>, <span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.hashJoin.W">W</span>)]</span>)</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.hashJoin.W">W</span>]</span>, <span name="koder">koder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.K">K</span>]</span>, <span name="voder">voder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.V">V</span>]</span>)</span><span class="result">: <a href="SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[(<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.K">K</span>, (<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.V">V</span>, <span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.hashJoin.W">W</span>))]</span>
+        <span class="name">hashJoin</span><span class="tparams">[<span name="W">W</span>]</span><span class="params">(<span name="sideInput">sideInput: <a href="SideInput.html" class="extype" name="com.spotify.scio.values.SideInput">SideInput</a>[<span class="extype" name="scala.Predef.Map">Map</span>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.K">K</span>, <span class="extype" name="scala.Iterable">Iterable</span>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.hashJoin.W">W</span>]]]</span>)</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.hashJoin.W">W</span>]</span>, <span name="koder">koder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.K">K</span>]</span>, <span name="voder">voder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.V">V</span>]</span>)</span><span class="result">: <a href="SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[(<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.K">K</span>, (<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.V">V</span>, <span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.hashJoin.W">W</span>))]</span>
       </span>
       
-      <p class="shortcomment cmt">Perform an inner join by replicating <code>that</code> to all workers.</p><div class="fullcomment"><div class="comment cmt"><p>Perform an inner join by replicating <code>that</code> to all workers. The right side should be tiny and
+      <p class="shortcomment cmt">Perform an inner join with a MultiMap <code>SideInput[Map[K, Iterable[V]]</code></p><div class="fullcomment"><div class="comment cmt"><p>Perform an inner join with a MultiMap <code>SideInput[Map[K, Iterable[V]]</code></p><p>The right side is tiny and fits in memory. The SideInput can be used reused for
+multiple joins.
+</p></div><dl class="attributes block"> <div class="block">Example:
+               <ol><li class="cmt"><p></p><pre><span class="kw">val</span> si = pairSCollRight.asMultiMapSideInput
+<span class="kw">val</span> joined1 = pairSColl1Left.hashJoin(si)
+<span class="kw">val</span> joined2 = pairSColl2Left.hashJoin(si)</pre></li></ol>
+            </div></dl></div>
+    </li><li name="com.spotify.scio.values.PairHashSCollectionFunctions#hashJoin" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="join">
+      <a id="hashJoin[W](rhs:com.spotify.scio.values.SCollection[(K,W)])(implicitevidence$1:com.spotify.scio.coders.Coder[W],implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SCollection[(K,(V,W))]"></a><a id="hashJoin[W](SCollection[(K,W)])(Coder[W],Coder[K],Coder[V]):SCollection[(K,(V,W))]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/values/PairHashSCollectionFunctions.html#hashJoin[W](rhs:com.spotify.scio.values.SCollection[(K,W)])(implicitevidence$1:com.spotify.scio.coders.Coder[W],implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SCollection[(K,(V,W))]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">hashJoin</span><span class="tparams">[<span name="W">W</span>]</span><span class="params">(<span name="rhs">rhs: <a href="SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[(<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.K">K</span>, <span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.hashJoin.W">W</span>)]</span>)</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.hashJoin.W">W</span>]</span>, <span name="koder">koder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.K">K</span>]</span>, <span name="voder">voder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.V">V</span>]</span>)</span><span class="result">: <a href="SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[(<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.K">K</span>, (<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.V">V</span>, <span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.hashJoin.W">W</span>))]</span>
+      </span>
+      
+      <p class="shortcomment cmt">Perform an inner join by replicating <code>rhs</code> to all workers.</p><div class="fullcomment"><div class="comment cmt"><p>Perform an inner join by replicating <code>rhs</code> to all workers. The right side should be tiny and
 fit in memory.
 </p></div></div>
-    </li><li name="com.spotify.scio.values.PairHashSCollectionFunctions#hashLeftJoin" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="join">
-      <a id="hashLeftJoin[W](that:com.spotify.scio.values.SideMap[K,W])(implicitevidence$4:com.spotify.scio.coders.Coder[W],implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SCollection[(K,(V,Option[W]))]"></a><a id="hashLeftJoin[W](SideMap[K,W])(Coder[W],Coder[K],Coder[V]):SCollection[(K,(V,Option[W]))]"></a>
+    </li><li name="com.spotify.scio.values.PairHashSCollectionFunctions#hashLeftOuterJoin" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="join">
+      <a id="hashLeftOuterJoin[W](sideInput:com.spotify.scio.values.SideInput[Map[K,Iterable[W]]])(implicitevidence$7:com.spotify.scio.coders.Coder[W],implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SCollection[(K,(V,Option[W]))]"></a><a id="hashLeftOuterJoin[W](SideInput[Map[K,Iterable[W]]])(Coder[W],Coder[K],Coder[V]):SCollection[(K,(V,Option[W]))]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/values/PairHashSCollectionFunctions.html#hashLeftJoin[W](that:com.spotify.scio.values.SideMap[K,W])(implicitevidence$4:com.spotify.scio.coders.Coder[W],implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SCollection[(K,(V,Option[W]))]" title="Permalink">
+      <a href="../../../../com/spotify/scio/values/PairHashSCollectionFunctions.html#hashLeftOuterJoin[W](sideInput:com.spotify.scio.values.SideInput[Map[K,Iterable[W]]])(implicitevidence$7:com.spotify.scio.coders.Coder[W],implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SCollection[(K,(V,Option[W]))]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -623,14 +634,20 @@ fit in memory.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">hashLeftJoin</span><span class="tparams">[<span name="W">W</span>]</span><span class="params">(<span name="that">that: <a href="SideMap.html" class="extype" name="com.spotify.scio.values.SideMap">SideMap</a>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.K">K</span>, <span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.hashLeftJoin.W">W</span>]</span>)</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.hashLeftJoin.W">W</span>]</span>, <span name="koder">koder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.K">K</span>]</span>, <span name="voder">voder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.V">V</span>]</span>)</span><span class="result">: <a href="SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[(<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.K">K</span>, (<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.V">V</span>, <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.hashLeftJoin.W">W</span>]))]</span>
+        <span class="name">hashLeftOuterJoin</span><span class="tparams">[<span name="W">W</span>]</span><span class="params">(<span name="sideInput">sideInput: <a href="SideInput.html" class="extype" name="com.spotify.scio.values.SideInput">SideInput</a>[<span class="extype" name="scala.Predef.Map">Map</span>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.K">K</span>, <span class="extype" name="scala.Iterable">Iterable</span>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.hashLeftOuterJoin.W">W</span>]]]</span>)</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.hashLeftOuterJoin.W">W</span>]</span>, <span name="koder">koder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.K">K</span>]</span>, <span name="voder">voder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.V">V</span>]</span>)</span><span class="result">: <a href="SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[(<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.K">K</span>, (<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.V">V</span>, <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.hashLeftOuterJoin.W">W</span>]))]</span>
       </span>
       
-      <p class="shortcomment cmt">Perform a left outer join with a SideMap.</p>
-    </li><li name="com.spotify.scio.values.PairHashSCollectionFunctions#hashLeftJoin" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="join">
-      <a id="hashLeftJoin[W](that:com.spotify.scio.values.SCollection[(K,W)])(implicitevidence$3:com.spotify.scio.coders.Coder[W],implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SCollection[(K,(V,Option[W]))]"></a><a id="hashLeftJoin[W](SCollection[(K,W)])(Coder[W],Coder[K],Coder[V]):SCollection[(K,(V,Option[W]))]"></a>
+      <p class="shortcomment cmt">Perform a left outer join with a MultiMap <code>SideInput[Map[K, Iterable[V]]</code>
+</p><div class="fullcomment"><div class="comment cmt"><p>Perform a left outer join with a MultiMap <code>SideInput[Map[K, Iterable[V]]</code>
+</p></div><dl class="attributes block"> <div class="block">Example:
+               <ol><li class="cmt"><p></p><pre><span class="kw">val</span> si = pairSCollRight.asMultiMapSideInput
+<span class="kw">val</span> joined1 = pairSColl1Left.hashLeftOuterJoin(si)
+<span class="kw">val</span> joined2 = pairSColl2Left.hashLeftOuterJoin(si)</pre></li></ol>
+            </div></dl></div>
+    </li><li name="com.spotify.scio.values.PairHashSCollectionFunctions#hashLeftOuterJoin" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="join">
+      <a id="hashLeftOuterJoin[W](rhs:com.spotify.scio.values.SCollection[(K,W)])(implicitevidence$5:com.spotify.scio.coders.Coder[W],implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SCollection[(K,(V,Option[W]))]"></a><a id="hashLeftOuterJoin[W](SCollection[(K,W)])(Coder[W],Coder[K],Coder[V]):SCollection[(K,(V,Option[W]))]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/values/PairHashSCollectionFunctions.html#hashLeftJoin[W](that:com.spotify.scio.values.SCollection[(K,W)])(implicitevidence$3:com.spotify.scio.coders.Coder[W],implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SCollection[(K,(V,Option[W]))]" title="Permalink">
+      <a href="../../../../com/spotify/scio/values/PairHashSCollectionFunctions.html#hashLeftOuterJoin[W](rhs:com.spotify.scio.values.SCollection[(K,W)])(implicitevidence$5:com.spotify.scio.coders.Coder[W],implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SCollection[(K,(V,Option[W]))]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -639,12 +656,15 @@ fit in memory.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">hashLeftJoin</span><span class="tparams">[<span name="W">W</span>]</span><span class="params">(<span name="that">that: <a href="SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[(<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.K">K</span>, <span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.hashLeftJoin.W">W</span>)]</span>)</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.hashLeftJoin.W">W</span>]</span>, <span name="koder">koder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.K">K</span>]</span>, <span name="voder">voder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.V">V</span>]</span>)</span><span class="result">: <a href="SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[(<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.K">K</span>, (<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.V">V</span>, <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.hashLeftJoin.W">W</span>]))]</span>
+        <span class="name">hashLeftOuterJoin</span><span class="tparams">[<span name="W">W</span>]</span><span class="params">(<span name="rhs">rhs: <a href="SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[(<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.K">K</span>, <span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.hashLeftOuterJoin.W">W</span>)]</span>)</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.hashLeftOuterJoin.W">W</span>]</span>, <span name="koder">koder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.K">K</span>]</span>, <span name="voder">voder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.V">V</span>]</span>)</span><span class="result">: <a href="SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[(<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.K">K</span>, (<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.V">V</span>, <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.hashLeftOuterJoin.W">W</span>]))]</span>
       </span>
       
-      <p class="shortcomment cmt">Perform a left outer join by replicating <code>that</code> to all workers.</p><div class="fullcomment"><div class="comment cmt"><p>Perform a left outer join by replicating <code>that</code> to all workers. The right side should be tiny
+      <p class="shortcomment cmt">Perform a left outer join by replicating <code>rhs</code> to all workers.</p><div class="fullcomment"><div class="comment cmt"><p>Perform a left outer join by replicating <code>rhs</code> to all workers. The right side should be tiny
 and fit in memory.
-</p></div></div>
+</p></div><dl class="paramcmts block"><dt class="param">rhs</dt><dd class="cmt"><p>The tiny SCollection[(K, W)] treated as right side of the join.</p></dd></dl><dl class="attributes block"> <div class="block">Example:
+               <ol><li class="cmt"><p></p><pre><span class="kw">val</span> si = pairSCollRight  <span class="cmt">// Should be tiny</span>
+<span class="kw">val</span> joined = pairSColl1Left.hashLeftOuterJoin(pairSCollRight)</pre></li></ol>
+            </div></dl></div>
     </li><li name="scala.Any#isInstanceOf" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="isInstanceOf[T0]:Boolean"></a>
       <span class="permalink">
@@ -747,22 +767,6 @@ and fit in memory.
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
-    </li><li name="com.spotify.scio.values.PairHashSCollectionFunctions#toSideMap" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="toSideMap(implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SideMap[K,V]"></a><a id="toSideMap(Coder[K],Coder[V]):SideMap[K,V]"></a>
-      <span class="permalink">
-      <a href="../../../../com/spotify/scio/values/PairHashSCollectionFunctions.html#toSideMap(implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SideMap[K,V]" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">toSideMap</span><span class="params">(<span class="implicit">implicit </span><span name="koder">koder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.K">K</span>]</span>, <span name="voder">voder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.V">V</span>]</span>)</span><span class="result">: <a href="SideMap.html" class="extype" name="com.spotify.scio.values.SideMap">SideMap</a>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.K">K</span>, <span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.V">V</span>]</span>
-      </span>
-      
-      
     </li><li name="scala.AnyRef#toString" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="toString():String"></a>
       <span class="permalink">
@@ -853,7 +857,139 @@ and fit in memory.
 
         
 
-        
+        <div class="values members">
+              <h3>Deprecated Value Members</h3>
+              <ol><li name="com.spotify.scio.values.PairHashSCollectionFunctions#hashFullOuterJoin" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="join">
+      <a id="hashFullOuterJoin[W](sideMap:com.spotify.scio.values.SideMap[K,W])(implicitevidence$9:com.spotify.scio.coders.Coder[W],implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SCollection[(K,(Option[V],Option[W]))]"></a><a id="hashFullOuterJoin[W](SideMap[K,W])(Coder[W],Coder[K],Coder[V]):SCollection[(K,(Option[V],Option[W]))]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/values/PairHashSCollectionFunctions.html#hashFullOuterJoin[W](sideMap:com.spotify.scio.values.SideMap[K,W])(implicitevidence$9:com.spotify.scio.coders.Coder[W],implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SCollection[(K,(Option[V],Option[W]))]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name deprecated" title="Deprecated: (Since version 0.8.0) Use SCollection[(K, V)]#hashFullOuterJoin(rhs) or SCollection[(K, V)]#hashFullOuterJoin(rhs.asMultiMapSideInput) instead.">hashFullOuterJoin</span><span class="tparams">[<span name="W">W</span>]</span><span class="params">(<span name="sideMap">sideMap: <a href="SideMap.html" class="extype" name="com.spotify.scio.values.SideMap">SideMap</a>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.K">K</span>, <span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.hashFullOuterJoin.W">W</span>]</span>)</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.hashFullOuterJoin.W">W</span>]</span>, <span name="koder">koder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.K">K</span>]</span>, <span name="voder">voder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.V">V</span>]</span>)</span><span class="result">: <a href="SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[(<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.K">K</span>, (<span class="extype" name="scala.Option">Option</span>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.V">V</span>], <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.hashFullOuterJoin.W">W</span>]))]</span>
+      </span>
+      
+      <p class="shortcomment cmt">Perform a full outer join with a <a href="SideMap.html" class="extype" name="com.spotify.scio.values.SideMap">SideMap</a>.</p><div class="fullcomment"><div class="comment cmt"><p>Perform a full outer join with a <a href="SideMap.html" class="extype" name="com.spotify.scio.values.SideMap">SideMap</a>.</p><p>SideMaps are deprecated in favour of <code>SideInput[ Map [ K, Iterable[W] ] ]</code>.
+Example replacement:</p><pre><span class="kw">val</span> si = pairSCollRight.asMultiMapSideInput
+<span class="kw">val</span> joined1 = pairSColl1Left.hashFullOuterJoin(si)
+<span class="kw">val</span> joined2 = pairSColl2Left.hashFullOuterJoin(si)</pre></div><dl class="attributes block"> <dt>Annotations</dt><dd>
+                <span class="name">@deprecated</span>
+              
+        </dd><dt>Deprecated</dt><dd class="cmt"><p><i>(Since version 0.8.0)</i> Use SCollection[(K, V)]#hashFullOuterJoin(rhs) or SCollection[(K, V)]#hashFullOuterJoin(rhs.asMultiMapSideInput) instead.</p></dd></dl></div>
+    </li><li name="com.spotify.scio.values.PairHashSCollectionFunctions#hashIntersectByKey" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="per key">
+      <a id="hashIntersectByKey(sideSet:com.spotify.scio.values.SideSet[K])(implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SCollection[(K,V)]"></a><a id="hashIntersectByKey(SideSet[K])(Coder[K],Coder[V]):SCollection[(K,V)]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/values/PairHashSCollectionFunctions.html#hashIntersectByKey(sideSet:com.spotify.scio.values.SideSet[K])(implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SCollection[(K,V)]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name deprecated" title="Deprecated: (Since version 0.8.0) Use SCollection[(K, V)]#hashIntersectByKey(rhs.asSetSingletonSideInput) instead">hashIntersectByKey</span><span class="params">(<span name="sideSet">sideSet: <a href="SideSet.html" class="extype" name="com.spotify.scio.values.SideSet">SideSet</a>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.K">K</span>]</span>)</span><span class="params">(<span class="implicit">implicit </span><span name="koder">koder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.K">K</span>]</span>, <span name="voder">voder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.V">V</span>]</span>)</span><span class="result">: <a href="SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[(<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.K">K</span>, <span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.V">V</span>)]</span>
+      </span>
+      
+      <p class="shortcomment cmt">Return an SCollection with the pairs from <code>this</code> whose keys are in the SideSet <code>rhs</code>.</p><div class="fullcomment"><div class="comment cmt"><p>Return an SCollection with the pairs from <code>this</code> whose keys are in the SideSet <code>rhs</code>.</p><p>Unlike <a href="SCollection.html#intersection(that:com.spotify.scio.values.SCollection[T])(implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]" class="extmbr" name="com.spotify.scio.values.SCollection#intersection">SCollection.intersection</a> this preserves duplicates in <code>this</code>.
+</p></div><dl class="attributes block"> <dt>Annotations</dt><dd>
+                <span class="name">@deprecated</span>
+              
+        </dd><dt>Deprecated</dt><dd class="cmt"><p><i>(Since version 0.8.0)</i> Use SCollection[(K, V)]#hashIntersectByKey(rhs.asSetSingletonSideInput) instead</p></dd></dl></div>
+    </li><li name="com.spotify.scio.values.PairHashSCollectionFunctions#hashJoin" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="join">
+      <a id="hashJoin[W](sideMap:com.spotify.scio.values.SideMap[K,W])(implicitevidence$2:com.spotify.scio.coders.Coder[W],implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SCollection[(K,(V,W))]"></a><a id="hashJoin[W](SideMap[K,W])(Coder[W],Coder[K],Coder[V]):SCollection[(K,(V,W))]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/values/PairHashSCollectionFunctions.html#hashJoin[W](sideMap:com.spotify.scio.values.SideMap[K,W])(implicitevidence$2:com.spotify.scio.coders.Coder[W],implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SCollection[(K,(V,W))]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name deprecated" title="Deprecated: (Since version 0.8.0) Use SCollection[(K, V)]#hashJoin(rhs) or SCollection[(K, V)]#hashJoin(rhs.asMultiMapSideInput) instead.">hashJoin</span><span class="tparams">[<span name="W">W</span>]</span><span class="params">(<span name="sideMap">sideMap: <a href="SideMap.html" class="extype" name="com.spotify.scio.values.SideMap">SideMap</a>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.K">K</span>, <span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.hashJoin.W">W</span>]</span>)</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.hashJoin.W">W</span>]</span>, <span name="koder">koder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.K">K</span>]</span>, <span name="voder">voder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.V">V</span>]</span>)</span><span class="result">: <a href="SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[(<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.K">K</span>, (<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.V">V</span>, <span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.hashJoin.W">W</span>))]</span>
+      </span>
+      
+      <p class="shortcomment cmt">Perform an inner join with a <a href="SideMap.html" class="extype" name="com.spotify.scio.values.SideMap">SideMap</a>.</p><div class="fullcomment"><div class="comment cmt"><p>Perform an inner join with a <a href="SideMap.html" class="extype" name="com.spotify.scio.values.SideMap">SideMap</a>.</p><p><code>SideMap</code>s are deprecated in favor of <code>SideInput[Map[K, Iterable[W]]]</code>.
+Example replacement:</p><pre><span class="kw">val</span> si = pairSCollRight.asMultiMapSideInput
+<span class="kw">val</span> joined1 = pairSColl1Left.hashJoin(si)
+<span class="kw">val</span> joined2 = pairSColl2Left.hashJoin(si)</pre></div><dl class="attributes block"> <dt>Annotations</dt><dd>
+                <span class="name">@deprecated</span>
+              
+        </dd><dt>Deprecated</dt><dd class="cmt"><p><i>(Since version 0.8.0)</i> Use SCollection[(K, V)]#hashJoin(rhs) or SCollection[(K, V)]#hashJoin(rhs.asMultiMapSideInput) instead.</p></dd></dl></div>
+    </li><li name="com.spotify.scio.values.PairHashSCollectionFunctions#hashLeftJoin" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="join">
+      <a id="hashLeftJoin[W](sideMap:com.spotify.scio.values.SideMap[K,W])(implicitevidence$6:com.spotify.scio.coders.Coder[W],implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SCollection[(K,(V,Option[W]))]"></a><a id="hashLeftJoin[W](SideMap[K,W])(Coder[W],Coder[K],Coder[V]):SCollection[(K,(V,Option[W]))]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/values/PairHashSCollectionFunctions.html#hashLeftJoin[W](sideMap:com.spotify.scio.values.SideMap[K,W])(implicitevidence$6:com.spotify.scio.coders.Coder[W],implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SCollection[(K,(V,Option[W]))]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name deprecated" title="Deprecated: (Since version 0.8.0) Use SCollection[(K, V)]#hashLeftOuterJoin(pairSColl) or SCollection[(K, V)]#hashLeftOuterJoin(pairSColl.asMultiMapSideInput) instead.">hashLeftJoin</span><span class="tparams">[<span name="W">W</span>]</span><span class="params">(<span name="sideMap">sideMap: <a href="SideMap.html" class="extype" name="com.spotify.scio.values.SideMap">SideMap</a>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.K">K</span>, <span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.hashLeftJoin.W">W</span>]</span>)</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.hashLeftJoin.W">W</span>]</span>, <span name="koder">koder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.K">K</span>]</span>, <span name="voder">voder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.V">V</span>]</span>)</span><span class="result">: <a href="SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[(<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.K">K</span>, (<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.V">V</span>, <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.hashLeftJoin.W">W</span>]))]</span>
+      </span>
+      
+      <p class="shortcomment cmt">Perform a left outer join with a <a href="SideMap.html" class="extype" name="com.spotify.scio.values.SideMap">SideMap</a>.</p><div class="fullcomment"><div class="comment cmt"><p>Perform a left outer join with a <a href="SideMap.html" class="extype" name="com.spotify.scio.values.SideMap">SideMap</a>.</p><p>SideMaps are deprecated in favor of <code>SideInput[Map[K, Iterable[W]]]</code>.
+Example replacement:</p><pre><span class="kw">val</span> si = pairSCollRight.asMultiMapSideInput
+<span class="kw">val</span> joined1 = pairSColl1Left.hashLeftOuterJoin(si)
+<span class="kw">val</span> joined2 = pairSColl2Left.hashLeftOuterJoin(si)</pre></div><dl class="attributes block"> <dt>Annotations</dt><dd>
+                <span class="name">@deprecated</span>
+              
+        </dd><dt>Deprecated</dt><dd class="cmt"><p><i>(Since version 0.8.0)</i> Use SCollection[(K, V)]#hashLeftOuterJoin(pairSColl) or SCollection[(K, V)]#hashLeftOuterJoin(pairSColl.asMultiMapSideInput) instead.</p></dd></dl></div>
+    </li><li name="com.spotify.scio.values.PairHashSCollectionFunctions#hashLeftJoin" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="join">
+      <a id="hashLeftJoin[W](rhs:com.spotify.scio.values.SCollection[(K,W)])(implicitevidence$4:com.spotify.scio.coders.Coder[W],implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SCollection[(K,(V,Option[W]))]"></a><a id="hashLeftJoin[W](SCollection[(K,W)])(Coder[W],Coder[K],Coder[V]):SCollection[(K,(V,Option[W]))]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/values/PairHashSCollectionFunctions.html#hashLeftJoin[W](rhs:com.spotify.scio.values.SCollection[(K,W)])(implicitevidence$4:com.spotify.scio.coders.Coder[W],implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SCollection[(K,(V,Option[W]))]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name deprecated" title="Deprecated: (Since version 0.8.0) Use SCollection[(K, V)]#hashLeftOuterJoin(pairSColl) instead.">hashLeftJoin</span><span class="tparams">[<span name="W">W</span>]</span><span class="params">(<span name="rhs">rhs: <a href="SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[(<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.K">K</span>, <span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.hashLeftJoin.W">W</span>)]</span>)</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.hashLeftJoin.W">W</span>]</span>, <span name="koder">koder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.K">K</span>]</span>, <span name="voder">voder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.V">V</span>]</span>)</span><span class="result">: <a href="SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[(<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.K">K</span>, (<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.V">V</span>, <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.hashLeftJoin.W">W</span>]))]</span>
+      </span>
+      
+      <p class="shortcomment cmt">Perform a left outer join by replicating <code>rhs</code> to all workers.</p><div class="fullcomment"><div class="comment cmt"><p>Perform a left outer join by replicating <code>rhs</code> to all workers. The right side should be tiny
+and fit in memory.
+</p></div><dl class="attributes block"> <dt>Annotations</dt><dd>
+                <span class="name">@deprecated</span>
+              
+        </dd><dt>Deprecated</dt><dd class="cmt"><p><i>(Since version 0.8.0)</i> Use SCollection[(K, V)]#hashLeftOuterJoin(pairSColl) instead.</p></dd><div class="block">Example:
+               <ol><li class="cmt"><p></p><pre><span class="kw">val</span> si = pairSCollRight  <span class="cmt">// Should be tiny</span>
+<span class="kw">val</span> joined = pairSColl1Left.hashLeftOuterJoin(pairSCollRight)</pre></li></ol>
+            </div></dl></div>
+    </li><li name="com.spotify.scio.values.PairHashSCollectionFunctions#toSideMap" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="toSideMap(implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SideMap[K,V]"></a><a id="toSideMap(Coder[K],Coder[V]):SideMap[K,V]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/values/PairHashSCollectionFunctions.html#toSideMap(implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SideMap[K,V]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name deprecated" title="Deprecated: (Since version 0.8.0) Use SCollection[(K, V)]#asMultiMapSideInput instead">toSideMap</span><span class="params">(<span class="implicit">implicit </span><span name="koder">koder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.K">K</span>]</span>, <span name="voder">voder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.V">V</span>]</span>)</span><span class="result">: <a href="SideMap.html" class="extype" name="com.spotify.scio.values.SideMap">SideMap</a>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.K">K</span>, <span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.V">V</span>]</span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Annotations</dt><dd>
+                <span class="name">@deprecated</span>
+              
+        </dd><dt>Deprecated</dt><dd class="cmt"><p><i>(Since version 0.8.0)</i> Use SCollection[(K, V)]#asMultiMapSideInput instead</p></dd></dl></div>
+    </li></ol>
+            </div>
         </div>
 
         <div id="inheritedMembers">

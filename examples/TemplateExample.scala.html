@@ -282,7 +282,7 @@ hr {
             
               <section class="">
                 <div class="comment "><p>To upload the template:
-<code>sbt runMain &quot;com.spotify.scio.examples.extra.TemplateExample
+<code>sbt &quot;runMain com.spotify.scio.examples.extra.TemplateExample
 --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
 --stagingLocation=gs://[BUCKET]/staging --templateLocation=gs://[BUCKET]/TemplateExample&quot;</code></p></p></div>
                 <div class="code empty">&nbsp;</div>
@@ -298,7 +298,7 @@ outputTopic=projects/[PROJECT]/topics/[TOPIC]</code></p></p></div>
             
               <section class="">
                 <div class="comment "><p>To run the job directly:
-<code>sbt runMain &quot;com.spotify.scio.examples.extra.TemplateExample
+<code>sbt &quot;runMain com.spotify.scio.examples.extra.TemplateExample
 --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
 --inputSub=projects/[PROJECT]/subscriptions/sub
 --outputTopic=projects/[PROJECT]/topics/[TOPIC]&quot;</code></p></p></div>
@@ -316,7 +316,6 @@ outputTopic=projects/[PROJECT]/topics/[TOPIC]</code></p></p></div>
 <span class="keyword">import</span> <span class="identifier">org</span>.<span class="identifier">apache</span>.<span class="identifier">beam</span>.<span class="identifier">sdk</span>.<span class="identifier">options</span>.<span class="identifier">Validation</span>.<span class="identifier">Required</span>
 
 <span class="keyword">object</span> <span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/examples/extra/TemplateExample$.html" data-tooltip="<span>com.spotify.scio.examples.extra.TemplateExample</span>">TemplateExample</a></span> {
-
   trait <span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/examples/extra/TemplateExample$$Options.html" data-tooltip="<span>com.spotify.scio.examples.extra.TemplateExample.Options</span>">Options</a></span> <span class="keyword">extends</span> <span class="identifier">PipelineOptions</span> with <span class="identifier">StreamingOptions</span> {
     @<span class="identifier">Description</span>(<span class="string">"The Cloud Pub/Sub subscription to read from"</span>)
     @<span class="identifier">Required</span>
@@ -355,7 +354,7 @@ outputTopic=projects/[PROJECT]/topics/[TOPIC]</code></p></p></div>
               </section>
             
               <section class="">
-                <div class="comment "><p>Close the context</p></p></div>
+                <div class="comment "><p>Execute the pipeline</p></p></div>
                 <div class="code ">    <span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/ScioContext.html" data-tooltip="<span>com.spotify.scio.ScioContext</span>">sc</a></span>.<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/ScioContext.html#run():com.spotify.scio.ScioExecutionContext" data-tooltip="<span>com.spotify.scio.ScioContext.run(): com.spotify.scio.ScioExecutionContext</span>">run</a></span>()
     ()
   }

@@ -211,6 +211,14 @@
                         <a href="ProtobufIO.html" title="">ProtobufIO</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
+                        <a class="class" href="ReflectiveRecordIO.html" title=""></a>
+                        <a href="ReflectiveRecordIO.html" title="">ReflectiveRecordIO</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
+                        <a class="class" href="ReflectiveRecordTap.html" title="Tap for GenericRecord Avro files."></a>
+                        <a href="ReflectiveRecordTap.html" title="Tap for GenericRecord Avro files.">ReflectiveRecordTap</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
                         <a class="class" href="SpecificRecordIO.html" title=""></a>
                         <a href="SpecificRecordIO.html" title="">SpecificRecordIO</a>
                       </li><li class="current-entities indented4">
@@ -240,7 +248,7 @@
         <span class="kind">case class</span>
       </span>
       <span class="symbol">
-        <span class="name">GenericRecordIO</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="schema">schema: <span class="extype" name="org.apache.avro.Schema">Schema</span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="evidence$5">evidence$5: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.avro.GenericRecordIO.T">T</span>]</span>)</span><span class="result"> extends <a href="AvroIO.html" class="extype" name="com.spotify.scio.avro.AvroIO">AvroIO</a>[<span class="extype" name="com.spotify.scio.avro.GenericRecordIO.T">T</span>] with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+        <span class="name">GenericRecordIO</span><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="schema">schema: <span class="extype" name="org.apache.avro.Schema">Schema</span></span>)</span><span class="result"> extends <a href="AvroIO.html" class="extype" name="com.spotify.scio.avro.AvroIO">AvroIO</a>[<span class="extype" name="org.apache.avro.generic.GenericRecord">GenericRecord</span>] with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
       </span>
       </h4>
 
@@ -249,7 +257,7 @@
           <span class="toggle">
             Linear Supertypes
           </span>
-          <div class="superTypes hiddenContent"><span class="extype" name="scala.Serializable">Serializable</span>, <span class="extype" name="java.io.Serializable">Serializable</span>, <span class="extype" name="scala.Product">Product</span>, <span class="extype" name="scala.Equals">Equals</span>, <a href="AvroIO.html" class="extype" name="com.spotify.scio.avro.AvroIO">AvroIO</a>[<span class="extype" name="com.spotify.scio.avro.GenericRecordIO.T">T</span>], <a href="../io/ScioIO.html" class="extype" name="com.spotify.scio.io.ScioIO">ScioIO</a>[<span class="extype" name="com.spotify.scio.avro.GenericRecordIO.T">T</span>], <span class="extype" name="scala.AnyRef">AnyRef</span>, <span class="extype" name="scala.Any">Any</span></div>
+          <div class="superTypes hiddenContent"><span class="extype" name="scala.Serializable">Serializable</span>, <span class="extype" name="java.io.Serializable">Serializable</span>, <span class="extype" name="scala.Product">Product</span>, <span class="extype" name="scala.Equals">Equals</span>, <a href="AvroIO.html" class="extype" name="com.spotify.scio.avro.AvroIO">AvroIO</a>[<span class="extype" name="org.apache.avro.generic.GenericRecord">GenericRecord</span>], <a href="../io/ScioIO.html" class="extype" name="com.spotify.scio.io.ScioIO">ScioIO</a>[<span class="extype" name="org.apache.avro.generic.GenericRecord">GenericRecord</span>], <span class="extype" name="scala.AnyRef">AnyRef</span>, <span class="extype" name="scala.Any">Any</span></div>
         </div></div>
         
 
@@ -296,9 +304,9 @@
         <div id="constructors" class="members">
               <h3>Instance Constructors</h3>
               <ol><li name="com.spotify.scio.avro.GenericRecordIO#&lt;init&gt;" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="&lt;init&gt;(path:String,schema:org.apache.avro.Schema)(implicitevidence$5:com.spotify.scio.coders.Coder[T]):com.spotify.scio.avro.GenericRecordIO[T]"></a><a id="&lt;init&gt;:GenericRecordIO[T]"></a>
+      <a id="&lt;init&gt;(path:String,schema:org.apache.avro.Schema):com.spotify.scio.avro.GenericRecordIO"></a><a id="&lt;init&gt;:GenericRecordIO"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/avro/GenericRecordIO.html#&lt;init&gt;(path:String,schema:org.apache.avro.Schema)(implicitevidence$5:com.spotify.scio.coders.Coder[T]):com.spotify.scio.avro.GenericRecordIO[T]" title="Permalink">
+      <a href="../../../../com/spotify/scio/avro/GenericRecordIO.html#&lt;init&gt;(path:String,schema:org.apache.avro.Schema):com.spotify.scio.avro.GenericRecordIO" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -307,7 +315,7 @@
         <span class="kind">new</span>
       </span>
       <span class="symbol">
-        <span class="name">GenericRecordIO</span><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="schema">schema: <span class="extype" name="org.apache.avro.Schema">Schema</span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.avro.GenericRecordIO.T">T</span>]</span>)</span>
+        <span class="name">GenericRecordIO</span><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="schema">schema: <span class="extype" name="org.apache.avro.Schema">Schema</span></span>)</span>
       </span>
       
       
@@ -421,7 +429,7 @@
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
     </li><li name="com.spotify.scio.avro.AvroIO#avroOut" visbl="prt" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="avroOut[U](sc:com.spotify.scio.values.SCollection[T],write:org.apache.beam.sdk.io.AvroIO.Write[U],path:String,numShards:Int,suffix:String,codec:org.apache.avro.file.CodecFactory,metadata:Map[String,AnyRef]):org.apache.beam.sdk.io.AvroIO.Write[U]"></a><a id="avroOut[U](SCollection[T],Write[U],String,Int,String,CodecFactory,Map[String,AnyRef]):Write[U]"></a>
+      <a id="avroOut[U](sc:com.spotify.scio.values.SCollection[T],write:org.apache.beam.sdk.io.AvroIO.Write[U],path:String,numShards:Int,suffix:String,codec:org.apache.avro.file.CodecFactory,metadata:Map[String,AnyRef]):org.apache.beam.sdk.io.AvroIO.Write[U]"></a><a id="avroOut[U](SCollection[GenericRecord],Write[U],String,Int,String,CodecFactory,Map[String,AnyRef]):Write[U]"></a>
       <span class="permalink">
       <a href="../../../../com/spotify/scio/avro/GenericRecordIO.html#avroOut[U](sc:com.spotify.scio.values.SCollection[T],write:org.apache.beam.sdk.io.AvroIO.Write[U],path:String,numShards:Int,suffix:String,codec:org.apache.avro.file.CodecFactory,metadata:Map[String,AnyRef]):org.apache.beam.sdk.io.AvroIO.Write[U]" title="Permalink">
         <i class="material-icons"></i>
@@ -432,7 +440,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">avroOut</span><span class="tparams">[<span name="U">U</span>]</span><span class="params">(<span name="sc">sc: <a href="../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.avro.GenericRecordIO.T">T</span>]</span>, <span name="write">write: <span class="extype" name="org.apache.beam.sdk.io.AvroIO.Write">Write</span>[<span class="extype" name="com.spotify.scio.avro.AvroIO.avroOut.U">U</span>]</span>, <span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="numShards">numShards: <span class="extype" name="scala.Int">Int</span></span>, <span name="suffix">suffix: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="codec">codec: <span class="extype" name="org.apache.avro.file.CodecFactory">CodecFactory</span></span>, <span name="metadata">metadata: <span class="extype" name="scala.Predef.Map">Map</span>[<span class="extype" name="scala.Predef.String">String</span>, <span class="extype" name="scala.AnyRef">AnyRef</span>]</span>)</span><span class="result">: <span class="extype" name="org.apache.beam.sdk.io.AvroIO.Write">Write</span>[<span class="extype" name="com.spotify.scio.avro.AvroIO.avroOut.U">U</span>]</span>
+        <span class="name">avroOut</span><span class="tparams">[<span name="U">U</span>]</span><span class="params">(<span name="sc">sc: <a href="../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="org.apache.avro.generic.GenericRecord">GenericRecord</span>]</span>, <span name="write">write: <span class="extype" name="org.apache.beam.sdk.io.AvroIO.Write">Write</span>[<span class="extype" name="com.spotify.scio.avro.AvroIO.avroOut.U">U</span>]</span>, <span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="numShards">numShards: <span class="extype" name="scala.Int">Int</span></span>, <span name="suffix">suffix: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="codec">codec: <span class="extype" name="org.apache.avro.file.CodecFactory">CodecFactory</span></span>, <span name="metadata">metadata: <span class="extype" name="scala.Predef.Map">Map</span>[<span class="extype" name="scala.Predef.String">String</span>, <span class="extype" name="scala.AnyRef">AnyRef</span>]</span>)</span><span class="result">: <span class="extype" name="org.apache.beam.sdk.io.AvroIO.Write">Write</span>[<span class="extype" name="com.spotify.scio.avro.AvroIO.avroOut.U">U</span>]</span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected </dd><dt>Definition Classes</dt><dd><a href="AvroIO.html" class="extype" name="com.spotify.scio.avro.AvroIO">AvroIO</a></dd></dl></div>
@@ -604,9 +612,9 @@
       
       
     </li><li name="com.spotify.scio.avro.GenericRecordIO#read" visbl="prt" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="read(sc:com.spotify.scio.ScioContext,params:GenericRecordIO.this.ReadP):com.spotify.scio.values.SCollection[T]"></a><a id="read(ScioContext,ReadP):SCollection[T]"></a>
+      <a id="read(sc:com.spotify.scio.ScioContext,params:GenericRecordIO.this.ReadP):com.spotify.scio.values.SCollection[org.apache.avro.generic.GenericRecord]"></a><a id="read(ScioContext,ReadP):SCollection[GenericRecord]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/avro/GenericRecordIO.html#read(sc:com.spotify.scio.ScioContext,params:GenericRecordIO.this.ReadP):com.spotify.scio.values.SCollection[T]" title="Permalink">
+      <a href="../../../../com/spotify/scio/avro/GenericRecordIO.html#read(sc:com.spotify.scio.ScioContext,params:GenericRecordIO.this.ReadP):com.spotify.scio.values.SCollection[org.apache.avro.generic.GenericRecord]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -615,14 +623,14 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">read</span><span class="params">(<span name="sc">sc: <a href="../ScioContext.html" class="extype" name="com.spotify.scio.ScioContext">ScioContext</a></span>, <span name="params">params: <a href="#ReadP=Unit" class="extmbr" name="com.spotify.scio.avro.GenericRecordIO.ReadP">ReadP</a></span>)</span><span class="result">: <a href="../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.avro.GenericRecordIO.T">T</span>]</span>
+        <span class="name">read</span><span class="params">(<span name="sc">sc: <a href="../ScioContext.html" class="extype" name="com.spotify.scio.ScioContext">ScioContext</a></span>, <span name="params">params: <a href="#ReadP=Unit" class="extmbr" name="com.spotify.scio.avro.GenericRecordIO.ReadP">ReadP</a></span>)</span><span class="result">: <a href="../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="org.apache.avro.generic.GenericRecord">GenericRecord</span>]</span>
       </span>
       
       <p class="shortcomment cmt">Get an SCollection of <span class="extype" name="org.apache.avro.generic.GenericRecord">GenericRecord</span> from an Avro
 file.</p><div class="fullcomment"><div class="comment cmt"><p>Get an SCollection of <span class="extype" name="org.apache.avro.generic.GenericRecord">GenericRecord</span> from an Avro
 file.</p></div><dl class="attributes block"> <dt>Attributes</dt><dd>protected </dd><dt>Definition Classes</dt><dd><a href="" class="extype" name="com.spotify.scio.avro.GenericRecordIO">GenericRecordIO</a> → <a href="../io/ScioIO.html" class="extype" name="com.spotify.scio.io.ScioIO">ScioIO</a></dd></dl></div>
     </li><li name="com.spotify.scio.io.ScioIO#readTest" visbl="prt" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="readTest(sc:com.spotify.scio.ScioContext,params:ScioIO.this.ReadP)(implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]"></a><a id="readTest(ScioContext,ReadP)(Coder[T]):SCollection[T]"></a>
+      <a id="readTest(sc:com.spotify.scio.ScioContext,params:ScioIO.this.ReadP)(implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]"></a><a id="readTest(ScioContext,ReadP)(Coder[GenericRecord]):SCollection[GenericRecord]"></a>
       <span class="permalink">
       <a href="../../../../com/spotify/scio/avro/GenericRecordIO.html#readTest(sc:com.spotify.scio.ScioContext,params:ScioIO.this.ReadP)(implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]" title="Permalink">
         <i class="material-icons"></i>
@@ -633,7 +641,7 @@ file.</p></div><dl class="attributes block"> <dt>Attributes</dt><dd>protected </
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">readTest</span><span class="params">(<span name="sc">sc: <a href="../ScioContext.html" class="extype" name="com.spotify.scio.ScioContext">ScioContext</a></span>, <span name="params">params: <a href="#ReadP=Unit" class="extmbr" name="com.spotify.scio.avro.GenericRecordIO.ReadP">ReadP</a></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="coder">coder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.avro.GenericRecordIO.T">T</span>]</span>)</span><span class="result">: <a href="../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.avro.GenericRecordIO.T">T</span>]</span>
+        <span class="name">readTest</span><span class="params">(<span name="sc">sc: <a href="../ScioContext.html" class="extype" name="com.spotify.scio.ScioContext">ScioContext</a></span>, <span name="params">params: <a href="#ReadP=Unit" class="extmbr" name="com.spotify.scio.avro.GenericRecordIO.ReadP">ReadP</a></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="coder">coder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="org.apache.avro.generic.GenericRecord">GenericRecord</span>]</span>)</span><span class="result">: <a href="../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="org.apache.avro.generic.GenericRecord">GenericRecord</span>]</span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected </dd><dt>Definition Classes</dt><dd><a href="../io/ScioIO.html" class="extype" name="com.spotify.scio.io.ScioIO">ScioIO</a></dd></dl></div>
@@ -670,9 +678,9 @@ file.</p></div><dl class="attributes block"> <dt>Attributes</dt><dd>protected </
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
     </li><li name="com.spotify.scio.avro.GenericRecordIO#tap" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="tap(read:GenericRecordIO.this.ReadP):com.spotify.scio.io.Tap[T]"></a><a id="tap(ReadP):Tap[T]"></a>
+      <a id="tap(read:GenericRecordIO.this.ReadP):com.spotify.scio.io.Tap[org.apache.avro.generic.GenericRecord]"></a><a id="tap(ReadP):Tap[GenericRecord]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/avro/GenericRecordIO.html#tap(read:GenericRecordIO.this.ReadP):com.spotify.scio.io.Tap[T]" title="Permalink">
+      <a href="../../../../com/spotify/scio/avro/GenericRecordIO.html#tap(read:GenericRecordIO.this.ReadP):com.spotify.scio.io.Tap[org.apache.avro.generic.GenericRecord]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -681,12 +689,12 @@ file.</p></div><dl class="attributes block"> <dt>Attributes</dt><dd>protected </
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">tap</span><span class="params">(<span name="read">read: <a href="#ReadP=Unit" class="extmbr" name="com.spotify.scio.avro.GenericRecordIO.ReadP">ReadP</a></span>)</span><span class="result">: <a href="../io/Tap.html" class="extype" name="com.spotify.scio.io.Tap">Tap</a>[<span class="extype" name="com.spotify.scio.avro.GenericRecordIO.T">T</span>]</span>
+        <span class="name">tap</span><span class="params">(<span name="read">read: <a href="#ReadP=Unit" class="extmbr" name="com.spotify.scio.avro.GenericRecordIO.ReadP">ReadP</a></span>)</span><span class="result">: <a href="../io/Tap.html" class="extype" name="com.spotify.scio.io.Tap">Tap</a>[<span class="extype" name="org.apache.avro.generic.GenericRecord">GenericRecord</span>]</span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="" class="extype" name="com.spotify.scio.avro.GenericRecordIO">GenericRecordIO</a> → <a href="../io/ScioIO.html" class="extype" name="com.spotify.scio.io.ScioIO">ScioIO</a></dd></dl></div>
     </li><li name="com.spotify.scio.avro.AvroIO#tapT" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="tapT:com.spotify.scio.io.TapT.Aux[T,T]"></a><a id="tapT:Aux[T,T]"></a>
+      <a id="tapT:com.spotify.scio.io.TapT.Aux[T,T]"></a><a id="tapT:Aux[GenericRecord,GenericRecord]"></a>
       <span class="permalink">
       <a href="../../../../com/spotify/scio/avro/GenericRecordIO.html#tapT:com.spotify.scio.io.TapT.Aux[T,T]" title="Permalink">
         <i class="material-icons"></i>
@@ -697,7 +705,7 @@ file.</p></div><dl class="attributes block"> <dt>Attributes</dt><dd>protected </
         <span class="kind">val</span>
       </span>
       <span class="symbol">
-        <span class="name">tapT</span><span class="result">: <a href="../io/TapT$.html#Aux[A,T0]=com.spotify.scio.io.TapT[A]{typeT=T0}" class="extmbr" name="com.spotify.scio.io.TapT.Aux">Aux</a>[<span class="extype" name="com.spotify.scio.avro.GenericRecordIO.T">T</span>, <span class="extype" name="com.spotify.scio.avro.GenericRecordIO.T">T</span>]</span>
+        <span class="name">tapT</span><span class="result">: <a href="../io/TapT$.html#Aux[A,T0]=com.spotify.scio.io.TapT[A]{typeT=T0}" class="extmbr" name="com.spotify.scio.io.TapT.Aux">Aux</a>[<span class="extype" name="org.apache.avro.generic.GenericRecord">GenericRecord</span>, <span class="extype" name="org.apache.avro.generic.GenericRecord">GenericRecord</span>]</span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="AvroIO.html" class="extype" name="com.spotify.scio.avro.AvroIO">AvroIO</a> → <a href="../io/ScioIO.html" class="extype" name="com.spotify.scio.io.ScioIO">ScioIO</a></dd></dl></div>
@@ -786,9 +794,9 @@ file.</p></div><dl class="attributes block"> <dt>Attributes</dt><dd>protected </
               
         </dd></dl></div>
     </li><li name="com.spotify.scio.avro.GenericRecordIO#write" visbl="prt" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="write(data:com.spotify.scio.values.SCollection[T],params:GenericRecordIO.this.WriteP):com.spotify.scio.io.Tap[T]"></a><a id="write(SCollection[T],WriteP):Tap[T]"></a>
+      <a id="write(data:com.spotify.scio.values.SCollection[org.apache.avro.generic.GenericRecord],params:GenericRecordIO.this.WriteP):com.spotify.scio.io.Tap[org.apache.avro.generic.GenericRecord]"></a><a id="write(SCollection[GenericRecord],WriteP):Tap[GenericRecord]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/avro/GenericRecordIO.html#write(data:com.spotify.scio.values.SCollection[T],params:GenericRecordIO.this.WriteP):com.spotify.scio.io.Tap[T]" title="Permalink">
+      <a href="../../../../com/spotify/scio/avro/GenericRecordIO.html#write(data:com.spotify.scio.values.SCollection[org.apache.avro.generic.GenericRecord],params:GenericRecordIO.this.WriteP):com.spotify.scio.io.Tap[org.apache.avro.generic.GenericRecord]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -797,13 +805,13 @@ file.</p></div><dl class="attributes block"> <dt>Attributes</dt><dd>protected </
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">write</span><span class="params">(<span name="data">data: <a href="../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.avro.GenericRecordIO.T">T</span>]</span>, <span name="params">params: <a href="#WriteP=com.spotify.scio.avro.AvroIO.WriteParam" class="extmbr" name="com.spotify.scio.avro.GenericRecordIO.WriteP">WriteP</a></span>)</span><span class="result">: <a href="../io/Tap.html" class="extype" name="com.spotify.scio.io.Tap">Tap</a>[<span class="extype" name="com.spotify.scio.avro.GenericRecordIO.T">T</span>]</span>
+        <span class="name">write</span><span class="params">(<span name="data">data: <a href="../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="org.apache.avro.generic.GenericRecord">GenericRecord</span>]</span>, <span name="params">params: <a href="#WriteP=com.spotify.scio.avro.AvroIO.WriteParam" class="extmbr" name="com.spotify.scio.avro.GenericRecordIO.WriteP">WriteP</a></span>)</span><span class="result">: <a href="../io/Tap.html" class="extype" name="com.spotify.scio.io.Tap">Tap</a>[<span class="extype" name="org.apache.avro.generic.GenericRecord">GenericRecord</span>]</span>
       </span>
       
       <p class="shortcomment cmt">Save this SCollection <span class="extype" name="org.apache.avro.generic.GenericRecord">GenericRecord</span> as a Avro file.</p><div class="fullcomment"><div class="comment cmt"><p>Save this SCollection <span class="extype" name="org.apache.avro.generic.GenericRecord">GenericRecord</span> as a Avro file.
 </p></div><dl class="attributes block"> <dt>Attributes</dt><dd>protected </dd><dt>Definition Classes</dt><dd><a href="" class="extype" name="com.spotify.scio.avro.GenericRecordIO">GenericRecordIO</a> → <a href="../io/ScioIO.html" class="extype" name="com.spotify.scio.io.ScioIO">ScioIO</a></dd></dl></div>
     </li><li name="com.spotify.scio.io.ScioIO#writeTest" visbl="prt" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="writeTest(data:com.spotify.scio.values.SCollection[T],params:ScioIO.this.WriteP)(implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.io.Tap[ScioIO.this.tapT.T]"></a><a id="writeTest(SCollection[T],WriteP)(Coder[T]):Tap[(tapT)#T]"></a>
+      <a id="writeTest(data:com.spotify.scio.values.SCollection[T],params:ScioIO.this.WriteP)(implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.io.Tap[ScioIO.this.tapT.T]"></a><a id="writeTest(SCollection[GenericRecord],WriteP)(Coder[GenericRecord]):Tap[(tapT)#T]"></a>
       <span class="permalink">
       <a href="../../../../com/spotify/scio/avro/GenericRecordIO.html#writeTest(data:com.spotify.scio.values.SCollection[T],params:ScioIO.this.WriteP)(implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.io.Tap[ScioIO.this.tapT.T]" title="Permalink">
         <i class="material-icons"></i>
@@ -814,7 +822,7 @@ file.</p></div><dl class="attributes block"> <dt>Attributes</dt><dd>protected </
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">writeTest</span><span class="params">(<span name="data">data: <a href="../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.avro.GenericRecordIO.T">T</span>]</span>, <span name="params">params: <a href="#WriteP=com.spotify.scio.avro.AvroIO.WriteParam" class="extmbr" name="com.spotify.scio.avro.GenericRecordIO.WriteP">WriteP</a></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="coder">coder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.avro.GenericRecordIO.T">T</span>]</span>)</span><span class="result">: <a href="../io/Tap.html" class="extype" name="com.spotify.scio.io.Tap">Tap</a>[(<a href="#tapT:com.spotify.scio.io.TapT.Aux[T,T]" class="extmbr" name="com.spotify.scio.avro.GenericRecordIO#tapT">tapT</a>)#<span class="extype" name="com.spotify.scio.io.TapT.&lt;refinement&gt;.T">T</span>]</span>
+        <span class="name">writeTest</span><span class="params">(<span name="data">data: <a href="../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="org.apache.avro.generic.GenericRecord">GenericRecord</span>]</span>, <span name="params">params: <a href="#WriteP=com.spotify.scio.avro.AvroIO.WriteParam" class="extmbr" name="com.spotify.scio.avro.GenericRecordIO.WriteP">WriteP</a></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="coder">coder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="org.apache.avro.generic.GenericRecord">GenericRecord</span>]</span>)</span><span class="result">: <a href="../io/Tap.html" class="extype" name="com.spotify.scio.io.Tap">Tap</a>[(<a href="#tapT:com.spotify.scio.io.TapT.Aux[T,T]" class="extmbr" name="com.spotify.scio.avro.GenericRecordIO#tapT">tapT</a>)#<span class="extype" name="com.spotify.scio.io.TapT.&lt;refinement&gt;.T">T</span>]</span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected </dd><dt>Definition Classes</dt><dd><a href="../io/ScioIO.html" class="extype" name="com.spotify.scio.io.ScioIO">ScioIO</a></dd></dl></div>
@@ -837,9 +845,9 @@ file.</p></div><dl class="attributes block"> <dt>Attributes</dt><dd>protected </
             </div><div class="parent" name="scala.Equals">
               <h3>Inherited from <span class="extype" name="scala.Equals">Equals</span></h3>
             </div><div class="parent" name="com.spotify.scio.avro.AvroIO">
-              <h3>Inherited from <a href="AvroIO.html" class="extype" name="com.spotify.scio.avro.AvroIO">AvroIO</a>[<span class="extype" name="com.spotify.scio.avro.GenericRecordIO.T">T</span>]</h3>
+              <h3>Inherited from <a href="AvroIO.html" class="extype" name="com.spotify.scio.avro.AvroIO">AvroIO</a>[<span class="extype" name="org.apache.avro.generic.GenericRecord">GenericRecord</span>]</h3>
             </div><div class="parent" name="com.spotify.scio.io.ScioIO">
-              <h3>Inherited from <a href="../io/ScioIO.html" class="extype" name="com.spotify.scio.io.ScioIO">ScioIO</a>[<span class="extype" name="com.spotify.scio.avro.GenericRecordIO.T">T</span>]</h3>
+              <h3>Inherited from <a href="../io/ScioIO.html" class="extype" name="com.spotify.scio.io.ScioIO">ScioIO</a>[<span class="extype" name="org.apache.avro.generic.GenericRecord">GenericRecord</span>]</h3>
             </div><div class="parent" name="scala.AnyRef">
               <h3>Inherited from <span class="extype" name="scala.AnyRef">AnyRef</span></h3>
             </div><div class="parent" name="scala.Any">

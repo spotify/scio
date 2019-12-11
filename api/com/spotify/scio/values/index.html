@@ -383,6 +383,22 @@ detects the query's dialect. To override this, start the query with either <code
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../index.html" class="extype" name="com.spotify.scio">scio</a></dd></dl></div>
+    </li><li name="com.spotify.scio.smb" visbl="pub" class="indented4 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="smb"></a><a id="smb:smb"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/smb/index.html" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">package</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="../smb/index.html"><span class="name">smb</span></a>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../index.html" class="extype" name="com.spotify.scio">scio</a></dd></dl></div>
     </li><li name="com.spotify.scio.spanner" visbl="pub" class="indented4 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="spanner"></a><a id="spanner:spanner"></a>
       <span class="permalink">
@@ -841,22 +857,6 @@ performing the full combine.</p>
       </span>
       
       <p class="shortcomment cmt">Encapsulate context of one or more <a href="SideInput.html" class="extype" name="com.spotify.scio.values.SideInput">SideInput</a>s in an <a href="SCollectionWithSideInput.html" class="extype" name="com.spotify.scio.values.SCollectionWithSideInput">SCollectionWithSideInput</a>.</p>
-    </li><li name="com.spotify.scio.values.SideMap" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="SideMap[K,V]extendsProductwithSerializable"></a><a id="SideMap[K,V]:SideMap[K,V]"></a>
-      <span class="permalink">
-      <a href="../../../../com/spotify/scio/values/SideMap.html" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">case class</span>
-      </span>
-      <span class="symbol">
-        <a title="" href="SideMap.html"><span class="name">SideMap</span></a><span class="tparams">[<span name="K">K</span>, <span name="V">V</span>]</span><span class="params">(<span name="side">side: <a href="SideInput.html" class="extype" name="com.spotify.scio.values.SideInput">SideInput</a>[<span class="extype" name="scala.collection.mutable.Map">Map</span>[<span class="extype" name="com.spotify.scio.values.SideMap.K">K</span>, <span class="extype" name="scala.collection.mutable.ArrayBuffer">ArrayBuffer</span>[<span class="extype" name="com.spotify.scio.values.SideMap.V">V</span>]]]</span>)</span><span class="result"> extends <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
-      </span>
-      
-      
     </li><li name="com.spotify.scio.values.SideOutput" visbl="pub" class="indented0 " data-isabs="true" fullComment="no" group="Ungrouped">
       <a id="SideOutput[T]extendsSerializable"></a><a id="SideOutput[T]:SideOutput[T]"></a>
       <span class="permalink">
@@ -905,22 +905,6 @@ performing the full combine.</p>
       </span>
       
       <p class="shortcomment cmt">Encapsulate context of one or more <a href="SideOutput.html" class="extype" name="com.spotify.scio.values.SideOutput">SideOutput</a>s in an <a href="SCollectionWithSideOutput.html" class="extype" name="com.spotify.scio.values.SCollectionWithSideOutput">SCollectionWithSideOutput</a>.</p>
-    </li><li name="com.spotify.scio.values.SideSet" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="SideSet[T]extendsProductwithSerializable"></a><a id="SideSet[T]:SideSet[T]"></a>
-      <span class="permalink">
-      <a href="../../../../com/spotify/scio/values/SideSet.html" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">case class</span>
-      </span>
-      <span class="symbol">
-        <a title="" href="SideSet.html"><span class="name">SideSet</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="side">side: <a href="SideInput.html" class="extype" name="com.spotify.scio.values.SideInput">SideInput</a>[<span class="extype" name="scala.Predef.Set">Set</span>[<span class="extype" name="com.spotify.scio.values.SideSet.T">T</span>]]</span>)</span><span class="result"> extends <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
-      </span>
-      
-      
     </li><li name="com.spotify.scio.values.TransformNameable" visbl="pub" class="indented0 " data-isabs="true" fullComment="no" group="Ungrouped">
       <a id="TransformNameableextendsAnyRef"></a><a id="TransformNameable:TransformNameable"></a>
       <span class="permalink">
@@ -985,6 +969,44 @@ performing the full combine.</p>
       </span>
       
       <p class="shortcomment cmt">Value with window information to be used inside a <a href="WindowedSCollection.html" class="extype" name="com.spotify.scio.values.WindowedSCollection">WindowedSCollection</a>.</p>
+    </li><li name="com.spotify.scio.values.SideMap" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="SideMap[K,V]extendsProductwithSerializable"></a><a id="SideMap[K,V]:SideMap[K,V]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/values/SideMap.html" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="SideMap.html"><span class="name deprecated" title="Deprecated: (Since version 0.8.0) Use SCollection[(K, V)]#asMultiMapSideInput instead">SideMap</span></a><span class="tparams">[<span name="K">K</span>, <span name="V">V</span>]</span><span class="params">(<span name="side">side: <a href="SideInput.html" class="extype" name="com.spotify.scio.values.SideInput">SideInput</a>[<span class="extype" name="scala.collection.mutable.Map">Map</span>[<span class="extype" name="com.spotify.scio.values.SideMap.K">K</span>, <span class="extype" name="scala.collection.mutable.ArrayBuffer">ArrayBuffer</span>[<span class="extype" name="com.spotify.scio.values.SideMap.V">V</span>]]]</span>)</span><span class="result"> extends <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Annotations</dt><dd>
+                <span class="name">@deprecated</span>
+              
+        </dd><dt>Deprecated</dt><dd class="cmt"><p><i>(Since version 0.8.0)</i> Use SCollection[(K, V)]#asMultiMapSideInput instead</p></dd></dl></div>
+    </li><li name="com.spotify.scio.values.SideSet" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="SideSet[T]extendsProductwithSerializable"></a><a id="SideSet[T]:SideSet[T]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/values/SideSet.html" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="SideSet.html"><span class="name deprecated" title="Deprecated: (Since version 0.8.0) Use SCollection[T]#asSetSingletonSideInput instead">SideSet</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="side">side: <a href="SideInput.html" class="extype" name="com.spotify.scio.values.SideInput">SideInput</a>[<span class="extype" name="scala.Predef.Set">Set</span>[<span class="extype" name="com.spotify.scio.values.SideSet.T">T</span>]]</span>)</span><span class="result"> extends <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Annotations</dt><dd>
+                <span class="name">@deprecated</span>
+              
+        </dd><dt>Deprecated</dt><dd class="cmt"><p><i>(Since version 0.8.0)</i> Use SCollection[T]#asSetSingletonSideInput instead</p></dd></dl></div>
     </li></ol>
             </div>
 

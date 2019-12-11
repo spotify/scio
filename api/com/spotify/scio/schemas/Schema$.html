@@ -154,13 +154,9 @@
                         <a class="class" href="ArrayType.html" title=""></a>
                         <a href="ArrayType.html" title="">ArrayType</a>
                       </li><li class="current-entities indented4">
-                        <span class="separator"></span>
-                        <a class="class" href="Fallback.html" title=""></a>
-                        <a href="Fallback.html" title="">Fallback</a>
-                      </li><li class="current-entities indented4">
-                        <span class="separator"></span>
-                        <a class="trait" href="LowPrioritySchemaDerivation.html" title=""></a>
-                        <a href="LowPrioritySchemaDerivation.html" title="">LowPrioritySchemaDerivation</a>
+                        <a class="object" href="LogicalType$.html" title=""></a>
+                        <a class="trait" href="LogicalType.html" title=""></a>
+                        <a href="LogicalType.html" title="">LogicalType</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
                         <a class="class" href="MapType.html" title=""></a>
@@ -222,7 +218,7 @@
         <span class="kind">object</span>
       </span>
       <span class="symbol">
-        <span class="name">Schema</span><span class="result"> extends <a href="instances/AllInstances.html" class="extype" name="com.spotify.scio.schemas.instances.AllInstances">AllInstances</a></span>
+        <span class="name">Schema</span><span class="result"> extends <a href="instances/JodaInstances.html" class="extype" name="com.spotify.scio.schemas.instances.JodaInstances">JodaInstances</a> with <a href="instances/AvroInstances.html" class="extype" name="com.spotify.scio.schemas.instances.AvroInstances">AvroInstances</a> with <a href="instances/LowPrioritySchemaDerivation.html" class="extype" name="com.spotify.scio.schemas.instances.LowPrioritySchemaDerivation">LowPrioritySchemaDerivation</a> with <span class="extype" name="scala.Serializable">Serializable</span></span>
       </span>
       </h4>
 
@@ -231,7 +227,7 @@
           <span class="toggle">
             Linear Supertypes
           </span>
-          <div class="superTypes hiddenContent"><a href="instances/AllInstances.html" class="extype" name="com.spotify.scio.schemas.instances.AllInstances">AllInstances</a>, <a href="instances/LowPriorityFallbackInstances.html" class="extype" name="com.spotify.scio.schemas.instances.LowPriorityFallbackInstances">LowPriorityFallbackInstances</a>, <a href="LowPrioritySchemaDerivation.html" class="extype" name="com.spotify.scio.schemas.LowPrioritySchemaDerivation">LowPrioritySchemaDerivation</a>, <a href="instances/AvroInstances.html" class="extype" name="com.spotify.scio.schemas.instances.AvroInstances">AvroInstances</a>, <a href="instances/JodaInstances.html" class="extype" name="com.spotify.scio.schemas.instances.JodaInstances">JodaInstances</a>, <a href="instances/JavaInstances.html" class="extype" name="com.spotify.scio.schemas.instances.JavaInstances">JavaInstances</a>, <a href="instances/ScalaInstances.html" class="extype" name="com.spotify.scio.schemas.instances.ScalaInstances">ScalaInstances</a>, <span class="extype" name="scala.AnyRef">AnyRef</span>, <span class="extype" name="scala.Any">Any</span></div>
+          <div class="superTypes hiddenContent"><span class="extype" name="scala.Serializable">Serializable</span>, <span class="extype" name="java.io.Serializable">Serializable</span>, <a href="instances/LowPrioritySchemaDerivation.html" class="extype" name="com.spotify.scio.schemas.instances.LowPrioritySchemaDerivation">LowPrioritySchemaDerivation</a>, <a href="instances/AvroInstances.html" class="extype" name="com.spotify.scio.schemas.instances.AvroInstances">AvroInstances</a>, <a href="instances/JodaInstances.html" class="extype" name="com.spotify.scio.schemas.instances.JodaInstances">JodaInstances</a>, <span class="extype" name="scala.AnyRef">AnyRef</span>, <span class="extype" name="scala.Any">Any</span></div>
         </div></div>
         
 
@@ -257,7 +253,7 @@
                   <span class="filtertype">Inherited<br />
                   </span>
                   <ol id="linearization">
-                    <li class="in" name="com.spotify.scio.schemas.Schema"><span>Schema</span></li><li class="in" name="com.spotify.scio.schemas.instances.AllInstances"><span>AllInstances</span></li><li class="in" name="com.spotify.scio.schemas.instances.LowPriorityFallbackInstances"><span>LowPriorityFallbackInstances</span></li><li class="in" name="com.spotify.scio.schemas.LowPrioritySchemaDerivation"><span>LowPrioritySchemaDerivation</span></li><li class="in" name="com.spotify.scio.schemas.instances.AvroInstances"><span>AvroInstances</span></li><li class="in" name="com.spotify.scio.schemas.instances.JodaInstances"><span>JodaInstances</span></li><li class="in" name="com.spotify.scio.schemas.instances.JavaInstances"><span>JavaInstances</span></li><li class="in" name="com.spotify.scio.schemas.instances.ScalaInstances"><span>ScalaInstances</span></li><li class="in" name="scala.AnyRef"><span>AnyRef</span></li><li class="in" name="scala.Any"><span>Any</span></li>
+                    <li class="in" name="com.spotify.scio.schemas.Schema"><span>Schema</span></li><li class="in" name="scala.Serializable"><span>Serializable</span></li><li class="in" name="java.io.Serializable"><span>Serializable</span></li><li class="in" name="com.spotify.scio.schemas.instances.LowPrioritySchemaDerivation"><span>LowPrioritySchemaDerivation</span></li><li class="in" name="com.spotify.scio.schemas.instances.AvroInstances"><span>AvroInstances</span></li><li class="in" name="com.spotify.scio.schemas.instances.JodaInstances"><span>JodaInstances</span></li><li class="in" name="scala.AnyRef"><span>AnyRef</span></li><li class="in" name="scala.Any"><span>Any</span></li>
                   </ol>
                 </div><div class="ancestors">
               <span class="filtertype"></span>
@@ -279,7 +275,7 @@
 
         <div id="types" class="types members">
               <h3>Type Members</h3>
-              <ol><li name="com.spotify.scio.schemas.LowPrioritySchemaDerivation.Typeclass" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+              <ol><li name="com.spotify.scio.schemas.instances.LowPrioritySchemaDerivation.Typeclass" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="Typeclass[T]=com.spotify.scio.schemas.Schema[T]"></a><a id="Typeclass[T]:Typeclass[T]"></a>
       <span class="permalink">
       <a href="../../../../com/spotify/scio/schemas/Schema$.html#Typeclass[T]=com.spotify.scio.schemas.Schema[T]" title="Permalink">
@@ -291,10 +287,10 @@
         <span class="kind">type</span>
       </span>
       <span class="symbol">
-        <span class="name">Typeclass</span><span class="tparams">[<span name="T">T</span>]</span><span class="result alias"> = <a href="Schema.html" class="extype" name="com.spotify.scio.schemas.Schema">Schema</a>[<span class="extype" name="com.spotify.scio.schemas.LowPrioritySchemaDerivation.Typeclass.T">T</span>]</span>
+        <span class="name">Typeclass</span><span class="tparams">[<span name="T">T</span>]</span><span class="result alias"> = <a href="Schema.html" class="extype" name="com.spotify.scio.schemas.Schema">Schema</a>[<span class="extype" name="com.spotify.scio.schemas.instances.LowPrioritySchemaDerivation.Typeclass.T">T</span>]</span>
       </span>
       
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="LowPrioritySchemaDerivation.html" class="extype" name="com.spotify.scio.schemas.LowPrioritySchemaDerivation">LowPrioritySchemaDerivation</a></dd></dl></div>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="instances/LowPrioritySchemaDerivation.html" class="extype" name="com.spotify.scio.schemas.instances.LowPrioritySchemaDerivation">LowPrioritySchemaDerivation</a></dd></dl></div>
     </li></ol>
             </div>
 
@@ -370,10 +366,10 @@
                 <span class="name">@inline</span><span class="args">()</span>
               
         </dd></dl></div>
-    </li><li name="com.spotify.scio.schemas.instances.ScalaInstances#arraySchema" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="arraySchema[T](implicitevidence$1:scala.reflect.ClassTag[T],implicits:com.spotify.scio.schemas.Schema[T]):com.spotify.scio.schemas.Schema[Array[T]]"></a><a id="arraySchema[T](ClassTag[T],Schema[T]):Schema[Array[T]]"></a>
+    </li><li name="com.spotify.scio.schemas.Schema#arrayBufferSchema" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="arrayBufferSchema[T](implicitevidence$15:com.spotify.scio.schemas.Schema[T]):com.spotify.scio.schemas.Schema[scala.collection.mutable.ArrayBuffer[T]]"></a><a id="arrayBufferSchema[T](Schema[T]):Schema[ArrayBuffer[T]]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/schemas/Schema$.html#arraySchema[T](implicitevidence$1:scala.reflect.ClassTag[T],implicits:com.spotify.scio.schemas.Schema[T]):com.spotify.scio.schemas.Schema[Array[T]]" title="Permalink">
+      <a href="../../../../com/spotify/scio/schemas/Schema$.html#arrayBufferSchema[T](implicitevidence$15:com.spotify.scio.schemas.Schema[T]):com.spotify.scio.schemas.Schema[scala.collection.mutable.ArrayBuffer[T]]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -382,10 +378,26 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">arraySchema</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <span class="extype" name="scala.reflect.ClassTag">ClassTag</span>[<span class="extype" name="com.spotify.scio.schemas.instances.ScalaInstances.arraySchema.T">T</span>]</span>, <span name="s">s: <a href="Schema.html" class="extype" name="com.spotify.scio.schemas.Schema">Schema</a>[<span class="extype" name="com.spotify.scio.schemas.instances.ScalaInstances.arraySchema.T">T</span>]</span>)</span><span class="result">: <a href="Schema.html" class="extype" name="com.spotify.scio.schemas.Schema">Schema</a>[<span class="extype" name="scala.Array">Array</span>[<span class="extype" name="com.spotify.scio.schemas.instances.ScalaInstances.arraySchema.T">T</span>]]</span>
+        <span class="name">arrayBufferSchema</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="Schema.html" class="extype" name="com.spotify.scio.schemas.Schema">Schema</a>[<span class="extype" name="com.spotify.scio.schemas.Schema.arrayBufferSchema.T">T</span>]</span>)</span><span class="result">: <a href="Schema.html" class="extype" name="com.spotify.scio.schemas.Schema">Schema</a>[<span class="extype" name="scala.collection.mutable.ArrayBuffer">ArrayBuffer</span>[<span class="extype" name="com.spotify.scio.schemas.Schema.arrayBufferSchema.T">T</span>]]</span>
       </span>
       
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="instances/ScalaInstances.html" class="extype" name="com.spotify.scio.schemas.instances.ScalaInstances">ScalaInstances</a></dd></dl></div>
+      
+    </li><li name="com.spotify.scio.schemas.Schema#arraySchema" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="arraySchema[T](implicitevidence$9:com.spotify.scio.schemas.Schema[T],implicitevidence$10:scala.reflect.ClassTag[T]):com.spotify.scio.schemas.Schema[Array[T]]"></a><a id="arraySchema[T](Schema[T],ClassTag[T]):Schema[Array[T]]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/schemas/Schema$.html#arraySchema[T](implicitevidence$9:com.spotify.scio.schemas.Schema[T],implicitevidence$10:scala.reflect.ClassTag[T]):com.spotify.scio.schemas.Schema[Array[T]]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">implicit </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">arraySchema</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="Schema.html" class="extype" name="com.spotify.scio.schemas.Schema">Schema</a>[<span class="extype" name="com.spotify.scio.schemas.Schema.arraySchema.T">T</span>]</span>, <span name="arg1">arg1: <span class="extype" name="scala.reflect.ClassTag">ClassTag</span>[<span class="extype" name="com.spotify.scio.schemas.Schema.arraySchema.T">T</span>]</span>)</span><span class="result">: <a href="Schema.html" class="extype" name="com.spotify.scio.schemas.Schema">Schema</a>[<span class="extype" name="scala.Array">Array</span>[<span class="extype" name="com.spotify.scio.schemas.Schema.arraySchema.T">T</span>]]</span>
+      </span>
+      
+      
     </li><li name="scala.Any#asInstanceOf" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="asInstanceOf[T0]:T0"></a>
       <span class="permalink">
@@ -418,7 +430,7 @@
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="instances/AvroInstances.html" class="extype" name="com.spotify.scio.schemas.instances.AvroInstances">AvroInstances</a></dd></dl></div>
-    </li><li name="com.spotify.scio.schemas.instances.ScalaInstances#bigDecimalSchema" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+    </li><li name="com.spotify.scio.schemas.Schema#bigDecimalSchema" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="bigDecimalSchema:com.spotify.scio.schemas.Type[BigDecimal]"></a><a id="bigDecimalSchema:Type[BigDecimal]"></a>
       <span class="permalink">
       <a href="../../../../com/spotify/scio/schemas/Schema$.html#bigDecimalSchema:com.spotify.scio.schemas.Type[BigDecimal]" title="Permalink">
@@ -433,8 +445,8 @@
         <span class="name">bigDecimalSchema</span><span class="result">: <a href="Type.html" class="extype" name="com.spotify.scio.schemas.Type">Type</a>[<span class="extype" name="scala.BigDecimal">BigDecimal</span>]</span>
       </span>
       
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="instances/ScalaInstances.html" class="extype" name="com.spotify.scio.schemas.instances.ScalaInstances">ScalaInstances</a></dd></dl></div>
-    </li><li name="com.spotify.scio.schemas.instances.ScalaInstances#booleanSchema" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      
+    </li><li name="com.spotify.scio.schemas.Schema#booleanSchema" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="booleanSchema:com.spotify.scio.schemas.Type[Boolean]"></a><a id="booleanSchema:Type[Boolean]"></a>
       <span class="permalink">
       <a href="../../../../com/spotify/scio/schemas/Schema$.html#booleanSchema:com.spotify.scio.schemas.Type[Boolean]" title="Permalink">
@@ -449,8 +461,24 @@
         <span class="name">booleanSchema</span><span class="result">: <a href="Type.html" class="extype" name="com.spotify.scio.schemas.Type">Type</a>[<span class="extype" name="scala.Boolean">Boolean</span>]</span>
       </span>
       
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="instances/ScalaInstances.html" class="extype" name="com.spotify.scio.schemas.instances.ScalaInstances">ScalaInstances</a></dd></dl></div>
-    </li><li name="com.spotify.scio.schemas.instances.ScalaInstances#byteSchema" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      
+    </li><li name="com.spotify.scio.schemas.Schema#bufferSchema" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="bufferSchema[T](implicitevidence$16:com.spotify.scio.schemas.Schema[T]):com.spotify.scio.schemas.Schema[scala.collection.mutable.Buffer[T]]"></a><a id="bufferSchema[T](Schema[T]):Schema[Buffer[T]]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/schemas/Schema$.html#bufferSchema[T](implicitevidence$16:com.spotify.scio.schemas.Schema[T]):com.spotify.scio.schemas.Schema[scala.collection.mutable.Buffer[T]]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">implicit </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">bufferSchema</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="Schema.html" class="extype" name="com.spotify.scio.schemas.Schema">Schema</a>[<span class="extype" name="com.spotify.scio.schemas.Schema.bufferSchema.T">T</span>]</span>)</span><span class="result">: <a href="Schema.html" class="extype" name="com.spotify.scio.schemas.Schema">Schema</a>[<span class="extype" name="scala.collection.mutable.Buffer">Buffer</span>[<span class="extype" name="com.spotify.scio.schemas.Schema.bufferSchema.T">T</span>]]</span>
+      </span>
+      
+      
+    </li><li name="com.spotify.scio.schemas.Schema#byteSchema" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="byteSchema:com.spotify.scio.schemas.Type[Byte]"></a><a id="byteSchema:Type[Byte]"></a>
       <span class="permalink">
       <a href="../../../../com/spotify/scio/schemas/Schema$.html#byteSchema:com.spotify.scio.schemas.Type[Byte]" title="Permalink">
@@ -465,8 +493,8 @@
         <span class="name">byteSchema</span><span class="result">: <a href="Type.html" class="extype" name="com.spotify.scio.schemas.Type">Type</a>[<span class="extype" name="scala.Byte">Byte</span>]</span>
       </span>
       
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="instances/ScalaInstances.html" class="extype" name="com.spotify.scio.schemas.instances.ScalaInstances">ScalaInstances</a></dd></dl></div>
-    </li><li name="com.spotify.scio.schemas.instances.ScalaInstances#bytesSchema" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      
+    </li><li name="com.spotify.scio.schemas.Schema#bytesSchema" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="bytesSchema:com.spotify.scio.schemas.Type[Array[Byte]]"></a><a id="bytesSchema:Type[Array[Byte]]"></a>
       <span class="permalink">
       <a href="../../../../com/spotify/scio/schemas/Schema$.html#bytesSchema:com.spotify.scio.schemas.Type[Array[Byte]]" title="Permalink">
@@ -481,7 +509,7 @@
         <span class="name">bytesSchema</span><span class="result">: <a href="Type.html" class="extype" name="com.spotify.scio.schemas.Type">Type</a>[<span class="extype" name="scala.Array">Array</span>[<span class="extype" name="scala.Byte">Byte</span>]]</span>
       </span>
       
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="instances/ScalaInstances.html" class="extype" name="com.spotify.scio.schemas.instances.ScalaInstances">ScalaInstances</a></dd></dl></div>
+      
     </li><li name="scala.AnyRef#clone" visbl="prt" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="clone():Object"></a><a id="clone():AnyRef"></a>
       <span class="permalink">
@@ -506,7 +534,7 @@
                 <span class="name">@native</span><span class="args">()</span>
               
         </dd></dl></div>
-    </li><li name="com.spotify.scio.schemas.LowPrioritySchemaDerivation#combine" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+    </li><li name="com.spotify.scio.schemas.instances.LowPrioritySchemaDerivation#combine" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="combine[T](ctx:magnolia.CaseClass[com.spotify.scio.schemas.Schema,T]):com.spotify.scio.schemas.Record[T]"></a><a id="combine[T](CaseClass[Schema,T]):Record[T]"></a>
       <span class="permalink">
       <a href="../../../../com/spotify/scio/schemas/Schema$.html#combine[T](ctx:magnolia.CaseClass[com.spotify.scio.schemas.Schema,T]):com.spotify.scio.schemas.Record[T]" title="Permalink">
@@ -518,11 +546,11 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">combine</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="ctx">ctx: <span class="extype" name="magnolia.CaseClass">CaseClass</span>[<a href="Schema.html" class="extype" name="com.spotify.scio.schemas.Schema">Schema</a>, <span class="extype" name="com.spotify.scio.schemas.LowPrioritySchemaDerivation.combine.T">T</span>]</span>)</span><span class="result">: <a href="Record.html" class="extype" name="com.spotify.scio.schemas.Record">Record</a>[<span class="extype" name="com.spotify.scio.schemas.LowPrioritySchemaDerivation.combine.T">T</span>]</span>
+        <span class="name">combine</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="ctx">ctx: <span class="extype" name="magnolia.CaseClass">CaseClass</span>[<a href="Schema.html" class="extype" name="com.spotify.scio.schemas.Schema">Schema</a>, <span class="extype" name="com.spotify.scio.schemas.instances.LowPrioritySchemaDerivation.combine.T">T</span>]</span>)</span><span class="result">: <a href="Record.html" class="extype" name="com.spotify.scio.schemas.Record">Record</a>[<span class="extype" name="com.spotify.scio.schemas.instances.LowPrioritySchemaDerivation.combine.T">T</span>]</span>
       </span>
       
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="LowPrioritySchemaDerivation.html" class="extype" name="com.spotify.scio.schemas.LowPrioritySchemaDerivation">LowPrioritySchemaDerivation</a></dd></dl></div>
-    </li><li name="com.spotify.scio.schemas.instances.ScalaInstances#doubleSchema" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="instances/LowPrioritySchemaDerivation.html" class="extype" name="com.spotify.scio.schemas.instances.LowPrioritySchemaDerivation">LowPrioritySchemaDerivation</a></dd></dl></div>
+    </li><li name="com.spotify.scio.schemas.Schema#doubleSchema" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="doubleSchema:com.spotify.scio.schemas.Type[Double]"></a><a id="doubleSchema:Type[Double]"></a>
       <span class="permalink">
       <a href="../../../../com/spotify/scio/schemas/Schema$.html#doubleSchema:com.spotify.scio.schemas.Type[Double]" title="Permalink">
@@ -537,7 +565,7 @@
         <span class="name">doubleSchema</span><span class="result">: <a href="Type.html" class="extype" name="com.spotify.scio.schemas.Type">Type</a>[<span class="extype" name="scala.Double">Double</span>]</span>
       </span>
       
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="instances/ScalaInstances.html" class="extype" name="com.spotify.scio.schemas.instances.ScalaInstances">ScalaInstances</a></dd></dl></div>
+      
     </li><li name="scala.AnyRef#eq" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="eq(x$1:AnyRef):Boolean"></a><a id="eq(AnyRef):Boolean"></a>
       <span class="permalink">
@@ -570,22 +598,6 @@
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
-    </li><li name="com.spotify.scio.schemas.instances.LowPriorityFallbackInstances#fallback" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="fallback[A](implicitevidence$1:com.spotify.scio.coders.Coder[A]):com.spotify.scio.schemas.Schema[A]"></a><a id="fallback[A](Coder[A]):Schema[A]"></a>
-      <span class="permalink">
-      <a href="../../../../com/spotify/scio/schemas/Schema$.html#fallback[A](implicitevidence$1:com.spotify.scio.coders.Coder[A]):com.spotify.scio.schemas.Schema[A]" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">fallback</span><span class="tparams">[<span name="A">A</span>]</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.schemas.instances.LowPriorityFallbackInstances.fallback.A">A</span>]</span>)</span><span class="result">: <a href="Schema.html" class="extype" name="com.spotify.scio.schemas.Schema">Schema</a>[<span class="extype" name="com.spotify.scio.schemas.instances.LowPriorityFallbackInstances.fallback.A">A</span>]</span>
-      </span>
-      
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="instances/LowPriorityFallbackInstances.html" class="extype" name="com.spotify.scio.schemas.instances.LowPriorityFallbackInstances">LowPriorityFallbackInstances</a></dd></dl></div>
     </li><li name="scala.AnyRef#finalize" visbl="prt" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="finalize():Unit"></a>
       <span class="permalink">
@@ -608,7 +620,7 @@
     </span>)</span>
               
         </dd></dl></div>
-    </li><li name="com.spotify.scio.schemas.instances.ScalaInstances#floatSchema" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+    </li><li name="com.spotify.scio.schemas.Schema#floatSchema" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="floatSchema:com.spotify.scio.schemas.Type[Float]"></a><a id="floatSchema:Type[Float]"></a>
       <span class="permalink">
       <a href="../../../../com/spotify/scio/schemas/Schema$.html#floatSchema:com.spotify.scio.schemas.Type[Float]" title="Permalink">
@@ -623,8 +635,24 @@
         <span class="name">floatSchema</span><span class="result">: <a href="Type.html" class="extype" name="com.spotify.scio.schemas.Type">Type</a>[<span class="extype" name="scala.Float">Float</span>]</span>
       </span>
       
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="instances/ScalaInstances.html" class="extype" name="com.spotify.scio.schemas.instances.ScalaInstances">ScalaInstances</a></dd></dl></div>
-    </li><li name="com.spotify.scio.schemas.LowPrioritySchemaDerivation#gen" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      
+    </li><li name="com.spotify.scio.schemas.instances.AvroInstances#fromAvroSchema" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="fromAvroSchema(schema:org.apache.avro.Schema):com.spotify.scio.schemas.Schema[org.apache.avro.generic.GenericRecord]"></a><a id="fromAvroSchema(org.apache.avro.Schema):Schema[GenericRecord]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/schemas/Schema$.html#fromAvroSchema(schema:org.apache.avro.Schema):com.spotify.scio.schemas.Schema[org.apache.avro.generic.GenericRecord]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">fromAvroSchema</span><span class="params">(<span name="schema">schema: <span class="extype" name="org.apache.avro.Schema">org.apache.avro.Schema</span></span>)</span><span class="result">: <a href="Schema.html" class="extype" name="com.spotify.scio.schemas.Schema">Schema</a>[<span class="extype" name="org.apache.avro.generic.GenericRecord">GenericRecord</span>]</span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="instances/AvroInstances.html" class="extype" name="com.spotify.scio.schemas.instances.AvroInstances">AvroInstances</a></dd></dl></div>
+    </li><li name="com.spotify.scio.schemas.instances.LowPrioritySchemaDerivation#gen" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="gen[T]:com.spotify.scio.schemas.Schema[T]"></a><a id="gen[T]:Schema[T]"></a>
       <span class="permalink">
       <a href="../../../../com/spotify/scio/schemas/Schema$.html#gen[T]:com.spotify.scio.schemas.Schema[T]" title="Permalink">
@@ -636,10 +664,10 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">gen</span><span class="tparams">[<span name="T">T</span>]</span><span class="result">: <a href="Schema.html" class="extype" name="com.spotify.scio.schemas.Schema">Schema</a>[<span class="extype" name="com.spotify.scio.schemas.LowPrioritySchemaDerivation.gen.T">T</span>]</span>
+        <span class="name">gen</span><span class="tparams">[<span name="T">T</span>]</span><span class="result">: <a href="Schema.html" class="extype" name="com.spotify.scio.schemas.Schema">Schema</a>[<span class="extype" name="com.spotify.scio.schemas.instances.LowPrioritySchemaDerivation.gen.T">T</span>]</span>
       </span>
       
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="LowPrioritySchemaDerivation.html" class="extype" name="com.spotify.scio.schemas.LowPrioritySchemaDerivation">LowPrioritySchemaDerivation</a></dd></dl></div>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="instances/LowPrioritySchemaDerivation.html" class="extype" name="com.spotify.scio.schemas.instances.LowPrioritySchemaDerivation">LowPrioritySchemaDerivation</a></dd></dl></div>
     </li><li name="scala.AnyRef#getClass" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="getClass():Class[_]"></a>
       <span class="permalink">
@@ -678,7 +706,7 @@
                 <span class="name">@native</span><span class="args">()</span>
               
         </dd></dl></div>
-    </li><li name="com.spotify.scio.schemas.instances.ScalaInstances#intSchema" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+    </li><li name="com.spotify.scio.schemas.Schema#intSchema" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="intSchema:com.spotify.scio.schemas.Type[Int]"></a><a id="intSchema:Type[Int]"></a>
       <span class="permalink">
       <a href="../../../../com/spotify/scio/schemas/Schema$.html#intSchema:com.spotify.scio.schemas.Type[Int]" title="Permalink">
@@ -693,7 +721,7 @@
         <span class="name">intSchema</span><span class="result">: <a href="Type.html" class="extype" name="com.spotify.scio.schemas.Type">Type</a>[<span class="extype" name="scala.Int">Int</span>]</span>
       </span>
       
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="instances/ScalaInstances.html" class="extype" name="com.spotify.scio.schemas.instances.ScalaInstances">ScalaInstances</a></dd></dl></div>
+      
     </li><li name="scala.Any#isInstanceOf" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="isInstanceOf[T0]:Boolean"></a>
       <span class="permalink">
@@ -710,10 +738,10 @@
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
-    </li><li name="com.spotify.scio.schemas.instances.JavaInstances#jArrayListSchema" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="jArrayListSchema[T](implicits:com.spotify.scio.schemas.Schema[T]):com.spotify.scio.schemas.Schema[java.util.ArrayList[T]]"></a><a id="jArrayListSchema[T](Schema[T]):Schema[ArrayList[T]]"></a>
+    </li><li name="com.spotify.scio.schemas.Schema#iterableSchema" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="iterableSchema[T](implicitevidence$14:com.spotify.scio.schemas.Schema[T]):com.spotify.scio.schemas.Schema[Iterable[T]]"></a><a id="iterableSchema[T](Schema[T]):Schema[Iterable[T]]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/schemas/Schema$.html#jArrayListSchema[T](implicits:com.spotify.scio.schemas.Schema[T]):com.spotify.scio.schemas.Schema[java.util.ArrayList[T]]" title="Permalink">
+      <a href="../../../../com/spotify/scio/schemas/Schema$.html#iterableSchema[T](implicitevidence$14:com.spotify.scio.schemas.Schema[T]):com.spotify.scio.schemas.Schema[Iterable[T]]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -722,11 +750,27 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">jArrayListSchema</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span class="implicit">implicit </span><span name="s">s: <a href="Schema.html" class="extype" name="com.spotify.scio.schemas.Schema">Schema</a>[<span class="extype" name="com.spotify.scio.schemas.instances.JavaInstances.jArrayListSchema.T">T</span>]</span>)</span><span class="result">: <a href="Schema.html" class="extype" name="com.spotify.scio.schemas.Schema">Schema</a>[<span class="extype" name="java.util.ArrayList">ArrayList</span>[<span class="extype" name="com.spotify.scio.schemas.instances.JavaInstances.jArrayListSchema.T">T</span>]]</span>
+        <span class="name">iterableSchema</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="Schema.html" class="extype" name="com.spotify.scio.schemas.Schema">Schema</a>[<span class="extype" name="com.spotify.scio.schemas.Schema.iterableSchema.T">T</span>]</span>)</span><span class="result">: <a href="Schema.html" class="extype" name="com.spotify.scio.schemas.Schema">Schema</a>[<span class="extype" name="scala.Iterable">Iterable</span>[<span class="extype" name="com.spotify.scio.schemas.Schema.iterableSchema.T">T</span>]]</span>
       </span>
       
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="instances/JavaInstances.html" class="extype" name="com.spotify.scio.schemas.instances.JavaInstances">JavaInstances</a></dd></dl></div>
-    </li><li name="com.spotify.scio.schemas.instances.JavaInstances#jBigDecimalSchema" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      
+    </li><li name="com.spotify.scio.schemas.Schema#jArrayListSchema" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="jArrayListSchema[T](implicitevidence$2:com.spotify.scio.schemas.Schema[T]):com.spotify.scio.schemas.Schema[java.util.ArrayList[T]]"></a><a id="jArrayListSchema[T](Schema[T]):Schema[ArrayList[T]]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/schemas/Schema$.html#jArrayListSchema[T](implicitevidence$2:com.spotify.scio.schemas.Schema[T]):com.spotify.scio.schemas.Schema[java.util.ArrayList[T]]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">implicit </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">jArrayListSchema</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="Schema.html" class="extype" name="com.spotify.scio.schemas.Schema">Schema</a>[<span class="extype" name="com.spotify.scio.schemas.Schema.jArrayListSchema.T">T</span>]</span>)</span><span class="result">: <a href="Schema.html" class="extype" name="com.spotify.scio.schemas.Schema">Schema</a>[<span class="extype" name="java.util.ArrayList">ArrayList</span>[<span class="extype" name="com.spotify.scio.schemas.Schema.jArrayListSchema.T">T</span>]]</span>
+      </span>
+      
+      
+    </li><li name="com.spotify.scio.schemas.Schema#jBigDecimalSchema" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="jBigDecimalSchema:com.spotify.scio.schemas.Type[java.math.BigDecimal]"></a><a id="jBigDecimalSchema:Type[BigDecimal]"></a>
       <span class="permalink">
       <a href="../../../../com/spotify/scio/schemas/Schema$.html#jBigDecimalSchema:com.spotify.scio.schemas.Type[java.math.BigDecimal]" title="Permalink">
@@ -741,8 +785,8 @@
         <span class="name">jBigDecimalSchema</span><span class="result">: <a href="Type.html" class="extype" name="com.spotify.scio.schemas.Type">Type</a>[<span class="extype" name="java.math.BigDecimal">BigDecimal</span>]</span>
       </span>
       
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="instances/JavaInstances.html" class="extype" name="com.spotify.scio.schemas.instances.JavaInstances">JavaInstances</a></dd></dl></div>
-    </li><li name="com.spotify.scio.schemas.instances.JavaInstances#jBooleanSchema" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      
+    </li><li name="com.spotify.scio.schemas.Schema#jBooleanSchema" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="jBooleanSchema:com.spotify.scio.schemas.Type[Boolean]"></a><a id="jBooleanSchema:Type[Boolean]"></a>
       <span class="permalink">
       <a href="../../../../com/spotify/scio/schemas/Schema$.html#jBooleanSchema:com.spotify.scio.schemas.Type[Boolean]" title="Permalink">
@@ -757,8 +801,8 @@
         <span class="name">jBooleanSchema</span><span class="result">: <a href="Type.html" class="extype" name="com.spotify.scio.schemas.Type">Type</a>[<span class="extype" name="java.lang.Boolean">Boolean</span>]</span>
       </span>
       
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="instances/JavaInstances.html" class="extype" name="com.spotify.scio.schemas.instances.JavaInstances">JavaInstances</a></dd></dl></div>
-    </li><li name="com.spotify.scio.schemas.instances.JavaInstances#jByteSchema" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      
+    </li><li name="com.spotify.scio.schemas.Schema#jByteSchema" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="jByteSchema:com.spotify.scio.schemas.Type[Byte]"></a><a id="jByteSchema:Type[Byte]"></a>
       <span class="permalink">
       <a href="../../../../com/spotify/scio/schemas/Schema$.html#jByteSchema:com.spotify.scio.schemas.Type[Byte]" title="Permalink">
@@ -773,8 +817,8 @@
         <span class="name">jByteSchema</span><span class="result">: <a href="Type.html" class="extype" name="com.spotify.scio.schemas.Type">Type</a>[<span class="extype" name="java.lang.Byte">Byte</span>]</span>
       </span>
       
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="instances/JavaInstances.html" class="extype" name="com.spotify.scio.schemas.instances.JavaInstances">JavaInstances</a></dd></dl></div>
-    </li><li name="com.spotify.scio.schemas.instances.JavaInstances#jBytesSchema" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      
+    </li><li name="com.spotify.scio.schemas.Schema#jBytesSchema" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="jBytesSchema:com.spotify.scio.schemas.Type[Array[Byte]]"></a><a id="jBytesSchema:Type[Array[Byte]]"></a>
       <span class="permalink">
       <a href="../../../../com/spotify/scio/schemas/Schema$.html#jBytesSchema:com.spotify.scio.schemas.Type[Array[Byte]]" title="Permalink">
@@ -789,8 +833,8 @@
         <span class="name">jBytesSchema</span><span class="result">: <a href="Type.html" class="extype" name="com.spotify.scio.schemas.Type">Type</a>[<span class="extype" name="scala.Array">Array</span>[<span class="extype" name="java.lang.Byte">Byte</span>]]</span>
       </span>
       
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="instances/JavaInstances.html" class="extype" name="com.spotify.scio.schemas.instances.JavaInstances">JavaInstances</a></dd></dl></div>
-    </li><li name="com.spotify.scio.schemas.instances.JavaInstances#jDoubleSchema" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      
+    </li><li name="com.spotify.scio.schemas.Schema#jDoubleSchema" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="jDoubleSchema:com.spotify.scio.schemas.Type[Double]"></a><a id="jDoubleSchema:Type[Double]"></a>
       <span class="permalink">
       <a href="../../../../com/spotify/scio/schemas/Schema$.html#jDoubleSchema:com.spotify.scio.schemas.Type[Double]" title="Permalink">
@@ -805,8 +849,8 @@
         <span class="name">jDoubleSchema</span><span class="result">: <a href="Type.html" class="extype" name="com.spotify.scio.schemas.Type">Type</a>[<span class="extype" name="java.lang.Double">Double</span>]</span>
       </span>
       
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="instances/JavaInstances.html" class="extype" name="com.spotify.scio.schemas.instances.JavaInstances">JavaInstances</a></dd></dl></div>
-    </li><li name="com.spotify.scio.schemas.instances.JavaInstances#jFloatSchema" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      
+    </li><li name="com.spotify.scio.schemas.Schema#jFloatSchema" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="jFloatSchema:com.spotify.scio.schemas.Type[Float]"></a><a id="jFloatSchema:Type[Float]"></a>
       <span class="permalink">
       <a href="../../../../com/spotify/scio/schemas/Schema$.html#jFloatSchema:com.spotify.scio.schemas.Type[Float]" title="Permalink">
@@ -821,8 +865,8 @@
         <span class="name">jFloatSchema</span><span class="result">: <a href="Type.html" class="extype" name="com.spotify.scio.schemas.Type">Type</a>[<span class="extype" name="java.lang.Float">Float</span>]</span>
       </span>
       
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="instances/JavaInstances.html" class="extype" name="com.spotify.scio.schemas.instances.JavaInstances">JavaInstances</a></dd></dl></div>
-    </li><li name="com.spotify.scio.schemas.instances.JavaInstances#jIntegerSchema" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      
+    </li><li name="com.spotify.scio.schemas.Schema#jIntegerSchema" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="jIntegerSchema:com.spotify.scio.schemas.Type[Integer]"></a><a id="jIntegerSchema:Type[Integer]"></a>
       <span class="permalink">
       <a href="../../../../com/spotify/scio/schemas/Schema$.html#jIntegerSchema:com.spotify.scio.schemas.Type[Integer]" title="Permalink">
@@ -837,11 +881,11 @@
         <span class="name">jIntegerSchema</span><span class="result">: <a href="Type.html" class="extype" name="com.spotify.scio.schemas.Type">Type</a>[<span class="extype" name="java.lang.Integer">Integer</span>]</span>
       </span>
       
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="instances/JavaInstances.html" class="extype" name="com.spotify.scio.schemas.instances.JavaInstances">JavaInstances</a></dd></dl></div>
-    </li><li name="com.spotify.scio.schemas.instances.JavaInstances#jListSchema" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="jListSchema[T](implicits:com.spotify.scio.schemas.Schema[T]):com.spotify.scio.schemas.Schema[java.util.List[T]]"></a><a id="jListSchema[T](Schema[T]):Schema[List[T]]"></a>
+      
+    </li><li name="com.spotify.scio.schemas.Schema#jListSchema" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="jListSchema[T](implicitevidence$1:com.spotify.scio.schemas.Schema[T]):com.spotify.scio.schemas.Schema[java.util.List[T]]"></a><a id="jListSchema[T](Schema[T]):Schema[List[T]]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/schemas/Schema$.html#jListSchema[T](implicits:com.spotify.scio.schemas.Schema[T]):com.spotify.scio.schemas.Schema[java.util.List[T]]" title="Permalink">
+      <a href="../../../../com/spotify/scio/schemas/Schema$.html#jListSchema[T](implicitevidence$1:com.spotify.scio.schemas.Schema[T]):com.spotify.scio.schemas.Schema[java.util.List[T]]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -850,11 +894,11 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">jListSchema</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span class="implicit">implicit </span><span name="s">s: <a href="Schema.html" class="extype" name="com.spotify.scio.schemas.Schema">Schema</a>[<span class="extype" name="com.spotify.scio.schemas.instances.JavaInstances.jListSchema.T">T</span>]</span>)</span><span class="result">: <a href="Schema.html" class="extype" name="com.spotify.scio.schemas.Schema">Schema</a>[<span class="extype" name="java.util.List">List</span>[<span class="extype" name="com.spotify.scio.schemas.instances.JavaInstances.jListSchema.T">T</span>]]</span>
+        <span class="name">jListSchema</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="Schema.html" class="extype" name="com.spotify.scio.schemas.Schema">Schema</a>[<span class="extype" name="com.spotify.scio.schemas.Schema.jListSchema.T">T</span>]</span>)</span><span class="result">: <a href="Schema.html" class="extype" name="com.spotify.scio.schemas.Schema">Schema</a>[<span class="extype" name="java.util.List">List</span>[<span class="extype" name="com.spotify.scio.schemas.Schema.jListSchema.T">T</span>]]</span>
       </span>
       
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="instances/JavaInstances.html" class="extype" name="com.spotify.scio.schemas.instances.JavaInstances">JavaInstances</a></dd></dl></div>
-    </li><li name="com.spotify.scio.schemas.instances.JavaInstances#jLongSchema" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      
+    </li><li name="com.spotify.scio.schemas.Schema#jLongSchema" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="jLongSchema:com.spotify.scio.schemas.Type[Long]"></a><a id="jLongSchema:Type[Long]"></a>
       <span class="permalink">
       <a href="../../../../com/spotify/scio/schemas/Schema$.html#jLongSchema:com.spotify.scio.schemas.Type[Long]" title="Permalink">
@@ -869,11 +913,11 @@
         <span class="name">jLongSchema</span><span class="result">: <a href="Type.html" class="extype" name="com.spotify.scio.schemas.Type">Type</a>[<span class="extype" name="java.lang.Long">Long</span>]</span>
       </span>
       
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="instances/JavaInstances.html" class="extype" name="com.spotify.scio.schemas.instances.JavaInstances">JavaInstances</a></dd></dl></div>
-    </li><li name="com.spotify.scio.schemas.instances.JavaInstances#jMapSchema" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="jMapSchema[K,V](implicitks:com.spotify.scio.schemas.Schema[K],implicitvs:com.spotify.scio.schemas.Schema[V]):com.spotify.scio.schemas.Schema[java.util.Map[K,V]]"></a><a id="jMapSchema[K,V](Schema[K],Schema[V]):Schema[Map[K,V]]"></a>
+      
+    </li><li name="com.spotify.scio.schemas.Schema#jMapSchema" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="jMapSchema[K,V](implicitevidence$3:com.spotify.scio.schemas.Schema[K],implicitevidence$4:com.spotify.scio.schemas.Schema[V]):com.spotify.scio.schemas.Schema[java.util.Map[K,V]]"></a><a id="jMapSchema[K,V](Schema[K],Schema[V]):Schema[Map[K,V]]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/schemas/Schema$.html#jMapSchema[K,V](implicitks:com.spotify.scio.schemas.Schema[K],implicitvs:com.spotify.scio.schemas.Schema[V]):com.spotify.scio.schemas.Schema[java.util.Map[K,V]]" title="Permalink">
+      <a href="../../../../com/spotify/scio/schemas/Schema$.html#jMapSchema[K,V](implicitevidence$3:com.spotify.scio.schemas.Schema[K],implicitevidence$4:com.spotify.scio.schemas.Schema[V]):com.spotify.scio.schemas.Schema[java.util.Map[K,V]]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -882,11 +926,11 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">jMapSchema</span><span class="tparams">[<span name="K">K</span>, <span name="V">V</span>]</span><span class="params">(<span class="implicit">implicit </span><span name="ks">ks: <a href="Schema.html" class="extype" name="com.spotify.scio.schemas.Schema">Schema</a>[<span class="extype" name="com.spotify.scio.schemas.instances.JavaInstances.jMapSchema.K">K</span>]</span>, <span name="vs">vs: <a href="Schema.html" class="extype" name="com.spotify.scio.schemas.Schema">Schema</a>[<span class="extype" name="com.spotify.scio.schemas.instances.JavaInstances.jMapSchema.V">V</span>]</span>)</span><span class="result">: <a href="Schema.html" class="extype" name="com.spotify.scio.schemas.Schema">Schema</a>[<span class="extype" name="java.util.Map">Map</span>[<span class="extype" name="com.spotify.scio.schemas.instances.JavaInstances.jMapSchema.K">K</span>, <span class="extype" name="com.spotify.scio.schemas.instances.JavaInstances.jMapSchema.V">V</span>]]</span>
+        <span class="name">jMapSchema</span><span class="tparams">[<span name="K">K</span>, <span name="V">V</span>]</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="Schema.html" class="extype" name="com.spotify.scio.schemas.Schema">Schema</a>[<span class="extype" name="com.spotify.scio.schemas.Schema.jMapSchema.K">K</span>]</span>, <span name="arg1">arg1: <a href="Schema.html" class="extype" name="com.spotify.scio.schemas.Schema">Schema</a>[<span class="extype" name="com.spotify.scio.schemas.Schema.jMapSchema.V">V</span>]</span>)</span><span class="result">: <a href="Schema.html" class="extype" name="com.spotify.scio.schemas.Schema">Schema</a>[<span class="extype" name="java.util.Map">Map</span>[<span class="extype" name="com.spotify.scio.schemas.Schema.jMapSchema.K">K</span>, <span class="extype" name="com.spotify.scio.schemas.Schema.jMapSchema.V">V</span>]]</span>
       </span>
       
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="instances/JavaInstances.html" class="extype" name="com.spotify.scio.schemas.instances.JavaInstances">JavaInstances</a></dd></dl></div>
-    </li><li name="com.spotify.scio.schemas.instances.JavaInstances#jShortSchema" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      
+    </li><li name="com.spotify.scio.schemas.Schema#jShortSchema" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="jShortSchema:com.spotify.scio.schemas.Type[Short]"></a><a id="jShortSchema:Type[Short]"></a>
       <span class="permalink">
       <a href="../../../../com/spotify/scio/schemas/Schema$.html#jShortSchema:com.spotify.scio.schemas.Type[Short]" title="Permalink">
@@ -901,11 +945,11 @@
         <span class="name">jShortSchema</span><span class="result">: <a href="Type.html" class="extype" name="com.spotify.scio.schemas.Type">Type</a>[<span class="extype" name="java.lang.Short">Short</span>]</span>
       </span>
       
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="instances/JavaInstances.html" class="extype" name="com.spotify.scio.schemas.instances.JavaInstances">JavaInstances</a></dd></dl></div>
-    </li><li name="com.spotify.scio.schemas.instances.JavaInstances#javaBeanSchema" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="javaBeanSchema[T](implicitevidence$1:com.spotify.scio.IsJavaBean[T],implicitevidence$2:scala.reflect.ClassTag[T]):com.spotify.scio.schemas.RawRecord[T]"></a><a id="javaBeanSchema[T](IsJavaBean[T],ClassTag[T]):RawRecord[T]"></a>
+      
+    </li><li name="com.spotify.scio.schemas.Schema#javaBeanSchema" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="javaBeanSchema[T](implicitevidence$5:com.spotify.scio.IsJavaBean[T],implicitevidence$6:scala.reflect.ClassTag[T]):com.spotify.scio.schemas.RawRecord[T]"></a><a id="javaBeanSchema[T](IsJavaBean[T],ClassTag[T]):RawRecord[T]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/schemas/Schema$.html#javaBeanSchema[T](implicitevidence$1:com.spotify.scio.IsJavaBean[T],implicitevidence$2:scala.reflect.ClassTag[T]):com.spotify.scio.schemas.RawRecord[T]" title="Permalink">
+      <a href="../../../../com/spotify/scio/schemas/Schema$.html#javaBeanSchema[T](implicitevidence$5:com.spotify.scio.IsJavaBean[T],implicitevidence$6:scala.reflect.ClassTag[T]):com.spotify.scio.schemas.RawRecord[T]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -914,14 +958,14 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">javaBeanSchema</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="../IsJavaBean.html" class="extype" name="com.spotify.scio.IsJavaBean">IsJavaBean</a>[<span class="extype" name="com.spotify.scio.schemas.instances.JavaInstances.javaBeanSchema.T">T</span>]</span>, <span name="arg1">arg1: <span class="extype" name="scala.reflect.ClassTag">ClassTag</span>[<span class="extype" name="com.spotify.scio.schemas.instances.JavaInstances.javaBeanSchema.T">T</span>]</span>)</span><span class="result">: <a href="RawRecord.html" class="extype" name="com.spotify.scio.schemas.RawRecord">RawRecord</a>[<span class="extype" name="com.spotify.scio.schemas.instances.JavaInstances.javaBeanSchema.T">T</span>]</span>
+        <span class="name">javaBeanSchema</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="../IsJavaBean.html" class="extype" name="com.spotify.scio.IsJavaBean">IsJavaBean</a>[<span class="extype" name="com.spotify.scio.schemas.Schema.javaBeanSchema.T">T</span>]</span>, <span name="arg1">arg1: <span class="extype" name="scala.reflect.ClassTag">ClassTag</span>[<span class="extype" name="com.spotify.scio.schemas.Schema.javaBeanSchema.T">T</span>]</span>)</span><span class="result">: <a href="RawRecord.html" class="extype" name="com.spotify.scio.schemas.RawRecord">RawRecord</a>[<span class="extype" name="com.spotify.scio.schemas.Schema.javaBeanSchema.T">T</span>]</span>
       </span>
       
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="instances/JavaInstances.html" class="extype" name="com.spotify.scio.schemas.instances.JavaInstances">JavaInstances</a></dd></dl></div>
-    </li><li name="com.spotify.scio.schemas.instances.JavaInstances#javaEnumSchema" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="javaEnumSchema[T&lt;:Enum[T]](implicitevidence$3:scala.reflect.ClassTag[T]):com.spotify.scio.schemas.Schema[T]"></a><a id="javaEnumSchema[T&lt;:Enum[T]](ClassTag[T]):Schema[T]"></a>
+      
+    </li><li name="com.spotify.scio.schemas.Schema#javaEnumSchema" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="javaEnumSchema[T&lt;:Enum[T]](implicitevidence$7:scala.reflect.ClassTag[T]):com.spotify.scio.schemas.Schema[T]"></a><a id="javaEnumSchema[T&lt;:Enum[T]](ClassTag[T]):Schema[T]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/schemas/Schema$.html#javaEnumSchema[T&lt;:Enum[T]](implicitevidence$3:scala.reflect.ClassTag[T]):com.spotify.scio.schemas.Schema[T]" title="Permalink">
+      <a href="../../../../com/spotify/scio/schemas/Schema$.html#javaEnumSchema[T&lt;:Enum[T]](implicitevidence$7:scala.reflect.ClassTag[T]):com.spotify.scio.schemas.Schema[T]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -930,10 +974,10 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">javaEnumSchema</span><span class="tparams">[<span name="T">T &lt;: <span class="extype" name="java.lang.Enum">Enum</span>[<span class="extype" name="com.spotify.scio.schemas.instances.JavaInstances.javaEnumSchema.T">T</span>]</span>]</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <span class="extype" name="scala.reflect.ClassTag">ClassTag</span>[<span class="extype" name="com.spotify.scio.schemas.instances.JavaInstances.javaEnumSchema.T">T</span>]</span>)</span><span class="result">: <a href="Schema.html" class="extype" name="com.spotify.scio.schemas.Schema">Schema</a>[<span class="extype" name="com.spotify.scio.schemas.instances.JavaInstances.javaEnumSchema.T">T</span>]</span>
+        <span class="name">javaEnumSchema</span><span class="tparams">[<span name="T">T &lt;: <span class="extype" name="java.lang.Enum">Enum</span>[<span class="extype" name="com.spotify.scio.schemas.Schema.javaEnumSchema.T">T</span>]</span>]</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <span class="extype" name="scala.reflect.ClassTag">ClassTag</span>[<span class="extype" name="com.spotify.scio.schemas.Schema.javaEnumSchema.T">T</span>]</span>)</span><span class="result">: <a href="Schema.html" class="extype" name="com.spotify.scio.schemas.Schema">Schema</a>[<span class="extype" name="com.spotify.scio.schemas.Schema.javaEnumSchema.T">T</span>]</span>
       </span>
       
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="instances/JavaInstances.html" class="extype" name="com.spotify.scio.schemas.instances.JavaInstances">JavaInstances</a></dd></dl></div>
+      
     </li><li name="com.spotify.scio.schemas.instances.JodaInstances#jodaReadableInstantSchema" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="jodaReadableInstantSchema[T&lt;:org.joda.time.ReadableInstant]:com.spotify.scio.schemas.Type[T]"></a><a id="jodaReadableInstantSchema[T&lt;:ReadableInstant]:Type[T]"></a>
       <span class="permalink">
@@ -950,10 +994,10 @@
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="instances/JodaInstances.html" class="extype" name="com.spotify.scio.schemas.instances.JodaInstances">JodaInstances</a></dd></dl></div>
-    </li><li name="com.spotify.scio.schemas.instances.ScalaInstances#listSchema" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="listSchema[T](implicits:com.spotify.scio.schemas.Schema[T]):com.spotify.scio.schemas.Schema[List[T]]"></a><a id="listSchema[T](Schema[T]):Schema[List[T]]"></a>
+    </li><li name="com.spotify.scio.schemas.Schema#listBufferSchema" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="listBufferSchema[T](implicitevidence$21:com.spotify.scio.schemas.Schema[T]):com.spotify.scio.schemas.Schema[scala.collection.mutable.ListBuffer[T]]"></a><a id="listBufferSchema[T](Schema[T]):Schema[ListBuffer[T]]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/schemas/Schema$.html#listSchema[T](implicits:com.spotify.scio.schemas.Schema[T]):com.spotify.scio.schemas.Schema[List[T]]" title="Permalink">
+      <a href="../../../../com/spotify/scio/schemas/Schema$.html#listBufferSchema[T](implicitevidence$21:com.spotify.scio.schemas.Schema[T]):com.spotify.scio.schemas.Schema[scala.collection.mutable.ListBuffer[T]]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -962,11 +1006,27 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">listSchema</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span class="implicit">implicit </span><span name="s">s: <a href="Schema.html" class="extype" name="com.spotify.scio.schemas.Schema">Schema</a>[<span class="extype" name="com.spotify.scio.schemas.instances.ScalaInstances.listSchema.T">T</span>]</span>)</span><span class="result">: <a href="Schema.html" class="extype" name="com.spotify.scio.schemas.Schema">Schema</a>[<span class="extype" name="scala.List">List</span>[<span class="extype" name="com.spotify.scio.schemas.instances.ScalaInstances.listSchema.T">T</span>]]</span>
+        <span class="name">listBufferSchema</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="Schema.html" class="extype" name="com.spotify.scio.schemas.Schema">Schema</a>[<span class="extype" name="com.spotify.scio.schemas.Schema.listBufferSchema.T">T</span>]</span>)</span><span class="result">: <a href="Schema.html" class="extype" name="com.spotify.scio.schemas.Schema">Schema</a>[<span class="extype" name="scala.collection.mutable.ListBuffer">ListBuffer</span>[<span class="extype" name="com.spotify.scio.schemas.Schema.listBufferSchema.T">T</span>]]</span>
       </span>
       
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="instances/ScalaInstances.html" class="extype" name="com.spotify.scio.schemas.instances.ScalaInstances">ScalaInstances</a></dd></dl></div>
-    </li><li name="com.spotify.scio.schemas.instances.ScalaInstances#longSchema" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      
+    </li><li name="com.spotify.scio.schemas.Schema#listSchema" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="listSchema[T](implicitevidence$11:com.spotify.scio.schemas.Schema[T]):com.spotify.scio.schemas.Schema[List[T]]"></a><a id="listSchema[T](Schema[T]):Schema[List[T]]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/schemas/Schema$.html#listSchema[T](implicitevidence$11:com.spotify.scio.schemas.Schema[T]):com.spotify.scio.schemas.Schema[List[T]]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">implicit </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">listSchema</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="Schema.html" class="extype" name="com.spotify.scio.schemas.Schema">Schema</a>[<span class="extype" name="com.spotify.scio.schemas.Schema.listSchema.T">T</span>]</span>)</span><span class="result">: <a href="Schema.html" class="extype" name="com.spotify.scio.schemas.Schema">Schema</a>[<span class="extype" name="scala.List">List</span>[<span class="extype" name="com.spotify.scio.schemas.Schema.listSchema.T">T</span>]]</span>
+      </span>
+      
+      
+    </li><li name="com.spotify.scio.schemas.Schema#longSchema" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="longSchema:com.spotify.scio.schemas.Type[Long]"></a><a id="longSchema:Type[Long]"></a>
       <span class="permalink">
       <a href="../../../../com/spotify/scio/schemas/Schema$.html#longSchema:com.spotify.scio.schemas.Type[Long]" title="Permalink">
@@ -981,11 +1041,11 @@
         <span class="name">longSchema</span><span class="result">: <a href="Type.html" class="extype" name="com.spotify.scio.schemas.Type">Type</a>[<span class="extype" name="scala.Long">Long</span>]</span>
       </span>
       
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="instances/ScalaInstances.html" class="extype" name="com.spotify.scio.schemas.instances.ScalaInstances">ScalaInstances</a></dd></dl></div>
-    </li><li name="com.spotify.scio.schemas.instances.ScalaInstances#mapSchema" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="mapSchema[K,V](implicitk:com.spotify.scio.schemas.Schema[K],implicitv:com.spotify.scio.schemas.Schema[V]):com.spotify.scio.schemas.Schema[Map[K,V]]"></a><a id="mapSchema[K,V](Schema[K],Schema[V]):Schema[Map[K,V]]"></a>
+      
+    </li><li name="com.spotify.scio.schemas.Schema#mapSchema" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="mapSchema[K,V](implicitevidence$23:com.spotify.scio.schemas.Schema[K],implicitevidence$24:com.spotify.scio.schemas.Schema[V]):com.spotify.scio.schemas.Schema[Map[K,V]]"></a><a id="mapSchema[K,V](Schema[K],Schema[V]):Schema[Map[K,V]]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/schemas/Schema$.html#mapSchema[K,V](implicitk:com.spotify.scio.schemas.Schema[K],implicitv:com.spotify.scio.schemas.Schema[V]):com.spotify.scio.schemas.Schema[Map[K,V]]" title="Permalink">
+      <a href="../../../../com/spotify/scio/schemas/Schema$.html#mapSchema[K,V](implicitevidence$23:com.spotify.scio.schemas.Schema[K],implicitevidence$24:com.spotify.scio.schemas.Schema[V]):com.spotify.scio.schemas.Schema[Map[K,V]]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -994,10 +1054,42 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">mapSchema</span><span class="tparams">[<span name="K">K</span>, <span name="V">V</span>]</span><span class="params">(<span class="implicit">implicit </span><span name="k">k: <a href="Schema.html" class="extype" name="com.spotify.scio.schemas.Schema">Schema</a>[<span class="extype" name="com.spotify.scio.schemas.instances.ScalaInstances.mapSchema.K">K</span>]</span>, <span name="v">v: <a href="Schema.html" class="extype" name="com.spotify.scio.schemas.Schema">Schema</a>[<span class="extype" name="com.spotify.scio.schemas.instances.ScalaInstances.mapSchema.V">V</span>]</span>)</span><span class="result">: <a href="Schema.html" class="extype" name="com.spotify.scio.schemas.Schema">Schema</a>[<span class="extype" name="scala.Predef.Map">Map</span>[<span class="extype" name="com.spotify.scio.schemas.instances.ScalaInstances.mapSchema.K">K</span>, <span class="extype" name="com.spotify.scio.schemas.instances.ScalaInstances.mapSchema.V">V</span>]]</span>
+        <span class="name">mapSchema</span><span class="tparams">[<span name="K">K</span>, <span name="V">V</span>]</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="Schema.html" class="extype" name="com.spotify.scio.schemas.Schema">Schema</a>[<span class="extype" name="com.spotify.scio.schemas.Schema.mapSchema.K">K</span>]</span>, <span name="arg1">arg1: <a href="Schema.html" class="extype" name="com.spotify.scio.schemas.Schema">Schema</a>[<span class="extype" name="com.spotify.scio.schemas.Schema.mapSchema.V">V</span>]</span>)</span><span class="result">: <a href="Schema.html" class="extype" name="com.spotify.scio.schemas.Schema">Schema</a>[<span class="extype" name="scala.Predef.Map">Map</span>[<span class="extype" name="com.spotify.scio.schemas.Schema.mapSchema.K">K</span>, <span class="extype" name="com.spotify.scio.schemas.Schema.mapSchema.V">V</span>]]</span>
       </span>
       
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="instances/ScalaInstances.html" class="extype" name="com.spotify.scio.schemas.instances.ScalaInstances">ScalaInstances</a></dd></dl></div>
+      
+    </li><li name="com.spotify.scio.schemas.Schema#mutableMapSchema" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="mutableMapSchema[K,V](implicitevidence$25:com.spotify.scio.schemas.Schema[K],implicitevidence$26:com.spotify.scio.schemas.Schema[V]):com.spotify.scio.schemas.Schema[scala.collection.mutable.Map[K,V]]"></a><a id="mutableMapSchema[K,V](Schema[K],Schema[V]):Schema[Map[K,V]]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/schemas/Schema$.html#mutableMapSchema[K,V](implicitevidence$25:com.spotify.scio.schemas.Schema[K],implicitevidence$26:com.spotify.scio.schemas.Schema[V]):com.spotify.scio.schemas.Schema[scala.collection.mutable.Map[K,V]]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">implicit </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">mutableMapSchema</span><span class="tparams">[<span name="K">K</span>, <span name="V">V</span>]</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="Schema.html" class="extype" name="com.spotify.scio.schemas.Schema">Schema</a>[<span class="extype" name="com.spotify.scio.schemas.Schema.mutableMapSchema.K">K</span>]</span>, <span name="arg1">arg1: <a href="Schema.html" class="extype" name="com.spotify.scio.schemas.Schema">Schema</a>[<span class="extype" name="com.spotify.scio.schemas.Schema.mutableMapSchema.V">V</span>]</span>)</span><span class="result">: <a href="Schema.html" class="extype" name="com.spotify.scio.schemas.Schema">Schema</a>[<span class="extype" name="scala.collection.mutable.Map">Map</span>[<span class="extype" name="com.spotify.scio.schemas.Schema.mutableMapSchema.K">K</span>, <span class="extype" name="com.spotify.scio.schemas.Schema.mutableMapSchema.V">V</span>]]</span>
+      </span>
+      
+      
+    </li><li name="com.spotify.scio.schemas.Schema#mutableSetSchema" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="mutableSetSchema[T](implicitevidence$18:com.spotify.scio.schemas.Schema[T]):com.spotify.scio.schemas.Schema[scala.collection.mutable.Set[T]]"></a><a id="mutableSetSchema[T](Schema[T]):Schema[Set[T]]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/schemas/Schema$.html#mutableSetSchema[T](implicitevidence$18:com.spotify.scio.schemas.Schema[T]):com.spotify.scio.schemas.Schema[scala.collection.mutable.Set[T]]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">implicit </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">mutableSetSchema</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="Schema.html" class="extype" name="com.spotify.scio.schemas.Schema">Schema</a>[<span class="extype" name="com.spotify.scio.schemas.Schema.mutableSetSchema.T">T</span>]</span>)</span><span class="result">: <a href="Schema.html" class="extype" name="com.spotify.scio.schemas.Schema">Schema</a>[<span class="extype" name="scala.collection.mutable.Set">Set</span>[<span class="extype" name="com.spotify.scio.schemas.Schema.mutableSetSchema.T">T</span>]]</span>
+      </span>
+      
+      
     </li><li name="scala.AnyRef#ne" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="ne(x$1:AnyRef):Boolean"></a><a id="ne(AnyRef):Boolean"></a>
       <span class="permalink">
@@ -1052,10 +1144,10 @@
                 <span class="name">@native</span><span class="args">()</span>
               
         </dd></dl></div>
-    </li><li name="com.spotify.scio.schemas.instances.ScalaInstances#optionSchema" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="optionSchema[T](implicits:com.spotify.scio.schemas.Schema[T]):com.spotify.scio.schemas.Schema[Option[T]]"></a><a id="optionSchema[T](Schema[T]):Schema[Option[T]]"></a>
+    </li><li name="com.spotify.scio.schemas.Schema#optionSchema" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="optionSchema[T](implicitevidence$8:com.spotify.scio.schemas.Schema[T]):com.spotify.scio.schemas.Schema[Option[T]]"></a><a id="optionSchema[T](Schema[T]):Schema[Option[T]]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/schemas/Schema$.html#optionSchema[T](implicits:com.spotify.scio.schemas.Schema[T]):com.spotify.scio.schemas.Schema[Option[T]]" title="Permalink">
+      <a href="../../../../com/spotify/scio/schemas/Schema$.html#optionSchema[T](implicitevidence$8:com.spotify.scio.schemas.Schema[T]):com.spotify.scio.schemas.Schema[Option[T]]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -1064,11 +1156,43 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">optionSchema</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span class="implicit">implicit </span><span name="s">s: <a href="Schema.html" class="extype" name="com.spotify.scio.schemas.Schema">Schema</a>[<span class="extype" name="com.spotify.scio.schemas.instances.ScalaInstances.optionSchema.T">T</span>]</span>)</span><span class="result">: <a href="Schema.html" class="extype" name="com.spotify.scio.schemas.Schema">Schema</a>[<span class="extype" name="scala.Option">Option</span>[<span class="extype" name="com.spotify.scio.schemas.instances.ScalaInstances.optionSchema.T">T</span>]]</span>
+        <span class="name">optionSchema</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="Schema.html" class="extype" name="com.spotify.scio.schemas.Schema">Schema</a>[<span class="extype" name="com.spotify.scio.schemas.Schema.optionSchema.T">T</span>]</span>)</span><span class="result">: <a href="Schema.html" class="extype" name="com.spotify.scio.schemas.Schema">Schema</a>[<span class="extype" name="scala.Option">Option</span>[<span class="extype" name="com.spotify.scio.schemas.Schema.optionSchema.T">T</span>]]</span>
       </span>
       
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="instances/ScalaInstances.html" class="extype" name="com.spotify.scio.schemas.instances.ScalaInstances">ScalaInstances</a></dd></dl></div>
-    </li><li name="com.spotify.scio.schemas.instances.ScalaInstances#sortSchema" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      
+    </li><li name="com.spotify.scio.schemas.Schema#seqSchema" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="seqSchema[T](implicitevidence$12:com.spotify.scio.schemas.Schema[T]):com.spotify.scio.schemas.Schema[Seq[T]]"></a><a id="seqSchema[T](Schema[T]):Schema[Seq[T]]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/schemas/Schema$.html#seqSchema[T](implicitevidence$12:com.spotify.scio.schemas.Schema[T]):com.spotify.scio.schemas.Schema[Seq[T]]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">implicit </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">seqSchema</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="Schema.html" class="extype" name="com.spotify.scio.schemas.Schema">Schema</a>[<span class="extype" name="com.spotify.scio.schemas.Schema.seqSchema.T">T</span>]</span>)</span><span class="result">: <a href="Schema.html" class="extype" name="com.spotify.scio.schemas.Schema">Schema</a>[<span class="extype" name="scala.Seq">Seq</span>[<span class="extype" name="com.spotify.scio.schemas.Schema.seqSchema.T">T</span>]]</span>
+      </span>
+      
+      
+    </li><li name="com.spotify.scio.schemas.Schema#setSchema" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="setSchema[T](implicitevidence$17:com.spotify.scio.schemas.Schema[T]):com.spotify.scio.schemas.Schema[Set[T]]"></a><a id="setSchema[T](Schema[T]):Schema[Set[T]]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/schemas/Schema$.html#setSchema[T](implicitevidence$17:com.spotify.scio.schemas.Schema[T]):com.spotify.scio.schemas.Schema[Set[T]]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">implicit </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">setSchema</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="Schema.html" class="extype" name="com.spotify.scio.schemas.Schema">Schema</a>[<span class="extype" name="com.spotify.scio.schemas.Schema.setSchema.T">T</span>]</span>)</span><span class="result">: <a href="Schema.html" class="extype" name="com.spotify.scio.schemas.Schema">Schema</a>[<span class="extype" name="scala.Predef.Set">Set</span>[<span class="extype" name="com.spotify.scio.schemas.Schema.setSchema.T">T</span>]]</span>
+      </span>
+      
+      
+    </li><li name="com.spotify.scio.schemas.Schema#sortSchema" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="sortSchema:com.spotify.scio.schemas.Type[Short]"></a><a id="sortSchema:Type[Short]"></a>
       <span class="permalink">
       <a href="../../../../com/spotify/scio/schemas/Schema$.html#sortSchema:com.spotify.scio.schemas.Type[Short]" title="Permalink">
@@ -1083,8 +1207,24 @@
         <span class="name">sortSchema</span><span class="result">: <a href="Type.html" class="extype" name="com.spotify.scio.schemas.Type">Type</a>[<span class="extype" name="scala.Short">Short</span>]</span>
       </span>
       
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="instances/ScalaInstances.html" class="extype" name="com.spotify.scio.schemas.instances.ScalaInstances">ScalaInstances</a></dd></dl></div>
-    </li><li name="com.spotify.scio.schemas.instances.ScalaInstances#stringSchema" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      
+    </li><li name="com.spotify.scio.schemas.Schema#sortedSetSchema" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="sortedSetSchema[T](implicitevidence$19:com.spotify.scio.schemas.Schema[T],implicitevidence$20:Ordering[T]):com.spotify.scio.schemas.Schema[scala.collection.SortedSet[T]]"></a><a id="sortedSetSchema[T](Schema[T],Ordering[T]):Schema[SortedSet[T]]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/schemas/Schema$.html#sortedSetSchema[T](implicitevidence$19:com.spotify.scio.schemas.Schema[T],implicitevidence$20:Ordering[T]):com.spotify.scio.schemas.Schema[scala.collection.SortedSet[T]]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">implicit </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">sortedSetSchema</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="Schema.html" class="extype" name="com.spotify.scio.schemas.Schema">Schema</a>[<span class="extype" name="com.spotify.scio.schemas.Schema.sortedSetSchema.T">T</span>]</span>, <span name="arg1">arg1: <span class="extype" name="scala.Ordering">Ordering</span>[<span class="extype" name="com.spotify.scio.schemas.Schema.sortedSetSchema.T">T</span>]</span>)</span><span class="result">: <a href="Schema.html" class="extype" name="com.spotify.scio.schemas.Schema">Schema</a>[<span class="extype" name="scala.collection.SortedSet">SortedSet</span>[<span class="extype" name="com.spotify.scio.schemas.Schema.sortedSetSchema.T">T</span>]]</span>
+      </span>
+      
+      
+    </li><li name="com.spotify.scio.schemas.Schema#stringSchema" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="stringSchema:com.spotify.scio.schemas.Type[String]"></a><a id="stringSchema:Type[String]"></a>
       <span class="permalink">
       <a href="../../../../com/spotify/scio/schemas/Schema$.html#stringSchema:com.spotify.scio.schemas.Type[String]" title="Permalink">
@@ -1099,7 +1239,7 @@
         <span class="name">stringSchema</span><span class="result">: <a href="Type.html" class="extype" name="com.spotify.scio.schemas.Type">Type</a>[<span class="extype" name="scala.Predef.String">String</span>]</span>
       </span>
       
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="instances/ScalaInstances.html" class="extype" name="com.spotify.scio.schemas.instances.ScalaInstances">ScalaInstances</a></dd></dl></div>
+      
     </li><li name="scala.AnyRef#synchronized" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="synchronized[T0](x$1:=&gt;T0):T0"></a><a id="synchronized[T0](⇒T0):T0"></a>
       <span class="permalink">
@@ -1132,6 +1272,38 @@
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
+    </li><li name="com.spotify.scio.schemas.Schema#traversableOnceSchema" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="traversableOnceSchema[T](implicitevidence$13:com.spotify.scio.schemas.Schema[T]):com.spotify.scio.schemas.Schema[TraversableOnce[T]]"></a><a id="traversableOnceSchema[T](Schema[T]):Schema[TraversableOnce[T]]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/schemas/Schema$.html#traversableOnceSchema[T](implicitevidence$13:com.spotify.scio.schemas.Schema[T]):com.spotify.scio.schemas.Schema[TraversableOnce[T]]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">implicit </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">traversableOnceSchema</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="Schema.html" class="extype" name="com.spotify.scio.schemas.Schema">Schema</a>[<span class="extype" name="com.spotify.scio.schemas.Schema.traversableOnceSchema.T">T</span>]</span>)</span><span class="result">: <a href="Schema.html" class="extype" name="com.spotify.scio.schemas.Schema">Schema</a>[<span class="extype" name="scala.TraversableOnce">TraversableOnce</span>[<span class="extype" name="com.spotify.scio.schemas.Schema.traversableOnceSchema.T">T</span>]]</span>
+      </span>
+      
+      
+    </li><li name="com.spotify.scio.schemas.Schema#vectorSchema" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="vectorSchema[T](implicitevidence$22:com.spotify.scio.schemas.Schema[T]):com.spotify.scio.schemas.Schema[Vector[T]]"></a><a id="vectorSchema[T](Schema[T]):Schema[Vector[T]]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/schemas/Schema$.html#vectorSchema[T](implicitevidence$22:com.spotify.scio.schemas.Schema[T]):com.spotify.scio.schemas.Schema[Vector[T]]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">implicit </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">vectorSchema</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="Schema.html" class="extype" name="com.spotify.scio.schemas.Schema">Schema</a>[<span class="extype" name="com.spotify.scio.schemas.Schema.vectorSchema.T">T</span>]</span>)</span><span class="result">: <a href="Schema.html" class="extype" name="com.spotify.scio.schemas.Schema">Schema</a>[<span class="extype" name="scala.Vector">Vector</span>[<span class="extype" name="com.spotify.scio.schemas.Schema.vectorSchema.T">T</span>]]</span>
+      </span>
+      
+      
     </li><li name="scala.AnyRef#wait" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="wait():Unit"></a>
       <span class="permalink">
@@ -1210,20 +1382,16 @@
         </div>
 
         <div id="inheritedMembers">
-        <div class="parent" name="com.spotify.scio.schemas.instances.AllInstances">
-              <h3>Inherited from <a href="instances/AllInstances.html" class="extype" name="com.spotify.scio.schemas.instances.AllInstances">AllInstances</a></h3>
-            </div><div class="parent" name="com.spotify.scio.schemas.instances.LowPriorityFallbackInstances">
-              <h3>Inherited from <a href="instances/LowPriorityFallbackInstances.html" class="extype" name="com.spotify.scio.schemas.instances.LowPriorityFallbackInstances">LowPriorityFallbackInstances</a></h3>
-            </div><div class="parent" name="com.spotify.scio.schemas.LowPrioritySchemaDerivation">
-              <h3>Inherited from <a href="LowPrioritySchemaDerivation.html" class="extype" name="com.spotify.scio.schemas.LowPrioritySchemaDerivation">LowPrioritySchemaDerivation</a></h3>
+        <div class="parent" name="scala.Serializable">
+              <h3>Inherited from <span class="extype" name="scala.Serializable">Serializable</span></h3>
+            </div><div class="parent" name="java.io.Serializable">
+              <h3>Inherited from <span class="extype" name="java.io.Serializable">Serializable</span></h3>
+            </div><div class="parent" name="com.spotify.scio.schemas.instances.LowPrioritySchemaDerivation">
+              <h3>Inherited from <a href="instances/LowPrioritySchemaDerivation.html" class="extype" name="com.spotify.scio.schemas.instances.LowPrioritySchemaDerivation">LowPrioritySchemaDerivation</a></h3>
             </div><div class="parent" name="com.spotify.scio.schemas.instances.AvroInstances">
               <h3>Inherited from <a href="instances/AvroInstances.html" class="extype" name="com.spotify.scio.schemas.instances.AvroInstances">AvroInstances</a></h3>
             </div><div class="parent" name="com.spotify.scio.schemas.instances.JodaInstances">
               <h3>Inherited from <a href="instances/JodaInstances.html" class="extype" name="com.spotify.scio.schemas.instances.JodaInstances">JodaInstances</a></h3>
-            </div><div class="parent" name="com.spotify.scio.schemas.instances.JavaInstances">
-              <h3>Inherited from <a href="instances/JavaInstances.html" class="extype" name="com.spotify.scio.schemas.instances.JavaInstances">JavaInstances</a></h3>
-            </div><div class="parent" name="com.spotify.scio.schemas.instances.ScalaInstances">
-              <h3>Inherited from <a href="instances/ScalaInstances.html" class="extype" name="com.spotify.scio.schemas.instances.ScalaInstances">ScalaInstances</a></h3>
             </div><div class="parent" name="scala.AnyRef">
               <h3>Inherited from <span class="extype" name="scala.AnyRef">AnyRef</span></h3>
             </div><div class="parent" name="scala.Any">

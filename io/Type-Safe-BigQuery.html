@@ -240,7 +240,7 @@ spotify/scio
   <li>Records are mapped to nested case classes</li>
   <li>Timestamps are mapped to Joda Time <a href="http://www.joda.org/joda-time/apidocs/org/joda/time/class-use/Instant.html"><code>Instant</code></a></li>
 </ul>
-<p>See documentation for <a href="https://spotify.github.io/scio/api/com/spotify/scio/bigquery/types/BigQueryType$.html">BigQueryType</a> for the complete list of supported types.</p>
+<p>See documentation for <a href="https://spotify.github.io/scio/api/com/spotify/scio/bigquery/types/BigQueryType$.html" title="com.spotify.scio.bigquery.types.BigQueryType"><code>BigQueryType</code></a> for the complete list of supported types.</p>
 <h2><a href="#type-annotations" name="type-annotations" class="anchor"><span class="anchor-link"></span></a>Type annotations</h2>
 <p>There are 4 annotations for type safe code generation.</p>
 <h3><a href="#bigquerytype-fromtable" name="bigquerytype-fromtable" class="anchor"><span class="anchor-link"></span></a>BigQueryType.fromTable</h3>
@@ -416,7 +416,7 @@ def main(cmdlineArgs: Array[String]): Unit = {
     .map(kv =&gt; Result(kv._1, kv._2))
     .saveAsTypedBigQuery(args(&quot;output&quot;))  // schema from Row.schema
   sc.run()
-()
+  ()
 }
 </code></pre>
 <h3><a href="#type-safe-bigqueryclient" name="type-safe-bigqueryclient" class="anchor"><span class="anchor-link"></span></a>Type safe BigQueryClient</h3>
@@ -511,7 +511,7 @@ Bigtable
 <div class="md-footer-meta__inner md-grid">
 <div class="md-footer-copyright">
 <div class="md-footer-copyright__highlight">
-Copyright (C) 2018 Spotify AB
+Copyright (C) 2019 Spotify AB
 </div>
 Powered by
 <a href="https://github.com/lightbend/paradox">Paradox</a>

@@ -323,7 +323,23 @@
         <span class="kind">case class</span>
       </span>
       <span class="symbol">
-        <a title="" href="PubsubIO$$ReadParam.html"><span class="name">ReadParam</span></a><span class="params">(<span name="isSubscription">isSubscription: <span class="extype" name="scala.Boolean">Boolean</span></span>)</span><span class="result"> extends <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+        <a title="" href="PubsubIO$$ReadParam.html"><span class="name">ReadParam</span></a><span class="params">(<span name="readType">readType: <a href="PubsubIO$$ReadType.html" class="extype" name="com.spotify.scio.io.PubsubIO.ReadType">ReadType</a></span>)</span><span class="result"> extends <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      
+      
+    </li><li name="com.spotify.scio.io.PubsubIO.ReadType" visbl="pub" class="indented0 " data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="ReadTypeextendsAnyRef"></a><a id="ReadType:ReadType"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/io/PubsubIO$$ReadType.html" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">sealed </span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="PubsubIO$$ReadType.html"><span class="name">ReadType</span></a><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
       </span>
       
       
@@ -399,22 +415,6 @@
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
-    </li><li name="com.spotify.scio.io.PubsubIO#apply" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="apply[T](name:String,idAttribute:String,timestampAttribute:String)(implicitevidence$1:scala.reflect.ClassTag[T],implicitevidence$2:com.spotify.scio.coders.Coder[T]):com.spotify.scio.io.PubsubIO[T]"></a><a id="apply[T](String,String,String)(ClassTag[T],Coder[T]):PubsubIO[T]"></a>
-      <span class="permalink">
-      <a href="../../../../com/spotify/scio/io/PubsubIO$.html#apply[T](name:String,idAttribute:String,timestampAttribute:String)(implicitevidence$1:scala.reflect.ClassTag[T],implicitevidence$2:com.spotify.scio.coders.Coder[T]):com.spotify.scio.io.PubsubIO[T]" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">apply</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="name">name: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="idAttribute">idAttribute: <span class="extype" name="scala.Predef.String">String</span> = <span class="symbol">null</span></span>, <span name="timestampAttribute">timestampAttribute: <span class="extype" name="scala.Predef.String">String</span> = <span class="symbol">null</span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <span class="extype" name="scala.reflect.ClassTag">ClassTag</span>[<span class="extype" name="com.spotify.scio.io.PubsubIO.apply.T">T</span>]</span>, <span name="arg1">arg1: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.io.PubsubIO.apply.T">T</span>]</span>)</span><span class="result">: <a href="PubsubIO.html" class="extype" name="com.spotify.scio.io.PubsubIO">PubsubIO</a>[<span class="extype" name="com.spotify.scio.io.PubsubIO.apply.T">T</span>]</span>
-      </span>
-      
-      
     </li><li name="scala.Any#asInstanceOf" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="asInstanceOf[T0]:T0"></a>
       <span class="permalink">
@@ -617,6 +617,86 @@
                 <span class="name">@native</span><span class="args">()</span>
               
         </dd></dl></div>
+    </li><li name="com.spotify.scio.io.PubsubIO#readAvro" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="readAvro[T&lt;:org.apache.avro.specific.SpecificRecordBase](name:String,idAttribute:String,timestampAttribute:String)(implicitevidence$3:scala.reflect.ClassTag[T]):com.spotify.scio.io.PubsubIO[T]"></a><a id="readAvro[T&lt;:SpecificRecordBase](String,String,String)(ClassTag[T]):PubsubIO[T]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/io/PubsubIO$.html#readAvro[T&lt;:org.apache.avro.specific.SpecificRecordBase](name:String,idAttribute:String,timestampAttribute:String)(implicitevidence$3:scala.reflect.ClassTag[T]):com.spotify.scio.io.PubsubIO[T]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">readAvro</span><span class="tparams">[<span name="T">T &lt;: <span class="extype" name="org.apache.avro.specific.SpecificRecordBase">SpecificRecordBase</span></span>]</span><span class="params">(<span name="name">name: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="idAttribute">idAttribute: <span class="extype" name="scala.Predef.String">String</span> = <span class="symbol">null</span></span>, <span name="timestampAttribute">timestampAttribute: <span class="extype" name="scala.Predef.String">String</span> = <span class="symbol">null</span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <span class="extype" name="scala.reflect.ClassTag">ClassTag</span>[<span class="extype" name="com.spotify.scio.io.PubsubIO.readAvro.T">T</span>]</span>)</span><span class="result">: <a href="PubsubIO.html" class="extype" name="com.spotify.scio.io.PubsubIO">PubsubIO</a>[<span class="extype" name="com.spotify.scio.io.PubsubIO.readAvro.T">T</span>]</span>
+      </span>
+      
+      
+    </li><li name="com.spotify.scio.io.PubsubIO#readCoder" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="readCoder[T](name:String,idAttribute:String,timestampAttribute:String)(implicitevidence$6:com.spotify.scio.coders.Coder[T],implicitevidence$7:scala.reflect.ClassTag[T]):com.spotify.scio.io.PubsubIO[T]"></a><a id="readCoder[T](String,String,String)(Coder[T],ClassTag[T]):PubsubIO[T]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/io/PubsubIO$.html#readCoder[T](name:String,idAttribute:String,timestampAttribute:String)(implicitevidence$6:com.spotify.scio.coders.Coder[T],implicitevidence$7:scala.reflect.ClassTag[T]):com.spotify.scio.io.PubsubIO[T]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">readCoder</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="name">name: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="idAttribute">idAttribute: <span class="extype" name="scala.Predef.String">String</span> = <span class="symbol">null</span></span>, <span name="timestampAttribute">timestampAttribute: <span class="extype" name="scala.Predef.String">String</span> = <span class="symbol">null</span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.io.PubsubIO.readCoder.T">T</span>]</span>, <span name="arg1">arg1: <span class="extype" name="scala.reflect.ClassTag">ClassTag</span>[<span class="extype" name="com.spotify.scio.io.PubsubIO.readCoder.T">T</span>]</span>)</span><span class="result">: <a href="PubsubIO.html" class="extype" name="com.spotify.scio.io.PubsubIO">PubsubIO</a>[<span class="extype" name="com.spotify.scio.io.PubsubIO.readCoder.T">T</span>]</span>
+      </span>
+      
+      
+    </li><li name="com.spotify.scio.io.PubsubIO#readProto" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="readProto[T&lt;:com.google.protobuf.Message](name:String,idAttribute:String,timestampAttribute:String)(implicitevidence$4:scala.reflect.ClassTag[T]):com.spotify.scio.io.PubsubIO[T]"></a><a id="readProto[T&lt;:Message](String,String,String)(ClassTag[T]):PubsubIO[T]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/io/PubsubIO$.html#readProto[T&lt;:com.google.protobuf.Message](name:String,idAttribute:String,timestampAttribute:String)(implicitevidence$4:scala.reflect.ClassTag[T]):com.spotify.scio.io.PubsubIO[T]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">readProto</span><span class="tparams">[<span name="T">T &lt;: <span class="extype" name="com.google.protobuf.Message">Message</span></span>]</span><span class="params">(<span name="name">name: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="idAttribute">idAttribute: <span class="extype" name="scala.Predef.String">String</span> = <span class="symbol">null</span></span>, <span name="timestampAttribute">timestampAttribute: <span class="extype" name="scala.Predef.String">String</span> = <span class="symbol">null</span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <span class="extype" name="scala.reflect.ClassTag">ClassTag</span>[<span class="extype" name="com.spotify.scio.io.PubsubIO.readProto.T">T</span>]</span>)</span><span class="result">: <a href="PubsubIO.html" class="extype" name="com.spotify.scio.io.PubsubIO">PubsubIO</a>[<span class="extype" name="com.spotify.scio.io.PubsubIO.readProto.T">T</span>]</span>
+      </span>
+      
+      
+    </li><li name="com.spotify.scio.io.PubsubIO#readPubsub" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="readPubsub[T&lt;:org.apache.beam.sdk.io.gcp.pubsub.PubsubMessage](name:String,idAttribute:String,timestampAttribute:String)(implicitevidence$5:scala.reflect.ClassTag[T]):com.spotify.scio.io.PubsubIO[T]"></a><a id="readPubsub[T&lt;:PubsubMessage](String,String,String)(ClassTag[T]):PubsubIO[T]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/io/PubsubIO$.html#readPubsub[T&lt;:org.apache.beam.sdk.io.gcp.pubsub.PubsubMessage](name:String,idAttribute:String,timestampAttribute:String)(implicitevidence$5:scala.reflect.ClassTag[T]):com.spotify.scio.io.PubsubIO[T]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">readPubsub</span><span class="tparams">[<span name="T">T &lt;: <span class="extype" name="org.apache.beam.sdk.io.gcp.pubsub.PubsubMessage">PubsubMessage</span></span>]</span><span class="params">(<span name="name">name: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="idAttribute">idAttribute: <span class="extype" name="scala.Predef.String">String</span> = <span class="symbol">null</span></span>, <span name="timestampAttribute">timestampAttribute: <span class="extype" name="scala.Predef.String">String</span> = <span class="symbol">null</span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <span class="extype" name="scala.reflect.ClassTag">ClassTag</span>[<span class="extype" name="com.spotify.scio.io.PubsubIO.readPubsub.T">T</span>]</span>)</span><span class="result">: <a href="PubsubIO.html" class="extype" name="com.spotify.scio.io.PubsubIO">PubsubIO</a>[<span class="extype" name="com.spotify.scio.io.PubsubIO.readPubsub.T">T</span>]</span>
+      </span>
+      
+      
+    </li><li name="com.spotify.scio.io.PubsubIO#readString" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="readString(name:String,idAttribute:String,timestampAttribute:String):com.spotify.scio.io.PubsubIO[String]"></a><a id="readString(String,String,String):PubsubIO[String]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/io/PubsubIO$.html#readString(name:String,idAttribute:String,timestampAttribute:String):com.spotify.scio.io.PubsubIO[String]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">readString</span><span class="params">(<span name="name">name: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="idAttribute">idAttribute: <span class="extype" name="scala.Predef.String">String</span> = <span class="symbol">null</span></span>, <span name="timestampAttribute">timestampAttribute: <span class="extype" name="scala.Predef.String">String</span> = <span class="symbol">null</span></span>)</span><span class="result">: <a href="PubsubIO.html" class="extype" name="com.spotify.scio.io.PubsubIO">PubsubIO</a>[<span class="extype" name="scala.Predef.String">String</span>]</span>
+      </span>
+      
+      
     </li><li name="scala.AnyRef#synchronized" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="synchronized[T0](x$1:=&gt;T0):T0"></a><a id="synchronized[T0](⇒T0):T0"></a>
       <span class="permalink">
@@ -718,9 +798,9 @@
               
         </dd></dl></div>
     </li><li name="com.spotify.scio.io.PubsubIO#withAttributes" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="withAttributes[T](name:String,idAttribute:String,timestampAttribute:String)(implicitevidence$3:scala.reflect.ClassTag[T],implicitevidence$4:com.spotify.scio.coders.Coder[T]):com.spotify.scio.io.PubsubIO[(T,Map[String,String])]"></a><a id="withAttributes[T](String,String,String)(ClassTag[T],Coder[T]):PubsubIO[(T,Map[String,String])]"></a>
+      <a id="withAttributes[T](name:String,idAttribute:String,timestampAttribute:String)(implicitevidence$8:scala.reflect.ClassTag[T],implicitevidence$9:com.spotify.scio.coders.Coder[T]):com.spotify.scio.io.PubsubIO[(T,Map[String,String])]"></a><a id="withAttributes[T](String,String,String)(ClassTag[T],Coder[T]):PubsubIO[(T,Map[String,String])]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/io/PubsubIO$.html#withAttributes[T](name:String,idAttribute:String,timestampAttribute:String)(implicitevidence$3:scala.reflect.ClassTag[T],implicitevidence$4:com.spotify.scio.coders.Coder[T]):com.spotify.scio.io.PubsubIO[(T,Map[String,String])]" title="Permalink">
+      <a href="../../../../com/spotify/scio/io/PubsubIO$.html#withAttributes[T](name:String,idAttribute:String,timestampAttribute:String)(implicitevidence$8:scala.reflect.ClassTag[T],implicitevidence$9:com.spotify.scio.coders.Coder[T]):com.spotify.scio.io.PubsubIO[(T,Map[String,String])]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -733,13 +813,83 @@
       </span>
       
       
+    </li><li name="com.spotify.scio.io.PubsubIO.ReadParam" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="ReadParam"></a><a id="ReadParam:ReadParam"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/io/PubsubIO$$ReadParam$.html" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="PubsubIO$$ReadParam$.html"><span class="name">ReadParam</span></a><span class="result"> extends <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      
+      
+    </li><li name="com.spotify.scio.io.PubsubIO.Subscription" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="Subscription"></a><a id="Subscription:Subscription"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/io/PubsubIO$$Subscription$.html" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="PubsubIO$$Subscription$.html"><span class="name">Subscription</span></a><span class="result"> extends <a href="PubsubIO$$ReadType.html" class="extype" name="com.spotify.scio.io.PubsubIO.ReadType">ReadType</a> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      
+      
+    </li><li name="com.spotify.scio.io.PubsubIO.Topic" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="Topic"></a><a id="Topic:Topic"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/io/PubsubIO$$Topic$.html" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="PubsubIO$$Topic$.html"><span class="name">Topic</span></a><span class="result"> extends <a href="PubsubIO$$ReadType.html" class="extype" name="com.spotify.scio.io.PubsubIO.ReadType">ReadType</a> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      
+      
     </li>
               </ol>
             </div>
 
         
 
-        
+        <div class="values members">
+              <h3>Deprecated Value Members</h3>
+              <ol><li name="com.spotify.scio.io.PubsubIO#apply" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="apply[T](name:String,idAttribute:String,timestampAttribute:String)(implicitevidence$1:scala.reflect.ClassTag[T],implicitevidence$2:com.spotify.scio.coders.Coder[T]):com.spotify.scio.io.PubsubIO[T]"></a><a id="apply[T](String,String,String)(ClassTag[T],Coder[T]):PubsubIO[T]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/io/PubsubIO$.html#apply[T](name:String,idAttribute:String,timestampAttribute:String)(implicitevidence$1:scala.reflect.ClassTag[T],implicitevidence$2:com.spotify.scio.coders.Coder[T]):com.spotify.scio.io.PubsubIO[T]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name deprecated" title="Deprecated: (Since version 0.8.0) Use readString, readAvro, readProto, readPubsub or readCoder instead.">apply</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="name">name: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="idAttribute">idAttribute: <span class="extype" name="scala.Predef.String">String</span> = <span class="symbol">null</span></span>, <span name="timestampAttribute">timestampAttribute: <span class="extype" name="scala.Predef.String">String</span> = <span class="symbol">null</span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <span class="extype" name="scala.reflect.ClassTag">ClassTag</span>[<span class="extype" name="com.spotify.scio.io.PubsubIO.apply.T">T</span>]</span>, <span name="arg1">arg1: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.io.PubsubIO.apply.T">T</span>]</span>)</span><span class="result">: <a href="PubsubIO.html" class="extype" name="com.spotify.scio.io.PubsubIO">PubsubIO</a>[<span class="extype" name="com.spotify.scio.io.PubsubIO.apply.T">T</span>]</span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Annotations</dt><dd>
+                <span class="name">@deprecated</span>
+              
+        </dd><dt>Deprecated</dt><dd class="cmt"><p><i>(Since version 0.8.0)</i> Use readString, readAvro, readProto, readPubsub or readCoder instead.</p></dd></dl></div>
+    </li></ol>
+            </div>
         </div>
 
         <div id="inheritedMembers">

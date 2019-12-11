@@ -333,10 +333,10 @@ spotify/scio
 <p>At Spotify we pack jars with sbt-pack, build docker images with <a href="https://github.com/marcuslonnberg/sbt-docker">sbt-docker</a> together with orchestration components e.g. <a href="https://github.com/spotify/luigi">Luigi</a> or <a href="https://github.com/apache/incubator-airflow">Airflow</a> and deploy them with <a href="https://github.com/spotify/styx">Styx</a>.</p>
 <h4><a href="#how-do-i-use-the-snapshot-builds-of-scio-" name="how-do-i-use-the-snapshot-builds-of-scio-" class="anchor"><span class="anchor-link"></span></a>How do I use the SNAPSHOT builds of Scio?</h4>
 <p>Commits to Scio master are automatically published to Sonatype via continuous integration. To use the latest SNAPSHOT artifact, add the following line to your <code>build.sbt</code>.</p>
-<pre class="prettyprint"><code class="language-scala">resolvers += Resolver.sonatypeRepo(&quot;snapshots&quot;)
+<pre class="prettyprint"><code class="language-sbt">resolvers += Resolver.sonatypeRepo(&quot;snapshots&quot;)
 </code></pre>
 <p>Or you can configure SBT globally by adding the following to <code>~/.sbt/1.0/global.sbt</code>.</p>
-<pre class="prettyprint"><code class="language-scala">resolvers ++= Seq(
+<pre class="prettyprint"><code class="language-sbt">resolvers ++= Seq(
   Resolver.sonatypeRepo(&quot;snapshots&quot;)
   // other resolvers
 )
@@ -344,10 +344,10 @@ spotify/scio
 <h4><a href="#how-do-i-unit-test-pipelines-" name="how-do-i-unit-test-pipelines-" class="anchor"><span class="anchor-link"></span></a>How do I unit test pipelines?</h4>
 <p>Any Scala or Java unit testing frameworks can be used with Scio but we provide some utilities for <a href="http://www.scalatest.org/">ScalaTest</a>.</p>
 <ul>
-  <li><a href="https://spotify.github.io/scio/api/com/spotify/scio/testing/PipelineTestUtils.html">PipelineTestUtils</a> - utilities for testing parts of a pipeline</li>
-  <li><a href="https://spotify.github.io/scio/api/com/spotify/scio/testing/JobTest$.html">JobTest</a> - for testing pipelines end-to-end with complete arguments and IO coverage</li>
-  <li><a href="https://spotify.github.io/scio/api/com/spotify/scio/testing/SCollectionMatchers.html">SCollectionMatchers</a> - ScalaTest matchers for <code>SCollection</code></li>
-  <li><a href="https://spotify.github.io/scio/api/com/spotify/scio/testing/PipelineSpec.html">PipelineSpec</a> - shortcut for ScalaTest <code>FlatSpec</code> with utilities and matchers</li>
+  <li><a href="https://spotify.github.io/scio/api/com/spotify/scio/testing/PipelineTestUtils.html" title="com.spotify.scio.testing.PipelineTestUtils"><code>PipelineTestUtils</code></a> - utilities for testing parts of a pipeline</li>
+  <li><a href="https://spotify.github.io/scio/api/com/spotify/scio/testing/JobTest$.html" title="com.spotify.scio.testing.JobTest"><code>JobTest</code></a> - for testing pipelines end-to-end with complete arguments and IO coverage</li>
+  <li><a href="https://spotify.github.io/scio/api/com/spotify/scio/testing/SCollectionMatchers.html" title="com.spotify.scio.testing.SCollectionMatchers"><code>SCollectionMatchers</code></a> - ScalaTest matchers for <code>SCollection</code></li>
+  <li><a href="https://spotify.github.io/scio/api/com/spotify/scio/testing/PipelineSpec.html" title="com.spotify.scio.testing.PipelineSpec"><code>PipelineSpec</code></a> - shortcut for ScalaTest <code>FlatSpec</code> with utilities and matchers</li>
 </ul>
 <p>The best place to find example useage of <code>JobTest</code> and <code>SCollectionMatchers</code> are their respective tests in <a href="https://github.com/spotify/scio/tree/master/scio-test/src/test/scala/com/spotify/scio/testing/JobTestTest.scala">JobTestTest</a> and <a href="https://github.com/spotify/scio/tree/master/scio-test/src/test/scala/com/spotify/scio/testing/SCollectionMatchersTest.scala">SCollectionMatchersTest</a>. For more examples see:</p>
 <ul>
@@ -399,7 +399,7 @@ object MyJob {
   <li><code>SCollection#applyTransform</code> to apply a <code>PTransform[_ &gt;: PCollection[T], PCollection[U]]</code> and get a <code>SCollection[U]</code></li>
   <li><code>SCollection#saveAsCustomOutput</code> to apply a <code>PTransform[_ &gt;: PCollection[T], PDone]</code> (sink) and get a <code>ClosedTap[T]</code>.</li>
 </ul>
-<p>See <a href="https://spotify.github.io/scio/examples/BeamExample.scala.html">BeamExample.scala</a> for more details. Custom I/O can also be tested via the <a href="https://spotify.github.io/scio/api/com/spotify/scio/testing/JobTest$.html"><code>JobTest</code></a> harness.</p>
+<p>See <a href="https://spotify.github.io/scio/examples/BeamExample.scala.html">BeamExample.scala</a> for more details. Custom I/O can also be tested via the <a href="https://spotify.github.io/scio/api/com/spotify/scio/testing/JobTest$.html" title="com.spotify.scio.testing.JobTest"><code>`JobTest`</code></a> harness.</p>
 <h4><a href="#what-are-the-different-types-of-joins-and-performance-implication-" name="what-are-the-different-types-of-joins-and-performance-implication-" class="anchor"><span class="anchor-link"></span></a>What are the different types of joins and performance implication?</h4>
 <ul>
   <li>Inner (<code>a.join(b)</code>), left (<code>a.leftOuterJoin(b)</code>), outer (<code>a.fullOuterJoin(b)</code>) performs better with a large LHS. So <code>a</code> should be the larger data set with potentially more hot keys, i.e. key with many values. Every key-value pair from every input is shuffled.</li>
@@ -530,15 +530,20 @@ object BQPartitionedJob {
 </code></pre>
 <p>In Scio 0.3.X it is possible to achieve the same behaviour using <code>SerializableFunction[BoundedWindow, String]</code> and <code>BigQueryIO.Write.to</code>. It is also possible to stream to separate tables with a Date suffix by modifying <code>DayPartitionFunction</code>, specifying the Schema, and changing the CreateDisposition to <code>CreateDisposition.CREATE_IF_NEEDED</code>.</p>
 <h4><a href="#how-do-i-invalidate-cached-bigquery-results-or-disable-cache-" name="how-do-i-invalidate-cached-bigquery-results-or-disable-cache-" class="anchor"><span class="anchor-link"></span></a>How do I invalidate cached BigQuery results or disable cache?</h4>
-<p>Scio&rsquo;s <a href="https://spotify.github.io/scio/api/com/spotify/scio/bigquery/client/BigQuery.html">BigQuery client</a> in Scio caches query result in system property <code>bigquery.cache.directory</code>, which defaults to <code>$PWD/.bigquery</code>. Use <code>rm -rf .bigquery</code> to invalidate all cached results. To disable caching, set system property <code>bigquery.cache.enabled</code> to <code>false</code>.</p>
+<p>Scio&rsquo;s <a href="https://spotify.github.io/scio/api/com/spotify/scio/bigquery/client/BigQuery.html" title="com.spotify.scio.bigquery.client.BigQuery"><code>BigQuery client</code></a> in Scio caches query result in system property <code>bigquery.cache.directory</code>, which defaults to <code>$PWD/.bigquery</code>. Use <code>rm -rf .bigquery</code> to invalidate all cached results. To disable caching, set system property <code>bigquery.cache.enabled</code> to <code>false</code>.</p>
 <h4><a href="#how-does-bigquery-determines-job-priority-" name="how-does-bigquery-determines-job-priority-" class="anchor"><span class="anchor-link"></span></a>How does BigQuery determines job priority?</h4>
 <p>By default Scio runs BigQuery jobs with <code>BATCH</code> priority except when in the REPL where it runs with <code>INTERACTIVE</code>. To override this, set system property <code>bigquery.priority</code> to either <code>BATCH</code> or <code>INTERACTIVE</code>.</p>
 <h3><a href="#streaming-questions" name="streaming-questions" class="anchor"><span class="anchor-link"></span></a>Streaming questions</h3>
 <h4><a href="#how-do-i-update-a-streaming-job-" name="how-do-i-update-a-streaming-job-" class="anchor"><span class="anchor-link"></span></a>How do I update a streaming job?</h4>
 <p>Dataflow allows streaming jobs to be updated on the fly by specifying <code>--update</code>, along with <code>--jobName=[your_job]</code> on the command line. See <a href="https://cloud.google.com/dataflow/pipelines/updating-a-pipeline">https://cloud.google.com/dataflow/pipelines/updating-a-pipeline</a> for detailed docs. Note that for this to work, Dataflow needs to be able to identify which transformations from the original job map to those in the replacement job. The easiest way to do so is to give unique names to transforms in the code itself. In Scio, this can be achieved by calling <code>.withName()</code> before applying the transform. For example:</p>
-<pre><code>sc.textFile(...)
-   .withName(&quot;MakeUpper&quot;).map(_.toUpperCase)
-   .withName(&quot;BigWords&quot;).filter(_.length &gt; 6)
+<pre class="prettyprint"><code class="language-scala">import com.spotify.scio._
+
+def main(cmdlineArgs: Array[String]): Unit = {
+  val (sc, args) = ContextAndArgs(cmdlineArgs)
+  sc.textFile(args(&quot;input&quot;))
+    .withName(&quot;MakeUpper&quot;).map(_.toUpperCase)
+    .withName(&quot;BigWords&quot;).filter(_.length &gt; 6)
+}
 </code></pre>
 <p>In this example, the <code>map</code>&rsquo;s transform name is &ldquo;MakeUpper&rdquo; and the <code>filter</code>&rsquo;s is &ldquo;BigWords&rdquo;. If we later decided that we want to count 6 letter words as &ldquo;big&rdquo; too, then we can change it to <code>_.length &gt; 5</code>, and because the transform name is the same the job can be updated on the fly.</p>
 <h3><a href="#other-io-components" name="other-io-components" class="anchor"><span class="anchor-link"></span></a>Other IO components</h3>
@@ -546,17 +551,17 @@ object BQPartitionedJob {
 <ul>
   <li>For Scio version &gt;= <code>0.4.0</code></li>
 </ul>
-<p>Starting from Scio <code>0.4.0</code> you can use Apache Beam&rsquo;s <a href="https://beam.apache.org/releases/javadoc/2.15.0/?org/apache/beam/sdk/io/FileSystems.html">Filesystems</a> abstraction:</p>
+<p>Starting from Scio <code>0.4.0</code> you can use Apache Beam&rsquo;s <a href="https://beam.apache.org/releases/javadoc/2.16.0/?org/apache/beam/sdk/io/FileSystems.html" title="org.apache.beam.sdk.io.FileSystems"><code>Filesystems</code></a> abstraction:</p>
 <pre class="prettyprint"><code class="language-scala">import org.apache.beam.sdk.io.FileSystems
 // the path can be any of the supported Filesystems, e.g. local, GCS, HDFS
-def readmeResource = FileSystems.matchNewResource(&quot;gs://&lt;bucket&gt;/README.md&quot;, isDirectory = false)
+def readmeResource = FileSystems.matchNewResource(&quot;gs://&lt;bucket&gt;/README.md&quot;, false)
 def readme = FileSystems.open(readmeResource)
 </code></pre>
 <ul>
   <li>For Scio version &lt; <code>0.4.0</code></li>
 </ul><div class="callout note "><div class="callout-title">Note</div>
 <p>This part is GCS specific.</p></div>
-<p>You can get a <a href="https://beam.apache.org/releases/javadoc/2.15.0/?org/apache/beam/sdk/extensions/gcp/options/GcsOptions.html#getGcsUtil--"><code>GcsUtil</code></a> instance from <code>ScioContext</code>, which can be used to open GCS files in read or write mode.</p>
+<p>You can get a <a href="https://beam.apache.org/releases/javadoc/2.16.0/?org/apache/beam/sdk/extensions/gcp/options/GcsOptions.html#getGcsUtil--" title="org.apache.beam.sdk.extensions.gcp.options.GcsOptions"><code>`GcsUtil`</code></a> instance from <code>ScioContext</code>, which can be used to open GCS files in read or write mode.</p>
 <pre class="prettyprint"><code class="language-scala">import com.spotify.scio.ContextAndArgs
 import org.apache.beam.sdk.extensions.gcp.options.GcsOptions
 
@@ -567,7 +572,7 @@ def main(cmdlineArgs: Array[String]): Unit = {
 }
 </code></pre>
 <h4><a href="#how-do-i-reduce-datastore-boilerplate-" name="how-do-i-reduce-datastore-boilerplate-" class="anchor"><span class="anchor-link"></span></a>How do I reduce Datastore boilerplate?</h4>
-<p>Datastore <code>Entity</code> class is actually generated from <a href="https://github.com/spotify/scio/tree/master/scio-examples/src/test/scala/com/spotify/scio/examples/extra/ShapelessDatastoreExampleTest.scala">Protobuf</a> which uses the builder pattern and very boilerplate heavy. You can use the <a href="https://github.com/nevillelyh/shapeless-datatype#datastoretype">shapeless-datatype</a> library to seamlessly convert bewteen case classes and <code>Entity</code>s. See <a href="https://spotify.github.io/scio/examples/ShapelessDatastoreExample.scala.html">ShapelessDatastoreExample.scala</a> for an example job and <a href="https://github.com/spotify/scio/tree/master/scio-examples/src/test/scala/com/spotify/scio/examples/extra/ShapelessDatastoreExampleTest.scala">ShapelessDatastoreExampleTest.scala</a> for tests.</p>
+<p>Datastore <code>Entity</code> class is actually generated from <a href="https://github.com/spotify/scio/tree/master/scio-examples/src/test/scala/com/spotify/scio/examples/extra/MagnolifyDatastoreExampleTest.scala">Protobuf</a> which uses the builder pattern and very boilerplate heavy. You can use the <a href="https://github.com/spotify/magnolify">Magnolify</a> library to seamlessly convert bewteen case classes and <code>Entity</code>s. See <a href="https://spotify.github.io/scio/examples/MagnolifyDatastoreExample.scala.html">MagnolifyDatastoreExample.scala</a> for an example job and <a href="https://github.com/spotify/scio/tree/master/scio-examples/src/test/scala/com/spotify/scio/examples/extra/MagnolifyDatastoreExampleTest.scala">MagnolifyDatastoreExampleTest.scala</a> for tests.</p>
 <h4><a href="#how-do-i-throttle-bigtable-writes-" name="how-do-i-throttle-bigtable-writes-" class="anchor"><span class="anchor-link"></span></a>How do I throttle Bigtable writes?</h4>
 <p>Currently Dataflow autoscaling may not work well with large writes BigtableIO. Specifically It does not take into account Bigtable IO rate limits and may scale up more workers and end up hitting the limit and eventually fail the job. As a workaround, you can enable throttling for Bigtable writes in Scio 0.4.0-alpha2 or later.</p>
 <pre class="prettyprint"><code class="language-scala">import com.spotify.scio.values._
@@ -658,21 +663,18 @@ class Tornado
 </code></pre>
 <p>Next print Scala code of the generated classes.</p>
 <pre class="prettyprint"><code class="language-scala">Tornado.toPrettyString()
-// res11: String = &quot;&quot;&quot;@BigQueryType.toTable
+// res12: String = &quot;&quot;&quot;@BigQueryType.toTable
 // case class Tornado(tornado: Option[Boolean], month: Long)&quot;&quot;&quot;
 </code></pre>
-<p>You can then paste the <code>@BigQueryType.toTable</code> code into your pipeline and use it with <code>sc.typedBigQuery</code>.</p>
+<p>You can then paste the <code>@BigQueryType.fromQuery</code> code into your pipeline and use it with <code>sc.typedBigQuery</code>.</p>
 <pre class="prettyprint"><code class="language-scala">import com.spotify.scio._
+import com.spotify.scio.values._
 import com.spotify.scio.bigquery._
-import com.spotify.scio.bigquery.types.BigQueryType
-
-@BigQueryType.toTable
-case class Tornado(tornado: Option[Boolean], month: Long)
 
 def main(cmdlineArgs: Array[String]): Unit = {
   val (sc, args) = ContextAndArgs(cmdlineArgs)
 
-  sc.typedBigQuery[Tornado](&quot;SELECT tornado, month FROM [publicdata:samples.gsod]&quot;)
+  val data: SCollection[Tornado] = sc.typedBigQuery[Tornado]
   // ...
 }
 </code></pre>
@@ -685,6 +687,7 @@ def main(cmdlineArgs: Array[String]): Unit = {
 <pre class="prettyprint"><code class="language-scala">import com.spotify.scio._
 import com.spotify.scio.values._
 import com.spotify.scio.bigquery._
+import com.spotify.scio.bigquery.types.BigQueryType
 
 @BigQueryType.toTable
 case class Result(user: String, score: Int)
@@ -701,16 +704,8 @@ def main(cmdlineArgs: Array[String]): Unit = {
 <h4><a href="#how-do-i-fix-invalid-default-bigquery-credentials-" name="how-do-i-fix-invalid-default-bigquery-credentials-" class="anchor"><span class="anchor-link"></span></a>How do I fix invalid default BigQuery credentials?</h4>
 <p>If you don&rsquo;t specify a secret credential file for BigQuery <code>[1]</code>, Scio will use your default credentials (via <a href="https://github.com/google/google-auth-library-java/blob/master/oauth2_http/java/com/google/auth/oauth2/GoogleCredentials.java#L57">GoogleCredential.getApplicationDefault</a>), which:</p>
 <blockquote>
-  <p>Returns the Application Default Credentials which are used to identify and authorize the whole application. The following are searched (in order) to find the Application Default Credentials:</p>
+  <p>Returns the Application Default Credentials which are used to identify and authorize the whole application. The following are searched (in order) to find the Application Default Credentials: - Credentials file pointed to by the <code>GOOGLE_APPLICATION_CREDENTIALS</code> environment variable - Credentials provided by the Google Cloud SDK - <code>gcloud auth application-default login</code> command - Google App Engine built-in credentials - Google Cloud Shell built-in credentials - Google Compute Engine built-in credentials</p>
 </blockquote>
-<ul>
-  <li>Credentials file pointed to by the <code>GOOGLE_APPLICATION_CREDENTIALS</code> environment variable</li>
-  <li>Credentials provided by the Google Cloud SDK</li>
-  <li><code>gcloud auth application-default login</code> command</li>
-  <li>Google App Engine built-in credentials</li>
-  <li>Google Cloud Shell built-in credentials</li>
-  <li>Google Compute Engine built-in credentials</li>
-</ul>
 <p>The easiest way to configure it on your local machine is to use the <code>gcloud auth application-default login</code> command.</p>
 <p><code>[1]</code> Keep in mind that you can specify your credential file via <code>-Dbigquery.secret</code>.</p>
 <h4><a href="#why-are-my-typed-bigquery-case-classes-not-up-to-date-" name="why-are-my-typed-bigquery-case-classes-not-up-to-date-" class="anchor"><span class="anchor-link"></span></a>Why are my typed BigQuery case classes not up to date?</h4>
@@ -730,9 +725,9 @@ def main(cmdlineArgs: Array[String]): Unit = {
 <h4><a href="#can-i-use-trait-instead-of-method-" name="can-i-use-trait-instead-of-method-" class="anchor"><span class="anchor-link"></span></a>Can I use &ldquo;scala.App&rdquo; trait instead of &ldquo;main&rdquo; method?</h4>
 <p>Your Scio applications should define a <code>main</code> method instead of extending <code>scala.App</code>. Applications extending <code>scala.App</code> due to delayed initialization and closure cleaning may not work properly.</p>
 <h4><a href="#how-to-inspect-the-content-of-an-scollection-" name="how-to-inspect-the-content-of-an-scollection-" class="anchor"><span class="anchor-link"></span></a>How to inspect the content of an <code>SCollection</code>?</h4>
-<p>There is multiple options here: - Use <code>debug()</code> method on an <code>SCollection</code> to print its content as the data flows through the DAG during the execution (after the <code>close</code> or <code>closeAndCollect</code>) - Use a debugger and setup break points - make sure to break inside of your functions to stop control at the execution not the pipeline construction time - In <a href="./Scio-REPL.html">Scio-REPL</a>, use <code>closeAndCollect()</code> to close the context and materialize the content of an <code>SCollection</code></p>
+<p>There is multiple options here: - Use <code>debug()</code> method on an <code>SCollection</code> to print its content as the data flows through the DAG during the execution (after the <code>run</code> or <code>runAndCollect</code>) - Use a debugger and setup break points - make sure to break inside of your functions to stop control at the execution not the pipeline construction time - In <a href="./Scio-REPL.html">Scio-REPL</a>, use <code>runAndCollect()</code> to execute the pipeline and materialize the contents of an <code>SCollection</code></p>
 <h4><a href="#how-do-i-improve-side-input-performance-" name="how-do-i-improve-side-input-performance-" class="anchor"><span class="anchor-link"></span></a>How do I improve side input performance?</h4>
-<p>By default Dataflow workers allocate 100MB (see <a href="https://beam.apache.org/releases/javadoc/2.15.0/?org/apache/beam/runners/dataflow/options/DataflowWorkerHarnessOptions.html#getWorkerCacheMb--">DataflowWorkerHarnessOptions#getWorkerCacheMb</a>) of memory for caching side inputs, and falls back to disk or network. Therefore jobs with large side inputs may be slow. To override this default, register <code>DataflowWorkerHarnessOptions</code> before parsing command line arguments and then pass <code>--workerCacheMb=N</code> when submitting the job.</p>
+<p>By default Dataflow workers allocate 100MB (see <a href="https://beam.apache.org/releases/javadoc/2.16.0/?org/apache/beam/runners/dataflow/options/DataflowWorkerHarnessOptions.html#getWorkerCacheMb--" title="org.apache.beam.runners.dataflow.options.DataflowWorkerHarnessOptions"><code>DataflowWorkerHarnessOptions#getWorkerCacheMb</code></a>) of memory for caching side inputs, and falls back to disk or network. Therefore jobs with large side inputs may be slow. To override this default, register <code>DataflowWorkerHarnessOptions</code> before parsing command line arguments and then pass <code>--workerCacheMb=N</code> when submitting the job.</p>
 <pre class="prettyprint"><code class="language-scala">import com.spotify.scio._
 import org.apache.beam.sdk.options.PipelineOptionsFactory
 import org.apache.beam.runners.dataflow.options.DataflowWorkerHarnessOptions
@@ -818,7 +813,7 @@ Powered By
 <div class="md-footer-meta__inner md-grid">
 <div class="md-footer-copyright">
 <div class="md-footer-copyright__highlight">
-Copyright (C) 2018 Spotify AB
+Copyright (C) 2019 Spotify AB
 </div>
 Powered by
 <a href="https://github.com/lightbend/paradox">Paradox</a>

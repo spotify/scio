@@ -276,7 +276,7 @@ hr {
               </section>
             
               <section class="">
-                <div class="comment "><p><code>sbt runMain &quot;com.spotify.scio.examples.DebuggingWordCount
+                <div class="comment "><p><code>sbt &quot;runMain com.spotify.scio.examples.DebuggingWordCount
 --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
 --input=gs://apache-beam-samples/shakespeare/kinglear.txt
 --output=gs://[BUCKET]/[PATH]/wordcount&quot;</code></p></p></div>
@@ -291,8 +291,7 @@ hr {
 
 <span class="keyword">import</span> <span class="identifier">scala</span>.<span class="identifier">collection</span>.<span class="identifier">JavaConverters</span>._
 
-<span class="keyword">object</span> <span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/examples/DebuggingWordCount$.html" data-tooltip="<span>com.spotify.scio.examples.DebuggingWordCount</span>">DebuggingWordCount</a></span> {
-&nbsp;</div>
+<span class="keyword">object</span> <span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/examples/DebuggingWordCount$.html" data-tooltip="<span>com.spotify.scio.examples.DebuggingWordCount</span>">DebuggingWordCount</a></span> {&nbsp;</div>
               </section>
             
               <section class="">
@@ -323,7 +322,7 @@ anonymous function without serialization issue</p></p></div>
             
               <section class="">
                 <div class="comment "><p>Split input lines, filter out empty tokens and expand into a collection of tokens</p></p></div>
-                <div class="code ">      .<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#flatMap[U](f:T=>TraversableOnce[U])(implicitevidence$9:com.spotify.scio.coders.Coder[U]):com.spotify.scio.values.SCollection[U]" data-tooltip="<span>com.spotify.scio.values.SCollection.flatMap[U](f: T => TraversableOnce[U])(implicit evidence$9: com.spotify.scio.coders.Coder[U]): com.spotify.scio.values.SCollection[U]</span>">flatMap</a></span>(_.<span class="identifier">split</span>(<span class="string">"[^a-zA-Z']+"</span>).<span class="identifier">filter</span>(_.<span class="identifier">nonEmpty</span>))&nbsp;</div>
+                <div class="code ">      .<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#flatMap[U](f:T=>TraversableOnce[U])(implicitevidence$8:com.spotify.scio.coders.Coder[U]):com.spotify.scio.values.SCollection[U]" data-tooltip="<span>com.spotify.scio.values.SCollection.flatMap[U](f: T => TraversableOnce[U])(implicit evidence$8: com.spotify.scio.coders.Coder[U]): com.spotify.scio.values.SCollection[U]</span>">flatMap</a></span>(_.<span class="identifier">split</span>(<span class="string">"[^a-zA-Z']+"</span>).<span class="identifier">filter</span>(_.<span class="identifier">nonEmpty</span>))&nbsp;</div>
               </section>
             
               <section class="">
@@ -357,7 +356,7 @@ anonymous function without serialization issue</p></p></div>
               </section>
             
               <section class="">
-                <div class="comment "><p>Close the context, execute the pipeline and block until it finishes</p></p></div>
+                <div class="comment "><p>Execute the pipeline and block until it finishes</p></p></div>
                 <div class="code ">    <span class="keyword">val</span> <span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/ScioResult.html" data-tooltip="<span>com.spotify.scio.ScioResult</span>">result</a></span> = <span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/ScioContext.html" data-tooltip="<span>com.spotify.scio.ScioContext</span>">sc</a></span>.<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/ScioContext.html#run():com.spotify.scio.ScioExecutionContext" data-tooltip="<span>com.spotify.scio.ScioContext.run(): com.spotify.scio.ScioExecutionContext</span>">run</a></span>().<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/ScioExecutionContext.html#waitUntilFinish(duration:scala.concurrent.duration.Duration,cancelJob:Boolean):com.spotify.scio.ScioResult" data-tooltip="<span>com.spotify.scio.ScioExecutionContext.waitUntilFinish(duration: scala.concurrent.duration.Duration, cancelJob: Boolean): com.spotify.scio.ScioResult</span>">waitUntilFinish</a></span>()
 &nbsp;</div>
               </section>
@@ -367,7 +366,6 @@ anonymous function without serialization issue</p></p></div>
                 <div class="code ">    <span class="identifier">require</span>(<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/ScioResult.html" data-tooltip="<span>com.spotify.scio.ScioResult</span>">result</a></span>.<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/ScioResult.html#counter(c:org.apache.beam.sdk.metrics.Counter):com.spotify.scio.metrics.MetricValue[Long]" data-tooltip="<span>com.spotify.scio.ScioResult.counter(c: org.apache.beam.sdk.metrics.Counter): com.spotify.scio.metrics.MetricValue[Long]</span>">counter</a></span>(<span class="identifier">matchedWords</span>).<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/metrics/package$$MetricValue.html#committed:Option[T]" data-tooltip="<span>com.spotify.scio.metrics.MetricValue.committed: Option[T]</span>">committed</a></span>.<span class="identifier">get</span> <span class="identifier">==</span> <span class="number">2</span>)
     <span class="identifier">require</span>(<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/ScioResult.html" data-tooltip="<span>com.spotify.scio.ScioResult</span>">result</a></span>.<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/ScioResult.html#counter(c:org.apache.beam.sdk.metrics.Counter):com.spotify.scio.metrics.MetricValue[Long]" data-tooltip="<span>com.spotify.scio.ScioResult.counter(c: org.apache.beam.sdk.metrics.Counter): com.spotify.scio.metrics.MetricValue[Long]</span>">counter</a></span>(<span class="identifier">unmatchedWords</span>).<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/metrics/package$$MetricValue.html#committed:Option[T]" data-tooltip="<span>com.spotify.scio.metrics.MetricValue.committed: Option[T]</span>">committed</a></span>.<span class="identifier">get</span> <span class="identifier">></span> <span class="number">100</span>)
   }
-
 }&nbsp;</div>
               </section>
             

@@ -276,7 +276,7 @@ hr {
               </section>
             
               <section class="">
-                <div class="comment "><p><code>sbt runMain &quot;com.spotify.scio.examples.extra.BeamExample
+                <div class="comment "><p><code>sbt &quot;runMain com.spotify.scio.examples.extra.BeamExample
 --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
 --inputTopic=[TOPIC] --outputTopic=[TOPIC]&quot;</code></p></p></div>
                 <div class="code "><span class="keyword">package</span> <span class="identifier">com</span>.<span class="identifier">spotify</span>.<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/index.html" data-tooltip="<span>com.spotify.scio</span>">scio</a></span>.<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/examples/index.html" data-tooltip="<span>com.spotify.scio.examples</span>">examples</a></span>.<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/examples/extra/index.html" data-tooltip="<span>com.spotify.scio.examples.extra</span>">extra</a></span>
@@ -294,8 +294,7 @@ hr {
 <span class="keyword">import</span> <span class="identifier">org</span>.<span class="identifier">apache</span>.<span class="identifier">beam</span>.<span class="identifier">sdk</span>.{<span class="identifier">Pipeline</span>, <span class="identifier">PipelineResult</span>}
 <span class="keyword">import</span> <span class="identifier">org</span>.<span class="identifier">joda</span>.<span class="identifier">time</span>.<span class="identifier">Duration</span>
 
-<span class="keyword">object</span> <span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/examples/extra/BeamExample$.html" data-tooltip="<span>com.spotify.scio.examples.extra.BeamExample</span>">BeamExample</a></span> {
-&nbsp;</div>
+<span class="keyword">object</span> <span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/examples/extra/BeamExample$.html" data-tooltip="<span>com.spotify.scio.examples.extra.BeamExample</span>">BeamExample</a></span> {&nbsp;</div>
               </section>
             
               <section class="">
@@ -389,7 +388,7 @@ arguments</p>
             
               <section class="">
                 <div class="comment "><p>Scio <code>map</code> transform</p></p></div>
-                <div class="code ">      .<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#map[U](f:T=>U)(implicitevidence$10:com.spotify.scio.coders.Coder[U]):com.spotify.scio.values.SCollection[U]" data-tooltip="<span>com.spotify.scio.values.SCollection.map[U](f: T => U)(implicit evidence$10: com.spotify.scio.coders.Coder[U]): com.spotify.scio.values.SCollection[U]</span>">map</a></span>(<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/avro/Account.html" data-tooltip="<span>com.spotify.scio.avro.Account</span>">a</a></span> => <span class="identifier">KV</span>.<span class="identifier">of</span>(<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/avro/Account.html" data-tooltip="<span>com.spotify.scio.avro.Account</span>">a</a></span>.<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/avro/Account.html#getName():CharSequence" data-tooltip="<span>com.spotify.scio.avro.Account.getName(): CharSequence</span>">getName</a></span>.<span class="identifier">toString</span>, <span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/avro/Account.html" data-tooltip="<span>com.spotify.scio.avro.Account</span>">a</a></span>.<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/avro/Account.html#getAmount():Double" data-tooltip="<span>com.spotify.scio.avro.Account.getAmount(): Double</span>">getAmount</a></span>))&nbsp;</div>
+                <div class="code ">      .<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#map[U](f:T=>U)(implicitevidence$9:com.spotify.scio.coders.Coder[U]):com.spotify.scio.values.SCollection[U]" data-tooltip="<span>com.spotify.scio.values.SCollection.map[U](f: T => U)(implicit evidence$9: com.spotify.scio.coders.Coder[U]): com.spotify.scio.values.SCollection[U]</span>">map</a></span>(<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/avro/Account.html" data-tooltip="<span>com.spotify.scio.avro.Account</span>">a</a></span> => <span class="identifier">KV</span>.<span class="identifier">of</span>(<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/avro/Account.html" data-tooltip="<span>com.spotify.scio.avro.Account</span>">a</a></span>.<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/avro/Account.html#getName():CharSequence" data-tooltip="<span>com.spotify.scio.avro.Account.getName(): CharSequence</span>">getName</a></span>.<span class="identifier">toString</span>, <span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/avro/Account.html" data-tooltip="<span>com.spotify.scio.avro.Account</span>">a</a></span>.<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/avro/Account.html#getAmount():Double" data-tooltip="<span>com.spotify.scio.avro.Account.getAmount(): Double</span>">getAmount</a></span>))&nbsp;</div>
               </section>
             
               <section class="">
@@ -399,7 +398,7 @@ arguments</p>
             
               <section class="">
                 <div class="comment "><p>Scio <code>map</code> transform</p></p></div>
-                <div class="code ">      .<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#map[U](f:T=>U)(implicitevidence$10:com.spotify.scio.coders.Coder[U]):com.spotify.scio.values.SCollection[U]" data-tooltip="<span>com.spotify.scio.values.SCollection.map[U](f: T => U)(implicit evidence$10: com.spotify.scio.coders.Coder[U]): com.spotify.scio.values.SCollection[U]</span>">map</a></span>(<span class="identifier">kv</span> => <span class="identifier">kv</span>.<span class="identifier">getKey</span> <span class="identifier">+</span> <span class="string">"_"</span> <span class="identifier">+</span> <span class="identifier">kv</span>.<span class="identifier">getValue</span>)&nbsp;</div>
+                <div class="code ">      .<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#map[U](f:T=>U)(implicitevidence$9:com.spotify.scio.coders.Coder[U]):com.spotify.scio.values.SCollection[U]" data-tooltip="<span>com.spotify.scio.values.SCollection.map[U](f: T => U)(implicit evidence$9: com.spotify.scio.coders.Coder[U]): com.spotify.scio.values.SCollection[U]</span>">map</a></span>(<span class="identifier">kv</span> => <span class="identifier">kv</span>.<span class="identifier">getKey</span> <span class="identifier">+</span> <span class="string">"_"</span> <span class="identifier">+</span> <span class="identifier">kv</span>.<span class="identifier">getValue</span>)&nbsp;</div>
               </section>
             
               <section class="">
@@ -410,15 +409,14 @@ arguments</p>
             
               <section class="">
                 <div class="comment "><p>This calls sc.pipeline.run() under the hood</p></p></div>
-                <div class="code ">    <span class="keyword">val</span> <span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/ScioExecutionContext.html" data-tooltip="<span>com.spotify.scio.ScioExecutionContext</span>">closedContext</a></span> = <span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/ScioContext.html" data-tooltip="<span>com.spotify.scio.ScioContext</span>">sc</a></span>.<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/ScioContext.html#run():com.spotify.scio.ScioExecutionContext" data-tooltip="<span>com.spotify.scio.ScioContext.run(): com.spotify.scio.ScioExecutionContext</span>">run</a></span>()
+                <div class="code ">    <span class="keyword">val</span> <span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/ScioExecutionContext.html" data-tooltip="<span>com.spotify.scio.ScioExecutionContext</span>">executedContext</a></span> = <span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/ScioContext.html" data-tooltip="<span>com.spotify.scio.ScioContext</span>">sc</a></span>.<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/ScioContext.html#run():com.spotify.scio.ScioExecutionContext" data-tooltip="<span>com.spotify.scio.ScioContext.run(): com.spotify.scio.ScioExecutionContext</span>">run</a></span>()
 &nbsp;</div>
               </section>
             
               <section class="">
                 <div class="comment "><p>Underlying Beam pipeline result</p></p></div>
-                <div class="code ">    <span class="keyword">val</span> <span class="identifier">pipelineResult</span>: <span class="identifier">PipelineResult</span> = <span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/ScioExecutionContext.html" data-tooltip="<span>com.spotify.scio.ScioExecutionContext</span>">closedContext</a></span>.<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/ScioExecutionContext.html#pipelineResult:org.apache.beam.sdk.PipelineResult" data-tooltip="<span>com.spotify.scio.ScioExecutionContext.pipelineResult: org.apache.beam.sdk.PipelineResult</span>">pipelineResult</a></span>
+                <div class="code ">    <span class="keyword">val</span> <span class="identifier">pipelineResult</span>: <span class="identifier">PipelineResult</span> = <span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/ScioExecutionContext.html" data-tooltip="<span>com.spotify.scio.ScioExecutionContext</span>">executedContext</a></span>.<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/ScioExecutionContext.html#pipelineResult:org.apache.beam.sdk.PipelineResult" data-tooltip="<span>com.spotify.scio.ScioExecutionContext.pipelineResult: org.apache.beam.sdk.PipelineResult</span>">pipelineResult</a></span>
   }
-
 }&nbsp;</div>
               </section>
             

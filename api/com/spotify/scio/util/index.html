@@ -383,6 +383,22 @@ detects the query's dialect. To override this, start the query with either <code
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../index.html" class="extype" name="com.spotify.scio">scio</a></dd></dl></div>
+    </li><li name="com.spotify.scio.smb" visbl="pub" class="indented4 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="smb"></a><a id="smb:smb"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/smb/index.html" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">package</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="../smb/index.html"><span class="name">smb</span></a>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../index.html" class="extype" name="com.spotify.scio">scio</a></dd></dl></div>
     </li><li name="com.spotify.scio.spanner" visbl="pub" class="indented4 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="spanner"></a><a id="spanner:spanner"></a>
       <span class="permalink">
@@ -465,6 +481,14 @@ detects the query's dialect. To override this, start the query with either <code
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../index.html" class="extype" name="com.spotify.scio">scio</a></dd></dl></div>
     </li><li class="current-entities indented4">
+                        <a class="object" href="Cache$.html" title=""></a>
+                        <a class="trait" href="Cache.html" title=""></a>
+                        <a href="Cache.html" title="">Cache</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
+                        <a class="trait" href="CacheT.html" title=""></a>
+                        <a href="CacheT.html" title="">CacheT</a>
+                      </li><li class="current-entities indented4">
                         <a class="object" href="MultiJoin$.html" title=""></a>
                         <a class="trait" href="MultiJoin.html" title=""></a>
                         <a href="MultiJoin.html" title="">MultiJoin</a>
@@ -555,7 +579,39 @@ detects the query's dialect. To override this, start the query with either <code
 
         <div id="types" class="types members">
               <h3>Type Members</h3>
-              <ol><li name="com.spotify.scio.util.MultiJoin" visbl="pub" class="indented0 " data-isabs="true" fullComment="no" group="Ungrouped">
+              <ol><li name="com.spotify.scio.util.Cache" visbl="pub" class="indented0 " data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="Cache[K,V]extendsSerializable"></a><a id="Cache[K,V]:Cache[K,V]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/util/Cache.html" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="Cache.html"><span class="name">Cache</span></a><span class="tparams">[<span name="K">K</span>, <span name="V">V</span>]</span><span class="result"> extends <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      
+      
+    </li><li name="com.spotify.scio.util.CacheT" visbl="pub" class="indented0 " data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="CacheT[K,V,U]extendsCache[K,V]"></a><a id="CacheT[K,V,U]:CacheT[K,V,U]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/util/CacheT.html" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="CacheT.html"><span class="name">CacheT</span></a><span class="tparams">[<span name="K">K</span>, <span name="V">V</span>, <span name="U">U</span>]</span><span class="result"> extends <a href="Cache.html" class="extype" name="com.spotify.scio.util.Cache">Cache</a>[<span class="extype" name="com.spotify.scio.util.CacheT.K">K</span>, <span class="extype" name="com.spotify.scio.util.CacheT.V">V</span>]</span>
+      </span>
+      
+      
+    </li><li name="com.spotify.scio.util.MultiJoin" visbl="pub" class="indented0 " data-isabs="true" fullComment="no" group="Ungrouped">
       <a id="MultiJoinextendsSerializable"></a><a id="MultiJoin:MultiJoin"></a>
       <span class="permalink">
       <a href="../../../../com/spotify/scio/util/MultiJoin.html" title="Permalink">
@@ -616,7 +672,23 @@ for running variance.
         <div class="values members">
               <h3>Value Members</h3>
               <ol>
-                <li name="com.spotify.scio.util.MultiJoin" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+                <li name="com.spotify.scio.util.Cache" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="Cache"></a><a id="Cache:Cache"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/util/Cache$.html" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="Cache$.html"><span class="name">Cache</span></a><span class="result"> extends <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      
+      
+    </li><li name="com.spotify.scio.util.MultiJoin" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="MultiJoin"></a><a id="MultiJoin:MultiJoin"></a>
       <span class="permalink">
       <a href="../../../../com/spotify/scio/util/MultiJoin$.html" title="Permalink">

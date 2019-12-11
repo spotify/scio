@@ -203,24 +203,20 @@ spotify/scio
 <h1><a href="#design-philosophy" name="design-philosophy" class="anchor"><span class="anchor-link"></span></a>Design Philosophy</h1>
 <p>We learned a lot building and improving Scio. The project was inspired by Spark and Scalding from the beginning, and we improved it over time working with customers of diverse background, including backend, data and ML. The design philosophy behind Scio can be summarized in a few points.</p>
 <ul>
-  <li>
-  <p><strong>Make it easy to do the right thing</strong></p></li>
-  <li>
-  <p>Scala made this possible for the most part. We have a fluent API and it&rsquo;s easy to find the right transformation without going through lengthy documentation or source code. The most obvious thing is usually the best.</p></li>
+  <li><strong>Make it easy to do the right thing</strong></li>
+  <li>Scala made this possible for the most part. We have a fluent API and it&rsquo;s easy to find the right transformation without going through lengthy documentation or source code. The most obvious thing is usually the best.</li>
   <li><code>.countByValue</code> is clearer and more efficient than <code>.map((_, 1L)).sumByKey</code> than <code>.map((_, 1L)).reduceByKey(_+_)</code>.</li>
   <li>Case classes and <code>Option</code>s are much safer and easier than JSON-based <code>TableRow</code>s with <code>Object</code>s and nulls, despite the effort we went through to make it work.</li>
   <li>One can <code>.sum</code> types with built-in <code>Semigroup</code>s easily and correctly.</li>
   <li>Conversely there is no <code>.groupAll</code> since it could incur huge performance penalty and is essentially <code>.groupBy(_ =&gt; ())</code>. It&rsquo;s easier to ask than making the wrong assumption and use it wrong (_&ldquo;because it&rsquo;s there&rdquo;_).</li>
   <li>
   <p><strong>Make common use cases simple</strong></p></li>
-  <li>
-  <p>We have syntactic sugar for most common IO modules e.g. <code>ScioContext#textFile</code>, <code>SCollection#saveAsBigQuery</code> but don&rsquo;t cover all possible parameters. There&rsquo;s a trade-off between covering more use cases and keeping the API simple.</p></li>
+  <li>We have syntactic sugar for most common IO modules e.g. <code>ScioContext#textFile</code>, <code>SCollection#saveAsBigQuery</code> but don&rsquo;t cover all possible parameters. There&rsquo;s a trade-off between covering more use cases and keeping the API simple.</li>
   <li>We opted for a more flexible boilerplate free <code>Args</code> instead of the more type-safe <code>PipelineOptions</code> for command line arguments parsing. Mistakes in these parts of the code are easier to catch and less damaging than those in the computation logic. Another trade-off we made.</li>
   <li>We have syntactic sugars for various types of joins (hash, inner, outer, sketch) and side input operations (cross, lookup) that can be easily swapped to fine tune a pipeline.</li>
   <li>
   <p><strong>Make complex use cases possible</strong></p></li>
-  <li>
-  <p>We wrap complex internal APIs but don&rsquo;t hide them away from users.</p></li>
+  <li>We wrap complex internal APIs but don&rsquo;t hide them away from users.</li>
   <li>Most low level Beam APIs (<code>Pipeline</code>, <code>PCollection</code>, <code>PTransform</code>) are still easily accessible.</li>
   <li>There are shorthands for integrating native Beam API, e.g. <code>ScioContext#customInput</code>, <code>SCollection#saveAsCustomOutput</code>, <code>SCollection#applyTransform</code>.</li>
   <li>Pipelines can be submitted from <code>main</code>, another process, a backend service, or chained with <code>Future</code>s.</li>
@@ -275,7 +271,7 @@ Scaladoc
 <div class="md-footer-meta__inner md-grid">
 <div class="md-footer-copyright">
 <div class="md-footer-copyright__highlight">
-Copyright (C) 2018 Spotify AB
+Copyright (C) 2019 Spotify AB
 </div>
 Powered by
 <a href="https://github.com/lightbend/paradox">Paradox</a>
