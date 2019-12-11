@@ -566,7 +566,16 @@ lazy val `scio-bigquery`: Project = project
       "com.google.cloud" % "google-cloud-storage" % gcsVersion % "test,it",
       // DataFlow testing requires junit and hamcrest
       "org.hamcrest" % "hamcrest-all" % hamcrestVersion % "test,it"
-    )
+    ),
+    // Workaround for https://github.com/spotify/scio/issues/2308
+    (Compile / doc) := Def.taskDyn {
+      val default = (Compile / doc).taskValue
+      if (scalaBinaryVersion.value == "2.11") {
+        (Compile / doc / target).toTask
+      } else {
+        Def.task(default.value)
+      }
+    }.value
   )
   .dependsOn(
     `scio-core` % "compile;it->it"
