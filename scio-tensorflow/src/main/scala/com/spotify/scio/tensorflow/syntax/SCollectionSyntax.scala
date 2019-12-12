@@ -60,7 +60,7 @@ final class PredictSCollectionOps[T: ClassTag](private val self: SCollection[T])
     savedModelUri: String,
     fetchOps: Seq[String],
     options: TensorFlowModel.Options,
-    signatureName: String = "serving_default"
+    signatureName: String = PredictSCollectionOps.DefaultSignatureName
   )(inFn: T => Map[String, Tensor[_]])(outFn: (T, Map[String, Tensor[_]]) => V): SCollection[V] =
     self.parDo(
       SavedBundlePredictDoFn
@@ -87,8 +87,8 @@ final class PredictSCollectionOps[T: ClassTag](private val self: SCollection[T])
   def predictWithSigDef[V: Coder, W](
     savedModelUri: String,
     options: TensorFlowModel.Options,
-    fetchOps: Option[Seq[String]] = None,
-    signatureName: String = "serving_default"
+    fetchOps: Option[Seq[String]] = PredictSCollectionOps.DefaultFetchOps,
+    signatureName: String = PredictSCollectionOps.DefaultSignatureName
   )(inFn: T => Map[String, Tensor[_]])(outFn: (T, Map[String, Tensor[_]]) => V): SCollection[V] =
     self.parDo(
       SavedBundlePredictDoFn
@@ -113,9 +113,9 @@ final class PredictSCollectionOps[T: ClassTag](private val self: SCollection[T])
   def predictTfExamples[V: Coder](
     savedModelUri: String,
     options: TensorFlowModel.Options,
-    exampleInputOp: String = "inputs",
-    fetchOps: Option[Seq[String]] = None,
-    signatureName: String = "serving_default"
+    exampleInputOp: String = PredictSCollectionOps.DefaultExampleInputOp,
+    fetchOps: Option[Seq[String]] = PredictSCollectionOps.DefaultFetchOps,
+    signatureName: String = PredictSCollectionOps.DefaultSignatureName
   )(outFn: (T, Map[String, Tensor[_]]) => V)(implicit ev: T <:< Example): SCollection[V] =
     self.parDo(
       SavedBundlePredictDoFn.forTensorFlowExample[T, V](
@@ -127,6 +127,12 @@ final class PredictSCollectionOps[T: ClassTag](private val self: SCollection[T])
         outFn
       )
     )
+}
+
+object PredictSCollectionOps {
+  val DefaultSignatureName: String = "serving_default"
+  val DefaultExampleInputOp: String = "inputs"
+  val DefaultFetchOps: Option[Seq[String]] = None
 }
 
 final class ExampleSCollectionOps[T <: Example](private val self: SCollection[T]) extends AnyVal {
