@@ -36,7 +36,7 @@ import java.io.NotSerializableException
 
 import com.spotify.scio.avro.TestRecord
 import com.spotify.scio.schemas.Schema
-import com.spotify.scio.testing.util.SCollectionPrettifier
+import com.spotify.scio.testing.util.TypedPrettifierInstances
 import org.scalactic.Prettifier
 
 object SCollectionMatchersTest {
@@ -600,7 +600,7 @@ class SCollectionMatchersTest extends PipelineSpec {
     // Test to make sure that our specialized schema based prettifier
     // is being used by containInAnyOrder
     val prettifier =
-      SCollectionPrettifier.getPrettifier(
+      TypedPrettifierInstances.forSchema(
         Schema[com.spotify.scio.avro.TestRecord],
         fallbackPrettifier = Prettifier.default
       )
@@ -622,7 +622,7 @@ class SCollectionMatchersTest extends PipelineSpec {
     // Test to make sure that our specialized schema based prettifier
     // is being used by containInAnyOrder
     val prettifier =
-      SCollectionPrettifier.getPrettifier(
+      TypedPrettifierInstances.forSchema(
         Schema[com.spotify.scio.avro.TestRecord],
         fallbackPrettifier = Prettifier.default
       )

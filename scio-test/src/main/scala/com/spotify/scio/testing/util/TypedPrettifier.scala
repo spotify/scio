@@ -1,6 +1,5 @@
 package com.spotify.scio.testing.util
 import com.spotify.scio.schemas.Schema
-import org.apache.avro.generic.IndexedRecord
 import org.scalactic.Prettifier
 
 /**
@@ -28,51 +27,8 @@ trait TypedPrettifier[T] extends Serializable {
   def apply: Prettifier
 }
 
-/**
- * A low priority fall back [[TypedPrettifier]] which delegates Scalactic's Prettifier.
- */
-trait LowPriorityFallbackTypedPrettifier {
+object TypedPrettifier extends TypedPrettifierInstances {
 
-  /**
-   * Visible when we fail to have a [[Schema]]
-   *
-   * This `TypedPrettifier` fallsback to the default scalactic Prettifier.
-   */
-  implicit def default[T](
-    implicit scalactic: Prettifier
-  ): TypedPrettifier[T] =
-    new TypedPrettifier[T] {
-      override def apply: Prettifier = scalactic
-    }
-}
-
-object TypedPrettifier extends LowPriorityFallbackTypedPrettifier {
-
-  /**
-   * An instance of TypedPrettifier when we have an AvroRecord.
-   * We use the Avro Schema to create an table representation of
-   * the SCollection[T]
-   */
-  implicit def avroPrettifier[T <: IndexedRecord](
-    implicit scalacticFallback: Prettifier
-  ): TypedPrettifier[T] = {
-    new TypedPrettifier[T] {
-      override def apply: Prettifier =
-        SCollectionPrettifier.getAvroRecordPrettifier(scalacticFallback)
-    }
-  }
-
-  /**
-   * An instance of [[TypedPrettifier]] when we have a [[Schema]] available
-   * for our type. We use the Schema to create a table representation of
-   * the SCollection[T]
-   */
-  def schemaPrettifier[T: Schema](
-    implicit schema: Schema[T],
-    scalactic: Prettifier
-  ): TypedPrettifier[T] =
-    new TypedPrettifier[T] {
-      override def apply: Prettifier =
-        SCollectionPrettifier.getPrettifier[T](schema, scalactic)
-    }
+  def apply[T](t: T)(implicit typedPrettifier: TypedPrettifier[T]): String =
+    typedPrettifier.apply(t)
 }
