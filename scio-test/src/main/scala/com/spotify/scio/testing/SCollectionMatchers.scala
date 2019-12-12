@@ -207,7 +207,7 @@ trait SCollectionMatchers {
                     // + shows diff viewer in IntelliJ by using the text `was not equal to`
                     // + keep the original error as is from Scalatest
                     throw new AssertionError(
-                      s"${prettifier(v.get)} was not equal to ${prettifier(jit.asScala)}\n",
+                      s"${prettifier(jit.asScala)} was not equal to ${prettifier(v.get)}\n",
                       e
                     )
                   case x: Exception => throw x // Unexpected, but we throw it anyway.
