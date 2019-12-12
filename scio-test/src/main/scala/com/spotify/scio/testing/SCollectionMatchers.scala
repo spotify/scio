@@ -184,44 +184,41 @@ trait SCollectionMatchers {
     matcher.matcher(_.inEarlyGlobalWindowPanes)
 
   /** Assert that the SCollection in question contains the provided elements. */
-  def containInAnyOrder[T: Coder](value: Iterable[T])(
-    implicit
-    typedPrettifier: TypedPrettifier[T]
-  ): IterableMatcher[SCollection[T], T] =
+  def containInAnyOrder[T: Coder: TypedPrettifier](value: Iterable[T]): IterableMatcher[SCollection[T], T] =
     new IterableMatcher[SCollection[T], T] {
       override def matcher(builder: AssertBuilder): Matcher[SCollection[T]] =
         new Matcher[SCollection[T]] {
           override def apply(left: SCollection[T]): MatchResult = {
             val v = Externalizer(value) // defeat closure
-            val p = Externalizer(typedPrettifier) // defeat closure
+            val p = Externalizer(implicitly[TypedPrettifier[T]]) // defeat closure
 
-            val shouldFn = makeFn[T] {
-              import scalatest.matchers.should.Matchers._
-              jit: JIterable[T] => {
-                implicit val prettifier: Prettifier = p.get.apply
-                try jit.asScala.should(contain).theSameElementsAs(v.get)
-                catch {
-                  case e: TestFailedException =>
-                    // Throw AssertionError / maintains backward compatibility
-                    // as Beam / Hamcrest throws AssertionError
-                    // + shows diff viewer in IntelliJ by using the text `was not equal to`
-                    // + keep the original error as is from Scalatest
-                    throw new AssertionError(
-                      s"${prettifier(jit.asScala)} was not equal to ${prettifier(v.get)}\n",
-                      e
-                    )
-                  case x: Exception => throw x // Unexpected, but we throw it anyway.
-                }
-                ()
+            val shouldFn = makeFn[T] { in =>
+              import org.hamcrest.Matchers
+              import org.junit.Assert
+              try Assert.assertThat(in, Matchers.containsInAnyOrder(v.get.toSeq: _*))
+              catch {
+                case e: AssertionError =>
+                  // shows diff viewer in IntelliJ by using the text `was not equal to`
+                  throw new AssertionError(
+                    s"${p.get.apply.apply(in.asScala.toList)} was not equal to ${p.get.apply.apply(v.get)}\n",
+                    e
+                  )
+                case x: Exception => throw x // Unexpected, but we throw it anyway.
               }
             }
 
-            val shouldNotFn = makeFn[T] {
-              import scalatest.matchers.should.Matchers._
-              jit: JIterable[T] => {
-                implicit val prettifier: Prettifier = p.get.apply
-                jit.asScala.shouldNot(contain).theSameElementsAs(v.get)
-                ()
+            val shouldNotFn = makeFn[T] { in =>
+              import org.hamcrest.Matchers
+              import org.junit.Assert
+              try Assert.assertThat(in, Matchers.not(Matchers.containsInAnyOrder(v.get.toSeq: _*)))
+              catch {
+                case e: AssertionError =>
+                  // shows diff viewer in IntelliJ by using the text `was not equal to`
+                  throw new AssertionError( // TODO this is wrong. FIXME please
+                    s"${p.get.apply.apply(in.asScala.toList)} was not equal to ${p.get.apply.apply(v.get)}\n",
+                    e
+                  )
+                case x: Exception => throw x // Unexpected, but we throw it anyway.
               }
             }
 
