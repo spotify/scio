@@ -867,4 +867,10 @@ class TypeProviderTest extends AnyFlatSpec with Matchers {
   it should "preserve sequential user defined annotations" in {
     containsAllAnnotTypes[RecordWithSequentialAnnotations]
   }
+
+  def containsAllAnnotTypes[T: TypeTag]: Assertion =
+    typeOf[T].typeSymbol.annotations
+      .map(_.tree.tpe)
+      .containsSlice(Seq(typeOf[Annotation1], typeOf[Annotation2])) shouldBe true
+
 }

@@ -50,10 +50,6 @@ class TypeProviderIT extends AnyFlatSpec with Matchers {
   class Annotation1 extends StaticAnnotation
   class Annotation2 extends StaticAnnotation
 
-  def containsAllAnnotTypes[T: TypeTag]: Assertion =
-    typeOf[T].typeSymbol.annotations
-      .map(_.tree.tpe)
-      .containsSlice(Seq(typeOf[Annotation1], typeOf[Annotation2])) shouldBe true
   @Annotation1
   @AvroType.fromSchemaFile(
     "https://raw.githubusercontent.com/spotify/scio/master/scio-avro/src/test/avro/scio-avro-test.avsc"
@@ -74,5 +70,10 @@ class TypeProviderIT extends AnyFlatSpec with Matchers {
   it should "preserve sequential user defined annotations" in {
     containsAllAnnotTypes[FromResourceWithSequentialAnnotations]
   }
+
+  def containsAllAnnotTypes[T: TypeTag]: Assertion =
+    typeOf[T].typeSymbol.annotations
+      .map(_.tree.tpe)
+      .containsSlice(Seq(typeOf[Annotation1], typeOf[Annotation2])) shouldBe true
 
 }
