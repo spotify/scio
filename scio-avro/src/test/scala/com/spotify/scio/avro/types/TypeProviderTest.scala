@@ -825,54 +825,8 @@ class TypeProviderTest extends AnyFlatSpec with Matchers {
     DocumentedRecord.isInstanceOf[HasAvroDoc] shouldBe true
   }
 
-  @AvroType.fromSchemaFile("""
-      |https://raw.githubusercontent.com/spotify/scio/master/
-      |scio-avro/src/test/avro/
-      |scio-avro-test.avsc
-    """.stripMargin)
-  class FromResourceMultiLine
-  @AvroType.fromSchemaFile(
-    "https://raw.githubusercontent.com/spotify/scio/master/scio-avro/src/test/avro/scio-avro-test.avsc"
-  )
-  class FromResource
-
-  "AvroType.fromSchemaFile" should "support reading schema from multiline resource" in {
-    val r = FromResourceMultiLine(1)
-    r.test shouldBe 1
-  }
-
-  it should "support reading schema from resource" in {
-    val r = FromResource(2)
-    r.test shouldBe 2
-  }
-
   class Annotation1 extends StaticAnnotation
   class Annotation2 extends StaticAnnotation
-
-  def containsAllAnnotTypes[T: TypeTag]: Assertion =
-    typeOf[T].typeSymbol.annotations
-      .map(_.tree.tpe)
-      .containsSlice(Seq(typeOf[Annotation1], typeOf[Annotation2])) shouldBe true
-  @Annotation1
-  @AvroType.fromSchemaFile(
-    "https://raw.githubusercontent.com/spotify/scio/master/scio-avro/src/test/avro/scio-avro-test.avsc"
-  )
-  @Annotation2
-  class FromResourceWithSurroundingAnnotations
-
-  it should "preserve surrounding user defined annotations" in {
-    containsAllAnnotTypes[FromResourceWithSurroundingAnnotations]
-  }
-  @AvroType.fromSchemaFile(
-    "https://raw.githubusercontent.com/spotify/scio/master/scio-avro/src/test/avro/scio-avro-test.avsc"
-  )
-  @Annotation1
-  @Annotation2
-  class FromResourceWithSequentialAnnotations
-
-  it should "preserve sequential user defined annotations" in {
-    containsAllAnnotTypes[FromResourceWithSequentialAnnotations]
-  }
 
   @Annotation1
   @AvroType.fromSchema(
