@@ -599,13 +599,8 @@ class SCollectionMatchersTest extends PipelineSpec {
     }
     // Test to make sure that our specialized schema based prettifier
     // is being used by containInAnyOrder
-    val prettifier =
-      TypedPrettifierInstances.forSchema(
-        Schema[com.spotify.scio.avro.TestRecord],
-        fallbackPrettifier = Prettifier.default
-      )
-
-    val expectedStringInErrorMessage = prettifier(incorrectExpected)
+    val expectedStringInErrorMessage =
+      TypedPrettifier[com.spotify.scio.avro.TestRecord](incorrectExpected)
 
     thrown.getMessage should include(expectedStringInErrorMessage)
   }
@@ -621,13 +616,8 @@ class SCollectionMatchersTest extends PipelineSpec {
     }
     // Test to make sure that our specialized schema based prettifier
     // is being used by containInAnyOrder
-    val prettifier =
-      TypedPrettifierInstances.forSchema(
-        Schema[com.spotify.scio.avro.TestRecord],
-        fallbackPrettifier = Prettifier.default
-      )
-
-    val expectedStringInErrorMessage = prettifier(correctExpected)
+    val expectedStringInErrorMessage =
+      TypedPrettifier[com.spotify.scio.avro.TestRecord](correctExpected)
 
     thrown.getMessage should include(expectedStringInErrorMessage)
   }

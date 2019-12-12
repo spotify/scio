@@ -1,15 +1,13 @@
 package com.spotify.scio.testing.util
 
-import com.spotify.scio.schemas.Schema
+import com.spotify.scio.avro.TestRecord
 import org.apache.avro.generic.IndexedRecord
 import org.scalactic.Prettifier
 
 import scala.collection.JavaConverters._
 
 /**
- * Scalactic [[Prettifier]]s for `SCollection[T]`when we have a `Schema[T]` in scope.
- *
- * These prettifiers are used by [[TypedPrettifier]]
+ * Instances of [[TypedPrettifier]] which are found by implicit search.
  */
 trait TypedPrettifierInstances extends LowPriorityFallbackTypedPrettifier {
 
@@ -19,7 +17,7 @@ trait TypedPrettifierInstances extends LowPriorityFallbackTypedPrettifier {
    * the SCollection[T]
    */
   implicit def forIndexedRecord[T <: IndexedRecord](
-    fallbackPrettifier: Prettifier
+    implicit fallbackPrettifier: Prettifier
   ): TypedPrettifier[T] = new TypedPrettifier[T] {
 
     /**
@@ -105,9 +103,7 @@ trait TypedPrettifierInstances extends LowPriorityFallbackTypedPrettifier {
 trait LowPriorityFallbackTypedPrettifier {
 
   /**
-   * Visible when we fail to have a [[Schema]]
-   *
-   * This `TypedPrettifier` fallsback to the default scalactic Prettifier.
+   * This `TypedPrettifier` falls back to the default scalactic [[Prettifier]].
    */
   implicit def default[T](
     implicit scalactic: Prettifier
