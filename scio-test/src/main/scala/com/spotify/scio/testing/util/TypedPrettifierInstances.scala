@@ -18,7 +18,7 @@ trait TypedPrettifierInstances extends LowPriorityFallbackTypedPrettifier {
    */
   implicit def forIndexedRecord[T <: IndexedRecord](
     implicit fallbackPrettifier: Prettifier
-  ): TypedPrettifier[T] = new TypedPrettifier[T] {
+  ): TypedPrettifier[Traversable[T]] = new TypedPrettifier[Traversable[T]] {
 
     /** When applied on traversables */
     override def apply(t: Traversable[T]): String = {
@@ -31,9 +31,6 @@ trait TypedPrettifierInstances extends LowPriorityFallbackTypedPrettifier {
         levelTwoFallback = fallbackPrettifier
       )
     }
-
-    /** When applied on a single Avro Record. */
-    override def apply(t: T): String = fallbackPrettifier(t)
   }
 
   /**
@@ -82,9 +79,11 @@ trait TypedPrettifierInstances extends LowPriorityFallbackTypedPrettifier {
         })
       }
 
-      (Seq(headerLine(padLengths),
-           toPrettyRecord(fieldNames.zip(padLengths)),
-           lineSeparator(padLengths))
+      (Seq(
+        headerLine(padLengths),
+        toPrettyRecord(fieldNames.zip(padLengths)),
+        lineSeparator(padLengths)
+      )
         ++ prettyRecords
         ++ Seq(
           footerLine(padLengths)
@@ -105,10 +104,7 @@ trait LowPriorityFallbackTypedPrettifier {
   implicit def default[T](
     implicit scalactic: Prettifier
   ): TypedPrettifier[T] =
-    new TypedPrettifier[T] {
-      override def apply(t: T): String = scalactic(t)
-      override def apply(t: Traversable[T]): String = scalactic(t)
-    }
+    (t: T) => scalactic(t)
 }
 
 object TypedPrettifierInstances extends TypedPrettifierInstances
@@ -118,15 +114,15 @@ object MyTest {
   import TypedPrettifierInstances._
 
   def main(args: Array[String]): Unit = {
-    val avroRecods: Iterable[TestRecord] = (1 to 5).map(
-      i =>
-        TestRecord
-          .newBuilder()
-          .setIntField(i)
-          .setStringField(i.toString)
-          .setBooleanField(false)
-          .setDoubleField(i / 2.0)
-          .build())
+    val avroRecods: Iterable[TestRecord] = (1 to 5).map(i =>
+      TestRecord
+        .newBuilder()
+        .setIntField(i)
+        .setStringField(i.toString)
+        .setBooleanField(false)
+        .setDoubleField(i / 2.0)
+        .build()
+    )
 
     val pre = TypedPrettifier[com.spotify.scio.avro.TestRecord](avroRecods)
     def red(s: String) = Console.GREEN + s + Console.RESET

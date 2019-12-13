@@ -184,13 +184,15 @@ trait SCollectionMatchers {
     matcher.matcher(_.inEarlyGlobalWindowPanes)
 
   /** Assert that the SCollection in question contains the provided elements. */
-  def containInAnyOrder[T: Coder: TypedPrettifier](value: Iterable[T]): IterableMatcher[SCollection[T], T] =
+  def containInAnyOrder[T: Coder](
+    value: Iterable[T]
+  )(implicit typedPrettifier: TypedPrettifier[Iterable[T]]): IterableMatcher[SCollection[T], T] =
     new IterableMatcher[SCollection[T], T] {
       override def matcher(builder: AssertBuilder): Matcher[SCollection[T]] =
         new Matcher[SCollection[T]] {
           override def apply(left: SCollection[T]): MatchResult = {
             val v = Externalizer(value) // defeat closure
-            val p = Externalizer(implicitly[TypedPrettifier[T]]) // defeat closure
+            val tp = Externalizer(typedPrettifier) // defeat closure
 
             val shouldFn = makeFn[T] { in =>
               import org.hamcrest.Matchers
@@ -200,7 +202,7 @@ trait SCollectionMatchers {
                 case e: AssertionError =>
                   // shows diff viewer in IntelliJ by using the text `was not equal to`
                   throw new AssertionError(
-                    s"${p.get(in.asScala.toList)} was not equal to ${p.get(v.get)}\n",
+                    s"${tp.get(in.asScala.toList)} was not equal to ${tp.get(v.get)}\n",
                     e
                   )
                 case x: Exception => throw x // Unexpected, but we throw it anyway.
@@ -215,7 +217,7 @@ trait SCollectionMatchers {
                 case e: AssertionError =>
                   // shows diff viewer in IntelliJ by using the text `was not equal to`
                   throw new AssertionError( // TODO this is wrong. FIXME please
-                    s"${p.get(in.asScala.toList)} was not equal to ${p.get(v.get)}\n",
+                    s"${tp.get(in.asScala.toList)} was not equal to ${tp.get(v.get)}\n",
                     e
                   )
                 case x: Exception => throw x // Unexpected, but we throw it anyway.

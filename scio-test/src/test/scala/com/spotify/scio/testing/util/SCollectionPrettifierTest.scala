@@ -28,7 +28,7 @@ class SCollectionPrettifierTest extends AnyFlatSpec with Matchers {
 
   it should "prettify AvroRecords" in {
     val prettyString =
-      implicitly[TypedPrettifier[TestRecord]].apply(avroRecods)
+      TypedPrettifier[TestRecord](avroRecods)
 
     val expected =
       """
@@ -47,7 +47,7 @@ class SCollectionPrettifierTest extends AnyFlatSpec with Matchers {
 
   ignore should "prettify an SCollection with Schema" in {
     val prettyString =
-      implicitly[TypedPrettifier[Something]].apply(Seq(Something(1, NestedRecord("one"))))
+      TypedPrettifier[Something](Seq(Something(1, NestedRecord("one"))))
 
     val expected =
       """
@@ -63,7 +63,7 @@ class SCollectionPrettifierTest extends AnyFlatSpec with Matchers {
 
   it should "use default Prettifier for non-avro records" in {
     val prettyString =
-      implicitly[TypedPrettifier[Something]].apply(Seq(Something(1, NestedRecord("one"))))
+      TypedPrettifier[Something](Seq(Something(1, NestedRecord("one"))))
 
     val expected = "List(Something(1,NestedRecord(one)))"
     prettyString should be(expected)
@@ -71,7 +71,7 @@ class SCollectionPrettifierTest extends AnyFlatSpec with Matchers {
 
   it should "use default default scalactic prettifier if Schema is not available" in {
     val prettyString =
-      implicitly[TypedPrettifier[NoSchemaAvailable]].apply(Seq(new NoSchemaAvailable()))
+      TypedPrettifier[NoSchemaAvailable](Seq(new NoSchemaAvailable()))
 
     val expected = "List(ClassWithNoSchemaAvailable)"
 
@@ -84,7 +84,7 @@ class SCollectionPrettifierTest extends AnyFlatSpec with Matchers {
     }
 
     val prettyString =
-      implicitly[TypedPrettifier[Something]].apply(Seq(Something(1, NestedRecord("one"))))
+      TypedPrettifier[Something](Seq(Something(1, NestedRecord("one"))))
 
     val expected = "user - defined"
 

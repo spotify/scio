@@ -17,8 +17,6 @@ import org.scalactic.Prettifier
  */
 trait TypedPrettifier[T] extends Serializable {
 
-  def apply(t: Traversable[T]): String
-
   def apply(t: T): String
 }
 
@@ -28,7 +26,10 @@ object TypedPrettifier extends TypedPrettifierInstances {
    * Prettify a `Traversable[T]` in a Tabular form if a [[TypedPrettifier]] for [[T]]
    * is available.
    */
-  def apply[T](t: Traversable[T])(implicit typedPrettifier: TypedPrettifier[T]): String =
+  def apply[T](t: Traversable[T])(
+    implicit typedPrettifier: TypedPrettifier[Traversable[T]],
+    dummyImplicit: DummyImplicit
+  ): String =
     typedPrettifier(t)
 
   /**
