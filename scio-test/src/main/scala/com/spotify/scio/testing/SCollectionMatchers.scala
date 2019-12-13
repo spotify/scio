@@ -200,7 +200,7 @@ trait SCollectionMatchers {
                 case e: AssertionError =>
                   // shows diff viewer in IntelliJ by using the text `was not equal to`
                   throw new AssertionError(
-                    s"${p.get.apply.apply(in.asScala.toList)} was not equal to ${p.get.apply.apply(v.get)}\n",
+                    s"${p.get(in.asScala.toList)} was not equal to ${p.get(v.get)}\n",
                     e
                   )
                 case x: Exception => throw x // Unexpected, but we throw it anyway.
@@ -215,7 +215,7 @@ trait SCollectionMatchers {
                 case e: AssertionError =>
                   // shows diff viewer in IntelliJ by using the text `was not equal to`
                   throw new AssertionError( // TODO this is wrong. FIXME please
-                    s"${p.get.apply.apply(in.asScala.toList)} was not equal to ${p.get.apply.apply(v.get)}\n",
+                    s"${p.get(in.asScala.toList)} was not equal to ${p.get(v.get)}\n",
                     e
                   )
                 case x: Exception => throw x // Unexpected, but we throw it anyway.

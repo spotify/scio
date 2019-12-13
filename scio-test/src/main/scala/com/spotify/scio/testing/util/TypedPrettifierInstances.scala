@@ -20,23 +20,20 @@ trait TypedPrettifierInstances extends LowPriorityFallbackTypedPrettifier {
     implicit fallbackPrettifier: Prettifier
   ): TypedPrettifier[T] = new TypedPrettifier[T] {
 
-    /**
-     * The scalatic prettifier for [[IndexedRecord]].
-     */
-    override def apply: Prettifier = {
-      case i: Traversable[_] => // TODO get type of the inner type.
-        val indexed = i.map(_.asInstanceOf[IndexedRecord])
-        val fieldNames =
-          indexed.headOption.map(_.getSchema.getFields.asScala).getOrElse(Nil).map(_.name())
-        prettifyLevelOne(
-          records = indexed,
-          fieldNames = fieldNames,
-          getFieldByIndex = (record: IndexedRecord, idx) => record.get(idx),
-          levelTwoFallback = fallbackPrettifier
-        )
-      case o =>
-        fallbackPrettifier.apply(o)
+    /** When applied on traversables */
+    override def apply(t: Traversable[T]): String = {
+      val fieldNames =
+        t.headOption.map(_.getSchema.getFields.asScala).getOrElse(Nil).map(_.name())
+      prettifyLevelOne(
+        records = t,
+        fieldNames = fieldNames,
+        getFieldByIndex = (record: IndexedRecord, idx) => record.get(idx),
+        levelTwoFallback = fallbackPrettifier
+      )
     }
+
+    /** When applied on a single Avro Record. */
+    override def apply(t: T): String = fallbackPrettifier(t)
   }
 
   /**
@@ -109,8 +106,31 @@ trait LowPriorityFallbackTypedPrettifier {
     implicit scalactic: Prettifier
   ): TypedPrettifier[T] =
     new TypedPrettifier[T] {
-      override def apply: Prettifier = scalactic
+      override def apply(t: T): String = scalactic(t)
+      override def apply(t: Traversable[T]): String = scalactic(t)
     }
 }
 
 object TypedPrettifierInstances extends TypedPrettifierInstances
+
+object MyTest {
+
+  import TypedPrettifierInstances._
+
+  def main(args: Array[String]): Unit = {
+    val avroRecods: Iterable[TestRecord] = (1 to 5).map(
+      i =>
+        TestRecord
+          .newBuilder()
+          .setIntField(i)
+          .setStringField(i.toString)
+          .setBooleanField(false)
+          .setDoubleField(i / 2.0)
+          .build())
+
+    val pre = TypedPrettifier[com.spotify.scio.avro.TestRecord](avroRecods)
+    def red(s: String) = Console.GREEN + s + Console.RESET
+
+    println(s"pre = ${red(pre)}")
+  }
+}

@@ -17,8 +17,12 @@
 
 package com.spotify.scio.testing
 
+import java.io.{IOException, NotSerializableException, ObjectInputStream, ObjectOutputStream}
+
+import com.spotify.scio.avro.TestRecord
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import com.spotify.scio.streaming.ACCUMULATING_FIRED_PANES
+import com.spotify.scio.testing.util.TypedPrettifier
 import com.spotify.scio.values.WindowOptions
 import org.apache.beam.sdk.Pipeline.PipelineExecutionException
 import org.apache.beam.sdk.transforms.windowing.{
@@ -28,16 +32,8 @@ import org.apache.beam.sdk.transforms.windowing.{
 }
 import org.apache.beam.sdk.values.TimestampedValue
 import org.joda.time.{Duration, Instant}
-import java.io.ObjectOutputStream
-import scala.util.Try
-import java.io.ObjectInputStream
-import java.io.IOException
-import java.io.NotSerializableException
 
-import com.spotify.scio.avro.TestRecord
-import com.spotify.scio.schemas.Schema
-import com.spotify.scio.testing.util.TypedPrettifierInstances
-import org.scalactic.Prettifier
+import scala.util.Try
 
 object SCollectionMatchersTest {
   // intentionally not serializable to test lambda ser/de

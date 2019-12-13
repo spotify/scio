@@ -17,10 +17,9 @@ import org.scalactic.Prettifier
  */
 trait TypedPrettifier[T] extends Serializable {
 
-  /**
-   * The scalatic prettifier wrapped for the given type T.
-   */
-  def apply: Prettifier
+  def apply(t: Traversable[T]): String
+
+  def apply(t: T): String
 }
 
 object TypedPrettifier extends TypedPrettifierInstances {
@@ -30,11 +29,11 @@ object TypedPrettifier extends TypedPrettifierInstances {
    * is available.
    */
   def apply[T](t: Traversable[T])(implicit typedPrettifier: TypedPrettifier[T]): String =
-    typedPrettifier.apply.apply(t)
+    typedPrettifier(t)
 
   /**
    * Prettify a Type [[T]] based on current implicit scope.
    */
   def apply[T](t: T)(implicit typedPrettifier: TypedPrettifier[T]): String =
-    typedPrettifier.apply.apply(t)
+    typedPrettifier(t)
 }
