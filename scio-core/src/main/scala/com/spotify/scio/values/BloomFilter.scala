@@ -20,7 +20,6 @@ package com.spotify.scio.values
 import java.io._
 
 import com.google.common.hash.{Funnel, BloomFilter => gBloomFilter}
-import com.spotify.scio.annotations.experimental
 
 /**
  * Bloom Filter - a probabilistic data structure to test approximate presence of an element.
@@ -34,11 +33,7 @@ import com.spotify.scio.annotations.experimental
  *
  * Implemented as an immutable wrapper over Guava's Bloom Filter.
  */
-@SerialVersionUID(1L)
-final case class BloomFilter[T] private (
-  private val internal: gBloomFilter[T],
-  private val funnel: Funnel[T]
-) extends ApproxFilter[T] {
+sealed trait BloomFilter[T] extends ApproxFilter[T] {
 
   /**
    * Returns the probability that [[mightContain(t: T)]] will erroneously return `true`
@@ -50,14 +45,69 @@ final case class BloomFilter[T] private (
    * case that too many elements (more than expected) were present in the original collection
    * from which this [[BloomFilter]] was built.
    */
-  val expectedFpp: Double = internal.expectedFpp()
+  val expectedFpp: Double
 
   /**
    * Returns an estimate for the total number of distinct elements that have been added to this
    * [[BloomFilter]]. This approximation is reasonably accurate if it does not exceed the value of
    * `expectedInsertions` that was used when constructing the filter.
    */
-  val approximateElementCount: Long = internal.approximateElementCount()
+  val approximateElementCount: Long
+
+}
+
+@SerialVersionUID(1L)
+final case class EmptyBloomFilter[T]() extends BloomFilter[T] {
+
+  /**
+   * Returns the probability that [[mightContain(t: T)]] will erroneously return `true`
+   * for an element that was not actually present the colleciton from which this [[BloomFilter]]
+   * was built.
+   *
+   * Ideally, this number should be close to the `fpProb` parameter passed to the [[BloomFilter#apply]]
+   * when this filter was built or smaller. If it is significantly higher, it is usually the
+   * case that too many elements (more than expected) were present in the original collection
+   * from which this [[BloomFilter]] was built.
+   */
+  override val expectedFpp: Double = Double.MinPositiveValue
+
+  /**
+   * Returns an estimate for the total number of distinct elements that have been added to this
+   * [[BloomFilter]]. This approximation is reasonably accurate if it does not exceed the value of
+   * `expectedInsertions` that was used when constructing the filter.
+   */
+  override val approximateElementCount: Long = 0L
+
+  /**
+   * Check if the filter may contain a given element.
+   */
+  override def mightContain(t: T): Boolean = false
+}
+
+@SerialVersionUID(1L)
+final case class BloomFilterInstance[T] private (
+  private val internal: gBloomFilter[T],
+  private val funnel: Funnel[T]
+) extends BloomFilter[T] {
+
+  /**
+   * Returns the probability that [[mightContain(t: T)]] will erroneously return `true`
+   * for an element that was not actually present the colleciton from which this [[BloomFilter]]
+   * was built.
+   *
+   * Ideally, this number should be close to the `fpProb` parameter passed to the [[BloomFilter#apply]]
+   * when this filter was built or smaller. If it is significantly higher, it is usually the
+   * case that too many elements (more than expected) were present in the original collection
+   * from which this [[BloomFilter]] was built.
+   */
+  override val expectedFpp: Double = internal.expectedFpp()
+
+  /**
+   * Returns an estimate for the total number of distinct elements that have been added to this
+   * [[BloomFilter]]. This approximation is reasonably accurate if it does not exceed the value of
+   * `expectedInsertions` that was used when constructing the filter.
+   */
+  override val approximateElementCount: Long = internal.approximateElementCount()
 
   /**
    * Check approximate presence of an element in the BloomFilter
@@ -109,10 +159,10 @@ object BloomFilter {
     while (it.hasNext) {
       bf.put(it.next())
     }
-    BloomFilter(bf, f)
+    BloomFilterInstance(bf, f)
   }
 
-  def empty[T]: BloomFilter[T] = ???
+  def empty[T]: BloomFilter[T] = EmptyBloomFilter()
 
   // ************************************************************************
   // Private helpers for constructing BloomFilters.
