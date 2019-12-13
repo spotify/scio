@@ -74,7 +74,7 @@ trait ApproxFilterCompanion {
   /**
    * [[Coder]] for [[ApproxFilter]]
    */
-  implicit def coder[T, AF[_] <: ApproxFilter[T]]: Coder[AF[T]] = {
+  implicit def coder[T, AF[_] <: ApproxFilter[_]]: Coder[AF[T]] = {
     Coder.beam {
       new AtomicCoder[AF[T]] {
         override def encode(value: AF[T], outStream: OutputStream): Unit =

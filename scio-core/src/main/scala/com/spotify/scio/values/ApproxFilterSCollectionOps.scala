@@ -22,6 +22,7 @@ import com.spotify.scio.coders.Coder
 import scala.language.implicitConversions
 
 class ApproxFilterSCollectionOps[T: Coder](self: SCollection[T]) {
+
   /**
    * Converts the SCollection to an ApproxFilter using the specified Builder.
    *
@@ -76,9 +77,39 @@ class ApproxFilterSCollectionOps[T: Coder](self: SCollection[T]) {
     fpPorb: Double
   )(implicit f: Funnel[T], coder: Coder[BloomFilter[T]]): SideInput[BloomFilter[T]] =
     to(BloomFilter(fpPorb)).asSingletonSideInput
+
+  /**
+   * Filter an SCollection by reusing an [[ApproxFilter]]
+   */
+  def appoxFilter[S >: T: Coder, AF[_] <: ApproxFilter[_]](filterSideInput: SideInput[AF[S]])(
+    implicit afcoder: Coder[AF[S]]): SCollection[T] = {
+    self
+      .withSideInputs(filterSideInput)
+      .filter {
+        case (left, ctx) =>
+          val af: ApproxFilter[S] = ctx(filterSideInput).asInstanceOf[ApproxFilter[S]]
+          af.mayBeContains(left)
+      }
+      .toSCollection
+  }
+
+  /**
+   * Filter an SCollection by reusing an [[ApproxFilter]]
+   */
+  def appoxFilter[S >: T: Coder, AF[_] <: ApproxFilter[_]](filter: SCollection[AF[S]])(
+    implicit afcoder: Coder[AF[S]]): SCollection[T] =
+    appoxFilter(filter.asSingletonSideInput)
+
+  /**
+   * Filter an SCollection by reusing an [[ApproxFilter]]
+   */
+  def appoxFilter[S >: T, AF[_] <: ApproxFilter[_]](filter: AF[S])(
+    implicit afcoder: Coder[AF[S]]): SCollection[T] =
+    appoxFilter(self.context.parallelize(Seq(filter)).asSingletonSideInput)
 }
 
 class ApproxPairSCollectionOps[K: Coder, V: Coder](self: SCollection[(K, V)]) {
+
   /**
    * Construct a [[BloomFilter]] of the values of each key in the current SCollection.
    */
