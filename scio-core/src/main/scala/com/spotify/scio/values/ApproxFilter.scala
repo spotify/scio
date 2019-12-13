@@ -33,12 +33,12 @@ import org.apache.beam.sdk.coders.AtomicCoder
  * For example usage see [[BloomFilter]]
  */
 @experimental
-trait ApproxFilter[-T] extends Serializable {
+trait ApproxFilter[T] extends Serializable {
 
   /**
    * Check if the filter may contain a given element.
    */
-  def mayBeContains(t: T): Boolean
+  def mightContain(t: T): Boolean
 
   /**
    * The serialized size of the filter in bytes.
@@ -48,29 +48,25 @@ trait ApproxFilter[-T] extends Serializable {
     new ObjectOutputStream(cos).writeObject(this)
     cos.getCount.toInt
   }
-}
-
-/**
- * This trait provides an implicit [[Coder]] and other helpers to the [[ApproxFilter]]
- * companion object.
- *
- * It doesn't enforce the user to implement anything.
- */
-@experimental
-trait ApproxFilterCompanion {
 
   // Helper for setting values when deserializing.
-  // This is used by the
-  private[values] def setField(name: String, value: Any): Unit = {
+  // This is used by sub classes to easily set field
+  protected def setField(name: String, value: Any): Unit = {
     val f = getClass.getDeclaredField(name)
     f.setAccessible(true)
     f.set(this, value)
   }
+}
+
+/**
+ * [[Coder]]s for any class that implements the [[ApproxFilter]] trait.
+ */
+object ApproxFilter {
 
   /**
    * [[Coder]] for [[ApproxFilter]]
    */
-  implicit def coder[T, AF[_] <: ApproxFilter[T]]: Coder[AF[T]] = {
+  implicit def coder[T, AF[_] <: ApproxFilter[_]]: Coder[AF[T]] = {
     Coder.beam {
       new AtomicCoder[AF[T]] {
         override def encode(value: AF[T], outStream: OutputStream): Unit =

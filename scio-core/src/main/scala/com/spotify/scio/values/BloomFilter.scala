@@ -21,7 +21,6 @@ import java.io._
 
 import com.google.common.hash.{Funnel, BloomFilter => gBloomFilter}
 import com.spotify.scio.annotations.experimental
-import com.spotify.scio.coders.Coder
 
 /**
  * Bloom Filter - a probabilistic data structure to test approximate presence of an element.
@@ -42,7 +41,7 @@ final case class BloomFilter[T] private (
 ) extends ApproxFilter[T] {
 
   /**
-   * Returns the probability that [[mayBeContains(t: T)]] will erroneously return `true`
+   * Returns the probability that [[mightContain(t: T)]] will erroneously return `true`
    * for an element that was not actually present the colleciton from which this [[BloomFilter]]
    * was built.
    *
@@ -65,7 +64,7 @@ final case class BloomFilter[T] private (
    *
    * @return true if the element may be present, false if it is definitely not present.
    */
-  def mayBeContains(t: T): Boolean = internal.mightContain(t)
+  def mightContain(t: T): Boolean = internal.mightContain(t)
 
   // Java Serialization
   private def writeObject(out: ObjectOutputStream): Unit = {
@@ -76,8 +75,8 @@ final case class BloomFilter[T] private (
   private def readObject(in: ObjectInputStream): Unit = {
     val funnel = in.readObject().asInstanceOf[Funnel[T]]
     val internal = gBloomFilter.readFrom(in, funnel)
-    BloomFilter.setField("funnel", funnel)
-    BloomFilter.setField("internal", internal)
+    setField("funnel", funnel)
+    setField("internal", internal)
   }
 
   /**
@@ -112,7 +111,7 @@ final case class BloomFilter[T] private (
   }
 }
 
-object BloomFilter extends ApproxFilterCompanion {
+object BloomFilter {
 
   /**
    * Constructor for [[BloomFilter]]
@@ -124,18 +123,18 @@ object BloomFilter extends ApproxFilterCompanion {
    */
   def apply[T](
     iterable: Iterable[T],
+    estimatedNumElements: Int,
     fpProb: Double
   )(
     implicit f: Funnel[T]
   ): BloomFilter[T] = {
-    val numElements = iterable.size
-    val settings = BloomFilter.optimalBFSettings(numElements, fpProb)
+    val settings = BloomFilter.optimalBFSettings(estimatedNumElements, fpProb)
     require(
       settings.numBFs == 1,
-      s"BloomFilter overflow: $numElements elements found, max allowed: ${settings.capacity}"
+      s"BloomFilter overflow: $estimatedNumElements elements found, max allowed: ${settings.capacity}"
     )
 
-    val bf = gBloomFilter.create[T](f, numElements, fpProb)
+    val bf = gBloomFilter.create[T](f, estimatedNumElements, fpProb)
     val it = iterable.iterator
     while (it.hasNext) {
       bf.put(it.next())

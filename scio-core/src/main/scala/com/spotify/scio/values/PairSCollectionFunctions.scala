@@ -22,7 +22,7 @@ import java.util.{Map => JMap}
 
 import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
-import com.spotify.scio.util._
+import com.spotify.scio.util.{BloomFilter => mBloomFilter, _}
 import com.spotify.scio.util.random.{BernoulliValueSampler, PoissonValueSampler}
 import com.twitter.algebird.{Aggregator, Hash128, Monoid, Semigroup}
 import org.apache.beam.sdk.transforms._
@@ -660,8 +660,8 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
 
     val numKeysPerPartition = if (bfSettings.numBFs == 1) thisNumKeys.toInt else bfSettings.capacity
     val n = bfSettings.numBFs
-    val width = BloomFilter.optimalWidth(numKeysPerPartition, fpProb).get
-    val numHashes = BloomFilter.optimalNumHashes(numKeysPerPartition, width)
+    val width = mBloomFilter.optimalWidth(numKeysPerPartition, fpProb).get
+    val numHashes = mBloomFilter.optimalNumHashes(numKeysPerPartition, width)
     val bfAggregator = BloomFilterAggregator[K](numHashes, width)
     self.keys
       .hashPartition(n)
