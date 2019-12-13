@@ -79,36 +79,6 @@ final case class BloomFilter[T] private (
     setField("internal", internal)
   }
 
-  /**
-   * Add an element to this [[BloomFilter]]. It creates a copy of the underlying
-   * structure.
-   *
-   * For creating BloomFilters from large collections, use [[BloomFilter#apply(Iterable)]]
-   * instead.
-   */
-  @experimental
-  def put(t: T): BloomFilter[T] = {
-    val copyOfInternal = internal.copy()
-    copyOfInternal.put(t)
-    this.copy(internal = copyOfInternal)
-  }
-
-  /**
-   * Add an Itearable of elements to this [[BloomFilter]]. It creates a copy of the underlying
-   * structure.
-   *
-   * For creating BloomFilters from large collections, use [[BloomFilter#apply(Iterable)]]
-   * instead.
-   */
-  @experimental
-  def putAll(elements: Iterable[T]): BloomFilter[T] = {
-    val copyOfInternal = internal.copy()
-    val it = elements.iterator
-    while (it.hasNext) {
-      copyOfInternal.put(it.next())
-    }
-    this.copy(internal = copyOfInternal)
-  }
 }
 
 object BloomFilter {
@@ -142,21 +112,7 @@ object BloomFilter {
     BloomFilter(bf, f)
   }
 
-  /**
-   * Constructor for an empty [[BloomFilter]]
-   *
-   * An empty BloomFilter is particularly useful when used with
-   * [[SCollection.asSetSingletonSideInput(defaultValue)]]
-   *
-   * @param numElements The number of elements that we might later want to insert using
-   *                    [[BloomFilter.put]] to create a new [[BloomFilter]]
-   * @param fpProb Expected false positive probability of the resulting [[BloomFilter]]
-   *               Default 0.01 (1 %)
-   */
-  def empty[T: Funnel](numElements: Int, fpProb: Double = 0.01): BloomFilter[T] = {
-    val f = implicitly[Funnel[T]]
-    BloomFilter(gBloomFilter.create[T](f, numElements, fpProb), f)
-  }
+  def empty[T]: BloomFilter[T] = ???
 
   // ************************************************************************
   // Private helpers for constructing BloomFilters.
