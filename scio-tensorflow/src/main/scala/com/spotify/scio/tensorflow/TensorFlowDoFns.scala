@@ -19,6 +19,7 @@ package com.spotify.scio.tensorflow
 
 import java.time.Duration
 import java.util.concurrent.{ConcurrentHashMap, ConcurrentMap}
+import java.util.function.Function
 
 import com.spotify.zoltar.tf.{TensorFlowLoader, TensorFlowModel}
 import com.spotify.zoltar.Model
@@ -94,10 +95,13 @@ private[tensorflow] abstract class SavedBundlePredictDoFn[T, V](
     @transient lazy val model = getResource
       .computeIfAbsent(
         modelId,
-        (_: String) =>
-          TensorFlowLoader
-            .create(Id.create(modelId), uri, options, signatureName)
-            .get(Duration.ofDays(Integer.MAX_VALUE))
+        new Function[String, TensorFlowModel] {
+          override def apply(v1: String): TensorFlowModel =
+            TensorFlowLoader
+              .create(Id.create(modelId), uri, options, signatureName)
+              .get(Duration.ofDays(Integer.MAX_VALUE))
+
+        }
       )
     model
   }
