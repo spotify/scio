@@ -36,6 +36,7 @@ object NearestNeighbor {
    * @param stages number of times a vector is bucketed
    * @param buckets number of buckets per stage
    */
+  @deprecated("NearestNeighbor support is deprecated, use Annoy instead", "0.8.0")
   def newLSHBuilder[K: ClassTag, @sp(Double, Int, Float, Long) V: ClassTag: Numeric: Semiring](
     dimension: Int,
     stages: Int,
@@ -47,6 +48,7 @@ object NearestNeighbor {
    * Create a new builder for matrix based [[NearestNeighbor]].
    * @param dimension dimension of input vectors
    */
+  @deprecated("NearestNeighbor support is deprecated, use Annoy instead", "0.8.0")
   def newMatrixBuilder[K: ClassTag, @sp(Double, Int, Float, Long) V: ClassTag: Numeric: Semiring](
     dimension: Int
   ): NearestNeighborBuilder[K, V] =

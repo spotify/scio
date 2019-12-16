@@ -24,7 +24,6 @@ import com.spotify.scio.io.FileStorage
 import com.spotify.scio.testing.TestDataManager
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
-import org.apache.beam.sdk.io.FileSystems
 
 /**
  * Main package for checkpoint API. Import all.
@@ -52,8 +51,12 @@ package object checkpoint {
      * @param fn result of this arbitrary => [[com.spotify.scio.values.SCollection SCollection]]
      *           flow is what is checkpointed
      */
+    @deprecated(
+      "Checkpoint support is deprecated, " +
+        "use smaller workflows and orchestration framework instead",
+      "0.8.0"
+    )
     def checkpoint[T: Coder](fileOrPath: String)(fn: => SCollection[T]): SCollection[T] = {
-      FileSystems.setDefaultPipelineOptions(self.options)
       val path = if (self.isTest) {
         fileOrPath
       } else {
