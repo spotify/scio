@@ -34,7 +34,7 @@ import com.spotify.scio.transforms.DoFnWithResource.ResourceType
 import com.spotify.zoltar.Model.Id
 
 sealed trait PredictDoFn[T, V, M <: Model[_]]
-  extends DoFnWithResource[T, V, ConcurrentMap[String, M]] {
+    extends DoFnWithResource[T, V, ConcurrentMap[String, M]] {
   @transient private lazy val log = LoggerFactory.getLogger(this.getClass)
 
   def withRunner(f: Session#Runner => V): V
@@ -47,7 +47,7 @@ sealed trait PredictDoFn[T, V, M <: Model[_]]
 
   override def createResource(): ConcurrentMap[String, M] = new ConcurrentHashMap[String, M]()
 
-  override def getResourceType: DoFnWithResource.ResourceType = ResourceType.PER_INSTANCE
+  override def getResourceType: DoFnWithResource.ResourceType = ResourceType.PER_CLASS
 
   /**
    * Process an element asynchronously.
@@ -90,30 +90,35 @@ private[tensorflow] abstract class SavedBundlePredictDoFn[T, V](
   options: TensorFlowModel.Options
 ) extends PredictDoFn[T, V, TensorFlowModel] {
   @transient private lazy val log = LoggerFactory.getLogger(this.getClass)
-
-  @transient protected lazy val model: TensorFlowModel = getResource
-    .computeIfAbsent(
-      id,
-      (_: String) => {
+  def getModel: TensorFlowModel = {
+    @transient lazy val model = getResource
+      .computeIfAbsent(
+        modelId,
+        (_: String) =>
           TensorFlowLoader
-            .create(Id.create(id), uri, options, signatureName)
+            .create(Id.create(modelId), uri, options, signatureName)
             .get(Duration.ofDays(Integer.MAX_VALUE))
-      }
-    )
+      )
+    model
+  }
 
   override def withRunner(f: Session#Runner => V): V =
-    f(model.instance().session().runner())
+    f(getModel.instance().session().runner())
 
-  def id(): String = {
+  def modelId: String = {
     val tokens = Seq("tf", uri, signatureName) ++ Seq(options.tags.asScala.mkString(";"))
     tokens.mkString(":")
   }
 
+  /**
+   * We explicitly don't close resources because:
+   *   - The same model can be used by two different processes within the same JVM,
+   *   and one closing it first will cause the other to crash.
+   *   - Models should be cleaned up at the end of the JVM run-time
+   */
   @Teardown
-  def teardown(): Unit = {
+  def teardown(): Unit =
     log.info(s"Tearing down predict DoFn $this")
-    model.close()
-  }
 }
 
 object SavedBundlePredictDoFn {
@@ -140,28 +145,28 @@ object SavedBundlePredictDoFn {
     inFn: T => Map[String, Tensor[_]],
     outFn: (T, Map[String, Tensor[_]]) => V
   ): SavedBundlePredictDoFn[T, V] = new SavedBundlePredictDoFn[T, V](uri, signatureName, options) {
-    @transient private lazy val requestedFetchOps: Map[String, String] = {
-      val exportedFetchOps = model.outputsNameMap().asScala.toMap
-      fetchOps
-        .map { tensorIds =>
-          tensorIds.iterator.map { tensorId =>
-            tensorId -> exportedFetchOps(tensorId)
-          }.toMap
-        }
-        .getOrElse(exportedFetchOps)
-    }
+    @transient private lazy val exportedFetchOps =
+      getModel.outputsNameMap().asScala.toMap
+    @transient private lazy val requestedFetchOps: Map[String, String] = fetchOps
+      .map { tensorIds =>
+        tensorIds.iterator.map { tensorId =>
+          tensorId -> exportedFetchOps(tensorId)
+        }.toMap
+      }
+      .getOrElse(exportedFetchOps)
 
     override def extractInput(input: T): Map[String, Tensor[_]] = {
       val extractedInput = inFn(input)
       extractedInput.iterator.map {
         case (tensorId, tensor) =>
-          model.inputsNameMap().get(tensorId) -> tensor
+          getModel.inputsNameMap().get(tensorId) -> tensor
       }.toMap
     }
 
     override def extractOutput(input: T, out: Map[String, Tensor[_]]): V =
-      outFn(input, requestedFetchOps.iterator.map{ case (tensorId, opName) =>
-        tensorId -> out(opName)
+      outFn(input, requestedFetchOps.iterator.map {
+        case (tensorId, opName) =>
+          tensorId -> out(opName)
       }.toMap)
 
     override def outputTensorNames: Seq[String] = requestedFetchOps.values.toSeq
@@ -180,27 +185,27 @@ object SavedBundlePredictDoFn {
     outFn: (T, Map[String, Tensor[_]]) => V
   )(implicit ev: T <:< Example): SavedBundlePredictDoFn[T, V] =
     new SavedBundlePredictDoFn[T, V](uri, signatureName, options) {
-      @transient private lazy val requestedFetchOps: Map[String, String] = {
-        val exportedFetchOps = model.outputsNameMap().asScala.toMap
-        fetchOps
-          .map { tensorIds =>
-            tensorIds.iterator.map { tensorId =>
-              tensorId -> exportedFetchOps(tensorId)
-            }.toMap
-          }
-          .getOrElse(exportedFetchOps)
-      }
+      @transient private lazy val exportedFetchOps =
+        getModel.outputsNameMap().asScala.toMap
+      @transient private lazy val requestedFetchOps: Map[String, String] = fetchOps
+        .map { tensorIds =>
+          tensorIds.iterator.map { tensorId =>
+            tensorId -> exportedFetchOps(tensorId)
+          }.toMap
+        }
+        .getOrElse(exportedFetchOps)
 
       override def outputTensorNames: Seq[String] = requestedFetchOps.values.toSeq
 
       override def extractInput(input: T): Map[String, Tensor[_]] = {
-        val i = model.inputsNameMap().get(exampleTensorName)
-        Map(i -> Tensors.create(Array(input.toByteArray)))
+        val opeName = getModel.inputsNameMap().get(exampleTensorName)
+        Map(opeName -> Tensors.create(Array(input.toByteArray)))
       }
 
       override def extractOutput(input: T, out: Map[String, Tensor[_]]): V =
-        outFn(input, requestedFetchOps.iterator.map{ case (tensorId, opName) =>
-          tensorId -> out(opName)
+        outFn(input, requestedFetchOps.iterator.map {
+          case (tensorId, opName) =>
+            tensorId -> out(opName)
         }.toMap)
     }
 }
