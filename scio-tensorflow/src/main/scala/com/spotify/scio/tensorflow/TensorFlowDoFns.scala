@@ -202,8 +202,8 @@ object SavedBundlePredictDoFn {
       override def outputTensorNames: Seq[String] = requestedFetchOps.values.toSeq
 
       override def extractInput(input: T): Map[String, Tensor[_]] = {
-        val opeName = getModel.inputsNameMap().get(exampleTensorName)
-        Map(opeName -> Tensors.create(Array(input.toByteArray)))
+        val opName = getModel.inputsNameMap().get(exampleTensorName)
+        Map(opName -> Tensors.create(Array(input.toByteArray)))
       }
 
       override def extractOutput(input: T, out: Map[String, Tensor[_]]): V =
