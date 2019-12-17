@@ -18,6 +18,7 @@
 package com.spotify.scio.smb.syntax
 
 import com.spotify.scio.ScioContext
+import com.spotify.scio.annotations.experimental
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.values._
 import org.apache.beam.sdk.extensions.smb.SortedBucketIO
@@ -53,6 +54,7 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) {
    * @param lhs
    * @param rhs
    */
+  @experimental
   def sortMergeJoin[K: Coder, L: Coder, R: Coder](
     keyClass: Class[K],
     lhs: SortedBucketIO.Read[L],
@@ -100,6 +102,7 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) {
    *                 [[org.apache.beam.sdk.coders.CoderRegistry]] as custom key coders are not
    *                 supported yet.
    */
+  @experimental
   def sortMergeCoGroup[K: Coder, A: Coder, B: Coder](
     keyClass: Class[K],
     a: SortedBucketIO.Read[A],
@@ -141,6 +144,7 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) {
    *                 [[org.apache.beam.sdk.coders.CoderRegistry]] as custom key coders are not
    *                 supported yet.
    */
+  @experimental
   def sortMergeCoGroup[K: Coder, A: Coder, B: Coder, C: Coder](
     keyClass: Class[K],
     a: SortedBucketIO.Read[A],
@@ -185,6 +189,7 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) {
    *                 [[org.apache.beam.sdk.coders.CoderRegistry]] as custom key coders are not
    *                 supported yet.
    */
+  @experimental
   def sortMergeCoGroup[K: Coder, A: Coder, B: Coder, C: Coder, D: Coder](
     keyClass: Class[K],
     a: SortedBucketIO.Read[A],
