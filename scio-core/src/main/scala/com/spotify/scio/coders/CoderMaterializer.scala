@@ -99,5 +99,5 @@ object CoderMaterializer {
     }
 
   def kvCoder[K, V](ctx: ScioContext)(implicit k: Coder[K], v: Coder[V]): KvCoder[K, V] =
-    KvCoder.of(beam(ctx, Coder[K]), beam(ctx, Coder[V]))
+    KvCoder.of(beam(ctx, k), beam(ctx, v))
 }
