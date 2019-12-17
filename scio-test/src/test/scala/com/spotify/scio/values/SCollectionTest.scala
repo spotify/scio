@@ -358,24 +358,25 @@ class SCollectionTest extends PipelineSpec {
 
   it should "support randomSplit()" in {
     runWithContext { sc =>
-      def round(c: Long): Long = math.round(c / 100.0) * 100
-      val p1 = sc.parallelize(0 to 1000).randomSplit(Array(0.3, 0.7))
-      val p2 = sc.parallelize(0 to 1000).randomSplit(Array(0.2, 0.3, 0.5))
+      val total = 5000
+      def round(c: Long): Double = math.round(c * 10.0 / total) / 10.0
+      val p1 = sc.parallelize(0 to total).randomSplit(Array(0.3, 0.7))
+      val p2 = sc.parallelize(0 to total).randomSplit(Array(0.2, 0.3, 0.5))
       p1.length shouldBe 2
       p2.length shouldBe 3
-      p1(0).count.map(round) should containSingleValue(300L)
-      p1(1).count.map(round) should containSingleValue(700L)
-      p2(0).count.map(round) should containSingleValue(200L)
-      p2(1).count.map(round) should containSingleValue(300L)
-      p2(2).count.map(round) should containSingleValue(500L)
+      p1(0).count.map(round) should containSingleValue(0.3)
+      p1(1).count.map(round) should containSingleValue(0.7)
+      p2(0).count.map(round) should containSingleValue(0.2)
+      p2(1).count.map(round) should containSingleValue(0.3)
+      p2(2).count.map(round) should containSingleValue(0.5)
 
-      val (pa, pb) = sc.parallelize(0 to 1000).randomSplit(0.3)
-      val (pc, pd, pe) = sc.parallelize(0 to 1000).randomSplit(0.2, 0.3)
-      pa.count.map(round) should containSingleValue(300L)
-      pb.count.map(round) should containSingleValue(700L)
-      pc.count.map(round) should containSingleValue(200L)
-      pd.count.map(round) should containSingleValue(300L)
-      pe.count.map(round) should containSingleValue(500L)
+      val (pa, pb) = sc.parallelize(0 to 5000).randomSplit(0.3)
+      val (pc, pd, pe) = sc.parallelize(0 to 5000).randomSplit(0.2, 0.3)
+      pa.count.map(round) should containSingleValue(0.3)
+      pb.count.map(round) should containSingleValue(0.7)
+      pc.count.map(round) should containSingleValue(0.2)
+      pd.count.map(round) should containSingleValue(0.3)
+      pe.count.map(round) should containSingleValue(0.5)
     }
   }
 
