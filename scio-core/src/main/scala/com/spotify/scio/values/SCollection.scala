@@ -23,7 +23,6 @@ import java.util.concurrent.ThreadLocalRandom
 
 import com.google.datastore.v1.Entity
 import com.spotify.scio.ScioContext
-import com.spotify.scio.annotations.experimental
 import com.spotify.scio.coders.{AvroBytesUtil, Coder, CoderMaterializer}
 import com.spotify.scio.io._
 import com.spotify.scio.schemas.{Schema, SchemaMaterializer, To}
