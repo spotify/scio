@@ -23,7 +23,6 @@ import java.util.concurrent.ThreadLocalRandom
 
 import com.google.datastore.v1.Entity
 import com.spotify.scio.ScioContext
-import com.spotify.scio.annotations.experimental
 import com.spotify.scio.coders.{AvroBytesUtil, Coder, CoderMaterializer}
 import com.spotify.scio.io._
 import com.spotify.scio.schemas.{Schema, SchemaMaterializer, To}
@@ -176,10 +175,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   }
 
   /** Apply a transform. */
-  @experimental
   def transform[U](f: SCollection[T] => SCollection[U]): SCollection[U] = transform(this.tfName)(f)
 
-  @experimental
   def transform[U](name: String)(f: SCollection[T] => SCollection[U]): SCollection[U] =
     context.wrap {
       internal.apply(name, new PTransform[PCollection[T], PCollection[U]]() {
