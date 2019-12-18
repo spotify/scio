@@ -59,7 +59,11 @@ trait PipelineSpec
       .toList
 
   implicit def beamOptions: BeamOptions = {
-    assume(beamOpts != null)
+    assume(
+      beamOpts != null,
+      "PipelineSpec#beamOpts is null, are you using JobTest outside of a " +
+        "`\"Test\" should \"work\" in {}` block?"
+    )
     beamOpts
   }
 
