@@ -16,6 +16,7 @@
  */
 package com.spotify.scio.sql
 
+import com.spotify.scio.annotations.experimental
 import com.spotify.scio.values.SCollection
 import com.spotify.scio.schemas.Schema
 import org.apache.beam.sdk.values.TupleTag
@@ -48,6 +49,7 @@ final class SqlInterpolator(private val sc: StringContext) extends AnyVal {
         udf.fnName
     }
 
+  @experimental
   def sql(p0: SqlParam, ps: SqlParam*): SQLBuilder = {
     val params = p0 :: ps.toList
 
@@ -73,6 +75,7 @@ final class SqlInterpolator(private val sc: StringContext) extends AnyVal {
     SQLBuilders.from(q, tags.values.toList, udfs)
   }
 
+  @experimental
   def tsql(ps: Any*): SQLBuilder =
     macro SqlInterpolatorMacro.builder
 }
