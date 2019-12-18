@@ -17,6 +17,7 @@
 
 package com.spotify.scio.smb.syntax
 
+import com.spotify.scio.annotations.experimental
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.io.{ClosedTap, EmptyTap}
 import com.spotify.scio.values._
@@ -42,6 +43,7 @@ final class SortedBucketSCollection[T: Coder](private val self: SCollection[T]) 
    * @param write the [[PTransform]] that applies a [[SortedBucketSink]] transform to the input
    *              data. It contains information about key function, bucket and shard size, etc.
    */
+  @experimental
   def saveAsSortedBucket(write: Write): ClosedTap[Nothing] = {
     self.applyInternal(write)
 
