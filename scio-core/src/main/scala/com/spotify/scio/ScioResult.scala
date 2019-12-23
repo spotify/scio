@@ -63,10 +63,7 @@ abstract class ScioResult private[scio] (val internal: PipelineResult) {
   /** Whether this is the result of a test. */
   def isTest: Boolean = false
 
-  @deprecated(
-    "ScioResult is guaranteed to be completed in Scio > 0.8.0",
-    since = "0.8.0"
-  )
+  @deprecated("ScioResult is guaranteed to be completed in Scio > 0.8.0", since = "0.8.0")
   def isCompleted: Boolean = true
 
   @deprecated(

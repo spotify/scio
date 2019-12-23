@@ -82,13 +82,13 @@ object JobTest {
     wasRunInvoked: Boolean = false
   )
 
-  private sealed trait MetricsAssertion[M <: beam.Metric, V]
-  private final case class SingleMetricAssertion[M <: beam.Metric, V](
+  sealed private trait MetricsAssertion[M <: beam.Metric, V]
+  final private case class SingleMetricAssertion[M <: beam.Metric, V](
     metric: M,
     assert: V => Any
   ) extends MetricsAssertion[M, V]
 
-  private final case class AllMetricsAssertion[M <: beam.Metric, V](
+  final private case class AllMetricsAssertion[M <: beam.Metric, V](
     assert: Map[beam.MetricName, V] => Any
   ) extends MetricsAssertion[M, V]
 

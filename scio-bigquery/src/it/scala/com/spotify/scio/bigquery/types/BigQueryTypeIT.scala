@@ -52,17 +52,12 @@ object BigQueryTypeIT {
   )
   class SqlLatestT
 
-  @BigQueryType.fromQuery(
-    """
+  @BigQueryType.fromQuery("""
       |SELECT word, word_count
       |FROM `data-integration-test.partition_a.table_%s`
       |WHERE word_count > %3$d and word != '%%'
       |LIMIT %d
-    """.stripMargin,
-    "$LATEST",
-    1,
-    1
-  )
+    """.stripMargin, "$LATEST", 1, 1)
   class SqlLatestTWithMultiArgs
 
   @BigQueryType.fromTable("data-integration-test:partition_a.table_%s", "$LATEST")

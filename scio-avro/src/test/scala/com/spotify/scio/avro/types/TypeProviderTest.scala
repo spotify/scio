@@ -30,7 +30,7 @@ import scala.reflect.runtime.universe._
 
 class TypeProviderTest extends AnyFlatSpec with Matchers {
   @AvroType.fromSchema(
-    """{"type":"record","name": "Record","fields":[{"name":"f1","type":"int"}]}"""
+    "{\"type\":\"record\",\"name\": \"Record\",\"fields\":[{\"name\":\"f1\",\"type\":\"int\"}]}"
   )
   class StringLiteralRecord
 
@@ -830,7 +830,7 @@ class TypeProviderTest extends AnyFlatSpec with Matchers {
 
   @Annotation1
   @AvroType.fromSchema(
-    """{"type":"record","name": "Record","fields":[{"name":"f1","type":"int"}]}"""
+    "{\"type\":\"record\",\"name\": \"Record\",\"fields\":[{\"name\":\"f1\",\"type\":\"int\"}]}"
   )
   @Annotation2
   class SchemaWithSurroundingAnnotations
@@ -840,7 +840,7 @@ class TypeProviderTest extends AnyFlatSpec with Matchers {
   }
 
   @AvroType.fromSchema(
-    """{"type":"record","name": "Record","fields":[{"name":"f1","type":"int"}]}"""
+    "{\"type\":\"record\",\"name\": \"Record\",\"fields\":[{\"name\":\"f1\",\"type\":\"int\"}]}"
   )
   @Annotation1
   @Annotation2

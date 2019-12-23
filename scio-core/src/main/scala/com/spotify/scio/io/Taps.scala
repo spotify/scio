@@ -51,7 +51,7 @@ trait Taps {
 }
 
 /** Taps implementation that fails immediately if tap not available. */
-private final class ImmediateTaps extends Taps {
+final private class ImmediateTaps extends Taps {
   override private[scio] def mkTap[T](
     name: String,
     readyFn: () => Boolean,
@@ -73,7 +73,7 @@ private object PollingTaps {
 }
 
 /** Taps implementation that polls for tap availability in the background. */
-private final class PollingTaps(private[this] val backOff: BackOff) extends Taps {
+final private class PollingTaps(private[this] val backOff: BackOff) extends Taps {
   import PollingTaps._
 
   private[this] var polls: List[Poll] = _

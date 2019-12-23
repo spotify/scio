@@ -47,7 +47,7 @@ private object NothingCoder extends AtomicCoder[Nothing] {
  * Most Coders TupleX are derived by Magnolia but we specialize Coder[(A, B)] for
  * performance reasons given that pairs are really common and used in groupBy operations.
  */
-private final class PairCoder[A, B](ac: BCoder[A], bc: BCoder[B]) extends AtomicCoder[(A, B)] {
+final private class PairCoder[A, B](ac: BCoder[A], bc: BCoder[B]) extends AtomicCoder[(A, B)] {
   @inline def onErrorMsg[T](msg: => (String, String))(f: => T): T =
     try {
       f
@@ -117,7 +117,7 @@ private final class PairCoder[A, B](ac: BCoder[A], bc: BCoder[B]) extends Atomic
   }
 }
 
-private abstract class BaseSeqLikeCoder[M[_], T](val elemCoder: BCoder[T])(
+abstract private class BaseSeqLikeCoder[M[_], T](val elemCoder: BCoder[T])(
   implicit toSeq: M[T] => TraversableOnce[T]
 ) extends AtomicCoder[M[T]] {
   override def getCoderArguments: java.util.List[_ <: BCoder[_]] =
@@ -148,7 +148,7 @@ private abstract class BaseSeqLikeCoder[M[_], T](val elemCoder: BCoder[T])(
   }
 }
 
-private abstract class SeqLikeCoder[M[_], T](bc: BCoder[T])(
+abstract private class SeqLikeCoder[M[_], T](bc: BCoder[T])(
   implicit toSeq: M[T] => TraversableOnce[T]
 ) extends BaseSeqLikeCoder[M, T](bc) {
   protected val lc = VarIntCoder.of()

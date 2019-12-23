@@ -35,7 +35,7 @@ sealed trait DistCache[F] extends Serializable {
   def apply(): F
 }
 
-private[scio] abstract class FileDistCache[F](options: PipelineOptions) extends DistCache[F] {
+abstract private[scio] class FileDistCache[F](options: PipelineOptions) extends DistCache[F] {
   override def apply(): F = data
 
   protected def init: F

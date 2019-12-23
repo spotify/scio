@@ -210,7 +210,7 @@ object BigQuery {
   def apply(project: String, credentials: => Credentials): BigQuery =
     new BigQuery(new Client(project, credentials))
 
-  private[client] final class Client(val project: String, _credentials: => Credentials) {
+  final private[client] class Client(val project: String, _credentials: => Credentials) {
     require(
       project != null && project.nonEmpty,
       "Invalid projectId. It should be a non-empty string"

@@ -303,8 +303,7 @@ trait ScioExecutionContext {
 
 object ScioExecutionContext {
   @deprecated(
-    "ScioContext.close now returns a ScioExecutionContext instead of a ScioResult." +
-      " See https://spotify.github.io/scio/migrations/v0.8.0.html#sciocontext",
+    "ScioContext.close now returns a ScioExecutionContext instead of a ScioResult." + " See https://spotify.github.io/scio/migrations/v0.8.0.html#sciocontext",
     since = "0.8.0"
   )
   implicit def toResult(sec: ScioExecutionContext): ScioResult =
@@ -857,17 +856,15 @@ class ScioContext private[scio] (
         )
       )
     }
-  @deprecated(
-    "\n⛔" +
-      "\n⛔️  makeFuture is PRIVATE and you should NOT be using it" +
-      "\n⛔️     - Scio's internals were simplified and it removed the need for makeFuture" +
-      "\n⛔️     - The current implementation is only there for back-compatibility" +
-      "\n⛔️     - There's NO GUARANTEE that its behavior is 100% similar to Scio < 0.8" +
-      "\n⛔️     - IT WILL BE REMOVED VERY SOON!" +
-      "\n⛔️ https://spotify.github.io/scio/migrations/v0.8.0.html#scala-concurrent-future-removed-from-scioios️" +
-      "\n⛔️",
-    since = "0.8.0"
-  )
+  @deprecated("""
+⛔""" + """
+⛔️  makeFuture is PRIVATE and you should NOT be using it""" + """
+⛔️     - Scio's internals were simplified and it removed the need for makeFuture""" + """
+⛔️     - The current implementation is only there for back-compatibility""" + """
+⛔️     - There's NO GUARANTEE that its behavior is 100% similar to Scio < 0.8""" + """
+⛔️     - IT WILL BE REMOVED VERY SOON!""" + """
+⛔️ https://spotify.github.io/scio/migrations/v0.8.0.html#scala-concurrent-future-removed-from-scioios️""" + """
+⛔️""", since = "0.8.0")
   private[scio] def makeFuture[T](value: Tap[T]): Future[Tap[T]] =
     Future.successful(value)
 

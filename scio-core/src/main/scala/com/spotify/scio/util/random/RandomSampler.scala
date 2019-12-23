@@ -38,7 +38,7 @@ private[scio] object RandomSampler {
   val roundingEpsilon = 1e-6
 }
 
-private[scio] abstract class RandomSampler[T, R] extends DoFn[T, T] {
+abstract private[scio] class RandomSampler[T, R] extends DoFn[T, T] {
   protected var rng: R = _
   protected var seed: Long = -1
 
@@ -123,7 +123,7 @@ private[scio] class PoissonSampler[T](val fraction: Double)
   override def samples: Int = if (fraction <= 0.0) 0 else rng.sample()
 }
 
-private[scio] abstract class RandomValueSampler[K, V, R](val fractions: Map[K, Double])
+abstract private[scio] class RandomValueSampler[K, V, R](val fractions: Map[K, Double])
     extends DoFn[(K, V), (K, V)] {
   protected var rngs: Map[K, R] = null.asInstanceOf[Map[K, R]]
   protected var seed: Long = -1

@@ -58,7 +58,7 @@ object To {
   }
 
   // Error API
-  private sealed trait Error
+  sealed private trait Error
   private case class NullableError(got: Nullable, expected: Nullable) extends Error
   private case class TypeError(got: BSchema.FieldType, expected: BSchema.FieldType) extends Error
   private case object FieldNotFound extends Error
@@ -225,7 +225,7 @@ object To {
 import scala.reflect.macros._
 import reflect.runtime.{universe => u}
 
-private[scio] final class FastEval(evalToolBox: ToolBox[u.type]) {
+final private[scio] class FastEval(evalToolBox: ToolBox[u.type]) {
   def eval[T](ctx: blackbox.Context)(expr: ctx.Expr[T]): T = {
     import ctx.universe._
 
@@ -249,7 +249,7 @@ private[scio] final class FastEval(evalToolBox: ToolBox[u.type]) {
  * This is faster bc. resusing the same toolbox also meas reusing the same classloader,
  * which saves disks IOs since we don't load the same classes from disk multiple times
  */
-private[scio] final object FastEval {
+final private[scio] object FastEval {
   import scala.tools.reflect._
 
   private lazy val tl: ToolBox[u.type] = {

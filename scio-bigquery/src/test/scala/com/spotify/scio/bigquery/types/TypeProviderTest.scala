@@ -32,7 +32,7 @@ object TypeProviderTest {
   case class RefinedClass(a1: Int)
 
   @BigQueryType.fromSchema(
-    """{"fields": [{"mode": "REQUIRED", "name": "f1", "type": "INTEGER"}]}"""
+    "{\"fields\": [{\"mode\": \"REQUIRED\", \"name\": \"f1\", \"type\": \"INTEGER\"}]}"
   )
   class S1
 
@@ -101,7 +101,7 @@ class TypeProviderTest extends AnyFlatSpec with Matchers {
     SerializableUtils.ensureSerializable[BigQueryTag](new BigQueryTag())
   }
 
-  @BigQueryType.fromSchema("""{"fields": [{"name": "f1", "type": "INTEGER"}]}""")
+  @BigQueryType.fromSchema("{\"fields\": [{\"name\": \"f1\", \"type\": \"INTEGER\"}]}")
   class MissingMode
 
   it should "support missing mode" in {
@@ -534,7 +534,9 @@ class TypeProviderTest extends AnyFlatSpec with Matchers {
   }
 
   @Annotation1
-  @BigQueryType.fromSchema("""{"fields": [ {"mode": "REQUIRED", "name": "f1", "type": "DATE"} ]}""")
+  @BigQueryType.fromSchema(
+    "{\"fields\": [ {\"mode\": \"REQUIRED\", \"name\": \"f1\", \"type\": \"DATE\"} ]}"
+  )
   @Annotation2
   class SchemaWithSurroundingAnnotations
 
@@ -542,7 +544,9 @@ class TypeProviderTest extends AnyFlatSpec with Matchers {
     containsAllAnnotTypes[SchemaWithSurroundingAnnotations]
   }
 
-  @BigQueryType.fromSchema("""{"fields": [ {"mode": "REQUIRED", "name": "f1", "type": "DATE"} ]}""")
+  @BigQueryType.fromSchema(
+    "{\"fields\": [ {\"mode\": \"REQUIRED\", \"name\": \"f1\", \"type\": \"DATE\"} ]}"
+  )
   @Annotation1
   @Annotation2
   class SchemaWithSequentialAnnotations

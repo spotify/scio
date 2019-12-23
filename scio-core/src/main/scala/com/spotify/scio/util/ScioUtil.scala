@@ -39,7 +39,7 @@ private[scio] object ScioUtil {
       case Failure(e) => Left(e)
     }
 
-  @transient lazy private val log = LoggerFactory.getLogger(this.getClass)
+  @transient private lazy val log = LoggerFactory.getLogger(this.getClass)
   @transient lazy val jsonFactory = Transport.getJsonFactory
 
   def isLocalUri(uri: URI): Boolean =

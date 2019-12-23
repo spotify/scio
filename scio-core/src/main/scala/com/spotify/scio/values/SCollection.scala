@@ -86,7 +86,7 @@ object SCollection {
   ): PairSkewedSCollectionFunctions[K, V] =
     new PairSkewedSCollectionFunctions(s)
 
-  private[scio] final case class State(postCoGroup: Boolean = false)
+  final private[scio] case class State(postCoGroup: Boolean = false)
 }
 
 /**

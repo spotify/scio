@@ -66,7 +66,7 @@ Cannot find an implicit Coder instance for type:
 )
 sealed trait Coder[T] extends Serializable
 
-private[scio] final class Ref[T](val typeName: String, c: => Coder[T]) extends Coder[T] {
+final private[scio] class Ref[T](val typeName: String, c: => Coder[T]) extends Coder[T] {
   def value: Coder[T] = c
 
   override def toString(): String = s"""Ref($typeName)"""
@@ -114,7 +114,7 @@ final case class KVCoder[K, V] private (koder: Coder[K], voder: Coder[V]) extend
   override def toString: String = s"KVCoder($koder, $voder)"
 }
 
-private final case class DisjunctionCoder[T, Id](
+final private case class DisjunctionCoder[T, Id](
   typeName: String,
   idCoder: BCoder[Id],
   id: T => Id,
@@ -172,7 +172,7 @@ private final case class DisjunctionCoder[T, Id](
     }
 }
 
-private[scio] final case class RefCoder[T](val typeName: String, var coder: BCoder[T])
+final private[scio] case class RefCoder[T](val typeName: String, var coder: BCoder[T])
     extends BCoder[T] {
   def setImpl(_c: BCoder[T]): Unit = coder = _c
 
@@ -259,7 +259,7 @@ private[scio] object WrappedBCoder {
 // Coder used internally specifically for Magnolia derived coders.
 // It's technically possible to define Product coders only in terms of `Coder.transform`
 // This is just faster
-private[scio] final case class RecordCoder[T](
+final private[scio] case class RecordCoder[T](
   typeName: String,
   cs: Array[(String, BCoder[Any])],
   construct: Seq[Any] => T,

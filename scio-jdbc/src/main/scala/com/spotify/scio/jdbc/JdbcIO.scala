@@ -31,7 +31,7 @@ sealed trait JdbcIO[T] extends ScioIO[T]
 object JdbcIO {
   final def apply[T](opts: JdbcIoOptions): JdbcIO[T] =
     new JdbcIO[T] with TestIO[T] {
-      override final val tapT = EmptyTapOf[T]
+      final override val tapT = EmptyTapOf[T]
       override def testId: String = s"JdbcIO(${jdbcIoId(opts)})"
     }
 
@@ -67,7 +67,7 @@ object JdbcIO {
 final case class JdbcSelect[T: Coder](readOptions: JdbcReadOptions[T]) extends JdbcIO[T] {
   override type ReadP = Unit
   override type WriteP = Nothing
-  override final val tapT = EmptyTapOf[T]
+  final override val tapT = EmptyTapOf[T]
 
   override def testId: String = s"JdbcIO(${JdbcIO.jdbcIoId(readOptions)})"
 
@@ -105,7 +105,7 @@ final case class JdbcSelect[T: Coder](readOptions: JdbcReadOptions[T]) extends J
 final case class JdbcWrite[T](writeOptions: JdbcWriteOptions[T]) extends JdbcIO[T] {
   override type ReadP = Nothing
   override type WriteP = Unit
-  override final val tapT = EmptyTapOf[T]
+  final override val tapT = EmptyTapOf[T]
 
   override def testId: String = s"JdbcIO(${JdbcIO.jdbcIoId(writeOptions)})"
 

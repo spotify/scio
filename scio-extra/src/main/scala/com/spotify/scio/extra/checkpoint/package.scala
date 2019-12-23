@@ -52,8 +52,7 @@ package object checkpoint {
      *           flow is what is checkpointed
      */
     @deprecated(
-      "Checkpoint support is deprecated, " +
-        "use smaller workflows and orchestration framework instead",
+      "Checkpoint support is deprecated, " + "use smaller workflows and orchestration framework instead",
       "0.8.0"
     )
     def checkpoint[T: Coder](fileOrPath: String)(fn: => SCollection[T]): SCollection[T] = {
