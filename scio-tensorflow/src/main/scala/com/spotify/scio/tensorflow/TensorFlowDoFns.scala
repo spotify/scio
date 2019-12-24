@@ -36,8 +36,8 @@ import com.spotify.zoltar.Model.Id
 import java.util.concurrent.atomic.AtomicInteger
 
 sealed trait PredictDoFn[T, V, M <: Model[_]]
-    extends DoFnWithResource[T, V, ConcurrentMap[String, (AtomicInteger, M)]] {
-  import PredictDoFn.Log
+    extends DoFnWithResource[T, V, PredictDoFn.Resource[M]] {
+  import PredictDoFn._
 
   def modelId: String
 
@@ -53,8 +53,7 @@ sealed trait PredictDoFn[T, V, M <: Model[_]]
 
   def outputTensorNames: Seq[String]
 
-  override def createResource(): ConcurrentMap[String, (AtomicInteger, M)] =
-    new ConcurrentHashMap[String, (AtomicInteger, M)]()
+  override def createResource(): Resource[M] = new ConcurrentHashMap[String, (AtomicInteger, M)]()
 
   override def getResourceType: DoFnWithResource.ResourceType = ResourceType.PER_CLASS
 
@@ -117,6 +116,8 @@ sealed trait PredictDoFn[T, V, M <: Model[_]]
 }
 
 object PredictDoFn {
+  type Resource[M <: Model[_]] = ConcurrentMap[String, (AtomicInteger, M)]
+
   private val Log = LoggerFactory.getLogger(this.getClass)
 }
 
