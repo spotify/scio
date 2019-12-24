@@ -57,7 +57,7 @@ public class CombinePerKeyExamplesTest {
       "king_lear,macbeth");
   private static final KV<String, String> combinedTuple2 = KV.of("snuffleupaguses", "king_lear");
 
-  @SuppressWarnings({"unchecked", "rawtypes"})
+  @SuppressWarnings({"unchecked"})
   static final KV<String, String>[] COMBINED_TUPLES_ARRAY = new KV[] {
     combinedTuple1, combinedTuple2
   };

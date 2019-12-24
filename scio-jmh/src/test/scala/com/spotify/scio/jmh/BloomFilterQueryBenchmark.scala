@@ -30,10 +30,10 @@ object BloomFilterQueryBenchmark {
   @State(Scope.Benchmark)
   class BloomFilterState {
     @Param(Array("100", "1000", "10000"))
-    var nbrOfElements: Int = 0
+    val nbrOfElements: Int = 0
 
     @Param(Array("0.001", "0.01"))
-    var falsePositiveRate: Double = 0
+    val falsePositiveRate: Double = 0
 
     private[scio] var bf: MutableBF[String] = _
 

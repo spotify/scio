@@ -156,7 +156,7 @@ final class SchemaMaterializerTest extends AnyFlatSpec with Matchers {
   it should "Support Optional fields when reading a Row" in {
     case class Bar(s: String, x: Int)
     case class Foo(a: String, b: Option[Bar])
-    val (schema, to, from) = SchemaMaterializer.materialize[Foo](Schema[Foo])
+    val (schema, _, from) = SchemaMaterializer.materialize[Foo](Schema[Foo])
     val row =
       Row
         .withSchema(schema)

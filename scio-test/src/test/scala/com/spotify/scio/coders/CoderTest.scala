@@ -107,7 +107,7 @@ final class CoderTest extends AnyFlatSpec with Matchers {
     import scala.collection.BitSet
 
     val nil: Seq[String] = Nil
-    val s: Seq[String] = (1 to 10).toSeq.map(_.toString)
+    val s: Seq[String] = (1 to 10).map(_.toString)
     val m = s.map { v =>
       v.toString -> v
     }.toMap
@@ -118,7 +118,7 @@ final class CoderTest extends AnyFlatSpec with Matchers {
     s.toVector coderShould notFallback()
     m coderShould notFallback()
     s.toSet coderShould notFallback()
-    mut.ListBuffer((1 to 10): _*) coderShould notFallback()
+    mut.ListBuffer(1 to 10: _*) coderShould notFallback()
     None coderShould notFallback()
     Option(1) coderShould notFallback()
     Some(1) coderShould notFallback()
@@ -130,7 +130,7 @@ final class CoderTest extends AnyFlatSpec with Matchers {
 
   it should "support Java collections" in {
     import java.util.{List => jList, Map => jMap, ArrayList => jArrayList}
-    val is = (1 to 10).toSeq
+    val is = (1 to 10)
     val s: jList[String] = is.map(_.toString).asJava
     val m: jMap[String, Int] = is
       .map { v =>

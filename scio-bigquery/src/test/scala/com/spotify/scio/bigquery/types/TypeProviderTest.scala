@@ -154,12 +154,12 @@ class TypeProviderTest extends AnyFlatSpec with Matchers {
   }
 
   it should "support .fromTableRow in companion object" in {
-    (classOf[(TableRow => RecordWithRequiredPrimitives)]
+    (classOf[TableRow => RecordWithRequiredPrimitives]
       isAssignableFrom RecordWithRequiredPrimitives.fromTableRow.getClass) shouldBe true
   }
 
   it should "support .toTableRow in companion object" in {
-    (classOf[(ToTable => RecordWithRequiredPrimitives)]
+    (classOf[ToTable => RecordWithRequiredPrimitives]
       isAssignableFrom RecordWithRequiredPrimitives.toTableRow.getClass) shouldBe true
   }
 
@@ -328,11 +328,11 @@ class TypeProviderTest extends AnyFlatSpec with Matchers {
   }
 
   it should "support .fromTableRow in companion object" in {
-    (classOf[(TableRow => ToTable)] isAssignableFrom ToTable.fromTableRow.getClass) shouldBe true
+    (classOf[TableRow => ToTable] isAssignableFrom ToTable.fromTableRow.getClass) shouldBe true
   }
 
   it should "support .toTableRow in companion object" in {
-    (classOf[(ToTable => TableRow)] isAssignableFrom ToTable.toTableRow.getClass) shouldBe true
+    (classOf[ToTable => TableRow] isAssignableFrom ToTable.toTableRow.getClass) shouldBe true
   }
 
   it should "create companion object that is a Function subtype" in {
@@ -441,12 +441,12 @@ class TypeProviderTest extends AnyFlatSpec with Matchers {
   }
 
   it should "support .fromTableRow in companion object with >22 fields" in {
-    val cls = classOf[(TableRow => TwentyThree)]
+    val cls = classOf[TableRow => TwentyThree]
     (cls isAssignableFrom TwentyThree.fromTableRow.getClass) shouldBe true
   }
 
   it should "support .toTableRow in companion object with >22 fields" in {
-    val cls = classOf[(TwentyThree => TableRow)]
+    val cls = classOf[TwentyThree => TableRow]
     (cls isAssignableFrom TwentyThree.toTableRow.getClass) shouldBe true
   }
 
@@ -475,9 +475,9 @@ class TypeProviderTest extends AnyFlatSpec with Matchers {
     Artisanal1Field.getClass.getMethods
       .map(_.getName) should not contain "tupled"
     RecordWithRequiredPrimitives.schema should not be null
-    (classOf[(TableRow => RecordWithRequiredPrimitives)]
+    (classOf[TableRow => RecordWithRequiredPrimitives]
       isAssignableFrom RecordWithRequiredPrimitives.fromTableRow.getClass) shouldBe true
-    (classOf[(ToTable => RecordWithRequiredPrimitives)]
+    (classOf[ToTable => RecordWithRequiredPrimitives]
       isAssignableFrom RecordWithRequiredPrimitives.toTableRow.getClass) shouldBe true
     Artisanal1FieldWithBody(3).bar shouldBe 42L
     Artisanal1FieldWithBody(3).foo shouldBe "foo"

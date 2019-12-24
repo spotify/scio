@@ -34,10 +34,10 @@ object BloomFilterCreateBenchmark {
   @State(Scope.Benchmark)
   class BloomFilterState {
     @Param(Array("100", "1000", "10000"))
-    var nbrOfElements: Int = 0
+    val nbrOfElements: Int = 0
 
     @Param(Array("0.01", "0.001"))
-    var falsePositiveRate: Double = 0
+    val falsePositiveRate: Double = 0
 
     var randomStrings: Seq[String] = _
 

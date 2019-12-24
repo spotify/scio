@@ -733,7 +733,7 @@ object TypeConvertionsTestData {
     from.map {
       case From0(i, s, From1(xs, q)) =>
         To1(s, To0(q, xs), i)
-    }.toList
+    }
 
   val tinyTo = to.map {
     case To1(s, _, i) => TinyTo(s, i)
@@ -760,7 +760,7 @@ object TypeConvertionsTestData {
         Option(r.getStringField).map(_.toString),
         r.getArrayField.asScala.toList.map(_.toString)
       )
-    }.toList
+    }
 
   case class CompatibleAvroTestRecord(
     int_field: Option[Int],
