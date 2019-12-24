@@ -41,7 +41,7 @@ sealed trait PredictDoFn[T, V, M <: Model[_]]
 
   def modelId: String
 
-  def createModel: M
+  def loadModel: M
 
   def model: M = getResource.get(modelId)._2
 
@@ -65,7 +65,7 @@ sealed trait PredictDoFn[T, V, M <: Model[_]]
       modelId,
       new Function[String, (AtomicInteger, M)] {
         override def apply(v1: String): (AtomicInteger, M) =
-          new AtomicInteger(0) -> createModel
+          new AtomicInteger(0) -> loadModel
       }
     )
     a.incrementAndGet()
@@ -128,7 +128,7 @@ private[tensorflow] abstract class SavedBundlePredictDoFn[T, V](
   override def modelId: String =
     s"tf:$uri:$signatureName:${options.tags.asScala.mkString(":")}"
 
-  override def createModel: TensorFlowModel =
+  override def loadModel: TensorFlowModel =
     TensorFlowLoader
       .create(Id.create(modelId), uri, options, signatureName)
       .get(Duration.ofDays(Integer.MAX_VALUE))
