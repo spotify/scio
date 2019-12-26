@@ -32,7 +32,7 @@ import scala.collection.JavaConverters._
 import scala.util.Success
 
 class BigQueryClientIT extends AnyFlatSpec with Matchers {
-  val bq = BigQuery.defaultInstance()
+  private[this] val bq = BigQuery.defaultInstance()
 
   val legacyQuery =
     "SELECT word, word_count FROM [bigquery-public-data:samples.shakespeare] LIMIT 10"
@@ -64,7 +64,7 @@ class BigQueryClientIT extends AnyFlatSpec with Matchers {
 
       val deleteQuery = s"delete from `${ref.asTableSpec}` where word = 'alien'"
       bq.query.run(
-        insertQuery,
+        deleteQuery,
         createDisposition = null,
         writeDisposition = null
       )
