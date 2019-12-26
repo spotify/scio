@@ -265,7 +265,7 @@ class StorageIT extends AnyFlatSpec with Matchers {
     import scala.concurrent.duration.Duration
     val res = Await.result(futureTap, Duration.Inf).value.toList
 
-    res should not be (empty)
+    res should not be empty
   }
 
   it should "support typed read" in {
@@ -277,7 +277,7 @@ class StorageIT extends AnyFlatSpec with Matchers {
     import scala.concurrent.duration.Duration
     val res = Await.result(futureTap, Duration.Inf).value.toList
 
-    res should not be (empty)
+    res should not be empty
   }
 }
 

@@ -257,9 +257,9 @@ sealed abstract private[scio] class MutableBF[A] extends Serializable {
     (this, that) match {
       // Comparing with empty filter should give number
       // of bits in other set
-      case (x: MutableBFZero[A], y: MutableBFZero[A]) => 0
-      case (x: MutableBFZero[A], y: MutableBF[A])     => y.numBits
-      case (x: MutableBF[A], y: MutableBFZero[A])     => x.numBits
+      case (_: MutableBFZero[A], _: MutableBFZero[A]) => 0
+      case (_: MutableBFZero[A], y: MutableBF[A])     => y.numBits
+      case (x: MutableBF[A], _: MutableBFZero[A])     => x.numBits
 
       // Otherwise compare as bit sets
       case _ =>
@@ -408,7 +408,7 @@ final private[scio] case class MutableSparseBFInstance[A](
   // The value is cached so that it is a set is created only once.
   // This cannot be a lazy val, because it is updated when an element gets added.
   @inline
-  private def setBits: Set[Int] = {
+  private def setBits(): Set[Int] = {
     if (setIsStale) {
       set = allSeenBit.toSet
       setIsStale = false
@@ -459,7 +459,7 @@ final private[scio] case class MutableSparseBFInstance[A](
         } else {
           asMutableBFInstance
         }
-      case MutableBFInstance(_, otherBits) =>
+      case MutableBFInstance(_, _) =>
         setIsStale = true
         // since the other is not a sparse BF, the result cannot be sparse.
 

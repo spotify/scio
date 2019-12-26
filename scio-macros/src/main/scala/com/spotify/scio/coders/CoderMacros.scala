@@ -79,11 +79,11 @@ private[coders] object CoderMacros {
         |  If a type is not supported, consider implementing your own implicit Coder for this type.
         |  It is recommended to declare this Coder in your class companion object:
         |
-        |       object ${typeName} {
+        |       object $typeName {
         |         import com.spotify.scio.coders.Coder
         |         import org.apache.beam.sdk.coders.AtomicCoder
         |
-        |         implicit def coder${typeName}: Coder[$fullType] =
+        |         implicit def coder$typeName: Coder[$fullType] =
         |           Coder.beam(new AtomicCoder[$fullType] {
         |             def decode(in: InputStream): $fullType = ???
         |             def encode(ts: $fullType, out: OutputStream): Unit = ???
@@ -92,7 +92,7 @@ private[coders] object CoderMacros {
         |
         |  If you do want to use a Kryo coder, be explicit about it:
         |
-        |       implicit def coder${typeName}: Coder[$fullType] = Coder.kryo[$fullType]
+        |       implicit def coder$typeName: Coder[$fullType] = Coder.kryo[$fullType]
         |
         |  Additional info at:
         |   - https://spotify.github.io/scio/internals/Coders
@@ -104,7 +104,7 @@ private[coders] object CoderMacros {
     (verbose, alreadyReported) match {
       case _ if BlacklistedTypes.contains(wtt.toString) =>
         val msg =
-          s"Can't use a Kryo coder for ${wtt}. You need to explicitly set the Coder for this type"
+          s"Can't use a Kryo coder for $wtt. You need to explicitly set the Coder for this type"
         c.abort(c.enclosingPosition, msg)
       case _ if Warnings.contains(wtt.toString) =>
         c.echo(c.enclosingPosition, Warnings(wtt.toString))

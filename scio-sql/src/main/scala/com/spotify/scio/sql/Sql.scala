@@ -91,11 +91,11 @@ private object Queries {
     val tableProvider = new ReadOnlyTableProvider(Sql.SCollectionTypeName, tables.asJava)
     val env = BeamSqlEnv.builder(tableProvider).setPipelineOptions(PipelineOptionsFactory.create())
     udfs.foreach {
-      case (x: UdfFromClass[_]) =>
+      case x: UdfFromClass[_] =>
         env.addUdf(x.fnName, x.clazz)
-      case (x: UdfFromSerializableFn[_, _]) =>
+      case x: UdfFromSerializableFn[_, _] =>
         env.addUdf(x.fnName, x.fn)
-      case (x: UdafFromCombineFn[_, _, _]) =>
+      case x: UdafFromCombineFn[_, _, _] =>
         env.addUdaf(x.fnName, x.fn)
     }
     env.build().parseQuery(query)

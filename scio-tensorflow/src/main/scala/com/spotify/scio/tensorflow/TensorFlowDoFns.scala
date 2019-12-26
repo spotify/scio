@@ -24,7 +24,7 @@ import java.util.function.Function
 import com.spotify.zoltar.tf.{TensorFlowLoader, TensorFlowModel}
 import com.spotify.zoltar.Model
 import org.apache.beam.sdk.transforms.DoFn
-import org.apache.beam.sdk.transforms.DoFn.{ProcessElement, Teardown}
+import org.apache.beam.sdk.transforms.DoFn.{ProcessElement, Setup, Teardown}
 import org.slf4j.LoggerFactory
 import org.tensorflow._
 import org.tensorflow.example.Example
@@ -33,10 +33,17 @@ import scala.collection.JavaConverters._
 import com.spotify.scio.transforms.DoFnWithResource
 import com.spotify.scio.transforms.DoFnWithResource.ResourceType
 import com.spotify.zoltar.Model.Id
+import java.util.concurrent.atomic.AtomicInteger
 
 sealed trait PredictDoFn[T, V, M <: Model[_]]
-    extends DoFnWithResource[T, V, ConcurrentMap[String, M]] {
-  @transient private lazy val log = LoggerFactory.getLogger(this.getClass)
+    extends DoFnWithResource[T, V, PredictDoFn.Resource[M]] {
+  import PredictDoFn._
+
+  def modelId: String
+
+  def loadModel: M
+
+  def model: M = getResource.get(modelId)._2
 
   def withRunner(f: Session#Runner => V): V
 
@@ -46,9 +53,23 @@ sealed trait PredictDoFn[T, V, M <: Model[_]]
 
   def outputTensorNames: Seq[String]
 
-  override def createResource(): ConcurrentMap[String, M] = new ConcurrentHashMap[String, M]()
+  override def createResource(): Resource[M] = new ConcurrentHashMap[String, (AtomicInteger, M)]()
 
   override def getResourceType: DoFnWithResource.ResourceType = ResourceType.PER_CLASS
+
+  @Setup
+  override def setup(): Unit = {
+    super.setup()
+    val (a, _) = getResource.computeIfAbsent(
+      modelId,
+      new Function[String, (AtomicInteger, M)] {
+        override def apply(v1: String): (AtomicInteger, M) =
+          new AtomicInteger(0) -> loadModel
+      }
+    )
+    a.incrementAndGet()
+    ()
+  }
 
   /**
    * Process an element asynchronously.
@@ -70,11 +91,11 @@ sealed trait PredictDoFn[T, V, M <: Model[_]]
             outputTensorNames.iterator.zip(outTensors.iterator().asScala).toMap
           )
         } finally {
-          log.debug("Closing down output tensors")
+          Log.debug("Closing down output tensors")
           outTensors.asScala.foreach(_.close())
         }
       } finally {
-        log.debug("Closing down input tensors")
+        Log.debug("Closing down input tensors")
         i.foreach { case (_, t) => t.close() }
       }
 
@@ -83,6 +104,21 @@ sealed trait PredictDoFn[T, V, M <: Model[_]]
 
     c.output(result)
   }
+
+  @Teardown
+  def teardown(): Unit = {
+    Log.info(s"Tearing down predict DoFn $this")
+    val (running, m) = getResource().get(modelId)
+    if (running.decrementAndGet() == 0) {
+      m.close()
+    }
+  }
+}
+
+object PredictDoFn {
+  type Resource[M <: Model[_]] = ConcurrentMap[String, (AtomicInteger, M)]
+
+  private val Log = LoggerFactory.getLogger(this.getClass)
 }
 
 abstract private[tensorflow] class SavedBundlePredictDoFn[T, V](
@@ -90,39 +126,16 @@ abstract private[tensorflow] class SavedBundlePredictDoFn[T, V](
   signatureName: String,
   options: TensorFlowModel.Options
 ) extends PredictDoFn[T, V, TensorFlowModel] {
-  @transient private lazy val log = LoggerFactory.getLogger(this.getClass)
-  def getModel: TensorFlowModel = {
-    @transient lazy val model = getResource
-      .computeIfAbsent(
-        modelId,
-        new Function[String, TensorFlowModel] {
-          override def apply(v1: String): TensorFlowModel =
-            TensorFlowLoader
-              .create(Id.create(modelId), uri, options, signatureName)
-              .get(Duration.ofDays(Integer.MAX_VALUE))
+  override def modelId: String =
+    s"tf:$uri:$signatureName:${options.tags.asScala.mkString(":")}"
 
-        }
-      )
-    model
-  }
+  override def loadModel: TensorFlowModel =
+    TensorFlowLoader
+      .create(Id.create(modelId), uri, options, signatureName)
+      .get(Duration.ofDays(Integer.MAX_VALUE))
 
   override def withRunner(f: Session#Runner => V): V =
-    f(getModel.instance().session().runner())
-
-  def modelId: String = {
-    val tokens = Seq("tf", uri, signatureName) ++ Seq(options.tags.asScala.mkString(";"))
-    tokens.mkString(":")
-  }
-
-  /**
-   * We explicitly don't close resources because:
-   *   - The same model can be used by two different processes within the same JVM,
-   *   and one closing it first will cause the other to crash.
-   *   - Models should be cleaned up at the end of the JVM run-time
-   */
-  @Teardown
-  def teardown(): Unit =
-    log.info(s"Tearing down predict DoFn $this")
+    f(model.instance().session().runner())
 }
 
 object SavedBundlePredictDoFn {
@@ -139,6 +152,8 @@ object SavedBundlePredictDoFn {
     override def extractOutput(input: T, out: Map[String, Tensor[_]]): V = outFn(input, out)
 
     override def outputTensorNames: Seq[String] = fetchOps
+
+    override def modelId: String = s"${super.modelId}:${fetchOps.mkString(":")}"
   }
 
   def forInput[T, V](
@@ -149,9 +164,9 @@ object SavedBundlePredictDoFn {
     inFn: T => Map[String, Tensor[_]],
     outFn: (T, Map[String, Tensor[_]]) => V
   ): SavedBundlePredictDoFn[T, V] = new SavedBundlePredictDoFn[T, V](uri, signatureName, options) {
-    @transient private lazy val exportedFetchOps =
-      getModel.outputsNameMap().asScala.toMap
-    @transient private lazy val requestedFetchOps: Map[String, String] = fetchOps
+    private lazy val exportedFetchOps =
+      model.outputsNameMap().asScala.toMap
+    private lazy val requestedFetchOps: Map[String, String] = fetchOps
       .map { tensorIds =>
         tensorIds.iterator.map { tensorId =>
           tensorId -> exportedFetchOps(tensorId)
@@ -163,7 +178,7 @@ object SavedBundlePredictDoFn {
       val extractedInput = inFn(input)
       extractedInput.iterator.map {
         case (tensorId, tensor) =>
-          getModel.inputsNameMap().get(tensorId) -> tensor
+          model.inputsNameMap().get(tensorId) -> tensor
       }.toMap
     }
 
@@ -174,6 +189,8 @@ object SavedBundlePredictDoFn {
       }.toMap)
 
     override def outputTensorNames: Seq[String] = requestedFetchOps.values.toSeq
+
+    override def modelId: String = s"${super.modelId}:${fetchOps.toList.mkString(":")}"
   }
 
   /**
@@ -189,9 +206,9 @@ object SavedBundlePredictDoFn {
     outFn: (T, Map[String, Tensor[_]]) => V
   )(implicit ev: T <:< Example): SavedBundlePredictDoFn[T, V] =
     new SavedBundlePredictDoFn[T, V](uri, signatureName, options) {
-      @transient private lazy val exportedFetchOps =
-        getModel.outputsNameMap().asScala.toMap
-      @transient private lazy val requestedFetchOps: Map[String, String] = fetchOps
+      private lazy val exportedFetchOps =
+        model.outputsNameMap().asScala.toMap
+      private lazy val requestedFetchOps: Map[String, String] = fetchOps
         .map { tensorIds =>
           tensorIds.iterator.map { tensorId =>
             tensorId -> exportedFetchOps(tensorId)
@@ -202,14 +219,15 @@ object SavedBundlePredictDoFn {
       override def outputTensorNames: Seq[String] = requestedFetchOps.values.toSeq
 
       override def extractInput(input: T): Map[String, Tensor[_]] = {
-        val opName = getModel.inputsNameMap().get(exampleTensorName)
+        val opName = model.inputsNameMap().get(exampleTensorName)
         Map(opName -> Tensors.create(Array(input.toByteArray)))
       }
 
       override def extractOutput(input: T, out: Map[String, Tensor[_]]): V =
         outFn(input, requestedFetchOps.iterator.map {
-          case (tensorId, opName) =>
-            tensorId -> out(opName)
+          case (tensorId, opName) => tensorId -> out(opName)
         }.toMap)
+
+      override def modelId: String = s"${super.modelId}:${fetchOps.toList.mkString(":")}"
     }
 }

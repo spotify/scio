@@ -91,7 +91,7 @@ object SchemaMaterializer {
     Option(v).map(dispatchDecode(schema.schema))
 
   private def decode[A](schema: LogicalType[A])(v: schema.Repr): A =
-    schema.fromBase(v).asInstanceOf[A]
+    schema.fromBase(v)
 
   private def decode[F[_], A: ClassTag](schema: ArrayType[F, A])(v: schema.Repr): F[A] = {
     val values = new Array[A](v.size)
@@ -146,7 +146,7 @@ object SchemaMaterializer {
   }
 
   private def encode[A](schema: LogicalType[A])(v: A): schema.Repr =
-    schema.toBase(v).asInstanceOf[schema.Repr]
+    schema.toBase(v)
 
   private def encode[A](schema: Type[A])(v: A): schema.Repr = v
 

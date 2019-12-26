@@ -36,17 +36,17 @@ private[scio] object PrettyPrint {
         val `type` = f.getType
         val typename =
           `type`.getTypeName match {
-            case t @ BSchema.TypeName.ARRAY =>
+            case BSchema.TypeName.ARRAY =>
               s"${`type`.getCollectionElementType.getTypeName}[]"
             case BSchema.TypeName.LOGICAL_TYPE =>
               `type`.getLogicalType().getIdentifier()
             case t => t
           }
         val out =
-          f"│ ${prefix + f.getName}%-40s │ ${typename}%-20s │ $nullable%-8s │%n"
+          f"│ ${prefix + f.getName}%-40s │ $typename%-20s │ $nullable%-8s │%n"
         val underlying =
           if (f.getType.getTypeName == BSchema.TypeName.ROW)
-            printContent(f.getType.getRowSchema.getFields.asScala.toList, s"${prefix}${f.getName}.")
+            printContent(f.getType.getRowSchema.getFields.asScala.toList, s"$prefix${f.getName}.")
           else ""
 
         out + underlying

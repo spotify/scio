@@ -267,8 +267,6 @@ final private case class PubSubMessagePubsubIOWithoutAttributes[T <: beam.Pubsub
   idAttribute: String,
   timestampAttribute: String
 ) extends PubsubIOWithoutAttributes[T] {
-  private[this] val cls = ScioUtil.classOf[T]
-
   override protected def read(sc: ScioContext, params: ReadP): SCollection[T] = {
     val t = setup(beam.PubsubIO.readMessages(), params)
     sc.wrap(sc.applyInternal(t)).asInstanceOf[SCollection[T]]
@@ -286,8 +284,6 @@ final private case class FallbackPubsubIOWithoutAttributes[T: ClassTag: Coder](
   idAttribute: String,
   timestampAttribute: String
 ) extends PubsubIOWithoutAttributes[T] {
-  private[this] val cls = ScioUtil.classOf[T]
-
   override protected def read(sc: ScioContext, params: ReadP): SCollection[T] = {
     val coder = CoderMaterializer.beam(sc, Coder[T])
     val t = setup(

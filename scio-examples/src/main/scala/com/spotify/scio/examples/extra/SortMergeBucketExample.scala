@@ -121,7 +121,7 @@ object SortMergeBucketWriteExample {
 }
 
 case class UserAccountData(userId: Int, age: Int, balance: Double) {
-  override def toString: String = s"${userId}\t${age}\t${balance}"
+  override def toString: String = s"$userId\t$age\t$balance"
 }
 
 object SortMergeBucketJoinExample {

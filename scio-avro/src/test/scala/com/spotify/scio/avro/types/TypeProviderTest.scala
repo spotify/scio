@@ -127,12 +127,12 @@ class TypeProviderTest extends AnyFlatSpec with Matchers {
   }
 
   it should "support .fromGenericRecord in companion object" in {
-    (classOf[(GenericRecord => RecordWithBasicTypes)]
+    (classOf[GenericRecord => RecordWithBasicTypes]
       isAssignableFrom RecordWithBasicTypes.fromGenericRecord.getClass) shouldBe true
   }
 
   it should "support .toGenericRecord in companion object" in {
-    (classOf[(RecordWithBasicTypes => GenericRecord)]
+    (classOf[RecordWithBasicTypes => GenericRecord]
       isAssignableFrom RecordWithBasicTypes.toGenericRecord.getClass) shouldBe true
   }
 
@@ -649,12 +649,12 @@ class TypeProviderTest extends AnyFlatSpec with Matchers {
   }
 
   it should "support .fromGenericRecord in companion object" in {
-    (classOf[(GenericRecord => ToSchema)] isAssignableFrom
+    (classOf[GenericRecord => ToSchema] isAssignableFrom
       ToSchema.fromGenericRecord.getClass) shouldBe true
   }
 
   it should "support .toGenericRecord in companion object" in {
-    (classOf[(ToSchema => GenericRecord)] isAssignableFrom
+    (classOf[ToSchema => GenericRecord] isAssignableFrom
       ToSchema.toGenericRecord.getClass) shouldBe true
   }
 
@@ -807,12 +807,12 @@ class TypeProviderTest extends AnyFlatSpec with Matchers {
   }
 
   it should "support .fromGenericRecord in companion object with >22 fields" in {
-    val cls = classOf[(GenericRecord => TwentyThree)]
+    val cls = classOf[GenericRecord => TwentyThree]
     (cls isAssignableFrom TwentyThree.fromGenericRecord.getClass) shouldBe true
   }
 
   it should "support .toGenericRecord in companion object with >22 fields" in {
-    val cls = classOf[(TwentyThree => GenericRecord)]
+    val cls = classOf[TwentyThree => GenericRecord]
     (cls isAssignableFrom TwentyThree.toGenericRecord.getClass) shouldBe true
   }
 

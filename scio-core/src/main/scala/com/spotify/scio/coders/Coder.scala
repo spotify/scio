@@ -172,7 +172,7 @@ final private case class DisjunctionCoder[T, Id](
     }
 }
 
-final private[scio] case class RefCoder[T](val typeName: String, var coder: BCoder[T])
+final private[scio] case class RefCoder[T](typeName: String, var coder: BCoder[T])
     extends BCoder[T] {
   def setImpl(_c: BCoder[T]): Unit = coder = _c
 

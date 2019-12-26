@@ -320,7 +320,7 @@ class BloomFilterTest extends AnyWordSpec with Matchers {
         val bf = bfMonoid.create(entries: _*)
 
         entries.foreach { i =>
-          assert(bf.contains(i.toString).isTrue)
+          assert(bf.contains(i).isTrue)
         }
       }
     }
@@ -340,7 +340,7 @@ class BloomFilterTest extends AnyWordSpec with Matchers {
             .map(_.toString)
           val bf = bfMonoid.create(entries.drop(1): _*)
 
-          if (bf.contains(entries(0)).isTrue) 1.0 else 0.0
+          if (bf.contains(entries.head).isTrue) 1.0 else 0.0
         }
 
         val observedFpProb = fps.sum / fps.size
@@ -373,7 +373,7 @@ class BloomFilterTest extends AnyWordSpec with Matchers {
         val bf = aggregator(entries)
 
         entries.foreach { i =>
-          assert(bf.contains(i.toString).isTrue)
+          assert(bf.contains(i).isTrue)
         }
       }
     }
@@ -442,7 +442,7 @@ class BloomFilterTest extends AnyWordSpec with Matchers {
           }
 
         entries.foreach { i =>
-          assert(bf.contains(i.toString).isTrue)
+          assert(bf.contains(i).isTrue)
         }
       }
     }
