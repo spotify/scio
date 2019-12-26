@@ -57,7 +57,7 @@ trait BigtableMatchers extends SCollectionMatchers {
     new Matcher[BTCollection] {
       override def apply(left: BTCollection): MatchResult = {
         val foundCFs = left.flatMap {
-          case (key, cells) =>
+          case (_, cells) =>
             cells.map(_.getSetCell.getFamilyName)
         }
 

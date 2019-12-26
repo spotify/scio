@@ -36,7 +36,7 @@ object DataflowIT {
         c.inc()
         x
       }
-      .filter { x =>
+      .filter { _ =>
         c.inc()
         true
       }

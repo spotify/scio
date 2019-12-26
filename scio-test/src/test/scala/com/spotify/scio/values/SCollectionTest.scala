@@ -99,7 +99,7 @@ class SCollectionTest extends PipelineSpec {
 
   it should "support unionAll() with an empty list" in {
     runWithContext { sc =>
-      sc.unionAll(List[SCollection[Unit]]().toIterable) should beEmpty
+      sc.unionAll(List[SCollection[Unit]]()) should beEmpty
     }
   }
 

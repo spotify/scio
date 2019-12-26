@@ -323,7 +323,7 @@ def beamRunnerSettings: Seq[Setting[_]] = Seq(
           case "DirectRunner"   => directRunnerDependencies
           case "DataflowRunner" => dataflowRunnerDependencies
           case "SparkRunner"    => sparkRunnerDependencies
-          case unkown           => Nil
+          case _                => Nil
         }.toSeq
       }
       .getOrElse(directRunnerDependencies)

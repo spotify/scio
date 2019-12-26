@@ -250,9 +250,9 @@ private[client] final class QueryOps(client: Client, tableService: TableOps, job
       client.underlying.jobs().insert(client.project, job).execute()
     }
     if (config.useLegacySql) {
-      Logger.info(s"Executing legacy query (${Priority}): `${config.sql}`")
+      Logger.info(s"Executing legacy query ($Priority): `${config.sql}`")
     } else {
-      Logger.info(s"Executing standard SQL query (${Priority}): `${config.sql}`")
+      Logger.info(s"Executing standard SQL query ($Priority): `${config.sql}`")
     }
     if (config.dryRun) {
       dryRunCache.getOrElseUpdate((config.sql, config.flattenResults, config.useLegacySql), run)

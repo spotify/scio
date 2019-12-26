@@ -49,7 +49,7 @@ class AnnoyIT extends PipelineSpec {
         s should containInAnyOrder(sideData.map(_._2))
       } finally {
         val files = FileSystems
-          .`match`(s"${tempLocation}/annoy-*")
+          .`match`(s"$tempLocation/annoy-*")
           .metadata()
           .asScala
           .map(_.resourceId())

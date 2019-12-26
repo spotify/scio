@@ -70,7 +70,7 @@ final class SqlInterpolator(private val sc: StringContext) extends AnyVal {
 
     val expr = expressions.map(toString)
     val q =
-      strings.zipAll(expr, "", "").foldLeft("") { case (a, (x, y)) => s"${a}${x} ${y}" }
+      strings.zipAll(expr, "", "").foldLeft("") { case (a, (x, y)) => s"$a$x $y" }
 
     SQLBuilders.from(q, tags.values.toList, udfs)
   }
@@ -108,7 +108,7 @@ private trait SqlInterpolatorMacroHelpers {
 
     ps2
       .zipAll(tags, "", "")
-      .foldLeft("") { case (a, (x, y)) => s"${a}${x} ${y}" }
+      .foldLeft("") { case (a, (x, y)) => s"$a$x $y" }
   }
 
   def tagFor(t: Type, lbl: String): Tree =

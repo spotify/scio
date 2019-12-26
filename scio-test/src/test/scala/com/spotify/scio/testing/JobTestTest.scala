@@ -268,7 +268,7 @@ object MetricsJob {
   val gauge = ScioMetrics.gauge("gauge")
 
   def main(cmdlineArgs: Array[String]): Unit = {
-    val (sc, args) = ContextAndArgs(cmdlineArgs)
+    val (sc, _) = ContextAndArgs(cmdlineArgs)
     sc.parallelize(1 to 10)
       .map { x =>
         counter.inc()
@@ -652,7 +652,7 @@ class JobTestTest extends PipelineSpec {
         .args("--input=in.txt", "--output=out.txt")
         .input(TextIO("in.txt"), Seq("a"))
         .inputStream(ReadIO("a"), testStream)
-        .output(TextIO("out.txt")) { coll =>
+        .output(TextIO("out.txt")) { _ =>
         }
         .run()
     } should have message
@@ -693,7 +693,7 @@ class JobTestTest extends PipelineSpec {
         .args("--input=in.txt", "--output=out.txt")
         .input(TextIO("in.txt"), Seq("a"))
         .inputStream(ReadIO("a"), testStream)
-        .output(TextIO("out.txt")) { coll =>
+        .output(TextIO("out.txt")) { _ =>
         }
         .run()
     } should have message

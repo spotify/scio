@@ -43,7 +43,7 @@ object SCollectionMatchersTest {
   }
 }
 
-final case class DoesNotSerialize(val a: String, val b: Int) extends Serializable {
+final case class DoesNotSerialize(a: String, b: Int) extends Serializable {
   @throws(classOf[IOException])
   private def writeObject(o: ObjectOutputStream): Unit =
     throw new NotSerializableException("DoesNotSerialize can't be serialized")
