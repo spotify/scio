@@ -29,19 +29,13 @@ package object scio {
   import scala.concurrent.Future
   import scala.concurrent.Await
   import com.spotify.scio.io.Tap
-  @deprecated(
-    "Scio does not rely on Future anymore. See https://spotify.github.io/scio/migrations/v0.8.0.html#scala-concurrent-future-removed-from-scioios",
-    since = "0.8.0"
-  )
+  @deprecated("Scio does not rely on Future anymore. See https://git.io/JeAt1", since = "0.8.0")
   implicit class WaitableFutureTap[T](self: Future[Tap[T]]) {
     def waitForResult(atMost: Duration = Duration.Inf): Tap[T] =
       Await.result(self, atMost)
   }
 
-  @deprecated(
-    "Scio does not rely on Future anymore. See https://spotify.github.io/scio/migrations/v0.8.0.html#scala-concurrent-future-removed-from-scioios",
-    since = "0.8.0"
-  )
+  @deprecated("Scio does not rely on Future anymore. See https://git.io/JeAt1", since = "0.8.0")
   implicit class WaitableClosedTap[T](self: com.spotify.scio.io.ClosedTap[T]) {
     def waitForResult(atMost: Duration = Duration.Inf): Tap[T] =
       self.underlying
@@ -51,10 +45,7 @@ package object scio {
    * Wait for nested [[com.spotify.scio.io.Tap Tap]] to be available, flatten result and get Tap
    * reference from `Future`.
    */
-  @deprecated(
-    "Scio does not rely on Future anymore. See https://spotify.github.io/scio/migrations/v0.8.0.html#scala-concurrent-future-removed-from-scioios",
-    since = "0.8.0"
-  )
+  @deprecated("Scio does not rely on Future anymore. See https://git.io/JeAt1", since = "0.8.0")
   implicit class WaitableNestedFutureTap[T](self: Future[Future[Tap[T]]]) {
     import scala.concurrent.ExecutionContext.Implicits.global
     def waitForResult(atMost: Duration = Duration.Inf): Tap[T] =
