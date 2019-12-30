@@ -99,7 +99,7 @@ final class SqlSCollection2[A: Schema, B: Schema](a: SCollection[A], b: SCollect
   def query(q: String, aTag: TupleTag[A], bTag: TupleTag[B], udfs: Udf*): SCollection[Row] =
     query(Query2(q, aTag, bTag, udfs.toList))
 
-  def query(q: Query2[A, B, Row]): SCollection[Row] = {
+  def query(q: Query2[A, B, Row]): SCollection[Row] =
     a.context.wrap {
       val collA = Sql.setSchema(a)
       val collB = Sql.setSchema(b)
@@ -110,7 +110,6 @@ final class SqlSCollection2[A: Schema, B: Schema](a: SCollection[A], b: SCollect
         .and(q.bTag, collB.internal)
         .apply(s"${collA.tfName} join ${collB.tfName}", sqlTransform)
     }
-  }
 
   def queryAs[R: Schema](
     q: String,

@@ -39,7 +39,7 @@ private[scio] object MagnoliaMacros {
     // not serialiazable and we don't use them anyway
 
     val removeAnnotations = new Transformer {
-      override def transform(tree: Tree): c.universe.Tree = {
+      override def transform(tree: Tree): c.universe.Tree =
         tree match {
           case Apply(
               AppliedTypeTree(Select(pack, TypeName("CaseClass")), ps),
@@ -64,7 +64,6 @@ private[scio] object MagnoliaMacros {
           case t =>
             super.transform(t)
         }
-      }
     }
 
     removeAnnotations.transform(magnoliaTree)

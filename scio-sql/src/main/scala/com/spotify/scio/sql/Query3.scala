@@ -123,7 +123,7 @@ final class SqlSCollection3[A: Schema, B: Schema, C: Schema](
   ): SCollection[Row] =
     query(Query3(q, aTag, bTag, cTag, udfs.toList))
 
-  def query(q: Query3[A, B, C, Row]): SCollection[Row] = {
+  def query(q: Query3[A, B, C, Row]): SCollection[Row] =
     a.context.wrap {
       val collA = Sql.setSchema(a)
       val collB = Sql.setSchema(b)
@@ -136,7 +136,6 @@ final class SqlSCollection3[A: Schema, B: Schema, C: Schema](
         .and(q.cTag, collC.internal)
         .apply(s"${collA.tfName} join ${collB.tfName} join ${collC.tfName}", sqlTransform)
     }
-  }
 
   def queryAs[R: Schema](
     q: String,

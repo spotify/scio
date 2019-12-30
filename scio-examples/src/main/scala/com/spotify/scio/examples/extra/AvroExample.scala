@@ -81,7 +81,7 @@ object AvroExample {
     ()
   }
 
-  private def specificOut(sc: ScioContext, args: Args): ClosedTap[Account] = {
+  private def specificOut(sc: ScioContext, args: Args): ClosedTap[Account] =
     sc.parallelize(1 to 100)
       .map { i =>
         Account
@@ -93,13 +93,11 @@ object AvroExample {
           .build()
       }
       .saveAsAvroFile(args("output"))
-  }
 
-  private def specificIn(sc: ScioContext, args: Args): ClosedTap[String] = {
+  private def specificIn(sc: ScioContext, args: Args): ClosedTap[String] =
     sc.avroFile[Account](args("input"))
       .map(_.toString)
       .saveAsTextFile(args("output"))
-  }
 
   private def genericOut(sc: ScioContext, args: Args): ClosedTap[GenericRecord] = {
     // Avro generic record encoding is more efficient with an explicit schema
@@ -120,13 +118,12 @@ object AvroExample {
     sc.typedAvroFile[AccountFromSchema](args("input"))
       .saveAsTextFile(args("output"))
 
-  private def typedOut(sc: ScioContext, args: Args): ClosedTap[AccountToSchema] = {
+  private def typedOut(sc: ScioContext, args: Args): ClosedTap[AccountToSchema] =
     sc.parallelize(1 to 100)
       .map { i =>
         AccountToSchema(id = i, amount = i.toDouble, name = "account" + i, `type` = "checking")
       }
       .saveAsTypedAvroFile(args("output"))
-  }
 
   private def genericIn(sc: ScioContext, args: Args): ClosedTap[String] = {
     implicit def genericCoder = Coder.avroGenericRecordCoder(schema)

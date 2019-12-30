@@ -89,7 +89,7 @@ object ScioBenchmarkSettings {
     }
   }
 
-  def benchmarks(regex: String): Seq[Benchmark] = {
+  def benchmarks(regex: String): Seq[Benchmark] =
     ClassPath
       .from(Thread.currentThread().getContextClassLoader)
       .getAllClasses
@@ -105,7 +105,6 @@ object ScioBenchmarkSettings {
       }
       .toSeq
       .sortBy(_.name)
-  }
 
   def logger[A <: BenchmarkType]: ScioBenchmarkLogger[Try, A] = {
     val loggers = if (CircleCI.isDefined) {
@@ -543,7 +542,7 @@ object Benchmark {
   ): Iterable[Iterable[Long]] = {
     val chunks = numPartitions * numOfWorkers
 
-    def loop(n: Long): Seq[Long] = {
+    def loop(n: Long): Seq[Long] =
       n match {
         case 0                    => Nil
         case x if x < chunks      => Seq(x)
@@ -552,7 +551,6 @@ object Benchmark {
           val r = x % chunks
           loop(r) ++ loop(x - r)
       }
-    }
 
     loop(n).grouped(numOfWorkers).toIterable
   }

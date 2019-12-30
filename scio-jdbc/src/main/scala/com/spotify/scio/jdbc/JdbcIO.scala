@@ -49,7 +49,7 @@ object JdbcIO {
 
   private[jdbc] def dataSourceConfiguration(
     opts: JdbcConnectionOptions
-  ): beam.JdbcIO.DataSourceConfiguration = {
+  ): beam.JdbcIO.DataSourceConfiguration =
     opts.password match {
       case Some(pass) =>
         beam.JdbcIO.DataSourceConfiguration
@@ -61,7 +61,6 @@ object JdbcIO {
           .create(opts.driverClass.getCanonicalName, opts.connectionUrl)
           .withUsername(opts.username)
     }
-  }
 }
 
 final case class JdbcSelect[T: Coder](readOptions: JdbcReadOptions[T]) extends JdbcIO[T] {

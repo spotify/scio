@@ -247,14 +247,13 @@ object ContextAndArgs {
       val originalHandler = currentThread.getUncaughtExceptionHandler
       currentThread.setUncaughtExceptionHandler(
         new Thread.UncaughtExceptionHandler {
-          def uncaughtException(thread: Thread, exception: Throwable): Unit = {
+          def uncaughtException(thread: Thread, exception: Throwable): Unit =
             exception match {
               case _: UsageOrHelpException =>
                 sys.exit(0)
               case _ =>
                 originalHandler.uncaughtException(thread, exception)
             }
-          }
         }
       )
     }

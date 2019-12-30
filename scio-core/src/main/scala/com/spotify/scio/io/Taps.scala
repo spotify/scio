@@ -151,7 +151,7 @@ object Taps extends {
    *
    * - `taps.polling.maximum_attempts`: maximum number of attempts, unlimited if <= 0. Default is 0.
    */
-  def apply(): Taps = {
+  def apply(): Taps =
     Algorithm.value(AlgorithmDefault) match {
       case "immediate" => new ImmediateTaps
       case "polling" =>
@@ -175,7 +175,6 @@ object Taps extends {
         new PollingTaps(backOff)
       case t => throw new IllegalArgumentException(s"Unsupported Taps $t")
     }
-  }
 }
 
 @registerSysProps

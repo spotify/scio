@@ -176,13 +176,12 @@ class ScioIOTest extends ScioIOSpec {
         override def visitValue(
           value: PValue,
           producer: TransformHierarchy#Node
-        ): Unit = {
+        ): Unit =
           producer.getTransform match {
             case _: Read.Bounded[_] | _: Read.Unbounded[_] =>
               allReads += value
             case _ =>
           }
-        }
       }
     )
 

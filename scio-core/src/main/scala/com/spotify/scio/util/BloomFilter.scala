@@ -446,7 +446,7 @@ final private[scio] case class MutableSparseBFInstance[A](
    *
    * Return a new [[MutableBFInstance]] if we should no longer stay sparse.
    */
-  def ++=(other: MutableBF[A]): MutableBF[A] = {
+  def ++=(other: MutableBF[A]): MutableBF[A] =
     other match {
       case _: MutableBFZero[A] => this
       case MutableSparseBFInstance(_, otherSetBits) =>
@@ -467,7 +467,6 @@ final private[scio] case class MutableSparseBFInstance[A](
         // We don't use this anywhere within Scio, and this data struct is private[scio]
         asMutableBFInstance ++= other
     }
-  }
 
   /**
    * Add one element to this Sparse Bloom Filter.
@@ -521,12 +520,11 @@ final private[scio] case class MutableSparseBFInstance[A](
   mutable.Buffer[Array[T]] cannot be compared with equals, hence we use
   Equiv[MutableBF[A]] to compare two instances.
    */
-  override def equals(obj: Any): Boolean = {
+  override def equals(obj: Any): Boolean =
     obj.isInstanceOf[MutableBF[A]] && {
       val that = obj.asInstanceOf[MutableBF[A]]
       implicitly[Equiv[MutableBF[A]]].equiv(this, that)
     }
-  }
 
   // Object.hashCode() is based on the hashing algorithm, and the elements added only.
   override def hashCode(): Int = Objects.hash(hashes, allHashes)

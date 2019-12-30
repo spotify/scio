@@ -57,7 +57,7 @@ object TableAdmin {
    * @param instancePath String of the form "projects/$project/instances/$instance".
    * @return
    */
-  private def fetchTables(client: BigtableTableAdminClient, instancePath: String): Set[String] = {
+  private def fetchTables(client: BigtableTableAdminClient, instancePath: String): Set[String] =
     client
       .listTables(
         ListTablesRequest
@@ -69,7 +69,6 @@ object TableAdmin {
       .asScala
       .map(_.getName)
       .toSet
-  }
 
   /**
    * Ensure that tables and column families exist.

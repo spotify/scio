@@ -33,11 +33,10 @@ trait JodaCoders {
 }
 
 object JodaCoders {
-  def checkChronology(chronology: Chronology): Unit = {
+  def checkChronology(chronology: Chronology): Unit =
     if (chronology != null && chronology != ISOChronology.getInstanceUTC) {
       throw new IllegalArgumentException(s"Unsupported chronology: $chronology")
     }
-  }
 }
 
 final private class JodaDateTimeCoder extends AtomicCoder[DateTime] {

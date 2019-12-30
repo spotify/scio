@@ -38,7 +38,7 @@ object SchemaUtil {
     fieldName: String,
     fieldSchema: Schema,
     indent: Int
-  ): (String, Seq[String]) = {
+  ): (String, Seq[String]) =
     fieldSchema.getType match {
       case BOOLEAN       => ("Boolean", Seq.empty)
       case INT           => ("Int", Seq.empty)
@@ -78,7 +78,6 @@ object SchemaUtil {
         (nestedClassName, Seq(nested))
       case t => throw new IllegalArgumentException(s"Type: $t not supported")
     }
-  }
 
   private def getCaseClass(className: String, schema: Schema, indent: Int): String = {
     val xs = schema.getFields.asScala
@@ -106,13 +105,12 @@ object SchemaUtil {
     (sb.toString() +: nested).mkString("\n")
   }
 
-  private[types] def escapeNameIfReserved(name: String): String = {
+  private[types] def escapeNameIfReserved(name: String): String =
     if (scalaReservedWords.contains(name)) {
       s"`$name`"
     } else {
       name
     }
-  }
 
   private[types] def unescapeNameIfReserved(name: String): String = {
     val Pattern = "^`(.*)`$".r

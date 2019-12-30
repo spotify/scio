@@ -132,7 +132,7 @@ final private case class DisjunctionCoder[T, Id](
   }
 
   override def verifyDeterministic(): Unit = {
-    def verify(label: String, c: BCoder[_]): List[(String, NonDeterministicException)] = {
+    def verify(label: String, c: BCoder[_]): List[(String, NonDeterministicException)] =
       try {
         c.verifyDeterministic()
         Nil
@@ -140,7 +140,6 @@ final private case class DisjunctionCoder[T, Id](
         case e: NonDeterministicException =>
           List(s"case $label is using non-deterministic $c" -> e)
       }
-    }
 
     val problems =
       coders.toList.flatMap { case (id, c) => verify(id.toString, c) } ++

@@ -106,7 +106,7 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
    *
    * @return map of clusterId to its number of nodes
    */
-  def getBigtableClusterSizes(projectId: String, instanceId: String): Map[String, Int] = {
+  def getBigtableClusterSizes(projectId: String, instanceId: String): Map[String, Int] =
     if (!self.isTest) {
       BigtableUtil
         .getClusterSizes(projectId, instanceId)
@@ -116,7 +116,6 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
     } else {
       Map.empty
     }
-  }
 
   /**
    * Ensure that tables and column families exist.
@@ -130,7 +129,7 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
     projectId: String,
     instanceId: String,
     tablesAndColumnFamilies: Map[String, List[String]]
-  ): Unit = {
+  ): Unit =
     if (!self.isTest) {
       val bigtableOptions = BigtableOptions
         .builder()
@@ -139,7 +138,6 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
         .build
       TableAdmin.ensureTables(bigtableOptions, tablesAndColumnFamilies)
     }
-  }
 
   /**
    * Ensure that tables and column families exist.
@@ -152,11 +150,10 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
   def ensureTables(
     bigtableOptions: BigtableOptions,
     tablesAndColumnFamilies: Map[String, List[String]]
-  ): Unit = {
+  ): Unit =
     if (!self.isTest) {
       TableAdmin.ensureTables(bigtableOptions, tablesAndColumnFamilies)
     }
-  }
 
   /**
    * Ensure that tables and column families exist.
@@ -175,7 +172,7 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
     projectId: String,
     instanceId: String,
     tablesAndColumnFamiliesWithExpiration: Map[String, List[(String, Option[Duration])]]
-  ): Unit = {
+  ): Unit =
     if (!self.isTest) {
       val bigtableOptions = BigtableOptions
         .builder()
@@ -187,7 +184,6 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
         tablesAndColumnFamiliesWithExpiration
       )
     }
-  }
 
   /**
    * Ensure that tables and column families exist.
@@ -205,14 +201,13 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
   def ensureTablesWithExpiration(
     bigtableOptions: BigtableOptions,
     tablesAndColumnFamiliesWithExpiration: Map[String, List[(String, Option[Duration])]]
-  ): Unit = {
+  ): Unit =
     if (!self.isTest) {
       TableAdmin.ensureTablesWithExpiration(
         bigtableOptions,
         tablesAndColumnFamiliesWithExpiration
       )
     }
-  }
 
   /**
    * Ensure that tables and column families exist.
@@ -227,7 +222,7 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
     projectId: String,
     instanceId: String,
     tablesAndColumnFamiliesWithGcRules: Map[String, List[(String, Option[GcRule])]]
-  ): Unit = {
+  ): Unit =
     if (!self.isTest) {
       val bigtableOptions = BigtableOptions
         .builder()
@@ -239,7 +234,6 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
         tablesAndColumnFamiliesWithGcRules
       )
     }
-  }
 
   /**
    * Ensure that tables and column families exist.
@@ -257,14 +251,13 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
   def ensureTablesWithGcRules(
     bigtableOptions: BigtableOptions,
     tablesAndColumnFamiliesWithGcRule: Map[String, List[(String, Option[GcRule])]]
-  ): Unit = {
+  ): Unit =
     if (!self.isTest) {
       TableAdmin.ensureTablesWithGcRules(
         bigtableOptions,
         tablesAndColumnFamiliesWithGcRule
       )
     }
-  }
 
 }
 

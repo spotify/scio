@@ -30,7 +30,7 @@ private[scio] object PrettyPrint {
     f"""
     |└──────────────────────────────────────────┴──────────────────────┴──────────┘%n""".stripMargin.trim
 
-  private def printContent(fs: List[BSchema.Field], prefix: String = ""): String = {
+  private def printContent(fs: List[BSchema.Field], prefix: String = ""): String =
     fs.map { f =>
         val nullable = if (f.getType.getNullable) "YES" else "NO"
         val `type` = f.getType
@@ -52,7 +52,6 @@ private[scio] object PrettyPrint {
         out + underlying
       }
       .mkString("")
-  }
 
   def prettyPrint(fs: List[BSchema.Field]): String =
     header + printContent(fs) + footer

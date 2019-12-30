@@ -60,7 +60,7 @@ trait ToTableSchema {
     new TableSchema().setFields(fields.asJava)
   }
 
-  private def getFieldSchemas(avroSchema: Schema): List[TableFieldSchema] = {
+  private def getFieldSchemas(avroSchema: Schema): List[TableFieldSchema] =
     avroSchema.getFields.asScala.map { field =>
       val tableField = new TableFieldSchema()
         .setName(field.name)
@@ -70,7 +70,6 @@ trait ToTableSchema {
       setFieldType(tableField, field.schema)
       tableField
     }.toList
-  }
 
   private def setFieldType(field: TableFieldSchema, schema: Schema): Unit = {
     val schemaType = schema.getType

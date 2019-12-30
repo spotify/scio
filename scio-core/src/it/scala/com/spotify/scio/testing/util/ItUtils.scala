@@ -80,7 +80,7 @@ private[scio] object ItUtils {
   private def chainHttpRequestInitializer(
     credential: Credentials,
     httpRequestInitializer: HttpRequestInitializer
-  ): HttpRequestInitializer = {
+  ): HttpRequestInitializer =
     if (credential == null) {
       new ChainingHttpRequestInitializer(new NullCredentialInitializer(), httpRequestInitializer)
     } else {
@@ -89,5 +89,4 @@ private[scio] object ItUtils {
         httpRequestInitializer
       )
     }
-  }
 }

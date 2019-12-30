@@ -142,7 +142,7 @@ package object avro {
   }
 
   private[avro] object GcsConnectorUtil {
-    def setCredentials(job: Job): Unit = {
+    def setCredentials(job: Job): Unit =
       // These are needed since `FileInputFormat.setInputPaths` validates paths locally and
       // requires the user's GCP credentials.
       sys.env.get("GOOGLE_APPLICATION_CREDENTIALS") match {
@@ -157,7 +157,6 @@ package object avro {
           job.getConfiguration
             .set("fs.gs.auth.client.secret", "ZmssLNjJy2998hD4CTg2ejr2")
       }
-    }
 
     def unsetCredentials(job: Job): Unit = {
       job.getConfiguration.unset("fs.gs.auth.service.account.json.keyfile")

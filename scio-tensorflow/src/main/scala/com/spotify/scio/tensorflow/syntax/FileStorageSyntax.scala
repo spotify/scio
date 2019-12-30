@@ -25,7 +25,7 @@ import org.apache.beam.sdk.io.Compression
 
 /** File storage functions for Tensorflow TFRecord files. */
 final class FileStorageOps(private val self: FileStorage) extends AnyVal {
-  def tfRecordFile: Iterator[Array[Byte]] = {
+  def tfRecordFile: Iterator[Array[Byte]] =
     new Iterator[Array[Byte]] {
       private def wrapInputStream(in: InputStream) =
         TFRecordCodec.wrapInputStream(in, Compression.AUTO)
@@ -39,7 +39,6 @@ final class FileStorageOps(private val self: FileStorage) extends AnyVal {
         r
       }
     }
-  }
 }
 
 trait FileStorageSyntax {

@@ -70,7 +70,7 @@ object To {
    */
   private def areCompatible(
     context: Location
-  )(t0: BSchema.FieldType, t1: BSchema.FieldType): Errors = {
+  )(t0: BSchema.FieldType, t1: BSchema.FieldType): Errors =
     (t0.getTypeName, t1.getTypeName, t0.getNullable == t1.getNullable) match {
       case (_, _, false) =>
         val expected = NullableBuilder.fromBoolean(t1.getNullable())
@@ -89,7 +89,6 @@ object To {
         if (t0.equivalent(t1, BSchema.EquivalenceNullablePolicy.SAME)) Nil
         else List(Positional(context, TypeError(t0, t1)))
     }
-  }
 
   private def areCompatible(s0: BSchema, s1: BSchema): Errors = {
     val s0Fields =

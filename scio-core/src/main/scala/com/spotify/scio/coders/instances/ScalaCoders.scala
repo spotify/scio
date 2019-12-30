@@ -138,14 +138,13 @@ abstract private class BaseSeqLikeCoder[M[_], T](val elemCoder: BCoder[T])(
 
   // delegate methods for byte size estimation
   override def isRegisterByteSizeObserverCheap(value: M[T]): Boolean = false
-  override def registerByteSizeObserver(value: M[T], observer: ElementByteSizeObserver): Unit = {
+  override def registerByteSizeObserver(value: M[T], observer: ElementByteSizeObserver): Unit =
     if (value.isInstanceOf[Wrappers.JIterableWrapper[_]]) {
       val wrapper = value.asInstanceOf[Wrappers.JIterableWrapper[T]]
       IterableCoder.of(elemCoder).registerByteSizeObserver(wrapper.underlying, observer)
     } else {
       super.registerByteSizeObserver(value, observer)
     }
-  }
 }
 
 abstract private class SeqLikeCoder[M[_], T](bc: BCoder[T])(
@@ -302,7 +301,7 @@ private class MapCoder[K, V](kc: BCoder[K], vc: BCoder[V]) extends AtomicCoder[M
     )
   override def consistentWithEquals(): Boolean =
     kc.consistentWithEquals() && vc.consistentWithEquals()
-  override def structuralValue(value: Map[K, V]): AnyRef = {
+  override def structuralValue(value: Map[K, V]): AnyRef =
     if (consistentWithEquals()) {
       value
     } else {
@@ -314,7 +313,6 @@ private class MapCoder[K, V](kc: BCoder[K], vc: BCoder[V]) extends AtomicCoder[M
       }
       b.result()
     }
-  }
 
   // delegate methods for byte size estimation
   override def isRegisterByteSizeObserverCheap(value: Map[K, V]): Boolean = false
@@ -368,7 +366,7 @@ private class MutableMapCoder[K, V](kc: BCoder[K], vc: BCoder[V]) extends Atomic
     )
   override def consistentWithEquals(): Boolean =
     kc.consistentWithEquals() && vc.consistentWithEquals()
-  override def structuralValue(value: m.Map[K, V]): AnyRef = {
+  override def structuralValue(value: m.Map[K, V]): AnyRef =
     if (consistentWithEquals()) {
       value
     } else {
@@ -380,7 +378,6 @@ private class MutableMapCoder[K, V](kc: BCoder[K], vc: BCoder[V]) extends Atomic
       }
       b.result()
     }
-  }
 
   // delegate methods for byte size estimation
   override def isRegisterByteSizeObserverCheap(value: m.Map[K, V]): Boolean = false

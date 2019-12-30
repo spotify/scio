@@ -87,11 +87,10 @@ object IndexAdmin {
     index: String,
     mappingSource: String,
     client: AdminClient
-  ): CreateIndexResponse = {
+  ): CreateIndexResponse =
     client
       .indices()
       .prepareCreate(index)
       .setSource(mappingSource, XContentType.JSON)
       .get()
-  }
 }

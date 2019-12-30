@@ -90,14 +90,13 @@ private[types] object TypeProvider {
     emitWarningIfGcsGlobPath(p)
 
     val avroFile = {
-      def matchResult(r: MatchResult): Option[ResourceId] = {
+      def matchResult(r: MatchResult): Option[ResourceId] =
         if (r.status() != Status.OK || r.metadata().isEmpty) {
           None
         } else {
           val last = r.metadata().asScala.maxBy(_.resourceId().toString)
           if (last.sizeBytes() > 0) Some(last.resourceId()) else None
         }
-      }
       val r = matchResult(FileSystems.`match`(p)) match {
         case Some(x) => Some(x)
         case None =>
@@ -203,7 +202,7 @@ private[types] object TypeProvider {
     checkMacroEnclosed(c)
 
     // Returns: (raw type, e.g. Int, String, NestedRecord, nested case class definitions)
-    def getField(className: String, fieldName: String, fieldSchema: Schema): (Tree, Seq[Tree]) = {
+    def getField(className: String, fieldName: String, fieldSchema: Schema): (Tree, Seq[Tree]) =
       fieldSchema.getType match {
         case UNION =>
           val unionTypes = fieldSchema.getTypes.asScala.map(_.getType).distinct
@@ -254,7 +253,6 @@ private[types] object TypeProvider {
         case t =>
           c.abort(c.enclosingPosition, s"type: $t not supported")
       }
-    }
 
     // Returns: ("fieldName: fieldType", nested case class definitions)
     def extractField(
@@ -391,11 +389,10 @@ private[types] object TypeProvider {
   }
 
   /** Enforce that the macro is not enclosed by a package, but a class or object instead. */
-  private def checkMacroEnclosed(c: blackbox.Context): Unit = {
+  private def checkMacroEnclosed(c: blackbox.Context): Unit =
     if (!c.internal.enclosingOwner.isClass) {
       c.abort(c.enclosingPosition, s"@AvroType declaration must be inside a class or object.")
     }
-  }
 
   private def getRecordDocs(
     c: blackbox.Context
@@ -417,7 +414,7 @@ private[types] object TypeProvider {
   private def shouldDumpClassesForPlugin =
     !AvroSysProps.DisableDump.value(default = "false").toBoolean
 
-  private def getBQClassCacheDir: Path = {
+  private def getBQClassCacheDir: Path =
     // TODO: add this as key/value settings with default etc
     AvroSysProps.ClassCacheDirectory.valueOption.map(Paths.get(_)).getOrElse {
       Paths
@@ -425,7 +422,6 @@ private[types] object TypeProvider {
         .resolve(CoreSysProps.User.value)
         .resolve("generated-classes")
     }
-  }
 
   private def pShowCode(
     c: blackbox.Context
@@ -452,7 +448,7 @@ private[types] object TypeProvider {
     }
   }
 
-  private def genHashForMacro(owner: String, srcFile: String): String = {
+  private def genHashForMacro(owner: String, srcFile: String): String =
     Hashing
       .murmur3_32()
       .newHasher()
@@ -460,7 +456,6 @@ private[types] object TypeProvider {
       .putString(srcFile, Charsets.UTF_8)
       .hash()
       .toString
-  }
 
   private def dumpCodeForScalaPlugin(
     c: blackbox.Context

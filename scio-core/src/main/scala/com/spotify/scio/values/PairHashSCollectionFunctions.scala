@@ -300,7 +300,7 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
 
   private def combineAsMapSideInput[W: Coder](
     rhs: SCollection[(K, W)]
-  )(implicit koder: Coder[K]): SideInput[MMap[K, ArrayBuffer[W]]] = {
+  )(implicit koder: Coder[K]): SideInput[MMap[K, ArrayBuffer[W]]] =
     rhs
       .combine {
         case (k, v) =>
@@ -317,5 +317,4 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
           left
       }
       .asSingletonSideInput(MMap.empty[K, ArrayBuffer[W]])
-  }
 }
