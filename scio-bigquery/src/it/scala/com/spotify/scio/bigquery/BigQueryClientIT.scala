@@ -243,12 +243,11 @@ class BigQueryClientIT extends AnyFlatSpec with Matchers {
   object GcsUtils {
     private val storage = StorageOptions.getDefaultInstance.getService
 
-    private def list(bucket: String, prefix: String): Iterable[Blob] = {
+    private def list(bucket: String, prefix: String): Iterable[Blob] =
       storage
         .list(bucket, BlobListOption.prefix(prefix))
         .iterateAll()
         .asScala
-    }
 
     def exists(bucket: String, prefix: String): Boolean =
       list(bucket, prefix).nonEmpty

@@ -223,7 +223,7 @@ class NamedTransformTest extends PipelineSpec {
     var success = false
     var nodeFullName = "<unknown>"
 
-    override def visitPrimitiveTransform(node: TransformHierarchy#Node): Unit = {
+    override def visitPrimitiveTransform(node: TransformHierarchy#Node): Unit =
       if (node.getOutputs.containsValue(pcoll)) {
         nodeFullName = node.getFullName
         success = node.getFullName
@@ -232,6 +232,5 @@ class NamedTransformTest extends PipelineSpec {
           .take(prefix.length)
           .equals(prefix)
       }
-    }
   }
 }

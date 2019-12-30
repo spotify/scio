@@ -41,7 +41,7 @@ object DynamicSCollectionOps {
     numShards: Int,
     suffix: String,
     destinationFn: A => String
-  ): FileIO.Write[String, A] = {
+  ): FileIO.Write[String, A] =
     FileIO
       .writeDynamic[String, A]()
       .to(path)
@@ -51,7 +51,6 @@ object DynamicSCollectionOps {
       .withNaming(Functions.serializableFn { destination: String =>
         FileIO.Write.defaultNaming(s"$destination/part", suffix)
       })
-  }
 }
 
 final class DynamicSpecificRecordSCollectionOps[T <: SpecificRecord](

@@ -68,7 +68,7 @@ class Args private (private val m: Map[String, List[String]]) extends Serializab
   /** All arguments as a map. */
   def asMap: Map[String, List[String]] = m
 
-  def toString(start: String, sep: String, end: String): String = {
+  def toString(start: String, sep: String, end: String): String =
     m.keys.toArray.sorted
       .map { k =>
         val values = m(k) match {
@@ -78,7 +78,6 @@ class Args private (private val m: Map[String, List[String]]) extends Serializab
         s"--$k=$values"
       }
       .mkString(start, sep, end)
-  }
 
   override def toString: String = toString("Args(", ", ", ")")
 
@@ -149,7 +148,7 @@ class Args private (private val m: Map[String, List[String]]) extends Serializab
   /** Get value as `Boolean`. */
   def boolean(key: String): Boolean = get(key, _.toBoolean)
 
-  private def getOrElse[T](key: String, default: T, f: String => T): T = {
+  private def getOrElse[T](key: String, default: T, f: String => T): T =
     optional(key)
       .map { value =>
         try f(value)
@@ -159,7 +158,6 @@ class Args private (private val m: Map[String, List[String]]) extends Serializab
         }
       }
       .getOrElse(default)
-  }
 
   private def get[T](key: String, f: String => T): T = {
     val value = required(key)

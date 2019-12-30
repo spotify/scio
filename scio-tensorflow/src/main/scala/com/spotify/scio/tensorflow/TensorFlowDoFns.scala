@@ -121,7 +121,7 @@ object PredictDoFn {
   private val Log = LoggerFactory.getLogger(this.getClass)
 }
 
-private[tensorflow] abstract class SavedBundlePredictDoFn[T, V](
+abstract private[tensorflow] class SavedBundlePredictDoFn[T, V](
   uri: String,
   signatureName: String,
   options: TensorFlowModel.Options

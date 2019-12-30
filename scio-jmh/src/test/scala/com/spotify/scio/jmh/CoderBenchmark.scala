@@ -283,13 +283,12 @@ final class SpecializedCoder extends AtomicCoder[SpecializedUser] {
     StringUtf8Coder.of().encode(value.email, os)
   }
 
-  def decode(is: InputStream): SpecializedUser = {
+  def decode(is: InputStream): SpecializedUser =
     SpecializedUser(
       UserId(ByteArrayCoder.of().decode(is)),
       StringUtf8Coder.of().decode(is),
       StringUtf8Coder.of().decode(is)
     )
-  }
 }
 
 final class SpecializedKryoSerializer extends Serializer[SpecializedUser] {

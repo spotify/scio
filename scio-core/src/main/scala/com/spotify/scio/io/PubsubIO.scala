@@ -39,7 +39,7 @@ import com.spotify.scio.io.PubsubIO.Topic
 sealed trait PubsubIO[T] extends ScioIO[T] {
   override type ReadP = PubsubIO.ReadParam
   override type WriteP = PubsubIO.WriteParam
-  override final val tapT = EmptyTapOf[T]
+  final override val tapT = EmptyTapOf[T]
 
   override def tap(params: ReadP): Tap[Nothing] =
     EmptyTap
@@ -176,7 +176,7 @@ object PubsubIO {
   }
 }
 
-private sealed trait PubsubIOWithoutAttributes[T] extends PubsubIO[T] {
+sealed private trait PubsubIOWithoutAttributes[T] extends PubsubIO[T] {
   def name: String
   def idAttribute: String
   def timestampAttribute: String
@@ -205,7 +205,7 @@ private sealed trait PubsubIOWithoutAttributes[T] extends PubsubIO[T] {
   }
 }
 
-private final case class StringPubsubIOWithoutAttributes(
+final private case class StringPubsubIOWithoutAttributes(
   name: String,
   idAttribute: String,
   timestampAttribute: String
@@ -224,7 +224,7 @@ private final case class StringPubsubIOWithoutAttributes(
   }
 }
 
-private final case class AvroPubsubIOWithoutAttributes[T <: SpecificRecordBase: ClassTag](
+final private case class AvroPubsubIOWithoutAttributes[T <: SpecificRecordBase: ClassTag](
   name: String,
   idAttribute: String,
   timestampAttribute: String
@@ -243,7 +243,7 @@ private final case class AvroPubsubIOWithoutAttributes[T <: SpecificRecordBase: 
   }
 }
 
-private final case class MessagePubsubIOWithoutAttributes[T <: Message: ClassTag](
+final private case class MessagePubsubIOWithoutAttributes[T <: Message: ClassTag](
   name: String,
   idAttribute: String,
   timestampAttribute: String
@@ -262,7 +262,7 @@ private final case class MessagePubsubIOWithoutAttributes[T <: Message: ClassTag
   }
 }
 
-private final case class PubSubMessagePubsubIOWithoutAttributes[T <: beam.PubsubMessage: ClassTag](
+final private case class PubSubMessagePubsubIOWithoutAttributes[T <: beam.PubsubMessage: ClassTag](
   name: String,
   idAttribute: String,
   timestampAttribute: String
@@ -279,7 +279,7 @@ private final case class PubSubMessagePubsubIOWithoutAttributes[T <: beam.Pubsub
   }
 }
 
-private final case class FallbackPubsubIOWithoutAttributes[T: ClassTag: Coder](
+final private case class FallbackPubsubIOWithoutAttributes[T: ClassTag: Coder](
   name: String,
   idAttribute: String,
   timestampAttribute: String
@@ -310,7 +310,7 @@ private final case class FallbackPubsubIOWithoutAttributes[T: ClassTag: Coder](
   }
 }
 
-private final case class PubsubIOWithAttributes[T: ClassTag: Coder](
+final private case class PubsubIOWithAttributes[T: ClassTag: Coder](
   name: String,
   idAttribute: String,
   timestampAttribute: String

@@ -58,7 +58,7 @@ object To {
   }
 
   // Error API
-  private sealed trait Error
+  sealed private trait Error
   private case class NullableError(got: Nullable, expected: Nullable) extends Error
   private case class TypeError(got: BSchema.FieldType, expected: BSchema.FieldType) extends Error
   private case object FieldNotFound extends Error
@@ -70,7 +70,7 @@ object To {
    */
   private def areCompatible(
     context: Location
-  )(t0: BSchema.FieldType, t1: BSchema.FieldType): Errors = {
+  )(t0: BSchema.FieldType, t1: BSchema.FieldType): Errors =
     (t0.getTypeName, t1.getTypeName, t0.getNullable == t1.getNullable) match {
       case (_, _, false) =>
         val expected = NullableBuilder.fromBoolean(t1.getNullable())
@@ -89,7 +89,6 @@ object To {
         if (t0.equivalent(t1, BSchema.EquivalenceNullablePolicy.SAME)) Nil
         else List(Positional(context, TypeError(t0, t1)))
     }
-  }
 
   private def areCompatible(s0: BSchema, s1: BSchema): Errors = {
     val s0Fields =
@@ -225,7 +224,7 @@ object To {
 import scala.reflect.macros._
 import reflect.runtime.{universe => u}
 
-private[scio] final class FastEval(evalToolBox: ToolBox[u.type]) {
+final private[scio] class FastEval(evalToolBox: ToolBox[u.type]) {
   def eval[T](ctx: blackbox.Context)(expr: ctx.Expr[T]): T = {
     import ctx.universe._
 
@@ -249,7 +248,7 @@ private[scio] final class FastEval(evalToolBox: ToolBox[u.type]) {
  * This is faster bc. resusing the same toolbox also meas reusing the same classloader,
  * which saves disks IOs since we don't load the same classes from disk multiple times
  */
-private[scio] final object FastEval {
+final private[scio] object FastEval {
   import scala.tools.reflect._
 
   private lazy val tl: ToolBox[u.type] = {

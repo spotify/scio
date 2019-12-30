@@ -42,7 +42,7 @@ private[scio] object FileStorage {
   @inline final def apply(path: String): FileStorage = new FileStorage(path)
 }
 
-private[scio] final class FileStorage(protected[scio] val path: String) {
+final private[scio] class FileStorage(protected[scio] val path: String) {
   private def listFiles: Seq[Metadata] =
     FileSystems.`match`(path, EmptyMatchTreatment.DISALLOW).metadata().asScala
 

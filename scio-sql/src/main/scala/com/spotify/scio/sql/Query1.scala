@@ -95,7 +95,7 @@ final class SqlSCollection1[A: Schema](sc: SCollection[A]) {
   def query(q: String, udfs: Udf*): SCollection[Row] =
     query(Query1[A, Row](q, Sql.defaultTag, udfs = udfs.toList))
 
-  def query(q: Query1[A, Row]): SCollection[Row] = {
+  def query(q: Query1[A, Row]): SCollection[Row] =
     sc.context.wrap {
       val scWithSchema = Sql.setSchema(sc)
       val transform =
@@ -105,7 +105,6 @@ final class SqlSCollection1[A: Schema](sc: SCollection[A]) {
       val sqlTransform = Sql.registerUdf(transform, q.udfs: _*)
       scWithSchema.applyInternal(sqlTransform)
     }
-  }
 
   def queryAs[R: Schema](q: String, udfs: Udf*): SCollection[R] =
     queryAs(Query1[A, R](q, Sql.defaultTag, udfs = udfs.toList))

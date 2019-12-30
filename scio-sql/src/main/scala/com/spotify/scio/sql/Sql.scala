@@ -126,7 +126,7 @@ private object Queries {
     inferredSchemas: List[(String, BSchema)],
     expectedSchema: BSchema,
     udfs: List[Udf]
-  ): Either[String, String] = {
+  ): Either[String, String] =
     ScioUtil
       .toEither(schema(query, inferredSchemas, udfs))
       .left
@@ -177,7 +177,6 @@ private object Queries {
         """.stripMargin
           Left(message)
       }
-  }
 }
 
 private object QueryMacros {

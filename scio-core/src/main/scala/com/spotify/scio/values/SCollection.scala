@@ -86,7 +86,7 @@ object SCollection {
   ): PairSkewedSCollectionFunctions[K, V] =
     new PairSkewedSCollectionFunctions(s)
 
-  private[scio] final case class State(postCoGroup: Boolean = false)
+  final private[scio] case class State(postCoGroup: Boolean = false)
 }
 
 /**
@@ -133,12 +133,11 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   def setCoder(coder: org.apache.beam.sdk.coders.Coder[T]): SCollection[T] =
     context.wrap(internal.setCoder(coder))
 
-  def setSchema(schema: Schema[T]): SCollection[T] = {
+  def setSchema(schema: Schema[T]): SCollection[T] =
     if (!internal.hasSchema) {
       val (s, to, from) = SchemaMaterializer.materialize(schema)
       context.wrap(internal.setSchema(s, to, from))
     } else this
-  }
 
   private def ensureSerializable[A](coder: BCoder[A]): Either[Throwable, BCoder[A]] =
     coder match {
@@ -675,13 +674,12 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    */
   def sample(withReplacement: Boolean, fraction: Double)(
     implicit coder: Coder[T]
-  ): SCollection[T] = {
+  ): SCollection[T] =
     if (withReplacement) {
       this.parDo(new PoissonSampler[T](fraction))
     } else {
       this.parDo(new BernoulliSampler[T](fraction))
     }
-  }
 
   /**
    * Return an SCollection with the elements from `this` that are not in `other`.
@@ -1183,14 +1181,13 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     suffix: String,
     numShards: Int,
     compression: Compression
-  ) = {
+  ) =
     beam.TextIO
       .write()
       .to(ScioUtil.pathWithShards(path))
       .withSuffix(suffix)
       .withNumShards(numShards)
       .withWritableByteChannelFactory(FileBasedSink.CompressionType.fromCanonical(compression))
-  }
 
   /**
    * Save this SCollection as a Datastore dataset. Note that elements must be of type `Entity`.

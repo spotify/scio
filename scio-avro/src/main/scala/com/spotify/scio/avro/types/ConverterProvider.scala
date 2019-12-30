@@ -45,7 +45,7 @@ private[types] object ConverterProvider {
     // Converter helpers
     // =======================================================================
 
-    def cast(tree: Tree, tpe: Type): Tree = {
+    def cast(tree: Tree, tpe: Type): Tree =
       tpe match {
         case t if t =:= typeOf[Boolean] => q"$tree.asInstanceOf[Boolean]"
         case t if t =:= typeOf[Int]     => q"$tree.asInstanceOf[Int]"
@@ -77,7 +77,6 @@ private[types] object ConverterProvider {
           """
         case _ => c.abort(c.enclosingPosition, s"Unsupported type: $tpe")
       }
-    }
 
     def option(tree: Tree, tpe: Type): Tree =
       q"if ($tree == null) None else Some(${cast(tree, tpe)})"
@@ -133,7 +132,7 @@ private[types] object ConverterProvider {
     // Converter helpers
     // =======================================================================
 
-    def cast(tree: Tree, tpe: Type): Tree = {
+    def cast(tree: Tree, tpe: Type): Tree =
       tpe match {
         case t if t =:= typeOf[Boolean] => tree
         case t if t =:= typeOf[Int]     => tree
@@ -161,7 +160,6 @@ private[types] object ConverterProvider {
           """
         case _ => c.abort(c.enclosingPosition, s"Unsupported type: $tpe")
       }
-    }
 
     def option(tree: Tree, tpe: Type): Tree =
       q"if ($tree.isDefined) ${cast(q"$tree.get", tpe)} else null"

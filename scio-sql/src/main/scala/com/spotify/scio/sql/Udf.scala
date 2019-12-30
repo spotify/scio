@@ -22,17 +22,17 @@ import org.apache.beam.sdk.transforms.SerializableFunction
 
 sealed trait Udf { val fnName: String }
 
-private final case class UdfFromSerializableFn[I, O](
+final private case class UdfFromSerializableFn[I, O](
   fnName: String,
   fn: SerializableFunction[I, O]
 ) extends Udf
 
-private final case class UdfFromClass[T <: BeamSqlUdf](
+final private case class UdfFromClass[T <: BeamSqlUdf](
   fnName: String,
   clazz: Class[T]
 ) extends Udf
 
-private final case class UdafFromCombineFn[I1, I2, O](
+final private case class UdafFromCombineFn[I1, I2, O](
   fnName: String,
   fn: CombineFn[I1, I2, O]
 ) extends Udf

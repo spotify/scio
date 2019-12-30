@@ -210,7 +210,7 @@ private object BucketFunctions {
   }
 
   // Determine the bucket function in constant time. Requires that buckets are evenly spaced
-  def fastBucketFunction(min: Double, max: Double, count: Int)(e: Double): Option[Int] = {
+  def fastBucketFunction(min: Double, max: Double, count: Int)(e: Double): Option[Int] =
     // If our input is not a number unless the increment is also NaN then we fail fast
     if (e.isNaN || e < min || e > max) {
       None
@@ -221,5 +221,4 @@ private object BucketFunctions {
       // it's part of the last end-range-inclusive bucket, so return count-1
       Some(math.min(bucketNumber, count - 1))
     }
-  }
 }

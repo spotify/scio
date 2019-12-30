@@ -39,16 +39,14 @@ import scala.util.{Failure, Success, Try}
  */
 package object transforms {
   @deprecated(
-    "Class AsyncLookupDoFn was renamed to BaseAsyncLookupDoFn." +
-      "see https://spotify.github.io/scio/migrations/v0.8.0.html#async-dofns for more information",
+    "renamed to BaseAsyncLookupDoFn. see https://spotify.github.io/scio/migrations/v0.8.0.html#async-dofns",
     "0.8.0"
   )
   type AsyncLookupDoFn[A, B, C] =
     BaseAsyncLookupDoFn[A, B, C, ListenableFuture[_], BaseAsyncLookupDoFn.Try[B]]
 
   @deprecated(
-    "Class AsyncLookupDoFn was renamed to BaseAsyncLookupDoFn." +
-      "see https://spotify.github.io/scio/migrations/v0.8.0.html#async-dofns for more information",
+    "renamed to BaseAsyncLookupDoFn. see https://spotify.github.io/scio/migrations/v0.8.0.html#async-dofns",
     "0.8.0"
   )
   object AsyncLookupDoFn {
@@ -119,21 +117,19 @@ package object transforms {
       new ParallelLimitedFn[T, U](parallelism) {
         val isDefined = ClosureCleaner.clean(pfn.isDefinedAt(_)) // defeat closure
         val g = ClosureCleaner.clean(pfn) // defeat closure
-        def parallelProcessElement(c: DoFn[T, U]#ProcessContext): Unit = {
+        def parallelProcessElement(c: DoFn[T, U]#ProcessContext): Unit =
           if (isDefined(c.element())) {
             c.output(g(c.element()))
           }
-        }
       }
 
     private def parallelFilterFn(parallelism: Int)(f: T => Boolean): DoFn[T, T] =
       new ParallelLimitedFn[T, T](parallelism) {
         val g = ClosureCleaner.clean(f) // defeat closure
-        def parallelProcessElement(c: DoFn[T, T]#ProcessContext): Unit = {
+        def parallelProcessElement(c: DoFn[T, T]#ProcessContext): Unit =
           if (g(c.element())) {
             c.output(c.element())
           }
-        }
       }
 
     private def parallelMapFn[U](parallelism: Int)(f: T => U): DoFn[T, U] =

@@ -47,10 +47,7 @@ final class SCollectionTableRowOps[T <: TableRow](private val self: SCollection[
    * Save this SCollection as a BigQuery table. Note that elements must be of type
    * [[com.google.api.services.bigquery.model.TableRow TableRow]].
    */
-  @deprecated(
-    "this method will be removed; use saveAsBigQuery(Table.Ref(table)) instead",
-    "0.8.0"
-  )
+  @deprecated("this method will be removed; use saveAsBigQuery(Table.Ref(table)) instead", "0.8.0")
   def saveAsBigQuery(
     table: TableReference,
     schema: TableSchema,
@@ -74,10 +71,7 @@ final class SCollectionTableRowOps[T <: TableRow](private val self: SCollection[
    * Save this SCollection as a BigQuery table. Note that elements must be of type
    * [[com.google.api.services.bigquery.model.TableRow TableRow]].
    */
-  @deprecated(
-    "this method will be removed; use saveAsBigQuery(Table.Ref(table)) instead",
-    "0.8.0"
-  )
+  @deprecated("this method will be removed; use saveAsBigQuery(Table.Ref(table)) instead", "0.8.0")
   def saveAsBigQuery(
     tableSpec: String,
     schema: TableSchema = BigQueryTable.WriteParam.DefaultSchema,
@@ -167,10 +161,7 @@ final class SCollectionTypedOps[T <: HasAnnotation](private val self: SCollectio
    * Save this SCollection as a BigQuery table. Note that element type `T` must be a case class
    * annotated with [[com.spotify.scio.bigquery.types.BigQueryType.toTable BigQueryType.toTable]].
    */
-  @deprecated(
-    "this method will be removed; use saveAsBigQuery(Table.Ref(table)) instead",
-    "0.8.0"
-  )
+  @deprecated("this method will be removed; use saveAsBigQuery(Table.Ref(table)) instead", "0.8.0")
   def saveAsTypedBigQuery(
     table: TableReference,
     writeDisposition: WriteDisposition,
@@ -211,10 +202,7 @@ final class SCollectionTypedOps[T <: HasAnnotation](private val self: SCollectio
    *   .saveAsTypedBigQuery("myproject:samples.gsod")
    * }}}
    */
-  @deprecated(
-    "this method will be removed; use saveAsBigQuery(Table.Ref(table)) instead",
-    "0.8.0"
-  )
+  @deprecated("this method will be removed; use saveAsBigQuery(Table.Ref(table)) instead", "0.8.0")
   def saveAsTypedBigQuery(
     tableSpec: String,
     writeDisposition: WriteDisposition = TableWriteParam.DefaultWriteDisposition,

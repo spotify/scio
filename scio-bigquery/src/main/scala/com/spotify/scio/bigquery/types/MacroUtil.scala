@@ -68,11 +68,10 @@ private[types] object MacroUtil {
 
   // Debugging
 
-  @inline def debug(msg: Any): Unit = {
+  @inline def debug(msg: Any): Unit =
     if (BigQuerySysProps.Debug.value("false").toBoolean) {
       logger.info(msg.toString)
     }
-  }
 
   // Namespace helpers
 

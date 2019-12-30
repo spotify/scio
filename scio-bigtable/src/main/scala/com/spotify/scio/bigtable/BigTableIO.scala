@@ -32,7 +32,7 @@ import org.joda.time.Duration
 import scala.collection.JavaConverters._
 
 sealed trait BigtableIO[T] extends ScioIO[T] {
-  override final val tapT = EmptyTapOf[T]
+  final override val tapT = EmptyTapOf[T]
 }
 
 object BigtableIO {

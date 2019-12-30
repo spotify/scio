@@ -41,7 +41,7 @@ private[client] object QueryOps {
   private[scio] def isDML(sqlQuery: String): Boolean =
     sqlQuery.toUpperCase().matches("(UPDATE|MERGE|INSERT|DELETE).*")
 
-  private[scio] final case class QueryJobConfig(
+  final private[scio] case class QueryJobConfig(
     sql: String,
     useLegacySql: Boolean,
     dryRun: Boolean = false,
@@ -52,7 +52,7 @@ private[client] object QueryOps {
   )
 }
 
-private[client] final class QueryOps(client: Client, tableService: TableOps, jobService: JobOps) {
+final private[client] class QueryOps(client: Client, tableService: TableOps, jobService: JobOps) {
   import QueryOps._
 
   /** Get schema for a query without executing it. */

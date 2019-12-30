@@ -51,7 +51,7 @@ trait Taps {
 }
 
 /** Taps implementation that fails immediately if tap not available. */
-private final class ImmediateTaps extends Taps {
+final private class ImmediateTaps extends Taps {
   override private[scio] def mkTap[T](
     name: String,
     readyFn: () => Boolean,
@@ -73,7 +73,7 @@ private object PollingTaps {
 }
 
 /** Taps implementation that polls for tap availability in the background. */
-private final class PollingTaps(private[this] val backOff: BackOff) extends Taps {
+final private class PollingTaps(private[this] val backOff: BackOff) extends Taps {
   import PollingTaps._
 
   private[this] var polls: List[Poll] = _
@@ -151,7 +151,7 @@ object Taps extends {
    *
    * - `taps.polling.maximum_attempts`: maximum number of attempts, unlimited if <= 0. Default is 0.
    */
-  def apply(): Taps = {
+  def apply(): Taps =
     Algorithm.value(AlgorithmDefault) match {
       case "immediate" => new ImmediateTaps
       case "polling" =>
@@ -175,7 +175,6 @@ object Taps extends {
         new PollingTaps(backOff)
       case t => throw new IllegalArgumentException(s"Unsupported Taps $t")
     }
-  }
 }
 
 @registerSysProps

@@ -74,7 +74,7 @@ object SchemaMaterializer {
     record.construct(values)
   }
 
-  private[scio] def decode[A](schema: Type[A])(v: schema.Repr): A = {
+  private[scio] def decode[A](schema: Type[A])(v: schema.Repr): A =
     schema match {
       case Type(t) if t.getTypeName() == BSchema.TypeName.LOGICAL_TYPE =>
         // XXX: The Beam API is not symetrical.
@@ -85,7 +85,6 @@ object SchemaMaterializer {
           .toInputType(v.asInstanceOf[Object])
       case _ => v
     }
-  }
 
   private def decode[A](schema: OptionType[A])(v: schema.Repr): Option[A] =
     Option(v).map(dispatchDecode(schema.schema))
@@ -156,13 +155,12 @@ object SchemaMaterializer {
 
   private def encode[F[_], A](schema: ArrayType[F, A], fieldType: BFieldType)(
     v: F[A]
-  ): schema.Repr = {
+  ): schema.Repr =
     schema
       .toList(v)
       .asScala
       .map(dispatchEncode(schema.schema, fieldType.getCollectionElementType))
       .asJava
-  }
 
   private def encode[F[_, _], A, B](schema: MapType[F, A, B], fieldType: BFieldType)(
     v: F[A, B]
@@ -186,7 +184,7 @@ object SchemaMaterializer {
 
   final def materialize[T](
     schema: Schema[T]
-  ): (BSchema, SerializableFunction[T, Row], SerializableFunction[Row, T]) = {
+  ): (BSchema, SerializableFunction[T, Row], SerializableFunction[Row, T]) =
     schema match {
       case RawRecord(bschema, fromRow, toRow) =>
         (bschema, toRow, fromRow)
@@ -225,7 +223,6 @@ object SchemaMaterializer {
 
         (bschema, toRow, fromRow)
     }
-  }
 
   final def beamSchema[T](implicit schema: Schema[T]): BSchema = schema match {
     case s @ (_: Record[T] | _: RawRecord[T]) =>

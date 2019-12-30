@@ -247,12 +247,11 @@ class ScioILoop(
     }
   }
 
-  private def loadIoCommands(): IR.Result = {
+  private def loadIoCommands(): IR.Result =
     intp.interpret("""
         |val _ioCommands = new com.spotify.scio.repl.IoCommands(sc.options)
         |import _ioCommands._
       """.stripMargin)
-  }
 
   override def createInterpreter(): Unit = {
     super.createInterpreter()

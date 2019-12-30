@@ -58,7 +58,7 @@ object SortMergeBucketExample {
     gr
   }
 
-  def account(id: Int, name: String, `type`: String, amount: Double): Account = {
+  def account(id: Int, name: String, `type`: String, amount: Double): Account =
     Account
       .newBuilder()
       .setId(id)
@@ -66,7 +66,6 @@ object SortMergeBucketExample {
       .setType(`type`)
       .setAmount(amount)
       .build()
-  }
 }
 
 object SortMergeBucketWriteExample {

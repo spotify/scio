@@ -75,10 +75,9 @@ object IndexAdmin {
     index: String,
     mappingSource: String,
     client: IndicesClient
-  ): CreateIndexResponse = {
+  ): CreateIndexResponse =
     client.create(
       new CreateIndexRequest(index).source(mappingSource, XContentType.JSON),
       RequestOptions.DEFAULT
     )
-  }
 }

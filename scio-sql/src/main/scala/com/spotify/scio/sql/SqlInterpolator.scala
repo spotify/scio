@@ -84,7 +84,7 @@ private trait SqlInterpolatorMacroHelpers {
   val ctx: blackbox.Context
   import ctx.universe._
 
-  def partsFromContext: List[Tree] = {
+  def partsFromContext: List[Tree] =
     ctx.prefix.tree match {
       case Apply(_, Apply(_, xs: List[_]) :: Nil) => xs
       case tree =>
@@ -93,7 +93,6 @@ private trait SqlInterpolatorMacroHelpers {
           s"Implementation error. Expected tsql string interpolation, found $tree"
         )
     }
-  }
 
   def buildSQLString(parts: List[Tree], tags: List[String]): String = {
     val ps2 =

@@ -96,7 +96,7 @@ private[scio] object VersionUtil {
     current: String,
     latestOverride: Option[String] = None,
     ignore: Boolean = ignoreVersionCheck
-  ): Seq[String] = {
+  ): Seq[String] =
     if (ignore) {
       Nil
     } else {
@@ -114,7 +114,6 @@ private[scio] object VersionUtil {
       }
       buffer
     }
-  }
 
   def checkVersion(): Unit = checkVersion(BuildInfo.version).foreach(Logger.warn)
 

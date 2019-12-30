@@ -311,10 +311,7 @@ object StorageIT {
   )
   class NestedWithAll
 
-  @BigQueryType.fromStorage(
-    "data-integration-test:partition_a.table_%s",
-    List("$LATEST")
-  )
+  @BigQueryType.fromStorage("data-integration-test:partition_a.table_%s", List("$LATEST"))
   class StorageLatest
 
   @BigQueryType.fromTable("data-integration-test:storage.required")

@@ -21,7 +21,7 @@ import com.spotify.scio.coders.Coder
 
 import com.twitter.algebird.{CMS, CMSHasher}
 
-private final case class Partitions[K, V](hot: SCollection[(K, V)], chill: SCollection[(K, V)])
+final private case class Partitions[K, V](hot: SCollection[(K, V)], chill: SCollection[(K, V)])
 
 /**
  * Extra functions available on SCollections of (key, value) pairs for skwed joins

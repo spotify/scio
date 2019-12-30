@@ -31,7 +31,7 @@ private[client] object LoadOps {
   private val Logger = LoggerFactory.getLogger(this.getClass)
 }
 
-private[client] final class LoadOps(client: Client, jobService: JobOps) {
+final private[client] class LoadOps(client: Client, jobService: JobOps) {
   import LoadOps._
 
   def csv(

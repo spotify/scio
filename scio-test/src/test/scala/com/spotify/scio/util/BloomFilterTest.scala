@@ -215,7 +215,7 @@ class BFHashIndices extends CheckProperties {
   }
 }
 
-private[scio] final class BloomFilterFalsePositives[T: Gen: Hash128](falsePositiveRate: Double)
+final private[scio] class BloomFilterFalsePositives[T: Gen: Hash128](falsePositiveRate: Double)
     extends ApproximateProperty {
   type Exact = Set[T]
   type Approx = MutableBF[T]
@@ -249,7 +249,7 @@ private[scio] final class BloomFilterFalsePositives[T: Gen: Hash128](falsePositi
   def approximateResult(bf: MutableBF[T], t: T): ApproximateBoolean = bf.contains(t)
 }
 
-private[scio] final class BloomFilterCardinality[T: Gen: Hash128] extends ApproximateProperty {
+final private[scio] class BloomFilterCardinality[T: Gen: Hash128] extends ApproximateProperty {
   type Exact = Set[T]
   type Approx = MutableBF[T]
 

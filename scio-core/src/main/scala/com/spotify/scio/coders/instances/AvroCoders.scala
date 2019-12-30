@@ -29,7 +29,7 @@ import org.apache.beam.sdk.util.common.ElementByteSizeObserver
 
 import scala.reflect.{classTag, ClassTag}
 
-private final class SlowGenericRecordCoder extends AtomicCoder[GenericRecord] {
+final private class SlowGenericRecordCoder extends AtomicCoder[GenericRecord] {
   // TODO: can we find something more efficient than String ?
   private[this] val sc = StringUtf8Coder.of()
 
@@ -69,7 +69,7 @@ private final class SlowGenericRecordCoder extends AtomicCoder[GenericRecord] {
 
 /** Implementation is legit only for SpecificFixed, not GenericFixed
  * @see [[org.apache.beam.sdk.coders.AvroCoder]] */
-private final class SpecificFixedCoder[A <: SpecificFixed](cls: Class[A]) extends AtomicCoder[A] {
+final private class SpecificFixedCoder[A <: SpecificFixed](cls: Class[A]) extends AtomicCoder[A] {
   // lazy because AVRO Schema isn't serializable
   @transient private[this] lazy val schema: Schema = SpecificData.get().getSchema(cls)
   private[this] val size = SpecificData.get().getSchema(cls).getFixedSize

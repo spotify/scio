@@ -29,9 +29,9 @@ import scala.annotation.StaticAnnotation
 import scala.reflect.runtime.universe._
 
 class TypeProviderTest extends AnyFlatSpec with Matchers {
-  @AvroType.fromSchema(
-    """{"type":"record","name": "Record","fields":[{"name":"f1","type":"int"}]}"""
-  )
+  @AvroType.fromSchema("""
+      |{"type":"record","name": "Record","fields":[{"name":"f1","type":"int"}]}
+      |""".stripMargin)
   class StringLiteralRecord
 
   @AvroType.fromSchema("""
@@ -829,9 +829,9 @@ class TypeProviderTest extends AnyFlatSpec with Matchers {
   class Annotation2 extends StaticAnnotation
 
   @Annotation1
-  @AvroType.fromSchema(
-    """{"type":"record","name": "Record","fields":[{"name":"f1","type":"int"}]}"""
-  )
+  @AvroType.fromSchema("""
+      |{"type":"record","name": "Record","fields":[{"name":"f1","type":"int"}]}
+      |""".stripMargin)
   @Annotation2
   class SchemaWithSurroundingAnnotations
 
@@ -839,9 +839,9 @@ class TypeProviderTest extends AnyFlatSpec with Matchers {
     containsAllAnnotTypes[SchemaWithSurroundingAnnotations]
   }
 
-  @AvroType.fromSchema(
-    """{"type":"record","name": "Record","fields":[{"name":"f1","type":"int"}]}"""
-  )
+  @AvroType.fromSchema("""
+      |{"type":"record","name": "Record","fields":[{"name":"f1","type":"int"}]}
+      |""".stripMargin)
   @Annotation1
   @Annotation2
   class SchemaWithSequentialAnnotations

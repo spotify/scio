@@ -52,8 +52,7 @@ package object checkpoint {
      *           flow is what is checkpointed
      */
     @deprecated(
-      "Checkpoint support is deprecated, " +
-        "use smaller workflows and orchestration framework instead",
+      "Checkpoint support is deprecated, use smaller workflows and orchestration framework instead",
       "0.8.0"
     )
     def checkpoint[T: Coder](fileOrPath: String)(fn: => SCollection[T]): SCollection[T] = {
@@ -72,7 +71,7 @@ package object checkpoint {
       }
     }
 
-    private def isCheckpointAvailable(path: String): Boolean = {
+    private def isCheckpointAvailable(path: String): Boolean =
       if (self.isTest &&
           TestDataManager.getInput(self.testId.get).m.contains(CheckpointIO[Unit](path).testId)) {
         // if it's test and checkpoint was registered in test
@@ -80,6 +79,5 @@ package object checkpoint {
       } else {
         FileStorage(ScioUtil.addPartSuffix(path)).isDone
       }
-    }
   }
 }

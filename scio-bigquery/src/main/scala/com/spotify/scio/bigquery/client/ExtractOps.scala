@@ -53,7 +53,7 @@ object CsvCompression extends NoCompressionT with GzipT
 object AvroCompression extends NoCompressionT with DeflateT with SnappyT
 object JsonCompression extends NoCompressionT with GzipT
 
-private[client] final class ExtractOps(client: Client, jobService: JobOps) {
+final private[client] class ExtractOps(client: Client, jobService: JobOps) {
   import ExtractOps._
 
   def asCsv(

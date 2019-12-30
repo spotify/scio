@@ -30,7 +30,7 @@ import org.apache.beam.sdk.{io => beam}
 final case class JsonIO[T: Encoder: Decoder: Coder](path: String) extends ScioIO[T] {
   override type ReadP = JsonIO.ReadParam
   override type WriteP = JsonIO.WriteParam
-  override final val tapT = TapOf[T]
+  final override val tapT = TapOf[T]
 
   override protected def read(sc: ScioContext, params: ReadP): SCollection[T] =
     sc.read(TextIO(path))(TextIO.ReadParam(params.compression)).map(decodeJson)
