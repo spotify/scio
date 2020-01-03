@@ -18,7 +18,7 @@
 // Example: BigQuery Tornadoes Example
 // Usage:
 
-// `sbt runMain "com.spotify.scio.examples.cookbook.BigQueryTornadoes
+// `sbt "runMain com.spotify.scio.examples.cookbook.BigQueryTornadoes
 // --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
 // --input=clouddataflow-readonly:samples.weather_stations
 // --output=[DATASET].bigquery_tornadoes"`
@@ -54,9 +54,9 @@ object BigQueryTornadoes {
       // Map `(Long, Long)` tuples into result `TableRow`s
       .map(kv => TableRow("month" -> kv._1, "tornado_count" -> kv._2))
       // Save result as a BigQuery table
-      .saveAsBigQuery(args("output"), schema, WRITE_TRUNCATE, CREATE_IF_NEEDED)
+      .saveAsBigQueryTable(Table.Spec(args("output")), schema, WRITE_TRUNCATE, CREATE_IF_NEEDED)
 
-    // Close the context and execute the pipeline
+    // Execute the pipeline
     sc.run()
     ()
   }

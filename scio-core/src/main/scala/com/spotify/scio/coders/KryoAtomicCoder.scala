@@ -67,16 +67,17 @@ private object KryoRegistrarLoader {
       .toSeq
       .filter(_.getName.endsWith("KryoRegistrar"))
       .flatMap { clsInfo =>
-        val optCls: Option[IKryoRegistrar] = try {
-          val cls = clsInfo.load()
-          if (classOf[AnnotatedKryoRegistrar] isAssignableFrom cls) {
-            Some(cls.newInstance().asInstanceOf[IKryoRegistrar])
-          } else {
-            None
+        val optCls: Option[IKryoRegistrar] =
+          try {
+            val cls = clsInfo.load()
+            if (classOf[AnnotatedKryoRegistrar] isAssignableFrom cls) {
+              Some(cls.getConstructor().newInstance().asInstanceOf[IKryoRegistrar])
+            } else {
+              None
+            }
+          } catch {
+            case _: Throwable => None
           }
-        } catch {
-          case _: Throwable => None
-        }
         optCls
       }
   }
@@ -88,7 +89,7 @@ object ScioKryoRegistrar {
 
 /** serializers we've written in Scio and want to add to Kryo serialization
  * @see com.spotify.scio.coders.instances.serializers */
-private final class ScioKryoRegistrar extends IKryoRegistrar {
+final private class ScioKryoRegistrar extends IKryoRegistrar {
   import ScioKryoRegistrar.logger
 
   override def apply(k: Kryo): Unit = {
@@ -126,7 +127,7 @@ private final class ScioKryoRegistrar extends IKryoRegistrar {
   }
 }
 
-private[scio] final class KryoAtomicCoder[T](private val options: KryoOptions)
+final private[scio] class KryoAtomicCoder[T](private val options: KryoOptions)
     extends AtomicCoder[T] {
   import KryoAtomicCoder._
 
@@ -236,7 +237,7 @@ private[scio] final class KryoAtomicCoder[T](private val options: KryoOptions)
 }
 
 /** Used for sharing Kryo instance and buffers. */
-private[scio] final case class KryoState(
+final private[scio] case class KryoState(
   kryo: Kryo,
   inputChunked: InputChunked,
   outputChunked: OutputChunked
@@ -279,7 +280,7 @@ private[scio] object KryoAtomicCoder {
   }
 }
 
-private[scio] final case class KryoOptions(
+final private[scio] case class KryoOptions(
   bufferSize: Int,
   maxBufferSize: Int,
   referenceTracking: Boolean,

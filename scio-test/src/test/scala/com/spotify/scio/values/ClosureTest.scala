@@ -137,7 +137,7 @@ class NestedClosuresNotSerializable {
     def x = irrelevantInt
     def y = 2
     val fn = { a: Int =>
-      (a + y)
+      a + y
     }
     fn
   }

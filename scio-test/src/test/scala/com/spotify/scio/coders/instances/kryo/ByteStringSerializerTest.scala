@@ -19,9 +19,10 @@ package com.spotify.scio.coders.instances.kryo
 import com.esotericsoftware.kryo.io.{Input, Output}
 import com.google.protobuf.ByteString
 import com.twitter.chill.{Kryo, KryoSerializer}
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
-class ByteStringSerializerTest extends FlatSpec with Matchers {
+class ByteStringSerializerTest extends AnyFlatSpec with Matchers {
   private def testRoundTrip(ser: ByteStringSerializer, bs: ByteString): Unit = {
     val k: Kryo = KryoSerializer.registered.newKryo()
     val o = new Array[Byte](bs.size() * 2)

@@ -19,7 +19,7 @@
 
 // Usage:
 
-// `sbt runMain "com.spotify.scio.examples.complete.game.UserScore
+// `sbt "runMain com.spotify.scio.examples.complete.game.UserScore
 // --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
 // --output=bq://[PROJECT]/[DATASET]/mobile_game_user_score"`
 
@@ -62,9 +62,9 @@ object UserScore {
       // Map summed results from tuples into `UserScoreSums` case class, so we can save to BQ
       .map(UserScoreSums.tupled)
       // Save to the BigQuery table defined by "output" in the arguments passed in
-      .saveAsTypedBigQuery(args("output"))
+      .saveAsTypedBigQueryTable(Table.Spec(args("output")))
 
-    // Close context and execute the pipeline
+    // Execute the pipeline
     sc.run()
     ()
   }

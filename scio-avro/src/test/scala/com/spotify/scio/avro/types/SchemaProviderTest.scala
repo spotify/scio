@@ -19,9 +19,10 @@ package com.spotify.scio.avro.types
 
 import com.spotify.scio.avro.types.Schemas._
 import com.spotify.scio.avro.types.Schemas.FieldMode._
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
-class SchemaProviderTest extends FlatSpec with Matchers {
+class SchemaProviderTest extends AnyFlatSpec with Matchers {
   "SchemaProvider.toSchema" should "support primitive types" in {
     SchemaProvider.schemaOf[BasicFields] shouldBe
       parseSchema(s"${basicFields()}")

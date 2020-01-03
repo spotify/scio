@@ -15,8 +15,6 @@
  * under the License.
  */
 
-// scalastyle:off file.size.limit
-
 package com.spotify.scio
 
 import java.beans.Introspector
@@ -169,8 +167,6 @@ object ContextAndArgs {
       case _ => arg
     }
 
-    // scalastyle:off regex
-    // scalastyle:off cyclomatic.complexity
     override def parse(args: Array[String]): Try[Result] = {
       // limit the options passed to case-app
       // to options supported in T
@@ -220,8 +216,6 @@ object ContextAndArgs {
           Failure(new Exception(error.message))
       }
     }
-    // scalastyle:on regex
-    // scalastyle:on cyclomatic.complexity
   }
 
   def withParser[T](parser: ArgsParser[Try]): Array[String] => (ScioContext, T) =
@@ -230,9 +224,8 @@ object ContextAndArgs {
         case Failure(exception) =>
           throw exception
         case Success(Left(usageOrHelp)) =>
-          // scalastyle:off regex
           Console.out.println(usageOrHelp)
-          // scalastyle:on regex
+
           UsageOrHelpException.attachUncaughtExceptionHandler()
           throw new UsageOrHelpException()
         case Success(Right((_opts, _args))) =>
@@ -254,14 +247,13 @@ object ContextAndArgs {
       val originalHandler = currentThread.getUncaughtExceptionHandler
       currentThread.setUncaughtExceptionHandler(
         new Thread.UncaughtExceptionHandler {
-          def uncaughtException(thread: Thread, exception: Throwable): Unit = {
+          def uncaughtException(thread: Thread, exception: Throwable): Unit =
             exception match {
               case _: UsageOrHelpException =>
                 sys.exit(0)
               case _ =>
                 originalHandler.uncaughtException(thread, exception)
             }
-          }
         }
       )
     }
@@ -309,10 +301,8 @@ trait ScioExecutionContext {
 }
 
 object ScioExecutionContext {
-  import scala.language.implicitConversions
   @deprecated(
-    "ScioContext.close now returns a ScioExecutionContext instead of a ScioResult." +
-      " See https://spotify.github.io/scio/migrations/v0.8.0.html#sciocontext",
+    "close() now returns a ScioExecutionContext instead of a ScioResult. See https://git.io/JeAt9",
     since = "0.8.0"
   )
   implicit def toResult(sec: ScioExecutionContext): ScioResult =
@@ -413,8 +403,6 @@ object ScioContext {
   // contributing to an exceeded upload size limit.
   private val appArgStringMaxLength = 50000
 
-  import scala.language.implicitConversions
-
   /** Implicit conversion from ScioContext to DistCacheScioContext. */
   implicit def makeDistCacheScioContext(self: ScioContext): DistCacheScioContext =
     new DistCacheScioContext(self)
@@ -431,11 +419,14 @@ object ScioContext {
  * @groupname input Input Sources
  * @groupname Ungrouped Other Members
  */
-// scalastyle:off number.of.methods
 class ScioContext private[scio] (
   val options: PipelineOptions,
   private var artifacts: List[String]
 ) extends TransformNameable {
+  // var _pipeline member is lazily initialized, this makes sure that file systems are registered
+  // before any IO
+  FileSystems.setDefaultPipelineOptions(options)
+
   /** Get PipelineOptions as a more specific sub-type. */
   def optionsAs[T <: PipelineOptions: ClassTag]: T =
     options.as(ScioUtil.classOf[T])
@@ -683,7 +674,7 @@ class ScioContext private[scio] (
    *
    * @see [[ScioContext#run]]
    */
-  @deprecated("this method will be removed in next scio version; use run() instead.", "Scio 0.8.0")
+  @deprecated("this method will be removed in next scio version; use run() instead.", "0.8.0")
   def close(): ScioExecutionContext = requireNotClosed {
     val closedContext = run()
 
@@ -697,9 +688,9 @@ class ScioContext private[scio] (
   /** Whether the context is closed. */
   def isClosed: Boolean = _isClosed
 
-  /** Ensure an operation is called before the pipeline is closed. */
+  /** Ensure an operation is called before the pipeline has already been executed. */
   private[scio] def requireNotClosed[T](body: => T): T = {
-    require(!this.isClosed, "ScioContext already closed")
+    require(!this.isClosed, "Pipeline cannot be modified once ScioContext has been executed")
     body
   }
 
@@ -827,10 +818,8 @@ class ScioContext private[scio] (
   def read[T: Coder](io: ScioIO[T])(params: io.ReadP): SCollection[T] =
     io.readWithContext(this, params)
 
-  // scalastyle:off structural.type
   def read[T: Coder](io: ScioIO[T] { type ReadP = Unit }): SCollection[T] =
     io.readWithContext(this, ())
-  // scalastyle:on structural.type
 
   // =======================================================================
   // In-memory collections
@@ -866,20 +855,13 @@ class ScioContext private[scio] (
         )
       )
     }
-
-  // scalastyle:off line.size.limit
-  @deprecated(
-    "\n⛔" +
-      "\n⛔️  makeFuture is PRIVATE and you should NOT be using it" +
-      "\n⛔️     - Scio's internals were simplified and it removed the need for makeFuture" +
-      "\n⛔️     - The current implementation is only there for back-compatibility" +
-      "\n⛔️     - There's NO GUARANTEE that its behavior is 100% similar to Scio < 0.8" +
-      "\n⛔️     - IT WILL BE REMOVED VERY SOON!" +
-      "\n⛔️ https://spotify.github.io/scio/migrations/v0.8.0.html#scala-concurrent-future-removed-from-scioios️" +
-      "\n⛔️",
-    since = "0.8.0"
-  )
-  // scalastyle:on line.size.limit
+  @deprecated("""
+⛔️  makeFuture is PRIVATE and you should NOT be using it
+⛔️     - Scio's internals were simplified and it removed the need for makeFuture
+⛔️     - The current implementation is only there for back-compatibility
+⛔️     - There's NO GUARANTEE that its behavior is 100% similar to Scio < 0.8
+⛔️     - IT WILL BE REMOVED VERY SOON!
+⛔️ https://git.io/JeAt1""", since = "0.8.0")
   private[scio] def makeFuture[T](value: Tap[T]): Future[Tap[T]] =
     Future.successful(value)
 
@@ -945,7 +927,6 @@ class ScioContext private[scio] (
     counters
   }
 }
-// scalastyle:on number.of.methods
 
 /** An enhanced ScioContext with distributed cache features. */
 class DistCacheScioContext private[scio] (self: ScioContext) {
@@ -996,5 +977,3 @@ class DistCacheScioContext private[scio] (self: ScioContext) {
       }
     }
 }
-
-// scalastyle:on file.size.limit

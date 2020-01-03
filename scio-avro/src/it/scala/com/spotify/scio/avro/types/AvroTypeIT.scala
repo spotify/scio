@@ -18,7 +18,9 @@
 package com.spotify.scio.avro.types
 
 import org.apache.avro.Schema.Parser
-import org.scalatest._
+import org.scalatest.Assertion
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import scala.annotation.StaticAnnotation
 import scala.reflect.runtime.universe._
@@ -76,7 +78,7 @@ object AvroTypeIT {
   class FromPathWithSequentialAnnotations
 }
 
-class AvroTypeIT extends FlatSpec with Matchers {
+class AvroTypeIT extends AnyFlatSpec with Matchers {
   import AvroTypeIT._
 
   private val expectedSchema = new Parser().parse("""{

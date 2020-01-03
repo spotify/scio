@@ -29,7 +29,6 @@ case class FooWithInt(s: String, l: Int)
 class TypedBeamSQLTest extends PipelineSpec {
   import TestData._
 
-  // scalastyle:off line.size.limit
   "(Typed) BeamSQL" should "typecheck queries at compile time" in {
     import Query1._
     typed[Bar, Long]("select l from SCOLLECTION")
@@ -70,7 +69,6 @@ class TypedBeamSQLTest extends PipelineSpec {
     |typed[User, User, String]("select a.username from B a join A b on a.username = b.username", new TupleTag[User]("C"), new TupleTag[User]("D"))
     |""".stripMargin shouldNot compile
   }
-  // scalastyle:on line.size.limit
 
   it should "give a clear error message when the query can not be checked at compile time" in {
     """

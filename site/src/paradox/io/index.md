@@ -1,13 +1,13 @@
 # IO
 
-@@toc { depth=2 }
+@@toc { depth=1 }
 
 @@@ index
 
-* [Type safe BigQuery](Type-Safe-BigQuery.md)
-* [Bigtable](Bigtable.md)
-* [Avro](Avro.md)
-* [Protobuf](Protobuf.md)
-* [Parquet](Parquet.md)
+* @ref:[Type safe BigQuery](Type-Safe-BigQuery.md)
+* @ref:[Bigtable](Bigtable.md)
+* @ref:[Avro](Avro.md)
+* @ref:[Protobuf](Protobuf.md)
+* @ref:[Parquet](Parquet.md)
 
 @@@

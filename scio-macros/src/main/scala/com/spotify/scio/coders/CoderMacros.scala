@@ -39,8 +39,6 @@ private[coders] object CoderMacros {
         """.stripMargin
     )
 
-  // scalastyle:off method.length
-  // scalastyle:off cyclomatic.complexity
   def issueFallbackWarning[T: c.WeakTypeTag](
     c: whitebox.Context
   )(lp: c.Expr[shapeless.LowPriority]): c.Tree = {
@@ -81,11 +79,11 @@ private[coders] object CoderMacros {
         |  If a type is not supported, consider implementing your own implicit Coder for this type.
         |  It is recommended to declare this Coder in your class companion object:
         |
-        |       object ${typeName} {
+        |       object $typeName {
         |         import com.spotify.scio.coders.Coder
         |         import org.apache.beam.sdk.coders.AtomicCoder
         |
-        |         implicit def coder${typeName}: Coder[$fullType] =
+        |         implicit def coder$typeName: Coder[$fullType] =
         |           Coder.beam(new AtomicCoder[$fullType] {
         |             def decode(in: InputStream): $fullType = ???
         |             def encode(ts: $fullType, out: OutputStream): Unit = ???
@@ -94,7 +92,7 @@ private[coders] object CoderMacros {
         |
         |  If you do want to use a Kryo coder, be explicit about it:
         |
-        |       implicit def coder${typeName}: Coder[$fullType] = Coder.kryo[$fullType]
+        |       implicit def coder$typeName: Coder[$fullType] = Coder.kryo[$fullType]
         |
         |  Additional info at:
         |   - https://spotify.github.io/scio/internals/Coders
@@ -106,7 +104,7 @@ private[coders] object CoderMacros {
     (verbose, alreadyReported) match {
       case _ if BlacklistedTypes.contains(wtt.toString) =>
         val msg =
-          s"Can't use a Kryo coder for ${wtt}. You need to explicitly set the Coder for this type"
+          s"Can't use a Kryo coder for $wtt. You need to explicitly set the Coder for this type"
         c.abort(c.enclosingPosition, msg)
       case _ if Warnings.contains(wtt.toString) =>
         c.echo(c.enclosingPosition, Warnings(wtt.toString))
@@ -122,42 +120,32 @@ private[coders] object CoderMacros {
         fallback
     }
   }
-  // scalastyle:on cyclomatic.complexity
 
   // Add a level of indirection to prevent the macro from capturing
   // $outer which would make the Coder serialization fail
   def wrappedCoder[T: c.WeakTypeTag](c: whitebox.Context): c.Tree = {
     import c.universe._
     val wtt = weakTypeOf[T]
-
-    if (wtt <:< typeOf[Iterable[_]]) {
-      c.abort(
-        c.enclosingPosition,
-        s"Automatic coder derivation can't derive a Coder for $wtt <: Seq"
-      )
+    val imp = c.openImplicits match {
+      case Nil => None
+      case _   => companionImplicit(c)(wtt)
     }
 
-    val magTree = MagnoliaMacros.genWithoutAnnotations[T](c)
-
-    val isPrivateConstructor =
-      wtt.decls
-        .collectFirst {
-          case m: MethodSymbol if m.isConstructor =>
-            m.isPrivate
-        }
-        .getOrElse(false)
-
-    val tree: c.Tree =
-      if (isPrivateConstructor) {
-        // Magnolia does not support classes with a private constructor.
-        // Workaround the limitation by using a fallback in that case
-        q"""_root_.com.spotify.scio.coders.Coder.fallback[$wtt](null)"""
-      } else {
-        //XXX: find a way to get rid of $outer references at compile time
-        magTree
+    imp.map(_ => EmptyTree).getOrElse {
+      // Magnolia does not support classes with a private constructor.
+      // Workaround the limitation by using a fallback in that case
+      privateConstructor(c)(wtt).fold(MagnoliaMacros.genWithoutAnnotations[T](c)) { _ =>
+        q"_root_.com.spotify.scio.coders.Coder.fallback[$wtt](null)"
       }
-
-    tree
+    }
   }
-  // scalastyle:on method.length
+
+  private[this] def companionImplicit(c: whitebox.Context)(tpe: c.Type): Option[c.Symbol] = {
+    import c.universe._
+    val tp = c.typecheck(tq"_root_.com.spotify.scio.coders.Coder[$tpe]", c.TYPEmode).tpe
+    tpe.companion.members.iterator.filter(_.isImplicit).find(_.info.resultType =:= tp)
+  }
+
+  private[this] def privateConstructor(c: whitebox.Context)(tpe: c.Type): Option[c.Symbol] =
+    tpe.decls.find(m => m.isConstructor && m.isPrivate)
 }

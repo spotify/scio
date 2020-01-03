@@ -41,8 +41,6 @@ import scala.collection.JavaConverters._
 import com.spotify.scio.coders.Coder
 
 class SCollectionTest extends PipelineSpec {
-  import com.spotify.scio.testing.TestingUtils._
-
   "SCollection" should "support applyTransform()" in {
     runWithContext { sc =>
       val p =
@@ -101,7 +99,7 @@ class SCollectionTest extends PipelineSpec {
 
   it should "support unionAll() with an empty list" in {
     runWithContext { sc =>
-      sc.unionAll(List[SCollection[Unit]]().toIterable) should beEmpty
+      sc.unionAll(List[SCollection[Unit]]()) should beEmpty
     }
   }
 
@@ -354,30 +352,31 @@ class SCollectionTest extends PipelineSpec {
   it should "support quantilesApprox()" in {
     runWithContext { sc =>
       val p = sc.parallelize(0 to 100).quantilesApprox(5)
-      p should containSingleValue(iterable(0, 25, 50, 75, 100))
+      p should containSingleValue(Iterable(0, 25, 50, 75, 100))
     }
   }
 
   it should "support randomSplit()" in {
     runWithContext { sc =>
-      def round(c: Long): Long = math.round(c / 100.0) * 100
-      val p1 = sc.parallelize(0 to 1000).randomSplit(Array(0.3, 0.7))
-      val p2 = sc.parallelize(0 to 1000).randomSplit(Array(0.2, 0.3, 0.5))
+      val total = 5000
+      def round(c: Long): Double = math.round(c * 10.0 / total) / 10.0
+      val p1 = sc.parallelize(0 to total).randomSplit(Array(0.3, 0.7))
+      val p2 = sc.parallelize(0 to total).randomSplit(Array(0.2, 0.3, 0.5))
       p1.length shouldBe 2
       p2.length shouldBe 3
-      p1(0).count.map(round) should containSingleValue(300L)
-      p1(1).count.map(round) should containSingleValue(700L)
-      p2(0).count.map(round) should containSingleValue(200L)
-      p2(1).count.map(round) should containSingleValue(300L)
-      p2(2).count.map(round) should containSingleValue(500L)
+      p1(0).count.map(round) should containSingleValue(0.3)
+      p1(1).count.map(round) should containSingleValue(0.7)
+      p2(0).count.map(round) should containSingleValue(0.2)
+      p2(1).count.map(round) should containSingleValue(0.3)
+      p2(2).count.map(round) should containSingleValue(0.5)
 
-      val (pa, pb) = sc.parallelize(0 to 1000).randomSplit(0.3)
-      val (pc, pd, pe) = sc.parallelize(0 to 1000).randomSplit(0.2, 0.3)
-      pa.count.map(round) should containSingleValue(300L)
-      pb.count.map(round) should containSingleValue(700L)
-      pc.count.map(round) should containSingleValue(200L)
-      pd.count.map(round) should containSingleValue(300L)
-      pe.count.map(round) should containSingleValue(500L)
+      val (pa, pb) = sc.parallelize(0 to 5000).randomSplit(0.3)
+      val (pc, pd, pe) = sc.parallelize(0 to 5000).randomSplit(0.2, 0.3)
+      pa.count.map(round) should containSingleValue(0.3)
+      pb.count.map(round) should containSingleValue(0.7)
+      pc.count.map(round) should containSingleValue(0.2)
+      pd.count.map(round) should containSingleValue(0.3)
+      pe.count.map(round) should containSingleValue(0.5)
     }
   }
 
@@ -393,8 +392,8 @@ class SCollectionTest extends PipelineSpec {
       val p = sc.parallelize(Seq(1, 1, 1, 1, 1))
       val r1 = p.sample(1)
       val r2 = p.sample(5)
-      r1 should containSingleValue(iterable(1))
-      r2 should containSingleValue(iterable(1, 1, 1, 1, 1))
+      r1 should containSingleValue(Iterable(1))
+      r2 should containSingleValue(Iterable(1, 1, 1, 1, 1))
     }
   }
 
@@ -459,8 +458,8 @@ class SCollectionTest extends PipelineSpec {
       val p = sc.parallelize(Seq(1, 2, 3, 4, 5))
       val r1 = p.top(3)
       val r2 = p.top(3, Ordering.by(-_))
-      r1 should containSingleValue(iterable(5, 4, 3))
-      r2 should containSingleValue(iterable(1, 2, 3))
+      r1 should containSingleValue(Iterable(5, 4, 3))
+      r2 should containSingleValue(Iterable(1, 2, 3))
     }
   }
 

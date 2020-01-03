@@ -38,13 +38,13 @@ import com.spotify.scio.schemas.Schema
 import com.spotify.scio.values._
 import org.apache.beam.sdk.io.gcp.bigquery.SchemaAndRecord
 
-import scala.language.implicitConversions
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
 import scala.util.Try
 
 /** Enhanced version of [[ScioContext]] with BigQuery methods. */
 final class ScioContextOps(private val self: ScioContext) extends AnyVal {
+
   /**
    * Get an SCollection for a BigQuery SELECT query.
    * Both [[https://cloud.google.com/bigquery/docs/reference/legacy-sql Legacy SQL]] and
@@ -53,8 +53,8 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
    * behavior, start the query string with `#legacysql` or `#standardsql`.
    */
   @deprecated(
-    "this method will be removed; use bigQuery(Query(sql), flattenResults) instead",
-    "Scio 0.8"
+    "this method will be removed; use bigQuerySelect(Query(sql), flattenResults) instead",
+    "0.8.0"
   )
   def bigQuerySelect(
     sqlQuery: String,
@@ -76,22 +76,28 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
     self.read(BigQuerySelect(sqlQuery))(BigQuerySelect.ReadParam(flattenResults))
 
   /**
+   * Get an SCollection for a BigQuery SELECT query.
+   * Both [[https://cloud.google.com/bigquery/docs/reference/legacy-sql Legacy SQL]] and
+   * [[https://cloud.google.com/bigquery/docs/reference/standard-sql/ Standard SQL]] dialects are
+   * supported. By default the query dialect will be automatically detected. To override this
+   * behavior, start the query string with `#legacysql` or `#standardsql`.
+   */
+  def bigQuerySelect(
+    sqlQuery: Query
+  ): SCollection[TableRow] =
+    bigQuerySelect(sqlQuery, BigQuerySelect.ReadParam.DefaultFlattenResults)
+
+  /**
    * Get an SCollection for a BigQuery table.
    */
-  @deprecated(
-    "this method will be removed; use bigQueryTable(Table.Ref(table)) instead",
-    "Scio 0.8"
-  )
+  @deprecated("this method will be removed; use bigQueryTable(Table.Ref(table)) instead", "0.8.0")
   def bigQueryTable(table: TableReference): SCollection[TableRow] =
     bigQueryTable(Table.Ref(table))
 
   /**
    * Get an SCollection for a BigQuery table.
    */
-  @deprecated(
-    "this method will be removed; use bigQueryTable(Table.Spec(table)) instead",
-    "Scio 0.8"
-  )
+  @deprecated("this method will be removed; use bigQueryTable(Table.Spec(table)) instead", "0.8.0")
   def bigQueryTable(tableSpec: String): SCollection[TableRow] =
     bigQueryTable(Table.Spec(tableSpec))
 
@@ -165,12 +171,9 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
    * supported. By default the query dialect will be automatically detected. To override this
    * behavior, start the query string with `#legacysql` or `#standardsql`.
    */
-  @deprecated(
-    "this method will be removed; use typedBigQuery(Source) instead",
-    "Scio 0.8"
-  )
+  @deprecated("this method will be removed; use typedBigQuery(Source) instead", "0.8.0")
   def typedBigQuery[T <: HasAnnotation: ClassTag: TypeTag: Coder](
-    newSource: String = null
+    newSource: String
   ): SCollection[T] = {
     val src = Option(newSource).map { s =>
       Try(Table.Spec(s)).getOrElse(Query(s))
@@ -178,14 +181,24 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
     typedBigQuery(src)
   }
 
+  def typedBigQuery[T <: HasAnnotation: ClassTag: TypeTag: Coder](): SCollection[T] =
+    typedBigQuery(None)
+
   def typedBigQuery[T <: HasAnnotation: ClassTag: TypeTag: Coder](
     newSource: Source
+  ): SCollection[T] = typedBigQuery(Option(newSource))
+
+  def typedBigQuery[T <: HasAnnotation: ClassTag: TypeTag: Coder](
+    newSource: Option[Source]
   ): SCollection[T] = {
     val bqt = BigQueryType[T]
     if (bqt.isStorage) {
-      typedBigQueryStorage(newSource)
+      newSource
+        .asInstanceOf[Option[Table]]
+        .map(typedBigQueryStorage(_))
+        .getOrElse(typedBigQueryStorage())
     } else {
-      self.read(BigQueryTyped.dynamic[T](Option(newSource)))
+      self.read(BigQueryTyped.dynamic[T](newSource))
     }
   }
 
@@ -205,29 +218,51 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
    * [[com.spotify.scio.bigquery.types.BigQueryType.fromSchema BigQueryType.fromStorage]] or
    * [[com.spotify.scio.bigquery.types.BigQueryType.fromQuery BigQueryType.fromQuery]]
    */
-  def typedBigQueryStorage[T <: HasAnnotation: ClassTag: TypeTag: Coder](
-    newSource: Source = null,
-    rowRestriction: String = null
-  ): SCollection[T] = {
+  def typedBigQueryStorage[T <: HasAnnotation: ClassTag: TypeTag: Coder](): SCollection[T] = {
     val bqt = BigQueryType[T]
     if (bqt.isQuery) {
-      require(newSource == null, "`newSource` was set; only applies if `fromStorage` is used")
-      require(
-        rowRestriction == null,
-        "`rowRestriction` was set; only applies if `fromStorage` is used"
-      )
       self.read(BigQueryTyped.StorageQuery[T](Query(bqt.query.get)))
     } else {
-      val table: Table = Option(newSource) match {
-        case None           => Table.Spec(bqt.table.get)
-        case Some(s: Table) => s
-        case _              => throw new IllegalArgumentException("Unsupported source")
-      }
-      val rr = if (rowRestriction != null) rowRestriction else bqt.rowRestriction.get
+      val table = Table.Spec(bqt.table.get)
+      val rr = bqt.rowRestriction.get
       val params = BigQueryTyped.Storage.ReadParam(bqt.selectedFields.get, rr)
       self.read(BigQueryTyped.Storage[T](table))(params)
     }
   }
+
+  def typedBigQueryStorage[T <: HasAnnotation: ClassTag: TypeTag: Coder](
+    table: Table
+  ): SCollection[T] =
+    self.read(BigQueryTyped.Storage[T](table))(
+      BigQueryTyped.Storage.ReadParam(
+        BigQueryType[T].selectedFields.get,
+        BigQueryType[T].rowRestriction.get
+      )
+    )
+
+  def typedBigQueryStorage[T <: HasAnnotation: ClassTag: TypeTag: Coder](
+    rowRestriction: String
+  ): SCollection[T] = {
+    val bqt = BigQueryType[T]
+    val table = Table.Spec(bqt.table.get)
+    self.read(BigQueryTyped.Storage[T](table))(
+      BigQueryTyped.Storage.ReadParam(
+        bqt.selectedFields.get,
+        rowRestriction
+      )
+    )
+  }
+
+  def typedBigQueryStorage[T <: HasAnnotation: ClassTag: TypeTag: Coder](
+    table: Table,
+    rowRestriction: String
+  ): SCollection[T] =
+    self.read(BigQueryTyped.Storage[T](table))(
+      BigQueryTyped.Storage.ReadParam(
+        BigQueryType[T].selectedFields.get,
+        rowRestriction
+      )
+    )
 
   /**
    * Get an SCollection for a BigQuery TableRow JSON file.

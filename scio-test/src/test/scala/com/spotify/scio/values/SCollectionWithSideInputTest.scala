@@ -72,6 +72,15 @@ class SCollectionWithSideInputTest extends PipelineSpec {
     }
   }
 
+  it should "support asSetSingletonSideInput" in {
+    runWithContext { sc =>
+      val p1 = sc.parallelize(Seq(1))
+      val p2 = sc.parallelize(sideData ++ sideData).asSetSingletonSideInput
+      val s = p1.withSideInputs(p2).flatMap((i, s) => s(p2)).toSCollection
+      s should containInAnyOrder(sideData)
+    }
+  }
+
   it should "support asMultiMapSideInput" in {
     runWithContext { sc =>
       val p1 = sc.parallelize(Seq(1))
@@ -203,6 +212,21 @@ class SCollectionWithSideInputTest extends PipelineSpec {
         .asIterableSideInput
       val s = p1.withSideInputs(p2).map((x, s) => (x, s(p2))).toSCollection
       s should forAll[(Int, Iterable[Int])](t => (1 to t._1).toSet == t._2.toSet)
+    }
+  }
+
+  it should "support windowed asSetSingletonSideInput" in {
+    runWithContext { sc =>
+      val p1 = sc
+        .parallelizeTimestamped(timestampedData)
+        .withFixedWindows(Duration.standardSeconds(1))
+      val p2 = sc
+        .parallelizeTimestamped(timestampedData ++ timestampedData)
+        .withFixedWindows(Duration.standardSeconds(1))
+        .flatMap(x => 1 to x)
+        .asSetSingletonSideInput
+      val s = p1.withSideInputs(p2).map((x, s) => (x, s(p2))).toSCollection
+      s should forAll[(Int, Set[Int])](t => (1 to t._1).toSet == t._2)
     }
   }
 

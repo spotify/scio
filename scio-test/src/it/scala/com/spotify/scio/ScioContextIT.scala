@@ -25,9 +25,10 @@ import org.apache.beam.runners.dataflow.DataflowRunner
 import org.apache.beam.sdk.extensions.gcp.options.GcpOptions
 import org.apache.beam.sdk.io.FileSystems
 import org.apache.beam.sdk.options.{PipelineOptions, PipelineOptionsFactory}
-import org.scalatest._
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
-class ScioContextIT extends FlatSpec with Matchers {
+class ScioContextIT extends AnyFlatSpec with Matchers {
   "ScioContext" should "have temp location for DataflowRunner" in {
     val opts = PipelineOptionsFactory.create()
     opts.setRunner(classOf[DataflowRunner])

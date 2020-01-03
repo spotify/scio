@@ -26,12 +26,13 @@ import com.spotify.scio.bigquery.BigQueryTaps._
 import org.apache.beam.sdk.io.gcp.{bigquery => beam}
 import org.apache.beam.sdk.testing.PAssert
 import org.joda.time.{DateTimeZone, Duration, Instant}
-import org.scalatest._
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import scala.collection.JavaConverters._
 
 // Run BigQueryITUtil to re-populate tables for integration tests
-class StorageIT extends FlatSpec with Matchers {
+class StorageIT extends AnyFlatSpec with Matchers {
   import StorageIT._
 
   "fromStorage" should "work with REQUIRED fields" in {
@@ -264,7 +265,7 @@ class StorageIT extends FlatSpec with Matchers {
     import scala.concurrent.duration.Duration
     val res = Await.result(futureTap, Duration.Inf).value.toList
 
-    res should not be (empty)
+    res should not be empty
   }
 
   it should "support typed read" in {
@@ -276,7 +277,7 @@ class StorageIT extends FlatSpec with Matchers {
     import scala.concurrent.duration.Duration
     val res = Await.result(futureTap, Duration.Inf).value.toList
 
-    res should not be (empty)
+    res should not be empty
   }
 }
 
@@ -310,10 +311,7 @@ object StorageIT {
   )
   class NestedWithAll
 
-  @BigQueryType.fromStorage(
-    "data-integration-test:partition_a.table_%s",
-    List("$LATEST")
-  )
+  @BigQueryType.fromStorage("data-integration-test:partition_a.table_%s", List("$LATEST"))
   class StorageLatest
 
   @BigQueryType.fromTable("data-integration-test:storage.required")

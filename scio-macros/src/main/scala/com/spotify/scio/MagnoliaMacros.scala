@@ -37,9 +37,9 @@ private[scio] object MagnoliaMacros {
 
     // Remove annotations from magnolia since they are
     // not serialiazable and we don't use them anyway
-    // scalastyle:off line.size.limit
+
     val removeAnnotations = new Transformer {
-      override def transform(tree: Tree): c.universe.Tree = {
+      override def transform(tree: Tree): c.universe.Tree =
         tree match {
           case Apply(
               AppliedTypeTree(Select(pack, TypeName("CaseClass")), ps),
@@ -64,9 +64,8 @@ private[scio] object MagnoliaMacros {
           case t =>
             super.transform(t)
         }
-      }
     }
-    // scalastyle:on line.size.limit
+
     removeAnnotations.transform(magnoliaTree)
   }
 }

@@ -25,7 +25,7 @@ import com.spotify.scio._
 
 // Usage:
 
-// `sbt runMain "com.spotify.scio.examples.extra.TapOutputExample
+// `sbt "runMain com.spotify.scio.examples.extra.TapOutputExample
 // --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
 // --output=gs://[OUTPUT] --method=[METHOD]"`
 object TapOutputExample {
@@ -51,7 +51,6 @@ object TapOutputExample {
     val t1 = scioResult.tap(closedTap1)
     val t2 = scioResult.tap(closedTap2)
 
-    // scalastyle:off regex
     // Fetch `Tap` values directly
     println(t1.value.mkString(", "))
     println(t2.value.mkString(", "))
@@ -60,7 +59,7 @@ object TapOutputExample {
     val (sc2, _) = ContextAndArgs(cmdlineArgs)
     // Re-open taps in new `ScioContext`
     val s = (t1.open(sc2) ++ t2.open(sc2).map(_.toInt)).sum
-    // Block until job finishes
+    // Execute the pipeline and block until it completes
     val result = sc2.run().waitUntilFinish()
 
     println(result.state)

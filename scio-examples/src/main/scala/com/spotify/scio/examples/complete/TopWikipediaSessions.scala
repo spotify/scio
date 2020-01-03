@@ -18,7 +18,7 @@
 // Example: Top Wikipedia Sessions
 // Usage:
 
-// `sbt runMain "com.spotify.scio.examples.complete.TopWikipediaSessions
+// `sbt "runMain com.spotify.scio.examples.complete.TopWikipediaSessions
 // --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
 // --input=gs://apache-beam-samples/wikipedia_edits/wiki_data-*.json
 // --output=gs://[BUCKET]/[PATH]/top_wikipedia_sessions"`
@@ -47,7 +47,7 @@ object TopWikipediaSessions {
   def computeTopSessions(
     input: SCollection[TableRow],
     samplingThreshold: Double
-  ): SCollection[String] = {
+  ): SCollection[String] =
     input
     // Extract fields from `TableRow` JSON
       .flatMap { row =>
@@ -91,5 +91,4 @@ object TopWikipediaSessions {
       }
       // End of windowed operation, convert back to a regular `SCollection`
       .toSCollection
-  }
 }

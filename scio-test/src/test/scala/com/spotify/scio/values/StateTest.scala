@@ -22,9 +22,10 @@ import com.spotify.scio.options.ScioOptions
 import com.spotify.scio.options.ScioOptions.CheckEnabled
 import com.spotify.scio.util.MultiJoin
 import org.apache.beam.sdk.options.PipelineOptionsFactory
-import org.scalatest._
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
 
-class StateTest extends FlatSpec with Matchers {
+class StateTest extends AnyFlatSpec with Matchers {
   type KV[V] = SCollection[(String, V)]
 
   private def testCogroup[T](f: (KV[Int], KV[Long], KV[String]) => T): Unit = {
@@ -46,7 +47,6 @@ class StateTest extends FlatSpec with Matchers {
     }
   }
 
-  // scalastyle:off no.whitespace.before.left.bracket
   it should "fail chained cogroups" in {
     testCogroup {
       case (a, b, c) =>
@@ -87,5 +87,4 @@ class StateTest extends FlatSpec with Matchers {
         }
     }
   }
-  // scalastyle:on no.whitespace.before.left.bracket
 }

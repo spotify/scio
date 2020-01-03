@@ -1,4 +1,3 @@
-// scalastyle:off header.matches
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -15,7 +14,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-// scalastyle:on header.matches
 
 /* Ported from org.apache.spark.util.random.RandomSampler */
 
@@ -28,6 +26,7 @@ import org.apache.beam.sdk.transforms.DoFn.{ProcessElement, StartBundle}
 import org.apache.commons.math3.distribution.{IntegerDistribution, PoissonDistribution}
 
 private[scio] object RandomSampler {
+
   /** Default random number generator used by random samplers. */
   def newDefaultRNG: JRandom = new XORShiftRandom
 
@@ -39,7 +38,7 @@ private[scio] object RandomSampler {
   val roundingEpsilon = 1e-6
 }
 
-private[scio] abstract class RandomSampler[T, R] extends DoFn[T, T] {
+abstract private[scio] class RandomSampler[T, R] extends DoFn[T, T] {
   protected var rng: R = _
   protected var seed: Long = -1
 
@@ -70,6 +69,7 @@ private[scio] abstract class RandomSampler[T, R] extends DoFn[T, T] {
  * @tparam T item type
  */
 private[scio] class BernoulliSampler[T](val fraction: Double) extends RandomSampler[T, JRandom] {
+
   /** Epsilon slop to avoid failure from floating point jitter */
   require(
     fraction >= (0.0 - RandomSampler.roundingEpsilon)
@@ -103,6 +103,7 @@ private[scio] class BernoulliSampler[T](val fraction: Double) extends RandomSamp
  */
 private[scio] class PoissonSampler[T](val fraction: Double)
     extends RandomSampler[T, IntegerDistribution] {
+
   /** Epsilon slop to avoid failure from floating point jitter. */
   require(
     fraction >= (0.0 - RandomSampler.roundingEpsilon),
@@ -122,7 +123,7 @@ private[scio] class PoissonSampler[T](val fraction: Double)
   override def samples: Int = if (fraction <= 0.0) 0 else rng.sample()
 }
 
-private[scio] abstract class RandomValueSampler[K, V, R](val fractions: Map[K, Double])
+abstract private[scio] class RandomValueSampler[K, V, R](val fractions: Map[K, Double])
     extends DoFn[(K, V), (K, V)] {
   protected var rngs: Map[K, R] = null.asInstanceOf[Map[K, R]]
   protected var seed: Long = -1
@@ -150,6 +151,7 @@ private[scio] abstract class RandomValueSampler[K, V, R](val fractions: Map[K, D
 
 private[scio] class BernoulliValueSampler[K, V](fractions: Map[K, Double])
     extends RandomValueSampler[K, V, JRandom](fractions) {
+
   /** Epsilon slop to avoid failure from floating point jitter */
   require(
     fractions.values.forall { f =>
@@ -179,6 +181,7 @@ private[scio] class BernoulliValueSampler[K, V](fractions: Map[K, Double])
 
 private[scio] class PoissonValueSampler[K, V](fractions: Map[K, Double])
     extends RandomValueSampler[K, V, IntegerDistribution](fractions) {
+
   /** Epsilon slop to avoid failure from floating point jitter. */
   require(
     fractions.values.forall(f => f >= (0.0 - RandomSampler.roundingEpsilon)),

@@ -16,6 +16,7 @@
  */
 package com.spotify.scio.sql
 
+import com.spotify.scio.annotations.experimental
 import com.spotify.scio.values.SCollection
 import com.spotify.scio.schemas.Schema
 import org.apache.beam.sdk.values.TupleTag
@@ -48,6 +49,7 @@ final class SqlInterpolator(private val sc: StringContext) extends AnyVal {
         udf.fnName
     }
 
+  @experimental
   def sql(p0: SqlParam, ps: SqlParam*): SQLBuilder = {
     val params = p0 :: ps.toList
 
@@ -68,11 +70,12 @@ final class SqlInterpolator(private val sc: StringContext) extends AnyVal {
 
     val expr = expressions.map(toString)
     val q =
-      strings.zipAll(expr, "", "").foldLeft("") { case (a, (x, y)) => s"${a}${x} ${y}" }
+      strings.zipAll(expr, "", "").foldLeft("") { case (a, (x, y)) => s"$a$x $y" }
 
     SQLBuilders.from(q, tags.values.toList, udfs)
   }
 
+  @experimental
   def tsql(ps: Any*): SQLBuilder =
     macro SqlInterpolatorMacro.builder
 }
@@ -81,7 +84,7 @@ private trait SqlInterpolatorMacroHelpers {
   val ctx: blackbox.Context
   import ctx.universe._
 
-  def partsFromContext: List[Tree] = {
+  def partsFromContext: List[Tree] =
     ctx.prefix.tree match {
       case Apply(_, Apply(_, xs: List[_]) :: Nil) => xs
       case tree =>
@@ -90,7 +93,6 @@ private trait SqlInterpolatorMacroHelpers {
           s"Implementation error. Expected tsql string interpolation, found $tree"
         )
     }
-  }
 
   def buildSQLString(parts: List[Tree], tags: List[String]): String = {
     val ps2 =
@@ -105,7 +107,7 @@ private trait SqlInterpolatorMacroHelpers {
 
     ps2
       .zipAll(tags, "", "")
-      .foldLeft("") { case (a, (x, y)) => s"${a}${x} ${y}" }
+      .foldLeft("") { case (a, (x, y)) => s"$a$x $y" }
   }
 
   def tagFor(t: Type, lbl: String): Tree =
@@ -113,6 +115,7 @@ private trait SqlInterpolatorMacroHelpers {
 }
 
 object SqlInterpolatorMacro {
+
   /**
    * This static annotation is used to pass (static) parameters to SqlInterpolatorMacro.expand
    */

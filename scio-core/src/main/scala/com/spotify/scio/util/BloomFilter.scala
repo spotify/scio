@@ -187,7 +187,7 @@ private[scio] object MutableBF {
 /**
  * A Mutable Bloom Filter data structure
  */
-private[scio] sealed abstract class MutableBF[A] extends Serializable {
+sealed abstract private[scio] class MutableBF[A] extends Serializable {
   def numHashes: Int
 
   def width: Int
@@ -202,11 +202,9 @@ private[scio] sealed abstract class MutableBF[A] extends Serializable {
    */
   def density: Double = numBits.toDouble / width
 
-  // scalastyle:off method.name
   def ++=(other: MutableBF[A]): MutableBF[A]
 
   def +=(other: A): MutableBF[A]
-  // scalastyle:on method.name
 
   def checkAndAdd(item: A): (MutableBF[A], ApproximateBoolean)
 
@@ -259,9 +257,9 @@ private[scio] sealed abstract class MutableBF[A] extends Serializable {
     (this, that) match {
       // Comparing with empty filter should give number
       // of bits in other set
-      case (x: MutableBFZero[A], y: MutableBFZero[A]) => 0
-      case (x: MutableBFZero[A], y: MutableBF[A])     => y.numBits
-      case (x: MutableBF[A], y: MutableBFZero[A])     => x.numBits
+      case (_: MutableBFZero[A], _: MutableBFZero[A]) => 0
+      case (_: MutableBFZero[A], y: MutableBF[A])     => y.numBits
+      case (x: MutableBF[A], _: MutableBFZero[A])     => x.numBits
 
       // Otherwise compare as bit sets
       case _ =>
@@ -275,7 +273,7 @@ private[scio] sealed abstract class MutableBF[A] extends Serializable {
 /**
  * Empty bloom filter.
  */
-private[scio] final case class MutableBFZero[A](hashes: KirMit32Hash[A]) extends MutableBF[A] {
+final private[scio] case class MutableBFZero[A](hashes: KirMit32Hash[A]) extends MutableBF[A] {
   def toBitSet: util.BitSet = new util.BitSet()
 
   def numHashes: Int = hashes.numHashes
@@ -284,11 +282,9 @@ private[scio] final case class MutableBFZero[A](hashes: KirMit32Hash[A]) extends
 
   def numBits: Int = 0
 
-  // scalastyle:off method.name
   def ++=(other: MutableBF[A]): MutableBF[A] = other
 
   def +=(other: A): MutableBF[A] = MutableBFInstance[A](hashes, other)
-  // scalastyle:on method.name
 
   def checkAndAdd(other: A): (MutableBF[A], ApproximateBoolean) =
     (this += other, ApproximateBoolean.exactFalse)
@@ -305,7 +301,7 @@ private[scio] final case class MutableBFZero[A](hashes: KirMit32Hash[A]) extends
 /**
  * Mutable Bloom filter with multiple values
  */
-private[scio] final case class MutableBFInstance[A](hashes: KirMit32Hash[A], bits: util.BitSet)
+final private[scio] case class MutableBFInstance[A](hashes: KirMit32Hash[A], bits: util.BitSet)
     extends MutableBF[A] {
   def numHashes: Int = hashes.numHashes
 
@@ -318,7 +314,6 @@ private[scio] final case class MutableBFInstance[A](hashes: KirMit32Hash[A], bit
 
   def toBitSet: util.BitSet = bits
 
-  // scalastyle:off method.name
   def ++=(other: MutableBF[A]): MutableBF[A] = {
     require(this.width == other.width)
     require(this.numHashes == other.numHashes)
@@ -349,7 +344,6 @@ private[scio] final case class MutableBFInstance[A](hashes: KirMit32Hash[A], bit
     }
     this
   }
-  // scalastyle:on method.name
 
   def checkAndAdd(other: A): (MutableBF[A], ApproximateBoolean) = {
     val doesContain = contains(other)
@@ -391,7 +385,7 @@ private[scio] final case class MutableBFInstance[A](hashes: KirMit32Hash[A], bit
  * bitmap. Also Apache Beam doesn't have a Coder for EWAHCompressedBitmap, and it would fallback
  * to Kryo
  */
-private[scio] final case class MutableSparseBFInstance[A](
+final private[scio] case class MutableSparseBFInstance[A](
   hashes: KirMit32Hash[A],
   allHashes: mutable.Buffer[Array[Int]]
 ) extends MutableBF[A] {
@@ -414,7 +408,7 @@ private[scio] final case class MutableSparseBFInstance[A](
   // The value is cached so that it is a set is created only once.
   // This cannot be a lazy val, because it is updated when an element gets added.
   @inline
-  private def setBits: Set[Int] = {
+  private def setBits(): Set[Int] = {
     if (setIsStale) {
       set = allSeenBit.toSet
       setIsStale = false
@@ -452,8 +446,7 @@ private[scio] final case class MutableSparseBFInstance[A](
    *
    * Return a new [[MutableBFInstance]] if we should no longer stay sparse.
    */
-  // scalastyle:off method.name
-  def ++=(other: MutableBF[A]): MutableBF[A] = {
+  def ++=(other: MutableBF[A]): MutableBF[A] =
     other match {
       case _: MutableBFZero[A] => this
       case MutableSparseBFInstance(_, otherSetBits) =>
@@ -466,7 +459,7 @@ private[scio] final case class MutableSparseBFInstance[A](
         } else {
           asMutableBFInstance
         }
-      case MutableBFInstance(_, otherBits) =>
+      case MutableBFInstance(_, _) =>
         setIsStale = true
         // since the other is not a sparse BF, the result cannot be sparse.
 
@@ -474,7 +467,6 @@ private[scio] final case class MutableSparseBFInstance[A](
         // We don't use this anywhere within Scio, and this data struct is private[scio]
         asMutableBFInstance ++= other
     }
-  }
 
   /**
    * Add one element to this Sparse Bloom Filter.
@@ -493,7 +485,6 @@ private[scio] final case class MutableSparseBFInstance[A](
       asMutableBFInstance
     }
   }
-  // scalastyle:on method.name
 
   def checkAndAdd(other: A): (MutableBF[A], ApproximateBoolean) = {
     val doesContain = contains(other)
@@ -529,12 +520,11 @@ private[scio] final case class MutableSparseBFInstance[A](
   mutable.Buffer[Array[T]] cannot be compared with equals, hence we use
   Equiv[MutableBF[A]] to compare two instances.
    */
-  override def equals(obj: Any): Boolean = {
+  override def equals(obj: Any): Boolean =
     obj.isInstanceOf[MutableBF[A]] && {
       val that = obj.asInstanceOf[MutableBF[A]]
       implicitly[Equiv[MutableBF[A]]].equiv(this, that)
     }
-  }
 
   // Object.hashCode() is based on the hashing algorithm, and the elements added only.
   override def hashCode(): Int = Objects.hash(hashes, allHashes)
@@ -574,7 +564,7 @@ private[scio] object MutableBFInstance {
  * We have noticed 2 to 4 times higher throughput when using this approach compared to the
  * implementation in Algebird.
  */
-private[util] final case class KirMit32Hash[A](numHashes: Int, width: Int)(
+final private[util] case class KirMit32Hash[A](numHashes: Int, width: Int)(
   implicit hash128: Hash128[A]
 ) {
   def apply(valueToHash: A): Array[Int] = {
@@ -593,7 +583,7 @@ private[util] final case class KirMit32Hash[A](numHashes: Int, width: Int)(
   }
 }
 
-private[scio] final case class BloomFilterAggregator[A](bfMonoid: BloomFilterMonoid[A])
+final private[scio] case class BloomFilterAggregator[A](bfMonoid: BloomFilterMonoid[A])
     extends MonoidAggregator[A, MutableBF[A], MutableBF[A]] {
   val monoid: BloomFilterMonoid[A] = bfMonoid
 

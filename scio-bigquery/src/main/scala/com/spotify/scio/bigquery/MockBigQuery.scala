@@ -30,6 +30,7 @@ import scala.reflect.runtime.universe._
 
 /** Companion object for [[MockBigQuery]]. */
 object MockBigQuery {
+
   /** Create a new MockBigQuery instance. */
   def apply(): MockBigQuery = new MockBigQuery(BigQuery.defaultInstance())
 

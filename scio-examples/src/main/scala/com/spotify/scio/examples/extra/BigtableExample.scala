@@ -54,7 +54,7 @@ object BigtableExample {
 
 // Usage:
 
-// `sbt runMain "com.spotify.scio.examples.extra.BigtableWriteExample
+// `sbt "runMain com.spotify.scio.examples.extra.BigtableWriteExample
 // --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
 // --input=gs://apache-beam-samples/shakespeare/kinglear.txt
 // --bigtableProjectId=[BIG_TABLE_PROJECT_ID]
@@ -100,7 +100,7 @@ object BigtableWriteExample {
 
 // Usage:
 
-// `sbt runMain "com.spotify.scio.examples.extra.BigtableReadExample
+// `sbt "runMain com.spotify.scio.examples.extra.BigtableReadExample
 // --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
 // --bigtableProjectId=[BIG_TABLE_PROJECT_ID]
 // --bigtableInstanceId=[BIG_TABLE_INSTANCE_ID]

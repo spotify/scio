@@ -15,8 +15,6 @@
  * under the License.
  */
 
-//scalastyle:off number.of.types
-//scalastyle:off file.size.limit
 package com.spotify.scio.bigquery
 
 import java.util.concurrent.ConcurrentHashMap
@@ -31,7 +29,7 @@ import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
 import com.spotify.scio.coders._
 import com.spotify.scio.io.{ScioIO, Tap, TapOf, TestIO}
 import com.spotify.scio.schemas.{Schema, SchemaMaterializer}
-import com.spotify.scio.util.{ClosureCleaner, ScioUtil}
+import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.extensions.gcp.options.GcpOptions
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.TypedRead.Method
@@ -46,6 +44,7 @@ import org.apache.beam.sdk.transforms.SerializableFunction
 import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
+import com.twitter.chill.ClosureCleaner
 
 private object Reads {
   private[this] val cache = new ConcurrentHashMap[ScioContext, BigQuery]()
@@ -127,7 +126,7 @@ private[bigquery] object Writes {
 }
 
 sealed trait BigQueryIO[T] extends ScioIO[T] {
-  override final val tapT = TapOf[T]
+  final override val tapT = TapOf[T]
 }
 
 object BigQueryIO {
@@ -255,8 +254,8 @@ object BigQueryTypedTable {
     tableRowFn: TableRow => T,
     table: Table
   ): BigQueryTypedTable[T] = {
-    val rFn = ClosureCleaner(readerFn)
-    val wFn = ClosureCleaner(writerFn)
+    val rFn = ClosureCleaner.clean(readerFn)
+    val wFn = ClosureCleaner.clean(writerFn)
     val reader = beam.BigQueryIO.read(new SerializableFunction[SchemaAndRecord, T] {
       override def apply(input: SchemaAndRecord): T = rFn(input)
     })
@@ -357,11 +356,11 @@ object BigQueryTable {
   type WriteParam = BigQueryTypedTable.WriteParam
   val WriteParam = BigQueryTypedTable.WriteParam
 
-  @deprecated("this method will be removed; use apply(Table.Ref(table)) instead", "Scio 0.8")
+  @deprecated("this method will be removed; use apply(Table.Ref(table)) instead", "0.8.0")
   @inline final def apply(table: TableReference): BigQueryTable =
     BigQueryTable(Table.Ref(table))
 
-  @deprecated("this method will be removed; use apply(Table.Spec(table)) instead", "Scio 0.8")
+  @deprecated("this method will be removed; use apply(Table.Spec(table)) instead", "0.8.0")
   @inline final def apply(spec: String): BigQueryTable =
     BigQueryTable(Table.Spec(spec))
 }
@@ -399,11 +398,11 @@ final case class BigQueryStorage(table: Table) extends BigQueryIO[TableRow] {
 object BigQueryStorage {
   final case class ReadParam(selectFields: List[String], rowRestriction: String)
 
-  @deprecated("this method will be removed; use apply(Table.Ref(table)) instead", "Scio 0.8")
+  @deprecated("this method will be removed; use apply(Table.Ref(table)) instead", "0.8.0")
   @inline final def apply(table: TableReference): BigQueryStorage =
     BigQueryStorage(Table.Ref(table))
 
-  @deprecated("this method will be removed; use apply(Table.Spec(table)) instead", "Scio 0.8")
+  @deprecated("this method will be removed; use apply(Table.Spec(table)) instead", "0.8.0")
   @inline final def apply(spec: String): BigQueryStorage =
     BigQueryStorage(Table.Spec(spec))
 }
@@ -436,7 +435,7 @@ final case class BigQueryStorageSelect(sqlQuery: Query) extends BigQueryIO[Table
 final case class TableRowJsonIO(path: String) extends ScioIO[TableRow] {
   override type ReadP = Unit
   override type WriteP = TableRowJsonIO.WriteParam
-  override final val tapT = TapOf[TableRow]
+  final override val tapT = TapOf[TableRow]
 
   override protected def read(sc: ScioContext, params: ReadP): SCollection[TableRow] =
     sc.wrap(sc.applyInternal(TextIO.read().from(path)))
@@ -482,7 +481,6 @@ object BigQueryTyped {
     def impl: F[T]
   }
 
-  // scalastyle:off structural.type
   object IO {
     type Aux[T <: HasAnnotation, F0[_ <: HasAnnotation] <: ScioIO[_]] =
       IO[T] { type F[A <: HasAnnotation] = F0[A] }
@@ -511,7 +509,6 @@ object BigQueryTyped {
         def impl: Storage[T] = Storage(STable.Spec(t.table))
       }
   }
-  // scalastyle:on structural.type
 
   /**
    * Get a typed SCollection for a BigQuery table or a SELECT query.
@@ -546,7 +543,7 @@ object BigQueryTyped {
         .read(new SerializableFunction[SchemaAndRecord, T] {
           override def apply(input: SchemaAndRecord): T = fromAvro(input.getRecord)
         })
-      BigQueryTypedSelect(reader, query, fromTableRow)(Coder.kryo[T])
+      BigQueryTypedSelect(reader, query, fromTableRow)
     }
 
     override def testId: String = s"BigQueryIO(${query.underlying})"
@@ -580,7 +577,7 @@ object BigQueryTyped {
         toTableRow,
         fromTableRow,
         table
-      )(Coder.kryo[T])
+      )
     }
 
     override type ReadP = Unit
@@ -643,12 +640,12 @@ object BigQueryTyped {
       ): WriteParam = apply(wd, cd, tp, DefaultExtendedErrorInfo)(defaultInsertErrorTransform)
     }
 
-    @deprecated("this method will be removed; use apply(Table.Ref(table)) instead", "Scio 0.8")
+    @deprecated("this method will be removed; use apply(Table.Ref(table)) instead", "0.8.0")
     @inline
     final def apply[T <: HasAnnotation: ClassTag: TypeTag: Coder](spec: String): Table[T] =
       Table[T](STable.Spec(spec))
 
-    @deprecated("this method will be removed; use apply(Table.Spec(table)) instead", "Scio 0.8")
+    @deprecated("this method will be removed; use apply(Table.Spec(table)) instead", "0.8.0")
     @inline
     final def apply[T <: HasAnnotation: ClassTag: TypeTag: Coder](table: TableReference): Table[T] =
       Table[T](STable.Ref(table))
@@ -689,7 +686,7 @@ object BigQueryTyped {
     }
 
     def defaultParseFn[T: Schema]: SchemaAndRecord => T = {
-      val (schema, _, fromRow) = SchemaMaterializer.materializeWithDefault(Schema[T])
+      val (schema, _, fromRow) = SchemaMaterializer.materialize(Schema[T])
       input =>
         fromRow {
           BigQueryUtils.toBeamRow(
@@ -714,7 +711,7 @@ object BigQueryTyped {
     override def testId: String = s"BigQueryIO(${table.spec})"
 
     private[this] lazy val underlying: BigQueryTypedTable[T] = {
-      val (s, toRow, fromRow) = SchemaMaterializer.materializeWithDefault(Schema[T])
+      val (s, toRow, fromRow) = SchemaMaterializer.materialize(Schema[T])
       BigQueryTypedTable[T](
         parseFn,
         (t: T) => BigQueryUtils.toTableRow(toRow(t)),
@@ -761,7 +758,7 @@ object BigQueryTyped {
         .read(new SerializableFunction[SchemaAndRecord, T] {
           override def apply(input: SchemaAndRecord): T = fromAvro(input.getRecord)
         })
-        .withCoder(CoderMaterializer.beam(sc, Coder.kryo[T]))
+        .withCoder(CoderMaterializer.beam(sc, Coder[T]))
       Reads.bqReadStorage(sc)(reader, table, params.selectFields, params.rowRestriction)
     }
 
@@ -792,7 +789,7 @@ object BigQueryTyped {
           override def apply(input: SchemaAndRecord): T = fromAvro(input.getRecord)
         })
         .withMethod(Method.DIRECT_READ)
-      BigQueryTypedSelect(reader, sqlQuery, fromTableRow)(Coder.kryo[T])
+      BigQueryTypedSelect(reader, sqlQuery, fromTableRow)
     }
 
     override def testId: String = s"BigQueryIO($sqlQuery)"
@@ -811,7 +808,6 @@ object BigQueryTyped {
     val ReadParam = BigQueryStorage.ReadParam
   }
 
-  // scalastyle:off cyclomatic.complexity
   private[scio] def dynamic[T <: HasAnnotation: ClassTag: TypeTag: Coder](
     newSource: Option[Source]
   ): ScioIO.ReadOnly[T, Unit] = {
@@ -835,7 +831,4 @@ object BigQueryTyped {
         throw new IllegalArgumentException(s"Missing table or query field in companion object")
     }
   }
-  // scalastyle:on cyclomatic.complexity
 }
-//scalastyle:on number.of.types
-//scalastyle:on file.size.limit

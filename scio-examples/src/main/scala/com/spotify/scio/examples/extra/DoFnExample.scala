@@ -18,7 +18,7 @@
 // Example: Mix Beam DoFn and Scio
 // Usage:
 
-// `sbt runMain "com.spotify.scio.examples.extra.DoFnExample
+// `sbt "runMain com.spotify.scio.examples.extra.DoFnExample
 // --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
 // --input=gs://apache-beam-samples/shakespeare/kinglear.txt
 // --output=gs://[BUCKET]/[PATH]/do_fn_example"`

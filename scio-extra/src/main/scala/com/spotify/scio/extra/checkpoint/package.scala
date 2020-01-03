@@ -24,7 +24,6 @@ import com.spotify.scio.io.FileStorage
 import com.spotify.scio.testing.TestDataManager
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
-import org.apache.beam.sdk.io.FileSystems
 
 /**
  * Main package for checkpoint API. Import all.
@@ -34,15 +33,15 @@ import org.apache.beam.sdk.io.FileSystems
  * }}}
  */
 package object checkpoint {
-  // scalastyle:off line.size.limit
+
   /**
    * For use in testing, see [[https://github.com/spotify/scio/blob/master/scio-examples/src/test/scala/com/spotify/scio/examples/extra/CheckpointExampleTest.scala CheckpointExampleTest]].
    */
-  // scalastyle:on line.size.limit
   type CheckpointIO[T] = ObjectFileIO[T]
   val CheckpointIO = ObjectFileIO
 
   implicit class CheckpointScioContext(private val self: ScioContext) extends AnyVal {
+
     /**
      * Checkpoints are useful for debugging one part of a long flow, when you would otherwise have
      * to run many steps to get to the one you care about. To enable checkpoints, sprinkle calls to
@@ -52,8 +51,11 @@ package object checkpoint {
      * @param fn result of this arbitrary => [[com.spotify.scio.values.SCollection SCollection]]
      *           flow is what is checkpointed
      */
+    @deprecated(
+      "Checkpoint support is deprecated, use smaller workflows and orchestration framework instead",
+      "0.8.0"
+    )
     def checkpoint[T: Coder](fileOrPath: String)(fn: => SCollection[T]): SCollection[T] = {
-      FileSystems.setDefaultPipelineOptions(self.options)
       val path = if (self.isTest) {
         fileOrPath
       } else {
@@ -69,7 +71,7 @@ package object checkpoint {
       }
     }
 
-    private def isCheckpointAvailable(path: String): Boolean = {
+    private def isCheckpointAvailable(path: String): Boolean =
       if (self.isTest &&
           TestDataManager.getInput(self.testId.get).m.contains(CheckpointIO[Unit](path).testId)) {
         // if it's test and checkpoint was registered in test
@@ -77,6 +79,5 @@ package object checkpoint {
       } else {
         FileStorage(ScioUtil.addPartSuffix(path)).isDone
       }
-    }
   }
 }

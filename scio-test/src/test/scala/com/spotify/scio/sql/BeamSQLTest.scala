@@ -22,7 +22,7 @@ import java.lang.{Iterable => JIterable}
 import com.spotify.scio.IsJavaBean
 import com.spotify.scio.bean.UserBean
 import com.spotify.scio.coders.Coder
-import com.spotify.scio.schemas.{Schema, To}
+import com.spotify.scio.schemas.{LogicalType, Schema, To}
 import com.spotify.scio.testing.PipelineSpec
 import org.apache.beam.sdk.extensions.sql.BeamSqlUdf
 import org.apache.beam.sdk.schemas.{Schema => BSchema}
@@ -35,6 +35,19 @@ import org.scalatest.Assertion
 
 import scala.collection.JavaConverters._
 import com.spotify.scio.avro
+import org.apache.avro.generic.GenericRecord
+
+object Schemas {
+  // test logical type support
+  implicit val localeSchema: Schema[Locale] =
+    LogicalType[Locale, String](
+      BSchema.FieldType.STRING,
+      l => l.toLanguageTag(),
+      s => Locale.forLanguageTag(s)
+    )
+}
+
+import Schemas._
 
 object TestData {
   case class Foo(i: Int, s: String)
@@ -55,10 +68,13 @@ object TestData {
       UserWithId(UserId(i), s"user$i", s"user$i@spotify.com", 20 + i)
     }.toList
 
-  case class UserWithFallBack(id: Long, username: String, locale: Locale)
+  case class UserWithLogicalType(id: Long, username: String, locale: Locale)
+  object UserWithLogicalType {
+    implicit def userWithLogicalTypeSchema = Schema.gen[UserWithLogicalType]
+  }
   val usersWithLocale =
     (1 to 10).map { i =>
-      UserWithFallBack(i, s"user$i", Locale.FRANCE)
+      UserWithLogicalType(i, s"user$i", Locale.FRANCE)
     }.toList
 
   case class UserWithOption(username: String, email: String, age: Option[Int])
@@ -140,7 +156,7 @@ object TestData {
   implicit def coderUser: Coder[User] = Coder.gen[User]
   implicit def coderUserId: Coder[UserId] = Coder.gen[UserId]
   implicit def coderUserWithId: Coder[UserWithId] = Coder.gen[UserWithId]
-  implicit def coderUserWithFallBack: Coder[UserWithFallBack] = Coder.gen[UserWithFallBack]
+  implicit def coderUserWithLogicalType: Coder[UserWithLogicalType] = Coder.gen[UserWithLogicalType]
   implicit def coderUserWithOption: Coder[UserWithOption] = Coder.gen[UserWithOption]
   implicit def coderUserWithList: Coder[UserWithList] = Coder.gen[UserWithList]
   implicit def coderUserWithJList: Coder[UserWithJList] = Coder.gen[UserWithJList]
@@ -203,7 +219,7 @@ class BeamSQLTest extends PipelineSpec {
     r2 should containInAnyOrder(expected)
   }
 
-  it should "support fallback coders" in runWithContext { sc =>
+  it should "support logical types" in runWithContext { sc =>
     val schemaRes = BSchema.builder().addStringField("username").build()
     val expected = usersWithLocale.map { u =>
       Row.withSchema(schemaRes).addValue(u.username).build()
@@ -234,7 +250,7 @@ class BeamSQLTest extends PipelineSpec {
     r should containInAnyOrder(expected)
   }
 
-  it should "support fallback in sql" in runWithContext { sc =>
+  it should "support logical type in sql" in runWithContext { sc =>
     val expected = usersWithLocale.map { u =>
       (u.username, u.locale)
     }
@@ -462,8 +478,7 @@ class BeamSQLTest extends PipelineSpec {
     checkOK[Bar, Foo]("select f from SCOLLECTION")
     checkOK[Bar, (String, Long)]("select `SCOLLECTION`.`f`.`s`, l from SCOLLECTION")
 
-    // test fallback support
-    checkOK[UserWithFallBack, Locale]("select locale from SCOLLECTION")
+    checkOK[UserWithLogicalType, Locale]("select locale from SCOLLECTION")
 
     checkOK[UserWithOption, Option[Int]]("select age from SCOLLECTION")
     checkNOK[UserWithOption, Int]("select age from SCOLLECTION")
@@ -590,9 +605,36 @@ class BeamSQLTest extends PipelineSpec {
 
   it should "Automatically convert from Avro to Scala" in runWithContext { sc =>
     import TypeConvertionsTestData._
+
+    val avroSchema =
+      """
+        {
+          "type": "record",
+          "name": "User",
+          "namespace": "com.spotify.scio.avro",
+          "doc": "Record for a user",
+          "fields": [
+              {"name": "id", "type": "int"},
+              {"name": "last_name", "type": "string"},
+              {"name": "first_name", "type": "string"}
+            ]
+        }
+      """
+
+    val schema = new org.apache.avro.Schema.Parser().parse(avroSchema)
+
     val expected: List[AvroCompatibleUser] =
       avroUsers.map { u =>
         AvroCompatibleUser(u.getId.toInt, u.getFirstName.toString, u.getLastName.toString)
+      }
+
+    val genericRecords: List[GenericRecord] =
+      avroUsers.map { u =>
+        val record = new org.apache.avro.generic.GenericData.Record(schema)
+        record.put("id", u.id)
+        record.put("first_name", u.first_name)
+        record.put("last_name", u.last_name)
+        record
       }
 
     sc.parallelize(avroUsers)
@@ -607,6 +649,14 @@ class BeamSQLTest extends PipelineSpec {
 
     sc.parallelize(avroWithNullable)
       .to(To.safe[avro.TestRecord, CompatibleAvroTestRecord]) should containInAnyOrder(expectedAvro)
+
+    implicit val genericRecordSchema = Schema.fromAvroSchema(schema)
+
+    sc.parallelize(avroUsers.map(_.asInstanceOf[GenericRecord]))
+      .to(To.unsafe[GenericRecord, AvroCompatibleUser]) should containInAnyOrder(expected)
+
+    sc.parallelize(expected)
+      .to(To.unsafe[AvroCompatibleUser, GenericRecord]) should containInAnyOrder(genericRecords)
   }
 
   "String interpolation" should "support simple queries" in runWithContext { sc =>
@@ -683,7 +733,7 @@ object TypeConvertionsTestData {
     from.map {
       case From0(i, s, From1(xs, q)) =>
         To1(s, To0(q, xs), i)
-    }.toList
+    }
 
   val tinyTo = to.map {
     case To1(s, _, i) => TinyTo(s, i)
@@ -710,7 +760,7 @@ object TypeConvertionsTestData {
         Option(r.getStringField).map(_.toString),
         r.getArrayField.asScala.toList.map(_.toString)
       )
-    }.toList
+    }
 
   case class CompatibleAvroTestRecord(
     int_field: Option[Int],

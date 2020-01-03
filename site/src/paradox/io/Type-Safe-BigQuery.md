@@ -203,7 +203,7 @@ def main(cmdlineArgs: Array[String]): Unit = {
     .map(kv => Result(kv._1, kv._2))
     .saveAsTypedBigQuery(args("output"))  // schema from Row.schema
   sc.run()
-()
+  ()
 }
 ```
 
@@ -255,8 +255,8 @@ def result =
 
 ### BigQueryType and IntelliJ IDEA
 
-See @ref[the FAQ](../FAQ.md#how-to-make-intellij-idea-work-with-type-safe-bigquery-classes-) for making IntelliJ happy with type safe BigQuery.
+See @ref:[the FAQ](../FAQ.md#how-to-make-intellij-idea-work-with-type-safe-bigquery-classes-) for making IntelliJ happy with type safe BigQuery.
 
 ### Custom types and validation
 
-See @ref[OverrideTypeProvider](../internals/OverrideTypeProvider.md) for details about the custom types and validation mechanism.
+See @ref:[OverrideTypeProvider](../internals/OverrideTypeProvider.md) for details about the custom types and validation mechanism.

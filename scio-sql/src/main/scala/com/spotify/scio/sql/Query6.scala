@@ -22,13 +22,6 @@
 
 package com.spotify.scio.sql
 
-// scalastyle:off cyclomatic.complexity
-// scalastyle:off file.size.limit
-// scalastyle:off line.size.limit
-// scalastyle:off method.length
-// scalastyle:off number.of.methods
-// scalastyle:off parameter.number
-
 import com.spotify.scio.schemas._
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.extensions.sql.SqlTransform
@@ -169,7 +162,7 @@ final class SqlSCollection6[A: Schema, B: Schema, C: Schema, D: Schema, E: Schem
   ): SCollection[Row] =
     query(Query6(q, aTag, bTag, cTag, dTag, eTag, fTag, udfs.toList))
 
-  def query(q: Query6[A, B, C, D, E, F, Row]): SCollection[Row] = {
+  def query(q: Query6[A, B, C, D, E, F, Row]): SCollection[Row] =
     a.context.wrap {
       val collA = Sql.setSchema(a)
       val collB = Sql.setSchema(b)
@@ -191,7 +184,6 @@ final class SqlSCollection6[A: Schema, B: Schema, C: Schema, D: Schema, E: Schem
           sqlTransform
         )
     }
-  }
 
   def queryAs[R: Schema](
     q: String,
@@ -214,10 +206,3 @@ final class SqlSCollection6[A: Schema, B: Schema, C: Schema, D: Schema, E: Schem
         Query6.typecheck(q).fold(err => throw new RuntimeException(err, e), _ => throw e)
     }
 }
-
-// scalastyle:on cyclomatic.complexity
-// scalastyle:on file.size.limit
-// scalastyle:on line.size.limit
-// scalastyle:on method.length
-// scalastyle:on number.of.methods
-// scalastyle:on parameter.number

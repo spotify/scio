@@ -21,7 +21,6 @@ import com.google.bigtable.v2.Mutation.{MutationCase, SetCell}
 import com.google.bigtable.v2._
 import com.google.protobuf.ByteString
 
-// scalastyle:off no.whitespace.before.left.bracket
 class BigtableMatchersTest extends PipelineSpec with BigtableMatchers {
   private lazy val key1 = ByteString.copyFromUtf8("k1")
   private lazy val key2 = ByteString.copyFromUtf8("k2")
@@ -196,4 +195,3 @@ class BigtableMatchersTest extends PipelineSpec with BigtableMatchers {
     }
   }
 }
-// scalastyle:on no.whitespace.before.left.bracket

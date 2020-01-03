@@ -15,15 +15,15 @@
  * under the License.
  */
 
-// scalastyle:off line.size.limit
 package com.spotify.scio.bigquery.types
 
 import com.google.api.services.bigquery.model.{TableFieldSchema, TableSchema}
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
 
 import scala.collection.JavaConverters._
 
-class SchemaUtilTest extends FlatSpec with Matchers {
+class SchemaUtilTest extends AnyFlatSpec with Matchers {
   def newSchema(mode: String): TableSchema =
     new TableSchema().setFields(
       List(
@@ -61,25 +61,21 @@ class SchemaUtilTest extends FlatSpec with Matchers {
   }
 
   it should "support nullable primitive types" in {
-    // scalastyle:off line.size.limit
     SchemaUtil.toPrettyString(newSchema("NULLABLE"), "Row", 0) should equal(
       """
         |@BigQueryType.toTable
         |case class Row(boolF: Option[Boolean], intF: Option[Long], floatF: Option[Double], stringF: Option[String], bytesF: Option[ByteString], timestampF: Option[Instant], dateF: Option[LocalDate], timeF: Option[LocalTime], datetimeF: Option[LocalDateTime])
       """.stripMargin.trim
     )
-    // scalastyle:on line.size.limit
   }
 
   it should "support repeated primitive types" in {
-    // scalastyle:off line.size.limit
     SchemaUtil.toPrettyString(newSchema("REPEATED"), "Row", 0) should equal(
       """
         |@BigQueryType.toTable
         |case class Row(boolF: List[Boolean], intF: List[Long], floatF: List[Double], stringF: List[String], bytesF: List[ByteString], timestampF: List[Instant], dateF: List[LocalDate], timeF: List[LocalTime], datetimeF: List[LocalDateTime])
       """.stripMargin.trim
     )
-    // scalastyle:on line.size.limit
   }
 
   it should "support records" in {
@@ -154,4 +150,3 @@ class SchemaUtilTest extends FlatSpec with Matchers {
     )
   }
 }
-// scalastyle:on line.size.limit

@@ -25,18 +25,51 @@ import com.google.cloud.storage.Storage.BlobListOption
 import com.google.cloud.storage.{Blob, StorageOptions}
 import com.spotify.scio.bigquery.client.BigQuery
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryHelpers
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
 
 import scala.collection.JavaConverters._
 import scala.util.Success
 
-class BigQueryClientIT extends FlatSpec with Matchers {
-  val bq = BigQuery.defaultInstance()
+class BigQueryClientIT extends AnyFlatSpec with Matchers {
+  private[this] val bq = BigQuery.defaultInstance()
 
   val legacyQuery =
     "SELECT word, word_count FROM [bigquery-public-data:samples.shakespeare] LIMIT 10"
   val sqlQuery =
     "SELECT word, word_count FROM `bigquery-public-data.samples.shakespeare` LIMIT 10"
+
+  "QueryService.run" should "run DML queries" in {
+    val schema =
+      BigQueryUtil.parseSchema("""
+      |{
+      |  "fields": [
+      |    {"mode": "NULLABLE", "name": "word", "type": "STRING"},
+      |    {"mode": "NULLABLE", "name": "word_count", "type": "INTEGER"},
+      |    {"mode": "NULLABLE", "name": "corpus", "type": "STRING"},
+      |    {"mode": "NULLABLE", "name": "corpus_date", "type": "INTEGER"}
+      |  ]
+      |}
+    """.stripMargin)
+    val sources = List("gs://data-integration-test-eu/shakespeare-sample-10.json")
+    val table = bq.tables.createTemporary(location = "EU")
+    val tableRef = bq.load.json(sources, table.asTableSpec, schema = Some(schema))
+    tableRef.map { ref =>
+      val insertQuery = s"insert into `${ref.asTableSpec}` values (1603, 'alien', 9000, 'alien')"
+      bq.query.run(
+        insertQuery,
+        createDisposition = null,
+        writeDisposition = null
+      )
+
+      val deleteQuery = s"delete from `${ref.asTableSpec}` where word = 'alien'"
+      bq.query.run(
+        deleteQuery,
+        createDisposition = null,
+        writeDisposition = null
+      )
+    }
+  }
 
   "QueryService.extractLocation" should "work with legacy syntax" in {
     val query = "SELECT word FROM [data-integration-test:samples_%s.shakespeare]"
@@ -82,7 +115,6 @@ class BigQueryClientIT extends FlatSpec with Matchers {
     bq.query.schema(sqlQuery) shouldBe expected
   }
 
-  // scalastyle:off no.whitespace.before.left.bracket
   it should "fail invalid legacy syntax" in {
     (the[GoogleJsonResponseException] thrownBy {
       bq.query.schema("SELECT word, count FROM [bigquery-public-data:samples.shakespeare]")
@@ -94,7 +126,6 @@ class BigQueryClientIT extends FlatSpec with Matchers {
       bq.query.schema("SELECT word, count FROM `bigquery-public-data.samples.shakespeare`")
     }).getDetails.getCode shouldBe 400
   }
-  // scalastyle:on no.whitespace.before.left.bracket
 
   "QueryService.getRows" should "work with legacy syntax" in {
     val rows = bq.query.rows(legacyQuery).toList
@@ -212,12 +243,11 @@ class BigQueryClientIT extends FlatSpec with Matchers {
   object GcsUtils {
     private val storage = StorageOptions.getDefaultInstance.getService
 
-    private def list(bucket: String, prefix: String): Iterable[Blob] = {
+    private def list(bucket: String, prefix: String): Iterable[Blob] =
       storage
         .list(bucket, BlobListOption.prefix(prefix))
         .iterateAll()
         .asScala
-    }
 
     def exists(bucket: String, prefix: String): Boolean =
       list(bucket, prefix).nonEmpty

@@ -49,8 +49,7 @@ trait ToTableRow {
     row
   }
 
-  // scalastyle:off cyclomatic.complexity
-  private def toTableRowField(fieldValue: Any, field: Schema.Field): Any = {
+  private def toTableRowField(fieldValue: Any, field: Schema.Field): Any =
     fieldValue match {
       case x: CharSequence          => x.toString
       case x: Enum[_]               => x.name()
@@ -67,11 +66,8 @@ trait ToTableRow {
             s"could not match ${fieldValue.getClass}"
         )
     }
-  }
 
-  // scalastyle:on cyclomatic.complexity
-
-  private def toTableRowFromIterable(iterable: Iterable[Any], field: Schema.Field): util.List[_] = {
+  private def toTableRowFromIterable(iterable: Iterable[Any], field: Schema.Field): util.List[_] =
     iterable
       .map { item =>
         if (item.isInstanceOf[Iterable[_]] || item.isInstanceOf[Map[_, _]]) {
@@ -84,9 +80,8 @@ trait ToTableRow {
       }
       .toList
       .asJava
-  }
 
-  private def toTableRowFromMap(map: Iterable[Any], field: Schema.Field): util.List[_] = {
+  private def toTableRowFromMap(map: Iterable[Any], field: Schema.Field): util.List[_] =
     map
       .map {
         case (k, v) =>
@@ -96,9 +91,8 @@ trait ToTableRow {
       }
       .toList
       .asJava
-  }
 
-  private def encodeByteArray(bytes: Array[Byte], fieldSchema: Schema): String = {
+  private def encodeByteArray(bytes: Array[Byte], fieldSchema: Schema): String =
     Option(fieldSchema.getProp(encodingPropName)) match {
       case Some("BASE64") => base64Encoding.encode(bytes)
       case Some("HEX")    => hexEncoding.encode(bytes)
@@ -106,7 +100,6 @@ trait ToTableRow {
         throw AvroConversionException(s"Unsupported encoding $encoding")
       case None => base64Encoding.encode(bytes)
     }
-  }
 
   private def toByteArray(buffer: ByteBuffer) = {
     val copy = buffer.asReadOnlyBuffer

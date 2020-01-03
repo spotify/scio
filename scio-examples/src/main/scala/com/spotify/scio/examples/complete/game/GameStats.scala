@@ -19,7 +19,7 @@
 
 // Usage:
 
-// `sbt runMain "com.spotify.scio.examples.complete.game.GameStats
+// `sbt "runMain com.spotify.scio.examples.complete.game.GameStats
 // --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
 // --fixedWindowDuration=60
 // --sessionGap=5
@@ -52,7 +52,6 @@ object GameStats {
   @BigQueryType.toTable
   case class AvgSessionLength(mean_duration: Double, window_start: String)
 
-  // scalastyle:off method.length
   def main(cmdlineArgs: Array[String]): Unit = {
     // Create `ScioContext` and `Args`
     val (opts, args) = ScioContext.parseArguments[ExampleOptions](cmdlineArgs)
@@ -111,7 +110,7 @@ object GameStats {
       // Done using windowing information, convert back to regular `SCollection`
       .toSCollection
       // Save to the BigQuery table defined by "output" in the arguments passed in + "_team" suffix
-      .saveAsTypedBigQuery(args("output") + "_team")
+      .saveAsTypedBigQueryTable(Table.Spec(args("output") + "_team"))
 
     userEvents
     // Window over a variable length of time - sessions end after sessionGap minutes no activity
@@ -141,14 +140,13 @@ object GameStats {
           AvgSessionLength(mean, fmt.print(w.start()))
       }
       // Save to the BigQuery table defined by "output" + "_sessions" suffix
-      .saveAsTypedBigQuery(args("output") + "_sessions")
+      .saveAsTypedBigQueryTable(Table.Spec(args("output") + "_sessions"))
 
-    // Close context and execute the pipeline
+    // Execute the pipeline
     val result = sc.run()
     // Wait to finish processing before exiting when streaming pipeline is canceled during shutdown
     exampleUtils.waitToFinish(result.pipelineResult)
   }
-  // scalastyle:on method.length
 
   def calculateSpammyUsers(userScores: SCollection[(String, Int)]): SCollection[(String, Int)] = {
     // Sum of scores by user

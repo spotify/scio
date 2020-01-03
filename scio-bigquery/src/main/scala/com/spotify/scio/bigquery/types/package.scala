@@ -20,6 +20,7 @@ package com.spotify.scio.bigquery
 import scala.annotation.StaticAnnotation
 
 package object types {
+
   /**
    * Case class field annotation for BigQuery field description.
    *
@@ -31,7 +32,5 @@ package object types {
    *                 @description("user age") age: Int)
    * }}}
    */
-  // scalastyle:off class.name
   final class description(value: String) extends StaticAnnotation with Serializable
-  // scalastyle:on class.name
 }

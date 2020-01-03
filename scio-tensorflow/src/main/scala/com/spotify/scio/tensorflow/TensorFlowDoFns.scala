@@ -21,28 +21,55 @@ import java.time.Duration
 import java.util.concurrent.{ConcurrentHashMap, ConcurrentMap}
 import java.util.function.Function
 
-import com.spotify.scio.transforms.DoFnWithResource
-import com.spotify.scio.transforms.DoFnWithResource.ResourceType
-import com.spotify.zoltar.tf.TensorFlowModel
-import com.spotify.zoltar.{Model, Models}
+import com.spotify.zoltar.tf.{TensorFlowLoader, TensorFlowModel}
+import com.spotify.zoltar.Model
 import org.apache.beam.sdk.transforms.DoFn
-import org.apache.beam.sdk.transforms.DoFn.{ProcessElement, Teardown}
-import org.tensorflow._
+import org.apache.beam.sdk.transforms.DoFn.{ProcessElement, Setup, Teardown}
 import org.slf4j.LoggerFactory
-
+import org.tensorflow._
+import org.tensorflow.example.Example
 import scala.collection.JavaConverters._
 
-private[this] abstract class PredictDoFn[T, V, M <: Model[_]](
-  fetchOp: Seq[String],
-  inFn: T => Map[String, Tensor[_]],
-  outFn: (T, Map[String, Tensor[_]]) => V
-) extends DoFnWithResource[T, V, ConcurrentMap[String, M]] {
-  @transient private lazy val log = LoggerFactory.getLogger(this.getClass)
+import com.spotify.scio.transforms.DoFnWithResource
+import com.spotify.scio.transforms.DoFnWithResource.ResourceType
+import com.spotify.zoltar.Model.Id
+import java.util.concurrent.atomic.AtomicInteger
+
+sealed trait PredictDoFn[T, V, M <: Model[_]]
+    extends DoFnWithResource[T, V, PredictDoFn.Resource[M]] {
+  import PredictDoFn._
+
+  def modelId: String
+
+  def loadModel: M
+
+  def model: M = getResource.get(modelId)._2
 
   def withRunner(f: Session#Runner => V): V
 
-  override def getResourceType: DoFnWithResource.ResourceType =
-    ResourceType.PER_CLASS
+  def extractInput(input: T): Map[String, Tensor[_]]
+
+  def extractOutput(input: T, out: Map[String, Tensor[_]]): V
+
+  def outputTensorNames: Seq[String]
+
+  override def createResource(): Resource[M] = new ConcurrentHashMap[String, (AtomicInteger, M)]()
+
+  override def getResourceType: DoFnWithResource.ResourceType = ResourceType.PER_CLASS
+
+  @Setup
+  override def setup(): Unit = {
+    super.setup()
+    val (a, _) = getResource.computeIfAbsent(
+      modelId,
+      new Function[String, (AtomicInteger, M)] {
+        override def apply(v1: String): (AtomicInteger, M) =
+          new AtomicInteger(0) -> loadModel
+      }
+    )
+    a.incrementAndGet()
+    ()
+  }
 
   /**
    * Process an element asynchronously.
@@ -51,22 +78,24 @@ private[this] abstract class PredictDoFn[T, V, M <: Model[_]](
   def processElement(c: DoFn[T, V]#ProcessContext): Unit = {
     val result = withRunner { runner =>
       val input = c.element()
-      val i = inFn(input)
+      val i = extractInput(input)
       var result: V = null.asInstanceOf[V]
 
       try {
         i.foreach { case (op, t) => runner.feed(op, t) }
-        fetchOp.foreach(runner.fetch)
+        outputTensorNames.foreach(runner.fetch)
         val outTensors = runner.run()
         try {
-          import scala.collection.breakOut
-          result = outFn(input, (fetchOp zip outTensors.asScala)(breakOut))
+          result = extractOutput(
+            input,
+            outputTensorNames.iterator.zip(outTensors.iterator().asScala).toMap
+          )
         } finally {
-          log.debug("Closing down output tensors")
+          Log.debug("Closing down output tensors")
           outTensors.asScala.foreach(_.close())
         }
       } finally {
-        log.debug("Closing down input tensors")
+        Log.debug("Closing down input tensors")
         i.foreach { case (_, t) => t.close() }
       }
 
@@ -76,37 +105,129 @@ private[this] abstract class PredictDoFn[T, V, M <: Model[_]](
     c.output(result)
   }
 
-  override def createResource(): ConcurrentMap[String, M] =
-    new ConcurrentHashMap[String, M]()
-}
-
-private[tensorflow] class SavedBundlePredictDoFn[T, V](
-  uri: String,
-  options: TensorFlowModel.Options,
-  fetchOp: Seq[String],
-  inFn: T => Map[String, Tensor[_]],
-  outFn: (T, Map[String, Tensor[_]]) => V
-) extends PredictDoFn[T, V, TensorFlowModel](fetchOp, inFn, outFn) {
-  @transient private lazy val log = LoggerFactory.getLogger(this.getClass)
-
-  override def withRunner(f: Session#Runner => V): V = {
-    val model = getResource
-      .computeIfAbsent(
-        uri,
-        new Function[String, TensorFlowModel] {
-          override def apply(t: String): TensorFlowModel =
-            Models
-              .tensorFlow(uri, options)
-              .get(Duration.ofDays(Integer.MAX_VALUE))
-        }
-      )
-
-    f(model.instance().session().runner())
-  }
-
   @Teardown
   def teardown(): Unit = {
-    log.info(s"Tearing down predict DoFn $this")
-    getResource.get(uri).close()
+    Log.info(s"Tearing down predict DoFn $this")
+    val (running, m) = getResource().get(modelId)
+    if (running.decrementAndGet() == 0) {
+      m.close()
+    }
   }
+}
+
+object PredictDoFn {
+  type Resource[M <: Model[_]] = ConcurrentMap[String, (AtomicInteger, M)]
+
+  private val Log = LoggerFactory.getLogger(this.getClass)
+}
+
+abstract private[tensorflow] class SavedBundlePredictDoFn[T, V](
+  uri: String,
+  signatureName: String,
+  options: TensorFlowModel.Options
+) extends PredictDoFn[T, V, TensorFlowModel] {
+  override def modelId: String =
+    s"tf:$uri:$signatureName:${options.tags.asScala.mkString(":")}"
+
+  override def loadModel: TensorFlowModel =
+    TensorFlowLoader
+      .create(Id.create(modelId), uri, options, signatureName)
+      .get(Duration.ofDays(Integer.MAX_VALUE))
+
+  override def withRunner(f: Session#Runner => V): V =
+    f(model.instance().session().runner())
+}
+
+object SavedBundlePredictDoFn {
+  def forRaw[T, V](
+    uri: String,
+    fetchOps: Seq[String],
+    options: TensorFlowModel.Options,
+    signatureName: String,
+    inFn: T => Map[String, Tensor[_]],
+    outFn: (T, Map[String, Tensor[_]]) => V
+  ): SavedBundlePredictDoFn[T, V] = new SavedBundlePredictDoFn[T, V](uri, signatureName, options) {
+    override def extractInput(input: T): Map[String, Tensor[_]] = inFn(input)
+
+    override def extractOutput(input: T, out: Map[String, Tensor[_]]): V = outFn(input, out)
+
+    override def outputTensorNames: Seq[String] = fetchOps
+
+    override def modelId: String = s"${super.modelId}:${fetchOps.mkString(":")}"
+  }
+
+  def forInput[T, V](
+    uri: String,
+    fetchOps: Option[Seq[String]],
+    options: TensorFlowModel.Options,
+    signatureName: String,
+    inFn: T => Map[String, Tensor[_]],
+    outFn: (T, Map[String, Tensor[_]]) => V
+  ): SavedBundlePredictDoFn[T, V] = new SavedBundlePredictDoFn[T, V](uri, signatureName, options) {
+    private lazy val exportedFetchOps =
+      model.outputsNameMap().asScala.toMap
+    private lazy val requestedFetchOps: Map[String, String] = fetchOps
+      .map { tensorIds =>
+        tensorIds.iterator.map { tensorId =>
+          tensorId -> exportedFetchOps(tensorId)
+        }.toMap
+      }
+      .getOrElse(exportedFetchOps)
+
+    override def extractInput(input: T): Map[String, Tensor[_]] = {
+      val extractedInput = inFn(input)
+      extractedInput.iterator.map {
+        case (tensorId, tensor) =>
+          model.inputsNameMap().get(tensorId) -> tensor
+      }.toMap
+    }
+
+    override def extractOutput(input: T, out: Map[String, Tensor[_]]): V =
+      outFn(input, requestedFetchOps.iterator.map {
+        case (tensorId, opName) =>
+          tensorId -> out(opName)
+      }.toMap)
+
+    override def outputTensorNames: Seq[String] = requestedFetchOps.values.toSeq
+
+    override def modelId: String = s"${super.modelId}:${fetchOps.toList.mkString(":")}"
+  }
+
+  /**
+   * Note: if fetchOps isn't provided, then all outputs defined in the signature of the model
+   * are retrieved. This can be expensive and unwanted, depending on the model.
+   */
+  def forTensorFlowExample[T, V](
+    uri: String,
+    exampleTensorName: String,
+    fetchOps: Option[Seq[String]],
+    options: TensorFlowModel.Options,
+    signatureName: String,
+    outFn: (T, Map[String, Tensor[_]]) => V
+  )(implicit ev: T <:< Example): SavedBundlePredictDoFn[T, V] =
+    new SavedBundlePredictDoFn[T, V](uri, signatureName, options) {
+      private lazy val exportedFetchOps =
+        model.outputsNameMap().asScala.toMap
+      private lazy val requestedFetchOps: Map[String, String] = fetchOps
+        .map { tensorIds =>
+          tensorIds.iterator.map { tensorId =>
+            tensorId -> exportedFetchOps(tensorId)
+          }.toMap
+        }
+        .getOrElse(exportedFetchOps)
+
+      override def outputTensorNames: Seq[String] = requestedFetchOps.values.toSeq
+
+      override def extractInput(input: T): Map[String, Tensor[_]] = {
+        val opName = model.inputsNameMap().get(exampleTensorName)
+        Map(opName -> Tensors.create(Array(input.toByteArray)))
+      }
+
+      override def extractOutput(input: T, out: Map[String, Tensor[_]]): V =
+        outFn(input, requestedFetchOps.iterator.map {
+          case (tensorId, opName) => tensorId -> out(opName)
+        }.toMap)
+
+      override def modelId: String = s"${super.modelId}:${fetchOps.toList.mkString(":")}"
+    }
 }

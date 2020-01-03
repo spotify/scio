@@ -18,7 +18,7 @@
 // Example: Distinct With RepresentativeValue Example
 // Usage:
 
-// `sbt runMain "com.spotify.scio.examples.cookbook.DistinctWithRepresentativeValueFnExample
+// `sbt "runMain com.spotify.scio.examples.cookbook.DistinctWithRepresentativeValueFnExample
 // --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
 // --output=[DATASET].distinct_by_key_example"`
 package com.spotify.scio.examples.cookbook
@@ -59,9 +59,9 @@ object DistinctByKeyExample {
       // Map `(String, String)` tuples into result `TableRow`s
       .map(kv => TableRow("word" -> kv._1, "reference_play" -> kv._2))
       // Save result as a BigQuery table
-      .saveAsBigQuery(args("output"), schema, WRITE_TRUNCATE, CREATE_IF_NEEDED)
+      .saveAsBigQueryTable(Table.Spec(args("output")), schema, WRITE_TRUNCATE, CREATE_IF_NEEDED)
 
-    // Close the context and execute the pipeline
+    // Execute the pipeline
     sc.run()
     ()
   }

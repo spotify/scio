@@ -25,8 +25,6 @@ import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.Blackhole
 
 import scala.collection.JavaConverters._
-
-// scalastyle:off number.of.methods
 @BenchmarkMode(Array(Mode.AverageTime))
 @OutputTimeUnit(TimeUnit.NANOSECONDS)
 @State(Scope.Thread)
@@ -79,7 +77,7 @@ class JoinBenchmark {
   def artisan(as: JIterable[Int], bs: JIterable[Int], bh: Blackhole): Unit =
     artisan(as, bs, new BlackholeContext[(Int, Int)](bh))
 
-  def artisan(as: JIterable[Int], bs: JIterable[Int], c: Context[(Int, Int)]): Unit = {
+  def artisan(as: JIterable[Int], bs: JIterable[Int], c: Context[(Int, Int)]): Unit =
     (peak(as), peak(bs)) match {
       case ((1, a), (1, b)) => c.output((a, b))
       case ((1, a), (2, _)) =>
@@ -99,12 +97,10 @@ class JoinBenchmark {
         }
       case _ => ()
     }
-  }
 
   def muchArtisan(as: JIterable[Int], bs: JIterable[Int], bh: Blackhole): Unit =
     muchArtisan(as, bs, new BlackholeContext[(Int, Int)](bh))
 
-  // scalastyle:off cyclomatic.complexity
   def muchArtisan(as: JIterable[Int], bs: JIterable[Int], c: Context[(Int, Int)]): Unit = {
     var ai = as.iterator()
     var bi = bs.iterator()
@@ -139,7 +135,6 @@ class JoinBenchmark {
       }
     }
   }
-  // scalastyle:on cyclomatic.complexity
 
   def suchArtisan(as: JIterable[Int], bs: JIterable[Int], bh: Blackhole): Unit =
     suchArtisan(as, bs, new BlackholeContext[(Int, Int)](bh))
@@ -231,7 +226,7 @@ private class CartesianIterator[A, B](as: JIterable[A], bs: JIterable[B])
     endOfData()
   }
 
-  override def computeNext(): (A, B) = {
+  override def computeNext(): (A, B) =
     if (!bsi.hasNext) {
       if (!asi.hasNext) {
         endOfData()
@@ -248,6 +243,4 @@ private class CartesianIterator[A, B](as: JIterable[A], bs: JIterable[B])
     } else {
       (a, bsi.next())
     }
-  }
 }
-// scalastyle:on number.of.methods

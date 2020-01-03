@@ -18,7 +18,7 @@
 // Example: Traffic routes based on traffic sensor data
 // Usage
 
-// `sbt runMain "com.spotify.scio.examples.complete.TrafficRoutes
+// `sbt "runMain com.spotify.scio.examples.complete.TrafficRoutes
 // --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
 // --input=gs://apache-beam-samples/traffic_sensor/Freeways-5Minaa2010-01-01_to_2010-02-15_test2.csv
 // --output=[DATASET].traffic_routes"`
@@ -48,7 +48,6 @@ object TrafficRoutes {
   private val sdStations =
     Map("1108413" -> "SDRoute1", "1108699" -> "SDRoute2", "1108702" -> "SDRoute3")
 
-  // scalastyle:off method.length
   def main(cmdlineArgs: Array[String]): Unit = {
     // set up example wiring
     val (opts, args) = ScioContext.parseArguments[ExampleOptions](cmdlineArgs)
@@ -113,10 +112,9 @@ object TrafficRoutes {
         case (r, ts) =>
           Record(r.route, r.avgSpeed, r.slowdownEvent, ts)
       }
-      .saveAsTypedBigQuery(args("output"))
+      .saveAsTypedBigQueryTable(Table.Spec(args("output")))
 
     val result = sc.run()
     exampleUtils.waitToFinish(result.pipelineResult)
   }
-  // scalastyle:on method.length
 }

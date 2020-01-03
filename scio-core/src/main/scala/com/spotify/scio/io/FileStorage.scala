@@ -30,6 +30,7 @@ import org.apache.avro.file.{DataFileReader, SeekableInput}
 import org.apache.avro.generic.GenericDatumReader
 import org.apache.avro.specific.SpecificDatumReader
 import org.apache.beam.sdk.io.FileSystems
+import org.apache.beam.sdk.io.fs.EmptyMatchTreatment
 import org.apache.beam.sdk.io.fs.MatchResult.Metadata
 import org.apache.commons.compress.compressors.CompressorStreamFactory
 import org.apache.commons.io.IOUtils
@@ -41,9 +42,9 @@ private[scio] object FileStorage {
   @inline final def apply(path: String): FileStorage = new FileStorage(path)
 }
 
-private[scio] final class FileStorage(protected[scio] val path: String) {
+final private[scio] class FileStorage(protected[scio] val path: String) {
   private def listFiles: Seq[Metadata] =
-    FileSystems.`match`(path).metadata().asScala
+    FileSystems.`match`(path, EmptyMatchTreatment.DISALLOW).metadata().asScala
 
   private def getObjectInputStream(meta: Metadata): InputStream =
     Channels.newInputStream(FileSystems.open(meta.resourceId()))
@@ -100,11 +101,12 @@ private[scio] final class FileStorage(protected[scio] val path: String) {
 
   def isDone: Boolean = {
     val partPattern = "([0-9]{5})-of-([0-9]{5})".r
-    val metadata = try {
-      listFiles
-    } catch {
-      case _: FileNotFoundException => Seq.empty
-    }
+    val metadata =
+      try {
+        listFiles
+      } catch {
+        case _: FileNotFoundException => Seq.empty
+      }
     val nums = metadata.flatMap { meta =>
       val m = partPattern.findAllIn(meta.resourceId().toString)
       if (m.hasNext) {

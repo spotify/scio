@@ -15,13 +15,10 @@
  * under the License.
  */
 
-// scalastyle:off method.length
-// scalastyle:off regex
-
 // Example: Metrics Example
 // Usage:
 
-// `sbt runMain "com.spotify.scio.examples.extra.MetricsExample
+// `sbt "runMain com.spotify.scio.examples.extra.MetricsExample
 // --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]"`
 package com.spotify.scio.examples.extra
 

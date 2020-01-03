@@ -118,6 +118,7 @@ import scala.util.hashing.MurmurHash3
  * }}}
  */
 package object sparkey {
+
   /** Enhanced version of [[ScioContext]] with Sparkey methods. */
   implicit class SparkeyScioContext(private val self: ScioContext) extends AnyVal {
     private def singleViewOf(basePath: String): PCollectionView[SparkeyUri] =
@@ -351,6 +352,7 @@ package object sparkey {
    * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with Sparkey methods.
    */
   implicit class SparkeySCollection(private val self: SCollection[SparkeyUri]) extends AnyVal {
+
     /**
      * Convert this SCollection to a SideInput of `SparkeyReader`, to be used with
      * [[com.spotify.scio.values.SCollection.withSideInputs SCollection.withSideInputs]].
@@ -435,12 +437,10 @@ package object sparkey {
     override def iterator: Iterator[(String, String)] =
       self.iterator.asScala.map(e => (e.getKeyAsString, e.getValueAsString))
 
-    //scalastyle:off method.name
     override def +[B1 >: String](kv: (String, B1)): Map[String, B1] =
       throw new NotImplementedError("Sparkey-backed map; operation not supported.")
     override def -(key: String): Map[String, String] =
       throw new NotImplementedError("Sparkey-backed map; operation not supported.")
-    //scalastyle:on method.name
   }
 
   private class SparkeySideInput(val view: PCollectionView[SparkeyUri])
@@ -494,12 +494,10 @@ package object sparkey {
         (key, value)
       }
 
-    //scalastyle:off method.name
     override def +[B1 >: T](kv: (String, B1)): Map[String, B1] =
       throw new NotImplementedError("Sparkey-backed map; operation not supported.")
     override def -(key: String): Map[String, T] =
       throw new NotImplementedError("Sparkey-backed map; operation not supported.")
-    //scalastyle:on method.name
 
     def close(): Unit = {
       sparkey.close()

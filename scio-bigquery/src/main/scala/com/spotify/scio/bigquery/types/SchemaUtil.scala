@@ -25,12 +25,12 @@ import scala.collection.JavaConverters._
 
 /** Utility for BigQuery schemas. */
 object SchemaUtil {
+
   /** Convert schema to case class definitions. */
   def toPrettyString(schema: TableSchema, name: String, indent: Int): String =
     "@BigQueryType.toTable\n" +
       getCaseClass(schema.getFields, name, indent)
 
-  // scalastyle:off cyclomatic.complexity
   private def getRawType(tfs: TableFieldSchema, indent: Int): (String, Seq[String]) = {
     val name = tfs.getType match {
       case "BOOLEAN"           => "Boolean"
@@ -53,7 +53,6 @@ object SchemaUtil {
       (name, Seq.empty)
     }
   }
-  // scalastyle:on cyclomatic.complexity
 
   private def getFieldType(tfs: TableFieldSchema, indent: Int): (String, Seq[String]) = {
     val (rawType, nested) = getRawType(tfs, indent)
@@ -90,13 +89,12 @@ object SchemaUtil {
     (sb.toString() +: nested).mkString("\n")
   }
 
-  private[types] def escapeNameIfReserved(name: String): String = {
+  private[types] def escapeNameIfReserved(name: String): String =
     if (scalaReservedWords.contains(name)) {
       s"`$name`"
     } else {
       name
     }
-  }
 
   private[types] val scalaReservedWords = Seq(
     "abstract",

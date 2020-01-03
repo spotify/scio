@@ -19,11 +19,12 @@ package com.spotify.scio
 
 import caseapp._
 import com.spotify.scio.ContextAndArgs.{ArgsParser, TypedParser, UsageOrHelpException}
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import scala.util.{Failure, Success, Try}
 
-class ArgsTest extends FlatSpec with Matchers {
+class ArgsTest extends AnyFlatSpec with Matchers {
   "Args" should "support String" in {
     Args("--str=value".split(" "))("str") shouldBe "value"
   }
@@ -48,7 +49,6 @@ class ArgsTest extends FlatSpec with Matchers {
     Args("--key=value".split(" ")).required("key") shouldBe "value"
   }
 
-  // scalastyle:off no.whitespace.before.left.bracket
   it should "fail required with missing value" in {
     the[IllegalArgumentException] thrownBy {
       Args(Array.empty).required("key")
@@ -60,7 +60,6 @@ class ArgsTest extends FlatSpec with Matchers {
       Args("--key=value1 --key=value2".split(" ")).required("key")
     } should have message "Multiple values for property 'key'"
   }
-  // scalastyle:on no.whitespace.before.left.bracket
 
   it should "support int" in {
     val args = Args("--key1=10".split(" "))

@@ -22,13 +22,6 @@
 
 package com.spotify.scio.sql
 
-// scalastyle:off cyclomatic.complexity
-// scalastyle:off file.size.limit
-// scalastyle:off line.size.limit
-// scalastyle:off method.length
-// scalastyle:off number.of.methods
-// scalastyle:off parameter.number
-
 import com.spotify.scio.schemas.Schema
 import org.apache.beam.sdk.values.TupleTag
 
@@ -590,9 +583,3 @@ object SQLBuilders {
         )
     }
 }
-// scalastyle:on cyclomatic.complexity
-// scalastyle:on file.size.limit
-// scalastyle:on line.size.limit
-// scalastyle:on method.length
-// scalastyle:on number.of.methods
-// scalastyle:on parameter.number

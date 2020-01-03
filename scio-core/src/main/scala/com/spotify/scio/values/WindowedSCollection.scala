@@ -38,6 +38,7 @@ case class WindowOptions(
 
 /** Value with window information to be used inside a [[WindowedSCollection]]. */
 case class WindowedValue[T](value: T, timestamp: Instant, window: BoundedWindow, pane: PaneInfo) {
+
   /** Make a copy with new value. */
   def withValue[U](v: U): WindowedValue[U] = this.copy(value = v)
 
@@ -56,6 +57,7 @@ class WindowedSCollection[T: Coder] private[values] (
   val internal: PCollection[T],
   val context: ScioContext
 ) extends PCollectionWrapper[T] {
+
   /** [[SCollection.filter]] with access to window information via [[WindowedValue]]. */
   def filter(f: WindowedValue[T] => Boolean): WindowedSCollection[T] =
     new WindowedSCollection(this.parDo(FunctionsWithWindowedValue.filterFn(f)).internal, context)

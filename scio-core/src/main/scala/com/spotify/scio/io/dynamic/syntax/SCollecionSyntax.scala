@@ -41,7 +41,7 @@ object DynamicSCollectionOps {
     numShards: Int,
     suffix: String,
     destinationFn: A => String
-  ): FileIO.Write[String, A] = {
+  ): FileIO.Write[String, A] =
     FileIO
       .writeDynamic[String, A]()
       .to(path)
@@ -51,7 +51,6 @@ object DynamicSCollectionOps {
       .withNaming(Functions.serializableFn { destination: String =>
         FileIO.Write.defaultNaming(s"$destination/part", suffix)
       })
-  }
 }
 
 final class DynamicSpecificRecordSCollectionOps[T <: SpecificRecord](
@@ -62,7 +61,6 @@ final class DynamicSpecificRecordSCollectionOps[T <: SpecificRecord](
   /**
    * Save this SCollection as Avro files specified by the destination function.
    */
-  // scalastyle:off parameter.number
   def saveAsDynamicAvroFile(
     path: String,
     numShards: Int = 0,
@@ -106,7 +104,6 @@ final class DynamicGenericRecordSCollectionOps[T <: GenericRecord](private val s
   /**
    * Save this SCollection as Avro files specified by the destination function.
    */
-  // scalastyle:off parameter.number
   def saveAsDynamicAvroFile(
     path: String,
     schema: Schema,
@@ -224,8 +221,6 @@ final class DynamicProtobufSCollectionOps[T <: Message](private val self: SColle
 }
 
 trait SCollectionSyntax {
-  import scala.language.implicitConversions
-
   implicit def dynamicSpecificRecordSCollectionOps[T <: SpecificRecord](
     sc: SCollection[T]
   ): DynamicSpecificRecordSCollectionOps[T] =

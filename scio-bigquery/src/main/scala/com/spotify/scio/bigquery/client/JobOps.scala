@@ -74,7 +74,7 @@ private[client] object JobOps {
   }
 }
 
-private[client] final class JobOps(client: Client) {
+final private[client] class JobOps(client: Client) {
   import JobOps._
 
   /** Wait for all jobs to finish. */

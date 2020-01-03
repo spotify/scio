@@ -22,17 +22,12 @@
 
 package com.spotify.scio.sql
 
-// scalastyle:off cyclomatic.complexity
-// scalastyle:off file.size.limit
-// scalastyle:off line.size.limit
-// scalastyle:off method.length
-// scalastyle:off number.of.methods
-// scalastyle:off parameter.number
-
+import com.spotify.scio.annotations.experimental
 import com.spotify.scio.schemas._
 import com.spotify.scio.values.SCollection
 
 trait SqlSCollections {
+  @experimental
   def from[A: Schema](a: SCollection[A]): SqlSCollection1[A] = new SqlSCollection1(a)
   def from[A: Schema, B: Schema](a: SCollection[A], b: SCollection[B]): SqlSCollection2[A, B] =
     new SqlSCollection2(a, b)
@@ -127,9 +122,3 @@ trait SqlSCollections {
   ): SqlSCollection10[A, B, C, D, E, F, G, H, I, J] =
     new SqlSCollection10(a, b, c, d, e, f, g, h, i, j)
 }
-// scalastyle:on cyclomatic.complexity
-// scalastyle:on file.size.limit
-// scalastyle:on line.size.limit
-// scalastyle:on method.length
-// scalastyle:on number.of.methods
-// scalastyle:on parameter.number

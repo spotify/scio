@@ -29,21 +29,21 @@ sealed trait BigQueryJob {
 }
 
 /** Extract Job Container */
-private[scio] final case class ExtractJob(
+final private[scio] case class ExtractJob(
   destinationUris: List[String],
   jobReference: Option[JobReference],
   table: TableReference
 ) extends BigQueryJob
 
 /** Load Job Container */
-private[scio] final case class LoadJob(
+final private[scio] case class LoadJob(
   sources: List[String],
   jobReference: Option[JobReference],
   table: TableReference
 ) extends BigQueryJob
 
 /** A query job that may delay execution. */
-private[scio] final case class QueryJob(
+final private[scio] case class QueryJob(
   query: String,
   jobReference: Option[JobReference],
   table: TableReference

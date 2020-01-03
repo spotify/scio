@@ -25,6 +25,7 @@ import com.spotify.scio.util._
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
 
 import com.spotify.scio.values.SCollection
+import com.twitter.chill.ClosureCleaner
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
 import org.apache.beam.sdk.transforms.{DoFn, ParDo}
 import org.apache.beam.sdk.values.{TupleTag, TupleTagList}
@@ -38,16 +39,14 @@ import scala.util.{Failure, Success, Try}
  */
 package object transforms {
   @deprecated(
-    "Class AsyncLookupDoFn was renamed to BaseAsyncLookupDoFn." +
-      "see https://spotify.github.io/scio/migrations/v0.8.0.html#async-dofns for more information",
+    "renamed to BaseAsyncLookupDoFn. see https://spotify.github.io/scio/migrations/v0.8.0.html#async-dofns",
     "0.8.0"
   )
   type AsyncLookupDoFn[A, B, C] =
     BaseAsyncLookupDoFn[A, B, C, ListenableFuture[_], BaseAsyncLookupDoFn.Try[B]]
 
   @deprecated(
-    "Class AsyncLookupDoFn was renamed to BaseAsyncLookupDoFn." +
-      "see https://spotify.github.io/scio/migrations/v0.8.0.html#async-dofns for more information",
+    "renamed to BaseAsyncLookupDoFn. see https://spotify.github.io/scio/migrations/v0.8.0.html#async-dofns",
     "0.8.0"
   )
   object AsyncLookupDoFn {
@@ -61,6 +60,7 @@ package object transforms {
    * [[java.net.URI URI]] methods.
    */
   implicit class URISCollection(private val self: SCollection[URI]) extends AnyVal {
+
     /**
      * Download [[java.net.URI URI]] elements and process as local [[java.nio.file.Path Path]]s.
      * @param batchSize batch size when downloading files
@@ -115,35 +115,33 @@ package object transforms {
       extends AnyVal {
     private def parallelCollectFn[U](parallelism: Int)(pfn: PartialFunction[T, U]): DoFn[T, U] =
       new ParallelLimitedFn[T, U](parallelism) {
-        val isDefined = ClosureCleaner(pfn.isDefinedAt(_)) // defeat closure
-        val g = ClosureCleaner(pfn) // defeat closure
-        def parallelProcessElement(c: DoFn[T, U]#ProcessContext): Unit = {
+        val isDefined = ClosureCleaner.clean(pfn.isDefinedAt(_)) // defeat closure
+        val g = ClosureCleaner.clean(pfn) // defeat closure
+        def parallelProcessElement(c: DoFn[T, U]#ProcessContext): Unit =
           if (isDefined(c.element())) {
             c.output(g(c.element()))
           }
-        }
       }
 
     private def parallelFilterFn(parallelism: Int)(f: T => Boolean): DoFn[T, T] =
       new ParallelLimitedFn[T, T](parallelism) {
-        val g = ClosureCleaner(f) // defeat closure
-        def parallelProcessElement(c: DoFn[T, T]#ProcessContext): Unit = {
+        val g = ClosureCleaner.clean(f) // defeat closure
+        def parallelProcessElement(c: DoFn[T, T]#ProcessContext): Unit =
           if (g(c.element())) {
             c.output(c.element())
           }
-        }
       }
 
     private def parallelMapFn[U](parallelism: Int)(f: T => U): DoFn[T, U] =
       new ParallelLimitedFn[T, U](parallelism) {
-        val g = ClosureCleaner(f) // defeat closure
+        val g = ClosureCleaner.clean(f) // defeat closure
         def parallelProcessElement(c: DoFn[T, U]#ProcessContext): Unit =
           c.output(g(c.element()))
       }
 
     private def parallelFlatMapFn[U](parallelism: Int)(f: T => TraversableOnce[U]): DoFn[T, U] =
       new ParallelLimitedFn[T, U](parallelism: Int) {
-        val g = ClosureCleaner(f) // defeat closure
+        val g = ClosureCleaner.clean(f) // defeat closure
         def parallelProcessElement(c: DoFn[T, U]#ProcessContext): Unit = {
           val i = g(c.element()).toIterator
           while (i.hasNext) c.output(i.next())
@@ -194,6 +192,7 @@ package object transforms {
    * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with pipe methods.
    */
   implicit class PipeSCollection(@transient private val self: SCollection[String]) extends AnyVal {
+
     /**
      * Pipe elements through an external command via StdIn & StdOut.
      * @param command the command to call
@@ -243,6 +242,7 @@ package object transforms {
    */
   implicit class SpecializedFlatMapSCollection[T](@transient private val self: SCollection[T])
       extends AnyVal {
+
     /**
      * Latency optimized flavor of
      * [[com.spotify.scio.values.SCollection.flatMap SCollection.flatMap]], it returns a new
@@ -257,16 +257,17 @@ package object transforms {
     )(implicit coder: Coder[T]): (SCollection[U], SCollection[(T, Throwable)]) = {
       val (mainTag, errorTag) = (new TupleTag[U], new TupleTag[(T, Throwable)])
       val doFn = new NamedDoFn[T, U] {
-        val g = ClosureCleaner(f) // defeat closure
+        val g = ClosureCleaner.clean(f) // defeat closure
         @ProcessElement
         private[scio] def processElement(c: DoFn[T, U]#ProcessContext): Unit = {
-          val i = try {
-            g(c.element()).toIterator
-          } catch {
-            case e: Throwable =>
-              c.output(errorTag, (c.element(), e))
-              Iterator.empty
-          }
+          val i =
+            try {
+              g(c.element()).toIterator
+            } catch {
+              case e: Throwable =>
+                c.output(errorTag, (c.element(), e))
+                Iterator.empty
+            }
           while (i.hasNext) c.output(i.next())
         }
       }
@@ -288,6 +289,7 @@ package object transforms {
   /** Enhanced version of `AsyncLookupDoFn.Try` with convenience methods. */
   implicit class RichAsyncLookupDoFnTry[A](private val self: BaseAsyncLookupDoFn.Try[A])
       extends AnyVal {
+
     /** Convert this `AsyncLookupDoFn.Try` to a Scala `Try`. */
     def asScala: Try[A] =
       if (self.isSuccess) Success(self.get()) else Failure(self.getException)

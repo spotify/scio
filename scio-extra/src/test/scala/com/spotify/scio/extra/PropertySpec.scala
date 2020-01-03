@@ -17,11 +17,12 @@
 
 package com.spotify.scio.extra
 
-import org.scalatest.{Matchers, PropSpec}
+import org.scalatest.propspec.AnyPropSpec
+import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
-trait PropertySpec extends PropSpec with ScalaCheckDrivenPropertyChecks with Matchers {
+trait PropertySpec extends AnyPropSpec with ScalaCheckDrivenPropertyChecks with Matchers {
   // TODO: remove this once https://github.com/scalatest/scalatest/issues/1090 is addressed
-  override implicit val generatorDrivenConfig: PropertyCheckConfiguration =
+  implicit override val generatorDrivenConfig: PropertyCheckConfiguration =
     PropertyCheckConfiguration(minSuccessful = 100)
 }

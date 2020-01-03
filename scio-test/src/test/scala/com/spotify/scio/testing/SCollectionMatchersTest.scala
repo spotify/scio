@@ -17,7 +17,7 @@
 
 package com.spotify.scio.testing
 
-import com.spotify.scio.coders.Coder
+import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import com.spotify.scio.streaming.ACCUMULATING_FIRED_PANES
 import com.spotify.scio.values.WindowOptions
 import org.apache.beam.sdk.Pipeline.PipelineExecutionException
@@ -28,6 +28,11 @@ import org.apache.beam.sdk.transforms.windowing.{
 }
 import org.apache.beam.sdk.values.TimestampedValue
 import org.joda.time.{Duration, Instant}
+import java.io.ObjectOutputStream
+import scala.util.Try
+import java.io.ObjectInputStream
+import java.io.IOException
+import java.io.NotSerializableException
 
 object SCollectionMatchersTest {
   // intentionally not serializable to test lambda ser/de
@@ -38,7 +43,15 @@ object SCollectionMatchersTest {
   }
 }
 
-// scalastyle:off no.whitespace.before.left.bracket
+final case class DoesNotSerialize(a: String, b: Int) extends Serializable {
+  @throws(classOf[IOException])
+  private def writeObject(o: ObjectOutputStream): Unit =
+    throw new NotSerializableException("DoesNotSerialize can't be serialized")
+  @throws(classOf[IOException])
+  private def readObject(o: ObjectInputStream): Unit =
+    throw new NotSerializableException("DoesNotSerialize can't be serialized")
+}
+
 class SCollectionMatchersTest extends PipelineSpec {
   import SCollectionMatchersTest.TestRecord
   implicit val coder = Coder.kryo[TestRecord]
@@ -350,6 +363,26 @@ class SCollectionMatchersTest extends PipelineSpec {
     }
   }
 
+  it should "support satisfy when the closure does not serialize" in {
+    runWithContext { ctx =>
+      import CoderAssertions._
+      import org.apache.beam.sdk.util.SerializableUtils
+
+      val v = new DoesNotSerialize("foo", 42)
+      val coder = CoderMaterializer.beam(ctx, Coder[DoesNotSerialize])
+
+      assume(Try(SerializableUtils.ensureSerializable(v)).isFailure)
+      assume(Try(SerializableUtils.ensureSerializableByCoder(coder, v, "?")).isSuccess)
+
+      v coderShould roundtrip()
+      coderIsSerializable[DoesNotSerialize]
+
+      val coll = ctx.parallelize(List(v))
+      coll shouldNot beEmpty // just make sure the SCollection can be built
+      coll should satisfySingleValue[DoesNotSerialize](_.a == v.a)
+    }
+  }
+
   it should "support forAll" in {
     // should cases
     runWithContext { _.parallelize(1 to 100) should forAll[Int](_ > 0) }
@@ -548,4 +581,3 @@ class SCollectionMatchersTest extends PipelineSpec {
     }
   }
 }
-// scalastyle:on no.whitespace.before.left.bracket

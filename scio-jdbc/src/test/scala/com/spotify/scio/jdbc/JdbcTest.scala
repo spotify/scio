@@ -87,10 +87,8 @@ class JdbcTest extends PipelineSpec {
   }
 
   it should "fail incorrect JDBC" in {
-    // scalastyle:off no.whitespace.before.left.bracket
     an[AssertionError] should be thrownBy { testJdbc("aJ", "bJ") }
     an[AssertionError] should be thrownBy { testJdbc("aJ", "bJ", "cJ", "dJ") }
-    // scalastyle:on no.whitespace.before.left.bracket
   }
 
   it should "connnect via JDBC without a password" in {

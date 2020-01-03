@@ -18,6 +18,7 @@ package com.spotify.scio.schemas.instances
 
 import com.spotify.scio.schemas.{RawRecord, Schema}
 import org.apache.avro.specific.SpecificRecord
+import org.apache.avro.generic.{GenericRecord, IndexedRecord}
 import org.apache.beam.sdk.schemas.utils.AvroUtils
 import org.apache.beam.sdk.schemas.{AvroRecordSchema, Schema => BSchema}
 import org.apache.beam.sdk.transforms.SerializableFunction
@@ -43,9 +44,25 @@ trait AvroInstances {
     val toRow: SerializableFunction[T, Row] =
       new SerializableFunction[T, Row] {
         def apply(t: T): Row =
-          AvroInstances.specificRecordtoRow(schema, avroSchema, t)
+          AvroInstances.recordtoRow(schema, avroSchema, t)
       }
     RawRecord[T](schema, fromRow, toRow)
+  }
+
+  def fromAvroSchema(schema: org.apache.avro.Schema): Schema[GenericRecord] = {
+    val beamSchema = AvroUtils.toBeamSchema(schema)
+    val avroSchema = new AvroInstances.SerializableSchema(schema)
+    val toRow = new SerializableFunction[GenericRecord, Row] {
+      def apply(t: GenericRecord): Row =
+        AvroInstances.recordtoRow[GenericRecord](beamSchema, avroSchema, t)
+    }
+
+    val fromRow = new SerializableFunction[Row, GenericRecord] {
+      def apply(t: Row): GenericRecord =
+        AvroUtils.toGenericRecord(t, avroSchema.get)
+    }
+
+    RawRecord[GenericRecord](beamSchema, fromRow, toRow)
   }
 }
 
@@ -57,7 +74,7 @@ object AvroInstances {
   }
 
   // Workaround BEAM-6742
-  private def specificRecordtoRow[T <: SpecificRecord](
+  private def recordtoRow[T <: IndexedRecord](
     schema: BSchema,
     avroSchema: SerializableSchema,
     t: T

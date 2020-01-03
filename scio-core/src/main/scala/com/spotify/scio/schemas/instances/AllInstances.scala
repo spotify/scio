@@ -21,4 +21,4 @@ trait AllInstances
     with JavaInstances
     with JodaInstances
     with AvroInstances
-    with LowPriorityFallbackInstances
+    with LowPrioritySchemaDerivation

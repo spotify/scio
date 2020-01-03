@@ -16,7 +16,8 @@
  */
 package com.spotify.scio.schemas
 
-import org.scalatest._
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 object SchemaCompatTest {
   case class Required(i: Int, s: String)
@@ -33,7 +34,7 @@ object SchemaCompatTest {
   case class NestedP(a: RequiredP, b: NullableP, c: RepeatedP, d: MapFieldP)
 }
 
-class SchemaCompatTest extends FlatSpec with Matchers {
+class SchemaCompatTest extends AnyFlatSpec with Matchers {
   import com.spotify.scio.schemas.SchemaCompatTest._
 
   private def check[A: Schema, B: Schema]: Either[String, Unit] = {

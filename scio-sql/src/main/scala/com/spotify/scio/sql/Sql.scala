@@ -60,7 +60,7 @@ object Sql extends SqlSCollections {
 
   private[sql] def setSchema[T: Schema](c: SCollection[T]): SCollection[T] =
     c.transform { x =>
-      val (schema, to, from) = SchemaMaterializer.materialize(c.context, Schema[T])
+      val (schema, to, from) = SchemaMaterializer.materialize(Schema[T])
       x.map(identity)(Coder.beam(SchemaCoder.of(schema, to, from)))
     }
 }
@@ -91,11 +91,11 @@ private object Queries {
     val tableProvider = new ReadOnlyTableProvider(Sql.SCollectionTypeName, tables.asJava)
     val env = BeamSqlEnv.builder(tableProvider).setPipelineOptions(PipelineOptionsFactory.create())
     udfs.foreach {
-      case (x: UdfFromClass[_]) =>
+      case x: UdfFromClass[_] =>
         env.addUdf(x.fnName, x.clazz)
-      case (x: UdfFromSerializableFn[_, _]) =>
+      case x: UdfFromSerializableFn[_, _] =>
         env.addUdf(x.fnName, x.fn)
-      case (x: UdafFromCombineFn[_, _, _]) =>
+      case x: UdafFromCombineFn[_, _, _] =>
         env.addUdaf(x.fnName, x.fn)
     }
     env.build().parseQuery(query)
@@ -126,7 +126,7 @@ private object Queries {
     inferredSchemas: List[(String, BSchema)],
     expectedSchema: BSchema,
     udfs: List[Udf]
-  ): Either[String, String] = {
+  ): Either[String, String] =
     ScioUtil
       .toEither(schema(query, inferredSchemas, udfs))
       .left
@@ -177,7 +177,6 @@ private object Queries {
         """.stripMargin
           Left(message)
       }
-  }
 }
 
 private object QueryMacros {

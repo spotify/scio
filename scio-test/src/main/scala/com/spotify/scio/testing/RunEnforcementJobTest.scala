@@ -18,7 +18,8 @@ package com.spotify.scio.testing
 
 import com.spotify.scio.testing.{JobTest => InnerJobTest}
 import org.scalactic.source.Position
-import org.scalatest._
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.{Failed, Outcome}
 
 import scala.collection.mutable.ArrayBuffer
 import scala.reflect.ClassTag
@@ -26,33 +27,27 @@ import scala.reflect.ClassTag
 /**
  * Trait that enforces [[JobTest.Builder.run]] is called.
  */
-trait RunEnforcementJobTest extends FlatSpec { this: PipelineSpec =>
+trait RunEnforcementJobTest extends AnyFlatSpec { this: PipelineSpec =>
 
   private val tests = ArrayBuffer.empty[InnerJobTest.Builder]
 
-  // scalastyle:off method.name
   def JobTest[T: ClassTag]: InnerJobTest.Builder = {
     val jt = InnerJobTest[T]
     tests += jt
     jt
   }
-  // scalastyle:on method.name
 
-  // scalastyle:off method.name
   private[testing] def JobTest[T: ClassTag](enforceRun: Boolean = true): InnerJobTest.Builder = {
     val jt = InnerJobTest[T]
     if (enforceRun) tests += jt
     jt
   }
-  // scalastyle:on method.name
 
-  // scalastyle:off method.name
   def JobTest(className: String): InnerJobTest.Builder = {
     val jt = InnerJobTest(className)
     tests += jt
     jt
   }
-  // scalastyle:on method.name
 
   override protected def withFixture(test: NoArgTest): Outcome = {
     // Tests within Suites are executed sequentially, thus we need to clear the tests, if

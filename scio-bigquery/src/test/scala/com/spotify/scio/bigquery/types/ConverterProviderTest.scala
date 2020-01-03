@@ -18,12 +18,12 @@
 package com.spotify.scio.bigquery.types
 
 import com.spotify.scio.bigquery._
-import org.scalatest._
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
 
-class ConverterProviderTest extends FlatSpec with Matchers {
+class ConverterProviderTest extends AnyFlatSpec with Matchers {
   import ConverterProviderTest._
 
-  // scalastyle:off no.whitespace.before.left.bracket
   "ConverterProvider" should "throw NPE with meaningful message for null in REQUIRED field" in {
     the[NullPointerException] thrownBy {
       Required.fromTableRow(TableRow())
@@ -39,7 +39,6 @@ class ConverterProviderTest extends FlatSpec with Matchers {
       Repeated.fromTableRow(TableRow())
     } should have message """REPEATED field "a" is null"""
   }
-  // scalastyle:on no.whitespace.before.left.bracket
 }
 
 object ConverterProviderTest {

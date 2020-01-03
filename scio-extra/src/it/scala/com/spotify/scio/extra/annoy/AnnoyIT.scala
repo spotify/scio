@@ -49,7 +49,7 @@ class AnnoyIT extends PipelineSpec {
         s should containInAnyOrder(sideData.map(_._2))
       } finally {
         val files = FileSystems
-          .`match`(s"${tempLocation}/annoy-*")
+          .`match`(s"$tempLocation/annoy-*")
           .metadata()
           .asScala
           .map(_.resourceId())
@@ -68,11 +68,10 @@ class AnnoyIT extends PipelineSpec {
         val f = FileSystems.create(resourceId, MimeTypes.BINARY)
         f.write(ByteBuffer.wrap("test-data".getBytes))
         f.close()
-        // scalastyle:off no.whitespace.before.left.bracket
+
         the[IllegalArgumentException] thrownBy {
           sc.parallelize(sideData).asAnnoy(path, Angular, dim, 10)
         } should have message s"requirement failed: Annoy URI $path already exists"
-        // scalastyle:on no.whitespace.before.left.bracket
       } finally {
         FileSystems.delete(Seq(resourceId).asJava)
       }

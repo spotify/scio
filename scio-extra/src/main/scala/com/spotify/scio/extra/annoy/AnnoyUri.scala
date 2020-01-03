@@ -51,14 +51,13 @@ private[annoy] object AnnoyUri {
 private class LocalAnnoyUri(val path: String) extends AnnoyUri {
   override private[annoy] def getReader(metric: AnnoyMetric, dim: Int): AnnoyReader =
     new AnnoyReader(path, metric, dim)
-  override private[annoy] def saveAndClose(w: AnnoyWriter): Unit = {
+  override private[annoy] def saveAndClose(w: AnnoyWriter): Unit =
     try {
       w.build()
       w.save(path.toString)
     } finally {
       w.free()
     }
-  }
   override private[annoy] def exists: Boolean = new File(path).exists()
 }
 

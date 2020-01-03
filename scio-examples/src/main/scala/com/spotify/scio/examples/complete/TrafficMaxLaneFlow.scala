@@ -18,7 +18,7 @@
 // Example: Traffic max lane flow computation from sensor data
 // Usage:
 
-// `sbt runMain "com.spotify.scio.examples.complete.TrafficMaxLaneFlow
+// `sbt "runMain com.spotify.scio.examples.complete.TrafficMaxLaneFlow
 // --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
 // --input=gs://apache-beam-samples/traffic_sensor/Freeways-5Minaa2010-01-01_to_2010-02-15_test2.csv
 // --output=[DATASET].traffic_max_lane_flow"`
@@ -60,7 +60,6 @@ object TrafficMaxLaneFlow {
     window_timestamp: Instant
   )
 
-  // scalastyle:off method.length
   def main(cmdlineArgs: Array[String]): Unit = {
     // set up example wiring
     val (opts, args) = ScioContext.parseArguments[ExampleOptions](cmdlineArgs)
@@ -128,10 +127,9 @@ object TrafficMaxLaneFlow {
             ts
           )
       }
-      .saveAsTypedBigQuery(args("output"))
+      .saveAsTypedBigQueryTable(Table.Spec(args("output")))
 
     val result = sc.run()
     exampleUtils.waitToFinish(result.pipelineResult)
   }
-  // scalastyle:on method.length
 }

@@ -48,19 +48,20 @@ class ScioReplClassLoader(urls: Array[URL], parent: ClassLoader)
 
   def setRepl(repl: ILoop): Unit = scioREPL = repl
 
-  override def loadClass(name: String): Class[_] = {
+  override def loadClass(name: String): Class[_] =
     // If contains $line - means that repl was loaded, so we can lookup
     // runtime classes
     if (name.contains("$line")) {
       Logger.debug(s"Trying to load $name")
       // Don't want to use Try{} cause nonFatal handling
-      val clazz: Class[_] = try {
-        scioREPL.classLoader.loadClass(name)
-      } catch {
-        case e: Exception =>
-          Logger.error(s"Could not find $name in REPL classloader", e)
-          null
-      }
+      val clazz: Class[_] =
+        try {
+          scioREPL.classLoader.loadClass(name)
+        } catch {
+          case e: Exception =>
+            Logger.error(s"Could not find $name in REPL classloader", e)
+            null
+        }
       if (clazz != null) {
         Logger.debug(s"Found $name in REPL classloader ${scioREPL.classLoader}")
         clazz
@@ -70,7 +71,6 @@ class ScioReplClassLoader(urls: Array[URL], parent: ClassLoader)
     } else {
       super.loadClass(name)
     }
-  }
 
   def genNextReplCodeJarDir: File =
     Files.createTempDirectory("scio-repl-").toFile
@@ -125,7 +125,7 @@ class ScioReplClassLoader(urls: Array[URL], parent: ClassLoader)
     dir: VirtualDirectory,
     entryPath: String,
     jarStream: JarOutputStream
-  ): Unit = {
+  ): Unit =
     dir.foreach { file =>
       if (file.isDirectory) {
         // Recursively descend into subdirectories, adjusting the package name as we do.
@@ -142,5 +142,4 @@ class ScioReplClassLoader(urls: Array[URL], parent: ClassLoader)
         jarStream.closeEntry()
       }
     }
-  }
 }

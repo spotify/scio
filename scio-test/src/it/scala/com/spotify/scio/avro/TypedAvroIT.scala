@@ -19,9 +19,10 @@ package com.spotify.scio.avro
 
 import com.spotify.scio._
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.io.Files
-import org.scalatest._
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
-class TypedAvroIT extends FlatSpec with Matchers {
+class TypedAvroIT extends AnyFlatSpec with Matchers {
   "Typed Avro IO" should "not throw exception" in {
     noException should be thrownBy {
       val tempDir = Files.createTempDir()

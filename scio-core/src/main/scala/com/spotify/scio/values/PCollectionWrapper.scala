@@ -23,6 +23,7 @@ import org.apache.beam.sdk.transforms.{Combine, DoFn, PTransform, ParDo}
 import org.apache.beam.sdk.values.{PCollection, POutput, WindowingStrategy}
 
 private[values] trait PCollectionWrapper[T] extends TransformNameable {
+
   /** The [[org.apache.beam.sdk.values.PCollection PCollection]] being wrapped internally. */
   val internal: PCollection[T]
 

@@ -18,7 +18,9 @@
 package com.spotify.scio.bigquery.types
 
 import com.spotify.scio.bigquery.client.BigQuery
-import org.scalatest.{Assertion, FlatSpec, Matchers}
+import org.scalatest.Assertion
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import scala.annotation.StaticAnnotation
 import scala.collection.JavaConverters._
@@ -50,17 +52,12 @@ object BigQueryTypeIT {
   )
   class SqlLatestT
 
-  @BigQueryType.fromQuery(
-    """
+  @BigQueryType.fromQuery("""
       |SELECT word, word_count
       |FROM `data-integration-test.partition_a.table_%s`
       |WHERE word_count > %3$d and word != '%%'
       |LIMIT %d
-    """.stripMargin,
-    "$LATEST",
-    1,
-    1
-  )
+    """.stripMargin, "$LATEST", 1, 1)
   class SqlLatestTWithMultiArgs
 
   @BigQueryType.fromTable("data-integration-test:partition_a.table_%s", "$LATEST")
@@ -81,7 +78,7 @@ object BigQueryTypeIT {
 }
 
 // Run BigQueryITUtil to re-populate tables for integration tests
-class BigQueryTypeIT extends FlatSpec with Matchers {
+class BigQueryTypeIT extends AnyFlatSpec with Matchers {
   import BigQueryTypeIT._
   import BigQueryITUtil._
 

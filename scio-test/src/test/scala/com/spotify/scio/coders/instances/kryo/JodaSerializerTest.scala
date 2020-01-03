@@ -20,15 +20,15 @@ package com.spotify.scio.coders.instances.kryo
 import com.spotify.scio.coders.{CoderTestUtils, KryoAtomicCoder, KryoOptions}
 import org.joda.time.{DateTime, DateTimeZone, LocalDate, LocalDateTime, LocalTime}
 import org.scalacheck._
-import org.scalatest._
+import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatestplus.scalacheck.Checkers
 
 import scala.collection.JavaConverters._
 import scala.util.Try
 
-class JodaSerializerTest extends FlatSpec with Checkers {
+class JodaSerializerTest extends AnyFlatSpec with Checkers {
   // TODO: remove this once https://github.com/scalatest/scalatest/issues/1090 is addressed
-  override implicit val generatorDrivenConfig: PropertyCheckConfiguration =
+  implicit override val generatorDrivenConfig: PropertyCheckConfiguration =
     PropertyCheckConfiguration(minSuccessful = 100)
 
   implicit val dateTimeArb = Arbitrary {

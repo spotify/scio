@@ -19,7 +19,7 @@
 
 // Usage:
 
-// `sbt runMain "com.spotify.scio.examples.complete.game.HourlyTeamScore
+// `sbt "runMain com.spotify.scio.examples.complete.game.HourlyTeamScore
 // --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
 // --windowDuration=60
 // --startMin=2018-05-13-00-00
@@ -92,9 +92,9 @@ object HourlyTeamScore {
           TeamScoreSums(team, score, start)
       }
       // Save to the BigQuery table defined by "output" in the arguments passed in
-      .saveAsTypedBigQuery(args("output"))
+      .saveAsTypedBigQueryTable(Table.Spec(args("output")))
 
-    // Close context and execute the pipeline
+    // Execute the pipeline
     sc.run()
     ()
   }

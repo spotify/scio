@@ -22,7 +22,8 @@ import com.spotify.scio.bigquery._
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.WriteDisposition
 import org.apache.beam.sdk.io.gcp.bigquery.SchemaAndRecord
 import org.apache.beam.sdk.testing.PAssert
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import scala.collection.JavaConverters._
 
@@ -36,7 +37,7 @@ object BeamSchemaIT {
   )
 }
 
-final class BeamSchemaIT extends FlatSpec with Matchers {
+final class BeamSchemaIT extends AnyFlatSpec with Matchers {
   import BeamSchemaIT._
 
   "typedBigQueryTable" should "read" in {

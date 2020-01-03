@@ -18,9 +18,10 @@
 package com.spotify.scio.bigquery
 
 import com.spotify.scio.bigquery.client.BigQuery
-import org.scalatest._
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
 
-class BigQueryPartitionUtilIT extends FlatSpec with Matchers {
+class BigQueryPartitionUtilIT extends AnyFlatSpec with Matchers {
   val bq = BigQuery.defaultInstance()
 
   "latestQuery" should "work with legacy syntax" in {
@@ -73,11 +74,10 @@ class BigQueryPartitionUtilIT extends FlatSpec with Matchers {
       "[data-integration-test:partition_a.table_$LATEST], " +
       "[data-integration-test:partition_b.table_$LATEST], " +
       "[data-integration-test:partition_c.table_$LATEST]"
-    // scalastyle:off no.whitespace.before.left.bracket
+
     the[IllegalArgumentException] thrownBy {
       BigQueryPartitionUtil.latestQuery(bq, input)
     } should have message msg
-    // scalastyle:on no.whitespace.before.left.bracket
   }
 
   it should "fail SQL syntax without latest common partition" in {
@@ -94,11 +94,10 @@ class BigQueryPartitionUtilIT extends FlatSpec with Matchers {
       "`data-integration-test.partition_a.table_$LATEST`, " +
       "`data-integration-test.partition_b.table_$LATEST`, " +
       "`data-integration-test.partition_c.table_$LATEST`"
-    // scalastyle:off no.whitespace.before.left.bracket
+
     the[IllegalArgumentException] thrownBy {
       BigQueryPartitionUtil.latestQuery(bq, input)
     } should have message msg
-    // scalastyle:on no.whitespace.before.left.bracket
   }
 
   "latestTable" should "work" in {
@@ -115,10 +114,9 @@ class BigQueryPartitionUtilIT extends FlatSpec with Matchers {
   it should "fail table specification without latest partition" in {
     val input = "data-integration-test:samples_eu.shakespeare_$LATEST"
     val msg = s"requirement failed: Cannot find latest partition for $input"
-    // scalastyle:off no.whitespace.before.left.bracket
+
     the[IllegalArgumentException] thrownBy {
       BigQueryPartitionUtil.latestTable(bq, input)
     } should have message msg
-    // scalastyle:on no.whitespace.before.left.bracket
   }
 }

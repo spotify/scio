@@ -15,25 +15,23 @@
  * under the License.
  */
 
-// scalastyle:off file.size.limit
-// scalastyle:off number.of.methods
-// scalastyle:off number.of.types
-
 package com.spotify.scio.avro.types
 
 import com.google.protobuf.ByteString
 import com.spotify.scio.avro.types.AvroType.HasAvroDoc
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecord
-import org.scalatest.{Assertion, FlatSpec, Matchers}
+import org.scalatest.Assertion
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import scala.annotation.StaticAnnotation
 import scala.reflect.runtime.universe._
 
-class TypeProviderTest extends FlatSpec with Matchers {
-  @AvroType.fromSchema(
-    """{"type":"record","name": "Record","fields":[{"name":"f1","type":"int"}]}"""
-  )
+class TypeProviderTest extends AnyFlatSpec with Matchers {
+  @AvroType.fromSchema("""
+      |{"type":"record","name": "Record","fields":[{"name":"f1","type":"int"}]}
+      |""".stripMargin)
   class StringLiteralRecord
 
   @AvroType.fromSchema("""
@@ -129,12 +127,12 @@ class TypeProviderTest extends FlatSpec with Matchers {
   }
 
   it should "support .fromGenericRecord in companion object" in {
-    (classOf[(GenericRecord => RecordWithBasicTypes)]
+    (classOf[GenericRecord => RecordWithBasicTypes]
       isAssignableFrom RecordWithBasicTypes.fromGenericRecord.getClass) shouldBe true
   }
 
   it should "support .toGenericRecord in companion object" in {
-    (classOf[(RecordWithBasicTypes => GenericRecord)]
+    (classOf[RecordWithBasicTypes => GenericRecord]
       isAssignableFrom RecordWithBasicTypes.toGenericRecord.getClass) shouldBe true
   }
 
@@ -651,12 +649,12 @@ class TypeProviderTest extends FlatSpec with Matchers {
   }
 
   it should "support .fromGenericRecord in companion object" in {
-    (classOf[(GenericRecord => ToSchema)] isAssignableFrom
+    (classOf[GenericRecord => ToSchema] isAssignableFrom
       ToSchema.fromGenericRecord.getClass) shouldBe true
   }
 
   it should "support .toGenericRecord in companion object" in {
-    (classOf[(ToSchema => GenericRecord)] isAssignableFrom
+    (classOf[ToSchema => GenericRecord] isAssignableFrom
       ToSchema.toGenericRecord.getClass) shouldBe true
   }
 
@@ -809,12 +807,12 @@ class TypeProviderTest extends FlatSpec with Matchers {
   }
 
   it should "support .fromGenericRecord in companion object with >22 fields" in {
-    val cls = classOf[(GenericRecord => TwentyThree)]
+    val cls = classOf[GenericRecord => TwentyThree]
     (cls isAssignableFrom TwentyThree.fromGenericRecord.getClass) shouldBe true
   }
 
   it should "support .toGenericRecord in companion object with >22 fields" in {
-    val cls = classOf[(TwentyThree => GenericRecord)]
+    val cls = classOf[TwentyThree => GenericRecord]
     (cls isAssignableFrom TwentyThree.toGenericRecord.getClass) shouldBe true
   }
 
@@ -827,68 +825,13 @@ class TypeProviderTest extends FlatSpec with Matchers {
     DocumentedRecord.isInstanceOf[HasAvroDoc] shouldBe true
   }
 
-  @AvroType.fromSchemaFile("""
-      |https://raw.githubusercontent.com/spotify/scio/master/
-      |scio-avro/src/test/avro/
-      |scio-avro-test.avsc
-    """.stripMargin)
-  class FromResourceMultiLine
-
-  // scalastyle:off line.size.limit
-  @AvroType.fromSchemaFile(
-    "https://raw.githubusercontent.com/spotify/scio/master/scio-avro/src/test/avro/scio-avro-test.avsc"
-  )
-  class FromResource
-  // scalastyle:on line.size.limit
-
-  "AvroType.fromSchemaFile" should "support reading schema from multiline resource" in {
-    val r = FromResourceMultiLine(1)
-    r.test shouldBe 1
-  }
-
-  it should "support reading schema from resource" in {
-    val r = FromResource(2)
-    r.test shouldBe 2
-  }
-
   class Annotation1 extends StaticAnnotation
   class Annotation2 extends StaticAnnotation
 
-  def containsAllAnnotTypes[T: TypeTag]: Assertion =
-    typeOf[T].typeSymbol.annotations
-      .map(_.tree.tpe)
-      .containsSlice(Seq(typeOf[Annotation1], typeOf[Annotation2])) shouldBe true
-
-  // scalastyle:off line.size.limit
   @Annotation1
-  @AvroType.fromSchemaFile(
-    "https://raw.githubusercontent.com/spotify/scio/master/scio-avro/src/test/avro/scio-avro-test.avsc"
-  )
-  @Annotation2
-  class FromResourceWithSurroundingAnnotations
-  // scalastyle:on line.size.limit
-
-  it should "preserve surrounding user defined annotations" in {
-    containsAllAnnotTypes[FromResourceWithSurroundingAnnotations]
-  }
-
-  // scalastyle:off line.size.limit
-  @AvroType.fromSchemaFile(
-    "https://raw.githubusercontent.com/spotify/scio/master/scio-avro/src/test/avro/scio-avro-test.avsc"
-  )
-  @Annotation1
-  @Annotation2
-  class FromResourceWithSequentialAnnotations
-  // scalastyle:on line.size.limit
-
-  it should "preserve sequential user defined annotations" in {
-    containsAllAnnotTypes[FromResourceWithSequentialAnnotations]
-  }
-
-  @Annotation1
-  @AvroType.fromSchema(
-    """{"type":"record","name": "Record","fields":[{"name":"f1","type":"int"}]}"""
-  )
+  @AvroType.fromSchema("""
+      |{"type":"record","name": "Record","fields":[{"name":"f1","type":"int"}]}
+      |""".stripMargin)
   @Annotation2
   class SchemaWithSurroundingAnnotations
 
@@ -896,9 +839,9 @@ class TypeProviderTest extends FlatSpec with Matchers {
     containsAllAnnotTypes[SchemaWithSurroundingAnnotations]
   }
 
-  @AvroType.fromSchema(
-    """{"type":"record","name": "Record","fields":[{"name":"f1","type":"int"}]}"""
-  )
+  @AvroType.fromSchema("""
+      |{"type":"record","name": "Record","fields":[{"name":"f1","type":"int"}]}
+      |""".stripMargin)
   @Annotation1
   @Annotation2
   class SchemaWithSequentialAnnotations
@@ -924,8 +867,10 @@ class TypeProviderTest extends FlatSpec with Matchers {
   it should "preserve sequential user defined annotations" in {
     containsAllAnnotTypes[RecordWithSequentialAnnotations]
   }
-}
 
-// scalastyle:on file.size.limit
-// scalastyle:on number.of.methods
-// scalastyle:on number.of.types
+  def containsAllAnnotTypes[T: TypeTag]: Assertion =
+    typeOf[T].typeSymbol.annotations
+      .map(_.tree.tpe)
+      .containsSlice(Seq(typeOf[Annotation1], typeOf[Annotation2])) shouldBe true
+
+}

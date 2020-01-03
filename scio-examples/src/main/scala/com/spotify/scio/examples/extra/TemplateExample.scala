@@ -21,7 +21,7 @@
 // Usage:
 
 // To upload the template:
-// `sbt runMain "com.spotify.scio.examples.extra.TemplateExample
+// `sbt "runMain com.spotify.scio.examples.extra.TemplateExample
 // --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
 // --stagingLocation=gs://[BUCKET]/staging --templateLocation=gs://[BUCKET]/TemplateExample"`
 
@@ -31,7 +31,7 @@
 //  outputTopic=projects/[PROJECT]/topics/[TOPIC]`
 
 // To run the job directly:
-// `sbt runMain "com.spotify.scio.examples.extra.TemplateExample
+// `sbt "runMain com.spotify.scio.examples.extra.TemplateExample
 // --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
 // --inputSub=projects/[PROJECT]/subscriptions/sub
 // --outputTopic=projects/[PROJECT]/topics/[TOPIC]"`
@@ -81,7 +81,7 @@ object TemplateExample {
     sc.customInput("input", inputIO)
       .saveAsCustomOutput("output", outputIO)
 
-    // Close the context
+    // Execute the pipeline
     sc.run()
     ()
   }

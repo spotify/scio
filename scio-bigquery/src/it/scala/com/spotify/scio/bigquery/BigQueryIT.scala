@@ -18,7 +18,8 @@
 package com.spotify.scio.bigquery
 
 import org.scalatest.Inspectors.forAll
-import org.scalatest._
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
 
 object BigQueryIT {
   val tableRef = "bigquery-public-data:samples.shakespeare"
@@ -36,7 +37,7 @@ object BigQueryIT {
   class WordCount
 }
 
-class BigQueryIT extends FlatSpec with Matchers {
+class BigQueryIT extends AnyFlatSpec with Matchers {
   import BigQueryIT._
 
   // =======================================================================
@@ -108,7 +109,6 @@ class BigQueryIT extends FlatSpec with Matchers {
   it should "fail insufficient sample data" in {
     val t = "clouddataflow-readonly:samples.weather_stations"
 
-    // scalastyle:off no.whitespace.before.left.bracket
     the[IllegalArgumentException] thrownBy {
       val mbq = MockBigQuery()
       mbq.mockTable(t).withSample(2000)
@@ -145,5 +145,4 @@ class BigQueryIT extends FlatSpec with Matchers {
     } should have message
       "404 Not Found, this is most likely caused by missing source table or mock data"
   }
-  // scalastyle:on no.whitespace.before.left.bracket
 }

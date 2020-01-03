@@ -32,7 +32,7 @@ import org.joda.time.Duration
 import scala.collection.JavaConverters._
 
 sealed trait BigtableIO[T] extends ScioIO[T] {
-  override final val tapT = EmptyTapOf[T]
+  final override val tapT = EmptyTapOf[T]
 }
 
 object BigtableIO {
@@ -103,9 +103,8 @@ object BigtableRead {
   }
 }
 
-final case class BigtableWrite[T](bigtableOptions: BigtableOptions, tableId: String)(
-  implicit ev: T <:< Mutation
-) extends BigtableIO[(ByteString, Iterable[T])] {
+final case class BigtableWrite[T <: Mutation](bigtableOptions: BigtableOptions, tableId: String)
+    extends BigtableIO[(ByteString, Iterable[T])] {
   override type ReadP = Nothing
   override type WriteP = BigtableWrite.WriteParam
 
@@ -168,8 +167,10 @@ object BigtableWrite {
     flushInterval: Duration = Bulk.DefaultFlushInterval
   ) extends WriteParam
 
-  final def apply[T](projectId: String, instanceId: String, tableId: String)(
-    implicit ev: T <:< Mutation
+  final def apply[T <: Mutation](
+    projectId: String,
+    instanceId: String,
+    tableId: String
   ): BigtableWrite[T] = {
     val bigtableOptions = BigtableOptions
       .builder()

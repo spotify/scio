@@ -18,7 +18,7 @@
 // Example: Gzip File write
 // Usage:
 
-// `sbt runMain "com.spotify.scio.examples.extra.SingleGZipFileExample
+// `sbt "runMain com.spotify.scio.examples.extra.SingleGZipFileExample
 // --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
 // --input=[INPUT.txt] --output=[OUTPUT]"`
 package com.spotify.scio.examples.extra
@@ -46,7 +46,7 @@ object SingleGZipFileExample {
       // Save result as a single text files under the output path, with deflate compression
       .saveAsTextFile(args("output"), numShards = 1, compression = Compression.DEFLATE)
 
-    // Close the context and execute the pipeline
+    // Execute the pipeline
     sc.run()
     ()
   }

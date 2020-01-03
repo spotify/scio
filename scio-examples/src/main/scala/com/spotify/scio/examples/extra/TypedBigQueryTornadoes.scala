@@ -18,7 +18,7 @@
 // Example: Read and write using typed BigQuery API with annotated case classes
 // Usage:
 
-// `sbt runMain "com.spotify.scio.examples.extra.TypedBigQueryTornadoes
+// `sbt "runMain com.spotify.scio.examples.extra.TypedBigQueryTornadoes
 // --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
 // --output=[PROJECT]:[DATASET].[TABLE]"`
 package com.spotify.scio.examples.extra
@@ -50,7 +50,11 @@ object TypedBigQueryTornadoes {
       .countByValue
       .map(kv => Result(kv._1, kv._2))
       // Convert elements from Result to TableRow and save output to BigQuery.
-      .saveAsTypedBigQuery(args("output"), WRITE_TRUNCATE, CREATE_IF_NEEDED)
+      .saveAsTypedBigQueryTable(
+        Table.Spec(args("output")),
+        writeDisposition = WRITE_TRUNCATE,
+        createDisposition = CREATE_IF_NEEDED
+      )
 
     sc.run()
     ()

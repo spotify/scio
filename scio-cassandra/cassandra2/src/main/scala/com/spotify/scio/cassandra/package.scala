@@ -45,6 +45,7 @@ package object cassandra {
    */
   implicit class CassandraSCollection[T](@transient private val self: SCollection[T])
       extends AnyVal {
+
     /**
      * Save this SCollection as a Cassandra table.
      *
@@ -61,6 +62,7 @@ package object cassandra {
      * @param parallelism number of concurrent bulk writers, default to number of Cassandra nodes
      * @param f function to convert input data to values for the CQL statement
      */
+    @deprecated("scio-cassandra2 will be removed", "0.8.0")
     def saveAsCassandra(
       opts: CassandraOptions,
       parallelism: Int = CassandraIO.WriteParam.DefaultPar

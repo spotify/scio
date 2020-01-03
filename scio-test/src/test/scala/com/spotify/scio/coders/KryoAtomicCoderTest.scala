@@ -41,8 +41,6 @@ case class RecordA(name: String, value: Int)
 case class RecordB(name: String, value: Int)
 
 class KryoAtomicCoderTest extends PipelineSpec {
-  import com.spotify.scio.testing.TestingUtils._
-
   type CoderFactory = () => BCoder[Any]
   val cf = () => new KryoAtomicCoder[Any](KryoOptions())
 
@@ -104,7 +102,7 @@ class KryoAtomicCoderTest extends PipelineSpec {
   }
 
   it should "support large objects" in {
-    val vs = iterable((1 to 1000000).map("value-%08d".format(_)): _*)
+    val vs = Iterable((1 to 1000000).map("value-%08d".format(_)): _*)
     val kv = ("key", vs)
     kv coderShould roundtripKryo()
   }
@@ -145,9 +143,7 @@ class KryoAtomicCoderTest extends PipelineSpec {
 
     sc.parallelize(1 to 10).map(x => RecordB(x.toString, x))
 
-    // scalastyle:off no.whitespace.before.left.bracket
     val e = the[PipelineExecutionException] thrownBy { sc.run() }
-    // scalastyle:on no.whitespace.before.left.bracket
 
     val msg = "Class is not registered: com.spotify.scio.coders.RecordB"
     e.getCause.getMessage should startWith(msg)
@@ -162,9 +158,7 @@ class KryoAtomicCoderTest extends PipelineSpec {
     val sc = ScioContext(options)
     sc.parallelize(1 to 10).map(x => RecordB(x.toString, x))
 
-    // scalastyle:off no.whitespace.before.left.bracket
     val e = the[PipelineExecutionException] thrownBy { sc.run() }
-    // scalastyle:on no.whitespace.before.left.bracket
 
     val msg = "Class is not registered: com.spotify.scio.coders.RecordB"
     e.getCause.getMessage should startWith(msg)

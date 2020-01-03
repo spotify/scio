@@ -24,6 +24,7 @@ import com.spotify.scio.values.SCollection
 
 /** Trait with utility methods for unit testing pipelines. */
 trait PipelineTestUtils {
+
   /**
    * Test pipeline components with a [[ScioContext]].
    * @param fn code that tests the components and verifies the result
@@ -86,11 +87,10 @@ trait PipelineTestUtils {
    */
   def runWithData[T1: Coder, T2: Coder, U: Coder](data1: Iterable[T1], data2: Iterable[T2])(
     fn: (SCollection[T1], SCollection[T2]) => SCollection[U]
-  ): Seq[U] = {
+  ): Seq[U] =
     runWithLocalOutput { sc =>
       fn(sc.parallelize(data1), sc.parallelize(data2))
     }._2
-  }
 
   /**
    * Test pipeline components with in-memory data.
@@ -109,11 +109,10 @@ trait PipelineTestUtils {
     data1: Iterable[T1],
     data2: Iterable[T2],
     data3: Iterable[T3]
-  )(fn: (SCollection[T1], SCollection[T2], SCollection[T3]) => SCollection[U]): Seq[U] = {
+  )(fn: (SCollection[T1], SCollection[T2], SCollection[T3]) => SCollection[U]): Seq[U] =
     runWithLocalOutput { sc =>
       fn(sc.parallelize(data1), sc.parallelize(data2), sc.parallelize(data3))
     }._2
-  }
 
   /**
    * Test pipeline components with in-memory data.
@@ -136,11 +135,10 @@ trait PipelineTestUtils {
     data4: Iterable[T4]
   )(
     fn: (SCollection[T1], SCollection[T2], SCollection[T3], SCollection[T4]) => SCollection[U]
-  ): Seq[U] = {
+  ): Seq[U] =
     runWithLocalOutput { sc =>
       fn(sc.parallelize(data1), sc.parallelize(data2), sc.parallelize(data3), sc.parallelize(data4))
     }._2
-  }
 
   /**
    * Test pipeline components with a [[ScioContext]] and materialized resulting collection.

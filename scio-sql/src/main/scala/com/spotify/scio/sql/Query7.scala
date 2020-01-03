@@ -22,13 +22,6 @@
 
 package com.spotify.scio.sql
 
-// scalastyle:off cyclomatic.complexity
-// scalastyle:off file.size.limit
-// scalastyle:off line.size.limit
-// scalastyle:off method.length
-// scalastyle:off number.of.methods
-// scalastyle:off parameter.number
-
 import com.spotify.scio.schemas._
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.extensions.sql.SqlTransform
@@ -194,7 +187,7 @@ final class SqlSCollection7[
   ): SCollection[Row] =
     query(Query7(q, aTag, bTag, cTag, dTag, eTag, fTag, gTag, udfs.toList))
 
-  def query(q: Query7[A, B, C, D, E, F, G, Row]): SCollection[Row] = {
+  def query(q: Query7[A, B, C, D, E, F, G, Row]): SCollection[Row] =
     a.context.wrap {
       val collA = Sql.setSchema(a)
       val collB = Sql.setSchema(b)
@@ -218,7 +211,6 @@ final class SqlSCollection7[
           sqlTransform
         )
     }
-  }
 
   def queryAs[R: Schema](
     q: String,
@@ -242,10 +234,3 @@ final class SqlSCollection7[
         Query7.typecheck(q).fold(err => throw new RuntimeException(err, e), _ => throw e)
     }
 }
-
-// scalastyle:on cyclomatic.complexity
-// scalastyle:on file.size.limit
-// scalastyle:on line.size.limit
-// scalastyle:on method.length
-// scalastyle:on number.of.methods
-// scalastyle:on parameter.number

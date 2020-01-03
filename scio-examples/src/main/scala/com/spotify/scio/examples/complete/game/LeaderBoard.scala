@@ -19,7 +19,7 @@
 
 // Usage:
 
-// `sbt runMain "com.spotify.scio.examples.complete.game.LeaderBoard
+// `sbt "runMain com.spotify.scio.examples.complete.game.LeaderBoard
 // --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
 // --teamWindowDuration=60
 // --allowedLateness=120
@@ -55,7 +55,6 @@ object LeaderBoard {
   @BigQueryType.toTable
   case class UserScoreSums(user: String, total_score: Int, processing_time: String)
 
-  // scalastyle:off method.length
   def main(cmdlineArgs: Array[String]): Unit = {
     // Create `ScioContext` and `Args`
     val (opts, args) = ScioContext.parseArguments[ExampleOptions](cmdlineArgs)
@@ -94,7 +93,7 @@ object LeaderBoard {
       // Done with windowing information, convert back to regular `SCollection`
       .toSCollection
       // Save to the BigQuery table defined by "output" in the arguments passed in + "_team" suffix
-      .saveAsTypedBigQuery(args("output") + "_team")
+      .saveAsTypedBigQueryTable(Table.Spec(args("output") + "_team"))
 
     gameEvents
     // Use a global window for unbounded data, which updates calculation every 10 minutes,
@@ -124,14 +123,13 @@ object LeaderBoard {
       // Map summed results from tuples into `UserScoreSums` case class, so we can save to BQ
       .map(kv => UserScoreSums(kv._1, kv._2, fmt.print(Instant.now())))
       // Save to the BigQuery table defined by "output" in the arguments passed in + "_user" suffix
-      .saveAsTypedBigQuery(args("output") + "_user")
+      .saveAsTypedBigQueryTable(Table.Spec(args("output") + "_user"))
 
-    // Close context and execute the pipeline
+    // Execute the pipeline
     val result = sc.run()
     // Wait to finish processing before exiting when streaming pipeline is canceled during shutdown
     exampleUtils.waitToFinish(result.pipelineResult)
   }
-  // scalastyle:on method.length
 
   def calculateTeamScores(
     infos: SCollection[GameActionInfo],

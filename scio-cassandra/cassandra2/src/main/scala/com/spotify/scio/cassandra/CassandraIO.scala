@@ -21,6 +21,7 @@ import com.spotify.scio.values.SCollection
 import com.spotify.scio.ScioContext
 import com.spotify.scio.io.{EmptyTap, EmptyTapOf, ScioIO, Tap}
 
+@deprecated("scio-cassandra2 will be removed", "0.8.0")
 final case class CassandraIO[T](opts: CassandraOptions) extends ScioIO[T] {
   override type ReadP = Nothing
   override type WriteP = CassandraIO.WriteParam[T]

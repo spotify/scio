@@ -18,7 +18,7 @@
 // Example: Streaming Word Extract
 // Usage:
 
-// `sbt runMain "com.spotify.scio.examples.complete.StreamingWordExtract
+// `sbt "runMain com.spotify.scio.examples.complete.StreamingWordExtract
 // --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
 // --input=gs://apache-beam-samples/shakespeare/kinglear.txt
 // --output=[DATASET].streaming_word_extract"`
@@ -49,7 +49,7 @@ object StreamingWordExtract {
       .flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty))
       .map(_.toUpperCase)
       .map(s => TableRow("string_field" -> s))
-      .saveAsBigQuery(args("output"), schema)
+      .saveAsBigQueryTable(Table.Spec(args("output")), schema)
 
     val result = sc.run()
     exampleUtils.waitToFinish(result.pipelineResult)

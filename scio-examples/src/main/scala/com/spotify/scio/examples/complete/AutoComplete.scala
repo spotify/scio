@@ -18,7 +18,7 @@
 // Example: AutoComplete lines of text
 // Usage:
 
-// `sbt runMain "com.spotify.scio.examples.complete.AutoComplete
+// `sbt "runMain com.spotify.scio.examples.complete.AutoComplete
 // --project=[PROJECT] --runner=DataflowPRunner --zone=[ZONE]
 // --input=gs://apache-beam-samples/shakespeare/kinglear.txt
 // --outputToBigqueryTable=true --outputToDatastore=false --output=[DATASET].auto_complete"`
@@ -145,7 +145,7 @@ object AutoComplete {
     if (outputToBigqueryTable) {
       tags
         .map(kv => Record(kv._1, kv._2.map(p => Tag(p._1, p._2)).toList))
-        .saveAsTypedBigQuery(args("output"))
+        .saveAsTypedBigQueryTable(Table.Spec(args("output")))
     }
     if (outputToDatastore) {
       val kind = args.getOrElse("kind", "autocomplete-demo")

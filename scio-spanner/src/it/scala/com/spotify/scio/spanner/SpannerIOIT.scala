@@ -22,7 +22,9 @@ import com.spotify.scio.ScioContext
 import com.spotify.scio.spanner.client.Spanner
 import org.apache.beam.sdk.io.gcp.spanner.SpannerConfig
 import org.apache.beam.sdk.options.PipelineOptionsFactory
-import org.scalatest.{BeforeAndAfterAll, FlatSpec, Matchers}
+import org.scalatest.BeforeAndAfterAll
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import scala.collection.JavaConverters._
 
@@ -40,7 +42,7 @@ object SpannerIOIT {
   private val adminClient = Spanner.adminClient(projectId)
   private val dbClient = Spanner.databaseClient(config)
 
-  private final case class FakeSpannerData(asMutations: Seq[Mutation], asStructs: Seq[Struct])
+  final private case class FakeSpannerData(asMutations: Seq[Mutation], asStructs: Seq[Struct])
   private def fakeData(tableName: String) = FakeSpannerData(
     Seq(
       Mutation
@@ -77,7 +79,7 @@ object SpannerIOIT {
   )
 }
 
-class SpannerIOIT extends FlatSpec with Matchers with BeforeAndAfterAll {
+class SpannerIOIT extends AnyFlatSpec with Matchers with BeforeAndAfterAll {
   import SpannerIOIT._
 
   override def beforeAll(): Unit = {
@@ -92,6 +94,7 @@ class SpannerIOIT extends FlatSpec with Matchers with BeforeAndAfterAll {
         ).asJava
       )
       .get()
+    ()
   }
 
   override def afterAll(): Unit =

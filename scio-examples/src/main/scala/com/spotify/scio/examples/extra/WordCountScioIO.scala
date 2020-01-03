@@ -18,7 +18,7 @@
 // Example: Word Count Example with Metrics and ScioIO read/write
 // Usage:
 
-// `sbt runMain "com.spotify.scio.examples.extra.WordCountScioIO
+// `sbt "runMain com.spotify.scio.examples.extra.WordCountScioIO
 // --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
 // --input=gs://apache-beam-samples/shakespeare/kinglear.txt
 // --output=gs://[BUCKET]/[PATH]/wordcount"`
@@ -75,7 +75,7 @@ object WordCountScioIO {
       // Save result as text files under the output path by passing write params
       .write(outputTextIO)(TextIO.WriteParam())
 
-    // Close the context, execute the pipeline and block until it finishes
+    // Execute the pipeline and block until it finishes
     val result = sc.run().waitUntilFinish()
 
     // Retrieve metric values

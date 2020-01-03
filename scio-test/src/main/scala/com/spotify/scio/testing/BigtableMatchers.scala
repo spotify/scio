@@ -25,7 +25,6 @@ import com.spotify.scio.coders.Coder
 
 import org.scalatest.matchers.{MatchResult, Matcher}
 
-import scala.language.implicitConversions
 import scala.reflect.ClassTag
 
 /**
@@ -58,7 +57,7 @@ trait BigtableMatchers extends SCollectionMatchers {
     new Matcher[BTCollection] {
       override def apply(left: BTCollection): MatchResult = {
         val foundCFs = left.flatMap {
-          case (key, cells) =>
+          case (_, cells) =>
             cells.map(_.getSetCell.getFamilyName)
         }
 

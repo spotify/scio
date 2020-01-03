@@ -28,12 +28,12 @@ import scala.collection.mutable.{Set => MSet}
 import scala.util.{Failure, Success, Try}
 
 /* Inputs are Scala Iterables to be parallelized for TestPipeline, or PTransforms to be applied */
-private[scio] sealed trait JobInputSource[T] {
+sealed private[scio] trait JobInputSource[T] {
   def toSCollection(sc: ScioContext)(implicit coder: Coder[T]): SCollection[T]
   val asIterable: Try[Iterable[T]]
 }
 
-private[scio] final case class TestStreamInputSource[T](
+final private[scio] case class TestStreamInputSource[T](
   stream: TestStream[T]
 ) extends JobInputSource[T] {
   override val asIterable = Failure(
@@ -48,7 +48,7 @@ private[scio] final case class TestStreamInputSource[T](
   override def toString: String = s"TestStream(${stream.getEvents})"
 }
 
-private[scio] final case class IterableInputSource[T](
+final private[scio] case class IterableInputSource[T](
   iterable: Iterable[T]
 ) extends JobInputSource[T] {
   override val asIterable = Success(iterable)
@@ -164,7 +164,7 @@ private[scio] object TestDataManager {
   }
 
   def ensureClosed(testId: String): Unit = {
-    require(closed(testId), "ScioContext was not closed. Did you forget close()?")
+    require(closed(testId), "ScioContext was not executed. Did you forget .run()?")
     closed -= testId
   }
 }

@@ -47,7 +47,7 @@ private object NothingCoder extends AtomicCoder[Nothing] {
  * Most Coders TupleX are derived by Magnolia but we specialize Coder[(A, B)] for
  * performance reasons given that pairs are really common and used in groupBy operations.
  */
-private final class PairCoder[A, B](ac: BCoder[A], bc: BCoder[B]) extends AtomicCoder[(A, B)] {
+final private class PairCoder[A, B](ac: BCoder[A], bc: BCoder[B]) extends AtomicCoder[(A, B)] {
   @inline def onErrorMsg[T](msg: => (String, String))(f: => T): T =
     try {
       f
@@ -77,7 +77,7 @@ private final class PairCoder[A, B](ac: BCoder[A], bc: BCoder[B]) extends Atomic
 
   override def verifyDeterministic(): Unit = {
     val cs = List("_1" -> ac, "_2" -> bc)
-    val problems = cs.toList.flatMap {
+    val problems = cs.flatMap {
       case (label, c) =>
         try {
           c.verifyDeterministic()
@@ -117,7 +117,7 @@ private final class PairCoder[A, B](ac: BCoder[A], bc: BCoder[B]) extends Atomic
   }
 }
 
-private abstract class BaseSeqLikeCoder[M[_], T](val elemCoder: BCoder[T])(
+abstract private class BaseSeqLikeCoder[M[_], T](val elemCoder: BCoder[T])(
   implicit toSeq: M[T] => TraversableOnce[T]
 ) extends AtomicCoder[M[T]] {
   override def getCoderArguments: java.util.List[_ <: BCoder[_]] =
@@ -138,17 +138,16 @@ private abstract class BaseSeqLikeCoder[M[_], T](val elemCoder: BCoder[T])(
 
   // delegate methods for byte size estimation
   override def isRegisterByteSizeObserverCheap(value: M[T]): Boolean = false
-  override def registerByteSizeObserver(value: M[T], observer: ElementByteSizeObserver): Unit = {
+  override def registerByteSizeObserver(value: M[T], observer: ElementByteSizeObserver): Unit =
     if (value.isInstanceOf[Wrappers.JIterableWrapper[_]]) {
       val wrapper = value.asInstanceOf[Wrappers.JIterableWrapper[T]]
       IterableCoder.of(elemCoder).registerByteSizeObserver(wrapper.underlying, observer)
     } else {
       super.registerByteSizeObserver(value, observer)
     }
-  }
 }
 
-private abstract class SeqLikeCoder[M[_], T](bc: BCoder[T])(
+abstract private class SeqLikeCoder[M[_], T](bc: BCoder[T])(
   implicit toSeq: M[T] => TraversableOnce[T]
 ) extends BaseSeqLikeCoder[M, T](bc) {
   protected val lc = VarIntCoder.of()
@@ -302,7 +301,7 @@ private class MapCoder[K, V](kc: BCoder[K], vc: BCoder[V]) extends AtomicCoder[M
     )
   override def consistentWithEquals(): Boolean =
     kc.consistentWithEquals() && vc.consistentWithEquals()
-  override def structuralValue(value: Map[K, V]): AnyRef = {
+  override def structuralValue(value: Map[K, V]): AnyRef =
     if (consistentWithEquals()) {
       value
     } else {
@@ -314,7 +313,6 @@ private class MapCoder[K, V](kc: BCoder[K], vc: BCoder[V]) extends AtomicCoder[M
       }
       b.result()
     }
-  }
 
   // delegate methods for byte size estimation
   override def isRegisterByteSizeObserverCheap(value: Map[K, V]): Boolean = false
@@ -368,7 +366,7 @@ private class MutableMapCoder[K, V](kc: BCoder[K], vc: BCoder[V]) extends Atomic
     )
   override def consistentWithEquals(): Boolean =
     kc.consistentWithEquals() && vc.consistentWithEquals()
-  override def structuralValue(value: m.Map[K, V]): AnyRef = {
+  override def structuralValue(value: m.Map[K, V]): AnyRef =
     if (consistentWithEquals()) {
       value
     } else {
@@ -380,7 +378,6 @@ private class MutableMapCoder[K, V](kc: BCoder[K], vc: BCoder[V]) extends Atomic
       }
       b.result()
     }
-  }
 
   // delegate methods for byte size estimation
   override def isRegisterByteSizeObserverCheap(value: m.Map[K, V]): Boolean = false
@@ -432,7 +429,6 @@ private object SDoubleCoder extends BCoder[Double] {
   override def toString: String = "DoubleCoder"
 }
 
-// scalastyle:off number.of.methods
 trait ScalaCoders {
   implicit def charCoder: Coder[Char] =
     Coder.xmap(Coder.beam(ByteCoder.of()))(_.toChar, _.toByte)
@@ -573,3 +569,5 @@ trait ScalaCoders {
 
   // implicit def enumerationCoder[E <: Enumeration]: Coder[E#Value] = ???
 }
+
+private[coders] object ScalaCoders extends ScalaCoders

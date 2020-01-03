@@ -2,7 +2,7 @@
 
 Starting Scio 0.4.4, Beam runner is completely decoupled from `scio-core`, which no longer depend on any Beam runner now. Add runner dependencies to enable execution on specific backends. For example, when using Scio 0.4.7 which depends on Beam 2.2.0, you should add the following dependencies to run pipelines locally and on Google Cloud Dataflow.
 
-```scala
+```sbt
 libraryDependencies ++= Seq(
   "org.apache.beam" % "beam-runners-direct-java" % "2.2.0",
   "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % "2.2.0"

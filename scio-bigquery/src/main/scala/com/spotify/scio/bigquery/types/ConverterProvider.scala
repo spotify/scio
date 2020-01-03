@@ -56,8 +56,6 @@ private[types] object ConverterProvider {
 
   // =======================================================================
 
-  // scalastyle:off cyclomatic.complexity
-  // scalastyle:off method.length
   private def fromAvroInternal(c: blackbox.Context)(tpe: c.Type): c.Tree = {
     import c.universe._
 
@@ -111,7 +109,7 @@ private[types] object ConverterProvider {
       q"if ($tree == null) None else Some(${cast(tree, tpe)})"
 
     def list(tree: Tree, tpe: Type): Tree = {
-      val jl = tq"_root_.org.apache.avro.generic.GenericData.Array[AnyRef]"
+      val jl = tq"_root_.java.util.List[AnyRef]"
       val bo = q"_root_.scala.collection.breakOut"
       q"$tree.asInstanceOf[$jl].asScala.map(x => ${cast(q"x", tpe)})($bo)"
     }
@@ -134,7 +132,7 @@ private[types] object ConverterProvider {
       val companion = tpe.typeSymbol.companion
       val gets = tpe.erasure match {
         case t if isCaseClass(c)(t) => getFields(c)(t).map(s => field(s, fn))
-        case t                      => c.abort(c.enclosingPosition, s"Unsupported type: $tpe")
+        case _                      => c.abort(c.enclosingPosition, s"Unsupported type: $tpe")
       }
       q"$companion(..$gets)"
     }
@@ -150,13 +148,9 @@ private[types] object ConverterProvider {
         }
     """
   }
-  // scalastyle:on cyclomatic.complexity
-  // scalastyle:on method.length
 
   // =======================================================================
 
-  // scalastyle:off cyclomatic.complexity
-  // scalastyle:off method.length
   private def fromTableRowInternal(c: blackbox.Context)(tpe: c.Type): c.Tree = {
     import c.universe._
 
@@ -241,7 +235,7 @@ private[types] object ConverterProvider {
       val companion = tpe.typeSymbol.companion
       val gets = tpe.erasure match {
         case t if isCaseClass(c)(t) => getFields(c)(t).map(s => field(s, fn))
-        case t                      => c.abort(c.enclosingPosition, s"Unsupported type: $tpe")
+        case _                      => c.abort(c.enclosingPosition, s"Unsupported type: $tpe")
       }
       q"$companion(..$gets)"
     }
@@ -257,13 +251,9 @@ private[types] object ConverterProvider {
         }
     """
   }
-  // scalastyle:on cyclomatic.complexity
-  // scalastyle:on method.length
 
   // =======================================================================
 
-  // scalastyle:off cyclomatic.complexity
-  // scalastyle:off method.length
   private def toTableRowInternal(c: blackbox.Context)(tpe: c.Type): c.Tree = {
     import c.universe._
 
@@ -355,8 +345,6 @@ private[types] object ConverterProvider {
         }
     """
   }
-  // scalastyle:on cyclomatic.complexity
-  // scalastyle:on method.length
 }
 
 object ConverterUtil {

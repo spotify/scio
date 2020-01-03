@@ -23,6 +23,7 @@ import java.util.{ArrayList => JArrayList, List => JList}
 import com.spotify.scio.ScioContext
 import com.spotify.scio.options.ScioOptions
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
+import com.twitter.chill.ClosureCleaner
 import com.twitter.algebird.{Monoid, Semigroup}
 import org.apache.beam.sdk.coders.{CoderRegistry, Coder => BCoder}
 import org.apache.beam.sdk.options.PipelineOptionsFactory
@@ -73,7 +74,7 @@ private[scio] object Functions {
     }
   }
 
-  private abstract class CombineFn[VI, VA, VO] extends BCombineFn[VI, VA, VO] with NamedFn {
+  abstract private class CombineFn[VI, VA, VO] extends BCombineFn[VI, VA, VO] with NamedFn {
     val vacoder: Coder[VA]
     val vocoder: Coder[VO]
 
@@ -108,8 +109,8 @@ private[scio] object Functions {
       override val context: CombineContext = CombineContext(sc)
 
       // defeat closure
-      private[this] val s = ClosureCleaner(seqOp)
-      private[this] val c = ClosureCleaner(combOp)
+      private[this] val s = ClosureCleaner.clean(seqOp)
+      private[this] val c = ClosureCleaner.clean(combOp)
 
       private def fold(accumulator: (U, JList[T])): U = {
         val (a, l) = accumulator
@@ -151,9 +152,9 @@ private[scio] object Functions {
       override val context: CombineContext = CombineContext(sc)
 
       // defeat closure
-      private[this] val cc = ClosureCleaner(createCombiner)
-      private[this] val mv = ClosureCleaner(mergeValue)
-      private[this] val mc = ClosureCleaner(mergeCombiners)
+      private[this] val cc = ClosureCleaner.clean(createCombiner)
+      private[this] val mv = ClosureCleaner.clean(mergeValue)
+      private[this] val mc = ClosureCleaner.clean(mergeCombiners)
 
       private def foldOption(accumulator: (Option[C], JList[T])): Option[C] = {
         val (opt, l) = accumulator
@@ -228,7 +229,7 @@ private[scio] object Functions {
 
   def flatMapFn[T, U](f: T => TraversableOnce[U]): DoFn[T, U] =
     new NamedDoFn[T, U] {
-      private[this] val g = ClosureCleaner(f) // defeat closure
+      private[this] val g = ClosureCleaner.clean(f) // defeat closure
       @ProcessElement
       private[scio] def processElement(c: DoFn[T, U]#ProcessContext): Unit = {
         val i = g(c.element()).toIterator
@@ -237,7 +238,7 @@ private[scio] object Functions {
     }
 
   def processFn[T, U](f: T => U): ProcessFunction[T, U] = new NamedProcessFn[T, U] {
-    private[this] val g = ClosureCleaner(f) // defeat closure
+    private[this] val g = ClosureCleaner.clean(f) // defeat closure
 
     @throws[Exception]
     override def apply(input: T): U = g(input)
@@ -245,18 +246,18 @@ private[scio] object Functions {
 
   def serializableFn[T, U](f: T => U): SerializableFunction[T, U] =
     new NamedSerializableFn[T, U] {
-      private[this] val g = ClosureCleaner(f) // defeat closure
+      private[this] val g = ClosureCleaner.clean(f) // defeat closure
       override def apply(input: T): U = g(input)
     }
 
   def simpleFn[T, U](f: T => U): SimpleFunction[T, U] =
     new NamedSimpleFn[T, U] {
-      private[this] val g = ClosureCleaner(f) // defeat closure
+      private[this] val g = ClosureCleaner.clean(f) // defeat closure
       override def apply(input: T): U = g(input)
     }
 
   def mapFn[T, U](f: T => U): DoFn[T, U] = new NamedDoFn[T, U] {
-    private[this] val g = ClosureCleaner(f) // defeat closure
+    private[this] val g = ClosureCleaner.clean(f) // defeat closure
     @ProcessElement
     private[scio] def processElement(c: DoFn[T, U]#ProcessContext): Unit =
       c.output(g(c.element()))
@@ -264,11 +265,11 @@ private[scio] object Functions {
 
   def partitionFn[T](numPartitions: Int, f: T => Int): PartitionFn[T] =
     new NamedPartitionFn[T] {
-      private[this] val g = ClosureCleaner(f) // defeat closure
+      private[this] val g = ClosureCleaner.clean(f) // defeat closure
       override def partitionFor(elem: T, numPartitions: Int): Int = g(elem)
     }
 
-  private abstract class ReduceFn[T: Coder] extends CombineFn[T, JList[T], T] {
+  abstract private class ReduceFn[T: Coder] extends CombineFn[T, JList[T], T] {
     override def createAccumulator(): JList[T] = new JArrayList[T]()
 
     override def addInput(accumulator: JList[T], input: T): JList[T] = {
@@ -310,7 +311,7 @@ private[scio] object Functions {
       val vacoder = Coder[JList[T]]
       val vocoder = Coder[T]
       override val context: CombineContext = CombineContext(sc)
-      private[this] val g = ClosureCleaner(f) // defeat closure
+      private[this] val g = ClosureCleaner.clean(f) // defeat closure
 
       override def reduceOption(accumulator: JIterable[T]): Option[T] =
         Fns.reduceOption(accumulator)(g)
@@ -321,7 +322,7 @@ private[scio] object Functions {
       val vacoder = Coder[JList[T]]
       val vocoder = Coder[T]
       override val context: CombineContext = CombineContext(sc)
-      private[this] val _sg = ClosureCleaner(sg) // defeat closure
+      private[this] val _sg = ClosureCleaner.clean(sg) // defeat closure
 
       override def mergeAccumulators(accumulators: JIterable[JList[T]]): JList[T] = {
         val iter = accumulators.iterator()
@@ -346,7 +347,7 @@ private[scio] object Functions {
       val vocoder = Coder[T]
       override val context: CombineContext = CombineContext(sc)
 
-      private[this] val _mon = ClosureCleaner(mon) // defeat closure
+      private[this] val _mon = ClosureCleaner.clean(mon) // defeat closure
 
       override def reduceOption(accumulator: JIterable[T]): Option[T] =
         Fns.reduceOption(accumulator)(_mon.plus(_, _)).orElse(Some(_mon.zero))

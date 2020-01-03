@@ -58,7 +58,7 @@ package object json extends AutoDerivation {
       compression: Compression = Compression.AUTO
     ): SCollection[T] = {
       implicit val encoder: Encoder[T] = new Encoder[T] {
-        override final def apply(a: T): io.circe.Json = ???
+        final override def apply(a: T): io.circe.Json = ???
       }
       self.read(JsonIO[T](path))(JsonIO.ReadParam(compression))
     }
