@@ -43,7 +43,7 @@ object ElasticsearchMinimalExample {
     val port = args.getOrElse("esPort", "9200").toInt
 
     // Output es index to write into
-    val index = args.getOrElse("index", "defaultIndex")
+    val index = args.getOrElse("index", "defaultindex")
 
     val primaryHost = new HttpHost(host, port)
     val servers: Seq[HttpHost] = Seq(primaryHost)
@@ -79,9 +79,9 @@ object ElasticsearchMinimalExample {
           "postDate",
           new java.util.Date(),
           "word",
-          message._1,
+          message._1.toString,
           "count",
-          message._2
+          message._2.toString
         )
 
       Iterable(request)
