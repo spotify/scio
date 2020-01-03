@@ -39,8 +39,6 @@ object ElasticsearchMinimalExample {
     // Create `ScioContext` and `Args`
     val (sc, args) = ContextAndArgs(cliArgs)
 
-    val input = args.required("input")
-
     val host = args.getOrElse("esHost", "localhost")
     val port = args.getOrElse("esPort", "9200").toInt
 
@@ -53,7 +51,7 @@ object ElasticsearchMinimalExample {
     val clusterOpts = ElasticsearchOptions(servers)
 
     // Provide an elasticsearch indexer to transform collections to indexable ES documents
-    val indexRequestBuilder = kvIndexer(index)
+    val indexRequestBuilder = indexer(index)
 
     // Open text file as `SCollection[String]`. The input can be either a single file or a
     // wildcard matching multiple files.
