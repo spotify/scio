@@ -18,17 +18,18 @@
 // Example: Elasticsearch minimal example
 
 // Open a connection to an ES cluster and index
-// an arbitrary input text string
+// the word count of a input document
 
 // Usage:
 
-// `sbt runMain "com.spotify.scio.examples.extra.ElasticsearchInOut
+// `sbt "runMain com.spotify.scio.examples.extra.ElasticsearchMinimalExample
 // --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
 // --input=[INPUT] --index=[INDEX] --esHost=[HOST] --esPort=[PORT]"`
 package com.spotify.scio.examples.extra
 
 import com.spotify.scio._
 import com.spotify.scio.elasticsearch._
+import com.spotify.scio.examples.common.ExampleData
 
 import org.apache.http.HttpHost
 import org.elasticsearch.action.index.IndexRequest
@@ -51,11 +52,19 @@ object ElasticsearchMinimalExample {
 
     val clusterOpts = ElasticsearchOptions(servers)
 
-    // Provide an elasticsearch writer to transform collections to es documents
-    val indexRequestBuilder = indexer(index)
+    // Provide an elasticsearch indexer to transform collections to indexable ES documents
+    val indexRequestBuilder = kvIndexer(index)
 
-    // Read a simple text file and write the first 10 characters to an elasticsearch document
-    sc.textFile(input)
+    // Open text file as `SCollection[String]`. The input can be either a single file or a
+    // wildcard matching multiple files.
+    sc.textFile(args.getOrElse("input", ExampleData.KING_LEAR))
+      .transform("counter") {
+        // Split input lines, filter out empty tokens and expand into a collection of tokens
+        _.flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty))
+        // Count occurrences of each unique `String` to get `(String, Long)`
+        .countByValue
+      }
+      // Save each collection as an ES document
       .saveAsElasticsearch(clusterOpts)(indexRequestBuilder)
 
     // Run pipeline
@@ -63,16 +72,18 @@ object ElasticsearchMinimalExample {
   }
 
   private val indexer = (index: String) =>
-    (message: String) => {
+    (message: (String, Long)) => {
       val request = new IndexRequest(index)
-        .id("1")
+        .id(message._1)
         .source(
           "user",
           "example",
           "postDate",
           new java.util.Date(),
-          "message",
-          message.substring(0, 10)
+          "word",
+          message._1,
+          "count",
+          message._2
         )
 
       Iterable(request)
