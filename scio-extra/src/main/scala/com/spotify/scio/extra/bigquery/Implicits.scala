@@ -18,6 +18,7 @@
 package com.spotify.scio.extra.bigquery
 
 import com.google.api.services.bigquery.model.TableReference
+import com.spotify.scio.annotations.experimental
 import com.spotify.scio.bigquery.BigQueryTable.WriteParam
 import com.spotify.scio.bigquery._
 import com.spotify.scio.io.ClosedTap
@@ -45,6 +46,7 @@ object Implicits extends ToTableRow with ToTableSchema {
      * [[org.apache.avro.generic.IndexedRecord IndexedRecord]] into a
      * [[com.spotify.scio.bigquery.TableRow TableRow]].
      */
+    @experimental
     def saveAvroAsBigQuery(
       table: TableReference,
       avroSchema: Schema = null,

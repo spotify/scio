@@ -18,6 +18,7 @@
 package com.spotify.scio.extra.bigquery
 
 import com.google.api.services.bigquery.model.{TableFieldSchema, TableSchema}
+import com.spotify.scio.annotations.experimental
 import com.spotify.scio.extra.bigquery.Implicits.AvroConversionException
 import org.apache.avro.Schema
 import org.apache.avro.Schema.Type
@@ -54,6 +55,7 @@ trait ToTableSchema {
    * @param avroSchema
    * @return the equivalent BigQuery schema
    */
+  @experimental
   def toTableSchema(avroSchema: Schema): TableSchema = {
     val fields = getFieldSchemas(avroSchema)
 

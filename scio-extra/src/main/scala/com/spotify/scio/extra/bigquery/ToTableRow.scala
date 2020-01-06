@@ -20,6 +20,7 @@ package com.spotify.scio.extra.bigquery
 import java.nio.ByteBuffer
 import java.util
 
+import com.spotify.scio.annotations.experimental
 import com.spotify.scio.bigquery.TableRow
 import com.spotify.scio.extra.bigquery.Implicits.AvroConversionException
 import org.apache.avro.Schema
@@ -37,6 +38,7 @@ trait ToTableRow {
   private lazy val base64Encoding: BaseEncoding = BaseEncoding.base64Url()
   private lazy val hexEncoding: BaseEncoding = BaseEncoding.base16()
 
+  @experimental
   def toTableRow[T](record: T)(implicit ev: T <:< IndexedRecord): TableRow = {
     val row = new TableRow
 
