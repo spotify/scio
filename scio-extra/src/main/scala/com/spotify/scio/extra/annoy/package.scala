@@ -20,6 +20,7 @@ package com.spotify.scio.extra
 import java.util.UUID
 
 import com.spotify.scio.ScioContext
+import com.spotify.scio.annotations.experimental
 import com.spotify.scio.values.{SCollection, SideInput}
 import org.apache.beam.sdk.transforms.{DoFn, View}
 import org.apache.beam.sdk.values.PCollectionView
@@ -147,6 +148,7 @@ package object annoy {
      * @param metric Metric (Angular, Euclidean) used to build the Annoy index
      * @param dim Number of dimensions in vectors used to build the Annoy index
      */
+    @experimental
     def annoySideInput(path: String, metric: AnnoyMetric, dim: Int): SideInput[AnnoyReader] = {
       val uri = AnnoyUri(path, self.options)
       val view = self.parallelize(Seq(uri)).applyInternal(View.asSingleton())
@@ -169,6 +171,7 @@ package object annoy {
      *               that they will take at most 2x the memory of the vectors.
      * @return A singleton SCollection containing the [[AnnoyUri]] of the saved files
      */
+    @experimental
     def asAnnoy(path: String, metric: AnnoyMetric, dim: Int, nTrees: Int): SCollection[AnnoyUri] = {
       val uri = AnnoyUri(path, self.context.options)
       require(!uri.exists, s"Annoy URI ${uri.path} already exists")
@@ -209,6 +212,7 @@ package object annoy {
      *               that they will take at most 2x the memory of the vectors.
      * @return A singleton SCollection containing the [[AnnoyUri]] of the saved files
      */
+    @experimental
     def asAnnoy(metric: AnnoyMetric, dim: Int, nTrees: Int): SCollection[AnnoyUri] = {
       val uuid = UUID.randomUUID()
       val tempLocation = self.context.options.getTempLocation
@@ -229,6 +233,7 @@ package object annoy {
      *               that they will take at most 2x the memory of the vectors.
      * @return SideInput[AnnoyReader]
      */
+    @experimental
     def asAnnoySideInput(metric: AnnoyMetric, dim: Int, nTrees: Int): SideInput[AnnoyReader] =
       self.asAnnoy(metric, dim, nTrees).asAnnoySideInput(metric, dim)
   }
@@ -246,6 +251,7 @@ package object annoy {
      * @param dim Number of dimensions in vectors used to build the Annoy index
      * @return SideInput[AnnoyReader]
      */
+    @experimental
     def asAnnoySideInput(metric: AnnoyMetric, dim: Int): SideInput[AnnoyReader] = {
       val view = self.applyInternal(View.asSingleton())
       new AnnoySideInput(view, metric, dim)
