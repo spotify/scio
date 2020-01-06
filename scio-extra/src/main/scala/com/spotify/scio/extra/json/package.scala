@@ -18,6 +18,7 @@
 package com.spotify.scio.extra
 
 import com.spotify.scio.ScioContext
+import com.spotify.scio.annotations.experimental
 import com.spotify.scio.io.ClosedTap
 import com.spotify.scio.values.SCollection
 import com.spotify.scio.coders.Coder
@@ -53,6 +54,7 @@ package object json extends AutoDerivation {
 
   /** Enhanced version of [[ScioContext]] with JSON methods. */
   implicit final class JsonScioContext(private val self: ScioContext) extends AnyVal {
+    @experimental
     def jsonFile[T: Decoder: Coder](
       path: String,
       compression: Compression = Compression.AUTO
@@ -69,6 +71,7 @@ package object json extends AutoDerivation {
    */
   implicit final class JsonSCollection[T: Encoder: Decoder: Coder](private val self: SCollection[T])
       extends Serializable {
+    @experimental
     def saveAsJsonFile(
       path: String,
       suffix: String = ".json",
