@@ -468,7 +468,8 @@ lazy val `scio-test`: Project = project
       "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test,it",
       "com.spotify" %% "magnolify-datastore" % magnolifyVersion % "it",
       // DataFlow testing requires junit and hamcrest
-      "org.hamcrest" % "hamcrest-all" % hamcrestVersion,
+      "org.hamcrest" % "hamcrest-core" % hamcrestVersion,
+      "org.hamcrest" % "hamcrest-library" % hamcrestVersion,
       // Our BloomFilters are Algebird Monoids and hence uses tests from Algebird Test
       "com.twitter" %% "algebird-test" % algebirdVersion % "test",
       "com.spotify" % "annoy" % annoyVersion % "test",
@@ -566,7 +567,8 @@ lazy val `scio-bigquery`: Project = project
       "com.spotify" %% "magnolify-scalacheck" % magnolifyVersion % "test",
       "com.google.cloud" % "google-cloud-storage" % gcsVersion % "test,it",
       // DataFlow testing requires junit and hamcrest
-      "org.hamcrest" % "hamcrest-all" % hamcrestVersion % "test,it"
+      "org.hamcrest" % "hamcrest-core" % hamcrestVersion % "test,it",
+      "org.hamcrest" % "hamcrest-library" % hamcrestVersion % "test,it"
     ),
     // Workaround for https://github.com/spotify/scio/issues/2308
     (Compile / doc) := Def.taskDyn {
@@ -598,7 +600,8 @@ lazy val `scio-bigtable`: Project = project
       "com.novocode" % "junit-interface" % junitInterfaceVersion,
       "org.apache.beam" % "beam-runners-direct-java" % beamVersion % "test",
       "org.scalatest" %% "scalatest" % scalatestVersion % "test",
-      "org.hamcrest" % "hamcrest-all" % hamcrestVersion % "test",
+      "org.hamcrest" % "hamcrest-core" % hamcrestVersion % "test",
+      "org.hamcrest" % "hamcrest-library" % hamcrestVersion % "test",
       "junit" % "junit" % junitVersion % "test"
     ),
     beamSDKIODependencies
@@ -989,7 +992,8 @@ lazy val `scio-jmh`: Project = project
     dependencyClasspath in Jmh := (dependencyClasspath in Test).value,
     libraryDependencies ++= directRunnerDependencies ++ Seq(
       "junit" % "junit" % junitVersion % "test",
-      "org.hamcrest" % "hamcrest-all" % hamcrestVersion % "test",
+      "org.hamcrest" % "hamcrest-core" % hamcrestVersion % "test",
+      "org.hamcrest" % "hamcrest-library" % hamcrestVersion % "test",
       "org.slf4j" % "slf4j-nop" % slf4jVersion
     )
   )
@@ -1017,7 +1021,8 @@ lazy val `scio-smb`: Project = project
       "com.google.auto.value" % "auto-value-annotations" % autoValueVersion,
       "com.google.auto.value" % "auto-value" % autoValueVersion,
       "javax.annotation" % "javax.annotation-api" % "1.3.2",
-      "org.hamcrest" % "hamcrest-all" % hamcrestVersion % Test,
+      "org.hamcrest" % "hamcrest-core" % hamcrestVersion % Test,
+      "org.hamcrest" % "hamcrest-library" % hamcrestVersion % Test,
       "com.novocode" % "junit-interface" % junitInterfaceVersion % Test,
       "junit" % "junit" % junitVersion % Test
     ),
