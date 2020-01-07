@@ -39,14 +39,14 @@ import scala.util.{Failure, Success, Try}
  */
 package object transforms {
   @deprecated(
-    "renamed to BaseAsyncLookupDoFn. see https://spotify.github.io/scio/migrations/v0.8.0.html#async-dofns",
+    "renamed to BaseAsyncLookupDoFn. see https://spotify.github.io/scio/migrations/v0.8.0-Migration-Guide.html#async-dofns",
     "0.8.0"
   )
   type AsyncLookupDoFn[A, B, C] =
     BaseAsyncLookupDoFn[A, B, C, ListenableFuture[_], BaseAsyncLookupDoFn.Try[B]]
 
   @deprecated(
-    "renamed to BaseAsyncLookupDoFn. see https://spotify.github.io/scio/migrations/v0.8.0.html#async-dofns",
+    "renamed to BaseAsyncLookupDoFn. see https://spotify.github.io/scio/migrations/v0.8.0-Migration-Guide.html#async-dofns",
     "0.8.0"
   )
   object AsyncLookupDoFn {
