@@ -1,5 +1,11 @@
 # Changelog
 
+## Breaking changes since Scio 0.8.0 (@ref:[v0.8.0 Migration Guide](migrations/v0.8.0-Migration-Guide.md))
+- `ScioIO`s no longer return `Future`
+- `ScioContext#close` returns `ScioExecutionContext` instead of `ScioResult`
+- Async `DoFn` refactor
+- Deprecate `scio-cassandra2` and `scio-elasticsearch2`
+
 ## Breaking changes since Scio 0.7.0 (@ref:[v0.7.0 Migration Guide](migrations/v0.7.0-Migration-Guide.md))
 
 - New [Magnolia](https://github.com/propensive/magnolia) based @ref:[Coders](internals/Coders.md) derivation
