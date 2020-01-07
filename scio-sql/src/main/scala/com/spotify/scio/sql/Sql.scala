@@ -21,21 +21,22 @@ import java.util.Collections
 
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.schemas._
-import com.spotify.scio.values.SCollection
-import org.apache.beam.sdk.extensions.sql.{BeamSqlTable, SqlTransform}
-import org.apache.beam.sdk.values._
-import org.apache.beam.sdk.schemas.{SchemaCoder, Schema => BSchema}
 import com.spotify.scio.util.ScioUtil
+import com.spotify.scio.values.SCollection
+import org.apache.beam.sdk.extensions.sql.SqlTransform
 import org.apache.beam.sdk.extensions.sql.impl.rel.BeamRelNode
-import org.apache.beam.sdk.extensions.sql.impl.{BeamSqlEnv, BeamTableStatistics}
-import org.apache.beam.sdk.extensions.sql.impl.schema.{BaseBeamTable, BeamPCollectionTable}
+import org.apache.beam.sdk.extensions.sql.impl.schema.BeamPCollectionTable
 import org.apache.beam.sdk.extensions.sql.impl.utils.CalciteUtils
+import org.apache.beam.sdk.extensions.sql.impl.{BeamSqlEnv, BeamTableStatistics}
 import org.apache.beam.sdk.extensions.sql.meta.provider.{ReadOnlyTableProvider, TableProvider}
+import org.apache.beam.sdk.extensions.sql.meta.{BaseBeamTable, BeamSqlTable}
 import org.apache.beam.sdk.options.{PipelineOptions, PipelineOptionsFactory}
-
-import scala.util.Try
-import scala.collection.JavaConverters._
+import org.apache.beam.sdk.schemas.{SchemaCoder, Schema => BSchema}
+import org.apache.beam.sdk.values._
 import org.apache.commons.lang3.exception.ExceptionUtils
+
+import scala.collection.JavaConverters._
+import scala.util.Try
 
 object Sql extends SqlSCollections {
   private[sql] val BeamProviderName = "beam"
@@ -76,7 +77,7 @@ private object Queries {
   ): Try[BeamRelNode] = Try {
     val tables: Map[String, BeamSqlTable] = schemas.map {
       case (tag, schema) =>
-        tag -> new BaseBeamTable(schema) {
+        tag -> new BaseBeamTable {
           override def buildIOReader(begin: PBegin): PCollection[Row] = ???
 
           override def buildIOWriter(input: PCollection[Row]): POutput = ???
@@ -85,6 +86,8 @@ private object Queries {
 
           override def getTableStatistics(options: PipelineOptions): BeamTableStatistics =
             BeamTableStatistics.BOUNDED_UNKNOWN
+
+          override def getSchema: BSchema = schema
         }
     }.toMap
 
