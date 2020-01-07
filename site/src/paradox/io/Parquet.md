@@ -8,7 +8,7 @@ When reading Parquet files, only Avro specific records are supported.
 
 To read a Parquet file with column projections and row predicates:
 
-```scala mdoc:reset:silent
+```scala
 import com.spotify.scio._
 import com.spotify.scio.parquet.avro._
 import com.spotify.scio.avro.TestRecord
@@ -36,7 +36,7 @@ Note that the result `TestRecord`s are not complete Avro objects. Only the proje
 
 Also note that `predicate` logic is only applied when reading actual Parquet files but not in `JobTest`. To retain the filter behavior while using mock input, it's recommend that you do the following.
 
-```scala mdoc:reset:silent
+```scala
 import com.spotify.scio._
 import com.spotify.scio.parquet.avro._
 import com.spotify.scio.avro.TestRecord
