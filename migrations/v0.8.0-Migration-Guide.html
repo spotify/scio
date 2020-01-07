@@ -163,8 +163,8 @@ spotify/scio
   </ul></li>
   <li><a href="../migrations/index.html" class="page">Migration Guides</a>
   <ul>
-    <li><a href="../migrations/v0.7.0-Migration-Guide.html" class="page">Scio 0.7.0</a></li>
-    <li><a href="../migrations/v0.8.0.html" class="active page">Scio v0.8.0</a></li>
+    <li><a href="../migrations/v0.7.0-Migration-Guide.html" class="page">Scio v0.7.0</a></li>
+    <li><a href="../migrations/v0.8.0-Migration-Guide.html" class="active page">Scio v0.8.0</a></li>
   </ul></li>
   <li><a href="../dev/index.html" class="page">Development</a>
   <ul>
@@ -186,11 +186,11 @@ spotify/scio
 <nav class="md-nav md-nav--secondary">
 <label class="md-nav__title" for="__toc">Table of contents</label>
 <ul>
-  <li><a href="../migrations/v0.8.0.html#scio-v0-8-0" class="header">Scio v0.8.0</a>
+  <li><a href="../migrations/v0.8.0-Migration-Guide.html#scio-v0-8-0" class="header">Scio v0.8.0</a>
   <ul>
-    <li><a href="../migrations/v0.8.0.html#tl-dr" class="header">TL;DR</a></li>
-    <li><a href="../migrations/v0.8.0.html#new-features" class="header">New features</a></li>
-    <li><a href="../migrations/v0.8.0.html#deprecations-and-breaking-changes" class="header">Deprecations and Breaking changes</a></li>
+    <li><a href="../migrations/v0.8.0-Migration-Guide.html#tl-dr" class="header">TL;DR</a></li>
+    <li><a href="../migrations/v0.8.0-Migration-Guide.html#new-features" class="header">New features</a></li>
+    <li><a href="../migrations/v0.8.0-Migration-Guide.html#deprecations-and-breaking-changes" class="header">Deprecations and Breaking changes</a></li>
   </ul></li>
 </ul>
 </nav>
@@ -199,7 +199,7 @@ spotify/scio
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.8.0*
+<i class="md-icon" title="Version">label_outline</i> 0.8.1*
 </label>
 </li>
 </ul>
@@ -212,11 +212,11 @@ spotify/scio
 <nav class="md-nav md-nav--secondary">
 <label class="md-nav__title" for="__toc">Table of contents</label>
 <ul>
-  <li><a href="../migrations/v0.8.0.html#scio-v0-8-0" class="header">Scio v0.8.0</a>
+  <li><a href="../migrations/v0.8.0-Migration-Guide.html#scio-v0-8-0" class="header">Scio v0.8.0</a>
   <ul>
-    <li><a href="../migrations/v0.8.0.html#tl-dr" class="header">TL;DR</a></li>
-    <li><a href="../migrations/v0.8.0.html#new-features" class="header">New features</a></li>
-    <li><a href="../migrations/v0.8.0.html#deprecations-and-breaking-changes" class="header">Deprecations and Breaking changes</a></li>
+    <li><a href="../migrations/v0.8.0-Migration-Guide.html#tl-dr" class="header">TL;DR</a></li>
+    <li><a href="../migrations/v0.8.0-Migration-Guide.html#new-features" class="header">New features</a></li>
+    <li><a href="../migrations/v0.8.0-Migration-Guide.html#deprecations-and-breaking-changes" class="header">Deprecations and Breaking changes</a></li>
   </ul></li>
 </ul>
 </nav>
@@ -241,7 +241,7 @@ spotify/scio
 <h2><a href="#new-features" name="new-features" class="anchor"><span class="anchor-link"></span></a>New features</h2>
 <h3><a href="#beamsql" name="beamsql" class="anchor"><span class="anchor-link"></span></a>BeamSQL</h3>
 <p>Beam SQL integration is added in this release! This integration comes in many flavors, from fluent api to string interpolation with both offering the possibility to typecheck the provided query at compile time.</p>
-<p>A simple use case of this api is reflected in the example below. This example uses the fluent api to query the <code>SCollection[User]</code> and extract <code>username</code> and <code>age</code>. <a href="https://spotify.github.io/scio/api/com/spotify/scio/sql/SqlCollection1.html" title="com.spotify.scio.sql.SqlCollection1"><code>`query`</code></a> return&rsquo;s <a href="https://beam.apache.org/releases/javadoc/2.16.0/?org/apache/beam/sdk/values/Row.html" title="org.apache.beam.sdk.values.Row"><code>Row</code></a> which <code>Beam</code>&rsquo;s underlying type that contains the values and the <a href="https://beam.apache.org/releases/javadoc/2.16.0/?org/apache/beam/sdk/values/Schema.html" title="org.apache.beam.sdk.values.Schema"><code>Schema</code></a> of the extracted data.</p>
+<p>A simple use case of this api is reflected in the example below. This example uses the fluent api to query the <code>SCollection[User]</code> and extract <code>username</code> and <code>age</code>. <a href="https://spotify.github.io/scio/api/com/spotify/scio/sql/SqlCollection1.html" title="com.spotify.scio.sql.SqlCollection1"><code>`query`</code></a> return&rsquo;s <a href="https://beam.apache.org/releases/javadoc/2.17.0/?org/apache/beam/sdk/values/Row.html" title="org.apache.beam.sdk.values.Row"><code>Row</code></a> which <code>Beam</code>&rsquo;s underlying type that contains the values and the <a href="https://beam.apache.org/releases/javadoc/2.17.0/?org/apache/beam/sdk/values/Schema.html" title="org.apache.beam.sdk.values.Schema"><code>Schema</code></a> of the extracted data.</p>
 <pre class="prettyprint"><code class="language-scala">import com.spotify.scio.sql._
 import com.spotify.scio.values._
 import org.apache.beam.sdk.values.Row
@@ -252,7 +252,7 @@ def users: SCollection[User] = ???
 
 def result: SCollection[Row] = users.query(&quot;select username, age from SCOLLECTION&quot;)
 </code></pre>
-<p>In the following example we go a little bit further. Using <a href="https://spotify.github.io/scio/api/com/spotify/scio/sql/SqlCollection1.html" title="com.spotify.scio.sql.SqlCollection1"><code>queryAs</code></a> we can express the expected return type <code>(String, Int)</code> instead of <a href="https://beam.apache.org/releases/javadoc/2.16.0/?org/apache/beam/sdk/values/Row.html" title="org.apache.beam.sdk.values.Row"><code>Row</code></a>. Query typecheck only happens at runtime</p>
+<p>In the following example we go a little bit further. Using <a href="https://spotify.github.io/scio/api/com/spotify/scio/sql/SqlCollection1.html" title="com.spotify.scio.sql.SqlCollection1"><code>queryAs</code></a> we can express the expected return type <code>(String, Int)</code> instead of <a href="https://beam.apache.org/releases/javadoc/2.17.0/?org/apache/beam/sdk/values/Row.html" title="org.apache.beam.sdk.values.Row"><code>Row</code></a>. Query typecheck only happens at runtime</p>
 <p>If the expected return type doesn&rsquo;t the inferred schema for the given query this will fail at runtime.</p>
 <pre class="prettyprint"><code class="language-scala">import com.spotify.scio.sql._
 import com.spotify.scio.values._
@@ -534,13 +534,13 @@ def table: Table = Table.Ref(tableReference)
 <p><code>AsyncLookupDoFn</code> was renamed to <a href="https://spotify.github.io/scio/api/com/spotify/scio/transforms/BaseAsyncLookupDoFn.html" title="com.spotify.scio.transforms.BaseAsyncLookupDoFn"><code>`BaseAsyncLookupDoFn`</code></a> and we now have better support for <code>Guava</code>, <code>Java 8</code> and scala <code>Future</code> lookup DoFn&rsquo;s through the following implementations <a href="https://spotify.github.io/scio/api/com/spotify/scio/transforms/GuavaAsyncLookupDoFn.html" title="com.spotify.scio.transforms.GuavaAsyncLookupDoFn"><code>`GuavaAsyncLookupDoFn`</code></a>, <a href="https://spotify.github.io/scio/api/com/spotify/scio/transforms/JavaAsyncLookupDoFn.html" title="com.spotify.scio.transforms.JavaAsyncLookupDoFn"><code>`JavaAsyncLookupDoFn`</code></a> and <a href="https://spotify.github.io/scio/api/com/spotify/scio/transforms/ScalaAsyncLookupDoFn.html" title="com.spotify.scio.transforms.ScalaAsyncLookupDoFn"><code>`ScalaAsyncLookupDoFn`</code></a>.</p>
 </div>
 <div>
-<a href="https://github.com/spotify/scio/tree/master/site/target/mdoc/migrations/v0.8.0.md" title="Edit this page" class="md-source-file md-edit">
+<a href="https://github.com/spotify/scio/tree/master/site/target/mdoc/migrations/v0.8.0-Migration-Guide.md" title="Edit this page" class="md-source-file md-edit">
 Edit this page
 </a>
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.8.0*
+0.8.1*
 </span>
 </div>
 </article>
@@ -550,7 +550,7 @@ Edit this page
 <footer class="md-footer">
 <div class="md-footer-nav">
 <nav class="md-footer-nav__inner md-grid">
-<a href="../migrations/v0.7.0-Migration-Guide.html" title="Scio 0.7.0" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+<a href="../migrations/v0.7.0-Migration-Guide.html" title="Scio v0.7.0" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
 <div class="md-flex__cell md-flex__cell--shrink">
 <i class="md-icon md-icon--arrow-back md-footer-nav__button"></i>
 </div>
@@ -559,7 +559,7 @@ Edit this page
 <span class="md-footer-nav__direction">
 Previous
 </span>
-Scio 0.7.0
+Scio v0.7.0
 </span>
 </div>
 </a>
@@ -582,7 +582,7 @@ Development
 <div class="md-footer-meta__inner md-grid">
 <div class="md-footer-copyright">
 <div class="md-footer-copyright__highlight">
-Copyright (C) 2019 Spotify AB
+Copyright (C) 2020 Spotify AB
 </div>
 Powered by
 <a href="https://github.com/lightbend/paradox">Paradox</a>

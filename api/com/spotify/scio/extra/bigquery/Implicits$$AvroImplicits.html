@@ -527,7 +527,7 @@
                 <span class="name">@native</span><span class="args">()</span>
               
         </dd></dl></div>
-    </li><li name="com.spotify.scio.extra.bigquery.Implicits.AvroImplicits#saveAvroAsBigQuery" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+    </li><li name="com.spotify.scio.extra.bigquery.Implicits.AvroImplicits#saveAvroAsBigQuery" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="saveAvroAsBigQuery(table:com.google.api.services.bigquery.model.TableReference,avroSchema:org.apache.avro.Schema,writeDisposition:org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.WriteDisposition,createDisposition:org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.CreateDisposition,tableDescription:String)(implicitev:T&lt;:&lt;org.apache.avro.generic.IndexedRecord,implicitc:scala.reflect.ClassTag[T]):com.spotify.scio.io.ClosedTap[com.spotify.scio.bigquery.TableRow]"></a><a id="saveAvroAsBigQuery(TableReference,Schema,WriteDisposition,CreateDisposition,String)(&lt;:&lt;[T,IndexedRecord],ClassTag[T]):ClosedTap[TableRow]"></a>
       <span class="permalink">
       <a href="../../../../../com/spotify/scio/extra/bigquery/Implicits$$AvroImplicits.html#saveAvroAsBigQuery(table:com.google.api.services.bigquery.model.TableReference,avroSchema:org.apache.avro.Schema,writeDisposition:org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.WriteDisposition,createDisposition:org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.CreateDisposition,tableDescription:String)(implicitev:T&lt;:&lt;org.apache.avro.generic.IndexedRecord,implicitc:scala.reflect.ClassTag[T]):com.spotify.scio.io.ClosedTap[com.spotify.scio.bigquery.TableRow]" title="Permalink">
@@ -546,7 +546,15 @@
 automatically converting T's <span class="extype" name="org.apache.avro.Schema">AvroSchema</span> to BigQuery's
 <span class="extype" name="com.google.api.services.bigquery.model.TableSchema">TableSchema</span> and converting each
 <span class="extype" name="org.apache.avro.generic.IndexedRecord">IndexedRecord</span> into a
-<a href="../../bigquery/index.html#TableRow=com.google.api.services.bigquery.model.TableRow" class="extmbr" name="com.spotify.scio.bigquery.TableRow">TableRow</a>.</p>
+<a href="../../bigquery/index.html#TableRow=com.google.api.services.bigquery.model.TableRow" class="extmbr" name="com.spotify.scio.bigquery.TableRow">TableRow</a>.</p><div class="fullcomment"><div class="comment cmt"><p>Saves the provided SCollection[T] to BigQuery where T is a subtype of Indexed Record,
+automatically converting T's <span class="extype" name="org.apache.avro.Schema">AvroSchema</span> to BigQuery's
+<span class="extype" name="com.google.api.services.bigquery.model.TableSchema">TableSchema</span> and converting each
+<span class="extype" name="org.apache.avro.generic.IndexedRecord">IndexedRecord</span> into a
+<a href="../../bigquery/index.html#TableRow=com.google.api.services.bigquery.model.TableRow" class="extmbr" name="com.spotify.scio.bigquery.TableRow">TableRow</a>.
+</p></div><dl class="attributes block"> <dt>Annotations</dt><dd>
+                <span class="name">@<a href="../../annotations/experimental.html" class="extype" name="com.spotify.scio.annotations.experimental">experimental</a></span><span class="args">()</span>
+              
+        </dd></dl></div>
     </li><li name="scala.AnyRef#synchronized" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="synchronized[T0](x$1:=&gt;T0):T0"></a><a id="synchronized[T0](⇒T0):T0"></a>
       <span class="permalink">

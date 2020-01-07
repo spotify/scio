@@ -163,8 +163,8 @@ spotify/scio
   </ul></li>
   <li><a href="migrations/index.html" class="page">Migration Guides</a>
   <ul>
-    <li><a href="migrations/v0.7.0-Migration-Guide.html" class="page">Scio 0.7.0</a></li>
-    <li><a href="migrations/v0.8.0.html" class="page">Scio v0.8.0</a></li>
+    <li><a href="migrations/v0.7.0-Migration-Guide.html" class="page">Scio v0.7.0</a></li>
+    <li><a href="migrations/v0.8.0-Migration-Guide.html" class="page">Scio v0.8.0</a></li>
   </ul></li>
   <li><a href="dev/index.html" class="page">Development</a>
   <ul>
@@ -199,7 +199,7 @@ spotify/scio
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.8.0*
+<i class="md-icon" title="Version">label_outline</i> 0.8.1*
 </label>
 </li>
 </ul>
@@ -297,7 +297,7 @@ def scioResult = sc.run().waitUntilDone()
 
 def values = scioResult.tap(wordCount).value.take(3)
 </code></pre>
-<p>Make sure <code>README.md</code> is in the current directory. This example counts words in local file using a local runner (<a href="https://beam.apache.org/releases/javadoc/2.16.0/?org/apache/beam/runners/direct/DirectRunner.html" title="org.apache.beam.runners.direct.DirectRunner"><code>`DirectRunner`</code></a> and writes result in a local file. The pipeline and actual computation starts on <code>sc.run()</code>. The last command take 3 lines from results and prints them.</p>
+<p>Make sure <code>README.md</code> is in the current directory. This example counts words in local file using a local runner (<a href="https://beam.apache.org/releases/javadoc/2.17.0/?org/apache/beam/runners/direct/DirectRunner.html" title="org.apache.beam.runners.direct.DirectRunner"><code>`DirectRunner`</code></a> and writes result in a local file. The pipeline and actual computation starts on <code>sc.run()</code>. The last command take 3 lines from results and prints them.</p>
 <h3><a href="#local-pipeline-" name="local-pipeline-" class="anchor"><span class="anchor-link"></span></a>Local pipeline ++</h3>
 <p>In the next example we will spice things up a bit and read data from GCS:</p>
 <pre><code>:newScio
@@ -451,7 +451,7 @@ def tap: ClosedTap[String] = evenNumbers.saveAsTextFile(&quot;/tmp/even&quot;)
 def result = sc.run()
 </code></pre>
 <h3><a href="#running-jobs-asynchronously" name="running-jobs-asynchronously" class="anchor"><span class="anchor-link"></span></a>Running jobs asynchronously</h3>
-<p>When using REPL and Dataflow service consider using the non-blocking <a href="https://beam.apache.org/releases/javadoc/2.16.0/?org/apache/beam/runners/dataflow/DataflowRunner.html" title="org.apache.beam.runners.dataflow.DataflowRunner"><code>`DataflowRunner`</code></a> for a more interactive experience. To start:</p>
+<p>When using REPL and Dataflow service consider using the non-blocking <a href="https://beam.apache.org/releases/javadoc/2.17.0/?org/apache/beam/runners/dataflow/DataflowRunner.html" title="org.apache.beam.runners.dataflow.DataflowRunner"><code>`DataflowRunner`</code></a> for a more interactive experience. To start:</p>
 <pre><code>java -jar scio-repl-0.7.0.jar \
 &gt; --project=&lt;project-id&gt; \
 &gt; --stagingLocation=&lt;stagin-dir&gt; \
@@ -562,7 +562,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.8.0*
+0.8.1*
 </span>
 </div>
 </article>
@@ -604,7 +604,7 @@ Internals
 <div class="md-footer-meta__inner md-grid">
 <div class="md-footer-copyright">
 <div class="md-footer-copyright__highlight">
-Copyright (C) 2019 Spotify AB
+Copyright (C) 2020 Spotify AB
 </div>
 Powered by
 <a href="https://github.com/lightbend/paradox">Paradox</a>

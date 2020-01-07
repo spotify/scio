@@ -373,7 +373,10 @@ building the trees in the index according to the parameters provided.</p><div cl
 building the trees in the index according to the parameters provided.
 </p></div><dl class="paramcmts block"><dt class="param">nTrees</dt><dd class="cmt"><p>Number of trees to build. More trees means more precision &amp; bigger indices.
               If nTrees is set to -1, the trees will automatically be built in such a way
-              that they will take at most 2x the memory of the vectors.</p></dd><dt>returns</dt><dd class="cmt"><p>A singleton SCollection containing the <a href="AnnoyUri.html" class="extype" name="com.spotify.scio.extra.annoy.AnnoyUri">AnnoyUri</a> of the saved files</p></dd></dl></div>
+              that they will take at most 2x the memory of the vectors.</p></dd><dt>returns</dt><dd class="cmt"><p>A singleton SCollection containing the <a href="AnnoyUri.html" class="extype" name="com.spotify.scio.extra.annoy.AnnoyUri">AnnoyUri</a> of the saved files</p></dd></dl><dl class="attributes block"> <dt>Annotations</dt><dd>
+                <span class="name">@<a href="../../annotations/experimental.html" class="extype" name="com.spotify.scio.annotations.experimental">experimental</a></span><span class="args">()</span>
+              
+        </dd></dl></div>
     </li><li name="com.spotify.scio.extra.annoy.AnnoyPairSCollection#asAnnoy" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="asAnnoy(path:String,metric:com.spotify.scio.extra.annoy.package.AnnoyMetric,dim:Int,nTrees:Int):com.spotify.scio.values.SCollection[com.spotify.scio.extra.annoy.AnnoyUri]"></a><a id="asAnnoy(String,AnnoyMetric,Int,Int):SCollection[AnnoyUri]"></a>
       <span class="permalink">
@@ -394,7 +397,10 @@ building the trees in the index according to the parameters provided.</p><div cl
 building the trees in the index according to the parameters provided.
 </p></div><dl class="paramcmts block"><dt class="param">path</dt><dd class="cmt"><p>Can be either a local file or a GCS location e.g. gs://&lt;bucket&gt;/&lt;path&gt;</p></dd><dt class="param">metric</dt><dd class="cmt"><p>One of Angular (cosine distance) or Euclidean</p></dd><dt class="param">dim</dt><dd class="cmt"><p>Number of dimensions in vectors</p></dd><dt class="param">nTrees</dt><dd class="cmt"><p>Number of trees to build. More trees means more precision &amp; bigger indices.
               If nTrees is set to -1, the trees will automatically be built in such a way
-              that they will take at most 2x the memory of the vectors.</p></dd><dt>returns</dt><dd class="cmt"><p>A singleton SCollection containing the <a href="AnnoyUri.html" class="extype" name="com.spotify.scio.extra.annoy.AnnoyUri">AnnoyUri</a> of the saved files</p></dd></dl></div>
+              that they will take at most 2x the memory of the vectors.</p></dd><dt>returns</dt><dd class="cmt"><p>A singleton SCollection containing the <a href="AnnoyUri.html" class="extype" name="com.spotify.scio.extra.annoy.AnnoyUri">AnnoyUri</a> of the saved files</p></dd></dl><dl class="attributes block"> <dt>Annotations</dt><dd>
+                <span class="name">@<a href="../../annotations/experimental.html" class="extype" name="com.spotify.scio.annotations.experimental">experimental</a></span><span class="args">()</span>
+              
+        </dd></dl></div>
     </li><li name="com.spotify.scio.extra.annoy.AnnoyPairSCollection#asAnnoySideInput" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="asAnnoySideInput(metric:com.spotify.scio.extra.annoy.package.AnnoyMetric,dim:Int,nTrees:Int):com.spotify.scio.values.SideInput[com.spotify.scio.extra.annoy.package.AnnoyReader]"></a><a id="asAnnoySideInput(AnnoyMetric,Int,Int):SideInput[AnnoyReader]"></a>
       <span class="permalink">
@@ -417,7 +423,10 @@ building the trees in the index according to the parameters provided, then load 
 trees as a side input.
 </p></div><dl class="paramcmts block"><dt class="param">metric</dt><dd class="cmt"><p>One of Angular (cosine distance) or Euclidean</p></dd><dt class="param">dim</dt><dd class="cmt"><p>Number of dimensions in vectors</p></dd><dt class="param">nTrees</dt><dd class="cmt"><p>Number of trees to build. More trees means more precision &amp; bigger indices.
               If nTrees is set to -1, the trees will automatically be built in such a way
-              that they will take at most 2x the memory of the vectors.</p></dd><dt>returns</dt><dd class="cmt"><p>SideInput[AnnoyReader]</p></dd></dl></div>
+              that they will take at most 2x the memory of the vectors.</p></dd><dt>returns</dt><dd class="cmt"><p>SideInput[AnnoyReader]</p></dd></dl><dl class="attributes block"> <dt>Annotations</dt><dd>
+                <span class="name">@<a href="../../annotations/experimental.html" class="extype" name="com.spotify.scio.annotations.experimental">experimental</a></span><span class="args">()</span>
+              
+        </dd></dl></div>
     </li><li name="scala.Any#asInstanceOf" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="asInstanceOf[T0]:T0"></a>
       <span class="permalink">

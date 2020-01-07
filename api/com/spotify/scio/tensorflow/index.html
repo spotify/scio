@@ -448,6 +448,14 @@ detects the query's dialect. To override this, start the query with either <code
       
       
     </li><li class="current-entities indented4">
+                        <a class="object" href="PredictDoFn$.html" title=""></a>
+                        <a class="trait" href="PredictDoFn.html" title=""></a>
+                        <a href="PredictDoFn.html" title="">PredictDoFn</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
+                        <a class="object" href="SavedBundlePredictDoFn$.html" title=""></a>
+                        <a href="SavedBundlePredictDoFn$.html" title="">SavedBundlePredictDoFn</a>
+                      </li><li class="current-entities indented4">
                         <a class="object" href="TFExampleIO$.html" title=""></a>
                         <a class="class" href="TFExampleIO.html" title=""></a>
                         <a href="TFExampleIO.html" title="">TFExampleIO</a>
@@ -608,7 +616,23 @@ detects the query's dialect. To override this, start the query with either <code
 
         <div id="types" class="types members">
               <h3>Type Members</h3>
-              <ol><li name="com.spotify.scio.tensorflow.TFExampleIO" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+              <ol><li name="com.spotify.scio.tensorflow.PredictDoFn" visbl="pub" class="indented0 " data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="PredictDoFn[T,V,M&lt;:com.spotify.zoltar.Model[_]]extendsDoFnWithResource[T,V,com.spotify.scio.tensorflow.PredictDoFn.Resource[M]]"></a><a id="PredictDoFn[T,V,M&lt;:Model[_]]:PredictDoFn[T,V,M]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/tensorflow/PredictDoFn.html" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">sealed </span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="PredictDoFn.html"><span class="name">PredictDoFn</span></a><span class="tparams">[<span name="T">T</span>, <span name="V">V</span>, <span name="M">M &lt;: <span class="extype" name="com.spotify.zoltar.Model">Model</span>[_]</span>]</span><span class="result"> extends <a href="../transforms/DoFnWithResource.html" class="extype" name="com.spotify.scio.transforms.DoFnWithResource">DoFnWithResource</a>[<span class="extype" name="com.spotify.scio.tensorflow.PredictDoFn.T">T</span>, <span class="extype" name="com.spotify.scio.tensorflow.PredictDoFn.V">V</span>, <a href="PredictDoFn$.html#Resource[M&lt;:com.spotify.zoltar.Model[_]]=java.util.concurrent.ConcurrentMap[String,(java.util.concurrent.atomic.AtomicInteger,M)]" class="extmbr" name="com.spotify.scio.tensorflow.PredictDoFn.Resource">Resource</a>[<span class="extype" name="com.spotify.scio.tensorflow.PredictDoFn.M">M</span>]]</span>
+      </span>
+      
+      
+    </li><li name="com.spotify.scio.tensorflow.TFExampleIO" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="TFExampleIOextendsScioIO[org.tensorflow.example.Example]withProductwithSerializable"></a><a id="TFExampleIO:TFExampleIO"></a>
       <span class="permalink">
       <a href="../../../../com/spotify/scio/tensorflow/TFExampleIO.html" title="Permalink">
@@ -700,9 +724,9 @@ detects the query's dialect. To override this, start the query with either <code
 <a href="syntax/ExampleSCollectionOps.html" class="extype" name="com.spotify.scio.tensorflow.syntax.ExampleSCollectionOps">ExampleSCollectionOps</a>.
 </p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="syntax/SCollectionSyntax.html" class="extype" name="com.spotify.scio.tensorflow.syntax.SCollectionSyntax">SCollectionSyntax</a></dd></dl></div>
     </li><li name="com.spotify.scio.tensorflow.syntax.SCollectionSyntax#tensorFlowPredictSCollectionOps" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="tensorFlowPredictSCollectionOps[T](s:com.spotify.scio.values.SCollection[T])(implicitevidence$3:scala.reflect.ClassTag[T]):com.spotify.scio.tensorflow.syntax.PredictSCollectionOps[T]"></a><a id="tensorFlowPredictSCollectionOps[T](SCollection[T])(ClassTag[T]):PredictSCollectionOps[T]"></a>
+      <a id="tensorFlowPredictSCollectionOps[T](s:com.spotify.scio.values.SCollection[T])(implicitevidence$5:scala.reflect.ClassTag[T]):com.spotify.scio.tensorflow.syntax.PredictSCollectionOps[T]"></a><a id="tensorFlowPredictSCollectionOps[T](SCollection[T])(ClassTag[T]):PredictSCollectionOps[T]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/tensorflow/index.html#tensorFlowPredictSCollectionOps[T](s:com.spotify.scio.values.SCollection[T])(implicitevidence$3:scala.reflect.ClassTag[T]):com.spotify.scio.tensorflow.syntax.PredictSCollectionOps[T]" title="Permalink">
+      <a href="../../../../com/spotify/scio/tensorflow/index.html#tensorFlowPredictSCollectionOps[T](s:com.spotify.scio.values.SCollection[T])(implicitevidence$5:scala.reflect.ClassTag[T]):com.spotify.scio.tensorflow.syntax.PredictSCollectionOps[T]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -791,6 +815,38 @@ detects the query's dialect. To override this, start the query with either <code
 <a href="syntax/TFRecordSCollectionOps.html" class="extype" name="com.spotify.scio.tensorflow.syntax.TFRecordSCollectionOps">TFRecordSCollectionOps</a>.</p><div class="fullcomment"><div class="comment cmt"><p>Implicit conversion from <a href="../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a> to
 <a href="syntax/TFRecordSCollectionOps.html" class="extype" name="com.spotify.scio.tensorflow.syntax.TFRecordSCollectionOps">TFRecordSCollectionOps</a>.
 </p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="syntax/SCollectionSyntax.html" class="extype" name="com.spotify.scio.tensorflow.syntax.SCollectionSyntax">SCollectionSyntax</a></dd></dl></div>
+    </li><li name="com.spotify.scio.tensorflow.PredictDoFn" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="PredictDoFn"></a><a id="PredictDoFn:PredictDoFn"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/tensorflow/PredictDoFn$.html" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="PredictDoFn$.html"><span class="name">PredictDoFn</span></a><span class="result"> extends <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      
+      
+    </li><li name="com.spotify.scio.tensorflow.SavedBundlePredictDoFn" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="SavedBundlePredictDoFn"></a><a id="SavedBundlePredictDoFn:SavedBundlePredictDoFn"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/tensorflow/SavedBundlePredictDoFn$.html" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="SavedBundlePredictDoFn$.html"><span class="name">SavedBundlePredictDoFn</span></a><span class="result"> extends <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      
+      
     </li><li name="com.spotify.scio.tensorflow.TFExampleIO" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="TFExampleIO"></a><a id="TFExampleIO:TFExampleIO"></a>
       <span class="permalink">

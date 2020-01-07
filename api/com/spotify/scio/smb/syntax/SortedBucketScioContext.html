@@ -544,7 +544,10 @@ tuple with the list of values for that key in <code>a</code>, <code>b</code>, <c
 differs from a regular <span class="extype" name="org.apache.beam.sdk.schemas.transforms.CoGroup">org.apache.beam.sdk.schemas.transforms.CoGroup</span> operation.
 </p></div><dl class="paramcmts block"><dt class="param">keyClass</dt><dd class="cmt"><p>cogroup key class. Must have a Coder in Beam's default
                 <span class="extype" name="org.apache.beam.sdk.coders.CoderRegistry">org.apache.beam.sdk.coders.CoderRegistry</span> as custom key coders are not
-                supported yet.</p></dd></dl></div>
+                supported yet.</p></dd></dl><dl class="attributes block"> <dt>Annotations</dt><dd>
+                <span class="name">@<a href="../../annotations/experimental.html" class="extype" name="com.spotify.scio.annotations.experimental">experimental</a></span><span class="args">()</span>
+              
+        </dd></dl></div>
     </li><li name="com.spotify.scio.smb.syntax.SortedBucketScioContext#sortMergeCoGroup" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="cogroup">
       <a id="sortMergeCoGroup[K,A,B,C](keyClass:Class[K],a:org.apache.beam.sdk.extensions.smb.SortedBucketIO.Read[A],b:org.apache.beam.sdk.extensions.smb.SortedBucketIO.Read[B],c:org.apache.beam.sdk.extensions.smb.SortedBucketIO.Read[C])(implicitevidence$7:com.spotify.scio.coders.Coder[K],implicitevidence$8:com.spotify.scio.coders.Coder[A],implicitevidence$9:com.spotify.scio.coders.Coder[B],implicitevidence$10:com.spotify.scio.coders.Coder[C]):com.spotify.scio.values.SCollection[(K,(Iterable[A],Iterable[B],Iterable[C]))]"></a><a id="sortMergeCoGroup[K,A,B,C](Class[K],Read[A],Read[B],Read[C])(Coder[K],Coder[A],Coder[B],Coder[C]):SCollection[(K,(Iterable[A],Iterable[B],Iterable[C]))]"></a>
       <span class="permalink">
@@ -566,7 +569,10 @@ with the list of values for that key in <code>a</code>, <code>b</code> and <code
 differs from a regular <span class="extype" name="org.apache.beam.sdk.schemas.transforms.CoGroup">org.apache.beam.sdk.schemas.transforms.CoGroup</span> operation.
 </p></div><dl class="paramcmts block"><dt class="param">keyClass</dt><dd class="cmt"><p>cogroup key class. Must have a Coder in Beam's default
                 <span class="extype" name="org.apache.beam.sdk.coders.CoderRegistry">org.apache.beam.sdk.coders.CoderRegistry</span> as custom key coders are not
-                supported yet.</p></dd></dl></div>
+                supported yet.</p></dd></dl><dl class="attributes block"> <dt>Annotations</dt><dd>
+                <span class="name">@<a href="../../annotations/experimental.html" class="extype" name="com.spotify.scio.annotations.experimental">experimental</a></span><span class="args">()</span>
+              
+        </dd></dl></div>
     </li><li name="com.spotify.scio.smb.syntax.SortedBucketScioContext#sortMergeCoGroup" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="cogroup">
       <a id="sortMergeCoGroup[K,A,B](keyClass:Class[K],a:org.apache.beam.sdk.extensions.smb.SortedBucketIO.Read[A],b:org.apache.beam.sdk.extensions.smb.SortedBucketIO.Read[B])(implicitevidence$4:com.spotify.scio.coders.Coder[K],implicitevidence$5:com.spotify.scio.coders.Coder[A],implicitevidence$6:com.spotify.scio.coders.Coder[B]):com.spotify.scio.values.SCollection[(K,(Iterable[A],Iterable[B]))]"></a><a id="sortMergeCoGroup[K,A,B](Class[K],Read[A],Read[B])(Coder[K],Coder[A],Coder[B]):SCollection[(K,(Iterable[A],Iterable[B]))]"></a>
       <span class="permalink">
@@ -588,7 +594,10 @@ list of values for that key in <code>a</code>, and <code>b</code>.</p><p>See not
 differs from a regular <span class="extype" name="org.apache.beam.sdk.schemas.transforms.CoGroup">org.apache.beam.sdk.schemas.transforms.CoGroup</span> operation.
 </p></div><dl class="paramcmts block"><dt class="param">keyClass</dt><dd class="cmt"><p>cogroup key class. Must have a Coder in Beam's default
                 <span class="extype" name="org.apache.beam.sdk.coders.CoderRegistry">org.apache.beam.sdk.coders.CoderRegistry</span> as custom key coders are not
-                supported yet.</p></dd></dl></div>
+                supported yet.</p></dd></dl><dl class="attributes block"> <dt>Annotations</dt><dd>
+                <span class="name">@<a href="../../annotations/experimental.html" class="extype" name="com.spotify.scio.annotations.experimental">experimental</a></span><span class="args">()</span>
+              
+        </dd></dl></div>
     </li><li name="com.spotify.scio.smb.syntax.SortedBucketScioContext#sortMergeJoin" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="join">
       <a id="sortMergeJoin[K,L,R](keyClass:Class[K],lhs:org.apache.beam.sdk.extensions.smb.SortedBucketIO.Read[L],rhs:org.apache.beam.sdk.extensions.smb.SortedBucketIO.Read[R])(implicitevidence$1:com.spotify.scio.coders.Coder[K],implicitevidence$2:com.spotify.scio.coders.Coder[L],implicitevidence$3:com.spotify.scio.coders.Coder[R]):com.spotify.scio.values.SCollection[(K,(L,R))]"></a><a id="sortMergeJoin[K,L,R](Class[K],Read[L],Read[R])(Coder[K],Coder[L],Coder[R]):SCollection[(K,(L,R))]"></a>
       <span class="permalink">
@@ -614,7 +623,10 @@ input records. This transform requires a filesystem lookup to ensure that the me
 each source are compatible.
 </p></div><dl class="paramcmts block"><dt class="param">keyClass</dt><dd class="cmt"><p>join key class. Must have a Coder in Beam's default
                 <span class="extype" name="org.apache.beam.sdk.coders.CoderRegistry">org.apache.beam.sdk.coders.CoderRegistry</span> as custom key coders are not
-                supported yet.</p></dd></dl></div>
+                supported yet.</p></dd></dl><dl class="attributes block"> <dt>Annotations</dt><dd>
+                <span class="name">@<a href="../../annotations/experimental.html" class="extype" name="com.spotify.scio.annotations.experimental">experimental</a></span><span class="args">()</span>
+              
+        </dd></dl></div>
     </li><li name="scala.AnyRef#synchronized" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="synchronized[T0](x$1:=&gt;T0):T0"></a><a id="synchronized[T0](⇒T0):T0"></a>
       <span class="permalink">

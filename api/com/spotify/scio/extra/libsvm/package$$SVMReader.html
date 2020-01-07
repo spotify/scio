@@ -356,31 +356,6 @@ sc.libSVMFile(<span class="lit">"input.svm"</span>)</pre></div><dl class="attrib
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
-    </li><li name="com.spotify.scio.extra.libsvm.SVMReader#libSVMFile" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="libSVMFile(path:String,numFeatures:Int):com.spotify.scio.values.SCollection[(Double,breeze.linalg.SparseVector[Double])]"></a><a id="libSVMFile(String,Int):SCollection[(Double,SparseVector[Double])]"></a>
-      <span class="permalink">
-      <a href="../../../../../com/spotify/scio/extra/libsvm/package$$SVMReader.html#libSVMFile(path:String,numFeatures:Int):com.spotify.scio.values.SCollection[(Double,breeze.linalg.SparseVector[Double])]" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">libSVMFile</span><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="numFeatures">numFeatures: <span class="extype" name="scala.Int">Int</span> = <span class="symbol">0</span></span>)</span><span class="result">: <a href="../../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[(<span class="extype" name="scala.Double">Double</span>, <span class="extype" name="breeze.linalg.SparseVector">SparseVector</span>[<span class="extype" name="scala.Double">Double</span>])]</span>
-      </span>
-      
-      <p class="shortcomment cmt">Loads labeled data in the LIBSVM format into an SCollection[(Double, SparseVector)].</p><div class="fullcomment"><div class="comment cmt"><p>Loads labeled data in the LIBSVM format into an SCollection[(Double, SparseVector)].
-The LIBSVM format is a text-based format used by LIBSVM and LIBLINEAR.
-Each line represents a labeled sparse feature vector using the following format:
-[label index1:value1 index2:value2 ...]
-where the indices are one-based and in ascending order.
-</p></div><dl class="paramcmts block"><dt class="param">path</dt><dd class="cmt"><p>file or directory path in any Hadoop-supported file system URI</p></dd><dt class="param">numFeatures</dt><dd class="cmt"><p>number of features, which will be determined from the input data if a
-                   nonpositive value is given. This is useful when the data is split
-                   into multiple files and you want to load them separately, because some
-                   features may not present in certain files, which leads to inconsistent
-                   feature dimensions.</p></dd><dt>returns</dt><dd class="cmt"><p>labeled data stored as an SCollection[(Double, SparseVector)]</p></dd></dl></div>
     </li><li name="scala.Any#toString" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="toString():String"></a>
       <span class="permalink">
@@ -403,7 +378,38 @@ where the indices are one-based and in ascending order.
 
         
 
-        
+        <div class="values members">
+              <h3>Deprecated Value Members</h3>
+              <ol><li name="com.spotify.scio.extra.libsvm.SVMReader#libSVMFile" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="libSVMFile(path:String,numFeatures:Int):com.spotify.scio.values.SCollection[(Double,breeze.linalg.SparseVector[Double])]"></a><a id="libSVMFile(String,Int):SCollection[(Double,SparseVector[Double])]"></a>
+      <span class="permalink">
+      <a href="../../../../../com/spotify/scio/extra/libsvm/package$$SVMReader.html#libSVMFile(path:String,numFeatures:Int):com.spotify.scio.values.SCollection[(Double,breeze.linalg.SparseVector[Double])]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name deprecated" title="Deprecated: (Since version 0.8.0) LibSVM support is deprecated, use TensorFlow, etc. instead">libSVMFile</span><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="numFeatures">numFeatures: <span class="extype" name="scala.Int">Int</span> = <span class="symbol">0</span></span>)</span><span class="result">: <a href="../../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[(<span class="extype" name="scala.Double">Double</span>, <span class="extype" name="breeze.linalg.SparseVector">SparseVector</span>[<span class="extype" name="scala.Double">Double</span>])]</span>
+      </span>
+      
+      <p class="shortcomment cmt">Loads labeled data in the LIBSVM format into an SCollection[(Double, SparseVector)].</p><div class="fullcomment"><div class="comment cmt"><p>Loads labeled data in the LIBSVM format into an SCollection[(Double, SparseVector)].
+The LIBSVM format is a text-based format used by LIBSVM and LIBLINEAR.
+Each line represents a labeled sparse feature vector using the following format:
+[label index1:value1 index2:value2 ...]
+where the indices are one-based and in ascending order.
+</p></div><dl class="paramcmts block"><dt class="param">path</dt><dd class="cmt"><p>file or directory path in any Hadoop-supported file system URI</p></dd><dt class="param">numFeatures</dt><dd class="cmt"><p>number of features, which will be determined from the input data if a
+                   nonpositive value is given. This is useful when the data is split
+                   into multiple files and you want to load them separately, because some
+                   features may not present in certain files, which leads to inconsistent
+                   feature dimensions.</p></dd><dt>returns</dt><dd class="cmt"><p>labeled data stored as an SCollection[(Double, SparseVector)]</p></dd></dl><dl class="attributes block"> <dt>Annotations</dt><dd>
+                <span class="name">@deprecated</span>
+              
+        </dd><dt>Deprecated</dt><dd class="cmt"><p><i>(Since version 0.8.0)</i> LibSVM support is deprecated, use TensorFlow, etc. instead</p></dd></dl></div>
+    </li></ol>
+            </div>
         </div>
 
         <div id="inheritedMembers">

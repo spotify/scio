@@ -321,27 +321,6 @@
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
-    </li><li name="com.spotify.scio.extra.checkpoint.CheckpointScioContext#checkpoint" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="checkpoint[T](fileOrPath:String)(fn:=&gt;com.spotify.scio.values.SCollection[T])(implicitevidence$1:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]"></a><a id="checkpoint[T](String)(⇒SCollection[T])(Coder[T]):SCollection[T]"></a>
-      <span class="permalink">
-      <a href="../../../../../com/spotify/scio/extra/checkpoint/package$$CheckpointScioContext.html#checkpoint[T](fileOrPath:String)(fn:=&gt;com.spotify.scio.values.SCollection[T])(implicitevidence$1:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">checkpoint</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="fileOrPath">fileOrPath: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="params">(<span name="fn">fn: ⇒ <a href="../../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.extra.checkpoint.CheckpointScioContext.checkpoint.T">T</span>]</span>)</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="../../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.extra.checkpoint.CheckpointScioContext.checkpoint.T">T</span>]</span>)</span><span class="result">: <a href="../../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.extra.checkpoint.CheckpointScioContext.checkpoint.T">T</span>]</span>
-      </span>
-      
-      <p class="shortcomment cmt">Checkpoints are useful for debugging one part of a long flow, when you would otherwise have
-to run many steps to get to the one you care about.</p><div class="fullcomment"><div class="comment cmt"><p>Checkpoints are useful for debugging one part of a long flow, when you would otherwise have
-to run many steps to get to the one you care about. To enable checkpoints, sprinkle calls to
-<code>checkpoint</code> throughout your flow, ideally after expensive steps.
-</p></div><dl class="paramcmts block"><dt class="param">fileOrPath</dt><dd class="cmt"><p>filename or fully qualified path to the checkpoint</p></dd><dt class="param">fn</dt><dd class="cmt"><p>result of this arbitrary =&gt; <a href="../../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>
-          flow is what is checkpointed</p></dd></dl></div>
     </li><li name="scala.AnyVal#getClass" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="getClass():Class[_&lt;:AnyVal]"></a>
       <span class="permalink">
@@ -396,7 +375,34 @@ to run many steps to get to the one you care about. To enable checkpoints, sprin
 
         
 
-        
+        <div class="values members">
+              <h3>Deprecated Value Members</h3>
+              <ol><li name="com.spotify.scio.extra.checkpoint.CheckpointScioContext#checkpoint" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="checkpoint[T](fileOrPath:String)(fn:=&gt;com.spotify.scio.values.SCollection[T])(implicitevidence$1:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]"></a><a id="checkpoint[T](String)(⇒SCollection[T])(Coder[T]):SCollection[T]"></a>
+      <span class="permalink">
+      <a href="../../../../../com/spotify/scio/extra/checkpoint/package$$CheckpointScioContext.html#checkpoint[T](fileOrPath:String)(fn:=&gt;com.spotify.scio.values.SCollection[T])(implicitevidence$1:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name deprecated" title="Deprecated: (Since version 0.8.0) Checkpoint support is deprecated, use smaller workflows and orchestration framework instead">checkpoint</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="fileOrPath">fileOrPath: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="params">(<span name="fn">fn: ⇒ <a href="../../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.extra.checkpoint.CheckpointScioContext.checkpoint.T">T</span>]</span>)</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="../../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.extra.checkpoint.CheckpointScioContext.checkpoint.T">T</span>]</span>)</span><span class="result">: <a href="../../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.extra.checkpoint.CheckpointScioContext.checkpoint.T">T</span>]</span>
+      </span>
+      
+      <p class="shortcomment cmt">Checkpoints are useful for debugging one part of a long flow, when you would otherwise have
+to run many steps to get to the one you care about.</p><div class="fullcomment"><div class="comment cmt"><p>Checkpoints are useful for debugging one part of a long flow, when you would otherwise have
+to run many steps to get to the one you care about. To enable checkpoints, sprinkle calls to
+<code>checkpoint</code> throughout your flow, ideally after expensive steps.
+</p></div><dl class="paramcmts block"><dt class="param">fileOrPath</dt><dd class="cmt"><p>filename or fully qualified path to the checkpoint</p></dd><dt class="param">fn</dt><dd class="cmt"><p>result of this arbitrary =&gt; <a href="../../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>
+          flow is what is checkpointed</p></dd></dl><dl class="attributes block"> <dt>Annotations</dt><dd>
+                <span class="name">@deprecated</span>
+              
+        </dd><dt>Deprecated</dt><dd class="cmt"><p><i>(Since version 0.8.0)</i> Checkpoint support is deprecated, use smaller workflows and orchestration framework instead</p></dd></dl></div>
+    </li></ol>
+            </div>
         </div>
 
         <div id="inheritedMembers">
