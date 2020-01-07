@@ -30,7 +30,7 @@ val algebirdVersion = "0.13.6"
 val annoy4sVersion = "0.9.0"
 val annoyVersion = "0.2.6"
 val asmVersion = "4.13"
-val autoServiceVersion = "1.0-rc2"
+val autoServiceVersion = "1.0-rc6"
 val autoValueVersion = "1.7"
 val avroVersion = "1.8.2"
 val breezeVersion = "1.0"
@@ -50,7 +50,7 @@ val gcsConnectorVersion = "hadoop2-2.0.0"
 val gcsVersion = "1.8.0"
 val guavaVersion = "25.1-jre"
 val hadoopVersion = "2.7.7"
-val hamcrestVersion = "1.3"
+val hamcrestVersion = "2.1"
 val jacksonVersion = "2.10.2"
 val javaLshVersion = "0.12"
 val jlineVersion = "2.14.6"
@@ -76,13 +76,13 @@ val magnoliaVersion = "0.12.5"
 val magnolifyVersion = "0.1.4"
 val grpcVersion = "1.17.1"
 val caseappVersion = "2.0.0-M9"
-val sparkVersion = "2.4.3"
+val sparkVersion = "2.4.4"
 val caffeineVersion = "2.8.0"
 val bigtableClientVersion = "1.8.0"
 val generatedGrpcGaVersion = "1.43.0"
 val generatedGrpcBetaVersion = "0.44.0"
 val googleClientsVersion = "1.27.0"
-val googleApiServicesBigQuery = "v2-rev20181104-1.27.0"
+val googleApiServicesBigQuery = s"v2-rev20181104-$googleClientsVersion"
 val bigdataossVersion = "1.9.16"
 val gaxVersion = "1.38.0"
 val googleAuthVersion = "0.12.0"
@@ -468,7 +468,8 @@ lazy val `scio-test`: Project = project
       "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test,it",
       "com.spotify" %% "magnolify-datastore" % magnolifyVersion % "it",
       // DataFlow testing requires junit and hamcrest
-      "org.hamcrest" % "hamcrest-all" % hamcrestVersion,
+      "org.hamcrest" % "hamcrest-core" % hamcrestVersion,
+      "org.hamcrest" % "hamcrest-library" % hamcrestVersion,
       // Our BloomFilters are Algebird Monoids and hence uses tests from Algebird Test
       "com.twitter" %% "algebird-test" % algebirdVersion % "test",
       "com.spotify" % "annoy" % annoyVersion % "test",
@@ -566,7 +567,8 @@ lazy val `scio-bigquery`: Project = project
       "com.spotify" %% "magnolify-scalacheck" % magnolifyVersion % "test",
       "com.google.cloud" % "google-cloud-storage" % gcsVersion % "test,it",
       // DataFlow testing requires junit and hamcrest
-      "org.hamcrest" % "hamcrest-all" % hamcrestVersion % "test,it"
+      "org.hamcrest" % "hamcrest-core" % hamcrestVersion % "test,it",
+      "org.hamcrest" % "hamcrest-library" % hamcrestVersion % "test,it"
     ),
     // Workaround for https://github.com/spotify/scio/issues/2308
     (Compile / doc) := Def.taskDyn {
@@ -598,7 +600,8 @@ lazy val `scio-bigtable`: Project = project
       "com.novocode" % "junit-interface" % junitInterfaceVersion,
       "org.apache.beam" % "beam-runners-direct-java" % beamVersion % "test",
       "org.scalatest" %% "scalatest" % scalatestVersion % "test",
-      "org.hamcrest" % "hamcrest-all" % hamcrestVersion % "test",
+      "org.hamcrest" % "hamcrest-core" % hamcrestVersion % "test",
+      "org.hamcrest" % "hamcrest-library" % hamcrestVersion % "test",
       "junit" % "junit" % junitVersion % "test"
     ),
     beamSDKIODependencies
@@ -989,7 +992,8 @@ lazy val `scio-jmh`: Project = project
     dependencyClasspath in Jmh := (dependencyClasspath in Test).value,
     libraryDependencies ++= directRunnerDependencies ++ Seq(
       "junit" % "junit" % junitVersion % "test",
-      "org.hamcrest" % "hamcrest-all" % hamcrestVersion % "test",
+      "org.hamcrest" % "hamcrest-core" % hamcrestVersion % "test",
+      "org.hamcrest" % "hamcrest-library" % hamcrestVersion % "test",
       "org.slf4j" % "slf4j-nop" % slf4jVersion
     )
   )
@@ -1017,7 +1021,8 @@ lazy val `scio-smb`: Project = project
       "com.google.auto.value" % "auto-value-annotations" % autoValueVersion,
       "com.google.auto.value" % "auto-value" % autoValueVersion,
       "javax.annotation" % "javax.annotation-api" % "1.3.2",
-      "org.hamcrest" % "hamcrest-all" % hamcrestVersion % Test,
+      "org.hamcrest" % "hamcrest-core" % hamcrestVersion % Test,
+      "org.hamcrest" % "hamcrest-library" % hamcrestVersion % Test,
       "com.novocode" % "junit-interface" % junitInterfaceVersion % Test,
       "junit" % "junit" % junitVersion % Test
     ),
