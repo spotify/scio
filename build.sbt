@@ -1018,8 +1018,8 @@ lazy val `scio-smb`: Project = project
       "com.google.auto.value" % "auto-value" % autoValueVersion,
       "javax.annotation" % "javax.annotation-api" % "1.3.2",
       "org.hamcrest" % "hamcrest-all" % hamcrestVersion % Test,
-      "com.novocode" % "junit-interface" % "0.11" % Test,
-      "junit" % "junit" % "4.13-rc-2" % Test
+      "com.novocode" % "junit-interface" % junitInterfaceVersion % Test,
+      "junit" % "junit" % junitVersion % Test
     ),
     javacOptions ++= {
       (Compile / sourceManaged).value.mkdirs()
