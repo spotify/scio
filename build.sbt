@@ -1175,7 +1175,7 @@ lazy val siteSettings = Def.settings(
       .withFavicon("images/favicon.ico")
       .withColor("white", "indigo")
       .withLogo("images/logo.png")
-      .withCopyright("Copyright (C) 2019 Spotify AB")
+      .withCopyright("Copyright (C) 2020 Spotify AB")
       .withRepository(uri("https://github.com/spotify/scio"))
       .withSocial(uri("https://github.com/spotify"), uri("https://twitter.com/spotifyeng"))
   }
