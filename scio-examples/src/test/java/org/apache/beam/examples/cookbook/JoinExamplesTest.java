@@ -18,8 +18,6 @@
 package org.apache.beam.examples.cookbook;
 
 import com.google.api.services.bigquery.model.TableRow;
-import java.util.Arrays;
-import java.util.List;
 import org.apache.beam.examples.cookbook.JoinExamples.ExtractCountryInfoFn;
 import org.apache.beam.examples.cookbook.JoinExamples.ExtractEventDataFn;
 import org.apache.beam.sdk.testing.PAssert;
@@ -30,12 +28,16 @@ import org.apache.beam.sdk.transforms.DoFnTester;
 import org.apache.beam.sdk.values.KV;
 import org.apache.beam.sdk.values.PCollection;
 import org.hamcrest.CoreMatchers;
-import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+
+import java.util.Arrays;
+import java.util.List;
+
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Unit tests for {@link JoinExamples}. */
 @RunWith(JUnit4.class)
@@ -88,8 +90,8 @@ public class JoinExamplesTest {
     DoFnTester<TableRow, KV<String, String>> extractEventDataFn =
         DoFnTester.of(new ExtractEventDataFn());
     List<KV<String, String>> results = extractEventDataFn.processBundle(EVENTS);
-    Assert.assertThat(results, CoreMatchers.hasItem(kv1));
-    Assert.assertThat(results, CoreMatchers.hasItem(kv2));
+    assertThat(results, CoreMatchers.hasItem(kv1));
+    assertThat(results, CoreMatchers.hasItem(kv2));
   }
 
   @Test
@@ -97,8 +99,8 @@ public class JoinExamplesTest {
     DoFnTester<TableRow, KV<String, String>> extractCountryInfoFn =
         DoFnTester.of(new ExtractCountryInfoFn());
     List<KV<String, String>> results = extractCountryInfoFn.processBundle(CCS);
-    Assert.assertThat(results, CoreMatchers.hasItem(kv3));
-    Assert.assertThat(results, CoreMatchers.hasItem(kv4));
+    assertThat(results, CoreMatchers.hasItem(kv3));
+    assertThat(results, CoreMatchers.hasItem(kv4));
   }
 
 

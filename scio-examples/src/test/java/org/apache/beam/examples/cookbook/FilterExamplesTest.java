@@ -24,10 +24,11 @@ import org.apache.beam.examples.cookbook.FilterExamples.FilterSingleMonthDataFn;
 import org.apache.beam.examples.cookbook.FilterExamples.ProjectionFn;
 import org.apache.beam.sdk.transforms.DoFnTester;
 import org.hamcrest.CoreMatchers;
-import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Unit tests for {@link FilterExamples}. */
 @RunWith(JUnit4.class)
@@ -69,9 +70,9 @@ public class FilterExamplesTest {
     DoFnTester<TableRow, TableRow> projectionFn =
         DoFnTester.of(new ProjectionFn());
     List<TableRow> results = projectionFn.processBundle(ROWS_ARRAY);
-    Assert.assertThat(results, CoreMatchers.hasItem(outRow1));
-    Assert.assertThat(results, CoreMatchers.hasItem(outRow2));
-    Assert.assertThat(results, CoreMatchers.hasItem(outRow3));
+    assertThat(results, CoreMatchers.hasItem(outRow1));
+    assertThat(results, CoreMatchers.hasItem(outRow2));
+    assertThat(results, CoreMatchers.hasItem(outRow3));
   }
 
   @Test
@@ -79,6 +80,6 @@ public class FilterExamplesTest {
     DoFnTester<TableRow, TableRow> filterSingleMonthDataFn =
         DoFnTester.of(new FilterSingleMonthDataFn(7));
     List<TableRow> results = filterSingleMonthDataFn.processBundle(PROJROWS_ARRAY);
-    Assert.assertThat(results, CoreMatchers.hasItem(outRow2));
+    assertThat(results, CoreMatchers.hasItem(outRow2));
   }
 }

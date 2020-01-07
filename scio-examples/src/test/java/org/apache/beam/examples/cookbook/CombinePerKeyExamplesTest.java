@@ -18,16 +18,18 @@
 package org.apache.beam.examples.cookbook;
 
 import com.google.api.services.bigquery.model.TableRow;
-import java.util.List;
 import org.apache.beam.examples.cookbook.CombinePerKeyExamples.ExtractLargeWordsFn;
 import org.apache.beam.examples.cookbook.CombinePerKeyExamples.FormatShakespeareOutputFn;
 import org.apache.beam.sdk.transforms.DoFnTester;
 import org.apache.beam.sdk.values.KV;
 import org.hamcrest.CoreMatchers;
-import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+
+import java.util.List;
+
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Unit tests for {@link CombinePerKeyExamples}. */
 @RunWith(JUnit4.class)
@@ -73,9 +75,9 @@ public class CombinePerKeyExamplesTest {
     DoFnTester<TableRow, KV<String, String>> extractLargeWordsFn =
         DoFnTester.of(new ExtractLargeWordsFn());
     List<KV<String, String>> results = extractLargeWordsFn.processBundle(ROWS_ARRAY);
-    Assert.assertThat(results, CoreMatchers.hasItem(tuple1));
-    Assert.assertThat(results, CoreMatchers.hasItem(tuple2));
-    Assert.assertThat(results, CoreMatchers.hasItem(tuple3));
+    assertThat(results, CoreMatchers.hasItem(tuple1));
+    assertThat(results, CoreMatchers.hasItem(tuple2));
+    assertThat(results, CoreMatchers.hasItem(tuple3));
   }
 
   @Test
@@ -83,7 +85,7 @@ public class CombinePerKeyExamplesTest {
     DoFnTester<KV<String, String>, TableRow> formatShakespeareOutputFn =
         DoFnTester.of(new FormatShakespeareOutputFn());
     List<TableRow> results = formatShakespeareOutputFn.processBundle(COMBINED_TUPLES_ARRAY);
-    Assert.assertThat(results, CoreMatchers.hasItem(resultRow1));
-    Assert.assertThat(results, CoreMatchers.hasItem(resultRow2));
+    assertThat(results, CoreMatchers.hasItem(resultRow1));
+    assertThat(results, CoreMatchers.hasItem(resultRow2));
   }
 }
