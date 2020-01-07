@@ -17,8 +17,6 @@
  */
 package org.apache.beam.examples;
 
-import java.util.Arrays;
-import java.util.List;
 import org.apache.beam.examples.WordCount.CountWords;
 import org.apache.beam.examples.WordCount.ExtractWordsFn;
 import org.apache.beam.examples.WordCount.FormatAsTextFn;
@@ -32,12 +30,16 @@ import org.apache.beam.sdk.transforms.DoFnTester;
 import org.apache.beam.sdk.transforms.MapElements;
 import org.apache.beam.sdk.values.PCollection;
 import org.hamcrest.CoreMatchers;
-import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+
+import java.util.Arrays;
+import java.util.List;
+
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
  * Tests of WordCount.
@@ -52,10 +54,10 @@ public class WordCountTest {
     DoFnTester<String, String> extractWordsFn =
         DoFnTester.of(new ExtractWordsFn());
 
-    Assert.assertThat(extractWordsFn.processBundle(" some  input  words "),
+    assertThat(extractWordsFn.processBundle(" some  input  words "),
                       CoreMatchers.hasItems("some", "input", "words"));
-    Assert.assertThat(extractWordsFn.processBundle(" "), CoreMatchers.hasItems());
-    Assert.assertThat(extractWordsFn.processBundle(" some ", " input", " words"),
+    assertThat(extractWordsFn.processBundle(" "), CoreMatchers.hasItems());
+    assertThat(extractWordsFn.processBundle(" some ", " input", " words"),
                       CoreMatchers.hasItems("some", "input", "words"));
   }
 

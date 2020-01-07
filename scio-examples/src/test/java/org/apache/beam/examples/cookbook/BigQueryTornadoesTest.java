@@ -18,7 +18,6 @@
 package org.apache.beam.examples.cookbook;
 
 import com.google.api.services.bigquery.model.TableRow;
-import java.util.List;
 import org.apache.beam.examples.cookbook.BigQueryTornadoes.ExtractTornadoesFn;
 import org.apache.beam.examples.cookbook.BigQueryTornadoes.FormatCountsFn;
 import org.apache.beam.sdk.transforms.DoFnTester;
@@ -28,6 +27,10 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+
+import java.util.List;
+
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
  * Test case for {@link BigQueryTornadoes}.
@@ -42,7 +45,7 @@ public class BigQueryTornadoesTest {
           .set("tornado", true);
     DoFnTester<TableRow, Integer> extractWordsFn =
         DoFnTester.of(new ExtractTornadoesFn());
-    Assert.assertThat(extractWordsFn.processBundle(row),
+    assertThat(extractWordsFn.processBundle(row),
                       CoreMatchers.hasItems(6));
   }
 
