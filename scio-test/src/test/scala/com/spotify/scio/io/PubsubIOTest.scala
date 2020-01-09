@@ -17,11 +17,7 @@
 
 package com.spotify.scio.io
 
-import java.nio.file.Files
-
-import com.spotify.scio.ScioContext
 import com.spotify.scio.testing.PipelineSpec
-import org.apache.avro.specific.SpecificRecordBase
 import com.google.protobuf.Message
 import org.apache.beam.sdk.io.gcp.{pubsub => beam}
 
