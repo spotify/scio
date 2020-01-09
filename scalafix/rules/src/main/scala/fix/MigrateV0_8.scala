@@ -193,7 +193,7 @@ final class ConsistenceJoinNames extends SemanticRule("ConsistenceJoinNames") {
       case _ => false
     }
 
-  private def renameNamedArgs(args: List[Term]): Patch = {
+  private def renameNamedArgs(args: List[Term]): Patch =
     args.collect {
       case Term.Assign(lhs, _) =>
         lhs match {
@@ -208,5 +208,4 @@ final class ConsistenceJoinNames extends SemanticRule("ConsistenceJoinNames") {
         }
       case _ => Patch.empty
     }.asPatch
-  }
 }
