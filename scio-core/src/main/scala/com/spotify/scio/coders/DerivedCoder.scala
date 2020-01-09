@@ -36,38 +36,41 @@ private object Derived extends Serializable {
     typeName: TypeName,
     ps: Seq[Param[Coder, T]],
     rawConstruct: Seq[Any] => T
-  ): Coder[T] = {
-    val cs = new Array[(String, Coder[Any])](ps.length)
-    var i = 0
-    while (i < ps.length) {
-      val p = ps(i)
-      cs.update(i, (p.label, p.typeclass.asInstanceOf[Coder[Any]]))
-      i = i + 1
-    }
-
-    val materializationStack = CoderStackTrace.prepare
-
-    @inline def destruct(v: T): Array[Any] = {
-      val arr = new Array[Any](ps.length)
-      var i = 0
-      while (i < ps.length) {
-        val p = ps(i)
-        catching(s"Error while dereferencing parameter ${p.label} in $v", materializationStack) {
-          arr.update(i, p.dereference(v))
+  ): Coder[T] =
+    Ref(
+      typeName.full, {
+        val cs = new Array[(String, Coder[Any])](ps.length)
+        var i = 0
+        while (i < ps.length) {
+          val p = ps(i)
+          cs.update(i, (p.label, p.typeclass.asInstanceOf[Coder[Any]]))
           i = i + 1
         }
+
+        val materializationStack = CoderStackTrace.prepare
+
+        @inline def destruct(v: T): Array[Any] = {
+          val arr = new Array[Any](ps.length)
+          var i = 0
+          while (i < ps.length) {
+            val p = ps(i)
+            catching(s"Error while dereferencing parameter ${p.label} in $v", materializationStack) {
+              arr.update(i, p.dereference(v))
+              i = i + 1
+            }
+          }
+          arr
+        }
+
+        val constructor: Seq[Any] => T =
+          ps =>
+            catching(s"Error while constructing object from parameters $ps", materializationStack)(
+              rawConstruct(ps)
+            )
+
+        Coder.record[T](typeName.full, cs, constructor, destruct)
       }
-      arr
-    }
-
-    val constructor: Seq[Any] => T =
-      ps =>
-        catching(s"Error while constructing object from parameters $ps", materializationStack)(
-          rawConstruct(ps)
-        )
-
-    Coder.record[T](typeName.full, cs, constructor, destruct)
-  }
+    )
 }
 
 trait LowPriorityCoderDerivation {
