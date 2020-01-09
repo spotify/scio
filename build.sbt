@@ -945,6 +945,7 @@ lazy val `scio-examples`: Project = project
     `scio-schemas`,
     `scio-jdbc`,
     `scio-extra`,
+    `scio-elasticsearch7`,
     `scio-spanner`,
     `scio-tensorflow`,
     `scio-sql`,
