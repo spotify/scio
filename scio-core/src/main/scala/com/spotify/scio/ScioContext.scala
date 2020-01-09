@@ -302,7 +302,7 @@ trait ScioExecutionContext {
 
 object ScioExecutionContext {
   @deprecated(
-    "close() now returns a ScioExecutionContext instead of a ScioResult. See https://git.io/JeAt9",
+    "close() now returns a ScioExecutionContext instead of a ScioResult. See https://git.io/JvvLu",
     since = "0.8.0"
   )
   implicit def toResult(sec: ScioExecutionContext): ScioResult =
