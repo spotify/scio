@@ -21,7 +21,7 @@ import com.spotify.scio.coders.Coder
 
 import com.twitter.algebird.{CMS, CMSHasher}
 
-private final case class Partitions[K, V](hot: SCollection[(K, V)], chill: SCollection[(K, V)])
+final private case class Partitions[K, V](hot: SCollection[(K, V)], chill: SCollection[(K, V)])
 
 /**
  * Extra functions available on SCollections of (key, value) pairs for skwed joins
@@ -33,6 +33,7 @@ private final case class Partitions[K, V](hot: SCollection[(K, V)], chill: SColl
  * @groupname transform Transformations
  */
 class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
+
   /**
    * N to 1 skew-proof flavor of [[PairSCollectionFunctions.join]].
    *
@@ -304,7 +305,7 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
 
     val cms =
       leftSideKeys.withName("Compute CMS of LHS keys").aggregate(keyAggregator)
-    self.skewedLeftJoin(rhs, hotKeyThreshold, cms)
+    self.skewedLeftOuterJoin(rhs, hotKeyThreshold, cms)
   }
 
   /**

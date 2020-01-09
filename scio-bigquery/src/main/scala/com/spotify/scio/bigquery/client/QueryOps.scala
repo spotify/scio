@@ -41,7 +41,7 @@ private[client] object QueryOps {
   private[scio] def isDML(sqlQuery: String): Boolean =
     sqlQuery.toUpperCase().matches("(UPDATE|MERGE|INSERT|DELETE).*")
 
-  private[scio] final case class QueryJobConfig(
+  final private[scio] case class QueryJobConfig(
     sql: String,
     useLegacySql: Boolean,
     dryRun: Boolean = false,
@@ -52,7 +52,7 @@ private[client] object QueryOps {
   )
 }
 
-private[client] final class QueryOps(client: Client, tableService: TableOps, jobService: JobOps) {
+final private[client] class QueryOps(client: Client, tableService: TableOps, jobService: JobOps) {
   import QueryOps._
 
   /** Get schema for a query without executing it. */
@@ -250,9 +250,9 @@ private[client] final class QueryOps(client: Client, tableService: TableOps, job
       client.underlying.jobs().insert(client.project, job).execute()
     }
     if (config.useLegacySql) {
-      Logger.info(s"Executing legacy query (${Priority}): `${config.sql}`")
+      Logger.info(s"Executing legacy query ($Priority): `${config.sql}`")
     } else {
-      Logger.info(s"Executing standard SQL query (${Priority}): `${config.sql}`")
+      Logger.info(s"Executing standard SQL query ($Priority): `${config.sql}`")
     }
     if (config.dryRun) {
       dryRunCache.getOrElseUpdate((config.sql, config.flattenResults, config.useLegacySql), run)

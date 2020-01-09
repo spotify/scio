@@ -29,9 +29,9 @@ import scala.annotation.StaticAnnotation
 import scala.reflect.runtime.universe._
 
 class TypeProviderTest extends AnyFlatSpec with Matchers {
-  @AvroType.fromSchema(
-    """{"type":"record","name": "Record","fields":[{"name":"f1","type":"int"}]}"""
-  )
+  @AvroType.fromSchema("""
+      |{"type":"record","name": "Record","fields":[{"name":"f1","type":"int"}]}
+      |""".stripMargin)
   class StringLiteralRecord
 
   @AvroType.fromSchema("""
@@ -127,12 +127,12 @@ class TypeProviderTest extends AnyFlatSpec with Matchers {
   }
 
   it should "support .fromGenericRecord in companion object" in {
-    (classOf[(GenericRecord => RecordWithBasicTypes)]
+    (classOf[GenericRecord => RecordWithBasicTypes]
       isAssignableFrom RecordWithBasicTypes.fromGenericRecord.getClass) shouldBe true
   }
 
   it should "support .toGenericRecord in companion object" in {
-    (classOf[(RecordWithBasicTypes => GenericRecord)]
+    (classOf[RecordWithBasicTypes => GenericRecord]
       isAssignableFrom RecordWithBasicTypes.toGenericRecord.getClass) shouldBe true
   }
 
@@ -649,12 +649,12 @@ class TypeProviderTest extends AnyFlatSpec with Matchers {
   }
 
   it should "support .fromGenericRecord in companion object" in {
-    (classOf[(GenericRecord => ToSchema)] isAssignableFrom
+    (classOf[GenericRecord => ToSchema] isAssignableFrom
       ToSchema.fromGenericRecord.getClass) shouldBe true
   }
 
   it should "support .toGenericRecord in companion object" in {
-    (classOf[(ToSchema => GenericRecord)] isAssignableFrom
+    (classOf[ToSchema => GenericRecord] isAssignableFrom
       ToSchema.toGenericRecord.getClass) shouldBe true
   }
 
@@ -807,12 +807,12 @@ class TypeProviderTest extends AnyFlatSpec with Matchers {
   }
 
   it should "support .fromGenericRecord in companion object with >22 fields" in {
-    val cls = classOf[(GenericRecord => TwentyThree)]
+    val cls = classOf[GenericRecord => TwentyThree]
     (cls isAssignableFrom TwentyThree.fromGenericRecord.getClass) shouldBe true
   }
 
   it should "support .toGenericRecord in companion object with >22 fields" in {
-    val cls = classOf[(TwentyThree => GenericRecord)]
+    val cls = classOf[TwentyThree => GenericRecord]
     (cls isAssignableFrom TwentyThree.toGenericRecord.getClass) shouldBe true
   }
 
@@ -825,59 +825,13 @@ class TypeProviderTest extends AnyFlatSpec with Matchers {
     DocumentedRecord.isInstanceOf[HasAvroDoc] shouldBe true
   }
 
-  @AvroType.fromSchemaFile("""
-      |https://raw.githubusercontent.com/spotify/scio/master/
-      |scio-avro/src/test/avro/
-      |scio-avro-test.avsc
-    """.stripMargin)
-  class FromResourceMultiLine
-  @AvroType.fromSchemaFile(
-    "https://raw.githubusercontent.com/spotify/scio/master/scio-avro/src/test/avro/scio-avro-test.avsc"
-  )
-  class FromResource
-
-  "AvroType.fromSchemaFile" should "support reading schema from multiline resource" in {
-    val r = FromResourceMultiLine(1)
-    r.test shouldBe 1
-  }
-
-  it should "support reading schema from resource" in {
-    val r = FromResource(2)
-    r.test shouldBe 2
-  }
-
   class Annotation1 extends StaticAnnotation
   class Annotation2 extends StaticAnnotation
 
-  def containsAllAnnotTypes[T: TypeTag]: Assertion =
-    typeOf[T].typeSymbol.annotations
-      .map(_.tree.tpe)
-      .containsSlice(Seq(typeOf[Annotation1], typeOf[Annotation2])) shouldBe true
   @Annotation1
-  @AvroType.fromSchemaFile(
-    "https://raw.githubusercontent.com/spotify/scio/master/scio-avro/src/test/avro/scio-avro-test.avsc"
-  )
-  @Annotation2
-  class FromResourceWithSurroundingAnnotations
-
-  it should "preserve surrounding user defined annotations" in {
-    containsAllAnnotTypes[FromResourceWithSurroundingAnnotations]
-  }
-  @AvroType.fromSchemaFile(
-    "https://raw.githubusercontent.com/spotify/scio/master/scio-avro/src/test/avro/scio-avro-test.avsc"
-  )
-  @Annotation1
-  @Annotation2
-  class FromResourceWithSequentialAnnotations
-
-  it should "preserve sequential user defined annotations" in {
-    containsAllAnnotTypes[FromResourceWithSequentialAnnotations]
-  }
-
-  @Annotation1
-  @AvroType.fromSchema(
-    """{"type":"record","name": "Record","fields":[{"name":"f1","type":"int"}]}"""
-  )
+  @AvroType.fromSchema("""
+      |{"type":"record","name": "Record","fields":[{"name":"f1","type":"int"}]}
+      |""".stripMargin)
   @Annotation2
   class SchemaWithSurroundingAnnotations
 
@@ -885,9 +839,9 @@ class TypeProviderTest extends AnyFlatSpec with Matchers {
     containsAllAnnotTypes[SchemaWithSurroundingAnnotations]
   }
 
-  @AvroType.fromSchema(
-    """{"type":"record","name": "Record","fields":[{"name":"f1","type":"int"}]}"""
-  )
+  @AvroType.fromSchema("""
+      |{"type":"record","name": "Record","fields":[{"name":"f1","type":"int"}]}
+      |""".stripMargin)
   @Annotation1
   @Annotation2
   class SchemaWithSequentialAnnotations
@@ -913,4 +867,10 @@ class TypeProviderTest extends AnyFlatSpec with Matchers {
   it should "preserve sequential user defined annotations" in {
     containsAllAnnotTypes[RecordWithSequentialAnnotations]
   }
+
+  def containsAllAnnotTypes[T: TypeTag]: Assertion =
+    typeOf[T].typeSymbol.annotations
+      .map(_.tree.tpe)
+      .containsSlice(Seq(typeOf[Annotation1], typeOf[Annotation2])) shouldBe true
+
 }

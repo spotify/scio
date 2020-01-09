@@ -36,13 +36,12 @@ import scala.util.Try
 
 object PubSubAdmin {
   private object GrpcClient {
-    private def newChannel: ManagedChannel = {
+    private def newChannel: ManagedChannel =
       NettyChannelBuilder
         .forAddress("pubsub.googleapis.com", 443)
         .negotiationType(NegotiationType.TLS)
         .sslContext(GrpcSslContexts.forClient.ciphers(null).build)
         .build
-    }
 
     def subscriber[A](pubsubOptions: PubsubOptions)(f: SubscriberBlockingStub => A): Try[A] = {
       val channel = newChannel

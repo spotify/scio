@@ -19,7 +19,7 @@ package com.spotify.scio
 
 import scala.reflect.macros.blackbox
 
-private[scio] sealed trait FeatureFlag
+sealed private[scio] trait FeatureFlag
 private[scio] object FeatureFlag {
   case object Enable extends FeatureFlag
   case object Disable extends FeatureFlag

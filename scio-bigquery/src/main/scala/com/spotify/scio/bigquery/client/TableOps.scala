@@ -53,7 +53,7 @@ private[client] object TableOps {
   private val StagingDatasetDescription = "Staging dataset for temporary tables"
 }
 
-private[client] final class TableOps(client: Client) {
+final private[client] class TableOps(client: Client) {
   import TableOps._
 
   /** Get rows from a table. */

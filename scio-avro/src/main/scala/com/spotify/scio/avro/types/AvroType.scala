@@ -49,6 +49,7 @@ import scala.reflect.runtime.universe._
  * @groupname Ungrouped Other Members
  */
 object AvroType {
+
   /**
    * Macro annotation for an Avro schema.
    *
@@ -184,9 +185,9 @@ object AvroType {
   trait HasAvroSchema[T] {
     def schema: Schema
 
-    def fromGenericRecord: (GenericRecord => T)
+    def fromGenericRecord: GenericRecord => T
 
-    def toGenericRecord: (T => GenericRecord)
+    def toGenericRecord: T => GenericRecord
 
     def toPrettyString(indent: Int = 0): String
   }
@@ -215,7 +216,7 @@ object AvroType {
    * to the given case class `T`.
    * @group converters
    */
-  def fromGenericRecord[T]: (GenericRecord => T) =
+  def fromGenericRecord[T]: GenericRecord => T =
     macro ConverterProvider.fromGenericRecordImpl[T]
 
   /**
@@ -223,7 +224,7 @@ object AvroType {
    * [[org.apache.avro.generic.GenericRecord GenericRecord]].
    * @group converters
    */
-  def toGenericRecord[T]: (T => GenericRecord) =
+  def toGenericRecord[T]: T => GenericRecord =
     macro ConverterProvider.toGenericRecordImpl[T]
 
   /** Create a new AvroType instance. */
@@ -244,12 +245,12 @@ class AvroType[T: TypeTag] extends Serializable {
     instance.getClass.getMethod(key).invoke(instance)
 
   /** GenericRecord to `T` converter. */
-  def fromGenericRecord: (GenericRecord => T) =
-    getField("fromGenericRecord").asInstanceOf[(GenericRecord => T)]
+  def fromGenericRecord: GenericRecord => T =
+    getField("fromGenericRecord").asInstanceOf[GenericRecord => T]
 
   /** `T` to GenericRecord converter. */
-  def toGenericRecord: (T => GenericRecord) =
-    getField("toGenericRecord").asInstanceOf[(T => GenericRecord)]
+  def toGenericRecord: T => GenericRecord =
+    getField("toGenericRecord").asInstanceOf[T => GenericRecord]
 
   /** Schema of `T`. */
   def schema: Schema =

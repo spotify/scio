@@ -108,6 +108,7 @@ case class ObjectFileTap[T: Coder](path: String) extends Tap[T] {
 }
 
 final case class AvroTaps(self: Taps) {
+
   /** Get a `Future[Tap[T]]` of a Protobuf file. */
   def protobufFile[T: ClassTag: Coder](path: String)(implicit ev: T <:< Message): Future[Tap[T]] =
     self.mkTap(s"Protobuf: $path", () => self.isPathDone(path), () => ObjectFileTap[T](path))

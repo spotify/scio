@@ -22,6 +22,7 @@ import com.spotify.scio.{ScioContext, ScioExecutionContext}
 
 class ReplScioContext(options: PipelineOptions, artifacts: List[String])
     extends ScioContext(options, artifacts) {
+
   /** Enhanced version that dumps REPL session jar. */
   override def run(): ScioExecutionContext = {
     createJar()
@@ -32,7 +33,7 @@ class ReplScioContext(options: PipelineOptions, artifacts: List[String])
   override private[scio] def requireNotClosed[T](body: => T): T = {
     require(
       !this.isClosed,
-      "ScioContext already closed, use :newScio <[context-name] | sc> to create new context"
+      "ScioContext has already been executed, use :newScio <[context-name] | sc> to create new context"
     )
     super.requireNotClosed(body)
   }

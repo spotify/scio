@@ -18,7 +18,7 @@
 // Example: Max Per Key Example
 // Usage:
 
-// `sbt runMain "com.spotify.scio.examples.cookbook.MaxPerKeyExamples
+// `sbt "runMain com.spotify.scio.examples.cookbook.MaxPerKeyExamples
 // --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
 // --output=[DATASET].max_per_key_examples"`
 package com.spotify.scio.examples.cookbook
@@ -56,7 +56,7 @@ object MaxPerKeyExamples {
       // Save result as a BigQuery table
       .saveAsBigQueryTable(Table.Spec(args("output")), schema, WRITE_TRUNCATE, CREATE_IF_NEEDED)
 
-    // Close the context and execute the pipeline
+    // Execute the pipeline
     sc.run()
     ()
   }

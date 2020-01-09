@@ -25,6 +25,7 @@ import com.google.protobuf.ByteString
 
 /** Helper methods for `Mutation`. */
 object Mutations {
+
   /** New `SetCell` mutation using the current timestamp. */
   def newSetCell(familyName: String, columnQualifier: ByteString, value: ByteString): Mutation =
     Mutation

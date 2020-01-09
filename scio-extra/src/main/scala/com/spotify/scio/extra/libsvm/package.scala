@@ -68,6 +68,7 @@ package object libsvm {
     (label, indices, values)
   }
 
+  @deprecated("LibSVM support is deprecated, use TensorFlow, etc. instead", "0.8.0")
   def libSVMCollection(
     col: SCollection[String],
     numFeatures: Int = 0
@@ -99,6 +100,7 @@ package object libsvm {
   }
 
   implicit class SVMReader(@transient private val self: ScioContext) extends AnyVal {
+
     /**
      * Loads labeled data in the LIBSVM format into an SCollection[(Double, SparseVector)].
      * The LIBSVM format is a text-based format used by LIBSVM and LIBLINEAR.
@@ -114,6 +116,7 @@ package object libsvm {
      *                    feature dimensions.
      * @return            labeled data stored as an SCollection[(Double, SparseVector)]
      */
+    @deprecated("LibSVM support is deprecated, use TensorFlow, etc. instead", "0.8.0")
     def libSVMFile(
       path: String,
       numFeatures: Int = 0

@@ -16,6 +16,7 @@ Also check out the [SDK Version Support Status](https://cloud.google.com/dataflo
 
 | **Scio** | **SDK Dependency** | **Description**     |
 |:--------:|:------------------:|:--------------------|
+| 0.8.x    | Apache Beam 2.x.x  | Beam SQL, BigQuery storage API, ScioExecutionContext, Async `DoFn`s |
 | 0.7.x    | Apache Beam 2.x.x  | Static coders, new ScioIO |
 | 0.6.x    | Apache Beam 2.x.x  | Cassandra 2.2       |
 | 0.5.x    | Apache Beam 2.x.x  | Better type-safe Avro and BigQuery IO |
@@ -26,6 +27,7 @@ Also check out the [SDK Version Support Status](https://cloud.google.com/dataflo
 
 | **Scio Version** | **Beam Version** | **Details** |
 |:----------------:|:----------------:|:------------|
+| 0.8.0            | 2.17.0           | |
 | 0.7.4            | 2.11.0           | This version will be deprecated on March 1, 2020. | 
 | 0.7.3            | 2.10.0           | This version will be deprecated on February 11, 2020. |
 | 0.7.2            | 2.10.0           | |

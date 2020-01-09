@@ -74,7 +74,7 @@ private[scio] object Functions {
     }
   }
 
-  private abstract class CombineFn[VI, VA, VO] extends BCombineFn[VI, VA, VO] with NamedFn {
+  abstract private class CombineFn[VI, VA, VO] extends BCombineFn[VI, VA, VO] with NamedFn {
     val vacoder: Coder[VA]
     val vocoder: Coder[VO]
 
@@ -269,7 +269,7 @@ private[scio] object Functions {
       override def partitionFor(elem: T, numPartitions: Int): Int = g(elem)
     }
 
-  private abstract class ReduceFn[T: Coder] extends CombineFn[T, JList[T], T] {
+  abstract private class ReduceFn[T: Coder] extends CombineFn[T, JList[T], T] {
     override def createAccumulator(): JList[T] = new JArrayList[T]()
 
     override def addInput(accumulator: JList[T], input: T): JList[T] = {

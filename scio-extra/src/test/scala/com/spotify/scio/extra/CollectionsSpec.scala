@@ -38,8 +38,8 @@ class CollectionsSpec extends PropertySpec {
       verify(xs.toArray.top(num), maxExpected)
       verify(xs.toBuffer.top(num), maxExpected)
       verify(xs.toIndexedSeq.top(num), maxExpected)
-      verify(xs.toIterable.top(num), maxExpected)
-      verify(xs.toSeq.top(num), maxExpected)
+      verify(xs.top(num), maxExpected)
+      verify(xs.top(num), maxExpected)
       verify(xs.toStream.top(num), maxExpected)
       verify(xs.toVector.top(num), maxExpected)
     }
@@ -57,8 +57,8 @@ class CollectionsSpec extends PropertySpec {
       verify(xs.topByKey(num)(Ordering[Int].reverse), minExpected)
       verify(xs.toArray.topByKey(num), maxExpected)
       verify(xs.toIndexedSeq.topByKey(num), maxExpected)
-      verify(xs.toIterable.topByKey(num), maxExpected)
-      verify(xs.toSeq.topByKey(num), maxExpected)
+      verify(xs.topByKey(num), maxExpected)
+      verify(xs.topByKey(num), maxExpected)
       verify(xs.toStream.topByKey(num), maxExpected)
       verify(xs.toVector.topByKey(num), maxExpected)
     }

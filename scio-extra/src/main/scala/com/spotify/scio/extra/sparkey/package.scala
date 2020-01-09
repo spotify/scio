@@ -24,6 +24,7 @@ import java.lang.{Iterable => JIterable}
 
 import com.spotify.scio.util.Cache
 import com.spotify.scio.ScioContext
+import com.spotify.scio.annotations.experimental
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import com.spotify.scio.values.{SCollection, SideInput}
 import com.spotify.sparkey.{IndexHeader, LogHeader, SparkeyReader}
@@ -118,6 +119,7 @@ import scala.util.hashing.MurmurHash3
  * }}}
  */
 package object sparkey {
+
   /** Enhanced version of [[ScioContext]] with Sparkey methods. */
   implicit class SparkeyScioContext(private val self: ScioContext) extends AnyVal {
     private def singleViewOf(basePath: String): PCollectionView[SparkeyUri] =
@@ -134,6 +136,7 @@ package object sparkey {
      * If the provided base path ends with "*", it will be treated as a sharded collection of
      * Sparkey files.
      */
+    @experimental
     def sparkeySideInput(basePath: String): SideInput[SparkeyReader] = {
       val view = if (basePath.endsWith("*")) {
         val basePathWithoutGlobPart = basePath.split("/").dropRight(1).mkString("/")
@@ -151,6 +154,7 @@ package object sparkey {
      * The provided decoder function will map from the underlying byte array to a JVM type, and
      * the optional [[Cache]] object can be used to cache reads in memory after decoding.
      */
+    @experimental
     def typedSparkeySideInput[T](
       basePath: String,
       decoder: Array[Byte] => T,
@@ -162,6 +166,7 @@ package object sparkey {
      * Create a SideInput of `CachedStringSparkeyReader` from a [[SparkeyUri]] base path, to be used
      * with [[com.spotify.scio.values.SCollection.withSideInputs SCollection.withSideInputs]].
      */
+    @experimental
     def cachedStringSparkeySideInput[T](
       basePath: String,
       cache: Cache[String, String]
@@ -204,6 +209,7 @@ package object sparkey {
      *                  by MurmurHash3 of the key mod the number of shards.
      * @return A singleton SCollection containing the [[SparkeyUri]] of the saved files.
      */
+    @experimental
     def asSparkey(
       path: String = null,
       maxMemoryUsage: Long = -1,
@@ -264,6 +270,7 @@ package object sparkey {
      *
      * @return A singleton SCollection containing the [[SparkeyUri]] of the saved files.
      */
+    @experimental
     def asSparkey(
       implicit w: SparkeyWritable[K, V],
       koder: Coder[K],
@@ -278,6 +285,7 @@ package object sparkey {
      *
      * @param numShards the number of shards to use when writing the Sparkey file(s).
      */
+    @experimental
     def asSparkeySideInput(numShards: Short = DefaultSideInputNumShards)(
       implicit w: SparkeyWritable[K, V],
       koder: Coder[K],
@@ -291,6 +299,7 @@ package object sparkey {
      * [[com.spotify.scio.values.SCollection.withSideInputs SCollection.withSideInputs]]. It is
      * required that each key of the input be associated with a single value.
      */
+    @experimental
     def asSparkeySideInput(
       implicit w: SparkeyWritable[K, V],
       koder: Coder[K],
@@ -305,6 +314,7 @@ package object sparkey {
      * required that each key of the input be associated with a single value. The provided
      * [[Cache]] will be used to cache reads from the resulting [[SparkeyReader]].
      */
+    @experimental
     def asTypedSparkeySideInput[T](decoder: Array[Byte] => T)(
       implicit w: SparkeyWritable[K, V],
       koder: Coder[K],
@@ -319,6 +329,7 @@ package object sparkey {
      * required that each key of the input be associated with a single value. The provided
      * [[Cache]] will be used to cache reads from the resulting [[SparkeyReader]].
      */
+    @experimental
     def asTypedSparkeySideInput[T](
       cache: Cache[String, T],
       numShards: Short = DefaultSideInputNumShards
@@ -336,6 +347,7 @@ package object sparkey {
      * `CachedStringSparkeyReader`, to be used with
      * [[com.spotify.scio.values.SCollection.withSideInputs SCollection.withSideInputs]].
      */
+    @experimental
     def asCachedStringSparkeySideInput(
       cache: Cache[String, String],
       numShards: Short = DefaultSideInputNumShards
@@ -351,10 +363,12 @@ package object sparkey {
    * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with Sparkey methods.
    */
   implicit class SparkeySCollection(private val self: SCollection[SparkeyUri]) extends AnyVal {
+
     /**
      * Convert this SCollection to a SideInput of `SparkeyReader`, to be used with
      * [[com.spotify.scio.values.SCollection.withSideInputs SCollection.withSideInputs]].
      */
+    @experimental
     def asSparkeySideInput: SideInput[SparkeyReader] = {
       val view = self.applyInternal(View.asSingleton())
       new SparkeySideInput(view)
@@ -366,6 +380,7 @@ package object sparkey {
      * The provided decoder function will map from the underlying byte array to a JVM type, and
      * the optional [[Cache]] object can be used to cache reads in memory after decoding.
      */
+    @experimental
     def asTypedSparkeySideInput[T](cache: Cache[String, T])(
       decoder: Array[Byte] => T
     ): SideInput[TypedSparkeyReader[T]] =
@@ -378,6 +393,7 @@ package object sparkey {
      * The provided decoder function will map from the underlying byte array to a JVM type, and
      * the optional [[Cache]] object can be used to cache reads in memory after decoding.
      */
+    @experimental
     def asTypedSparkeySideInput[T](decoder: Array[Byte] => T): SideInput[TypedSparkeyReader[T]] =
       asSparkeySideInput
         .map(reader => new TypedSparkeyReader[T](reader, decoder, Cache.noOp))
@@ -386,6 +402,7 @@ package object sparkey {
      * Convert this SCollection to a SideInput of `CachedStringSparkeyReader`, to be used with
      * [[com.spotify.scio.values.SCollection.withSideInputs SCollection.withSideInputs]].
      */
+    @experimental
     def asCachedStringSparkeySideInput(
       cache: Cache[String, String]
     ): SideInput[CachedStringSparkeyReader] =

@@ -25,6 +25,7 @@ import scala.collection.JavaConverters._
 
 /** Utility for BigQuery schemas. */
 object SchemaUtil {
+
   /** Convert schema to case class definitions. */
   def toPrettyString(schema: TableSchema, name: String, indent: Int): String =
     "@BigQueryType.toTable\n" +
@@ -88,13 +89,12 @@ object SchemaUtil {
     (sb.toString() +: nested).mkString("\n")
   }
 
-  private[types] def escapeNameIfReserved(name: String): String = {
+  private[types] def escapeNameIfReserved(name: String): String =
     if (scalaReservedWords.contains(name)) {
       s"`$name`"
     } else {
       name
     }
-  }
 
   private[types] val scalaReservedWords = Seq(
     "abstract",

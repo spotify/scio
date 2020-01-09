@@ -86,9 +86,9 @@ public abstract class FileOperations<V> implements Serializable, HasDisplayData 
     public abstract void prepareRead(ReadableByteChannel channel) throws IOException;
 
     /** Reads next record in the collection. */
-    abstract V readNext() throws IOException, NoSuchElementException;
+    public abstract V readNext() throws IOException, NoSuchElementException;
 
-    abstract boolean hasNextElement() throws IOException;
+    public abstract boolean hasNextElement() throws IOException;
 
     public abstract void finishRead() throws IOException;
 

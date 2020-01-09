@@ -39,6 +39,7 @@ import scala.reflect.ClassTag
  * }}}
  */
 package object avro {
+
   /** Alias for `me.lyh.parquet.avro.Projection`. */
   val Projection = me.lyh.parquet.avro.Projection
 
@@ -47,6 +48,7 @@ package object avro {
 
   /** Enhanced version of [[ScioContext]] with Parquet Avro methods. */
   implicit class ParquetAvroScioContext(@transient private val self: ScioContext) extends AnyVal {
+
     /**
      * Get an SCollection for a Parquet file as Avro records. Since Avro records produced by
      * Parquet column projection may be incomplete and may fail serialization, you must
@@ -121,6 +123,7 @@ package object avro {
    * methods.
    */
   implicit class ParquetAvroSCollection[T](private val self: SCollection[T]) extends AnyVal {
+
     /**
      * Save this SCollection of Avro records as a Parquet file.
      * @param schema must be not null if `T` is of type
@@ -139,7 +142,7 @@ package object avro {
   }
 
   private[avro] object GcsConnectorUtil {
-    def setCredentials(job: Job): Unit = {
+    def setCredentials(job: Job): Unit =
       // These are needed since `FileInputFormat.setInputPaths` validates paths locally and
       // requires the user's GCP credentials.
       sys.env.get("GOOGLE_APPLICATION_CREDENTIALS") match {
@@ -154,7 +157,6 @@ package object avro {
           job.getConfiguration
             .set("fs.gs.auth.client.secret", "ZmssLNjJy2998hD4CTg2ejr2")
       }
-    }
 
     def unsetCredentials(job: Job): Unit = {
       job.getConfiguration.unset("fs.gs.auth.service.account.json.keyfile")

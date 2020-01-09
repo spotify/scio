@@ -51,11 +51,10 @@ object CloudSqlExample {
   // other options
   // - See this [page](https://github.com/GoogleCloudPlatform/cloud-sql-mysql-socket-factory) for
   // more information on socket factory
-  def getJdbcUrl(opts: CloudSqlOptions): String = {
+  def getJdbcUrl(opts: CloudSqlOptions): String =
     s"jdbc:mysql://google/${opts.getCloudSqlDb}?" +
       s"cloudSqlInstance=${opts.getCloudSqlInstanceConnectionName}&" +
       s"socketFactory=com.google.cloud.sql.mysql.SocketFactory"
-  }
 
   // Basic connection details
   def getConnectionOptions(opts: CloudSqlOptions): JdbcConnectionOptions =

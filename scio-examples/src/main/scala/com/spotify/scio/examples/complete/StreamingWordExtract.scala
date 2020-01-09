@@ -18,7 +18,7 @@
 // Example: Streaming Word Extract
 // Usage:
 
-// `sbt runMain "com.spotify.scio.examples.complete.StreamingWordExtract
+// `sbt "runMain com.spotify.scio.examples.complete.StreamingWordExtract
 // --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
 // --input=gs://apache-beam-samples/shakespeare/kinglear.txt
 // --output=[DATASET].streaming_word_extract"`

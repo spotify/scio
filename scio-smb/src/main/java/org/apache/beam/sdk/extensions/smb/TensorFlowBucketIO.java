@@ -79,8 +79,6 @@ public class TensorFlowBucketIO {
    */
   @AutoValue
   public abstract static class Read extends SortedBucketIO.Read<Example> {
-    abstract TupleTag<Example> getTupleTag();
-
     @Nullable
     abstract ResourceId getInputDirectory();
 

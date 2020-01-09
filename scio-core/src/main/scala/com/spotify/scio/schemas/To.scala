@@ -25,9 +25,16 @@ import scala.language.experimental.macros
 import scala.annotation.tailrec
 import scala.tools.reflect.ToolBox
 
-sealed trait To[I, O] extends (SCollection[I] => SCollection[O])
+sealed trait To[I, O] extends (SCollection[I] => SCollection[O]) with Serializable {
+  def coder: Coder[O]
+  def convert(i: I): O
+
+  final def apply(coll: SCollection[I]): SCollection[O] =
+    coll.map(i => convert(i))(coder)
+}
 
 object To {
+
   @tailrec @inline
   private def getBaseType(t: BSchema.FieldType): BSchema.FieldType = {
     val log = t.getLogicalType()
@@ -51,7 +58,7 @@ object To {
   }
 
   // Error API
-  private sealed trait Error
+  sealed private trait Error
   private case class NullableError(got: Nullable, expected: Nullable) extends Error
   private case class TypeError(got: BSchema.FieldType, expected: BSchema.FieldType) extends Error
   private case object FieldNotFound extends Error
@@ -63,7 +70,7 @@ object To {
    */
   private def areCompatible(
     context: Location
-  )(t0: BSchema.FieldType, t1: BSchema.FieldType): Errors = {
+  )(t0: BSchema.FieldType, t1: BSchema.FieldType): Errors =
     (t0.getTypeName, t1.getTypeName, t0.getNullable == t1.getNullable) match {
       case (_, _, false) =>
         val expected = NullableBuilder.fromBoolean(t1.getNullable())
@@ -82,7 +89,6 @@ object To {
         if (t0.equivalent(t1, BSchema.EquivalenceNullablePolicy.SAME)) Nil
         else List(Positional(context, TypeError(t0, t1)))
     }
-  }
 
   private def areCompatible(s0: BSchema, s1: BSchema): Errors = {
     val s0Fields =
@@ -171,13 +177,13 @@ object To {
 
   private[scio] def unsafe[I: Schema, O: Schema](to: To[I, O]): To[I, O] =
     new To[I, O] {
-      def apply(coll: SCollection[I]): SCollection[O] = {
-        val (bst, _, _) = SchemaMaterializer.materialize(coll.context, Schema[I])
-        val (bso, _, _) = SchemaMaterializer.materialize(coll.context, Schema[O])
+      val (bst, _, _) = SchemaMaterializer.materialize(Schema[I])
+      val (bso, _, _) = SchemaMaterializer.materialize(Schema[O])
+      val underlying: To[I, O] = checkCompatibility(bst, bso)(to)
+        .fold(message => throw new IllegalArgumentException(message), identity)
 
-        checkCompatibility(bst, bso)(to)
-          .fold(message => throw new IllegalArgumentException(message), _.apply(coll))
-      }
+      val coder = underlying.coder
+      def convert(i: I): O = underlying.convert(i)
     }
 
   /**
@@ -187,23 +193,22 @@ object To {
    */
   def unchecked[I: Schema, O: Schema]: To[I, O] =
     new To[I, O] {
-      def apply(coll: SCollection[I]): SCollection[O] = {
-        val (_, toT, _) = SchemaMaterializer.materialize(coll.context, Schema[I])
-        val convertRow: (BSchema, I) => Row = { (s, i) =>
-          val row = toT(i)
-          transform(s)(row)
-        }
-        unchecked[I, O](convertRow).apply(coll)
+      val (_, toT, _) = SchemaMaterializer.materialize(Schema[I])
+      val convertRow: (BSchema, I) => Row = { (s, i) =>
+        val row = toT(i)
+        transform(s)(row)
       }
+      val underlying = unchecked[I, O](convertRow)
+
+      val coder = underlying.coder
+      def convert(i: I): O = underlying.convert(i)
     }
 
   private[scio] def unchecked[I, O: Schema](f: (BSchema, I) => Row): To[I, O] =
     new To[I, O] {
-      def apply(coll: SCollection[I]): SCollection[O] = {
-        val (bso, toO, fromO) = SchemaMaterializer.materialize(coll.context, Schema[O])
-        val convert: I => O = f.curried(bso).andThen(fromO(_))
-        coll.map[O](convert)(Coder.beam(SchemaCoder.of(bso, toO, fromO)))
-      }
+      val (bso, toO, fromO) = SchemaMaterializer.materialize(Schema[O])
+      val coder = Coder.beam(SchemaCoder.of(bso, toO, fromO))
+      def convert(i: I): O = f.curried(bso).andThen(fromO(_))(i)
     }
 
   /**
@@ -219,7 +224,7 @@ object To {
 import scala.reflect.macros._
 import reflect.runtime.{universe => u}
 
-private[scio] final class FastEval(evalToolBox: ToolBox[u.type]) {
+final private[scio] class FastEval(evalToolBox: ToolBox[u.type]) {
   def eval[T](ctx: blackbox.Context)(expr: ctx.Expr[T]): T = {
     import ctx.universe._
 
@@ -243,7 +248,7 @@ private[scio] final class FastEval(evalToolBox: ToolBox[u.type]) {
  * This is faster bc. resusing the same toolbox also meas reusing the same classloader,
  * which saves disks IOs since we don't load the same classes from disk multiple times
  */
-private[scio] final object FastEval {
+final private[scio] object FastEval {
   import scala.tools.reflect._
 
   private lazy val tl: ToolBox[u.type] = {

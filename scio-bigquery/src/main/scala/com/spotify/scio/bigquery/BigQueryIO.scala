@@ -126,7 +126,7 @@ private[bigquery] object Writes {
 }
 
 sealed trait BigQueryIO[T] extends ScioIO[T] {
-  override final val tapT = TapOf[T]
+  final override val tapT = TapOf[T]
 }
 
 object BigQueryIO {
@@ -435,7 +435,7 @@ final case class BigQueryStorageSelect(sqlQuery: Query) extends BigQueryIO[Table
 final case class TableRowJsonIO(path: String) extends ScioIO[TableRow] {
   override type ReadP = Unit
   override type WriteP = TableRowJsonIO.WriteParam
-  override final val tapT = TapOf[TableRow]
+  final override val tapT = TapOf[TableRow]
 
   override protected def read(sc: ScioContext, params: ReadP): SCollection[TableRow] =
     sc.wrap(sc.applyInternal(TextIO.read().from(path)))
@@ -686,7 +686,7 @@ object BigQueryTyped {
     }
 
     def defaultParseFn[T: Schema]: SchemaAndRecord => T = {
-      val (schema, _, fromRow) = SchemaMaterializer.materializeWithDefault(Schema[T])
+      val (schema, _, fromRow) = SchemaMaterializer.materialize(Schema[T])
       input =>
         fromRow {
           BigQueryUtils.toBeamRow(
@@ -711,7 +711,7 @@ object BigQueryTyped {
     override def testId: String = s"BigQueryIO(${table.spec})"
 
     private[this] lazy val underlying: BigQueryTypedTable[T] = {
-      val (s, toRow, fromRow) = SchemaMaterializer.materializeWithDefault(Schema[T])
+      val (s, toRow, fromRow) = SchemaMaterializer.materialize(Schema[T])
       BigQueryTypedTable[T](
         parseFn,
         (t: T) => BigQueryUtils.toTableRow(toRow(t)),

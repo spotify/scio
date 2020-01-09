@@ -45,7 +45,7 @@ object BeamSqlInterpolatorWordCount {
       // Save result as text files under the output path
       .saveAsTextFile(args("output"))
 
-    // Close the context and execute the pipeline
+    // Execute the pipeline
     sc.run()
     ()
   }

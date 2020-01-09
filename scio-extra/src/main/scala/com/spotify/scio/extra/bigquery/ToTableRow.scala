@@ -20,6 +20,7 @@ package com.spotify.scio.extra.bigquery
 import java.nio.ByteBuffer
 import java.util
 
+import com.spotify.scio.annotations.experimental
 import com.spotify.scio.bigquery.TableRow
 import com.spotify.scio.extra.bigquery.Implicits.AvroConversionException
 import org.apache.avro.Schema
@@ -37,6 +38,7 @@ trait ToTableRow {
   private lazy val base64Encoding: BaseEncoding = BaseEncoding.base64Url()
   private lazy val hexEncoding: BaseEncoding = BaseEncoding.base16()
 
+  @experimental
   def toTableRow[T](record: T)(implicit ev: T <:< IndexedRecord): TableRow = {
     val row = new TableRow
 
@@ -49,7 +51,7 @@ trait ToTableRow {
     row
   }
 
-  private def toTableRowField(fieldValue: Any, field: Schema.Field): Any = {
+  private def toTableRowField(fieldValue: Any, field: Schema.Field): Any =
     fieldValue match {
       case x: CharSequence          => x.toString
       case x: Enum[_]               => x.name()
@@ -66,9 +68,8 @@ trait ToTableRow {
             s"could not match ${fieldValue.getClass}"
         )
     }
-  }
 
-  private def toTableRowFromIterable(iterable: Iterable[Any], field: Schema.Field): util.List[_] = {
+  private def toTableRowFromIterable(iterable: Iterable[Any], field: Schema.Field): util.List[_] =
     iterable
       .map { item =>
         if (item.isInstanceOf[Iterable[_]] || item.isInstanceOf[Map[_, _]]) {
@@ -81,9 +82,8 @@ trait ToTableRow {
       }
       .toList
       .asJava
-  }
 
-  private def toTableRowFromMap(map: Iterable[Any], field: Schema.Field): util.List[_] = {
+  private def toTableRowFromMap(map: Iterable[Any], field: Schema.Field): util.List[_] =
     map
       .map {
         case (k, v) =>
@@ -93,9 +93,8 @@ trait ToTableRow {
       }
       .toList
       .asJava
-  }
 
-  private def encodeByteArray(bytes: Array[Byte], fieldSchema: Schema): String = {
+  private def encodeByteArray(bytes: Array[Byte], fieldSchema: Schema): String =
     Option(fieldSchema.getProp(encodingPropName)) match {
       case Some("BASE64") => base64Encoding.encode(bytes)
       case Some("HEX")    => hexEncoding.encode(bytes)
@@ -103,7 +102,6 @@ trait ToTableRow {
         throw AvroConversionException(s"Unsupported encoding $encoding")
       case None => base64Encoding.encode(bytes)
     }
-  }
 
   private def toByteArray(buffer: ByteBuffer) = {
     val copy = buffer.asReadOnlyBuffer

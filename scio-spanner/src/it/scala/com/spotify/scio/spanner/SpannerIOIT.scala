@@ -42,7 +42,7 @@ object SpannerIOIT {
   private val adminClient = Spanner.adminClient(projectId)
   private val dbClient = Spanner.databaseClient(config)
 
-  private final case class FakeSpannerData(asMutations: Seq[Mutation], asStructs: Seq[Struct])
+  final private case class FakeSpannerData(asMutations: Seq[Mutation], asStructs: Seq[Struct])
   private def fakeData(tableName: String) = FakeSpannerData(
     Seq(
       Mutation

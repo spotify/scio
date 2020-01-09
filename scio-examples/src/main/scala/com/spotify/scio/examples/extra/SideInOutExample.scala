@@ -18,7 +18,7 @@
 // Example: Side Input and Output Example
 // Usage:
 
-// `sbt runMain "com.spotify.scio.examples.extra.SideInOutExample
+// `sbt "runMain com.spotify.scio.examples.extra.SideInOutExample
 // --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
 // --input=gs://apache-beam-samples/shakespeare/kinglear.txt
 // --stopWords=[STOP_WORDS_URI]
@@ -101,7 +101,7 @@ object SideInOutExample {
     sideOutputs(twoLetter).map(toString).saveAsTextFile(args("output2"))
     sideOutputs(threeLetter).map(toString).saveAsTextFile(args("output3"))
 
-    // Close the context and execute the pipeline
+    // Execute the pipeline
     sc.run()
     ()
   }

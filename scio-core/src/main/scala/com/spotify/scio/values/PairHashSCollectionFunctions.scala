@@ -28,6 +28,7 @@ import scala.collection.mutable.{ArrayBuffer, Map => MMap}
  * @groupname join Join Operations
  */
 class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
+
   /**
    * Perform an inner join by replicating `rhs` to all workers. The right side should be tiny and
    * fit in memory.
@@ -205,7 +206,7 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     hashFullOuterJoin(sideMap.asImmutableSideInput)
 
   /**
-   * Perform a full outer join with a SideMap.
+   * Perform a full outer join with a `SideInput[Map[K, Iterable[W]]]`.
    *
    * @example
    * {{{
@@ -299,7 +300,7 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
 
   private def combineAsMapSideInput[W: Coder](
     rhs: SCollection[(K, W)]
-  )(implicit koder: Coder[K]): SideInput[MMap[K, ArrayBuffer[W]]] = {
+  )(implicit koder: Coder[K]): SideInput[MMap[K, ArrayBuffer[W]]] =
     rhs
       .combine {
         case (k, v) =>
@@ -316,5 +317,4 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
           left
       }
       .asSingletonSideInput(MMap.empty[K, ArrayBuffer[W]])
-  }
 }

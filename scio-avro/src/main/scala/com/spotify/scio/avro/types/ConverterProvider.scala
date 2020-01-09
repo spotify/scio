@@ -24,18 +24,18 @@ import org.apache.avro.generic.GenericRecord
 import scala.reflect.macros._
 
 private[types] object ConverterProvider {
-  def fromGenericRecordImpl[T: c.WeakTypeTag](c: blackbox.Context): c.Expr[(GenericRecord => T)] = {
+  def fromGenericRecordImpl[T: c.WeakTypeTag](c: blackbox.Context): c.Expr[GenericRecord => T] = {
     val tpe = implicitly[c.WeakTypeTag[T]].tpe
     val r = fromGenericRecordInternal(c)(tpe)
 
-    c.Expr[(GenericRecord => T)](r)
+    c.Expr[GenericRecord => T](r)
   }
 
-  def toGenericRecordImpl[T: c.WeakTypeTag](c: blackbox.Context): c.Expr[(T => GenericRecord)] = {
+  def toGenericRecordImpl[T: c.WeakTypeTag](c: blackbox.Context): c.Expr[T => GenericRecord] = {
     val tpe = implicitly[c.WeakTypeTag[T]].tpe
     val r = toGenericRecordInternal(c)(tpe)
 
-    c.Expr[(T => GenericRecord)](r)
+    c.Expr[T => GenericRecord](r)
   }
 
   private def fromGenericRecordInternal(c: blackbox.Context)(tpe: c.Type): c.Tree = {
@@ -45,7 +45,7 @@ private[types] object ConverterProvider {
     // Converter helpers
     // =======================================================================
 
-    def cast(tree: Tree, tpe: Type): Tree = {
+    def cast(tree: Tree, tpe: Type): Tree =
       tpe match {
         case t if t =:= typeOf[Boolean] => q"$tree.asInstanceOf[Boolean]"
         case t if t =:= typeOf[Int]     => q"$tree.asInstanceOf[Int]"
@@ -77,7 +77,6 @@ private[types] object ConverterProvider {
           """
         case _ => c.abort(c.enclosingPosition, s"Unsupported type: $tpe")
       }
-    }
 
     def option(tree: Tree, tpe: Type): Tree =
       q"if ($tree == null) None else Some(${cast(tree, tpe)})"
@@ -109,7 +108,7 @@ private[types] object ConverterProvider {
       val companion = tpe.typeSymbol.companion
       val gets = tpe.erasure match {
         case t if isCaseClass(c)(t) => getFields(c)(t).map(s => field(s, fn))
-        case t                      => c.abort(c.enclosingPosition, s"Unsupported type: $tpe")
+        case _                      => c.abort(c.enclosingPosition, s"Unsupported type: $tpe")
       }
       q"$companion(..$gets)"
     }
@@ -133,7 +132,7 @@ private[types] object ConverterProvider {
     // Converter helpers
     // =======================================================================
 
-    def cast(tree: Tree, tpe: Type): Tree = {
+    def cast(tree: Tree, tpe: Type): Tree =
       tpe match {
         case t if t =:= typeOf[Boolean] => tree
         case t if t =:= typeOf[Int]     => tree
@@ -161,7 +160,6 @@ private[types] object ConverterProvider {
           """
         case _ => c.abort(c.enclosingPosition, s"Unsupported type: $tpe")
       }
-    }
 
     def option(tree: Tree, tpe: Type): Tree =
       q"if ($tree.isDefined) ${cast(q"$tree.get", tpe)} else null"

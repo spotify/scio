@@ -18,7 +18,7 @@
 // Example: Filter Example
 // Usage:
 
-// `sbt runMain "com.spotify.scio.examples.cookbook.FilterExamples
+// `sbt "runMain com.spotify.scio.examples.cookbook.FilterExamples
 // --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
 // --output=[DATASET].filter_examples"`
 package com.spotify.scio.examples.cookbook
@@ -83,7 +83,7 @@ object FilterExamples {
       // Save result as a BigQuery table
       .saveAsBigQueryTable(Table.Spec(args("output")), schema, WRITE_TRUNCATE, CREATE_IF_NEEDED)
 
-    // Close the context and execute the pipeline
+    // Execute the pipeline
     sc.run()
     ()
   }

@@ -24,13 +24,13 @@ import bloop.integrations.sbt.BloopDefaults
 
 ThisBuild / turbo := true
 
-val beamVersion = "2.16.0"
+val beamVersion = "2.17.0"
 
 val algebirdVersion = "0.13.6"
 val annoy4sVersion = "0.9.0"
 val annoyVersion = "0.2.6"
 val asmVersion = "4.13"
-val autoServiceVersion = "1.0-rc2"
+val autoServiceVersion = "1.0-rc6"
 val autoValueVersion = "1.7"
 val avroVersion = "1.8.2"
 val breezeVersion = "1.0"
@@ -43,46 +43,46 @@ val commonsCompressVersion = "1.19"
 val commonsTextVersion = "1.8"
 val elasticsearch2Version = "2.4.6"
 val elasticsearch5Version = "5.6.16"
-val elasticsearch6Version = "6.8.5"
-val elasticsearch7Version = "7.5.0"
-val featranVersion = "0.4.0"
+val elasticsearch6Version = "6.8.6"
+val elasticsearch7Version = "7.5.1"
+val featranVersion = "0.5.0"
 val gcsConnectorVersion = "hadoop2-2.0.0"
 val gcsVersion = "1.8.0"
 val guavaVersion = "25.1-jre"
 val hadoopVersion = "2.7.7"
-val hamcrestVersion = "1.3"
-val jacksonVersion = "2.10.1"
+val hamcrestVersion = "2.2"
+val jacksonVersion = "2.10.2"
 val javaLshVersion = "0.12"
 val jlineVersion = "2.14.6"
 val jodaTimeVersion = "2.10.5"
 val junitInterfaceVersion = "0.11"
-val junitVersion = "4.12"
+val junitVersion = "4.13"
 val kantanCsvVersion = "0.5.1"
 val kryoVersion = "4.0.2" // explicitly depend on 4.0.1+ due to https://github.com/EsotericSoftware/kryo/pull/516
-val parquetAvroExtraVersion = "0.2.3"
-val parquetVersion = "1.10.1"
-val protobufGenericVersion = "0.2.5"
-val protobufVersion = "3.11.0"
-val scalacheckVersion = "1.14.2"
+val parquetAvroVersion = "0.3.1"
+val parquetVersion = "1.11.0"
+val protobufGenericVersion = "0.2.8"
+val protobufVersion = "3.11.1"
+val scalacheckVersion = "1.14.3"
 val scalaMacrosVersion = "2.1.1"
 val scalatestVersion = "3.1.0"
 val scalatestplusVersion = "3.1.0.0-RC2"
 val shapelessVersion = "2.3.3"
-val slf4jVersion = "1.7.29"
+val slf4jVersion = "1.7.30"
 val sparkeyVersion = "3.0.0"
 val tensorFlowVersion = "1.15.0"
 val zoltarVersion = "0.5.6"
-val magnoliaVersion = "0.12.2"
-val magnolifyVersion = "0.1.3"
+val magnoliaVersion = "0.12.6"
+val magnolifyVersion = "0.1.4"
 val grpcVersion = "1.17.1"
 val caseappVersion = "2.0.0-M9"
-val sparkVersion = "2.4.3"
+val sparkVersion = "2.4.4"
 val caffeineVersion = "2.8.0"
 val bigtableClientVersion = "1.8.0"
 val generatedGrpcGaVersion = "1.43.0"
 val generatedGrpcBetaVersion = "0.44.0"
 val googleClientsVersion = "1.27.0"
-val googleApiServicesBigQuery = "v2-rev20181104-1.27.0"
+val googleApiServicesBigQuery = s"v2-rev20181104-$googleClientsVersion"
 val bigdataossVersion = "1.9.16"
 val gaxVersion = "1.38.0"
 val googleAuthVersion = "0.12.0"
@@ -265,18 +265,19 @@ lazy val assemblySettings = Seq(
   test in assembly := {},
   assemblyMergeStrategy in assembly ~= { old =>
     {
-      case s if s.endsWith(".properties")           => MergeStrategy.filterDistinctLines
-      case s if s.endsWith("pom.xml")               => MergeStrategy.last
-      case s if s.endsWith(".class")                => MergeStrategy.last
-      case s if s.endsWith(".proto")                => MergeStrategy.last
-      case s if s.endsWith("libjansi.jnilib")       => MergeStrategy.last
-      case s if s.endsWith("jansi.dll")             => MergeStrategy.rename
-      case s if s.endsWith("libjansi.so")           => MergeStrategy.rename
-      case s if s.endsWith("libsnappyjava.jnilib")  => MergeStrategy.last
-      case s if s.endsWith("libsnappyjava.so")      => MergeStrategy.last
-      case s if s.endsWith("snappyjava_snappy.dll") => MergeStrategy.last
-      case s if s.endsWith(".dtd")                  => MergeStrategy.rename
-      case s if s.endsWith(".xsd")                  => MergeStrategy.rename
+      case s if s.endsWith(".properties")            => MergeStrategy.filterDistinctLines
+      case s if s.endsWith("public-suffix-list.txt") => MergeStrategy.filterDistinctLines
+      case s if s.endsWith("pom.xml")                => MergeStrategy.last
+      case s if s.endsWith(".class")                 => MergeStrategy.last
+      case s if s.endsWith(".proto")                 => MergeStrategy.last
+      case s if s.endsWith("libjansi.jnilib")        => MergeStrategy.last
+      case s if s.endsWith("jansi.dll")              => MergeStrategy.rename
+      case s if s.endsWith("libjansi.so")            => MergeStrategy.rename
+      case s if s.endsWith("libsnappyjava.jnilib")   => MergeStrategy.last
+      case s if s.endsWith("libsnappyjava.so")       => MergeStrategy.last
+      case s if s.endsWith("snappyjava_snappy.dll")  => MergeStrategy.last
+      case s if s.endsWith(".dtd")                   => MergeStrategy.rename
+      case s if s.endsWith(".xsd")                   => MergeStrategy.rename
       case PathList("META-INF", "services", "org.apache.hadoop.fs.FileSystem") =>
         MergeStrategy.filterDistinctLines
       case s => old(s)
@@ -323,7 +324,7 @@ def beamRunnerSettings: Seq[Setting[_]] = Seq(
           case "DirectRunner"   => directRunnerDependencies
           case "DataflowRunner" => dataflowRunnerDependencies
           case "SparkRunner"    => sparkRunnerDependencies
-          case unkown           => Nil
+          case _                => Nil
         }.toSeq
       }
       .getOrElse(directRunnerDependencies)
@@ -467,7 +468,8 @@ lazy val `scio-test`: Project = project
       "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test,it",
       "com.spotify" %% "magnolify-datastore" % magnolifyVersion % "it",
       // DataFlow testing requires junit and hamcrest
-      "org.hamcrest" % "hamcrest-all" % hamcrestVersion,
+      "org.hamcrest" % "hamcrest-core" % hamcrestVersion,
+      "org.hamcrest" % "hamcrest-library" % hamcrestVersion,
       // Our BloomFilters are Algebird Monoids and hence uses tests from Algebird Test
       "com.twitter" %% "algebird-test" % algebirdVersion % "test",
       "com.spotify" % "annoy" % annoyVersion % "test",
@@ -565,8 +567,18 @@ lazy val `scio-bigquery`: Project = project
       "com.spotify" %% "magnolify-scalacheck" % magnolifyVersion % "test",
       "com.google.cloud" % "google-cloud-storage" % gcsVersion % "test,it",
       // DataFlow testing requires junit and hamcrest
-      "org.hamcrest" % "hamcrest-all" % hamcrestVersion % "test,it"
-    )
+      "org.hamcrest" % "hamcrest-core" % hamcrestVersion % "test,it",
+      "org.hamcrest" % "hamcrest-library" % hamcrestVersion % "test,it"
+    ),
+    // Workaround for https://github.com/spotify/scio/issues/2308
+    (Compile / doc) := Def.taskDyn {
+      val default = (Compile / doc).taskValue
+      if (scalaBinaryVersion.value == "2.11") {
+        (Compile / doc / target).toTask
+      } else {
+        Def.task(default.value)
+      }
+    }.value
   )
   .dependsOn(
     `scio-core` % "compile;it->it"
@@ -588,7 +600,8 @@ lazy val `scio-bigtable`: Project = project
       "com.novocode" % "junit-interface" % junitInterfaceVersion,
       "org.apache.beam" % "beam-runners-direct-java" % beamVersion % "test",
       "org.scalatest" %% "scalatest" % scalatestVersion % "test",
-      "org.hamcrest" % "hamcrest-all" % hamcrestVersion % "test",
+      "org.hamcrest" % "hamcrest-core" % hamcrestVersion % "test",
+      "org.hamcrest" % "hamcrest-library" % hamcrestVersion % "test",
       "junit" % "junit" % junitVersion % "test"
     ),
     beamSDKIODependencies
@@ -797,11 +810,14 @@ lazy val `scio-parquet`: Project = project
     javacOptions ++= Seq("-s", (sourceManaged.value / "main").toString),
     description := "Scio add-on for Parquet",
     libraryDependencies ++= Seq(
-      "me.lyh" %% "parquet-avro-extra" % parquetAvroExtraVersion,
+      "me.lyh" %% "parquet-avro" % parquetAvroVersion,
       "com.google.cloud.bigdataoss" % "gcs-connector" % gcsConnectorVersion,
       "org.apache.beam" % "beam-sdks-java-io-hadoop-format" % beamVersion,
       "org.apache.hadoop" % "hadoop-client" % hadoopVersion,
       "org.apache.parquet" % "parquet-avro" % parquetVersion
+    ),
+    dependencyOverrides ++= Seq(
+      "org.apache.avro" % "avro" % avroVersion
     )
   )
   .dependsOn(
@@ -860,9 +876,8 @@ lazy val `scio-tensorflow`: Project = project
   .dependsOn(
     `scio-avro`,
     `scio-core`,
-    `scio-test` % "it->it;test->test"
+    `scio-test` % "test->test"
   )
-  .configs(IntegrationTest)
   .enablePlugins(ProtobufPlugin)
 
 lazy val `scio-schemas`: Project = project
@@ -920,7 +935,8 @@ lazy val `scio-examples`: Project = project
       }
     },
     sources in doc in Compile := List(),
-    run / classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.Flat
+    run / classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.Flat,
+    Test / classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.Flat
   )
   .dependsOn(
     `scio-core`,
@@ -929,10 +945,12 @@ lazy val `scio-examples`: Project = project
     `scio-schemas`,
     `scio-jdbc`,
     `scio-extra`,
+    `scio-elasticsearch7`,
     `scio-spanner`,
     `scio-tensorflow`,
     `scio-sql`,
-    `scio-test` % "compile->test"
+    `scio-test` % "compile->test",
+    `scio-smb`
   )
 
 lazy val `scio-repl`: Project = project
@@ -975,7 +993,8 @@ lazy val `scio-jmh`: Project = project
     dependencyClasspath in Jmh := (dependencyClasspath in Test).value,
     libraryDependencies ++= directRunnerDependencies ++ Seq(
       "junit" % "junit" % junitVersion % "test",
-      "org.hamcrest" % "hamcrest-all" % hamcrestVersion % "test",
+      "org.hamcrest" % "hamcrest-core" % hamcrestVersion % "test",
+      "org.hamcrest" % "hamcrest-library" % hamcrestVersion % "test",
       "org.slf4j" % "slf4j-nop" % slf4jVersion
     )
   )
@@ -994,7 +1013,7 @@ lazy val `scio-smb`: Project = project
     description := "Sort Merge Bucket source/sink implementations for Apache Beam",
     libraryDependencies ++= Seq(
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
-      "org.apache.beam" % "beam-sdks-java-core" % "it,test" classifier "tests",
+      "org.apache.beam" % "beam-sdks-java-core" % beamVersion % "it,test" classifier "tests",
       "org.apache.beam" % "beam-sdks-java-extensions-sorter" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-extensions-protobuf" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
@@ -1003,9 +1022,10 @@ lazy val `scio-smb`: Project = project
       "com.google.auto.value" % "auto-value-annotations" % autoValueVersion,
       "com.google.auto.value" % "auto-value" % autoValueVersion,
       "javax.annotation" % "javax.annotation-api" % "1.3.2",
-      "org.hamcrest" % "hamcrest-all" % hamcrestVersion % Test,
-      "com.novocode" % "junit-interface" % "0.11" % Test,
-      "junit" % "junit" % "4.13-rc-2" % Test
+      "org.hamcrest" % "hamcrest-core" % hamcrestVersion % Test,
+      "org.hamcrest" % "hamcrest-library" % hamcrestVersion % Test,
+      "com.novocode" % "junit-interface" % junitInterfaceVersion % Test,
+      "junit" % "junit" % junitVersion % Test
     ),
     javacOptions ++= {
       (Compile / sourceManaged).value.mkdirs()
@@ -1015,6 +1035,11 @@ lazy val `scio-smb`: Project = project
   )
   .configs(
     IntegrationTest
+  )
+  .dependsOn(
+    `scio-core`,
+    `scio-test` % "test;it",
+    `scio-avro` % IntegrationTest
   )
 
 lazy val site: Project = project
@@ -1048,7 +1073,7 @@ lazy val site: Project = project
 // ScalaDoc links look like http://site/index.html#my.package.MyClass while JavaDoc links look
 // like http://site/my/package/MyClass.html. Therefore we need to fix links to external JavaDoc
 // generated by ScalaDoc.
-def fixJavaDocLinks(bases: Seq[String], doc: String): String = {
+def fixJavaDocLinks(bases: Seq[String], doc: String): String =
   bases.foldLeft(doc) { (d, base) =>
     val regex = s"""\"($base)#([^"]*)\"""".r
     regex.replaceAllIn(d, m => {
@@ -1057,7 +1082,6 @@ def fixJavaDocLinks(bases: Seq[String], doc: String): String = {
       s"$b/$c.html"
     })
   }
-}
 
 lazy val soccoIndex = taskKey[File]("Generates examples/index.html")
 
@@ -1081,9 +1105,9 @@ lazy val siteSettings = Def.settings(
   mdocIn := baseDirectory.value / "src" / "paradox",
   mdocExtraArguments ++= Seq("--no-link-hygiene"),
   sourceDirectory in Paradox := mdocOut.value,
+  makeSite := makeSite.dependsOn(mdoc.toTask("")).value,
   makeSite := {
     // Fix JavaDoc links before makeSite
-    mdoc.toTask("").value
     (doc in ScalaUnidoc).value
     val bases = javaMappings.map(m => m._3 + "/index.html")
     val t = (target in ScalaUnidoc).value
@@ -1095,14 +1119,13 @@ lazy val siteSettings = Def.settings(
   },
   // Mappings from dependencies to external ScalaDoc/JavaDoc sites
   apiMappings ++= {
-    def mappingFn(organization: String, name: String, apiUrl: String) = {
+    def mappingFn(organization: String, name: String, apiUrl: String) =
       (for {
         entry <- (fullClasspath in Compile).value
         module <- entry.get(moduleID.key)
         if module.organization == organization
         if module.name.startsWith(name)
       } yield entry.data).toList.map((_, url(apiUrl)))
-    }
     val bootClasspath = System
       .getProperty("sun.boot.class.path")
       .split(sys.props("path.separator"))
@@ -1128,7 +1151,8 @@ lazy val siteSettings = Def.settings(
       `scio-parquet`,
       `scio-tensorflow`,
       `scio-spanner`,
-      `scio-macros`
+      `scio-macros`,
+      `scio-smb`
     ),
   // unidoc handles class paths differently than compile and may give older
   // versions high precedence.
@@ -1152,7 +1176,7 @@ lazy val siteSettings = Def.settings(
       .withFavicon("images/favicon.ico")
       .withColor("white", "indigo")
       .withLogo("images/logo.png")
-      .withCopyright("Copyright (C) 2018 Spotify AB")
+      .withCopyright("Copyright (C) 2020 Spotify AB")
       .withRepository(uri("https://github.com/spotify/scio"))
       .withSocial(uri("https://github.com/spotify"), uri("https://twitter.com/spotifyeng"))
   }

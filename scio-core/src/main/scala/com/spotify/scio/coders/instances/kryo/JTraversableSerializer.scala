@@ -56,7 +56,7 @@ private[coders] class JTraversableSerializer[T, C <: Traversable[T]](
 }
 
 // workaround for Java Iterable/Collection missing proper equality check
-private[coders] abstract class JWrapperCBF[T] extends CanBuildFrom[Iterable[T], T, Iterable[T]] {
+abstract private[coders] class JWrapperCBF[T] extends CanBuildFrom[Iterable[T], T, Iterable[T]] {
   override def apply(from: Iterable[T]): mutable.Builder[T, Iterable[T]] = {
     val b = new JIterableWrapperBuilder
     from.foreach(b += _)

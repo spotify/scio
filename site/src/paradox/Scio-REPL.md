@@ -461,10 +461,9 @@ Type :help for more information.
 
 BigQuery client available as 'bq'
 Scio context available as 'sc'
-
 ```
 
-``` scala
+```scala
 Runtime.getRuntime().maxMemory()
 // res1: Long = 1908932608
 ```

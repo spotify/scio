@@ -27,7 +27,7 @@ import org.apache.beam.sdk.io.gcp.spanner.{SpannerConfig, SpannerIO => BSpannerI
 import scala.collection.JavaConverters._
 
 sealed trait SpannerIO[T] extends ScioIO[T] {
-  override final val tapT = EmptyTapOf[T]
+  final override val tapT = EmptyTapOf[T]
   val config: SpannerConfig
 
   override def testId: String =

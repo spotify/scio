@@ -18,7 +18,7 @@
 // Example: Use Futures and Taps to orchestrate multiple jobs with dependencies
 // Usage:
 
-// `sbt runMain "com.spotify.scio.examples.extra.WordCountOrchestration
+// `sbt "runMain com.spotify.scio.examples.extra.WordCountOrchestration
 // --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
 // --output=gs://[BUCKET]/[PATH]/wordcount"`
 package com.spotify.scio.examples.extra

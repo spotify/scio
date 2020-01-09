@@ -265,7 +265,7 @@ class StorageIT extends AnyFlatSpec with Matchers {
     import scala.concurrent.duration.Duration
     val res = Await.result(futureTap, Duration.Inf).value.toList
 
-    res should not be (empty)
+    res should not be empty
   }
 
   it should "support typed read" in {
@@ -277,7 +277,7 @@ class StorageIT extends AnyFlatSpec with Matchers {
     import scala.concurrent.duration.Duration
     val res = Await.result(futureTap, Duration.Inf).value.toList
 
-    res should not be (empty)
+    res should not be empty
   }
 }
 
@@ -311,10 +311,7 @@ object StorageIT {
   )
   class NestedWithAll
 
-  @BigQueryType.fromStorage(
-    "data-integration-test:partition_a.table_%s",
-    List("$LATEST")
-  )
+  @BigQueryType.fromStorage("data-integration-test:partition_a.table_%s", List("$LATEST"))
   class StorageLatest
 
   @BigQueryType.fromTable("data-integration-test:storage.required")

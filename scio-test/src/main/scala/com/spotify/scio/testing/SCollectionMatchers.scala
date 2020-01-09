@@ -29,6 +29,8 @@ import org.apache.beam.sdk.transforms.SerializableFunction
 import org.apache.beam.sdk.transforms.windowing.BoundedWindow
 import org.apache.beam.sdk.util.CoderUtils
 import org.scalatest.matchers.{MatchResult, Matcher}
+import org.hamcrest.Matchers
+import org.hamcrest.MatcherAssert.assertThat
 
 import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
@@ -93,9 +95,9 @@ trait SCollectionMatchers {
     new SerializableFunction[JIterable[T], Void] {
       // delegate serialization to Kryo to avoid serialization issues in tests
       // when a non-serializable object is captured by the closure
-      val impl = Externalizer(f)
+      private[this] val impl = Externalizer(f)
 
-      override def apply(input: JIterable[T]) = {
+      override def apply(input: JIterable[T]): Void = {
         impl.get(input)
         null
       }
@@ -105,9 +107,9 @@ trait SCollectionMatchers {
     new SerializableFunction[T, Void] {
       // delegate serialization to Kryo to avoid serialization issues in tests
       // when a non-serializable object is captured by the closure
-      val impl = Externalizer(f)
+      private[this] val impl = Externalizer(f)
 
-      override def apply(input: T) = {
+      override def apply(input: T): Void = {
         impl.get(input)
         null
       }
@@ -118,10 +120,9 @@ trait SCollectionMatchers {
   private def serDeCycle[T: Coder](scollection: SCollection[T]): SCollection[T] = {
     val coder = scollection.internal.getCoder
     scollection
-      .map(
-        e =>
-          CoderUtils
-            .decodeFromByteArray(coder, CoderUtils.encodeToByteArray(coder, e))
+      .map(e =>
+        CoderUtils
+          .decodeFromByteArray(coder, CoderUtils.encodeToByteArray(coder, e))
       )
   }
 
@@ -189,9 +190,7 @@ trait SCollectionMatchers {
           override def apply(left: SCollection[T]): MatchResult = {
             val v = Externalizer(value) // defeat closure
             val f = makeFn[T] { in =>
-              import org.hamcrest.Matchers
-              import org.junit.Assert
-              Assert.assertThat(in, Matchers.not(Matchers.containsInAnyOrder(v.get.toSeq: _*)))
+              assertThat(in, Matchers.not(Matchers.containsInAnyOrder(v.get.toSeq: _*)))
             }
             m(
               () =>
@@ -231,15 +230,9 @@ trait SCollectionMatchers {
           override def apply(left: SCollection[T]): MatchResult = {
             val v = Externalizer(value) // defeat closure
             val (should, shouldNot) = {
-              import org.hamcrest.Matchers
-              import org.junit.Assert
               (
-                makeFn[T] { in =>
-                  Assert.assertThat(in, Matchers.hasItem(v.get))
-                },
-                makeFn[T] { in =>
-                  Assert.assertThat(in, Matchers.not(Matchers.hasItem(v.get)))
-                }
+                makeFn[T](in => assertThat(in, Matchers.hasItem(v.get))),
+                makeFn[T](in => assertThat(in, Matchers.not(Matchers.hasItem(v.get))))
               )
             }
             m(

@@ -31,24 +31,24 @@ object TypeProviderTest {
   @BigQueryType.toTable
   case class RefinedClass(a1: Int)
 
-  @BigQueryType.fromSchema(
-    """{"fields": [{"mode": "REQUIRED", "name": "f1", "type": "INTEGER"}]}"""
-  )
+  @BigQueryType.fromSchema("""
+      |{"fields": [{"mode": "REQUIRED", "name": "f1", "type": "INTEGER"}]}
+      |""".stripMargin)
   class S1
 
   @BigQueryType.fromSchema("""
-       {"fields": [{"mode": "REQUIRED", "name": "f1", "type": "INTEGER"}]}
-    """)
+       |{"fields": [{"mode": "REQUIRED", "name": "f1", "type": "INTEGER"}]}
+       |""".stripMargin)
   class S2
 
   @BigQueryType.fromSchema("""
       |{"fields": [{"mode": "REQUIRED", "name": "f1", "type": "INTEGER"}]}
-    """.stripMargin)
+      |""".stripMargin)
   class S3
 
   @BigQueryType.fromSchema("""
       |{"fields": [{"mode": "REQUIRED", "name": "f1", "type": "INTEGER"}]}
-    """.stripMargin)
+      |""".stripMargin)
   @description("Table S4")
   class S4
 
@@ -101,7 +101,9 @@ class TypeProviderTest extends AnyFlatSpec with Matchers {
     SerializableUtils.ensureSerializable[BigQueryTag](new BigQueryTag())
   }
 
-  @BigQueryType.fromSchema("""{"fields": [{"name": "f1", "type": "INTEGER"}]}""")
+  @BigQueryType.fromSchema("""
+      |{"fields": [{"name": "f1", "type": "INTEGER"}]}
+      |""".stripMargin)
   class MissingMode
 
   it should "support missing mode" in {
@@ -154,12 +156,12 @@ class TypeProviderTest extends AnyFlatSpec with Matchers {
   }
 
   it should "support .fromTableRow in companion object" in {
-    (classOf[(TableRow => RecordWithRequiredPrimitives)]
+    (classOf[TableRow => RecordWithRequiredPrimitives]
       isAssignableFrom RecordWithRequiredPrimitives.fromTableRow.getClass) shouldBe true
   }
 
   it should "support .toTableRow in companion object" in {
-    (classOf[(ToTable => RecordWithRequiredPrimitives)]
+    (classOf[ToTable => RecordWithRequiredPrimitives]
       isAssignableFrom RecordWithRequiredPrimitives.toTableRow.getClass) shouldBe true
   }
 
@@ -328,11 +330,11 @@ class TypeProviderTest extends AnyFlatSpec with Matchers {
   }
 
   it should "support .fromTableRow in companion object" in {
-    (classOf[(TableRow => ToTable)] isAssignableFrom ToTable.fromTableRow.getClass) shouldBe true
+    (classOf[TableRow => ToTable] isAssignableFrom ToTable.fromTableRow.getClass) shouldBe true
   }
 
   it should "support .toTableRow in companion object" in {
-    (classOf[(ToTable => TableRow)] isAssignableFrom ToTable.toTableRow.getClass) shouldBe true
+    (classOf[ToTable => TableRow] isAssignableFrom ToTable.toTableRow.getClass) shouldBe true
   }
 
   it should "create companion object that is a Function subtype" in {
@@ -441,12 +443,12 @@ class TypeProviderTest extends AnyFlatSpec with Matchers {
   }
 
   it should "support .fromTableRow in companion object with >22 fields" in {
-    val cls = classOf[(TableRow => TwentyThree)]
+    val cls = classOf[TableRow => TwentyThree]
     (cls isAssignableFrom TwentyThree.fromTableRow.getClass) shouldBe true
   }
 
   it should "support .toTableRow in companion object with >22 fields" in {
-    val cls = classOf[(TwentyThree => TableRow)]
+    val cls = classOf[TwentyThree => TableRow]
     (cls isAssignableFrom TwentyThree.toTableRow.getClass) shouldBe true
   }
 
@@ -475,9 +477,9 @@ class TypeProviderTest extends AnyFlatSpec with Matchers {
     Artisanal1Field.getClass.getMethods
       .map(_.getName) should not contain "tupled"
     RecordWithRequiredPrimitives.schema should not be null
-    (classOf[(TableRow => RecordWithRequiredPrimitives)]
+    (classOf[TableRow => RecordWithRequiredPrimitives]
       isAssignableFrom RecordWithRequiredPrimitives.fromTableRow.getClass) shouldBe true
-    (classOf[(ToTable => RecordWithRequiredPrimitives)]
+    (classOf[ToTable => RecordWithRequiredPrimitives]
       isAssignableFrom RecordWithRequiredPrimitives.toTableRow.getClass) shouldBe true
     Artisanal1FieldWithBody(3).bar shouldBe 42L
     Artisanal1FieldWithBody(3).foo shouldBe "foo"
@@ -534,7 +536,9 @@ class TypeProviderTest extends AnyFlatSpec with Matchers {
   }
 
   @Annotation1
-  @BigQueryType.fromSchema("""{"fields": [ {"mode": "REQUIRED", "name": "f1", "type": "DATE"} ]}""")
+  @BigQueryType.fromSchema("""
+      |{"fields": [ {"mode": "REQUIRED", "name": "f1", "type": "DATE"} ]}
+      |""".stripMargin)
   @Annotation2
   class SchemaWithSurroundingAnnotations
 
@@ -542,7 +546,9 @@ class TypeProviderTest extends AnyFlatSpec with Matchers {
     containsAllAnnotTypes[SchemaWithSurroundingAnnotations]
   }
 
-  @BigQueryType.fromSchema("""{"fields": [ {"mode": "REQUIRED", "name": "f1", "type": "DATE"} ]}""")
+  @BigQueryType.fromSchema("""
+      |{"fields": [ {"mode": "REQUIRED", "name": "f1", "type": "DATE"} ]}
+      |""".stripMargin)
   @Annotation1
   @Annotation2
   class SchemaWithSequentialAnnotations

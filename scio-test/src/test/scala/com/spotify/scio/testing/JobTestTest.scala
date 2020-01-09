@@ -79,8 +79,8 @@ object GenericParseFnAvroFileJob {
 
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
-    sc.parseAvroFile[PartialFieldsAvro](args("input"))(
-        (gr: GenericRecord) => PartialFieldsAvro(gr.get("int_field").asInstanceOf[Int])
+    sc.parseAvroFile[PartialFieldsAvro](args("input"))((gr: GenericRecord) =>
+        PartialFieldsAvro(gr.get("int_field").asInstanceOf[Int])
       )
       .map(a => AvroUtils.newGenericRecord(a.intField))
       .saveAsAvroFile(args("output"), schema = AvroUtils.schema)
@@ -268,7 +268,7 @@ object MetricsJob {
   val gauge = ScioMetrics.gauge("gauge")
 
   def main(cmdlineArgs: Array[String]): Unit = {
-    val (sc, args) = ContextAndArgs(cmdlineArgs)
+    val (sc, _) = ContextAndArgs(cmdlineArgs)
     sc.parallelize(1 to 10)
       .map { x =>
         counter.inc()
@@ -282,7 +282,7 @@ object MetricsJob {
 }
 
 class JobTestTest extends PipelineSpec {
-  def testObjectFileJob(xs: Int*): Unit = {
+  def testObjectFileJob(xs: Int*): Unit =
     JobTest[ObjectFileJob.type]
       .args("--input=in.avro", "--output=out.avro")
       .input(ObjectFileIO[Int]("in.avro"), Seq(1, 2, 3))
@@ -290,7 +290,6 @@ class JobTestTest extends PipelineSpec {
         coll should containInAnyOrder(xs)
       }
       .run()
-  }
 
   "JobTest" should "pass correct ObjectFileIO" in {
     testObjectFileJob(10, 20, 30)
@@ -301,7 +300,7 @@ class JobTestTest extends PipelineSpec {
     an[AssertionError] should be thrownBy { testObjectFileJob(10, 20, 30, 40) }
   }
 
-  def testSpecificAvroFileJob(xs: Seq[TestRecord]): Unit = {
+  def testSpecificAvroFileJob(xs: Seq[TestRecord]): Unit =
     JobTest[SpecificAvroFileJob.type]
       .args("--input=in.avro", "--output=out.avro")
       .input(AvroIO[TestRecord]("in.avro"), (1 to 3).map(newSpecificRecord))
@@ -309,7 +308,6 @@ class JobTestTest extends PipelineSpec {
         coll should containInAnyOrder(xs)
       }
       .run()
-  }
 
   it should "pass correct specific AvroFileIO" in {
     testSpecificAvroFileJob((1 to 3).map(newSpecificRecord))
@@ -376,7 +374,7 @@ class JobTestTest extends PipelineSpec {
 
   def newTableRow(i: Int): TableRow = TableRow("int_field" -> i)
 
-  def testBigQuery(xs: Seq[TableRow]): Unit = {
+  def testBigQuery(xs: Seq[TableRow]): Unit =
     JobTest[BigQueryJob.type]
       .args("--input=table.in", "--output=table.out")
       .input(BigQueryIO[TableRow]("table.in"), (1 to 3).map(newTableRow))
@@ -384,7 +382,6 @@ class JobTestTest extends PipelineSpec {
         coll should containInAnyOrder(xs)
       }
       .run()
-  }
 
   it should "pass correct BigQueryJob" in {
     testBigQuery((1 to 3).map(newTableRow))
@@ -399,7 +396,7 @@ class JobTestTest extends PipelineSpec {
     }
   }
 
-  def testTableRowJson(xs: Seq[TableRow]): Unit = {
+  def testTableRowJson(xs: Seq[TableRow]): Unit =
     JobTest[TableRowJsonJob.type]
       .args("--input=in.json", "--output=out.json")
       .input(TableRowJsonIO("in.json"), (1 to 3).map(newTableRow))
@@ -407,7 +404,6 @@ class JobTestTest extends PipelineSpec {
         coll should containInAnyOrder(xs)
       }
       .run()
-  }
 
   it should "pass correct TableRowJsonIO" in {
     testTableRowJson((1 to 3).map(newTableRow))
@@ -429,7 +425,7 @@ class JobTestTest extends PipelineSpec {
       .putAllProperties(Collections.singletonMap("int_field", makeValue(i).build()))
       .build()
 
-  def testDatastore(xs: Seq[Entity]): Unit = {
+  def testDatastore(xs: Seq[Entity]): Unit =
     JobTest[DatastoreJob.type]
       .args("--input=store.in", "--output=store.out")
       .input(DatastoreIO("store.in"), (1 to 3).map(newEntity))
@@ -437,7 +433,6 @@ class JobTestTest extends PipelineSpec {
         coll should containInAnyOrder(xs)
       }
       .run()
-  }
 
   it should "pass correct DatastoreJob" in {
     testDatastore((1 to 3).map(newEntity))
@@ -452,7 +447,7 @@ class JobTestTest extends PipelineSpec {
     }
   }
 
-  def testPubsubJob(xs: String*): Unit = {
+  def testPubsubJob(xs: String*): Unit =
     JobTest[PubsubJob.type]
       .args("--input=in", "--output=out")
       .input(PubsubIO[String]("in"), Seq("a", "b", "c"))
@@ -460,7 +455,6 @@ class JobTestTest extends PipelineSpec {
         coll should containInAnyOrder(xs)
       }
       .run()
-  }
 
   it should "pass correct PubsubIO" in {
     testPubsubJob("aX", "bX", "cX")
@@ -473,7 +467,7 @@ class JobTestTest extends PipelineSpec {
     }
   }
 
-  def testPubsubJobWithTestStreamInput(xs: String*): Unit = {
+  def testPubsubJobWithTestStreamInput(xs: String*): Unit =
     JobTest[PubsubJob.type]
       .args("--input=in", "--output=out")
       .inputStream(
@@ -484,7 +478,6 @@ class JobTestTest extends PipelineSpec {
         coll should containInAnyOrder(xs)
       }
       .run()
-  }
 
   it should "pass correct PubsubIO with TestStream input" in {
     testPubsubJobWithTestStreamInput("aX", "bX", "cX")
@@ -555,7 +548,7 @@ class JobTestTest extends PipelineSpec {
     }
   }
 
-  def testTextFileJob(xs: String*): Unit = {
+  def testTextFileJob(xs: String*): Unit =
     JobTest[TextFileJob.type]
       .args("--input=in.txt", "--output=out.txt")
       .input(TextIO("in.txt"), Seq("a", "b", "c"))
@@ -563,7 +556,6 @@ class JobTestTest extends PipelineSpec {
         coll should containInAnyOrder(xs)
       }
       .run()
-  }
 
   it should "pass correct TextIO" in {
     testTextFileJob("aX", "bX", "cX")
@@ -576,7 +568,7 @@ class JobTestTest extends PipelineSpec {
     }
   }
 
-  def testDistCacheJob(xs: String*): Unit = {
+  def testDistCacheJob(xs: String*): Unit =
     JobTest[DistCacheJob.type]
       .args("--input=in.txt", "--output=out.txt", "--distCache=dc.txt")
       .input(TextIO("in.txt"), Seq("a", "b"))
@@ -585,7 +577,6 @@ class JobTestTest extends PipelineSpec {
         coll should containInAnyOrder(xs)
       }
       .run()
-  }
 
   it should "pass correct DistCacheIO" in {
     testDistCacheJob("a1", "a2", "b1", "b2")
@@ -598,7 +589,7 @@ class JobTestTest extends PipelineSpec {
     }
   }
 
-  def testCustomIOJob(xs: String*): Unit = {
+  def testCustomIOJob(xs: String*): Unit =
     JobTest[CustomIOJob.type]
       .args("--input=in.txt", "--output=out.txt")
       .input(CustomIO[String]("TextIn"), Seq(1, 2, 3).map(_.toString))
@@ -606,7 +597,6 @@ class JobTestTest extends PipelineSpec {
         coll should containInAnyOrder(xs)
       }
       .run()
-  }
 
   it should "pass correct CustomIO" in {
     testCustomIOJob("10", "20", "30")
@@ -619,7 +609,7 @@ class JobTestTest extends PipelineSpec {
     }
   }
 
-  def testReadAllJob(xs: String*): Unit = {
+  def testReadAllJob(xs: String*): Unit =
     JobTest[ReadAllJob.type]
       .args("--input=in.txt", "--output=out.txt")
       .input(TextIO("in.txt"), Seq("a", "b"))
@@ -629,7 +619,6 @@ class JobTestTest extends PipelineSpec {
         coll should containInAnyOrder(xs)
       }
       .run()
-  }
 
   it should "pass correct string ReadIO" in {
     testReadAllJob("a1", "a2", "b1", "b2")
@@ -652,7 +641,7 @@ class JobTestTest extends PipelineSpec {
         .args("--input=in.txt", "--output=out.txt")
         .input(TextIO("in.txt"), Seq("a"))
         .inputStream(ReadIO("a"), testStream)
-        .output(TextIO("out.txt")) { coll =>
+        .output(TextIO("out.txt")) { _ =>
         }
         .run()
     } should have message
@@ -660,7 +649,7 @@ class JobTestTest extends PipelineSpec {
         s"can't be converted to Iterable[T] to test this ScioIO type"
   }
 
-  def testReadAllBytesJob(xs: String*): Unit = {
+  def testReadAllBytesJob(xs: String*): Unit =
     JobTest[ReadAllBytesJob.type]
       .args("--input=in.txt", "--output=out.txt")
       .input(TextIO("in.txt"), Seq("a", "b"))
@@ -670,7 +659,6 @@ class JobTestTest extends PipelineSpec {
         coll should containInAnyOrder(xs)
       }
       .run()
-  }
 
   it should "pass correct bytes ReadIO" in {
     testReadAllBytesJob("a1", "a2", "b1", "b2")
@@ -693,7 +681,7 @@ class JobTestTest extends PipelineSpec {
         .args("--input=in.txt", "--output=out.txt")
         .input(TextIO("in.txt"), Seq("a"))
         .inputStream(ReadIO("a"), testStream)
-        .output(TextIO("out.txt")) { coll =>
+        .output(TextIO("out.txt")) { _ =>
         }
         .run()
     } should have message
@@ -892,7 +880,7 @@ class JobTestTest extends PipelineSpec {
         }
         .run()
     } should have message
-      "requirement failed: ScioContext was not closed. Did you forget close()?"
+      "requirement failed: ScioContext was not executed. Did you forget .run()?"
   }
 
   // =======================================================================

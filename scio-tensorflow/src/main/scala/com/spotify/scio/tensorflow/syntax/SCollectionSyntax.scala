@@ -17,26 +17,29 @@
 
 package com.spotify.scio.tensorflow.syntax
 
+import scala.language.implicitConversions
+import scala.reflect.ClassTag
+
+import org.apache.beam.sdk.io.Compression
+import org.tensorflow._
+import org.tensorflow.example.{Example, SequenceExample}
+
 import com.spotify.scio.coders.Coder
+import com.spotify.scio.io.ClosedTap
 import com.spotify.scio.tensorflow.{
   SavedBundlePredictDoFn,
   TFExampleIO,
   TFRecordIO,
   TFSequenceExampleIO
 }
-import com.spotify.scio.io.ClosedTap
 import com.spotify.scio.values.SCollection
 import com.spotify.zoltar.tf.TensorFlowModel
-import org.apache.beam.sdk.io.Compression
-import org.tensorflow._
-import org.tensorflow.example.{Example, SequenceExample}
-
-import scala.reflect.ClassTag
 
 /**
  * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with TensorFlow methods.
  */
 final class PredictSCollectionOps[T: ClassTag](private val self: SCollection[T]) {
+
   /**
    * Predict/infer/forward-pass on a TensorFlow Saved Model.
    *
@@ -50,18 +53,93 @@ final class PredictSCollectionOps[T: ClassTag](private val self: SCollection[T])
    * @param outFn    translates output of prediction from map of output-operation ->
    *                 [[org.tensorflow.Tensor Tensor]], to elements of V. This method takes
    *                 ownership of the [[org.tensorflow.Tensor Tensor]]s.
+   * @param signatureName  name of [[org.tensorflow.framework.SignatureDef]]s to be used
+   *                       to run the prediction.
    */
   def predict[V: Coder, W](
     savedModelUri: String,
     fetchOps: Seq[String],
-    options: TensorFlowModel.Options
+    options: TensorFlowModel.Options,
+    signatureName: String = PredictSCollectionOps.DefaultSignatureName
   )(inFn: T => Map[String, Tensor[_]])(outFn: (T, Map[String, Tensor[_]]) => V): SCollection[V] =
-    self.parDo(new SavedBundlePredictDoFn[T, V](savedModelUri, options, fetchOps, inFn, outFn))
+    self.parDo(
+      SavedBundlePredictDoFn
+        .forRaw[T, V](savedModelUri, fetchOps, options, signatureName, inFn, outFn)
+    )
+
+  /**
+   * Predict/infer/forward-pass on a TensorFlow Saved Model.
+   * Only exported ops can be fetched.
+   *
+   * @param savedModelUri URI of Saved TensorFlow model
+   * @param options   configuration parameters for the session specified as a
+   *                 `com.spotify.zoltar.tf.TensorFlowModel.Options`.
+   * @param fetchOps names of [[Option]] of [[org.tensorflow.Operation]]s to fetch the results from
+   * @param inFn     translates input elements of T to map of input-operation ->
+   *                 [[org.tensorflow.Tensor Tensor]]. This method takes ownership of the
+   *                 [[org.tensorflow.Tensor Tensor]]s.
+   * @param outFn    translates output of prediction from map of output-operation ->
+   *                 [[org.tensorflow.Tensor Tensor]], to elements of V. This method takes
+   *                 ownership of the [[org.tensorflow.Tensor Tensor]]s.
+   * @param signatureName  name of [[org.tensorflow.framework.SignatureDef]]s to be used
+   *                       to run the prediction.
+   */
+  def predictWithSigDef[V: Coder, W](
+    savedModelUri: String,
+    options: TensorFlowModel.Options,
+    fetchOps: Option[Seq[String]] = PredictSCollectionOps.DefaultFetchOps,
+    signatureName: String = PredictSCollectionOps.DefaultSignatureName
+  )(inFn: T => Map[String, Tensor[_]])(outFn: (T, Map[String, Tensor[_]]) => V): SCollection[V] =
+    self.parDo(
+      SavedBundlePredictDoFn
+        .forInput[T, V](savedModelUri, fetchOps, options, signatureName, inFn, outFn)
+    )
+
+  /**
+   * Predict/infer/forward-pass on a TensorFlow Saved Model.
+   * Only exported ops can be fetched.
+   *
+   * @param savedModelUri  URI of Saved TensorFlow model
+   * @param options        configuration parameters for the session specified as a
+   *                       `com.spotify.zoltar.tf.TensorFlowModel.Options`.
+   * @param exampleInputOp name of [[org.tensorflow.Operation]]s to feed an example.
+   * @param fetchOps names of [[org.tensorflow.Operation]]s to fetch the results from
+   * @param signatureName  name of [[org.tensorflow.framework.SignatureDef]]s to be used
+   *                       to run the prediction.
+   * @param outFn          translates output of prediction from map of output-operation ->
+   *                       [[org.tensorflow.Tensor Tensor]], to elements of V. This method takes
+   *                       ownership of the [[org.tensorflow.Tensor Tensor]]s.
+   */
+  def predictTfExamples[V: Coder](
+    savedModelUri: String,
+    options: TensorFlowModel.Options,
+    exampleInputOp: String = PredictSCollectionOps.DefaultExampleInputOp,
+    fetchOps: Option[Seq[String]] = PredictSCollectionOps.DefaultFetchOps,
+    signatureName: String = PredictSCollectionOps.DefaultSignatureName
+  )(outFn: (T, Map[String, Tensor[_]]) => V)(implicit ev: T <:< Example): SCollection[V] =
+    self.parDo(
+      SavedBundlePredictDoFn.forTensorFlowExample[T, V](
+        savedModelUri,
+        exampleInputOp,
+        fetchOps,
+        options,
+        signatureName,
+        outFn
+      )
+    )
+}
+
+object PredictSCollectionOps {
+  val DefaultSignatureName: String = "serving_default"
+  val DefaultExampleInputOp: String = "inputs"
+  val DefaultFetchOps: Option[Seq[String]] = None
 }
 
 final class ExampleSCollectionOps[T <: Example](private val self: SCollection[T]) extends AnyVal {
+
   /**
    * Saves this SCollection of `org.tensorflow.example.Example` as a TensorFlow TFRecord file.
+   *
    * @return
    */
   @deprecated("saveAsTfExampleFile is deprecated: use saveAsTfRecordFile instead", "0.7.4")
@@ -75,6 +153,7 @@ final class ExampleSCollectionOps[T <: Example](private val self: SCollection[T]
 
   /**
    * Saves this SCollection of `org.tensorflow.example.Example` as a TensorFlow TFRecord file.
+   *
    * @return
    */
   def saveAsTfRecordFile(
@@ -130,6 +209,7 @@ final class SeqExampleSCollectionOps[T <: Example](private val self: SCollection
 
 final class TFRecordSCollectionOps[T <: Array[Byte]](private val self: SCollection[T])
     extends AnyVal {
+
   /**
    * Save this SCollection as a TensorFlow TFRecord file. Note that elements must be of type
    * `Array[Byte]`. The recommended record encoding is `org.tensorflow.example.Example` protocol
@@ -150,6 +230,7 @@ final class TFRecordSCollectionOps[T <: Array[Byte]](private val self: SCollecti
 
 final class SequenceExampleSCollectionOps[T <: SequenceExample](private val self: SCollection[T])
     extends AnyVal {
+
   /**
    * Saves this SCollection of `org.tensorflow.example.SequenceExample` as a TensorFlow
    * TFRecord file.
@@ -168,6 +249,7 @@ final class SequenceExampleSCollectionOps[T <: SequenceExample](private val self
 }
 
 trait SCollectionSyntax {
+
   /**
    * Implicit conversion from [[com.spotify.scio.values.SCollection SCollection]] to
    * [[PredictSCollectionOps]].

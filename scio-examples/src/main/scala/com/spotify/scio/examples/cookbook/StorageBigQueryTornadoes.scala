@@ -18,7 +18,7 @@
 // Example: Read using BigQuery Storage Read API.
 // Usage:
 
-// `sbt runMain "com.spotify.scio.examples.extra.StorageBigQueryTornadoes
+// `sbt "runMain com.spotify.scio.examples.extra.StorageBigQueryTornadoes
 // --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
 // --output=[PROJECT]:[DATASET].[TABLE]"`
 package com.spotify.scio.examples.cookbook
@@ -58,7 +58,7 @@ object StorageBigQueryTornadoes {
       // Save result as a BigQuery table
       .saveAsBigQueryTable(Table.Spec(args("output")), schema, WRITE_TRUNCATE, CREATE_IF_NEEDED)
 
-    // Close the context and execute the pipeline
+    // Execute the pipeline
     sc.run()
     ()
   }

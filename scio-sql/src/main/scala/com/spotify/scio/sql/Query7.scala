@@ -187,7 +187,7 @@ final class SqlSCollection7[
   ): SCollection[Row] =
     query(Query7(q, aTag, bTag, cTag, dTag, eTag, fTag, gTag, udfs.toList))
 
-  def query(q: Query7[A, B, C, D, E, F, G, Row]): SCollection[Row] = {
+  def query(q: Query7[A, B, C, D, E, F, G, Row]): SCollection[Row] =
     a.context.wrap {
       val collA = Sql.setSchema(a)
       val collB = Sql.setSchema(b)
@@ -211,7 +211,6 @@ final class SqlSCollection7[
           sqlTransform
         )
     }
-  }
 
   def queryAs[R: Schema](
     q: String,

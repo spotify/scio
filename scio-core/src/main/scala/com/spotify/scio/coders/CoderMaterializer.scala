@@ -50,14 +50,14 @@ object CoderMaterializer {
     o: PipelineOptions,
     coder: Coder[T],
     refs: TrieMap[String, RefCoder[_]]
-  ): BCoder[T] = {
+  ): BCoder[T] =
     coder match {
       // #1734: do not wrap native beam coders
       case Beam(c) if c.getClass.getPackage.getName.startsWith("org.apache.beam") =>
         nullCoder(o, c)
       case Beam(c) =>
         WrappedBCoder.create(nullCoder(o, c))
-      case Fallback(ct) =>
+      case Fallback(_) =>
         val kryoCoder = new KryoAtomicCoder[T](KryoOptions(o))
         WrappedBCoder.create(nullCoder(o, kryoCoder))
       case Transform(c, f) =>
@@ -97,7 +97,6 @@ object CoderMaterializer {
           }
           .asInstanceOf[BCoder[T]]
     }
-  }
 
   def kvCoder[K, V](ctx: ScioContext)(implicit k: Coder[K], v: Coder[V]): KvCoder[K, V] =
     KvCoder.of(beam(ctx, Coder[K]), beam(ctx, Coder[V]))

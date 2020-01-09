@@ -39,7 +39,7 @@ private[cassandra] class DataTypeExternalizer extends Externalizer[DataType] {
     new (DataTypeKryoInstantiator).setReferences(true)
 }
 
-private final class DataTypeKryoInstantiator extends EmptyScalaKryoInstantiator {
+final private class DataTypeKryoInstantiator extends EmptyScalaKryoInstantiator {
   override def newKryo: KryoBase = {
     val k = super.newKryo
     k.forSubclass[ImmutableList[Any]](new ImmutableListSerializer[Any])
@@ -61,7 +61,7 @@ private trait ImmutableCollectionSerializer[M] extends KSerializer[M] {
   }
 }
 
-private final class ImmutableListSerializer[T]
+final private class ImmutableListSerializer[T]
     extends ImmutableCollectionSerializer[ImmutableList[T]] {
   override def read(kser: Kryo, in: Input, cls: Class[ImmutableList[T]]): ImmutableList[T] =
     ImmutableList.copyOf(readList(kser, in): JIterable[T])
@@ -69,7 +69,7 @@ private final class ImmutableListSerializer[T]
     writeList(kser, out, obj)
 }
 
-private final class ImmutableSetSerializer[T]
+final private class ImmutableSetSerializer[T]
     extends ImmutableCollectionSerializer[ImmutableSet[T]] {
   override def read(kser: Kryo, in: Input, cls: Class[ImmutableSet[T]]): ImmutableSet[T] =
     ImmutableSet.copyOf(readList(kser, in): JIterable[T])

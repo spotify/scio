@@ -92,7 +92,7 @@ class TensorFlowFileOperations extends FileOperations<Example> {
     }
 
     @Override
-    Example readNext() throws IOException, NoSuchElementException {
+    public Example readNext() throws IOException, NoSuchElementException {
       if (next == null) {
         throw new NoSuchElementException();
       }
@@ -100,7 +100,7 @@ class TensorFlowFileOperations extends FileOperations<Example> {
     }
 
     @Override
-    boolean hasNextElement() throws IOException {
+    public boolean hasNextElement() throws IOException {
       next = codec.read(channel);
       return next != null;
     }

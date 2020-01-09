@@ -18,7 +18,7 @@
 // Example: Combine Per Key Example
 // Usage:
 
-// `sbt runMain "com.spotify.scio.examples.cookbook.CombinePerKeyExamples
+// `sbt "runMain com.spotify.scio.examples.cookbook.CombinePerKeyExamples
 // --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
 // --output=[DATASET].combine_per_key_examples"`
 package com.spotify.scio.examples.cookbook
@@ -66,7 +66,7 @@ object CombinePerKeyExamples {
       // Save result as a BigQuery table
       .saveAsBigQueryTable(Table.Spec(args("output")), schema, WRITE_TRUNCATE, CREATE_IF_NEEDED)
 
-    // Close the context and execute the pipeline
+    // Execute the pipeline
     sc.run()
     ()
   }

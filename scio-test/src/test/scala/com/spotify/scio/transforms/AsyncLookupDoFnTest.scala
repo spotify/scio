@@ -191,13 +191,12 @@ class CachingScalaLookupDoFn
 class FailingScalaLookupDoFn extends ScalaAsyncLookupDoFn[Int, String, AsyncClient]() {
   import scala.concurrent.ExecutionContext.Implicits.global
   override protected def newClient(): AsyncClient = null
-  override def asyncLookup(session: AsyncClient, input: Int): Future[String] = {
+  override def asyncLookup(session: AsyncClient, input: Int): Future[String] =
     if (input % 2 == 0) {
       Future("success" + input)
     } else {
       Future(throw new RuntimeException("failure" + input))
     }
-  }
 }
 
 class TestCacheSupplier extends CacheSupplier[Int, String, java.lang.Long] {

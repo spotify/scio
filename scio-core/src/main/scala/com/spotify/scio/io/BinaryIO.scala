@@ -33,7 +33,7 @@ import org.apache.beam.sdk.io._
 final case class BinaryIO(path: String) extends ScioIO[Array[Byte]] {
   override type ReadP = Nothing
   override type WriteP = BinaryIO.WriteParam
-  override final val tapT = EmptyTapOf[Array[Byte]]
+  final override val tapT = EmptyTapOf[Array[Byte]]
 
   override def testId: String = s"BinaryIO($path)"
 
@@ -82,7 +82,7 @@ object BinaryIO {
     frameSuffix: Array[Byte] => Array[Byte] = WriteParam.DefaultFrameSuffix
   )
 
-  private final class BytesSink(
+  final private class BytesSink(
     val header: Array[Byte],
     val footer: Array[Byte],
     val framePrefix: Array[Byte] => Array[Byte],

@@ -43,7 +43,7 @@ private[scio] object CallSites {
   private def isPCollectionApply(e: StackTraceElement): Boolean =
     e.getClassName == s"$beamNs.sdk.values.PCollection" && e.getMethodName == "apply"
 
-  def getAppName: String = {
+  def getAppName: String =
     Thread
       .currentThread()
       .getStackTrace
@@ -54,7 +54,6 @@ private[scio] object CallSites {
       .split("\\.")
       .last
       .replaceAll("\\$$", "")
-  }
 
   def getCurrent: String = {
     val (method, location, nested) = getCurrentName

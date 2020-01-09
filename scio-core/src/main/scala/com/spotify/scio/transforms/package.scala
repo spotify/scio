@@ -39,16 +39,14 @@ import scala.util.{Failure, Success, Try}
  */
 package object transforms {
   @deprecated(
-    "Class AsyncLookupDoFn was renamed to BaseAsyncLookupDoFn." +
-      "see https://spotify.github.io/scio/migrations/v0.8.0.html#async-dofns for more information",
+    "renamed to BaseAsyncLookupDoFn. see https://spotify.github.io/scio/migrations/v0.8.0-Migration-Guide.html#async-dofns",
     "0.8.0"
   )
   type AsyncLookupDoFn[A, B, C] =
     BaseAsyncLookupDoFn[A, B, C, ListenableFuture[_], BaseAsyncLookupDoFn.Try[B]]
 
   @deprecated(
-    "Class AsyncLookupDoFn was renamed to BaseAsyncLookupDoFn." +
-      "see https://spotify.github.io/scio/migrations/v0.8.0.html#async-dofns for more information",
+    "renamed to BaseAsyncLookupDoFn. see https://spotify.github.io/scio/migrations/v0.8.0-Migration-Guide.html#async-dofns",
     "0.8.0"
   )
   object AsyncLookupDoFn {
@@ -62,6 +60,7 @@ package object transforms {
    * [[java.net.URI URI]] methods.
    */
   implicit class URISCollection(private val self: SCollection[URI]) extends AnyVal {
+
     /**
      * Download [[java.net.URI URI]] elements and process as local [[java.nio.file.Path Path]]s.
      * @param batchSize batch size when downloading files
@@ -118,21 +117,19 @@ package object transforms {
       new ParallelLimitedFn[T, U](parallelism) {
         val isDefined = ClosureCleaner.clean(pfn.isDefinedAt(_)) // defeat closure
         val g = ClosureCleaner.clean(pfn) // defeat closure
-        def parallelProcessElement(c: DoFn[T, U]#ProcessContext): Unit = {
+        def parallelProcessElement(c: DoFn[T, U]#ProcessContext): Unit =
           if (isDefined(c.element())) {
             c.output(g(c.element()))
           }
-        }
       }
 
     private def parallelFilterFn(parallelism: Int)(f: T => Boolean): DoFn[T, T] =
       new ParallelLimitedFn[T, T](parallelism) {
         val g = ClosureCleaner.clean(f) // defeat closure
-        def parallelProcessElement(c: DoFn[T, T]#ProcessContext): Unit = {
+        def parallelProcessElement(c: DoFn[T, T]#ProcessContext): Unit =
           if (g(c.element())) {
             c.output(c.element())
           }
-        }
       }
 
     private def parallelMapFn[U](parallelism: Int)(f: T => U): DoFn[T, U] =
@@ -195,6 +192,7 @@ package object transforms {
    * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with pipe methods.
    */
   implicit class PipeSCollection(@transient private val self: SCollection[String]) extends AnyVal {
+
     /**
      * Pipe elements through an external command via StdIn & StdOut.
      * @param command the command to call
@@ -244,6 +242,7 @@ package object transforms {
    */
   implicit class SpecializedFlatMapSCollection[T](@transient private val self: SCollection[T])
       extends AnyVal {
+
     /**
      * Latency optimized flavor of
      * [[com.spotify.scio.values.SCollection.flatMap SCollection.flatMap]], it returns a new
@@ -261,13 +260,14 @@ package object transforms {
         val g = ClosureCleaner.clean(f) // defeat closure
         @ProcessElement
         private[scio] def processElement(c: DoFn[T, U]#ProcessContext): Unit = {
-          val i = try {
-            g(c.element()).toIterator
-          } catch {
-            case e: Throwable =>
-              c.output(errorTag, (c.element(), e))
-              Iterator.empty
-          }
+          val i =
+            try {
+              g(c.element()).toIterator
+            } catch {
+              case e: Throwable =>
+                c.output(errorTag, (c.element(), e))
+                Iterator.empty
+            }
           while (i.hasNext) c.output(i.next())
         }
       }
@@ -289,6 +289,7 @@ package object transforms {
   /** Enhanced version of `AsyncLookupDoFn.Try` with convenience methods. */
   implicit class RichAsyncLookupDoFnTry[A](private val self: BaseAsyncLookupDoFn.Try[A])
       extends AnyVal {
+
     /** Convert this `AsyncLookupDoFn.Try` to a Scala `Try`. */
     def asScala: Try[A] =
       if (self.isSuccess) Success(self.get()) else Failure(self.getException)

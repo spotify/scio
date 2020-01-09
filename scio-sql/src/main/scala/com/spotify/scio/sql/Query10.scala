@@ -274,7 +274,7 @@ final class SqlSCollection10[
   ): SCollection[Row] =
     query(Query10(q, aTag, bTag, cTag, dTag, eTag, fTag, gTag, hTag, iTag, jTag, udfs.toList))
 
-  def query(q: Query10[A, B, C, D, E, F, G, H, I, J, Row]): SCollection[Row] = {
+  def query(q: Query10[A, B, C, D, E, F, G, H, I, J, Row]): SCollection[Row] =
     a.context.wrap {
       val collA = Sql.setSchema(a)
       val collB = Sql.setSchema(b)
@@ -304,7 +304,6 @@ final class SqlSCollection10[
           sqlTransform
         )
     }
-  }
 
   def queryAs[R: Schema](
     q: String,

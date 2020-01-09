@@ -96,7 +96,7 @@ private[scio] object ArtisanJoin {
   )(
     leftFn: JIterator[A] => JIterator[A1],
     rightFn: JIterator[B] => JIterator[B1]
-  ): SCollection[(KEY, (A1, B1))] = {
+  ): SCollection[(KEY, (A1, B1))] =
     cogroupImpl[KEY, A, B, A1, B1](name, a, b) {
       case (key, as, bs, c) =>
         val bi = rightFn(bs.iterator())
@@ -109,7 +109,6 @@ private[scio] object ArtisanJoin {
           }
         }
     }.withState(_.copy(postCoGroup = true))
-  }
 
   def cogroup[KEY: Coder, A: Coder, B: Coder](
     name: String,

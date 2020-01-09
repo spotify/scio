@@ -18,7 +18,7 @@
 // Example: AutoComplete lines of text
 // Usage:
 
-// `sbt runMain "com.spotify.scio.examples.complete.AutoComplete
+// `sbt "runMain com.spotify.scio.examples.complete.AutoComplete
 // --project=[PROJECT] --runner=DataflowPRunner --zone=[ZONE]
 // --input=gs://apache-beam-samples/shakespeare/kinglear.txt
 // --outputToBigqueryTable=true --outputToDatastore=false --output=[DATASET].auto_complete"`

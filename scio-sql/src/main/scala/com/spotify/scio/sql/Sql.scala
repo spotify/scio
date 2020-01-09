@@ -21,21 +21,22 @@ import java.util.Collections
 
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.schemas._
-import com.spotify.scio.values.SCollection
-import org.apache.beam.sdk.extensions.sql.{BeamSqlTable, SqlTransform}
-import org.apache.beam.sdk.values._
-import org.apache.beam.sdk.schemas.{SchemaCoder, Schema => BSchema}
 import com.spotify.scio.util.ScioUtil
+import com.spotify.scio.values.SCollection
+import org.apache.beam.sdk.extensions.sql.SqlTransform
 import org.apache.beam.sdk.extensions.sql.impl.rel.BeamRelNode
-import org.apache.beam.sdk.extensions.sql.impl.{BeamSqlEnv, BeamTableStatistics}
-import org.apache.beam.sdk.extensions.sql.impl.schema.{BaseBeamTable, BeamPCollectionTable}
+import org.apache.beam.sdk.extensions.sql.impl.schema.BeamPCollectionTable
 import org.apache.beam.sdk.extensions.sql.impl.utils.CalciteUtils
+import org.apache.beam.sdk.extensions.sql.impl.{BeamSqlEnv, BeamTableStatistics}
 import org.apache.beam.sdk.extensions.sql.meta.provider.{ReadOnlyTableProvider, TableProvider}
+import org.apache.beam.sdk.extensions.sql.meta.{BaseBeamTable, BeamSqlTable}
 import org.apache.beam.sdk.options.{PipelineOptions, PipelineOptionsFactory}
-
-import scala.util.Try
-import scala.collection.JavaConverters._
+import org.apache.beam.sdk.schemas.{SchemaCoder, Schema => BSchema}
+import org.apache.beam.sdk.values._
 import org.apache.commons.lang3.exception.ExceptionUtils
+
+import scala.collection.JavaConverters._
+import scala.util.Try
 
 object Sql extends SqlSCollections {
   private[sql] val BeamProviderName = "beam"
@@ -60,7 +61,7 @@ object Sql extends SqlSCollections {
 
   private[sql] def setSchema[T: Schema](c: SCollection[T]): SCollection[T] =
     c.transform { x =>
-      val (schema, to, from) = SchemaMaterializer.materialize(c.context, Schema[T])
+      val (schema, to, from) = SchemaMaterializer.materialize(Schema[T])
       x.map(identity)(Coder.beam(SchemaCoder.of(schema, to, from)))
     }
 }
@@ -76,7 +77,7 @@ private object Queries {
   ): Try[BeamRelNode] = Try {
     val tables: Map[String, BeamSqlTable] = schemas.map {
       case (tag, schema) =>
-        tag -> new BaseBeamTable(schema) {
+        tag -> new BaseBeamTable {
           override def buildIOReader(begin: PBegin): PCollection[Row] = ???
 
           override def buildIOWriter(input: PCollection[Row]): POutput = ???
@@ -85,17 +86,19 @@ private object Queries {
 
           override def getTableStatistics(options: PipelineOptions): BeamTableStatistics =
             BeamTableStatistics.BOUNDED_UNKNOWN
+
+          override def getSchema: BSchema = schema
         }
     }.toMap
 
     val tableProvider = new ReadOnlyTableProvider(Sql.SCollectionTypeName, tables.asJava)
     val env = BeamSqlEnv.builder(tableProvider).setPipelineOptions(PipelineOptionsFactory.create())
     udfs.foreach {
-      case (x: UdfFromClass[_]) =>
+      case x: UdfFromClass[_] =>
         env.addUdf(x.fnName, x.clazz)
-      case (x: UdfFromSerializableFn[_, _]) =>
+      case x: UdfFromSerializableFn[_, _] =>
         env.addUdf(x.fnName, x.fn)
-      case (x: UdafFromCombineFn[_, _, _]) =>
+      case x: UdafFromCombineFn[_, _, _] =>
         env.addUdaf(x.fnName, x.fn)
     }
     env.build().parseQuery(query)
@@ -126,7 +129,7 @@ private object Queries {
     inferredSchemas: List[(String, BSchema)],
     expectedSchema: BSchema,
     udfs: List[Udf]
-  ): Either[String, String] = {
+  ): Either[String, String] =
     ScioUtil
       .toEither(schema(query, inferredSchemas, udfs))
       .left
@@ -177,7 +180,6 @@ private object Queries {
         """.stripMargin
           Left(message)
       }
-  }
 }
 
 private object QueryMacros {

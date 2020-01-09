@@ -147,7 +147,7 @@ object BigtableBenchmark {
         (0, 1)
     }
 
-  def main(args: Array[String]): Unit = {
+  def main(args: Array[String]): Unit =
     // Run sequentially to avoid read/write contention
     BenchmarkRunner.runSequentially(
       args,
@@ -155,7 +155,6 @@ object BigtableBenchmark {
       benchmarks,
       ScioBenchmarkSettings.commonArgs() :+ "--region=us-east1"
     )
-  }
 
   private val benchmarks =
     Seq(BigtableWrite, BigtableRead, AsyncBigtableDoFnRead, AsyncCachingBigtableDoFnRead)

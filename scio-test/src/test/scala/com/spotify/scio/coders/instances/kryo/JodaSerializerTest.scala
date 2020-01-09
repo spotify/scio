@@ -28,7 +28,7 @@ import scala.util.Try
 
 class JodaSerializerTest extends AnyFlatSpec with Checkers {
   // TODO: remove this once https://github.com/scalatest/scalatest/issues/1090 is addressed
-  override implicit val generatorDrivenConfig: PropertyCheckConfiguration =
+  implicit override val generatorDrivenConfig: PropertyCheckConfiguration =
     PropertyCheckConfiguration(minSuccessful = 100)
 
   implicit val dateTimeArb = Arbitrary {

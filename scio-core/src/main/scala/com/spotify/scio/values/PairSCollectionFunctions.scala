@@ -1029,13 +1029,12 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
   def sampleByKey(
     withReplacement: Boolean,
     fractions: Map[K, Double]
-  )(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, V)] = {
+  )(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, V)] =
     if (withReplacement) {
       self.parDo(new PoissonValueSampler[K, V](fractions))
     } else {
       self.parDo(new BernoulliValueSampler[K, V](fractions))
     }
-  }
 
   /**
    * Return an SCollection with the pairs from `this` whose keys are not in `rhs`.

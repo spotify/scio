@@ -19,16 +19,18 @@ package org.apache.beam.examples.cookbook;
 
 import com.google.api.services.bigquery.model.TableRow;
 import com.google.common.collect.ImmutableList;
-import java.util.List;
 import org.apache.beam.examples.cookbook.MaxPerKeyExamples.ExtractTempFn;
 import org.apache.beam.examples.cookbook.MaxPerKeyExamples.FormatMaxesFn;
 import org.apache.beam.sdk.transforms.DoFnTester;
 import org.apache.beam.sdk.values.KV;
 import org.hamcrest.CoreMatchers;
-import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+
+import java.util.List;
+
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Unit tests for {@link MaxPerKeyExamples}. */
 @RunWith(JUnit4.class)
@@ -67,9 +69,9 @@ public class MaxPerKeyExamplesTest {
     DoFnTester<TableRow, KV<Integer, Double>> extractTempFn =
         DoFnTester.of(new ExtractTempFn());
     List<KV<Integer, Double>> results = extractTempFn.processBundle(TEST_ROWS);
-    Assert.assertThat(results, CoreMatchers.hasItem(kv1));
-    Assert.assertThat(results, CoreMatchers.hasItem(kv2));
-    Assert.assertThat(results, CoreMatchers.hasItem(kv3));
+    assertThat(results, CoreMatchers.hasItem(kv1));
+    assertThat(results, CoreMatchers.hasItem(kv2));
+    assertThat(results, CoreMatchers.hasItem(kv3));
   }
 
   @Test
@@ -77,8 +79,8 @@ public class MaxPerKeyExamplesTest {
     DoFnTester<KV<Integer, Double>, TableRow> formatMaxesFnFn =
         DoFnTester.of(new FormatMaxesFn());
     List<TableRow> results = formatMaxesFnFn.processBundle(TEST_KVS);
-    Assert.assertThat(results, CoreMatchers.hasItem(resultRow1));
-    Assert.assertThat(results, CoreMatchers.hasItem(resultRow2));
+    assertThat(results, CoreMatchers.hasItem(resultRow1));
+    assertThat(results, CoreMatchers.hasItem(resultRow2));
   }
 
 }

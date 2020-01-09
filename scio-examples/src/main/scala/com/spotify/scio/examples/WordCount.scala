@@ -18,7 +18,7 @@
 // Example: Word Count Example with Metrics
 // Usage:
 
-// `sbt runMain "com.spotify.scio.examples.WordCount
+// `sbt "runMain com.spotify.scio.examples.WordCount
 // --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
 // --input=gs://apache-beam-samples/shakespeare/kinglear.txt
 // --output=gs://[BUCKET]/[PATH]/wordcount"`
@@ -73,7 +73,7 @@ object WordCount {
       // Save result as text files under the output path
       .saveAsTextFile(output)
 
-    // Close the context, execute the pipeline and block until it finishes
+    // Execute the pipeline and block until it finishes
     val result = sc.run().waitUntilFinish()
 
     // Retrieve metric values

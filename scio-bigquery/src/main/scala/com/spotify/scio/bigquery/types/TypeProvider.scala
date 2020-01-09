@@ -159,11 +159,10 @@ private[types] object TypeProvider {
 
   private def getTableDescription(
     c: blackbox.Context
-  )(cd: c.universe.ClassDef): List[c.universe.Tree] = {
+  )(cd: c.universe.ClassDef): List[c.universe.Tree] =
     cd.mods.annotations
       .filter(_.children.head.toString().matches("^new description$"))
       .map(_.children.tail.head)
-  }
 
   def toTableImpl(c: blackbox.Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
     import c.universe._
@@ -481,7 +480,7 @@ private[types] object TypeProvider {
   private def shouldDumpClassesForPlugin =
     !BigQuerySysProps.DisableDump.value(default = "false").toBoolean
 
-  private def getBQClassCacheDir: Path = {
+  private def getBQClassCacheDir: Path =
     // TODO: add this as key/value settings with default etc
     BigQuerySysProps.ClassCacheDirectory.valueOption.map(Paths.get(_)).getOrElse {
       Paths
@@ -489,7 +488,6 @@ private[types] object TypeProvider {
         .resolve(CoreSysProps.User.value)
         .resolve("generated-classes")
     }
-  }
 
   private def pShowCode(
     c: blackbox.Context
@@ -519,7 +517,7 @@ private[types] object TypeProvider {
     }
   }
 
-  private def genHashForMacro(owner: String, srcFile: String): String = {
+  private def genHashForMacro(owner: String, srcFile: String): String =
     Hashing
       .murmur3_32()
       .newHasher()
@@ -527,7 +525,6 @@ private[types] object TypeProvider {
       .putString(srcFile, Charsets.UTF_8)
       .hash()
       .toString
-  }
 
   private def dumpCodeForScalaPlugin(
     c: blackbox.Context

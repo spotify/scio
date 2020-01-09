@@ -20,7 +20,7 @@ System.setProperty(
 
 Since this feature uses Scala macros you must do this at initialization time.  One easy way to do this is in the `build.sbt` file for your project.  This would look like below.
 
-```scala
+```sbt
 initialize in Test ~= { _ => System.setProperty(
   "override.type.provider",
   "com.spotify.scio.bigquery.validation.SampleOverrideTypeProvider")

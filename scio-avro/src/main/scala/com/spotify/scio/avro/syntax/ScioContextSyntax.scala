@@ -57,6 +57,7 @@ object AvroFileImpl extends LowPriorityAvroFileImpl {
 
 /** Enhanced version of [[ScioContext]] with Avro methods. */
 final class ScioContextOps(private val self: ScioContext) extends AnyVal {
+
   /**
    * Get an SCollection for an object file using default serialization.
    *

@@ -18,7 +18,7 @@
 // Example: Word Count Example with Assertions
 // Usage:
 
-// `sbt runMain "com.spotify.scio.examples.DebuggingWordCount
+// `sbt "runMain com.spotify.scio.examples.DebuggingWordCount
 // --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
 // --input=gs://apache-beam-samples/shakespeare/kinglear.txt
 // --output=gs://[BUCKET]/[PATH]/wordcount"`
@@ -74,7 +74,7 @@ object DebuggingWordCount {
       .that(filteredWords.internal)
       .containsInAnyOrder(List(("Flourish", 3L), ("stomach", 1L)).asJava)
 
-    // Close the context, execute the pipeline and block until it finishes
+    // Execute the pipeline and block until it finishes
     val result = sc.run().waitUntilFinish()
 
     // Retrieve metric values
