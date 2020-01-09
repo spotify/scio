@@ -153,3 +153,38 @@ final class FixBigQueryDeprecations extends SemanticRule("FixBigQueryDeprecation
         Patch.replaceTree(t, syntax)
     }.asPatch
 }
+
+final class ConsistenceJoinNames  extends SemanticRule ("ConsistenceJoinNames") {
+  private val pairedHashScol = "com/spotify/scio/values/PairHashSCollectionFunctions#"
+  private val pairedSkewedScol ="com/spotify/scio/values/PairSkewedSCollectionFunctions#"
+  private val pairedScol = "com/spotify/scio/values/PairSCollectionFunctions#"
+
+  override def fix(implicit doc: SemanticDocument): Patch = {
+    doc.tree.collect{
+      case Term.Apply(fun, _) =>
+        fun match {
+          case Term.Select(qual, name) =>
+            name match {
+              case t @ Term.Name("hashLeftJoin") if(expectedType(qual, pairedHashScol)) =>
+                Patch.replaceTree(t, "hashLeftOuterJoin")
+              case t @ Term.Name("skewedLeftJoin") if(expectedType(qual, pairedSkewedScol))=>
+                Patch.replaceTree(t, "skewedLeftOuterJoin")
+              case t @ Term.Name("sparseOuterJoin") if (expectedType(qual, pairedScol)) =>
+                Patch.replaceTree(t, "sparseFullOuterJoin")
+              case _ => Patch.empty
+            }
+          case _ => Patch.empty
+        }
+    }
+    }.asPatch
+
+  private def expectedType(qual: Term, typStr: String)(implicit doc: SemanticDocument): Boolean = {
+    qual.symbol.info.get.signature match {
+      case MethodSignature(_, _, TypeRef(_, typ, _)) =>
+        typ == Symbol(typStr)
+      case ValueSignature(AnnotatedType(_, TypeRef(_, typ, _))) =>
+        typ == Symbol(typStr)
+      case _ => false
+    }
+  }
+}
