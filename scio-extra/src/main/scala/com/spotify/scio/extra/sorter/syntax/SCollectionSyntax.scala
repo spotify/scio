@@ -37,7 +37,7 @@ final class SorterOps[K1, K2: SortingKey, V](self: SCollection[(K1, Iterable[(K2
    * but with values sorted lexicographicly by the secondary key.
    *
    * The secondary key needs to be encoded as a [[String]] or [[Array[Byte]].
-   * [[SorteValues]] compares bytes lexicographically and may write secondary key-value pairs to disk.
+   * [[SortValues]] compares bytes lexicographically and may write secondary key-value pairs to disk.
    *
    * @note The primary key is explicit here only because this
    * transform is typically used on a result of a [[PairSCollectionFunctions.groupByKey]].
@@ -60,7 +60,7 @@ final class SorterOps[K1, K2: SortingKey, V](self: SCollection[(K1, Iterable[(K2
         )
       )
       .withName("SortValues")
-      .applyTransform(SortValues.create(sorterOptions))
+      .applyTransform(SortValues.create[K1, K2, V](sorterOptions))
       .withName("KvToTuple")
       .map { kv =>
         (
