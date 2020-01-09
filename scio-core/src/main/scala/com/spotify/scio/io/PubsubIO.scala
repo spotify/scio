@@ -32,7 +32,7 @@ import org.apache.beam.sdk.values.{PCollection, PDone}
 import org.joda.time.Instant
 
 import scala.collection.JavaConverters._
-import scala.reflect.ClassTag
+import scala.reflect.{classTag, ClassTag}
 import com.spotify.scio.io.PubsubIO.Subscription
 import com.spotify.scio.io.PubsubIO.Topic
 
@@ -85,17 +85,17 @@ object PubsubIO {
     case cls if classOf[SpecificRecordBase] isAssignableFrom cls =>
       type X = T with SpecificRecordBase
       AvroPubsubIOWithoutAttributes[X](name, idAttribute, timestampAttribute)(
-        cls.asInstanceOf[ClassTag[X]]
+        classTag[T].asInstanceOf[ClassTag[X]]
       ).asInstanceOf[PubsubIO[T]]
     case cls if classOf[Message] isAssignableFrom cls =>
       type X = T with Message
       MessagePubsubIOWithoutAttributes[X](name, idAttribute, timestampAttribute)(
-        cls.asInstanceOf[ClassTag[X]]
+        classTag[T].asInstanceOf[ClassTag[X]]
       ).asInstanceOf[PubsubIO[T]]
     case cls if classOf[beam.PubsubMessage] isAssignableFrom cls =>
       type X = T with beam.PubsubMessage
       PubSubMessagePubsubIOWithoutAttributes[X](name, idAttribute, timestampAttribute)(
-        cls.asInstanceOf[ClassTag[X]]
+        classTag[T].asInstanceOf[ClassTag[X]]
       ).asInstanceOf[PubsubIO[T]]
     case _ =>
       FallbackPubsubIOWithoutAttributes[T](name, idAttribute, timestampAttribute)
