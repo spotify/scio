@@ -94,9 +94,8 @@ object PubsubIO {
       ).asInstanceOf[PubsubIO[T]]
     case cls if classOf[beam.PubsubMessage] isAssignableFrom cls =>
       type X = T with beam.PubsubMessage
-      PubSubMessagePubsubIOWithoutAttributes[X](name, idAttribute, timestampAttribute)(
-        classTag[T].asInstanceOf[ClassTag[X]]
-      ).asInstanceOf[PubsubIO[T]]
+      PubSubMessagePubsubIOWithoutAttributes[X](name, idAttribute, timestampAttribute)
+        .asInstanceOf[PubsubIO[T]]
     case _ =>
       FallbackPubsubIOWithoutAttributes[T](name, idAttribute, timestampAttribute)
   }
@@ -262,7 +261,7 @@ final private case class MessagePubsubIOWithoutAttributes[T <: Message: ClassTag
   }
 }
 
-final private case class PubSubMessagePubsubIOWithoutAttributes[T <: beam.PubsubMessage: ClassTag](
+final private case class PubSubMessagePubsubIOWithoutAttributes[T <: beam.PubsubMessage](
   name: String,
   idAttribute: String,
   timestampAttribute: String
@@ -279,7 +278,7 @@ final private case class PubSubMessagePubsubIOWithoutAttributes[T <: beam.Pubsub
   }
 }
 
-final private case class FallbackPubsubIOWithoutAttributes[T: ClassTag: Coder](
+final private case class FallbackPubsubIOWithoutAttributes[T: Coder](
   name: String,
   idAttribute: String,
   timestampAttribute: String
