@@ -34,7 +34,7 @@ class FixAvroIO extends SemanticRule("FixAvroIO") {
       }
       .getOrElse(false)
 
-  override def fix(implicit doc: SemanticDocument): Patch = {
+  override def fix(implicit doc: SemanticDocument): Patch =
     doc.tree.collect {
       case t @ Term.Apply(
             Term.Select(parent, Term.Name("input")),
@@ -69,5 +69,4 @@ class FixAvroIO extends SemanticRule("FixAvroIO") {
           }
         imports.foldLeft(Patch.empty)(_ + _)
     }.asPatch
-  }
 }

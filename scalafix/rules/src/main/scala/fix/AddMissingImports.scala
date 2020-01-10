@@ -42,12 +42,11 @@ class AddMissingImports extends SyntacticRule("AddMissingImports") {
     val `import` = importer"com.spotify.scio.bigquery._"
   }
 
-  override def fix(implicit doc: SyntacticDocument): Patch = {
+  override def fix(implicit doc: SyntacticDocument): Patch =
     doc.tree.collect {
       case t @ Term.Name(n) if Avro.fns.contains(n) =>
         addImport(t.pos, Avro.`import`)
       case t @ Term.Name(n) if BQ.fns.contains(n) =>
         addImport(t.pos, BQ.`import`)
     }.asPatch
-  }
 }

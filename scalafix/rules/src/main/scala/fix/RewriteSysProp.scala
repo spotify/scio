@@ -44,7 +44,7 @@ class RewriteSysProp extends SyntacticRule("RewriteSysProp") {
       }
   }
 
-  override def fix(implicit doc: SyntacticDocument): Patch = {
+  override def fix(implicit doc: SyntacticDocument): Patch =
     doc.tree.collect {
       // BigQuery
       case t @ NamedSysProp("BigQueryClient", key) =>
@@ -90,5 +90,4 @@ class RewriteSysProp extends SyntacticRule("RewriteSysProp") {
       case c =>
         Patch.empty
     }.asPatch
-  }
 }

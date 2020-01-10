@@ -32,7 +32,7 @@ class BQClientRefactoring extends SyntacticRule("BQClientRefactoring") {
   def addBQImport(i: Tree) =
     addImport(i.pos, importer"com.spotify.scio.bigquery.client.BigQuery")
 
-  override def fix(implicit doc: SyntacticDocument): Patch = {
+  override def fix(implicit doc: SyntacticDocument): Patch =
     doc.tree.collect {
       case i @ Importee.Name(Name.Indeterminate("BigQueryClient")) =>
         Patch.removeImportee(i) + addBQImport(i)
@@ -72,5 +72,4 @@ class BQClientRefactoring extends SyntacticRule("BQClientRefactoring") {
       case c if c.toString.contains("BigQueryClient") =>
         Patch.empty
     }.asPatch
-  }
 }
