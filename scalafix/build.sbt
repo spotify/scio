@@ -7,14 +7,17 @@ inThisBuild(
     scalacOptions ++= List(
       "-Yrangepos"
     ),
-    skip in publish := true
+    skip in publish := true,
+    scalafmtOnCompile := false,
+    scalafmtConfig := baseDirectory.value / ".." / ".scalafmt.conf"
   )
 )
 
-lazy val rules = project.settings(
-  moduleName := "scalafix",
-  libraryDependencies += "ch.epfl.scala" %% "scalafix-core" % V.scalafixVersion
-)
+lazy val rules = project
+  .settings(
+    moduleName := "scalafix",
+    libraryDependencies += "ch.epfl.scala" %% "scalafix-core" % V.scalafixVersion
+  )
 
 def scio(version: String) =
   List(
@@ -26,21 +29,25 @@ def scio(version: String) =
     "com.spotify" %% "scio-tensorflow"
   ).map(_ % version)
 
-lazy val input = project.settings(
-  libraryDependencies ++= scio(Scio.`0.6`)
-)
+lazy val input = project
+  .settings(
+    libraryDependencies ++= scio(Scio.`0.6`)
+  )
 
-lazy val output = project.settings(
-  libraryDependencies ++= scio(Scio.`0.7`)
-)
+lazy val output = project
+  .settings(
+    libraryDependencies ++= scio(Scio.`0.7`)
+  )
 
-lazy val `input-0_8` = project.settings(
-  libraryDependencies ++= scio(Scio.`0.7`)
-)
+lazy val `input-0_8` = project
+  .settings(
+    libraryDependencies ++= scio(Scio.`0.7`)
+  )
 
-lazy val `output-0_8` = project.settings(
-  libraryDependencies ++= scio(Scio.`0.8`)
-)
+lazy val `output-0_8` = project
+  .settings(
+    libraryDependencies ++= scio(Scio.`0.8`)
+  )
 
 lazy val tests = project
   .settings(

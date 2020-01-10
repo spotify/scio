@@ -111,6 +111,9 @@ jobs:
                   sbt -v $SBT_OPTS \
                     scalafmtCheckAll scalafmtSbtCheck \
                     "; scalafixEnable; scalafix --check; test:scalafix --check; it:scalafix --check"
+            - run:
+                command: |
+                  cd scalafix; sbt -v $SBT_OPTS  scalafmtCheckAll scalafmtSbtCheck
 
   build_211:
     executor: scala_211

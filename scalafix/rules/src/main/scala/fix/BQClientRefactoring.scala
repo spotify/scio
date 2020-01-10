@@ -14,7 +14,7 @@ class BQClientRefactoring extends SyntacticRule("BQClientRefactoring") {
     val Input.VirtualFile(path, _) = p.input
 
     val t = (s.toString, path)
-    if(!imports.contains(t)) {
+    if (!imports.contains(t)) {
       imports += t
       Patch.addGlobalImport(i)
     } else Patch.empty
@@ -32,13 +32,16 @@ class BQClientRefactoring extends SyntacticRule("BQClientRefactoring") {
   def addBQImport(i: Tree) =
     addImport(i.pos, importer"com.spotify.scio.bigquery.client.BigQuery")
 
-  override def fix(implicit doc: SyntacticDocument): Patch = {
+  override def fix(implicit doc: SyntacticDocument): Patch =
     doc.tree.collect {
       case i @ Importee.Name(Name.Indeterminate("BigQueryClient")) =>
         Patch.removeImportee(i) + addBQImport(i)
       case BQDef(t, "extractLocation" | "extractTables") =>
         Patch.addLeft(t, "query.") + addBQImport(t)
-      case Term.Apply(Term.Select(n @ Term.Name("BigQueryClient"), Term.Name("defaultInstance")), _) =>
+      case Term.Apply(
+          Term.Select(n @ Term.Name("BigQueryClient"), Term.Name("defaultInstance")),
+          _
+          ) =>
         Patch.replaceTree(n, "BigQuery") + addBQImport(n)
       case BQDef(t, "getQuerySchema") =>
         Patch.replaceTree(t, "query.schema") + addBQImport(t)
@@ -69,5 +72,4 @@ class BQClientRefactoring extends SyntacticRule("BQClientRefactoring") {
       case c if c.toString.contains("BigQueryClient") =>
         Patch.empty
     }.asPatch
-  }
 }
