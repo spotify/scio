@@ -19,7 +19,7 @@ package com.spotify.scio.coders
 
 import java.io.{EOFException, InputStream, OutputStream}
 import java.nio.file.Path
-import java.util.UUID
+import java.util.concurrent.atomic.AtomicInteger
 
 import com.esotericsoftware.kryo.KryoException
 import com.esotericsoftware.kryo.io.{InputChunked, OutputChunked}
@@ -131,7 +131,7 @@ final private[scio] class KryoAtomicCoder[T](private val options: KryoOptions)
     extends AtomicCoder[T] {
   import KryoAtomicCoder._
 
-  private[this] val instanceId = UUID.randomUUID.toString
+  private[this] val instanceId = KryoAtomicCoder.nextInstanceId()
 
   override def encode(value: T, os: OutputStream): Unit =
     withKryoState(instanceId, options) { kryoState =>
@@ -246,16 +246,19 @@ final private[scio] case class KryoState(
 private[scio] object KryoAtomicCoder {
   private val logger = LoggerFactory.getLogger(this.getClass)
   private val Header = -1
+  private val atomicInstanceIds = new AtomicInteger(0)
 
   // We want to have one Kryo instance per thread per instance.
   // Also the instances should be garbage collected when the thread dies.
-  private[this] val KryoStateMap: ThreadLocal[mutable.HashMap[String, KryoState]] =
-    new ThreadLocal[mutable.HashMap[String, KryoState]] {
-      override def initialValue(): mutable.HashMap[String, KryoState] =
-        mutable.HashMap[String, KryoState]()
+  private[this] val KryoStateMap: ThreadLocal[mutable.HashMap[Integer, KryoState]] =
+    new ThreadLocal[mutable.HashMap[Integer, KryoState]] {
+      override def initialValue(): mutable.HashMap[Integer, KryoState] =
+        mutable.HashMap[Integer, KryoState]()
     }
 
-  final def withKryoState[R](instanceId: String, options: KryoOptions)(f: KryoState => R): R = {
+  private def nextInstanceId(): Int = atomicInstanceIds.getAndIncrement()
+
+  final def withKryoState[R](instanceId: Integer, options: KryoOptions)(f: KryoState => R): R = {
     val ks = KryoStateMap
       .get()
       .getOrElseUpdate(
