@@ -659,6 +659,38 @@ class BeamSQLTest extends PipelineSpec {
       .to(To.unsafe[AvroCompatibleUser, GenericRecord]) should containInAnyOrder(genericRecords)
   }
 
+  it should "support bytes in avro generic classes" in {
+    import com.spotify.scio.avro.AvroWithBytesRecord
+    import java.nio.ByteBuffer
+    import TypeConvertionsTestData._
+
+    val cat = "lorem"
+    val cid = "42"
+    val devId = "device_id".getBytes()
+
+    val m = com.spotify.scio.avro.Message.newBuilder()
+    val r = AvroWithBytesRecord.newBuilder()
+    m.setCatalogue(cat)
+    m.setClientId("42")
+    m.setDeviceId(ByteBuffer.wrap(devId))
+    r.setMessage(m.build())
+
+    val expected =
+      ScalaRecord(
+        Option(ScalaMessage(Option(cat), Option(cid), Option(devId)))
+      )
+
+    val rec = r.build()
+    val to = To.safe[AvroWithBytesRecord, ScalaRecord]
+
+    val converted = to.convert(rec)
+    converted.message.get.catalogue shouldBe expected.message.get.catalogue
+    converted.message.get.client_id shouldBe expected.message.get.client_id
+    new String(converted.message.get.device_id.get) shouldBe new String(
+      expected.message.get.device_id.get
+    )
+  }
+
   "String interpolation" should "support simple queries" in runWithContext { sc =>
     val expected = users.map { u =>
       (u.username, u.age)
@@ -768,4 +800,11 @@ object TypeConvertionsTestData {
     string_field: Option[String],
     array_field: List[String]
   )
+
+  case class ScalaMessage(
+    catalogue: Option[String],
+    client_id: Option[String],
+    device_id: Option[Array[Byte]]
+  )
+  case class ScalaRecord(message: Option[ScalaMessage])
 }
