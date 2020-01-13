@@ -453,9 +453,9 @@ def examples: SCollection[FromExample] = ???
 def safe: SCollection[ToExample] = examples.to[ToExample](To.safe)
 </code></pre>
 <h2><a href="#deprecations-and-breaking-changes" name="deprecations-and-breaking-changes" class="anchor"><span class="anchor-link"></span></a>Deprecations and Breaking changes</h2>
-<h3><a href="#scala-concurrent-future-removed-from-scioios" name="scala-concurrent-future-removed-from-scioios" class="anchor"><span class="anchor-link"></span></a>scala.concurrent.Future removed from ScioIO&rsquo;s</h3>
+<h3><a href="#scala-concurrent-future-removed-from-scioios" name="scala-concurrent-future-removed-from-scioios" class="anchor"><span class="anchor-link"></span></a>scala.concurrent.Future removed from <code>ScioIO</code>s</h3>
 <p>The removal of <a href="http://www.scala-lang.org/api/2.12.10/scala/concurrent/Future.html" title="scala.concurrent.Future"><code>Future</code></a> led to some semantic and behaviour changes.</p>
-<p><code>ScioIO</code>&rsquo;s no longer return <a href="http://www.scala-lang.org/api/2.12.10/scala/concurrent/Future.html" title="scala.concurrent.Future"><code>Future</code></a></p>
+<p><code>ScioIO</code>s no longer return <a href="http://www.scala-lang.org/api/2.12.10/scala/concurrent/Future.html" title="scala.concurrent.Future"><code>Future</code></a></p>
 <pre class="prettyprint"><code class="language-diff">trait ScioIO[T] {
   ....
 - protected def write(data: SCollection[T], params: WriteP): Future[Tap[tapT.T]]
@@ -529,8 +529,8 @@ def table: Table = Table.Spec(tableSpecString)
 def table: Table = Table.Ref(tableReference)
 </code></pre>
 <p>The advantage of this over the previous usage of <code>String</code> or <code>TableReference</code> is that now we are able to safely disambiguate between table spec and table reference.</p>
-<h3><a href="#async-dofns" name="async-dofns" class="anchor"><span class="anchor-link"></span></a>Async DoFn&rsquo;s</h3>
-<p>Async DoFn&rsquo;s were refactored.</p>
+<h3><a href="#async-dofns" name="async-dofns" class="anchor"><span class="anchor-link"></span></a>Async <code>DoFn</code>s</h3>
+<p>Async <code>DoFn</code>s were refactored.</p>
 <p><code>AsyncLookupDoFn</code> was renamed to <a href="https://spotify.github.io/scio/api/com/spotify/scio/transforms/BaseAsyncLookupDoFn.html" title="com.spotify.scio.transforms.BaseAsyncLookupDoFn"><code>`BaseAsyncLookupDoFn`</code></a> and we now have better support for <code>Guava</code>, <code>Java 8</code> and scala <code>Future</code> lookup DoFn&rsquo;s through the following implementations <a href="https://spotify.github.io/scio/api/com/spotify/scio/transforms/GuavaAsyncLookupDoFn.html" title="com.spotify.scio.transforms.GuavaAsyncLookupDoFn"><code>`GuavaAsyncLookupDoFn`</code></a>, <a href="https://spotify.github.io/scio/api/com/spotify/scio/transforms/JavaAsyncLookupDoFn.html" title="com.spotify.scio.transforms.JavaAsyncLookupDoFn"><code>`JavaAsyncLookupDoFn`</code></a> and <a href="https://spotify.github.io/scio/api/com/spotify/scio/transforms/ScalaAsyncLookupDoFn.html" title="com.spotify.scio.transforms.ScalaAsyncLookupDoFn"><code>`ScalaAsyncLookupDoFn`</code></a>.</p>
 </div>
 <div>

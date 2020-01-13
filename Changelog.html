@@ -188,6 +188,7 @@ spotify/scio
 <ul>
   <li><a href="Changelog.html#changelog" class="header">Changelog</a>
   <ul>
+    <li><a href="Changelog.html#breaking-changes-since-scio-0-8-0-" class="header">Breaking changes since Scio 0.8.0 (<a href="migrations/v0.8.0-Migration-Guide.html">v0.8.0 Migration Guide</a>)</a></li>
     <li><a href="Changelog.html#breaking-changes-since-scio-0-7-0-" class="header">Breaking changes since Scio 0.7.0 (<a href="migrations/v0.7.0-Migration-Guide.html">v0.7.0 Migration Guide</a>)</a></li>
     <li><a href="Changelog.html#breaking-changes-since-scio-0-6-0" class="header">Breaking changes since Scio 0.6.0</a></li>
     <li><a href="Changelog.html#breaking-changes-since-scio-0-5-0" class="header">Breaking changes since Scio 0.5.0</a></li>
@@ -216,6 +217,7 @@ spotify/scio
 <ul>
   <li><a href="Changelog.html#changelog" class="header">Changelog</a>
   <ul>
+    <li><a href="Changelog.html#breaking-changes-since-scio-0-8-0-" class="header">Breaking changes since Scio 0.8.0 (<a href="migrations/v0.8.0-Migration-Guide.html">v0.8.0 Migration Guide</a>)</a></li>
     <li><a href="Changelog.html#breaking-changes-since-scio-0-7-0-" class="header">Breaking changes since Scio 0.7.0 (<a href="migrations/v0.7.0-Migration-Guide.html">v0.7.0 Migration Guide</a>)</a></li>
     <li><a href="Changelog.html#breaking-changes-since-scio-0-6-0" class="header">Breaking changes since Scio 0.6.0</a></li>
     <li><a href="Changelog.html#breaking-changes-since-scio-0-5-0" class="header">Breaking changes since Scio 0.5.0</a></li>
@@ -232,6 +234,13 @@ spotify/scio
 <article class="md-content__inner md-typeset">
 <div class="md-content__searchable">
 <h1><a href="#changelog" name="changelog" class="anchor"><span class="anchor-link"></span></a>Changelog</h1>
+<h2><a href="#breaking-changes-since-scio-0-8-0-" name="breaking-changes-since-scio-0-8-0-" class="anchor"><span class="anchor-link"></span></a>Breaking changes since Scio 0.8.0 (<a href="migrations/v0.8.0-Migration-Guide.html">v0.8.0 Migration Guide</a>)</h2>
+<ul>
+  <li><code>ScioIO</code>s no longer return <code>Future</code></li>
+  <li><code>ScioContext#close</code> returns <code>ScioExecutionContext</code> instead of <code>ScioResult</code></li>
+  <li>Async <code>DoFn</code> refactor</li>
+  <li>Deprecate <code>scio-cassandra2</code> and <code>scio-elasticsearch2</code></li>
+</ul>
 <h2><a href="#breaking-changes-since-scio-0-7-0-" name="breaking-changes-since-scio-0-7-0-" class="anchor"><span class="anchor-link"></span></a>Breaking changes since Scio 0.7.0 (<a href="migrations/v0.7.0-Migration-Guide.html">v0.7.0 Migration Guide</a>)</h2>
 <ul>
   <li>New <a href="https://github.com/propensive/magnolia">Magnolia</a> based <a href="internals/Coders.html">Coders</a> derivation</li>
