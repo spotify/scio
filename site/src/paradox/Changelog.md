@@ -5,6 +5,7 @@
 - `ScioContext#close` returns `ScioExecutionContext` instead of `ScioResult`
 - Async `DoFn` refactor
 - Deprecate `scio-cassandra2` and `scio-elasticsearch2`
+- `ContextAndArgs#typed` no longer accepts list-case #2221
 
 ## Breaking changes since Scio 0.7.0 (@ref:[v0.7.0 Migration Guide](migrations/v0.7.0-Migration-Guide.md))
 
