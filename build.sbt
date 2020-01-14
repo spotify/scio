@@ -417,6 +417,7 @@ lazy val `scio-core`: Project = project
       "com.google.api.grpc" % "proto-google-cloud-datastore-v1" % generatedGrpcBetaVersion,
       "com.google.http-client" % "google-http-client" % googleClientsVersion,
       "com.google.http-client" % "google-http-client-jackson2" % googleClientsVersion,
+      "com.spotify" %% "magnolify-guava" % magnolifyVersion,
       "io.grpc" % "grpc-core" % grpcVersion,
       "io.grpc" % "grpc-auth" % grpcVersion,
       "io.grpc" % "grpc-netty" % grpcVersion,
