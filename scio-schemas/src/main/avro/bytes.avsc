@@ -1,0 +1,45 @@
+{
+  "type": "record",
+  "name": "AvroWithBytesRecord",
+  "namespace": "com.spotify.scio.avro",
+  "fields": [
+    {
+      "name": "message",
+      "type": [
+        "null",
+        {
+          "type": "record",
+          "name": "Message",
+          "doc": "A message",
+          "fields": [
+            {
+              "name": "catalogue",
+              "type": [
+                "null",
+                "string"
+              ],
+              "default": null
+            },
+            {
+              "name": "client_id",
+              "type": [
+                "null",
+                "string"
+              ],
+              "default": null
+            },
+            {
+              "name": "device_id",
+              "type": [
+                "null",
+                "bytes"
+              ],
+              "default": null
+            }
+          ]
+        }
+      ],
+      "default": null
+    }
+  ]
+}
