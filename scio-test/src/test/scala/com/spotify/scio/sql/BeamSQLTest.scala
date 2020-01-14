@@ -671,7 +671,7 @@ class BeamSQLTest extends PipelineSpec {
     val m = com.spotify.scio.avro.Message.newBuilder()
     val r = AvroWithBytesRecord.newBuilder()
     m.setCatalogue(cat)
-    m.setClientId("42")
+    m.setClientId(cid)
     m.setDeviceId(ByteBuffer.wrap(devId))
     r.setMessage(m.build())
 
