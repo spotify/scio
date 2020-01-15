@@ -80,7 +80,7 @@ Scio includes the following artifacts:
 - `scio-bigtable`: add-on for Bigtable
 - `scio-cassandra*`: add-ons for Cassandra
 - `scio-elasticsearch*`: add-ons for Elasticsearch
-- `scio-extra`: extra utilities for working with collections, Breeze, etc.
+- `scio-extra`: extra utilities for working with collections, Breeze, etc., best effort support
 - `scio-jdbc`: add-on for JDBC IO
 - `scio-parquet`: add-on for Parquet
 - `scio-tensorflow`: add-on for TensorFlow TFRecords IO and prediction
