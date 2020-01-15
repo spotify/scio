@@ -161,6 +161,7 @@ trait ToTableSchema {
   }
 
   import org.apache.avro.LogicalTypes._
+
   /**
    * This uses avro logical type to Converted BigQuery mapping in the following table
    * https://cloud.google.com/bigquery/docs/loading-data-cloud-storage-avro#logical_types
@@ -174,6 +175,6 @@ trait ToTableSchema {
     case _: TimeMicros      => "INTEGER"
     case _: TimestampMillis => "TIMESTAMP"
     case _: TimestampMicros => "INTEGER"
-    case _  => throw new IllegalStateException(s"Unknown Logical Type: [${logicalType.getName}]")
+    case _                  => throw new IllegalStateException(s"Unknown Logical Type: [${logicalType.getName}]")
   }
 }
