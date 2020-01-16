@@ -20,6 +20,7 @@ package com.spotify.scio.extra.bigquery
 import com.google.api.services.bigquery.model.{TableFieldSchema, TableSchema}
 import com.spotify.scio.annotations.experimental
 import com.spotify.scio.extra.bigquery.Implicits.AvroConversionException
+import org.apache.avro.LogicalTypes._
 import org.apache.avro.Schema.Type
 import org.apache.avro.Schema.Type._
 import org.apache.avro.{LogicalType, Schema}
@@ -84,14 +85,10 @@ trait ToTableSchema {
       field.setMode("REQUIRED")
     }
 
-    val logicalType = schema.getLogicalType
-    if (logicalType != null) {
-      field.setType(typeFromLogicalType(logicalType))
-    } else {
-      avroToBQTypes.get(schemaType).foreach { bqType =>
-        field.setType(bqType)
-      }
-    }
+    Option(schema.getLogicalType)
+      .map(typeFromLogicalType)
+      .orElse(avroToBQTypes.get(schemaType))
+      .foreach(field.setType)
 
     schemaType match {
       case UNION =>
@@ -159,8 +156,6 @@ trait ToTableSchema {
     field.setFields(List(keyField, valueField).asJava)
     ()
   }
-
-  import org.apache.avro.LogicalTypes._
 
   /**
    * This uses avro logical type to Converted BigQuery mapping in the following table

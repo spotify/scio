@@ -17,6 +17,7 @@
 
 package com.spotify.scio.extra.bigquery
 
+import java.math.{BigDecimal => JBigDecimal}
 import java.nio.ByteBuffer
 
 import com.google.protobuf.ByteString
@@ -24,8 +25,8 @@ import com.spotify.scio.bigquery.TableRow
 import org.apache.avro.generic.GenericData
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.io.BaseEncoding
 import org.joda.time.{DateTime, LocalDate, LocalTime}
-import org.scalatest.Matchers
 import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import scala.collection.JavaConverters._
 
@@ -100,7 +101,6 @@ class ToTableRowTest extends AnyFlatSpec with Matchers with ToTableRow {
   val timeMicros = 1234L
   val timestampMillis: DateTime = DateTime.parse("2019-10-29T05:24:52.215")
   val timestampMicros = 4325L
-  import java.math.{BigDecimal => JBigDecimal}
   val decimal = new JBigDecimal("3.14")
 
   val expectedLogicalTypeOutput = new TableRow()
