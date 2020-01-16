@@ -18,8 +18,6 @@
 package com.spotify.scio.extra.sorter
 
 import com.spotify.scio.testing._
-import org.apache.beam.sdk.extensions.sorter.BufferedExternalSorter
-import org.apache.beam.sdk.extensions.sorter.ExternalSorter
 
 final class SorterTest extends PipelineSpec {
   "NativeFileSorter" should "sort string keys lexicographically" in {
@@ -35,14 +33,10 @@ final class SorterTest extends PipelineSpec {
       ("c", Iterable(("d", 4)))
     )
     runWithContext { sc =>
-      val sorterOptions = BufferedExternalSorter
-        .options()
-        .withExternalSorterType(ExternalSorter.Options.SorterType.NATIVE)
-
       val p = sc
         .parallelize(data)
         .groupByKey
-        .sortValues(sorterOptions)
+        .sortValues(100)
 
       p should containInAnyOrder(expected)
     }
@@ -62,14 +56,10 @@ final class SorterTest extends PipelineSpec {
       ("c", Iterable(("d", 4)))
     )
     runWithContext { sc =>
-      val sorterOptions = BufferedExternalSorter
-        .options()
-        .withExternalSorterType(ExternalSorter.Options.SorterType.NATIVE)
-
       val p = sc
         .parallelize(data)
         .groupByKey
-        .sortValues(sorterOptions)
+        .sortValues(100)
         .mapValues(iter => iter.map(kv => (new String(kv._1), kv._2)))
 
       p should containInAnyOrder(expected)

@@ -24,9 +24,11 @@ import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import com.spotify.scio.extra.sorter.SortingKey
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.coders.{IterableCoder, KvCoder}
+import org.apache.beam.sdk.extensions.sorter.ExternalSorter.Options.SorterType
 import org.apache.beam.sdk.extensions.sorter.{BufferedExternalSorter, SortValues}
 import org.apache.beam.sdk.values.KV
 
+import scala.collection.AbstractIterator
 import scala.collection.JavaConverters._
 
 final class SorterOps[K1, K2: SortingKey, V](self: SCollection[(K1, Iterable[(K2, V)])]) {
@@ -42,15 +44,22 @@ final class SorterOps[K1, K2: SortingKey, V](self: SCollection[(K1, Iterable[(K2
    * @note The primary key is explicit here only because this
    * transform is typically used on a result of a [[PairSCollectionFunctions.groupByKey]].
    *
-   * @param sorterOptions see [[BufferedExternalSorter.Options]]
+   * @param memoryMB Sets the size of the memory buffer in megabytes. This controls both the buffer for initial in
+   *                 memory sorting and the buffer used when external sorting. Must be greater than zero and less
+   *                 than 2048.
    */
   @experimental
-  def sortValues(sorterOptions: BufferedExternalSorter.Options)(
+  def sortValues(memoryMB: Int)(
     implicit k1Coder: Coder[K1],
     k2Coder: Coder[K2],
     vCoder: Coder[V],
     kvCoder: Coder[KV[K1, JIterable[KV[K2, V]]]]
   ): SCollection[(K1, Iterable[(K2, V)])] = self.transform { c =>
+    val options = BufferedExternalSorter
+      .options()
+      .withExternalSorterType(SorterType.NATIVE)
+      .withMemoryMB(memoryMB)
+
     c.withName("TupleToKv")
       .map(kv => KV.of(kv._1, kv._2.map(t => KV.of(t._1, t._2)).asJava))
       .setCoder(
@@ -60,13 +69,23 @@ final class SorterOps[K1, K2: SortingKey, V](self: SCollection[(K1, Iterable[(K2
         )
       )
       .withName("SortValues")
-      .applyTransform(SortValues.create[K1, K2, V](sorterOptions))
+      .applyTransform(SortValues.create[K1, K2, V](options))
       .withName("KvToTuple")
       .map { kv =>
-        (
-          kv.getKey,
-          kv.getValue.asScala.map(xs => (xs.getKey, xs.getValue))
-        )
+        val iter = new Iterable[(K2, V)] {
+          override def iterator: Iterator[(K2, V)] = new AbstractIterator[(K2, V)] {
+            private[this] val iter = kv.getValue.iterator()
+            override def hasNext: Boolean = iter.hasNext
+
+            override def next(): (K2, V) = {
+              val next = iter.next()
+              (next.getKey, next.getValue)
+            }
+          }
+
+          override def toString: String = "<iterable>"
+        }
+        (kv.getKey, iter)
       }
   }
 }
