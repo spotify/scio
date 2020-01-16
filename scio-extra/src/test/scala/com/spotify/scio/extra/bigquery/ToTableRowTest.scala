@@ -112,7 +112,7 @@ class ToTableRowTest extends AnyFlatSpec with Matchers with ToTableRow {
     .set("floatField", 1f)
     .set("bytesField", BaseEncoding.base64Url().encode("someBytes".getBytes))
     .set("dateField", "2019-10-29")
-    .set("decimalField", decimal.unscaledValue().toString)
+    .set("decimalField", decimal.toString)
     .set("timeMillisField", "01:24:52.211000")
     .set("timeMicrosField", timeMicros)
     .set("timestampMillisField", "2019-10-29T05:24:52.215000")
