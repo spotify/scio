@@ -19,10 +19,17 @@ package com.spotify.scio.coders
 
 import org.apache.beam.sdk.coders.{CoderRegistry, KvCoder, NullableCoder, Coder => BCoder}
 import org.apache.beam.sdk.options.{PipelineOptions, PipelineOptionsFactory}
-import scala.collection.concurrent.TrieMap
 
 object CoderMaterializer {
   import com.spotify.scio.ScioContext
+
+  private[scio] case class CoderOptions(nullableCoders: Boolean, kryo: KryoOptions)
+  private[scio] object CoderOptions {
+    def apply(o: PipelineOptions) = {
+      val nullableCoder = o.as(classOf[com.spotify.scio.options.ScioOptions]).getNullableCoders()
+      new CoderOptions(nullableCoder, KryoOptions(o))
+    }
+  }
 
   final def beam[T](sc: ScioContext, c: Coder[T]): BCoder[T] =
     beam(sc.pipeline.getCoderRegistry, sc.options, c)
@@ -33,23 +40,19 @@ object CoderMaterializer {
     o: PipelineOptions = PipelineOptionsFactory.create()
   ): BCoder[T] = beam(r, o, coder)
 
-  @inline private def nullCoder[T](o: PipelineOptions, c: BCoder[T]) = {
-    val nullableCoder = o.as(classOf[com.spotify.scio.options.ScioOptions]).getNullableCoders()
-    if (nullableCoder) NullableCoder.of(c)
+  @inline private def nullCoder[T](o: CoderOptions, c: BCoder[T]) =
+    if (o.nullableCoders) NullableCoder.of(c)
     else c
-  }
 
   final def beam[T](
     r: CoderRegistry,
     o: PipelineOptions,
     coder: Coder[T]
-  ): BCoder[T] = beamImpl(r, o, coder, TrieMap.empty)
+  ): BCoder[T] = beamImpl(CoderOptions(o), coder)
 
-  final private def beamImpl[T](
-    r: CoderRegistry,
-    o: PipelineOptions,
-    coder: Coder[T],
-    refs: TrieMap[String, RefCoder[_]]
+  final private[scio] def beamImpl[T](
+    o: CoderOptions,
+    coder: Coder[T]
   ): BCoder[T] =
     coder match {
       // #1734: do not wrap native beam coders
@@ -58,16 +61,16 @@ object CoderMaterializer {
       case Beam(c) =>
         WrappedBCoder.create(nullCoder(o, c))
       case Fallback(_) =>
-        val kryoCoder = new KryoAtomicCoder[T](KryoOptions(o))
+        val kryoCoder = new KryoAtomicCoder[T](o.kryo)
         WrappedBCoder.create(nullCoder(o, kryoCoder))
       case Transform(c, f) =>
-        val u = f(beamImpl(r, o, c, refs))
-        WrappedBCoder.create(beamImpl(r, o, u, refs))
+        val u = f(beamImpl(o, c))
+        WrappedBCoder.create(beamImpl(o, u))
       case Record(typeName, coders, construct, destruct) =>
         WrappedBCoder.create(
           new RecordCoder(
             typeName,
-            coders.map(c => c._1 -> nullCoder(o, beamImpl(r, o, c._2, refs))),
+            coders.map(c => c._1 -> nullCoder(o, beamImpl(o, c._2))),
             construct,
             destruct
           )
@@ -77,25 +80,15 @@ object CoderMaterializer {
           // `.map(identity) is really needed to make Map serializable.
           DisjunctionCoder(
             typeName,
-            beamImpl(r, o, idCoder, refs),
+            beamImpl(o, idCoder),
             id,
-            coders.mapValues(u => beamImpl(r, o, u, refs)).map(identity)
+            coders.mapValues(u => beamImpl(o, u)).map(identity)
           )
         )
       case KVCoder(koder, voder) =>
-        WrappedBCoder.create(KvCoder.of(beamImpl(r, o, koder, refs), beamImpl(r, o, voder, refs)))
+        WrappedBCoder.create(KvCoder.of(beamImpl(o, koder), beamImpl(o, voder)))
       case Ref(t, c) =>
-        refs
-          .get(t)
-          .getOrElse {
-            // #2269: _REALLY_ support recursive ADTs
-            val bc = RefCoder[T](t, null) // placeholder
-            refs.put(t, bc)
-            val actualImpl = beamImpl(r, o, c, refs)
-            bc.setImpl(actualImpl)
-            bc
-          }
-          .asInstanceOf[BCoder[T]]
+        LazyCoder[T](t, o)(c)
     }
 
   def kvCoder[K, V](ctx: ScioContext)(implicit k: Coder[K], v: Coder[V]): KvCoder[K, V] =

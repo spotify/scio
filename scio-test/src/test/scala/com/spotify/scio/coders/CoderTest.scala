@@ -482,6 +482,13 @@ final class CoderTest extends AnyFlatSpec with Matchers {
       )
     ) coderShould roundtrip()
   }
+
+  it should "#2595: work with parameterized types" in {
+    case class Example(stringT: Either[Array[Byte], String], longT: Either[Array[Byte], Long])
+    val sc = com.spotify.scio.ScioContext.forTest()
+    val c = CoderMaterializer.beam(sc, implicitly[Coder[Example]])
+    c.encode(Example(Right("str"), Right(0L)), System.out)
+  }
 }
 
 object RecursiveCase {
