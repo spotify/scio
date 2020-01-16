@@ -171,31 +171,26 @@ final private case class DisjunctionCoder[T, Id](
     }
 }
 
-final private[scio] case class RefCoder[T](typeName: String, var coder: BCoder[T])
+final private[scio] case class LazyCoder[T](
+  typeName: String,
+  o: CoderMaterializer.CoderOptions
+)(coder: Coder[T])
     extends BCoder[T] {
-  def setImpl(_c: BCoder[T]): Unit = coder = _c
 
-  private def check[A](t: => A): A = {
-    require(coder != null, s"Coder implementation should not be null in ${this}")
-    t
-  }
+  private lazy val bcoder = CoderMaterializer.beamImpl[T](o, coder)
 
-  def decode(inStream: InputStream): T = check { coder.decode(inStream) }
-  def encode(value: T, outStream: OutputStream): Unit = check { coder.encode(value, outStream) }
-  def getCoderArguments(): java.util.List[_ <: BCoder[_]] = check { coder.getCoderArguments() }
-  def verifyDeterministic(): Unit = check { coder.verifyDeterministic() }
+  def decode(inStream: InputStream): T = bcoder.decode(inStream)
+  def encode(value: T, outStream: OutputStream): Unit = bcoder.encode(value, outStream)
+  def getCoderArguments(): java.util.List[_ <: BCoder[_]] = bcoder.getCoderArguments()
+  def verifyDeterministic(): Unit = bcoder.verifyDeterministic()
 
-  override def consistentWithEquals(): Boolean = check { coder.consistentWithEquals() }
-  override def structuralValue(value: T): AnyRef = check {
+  override def consistentWithEquals(): Boolean = bcoder.consistentWithEquals()
+  override def structuralValue(value: T): AnyRef =
     if (consistentWithEquals()) {
       value.asInstanceOf[AnyRef]
     } else {
-      coder.structuralValue(value)
+      bcoder.structuralValue(value)
     }
-  }
-
-  override def toString(): String =
-    s"RefCoder($typeName, ${if (coder == null) "null" else "<coder ref>"})"
 }
 
 // XXX: Workaround a NPE deep down the stack in Beam

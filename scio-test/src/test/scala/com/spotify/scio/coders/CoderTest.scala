@@ -482,6 +482,18 @@ final class CoderTest extends AnyFlatSpec with Matchers {
       )
     ) coderShould roundtrip()
   }
+
+  it should "#2595: work with parameterized types" in {
+    case class Example(stringT: Either[Array[Byte], String], longT: Either[Array[Byte], Long])
+    val sc = com.spotify.scio.ScioContext.forTest()
+    val c = CoderMaterializer.beam(sc, implicitly[Coder[Example]])
+    c.encode(Example(Right("str"), Right(0L)), System.out)
+  }
+
+  it should "#2467 support derivation of directly recursive types" in {
+    import RecursiveCase._
+    Recursive(1, Option(Recursive(2, None))) coderShould roundtrip()
+  }
 }
 
 object RecursiveCase {
@@ -492,4 +504,6 @@ object RecursiveCase {
   case class RecordType(fields: List[SampleField]) extends SampleFieldType
 
   implicit val coderSampleFieldType = Coder.gen[SampleField]
+
+  case class Recursive(a: Int, rec: Option[Recursive] = None)
 }
