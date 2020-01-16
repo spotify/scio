@@ -175,6 +175,7 @@ trait ToTableSchema {
     case _: TimeMicros      => "INTEGER"
     case _: TimestampMillis => "TIMESTAMP"
     case _: TimestampMicros => "INTEGER"
+    case _: Decimal         => "NUMERIC"
     case _                  => throw new IllegalStateException(s"Unknown Logical Type: [${logicalType.getName}]")
   }
 }

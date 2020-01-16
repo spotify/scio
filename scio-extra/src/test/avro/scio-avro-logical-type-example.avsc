@@ -10,6 +10,7 @@
     {"name": "doubleField", "type": "double"},
     {"name": "floatField", "type": "float"},
     {"name": "bytesField", "type": "bytes"},
+    {"name":  "decimalField", "type": {"type": "bytes", "logicalType": "decimal", "precision": 4, "scale": 2}},
     {"name": "dateField", "type": { "type":  "int", "logicalType":  "date" }},
     {"name": "timeMillisField", "type":{ "type":  "int", "logicalType":  "time-millis"}},
     {"name": "timeMicrosField", "type": { "type":  "long", "logicalType":  "time-micros"}},

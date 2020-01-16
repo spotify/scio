@@ -17,6 +17,7 @@
 
 package com.spotify.scio.extra.bigquery
 
+import java.math.{BigDecimal => JBigDecimal}
 import java.nio.ByteBuffer
 import java.util
 
@@ -68,6 +69,7 @@ trait ToTableRow {
     fieldValue match {
       case x: CharSequence          => x.toString
       case x: Enum[_]               => x.name()
+      case x: JBigDecimal           => x.unscaledValue().toString
       case x: Number                => x
       case x: Boolean               => x
       case x: GenericFixed          => encodeByteArray(x.bytes(), field.schema())

@@ -134,6 +134,10 @@ class ToTableSchemaTest extends AnyFlatSpec with Matchers with ToTableSchema {
             .setType("BYTES")
             .setMode("REQUIRED"),
           new TableFieldSchema()
+            .setName("decimalField")
+            .setType("NUMERIC")
+            .setMode("REQUIRED"),
+          new TableFieldSchema()
             .setName("dateField")
             .setType("DATE")
             .setMode("REQUIRED"),

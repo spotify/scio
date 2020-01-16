@@ -100,6 +100,8 @@ class ToTableRowTest extends AnyFlatSpec with Matchers with ToTableRow {
   val timeMicros = 1234L
   val timestampMillis: DateTime = DateTime.parse("2019-10-29T05:24:52.215")
   val timestampMicros = 4325L
+  import java.math.{BigDecimal => JBigDecimal}
+  val decimal = new JBigDecimal("3.14")
 
   val expectedLogicalTypeOutput = new TableRow()
     .set("intField", 1)
@@ -110,6 +112,7 @@ class ToTableRowTest extends AnyFlatSpec with Matchers with ToTableRow {
     .set("floatField", 1f)
     .set("bytesField", BaseEncoding.base64Url().encode("someBytes".getBytes))
     .set("dateField", "2019-10-29")
+    .set("decimalField", decimal.unscaledValue().toString)
     .set("timeMillisField", "01:24:52.211000")
     .set("timeMicrosField", timeMicros)
     .set("timestampMillisField", "2019-10-29T05:24:52.215000")
@@ -130,6 +133,7 @@ class ToTableRowTest extends AnyFlatSpec with Matchers with ToTableRow {
       .setTimeMicrosField(timeMicros)
       .setTimestampMillisField(timestampMillis)
       .setTimestampMicrosField(timestampMicros)
+      .setDecimalField(decimal)
       .build()
 
     toTableRow(specificRecord) shouldEqual expectedLogicalTypeOutput
