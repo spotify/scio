@@ -35,6 +35,7 @@ import org.scalatest.Assertion
 
 import scala.collection.JavaConverters._
 import com.spotify.scio.avro
+import com.spotify.scio.avro.MessageRecord
 import org.apache.avro.generic.GenericRecord
 
 object Schemas {
@@ -668,7 +669,7 @@ class BeamSQLTest extends PipelineSpec {
     val cid = "42"
     val devId = "device_id".getBytes()
 
-    val m = com.spotify.scio.avro.Message.newBuilder()
+    val m = MessageRecord.newBuilder()
     val r = AvroWithBytesRecord.newBuilder()
     m.setCatalogue(cat)
     m.setClientId(cid)
