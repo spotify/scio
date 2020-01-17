@@ -20,7 +20,6 @@ package com.spotify.scio
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Splitter
 
 import scala.collection.JavaConverters._
-import scala.collection.breakOut
 import scala.util.control.NonFatal
 
 /**
@@ -49,7 +48,7 @@ object Args {
       .groupBy(_._1)
       .mapValues(_.flatMap(_._2).toList)
     val booleanMap: Map[String, List[String]] =
-      booleans.map((_, List("true")))(breakOut)
+      booleans.iterator.map((_, List("true"))).toMap
 
     propertyMap.keySet.intersect(booleanMap.keySet).foreach { arg =>
       throw new IllegalArgumentException(s"Conflicting boolean and property '$arg'")
