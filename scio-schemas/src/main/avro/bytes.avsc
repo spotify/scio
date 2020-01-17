@@ -9,7 +9,7 @@
         "null",
         {
           "type": "record",
-          "name": "Message",
+          "name": "MessageRecord",
           "doc": "A message",
           "fields": [
             {
