@@ -47,6 +47,8 @@ object Args {
       }
       .groupBy(_._1)
       .mapValues(_.flatMap(_._2).toList)
+      .toMap
+
     val booleanMap: Map[String, List[String]] =
       booleans.iterator.map((_, List("true"))).toMap
 
