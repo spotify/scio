@@ -1126,15 +1126,19 @@ lazy val siteSettings = Def.settings(
         if module.organization == organization
         if module.name.startsWith(name)
       } yield entry.data).toList.map((_, url(apiUrl)))
-    val bootClasspath = System
-      .getProperty("sun.boot.class.path")
-      .split(sys.props("path.separator"))
-      .map(file(_))
-    val jdkMapping = Map(
-      bootClasspath.find(_.getPath.endsWith("rt.jar")).get -> url(
-        "http://docs.oracle.com/javase/8/docs/api/"
+    val rtJar = sys.props
+      .get("sun.boot.class.path")
+      .flatMap { cp =>
+        cp.split(java.io.File.pathSeparator)
+          .map(file)
+          .find(_.getPath.endsWith("rt.jar"))
+      }
+
+    val jdkMapping =
+      rtJar.fold(Map.empty[File, URL])(jar =>
+        Map(jar -> url("http://docs.oracle.com/javase/8/docs/api/"))
       )
-    )
+
     docMappings.flatMap((mappingFn _).tupled).toMap ++ jdkMapping
   },
   unidocProjectFilter in (ScalaUnidoc, unidoc) :=
