@@ -20,8 +20,6 @@ import sbt._, Keys._
 object Scalac {
   // see: https://tpolecat.github.io/2017/04/25/scalac-flags.html
   val baseOptions = List(
-    "-Xmax-classfile-name",
-    "100",
     "-target:jvm-1.8",
     "-deprecation", // Emit warning and location for usages of deprecated APIs.
     "-feature", // Emit warning and location for usages of features that should be imported explicitly.
@@ -37,7 +35,6 @@ object Scalac {
     // "-Xfatal-warnings", // Fail the compilation if there are any warnings.
     // "-Xfuture", // Turn on future language features.
     "-Xlint:adapted-args", // Warn if an argument list is modified to match the receiver.
-    "-Xlint:by-name-right-associative", // By-name parameter of right associative operator.
     // "-Xlint:delayedinit-select", // Selecting member of DelayedInit.
     "-Xlint:doc-detached", // A Scaladoc comment appears to be detached from its element.
     "-Xlint:inaccessible", // Warn about inaccessible types in method signatures.
@@ -51,11 +48,7 @@ object Scalac {
     "-Xlint:private-shadow", // A private field (or class parameter) shadows a superclass field.
     "-Xlint:stars-align", // Pattern sequence wildcard must align with sequence component.
     "-Xlint:type-parameter-shadow", // A local type parameter shadows a type already in scope.
-    "-Xlint:unsound-match", // Pattern match may not be typesafe.
-    "-Ypartial-unification", // Enable partial unification in type constructor inference
     // "-Ywarn-dead-code", // Warn when dead code is identified.
-    "-Ywarn-inaccessible", // Warn about inaccessible types in method signatures.
-    "-Ywarn-infer-any", // Warn when a type argument is inferred to be `Any`.
     // "-Ywarn-numeric-widen", // Warn when numerics are widened.
     // "-Ywarn-unused:implicits", // Warn if an implicit parameter is unused.
     // "-Ywarn-unused:locals", // Warn if a local definition is unused.
@@ -68,10 +61,17 @@ object Scalac {
 
   def scala212settings = Def.setting {
     List(
+      "-Xmax-classfile-name",
+      "100",
       "-Xlint:constant", // Evaluation of a constant arithmetic expression results in an error.
+      "-Xlint:by-name-right-associative", // By-name parameter of right associative operator.
+      "-Xlint:unsound-match", // Pattern match may not be typesafe.
+      "-Ypartial-unification", // Enable partial unification in type constructor inference
+      "-Ydelambdafy:inline", // Set the strategy used for translating lambdas into JVM code to "inline"
       "-Ywarn-unused:imports", // Warn if an import selector is not referenced.
       "-Ywarn-extra-implicit", // Warn when more than one implicit parameter section is defined.,
-      "-Ydelambdafy:inline", // Set the strategy used for translating lambdas into JVM code to "inline"
+      "-Ywarn-inaccessible", // Warn about inaccessible types in method signatures.
+      "-Ywarn-infer-any", // Warn when a type argument is inferred to be `Any`.
       "-Ybackend-parallelism",
       "8"
     )
