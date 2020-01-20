@@ -27,6 +27,13 @@ executors:
     environment:
       <<: *env
       SCALA_VERSION: 2.11.12
+  scala_213: &scala_213
+    <<: [*settings]
+    docker:
+      - image: circleci/openjdk:8-jdk
+    environment:
+      <<: *env
+      SCALA_VERSION: 2.13.1
 
   scala_212_jdk11:
     <<: [*scala_212]
@@ -34,6 +41,10 @@ executors:
       - image: circleci/openjdk:11-jdk
   scala_211_jdk11:
     <<: [*scala_211]
+    docker:
+      - image: circleci/openjdk:11-jdk
+  scala_213_jdk11:
+    <<: [*scala_213]
     docker:
       - image: circleci/openjdk:11-jdk
 

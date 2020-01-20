@@ -17,22 +17,20 @@
 
 package com.spotify.scio.extra
 
-import java.util
-import java.util.{UUID, List => JList}
 import java.lang.{Iterable => JIterable}
+import java.util.{UUID, List => JList}
 
-import com.spotify.scio.util.Cache
 import com.spotify.scio.ScioContext
 import com.spotify.scio.annotations.experimental
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import com.spotify.scio.extra.sparkey.instances.{
   CachedStringSparkeyReader,
   SparkeyReaderInstances,
-  StringSparkeyReader,
   TypedSparkeyReader
 }
+import com.spotify.scio.util.Cache
 import com.spotify.scio.values.{SCollection, SideInput}
-import com.spotify.sparkey.{IndexHeader, LogHeader, SparkeyReader}
+import com.spotify.sparkey.SparkeyReader
 import org.apache.beam.sdk.transforms.{DoFn, Reify, View}
 import org.apache.beam.sdk.values.PCollectionView
 import org.slf4j.LoggerFactory

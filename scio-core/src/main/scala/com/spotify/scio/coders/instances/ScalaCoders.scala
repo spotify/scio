@@ -31,7 +31,6 @@ import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
 import scala.collection.{BitSet, SortedSet, TraversableOnce, mutable => m}
 import scala.util.Try
-import scala.collection.compat._
 import scala.collection.compat.extra.Wrappers
 
 private object UnitCoder extends AtomicCoder[Unit] {
