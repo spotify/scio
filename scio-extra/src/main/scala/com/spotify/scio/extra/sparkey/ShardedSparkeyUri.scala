@@ -21,6 +21,7 @@ import java.io.File
 import java.net.URI
 
 import com.spotify.scio.coders.Coder
+import com.spotify.scio.extra.sparkey.instances.ShardedSparkeyReader
 import com.spotify.scio.util.{RemoteFileUtil, ScioUtil}
 import com.spotify.sparkey.SparkeyReader
 import com.spotify.sparkey.extra.ThreadLocalSparkeyReader
@@ -69,7 +70,7 @@ trait ShardedSparkeyUri extends SparkeyUri {
             s"total shard count ($numShards), but found $numShardFiles"
         )
 
-        val basePaths = indexPaths.map(_.replaceAll("\\.spi$", ""))
+        val basePaths = indexPaths.iterator.map(_.replaceAll("\\.spi$", "")).toSeq
 
         (basePaths, numShards)
       case _ =>

@@ -17,7 +17,6 @@
 
 package com.spotify.scio.extra
 
-import java.nio.charset.Charset
 import java.util
 import java.util.{UUID, List => JList}
 import java.lang.{Iterable => JIterable}
@@ -26,6 +25,12 @@ import com.spotify.scio.util.Cache
 import com.spotify.scio.ScioContext
 import com.spotify.scio.annotations.experimental
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
+import com.spotify.scio.extra.sparkey.instances.{
+  CachedStringSparkeyReader,
+  SparkeyReaderInstances,
+  StringSparkeyReader,
+  TypedSparkeyReader
+}
 import com.spotify.scio.values.{SCollection, SideInput}
 import com.spotify.sparkey.{IndexHeader, LogHeader, SparkeyReader}
 import org.apache.beam.sdk.transforms.{DoFn, Reify, View}
@@ -119,7 +124,7 @@ import java.lang.Math.floorMod
  *   .toSCollection
  * }}}
  */
-package object sparkey {
+package object sparkey extends SparkeyReaderInstances {
 
   /** Enhanced version of [[ScioContext]] with Sparkey methods. */
   implicit class SparkeyScioContext(private val self: ScioContext) extends AnyVal {
@@ -260,7 +265,7 @@ package object sparkey {
                     xs.asJava
                   )
               }
-              .groupBy(_ => Unit)
+              .groupBy(_ => ())
               .map(_ => uri: SparkeyUri)
           }
       }
@@ -484,61 +489,6 @@ package object sparkey {
     override def updateCacheOnGlobalWindow: Boolean = false
     override def get[I, O](context: DoFn[I, O]#ProcessContext): SparkeyReader =
       context.sideInput(view).getReader
-  }
-
-  /**
-   * A wrapper around `SparkeyReader` that includes an in-memory Caffeine cache.
-   */
-  class CachedStringSparkeyReader(val sparkey: SparkeyReader, val cache: Cache[String, String])
-      extends RichStringSparkeyReader(sparkey) {
-    override def get(key: String): Option[String] =
-      Option(cache.get(key, sparkey.getAsString(key)))
-
-    def close(): Unit = {
-      sparkey.close()
-      cache.invalidateAll()
-    }
-  }
-
-  /**
-   * A wrapper around `SparkeyReader` that includes both a decoder (to map from each byte array
-   * to a JVM type) and an optional in-memory cache.
-   */
-  class TypedSparkeyReader[T](
-    val sparkey: SparkeyReader,
-    val decoder: Array[Byte] => T,
-    val cache: Cache[String, T] = Cache.noOp
-  ) extends Map[String, T] {
-    private def stringKeyToBytes(key: String): Array[Byte] = key.getBytes(Charset.defaultCharset())
-
-    private def loadValueFromSparkey(key: String): T = {
-      val value = sparkey.getAsByteArray(stringKeyToBytes(key))
-      if (value == null) {
-        null.asInstanceOf[T]
-      } else {
-        decoder(value)
-      }
-    }
-
-    override def get(key: String): Option[T] =
-      Option(cache.get(key, loadValueFromSparkey(key)))
-
-    override def iterator: Iterator[(String, T)] =
-      sparkey.iterator.asScala.map { e =>
-        val key = e.getKeyAsString
-        val value = cache.get(key).getOrElse(decoder(e.getValue))
-        (key, value)
-      }
-
-    override def +[B1 >: T](kv: (String, B1)): Map[String, B1] =
-      throw new NotImplementedError("Sparkey-backed map; operation not supported.")
-    override def -(key: String): Map[String, T] =
-      throw new NotImplementedError("Sparkey-backed map; operation not supported.")
-
-    def close(): Unit = {
-      sparkey.close()
-      cache.invalidateAll()
-    }
   }
 
   sealed trait SparkeyWritable[K, V] extends Serializable {

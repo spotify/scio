@@ -94,7 +94,7 @@ import scala.collection.JavaConverters._
  * }}}
  */
 package object annoy {
-  sealed trait AnnoyMetric
+  sealed abstract class AnnoyMetric
   case object Angular extends AnnoyMetric
   case object Euclidean extends AnnoyMetric
 
