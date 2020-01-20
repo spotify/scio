@@ -141,7 +141,7 @@ final private[client] class QueryOps(client: Client, tableService: TableOps, job
     }
 
   private[scio] def newCachedQueryJob(query: QueryJobConfig): Try[QueryJob] =
-    extractTables(query)
+    extractTables(query.copy(dryRun = true))
       .flatMap { tableRefs =>
         val sourceTimes = tableRefs
           .map { t =>
