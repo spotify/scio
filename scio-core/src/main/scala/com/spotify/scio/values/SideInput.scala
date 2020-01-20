@@ -104,7 +104,7 @@ private[values] class SingletonSideInput[T](val view: PCollectionView[T]) extend
 private[values] class ListSideInput[T](val view: PCollectionView[JList[T]])
     extends SideInput[Seq[T]] {
   override def get[I, O](context: DoFn[I, O]#ProcessContext): Seq[T] =
-    context.sideInput(view).asScala
+    context.sideInput(view).iterator().asScala.toSeq
 }
 
 private[values] class IterableSideInput[T](val view: PCollectionView[JIterable[T]])

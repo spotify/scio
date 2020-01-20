@@ -46,8 +46,8 @@ import org.joda.time.{DateTime, LocalDate, LocalDateTime, LocalTime}
 import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConverters._
-import scala.collection.convert.Wrappers
 import scala.collection.mutable
+import scala.collection.compat.extra.Wrappers
 
 private object KryoRegistrarLoader {
   private[this] val logger = LoggerFactory.getLogger(this.getClass)

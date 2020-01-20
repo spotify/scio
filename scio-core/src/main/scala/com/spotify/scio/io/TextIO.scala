@@ -117,7 +117,7 @@ object TextIO {
   }
 
   private def listFiles(path: String): Seq[Metadata] =
-    FileSystems.`match`(path).metadata().asScala
+    FileSystems.`match`(path).metadata().iterator().asScala.toSeq
 
   private def getObjectInputStream(meta: Metadata): InputStream =
     Channels.newInputStream(FileSystems.open(meta.resourceId()))

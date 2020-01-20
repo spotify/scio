@@ -44,7 +44,7 @@ private[scio] object FileStorage {
 
 final private[scio] class FileStorage(protected[scio] val path: String) {
   private def listFiles: Seq[Metadata] =
-    FileSystems.`match`(path, EmptyMatchTreatment.DISALLOW).metadata().asScala
+    FileSystems.`match`(path, EmptyMatchTreatment.DISALLOW).metadata().iterator.asScala.toSeq
 
   private def getObjectInputStream(meta: Metadata): InputStream =
     Channels.newInputStream(FileSystems.open(meta.resourceId()))

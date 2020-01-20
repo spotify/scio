@@ -30,8 +30,9 @@ import org.apache.beam.sdk.util.common.ElementByteSizeObserver
 import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
 import scala.collection.{BitSet, SortedSet, TraversableOnce, mutable => m}
-import scala.collection.convert.Wrappers
 import scala.util.Try
+import scala.collection.compat._
+import scala.collection.compat.extra.Wrappers
 
 private object UnitCoder extends AtomicCoder[Unit] {
   override def encode(value: Unit, os: OutputStream): Unit = ()
@@ -133,8 +134,9 @@ abstract private class BaseSeqLikeCoder[M[_], T](val elemCoder: BCoder[T])(
       value.asInstanceOf[AnyRef]
     } else {
       val b = Seq.newBuilder[AnyRef]
-      b.sizeHint(value.size)
-      value.foreach(v => b += elemCoder.structuralValue(v))
+      val traversable = toSeq(value)
+      b.sizeHint(traversable.size)
+      traversable.foreach(v => b += elemCoder.structuralValue(v))
       b.result()
     }
 
@@ -154,8 +156,9 @@ abstract private class SeqLikeCoder[M[_], T](bc: BCoder[T])(
 ) extends BaseSeqLikeCoder[M, T](bc) {
   protected val lc = VarIntCoder.of()
   override def encode(value: M[T], outStream: OutputStream): Unit = {
-    lc.encode(value.size, outStream)
-    value.foreach(bc.encode(_, outStream))
+    val traversable = toSeq(value)
+    lc.encode(traversable.size, outStream)
+    traversable.foreach(bc.encode(_, outStream))
   }
   def decode(inStream: InputStream, builder: m.Builder[T, M[T]]): M[T] = {
     val size = lc.decode(inStream)
@@ -519,7 +522,7 @@ trait ScalaCoders {
     Coder.transform(Coder[T])(bc => Coder.beam(new BufferCoder[T](bc)))
 
   implicit def listBufferCoder[T: Coder]: Coder[m.ListBuffer[T]] =
-    Coder.xmap(bufferCoder[T])(m.ListBuffer(_: _*), identity)
+    Coder.xmap(bufferCoder[T])(x => m.ListBuffer(x.toSeq: _*), identity)
 
   implicit def arrayCoder[T: Coder: ClassTag]: Coder[Array[T]] =
     Coder.transform(Coder[T])(bc => Coder.beam(new ArrayCoder[T](bc)))
@@ -530,7 +533,7 @@ trait ScalaCoders {
   implicit def wrappedArrayCoder[T: Coder: ClassTag](
     implicit wrap: Array[T] => m.WrappedArray[T]
   ): Coder[m.WrappedArray[T]] =
-    Coder.xmap(Coder[Array[T]])(wrap, _.array)
+    Coder.xmap(Coder[Array[T]])(wrap, _.toArray)
 
   implicit def mutableMapCoder[K: Coder, V: Coder]: Coder[m.Map[K, V]] =
     Coder.transform(Coder[K]) { kc =>
