@@ -22,7 +22,6 @@ import com.esotericsoftware.kryo.io.{Input, InputChunked, Output, OutputChunked}
 import com.twitter.chill.KSerializer
 
 import scala.collection.JavaConverters._
-import scala.collection.generic.CanBuildFrom
 import scala.collection.mutable
 import scala.collection.compat._
 
@@ -58,13 +57,6 @@ private[coders] class JTraversableSerializer[T, C <: Traversable[T]](
 
 // workaround for Java Iterable/Collection missing proper equality check
 abstract private[coders] class JWrapperCBF[T] extends Factory[T, Iterable[T]] {
-  //  override def apply(from: Iterable[T]): mutable.Builder[T, Iterable[T]] = {
-  //    val b = new JIterableWrapperBuilder
-  //    from.foreach(b += _)
-  //    b
-  //  }
-  //  override def apply(): mutable.Builder[T, Iterable[T]] =
-  //    new JIterableWrapperBuilder
   def asScala(xs: java.util.List[T]): Iterable[T]
 
   class JIterableWrapperBuilder extends mutable.Builder[T, Iterable[T]] {

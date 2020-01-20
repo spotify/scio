@@ -311,7 +311,7 @@ class BloomFilterTest extends AnyWordSpec with Matchers {
       val iter = 10000
 
       Seq(0.1, 0.01, 0.005).foreach { fpProb =>
-        val fps = (0 until iter).par.map { _ =>
+        val fps = (0 until iter).iterator.map { _ =>
           val numEntries = RAND.nextInt(10) + 1
 
           val bfMonoid = BloomFilter[String](numEntries, fpProb)

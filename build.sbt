@@ -100,6 +100,7 @@ val sparkeyVersion = "3.0.1"
 val sparkVersion = "2.4.4"
 val tensorFlowVersion = "1.15.0"
 val zoltarVersion = "0.5.6"
+val scalaCollectionCompatVersion = "2.1.3"
 
 def scalaVersionSpecificFolders(srcBaseDir: java.io.File, scalaVersion: String) =
   CrossVersion.partialVersion(scalaVersion) match {
@@ -526,7 +527,8 @@ lazy val `scio-core`: Project = project
       "org.scalatest" %% "scalatest" % scalatestVersion % Test,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       "org.typelevel" %% "algebra" % algebraVersion,
-      "org.typelevel" %% "cats-kernel" % catsVersion
+      "org.typelevel" %% "cats-kernel" % catsVersion,
+      "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion
     ),
     magnoliaDependencies
   )
