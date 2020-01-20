@@ -295,7 +295,7 @@ private[types] object TypeProvider {
 
     def toFields(fields: JList[TableFieldSchema]): (Seq[Tree], Seq[Tree]) = {
       val f = fields.asScala.map(s => toField(s))
-      (f.map(_._1), f.flatMap(_._2))
+      (f.map(_._1).toSeq, f.flatMap(_._2).toSeq)
     }
 
     val (fields, records) = toFields(schema.getFields)
