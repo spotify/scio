@@ -111,8 +111,9 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
       BigtableUtil
         .getClusterSizes(projectId, instanceId)
         .asScala
+        .iterator
+        .map { case (k, v) => k -> v.toInt }
         .toMap
-        .mapValues(_.toInt)
     } else {
       Map.empty
     }
