@@ -162,7 +162,7 @@ jobs:
       - build:
           build-steps:
             - run: sbt -v $SBT_OPTS "++$SCALA_VERSION test"
-            - run: ./scripts/circleci_repl.sh
+            # - run: ./scripts/circleci_repl.sh
 
   build_it_213: &build_it_213
     executor: scala_213
