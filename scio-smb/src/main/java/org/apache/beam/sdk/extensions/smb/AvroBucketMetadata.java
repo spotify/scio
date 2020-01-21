@@ -26,7 +26,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.Map;
+import java.util.Objects;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.beam.sdk.coders.AtomicCoder;
 import org.apache.beam.sdk.coders.ByteArrayCoder;
@@ -93,6 +95,16 @@ class AvroBucketMetadata<K, V extends GenericRecord> extends BucketMetadata<K, V
   public void populateDisplayData(Builder builder) {
     super.populateDisplayData(builder);
     builder.add(DisplayData.item("keyField", keyField));
+  }
+
+  @Override
+  public boolean isSameSourceCompatible(BucketMetadata o) {
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    AvroBucketMetadata<?, ?> that = (AvroBucketMetadata<?, ?>) o;
+    return Objects.equals(keyField, that.keyField) &&
+        Arrays.equals(keyPath, that.keyPath);
   }
 
   // Coders for types commonly used as keys in Avro

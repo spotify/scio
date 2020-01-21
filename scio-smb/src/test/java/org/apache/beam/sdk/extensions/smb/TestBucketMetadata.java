@@ -48,6 +48,11 @@ class TestBucketMetadata extends BucketMetadata<String, String> {
   }
 
   @Override
+  public boolean isSameSourceCompatible(BucketMetadata other) {
+    return true;
+  }
+
+  @Override
   public String extractKey(String value) {
     try {
       return value.substring(0, 1);

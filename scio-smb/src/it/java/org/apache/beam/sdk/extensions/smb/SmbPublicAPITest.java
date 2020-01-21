@@ -75,6 +75,11 @@ public class SmbPublicAPITest {
     }
 
     @Override
+    public boolean isSameSourceCompatible(BucketMetadata other) {
+      return true;
+    }
+
+    @Override
     public String extractKey(String value) {
       return null;
     }

@@ -57,6 +57,10 @@ public class BucketMetadataTest {
               public Object extractKey(Object value) {
                 return null;
               }
+              @Override
+              public boolean isSameSourceCompatible(BucketMetadata other) {
+                return false;
+              }
             });
   }
 

@@ -29,6 +29,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.coders.AtomicCoder;
@@ -37,6 +38,7 @@ import org.apache.beam.sdk.coders.Coder;
 import org.apache.beam.sdk.coders.Coder.NonDeterministicException;
 import org.apache.beam.sdk.coders.KvCoder;
 import org.apache.beam.sdk.coders.ListCoder;
+import org.apache.beam.sdk.coders.MapCoder;
 import org.apache.beam.sdk.coders.SerializableCoder;
 import org.apache.beam.sdk.coders.StringUtf8Coder;
 import org.apache.beam.sdk.coders.VarIntCoder;
@@ -111,7 +113,8 @@ public class SortedBucketSource<FinalKeyT>
     int leastNumBuckets = Integer.MAX_VALUE;
     // Check metadata of each source
     for (BucketedInput<?, ?> source : sources) {
-      final BucketMetadata<?, ?> current = source.getMetadata();
+      source.validateSourcesCompatibility();
+      final BucketMetadata<?, ?> current = source.getCanonicalMetadata();
       if (first == null) {
         first = current;
       } else {
@@ -321,80 +324,135 @@ public class SortedBucketSource<FinalKeyT>
    */
   public static class BucketedInput<K, V> {
     private final TupleTag<V> tupleTag;
-    private final ResourceId inputDirectory;
     private final String filenameSuffix;
     private final FileOperations<V> fileOperations;
+    private final List<ResourceId> inputDirectories;
 
-    private final transient FileAssignment fileAssignment;
-    private transient BucketMetadata<K, V> metadata;
+    private transient Map<ResourceId, FileAssignment> fileAssignments;
+    private transient Map<ResourceId, BucketMetadata<K, V>> metadata;
+    private transient BucketMetadata<K, V> canonicalMetadata;
 
     public BucketedInput(
         TupleTag<V> tupleTag,
         ResourceId inputDirectory,
         String filenameSuffix,
-        FileOperations<V> fileOperations) {
+        FileOperations<V> fileOperations
+    ) {
+      this(tupleTag, Collections.singletonList(inputDirectory), filenameSuffix, fileOperations);
+    }
+
+    public BucketedInput(
+        TupleTag<V> tupleTag,
+        List<ResourceId> inputDirectories,
+        String filenameSuffix,
+        FileOperations<V> fileOperations
+    ) {
       this.tupleTag = tupleTag;
-      this.inputDirectory = inputDirectory;
+      this.inputDirectories = inputDirectories;
       this.filenameSuffix = filenameSuffix;
       this.fileOperations = fileOperations;
 
-      this.fileAssignment = new SMBFilenamePolicy(inputDirectory, filenameSuffix).forDestination();
+      this.fileAssignments = inputDirectories.stream().collect(
+          Collectors.toMap(
+            (ResourceId dir) -> dir,
+            (ResourceId dir) -> new SMBFilenamePolicy(dir, filenameSuffix).forDestination()
+          )
+      ) ;
     }
 
     private BucketedInput(
         TupleTag<V> tupleTag,
-        ResourceId inputDirectory,
+        List<ResourceId> inputDirectories,
         String filenameSuffix,
         FileOperations<V> fileOperations,
-        BucketMetadata<K, V> metadata) {
-      this(tupleTag, inputDirectory, filenameSuffix, fileOperations);
+        Map<ResourceId, BucketMetadata<K, V>> metadata) {
+      this(tupleTag, inputDirectories, filenameSuffix, fileOperations);
       this.metadata = metadata;
+      getCanonicalMetadata();
     }
 
     public TupleTag<V> getTupleTag() {
       return tupleTag;
     }
 
-    public BucketMetadata<K, V> getMetadata() {
-      if (metadata != null) {
-        return metadata;
-      } else {
-        try {
-          metadata =
-              BucketMetadata.from(
-                  Channels.newInputStream(FileSystems.open(fileAssignment.forMetadata())));
-          return metadata;
-        } catch (IOException e) {
-          throw new RuntimeException(e);
-        }
+    public BucketMetadata<K, V> getCanonicalMetadata() {
+      if (canonicalMetadata == null) {
+        canonicalMetadata = getMetadata().values().stream()
+            .min(Comparator.comparingInt(BucketMetadata::getNumBuckets))
+            .get();
       }
+
+      return canonicalMetadata;
+    }
+
+    public Map<ResourceId, BucketMetadata<K, V>> getMetadata() {
+      if (metadata == null) {
+        metadata = fileAssignments.entrySet().stream().collect(
+            Collectors.toMap(
+                entry -> entry.getKey(),
+                entry -> {
+                  try {
+                    return BucketMetadata.from(
+                        Channels.newInputStream(FileSystems.open(entry.getValue().forMetadata())));
+                  } catch (IOException e) {
+                    throw new RuntimeException(e);
+                  }
+                }));
+      }
+
+      return metadata;
     }
 
     public Coder<V> getCoder() {
       return fileOperations.getCoder();
     }
 
+    private void validateSourcesCompatibility() {
+      if (getMetadata().size() == 1) {
+        return;
+      }
+
+      Map.Entry<ResourceId, BucketMetadata<K, V>> first = null;
+      for (Map.Entry<ResourceId, BucketMetadata<K, V>> current : getMetadata().entrySet()) {
+        if (first == null) {
+          first = current;
+          continue;
+        }
+
+        Preconditions.checkState(
+            first.getValue().isCompatibleWith(current.getValue()) &&
+                first.getValue().isSameSourceCompatible(current.getValue()),
+            "Metadata in directory %s is incompatible with metadata in directory %s: %s != %s",
+            first.getKey(), current.getValue(), first.getValue(), current.getValue()
+        );
+      }
+    }
+
     private KeyGroupIterator<byte[], V> createIterator(int bucketId, int leastNumBuckets) {
-      // Create one iterator per shard
-      final BucketMetadata<K, V> metadata = getMetadata();
-
-      final int numBucketsInSource = metadata.getNumBuckets();
-      final int numShards = metadata.getNumShards();
-
       final List<Iterator<V>> iterators = new ArrayList<>();
 
-      // Since all BucketedInputs have a bucket count that's a power of two, we can infer
-      // which buckets should be merged together for the join.
-      for (int i = bucketId; i < numBucketsInSource; i += leastNumBuckets) {
-        for (int j = 0; j < numShards; j++) {
-          final ResourceId file = fileAssignment.forBucket(BucketShardId.of(i, j), metadata);
-          try {
-            iterators.add(fileOperations.iterator(file));
-          } catch (Exception e) {
-            throw new RuntimeException(e);
+      // Create one iterator per shard
+      fileAssignments.forEach((resourceId, fileAssignment) -> {
+        final BucketMetadata<K, V> metadata = getMetadata().get(resourceId);
+
+        final int numBucketsInSource = metadata.getNumBuckets();
+        final int numShards = metadata.getNumShards();
+
+        // Since all BucketedInputs have a bucket count that's a power of two, we can infer
+        // which buckets should be merged together for the join.
+        for (int i = bucketId; i < numBucketsInSource; i += leastNumBuckets) {
+          for (int j = 0; j < numShards; j++) {
+            final ResourceId file = fileAssignment.forBucket(BucketShardId.of(i, j), metadata);
+            try {
+              iterators.add(fileOperations.iterator(file));
+            } catch (Exception e) {
+              throw new RuntimeException(e);
+            }
           }
         }
-      }
+      });
+
+      final Function<V, byte[]> keyBytesFn = getCanonicalMetadata()::getKeyBytes;
 
       // Merge-sort key-values from shards
       final UnmodifiableIterator<V> iterator =
@@ -402,46 +460,56 @@ public class SortedBucketSource<FinalKeyT>
               iterators,
               (o1, o2) ->
                   bytesComparator.compare(
-                      getMetadata().getKeyBytes(o1), getMetadata().getKeyBytes(o2)));
-      return new KeyGroupIterator<>(iterator, getMetadata()::getKeyBytes, bytesComparator);
+                      keyBytesFn.apply(o1), keyBytesFn.apply(o2)));
+      return new KeyGroupIterator<>(iterator, keyBytesFn, bytesComparator);
     }
 
     @Override
     public String toString() {
       return String.format(
-          "BucketedInput[tupleTag=%s, inputDirectory=%s, metadata=%s]",
-          tupleTag.getId(), inputDirectory, getMetadata());
+          "BucketedInput[tupleTag=%s, inputDirectories=%s, metadata=%s]",
+          tupleTag.getId(),
+          inputDirectories.size() > 10 ?
+              inputDirectories.subList(0, 8) + "..." + inputDirectories.get(inputDirectories.size() - 1)
+              : inputDirectories,
+          getCanonicalMetadata());
     }
 
     private static class BucketedInputCoder<K, V> extends AtomicCoder<BucketedInput<K, V>> {
       private static SerializableCoder<TupleTag> tupleTagCoder =
           SerializableCoder.of(TupleTag.class);
-      private static ResourceIdCoder resourceIdCoder = ResourceIdCoder.of();
+      private static ListCoder<ResourceId> inputDirectoriesCoder =
+          ListCoder.of(ResourceIdCoder.of());
       private static StringUtf8Coder stringCoder = StringUtf8Coder.of();
       private static SerializableCoder<FileOperations> fileOpCoder =
           SerializableCoder.of(FileOperations.class);
-      private BucketMetadataCoder<K, V> metadataCoder = new BucketMetadataCoder<>();
+      private MapCoder<ResourceId, BucketMetadata<K, V>> metadataMapCoder = MapCoder.of(
+          ResourceIdCoder.of(),
+          new BucketMetadataCoder<>()
+      );
+
+
 
       @Override
       public void encode(BucketedInput<K, V> value, OutputStream outStream) throws IOException {
         tupleTagCoder.encode(value.tupleTag, outStream);
-        resourceIdCoder.encode(value.inputDirectory, outStream);
+        inputDirectoriesCoder.encode(value.inputDirectories, outStream);
         stringCoder.encode(value.filenameSuffix, outStream);
         fileOpCoder.encode(value.fileOperations, outStream);
-        metadataCoder.encode(value.getMetadata(), outStream);
+        metadataMapCoder.encode(value.getMetadata(), outStream);
       }
 
       @Override
       public BucketedInput<K, V> decode(InputStream inStream) throws IOException {
         @SuppressWarnings("unchecked")
         TupleTag<V> tupleTag = (TupleTag<V>) tupleTagCoder.decode(inStream);
-        ResourceId inputDirectory = resourceIdCoder.decode(inStream);
+        List<ResourceId> inputDirectories = inputDirectoriesCoder.decode(inStream);
         String filenameSuffix = stringCoder.decode(inStream);
         @SuppressWarnings("unchecked")
         FileOperations<V> fileOperations = fileOpCoder.decode(inStream);
-        BucketMetadata<K, V> metadata = metadataCoder.decode(inStream);
+        Map<ResourceId, BucketMetadata<K, V>> metadata = metadataMapCoder.decode(inStream);
         return new BucketedInput<>(
-            tupleTag, inputDirectory, filenameSuffix, fileOperations, metadata);
+            tupleTag, inputDirectories, filenameSuffix, fileOperations, metadata);
       }
     }
   }

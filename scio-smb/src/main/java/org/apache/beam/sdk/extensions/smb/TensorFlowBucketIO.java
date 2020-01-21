@@ -18,6 +18,7 @@
 package org.apache.beam.sdk.extensions.smb;
 
 import com.google.auto.value.AutoValue;
+import java.util.List;
 import javax.annotation.Nullable;
 import org.apache.beam.sdk.coders.CannotProvideCoderException;
 import org.apache.beam.sdk.coders.Coder;
@@ -31,6 +32,7 @@ import org.apache.beam.sdk.transforms.PTransform;
 import org.apache.beam.sdk.values.PCollection;
 import org.apache.beam.sdk.values.TupleTag;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions;
+import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ImmutableList;
 import org.tensorflow.example.Example;
 
 /**
@@ -80,7 +82,7 @@ public class TensorFlowBucketIO {
   @AutoValue
   public abstract static class Read extends SortedBucketIO.Read<Example> {
     @Nullable
-    abstract ResourceId getInputDirectory();
+    abstract ImmutableList<ResourceId> getInputDirectories();
 
     abstract String getFilenameSuffix();
 
@@ -92,7 +94,9 @@ public class TensorFlowBucketIO {
     abstract static class Builder {
       abstract Builder setTupleTag(TupleTag<Example> tupleTag);
 
-      abstract Builder setInputDirectory(ResourceId inputDirectory);
+      abstract Builder setInputDirectories(ResourceId... inputDirectories);
+
+      abstract Builder setInputDirectories(List<ResourceId> inputDirectories);
 
       abstract Builder setFilenameSuffix(String filenameSuffix);
 
@@ -104,7 +108,7 @@ public class TensorFlowBucketIO {
     /** Reads from the given input directory. */
     public Read from(String inputDirectory) {
       return toBuilder()
-          .setInputDirectory(FileSystems.matchNewResource(inputDirectory, true))
+          .setInputDirectories(FileSystems.matchNewResource(inputDirectory, true))
           .build();
     }
 
@@ -117,7 +121,7 @@ public class TensorFlowBucketIO {
     protected BucketedInput<?, Example> toBucketedInput() {
       return new BucketedInput<>(
           getTupleTag(),
-          getInputDirectory(),
+          getInputDirectories(),
           getFilenameSuffix(),
           TensorFlowFileOperations.of(getCompression()));
     }

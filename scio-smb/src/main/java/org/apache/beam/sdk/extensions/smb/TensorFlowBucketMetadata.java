@@ -19,6 +19,7 @@ package org.apache.beam.sdk.extensions.smb;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.Objects;
 import org.apache.beam.sdk.coders.CannotProvideCoderException;
 import org.apache.beam.sdk.coders.Coder.NonDeterministicException;
 import org.apache.beam.sdk.transforms.display.DisplayData;
@@ -82,5 +83,14 @@ class TensorFlowBucketMetadata<K> extends BucketMetadata<K, Example> {
   public void populateDisplayData(Builder builder) {
     super.populateDisplayData(builder);
     builder.add(DisplayData.item("keyField", keyField));
+  }
+
+  @Override
+  public boolean isSameSourceCompatible(BucketMetadata o) {
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    TensorFlowBucketMetadata<?> that = (TensorFlowBucketMetadata<?>) o;
+    return Objects.equals(keyField, that.keyField);
   }
 }

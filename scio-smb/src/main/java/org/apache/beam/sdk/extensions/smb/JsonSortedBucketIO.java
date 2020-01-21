@@ -21,6 +21,7 @@ import static org.apache.beam.sdk.extensions.smb.BucketMetadata.HashType;
 
 import com.google.api.services.bigquery.model.TableRow;
 import com.google.auto.value.AutoValue;
+import java.util.List;
 import javax.annotation.Nullable;
 import org.apache.beam.sdk.coders.CannotProvideCoderException;
 import org.apache.beam.sdk.coders.Coder;
@@ -33,6 +34,7 @@ import org.apache.beam.sdk.transforms.PTransform;
 import org.apache.beam.sdk.values.PCollection;
 import org.apache.beam.sdk.values.TupleTag;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions;
+import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ImmutableList;
 
 /** API for reading and writing BigQuery {@link TableRow} JSON sorted-bucket files. */
 public class JsonSortedBucketIO {
@@ -72,7 +74,7 @@ public class JsonSortedBucketIO {
   @AutoValue
   public abstract static class Read extends SortedBucketIO.Read<TableRow> {
     @Nullable
-    abstract ResourceId getInputDirectory();
+    abstract ImmutableList<ResourceId> getInputDirectories();
 
     abstract String getFilenameSuffix();
 
@@ -84,7 +86,9 @@ public class JsonSortedBucketIO {
     abstract static class Builder {
       abstract Builder setTupleTag(TupleTag<TableRow> tupleTag);
 
-      abstract Builder setInputDirectory(ResourceId inputDirectory);
+      abstract Builder setInputDirectories(ResourceId... inputDirectories);
+
+      abstract Builder setInputDirectories(List<ResourceId> inputDirectories);
 
       abstract Builder setFilenameSuffix(String filenameSuffix);
 
@@ -96,7 +100,7 @@ public class JsonSortedBucketIO {
     /** Reads from the given input directory. */
     public Read from(String inputDirectory) {
       return toBuilder()
-          .setInputDirectory(FileSystems.matchNewResource(inputDirectory, true))
+          .setInputDirectories(FileSystems.matchNewResource(inputDirectory, true))
           .build();
     }
 
@@ -109,7 +113,7 @@ public class JsonSortedBucketIO {
     protected BucketedInput<?, TableRow> toBucketedInput() {
       return new BucketedInput<>(
           getTupleTag(),
-          getInputDirectory(),
+          getInputDirectories(),
           getFilenameSuffix(),
           JsonFileOperations.of(getCompression()));
     }

@@ -20,6 +20,9 @@ package org.apache.beam.sdk.extensions.smb;
 import static org.apache.beam.sdk.extensions.smb.SortedBucketSink.WriteResult;
 
 import com.google.auto.value.AutoValue;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.apache.avro.Schema;
 import org.apache.avro.file.CodecFactory;
@@ -35,6 +38,7 @@ import org.apache.beam.sdk.transforms.PTransform;
 import org.apache.beam.sdk.values.PCollection;
 import org.apache.beam.sdk.values.TupleTag;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions;
+import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ImmutableList;
 
 /** API for reading and writing Avro sorted-bucket files. */
 public class AvroSortedBucketIO {
@@ -97,7 +101,7 @@ public class AvroSortedBucketIO {
   @AutoValue
   public abstract static class Read<T extends GenericRecord> extends SortedBucketIO.Read<T> {
     @Nullable
-    abstract ResourceId getInputDirectory();
+    abstract ImmutableList<ResourceId> getInputDirectories();
 
     abstract String getFilenameSuffix();
 
@@ -115,7 +119,9 @@ public class AvroSortedBucketIO {
     abstract static class Builder<T extends GenericRecord> {
       abstract Builder<T> setTupleTag(TupleTag<T> tupleTag);
 
-      abstract Builder<T> setInputDirectory(ResourceId inputDirectory);
+      abstract Builder<T> setInputDirectories(List<ResourceId> inputDirectories);
+
+      abstract Builder<T> setInputDirectories(ResourceId... inputDirectory);
 
       abstract Builder<T> setFilenameSuffix(String filenameSuffix);
 
@@ -131,8 +137,18 @@ public class AvroSortedBucketIO {
     /** Reads from the given input directory. */
     public Read<T> from(String inputDirectory) {
       return toBuilder()
-          .setInputDirectory(FileSystems.matchNewResource(inputDirectory, true))
+          .setInputDirectories(FileSystems.matchNewResource(inputDirectory, true))
           .build();
+    }
+
+    /** Reads from the given input directories. */
+    public Read<T> from(List<String> inputDirectories) {
+      return toBuilder()
+          .setInputDirectories(
+              inputDirectories.stream()
+                  .map(dir -> FileSystems.matchNewResource(dir, true))
+                  .collect(Collectors.toList())
+          ).build();
     }
 
     /** Specifies the input filename suffix. */
@@ -149,7 +165,7 @@ public class AvroSortedBucketIO {
               : (AvroFileOperations<T>)
                   AvroFileOperations.of((Class<SpecificRecordBase>) getRecordClass(), getCodec());
       return new BucketedInput<>(
-          getTupleTag(), getInputDirectory(), getFilenameSuffix(), fileOperations);
+          getTupleTag(), getInputDirectories(), getFilenameSuffix(), fileOperations);
     }
   }
 

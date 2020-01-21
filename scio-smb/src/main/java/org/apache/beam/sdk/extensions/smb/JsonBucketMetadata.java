@@ -23,6 +23,8 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.api.services.bigquery.model.TableRow;
+import java.util.Arrays;
+import java.util.Objects;
 import org.apache.beam.sdk.coders.CannotProvideCoderException;
 import org.apache.beam.sdk.transforms.display.DisplayData;
 import org.apache.beam.sdk.transforms.display.DisplayData.Builder;
@@ -76,5 +78,15 @@ class JsonBucketMetadata<K> extends BucketMetadata<K, TableRow> {
   public void populateDisplayData(Builder builder) {
     super.populateDisplayData(builder);
     builder.add(DisplayData.item("keyField", keyField));
+  }
+
+  @Override
+  public boolean isSameSourceCompatible(BucketMetadata o) {
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    JsonBucketMetadata<?> that = (JsonBucketMetadata<?>) o;
+    return Objects.equals(keyField, that.keyField) &&
+        Arrays.equals(keyPath, that.keyPath);
   }
 }
