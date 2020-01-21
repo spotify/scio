@@ -528,9 +528,9 @@ lazy val `scio-core`: Project = project
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       "org.typelevel" %% "algebra" % algebraVersion,
       "org.typelevel" %% "cats-kernel" % catsVersion,
-      "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion
-    ),
-    magnoliaDependencies
+      "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
+      "com.propensive" %% "magnolia" % magnoliaVersion
+    )
   )
   .dependsOn(
     `scio-schemas` % "test->test",
@@ -623,9 +623,9 @@ lazy val `scio-macros`: Project = project
       "com.chuusai" %% "shapeless" % shapelessVersion,
       "com.esotericsoftware" % "kryo-shaded" % kryoVersion,
       "org.apache.beam" % "beam-sdks-java-extensions-sql" % beamVersion,
-      "org.apache.avro" % "avro" % avroVersion
-    ),
-    magnoliaDependencies
+      "org.apache.avro" % "avro" % avroVersion,
+      "com.propensive" %% "magnolia" % magnoliaVersion
+    )
   )
 
 lazy val `scio-avro`: Project = project
@@ -702,16 +702,7 @@ lazy val `scio-bigquery`: Project = project
       "org.hamcrest" % "hamcrest-core" % hamcrestVersion % "test,it",
       "org.hamcrest" % "hamcrest-library" % hamcrestVersion % "test,it"
     ),
-    beamSDKIODependencies,
-    // Workaround for https://github.com/spotify/scio/issues/2308
-    (Compile / doc) := Def.taskDyn {
-      val default = (Compile / doc).taskValue
-      if (scalaBinaryVersion.value == "2.11") {
-        (Compile / doc / target).toTask
-      } else {
-        Def.task(default.value)
-      }
-    }.value
+    beamSDKIODependencies
   )
   .dependsOn(
     `scio-core` % "compile;it->it"
