@@ -120,14 +120,20 @@ jobs:
     steps:
       - build:
           build-steps:
-            - run: cd scalafix; sbt -v $SBT_OPTS ++$SCALA_VERSION test
+            - run: cd scalafix; sbt -v $SBT_OPTS "++$SCALA_VERSION test"
 
   build_212:
     executor: scala_212
     steps:
       - build:
           build-steps:
-            - run: sbt -v $SBT_OPTS ++$SCALA_VERSION coverage test coverageReport coverageAggregate
+            - run:
+                command: |
+                  sbt -v $SBT_OPTS \
+                  coverage \
+                  "++$SCALA_VERSION test" \
+                  "++$SCALA_VERSION coverageReport" \
+                  "++$SCALA_VERSION coverageAggregate"
             - run: ./scripts/circleci_repl.sh
             - run: bash <(curl -s https://codecov.io/bash)
 
@@ -136,14 +142,14 @@ jobs:
     steps:
       - build:
           build-steps:
-            - run: sbt -v $SBT_OPTS ++$SCALA_VERSION it:test
+            - run: sbt -v $SBT_OPTS "++$SCALA_VERSION it:test"
 
   build_212-jdk11:
     executor: scala_212_jdk11
     steps:
       - build:
           build-steps:
-            - run: sbt -v $SBT_OPTS ++$SCALA_VERSION test
+            - run: sbt -v $SBT_OPTS "++$SCALA_VERSION test"
             - run: ./scripts/circleci_repl.sh
 
   build_212-it-jdk11:
@@ -155,7 +161,7 @@ jobs:
     steps:
       - build:
           build-steps:
-            - run: sbt -v $SBT_OPTS ++$SCALA_VERSION test
+            - run: sbt -v $SBT_OPTS "++$SCALA_VERSION test"
             - run: ./scripts/circleci_repl.sh
 
   build_it_213: &build_it_213
@@ -163,7 +169,7 @@ jobs:
     steps:
       - build:
           build-steps:
-            - run: sbt -v $SBT_OPTS ++$SCALA_VERSION it:test
+            - run: sbt -v $SBT_OPTS "++$SCALA_VERSION it:test"
 
   build_213-jdk11:
     <<: [*build_213]
@@ -189,7 +195,7 @@ jobs:
     steps:
       - build:
           build-steps:
-            - run: sbt -v $SBT_OPTS ++$SCALA_VERSION publish
+            - run: sbt -v $SBT_OPTS "++$SCALA_VERSION publish"
 
   publish_213:
     <<: [*publish_212]
@@ -201,7 +207,7 @@ jobs:
       - build:
           build-steps:
             - run:
-                command: sbt -v $SBT_OPTS ++$SCALA_VERSION "scio-test/it:runMain com.spotify.scio.benchmarks.ScioIOBenchmark --name=ci"
+                command: sbt -v $SBT_OPTS "++$SCALA_VERSION scio-test/it:runMain com.spotify.scio.benchmarks.ScioIOBenchmark --name=ci"
                 no_output_timeout: 30m
 
   bench_bigtable:
@@ -210,7 +216,7 @@ jobs:
       - build:
           build-steps:
             - run:
-                command: sbt -v $SBT_OPTS ++$SCALA_VERSION "scio-bigtable/it:runMain com.spotify.scio.bigtable.BigtableBenchmark --name=ci"
+                command: sbt -v $SBT_OPTS "++$SCALA_VERSION scio-bigtable/it:runMain com.spotify.scio.bigtable.BigtableBenchmark --name=ci"
                 no_output_timeout: 30m
 
   bench_batch:
@@ -219,7 +225,7 @@ jobs:
       - build:
           build-steps:
             - run:
-                command: sbt -v $SBT_OPTS ++$SCALA_VERSION "scio-test/it:runMain com.spotify.scio.benchmarks.ScioBatchBenchmark --name=ci"
+                command: sbt -v $SBT_OPTS "++$SCALA_VERSION scio-test/it:runMain com.spotify.scio.benchmarks.ScioBatchBenchmark --name=ci"
                 no_output_timeout: 30m
 
   bench_streaming:
@@ -228,7 +234,7 @@ jobs:
       - build:
           build-steps:
             - run:
-                command: sbt -v $SBT_OPTS ++$SCALA_VERSION "scio-test/it:runMain com.spotify.scio.benchmarks.ScioStreamingBenchmark --name=ci"
+                command: sbt -v $SBT_OPTS "++$SCALA_VERSION scio-test/it:runMain com.spotify.scio.benchmarks.ScioStreamingBenchmark --name=ci"
                 no_output_timeout: 30m
 
   bench_streaming_metrics:
@@ -237,7 +243,7 @@ jobs:
       - build:
           build-steps:
             - run:
-                command: sbt -v $SBT_OPTS ++$SCALA_VERSION "scio-test/it:runMain com.spotify.scio.benchmarks.ScioStreamingBenchmarkMetrics --name=ci"
+                command: sbt -v $SBT_OPTS "++$SCALA_VERSION scio-test/it:runMain com.spotify.scio.benchmarks.ScioStreamingBenchmarkMetrics --name=ci"
                 no_output_timeout: 30m
 
 ####################
