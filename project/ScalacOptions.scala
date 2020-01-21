@@ -56,7 +56,10 @@ object Scalac {
     // "-Ywarn-unused:patvars", // Warn if a variable bound in a pattern is unused.
     // "-Ywarn-unused:privates", // Warn if a private member is unused.
     "-Ywarn-value-discard", // Warn when non-Unit expression results are unused.
-    "-Xmacro-settings:show-coder-fallback=true"
+    "-Xmacro-settings:show-coder-fallback=true",
+    "-Ydelambdafy:inline", // Set the strategy used for translating lambdas into JVM code to "inline"
+    "-Ybackend-parallelism",
+    "8"
   )
 
   def scala212settings = Def.setting {
@@ -67,13 +70,10 @@ object Scalac {
       "-Xlint:by-name-right-associative", // By-name parameter of right associative operator.
       "-Xlint:unsound-match", // Pattern match may not be typesafe.
       "-Ypartial-unification", // Enable partial unification in type constructor inference
-      "-Ydelambdafy:inline", // Set the strategy used for translating lambdas into JVM code to "inline"
       "-Ywarn-unused:imports", // Warn if an import selector is not referenced.
       "-Ywarn-extra-implicit", // Warn when more than one implicit parameter section is defined.,
       "-Ywarn-inaccessible", // Warn about inaccessible types in method signatures.
-      "-Ywarn-infer-any", // Warn when a type argument is inferred to be `Any`.
-      "-Ybackend-parallelism",
-      "8"
+      "-Ywarn-infer-any" // Warn when a type argument is inferred to be `Any`.
     )
   }
 
