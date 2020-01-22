@@ -24,7 +24,7 @@ import java.util.jar.{JarEntry, JarOutputStream}
 
 import org.slf4j.LoggerFactory
 
-import scala.tools.nsc.interpreter.ILoop
+import scala.tools.nsc.interpreter.shell.ILoop
 import scala.tools.nsc.io._
 
 object ScioReplClassLoader {

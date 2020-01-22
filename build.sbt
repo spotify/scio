@@ -181,8 +181,8 @@ lazy val formatSettings = Seq(
 
 val commonSettings = Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
   organization := "com.spotify",
-  scalaVersion := "2.12.11",
-  crossScalaVersions := Seq("2.12.10"),
+  scalaVersion := "2.13.1",
+  crossScalaVersions := Seq("2.12.11"),
   scalacOptions ++= Scalac.commonsOptions.value,
   scalacOptions ++= {
     if (isScala213x.value) {
@@ -425,11 +425,11 @@ lazy val root: Project = Project("scio", file("."))
     `scio-extra`,
     `scio-jdbc`,
     `scio-parquet`,
-    `scio-tensorflow`,
+//    `scio-tensorflow`,
     `scio-schemas`,
     `scio-spanner`,
     `scio-sql`,
-    `scio-examples`,
+//    `scio-examples`,
     `scio-repl`,
     `scio-jmh`,
     `scio-macros`,
@@ -1122,6 +1122,7 @@ lazy val `scio-repl`: Project = project
   .settings(commonSettings)
   .settings(macroSettings)
   .settings(
+    crossScalaVersions += "2.13.1",
     libraryDependencies ++= Seq(
       "org.apache.beam" % "beam-runners-direct-java" % beamVersion,
       "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion,
@@ -1134,14 +1135,13 @@ lazy val `scio-repl`: Project = project
       "org.slf4j" % "slf4j-simple" % slf4jVersion,
       "jline" % "jline" % jlineVersion,
       "org.scala-lang" % "scala-compiler" % scalaVersion.value,
-      "com.nrinaudo" %% "kantan.csv" % kantanCsvVersion,
-      "org.scalamacros" % "paradise" % scalaMacrosVersion cross CrossVersion.full
+      "com.nrinaudo" %% "kantan.csv" % kantanCsvVersion
     ),
     libraryDependencies ++= {
-      if (scalaBinaryVersion.value == "2.11") {
-        Seq("com.nrinaudo" %% "kantan.codecs" % "0.5.0")
+      if (isScala213x.value) {
+        Seq()
       } else {
-        Seq("com.nrinaudo" %% "kantan.codecs" % kantanCsvVersion)
+        Seq("org.scalamacros" % "paradise" % scalaMacrosVersion cross CrossVersion.full)
       }
     },
     assemblyJarName in assembly := s"scio-repl-${version.value}.jar"
@@ -1337,7 +1337,7 @@ lazy val siteSettings = Def.settings(
       `scio-extra`,
       `scio-jdbc`,
       `scio-parquet`,
-      `scio-tensorflow`,
+//      `scio-tensorflow`,
       `scio-spanner`,
       `scio-macros`,
       `scio-smb`

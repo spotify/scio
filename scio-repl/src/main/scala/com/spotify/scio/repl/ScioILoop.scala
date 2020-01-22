@@ -26,7 +26,7 @@ import org.apache.beam.sdk.extensions.gcp.options.GcpOptions.DefaultProjectFacto
 import org.apache.commons.text.StringEscapeUtils
 
 import scala.tools.nsc.GenericRunnerSettings
-import scala.tools.nsc.interpreter.{IR, JPrintWriter}
+import scala.tools.nsc.interpreter.shell.{IR, JPrintWriter}
 
 /**
  * ScioILoop - core of Scio REPL.

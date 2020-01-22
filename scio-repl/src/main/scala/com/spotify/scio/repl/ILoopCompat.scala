@@ -19,9 +19,11 @@ package com.spotify.scio.repl
 
 import java.io.BufferedReader
 
-import scala.tools.nsc.interpreter.{ILoop, JPrintWriter}
+import scala.tools.nsc.interpreter.shell.{ILoop, ShellConfig}
+import java.io.{PrintWriter => JPrintWriter}
 
 /** ILoop for ScioLoop. */
-class ILoopCompat(in: Option[BufferedReader], out: JPrintWriter) extends ILoop(in, out) {
-  def addThunk(f: => Unit): Unit = intp.initialize(f)
+class ILoopCompat(config: ShellConfig, in: BufferedReader, out: JPrintWriter)
+    extends ILoop(config, in, out) {
+  def addThunk(f: => Unit): Unit = intp.initializeCompiler()
 }
