@@ -233,6 +233,30 @@ class SparkeyTest extends PipelineSpec {
     FileUtils.deleteDirectory(new File(basePath))
   }
 
+  it should "support .asSparkeySideInput with shards and missing values" in {
+    val sc = ScioContext()
+
+    val input = Seq("a", "b", "a", "b", "d", "e")
+
+    val sparkey = sc.parallelize(sideData).asSparkey(numShards = 10)
+    val sparkeyMaterialized = sparkey.materialize
+    val si = sparkey.asSparkeySideInput
+    val result = sc
+      .parallelize(input)
+      .withSideInputs(si)
+      .flatMap((x, sic) => sic(si).get(x))
+      .toSCollection
+      .materialize
+
+    val scioResult = sc.run().waitUntilFinish()
+
+    val sideDataMap = sideData.toMap
+    scioResult.tap(result).value.toList.sorted shouldBe input.flatMap(sideDataMap.get).sorted
+
+    val basePath = scioResult.tap(sparkeyMaterialized).value.next().basePath
+    FileUtils.deleteDirectory(new File(basePath))
+  }
+
   it should "support .asCachedStringSparkeySideInput" in {
     val sc = ScioContext()
 
