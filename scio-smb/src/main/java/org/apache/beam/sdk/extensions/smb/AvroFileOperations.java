@@ -35,7 +35,7 @@ import org.apache.beam.sdk.coders.Coder;
 import org.apache.beam.sdk.io.AvroIO;
 import org.apache.beam.sdk.io.Compression;
 import org.apache.beam.sdk.io.FileIO;
-import org.apache.beam.sdk.io.SerializableAvroCodecFactory;
+import org.apache.beam.sdk.io.PatchedSerializableAvroCodecFactory;
 import org.apache.beam.sdk.transforms.display.DisplayData;
 import org.apache.beam.sdk.transforms.display.DisplayData.Builder;
 import org.apache.beam.sdk.util.MimeTypes;
@@ -47,13 +47,13 @@ class AvroFileOperations<ValueT> extends FileOperations<ValueT> {
 
   private final Class<ValueT> recordClass;
   private final SerializableSchemaSupplier schemaSupplier;
-  private final SerializableAvroCodecFactory codec;
+  private final PatchedSerializableAvroCodecFactory codec;
 
   private AvroFileOperations(Class<ValueT> recordClass, Schema schema, CodecFactory codec) {
     super(Compression.UNCOMPRESSED, MimeTypes.BINARY); // Avro has its own compression via codec
     this.recordClass = recordClass;
     this.schemaSupplier = new SerializableSchemaSupplier(schema);
-    this.codec = new SerializableAvroCodecFactory(codec);
+    this.codec = new PatchedSerializableAvroCodecFactory(codec);
   }
 
   public static <V extends GenericRecord> AvroFileOperations<V> of(Schema schema) {
