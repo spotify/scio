@@ -1,0 +1,18 @@
+{
+  "type" : "record",
+  "name" : "Root",
+  "fields" : [ {
+    "name" : "word",
+    "type" : [ "string", "null" ]
+  }, {
+    "name" : "word_count",
+    "type" : [ "long", "null" ]
+  }, {
+    "name" : "corpus",
+    "type" : [ "string", "null" ]
+  }, {
+    "name" : "corpus_date",
+    "type" : [ "long", "null" ]
+  } ]
+}
+
