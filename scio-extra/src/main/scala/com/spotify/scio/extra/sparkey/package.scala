@@ -422,13 +422,32 @@ package object sparkey {
 
     def hashKey(str: String): Short = hashKey(str.getBytes)
 
-    override def getAsString(key: String): String = sparkeys(hashKey(key)).getAsString(key)
+    override def getAsString(key: String): String = {
+      val hashed = hashKey(key)
+      if (sparkeys.contains(hashed)) {
+        sparkeys(hashed).getAsString(key)
+      } else {
+        null
+      }
+    }
 
-    override def getAsByteArray(key: Array[Byte]): Array[Byte] =
-      sparkeys(hashKey(key)).getAsByteArray(key)
+    override def getAsByteArray(key: Array[Byte]): Array[Byte] = {
+      val hashed = hashKey(key)
+      if (sparkeys.contains(hashed)) {
+        sparkeys(hashed).getAsByteArray(key)
+      } else {
+        null
+      }
+    }
 
-    override def getAsEntry(key: Array[Byte]): SparkeyReader.Entry =
-      sparkeys(hashKey(key)).getAsEntry(key)
+    override def getAsEntry(key: Array[Byte]): SparkeyReader.Entry = {
+      val hashed = hashKey(key)
+      if (sparkeys.contains(hashed)) {
+        sparkeys(hashed).getAsEntry(key)
+      } else {
+        null
+      }
+    }
 
     override def getIndexHeader: IndexHeader =
       throw new NotImplementedError("ShardedSparkeyReader does not support getIndexHeader.")
