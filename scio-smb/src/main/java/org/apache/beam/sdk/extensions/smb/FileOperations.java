@@ -28,7 +28,7 @@ import org.apache.beam.sdk.io.Compression;
 import org.apache.beam.sdk.io.FileIO;
 import org.apache.beam.sdk.io.FileIO.ReadableFile;
 import org.apache.beam.sdk.io.FileSystems;
-import org.apache.beam.sdk.io.ReadableFileUtil;
+import org.apache.beam.sdk.io.PatchedReadableFileUtil;
 import org.apache.beam.sdk.io.fs.MatchResult.Metadata;
 import org.apache.beam.sdk.io.fs.ResourceId;
 import org.apache.beam.sdk.transforms.display.DisplayData;
@@ -160,7 +160,7 @@ public abstract class FileOperations<V> implements Serializable, HasDisplayData 
     try {
       final Metadata metadata = FileSystems.matchSingleFileSpec(resourceId.toString());
 
-      return ReadableFileUtil.newReadableFile(
+      return PatchedReadableFileUtil.newReadableFile(
           metadata,
           compression == Compression.AUTO
               ? Compression.detect(resourceId.getFilename())

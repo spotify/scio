@@ -42,7 +42,7 @@ import com.spotify.scio.smb.annotations.PatchedFromBeam;
  * standard serialization mechanisms.
  */
 @PatchedFromBeam(origin="org.apache.beam.sdk.io.SerializableAvroCodecFactory")
-public class SerializableAvroCodecFactory implements Externalizable {
+public class PatchedSerializableAvroCodecFactory implements Externalizable {
   // Matches Beam 2.16.0
   private static final long serialVersionUID = 7445324844109564303L;
   private static final List<String> noOptAvroCodecs =
@@ -53,9 +53,9 @@ public class SerializableAvroCodecFactory implements Externalizable {
   private @Nullable CodecFactory codecFactory;
 
   // For java.io.Externalizable
-  public SerializableAvroCodecFactory() {}
+  public PatchedSerializableAvroCodecFactory() {}
 
-  public SerializableAvroCodecFactory(CodecFactory codecFactory) {
+  public PatchedSerializableAvroCodecFactory(CodecFactory codecFactory) {
     checkNotNull(codecFactory, "Codec can't be null");
     checkState(checkIsSupportedCodec(codecFactory), "%s is not supported", codecFactory);
     this.codecFactory = codecFactory;
