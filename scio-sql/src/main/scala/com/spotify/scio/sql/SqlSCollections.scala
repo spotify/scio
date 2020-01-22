@@ -22,12 +22,10 @@
 
 package com.spotify.scio.sql
 
-import com.spotify.scio.annotations.experimental
 import com.spotify.scio.schemas._
 import com.spotify.scio.values.SCollection
 
 trait SqlSCollections {
-  @experimental
   def from[A: Schema](a: SCollection[A]): SqlSCollection1[A] = new SqlSCollection1(a)
   def from[A: Schema, B: Schema](a: SCollection[A], b: SCollection[B]): SqlSCollection2[A, B] =
     new SqlSCollection2(a, b)

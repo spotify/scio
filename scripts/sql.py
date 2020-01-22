@@ -204,7 +204,7 @@ def mkMacro(n):
     assertConcrete[R](c)
 
     val ({schema_tuple_vals}, schemas{n_p}) =
-        FastEval(c)(
+        c.eval(
             c.Expr[({schemas}, Schema[R])](
                 q"({infer_schemas}, ${{untyped(rSchema)}})"))
 
@@ -336,7 +336,7 @@ def main(out):
     N = 10
     for i in xrange(2, N + 1):
         f = open(
-            "scio-core/src/main/scala/com/spotify/scio/sql/Query{}.scala".format(i), "w"
+            "scio-sql/src/main/scala/com/spotify/scio/sql/Query{}.scala".format(i), "w"
         )
         print >> f, header
         sqlCollectionFns(f, i)
@@ -352,7 +352,7 @@ def main(out):
         )
         f.close()
     f = open(
-        "scio-core/src/main/scala/com/spotify/scio/sql/SqlSCollections.scala".format(i),
+        "scio-sql/src/main/scala/com/spotify/scio/sql/SqlSCollections.scala".format(i),
         "w",
     )
     print >> f, header
@@ -380,7 +380,7 @@ def main(out):
     )
     f.close()
     f = open(
-    "scio-core/src/main/scala/com/spotify/scio/sql/SQLBuilders.scala".format(i),
+    "scio-sql/src/main/scala/com/spotify/scio/sql/SQLBuilders.scala".format(i),
     "w",
     )
     print >> f, header

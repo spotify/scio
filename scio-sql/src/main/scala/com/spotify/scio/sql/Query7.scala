@@ -128,7 +128,7 @@ object Query7 {
     assertConcrete[R](c)
 
     val (schemas1, schemas2, schemas3, schemas4, schemas5, schemas6, schemas7, schemas8) =
-      FastEval(c)(
+      c.eval(
         c.Expr[
           (Schema[A], Schema[B], Schema[C], Schema[D], Schema[E], Schema[F], Schema[G], Schema[R])
         ](q"(${untyped(aSchema)}, ${untyped(bSchema)}, ${untyped(cSchema)}, ${untyped(dSchema)}, ${untyped(
@@ -174,6 +174,7 @@ final class SqlSCollection7[
   f: SCollection[F],
   g: SCollection[G]
 ) {
+
   def query(
     q: String,
     aTag: TupleTag[A],
@@ -210,6 +211,7 @@ final class SqlSCollection7[
           s"${collA.tfName} join ${collB.tfName} join ${collC.tfName} join ${collD.tfName} join ${collE.tfName} join ${collF.tfName} join ${collG.tfName}",
           sqlTransform
         )
+
     }
 
   def queryAs[R: Schema](
@@ -233,4 +235,5 @@ final class SqlSCollection7[
       case e: ParseException =>
         Query7.typecheck(q).fold(err => throw new RuntimeException(err, e), _ => throw e)
     }
+
 }
