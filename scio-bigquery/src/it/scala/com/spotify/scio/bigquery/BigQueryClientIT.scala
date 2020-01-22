@@ -74,11 +74,13 @@ class BigQueryClientIT extends AnyFlatSpec with Matchers {
   "QueryService.extractLocation" should "work with legacy syntax" in {
     val query = "SELECT word FROM [data-integration-test:samples_%s.shakespeare]"
     bq.query.extractLocation(query.format("eu")) shouldBe Some("EU")
+    bq.query.extractLocation(query.format("us")) shouldBe Some("US")
   }
 
   it should "work with SQL syntax" in {
     val query = "SELECT word FROM `data-integration-test.samples_%s.shakespeare`"
     bq.query.extractLocation(query.format("eu")) shouldBe Some("EU")
+    bq.query.extractLocation(query.format("us")) shouldBe Some("US")
   }
 
   it should "support missing source tables" in {
