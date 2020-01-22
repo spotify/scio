@@ -39,9 +39,20 @@ class ConverterProviderTest extends AnyFlatSpec with Matchers {
       Repeated.fromTableRow(TableRow())
     } should have message """REPEATED field "a" is null"""
   }
+
+  // scalastyle:on no.whitespace.before.left.bracket
+  it should "handle required geography type" in {
+    val wkt = "POINT (30 10)"
+    RequiredGeo.fromTableRow(TableRow("a" -> wkt)) shouldBe RequiredGeo(Geography(wkt))
+    BigQueryType.toTableRow[RequiredGeo](RequiredGeo(Geography(wkt))) shouldBe TableRow("a" -> wkt)
+  }
 }
 
 object ConverterProviderTest {
+
+  @BigQueryType.toTable
+  case class RequiredGeo(a: Geography)
+
   @BigQueryType.toTable
   case class Required(a: String)
 
