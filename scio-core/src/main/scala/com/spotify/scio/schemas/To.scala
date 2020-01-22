@@ -23,7 +23,6 @@ import org.apache.beam.sdk.schemas.{Schema => BSchema, SchemaCoder}
 import scala.collection.JavaConverters._
 import scala.language.experimental.macros
 import scala.annotation.tailrec
-import scala.tools.reflect.ToolBox
 
 sealed trait To[I, O] extends (SCollection[I] => SCollection[O]) with Serializable {
   def coder: Coder[O]
