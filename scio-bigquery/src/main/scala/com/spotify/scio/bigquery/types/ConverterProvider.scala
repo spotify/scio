@@ -93,6 +93,8 @@ private[types] object ConverterProvider {
           q"_root_.com.spotify.scio.bigquery.Time.parse($tree)"
         case t if t =:= typeOf[LocalDateTime] =>
           q"_root_.com.spotify.scio.bigquery.DateTime.parse($tree.toString)"
+        case t if t =:= typeOf[Geography] =>
+          q"_root_.com.spotify.scio.bigquery.types.Geography($tree.toString)"
 
         case t if isCaseClass(c)(t) =>
           val fn = TermName("r" + t.typeSymbol.name)
