@@ -17,34 +17,25 @@
 
 package com.spotify.scio.repl
 
-import java.io.BufferedReader
+import java.io.{PrintWriter => JPrintWriter}
 
-import org.apache.beam.sdk.options.PipelineOptionsFactory
-import com.spotify.scio.bigquery.BigQuerySysProps
 import com.spotify.scio.BuildInfo
+import com.spotify.scio.bigquery.BigQuerySysProps
 import org.apache.beam.sdk.extensions.gcp.options.GcpOptions.DefaultProjectFactory
+import org.apache.beam.sdk.options.PipelineOptionsFactory
 import org.apache.commons.text.StringEscapeUtils
 
-import scala.tools.nsc.GenericRunnerSettings
-import scala.tools.nsc.interpreter.shell.{IR, JPrintWriter}
+import scala.tools.nsc.{CompilerCommand, Settings}
+import scala.tools.nsc.interpreter.Results
+import scala.tools.nsc.interpreter.ILoop
 
 /**
  * ScioILoop - core of Scio REPL.
  * @param scioClassLoader [[ScioReplClassLoader]] used for runtime/in-memory classloading
  * @param args user arguments for Scio REPL
  */
-class ScioILoop(
-  scioClassLoader: ScioReplClassLoader,
-  args: List[String],
-  reader: Option[BufferedReader],
-  out: JPrintWriter
-) extends ILoopCompat(reader, out) {
-  private var scioIsInitialized = false
-
-  welcome()
-
-  def this(scioCL: ScioReplClassLoader, args: List[String]) =
-    this(scioCL, args, None, new JPrintWriter(Console.out, true))
+class ScioILoop(command: CompilerCommand, scioClassLoader: ScioReplClassLoader, args: List[String])
+    extends ILoop(None, new JPrintWriter(Console.out, true)) {
 
   // Fail fast for illegal arguments
   try {
@@ -55,16 +46,10 @@ class ScioILoop(
       sys.exit(1)
   }
 
-  settings = new GenericRunnerSettings(echo)
+  settings = command.settings
 
-  override def printWelcome(): Unit = {}
-
-  override def prompt: String =
-    if (scioIsInitialized) {
-      Console.GREEN + "\nscio> " + Console.RESET
-    } else {
-      ""
-    }
+  override lazy val prompt: String =
+    Console.GREEN + "\nscio> " + Console.RESET
 
   // Options for creating new Scio contexts
   private var scioOpts: Array[String] = args.toArray
@@ -135,10 +120,8 @@ class ScioILoop(
     if (args.trim.nonEmpty) {
       // update options
       val newOpts = args.split("\\s+")
-      val result = intp.beQuietDuring {
+      intp.beQuietDuring {
         intp.interpret(optsFromArgs(newOpts))
-      }
-      if (result == IR.Success) {
         scioOpts = newOpts
         echo("Scio options updated. Use :newScio to get a new Scio context.")
       }
@@ -191,7 +174,10 @@ class ScioILoop(
     s"""$factory.fromArgs($optionsAsStr).create()"""
   }
 
-  private def welcome(): Unit = {
+  override def printWelcome(): Unit = echo(welcome())
+
+  def welcome(): String = {
+    val p = scala.util.Properties
     val ascii =
       """Welcome to
         |                 _____
@@ -199,21 +185,23 @@ class ScioILoop(
         |    __  ___/  ___/_  /_  __ \
         |    _(__  )/ /__ _  / / /_/ /
         |    /____/ \___/ /_/  \____/""".stripMargin + "   version " + BuildInfo.version + "\n"
-    echo(ascii)
 
-    val p = scala.util.Properties
-    echo(
-      "Using Scala version %s (%s, Java %s)"
-        .format(BuildInfo.scalaVersion, p.javaVmName, p.javaVersion)
+    val version = "Using Scala version %s (%s, Java %s)".format(
+      BuildInfo.scalaVersion,
+      p.javaVmName,
+      p.javaVersion
     )
 
-    echo("""
-        |Type in expressions to have them evaluated.
-        |Type :help for more information.
-      """.stripMargin)
+    s"""
+      |$ascii
+      |$version
+      |
+      |Type in expressions to have them evaluated.
+      |Type :help for more information.
+      """.stripMargin
   }
 
-  private def addImports(): IR.Result =
+  private def addImports(): Results.Result =
     intp.interpret("""
         |import com.spotify.scio.{io => _, _}
         |import com.spotify.scio.avro._
@@ -223,9 +211,9 @@ class ScioILoop(
         |import scala.concurrent.ExecutionContext.Implicits.global
       """.stripMargin)
 
-  private def createBigQueryClient(): IR.Result = {
-    def create(projectId: String): IR.Result = {
-      val r = intp.interpret(s"""val bq = BigQuery("$projectId")""")
+  private def createBigQueryClient(): Results.Result = {
+    def create(projectId: String): Results.Result = {
+      val r: Results.Result = intp.interpret(s"""val bq = BigQuery("$projectId")""")
       echo(s"BigQuery client available as 'bq'")
       r
     }
@@ -242,12 +230,12 @@ class ScioILoop(
       } else {
         echo(s"System property '$key' not set. BigQueryClient is not available.")
         echo(s"Set it with '-D$key=<PROJECT-NAME>' command line argument.")
-        IR.Success
+        Results.Success
       }
     }
   }
 
-  private def loadIoCommands(): IR.Result =
+  private def loadIoCommands(): Results.Result =
     intp.interpret("""
         |val _ioCommands = new com.spotify.scio.repl.IoCommands(sc.options)
         |import _ioCommands._
@@ -261,15 +249,9 @@ class ScioILoop(
       newScioCmdImpl("sc")
       loadIoCommands()
     }
-    if (in == null) {
-      sys.error(
-        "Could not initialize Scio interpreter - abort." +
-          "One possible reason is inconsistent Scala versions. " +
-          "Please use the exact same version of Scala as scio-repl."
-      )
-    }
-    scioIsInitialized = true
     out.print(prompt)
     out.flush()
   }
+
+  def run(settings: Settings): Boolean = process(settings)
 }
