@@ -31,7 +31,7 @@ import org.scalatest.matchers.should.Matchers
 
 import scala.collection.JavaConverters._
 
-// Run BigQueryITUtil to re-populate tables for integration tests
+// scio-test/it:runMain PopulateTestData to re-populate data for integration tests
 class StorageIT extends AnyFlatSpec with Matchers {
   import StorageIT._
 

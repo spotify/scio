@@ -21,6 +21,7 @@ import com.spotify.scio.bigquery.client.BigQuery
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.flatspec.AnyFlatSpec
 
+// scio-test/it:runMain PopulateTestData to re-populate data for integration tests
 class BigQueryPartitionUtilIT extends AnyFlatSpec with Matchers {
   val bq = BigQuery.defaultInstance()
 

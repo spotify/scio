@@ -28,6 +28,7 @@ import org.scalatest.matchers.should.Matchers
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 
+// scio-test/it:runMain PopulateTestData to re-populate data for integration tests
 final class AvroTapIT extends AnyFlatSpec with Matchers {
   private val schema = new Parser().parse("""{
                                                     |  "type" : "record",
