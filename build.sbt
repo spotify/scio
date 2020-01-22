@@ -229,6 +229,12 @@ val commonSettings = Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
       name = "Claire McGinty",
       email = "clairem@spotify.com",
       url = url("http://github.com/clairemcginty")
+    ),
+    Developer(
+      id = "syodage",
+      name = "Shameera Rathnayaka",
+      email = "shameerayodage@gmail.com",
+      url = url("http://github.com/syodage")
     )
   ),
   credentials ++= (for {
