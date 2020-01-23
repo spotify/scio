@@ -80,7 +80,7 @@ object Query1 {
     assertConcrete[B](c)
 
     val (sIn, sOut) =
-      FastEval(c)(c.Expr[(Schema[A], Schema[B])](q"(${untyped(iSchema)}, ${untyped(oSchema)})"))
+      c.eval(c.Expr[(Schema[A], Schema[B])](q"(${untyped(iSchema)}, ${untyped(oSchema)})"))
 
     val sq = Query1[A, B](cons(c)(query), tupleTag(c)(aTag))
     typecheck(sq)(sIn, sOut)

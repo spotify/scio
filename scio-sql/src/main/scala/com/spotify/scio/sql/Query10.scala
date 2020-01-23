@@ -178,7 +178,7 @@ object Query10 {
       schemas10,
       schemas11
     ) =
-      FastEval(c)(
+      c.eval(
         c.Expr[
           (
             Schema[A],
@@ -258,6 +258,7 @@ final class SqlSCollection10[
   i: SCollection[I],
   j: SCollection[J]
 ) {
+
   def query(
     q: String,
     aTag: TupleTag[A],
@@ -303,6 +304,7 @@ final class SqlSCollection10[
           s"${collA.tfName} join ${collB.tfName} join ${collC.tfName} join ${collD.tfName} join ${collE.tfName} join ${collF.tfName} join ${collG.tfName} join ${collH.tfName} join ${collI.tfName} join ${collJ.tfName}",
           sqlTransform
         )
+
     }
 
   def queryAs[R: Schema](
@@ -341,4 +343,5 @@ final class SqlSCollection10[
       case e: ParseException =>
         Query10.typecheck(q).fold(err => throw new RuntimeException(err, e), _ => throw e)
     }
+
 }
