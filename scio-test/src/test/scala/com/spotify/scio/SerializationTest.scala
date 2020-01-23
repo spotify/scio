@@ -44,9 +44,12 @@ class SerializationTest extends AnyFlatSpec with Matchers {
     SerializableUtils.ensureSerializable(p1.asSingletonSideInput)
     SerializableUtils.ensureSerializable(p1.asListSideInput)
     SerializableUtils.ensureSerializable(p1.asIterableSideInput)
+    SerializableUtils.ensureSerializable(p1.asSetSingletonSideInput)
     val p2 = sc.parallelize(1 to 10).map(i => (s"k$i", s"v$i"))
     SerializableUtils.ensureSerializable(p2.asMapSideInput)
     SerializableUtils.ensureSerializable(p2.asMultiMapSideInput)
+    SerializableUtils.ensureSerializable(p2.asMapSingletonSideInput)
+    SerializableUtils.ensureSerializable(p2.asMultiMapSingletonSideInput)
   }
 
   "SideOutput" should "be serializable" in {

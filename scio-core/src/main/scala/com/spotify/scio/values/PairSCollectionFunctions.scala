@@ -1121,7 +1121,8 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * `Map[key, value]`, to be used with [[SCollection.withSideInputs]]. It is required that each
    * key of the input be associated with a single value.
    *
-   * Currently, the resulting map is required to fit into memory.
+   * Note: the underlying map implementation is runner specific and may have performance overhead.
+   * Use [[asMapSingletonSideInput]] instead if the resulting map can fit into memory.
    */
   def asMapSideInput(implicit koder: Coder[K], voder: Coder[V]): SideInput[Map[K, V]] = {
     val o = self.applyInternal(new PTransform[PCollection[(K, V)], PCollectionView[JMap[K, V]]]() {
@@ -1139,7 +1140,8 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * `Map[key, Iterable[value]]`, to be used with [[SCollection.withSideInputs]]. In contrast to
    * [[asMapSideInput]], it is not required that the keys in the input collection be unique.
    *
-   * Currently, the resulting map is required to fit into memory.
+   * Note: the underlying map implementation is runner specific and may have performance overhead.
+   * Use [[asMultiMapSingletonSideInput]] instead if the resulting map can fit into memory.
    */
   def asMultiMapSideInput(
     implicit koder: Coder[K],
@@ -1156,4 +1158,46 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     )
     new MultiMapSideInput[K, V](o)
   }
+
+  /**
+   * Convert this SCollection to a SideInput, mapping key-value pairs of each window to a
+   * `Map[key, value]`, to be used with [[SCollection.withSideInputs]]. It is required that each
+   * key of the input be associated with a single value.
+   *
+   * Currently, the resulting map is required to fit into memory. This is preferable to
+   * [[asMapSideInput]] if that's the case.
+   */
+  def asMapSingletonSideInput(implicit koder: Coder[K], voder: Coder[V]): SideInput[Map[K, V]] =
+    self
+      .transform(
+        _.groupByKey
+          .map { kv =>
+            require(kv._2.size == 1, s"Multiple values for key ${kv._1}")
+            (kv._1, kv._2.head)
+          }
+          .groupBy(_ => ())
+          .map(_._2.toMap)
+      )
+      .asSingletonSideInput(Map.empty[K, V])
+
+  /**
+   * Convert this SCollection to a SideInput, mapping key-value pairs of each window to a
+   * `Map[key, Iterable[value]]`, to be used with [[SCollection.withSideInputs]]. In contrast to
+   * [[asMapSingletonSideInput]], it is not required that the keys in the input collection be
+   * unique.
+   *
+   * Currently, the resulting map is required to fit into memory. This is preferable to
+   * [[asMultiMapSideInput]] if that's the case.
+   */
+  def asMultiMapSingletonSideInput(
+    implicit koder: Coder[K],
+    voder: Coder[V]
+  ): SideInput[Map[K, Iterable[V]]] =
+    self
+      .transform(
+        _.groupByKey
+          .groupBy(_ => ())
+          .map(_._2.toMap)
+      )
+      .asSingletonSideInput(Map.empty[K, Iterable[V]])
 }
