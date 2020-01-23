@@ -169,6 +169,12 @@ object BigQueryTestData {
       WRITE_TRUNCATE
     )
 
+    bq.writeTypedRows(
+      s"$projectId:samples_us.shakespeare",
+      List(Shakespeare(Some(0), Some("sonnets"), Some(1), Some("LVII"))),
+      WRITE_TRUNCATE
+    )
+
     val data = List(ToTableT("a", 1), ToTableT("b", 2))
     bq.writeTypedRows(s"$projectId:partition_a.table_20170101", data, WRITE_TRUNCATE)
     bq.writeTypedRows(s"$projectId:partition_a.table_20170102", data, WRITE_TRUNCATE)
