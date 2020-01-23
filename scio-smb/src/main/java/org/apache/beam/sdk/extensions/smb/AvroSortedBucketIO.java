@@ -135,10 +135,8 @@ public class AvroSortedBucketIO {
     }
 
     /** Reads from the given input directory. */
-    public Read<T> from(String inputDirectory) {
-      return toBuilder()
-          .setInputDirectories(FileSystems.matchNewResource(inputDirectory, true))
-          .build();
+    public Read<T> from(String... inputDirectories) {
+      return from(Arrays.asList(inputDirectories));
     }
 
     /** Reads from the given input directories. */

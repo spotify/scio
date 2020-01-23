@@ -91,6 +91,6 @@ class TensorFlowBucketMetadata<K> extends BucketMetadata<K, Example> {
       return false;
     }
     TensorFlowBucketMetadata<?> that = (TensorFlowBucketMetadata<?>) o;
-    return Objects.equals(keyField, that.keyField);
+    return getKeyClass() == that.getKeyClass() && keyField.equals(that.keyField);
   }
 }

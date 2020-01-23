@@ -23,10 +23,17 @@ import org.apache.beam.sdk.coders.CannotProvideCoderException;
 import org.apache.beam.sdk.coders.Coder.NonDeterministicException;
 
 class TestBucketMetadata extends BucketMetadata<String, String> {
+  @JsonProperty("keyIndex")
+  private Integer keyIndex = 0;
 
   static TestBucketMetadata of(int numBuckets, int numShards)
       throws CannotProvideCoderException, NonDeterministicException {
     return new TestBucketMetadata(numBuckets, numShards, HashType.MURMUR3_32);
+  }
+
+  TestBucketMetadata withKeyIndex(int keyIndex) {
+    this.keyIndex = keyIndex;
+    return this;
   }
 
   TestBucketMetadata(
@@ -49,13 +56,13 @@ class TestBucketMetadata extends BucketMetadata<String, String> {
 
   @Override
   public boolean isSameSourceCompatible(BucketMetadata other) {
-    return true;
+    return keyIndex.equals(((TestBucketMetadata) other).keyIndex);
   }
 
   @Override
   public String extractKey(String value) {
     try {
-      return value.substring(0, 1);
+      return value.substring(keyIndex, 1);
     } catch (StringIndexOutOfBoundsException e) {
       return null;
     }

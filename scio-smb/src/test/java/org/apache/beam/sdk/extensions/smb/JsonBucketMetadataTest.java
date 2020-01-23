@@ -99,4 +99,23 @@ public class JsonBucketMetadataTest {
         displayData, hasDisplayItem("hashType", HashType.MURMUR3_32.toString()));
     MatcherAssert.assertThat(displayData, hasDisplayItem("keyCoder", StringUtf8Coder.class));
   }
+
+  @Test
+  public void testSameSourceCompatibility() throws Exception {
+    final JsonBucketMetadata<String> metadata1 =
+        new JsonBucketMetadata<>(2, 1, String.class, HashType.MURMUR3_32, "favorite_country");
+
+    final JsonBucketMetadata<String> metadata2 =
+        new JsonBucketMetadata<>(2, 1, String.class, HashType.MURMUR3_32, "favorite_color");
+
+    final JsonBucketMetadata<String> metadata3 =
+        new JsonBucketMetadata<>(4, 1, String.class, HashType.MURMUR3_32, "favorite_color");
+
+    final JsonBucketMetadata<Long> metadata4 =
+        new JsonBucketMetadata<>(4, 1, Long.class, HashType.MURMUR3_32, "favorite_color");
+
+    Assert.assertFalse(metadata1.isSameSourceCompatible(metadata2));
+    Assert.assertTrue(metadata2.isSameSourceCompatible(metadata3));
+    Assert.assertFalse(metadata3.isSameSourceCompatible(metadata4));
+  }
 }

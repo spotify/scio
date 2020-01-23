@@ -103,7 +103,7 @@ class AvroBucketMetadata<K, V extends GenericRecord> extends BucketMetadata<K, V
       return false;
     }
     AvroBucketMetadata<?, ?> that = (AvroBucketMetadata<?, ?>) o;
-    return Objects.equals(keyField, that.keyField) &&
+    return getKeyClass() == that.getKeyClass() && keyField.equals(that.keyField) &&
         Arrays.equals(keyPath, that.keyPath);
   }
 

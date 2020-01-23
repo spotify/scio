@@ -17,6 +17,7 @@
 
 package org.apache.beam.sdk.extensions.smb;
 
+import com.google.common.collect.Lists;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -29,6 +30,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.apache.beam.sdk.Pipeline;
@@ -375,6 +377,10 @@ public class SortedBucketSource<FinalKeyT>
       return tupleTag;
     }
 
+    /**
+     Returns a single metadata to represent this source. Used for key extraction
+     functions and computing least # buckets (see: {@link MergeBuckets#leastNumBuckets})
+     */
     public BucketMetadata<K, V> getCanonicalMetadata() {
       if (canonicalMetadata == null) {
         canonicalMetadata = getMetadata().values().stream()
@@ -389,7 +395,7 @@ public class SortedBucketSource<FinalKeyT>
       if (metadata == null) {
         metadata = fileAssignments.entrySet().stream().collect(
             Collectors.toMap(
-                entry -> entry.getKey(),
+                Entry::getKey,
                 entry -> {
                   try {
                     return BucketMetadata.from(
@@ -407,7 +413,7 @@ public class SortedBucketSource<FinalKeyT>
       return fileOperations.getCoder();
     }
 
-    private void validateSourcesCompatibility() {
+    void validateSourcesCompatibility() {
       if (getMetadata().size() == 1) {
         return;
       }
@@ -422,8 +428,9 @@ public class SortedBucketSource<FinalKeyT>
         Preconditions.checkState(
             first.getValue().isCompatibleWith(current.getValue()) &&
                 first.getValue().isSameSourceCompatible(current.getValue()),
-            "Metadata in directory %s is incompatible with metadata in directory %s: %s != %s",
-            first.getKey(), current.getValue(), first.getValue(), current.getValue()
+            "%s cannot be read as a single input source. Metadata in directory "
+                + "%s is incompatible with metadata in directory %s: %s != %s",
+            this, first.getKey(), current.getKey(), first.getValue(), current.getValue()
         );
       }
     }
@@ -467,10 +474,10 @@ public class SortedBucketSource<FinalKeyT>
     @Override
     public String toString() {
       return String.format(
-          "BucketedInput[tupleTag=%s, inputDirectories=%s, metadata=%s]",
+          "BucketedInput[tupleTag=%s, inputDirectories=[%s], metadata=%s]",
           tupleTag.getId(),
-          inputDirectories.size() > 10 ?
-              inputDirectories.subList(0, 8) + "..." + inputDirectories.get(inputDirectories.size() - 1)
+          inputDirectories.size() > 5 ?
+              inputDirectories.subList(0, 4) + "..." + inputDirectories.get(inputDirectories.size() - 1)
               : inputDirectories,
           getCanonicalMetadata());
     }

@@ -104,4 +104,24 @@ public class TensorFlowBucketMetadataTest {
         displayData, hasDisplayItem("hashType", HashType.MURMUR3_32.toString()));
     MatcherAssert.assertThat(displayData, hasDisplayItem("keyCoder", ByteArrayCoder.class));
   }
+
+
+  @Test
+  public void testSameSourceCompatibility() throws Exception {
+    final TensorFlowBucketMetadata<byte[]> metadata1 =
+        new TensorFlowBucketMetadata<>(2, 1, byte[].class, HashType.MURMUR3_32, "foo");
+
+    final TensorFlowBucketMetadata<byte[]> metadata2 =
+        new TensorFlowBucketMetadata<>(2, 1, byte[].class, HashType.MURMUR3_32, "bar");;
+
+    final TensorFlowBucketMetadata<byte[]> metadata3 =
+        new TensorFlowBucketMetadata<>(4, 1, byte[].class, HashType.MURMUR3_32, "bar");
+
+    final TensorFlowBucketMetadata<String> metadata4 =
+        new TensorFlowBucketMetadata<>(4, 1, String.class, HashType.MURMUR3_32, "bar");
+
+    Assert.assertFalse(metadata1.isSameSourceCompatible(metadata2));
+    Assert.assertTrue(metadata2.isSameSourceCompatible(metadata3));
+    Assert.assertFalse(metadata3.isSameSourceCompatible(metadata4));
+  }
 }

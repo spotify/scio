@@ -20,6 +20,8 @@ package org.apache.beam.sdk.extensions.smb;
 import static org.apache.beam.sdk.extensions.smb.SortedBucketSource.BucketedInput;
 import static org.apache.beam.sdk.extensions.smb.TestUtils.fromFolder;
 
+import java.io.File;
+import java.io.OutputStream;
 import java.nio.channels.Channels;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -70,6 +72,40 @@ public class SortedBucketSourceTest {
   public void setup() {
     lhsPolicy = new SMBFilenamePolicy(fromFolder(lhsFolder), ".txt");
     rhsPolicy = new SMBFilenamePolicy(fromFolder(rhsFolder), ".txt");
+  }
+
+  @Test
+  public void testBucketedInputMetadata() throws Exception {
+    List<ResourceId> inputDirectories = new LinkedList<>();
+
+    for (int i = 0; i < 10; i++) {
+      final TestBucketMetadata metadata = TestBucketMetadata.of(
+          (int) Math.pow(2.0, 1.0 * i), 1).withKeyIndex(i);
+      final File dest = lhsFolder.newFolder(String.valueOf(i));
+
+      final OutputStream outputStream =
+          Channels.newOutputStream(FileSystems.create(
+              LocalResources.fromFile(lhsFolder.newFile(i + "/metadata.json"), false),
+              "application/json"));
+
+      BucketMetadata.to(metadata, outputStream);
+      inputDirectories.add(LocalResources.fromFile(dest, true));
+    }
+
+    final BucketedInput bucketedInput = new BucketedInput<>(
+        new TupleTag<String>("testInput"),
+        inputDirectories,
+        ".txt",
+        new TestFileOperations()
+    );
+
+    // Canonical metadata should have the smallest bucket count
+    Assert.assertEquals(bucketedInput.getCanonicalMetadata().getNumBuckets(), 1);
+
+    // Metadata aren't same-source compatible
+    Assert.assertThrows(
+        IllegalStateException.class,
+        bucketedInput::validateSourcesCompatibility);
   }
 
   @Test
