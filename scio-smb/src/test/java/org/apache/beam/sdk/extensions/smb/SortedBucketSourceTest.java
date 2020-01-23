@@ -105,7 +105,7 @@ public class SortedBucketSourceTest {
     // Metadata aren't same-source compatible
     Assert.assertThrows(
         IllegalStateException.class,
-        bucketedInput::validateSourcesCompatibility);
+        bucketedInput::validateIntraSourceCompatibility);
   }
 
   @Test

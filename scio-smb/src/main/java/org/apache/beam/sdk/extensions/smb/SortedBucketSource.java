@@ -17,7 +17,6 @@
 
 package org.apache.beam.sdk.extensions.smb;
 
-import com.google.common.collect.Lists;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -115,7 +114,7 @@ public class SortedBucketSource<FinalKeyT>
     int leastNumBuckets = Integer.MAX_VALUE;
     // Check metadata of each source
     for (BucketedInput<?, ?> source : sources) {
-      source.validateSourcesCompatibility();
+      source.validateIntraSourceCompatibility();
       final BucketMetadata<?, ?> current = source.getCanonicalMetadata();
       if (first == null) {
         first = current;
@@ -413,7 +412,8 @@ public class SortedBucketSource<FinalKeyT>
       return fileOperations.getCoder();
     }
 
-    void validateSourcesCompatibility() {
+    // Validates that all the inputDirectories in this source contain compatible metadata
+    void validateIntraSourceCompatibility() {
       if (getMetadata().size() == 1) {
         return;
       }
