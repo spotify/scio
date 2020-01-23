@@ -327,7 +327,6 @@ public class SortedBucketSource<FinalKeyT>
     private final TupleTag<V> tupleTag;
     private final String filenameSuffix;
     private final FileOperations<V> fileOperations;
-    private final List<ResourceId> inputDirectories;
 
     private transient Map<ResourceId, FileAssignment> fileAssignments;
     private transient Map<ResourceId, BucketMetadata<K, V>> metadata;
@@ -348,17 +347,15 @@ public class SortedBucketSource<FinalKeyT>
         String filenameSuffix,
         FileOperations<V> fileOperations
     ) {
-      this.tupleTag = tupleTag;
-      this.inputDirectories = inputDirectories;
-      this.filenameSuffix = filenameSuffix;
-      this.fileOperations = fileOperations;
-
       this.fileAssignments = inputDirectories.stream().collect(
-          Collectors.toMap(
+        Collectors.toMap(
             (ResourceId dir) -> dir,
             (ResourceId dir) -> new SMBFilenamePolicy(dir, filenameSuffix).forDestination()
-          )
-      ) ;
+        )
+      );
+      this.tupleTag = tupleTag;
+      this.filenameSuffix = filenameSuffix;
+      this.fileOperations = fileOperations;
     }
 
     private BucketedInput(
@@ -473,6 +470,7 @@ public class SortedBucketSource<FinalKeyT>
 
     @Override
     public String toString() {
+      final List<ResourceId> inputDirectories = new ArrayList<>(getMetadata().keySet());
       return String.format(
           "BucketedInput[tupleTag=%s, inputDirectories=[%s], metadata=%s]",
           tupleTag.getId(),
@@ -485,8 +483,6 @@ public class SortedBucketSource<FinalKeyT>
     private static class BucketedInputCoder<K, V> extends AtomicCoder<BucketedInput<K, V>> {
       private static SerializableCoder<TupleTag> tupleTagCoder =
           SerializableCoder.of(TupleTag.class);
-      private static ListCoder<ResourceId> inputDirectoriesCoder =
-          ListCoder.of(ResourceIdCoder.of());
       private static StringUtf8Coder stringCoder = StringUtf8Coder.of();
       private static SerializableCoder<FileOperations> fileOpCoder =
           SerializableCoder.of(FileOperations.class);
@@ -500,7 +496,6 @@ public class SortedBucketSource<FinalKeyT>
       @Override
       public void encode(BucketedInput<K, V> value, OutputStream outStream) throws IOException {
         tupleTagCoder.encode(value.tupleTag, outStream);
-        inputDirectoriesCoder.encode(value.inputDirectories, outStream);
         stringCoder.encode(value.filenameSuffix, outStream);
         fileOpCoder.encode(value.fileOperations, outStream);
         metadataMapCoder.encode(value.getMetadata(), outStream);
@@ -510,13 +505,16 @@ public class SortedBucketSource<FinalKeyT>
       public BucketedInput<K, V> decode(InputStream inStream) throws IOException {
         @SuppressWarnings("unchecked")
         TupleTag<V> tupleTag = (TupleTag<V>) tupleTagCoder.decode(inStream);
-        List<ResourceId> inputDirectories = inputDirectoriesCoder.decode(inStream);
         String filenameSuffix = stringCoder.decode(inStream);
         @SuppressWarnings("unchecked")
         FileOperations<V> fileOperations = fileOpCoder.decode(inStream);
         Map<ResourceId, BucketMetadata<K, V>> metadata = metadataMapCoder.decode(inStream);
         return new BucketedInput<>(
-            tupleTag, inputDirectories, filenameSuffix, fileOperations, metadata);
+            tupleTag,
+            new ArrayList<>(metadata.keySet()),
+            filenameSuffix,
+            fileOperations,
+            metadata);
       }
     }
   }
