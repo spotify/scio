@@ -85,11 +85,15 @@ class SortMergeBucketParityIT extends AnyFlatSpec with Matchers {
           SCollection.unionAll(
             List(
               sc.avroFile(s"${inputs(0)}/*.avro", schema),
-              sc.avroFile(s"${inputs(1)}/*.avro", schema))),
+              sc.avroFile(s"${inputs(1)}/*.avro", schema)
+            )
+          ),
           SCollection.unionAll(
             List(
               sc.avroFile(s"${inputs(2)}/*.avro", schema),
-              sc.avroFile(s"${inputs(3)}/*.avro", schema)))
+              sc.avroFile(s"${inputs(3)}/*.avro", schema)
+            )
+          )
         )
 
         lhs.keyBy(keyFn).cogroup(rhs.keyBy(keyFn))
