@@ -63,15 +63,6 @@ class SCollectionWithSideInputTest extends PipelineSpec {
     }
   }
 
-  it should "support asMapSideInput" in {
-    runWithContext { sc =>
-      val p1 = sc.parallelize(Seq(1))
-      val p2 = sc.parallelize(sideData).asMapSideInput
-      val s = p1.withSideInputs(p2).flatMap((i, s) => s(p2).toSeq).toSCollection
-      s should containInAnyOrder(sideData)
-    }
-  }
-
   it should "support asSetSingletonSideInput" in {
     runWithContext { sc =>
       val p1 = sc.parallelize(Seq(1))
@@ -81,11 +72,43 @@ class SCollectionWithSideInputTest extends PipelineSpec {
     }
   }
 
+  it should "support asMapSideInput" in {
+    runWithContext { sc =>
+      val p1 = sc.parallelize(Seq(1))
+      val p2 = sc.parallelize(sideData).asMapSideInput
+      val s = p1.withSideInputs(p2).flatMap((i, s) => s(p2).toSeq).toSCollection
+      s should containInAnyOrder(sideData)
+    }
+  }
+
   it should "support asMultiMapSideInput" in {
     runWithContext { sc =>
       val p1 = sc.parallelize(Seq(1))
       val p2 =
         sc.parallelize(sideData ++ sideData.map(kv => (kv._1, kv._2 + 10))).asMultiMapSideInput
+      val s = p1
+        .withSideInputs(p2)
+        .flatMap((i, s) => s(p2).mapValues(_.toSet))
+        .toSCollection
+      s should containInAnyOrder(sideData.map(kv => (kv._1, Set(kv._2, kv._2 + 10))))
+    }
+  }
+
+  it should "support asMapSingletonSideInput" in {
+    runWithContext { sc =>
+      val p1 = sc.parallelize(Seq(1))
+      val p2 = sc.parallelize(sideData).asMapSingletonSideInput
+      val s = p1.withSideInputs(p2).flatMap((i, s) => s(p2).toSeq).toSCollection
+      s should containInAnyOrder(sideData)
+    }
+  }
+
+  it should "support asMultiMapSingletonSideInput" in {
+    runWithContext { sc =>
+      val p1 = sc.parallelize(Seq(1))
+      val p2 =
+        sc.parallelize(sideData ++ sideData.map(kv => (kv._1, kv._2 + 10)))
+          .asMultiMapSingletonSideInput
       val s = p1
         .withSideInputs(p2)
         .flatMap((i, s) => s(p2).mapValues(_.toSet))

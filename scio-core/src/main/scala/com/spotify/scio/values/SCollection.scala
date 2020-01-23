@@ -750,7 +750,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   def hashLookup[V: Coder](
     that: SCollection[(T, V)]
   )(implicit coder: Coder[T]): SCollection[(T, Iterable[V])] = this.transform { in =>
-    val side = that.asMultiMapSideInput
+    val side = that.asMultiMapSingletonSideInput
     in.withSideInputs(side)
       .map((t, s) => (t, s(side).getOrElse(t, Iterable())))
       .toSCollection
@@ -841,8 +841,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       .transform(
         _.distinct
           .groupBy(_ => ())
-          .values
-          .map(_.toSet)
+          .map(_._2.toSet)
       )
       .asSingletonSideInput(Set.empty[T])
 
