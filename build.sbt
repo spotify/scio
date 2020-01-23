@@ -181,7 +181,7 @@ lazy val formatSettings = Seq(
 
 val commonSettings = Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
   organization := "com.spotify",
-  scalaVersion := "2.13.1",
+  scalaVersion := "2.12.11",
   crossScalaVersions := Seq("2.12.11"),
   scalacOptions ++= Scalac.commonsOptions.value,
   scalacOptions ++= {
@@ -425,11 +425,11 @@ lazy val root: Project = Project("scio", file("."))
     `scio-extra`,
     `scio-jdbc`,
     `scio-parquet`,
-//    `scio-tensorflow`,
+    `scio-tensorflow`,
     `scio-schemas`,
     `scio-spanner`,
     `scio-sql`,
-//    `scio-examples`,
+    `scio-examples`,
     `scio-repl`,
     `scio-jmh`,
     `scio-macros`,
@@ -1011,10 +1011,14 @@ lazy val `scio-tensorflow`: Project = project
       "com.spotify" % "zoltar-api" % zoltarVersion,
       "com.spotify" % "zoltar-tensorflow" % zoltarVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
-      "com.spotify" %% "magnolify-tensorflow" % magnolifyVersion % Test,
+      <<<<<<< HEAD
+        "com.spotify" %% "magnolify-tensorflow" % magnolifyVersion % Test,
       "com.spotify" % "zoltar-core" % zoltarVersion,
       "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamVendorVersion,
       "org.tensorflow" % "libtensorflow" % tensorFlowVersion
+        =======
+          "com.spotify" %% "magnolify-tensorflow" % magnolifyVersion % Test
+            >>>>>>> Fix build
     ),
     javaOptions += "-Dscio.ignoreVersionWarning=true"
   )
@@ -1337,7 +1341,7 @@ lazy val siteSettings = Def.settings(
       `scio-extra`,
       `scio-jdbc`,
       `scio-parquet`,
-//      `scio-tensorflow`,
+      `scio-tensorflow`,
       `scio-spanner`,
       `scio-macros`,
       `scio-smb`
