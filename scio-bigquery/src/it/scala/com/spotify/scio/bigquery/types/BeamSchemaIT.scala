@@ -93,8 +93,8 @@ final class BeamSchemaIT extends AnyFlatSpec with Matchers {
       "--tempLocation=gs://data-integration-test-eu/temp"
     )
     val (sc, _) = ContextAndArgs(args)
-    val table =
-      Table.Spec(s"data-integration-test:schema_it.shakespeare_schema_${UUID.randomUUID()}")
+    val uuid = UUID.randomUUID().toString.replaceAll("-", "")
+    val table = Table.Spec(s"data-integration-test:schema_it.shakespeare_schema_$uuid")
 
     val closedTap = sc
       .parallelize(AlienExpected)
