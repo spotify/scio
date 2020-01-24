@@ -24,7 +24,7 @@ import bloop.integrations.sbt.BloopDefaults
 
 ThisBuild / turbo := true
 
-val beamVersion = "2.17.0"
+val beamVersion = "2.18.0"
 
 val algebirdVersion = "0.13.6"
 val annoy4sVersion = "0.9.0"
