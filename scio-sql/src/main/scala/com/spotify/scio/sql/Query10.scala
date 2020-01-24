@@ -227,12 +227,12 @@ object Query10 {
       schemas10,
       schemas11
     ).fold(
-        err => c.abort(c.enclosingPosition, err),
-        _ =>
-          c.Expr[Query10[A, B, C, D, E, F, G, H, I, J, R]](
-            q"_root_.com.spotify.scio.sql.Query10($query, $aTag, $bTag, $cTag, $dTag, $eTag, $fTag, $gTag, $hTag, $iTag, $jTag)"
-          )
-      )
+      err => c.abort(c.enclosingPosition, err),
+      _ =>
+        c.Expr[Query10[A, B, C, D, E, F, G, H, I, J, R]](
+          q"_root_.com.spotify.scio.sql.Query10($query, $aTag, $bTag, $cTag, $dTag, $eTag, $fTag, $gTag, $hTag, $iTag, $jTag)"
+        )
+    )
   }
 }
 
