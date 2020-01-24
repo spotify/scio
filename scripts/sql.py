@@ -101,6 +101,7 @@ def sqlCollectionFns(out, idx):
     import org.apache.beam.sdk.values._
 
     import scala.language.experimental.macros
+    import scala.reflect.ClassTag
 
     final case class Query{n}[{types}, R](query: String, {tuple_tag_args}, udfs: List[Udf] = Nil)
 
@@ -127,10 +128,10 @@ def sqlCollectionFns(out, idx):
         }}
     }}
 
-    def queryAs[R: Schema](q: String, {tuple_tag_args}, udfs: Udf*): SCollection[R] =
+    def queryAs[R: Schema: ClassTag](q: String, {tuple_tag_args}, udfs: Udf*): SCollection[R] =
         queryAs(Query{n}(q, {var_tags}, udfs.toList))
 
-    def queryAs[R: Schema](q: Query{n}[{types}, R]): SCollection[R] =
+    def queryAs[R: Schema: ClassTag](q: Query{n}[{types}, R]): SCollection[R] =
         try {{
         query(q.query, {q_var_tags}, q.udfs: _*).to(To.unchecked((_, i) => i))
         }} catch {{
@@ -141,7 +142,7 @@ def sqlCollectionFns(out, idx):
     }}""".format(
         n=idx,
         types=mkTypes(idx),
-        bounds=mkBounds(idx, "Schema"),
+        bounds=mkBounds(idx, "Schema: ClassTag"),
         set_coll_schemas=mkSetSchema(idx),
         tuple_tag_args=mkTupleTagArgs(idx),
         var_tags=mkVarTag(idx),
@@ -157,7 +158,7 @@ def mkFrom(idx):
     return """def from[{bounds}]({scollections}): SqlSCollection{n}[{types}] = new SqlSCollection{n}({vals})""".format(
         n=idx,
         types=mkTypes(idx),
-        bounds=mkBounds(idx, "Schema"),
+        bounds=mkBounds(idx, "Schema: ClassTag"),
         scollections=mkSCollection(idx),
         vals=mkLowerVals(idx),
     )
@@ -237,18 +238,18 @@ def mkMacro(n):
 def mkSQLBuilderFrom(n):
     return """
     private[sql] def from[{types}](q: String, {ref_args}, {tuple_tag_args}, udfs: List[Udf]): SQLBuilder = new SQLBuilder {{
-        def as[R: Schema] =
+        def as[R: Schema: ClassTag] =
         Sql
             .from({ref_colls})({ref_schemas})
             .queryAs(new Query{n}[{ref_types}, R](q, {tuple_tags}, udfs))
     }}
     """.format(
         n=n,
-        types=mkTypes(n),
+        types=mkBounds(n, "ClassTag"),
         ref_args=", ".join(mkValsFmt(n, "ref{upperIdx}: SCollectionRef[{upperIdx}]")),
         tuple_tag_args=mkTupleTagArgs(n),
         ref_colls=", ".join(mkValsFmt(n, "ref{upperIdx}.coll")),
-        ref_schemas=", ".join(mkValsFmt(n, "ref{upperIdx}.schema")),
+        ref_schemas=", ".join(mkValsFmt(n, "ref{upperIdx}.schema, classTag[{upperIdx}]")),
         ref_types=", ".join(mkValsFmt(n, "ref{upperIdx}._A")),
         tuple_tags=", ".join(mkValsFmt(n, "{lowerIdx}Tag")),
     )
@@ -270,6 +271,7 @@ def mkSQLBuilder(n):
     return """
 import com.spotify.scio.schemas.Schema
 import org.apache.beam.sdk.values.TupleTag
+import scala.reflect._
 
 object SQLBuilders {{
     {from_methods}
@@ -360,6 +362,8 @@ def main(out):
         """
         import com.spotify.scio.schemas._
         import com.spotify.scio.values.SCollection
+        
+        import scala.reflect.ClassTag
 
         trait SqlSCollections {{
             {from_method}

@@ -29,6 +29,7 @@ import org.apache.beam.sdk.extensions.sql.impl.ParseException
 import org.apache.beam.sdk.values._
 
 import scala.language.experimental.macros
+import scala.reflect.ClassTag
 
 final case class Query10[A, B, C, D, E, F, G, H, I, J, R](
   query: String,
@@ -226,26 +227,26 @@ object Query10 {
       schemas10,
       schemas11
     ).fold(
-      err => c.abort(c.enclosingPosition, err),
-      _ =>
-        c.Expr[Query10[A, B, C, D, E, F, G, H, I, J, R]](
-          q"_root_.com.spotify.scio.sql.Query10($query, $aTag, $bTag, $cTag, $dTag, $eTag, $fTag, $gTag, $hTag, $iTag, $jTag)"
-        )
-    )
+        err => c.abort(c.enclosingPosition, err),
+        _ =>
+          c.Expr[Query10[A, B, C, D, E, F, G, H, I, J, R]](
+            q"_root_.com.spotify.scio.sql.Query10($query, $aTag, $bTag, $cTag, $dTag, $eTag, $fTag, $gTag, $hTag, $iTag, $jTag)"
+          )
+      )
   }
 }
 
 final class SqlSCollection10[
-  A: Schema,
-  B: Schema,
-  C: Schema,
-  D: Schema,
-  E: Schema,
-  F: Schema,
-  G: Schema,
-  H: Schema,
-  I: Schema,
-  J: Schema
+  A: Schema: ClassTag,
+  B: Schema: ClassTag,
+  C: Schema: ClassTag,
+  D: Schema: ClassTag,
+  E: Schema: ClassTag,
+  F: Schema: ClassTag,
+  G: Schema: ClassTag,
+  H: Schema: ClassTag,
+  I: Schema: ClassTag,
+  J: Schema: ClassTag
 ](
   a: SCollection[A],
   b: SCollection[B],
@@ -307,7 +308,7 @@ final class SqlSCollection10[
 
     }
 
-  def queryAs[R: Schema](
+  def queryAs[R: Schema: ClassTag](
     q: String,
     aTag: TupleTag[A],
     bTag: TupleTag[B],
@@ -323,7 +324,7 @@ final class SqlSCollection10[
   ): SCollection[R] =
     queryAs(Query10(q, aTag, bTag, cTag, dTag, eTag, fTag, gTag, hTag, iTag, jTag, udfs.toList))
 
-  def queryAs[R: Schema](q: Query10[A, B, C, D, E, F, G, H, I, J, R]): SCollection[R] =
+  def queryAs[R: Schema: ClassTag](q: Query10[A, B, C, D, E, F, G, H, I, J, R]): SCollection[R] =
     try {
       query(
         q.query,

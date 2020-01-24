@@ -18,11 +18,14 @@ package com.spotify.scio.schemas
 
 import com.spotify.scio.values._
 import com.spotify.scio.coders._
+import com.spotify.scio.util.ScioUtil
 import org.apache.beam.sdk.values._
-import org.apache.beam.sdk.schemas.{Schema => BSchema, SchemaCoder}
+import org.apache.beam.sdk.schemas.{SchemaCoder, Schema => BSchema}
+
 import scala.collection.JavaConverters._
 import scala.language.experimental.macros
 import scala.annotation.tailrec
+import scala.reflect.ClassTag
 
 sealed trait To[I, O] extends (SCollection[I] => SCollection[O]) with Serializable {
   def coder: Coder[O]
@@ -172,7 +175,7 @@ object To {
    * The compatibility of the 2 schemas is NOT checked at compile time, so the execution may fail.
    * @see To#apply
    */
-  def unsafe[I: Schema, O: Schema]: To[I, O] = unsafe(unchecked)
+  def unsafe[I: Schema, O: Schema: ClassTag]: To[I, O] = unsafe(unchecked)
 
   private[scio] def unsafe[I: Schema, O: Schema](to: To[I, O]): To[I, O] =
     new To[I, O] {
@@ -190,7 +193,7 @@ object To {
    * @see To#safe
    * @see To#unsafe
    */
-  def unchecked[I: Schema, O: Schema]: To[I, O] =
+  def unchecked[I: Schema, O: Schema: ClassTag]: To[I, O] =
     new To[I, O] {
       val (_, toT, _) = SchemaMaterializer.materialize(Schema[I])
       val convertRow: (BSchema, I) => Row = { (s, i) =>
@@ -203,10 +206,11 @@ object To {
       def convert(i: I): O = underlying.convert(i)
     }
 
-  private[scio] def unchecked[I, O: Schema](f: (BSchema, I) => Row): To[I, O] =
+  private[scio] def unchecked[I, O: Schema: ClassTag](f: (BSchema, I) => Row): To[I, O] =
     new To[I, O] {
       val (bso, toO, fromO) = SchemaMaterializer.materialize(Schema[O])
-      val coder = Coder.beam(SchemaCoder.of(bso, toO, fromO))
+      val td = TypeDescriptor.of(ScioUtil.classOf[O])
+      val coder = Coder.beam(SchemaCoder.of(bso, td, toO, fromO))
       def convert(i: I): O = f.curried(bso).andThen(fromO(_))(i)
     }
 

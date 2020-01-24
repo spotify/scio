@@ -34,6 +34,7 @@ import org.apache.beam.sdk.coders.{
 }
 import org.apache.beam.sdk.util.CoderUtils
 import org.apache.beam.sdk.schemas.SchemaCoder
+import org.apache.beam.sdk.values.TypeDescriptor
 import org.openjdk.jmh.annotations._
 
 final case class UserId(bytes: Array[Byte])
@@ -209,7 +210,12 @@ class CoderBenchmark {
     )
 
   val specializedSchemaCoder: BCoder[SpecializedUserForDerived] =
-    SchemaCoder.of(specializedUserSchema, specializedTo, specializedFrom)
+    SchemaCoder.of(
+      specializedUserSchema,
+      TypeDescriptor.of(classOf[SpecializedUserForDerived]),
+      specializedTo,
+      specializedFrom
+    )
 
   @Benchmark
   def schemaCoderEncode(o: SerializedOutputSize): Array[Byte] =
@@ -231,7 +237,7 @@ class CoderBenchmark {
     )
 
   val javaSchemaCoder: BCoder[j.User] =
-    SchemaCoder.of(javaUserSchema, javaTo, javaFrom)
+    SchemaCoder.of(javaUserSchema, TypeDescriptor.of(classOf[j.User]), javaTo, javaFrom)
 
   @Benchmark
   def javaSchemaCoderEncode(o: SerializedOutputSize): Array[Byte] =

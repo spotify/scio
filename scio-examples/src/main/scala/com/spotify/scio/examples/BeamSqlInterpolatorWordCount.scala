@@ -30,23 +30,22 @@ import com.spotify.scio.sql._
 import com.spotify.scio.examples.common.ExampleData
 
 object BeamSqlInterpolatorWordCount {
-  def main(cmdlineArgs: Array[String]): Unit = {
-    val (sc, args) = ContextAndArgs(cmdlineArgs)
-    val coll = sc
-      .textFile(args.getOrElse("input", ExampleData.KING_LEAR))
-      // Split input lines, filter out empty tokens and expand into a collection of tokens
-      .flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty))
-
-    // Count distinct string's
-    tsql"select distinct(`value`), count(*) from $coll group by `value`"
-      .as[(String, Long)]
-      // Map `(String, Long)` tuples into strings
-      .map(t => t._1 + ": " + t._2)
-      // Save result as text files under the output path
-      .saveAsTextFile(args("output"))
-
-    // Execute the pipeline
-    sc.run()
+  def main(cmdlineArgs: Array[String]): Unit =
+//    val (sc, args) = ContextAndArgs(cmdlineArgs)
+//    val coll = sc
+//      .textFile(args.getOrElse("input", ExampleData.KING_LEAR))
+//      // Split input lines, filter out empty tokens and expand into a collection of tokens
+//      .flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty))
+//
+//    // Count distinct string's
+//    tsql"select distinct(`value`), count(*) from $coll group by `value`"
+//      .as[(String, Long)]
+//      // Map `(String, Long)` tuples into strings
+//      .map(t => t._1 + ": " + t._2)
+//      // Save result as text files under the output path
+//      .saveAsTextFile(args("output"))
+//
+//    // Execute the pipeline
+//    sc.run()
     ()
-  }
 }

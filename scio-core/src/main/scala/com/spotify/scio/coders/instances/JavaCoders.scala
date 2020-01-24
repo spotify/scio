@@ -28,6 +28,7 @@ import com.spotify.scio.transforms.BaseAsyncLookupDoFn
 import com.spotify.scio.util.ScioUtil
 import org.apache.beam.sdk.coders.{Coder => _, _}
 import org.apache.beam.sdk.schemas.SchemaCoder
+import org.apache.beam.sdk.values.TypeDescriptor
 import org.apache.beam.sdk.{coders => bcoders}
 
 import scala.reflect.ClassTag
@@ -116,7 +117,8 @@ trait JavaCoders extends JavaBeanCoders {
 trait JavaBeanCoders {
   implicit def javaBeanCoder[T: IsJavaBean: ClassTag]: Coder[T] = {
     val rec = Schema.javaBeanSchema[T]
-    Coder.beam(SchemaCoder.of(rec.schema, rec.toRow, rec.fromRow))
+    val td = TypeDescriptor.of(ScioUtil.classOf[T])
+    Coder.beam(SchemaCoder.of(rec.schema, td, rec.toRow, rec.fromRow))
   }
 }
 

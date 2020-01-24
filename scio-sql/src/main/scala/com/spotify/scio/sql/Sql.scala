@@ -36,6 +36,7 @@ import org.apache.beam.sdk.values._
 import org.apache.commons.lang3.exception.ExceptionUtils
 
 import scala.collection.JavaConverters._
+import scala.reflect.ClassTag
 import scala.util.Try
 
 object Sql extends SqlSCollections {
@@ -59,10 +60,11 @@ object Sql extends SqlSCollections {
     new ReadOnlyTableProvider(SCollectionTypeName, Collections.singletonMap(tag.getId, table))
   }
 
-  private[sql] def setSchema[T: Schema](c: SCollection[T]): SCollection[T] =
+  private[sql] def setSchema[T: Schema: ClassTag](c: SCollection[T]): SCollection[T] =
     c.transform { x =>
       val (schema, to, from) = SchemaMaterializer.materialize(Schema[T])
-      x.map(identity)(Coder.beam(SchemaCoder.of(schema, to, from)))
+      val td = TypeDescriptor.of(ScioUtil.classOf[T])
+      x.map(identity)(Coder.beam(SchemaCoder.of(schema, td, to, from)))
     }
 }
 
