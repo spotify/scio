@@ -24,7 +24,7 @@ import bloop.integrations.sbt.BloopDefaults
 
 ThisBuild / turbo := true
 
-val beamVersion = "2.17.0"
+val beamVersion = "2.18.0"
 
 val algebirdVersion = "0.13.6"
 val annoy4sVersion = "0.9.0"
@@ -81,8 +81,8 @@ val caffeineVersion = "2.8.1"
 val bigtableClientVersion = "1.8.0"
 val generatedGrpcGaVersion = "1.43.0"
 val generatedGrpcBetaVersion = "0.44.0"
-val googleClientsVersion = "1.27.0"
-val googleApiServicesBigQuery = s"v2-rev20181104-$googleClientsVersion"
+val googleClientsVersion = "1.28.0"
+val googleApiServicesBigQuery = s"v2-rev20181221-$googleClientsVersion"
 val bigdataossVersion = "1.9.16"
 val gaxVersion = "1.38.0"
 val googleAuthVersion = "0.12.0"
