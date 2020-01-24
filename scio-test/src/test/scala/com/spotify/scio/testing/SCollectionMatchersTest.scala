@@ -24,11 +24,13 @@ import org.apache.beam.sdk.Pipeline.PipelineExecutionException
 import org.apache.beam.sdk.transforms.windowing.{
   AfterProcessingTime,
   AfterWatermark,
-  IntervalWindow
+  IntervalWindow,
+  Repeatedly
 }
 import org.apache.beam.sdk.values.TimestampedValue
 import org.joda.time.{Duration, Instant}
 import java.io.ObjectOutputStream
+
 import scala.util.Try
 import java.io.ObjectInputStream
 import java.io.IOException
@@ -506,17 +508,20 @@ class SCollectionMatchersTest extends PipelineSpec {
         .withFixedWindows(
           teamWindowDuration,
           options = WindowOptions(
-            trigger = AfterWatermark
-              .pastEndOfWindow()
-              .withEarlyFirings(
-                AfterProcessingTime
-                  .pastFirstElementInPane()
-                  .plusDelayOf(Duration.standardMinutes(5))
-              )
-              .withLateFirings(
-                AfterProcessingTime
-                  .pastFirstElementInPane()
-                  .plusDelayOf(Duration.standardMinutes(10))
+            trigger = Repeatedly
+              .forever(
+                AfterWatermark
+                  .pastEndOfWindow()
+                  .withEarlyFirings(
+                    AfterProcessingTime
+                      .pastFirstElementInPane()
+                      .plusDelayOf(Duration.standardMinutes(5))
+                  )
+                  .withLateFirings(
+                    AfterProcessingTime
+                      .pastFirstElementInPane()
+                      .plusDelayOf(Duration.standardMinutes(10))
+                  )
               ),
             accumulationMode = ACCUMULATING_FIRED_PANES,
             allowedLateness = allowedLateness
@@ -559,13 +564,15 @@ class SCollectionMatchersTest extends PipelineSpec {
         )
         .withGlobalWindow(
           options = WindowOptions(
-            trigger = AfterWatermark
-              .pastEndOfWindow()
-              .withEarlyFirings(
-                AfterProcessingTime
-                  .pastFirstElementInPane()
-                  .plusDelayOf(Duration.standardMinutes(5))
-              ),
+            trigger = Repeatedly.forever(
+              AfterWatermark
+                .pastEndOfWindow()
+                .withEarlyFirings(
+                  AfterProcessingTime
+                    .pastFirstElementInPane()
+                    .plusDelayOf(Duration.standardMinutes(5))
+                )
+            ),
             accumulationMode = ACCUMULATING_FIRED_PANES,
             allowedLateness = allowedLateness
           )
