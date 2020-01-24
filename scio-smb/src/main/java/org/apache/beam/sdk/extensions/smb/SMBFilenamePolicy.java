@@ -102,35 +102,39 @@ public final class SMBFilenamePolicy implements Serializable {
       this.doTimestampFiles = doTimestampFiles;
     }
 
-    public ResourceId forBucket(BucketShardId id, BucketMetadata<?, ?> metadata) {
+    ResourceId forBucket(BucketShardId id, int maxNumBuckets, int maxNumShards) {
       Preconditions.checkArgument(
-          id.getBucketId() < metadata.getNumBuckets(),
+          id.getBucketId() < maxNumBuckets,
           "Can't assign a filename for bucketShardId %s: max number of buckets is %s",
           id,
-          metadata.getNumBuckets());
+          maxNumBuckets);
 
       Preconditions.checkArgument(
-          id.getShardId() < metadata.getNumShards(),
+          id.getShardId() < maxNumShards,
           "Can't assign a filename for bucketShardId %s: max number of shards is %s",
           id,
-          metadata.getNumBuckets());
+          maxNumShards);
 
       final String bucketName =
           id.isNullKeyBucket()
               ? NULL_KEYS_BUCKET_TEMPLATE
-              : String.format(NUMERIC_BUCKET_TEMPLATE, id.getBucketId(), metadata.getNumBuckets());
+              : String.format(NUMERIC_BUCKET_TEMPLATE, id.getBucketId(), maxNumBuckets);
 
       final String timestamp = doTimestampFiles ? Instant.now().toString(TEMPFILE_TIMESTAMP) : "";
-      String filename = metadata.getNumShards() == 1 ?
+      String filename = maxNumShards == 1 ?
           String.format(BUCKET_ONLY_TEMPLATE, bucketName, filenameSuffix) :
           String.format(
               BUCKET_SHARD_TEMPLATE,
               bucketName,
               id.getShardId(),
-              metadata.getNumShards(),
+              maxNumShards,
               filenameSuffix);
 
       return filenamePrefix.resolve(timestamp + filename, StandardResolveOptions.RESOLVE_FILE);
+    }
+
+    public ResourceId forBucket(BucketShardId id, BucketMetadata<?, ?> metadata) {
+      return forBucket(id, metadata.getNumBuckets(), metadata.getNumShards());
     }
 
     public ResourceId forMetadata() {

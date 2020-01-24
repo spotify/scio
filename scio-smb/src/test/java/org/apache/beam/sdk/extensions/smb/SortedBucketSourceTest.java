@@ -78,9 +78,11 @@ public class SortedBucketSourceTest {
   public void testBucketedInputMetadata() throws Exception {
     List<ResourceId> inputDirectories = new LinkedList<>();
 
+    // first 9 elements are source-compatible, last is not
     for (int i = 0; i < 10; i++) {
-      final TestBucketMetadata metadata = TestBucketMetadata.of(
-          (int) Math.pow(2.0, 1.0 * i), 1).withKeyIndex(i);
+      final TestBucketMetadata metadata = TestBucketMetadata
+          .of((int) Math.pow(2.0, 1.0 * i), 1)
+          .withKeyIndex(i < 9 ? 0 : 1);
       final File dest = lhsFolder.newFolder(String.valueOf(i));
 
       final OutputStream outputStream =
@@ -92,20 +94,28 @@ public class SortedBucketSourceTest {
       inputDirectories.add(LocalResources.fromFile(dest, true));
     }
 
-    final BucketedInput bucketedInput = new BucketedInput<>(
-        new TupleTag<String>("testInput"),
-        inputDirectories,
+    // Test with source-compatible input directories
+    final BucketedInput validBucketedInput = new BucketedInput<>(
+        new TupleTag<>("testInput"),
+        inputDirectories.subList(0, 8),
         ".txt",
         new TestFileOperations()
     );
 
     // Canonical metadata should have the smallest bucket count
-    Assert.assertEquals(bucketedInput.getCanonicalMetadata().getNumBuckets(), 1);
+    Assert.assertEquals(validBucketedInput.getMetadata().getNumBuckets(), 1);
 
-    // Metadata aren't same-source compatible
+    // Test when metadata aren't same-source compatible
+    final BucketedInput invalidBucketedInput = new BucketedInput<>(
+        new TupleTag<>("testInput"),
+        inputDirectories,
+        ".txt",
+        new TestFileOperations()
+    );
+
     Assert.assertThrows(
         IllegalStateException.class,
-        bucketedInput::validateIntraSourceCompatibility);
+        invalidBucketedInput::getMetadata);
   }
 
   @Test
