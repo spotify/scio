@@ -417,7 +417,6 @@ lazy val `scio-core`: Project = project
       "com.google.api.grpc" % "proto-google-cloud-datastore-v1" % generatedGrpcBetaVersion,
       "com.google.http-client" % "google-http-client" % googleClientsVersion,
       "com.google.http-client" % "google-http-client-jackson2" % googleClientsVersion,
-      "com.spotify" %% "magnolify-guava" % magnolifyVersion,
       "io.grpc" % "grpc-core" % grpcVersion,
       "io.grpc" % "grpc-auth" % grpcVersion,
       "io.grpc" % "grpc-netty" % grpcVersion,
@@ -474,6 +473,7 @@ lazy val `scio-test`: Project = project
       "org.scalatestplus" %% "scalatestplus-scalacheck" % scalatestplusVersion % "test,it",
       "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test,it",
       "com.spotify" %% "magnolify-datastore" % magnolifyVersion % "it",
+      "com.spotify" %% "magnolify-guava" % magnolifyVersion % "test",
       // DataFlow testing requires junit and hamcrest
       "org.hamcrest" % "hamcrest-core" % hamcrestVersion,
       "org.hamcrest" % "hamcrest-library" % hamcrestVersion,

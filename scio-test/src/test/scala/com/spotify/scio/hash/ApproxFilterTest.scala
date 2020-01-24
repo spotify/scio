@@ -1,0 +1,89 @@
+/*
+ * Copyright 2020 Spotify AB.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+
+package com.spotify.scio.hash
+
+import com.spotify.scio.coders.CoderMaterializer
+import com.spotify.scio.testing._
+import magnolify.guava.auto._
+import org.apache.beam.sdk.util.{CoderUtils, SerializableUtils}
+
+class ApproxFilterTest extends PipelineSpec {
+  def test[C <: ApproxFilterCompanion](c: C)(implicit hash: c.Hash[Int]): Unit = {
+    val filterName = c.getClass.getSimpleName.stripSuffix("$")
+
+    filterName should "work with defaults" in {
+      val bf = c.create(1 to 1000)
+      // no false negatives
+      (1 to 1000).forall(bf.mightContain) shouldBe true
+      // true fpp
+      (1001 to 2000).count(bf.mightContain).toDouble / 1000 should be <= 0.03
+      ()
+    }
+
+    it should "work with custom expectedInsertions" in {
+      val bf = c.create(1 to 1000, 2000)
+      bf.approxElementCount should be <= 2000L
+      bf.expectedFpp should be <= 0.03
+      (1 to 1000).forall(bf.mightContain) shouldBe true
+      (1001 to 2000).count(bf.mightContain).toDouble / 1000 should be <= 0.03
+      ()
+    }
+
+    it should "work with custom fpp" in {
+      val bf = c.create(1 to 1000, 2000, 0.01)
+      bf.approxElementCount should be <= 2000L
+      bf.expectedFpp should be <= 0.01
+      (1 to 1000).forall(bf.mightContain) shouldBe true
+      (1001 to 2000).count(bf.mightContain).toDouble / 1000 should be <= 0.01
+      ()
+    }
+
+    it should "work with SCollection" in {
+      runWithContext { sc =>
+        implicit val coder = c.coder
+        c.create(sc.parallelize(1 to 1000)) should satisfySingleValue[c.Filter[Int]] { bf1 =>
+          val bf2 = c.create(1 to 1000)
+          bf1.approxElementCount == bf2.approxElementCount &&
+            bf1.expectedFpp == bf2.expectedFpp &&
+            (1 to 2000).map(bf1.mightContain) == (1 to 2000).map(bf2.mightContain)
+          true
+        }
+      }
+    }
+
+    it should "support Java serialization" in {
+      val orig = c.create(1 to 1000, 2000, 0.01)
+      val copy = SerializableUtils.clone(orig)
+      copy.approxElementCount shouldBe orig.approxElementCount
+      copy.expectedFpp shouldBe orig.expectedFpp
+      (1 to 2000).map(copy.mightContain) shouldBe (1 to 2000).map(orig.mightContain)
+    }
+
+    it should "support Coder serialization" in {
+      val coder = CoderMaterializer.beamWithDefault(c.coder)
+      val orig = c.create(1 to 1000, 2000, 0.01)
+      val copy = CoderUtils.clone(coder, orig)
+      copy.approxElementCount shouldBe orig.approxElementCount
+      copy.expectedFpp shouldBe orig.expectedFpp
+      (1 to 2000).map(copy.mightContain) shouldBe (1 to 2000).map(orig.mightContain)
+    }
+  }
+
+  test(BloomFilter)
+  test(ABloomFilter)
+}

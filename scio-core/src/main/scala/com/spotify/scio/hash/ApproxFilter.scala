@@ -24,6 +24,7 @@ import com.spotify.scio.coders.Coder
 import com.spotify.scio.values.SCollection
 import com.twitter.{algebird => a}
 import org.apache.beam.sdk.coders.{AtomicCoder, VarIntCoder, VarLongCoder}
+import org.slf4j.LoggerFactory
 
 sealed trait ApproxFilter[T] extends Serializable {
   def mightContain(elem: T): Boolean
@@ -33,6 +34,8 @@ sealed trait ApproxFilter[T] extends Serializable {
 }
 
 sealed trait ApproxFilterCompanion {
+  private val logger = LoggerFactory.getLogger(this.getClass)
+
   type Hash[T]
   type Filter[T] <: ApproxFilter[T]
 
@@ -46,10 +49,13 @@ sealed trait ApproxFilterCompanion {
 
   final def create[T: Hash](elems: Iterable[T], expectedInsertions: Long, fpp: Double): Filter[T] = {
     val filter = createImpl(elems, expectedInsertions, fpp)
-    require(filter.approxElementCount <= expectedInsertions,
-      s"Approximate element count exceeds expected, ${filter.approxElementCount} > $expectedInsertions")
-    require(filter.expectedFpp <= fpp,
-      s"False positive probability exceeds expected, ${filter.expectedFpp} > $fpp")
+    if (filter.approxElementCount > expectedInsertions) {
+      logger.warn("Approximate element count exceeds expected, {} > {}",
+        filter.approxElementCount, expectedInsertions)
+    }
+    if (filter.expectedFpp > fpp) {
+      logger.warn("False positive probability exceeds expected, {}} > {}", filter.expectedFpp, fpp)
+    }
     filter
   }
 
