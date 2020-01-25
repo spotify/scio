@@ -267,12 +267,8 @@ private[scio] trait SchemaMacroHelpers {
     }
   }
 
-  def inferClassTag(t: ctx.Type): ctx.Expr[ClassTag[_]] = {
-    val tp = ctx.typecheck(tq"_root_.scala.reflect.ClassTag[$t]", ctx.TYPEmode).tpe
-    val typedTree = ctx.inferImplicitValue(tp, silent = false)
-    val untypedTree = ctx.untypecheck(typedTree.duplicate)
-    ctx.Expr[ClassTag[_]](untypedTree)
-  }
+  def inferClassTag(t: ctx.Type): ctx.Expr[ClassTag[_]] =
+    ctx.Expr[ClassTag[_]](q"implicitly[_root_.scala.reflect.ClassTag[$t]]")
 
   implicit def liftTupleTag[A: ctx.WeakTypeTag]: Liftable[TupleTag[A]] = Liftable[TupleTag[A]] {
     x =>

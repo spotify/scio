@@ -248,12 +248,9 @@ object SqlInterpolatorMacro {
         val tags = list.map(x => tagFor(x._2, toSCollectionName(x._1)))
         val sql = buildSQLString(parts, scs.map(x => toSCollectionName(x._1)))
         val implOut = inferImplicitSchema[B]
-        val implIn =
-          types
-            .map(inferImplicitSchema)
-            .map(List(_))
-            .zipAll(types.map(inferClassTag).map(List(_)), Nil, Nil)
-            .flatMap { case (a, b) => a ++ b }
+        val implIn = types.flatMap { t =>
+          Seq(inferImplicitSchema(t), inferClassTag(t))
+        }
 
         val queryTree = c.parse(s"_root_.com.spotify.scio.sql.Query${types.size}")
         val q = q"$queryTree.typed[..${types :+ weakTypeOf[B]}]($sql, ..$tags)"
