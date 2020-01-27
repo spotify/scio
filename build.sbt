@@ -162,13 +162,19 @@ val beamSDKIODependencies = Def.settings(
 )
 
 val magnoliaDependencies = Def.settings(
-  libraryDependencies ++= Seq(
+  libraryDependencies ++= {
     if (scalaBinaryVersion.value == "2.11") {
-      "me.lyh" %% "magnolia" % "0.10.1-jto"
+      Seq(
+        "me.lyh" %% "magnolia" % "0.10.1-jto",
+        "com.propensive" %% "mercator" % "0.1.1"
+      )
     } else {
-      "com.propensive" %% "magnolia" % magnoliaVersion
+      Seq(
+        "com.propensive" %% "magnolia" % magnoliaVersion,
+        "com.propensive" %% "mercator" % mercatorVersion
+      )
     }
-  )
+  }
 )
 
 val circeDependencies = Def.settings(
@@ -459,11 +465,11 @@ lazy val `scio-core`: Project = project
       "com.google.apis" % "google-api-services-bigquery" % googleApiServicesBigQuery,
       "com.google.apis" % "google-api-services-dataflow" % googleApiServicesDataflow,
       "com.google.auth" % "google-auth-library-credentials" % googleAuthVersion,
+      "com.google.auto.service" % "auto-service" % autoServiceVersion,
       "com.google.guava" % "guava" % guavaVersion,
       "com.google.http-client" % "google-http-client" % googleClientsVersion,
       "com.google.http-client" % "google-http-client-jackson2" % googleClientsVersion,
       "com.google.protobuf" % "protobuf-java" % protobufVersion,
-      "com.propensive" %% "mercator" % mercatorVersion,
       "com.twitter" % "chill-java" % chillVersion,
       "com.twitter" % "chill-protobuf" % chillVersion,
       "com.twitter" %% "algebird-core" % algebirdVersion,
