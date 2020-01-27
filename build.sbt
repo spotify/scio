@@ -24,33 +24,51 @@ import bloop.integrations.sbt.BloopDefaults
 
 ThisBuild / turbo := true
 
-val beamVersion = "2.19.0"
-
 val algebirdVersion = "0.13.6"
+val algebraVersion = "2.0.0"
 val annoy4sVersion = "0.9.0"
 val annoyVersion = "0.2.6"
 val asmVersion = "4.13"
 val autoServiceVersion = "1.0-rc6"
 val autoValueVersion = "1.7"
 val avroVersion = "1.8.2"
+val beamGuavaVersion = "0.1"
+val beamVersion = "2.19.0"
+val bigdataossVersion = "1.9.16"
+val bigQueryStorageVersion = "0.79.0-alpha"
+val bigtableClientVersion = "1.8.0"
 val breezeVersion = "1.0"
+val caffeineVersion = "2.8.1"
+val caseappVersion = "2.0.0-M9"
+val catsVersion = "2.0.0"
 val chillVersion = "0.9.5"
 val circeVersion = "0.13.0"
-val commonsIoVersion = "2.6"
-val commonsMath3Version = "3.6.1"
-val commonsLang3Version = "3.9"
 val commonsCompressVersion = "1.20"
+val commonsIoVersion = "2.6"
+val commonsLang3Version = "3.9"
+val commonsMath3Version = "3.6.1"
 val commonsTextVersion = "1.8"
+val datastoreV1ProtoClientVersion = "1.6.0"
 val elasticsearch2Version = "2.4.6"
 val elasticsearch5Version = "5.6.16"
 val elasticsearch6Version = "6.8.6"
 val elasticsearch7Version = "7.6.0"
 val featranVersion = "0.5.0"
+val gaxVersion = "1.38.0"
 val gcsConnectorVersion = "hadoop2-2.0.1"
 val gcsVersion = "1.8.0"
-val guavaVersion = "25.1-jre"
+val generatedGrpcBetaVersion = "0.44.0"
+val generatedGrpcGaVersion = "1.83.0"
+val googleApiServicesBigQuery = s"v2-rev20181221-1.28.0"
+val googleAuthVersion = "0.19.0"
+val googleClientsVersion = "1.28.0"
+val googleCloudSpannerVersion = "1.6.0"
+val googleHttpClientsVersion = "1.33.0"
+val grpcVersion = "1.17.1"
+val guavaVersion = "27.0.1-jre"
 val hadoopVersion = "2.7.7"
 val hamcrestVersion = "2.2"
+val httpCoreVersion = "4.4.11"
 val jacksonVersion = "2.10.2"
 val javaLshVersion = "0.12"
 val jlineVersion = "2.14.6"
@@ -60,16 +78,23 @@ val junitVersion = "4.13"
 val kantanCsvVersion = "0.5.1"
 val kryoVersion = "4.0.2" // explicitly depend on 4.0.1+ due to https://github.com/EsotericSoftware/kryo/pull/516
 val parquetExtraVersion = "0.3.4"
+val magnoliaVersion = "0.12.6"
+val magnolifyVersion = "0.1.4"
+val mercatorVersion = "0.2.1"
+val nettyVersion = "4.1.30.Final"
+val opencensusVersion = "0.17.0"
+val parquetAvroVersion = "0.3.4"
 val parquetVersion = "1.11.0"
 val protobufGenericVersion = "0.2.8"
 val protobufVersion = "3.11.4"
 val scalacheckVersion = "1.14.3"
 val scalaMacrosVersion = "2.1.1"
-val scalatestVersion = "3.1.1"
 val scalatestplusVersion = "3.1.0.0-RC2"
+val scalatestVersion = "3.1.1"
 val shapelessVersion = "2.3.3"
 val slf4jVersion = "1.7.30"
 val sparkeyVersion = "3.0.1"
+val sparkVersion = "2.4.4"
 val tensorFlowVersion = "1.15.0"
 val zoltarVersion = "0.5.6"
 val magnoliaVersion = "0.12.7"
@@ -92,6 +117,9 @@ val httpCoreVersion = "4.4.11"
 val googleCloudSpannerVersion = "1.6.0"
 val datastoreV1ProtoClientVersion = "1.6.0"
 val opencensusVersion = "0.17.0"
+
+lazy val googleApiServicesBigQuery = s"v2-rev20181221-$googleClientsVersion"
+lazy val googleApiServicesDataflow = s"v1b3-rev20190927-$googleClientsVersion"
 
 lazy val mimaSettings = Seq(
   mimaPreviousArtifacts :=
@@ -417,42 +445,57 @@ lazy val `scio-core`: Project = project
       "com.google.guava" % "guava" % guavaVersion
     ),
     libraryDependencies ++= Seq(
-      "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
-      "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
+      "com.chuusai" %% "shapeless" % shapelessVersion,
+      "com.esotericsoftware" % "kryo-shaded" % kryoVersion,
+      "com.fasterxml.jackson.core" % "jackson-databind" % jacksonVersion,
+      "com.fasterxml.jackson.module" %% "jackson-module-scala" % jacksonVersion,
+      "com.github.alexarchambault" %% "case-app" % caseappVersion,
+      "com.github.alexarchambault" %% "case-app-annotations" % caseappVersion,
+      "com.github.ben-manes.caffeine" % "caffeine" % caffeineVersion % "provided",
+      "com.google.api-client" % "google-api-client" % googleClientsVersion,
+      "com.google.api.grpc" % "grpc-google-cloud-pubsub-v1" % generatedGrpcGaVersion,
+      "com.google.api.grpc" % "proto-google-cloud-datastore-v1" % generatedGrpcBetaVersion,
+      "com.google.api.grpc" % "proto-google-cloud-pubsub-v1" % generatedGrpcGaVersion,
+      "com.google.apis" % "google-api-services-bigquery" % googleApiServicesBigQuery,
+      "com.google.apis" % "google-api-services-dataflow" % googleApiServicesDataflow,
+      "com.google.auth" % "google-auth-library-credentials" % googleAuthVersion,
+      "com.google.auto.service" % "auto-service" % autoServiceVersion,
+      "com.google.guava" % "guava" % guavaVersion,
+      "com.google.http-client" % "google-http-client" % googleClientsVersion,
+      "com.google.http-client" % "google-http-client-jackson2" % googleClientsVersion,
+      "com.google.protobuf" % "protobuf-java" % protobufVersion,
+      "com.propensive" %% "mercator" % mercatorVersion,
+      "com.twitter" % "chill-java" % chillVersion,
+      "com.twitter" % "chill-protobuf" % chillVersion,
+      "com.twitter" %% "algebird-core" % algebirdVersion,
+      "com.twitter" %% "chill" % chillVersion,
+      "com.twitter" %% "chill-algebird" % chillVersion,
+      "commons-io" % "commons-io" % commonsIoVersion,
+      "io.grpc" % "grpc-auth" % grpcVersion,
+      "io.grpc" % "grpc-core" % grpcVersion,
+      "io.grpc" % "grpc-netty" % grpcVersion,
+      "io.grpc" % "grpc-stub" % grpcVersion,
+      "io.netty" % "netty-handler" % nettyVersion,
+      "joda-time" % "joda-time" % jodaTimeVersion,
+      "me.lyh" %% "protobuf-generic" % protobufGenericVersion,
+      "org.apache.avro" % "avro" % avroVersion,
+      "org.apache.beam" % "beam-runners-core-construction-java" % beamVersion,
       "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion % Provided,
       "org.apache.beam" % "beam-runners-spark" % beamVersion % Provided exclude (
         "com.fasterxml.jackson.module", "jackson-module-scala_2.11"
       ),
-      "com.chuusai" %% "shapeless" % shapelessVersion,
-      "com.twitter" %% "algebird-core" % algebirdVersion,
-      "com.twitter" %% "chill" % chillVersion,
-      "com.twitter" %% "chill-algebird" % chillVersion,
-      "com.twitter" % "chill-protobuf" % chillVersion,
-      "com.esotericsoftware" % "kryo-shaded" % kryoVersion,
-      "commons-io" % "commons-io" % commonsIoVersion,
-      "org.apache.avro" % "avro" % avroVersion,
-      "org.apache.commons" % "commons-math3" % commonsMath3Version,
+      "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
+      "org.apache.beam" % "beam-sdks-java-extensions-google-cloud-platform-core" % beamVersion,
+      "org.apache.beam" % "beam-sdks-java-extensions-protobuf" % beamVersion,
+      "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
+      "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamGuavaVersion,
       "org.apache.commons" % "commons-compress" % commonsCompressVersion,
-      "com.fasterxml.jackson.module" %% "jackson-module-scala" % jacksonVersion,
-      "com.fasterxml.jackson.core" % "jackson-databind" % jacksonVersion,
-      "me.lyh" %% "protobuf-generic" % protobufGenericVersion,
+      "org.apache.commons" % "commons-math3" % commonsMath3Version,
       "org.apache.xbean" % "xbean-asm7-shaded" % asmVersion,
-      "com.google.auto.service" % "auto-service" % autoServiceVersion,
-      "com.google.guava" % "guava" % guavaVersion,
-      "com.google.protobuf" % "protobuf-java" % protobufVersion,
-      "com.google.apis" % "google-api-services-bigquery" % googleApiServicesBigQuery,
-      "com.google.api.grpc" % "grpc-google-cloud-pubsub-v1" % generatedGrpcGaVersion,
-      "com.google.api.grpc" % "proto-google-cloud-datastore-v1" % generatedGrpcBetaVersion,
-      "com.google.http-client" % "google-http-client" % googleHttpClientsVersion,
-      "com.google.http-client" % "google-http-client-jackson2" % googleHttpClientsVersion,
-      "io.grpc" % "grpc-core" % grpcVersion,
-      "io.grpc" % "grpc-auth" % grpcVersion,
-      "io.grpc" % "grpc-netty" % grpcVersion,
-      "com.github.alexarchambault" %% "case-app" % caseappVersion,
-      "com.github.ben-manes.caffeine" % "caffeine" % caffeineVersion % "provided",
-      "joda-time" % "joda-time" % jodaTimeVersion,
+      "org.scalatest" %% "scalatest" % scalatestVersion % Test,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
-      "org.scalatest" %% "scalatest" % scalatestVersion % Test
+      "org.typelevel" %% "algebra" % algebraVersion,
+      "org.typelevel" %% "cats-kernel" % catsVersion
     ),
     magnoliaDependencies
   )
