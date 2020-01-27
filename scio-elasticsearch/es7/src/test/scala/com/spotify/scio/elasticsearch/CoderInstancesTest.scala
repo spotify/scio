@@ -30,8 +30,7 @@ import org.scalatest.matchers.should.Matchers
 
 import scala.collection.JavaConverters._
 
-
-class ESCoderInstancesTest extends AnyFlatSpec with Matchers with CoderInstances {
+class CoderInstancesTest extends AnyFlatSpec with Matchers with CoderInstances {
   import com.spotify.scio.testing.CoderAssertions._
 
   val indexRequest = new IndexRequest("index").id("id").`type`("type")

@@ -20,7 +20,7 @@ package com.spotify.scio.elasticsearch
 import java.io.{InputStream, OutputStream}
 
 import com.spotify.scio.coders._
-import org.apache.beam.sdk.coders.AtomicCoder
+import org.apache.beam.sdk.coders.{AtomicCoder, CoderException}
 import org.elasticsearch.action.DocWriteRequest
 import org.elasticsearch.action.delete.DeleteRequest
 import org.elasticsearch.action.index.IndexRequest
@@ -60,7 +60,8 @@ trait CoderInstances {
           case INDEX_REQ_INDEX => indexRequestBCoder.decode(inStream)
           case UPDATE_REQ_INDEX => updateRequestBCoder.decode(inStream)
           case DELETE_REQ_INDEX => deleteRequestBCoder.decode(inStream)
-          case _ => kryoBCoder.decode(inStream)
+          case KRYO_INDEX => kryoBCoder.decode(inStream)
+          case n => throw new CoderException(s"Unknown index $n")
         }
 
         request.asInstanceOf[DocWriteRequest[_]]
@@ -73,7 +74,7 @@ trait CoderInstances {
     override def encode(value: T, outStream: OutputStream): Unit =
       value.writeTo(new OutputStreamStreamOutput(outStream))
     override def decode(inStream: InputStream): T =
-      constructor.apply(new InputStreamStreamInput(inStream))
+      constructor(new InputStreamStreamInput(inStream))
   }
 
   private val indexRequestBCoder = writableBCoder[IndexRequest](new IndexRequest(_))
