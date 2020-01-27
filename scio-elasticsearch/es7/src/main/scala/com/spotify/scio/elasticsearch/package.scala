@@ -33,7 +33,7 @@ import org.joda.time.Duration
  * import com.spotify.scio.elasticsearch._
  * }}}
  */
-package object elasticsearch {
+package object elasticsearch extends CoderInstances {
   final case class ElasticsearchOptions(nodes: Seq[HttpHost])
 
   implicit class ElasticsearchSCollection[T](@transient private val self: SCollection[T])
