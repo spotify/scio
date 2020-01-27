@@ -25,15 +25,17 @@ import scala.language.experimental.macros
 import scala.reflect.macros.{blackbox, whitebox}
 import com.spotify.scio.schemas.SchemaMacroHelpers
 
+import scala.reflect._
+
 trait SQLBuilder {
-  def as[B: Schema]: SCollection[B]
+  def as[B: Schema: ClassTag]: SCollection[B]
 }
 
 sealed trait SqlParam
 
 final case class SCollectionRef[A: Schema](coll: SCollection[A]) extends SqlParam {
   type _A = A
-  val schema = Schema[A]
+  val schema: Schema[A] = Schema[A]
 }
 
 final case class UdfRef(udf: Udf) extends SqlParam
@@ -156,16 +158,17 @@ object SqlInterpolatorMacro {
         {
           import _root_.com.spotify.scio.values.SCollection
           import _root_.com.spotify.scio.schemas.Schema
+          import _root_.scala.reflect.ClassTag
 
           sealed trait $fakeName  extends _root_.com.spotify.scio.sql.SQLBuilder {
-            def as[B: Schema]: SCollection[B] = ???
+            def as[B: Schema: ClassTag]: SCollection[B] = ???
           }
 
           final class $className extends $fakeName {
             import scala.language.experimental.macros
 
             @_root_.com.spotify.scio.sql.SqlInterpolatorMacro.SqlParts(List(..$parts),..$ps)
-            override def as[B: Schema]: SCollection[B] =
+            override def as[B: Schema: ClassTag]: SCollection[B] =
               macro _root_.com.spotify.scio.sql.SqlInterpolatorMacro.expand[B]
           }
           new $className
@@ -177,7 +180,7 @@ object SqlInterpolatorMacro {
 
   def expand[B: c.WeakTypeTag](
     c: blackbox.Context
-  )(schB: c.Expr[Schema[B]]): c.Expr[SCollection[B]] = {
+  )(schB: c.Expr[Schema[B]], classTag: c.Expr[ClassTag[B]]): c.Expr[SCollection[B]] = {
     import c.universe._
 
     val annotationParams =
@@ -202,12 +205,14 @@ object SqlInterpolatorMacro {
           )
       }
 
-    tsqlImpl[B](c)(parts, ps: _*)
+    tsqlImpl[B](c)(parts, ps: _*)(classTag)
   }
 
   def tsqlImpl[B: c.WeakTypeTag](
     c: blackbox.Context
-  )(parts: List[c.Tree], ps: c.Expr[Any]*): c.Expr[SCollection[B]] = {
+  )(parts: List[c.Tree], ps: c.Expr[Any]*)(
+    ct: c.Expr[ClassTag[B]]
+  ): c.Expr[SCollection[B]] = {
     val h = new { val ctx: c.type = c } with SqlInterpolatorMacroHelpers with SchemaMacroHelpers
     import h._
     import c.universe._
@@ -243,14 +248,16 @@ object SqlInterpolatorMacro {
         val tags = list.map(x => tagFor(x._2, toSCollectionName(x._1)))
         val sql = buildSQLString(parts, scs.map(x => toSCollectionName(x._1)))
         val implOut = inferImplicitSchema[B]
-        val implIn = types.map(inferImplicitSchema)
+        val implIn = types.flatMap { t =>
+          Seq(inferImplicitSchema(t), inferClassTag(t))
+        }
 
         val queryTree = c.parse(s"_root_.com.spotify.scio.sql.Query${types.size}")
         val q = q"$queryTree.typed[..${types :+ weakTypeOf[B]}]($sql, ..$tags)"
         c.Expr[SCollection[B]](q"""
             _root_.com.spotify.scio.sql.Sql
                 .from(..$colls)(..$implIn)
-                .queryAs($q)($implOut)""")
+                .queryAs($q)($implOut, $ct)""")
       case d =>
         val ns = d.map(_._1).mkString(", ")
         c.abort(

@@ -697,11 +697,11 @@ object BigQueryTyped {
         }
     }
 
-    def apply[T: Schema: Coder](table: STable): BeamSchema[T] =
+    def apply[T: Schema: Coder: ClassTag](table: STable): BeamSchema[T] =
       new BeamSchema(table, defaultParseFn)
   }
 
-  final case class BeamSchema[T: Schema: Coder](
+  final case class BeamSchema[T: Schema: Coder: ClassTag](
     table: STable,
     parseFn: SchemaAndRecord => T
   ) extends BigQueryIO[T] {

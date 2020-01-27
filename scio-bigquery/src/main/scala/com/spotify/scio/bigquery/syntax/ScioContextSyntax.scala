@@ -202,10 +202,10 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
     }
   }
 
-  def typedBigQueryTable[T: Schema: Coder](table: Table): SCollection[T] =
+  def typedBigQueryTable[T: Schema: Coder: ClassTag](table: Table): SCollection[T] =
     self.read(BigQueryTyped.BeamSchema(table))
 
-  def typedBigQueryTable[T: Schema: Coder](
+  def typedBigQueryTable[T: Schema: Coder: ClassTag](
     table: Table,
     parseFn: SchemaAndRecord => T
   ): SCollection[T] =

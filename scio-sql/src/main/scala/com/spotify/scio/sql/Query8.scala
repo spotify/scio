@@ -29,6 +29,7 @@ import org.apache.beam.sdk.extensions.sql.impl.ParseException
 import org.apache.beam.sdk.values._
 
 import scala.language.experimental.macros
+import scala.reflect.ClassTag
 
 final case class Query8[A, B, C, D, E, F, G, H, R](
   query: String,
@@ -196,14 +197,14 @@ object Query8 {
 }
 
 final class SqlSCollection8[
-  A: Schema,
-  B: Schema,
-  C: Schema,
-  D: Schema,
-  E: Schema,
-  F: Schema,
-  G: Schema,
-  H: Schema
+  A: Schema: ClassTag,
+  B: Schema: ClassTag,
+  C: Schema: ClassTag,
+  D: Schema: ClassTag,
+  E: Schema: ClassTag,
+  F: Schema: ClassTag,
+  G: Schema: ClassTag,
+  H: Schema: ClassTag
 ](
   a: SCollection[A],
   b: SCollection[B],
@@ -257,7 +258,7 @@ final class SqlSCollection8[
 
     }
 
-  def queryAs[R: Schema](
+  def queryAs[R: Schema: ClassTag](
     q: String,
     aTag: TupleTag[A],
     bTag: TupleTag[B],
@@ -271,7 +272,7 @@ final class SqlSCollection8[
   ): SCollection[R] =
     queryAs(Query8(q, aTag, bTag, cTag, dTag, eTag, fTag, gTag, hTag, udfs.toList))
 
-  def queryAs[R: Schema](q: Query8[A, B, C, D, E, F, G, H, R]): SCollection[R] =
+  def queryAs[R: Schema: ClassTag](q: Query8[A, B, C, D, E, F, G, H, R]): SCollection[R] =
     try {
       query(q.query, q.aTag, q.bTag, q.cTag, q.dTag, q.eTag, q.fTag, q.gTag, q.hTag, q.udfs: _*)
         .to(To.unchecked((_, i) => i))

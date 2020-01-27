@@ -29,6 +29,7 @@ import org.apache.beam.sdk.extensions.sql.impl.ParseException
 import org.apache.beam.sdk.values._
 
 import scala.language.experimental.macros
+import scala.reflect.ClassTag
 
 final case class Query7[A, B, C, D, E, F, G, R](
   query: String,
@@ -158,13 +159,13 @@ object Query7 {
 }
 
 final class SqlSCollection7[
-  A: Schema,
-  B: Schema,
-  C: Schema,
-  D: Schema,
-  E: Schema,
-  F: Schema,
-  G: Schema
+  A: Schema: ClassTag,
+  B: Schema: ClassTag,
+  C: Schema: ClassTag,
+  D: Schema: ClassTag,
+  E: Schema: ClassTag,
+  F: Schema: ClassTag,
+  G: Schema: ClassTag
 ](
   a: SCollection[A],
   b: SCollection[B],
@@ -214,7 +215,7 @@ final class SqlSCollection7[
 
     }
 
-  def queryAs[R: Schema](
+  def queryAs[R: Schema: ClassTag](
     q: String,
     aTag: TupleTag[A],
     bTag: TupleTag[B],
@@ -227,7 +228,7 @@ final class SqlSCollection7[
   ): SCollection[R] =
     queryAs(Query7(q, aTag, bTag, cTag, dTag, eTag, fTag, gTag, udfs.toList))
 
-  def queryAs[R: Schema](q: Query7[A, B, C, D, E, F, G, R]): SCollection[R] =
+  def queryAs[R: Schema: ClassTag](q: Query7[A, B, C, D, E, F, G, R]): SCollection[R] =
     try {
       query(q.query, q.aTag, q.bTag, q.cTag, q.dTag, q.eTag, q.fTag, q.gTag, q.udfs: _*)
         .to(To.unchecked((_, i) => i))

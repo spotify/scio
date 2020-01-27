@@ -24,22 +24,23 @@ package com.spotify.scio.sql
 
 import com.spotify.scio.schemas.Schema
 import org.apache.beam.sdk.values.TupleTag
+import scala.reflect._
 
 object SQLBuilders {
 
-  private[sql] def from[A](
+  private[sql] def from[A: ClassTag](
     q: String,
     refA: SCollectionRef[A],
     aTag: TupleTag[A],
     udfs: List[Udf]
   ): SQLBuilder = new SQLBuilder {
-    def as[R: Schema] =
+    def as[R: Schema: ClassTag] =
       Sql
-        .from(refA.coll)(refA.schema)
+        .from(refA.coll)(refA.schema, classTag[A])
         .queryAs(new Query1[refA._A, R](q, aTag, udfs))
   }
 
-  private[sql] def from[A, B](
+  private[sql] def from[A: ClassTag, B: ClassTag](
     q: String,
     refA: SCollectionRef[A],
     refB: SCollectionRef[B],
@@ -47,13 +48,13 @@ object SQLBuilders {
     bTag: TupleTag[B],
     udfs: List[Udf]
   ): SQLBuilder = new SQLBuilder {
-    def as[R: Schema] =
+    def as[R: Schema: ClassTag] =
       Sql
-        .from(refA.coll, refB.coll)(refA.schema, refB.schema)
+        .from(refA.coll, refB.coll)(refA.schema, classTag[A], refB.schema, classTag[B])
         .queryAs(new Query2[refA._A, refB._A, R](q, aTag, bTag, udfs))
   }
 
-  private[sql] def from[A, B, C](
+  private[sql] def from[A: ClassTag, B: ClassTag, C: ClassTag](
     q: String,
     refA: SCollectionRef[A],
     refB: SCollectionRef[B],
@@ -63,13 +64,20 @@ object SQLBuilders {
     cTag: TupleTag[C],
     udfs: List[Udf]
   ): SQLBuilder = new SQLBuilder {
-    def as[R: Schema] =
+    def as[R: Schema: ClassTag] =
       Sql
-        .from(refA.coll, refB.coll, refC.coll)(refA.schema, refB.schema, refC.schema)
+        .from(refA.coll, refB.coll, refC.coll)(
+          refA.schema,
+          classTag[A],
+          refB.schema,
+          classTag[B],
+          refC.schema,
+          classTag[C]
+        )
         .queryAs(new Query3[refA._A, refB._A, refC._A, R](q, aTag, bTag, cTag, udfs))
   }
 
-  private[sql] def from[A, B, C, D](
+  private[sql] def from[A: ClassTag, B: ClassTag, C: ClassTag, D: ClassTag](
     q: String,
     refA: SCollectionRef[A],
     refB: SCollectionRef[B],
@@ -81,18 +89,22 @@ object SQLBuilders {
     dTag: TupleTag[D],
     udfs: List[Udf]
   ): SQLBuilder = new SQLBuilder {
-    def as[R: Schema] =
+    def as[R: Schema: ClassTag] =
       Sql
         .from(refA.coll, refB.coll, refC.coll, refD.coll)(
           refA.schema,
+          classTag[A],
           refB.schema,
+          classTag[B],
           refC.schema,
-          refD.schema
+          classTag[C],
+          refD.schema,
+          classTag[D]
         )
         .queryAs(new Query4[refA._A, refB._A, refC._A, refD._A, R](q, aTag, bTag, cTag, dTag, udfs))
   }
 
-  private[sql] def from[A, B, C, D, E](
+  private[sql] def from[A: ClassTag, B: ClassTag, C: ClassTag, D: ClassTag, E: ClassTag](
     q: String,
     refA: SCollectionRef[A],
     refB: SCollectionRef[B],
@@ -106,14 +118,19 @@ object SQLBuilders {
     eTag: TupleTag[E],
     udfs: List[Udf]
   ): SQLBuilder = new SQLBuilder {
-    def as[R: Schema] =
+    def as[R: Schema: ClassTag] =
       Sql
         .from(refA.coll, refB.coll, refC.coll, refD.coll, refE.coll)(
           refA.schema,
+          classTag[A],
           refB.schema,
+          classTag[B],
           refC.schema,
+          classTag[C],
           refD.schema,
-          refE.schema
+          classTag[D],
+          refE.schema,
+          classTag[E]
         )
         .queryAs(
           new Query5[refA._A, refB._A, refC._A, refD._A, refE._A, R](
@@ -128,7 +145,14 @@ object SQLBuilders {
         )
   }
 
-  private[sql] def from[A, B, C, D, E, F](
+  private[sql] def from[
+    A: ClassTag,
+    B: ClassTag,
+    C: ClassTag,
+    D: ClassTag,
+    E: ClassTag,
+    F: ClassTag
+  ](
     q: String,
     refA: SCollectionRef[A],
     refB: SCollectionRef[B],
@@ -144,15 +168,21 @@ object SQLBuilders {
     fTag: TupleTag[F],
     udfs: List[Udf]
   ): SQLBuilder = new SQLBuilder {
-    def as[R: Schema] =
+    def as[R: Schema: ClassTag] =
       Sql
         .from(refA.coll, refB.coll, refC.coll, refD.coll, refE.coll, refF.coll)(
           refA.schema,
+          classTag[A],
           refB.schema,
+          classTag[B],
           refC.schema,
+          classTag[C],
           refD.schema,
+          classTag[D],
           refE.schema,
-          refF.schema
+          classTag[E],
+          refF.schema,
+          classTag[F]
         )
         .queryAs(
           new Query6[refA._A, refB._A, refC._A, refD._A, refE._A, refF._A, R](
@@ -168,7 +198,15 @@ object SQLBuilders {
         )
   }
 
-  private[sql] def from[A, B, C, D, E, F, G](
+  private[sql] def from[
+    A: ClassTag,
+    B: ClassTag,
+    C: ClassTag,
+    D: ClassTag,
+    E: ClassTag,
+    F: ClassTag,
+    G: ClassTag
+  ](
     q: String,
     refA: SCollectionRef[A],
     refB: SCollectionRef[B],
@@ -186,16 +224,23 @@ object SQLBuilders {
     gTag: TupleTag[G],
     udfs: List[Udf]
   ): SQLBuilder = new SQLBuilder {
-    def as[R: Schema] =
+    def as[R: Schema: ClassTag] =
       Sql
         .from(refA.coll, refB.coll, refC.coll, refD.coll, refE.coll, refF.coll, refG.coll)(
           refA.schema,
+          classTag[A],
           refB.schema,
+          classTag[B],
           refC.schema,
+          classTag[C],
           refD.schema,
+          classTag[D],
           refE.schema,
+          classTag[E],
           refF.schema,
-          refG.schema
+          classTag[F],
+          refG.schema,
+          classTag[G]
         )
         .queryAs(
           new Query7[refA._A, refB._A, refC._A, refD._A, refE._A, refF._A, refG._A, R](
@@ -212,7 +257,16 @@ object SQLBuilders {
         )
   }
 
-  private[sql] def from[A, B, C, D, E, F, G, H](
+  private[sql] def from[
+    A: ClassTag,
+    B: ClassTag,
+    C: ClassTag,
+    D: ClassTag,
+    E: ClassTag,
+    F: ClassTag,
+    G: ClassTag,
+    H: ClassTag
+  ](
     q: String,
     refA: SCollectionRef[A],
     refB: SCollectionRef[B],
@@ -232,7 +286,7 @@ object SQLBuilders {
     hTag: TupleTag[H],
     udfs: List[Udf]
   ): SQLBuilder = new SQLBuilder {
-    def as[R: Schema] =
+    def as[R: Schema: ClassTag] =
       Sql
         .from(
           refA.coll,
@@ -245,13 +299,21 @@ object SQLBuilders {
           refH.coll
         )(
           refA.schema,
+          classTag[A],
           refB.schema,
+          classTag[B],
           refC.schema,
+          classTag[C],
           refD.schema,
+          classTag[D],
           refE.schema,
+          classTag[E],
           refF.schema,
+          classTag[F],
           refG.schema,
-          refH.schema
+          classTag[G],
+          refH.schema,
+          classTag[H]
         )
         .queryAs(
           new Query8[refA._A, refB._A, refC._A, refD._A, refE._A, refF._A, refG._A, refH._A, R](
@@ -269,7 +331,17 @@ object SQLBuilders {
         )
   }
 
-  private[sql] def from[A, B, C, D, E, F, G, H, I](
+  private[sql] def from[
+    A: ClassTag,
+    B: ClassTag,
+    C: ClassTag,
+    D: ClassTag,
+    E: ClassTag,
+    F: ClassTag,
+    G: ClassTag,
+    H: ClassTag,
+    I: ClassTag
+  ](
     q: String,
     refA: SCollectionRef[A],
     refB: SCollectionRef[B],
@@ -291,7 +363,7 @@ object SQLBuilders {
     iTag: TupleTag[I],
     udfs: List[Udf]
   ): SQLBuilder = new SQLBuilder {
-    def as[R: Schema] =
+    def as[R: Schema: ClassTag] =
       Sql
         .from(
           refA.coll,
@@ -305,14 +377,23 @@ object SQLBuilders {
           refI.coll
         )(
           refA.schema,
+          classTag[A],
           refB.schema,
+          classTag[B],
           refC.schema,
+          classTag[C],
           refD.schema,
+          classTag[D],
           refE.schema,
+          classTag[E],
           refF.schema,
+          classTag[F],
           refG.schema,
+          classTag[G],
           refH.schema,
-          refI.schema
+          classTag[H],
+          refI.schema,
+          classTag[I]
         )
         .queryAs(
           new Query9[
@@ -330,7 +411,18 @@ object SQLBuilders {
         )
   }
 
-  private[sql] def from[A, B, C, D, E, F, G, H, I, J](
+  private[sql] def from[
+    A: ClassTag,
+    B: ClassTag,
+    C: ClassTag,
+    D: ClassTag,
+    E: ClassTag,
+    F: ClassTag,
+    G: ClassTag,
+    H: ClassTag,
+    I: ClassTag,
+    J: ClassTag
+  ](
     q: String,
     refA: SCollectionRef[A],
     refB: SCollectionRef[B],
@@ -354,7 +446,7 @@ object SQLBuilders {
     jTag: TupleTag[J],
     udfs: List[Udf]
   ): SQLBuilder = new SQLBuilder {
-    def as[R: Schema] =
+    def as[R: Schema: ClassTag] =
       Sql
         .from(
           refA.coll,
@@ -369,15 +461,25 @@ object SQLBuilders {
           refJ.coll
         )(
           refA.schema,
+          classTag[A],
           refB.schema,
+          classTag[B],
           refC.schema,
+          classTag[C],
           refD.schema,
+          classTag[D],
           refE.schema,
+          classTag[E],
           refF.schema,
+          classTag[F],
           refG.schema,
+          classTag[G],
           refH.schema,
+          classTag[H],
           refI.schema,
-          refJ.schema
+          classTag[I],
+          refJ.schema,
+          classTag[J]
         )
         .queryAs(
           new Query10[

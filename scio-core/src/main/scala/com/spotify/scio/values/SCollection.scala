@@ -133,10 +133,11 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   def setCoder(coder: org.apache.beam.sdk.coders.Coder[T]): SCollection[T] =
     context.wrap(internal.setCoder(coder))
 
-  def setSchema(schema: Schema[T]): SCollection[T] =
+  def setSchema(schema: Schema[T])(implicit ct: ClassTag[T]): SCollection[T] =
     if (!internal.hasSchema) {
       val (s, to, from) = SchemaMaterializer.materialize(schema)
-      context.wrap(internal.setSchema(s, to, from))
+      val td = TypeDescriptor.of(ScioUtil.classOf[T])
+      context.wrap(internal.setSchema(s, td, to, from))
     } else this
 
   private def ensureSerializable[A](coder: BCoder[A]): Either[Throwable, BCoder[A]] =

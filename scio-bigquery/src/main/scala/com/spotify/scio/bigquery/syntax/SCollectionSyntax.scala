@@ -138,7 +138,7 @@ final class SCollectionTableRowOps[T <: TableRow](private val self: SCollection[
   }
 }
 
-final class SCollectionBeamSchemaOps[T](private val self: SCollection[T]) extends AnyVal {
+final class SCollectionBeamSchemaOps[T: ClassTag](private val self: SCollection[T]) {
   def saveAsBigQuery(
     table: Table,
     writeDisposition: WriteDisposition = TypedWriteParam.DefaultWriteDisposition,
@@ -272,7 +272,7 @@ trait SCollectionSyntax {
   ): SCollectionTableRowOps[T] =
     new SCollectionTableRowOps[T](sc)
 
-  implicit def bigQuerySCollectionBeamSchemaOps[T](
+  implicit def bigQuerySCollectionBeamSchemaOps[T: ClassTag](
     sc: SCollection[T]
   ): SCollectionBeamSchemaOps[T] =
     new SCollectionBeamSchemaOps[T](sc)
