@@ -71,7 +71,7 @@ class ApproxFilterTest extends PipelineSpec {
 
     it should "support SCollection syntax" in {
       runWithContext { sc =>
-      implicit  val coder = c.coder
+        implicit val coder = c.coder
         val coll = sc.parallelize(1 to 1000)
         coll.asApproxFilter(c) should satisfySingleValue[c.Filter[Int]] {
           eq(_, c.create(1 to 1000))
@@ -102,11 +102,10 @@ class ApproxFilterTest extends PipelineSpec {
       (1 to 2000).map(copy.mightContain) shouldBe (1 to 2000).map(orig.mightContain)
     }
 
-    def eq(lhs: c.Filter[Int], rhs: c.Filter[Int]): Boolean = {
+    def eq(lhs: c.Filter[Int], rhs: c.Filter[Int]): Boolean =
       lhs.approxElementCount == rhs.approxElementCount &&
         lhs.expectedFpp == rhs.expectedFpp &&
         (1 to 2000).map(lhs.mightContain) == (1 to 2000).map(rhs.mightContain)
-    }
   }
 
   test(BloomFilter)

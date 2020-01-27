@@ -47,11 +47,18 @@ sealed trait ApproxFilterCompanion {
   final def create[T: Hash](elems: Iterable[T], expectedInsertions: Long): Filter[T] =
     create(elems, expectedInsertions, 0.03)
 
-  final def create[T: Hash](elems: Iterable[T], expectedInsertions: Long, fpp: Double): Filter[T] = {
+  final def create[T: Hash](
+    elems: Iterable[T],
+    expectedInsertions: Long,
+    fpp: Double
+  ): Filter[T] = {
     val filter = createImpl(elems, expectedInsertions, fpp)
     if (filter.approxElementCount > expectedInsertions) {
-      logger.warn("Approximate element count exceeds expected, {} > {}",
-        filter.approxElementCount, expectedInsertions)
+      logger.warn(
+        "Approximate element count exceeds expected, {} > {}",
+        filter.approxElementCount,
+        expectedInsertions
+      )
     }
     if (filter.expectedFpp > fpp) {
       logger.warn("False positive probability exceeds expected, {}} > {}", filter.expectedFpp, fpp)
@@ -59,7 +66,11 @@ sealed trait ApproxFilterCompanion {
     filter
   }
 
-  protected def createImpl[T: Hash](elems: Iterable[T], expectedInsertions: Long, fpp: Double): Filter[T]
+  protected def createImpl[T: Hash](
+    elems: Iterable[T],
+    expectedInsertions: Long,
+    fpp: Double
+  ): Filter[T]
 
   // for SCollection, naive implementation with group-all
 
@@ -69,18 +80,24 @@ sealed trait ApproxFilterCompanion {
     // size is unknown, count after groupBy
     create(elems, 0)
 
-  final def create[T: Hash](elems: SCollection[T], expectedInsertions: Long): SCollection[Filter[T]] =
+  final def create[T: Hash](
+    elems: SCollection[T],
+    expectedInsertions: Long
+  ): SCollection[Filter[T]] =
     create(elems, expectedInsertions, 0.03)
 
-  def create[T: Hash](elems: SCollection[T], expectedInsertions: Long, fpp: Double): SCollection[Filter[T]] = {
+  def create[T: Hash](
+    elems: SCollection[T],
+    expectedInsertions: Long,
+    fpp: Double
+  ): SCollection[Filter[T]] = {
     implicit val elemCoder = Coder.beam(elems.internal.getCoder)
-    elems.transform { _
-      .groupBy(_ => ())
-      .values
-      .map { xs =>
-        val n = if (expectedInsertions > 0) expectedInsertions else xs.size
-        create(xs, n, fpp)
-      }
+    elems.transform {
+      _.groupBy(_ => ()).values
+        .map { xs =>
+          val n = if (expectedInsertions > 0) expectedInsertions else xs.size
+          create(xs, n, fpp)
+        }
     }
   }
 }
@@ -89,7 +106,8 @@ sealed trait ApproxFilterCompanion {
 // Guava Bloom Filter
 ////////////////////////////////////////////////////////////////////////////////
 
-class BloomFilter[T: g.Funnel] private (private val impl: g.BloomFilter[T]) extends ApproxFilter[T] {
+class BloomFilter[T: g.Funnel] private (private val impl: g.BloomFilter[T])
+    extends ApproxFilter[T] {
   override def mightContain(elem: T): Boolean = impl.mightContain(elem)
   override val approxElementCount: Long = impl.approximateElementCount()
   override val expectedFpp: Double = impl.expectedFpp()
@@ -99,17 +117,20 @@ object BloomFilter extends ApproxFilterCompanion {
   override type Hash[T] = g.Funnel[T]
   override type Filter[T] = BloomFilter[T]
 
-  private class BloomFilterCoder[T](implicit val hash: Hash[T])
-    extends AtomicCoder[Filter[T]] {
+  private class BloomFilterCoder[T](implicit val hash: Hash[T]) extends AtomicCoder[Filter[T]] {
     override def encode(value: Filter[T], outStream: OutputStream): Unit =
       value.impl.writeTo(outStream)
     override def decode(inStream: InputStream): Filter[T] =
       new BloomFilter[T](g.BloomFilter.readFrom(inStream, hash))
   }
 
-  override implicit def coder[T: Hash]: Coder[Filter[T]] = Coder.beam(new BloomFilterCoder[T]())
+  implicit override def coder[T: Hash]: Coder[Filter[T]] = Coder.beam(new BloomFilterCoder[T]())
 
-  protected override def createImpl[T: Hash](elems: Iterable[T], expectedInsertions: Long, fpp: Double): Filter[T] = {
+  override protected def createImpl[T: Hash](
+    elems: Iterable[T],
+    expectedInsertions: Long,
+    fpp: Double
+  ): Filter[T] = {
     val hash = implicitly[Hash[T]]
     val impl = g.BloomFilter.create(hash, expectedInsertions, fpp)
     elems.foreach(impl.put)
@@ -127,7 +148,10 @@ class ABloomFilter[T: a.Hash128] private (private val impl: a.BF[T]) extends App
   override val expectedFpp: Double = if (impl.density > 0.95) {
     1.0
   } else {
-    scala.math.pow(1 - scala.math.exp(-impl.numHashes * approxElementCount * 1.1 / impl.width), impl.numHashes)
+    scala.math.pow(
+      1 - scala.math.exp(-impl.numHashes * approxElementCount * 1.1 / impl.width),
+      impl.numHashes
+    )
   }
 }
 
@@ -172,9 +196,13 @@ object ABloomFilter extends ApproxFilterCompanion {
     }
   }
 
-  override implicit def coder[T: Hash]: Coder[Filter[T]] = Coder.beam(new ABloomFilterCoder[T])
+  implicit override def coder[T: Hash]: Coder[Filter[T]] = Coder.beam(new ABloomFilterCoder[T])
 
-  protected override def createImpl[T: Hash](elems: Iterable[T], expectedInsertions: Long, fpp: Double): Filter[T] = {
+  override protected def createImpl[T: Hash](
+    elems: Iterable[T],
+    expectedInsertions: Long,
+    fpp: Double
+  ): Filter[T] = {
     require(expectedInsertions <= Int.MaxValue)
     val impl = a.BloomFilter(expectedInsertions.toInt, fpp).create(elems.iterator)
     new ABloomFilter[T](impl)

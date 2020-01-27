@@ -24,21 +24,31 @@ package object hash {
     def asApproxFilter[C <: ApproxFilterCompanion](c: C)(implicit hash: c.Hash[T]): c.Filter[T] =
       c.create(self)
 
-    def asApproxFilter[C <: ApproxFilterCompanion](c: C, expectedInsertions: Long)(implicit hash: c.Hash[T]): c.Filter[T] =
+    def asApproxFilter[C <: ApproxFilterCompanion](c: C, expectedInsertions: Long)(
+      implicit hash: c.Hash[T]
+    ): c.Filter[T] =
       c.create(self, expectedInsertions)
 
-    def asApproxFilter[C <: ApproxFilterCompanion](c: C, expectedInsertions: Long, fpp: Double)(implicit hash: c.Hash[T]): c.Filter[T] =
+    def asApproxFilter[C <: ApproxFilterCompanion](c: C, expectedInsertions: Long, fpp: Double)(
+      implicit hash: c.Hash[T]
+    ): c.Filter[T] =
       c.create(self, expectedInsertions, fpp)
   }
 
   implicit class ApproxFilterSCollection[T](val self: SCollection[T]) extends AnyVal {
-    def asApproxFilter[C <: ApproxFilterCompanion](c: C)(implicit hash: c.Hash[T]): SCollection[c.Filter[T]] =
+    def asApproxFilter[C <: ApproxFilterCompanion](
+      c: C
+    )(implicit hash: c.Hash[T]): SCollection[c.Filter[T]] =
       c.create(self)
 
-    def asApproxFilter[C <: ApproxFilterCompanion](c: C, expectedInsertions: Long)(implicit hash: c.Hash[T]): SCollection[c.Filter[T]] =
+    def asApproxFilter[C <: ApproxFilterCompanion](c: C, expectedInsertions: Long)(
+      implicit hash: c.Hash[T]
+    ): SCollection[c.Filter[T]] =
       c.create(self, expectedInsertions)
 
-    def asApproxFilter[C <: ApproxFilterCompanion](c: C, expectedInsertions: Long, fpp: Double)(implicit hash: c.Hash[T]): SCollection[c.Filter[T]] =
+    def asApproxFilter[C <: ApproxFilterCompanion](c: C, expectedInsertions: Long, fpp: Double)(
+      implicit hash: c.Hash[T]
+    ): SCollection[c.Filter[T]] =
       c.create(self, expectedInsertions, fpp)
   }
 }
