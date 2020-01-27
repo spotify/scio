@@ -20,7 +20,7 @@ package com.spotify.scio
 import com.spotify.scio.values.SCollection
 
 package object hash {
-  implicit class ApproxFilterIterable[T](val self: Iterable[T]) extends AnyVal {
+  implicit class ApproxFilterIterable[T](private val self: Iterable[T]) extends AnyVal {
     def asApproxFilter[C <: ApproxFilterCompanion](c: C)(implicit hash: c.Hash[T]): c.Filter[T] =
       c.create(self)
 
@@ -35,7 +35,7 @@ package object hash {
       c.create(self, expectedInsertions, fpp)
   }
 
-  implicit class ApproxFilterSCollection[T](val self: SCollection[T]) extends AnyVal {
+  implicit class ApproxFilterSCollection[T](private val self: SCollection[T]) extends AnyVal {
     def asApproxFilter[C <: ApproxFilterCompanion](
       c: C
     )(implicit hash: c.Hash[T]): SCollection[c.Filter[T]] =
