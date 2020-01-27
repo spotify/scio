@@ -58,7 +58,7 @@ public class BucketMetadataTest {
                 return null;
               }
               @Override
-              public boolean isSameSourceCompatible(BucketMetadata other) {
+              public boolean isPartitionCompatible(BucketMetadata other) {
                 return false;
               }
             });

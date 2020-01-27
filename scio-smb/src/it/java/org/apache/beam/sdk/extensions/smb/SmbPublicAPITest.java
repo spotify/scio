@@ -77,7 +77,7 @@ public class SmbPublicAPITest {
     }
 
     @Override
-    public boolean isSameSourceCompatible(BucketMetadata other) {
+    public boolean isPartitionCompatible(BucketMetadata other) {
       return true;
     }
 

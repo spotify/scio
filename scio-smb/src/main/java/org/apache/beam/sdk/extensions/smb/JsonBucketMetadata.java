@@ -81,7 +81,7 @@ class JsonBucketMetadata<K> extends BucketMetadata<K, TableRow> {
   }
 
   @Override
-  public boolean isSameSourceCompatible(BucketMetadata o) {
+  public boolean isPartitionCompatible(BucketMetadata o) {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }

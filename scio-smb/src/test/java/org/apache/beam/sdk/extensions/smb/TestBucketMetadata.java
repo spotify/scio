@@ -55,7 +55,7 @@ class TestBucketMetadata extends BucketMetadata<String, String> {
   }
 
   @Override
-  public boolean isSameSourceCompatible(BucketMetadata other) {
+  public boolean isPartitionCompatible(BucketMetadata other) {
     return keyIndex.equals(((TestBucketMetadata) other).keyIndex);
   }
 

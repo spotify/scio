@@ -98,7 +98,7 @@ class AvroBucketMetadata<K, V extends GenericRecord> extends BucketMetadata<K, V
   }
 
   @Override
-  public boolean isSameSourceCompatible(BucketMetadata o) {
+  public boolean isPartitionCompatible(BucketMetadata o) {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }

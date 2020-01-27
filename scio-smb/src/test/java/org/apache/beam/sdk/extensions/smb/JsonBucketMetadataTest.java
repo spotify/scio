@@ -114,8 +114,8 @@ public class JsonBucketMetadataTest {
     final JsonBucketMetadata<Long> metadata4 =
         new JsonBucketMetadata<>(4, 1, Long.class, HashType.MURMUR3_32, "favorite_color");
 
-    Assert.assertFalse(metadata1.isSameSourceCompatible(metadata2));
-    Assert.assertTrue(metadata2.isSameSourceCompatible(metadata3));
-    Assert.assertFalse(metadata3.isSameSourceCompatible(metadata4));
+    Assert.assertFalse(metadata1.isPartitionCompatible(metadata2));
+    Assert.assertTrue(metadata2.isPartitionCompatible(metadata3));
+    Assert.assertFalse(metadata3.isPartitionCompatible(metadata4));
   }
 }

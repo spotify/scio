@@ -86,7 +86,7 @@ class TensorFlowBucketMetadata<K> extends BucketMetadata<K, Example> {
   }
 
   @Override
-  public boolean isSameSourceCompatible(BucketMetadata o) {
+  public boolean isPartitionCompatible(BucketMetadata o) {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }

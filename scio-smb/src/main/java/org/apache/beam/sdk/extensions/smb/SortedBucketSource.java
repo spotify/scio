@@ -412,7 +412,7 @@ public class SortedBucketSource<FinalKeyT>
 
         Preconditions.checkState(
             metadata.isCompatibleWith(this.canonicalMetadata) &&
-                metadata.isSameSourceCompatible(this.canonicalMetadata),
+                metadata.isPartitionCompatible(this.canonicalMetadata),
             "%s cannot be read as a single input source. Metadata in directory "
                 + "%s is incompatible with metadata in directory %s. %s != %s",
             this, dir, canonicalMetadataDir, metadata, canonicalMetadata);

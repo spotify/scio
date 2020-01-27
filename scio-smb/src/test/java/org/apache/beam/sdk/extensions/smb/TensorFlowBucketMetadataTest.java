@@ -120,8 +120,8 @@ public class TensorFlowBucketMetadataTest {
     final TensorFlowBucketMetadata<String> metadata4 =
         new TensorFlowBucketMetadata<>(4, 1, String.class, HashType.MURMUR3_32, "bar");
 
-    Assert.assertFalse(metadata1.isSameSourceCompatible(metadata2));
-    Assert.assertTrue(metadata2.isSameSourceCompatible(metadata3));
-    Assert.assertFalse(metadata3.isSameSourceCompatible(metadata4));
+    Assert.assertFalse(metadata1.isPartitionCompatible(metadata2));
+    Assert.assertTrue(metadata2.isPartitionCompatible(metadata3));
+    Assert.assertFalse(metadata3.isPartitionCompatible(metadata4));
   }
 }
