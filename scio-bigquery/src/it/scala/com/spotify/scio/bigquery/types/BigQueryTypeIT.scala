@@ -40,6 +40,9 @@ object BigQueryTypeIT {
   @BigQueryType.fromTable("bigquery-public-data:samples.shakespeare")
   class FromTableT
 
+  @BigQueryType.toTable
+  case class ToTableT(word: String, word_count: Int)
+
   @BigQueryType.fromQuery(
     "SELECT word, word_count FROM [data-integration-test:partition_a.table_%s]",
     "$LATEST"
@@ -77,10 +80,9 @@ object BigQueryTypeIT {
   class ShakespeareWithSequentialAnnotations
 }
 
-// Run BigQueryITUtil to re-populate tables for integration tests
+// scio-test/it:runMain PopulateTestData to re-populate data for integration tests
 class BigQueryTypeIT extends AnyFlatSpec with Matchers {
   import BigQueryTypeIT._
-  import BigQueryITUtil._
 
   val bq = BigQuery.defaultInstance()
 

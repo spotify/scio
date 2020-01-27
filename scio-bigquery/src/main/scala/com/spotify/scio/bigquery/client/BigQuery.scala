@@ -44,7 +44,7 @@ import scala.reflect.runtime.universe.TypeTag
 import scala.util.Try
 
 /** A simple BigQuery client. */
-final class BigQuery private (client: Client) {
+final class BigQuery private (val client: Client) {
   private[scio] def isCacheEnabled: Boolean = BigQueryConfig.isCacheEnabled
 
   val jobs: JobOps = new JobOps(client)

@@ -17,8 +17,11 @@
 
 package com.spotify.scio.bigquery.types
 
+import java.util.UUID
+
 import com.spotify.scio.ContextAndArgs
 import com.spotify.scio.bigquery._
+import com.spotify.scio.bigquery.client.BigQuery
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.WriteDisposition
 import org.apache.beam.sdk.io.gcp.bigquery.SchemaAndRecord
 import org.apache.beam.sdk.testing.PAssert
@@ -90,7 +93,8 @@ final class BeamSchemaIT extends AnyFlatSpec with Matchers {
       "--tempLocation=gs://data-integration-test-eu/temp"
     )
     val (sc, _) = ContextAndArgs(args)
-    val table = Table.Spec("data-integration-test:samples_eu.shakespeare_schema")
+    val uuid = UUID.randomUUID().toString.replaceAll("-", "")
+    val table = Table.Spec(s"data-integration-test:schema_it.shakespeare_schema_$uuid")
 
     val closedTap = sc
       .parallelize(AlienExpected)
@@ -101,5 +105,7 @@ final class BeamSchemaIT extends AnyFlatSpec with Matchers {
     val p = result.tap(closedTap).open(readContext).internal
     PAssert.that(p).containsInAnyOrder(AlienExpected.asJava)
     readContext.run()
+
+    BigQuery.defaultInstance().tables.delete(table.ref)
   }
 }

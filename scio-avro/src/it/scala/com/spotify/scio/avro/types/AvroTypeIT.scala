@@ -25,6 +25,7 @@ import org.scalatest.matchers.should.Matchers
 import scala.annotation.StaticAnnotation
 import scala.reflect.runtime.universe._
 
+// scio-test/it:runMain PopulateTestData to re-populate data for integration tests
 object AvroTypeIT {
   @AvroType.fromPath(
     "gs://data-integration-test-eu/avro-integration-test/folder-a/folder-b/shakespeare.avro"

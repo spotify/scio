@@ -31,6 +31,7 @@ import org.scalatest.flatspec.AnyFlatSpec
 import scala.collection.JavaConverters._
 import scala.util.Success
 
+// scio-test/it:runMain PopulateTestData to re-populate data for integration tests
 class BigQueryClientIT extends AnyFlatSpec with Matchers {
   private[this] val bq = BigQuery.defaultInstance()
 
@@ -74,11 +75,13 @@ class BigQueryClientIT extends AnyFlatSpec with Matchers {
   "QueryService.extractLocation" should "work with legacy syntax" in {
     val query = "SELECT word FROM [data-integration-test:samples_%s.shakespeare]"
     bq.query.extractLocation(query.format("eu")) shouldBe Some("EU")
+    bq.query.extractLocation(query.format("us")) shouldBe Some("US")
   }
 
   it should "work with SQL syntax" in {
     val query = "SELECT word FROM `data-integration-test.samples_%s.shakespeare`"
     bq.query.extractLocation(query.format("eu")) shouldBe Some("EU")
+    bq.query.extractLocation(query.format("us")) shouldBe Some("US")
   }
 
   it should "support missing source tables" in {
