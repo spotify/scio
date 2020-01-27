@@ -97,6 +97,10 @@ class TypeProviderTest extends AnyFlatSpec with Matchers {
     BigQueryType[RecordWithDescription].schema shouldBe RecordWithDescription.schema
   }
 
+  it should "infer the same avro schema" in {
+    BigQueryType[RecordWithDescription].avroSchema shouldBe RecordWithDescription.avroSchema
+  }
+
   "BigQueryTag" should "be a serializable annotation" in {
     SerializableUtils.ensureSerializable[BigQueryTag](new BigQueryTag())
   }
