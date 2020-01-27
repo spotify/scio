@@ -242,8 +242,8 @@ public class SortedBucketSourceTest {
 
     final TupleTag<String> tag = new TupleTag<>("GBK");
     final TestFileOperations fileOperations = new TestFileOperations();
-    final BucketedInput<?, ?> bucketedInput =
-        new BucketedInput<>(tag, fromFolder(lhsFolder), ".txt", fileOperations);
+    final BucketedInput<?, ?> bucketedInput = new BucketedInput<>(
+        tag, fromFolder(lhsFolder), ".txt", fileOperations);
 
     PCollection<KV<String, CoGbkResult>> output = pipeline.apply(
         new SortedBucketSource<>(String.class, Collections.singletonList(bucketedInput)));

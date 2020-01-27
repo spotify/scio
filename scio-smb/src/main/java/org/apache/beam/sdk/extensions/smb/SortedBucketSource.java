@@ -345,6 +345,15 @@ public class SortedBucketSource<FinalKeyT>
 
     public BucketedInput(
         TupleTag<V> tupleTag,
+        ResourceId inputDirectory,
+        String filenameSuffix,
+        FileOperations<V> fileOperations
+    ) {
+      this(tupleTag, Collections.singletonList(inputDirectory), filenameSuffix, fileOperations);
+    }
+
+    public BucketedInput(
+        TupleTag<V> tupleTag,
         List<ResourceId> inputDirectories,
         String filenameSuffix,
         FileOperations<V> fileOperations
