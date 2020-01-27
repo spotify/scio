@@ -103,6 +103,14 @@ class SortMergeBucketParityIT extends AnyFlatSpec with Matchers {
     }
   }
 
+  "sortMergeGroupByKey" should "have parity with Scio's groupBy" in withNumSources(1) { inputs =>
+    compareResults(
+      _.sortMergeGroupByKey(classOf[Integer], mkRead(inputs(0)))
+    ) { sc =>
+      sc.avroFile(s"${inputs(0)}/*.avro", schema).groupBy(keyFn)
+    }
+  }
+
   "sortMergeJoin" should "have parity with a 2-way Join" in withNumSources(2) { inputs =>
     compareResults(
       _.sortMergeJoin(classOf[Integer], mkRead(inputs(0)), mkRead(inputs(1)))

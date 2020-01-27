@@ -45,7 +45,8 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) {
    * extract a comparable `K` from `L` and `R`) is remotely encoded in a
    * [[org.apache.beam.sdk.extensions.smb.BucketMetadata]] file in the same directory as the
    * input records. This transform requires a filesystem lookup to ensure that the metadata for
-   * each source are compatible.
+   * each source are compatible. In return for reading pre-sorted data, the shuffle step in a
+   * typical [[org.apache.beam.sdk.transforms.GroupByKey]] operation can be eliminated.
    *
    * @group join
    * @param keyClass join key class. Must have a Coder in Beam's default
@@ -90,11 +91,44 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) {
   }
 
   /**
+   * For each key K in `read` return a resulting SCollection that contains a tuple with the
+   * list of values for that key in `read`.
+   *
+   * See note on [[SortedBucketScioContext.sortMergeJoin()]] for information on how an SMB group
+   * differs from a regular [[org.apache.beam.sdk.transforms.GroupByKey]] operation.
+   *
+   * @group per_key
+
+   * @param keyClass grouping key class. Must have a Coder in Beam's default
+   *                 [[org.apache.beam.sdk.coders.CoderRegistry]] as custom key coders are not
+   *                 supported yet.
+   */
+  @experimental
+  def sortMergeGroupByKey[K: Coder, V: Coder](
+    keyClass: Class[K],
+    read: SortedBucketIO.Read[V]
+  ): SCollection[(K, Iterable[V])] = {
+    val t = SortedBucketIO.read(keyClass).of(read)
+    val tupleTag = read.getTupleTag
+    val tfName = self.tfName
+
+    self
+      .wrap(self.pipeline.apply(s"SMB GroupByKey@$tfName", t))
+      .withName(tfName)
+      .map { kv =>
+        (
+          kv.getKey,
+          kv.getValue.getAll(tupleTag).asScala
+        )
+      }
+  }
+
+  /**
    * For each key K in `a` or `b` return a resulting SCollection that contains a tuple with the
    * list of values for that key in `a`, and `b`.
    *
    * See note on [[SortedBucketScioContext.sortMergeJoin()]] for information on how an SMB cogroup
-   * differs from a regular [[org.apache.beam.sdk.schemas.transforms.CoGroup]] operation.
+   * differs from a regular [[org.apache.beam.sdk.transforms.join.CoGroupByKey]] operation.
    *
    * @group cogroup
 
@@ -136,7 +170,7 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) {
    * with the list of values for that key in `a`, `b` and `c`.
    *
    * See note on [[SortedBucketScioContext.sortMergeJoin()]] for information on how an SMB cogroup
-   * differs from a regular [[org.apache.beam.sdk.schemas.transforms.CoGroup]] operation.
+   * differs from a regular [[org.apache.beam.sdk.transforms.join.CoGroupByKey]] operation.
    *
    * @group cogroup
 
@@ -181,7 +215,7 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) {
    * tuple with the list of values for that key in `a`, `b`, `c` and `d`.
    *
    * See note on [[SortedBucketScioContext.sortMergeJoin()]] for information on how an SMB cogroup
-   * differs from a regular [[org.apache.beam.sdk.schemas.transforms.CoGroup]] operation.
+   * differs from a regular [[org.apache.beam.sdk.transforms.join.CoGroupByKey]] operation.
    *
    * @group cogroup
 

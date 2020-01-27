@@ -174,6 +174,48 @@ public class SortedBucketSourceTest {
             BucketShardId.of(1, 0), Lists.newArrayList("c2", "c3")));
   }
 
+  @Test
+  @Category(NeedsRunner.class)
+  public void testSingleSourceGbk() throws Exception {
+    Map<BucketShardId, List<String>> input = ImmutableMap.of(
+      BucketShardId.of(0, 0), Lists.newArrayList("a1", "a2", "b1", "b2"),
+      BucketShardId.of(1, 0), Lists.newArrayList("x1", "x2", "y1", "y2"));
+
+    int numBuckets = maxId(input.keySet(), BucketShardId::getBucketId) + 1;
+    int numShards = maxId(input.keySet(), BucketShardId::getShardId) + 1;
+
+    TestBucketMetadata metadata = TestBucketMetadata.of(numBuckets, numShards);
+
+    write(lhsPolicy.forDestination(), metadata, input);
+
+    final TupleTag<String> tag = new TupleTag<>("GBK");
+    final TestFileOperations fileOperations = new TestFileOperations();
+    final BucketedInput<?, ?> bucketedInput =
+        new BucketedInput<>(tag, fromFolder(lhsFolder), ".txt", fileOperations);
+
+    PCollection<KV<String, CoGbkResult>> output = pipeline.apply(
+        new SortedBucketSource<>(String.class, Collections.singletonList(bucketedInput)));
+
+    final Map<String, List<String>> expected = groupByKey(input, metadata::extractKey);
+
+    PAssert.thatMap(output)
+        .satisfies(
+            m -> {
+              Map<String, List<String>> actual = new HashMap<>();
+              for (Map.Entry<String, CoGbkResult> kv : m.entrySet()) {
+                List<String> v =
+                    StreamSupport.stream(kv.getValue().getAll(tag).spliterator(), false)
+                        .sorted()
+                        .collect(Collectors.toList());
+                actual.put(kv.getKey(), v);
+              }
+              Assert.assertEquals(expected, actual);
+              return null;
+            });
+
+    pipeline.run();
+  }
+
   private void test(
       Map<BucketShardId, List<String>> lhsInput, Map<BucketShardId, List<String>> rhsInput)
       throws Exception {

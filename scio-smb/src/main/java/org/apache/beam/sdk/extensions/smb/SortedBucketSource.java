@@ -105,8 +105,6 @@ public class SortedBucketSource<FinalKeyT>
 
   @Override
   public final PCollection<KV<FinalKeyT, CoGbkResult>> expand(PBegin begin) {
-    Preconditions.checkState(sources.size() > 1, "Must have more than one source");
-
     BucketMetadata<?, ?> first = null;
     Coder<FinalKeyT> finalKeyCoder = null;
 
