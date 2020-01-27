@@ -103,7 +103,7 @@ class SortMergeBucketParityIT extends AnyFlatSpec with Matchers {
     }
   }
 
-  "sortMergeGroupByKey" should "have parity with Scio's groupByKey" in withNumSources(1) { inputs =>
+  "sortMergeGroupByKey" should "have parity with Scio's groupBy" in withNumSources(1) { inputs =>
     compareResults(
       _.sortMergeGroupByKey(classOf[Integer], mkRead(inputs(0)))
     ) { sc =>
