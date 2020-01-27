@@ -25,7 +25,12 @@ import org.elasticsearch.action.DocWriteRequest
 import org.elasticsearch.action.delete.DeleteRequest
 import org.elasticsearch.action.index.IndexRequest
 import org.elasticsearch.action.update.UpdateRequest
-import org.elasticsearch.common.io.stream.{InputStreamStreamInput, OutputStreamStreamOutput, StreamInput, Writeable}
+import org.elasticsearch.common.io.stream.{
+  InputStreamStreamInput,
+  OutputStreamStreamOutput,
+  StreamInput,
+  Writeable
+}
 
 trait CoderInstances {
   private val INDEX_REQ_INDEX = 0
@@ -36,9 +41,9 @@ trait CoderInstances {
   private lazy val kryoCoder = Coder.kryo[DocWriteRequest[_]]
   private lazy val kryoBCoder = CoderMaterializer.beamWithDefault(kryoCoder)
 
-  implicit val docWriteRequestCoder: Coder[DocWriteRequest[_]] = Coder.beam[DocWriteRequest[_]](
-    new AtomicCoder[DocWriteRequest[_]] {
-      override def encode(value: DocWriteRequest[_], outStream: OutputStream): Unit = {
+  implicit val docWriteRequestCoder: Coder[DocWriteRequest[_]] =
+    Coder.beam[DocWriteRequest[_]](new AtomicCoder[DocWriteRequest[_]] {
+      override def encode(value: DocWriteRequest[_], outStream: OutputStream): Unit =
         value match {
           case i: IndexRequest =>
             outStream.write(INDEX_REQ_INDEX)
@@ -53,15 +58,14 @@ trait CoderInstances {
             outStream.write(KRYO_INDEX)
             kryoBCoder.encode(value, outStream)
         }
-      }
 
       override def decode(inStream: InputStream): DocWriteRequest[_] = {
         val request = inStream.read() match {
-          case INDEX_REQ_INDEX => indexRequestBCoder.decode(inStream)
+          case INDEX_REQ_INDEX  => indexRequestBCoder.decode(inStream)
           case UPDATE_REQ_INDEX => updateRequestBCoder.decode(inStream)
           case DELETE_REQ_INDEX => deleteRequestBCoder.decode(inStream)
-          case KRYO_INDEX => kryoBCoder.decode(inStream)
-          case n => throw new CoderException(s"Unknown index $n")
+          case KRYO_INDEX       => kryoBCoder.decode(inStream)
+          case n                => throw new CoderException(s"Unknown index $n")
         }
 
         request.asInstanceOf[DocWriteRequest[_]]
