@@ -420,6 +420,7 @@ lazy val `scio-core`: Project = project
       "io.grpc" % "grpc-core" % grpcVersion,
       "io.grpc" % "grpc-auth" % grpcVersion,
       "io.grpc" % "grpc-netty" % grpcVersion,
+      "com.spotify" %% "magnolify-guava" % magnolifyVersion,
       "com.github.alexarchambault" %% "case-app" % caseappVersion,
       "com.github.ben-manes.caffeine" % "caffeine" % caffeineVersion % "provided",
       "joda-time" % "joda-time" % jodaTimeVersion,

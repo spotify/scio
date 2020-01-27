@@ -66,6 +66,7 @@ sealed trait ApproxFilterCompanion {
   implicit def coder[T: Hash]: Coder[Filter[T]]
 
   final def create[T: Hash](elems: SCollection[T]): SCollection[Filter[T]] =
+    // size is unknown, count after groupBy
     create(elems, 0)
 
   final def create[T: Hash](elems: SCollection[T], expectedInsertions: Long): SCollection[Filter[T]] =
@@ -134,7 +135,8 @@ object ABloomFilter extends ApproxFilterCompanion {
   override type Hash[T] = a.Hash128[T]
   override type Filter[T] = ABloomFilter[T]
 
-  // naive implementation, encodes BFZero, BFItem, BFSparse as BFInstance with dense bit set
+  // naive implementation, encodes all 4 instances, e.g. BFZero, BFItem, BFSparse, BFInstance as
+  // dense bit set
   private class ABloomFilterCoder[T: Hash] extends AtomicCoder[Filter[T]] {
     private val intCoder = VarIntCoder.of()
     private val longCoder = VarLongCoder.of()

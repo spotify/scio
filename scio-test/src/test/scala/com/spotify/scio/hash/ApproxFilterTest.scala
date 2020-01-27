@@ -58,10 +58,29 @@ class ApproxFilterTest extends PipelineSpec {
         implicit val coder = c.coder
         c.create(sc.parallelize(1 to 1000)) should satisfySingleValue[c.Filter[Int]] { bf1 =>
           val bf2 = c.create(1 to 1000)
-          bf1.approxElementCount == bf2.approxElementCount &&
-            bf1.expectedFpp == bf2.expectedFpp &&
-            (1 to 2000).map(bf1.mightContain) == (1 to 2000).map(bf2.mightContain)
-          true
+          eq(bf1, bf2)
+        }
+      }
+    }
+
+    it should "support Iterable syntax" in {
+      eq((1 to 1000).asApproxFilter(c), c.create(1 to 1000))
+      eq((1 to 1000).asApproxFilter(c, 2000), c.create(1 to 1000, 2000))
+      eq((1 to 1000).asApproxFilter(c, 2000, 0.01), c.create(1 to 1000, 2000, 0.01))
+    }
+
+    it should "support SCollection syntax" in {
+      runWithContext { sc =>
+      implicit  val coder = c.coder
+        val coll = sc.parallelize(1 to 1000)
+        coll.asApproxFilter(c) should satisfySingleValue[c.Filter[Int]] {
+          eq(_, c.create(1 to 1000))
+        }
+        coll.asApproxFilter(c, 2000) should satisfySingleValue[c.Filter[Int]] {
+          eq(_, c.create(1 to 1000, 2000))
+        }
+        coll.asApproxFilter(c, 2000, 0.01) should satisfySingleValue[c.Filter[Int]] {
+          eq(_, c.create(1 to 1000, 2000, 0.01))
         }
       }
     }
@@ -81,6 +100,12 @@ class ApproxFilterTest extends PipelineSpec {
       copy.approxElementCount shouldBe orig.approxElementCount
       copy.expectedFpp shouldBe orig.expectedFpp
       (1 to 2000).map(copy.mightContain) shouldBe (1 to 2000).map(orig.mightContain)
+    }
+
+    def eq(lhs: c.Filter[Int], rhs: c.Filter[Int]): Boolean = {
+      lhs.approxElementCount == rhs.approxElementCount &&
+        lhs.expectedFpp == rhs.expectedFpp &&
+        (1 to 2000).map(lhs.mightContain) == (1 to 2000).map(rhs.mightContain)
     }
   }
 
