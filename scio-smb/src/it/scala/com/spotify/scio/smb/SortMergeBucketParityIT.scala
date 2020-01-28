@@ -68,6 +68,38 @@ class SortMergeBucketParityIT extends AnyFlatSpec with Matchers {
     }
   }
 
+  it should "have parity with a 2-way CoGroup across multiple input partitions" in
+    withNumSources(4) { inputs =>
+      compareResults(
+        _.sortMergeCoGroup(
+          classOf[Integer],
+          AvroSortedBucketIO
+            .read(new TupleTag[GenericRecord]("lhs"), schema)
+            .from(inputs(0).toString, inputs(1).toString),
+          AvroSortedBucketIO
+            .read(new TupleTag[GenericRecord]("rhs"), schema)
+            .from(inputs(2).toString, inputs(3).toString)
+        )
+      ) { sc =>
+        val (lhs, rhs) = (
+          SCollection.unionAll(
+            List(
+              sc.avroFile(s"${inputs(0)}/*.avro", schema),
+              sc.avroFile(s"${inputs(1)}/*.avro", schema)
+            )
+          ),
+          SCollection.unionAll(
+            List(
+              sc.avroFile(s"${inputs(2)}/*.avro", schema),
+              sc.avroFile(s"${inputs(3)}/*.avro", schema)
+            )
+          )
+        )
+
+        lhs.keyBy(keyFn).cogroup(rhs.keyBy(keyFn))
+      }
+    }
+
   it should "have parity with a 3-way CoGroup" in withNumSources(3) { inputs =>
     compareResults(
       _.sortMergeCoGroup(classOf[Integer], mkRead(inputs(0)), mkRead(inputs(1)), mkRead(inputs(2)))
@@ -147,7 +179,7 @@ class SortMergeBucketParityIT extends AnyFlatSpec with Matchers {
           AvroSortedBucketIO
             .write(classOf[Integer], "key", schema)
             .to(outputPath.toString)
-            .withNumBuckets(2)
+            .withNumBuckets(Math.pow(2.0, 1.0 * n).toInt)
             .withNumShards(2)
         )
 

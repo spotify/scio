@@ -1038,6 +1038,7 @@ lazy val `scio-smb`: Project = project
       (Compile / sourceManaged).value.mkdirs()
       Seq("-s", (Compile / sourceManaged).value.getAbsolutePath)
     },
+    testOptions in Test := Seq(Tests.Argument(TestFrameworks.JUnit, "-a")),
     Test / classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.Flat
   )
   .configs(

@@ -63,7 +63,9 @@ public class SmbPublicAPITest {
         Collections.singletonList(
             new BucketedInput<>(
                 new TupleTag<>(),
-                FileSystems.matchSingleFileSpec("in").resourceId(),
+                Collections.singletonList(
+                    FileSystems.matchSingleFileSpec("in").resourceId()
+                ),
                 ".avro",
                 new MyFileOperation())));
   }
@@ -72,6 +74,11 @@ public class SmbPublicAPITest {
     private MyMetadata(int numBuckets, int numShards, Class<String> keyClass, BucketMetadata.HashType hashType)
         throws CannotProvideCoderException, Coder.NonDeterministicException {
       super(BucketMetadata.CURRENT_VERSION, numBuckets, numShards, keyClass, hashType);
+    }
+
+    @Override
+    public boolean isPartitionCompatible(BucketMetadata other) {
+      return true;
     }
 
     @Override

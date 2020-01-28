@@ -142,4 +142,23 @@ public class AvroBucketMetadataTest {
         displayData, hasDisplayItem("hashType", HashType.MURMUR3_32.toString()));
     MatcherAssert.assertThat(displayData, hasDisplayItem("keyCoder", StringUtf8Coder.class));
   }
+
+  @Test
+  public void testSameSourceCompatibility() throws Exception {
+    final AvroBucketMetadata<String, GenericRecord> metadata1 =
+        new AvroBucketMetadata<>(2, 1, String.class, HashType.MURMUR3_32, "favorite_country");
+
+    final AvroBucketMetadata<String, GenericRecord> metadata2 =
+        new AvroBucketMetadata<>(2, 1, String.class, HashType.MURMUR3_32, "favorite_color");
+
+    final AvroBucketMetadata<String, GenericRecord> metadata3 =
+        new AvroBucketMetadata<>(4, 1, String.class, HashType.MURMUR3_32, "favorite_color");
+
+    final AvroBucketMetadata<Long, GenericRecord> metadata4 =
+        new AvroBucketMetadata<>(4, 1, Long.class, HashType.MURMUR3_32, "favorite_color");
+
+    Assert.assertFalse(metadata1.isPartitionCompatible(metadata2));
+    Assert.assertTrue(metadata2.isPartitionCompatible(metadata3));
+    Assert.assertFalse(metadata3.isPartitionCompatible(metadata4));
+  }
 }

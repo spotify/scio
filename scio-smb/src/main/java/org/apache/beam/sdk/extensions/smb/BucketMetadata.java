@@ -194,6 +194,9 @@ public abstract class BucketMetadata<K, V> implements Serializable, HasDisplayDa
     return baos.toByteArray();
   }
 
+  // Checks for complete equality between BucketMetadatas originating from the same BucketedInput
+  public abstract boolean isPartitionCompatible(BucketMetadata other);
+
   public abstract K extractKey(V value);
 
   int getBucketId(byte[] keyBytes) {
