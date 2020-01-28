@@ -132,11 +132,61 @@ final class CoderTest extends AnyFlatSpec with Matchers {
     val bsc = CoderMaterializer.beamWithDefault(Coder[Seq[String]])
     // Check that registerByteSizeObserver() and encode() are consistent
     CoderProperties.testByteCount(bsc, BCoder.Context.OUTER, Array(s))
-    CoderProperties.coderConsistentWithEquals(bsc, s, s)
+    CoderProperties.structuralValueConsistentWithEquals(bsc, s, s)
 
     val bmc = CoderMaterializer.beamWithDefault(Coder[Map[String, String]])
     CoderProperties.testByteCount(bmc, BCoder.Context.OUTER, Array(m))
-    CoderProperties.coderConsistentWithEquals(bmc, m, m)
+    CoderProperties.structuralValueConsistentWithEquals(bmc, m, m)
+  }
+
+  it should "support tuples" in {
+    import shapeless.syntax.std.tuple._
+    val t22 = (
+      42,
+      "foo",
+      4.2d,
+      4.2f,
+      'a',
+      List(1, 2, 3, 4, 5),
+      42,
+      "foo",
+      4.2d,
+      4.2f,
+      'a',
+      List(1, 2, 3, 4, 5),
+      42,
+      "foo",
+      4.2d,
+      4.2f,
+      'a',
+      List(1, 2, 3, 4, 5),
+      42,
+      "foo",
+      4.2d,
+      4.2f
+    )
+
+    t22.take(2) coderShould roundtrip()
+    t22.take(3) coderShould roundtrip()
+    t22.take(4) coderShould roundtrip()
+    t22.take(5) coderShould roundtrip()
+    t22.take(6) coderShould roundtrip()
+    t22.take(7) coderShould roundtrip()
+    t22.take(8) coderShould roundtrip()
+    t22.take(9) coderShould roundtrip()
+    t22.take(10) coderShould roundtrip()
+    t22.take(11) coderShould roundtrip()
+    t22.take(12) coderShould roundtrip()
+    t22.take(13) coderShould roundtrip()
+    t22.take(14) coderShould roundtrip()
+    t22.take(15) coderShould roundtrip()
+    t22.take(16) coderShould roundtrip()
+    t22.take(17) coderShould roundtrip()
+    t22.take(18) coderShould roundtrip()
+    t22.take(19) coderShould roundtrip()
+    t22.take(20) coderShould roundtrip()
+    t22.take(21) coderShould roundtrip()
+    t22.take(22) coderShould roundtrip()
   }
 
   it should "have a Coder for Nothing" in {
