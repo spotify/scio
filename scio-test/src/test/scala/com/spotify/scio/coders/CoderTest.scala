@@ -31,6 +31,7 @@ import org.apache.beam.sdk.util.SerializableUtils
 import scala.collection.JavaConverters._
 import scala.collection.{mutable => mut}
 import java.io.ByteArrayInputStream
+import org.apache.beam.sdk.testing.CoderProperties
 
 final case class UserId(bytes: Seq[Byte])
 final case class User(id: UserId, username: String, email: String)
@@ -127,6 +128,15 @@ final class CoderTest extends AnyFlatSpec with Matchers {
     Right(1) coderShould notFallback()
     Left(1) coderShould notFallback()
     mut.Set(s: _*) coderShould notFallback()
+
+    val bsc = CoderMaterializer.beamWithDefault(Coder[Seq[String]])
+    // Check that registerByteSizeObserver() and encode() are consistent
+    CoderProperties.testByteCount(bsc, BCoder.Context.OUTER, Array(s))
+    CoderProperties.coderConsistentWithEquals(bsc, s, s)
+
+    val bmc = CoderMaterializer.beamWithDefault(Coder[Map[String, String]])
+    CoderProperties.testByteCount(bmc, BCoder.Context.OUTER, Array(m))
+    CoderProperties.coderConsistentWithEquals(bmc, m, m)
   }
 
   it should "have a Coder for Nothing" in {
