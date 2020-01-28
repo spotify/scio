@@ -36,6 +36,7 @@ import org.joda.time.Instant
 
 import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
+import org.apache.beam.sdk.testing.CoderProperties
 
 case class RecordA(name: String, value: Int)
 case class RecordB(name: String, value: Int)
@@ -162,6 +163,18 @@ class KryoAtomicCoderTest extends PipelineSpec {
 
     val msg = "Class is not registered: com.spotify.scio.coders.RecordB"
     e.getCause.getMessage should startWith(msg)
+  }
+
+  it should "support registerByteSizeObserver" in {
+    val c = cf()
+    val s: Seq[String] = (1 to 10).map(_.toString)
+    // Check that registerByteSizeObserver() and encode() are consistent
+    CoderProperties.testByteCount(c, BCoder.Context.OUTER, Array[Object](s))
+    CoderProperties.testByteCount(
+      c,
+      BCoder.Context.OUTER,
+      Array[Object](s.map(x => (x, s.toIterable.asJava)))
+    )
   }
 }
 
