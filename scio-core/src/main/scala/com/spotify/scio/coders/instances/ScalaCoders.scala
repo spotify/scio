@@ -40,7 +40,9 @@ private object UnitCoder extends AtomicCoder[Unit] {
 
 private object NothingCoder extends AtomicCoder[Nothing] {
   override def encode(value: Nothing, os: OutputStream): Unit = ()
-  override def decode(is: InputStream): Nothing = ??? // can't possibly happen
+  override def decode(is: InputStream): Nothing =
+    // can't possibly happen
+    throw new IllegalStateException("Trying to decode a value of type Nothing is impossible")
 }
 
 /**
