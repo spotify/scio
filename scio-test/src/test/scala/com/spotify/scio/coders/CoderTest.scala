@@ -30,6 +30,7 @@ import org.apache.beam.sdk.util.SerializableUtils
 
 import scala.collection.JavaConverters._
 import scala.collection.{mutable => mut}
+import java.io.ByteArrayInputStream
 
 final case class UserId(bytes: Seq[Byte])
 final case class User(id: UserId, username: String, email: String)
@@ -125,6 +126,17 @@ final class CoderTest extends AnyFlatSpec with Matchers {
 
     Right(1) coderShould notFallback()
     Left(1) coderShould notFallback()
+    mut.Set(s: _*) coderShould notFallback()
+  }
+
+  it should "have a Coder for Nothing" in {
+    val bnc = CoderMaterializer.beamWithDefault[Nothing](Coder[Nothing])
+    bnc
+      .asInstanceOf[BCoder[Any]]
+      .encode(null, null) shouldBe (()) // make sure the code does nothing
+    an[IllegalStateException] should be thrownBy {
+      bnc.decode(new ByteArrayInputStream(Array()))
+    }
   }
 
   it should "support Java collections" in {
@@ -167,6 +179,7 @@ final class CoderTest extends AnyFlatSpec with Matchers {
     coderIsSerializable(Coder.gen[DummyCC])
     coderIsSerializable[com.spotify.scio.avro.User]
     coderIsSerializable[NestedA]
+    coderIsSerializable[Nothing]
   }
 
   it should "support Avro's SpecificRecordBase" in {
@@ -494,6 +507,7 @@ final class CoderTest extends AnyFlatSpec with Matchers {
     import RecursiveCase._
     Recursive(1, Option(Recursive(2, None))) coderShould roundtrip()
   }
+
 }
 
 object RecursiveCase {
