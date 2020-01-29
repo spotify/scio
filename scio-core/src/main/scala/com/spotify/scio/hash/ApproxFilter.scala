@@ -53,6 +53,12 @@ sealed trait ApproxFilter[T] extends Serializable {
   val expectedFpp: Double
 }
 
+/**
+ * Settings in case the elements need to be partitioned into multiple [[ApproxFilter]]s to
+ * maintain the desired `fpp` and size.
+ */
+final case class PartitionSettings(partitions: Int, expectedInsertions: Long)
+
 /** A trait for all [[ApproxFilter]] companion objects. */
 sealed trait ApproxFilterCompanion {
   private val logger = LoggerFactory.getLogger(this.getClass)
@@ -65,6 +71,16 @@ sealed trait ApproxFilterCompanion {
 
   /** Type of the [[ApproxFilter]] implementation. */
   type Filter[T] <: ApproxFilter[T]
+
+  /**
+   * Compute partition settings so that `expectedInsertions` can be done over one or more
+   * [[ApproxFilter]]s while maintaining `fpp` and `maxBytes` in each filter.
+   *
+   * For example, when `expectedInsertions = 1L << 27` and `fpp = 0.01`, a Guava
+   * [[com.google.common.hash.BloomFilter BloomFilter]] needs 1286484758 bits or 153MB, which
+   * exceeds the default side input cache size in Dataflow.
+   */
+  def partitionSettings(expectedInsertions: Long, fpp: Double, maxBytes: Int): PartitionSettings
 
   // for Scala collections
 
@@ -200,6 +216,23 @@ object BloomFilter extends ApproxFilterCompanion {
   override type Hash[T] = g.Funnel[T]
   override type Filter[T] = BloomFilter[T]
 
+  override def partitionSettings(expectedInsertions: Long, fpp: Double, maxBytes: Int): PartitionSettings = {
+    // empirical scaling factor to ensure the filter is not completely saturated
+    // see [[BF.contains]]
+    val n = (expectedInsertions * 1.1).toLong
+
+    // see [[BloomFilter.optimalNumOfBits]]
+    val optimalNumOfBits =
+      (-n * 1.1 * math.log(fpp) / (math.log(2) * math.log(2))).toLong
+
+    // given a constant fpp, optimalNumOfBits scales linearly with expectedInsertions
+    val maxBits = maxBytes.toLong * 8
+    val partitions = math.ceil(optimalNumOfBits.toDouble / maxBits).toInt
+    val capacity = math.ceil(n.toDouble / partitions).toLong
+
+    PartitionSettings(partitions, capacity)
+  }
+
   private class BloomFilterCoder[T](implicit val hash: Hash[T]) extends AtomicCoder[Filter[T]] {
     override def encode(value: Filter[T], outStream: OutputStream): Unit =
       value.impl.writeTo(outStream)
@@ -235,10 +268,7 @@ class ABloomFilter[T: a.Hash128] private (private val impl: a.BF[T]) extends App
   override val expectedFpp: Double = if (impl.density > 0.95) {
     1.0
   } else {
-    scala.math.pow(
-      1 - scala.math.exp(-impl.numHashes * approxElementCount * 1.1 / impl.width),
-      impl.numHashes
-    )
+    math.pow(1 - math.exp(-impl.numHashes * approxElementCount * 1.1 / impl.width), impl.numHashes)
   }
 }
 
@@ -246,6 +276,38 @@ class ABloomFilter[T: a.Hash128] private (private val impl: a.BF[T]) extends App
 object ABloomFilter extends ApproxFilterCompanion {
   override type Hash[T] = a.Hash128[T]
   override type Filter[T] = ABloomFilter[T]
+
+  override def partitionSettings(expectedInsertions: Long, fpp: Double, maxBytes: Int): PartitionSettings = {
+    // at fpp = 0.01, double to int rounding error happens when numEntries > (1 << 27)
+    // e.g.:
+    // let e(n) = estimateWith(1<<n, 0.01).toDouble
+    // e(27) / e(26) == 1.999999998445376 ~= 2.0
+    // e(28) / e(27) == 1.6692647401973613 < 2.0
+    // also, e(27) = 1286484759 bits = 153MB, hitting the limit of side input cache
+    // set numEntries upper bound to 1 << 27 to avoid high false positive
+    def estimateWidth(numEntries: Int, fpProb: Double): Int =
+      math
+        .ceil(-numEntries * math.log(fpProb) / math.log(2) / math.log(2))
+        .toInt
+
+    // upper bound of n as 2^x, e.g. upper(128) == 128, upper(129) == 256
+    def upper(n: Int): Int = 1 << (0 to 27).find(1 << _ >= n).get
+
+    // cap capacity between [minSize, maxSize] and find upper bound of 2^x
+    val (minSize, maxSize) = (2048, 1 << 27)
+    var capacity = upper(math.max(math.min(expectedInsertions, maxSize).toInt, minSize))
+
+    // find a width with the given capacity
+    var width = estimateWidth(capacity, fpp)
+    while (width == Int.MaxValue) {
+      capacity = capacity >> 1
+      width = estimateWidth(capacity, fpp)
+    }
+
+    // see [[BF.contains]] about the 1.1 factor
+    val partitions = math.ceil(expectedInsertions * 1.1 / capacity).toInt
+    PartitionSettings(partitions, capacity)
+  }
 
   // naive implementation, encodes all 4 instances, e.g. BFZero, BFItem, BFSparse, BFInstance as
   // dense bit set
