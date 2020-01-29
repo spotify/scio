@@ -43,7 +43,7 @@ import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Immutabl
 /**
  * {@link org.apache.beam.sdk.extensions.smb.BucketMetadata} for Avro {@link GenericRecord} records.
  */
-class AvroBucketMetadata<K, V extends GenericRecord> extends BucketMetadata<K, V> {
+public class AvroBucketMetadata<K, V extends GenericRecord> extends BucketMetadata<K, V> {
 
   @JsonProperty private final String keyField;
 

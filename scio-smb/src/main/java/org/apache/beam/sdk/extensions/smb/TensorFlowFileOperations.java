@@ -33,7 +33,7 @@ import org.tensorflow.example.Example;
  * {@link org.apache.beam.sdk.extensions.smb.FileOperations} implementation for TensorFlow TFRecord
  * files with TensorFlow {@link Example} records.
  */
-class TensorFlowFileOperations extends FileOperations<Example> {
+public class TensorFlowFileOperations extends FileOperations<Example> {
 
   private TensorFlowFileOperations(Compression compression) {
     super(compression, MimeTypes.BINARY);

@@ -42,7 +42,7 @@ import org.apache.beam.sdk.util.MimeTypes;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Supplier;
 
 /** {@link org.apache.beam.sdk.extensions.smb.FileOperations} implementation for Avro files. */
-class AvroFileOperations<ValueT> extends FileOperations<ValueT> {
+public class AvroFileOperations<ValueT> extends FileOperations<ValueT> {
   private static final CodecFactory DEFAULT_CODEC = CodecFactory.snappyCodec();
 
   private final Class<ValueT> recordClass;

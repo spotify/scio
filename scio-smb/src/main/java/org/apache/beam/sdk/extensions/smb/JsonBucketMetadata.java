@@ -33,7 +33,7 @@ import org.apache.beam.sdk.transforms.display.DisplayData.Builder;
  * {@link org.apache.beam.sdk.extensions.smb.BucketMetadata} for BigQuery {@link TableRow} JSON
  * records.
  */
-class JsonBucketMetadata<K> extends BucketMetadata<K, TableRow> {
+public class JsonBucketMetadata<K> extends BucketMetadata<K, TableRow> {
 
   @JsonProperty private final String keyField;
 
