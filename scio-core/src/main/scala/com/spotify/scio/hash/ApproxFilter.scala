@@ -26,27 +26,75 @@ import com.twitter.{algebird => a}
 import org.apache.beam.sdk.coders.{AtomicCoder, VarIntCoder, VarLongCoder}
 import org.slf4j.LoggerFactory
 
+/**
+ * An approximate filter for instances of `T`, e.g. a Bloom filter. A Bloom filter offers an
+ * approximate containment test with one-sided error: if it claims that an element is contained in
+ * it, this might be in error, but if it claims that an element is not contained in it, then this
+ * is definitely true.
+ */
 sealed trait ApproxFilter[T] extends Serializable {
+  /**
+   * Return `true` if the element might have been put in this filter, `false` if this is definitely
+   * not the case.
+   */
   def mightContain(elem: T): Boolean
 
+  /**
+   * Return an estimate for the total number of distinct elements that have been added to this
+   * [[ApproxFilter]]. This approximation is reasonably accurate if it does not exceed the value of
+   * `expectedInsertions` that was used when constructing the filter.
+   */
   val approxElementCount: Long
+
+  /**
+   * Return the probability that [[mightContain]] will erroneously return `true` for an object
+   * that has not actually been put in the [[ApproxFilter]].
+   */
   val expectedFpp: Double
 }
 
+/** A trait for all [[ApproxFilter]] companion objects. */
 sealed trait ApproxFilterCompanion {
   private val logger = LoggerFactory.getLogger(this.getClass)
 
+  /**
+   * Type of the hashing function for [[ApproxFilter]] elements, e.g. Guava
+   * [[com.google.common.hash.Funnel Funnel]] or Algebird [[com.twitter.algebird.Hash128 Hash128]].
+   */
   type Hash[T]
+
+  /** Type of the [[ApproxFilter]] implementation. */
   type Filter[T] <: ApproxFilter[T]
 
   // for Scala collections
 
+  /**
+   * Creates an [[ApproxFilter]] from an [[Iterable]] with the collection size as
+   * `expectedInsertions` and default `fpp` of 0.03.
+   *
+   * Note that overflowing an [[ApproxFilter]] with significantly more elements than specified,
+   * will result in its saturation, and a sharp deterioration of its false positive probability.
+   */
   final def create[T: Hash](elems: Iterable[T]): Filter[T] =
     create(elems, elems.size)
 
+  /**
+   * Creates an [[ApproxFilter]] from an [[Iterable]] with the expected number of insertions and
+   * default `fpp` of 0.03.
+   *
+   * Note that overflowing an [[ApproxFilter]] with significantly more elements than specified,
+   * will result in its saturation, and a sharp deterioration of its false positive probability.
+   */
   final def create[T: Hash](elems: Iterable[T], expectedInsertions: Long): Filter[T] =
     create(elems, expectedInsertions, 0.03)
 
+  /**
+   * Creates an [[ApproxFilter]] from an [[Iterable]] with the expected number of insertions and
+   * expected false positive probability.
+   *
+   * Note that overflowing an [[ApproxFilter]] with significantly more elements than specified,
+   * will result in its saturation, and a sharp deterioration of its false positive probability.
+   */
   final def create[T: Hash](
     elems: Iterable[T],
     expectedInsertions: Long,
@@ -74,19 +122,46 @@ sealed trait ApproxFilterCompanion {
 
   // for SCollection, naive implementation with group-all
 
+  /**
+   * [[Coder]] for the [[ApproxFilter]] implementation.
+   *
+   * Note that [[Hash]] should be supplied at compile time and not serialized since it might not
+   * have deterministic serialization.
+   */
   implicit def coder[T: Hash]: Coder[Filter[T]]
 
+  /**
+   * Creates an [[ApproxFilter]] from an [[SCollection]] with the collection size as
+   * `expectedInsertions` and default `fpp` of 0.03.
+   *
+   * Note that overflowing an [[ApproxFilter]] with significantly more elements than specified,
+   * will result in its saturation, and a sharp deterioration of its false positive probability.
+   */
   final def create[T: Hash](elems: SCollection[T]): SCollection[Filter[T]] =
     // size is unknown, count after groupBy
     create(elems, 0)
 
+  /**
+   * Creates an [[ApproxFilter]] from an [[SCollection]] with the expected number of insertions and
+   * default `fpp` of 0.03.
+   *
+   * Note that overflowing an [[ApproxFilter]] with significantly more elements than specified,
+   * will result in its saturation, and a sharp deterioration of its false positive probability.
+   */
   final def create[T: Hash](
     elems: SCollection[T],
     expectedInsertions: Long
   ): SCollection[Filter[T]] =
     create(elems, expectedInsertions, 0.03)
 
-  def create[T: Hash](
+  /**
+   * Creates an [[ApproxFilter]] from an [[SCollection]] with the expected number of insertions and
+   * expected false positive probability.
+   *
+   * Note that overflowing an [[ApproxFilter]] with significantly more elements than specified,
+   * will result in its saturation, and a sharp deterioration of its false positive probability.
+   */
+  final def create[T: Hash](
     elems: SCollection[T],
     expectedInsertions: Long,
     fpp: Double
@@ -106,6 +181,13 @@ sealed trait ApproxFilterCompanion {
 // Guava Bloom Filter
 ////////////////////////////////////////////////////////////////////////////////
 
+/**
+ * An [[ApproxFilter]] implementation backed by a Guava
+ * [[com.google.common.hash.BloomFilter BloomFilter]].
+ *
+ * Import `magnolify.guava.auto._` to get common instances of Guava
+ * [[com.google.common.hash.Funnel Funnel]]s.
+ */
 class BloomFilter[T: g.Funnel] private (private val impl: g.BloomFilter[T])
     extends ApproxFilter[T] {
   override def mightContain(elem: T): Boolean = impl.mightContain(elem)
@@ -113,6 +195,7 @@ class BloomFilter[T: g.Funnel] private (private val impl: g.BloomFilter[T])
   override val expectedFpp: Double = impl.expectedFpp()
 }
 
+/**  Companion object for [[BloomFilter]]. */
 object BloomFilter extends ApproxFilterCompanion {
   override type Hash[T] = g.Funnel[T]
   override type Filter[T] = BloomFilter[T]
@@ -142,6 +225,10 @@ object BloomFilter extends ApproxFilterCompanion {
 // Algebird Bloom Filter
 ////////////////////////////////////////////////////////////////////////////////
 
+/**
+ * An [[ApproxFilter]] implementation backed by an Algebird
+ * [[com.twitter.algebird.BloomFilter BloomFilter]].
+ */
 class ABloomFilter[T: a.Hash128] private (private val impl: a.BF[T]) extends ApproxFilter[T] {
   override def mightContain(elem: T): Boolean = impl.maybeContains(elem)
   override val approxElementCount: Long = impl.size.estimate
@@ -155,6 +242,7 @@ class ABloomFilter[T: a.Hash128] private (private val impl: a.BF[T]) extends App
   }
 }
 
+/**  Companion object for [[ABloomFilter]]. */
 object ABloomFilter extends ApproxFilterCompanion {
   override type Hash[T] = a.Hash128[T]
   override type Filter[T] = ABloomFilter[T]
