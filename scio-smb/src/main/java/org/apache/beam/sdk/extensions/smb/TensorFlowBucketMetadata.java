@@ -32,7 +32,7 @@ import org.tensorflow.example.FloatList;
 import org.tensorflow.example.Int64List;
 
 /** {@link BucketMetadata} for TensorFlow {@link Example} records. */
-class TensorFlowBucketMetadata<K> extends BucketMetadata<K, Example> {
+public class TensorFlowBucketMetadata<K> extends BucketMetadata<K, Example> {
 
   @JsonProperty private final String keyField;
 

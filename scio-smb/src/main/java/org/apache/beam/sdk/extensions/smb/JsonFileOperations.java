@@ -38,7 +38,7 @@ import org.apache.beam.sdk.util.MimeTypes;
  * {@link org.apache.beam.sdk.extensions.smb.FileOperations} implementation for text files with
  * BigQuery {@link TableRow} JSON records.
  */
-class JsonFileOperations extends FileOperations<TableRow> {
+public class JsonFileOperations extends FileOperations<TableRow> {
   private JsonFileOperations(Compression compression) {
     super(compression, compression == Compression.UNCOMPRESSED ? MimeTypes.TEXT : MimeTypes.BINARY);
   }
