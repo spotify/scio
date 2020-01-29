@@ -26,6 +26,7 @@ import org.scalatest.flatspec.AnyFlatSpec
 
 import scala.annotation.StaticAnnotation
 import scala.reflect.runtime.universe._
+import org.apache.avro.generic.GenericRecord
 
 object TypeProviderTest {
   @BigQueryType.toTable
@@ -446,14 +447,23 @@ class TypeProviderTest extends AnyFlatSpec with Matchers {
     TwentyThree.schema should not be null
   }
 
+  it should "support .avroSchema in companion object with >22 fields" in {
+    TwentyThree.avroSchema should not be null
+  }
+
   it should "support .fromTableRow in companion object with >22 fields" in {
     val cls = classOf[TableRow => TwentyThree]
     (cls isAssignableFrom TwentyThree.fromTableRow.getClass) shouldBe true
   }
 
-  it should "support .toTableRow in companion object with >22 fields" in {
-    val cls = classOf[TwentyThree => TableRow]
-    (cls isAssignableFrom TwentyThree.toTableRow.getClass) shouldBe true
+  it should "support .fromAvro in companion object with >22 fields" in {
+    val cls = classOf[GenericRecord => TwentyThree]
+    (cls isAssignableFrom TwentyThree.fromAvro.getClass) shouldBe true
+  }
+
+  it should "support .toAvro in companion object with >22 fields" in {
+    val cls = classOf[TwentyThree => GenericRecord]
+    (cls isAssignableFrom TwentyThree.toAvro.getClass) shouldBe true
   }
 
   @BigQueryType.toTable

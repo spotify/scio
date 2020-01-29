@@ -473,6 +473,7 @@ private[types] object TypeProvider {
     import c.universe._
     List(
       q"override def fromAvro: (_root_.org.apache.avro.generic.GenericRecord => $name) = ${p(c, SType)}.fromAvro[$name]",
+      q"override def toAvro: ($name => _root_.org.apache.avro.generic.GenericRecord) = ${p(c, SType)}.toAvro[$name]",
       q"override def fromTableRow: (${p(c, GModel)}.TableRow => $name) = ${p(c, SType)}.fromTableRow[$name]",
       q"override def toTableRow: ($name => ${p(c, GModel)}.TableRow) = ${p(c, SType)}.toTableRow[$name]"
     )

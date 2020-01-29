@@ -36,6 +36,15 @@ private[types] object ConverterProvider {
     c.Expr[GenericRecord => T](r)
   }
 
+  def toAvroImpl[T: c.WeakTypeTag](c: blackbox.Context): c.Expr[T => GenericRecord] = {
+    import c.universe._
+    val tpe = weakTypeOf[T]
+    val r = toAvroInternal(c)(tpe)
+    debug(s"ConverterProvider.toAvroInternal[$tpe]:")
+    debug(r)
+    c.Expr[T => GenericRecord](r)
+  }
+
   def fromTableRowImpl[T: c.WeakTypeTag](c: blackbox.Context): c.Expr[TableRow => T] = {
     import c.universe._
     val tpe = implicitly[c.WeakTypeTag[T]].tpe
@@ -145,6 +154,100 @@ private[types] object ConverterProvider {
 
     val tn = TermName("r")
     q"""(r: _root_.org.apache.avro.generic.GenericRecord) => {
+          import _root_.scala.collection.JavaConverters._
+          ${constructor(tpe, tn)}
+        }
+    """
+  }
+
+  private def toAvroInternal(c: blackbox.Context)(tpe: c.Type): c.Tree = {
+    import c.universe._
+
+    // =======================================================================
+    // Converter helpers
+    // =======================================================================
+
+    def cast(tree: Tree, tpe: Type): Tree = {
+      val provider: OverrideTypeProvider =
+        OverrideTypeProviderFinder.getProvider
+      tpe match {
+        case t if provider.shouldOverrideType(c)(t) => q"$tree.toString"
+        case t if t =:= typeOf[Boolean]             => tree
+        case t if t =:= typeOf[Int]                 => q"$tree.toLong"
+        case t if t =:= typeOf[Long]                => tree
+        case t if t =:= typeOf[Float]               => q"$tree.toDouble"
+        case t if t =:= typeOf[Double]              => tree
+        case t if t =:= typeOf[String]              => tree
+
+        case t if t =:= typeOf[BigDecimal] =>
+          q"_root_.com.spotify.scio.bigquery.Numeric($tree).toString"
+        case t if t =:= typeOf[ByteString]  => q"_root_.java.nio.ByteBuffer.wrap($tree.toByteArray)"
+        case t if t =:= typeOf[Array[Byte]] => q"_root_.java.nio.ByteBuffer.wrap($tree)"
+
+        case t if t =:= typeOf[Instant] => q"$tree.getMillis * 1000"
+        case t if t =:= typeOf[LocalDate] =>
+          q"_root_.com.spotify.scio.bigquery.Date($tree)"
+        case t if t =:= typeOf[LocalTime] =>
+          q"_root_.com.spotify.scio.bigquery.Time($tree)"
+        case t if t =:= typeOf[LocalDateTime] =>
+          q"_root_.com.spotify.scio.bigquery.DateTime($tree)"
+
+        case t if t =:= typeOf[Geography] =>
+          // different than nested record match below, even though this is a case class
+          q"$tree.wkt"
+
+        case t if isCaseClass(c)(t) => // nested records
+          val fn = TermName("r" + t.typeSymbol.name)
+          q"""{
+                val $fn = $tree
+                ${constructor(t, fn)}
+              }
+          """
+        case _ => c.abort(c.enclosingPosition, s"Unsupported type: $tpe")
+      }
+    }
+
+    def option(tree: Tree, tpe: Type): Tree =
+      q"if ($tree.isDefined) ${cast(q"$tree.get", tpe)} else null"
+
+    def list(tree: Tree, tpe: Type): Tree =
+      q"$tree.map(x => ${cast(q"x", tpe)}).asJava"
+
+    def field(symbol: Symbol, fn: TermName): (String, Tree) = {
+      val name = symbol.name.toString
+      val tpe = symbol.asMethod.returnType
+
+      val tree = q"$fn.${TermName(name)}"
+      if (tpe.erasure =:= typeOf[Option[_]].erasure) {
+        (name, option(tree, tpe.typeArgs.head))
+      } else if (tpe.erasure =:= typeOf[List[_]].erasure) {
+        (name, list(tree, tpe.typeArgs.head))
+      } else {
+        (name, cast(tree, tpe))
+      }
+    }
+
+    def constructor(tpe: Type, fn: TermName): Tree = {
+      val sets = tpe.erasure match {
+        case t if isCaseClass(c)(t) => getFields(c)(t).map(s => field(s, fn))
+        case _                      => c.abort(c.enclosingPosition, s"Unsupported type: $tpe")
+      }
+
+      val header =
+        q"val result = new _root_.org.apache.avro.generic.GenericRecordBuilder(${p(c, SType)}.avroSchemaOf[$tpe])"
+      val body = sets.map {
+        case (name, value) => q"result.set($name, $value)"
+      }
+      val footer = q"result.build()"
+      q"{$header; ..$body; $footer}"
+    }
+
+    // =======================================================================
+    // Entry point
+    // =======================================================================
+
+    val tn = TermName("r")
+    q"""(r: $tpe) => {
           import _root_.scala.collection.JavaConverters._
           ${constructor(tpe, tn)}
         }

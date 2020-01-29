@@ -85,6 +85,9 @@ object BigQueryType {
     /** Avro [[GenericRecord]] to `T` converter. */
     def fromAvro: GenericRecord => T
 
+    /** `T` to GenericRecord converter. */
+    def toAvro: T => GenericRecord
+
     /** TableRow to `T` converter. */
     def fromTableRow: TableRow => T
 
@@ -335,6 +338,12 @@ object BigQueryType {
    * @group converters
    */
   def fromAvro[T]: GenericRecord => T = macro ConverterProvider.fromAvroImpl[T]
+
+  /**
+   * Generate a converter function from the given case class `T` to [[GenericRecord]].
+   * @group converters
+   */
+  def toAvro[T]: T => GenericRecord = macro ConverterProvider.toAvroImpl[T]
 
   /**
    * Generate a converter function from [[TableRow]] to the given case class `T`.

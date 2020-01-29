@@ -68,7 +68,21 @@ final class ConverterProviderSpec
     }
   }
 
+  property("avro round trip required primitive types") {
+    forAll { r1: Required =>
+      val r2 = BigQueryType.fromAvro[Required](BigQueryType.toAvro[Required](r1))
+      EqDerivation[Required].eqv(r1, r2) shouldBe true
+    }
+  }
+
   property("round trip optional primitive types") {
+    forAll { r1: Optional =>
+      val r2 = BigQueryType.fromTableRow[Optional](BigQueryType.toTableRow[Optional](r1))
+      EqDerivation[Optional].eqv(r1, r2) shouldBe true
+    }
+  }
+
+  property("avro round trip optional primitive types") {
     forAll { r1: Optional =>
       val r2 = BigQueryType.fromTableRow[Optional](BigQueryType.toTableRow[Optional](r1))
       EqDerivation[Optional].eqv(r1, r2) shouldBe true
@@ -103,6 +117,13 @@ final class ConverterProviderSpec
     }
   }
 
+  property("avro round trip repeated primitive types") {
+    forAll { r1: Repeated =>
+      val r2 = BigQueryType.fromAvro[Repeated](BigQueryType.toAvro[Repeated](r1))
+      EqDerivation[Repeated].eqv(r1, r2) shouldBe true
+    }
+  }
+
   property("round trip required nested types") {
     forAll { r1: RequiredNested =>
       val r2 =
@@ -111,10 +132,26 @@ final class ConverterProviderSpec
     }
   }
 
+  property("avro round trip required nested types") {
+    forAll { r1: RequiredNested =>
+      val r2 =
+        BigQueryType.fromAvro[RequiredNested](BigQueryType.toAvro[RequiredNested](r1))
+      EqDerivation[RequiredNested].eqv(r1, r2) shouldBe true
+    }
+  }
+
   property("round trip optional nested types") {
     forAll { r1: OptionalNested =>
       val r2 =
         BigQueryType.fromTableRow[OptionalNested](BigQueryType.toTableRow[OptionalNested](r1))
+      EqDerivation[OptionalNested].eqv(r1, r2) shouldBe true
+    }
+  }
+
+  property("avro round trip optional nested types") {
+    forAll { r1: OptionalNested =>
+      val r2 =
+        BigQueryType.fromAvro[OptionalNested](BigQueryType.toAvro[OptionalNested](r1))
       EqDerivation[OptionalNested].eqv(r1, r2) shouldBe true
     }
   }
@@ -133,6 +170,14 @@ final class ConverterProviderSpec
     forAll { r1: RepeatedNested =>
       val r2 =
         BigQueryType.fromTableRow[RepeatedNested](BigQueryType.toTableRow[RepeatedNested](r1))
+      EqDerivation[RepeatedNested].eqv(r1, r2) shouldBe true
+    }
+  }
+
+  property("avro round trip repeated nested types") {
+    forAll { r1: RepeatedNested =>
+      val r2 =
+        BigQueryType.fromAvro[RepeatedNested](BigQueryType.toAvro[RepeatedNested](r1))
       EqDerivation[RepeatedNested].eqv(r1, r2) shouldBe true
     }
   }
