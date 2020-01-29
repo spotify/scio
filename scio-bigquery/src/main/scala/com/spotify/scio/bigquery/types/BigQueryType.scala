@@ -79,7 +79,7 @@ object BigQueryType {
     /** Case class schema. */
     def schema: TableSchema
 
-    /** Case class schema. */
+    /** Case class avro schema. */
     def avroSchema: Schema
 
     /** Avro [[GenericRecord]] to `T` converter. */
