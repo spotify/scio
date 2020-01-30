@@ -26,8 +26,14 @@ class ApproxFilterTest extends PipelineSpec {
   def test[C <: ApproxFilterCompanion](c: C)(implicit hash: c.Hash[Int]): Unit = {
     val filterName = c.getClass.getSimpleName.stripSuffix("$")
 
+    // make unique items to expectedInsertions ratio 1.1 to prevent filter saturation
+    // see [[com.twitter.algebird.BF.contains]] for the 1.1 empirical factor
+    val paddedInput = (1 to 1000) ++ (1 to 100)
+
     filterName should "work with defaults" in {
-      val bf = c.create(1 to 1000)
+      val bf = c.create(paddedInput)
+      bf.approxElementCount should be <= 1000L
+      bf.expectedFpp should be <= 0.03
       // no false negatives
       (1 to 1000).forall(bf.mightContain) shouldBe true
       // true fpp
@@ -36,7 +42,7 @@ class ApproxFilterTest extends PipelineSpec {
     }
 
     it should "work with custom expectedInsertions" in {
-      val bf = c.create(1 to 1000, 2000)
+      val bf = c.create(paddedInput, 2000)
       bf.approxElementCount should be <= 2000L
       bf.expectedFpp should be <= 0.03
       (1 to 1000).forall(bf.mightContain) shouldBe true
@@ -45,7 +51,7 @@ class ApproxFilterTest extends PipelineSpec {
     }
 
     it should "work with custom fpp" in {
-      val bf = c.create(1 to 1000, 2000, 0.01)
+      val bf = c.create(paddedInput, 2000, 0.01)
       bf.approxElementCount should be <= 2000L
       bf.expectedFpp should be <= 0.01
       (1 to 1000).forall(bf.mightContain) shouldBe true
@@ -56,37 +62,37 @@ class ApproxFilterTest extends PipelineSpec {
     it should "work with SCollection" in {
       runWithContext { sc =>
         implicit val coder = c.coder
-        c.create(sc.parallelize(1 to 1000)) should satisfySingleValue[c.Filter[Int]] { bf1 =>
-          val bf2 = c.create(1 to 1000)
+        c.create(sc.parallelize(paddedInput)) should satisfySingleValue[c.Filter[Int]] { bf1 =>
+          val bf2 = c.create(paddedInput)
           eq(bf1, bf2)
         }
       }
     }
 
     it should "support Iterable syntax" in {
-      eq((1 to 1000).asApproxFilter(c), c.create(1 to 1000))
-      eq((1 to 1000).asApproxFilter(c, 2000), c.create(1 to 1000, 2000))
-      eq((1 to 1000).asApproxFilter(c, 2000, 0.01), c.create(1 to 1000, 2000, 0.01))
+      eq(paddedInput.asApproxFilter(c), c.create(paddedInput))
+      eq(paddedInput.asApproxFilter(c, 2000), c.create(paddedInput, 2000))
+      eq(paddedInput.asApproxFilter(c, 2000, 0.01), c.create(paddedInput, 2000, 0.01))
     }
 
     it should "support SCollection syntax" in {
       runWithContext { sc =>
         implicit val coder = c.coder
-        val coll = sc.parallelize(1 to 1000)
+        val coll = sc.parallelize(paddedInput)
         coll.asApproxFilter(c) should satisfySingleValue[c.Filter[Int]] {
-          eq(_, c.create(1 to 1000))
+          eq(_, c.create(paddedInput))
         }
         coll.asApproxFilter(c, 2000) should satisfySingleValue[c.Filter[Int]] {
-          eq(_, c.create(1 to 1000, 2000))
+          eq(_, c.create(paddedInput, 2000))
         }
         coll.asApproxFilter(c, 2000, 0.01) should satisfySingleValue[c.Filter[Int]] {
-          eq(_, c.create(1 to 1000, 2000, 0.01))
+          eq(_, c.create(paddedInput, 2000, 0.01))
         }
       }
     }
 
     it should "support Java serialization" in {
-      val orig = c.create(1 to 1000, 2000, 0.01)
+      val orig = c.create(paddedInput, 2000, 0.01)
       val copy = SerializableUtils.clone(orig)
       copy.approxElementCount shouldBe orig.approxElementCount
       copy.expectedFpp shouldBe orig.expectedFpp
@@ -95,7 +101,7 @@ class ApproxFilterTest extends PipelineSpec {
 
     it should "support Coder serialization" in {
       val coder = CoderMaterializer.beamWithDefault(c.coder)
-      val orig = c.create(1 to 1000, 2000, 0.01)
+      val orig = c.create(paddedInput, 2000, 0.01)
       val copy = CoderUtils.clone(coder, orig)
       copy.approxElementCount shouldBe orig.approxElementCount
       copy.expectedFpp shouldBe orig.expectedFpp

@@ -23,30 +23,35 @@ import org.scalatest.matchers.should.Matchers
 
 class PartitionSettingsTest extends AnyFlatSpec with Matchers {
 
-  def test(expectedInsertions: Long, fpp: Double, maxBytes: Int): Unit = {
-    val settings = BloomFilter.partitionSettings(expectedInsertions, fpp, maxBytes)
+  def test[C <: ApproxFilterCompanion](c: C, expectedInsertions: Long, fpp: Double, maxBytes: Int)(implicit hash: c.Hash[Long]): Unit = {
+    val actualInsertions = (expectedInsertions / 1.1).toLong // to prevent filter saturation
+    val settings = c.partitionSettings(expectedInsertions, fpp, maxBytes)
     val filters = (0 until settings.partitions).map { i =>
-      val part = Range.Long(i, expectedInsertions, settings.partitions)
-      BloomFilter.create(part, settings.expectedInsertions, fpp)
+      val part = Range.Long(i, actualInsertions, settings.partitions)
+      c.create(part, settings.expectedInsertions, fpp)
     }
-    println(s"test($expectedInsertions, $fpp) = $settings")
-    filters.foreach { f =>
-      println(f.approxElementCount, f.expectedFpp)
-    }
+
     all(filters.map(_.approxElementCount)) should be <= settings.expectedInsertions
     all(filters.map(_.expectedFpp)) should be <= fpp
+    ()
   }
 
-  val kb = 1024
-  val mb = 1024 * 1024
+  def test[C <: ApproxFilterCompanion](c: C)(implicit hash: c.Hash[Long]): Unit = {
+    val kb = 1024
+    val mb = 1024 * 1024
 
-  "BloomFilter" should "support partition settings" in {
-    test(1L << 10, 0.01, 1 * kb)
-    test(1L << 10, 0.03, 1 * kb)
-    test(1L << 10, 0.05, 1 * kb)
+    val filterName = c.getClass.getSimpleName.stripSuffix("$")
 
-    test(1L << 20, 0.01, 1 * mb)
-    test(1L << 20, 0.03, 1 * mb)
-    test(1L << 20, 0.05, 1 * mb)
+    filterName should "support partitions" in {
+      test(c, 1L << 10, 0.01, 1 * kb)
+      test(c, 1L << 10, 0.03, 1 * kb)
+      test(c, 1L << 10, 0.05, 1 * kb)
+
+      test(c, 1L << 20, 0.01, 1 * mb)
+      test(c, 1L << 20, 0.03, 1 * mb)
+      test(c, 1L << 20, 0.05, 1 * mb)
+    }
   }
+
+  test(BloomFilter)
 }

@@ -217,18 +217,14 @@ object BloomFilter extends ApproxFilterCompanion {
   override type Filter[T] = BloomFilter[T]
 
   override def partitionSettings(expectedInsertions: Long, fpp: Double, maxBytes: Int): PartitionSettings = {
-    // empirical scaling factor to ensure the filter is not completely saturated
-    // see [[BF.contains]]
-    val n = (expectedInsertions * 1.1).toLong
-
     // see [[BloomFilter.optimalNumOfBits]]
     val optimalNumOfBits =
-      (-n * 1.1 * math.log(fpp) / (math.log(2) * math.log(2))).toLong
+      (-expectedInsertions * math.log(fpp) / (math.log(2) * math.log(2))).toLong
 
     // given a constant fpp, optimalNumOfBits scales linearly with expectedInsertions
     val maxBits = maxBytes.toLong * 8
     val partitions = math.ceil(optimalNumOfBits.toDouble / maxBits).toInt
-    val capacity = math.ceil(n.toDouble / partitions).toLong
+    val capacity = math.ceil(expectedInsertions.toDouble / partitions).toLong
 
     PartitionSettings(partitions, capacity)
   }
