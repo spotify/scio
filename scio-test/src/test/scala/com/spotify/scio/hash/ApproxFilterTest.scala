@@ -26,8 +26,8 @@ class ApproxFilterTest extends PipelineSpec {
   def test[C <: ApproxFilterCompanion](c: C)(implicit hash: c.Hash[Int]): Unit = {
     val filterName = c.getClass.getSimpleName.stripSuffix("$")
 
-    // make unique items to expectedInsertions ratio 1.1 to prevent filter saturation
-    // see [[com.twitter.algebird.BF.contains]] for the 1.1 empirical factor
+    // make `expectedInsertions` to number of unique items ratio 1.1 to prevent filter saturation
+    // see [[com.twitter.algebird.BF.contains]] for the empirical factor
     val paddedInput = (1 to 1000) ++ (1 to 100)
 
     filterName should "work with defaults" in {

@@ -73,7 +73,7 @@ sealed trait ApproxFilterCompanion {
   type Filter[T] <: ApproxFilter[T]
 
   /**
-   * Compute partition settings so that `expectedInsertions` can be done over one or more
+   * Compute partition settings so that `expectedInsertions` can be spread across one or more
    * [[ApproxFilter]]s while maintaining `fpp` and `maxBytes` in each filter.
    *
    * For example, when `expectedInsertions = 1L << 27` and `fpp = 0.01`, a Guava
@@ -82,7 +82,9 @@ sealed trait ApproxFilterCompanion {
    */
   def partitionSettings(expectedInsertions: Long, fpp: Double, maxBytes: Int): PartitionSettings
 
-  // for Scala collections
+  //////////////////////////////
+  // Scala collections
+  //////////////////////////////
 
   /**
    * Creates an [[ApproxFilter]] from an [[Iterable]] with the collection size as
@@ -91,6 +93,8 @@ sealed trait ApproxFilterCompanion {
    * Note that overflowing an [[ApproxFilter]] with significantly more elements than specified,
    * will result in its saturation, and a sharp deterioration of its false positive probability.
    */
+  // Empirically (see [[com.twitter.algebird.BF.contains]])
+  // `expectedInsertions` to number of unique elements ratio should be 1.1
   final def create[T: Hash](elems: Iterable[T]): Filter[T] =
     create(elems, elems.size)
 
@@ -136,7 +140,9 @@ sealed trait ApproxFilterCompanion {
     fpp: Double
   ): Filter[T]
 
+  ////////////////////////////////////////////////////////////
   // for SCollection, naive implementation with group-all
+  ////////////////////////////////////////////////////////////
 
   /**
    * [[Coder]] for the [[ApproxFilter]] implementation.
@@ -217,7 +223,7 @@ object BloomFilter extends ApproxFilterCompanion {
   override type Filter[T] = BloomFilter[T]
 
   override def partitionSettings(expectedInsertions: Long, fpp: Double, maxBytes: Int): PartitionSettings = {
-    // see [[BloomFilter.optimalNumOfBits]]
+    // see [[com.google.common.hash.BloomFilter.optimalNumOfBits]]
     val optimalNumOfBits =
       (-expectedInsertions * math.log(fpp) / (math.log(2) * math.log(2))).toLong
 
@@ -264,7 +270,7 @@ class ABloomFilter[T: a.Hash128] private (private val impl: a.BF[T]) extends App
   override val expectedFpp: Double = if (impl.density > 0.95) {
     1.0
   } else {
-    // similar to [[BF.contains]] but without the 1.1 factor to be mirror Guava BloomFilter
+    // similar to [[com.twitter.algebird.BF.contains]] but without the 1.1 factor to mirror Guava
     math.pow(1 - math.exp(-impl.numHashes * approxElementCount / impl.width), impl.numHashes)
   }
 }
@@ -275,7 +281,7 @@ object ABloomFilter extends ApproxFilterCompanion {
   override type Filter[T] = ABloomFilter[T]
 
   override def partitionSettings(expectedInsertions: Long, fpp: Double, maxBytes: Int): PartitionSettings = {
-    // see [[BloomFilter.optimalNumOfBits]]
+    // see [[com.google.common.hash.BloomFilter.optimalNumOfBits]]
     def optimalWidth(n: Long, p: Double): Long =
       math.ceil(-n * math.log(p) / (math.log(2) * math.log(2))).toLong
 
@@ -286,12 +292,10 @@ object ABloomFilter extends ApproxFilterCompanion {
     val partitions = math.ceil(optimalNumOfBits.toDouble / maxBits).toInt
     val capacity = math.ceil(expectedInsertions.toDouble / partitions).toLong
 
-    require(optimalWidth(capacity, fpp) <= Int.MaxValue)
     PartitionSettings(partitions, capacity)
   }
 
-  // naive implementation, encodes all 4 instances, e.g. BFZero, BFItem, BFSparse, BFInstance as
-  // dense bit set
+  // FIXME: encodes all 4 instances, BFZero, BFItem, BFSparse & BFInstance as dense bit set, slow
   private class ABloomFilterCoder[T: Hash] extends AtomicCoder[Filter[T]] {
     private val intCoder = VarIntCoder.of()
     private val longCoder = VarLongCoder.of()
@@ -335,6 +339,7 @@ object ABloomFilter extends ApproxFilterCompanion {
     fpp: Double
   ): Filter[T] = {
     require(expectedInsertions <= Int.MaxValue)
+    // FIXME: this sums over BFItems, slow
     val impl = a.BloomFilter(expectedInsertions.toInt, fpp).create(elems.iterator)
     new ABloomFilter[T](impl)
   }
