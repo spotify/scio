@@ -33,6 +33,7 @@ import org.slf4j.LoggerFactory
  * is definitely true.
  */
 sealed trait ApproxFilter[T] extends Serializable {
+
   /**
    * Return `true` if the element might have been put in this filter, `false` if this is definitely
    * not the case.
@@ -222,7 +223,11 @@ object BloomFilter extends ApproxFilterCompanion {
   override type Hash[T] = g.Funnel[T]
   override type Filter[T] = BloomFilter[T]
 
-  override def partitionSettings(expectedInsertions: Long, fpp: Double, maxBytes: Int): PartitionSettings = {
+  override def partitionSettings(
+    expectedInsertions: Long,
+    fpp: Double,
+    maxBytes: Int
+  ): PartitionSettings = {
     // see [[com.google.common.hash.BloomFilter.optimalNumOfBits]]
     val optimalNumOfBits =
       (-expectedInsertions * math.log(fpp) / (math.log(2) * math.log(2))).toLong
@@ -280,7 +285,11 @@ object ABloomFilter extends ApproxFilterCompanion {
   override type Hash[T] = a.Hash128[T]
   override type Filter[T] = ABloomFilter[T]
 
-  override def partitionSettings(expectedInsertions: Long, fpp: Double, maxBytes: Int): PartitionSettings = {
+  override def partitionSettings(
+    expectedInsertions: Long,
+    fpp: Double,
+    maxBytes: Int
+  ): PartitionSettings = {
     // see [[com.google.common.hash.BloomFilter.optimalNumOfBits]]
     def optimalWidth(n: Long, p: Double): Long =
       math.ceil(-n * math.log(p) / (math.log(2) * math.log(2))).toLong

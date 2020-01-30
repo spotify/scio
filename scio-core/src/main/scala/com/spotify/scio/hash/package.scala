@@ -28,6 +28,7 @@ import com.spotify.scio.values.SCollection
  */
 package object hash {
   implicit class ApproxFilterIterable[T](private val self: Iterable[T]) extends AnyVal {
+
     /**
      * Creates an [[ApproxFilter]] from this [[Iterable]] with the collection size as
      * `expectedInsertions` and default `fpp` of 0.03.
@@ -70,6 +71,7 @@ package object hash {
   }
 
   implicit class ApproxFilterSCollection[T](private val self: SCollection[T]) extends AnyVal {
+
     /**
      * Creates an [[ApproxFilter]] from this [[SCollection]] with the collection size as
      * `expectedInsertions` and default `fpp` of 0.03.
