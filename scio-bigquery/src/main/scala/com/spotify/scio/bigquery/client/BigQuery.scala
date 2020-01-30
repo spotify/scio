@@ -31,6 +31,7 @@ import com.google.auth.http.HttpCredentialsAdapter
 import com.google.auth.oauth2.GoogleCredentials
 import com.google.cloud.bigquery.storage.v1beta1.{BigQueryStorageClient, BigQueryStorageSettings}
 import com.google.cloud.hadoop.util.ChainingHttpRequestInitializer
+import com.spotify.scio.bigquery
 import com.spotify.scio.bigquery.client.BigQuery.Client
 import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
 import com.spotify.scio.bigquery.{BigQuerySysProps, BigQueryType, CREATE_IF_NEEDED, WRITE_EMPTY}
@@ -85,7 +86,7 @@ final class BigQuery private (val client: Client) {
     val rows = if (newSource == null) {
       // newSource is missing, T's companion object must have either table or query
       if (bqt.isTable) {
-        tables.rows(bqt.table.get)
+        tables.rows(bigquery.Table.Spec(bqt.table.get))
       } else if (bqt.isQuery) {
         query.rows(bqt.query.get)
       } else {
@@ -94,6 +95,7 @@ final class BigQuery private (val client: Client) {
     } else {
       // newSource can be either table or query
       Try(BigQueryHelpers.parseTableSpec(newSource)).toOption
+        .map(bigquery.Table.Ref)
         .map(tables.rows)
         .getOrElse(query.rows(newSource))
     }
