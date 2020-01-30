@@ -19,7 +19,7 @@ package com.spotify.scio.bigquery.client
 
 import com.google.api.client.googleapis.json.GoogleJsonResponseException
 import com.google.api.services.bigquery.model._
-import com.spotify.scio.bigquery
+import com.spotify.scio.bigquery.{Table => STable}
 import com.spotify.scio.bigquery.client.BigQuery.Client
 import com.spotify.scio.bigquery.{BigQueryUtil, TableRow}
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.TypedRead.QueryPriority
@@ -109,7 +109,7 @@ final private[client] class QueryOps(client: Client, tableService: TableOps, job
 
     newQueryJob(config).map { job =>
       jobService.waitForJobs(job)
-      tableService.rows(bigquery.Table.Ref(job.table))
+      tableService.rows(STable.Ref(job.table))
     }.get
   }
 
