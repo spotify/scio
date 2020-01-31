@@ -200,7 +200,7 @@ spotify/scio
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.8.1*
+<i class="md-icon" title="Version">label_outline</i> 0.8.2*
 </label>
 </li>
 </ul>
@@ -276,16 +276,7 @@ Coder[Int] // Try to find a Coder instance for Int
 <p>If you define a case class, the compiler can automatically derive a <code>Coder</code> for that class</p>
 <pre class="prettyprint"><code class="language-scala">case class Demo(i: Int, s: String, xs: List[Double])
 Coder[Demo]
-// res2: Coder[Demo] = Record(
-//   &quot;repl.Session.App.Demo&quot;,
-//   Array(
-//     (&quot;i&quot;, Beam(VarIntCoder)),
-//     (&quot;s&quot;, Beam(StringUtf8Coder)),
-//     (&quot;xs&quot;, Transform(Beam(DoubleCoder), &lt;function1&gt;))
-//   ),
-//   &lt;function1&gt;,
-//   &lt;function1&gt;
-// )
+// res2: Coder[Demo] = Ref(repl.Session.App.Demo)
 </code></pre>
 <p>sealed class hierarchy are also supported:</p>
 <pre class="prettyprint"><code class="language-scala">sealed trait Top
@@ -338,16 +329,7 @@ val localeCoder = Coder[java.util.Locale]
 <pre class="prettyprint"><code class="language-scala">import com.spotify.scio.coders._
 case class Demo2(i: Int, s: String, xs: List[java.util.Locale])
 val demoCoder = Coder[Demo2]
-// demoCoder: Coder[Demo2] = Record(
-//   &quot;repl.Session.App5.Demo2&quot;,
-//   Array(
-//     (&quot;i&quot;, Beam(VarIntCoder)),
-//     (&quot;s&quot;, Beam(StringUtf8Coder)),
-//     (&quot;xs&quot;, Transform(Fallback(java.util.Locale), &lt;function1&gt;))
-//   ),
-//   &lt;function1&gt;,
-//   &lt;function1&gt;
-// )
+// demoCoder: Coder[Demo2] = Ref(repl.Session.App5.Demo2)
 </code></pre>
 <p>Scio will still use a &ldquo;proper&rdquo; Coder for <code>Int</code>, <code>String</code> and <code>List</code>. Only the serialization of <code>Locale</code> instances is delegated to Kryo.</p>
 <h2><a href="#upgrading-to-v0-7-0-or-above-migrating-to-static-coder" name="upgrading-to-v0-7-0-or-above-migrating-to-static-coder" class="anchor"><span class="anchor-link"></span></a>Upgrading to <code>v0.7.0</code> or above: Migrating to static coder</h2>
@@ -360,7 +342,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.8.1*
+0.8.2*
 </span>
 </div>
 </article>

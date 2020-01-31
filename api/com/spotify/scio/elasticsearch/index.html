@@ -240,6 +240,10 @@ detects the query's dialect. To override this, start the query with either <code
       
       <p class="shortcomment cmt">Main package for Elasticsearch APIs.</p><div class="fullcomment"><div class="comment cmt"><p>Main package for Elasticsearch APIs. Import all.</p><pre><span class="kw">import</span> com.spotify.scio.elasticsearch._</pre></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../index.html" class="extype" name="com.spotify.scio">scio</a></dd></dl></div>
     </li><li class="current-entities indented4">
+                        <span class="separator"></span>
+                        <a class="trait" href="CoderInstances.html" title=""></a>
+                        <a href="CoderInstances.html" title="">CoderInstances</a>
+                      </li><li class="current-entities indented4">
                         <a class="object" href="ElasticsearchIO$.html" title=""></a>
                         <a class="class" href="ElasticsearchIO.html" title=""></a>
                         <a href="ElasticsearchIO.html" title="">ElasticsearchIO</a>
@@ -544,7 +548,7 @@ detects the query's dialect. To override this, start the query with either <code
           <span class="toggle">
             Linear Supertypes
           </span>
-          <div class="superTypes hiddenContent"><span class="extype" name="scala.AnyRef">AnyRef</span>, <span class="extype" name="scala.Any">Any</span></div>
+          <div class="superTypes hiddenContent"><a href="CoderInstances.html" class="extype" name="com.spotify.scio.elasticsearch.CoderInstances">CoderInstances</a>, <span class="extype" name="scala.AnyRef">AnyRef</span>, <span class="extype" name="scala.Any">Any</span></div>
         </div></div>
         
 
@@ -570,7 +574,7 @@ detects the query's dialect. To override this, start the query with either <code
                   <span class="filtertype">Inherited<br />
                   </span>
                   <ol id="linearization">
-                    <li class="in" name="com.spotify.scio.elasticsearch"><span>elasticsearch</span></li><li class="in" name="scala.AnyRef"><span>AnyRef</span></li><li class="in" name="scala.Any"><span>Any</span></li>
+                    <li class="in" name="com.spotify.scio.elasticsearch"><span>elasticsearch</span></li><li class="in" name="com.spotify.scio.elasticsearch.CoderInstances"><span>CoderInstances</span></li><li class="in" name="scala.AnyRef"><span>AnyRef</span></li><li class="in" name="scala.Any"><span>Any</span></li>
                   </ol>
                 </div><div class="ancestors">
               <span class="filtertype"></span>
@@ -592,7 +596,23 @@ detects the query's dialect. To override this, start the query with either <code
 
         <div id="types" class="types members">
               <h3>Type Members</h3>
-              <ol><li name="com.spotify.scio.elasticsearch.ElasticsearchIO" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+              <ol><li name="com.spotify.scio.elasticsearch.CoderInstances" visbl="pub" class="indented0 " data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="CoderInstancesextendsAnyRef"></a><a id="CoderInstances:CoderInstances"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/elasticsearch/CoderInstances.html" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="CoderInstances.html"><span class="name">CoderInstances</span></a><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
+      </span>
+      
+      
+    </li><li name="com.spotify.scio.elasticsearch.ElasticsearchIO" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="ElasticsearchIO[T]extendsScioIO[T]withProductwithSerializable"></a><a id="ElasticsearchIO[T]:ElasticsearchIO[T]"></a>
       <span class="permalink">
       <a href="../../../../com/spotify/scio/elasticsearch/ElasticsearchIO.html" title="Permalink">
@@ -648,7 +668,71 @@ detects the query's dialect. To override this, start the query with either <code
         <div class="values members">
               <h3>Value Members</h3>
               <ol>
-                <li name="com.spotify.scio.elasticsearch.ElasticsearchIO" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+                <li name="com.spotify.scio.elasticsearch.CoderInstances#deleteRequestCoder" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="deleteRequestCoder:com.spotify.scio.coders.Coder[org.elasticsearch.action.delete.DeleteRequest]"></a><a id="deleteRequestCoder:Coder[DeleteRequest]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/elasticsearch/index.html#deleteRequestCoder:com.spotify.scio.coders.Coder[org.elasticsearch.action.delete.DeleteRequest]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">implicit </span>
+        <span class="kind">val</span>
+      </span>
+      <span class="symbol">
+        <span class="name">deleteRequestCoder</span><span class="result">: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="org.elasticsearch.action.delete.DeleteRequest">DeleteRequest</span>]</span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="CoderInstances.html" class="extype" name="com.spotify.scio.elasticsearch.CoderInstances">CoderInstances</a></dd></dl></div>
+    </li><li name="com.spotify.scio.elasticsearch.CoderInstances#docWriteRequestCoder" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="docWriteRequestCoder:com.spotify.scio.coders.Coder[org.elasticsearch.action.DocWriteRequest[_]]"></a><a id="docWriteRequestCoder:Coder[DocWriteRequest[_]]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/elasticsearch/index.html#docWriteRequestCoder:com.spotify.scio.coders.Coder[org.elasticsearch.action.DocWriteRequest[_]]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">implicit </span>
+        <span class="kind">val</span>
+      </span>
+      <span class="symbol">
+        <span class="name">docWriteRequestCoder</span><span class="result">: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="org.elasticsearch.action.DocWriteRequest">DocWriteRequest</span>[_]]</span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="CoderInstances.html" class="extype" name="com.spotify.scio.elasticsearch.CoderInstances">CoderInstances</a></dd></dl></div>
+    </li><li name="com.spotify.scio.elasticsearch.CoderInstances#indexRequestCoder" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="indexRequestCoder:com.spotify.scio.coders.Coder[org.elasticsearch.action.index.IndexRequest]"></a><a id="indexRequestCoder:Coder[IndexRequest]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/elasticsearch/index.html#indexRequestCoder:com.spotify.scio.coders.Coder[org.elasticsearch.action.index.IndexRequest]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">implicit </span>
+        <span class="kind">val</span>
+      </span>
+      <span class="symbol">
+        <span class="name">indexRequestCoder</span><span class="result">: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="org.elasticsearch.action.index.IndexRequest">IndexRequest</span>]</span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="CoderInstances.html" class="extype" name="com.spotify.scio.elasticsearch.CoderInstances">CoderInstances</a></dd></dl></div>
+    </li><li name="com.spotify.scio.elasticsearch.CoderInstances#updateRequestCoder" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="updateRequestCoder:com.spotify.scio.coders.Coder[org.elasticsearch.action.update.UpdateRequest]"></a><a id="updateRequestCoder:Coder[UpdateRequest]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/elasticsearch/index.html#updateRequestCoder:com.spotify.scio.coders.Coder[org.elasticsearch.action.update.UpdateRequest]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">implicit </span>
+        <span class="kind">val</span>
+      </span>
+      <span class="symbol">
+        <span class="name">updateRequestCoder</span><span class="result">: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="org.elasticsearch.action.update.UpdateRequest">UpdateRequest</span>]</span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="CoderInstances.html" class="extype" name="com.spotify.scio.elasticsearch.CoderInstances">CoderInstances</a></dd></dl></div>
+    </li><li name="com.spotify.scio.elasticsearch.ElasticsearchIO" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="ElasticsearchIO"></a><a id="ElasticsearchIO:ElasticsearchIO"></a>
       <span class="permalink">
       <a href="../../../../com/spotify/scio/elasticsearch/ElasticsearchIO$.html" title="Permalink">
@@ -690,7 +774,9 @@ detects the query's dialect. To override this, start the query with either <code
         </div>
 
         <div id="inheritedMembers">
-        <div class="parent" name="scala.AnyRef">
+        <div class="parent" name="com.spotify.scio.elasticsearch.CoderInstances">
+              <h3>Inherited from <a href="CoderInstances.html" class="extype" name="com.spotify.scio.elasticsearch.CoderInstances">CoderInstances</a></h3>
+            </div><div class="parent" name="scala.AnyRef">
               <h3>Inherited from <span class="extype" name="scala.AnyRef">AnyRef</span></h3>
             </div><div class="parent" name="scala.Any">
               <h3>Inherited from <span class="extype" name="scala.Any">Any</span></h3>

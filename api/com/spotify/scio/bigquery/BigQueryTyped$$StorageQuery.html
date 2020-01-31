@@ -206,7 +206,7 @@ detects the query's dialect. To override this, start the query with either <code
         <span class="kind">case class</span>
       </span>
       <span class="symbol">
-        <span class="name">StorageQuery</span><span class="tparams">[<span name="T">T &lt;: <a href="types/BigQueryType$$HasAnnotation.html" class="extype" name="com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation">HasAnnotation</a></span>]</span><span class="params">(<span name="sqlQuery">sqlQuery: <a href="Query.html" class="extype" name="com.spotify.scio.bigquery.Query">Query</a></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="evidence$39">evidence$39: <span class="extype" name="scala.reflect.ClassTag">ClassTag</span>[<span class="extype" name="com.spotify.scio.bigquery.BigQueryTyped.StorageQuery.T">T</span>]</span>, <span name="evidence$40">evidence$40: <span class="extype" name="scala.reflect.api.TypeTags.TypeTag">scala.reflect.api.JavaUniverse.TypeTag</span>[<span class="extype" name="com.spotify.scio.bigquery.BigQueryTyped.StorageQuery.T">T</span>]</span>, <span name="evidence$41">evidence$41: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.bigquery.BigQueryTyped.StorageQuery.T">T</span>]</span>)</span><span class="result"> extends <a href="BigQueryIO.html" class="extype" name="com.spotify.scio.bigquery.BigQueryIO">BigQueryIO</a>[<span class="extype" name="com.spotify.scio.bigquery.BigQueryTyped.StorageQuery.T">T</span>] with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+        <span class="name">StorageQuery</span><span class="tparams">[<span name="T">T &lt;: <a href="types/BigQueryType$$HasAnnotation.html" class="extype" name="com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation">HasAnnotation</a></span>]</span><span class="params">(<span name="sqlQuery">sqlQuery: <a href="Query.html" class="extype" name="com.spotify.scio.bigquery.Query">Query</a></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="evidence$41">evidence$41: <span class="extype" name="scala.reflect.ClassTag">ClassTag</span>[<span class="extype" name="com.spotify.scio.bigquery.BigQueryTyped.StorageQuery.T">T</span>]</span>, <span name="evidence$42">evidence$42: <span class="extype" name="scala.reflect.api.TypeTags.TypeTag">scala.reflect.api.JavaUniverse.TypeTag</span>[<span class="extype" name="com.spotify.scio.bigquery.BigQueryTyped.StorageQuery.T">T</span>]</span>, <span name="evidence$43">evidence$43: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.bigquery.BigQueryTyped.StorageQuery.T">T</span>]</span>)</span><span class="result"> extends <a href="BigQueryIO.html" class="extype" name="com.spotify.scio.bigquery.BigQueryIO">BigQueryIO</a>[<span class="extype" name="com.spotify.scio.bigquery.BigQueryTyped.StorageQuery.T">T</span>] with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
       </span>
       </h4>
 
@@ -262,9 +262,9 @@ detects the query's dialect. To override this, start the query with either <code
         <div id="constructors" class="members">
               <h3>Instance Constructors</h3>
               <ol><li name="com.spotify.scio.bigquery.BigQueryTyped.StorageQuery#&lt;init&gt;" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="&lt;init&gt;(sqlQuery:com.spotify.scio.bigquery.Query)(implicitevidence$39:scala.reflect.ClassTag[T],implicitevidence$40:reflect.runtime.universe.TypeTag[T],implicitevidence$41:com.spotify.scio.coders.Coder[T]):com.spotify.scio.bigquery.BigQueryTyped.StorageQuery[T]"></a><a id="&lt;init&gt;:StorageQuery[T]"></a>
+      <a id="&lt;init&gt;(sqlQuery:com.spotify.scio.bigquery.Query)(implicitevidence$41:scala.reflect.ClassTag[T],implicitevidence$42:reflect.runtime.universe.TypeTag[T],implicitevidence$43:com.spotify.scio.coders.Coder[T]):com.spotify.scio.bigquery.BigQueryTyped.StorageQuery[T]"></a><a id="&lt;init&gt;:StorageQuery[T]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/bigquery/BigQueryTyped$$StorageQuery.html#&lt;init&gt;(sqlQuery:com.spotify.scio.bigquery.Query)(implicitevidence$39:scala.reflect.ClassTag[T],implicitevidence$40:reflect.runtime.universe.TypeTag[T],implicitevidence$41:com.spotify.scio.coders.Coder[T]):com.spotify.scio.bigquery.BigQueryTyped.StorageQuery[T]" title="Permalink">
+      <a href="../../../../com/spotify/scio/bigquery/BigQueryTyped$$StorageQuery.html#&lt;init&gt;(sqlQuery:com.spotify.scio.bigquery.Query)(implicitevidence$41:scala.reflect.ClassTag[T],implicitevidence$42:reflect.runtime.universe.TypeTag[T],implicitevidence$43:com.spotify.scio.coders.Coder[T]):com.spotify.scio.bigquery.BigQueryTyped.StorageQuery[T]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -409,6 +409,8 @@ detects the query's dialect. To override this, start the query with either <code
               
                 <span class="name">@native</span><span class="args">()</span>
               
+                <span class="name">@HotSpotIntrinsicCandidate</span><span class="args">()</span>
+              
         </dd></dl></div>
     </li><li name="scala.AnyRef#eq" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="eq(x$1:AnyRef):Boolean"></a><a id="eq(AnyRef):Boolean"></a>
@@ -426,28 +428,6 @@ detects the query's dialect. To override this, start the query with either <code
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
-    </li><li name="scala.AnyRef#finalize" visbl="prt" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="finalize():Unit"></a>
-      <span class="permalink">
-      <a href="../../../../com/spotify/scio/bigquery/BigQueryTyped$$StorageQuery.html#finalize():Unit" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">finalize</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
-      </span>
-      
-      <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected[<span class="extype" name="java.lang">lang</span>] </dd><dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
-                <span class="name">@throws</span><span class="args">(<span>
-      
-      <span class="symbol">classOf[java.lang.Throwable]</span>
-    </span>)</span>
-              
-        </dd></dl></div>
     </li><li name="scala.AnyRef#getClass" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="getClass():Class[_]"></a>
       <span class="permalink">
@@ -465,6 +445,8 @@ detects the query's dialect. To override this, start the query with either <code
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd><dt>Annotations</dt><dd>
                 <span class="name">@native</span><span class="args">()</span>
+              
+                <span class="name">@HotSpotIntrinsicCandidate</span><span class="args">()</span>
               
         </dd></dl></div>
     </li><li name="scala.Any#isInstanceOf" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
@@ -517,6 +499,8 @@ detects the query's dialect. To override this, start the query with either <code
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
                 <span class="name">@native</span><span class="args">()</span>
               
+                <span class="name">@HotSpotIntrinsicCandidate</span><span class="args">()</span>
+              
         </dd></dl></div>
     </li><li name="scala.AnyRef#notifyAll" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="notifyAll():Unit"></a>
@@ -535,6 +519,8 @@ detects the query's dialect. To override this, start the query with either <code
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
                 <span class="name">@native</span><span class="args">()</span>
+              
+                <span class="name">@HotSpotIntrinsicCandidate</span><span class="args">()</span>
               
         </dd></dl></div>
     </li><li name="com.spotify.scio.bigquery.BigQueryTyped.StorageQuery#read" visbl="prt" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
@@ -650,28 +636,6 @@ detects the query's dialect. To override this, start the query with either <code
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="" class="extype" name="com.spotify.scio.bigquery.BigQueryTyped.StorageQuery">StorageQuery</a> → <a href="../io/ScioIO.html" class="extype" name="com.spotify.scio.io.ScioIO">ScioIO</a></dd></dl></div>
     </li><li name="scala.AnyRef#wait" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="wait():Unit"></a>
-      <span class="permalink">
-      <a href="../../../../com/spotify/scio/bigquery/BigQueryTyped$$StorageQuery.html#wait():Unit" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier">final </span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">wait</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
-      </span>
-      
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
-                <span class="name">@throws</span><span class="args">(<span>
-      
-      <span class="defval" name="classOf[java.lang.InterruptedException]">...</span>
-    </span>)</span>
-              
-        </dd></dl></div>
-    </li><li name="scala.AnyRef#wait" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="wait(x$1:Long,x$2:Int):Unit"></a><a id="wait(Long,Int):Unit"></a>
       <span class="permalink">
       <a href="../../../../com/spotify/scio/bigquery/BigQueryTyped$$StorageQuery.html#wait(x$1:Long,x$2:Int):Unit" title="Permalink">
@@ -717,6 +681,28 @@ detects the query's dialect. To override this, start the query with either <code
                 <span class="name">@native</span><span class="args">()</span>
               
         </dd></dl></div>
+    </li><li name="scala.AnyRef#wait" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="wait():Unit"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/bigquery/BigQueryTyped$$StorageQuery.html#wait():Unit" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">wait</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
+                <span class="name">@throws</span><span class="args">(<span>
+      
+      <span class="defval" name="classOf[java.lang.InterruptedException]">...</span>
+    </span>)</span>
+              
+        </dd></dl></div>
     </li><li name="com.spotify.scio.bigquery.BigQueryTyped.StorageQuery#write" visbl="prt" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="write(data:com.spotify.scio.values.SCollection[T],params:StorageQuery.this.WriteP):com.spotify.scio.io.Tap[T]"></a><a id="write(SCollection[T],WriteP):Tap[T]"></a>
       <span class="permalink">
@@ -755,7 +741,36 @@ detects the query's dialect. To override this, start the query with either <code
 
         
 
-        
+        <div class="values members">
+              <h3>Deprecated Value Members</h3>
+              <ol><li name="scala.AnyRef#finalize" visbl="prt" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="finalize():Unit"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/bigquery/BigQueryTyped$$StorageQuery.html#finalize():Unit" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name deprecated" title="Deprecated: (Since version ) see corresponding Javadoc for more information.">finalize</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected[<span class="extype" name="java.lang">lang</span>] </dd><dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
+                <span class="name">@throws</span><span class="args">(<span>
+      
+      <span class="symbol">classOf[java.lang.Throwable]</span>
+    </span>)</span>
+              
+                <span class="name">@Deprecated</span>
+              
+                <span class="name">@deprecated</span>
+              
+        </dd><dt>Deprecated</dt><dd class="cmt"><p><i>(Since version )</i> see corresponding Javadoc for more information.</p></dd></dl></div>
+    </li></ol>
+            </div>
         </div>
 
         <div id="inheritedMembers">
