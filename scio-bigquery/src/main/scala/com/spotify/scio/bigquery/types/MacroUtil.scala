@@ -80,6 +80,7 @@ private[types] object MacroUtil {
   val GBQIO = "_root_.org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO"
   val SType = s"$SBQ.types.BigQueryType"
   val SUtil = s"$SBQ.BigQueryUtil"
+  val BigQueryUtils = s"_root_.org.apache.beam.sdk.io.gcp.bigquery.BigQueryUtils"
 
   def p(c: blackbox.Context, code: String): c.Tree = c.parse(code)
 }

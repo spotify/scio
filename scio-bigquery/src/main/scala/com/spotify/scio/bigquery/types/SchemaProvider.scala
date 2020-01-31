@@ -21,12 +21,17 @@ import com.google.api.services.bigquery.model.{TableFieldSchema, TableSchema}
 import com.google.protobuf.ByteString
 import com.spotify.scio.bigquery.types.MacroUtil._
 import com.spotify.scio.bigquery.validation.{OverrideTypeProvider, OverrideTypeProviderFinder}
+import org.apache.avro.Schema
+import org.apache.beam.sdk.io.gcp.bigquery.BigQueryUtils
 import org.joda.time.{Instant, LocalDate, LocalDateTime, LocalTime}
 
 import scala.collection.JavaConverters._
 import scala.reflect.runtime.universe._
 
 private[types] object SchemaProvider {
+  def avroSchemaOf[T: TypeTag]: Schema =
+    BigQueryUtils.toGenericAvroSchema(typeTag[T].tpe.toString, schemaOf[T].getFields)
+
   def schemaOf[T: TypeTag]: TableSchema = {
     val fields = typeOf[T].erasure match {
       case t if isCaseClass(t) => toFields(t)

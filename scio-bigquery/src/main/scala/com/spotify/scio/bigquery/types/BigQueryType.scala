@@ -18,6 +18,7 @@
 package com.spotify.scio.bigquery.types
 
 import com.google.api.services.bigquery.model.{TableRow, TableSchema}
+import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecord
 
 import scala.annotation.{compileTimeOnly, StaticAnnotation}
@@ -78,8 +79,14 @@ object BigQueryType {
     /** Case class schema. */
     def schema: TableSchema
 
+    /** Case class avro schema. */
+    def avroSchema: Schema
+
     /** Avro [[GenericRecord]] to `T` converter. */
     def fromAvro: GenericRecord => T
+
+    /** `T` to GenericRecord converter. */
+    def toAvro: T => GenericRecord
 
     /** TableRow to `T` converter. */
     def fromTableRow: TableRow => T
@@ -317,6 +324,11 @@ object BigQueryType {
   }
 
   /**
+   * Generate [[org.apache.avro.Schema Schema]] for a case class.
+   */
+  def avroSchemaOf[T: TypeTag]: Schema = SchemaProvider.avroSchemaOf[T]
+
+  /**
    * Generate [[com.google.api.services.bigquery.model.TableSchema TableSchema]] for a case class.
    */
   def schemaOf[T: TypeTag]: TableSchema = SchemaProvider.schemaOf[T]
@@ -326,6 +338,12 @@ object BigQueryType {
    * @group converters
    */
   def fromAvro[T]: GenericRecord => T = macro ConverterProvider.fromAvroImpl[T]
+
+  /**
+   * Generate a converter function from the given case class `T` to [[GenericRecord]].
+   * @group converters
+   */
+  def toAvro[T]: T => GenericRecord = macro ConverterProvider.toAvroImpl[T]
 
   /**
    * Generate a converter function from [[TableRow]] to the given case class `T`.
@@ -407,5 +425,11 @@ class BigQueryType[T: TypeTag] {
   def schema: TableSchema =
     Try(getField("schema").asInstanceOf[TableSchema]).toOption.getOrElse {
       BigQueryType.schemaOf[T]
+    }
+
+  /** Avro schema of `T`. */
+  def avroSchema: Schema =
+    Try(getField("avroSchema").asInstanceOf[Schema]).toOption.getOrElse {
+      BigQueryType.avroSchemaOf[T]
     }
 }

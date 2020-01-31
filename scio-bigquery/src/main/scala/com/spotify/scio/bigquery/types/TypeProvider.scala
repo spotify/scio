@@ -178,6 +178,8 @@ private[types] object TypeProvider {
         val desc = getTableDescription(c)(clazzDef.asInstanceOf[ClassDef])
         val defSchema =
           q"override def schema: ${p(c, GModel)}.TableSchema = ${p(c, SType)}.schemaOf[$cName]"
+        val defAvroSchema =
+          q"override def avroSchema: org.apache.avro.Schema =  ${p(c, SType)}.avroSchemaOf[$cName]"
         val defTblDesc =
           desc.headOption.map(d => q"override def tableDescription: _root_.java.lang.String = $d")
         val defToPrettyString =
@@ -211,7 +213,7 @@ private[types] object TypeProvider {
             ${companion(c)(
           cName,
           traits,
-          Seq(defSchema, defToPrettyString) ++ defTblDesc,
+          Seq(defSchema, defAvroSchema, defToPrettyString) ++ defTblDesc,
           taggedFields.asInstanceOf[Seq[Tree]].size,
           maybeCompanion
         )}
@@ -318,6 +320,8 @@ private[types] object TypeProvider {
           schema.setFactory(new JacksonFactory)
           q"override def schema: ${p(c, GModel)}.TableSchema = ${p(c, SUtil)}.parseSchema(${schema.toString})"
         }
+        val defAvroSchema =
+          q"override def avroSchema: org.apache.avro.Schema = ${p(c, BigQueryUtils)}.toGenericAvroSchema(${cName.toString}, this.schema.getFields)"
         val defToPrettyString =
           q"override def toPrettyString(indent: Int = 0): String = ${p(c, s"$SBQ.types.SchemaUtil")}.toPrettyString(this.schema, ${cName.toString}, indent)"
 
@@ -327,7 +331,7 @@ private[types] object TypeProvider {
             ${companion(c)(
           cName,
           traits ++ defTblTrait,
-          Seq(defSchema, defToPrettyString) ++ overrides ++ defTblDesc,
+          Seq(defSchema, defAvroSchema, defToPrettyString) ++ overrides ++ defTblDesc,
           fields.size,
           maybeCompanion
         )}
@@ -469,6 +473,7 @@ private[types] object TypeProvider {
     import c.universe._
     List(
       q"override def fromAvro: (_root_.org.apache.avro.generic.GenericRecord => $name) = ${p(c, SType)}.fromAvro[$name]",
+      q"override def toAvro: ($name => _root_.org.apache.avro.generic.GenericRecord) = ${p(c, SType)}.toAvro[$name]",
       q"override def fromTableRow: (${p(c, GModel)}.TableRow => $name) = ${p(c, SType)}.fromTableRow[$name]",
       q"override def toTableRow: ($name => ${p(c, GModel)}.TableRow) = ${p(c, SType)}.toTableRow[$name]"
     )
