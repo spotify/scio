@@ -93,7 +93,13 @@ public class AvroFileOperations<ValueT> extends FileOperations<ValueT> {
   protected FileIO.Sink<ValueT> createSink() {
     final AvroIO.Sink<ValueT> sink =
         recordClass == null
-            ? (AvroIO.Sink<ValueT>) AvroIO.sink(getSchema())
+            ? (AvroIO.Sink<ValueT>) AvroIO.sinkViaGenericRecords(getSchema(),
+                new AvroIO.RecordFormatter<ValueT>() {
+                  @Override
+                  public GenericRecord formatRecord(ValueT element, Schema schema) {
+                    return (GenericRecord) element;
+                  }
+                })
             : AvroIO.sink(recordClass);
     return sink.withCodec(codec.getCodec());
   }
