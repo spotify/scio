@@ -36,6 +36,7 @@ credentials ++= Seq(
 ## Past release names
 
 ### 0.8.x
+- [v0.8.1](https://github.com/spotify/scio/releases/tag/v0.8.1) - _"Bombarda Maxima"_
 - [v0.8.0](https://github.com/spotify/scio/releases/tag/v0.8.0) - _"Amato Animo Animato Animagus"_
 
 ### 0.7.x
