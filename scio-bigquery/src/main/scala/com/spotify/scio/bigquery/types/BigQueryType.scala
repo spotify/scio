@@ -413,6 +413,10 @@ class BigQueryType[T: TypeTag] {
   def fromAvro: GenericRecord => T =
     getField("fromAvro").asInstanceOf[GenericRecord => T]
 
+  /** `T` to [[GenericRecord]] converter. */
+  def toAvro: T => GenericRecord =
+    getField("toAvro").asInstanceOf[T => GenericRecord]
+
   /** TableRow to `T` converter. */
   def fromTableRow: TableRow => T =
     getField("fromTableRow").asInstanceOf[TableRow => T]
