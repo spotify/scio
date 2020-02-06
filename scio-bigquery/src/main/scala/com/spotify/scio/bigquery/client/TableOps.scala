@@ -57,88 +57,65 @@ final private[client] class TableOps(client: Client) {
   import TableOps._
 
   /** Get rows from a table. */
-  def rows(tableSpec: String): Iterator[TableRow] =
-    rows(bq.BigQueryHelpers.parseTableSpec(tableSpec))
+  def rows(table: STable): Iterator[TableRow] =
+    storageRows(table, TableReadOptions.getDefaultInstance)
 
-  /** Get rows from a table. */
-  def rows(table: TableReference): Iterator[TableRow] =
-    new Iterator[TableRow] {
-      private val iterator = bq.PatchedBigQueryTableRowIterator.fromTable(table, client.underlying)
-      private var _isOpen = false
-      private var _hasNext = false
-
-      private def init(): Unit = if (!_isOpen) {
-        iterator.open()
-        _isOpen = true
-        _hasNext = iterator.advance()
-      }
-
-      override def hasNext: Boolean = {
-        init()
-        _hasNext
-      }
-
-      override def next(): TableRow = {
-        init()
-        if (_hasNext) {
-          val r = iterator.getCurrent
-          _hasNext = iterator.advance()
-          r
-        } else {
-          throw new NoSuchElementException
-        }
-      }
-    }
+  def avroRows(table: STable): Iterator[GenericRecord] =
+    storageAvroRows(table, TableReadOptions.getDefaultInstance)
 
   def storageRows(table: STable, readOptions: TableReadOptions): Iterator[TableRow] =
     withBigQueryService { bqServices =>
-      val tableRefProto = TableReferenceProto.TableReference
-        .newBuilder()
-        .setDatasetId(table.ref.getDatasetId)
-        .setTableId(table.ref.getTableId)
-      if (table.ref.getProjectId != null) {
-        tableRefProto.setProjectId(table.ref.getProjectId)
-      }
-
-      val request = CreateReadSessionRequest
-        .newBuilder()
-        .setTableReference(tableRefProto)
-        .setReadOptions(readOptions)
-        .setParent(s"projects/${client.project}")
-        .setRequestedStreams(1)
-        .setFormat(DataFormat.AVRO)
-        .build()
-
-      val session = client.storage.createReadSession(request)
-      val readRowsRequest = ReadRowsRequest
-        .newBuilder()
-        .setReadPosition(
-          StreamPosition
-            .newBuilder()
-            .setStream(session.getStreams(0))
-        )
-        .build()
-
-      val schema = new Schema.Parser().parse(session.getAvroSchema().getSchema())
-      val reader = new GenericDatumReader[GenericRecord](schema)
-      val responses = client.storage.readRowsCallable().call(readRowsRequest).asScala
-
-      var decoder: BinaryDecoder = null
-      var gr: GenericRecord = null
-      responses.iterator.flatMap { resp =>
-        val bytes = resp.getAvroRows().getSerializedBinaryRows.toByteArray()
-        decoder = DecoderFactory.get().binaryDecoder(bytes, decoder)
-
-        val res = ArrayBuffer.empty[TableRow]
-        while (!decoder.isEnd()) {
-          gr = reader.read(gr, decoder)
-          val tb = bqServices.getTable(table.ref, readOptions.getSelectedFieldsList())
-          res += BigQueryAvroUtilsWrapper.convertGenericRecordToTableRow(gr, tb.getSchema)
-        }
-
-        res.toIterator
+      val tb = bqServices.getTable(table.ref, readOptions.getSelectedFieldsList)
+      storageAvroRows(table, readOptions).map { gr =>
+        BigQueryAvroUtilsWrapper.convertGenericRecordToTableRow(gr, tb.getSchema)
       }
     }
+
+  def storageAvroRows(table: STable, readOptions: TableReadOptions): Iterator[GenericRecord] = {
+    val tableRefProto = TableReferenceProto.TableReference
+      .newBuilder()
+      .setDatasetId(table.ref.getDatasetId)
+      .setTableId(table.ref.getTableId)
+    if (table.ref.getProjectId != null) {
+      tableRefProto.setProjectId(table.ref.getProjectId)
+    }
+
+    val request = CreateReadSessionRequest
+      .newBuilder()
+      .setTableReference(tableRefProto)
+      .setReadOptions(readOptions)
+      .setParent(s"projects/${client.project}")
+      .setRequestedStreams(1)
+      .setFormat(DataFormat.AVRO)
+      .build()
+
+    val session = client.storage.createReadSession(request)
+    val readRowsRequest = ReadRowsRequest
+      .newBuilder()
+      .setReadPosition(
+        StreamPosition
+          .newBuilder()
+          .setStream(session.getStreams(0))
+      )
+      .build()
+
+    val schema = new Schema.Parser().parse(session.getAvroSchema.getSchema)
+    val reader = new GenericDatumReader[GenericRecord](schema)
+    val responses = client.storage.readRowsCallable().call(readRowsRequest).asScala
+
+    var decoder: BinaryDecoder = null
+    responses.iterator.flatMap { resp =>
+      val bytes = resp.getAvroRows.getSerializedBinaryRows.toByteArray
+      decoder = DecoderFactory.get().binaryDecoder(bytes, decoder)
+
+      val res = ArrayBuffer.empty[GenericRecord]
+      while (!decoder.isEnd) {
+        res += reader.read(null, decoder)
+      }
+
+      res.toIterator
+    }
+  }
 
   /** Get schema from a table. */
   def schema(tableSpec: String): TableSchema =

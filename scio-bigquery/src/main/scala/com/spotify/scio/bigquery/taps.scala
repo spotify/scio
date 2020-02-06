@@ -48,7 +48,7 @@ final case class BigQueryTypedTap[T: Coder](table: Table, fn: TableRow => T) ext
 /** Tap for BigQuery tables. */
 final case class BigQueryTap(table: TableReference) extends Tap[TableRow] {
   override def value: Iterator[TableRow] =
-    BigQuery.defaultInstance().tables.rows(table)
+    BigQuery.defaultInstance().tables.rows(Table.Ref(table))
   override def open(sc: ScioContext): SCollection[TableRow] =
     sc.bigQueryTable(Table.Ref(table))
 }
