@@ -84,7 +84,7 @@ final class ConverterProviderSpec
 
   property("avro round trip optional primitive types") {
     forAll { r1: Optional =>
-      val r2 = BigQueryType.fromTableRow[Optional](BigQueryType.toTableRow[Optional](r1))
+      val r2 = BigQueryType.fromAvro[Optional](BigQueryType.toAvro[Optional](r1))
       EqDerivation[Optional].eqv(r1, r2) shouldBe true
     }
   }
