@@ -27,7 +27,7 @@ import scala.collection.JavaConverters._
 case object SparkContext extends RunnerContext {
   override def prepareOptions(options: PipelineOptions, artifacts: List[String]): Unit = {
     val classLoader = classOf[SparkRunner].getClassLoader
-    val filesToStage = RunnerContext.filesToStage(classLoader, artifacts)
+    val filesToStage = RunnerContext.filesToStage(options, classLoader, artifacts)
 
     options
       .as(classOf[SparkPipelineOptions])
