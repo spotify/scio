@@ -56,10 +56,10 @@ public class BigQueryServicesWrapper {
 
     public long insertAll(TableReference ref, List<TableRow> rowList) throws IOException, InterruptedException {
         List<ValueInSingleWindow<TableRow>> rows = rowList.stream().map(
-                r -> ValueInSingleWindow.of(r, BoundedWindow.TIMESTAMP_MIN_VALUE, GlobalWindow.INSTANCE, PaneInfo.NO_FIRING))
-                .collect(Collectors.toList());
+            r -> ValueInSingleWindow.of(r, BoundedWindow.TIMESTAMP_MIN_VALUE, GlobalWindow.INSTANCE, PaneInfo.NO_FIRING))
+            .collect(Collectors.toList());
         return bqServices.getDatasetService(bqOptions).insertAll(ref, rows, null, InsertRetryPolicy.alwaysRetry(),
-                new ArrayList<>(), ErrorContainer.TABLE_ROW_ERROR_CONTAINER, false, false);
+            new ArrayList<>(), ErrorContainer.TABLE_ROW_ERROR_CONTAINER, false, false, false);
     }
 
     public Table getTable(TableReference tableReference)
