@@ -79,13 +79,13 @@ val caseappVersion = "2.0.0-M9"
 val sparkVersion = "2.4.4"
 val caffeineVersion = "2.8.1"
 val bigtableClientVersion = "1.8.0"
-val generatedGrpcGaVersion = "1.43.0"
+val generatedGrpcGaVersion = "1.83.0"
 val generatedGrpcBetaVersion = "0.44.0"
 val googleClientsVersion = "1.28.0"
 val googleApiServicesBigQuery = s"v2-rev20181221-$googleClientsVersion"
 val bigdataossVersion = "1.9.16"
 val gaxVersion = "1.38.0"
-val googleAuthVersion = "0.12.0"
+val googleAuthVersion = "0.19.0"
 val bigQueryStorageVersion = "0.79.0-alpha"
 val httpCoreVersion = "4.4.11"
 val googleCloudSpannerVersion = "1.6.0"
@@ -387,6 +387,9 @@ lazy val `scio-core`: Project = project
     resources in Compile ++= Seq(
       (baseDirectory in ThisBuild).value / "build.sbt",
       (baseDirectory in ThisBuild).value / "version.sbt"
+    ),
+    dependencyOverrides ++= Seq(
+      "com.google.guava" % "guava" % guavaVersion
     ),
     libraryDependencies ++= Seq(
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
@@ -793,6 +796,9 @@ lazy val `scio-jdbc`: Project = project
   .settings(commonSettings)
   .settings(
     description := "Scio add-on for JDBC",
+    dependencyOverrides ++= Seq(
+      "com.google.guava" % "guava" % guavaVersion
+    ),
     libraryDependencies ++= Seq(
       "org.apache.beam" % "beam-sdks-java-io-jdbc" % beamVersion
     )
@@ -912,11 +918,15 @@ lazy val `scio-examples`: Project = project
   .settings(beamRunnerSettings)
   .settings(macroSettings)
   .settings(
+    dependencyOverrides ++= Seq(
+      "com.google.http-client" % "google-http-client" % googleClientsVersion
+    ),
     libraryDependencies ++= Seq(
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-extensions-google-cloud-platform-core" % beamVersion,
       "org.apache.avro" % "avro" % avroVersion,
       "com.google.cloud.datastore" % "datastore-v1-proto-client" % datastoreV1ProtoClientVersion,
+      "com.google.http-client" % "google-http-client" % googleClientsVersion,
       "com.google.api.grpc" % "proto-google-cloud-datastore-v1" % generatedGrpcBetaVersion,
       "com.google.api.grpc" % "proto-google-cloud-bigtable-v2" % generatedGrpcBetaVersion,
       "com.google.cloud.sql" % "mysql-socket-factory" % "1.0.15",
