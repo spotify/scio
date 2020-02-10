@@ -21,7 +21,7 @@ import java.io.{InputStream, OutputStream}
 
 import com.google.common.{hash => g}
 import com.spotify.scio.coders.Coder
-import com.spotify.scio.values.SCollection
+import com.spotify.scio.values.{SCollection, SideInput}
 import com.twitter.{algebird => a}
 import org.apache.beam.sdk.coders.{AtomicCoder, VarIntCoder, VarLongCoder}
 import org.slf4j.LoggerFactory
@@ -54,16 +54,6 @@ sealed trait ApproxFilter[T] extends Serializable {
   val expectedFpp: Double
 }
 
-/**
- * Settings in case the elements need to be partitioned into multiple [[ApproxFilter]]s to
- * maintain the desired `fpp` and size.
- */
-final private[scio] case class PartitionSettings(
-  partitions: Int,
-  expectedInsertions: Long,
-  sizeBytes: Long
-)
-
 /** A trait for all [[ApproxFilter]] companion objects. */
 sealed trait ApproxFilterCompanion {
   private val logger = LoggerFactory.getLogger(this.getClass)
@@ -78,6 +68,16 @@ sealed trait ApproxFilterCompanion {
   type Filter[T] <: ApproxFilter[T]
 
   /**
+   * Settings in case the elements need to be partitioned into multiple [[ApproxFilter]]s to
+   * maintain the desired `fpp` and size.
+   */
+  final private[hash] case class PartitionSettings(
+    partitions: Int,
+    expectedInsertions: Long,
+    sizeBytes: Long
+  )
+
+  /**
    * Compute partition settings so that `expectedInsertions` can be spread across one or more
    * [[ApproxFilter]]s while maintaining `fpp` and `maxBytes` in each filter.
    *
@@ -85,10 +85,10 @@ sealed trait ApproxFilterCompanion {
    * [[com.google.common.hash.BloomFilter BloomFilter]] needs 1286484758 bits or 153MB, which
    * exceeds the default side input cache size in Dataflow.
    */
-  private[scio] def partitionSettings(
+  private[hash] def partitionSettings(
     expectedInsertions: Long,
     fpp: Double,
-    bytes: Int
+    maxBytes: Int
   ): PartitionSettings
 
   //////////////////////////////
@@ -199,14 +199,44 @@ sealed trait ApproxFilterCompanion {
   ): SCollection[Filter[T]] = {
     implicit val elemCoder = Coder.beam(elems.internal.getCoder)
     elems.transform {
-      _.groupBy(_ => ())
-        .values
+      _.groupBy(_ => ()).values
         .map { xs =>
           val n = if (expectedInsertions > 0) expectedInsertions else xs.size
           create(xs, n, fpp)
         }
     }
   }
+
+  final private[scio] def createPartitionedSideInputs[T: Hash](
+    elems: SCollection[T],
+    expectedInsertions: Long,
+    fpp: Double
+  ): Seq[SideInput[Filter[T]]] =
+    if (elems.context.isTest) {
+      // use exact element count to avoid OOM from very large `expectedInsertions`
+      Seq(
+        create(elems, 0L, fpp)
+          .asSingletonSideInput(create(Nil, 1, fpp))
+      )
+    } else {
+      val settings = partitionSettings(expectedInsertions, fpp, 100 * 1024 * 1024)
+      logger.info(
+        "Partition settings for approximate filter side input of {} keys: " +
+          "partitions={}, expectedInsertions={}, sizeBytes={}",
+        Seq(
+          expectedInsertions,
+          settings.partitions,
+          settings.expectedInsertions,
+          settings.sizeBytes
+        )
+      )
+      elems
+        .hashPartition(settings.partitions)
+        .map { xs =>
+          create(xs, settings.expectedInsertions, fpp)
+            .asSingletonSideInput(create(Nil, settings.expectedInsertions, fpp))
+        }
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -232,7 +262,7 @@ object BloomFilter extends ApproxFilterCompanion {
   override type Hash[T] = g.Funnel[T]
   override type Filter[T] = BloomFilter[T]
 
-  override private[scio] def partitionSettings(
+  override private[hash] def partitionSettings(
     expectedInsertions: Long,
     fpp: Double,
     maxBytes: Int
@@ -294,7 +324,7 @@ object ABloomFilter extends ApproxFilterCompanion {
   override type Hash[T] = a.Hash128[T]
   override type Filter[T] = ABloomFilter[T]
 
-  override private[scio] def partitionSettings(
+  override private[hash] def partitionSettings(
     expectedInsertions: Long,
     fpp: Double,
     maxBytes: Int

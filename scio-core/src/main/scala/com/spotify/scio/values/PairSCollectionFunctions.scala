@@ -432,7 +432,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     koder: Coder[K],
     voder: Coder[V]
   ): Seq[(SCollection[(K, V)], SCollection[(K, V)], SCollection[(K, W)])] = {
-    val rhsBfSIs = rhsSColl.optimalKeysBloomFiltersAsSideInputs(rhsNumKeys, fpProb)
+    val rhsBfSIs = BloomFilter.createPartitionedSideInputs(self.keys, rhsNumKeys, fpProb)
     val n = rhsBfSIs.size
 
     val thisParts = thisSColl.hashPartitionByKey(n)
@@ -473,7 +473,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     koder: Coder[K],
     voder: Coder[V]
   ): SCollection[(K, (V, Iterable[A]))] = self.transform { sColl =>
-    val selfBfSideInputs = sColl.optimalKeysBloomFiltersAsSideInputs(thisNumKeys, fpProb)
+    val selfBfSideInputs = BloomFilter.createPartitionedSideInputs(sColl.keys, thisNumKeys, fpProb)
     val n = selfBfSideInputs.size
 
     val thisParts = sColl.hashPartitionByKey(n)
@@ -540,7 +540,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     koder: Coder[K],
     voder: Coder[V]
   ): SCollection[(K, (V, Iterable[A], Iterable[B]))] = self.transform { sColl =>
-    val selfBfSideInputs = sColl.optimalKeysBloomFiltersAsSideInputs(thisNumKeys, fpProb)
+    val selfBfSideInputs = BloomFilter.createPartitionedSideInputs(sColl.keys, thisNumKeys, fpProb)
     val n = selfBfSideInputs.size
 
     val thisParts = sColl.hashPartitionByKey(n)
@@ -588,32 +588,6 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     voder: Coder[V]
   ): SCollection[(K, (V, Iterable[A], Iterable[B]))] =
     sparseLookup(rhs1, rhs2, thisNumKeys, 0.01)
-
-  private[values] def optimalKeysBloomFiltersAsSideInputs(
-    thisNumKeys: Long,
-    fpp: Double
-  )(implicit funnel: Funnel[K], koder: Coder[K], voder: Coder[V]): Seq[SideInput[BloomFilter[K]]] =
-    if (self.context.isTest) {
-      // use exact element count to avoid OOM from very large `thisNumKeys`
-      val side = self.keys
-        .asApproxFilter(BloomFilter, 0, fpp)
-        .asSingletonSideInput(BloomFilter.create(Nil, 1, fpp))
-      Seq(side)
-    } else {
-      val settings = BloomFilter.partitionSettings(thisNumKeys, fpp, 100 * 1024 * 1024)
-      PairSCollectionFunctions.logger.info(
-        "Partition settings for Bloom filter side input of {} keys: " +
-          "partitions={}, expectedInsertions={}, sizeBytes={}",
-        Seq(thisNumKeys, settings.partitions, settings.expectedInsertions, settings.sizeBytes)
-      )
-
-      self.keys
-        .hashPartition(settings.partitions)
-        .map { me =>
-          me.asApproxFilter(BloomFilter, settings.expectedInsertions, fpp)
-            .asSingletonSideInput(BloomFilter.create(Nil, settings.expectedInsertions, fpp))
-        }
-    }
 
   // =======================================================================
   // Transformations
@@ -868,7 +842,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     fpProb: Double = 0.01
   )(implicit koder: Coder[K], voder: Coder[V], funnel: Funnel[K]): SCollection[(K, V)] =
     self.transform { me =>
-      val rhsBfs = rhs.map(k => (k, ())).optimalKeysBloomFiltersAsSideInputs(rhsNumKeys, fpProb)
+      val rhsBfs = BloomFilter.createPartitionedSideInputs(rhs, rhsNumKeys, fpProb)
       val n = rhsBfs.size
       val thisParts = me.hashPartitionByKey(n)
       val rhsParts = rhs.hashPartition(n)
