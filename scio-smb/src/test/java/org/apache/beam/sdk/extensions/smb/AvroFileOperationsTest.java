@@ -21,18 +21,23 @@ import static org.apache.beam.sdk.extensions.smb.TestUtils.fromFolder;
 import static org.apache.beam.sdk.transforms.display.DisplayDataMatchers.hasDisplayItem;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+
+import org.apache.avro.JsonProperties;
 import org.apache.avro.Schema;
 import org.apache.avro.file.CodecFactory;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.generic.GenericRecordBuilder;
+import org.apache.beam.sdk.coders.AvroCoder;
 import org.apache.beam.sdk.io.AvroGeneratedUser;
 import org.apache.beam.sdk.io.Compression;
 import org.apache.beam.sdk.io.fs.ResolveOptions.StandardResolveOptions;
 import org.apache.beam.sdk.io.fs.ResourceId;
 import org.apache.beam.sdk.transforms.display.DisplayData;
+import org.apache.beam.sdk.util.CoderUtils;
 import org.apache.beam.sdk.util.MimeTypes;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Lists;
 import org.hamcrest.MatcherAssert;
@@ -126,5 +131,42 @@ public class AvroFileOperationsTest {
         displayData, hasDisplayItem("codecFactory", CodecFactory.snappyCodec().getClass()));
     MatcherAssert.assertThat(
         displayData, hasDisplayItem("schema", AvroGeneratedUser.SCHEMA$.getFullName()));
+  }
+
+  // https://github.com/spotify/scio/pull/2649
+  @Test
+  public void testMap2649() throws Exception {
+    final Schema schema = Schema.createRecord(
+        "Record",
+        "",
+        "org.apache.beam.sdk.extensions.smb.avro",
+        false,
+        Lists.newArrayList(
+            new Schema.Field("map",
+                Schema.createUnion(
+                    Schema.create(Schema.Type.NULL),
+                    Schema.createMap(Schema.create(Schema.Type.STRING))
+                ),
+                "",
+                JsonProperties.NULL_VALUE)
+        ));
+
+    final AvroFileOperations<GenericRecord> fileOperations = AvroFileOperations.of(schema);
+    final ResourceId file =
+        fromFolder(output).resolve("map2649.avro", StandardResolveOptions.RESOLVE_FILE);
+
+    // String round-trips back as Utf8, causing the map to be treated as non-string-map in
+    // ReflectData.isNonStringMap
+    final GenericRecord record = CoderUtils.clone(AvroCoder.of(schema),
+        new GenericRecordBuilder(schema)
+            .set("map", Collections.singletonMap("key", "value"))
+            .build());
+
+    final FileOperations.Writer<GenericRecord> writer = fileOperations.createWriter(file);
+    writer.write(record);
+    writer.close();
+
+    GenericRecord actual = fileOperations.iterator(file).next();
+    Assert.assertEquals(record, actual);
   }
 }
