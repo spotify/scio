@@ -119,7 +119,8 @@ val beamSDKIODependencies = Def.settings(
   dependencyOverrides ++= Seq(
     "com.google.guava" % "guava" % guavaVersion,
     "com.google.api" % "gax" % gaxVersion,
-    "com.google.api" % "gax-grpc" % gaxVersion
+    "com.google.api" % "gax-grpc" % gaxVersion,
+    "com.google.http-client" % "google-http-client" % googleClientsVersion
   )
 )
 
