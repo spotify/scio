@@ -115,5 +115,4 @@ class ApproxFilterTest extends PipelineSpec {
   }
 
   test(BloomFilter)
-  test(ABloomFilter)
 }

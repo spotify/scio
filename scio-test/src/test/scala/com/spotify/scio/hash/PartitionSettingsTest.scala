@@ -56,5 +56,4 @@ class PartitionSettingsTest extends AnyFlatSpec with Matchers {
   }
 
   test(BloomFilter)
-  test(ABloomFilter)
 }

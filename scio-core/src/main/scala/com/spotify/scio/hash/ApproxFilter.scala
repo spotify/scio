@@ -22,8 +22,7 @@ import java.io.{InputStream, OutputStream}
 import com.google.common.{hash => g}
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.values.{SCollection, SideInput}
-import com.twitter.{algebird => a}
-import org.apache.beam.sdk.coders.{AtomicCoder, VarIntCoder, VarLongCoder}
+import org.apache.beam.sdk.coders.AtomicCoder
 import org.slf4j.LoggerFactory
 
 /**
@@ -297,98 +296,5 @@ object BloomFilter extends ApproxFilterCompanion {
     val impl = g.BloomFilter.create(hash, expectedInsertions, fpp)
     elems.foreach(impl.put)
     new BloomFilter[T](impl)
-  }
-}
-
-////////////////////////////////////////////////////////////////////////////////
-// Algebird Bloom Filter
-////////////////////////////////////////////////////////////////////////////////
-
-/**
- * An [[ApproxFilter]] implementation backed by an Algebird
- * [[com.twitter.algebird.BloomFilter BloomFilter]].
- */
-class ABloomFilter[T: a.Hash128] private (private val impl: a.BF[T]) extends ApproxFilter[T] {
-  override def mightContain(elem: T): Boolean = impl.maybeContains(elem)
-  override val approxElementCount: Long = impl.size.estimate
-  override val expectedFpp: Double = if (impl.density > 0.95) {
-    1.0
-  } else {
-    // similar to [[com.twitter.algebird.BF.contains]] but without the 1.1 factor to mirror Guava
-    math.pow(1 - math.exp(-impl.numHashes * approxElementCount / impl.width), impl.numHashes)
-  }
-}
-
-/**  Companion object for [[ABloomFilter]]. */
-object ABloomFilter extends ApproxFilterCompanion {
-  override type Hash[T] = a.Hash128[T]
-  override type Filter[T] = ABloomFilter[T]
-
-  override private[hash] def partitionSettings(
-    expectedInsertions: Long,
-    fpp: Double,
-    maxBytes: Int
-  ): PartitionSettings = {
-    // see [[com.google.common.hash.BloomFilter.optimalNumOfBits]]
-    def numBits(n: Long, p: Double) =
-      math.ceil(-n * math.log(p) / (math.log(2) * math.log(2))).toLong
-
-    val optimalNumOfBits = numBits(expectedInsertions, fpp)
-
-    // given a constant fpp, optimalNumOfBits scales linearly with expectedInsertions
-    val maxBits = maxBytes.toLong * 8
-    val partitions = math.ceil(optimalNumOfBits.toDouble / maxBits).toInt
-    val capacity = math.ceil(expectedInsertions.toDouble / partitions).toLong
-
-    PartitionSettings(partitions, capacity, numBits(capacity, fpp) / 8)
-  }
-
-  // FIXME: encodes all 4 instances, BFZero, BFItem, BFSparse & BFInstance as dense bit set, slow
-  private class ABloomFilterCoder[T: Hash] extends AtomicCoder[Filter[T]] {
-    private val intCoder = VarIntCoder.of()
-    private val longCoder = VarLongCoder.of()
-
-    override def encode(value: ABloomFilter[T], outStream: OutputStream): Unit = {
-      intCoder.encode(value.impl.numHashes, outStream)
-      intCoder.encode(value.impl.width, outStream)
-
-      val bits = value.impl.toBitSet.toBitMask
-      intCoder.encode(bits.length, outStream)
-      var i = 0
-      while (i < bits.length) {
-        longCoder.encode(bits(i), outStream)
-        i += 1
-      }
-    }
-
-    override def decode(inStream: InputStream): ABloomFilter[T] = {
-      val numHashes = intCoder.decode(inStream)
-      val width = intCoder.decode(inStream)
-      val hashes = a.BFHash(numHashes, width)
-
-      val n = intCoder.decode(inStream)
-      val bits = new Array[Long](n)
-      var i = 0
-      while (i < n) {
-        bits(i) = longCoder.decode(inStream)
-        i += 1
-      }
-      val bitSet = scala.collection.immutable.BitSet.fromBitMaskNoCopy(bits)
-      val impl = a.BFInstance(hashes, bitSet, width)
-      new ABloomFilter[T](impl)
-    }
-  }
-
-  implicit override def coder[T: Hash]: Coder[Filter[T]] = Coder.beam(new ABloomFilterCoder[T])
-
-  override protected def createImpl[T: Hash](
-    elems: Iterable[T],
-    expectedInsertions: Long,
-    fpp: Double
-  ): Filter[T] = {
-    require(expectedInsertions <= Int.MaxValue)
-    // FIXME: this sums over BFItems, slow
-    val impl = a.BloomFilter(expectedInsertions.toInt, fpp).create(elems.iterator)
-    new ABloomFilter[T](impl)
   }
 }
