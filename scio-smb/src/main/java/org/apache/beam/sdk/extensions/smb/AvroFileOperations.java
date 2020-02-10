@@ -93,7 +93,7 @@ public class AvroFileOperations<ValueT> extends FileOperations<ValueT> {
   protected FileIO.Sink<ValueT> createSink() {
     final AvroIO.Sink<ValueT> sink =
         recordClass == null
-            // https://github.com/spotify/scio/pull/2649
+            // https://github.com/spotify/scio/issues/2649
             // force GenericDatumWriter instead of ReflectDatumWriter
             ? (AvroIO.Sink<ValueT>) AvroIO.sinkViaGenericRecords(getSchema(),
                 new AvroIO.RecordFormatter<ValueT>() {
