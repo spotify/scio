@@ -133,7 +133,7 @@ public class AvroFileOperationsTest {
         displayData, hasDisplayItem("schema", AvroGeneratedUser.SCHEMA$.getFullName()));
   }
 
-  // https://github.com/spotify/scio/pull/2649
+  // https://github.com/spotify/scio/issues/2649
   @Test
   public void testMap2649() throws Exception {
     final Schema schema = Schema.createRecord(
