@@ -215,7 +215,7 @@ sealed trait ApproxFilterCompanion {
       // use exact element count to avoid OOM from very large `expectedInsertions`
       Seq(
         create(elems, 0L, fpp)
-          .asSingletonSideInput(create(Nil, 1, fpp))
+          .asSingletonSideInput(create(Nil, 1L, fpp))
       )
     } else {
       val settings = partitionSettings(expectedInsertions, fpp, 100 * 1024 * 1024)
@@ -233,7 +233,7 @@ sealed trait ApproxFilterCompanion {
         .hashPartition(settings.partitions)
         .map { xs =>
           create(xs, settings.expectedInsertions, fpp)
-            .asSingletonSideInput(create(Nil, settings.expectedInsertions, fpp))
+            .asSingletonSideInput(create(Nil, 1L, fpp))
         }
     }
 }
