@@ -31,6 +31,7 @@ import com.spotify.scio.options.ScioOptions
 import com.spotify.scio.testing._
 import com.spotify.scio.util._
 import com.spotify.scio.values._
+import org.apache.beam.runners.core.construction.resources.PipelineResources
 import org.apache.beam.sdk.Pipeline.PipelineExecutionException
 import org.apache.beam.sdk.PipelineResult.State
 import org.apache.beam.sdk.extensions.gcp.options.GcsOptions
@@ -40,7 +41,6 @@ import org.apache.beam.sdk.options._
 import org.apache.beam.sdk.transforms._
 import org.apache.beam.sdk.values._
 import org.apache.beam.sdk.{Pipeline, PipelineResult, io => beam}
-import org.apache.beam.runners.core.construction.PipelineResources
 import org.joda.time
 import org.joda.time.Instant
 import org.slf4j.LoggerFactory
@@ -105,23 +105,27 @@ private object RunnerContext {
 
   /** Compute list of local files to make available to workers. */
   def filesToStage(
+    pipelineOptions: PipelineOptions,
     classLoader: ClassLoader,
     extraLocalArtifacts: List[String]
   ): Iterable[String] = {
-    val finalLocalArtifacts = detectClassPathResourcesToStage(classLoader) ++ extraLocalArtifacts
+    val finalLocalArtifacts = detectClassPathResourcesToStage(pipelineOptions, classLoader) ++ extraLocalArtifacts
 
     logger.debug(s"Final list of extra artifacts: ${finalLocalArtifacts.mkString(":")}")
     finalLocalArtifacts
   }
 
   /** Borrowed from DataflowRunner. */
-  def detectClassPathResourcesToStage(classLoader: ClassLoader): Iterable[String] = {
+  def detectClassPathResourcesToStage(
+    pipelineOptions: PipelineOptions,
+    classLoader: ClassLoader
+  ): Iterable[String] = {
     // exclude jars from JAVA_HOME and files from current directory
     val javaHome = new File(CoreSysProps.Home.value).getCanonicalPath
     val userDir = new File(CoreSysProps.UserDir.value).getCanonicalPath
 
     val classPathJars = PipelineResources
-      .detectClassPathResourcesToStage(classLoader)
+      .detectClassPathResourcesToStage(classLoader, pipelineOptions)
       .asScala
       .filter(path => !path.startsWith(javaHome) && path != userDir)
 

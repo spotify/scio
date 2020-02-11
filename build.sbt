@@ -24,7 +24,7 @@ import bloop.integrations.sbt.BloopDefaults
 
 ThisBuild / turbo := true
 
-val beamVersion = "2.18.0"
+val beamVersion = "2.19.0"
 
 val algebirdVersion = "0.13.6"
 val annoy4sVersion = "0.9.0"
@@ -79,17 +79,19 @@ val caseappVersion = "2.0.0-M9"
 val sparkVersion = "2.4.4"
 val caffeineVersion = "2.8.1"
 val bigtableClientVersion = "1.8.0"
-val generatedGrpcGaVersion = "1.43.0"
+val generatedGrpcGaVersion = "1.83.0"
 val generatedGrpcBetaVersion = "0.44.0"
 val googleClientsVersion = "1.28.0"
-val googleApiServicesBigQuery = s"v2-rev20181221-$googleClientsVersion"
+val googleHttpClientsVersion = "1.33.0"
+val googleApiServicesBigQuery = s"v2-rev20181221-1.28.0"
 val bigdataossVersion = "1.9.16"
 val gaxVersion = "1.38.0"
-val googleAuthVersion = "0.12.0"
+val googleAuthVersion = "0.19.0"
 val bigQueryStorageVersion = "0.79.0-alpha"
 val httpCoreVersion = "4.4.11"
 val googleCloudSpannerVersion = "1.6.0"
 val datastoreV1ProtoClientVersion = "1.6.0"
+val opencensusVersion = "0.17.0"
 
 lazy val mimaSettings = Seq(
   mimaPreviousArtifacts :=
@@ -119,7 +121,15 @@ val beamSDKIODependencies = Def.settings(
   dependencyOverrides ++= Seq(
     "com.google.guava" % "guava" % guavaVersion,
     "com.google.api" % "gax" % gaxVersion,
-    "com.google.api" % "gax-grpc" % gaxVersion
+    "com.google.api" % "gax-grpc" % gaxVersion,
+    "com.google.http-client" % "google-http-client" % googleHttpClientsVersion,
+    "com.google.http-client" % "google-http-client-jackson2" % googleHttpClientsVersion,
+    "io.grpc" % "grpc-core" % grpcVersion,
+    "io.grpc" % "grpc-context" % grpcVersion,
+    "io.grpc" % "grpc-auth" % grpcVersion,
+    "io.grpc" % "grpc-netty" % grpcVersion,
+    "io.grpc" % "grpc-stub" % grpcVersion,
+    "io.opencensus" % "opencensus-api" % opencensusVersion
   )
 )
 
@@ -388,6 +398,9 @@ lazy val `scio-core`: Project = project
       (baseDirectory in ThisBuild).value / "build.sbt",
       (baseDirectory in ThisBuild).value / "version.sbt"
     ),
+    dependencyOverrides ++= Seq(
+      "com.google.guava" % "guava" % guavaVersion
+    ),
     libraryDependencies ++= Seq(
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
@@ -415,8 +428,8 @@ lazy val `scio-core`: Project = project
       "com.google.apis" % "google-api-services-bigquery" % googleApiServicesBigQuery,
       "com.google.api.grpc" % "grpc-google-cloud-pubsub-v1" % generatedGrpcGaVersion,
       "com.google.api.grpc" % "proto-google-cloud-datastore-v1" % generatedGrpcBetaVersion,
-      "com.google.http-client" % "google-http-client" % googleClientsVersion,
-      "com.google.http-client" % "google-http-client-jackson2" % googleClientsVersion,
+      "com.google.http-client" % "google-http-client" % googleHttpClientsVersion,
+      "com.google.http-client" % "google-http-client-jackson2" % googleHttpClientsVersion,
       "io.grpc" % "grpc-core" % grpcVersion,
       "io.grpc" % "grpc-auth" % grpcVersion,
       "io.grpc" % "grpc-netty" % grpcVersion,
@@ -553,9 +566,10 @@ lazy val `scio-bigquery`: Project = project
       "com.google.api" % "gax" % gaxVersion,
       "com.google.api-client" % "google-api-client" % googleClientsVersion,
       "com.google.apis" % "google-api-services-bigquery" % googleApiServicesBigQuery,
-      "com.google.api.grpc" % "proto-google-cloud-bigquerystorage-v1beta1" % generatedGrpcBetaVersion,
-      "com.google.http-client" % "google-http-client" % googleClientsVersion,
-      "com.google.http-client" % "google-http-client-jackson2" % googleClientsVersion,
+      "com.google.api.grpc" % "proto-google-cloud-bigquerystorage-v1beta1" % "0.83.0",
+      "com.google.http-client" % "google-http-client" % googleHttpClientsVersion,
+      "com.google.http-client" % "google-http-client-jackson" % googleClientsVersion,
+      "com.google.http-client" % "google-http-client-jackson2" % googleHttpClientsVersion,
       "com.google.auth" % "google-auth-library-credentials" % googleAuthVersion,
       "com.google.auth" % "google-auth-library-oauth2-http" % googleAuthVersion,
       "com.google.cloud" % "google-cloud-bigquerystorage" % bigQueryStorageVersion,
@@ -576,6 +590,7 @@ lazy val `scio-bigquery`: Project = project
       "org.hamcrest" % "hamcrest-core" % hamcrestVersion % "test,it",
       "org.hamcrest" % "hamcrest-library" % hamcrestVersion % "test,it"
     ),
+    beamSDKIODependencies,
     // Workaround for https://github.com/spotify/scio/issues/2308
     (Compile / doc) := Def.taskDyn {
       val default = (Compile / doc).taskValue
@@ -793,6 +808,9 @@ lazy val `scio-jdbc`: Project = project
   .settings(commonSettings)
   .settings(
     description := "Scio add-on for JDBC",
+    dependencyOverrides ++= Seq(
+      "com.google.guava" % "guava" % guavaVersion
+    ),
     libraryDependencies ++= Seq(
       "org.apache.beam" % "beam-sdks-java-io-jdbc" % beamVersion
     )
@@ -917,6 +935,7 @@ lazy val `scio-examples`: Project = project
       "org.apache.beam" % "beam-sdks-java-extensions-google-cloud-platform-core" % beamVersion,
       "org.apache.avro" % "avro" % avroVersion,
       "com.google.cloud.datastore" % "datastore-v1-proto-client" % datastoreV1ProtoClientVersion,
+      "com.google.http-client" % "google-http-client" % googleHttpClientsVersion,
       "com.google.api.grpc" % "proto-google-cloud-datastore-v1" % generatedGrpcBetaVersion,
       "com.google.api.grpc" % "proto-google-cloud-bigtable-v2" % generatedGrpcBetaVersion,
       "com.google.cloud.sql" % "mysql-socket-factory" % "1.0.15",

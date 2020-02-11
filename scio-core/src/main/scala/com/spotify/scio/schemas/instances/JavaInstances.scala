@@ -78,8 +78,10 @@ trait JavaInstances {
       override def toBaseType(input: T): String = input.name()
       override def toInputType(base: String): T =
         java.lang.Enum.valueOf[T](clazz, base)
-      override def toString(): String =
+      override def toString: String =
         s"EnumLogicalType($className, String)"
+
+      override def getArgumentType: FieldType = FieldType.STRING
     }))
 }
 

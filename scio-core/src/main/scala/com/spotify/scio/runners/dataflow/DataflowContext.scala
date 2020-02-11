@@ -28,7 +28,7 @@ import scala.collection.JavaConverters._
 case object DataflowContext extends RunnerContext {
   override def prepareOptions(options: PipelineOptions, artifacts: List[String]): Unit = {
     val classLoader = classOf[DataflowRunner].getClassLoader
-    val filesToStage = RunnerContext.filesToStage(classLoader, artifacts)
+    val filesToStage = RunnerContext.filesToStage(options, classLoader, artifacts)
 
     options
       .as(classOf[DataflowPipelineWorkerPoolOptions])
