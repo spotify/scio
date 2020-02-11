@@ -34,6 +34,7 @@ import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConverters._
 import scala.util.hashing.MurmurHash3
+import java.lang.Math.floorMod
 
 /**
  * Main package for Sparkey side input APIs. Import all.
@@ -250,7 +251,7 @@ package object sparkey {
 
           self.transform { collection =>
             collection
-              .groupBy { case (k, _) => (w.shardHash(k) % shardCount).toShort }
+              .groupBy { case (k, _) => floorMod(w.shardHash(k), shardCount).toShort }
               .map {
                 case (shard, xs) =>
                   writeToSparkey(
@@ -418,7 +419,8 @@ package object sparkey {
    */
   class ShardedSparkeyReader(val sparkeys: Map[Short, SparkeyReader], val numShards: Short)
       extends SparkeyReader {
-    def hashKey(arr: Array[Byte]): Short = (MurmurHash3.bytesHash(arr, 1) % numShards).toShort
+    def hashKey(arr: Array[Byte]): Short =
+      floorMod(MurmurHash3.bytesHash(arr, 1), numShards).toShort
 
     def hashKey(str: String): Short = hashKey(str.getBytes)
 

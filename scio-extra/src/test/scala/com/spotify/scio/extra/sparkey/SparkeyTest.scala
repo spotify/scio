@@ -60,6 +60,7 @@ object TestCache {
 
 class SparkeyTest extends PipelineSpec {
   val sideData = Seq(("a", "1"), ("b", "2"), ("c", "3"))
+  val bigSideData = (0 until 100).map(i => (('a' + i).toString, i.toString))
 
   "SCollection" should "support .asSparkey with temporary local file" in {
     val sc = ScioContext()
@@ -122,7 +123,7 @@ class SparkeyTest extends PipelineSpec {
 
   "SCollection" should "support .asSparkey with shards" in {
     val sc = ScioContext()
-    val p = sc.parallelize(sideData).asSparkey(numShards = 2).materialize
+    val p = sc.parallelize(bigSideData).asSparkey(numShards = 2).materialize
     val scioResult = sc.run().waitUntilFinish()
 
     val sparkeyUri = scioResult.tap(p).value.next().asInstanceOf[LocalShardedSparkeyUri]
@@ -134,9 +135,10 @@ class SparkeyTest extends PipelineSpec {
       .map(_.resourceId.toString)
 
     val basePaths = allSparkeyFiles.map(_.replaceAll("\\.sp[il]$", "")).toSet
+    basePaths.size shouldBe 2
 
     val readers = basePaths.map(basePath => Sparkey.open(new File(basePath)))
-    readers.map(_.toMap.toList.toMap).reduce(_ ++ _) shouldBe sideData.toMap
+    readers.map(_.toMap.toList.toMap).reduce(_ ++ _) shouldBe bigSideData.toMap
 
     FileUtils.deleteDirectory(new File(sparkeyUri.basePath))
   }
