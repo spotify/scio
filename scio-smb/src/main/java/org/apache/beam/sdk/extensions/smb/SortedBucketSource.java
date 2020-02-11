@@ -19,8 +19,8 @@ package org.apache.beam.sdk.extensions.smb;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.nio.channels.Channels;
 import java.util.ArrayList;
@@ -32,14 +32,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import org.apache.beam.sdk.Pipeline;
-import org.apache.beam.sdk.coders.AtomicCoder;
+import java.util.stream.IntStream;
 import org.apache.beam.sdk.coders.CannotProvideCoderException;
 import org.apache.beam.sdk.coders.Coder;
 import org.apache.beam.sdk.coders.Coder.NonDeterministicException;
 import org.apache.beam.sdk.coders.KvCoder;
-import org.apache.beam.sdk.coders.ListCoder;
 import org.apache.beam.sdk.coders.MapCoder;
+import org.apache.beam.sdk.coders.NullableCoder;
 import org.apache.beam.sdk.coders.SerializableCoder;
 import org.apache.beam.sdk.coders.StringUtf8Coder;
 import org.apache.beam.sdk.coders.VarIntCoder;
@@ -61,8 +60,6 @@ import org.apache.beam.sdk.transforms.join.UnionCoder;
 import org.apache.beam.sdk.values.KV;
 import org.apache.beam.sdk.values.PBegin;
 import org.apache.beam.sdk.values.PCollection;
-import org.apache.beam.sdk.values.PInput;
-import org.apache.beam.sdk.values.PValue;
 import org.apache.beam.sdk.values.TupleTag;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Iterators;
@@ -143,17 +140,8 @@ public class SortedBucketSource<FinalKeyT>
     Preconditions.checkNotNull(
         finalKeyCoder, "Could not infer coder for key class %s", finalKeyClass);
 
-    // Expand sources into one key-value pair per bucket
-    @SuppressWarnings("unchecked")
-    final PCollection<KV<Integer, List<BucketedInput<?, ?>>>> bucketedInputs =
-        (PCollection<KV<Integer, List<BucketedInput<?, ?>>>>)
-            new BucketedInputs(begin.getPipeline(), leastNumBuckets, sources)
-                .expand()
-                .get(new TupleTag<>("BucketedSources"));
-
     @SuppressWarnings("deprecation")
-    final Reshuffle.ViaRandomKey<KV<Integer, List<BucketedInput<?, ?>>>> reshuffle =
-        Reshuffle.viaRandomKey();
+    final Reshuffle.ViaRandomKey<Integer> reshuffle = Reshuffle.viaRandomKey();
 
     final List<TupleTag<?>> tupleTags =
         sources.stream().map(BucketedInput::getTupleTag).collect(Collectors.toList());
@@ -164,31 +152,38 @@ public class SortedBucketSource<FinalKeyT>
             UnionCoder.of(
                 sources.stream().map(BucketedInput::getCoder).collect(Collectors.toList())));
 
-    return bucketedInputs
+    return begin.getPipeline()
+        .apply("CreateBuckets",
+            Create.of(
+                IntStream.range(0, leastNumBuckets).boxed().collect(Collectors.toList())
+            ).withCoder(VarIntCoder.of()))
         .apply("ReshuffleKeys", reshuffle)
-        .apply("MergeBuckets", ParDo.of(new MergeBuckets<>(leastNumBuckets, finalKeyCoder)))
+        .apply("MergeBuckets", ParDo.of(
+            new MergeBuckets<>(sources, leastNumBuckets, finalKeyCoder))
+        )
         .setCoder(KvCoder.of(finalKeyCoder, resultCoder));
   }
 
   /** Merge key-value groups in matching buckets. */
   private static class MergeBuckets<FinalKeyT>
-      extends DoFn<KV<Integer, List<BucketedInput<?, ?>>>, KV<FinalKeyT, CoGbkResult>> {
+      extends DoFn<Integer, KV<FinalKeyT, CoGbkResult>> {
 
     private static final Comparator<Map.Entry<TupleTag, KV<byte[], Iterator<?>>>> keyComparator =
         (o1, o2) -> bytesComparator.compare(o1.getValue().getKey(), o2.getValue().getKey());
 
     private final Integer leastNumBuckets;
     private final Coder<FinalKeyT> keyCoder;
+    private final List<BucketedInput<?, ?>> sources;
 
-    MergeBuckets(int leastNumBuckets, Coder<FinalKeyT> keyCoder) {
+    MergeBuckets(List<BucketedInput<?, ?>> sources, int leastNumBuckets, Coder<FinalKeyT> keyCoder) {
       this.leastNumBuckets = leastNumBuckets;
       this.keyCoder = keyCoder;
+      this.sources = sources;
     }
 
     @ProcessElement
     public void processElement(ProcessContext c) {
-      final int bucketId = c.element().getKey();
-      final List<BucketedInput<?, ?>> sources = c.element().getValue();
+      final int bucketId = c.element();
       final int numSources = sources.size();
 
       // Initialize iterators and tuple tags for sources
@@ -274,59 +269,17 @@ public class SortedBucketSource<FinalKeyT>
   }
 
   /**
-   * Abstracts a potentially heterogeneous list of sorted-bucket sources of {@link BucketedInput}s,
-   * similar to {@link org.apache.beam.sdk.transforms.join.CoGroupByKey}.
-   */
-  private static class BucketedInputs implements PInput {
-    private final transient Pipeline pipeline;
-    private final List<BucketedInput<?, ?>> sources;
-    private final Integer numBuckets;
-
-    private BucketedInputs(
-        Pipeline pipeline, Integer numBuckets, List<BucketedInput<?, ?>> sources) {
-      this.pipeline = pipeline;
-      this.numBuckets = numBuckets;
-      this.sources = sources;
-    }
-
-    @Override
-    public Pipeline getPipeline() {
-      return pipeline;
-    }
-
-    @Override
-    public Map<TupleTag<?>, PValue> expand() {
-      final List<KV<Integer, List<BucketedInput<?, ?>>>> sources = new ArrayList<>();
-      for (int i = 0; i < numBuckets; i++) {
-        try {
-          sources.add(KV.of(i, this.sources));
-        } catch (Exception e) {
-          throw new RuntimeException(e);
-        }
-      }
-
-      @SuppressWarnings("unchecked")
-      final KvCoder<Integer, List<BucketedInput<?, ?>>> coder =
-          KvCoder.of(VarIntCoder.of(), ListCoder.of(new BucketedInput.BucketedInputCoder()));
-
-      return Collections.singletonMap(
-          new TupleTag<>("BucketedSources"),
-          pipeline.apply("CreateBucketedSources", Create.of(sources).withCoder(coder)));
-    }
-  }
-
-  /**
    * Abstracts a sorted-bucket input to {@link SortedBucketSource} written by {@link
    * SortedBucketSink}.
    *
    * @param <K> the type of the keys that values in a bucket are sorted with
    * @param <V> the type of the values in a bucket
    */
-  public static class BucketedInput<K, V> {
-    private final TupleTag<V> tupleTag;
-    private final String filenameSuffix;
-    private final FileOperations<V> fileOperations;
-    private final List<ResourceId> inputDirectories;
+  public static class BucketedInput<K, V> implements Serializable {
+    private TupleTag<V> tupleTag;
+    private String filenameSuffix;
+    private FileOperations<V> fileOperations;
+    private List<ResourceId> inputDirectories;
 
     private transient Map<ResourceId, DirectoryMetadata> inputMetadata;
     private transient BucketMetadata<K, V> canonicalMetadata;
@@ -364,20 +317,6 @@ public class SortedBucketSource<FinalKeyT>
       this.inputDirectories = inputDirectories;
     }
 
-    private BucketedInput(
-        TupleTag<V> tupleTag,
-        String filenameSuffix,
-        FileOperations<V> fileOperations,
-        Map<ResourceId, DirectoryMetadata> inputMetadata,
-        BucketMetadata<K, V> canonicalMetadata) {
-      this.tupleTag = tupleTag;
-      this.filenameSuffix = filenameSuffix;
-      this.fileOperations = fileOperations;
-      this.inputDirectories = new ArrayList<>(inputMetadata.keySet());
-      this.inputMetadata = inputMetadata;
-      this.canonicalMetadata = canonicalMetadata;
-    }
-
     public TupleTag<V> getTupleTag() {
       return tupleTag;
     }
@@ -387,11 +326,11 @@ public class SortedBucketSource<FinalKeyT>
     }
 
     public BucketMetadata<K, V> getMetadata() {
-      computeMetadata();
+      computeMetadataIfAbsent();
       return canonicalMetadata;
     }
 
-    private void computeMetadata() {
+    private void computeMetadataIfAbsent() {
       if (this.inputMetadata != null && this.canonicalMetadata != null) {
         return;
       }
@@ -413,7 +352,7 @@ public class SortedBucketSource<FinalKeyT>
         }
         if (
             this.canonicalMetadata == null ||
-            metadata.getNumBuckets() < this.canonicalMetadata.getNumBuckets()
+                metadata.getNumBuckets() < this.canonicalMetadata.getNumBuckets()
         ) {
           this.canonicalMetadata = metadata;
           canonicalMetadataDir = dir;
@@ -481,39 +420,36 @@ public class SortedBucketSource<FinalKeyT>
           canonicalMetadata);
     }
 
-    private static class BucketedInputCoder<K, V> extends AtomicCoder<BucketedInput<K, V>> {
-      private static SerializableCoder<TupleTag> tupleTagCoder =
-          SerializableCoder.of(TupleTag.class);
-      private static StringUtf8Coder fileSuffixCoder = StringUtf8Coder.of();
-      private static SerializableCoder<FileOperations> fileOperationsCoder =
-          SerializableCoder.of(FileOperations.class);
-      private static MapCoder<ResourceId, DirectoryMetadata> inputMetadataCoder =
-          MapCoder.of(ResourceIdCoder.of(), SerializableCoder.of(DirectoryMetadata.class));
-      private BucketMetadataCoder<K, V> canonicalMetadataCoder = new BucketMetadataCoder<>();
+    // Not all instance members can be natively serialized, so override writeObject/readObject
+    // using Coders for each type
+    @SuppressWarnings("unchecked")
+    private void writeObject(ObjectOutputStream outStream) throws IOException {
+      SerializableCoder.of(TupleTag.class).encode(tupleTag, outStream);
+      StringUtf8Coder.of().encode(filenameSuffix, outStream);
+      SerializableCoder.of(FileOperations.class).encode(fileOperations, outStream);
 
-      @Override
-      public void encode(BucketedInput<K, V> value, OutputStream outStream) throws IOException {
-        tupleTagCoder.encode(value.tupleTag, outStream);
-        fileSuffixCoder.encode(value.filenameSuffix, outStream);
-        fileOperationsCoder.encode(value.fileOperations, outStream);
-        inputMetadataCoder.encode(value.inputMetadata, outStream);
-        canonicalMetadataCoder.encode(value.canonicalMetadata, outStream);
-      }
+      // Depending on when .writeObject is called, metadata may not have been computed.
+      NullableCoder.of(MapCoder.of(
+          ResourceIdCoder.of(),
+          SerializableCoder.of(DirectoryMetadata.class)
+      )).encode(inputMetadata, outStream);
 
-      @Override
-      public BucketedInput<K, V> decode(InputStream inStream) throws IOException {
-        @SuppressWarnings("unchecked")
-        final TupleTag<V> tupleTag = (TupleTag<V>) tupleTagCoder.decode(inStream);
-        final String filenameSuffix = fileSuffixCoder.decode(inStream);
-        @SuppressWarnings("unchecked")
-        final FileOperations<V> fileOperations = fileOperationsCoder.decode(inStream);
-        final Map<ResourceId, DirectoryMetadata> inputMetadata = inputMetadataCoder.decode(inStream);
-        @SuppressWarnings("unchecked")
-        final BucketMetadata<K, V> canonicalMetadata = canonicalMetadataCoder.decode(inStream);
+      NullableCoder.of(
+          new BucketMetadataCoder<K, V>()
+      ).encode(canonicalMetadata, outStream);
+    }
 
-        return new BucketedInput<>(
-            tupleTag, filenameSuffix, fileOperations, inputMetadata, canonicalMetadata);
-      }
+    @SuppressWarnings("unchecked")
+    private void readObject(ObjectInputStream inStream) throws ClassNotFoundException, IOException {
+      this.tupleTag = SerializableCoder.of(TupleTag.class).decode(inStream);
+      this.filenameSuffix = StringUtf8Coder.of().decode(inStream);
+      this.fileOperations = SerializableCoder.of(FileOperations.class).decode(inStream);
+
+      this.inputMetadata = NullableCoder.of(MapCoder.of(
+          ResourceIdCoder.of(),
+          SerializableCoder.of(DirectoryMetadata.class)
+      )).decode(inStream);
+      this.canonicalMetadata = NullableCoder.of(new BucketMetadataCoder<K, V>()).decode(inStream);
     }
   }
 }
