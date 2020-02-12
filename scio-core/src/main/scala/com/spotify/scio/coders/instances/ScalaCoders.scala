@@ -239,6 +239,12 @@ private class BufferCoder[T](bc: BCoder[T]) extends SeqLikeCoder[m.Buffer, T](bc
 
 private class SetCoder[T](bc: BCoder[T]) extends SeqLikeCoder[Set, T](bc) {
   override def decode(inStream: InputStream): Set[T] = decode(inStream, Set.newBuilder[T])
+
+  override def verifyDeterministic(): Unit =
+    throw new NonDeterministicException(
+      this,
+      "Ordering of entries in a Set may be non-deterministic."
+    )
 }
 
 private class MutableSetCoder[T](bc: BCoder[T]) extends SeqLikeCoder[m.Set, T](bc) {
