@@ -568,6 +568,13 @@ final class CoderTest extends AnyFlatSpec with Matchers {
     Recursive(1, Option(Recursive(2, None))) coderShould roundtrip()
   }
 
+  it should "#2644 verifyDeterministic throw a NonDeterministicException exception for Set" in {
+    an[NonDeterministicException] should be thrownBy {
+      val coder = Coder[Set[Int]]
+      materialize(coder).verifyDeterministic()
+    }
+  }
+
 }
 
 object RecursiveCase {
