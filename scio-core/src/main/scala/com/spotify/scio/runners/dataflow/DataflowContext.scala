@@ -32,6 +32,6 @@ case object DataflowContext extends RunnerContext {
 
     options
       .as(classOf[DataflowPipelineWorkerPoolOptions])
-      .setFilesToStage(filesToStage.toList.asJava)
+      .setFilesToStage(new java.util.ArrayList(filesToStage.asJavaCollection))
   }
 }
