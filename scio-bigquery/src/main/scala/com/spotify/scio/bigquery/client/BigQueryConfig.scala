@@ -48,10 +48,11 @@ object BigQueryConfig {
 
   def location: String = DefaultLocation
 
-  def scopes: Seq[String] = DefaultScopes ++
-    BigQuerySysProps.DriveScope.valueOption
-      .map(x => Try(x.toBoolean).getOrElse(false))
-      .collect { case true => DRIVE_SCOPE }
+  def scopes: Seq[String] =
+    DefaultScopes ++
+      BigQuerySysProps.DriveScope.valueOption
+        .map(x => Try(x.toBoolean).getOrElse(false))
+        .collect { case true => DRIVE_SCOPE }
 
   def isCacheEnabled: Boolean =
     BigQuerySysProps.CacheEnabled.valueOption
