@@ -52,4 +52,9 @@ object BigQuerySysProps {
     "Timeout in milliseconds to read data from an established connection. " +
       "Default is 20000 (20 seconds). 0 for an infinite timeout."
   )
+
+  val DriveScope = SysProp(
+    "bigquery.drive_scope.enabled",
+    "Add Google Drive OAuth 2.0 scope to allow querying tables backed by Google Drive"
+  )
 }
