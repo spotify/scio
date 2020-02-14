@@ -28,7 +28,7 @@ import scala.util.Try
 
 object BigQueryConfig {
 
-  private[this] val DRIVE_SCOPE = "https://www.googleapis.com/auth/drive"
+  private[this] val DriveScope = "https://www.googleapis.com/auth/drive"
 
   /** Default cache directory. */
   private[this] val CacheDirectoryDefault: Path = Paths
@@ -51,8 +51,8 @@ object BigQueryConfig {
   def scopes: Seq[String] =
     DefaultScopes ++
       BigQuerySysProps.DriveScope.valueOption
-        .map(x => Try(x.toBoolean).getOrElse(false))
-        .collect { case true => DRIVE_SCOPE }
+        .filter(x => Try(x.toBoolean).getOrElse(false))
+        .map(_ => DriveScope)
 
   def isCacheEnabled: Boolean =
     BigQuerySysProps.CacheEnabled.valueOption
