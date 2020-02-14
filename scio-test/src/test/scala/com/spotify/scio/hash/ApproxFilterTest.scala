@@ -61,7 +61,7 @@ class ApproxFilterTest extends PipelineSpec {
 
     it should "work with SCollection" in {
       runWithContext { sc =>
-        implicit val coder = c.coder
+        implicit val filterCoder = c.filterCoder
         c.create(sc.parallelize(paddedInput)) should satisfySingleValue[c.Filter[Int]] { bf1 =>
           val bf2 = c.create(paddedInput)
           eq(bf1, bf2)
@@ -77,7 +77,7 @@ class ApproxFilterTest extends PipelineSpec {
 
     it should "support SCollection syntax" in {
       runWithContext { sc =>
-        implicit val coder = c.coder
+        implicit val filterCoder = c.filterCoder
         val coll = sc.parallelize(paddedInput)
         coll.asApproxFilter(c) should satisfySingleValue[c.Filter[Int]] {
           eq(_, c.create(paddedInput))
@@ -100,7 +100,7 @@ class ApproxFilterTest extends PipelineSpec {
     }
 
     it should "support Coder serialization" in {
-      val coder = CoderMaterializer.beamWithDefault(c.coder)
+      val coder = CoderMaterializer.beamWithDefault(c.filterCoder)
       val orig = c.create(paddedInput, 2000, 0.01)
       val copy = CoderUtils.clone(coder, orig)
       copy.approxElementCount shouldBe orig.approxElementCount

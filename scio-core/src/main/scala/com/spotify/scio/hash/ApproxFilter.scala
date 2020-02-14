@@ -158,7 +158,7 @@ sealed trait ApproxFilterCompanion {
    * Note that [[Hash]] should be supplied at compile time and not serialized since it might not
    * have deterministic serialization.
    */
-  implicit def coder[T: Hash]: Coder[Filter[T]]
+  implicit def filterCoder[T: Hash]: Coder[Filter[T]]
 
   /**
    * Creates an [[ApproxFilter]] from an [[SCollection]] with the collection size as
@@ -285,7 +285,8 @@ object BloomFilter extends ApproxFilterCompanion {
       new BloomFilter[T](g.BloomFilter.readFrom(inStream, hash))
   }
 
-  implicit override def coder[T: Hash]: Coder[Filter[T]] = Coder.beam(new BloomFilterCoder[T]())
+  implicit override def filterCoder[T: Hash]: Coder[Filter[T]] =
+    Coder.beam(new BloomFilterCoder[T]())
 
   override protected def createImpl[T: Hash](
     elems: Iterable[T],
