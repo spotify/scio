@@ -109,14 +109,18 @@ private object RunnerContext {
     classLoader: ClassLoader,
     extraLocalArtifacts: List[String]
   ): Iterable[String] = {
-    val finalLocalArtifacts = detectClassPathResourcesToStage(pipelineOptions, classLoader) ++ extraLocalArtifacts
+    val finalLocalArtifacts =
+      (detectClassPathResourcesToStage(pipelineOptions, classLoader) ++ extraLocalArtifacts)
+        .map(path => path.substring(path.lastIndexOf("/") + 1, path.length) -> path)
+        .toMap
+        .values
 
     logger.debug(s"Final list of extra artifacts: ${finalLocalArtifacts.mkString(":")}")
     finalLocalArtifacts
   }
 
   /** Borrowed from DataflowRunner. */
-  def detectClassPathResourcesToStage(
+  private[this] def detectClassPathResourcesToStage(
     pipelineOptions: PipelineOptions,
     classLoader: ClassLoader
   ): Iterable[String] = {
