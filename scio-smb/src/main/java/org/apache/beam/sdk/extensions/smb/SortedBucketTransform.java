@@ -91,14 +91,15 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
 
     final FileAssignment tempFileAssignment = filenamePolicy.forTempFiles(tempDirectory);
 
-    @SuppressWarnings("deprecation")
-    final Reshuffle.ViaRandomKey<Integer> reshuffle = Reshuffle.viaRandomKey();
     final Create.Values<Integer> createBuckets = Create.of(
         IntStream.range(0, sourceSpec.leastNumBuckets).boxed().collect(Collectors.toList())
     ).withCoder(VarIntCoder.of());
 
     final Create.Values<ResourceId> writeTempMetadata =
         SortedBucketSink.WriteTempFiles.writeMetadataTransform(tempFileAssignment, bucketMetadata);
+
+    @SuppressWarnings("deprecation")
+    final Reshuffle.ViaRandomKey<Integer> reshuffle = Reshuffle.viaRandomKey();
 
     return PCollectionTuple
         .of(
@@ -116,7 +117,7 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
                     "MergeTransformWrite",
                     ParDo.of(new MergeAndWriteBuckets<>(
                       sources,
-                      sourceSpec,
+                      sourceSpec.keyCoder,
                       tempFileAssignment,
                       fileOperations,
                       bucketMetadata,
@@ -136,20 +137,18 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
     private final FileOperations<FinalValueT> fileOperations;
     private final SerializableFunction<KV<FinalKeyT, CoGbkResult>, Iterator<FinalValueT>> toFinalResultT;
     private final Coder<FinalKeyT> keyCoder;
-    private final int leastNumBuckets;
     private final int numBuckets;
     private final int numShards;
 
     MergeAndWriteBuckets(
         List<BucketedInput<?, ?>> sources,
-        SourceSpec<FinalKeyT> sourceSpec,
+        Coder<FinalKeyT> keyCoder,
         FileAssignment fileAssignment,
         FileOperations<FinalValueT> fileOperations,
         BucketMetadata<FinalKeyT, FinalValueT> bucketMetadata,
         SerializableFunction<KV<FinalKeyT, CoGbkResult>, Iterator<FinalValueT>> toFinalResultT
     ) {
-      this.keyCoder = sourceSpec.keyCoder;
-      this.leastNumBuckets = sourceSpec.leastNumBuckets;
+      this.keyCoder = keyCoder;
       this.sources = sources;
       this.fileAssignment = fileAssignment;
       this.fileOperations = fileOperations;
@@ -181,7 +180,7 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
       }
 
       final KeyGroupIterator[] iterators = sources.stream()
-          .map(i -> i.createIterator(bucketId, leastNumBuckets))
+          .map(i -> i.createIterator(bucketId, numBuckets))
           .toArray(KeyGroupIterator[]::new);
 
       // Supplies sharded writers per key group in round-robin style
