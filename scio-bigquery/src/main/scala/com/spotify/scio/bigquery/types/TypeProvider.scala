@@ -93,12 +93,11 @@ private[types] object TypeProvider {
     val tableSpec = BigQueryPartitionUtil.latestTable(bigquery, formatString(table :: args))
     val avroSchema = bigquery.tables.storageReadSchema(tableSpec, selectedFields, rowRestriction)
     val schema = StorageUtil.toTableSchema(avroSchema)
-
     val traits = List(tq"${p(c, SType)}.HasStorageOptions")
     val overrides = List(
       q"override def table: _root_.java.lang.String = $table",
       q"override def selectedFields: _root_.scala.List[_root_.java.lang.String] = _root_.scala.List(..$selectedFields)",
-      q"override def rowRestriction: _root_.java.lang.String = $rowRestriction"
+      q"override def rowRestriction: _root_.scala.Option[_root_.java.lang.String] = $rowRestriction"
     )
 
     val ta =
@@ -374,7 +373,7 @@ private[types] object TypeProvider {
 
   private def extractStorageArgs(
     c: blackbox.Context
-  ): (String, List[String], List[String], String) = {
+  ): (String, List[String], List[String], Option[String]) = {
     import c.universe._
 
     def str(tree: c.Tree) = tree match {
@@ -406,7 +405,7 @@ private[types] object TypeProvider {
         val argMap = posArgs ++ namedArgs
         val args = argMap.getOrElse("args", Nil)
         val selectedFields = argMap.getOrElse("selectedFields", Nil)
-        val rowRestriction = argMap.getOrElse("rowRestriction", Nil).headOption.getOrElse("")
+        val rowRestriction = argMap.getOrElse("rowRestriction", Nil).headOption
         (table, args, selectedFields, rowRestriction)
     }
   }

@@ -94,13 +94,13 @@ private object Reads {
     typedRead: beam.BigQueryIO.TypedRead[T],
     table: Table,
     selectedFields: List[String] = BigQueryStorage.ReadParam.DefaultSelectFields,
-    rowRestriction: String = BigQueryStorage.ReadParam.DefaultRowRestriction
+    rowRestriction: Option[String] = BigQueryStorage.ReadParam.DefaultRowRestriction
   ): SCollection[T] = sc.wrap {
     val read = typedRead
       .from(table.spec)
       .withMethod(Method.DIRECT_READ)
       .withSelectedFields(selectedFields.asJava)
-      .withRowRestriction(rowRestriction)
+      .withRowRestriction(rowRestriction.getOrElse(""))
     sc.applyInternal(read)
   }
 }
@@ -383,11 +383,7 @@ final case class BigQueryStorage(table: Table) extends BigQueryIO[TableRow] {
     throw new UnsupportedOperationException("BigQueryStorage is read-only")
 
   override def tap(read: ReadP): Tap[TableRow] = {
-    val readOptions = TableReadOptions
-      .newBuilder()
-      .setRowRestriction(read.rowRestriction)
-      .addAllSelectedFields(read.selectFields.asJava)
-      .build()
+    val readOptions = StorageUtil.tableReadOptions(read.selectFields, read.rowRestriction)
     BigQueryStorageTap(table, readOptions)
   }
 }
@@ -395,12 +391,12 @@ final case class BigQueryStorage(table: Table) extends BigQueryIO[TableRow] {
 object BigQueryStorage {
   final case class ReadParam(
     selectFields: List[String] = ReadParam.DefaultSelectFields,
-    rowRestriction: String = ReadParam.DefaultRowRestriction
+    rowRestriction: Option[String] = ReadParam.DefaultRowRestriction
   )
 
   object ReadParam {
     private[bigquery] val DefaultSelectFields: List[String] = Nil
-    private[bigquery] val DefaultRowRestriction: String = ""
+    private[bigquery] val DefaultRowRestriction: Option[String] = None
   }
 
   @deprecated("this method will be removed; use apply(Table.Ref(table)) instead", "0.8.0")
@@ -772,11 +768,7 @@ object BigQueryTyped {
 
     override def tap(read: ReadP): Tap[T] = {
       val fn = BigQueryType[T].fromTableRow
-      val readOptions = TableReadOptions
-        .newBuilder()
-        .setRowRestriction(read.rowRestriction)
-        .addAllSelectedFields(read.selectFields.asJava)
-        .build()
+      val readOptions = StorageUtil.tableReadOptions(read.selectFields, read.rowRestriction)
       BigQueryStorageTap(table, readOptions).map(fn)
     }
   }

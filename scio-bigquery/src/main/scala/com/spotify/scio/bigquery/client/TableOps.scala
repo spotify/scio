@@ -131,7 +131,7 @@ final private[client] class TableOps(client: Client) {
   def storageReadSchema(
     tableSpec: String,
     selectedFields: List[String] = Nil,
-    rowRestriction: String = null
+    rowRestriction: Option[String] = None
   ): Schema =
     Cache.getOrElse(s"""$tableSpec;${selectedFields
       .mkString(",")};$rowRestriction""", Cache.SchemaCache) {

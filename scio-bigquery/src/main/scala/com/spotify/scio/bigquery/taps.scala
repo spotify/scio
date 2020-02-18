@@ -134,7 +134,7 @@ final case class BigQueryTaps(self: Taps) {
         BigQueryStorage(Table.Ref(table)).tap(
           BigQueryStorage.ReadParam(
             readOptions.getSelectedFieldsList.asScala.toList,
-            readOptions.getRowRestriction
+            Some(readOptions.getRowRestriction)
           )
         )
     )
@@ -152,7 +152,7 @@ final case class BigQueryTaps(self: Taps) {
           .tap(
             BigQueryStorage.ReadParam(
               readOptions.getSelectedFieldsList.asScala.toList,
-              readOptions.getRowRestriction
+              Some(readOptions.getRowRestriction)
             )
           )
           .map(fn)
