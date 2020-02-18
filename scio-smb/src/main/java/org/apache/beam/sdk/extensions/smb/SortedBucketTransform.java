@@ -18,7 +18,7 @@
 package org.apache.beam.sdk.extensions.smb;
 
 import java.io.IOException;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -163,24 +163,24 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
       final int bucketId = c.element();
       final int numSources = sources.size();
 
-      final Map<BucketShardId, ResourceId> bucketShardsToDsts = new HashMap<>();
-      final Map<Integer, Writer<FinalValueT>> shardsToWriters = new HashMap<>();
+      @SuppressWarnings("unchecked")
+      final Writer<FinalValueT>[] writers = new Writer[numShards];
+      final List<KV<BucketShardId, ResourceId>> bucketShardsToDsts = new ArrayList<>();
 
       for (int shardId = 0; shardId < numShards; shardId++) {
         final BucketShardId bucketShardId = BucketShardId.of(bucketId, shardId);
         final ResourceId dst = fileAssignment.forBucket(bucketShardId, numBuckets, numShards);
 
         try {
-          shardsToWriters.put(shardId, fileOperations.createWriter(dst));
+          writers[shardId] = fileOperations.createWriter(dst);
         } catch (IOException e) {
           throw new RuntimeException(e);
         }
 
-        bucketShardsToDsts.put(bucketShardId, dst);
+        bucketShardsToDsts.add(KV.of(bucketShardId, dst));
       }
 
       final CoGbkResultSchema resultSchema = BucketedInput.schemaOf(sources);
-      final TupleTagList tupleTags = resultSchema.getTupleTagList();
 
       final KeyGroupIterator[] iterators = sources.stream()
           .map(i -> i.createIterator(bucketId, leastNumBuckets))
@@ -189,15 +189,14 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
       // Supplies sharded writers per key group in round-robin style
       final Supplier<Writer<FinalValueT>> writerSupplier;
       if (numShards == 1) {
-        final Writer<FinalValueT> writer = shardsToWriters.get(0);
-        writerSupplier = () -> writer;
+        writerSupplier = () -> writers[0];
       } else {
         writerSupplier = new Supplier<Writer<FinalValueT>>() {
           private int shard = 0;
 
           @Override
           public Writer<FinalValueT> get() {
-            final Writer<FinalValueT> result = shardsToWriters.get(shard);
+            final Writer<FinalValueT> result = writers[shard];
             shard = (shard + 1) % numShards;
             return result;
           }
@@ -205,6 +204,7 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
       }
 
       final Map<TupleTag, KV<byte[], Iterator<?>>> nextKeyGroups = new HashMap<>();
+      final TupleTagList tupleTags = resultSchema.getTupleTagList();
 
       while (true) {
         int completedSources = 0;
@@ -243,10 +243,10 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
         }
       }
 
-      bucketShardsToDsts.forEach((bucketShardId, dst) -> {
+      bucketShardsToDsts.forEach(bucketShardAndDst -> {
         try {
-          shardsToWriters.get(bucketShardId.getShardId()).close();
-          c.output(KV.of(bucketShardId, dst));
+          writers[bucketShardAndDst.getKey().getShardId()].close();
+          c.output(bucketShardAndDst);
         } catch (IOException e) {
           throw new RuntimeException(e);
         }
