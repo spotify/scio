@@ -95,11 +95,13 @@ private object Reads {
     selectedFields: List[String] = BigQueryStorage.ReadParam.DefaultSelectFields,
     rowRestriction: Option[String] = BigQueryStorage.ReadParam.DefaultRowRestriction
   ): SCollection[T] = sc.wrap {
-    val read = typedRead
+    var read = typedRead
       .from(table.spec)
       .withMethod(Method.DIRECT_READ)
       .withSelectedFields(selectedFields.asJava)
-      .withRowRestriction(rowRestriction.getOrElse(""))
+
+    read = rowRestriction.fold(read)(read.withRowRestriction)
+
     sc.applyInternal(read)
   }
 }
