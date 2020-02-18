@@ -59,7 +59,7 @@ val junitInterfaceVersion = "0.11"
 val junitVersion = "4.13"
 val kantanCsvVersion = "0.5.1"
 val kryoVersion = "4.0.2" // explicitly depend on 4.0.1+ due to https://github.com/EsotericSoftware/kryo/pull/516
-val parquetAvroVersion = "0.3.4"
+val parquetExtraVersion = "0.3.4"
 val parquetVersion = "1.11.0"
 val protobufGenericVersion = "0.2.8"
 val protobufVersion = "3.11.4"
@@ -835,7 +835,8 @@ lazy val `scio-parquet`: Project = project
     javacOptions ++= Seq("-s", (sourceManaged.value / "main").toString),
     description := "Scio add-on for Parquet",
     libraryDependencies ++= Seq(
-      "me.lyh" %% "parquet-avro" % parquetAvroVersion,
+      "me.lyh" %% "parquet-avro" % parquetExtraVersion,
+      "me.lyh" % "parquet-tensorflow" % parquetExtraVersion,
       "com.google.cloud.bigdataoss" % "gcs-connector" % gcsConnectorVersion,
       "org.apache.beam" % "beam-sdks-java-io-hadoop-format" % beamVersion,
       "org.apache.hadoop" % "hadoop-client" % hadoopVersion,
