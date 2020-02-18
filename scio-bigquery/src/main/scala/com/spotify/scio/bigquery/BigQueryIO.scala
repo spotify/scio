@@ -93,10 +93,10 @@ private object Reads {
   private[scio] def bqReadStorage[T: ClassTag](sc: ScioContext)(
     typedRead: beam.BigQueryIO.TypedRead[T],
     table: Table,
-    selectedFields: List[String] = Nil,
-    rowRestriction: String = ""
+    selectedFields: List[String] = BigQueryStorage.ReadParam.DefaultSelectFields,
+    rowRestriction: String = BigQueryStorage.ReadParam.DefaultRowRestriction
   ): SCollection[T] = sc.wrap {
-    var read = typedRead
+    val read = typedRead
       .from(table.spec)
       .withMethod(Method.DIRECT_READ)
       .withSelectedFields(selectedFields.asJava)
@@ -396,9 +396,7 @@ object BigQueryStorage {
   final case class ReadParam(
     selectFields: List[String] = ReadParam.DefaultSelectFields,
     rowRestriction: String = ReadParam.DefaultRowRestriction
-  ) {
-    require(rowRestriction != null)
-  }
+  )
 
   object ReadParam {
     private[bigquery] val DefaultSelectFields: List[String] = Nil
