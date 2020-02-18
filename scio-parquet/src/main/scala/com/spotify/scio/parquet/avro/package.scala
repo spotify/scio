@@ -24,7 +24,6 @@ import com.spotify.scio.coders.Coder
 import com.spotify.scio.parquet.avro.ParquetAvroIO.WriteParam
 import org.apache.avro.Schema
 import org.apache.avro.specific.SpecificRecordBase
-import org.apache.hadoop.mapreduce.Job
 import org.apache.parquet.filter2.predicate.FilterPredicate
 import org.apache.parquet.hadoop.metadata.CompressionCodecName
 import org.slf4j.LoggerFactory
@@ -138,31 +137,6 @@ package object avro {
     )(implicit ct: ClassTag[T], coder: Coder[T]): ClosedTap[T] = {
       val param = WriteParam(schema, numShards, suffix, compression)
       self.write(ParquetAvroIO[T](path))(param)
-    }
-  }
-
-  private[avro] object GcsConnectorUtil {
-    def setCredentials(job: Job): Unit =
-      // These are needed since `FileInputFormat.setInputPaths` validates paths locally and
-      // requires the user's GCP credentials.
-      sys.env.get("GOOGLE_APPLICATION_CREDENTIALS") match {
-        case Some(json) =>
-          job.getConfiguration
-            .set("fs.gs.auth.service.account.json.keyfile", json)
-        case None =>
-          // Client id/secret of Google-managed project associated with the Cloud SDK
-          job.getConfiguration
-            .setBoolean("fs.gs.auth.service.account.enable", false)
-          job.getConfiguration.set("fs.gs.auth.client.id", "32555940559.apps.googleusercontent.com")
-          job.getConfiguration
-            .set("fs.gs.auth.client.secret", "ZmssLNjJy2998hD4CTg2ejr2")
-      }
-
-    def unsetCredentials(job: Job): Unit = {
-      job.getConfiguration.unset("fs.gs.auth.service.account.json.keyfile")
-      job.getConfiguration.unset("fs.gs.auth.service.account.enable")
-      job.getConfiguration.unset("fs.gs.auth.client.id")
-      job.getConfiguration.unset("fs.gs.auth.client.secret")
     }
   }
 }

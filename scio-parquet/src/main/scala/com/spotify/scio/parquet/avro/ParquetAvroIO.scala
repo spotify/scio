@@ -18,13 +18,15 @@
 package com.spotify.scio.parquet.avro
 
 import java.lang.{Boolean => JBoolean}
-import java.nio.channels.{Channels, SeekableByteChannel}
+import java.nio.channels.SeekableByteChannel
 
 import com.spotify.scio.ScioContext
+import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import com.spotify.scio.io.{ScioIO, Tap, TapOf}
+import com.spotify.scio.parquet.{BeamParquetInputFile, GcsConnectorUtil}
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
-import com.spotify.scio.coders.{Coder, CoderMaterializer}
+import com.twitter.chill.ClosureCleaner
 import org.apache.avro.Schema
 import org.apache.avro.reflect.ReflectData
 import org.apache.avro.specific.SpecificRecordBase
@@ -34,16 +36,13 @@ import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider
 import org.apache.beam.sdk.transforms.SimpleFunction
 import org.apache.beam.sdk.values.TypeDescriptor
 import org.apache.hadoop.mapreduce.Job
-import org.apache.hadoop.mapreduce.lib.input.FileInputFormat
 import org.apache.parquet.avro.{AvroParquetInputFormat, AvroParquetReader}
 import org.apache.parquet.filter2.predicate.FilterPredicate
 import org.apache.parquet.hadoop.ParquetInputFormat
 import org.apache.parquet.hadoop.metadata.CompressionCodecName
-import org.apache.parquet.io.{DelegatingSeekableInputStream, InputFile, SeekableInputStream}
 
 import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
-import com.twitter.chill.ClosureCleaner
 
 final case class ParquetAvroIO[T: ClassTag: Coder](path: String) extends ScioIO[T] {
   override type ReadP = ParquetAvroIO.ReadParam[_, T]
@@ -54,7 +53,7 @@ final case class ParquetAvroIO[T: ClassTag: Coder](path: String) extends ScioIO[
 
   override protected def read(sc: ScioContext, params: ReadP): SCollection[T] = {
     val job = Job.getInstance()
-    setInputPaths(sc, job, path)
+    GcsConnectorUtil.setInputPaths(sc, job, path)
     job.setInputFormatClass(classOf[AvroParquetInputFormat[T]])
     job.getConfiguration.setClass("key.class", classOf[Void], classOf[Void])
     job.getConfiguration.setClass("value.class", params.avroClass, params.avroClass)
@@ -105,19 +104,6 @@ final case class ParquetAvroIO[T: ClassTag: Coder](path: String) extends ScioIO[
 
   override def tap(params: ReadP): Tap[T] =
     ParquetAvroTap(ScioUtil.addPartSuffix(path), params)
-
-  private def setInputPaths(sc: ScioContext, job: Job, path: String): Unit = {
-    // This is needed since `FileInputFormat.setInputPaths` validates paths locally and requires
-    // the user's GCP credentials.
-    GcsConnectorUtil.setCredentials(job)
-
-    FileInputFormat.setInputPaths(job, path)
-
-    // It will interfere with credentials in Dataflow workers
-    if (!ScioUtil.isLocalRunner(sc.options.getRunner)) {
-      GcsConnectorUtil.unsetCredentials(job)
-    }
-  }
 }
 
 object ParquetAvroIO {
@@ -195,16 +181,4 @@ case class ParquetAvroTap[A, T: ClassTag: Coder](
   }
   override def open(sc: ScioContext): SCollection[T] =
     sc.read(ParquetAvroIO[T](path))(params)
-}
-
-private class BeamParquetInputFile(var channel: SeekableByteChannel) extends InputFile {
-  override def getLength: Long = channel.size
-  override def newStream: SeekableInputStream =
-    new DelegatingSeekableInputStream(Channels.newInputStream(channel)) {
-      override def getPos: Long = channel.position
-      override def seek(newPos: Long): Unit = {
-        channel.position(newPos)
-        ()
-      }
-    }
 }
