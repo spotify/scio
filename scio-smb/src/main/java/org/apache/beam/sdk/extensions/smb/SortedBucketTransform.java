@@ -180,8 +180,6 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
         bucketShardsToDsts.add(KV.of(bucketShardId, dst));
       }
 
-      final CoGbkResultSchema resultSchema = BucketedInput.schemaOf(sources);
-
       final KeyGroupIterator[] iterators = sources.stream()
           .map(i -> i.createIterator(bucketId, leastNumBuckets))
           .toArray(KeyGroupIterator[]::new);
@@ -204,6 +202,7 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
       }
 
       final Map<TupleTag, KV<byte[], Iterator<?>>> nextKeyGroups = new HashMap<>();
+      final CoGbkResultSchema resultSchema = BucketedInput.schemaOf(sources);
       final TupleTagList tupleTags = resultSchema.getTupleTagList();
 
       while (true) {
