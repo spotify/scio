@@ -124,8 +124,9 @@ public class SortedBucketSource<FinalKeyT>
                 IntStream.range(0, sourceSpec.leastNumBuckets).boxed().collect(Collectors.toList())
             ).withCoder(VarIntCoder.of()))
         .apply("ReshuffleKeys", reshuffle)
-        .apply("MergeBuckets", ParDo.of(new MergeBuckets<>(sources, sourceSpec)))
-        .setCoder(KvCoder.of(sourceSpec.keyCoder, resultCoder));
+        .apply("MergeBuckets", ParDo.of(
+            new MergeBuckets<>(sources, sourceSpec.leastNumBuckets, sourceSpec.keyCoder)
+        )).setCoder(KvCoder.of(sourceSpec.keyCoder, resultCoder));
   }
 
   static class SourceSpec<K> {
@@ -189,9 +190,9 @@ public class SortedBucketSource<FinalKeyT>
     private final Coder<FinalKeyT> keyCoder;
     private final List<BucketedInput<?, ?>> sources;
 
-    MergeBuckets(List<BucketedInput<?, ?>> sources, SourceSpec<FinalKeyT> sourceSpec) {
-      this.leastNumBuckets = sourceSpec.leastNumBuckets;
-      this.keyCoder = sourceSpec.keyCoder;
+    MergeBuckets(List<BucketedInput<?, ?>> sources, int leastNumBuckets, Coder<FinalKeyT> keyCoder) {
+      this.leastNumBuckets = leastNumBuckets;
+      this.keyCoder = keyCoder;
       this.sources = sources;
     }
 
