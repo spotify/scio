@@ -112,11 +112,9 @@ public class SortedBucketSource<FinalKeyT>
     @SuppressWarnings("deprecation")
     final Reshuffle.ViaRandomKey<Integer> reshuffle = Reshuffle.viaRandomKey();
 
-    final TupleTag<?>[] tupleTags = BucketedInput.collectTupleTags(sources);
-    final CoGbkResultSchema resultSchema = CoGbkResultSchema.of(Arrays.asList(tupleTags));
     final CoGbkResult.CoGbkResultCoder resultCoder =
         CoGbkResult.CoGbkResultCoder.of(
-            resultSchema,
+            BucketedInput.schemaOf(sources),
             UnionCoder.of(
                 sources.stream().map(BucketedInput::getCoder).collect(Collectors.toList())));
 
@@ -202,12 +200,14 @@ public class SortedBucketSource<FinalKeyT>
       final int bucketId = c.element();
       final int numSources = sources.size();
 
-      final KeyGroupIterator[] iterators = sources.stream()
-          .map(i -> i.createIterator(bucketId, leastNumBuckets))
-          .toArray(KeyGroupIterator[]::new);
+      // Initialize iterators and tuple tags for sources
+      final KeyGroupIterator[] iterators =
+          sources.stream()
+              .map(i -> i.createIterator(bucketId, leastNumBuckets))
+              .toArray(KeyGroupIterator[]::new);
 
-      final TupleTag[] tupleTags = BucketedInput.collectTupleTags(sources);
-      final CoGbkResultSchema resultSchema = CoGbkResultSchema.of(Arrays.asList(tupleTags));
+      final CoGbkResultSchema resultSchema = BucketedInput.schemaOf(sources);
+      final TupleTagList tupleTags = resultSchema.getTupleTagList();
 
       final Map<TupleTag, KV<byte[], Iterator<?>>> nextKeyGroups = new HashMap<>();
 
@@ -216,13 +216,13 @@ public class SortedBucketSource<FinalKeyT>
         // Advance key-value groups from each source
         for (int i = 0; i < numSources; i++) {
           final KeyGroupIterator it = iterators[i];
-          if (nextKeyGroups.containsKey(tupleTags[i])) {
+          if (nextKeyGroups.containsKey(tupleTags.get(i))) {
             continue;
           }
           if (it.hasNext()) {
             @SuppressWarnings("unchecked")
             final KV<byte[], Iterator<?>> next = it.next();
-            nextKeyGroups.put(tupleTags[i], next);
+            nextKeyGroups.put(tupleTags.get(i), next);
           } else {
             completedSources++;
           }
@@ -347,10 +347,10 @@ public class SortedBucketSource<FinalKeyT>
       return fileOperations.getCoder();
     }
 
-    static TupleTag<?>[] collectTupleTags(List<BucketedInput<?, ?>> sources) {
-      return sources.stream()
+    static CoGbkResultSchema schemaOf(List<BucketedInput<?, ?>> sources) {
+      return CoGbkResultSchema.of(sources.stream()
           .map(BucketedInput::getTupleTag)
-          .toArray(TupleTag[]::new);
+          .collect(Collectors.toList()));
     }
 
     public BucketMetadata<K, V> getMetadata() {

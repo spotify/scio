@@ -49,6 +49,7 @@ import org.apache.beam.sdk.values.KV;
 import org.apache.beam.sdk.values.PBegin;
 import org.apache.beam.sdk.values.PCollectionTuple;
 import org.apache.beam.sdk.values.TupleTag;
+import org.apache.beam.sdk.values.TupleTagList;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions;
 
 public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PBegin, WriteResult> {
@@ -178,8 +179,9 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
         bucketShardsToDsts.put(bucketShardId, dst);
       }
 
-      final TupleTag<?>[] tupleTags = BucketedInput.collectTupleTags(sources);
-      final CoGbkResultSchema resultSchema = CoGbkResultSchema.of(Arrays.asList(tupleTags));
+      final CoGbkResultSchema resultSchema = BucketedInput.schemaOf(sources);
+      final TupleTagList tupleTags = resultSchema.getTupleTagList();
+
       final KeyGroupIterator[] iterators = sources.stream()
           .map(i -> i.createIterator(bucketId, leastNumBuckets))
           .toArray(KeyGroupIterator[]::new);
@@ -208,12 +210,12 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
         int completedSources = 0;
         for (int i = 0; i < numSources; i++) {
           final KeyGroupIterator it = iterators[i];
-          if (nextKeyGroups.containsKey(tupleTags[i])) {
+          if (nextKeyGroups.containsKey(tupleTags.get(i))) {
             continue;
           }
           if (it.hasNext()) {
             @SuppressWarnings("unchecked") final KV<byte[], Iterator<?>> next = it.next();
-            nextKeyGroups.put(tupleTags[i], next);
+            nextKeyGroups.put(tupleTags.get(i), next);
           } else {
             completedSources++;
           }
