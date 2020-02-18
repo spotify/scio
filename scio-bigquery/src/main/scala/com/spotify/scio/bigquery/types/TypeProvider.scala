@@ -406,7 +406,7 @@ private[types] object TypeProvider {
         val argMap = posArgs ++ namedArgs
         val args = argMap.getOrElse("args", Nil)
         val selectedFields = argMap.getOrElse("selectedFields", Nil)
-        val rowRestriction = argMap.getOrElse("rowRestriction", Nil).headOption.orNull
+        val rowRestriction = argMap.getOrElse("rowRestriction", Nil).headOption.getOrElse("")
         (table, args, selectedFields, rowRestriction)
     }
   }

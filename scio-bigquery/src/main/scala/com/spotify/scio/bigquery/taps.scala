@@ -61,8 +61,8 @@ final case class BigQueryStorageTap(table: Table, readOptions: TableReadOptions)
   override def open(sc: ScioContext): SCollection[TableRow] =
     sc.bigQueryStorage(
       table,
-      readOptions.getSelectedFieldsList().asScala.toList,
-      readOptions.getRowRestriction()
+      readOptions.getSelectedFieldsList.asScala.toList,
+      readOptions.getRowRestriction
     )
 }
 
@@ -133,8 +133,8 @@ final case class BigQueryTaps(self: Taps) {
       () =>
         BigQueryStorage(Table.Ref(table)).tap(
           BigQueryStorage.ReadParam(
-            readOptions.getSelectedFieldsList().asScala.toList,
-            readOptions.getRowRestriction()
+            readOptions.getSelectedFieldsList.asScala.toList,
+            readOptions.getRowRestriction
           )
         )
     )
@@ -151,8 +151,8 @@ final case class BigQueryTaps(self: Taps) {
         BigQueryStorage(Table.Ref(table))
           .tap(
             BigQueryStorage.ReadParam(
-              readOptions.getSelectedFieldsList().asScala.toList,
-              readOptions.getRowRestriction()
+              readOptions.getSelectedFieldsList.asScala.toList,
+              readOptions.getRowRestriction
             )
           )
           .map(fn)

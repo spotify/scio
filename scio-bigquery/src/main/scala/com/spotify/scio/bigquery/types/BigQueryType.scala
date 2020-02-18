@@ -261,7 +261,7 @@ object BigQueryType {
     tableSpec: String,
     args: List[Any] = Nil,
     selectedFields: List[String] = Nil,
-    rowRestriction: String = null
+    rowRestriction: String = ""
   ) extends StaticAnnotation {
     def macroTransform(annottees: Any*): Any = macro TypeProvider.storageImpl
   }

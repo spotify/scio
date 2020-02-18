@@ -94,16 +94,13 @@ private object Reads {
     typedRead: beam.BigQueryIO.TypedRead[T],
     table: Table,
     selectedFields: List[String] = Nil,
-    rowRestriction: String = null
+    rowRestriction: String = ""
   ): SCollection[T] = sc.wrap {
     var read = typedRead
       .from(table.spec)
       .withMethod(Method.DIRECT_READ)
       .withSelectedFields(selectedFields.asJava)
-
-    if (rowRestriction != null) {
-      read = read.withRowRestriction(rowRestriction)
-    }
+      .withRowRestriction(rowRestriction)
     sc.applyInternal(read)
   }
 }
@@ -396,7 +393,17 @@ final case class BigQueryStorage(table: Table) extends BigQueryIO[TableRow] {
 }
 
 object BigQueryStorage {
-  final case class ReadParam(selectFields: List[String], rowRestriction: String)
+  final case class ReadParam(
+    selectFields: List[String] = ReadParam.DefaultSelectFields,
+    rowRestriction: String = ReadParam.DefaultRowRestriction
+  ) {
+    require(rowRestriction != null)
+  }
+
+  object ReadParam {
+    private[bigquery] val DefaultSelectFields: List[String] = Nil
+    private[bigquery] val DefaultRowRestriction: String = ""
+  }
 
   @deprecated("this method will be removed; use apply(Table.Ref(table)) instead", "0.8.0")
   @inline final def apply(table: TableReference): BigQueryStorage =
