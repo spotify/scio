@@ -19,6 +19,7 @@ package com.spotify.scio.bigquery.syntax
 
 import com.google.api.services.bigquery.model.TableReference
 import com.spotify.scio.ScioContext
+import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
 import com.spotify.scio.bigquery.{
   BigQuerySelect,
   BigQueryStorage,
@@ -32,7 +33,6 @@ import com.spotify.scio.bigquery.{
   TableRow,
   TableRowJsonIO
 }
-import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.schemas.Schema
 import com.spotify.scio.values._

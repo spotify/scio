@@ -17,12 +17,12 @@
 
 package com.spotify.scio.bigquery.types
 
-import com.google.protobuf.ByteString
 import com.google.cloud.bigquery.storage.v1beta1.ReadOptions.TableReadOptions
+import com.google.protobuf.ByteString
 import com.spotify.scio._
-import com.spotify.scio.io.Taps
-import com.spotify.scio.bigquery._
 import com.spotify.scio.bigquery.BigQueryTaps._
+import com.spotify.scio.bigquery._
+import com.spotify.scio.io.Taps
 import org.apache.beam.sdk.io.gcp.{bigquery => beam}
 import org.apache.beam.sdk.testing.PAssert
 import org.joda.time.{DateTimeZone, Duration, Instant}

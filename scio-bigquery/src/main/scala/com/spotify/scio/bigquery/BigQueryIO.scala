@@ -20,7 +20,6 @@ package com.spotify.scio.bigquery
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function
 
-import com.google.cloud.bigquery.storage.v1beta1.ReadOptions.TableReadOptions
 import com.google.api.services.bigquery.model.{TableReference, TableSchema}
 import com.spotify.scio.ScioContext
 import com.spotify.scio.bigquery.ExtendedErrorInfo._
@@ -31,6 +30,7 @@ import com.spotify.scio.io.{ScioIO, Tap, TapOf, TestIO}
 import com.spotify.scio.schemas.{Schema, SchemaMaterializer}
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
+import com.twitter.chill.ClosureCleaner
 import org.apache.beam.sdk.extensions.gcp.options.GcpOptions
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.TypedRead.Method
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
@@ -44,7 +44,6 @@ import org.apache.beam.sdk.transforms.SerializableFunction
 import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
-import com.twitter.chill.ClosureCleaner
 
 private object Reads {
   private[this] val cache = new ConcurrentHashMap[ScioContext, BigQuery]()
