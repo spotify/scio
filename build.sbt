@@ -32,7 +32,7 @@ val asmVersion = "4.13"
 val autoServiceVersion = "1.0-rc6"
 val autoValueVersion = "1.7"
 val avroVersion = "1.8.2"
-val beamGuavaVersion = "0.1"
+val beamVendorVersion = "0.1"
 val beamVersion = "2.19.0"
 val bigdataossVersion = "1.9.16"
 val bigQueryStorageVersion = "0.79.0-alpha"
@@ -48,7 +48,7 @@ val commonsIoVersion = "2.6"
 val commonsLang3Version = "3.9"
 val commonsMath3Version = "3.6.1"
 val commonsTextVersion = "1.8"
-val datastoreV1ProtoClientVersion = "1.6.0"
+val datastoreV1ProtoClientVersion = "1.6.3"
 val elasticsearch2Version = "2.4.6"
 val elasticsearch5Version = "5.6.16"
 val elasticsearch6Version = "6.8.6"
@@ -59,9 +59,10 @@ val gcsConnectorVersion = "hadoop2-2.0.1"
 val gcsVersion = "1.8.0"
 val generatedGrpcBetaVersion = "0.44.0"
 val generatedGrpcGaVersion = "1.83.0"
-val googleApiServicesBigQuery = s"v2-rev20181221-1.28.0"
+val googleApiServicesBigQuery = s"v2-rev20190917-1.30.3"
+val googleApiServicesDataflow = s"v1b3-rev20190927-1.30.3"
 val googleAuthVersion = "0.19.0"
-val googleClientsVersion = "1.28.0"
+val googleClientsVersion = "1.30.5"
 val googleCloudSpannerVersion = "1.6.0"
 val googleHttpClientsVersion = "1.33.0"
 val grpcVersion = "1.17.1"
@@ -81,7 +82,7 @@ val parquetExtraVersion = "0.3.4"
 val magnoliaVersion = "0.12.6"
 val magnolifyVersion = "0.1.4"
 val mercatorVersion = "0.2.1"
-val nettyVersion = "4.1.30.Final"
+val nettyVersion = "4.1.38.Final"
 val opencensusVersion = "0.17.0"
 val parquetAvroVersion = "0.3.4"
 val parquetVersion = "1.11.0"
@@ -118,9 +119,6 @@ val googleCloudSpannerVersion = "1.6.0"
 val datastoreV1ProtoClientVersion = "1.6.0"
 val opencensusVersion = "0.17.0"
 
-lazy val googleApiServicesBigQuery = s"v2-rev20181221-$googleClientsVersion"
-lazy val googleApiServicesDataflow = s"v1b3-rev20190927-$googleClientsVersion"
-
 lazy val mimaSettings = Seq(
   mimaPreviousArtifacts :=
     previousVersion(version.value)
@@ -144,7 +142,11 @@ val beamSDKIODependencies = Def.settings(
     "io.grpc" % "grpc-context" % grpcVersion,
     "io.grpc" % "grpc-auth" % grpcVersion,
     "io.grpc" % "grpc-netty" % grpcVersion,
-    "io.grpc" % "grpc-stub" % grpcVersion
+    "io.grpc" % "grpc-stub" % grpcVersion,
+    "io.grpc" % "grpc-okhttp" % grpcVersion,
+//    "io.grpc" % "grpc-api" % grpcVersion,
+    "com.google.api" % "gax" % gaxVersion,
+    "com.google.api" % "gax-grpc" % gaxVersion
   ),
   dependencyOverrides ++= Seq(
     "com.google.guava" % "guava" % guavaVersion,
@@ -157,6 +159,8 @@ val beamSDKIODependencies = Def.settings(
     "io.grpc" % "grpc-auth" % grpcVersion,
     "io.grpc" % "grpc-netty" % grpcVersion,
     "io.grpc" % "grpc-stub" % grpcVersion,
+    "io.grpc" % "grpc-okhttp" % grpcVersion,
+//    "io.grpc" % "grpc-api" % grpcVersion,
     "io.opencensus" % "opencensus-api" % opencensusVersion
   )
 )
@@ -448,7 +452,8 @@ lazy val `scio-core`: Project = project
       (baseDirectory in ThisBuild).value / "version.sbt"
     ),
     dependencyOverrides ++= Seq(
-      "com.google.guava" % "guava" % guavaVersion
+      "com.google.guava" % "guava" % guavaVersion,
+      "io.grpc" % "grpc-stub" % grpcVersion
     ),
     libraryDependencies ++= Seq(
       "com.chuusai" %% "shapeless" % shapelessVersion,
@@ -467,8 +472,8 @@ lazy val `scio-core`: Project = project
       "com.google.auth" % "google-auth-library-credentials" % googleAuthVersion,
       "com.google.auto.service" % "auto-service" % autoServiceVersion,
       "com.google.guava" % "guava" % guavaVersion,
-      "com.google.http-client" % "google-http-client" % googleClientsVersion,
-      "com.google.http-client" % "google-http-client-jackson2" % googleClientsVersion,
+      "com.google.http-client" % "google-http-client" % googleHttpClientsVersion,
+      "com.google.http-client" % "google-http-client-jackson2" % googleHttpClientsVersion,
       "com.google.protobuf" % "protobuf-java" % protobufVersion,
       "com.twitter" % "chill-java" % chillVersion,
       "com.twitter" % "chill-protobuf" % chillVersion,
@@ -493,7 +498,7 @@ lazy val `scio-core`: Project = project
       "org.apache.beam" % "beam-sdks-java-extensions-google-cloud-platform-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-extensions-protobuf" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
-      "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamGuavaVersion,
+      "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamVendorVersion,
       "org.apache.commons" % "commons-compress" % commonsCompressVersion,
       "org.apache.commons" % "commons-math3" % commonsMath3Version,
       "org.scalatest" %% "scalatest" % scalatestVersion % Test,
@@ -522,7 +527,8 @@ lazy val `scio-sql`: Project = Project(
     libraryDependencies ++= Seq(
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-extensions-sql" % beamVersion,
-      "org.apache.commons" % "commons-lang3" % commonsLang3Version
+      "org.apache.commons" % "commons-lang3" % commonsLang3Version,
+      "org.apache.beam" % "beam-vendor-calcite-1_20_0" % beamVendorVersion
     )
   )
   .dependsOn(
@@ -556,8 +562,17 @@ lazy val `scio-test`: Project = project
       "com.spotify" % "annoy" % annoyVersion % "test",
       "com.spotify.sparkey" % "sparkey" % sparkeyVersion % "test",
       "com.novocode" % "junit-interface" % junitInterfaceVersion,
-      "junit" % "junit" % junitVersion % "test"
+      "junit" % "junit" % junitVersion % "test",
+      "com.chuusai" %% "shapeless" % shapelessVersion,
+      "com.google.api.grpc" % "proto-google-cloud-bigtable-v2" % generatedGrpcBetaVersion,
+      "com.google.protobuf" % "protobuf-java" % protobufVersion,
+      "com.twitter" %% "chill" % chillVersion,
+      "commons-io" % "commons-io" % commonsIoVersion,
+      "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
+      "org.hamcrest" % "hamcrest" % hamcrestVersion,
+      "org.scalactic" %% "scalactic" % "3.1.0"
     ),
+    magnoliaDependencies,
     (Test / compileOrder) := CompileOrder.JavaThenScala
   )
   .configs(
@@ -594,6 +609,8 @@ lazy val `scio-avro`: Project = project
   .settings(
     description := "Scio add-on for working with Avro",
     libraryDependencies ++= Seq(
+      "me.lyh" %% "protobuf-generic" % protobufGenericVersion,
+      "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamVendorVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "com.twitter" %% "chill" % chillVersion,
       "com.google.protobuf" % "protobuf-java" % protobufVersion,
@@ -622,6 +639,8 @@ lazy val `scio-bigquery`: Project = project
   .settings(
     description := "Scio add-on for Google BigQuery",
     libraryDependencies ++= Seq(
+      "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamVendorVersion,
+      "com.twitter" %% "chill" % chillVersion,
       "com.google.protobuf" % "protobuf-java" % protobufVersion,
       "org.apache.avro" % "avro" % avroVersion,
       "com.google.cloud.bigdataoss" % "util" % bigdataossVersion,
@@ -630,7 +649,7 @@ lazy val `scio-bigquery`: Project = project
       "com.google.apis" % "google-api-services-bigquery" % googleApiServicesBigQuery,
       "com.google.api.grpc" % "proto-google-cloud-bigquerystorage-v1beta1" % "0.83.0",
       "com.google.http-client" % "google-http-client" % googleHttpClientsVersion,
-      "com.google.http-client" % "google-http-client-jackson" % googleClientsVersion,
+      "com.google.http-client" % "google-http-client-jackson" % "1.29.2",
       "com.google.http-client" % "google-http-client-jackson2" % googleHttpClientsVersion,
       "com.google.auth" % "google-auth-library-credentials" % googleAuthVersion,
       "com.google.auth" % "google-auth-library-oauth2-http" % googleAuthVersion,
@@ -685,7 +704,11 @@ lazy val `scio-bigtable`: Project = project
       "org.scalatest" %% "scalatest" % scalatestVersion % "test",
       "org.hamcrest" % "hamcrest-core" % hamcrestVersion % "test",
       "org.hamcrest" % "hamcrest-library" % hamcrestVersion % "test",
-      "junit" % "junit" % junitVersion % "test"
+      "junit" % "junit" % junitVersion % "test",
+      "com.chuusai" %% "shapeless" % shapelessVersion,
+      "com.google.api.grpc" % "proto-google-cloud-bigtable-admin-v2" % "0.38.0",
+      "com.google.guava" % "guava" % guavaVersion,
+      "org.slf4j" % "slf4j-api" % slf4jVersion
     ),
     beamSDKIODependencies
   )
@@ -710,7 +733,11 @@ lazy val `scio-cassandra2`: Project = project
         .exclude("ch.qos.logback", "logback-classic")
         .exclude("org.slf4j", "log4j-over-slf4j"),
       "org.apache.hadoop" % "hadoop-common" % hadoopVersion,
-      "org.apache.hadoop" % "hadoop-mapreduce-client-core" % hadoopVersion
+      "org.apache.hadoop" % "hadoop-mapreduce-client-core" % hadoopVersion,
+      "com.esotericsoftware" % "kryo-shaded" % kryoVersion,
+      "com.google.guava" % "guava" % guavaVersion,
+      "com.twitter" % "chill-java" % chillVersion,
+      "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamVendorVersion
     )
   )
   .dependsOn(
@@ -736,7 +763,10 @@ lazy val `scio-cassandra3`: Project = project
       "org.apache.hadoop" % "hadoop-common" % hadoopVersion,
       "org.apache.hadoop" % "hadoop-mapreduce-client-core" % hadoopVersion,
       "org.scalatest" %% "scalatest" % scalatestVersion % Test,
-      "org.apache.beam" % "beam-sdks-java-core" % beamVersion % Test
+      "org.apache.beam" % "beam-sdks-java-core" % beamVersion % Test,
+      "com.esotericsoftware" % "kryo-shaded" % kryoVersion,
+      "com.google.guava" % "guava" % guavaVersion,
+      "com.twitter" % "chill-java" % chillVersion
     )
   )
   .dependsOn(
@@ -751,6 +781,7 @@ lazy val `scio-elasticsearch2`: Project = project
   .settings(
     description := "Scio add-on for writing to Elasticsearch",
     libraryDependencies ++= Seq(
+      "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamVendorVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "joda-time" % "joda-time" % jodaTimeVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
@@ -768,6 +799,7 @@ lazy val `scio-elasticsearch5`: Project = project
   .settings(
     description := "Scio add-on for writing to Elasticsearch",
     libraryDependencies ++= Seq(
+      "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamVendorVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "joda-time" % "joda-time" % jodaTimeVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
@@ -786,6 +818,7 @@ lazy val `scio-elasticsearch6`: Project = project
   .settings(
     description := "Scio add-on for writing to Elasticsearch",
     libraryDependencies ++= Seq(
+      "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamVendorVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "joda-time" % "joda-time" % jodaTimeVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
@@ -805,13 +838,16 @@ lazy val `scio-elasticsearch7`: Project = project
   .settings(
     description := "Scio add-on for writing to Elasticsearch",
     libraryDependencies ++= Seq(
+      "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamVendorVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "joda-time" % "joda-time" % jodaTimeVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       "org.apache.httpcomponents" % "httpcore" % httpCoreVersion,
       "org.elasticsearch" % "elasticsearch-x-content" % elasticsearch7Version,
       "org.elasticsearch.client" % "elasticsearch-rest-client" % elasticsearch7Version,
-      "org.elasticsearch.client" % "elasticsearch-rest-high-level-client" % elasticsearch7Version
+      "org.elasticsearch.client" % "elasticsearch-rest-high-level-client" % elasticsearch7Version,
+      "org.apache.httpcomponents" % "httpcore" % httpCoreVersion,
+      "org.elasticsearch" % "elasticsearch" % elasticsearch7Version
     )
   )
   .dependsOn(
@@ -839,8 +875,14 @@ lazy val `scio-extra`: Project = project
       "com.github.ben-manes.caffeine" % "caffeine" % caffeineVersion % "test",
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       "org.scalatest" %% "scalatest" % scalatestVersion % "test",
-      "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test"
+      "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test",
+      "com.chuusai" %% "shapeless" % shapelessVersion,
+      "joda-time" % "joda-time" % jodaTimeVersion,
+      "net.java.dev.jna" % "jna" % "5.4.0",
+      "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamVendorVersion,
+      "org.typelevel" %% "algebra" % algebraVersion
     ),
+    magnoliaDependencies,
     beamSDKIODependencies,
     circeDependencies,
     AvroConfig / version := avroVersion,
@@ -870,6 +912,7 @@ lazy val `scio-jdbc`: Project = project
       "com.google.guava" % "guava" % guavaVersion
     ),
     libraryDependencies ++= Seq(
+      "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-io-jdbc" % beamVersion
     )
   )
@@ -898,7 +941,16 @@ lazy val `scio-parquet`: Project = project
       "com.google.cloud.bigdataoss" % "gcs-connector" % gcsConnectorVersion,
       "org.apache.beam" % "beam-sdks-java-io-hadoop-format" % beamVersion,
       "org.apache.hadoop" % "hadoop-client" % hadoopVersion,
-      "org.apache.parquet" % "parquet-avro" % parquetVersion
+      "org.apache.parquet" % "parquet-avro" % parquetVersion,
+      "com.twitter" %% "chill" % chillVersion,
+      "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
+      "org.apache.beam" % "beam-sdks-java-io-hadoop-common" % beamVersion,
+      "org.apache.hadoop" % "hadoop-common" % hadoopVersion,
+      "org.apache.hadoop" % "hadoop-mapreduce-client-core" % hadoopVersion,
+      "org.apache.parquet" % "parquet-column" % parquetVersion,
+      "org.apache.parquet" % "parquet-common" % parquetVersion,
+      "org.apache.parquet" % "parquet-hadoop" % parquetVersion,
+      "org.slf4j" % "slf4j-api" % slf4jVersion
     ),
     dependencyOverrides ++= Seq(
       "org.apache.avro" % "avro" % avroVersion
@@ -919,6 +971,7 @@ lazy val `scio-spanner`: Project = project
   .settings(
     description := "Scio add-on for Google Cloud Spanner",
     libraryDependencies ++= Seq(
+      "com.google.cloud" % "google-cloud-core" % "1.61.0",
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "com.google.cloud" % "google-cloud-spanner" % googleCloudSpannerVersion,
       "org.scalatest" %% "scalatest" % scalatestVersion % "it"
@@ -953,7 +1006,10 @@ lazy val `scio-tensorflow`: Project = project
       "com.spotify" % "zoltar-api" % zoltarVersion,
       "com.spotify" % "zoltar-tensorflow" % zoltarVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
-      "com.spotify" %% "magnolify-tensorflow" % magnolifyVersion % Test
+      "com.spotify" %% "magnolify-tensorflow" % magnolifyVersion % Test,
+      "com.spotify" % "zoltar-core" % zoltarVersion,
+      "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamVendorVersion,
+      "org.tensorflow" % "libtensorflow" % tensorFlowVersion
     ),
     javaOptions += "-Dscio.ignoreVersionWarning=true"
   )
@@ -989,6 +1045,9 @@ lazy val `scio-examples`: Project = project
   .settings(beamRunnerSettings)
   .settings(macroSettings)
   .settings(
+    dependencyOverrides ++= Seq(
+      "org.apache.httpcomponents" % "httpcore" % httpCoreVersion
+    ),
     libraryDependencies ++= Seq(
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-extensions-google-cloud-platform-core" % beamVersion,
@@ -1008,9 +1067,26 @@ lazy val `scio-examples`: Project = project
       "com.github.alexarchambault" %% "case-app" % caseappVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       "org.slf4j" % "slf4j-simple" % slf4jVersion,
-      "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test"
+      "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test",
+      "com.chuusai" %% "shapeless" % shapelessVersion,
+      "com.github.alexarchambault" %% "case-app-annotations" % caseappVersion,
+      "com.github.alexarchambault" %% "case-app-util" % caseappVersion,
+      "com.google.api-client" % "google-api-client" % googleClientsVersion,
+      "com.google.apis" % "google-api-services-pubsub" % "v1-rev20191111-1.28.0",
+      "com.google.auth" % "google-auth-library-credentials" % googleAuthVersion,
+      "com.google.auth" % "google-auth-library-oauth2-http" % googleAuthVersion,
+      "com.google.cloud.bigdataoss" % "util" % bigdataossVersion,
+      "com.google.guava" % "guava" % guavaVersion,
+      "com.google.oauth-client" % "google-oauth-client" % "1.30.4",
+      "com.google.protobuf" % "protobuf-java" % protobufVersion,
+      "com.spotify" %% "magnolify-shared" % magnolifyVersion,
+      "com.twitter" %% "algebird-core" % algebirdVersion,
+      "org.apache.beam" % "beam-sdks-java-extensions-sql" % beamVersion,
+      "org.apache.httpcomponents" % "httpcore" % httpCoreVersion,
+      "org.elasticsearch" % "elasticsearch" % elasticsearch7Version
     ),
     beamSDKIODependencies,
+    magnoliaDependencies,
     // exclude problematic sources if we don't have GCP credentials
     excludeFilter in unmanagedSources := {
       if (BuildCredentials.exists) {
@@ -1056,6 +1132,7 @@ lazy val `scio-repl`: Project = project
       "jline" % "jline" % jlineVersion,
       "org.scala-lang" % "scala-compiler" % scalaVersion.value,
       "com.nrinaudo" %% "kantan.csv" % kantanCsvVersion,
+      "com.nrinaudo" %% "kantan.codecs" % kantanCsvVersion,
       "org.scalamacros" % "paradise" % scalaMacrosVersion cross CrossVersion.full
     ),
     assemblyJarName in assembly := s"scio-repl-${version.value}.jar"
@@ -1110,7 +1187,15 @@ lazy val `scio-smb`: Project = project
       "org.hamcrest" % "hamcrest-core" % hamcrestVersion % Test,
       "org.hamcrest" % "hamcrest-library" % hamcrestVersion % Test,
       "com.novocode" % "junit-interface" % junitInterfaceVersion % Test,
-      "junit" % "junit" % junitVersion % Test
+      "junit" % "junit" % junitVersion % Test,
+      "com.chuusai" %% "shapeless" % shapelessVersion,
+      "com.fasterxml.jackson.core" % "jackson-annotations" % jacksonVersion,
+      "com.fasterxml.jackson.core" % "jackson-core" % jacksonVersion,
+      "com.fasterxml.jackson.core" % "jackson-databind" % jacksonVersion,
+      "com.google.protobuf" % "protobuf-java" % protobufVersion,
+      "joda-time" % "joda-time" % jodaTimeVersion,
+      "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamVendorVersion,
+      "org.slf4j" % "slf4j-api" % slf4jVersion
     ),
     javacOptions ++= {
       (Compile / sourceManaged).value.mkdirs()
