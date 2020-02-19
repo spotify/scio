@@ -20,16 +20,12 @@ package org.apache.beam.sdk.extensions.smb;
 import static org.apache.beam.sdk.extensions.smb.SortedBucketSource.BucketedInput;
 import static org.apache.beam.sdk.extensions.smb.TestUtils.fromFolder;
 
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
+import org.apache.beam.sdk.extensions.smb.SortedBucketTransform.TransformFn;
 import org.apache.beam.sdk.io.FileSystems;
 import org.apache.beam.sdk.testing.TestPipeline;
 import org.apache.beam.sdk.transforms.Create;
-import org.apache.beam.sdk.transforms.SerializableFunction;
-import org.apache.beam.sdk.transforms.join.CoGbkResult;
-import org.apache.beam.sdk.values.KV;
 import org.apache.beam.sdk.values.PBegin;
 import org.apache.beam.sdk.values.TupleTag;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ImmutableList;
@@ -87,18 +83,12 @@ public class SortedBucketTransformTest {
             new TestFileOperations()
         ));
 
-    final SerializableFunction<KV<String, CoGbkResult>, Iterator<String>> transformFn =
-        (SerializableFunction<KV<String, CoGbkResult>, Iterator<String>>) input -> {
-          final List<String> output = new ArrayList<>();
-
-          input.getValue().getAll(new TupleTag<String>("lhs")).forEach(lhs -> {
-            input.getValue().getAll(new TupleTag<String>("rhs")).forEach(rhs -> {
-              output.add(lhs + "-" + rhs);
-            });
-          });
-
-          return output.iterator();
-        };
+    final TransformFn<String, String> mergeFunction = (keyGroup, outputConsumer) ->
+        keyGroup.getValue().getAll(new TupleTag<String>("lhs")).forEach(lhs -> {
+          keyGroup.getValue().getAll(new TupleTag<String>("rhs")).forEach(rhs -> {
+            outputConsumer.accept(lhs + "-" + rhs);
+        });
+    });
 
     transformPipeline.apply(
         new SortedBucketTransform<>(
@@ -109,7 +99,7 @@ public class SortedBucketTransformTest {
             ".txt",
             new TestFileOperations(),
             sources,
-            transformFn
+            mergeFunction
         )
     );
 
@@ -140,8 +130,9 @@ public class SortedBucketTransformTest {
             new TestFileOperations())
     );
 
-    final SerializableFunction<KV<String, CoGbkResult>, Iterator<String>> transformFn =
-        (input) -> { throw new RuntimeException("This code is unreachable"); };
+    final TransformFn<String, String> transformFn = (keyGroup, outputConsumer) -> {
+      throw new RuntimeException("This code is unreachable");
+    };
 
     Assert.assertThrows(
         "Specified number of buckets 8 does not match smallest bucket size among inputs: 4",

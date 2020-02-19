@@ -18,11 +18,13 @@
 package org.apache.beam.sdk.extensions.smb;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -42,7 +44,6 @@ import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.transforms.PTransform;
 import org.apache.beam.sdk.transforms.ParDo;
 import org.apache.beam.sdk.transforms.Reshuffle;
-import org.apache.beam.sdk.transforms.SerializableFunction;
 import org.apache.beam.sdk.transforms.join.CoGbkResult;
 import org.apache.beam.sdk.transforms.join.CoGbkResultSchema;
 import org.apache.beam.sdk.values.KV;
@@ -59,7 +60,7 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
   private final Class<FinalKeyT> finalKeyClass;
   private final List<BucketedInput<?, ?>> sources;
   private final BucketMetadata<FinalKeyT, FinalValueT> bucketMetadata;
-  private final SerializableFunction<KV<FinalKeyT, CoGbkResult>, Iterator<FinalValueT>> toFinalResultT;
+  private final TransformFn<FinalKeyT, FinalValueT> transformFn;
 
   public SortedBucketTransform(
       Class<FinalKeyT> finalKeyClass,
@@ -69,13 +70,13 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
       String filenameSuffix,
       FileOperations<FinalValueT> fileOperations,
       List<BucketedInput<?, ?>> sources,
-      SerializableFunction<KV<FinalKeyT, CoGbkResult>, Iterator<FinalValueT>> toFinalResultT) {
+      TransformFn<FinalKeyT, FinalValueT> transformFn) {
     this.filenamePolicy = new SMBFilenamePolicy(outputDirectory, filenameSuffix);
     this.tempDirectory = tempDirectory;
     this.fileOperations = fileOperations;
     this.finalKeyClass = finalKeyClass;
     this.sources = sources;
-    this.toFinalResultT = toFinalResultT;
+    this.transformFn = transformFn;
     this.bucketMetadata = bucketMetadata;
   }
 
@@ -121,7 +122,7 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
                       tempFileAssignment,
                       fileOperations,
                       bucketMetadata,
-                      toFinalResultT)
+                      transformFn)
                   )
                 ).setCoder(KvCoder.of(BucketShardIdCoder.of(), ResourceIdCoder.of()))
         ).apply(
@@ -131,11 +132,41 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
         );
   }
 
+  @FunctionalInterface
+  public interface TransformFn<KeyT, ValueT> extends Serializable {
+    void writeTransform(KV<KeyT, CoGbkResult> keyGroup, OutputCollector<ValueT> outputConsumer);
+  }
+
+  public static class OutputCollector<ValueT> implements Consumer<ValueT>, Serializable {
+    private final Writer<ValueT> writer;
+
+    public OutputCollector(Writer<ValueT> writer) {
+      this.writer = writer;
+    }
+
+    public void onComplete() {
+      try {
+        writer.close();
+      } catch (IOException e) {
+        throw new RuntimeException("Closing writer failed: ", e);
+      }
+    }
+
+    @Override
+    public void accept(ValueT t) {
+      try {
+        writer.write(t);
+      } catch (IOException e) {
+        throw new RuntimeException("Write of element " + t + " failed: ", e);
+      }
+    }
+  }
+
   private static class MergeAndWriteBuckets<FinalKeyT, FinalValueT> extends DoFn<Integer, KV<BucketShardId, ResourceId>> {
     private final List<BucketedInput<?, ?>> sources;
     private final FileAssignment fileAssignment;
     private final FileOperations<FinalValueT> fileOperations;
-    private final SerializableFunction<KV<FinalKeyT, CoGbkResult>, Iterator<FinalValueT>> toFinalResultT;
+    private final TransformFn<FinalKeyT, FinalValueT> transformFn;
     private final Coder<FinalKeyT> keyCoder;
     private final int numBuckets;
     private final int numShards;
@@ -146,13 +177,13 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
         FileAssignment fileAssignment,
         FileOperations<FinalValueT> fileOperations,
         BucketMetadata<FinalKeyT, FinalValueT> bucketMetadata,
-        SerializableFunction<KV<FinalKeyT, CoGbkResult>, Iterator<FinalValueT>> toFinalResultT
+        TransformFn<FinalKeyT, FinalValueT> transformFn
     ) {
       this.keyCoder = keyCoder;
       this.sources = sources;
       this.fileAssignment = fileAssignment;
       this.fileOperations = fileOperations;
-      this.toFinalResultT = toFinalResultT;
+      this.transformFn = transformFn;
       this.numBuckets = bucketMetadata.getNumBuckets();
       this.numShards = bucketMetadata.getNumShards();
     }
@@ -163,7 +194,7 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
       final int numSources = sources.size();
 
       @SuppressWarnings("unchecked")
-      final Writer<FinalValueT>[] writers = new Writer[numShards];
+      final OutputCollector<FinalValueT>[] writers = new OutputCollector[numShards];
       final List<KV<BucketShardId, ResourceId>> bucketShardsToDsts = new ArrayList<>();
 
       for (int shardId = 0; shardId < numShards; shardId++) {
@@ -171,7 +202,7 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
         final ResourceId dst = fileAssignment.forBucket(bucketShardId, numBuckets, numShards);
 
         try {
-          writers[shardId] = fileOperations.createWriter(dst);
+          writers[shardId] = new OutputCollector<>(fileOperations.createWriter(dst));
         } catch (IOException e) {
           throw new RuntimeException(e);
         }
@@ -184,16 +215,16 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
           .toArray(KeyGroupIterator[]::new);
 
       // Supplies sharded writers per key group in round-robin style
-      final Supplier<Writer<FinalValueT>> writerSupplier;
+      final Supplier<OutputCollector<FinalValueT>> writerSupplier;
       if (numShards == 1) {
         writerSupplier = () -> writers[0];
       } else {
-        writerSupplier = new Supplier<Writer<FinalValueT>>() {
+        writerSupplier = new Supplier<OutputCollector<FinalValueT>>() {
           private int shard = 0;
 
           @Override
-          public Writer<FinalValueT> get() {
-            final Writer<FinalValueT> result = writers[shard];
+          public OutputCollector<FinalValueT> get() {
+            final OutputCollector<FinalValueT> result = writers[shard];
             shard = (shard + 1) % numShards;
             return result;
           }
@@ -223,18 +254,10 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
           break;
         }
 
-
-        final Writer<FinalValueT> writer = writerSupplier.get();
-
-        toFinalResultT.apply(
-            SortedBucketSource.MergeBuckets.mergeKeyGroup(nextKeyGroups, resultSchema, keyCoder)
-        ).forEachRemaining(output -> {
-          try {
-            writer.write(output);
-          } catch (IOException e) {
-            throw new RuntimeException(e);
-          }
-        });
+        transformFn.writeTransform(
+            SortedBucketSource.MergeBuckets.mergeKeyGroup(nextKeyGroups, resultSchema, keyCoder),
+            writerSupplier.get()
+        );
 
         if (completedSources == numSources) {
           break;
@@ -242,12 +265,8 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
       }
 
       bucketShardsToDsts.forEach(bucketShardAndDst -> {
-        try {
-          writers[bucketShardAndDst.getKey().getShardId()].close();
-          c.output(bucketShardAndDst);
-        } catch (IOException e) {
-          throw new RuntimeException(e);
-        }
+        writers[bucketShardAndDst.getKey().getShardId()].onComplete();
+        c.output(bucketShardAndDst);
       });
     }
   }
