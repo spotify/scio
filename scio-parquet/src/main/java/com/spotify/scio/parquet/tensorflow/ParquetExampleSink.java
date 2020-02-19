@@ -17,7 +17,7 @@
 
 package com.spotify.scio.parquet.tensorflow;
 
-import com.spotify.scio.parquet.BeamParquetOutputFile;
+import com.spotify.scio.parquet.BeamOutputFile;
 import me.lyh.parquet.tensorflow.Schema;
 import org.apache.beam.sdk.io.FileBasedSink;
 import org.apache.beam.sdk.io.fs.ResourceId;
@@ -29,7 +29,6 @@ import org.apache.parquet.hadoop.ParquetWriter;
 import org.apache.parquet.hadoop.metadata.CompressionCodecName;
 import org.tensorflow.example.Example;
 
-import java.nio.channels.Channels;
 import java.nio.channels.WritableByteChannel;
 
 public class ParquetExampleSink extends FileBasedSink<Example, Void, Example> {
@@ -103,8 +102,7 @@ public class ParquetExampleSink extends FileBasedSink<Example, Void, Example> {
 
     @Override
     protected void prepareWrite(WritableByteChannel channel) throws Exception {
-      BeamParquetOutputFile outputFile =
-              new BeamParquetOutputFile(Channels.newOutputStream(channel));
+      BeamOutputFile outputFile = BeamOutputFile.of(channel);
       writer = me.lyh.parquet.tensorflow.ExampleParquetWriter.builder(outputFile)
               .withSchema(schema)
               .withConf(conf.get())

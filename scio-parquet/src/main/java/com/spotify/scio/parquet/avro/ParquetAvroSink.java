@@ -17,7 +17,7 @@
 
 package com.spotify.scio.parquet.avro;
 
-import com.spotify.scio.parquet.BeamParquetOutputFile;
+import com.spotify.scio.parquet.BeamOutputFile;
 import org.apache.avro.Schema;
 import org.apache.beam.sdk.io.FileBasedSink;
 import org.apache.beam.sdk.io.fs.ResourceId;
@@ -28,7 +28,6 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.parquet.hadoop.ParquetWriter;
 import org.apache.parquet.hadoop.metadata.CompressionCodecName;
 
-import java.nio.channels.Channels;
 import java.nio.channels.WritableByteChannel;
 
 public class ParquetAvroSink<T> extends FileBasedSink<T, Void, T> {
@@ -102,8 +101,7 @@ public class ParquetAvroSink<T> extends FileBasedSink<T, Void, T> {
 
     @Override
     protected void prepareWrite(WritableByteChannel channel) throws Exception {
-      BeamParquetOutputFile outputFile =
-              new BeamParquetOutputFile(Channels.newOutputStream(channel));
+      BeamOutputFile outputFile = BeamOutputFile.of(channel);
       writer = org.apache.parquet.avro.AvroParquetWriter.<T>builder(outputFile)
               .withSchema(schema)
               .withConf(conf.get())

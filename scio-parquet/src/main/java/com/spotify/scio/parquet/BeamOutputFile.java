@@ -17,17 +17,34 @@
 
 package com.spotify.scio.parquet;
 
+import org.apache.beam.sdk.io.FileSystems;
+import org.apache.beam.sdk.io.fs.ResourceId;
+import org.apache.beam.sdk.util.MimeTypes;
 import org.apache.parquet.io.OutputFile;
 import org.apache.parquet.io.PositionOutputStream;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.channels.Channels;
+import java.nio.channels.WritableByteChannel;
 
-public class BeamParquetOutputFile implements OutputFile {
+public class BeamOutputFile implements OutputFile {
 
   private OutputStream outputStream;
 
-  public BeamParquetOutputFile(OutputStream outputStream) {
+  public static BeamOutputFile of(WritableByteChannel channel) {
+    return new BeamOutputFile(Channels.newOutputStream(channel));
+  }
+
+  public static BeamOutputFile of(ResourceId resourceId) throws IOException {
+    return of(FileSystems.create(resourceId, MimeTypes.BINARY));
+  }
+
+  public static BeamOutputFile of(String path) throws IOException {
+    return of(FileSystems.matchNewResource(path, false));
+  }
+
+  private BeamOutputFile(OutputStream outputStream) {
     this.outputStream = outputStream;
   }
 

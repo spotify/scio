@@ -18,11 +18,10 @@
 package com.spotify.scio.parquet.tensorflow
 
 import java.lang.{Boolean => JBoolean}
-import java.nio.channels.SeekableByteChannel
 
 import com.spotify.scio.ScioContext
 import com.spotify.scio.io.{ScioIO, Tap, TapOf}
-import com.spotify.scio.parquet.{BeamParquetInputFile, GcsConnectorUtil}
+import com.spotify.scio.parquet.{BeamInputFile, GcsConnectorUtil}
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
 import me.lyh.parquet.tensorflow.{
@@ -131,11 +130,7 @@ case class ParquetExapmleTap(path: String, params: ParquetExampleIO.ReadParam)
   override def value: Iterator[Example] = {
     val xs = FileSystems.`match`(path).metadata().asScala.toList
     xs.iterator.flatMap { metadata =>
-      val channel = FileSystems
-        .open(metadata.resourceId())
-        .asInstanceOf[SeekableByteChannel]
-      val reader =
-        ExampleParquetReader.builder(new BeamParquetInputFile(channel)).build()
+      val reader = ExampleParquetReader.builder(BeamInputFile.of(metadata.resourceId())).build()
       new Iterator[Example] {
         private var current: Example = reader.read()
         override def hasNext: Boolean = current != null

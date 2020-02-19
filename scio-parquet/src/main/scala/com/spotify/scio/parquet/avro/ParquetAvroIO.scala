@@ -18,12 +18,11 @@
 package com.spotify.scio.parquet.avro
 
 import java.lang.{Boolean => JBoolean}
-import java.nio.channels.SeekableByteChannel
 
 import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import com.spotify.scio.io.{ScioIO, Tap, TapOf}
-import com.spotify.scio.parquet.{BeamParquetInputFile, GcsConnectorUtil}
+import com.spotify.scio.parquet.{BeamInputFile, GcsConnectorUtil}
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
 import com.twitter.chill.ClosureCleaner
@@ -163,11 +162,7 @@ case class ParquetAvroTap[A, T: ClassTag: Coder](
   override def value: Iterator[T] = {
     val xs = FileSystems.`match`(path).metadata().asScala.toList
     xs.iterator.flatMap { metadata =>
-      val channel = FileSystems
-        .open(metadata.resourceId())
-        .asInstanceOf[SeekableByteChannel]
-      val reader =
-        AvroParquetReader.builder[A](new BeamParquetInputFile(channel)).build()
+      val reader = AvroParquetReader.builder[A](BeamInputFile.of(metadata.resourceId())).build()
       new Iterator[T] {
         private var current: A = reader.read()
         override def hasNext: Boolean = current != null
