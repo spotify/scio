@@ -200,16 +200,9 @@ object CustomIOJob {
 object ReadAllJob {
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
-    val readAllTransform = new PTransform[PCollection[String], PCollection[String]] {
-      override def expand(input: PCollection[String]): PCollection[String] =
-        input
-          .apply(FileIO.matchAll())
-          .apply(FileIO.readMatches().withDirectoryTreatment(DirectoryTreatment.PROHIBIT))
-          .apply(beam.TextIO.readFiles())
-    }
 
     sc.textFile(args("input"))
-      .readAll(readAllTransform)
+      .readLines
       .saveAsTextFile(args("output"))
     sc.run()
     ()

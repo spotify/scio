@@ -32,8 +32,9 @@ import com.spotify.scio.util.random.{BernoulliSampler, PoissonSampler}
 import com.twitter.algebird.{Aggregator, Monoid, Semigroup}
 import org.apache.avro.file.CodecFactory
 import org.apache.beam.sdk.coders.{Coder => BCoder}
-import org.apache.beam.sdk.io.{Compression, FileBasedSink}
+import org.apache.beam.sdk.io.{Compression, FileBasedSink, FileIO}
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
+import org.apache.beam.sdk.transforms.ParDo.SingleOutput
 import org.apache.beam.sdk.transforms._
 import org.apache.beam.sdk.transforms.windowing._
 import org.apache.beam.sdk.util.SerializableUtils
@@ -1097,9 +1098,10 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * sc.parallelize("a.txt").readAll(TextIO.readAll())
    * }}}
    */
-  def readAll[U: Coder](
-    read: PTransform[PCollection[String], PCollection[U]]
-  )(implicit ev: T <:< String): SCollection[U] =
+  @deprecated("Use readFiles instead", "0.8.1")
+  def readAll[U: Coder](read: PTransform[PCollection[String], PCollection[U]])(
+    implicit ev: T <:< String
+  ): SCollection[U] =
     if (context.isTest) {
       val id = context.testId.get
       this
@@ -1110,9 +1112,43 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     }
 
   /**
-   * Read files as byte arrays represented by elements of this [[SCollection]] as file patterns.
+   * Read files represented by elements of this [[SCollection]] as file patterns.
+   *
+   * {{{
+   * sc.parallelize("a.txt").readFiles(beam.TextIO.readFiles())
+   * }}}
+   *
+   * @see [[readAllAsBytes]], [[readAllAsString]], [[readLines]]
    */
-  def readAllBytes(implicit ev: T <:< String): SCollection[Array[Byte]] =
+  def readFiles[A: Coder](
+    f: beam.FileIO.ReadableFile => A
+  )(implicit ev: T <:< String): SCollection[A] = {
+    val transform =
+      ParDo
+        .of(Functions.mapFn[beam.FileIO.ReadableFile, A](f))
+        .asInstanceOf[PTransform[PCollection[beam.FileIO.ReadableFile], PCollection[A]]]
+    readFiles(transform)
+  }
+
+  /**
+   * Read files represented by elements of this [[SCollection]] as file patterns.
+   *
+   * {{{
+   * sc.parallelize("a.txt")
+   *   .readFiles(new PTransform[PCollection[String], PCollection[A]]() {
+   *       override def expand(input: PCollection[String]): PCollection[A] =
+   *         input
+   *           .apply(beam.FileIO.matchAll())
+   *           .apply(beam.FileIO.readMatches())
+   *           .apply(beam.TextIO.readFiles())
+   *     })
+   * }}}
+   *
+   * @see [[readAllAsBytes]], [[readAllAsString]], [[readLines]]
+   */
+  def readFiles[A: Coder](
+    filesTransform: PTransform[PCollection[beam.FileIO.ReadableFile], PCollection[A]]
+  )(implicit ev: T <:< String): SCollection[A] =
     if (context.isTest) {
       val id = context.testId.get
       this
@@ -1121,16 +1157,29 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     } else {
       this
         .asInstanceOf[SCollection[String]]
-        .applyTransform(new PTransform[PCollection[String], PCollection[Array[Byte]]]() {
-          override def expand(input: PCollection[String]): PCollection[Array[Byte]] =
+        .applyTransform(new PTransform[PCollection[String], PCollection[A]]() {
+          override def expand(input: PCollection[String]): PCollection[A] =
             input
               .apply(beam.FileIO.matchAll())
               .apply(beam.FileIO.readMatches())
-              .apply(
-                ParDo.of(Functions.mapFn((f: beam.FileIO.ReadableFile) => f.readFullyAsBytes()))
-              )
+              .apply(filesTransform)
         })
     }
+
+  /**
+   * Read files as byte arrays represented by elements of this [[SCollection]] as file patterns.
+   */
+  @deprecated("Use readAllAsBytes instead", "0.8.1")
+  def readAllBytes(implicit ev: T <:< String): SCollection[Array[Byte]] = readAllAsBytes
+
+  def readAllAsBytes(implicit ev: T <:< String): SCollection[Array[Byte]] =
+    readFiles(_.readFullyAsBytes())
+
+  def readAllAsString(implicit ev: T <:< String): SCollection[String] =
+    readFiles(_.readFullyAsUTF8String())
+
+  def readLines(implicit ev: T <:< String): SCollection[String] =
+    readFiles(beam.TextIO.readFiles())
 
   // =======================================================================
   // Write operations
