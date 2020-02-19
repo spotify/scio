@@ -1132,9 +1132,15 @@ lazy val `scio-repl`: Project = project
       "jline" % "jline" % jlineVersion,
       "org.scala-lang" % "scala-compiler" % scalaVersion.value,
       "com.nrinaudo" %% "kantan.csv" % kantanCsvVersion,
-      "com.nrinaudo" %% "kantan.codecs" % kantanCsvVersion,
       "org.scalamacros" % "paradise" % scalaMacrosVersion cross CrossVersion.full
     ),
+    libraryDependencies ++= {
+      if (scalaBinaryVersion.value == "2.11") {
+        Seq("com.nrinaudo" %% "kantan.codecs" % "0.5.0")
+      } else {
+        Seq("com.nrinaudo" %% "kantan.codecs" % kantanCsvVersion)
+      }
+    },
     assemblyJarName in assembly := s"scio-repl-${version.value}.jar"
   )
   .dependsOn(
