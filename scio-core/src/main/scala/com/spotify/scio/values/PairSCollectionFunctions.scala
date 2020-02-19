@@ -1076,9 +1076,10 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     self.map(kv => (kv._2, kv._1))
 
   /**
-   * Return the top k (largest) values for each key from this SCollection as defined by the
+   * Return the top `num` (largest) values for each key from this SCollection as defined by the
    * specified implicit `Ordering[T]`.
-   * @return a new SCollection of (key, top k) pairs
+   *
+   * @return a new SCollection of (key, top `num` values) pairs
    * @group per_key
    */
   def topByKey(num: Int)(
