@@ -20,15 +20,19 @@ package org.apache.beam.sdk.extensions.smb;
 import static org.apache.beam.sdk.extensions.smb.SortedBucketSource.BucketedInput;
 import static org.apache.beam.sdk.extensions.smb.TestUtils.fromFolder;
 
-import java.util.Collections;
+import java.nio.channels.Channels;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import org.apache.beam.sdk.extensions.smb.SMBFilenamePolicy.FileAssignment;
 import org.apache.beam.sdk.extensions.smb.SortedBucketTransform.TransformFn;
 import org.apache.beam.sdk.io.FileSystems;
 import org.apache.beam.sdk.testing.TestPipeline;
 import org.apache.beam.sdk.transforms.Create;
-import org.apache.beam.sdk.values.PBegin;
+import org.apache.beam.sdk.values.KV;
 import org.apache.beam.sdk.values.TupleTag;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ImmutableList;
+import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ImmutableSet;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -48,6 +52,16 @@ public class SortedBucketTransformTest {
 
   private static final List<String> inputLhs = ImmutableList.of("a1", "b1", "c1", "d1", "e1");
   private static final List<String> inputRhs = ImmutableList.of("c2", "d2", "e2", "f2", "g2");
+  private static final Set<String> expected = ImmutableSet.of("c1-c2", "d1-d2", "e1-e2");
+
+  private static List<BucketedInput<?, ?>> sources;
+
+  private static final TransformFn<String, String> mergeFunction = (keyGroup, outputConsumer) ->
+      keyGroup.getValue().getAll(new TupleTag<String>("lhs")).forEach(lhs -> {
+        keyGroup.getValue().getAll(new TupleTag<String>("rhs")).forEach(rhs -> {
+          outputConsumer.accept(lhs + "-" + rhs);
+        });
+      });
 
   @BeforeClass
   public static void writeData() throws Exception {
@@ -60,16 +74,12 @@ public class SortedBucketTransformTest {
     sinkPipeline
         .apply("CreateRHS", Create.of(inputRhs))
         .apply("SinkRHS", new SortedBucketSink<>(
-            TestBucketMetadata.of(1, 1), fromFolder(inputRhsFolder), fromFolder(tempFolder), ".txt", new TestFileOperations(), 1)
+            TestBucketMetadata.of(2, 1), fromFolder(inputRhsFolder), fromFolder(tempFolder), ".txt", new TestFileOperations(), 1)
         );
 
     sinkPipeline.run().waitUntilFinish();
-  }
 
-  @Test
-  public void testSortedBucketTransform() throws Exception {
-    final TestBucketMetadata outputMetadata = TestBucketMetadata.of(1, 1);
-    final List<BucketedInput<?, ?>> sources = ImmutableList.of(
+    sources = ImmutableList.of(
         new BucketedInput<String, String>(
             new TupleTag<>("lhs"),
             fromFolder(inputLhsFolder),
@@ -82,13 +92,11 @@ public class SortedBucketTransformTest {
             ".txt",
             new TestFileOperations()
         ));
+  }
 
-    final TransformFn<String, String> mergeFunction = (keyGroup, outputConsumer) ->
-        keyGroup.getValue().getAll(new TupleTag<String>("lhs")).forEach(lhs -> {
-          keyGroup.getValue().getAll(new TupleTag<String>("rhs")).forEach(rhs -> {
-            outputConsumer.accept(lhs + "-" + rhs);
-        });
-    });
+  @Test
+  public void testSortedBucketTransformNoFanout() throws Exception {
+    final TestBucketMetadata outputMetadata = TestBucketMetadata.of(2, 1);
 
     transformPipeline.apply(
         new SortedBucketTransform<>(
@@ -105,49 +113,55 @@ public class SortedBucketTransformTest {
 
     transformPipeline.run().waitUntilFinish();
 
-    final FileOperations.Reader<String> outputReader = new TestFileOperations().createReader();
-    outputReader.prepareRead(
-        FileSystems.open(new SMBFilenamePolicy(fromFolder(outputFolder), ".txt")
-            .forDestination()
-            .forBucket(BucketShardId.of(0, 0), outputMetadata)
-    ));
-
-    final List<String> outputElements = ImmutableList.copyOf(outputReader.iterator());
-    final List<String> expected = ImmutableList.of("c1-c2", "d1-d2", "e1-e2");
-
-    Assert.assertEquals(expected, outputElements);
+    final KV<BucketMetadata, Set<String>> outputs = readAllFrom(output, outputMetadata);
+    Assert.assertEquals(expected, outputs.getValue());
+    Assert.assertEquals(outputMetadata, outputs.getKey());
   }
 
   @Test
-  public void testFailsOnIncompatibleMetadata() throws Exception {
-    // # of buckets requested for output > least number of buckets in input
-    final TestBucketMetadata outputMetadata = TestBucketMetadata.of(8, 1);
-    final List<BucketedInput<?, ?>> sources = Collections.singletonList(
-        new BucketedInput<String, String>(
-            new TupleTag<>("lhs"),
-            fromFolder(inputLhsFolder),
+  public void testWorksWithBucketFanout() throws Exception {
+    final TestBucketMetadata outputMetadata = TestBucketMetadata.of(4, 1);
+
+    transformPipeline.apply(
+        new SortedBucketTransform<>(
+            String.class,
+            outputMetadata,
+            fromFolder(outputFolder),
+            fromFolder(tempFolder),
             ".txt",
-            new TestFileOperations())
+            new TestFileOperations(),
+            sources,
+            mergeFunction
+        )
     );
 
-    final TransformFn<String, String> transformFn = (keyGroup, outputConsumer) -> {
-      throw new RuntimeException("This code is unreachable");
-    };
+    transformPipeline.run().waitUntilFinish();
 
-    Assert.assertThrows(
-        "Specified number of buckets 8 does not match smallest bucket size among inputs: 4",
-        IllegalArgumentException.class,
-        () ->
-          new SortedBucketTransform<>(
-              String.class,
-              outputMetadata,
-              fromFolder(outputFolder),
-              fromFolder(tempFolder),
-              ".txt",
-              new TestFileOperations(),
-              sources,
-              transformFn
-          ).expand(PBegin.in(transformPipeline))
-      );
+    final KV<BucketMetadata, Set<String>> outputs = readAllFrom(output, outputMetadata);
+    Assert.assertEquals(expected, outputs.getValue());
+    Assert.assertEquals(outputMetadata, outputs.getKey());
+  }
+
+  private static KV<BucketMetadata, Set<String>> readAllFrom(
+      TemporaryFolder folder, TestBucketMetadata metadata
+  ) throws Exception {
+    final FileAssignment fileAssignment = new SMBFilenamePolicy(
+        fromFolder(folder), ".txt"
+    ).forDestination();
+
+    final Set<String> outputElements = new HashSet<>();
+
+    for (int bucketId = 0; bucketId < metadata.getNumBuckets(); bucketId++) {
+      final FileOperations.Reader<String> outputReader = new TestFileOperations().createReader();
+      outputReader.prepareRead(FileSystems.open(
+          fileAssignment.forBucket(BucketShardId.of(bucketId, 0), metadata)));
+
+      outputReader.iterator().forEachRemaining(outputElements::add);
+    }
+
+    return KV.of(
+        BucketMetadata.from(Channels.newInputStream(FileSystems.open(fileAssignment.forMetadata()))),
+        outputElements
+    );
   }
 }

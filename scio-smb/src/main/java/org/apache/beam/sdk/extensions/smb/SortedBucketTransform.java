@@ -21,11 +21,12 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.apache.beam.sdk.coders.Coder;
@@ -53,6 +54,15 @@ import org.apache.beam.sdk.values.TupleTag;
 import org.apache.beam.sdk.values.TupleTagList;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions;
 
+/**
+ * A {@link PTransform} that encapsulates both a {@link SortedBucketSource} and {@link SortedBucketSink}
+ * operation, with a user-supplied transform function mapping merged {@link CoGbkResult}s to their
+ * final writable outputs. The same hash function must be supplied in the output
+ * {@link BucketMetadata} to preserve the same key distribution.
+ *
+ * @param <FinalKeyT>
+ * @param <FinalValueT>
+ */
 public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PBegin, WriteResult> {
   private final SMBFilenamePolicy filenamePolicy;
   private final ResourceId tempDirectory;
@@ -82,12 +92,17 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
 
   @Override
   public final WriteResult expand(PBegin begin) {
+    Preconditions.checkArgument(
+        bucketMetadata.getNumShards() == 1,
+        "Sharding is not supported in SortedBucketTransform. numShards must == 1.")
+    ;
+
     final SourceSpec<FinalKeyT> sourceSpec = SortedBucketSource.getSourceSpec(finalKeyClass, sources);
 
     Preconditions.checkArgument(
-        bucketMetadata.getNumBuckets() == sourceSpec.leastNumBuckets,
-        "Specified number of buckets %s does not match smallest bucket size among"
-            + " inputs: %s.", bucketMetadata.getNumBuckets(), sourceSpec.leastNumBuckets
+        bucketMetadata.getNumBuckets() >= sourceSpec.leastNumBuckets,
+        "numBuckets in BucketMetadata must be >= leastNumBuckets among sources: "
+            + sourceSpec.leastNumBuckets
     );
 
     final FileAssignment tempFileAssignment = filenamePolicy.forTempFiles(tempDirectory);
@@ -118,7 +133,7 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
                     "MergeTransformWrite",
                     ParDo.of(new MergeAndWriteBuckets<>(
                       sources,
-                      sourceSpec.keyCoder,
+                      sourceSpec,
                       tempFileAssignment,
                       fileOperations,
                       bucketMetadata,
@@ -140,11 +155,11 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
   public static class OutputCollector<ValueT> implements Consumer<ValueT>, Serializable {
     private final Writer<ValueT> writer;
 
-    public OutputCollector(Writer<ValueT> writer) {
+    OutputCollector(Writer<ValueT> writer) {
       this.writer = writer;
     }
 
-    public void onComplete() {
+    void onComplete() {
       try {
         writer.close();
       } catch (IOException e) {
@@ -162,30 +177,31 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
     }
   }
 
-  private static class MergeAndWriteBuckets<FinalKeyT, FinalValueT> extends DoFn<Integer, KV<BucketShardId, ResourceId>> {
+  private static class MergeAndWriteBuckets<FinalKeyT, FinalValueT>
+      extends DoFn<Integer, KV<BucketShardId, ResourceId>> {
     private final List<BucketedInput<?, ?>> sources;
     private final FileAssignment fileAssignment;
     private final FileOperations<FinalValueT> fileOperations;
     private final TransformFn<FinalKeyT, FinalValueT> transformFn;
+    private final BucketMetadata<FinalKeyT, FinalValueT> bucketMetadata;
     private final Coder<FinalKeyT> keyCoder;
-    private final int numBuckets;
-    private final int numShards;
+    private final int leastNumBuckets;
 
     MergeAndWriteBuckets(
         List<BucketedInput<?, ?>> sources,
-        Coder<FinalKeyT> keyCoder,
+        SourceSpec<FinalKeyT> sourceSpec,
         FileAssignment fileAssignment,
         FileOperations<FinalValueT> fileOperations,
         BucketMetadata<FinalKeyT, FinalValueT> bucketMetadata,
         TransformFn<FinalKeyT, FinalValueT> transformFn
     ) {
-      this.keyCoder = keyCoder;
       this.sources = sources;
       this.fileAssignment = fileAssignment;
       this.fileOperations = fileOperations;
       this.transformFn = transformFn;
-      this.numBuckets = bucketMetadata.getNumBuckets();
-      this.numShards = bucketMetadata.getNumShards();
+      this.bucketMetadata = bucketMetadata;
+      this.keyCoder = sourceSpec.keyCoder;
+      this.leastNumBuckets = sourceSpec.leastNumBuckets;
     }
 
     @ProcessElement
@@ -193,47 +209,37 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
       final int bucketId = c.element();
       final int numSources = sources.size();
 
-      @SuppressWarnings("unchecked")
-      final OutputCollector<FinalValueT>[] writers = new OutputCollector[numShards];
-      final List<KV<BucketShardId, ResourceId>> bucketShardsToDsts = new ArrayList<>();
+      final int numBuckets = bucketMetadata.getNumBuckets();
+      final int fanout = numBuckets / leastNumBuckets;
+      final boolean reHashBucket = fanout != 1;
 
-      for (int shardId = 0; shardId < numShards; shardId++) {
-        final BucketShardId bucketShardId = BucketShardId.of(bucketId, shardId);
-        final ResourceId dst = fileAssignment.forBucket(bucketShardId, numBuckets, numShards);
+      final Map<Integer, OutputCollector<FinalValueT>> bucketsToWriters = new HashMap<>();
+      final List<KV<BucketShardId, ResourceId>> bucketsToDsts = new ArrayList<>();
+
+      for (int bucketFanout = bucketId; bucketFanout < numBuckets; bucketFanout += fanout) {
+        final BucketShardId bucketShardId = BucketShardId.of(bucketFanout, 0);
+        final ResourceId dst = fileAssignment.forBucket(bucketShardId, numBuckets, 1);
 
         try {
-          writers[shardId] = new OutputCollector<>(fileOperations.createWriter(dst));
+          bucketsToWriters.put(
+              bucketShardId.getBucketId(),
+              new OutputCollector<>(fileOperations.createWriter(dst))
+          );
         } catch (IOException e) {
           throw new RuntimeException(e);
         }
 
-        bucketShardsToDsts.add(KV.of(bucketShardId, dst));
+        bucketsToDsts.add(KV.of(bucketShardId, dst));
       }
 
       final KeyGroupIterator[] iterators = sources.stream()
           .map(i -> i.createIterator(bucketId, numBuckets))
           .toArray(KeyGroupIterator[]::new);
 
-      // Supplies sharded writers per key group in round-robin style
-      final Supplier<OutputCollector<FinalValueT>> writerSupplier;
-      if (numShards == 1) {
-        writerSupplier = () -> writers[0];
-      } else {
-        writerSupplier = new Supplier<OutputCollector<FinalValueT>>() {
-          private int shard = 0;
-
-          @Override
-          public OutputCollector<FinalValueT> get() {
-            final OutputCollector<FinalValueT> result = writers[shard];
-            shard = (shard + 1) % numShards;
-            return result;
-          }
-        };
-      }
-
       final Map<TupleTag, KV<byte[], Iterator<?>>> nextKeyGroups = new HashMap<>();
       final CoGbkResultSchema resultSchema = BucketedInput.schemaOf(sources);
       final TupleTagList tupleTags = resultSchema.getTupleTagList();
+      final Set<Integer> bucketsWritten = new HashSet<>();
 
       while (true) {
         int completedSources = 0;
@@ -254,19 +260,30 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
           break;
         }
 
+        int assignedBucket = reHashBucket ?
+            bucketMetadata.getBucketId(
+                nextKeyGroups.entrySet().iterator().next().getValue().getKey()
+            ) : bucketId;
+
         transformFn.writeTransform(
-            SortedBucketSource.MergeBuckets.mergeKeyGroup(nextKeyGroups, resultSchema, keyCoder),
-            writerSupplier.get()
-        );
+            SortedBucketSource.MergeBuckets.mergeKeyGroup(
+                nextKeyGroups, resultSchema, keyCoder),
+            bucketsToWriters.get(assignedBucket));
+
+        bucketsWritten.add(assignedBucket);
 
         if (completedSources == numSources) {
           break;
         }
       }
 
-      bucketShardsToDsts.forEach(bucketShardAndDst -> {
-        writers[bucketShardAndDst.getKey().getShardId()].onComplete();
-        c.output(bucketShardAndDst);
+      bucketsToDsts.forEach(bucketShardAndDst -> {
+        final Integer bucket = bucketShardAndDst.getKey().getBucketId();
+        bucketsToWriters.get(bucket).onComplete();
+
+        if (bucketsWritten.contains(bucket)) {
+          c.output(bucketShardAndDst);
+        }
       });
     }
   }
