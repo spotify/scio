@@ -30,11 +30,7 @@ import com.spotify.scio.io._
 import com.spotify.scio.util.MockedPrintStream
 import org.apache.avro.generic.GenericRecord
 import org.apache.beam.sdk.Pipeline.PipelineExecutionException
-import org.apache.beam.sdk.io.FileIO
-import org.apache.beam.sdk.io.FileIO.ReadMatches.DirectoryTreatment
 import org.apache.beam.sdk.metrics.DistributionResult
-import org.apache.beam.sdk.transforms.PTransform
-import org.apache.beam.sdk.values.PCollection
 import org.apache.beam.sdk.{io => beam}
 import org.joda.time.Instant
 import org.scalatest.exceptions.TestFailedException
@@ -200,16 +196,9 @@ object CustomIOJob {
 object ReadAllJob {
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
-    val readAllTransform = new PTransform[PCollection[String], PCollection[String]] {
-      override def expand(input: PCollection[String]): PCollection[String] =
-        input
-          .apply(FileIO.matchAll())
-          .apply(FileIO.readMatches().withDirectoryTreatment(DirectoryTreatment.PROHIBIT))
-          .apply(beam.TextIO.readFiles())
-    }
 
     sc.textFile(args("input"))
-      .readAll(readAllTransform)
+      .readFiles
       .saveAsTextFile(args("output"))
     sc.run()
     ()
