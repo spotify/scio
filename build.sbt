@@ -775,6 +775,7 @@ lazy val `scio-extra`: Project = project
       "net.pishen" %% "annoy4s" % annoy4sVersion,
       "org.scalanlp" %% "breeze" % breezeVersion,
       "com.github.ben-manes.caffeine" % "caffeine" % caffeineVersion % "test",
+      "com.nrinaudo" %% "kantan.csv" % kantanCsvVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       "org.scalatest" %% "scalatest" % scalatestVersion % "test",
       "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test"

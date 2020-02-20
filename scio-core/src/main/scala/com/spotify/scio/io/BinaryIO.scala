@@ -17,13 +17,18 @@
 
 package com.spotify.scio.io
 
-import java.io.OutputStream
+import java.io.{BufferedInputStream, InputStream, OutputStream}
 import java.nio.channels.{Channels, WritableByteChannel}
 
 import com.spotify.scio.ScioContext
 import com.spotify.scio.io.BinaryIO.BytesSink
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.io._
+import org.apache.beam.sdk.io.fs.MatchResult.Metadata
+import org.apache.commons.compress.compressors.CompressorStreamFactory
+import scala.collection.JavaConverters._
+
+import scala.util.Try
 
 /**
  * A ScioIO class for writing raw bytes to files.
@@ -61,6 +66,25 @@ final case class BinaryIO(path: String) extends ScioIO[Array[Byte]] {
 }
 
 object BinaryIO {
+
+
+  private[scio] def openInputStreamsFor(path: String): Iterator[InputStream] = {
+    val factory = new CompressorStreamFactory()
+
+    def wrapInputStream(in: InputStream) = {
+      val buffered = new BufferedInputStream(in)
+      Try(factory.createCompressorInputStream(buffered)).getOrElse(buffered)
+    }
+
+    listFiles(path).map(getObjectInputStream).map(wrapInputStream).iterator
+  }
+
+  private def listFiles(path: String): Seq[Metadata] =
+    FileSystems.`match`(path).metadata().asScala
+
+  private def getObjectInputStream(meta: Metadata): InputStream =
+    Channels.newInputStream(FileSystems.open(meta.resourceId()))
+
   object WriteParam {
     private[scio] val DefaultPrefix = "part"
     private[scio] val DefaultSuffix = ".bin"
