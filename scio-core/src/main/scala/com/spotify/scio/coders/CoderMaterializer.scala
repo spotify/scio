@@ -25,8 +25,8 @@ object CoderMaterializer {
 
   private[scio] case class CoderOptions(nullableCoders: Boolean, kryo: KryoOptions)
   private[scio] object CoderOptions {
-    def apply(o: PipelineOptions) = {
-      val nullableCoder = o.as(classOf[com.spotify.scio.options.ScioOptions]).getNullableCoders()
+    final def apply(o: PipelineOptions): CoderOptions = {
+      val nullableCoder = o.as(classOf[com.spotify.scio.options.ScioOptions]).getNullableCoders
       new CoderOptions(nullableCoder, KryoOptions(o))
     }
   }
@@ -77,7 +77,6 @@ object CoderMaterializer {
         )
       case Disjunction(typeName, idCoder, id, coders) =>
         WrappedBCoder.create(
-          // `.map(identity) is really needed to make Map serializable.
           DisjunctionCoder(
             typeName,
             beamImpl(o, idCoder),

@@ -75,7 +75,6 @@ private object Derived extends Serializable {
 
 trait LowPriorityCoderDerivation {
   import magnolia._
-  import com.spotify.scio.coders.CoderMacros
 
   type Typeclass[T] = Coder[T]
 
@@ -84,35 +83,34 @@ trait LowPriorityCoderDerivation {
 
   def dispatch[T](sealedTrait: SealedTrait[Coder, T]): Coder[T] = {
     val typeName = sealedTrait.typeName.full
+    val coder: Coder[T] = {
+      val idx: Map[magnolia.TypeName, Int] =
+        sealedTrait.subtypes.map(_.typeName).zipWithIndex.toMap
+      val coders: Map[Int, Coder[T]] =
+        sealedTrait.subtypes
+          .map(_.typeclass.asInstanceOf[Coder[T]])
+          .zipWithIndex
+          .map { case (c, i) => (i, c) }
+          .toMap
 
-    Ref(
-      typeName, {
-        val idx: Map[magnolia.TypeName, Int] =
-          sealedTrait.subtypes.map(_.typeName).zipWithIndex.toMap
-        val coders: Map[Int, Coder[T]] =
-          sealedTrait.subtypes
-            .map(_.typeclass.asInstanceOf[Coder[T]])
-            .zipWithIndex
-            .map { case (c, i) => (i, c) }
-            .toMap
-
-        if (sealedTrait.subtypes.length <= 2) {
-          val booleanId: Int => Boolean = _ != 0
-          val cs = coders.map { case (key, v) => (booleanId(key), v) }
-          Coder.disjunction[T, Boolean](typeName, cs) { t =>
-            sealedTrait.dispatch(t) { subtype =>
-              booleanId(idx(subtype.typeName))
-            }
+      if (sealedTrait.subtypes.length <= 2) {
+        val booleanId: Int => Boolean = _ != 0
+        val cs = coders.map { case (key, v) => (booleanId(key), v) }
+        Coder.disjunction[T, Boolean](typeName, cs) { t =>
+          sealedTrait.dispatch(t) { subtype =>
+            booleanId(idx(subtype.typeName))
           }
-        } else {
-          Coder.disjunction[T, Int](typeName, coders) { t =>
-            sealedTrait.dispatch(t) { subtype =>
-              idx(subtype.typeName)
-            }
+        }
+      } else {
+        Coder.disjunction[T, Int](typeName, coders) { t =>
+          sealedTrait.dispatch(t) { subtype =>
+            idx(subtype.typeName)
           }
         }
       }
-    )
+    }
+
+    Ref(typeName, coder)
   }
 
   /**
