@@ -198,7 +198,7 @@ object ReadAllJob {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
 
     sc.textFile(args("input"))
-      .readLines
+      .readFiles
       .saveAsTextFile(args("output"))
     sc.run()
     ()
