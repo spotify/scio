@@ -16,7 +16,7 @@
  */
 package com.spotify.scio.extra.csv
 
-import java.io.File
+import java.io.{File, FilenameFilter}
 import java.nio.charset.StandardCharsets
 
 import com.spotify.scio.ScioContext
@@ -25,7 +25,15 @@ import com.spotify.scio.extra.csv.CsvIOTest.TestTuple
 import com.spotify.scio.io.TapSpec
 import com.spotify.scio.testing.ScioIOSpec
 import com.spotify.scio.values.SCollection
-import kantan.csv.{CsvConfiguration, HeaderDecoder, HeaderEncoder, RowDecoder, RowEncoder}
+import kantan.csv.{
+  CsvConfiguration,
+  HeaderCodec,
+  HeaderDecoder,
+  HeaderEncoder,
+  RowDecoder,
+  RowEncoder
+}
+import org.apache.beam.sdk.util.SerializableUtils
 import org.apache.commons.io.FileUtils
 import org.scalatest.BeforeAndAfterEach
 
@@ -40,7 +48,7 @@ class CsvIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterEach {
   override protected def beforeEach(): Unit = dir = tmpDir
   override protected def afterEach(): Unit = FileUtils.deleteDirectory(dir)
 
-  "read csv" should "read strings" in {
+  "CsvIO.Read" should "read strings" in {
 
     val csv = """header1
                 |data1
@@ -163,6 +171,42 @@ class CsvIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterEach {
     )
   }
 
+  "Csvio.ReadWrite" should "read and write csv files" in {
+    implicit val codec: HeaderCodec[TestTuple] =
+      HeaderCodec.codec("numericValue", "stringValue")(TestTuple.apply)(TestTuple.unapply(_).get)
+    val csv = """numericValue, stringValue
+        |1,test1
+        |2,test2
+        |""".stripMargin
+
+    val sc = ScioContext()
+
+    val inputFile = new File(new File(dir, "input"), "source.csv")
+    FileUtils.write(inputFile, csv, StandardCharsets.UTF_8)
+
+    val outputDir = new File(dir, "output")
+
+    sc.csvFile(inputFile.getAbsolutePath)
+      .saveAsCsvFile(outputDir.getPath)
+
+    sc.run().waitUntilFinish()
+
+    val outputFile = getFirstCsvFileFrom(outputDir)
+    val readLines = FileUtils.readLines(outputFile, StandardCharsets.UTF_8).asScala.toList
+
+    readLines.head shouldBe "numericValue,stringValue"
+    readLines.tail should contain allElementsOf Seq(
+      "1,test1",
+      "2,test2"
+    )
+  }
+
+  "CsvIO.ReadDoFn" should "be serialisable" in {
+    implicit val decoder: HeaderDecoder[TestTuple] =
+      HeaderDecoder.decoder("numericValue", "stringValue")(TestTuple.apply)
+    SerializableUtils.serializeToByteArray(CsvIO.ReadDoFn[TestTuple](CsvIO.DEFAULT_CSV_CONFIG))
+  }
+
   private def writeAsCsvAndReadLines[T: HeaderEncoder: Coder](
     items: Seq[T],
     params: CsvIO.WriteParam = CsvIO.DEFAULT_WRITE_PARAMS
@@ -174,10 +218,17 @@ class CsvIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterEach {
 
     sc.run().waitUntilFinish()
 
-    val file = dir.listFiles((_, fileName) => fileName.endsWith("csv")).head
+    val file: File = getFirstCsvFileFrom(dir)
 
     FileUtils.readLines(file, StandardCharsets.UTF_8).asScala.toList
   }
+
+  private def getFirstCsvFileFrom[T: HeaderEncoder: Coder](dir: File) =
+    dir
+      .listFiles(new FilenameFilter {
+        override def accept(dir: File, name: String): Boolean = name.endsWith("csv")
+      })
+      .head
 
   private def parse[T: HeaderDecoder: Coder](csv: String): SCollection[T] = {
     val file = new File(dir, "source.csv")

@@ -18,7 +18,7 @@ package com.spotify.scio.extra.csv
 
 import java.io.{Reader, Writer}
 import java.nio.channels.{Channels, WritableByteChannel}
-import java.nio.charset.{Charset, StandardCharsets}
+import java.nio.charset.StandardCharsets
 
 import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.Coder
@@ -32,7 +32,7 @@ import org.apache.beam.sdk.io.FileIO.ReadMatches.DirectoryTreatment
 import org.apache.beam.sdk.io.FileIO.ReadableFile
 import org.apache.beam.sdk.io.fs.{MatchResult, MetadataCoderV2}
 import org.apache.beam.sdk.io.{FileIO, ReadableFileCoder}
-import org.apache.beam.sdk.transforms.DoFn
+import org.apache.beam.sdk.transforms.{DoFn, ParDo}
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
 import org.apache.beam.sdk.{io => beam}
 
@@ -180,9 +180,10 @@ object CsvIO {
           .withDirectoryTreatment(DirectoryTreatment.PROHIBIT)
           .withCompression(params.compression)
       )
-      .readCsv(params.csvConfiguration)
+      .applyTransform(ParDo.of(CsvIO.ReadDoFn[T](params.csvConfiguration)))
 
-  class CsvTap[T: HeaderDecoder: Coder](path: String, params: ReadParam) extends Tap[T] {
+  final private class CsvTap[T: HeaderDecoder: Coder](path: String, params: ReadParam)
+      extends Tap[T] {
     override def value: Iterator[T] = {
       import kantan.csv.ops._
       BinaryIO
@@ -194,24 +195,23 @@ object CsvIO {
   }
 
   private[scio] case class ReadDoFn[T: HeaderDecoder](
-    config: CsvConfiguration,
-    charSet: Charset = StandardCharsets.UTF_8
-  )(implicit engine: ReaderEngine = ReaderEngine.internalCsvReaderEngine)
-      extends DoFn[ReadableFile, T] {
+    final val config: CsvConfiguration,
+    final val charSet: String = StandardCharsets.UTF_8.name()
+  ) extends DoFn[ReadableFile, T] {
 
     @ProcessElement
     def process(pc: ProcessContext): Unit = {
       import kantan.csv.ops._
 
-      val reader: Reader = Channels.newReader(pc.element().open(), charSet.name())
-
+      val reader: Reader = Channels.newReader(pc.element().open(), charSet)
+      implicit val engine: ReaderEngine = ReaderEngine.internalCsvReaderEngine
       reader
-        .asCsvReader[T](config)
-        .foreach(item => pc.output(item.right.get))
+        .asUnsafeCsvReader[T](config)
+        .foreach(pc.output)
     }
   }
 
-  private[scio] class CsvSink[T: HeaderEncoder](csvConfig: CsvConfiguration)
+  final private class CsvSink[T: HeaderEncoder](csvConfig: CsvConfiguration)
       extends FileIO.Sink[T] {
     var csvWriter: CsvWriter[T] = _
     var byteChannelWriter: Writer = _
