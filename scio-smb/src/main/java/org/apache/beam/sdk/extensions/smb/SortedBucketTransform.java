@@ -238,7 +238,6 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
       final Map<TupleTag, KV<byte[], Iterator<?>>> nextKeyGroups = new HashMap<>();
       final CoGbkResultSchema resultSchema = BucketedInput.schemaOf(sources);
       final TupleTagList tupleTags = resultSchema.getTupleTagList();
-      final Set<Integer> bucketsWritten = new HashSet<>();
 
       while (true) {
         int completedSources = 0;
@@ -278,8 +277,6 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
             throw new RuntimeException("Failed to decode and merge key group", e);
         }
 
-        bucketsWritten.add(assignedBucket);
-
         if (completedSources == numSources) {
           break;
         }
@@ -289,9 +286,7 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
         final Integer bucket = bucketShardAndDst.getKey().getBucketId();
         bucketsToWriters.get(bucket).onComplete();
 
-        if (bucketsWritten.contains(bucket)) {
-          c.output(bucketShardAndDst);
-        }
+        c.output(bucketShardAndDst);
       });
     }
   }
