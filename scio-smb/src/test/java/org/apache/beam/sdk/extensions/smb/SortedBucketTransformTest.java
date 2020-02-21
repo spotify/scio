@@ -113,14 +113,14 @@ public class SortedBucketTransformTest {
 
     transformPipeline.run().waitUntilFinish();
 
-    final KV<BucketMetadata, Set<String>> outputs = readAllFrom(output, outputMetadata);
+    final KV<BucketMetadata, Set<String>> outputs = readAllFrom(outputFolder, outputMetadata);
     Assert.assertEquals(expected, outputs.getValue());
     Assert.assertEquals(outputMetadata, outputs.getKey());
   }
 
   @Test
   public void testWorksWithBucketFanout() throws Exception {
-    final TestBucketMetadata outputMetadata = TestBucketMetadata.of(4, 1);
+    final TestBucketMetadata outputMetadata = TestBucketMetadata.of(8, 1);
 
     transformPipeline.apply(
         new SortedBucketTransform<>(
@@ -137,7 +137,7 @@ public class SortedBucketTransformTest {
 
     transformPipeline.run().waitUntilFinish();
 
-    final KV<BucketMetadata, Set<String>> outputs = readAllFrom(output, outputMetadata);
+    final KV<BucketMetadata, Set<String>> outputs = readAllFrom(outputFolder, outputMetadata);
     Assert.assertEquals(expected, outputs.getValue());
     Assert.assertEquals(outputMetadata, outputs.getKey());
   }

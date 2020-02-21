@@ -17,6 +17,7 @@
 
 package org.apache.beam.sdk.extensions.smb;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -71,6 +72,7 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
   private final List<BucketedInput<?, ?>> sources;
   private final BucketMetadata<FinalKeyT, FinalValueT> bucketMetadata;
   private final TransformFn<FinalKeyT, FinalValueT> transformFn;
+
 
   public SortedBucketTransform(
       Class<FinalKeyT> finalKeyClass,
@@ -208,28 +210,25 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
     public void processElement(ProcessContext c) {
       final int bucketId = c.element();
       final int numSources = sources.size();
-
       final int numBuckets = bucketMetadata.getNumBuckets();
-      final int fanout = numBuckets / leastNumBuckets;
-      final boolean reHashBucket = fanout != 1;
+      final boolean reHashBucket = numBuckets > leastNumBuckets;
 
       final Map<Integer, OutputCollector<FinalValueT>> bucketsToWriters = new HashMap<>();
       final List<KV<BucketShardId, ResourceId>> bucketsToDsts = new ArrayList<>();
 
-      for (int bucketFanout = bucketId; bucketFanout < numBuckets; bucketFanout += fanout) {
+      for (int bucketFanout = bucketId; bucketFanout < numBuckets; bucketFanout += leastNumBuckets) {
         final BucketShardId bucketShardId = BucketShardId.of(bucketFanout, 0);
         final ResourceId dst = fileAssignment.forBucket(bucketShardId, numBuckets, 1);
 
         try {
           bucketsToWriters.put(
-              bucketShardId.getBucketId(),
+              bucketFanout,
               new OutputCollector<>(fileOperations.createWriter(dst))
           );
+          bucketsToDsts.add(KV.of(bucketShardId, dst));
         } catch (IOException e) {
           throw new RuntimeException(e);
         }
-
-        bucketsToDsts.add(KV.of(bucketShardId, dst));
       }
 
       final KeyGroupIterator[] iterators = sources.stream()
@@ -260,15 +259,24 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
           break;
         }
 
-        int assignedBucket = reHashBucket ?
-            bucketMetadata.getBucketId(
-                nextKeyGroups.entrySet().iterator().next().getValue().getKey()
-            ) : bucketId;
+        KV<byte[], CoGbkResult> mergedKeyGroup = SortedBucketSource.MergeBuckets.mergeKeyGroup(
+            nextKeyGroups, resultSchema
+        );
 
-        transformFn.writeTransform(
-            SortedBucketSource.MergeBuckets.mergeKeyGroup(
-                nextKeyGroups, resultSchema, keyCoder),
-            bucketsToWriters.get(assignedBucket));
+        int assignedBucket = reHashBucket ?
+            bucketMetadata.getBucketId(mergedKeyGroup.getKey()) : bucketId;
+
+        try {
+          transformFn.writeTransform(
+            KV.of(
+              keyCoder.decode(new ByteArrayInputStream(mergedKeyGroup.getKey())),
+              mergedKeyGroup.getValue()
+            ),
+            bucketsToWriters.get(assignedBucket)
+          );
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to decode and merge key group", e);
+        }
 
         bucketsWritten.add(assignedBucket);
 

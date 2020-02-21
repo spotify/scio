@@ -24,7 +24,6 @@ import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.nio.channels.Channels;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -234,7 +233,17 @@ public class SortedBucketSource<FinalKeyT>
         }
 
         // Find next key-value groups
-        c.output(mergeKeyGroup(nextKeyGroups, resultSchema, keyCoder));
+        KV<byte[], CoGbkResult> mergedKeyGroup = mergeKeyGroup(nextKeyGroups, resultSchema);
+        try {
+          c.output(
+            KV.of(
+              keyCoder.decode(new ByteArrayInputStream(mergedKeyGroup.getKey())),
+              mergedKeyGroup.getValue()
+            )
+          );
+        } catch (Exception e) {
+          throw new RuntimeException("Could not decode key bytes for group", e);
+        }
 
         if (completedSources == numSources) {
           break;
@@ -242,10 +251,9 @@ public class SortedBucketSource<FinalKeyT>
       }
     }
 
-    static <K> KV<K, CoGbkResult> mergeKeyGroup(
+    static KV<byte[], CoGbkResult> mergeKeyGroup(
         Map<TupleTag, KV<byte[], Iterator<?>>> nextKeyGroups,
-        CoGbkResultSchema resultSchema,
-        Coder<K> keyCoder
+        CoGbkResultSchema resultSchema
     ) {
       final Map.Entry<TupleTag, KV<byte[], Iterator<?>>> minKeyEntry =
           nextKeyGroups.entrySet().stream().min(keyComparator).orElse(null);
@@ -272,15 +280,10 @@ public class SortedBucketSource<FinalKeyT>
       }
 
       // Output next key-value group
-      final ByteArrayInputStream groupKeyBytes =
-          new ByteArrayInputStream(minKeyEntry.getValue().getKey());
-      final K groupKey;
-      try {
-        groupKey = keyCoder.decode(groupKeyBytes);
-      } catch (Exception e) {
-        throw new RuntimeException("Could not decode key bytes for group", e);
-      }
-      return KV.of(groupKey, CoGbkResultUtil.newCoGbkResult(resultSchema, valueMap));
+      return KV.of(
+          minKeyEntry.getValue().getKey(),
+          CoGbkResultUtil.newCoGbkResult(resultSchema, valueMap)
+      );
     }
 
     @Override
