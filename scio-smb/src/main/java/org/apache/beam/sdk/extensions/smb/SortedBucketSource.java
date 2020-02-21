@@ -30,6 +30,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -189,7 +190,11 @@ public class SortedBucketSource<FinalKeyT>
     private final Coder<FinalKeyT> keyCoder;
     private final List<BucketedInput<?, ?>> sources;
 
-    MergeBuckets(List<BucketedInput<?, ?>> sources, int leastNumBuckets, Coder<FinalKeyT> keyCoder) {
+    MergeBuckets(
+        List<BucketedInput<?, ?>> sources,
+        int leastNumBuckets,
+        Coder<FinalKeyT> keyCoder
+    ) {
       this.leastNumBuckets = leastNumBuckets;
       this.keyCoder = keyCoder;
       this.sources = sources;
@@ -197,7 +202,28 @@ public class SortedBucketSource<FinalKeyT>
 
     @ProcessElement
     public void processElement(ProcessContext c) {
-      final int bucketId = c.element();
+      merge(
+        c.element(),
+        sources,
+        leastNumBuckets,
+        mergedKeyGroup -> {
+          try {
+            c.output(KV.of(
+              keyCoder.decode(new ByteArrayInputStream(mergedKeyGroup.getKey())),
+              mergedKeyGroup.getValue()
+            ));
+          } catch (Exception e) {
+            throw new RuntimeException("Failed to decode and merge key group", e);
+          }
+        });
+    }
+
+    static void merge(
+        int bucketId,
+        List<BucketedInput<?, ?>> sources,
+        int leastNumBuckets,
+        Consumer<KV<byte[], CoGbkResult>> consumer
+        ) {
       final int numSources = sources.size();
 
       // Initialize iterators and tuple tags for sources
@@ -234,16 +260,7 @@ public class SortedBucketSource<FinalKeyT>
 
         // Find next key-value groups
         KV<byte[], CoGbkResult> mergedKeyGroup = mergeKeyGroup(nextKeyGroups, resultSchema);
-        try {
-          c.output(
-            KV.of(
-              keyCoder.decode(new ByteArrayInputStream(mergedKeyGroup.getKey())),
-              mergedKeyGroup.getValue()
-            )
-          );
-        } catch (Exception e) {
-          throw new RuntimeException("Could not decode key bytes for group", e);
-        }
+        consumer.accept(mergedKeyGroup);
 
         if (completedSources == numSources) {
           break;
@@ -251,7 +268,7 @@ public class SortedBucketSource<FinalKeyT>
       }
     }
 
-    static KV<byte[], CoGbkResult> mergeKeyGroup(
+    private static KV<byte[], CoGbkResult> mergeKeyGroup(
         Map<TupleTag, KV<byte[], Iterator<?>>> nextKeyGroups,
         CoGbkResultSchema resultSchema
     ) {

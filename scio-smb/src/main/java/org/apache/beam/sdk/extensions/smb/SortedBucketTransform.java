@@ -22,11 +22,8 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -47,12 +44,10 @@ import org.apache.beam.sdk.transforms.PTransform;
 import org.apache.beam.sdk.transforms.ParDo;
 import org.apache.beam.sdk.transforms.Reshuffle;
 import org.apache.beam.sdk.transforms.join.CoGbkResult;
-import org.apache.beam.sdk.transforms.join.CoGbkResultSchema;
 import org.apache.beam.sdk.values.KV;
 import org.apache.beam.sdk.values.PBegin;
 import org.apache.beam.sdk.values.PCollectionTuple;
 import org.apache.beam.sdk.values.TupleTag;
-import org.apache.beam.sdk.values.TupleTagList;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions;
 
 /**
@@ -209,16 +204,18 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
     @ProcessElement
     public void processElement(ProcessContext c) {
       final int bucketId = c.element();
-      final int numSources = sources.size();
-      final int numBuckets = bucketMetadata.getNumBuckets();
-      final boolean reHashBucket = numBuckets > leastNumBuckets;
+      final boolean reHashBucket = bucketMetadata.getNumBuckets() > leastNumBuckets;
 
       final Map<Integer, OutputCollector<FinalValueT>> bucketsToWriters = new HashMap<>();
       final List<KV<BucketShardId, ResourceId>> bucketsToDsts = new ArrayList<>();
 
-      for (int bucketFanout = bucketId; bucketFanout < numBuckets; bucketFanout += leastNumBuckets) {
+      for (
+          int bucketFanout = bucketId;
+          bucketFanout < bucketMetadata.getNumBuckets();
+          bucketFanout += leastNumBuckets
+      ) {
         final BucketShardId bucketShardId = BucketShardId.of(bucketFanout, 0);
-        final ResourceId dst = fileAssignment.forBucket(bucketShardId, numBuckets, 1);
+        final ResourceId dst = fileAssignment.forBucket(bucketShardId, bucketMetadata);
 
         try {
           bucketsToWriters.put(
@@ -231,61 +228,29 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
         }
       }
 
-      final KeyGroupIterator[] iterators = sources.stream()
-          .map(i -> i.createIterator(bucketId, numBuckets))
-          .toArray(KeyGroupIterator[]::new);
+      SortedBucketSource.MergeBuckets.merge(
+          bucketId,
+          sources,
+          leastNumBuckets,
+          mergedKeyGroup -> {
+            int assignedBucket = reHashBucket ?
+                bucketMetadata.getBucketId(mergedKeyGroup.getKey()) : bucketId;
 
-      final Map<TupleTag, KV<byte[], Iterator<?>>> nextKeyGroups = new HashMap<>();
-      final CoGbkResultSchema resultSchema = BucketedInput.schemaOf(sources);
-      final TupleTagList tupleTags = resultSchema.getTupleTagList();
-
-      while (true) {
-        int completedSources = 0;
-        for (int i = 0; i < numSources; i++) {
-          final KeyGroupIterator it = iterators[i];
-          if (nextKeyGroups.containsKey(tupleTags.get(i))) {
-            continue;
-          }
-          if (it.hasNext()) {
-            @SuppressWarnings("unchecked") final KV<byte[], Iterator<?>> next = it.next();
-            nextKeyGroups.put(tupleTags.get(i), next);
-          } else {
-            completedSources++;
-          }
-        }
-
-        if (nextKeyGroups.isEmpty()) {
-          break;
-        }
-
-        KV<byte[], CoGbkResult> mergedKeyGroup = SortedBucketSource.MergeBuckets.mergeKeyGroup(
-            nextKeyGroups, resultSchema
-        );
-
-        int assignedBucket = reHashBucket ?
-            bucketMetadata.getBucketId(mergedKeyGroup.getKey()) : bucketId;
-
-        try {
-          transformFn.writeTransform(
-            KV.of(
-              keyCoder.decode(new ByteArrayInputStream(mergedKeyGroup.getKey())),
-              mergedKeyGroup.getValue()
-            ),
-            bucketsToWriters.get(assignedBucket)
-          );
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to decode and merge key group", e);
-        }
-
-        if (completedSources == numSources) {
-          break;
-        }
-      }
+            try {
+              transformFn.writeTransform(
+                  KV.of(
+                      keyCoder.decode(new ByteArrayInputStream(mergedKeyGroup.getKey())),
+                      mergedKeyGroup.getValue()
+                  ),
+                  bucketsToWriters.get(assignedBucket)
+              );
+            } catch (Exception e) {
+              throw new RuntimeException("Failed to decode and merge key group", e);
+            }
+          });
 
       bucketsToDsts.forEach(bucketShardAndDst -> {
-        final Integer bucket = bucketShardAndDst.getKey().getBucketId();
-        bucketsToWriters.get(bucket).onComplete();
-
+        bucketsToWriters.get(bucketShardAndDst.getKey().getBucketId()).onComplete();
         c.output(bucketShardAndDst);
       });
     }
