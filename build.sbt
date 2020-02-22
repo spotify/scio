@@ -460,13 +460,16 @@ lazy val `scio-sql`: Project = Project(
     libraryDependencies ++= Seq(
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-extensions-sql" % beamVersion,
-      "org.apache.commons" % "commons-lang3" % commonsLang3Version
-    )
+      "org.apache.commons" % "commons-lang3" % commonsLang3Version,
+      "org.scalatest" %% "scalatest" % scalatestVersion % Test
+    ),
+    (Test / compileOrder) := CompileOrder.JavaThenScala
   )
   .dependsOn(
     `scio-core`,
+    `scio-macros`,
     `scio-schemas` % "test->test",
-    `scio-macros`
+    `scio-test` % "test->test"
   )
 
 lazy val `scio-test`: Project = project
@@ -505,7 +508,6 @@ lazy val `scio-test`: Project = project
     `scio-core` % "test->test;compile->compile;it->it",
     `scio-schemas` % "test;it",
     `scio-avro` % "compile->test;it->it",
-    `scio-sql` % "compile->test;it->it",
     `scio-bigquery` % "compile->test;it->it"
   )
 
