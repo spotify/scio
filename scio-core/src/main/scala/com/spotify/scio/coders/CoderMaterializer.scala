@@ -25,8 +25,8 @@ object CoderMaterializer {
 
   private[scio] case class CoderOptions(nullableCoders: Boolean, kryo: KryoOptions)
   private[scio] object CoderOptions {
-    def apply(o: PipelineOptions) = {
-      val nullableCoder = o.as(classOf[com.spotify.scio.options.ScioOptions]).getNullableCoders()
+    final def apply(o: PipelineOptions): CoderOptions = {
+      val nullableCoder = o.as(classOf[com.spotify.scio.options.ScioOptions]).getNullableCoders
       new CoderOptions(nullableCoder, KryoOptions(o))
     }
   }
