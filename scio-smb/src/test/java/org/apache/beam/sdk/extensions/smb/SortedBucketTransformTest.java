@@ -24,14 +24,17 @@ import java.nio.channels.Channels;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import org.apache.beam.sdk.PipelineResult;
 import org.apache.beam.sdk.extensions.smb.SMBFilenamePolicy.FileAssignment;
 import org.apache.beam.sdk.extensions.smb.SortedBucketTransform.TransformFn;
 import org.apache.beam.sdk.io.FileSystems;
+import org.apache.beam.sdk.metrics.DistributionResult;
 import org.apache.beam.sdk.testing.TestPipeline;
 import org.apache.beam.sdk.transforms.Create;
 import org.apache.beam.sdk.values.KV;
 import org.apache.beam.sdk.values.TupleTag;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ImmutableList;
+import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ImmutableMap;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ImmutableSet;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -111,11 +114,22 @@ public class SortedBucketTransformTest {
         )
     );
 
-    transformPipeline.run().waitUntilFinish();
+    final PipelineResult result = transformPipeline.run();
+    result.waitUntilFinish();
 
     final KV<BucketMetadata, Set<String>> outputs = readAllFrom(outputFolder, outputMetadata);
     Assert.assertEquals(expected, outputs.getValue());
     Assert.assertEquals(outputMetadata, outputs.getKey());
+
+    SortedBucketSourceTest.verifyMetrics(
+        result,
+        ImmutableMap.of(
+            "SortedBucketTransform-ElementsWritten", 3L,
+            "SortedBucketTransform-ElementsRead", 10L
+        ),
+        ImmutableMap.of(
+            "SortedBucketTransform-KeyGroupSize", DistributionResult.create(10, 7, 1, 2)
+        ));
   }
 
   @Test
@@ -135,11 +149,22 @@ public class SortedBucketTransformTest {
         )
     );
 
-    transformPipeline.run().waitUntilFinish();
+    final PipelineResult result = transformPipeline.run();
+    result.waitUntilFinish();
 
     final KV<BucketMetadata, Set<String>> outputs = readAllFrom(outputFolder, outputMetadata);
     Assert.assertEquals(expected, outputs.getValue());
     Assert.assertEquals(outputMetadata, outputs.getKey());
+
+    SortedBucketSourceTest.verifyMetrics(
+        result,
+        ImmutableMap.of(
+            "SortedBucketTransform-ElementsWritten", 3L,
+            "SortedBucketTransform-ElementsRead", 10L
+        ),
+        ImmutableMap.of(
+            "SortedBucketTransform-KeyGroupSize", DistributionResult.create(10, 7, 1, 2)
+        ));
   }
 
   private static KV<BucketMetadata, Set<String>> readAllFrom(

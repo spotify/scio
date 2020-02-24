@@ -38,6 +38,9 @@ import org.apache.beam.sdk.extensions.smb.SortedBucketSource.BucketedInput;
 import org.apache.beam.sdk.extensions.smb.SortedBucketSource.SourceSpec;
 import org.apache.beam.sdk.io.fs.ResourceId;
 import org.apache.beam.sdk.io.fs.ResourceIdCoder;
+import org.apache.beam.sdk.metrics.Counter;
+import org.apache.beam.sdk.metrics.Distribution;
+import org.apache.beam.sdk.metrics.Metrics;
 import org.apache.beam.sdk.transforms.Create;
 import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.transforms.PTransform;
@@ -129,6 +132,7 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
                 .apply(
                     "MergeTransformWrite",
                     ParDo.of(new MergeAndWriteBuckets<>(
+                      this.getName(),
                       sources,
                       sourceSpec,
                       tempFileAssignment,
@@ -151,9 +155,11 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
 
   public static class OutputCollector<ValueT> implements Consumer<ValueT>, Serializable {
     private final Writer<ValueT> writer;
+    private final Counter elementsWritten;
 
-    OutputCollector(Writer<ValueT> writer) {
+    OutputCollector(Writer<ValueT> writer, Counter elementsWritten) {
       this.writer = writer;
+      this.elementsWritten = elementsWritten;
     }
 
     void onComplete() {
@@ -168,6 +174,7 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
     public void accept(ValueT t) {
       try {
         writer.write(t);
+        elementsWritten.inc();
       } catch (IOException e) {
         throw new RuntimeException("Write of element " + t + " failed: ", e);
       }
@@ -184,7 +191,12 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
     private final Coder<FinalKeyT> keyCoder;
     private final int leastNumBuckets;
 
+    private final Counter elementsWritten;
+    private final Counter elementsRead;
+    private final Distribution keyGroupSize;
+
     MergeAndWriteBuckets(
+        String transformName,
         List<BucketedInput<?, ?>> sources,
         SourceSpec<FinalKeyT> sourceSpec,
         FileAssignment fileAssignment,
@@ -199,6 +211,10 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
       this.bucketMetadata = bucketMetadata;
       this.keyCoder = sourceSpec.keyCoder;
       this.leastNumBuckets = sourceSpec.leastNumBuckets;
+
+      elementsWritten = Metrics.counter(SortedBucketTransform.class, transformName + "-ElementsWritten");
+      elementsRead = Metrics.counter(SortedBucketTransform.class, transformName + "-ElementsRead");
+      keyGroupSize = Metrics.distribution(SortedBucketTransform.class, transformName + "-KeyGroupSize");
     }
 
     @ProcessElement
@@ -220,7 +236,7 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
         try {
           bucketsToWriters.put(
               bucketFanout,
-              new OutputCollector<>(fileOperations.createWriter(dst))
+              new OutputCollector<>(fileOperations.createWriter(dst), elementsWritten)
           );
           bucketsToDsts.add(KV.of(bucketShardId, dst));
         } catch (IOException e) {
@@ -247,7 +263,10 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
             } catch (Exception e) {
               throw new RuntimeException("Failed to decode and merge key group", e);
             }
-          });
+          },
+          elementsRead,
+          keyGroupSize
+      );
 
       bucketsToDsts.forEach(bucketShardAndDst -> {
         bucketsToWriters.get(bucketShardAndDst.getKey().getBucketId()).onComplete();
