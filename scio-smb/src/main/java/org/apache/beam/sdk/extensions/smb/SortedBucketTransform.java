@@ -46,6 +46,8 @@ import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.transforms.PTransform;
 import org.apache.beam.sdk.transforms.ParDo;
 import org.apache.beam.sdk.transforms.Reshuffle;
+import org.apache.beam.sdk.transforms.display.DisplayData;
+import org.apache.beam.sdk.transforms.display.DisplayData.Builder;
 import org.apache.beam.sdk.transforms.join.CoGbkResult;
 import org.apache.beam.sdk.values.KV;
 import org.apache.beam.sdk.values.PBegin;
@@ -215,6 +217,14 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
       elementsWritten = Metrics.counter(SortedBucketTransform.class, transformName + "-ElementsWritten");
       elementsRead = Metrics.counter(SortedBucketTransform.class, transformName + "-ElementsRead");
       keyGroupSize = Metrics.distribution(SortedBucketTransform.class, transformName + "-KeyGroupSize");
+    }
+
+    @Override
+    public void populateDisplayData(Builder builder) {
+      super.populateDisplayData(builder);
+      builder.add(DisplayData.item("keyCoder", keyCoder.getClass()));
+      builder.add(DisplayData.item("numBuckets", bucketMetadata.getNumBuckets()));
+      builder.add(DisplayData.item("numShards", bucketMetadata.getNumShards()));
     }
 
     @ProcessElement
