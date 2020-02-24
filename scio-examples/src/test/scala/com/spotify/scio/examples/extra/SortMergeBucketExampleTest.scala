@@ -66,4 +66,26 @@ class SortMergeBucketExampleTest extends AnyFlatSpec with Matchers {
 
       TextTap(s"$joinOutputDir/*.txt").value.size shouldBe 250
   }
+
+  it should "transform user and account data" in withTempFolders {
+    (userDir, accountDir, joinOutputDir) =>
+      SortMergeBucketWriteExample.main(
+        Array(
+          s"--outputL=$userDir",
+          s"--outputR=$accountDir"
+        )
+      )
+
+      SortMergeBucketTransformExample.main(
+        Array(
+          s"--inputL=$userDir",
+          s"--inputR=$accountDir",
+          s"--output=$joinOutputDir"
+        )
+      )
+
+      SpecificRecordTap[Account](s"$joinOutputDir/*.avro").value
+        .map(account => (account.getId, account.getType.toString))
+        .toList should contain theSameElementsAs (0 until 500).map((_, "combinedAmount"))
+  }
 }

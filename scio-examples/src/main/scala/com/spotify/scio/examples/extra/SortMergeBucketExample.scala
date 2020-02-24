@@ -27,10 +27,10 @@ package com.spotify.scio.examples.extra
 import com.spotify.scio.ContextAndArgs
 import com.spotify.scio.avro.Account
 import com.spotify.scio.coders.Coder
-import org.apache.avro.Schema
 import org.apache.avro.Schema.Field
 import org.apache.avro.file.CodecFactory
 import org.apache.avro.generic.{GenericData, GenericRecord}
+import org.apache.avro.{JsonProperties, Schema}
 import org.apache.beam.sdk.extensions.smb.AvroSortedBucketIO
 import org.apache.beam.sdk.extensions.smb.BucketMetadata.HashType
 import org.apache.beam.sdk.values.TupleTag
@@ -45,8 +45,8 @@ object SortMergeBucketExample {
     "com.spotify.scio.examples.extra",
     false,
     List(
-      new Field("userId", Schema.create(Schema.Type.INT), "doc", ""),
-      new Field("age", Schema.create(Schema.Type.INT), "doc", -1)
+      new Field("userId", Schema.create(Schema.Type.INT), "doc", JsonProperties.NULL_VALUE),
+      new Field("age", Schema.create(Schema.Type.INT), "doc", JsonProperties.NULL_VALUE)
     ).asJava
   )
 
@@ -147,6 +147,50 @@ object SortMergeBucketJoinExample {
           UserAccountData(userId, userData.get("age").toString.toInt, account.getAmount)
       }
       .saveAsTextFile(output)
+
+    sc.run().waitUntilDone()
+    ()
+  }
+}
+
+object SortMergeBucketTransformExample {
+  import com.spotify.scio.smb._
+
+  def main(cmdLineArgs: Array[String]): Unit = {
+    val (sc, args) = ContextAndArgs(cmdLineArgs)
+    val inputL = args("inputL")
+    val inputR = args("inputR")
+    val output = args("output")
+
+    implicit val coder: Coder[GenericRecord] =
+      Coder.avroGenericRecordCoder(SortMergeBucketExample.UserDataSchema)
+
+    sc.sortMergeTransform(
+      AvroSortedBucketIO
+        .read(new TupleTag[GenericRecord](inputL), SortMergeBucketExample.UserDataSchema)
+        .from(inputL),
+      AvroSortedBucketIO
+        .read(new TupleTag[Account](inputR), classOf[Account])
+        .from(inputR),
+      AvroSortedBucketIO
+        .write(classOf[Integer], "userId", classOf[Account])
+        .to(output)
+        .withNumBuckets(2)
+        .withNumShards(1)
+        .withHashType(HashType.MURMUR3_32)
+    )({
+      case (key, (users, accounts), outputCollector) =>
+        users.foreach { user =>
+          outputCollector.accept(
+            SortMergeBucketExample.account(
+              key,
+              user.get("age").toString,
+              "combinedAmount",
+              accounts.foldLeft(0.0)(_ + _.getAmount)
+            )
+          )
+        }
+    })
 
     sc.run().waitUntilDone()
     ()

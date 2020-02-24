@@ -20,14 +20,19 @@ package org.apache.beam.sdk.extensions.smb;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 import org.apache.beam.sdk.extensions.smb.BucketMetadata.HashType;
+import org.apache.beam.sdk.extensions.smb.SortedBucketSink.WriteResult;
 import org.apache.beam.sdk.extensions.smb.SortedBucketSource.BucketedInput;
+import org.apache.beam.sdk.extensions.smb.SortedBucketTransform.TransformFn;
+import org.apache.beam.sdk.io.fs.ResourceId;
 import org.apache.beam.sdk.transforms.PTransform;
 import org.apache.beam.sdk.transforms.join.CoGbkResult;
 import org.apache.beam.sdk.values.KV;
 import org.apache.beam.sdk.values.PBegin;
 import org.apache.beam.sdk.values.PCollection;
 import org.apache.beam.sdk.values.TupleTag;
+import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ImmutableList;
 
 /**
@@ -84,6 +89,10 @@ public class SortedBucketIO {
       return new CoGbk<>(keyClass, newReads);
     }
 
+    public <V> CoGbkTransform<K, V> transformVia(TransformFn<K, V> toFinalResultT) {
+      return new CoGbkTransform<>(this.keyClass, this.reads, toFinalResultT);
+    }
+
     @Override
     public PCollection<KV<K, CoGbkResult>> expand(PBegin input) {
       List<BucketedInput<?, ?>> bucketedInputs =
@@ -92,10 +101,101 @@ public class SortedBucketIO {
     }
   }
 
+  public static class CoGbkTransform<K, V> extends PTransform<PBegin, WriteResult> {
+    private final Class<K> keyClass;
+    private final List<Read<?>> reads;
+    private final TransformFn<K, V> toFinalResultT;
+    private SortedBucketIO.Write<K, V> write;
+
+    private CoGbkTransform(
+        Class<K> keyClass,
+        List<Read<?>> reads,
+        TransformFn<K, V> toFinalResultT) {
+      this.keyClass = keyClass;
+      this.reads = reads;
+      this.toFinalResultT = toFinalResultT;
+    }
+
+    public CoGbkTransform<K, V> to(SortedBucketIO.Write<K, V> write) {
+      this.write = write;
+      return this;
+    }
+
+    @Override
+    public WriteResult expand(PBegin input) {
+      Preconditions.checkNotNull(write.getOutputDirectory(), "outputDirectory is not set");
+
+      final List<BucketedInput<?, ?>> bucketedInputs =
+          reads.stream().map(Read::toBucketedInput).collect(Collectors.toList());
+
+      final ResourceId outputDirectory = write.getOutputDirectory();
+      ResourceId tempDirectory = write.getTempDirectory();
+      if (tempDirectory == null) {
+        tempDirectory = outputDirectory;
+      }
+
+      return input.apply(
+        new SortedBucketTransform<>(
+          keyClass,
+          write.getBucketMetadata(),
+          outputDirectory,
+          tempDirectory,
+          write.getFilenameSuffix(),
+          write.getFileOperations(),
+          bucketedInputs,
+          toFinalResultT
+        ));
+    }
+  }
+
   /** Represents a single sorted-bucket source written using {@link SortedBucketSink}. */
   public abstract static class Read<V> {
     public abstract TupleTag<V> getTupleTag();
 
     protected abstract BucketedInput<?, V> toBucketedInput();
+  }
+
+  public abstract static class Write<K, V> extends PTransform<PCollection<V>, WriteResult> {
+    abstract int getNumBuckets();
+
+    abstract int getNumShards();
+
+    abstract Class<K> getKeyClass();
+
+    abstract HashType getHashType();
+
+    @Nullable
+    abstract ResourceId getOutputDirectory();
+
+    @Nullable
+    abstract ResourceId getTempDirectory();
+
+    abstract String getFilenameSuffix();
+
+    abstract int getSorterMemoryMb();
+
+    abstract FileOperations<V> getFileOperations();
+    abstract BucketMetadata<K, V> getBucketMetadata();
+
+    @Override
+    public WriteResult expand(PCollection<V> input) {
+      Preconditions.checkNotNull(getOutputDirectory(), "outputDirectory is not set");
+
+      final ResourceId outputDirectory = getOutputDirectory();
+      ResourceId tempDirectory = getTempDirectory();
+      if (tempDirectory == null) {
+        tempDirectory = outputDirectory;
+      }
+
+      return input.apply(
+          new SortedBucketSink<>(
+              getBucketMetadata(),
+              outputDirectory,
+              tempDirectory,
+              getFilenameSuffix(),
+              getFileOperations(),
+              getSorterMemoryMb()
+          ));
+    }
   }
 }
