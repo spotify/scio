@@ -77,6 +77,7 @@ object CoderMaterializer {
         )
       case Disjunction(typeName, idCoder, id, coders) =>
         WrappedBCoder.create(
+          // `.map(identity) is really needed to make Map serializable.
           DisjunctionCoder(
             typeName,
             beamImpl(o, idCoder),
