@@ -19,6 +19,7 @@ package org.apache.beam.sdk.extensions.smb;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.Objects;
 import org.apache.beam.sdk.coders.CannotProvideCoderException;
 import org.apache.beam.sdk.coders.Coder.NonDeterministicException;
 
@@ -52,6 +53,26 @@ class TestBucketMetadata extends BucketMetadata<String, String> {
       @JsonProperty("hashType") HashType hashType)
       throws CannotProvideCoderException, NonDeterministicException {
     super(version, numBuckets, numShards, String.class, hashType);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    TestBucketMetadata metadata = (TestBucketMetadata) o;
+    return this.keyIndex.equals(metadata.keyIndex) &&
+        this.getNumBuckets() == metadata.getNumBuckets() &&
+        this.getNumShards() == metadata.getNumShards() &&
+        this.getHashType() == metadata.getHashType();
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(keyIndex, getNumBuckets(), getNumShards(), getHashType());
   }
 
   @Override

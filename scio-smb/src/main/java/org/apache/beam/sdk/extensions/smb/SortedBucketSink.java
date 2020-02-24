@@ -235,7 +235,7 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
    * operation that manages the process of writing to {@link SortedBucketSink}.
    */
   // TODO: Retry policy, etc...
-  private static class WriteOperation<V>
+  static class WriteOperation<V>
       extends PTransform<PCollection<KV<BucketShardId, Iterable<KV<byte[], V>>>>, WriteResult> {
     private final SMBFilenamePolicy filenamePolicy;
     private final BucketMetadata<?, V> bucketMetadata;
@@ -268,7 +268,7 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
   }
 
   /** Writes metadata and bucket files to temporary location. */
-  private static class WriteTempFiles<V>
+  static class WriteTempFiles<V>
       extends PTransform<
           PCollection<KV<BucketShardId, Iterable<KV<byte[], V>>>>, PCollectionTuple> {
 
@@ -294,7 +294,7 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
                   .getPipeline()
                   .apply(
                       "WriteTempMetadata",
-                      Create.of(Collections.singletonList(writeMetadataFile()))))
+                      writeMetadataTransform(fileAssignment, bucketMetadata)))
           .and(
               new TupleTag<>("TempBuckets"),
               input.apply(
@@ -341,7 +341,10 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
     }
 
     @SuppressWarnings("unchecked")
-    private ResourceId writeMetadataFile() {
+    static Create.Values<ResourceId> writeMetadataTransform(
+        FileAssignment fileAssignment,
+        BucketMetadata bucketMetadata
+    ) {
       final ResourceId tmpFile = fileAssignment.forMetadata();
 
       LOG.info("Writing metadata to temporary file {}", tmpFile);
@@ -352,12 +355,13 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
         cleanupTempFiles(e, Collections.singleton(tmpFile));
         throw new RuntimeException("Failed to write metadata file", e);
       }
-      return tmpFile;
+
+      return Create.of(Collections.singletonList(tmpFile));
     }
   }
 
   /** Moves temporary files to final destinations. */
-  private static class FinalizeTempFiles<V> extends PTransform<PCollectionTuple, WriteResult> {
+  static class FinalizeTempFiles<V> extends PTransform<PCollectionTuple, WriteResult> {
     private final FileAssignment fileAssignment;
     private final BucketMetadata bucketMetadata;
     private final FileOperations<V> fileOperations;

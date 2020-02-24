@@ -30,6 +30,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -61,6 +62,7 @@ import org.apache.beam.sdk.values.KV;
 import org.apache.beam.sdk.values.PBegin;
 import org.apache.beam.sdk.values.PCollection;
 import org.apache.beam.sdk.values.TupleTag;
+import org.apache.beam.sdk.values.TupleTagList;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Iterators;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.UnmodifiableIterator;
@@ -105,8 +107,44 @@ public class SortedBucketSource<FinalKeyT>
 
   @Override
   public final PCollection<KV<FinalKeyT, CoGbkResult>> expand(PBegin begin) {
+    final SourceSpec<FinalKeyT> sourceSpec = getSourceSpec(finalKeyClass, sources);
+
+    @SuppressWarnings("deprecation")
+    final Reshuffle.ViaRandomKey<Integer> reshuffle = Reshuffle.viaRandomKey();
+
+    final CoGbkResult.CoGbkResultCoder resultCoder =
+        CoGbkResult.CoGbkResultCoder.of(
+            BucketedInput.schemaOf(sources),
+            UnionCoder.of(
+                sources.stream().map(BucketedInput::getCoder).collect(Collectors.toList())));
+
+    return begin.getPipeline()
+        .apply("CreateBuckets",
+            Create.of(
+                IntStream.range(0, sourceSpec.leastNumBuckets).boxed().collect(Collectors.toList())
+            ).withCoder(VarIntCoder.of()))
+        .apply("ReshuffleKeys", reshuffle)
+        .apply("MergeBuckets", ParDo.of(
+            new MergeBuckets<>(sources, sourceSpec.leastNumBuckets, sourceSpec.keyCoder)
+        )).setCoder(KvCoder.of(sourceSpec.keyCoder, resultCoder));
+  }
+
+  static class SourceSpec<K> {
+    int leastNumBuckets;
+    Coder<K> keyCoder;
+
+    SourceSpec(int leastNumBuckets, Coder<K> keyCoder) {
+      this.leastNumBuckets = leastNumBuckets;
+      this.keyCoder = keyCoder;
+    }
+  }
+
+  static <KeyT> SourceSpec<KeyT> getSourceSpec(
+      Class<KeyT> finalKeyClass,
+      List<BucketedInput<?, ?>> sources
+  ) {
     BucketMetadata<?, ?> first = null;
-    Coder<FinalKeyT> finalKeyCoder = null;
+    Coder<KeyT> finalKeyCoder = null;
 
     int leastNumBuckets = Integer.MAX_VALUE;
     // Check metadata of each source
@@ -127,7 +165,7 @@ public class SortedBucketSource<FinalKeyT>
       if (current.getKeyClass() == finalKeyClass && finalKeyCoder == null) {
         try {
           @SuppressWarnings("unchecked")
-          final Coder<FinalKeyT> coder = (Coder<FinalKeyT>) current.getKeyCoder();
+          final Coder<KeyT> coder = (Coder<KeyT>) current.getKeyCoder();
           finalKeyCoder = coder;
         } catch (CannotProvideCoderException e) {
           throw new RuntimeException("Could not provide coder for key class " + finalKeyClass, e);
@@ -140,34 +178,11 @@ public class SortedBucketSource<FinalKeyT>
     Preconditions.checkNotNull(
         finalKeyCoder, "Could not infer coder for key class %s", finalKeyClass);
 
-    @SuppressWarnings("deprecation")
-    final Reshuffle.ViaRandomKey<Integer> reshuffle = Reshuffle.viaRandomKey();
-
-    final List<TupleTag<?>> tupleTags =
-        sources.stream().map(BucketedInput::getTupleTag).collect(Collectors.toList());
-    final CoGbkResultSchema resultSchema = CoGbkResultSchema.of(tupleTags);
-    final CoGbkResult.CoGbkResultCoder resultCoder =
-        CoGbkResult.CoGbkResultCoder.of(
-            resultSchema,
-            UnionCoder.of(
-                sources.stream().map(BucketedInput::getCoder).collect(Collectors.toList())));
-
-    return begin.getPipeline()
-        .apply("CreateBuckets",
-            Create.of(
-                IntStream.range(0, leastNumBuckets).boxed().collect(Collectors.toList())
-            ).withCoder(VarIntCoder.of()))
-        .apply("ReshuffleKeys", reshuffle)
-        .apply("MergeBuckets", ParDo.of(
-            new MergeBuckets<>(sources, leastNumBuckets, finalKeyCoder))
-        )
-        .setCoder(KvCoder.of(finalKeyCoder, resultCoder));
+    return new SourceSpec<>(leastNumBuckets, finalKeyCoder);
   }
 
   /** Merge key-value groups in matching buckets. */
-  private static class MergeBuckets<FinalKeyT>
-      extends DoFn<Integer, KV<FinalKeyT, CoGbkResult>> {
-
+  static class MergeBuckets<FinalKeyT> extends DoFn<Integer, KV<FinalKeyT, CoGbkResult>> {
     private static final Comparator<Map.Entry<TupleTag, KV<byte[], Iterator<?>>>> keyComparator =
         (o1, o2) -> bytesComparator.compare(o1.getValue().getKey(), o2.getValue().getKey());
 
@@ -175,7 +190,11 @@ public class SortedBucketSource<FinalKeyT>
     private final Coder<FinalKeyT> keyCoder;
     private final List<BucketedInput<?, ?>> sources;
 
-    MergeBuckets(List<BucketedInput<?, ?>> sources, int leastNumBuckets, Coder<FinalKeyT> keyCoder) {
+    MergeBuckets(
+        List<BucketedInput<?, ?>> sources,
+        int leastNumBuckets,
+        Coder<FinalKeyT> keyCoder
+    ) {
       this.leastNumBuckets = leastNumBuckets;
       this.keyCoder = keyCoder;
       this.sources = sources;
@@ -183,7 +202,28 @@ public class SortedBucketSource<FinalKeyT>
 
     @ProcessElement
     public void processElement(ProcessContext c) {
-      final int bucketId = c.element();
+      merge(
+        c.element(),
+        sources,
+        leastNumBuckets,
+        mergedKeyGroup -> {
+          try {
+            c.output(KV.of(
+              keyCoder.decode(new ByteArrayInputStream(mergedKeyGroup.getKey())),
+              mergedKeyGroup.getValue()
+            ));
+          } catch (Exception e) {
+            throw new RuntimeException("Failed to decode and merge key group", e);
+          }
+        });
+    }
+
+    static void merge(
+        int bucketId,
+        List<BucketedInput<?, ?>> sources,
+        int leastNumBuckets,
+        Consumer<KV<byte[], CoGbkResult>> consumer
+        ) {
       final int numSources = sources.size();
 
       // Initialize iterators and tuple tags for sources
@@ -191,9 +231,9 @@ public class SortedBucketSource<FinalKeyT>
           sources.stream()
               .map(i -> i.createIterator(bucketId, leastNumBuckets))
               .toArray(KeyGroupIterator[]::new);
-      final List<TupleTag<?>> tupleTags =
-          sources.stream().map(BucketedInput::getTupleTag).collect(Collectors.toList());
-      final CoGbkResultSchema resultSchema = CoGbkResultSchema.of(tupleTags);
+
+      final CoGbkResultSchema resultSchema = BucketedInput.schemaOf(sources);
+      final TupleTagList tupleTags = resultSchema.getTupleTagList();
 
       final Map<TupleTag, KV<byte[], Iterator<?>>> nextKeyGroups = new HashMap<>();
 
@@ -219,45 +259,48 @@ public class SortedBucketSource<FinalKeyT>
         }
 
         // Find next key-value groups
-        final Map.Entry<TupleTag, KV<byte[], Iterator<?>>> minKeyEntry =
-            nextKeyGroups.entrySet().stream().min(keyComparator).orElse(null);
-
-        final Iterator<Map.Entry<TupleTag, KV<byte[], Iterator<?>>>> nextKeyGroupsIt =
-            nextKeyGroups.entrySet().iterator();
-        final List<Iterable<?>> valueMap = new ArrayList<>();
-        for (int i = 0; i < resultSchema.size(); i++) {
-          valueMap.add(new ArrayList<>());
-        }
-
-        while (nextKeyGroupsIt.hasNext()) {
-          final Map.Entry<TupleTag, KV<byte[], Iterator<?>>> entry = nextKeyGroupsIt.next();
-          if (keyComparator.compare(entry, minKeyEntry) == 0) {
-            int index = resultSchema.getIndex(entry.getKey());
-            @SuppressWarnings("unchecked")
-            final List<Object> values = (List<Object>) valueMap.get(index);
-            // TODO: this exhausts everything from the "lazy" iterator and can be expensive.
-            // To fix we have to make the underlying Reader range aware so that it's safe to
-            // re-iterate or stop without exhausting remaining elements in the value group.
-            entry.getValue().getValue().forEachRemaining(values::add);
-            nextKeyGroupsIt.remove();
-          }
-        }
-
-        // Output next key-value group
-        final ByteArrayInputStream groupKeyBytes =
-            new ByteArrayInputStream(minKeyEntry.getValue().getKey());
-        final FinalKeyT groupKey;
-        try {
-          groupKey = keyCoder.decode(groupKeyBytes);
-        } catch (Exception e) {
-          throw new RuntimeException("Could not decode key bytes for group", e);
-        }
-        c.output(KV.of(groupKey, CoGbkResultUtil.newCoGbkResult(resultSchema, valueMap)));
+        KV<byte[], CoGbkResult> mergedKeyGroup = mergeKeyGroup(nextKeyGroups, resultSchema);
+        consumer.accept(mergedKeyGroup);
 
         if (completedSources == numSources) {
           break;
         }
       }
+    }
+
+    private static KV<byte[], CoGbkResult> mergeKeyGroup(
+        Map<TupleTag, KV<byte[], Iterator<?>>> nextKeyGroups,
+        CoGbkResultSchema resultSchema
+    ) {
+      final Map.Entry<TupleTag, KV<byte[], Iterator<?>>> minKeyEntry =
+          nextKeyGroups.entrySet().stream().min(keyComparator).orElse(null);
+
+      final Iterator<Map.Entry<TupleTag, KV<byte[], Iterator<?>>>> nextKeyGroupsIt =
+          nextKeyGroups.entrySet().iterator();
+      final List<Iterable<?>> valueMap = new ArrayList<>();
+      for (int i = 0; i < resultSchema.size(); i++) {
+        valueMap.add(new ArrayList<>());
+      }
+
+      while (nextKeyGroupsIt.hasNext()) {
+        final Map.Entry<TupleTag, KV<byte[], Iterator<?>>> entry = nextKeyGroupsIt.next();
+        if (keyComparator.compare(entry, minKeyEntry) == 0) {
+          int index = resultSchema.getIndex(entry.getKey());
+          @SuppressWarnings("unchecked")
+          final List<Object> values = (List<Object>) valueMap.get(index);
+          // TODO: this exhausts everything from the "lazy" iterator and can be expensive.
+          // To fix we have to make the underlying Reader range aware so that it's safe to
+          // re-iterate or stop without exhausting remaining elements in the value group.
+          entry.getValue().getValue().forEachRemaining(values::add);
+          nextKeyGroupsIt.remove();
+        }
+      }
+
+      // Output next key-value group
+      return KV.of(
+          minKeyEntry.getValue().getKey(),
+          CoGbkResultUtil.newCoGbkResult(resultSchema, valueMap)
+      );
     }
 
     @Override
@@ -325,6 +368,12 @@ public class SortedBucketSource<FinalKeyT>
       return fileOperations.getCoder();
     }
 
+    static CoGbkResultSchema schemaOf(List<BucketedInput<?, ?>> sources) {
+      return CoGbkResultSchema.of(sources.stream()
+          .map(BucketedInput::getTupleTag)
+          .collect(Collectors.toList()));
+    }
+
     public BucketMetadata<K, V> getMetadata() {
       computeMetadataIfAbsent();
       return canonicalMetadata;
@@ -372,7 +421,7 @@ public class SortedBucketSource<FinalKeyT>
       }
     }
 
-    private KeyGroupIterator<byte[], V> createIterator(int bucketId, int leastNumBuckets) {
+    KeyGroupIterator<byte[], V> createIterator(int bucketId, int leastNumBuckets) {
       final List<Iterator<V>> iterators = new ArrayList<>();
 
       // Create one iterator per shard
