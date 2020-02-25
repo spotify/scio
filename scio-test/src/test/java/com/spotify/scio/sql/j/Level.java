@@ -18,5 +18,7 @@
 package com.spotify.scio.sql.j;
 
 public enum Level {
-  LOW, MEDIUM, HIGH
+  LOW,
+  MEDIUM,
+  HIGH
 }

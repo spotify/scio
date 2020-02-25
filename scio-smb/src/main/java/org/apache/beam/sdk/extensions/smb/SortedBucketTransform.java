@@ -51,10 +51,10 @@ import org.apache.beam.sdk.values.TupleTag;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions;
 
 /**
- * A {@link PTransform} that encapsulates both a {@link SortedBucketSource} and {@link SortedBucketSink}
- * operation, with a user-supplied transform function mapping merged {@link CoGbkResult}s to their
- * final writable outputs. The same hash function must be supplied in the output
- * {@link BucketMetadata} to preserve the same key distribution.
+ * A {@link PTransform} that encapsulates both a {@link SortedBucketSource} and {@link
+ * SortedBucketSink} operation, with a user-supplied transform function mapping merged {@link
+ * CoGbkResult}s to their final writable outputs. The same hash function must be supplied in the
+ * output {@link BucketMetadata} to preserve the same key distribution.
  *
  * @param <FinalKeyT>
  * @param <FinalValueT>
@@ -67,7 +67,6 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
   private final List<BucketedInput<?, ?>> sources;
   private final BucketMetadata<FinalKeyT, FinalValueT> bucketMetadata;
   private final TransformFn<FinalKeyT, FinalValueT> transformFn;
-
 
   public SortedBucketTransform(
       Class<FinalKeyT> finalKeyClass,
@@ -91,22 +90,22 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
   public final WriteResult expand(PBegin begin) {
     Preconditions.checkArgument(
         bucketMetadata.getNumShards() == 1,
-        "Sharding is not supported in SortedBucketTransform. numShards must == 1.")
-    ;
+        "Sharding is not supported in SortedBucketTransform. numShards must == 1.");
 
-    final SourceSpec<FinalKeyT> sourceSpec = SortedBucketSource.getSourceSpec(finalKeyClass, sources);
+    final SourceSpec<FinalKeyT> sourceSpec =
+        SortedBucketSource.getSourceSpec(finalKeyClass, sources);
 
     Preconditions.checkArgument(
         bucketMetadata.getNumBuckets() >= sourceSpec.leastNumBuckets,
         "numBuckets in BucketMetadata must be >= leastNumBuckets among sources: "
-            + sourceSpec.leastNumBuckets
-    );
+            + sourceSpec.leastNumBuckets);
 
     final FileAssignment tempFileAssignment = filenamePolicy.forTempFiles(tempDirectory);
 
-    final Create.Values<Integer> createBuckets = Create.of(
-        IntStream.range(0, sourceSpec.leastNumBuckets).boxed().collect(Collectors.toList())
-    ).withCoder(VarIntCoder.of());
+    final Create.Values<Integer> createBuckets =
+        Create.of(
+                IntStream.range(0, sourceSpec.leastNumBuckets).boxed().collect(Collectors.toList()))
+            .withCoder(VarIntCoder.of());
 
     final Create.Values<ResourceId> writeTempMetadata =
         SortedBucketSink.WriteTempFiles.writeMetadataTransform(tempFileAssignment, bucketMetadata);
@@ -114,34 +113,33 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
     @SuppressWarnings("deprecation")
     final Reshuffle.ViaRandomKey<Integer> reshuffle = Reshuffle.viaRandomKey();
 
-    return PCollectionTuple
-        .of(
+    return PCollectionTuple.of(
             new TupleTag<>("TempMetadata"),
             begin
                 .getPipeline()
                 .apply("WriteTempMetadata", writeTempMetadata)
-                .setCoder(ResourceIdCoder.of())
-        ).and(
+                .setCoder(ResourceIdCoder.of()))
+        .and(
             new TupleTag<>("TempBuckets"),
-            begin.getPipeline()
+            begin
+                .getPipeline()
                 .apply("CreateBuckets", createBuckets)
                 .apply("ReshuffleKeys", reshuffle)
                 .apply(
                     "MergeTransformWrite",
-                    ParDo.of(new MergeAndWriteBuckets<>(
-                      sources,
-                      sourceSpec,
-                      tempFileAssignment,
-                      fileOperations,
-                      bucketMetadata,
-                      transformFn)
-                  )
-                ).setCoder(KvCoder.of(BucketShardIdCoder.of(), ResourceIdCoder.of()))
-        ).apply(
+                    ParDo.of(
+                        new MergeAndWriteBuckets<>(
+                            sources,
+                            sourceSpec,
+                            tempFileAssignment,
+                            fileOperations,
+                            bucketMetadata,
+                            transformFn)))
+                .setCoder(KvCoder.of(BucketShardIdCoder.of(), ResourceIdCoder.of())))
+        .apply(
             "FinalizeTempFiles",
             new SortedBucketSink.FinalizeTempFiles<>(
-                filenamePolicy.forDestination(), bucketMetadata, fileOperations)
-        );
+                filenamePolicy.forDestination(), bucketMetadata, fileOperations));
   }
 
   @FunctionalInterface
@@ -190,8 +188,7 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
         FileAssignment fileAssignment,
         FileOperations<FinalValueT> fileOperations,
         BucketMetadata<FinalKeyT, FinalValueT> bucketMetadata,
-        TransformFn<FinalKeyT, FinalValueT> transformFn
-    ) {
+        TransformFn<FinalKeyT, FinalValueT> transformFn) {
       this.sources = sources;
       this.fileAssignment = fileAssignment;
       this.fileOperations = fileOperations;
@@ -209,19 +206,15 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
       final Map<Integer, OutputCollector<FinalValueT>> bucketsToWriters = new HashMap<>();
       final List<KV<BucketShardId, ResourceId>> bucketsToDsts = new ArrayList<>();
 
-      for (
-          int bucketFanout = bucketId;
+      for (int bucketFanout = bucketId;
           bucketFanout < bucketMetadata.getNumBuckets();
-          bucketFanout += leastNumBuckets
-      ) {
+          bucketFanout += leastNumBuckets) {
         final BucketShardId bucketShardId = BucketShardId.of(bucketFanout, 0);
         final ResourceId dst = fileAssignment.forBucket(bucketShardId, bucketMetadata);
 
         try {
           bucketsToWriters.put(
-              bucketFanout,
-              new OutputCollector<>(fileOperations.createWriter(dst))
-          );
+              bucketFanout, new OutputCollector<>(fileOperations.createWriter(dst)));
           bucketsToDsts.add(KV.of(bucketShardId, dst));
         } catch (IOException e) {
           throw new RuntimeException(e);
@@ -233,26 +226,25 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
           sources,
           leastNumBuckets,
           mergedKeyGroup -> {
-            int assignedBucket = reHashBucket ?
-                bucketMetadata.getBucketId(mergedKeyGroup.getKey()) : bucketId;
+            int assignedBucket =
+                reHashBucket ? bucketMetadata.getBucketId(mergedKeyGroup.getKey()) : bucketId;
 
             try {
               transformFn.writeTransform(
                   KV.of(
                       keyCoder.decode(new ByteArrayInputStream(mergedKeyGroup.getKey())),
-                      mergedKeyGroup.getValue()
-                  ),
-                  bucketsToWriters.get(assignedBucket)
-              );
+                      mergedKeyGroup.getValue()),
+                  bucketsToWriters.get(assignedBucket));
             } catch (Exception e) {
               throw new RuntimeException("Failed to decode and merge key group", e);
             }
           });
 
-      bucketsToDsts.forEach(bucketShardAndDst -> {
-        bucketsToWriters.get(bucketShardAndDst.getKey().getBucketId()).onComplete();
-        c.output(bucketShardAndDst);
-      });
+      bucketsToDsts.forEach(
+          bucketShardAndDst -> {
+            bucketsToWriters.get(bucketShardAndDst.getKey().getBucketId()).onComplete();
+            c.output(bucketShardAndDst);
+          });
     }
   }
 }

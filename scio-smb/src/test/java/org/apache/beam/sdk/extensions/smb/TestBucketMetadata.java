@@ -64,10 +64,10 @@ class TestBucketMetadata extends BucketMetadata<String, String> {
       return false;
     }
     TestBucketMetadata metadata = (TestBucketMetadata) o;
-    return this.keyIndex.equals(metadata.keyIndex) &&
-        this.getNumBuckets() == metadata.getNumBuckets() &&
-        this.getNumShards() == metadata.getNumShards() &&
-        this.getHashType() == metadata.getHashType();
+    return this.keyIndex.equals(metadata.keyIndex)
+        && this.getNumBuckets() == metadata.getNumBuckets()
+        && this.getNumShards() == metadata.getNumShards()
+        && this.getHashType() == metadata.getHashType();
   }
 
   @Override

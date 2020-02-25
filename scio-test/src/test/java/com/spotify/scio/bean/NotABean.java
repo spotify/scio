@@ -16,7 +16,7 @@
  */
 package com.spotify.scio.bean;
 
-final public class NotABean {
+public final class NotABean {
 
   private String name;
   private Integer age;

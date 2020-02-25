@@ -37,14 +37,14 @@ import java.util.function.Consumer;
 
 /**
  * A {@link DoFn} that performs asynchronous lookup using the provided client.
+ *
  * @param <A> input element type.
  * @param <B> client lookup value type.
  * @param <C> client type.
  * @param <F> future type.
  * @param <T> client lookup value type wrapped in a Try.
  */
-public abstract class BaseAsyncLookupDoFn<A, B, C, F, T>
-    extends DoFn<A, KV<A, T>>
+public abstract class BaseAsyncLookupDoFn<A, B, C, F, T> extends DoFn<A, KV<A, T>>
     implements FutureHandlers.Base<F, B> {
   private static final Logger LOG = LoggerFactory.getLogger(BaseAsyncLookupDoFn.class);
 
@@ -64,9 +64,7 @@ public abstract class BaseAsyncLookupDoFn<A, B, C, F, T>
   private long requestCount;
   private long resultCount;
 
-  /**
-   * Perform asynchronous lookup.
-   */
+  /** Perform asynchronous lookup. */
   public abstract F asyncLookup(C client, A input);
 
   /** Wrap output in a successful Try. */
@@ -75,17 +73,16 @@ public abstract class BaseAsyncLookupDoFn<A, B, C, F, T>
   /** Wrap output in a failed Try. */
   public abstract T failure(Throwable throwable);
 
-  /**
-   * Create a {@link BaseAsyncLookupDoFn} instance.
-   */
+  /** Create a {@link BaseAsyncLookupDoFn} instance. */
   public BaseAsyncLookupDoFn() {
     this(1000);
   }
 
   /**
    * Create a {@link BaseAsyncLookupDoFn} instance.
+   *
    * @param maxPendingRequests maximum number of pending requests to prevent runner from timing out
-   *                           and retrying bundles.
+   *     and retrying bundles.
    */
   public BaseAsyncLookupDoFn(int maxPendingRequests) {
     this(maxPendingRequests, new NoOpCacheSupplier<>());
@@ -93,8 +90,9 @@ public abstract class BaseAsyncLookupDoFn<A, B, C, F, T>
 
   /**
    * Create a {@link BaseAsyncLookupDoFn} instance.
+   *
    * @param maxPendingRequests maximum number of pending requests to prevent runner from timing out
-   *                           and retrying bundles.
+   *     and retrying bundles.
    * @param cacheSupplier supplier for lookup cache.
    */
   public <K> BaseAsyncLookupDoFn(int maxPendingRequests, CacheSupplier<A, B, K> cacheSupplier) {
@@ -149,23 +147,27 @@ public abstract class BaseAsyncLookupDoFn<A, B, C, F, T>
     }
     requestCount++;
 
-    F f = addCallback(future, output -> {
-      semaphore.release();
-      try {
-        cacheSupplier.put(instanceId, input, output);
-        results.add(new Result(input, success(output), c.timestamp(), window));
-        futures.remove(uuid);
-      } catch (Exception e) {
-        LOG.error("Failed to cache result", e);
-        throw e;
-      }
-      return null;
-    }, throwable -> {
-      semaphore.release();
-      results.add(new Result(input, failure(throwable), c.timestamp(), window));
-      futures.remove(uuid);
-      return null;
-    });
+    F f =
+        addCallback(
+            future,
+            output -> {
+              semaphore.release();
+              try {
+                cacheSupplier.put(instanceId, input, output);
+                results.add(new Result(input, success(output), c.timestamp(), window));
+                futures.remove(uuid);
+              } catch (Exception e) {
+                LOG.error("Failed to cache result", e);
+                throw e;
+              }
+              return null;
+            },
+            throwable -> {
+              semaphore.release();
+              results.add(new Result(input, failure(throwable), c.timestamp(), window));
+              futures.remove(uuid);
+              return null;
+            });
 
     // This `put` may happen after `remove` in the callbacks but it's OK since either the result
     // or the error would've already been pushed to the corresponding queues and we are not losing
@@ -211,7 +213,7 @@ public abstract class BaseAsyncLookupDoFn<A, B, C, F, T>
     private BoundedWindow window;
 
     Result(A input, T output, Instant timestamp, BoundedWindow window) {
-      this.input  = input;
+      this.input = input;
       this.output = output;
       this.timestamp = timestamp;
       this.window = window;
@@ -220,6 +222,7 @@ public abstract class BaseAsyncLookupDoFn<A, B, C, F, T>
 
   /**
    * Encapsulate lookup that may be success or failure.
+   *
    * @param <A> lookup value type.
    */
   public static class Try<A> implements Serializable {
@@ -251,7 +254,9 @@ public abstract class BaseAsyncLookupDoFn<A, B, C, F, T>
       return isSuccess;
     }
 
-    public boolean isFailure() { return !isSuccess; }
+    public boolean isFailure() {
+      return !isSuccess;
+    }
 
     @Override
     public int hashCode() {
@@ -267,27 +272,27 @@ public abstract class BaseAsyncLookupDoFn<A, B, C, F, T>
         return false;
       }
       Try<?> that = (Try<?>) obj;
-      return (this.isSuccess == that.isSuccess) && Objects.equals(this.get(), that.get()) &&
-          Objects.equals(this.getException(), that.getException());
+      return (this.isSuccess == that.isSuccess)
+          && Objects.equals(this.get(), that.get())
+          && Objects.equals(this.getException(), that.getException());
     }
   }
 
   /**
    * {@link Cache} supplier for {@link BaseAsyncLookupDoFn}.
+   *
    * @param <A> input element type.
    * @param <B> lookup value type.
    * @param <K> key type.
    */
-  public static abstract class CacheSupplier<A, B, K> implements Serializable {
+  public abstract static class CacheSupplier<A, B, K> implements Serializable {
     /**
-     * Create a new {@link Cache} instance. This is called once per
-     * {@link BaseAsyncLookupDoFn} instance.
+     * Create a new {@link Cache} instance. This is called once per {@link BaseAsyncLookupDoFn}
+     * instance.
      */
     public abstract Cache<K, B> createCache();
 
-    /**
-     * Get cache key for the input element.
-     */
+    /** Get cache key for the input element. */
     public abstract K getKey(A input);
 
     @SuppressWarnings("unchecked")

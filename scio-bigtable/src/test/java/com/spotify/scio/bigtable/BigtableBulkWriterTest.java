@@ -46,8 +46,7 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class BigtableBulkWriterTest {
 
-  @Rule
-  public final transient TestPipeline p = TestPipeline.create();
+  @Rule public final transient TestPipeline p = TestPipeline.create();
 
   private static final Instant baseTime = new Instant(0);
 
@@ -67,33 +66,27 @@ public class BigtableBulkWriterTest {
     final String key4 = "key4";
     final String value4 = "value4";
 
-    final TimestampedValue<KV<ByteString, Iterable<Mutation>>>
-        firstMutation =
+    final TimestampedValue<KV<ByteString, Iterable<Mutation>>> firstMutation =
         makeMutation(key1, value1, Duration.standardMinutes(1));
 
     expected.add(firstMutation.getValue());
 
-    final TimestampedValue<KV<ByteString, Iterable<Mutation>>>
-        secondMutation =
+    final TimestampedValue<KV<ByteString, Iterable<Mutation>>> secondMutation =
         makeMutation(key2, value2, Duration.standardMinutes(5));
     expected.add(secondMutation.getValue());
 
-    final TimestampedValue<KV<ByteString, Iterable<Mutation>>>
-        thirdMutation =
+    final TimestampedValue<KV<ByteString, Iterable<Mutation>>> thirdMutation =
         makeMutation(key3, value3, Duration.standardMinutes(1));
     expected.add(thirdMutation.getValue());
 
-    final TimestampedValue<KV<ByteString, Iterable<Mutation>>>
-        fourthMutation =
+    final TimestampedValue<KV<ByteString, Iterable<Mutation>>> fourthMutation =
         makeMutation(key4, value4, Duration.standardMinutes(4));
     expected.add(fourthMutation.getValue());
 
-    final Coder<KV<ByteString, Iterable<Mutation>>>
-        bigtableCoder =
+    final Coder<KV<ByteString, Iterable<Mutation>>> bigtableCoder =
         p.getCoderRegistry().getCoder(BIGTABLE_WRITE_TYPE);
 
-    final TestStream<KV<ByteString, Iterable<Mutation>>>
-        kvTestStream =
+    final TestStream<KV<ByteString, Iterable<Mutation>>> kvTestStream =
         TestStream.create(bigtableCoder)
             .addElements(firstMutation)
             .advanceProcessingTime(Duration.standardMinutes(2))
@@ -110,41 +103,37 @@ public class BigtableBulkWriterTest {
 
     final Duration flushInterval = Duration.standardSeconds(1);
     final int numOfShard = 1;
-    final PCollection<Iterable<KV<ByteString, Iterable<Mutation>>>>
-        actual =
-        p.apply(kvTestStream)
-            .apply(new TestPTransform(numOfShard, flushInterval));
+    final PCollection<Iterable<KV<ByteString, Iterable<Mutation>>>> actual =
+        p.apply(kvTestStream).apply(new TestPTransform(numOfShard, flushInterval));
 
     PAssert.that(actual).inEarlyGlobalWindowPanes().satisfies(new VerifyKVStreamFn(expected));
 
     p.run();
   }
 
-  private TimestampedValue<KV<ByteString, Iterable<Mutation>>> makeMutation(String key,
-                                                                         String value,
-                                                                         Duration baseTimeOffset) {
+  private TimestampedValue<KV<ByteString, Iterable<Mutation>>> makeMutation(
+      String key, String value, Duration baseTimeOffset) {
     Instant timestamp = baseTime.plus(baseTimeOffset);
     ByteString rowKey = ByteString.copyFromUtf8(key);
     Iterable<Mutation> mutations =
         Collections.singletonList(
-                Mutation.newBuilder()
-                        .setSetCell(Mutation.SetCell.newBuilder().setValue(ByteString.copyFromUtf8(value)))
-                        .build());
+            Mutation.newBuilder()
+                .setSetCell(Mutation.SetCell.newBuilder().setValue(ByteString.copyFromUtf8(value)))
+                .build());
     return TimestampedValue.of(KV.of(rowKey, mutations), timestamp);
   }
 
   /**
-   * Hepler class to verify output of {@link PCollection} by converting {@link ByteString}
-   * to {@link String} to able to verify values.
+   * Hepler class to verify output of {@link PCollection} by converting {@link ByteString} to {@link
+   * String} to able to verify values.
    */
   private static class VerifyKVStreamFn
-      implements
-      SerializableFunction<Iterable<Iterable<KV<ByteString, Iterable<Mutation>>>>, Void> {
+      implements SerializableFunction<
+          Iterable<Iterable<KV<ByteString, Iterable<Mutation>>>>, Void> {
 
     private final Iterable<KV<ByteString, Iterable<Mutation>>> expected;
 
-    private VerifyKVStreamFn(
-        Iterable<KV<ByteString, Iterable<Mutation>>> expected) {
+    private VerifyKVStreamFn(Iterable<KV<ByteString, Iterable<Mutation>>> expected) {
       this.expected = expected;
     }
 
@@ -176,8 +165,9 @@ public class BigtableBulkWriterTest {
       return mutations;
     }
 
-    private void verify(final Iterable<Iterable<KV<ByteString, Iterable<Mutation>>>> input,
-                        final Iterable<KV<ByteString, Iterable<Mutation>>> expected) {
+    private void verify(
+        final Iterable<Iterable<KV<ByteString, Iterable<Mutation>>>> input,
+        final Iterable<KV<ByteString, Iterable<Mutation>>> expected) {
       final List<KV<String, Iterable<Mutation>>> actual = convertActual(input);
       final List<KV<String, Iterable<Mutation>>> expectedValues = convertExpected(expected);
 
@@ -187,12 +177,11 @@ public class BigtableBulkWriterTest {
     }
   }
 
-  /**
-   * Hepler to test createBulkShards.
-   */
-  private static class TestPTransform extends
-                                      PTransform<PCollection<KV<ByteString, Iterable<Mutation>>>,
-                                          PCollection<Iterable<KV<ByteString, Iterable<Mutation>>>>> {
+  /** Hepler to test createBulkShards. */
+  private static class TestPTransform
+      extends PTransform<
+          PCollection<KV<ByteString, Iterable<Mutation>>>,
+          PCollection<Iterable<KV<ByteString, Iterable<Mutation>>>>> {
 
     private final int numOfShards;
     private final Duration flushInterval;

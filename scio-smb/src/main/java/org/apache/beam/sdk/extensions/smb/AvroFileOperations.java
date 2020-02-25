@@ -95,13 +95,15 @@ public class AvroFileOperations<ValueT> extends FileOperations<ValueT> {
         recordClass == null
             // https://github.com/spotify/scio/issues/2649
             // force GenericDatumWriter instead of ReflectDatumWriter
-            ? (AvroIO.Sink<ValueT>) AvroIO.sinkViaGenericRecords(getSchema(),
-                new AvroIO.RecordFormatter<ValueT>() {
-                  @Override
-                  public GenericRecord formatRecord(ValueT element, Schema schema) {
-                    return (GenericRecord) element;
-                  }
-                })
+            ? (AvroIO.Sink<ValueT>)
+                AvroIO.sinkViaGenericRecords(
+                    getSchema(),
+                    new AvroIO.RecordFormatter<ValueT>() {
+                      @Override
+                      public GenericRecord formatRecord(ValueT element, Schema schema) {
+                        return (GenericRecord) element;
+                      }
+                    })
             : AvroIO.sink(recordClass);
     return sink.withCodec(codec.getCodec());
   }

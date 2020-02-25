@@ -86,7 +86,8 @@ public class JsonBucketMetadata<K> extends BucketMetadata<K, TableRow> {
       return false;
     }
     JsonBucketMetadata<?> that = (JsonBucketMetadata<?>) o;
-    return getKeyClass() == that.getKeyClass() && keyField.equals(that.keyField) &&
-        Arrays.equals(keyPath, that.keyPath);
+    return getKeyClass() == that.getKeyClass()
+        && keyField.equals(that.keyField)
+        && Arrays.equals(keyPath, that.keyPath);
   }
 }

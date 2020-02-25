@@ -23,12 +23,14 @@ import org.apache.beam.sdk.options.Validation;
 import scala.reflect.ClassTag;
 
 /**
- * Options provided to test {@link com.spotify.scio.ScioContext#parseArguments(String[], boolean, ClassTag)}
+ * Options provided to test {@link com.spotify.scio.ScioContext#parseArguments(String[], boolean,
+ * ClassTag)}
  */
 public interface TestValidationOptions extends PipelineOptions {
 
   @Validation.Required
   @Description("Required argument to test validation")
   String getRequiredArgument();
+
   void setRequiredArgument(String requiredArgument);
 }

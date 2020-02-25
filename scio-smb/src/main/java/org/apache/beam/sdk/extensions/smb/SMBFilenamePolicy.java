@@ -121,14 +121,11 @@ public final class SMBFilenamePolicy implements Serializable {
               : String.format(NUMERIC_BUCKET_TEMPLATE, id.getBucketId(), maxNumBuckets);
 
       final String timestamp = doTimestampFiles ? Instant.now().toString(TEMPFILE_TIMESTAMP) : "";
-      String filename = maxNumShards == 1 ?
-          String.format(BUCKET_ONLY_TEMPLATE, bucketName, filenameSuffix) :
-          String.format(
-              BUCKET_SHARD_TEMPLATE,
-              bucketName,
-              id.getShardId(),
-              maxNumShards,
-              filenameSuffix);
+      String filename =
+          maxNumShards == 1
+              ? String.format(BUCKET_ONLY_TEMPLATE, bucketName, filenameSuffix)
+              : String.format(
+                  BUCKET_SHARD_TEMPLATE, bucketName, id.getShardId(), maxNumShards, filenameSuffix);
 
       return filenamePrefix.resolve(timestamp + filename, StandardResolveOptions.RESOLVE_FILE);
     }

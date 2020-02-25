@@ -27,9 +27,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-/**
- * A {@link DoFn} that manages an external resource.
- */
+/** A {@link DoFn} that manages an external resource. */
 public abstract class DoFnWithResource<InputT, OutputT, ResourceT> extends DoFn<InputT, OutputT> {
 
   private static final Logger LOG = LoggerFactory.getLogger(DoFnWithResource.class);
@@ -41,7 +39,7 @@ public abstract class DoFnWithResource<InputT, OutputT, ResourceT> extends DoFn<
   /**
    * Resource type for sharing the resource among {@link DoFn} instances.
    *
-   * {@link DoFn}s are defined and created locally, serialized, submitted to the runner and
+   * <p>{@link DoFn}s are defined and created locally, serialized, submitted to the runner and
    * de-serialized on remote workers.
    *
    * <pre><code>
@@ -66,18 +64,18 @@ public abstract class DoFnWithResource<InputT, OutputT, ResourceT> extends DoFn<
     /**
      * One instance of the resource per sub-class.
      *
-     * All instances of the same class in a remote JVM share a single `ResourceT`, e.g. all clones
-     * of `f1` and `f2`. This is useful for sharing resources within the same JVM, e.g. static
-     * look up table, thread-safe asynchronous client.
+     * <p>All instances of the same class in a remote JVM share a single `ResourceT`, e.g. all
+     * clones of `f1` and `f2`. This is useful for sharing resources within the same JVM, e.g.
+     * static look up table, thread-safe asynchronous client.
      */
     PER_CLASS,
 
     /**
      * One instance of the resource per sub-class instance.
      *
-     * Every instance of the same class in a remote JVM share a single `ResourceT`, e.g. all clones
-     * of `f1` share one and all clones of `f2` share a different one. This is useful for sharing
-     * resources within each {@link ParDo} transform, e.g. accumulation specific to current
+     * <p>Every instance of the same class in a remote JVM share a single `ResourceT`, e.g. all
+     * clones of `f1` share one and all clones of `f2` share a different one. This is useful for
+     * sharing resources within each {@link ParDo} transform, e.g. accumulation specific to current
      * transform logic.
      */
     PER_INSTANCE,
@@ -85,22 +83,20 @@ public abstract class DoFnWithResource<InputT, OutputT, ResourceT> extends DoFn<
     /**
      * One instance of the resource per cloned instance.
      *
-     * Each cloned instance in a remote JVM has its own copy of `ResourceT`, e.g. each clone of
+     * <p>Each cloned instance in a remote JVM has its own copy of `ResourceT`, e.g. each clone of
      * `f1` and `f2` has its own copy. This is useful for thread local resources, e.g. resources
      * that are not thread-safe.
      */
     PER_CLONE
   }
 
-  /**
-   * Get resource type.
-   */
+  /** Get resource type. */
   public abstract ResourceType getResourceType();
 
   /**
    * Create resource.
    *
-   * {@link DoFnWithResource#getResourceType()} determines how many times this is called.
+   * <p>{@link DoFnWithResource#getResourceType()} determines how many times this is called.
    */
   public abstract ResourceT createResource();
 
@@ -121,10 +117,12 @@ public abstract class DoFnWithResource<InputT, OutputT, ResourceT> extends DoFn<
         resourceId = instanceId + "-" + this.toString();
         break;
     }
-    resources.computeIfAbsent(resourceId, key -> {
-      LOG.debug("Creating resource {}", resourceId);
-      return createResource();
-    });
+    resources.computeIfAbsent(
+        resourceId,
+        key -> {
+          LOG.debug("Creating resource {}", resourceId);
+          return createResource();
+        });
   }
 
   @Override
@@ -133,12 +131,9 @@ public abstract class DoFnWithResource<InputT, OutputT, ResourceT> extends DoFn<
     builder.add(DisplayData.item("Resource Type", getResourceType().toString()));
   }
 
-  /**
-   * Get managed resource.
-   */
+  /** Get managed resource. */
   @SuppressWarnings("unchecked")
   public ResourceT getResource() {
     return (ResourceT) resources.get(resourceId);
   }
-
 }

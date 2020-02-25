@@ -27,9 +27,7 @@ import org.apache.cassandra.dht.RandomPartitioner;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 
-/**
- * Utilities to handle Datastax Java Driver compatibility issues.
- */
+/** Utilities to handle Datastax Java Driver compatibility issues. */
 class CompatUtil {
 
   private static RandomPartitioner randomPartitioner = new RandomPartitioner();
@@ -39,8 +37,8 @@ class CompatUtil {
     return cluster.getConfiguration().getProtocolOptions().getProtocolVersion();
   }
 
-  public static <T> ByteBuffer serialize(DataType dataType, T value,
-                                         ProtocolVersion protocolVersion) {
+  public static <T> ByteBuffer serialize(
+      DataType dataType, T value, ProtocolVersion protocolVersion) {
     return CodecRegistry.DEFAULT_INSTANCE
         .codecFor(dataType, value)
         .serialize(value, protocolVersion);
@@ -79,5 +77,4 @@ class CompatUtil {
         throw new IllegalArgumentException("Unsupported partitioner " + partitioner);
     }
   }
-
 }

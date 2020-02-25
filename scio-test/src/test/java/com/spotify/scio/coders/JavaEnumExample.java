@@ -14,9 +14,9 @@
  * specific language governing permissions and limitations
  * under the License.
  */
- package com.spotify.scio.coders;
+package com.spotify.scio.coders;
 
- public enum JavaEnumExample {
-    BAD_THING,
-    GOOD_THING
+public enum JavaEnumExample {
+  BAD_THING,
+  GOOD_THING
 }

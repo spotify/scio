@@ -16,7 +16,7 @@
  */
 package com.spotify.scio.bean;
 
-final public class TypeMismatch {
+public final class TypeMismatch {
 
   private String name;
   private Integer age;

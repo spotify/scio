@@ -37,48 +37,45 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-/**
- * Utilities to deal with Bigtable.
- */
+/** Utilities to deal with Bigtable. */
 public final class BigtableUtil {
 
-  private BigtableUtil() { }
+  private BigtableUtil() {}
 
   private static final Logger LOG = LoggerFactory.getLogger(BigtableUtil.class);
 
-  private static final PeriodFormatter formatter = new PeriodFormatterBuilder()
-     .appendDays()
-     .appendSuffix("d")
-     .appendHours()
-     .appendSuffix("h")
-     .appendMinutes()
-     .appendSuffix("m")
-     .appendSeconds()
-     .appendSuffix("s")
-     .toFormatter();
+  private static final PeriodFormatter formatter =
+      new PeriodFormatterBuilder()
+          .appendDays()
+          .appendSuffix("d")
+          .appendHours()
+          .appendSuffix("h")
+          .appendMinutes()
+          .appendSuffix("m")
+          .appendSeconds()
+          .appendSuffix("s")
+          .toFormatter();
 
   /**
    * Updates all clusters within the specified Bigtable instance to a specified number of nodes.
-   * Useful for increasing the number of nodes at the beginning of a job and decreasing it at
-   * the end to lower costs yet still get high throughput during bulk ingests/dumps.
+   * Useful for increasing the number of nodes at the beginning of a job and decreasing it at the
+   * end to lower costs yet still get high throughput during bulk ingests/dumps.
    *
    * @param bigtableOptions Bigtable Options
    * @param numberOfNodes New number of nodes in the cluster
-   * @param sleepDuration How long to sleep after updating the number of nodes. Google recommends
-   *                      at least 20 minutes before the new nodes are fully functional
+   * @param sleepDuration How long to sleep after updating the number of nodes. Google recommends at
+   *     least 20 minutes before the new nodes are fully functional
    * @throws IOException If setting up channel pool fails
    * @throws InterruptedException If sleep fails
    */
   public static void updateNumberOfBigtableNodes(
-      final BigtableOptions bigtableOptions,
-      final int numberOfNodes,
-      final Duration sleepDuration
-  ) throws IOException, InterruptedException {
-    final ChannelPool channelPool =
-        ChannelPoolCreator.createPool(bigtableOptions);
+      final BigtableOptions bigtableOptions, final int numberOfNodes, final Duration sleepDuration)
+      throws IOException, InterruptedException {
+    final ChannelPool channelPool = ChannelPoolCreator.createPool(bigtableOptions);
 
     try {
-      final BigtableInstanceClient bigtableInstanceClient = new BigtableInstanceGrpcClient(channelPool);
+      final BigtableInstanceClient bigtableInstanceClient =
+          new BigtableInstanceGrpcClient(channelPool);
 
       final String instanceName = bigtableOptions.getInstanceName().toString();
 
@@ -90,10 +87,8 @@ public final class BigtableUtil {
 
       // For each cluster update the number of nodes
       for (Cluster cluster : clustersResponse.getClustersList()) {
-        final Cluster updatedCluster = Cluster.newBuilder()
-            .setName(cluster.getName())
-            .setServeNodes(numberOfNodes)
-            .build();
+        final Cluster updatedCluster =
+            Cluster.newBuilder().setName(cluster.getName()).setServeNodes(numberOfNodes).build();
         LOG.info("Updating number of nodes to {} for cluster {}", numberOfNodes, cluster.getName());
         bigtableInstanceClient.updateCluster(updatedCluster);
       }
@@ -113,23 +108,21 @@ public final class BigtableUtil {
    *
    * @param projectId GCP projectId
    * @param instanceId Bigtable instanceId
-   *
    * @return map of clusterId to its number of nodes
    * @throws IOException If setting up channel pool fails
    * @throws GeneralSecurityException If security-related exceptions occurs
    */
   public static Map<String, Integer> getClusterSizes(
-      final String projectId,
-      final String instanceId
-  ) throws IOException, GeneralSecurityException {
-    try (BigtableClusterUtilities clusterUtil = BigtableClusterUtilities
-        .forInstance(projectId, instanceId)) {
+      final String projectId, final String instanceId)
+      throws IOException, GeneralSecurityException {
+    try (BigtableClusterUtilities clusterUtil =
+        BigtableClusterUtilities.forInstance(projectId, instanceId)) {
       return Collections.unmodifiableMap(
           clusterUtil.getClusters().getClustersList().stream()
-              .collect(Collectors.toMap(
+              .collect(
+                  Collectors.toMap(
                       cn -> cn.getName().substring(cn.getName().indexOf("/clusters/") + 10),
                       Cluster::getServeNodes)));
     }
   }
-
 }

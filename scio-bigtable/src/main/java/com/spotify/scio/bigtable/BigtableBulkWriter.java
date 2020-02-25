@@ -44,7 +44,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class BigtableBulkWriter
-        extends PTransform<PCollection<KV<ByteString, Iterable<Mutation>>>, PDone> {
+    extends PTransform<PCollection<KV<ByteString, Iterable<Mutation>>>, PDone> {
 
   private static final Logger LOG = LoggerFactory.getLogger(BigtableBulkWriter.class);
 
@@ -53,10 +53,11 @@ public class BigtableBulkWriter
   private final int numOfShards;
   private final Duration flushInterval;
 
-  public BigtableBulkWriter(final String tableName,
-                            final BigtableOptions bigtableOptions,
-                            final int numOfShards,
-                            final Duration flushInterval) {
+  public BigtableBulkWriter(
+      final String tableName,
+      final BigtableOptions bigtableOptions,
+      final int numOfShards,
+      final Duration flushInterval) {
     this.bigtableOptions = bigtableOptions;
     this.tableName = tableName;
     this.numOfShards = numOfShards;
@@ -72,31 +73,35 @@ public class BigtableBulkWriter
 
   @VisibleForTesting
   static PCollection<Iterable<KV<ByteString, Iterable<Mutation>>>> createBulkShards(
-      final PCollection<KV<ByteString, Iterable<Mutation>>> input, final int numOfShards,
+      final PCollection<KV<ByteString, Iterable<Mutation>>> input,
+      final int numOfShards,
       final Duration flushInterval) {
     return input
         .apply("Assign To Shard", ParDo.of(new AssignToShard(numOfShards)))
-        .apply("Window", Window
-            .<KV<Long, KV<ByteString, Iterable<Mutation>>>>into(new GlobalWindows())
-            .triggering(Repeatedly.forever(
-                AfterProcessingTime
-                    .pastFirstElementInPane()
-                    .plusDelayOf(flushInterval)))
-            .discardingFiredPanes()
-            .withAllowedLateness(Duration.ZERO))
+        .apply(
+            "Window",
+            Window.<KV<Long, KV<ByteString, Iterable<Mutation>>>>into(new GlobalWindows())
+                .triggering(
+                    Repeatedly.forever(
+                        AfterProcessingTime.pastFirstElementInPane().plusDelayOf(flushInterval)))
+                .discardingFiredPanes()
+                .withAllowedLateness(Duration.ZERO))
         .apply("Group By Shard", GroupByKey.create())
-        .apply("Gets Mutations", ParDo
-            .of(new DoFn<KV<Long, Iterable<KV<ByteString, Iterable<Mutation>>>>,
-                Iterable<KV<ByteString, Iterable<Mutation>>>>() {
-              @ProcessElement
-              public void process(ProcessContext c) {
-                c.output(c.element().getValue());
-              }
-            }));
+        .apply(
+            "Gets Mutations",
+            ParDo.of(
+                new DoFn<
+                    KV<Long, Iterable<KV<ByteString, Iterable<Mutation>>>>,
+                    Iterable<KV<ByteString, Iterable<Mutation>>>>() {
+                  @ProcessElement
+                  public void process(ProcessContext c) {
+                    c.output(c.element().getValue());
+                  }
+                }));
   }
 
-  private class BigtableBulkWriterFn extends
-                                     DoFn<Iterable<KV<ByteString, Iterable<Mutation>>>, Void> {
+  private class BigtableBulkWriterFn
+      extends DoFn<Iterable<KV<ByteString, Iterable<Mutation>>>, Void> {
 
     private BigtableServiceHelper.Writer bigtableWriter;
     private long recordsWritten;
@@ -109,8 +114,7 @@ public class BigtableBulkWriter
     @StartBundle
     public void startBundle(StartBundleContext c) throws IOException {
       if (bigtableWriter == null) {
-        bigtableWriter = new BigtableServiceHelper(bigtableOptions)
-            .openForWriting(tableName);
+        bigtableWriter = new BigtableServiceHelper(bigtableOptions).openForWriting(tableName);
       }
       recordsWritten = 0;
     }
@@ -152,9 +156,7 @@ public class BigtableBulkWriter
       builder.add(DisplayData.item("Records Written", recordsWritten));
     }
 
-    /**
-     * If any write has asynchronously failed, fail the bundle with a useful error.
-     */
+    /** If any write has asynchronously failed, fail the bundle with a useful error. */
     private void checkForFailures(final ConcurrentLinkedQueue<BigtableWriteException> failures)
         throws IOException {
       // Note that this function is never called by multiple threads and is the only place that
@@ -177,9 +179,7 @@ public class BigtableBulkWriter
       String message =
           String.format(
               "At least %d errors occurred writing to Bigtable. First %d errors: %s",
-              i + failures.size(),
-              i,
-              logEntry.toString());
+              i + failures.size(), i, logEntry.toString());
       LOG.error(message);
       IOException exception = new IOException(message);
       for (BigtableWriteException e : suppressed) {
@@ -188,25 +188,23 @@ public class BigtableBulkWriter
       throw exception;
     }
 
-    /**
-     * An exception that puts information about the failed record being written in its message.
-     */
+    /** An exception that puts information about the failed record being written in its message. */
     class BigtableWriteException extends IOException {
 
-      public BigtableWriteException(final KV<ByteString, Iterable<Mutation>> record,
-                                    Throwable cause) {
+      public BigtableWriteException(
+          final KV<ByteString, Iterable<Mutation>> record, Throwable cause) {
         super(
             String.format(
                 "Error mutating row %s with mutations %s",
-                record.getKey().toStringUtf8(),
-                record.getValue()),
+                record.getKey().toStringUtf8(), record.getValue()),
             cause);
       }
     }
   }
 
-  static class AssignToShard extends DoFn<KV<ByteString, Iterable<Mutation>>,
-      KV<Long, KV<ByteString, Iterable<Mutation>>>> {
+  static class AssignToShard
+      extends DoFn<
+          KV<ByteString, Iterable<Mutation>>, KV<Long, KV<ByteString, Iterable<Mutation>>>> {
 
     private final int numOfShards;
 
