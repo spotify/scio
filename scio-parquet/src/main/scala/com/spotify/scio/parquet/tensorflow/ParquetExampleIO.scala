@@ -125,7 +125,7 @@ object ParquetExampleIO {
   )
 }
 
-case class ParquetExapmleTap(path: String, params: ParquetExampleIO.ReadParam)
+final case class ParquetExapmleTap(path: String, params: ParquetExampleIO.ReadParam)
     extends Tap[Example] {
   override def value: Iterator[Example] = {
     val xs = FileSystems.`match`(path).metadata().asScala.toList
