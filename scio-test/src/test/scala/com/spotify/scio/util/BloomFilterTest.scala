@@ -195,9 +195,7 @@ class BFHashIndices extends CheckProperties {
     }
 
   property("Indices are non negative") {
-    forAll { (hash: KirMit32Hash[String], v: Long) =>
-      hash.apply(v.toString).forall(e => e >= 0)
-    }
+    forAll((hash: KirMit32Hash[String], v: Long) => hash.apply(v.toString).forall(e => e >= 0))
   }
 }
 

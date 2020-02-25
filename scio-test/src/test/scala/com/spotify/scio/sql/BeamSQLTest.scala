@@ -80,7 +80,9 @@ object TestData {
 
   case class UserWithList(username: String, emails: List[String])
   val usersWithList =
-    (1 to 10).map(i => UserWithList(s"user$i", List(s"user$i@spotify.com", s"user$i@yolo.com"))).toList
+    (1 to 10)
+      .map(i => UserWithList(s"user$i", List(s"user$i@spotify.com", s"user$i@yolo.com")))
+      .toList
 
   val javaUsers =
     (1 to 10).map(i => new UserBean(s"user$i", 20 + i))
