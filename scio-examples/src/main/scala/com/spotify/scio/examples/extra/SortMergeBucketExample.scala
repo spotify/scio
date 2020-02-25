@@ -178,7 +178,7 @@ object SortMergeBucketTransformExample {
         .withNumBuckets(2)
         .withNumShards(1)
         .withHashType(HashType.MURMUR3_32)
-    )({
+    ) {
       case (key, (users, accounts), outputCollector) =>
         users.foreach { user =>
           outputCollector.accept(
@@ -190,7 +190,7 @@ object SortMergeBucketTransformExample {
             )
           )
         }
-    })
+    }
 
     sc.run().waitUntilDone()
     ()
