@@ -28,23 +28,27 @@ public interface KryoOptions extends PipelineOptions {
   @Description("Set buffer size")
   @Default.Integer(64 * 1024)
   int getKryoBufferSize();
+
   void setKryoBufferSize(int bufferSize);
 
   @JsonIgnore
   @Description("Set maximum buffer size")
   @Default.Integer(64 * 1024 * 1024)
   int getKryoMaxBufferSize();
+
   void setKryoMaxBufferSize(int bufferSize);
 
   @JsonIgnore
   @Description("Set to false to disable reference tracking")
   @Default.Boolean(true)
   boolean getKryoReferenceTracking();
+
   void setKryoReferenceTracking(boolean referenceTracking);
 
   @JsonIgnore
   @Description("Set to true to require registration")
   @Default.Boolean(false)
   boolean getKryoRegistrationRequired();
+
   void setKryoRegistrationRequired(boolean registrationRequired);
 }

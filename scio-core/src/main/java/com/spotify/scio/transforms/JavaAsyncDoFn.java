@@ -27,5 +27,4 @@ import java.util.concurrent.CompletableFuture;
  */
 public abstract class JavaAsyncDoFn<InputT, OutputT, ResourceT>
     extends BaseAsyncDoFn<InputT, OutputT, ResourceT, CompletableFuture<OutputT>>
-    implements FutureHandlers.Java<OutputT> {
-}
+    implements FutureHandlers.Java<OutputT> {}

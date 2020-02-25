@@ -34,7 +34,7 @@ import static org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Prec
  * Codec for TFRecords file format. See
  * https://www.tensorflow.org/api_guides/python/python_io#TFRecords_Format_Details
  */
-@PatchedFromBeam(origin="org.apache.beam.sdk.io.TFRecordIO")
+@PatchedFromBeam(origin = "org.apache.beam.sdk.io.TFRecordIO")
 public class TFRecordCodec {
   private static final int HEADER_LEN = (Long.SIZE + Integer.SIZE) / Byte.SIZE;
   private static final int FOOTER_LEN = Integer.SIZE / Byte.SIZE;

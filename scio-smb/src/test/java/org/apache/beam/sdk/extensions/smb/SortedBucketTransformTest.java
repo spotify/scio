@@ -56,42 +56,62 @@ public class SortedBucketTransformTest {
 
   private static List<BucketedInput<?, ?>> sources;
 
-  private static final TransformFn<String, String> mergeFunction = (keyGroup, outputConsumer) ->
-      keyGroup.getValue().getAll(new TupleTag<String>("lhs")).forEach(lhs -> {
-        keyGroup.getValue().getAll(new TupleTag<String>("rhs")).forEach(rhs -> {
-          outputConsumer.accept(lhs + "-" + rhs);
-        });
-      });
+  private static final TransformFn<String, String> mergeFunction =
+      (keyGroup, outputConsumer) ->
+          keyGroup
+              .getValue()
+              .getAll(new TupleTag<String>("lhs"))
+              .forEach(
+                  lhs -> {
+                    keyGroup
+                        .getValue()
+                        .getAll(new TupleTag<String>("rhs"))
+                        .forEach(
+                            rhs -> {
+                              outputConsumer.accept(lhs + "-" + rhs);
+                            });
+                  });
 
   @BeforeClass
   public static void writeData() throws Exception {
     sinkPipeline
         .apply("CreateLHS", Create.of(inputLhs))
-        .apply("SinkLHS", new SortedBucketSink<>(
-            TestBucketMetadata.of(4, 3), fromFolder(inputLhsFolder), fromFolder(tempFolder), ".txt", new TestFileOperations(), 1)
-        );
+        .apply(
+            "SinkLHS",
+            new SortedBucketSink<>(
+                TestBucketMetadata.of(4, 3),
+                fromFolder(inputLhsFolder),
+                fromFolder(tempFolder),
+                ".txt",
+                new TestFileOperations(),
+                1));
 
     sinkPipeline
         .apply("CreateRHS", Create.of(inputRhs))
-        .apply("SinkRHS", new SortedBucketSink<>(
-            TestBucketMetadata.of(2, 1), fromFolder(inputRhsFolder), fromFolder(tempFolder), ".txt", new TestFileOperations(), 1)
-        );
+        .apply(
+            "SinkRHS",
+            new SortedBucketSink<>(
+                TestBucketMetadata.of(2, 1),
+                fromFolder(inputRhsFolder),
+                fromFolder(tempFolder),
+                ".txt",
+                new TestFileOperations(),
+                1));
 
     sinkPipeline.run().waitUntilFinish();
 
-    sources = ImmutableList.of(
-        new BucketedInput<String, String>(
-            new TupleTag<>("lhs"),
-            fromFolder(inputLhsFolder),
-            ".txt",
-            new TestFileOperations()
-        ),
-        new BucketedInput<String, String>(
-            new TupleTag<>("rhs"),
-            fromFolder(inputRhsFolder),
-            ".txt",
-            new TestFileOperations()
-        ));
+    sources =
+        ImmutableList.of(
+            new BucketedInput<String, String>(
+                new TupleTag<>("lhs"),
+                fromFolder(inputLhsFolder),
+                ".txt",
+                new TestFileOperations()),
+            new BucketedInput<String, String>(
+                new TupleTag<>("rhs"),
+                fromFolder(inputRhsFolder),
+                ".txt",
+                new TestFileOperations()));
   }
 
   @Test
@@ -107,9 +127,7 @@ public class SortedBucketTransformTest {
             ".txt",
             new TestFileOperations(),
             sources,
-            mergeFunction
-        )
-    );
+            mergeFunction));
 
     transformPipeline.run().waitUntilFinish();
 
@@ -131,9 +149,7 @@ public class SortedBucketTransformTest {
             ".txt",
             new TestFileOperations(),
             sources,
-            mergeFunction
-        )
-    );
+            mergeFunction));
 
     transformPipeline.run().waitUntilFinish();
 
@@ -143,25 +159,23 @@ public class SortedBucketTransformTest {
   }
 
   private static KV<BucketMetadata, Set<String>> readAllFrom(
-      TemporaryFolder folder, TestBucketMetadata metadata
-  ) throws Exception {
-    final FileAssignment fileAssignment = new SMBFilenamePolicy(
-        fromFolder(folder), ".txt"
-    ).forDestination();
+      TemporaryFolder folder, TestBucketMetadata metadata) throws Exception {
+    final FileAssignment fileAssignment =
+        new SMBFilenamePolicy(fromFolder(folder), ".txt").forDestination();
 
     final Set<String> outputElements = new HashSet<>();
 
     for (int bucketId = 0; bucketId < metadata.getNumBuckets(); bucketId++) {
       final FileOperations.Reader<String> outputReader = new TestFileOperations().createReader();
-      outputReader.prepareRead(FileSystems.open(
-          fileAssignment.forBucket(BucketShardId.of(bucketId, 0), metadata)));
+      outputReader.prepareRead(
+          FileSystems.open(fileAssignment.forBucket(BucketShardId.of(bucketId, 0), metadata)));
 
       outputReader.iterator().forEachRemaining(outputElements::add);
     }
 
     return KV.of(
-        BucketMetadata.from(Channels.newInputStream(FileSystems.open(fileAssignment.forMetadata()))),
-        outputElements
-    );
+        BucketMetadata.from(
+            Channels.newInputStream(FileSystems.open(fileAssignment.forMetadata()))),
+        outputElements);
   }
 }

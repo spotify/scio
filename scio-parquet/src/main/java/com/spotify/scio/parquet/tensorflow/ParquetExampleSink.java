@@ -37,11 +37,12 @@ public class ParquetExampleSink extends FileBasedSink<Example, Void, Example> {
   private final SerializableConfiguration conf;
   private final CompressionCodecName compression;
 
-  public ParquetExampleSink(ValueProvider<ResourceId> baseOutputFileName,
-                            FileBasedSink.DynamicDestinations<Example, Void, Example> dynamicDestinations,
-                            Schema schema,
-                            Configuration conf,
-                            CompressionCodecName compression) {
+  public ParquetExampleSink(
+      ValueProvider<ResourceId> baseOutputFileName,
+      FileBasedSink.DynamicDestinations<Example, Void, Example> dynamicDestinations,
+      Schema schema,
+      Configuration conf,
+      CompressionCodecName compression) {
     super(baseOutputFileName, dynamicDestinations);
     this.schemaString = schema.toJson();
     this.conf = new SerializableConfiguration(conf);
@@ -62,11 +63,11 @@ public class ParquetExampleSink extends FileBasedSink<Example, Void, Example> {
     private final SerializableConfiguration conf;
     private final CompressionCodecName compression;
 
-
-    ParquetExampleWriteOperation(FileBasedSink<Example, Void, Example> sink,
-                                 String schemaString,
-                                 SerializableConfiguration conf,
-                                 CompressionCodecName compression) {
+    ParquetExampleWriteOperation(
+        FileBasedSink<Example, Void, Example> sink,
+        String schemaString,
+        SerializableConfiguration conf,
+        CompressionCodecName compression) {
       super(sink);
       this.schemaString = schemaString;
       this.conf = conf;
@@ -90,10 +91,11 @@ public class ParquetExampleSink extends FileBasedSink<Example, Void, Example> {
     private final CompressionCodecName compression;
     private ParquetWriter<Example> writer;
 
-    public ParquetExampleWriter(WriteOperation<Void, Example> writeOperation,
-                                Schema schema,
-                                SerializableConfiguration conf,
-                                CompressionCodecName compression) {
+    public ParquetExampleWriter(
+        WriteOperation<Void, Example> writeOperation,
+        Schema schema,
+        SerializableConfiguration conf,
+        CompressionCodecName compression) {
       super(writeOperation, MimeTypes.BINARY);
       this.schema = schema;
       this.conf = conf;
@@ -103,7 +105,8 @@ public class ParquetExampleSink extends FileBasedSink<Example, Void, Example> {
     @Override
     protected void prepareWrite(WritableByteChannel channel) throws Exception {
       BeamOutputFile outputFile = BeamOutputFile.of(channel);
-      writer = me.lyh.parquet.tensorflow.ExampleParquetWriter.builder(outputFile)
+      writer =
+          me.lyh.parquet.tensorflow.ExampleParquetWriter.builder(outputFile)
               .withSchema(schema)
               .withConf(conf.get())
               .withCompressionCodec(compression)

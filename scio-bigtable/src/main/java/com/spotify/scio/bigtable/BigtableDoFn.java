@@ -28,6 +28,7 @@ import java.io.IOException;
 
 /**
  * A {@link DoFn} that performs asynchronous lookup using Google Cloud Bigtable.
+ *
  * @param <A> input element type.
  * @param <B> Bigtable lookup value type.
  */
@@ -35,13 +36,12 @@ public abstract class BigtableDoFn<A, B> extends GuavaAsyncLookupDoFn<A, B, Bigt
 
   private final BigtableOptions options;
 
-  /**
-   * Perform asynchronous Bigtable lookup.
-   */
+  /** Perform asynchronous Bigtable lookup. */
   public abstract ListenableFuture<B> asyncLookup(BigtableSession session, A input);
 
   /**
    * Create a {@link BigtableDoFn} instance.
+   *
    * @param options Bigtable options.
    */
   public BigtableDoFn(BigtableOptions options) {
@@ -50,25 +50,27 @@ public abstract class BigtableDoFn<A, B> extends GuavaAsyncLookupDoFn<A, B, Bigt
 
   /**
    * Create a {@link BigtableDoFn} instance.
+   *
    * @param options Bigtable options.
    * @param maxPendingRequests maximum number of pending requests to prevent runner from timing out
-   *                           and retrying bundles.
+   *     and retrying bundles.
    */
-  public BigtableDoFn(BigtableOptions options,
-                      int maxPendingRequests) {
+  public BigtableDoFn(BigtableOptions options, int maxPendingRequests) {
     this(options, maxPendingRequests, new BaseAsyncLookupDoFn.NoOpCacheSupplier<>());
   }
 
   /**
    * Create a {@link BigtableDoFn} instance.
+   *
    * @param options Bigtable options.
    * @param maxPendingRequests maximum number of pending requests to prevent runner from timing out
-   *                           and retrying bundles.
+   *     and retrying bundles.
    * @param cacheSupplier supplier for lookup cache.
    */
-  public <K> BigtableDoFn(BigtableOptions options,
-                          int maxPendingRequests,
-                          BaseAsyncLookupDoFn.CacheSupplier<A, B, K> cacheSupplier) {
+  public <K> BigtableDoFn(
+      BigtableOptions options,
+      int maxPendingRequests,
+      BaseAsyncLookupDoFn.CacheSupplier<A, B, K> cacheSupplier) {
     super(maxPendingRequests, cacheSupplier);
     this.options = options;
   }
@@ -80,5 +82,4 @@ public abstract class BigtableDoFn<A, B> extends GuavaAsyncLookupDoFn<A, B, Bigt
       throw new RuntimeException(e);
     }
   }
-
 }

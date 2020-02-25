@@ -26,16 +26,17 @@ import java.nio.file.Files;
 
 public class CqlBulkRecordWriterUtil {
   /** Workaround to expose package private constructor. */
-  public static CqlBulkRecordWriter newWriter(Configuration conf,
-                                              String host,
-                                              int port,
-                                              String username,
-                                              String password,
-                                              String keyspace,
-                                              String table,
-                                              String partitioner,
-                                              String tableSchema,
-                                              String insertStatement)
+  public static CqlBulkRecordWriter newWriter(
+      Configuration conf,
+      String host,
+      int port,
+      String username,
+      String password,
+      String keyspace,
+      String table,
+      String partitioner,
+      String tableSchema,
+      String insertStatement)
       throws IOException {
     Config.setClientMode(true);
     ConfigHelper.setOutputInitialAddress(conf, host);
@@ -50,11 +51,13 @@ public class CqlBulkRecordWriterUtil {
     ConfigHelper.setOutputPartitioner(conf, partitioner);
     CqlBulkOutputFormat.setTableSchema(conf, table, tableSchema);
     CqlBulkOutputFormat.setTableInsertStatement(conf, table, insertStatement);
-    conf.set(CqlBulkRecordWriter.OUTPUT_LOCATION, Files.createTempDirectory("scio-cassandra-").toString());
+    conf.set(
+        CqlBulkRecordWriter.OUTPUT_LOCATION,
+        Files.createTempDirectory("scio-cassandra-").toString());
 
     // workaround for Hadoop static initialization
-    if (!System.getProperties().containsKey("hadoop.home.dir") &&
-        !System.getenv().containsKey("HADOOP_HOME")) {
+    if (!System.getProperties().containsKey("hadoop.home.dir")
+        && !System.getenv().containsKey("HADOOP_HOME")) {
       System.setProperty("hadoop.home.dir", "/");
     }
 

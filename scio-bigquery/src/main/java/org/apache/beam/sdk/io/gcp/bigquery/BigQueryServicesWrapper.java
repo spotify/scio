@@ -33,43 +33,58 @@ import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
-/**
- * Wrap {@link BigQueryServices} and expose package private methods.
- */
+/** Wrap {@link BigQueryServices} and expose package private methods. */
 public class BigQueryServicesWrapper {
 
-    private final BigQueryServices bqServices;
-    private final BigQueryOptions bqOptions;
+  private final BigQueryServices bqServices;
+  private final BigQueryOptions bqOptions;
 
-    public BigQueryServicesWrapper(BigQueryOptions bqOptions) {
-        this.bqServices = new BigQueryServicesImpl();
-        this.bqOptions = bqOptions;
-    }
+  public BigQueryServicesWrapper(BigQueryOptions bqOptions) {
+    this.bqServices = new BigQueryServicesImpl();
+    this.bqOptions = bqOptions;
+  }
 
-    public void createTable(Table table) throws IOException, InterruptedException {
-        bqServices.getDatasetService(bqOptions).createTable(table);
-    }
+  public void createTable(Table table) throws IOException, InterruptedException {
+    bqServices.getDatasetService(bqOptions).createTable(table);
+  }
 
-    public boolean isTableEmpty(TableReference tableReference) throws IOException, InterruptedException {
-        return bqServices.getDatasetService(bqOptions).isTableEmpty(tableReference);
-    }
+  public boolean isTableEmpty(TableReference tableReference)
+      throws IOException, InterruptedException {
+    return bqServices.getDatasetService(bqOptions).isTableEmpty(tableReference);
+  }
 
-    public long insertAll(TableReference ref, List<TableRow> rowList) throws IOException, InterruptedException {
-        List<ValueInSingleWindow<TableRow>> rows = rowList.stream().map(
-            r -> ValueInSingleWindow.of(r, BoundedWindow.TIMESTAMP_MIN_VALUE, GlobalWindow.INSTANCE, PaneInfo.NO_FIRING))
+  public long insertAll(TableReference ref, List<TableRow> rowList)
+      throws IOException, InterruptedException {
+    List<ValueInSingleWindow<TableRow>> rows =
+        rowList.stream()
+            .map(
+                r ->
+                    ValueInSingleWindow.of(
+                        r,
+                        BoundedWindow.TIMESTAMP_MIN_VALUE,
+                        GlobalWindow.INSTANCE,
+                        PaneInfo.NO_FIRING))
             .collect(Collectors.toList());
-        return bqServices.getDatasetService(bqOptions).insertAll(ref, rows, null, InsertRetryPolicy.alwaysRetry(),
-            new ArrayList<>(), ErrorContainer.TABLE_ROW_ERROR_CONTAINER, false, false, false);
-    }
+    return bqServices
+        .getDatasetService(bqOptions)
+        .insertAll(
+            ref,
+            rows,
+            null,
+            InsertRetryPolicy.alwaysRetry(),
+            new ArrayList<>(),
+            ErrorContainer.TABLE_ROW_ERROR_CONTAINER,
+            false,
+            false,
+            false);
+  }
 
-    public Table getTable(TableReference tableReference)
-            throws IOException, InterruptedException {
-        return bqServices.getDatasetService(bqOptions).getTable(tableReference);
-    }
+  public Table getTable(TableReference tableReference) throws IOException, InterruptedException {
+    return bqServices.getDatasetService(bqOptions).getTable(tableReference);
+  }
 
-    public Table getTable(TableReference tableReference, List<String> selectedFields)
-            throws IOException, InterruptedException {
-        return bqServices.getDatasetService(bqOptions).getTable(tableReference, selectedFields);
-    }
-
+  public Table getTable(TableReference tableReference, List<String> selectedFields)
+      throws IOException, InterruptedException {
+    return bqServices.getDatasetService(bqOptions).getTable(tableReference, selectedFields);
+  }
 }

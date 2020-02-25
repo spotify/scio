@@ -29,17 +29,13 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 
-/**
- * A {@link DoFn} that handles asynchronous requests to an external service.
- */
+/** A {@link DoFn} that handles asynchronous requests to an external service. */
 public abstract class BaseAsyncDoFn<InputT, OutputT, ResourceT, FutureT>
     extends DoFnWithResource<InputT, OutputT, ResourceT>
     implements FutureHandlers.Base<FutureT, OutputT> {
   private static final Logger LOG = LoggerFactory.getLogger(BaseAsyncDoFn.class);
 
-  /**
-   * Process an element asynchronously.
-   */
+  /** Process an element asynchronously. */
   public abstract FutureT processElement(InputT input);
 
   private final ConcurrentMap<UUID, FutureT> futures = new ConcurrentHashMap<>();
@@ -75,15 +71,19 @@ public abstract class BaseAsyncDoFn<InputT, OutputT, ResourceT, FutureT>
     flush(c);
 
     final UUID uuid = UUID.randomUUID();
-    FutureT future = addCallback(processElement(c.element()), r -> {
-      results.add(new Result(r, c.timestamp(), window));
-      futures.remove(uuid);
-      return null;
-    }, t -> {
-      errors.add(t);
-      futures.remove(uuid);
-      return null;
-    });
+    FutureT future =
+        addCallback(
+            processElement(c.element()),
+            r -> {
+              results.add(new Result(r, c.timestamp(), window));
+              futures.remove(uuid);
+              return null;
+            },
+            t -> {
+              errors.add(t);
+              futures.remove(uuid);
+              return null;
+            });
     // This `put` may happen after `remove` in the callbacks but it's OK since either the result
     // or the error would've already been pushed to the corresponding queues and we are not losing
     // data. `waitForFutures` in `finishBundle` blocks until all pending futures, including ones
@@ -136,5 +136,4 @@ public abstract class BaseAsyncDoFn<InputT, OutputT, ResourceT, FutureT>
       this.window = window;
     }
   }
-
 }

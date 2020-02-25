@@ -26,31 +26,39 @@ import org.apache.beam.sdk.options.PipelineOptions;
 public interface ScioOptions extends PipelineOptions, KryoOptions {
   @Description("Scio version")
   String getScioVersion();
+
   void setScioVersion(String version);
 
   @Description("Scala version")
   String getScalaVersion();
+
   void setScalaVersion(String version);
 
   @Description("Filename to save metrics to.")
   String getMetricsLocation();
+
   void setMetricsLocation(String metricsLocation);
 
   @Description("Set to true to block on ScioContext#close()")
   boolean isBlocking();
+
   void setBlocking(boolean value);
 
-  @Description("Time period in scala.concurrent.duration.Duration style to block for job completion")
+  @Description(
+      "Time period in scala.concurrent.duration.Duration style to block for job completion")
   String getBlockFor();
+
   void setBlockFor(String value);
 
   @Description("Custom application arguments")
   String getAppArguments();
+
   void setAppArguments(String arguments);
 
   @JsonIgnore
   @Description("Path to newline separated file with command line options")
   String getOptionsFile();
+
   void setOptionsFile(String optionsFile);
 
   @Description("Whether to check for chained cogroups")
@@ -68,5 +76,6 @@ public interface ScioOptions extends PipelineOptions, KryoOptions {
   @Description("Should scio use NullableCoder to serialize data.")
   @Default.Boolean(false)
   boolean getNullableCoders();
+
   void setNullableCoders(boolean value);
 }

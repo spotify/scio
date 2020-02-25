@@ -1,6 +1,6 @@
 package com.spotify.scio.jmh.j;
 
-final public class User {
+public final class User {
 
   private UserId id;
   private String name;

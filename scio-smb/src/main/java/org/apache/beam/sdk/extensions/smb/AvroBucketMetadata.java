@@ -103,8 +103,9 @@ public class AvroBucketMetadata<K, V extends GenericRecord> extends BucketMetada
       return false;
     }
     AvroBucketMetadata<?, ?> that = (AvroBucketMetadata<?, ?>) o;
-    return getKeyClass() == that.getKeyClass() && keyField.equals(that.keyField) &&
-        Arrays.equals(keyPath, that.keyPath);
+    return getKeyClass() == that.getKeyClass()
+        && keyField.equals(that.keyField)
+        && Arrays.equals(keyPath, that.keyPath);
   }
 
   // Coders for types commonly used as keys in Avro

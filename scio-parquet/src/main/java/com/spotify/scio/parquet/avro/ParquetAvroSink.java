@@ -36,11 +36,12 @@ public class ParquetAvroSink<T> extends FileBasedSink<T, Void, T> {
   private final SerializableConfiguration conf;
   private final CompressionCodecName compression;
 
-  public ParquetAvroSink(ValueProvider<ResourceId> baseOutputFileName,
-                         FileBasedSink.DynamicDestinations<T, Void, T> dynamicDestinations,
-                         Schema schema,
-                         Configuration conf,
-                         CompressionCodecName compression) {
+  public ParquetAvroSink(
+      ValueProvider<ResourceId> baseOutputFileName,
+      FileBasedSink.DynamicDestinations<T, Void, T> dynamicDestinations,
+      Schema schema,
+      Configuration conf,
+      CompressionCodecName compression) {
     super(baseOutputFileName, dynamicDestinations);
     this.schemaString = schema.toString();
     this.conf = new SerializableConfiguration(conf);
@@ -62,10 +63,11 @@ public class ParquetAvroSink<T> extends FileBasedSink<T, Void, T> {
     private final SerializableConfiguration conf;
     private final CompressionCodecName compression;
 
-    public ParquetAvroWriteOperation(FileBasedSink<T, Void, T> sink,
-                                     String schemaString,
-                                     SerializableConfiguration conf,
-                                     CompressionCodecName compression) {
+    public ParquetAvroWriteOperation(
+        FileBasedSink<T, Void, T> sink,
+        String schemaString,
+        SerializableConfiguration conf,
+        CompressionCodecName compression) {
       super(sink);
       this.schemaString = schemaString;
       this.conf = conf;
@@ -74,7 +76,8 @@ public class ParquetAvroSink<T> extends FileBasedSink<T, Void, T> {
 
     @Override
     public Writer<Void, T> createWriter() throws Exception {
-      return new ParquetAvroWriter<>(this, new Schema.Parser().parse(schemaString), conf, compression);
+      return new ParquetAvroWriter<>(
+          this, new Schema.Parser().parse(schemaString), conf, compression);
     }
   }
 
@@ -89,10 +92,11 @@ public class ParquetAvroSink<T> extends FileBasedSink<T, Void, T> {
     private final CompressionCodecName compression;
     private ParquetWriter<T> writer;
 
-    public ParquetAvroWriter(WriteOperation<Void, T> writeOperation,
-                             Schema schema,
-                             SerializableConfiguration conf,
-                             CompressionCodecName compression) {
+    public ParquetAvroWriter(
+        WriteOperation<Void, T> writeOperation,
+        Schema schema,
+        SerializableConfiguration conf,
+        CompressionCodecName compression) {
       super(writeOperation, MimeTypes.BINARY);
       this.schema = schema;
       this.conf = conf;
@@ -102,7 +106,8 @@ public class ParquetAvroSink<T> extends FileBasedSink<T, Void, T> {
     @Override
     protected void prepareWrite(WritableByteChannel channel) throws Exception {
       BeamOutputFile outputFile = BeamOutputFile.of(channel);
-      writer = org.apache.parquet.avro.AvroParquetWriter.<T>builder(outputFile)
+      writer =
+          org.apache.parquet.avro.AvroParquetWriter.<T>builder(outputFile)
               .withSchema(schema)
               .withConf(conf.get())
               .withCompressionCodec(compression)

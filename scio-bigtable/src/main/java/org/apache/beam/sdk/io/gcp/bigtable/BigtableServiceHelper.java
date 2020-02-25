@@ -19,9 +19,7 @@ package org.apache.beam.sdk.io.gcp.bigtable;
 
 import com.google.cloud.bigtable.config.BigtableOptions;
 
-/**
- * Wrap {@link BigtableServiceImpl} and expose package private methods.
- */
+/** Wrap {@link BigtableServiceImpl} and expose package private methods. */
 public class BigtableServiceHelper extends BigtableServiceImpl {
 
   public BigtableServiceHelper(BigtableOptions options) {
