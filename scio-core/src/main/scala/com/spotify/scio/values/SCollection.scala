@@ -769,17 +769,20 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     out: () => PrintStream = () => Console.out,
     prefix: String = "",
     enabled: Boolean = true
-  ): SCollection[T] =
+  )(implicit coder: Coder[T]): SCollection[T] =
     if (enabled) {
-      this.filter { e =>
-        out().println(prefix + e)
-
-        // filter that never removes
-        true
-      }
+      tap(elem => out().println(prefix + elem))
     } else {
       this
     }
+
+  /**
+   * Applies f to each element of this [[SCollection]], and returns the original value.
+   *
+   * @group debug
+   */
+  def tap[U](f: T => U)(implicit coder: Coder[T]): SCollection[T] =
+    map { elem => f(elem); elem }
 
   // =======================================================================
   // Side input operations
