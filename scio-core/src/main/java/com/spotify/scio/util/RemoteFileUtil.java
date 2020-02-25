@@ -144,11 +144,18 @@ public class RemoteFileUtil implements Serializable {
    * Upload a single local {@link Path} to a remote {@link URI}.
    */
   public void upload(Path src, URI dst) throws IOException {
+    upload(src, dst, MimeTypes.BINARY);
+  }
+
+  /**
+   * Upload a single local {@link Path} to a remote {@link URI} with mimeType {@link MimeTypes}.
+   */
+  public void upload(Path src, URI dst, String mimeType) throws IOException {
     if (remoteExists(dst)) {
       String msg = String.format("Destination URI %s already exists", dst);
       throw new IllegalArgumentException(msg);
     }
-    copyToRemote(src, dst);
+    copyToRemote(src, dst, mimeType);
   }
 
   private static Path downloadImpl(URI src) {
@@ -231,9 +238,9 @@ public class RemoteFileUtil implements Serializable {
   }
 
   // Copy a single file from local source to remote destination
-  private static void copyToRemote(Path src, URI dst) throws IOException {
+  private static void copyToRemote(Path src, URI dst, String mimeType) throws IOException {
     ResourceId dstId = FileSystems.matchNewResource(dst.toString(), false);
-    WritableByteChannel dstCh = FileSystems.create(dstId, MimeTypes.BINARY);
+    WritableByteChannel dstCh = FileSystems.create(dstId, mimeType);
     FileChannel srcCh = FileChannel.open(src, StandardOpenOption.READ);
     long srcSize = srcCh.size();
     long copied = 0;
