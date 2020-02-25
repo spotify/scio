@@ -70,8 +70,9 @@ final case class ParquetExampleIO(path: String) extends ScioIO[Example] {
 
     val source = HadoopFormatIO
       .read[JBoolean, Example]()
+      // Hadoop input always emit key-value, and `Void` causes NPE in Beam coder
       .withKeyTranslation(new SimpleFunction[Void, JBoolean]() {
-        override def apply(input: Void): JBoolean = true // workaround for NPE
+        override def apply(input: Void): JBoolean = true
       })
       .withConfiguration(job.getConfiguration)
     sc.wrap(sc.applyInternal(source)).map(_.getValue)
