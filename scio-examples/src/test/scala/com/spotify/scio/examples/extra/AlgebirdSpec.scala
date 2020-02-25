@@ -79,33 +79,23 @@ class AlgebirdSpec extends AnyPropSpec with ScalaCheckDrivenPropertyChecks with 
   // =======================================================================
 
   property("sum of Int") {
-    forAll { xs: SColl[Int] =>
-      xs.sum shouldBe xs.internal.sum
-    }
+    forAll { xs: SColl[Int] => xs.sum shouldBe xs.internal.sum }
   }
 
   property("sum of Long") {
-    forAll { xs: SColl[Long] =>
-      xs.sum shouldBe xs.internal.sum
-    }
+    forAll { xs: SColl[Long] => xs.sum shouldBe xs.internal.sum }
   }
 
   property("sum of Float") {
-    forAll { xs: SColl[Float] =>
-      xs.sum shouldBe xs.internal.sum
-    }
+    forAll { xs: SColl[Float] => xs.sum shouldBe xs.internal.sum }
   }
 
   property("sum of Double") {
-    forAll { xs: SColl[Double] =>
-      xs.sum shouldBe xs.internal.sum
-    }
+    forAll { xs: SColl[Double] => xs.sum shouldBe xs.internal.sum }
   }
 
   property("sum of Set") {
-    forAll { xs: SColl[Set[String]] =>
-      xs.sum shouldBe xs.internal.reduce(_ ++ _)
-    }
+    forAll { xs: SColl[Set[String]] => xs.sum shouldBe xs.internal.reduce(_ ++ _) }
   }
 
   // Sum fields of tuples individually

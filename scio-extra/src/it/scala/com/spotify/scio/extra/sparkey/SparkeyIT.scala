@@ -60,19 +60,13 @@ class SparkeyIT extends PipelineSpec {
       // Create a sparkey KV file
       val uri = SparkeyUri(basePath, sc.options)
       val writer = new SparkeyWriter(uri, -1)
-      (1 to 100000000).foreach { x =>
-        writer.put(x.toString, x.toString)
-      }
+      (1 to 100000000).foreach(x => writer.put(x.toString, x.toString))
       writer.close()
 
       try {
         val p1 = sc.parallelize(1 to 10)
         val p2 = new SparkeyScioContext(sc).sparkeySideInput(basePath)
-        p1.withSideInputs(p2)
-          .map { (x, si) =>
-            si(p2).get(x.toString)
-          }
-          .toSCollection
+        p1.withSideInputs(p2).map((x, si) => si(p2).get(x.toString)).toSCollection
       } finally {
         FileSystems.delete(Seq(resourceId).asJava)
       }

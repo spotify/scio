@@ -189,9 +189,7 @@ object BigQuery {
   /** Create a new BigQueryClient instance with the given project. */
   def apply(project: String): BigQuery =
     BigQuerySysProps.Secret.valueOption
-      .map { secret =>
-        BigQuery(project, new File(secret))
-      }
+      .map(secret => BigQuery(project, new File(secret)))
       .getOrElse {
         BigQuery(
           project,

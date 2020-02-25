@@ -111,26 +111,21 @@ class StorageIT extends AnyFlatSpec with Matchers {
   }
 
   it should "work with selectedFields" in {
-    val expected = (0 until 10).map { i =>
-      (i.toLong, s"s$i", i.toLong)
-    }.asJava
+    val expected = (0 until 10).map(i => (i.toLong, s"s$i", i.toLong)).asJava
     val (sc, _) = ContextAndArgs(
       Array("--project=data-integration-test", "--tempLocation=gs://data-integration-test-eu/temp")
     )
     val p = sc
       .typedBigQuery[NestedWithFields]()
-      .map { r =>
-        (r.required.int, r.required.string, r.optional.get.int)
-      }
+      .map(r => (r.required.int, r.required.string, r.optional.get.int))
       .internal
     PAssert.that(p).containsInAnyOrder(expected)
     sc.run()
   }
 
   it should "work with rowRestriction" in {
-    val expected = (0 until 5).map { i =>
-      (i.toLong, s"s$i", i.toLong, s"s$i", i.toLong, s"s$i")
-    }.asJava
+    val expected =
+      (0 until 5).map(i => (i.toLong, s"s$i", i.toLong, s"s$i", i.toLong, s"s$i")).asJava
     val (sc, _) = ContextAndArgs(
       Array("--project=data-integration-test", "--tempLocation=gs://data-integration-test-eu/temp")
     )
@@ -146,9 +141,8 @@ class StorageIT extends AnyFlatSpec with Matchers {
   }
 
   it should "work with rowRestriction override" in {
-    val expected = (0 until 3).map { i =>
-      (i.toLong, s"s$i", i.toLong, s"s$i", i.toLong, s"s$i")
-    }.asJava
+    val expected =
+      (0 until 3).map(i => (i.toLong, s"s$i", i.toLong, s"s$i", i.toLong, s"s$i")).asJava
     val (sc, _) = ContextAndArgs(
       Array("--project=data-integration-test", "--tempLocation=gs://data-integration-test-eu/temp")
     )
@@ -164,17 +158,13 @@ class StorageIT extends AnyFlatSpec with Matchers {
   }
 
   it should "work with all options" in {
-    val expected = (0 until 5).map { i =>
-      (i.toLong, s"s$i", i.toLong)
-    }.asJava
+    val expected = (0 until 5).map(i => (i.toLong, s"s$i", i.toLong)).asJava
     val (sc, _) = ContextAndArgs(
       Array("--project=data-integration-test", "--tempLocation=gs://data-integration-test-eu/temp")
     )
     val p = sc
       .typedBigQuery[NestedWithAll](NestedWithAll.table.format("nested"))
-      .map { r =>
-        (r.required.int, r.required.string, r.optional.get.int)
-      }
+      .map(r => (r.required.int, r.required.string, r.optional.get.int))
       .internal
     PAssert.that(p).containsInAnyOrder(expected)
     sc.run()

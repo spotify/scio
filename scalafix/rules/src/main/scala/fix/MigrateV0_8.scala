@@ -31,9 +31,7 @@ final class FixRunWithContext extends SemanticRule("FixRunWithContext") {
       case t @ q"val ${x} = runWithContext(${body})" =>
         val children = t.parent.toList.flatMap(_.children).filterNot(_ == t)
         val name = x.toString()
-        children.map { c =>
-          fixSubtree(name)(SyntacticDocument.fromTree(c))
-        }.asPatch
+        children.map(c => fixSubtree(name)(SyntacticDocument.fromTree(c))).asPatch
       // Convert ScioExecutionContext to ScioResult in methods that return a ScioResult
       case t @ q"def $fn(..$ps): ScioResult = {$body}" =>
         Patch.addRight(t, ".waitUntilFinish()")

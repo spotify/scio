@@ -88,7 +88,7 @@ object RandomSamplerUtils extends Serializable {
   def cumulativeDist(hist: Array[Int]): Array[Double] = {
     val n = hist.sum.toDouble
     assert(n > 0.0)
-    hist.scanLeft(0)(_ + _).drop(1).map { _.toDouble / n }
+    hist.scanLeft(0)(_ + _).drop(1).map(_.toDouble / n)
   }
 
   // Returns aligned cumulative distributions from two arrays of data
@@ -118,9 +118,7 @@ object RandomSamplerUtils extends Serializable {
     assert(cdf2(n - 1) == 1.0)
     cdf1
       .zip(cdf2)
-      .map { x =>
-        Math.abs(x._1 - x._2)
-      }
+      .map(x => Math.abs(x._1 - x._2))
       .max
   }
 

@@ -28,36 +28,28 @@ class JavaConvertersExampleTest extends PipelineSpec {
   "JavaConverters" should "convert filename prefix String to ResourceId" in {
     JobTest[com.spotify.scio.examples.extra.JavaConvertersExample.type]
       .args(s"--output=$output", "--converter=String#toResourceId")
-      .output(io) { coll =>
-        coll should containInAnyOrder(expected)
-      }
+      .output(io)(coll => coll should containInAnyOrder(expected))
       .run()
   }
 
   it should "convert filename prefix String to StaticValueProvider[String]" in {
     JobTest[com.spotify.scio.examples.extra.JavaConvertersExample.type]
       .args(s"--output=$output", "--converter=String#toFilenamePolicy")
-      .output(io) { coll =>
-        coll should containInAnyOrder(expected)
-      }
+      .output(io)(coll => coll should containInAnyOrder(expected))
       .run()
   }
 
   it should "convert filename prefix String to DefaultFilenamePolicy" in {
     JobTest[com.spotify.scio.examples.extra.JavaConvertersExample.type]
       .args(s"--output=$output", "--converter=String#toStaticValueProvider")
-      .output(io) { coll =>
-        coll should containInAnyOrder(expected)
-      }
+      .output(io)(coll => coll should containInAnyOrder(expected))
       .run()
   }
 
   it should "convert FilenamePolicy case class to DefaultFilenamePolicy" in {
     JobTest[com.spotify.scio.examples.extra.JavaConvertersExample.type]
       .args(s"--output=$output", "--converter=FilenamePolicy#toJava")
-      .output(io) { coll =>
-        coll should containInAnyOrder(expected)
-      }
+      .output(io)(coll => coll should containInAnyOrder(expected))
       .run()
   }
 }

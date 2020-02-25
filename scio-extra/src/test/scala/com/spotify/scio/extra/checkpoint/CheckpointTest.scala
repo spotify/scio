@@ -37,13 +37,9 @@ object CheckpointMetrics {
     )
     sc.checkpoint(args("checkpoint")) {
         sc.parallelize(1 to 10)
-          .map { x =>
-            elemsBefore.inc(); x
-          }
+          .map { x => elemsBefore.inc(); x }
       }
-      .map { x =>
-        elemsAfter.inc(); x
-      }
+      .map { x => elemsAfter.inc(); x }
     val r = sc.run().waitUntilDone()
     (Try(r.counter(elemsBefore).committed.get).getOrElse(0), r.counter(elemsAfter).committed.get)
   }

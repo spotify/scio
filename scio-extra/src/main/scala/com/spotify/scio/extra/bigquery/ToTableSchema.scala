@@ -122,9 +122,7 @@ trait ToTableSchema {
 
     schema.getTypes.asScala
       .find(_.getType != NULL)
-      .foreach { fieldType =>
-        setFieldType(field, fieldType)
-      }
+      .foreach(fieldType => setFieldType(field, fieldType))
 
     ()
   }

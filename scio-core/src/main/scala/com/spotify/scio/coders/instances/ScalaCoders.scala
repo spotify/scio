@@ -176,7 +176,7 @@ private class OptionCoder[T](bc: BCoder[T]) extends SeqLikeCoder[Option, T](bc) 
   private[this] val bcoder = BooleanCoder.of().asInstanceOf[BCoder[Boolean]]
   override def encode(value: Option[T], os: OutputStream): Unit = {
     bcoder.encode(value.isDefined, os)
-    value.foreach { bc.encode(_, os) }
+    value.foreach(bc.encode(_, os))
   }
 
   override def decode(is: InputStream): Option[T] = {
@@ -472,9 +472,7 @@ trait ScalaCoders {
 
   implicit def optionCoder[T, S[_] <: Option[_]](implicit c: Coder[T]): Coder[S[T]] =
     Coder
-      .transform(c) { bc =>
-        Coder.beam(new OptionCoder[T](bc))
-      }
+      .transform(c)(bc => Coder.beam(new OptionCoder[T](bc)))
       .asInstanceOf[Coder[S[T]]]
 
   implicit def noneCoder: Coder[None.type] =
@@ -483,70 +481,48 @@ trait ScalaCoders {
   implicit def bitSetCoder: Coder[BitSet] = Coder.beam(new BitSetCoder)
 
   implicit def seqCoder[T: Coder]: Coder[Seq[T]] =
-    Coder.transform(Coder[T]) { bc =>
-      Coder.beam(new SeqCoder[T](bc))
-    }
+    Coder.transform(Coder[T])(bc => Coder.beam(new SeqCoder[T](bc)))
 
   import shapeless.Strict
   implicit def pairCoder[A, B](implicit CA: Strict[Coder[A]], CB: Strict[Coder[B]]): Coder[(A, B)] =
     Coder.transform(CA.value) { ac =>
-      Coder.transform(CB.value) { bc =>
-        Coder.beam(new PairCoder[A, B](ac, bc))
-      }
+      Coder.transform(CB.value)(bc => Coder.beam(new PairCoder[A, B](ac, bc)))
     }
 
   // TODO: proper chunking implementation
   implicit def iterableCoder[T: Coder]: Coder[Iterable[T]] =
-    Coder.transform(Coder[T]) { bc =>
-      Coder.beam(new IterableCoder[T](bc))
-    }
+    Coder.transform(Coder[T])(bc => Coder.beam(new IterableCoder[T](bc)))
 
   implicit def throwableCoder[T <: Throwable: ClassTag]: Coder[T] =
     Coder.kryo[T]
 
   // specialized coder. Since `::` is a case class, Magnolia would derive an incorrect one...
   implicit def listCoder[T: Coder]: Coder[List[T]] =
-    Coder.transform(Coder[T]) { bc =>
-      Coder.beam(new ListCoder[T](bc))
-    }
+    Coder.transform(Coder[T])(bc => Coder.beam(new ListCoder[T](bc)))
 
   implicit def traversableOnceCoder[T: Coder]: Coder[TraversableOnce[T]] =
-    Coder.transform(Coder[T]) { bc =>
-      Coder.beam(new TraversableOnceCoder[T](bc))
-    }
+    Coder.transform(Coder[T])(bc => Coder.beam(new TraversableOnceCoder[T](bc)))
 
   implicit def setCoder[T: Coder]: Coder[Set[T]] =
-    Coder.transform(Coder[T]) { bc =>
-      Coder.beam(new SetCoder[T](bc))
-    }
+    Coder.transform(Coder[T])(bc => Coder.beam(new SetCoder[T](bc)))
 
   implicit def mutableSetCoder[T: Coder]: Coder[m.Set[T]] =
-    Coder.transform(Coder[T]) { bc =>
-      Coder.beam(new MutableSetCoder[T](bc))
-    }
+    Coder.transform(Coder[T])(bc => Coder.beam(new MutableSetCoder[T](bc)))
 
   implicit def vectorCoder[T: Coder]: Coder[Vector[T]] =
-    Coder.transform(Coder[T]) { bc =>
-      Coder.beam(new VectorCoder[T](bc))
-    }
+    Coder.transform(Coder[T])(bc => Coder.beam(new VectorCoder[T](bc)))
 
   implicit def arrayBufferCoder[T: Coder]: Coder[m.ArrayBuffer[T]] =
-    Coder.transform(Coder[T]) { bc =>
-      Coder.beam(new ArrayBufferCoder[T](bc))
-    }
+    Coder.transform(Coder[T])(bc => Coder.beam(new ArrayBufferCoder[T](bc)))
 
   implicit def bufferCoder[T: Coder]: Coder[m.Buffer[T]] =
-    Coder.transform(Coder[T]) { bc =>
-      Coder.beam(new BufferCoder[T](bc))
-    }
+    Coder.transform(Coder[T])(bc => Coder.beam(new BufferCoder[T](bc)))
 
   implicit def listBufferCoder[T: Coder]: Coder[m.ListBuffer[T]] =
     Coder.xmap(bufferCoder[T])(m.ListBuffer(_: _*), identity)
 
   implicit def arrayCoder[T: Coder: ClassTag]: Coder[Array[T]] =
-    Coder.transform(Coder[T]) { bc =>
-      Coder.beam(new ArrayCoder[T](bc))
-    }
+    Coder.transform(Coder[T])(bc => Coder.beam(new ArrayCoder[T](bc)))
 
   implicit def arrayByteCoder: Coder[Array[Byte]] =
     Coder.beam(ByteArrayCoder.of())
@@ -558,22 +534,16 @@ trait ScalaCoders {
 
   implicit def mutableMapCoder[K: Coder, V: Coder]: Coder[m.Map[K, V]] =
     Coder.transform(Coder[K]) { kc =>
-      Coder.transform(Coder[V]) { vc =>
-        Coder.beam(new MutableMapCoder[K, V](kc, vc))
-      }
+      Coder.transform(Coder[V])(vc => Coder.beam(new MutableMapCoder[K, V](kc, vc)))
     }
 
   implicit def mapCoder[K: Coder, V: Coder]: Coder[Map[K, V]] =
     Coder.transform(Coder[K]) { kc =>
-      Coder.transform(Coder[V]) { vc =>
-        Coder.beam(new MapCoder[K, V](kc, vc))
-      }
+      Coder.transform(Coder[V])(vc => Coder.beam(new MapCoder[K, V](kc, vc)))
     }
 
   implicit def sortedSetCoder[T: Coder: Ordering]: Coder[SortedSet[T]] =
-    Coder.transform(Coder[T]) { bc =>
-      Coder.beam(new SortedSetCoder[T](bc))
-    }
+    Coder.transform(Coder[T])(bc => Coder.beam(new SortedSetCoder[T](bc)))
 
   // implicit def enumerationCoder[E <: Enumeration]: Coder[E#Value] = ???
 }

@@ -98,9 +98,7 @@ class SCollectionTest extends PipelineSpec {
   }
 
   it should "support unionAll() with an empty list" in {
-    runWithContext { sc =>
-      sc.unionAll(List[SCollection[Unit]]()) should beEmpty
-    }
+    runWithContext(sc => sc.unionAll(List[SCollection[Unit]]()) should beEmpty)
   }
 
   it should "support ++ operator" in {
@@ -214,9 +212,7 @@ class SCollectionTest extends PipelineSpec {
   }
 
   it should "support count" in {
-    runWithContext { sc =>
-      sc.parallelize(Seq("a", "b", "c")).count should containSingleValue(3L)
-    }
+    runWithContext(sc => sc.parallelize(Seq("a", "b", "c")).count should containSingleValue(3L))
   }
 
   it should "support countApproxDistinct()" in {

@@ -39,9 +39,7 @@ class MagnolifyDatastoreExampleTest extends PipelineSpec {
     JobTest[com.spotify.scio.examples.extra.MagnolifyDatastoreWriteExample.type]
       .args("--input=in.txt", "--output=project")
       .input(TextIO("in.txt"), textIn)
-      .output(DatastoreIO("project")) { coll =>
-        coll should containInAnyOrder(entities)
-      }
+      .output(DatastoreIO("project"))(coll => coll should containInAnyOrder(entities))
       .run()
   }
 
@@ -49,9 +47,7 @@ class MagnolifyDatastoreExampleTest extends PipelineSpec {
     JobTest[com.spotify.scio.examples.extra.MagnolifyDatastoreReadExample.type]
       .args("--input=project", "--output=out.txt")
       .input(DatastoreIO("project"), entities)
-      .output(TextIO("out.txt")) { coll =>
-        coll should containInAnyOrder(textOut)
-      }
+      .output(TextIO("out.txt"))(coll => coll should containInAnyOrder(textOut))
       .run()
   }
 }

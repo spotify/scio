@@ -150,7 +150,7 @@ object SchemaMaterializer {
   private def encode[A](schema: Type[A])(v: A): schema.Repr = v
 
   private def encode[A](schema: OptionType[A], fieldType: BFieldType)(v: Option[A]): schema.Repr =
-    v.map { dispatchEncode(schema.schema, fieldType)(_) }
+    v.map(dispatchEncode(schema.schema, fieldType)(_))
       .getOrElse(null.asInstanceOf[schema.Repr])
 
   private def encode[F[_], A](schema: ArrayType[F, A], fieldType: BFieldType)(

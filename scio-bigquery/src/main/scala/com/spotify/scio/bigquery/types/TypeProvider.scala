@@ -519,7 +519,10 @@ private[types] object TypeProvider {
               s"${SchemaUtil.escapeNameIfReserved(fname.toString)} : $ftpt"
           }
           .mkString(", ")
-          .replaceAll(s"@${classOf[BigQueryTag].getName}", "") //BQ plugin does not need to know about BQTag
+          .replaceAll(
+            s"@${classOf[BigQueryTag].getName}",
+            ""
+          ) //BQ plugin does not need to know about BQTag
         parents match {
           case Nil =>
             s"case class $name($f)"

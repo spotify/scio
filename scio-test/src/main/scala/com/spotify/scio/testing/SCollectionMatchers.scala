@@ -78,9 +78,7 @@ trait SCollectionMatchers {
       .currentThread()
       .getStackTrace
       .filter(_.getClassName.startsWith("org.scalatest."))
-      .exists { e =>
-        e.getClassName.contains("NotWord") || e.getMethodName == "shouldNot"
-      }
+      .exists(e => e.getClassName.contains("NotWord") || e.getMethodName == "shouldNot")
     val r = if (isShouldNot) {
       shouldNotFn()
       false

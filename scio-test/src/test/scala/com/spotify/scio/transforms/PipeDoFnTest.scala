@@ -105,7 +105,7 @@ class PipeDoFnTest extends PipelineSpec {
     // the exception thrown could be UncheckedIOException for broken pipe or IllegalStateException
     // for non-zero exit code, depending on which happens first
     an[Exception] should be thrownBy {
-      runWithContext { _.parallelize(input).pipe("rm /non-existent-path") }
+      runWithContext(_.parallelize(input).pipe("rm /non-existent-path"))
     }
 
     an[Exception] should be thrownBy {

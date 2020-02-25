@@ -146,15 +146,11 @@ object PubsubIO {
     r: beam.PubsubIO.Read[T]
   )(idAttribute: String, timestampAttribute: String): beam.PubsubIO.Read[T] = {
     val r0 = Option(idAttribute)
-      .map { att =>
-        r.withIdAttribute(att)
-      }
+      .map(att => r.withIdAttribute(att))
       .getOrElse(r)
 
     Option(timestampAttribute)
-      .map { att =>
-        r0.withTimestampAttribute(att)
-      }
+      .map(att => r0.withTimestampAttribute(att))
       .getOrElse(r0)
   }
 
@@ -162,15 +158,11 @@ object PubsubIO {
     r: beam.PubsubIO.Write[T]
   )(idAttribute: String, timestampAttribute: String): beam.PubsubIO.Write[T] = {
     val r0 = Option(idAttribute)
-      .map { att =>
-        r.withIdAttribute(att)
-      }
+      .map(att => r.withIdAttribute(att))
       .getOrElse(r)
 
     Option(timestampAttribute)
-      .map { att =>
-        r0.withTimestampAttribute(att)
-      }
+      .map(att => r0.withTimestampAttribute(att))
       .getOrElse(r0)
   }
 }
@@ -342,9 +334,7 @@ final private case class PubsubIOWithAttributes[T: ClassTag: Coder](
     val read = TestDataManager.getInput(sc.testId.get)(this).toSCollection(sc)
 
     Option(timestampAttribute)
-      .map { att =>
-        read.timestampBy(kv => new Instant(kv._2(att)))
-      }
+      .map(att => read.timestampBy(kv => new Instant(kv._2(att))))
       .getOrElse(read)
   }
 

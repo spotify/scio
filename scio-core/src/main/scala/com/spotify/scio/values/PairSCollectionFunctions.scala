@@ -546,9 +546,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
               .cogroup(
                 rhs1
                   .withSideInputs(lhsBfSi)
-                  .filter { (e, c) =>
-                    c(lhsBfSi).maybeContains(e._1)
-                  }
+                  .filter((e, c) => c(lhsBfSi).maybeContains(e._1))
                   .toSCollection
               )
               .flatMap { case (k, (iV, iA)) => iV.map(v => (k, (v, iA))) }
@@ -613,15 +611,11 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
             .cogroup(
               rhs1
                 .withSideInputs(lhsBfSi)
-                .filter { (e, c) =>
-                  c(lhsBfSi).maybeContains(e._1)
-                }
+                .filter((e, c) => c(lhsBfSi).maybeContains(e._1))
                 .toSCollection,
               rhs2
                 .withSideInputs(lhsBfSi)
-                .filter { (e, c) =>
-                  c(lhsBfSi).maybeContains(e._1)
-                }
+                .filter((e, c) => c(lhsBfSi).maybeContains(e._1))
                 .toSCollection
             )
             .flatMap { case (k, (iV, iA, iB)) => iV.map(v => (k, (v, iA, iB))) }

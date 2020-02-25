@@ -65,9 +65,7 @@ class BigtableExampleTest extends PipelineSpec {
     JobTest[com.spotify.scio.examples.extra.BigtableReadExample.type]
       .args(bigtableOptions :+ "--output=out.txt": _*)
       .input(BigtableIO("my-project", "my-instance", "my-table"), rowsIn)
-      .output(TextIO("out.txt")) { coll =>
-        coll should containInAnyOrder(expectedText)
-      }
+      .output(TextIO("out.txt"))(coll => coll should containInAnyOrder(expectedText))
       .run()
   }
 }

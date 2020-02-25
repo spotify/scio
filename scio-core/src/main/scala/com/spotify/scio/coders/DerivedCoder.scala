@@ -96,15 +96,11 @@ trait LowPriorityCoderDerivation {
       val booleanId: Int => Boolean = _ != 0
       val cs = coders.map { case (key, v) => (booleanId(key), v) }
       Coder.disjunction[T, Boolean](typeName, cs) { t =>
-        sealedTrait.dispatch(t) { subtype =>
-          booleanId(idx(subtype.typeName))
-        }
+        sealedTrait.dispatch(t)(subtype => booleanId(idx(subtype.typeName)))
       }
     } else {
       Coder.disjunction[T, Int](typeName, coders) { t =>
-        sealedTrait.dispatch(t) { subtype =>
-          idx(subtype.typeName)
-        }
+        sealedTrait.dispatch(t)(subtype => idx(subtype.typeName))
       }
     }
   }

@@ -296,25 +296,19 @@ object JobTest {
           case a: SingleMetricAssertion[beam.Counter, Long] =>
             a.assert(result.counter(a.metric).committed.get)
           case a: AllMetricsAssertion[beam.Counter, Long] =>
-            a.assert(result.allCounters.map { c =>
-              c._1 -> c._2.committed.get
-            })
+            a.assert(result.allCounters.map(c => c._1 -> c._2.committed.get))
         }
         state.gauges.foreach {
           case a: SingleMetricAssertion[beam.Gauge, beam.GaugeResult] =>
             a.assert(result.gauge(a.metric).committed.get)
           case a: AllMetricsAssertion[beam.Gauge, beam.GaugeResult] =>
-            a.assert(result.allGauges.map { c =>
-              c._1 -> c._2.committed.get
-            })
+            a.assert(result.allGauges.map(c => c._1 -> c._2.committed.get))
         }
         state.distributions.foreach {
           case a: SingleMetricAssertion[beam.Distribution, beam.DistributionResult] =>
             a.assert(result.distribution(a.metric).committed.get)
           case a: AllMetricsAssertion[beam.Distribution, beam.DistributionResult] =>
-            a.assert(result.allDistributions.map { c =>
-              c._1 -> c._2.committed.get
-            })
+            a.assert(result.allDistributions.map(c => c._1 -> c._2.committed.get))
         }
       }
       TestDataManager.tearDown(testId, metricsFn)

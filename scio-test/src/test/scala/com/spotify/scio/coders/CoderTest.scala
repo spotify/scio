@@ -109,9 +109,7 @@ final class CoderTest extends AnyFlatSpec with Matchers {
 
     val nil: Seq[String] = Nil
     val s: Seq[String] = (1 to 10).map(_.toString)
-    val m = s.map { v =>
-      v.toString -> v
-    }.toMap
+    val m = s.map(v => v.toString -> v).toMap
 
     nil coderShould notFallback()
     s coderShould notFallback()
@@ -204,9 +202,7 @@ final class CoderTest extends AnyFlatSpec with Matchers {
     val is = (1 to 10)
     val s: jList[String] = is.map(_.toString).asJava
     val m: jMap[String, Int] = is
-      .map { v =>
-        v.toString -> v
-      }
+      .map(v => v.toString -> v)
       .toMap
       .asJava
     val arrayList = new jArrayList(s)
@@ -263,9 +259,7 @@ final class CoderTest extends AnyFlatSpec with Matchers {
     MultiParameterizedDummy("dummy", 2) coderShould notFallback()
     user coderShould notFallback()
     (1, "String", List[Int]()) coderShould notFallback()
-    val ds = (1 to 10).map { _ =>
-      DummyCC("dummy")
-    }.toList
+    val ds = (1 to 10).map(_ => DummyCC("dummy")).toList
     ds coderShould notFallback()
   }
 
@@ -302,9 +296,7 @@ final class CoderTest extends AnyFlatSpec with Matchers {
 
     import java.util.BitSet
     val bs = new BitSet()
-    (1 to 100000).foreach { x =>
-      bs.set(x)
-    }
+    (1 to 100000).foreach(x => bs.set(x))
     bs coderShould notFallback()
 
     new BigInteger("123456789") coderShould notFallback()
@@ -346,9 +338,7 @@ final class CoderTest extends AnyFlatSpec with Matchers {
           case (a, b, c) =>
             Row.withSchema(beamSchema).addValues(a, b, c).build()
         }
-        .foreach { r =>
-          r coderShould notFallback()
-        }
+        .foreach(r => r coderShould notFallback())
   }
 
   it should "Serialize objects" in {
