@@ -226,6 +226,6 @@ class ScioContextTest extends PipelineSpec {
     val s2 = sc.empty[(String, Double)]()
     s1.join(s2)
 
-    noException shouldBe thrownBy { sc.run() }
+    noException shouldBe thrownBy(sc.run())
   }
 }

@@ -160,11 +160,11 @@ class HistogramTest extends PipelineSpec {
     val msg = "java.lang.IllegalArgumentException: requirement failed: " +
       "buckets array must have at least two elements"
     the[RuntimeException] thrownBy {
-      runWithContext { _.parallelize(Seq(1.0)).histogram(Array.empty[Double]) }
+      runWithContext(_.parallelize(Seq(1.0)).histogram(Array.empty[Double]))
     } should have message msg
 
     the[RuntimeException] thrownBy {
-      runWithContext { _.parallelize(Seq(1.0)).histogram(Array(1.0)) }
+      runWithContext(_.parallelize(Seq(1.0)).histogram(Array(1.0)))
     } should have message msg
   }
 
@@ -264,11 +264,11 @@ class HistogramTest extends PipelineSpec {
     } should have message msg
 
     the[RuntimeException] thrownBy {
-      runWithContext { _.parallelize(Seq(1.0, Double.NaN)).histogram(1) }
+      runWithContext(_.parallelize(Seq(1.0, Double.NaN)).histogram(1))
     } should have message msg
 
     the[RuntimeException] thrownBy {
-      runWithContext { _.parallelize[Double](Seq.empty).histogram(1) }
+      runWithContext(_.parallelize[Double](Seq.empty).histogram(1))
     } should have message msg
   }
 }

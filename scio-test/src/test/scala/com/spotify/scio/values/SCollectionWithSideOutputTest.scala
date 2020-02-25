@@ -24,9 +24,7 @@ class SCollectionWithSideOutputTest extends PipelineSpec {
     runWithContext { sc =>
       val p1 = sc.parallelize(Seq("a", "b", "c"))
       val p2 = SideOutput[String]()
-      val (main, side) = p1.withSideOutputs(p2).map { (x, s) =>
-        s.output(p2, x + "2"); x + "1"
-      }
+      val (main, side) = p1.withSideOutputs(p2).map { (x, s) => s.output(p2, x + "2"); x + "1" }
       main should containInAnyOrder(Seq("a1", "b1", "c1"))
       side(p2) should containInAnyOrder(Seq("a2", "b2", "c2"))
     }

@@ -145,9 +145,7 @@ final private[client] class QueryOps(client: Client, tableService: TableOps, job
     extractTables(query.copy(dryRun = true))
       .flatMap { tableRefs =>
         val sourceTimes = tableRefs
-          .map { t =>
-            BigInt(tableService.table(t).getLastModifiedTime)
-          }
+          .map(t => BigInt(tableService.table(t).getLastModifiedTime))
 
         val temp = Cache.get[TableReference](query.sql, Cache.TableCache).get
         val time = BigInt(tableService.table(temp).getLastModifiedTime)
@@ -186,9 +184,7 @@ final private[client] class QueryOps(client: Client, tableService: TableOps, job
   private def delayedQueryJob(query: QueryJobConfig): Try[QueryJob] = {
     val location = extractLocation(query.sql).getOrElse(BigQueryConfig.location)
     tableService.prepareStagingDataset(location)
-    run(query).map { job =>
-      QueryJob(query.sql, Some(job.getJobReference), query.destinationTable)
-    }
+    run(query).map(job => QueryJob(query.sql, Some(job.getJobReference), query.destinationTable))
   }
 
   private val dryRunCache: MMap[(String, Boolean, Boolean), Try[Job]] = MMap.empty

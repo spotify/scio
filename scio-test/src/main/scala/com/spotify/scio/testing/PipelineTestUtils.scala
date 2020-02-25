@@ -69,9 +69,7 @@ trait PipelineTestUtils {
   def runWithData[T: Coder, U: Coder](
     data: Iterable[T]
   )(fn: SCollection[T] => SCollection[U]): Seq[U] =
-    runWithLocalOutput { sc =>
-      fn(sc.parallelize(data))
-    }._2
+    runWithLocalOutput(sc => fn(sc.parallelize(data)))._2
 
   /**
    * Test pipeline components with in-memory data.
@@ -88,9 +86,7 @@ trait PipelineTestUtils {
   def runWithData[T1: Coder, T2: Coder, U: Coder](data1: Iterable[T1], data2: Iterable[T2])(
     fn: (SCollection[T1], SCollection[T2]) => SCollection[U]
   ): Seq[U] =
-    runWithLocalOutput { sc =>
-      fn(sc.parallelize(data1), sc.parallelize(data2))
-    }._2
+    runWithLocalOutput(sc => fn(sc.parallelize(data1), sc.parallelize(data2)))._2
 
   /**
    * Test pipeline components with in-memory data.

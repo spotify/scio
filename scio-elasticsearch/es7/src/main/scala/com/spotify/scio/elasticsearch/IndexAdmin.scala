@@ -61,9 +61,7 @@ object IndexAdmin {
     index: String,
     mappingSource: String
   ): Try[CreateIndexResponse] =
-    indicesClient(esOptions) { client =>
-      ensureIndex(index, mappingSource, client)
-    }
+    indicesClient(esOptions)(client => ensureIndex(index, mappingSource, client))
 
   /**
    * Ensure that index is created.

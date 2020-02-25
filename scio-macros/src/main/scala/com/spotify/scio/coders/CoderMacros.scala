@@ -51,9 +51,7 @@ private[coders] object CoderMacros {
 
     val typeName = sym.name
     val params = args.headOption
-      .map { _ =>
-        args.mkString("[", ",", "]")
-      }
+      .map(_ => args.mkString("[", ",", "]"))
       .getOrElse("")
     val fullType = typeName + params
 

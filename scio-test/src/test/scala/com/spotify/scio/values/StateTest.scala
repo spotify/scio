@@ -43,21 +43,21 @@ class StateTest extends AnyFlatSpec with Matchers {
   "SCollection.State" should "pass MultiJoin" in {
     testCogroup {
       case (a, b, c) =>
-        noException shouldBe thrownBy { MultiJoin(a, b, c) }
+        noException shouldBe thrownBy(MultiJoin(a, b, c))
     }
   }
 
   it should "fail chained cogroups" in {
     testCogroup {
       case (a, b, c) =>
-        an[RuntimeException] shouldBe thrownBy { a.cogroup(b).cogroup(c) }
+        an[RuntimeException] shouldBe thrownBy(a.cogroup(b).cogroup(c))
     }
   }
 
   it should "fail chained joins" in {
     testCogroup {
       case (a, b, c) =>
-        an[RuntimeException] shouldBe thrownBy { a.join(b).join(c) }
+        an[RuntimeException] shouldBe thrownBy(a.join(b).join(c))
     }
   }
 

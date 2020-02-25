@@ -175,9 +175,7 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
   def typedBigQuery[T <: HasAnnotation: ClassTag: TypeTag: Coder](
     newSource: String
   ): SCollection[T] = {
-    val src = Option(newSource).map { s =>
-      Try(Table.Spec(s)).getOrElse(Query(s))
-    }.orNull
+    val src = Option(newSource).map(s => Try(Table.Spec(s)).getOrElse(Query(s))).orNull
     typedBigQuery(src)
   }
 

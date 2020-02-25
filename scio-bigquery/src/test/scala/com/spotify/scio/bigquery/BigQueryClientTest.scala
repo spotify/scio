@@ -37,8 +37,6 @@ class BigQueryClientTest extends AnyFlatSpec with Matchers with ScalaCheckDriven
   it should "work with non-empty ProjectId" in {
     val projectIdGen = Gen.alphaNumStr.suchThat(_.nonEmpty)
 
-    forAll(projectIdGen) { projectId =>
-      BigQuery(projectId)
-    }
+    forAll(projectIdGen)(projectId => BigQuery(projectId))
   }
 }

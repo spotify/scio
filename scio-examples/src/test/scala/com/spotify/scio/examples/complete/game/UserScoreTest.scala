@@ -65,9 +65,7 @@ class UserScoreTest extends PipelineSpec {
     JobTest[com.spotify.scio.examples.complete.game.UserScore.type]
       .args("--input=in.txt", "--output=dataset.table")
       .input(TextIO("in.txt"), inData2)
-      .output(BigQueryIO[UserScoreSums]("dataset.table")) { coll =>
-        coll should beEmpty
-      }
+      .output(BigQueryIO[UserScoreSums]("dataset.table"))(coll => coll should beEmpty)
       .run()
   }
 }

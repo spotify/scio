@@ -123,9 +123,7 @@ class DynamicFileTest extends PipelineSpec {
     sc1
       .parallelize(1 to 10)
       .map(newSpecificRecord)
-      .saveAsDynamicAvroFile(tmpDir.toString) { r =>
-        (r.getIntField % 2).toString
-      }
+      .saveAsDynamicAvroFile(tmpDir.toString)(r => (r.getIntField % 2).toString)
     sc1.run()
     verifyOutput(tmpDir, "0", "1")
 
@@ -179,9 +177,7 @@ class DynamicFileTest extends PipelineSpec {
     sc1
       .parallelize(1 to 10)
       .map(mkProto)
-      .saveAsDynamicProtobufFile(tmpDir.toString) { r =>
-        (r.getPlays % 2).toString
-      }
+      .saveAsDynamicProtobufFile(tmpDir.toString)(r => (r.getPlays % 2).toString)
     sc1.run()
     verifyOutput(tmpDir, "0", "1")
 

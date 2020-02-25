@@ -41,9 +41,7 @@ class CloudSqlExampleTest extends PipelineSpec {
     JobTest[com.spotify.scio.examples.extra.CloudSqlExample.type]
       .args(args: _*)
       .input(JdbcIO(readOpts), input)
-      .output(JdbcIO[(String, Long)](writeOpts)) { coll =>
-        coll should containInAnyOrder(expected)
-      }
+      .output(JdbcIO[(String, Long)](writeOpts))(coll => coll should containInAnyOrder(expected))
       .run()
   }
 }

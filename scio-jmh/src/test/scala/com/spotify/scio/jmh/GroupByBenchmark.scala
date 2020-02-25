@@ -76,9 +76,7 @@ class GroupByBenchmark {
   def testScioGroupByKey: ScioExecutionContext =
     runWithContext { sc =>
       sc.avroFile[GenericRecord](source, schema = avroSchema)
-        .map { rec =>
-          (rec.get("id").toString.head, rec.get("value").asInstanceOf[Double])
-        }
+        .map(rec => (rec.get("id").toString.head, rec.get("value").asInstanceOf[Double]))
         .groupByKey
     }
 
@@ -94,8 +92,6 @@ class GroupByBenchmark {
             .setCoder(kvCoder)
             .apply(GroupByKey.create[Char, Double])
         }
-        .map { kv =>
-          (kv.getKey, kv.getValue.asScala)
-        }
+        .map(kv => (kv.getKey, kv.getValue.asScala))
     }
 }

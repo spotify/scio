@@ -146,9 +146,7 @@ class SparkeyTest extends PipelineSpec {
   it should "support .asSparkey with specified local file" in {
     val tmpDir = Files.createTempDirectory("sparkey-test-")
     val basePath = tmpDir.resolve("sparkey").toString
-    runWithContext { sc =>
-      sc.parallelize(sideData).asSparkey(basePath)
-    }
+    runWithContext(sc => sc.parallelize(sideData).asSparkey(basePath))
     val reader = Sparkey.open(new File(basePath + ".spi"))
     reader.toMap shouldBe sideData.toMap
     for (ext <- Seq(".spi", ".spl")) {
@@ -173,17 +171,11 @@ class SparkeyTest extends PipelineSpec {
 
   it should "support .asSparkey with Array[Byte] key, value" in {
     val tmpDir = Files.createTempDirectory("sparkey-test-")
-    val sideDataBytes = sideData.map { kv =>
-      (kv._1.getBytes, kv._2.getBytes)
-    }
+    val sideDataBytes = sideData.map(kv => (kv._1.getBytes, kv._2.getBytes))
     val basePath = tmpDir + "/my-sparkey-file"
-    runWithContext { sc =>
-      sc.parallelize(sideDataBytes).asSparkey(basePath)
-    }
+    runWithContext(sc => sc.parallelize(sideDataBytes).asSparkey(basePath))
     val reader = Sparkey.open(new File(basePath + ".spi"))
-    sideDataBytes.foreach { kv =>
-      Arrays.equals(reader.getAsByteArray(kv._1), kv._2) shouldBe true
-    }
+    sideDataBytes.foreach(kv => Arrays.equals(reader.getAsByteArray(kv._1), kv._2) shouldBe true)
     for (ext <- Seq(".spi", ".spl")) {
       new File(basePath + ext).delete()
     }

@@ -76,9 +76,7 @@ class JdbcTest extends PipelineSpec {
     JobTest[JdbcJob.type]
       .args(args: _*)
       .input(JdbcIO[String](readOpts), Seq("a", "b", "c"))
-      .output(JdbcIO[String](writeOpts)) { coll =>
-        coll should containInAnyOrder(xs)
-      }
+      .output(JdbcIO[String](writeOpts))(coll => coll should containInAnyOrder(xs))
       .run()
   }
 
@@ -107,9 +105,7 @@ class JdbcTest extends PipelineSpec {
     JobTest[JdbcJob.type]
       .args(args: _*)
       .input(JdbcIO[String](readOpts), Seq("a", "b", "c"))
-      .output(JdbcIO[String](writeOpts)) { coll =>
-        coll should containInAnyOrder(expected)
-      }
+      .output(JdbcIO[String](writeOpts))(coll => coll should containInAnyOrder(expected))
       .run()
   }
 

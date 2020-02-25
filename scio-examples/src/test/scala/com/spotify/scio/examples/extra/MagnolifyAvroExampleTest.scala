@@ -39,9 +39,7 @@ class MagnolifyAvroExampleTest extends PipelineSpec {
     JobTest[com.spotify.scio.examples.extra.MagnolifyAvroWriteExample.type]
       .args("--input=in.txt", "--output=wc.avro")
       .input(TextIO("in.txt"), textIn)
-      .output(AvroIO[GenericRecord]("wc.avro")) { coll =>
-        coll should containInAnyOrder(records)
-      }
+      .output(AvroIO[GenericRecord]("wc.avro"))(coll => coll should containInAnyOrder(records))
       .run()
   }
 
@@ -49,9 +47,7 @@ class MagnolifyAvroExampleTest extends PipelineSpec {
     JobTest[com.spotify.scio.examples.extra.MagnolifyAvroReadExample.type]
       .args("--input=wc.avro", "--output=out.txt")
       .input(AvroIO[GenericRecord]("wc.avro"), records)
-      .output(TextIO("out.txt")) { coll =>
-        coll should containInAnyOrder(textOut)
-      }
+      .output(TextIO("out.txt"))(coll => coll should containInAnyOrder(textOut))
       .run()
   }
 }

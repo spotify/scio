@@ -114,9 +114,7 @@ class NamedTransformTest extends PipelineSpec {
       val (main, side) = p1
         .withSideOutputs(p2)
         .withName("MakeSideOutput")
-        .map { (x, s) =>
-          s.output(p2, x + "2"); x + "1"
-        }
+        .map { (x, s) => s.output(p2, x + "2"); x + "1" }
       val sideOut = side(p2)
       assertTransformNameStartsWith(main, "MakeSideOutput")
       assertTransformNameStartsWith(sideOut, "MakeSideOutput")
@@ -195,9 +193,7 @@ class NamedTransformTest extends PipelineSpec {
     import com.spotify.scio.io.TextIO
     JobTest[SimpleJob.type]
       .args("--output=top.txt", "--stableUniqueNames=ERROR")
-      .output(TextIO("top.txt")) { _ =>
-        ()
-      }
+      .output(TextIO("top.txt"))(_ => ())
       .run()
   }
 

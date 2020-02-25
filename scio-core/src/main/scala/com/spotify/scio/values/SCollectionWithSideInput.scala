@@ -123,7 +123,7 @@ class SCollectionWithSideInput[T: Coder] private[values] (
           .asInstanceOf[SCollection[T]]
           .setCoder(internal.getCoder)
       )
-      .flatMap { case (tt, col) => Try { tagToSide(tt.getId) -> col }.toOption }
+      .flatMap { case (tt, col) => Try(tagToSide(tt.getId) -> col).toOption }
       .toMap
   }
 

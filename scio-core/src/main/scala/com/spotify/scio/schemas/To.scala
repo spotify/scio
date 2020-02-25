@@ -94,18 +94,14 @@ object To {
 
   private def areCompatible(s0: BSchema, s1: BSchema): Errors = {
     val s0Fields =
-      s0.getFields.asScala.map { x =>
-        (x.getName, x)
-      }.toMap
+      s0.getFields.asScala.map(x => (x.getName, x)).toMap
 
     s1.getFields.asScala.toList.flatMap { f =>
       val name = f.getName
       val loc = Location(List(name))
       s0Fields
         .get(name)
-        .map { other =>
-          areCompatible(loc)(other.getType, f.getType)
-        }
+        .map(other => areCompatible(loc)(other.getType, f.getType))
         .getOrElse[Errors](List(Positional(loc, FieldNotFound)))
     }
   }
