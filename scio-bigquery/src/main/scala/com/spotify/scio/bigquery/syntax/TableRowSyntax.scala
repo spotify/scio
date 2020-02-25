@@ -76,7 +76,8 @@ final class TableRowOps(private val r: TableRow) extends AnyVal {
   def getRepeated(name: AnyRef): Seq[AnyRef] =
     this.getValue(name, _.asInstanceOf[java.util.List[AnyRef]].asScala, null)
 
-  def getRecord(name: AnyRef): TableRow = r.get(name).asInstanceOf[TableRow]
+  def getRecord(name: AnyRef): Map[String, AnyRef] =
+    r.get(name).asInstanceOf[java.util.Map[String, AnyRef]].asScala.toMap
 
   private def getValue[T](name: AnyRef, fn: AnyRef => T, default: T): T = {
     val o = r.get(name)
