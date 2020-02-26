@@ -27,13 +27,13 @@ import org.apache.avro.file.CodecFactory
 import org.apache.avro.generic.GenericRecord
 import org.apache.avro.specific.SpecificRecord
 import org.apache.beam.sdk.coders.StringUtf8Coder
-import org.apache.beam.sdk.io.AvroIO.RecordFormatter
 import org.apache.beam.sdk.io.{Compression, FileIO}
 import org.apache.beam.sdk.{io => beam}
 
 import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
 import java.util.{HashMap => JHashMap}
+import java.nio.channels.WritableByteChannel
 
 object DynamicSCollectionOps {
   private[syntax] def writeDynamic[A](
@@ -122,12 +122,10 @@ final class DynamicGenericRecordSCollectionOps[T <: GenericRecord](private val s
       val nm = new JHashMap[String, AnyRef]()
       nm.putAll(metadata.asJava)
       val sink = beam.AvroIO
-        .sinkViaGenericRecords(schema, new RecordFormatter[T] {
-          override def formatRecord(element: T, schema: Schema): GenericRecord =
-            element
-        })
+        .sink[T](schema)
         .withCodec(codec)
         .withMetadata(nm)
+
       val write =
         writeDynamic(path, numShards, suffix, destinationFn)
           .via(sink)
@@ -202,13 +200,22 @@ final class DynamicProtobufSCollectionOps[T <: Message](private val self: SColle
         "Protobuf file with dynamic destinations cannot be used in a test context"
       )
     } else {
-      val sink = beam.AvroIO
-        .sinkViaGenericRecords(avroSchema, new RecordFormatter[T] {
-          override def formatRecord(element: T, schema: Schema): GenericRecord =
-            AvroBytesUtil.encode(elemCoder, element)
-        })
-        .withCodec(codec)
-        .withMetadata(nm)
+      val genSink =
+        beam.AvroIO
+          .sink[GenericRecord](avroSchema)
+          .withCodec(codec)
+          .withMetadata(nm)
+
+      val sink =
+        new FileIO.Sink[T] {
+          override def open(channel: WritableByteChannel): Unit =
+            genSink.open(channel)
+          override def write(element: T): Unit =
+            genSink.write(AvroBytesUtil.encode(elemCoder, element))
+          override def flush(): Unit =
+            genSink.flush()
+        }
+
       val write =
         writeDynamic(path, numShards, suffix, destinationFn)
           .via(sink)
