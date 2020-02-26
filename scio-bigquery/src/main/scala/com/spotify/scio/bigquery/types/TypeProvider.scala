@@ -32,6 +32,7 @@ import com.spotify.scio.bigquery.{
   BigQueryUtil,
   StorageUtil
 }
+import com.spotify.scio.util.ScioUtil
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Charsets
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.hash.Hashing
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.io.Files
@@ -40,6 +41,8 @@ import org.slf4j.LoggerFactory
 import scala.collection.JavaConverters._
 import scala.collection.mutable.{Buffer => MBuffer, Map => MMap}
 import scala.reflect.macros._
+import scala.io.Source
+import java.{util => ju}
 
 private[types] object TypeProvider {
   private[this] val logger = LoggerFactory.getLogger(this.getClass)
@@ -86,13 +89,33 @@ private[types] object TypeProvider {
     schemaToType(c)(schema, annottees, Nil, Nil)
   }
 
+  private def cached(name: String)(s: => TableSchema): TableSchema = {
+    val temp = Paths.get(System.getProperty("java.io.tmpdir")).resolve("scio").resolve("schema")
+    val filename = s"$name.json"
+    val target = temp.resolve(filename).toFile()
+    if (target.exists()) {
+      logger.info(s"Cache hit for $name")
+      val s = Source.fromFile(target).mkString
+      ScioUtil.jsonFactory.fromString(s, classOf[TableSchema])
+    } else {
+      val js = ScioUtil.jsonFactory.toString(s)
+      Files.createParentDirs(target)
+      Files.write(js.getBytes(), target)
+      s
+    }
+  }
+
   def storageImpl(c: blackbox.Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
     import c.universe._
 
     val (table, args, selectedFields, rowRestriction) = extractStorageArgs(c)
     val tableSpec = BigQueryPartitionUtil.latestTable(bigquery, formatString(table :: args))
-    val avroSchema = bigquery.tables.storageReadSchema(tableSpec, selectedFields, rowRestriction)
-    val schema = StorageUtil.toTableSchema(avroSchema)
+    val schema =
+      cached(s"$tableSpec-${selectedFields.mkString("-")}-$rowRestriction") {
+        val avroSchema =
+          bigquery.tables.storageReadSchema(tableSpec, selectedFields, rowRestriction)
+        StorageUtil.toTableSchema(avroSchema)
+      }
 
     val traits = List(tq"${p(c, SType)}.HasStorageOptions")
     val overrides = List(
@@ -126,7 +149,10 @@ private[types] object TypeProvider {
     }
     val (queryFormat: String, _) :: queryArgs = extractedArgs
     val query = BigQueryPartitionUtil.latestQuery(bigquery, formatString(extractedArgs.map(_._1)))
-    val schema = bigquery.query.schema(query)
+    val b64q = new String(ju.Base64.getEncoder().encode(query.getBytes()))
+    val schema = cached(s"query-${b64q}") {
+      bigquery.query.schema(query)
+    }
     val traits = List(tq"${p(c, SType)}.HasQuery")
 
     val queryDef =
