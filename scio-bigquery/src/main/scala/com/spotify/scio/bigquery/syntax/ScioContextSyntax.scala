@@ -19,6 +19,7 @@ package com.spotify.scio.bigquery.syntax
 
 import com.google.api.services.bigquery.model.TableReference
 import com.spotify.scio.ScioContext
+import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
 import com.spotify.scio.bigquery.{
   BigQuerySelect,
   BigQueryStorage,
@@ -32,7 +33,6 @@ import com.spotify.scio.bigquery.{
   TableRow,
   TableRowJsonIO
 }
-import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.schemas.Schema
 import com.spotify.scio.values._
@@ -124,11 +124,11 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
    */
   def bigQueryStorage(
     table: Table,
-    selectedFields: List[String] = Nil,
+    selectedFields: List[String] = BigQueryStorage.ReadParam.DefaultSelectFields,
     rowRestriction: String = null
   ): SCollection[TableRow] =
     self.read(BigQueryStorage(table))(
-      BigQueryStorage.ReadParam(selectedFields, rowRestriction)
+      BigQueryStorage.ReadParam(selectedFields, Option(rowRestriction))
     )
 
   /**
@@ -222,8 +222,9 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
       self.read(BigQueryTyped.StorageQuery[T](Query(bqt.query.get)))
     } else {
       val table = Table.Spec(bqt.table.get)
-      val rr = bqt.rowRestriction.get
-      val params = BigQueryTyped.Storage.ReadParam(bqt.selectedFields.get, rr)
+      val rr = bqt.rowRestriction
+      val fields = bqt.selectedFields.getOrElse(BigQueryStorage.ReadParam.DefaultSelectFields)
+      val params = BigQueryTyped.Storage.ReadParam(fields, rr)
       self.read(BigQueryTyped.Storage[T](table))(params)
     }
   }
@@ -232,9 +233,9 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
     table: Table
   ): SCollection[T] =
     self.read(BigQueryTyped.Storage[T](table))(
-      BigQueryTyped.Storage.ReadParam(
-        BigQueryType[T].selectedFields.get,
-        BigQueryType[T].rowRestriction.get
+      BigQueryStorage.ReadParam(
+        BigQueryType[T].selectedFields.getOrElse(BigQueryStorage.ReadParam.DefaultSelectFields),
+        BigQueryType[T].rowRestriction
       )
     )
 
@@ -245,8 +246,8 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
     val table = Table.Spec(bqt.table.get)
     self.read(BigQueryTyped.Storage[T](table))(
       BigQueryTyped.Storage.ReadParam(
-        bqt.selectedFields.get,
-        rowRestriction
+        bqt.selectedFields.getOrElse(BigQueryStorage.ReadParam.DefaultSelectFields),
+        Option(rowRestriction)
       )
     )
   }
@@ -257,8 +258,8 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
   ): SCollection[T] =
     self.read(BigQueryTyped.Storage[T](table))(
       BigQueryTyped.Storage.ReadParam(
-        BigQueryType[T].selectedFields.get,
-        rowRestriction
+        BigQueryType[T].selectedFields.getOrElse(BigQueryStorage.ReadParam.DefaultSelectFields),
+        Option(rowRestriction)
       )
     )
 

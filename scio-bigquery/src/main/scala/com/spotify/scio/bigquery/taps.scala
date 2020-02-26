@@ -17,8 +17,8 @@
 
 package com.spotify.scio.bigquery
 
-import com.google.cloud.bigquery.storage.v1beta1.ReadOptions.TableReadOptions
 import com.google.api.services.bigquery.model.TableReference
+import com.google.cloud.bigquery.storage.v1beta1.ReadOptions.TableReadOptions
 import com.spotify.scio.ScioContext
 import com.spotify.scio.bigquery.client.BigQuery
 import com.spotify.scio.coders.Coder
@@ -27,7 +27,6 @@ import com.spotify.scio.values.SCollection
 
 import scala.collection.JavaConverters._
 import scala.concurrent.Future
-
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
 
@@ -61,8 +60,8 @@ final case class BigQueryStorageTap(table: Table, readOptions: TableReadOptions)
   override def open(sc: ScioContext): SCollection[TableRow] =
     sc.bigQueryStorage(
       table,
-      readOptions.getSelectedFieldsList().asScala.toList,
-      readOptions.getRowRestriction()
+      readOptions.getSelectedFieldsList.asScala.toList,
+      readOptions.getRowRestriction
     )
 }
 
@@ -133,8 +132,8 @@ final case class BigQueryTaps(self: Taps) {
       () =>
         BigQueryStorage(Table.Ref(table)).tap(
           BigQueryStorage.ReadParam(
-            readOptions.getSelectedFieldsList().asScala.toList,
-            readOptions.getRowRestriction()
+            readOptions.getSelectedFieldsList.asScala.toList,
+            Option(readOptions.getRowRestriction)
           )
         )
     )
@@ -151,8 +150,8 @@ final case class BigQueryTaps(self: Taps) {
         BigQueryStorage(Table.Ref(table))
           .tap(
             BigQueryStorage.ReadParam(
-              readOptions.getSelectedFieldsList().asScala.toList,
-              readOptions.getRowRestriction()
+              readOptions.getSelectedFieldsList.asScala.toList,
+              Option(readOptions.getRowRestriction)
             )
           )
           .map(fn)

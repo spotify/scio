@@ -111,7 +111,7 @@ object BigQueryType {
     def selectedFields: List[String]
 
     /** Row restriction for case class schema. */
-    def rowRestriction: String
+    def rowRestriction: Option[String]
   }
 
   /**
@@ -261,7 +261,7 @@ object BigQueryType {
     tableSpec: String,
     args: List[Any] = Nil,
     selectedFields: List[String] = Nil,
-    rowRestriction: String = null
+    rowRestriction: String = ""
   ) extends StaticAnnotation {
     def macroTransform(annottees: Any*): Any = macro TypeProvider.storageImpl
   }
@@ -399,7 +399,7 @@ class BigQueryType[T: TypeTag] {
 
   /** Storage API `restriction` from the annotation. */
   def rowRestriction: Option[String] =
-    Try(getField("rowRestriction").asInstanceOf[String]).toOption
+    Try(getField("rowRestriction").asInstanceOf[Option[String]]).toOption.flatten
 
   /** Query from the annotation. */
   def query: Option[String] =

@@ -20,7 +20,6 @@ package com.spotify.scio.bigquery
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function
 
-import com.google.cloud.bigquery.storage.v1beta1.ReadOptions.TableReadOptions
 import com.google.api.services.bigquery.model.{TableReference, TableSchema}
 import com.spotify.scio.ScioContext
 import com.spotify.scio.bigquery.ExtendedErrorInfo._
@@ -31,6 +30,7 @@ import com.spotify.scio.io.{ScioIO, Tap, TapOf, TestIO}
 import com.spotify.scio.schemas.{Schema, SchemaMaterializer}
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
+import com.twitter.chill.ClosureCleaner
 import org.apache.beam.sdk.extensions.gcp.options.GcpOptions
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.TypedRead.Method
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
@@ -44,7 +44,6 @@ import org.apache.beam.sdk.transforms.SerializableFunction
 import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
-import com.twitter.chill.ClosureCleaner
 
 private object Reads {
   private[this] val cache = new ConcurrentHashMap[ScioContext, BigQuery]()
@@ -93,17 +92,16 @@ private object Reads {
   private[scio] def bqReadStorage[T: ClassTag](sc: ScioContext)(
     typedRead: beam.BigQueryIO.TypedRead[T],
     table: Table,
-    selectedFields: List[String] = Nil,
-    rowRestriction: String = null
+    selectedFields: List[String] = BigQueryStorage.ReadParam.DefaultSelectFields,
+    rowRestriction: Option[String] = BigQueryStorage.ReadParam.DefaultRowRestriction
   ): SCollection[T] = sc.wrap {
     var read = typedRead
       .from(table.spec)
       .withMethod(Method.DIRECT_READ)
       .withSelectedFields(selectedFields.asJava)
 
-    if (rowRestriction != null) {
-      read = read.withRowRestriction(rowRestriction)
-    }
+    read = rowRestriction.fold(read)(read.withRowRestriction)
+
     sc.applyInternal(read)
   }
 }
@@ -386,17 +384,21 @@ final case class BigQueryStorage(table: Table) extends BigQueryIO[TableRow] {
     throw new UnsupportedOperationException("BigQueryStorage is read-only")
 
   override def tap(read: ReadP): Tap[TableRow] = {
-    val readOptions = TableReadOptions
-      .newBuilder()
-      .setRowRestriction(read.rowRestriction)
-      .addAllSelectedFields(read.selectFields.asJava)
-      .build()
+    val readOptions = StorageUtil.tableReadOptions(read.selectFields, read.rowRestriction)
     BigQueryStorageTap(table, readOptions)
   }
 }
 
 object BigQueryStorage {
-  final case class ReadParam(selectFields: List[String], rowRestriction: String)
+  final case class ReadParam(
+    selectFields: List[String] = ReadParam.DefaultSelectFields,
+    rowRestriction: Option[String] = ReadParam.DefaultRowRestriction
+  )
+
+  object ReadParam {
+    private[bigquery] val DefaultSelectFields: List[String] = Nil
+    private[bigquery] val DefaultRowRestriction: Option[String] = None
+  }
 
   @deprecated("this method will be removed; use apply(Table.Ref(table)) instead", "0.8.0")
   @inline final def apply(table: TableReference): BigQueryStorage =
@@ -767,11 +769,7 @@ object BigQueryTyped {
 
     override def tap(read: ReadP): Tap[T] = {
       val fn = BigQueryType[T].fromTableRow
-      val readOptions = TableReadOptions
-        .newBuilder()
-        .setRowRestriction(read.rowRestriction)
-        .addAllSelectedFields(read.selectFields.asJava)
-        .build()
+      val readOptions = StorageUtil.tableReadOptions(read.selectFields, read.rowRestriction)
       BigQueryStorageTap(table, readOptions).map(fn)
     }
   }
