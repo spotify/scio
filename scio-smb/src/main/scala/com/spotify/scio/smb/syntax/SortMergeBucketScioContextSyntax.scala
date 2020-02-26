@@ -274,6 +274,7 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
     read: => SortedBucketIO.Read[R]
   ): SortMergeTransformReadBuilder[K, Iterable[R]] = {
     val tupleTag = read.getTupleTag
+
     new SortMergeTransformReadBuilder(
       SortedBucketIO.read(keyClass).of(read),
       _.getAll(tupleTag).asScala
@@ -281,25 +282,55 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
   }
 
   /**
-   * Perform a [[SortedBucketScioContext.sortMergeCoGroup()]] operation, then immediately apply
-   * a transformation function to the merged cogroups and re-write using the same bucketing key and
-   * hashing scheme. By applying the write, transform, and write in the same transform, an extra
-   * shuffle step can be avoided.
+   * Perform a 2-way [[SortedBucketScioContext.sortMergeCoGroup()]] operation, then immediately
+   * apply a transformation function to the merged cogroups and re-write using the same bucketing
+   * key and hashing scheme. By applying the write, transform, and write in the same transform,
+   * an extra shuffle step can be avoided.
    *
-   * @group per_key
+   * @group cogroup
    */
   @experimental
-  def sortMergeTransform[K: Coder, R1: Coder, R2: Coder](
+  def sortMergeTransform[K: Coder, A: Coder, B: Coder](
     keyClass: Class[K],
-    read1: => SortedBucketIO.Read[R1],
-    read2: => SortedBucketIO.Read[R2]
-  ): SortMergeTransformReadBuilder[K, (Iterable[R1], Iterable[R2])] = {
-    val tupleTag1 = read1.getTupleTag
-    val tupleTag2 = read2.getTupleTag
+    readA: => SortedBucketIO.Read[A],
+    readB: => SortedBucketIO.Read[B]
+  ): SortMergeTransformReadBuilder[K, (Iterable[A], Iterable[B])] = {
+    val tupleTagA = readA.getTupleTag
+    val tupleTagB = readB.getTupleTag
 
     new SortMergeTransformReadBuilder(
-      SortedBucketIO.read(keyClass).of(read1).and(read2),
-      cgbk => (cgbk.getAll(tupleTag1).asScala, cgbk.getAll(tupleTag2).asScala)
+      SortedBucketIO.read(keyClass).of(readA).and(readB),
+      cgbk => (cgbk.getAll(tupleTagA).asScala, cgbk.getAll(tupleTagB).asScala)
+    )
+  }
+
+  /**
+   * Perform a 3-way [[SortedBucketScioContext.sortMergeCoGroup()]] operation, then immediately
+   * apply a transformation function to the merged cogroups and re-write using the same bucketing
+   * key and hashing scheme. By applying the write, transform, and write in the same transform,
+   * an extra shuffle step can be avoided.
+   *
+   * @group cogroup
+   */
+  @experimental
+  def sortMergeTransform[K: Coder, A: Coder, B: Coder, C: Coder](
+    keyClass: Class[K],
+    readA: => SortedBucketIO.Read[A],
+    readB: => SortedBucketIO.Read[B],
+    readC: => SortedBucketIO.Read[C]
+  ): SortMergeTransformReadBuilder[K, (Iterable[A], Iterable[B], Iterable[C])] = {
+    val tupleTagA = readA.getTupleTag
+    val tupleTagB = readB.getTupleTag
+    val tupleTagC = readC.getTupleTag
+
+    new SortMergeTransformReadBuilder(
+      SortedBucketIO.read(keyClass).of(readA).and(readB).and(readC),
+      cgbk =>
+        (
+          cgbk.getAll(tupleTagA).asScala,
+          cgbk.getAll(tupleTagB).asScala,
+          cgbk.getAll(tupleTagC).asScala
+        )
     )
   }
 
