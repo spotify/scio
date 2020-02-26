@@ -164,9 +164,6 @@ object SortMergeBucketTransformExample {
     val inputR = args("inputR")
     val output = args("output")
 
-    implicit val coder: Coder[GenericRecord] =
-      Coder.avroGenericRecordCoder(SortMergeBucketExample.UserDataSchema)
-
     sc.sortMergeTransform(
         classOf[Integer],
         AvroSortedBucketIO

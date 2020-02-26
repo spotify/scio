@@ -269,7 +269,7 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
    * @group per_key
    */
   @experimental
-  def sortMergeTransform[K: Coder: ClassTag, R: Coder](
+  def sortMergeTransform[K, R](
     keyClass: Class[K],
     read: => SortedBucketIO.Read[R]
   ): SortMergeTransformReadBuilder[K, Iterable[R]] = {
