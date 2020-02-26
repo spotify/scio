@@ -23,6 +23,7 @@ import org.scalafmt.sbt.ScalafmtPlugin.scalafmtConfigSettings
 import bloop.integrations.sbt.BloopDefaults
 
 ThisBuild / turbo := true
+ThisBuild / conflictManager := ConflictManager.strict
 
 val algebirdVersion = "0.13.6"
 val algebraVersion = "2.0.0"
@@ -144,24 +145,8 @@ val beamSDKIODependencies = Def.settings(
     "io.grpc" % "grpc-netty" % grpcVersion,
     "io.grpc" % "grpc-stub" % grpcVersion,
     "io.grpc" % "grpc-okhttp" % grpcVersion,
-//    "io.grpc" % "grpc-api" % grpcVersion,
     "com.google.api" % "gax" % gaxVersion,
     "com.google.api" % "gax-grpc" % gaxVersion
-  ),
-  dependencyOverrides ++= Seq(
-    "com.google.guava" % "guava" % guavaVersion,
-    "com.google.api" % "gax" % gaxVersion,
-    "com.google.api" % "gax-grpc" % gaxVersion,
-    "com.google.http-client" % "google-http-client" % googleHttpClientsVersion,
-    "com.google.http-client" % "google-http-client-jackson2" % googleHttpClientsVersion,
-    "io.grpc" % "grpc-core" % grpcVersion,
-    "io.grpc" % "grpc-context" % grpcVersion,
-    "io.grpc" % "grpc-auth" % grpcVersion,
-    "io.grpc" % "grpc-netty" % grpcVersion,
-    "io.grpc" % "grpc-stub" % grpcVersion,
-    "io.grpc" % "grpc-okhttp" % grpcVersion,
-//    "io.grpc" % "grpc-api" % grpcVersion,
-    "io.opencensus" % "opencensus-api" % opencensusVersion
   )
 )
 
@@ -450,10 +435,6 @@ lazy val `scio-core`: Project = project
     resources in Compile ++= Seq(
       (baseDirectory in ThisBuild).value / "build.sbt",
       (baseDirectory in ThisBuild).value / "version.sbt"
-    ),
-    dependencyOverrides ++= Seq(
-      "com.google.guava" % "guava" % guavaVersion,
-      "io.grpc" % "grpc-stub" % grpcVersion
     ),
     libraryDependencies ++= Seq(
       "com.chuusai" %% "shapeless" % shapelessVersion,
@@ -908,9 +889,6 @@ lazy val `scio-jdbc`: Project = project
   .settings(commonSettings)
   .settings(
     description := "Scio add-on for JDBC",
-    dependencyOverrides ++= Seq(
-      "com.google.guava" % "guava" % guavaVersion
-    ),
     libraryDependencies ++= Seq(
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-io-jdbc" % beamVersion
@@ -951,9 +929,6 @@ lazy val `scio-parquet`: Project = project
       "org.apache.parquet" % "parquet-common" % parquetVersion,
       "org.apache.parquet" % "parquet-hadoop" % parquetVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion
-    ),
-    dependencyOverrides ++= Seq(
-      "org.apache.avro" % "avro" % avroVersion
     )
   )
   .dependsOn(
@@ -1045,9 +1020,6 @@ lazy val `scio-examples`: Project = project
   .settings(beamRunnerSettings)
   .settings(macroSettings)
   .settings(
-    dependencyOverrides ++= Seq(
-      "org.apache.httpcomponents" % "httpcore" % httpCoreVersion
-    ),
     libraryDependencies ++= Seq(
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-extensions-google-cloud-platform-core" % beamVersion,
@@ -1416,3 +1388,112 @@ val scalaMappings = Seq(
   ("org.scalatest", "scalatest", "http://doc.scalatest.org/3.0.0")
 )
 val docMappings = javaMappings ++ scalaMappings
+
+ThisBuild / dependencyOverrides ++= Seq(
+  "com.fasterxml.jackson.core" % "jackson-annotations" % jacksonVersion,
+  "com.fasterxml.jackson.core" % "jackson-core" % jacksonVersion,
+  "com.fasterxml.jackson.core" % "jackson-databind" % jacksonVersion,
+  "com.fasterxml.jackson.module" %% "jackson-module-scala" % jacksonVersion,
+  "com.google.api-client" % "google-api-client" % googleClientsVersion,
+  "com.google.api.grpc" % "proto-google-cloud-bigquerystorage-v1beta1" % "0.83.0",
+  "com.google.api.grpc" % "proto-google-cloud-bigtable-v2" % "0.44.0",
+  "com.google.api.grpc" % "proto-google-cloud-datastore-v1" % "0.44.0",
+  "com.google.api.grpc" % "proto-google-common-protos" % "1.17.0",
+  "com.google.api.grpc" % "proto-google-iam-v1" % "0.13.0",
+  "com.google.api" % "api-common" % "1.8.1",
+  "com.google.api" % "gax-grpc" % gaxVersion,
+  "com.google.api" % "gax" % gaxVersion,
+  "com.google.apis" % "google-api-services-bigquery" % "v2-rev20190917-1.30.3",
+  "com.google.apis" % "google-api-services-dataflow" % "v1b3-rev20190927-1.30.3",
+  "com.google.apis" % "google-api-services-storage" % "v1-rev20181109-1.28.0",
+  "com.google.auth" % "google-auth-library-credentials" % googleAuthVersion,
+  "com.google.auth" % "google-auth-library-oauth2-http" % googleAuthVersion,
+  "com.google.auto.value" % "auto-value-annotations" % autoValueVersion,
+  "com.google.auto.value" % "auto-value" % autoValueVersion,
+  "com.google.cloud.bigdataoss" % "gcsio" % "2.0.1",
+  "com.google.cloud.bigdataoss" % "util" % "2.0.1",
+  "com.google.cloud" % "google-cloud-core-grpc" % "1.61.0",
+  "com.google.cloud" % "google-cloud-core-http" % "1.55.0",
+  "com.google.cloud" % "google-cloud-core" % "1.61.0",
+  "com.google.cloud" % "google-cloud-storage" % gcsVersion,
+  "com.google.code.findbugs" % "jsr305" % "3.0.2",
+  "com.google.code.gson" % "gson" % "2.7",
+  "com.google.errorprone" % "error_prone_annotations" % "2.3.4",
+  "com.google.guava" % "guava" % guavaVersion,
+  "com.google.http-client" % "google-http-client-jackson2" % "1.33.0",
+  "com.google.http-client" % "google-http-client" % "1.33.0",
+  "com.google.j2objc" % "j2objc-annotations" % "1.3",
+  "com.google.oauth-client" % "google-oauth-client" % "1.30.4",
+  "com.google.protobuf" % "protobuf-java-util" % protobufVersion,
+  "com.google.protobuf" % "protobuf-java" % protobufVersion,
+  "com.propensive" %% "magnolia" % "0.12.6",
+  "com.squareup.okio" % "okio" % "1.13.0",
+  "com.thoughtworks.paranamer" % "paranamer" % "2.8",
+  "commons-cli" % "commons-cli" % "1.2",
+  "commons-codec" % "commons-codec" % "1.14",
+  "commons-collections" % "commons-collections" % "3.2.2",
+  "commons-io" % "commons-io" % commonsIoVersion,
+  "commons-lang" % "commons-lang" % "2.6",
+  "commons-logging" % "commons-logging" % "1.2",
+  "io.circe" %% "circe-core" % circeVersion,
+  "io.circe" %% "circe-generic" % circeVersion,
+  "io.circe" %% "circe-parser" % circeVersion,
+  "io.dropwizard.metrics" % "metrics-core" % "3.2.2",
+  "io.grpc" % "grpc-auth" % grpcVersion,
+  "io.grpc" % "grpc-context" % grpcVersion,
+  "io.grpc" % "grpc-core" % grpcVersion,
+  "io.grpc" % "grpc-netty-shaded" % grpcVersion,
+  "io.grpc" % "grpc-protobuf" % grpcVersion,
+  "io.grpc" % "grpc-stub" % grpcVersion,
+  "io.netty" % "netty-buffer" % nettyVersion,
+  "io.netty" % "netty-codec-http" % nettyVersion,
+  "io.netty" % "netty-codec-http2" % nettyVersion,
+  "io.netty" % "netty-codec" % nettyVersion,
+  "io.netty" % "netty-common" % nettyVersion,
+  "io.netty" % "netty-handler" % nettyVersion,
+  "io.netty" % "netty-resolver" % nettyVersion,
+  "io.netty" % "netty-transport" % nettyVersion,
+  "io.netty" % "netty" % "3.7.0.Final",
+  "io.opencensus" % "opencensus-api" % opencensusVersion,
+  "io.opencensus" % "opencensus-contrib-grpc-util" % opencensusVersion,
+  "io.opencensus" % "opencensus-contrib-http-util" % opencensusVersion,
+  "javax.annotation" % "javax.annotation-api" % "1.3.2",
+  "joda-time" % "joda-time" % jodaTimeVersion,
+  "junit" % "junit" % junitVersion,
+  "log4j" % "log4j" % "1.2.17",
+  "net.java.dev.jna" % "jna" % "4.1.0",
+  "org.apache.avro" % "avro" % avroVersion,
+  "org.apache.commons" % "commons-compress" % commonsCompressVersion,
+  "org.apache.commons" % "commons-lang3" % commonsLang3Version,
+  "org.apache.commons" % "commons-math3" % commonsMath3Version,
+  "org.apache.httpcomponents" % "httpclient" % "4.5.10",
+  "org.apache.httpcomponents" % "httpcore" % httpCoreVersion,
+  "org.apache.thrift" % "libthrift" % "0.9.2",
+  "org.checkerframework" % "checker-qual" % "3.1.0",
+  "org.codehaus.jackson" % "jackson-core-asl" % "1.9.13",
+  "org.codehaus.jackson" % "jackson-jaxrs" % "1.9.13",
+  "org.codehaus.jackson" % "jackson-mapper-asl" % "1.9.13",
+  "org.codehaus.jackson" % "jackson-xc" % "1.9.13",
+  "org.codehaus.mojo" % "animal-sniffer-annotations" % "1.18",
+  "org.hamcrest" % "hamcrest-core" % hamcrestVersion,
+  "org.objenesis" % "objenesis" % "2.5.1",
+  "org.ow2.asm" % "asm" % "5.0.4",
+  "org.scala-lang.modules" %% "scala-collection-compat" % "2.1.2",
+  "org.scala-lang.modules" %% "scala-xml" % "1.2.0",
+  "org.scalacheck" %% "scalacheck" % scalacheckVersion,
+  "org.scalactic" %% "scalactic" % scalatestVersion,
+  "org.scalatest" %% "scalatest" % scalatestVersion,
+  "org.slf4j" % "slf4j-api" % slf4jVersion,
+  "org.slf4j" % "slf4j-log4j12" % "1.7.10",
+  "org.tukaani" % "xz" % "1.8",
+  "org.typelevel" %% "algebra" % algebraVersion,
+  "org.typelevel" %% "cats-core" % catsVersion,
+  "org.xerial.snappy" % "snappy-java" % "1.1.4",
+  "org.yaml" % "snakeyaml" % "1.12"
+) ++ {
+  if (scalaBinaryVersion.value == "2.11") {
+    Seq("com.nrinaudo" %% "kantan.codecs" % "0.5.0")
+  } else {
+    Seq("com.nrinaudo" %% "kantan.codecs" % kantanCsvVersion)
+  }
+}
