@@ -23,7 +23,7 @@ import org.scalafmt.sbt.ScalafmtPlugin.scalafmtConfigSettings
 import bloop.integrations.sbt.BloopDefaults
 
 ThisBuild / turbo := true
-ThisBuild / conflictManager := ConflictManager.strict
+//ThisBuild / conflictManager := ConflictManager.strict
 
 val algebirdVersion = "0.13.6"
 val algebraVersion = "2.0.0"
