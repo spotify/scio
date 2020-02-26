@@ -27,21 +27,35 @@ import org.joda.time.{Instant, LocalDate, LocalDateTime, LocalTime}
 
 import scala.collection.JavaConverters._
 import scala.reflect.runtime.universe._
+import com.spotify.scio.util.Cache
 
 private[types] object SchemaProvider {
-  def avroSchemaOf[T: TypeTag]: Schema =
-    BigQueryUtils.toGenericAvroSchema(typeTag[T].tpe.toString, schemaOf[T].getFields)
 
-  def schemaOf[T: TypeTag]: TableSchema = {
-    val fields = typeOf[T].erasure match {
-      case t if isCaseClass(t) => toFields(t)
-      case t                   => throw new RuntimeException(s"Unsupported type $t")
-    }
-    val r = new TableSchema().setFields(fields.toList.asJava)
-    debug(s"SchemaProvider.schemaOf[${typeOf[T]}]:")
-    debug(r)
-    r
-  }
+  private val avroSchemaCache =
+    Cache.concurrentHashMap[String, Schema]
+
+  def avroSchemaOf[T: TypeTag]: Schema =
+    avroSchemaCache.get(
+      typeTag[T].tpe.toString,
+      BigQueryUtils.toGenericAvroSchema(typeTag[T].tpe.toString, schemaOf[T].getFields)
+    )
+
+  private val tableSchemaCache =
+    Cache.concurrentHashMap[Type, TableSchema]
+
+  def schemaOf[T: TypeTag]: TableSchema =
+    tableSchemaCache.get(
+      typeOf[T].erasure, {
+        val fields = typeOf[T].erasure match {
+          case t if isCaseClass(t) => toFields(t)
+          case t                   => throw new RuntimeException(s"Unsupported type $t")
+        }
+        val r = new TableSchema().setFields(fields.toList.asJava)
+        debug(s"SchemaProvider.schemaOf[${typeOf[T]}]:")
+        debug(r)
+        r
+      }
+    )
 
   private def field(
     mode: String,
