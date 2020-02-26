@@ -769,7 +769,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     out: () => PrintStream = () => Console.out,
     prefix: String = "",
     enabled: Boolean = true
-  )(implicit coder: Coder[T]): SCollection[T] =
+  ): SCollection[T] =
     if (enabled) {
       tap(elem => out().println(prefix + elem))
     } else {
@@ -781,8 +781,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    *
    * @group debug
    */
-  def tap[U](f: T => U)(implicit coder: Coder[T]): SCollection[T] =
-    map { elem => f(elem); elem }
+  def tap[U](f: T => U): SCollection[T] =
+    map { elem => f(elem); elem }(Coder.beam(internal.getCoder))
 
   // =======================================================================
   // Side input operations
