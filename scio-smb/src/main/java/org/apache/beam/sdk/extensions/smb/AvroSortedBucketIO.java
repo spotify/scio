@@ -168,7 +168,8 @@ public class AvroSortedBucketIO {
 
   /** Writes to Avro sorted-bucket files using {@link SortedBucketSink}. */
   @AutoValue
-  public abstract static class Write<K, T extends GenericRecord> extends SortedBucketIO.Write<K, T> {
+  public abstract static class Write<K, T extends GenericRecord>
+      extends SortedBucketIO.Write<K, T> {
     @Nullable
     abstract String getKeyField();
 

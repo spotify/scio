@@ -108,9 +108,7 @@ public class SortedBucketIO {
     private TransformFn<K, V> toFinalResultT;
 
     private CoGbkTransform(
-        Class<K> keyClass,
-        List<Read<?>> reads,
-        SortedBucketIO.Write<K, V> write) {
+        Class<K> keyClass, List<Read<?>> reads, SortedBucketIO.Write<K, V> write) {
       this.keyClass = keyClass;
       this.reads = reads;
       this.write = write;
@@ -136,16 +134,15 @@ public class SortedBucketIO {
       }
 
       return input.apply(
-        new SortedBucketTransform<>(
-          keyClass,
-          write.getBucketMetadata(),
-          outputDirectory,
-          tempDirectory,
-          write.getFilenameSuffix(),
-          write.getFileOperations(),
-          bucketedInputs,
-          toFinalResultT
-        ));
+          new SortedBucketTransform<>(
+              keyClass,
+              write.getBucketMetadata(),
+              outputDirectory,
+              tempDirectory,
+              write.getFilenameSuffix(),
+              write.getFileOperations(),
+              bucketedInputs,
+              toFinalResultT));
     }
   }
 
@@ -176,6 +173,7 @@ public class SortedBucketIO {
     abstract int getSorterMemoryMb();
 
     abstract FileOperations<V> getFileOperations();
+
     abstract BucketMetadata<K, V> getBucketMetadata();
 
     @Override
@@ -195,8 +193,7 @@ public class SortedBucketIO {
               tempDirectory,
               getFilenameSuffix(),
               getFileOperations(),
-              getSorterMemoryMb()
-          ));
+              getSorterMemoryMb()));
     }
   }
 }
