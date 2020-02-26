@@ -290,7 +290,7 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
    * @group cogroup
    */
   @experimental
-  def sortMergeTransform[K: Coder, A: Coder, B: Coder](
+  def sortMergeTransform[K, A, B](
     keyClass: Class[K],
     readA: => SortedBucketIO.Read[A],
     readB: => SortedBucketIO.Read[B]
@@ -313,7 +313,7 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
    * @group cogroup
    */
   @experimental
-  def sortMergeTransform[K: Coder, A: Coder, B: Coder, C: Coder](
+  def sortMergeTransform[K, A, B, C](
     keyClass: Class[K],
     readA: => SortedBucketIO.Read[A],
     readB: => SortedBucketIO.Read[B],
@@ -334,7 +334,7 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
     )
   }
 
-  class SortMergeTransformReadBuilder[K: Coder, R: Coder](
+  class SortMergeTransformReadBuilder[K, R](
     coGbk: => SortedBucketIO.CoGbk[K],
     toR: CoGbkResult => R
   ) extends Serializable {
@@ -345,7 +345,7 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
       new SortMergeTransformWriteBuilder(coGbk.to(write), toR)
   }
 
-  class SortMergeTransformWriteBuilder[K: Coder, R: Coder, W: Coder](
+  class SortMergeTransformWriteBuilder[K, R, W](
     transform: => SortedBucketIO.CoGbkTransform[K, W],
     toR: CoGbkResult => R
   ) extends Serializable {
