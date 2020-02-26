@@ -249,7 +249,7 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
     self.read(BigQueryTyped.Storage[T](table))(
       BigQueryTyped.Storage.ReadParam(
         bqt.selectedFields.getOrElse(BigQueryStorage.ReadParam.DefaultSelectFields),
-        Some(rowRestriction)
+        Option(rowRestriction)
       )
     )
   }
@@ -261,7 +261,7 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
     self.read(BigQueryTyped.Storage[T](table))(
       BigQueryTyped.Storage.ReadParam(
         BigQueryType[T].selectedFields.getOrElse(BigQueryStorage.ReadParam.DefaultSelectFields),
-        Some(rowRestriction)
+        Option(rowRestriction)
       )
     )
 
