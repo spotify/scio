@@ -21,7 +21,6 @@ import com.spotify.scio.ScioContext
 import com.spotify.scio.annotations.experimental
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.io.{ClosedTap, EmptyTap}
-import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values._
 import org.apache.beam.sdk.extensions.smb.{SortedBucketIO, SortedBucketTransform}
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
@@ -37,7 +36,7 @@ trait SortMergeBucketScioContextSyntax {
     new SortedBucketScioContext(sc)
 }
 
-final class SortedBucketScioContext(@transient private val self: ScioContext) {
+final class SortedBucketScioContext(@transient private val self: ScioContext) extends Serializable {
 
   /**
    * Return an SCollection containing all pairs of elements with matching keys in `lhs` and
@@ -263,93 +262,82 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) {
 
   /**
    * Perform a [[SortedBucketScioContext.sortMergeGroupByKey()]] operation, then immediately apply
+   * a transformation function to the merged groups and re-write using the same bucketing key and
+   * hashing scheme. By applying the write, transform, and write in the same transform, an extra
+   * shuffle step can be avoided.
+   *
+   * @group per_key
+   */
+  @experimental
+  def sortMergeTransform[K: Coder: ClassTag, R: Coder](
+    keyClass: Class[K],
+    read: => SortedBucketIO.Read[R]
+  ): SortMergeTransformReadBuilder[K, Iterable[R]] = {
+    val tupleTag = read.getTupleTag
+    new SortMergeTransformReadBuilder(
+      SortedBucketIO.read(keyClass).of(read),
+      _.getAll(tupleTag).asScala
+    )
+  }
+
+  /**
+   * Perform a [[SortedBucketScioContext.sortMergeCoGroup()]] operation, then immediately apply
    * a transformation function to the merged cogroups and re-write using the same bucketing key and
    * hashing scheme. By applying the write, transform, and write in the same transform, an extra
    * shuffle step can be avoided.
    *
    * @group per_key
-   *
-   * @param transformVia transforms merged cogroups into final output type `W`. Each `W` should
-   *                     be outputted to the given [[SortedBucketTransform.OutputCollector]]'s
-   *                     `accept` method, at which point it will be written to file system.
    */
   @experimental
-  def sortMergeTransform[K: Coder: ClassTag, R: Coder, W: Coder](
-    read: SortedBucketIO.Read[R],
-    write: SortedBucketIO.Write[K, W]
-  )(
-    transformVia: (K, Iterable[R], SortedBucketTransform.OutputCollector[W]) => Unit
-  ): ClosedTap[Nothing] = {
-    val tupleTag = read.getTupleTag
+  def sortMergeTransform[K: Coder, R1: Coder, R2: Coder](
+    keyClass: Class[K],
+    read1: => SortedBucketIO.Read[R1],
+    read2: => SortedBucketIO.Read[R2]
+  ): SortMergeTransformReadBuilder[K, (Iterable[R1], Iterable[R2])] = {
+    val tupleTag1 = read1.getTupleTag
+    val tupleTag2 = read2.getTupleTag
 
-    val t = SortedBucketIO
-      .read(ScioUtil.classOf[K])
-      .of(read)
-      .transformVia[W](new SortedBucketTransform.TransformFn[K, W]() {
-        override def writeTransform(
-          keyGroup: KV[K, CoGbkResult],
-          outputConsumer: SortedBucketTransform.OutputCollector[W]
-        ): Unit =
-          transformVia.apply(
-            keyGroup.getKey,
-            keyGroup.getValue.getAll(tupleTag).asScala,
-            outputConsumer
-          )
-      })
-      .to(write)
-
-    self.applyInternal(t)
-    ClosedTap[Nothing](EmptyTap)
+    new SortMergeTransformReadBuilder(
+      SortedBucketIO.read(keyClass).of(read1).and(read2),
+      cgbk => (cgbk.getAll(tupleTag1).asScala, cgbk.getAll(tupleTag2).asScala)
+    )
   }
 
-  /**
-   * Perform a [[SortedBucketScioContext.sortMergeCoGroup()]] operation, then immediately apply a
-   * transformation function to the merged cogroups and re-write using the same bucketing key
-   * and hashing scheme. By applying the write, transform, and write in the same transform, an
-   * extra shuffle step can be avoided.
-   *
-   * @group per_key
-   *
-   * @param transformVia transforms merged cogroups into final output type `W`. Each `W` should
-   *                     be outputted to the given [[SortedBucketTransform.OutputCollector]]'s
-   *                     `accept` method, at which point it will be written to file system.
-   */
-  @experimental
-  def sortMergeTransform[K: Coder: ClassTag, R1: Coder, R2: Coder, W: Coder](
-    read1: SortedBucketIO.Read[R1],
-    read2: SortedBucketIO.Read[R2],
-    write: SortedBucketIO.Write[K, W]
-  )(
-    transformVia: (
-      K,
-      (Iterable[R1], Iterable[R2]),
-      SortedBucketTransform.OutputCollector[W]
-    ) => Unit
-  ): ClosedTap[Nothing] = {
-    val (tupleTagA, tupleTagB) = (read1.getTupleTag, read2.getTupleTag)
+  class SortMergeTransformReadBuilder[K: Coder, R: Coder](
+    coGbk: => SortedBucketIO.CoGbk[K],
+    toR: CoGbkResult => R
+  ) extends Serializable {
 
-    val t = SortedBucketIO
-      .read(ScioUtil.classOf[K])
-      .of(read1)
-      .and(read2)
-      .transformVia[W](new SortedBucketTransform.TransformFn[K, W]() {
+    def to[W: Coder](
+      write: => SortedBucketIO.Write[K, W]
+    ): SortMergeTransformWriteBuilder[K, R, W] =
+      new SortMergeTransformWriteBuilder(coGbk.to(write), toR)
+  }
+
+  class SortMergeTransformWriteBuilder[K: Coder, R: Coder, W: Coder](
+    transform: => SortedBucketIO.CoGbkTransform[K, W],
+    toR: CoGbkResult => R
+  ) extends Serializable {
+
+    def via(
+      transformFn: (K, R, SortedBucketTransform.OutputCollector[W]) => Unit
+    ): ClosedTap[Nothing] = {
+      val fn = new SortedBucketTransform.TransformFn[K, W]() {
         override def writeTransform(
           keyGroup: KV[K, CoGbkResult],
           outputConsumer: SortedBucketTransform.OutputCollector[W]
         ): Unit =
-          transformVia
-            .apply(
-              keyGroup.getKey,
-              (
-                keyGroup.getValue.getAll(tupleTagA).asScala,
-                keyGroup.getValue.getAll(tupleTagB).asScala
-              ),
-              outputConsumer
-            )
-      })
-      .to(write)
+          transformFn.apply(
+            keyGroup.getKey,
+            toR(keyGroup.getValue),
+            outputConsumer
+          )
+      }
 
-    self.applyInternal(t)
-    ClosedTap[Nothing](EmptyTap)
+      val t = transform.via(fn)
+
+      self.applyInternal(t)
+      ClosedTap[Nothing](EmptyTap)
+    }
   }
 }

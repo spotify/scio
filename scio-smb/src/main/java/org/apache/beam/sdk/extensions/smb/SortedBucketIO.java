@@ -89,8 +89,8 @@ public class SortedBucketIO {
       return new CoGbk<>(keyClass, newReads);
     }
 
-    public <V> CoGbkTransform<K, V> transformVia(TransformFn<K, V> toFinalResultT) {
-      return new CoGbkTransform<>(this.keyClass, this.reads, toFinalResultT);
+    public <V> CoGbkTransform<K, V> to(SortedBucketIO.Write<K, V> write) {
+      return new CoGbkTransform<>(this.keyClass, this.reads, write);
     }
 
     @Override
@@ -104,26 +104,27 @@ public class SortedBucketIO {
   public static class CoGbkTransform<K, V> extends PTransform<PBegin, WriteResult> {
     private final Class<K> keyClass;
     private final List<Read<?>> reads;
-    private final TransformFn<K, V> toFinalResultT;
-    private SortedBucketIO.Write<K, V> write;
+    private final SortedBucketIO.Write<K, V> write;
+    private TransformFn<K, V> toFinalResultT;
 
     private CoGbkTransform(
         Class<K> keyClass,
         List<Read<?>> reads,
-        TransformFn<K, V> toFinalResultT) {
+        SortedBucketIO.Write<K, V> write) {
       this.keyClass = keyClass;
       this.reads = reads;
-      this.toFinalResultT = toFinalResultT;
+      this.write = write;
     }
 
-    public CoGbkTransform<K, V> to(SortedBucketIO.Write<K, V> write) {
-      this.write = write;
+    public CoGbkTransform<K, V> via(TransformFn<K, V> toFinalResultT) {
+      this.toFinalResultT = toFinalResultT;
       return this;
     }
 
     @Override
     public WriteResult expand(PBegin input) {
       Preconditions.checkNotNull(write.getOutputDirectory(), "outputDirectory is not set");
+      Preconditions.checkNotNull(toFinalResultT, "TransformFn<K, V>v via() is not set");
 
       final List<BucketedInput<?, ?>> bucketedInputs =
           reads.stream().map(Read::toBucketedInput).collect(Collectors.toList());

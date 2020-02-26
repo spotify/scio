@@ -22,6 +22,8 @@
 // --outputL=[OUTPUT]--outputR=[OUTPUT]"`
 // `sbt runMain "com.spotify.scio.examples.extra.SortMergeBucketJoinExample
 // --inputL=[INPUT]--inputR=[INPUT] --output=[OUTPUT]"`
+// `sbt runMain "com.spotify.scio.examples.extra.SortMergeBucketTransformExample
+// --inputL=[INPUT]--inputR=[INPUT] --output=[OUTPUT]"`
 package com.spotify.scio.examples.extra
 
 import com.spotify.scio.ContextAndArgs
@@ -166,31 +168,35 @@ object SortMergeBucketTransformExample {
       Coder.avroGenericRecordCoder(SortMergeBucketExample.UserDataSchema)
 
     sc.sortMergeTransform(
-      AvroSortedBucketIO
-        .read(new TupleTag[GenericRecord](inputL), SortMergeBucketExample.UserDataSchema)
-        .from(inputL),
-      AvroSortedBucketIO
-        .read(new TupleTag[Account](inputR), classOf[Account])
-        .from(inputR),
-      AvroSortedBucketIO
-        .write(classOf[Integer], "userId", classOf[Account])
-        .to(output)
-        .withNumBuckets(2)
-        .withNumShards(1)
-        .withHashType(HashType.MURMUR3_32)
-    ) {
-      case (key, (users, accounts), outputCollector) =>
-        users.foreach { user =>
-          outputCollector.accept(
-            SortMergeBucketExample.account(
-              key,
-              user.get("age").toString,
-              "combinedAmount",
-              accounts.foldLeft(0.0)(_ + _.getAmount)
+        classOf[Integer],
+        AvroSortedBucketIO
+          .read(new TupleTag[GenericRecord](inputL), SortMergeBucketExample.UserDataSchema)
+          .from(inputL),
+        AvroSortedBucketIO
+          .read(new TupleTag[Account](inputR), classOf[Account])
+          .from(inputR)
+      )
+      .to(
+        AvroSortedBucketIO
+          .write(classOf[Integer], "userId", classOf[Account])
+          .to(output)
+          .withNumBuckets(2)
+          .withNumShards(1)
+          .withHashType(HashType.MURMUR3_32)
+      )
+      .via {
+        case (key, (users, accounts), outputCollector) =>
+          users.foreach { user =>
+            outputCollector.accept(
+              SortMergeBucketExample.account(
+                key,
+                user.get("age").toString,
+                "combinedAmount",
+                accounts.foldLeft(0.0)(_ + _.getAmount)
+              )
             )
-          )
-        }
-    }
+          }
+      }
 
     sc.run().waitUntilDone()
     ()
