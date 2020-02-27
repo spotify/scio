@@ -48,6 +48,9 @@ import org.apache.beam.sdk.extensions.smb.SMBFilenamePolicy.FileAssignment;
 import org.apache.beam.sdk.io.FileSystems;
 import org.apache.beam.sdk.io.fs.ResourceId;
 import org.apache.beam.sdk.io.fs.ResourceIdCoder;
+import org.apache.beam.sdk.metrics.Counter;
+import org.apache.beam.sdk.metrics.Distribution;
+import org.apache.beam.sdk.metrics.Metrics;
 import org.apache.beam.sdk.transforms.Create;
 import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.transforms.PTransform;
@@ -130,7 +133,9 @@ public class SortedBucketSource<FinalKeyT>
         .apply("ReshuffleKeys", reshuffle)
         .apply(
             "MergeBuckets",
-            ParDo.of(new MergeBuckets<>(sources, sourceSpec.leastNumBuckets, sourceSpec.keyCoder)))
+            ParDo.of(
+                new MergeBuckets<>(
+                    this.getName(), sources, sourceSpec.leastNumBuckets, sourceSpec.keyCoder)))
         .setCoder(KvCoder.of(sourceSpec.keyCoder, resultCoder));
   }
 
@@ -193,11 +198,21 @@ public class SortedBucketSource<FinalKeyT>
     private final Coder<FinalKeyT> keyCoder;
     private final List<BucketedInput<?, ?>> sources;
 
+    private final Counter elementsRead;
+    private final Distribution keyGroupSize;
+
     MergeBuckets(
-        List<BucketedInput<?, ?>> sources, int leastNumBuckets, Coder<FinalKeyT> keyCoder) {
+        String transformName,
+        List<BucketedInput<?, ?>> sources,
+        int leastNumBuckets,
+        Coder<FinalKeyT> keyCoder) {
       this.leastNumBuckets = leastNumBuckets;
       this.keyCoder = keyCoder;
       this.sources = sources;
+
+      elementsRead = Metrics.counter(SortedBucketSource.class, transformName + "-ElementsRead");
+      keyGroupSize =
+          Metrics.distribution(SortedBucketSource.class, transformName + "-KeyGroupSize");
     }
 
     @ProcessElement
@@ -215,14 +230,18 @@ public class SortedBucketSource<FinalKeyT>
             } catch (Exception e) {
               throw new RuntimeException("Failed to decode and merge key group", e);
             }
-          });
+          },
+          elementsRead,
+          keyGroupSize);
     }
 
     static void merge(
         int bucketId,
         List<BucketedInput<?, ?>> sources,
         int leastNumBuckets,
-        Consumer<KV<byte[], CoGbkResult>> consumer) {
+        Consumer<KV<byte[], CoGbkResult>> consumer,
+        Counter elementsRead,
+        Distribution keyGroupSize) {
       final int numSources = sources.size();
 
       // Initialize iterators and tuple tags for sources
@@ -258,44 +277,46 @@ public class SortedBucketSource<FinalKeyT>
         }
 
         // Find next key-value groups
-        KV<byte[], CoGbkResult> mergedKeyGroup = mergeKeyGroup(nextKeyGroups, resultSchema);
+        final Map.Entry<TupleTag, KV<byte[], Iterator<?>>> minKeyEntry =
+            nextKeyGroups.entrySet().stream().min(keyComparator).orElse(null);
+
+        final Iterator<Map.Entry<TupleTag, KV<byte[], Iterator<?>>>> nextKeyGroupsIt =
+            nextKeyGroups.entrySet().iterator();
+        final List<Iterable<?>> valueMap = new ArrayList<>();
+        for (int i = 0; i < resultSchema.size(); i++) {
+          valueMap.add(new ArrayList<>());
+        }
+
+        int keyGroupCount = 0;
+        while (nextKeyGroupsIt.hasNext()) {
+          final Map.Entry<TupleTag, KV<byte[], Iterator<?>>> entry = nextKeyGroupsIt.next();
+          if (keyComparator.compare(entry, minKeyEntry) == 0) {
+            int index = resultSchema.getIndex(entry.getKey());
+            @SuppressWarnings("unchecked")
+            final List<Object> values = (List<Object>) valueMap.get(index);
+            // TODO: this exhausts everything from the "lazy" iterator and can be expensive.
+            // To fix we have to make the underlying Reader range aware so that it's safe to
+            // re-iterate or stop without exhausting remaining elements in the value group.
+            entry.getValue().getValue().forEachRemaining(values::add);
+            nextKeyGroupsIt.remove();
+            keyGroupCount += values.size();
+          }
+        }
+
+        keyGroupSize.update(keyGroupCount);
+        elementsRead.inc(keyGroupCount);
+
+        final KV<byte[], CoGbkResult> mergedKeyGroup =
+            KV.of(
+                minKeyEntry.getValue().getKey(),
+                CoGbkResultUtil.newCoGbkResult(resultSchema, valueMap));
+
         consumer.accept(mergedKeyGroup);
 
         if (completedSources == numSources) {
           break;
         }
       }
-    }
-
-    private static KV<byte[], CoGbkResult> mergeKeyGroup(
-        Map<TupleTag, KV<byte[], Iterator<?>>> nextKeyGroups, CoGbkResultSchema resultSchema) {
-      final Map.Entry<TupleTag, KV<byte[], Iterator<?>>> minKeyEntry =
-          nextKeyGroups.entrySet().stream().min(keyComparator).orElse(null);
-
-      final Iterator<Map.Entry<TupleTag, KV<byte[], Iterator<?>>>> nextKeyGroupsIt =
-          nextKeyGroups.entrySet().iterator();
-      final List<Iterable<?>> valueMap = new ArrayList<>();
-      for (int i = 0; i < resultSchema.size(); i++) {
-        valueMap.add(new ArrayList<>());
-      }
-
-      while (nextKeyGroupsIt.hasNext()) {
-        final Map.Entry<TupleTag, KV<byte[], Iterator<?>>> entry = nextKeyGroupsIt.next();
-        if (keyComparator.compare(entry, minKeyEntry) == 0) {
-          int index = resultSchema.getIndex(entry.getKey());
-          @SuppressWarnings("unchecked")
-          final List<Object> values = (List<Object>) valueMap.get(index);
-          // TODO: this exhausts everything from the "lazy" iterator and can be expensive.
-          // To fix we have to make the underlying Reader range aware so that it's safe to
-          // re-iterate or stop without exhausting remaining elements in the value group.
-          entry.getValue().getValue().forEachRemaining(values::add);
-          nextKeyGroupsIt.remove();
-        }
-      }
-
-      // Output next key-value group
-      return KV.of(
-          minKeyEntry.getValue().getKey(), CoGbkResultUtil.newCoGbkResult(resultSchema, valueMap));
     }
 
     @Override

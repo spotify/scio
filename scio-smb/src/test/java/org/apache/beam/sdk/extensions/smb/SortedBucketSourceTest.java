@@ -35,11 +35,14 @@ import java.util.function.ToIntFunction;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
+import org.apache.beam.sdk.PipelineResult;
 import org.apache.beam.sdk.extensions.smb.FileOperations.Writer;
 import org.apache.beam.sdk.extensions.smb.SMBFilenamePolicy.FileAssignment;
 import org.apache.beam.sdk.io.FileSystems;
 import org.apache.beam.sdk.io.LocalResources;
 import org.apache.beam.sdk.io.fs.ResourceId;
+import org.apache.beam.sdk.metrics.DistributionResult;
+import org.apache.beam.sdk.metrics.MetricResult;
 import org.apache.beam.sdk.testing.NeedsRunner;
 import org.apache.beam.sdk.testing.PAssert;
 import org.apache.beam.sdk.testing.TestPipeline;
@@ -323,7 +326,27 @@ public class SortedBucketSourceTest {
         lhsInput,
         rhsInput);
 
-    pipeline.run();
+    final PipelineResult result = pipeline.run();
+
+    // Verify Metrics
+    final Map<String, Integer> keyGroupCounts =
+        Stream.concat(lhsInput.values().stream(), rhsInput.values().stream())
+            .flatMap(List::stream)
+            .filter(element -> !element.equals("")) // filter out null keys
+            .collect(Collectors.toMap(lhsMetadata::extractKey, str -> 1, Integer::sum));
+
+    final long elementsRead = keyGroupCounts.values().stream().reduce(0, Integer::sum);
+
+    verifyMetrics(
+        result,
+        ImmutableMap.of("SortedBucketSource-ElementsRead", elementsRead),
+        ImmutableMap.of(
+            "SortedBucketSource-KeyGroupSize",
+            DistributionResult.create(
+                elementsRead,
+                keyGroupCounts.keySet().size(),
+                keyGroupCounts.values().stream().min(Integer::compareTo).get(),
+                keyGroupCounts.values().stream().max(Integer::compareTo).get())));
   }
 
   private void testPartitioned(
@@ -474,5 +497,25 @@ public class SortedBucketSourceTest {
                 Collections::singletonList,
                 (l, r) ->
                     Stream.concat(l.stream(), r.stream()).sorted().collect(Collectors.toList())));
+  }
+
+  static void verifyMetrics(
+      PipelineResult result,
+      Map<String, Long> expectedCounters,
+      Map<String, DistributionResult> expectedDistributions) {
+    final Map<String, Long> actualCounters =
+        ImmutableList.copyOf(result.metrics().allMetrics().getCounters().iterator()).stream()
+            .filter(metric -> !metric.getName().getName().equals(PAssert.SUCCESS_COUNTER))
+            .collect(
+                Collectors.toMap(metric -> metric.getName().getName(), MetricResult::getCommitted));
+
+    Assert.assertEquals(expectedCounters, actualCounters);
+
+    final Map<String, DistributionResult> actualDistributions =
+        ImmutableList.copyOf(result.metrics().allMetrics().getDistributions().iterator()).stream()
+            .collect(
+                Collectors.toMap(metric -> metric.getName().getName(), MetricResult::getCommitted));
+
+    Assert.assertEquals(expectedDistributions, actualDistributions);
   }
 }
