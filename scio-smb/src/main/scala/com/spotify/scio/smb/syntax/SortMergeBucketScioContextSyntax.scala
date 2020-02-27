@@ -29,7 +29,6 @@ import org.apache.beam.sdk.transforms.{DoFn, ParDo}
 import org.apache.beam.sdk.values.KV
 
 import scala.collection.JavaConverters._
-import scala.reflect.ClassTag
 
 trait SortMergeBucketScioContextSyntax {
   implicit def asSMBScioContext(sc: ScioContext): SortedBucketScioContext =
