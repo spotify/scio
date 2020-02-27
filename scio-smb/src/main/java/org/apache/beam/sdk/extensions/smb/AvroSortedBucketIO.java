@@ -17,8 +17,6 @@
 
 package org.apache.beam.sdk.extensions.smb;
 
-import static org.apache.beam.sdk.extensions.smb.SortedBucketSink.WriteResult;
-
 import com.google.auto.value.AutoValue;
 import java.util.Arrays;
 import java.util.List;
@@ -34,10 +32,7 @@ import org.apache.beam.sdk.extensions.smb.BucketMetadata.HashType;
 import org.apache.beam.sdk.extensions.smb.SortedBucketSource.BucketedInput;
 import org.apache.beam.sdk.io.FileSystems;
 import org.apache.beam.sdk.io.fs.ResourceId;
-import org.apache.beam.sdk.transforms.PTransform;
-import org.apache.beam.sdk.values.PCollection;
 import org.apache.beam.sdk.values.TupleTag;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ImmutableList;
 
 /** API for reading and writing Avro sorted-bucket files. */
@@ -174,27 +169,7 @@ public class AvroSortedBucketIO {
   /** Writes to Avro sorted-bucket files using {@link SortedBucketSink}. */
   @AutoValue
   public abstract static class Write<K, T extends GenericRecord>
-      extends PTransform<PCollection<T>, WriteResult> {
-    // Common
-    abstract int getNumBuckets();
-
-    abstract int getNumShards();
-
-    abstract Class<K> getKeyClass();
-
-    abstract HashType getHashType();
-
-    @Nullable
-    abstract ResourceId getOutputDirectory();
-
-    @Nullable
-    abstract ResourceId getTempDirectory();
-
-    abstract String getFilenameSuffix();
-
-    abstract int getSorterMemoryMb();
-
-    // Avro
+      extends SortedBucketIO.Write<K, T> {
     @Nullable
     abstract String getKeyField();
 
@@ -268,6 +243,25 @@ public class AvroSortedBucketIO {
           .build();
     }
 
+    @SuppressWarnings("unchecked")
+    @Override
+    FileOperations<T> getFileOperations() {
+      return getRecordClass() == null
+          ? AvroFileOperations.of(getSchema(), getCodec())
+          : (AvroFileOperations<T>)
+              AvroFileOperations.of((Class<SpecificRecordBase>) getRecordClass(), getCodec());
+    }
+
+    @Override
+    BucketMetadata<K, T> getBucketMetadata() {
+      try {
+        return new AvroBucketMetadata<>(
+            getNumBuckets(), getNumShards(), getKeyClass(), getHashType(), getKeyField());
+      } catch (CannotProvideCoderException | Coder.NonDeterministicException e) {
+        throw new IllegalStateException(e);
+      }
+    }
+
     /** Specifies the output filename suffix. */
     public Write<K, T> withSuffix(String filenameSuffix) {
       return toBuilder().setFilenameSuffix(filenameSuffix).build();
@@ -281,42 +275,6 @@ public class AvroSortedBucketIO {
     /** Specifies the output file {@link CodecFactory}. */
     public Write<K, T> withCodec(CodecFactory codec) {
       return toBuilder().setCodec(codec).build();
-    }
-
-    @Override
-    public WriteResult expand(PCollection<T> input) {
-      Preconditions.checkNotNull(getOutputDirectory(), "outputDirectory is not set");
-
-      BucketMetadata<K, T> metadata;
-      try {
-        metadata =
-            new AvroBucketMetadata<>(
-                getNumBuckets(), getNumShards(), getKeyClass(), getHashType(), getKeyField());
-      } catch (CannotProvideCoderException | Coder.NonDeterministicException e) {
-        throw new IllegalStateException(e);
-      }
-
-      final ResourceId outputDirectory = getOutputDirectory();
-      ResourceId tempDirectory = getTempDirectory();
-      if (tempDirectory == null) {
-        tempDirectory = outputDirectory;
-      }
-
-      @SuppressWarnings("unchecked")
-      final AvroFileOperations<T> fileOperations =
-          getRecordClass() == null
-              ? AvroFileOperations.of(getSchema(), getCodec())
-              : (AvroFileOperations<T>)
-                  AvroFileOperations.of((Class<SpecificRecordBase>) getRecordClass(), getCodec());
-      SortedBucketSink<K, T> sink =
-          new SortedBucketSink<>(
-              metadata,
-              outputDirectory,
-              tempDirectory,
-              getFilenameSuffix(),
-              fileOperations,
-              getSorterMemoryMb());
-      return input.apply(sink);
     }
   }
 }
