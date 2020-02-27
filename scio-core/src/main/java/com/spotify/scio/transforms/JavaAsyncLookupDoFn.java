@@ -21,8 +21,9 @@ import org.apache.beam.sdk.transforms.DoFn;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * A {@link DoFn} that performs asynchronous lookup using the provided client for Java 8
- * {@link CompletableFuture}.
+ * A {@link DoFn} that performs asynchronous lookup using the provided client for Java 8 {@link
+ * CompletableFuture}.
+ *
  * @param <A> input element type.
  * @param <B> client lookup value type.
  * @param <C> client type.
@@ -31,17 +32,16 @@ public abstract class JavaAsyncLookupDoFn<A, B, C>
     extends BaseAsyncLookupDoFn<A, B, C, CompletableFuture<B>, BaseAsyncLookupDoFn.Try<B>>
     implements FutureHandlers.Java<B> {
 
-  /**
-   * Create a {@link GuavaAsyncLookupDoFn} instance.
-   */
+  /** Create a {@link GuavaAsyncLookupDoFn} instance. */
   public JavaAsyncLookupDoFn() {
     super();
   }
 
   /**
    * Create a {@link JavaAsyncLookupDoFn} instance.
+   *
    * @param maxPendingRequests maximum number of pending requests to prevent runner from timing out
-   *                           and retrying bundles.
+   *     and retrying bundles.
    */
   public JavaAsyncLookupDoFn(int maxPendingRequests) {
     super(maxPendingRequests);
@@ -49,12 +49,13 @@ public abstract class JavaAsyncLookupDoFn<A, B, C>
 
   /**
    * Create a {@link JavaAsyncLookupDoFn} instance.
+   *
    * @param maxPendingRequests maximum number of pending requests to prevent runner from timing out
-   *                           and retrying bundles.
+   *     and retrying bundles.
    * @param cacheSupplier supplier for lookup cache.
    */
-  public <K> JavaAsyncLookupDoFn(int maxPendingRequests,
-                                 BaseAsyncLookupDoFn.CacheSupplier<A, B, K> cacheSupplier) {
+  public <K> JavaAsyncLookupDoFn(
+      int maxPendingRequests, BaseAsyncLookupDoFn.CacheSupplier<A, B, K> cacheSupplier) {
     super(maxPendingRequests, cacheSupplier);
   }
 

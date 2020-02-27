@@ -83,42 +83,37 @@ public class SortedBucketSourceTest {
 
     // first 9 elements are source-compatible, last is not
     for (int i = 0; i < 10; i++) {
-      final TestBucketMetadata metadata = TestBucketMetadata
-          .of((int) Math.pow(2.0, 1.0 * i), 1)
-          .withKeyIndex(i < 9 ? 0 : 1);
+      final TestBucketMetadata metadata =
+          TestBucketMetadata.of((int) Math.pow(2.0, 1.0 * i), 1).withKeyIndex(i < 9 ? 0 : 1);
       final File dest = lhsFolder.newFolder(String.valueOf(i));
 
       final OutputStream outputStream =
-          Channels.newOutputStream(FileSystems.create(
-              LocalResources.fromFile(lhsFolder.newFile(i + "/metadata.json"), false),
-              "application/json"));
+          Channels.newOutputStream(
+              FileSystems.create(
+                  LocalResources.fromFile(lhsFolder.newFile(i + "/metadata.json"), false),
+                  "application/json"));
 
       BucketMetadata.to(metadata, outputStream);
       inputDirectories.add(LocalResources.fromFile(dest, true));
     }
 
     // Test with source-compatible input directories
-    final BucketedInput validBucketedInput = new BucketedInput<>(
-        new TupleTag<>("testInput"),
-        inputDirectories.subList(0, 8),
-        ".txt",
-        new TestFileOperations()
-    );
+    final BucketedInput validBucketedInput =
+        new BucketedInput<>(
+            new TupleTag<>("testInput"),
+            inputDirectories.subList(0, 8),
+            ".txt",
+            new TestFileOperations());
 
     // Canonical metadata should have the smallest bucket count
     Assert.assertEquals(validBucketedInput.getMetadata().getNumBuckets(), 1);
 
     // Test when metadata aren't same-source compatible
-    final BucketedInput invalidBucketedInput = new BucketedInput<>(
-        new TupleTag<>("testInput"),
-        inputDirectories,
-        ".txt",
-        new TestFileOperations()
-    );
+    final BucketedInput invalidBucketedInput =
+        new BucketedInput<>(
+            new TupleTag<>("testInput"), inputDirectories, ".txt", new TestFileOperations());
 
-    Assert.assertThrows(
-        IllegalStateException.class,
-        invalidBucketedInput::getMetadata);
+    Assert.assertThrows(IllegalStateException.class, invalidBucketedInput::getMetadata);
   }
 
   @Test
@@ -232,9 +227,10 @@ public class SortedBucketSourceTest {
   @Test
   @Category(NeedsRunner.class)
   public void testSingleSourceGbk() throws Exception {
-    Map<BucketShardId, List<String>> input = ImmutableMap.of(
-        BucketShardId.of(0, 0), Lists.newArrayList("a1", "a2", "b1", "b2"),
-        BucketShardId.of(1, 0), Lists.newArrayList("x1", "x2", "y1", "y2"));
+    Map<BucketShardId, List<String>> input =
+        ImmutableMap.of(
+            BucketShardId.of(0, 0), Lists.newArrayList("a1", "a2", "b1", "b2"),
+            BucketShardId.of(1, 0), Lists.newArrayList("x1", "x2", "y1", "y2"));
 
     int numBuckets = maxId(input.keySet(), BucketShardId::getBucketId) + 1;
     int numShards = maxId(input.keySet(), BucketShardId::getShardId) + 1;
@@ -245,11 +241,12 @@ public class SortedBucketSourceTest {
 
     final TupleTag<String> tag = new TupleTag<>("GBK");
     final TestFileOperations fileOperations = new TestFileOperations();
-    final BucketedInput<?, ?> bucketedInput = new BucketedInput<>(
-        tag, fromFolder(lhsFolder), ".txt", fileOperations);
+    final BucketedInput<?, ?> bucketedInput =
+        new BucketedInput<>(tag, fromFolder(lhsFolder), ".txt", fileOperations);
 
-    PCollection<KV<String, CoGbkResult>> output = pipeline.apply(
-        new SortedBucketSource<>(String.class, Collections.singletonList(bucketedInput)));
+    PCollection<KV<String, CoGbkResult>> output =
+        pipeline.apply(
+            new SortedBucketSource<>(String.class, Collections.singletonList(bucketedInput)));
 
     final Map<String, List<String>> expected = groupByKey(input, metadata::extractKey);
 
@@ -279,16 +276,12 @@ public class SortedBucketSourceTest {
             ImmutableMap.of(
                 BucketShardId.of(0, 0), Lists.newArrayList("x1", "x2"),
                 BucketShardId.of(1, 0), Lists.newArrayList("c1", "c2")),
-            ImmutableMap.of(
-                BucketShardId.of(0, 0), Lists.newArrayList("x3", "x4"))
-        ),
+            ImmutableMap.of(BucketShardId.of(0, 0), Lists.newArrayList("x3", "x4"))),
         ImmutableList.of(
-            ImmutableMap.of(
-                BucketShardId.of(0, 0), Lists.newArrayList("x5", "x6")),
+            ImmutableMap.of(BucketShardId.of(0, 0), Lists.newArrayList("x5", "x6")),
             ImmutableMap.of(
                 BucketShardId.of(0, 0), Lists.newArrayList("x7", "x8"),
-                BucketShardId.of(1, 0), Lists.newArrayList("c7", "c8")))
-    );
+                BucketShardId.of(1, 0), Lists.newArrayList("c7", "c8"))));
   }
 
   @Test
@@ -301,16 +294,14 @@ public class SortedBucketSourceTest {
                 BucketShardId.of(1, 0), Lists.newArrayList("c1", "c2")),
             ImmutableMap.of(
                 BucketShardId.of(0, 0), Lists.newArrayList("x3", "x4"),
-                BucketShardId.of(1, 0), Lists.newArrayList("c3", "c4"))
-        ),
+                BucketShardId.of(1, 0), Lists.newArrayList("c3", "c4"))),
         ImmutableList.of(
             ImmutableMap.of(
                 BucketShardId.of(0, 0), Lists.newArrayList("x5", "x6"),
                 BucketShardId.of(1, 0), Lists.newArrayList("c5", "c6")),
             ImmutableMap.of(
                 BucketShardId.of(0, 0), Lists.newArrayList("x7", "x8"),
-                BucketShardId.of(1, 0), Lists.newArrayList("c7", "c8")))
-    );
+                BucketShardId.of(1, 0), Lists.newArrayList("c7", "c8"))));
   }
 
   private void test(
@@ -332,7 +323,8 @@ public class SortedBucketSourceTest {
         pipeline,
         Collections.singletonList(fromFolder(lhsFolder)),
         Collections.singletonList(fromFolder(rhsFolder)),
-        lhsInput, rhsInput);
+        lhsInput,
+        rhsInput);
 
     final PipelineResult result = pipeline.run();
 
@@ -370,19 +362,22 @@ public class SortedBucketSourceTest {
       int numBuckets = maxId(input.keySet(), BucketShardId::getBucketId) + 1;
       int numShards = maxId(input.keySet(), BucketShardId::getShardId) + 1;
       TestBucketMetadata metadata = TestBucketMetadata.of(numBuckets, numShards);
-      ResourceId destination = LocalResources.fromFile(
-        partitionedInputFolder.newFolder("lhs" + lhsInputs.indexOf(input)),
-        true
-      );
-      FileAssignment fileAssignment =
-          new SMBFilenamePolicy(destination,".txt").forDestination();
+      ResourceId destination =
+          LocalResources.fromFile(
+              partitionedInputFolder.newFolder("lhs" + lhsInputs.indexOf(input)), true);
+      FileAssignment fileAssignment = new SMBFilenamePolicy(destination, ".txt").forDestination();
       write(fileAssignment, metadata, input);
       lhsPaths.add(destination);
-      input.forEach((k, v) -> allLhsValues.merge(k, v, (v1, v2) -> {
-        List<String> newList = new LinkedList<>(v1);
-        newList.addAll(v2);
-        return newList;
-      }));
+      input.forEach(
+          (k, v) ->
+              allLhsValues.merge(
+                  k,
+                  v,
+                  (v1, v2) -> {
+                    List<String> newList = new LinkedList<>(v1);
+                    newList.addAll(v2);
+                    return newList;
+                  }));
     }
 
     List<ResourceId> rhsPaths = new ArrayList<>();
@@ -391,19 +386,22 @@ public class SortedBucketSourceTest {
       int numBuckets = maxId(input.keySet(), BucketShardId::getBucketId) + 1;
       int numShards = maxId(input.keySet(), BucketShardId::getShardId) + 1;
       TestBucketMetadata metadata = TestBucketMetadata.of(numBuckets, numShards);
-      ResourceId destination = LocalResources.fromFile(
-          partitionedInputFolder.newFolder("rhs" + rhsInputs.indexOf(input)),
-          true
-      );
-      FileAssignment fileAssignment =
-          new SMBFilenamePolicy(destination,".txt").forDestination();
+      ResourceId destination =
+          LocalResources.fromFile(
+              partitionedInputFolder.newFolder("rhs" + rhsInputs.indexOf(input)), true);
+      FileAssignment fileAssignment = new SMBFilenamePolicy(destination, ".txt").forDestination();
       write(fileAssignment, metadata, input);
       rhsPaths.add(destination);
-      input.forEach((k, v) -> allRhsValues.merge(k, v, (v1, v2) -> {
-        List<String> newList = new LinkedList<>(v1);
-        newList.addAll(v2);
-        return newList;
-      }));
+      input.forEach(
+          (k, v) ->
+              allRhsValues.merge(
+                  k,
+                  v,
+                  (v1, v2) -> {
+                    List<String> newList = new LinkedList<>(v1);
+                    newList.addAll(v2);
+                    return newList;
+                  }));
     }
 
     checkJoin(pipeline, lhsPaths, rhsPaths, allLhsValues, allRhsValues);
@@ -412,9 +410,11 @@ public class SortedBucketSourceTest {
 
   private static void checkJoin(
       TestPipeline pipeline,
-      List<ResourceId> lhsPaths, List<ResourceId> rhsPaths,
-      Map<BucketShardId, List<String>> lhsValues, Map<BucketShardId, List<String>> rhsValues
-  ) throws Exception {
+      List<ResourceId> lhsPaths,
+      List<ResourceId> rhsPaths,
+      Map<BucketShardId, List<String>> lhsValues,
+      Map<BucketShardId, List<String>> rhsValues)
+      throws Exception {
     final TupleTag<String> lhsTag = new TupleTag<>("LHS");
     final TupleTag<String> rhsTag = new TupleTag<>("RHS");
     final TestFileOperations fileOperations = new TestFileOperations();

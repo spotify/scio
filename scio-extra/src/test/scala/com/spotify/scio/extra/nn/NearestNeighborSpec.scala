@@ -25,9 +25,7 @@ import org.scalacheck._
 class NearestNeighborSpec extends PropertySpec {
   val dimension = 40
   private def randVec = DenseVector.rand[Double](dimension)
-  val vector = Gen.resultOf { _: Int =>
-    randVec
-  }
+  val vector = Gen.resultOf { _: Int => randVec }
   val vecs = Gen
     .nonEmptyListOf(vector)
     .map(_.zipWithIndex.map(kv => ("key" + kv._2, kv._1)))

@@ -293,8 +293,7 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
               input
                   .getPipeline()
                   .apply(
-                      "WriteTempMetadata",
-                      writeMetadataTransform(fileAssignment, bucketMetadata)))
+                      "WriteTempMetadata", writeMetadataTransform(fileAssignment, bucketMetadata)))
           .and(
               new TupleTag<>("TempBuckets"),
               input.apply(
@@ -342,9 +341,7 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
 
     @SuppressWarnings("unchecked")
     static Create.Values<ResourceId> writeMetadataTransform(
-        FileAssignment fileAssignment,
-        BucketMetadata bucketMetadata
-    ) {
+        FileAssignment fileAssignment, BucketMetadata bucketMetadata) {
       final ResourceId tmpFile = fileAssignment.forMetadata();
 
       LOG.info("Writing metadata to temporary file {}", tmpFile);

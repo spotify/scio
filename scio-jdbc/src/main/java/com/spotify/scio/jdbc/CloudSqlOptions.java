@@ -45,5 +45,4 @@ public interface CloudSqlOptions extends PipelineOptions {
   String getCloudSqlInstanceConnectionName();
 
   void setCloudSqlInstanceConnectionName(String value);
-
 }

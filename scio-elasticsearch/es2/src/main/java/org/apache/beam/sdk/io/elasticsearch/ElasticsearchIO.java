@@ -85,8 +85,8 @@ public class ElasticsearchIO {
     }
 
     /**
-     * Returns a transform for writing to Elasticsearch cluster by providing
-     * slight delay specified by flushInterval.
+     * Returns a transform for writing to Elasticsearch cluster by providing slight delay specified
+     * by flushInterval.
      *
      * @param flushInterval delay applied to buffer elements. Defaulted to 1 seconds.
      */
@@ -105,8 +105,8 @@ public class ElasticsearchIO {
     }
 
     /**
-     * Returns a transform for writing to Elasticsearch cluster.
-     * Note: Recommended to set this number as number of workers in your pipeline.
+     * Returns a transform for writing to Elasticsearch cluster. Note: Recommended to set this
+     * number as number of workers in your pipeline.
      *
      * @param numOfShard to construct a batch to bulk write to Elasticsearch.
      */
@@ -117,8 +117,8 @@ public class ElasticsearchIO {
     /**
      * Returns a transform for writing to Elasticsearch cluster.
      *
-     * @param error applies given function if specified in case of
-     *              Elasticsearch error with bulk writes. Default behavior throws IOException.
+     * @param error applies given function if specified in case of Elasticsearch error with bulk
+     *     writes. Default behavior throws IOException.
      */
     public static <T> Bound withError(ThrowingConsumer<BulkExecutionException> error) {
       return new Bound<>().withError(error);
@@ -132,7 +132,7 @@ public class ElasticsearchIO {
      * Returns a transform for writing to Elasticsearch cluster.
      *
      * @param maxRetries Maximum number of retries to attempt for saving any single chunk of bulk
-     * requests to the Elasticsearch cluster.
+     *     requests to the Elasticsearch cluster.
      */
     public static <T> Bound withMaxRetries(int maxRetries) {
       return new Bound<>().withMaxRetries(maxRetries);
@@ -162,15 +162,16 @@ public class ElasticsearchIO {
       private final Duration retryPause;
       private final ThrowingConsumer<BulkExecutionException> error;
 
-      private Bound(final String clusterName,
-                    final InetSocketAddress[] servers,
-                    final Duration flushInterval,
-                    final SerializableFunction<T, Iterable<ActionRequest<?>>> toActionRequests,
-                    final long numOfShard,
-                    final int maxBulkRequestSize,
-                    final int maxRetries,
-                    final Duration retryPause,
-                    final ThrowingConsumer<BulkExecutionException> error) {
+      private Bound(
+          final String clusterName,
+          final InetSocketAddress[] servers,
+          final Duration flushInterval,
+          final SerializableFunction<T, Iterable<ActionRequest<?>>> toActionRequests,
+          final long numOfShard,
+          final int maxBulkRequestSize,
+          final int maxRetries,
+          final Duration retryPause,
+          final ThrowingConsumer<BulkExecutionException> error) {
         this.clusterName = clusterName;
         this.servers = servers;
         this.flushInterval = flushInterval;
@@ -183,63 +184,134 @@ public class ElasticsearchIO {
       }
 
       Bound() {
-        this(null, null, null, null, 0, CHUNK_SIZE, DEFAULT_RETRIES, DEFAULT_RETRY_PAUSE,
-             defaultErrorHandler());
+        this(
+            null,
+            null,
+            null,
+            null,
+            0,
+            CHUNK_SIZE,
+            DEFAULT_RETRIES,
+            DEFAULT_RETRY_PAUSE,
+            defaultErrorHandler());
       }
 
       public Bound<T> withClusterName(String clusterName) {
-        return new Bound<>(clusterName, servers, flushInterval, toActionRequests, numOfShard,
-                           maxBulkRequestSize,
-                           maxRetries, retryPause, error);
+        return new Bound<>(
+            clusterName,
+            servers,
+            flushInterval,
+            toActionRequests,
+            numOfShard,
+            maxBulkRequestSize,
+            maxRetries,
+            retryPause,
+            error);
       }
 
       public Bound<T> withServers(InetSocketAddress[] servers) {
-        return new Bound<>(clusterName, servers, flushInterval, toActionRequests, numOfShard,
-                           maxBulkRequestSize,
-                           maxRetries, retryPause, error);
+        return new Bound<>(
+            clusterName,
+            servers,
+            flushInterval,
+            toActionRequests,
+            numOfShard,
+            maxBulkRequestSize,
+            maxRetries,
+            retryPause,
+            error);
       }
 
       public Bound<T> withFlushInterval(Duration flushInterval) {
-        return new Bound<>(clusterName, servers, flushInterval, toActionRequests, numOfShard,
-                           maxBulkRequestSize,
-                           maxRetries, retryPause, error);
+        return new Bound<>(
+            clusterName,
+            servers,
+            flushInterval,
+            toActionRequests,
+            numOfShard,
+            maxBulkRequestSize,
+            maxRetries,
+            retryPause,
+            error);
       }
 
       public Bound<T> withFunction(
           SerializableFunction<T, Iterable<ActionRequest<?>>> toIndexRequest) {
-        return new Bound<>(clusterName, servers, flushInterval, toIndexRequest, numOfShard,
-                           maxBulkRequestSize,
-                           maxRetries, retryPause, error);
+        return new Bound<>(
+            clusterName,
+            servers,
+            flushInterval,
+            toIndexRequest,
+            numOfShard,
+            maxBulkRequestSize,
+            maxRetries,
+            retryPause,
+            error);
       }
 
       public Bound<T> withNumOfShard(long numOfShard) {
-        return new Bound<>(clusterName, servers, flushInterval, toActionRequests, numOfShard,
-                           maxBulkRequestSize,
-                           maxRetries, retryPause, error);
+        return new Bound<>(
+            clusterName,
+            servers,
+            flushInterval,
+            toActionRequests,
+            numOfShard,
+            maxBulkRequestSize,
+            maxRetries,
+            retryPause,
+            error);
       }
 
       public Bound<T> withError(ThrowingConsumer<BulkExecutionException> error) {
-        return new Bound<>(clusterName, servers, flushInterval, toActionRequests, numOfShard,
-                           maxBulkRequestSize,
-                           maxRetries, retryPause, error);
+        return new Bound<>(
+            clusterName,
+            servers,
+            flushInterval,
+            toActionRequests,
+            numOfShard,
+            maxBulkRequestSize,
+            maxRetries,
+            retryPause,
+            error);
       }
 
       public Bound<T> withMaxBulkRequestSize(int maxBulkRequestSize) {
-        return new Bound<>(clusterName, servers, flushInterval, toActionRequests, numOfShard,
-                           maxBulkRequestSize,
-                           maxRetries, retryPause, error);
+        return new Bound<>(
+            clusterName,
+            servers,
+            flushInterval,
+            toActionRequests,
+            numOfShard,
+            maxBulkRequestSize,
+            maxRetries,
+            retryPause,
+            error);
       }
 
       public Bound<T> withMaxRetries(int maxRetries) {
-        return new Bound<>(clusterName, servers, flushInterval, toActionRequests, numOfShard,
-                           maxBulkRequestSize,
-                           maxRetries, retryPause, error);
+        return new Bound<>(
+            clusterName,
+            servers,
+            flushInterval,
+            toActionRequests,
+            numOfShard,
+            maxBulkRequestSize,
+            maxRetries,
+            retryPause,
+            error);
       }
 
       public Bound<T> withRetryPause(Duration retryPause) {
-        return new Bound<>(clusterName, servers, flushInterval, toActionRequests, numOfShard,
-                           maxBulkRequestSize,
-                           maxRetries, retryPause, error);
+        return new Bound<>(
+            clusterName,
+            servers,
+            flushInterval,
+            toActionRequests,
+            numOfShard,
+            maxBulkRequestSize,
+            maxRetries,
+            retryPause,
+            error);
       }
 
       @Override
@@ -254,18 +326,27 @@ public class ElasticsearchIO {
         checkArgument(retryPause.getMillis() >= 0);
         input
             .apply("Assign To Shard", ParDo.of(new AssignToShard<>(numOfShard)))
-            .apply("Re-Window to Global Window", Window.<KV<Long, T>>into(new GlobalWindows())
-                .triggering(Repeatedly.forever(
-                    AfterProcessingTime
-                        .pastFirstElementInPane()
-                        .plusDelayOf(flushInterval)))
-                .discardingFiredPanes()
-                .withTimestampCombiner(TimestampCombiner.END_OF_WINDOW))
+            .apply(
+                "Re-Window to Global Window",
+                Window.<KV<Long, T>>into(new GlobalWindows())
+                    .triggering(
+                        Repeatedly.forever(
+                            AfterProcessingTime.pastFirstElementInPane()
+                                .plusDelayOf(flushInterval)))
+                    .discardingFiredPanes()
+                    .withTimestampCombiner(TimestampCombiner.END_OF_WINDOW))
             .apply(GroupByKey.create())
-            .apply("Write to Elasticesearch",
-                   ParDo.of(new ElasticsearchWriter<>
-                                (clusterName, servers, maxBulkRequestSize, toActionRequests, error,
-                                 maxRetries, retryPause)));
+            .apply(
+                "Write to Elasticesearch",
+                ParDo.of(
+                    new ElasticsearchWriter<>(
+                        clusterName,
+                        servers,
+                        maxBulkRequestSize,
+                        toActionRequests,
+                        error,
+                        maxRetries,
+                        retryPause)));
         return PDone.in(input.getPipeline());
       }
     }
@@ -302,13 +383,14 @@ public class ElasticsearchIO {
       private final int maxRetries;
       private final Duration retryPause;
 
-      public ElasticsearchWriter(String clusterName,
-                                 InetSocketAddress[] servers,
-                                 int maxBulkRequestSize,
-                                 SerializableFunction<T, Iterable<ActionRequest<?>>> toActionRequests,
-                                 ThrowingConsumer<BulkExecutionException> error,
-                                 int maxRetries,
-                                 Duration retryPause) {
+      public ElasticsearchWriter(
+          String clusterName,
+          InetSocketAddress[] servers,
+          int maxBulkRequestSize,
+          SerializableFunction<T, Iterable<ActionRequest<?>>> toActionRequests,
+          ThrowingConsumer<BulkExecutionException> error,
+          int maxRetries,
+          Duration retryPause) {
         this.maxBulkRequestSize = maxBulkRequestSize;
         this.clientSupplier = new ClientSupplier(clusterName, servers);
         this.toActionRequests = toActionRequests;
@@ -319,9 +401,10 @@ public class ElasticsearchIO {
 
       @Setup
       public void setup() throws Exception {
-        this.backoffConfig = FluentBackoff.DEFAULT
-            .withMaxRetries(this.maxRetries)
-            .withInitialBackoff(this.retryPause);
+        this.backoffConfig =
+            FluentBackoff.DEFAULT
+                .withMaxRetries(this.maxRetries)
+                .withInitialBackoff(this.retryPause);
       }
 
       @SuppressWarnings("Duplicates")
@@ -399,7 +482,6 @@ public class ElasticsearchIO {
           return response;
         };
       }
-
     }
 
     private static class ClientSupplier implements Supplier<Client>, Serializable {
@@ -426,13 +508,13 @@ public class ElasticsearchIO {
       }
 
       private TransportClient create(String clusterName, InetSocketAddress[] addresses) {
-        final Settings settings = Settings.settingsBuilder()
-            .put("cluster.name", clusterName)
-            .build();
+        final Settings settings =
+            Settings.settingsBuilder().put("cluster.name", clusterName).build();
 
-        InetSocketTransportAddress[] transportAddresses = Arrays.stream(addresses)
-            .map(InetSocketTransportAddress::new)
-            .toArray(InetSocketTransportAddress[]::new);
+        InetSocketTransportAddress[] transportAddresses =
+            Arrays.stream(addresses)
+                .map(InetSocketTransportAddress::new)
+                .toArray(InetSocketTransportAddress[]::new);
 
         return TransportClient.builder()
             .settings(settings)
@@ -447,20 +529,19 @@ public class ElasticsearchIO {
       };
     }
 
-    /**
-     * An exception that puts information about the failures in the bulk execution.
-     */
+    /** An exception that puts information about the failures in the bulk execution. */
     public static class BulkExecutionException extends IOException {
 
       private final Iterable<Throwable> failures;
 
       BulkExecutionException(BulkResponse bulkResponse) {
         super(bulkResponse.buildFailureMessage());
-        this.failures = Arrays.stream(bulkResponse.getItems())
-            .map(BulkItemResponse::getFailure)
-            .filter(Objects::nonNull)
-            .map(BulkItemResponse.Failure::getCause)
-            .collect(Collectors.toList());
+        this.failures =
+            Arrays.stream(bulkResponse.getItems())
+                .map(BulkItemResponse::getFailure)
+                .filter(Objects::nonNull)
+                .map(BulkItemResponse.Failure::getCause)
+                .collect(Collectors.toList());
       }
 
       public Iterable<Throwable> getFailures() {

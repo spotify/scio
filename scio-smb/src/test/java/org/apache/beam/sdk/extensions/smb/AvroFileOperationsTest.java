@@ -136,20 +136,20 @@ public class AvroFileOperationsTest {
   // https://github.com/spotify/scio/issues/2649
   @Test
   public void testMap2649() throws Exception {
-    final Schema schema = Schema.createRecord(
-        "Record",
-        "",
-        "org.apache.beam.sdk.extensions.smb.avro",
-        false,
-        Lists.newArrayList(
-            new Schema.Field("map",
-                Schema.createUnion(
-                    Schema.create(Schema.Type.NULL),
-                    Schema.createMap(Schema.create(Schema.Type.STRING))
-                ),
-                "",
-                JsonProperties.NULL_VALUE)
-        ));
+    final Schema schema =
+        Schema.createRecord(
+            "Record",
+            "",
+            "org.apache.beam.sdk.extensions.smb.avro",
+            false,
+            Lists.newArrayList(
+                new Schema.Field(
+                    "map",
+                    Schema.createUnion(
+                        Schema.create(Schema.Type.NULL),
+                        Schema.createMap(Schema.create(Schema.Type.STRING))),
+                    "",
+                    JsonProperties.NULL_VALUE)));
 
     final AvroFileOperations<GenericRecord> fileOperations = AvroFileOperations.of(schema);
     final ResourceId file =
@@ -157,10 +157,12 @@ public class AvroFileOperationsTest {
 
     // String round-trips back as Utf8, causing the map to be treated as non-string-map in
     // ReflectData.isNonStringMap
-    final GenericRecord record = CoderUtils.clone(AvroCoder.of(schema),
-        new GenericRecordBuilder(schema)
-            .set("map", Collections.singletonMap("key", "value"))
-            .build());
+    final GenericRecord record =
+        CoderUtils.clone(
+            AvroCoder.of(schema),
+            new GenericRecordBuilder(schema)
+                .set("map", Collections.singletonMap("key", "value"))
+                .build());
 
     final FileOperations.Writer<GenericRecord> writer = fileOperations.createWriter(file);
     writer.write(record);

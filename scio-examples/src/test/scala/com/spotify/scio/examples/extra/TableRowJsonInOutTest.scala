@@ -30,9 +30,7 @@ class TableRowJsonInOutTest extends PipelineSpec {
     JobTest[com.spotify.scio.examples.extra.TableRowJsonInOut.type]
       .args("--input=in.json", "--output=out.json")
       .input(TableRowJsonIO("in.json"), input)
-      .output(TableRowJsonIO("out.json")) { coll =>
-        coll should containInAnyOrder(input)
-      }
+      .output(TableRowJsonIO("out.json"))(coll => coll should containInAnyOrder(input))
       .run()
   }
 }

@@ -18,9 +18,9 @@
 package com.spotify.scio.smb.annotations;
 
 /**
- * Indicates that this class has been ported from Beam and patched--for example, if the class
- * has private access in Beam. These classes should be removed if SMB is merged into the
- * open-source Beam lib.
+ * Indicates that this class has been ported from Beam and patched--for example, if the class has
+ * private access in Beam. These classes should be removed if SMB is merged into the open-source
+ * Beam lib.
  */
 public @interface PatchedFromBeam {
   String origin();

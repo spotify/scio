@@ -64,14 +64,10 @@ object CheckBeamDependencies extends AutoPlugin {
 
   override lazy val projectSettings = Seq(
     checkBeamDependencies := {
-      val deps = libraryDependencies.value.map { m =>
-        (s"${m.organization}:${m.name}", m.revision)
-      }
+      val deps = libraryDependencies.value.map(m => (s"${m.organization}:${m.name}", m.revision))
       val beamDependencies = resolveBeamDependencies(deps)
       val projectBeamDeps = deps
-        .map { dep =>
-          (dep, beamDependencies.getOrElse(dep._1, Nil))
-        }
+        .map(dep => (dep, beamDependencies.getOrElse(dep._1, Nil)))
         .collect {
           case ((dep, version), beamVersions) => beamVersions.map(v => (dep, (version, v)))
         }

@@ -16,12 +16,12 @@
  */
 package com.spotify.scio.bean;
 
-final public class UserBean {
+public final class UserBean {
 
   private String name;
   private Integer age;
 
-  public UserBean(){}
+  public UserBean() {}
 
   public UserBean(String name, Integer age) {
     this.name = name;
@@ -46,18 +46,14 @@ final public class UserBean {
 
   @Override
   public boolean equals(Object obj) {
-    if (obj == null)
-      return false;
+    if (obj == null) return false;
 
-    if (!(obj instanceof UserBean))
-      return false;
+    if (!(obj instanceof UserBean)) return false;
 
-    if (obj == this)
-      return true;
+    if (obj == this) return true;
 
-    return
-      this.getName().equals(((UserBean) obj).getName()) &&
-      this.getAge().equals(((UserBean) obj).getAge());
+    return this.getName().equals(((UserBean) obj).getName())
+        && this.getAge().equals(((UserBean) obj).getAge());
   }
 
   @Override

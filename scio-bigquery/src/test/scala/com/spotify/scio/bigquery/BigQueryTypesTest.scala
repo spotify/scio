@@ -22,6 +22,6 @@ import org.scalatest.flatspec.AnyFlatSpec
 
 class BigQueryTypesTest extends AnyFlatSpec with Matchers {
   "Table.Spec" should "fail malformed spec" in {
-    an[IllegalArgumentException] shouldBe thrownBy { Table.Spec("bad spec") }
+    an[IllegalArgumentException] shouldBe thrownBy(Table.Spec("bad spec"))
   }
 }

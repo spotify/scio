@@ -23,7 +23,7 @@ import org.apache.avro.generic.GenericRecord;
 
 public final class BigQueryAvroUtilsWrapper {
 
-    public static TableRow convertGenericRecordToTableRow(GenericRecord record, TableSchema schema) {
-        return BigQueryAvroUtils.convertGenericRecordToTableRow(record, schema);
-    }
+  public static TableRow convertGenericRecordToTableRow(GenericRecord record, TableSchema schema) {
+    return BigQueryAvroUtils.convertGenericRecordToTableRow(record, schema);
+  }
 }

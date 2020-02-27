@@ -26,5 +26,4 @@ import org.apache.beam.sdk.transforms.DoFn;
  */
 public abstract class GuavaAsyncDoFn<InputT, OutputT, ResourceT>
     extends BaseAsyncDoFn<InputT, OutputT, ResourceT, ListenableFuture<OutputT>>
-    implements FutureHandlers.Guava<OutputT> {
-}
+    implements FutureHandlers.Guava<OutputT> {}

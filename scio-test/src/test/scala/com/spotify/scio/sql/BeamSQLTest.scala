@@ -57,26 +57,20 @@ object TestData {
 
   case class User(username: String, email: String, age: Int)
   val users =
-    (1 to 10).map { i =>
-      User(s"user$i", s"user$i@spotify.com", 20 + i)
-    }.toList
+    (1 to 10).map(i => User(s"user$i", s"user$i@spotify.com", 20 + i)).toList
 
   case class UserId(id: Long)
   case class UserWithId(id: UserId, username: String, email: String, age: Int)
 
   val usersWithIds =
-    (1 to 10).map { i =>
-      UserWithId(UserId(i), s"user$i", s"user$i@spotify.com", 20 + i)
-    }.toList
+    (1 to 10).map(i => UserWithId(UserId(i), s"user$i", s"user$i@spotify.com", 20 + i)).toList
 
   case class UserWithLogicalType(id: Long, username: String, locale: Locale)
   object UserWithLogicalType {
     implicit def userWithLogicalTypeSchema = Schema.gen[UserWithLogicalType]
   }
   val usersWithLocale =
-    (1 to 10).map { i =>
-      UserWithLogicalType(i, s"user$i", Locale.FRANCE)
-    }.toList
+    (1 to 10).map(i => UserWithLogicalType(i, s"user$i", Locale.FRANCE)).toList
 
   case class UserWithOption(username: String, email: String, age: Option[Int])
   val usersWithOption =
@@ -86,14 +80,12 @@ object TestData {
 
   case class UserWithList(username: String, emails: List[String])
   val usersWithList =
-    (1 to 10).map { i =>
-      UserWithList(s"user$i", List(s"user$i@spotify.com", s"user$i@yolo.com"))
-    }.toList
+    (1 to 10)
+      .map(i => UserWithList(s"user$i", List(s"user$i@spotify.com", s"user$i@yolo.com")))
+      .toList
 
   val javaUsers =
-    (1 to 10).map { i =>
-      new UserBean(s"user$i", 20 + i)
-    }
+    (1 to 10).map(i => new UserBean(s"user$i", 20 + i))
 
   case class UserWithJList(username: String, emails: java.util.List[String])
   val usersWithJList =
@@ -109,9 +101,7 @@ object TestData {
 
   case class UserWithInstant(username: String, created: Instant, dateString: String)
   val usersWithJoda =
-    (1 to 10).map { i =>
-      UserWithInstant(s"user$i", Instant.now(), "19851026")
-    }.toList
+    (1 to 10).map(i => UserWithInstant(s"user$i", Instant.now(), "19851026")).toList
 
   class IsOver18UdfFn extends SerializableFunction[Integer, Boolean] {
     override def apply(input: Integer): Boolean = input >= 18
@@ -171,9 +161,7 @@ class BeamSQLTest extends PipelineSpec {
 
   "BeamSQL" should "support queries on case classes" in runWithContext { sc =>
     val schemaRes = BSchema.builder().addStringField("username").build()
-    val expected = users.map { u =>
-      Row.withSchema(schemaRes).addValue(u.username).build()
-    }
+    val expected = users.map(u => Row.withSchema(schemaRes).addValue(u.username).build())
     implicit def coderRowRes: Coder[Row] = Coder.row(schemaRes)
     val in = sc.parallelize(users)
     val r = in.query("select username from SCOLLECTION")
@@ -233,9 +221,7 @@ class BeamSQLTest extends PipelineSpec {
 
   it should "infer the schema of results" in runWithContext { sc =>
     val schemaRes = BSchema.builder().addStringField("username").build()
-    val expected = users.map { u =>
-      Row.withSchema(schemaRes).addValue(u.username).build()
-    }
+    val expected = users.map(u => Row.withSchema(schemaRes).addValue(u.username).build())
     implicit def coderRowRes: Coder[Row] = Coder.row(schemaRes)
     val in = sc.parallelize(users)
     val r = in.query("select username from SCOLLECTION")
@@ -243,27 +229,21 @@ class BeamSQLTest extends PipelineSpec {
   }
 
   it should "Automatically convert rows results to Products" in runWithContext { sc =>
-    val expected = users.map { u =>
-      (u.username, u.age)
-    }
+    val expected = users.map(u => (u.username, u.age))
     val in = sc.parallelize(users)
     val r = in.queryAs[(String, Int)]("select username, age from SCOLLECTION")
     r should containInAnyOrder(expected)
   }
 
   it should "support logical type in sql" in runWithContext { sc =>
-    val expected = usersWithLocale.map { u =>
-      (u.username, u.locale)
-    }
+    val expected = usersWithLocale.map(u => (u.username, u.locale))
     val in = sc.parallelize(usersWithLocale)
     val r = in.queryAs[(String, Locale)]("select username, locale from SCOLLECTION")
     r should containInAnyOrder(expected)
   }
 
   it should "support Option" in runWithContext { sc =>
-    val expected = usersWithOption.map { u =>
-      (u.username, u.age)
-    }
+    val expected = usersWithOption.map(u => (u.username, u.age))
     val in = sc.parallelize(usersWithOption)
     val r = in.queryAs[(String, Option[Int])]("select username, age from SCOLLECTION")
     r should containInAnyOrder(expected)
@@ -274,9 +254,7 @@ class BeamSQLTest extends PipelineSpec {
   }
 
   it should "support scala collections" in runWithContext { sc =>
-    val expected = usersWithList.map { u =>
-      (u.username, u.emails)
-    }
+    val expected = usersWithList.map(u => (u.username, u.emails))
     val in = sc.parallelize(usersWithList)
     val r = in.queryAs[(String, List[String])]("select username, emails from SCOLLECTION")
     r should containInAnyOrder(expected)
@@ -290,9 +268,7 @@ class BeamSQLTest extends PipelineSpec {
   }
 
   it should "support java collections" in runWithContext { sc =>
-    val expected = usersWithJList.map { u =>
-      (u.username, u.emails.get(0))
-    }
+    val expected = usersWithJList.map(u => (u.username, u.emails.get(0)))
     val in = sc.parallelize(usersWithJList)
     val r =
       in.queryAs[(String, String)]("select username, emails[1] from SCOLLECTION")
@@ -300,9 +276,7 @@ class BeamSQLTest extends PipelineSpec {
   }
 
   it should "support Map[K, V]" in runWithContext { sc =>
-    val expected = usersWithMap.map { u =>
-      (u.username, u.contacts)
-    }
+    val expected = usersWithMap.map(u => (u.username, u.contacts))
     val in = sc.parallelize(usersWithMap)
     val r =
       in.queryAs[(String, Map[String, String])]("select username, contacts from SCOLLECTION")
@@ -321,9 +295,7 @@ class BeamSQLTest extends PipelineSpec {
   }
 
   it should "support joda types" in runWithContext { sc =>
-    val expected = usersWithJoda.map { u =>
-      (u.username, u.created)
-    }
+    val expected = usersWithJoda.map(u => (u.username, u.created))
 
     val r = sc
       .parallelize(usersWithJoda)
@@ -591,9 +563,7 @@ class BeamSQLTest extends PipelineSpec {
 
   it should "Support queries on Avro generated classes" in runWithContext { sc =>
     val expected: List[(Int, String, String)] =
-      avroUsers.map { u =>
-        (u.getId.toInt, u.getFirstName.toString, u.getLastName.toString)
-      }
+      avroUsers.map(u => (u.getId.toInt, u.getFirstName.toString, u.getLastName.toString))
 
     val q =
       Query1[avro.User, (Int, String, String)](
@@ -693,9 +663,7 @@ class BeamSQLTest extends PipelineSpec {
   }
 
   "String interpolation" should "support simple queries" in runWithContext { sc =>
-    val expected = users.map { u =>
-      (u.username, u.age)
-    }
+    val expected = users.map(u => (u.username, u.age))
     val in = sc.parallelize(users)
     val r = sql"select username, age from $in".as[(String, Int)]
     r should containInAnyOrder(expected)
@@ -774,9 +742,7 @@ object TypeConvertionsTestData {
 
   case class JavaCompatibleUser(name: String, age: Int)
   val expectedJavaCompatUsers =
-    javaUsers.map { j =>
-      JavaCompatibleUser(j.getName, j.getAge)
-    }
+    javaUsers.map(j => JavaCompatibleUser(j.getName, j.getAge))
 
   case class AvroCompatibleUser(id: Int, first_name: String, last_name: String)
 

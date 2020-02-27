@@ -41,9 +41,7 @@ import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 
-/**
- * Tests of WordCount.
- */
+/** Tests of WordCount. */
 @SuppressWarnings("unchecked")
 @RunWith(JUnit4.class)
 public class WordCountTest {
@@ -51,27 +49,28 @@ public class WordCountTest {
   /** Example test that tests a specific {@link DoFn}. */
   @Test
   public void testExtractWordsFn() throws Exception {
-    DoFnTester<String, String> extractWordsFn =
-        DoFnTester.of(new ExtractWordsFn());
+    DoFnTester<String, String> extractWordsFn = DoFnTester.of(new ExtractWordsFn());
 
-    assertThat(extractWordsFn.processBundle(" some  input  words "),
-                      CoreMatchers.hasItems("some", "input", "words"));
+    assertThat(
+        extractWordsFn.processBundle(" some  input  words "),
+        CoreMatchers.hasItems("some", "input", "words"));
     assertThat(extractWordsFn.processBundle(" "), CoreMatchers.hasItems());
-    assertThat(extractWordsFn.processBundle(" some ", " input", " words"),
-                      CoreMatchers.hasItems("some", "input", "words"));
+    assertThat(
+        extractWordsFn.processBundle(" some ", " input", " words"),
+        CoreMatchers.hasItems("some", "input", "words"));
   }
 
-  static final String[] WORDS_ARRAY = new String[] {
-    "hi there", "hi", "hi sue bob",
-    "hi sue", "", "bob hi"};
+  static final String[] WORDS_ARRAY =
+      new String[] {
+        "hi there", "hi", "hi sue bob",
+        "hi sue", "", "bob hi"
+      };
 
   static final List<String> WORDS = Arrays.asList(WORDS_ARRAY);
 
-  static final String[] COUNTS_ARRAY = new String[] {
-      "hi: 5", "there: 1", "sue: 2", "bob: 2"};
+  static final String[] COUNTS_ARRAY = new String[] {"hi: 5", "there: 1", "sue: 2", "bob: 2"};
 
-  @Rule
-  public TestPipeline p = TestPipeline.create();
+  @Rule public TestPipeline p = TestPipeline.create();
 
   /** Example test that tests a PTransform by using an in-memory input and inspecting the output. */
   @Test
@@ -79,8 +78,8 @@ public class WordCountTest {
   public void testCountWords() throws Exception {
     PCollection<String> input = p.apply(Create.of(WORDS).withCoder(StringUtf8Coder.of()));
 
-    PCollection<String> output = input.apply(new CountWords())
-      .apply(MapElements.via(new FormatAsTextFn()));
+    PCollection<String> output =
+        input.apply(new CountWords()).apply(MapElements.via(new FormatAsTextFn()));
 
     PAssert.that(output).containsInAnyOrder(COUNTS_ARRAY);
     p.run().waitUntilFinish();

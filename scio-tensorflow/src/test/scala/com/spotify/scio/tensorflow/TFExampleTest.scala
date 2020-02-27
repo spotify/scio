@@ -71,9 +71,7 @@ class TFExampleTest extends PipelineSpec {
   "ExamplesJobV2" should "work" in {
     JobTest[ExamplesJobV2.type]
       .args("--output=out")
-      .output(TFExampleIO("out")) { coll =>
-        coll should haveSize(2)
-      }
+      .output(TFExampleIO("out"))(coll => coll should haveSize(2))
       .run()
   }
 

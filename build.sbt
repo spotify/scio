@@ -59,7 +59,7 @@ val junitInterfaceVersion = "0.11"
 val junitVersion = "4.13"
 val kantanCsvVersion = "0.5.1"
 val kryoVersion = "4.0.2" // explicitly depend on 4.0.1+ due to https://github.com/EsotericSoftware/kryo/pull/516
-val parquetAvroVersion = "0.3.4"
+val parquetExtraVersion = "0.3.4"
 val parquetVersion = "1.11.0"
 val protobufGenericVersion = "0.2.8"
 val protobufVersion = "3.11.4"
@@ -72,8 +72,8 @@ val slf4jVersion = "1.7.30"
 val sparkeyVersion = "3.0.1"
 val tensorFlowVersion = "1.15.0"
 val zoltarVersion = "0.5.6"
-val magnoliaVersion = "0.12.6"
-val magnolifyVersion = "0.1.4"
+val magnoliaVersion = "0.12.7"
+val magnolifyVersion = "0.1.5"
 val grpcVersion = "1.17.1"
 val caseappVersion = "2.0.0-M9"
 val sparkVersion = "2.4.4"
@@ -350,8 +350,8 @@ def beamRunnerSettings: Seq[Setting[_]] = Seq(
 
 lazy val protobufSettings = Def.settings(
   version in ProtobufConfig := protobufVersion,
-  protobufRunProtoc in ProtobufConfig := (
-    args => com.github.os72.protocjar.Protoc.runProtoc("-v3.7.1" +: args.toArray)
+  protobufRunProtoc in ProtobufConfig := (args =>
+    com.github.os72.protocjar.Protoc.runProtoc("-v3.7.1" +: args.toArray)
   )
 )
 
@@ -835,7 +835,8 @@ lazy val `scio-parquet`: Project = project
     javacOptions ++= Seq("-s", (sourceManaged.value / "main").toString),
     description := "Scio add-on for Parquet",
     libraryDependencies ++= Seq(
-      "me.lyh" %% "parquet-avro" % parquetAvroVersion,
+      "me.lyh" %% "parquet-avro" % parquetExtraVersion,
+      "me.lyh" % "parquet-tensorflow" % parquetExtraVersion,
       "com.google.cloud.bigdataoss" % "gcs-connector" % gcsConnectorVersion,
       "org.apache.beam" % "beam-sdks-java-io-hadoop-format" % beamVersion,
       "org.apache.hadoop" % "hadoop-client" % hadoopVersion,

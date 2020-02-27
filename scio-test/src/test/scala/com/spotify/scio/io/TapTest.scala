@@ -76,12 +76,12 @@ class TapTest extends TapSpec {
     Set(1, 2, 3).map(i => (newSpecificRecord(i), newGenericRecord(i)))
 
   "Future" should "support saveAsInMemoryTap" in {
-    val t = runWithInMemoryFuture { makeRecords(_).saveAsInMemoryTap }
+    val t = runWithInMemoryFuture(makeRecords(_).saveAsInMemoryTap)
     verifyTap(t, expectedRecords)
   }
 
   it should "support materialize" in {
-    val t = runWithFileFuture { makeRecords(_).materialize }
+    val t = runWithFileFuture(makeRecords(_).materialize)
     verifyTap(t, expectedRecords)
   }
 

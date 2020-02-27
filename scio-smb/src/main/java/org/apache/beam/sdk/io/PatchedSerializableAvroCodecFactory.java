@@ -41,7 +41,7 @@ import com.spotify.scio.smb.annotations.PatchedFromBeam;
  * A wrapper that allows {@link org.apache.avro.file.CodecFactory}s to be serialized using Java's
  * standard serialization mechanisms.
  */
-@PatchedFromBeam(origin="org.apache.beam.sdk.io.SerializableAvroCodecFactory")
+@PatchedFromBeam(origin = "org.apache.beam.sdk.io.SerializableAvroCodecFactory")
 public class PatchedSerializableAvroCodecFactory implements Externalizable {
   // Matches Beam 2.16.0
   private static final long serialVersionUID = 7445324844109564303L;

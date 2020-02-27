@@ -32,9 +32,7 @@ private object Derived extends Serializable {
       }
       arr
     }
-    val schemas = ps.iterator.map { p =>
-      p.label -> p.typeclass.asInstanceOf[Schema[Any]]
-    }.toArray
+    val schemas = ps.iterator.map(p => p.label -> p.typeclass.asInstanceOf[Schema[Any]]).toArray
 
     Record(schemas, rawConstruct, destruct)
   }

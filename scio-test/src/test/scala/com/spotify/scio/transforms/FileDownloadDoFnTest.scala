@@ -32,9 +32,7 @@ class FileDownloadDoFnTest extends PipelineSpec {
     runWithContext { sc =>
       val p = sc.parallelize(files.map(_.toUri)).flatMapFile(fn)
       p.keys should containInAnyOrder((1 to 100).map(_.toString))
-      p.values.distinct should forAll { f: Path =>
-        !Files.exists(f)
-      }
+      p.values.distinct should forAll { f: Path => !Files.exists(f) }
     }
     files.foreach(Files.delete)
     Files.delete(tmpDir)
@@ -46,9 +44,7 @@ class FileDownloadDoFnTest extends PipelineSpec {
     runWithContext { sc =>
       val p = sc.parallelize(files.map(_.toUri)).flatMapFile(fn, 10, false)
       p.keys should containInAnyOrder((1 to 100).map(_.toString))
-      p.values.distinct should forAll { f: Path =>
-        !Files.exists(f)
-      }
+      p.values.distinct should forAll { f: Path => !Files.exists(f) }
     }
     files.foreach(Files.delete)
     Files.delete(tmpDir)

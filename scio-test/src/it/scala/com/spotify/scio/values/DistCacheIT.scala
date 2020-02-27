@@ -41,9 +41,7 @@ class DistCacheIT extends PipelineSpec {
   )(fn: (ScioContext, DistCache[List[String]]) => T): ScioResult = {
     val sc = ScioContext()
     val uri = ItUtils.gcpTempLocation("dist-cache-it")
-    val cache = sc.distCache(uri) { f =>
-      scala.io.Source.fromFile(f).getLines().toList
-    }
+    val cache = sc.distCache(uri)(f => scala.io.Source.fromFile(f).getLines().toList)
     FileSystems.setDefaultPipelineOptions(sc.options)
     val resourceId = FileSystems.matchNewResource(uri, false)
     try {

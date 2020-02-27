@@ -80,9 +80,7 @@ object SortMergeBucketWriteExample {
       Coder.avroGenericRecordCoder(SortMergeBucketExample.UserDataSchema)
 
     sc.parallelize(0 until 500)
-      .map { i =>
-        SortMergeBucketExample.user(i, Random.nextInt(100))
-      }
+      .map(i => SortMergeBucketExample.user(i, Random.nextInt(100)))
       .saveAsSortedBucket(
         AvroSortedBucketIO
           .write(classOf[Integer], "userId", SortMergeBucketExample.UserDataSchema)

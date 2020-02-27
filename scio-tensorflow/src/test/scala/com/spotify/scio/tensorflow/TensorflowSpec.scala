@@ -169,9 +169,7 @@ object TFSavedTensorsMapInputPredictSigDefSpecifiedFetchOpsJob {
         options,
         fetchOps = Some(Seq("classes")),
         signatureName = "predict"
-      ) { e =>
-        Map("examples" -> Tensors.create(Array(e.toByteArray)))
-      } { (_, o) =>
+      )(e => Map("examples" -> Tensors.create(Array(e.toByteArray)))) { (_, o) =>
         val classes = Array.ofDim[Array[Byte]](1, 1)
         o("classes").copyTo(classes)
         // get the highest probability class
@@ -296,9 +294,7 @@ class TensorflowSpec extends PipelineSpec {
 
     JobTest[TFSavedRawJob.type]
       .args(s"--savedModelUri=$resource", s"--settings=$settings", "--output=output")
-      .output(TextIO("output")) { out =>
-        out should containInAnyOrder(List("0"))
-      }
+      .output(TextIO("output"))(out => out should containInAnyOrder(List("0")))
       .run()
   }
 
@@ -308,9 +304,7 @@ class TensorflowSpec extends PipelineSpec {
 
     JobTest[TFSavedTensorsMapInputDefaultSigDefJob.type]
       .args(s"--savedModelUri=$resource", s"--settings=$settings", "--output=output")
-      .output(TextIO("output")) { out =>
-        out should containInAnyOrder(List("0"))
-      }
+      .output(TextIO("output"))(out => out should containInAnyOrder(List("0")))
       .run()
   }
 
@@ -320,9 +314,7 @@ class TensorflowSpec extends PipelineSpec {
 
     JobTest[TFSavedTensorsMapInputPredictSigDefJob.type]
       .args(s"--savedModelUri=$resource", s"--settings=$settings", "--output=output")
-      .output(TextIO("output")) { out =>
-        out should containInAnyOrder(List("0"))
-      }
+      .output(TextIO("output"))(out => out should containInAnyOrder(List("0")))
       .run()
   }
 
@@ -332,9 +324,7 @@ class TensorflowSpec extends PipelineSpec {
 
     JobTest[TFSavedTensorsMapInputPredictSigDefSpecifiedFetchOpsJob.type]
       .args(s"--savedModelUri=$resource", s"--settings=$settings", "--output=output")
-      .output(TextIO("output")) { out =>
-        out should containInAnyOrder(List("0"))
-      }
+      .output(TextIO("output"))(out => out should containInAnyOrder(List("0")))
       .run()
   }
 
@@ -344,9 +334,7 @@ class TensorflowSpec extends PipelineSpec {
 
     JobTest[TFSavedExampleInputDefaultSigDefJob.type]
       .args(s"--savedModelUri=$resource", s"--settings=$settings", "--output=output")
-      .output(TextIO("output")) { out =>
-        out should containInAnyOrder(List("0"))
-      }
+      .output(TextIO("output"))(out => out should containInAnyOrder(List("0")))
       .run()
   }
 
@@ -356,9 +344,7 @@ class TensorflowSpec extends PipelineSpec {
 
     JobTest[TFSavedExampleInputPredictSigDefJob.type]
       .args(s"--savedModelUri=$resource", s"--settings=$settings", "--output=output")
-      .output(TextIO("output")) { out =>
-        out should containInAnyOrder(List("0"))
-      }
+      .output(TextIO("output"))(out => out should containInAnyOrder(List("0")))
       .run()
   }
 
@@ -372,9 +358,7 @@ class TensorflowSpec extends PipelineSpec {
         s"--settings=$settings",
         "--output=output"
       )
-      .output(TextIO("output")) { out =>
-        out should containInAnyOrder(List("0"))
-      }
+      .output(TextIO("output"))(out => out should containInAnyOrder(List("0")))
       .run()
   }
 }

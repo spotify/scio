@@ -1,6 +1,6 @@
 package com.spotify.scio.jmh.j;
 
-final public class UserId {
+public final class UserId {
 
   private Byte[] bytes;
 

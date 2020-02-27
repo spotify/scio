@@ -17,12 +17,12 @@
 
 package com.spotify.scio.bigquery.types
 
-import com.google.protobuf.ByteString
 import com.google.cloud.bigquery.storage.v1beta1.ReadOptions.TableReadOptions
+import com.google.protobuf.ByteString
 import com.spotify.scio._
-import com.spotify.scio.io.Taps
-import com.spotify.scio.bigquery._
 import com.spotify.scio.bigquery.BigQueryTaps._
+import com.spotify.scio.bigquery._
+import com.spotify.scio.io.Taps
 import org.apache.beam.sdk.io.gcp.{bigquery => beam}
 import org.apache.beam.sdk.testing.PAssert
 import org.joda.time.{DateTimeZone, Duration, Instant}
@@ -111,26 +111,21 @@ class StorageIT extends AnyFlatSpec with Matchers {
   }
 
   it should "work with selectedFields" in {
-    val expected = (0 until 10).map { i =>
-      (i.toLong, s"s$i", i.toLong)
-    }.asJava
+    val expected = (0 until 10).map(i => (i.toLong, s"s$i", i.toLong)).asJava
     val (sc, _) = ContextAndArgs(
       Array("--project=data-integration-test", "--tempLocation=gs://data-integration-test-eu/temp")
     )
     val p = sc
       .typedBigQuery[NestedWithFields]()
-      .map { r =>
-        (r.required.int, r.required.string, r.optional.get.int)
-      }
+      .map(r => (r.required.int, r.required.string, r.optional.get.int))
       .internal
     PAssert.that(p).containsInAnyOrder(expected)
     sc.run()
   }
 
   it should "work with rowRestriction" in {
-    val expected = (0 until 5).map { i =>
-      (i.toLong, s"s$i", i.toLong, s"s$i", i.toLong, s"s$i")
-    }.asJava
+    val expected =
+      (0 until 5).map(i => (i.toLong, s"s$i", i.toLong, s"s$i", i.toLong, s"s$i")).asJava
     val (sc, _) = ContextAndArgs(
       Array("--project=data-integration-test", "--tempLocation=gs://data-integration-test-eu/temp")
     )
@@ -146,9 +141,8 @@ class StorageIT extends AnyFlatSpec with Matchers {
   }
 
   it should "work with rowRestriction override" in {
-    val expected = (0 until 3).map { i =>
-      (i.toLong, s"s$i", i.toLong, s"s$i", i.toLong, s"s$i")
-    }.asJava
+    val expected =
+      (0 until 3).map(i => (i.toLong, s"s$i", i.toLong, s"s$i", i.toLong, s"s$i")).asJava
     val (sc, _) = ContextAndArgs(
       Array("--project=data-integration-test", "--tempLocation=gs://data-integration-test-eu/temp")
     )
@@ -164,17 +158,13 @@ class StorageIT extends AnyFlatSpec with Matchers {
   }
 
   it should "work with all options" in {
-    val expected = (0 until 5).map { i =>
-      (i.toLong, s"s$i", i.toLong)
-    }.asJava
+    val expected = (0 until 5).map(i => (i.toLong, s"s$i", i.toLong)).asJava
     val (sc, _) = ContextAndArgs(
       Array("--project=data-integration-test", "--tempLocation=gs://data-integration-test-eu/temp")
     )
     val p = sc
       .typedBigQuery[NestedWithAll](NestedWithAll.table.format("nested"))
-      .map { r =>
-        (r.required.int, r.required.string, r.optional.get.int)
-      }
+      .map(r => (r.required.int, r.required.string, r.optional.get.int))
       .internal
     PAssert.that(p).containsInAnyOrder(expected)
     sc.run()
@@ -228,6 +218,18 @@ class StorageIT extends AnyFlatSpec with Matchers {
       Array("--project=data-integration-test", "--tempLocation=gs://data-integration-test-eu/temp")
     )
     val p = sc.typedBigQuery[FromTable]().internal
+    PAssert.that(p).containsInAnyOrder(expected)
+    sc.run()
+  }
+
+  it should "work with toTable" in {
+    val expected = (0 until 10).map(_ => ToTableRequired(true)).asJava
+    val (sc, _) = ContextAndArgs(
+      Array("--project=data-integration-test", "--tempLocation=gs://data-integration-test-eu/temp")
+    )
+    val p = sc
+      .typedBigQueryStorage[ToTableRequired](Table.Spec("data-integration-test:storage.required"))
+      .internal
     PAssert.that(p).containsInAnyOrder(expected)
     sc.run()
   }
@@ -319,4 +321,7 @@ object StorageIT {
 
   @BigQueryType.fromQuery("SELECT * FROM `data-integration-test.storage.required`")
   class FromQuery
+
+  @BigQueryType.toTable
+  case class ToTableRequired(bool: Boolean)
 }

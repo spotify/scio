@@ -32,14 +32,14 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.*;
 
-/**
- * A {@link DoFn} that pipes elements through an external command via StdIn & StdOut.
- */
+/** A {@link DoFn} that pipes elements through an external command via StdIn & StdOut. */
 public class PipeDoFn extends DoFn<String, String> {
 
   private static final Logger LOG = LoggerFactory.getLogger(PipeDoFn.class);
-  private static final ConcurrentMap<UUID, Optional<RuntimeException>> setupMap = new ConcurrentHashMap<>();
-  private static final ConcurrentMap<UUID, Optional<RuntimeException>> teardownMap = new ConcurrentHashMap<>();
+  private static final ConcurrentMap<UUID, Optional<RuntimeException>> setupMap =
+      new ConcurrentHashMap<>();
+  private static final ConcurrentMap<UUID, Optional<RuntimeException>> teardownMap =
+      new ConcurrentHashMap<>();
 
   private final UUID uuid;
   private final String[] cmdArray;
@@ -56,6 +56,7 @@ public class PipeDoFn extends DoFn<String, String> {
 
   /**
    * Create a new {@link PipeDoFn} instance.
+   *
    * @param command the command to call.
    */
   public PipeDoFn(String command) {
@@ -64,6 +65,7 @@ public class PipeDoFn extends DoFn<String, String> {
 
   /**
    * Create a new {@link PipeDoFn} instance.
+   *
    * @param cmdArray array containing the command to call and its arguments.
    */
   public PipeDoFn(String[] cmdArray) {
@@ -73,21 +75,28 @@ public class PipeDoFn extends DoFn<String, String> {
   /**
    * Create a new {@link PipeDoFn} instance.
    *
-   * The setup and teardown commands will be executed once per {@link PipeDoFn} instance, i.e. on
+   * <p>The setup and teardown commands will be executed once per {@link PipeDoFn} instance, i.e. on
    * a 4-core Dataflow worker, an instance will be cloned 4 times, one for each CPU core but setup
    * and teardown commands will be executed only once.
    *
-   * @param command      the command to call.
-   * @param environment  environment variables, or <tt>null</tt> if the subprocess should inherit
-   *                     the environment from the current process.
-   * @param dir          the working directory of the sub process, or <tt>null</tt> if the
-   *                     subprocess should inherit the working directly of the current process.
-   * @param setupCmds    setup commands to be run before processing.
+   * @param command the command to call.
+   * @param environment environment variables, or <tt>null</tt> if the subprocess should inherit the
+   *     environment from the current process.
+   * @param dir the working directory of the sub process, or <tt>null</tt> if the subprocess should
+   *     inherit the working directly of the current process.
+   * @param setupCmds setup commands to be run before processing.
    * @param teardownCmds tear down commands to be run after processing.
    */
-  public PipeDoFn(String command, Map<String, String> environment, File dir,
-                  List<String> setupCmds, List<String> teardownCmds) {
-    this(ProcessUtil.tokenizeCommand(command), environment, dir,
+  public PipeDoFn(
+      String command,
+      Map<String, String> environment,
+      File dir,
+      List<String> setupCmds,
+      List<String> teardownCmds) {
+    this(
+        ProcessUtil.tokenizeCommand(command),
+        environment,
+        dir,
         ProcessUtil.tokenizeCommands(setupCmds),
         ProcessUtil.tokenizeCommands(teardownCmds));
   }
@@ -95,20 +104,24 @@ public class PipeDoFn extends DoFn<String, String> {
   /**
    * Create a new {@link PipeDoFn} instance.
    *
-   * * The setup and teardown commands will be executed once per {@link PipeDoFn} instance, i.e. on
-   * a 4-core Dataflow worker, an instance will be cloned 4 times, one for each CPU core but setup
-   * and teardown commands will be executed only once.
+   * <p>* The setup and teardown commands will be executed once per {@link PipeDoFn} instance, i.e.
+   * on a 4-core Dataflow worker, an instance will be cloned 4 times, one for each CPU core but
+   * setup and teardown commands will be executed only once.
    *
-   * @param cmdArray     array containing the command to call and its arguments.
-   * @param environment  environment variables, or <tt>null</tt> if the subprocess should inherit
-   *                     the environment from the current process.
-   * @param dir          the working directory of the sub process, or <tt>null</tt> if the
-   *                     subprocess should inherit the working directly of the current process.
-   * @param setupCmds    setup commands to be run before processing.
+   * @param cmdArray array containing the command to call and its arguments.
+   * @param environment environment variables, or <tt>null</tt> if the subprocess should inherit the
+   *     environment from the current process.
+   * @param dir the working directory of the sub process, or <tt>null</tt> if the subprocess should
+   *     inherit the working directly of the current process.
+   * @param setupCmds setup commands to be run before processing.
    * @param teardownCmds tear down commands to be run after processing.
    */
-  public PipeDoFn(String[] cmdArray, Map<String, String> environment, File dir,
-                  List<String[]> setupCmds, List<String[]> teardownCmds) {
+  public PipeDoFn(
+      String[] cmdArray,
+      Map<String, String> environment,
+      File dir,
+      List<String[]> setupCmds,
+      List<String[]> teardownCmds) {
     this.uuid = UUID.randomUUID();
     this.cmdArray = cmdArray;
     this.envp = ProcessUtil.createEnv(environment);
@@ -119,10 +132,11 @@ public class PipeDoFn extends DoFn<String, String> {
 
   @Setup
   public void setup() {
-    executorService = MoreExecutors.getExitingExecutorService(
-        (ThreadPoolExecutor) Executors.newFixedThreadPool(1));
-    Optional<RuntimeException> result = setupMap
-        .computeIfAbsent(uuid, key -> runCommands("Setup", setupCmds));
+    executorService =
+        MoreExecutors.getExitingExecutorService(
+            (ThreadPoolExecutor) Executors.newFixedThreadPool(1));
+    Optional<RuntimeException> result =
+        setupMap.computeIfAbsent(uuid, key -> runCommands("Setup", setupCmds));
     if (result.isPresent()) {
       throw result.get();
     }
@@ -131,8 +145,8 @@ public class PipeDoFn extends DoFn<String, String> {
   @Teardown
   public void teardown() {
     executorService.shutdown();
-    Optional<RuntimeException> result = teardownMap
-        .computeIfAbsent(uuid, key -> runCommands("Teardown", teardownCmds));
+    Optional<RuntimeException> result =
+        teardownMap.computeIfAbsent(uuid, key -> runCommands("Teardown", teardownCmds));
     if (result.isPresent()) {
       throw result.get();
     }
@@ -183,8 +197,10 @@ public class PipeDoFn extends DoFn<String, String> {
       int exitCode = pipeProcess.waitFor();
       stdOut.get();
       String stdErr = ProcessUtil.getStdErr(pipeProcess);
-      LOG.info("Process exited: {}{}",
-          ProcessUtil.join(cmdArray), stdErr.isEmpty() ? "" : ", STDERR:\n" + stdErr);
+      LOG.info(
+          "Process exited: {}{}",
+          ProcessUtil.join(cmdArray),
+          stdErr.isEmpty() ? "" : ", STDERR:\n" + stdErr);
       Preconditions.checkState(exitCode == 0, "Non-zero exit code: " + exitCode);
     } catch (InterruptedException | ExecutionException e) {
       throw new RuntimeException(e);
@@ -201,7 +217,8 @@ public class PipeDoFn extends DoFn<String, String> {
       try {
         pipeProcess = Runtime.getRuntime().exec(cmdArray, envp, dir);
         stdIn = new BufferedWriter(new OutputStreamWriter(pipeProcess.getOutputStream()));
-        BufferedReader out = new BufferedReader(new InputStreamReader(pipeProcess.getInputStream()));
+        BufferedReader out =
+            new BufferedReader(new InputStreamReader(pipeProcess.getInputStream()));
         stdOut = CompletableFuture.runAsync(() -> out.lines().forEach(c::output), executorService);
         LOG.info("Process started: {}", ProcessUtil.join(cmdArray));
       } catch (IOException e) {
@@ -226,5 +243,4 @@ public class PipeDoFn extends DoFn<String, String> {
         .add(DisplayData.item("Environment", envp == null ? "null" : Joiner.on(' ').join(envp)))
         .add(DisplayData.item("Working Directory", dir == null ? "null" : dir.toString()));
   }
-
 }

@@ -46,7 +46,7 @@ import org.scalatest.wordspec.AnyWordSpec
  */
 trait CheckProperties extends AnyPropSpec with Checkers {
   def property(testName: String, testTags: org.scalatest.Tag*)(testFun: org.scalacheck.Prop): Unit =
-    super.property(testName, testTags: _*) { check { testFun } }
+    super.property(testName, testTags: _*)(check(testFun))
 }
 
 class BloomFilterLaws extends CheckProperties {
@@ -61,9 +61,7 @@ class BloomFilterLaws extends CheckProperties {
     Arbitrary {
       val valueGen = Gen.choose(0, 10000)
 
-      val item = valueGen.map { v =>
-        bfMonoid.create(v.toString)
-      }
+      val item = valueGen.map(v => bfMonoid.create(v.toString))
 
       val sparseGen = valueGen.map { v =>
         val sparseInstance =
@@ -98,18 +96,14 @@ class BloomFilterLaws extends CheckProperties {
   }
 
   property("the distance between a filter and itself should be 0") {
-    forAll { (a: MutableBF[String]) =>
-      a.hammingDistance(a) == 0
-    }
+    forAll((a: MutableBF[String]) => a.hammingDistance(a) == 0)
   }
 
   property(
     "the distance between a filter and an empty filter should be the number of bits" +
       "set in the existing filter"
   ) {
-    forAll { (a: MutableBF[String]) =>
-      a.hammingDistance(bfMonoid.zero) == a.numBits
-    }
+    forAll((a: MutableBF[String]) => a.hammingDistance(bfMonoid.zero) == a.numBits)
   }
 
   property("all equivalent filters should have 0 Hamming distance") {
@@ -144,15 +138,11 @@ class BloomFilterLaws extends CheckProperties {
   }
 
   property("maybeContains is consistent with contains") {
-    forAll { (a: MutableBF[String], b: String) =>
-      a.maybeContains(b) == a.contains(b).isTrue
-    }
+    forAll((a: MutableBF[String], b: String) => a.maybeContains(b) == a.contains(b).isTrue)
   }
 
   property("after + maybeContains is true") {
-    forAll { (a: MutableBF[String], b: String) =>
-      (a += b).maybeContains(b)
-    }
+    forAll((a: MutableBF[String], b: String) => (a += b).maybeContains(b))
   }
 
   property("checkAndAdd works like check the add") {
@@ -166,9 +156,7 @@ class BloomFilterLaws extends CheckProperties {
   }
 
   property("a ++= a = a for BF") {
-    forAll { (a: MutableBF[String]) =>
-      Equiv[MutableBF[String]].equiv(a ++= a, a)
-    }
+    forAll((a: MutableBF[String]) => Equiv[MutableBF[String]].equiv(a ++= a, a))
   }
 
   property("MutableBF instances should be serializable by Beam") {
@@ -207,11 +195,7 @@ class BFHashIndices extends CheckProperties {
     }
 
   property("Indices are non negative") {
-    forAll { (hash: KirMit32Hash[String], v: Long) =>
-      hash.apply(v.toString).forall { e =>
-        e >= 0
-      }
-    }
+    forAll((hash: KirMit32Hash[String], v: Long) => hash.apply(v.toString).forall(e => e >= 0))
   }
 }
 
@@ -319,9 +303,7 @@ class BloomFilterTest extends AnyWordSpec with Matchers {
         val entries = (0 until numEntries).map(_ => RAND.nextInt.toString)
         val bf = bfMonoid.create(entries: _*)
 
-        entries.foreach { i =>
-          assert(bf.contains(i).isTrue)
-        }
+        entries.foreach(i => assert(bf.contains(i).isTrue))
       }
     }
 
@@ -355,7 +337,7 @@ class BloomFilterTest extends AnyWordSpec with Matchers {
     "approximate cardinality" in {
       val bfMonoid = BloomFilterMonoid[String](10, 100000)
       Seq(10, 100, 1000, 10000).foreach { exactCardinality =>
-        val items = (1 until exactCardinality).map { _.toString }
+        val items = (1 until exactCardinality).map(_.toString)
         val bf = bfMonoid.create(items: _*)
         val size = bf.size
 
@@ -372,9 +354,7 @@ class BloomFilterTest extends AnyWordSpec with Matchers {
         val entries = (0 until numEntries).map(_ => RAND.nextInt.toString)
         val bf = aggregator(entries)
 
-        entries.foreach { i =>
-          assert(bf.contains(i).isTrue)
-        }
+        entries.foreach(i => assert(bf.contains(i).isTrue))
       }
     }
 
@@ -431,9 +411,7 @@ class BloomFilterTest extends AnyWordSpec with Matchers {
         val entries = (0 until numEntries).map(_ => RAND.nextInt.toString)
         val bf = bfMonoid.create(entries: _*)
         val bfWithCheckAndAdd = entries
-          .map { entry =>
-            (entry, bfMonoid.create(entry))
-          }
+          .map(entry => (entry, bfMonoid.create(entry)))
           .foldLeft((bfMonoid.zero, bfMonoid.zero)) {
             case ((left, leftAlt), (entry, right)) =>
               val (newLeftAlt, contained) = leftAlt.checkAndAdd(entry)
@@ -441,9 +419,7 @@ class BloomFilterTest extends AnyWordSpec with Matchers {
               (left += entry, newLeftAlt)
           }
 
-        entries.foreach { i =>
-          assert(bf.contains(i).isTrue)
-        }
+        entries.foreach(i => assert(bf.contains(i).isTrue))
       }
     }
   }

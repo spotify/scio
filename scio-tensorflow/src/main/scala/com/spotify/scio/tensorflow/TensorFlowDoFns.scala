@@ -168,9 +168,7 @@ object SavedBundlePredictDoFn {
       model.outputsNameMap().asScala.toMap
     private lazy val requestedFetchOps: Map[String, String] = fetchOps
       .map { tensorIds =>
-        tensorIds.iterator.map { tensorId =>
-          tensorId -> exportedFetchOps(tensorId)
-        }.toMap
+        tensorIds.iterator.map(tensorId => tensorId -> exportedFetchOps(tensorId)).toMap
       }
       .getOrElse(exportedFetchOps)
 
@@ -210,9 +208,7 @@ object SavedBundlePredictDoFn {
         model.outputsNameMap().asScala.toMap
       private lazy val requestedFetchOps: Map[String, String] = fetchOps
         .map { tensorIds =>
-          tensorIds.iterator.map { tensorId =>
-            tensorId -> exportedFetchOps(tensorId)
-          }.toMap
+          tensorIds.iterator.map(tensorId => tensorId -> exportedFetchOps(tensorId)).toMap
         }
         .getOrElse(exportedFetchOps)
 

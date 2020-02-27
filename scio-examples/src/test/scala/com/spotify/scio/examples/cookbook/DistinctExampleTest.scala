@@ -39,9 +39,7 @@ class DistinctExampleTest extends PipelineSpec {
     JobTest[com.spotify.scio.examples.cookbook.DistinctExample.type]
       .args("--input=in.txt", "--output=out.txt")
       .input(TextIO("in.txt"), input)
-      .output(TextIO("out.txt")) { coll =>
-        coll should containInAnyOrder(expected)
-      }
+      .output(TextIO("out.txt"))(coll => coll should containInAnyOrder(expected))
       .run()
   }
 }

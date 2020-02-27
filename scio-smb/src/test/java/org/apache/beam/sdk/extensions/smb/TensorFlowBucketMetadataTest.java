@@ -105,14 +105,14 @@ public class TensorFlowBucketMetadataTest {
     MatcherAssert.assertThat(displayData, hasDisplayItem("keyCoder", ByteArrayCoder.class));
   }
 
-
   @Test
   public void testSameSourceCompatibility() throws Exception {
     final TensorFlowBucketMetadata<byte[]> metadata1 =
         new TensorFlowBucketMetadata<>(2, 1, byte[].class, HashType.MURMUR3_32, "foo");
 
     final TensorFlowBucketMetadata<byte[]> metadata2 =
-        new TensorFlowBucketMetadata<>(2, 1, byte[].class, HashType.MURMUR3_32, "bar");;
+        new TensorFlowBucketMetadata<>(2, 1, byte[].class, HashType.MURMUR3_32, "bar");
+    ;
 
     final TensorFlowBucketMetadata<byte[]> metadata3 =
         new TensorFlowBucketMetadata<>(4, 1, byte[].class, HashType.MURMUR3_32, "bar");

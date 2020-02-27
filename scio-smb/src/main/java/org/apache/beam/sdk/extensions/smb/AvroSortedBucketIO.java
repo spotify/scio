@@ -145,8 +145,8 @@ public class AvroSortedBucketIO {
           .setInputDirectories(
               inputDirectories.stream()
                   .map(dir -> FileSystems.matchNewResource(dir, true))
-                  .collect(Collectors.toList())
-          ).build();
+                  .collect(Collectors.toList()))
+          .build();
     }
 
     /** Specifies the input filename suffix. */

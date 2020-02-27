@@ -47,9 +47,7 @@ object WriteDynamicExample {
       // Group records according to first letter of the character's name so
       // all characters starting with letter A will share an output path, etc.
       // Since input is small, restrict to one file per bucket.
-      .saveAsDynamicTextFile(args("output"), 1) { l =>
-        l.charAt(0).toString.toUpperCase
-      }
+      .saveAsDynamicTextFile(args("output"), 1)(l => l.charAt(0).toString.toUpperCase)
 
     sc.run()
     ()

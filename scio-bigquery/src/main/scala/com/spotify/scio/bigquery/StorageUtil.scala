@@ -28,14 +28,13 @@ import scala.collection.JavaConverters._
 object StorageUtil {
   def tableReadOptions(
     selectedFields: List[String] = Nil,
-    rowRestriction: String = null
-  ): TableReadOptions = {
-    val builder = TableReadOptions.newBuilder().addAllSelectedFields(selectedFields.asJava)
-    if (rowRestriction != null) {
-      builder.setRowRestriction(rowRestriction)
-    }
-    builder.build()
-  }
+    rowRestriction: Option[String] = None
+  ): TableReadOptions =
+    TableReadOptions
+      .newBuilder()
+      .addAllSelectedFields(selectedFields.asJava)
+      .setRowRestriction(rowRestriction.getOrElse(""))
+      .build()
 
   // https://cloud.google.com/bigquery/docs/reference/storage/
   def toTableSchema(avroSchema: Schema): TableSchema = {

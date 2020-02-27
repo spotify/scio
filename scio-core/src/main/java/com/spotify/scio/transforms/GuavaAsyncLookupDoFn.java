@@ -20,8 +20,9 @@ import com.google.common.util.concurrent.ListenableFuture;
 import org.apache.beam.sdk.transforms.DoFn;
 
 /**
- * A {@link DoFn} that performs asynchronous lookup using the provided client for Guava
- * {@link ListenableFuture}.
+ * A {@link DoFn} that performs asynchronous lookup using the provided client for Guava {@link
+ * ListenableFuture}.
+ *
  * @param <A> input element type.
  * @param <B> client lookup value type.
  * @param <C> client type.
@@ -30,17 +31,16 @@ public abstract class GuavaAsyncLookupDoFn<A, B, C>
     extends BaseAsyncLookupDoFn<A, B, C, ListenableFuture<B>, BaseAsyncLookupDoFn.Try<B>>
     implements FutureHandlers.Guava<B> {
 
-  /**
-   * Create a {@link GuavaAsyncLookupDoFn} instance.
-   */
+  /** Create a {@link GuavaAsyncLookupDoFn} instance. */
   public GuavaAsyncLookupDoFn() {
     super();
   }
 
   /**
    * Create a {@link GuavaAsyncLookupDoFn} instance.
+   *
    * @param maxPendingRequests maximum number of pending requests to prevent runner from timing out
-   *                           and retrying bundles.
+   *     and retrying bundles.
    */
   public GuavaAsyncLookupDoFn(int maxPendingRequests) {
     super(maxPendingRequests);
@@ -48,12 +48,13 @@ public abstract class GuavaAsyncLookupDoFn<A, B, C>
 
   /**
    * Create a {@link GuavaAsyncLookupDoFn} instance.
+   *
    * @param maxPendingRequests maximum number of pending requests to prevent runner from timing out
-   *                           and retrying bundles.
+   *     and retrying bundles.
    * @param cacheSupplier supplier for lookup cache.
    */
-  public <K> GuavaAsyncLookupDoFn(int maxPendingRequests,
-                                  BaseAsyncLookupDoFn.CacheSupplier<A, B, K> cacheSupplier) {
+  public <K> GuavaAsyncLookupDoFn(
+      int maxPendingRequests, BaseAsyncLookupDoFn.CacheSupplier<A, B, K> cacheSupplier) {
     super(maxPendingRequests, cacheSupplier);
   }
 

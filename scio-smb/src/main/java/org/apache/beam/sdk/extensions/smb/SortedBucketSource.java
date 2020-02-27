@@ -121,11 +121,15 @@ public class SortedBucketSource<FinalKeyT>
             UnionCoder.of(
                 sources.stream().map(BucketedInput::getCoder).collect(Collectors.toList())));
 
-    return begin.getPipeline()
-        .apply("CreateBuckets",
+    return begin
+        .getPipeline()
+        .apply(
+            "CreateBuckets",
             Create.of(
-                IntStream.range(0, sourceSpec.leastNumBuckets).boxed().collect(Collectors.toList())
-            ).withCoder(VarIntCoder.of()))
+                    IntStream.range(0, sourceSpec.leastNumBuckets)
+                        .boxed()
+                        .collect(Collectors.toList()))
+                .withCoder(VarIntCoder.of()))
         .apply("ReshuffleKeys", reshuffle)
         .apply("MergeBuckets", ParDo.of(
             new MergeBuckets<>(this.getName(), sources, sourceSpec.leastNumBuckets, sourceSpec.keyCoder)
@@ -143,9 +147,7 @@ public class SortedBucketSource<FinalKeyT>
   }
 
   static <KeyT> SourceSpec<KeyT> getSourceSpec(
-      Class<KeyT> finalKeyClass,
-      List<BucketedInput<?, ?>> sources
-  ) {
+      Class<KeyT> finalKeyClass, List<BucketedInput<?, ?>> sources) {
     BucketMetadata<?, ?> first = null;
     Coder<KeyT> finalKeyCoder = null;
 
@@ -314,6 +316,10 @@ public class SortedBucketSource<FinalKeyT>
           break;
         }
       }
+
+      // Output next key-value group
+      return KV.of(
+          minKeyEntry.getValue().getKey(), CoGbkResultUtil.newCoGbkResult(resultSchema, valueMap));
     }
 
     @Override
@@ -356,8 +362,7 @@ public class SortedBucketSource<FinalKeyT>
         TupleTag<V> tupleTag,
         ResourceId inputDirectory,
         String filenameSuffix,
-        FileOperations<V> fileOperations
-    ) {
+        FileOperations<V> fileOperations) {
       this(tupleTag, Collections.singletonList(inputDirectory), filenameSuffix, fileOperations);
     }
 
@@ -365,8 +370,7 @@ public class SortedBucketSource<FinalKeyT>
         TupleTag<V> tupleTag,
         List<ResourceId> inputDirectories,
         String filenameSuffix,
-        FileOperations<V> fileOperations
-    ) {
+        FileOperations<V> fileOperations) {
       this.tupleTag = tupleTag;
       this.filenameSuffix = filenameSuffix;
       this.fileOperations = fileOperations;
@@ -382,9 +386,8 @@ public class SortedBucketSource<FinalKeyT>
     }
 
     static CoGbkResultSchema schemaOf(List<BucketedInput<?, ?>> sources) {
-      return CoGbkResultSchema.of(sources.stream()
-          .map(BucketedInput::getTupleTag)
-          .collect(Collectors.toList()));
+      return CoGbkResultSchema.of(
+          sources.stream().map(BucketedInput::getTupleTag).collect(Collectors.toList()));
     }
 
     public BucketMetadata<K, V> getMetadata() {
@@ -406,31 +409,30 @@ public class SortedBucketSource<FinalKeyT>
             new SMBFilenamePolicy(dir, filenameSuffix).forDestination();
         BucketMetadata<K, V> metadata;
         try {
-          metadata = BucketMetadata.from(
-              Channels.newInputStream(FileSystems.open(fileAssignment.forMetadata()))
-          );
+          metadata =
+              BucketMetadata.from(
+                  Channels.newInputStream(FileSystems.open(fileAssignment.forMetadata())));
         } catch (IOException e) {
           throw new RuntimeException("Error fetching metadata for " + dir, e);
         }
-        if (
-            this.canonicalMetadata == null ||
-                metadata.getNumBuckets() < this.canonicalMetadata.getNumBuckets()
-        ) {
+        if (this.canonicalMetadata == null
+            || metadata.getNumBuckets() < this.canonicalMetadata.getNumBuckets()) {
           this.canonicalMetadata = metadata;
           canonicalMetadataDir = dir;
         }
 
         Preconditions.checkState(
-            metadata.isCompatibleWith(this.canonicalMetadata) &&
-                metadata.isPartitionCompatible(this.canonicalMetadata),
+            metadata.isCompatibleWith(this.canonicalMetadata)
+                && metadata.isPartitionCompatible(this.canonicalMetadata),
             "%s cannot be read as a single input source. Metadata in directory "
                 + "%s is incompatible with metadata in directory %s. %s != %s",
-            this, dir, canonicalMetadataDir, metadata, canonicalMetadata);
-
-        this.inputMetadata.put(
+            this,
             dir,
-            new DirectoryMetadata(fileAssignment, metadata)
-        );
+            canonicalMetadataDir,
+            metadata,
+            canonicalMetadata);
+
+        this.inputMetadata.put(dir, new DirectoryMetadata(fileAssignment, metadata));
       }
     }
 
@@ -438,25 +440,26 @@ public class SortedBucketSource<FinalKeyT>
       final List<Iterator<V>> iterators = new ArrayList<>();
 
       // Create one iterator per shard
-      inputMetadata.forEach((resourceId, directoryMetadata) -> {
-        final int directoryBuckets = directoryMetadata.numBuckets;
-        final int directoryShards = directoryMetadata.numShards;
+      inputMetadata.forEach(
+          (resourceId, directoryMetadata) -> {
+            final int directoryBuckets = directoryMetadata.numBuckets;
+            final int directoryShards = directoryMetadata.numShards;
 
-        // Since all BucketedInputs have a bucket count that's a power of two, we can infer
-        // which buckets should be merged together for the join.
-        for (int i = bucketId; i < directoryBuckets; i += leastNumBuckets) {
-          for (int j = 0; j < directoryShards; j++) {
-            final ResourceId file = directoryMetadata
-                .fileAssignment
-                .forBucket(BucketShardId.of(i, j), directoryBuckets, directoryShards);
-            try {
-              iterators.add(fileOperations.iterator(file));
-            } catch (Exception e) {
-              throw new RuntimeException(e);
+            // Since all BucketedInputs have a bucket count that's a power of two, we can infer
+            // which buckets should be merged together for the join.
+            for (int i = bucketId; i < directoryBuckets; i += leastNumBuckets) {
+              for (int j = 0; j < directoryShards; j++) {
+                final ResourceId file =
+                    directoryMetadata.fileAssignment.forBucket(
+                        BucketShardId.of(i, j), directoryBuckets, directoryShards);
+                try {
+                  iterators.add(fileOperations.iterator(file));
+                } catch (Exception e) {
+                  throw new RuntimeException(e);
+                }
+              }
             }
-          }
-        }
-      });
+          });
 
       final Function<V, byte[]> keyBytesFn = canonicalMetadata::getKeyBytes;
 
@@ -464,9 +467,7 @@ public class SortedBucketSource<FinalKeyT>
       final UnmodifiableIterator<V> iterator =
           Iterators.mergeSorted(
               iterators,
-              (o1, o2) ->
-                  bytesComparator.compare(
-                      keyBytesFn.apply(o1), keyBytesFn.apply(o2)));
+              (o1, o2) -> bytesComparator.compare(keyBytesFn.apply(o1), keyBytesFn.apply(o2)));
       return new KeyGroupIterator<>(iterator, keyBytesFn, bytesComparator);
     }
 
@@ -475,9 +476,10 @@ public class SortedBucketSource<FinalKeyT>
       return String.format(
           "BucketedInput[tupleTag=%s, inputDirectories=[%s], metadata=%s]",
           tupleTag.getId(),
-          inputDirectories.size() > 5 ?
-              inputDirectories.subList(0, 4) + "..." +
-                  inputDirectories.get(inputDirectories.size() - 1)
+          inputDirectories.size() > 5
+              ? inputDirectories.subList(0, 4)
+                  + "..."
+                  + inputDirectories.get(inputDirectories.size() - 1)
               : inputDirectories,
           canonicalMetadata);
     }
@@ -491,14 +493,11 @@ public class SortedBucketSource<FinalKeyT>
       SerializableCoder.of(FileOperations.class).encode(fileOperations, outStream);
 
       // Depending on when .writeObject is called, metadata may not have been computed.
-      NullableCoder.of(MapCoder.of(
-          ResourceIdCoder.of(),
-          SerializableCoder.of(DirectoryMetadata.class)
-      )).encode(inputMetadata, outStream);
-
       NullableCoder.of(
-          new BucketMetadataCoder<K, V>()
-      ).encode(canonicalMetadata, outStream);
+              MapCoder.of(ResourceIdCoder.of(), SerializableCoder.of(DirectoryMetadata.class)))
+          .encode(inputMetadata, outStream);
+
+      NullableCoder.of(new BucketMetadataCoder<K, V>()).encode(canonicalMetadata, outStream);
     }
 
     @SuppressWarnings("unchecked")
@@ -507,10 +506,10 @@ public class SortedBucketSource<FinalKeyT>
       this.filenameSuffix = StringUtf8Coder.of().decode(inStream);
       this.fileOperations = SerializableCoder.of(FileOperations.class).decode(inStream);
 
-      this.inputMetadata = NullableCoder.of(MapCoder.of(
-          ResourceIdCoder.of(),
-          SerializableCoder.of(DirectoryMetadata.class)
-      )).decode(inStream);
+      this.inputMetadata =
+          NullableCoder.of(
+                  MapCoder.of(ResourceIdCoder.of(), SerializableCoder.of(DirectoryMetadata.class)))
+              .decode(inStream);
       this.canonicalMetadata = NullableCoder.of(new BucketMetadataCoder<K, V>()).decode(inStream);
     }
   }

@@ -28,9 +28,7 @@ class WordCountScioIOTest extends PipelineSpec {
     JobTest[com.spotify.scio.examples.extra.WordCountScioIO.type]
       .args("--input=in.txt", "--output=out.txt")
       .input(TextIO("in.txt"), inData)
-      .output[String](TextIO("out.txt")) { coll =>
-        coll should containInAnyOrder(expected)
-      }
+      .output[String](TextIO("out.txt"))(coll => coll should containInAnyOrder(expected))
       .run()
   }
 }
