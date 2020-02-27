@@ -1369,6 +1369,7 @@ val scalaMappings = Seq(
 val docMappings = javaMappings ++ scalaMappings
 
 //ThisBuild / conflictManager := ConflictManager.strict
+//To update this list we need to check against the dependencies being evicted
 ThisBuild / dependencyOverrides ++= Seq(
   "com.fasterxml.jackson.core" % "jackson-annotations" % jacksonVersion,
   "com.fasterxml.jackson.core" % "jackson-core" % jacksonVersion,
