@@ -329,11 +329,11 @@ public class SortedBucketSourceTest {
     final PipelineResult result = pipeline.run();
 
     // Verify Metrics
-    final Map<String, Integer> keyGroupCounts = Stream
-        .concat(lhsInput.values().stream(), rhsInput.values().stream())
-        .flatMap(List::stream)
-        .filter(element -> !element.equals("")) // filter out null keys
-        .collect(Collectors.toMap(lhsMetadata::extractKey, str -> 1, Integer::sum));
+    final Map<String, Integer> keyGroupCounts =
+        Stream.concat(lhsInput.values().stream(), rhsInput.values().stream())
+            .flatMap(List::stream)
+            .filter(element -> !element.equals("")) // filter out null keys
+            .collect(Collectors.toMap(lhsMetadata::extractKey, str -> 1, Integer::sum));
 
     final long elementsRead = keyGroupCounts.values().stream().reduce(0, Integer::sum);
 
@@ -343,11 +343,10 @@ public class SortedBucketSourceTest {
         ImmutableMap.of(
             "SortedBucketSource-KeyGroupSize",
             DistributionResult.create(
-                elementsRead, keyGroupCounts.keySet().size(),
+                elementsRead,
+                keyGroupCounts.keySet().size(),
                 keyGroupCounts.values().stream().min(Integer::compareTo).get(),
-                keyGroupCounts.values().stream().max(Integer::compareTo).get())
-        )
-    );
+                keyGroupCounts.values().stream().max(Integer::compareTo).get())));
   }
 
   private void testPartitioned(
@@ -503,25 +502,19 @@ public class SortedBucketSourceTest {
   static void verifyMetrics(
       PipelineResult result,
       Map<String, Long> expectedCounters,
-      Map<String, DistributionResult> expectedDistributions
-  ) {
-    final Map<String, Long> actualCounters = ImmutableList.copyOf(
-        result.metrics().allMetrics().getCounters().iterator()
-    ).stream()
-      .filter(metric -> !metric.getName().getName().equals(PAssert.SUCCESS_COUNTER))
-      .collect(Collectors.toMap(
-          metric -> metric.getName().getName(),
-          MetricResult::getCommitted)
-      );
+      Map<String, DistributionResult> expectedDistributions) {
+    final Map<String, Long> actualCounters =
+        ImmutableList.copyOf(result.metrics().allMetrics().getCounters().iterator()).stream()
+            .filter(metric -> !metric.getName().getName().equals(PAssert.SUCCESS_COUNTER))
+            .collect(
+                Collectors.toMap(metric -> metric.getName().getName(), MetricResult::getCommitted));
 
     Assert.assertEquals(expectedCounters, actualCounters);
 
     final Map<String, DistributionResult> actualDistributions =
-        ImmutableList.copyOf(result.metrics().allMetrics().getDistributions().iterator())
-            .stream().collect(Collectors.toMap(
-            metric -> metric.getName().getName(),
-            MetricResult::getCommitted
-        ));
+        ImmutableList.copyOf(result.metrics().allMetrics().getDistributions().iterator()).stream()
+            .collect(
+                Collectors.toMap(metric -> metric.getName().getName(), MetricResult::getCommitted));
 
     Assert.assertEquals(expectedDistributions, actualDistributions);
   }

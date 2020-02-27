@@ -131,9 +131,12 @@ public class SortedBucketSource<FinalKeyT>
                         .collect(Collectors.toList()))
                 .withCoder(VarIntCoder.of()))
         .apply("ReshuffleKeys", reshuffle)
-        .apply("MergeBuckets", ParDo.of(
-            new MergeBuckets<>(this.getName(), sources, sourceSpec.leastNumBuckets, sourceSpec.keyCoder)
-        )).setCoder(KvCoder.of(sourceSpec.keyCoder, resultCoder));
+        .apply(
+            "MergeBuckets",
+            ParDo.of(
+                new MergeBuckets<>(
+                    this.getName(), sources, sourceSpec.leastNumBuckets, sourceSpec.keyCoder)))
+        .setCoder(KvCoder.of(sourceSpec.keyCoder, resultCoder));
   }
 
   static class SourceSpec<K> {
@@ -202,35 +205,34 @@ public class SortedBucketSource<FinalKeyT>
         String transformName,
         List<BucketedInput<?, ?>> sources,
         int leastNumBuckets,
-        Coder<FinalKeyT> keyCoder
-    ) {
+        Coder<FinalKeyT> keyCoder) {
       this.leastNumBuckets = leastNumBuckets;
       this.keyCoder = keyCoder;
       this.sources = sources;
 
       elementsRead = Metrics.counter(SortedBucketSource.class, transformName + "-ElementsRead");
-      keyGroupSize = Metrics.distribution(SortedBucketSource.class, transformName + "-KeyGroupSize");
+      keyGroupSize =
+          Metrics.distribution(SortedBucketSource.class, transformName + "-KeyGroupSize");
     }
 
     @ProcessElement
     public void processElement(ProcessContext c) {
       merge(
-        c.element(),
-        sources,
-        leastNumBuckets,
-        mergedKeyGroup -> {
-          try {
-            c.output(KV.of(
-              keyCoder.decode(new ByteArrayInputStream(mergedKeyGroup.getKey())),
-              mergedKeyGroup.getValue()
-            ));
-          } catch (Exception e) {
-            throw new RuntimeException("Failed to decode and merge key group", e);
-          }
-        },
-        elementsRead,
-        keyGroupSize
-      );
+          c.element(),
+          sources,
+          leastNumBuckets,
+          mergedKeyGroup -> {
+            try {
+              c.output(
+                  KV.of(
+                      keyCoder.decode(new ByteArrayInputStream(mergedKeyGroup.getKey())),
+                      mergedKeyGroup.getValue()));
+            } catch (Exception e) {
+              throw new RuntimeException("Failed to decode and merge key group", e);
+            }
+          },
+          elementsRead,
+          keyGroupSize);
     }
 
     static void merge(
@@ -239,8 +241,7 @@ public class SortedBucketSource<FinalKeyT>
         int leastNumBuckets,
         Consumer<KV<byte[], CoGbkResult>> consumer,
         Counter elementsRead,
-        Distribution keyGroupSize
-    ) {
+        Distribution keyGroupSize) {
       final int numSources = sources.size();
 
       // Initialize iterators and tuple tags for sources
@@ -305,10 +306,10 @@ public class SortedBucketSource<FinalKeyT>
         keyGroupSize.update(keyGroupCount);
         elementsRead.inc(keyGroupCount);
 
-        final KV<byte[], CoGbkResult> mergedKeyGroup = KV.of(
-            minKeyEntry.getValue().getKey(),
-            CoGbkResultUtil.newCoGbkResult(resultSchema, valueMap)
-        );
+        final KV<byte[], CoGbkResult> mergedKeyGroup =
+            KV.of(
+                minKeyEntry.getValue().getKey(),
+                CoGbkResultUtil.newCoGbkResult(resultSchema, valueMap));
 
         consumer.accept(mergedKeyGroup);
 
@@ -316,10 +317,6 @@ public class SortedBucketSource<FinalKeyT>
           break;
         }
       }
-
-      // Output next key-value group
-      return KV.of(
-          minKeyEntry.getValue().getKey(), CoGbkResultUtil.newCoGbkResult(resultSchema, valueMap));
     }
 
     @Override

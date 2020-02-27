@@ -132,17 +132,17 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
                 .apply("ReshuffleKeys", reshuffle)
                 .apply(
                     "MergeTransformWrite",
-                    ParDo.of(new MergeAndWriteBuckets<>(
-                      this.getName(),
-                      sources,
-                      sourceSpec,
-                      tempFileAssignment,
-                      fileOperations,
-                      bucketMetadata,
-                      transformFn)
-                  )
-                ).setCoder(KvCoder.of(BucketShardIdCoder.of(), ResourceIdCoder.of()))
-        ).apply(
+                    ParDo.of(
+                        new MergeAndWriteBuckets<>(
+                            this.getName(),
+                            sources,
+                            sourceSpec,
+                            tempFileAssignment,
+                            fileOperations,
+                            bucketMetadata,
+                            transformFn)))
+                .setCoder(KvCoder.of(BucketShardIdCoder.of(), ResourceIdCoder.of())))
+        .apply(
             "FinalizeTempFiles",
             new SortedBucketSink.FinalizeTempFiles<>(
                 filenamePolicy.forDestination(), bucketMetadata, fileOperations));
@@ -211,9 +211,11 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
       this.keyCoder = sourceSpec.keyCoder;
       this.leastNumBuckets = sourceSpec.leastNumBuckets;
 
-      elementsWritten = Metrics.counter(SortedBucketTransform.class, transformName + "-ElementsWritten");
+      elementsWritten =
+          Metrics.counter(SortedBucketTransform.class, transformName + "-ElementsWritten");
       elementsRead = Metrics.counter(SortedBucketTransform.class, transformName + "-ElementsRead");
-      keyGroupSize = Metrics.distribution(SortedBucketTransform.class, transformName + "-KeyGroupSize");
+      keyGroupSize =
+          Metrics.distribution(SortedBucketTransform.class, transformName + "-KeyGroupSize");
     }
 
     @Override
@@ -241,8 +243,7 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
         try {
           bucketsToWriters.put(
               bucketFanout,
-              new OutputCollector<>(fileOperations.createWriter(dst), elementsWritten)
-          );
+              new OutputCollector<>(fileOperations.createWriter(dst), elementsWritten));
           bucketsToDsts.add(KV.of(bucketShardId, dst));
         } catch (IOException e) {
           throw new RuntimeException(e);
@@ -268,8 +269,7 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
             }
           },
           elementsRead,
-          keyGroupSize
-      );
+          keyGroupSize);
 
       bucketsToDsts.forEach(
           bucketShardAndDst -> {

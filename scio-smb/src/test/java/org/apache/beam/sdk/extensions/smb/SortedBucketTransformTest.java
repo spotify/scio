@@ -143,11 +143,9 @@ public class SortedBucketTransformTest {
         result,
         ImmutableMap.of(
             "SortedBucketTransform-ElementsWritten", 3L,
-            "SortedBucketTransform-ElementsRead", 10L
-        ),
+            "SortedBucketTransform-ElementsRead", 10L),
         ImmutableMap.of(
-            "SortedBucketTransform-KeyGroupSize", DistributionResult.create(10, 7, 1, 2)
-        ));
+            "SortedBucketTransform-KeyGroupSize", DistributionResult.create(10, 7, 1, 2)));
   }
 
   @Test
@@ -176,11 +174,9 @@ public class SortedBucketTransformTest {
         result,
         ImmutableMap.of(
             "SortedBucketTransform-ElementsWritten", 3L,
-            "SortedBucketTransform-ElementsRead", 10L
-        ),
+            "SortedBucketTransform-ElementsRead", 10L),
         ImmutableMap.of(
-            "SortedBucketTransform-KeyGroupSize", DistributionResult.create(10, 7, 1, 2)
-        ));
+            "SortedBucketTransform-KeyGroupSize", DistributionResult.create(10, 7, 1, 2)));
   }
 
   private static KV<BucketMetadata, Set<String>> readAllFrom(
