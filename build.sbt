@@ -23,7 +23,6 @@ import org.scalafmt.sbt.ScalafmtPlugin.scalafmtConfigSettings
 import bloop.integrations.sbt.BloopDefaults
 
 ThisBuild / turbo := true
-//ThisBuild / conflictManager := ConflictManager.strict
 
 val algebirdVersion = "0.13.6"
 val algebraVersion = "2.0.0"
@@ -1369,6 +1368,7 @@ val scalaMappings = Seq(
 )
 val docMappings = javaMappings ++ scalaMappings
 
+//ThisBuild / conflictManager := ConflictManager.strict
 ThisBuild / dependencyOverrides ++= Seq(
   "com.fasterxml.jackson.core" % "jackson-annotations" % jacksonVersion,
   "com.fasterxml.jackson.core" % "jackson-core" % jacksonVersion,
@@ -1376,8 +1376,8 @@ ThisBuild / dependencyOverrides ++= Seq(
   "com.fasterxml.jackson.module" %% "jackson-module-scala" % jacksonVersion,
   "com.google.api-client" % "google-api-client" % googleClientsVersion,
   "com.google.api.grpc" % "proto-google-cloud-bigquerystorage-v1beta1" % "0.83.0",
-  "com.google.api.grpc" % "proto-google-cloud-bigtable-v2" % "0.44.0",
-  "com.google.api.grpc" % "proto-google-cloud-datastore-v1" % "0.44.0",
+  "com.google.api.grpc" % "proto-google-cloud-bigtable-v2" % generatedGrpcBetaVersion,
+  "com.google.api.grpc" % "proto-google-cloud-datastore-v1" % generatedGrpcBetaVersion,
   "com.google.api.grpc" % "proto-google-common-protos" % "1.17.0",
   "com.google.api.grpc" % "proto-google-iam-v1" % "0.13.0",
   "com.google.api" % "api-common" % "1.8.1",
@@ -1400,8 +1400,8 @@ ThisBuild / dependencyOverrides ++= Seq(
   "com.google.code.gson" % "gson" % "2.7",
   "com.google.errorprone" % "error_prone_annotations" % "2.3.4",
   "com.google.guava" % "guava" % guavaVersion,
-  "com.google.http-client" % "google-http-client-jackson2" % "1.33.0",
-  "com.google.http-client" % "google-http-client" % "1.33.0",
+  "com.google.http-client" % "google-http-client-jackson2" % googleHttpClientsVersion,
+  "com.google.http-client" % "google-http-client" % googleHttpClientsVersion,
   "com.google.j2objc" % "j2objc-annotations" % "1.3",
   "com.google.oauth-client" % "google-oauth-client" % "1.30.4",
   "com.google.protobuf" % "protobuf-java-util" % protobufVersion,
