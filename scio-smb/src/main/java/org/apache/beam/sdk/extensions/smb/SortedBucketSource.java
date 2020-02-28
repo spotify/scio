@@ -30,6 +30,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -295,10 +296,6 @@ public class SortedBucketSource<FinalKeyT>
             int index = resultSchema.getIndex(entry.getKey());
             @SuppressWarnings("unchecked")
             final LazyIterable<Object> values = (LazyIterable<Object>) valueMap.get(index);
-            // TODO: this exhausts everything from the "lazy" iterator and can be expensive.
-            // To fix we have to make the underlying Reader range aware so that it's safe to
-            // re-iterate or stop without exhausting remaining elements in the value group.
-            //
             @SuppressWarnings("unchecked")
             final Iterator<Object> it = (Iterator<Object>) entry.getValue().getValue();
             values.set(it);
@@ -516,6 +513,7 @@ public class SortedBucketSource<FinalKeyT>
     private Iterator<T> iterator = null;
     private List<T> buffer = null;
     private boolean reiterate = false;
+    private boolean exhausted = false;
 
     LazyIterable(KeyGroupMetrics keyGroupMetrics) {
       this.keyGroupMetrics = keyGroupMetrics;
@@ -528,12 +526,44 @@ public class SortedBucketSource<FinalKeyT>
 
     @Override
     public Iterator<T> iterator() {
-      if (buffer == null) {
+      if (reiterate) {
+        Preconditions.checkState(exhausted, "Previous Iterator has not exhausted");
+        return buffer.iterator();
+      } else {
         buffer = new ArrayList<>();
-        iteratorOnce().forEachRemaining(buffer::add);
-        keyGroupMetrics.report(buffer.size());
+        final Iterator<T> inner = iteratorOnce();
+
+        return new Iterator<T>() {
+          private boolean reported = false;
+
+          @Override
+          public boolean hasNext() {
+            boolean hasNext = inner.hasNext();
+            if (!hasNext && !reported) {
+              exhausted = true;
+              reported = true;
+              keyGroupMetrics.report(buffer.size());
+            }
+            return hasNext;
+          }
+
+          @Override
+          public T next() {
+            try {
+              T value = inner.next();
+              buffer.add(value);
+              return value;
+            } catch (NoSuchElementException e) {
+              if (!reported) {
+                exhausted = true;
+                reported = true;
+                keyGroupMetrics.report(buffer.size());
+              }
+              throw e;
+            }
+          }
+        };
       }
-      return buffer.iterator();
     }
 
     Iterator<T> iteratorOnce() {
