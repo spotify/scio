@@ -283,28 +283,28 @@ public class SortedBucketSource<FinalKeyT>
         final Iterator<Map.Entry<TupleTag, KV<byte[], Iterator<?>>>> nextKeyGroupsIt =
             nextKeyGroups.entrySet().iterator();
         final List<Iterable<?>> valueMap = new ArrayList<>();
+        final KeyGroupMetrics keyGroupMetrics =
+            new KeyGroupMetrics(elementsRead, keyGroupSize, resultSchema.size());
         for (int i = 0; i < resultSchema.size(); i++) {
-          valueMap.add(new ArrayList<>());
+          valueMap.add(new LazyIterable<>(keyGroupMetrics));
         }
 
-        int keyGroupCount = 0;
         while (nextKeyGroupsIt.hasNext()) {
           final Map.Entry<TupleTag, KV<byte[], Iterator<?>>> entry = nextKeyGroupsIt.next();
           if (keyComparator.compare(entry, minKeyEntry) == 0) {
             int index = resultSchema.getIndex(entry.getKey());
             @SuppressWarnings("unchecked")
-            final List<Object> values = (List<Object>) valueMap.get(index);
+            final LazyIterable<Object> values = (LazyIterable<Object>) valueMap.get(index);
             // TODO: this exhausts everything from the "lazy" iterator and can be expensive.
             // To fix we have to make the underlying Reader range aware so that it's safe to
             // re-iterate or stop without exhausting remaining elements in the value group.
-            entry.getValue().getValue().forEachRemaining(values::add);
+            //
+            @SuppressWarnings("unchecked")
+            final Iterator<Object> it = (Iterator<Object>) entry.getValue().getValue();
+            values.set(it);
             nextKeyGroupsIt.remove();
-            keyGroupCount += values.size();
           }
         }
-
-        keyGroupSize.update(keyGroupCount);
-        elementsRead.inc(keyGroupCount);
 
         final KV<byte[], CoGbkResult> mergedKeyGroup =
             KV.of(
@@ -508,6 +508,61 @@ public class SortedBucketSource<FinalKeyT>
                   MapCoder.of(ResourceIdCoder.of(), SerializableCoder.of(DirectoryMetadata.class)))
               .decode(inStream);
       this.canonicalMetadata = NullableCoder.of(new BucketMetadataCoder<K, V>()).decode(inStream);
+    }
+  }
+
+  static class LazyIterable<T> implements Iterable<T> {
+    private final KeyGroupMetrics keyGroupMetrics;
+    private Iterator<T> iterator = null;
+    private List<T> buffer = null;
+    private boolean reiterate = false;
+
+    LazyIterable(KeyGroupMetrics keyGroupMetrics) {
+      this.keyGroupMetrics = keyGroupMetrics;
+    }
+
+    void set(Iterator<T> iterator) {
+      Preconditions.checkState(this.iterator == null, "Iterator already set");
+      this.iterator = iterator;
+    }
+
+    @Override
+    public Iterator<T> iterator() {
+      if (buffer == null) {
+        buffer = new ArrayList<>();
+        iteratorOnce().forEachRemaining(buffer::add);
+        keyGroupMetrics.report(buffer.size());
+      }
+      return buffer.iterator();
+    }
+
+    Iterator<T> iteratorOnce() {
+      Preconditions.checkState(!reiterate, "Iterator already started");
+      reiterate = true;
+      return iterator == null ? Collections.emptyIterator() : iterator;
+    }
+  }
+
+  private static class KeyGroupMetrics {
+    private final Counter elementsRead;
+    private final Distribution keyGroupSize;
+    private int numSourcesPending;
+    private int keyGroupCount = 0;
+
+    private KeyGroupMetrics(
+        Counter elementsRead, Distribution keyGroupSize, int numSourcesPending) {
+      this.elementsRead = elementsRead;
+      this.keyGroupSize = keyGroupSize;
+      this.numSourcesPending = numSourcesPending;
+    }
+
+    public void report(int count) {
+      elementsRead.inc(count);
+      numSourcesPending--;
+      keyGroupCount += count;
+      if (numSourcesPending == 0) {
+        keyGroupSize.update(keyGroupCount);
+      }
     }
   }
 }
