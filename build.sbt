@@ -81,7 +81,7 @@ val kryoVersion = "4.0.2" // explicitly depend on 4.0.1+ due to https://github.c
 val magnoliaVersion = "0.12.7"
 val magnolifyVersion = "0.1.5"
 val mercatorVersion = "0.2.1"
-val nettyVersion = "4.1.38.Final"
+val nettyVersion = "4.1.30.Final"
 val opencensusVersion = "0.17.0"
 val parquetAvroVersion = "0.3.4"
 val parquetExtraVersion = "0.3.4"
@@ -1368,7 +1368,7 @@ val scalaMappings = Seq(
 )
 val docMappings = javaMappings ++ scalaMappings
 
-//ThisBuild / conflictManager := ConflictManager.strict
+ThisBuild / conflictManager := ConflictManager.strict
 //To update this list we need to check against the dependencies being evicted
 ThisBuild / dependencyOverrides ++= Seq(
   "com.fasterxml.jackson.core" % "jackson-annotations" % jacksonVersion,
