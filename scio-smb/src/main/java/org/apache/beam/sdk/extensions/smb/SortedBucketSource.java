@@ -508,6 +508,7 @@ public class SortedBucketSource<FinalKeyT>
     }
   }
 
+  /** Lazily wraps an Iterator in an Iterable and populates a buffer in the first iteration. */
   static class LazyIterable<T> implements Iterable<T> {
     private final KeyGroupMetrics keyGroupMetrics;
     private Iterator<T> iterator = null;
@@ -515,11 +516,11 @@ public class SortedBucketSource<FinalKeyT>
     private boolean reiterate = false;
     private boolean exhausted = false;
 
-    LazyIterable(KeyGroupMetrics keyGroupMetrics) {
+    private LazyIterable(KeyGroupMetrics keyGroupMetrics) {
       this.keyGroupMetrics = keyGroupMetrics;
     }
 
-    void set(Iterator<T> iterator) {
+    private void set(Iterator<T> iterator) {
       Preconditions.checkState(this.iterator == null, "Iterator already set");
       this.iterator = iterator;
     }
@@ -527,6 +528,7 @@ public class SortedBucketSource<FinalKeyT>
     @Override
     public Iterator<T> iterator() {
       if (reiterate) {
+        // the first iteration is still in progress and the buffer is not fully populated yet
         Preconditions.checkState(exhausted, "Previous Iterator has not exhausted");
         return buffer.iterator();
       } else {
@@ -573,6 +575,7 @@ public class SortedBucketSource<FinalKeyT>
     }
   }
 
+  /** Allows key group metrics to be reported lazily by LazyIterable. */
   private static class KeyGroupMetrics {
     private final Counter elementsRead;
     private final Distribution keyGroupSize;
