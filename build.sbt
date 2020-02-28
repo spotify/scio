@@ -144,21 +144,18 @@ val magnoliaDependencies = Def.settings(
 )
 
 val circeDependencies = Def.settings(
-  libraryDependencies ++= {
-    if (scalaBinaryVersion.value == "2.11") {
-      Seq(
-        "io.circe" %% "circe-core",
-        "io.circe" %% "circe-generic",
-        "io.circe" %% "circe-parser"
-      ).map(_ % "0.11.2"),
-    } else {
-      Seq(
-        "io.circe" %% "circe-core",
-        "io.circe" %% "circe-generic",
-        "io.circe" %% "circe-parser"
-      ).map(_ % circeVersion),
+  libraryDependencies ++=
+    Seq(
+      "io.circe" %% "circe-core",
+      "io.circe" %% "circe-generic",
+      "io.circe" %% "circe-parser"
+    ).map { dep =>
+      if (scalaBinaryVersion.value == "2.11") {
+        dep % "0.11.2"
+      } else {
+        dep % circeVersion
+      }
     }
-  }
 )
 
 def previousVersion(currentVersion: String): Option[String] = {
@@ -798,11 +795,7 @@ lazy val `scio-extra`: Project = project
       "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test"
     ),
     beamSDKIODependencies,
-    libraryDependencies ++= Seq(
-      "io.circe" %% "circe-core",
-      "io.circe" %% "circe-generic",
-      "io.circe" %% "circe-parser"
-    ).map(_ % circeVersion),
+    circeDependencies,
     AvroConfig / version := avroVersion,
     AvroConfig / sourceDirectory := baseDirectory.value / "src" / "test" / "avro",
     Compile / sourceDirectories := (Compile / sourceDirectories).value
