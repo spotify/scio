@@ -1416,9 +1416,6 @@ ThisBuild / dependencyOverrides ++= Seq(
   "commons-io" % "commons-io" % commonsIoVersion,
   "commons-lang" % "commons-lang" % "2.6",
   "commons-logging" % "commons-logging" % "1.2",
-  "io.circe" %% "circe-core" % circeVersion,
-  "io.circe" %% "circe-generic" % circeVersion,
-  "io.circe" %% "circe-parser" % circeVersion,
   "io.dropwizard.metrics" % "metrics-core" % "3.2.2",
   "io.grpc" % "grpc-auth" % grpcVersion,
   "io.grpc" % "grpc-context" % grpcVersion,
@@ -1476,5 +1473,15 @@ ThisBuild / dependencyOverrides ++= Seq(
     Seq("com.nrinaudo" %% "kantan.codecs" % "0.5.0")
   } else {
     Seq("com.nrinaudo" %% "kantan.codecs" % kantanCsvVersion)
+  }
+} ++ Seq(
+  "io.circe" %% "circe-core",
+  "io.circe" %% "circe-generic",
+  "io.circe" %% "circe-parser"
+).map { dep =>
+  if (scalaBinaryVersion.value == "2.11") {
+    dep % "0.11.2"
+  } else {
+    dep % circeVersion
   }
 }
