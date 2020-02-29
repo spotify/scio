@@ -838,7 +838,7 @@ lazy val `scio-extra`: Project = project
       "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test",
       "com.chuusai" %% "shapeless" % shapelessVersion,
       "joda-time" % "joda-time" % jodaTimeVersion,
-      "net.java.dev.jna" % "jna" % "5.4.0",
+      "net.java.dev.jna" % "jna" % "5.5.0",
       "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamVendorVersion,
       "org.typelevel" %% "algebra" % algebraVersion
     ),
