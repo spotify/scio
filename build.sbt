@@ -1386,7 +1386,7 @@ ThisBuild / dependencyOverrides ++= Seq(
   "com.google.api" % "gax-grpc" % gaxVersion,
   "com.google.api" % "gax" % gaxVersion,
   "com.google.apis" % "google-api-services-bigquery" % "v2-rev20190917-1.30.3",
-  "com.google.apis" % "google-api-services-dataflow" % "v1b3-rev20190927-1.30.3",
+  "com.google.apis" % "google-api-services-dataflow" % "v1b4-rev7-1.20.0",
   "com.google.apis" % "google-api-services-storage" % "v1-rev20181109-1.28.0",
   "com.google.auth" % "google-auth-library-credentials" % googleAuthVersion,
   "com.google.auth" % "google-auth-library-oauth2-http" % googleAuthVersion,
