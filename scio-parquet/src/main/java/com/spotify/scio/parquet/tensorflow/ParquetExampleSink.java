@@ -50,7 +50,7 @@ public class ParquetExampleSink extends FileBasedSink<Example, Void, Example> {
   }
 
   @Override
-  public WriteOperation<Void, Example> createWriteOperation() {
+  public FileBasedSink.WriteOperation<Void, Example> createWriteOperation() {
     return new ParquetExampleWriteOperation(this, schemaString, conf, compression);
   }
 
@@ -58,7 +58,7 @@ public class ParquetExampleSink extends FileBasedSink<Example, Void, Example> {
   // WriteOperation
   // =======================================================================
 
-  static class ParquetExampleWriteOperation extends WriteOperation<Void, Example> {
+  static class ParquetExampleWriteOperation extends FileBasedSink.WriteOperation<Void, Example> {
     private final String schemaString;
     private final SerializableConfiguration conf;
     private final CompressionCodecName compression;
@@ -92,7 +92,7 @@ public class ParquetExampleSink extends FileBasedSink<Example, Void, Example> {
     private ParquetWriter<Example> writer;
 
     public ParquetExampleWriter(
-        WriteOperation<Void, Example> writeOperation,
+        FileBasedSink.WriteOperation<Void, Example> writeOperation,
         Schema schema,
         SerializableConfiguration conf,
         CompressionCodecName compression) {
