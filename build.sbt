@@ -73,6 +73,7 @@ val httpCoreVersion = "4.4.11"
 val jacksonVersion = "2.10.2"
 val javaLshVersion = "0.12"
 val jlineVersion = "2.14.6"
+val jnaVersion = "5.5.0"
 val jodaTimeVersion = "2.10.5"
 val junitInterfaceVersion = "0.11"
 val junitVersion = "4.13"
@@ -838,7 +839,7 @@ lazy val `scio-extra`: Project = project
       "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test",
       "com.chuusai" %% "shapeless" % shapelessVersion,
       "joda-time" % "joda-time" % jodaTimeVersion,
-      "net.java.dev.jna" % "jna" % "5.4.0",
+      "net.java.dev.jna" % "jna" % jnaVersion,
       "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamVendorVersion,
       "org.typelevel" %% "algebra" % algebraVersion
     ),
@@ -1440,7 +1441,7 @@ ThisBuild / dependencyOverrides ++= Seq(
   "joda-time" % "joda-time" % jodaTimeVersion,
   "junit" % "junit" % junitVersion,
   "log4j" % "log4j" % "1.2.17",
-  "net.java.dev.jna" % "jna" % "4.1.0",
+  "net.java.dev.jna" % "jna" % jnaVersion,
   "org.apache.avro" % "avro" % avroVersion,
   "org.apache.commons" % "commons-compress" % commonsCompressVersion,
   "org.apache.commons" % "commons-lang3" % commonsLang3Version,
