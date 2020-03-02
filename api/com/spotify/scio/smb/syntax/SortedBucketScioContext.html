@@ -192,7 +192,7 @@
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <span class="name">SortedBucketScioContext</span><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
+        <span class="name">SortedBucketScioContext</span><span class="result"> extends <span class="extype" name="scala.Serializable">Serializable</span></span>
       </span>
       </h4>
 
@@ -201,7 +201,7 @@
           <span class="toggle">
             Linear Supertypes
           </span>
-          <div class="superTypes hiddenContent"><span class="extype" name="scala.AnyRef">AnyRef</span>, <span class="extype" name="scala.Any">Any</span></div>
+          <div class="superTypes hiddenContent"><span class="extype" name="scala.Serializable">Serializable</span>, <span class="extype" name="java.io.Serializable">Serializable</span>, <span class="extype" name="scala.AnyRef">AnyRef</span>, <span class="extype" name="scala.Any">Any</span></div>
         </div></div>
         
 
@@ -227,7 +227,7 @@
                   <span class="filtertype">Inherited<br />
                   </span>
                   <ol id="linearization">
-                    <li class="in" name="com.spotify.scio.smb.syntax.SortedBucketScioContext"><span>SortedBucketScioContext</span></li><li class="in" name="scala.AnyRef"><span>AnyRef</span></li><li class="in" name="scala.Any"><span>Any</span></li>
+                    <li class="in" name="com.spotify.scio.smb.syntax.SortedBucketScioContext"><span>SortedBucketScioContext</span></li><li class="in" name="scala.Serializable"><span>Serializable</span></li><li class="in" name="java.io.Serializable"><span>Serializable</span></li><li class="in" name="scala.AnyRef"><span>AnyRef</span></li><li class="in" name="scala.Any"><span>Any</span></li>
                   </ol>
                 </div><div class="ancestors">
               <span class="filtertype"></span>
@@ -266,7 +266,42 @@
     </li></ol>
             </div>
 
-        
+        <div id="types" class="types members">
+              <h3>Type Members</h3>
+              <ol><li name="com.spotify.scio.smb.syntax.SortedBucketScioContext.SortMergeTransformReadBuilder" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="SortMergeTransformReadBuilder[K,R]extendsSerializable"></a><a id="SortMergeTransformReadBuilder[K,R]:SortMergeTransformReadBuilder[K,R]"></a>
+      <span class="permalink">
+      <a href="../../../../../com/spotify/scio/smb/syntax/SortedBucketScioContext$SortMergeTransformReadBuilder.html" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="SortedBucketScioContext$SortMergeTransformReadBuilder.html"><span class="name">SortMergeTransformReadBuilder</span></a><span class="tparams">[<span name="K">K</span>, <span name="R">R</span>]</span><span class="result"> extends <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      
+      
+    </li><li name="com.spotify.scio.smb.syntax.SortedBucketScioContext.SortMergeTransformWriteBuilder" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="SortMergeTransformWriteBuilder[K,R,W]extendsSerializable"></a><a id="SortMergeTransformWriteBuilder[K,R,W]:SortMergeTransformWriteBuilder[K,R,W]"></a>
+      <span class="permalink">
+      <a href="../../../../../com/spotify/scio/smb/syntax/SortedBucketScioContext$SortMergeTransformWriteBuilder.html" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="SortedBucketScioContext$SortMergeTransformWriteBuilder.html"><span class="name">SortMergeTransformWriteBuilder</span></a><span class="tparams">[<span name="K">K</span>, <span name="R">R</span>, <span name="W">W</span>]</span><span class="result"> extends <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      
+      
+    </li></ol>
+            </div>
 
         
 
@@ -360,8 +395,6 @@
               
                 <span class="name">@native</span><span class="args">()</span>
               
-                <span class="name">@HotSpotIntrinsicCandidate</span><span class="args">()</span>
-              
         </dd></dl></div>
     </li><li name="scala.AnyRef#eq" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="eq(x$1:AnyRef):Boolean"></a><a id="eq(AnyRef):Boolean"></a>
@@ -395,6 +428,28 @@
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
+    </li><li name="scala.AnyRef#finalize" visbl="prt" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="finalize():Unit"></a>
+      <span class="permalink">
+      <a href="../../../../../com/spotify/scio/smb/syntax/SortedBucketScioContext.html#finalize():Unit" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">finalize</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected[<span class="extype" name="java.lang">lang</span>] </dd><dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
+                <span class="name">@throws</span><span class="args">(<span>
+      
+      <span class="symbol">classOf[java.lang.Throwable]</span>
+    </span>)</span>
+              
+        </dd></dl></div>
     </li><li name="scala.AnyRef#getClass" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="getClass():Class[_]"></a>
       <span class="permalink">
@@ -412,8 +467,6 @@
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd><dt>Annotations</dt><dd>
                 <span class="name">@native</span><span class="args">()</span>
-              
-                <span class="name">@HotSpotIntrinsicCandidate</span><span class="args">()</span>
               
         </dd></dl></div>
     </li><li name="scala.AnyRef#hashCode" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
@@ -433,8 +486,6 @@
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd><dt>Annotations</dt><dd>
                 <span class="name">@native</span><span class="args">()</span>
-              
-                <span class="name">@HotSpotIntrinsicCandidate</span><span class="args">()</span>
               
         </dd></dl></div>
     </li><li name="scala.Any#isInstanceOf" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
@@ -487,8 +538,6 @@
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
                 <span class="name">@native</span><span class="args">()</span>
               
-                <span class="name">@HotSpotIntrinsicCandidate</span><span class="args">()</span>
-              
         </dd></dl></div>
     </li><li name="scala.AnyRef#notifyAll" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="notifyAll():Unit"></a>
@@ -507,8 +556,6 @@
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
                 <span class="name">@native</span><span class="args">()</span>
-              
-                <span class="name">@HotSpotIntrinsicCandidate</span><span class="args">()</span>
               
         </dd></dl></div>
     </li><li name="com.spotify.scio.smb.syntax.SortedBucketScioContext#sortMergeCoGroup" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="cogroup">
@@ -641,6 +688,81 @@ typical <span class="extype" name="org.apache.beam.sdk.transforms.GroupByKey">or
                 <span class="name">@<a href="../../annotations/experimental.html" class="extype" name="com.spotify.scio.annotations.experimental">experimental</a></span><span class="args">()</span>
               
         </dd></dl></div>
+    </li><li name="com.spotify.scio.smb.syntax.SortedBucketScioContext#sortMergeTransform" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="cogroup">
+      <a id="sortMergeTransform[K,A,B,C](keyClass:Class[K],readA:=&gt;org.apache.beam.sdk.extensions.smb.SortedBucketIO.Read[A],readB:=&gt;org.apache.beam.sdk.extensions.smb.SortedBucketIO.Read[B],readC:=&gt;org.apache.beam.sdk.extensions.smb.SortedBucketIO.Read[C]):SortedBucketScioContext.this.SortMergeTransformReadBuilder[K,(Iterable[A],Iterable[B],Iterable[C])]"></a><a id="sortMergeTransform[K,A,B,C](Class[K],⇒Read[A],⇒Read[B],⇒Read[C]):SortMergeTransformReadBuilder[K,(Iterable[A],Iterable[B],Iterable[C])]"></a>
+      <span class="permalink">
+      <a href="../../../../../com/spotify/scio/smb/syntax/SortedBucketScioContext.html#sortMergeTransform[K,A,B,C](keyClass:Class[K],readA:=&gt;org.apache.beam.sdk.extensions.smb.SortedBucketIO.Read[A],readB:=&gt;org.apache.beam.sdk.extensions.smb.SortedBucketIO.Read[B],readC:=&gt;org.apache.beam.sdk.extensions.smb.SortedBucketIO.Read[C]):SortedBucketScioContext.this.SortMergeTransformReadBuilder[K,(Iterable[A],Iterable[B],Iterable[C])]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">sortMergeTransform</span><span class="tparams">[<span name="K">K</span>, <span name="A">A</span>, <span name="B">B</span>, <span name="C">C</span>]</span><span class="params">(<span name="keyClass">keyClass: <span class="extype" name="scala.Predef.Class">Class</span>[<span class="extype" name="com.spotify.scio.smb.syntax.SortedBucketScioContext.sortMergeTransform.K">K</span>]</span>, <span name="readA">readA: ⇒ <span class="extype" name="org.apache.beam.sdk.extensions.smb.SortedBucketIO.Read">Read</span>[<span class="extype" name="com.spotify.scio.smb.syntax.SortedBucketScioContext.sortMergeTransform.A">A</span>]</span>, <span name="readB">readB: ⇒ <span class="extype" name="org.apache.beam.sdk.extensions.smb.SortedBucketIO.Read">Read</span>[<span class="extype" name="com.spotify.scio.smb.syntax.SortedBucketScioContext.sortMergeTransform.B">B</span>]</span>, <span name="readC">readC: ⇒ <span class="extype" name="org.apache.beam.sdk.extensions.smb.SortedBucketIO.Read">Read</span>[<span class="extype" name="com.spotify.scio.smb.syntax.SortedBucketScioContext.sortMergeTransform.C">C</span>]</span>)</span><span class="result">: <a href="SortedBucketScioContext$SortMergeTransformReadBuilder.html" class="extype" name="com.spotify.scio.smb.syntax.SortedBucketScioContext.SortMergeTransformReadBuilder">SortMergeTransformReadBuilder</a>[<span class="extype" name="com.spotify.scio.smb.syntax.SortedBucketScioContext.sortMergeTransform.K">K</span>, (<span class="extype" name="scala.Iterable">Iterable</span>[<span class="extype" name="com.spotify.scio.smb.syntax.SortedBucketScioContext.sortMergeTransform.A">A</span>], <span class="extype" name="scala.Iterable">Iterable</span>[<span class="extype" name="com.spotify.scio.smb.syntax.SortedBucketScioContext.sortMergeTransform.B">B</span>], <span class="extype" name="scala.Iterable">Iterable</span>[<span class="extype" name="com.spotify.scio.smb.syntax.SortedBucketScioContext.sortMergeTransform.C">C</span>])]</span>
+      </span>
+      
+      <p class="shortcomment cmt">Perform a 3-way <span class="extype" name="SortedBucketScioContext.sortMergeCoGroup()">SortedBucketScioContext.sortMergeCoGroup()</span> operation, then immediately
+apply a transformation function to the merged cogroups and re-write using the same bucketing
+key and hashing scheme.</p><div class="fullcomment"><div class="comment cmt"><p>Perform a 3-way <span class="extype" name="SortedBucketScioContext.sortMergeCoGroup()">SortedBucketScioContext.sortMergeCoGroup()</span> operation, then immediately
+apply a transformation function to the merged cogroups and re-write using the same bucketing
+key and hashing scheme. By applying the write, transform, and write in the same transform,
+an extra shuffle step can be avoided.
+</p></div><dl class="attributes block"> <dt>Annotations</dt><dd>
+                <span class="name">@<a href="../../annotations/experimental.html" class="extype" name="com.spotify.scio.annotations.experimental">experimental</a></span><span class="args">()</span>
+              
+        </dd></dl></div>
+    </li><li name="com.spotify.scio.smb.syntax.SortedBucketScioContext#sortMergeTransform" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="cogroup">
+      <a id="sortMergeTransform[K,A,B](keyClass:Class[K],readA:=&gt;org.apache.beam.sdk.extensions.smb.SortedBucketIO.Read[A],readB:=&gt;org.apache.beam.sdk.extensions.smb.SortedBucketIO.Read[B]):SortedBucketScioContext.this.SortMergeTransformReadBuilder[K,(Iterable[A],Iterable[B])]"></a><a id="sortMergeTransform[K,A,B](Class[K],⇒Read[A],⇒Read[B]):SortMergeTransformReadBuilder[K,(Iterable[A],Iterable[B])]"></a>
+      <span class="permalink">
+      <a href="../../../../../com/spotify/scio/smb/syntax/SortedBucketScioContext.html#sortMergeTransform[K,A,B](keyClass:Class[K],readA:=&gt;org.apache.beam.sdk.extensions.smb.SortedBucketIO.Read[A],readB:=&gt;org.apache.beam.sdk.extensions.smb.SortedBucketIO.Read[B]):SortedBucketScioContext.this.SortMergeTransformReadBuilder[K,(Iterable[A],Iterable[B])]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">sortMergeTransform</span><span class="tparams">[<span name="K">K</span>, <span name="A">A</span>, <span name="B">B</span>]</span><span class="params">(<span name="keyClass">keyClass: <span class="extype" name="scala.Predef.Class">Class</span>[<span class="extype" name="com.spotify.scio.smb.syntax.SortedBucketScioContext.sortMergeTransform.K">K</span>]</span>, <span name="readA">readA: ⇒ <span class="extype" name="org.apache.beam.sdk.extensions.smb.SortedBucketIO.Read">Read</span>[<span class="extype" name="com.spotify.scio.smb.syntax.SortedBucketScioContext.sortMergeTransform.A">A</span>]</span>, <span name="readB">readB: ⇒ <span class="extype" name="org.apache.beam.sdk.extensions.smb.SortedBucketIO.Read">Read</span>[<span class="extype" name="com.spotify.scio.smb.syntax.SortedBucketScioContext.sortMergeTransform.B">B</span>]</span>)</span><span class="result">: <a href="SortedBucketScioContext$SortMergeTransformReadBuilder.html" class="extype" name="com.spotify.scio.smb.syntax.SortedBucketScioContext.SortMergeTransformReadBuilder">SortMergeTransformReadBuilder</a>[<span class="extype" name="com.spotify.scio.smb.syntax.SortedBucketScioContext.sortMergeTransform.K">K</span>, (<span class="extype" name="scala.Iterable">Iterable</span>[<span class="extype" name="com.spotify.scio.smb.syntax.SortedBucketScioContext.sortMergeTransform.A">A</span>], <span class="extype" name="scala.Iterable">Iterable</span>[<span class="extype" name="com.spotify.scio.smb.syntax.SortedBucketScioContext.sortMergeTransform.B">B</span>])]</span>
+      </span>
+      
+      <p class="shortcomment cmt">Perform a 2-way <span class="extype" name="SortedBucketScioContext.sortMergeCoGroup()">SortedBucketScioContext.sortMergeCoGroup()</span> operation, then immediately
+apply a transformation function to the merged cogroups and re-write using the same bucketing
+key and hashing scheme.</p><div class="fullcomment"><div class="comment cmt"><p>Perform a 2-way <span class="extype" name="SortedBucketScioContext.sortMergeCoGroup()">SortedBucketScioContext.sortMergeCoGroup()</span> operation, then immediately
+apply a transformation function to the merged cogroups and re-write using the same bucketing
+key and hashing scheme. By applying the write, transform, and write in the same transform,
+an extra shuffle step can be avoided.
+</p></div><dl class="attributes block"> <dt>Annotations</dt><dd>
+                <span class="name">@<a href="../../annotations/experimental.html" class="extype" name="com.spotify.scio.annotations.experimental">experimental</a></span><span class="args">()</span>
+              
+        </dd></dl></div>
+    </li><li name="com.spotify.scio.smb.syntax.SortedBucketScioContext#sortMergeTransform" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="per_key">
+      <a id="sortMergeTransform[K,R](keyClass:Class[K],read:=&gt;org.apache.beam.sdk.extensions.smb.SortedBucketIO.Read[R]):SortedBucketScioContext.this.SortMergeTransformReadBuilder[K,Iterable[R]]"></a><a id="sortMergeTransform[K,R](Class[K],⇒Read[R]):SortMergeTransformReadBuilder[K,Iterable[R]]"></a>
+      <span class="permalink">
+      <a href="../../../../../com/spotify/scio/smb/syntax/SortedBucketScioContext.html#sortMergeTransform[K,R](keyClass:Class[K],read:=&gt;org.apache.beam.sdk.extensions.smb.SortedBucketIO.Read[R]):SortedBucketScioContext.this.SortMergeTransformReadBuilder[K,Iterable[R]]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">sortMergeTransform</span><span class="tparams">[<span name="K">K</span>, <span name="R">R</span>]</span><span class="params">(<span name="keyClass">keyClass: <span class="extype" name="scala.Predef.Class">Class</span>[<span class="extype" name="com.spotify.scio.smb.syntax.SortedBucketScioContext.sortMergeTransform.K">K</span>]</span>, <span name="read">read: ⇒ <span class="extype" name="org.apache.beam.sdk.extensions.smb.SortedBucketIO.Read">Read</span>[<span class="extype" name="com.spotify.scio.smb.syntax.SortedBucketScioContext.sortMergeTransform.R">R</span>]</span>)</span><span class="result">: <a href="SortedBucketScioContext$SortMergeTransformReadBuilder.html" class="extype" name="com.spotify.scio.smb.syntax.SortedBucketScioContext.SortMergeTransformReadBuilder">SortMergeTransformReadBuilder</a>[<span class="extype" name="com.spotify.scio.smb.syntax.SortedBucketScioContext.sortMergeTransform.K">K</span>, <span class="extype" name="scala.Iterable">Iterable</span>[<span class="extype" name="com.spotify.scio.smb.syntax.SortedBucketScioContext.sortMergeTransform.R">R</span>]]</span>
+      </span>
+      
+      <p class="shortcomment cmt">Perform a <span class="extype" name="SortedBucketScioContext.sortMergeGroupByKey()">SortedBucketScioContext.sortMergeGroupByKey()</span> operation, then immediately apply
+a transformation function to the merged groups and re-write using the same bucketing key and
+hashing scheme.</p><div class="fullcomment"><div class="comment cmt"><p>Perform a <span class="extype" name="SortedBucketScioContext.sortMergeGroupByKey()">SortedBucketScioContext.sortMergeGroupByKey()</span> operation, then immediately apply
+a transformation function to the merged groups and re-write using the same bucketing key and
+hashing scheme. By applying the write, transform, and write in the same transform, an extra
+shuffle step can be avoided.
+</p></div><dl class="attributes block"> <dt>Annotations</dt><dd>
+                <span class="name">@<a href="../../annotations/experimental.html" class="extype" name="com.spotify.scio.annotations.experimental">experimental</a></span><span class="args">()</span>
+              
+        </dd></dl></div>
     </li><li name="scala.AnyRef#synchronized" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="synchronized[T0](x$1:=&gt;T0):T0"></a><a id="synchronized[T0](⇒T0):T0"></a>
       <span class="permalink">
@@ -673,6 +795,28 @@ typical <span class="extype" name="org.apache.beam.sdk.transforms.GroupByKey">or
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
+    </li><li name="scala.AnyRef#wait" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="wait():Unit"></a>
+      <span class="permalink">
+      <a href="../../../../../com/spotify/scio/smb/syntax/SortedBucketScioContext.html#wait():Unit" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">wait</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
+                <span class="name">@throws</span><span class="args">(<span>
+      
+      <span class="defval" name="classOf[java.lang.InterruptedException]">...</span>
+    </span>)</span>
+              
+        </dd></dl></div>
     </li><li name="scala.AnyRef#wait" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="wait(x$1:Long,x$2:Int):Unit"></a><a id="wait(Long,Int):Unit"></a>
       <span class="permalink">
@@ -719,68 +863,21 @@ typical <span class="extype" name="org.apache.beam.sdk.transforms.GroupByKey">or
                 <span class="name">@native</span><span class="args">()</span>
               
         </dd></dl></div>
-    </li><li name="scala.AnyRef#wait" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="wait():Unit"></a>
-      <span class="permalink">
-      <a href="../../../../../com/spotify/scio/smb/syntax/SortedBucketScioContext.html#wait():Unit" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier">final </span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">wait</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
-      </span>
-      
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
-                <span class="name">@throws</span><span class="args">(<span>
-      
-      <span class="defval" name="classOf[java.lang.InterruptedException]">...</span>
-    </span>)</span>
-              
-        </dd></dl></div>
     </li>
               </ol>
             </div>
 
         
 
-        <div class="values members">
-              <h3>Deprecated Value Members</h3>
-              <ol><li name="scala.AnyRef#finalize" visbl="prt" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="finalize():Unit"></a>
-      <span class="permalink">
-      <a href="../../../../../com/spotify/scio/smb/syntax/SortedBucketScioContext.html#finalize():Unit" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name deprecated" title="Deprecated: (Since version ) see corresponding Javadoc for more information.">finalize</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
-      </span>
-      
-      <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected[<span class="extype" name="java.lang">lang</span>] </dd><dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
-                <span class="name">@throws</span><span class="args">(<span>
-      
-      <span class="symbol">classOf[java.lang.Throwable]</span>
-    </span>)</span>
-              
-                <span class="name">@Deprecated</span>
-              
-                <span class="name">@deprecated</span>
-              
-        </dd><dt>Deprecated</dt><dd class="cmt"><p><i>(Since version )</i> see corresponding Javadoc for more information.</p></dd></dl></div>
-    </li></ol>
-            </div>
+        
         </div>
 
         <div id="inheritedMembers">
-        <div class="parent" name="scala.AnyRef">
+        <div class="parent" name="scala.Serializable">
+              <h3>Inherited from <span class="extype" name="scala.Serializable">Serializable</span></h3>
+            </div><div class="parent" name="java.io.Serializable">
+              <h3>Inherited from <span class="extype" name="java.io.Serializable">Serializable</span></h3>
+            </div><div class="parent" name="scala.AnyRef">
               <h3>Inherited from <span class="extype" name="scala.AnyRef">AnyRef</span></h3>
             </div><div class="parent" name="scala.Any">
               <h3>Inherited from <span class="extype" name="scala.Any">Any</span></h3>

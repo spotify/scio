@@ -606,8 +606,6 @@ Batches may contain elements from more than one bundle.
               
                 <span class="name">@native</span><span class="args">()</span>
               
-                <span class="name">@HotSpotIntrinsicCandidate</span><span class="args">()</span>
-              
         </dd></dl></div>
     </li><li name="com.spotify.scio.values.PairSCollectionFunctions#cogroup" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="cogroup">
       <a id="cogroup[W1,W2,W3](rhs1:com.spotify.scio.values.SCollection[(K,W1)],rhs2:com.spotify.scio.values.SCollection[(K,W2)],rhs3:com.spotify.scio.values.SCollection[(K,W3)])(implicitevidence$7:com.spotify.scio.coders.Coder[W1],implicitevidence$8:com.spotify.scio.coders.Coder[W2],implicitevidence$9:com.spotify.scio.coders.Coder[W3],implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SCollection[(K,(Iterable[V],Iterable[W1],Iterable[W2],Iterable[W3]))]"></a><a id="cogroup[W1,W2,W3](SCollection[(K,W1)],SCollection[(K,W2)],SCollection[(K,W3)])(Coder[W1],Coder[W2],Coder[W3],Coder[K],Coder[V]):SCollection[(K,(Iterable[V],Iterable[W1],Iterable[W2],Iterable[W3]))]"></a>
@@ -799,6 +797,28 @@ The value is taken randomly for each key.
       
       <p class="shortcomment cmt">Pass each value in the key-value pair SCollection through a <code>filter</code> function without
 changing the keys.</p>
+    </li><li name="scala.AnyRef#finalize" visbl="prt" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="finalize():Unit"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/values/PairSCollectionFunctions.html#finalize():Unit" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">finalize</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected[<span class="extype" name="java.lang">lang</span>] </dd><dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
+                <span class="name">@throws</span><span class="args">(<span>
+      
+      <span class="symbol">classOf[java.lang.Throwable]</span>
+    </span>)</span>
+              
+        </dd></dl></div>
     </li><li name="com.spotify.scio.values.PairSCollectionFunctions#flatMapValues" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="transform">
       <a id="flatMapValues[U](f:V=&gt;TraversableOnce[U])(implicitevidence$36:com.spotify.scio.coders.Coder[U],implicitkoder:com.spotify.scio.coders.Coder[K]):com.spotify.scio.values.SCollection[(K,U)]"></a><a id="flatMapValues[U]((V)⇒TraversableOnce[U])(Coder[U],Coder[K]):SCollection[(K,U)]"></a>
       <span class="permalink">
@@ -908,8 +928,6 @@ element (k, w) in <code>rhs</code>, the resulting SCollection will either contai
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd><dt>Annotations</dt><dd>
                 <span class="name">@native</span><span class="args">()</span>
               
-                <span class="name">@HotSpotIntrinsicCandidate</span><span class="args">()</span>
-              
         </dd></dl></div>
     </li><li name="com.spotify.scio.values.PairSCollectionFunctions#groupByKey" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="per_key">
       <a id="groupByKey(implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SCollection[(K,Iterable[V])]"></a><a id="groupByKey(Coder[K],Coder[V]):SCollection[(K,Iterable[V])]"></a>
@@ -998,8 +1016,6 @@ any key in memory. If a key has too many values, it can result in an <code>OutOf
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd><dt>Annotations</dt><dd>
                 <span class="name">@native</span><span class="args">()</span>
-              
-                <span class="name">@HotSpotIntrinsicCandidate</span><span class="args">()</span>
               
         </dd></dl></div>
     </li><li name="com.spotify.scio.values.PairSCollectionFunctions#hashPartitionByKey" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="collection">
@@ -1221,8 +1237,6 @@ the keys.</p>
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
                 <span class="name">@native</span><span class="args">()</span>
               
-                <span class="name">@HotSpotIntrinsicCandidate</span><span class="args">()</span>
-              
         </dd></dl></div>
     </li><li name="scala.AnyRef#notifyAll" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="notifyAll():Unit"></a>
@@ -1241,8 +1255,6 @@ the keys.</p>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
                 <span class="name">@native</span><span class="args">()</span>
-              
-                <span class="name">@HotSpotIntrinsicCandidate</span><span class="args">()</span>
               
         </dd></dl></div>
     </li><li name="com.spotify.scio.values.PairSCollectionFunctions#reduceByKey" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="per_key">
@@ -1720,9 +1732,10 @@ and better optimized than <a href="#reduceByKey(op:(V,V)=&gt;V)(implicitkoder:co
         <span class="name">topByKey</span><span class="params">(<span name="num">num: <span class="extype" name="scala.Int">Int</span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="ord">ord: <span class="extype" name="scala.Ordering">Ordering</span>[<span class="extype" name="com.spotify.scio.values.PairSCollectionFunctions.V">V</span>]</span>, <span name="koder">koder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.PairSCollectionFunctions.K">K</span>]</span>, <span name="voder">voder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.PairSCollectionFunctions.V">V</span>]</span>, <span name="dummy">dummy: <span class="extype" name="scala.Predef.DummyImplicit">DummyImplicit</span></span>)</span><span class="result">: <a href="SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[(<span class="extype" name="com.spotify.scio.values.PairSCollectionFunctions.K">K</span>, <span class="extype" name="scala.Iterable">Iterable</span>[<span class="extype" name="com.spotify.scio.values.PairSCollectionFunctions.V">V</span>])]</span>
       </span>
       
-      <p class="shortcomment cmt">Return the top k (largest) values for each key from this SCollection as defined by the
-specified implicit <code>Ordering[T]</code>.</p><div class="fullcomment"><div class="comment cmt"><p>Return the top k (largest) values for each key from this SCollection as defined by the
-specified implicit <code>Ordering[T]</code>.</p></div><dl class="paramcmts block"><dt>returns</dt><dd class="cmt"><p>a new SCollection of (key, top k) pairs</p></dd></dl></div>
+      <p class="shortcomment cmt">Return the top <code>num</code> (largest) values for each key from this SCollection as defined by the
+specified implicit <code>Ordering[T]</code>.</p><div class="fullcomment"><div class="comment cmt"><p>Return the top <code>num</code> (largest) values for each key from this SCollection as defined by the
+specified implicit <code>Ordering[T]</code>.
+</p></div><dl class="paramcmts block"><dt>returns</dt><dd class="cmt"><p>a new SCollection of (key, top <code>num</code> values) pairs</p></dd></dl></div>
     </li><li name="com.spotify.scio.values.PairSCollectionFunctions#values" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="transform">
       <a id="values(implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SCollection[V]"></a><a id="values(Coder[V]):SCollection[V]"></a>
       <span class="permalink">
@@ -1739,6 +1752,28 @@ specified implicit <code>Ordering[T]</code>.</p></div><dl class="paramcmts block
       </span>
       
       <p class="shortcomment cmt">Return an SCollection with the values of each tuple.</p>
+    </li><li name="scala.AnyRef#wait" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="wait():Unit"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/values/PairSCollectionFunctions.html#wait():Unit" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">wait</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
+                <span class="name">@throws</span><span class="args">(<span>
+      
+      <span class="defval" name="classOf[java.lang.InterruptedException]">...</span>
+    </span>)</span>
+              
+        </dd></dl></div>
     </li><li name="scala.AnyRef#wait" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="wait(x$1:Long,x$2:Int):Unit"></a><a id="wait(Long,Int):Unit"></a>
       <span class="permalink">
@@ -1783,28 +1818,6 @@ specified implicit <code>Ordering[T]</code>.</p></div><dl class="paramcmts block
     </span>)</span>
               
                 <span class="name">@native</span><span class="args">()</span>
-              
-        </dd></dl></div>
-    </li><li name="scala.AnyRef#wait" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="wait():Unit"></a>
-      <span class="permalink">
-      <a href="../../../../com/spotify/scio/values/PairSCollectionFunctions.html#wait():Unit" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier">final </span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">wait</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
-      </span>
-      
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
-                <span class="name">@throws</span><span class="args">(<span>
-      
-      <span class="defval" name="classOf[java.lang.InterruptedException]">...</span>
-    </span>)</span>
               
         </dd></dl></div>
     </li><li name="com.spotify.scio.values.PairSCollectionFunctions#withHotKeyFanout" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
@@ -1853,33 +1866,7 @@ not be sent through an intermediate node.</p></dd></dl></div>
 
         <div class="values members">
               <h3>Deprecated Value Members</h3>
-              <ol><li name="scala.AnyRef#finalize" visbl="prt" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="finalize():Unit"></a>
-      <span class="permalink">
-      <a href="../../../../com/spotify/scio/values/PairSCollectionFunctions.html#finalize():Unit" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name deprecated" title="Deprecated: (Since version ) see corresponding Javadoc for more information.">finalize</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
-      </span>
-      
-      <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected[<span class="extype" name="java.lang">lang</span>] </dd><dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
-                <span class="name">@throws</span><span class="args">(<span>
-      
-      <span class="symbol">classOf[java.lang.Throwable]</span>
-    </span>)</span>
-              
-                <span class="name">@Deprecated</span>
-              
-                <span class="name">@deprecated</span>
-              
-        </dd><dt>Deprecated</dt><dd class="cmt"><p><i>(Since version )</i> see corresponding Javadoc for more information.</p></dd></dl></div>
-    </li><li name="com.spotify.scio.values.PairSCollectionFunctions#sparseOuterJoin" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="join">
+              <ol><li name="com.spotify.scio.values.PairSCollectionFunctions#sparseOuterJoin" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="join">
       <a id="sparseOuterJoin[W](rhs:com.spotify.scio.values.SCollection[(K,W)],rhsNumKeys:Long,fpProb:Double)(implicitevidence$21:com.spotify.scio.coders.Coder[W],implicithash:com.twitter.algebird.Hash128[K],implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SCollection[(K,(Option[V],Option[W]))]"></a><a id="sparseOuterJoin[W](SCollection[(K,W)],Long,Double)(Coder[W],Hash128[K],Coder[K],Coder[V]):SCollection[(K,(Option[V],Option[W]))]"></a>
       <span class="permalink">
       <a href="../../../../com/spotify/scio/values/PairSCollectionFunctions.html#sparseOuterJoin[W](rhs:com.spotify.scio.values.SCollection[(K,W)],rhsNumKeys:Long,fpProb:Double)(implicitevidence$21:com.spotify.scio.coders.Coder[W],implicithash:com.twitter.algebird.Hash128[K],implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SCollection[(K,(Option[V],Option[W]))]" title="Permalink">

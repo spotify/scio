@@ -200,7 +200,7 @@ spotify/scio
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.8.2*
+<i class="md-icon" title="Version">label_outline</i> 0.8.3*
 </label>
 </li>
 </ul>
@@ -284,7 +284,12 @@ final case class TA(anInt: Int, aString: String) extends Top
 final case class TB(anDouble: Double) extends Top
 
 Coder[Top]
-// res3: Coder[Top] = Ref(repl.Session.App.Top)
+// res3: Coder[Top] = Disjunction(
+//   &quot;repl.Session.App.Top&quot;,
+//   Beam(BooleanCoder),
+//   &lt;function1&gt;,
+//   Map(false -&gt; Ref(repl.Session.App.TA), true -&gt; Ref(repl.Session.App.TB))
+// )
 </code></pre>
 <h3><a href="#coder-fallbacks" name="coder-fallbacks" class="anchor"><span class="anchor-link"></span></a>Coder fallbacks</h3>
 <p>Sometimes, no <code>Coder</code> instance can be found, and it&rsquo;s impossible to automatically derive one. In that case, Scio will fallback to a Kryo coder for that specific type, and if the scalac flag <code>-Xmacro-settings:show-coder-fallback=true</code> is set, a warning message will be displayed <strong>at compile time</strong>. This message should help you fix the warning.</p>
@@ -342,7 +347,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.8.2*
+0.8.3*
 </span>
 </div>
 </article>
