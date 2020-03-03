@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Spotify AB.
+ * Copyright 2020 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,44 +14,31 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 package com.spotify.scio.extra.csv
 
-import com.spotify.scio.ScioContext
 import com.spotify.scio.annotations.experimental
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.io.ClosedTap
 import com.spotify.scio.values.SCollection
+import kantan.csv.{CsvConfiguration, HeaderDecoder, HeaderEncoder}
 import org.apache.beam.sdk.io.FileIO.ReadableFile
 import org.apache.beam.sdk.transforms.ParDo
 
-/**
- * @see [[com.spotify.scio.extra.csv.CsvIO CsvIO]] for usage documentation
- */
-trait CsvSyntax {
-
-  import kantan.csv._
-
-  implicit final class CsvScioContext(private val self: ScioContext) {
+trait SCollectionSyntax {
+  implicit final class WritableCsvSCollection[T](private val self: SCollection[T]) {
     @experimental
-    def csvFile[T: HeaderDecoder: Coder](
-      path: String,
-      params: CsvIO.ReadParam = CsvIO.DEFAULT_READ_PARAMS
-    ): SCollection[T] =
-      self.read(CsvIO.Read[T](path))(params)
-  }
-
-  implicit final class CsvSCollection[T](private val self: SCollection[T]) {
-    @experimental
-    def saveAsCsvFile(path: String, params: CsvIO.WriteParam = CsvIO.DEFAULT_WRITE_PARAMS)(
-      implicit headerEncoder: HeaderEncoder[T],
-      coder: Coder[T]
+    def saveAsCsvFile(path: String, params: CsvIO.WriteParam = CsvIO.DefaultWriteParams)(
+      implicit coder: Coder[T],
+      enc: HeaderEncoder[T]
     ): ClosedTap[Nothing] = self.write(CsvIO.Write[T](path))(params)
   }
 
   implicit final class ReadableCsvFileSCollection(private val self: SCollection[ReadableFile]) {
     @experimental
     def readCsv[T: HeaderDecoder: Coder](csvConfiguration: CsvConfiguration): SCollection[T] =
-      self.applyTransform(ParDo.of(CsvIO.ReadDoFn[T](csvConfiguration)))
+      self
+        .withName("Read CSV")
+        .applyTransform(ParDo.of(CsvIO.ReadDoFn[T](csvConfiguration)))
   }
-
 }

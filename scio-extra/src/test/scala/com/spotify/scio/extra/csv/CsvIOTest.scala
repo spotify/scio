@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Spotify AB.
+ * Copyright 2020 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,19 +25,13 @@ import com.spotify.scio.extra.csv.CsvIOTest.TestTuple
 import com.spotify.scio.io.TapSpec
 import com.spotify.scio.testing.ScioIOSpec
 import com.spotify.scio.values.SCollection
-import kantan.csv.{
-  CsvConfiguration,
-  HeaderCodec,
-  HeaderDecoder,
-  HeaderEncoder,
-  RowDecoder,
-  RowEncoder
-}
 import org.apache.beam.sdk.util.SerializableUtils
 import org.apache.commons.io.FileUtils
 import org.scalatest.BeforeAndAfterEach
 
 import scala.collection.JavaConverters._
+import kantan.csv._
+
 object CsvIOTest {
   case class TestTuple(a: Int, string: String)
 }
@@ -138,7 +132,7 @@ class CsvIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterEach {
   it should "write without headers" in {
     implicit val encoder: HeaderEncoder[TestTuple] =
       HeaderEncoder.caseEncoder("intValue", "stringValue")(TestTuple.unapply)
-    val noHeaderConfig = CsvIO.DEFAULT_CSV_CONFIG.copy(header = CsvConfiguration.Header.None)
+    val noHeaderConfig = CsvIO.DefaultCsvConfig.copy(header = CsvConfiguration.Header.None)
 
     val csvLines = writeAsCsvAndReadLines(
       Seq(
@@ -156,7 +150,7 @@ class CsvIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterEach {
   it should "write with a row encoder" in {
     implicit val encoder: RowEncoder[TestTuple] =
       RowEncoder.encoder(0, 1)((tup: TestTuple) => (tup.a, tup.string))
-    val noHeaderConfig = CsvIO.DEFAULT_CSV_CONFIG.copy(header = CsvConfiguration.Header.None)
+    val noHeaderConfig = CsvIO.DefaultCsvConfig.copy(header = CsvConfiguration.Header.None)
 
     val csvLines = writeAsCsvAndReadLines(
       Seq(
@@ -204,12 +198,12 @@ class CsvIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterEach {
   "CsvIO.ReadDoFn" should "be serialisable" in {
     implicit val decoder: HeaderDecoder[TestTuple] =
       HeaderDecoder.decoder("numericValue", "stringValue")(TestTuple.apply)
-    SerializableUtils.serializeToByteArray(CsvIO.ReadDoFn[TestTuple](CsvIO.DEFAULT_CSV_CONFIG))
+    SerializableUtils.serializeToByteArray(CsvIO.ReadDoFn[TestTuple](CsvIO.DefaultCsvConfig))
   }
 
   private def writeAsCsvAndReadLines[T: HeaderEncoder: Coder](
     items: Seq[T],
-    params: CsvIO.WriteParam = CsvIO.DEFAULT_WRITE_PARAMS
+    params: CsvIO.WriteParam = CsvIO.DefaultWriteParams
   ): List[String] = {
     val sc = ScioContext()
 
