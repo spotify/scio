@@ -19,6 +19,7 @@ package com.spotify.scio.avro
 
 import com.google.protobuf.Message
 import com.spotify.scio.avro.types.AvroType.HasAvroAnnotation
+import com.spotify.scio.util.ProtobufUtil
 import com.spotify.scio.coders.{AvroBytesUtil, Coder, CoderMaterializer}
 import com.spotify.scio.io._
 import com.spotify.scio.util.{Functions, ScioUtil}
@@ -90,11 +91,7 @@ final case class ProtobufIO[T <: Message: ClassTag](path: String) extends ScioIO
   override type ReadP = Unit
   override type WriteP = ProtobufIO.WriteParam
   final override val tapT = TapOf[T]
-
-  private val protoCoder =
-    Coder
-      .protoMessageCoder[Message](classTag[T].asInstanceOf[ClassTag[Message]])
-      .asInstanceOf[Coder[T]]
+  private val protoCoder = ProtobufUtil.protoCoderOf[T]
 
   /**
    * Get an SCollection for a Protobuf file.
@@ -112,11 +109,7 @@ final case class ProtobufIO[T <: Message: ClassTag](path: String) extends ScioIO
    * Avro's block file format.
    */
   override protected def write(data: SCollection[T], params: WriteP): Tap[T] = {
-    import me.lyh.protobuf.generic
-    val schema = generic.Schema
-      .of[Message](classTag[T].asInstanceOf[ClassTag[Message]])
-      .toJson
-    val metadata = params.metadata ++ Map("protobuf.generic.schema" -> schema)
+    val metadata = params.metadata ++ ProtobufUtil.schemaMetadataOf[T]
     data.write(ObjectFileIO[T](path)(protoCoder))(params.copy(metadata = metadata)).underlying
   }
 

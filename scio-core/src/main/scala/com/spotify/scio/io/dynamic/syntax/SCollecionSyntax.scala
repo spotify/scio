@@ -178,6 +178,7 @@ final class DynamicSCollectionOps[T](private val self: SCollection[T]) extends A
 final class DynamicProtobufSCollectionOps[T <: Message](private val self: SCollection[T])
     extends AnyVal {
   import DynamicSCollectionOps.writeDynamic
+  import com.spotify.scio.util.ProtobufUtil
 
   def saveAsDynamicProtobufFile(
     path: String,
@@ -193,10 +194,7 @@ final class DynamicProtobufSCollectionOps[T <: Message](private val self: SColle
 
     val elemCoder = CoderMaterializer.beam(self.context, protoCoder)
     val avroSchema = AvroBytesUtil.schema
-    val schemaJson = generic.Schema.of[Message](ct.asInstanceOf[ClassTag[Message]]).toJson
-    val nm = new JHashMap[String, AnyRef]()
-    nm.putAll((metadata + ("protobuf.generic.schema" -> schemaJson)).asJava)
-
+    val schemaMetadata = ProtobufUtil.schemaMetadataOf(ct)
     if (self.context.isTest) {
       throw new NotImplementedError(
         "Protobuf file with dynamic destinations cannot be used in a test context"
@@ -208,7 +206,7 @@ final class DynamicProtobufSCollectionOps[T <: Message](private val self: SColle
             AvroBytesUtil.encode(elemCoder, element)
         })
         .withCodec(codec)
-        .withMetadata(nm)
+        .withMetadata((schemaMetadata ++ metadata).asJava)
       val write =
         writeDynamic(path, numShards, suffix, destinationFn)
           .via(sink)
