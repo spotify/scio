@@ -60,7 +60,7 @@ trait BeamTypeCoders {
 
   implicit def genericJsonCoder[T <: GenericJson: ClassTag]: Coder[T] =
     Coder.xmap(Coder[String])(
-      str => DefaultDsonObjectParser.parseAndClose(new StringReader(str), ScioUtil.classOf[T]),
+      str => DefaultJsonObjectParser.parseAndClose(new StringReader(str), ScioUtil.classOf[T]),
       (s: T) => {
         s.setFactory(new JacksonFactory)
         s.toString
@@ -69,5 +69,5 @@ trait BeamTypeCoders {
 }
 
 private[coders] object BeamTypeCoders extends BeamTypeCoders {
-  private lazy val DefaultDsonObjectParser = new JsonObjectParser(new JacksonFactory)
+  private lazy val DefaultJsonObjectParser = new JsonObjectParser(new JacksonFactory)
 }
