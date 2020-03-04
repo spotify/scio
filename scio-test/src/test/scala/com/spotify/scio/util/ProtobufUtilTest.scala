@@ -44,7 +44,7 @@ class ProtobufUtilTest extends AnyFlatSpec with Matchers {
     path2.deleteOnExit()
     dir.toFile.deleteOnExit()
 
-    implicit val grCoder: Coder[GenericRecord] = ProtobufUtil.genericRecordMessageCoder
+    implicit val grCoder: Coder[GenericRecord] = ProtobufUtil.AvroMessageCoder
 
     val messages = sc
       .parallelize(1 to 10)
@@ -56,7 +56,7 @@ class ProtobufUtilTest extends AnyFlatSpec with Matchers {
         path1.getPath,
         suffix = ".protobuf",
         metadata = ProtobufUtil.schemaMetadataOf[TrackPB],
-        schema = ProtobufUtil.genericRecordMessageSchema,
+        schema = ProtobufUtil.AvroMessageSchema,
         numShards = 1
       )
 
