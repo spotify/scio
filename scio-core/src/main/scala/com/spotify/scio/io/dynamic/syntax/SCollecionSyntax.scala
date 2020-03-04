@@ -186,14 +186,12 @@ final class DynamicProtobufSCollectionOps[T <: Message](private val self: SColle
     codec: CodecFactory = CodecFactory.deflateCodec(6),
     metadata: Map[String, AnyRef] = Map.empty
   )(destinationFn: T => String)(implicit ct: ClassTag[T]): ClosedTap[Nothing] = {
-    val protoCoder =
-      Coder
-        .protoMessageCoder[Message](ct.asInstanceOf[ClassTag[Message]])
-        .asInstanceOf[Coder[T]]
-
+    val protoCoder = ProtobufUtil.protoCoderOf(ct)
     val elemCoder = CoderMaterializer.beam(self.context, protoCoder)
     val avroSchema = AvroBytesUtil.schema
-    val schemaMetadata = ProtobufUtil.schemaMetadataOf(ct)
+    val nm = new JHashMap[String, AnyRef]()
+    nm.putAll((metadata ++ ProtobufUtil.schemaMetadataOf(ct)).asJava)
+
     if (self.context.isTest) {
       throw new NotImplementedError(
         "Protobuf file with dynamic destinations cannot be used in a test context"
@@ -205,7 +203,7 @@ final class DynamicProtobufSCollectionOps[T <: Message](private val self: SColle
             AvroBytesUtil.encode(elemCoder, element)
         })
         .withCodec(codec)
-        .withMetadata((schemaMetadata ++ metadata).asJava)
+        .withMetadata(nm)
       val write =
         writeDynamic(path, numShards, suffix, destinationFn)
           .via(sink)
