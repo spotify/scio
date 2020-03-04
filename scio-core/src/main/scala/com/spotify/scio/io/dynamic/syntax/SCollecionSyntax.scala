@@ -18,8 +18,8 @@ package com.spotify.scio.io.dynamic.syntax
 
 import com.google.protobuf.Message
 import com.spotify.scio.io.{ClosedTap, EmptyTap}
-import com.spotify.scio.coders.{AvroBytesUtil, Coder, CoderMaterializer}
-import com.spotify.scio.util.Functions
+import com.spotify.scio.coders.{AvroBytesUtil, CoderMaterializer}
+import com.spotify.scio.util.{Functions, ProtobufUtil}
 import com.spotify.scio.values.SCollection
 import org.apache.avro.Schema
 import org.apache.avro.file.CodecFactory
@@ -177,7 +177,6 @@ final class DynamicSCollectionOps[T](private val self: SCollection[T]) extends A
 final class DynamicProtobufSCollectionOps[T <: Message](private val self: SCollection[T])
     extends AnyVal {
   import DynamicSCollectionOps.writeDynamic
-  import com.spotify.scio.util.ProtobufUtil
 
   def saveAsDynamicProtobufFile(
     path: String,
