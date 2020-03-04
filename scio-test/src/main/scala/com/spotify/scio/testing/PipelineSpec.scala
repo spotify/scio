@@ -41,7 +41,8 @@ trait PipelineSpec
     with Matchers
     with SCollectionMatchers
     with PipelineTestUtils
-    with RunEnforcementJobTest {
+    with RunEnforcementJobTest
+    with EqInstances {
   private val Beam = """beam\.(.*)""".r
 
   private var beamOpts: BeamOptions = _

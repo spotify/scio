@@ -32,6 +32,9 @@ import scala.reflect.ClassTag
  * [[com.spotify.scio.values.SCollection SCollection]]s specific to Bigtable output.
  */
 trait BigtableMatchers extends SCollectionMatchers {
+
+  import EqInstances._
+
   type BTRow = (ByteString, Iterable[Mutation])
   type BTCollection = SCollection[BTRow]
 

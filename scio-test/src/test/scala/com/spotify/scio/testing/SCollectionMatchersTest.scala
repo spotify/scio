@@ -35,6 +35,7 @@ import scala.util.Try
 import java.io.ObjectInputStream
 import java.io.IOException
 import java.io.NotSerializableException
+import cats.kernel.Eq
 
 object SCollectionMatchersTest {
   // intentionally not serializable to test lambda ser/de
@@ -587,4 +588,44 @@ class SCollectionMatchersTest extends PipelineSpec {
       }
     }
   }
+
+  it should "customize equality" in {
+    val in = 1 to 10
+    val out = 2 to 11
+
+    runWithContext {
+      _.parallelize(in) shouldNot containInAnyOrder(out)
+    }
+
+    runWithContext {
+      implicit val eqW = Eqv.always
+      _.parallelize(in) should containInAnyOrder(out)
+    }
+
+    runWithContext {
+      _.parallelize(List(1)) shouldNot containSingleValue(2)
+    }
+
+    runWithContext {
+      implicit val eqW = Eqv.always
+      _.parallelize(List(1)) should containSingleValue(2)
+    }
+
+    runWithContext {
+      _.parallelize(List(1, 3, 4, 5)) shouldNot containValue(2)
+    }
+
+    runWithContext {
+      implicit val eqW = Eqv.always
+      _.parallelize(List(1, 3, 4, 5)) should containValue(2)
+    }
+  }
+}
+
+object Eqv {
+  def always: Eq[Int] =
+    new Eq[Int] {
+      def eqv(x: Int, y: Int): Boolean =
+        true
+    }
 }
