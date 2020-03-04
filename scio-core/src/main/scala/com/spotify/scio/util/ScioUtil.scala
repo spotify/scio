@@ -31,7 +31,7 @@ import org.slf4j.LoggerFactory
 import scala.reflect.ClassTag
 import scala.util.{Failure, Success, Try}
 
-object ScioUtil {
+private[scio] object ScioUtil {
   // Try.toEither does not exists in Scala 2.11
   def toEither[T](t: Try[T]): Either[Throwable, T] =
     t match {
