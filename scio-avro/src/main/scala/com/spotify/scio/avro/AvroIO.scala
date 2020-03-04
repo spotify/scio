@@ -35,7 +35,7 @@ import org.apache.beam.sdk.{io => beam}
 
 import scala.collection.JavaConverters._
 import scala.reflect.runtime.universe._
-import scala.reflect.{classTag, ClassTag}
+import scala.reflect.ClassTag
 
 final case class ObjectFileIO[T: Coder](path: String) extends ScioIO[T] {
   override type ReadP = Unit

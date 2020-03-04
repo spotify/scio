@@ -21,7 +21,6 @@ import com.spotify.scio.io.{ClosedTap, EmptyTap}
 import com.spotify.scio.coders.{AvroBytesUtil, Coder, CoderMaterializer}
 import com.spotify.scio.util.Functions
 import com.spotify.scio.values.SCollection
-import me.lyh.protobuf.generic
 import org.apache.avro.Schema
 import org.apache.avro.file.CodecFactory
 import org.apache.avro.generic.GenericRecord
