@@ -15,10 +15,11 @@
  * under the License.
  */
 
-package com.spotify.scio.extra.csv
+package com.spotify.scio.extra.csv.syntax
 
 import com.spotify.scio.annotations.experimental
 import com.spotify.scio.coders.Coder
+import com.spotify.scio.extra.csv.CsvIO
 import com.spotify.scio.io.ClosedTap
 import com.spotify.scio.values.SCollection
 import kantan.csv.{CsvConfiguration, HeaderDecoder, HeaderEncoder}
