@@ -60,13 +60,13 @@ class ProtobufUtilTest extends AnyFlatSpec with Matchers {
         numShards = 1
       )
 
-    val tap2 = messages.saveAsProtobufFile(path2.getPath, numShards = 1)
+    val protoWriteTap = messages.saveAsProtobufFile(path2.getPath, numShards = 1)
 
     val result = sc.run().waitUntilDone()
 
     val (tapFromAvroWrite, tapFromProtoWrite) = (
-      ObjectFileTap[TrackPB](ScioUtil.addPartSuffix(path2.getPath)),
-      tap2.get(result)
+      ObjectFileTap[TrackPB](ScioUtil.addPartSuffix(path1.getPath)),
+      protoWriteTap.get(result)
     )
 
     tapFromAvroWrite.value.toList should contain theSameElementsAs tapFromProtoWrite.value.toList
