@@ -17,19 +17,27 @@
 
 package com.spotify.scio.coders.instances
 
+import com.google.api.client.json.GenericJson
+import com.google.api.client.json.jackson2.JacksonFactory
+import com.google.api.client.json.JsonObjectParser
 import com.google.api.services.bigquery.model.TableRow
 import com.spotify.scio.coders.Coder
+import com.spotify.scio.util.ScioUtil
+import java.io.StringReader
 import org.apache.beam.sdk.coders.RowCoder
 import org.apache.beam.sdk.io.FileIO.ReadableFile
-import org.apache.beam.sdk.io.ReadableFileCoder
 import org.apache.beam.sdk.io.fs.{MatchResult, MetadataCoderV2}
 import org.apache.beam.sdk.io.gcp.bigquery.TableRowJsonCoder
 import org.apache.beam.sdk.io.gcp.pubsub.{PubsubMessage, PubsubMessageWithAttributesCoder}
+import org.apache.beam.sdk.io.ReadableFileCoder
 import org.apache.beam.sdk.schemas.{Schema => BSchema}
 import org.apache.beam.sdk.transforms.windowing.{BoundedWindow, IntervalWindow, PaneInfo}
 import org.apache.beam.sdk.values.{KV, Row}
+import scala.reflect.ClassTag
 
 trait BeamTypeCoders {
+  import BeamTypeCoders._
+
   implicit def intervalWindowCoder: Coder[IntervalWindow] = Coder.beam(IntervalWindow.getCoder)
 
   implicit def boundedWindowCoder: Coder[BoundedWindow] = Coder.kryo[BoundedWindow]
@@ -49,6 +57,17 @@ trait BeamTypeCoders {
 
   implicit def matchResultMetadataCoder: Coder[MatchResult.Metadata] =
     Coder.beam(MetadataCoderV2.of())
+
+  implicit def genericJsonCoder[T <: GenericJson: ClassTag]: Coder[T] =
+    Coder.xmap(Coder[String])(
+      str => DefaultDsonObjectParser.parseAndClose(new StringReader(str), ScioUtil.classOf[T]),
+      (s: T) => {
+        s.setFactory(new JacksonFactory)
+        s.toString
+      }
+    )
 }
 
-private[coders] object BeamTypeCoders extends BeamTypeCoders
+private[coders] object BeamTypeCoders extends BeamTypeCoders {
+  private lazy val DefaultDsonObjectParser = new JsonObjectParser(new JacksonFactory)
+}
