@@ -32,6 +32,7 @@ import scala.collection.JavaConverters._
 import scala.collection.{mutable => mut}
 import java.io.ByteArrayInputStream
 import org.apache.beam.sdk.testing.CoderProperties
+import com.google.api.services.bigquery.model.{TableFieldSchema, TableSchema}
 
 final case class UserId(bytes: Seq[Byte])
 final case class User(id: UserId, username: String, email: String)
@@ -563,6 +564,19 @@ final class CoderTest extends AnyFlatSpec with Matchers {
       val coder = Coder[Set[Int]]
       materialize(coder).verifyDeterministic()
     }
+  }
+
+  it should "support GenericJson types" in {
+    coderIsSerializable[TableSchema]
+
+    val tableSchema = new TableSchema().setFields(
+      List(
+        new TableFieldSchema().setName("word").setType("STRING").setMode("NULLABLE"),
+        new TableFieldSchema().setName("word_count").setType("INTEGER").setMode("NULLABLE")
+      ).asJava
+    )
+
+    tableSchema coderShould roundtrip()
   }
 
 }
