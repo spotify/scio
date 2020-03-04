@@ -20,6 +20,9 @@ package com.spotify.scio.coders.instances
 import com.google.api.services.bigquery.model.TableRow
 import com.spotify.scio.coders.Coder
 import org.apache.beam.sdk.coders.RowCoder
+import org.apache.beam.sdk.io.FileIO.ReadableFile
+import org.apache.beam.sdk.io.ReadableFileCoder
+import org.apache.beam.sdk.io.fs.{MatchResult, MetadataCoderV2}
 import org.apache.beam.sdk.io.gcp.bigquery.TableRowJsonCoder
 import org.apache.beam.sdk.io.gcp.pubsub.{PubsubMessage, PubsubMessageWithAttributesCoder}
 import org.apache.beam.sdk.schemas.{Schema => BSchema}
@@ -41,6 +44,11 @@ trait BeamTypeCoders {
     Coder.beam(PubsubMessageWithAttributesCoder.of())
 
   implicit def beamKVCoder[K: Coder, V: Coder]: Coder[KV[K, V]] = Coder.kv(Coder[K], Coder[V])
+
+  implicit def readableFileCoder: Coder[ReadableFile] = Coder.beam(new ReadableFileCoder())
+
+  implicit def matchResultMetadataCoder: Coder[MatchResult.Metadata] =
+    Coder.beam(MetadataCoderV2.of())
 }
 
 private[coders] object BeamTypeCoders extends BeamTypeCoders

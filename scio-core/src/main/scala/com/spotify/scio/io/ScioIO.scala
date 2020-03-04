@@ -104,6 +104,12 @@ trait ScioIO[T] {
     tapT.saveForTest(data)
   }
 
+  /**
+   * Write options also return a `ClosedTap`. Once the job completes you can open the `Tap`.
+   * Tap abstracts away the logic of reading the dataset directly as an Iterator[T] or
+   * re-opening it in another ScioContext. The Future is complete once the job finishes.
+   * This can be used to do light weight pipeline orchestration e.g. WordCountOrchestration.scala.
+   */
   def tap(read: ReadP): Tap[tapT.T]
 }
 
