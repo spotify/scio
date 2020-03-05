@@ -79,7 +79,7 @@ final class DynamicBigQueryOps[T](private val self: SCollection[T]) extends AnyV
         .write()
         .to(destinations)
         .withFormatFunction(Functions.serializableFn(formatFn))
-        .withExtendedErrorInfo()
+
       if (createDisposition != null) {
         transform = transform.withCreateDisposition(createDisposition)
       }
