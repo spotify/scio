@@ -67,7 +67,7 @@ public class SmbPublicAPITest {
                     FileSystems.matchSingleFileSpec("in").resourceId()
                 ),
                 ".avro",
-                new MyFileOperation())));
+                new MyFileOperation())), iterateOnce);
   }
 
   private static class MyMetadata extends BucketMetadata<String, String> {

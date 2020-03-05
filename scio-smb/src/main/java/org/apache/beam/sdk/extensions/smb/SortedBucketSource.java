@@ -103,10 +103,17 @@ public class SortedBucketSource<FinalKeyT>
 
   private final Class<FinalKeyT> finalKeyClass;
   private final transient List<BucketedInput<?, ?>> sources;
+  private final boolean iterableOnce;
 
   public SortedBucketSource(Class<FinalKeyT> finalKeyClass, List<BucketedInput<?, ?>> sources) {
+    this(finalKeyClass, sources, false);
+  }
+
+  public SortedBucketSource(
+      Class<FinalKeyT> finalKeyClass, List<BucketedInput<?, ?>> sources, boolean iterableOnce) {
     this.finalKeyClass = finalKeyClass;
     this.sources = sources;
+    this.iterableOnce = iterableOnce;
   }
 
   @Override
@@ -136,7 +143,11 @@ public class SortedBucketSource<FinalKeyT>
             "MergeBuckets",
             ParDo.of(
                 new MergeBuckets<>(
-                    this.getName(), sources, sourceSpec.leastNumBuckets, sourceSpec.keyCoder)))
+                    this.getName(),
+                    sources,
+                    sourceSpec.leastNumBuckets,
+                    sourceSpec.keyCoder,
+                    iterableOnce)))
         .setCoder(KvCoder.of(sourceSpec.keyCoder, resultCoder));
   }
 
@@ -195,9 +206,10 @@ public class SortedBucketSource<FinalKeyT>
     private static final Comparator<Map.Entry<TupleTag, KV<byte[], Iterator<?>>>> keyComparator =
         (o1, o2) -> bytesComparator.compare(o1.getValue().getKey(), o2.getValue().getKey());
 
-    private final Integer leastNumBuckets;
-    private final Coder<FinalKeyT> keyCoder;
     private final List<BucketedInput<?, ?>> sources;
+    private final int leastNumBuckets;
+    private final Coder<FinalKeyT> keyCoder;
+    private final boolean iterableOnce;
 
     private final Counter elementsRead;
     private final Distribution keyGroupSize;
@@ -206,10 +218,12 @@ public class SortedBucketSource<FinalKeyT>
         String transformName,
         List<BucketedInput<?, ?>> sources,
         int leastNumBuckets,
-        Coder<FinalKeyT> keyCoder) {
+        Coder<FinalKeyT> keyCoder,
+        boolean iterableOnce) {
+      this.sources = sources;
       this.leastNumBuckets = leastNumBuckets;
       this.keyCoder = keyCoder;
-      this.sources = sources;
+      this.iterableOnce = iterableOnce;
 
       elementsRead = Metrics.counter(SortedBucketSource.class, transformName + "-ElementsRead");
       keyGroupSize =
@@ -222,6 +236,7 @@ public class SortedBucketSource<FinalKeyT>
           c.element(),
           sources,
           leastNumBuckets,
+          iterableOnce,
           mergedKeyGroup -> {
             try {
               c.output(
@@ -240,6 +255,7 @@ public class SortedBucketSource<FinalKeyT>
         int bucketId,
         List<BucketedInput<?, ?>> sources,
         int leastNumBuckets,
+        boolean iterableOnce,
         Consumer<KV<byte[], CoGbkResult>> consumer,
         Counter elementsRead,
         Distribution keyGroupSize) {
@@ -287,7 +303,7 @@ public class SortedBucketSource<FinalKeyT>
         final KeyGroupMetrics keyGroupMetrics =
             new KeyGroupMetrics(elementsRead, keyGroupSize, resultSchema.size());
         for (int i = 0; i < resultSchema.size(); i++) {
-          valueMap.add(new LazyIterable<>(keyGroupMetrics));
+          valueMap.add(new LazyIterable<>(keyGroupMetrics, iterableOnce));
         }
 
         while (nextKeyGroupsIt.hasNext()) {
@@ -511,67 +527,76 @@ public class SortedBucketSource<FinalKeyT>
   /** Lazily wraps an Iterator in an Iterable and populates a buffer in the first iteration. */
   static class LazyIterable<T> implements Iterable<T> {
     private final KeyGroupMetrics keyGroupMetrics;
+    private final boolean iterableOnce;
     private Iterator<T> iterator = null;
     private List<T> buffer = null;
-    private boolean reiterate = false;
-    private boolean exhausted = false;
+    private boolean started = false;
 
-    private LazyIterable(KeyGroupMetrics keyGroupMetrics) {
+    private LazyIterable(KeyGroupMetrics keyGroupMetrics, boolean iterableOnce) {
       this.keyGroupMetrics = keyGroupMetrics;
+      this.iterableOnce = iterableOnce;
     }
 
     private void set(Iterator<T> iterator) {
       Preconditions.checkState(this.iterator == null, "Iterator already set");
       this.iterator = iterator;
+      if (!iterableOnce) {
+        // regular Iterable, buffer everything eagerly and report metrics right away
+        buffer = new ArrayList<>();
+        iterator.forEachRemaining(buffer::add);
+        keyGroupMetrics.report(buffer.size());
+      }
     }
 
     @Override
     public Iterator<T> iterator() {
-      if (reiterate) {
-        // the first iteration is still in progress and the buffer is not fully populated yet
-        Preconditions.checkState(exhausted, "Previous Iterator has not exhausted");
+      if (!iterableOnce) {
+        if (buffer == null) {
+          buffer = Collections.emptyList();
+          keyGroupMetrics.report(0);
+        }
         return buffer.iterator();
-      } else {
-        buffer = new ArrayList<>();
-        final Iterator<T> inner = iteratorOnce();
-
-        return new Iterator<T>() {
-          private boolean reported = false;
-
-          @Override
-          public boolean hasNext() {
-            boolean hasNext = inner.hasNext();
-            if (!hasNext && !reported) {
-              exhausted = true;
-              reported = true;
-              keyGroupMetrics.report(buffer.size());
-            }
-            return hasNext;
-          }
-
-          @Override
-          public T next() {
-            try {
-              T value = inner.next();
-              buffer.add(value);
-              return value;
-            } catch (NoSuchElementException e) {
-              if (!reported) {
-                exhausted = true;
-                reported = true;
-                keyGroupMetrics.report(buffer.size());
-              }
-              throw e;
-            }
-          }
-        };
       }
-    }
 
-    Iterator<T> iteratorOnce() {
-      Preconditions.checkState(!reiterate, "Iterator already started");
-      reiterate = true;
-      return iterator == null ? Collections.emptyIterator() : iterator;
+      Preconditions.checkState(!started, "Iterator already started");
+      started = true;
+
+      if (iterator == null) {
+        // iterator never set, e.g. empty side of an outer join
+        iterator = Collections.emptyIterator();
+        keyGroupMetrics.report(0);
+      }
+
+      // iterable once, report metrics at the end
+      return new Iterator<T>() {
+        private boolean reported = false;
+        private int count = 0;
+
+        @Override
+        public boolean hasNext() {
+          boolean hasNext = iterator.hasNext();
+          if (!hasNext && !reported) {
+            reported = true;
+            keyGroupMetrics.report(count);
+          }
+          return hasNext;
+        }
+
+        @Override
+        public T next() {
+          try {
+            T value = iterator.next();
+            count++;
+            return value;
+          } catch (NoSuchElementException e) {
+            if (!reported) {
+              reported = true;
+              keyGroupMetrics.report(count);
+            }
+            throw e;
+          }
+        }
+      };
     }
   }
 
