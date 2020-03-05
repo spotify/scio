@@ -254,7 +254,7 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
           bucketId,
           sources,
           leastNumBuckets,
-          false,
+          true,
           mergedKeyGroup -> {
             int assignedBucket =
                 reHashBucket ? bucketMetadata.getBucketId(mergedKeyGroup.getKey()) : bucketId;
