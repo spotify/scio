@@ -18,7 +18,7 @@ package com.spotify.scio.io.dynamic.syntax
 
 import com.google.protobuf.Message
 import com.spotify.scio.io.{ClosedTap, EmptyTap}
-import com.spotify.scio.coders.{AvroBytesUtil, CoderMaterializer}
+import com.spotify.scio.coders.{AvroBytesUtil, Coder, CoderMaterializer}
 import com.spotify.scio.util.{Functions, ProtobufUtil}
 import com.spotify.scio.values.SCollection
 import org.apache.avro.Schema
@@ -185,7 +185,7 @@ final class DynamicProtobufSCollectionOps[T <: Message](private val self: SColle
     codec: CodecFactory = CodecFactory.deflateCodec(6),
     metadata: Map[String, AnyRef] = Map.empty
   )(destinationFn: T => String)(implicit ct: ClassTag[T]): ClosedTap[Nothing] = {
-    val protoCoder = ProtobufUtil.protoCoderOf(ct)
+    val protoCoder = Coder.protoMessageCoder[T]
     val elemCoder = CoderMaterializer.beam(self.context, protoCoder)
     val avroSchema = AvroBytesUtil.schema
     val nm = new JHashMap[String, AnyRef]()

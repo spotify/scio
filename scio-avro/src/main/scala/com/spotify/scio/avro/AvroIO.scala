@@ -90,7 +90,7 @@ final case class ProtobufIO[T <: Message: ClassTag](path: String) extends ScioIO
   override type ReadP = Unit
   override type WriteP = ProtobufIO.WriteParam
   final override val tapT = TapOf[T]
-  private val protoCoder = ProtobufUtil.protoCoderOf[T]
+  private val protoCoder = Coder.protoMessageCoder[T]
 
   /**
    * Get an SCollection for a Protobuf file.

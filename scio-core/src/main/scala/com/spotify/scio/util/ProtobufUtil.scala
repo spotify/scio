@@ -60,13 +60,8 @@ object ProtobufUtil {
    * whose [[Schema]] is a single byte array field, corresponding to the serialized bytes in `T`.
    */
   def toAvro[T <: Message: ClassTag]: T => GenericRecord = {
-    val protoCoder = CoderMaterializer.beamWithDefault(protoCoderOf[T])
+    val protoCoder = CoderMaterializer.beamWithDefault(Coder.protoMessageCoder[T])
 
     (t: T) => AvroBytesUtil.encode(protoCoder, t)
   }
-
-  private[scio] def protoCoderOf[T <: Message: ClassTag]: Coder[T] =
-    Coder
-      .protoMessageCoder[Message](classTag[T].asInstanceOf[ClassTag[Message]])
-      .asInstanceOf[Coder[T]]
 }
