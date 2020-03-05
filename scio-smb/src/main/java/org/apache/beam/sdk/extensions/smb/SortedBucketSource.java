@@ -303,7 +303,7 @@ public class SortedBucketSource<FinalKeyT>
         final KeyGroupMetrics keyGroupMetrics =
             new KeyGroupMetrics(elementsRead, keyGroupSize, resultSchema.size());
         for (int i = 0; i < resultSchema.size(); i++) {
-          valueMap.add(new LazyIterable<>(keyGroupMetrics, iterableOnce));
+          valueMap.add(new IterableOnceMaybe<>(keyGroupMetrics, iterableOnce));
         }
 
         while (nextKeyGroupsIt.hasNext()) {
@@ -311,7 +311,7 @@ public class SortedBucketSource<FinalKeyT>
           if (keyComparator.compare(entry, minKeyEntry) == 0) {
             int index = resultSchema.getIndex(entry.getKey());
             @SuppressWarnings("unchecked")
-            final LazyIterable<Object> values = (LazyIterable<Object>) valueMap.get(index);
+            final IterableOnceMaybe<Object> values = (IterableOnceMaybe<Object>) valueMap.get(index);
             @SuppressWarnings("unchecked")
             final Iterator<Object> it = (Iterator<Object>) entry.getValue().getValue();
             values.set(it);
@@ -524,15 +524,15 @@ public class SortedBucketSource<FinalKeyT>
     }
   }
 
-  /** Lazily wraps an Iterator in an Iterable and populates a buffer in the first iteration. */
-  static class LazyIterable<T> implements Iterable<T> {
+  /** An Iterable that maybe iterated only once to avoid buffering the underlying iterator. */
+  static class IterableOnceMaybe<T> implements Iterable<T> {
     private final KeyGroupMetrics keyGroupMetrics;
     private final boolean iterableOnce;
     private Iterator<T> iterator = null;
     private List<T> buffer = null;
     private boolean started = false;
 
-    private LazyIterable(KeyGroupMetrics keyGroupMetrics, boolean iterableOnce) {
+    private IterableOnceMaybe(KeyGroupMetrics keyGroupMetrics, boolean iterableOnce) {
       this.keyGroupMetrics = keyGroupMetrics;
       this.iterableOnce = iterableOnce;
     }
