@@ -53,8 +53,6 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
    * @param keyClass join key class. Must have a Coder in Beam's default
    *                 [[org.apache.beam.sdk.coders.CoderRegistry]] as custom key coders are not
    *                 supported yet.
-   * @param lhs
-   * @param rhs
    */
   @experimental
   def sortMergeJoin[K: Coder, L: Coder, R: Coder](
@@ -98,8 +96,7 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
    * See note on [[SortedBucketScioContext.sortMergeJoin()]] for information on how an SMB group
    * differs from a regular [[org.apache.beam.sdk.transforms.GroupByKey]] operation.
    *
-   * @group per_key
-
+   * @group cogroup
    * @param keyClass grouping key class. Must have a Coder in Beam's default
    *                 [[org.apache.beam.sdk.coders.CoderRegistry]] as custom key coders are not
    *                 supported yet.
@@ -132,10 +129,9 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
    * differs from a regular [[org.apache.beam.sdk.transforms.join.CoGroupByKey]] operation.
    *
    * @group cogroup
-
-   * @param keyClass cogroup key class. Must have a Coder in Beam's default
-   *                 [[org.apache.beam.sdk.coders.CoderRegistry]] as custom key coders are not
-   *                 supported yet.
+   * @param keyClass   cogroup key class. Must have a Coder in Beam's default
+   *                   [[org.apache.beam.sdk.coders.CoderRegistry]] as custom key coders are not
+   *                   supported yet.
    */
   @experimental
   def sortMergeCoGroup[K: Coder, A: Coder, B: Coder](
@@ -174,7 +170,6 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
    * differs from a regular [[org.apache.beam.sdk.transforms.join.CoGroupByKey]] operation.
    *
    * @group cogroup
-
    * @param keyClass cogroup key class. Must have a Coder in Beam's default
    *                 [[org.apache.beam.sdk.coders.CoderRegistry]] as custom key coders are not
    *                 supported yet.
@@ -219,7 +214,6 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
    * differs from a regular [[org.apache.beam.sdk.transforms.join.CoGroupByKey]] operation.
    *
    * @group cogroup
-
    * @param keyClass cogroup key class. Must have a Coder in Beam's default
    *                 [[org.apache.beam.sdk.coders.CoderRegistry]] as custom key coders are not
    *                 supported yet.
@@ -265,7 +259,7 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
    * hashing scheme. By applying the write, transform, and write in the same transform, an extra
    * shuffle step can be avoided.
    *
-   * @group per_key
+   * @group cogroup
    */
   @experimental
   def sortMergeTransform[K, R](
@@ -337,6 +331,9 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
     coGbk: => SortedBucketIO.CoGbk[K],
     toR: CoGbkResult => R
   ) extends Serializable {
+
+    def withoutReiterable: SortMergeTransformReadBuilder[K, R] =
+      new SortMergeTransformReadBuilder(coGbk.withoutReiterable(), toR)
 
     def to[W: Coder](
       write: => SortedBucketIO.Write[K, W]

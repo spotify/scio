@@ -246,7 +246,7 @@ public class SortedBucketSourceTest {
 
     PCollection<KV<String, CoGbkResult>> output =
         pipeline.apply(
-            new SortedBucketSource<>(String.class, Collections.singletonList(bucketedInput)));
+            new SortedBucketSource<>(String.class, Collections.singletonList(bucketedInput), true));
 
     final Map<String, List<String>> expected = groupByKey(input, metadata::extractKey);
 
@@ -423,7 +423,7 @@ public class SortedBucketSourceTest {
             new BucketedInput<>(rhsTag, rhsPaths, ".txt", fileOperations));
 
     PCollection<KV<String, CoGbkResult>> output =
-        pipeline.apply(new SortedBucketSource<>(String.class, inputs));
+        pipeline.apply(new SortedBucketSource<>(String.class, inputs, true));
 
     Function<String, String> extractKeyFn = TestBucketMetadata.of(2, 1)::extractKey;
 

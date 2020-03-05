@@ -65,13 +65,14 @@ import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditio
  * @param <FinalValueT>
  */
 public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PBegin, WriteResult> {
+  private final Class<FinalKeyT> finalKeyClass;
+  private final BucketMetadata<FinalKeyT, FinalValueT> bucketMetadata;
   private final SMBFilenamePolicy filenamePolicy;
   private final ResourceId tempDirectory;
   private final FileOperations<FinalValueT> fileOperations;
-  private final Class<FinalKeyT> finalKeyClass;
   private final List<BucketedInput<?, ?>> sources;
-  private final BucketMetadata<FinalKeyT, FinalValueT> bucketMetadata;
   private final TransformFn<FinalKeyT, FinalValueT> transformFn;
+  private final boolean reiterable;
 
   public SortedBucketTransform(
       Class<FinalKeyT> finalKeyClass,
@@ -81,14 +82,16 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
       String filenameSuffix,
       FileOperations<FinalValueT> fileOperations,
       List<BucketedInput<?, ?>> sources,
-      TransformFn<FinalKeyT, FinalValueT> transformFn) {
+      TransformFn<FinalKeyT, FinalValueT> transformFn,
+      boolean reiterable) {
+    this.finalKeyClass = finalKeyClass;
+    this.bucketMetadata = bucketMetadata;
     this.filenamePolicy = new SMBFilenamePolicy(outputDirectory, filenameSuffix);
     this.tempDirectory = tempDirectory;
     this.fileOperations = fileOperations;
-    this.finalKeyClass = finalKeyClass;
     this.sources = sources;
     this.transformFn = transformFn;
-    this.bucketMetadata = bucketMetadata;
+    this.reiterable = reiterable;
   }
 
   @Override
@@ -140,7 +143,8 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
                             tempFileAssignment,
                             fileOperations,
                             bucketMetadata,
-                            transformFn)))
+                            transformFn,
+                            reiterable)))
                 .setCoder(KvCoder.of(BucketShardIdCoder.of(), ResourceIdCoder.of())))
         .apply(
             "FinalizeTempFiles",
@@ -184,12 +188,13 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
   private static class MergeAndWriteBuckets<FinalKeyT, FinalValueT>
       extends DoFn<Integer, KV<BucketShardId, ResourceId>> {
     private final List<BucketedInput<?, ?>> sources;
-    private final FileAssignment fileAssignment;
-    private final FileOperations<FinalValueT> fileOperations;
-    private final TransformFn<FinalKeyT, FinalValueT> transformFn;
-    private final BucketMetadata<FinalKeyT, FinalValueT> bucketMetadata;
     private final Coder<FinalKeyT> keyCoder;
     private final int leastNumBuckets;
+    private final FileAssignment fileAssignment;
+    private final FileOperations<FinalValueT> fileOperations;
+    private final BucketMetadata<FinalKeyT, FinalValueT> bucketMetadata;
+    private final TransformFn<FinalKeyT, FinalValueT> transformFn;
+    private final boolean reiterable;
 
     private final Counter elementsWritten;
     private final Counter elementsRead;
@@ -202,14 +207,16 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
         FileAssignment fileAssignment,
         FileOperations<FinalValueT> fileOperations,
         BucketMetadata<FinalKeyT, FinalValueT> bucketMetadata,
-        TransformFn<FinalKeyT, FinalValueT> transformFn) {
+        TransformFn<FinalKeyT, FinalValueT> transformFn,
+        boolean reiterable) {
       this.sources = sources;
-      this.fileAssignment = fileAssignment;
-      this.fileOperations = fileOperations;
-      this.transformFn = transformFn;
-      this.bucketMetadata = bucketMetadata;
       this.keyCoder = sourceSpec.keyCoder;
       this.leastNumBuckets = sourceSpec.leastNumBuckets;
+      this.fileAssignment = fileAssignment;
+      this.fileOperations = fileOperations;
+      this.bucketMetadata = bucketMetadata;
+      this.transformFn = transformFn;
+      this.reiterable = reiterable;
 
       elementsWritten =
           Metrics.counter(SortedBucketTransform.class, transformName + "-ElementsWritten");
@@ -254,7 +261,7 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
           bucketId,
           sources,
           leastNumBuckets,
-          true,
+          reiterable,
           mergedKeyGroup -> {
             int assignedBucket =
                 reHashBucket ? bucketMetadata.getBucketId(mergedKeyGroup.getKey()) : bucketId;

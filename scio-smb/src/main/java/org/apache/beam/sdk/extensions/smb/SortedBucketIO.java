@@ -63,7 +63,7 @@ public class SortedBucketIO {
 
     /** Returns a new {@link CoGbk} with the given first sorted-bucket source in {@link Read}. */
     public CoGbk<K> of(Read<?> read) {
-      return new CoGbk<>(finalKeyClass, Collections.singletonList(read));
+      return new CoGbk<>(finalKeyClass, Collections.singletonList(read), true);
     }
   }
 
@@ -73,10 +73,12 @@ public class SortedBucketIO {
   public static class CoGbk<K> extends PTransform<PBegin, PCollection<KV<K, CoGbkResult>>> {
     private final Class<K> keyClass;
     private final List<Read<?>> reads;
+    private final boolean reiterable;
 
-    private CoGbk(Class<K> keyClass, List<Read<?>> reads) {
+    private CoGbk(Class<K> keyClass, List<Read<?>> reads, boolean reiterable) {
       this.keyClass = keyClass;
       this.reads = reads;
+      this.reiterable = true;
     }
 
     /**
@@ -86,18 +88,22 @@ public class SortedBucketIO {
     public CoGbk<K> and(Read<?> read) {
       ImmutableList<Read<?>> newReads =
           ImmutableList.<Read<?>>builder().addAll(reads).add(read).build();
-      return new CoGbk<>(keyClass, newReads);
+      return new CoGbk<>(keyClass, newReads, reiterable);
+    }
+
+    public CoGbk<K> withoutReiterable() {
+      return new CoGbk<>(this.keyClass, this.reads, false);
     }
 
     public <V> CoGbkTransform<K, V> to(SortedBucketIO.Write<K, V> write) {
-      return new CoGbkTransform<>(this.keyClass, this.reads, write);
+      return new CoGbkTransform<>(this.keyClass, this.reads, write, reiterable);
     }
 
     @Override
     public PCollection<KV<K, CoGbkResult>> expand(PBegin input) {
       List<BucketedInput<?, ?>> bucketedInputs =
           reads.stream().map(Read::toBucketedInput).collect(Collectors.toList());
-      return input.apply(new SortedBucketSource<>(keyClass, bucketedInputs));
+      return input.apply(new SortedBucketSource<>(keyClass, bucketedInputs, reiterable));
     }
   }
 
@@ -105,13 +111,18 @@ public class SortedBucketIO {
     private final Class<K> keyClass;
     private final List<Read<?>> reads;
     private final SortedBucketIO.Write<K, V> write;
+    private final boolean reiterable;
     private TransformFn<K, V> toFinalResultT;
 
     private CoGbkTransform(
-        Class<K> keyClass, List<Read<?>> reads, SortedBucketIO.Write<K, V> write) {
+        Class<K> keyClass,
+        List<Read<?>> reads,
+        SortedBucketIO.Write<K, V> write,
+        boolean reiterable) {
       this.keyClass = keyClass;
       this.reads = reads;
       this.write = write;
+      this.reiterable = reiterable;
     }
 
     public CoGbkTransform<K, V> via(TransformFn<K, V> toFinalResultT) {
@@ -142,7 +153,8 @@ public class SortedBucketIO {
               write.getFilenameSuffix(),
               write.getFileOperations(),
               bucketedInputs,
-              toFinalResultT));
+              toFinalResultT,
+              reiterable));
     }
   }
 

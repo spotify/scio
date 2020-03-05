@@ -103,17 +103,13 @@ public class SortedBucketSource<FinalKeyT>
 
   private final Class<FinalKeyT> finalKeyClass;
   private final transient List<BucketedInput<?, ?>> sources;
-  private final boolean iterableBuffer;
-
-  public SortedBucketSource(Class<FinalKeyT> finalKeyClass, List<BucketedInput<?, ?>> sources) {
-    this(finalKeyClass, sources, true);
-  }
+  private final boolean reiterable;
 
   public SortedBucketSource(
-      Class<FinalKeyT> finalKeyClass, List<BucketedInput<?, ?>> sources, boolean iterableBuffer) {
+      Class<FinalKeyT> finalKeyClass, List<BucketedInput<?, ?>> sources, boolean reiterable) {
     this.finalKeyClass = finalKeyClass;
     this.sources = sources;
-    this.iterableBuffer = iterableBuffer;
+    this.reiterable = reiterable;
   }
 
   @Override
@@ -147,7 +143,7 @@ public class SortedBucketSource<FinalKeyT>
                     sources,
                     sourceSpec.leastNumBuckets,
                     sourceSpec.keyCoder,
-                    iterableBuffer)))
+                    reiterable)))
         .setCoder(KvCoder.of(sourceSpec.keyCoder, resultCoder));
   }
 
@@ -209,7 +205,7 @@ public class SortedBucketSource<FinalKeyT>
     private final List<BucketedInput<?, ?>> sources;
     private final int leastNumBuckets;
     private final Coder<FinalKeyT> keyCoder;
-    private final boolean iterableBuffer;
+    private final boolean reiterable;
 
     private final Counter elementsRead;
     private final Distribution keyGroupSize;
@@ -219,11 +215,11 @@ public class SortedBucketSource<FinalKeyT>
         List<BucketedInput<?, ?>> sources,
         int leastNumBuckets,
         Coder<FinalKeyT> keyCoder,
-        boolean iterableBuffer) {
+        boolean reiterable) {
       this.sources = sources;
       this.leastNumBuckets = leastNumBuckets;
       this.keyCoder = keyCoder;
-      this.iterableBuffer = iterableBuffer;
+      this.reiterable = reiterable;
 
       elementsRead = Metrics.counter(SortedBucketSource.class, transformName + "-ElementsRead");
       keyGroupSize =
@@ -236,7 +232,7 @@ public class SortedBucketSource<FinalKeyT>
           c.element(),
           sources,
           leastNumBuckets,
-          iterableBuffer,
+          reiterable,
           mergedKeyGroup -> {
             try {
               c.output(
@@ -255,7 +251,7 @@ public class SortedBucketSource<FinalKeyT>
         int bucketId,
         List<BucketedInput<?, ?>> sources,
         int leastNumBuckets,
-        boolean iterableBuffer,
+        boolean reiterable,
         Consumer<KV<byte[], CoGbkResult>> consumer,
         Counter elementsRead,
         Distribution keyGroupSize) {
@@ -303,7 +299,7 @@ public class SortedBucketSource<FinalKeyT>
         final KeyGroupMetrics keyGroupMetrics =
             new KeyGroupMetrics(elementsRead, keyGroupSize, resultSchema.size());
         for (int i = 0; i < resultSchema.size(); i++) {
-          valueMap.add(new IterableOnceMaybe<>(keyGroupMetrics, iterableBuffer));
+          valueMap.add(new IterableOnceMaybe<>(keyGroupMetrics, reiterable));
         }
 
         while (nextKeyGroupsIt.hasNext()) {
@@ -528,20 +524,20 @@ public class SortedBucketSource<FinalKeyT>
   /** An Iterator wrapper that maybe used only once to avoid buffering the underlying iterator. */
   static class IterableOnceMaybe<T> implements Iterable<T> {
     private final KeyGroupMetrics keyGroupMetrics;
-    private final boolean iterableBuffer;
+    private final boolean reiterable;
     private Iterator<T> iterator = null;
     private List<T> buffer = null;
     private boolean started = false;
 
-    private IterableOnceMaybe(KeyGroupMetrics keyGroupMetrics, boolean iterableBuffer) {
+    private IterableOnceMaybe(KeyGroupMetrics keyGroupMetrics, boolean reiterable) {
       this.keyGroupMetrics = keyGroupMetrics;
-      this.iterableBuffer = iterableBuffer;
+      this.reiterable = reiterable;
     }
 
     private void set(Iterator<T> iterator) {
       Preconditions.checkState(this.iterator == null, "Iterator already set");
       this.iterator = iterator;
-      if (iterableBuffer) {
+      if (reiterable) {
         // regular Iterable, buffer everything eagerly and report metrics right away
         buffer = new ArrayList<>();
         iterator.forEachRemaining(buffer::add);
@@ -551,7 +547,7 @@ public class SortedBucketSource<FinalKeyT>
 
     @Override
     public Iterator<T> iterator() {
-      if (iterableBuffer) {
+      if (reiterable) {
         if (buffer == null) {
           buffer = Collections.emptyList();
           keyGroupMetrics.report(0);

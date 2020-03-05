@@ -130,7 +130,8 @@ public class SortedBucketTransformTest {
             ".txt",
             new TestFileOperations(),
             sources,
-            mergeFunction));
+            mergeFunction,
+            true));
 
     final PipelineResult result = transformPipeline.run();
     result.waitUntilFinish();
@@ -161,7 +162,8 @@ public class SortedBucketTransformTest {
             ".txt",
             new TestFileOperations(),
             sources,
-            mergeFunction));
+            mergeFunction,
+            true));
 
     final PipelineResult result = transformPipeline.run();
     result.waitUntilFinish();
