@@ -549,6 +549,7 @@ public class SortedBucketSource<FinalKeyT>
     public Iterator<T> iterator() {
       if (reiterable) {
         if (buffer == null) {
+          // iterator never set, e.g. empty side of an outer join
           buffer = Collections.emptyList();
           keyGroupMetrics.report(0);
         }
@@ -561,8 +562,8 @@ public class SortedBucketSource<FinalKeyT>
 
       if (iterator == null) {
         // iterator never set, e.g. empty side of an outer join
-        iterator = Collections.emptyIterator();
         keyGroupMetrics.report(0);
+        return Collections.emptyIterator();
       }
 
       // iterable once, report metrics at the end
@@ -595,6 +596,12 @@ public class SortedBucketSource<FinalKeyT>
           }
         }
       };
+    }
+
+    public void exhaust() {
+      if (!reiterable && iterator != null) {
+        iterator.forEachRemaining(x -> {});
+      }
     }
   }
 
