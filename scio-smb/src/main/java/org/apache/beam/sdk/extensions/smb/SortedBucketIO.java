@@ -78,7 +78,7 @@ public class SortedBucketIO {
     private CoGbk(Class<K> keyClass, List<Read<?>> reads, boolean reiterable) {
       this.keyClass = keyClass;
       this.reads = reads;
-      this.reiterable = true;
+      this.reiterable = reiterable;
     }
 
     /**
