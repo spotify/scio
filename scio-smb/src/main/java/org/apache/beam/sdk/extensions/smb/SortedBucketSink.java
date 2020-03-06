@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -31,6 +32,8 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.coders.ByteArrayCoder;
+import org.apache.beam.sdk.coders.Coder;
+import org.apache.beam.sdk.coders.CoderException;
 import org.apache.beam.sdk.coders.KvCoder;
 import org.apache.beam.sdk.extensions.smb.BucketShardId.BucketShardIdCoder;
 import org.apache.beam.sdk.extensions.smb.SMBFilenamePolicy.FileAssignment;
@@ -41,6 +44,8 @@ import org.apache.beam.sdk.extensions.sorter.SortValues;
 import org.apache.beam.sdk.io.FileSystems;
 import org.apache.beam.sdk.io.fs.MoveOptions;
 import org.apache.beam.sdk.io.fs.ResourceId;
+import org.apache.beam.sdk.metrics.Counter;
+import org.apache.beam.sdk.metrics.Metrics;
 import org.apache.beam.sdk.schemas.transforms.Group;
 import org.apache.beam.sdk.transforms.Create;
 import org.apache.beam.sdk.transforms.DoFn;
@@ -49,6 +54,7 @@ import org.apache.beam.sdk.transforms.PTransform;
 import org.apache.beam.sdk.transforms.ParDo;
 import org.apache.beam.sdk.transforms.display.DisplayData;
 import org.apache.beam.sdk.transforms.display.DisplayData.Builder;
+import org.apache.beam.sdk.util.CoderUtils;
 import org.apache.beam.sdk.values.KV;
 import org.apache.beam.sdk.values.PCollection;
 import org.apache.beam.sdk.values.PCollection.IsBounded;
@@ -133,32 +139,40 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
         input.isBounded() == IsBounded.BOUNDED,
         "SortedBucketSink cannot be applied to a non-bounded PCollection");
 
+    final Coder<V> valueCoder = input.getCoder();
+
     return input
-        .apply("ExtractKeys", ParDo.of(new ExtractKeys<>(this.bucketMetadata)))
+        .apply("ExtractKeys", ParDo.of(new ExtractKeys<>(this.bucketMetadata, valueCoder)))
         .setCoder(
-            KvCoder.of(BucketShardIdCoder.of(), KvCoder.of(ByteArrayCoder.of(), input.getCoder())))
+            KvCoder.of(
+                BucketShardIdCoder.of(), KvCoder.of(ByteArrayCoder.of(), ByteArrayCoder.of())))
         .apply("GroupByKey", GroupByKey.create())
         .apply(
             "SortValues",
-            SortValues.create(
-                BufferedExternalSorter.options()
-                    .withExternalSorterType(ExternalSorter.Options.SorterType.NATIVE)
-                    .withMemoryMB(sorterMemoryMb)))
+            ParDo.of(
+                new SortBytesDoFn<>(
+                    getName(),
+                    BufferedExternalSorter.options()
+                        .withExternalSorterType(ExternalSorter.Options.SorterType.NATIVE)
+                        .withMemoryMB(sorterMemoryMb))))
         .apply(
             "WriteOperation",
-            new WriteOperation<>(filenamePolicy, bucketMetadata, fileOperations, tempDirectory));
+            new WriteOperation<>(
+                filenamePolicy, bucketMetadata, fileOperations, tempDirectory, valueCoder));
   }
 
   /** Extract bucket and shard id for grouping, and key bytes for sorting. */
-  private static class ExtractKeys<K, V> extends DoFn<V, KV<BucketShardId, KV<byte[], V>>> {
+  private static class ExtractKeys<K, V> extends DoFn<V, KV<BucketShardId, KV<byte[], byte[]>>> {
     // Substitute null keys in the output KV<byte[], V> so that they survive serialization
     private static final byte[] NULL_SORT_KEY = new byte[0];
 
-    ExtractKeys(BucketMetadata<K, V> bucketMetadata) {
+    ExtractKeys(BucketMetadata<K, V> bucketMetadata, Coder<V> valueCoder) {
       this.bucketMetadata = bucketMetadata;
+      this.valueCoder = valueCoder;
     }
 
     private final BucketMetadata<K, V> bucketMetadata;
+    private final Coder<V> valueCoder;
     private transient int shardId;
 
     // From Combine.PerKeyWithHotKeyFanout.
@@ -184,13 +198,56 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
               : BucketShardId.ofNullKey(shardId);
 
       final byte[] sortKey = keyBytes != null ? keyBytes : NULL_SORT_KEY;
-      c.output(KV.of(bucketShardId, KV.of(sortKey, record)));
+      try {
+        final byte[] valueBytes = CoderUtils.encodeToByteArray(valueCoder, record);
+        c.output(KV.of(bucketShardId, KV.of(sortKey, valueBytes)));
+      } catch (CoderException e) {
+        throw new RuntimeException("Caught coder exception: " + e);
+      }
     }
 
     @Override
     public void populateDisplayData(Builder builder) {
       super.populateDisplayData(builder);
       builder.delegate(bucketMetadata);
+    }
+  }
+
+  /**
+   * Patch of {@link SortValues}'s SortValuesDoFn which acts on elements already encoded as bytes
+   * and can avoid the additional ser/de operation per element.
+   */
+  private static class SortBytesDoFn<K>
+      extends DoFn<KV<K, Iterable<KV<byte[], byte[]>>>, KV<K, Iterable<KV<byte[], byte[]>>>> {
+    private final BufferedExternalSorter.Options sorterOptions;
+    private final Counter bucketsInitiatedSorting;
+    private final Counter bucketsCompletedSorting;
+
+    SortBytesDoFn(String transformName, BufferedExternalSorter.Options sorterOptions) {
+      this.sorterOptions = sorterOptions;
+      this.bucketsInitiatedSorting =
+          Metrics.counter(SortedBucketSink.class, transformName + "-bucketsInitiatedSorting");
+      this.bucketsCompletedSorting =
+          Metrics.counter(SortedBucketSink.class, transformName + "-bucketsCompletedSorting");
+    }
+
+    @ProcessElement
+    public void processElement(ProcessContext c) {
+      final KV<K, Iterable<KV<byte[], byte[]>>> record = c.element();
+      final BufferedExternalSorter sorter = BufferedExternalSorter.create(sorterOptions);
+
+      try {
+        bucketsInitiatedSorting.inc();
+
+        for (KV<byte[], byte[]> kv : record.getValue()) {
+          sorter.add(kv);
+        }
+        c.output(KV.of(record.getKey(), sorter.sort()));
+
+        bucketsCompletedSorting.inc();
+      } catch (IOException e) {
+        throw new RuntimeException("Caught sorting sorting exception", e);
+      }
     }
   }
 
@@ -236,30 +293,37 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
    */
   // TODO: Retry policy, etc...
   static class WriteOperation<V>
-      extends PTransform<PCollection<KV<BucketShardId, Iterable<KV<byte[], V>>>>, WriteResult> {
+      extends PTransform<
+          PCollection<KV<BucketShardId, Iterable<KV<byte[], byte[]>>>>, WriteResult> {
     private final SMBFilenamePolicy filenamePolicy;
     private final BucketMetadata<?, V> bucketMetadata;
     private final FileOperations<V> fileOperations;
     private final ResourceId tempDirectory;
+    private final Coder<V> valueCoder;
 
     WriteOperation(
         SMBFilenamePolicy filenamePolicy,
         BucketMetadata<?, V> bucketMetadata,
         FileOperations<V> fileOperations,
-        ResourceId tempDirectory) {
+        ResourceId tempDirectory,
+        Coder<V> valueCoder) {
       this.filenamePolicy = filenamePolicy;
       this.bucketMetadata = bucketMetadata;
       this.fileOperations = fileOperations;
       this.tempDirectory = tempDirectory;
+      this.valueCoder = valueCoder;
     }
 
     @Override
-    public WriteResult expand(PCollection<KV<BucketShardId, Iterable<KV<byte[], V>>>> input) {
+    public WriteResult expand(PCollection<KV<BucketShardId, Iterable<KV<byte[], byte[]>>>> input) {
       return input
           .apply(
               "WriteTempFiles",
               new WriteTempFiles<>(
-                  filenamePolicy.forTempFiles(tempDirectory), bucketMetadata, fileOperations))
+                  filenamePolicy.forTempFiles(tempDirectory),
+                  bucketMetadata,
+                  fileOperations,
+                  valueCoder))
           .apply(
               "FinalizeTempFiles",
               new FinalizeTempFiles<>(
@@ -270,23 +334,27 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
   /** Writes metadata and bucket files to temporary location. */
   static class WriteTempFiles<V>
       extends PTransform<
-          PCollection<KV<BucketShardId, Iterable<KV<byte[], V>>>>, PCollectionTuple> {
+          PCollection<KV<BucketShardId, Iterable<KV<byte[], byte[]>>>>, PCollectionTuple> {
 
     private final FileAssignment fileAssignment;
     private final BucketMetadata bucketMetadata;
     private final FileOperations<V> fileOperations;
+    private final Coder<V> valueCoder;
 
     WriteTempFiles(
         FileAssignment fileAssignment,
         BucketMetadata bucketMetadata,
-        FileOperations<V> fileOperations) {
+        FileOperations<V> fileOperations,
+        Coder<V> valueCoder) {
       this.fileAssignment = fileAssignment;
       this.bucketMetadata = bucketMetadata;
       this.fileOperations = fileOperations;
+      this.valueCoder = valueCoder;
     }
 
     @Override
-    public PCollectionTuple expand(PCollection<KV<BucketShardId, Iterable<KV<byte[], V>>>> input) {
+    public PCollectionTuple expand(
+        PCollection<KV<BucketShardId, Iterable<KV<byte[], byte[]>>>> input) {
 
       return PCollectionTuple.of(
               new TupleTag<>("TempMetadata"),
@@ -300,12 +368,12 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
                   "WriteTempBuckets",
                   ParDo.of(
                       new DoFn<
-                          KV<BucketShardId, Iterable<KV<byte[], V>>>,
+                          KV<BucketShardId, Iterable<KV<byte[], byte[]>>>,
                           KV<BucketShardId, ResourceId>>() {
                         @ProcessElement
                         public void processElement(ProcessContext c) throws IOException {
                           final BucketShardId bucketShardId = c.element().getKey();
-                          final Iterable<KV<byte[], V>> records = c.element().getValue();
+                          final Iterable<KV<byte[], byte[]>> records = c.element().getValue();
                           final ResourceId tmpFile =
                               fileAssignment.forBucket(bucketShardId, bucketMetadata);
 
@@ -318,7 +386,8 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
                             records.forEach(
                                 kv -> {
                                   try {
-                                    writer.write(kv.getValue());
+                                    writer.write(
+                                        CoderUtils.decodeFromByteArray(valueCoder, kv.getValue()));
                                   } catch (IOException e) {
                                     cleanupTempFiles(e, Collections.singleton(tmpFile));
                                     throw new RuntimeException(
