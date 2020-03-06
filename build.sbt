@@ -168,8 +168,9 @@ def previousVersion(currentVersion: String): Option[String] = {
   else Some(s"$x.$y.${z.toInt - 1}")
 }
 
-lazy val scalafmtSettings = Seq(
-  scalafmtOnCompile := false
+lazy val formatSettings = Seq(
+  scalafmtOnCompile := false,
+  javafmtOnCompile := false
 )
 
 val commonSettings = Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
@@ -271,7 +272,7 @@ val commonSettings = Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
   } yield Credentials("Sonatype Nexus Repository Manager", "oss.sonatype.org", username, password)).toSeq,
   buildInfoKeys := Seq[BuildInfoKey](scalaVersion, version, "beamVersion" -> beamVersion),
   buildInfoPackage := "com.spotify.scio"
-) ++ mimaSettings ++ scalafmtSettings
+) ++ mimaSettings ++ formatSettings
 
 lazy val itSettings = Defaults.itSettings ++ Seq(
   IntegrationTest / classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.Flat,
