@@ -510,14 +510,15 @@ public class SortedBucketSource<FinalKeyT>
 
   /** Lazily wraps an Iterator in an Iterable and populates a buffer in the first iteration. */
   static class LazyIterable<T> implements Iterable<T> {
-    private final KeyGroupMetrics keyGroupMetrics;
+    private final KeyGroupMetrics metrics;
     private Iterator<T> iterator = null;
     private List<T> buffer = null;
-    private boolean reiterate = false;
-    private boolean exhausted = false;
+    private boolean reiterate = false; // when iterator() is called again
+    private boolean exhausted = false; // when the first iterator() has reached its last element
+    private int count = 0;
 
-    private LazyIterable(KeyGroupMetrics keyGroupMetrics) {
-      this.keyGroupMetrics = keyGroupMetrics;
+    private LazyIterable(KeyGroupMetrics metrics) {
+      this.metrics = metrics;
     }
 
     private void set(Iterator<T> iterator) {
@@ -530,49 +531,75 @@ public class SortedBucketSource<FinalKeyT>
       if (reiterate) {
         // the first iteration is still in progress and the buffer is not fully populated yet
         Preconditions.checkState(exhausted, "Previous Iterator has not exhausted");
+        Preconditions.checkNotNull(buffer, "No buffer, did you call iteratorOnce() before");
         return buffer.iterator();
       } else {
+        reiterate = true;
         buffer = new ArrayList<>();
-        final Iterator<T> inner = iteratorOnce();
-
-        return new Iterator<T>() {
-          private boolean reported = false;
-
-          @Override
-          public boolean hasNext() {
-            boolean hasNext = inner.hasNext();
-            if (!hasNext && !reported) {
-              exhausted = true;
-              reported = true;
-              keyGroupMetrics.report(buffer.size());
-            }
-            return hasNext;
-          }
-
-          @Override
-          public T next() {
-            try {
-              T value = inner.next();
-              buffer.add(value);
-              return value;
-            } catch (NoSuchElementException e) {
-              if (!reported) {
-                exhausted = true;
-                reported = true;
-                keyGroupMetrics.report(buffer.size());
-              }
-              throw e;
-            }
-          }
-        };
+        if (iterator == null) {
+          exhausted = true;
+          metrics.report(0);
+          return Collections.emptyIterator();
+        } else {
+          return new LazyIterator(iterator);
+        }
       }
     }
 
     Iterator<T> iteratorOnce() {
       Preconditions.checkState(!reiterate, "Iterator already started");
       reiterate = true;
-      return iterator == null ? Collections.emptyIterator() : iterator;
+      return iterator == null ? Collections.emptyIterator() : new LazyIterator(iterator);
     }
+
+    // exhaust unconsumed elements so that KeyGroupIterator can proceed properly
+    void exhaust() {
+      if (iterator != null && !exhausted) {
+        iterator.forEachRemaining(x -> count++);
+        metrics.report(count);
+        exhausted = true;
+      }
+    }
+
+    // a lazy wrapper that populates a buffer while iterating and reports metrics at the end
+    private class LazyIterator implements Iterator<T> {
+      private final Iterator<T> inner;
+      private boolean reported = false;
+
+      private LazyIterator(Iterator<T> inner) {
+        this.inner = inner;
+      }
+
+      @Override
+      public boolean hasNext() {
+        boolean hasNext = inner.hasNext();
+        if (!hasNext && !reported) {
+          metrics.report(count);
+          reported = true;
+          exhausted = true;
+        }
+        return hasNext;
+      }
+
+      @Override
+      public T next() {
+        try {
+          T value = inner.next();
+          if (buffer != null) {
+            buffer.add(value);
+          }
+          count++;
+          return value;
+        } catch (NoSuchElementException e) {
+          if (!reported) {
+            metrics.report(count);
+            reported = true;
+            exhausted = true;
+          }
+          throw e;
+        }
+      }
+    };
   }
 
   /** Allows key group metrics to be reported lazily by LazyIterable. */

@@ -272,7 +272,7 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
             // KeyGroupIterator can proceed properly
             CoGbkResult result = mergedKeyGroup.getValue();
             for (TupleTag<?> tupleTag : result.getSchema().getTupleTagList().getAll()) {
-              result.getAll(tupleTag).iterator().forEachRemaining(x -> {});
+              ((SortedBucketSource.LazyIterable<?>) result.getAll(tupleTag)).exhaust();
             }
           },
           elementsRead,
