@@ -536,20 +536,14 @@ public class SortedBucketSource<FinalKeyT>
       } else {
         reiterate = true;
         buffer = new ArrayList<>();
-        if (iterator == null) {
-          exhausted = true;
-          metrics.report(0);
-          return Collections.emptyIterator();
-        } else {
-          return new LazyIterator(iterator);
-        }
+        return new LazyIterator(iterator == null ? Collections.emptyIterator() : iterator);
       }
     }
 
     Iterator<T> iteratorOnce() {
       Preconditions.checkState(!reiterate, "Iterator already started");
       reiterate = true;
-      return iterator == null ? Collections.emptyIterator() : new LazyIterator(iterator);
+      return new LazyIterator(iterator == null ? Collections.emptyIterator() : iterator);
     }
 
     // exhaust unconsumed elements so that KeyGroupIterator can proceed properly
