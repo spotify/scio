@@ -19,9 +19,8 @@ package com.spotify.scio.io.dynamic.syntax
 import com.google.protobuf.Message
 import com.spotify.scio.io.{ClosedTap, EmptyTap}
 import com.spotify.scio.coders.{AvroBytesUtil, Coder, CoderMaterializer}
-import com.spotify.scio.util.Functions
+import com.spotify.scio.util.{Functions, ProtobufUtil}
 import com.spotify.scio.values.SCollection
-import me.lyh.protobuf.generic
 import org.apache.avro.Schema
 import org.apache.avro.file.CodecFactory
 import org.apache.avro.generic.GenericRecord
@@ -186,16 +185,11 @@ final class DynamicProtobufSCollectionOps[T <: Message](private val self: SColle
     codec: CodecFactory = CodecFactory.deflateCodec(6),
     metadata: Map[String, AnyRef] = Map.empty
   )(destinationFn: T => String)(implicit ct: ClassTag[T]): ClosedTap[Nothing] = {
-    val protoCoder =
-      Coder
-        .protoMessageCoder[Message](ct.asInstanceOf[ClassTag[Message]])
-        .asInstanceOf[Coder[T]]
-
+    val protoCoder = Coder.protoMessageCoder[T]
     val elemCoder = CoderMaterializer.beam(self.context, protoCoder)
     val avroSchema = AvroBytesUtil.schema
-    val schemaJson = generic.Schema.of[Message](ct.asInstanceOf[ClassTag[Message]]).toJson
     val nm = new JHashMap[String, AnyRef]()
-    nm.putAll((metadata + ("protobuf.generic.schema" -> schemaJson)).asJava)
+    nm.putAll((metadata ++ ProtobufUtil.schemaMetadataOf(ct)).asJava)
 
     if (self.context.isTest) {
       throw new NotImplementedError(
