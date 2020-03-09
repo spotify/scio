@@ -59,34 +59,23 @@ object SortMergeBucketExample {
 
     gr
   }
-
-  def account(id: Int, name: String, `type`: String, amount: Double): Account =
-    Account
-      .newBuilder()
-      .setId(id)
-      .setName(name)
-      .setType(`type`)
-      .setAmount(amount)
-      .build()
 }
 
 object SortMergeBucketWriteExample {
   import com.spotify.scio.smb._
 
+  implicit val coder: Coder[GenericRecord] =
+    Coder.avroGenericRecordCoder(SortMergeBucketExample.UserDataSchema)
+
   def main(cmdLineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdLineArgs)
-    val outputL = args("outputL")
-    val outputR = args("outputR")
-
-    implicit val coder: Coder[GenericRecord] =
-      Coder.avroGenericRecordCoder(SortMergeBucketExample.UserDataSchema)
 
     sc.parallelize(0 until 500)
       .map(i => SortMergeBucketExample.user(i, Random.nextInt(100)))
       .saveAsSortedBucket(
         AvroSortedBucketIO
           .write(classOf[Integer], "userId", SortMergeBucketExample.UserDataSchema)
-          .to(outputL)
+          .to(args("userOutput"))
           .withTempDirectory(sc.options.getTempLocation)
           .withCodec(CodecFactory.snappyCodec())
           .withHashType(HashType.MURMUR3_32)
@@ -94,61 +83,65 @@ object SortMergeBucketWriteExample {
           .withNumShards(1)
       )
 
+    // #SortMergeBucketExample_sink
     sc.parallelize(250 until 750)
       .map { i =>
-        SortMergeBucketExample.account(
-          i,
-          s"user$i",
-          s"type${i % 5}",
-          Random.nextDouble() * 1000
-        )
+        Account
+          .newBuilder()
+          .setId(i)
+          .setName(s"user$i")
+          .setType(s"type${i % 5}")
+          .setAmount(Random.nextDouble() * 1000)
+          .build()
       }
       .saveAsSortedBucket(
         AvroSortedBucketIO
           .write[Integer, Account](classOf[Integer], "id", classOf[Account])
-          .to(outputR)
+          .to(args("accountOutput"))
+          .withSorterMemoryMb(128)
           .withTempDirectory(sc.options.getTempLocation)
           .withCodec(CodecFactory.snappyCodec())
           .withHashType(HashType.MURMUR3_32)
           .withNumBuckets(1)
           .withNumShards(1)
       )
-
+    // #SortMergeBucketExample_sink
     sc.run().waitUntilDone()
     ()
   }
 }
 
-case class UserAccountData(userId: Int, age: Int, balance: Double) {
-  override def toString: String = s"$userId\t$age\t$balance"
-}
-
 object SortMergeBucketJoinExample {
   import com.spotify.scio.smb._
 
+  implicit val coder: Coder[GenericRecord] =
+    Coder.avroGenericRecordCoder(SortMergeBucketExample.UserDataSchema)
+
+  case class UserAccountData(userId: Int, age: Int, balance: Double) {
+    override def toString: String = s"$userId\t$age\t$balance"
+  }
+
   def main(cmdLineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdLineArgs)
-    val inputL = args("inputL")
-    val inputR = args("inputR")
-    val output = args("output")
 
-    implicit val coder: Coder[GenericRecord] =
-      Coder.avroGenericRecordCoder(SortMergeBucketExample.UserDataSchema)
+    val mapFn: ((Integer, (GenericRecord, Account))) => UserAccountData = {
+      case (userId, (userData, account)) =>
+        UserAccountData(userId, userData.get("age").toString.toInt, account.getAmount)
+    }
 
+    // #SortMergeBucketExample_join
     sc.sortMergeJoin(
         classOf[Integer],
         AvroSortedBucketIO
-          .read(new TupleTag[GenericRecord](inputL), SortMergeBucketExample.UserDataSchema)
-          .from(inputL),
+          .read(new TupleTag[GenericRecord]("lhs"), SortMergeBucketExample.UserDataSchema)
+          .from(args("lhsInput")),
         AvroSortedBucketIO
-          .read(new TupleTag[Account](inputR), classOf[Account])
-          .from(inputR)
+          .read(new TupleTag[Account]("rhs"), classOf[Account])
+          .from(args("rhsInput"))
       )
-      .map {
-        case (userId, (userData, account)) =>
-          UserAccountData(userId, userData.get("age").toString.toInt, account.getAmount)
-      }
-      .saveAsTextFile(output)
+      .map(mapFn) // Apply user-defined mapping function
+      .saveAsTextFile(args("output"))
+    // #SortMergeBucketExample_join
 
     sc.run().waitUntilDone()
     ()
@@ -160,23 +153,21 @@ object SortMergeBucketTransformExample {
 
   def main(cmdLineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdLineArgs)
-    val inputL = args("inputL")
-    val inputR = args("inputR")
-    val output = args("output")
 
+    // #SortMergeBucketExample_transform
     sc.sortMergeTransform(
         classOf[Integer],
         AvroSortedBucketIO
-          .read(new TupleTag[GenericRecord](inputL), SortMergeBucketExample.UserDataSchema)
-          .from(inputL),
+          .read(new TupleTag[GenericRecord]("lhs"), SortMergeBucketExample.UserDataSchema)
+          .from(args("lhsInput")),
         AvroSortedBucketIO
-          .read(new TupleTag[Account](inputR), classOf[Account])
-          .from(inputR)
+          .read(new TupleTag[Account]("rhs"), classOf[Account])
+          .from(args("rhsInput"))
       )
       .to(
         AvroSortedBucketIO
           .write(classOf[Integer], "userId", classOf[Account])
-          .to(output)
+          .to(args("output"))
           .withNumBuckets(2)
           .withNumShards(1)
           .withHashType(HashType.MURMUR3_32)
@@ -185,15 +176,17 @@ object SortMergeBucketTransformExample {
         case (key, (users, accounts), outputCollector) =>
           users.foreach { user =>
             outputCollector.accept(
-              SortMergeBucketExample.account(
-                key,
-                user.get("age").toString,
-                "combinedAmount",
-                accounts.foldLeft(0.0)(_ + _.getAmount)
-              )
+              Account
+                .newBuilder()
+                .setId(key)
+                .setName(user.get("userId").toString)
+                .setType("combinedAmount")
+                .setAmount(accounts.foldLeft(0.0)(_ + _.getAmount))
+                .build()
             )
           }
       }
+    // #SortMergeBucketExample_transform
 
     sc.run().waitUntilDone()
     ()

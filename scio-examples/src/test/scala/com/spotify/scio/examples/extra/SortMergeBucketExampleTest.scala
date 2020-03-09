@@ -44,8 +44,8 @@ class SortMergeBucketExampleTest extends AnyFlatSpec with Matchers {
     (userDir, accountDir, joinOutputDir) =>
       SortMergeBucketWriteExample.main(
         Array(
-          s"--outputL=$userDir",
-          s"--outputR=$accountDir"
+          s"--userOutput=$userDir",
+          s"--accountOutput=$accountDir"
         )
       )
 
@@ -58,8 +58,8 @@ class SortMergeBucketExampleTest extends AnyFlatSpec with Matchers {
 
       SortMergeBucketJoinExample.main(
         Array(
-          s"--inputL=$userDir",
-          s"--inputR=$accountDir",
+          s"--lhsInput=$userDir",
+          s"--rhsInput=$accountDir",
           s"--output=$joinOutputDir"
         )
       )
@@ -71,15 +71,15 @@ class SortMergeBucketExampleTest extends AnyFlatSpec with Matchers {
     (userDir, accountDir, joinOutputDir) =>
       SortMergeBucketWriteExample.main(
         Array(
-          s"--outputL=$userDir",
-          s"--outputR=$accountDir"
+          s"--userOutput=$userDir",
+          s"--accountOutput=$accountDir"
         )
       )
 
       SortMergeBucketTransformExample.main(
         Array(
-          s"--inputL=$userDir",
-          s"--inputR=$accountDir",
+          s"--lhsInput=$userDir",
+          s"--rhsInput=$accountDir",
           s"--output=$joinOutputDir"
         )
       )

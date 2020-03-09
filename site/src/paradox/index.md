@@ -39,6 +39,7 @@ See @scaladoc[Scio Scaladocs](com.spotify.scio.index)  for current API documenta
 
 ### Extras
   - @ref:[Algebird](extras/Algebird.md)
+  - @ref:[Sort Merge Bucket](extras/Sort-Merge-Bucket.md)
 
 ### Internals
   - @ref:[ScioIO](internals/ScioIO.md) - new IO system to simplify implementation and stubbing in `JobTest`
