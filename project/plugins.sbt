@@ -21,5 +21,5 @@ addSbtPlugin("com.lightbend.sbt" % "sbt-java-formatter" % "0.5.1")
 addSbtPlugin("com.github.cb372" % "sbt-explicit-dependencies" % "0.2.12")
 
 libraryDependencies ++= Seq(
-  "com.github.os72" % "protoc-jar" % "3.11.1"
+  "com.github.os72" % "protoc-jar" % "3.11.4"
 )
