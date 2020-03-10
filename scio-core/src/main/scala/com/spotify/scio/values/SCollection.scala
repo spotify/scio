@@ -47,6 +47,7 @@ import scala.collection.JavaConverters._
 import scala.collection.immutable.TreeMap
 import scala.reflect.ClassTag
 import scala.util.Try
+import org.apache.beam.sdk.io.FileIO.Write.FileNaming
 
 /** Convenience functions for creating SCollections. */
 object SCollection {
@@ -1306,18 +1307,30 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   def saveAsBinaryFile(
     path: String,
     numShards: Int = BinaryIO.WriteParam.DefaultNumShards,
+    prefix: String = BinaryIO.WriteParam.DefaultPrefix,
     suffix: String = BinaryIO.WriteParam.DefaultSuffix,
     compression: Compression = BinaryIO.WriteParam.DefaultCompression,
     header: Array[Byte] = BinaryIO.WriteParam.DefaultHeader,
     footer: Array[Byte] = BinaryIO.WriteParam.DefaultFooter,
     framePrefix: Array[Byte] => Array[Byte] = BinaryIO.WriteParam.DefaultFramePrefix,
-    frameSuffix: Array[Byte] => Array[Byte] = BinaryIO.WriteParam.DefaultFrameSuffix
+    frameSuffix: Array[Byte] => Array[Byte] = BinaryIO.WriteParam.DefaultFrameSuffix,
+    fileNaming: Option[FileNaming] = BinaryIO.WriteParam.DefaultFileNaming
   )(implicit ev: T <:< Array[Byte]): ClosedTap[Nothing] =
     this
       .asInstanceOf[SCollection[Array[Byte]]]
       .write(BinaryIO(path))(
         BinaryIO
-          .WriteParam(suffix, numShards, compression, header, footer, framePrefix, frameSuffix)
+          .WriteParam(
+            prefix,
+            suffix,
+            numShards,
+            compression,
+            header,
+            footer,
+            framePrefix,
+            frameSuffix,
+            fileNaming
+          )
       )
 
   /**

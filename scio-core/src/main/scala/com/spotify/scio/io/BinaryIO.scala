@@ -24,6 +24,7 @@ import com.spotify.scio.ScioContext
 import com.spotify.scio.io.BinaryIO.BytesSink
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.io._
+import org.apache.beam.sdk.io.FileIO.Write.FileNaming
 import org.apache.beam.sdk.io.fs.MatchResult.Metadata
 import org.apache.commons.compress.compressors.CompressorStreamFactory
 import scala.collection.JavaConverters._
@@ -46,23 +47,26 @@ final case class BinaryIO(path: String) extends ScioIO[Array[Byte]] {
     throw new UnsupportedOperationException("BinaryIO is write-only")
 
   override protected def write(data: SCollection[Array[Byte]], params: WriteP): Tap[Nothing] = {
-    data.applyInternal(
-      FileIO
-        .write[Array[Byte]]
-        .via(new BytesSink(params.header, params.footer, params.framePrefix, params.frameSuffix))
-        .withCompression(params.compression)
-        .withNumShards(params.numShards)
-        .withPrefix(BinaryIO.WriteParam.DefaultPrefix)
+    var transform = FileIO
+      .write[Array[Byte]]
+      .via(new BytesSink(params.header, params.footer, params.framePrefix, params.frameSuffix))
+      .withCompression(params.compression)
+      .withNumShards(params.numShards)
+      .to(pathWithShards(path))
+
+    transform = params.fileNaming.fold {
+      transform
+        .withPrefix(params.prefix)
         .withSuffix(params.suffix)
-        .to(pathWithShards(path))
-    )
+    }(transform.withNaming)
+
+    data.applyInternal(transform)
     EmptyTap
   }
 
   override def tap(params: Nothing): Tap[Nothing] = EmptyTap
 
-  private[scio] def pathWithShards(path: String) =
-    path.replaceAll("\\/+$", "")
+  private def pathWithShards(path: String) = path.replaceAll("\\/+$", "")
 }
 
 object BinaryIO {
@@ -85,6 +89,7 @@ object BinaryIO {
     Channels.newInputStream(FileSystems.open(meta.resourceId()))
 
   object WriteParam {
+    private[scio] val DefaultFileNaming = Option.empty[FileNaming]
     private[scio] val DefaultPrefix = "part"
     private[scio] val DefaultSuffix = ".bin"
     private[scio] val DefaultNumShards = 0
@@ -96,13 +101,15 @@ object BinaryIO {
   }
 
   final case class WriteParam(
+    prefix: String = WriteParam.DefaultPrefix,
     suffix: String = WriteParam.DefaultSuffix,
     numShards: Int = WriteParam.DefaultNumShards,
     compression: Compression = WriteParam.DefaultCompression,
     header: Array[Byte] = WriteParam.DefaultHeader,
     footer: Array[Byte] = WriteParam.DefaultFooter,
     framePrefix: Array[Byte] => Array[Byte] = WriteParam.DefaultFramePrefix,
-    frameSuffix: Array[Byte] => Array[Byte] = WriteParam.DefaultFrameSuffix
+    frameSuffix: Array[Byte] => Array[Byte] = WriteParam.DefaultFrameSuffix,
+    fileNaming: Option[FileNaming] = WriteParam.DefaultFileNaming
   )
 
   final private class BytesSink(
