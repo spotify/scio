@@ -1287,9 +1287,11 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    */
   def saveAsTextFile(
     path: String,
-    numShards: Int = 0,
-    suffix: String = ".txt",
-    compression: Compression = Compression.UNCOMPRESSED
+    numShards: Int = TextIO.WriteParam.DefaultNumShards,
+    suffix: String = TextIO.WriteParam.DefaultSuffix,
+    compression: Compression = TextIO.WriteParam.DefaultCompression,
+    header: Option[String] = TextIO.WriteParam.DefaultHeader,
+    footer: Option[String] = TextIO.WriteParam.DefaultFooter
   )(implicit ct: ClassTag[T]): ClosedTap[String] = {
     val s = if (classOf[String] isAssignableFrom ct.runtimeClass) {
       this.asInstanceOf[SCollection[String]]
