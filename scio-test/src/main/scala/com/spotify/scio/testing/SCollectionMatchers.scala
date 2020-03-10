@@ -38,8 +38,7 @@ import com.twitter.chill.ClosureCleaner
 import cats.kernel.Eq
 import org.apache.beam.sdk.testing.SerializableMatchers
 import com.spotify.scio.coders.CoderMaterializer
-import org.apache.beam.sdk.options.PipelineOptionsFactory
-import com.spotify.scio.options.ScioOptions
+import com.spotify.scio.ScioContext
 
 private[testing] case class TestWrapper[T: Eq](value: T) {
   override def toString: String = Pretty.printer.apply(value).render
@@ -59,10 +58,10 @@ object TestWrapper {
 }
 
 private object ScioMatchers {
-  private def supplierFromCoder[A: Coder, B](@transient a: A)(builder: A => B) = {
-    val options = PipelineOptionsFactory.create().as(classOf[ScioOptions])
-    options.setNullableCoders(true)
-    val coder = CoderMaterializer.beamWithDefault(Coder[A], o = options)
+  private def supplierFromCoder[A: Coder, B](@transient a: A, @transient context: ScioContext)(
+    builder: A => B
+  ) = {
+    val coder = CoderMaterializer.beam(context, Coder[A])
     val encoded = CoderUtils.encodeToByteArray(coder, a)
     new SerializableMatchers.SerializableSupplier[B] {
       def a = CoderUtils.decodeFromByteArray(coder, encoded)
@@ -75,9 +74,12 @@ private object ScioMatchers {
    * This is equivalent to [[org.apache.beam.sdk.testing.PAssert#containsInAnyOrder()]]
    * but will but have a nicer message in case of failure.
    */
-  def containsInAnyOrder[T: Coder](ts: Seq[T]): org.hamcrest.Matcher[JIterable[T]] =
+  def containsInAnyOrder[T: Coder](
+    ts: Seq[T],
+    context: ScioContext
+  ): org.hamcrest.Matcher[JIterable[T]] =
     SerializableMatchers.fromSupplier {
-      supplierFromCoder(ts) { ds =>
+      supplierFromCoder(ts, context) { ds =>
         val items = ds.mkString("\n\t\t", "\n\t\t", "\n")
         val message = s"Expected: iterable with items [$items]"
         val c = Matchers
@@ -242,7 +244,7 @@ trait SCollectionMatchers {
       override def matcher(builder: AssertBuilder): Matcher[SCollection[T]] =
         new Matcher[SCollection[T]] {
           override def apply(left: SCollection[T]): MatchResult = {
-            val mm = ScioMatchers.containsInAnyOrder(v.get)
+            val mm = ScioMatchers.containsInAnyOrder(v.get, left.context)
             val f = makeFn[TestWrapper[T]](in => assertThat(in, Matchers.not(mm)))
             val g = makeFn[TestWrapper[T]](in => assertThat(in, mm))
             val assertion = builder(PAssert.that(serDeCycle(TestWrapper.wrap(left)).internal))
