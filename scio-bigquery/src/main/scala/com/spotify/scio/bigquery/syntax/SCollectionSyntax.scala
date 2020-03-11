@@ -168,7 +168,7 @@ final class SCollectionTypedOps[T <: HasAnnotation](private val self: SCollectio
    * annotated with [[com.spotify.scio.bigquery.types.BigQueryType.toTable BigQueryType.toTable]].
    */
   @deprecated(
-    "this method will be removed; use saveAsBigQueryTable(Table.Ref(table)) instead",
+    "this method will be removed; use saveAsTypedBigQueryTable(Table.Ref(table)) instead",
     "0.8.0"
   )
   def saveAsTypedBigQuery(
@@ -212,7 +212,7 @@ final class SCollectionTypedOps[T <: HasAnnotation](private val self: SCollectio
    * }}}
    */
   @deprecated(
-    "this method will be removed; use saveAsBigQueryTable(Table.Ref(table)) instead",
+    "this method will be removed; use saveAsTypedBigQueryTable(Table.Ref(table)) instead",
     "0.8.0"
   )
   def saveAsTypedBigQuery(
