@@ -434,7 +434,7 @@ final class CoderTest extends AnyFlatSpec with Matchers {
     JavaEnumExample.GOOD_THING coderShould roundtrip()
     JavaEnumExample.BAD_THING coderShould roundtrip()
   }
-  
+
   it should "be deterministic for java enums" in {
     materialize(Coder[JavaEnumExample]).verifyDeterministic()
   }
