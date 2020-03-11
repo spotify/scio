@@ -17,6 +17,7 @@
 
 package com.spotify.scio.extra
 
+import java.util
 import java.lang.{Iterable => JIterable}
 import java.util.{UUID, List => JList}
 
@@ -30,7 +31,7 @@ import com.spotify.scio.extra.sparkey.instances.{
 }
 import com.spotify.scio.util.Cache
 import com.spotify.scio.values.{SCollection, SideInput}
-import com.spotify.sparkey.SparkeyReader
+import com.spotify.sparkey.{IndexHeader, LogHeader, SparkeyReader}
 import org.apache.beam.sdk.transforms.{DoFn, Reify, View}
 import org.apache.beam.sdk.values.PCollectionView
 import org.slf4j.LoggerFactory
@@ -476,9 +477,9 @@ package object sparkey extends SparkeyReaderInstances {
     override def iterator: Iterator[(String, String)] =
       self.iterator.asScala.map(e => (e.getKeyAsString, e.getValueAsString))
 
-    override def +[B1 >: String](kv: (String, B1)): Map[String, B1] =
+    override def updated[B1 >: String](k: String, v: B1): Map[String, B1] =
       throw new NotImplementedError("Sparkey-backed map; operation not supported.")
-    override def -(key: String): Map[String, String] =
+    override def removed(key: String): Map[String, String] =
       throw new NotImplementedError("Sparkey-backed map; operation not supported.")
   }
 

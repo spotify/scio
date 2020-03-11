@@ -78,6 +78,7 @@ val jnaVersion = "5.5.0"
 val jodaTimeVersion = "2.10.5"
 val junitInterfaceVersion = "0.11"
 val junitVersion = "4.13"
+val kantanCodecsVersion = "0.5.1"
 val kantanCsvVersion = "0.6.0"
 val kryoVersion = "4.0.2" // explicitly depend on 4.0.1+ due to https://github.com/EsotericSoftware/kryo/pull/516
 val magnoliaVersion = "0.12.8"
@@ -137,19 +138,11 @@ val beamSDKIODependencies = Def.settings(
 )
 
 val magnoliaDependencies = Def.settings(
-  libraryDependencies ++= {
-    if (scalaBinaryVersion.value == "2.11") {
-      Seq(
-        "me.lyh" %% "magnolia" % "0.10.1-jto",
-        "com.propensive" %% "mercator" % "0.1.1"
-      )
-    } else {
-      Seq(
-        "com.propensive" %% "magnolia" % magnoliaVersion,
-        "com.propensive" %% "mercator" % mercatorVersion
-      )
-    }
-  }
+  libraryDependencies ++=
+    Seq(
+      "com.propensive" %% "magnolia" % magnoliaVersion,
+      "com.propensive" %% "mercator" % mercatorVersion
+    )
 )
 
 val circeDependencies = Def.settings(
@@ -158,13 +151,7 @@ val circeDependencies = Def.settings(
       "io.circe" %% "circe-core",
       "io.circe" %% "circe-generic",
       "io.circe" %% "circe-parser"
-    ).map { dep =>
-      if (scalaBinaryVersion.value == "2.11") {
-        dep % "0.11.2"
-      } else {
-        dep % circeVersion
-      }
-    }
+    ).map(_ % circeVersion)
 )
 
 def previousVersion(currentVersion: String): Option[String] = {
@@ -1011,14 +998,10 @@ lazy val `scio-tensorflow`: Project = project
       "com.spotify" % "zoltar-api" % zoltarVersion,
       "com.spotify" % "zoltar-tensorflow" % zoltarVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
-      <<<<<<< HEAD
-        "com.spotify" %% "magnolify-tensorflow" % magnolifyVersion % Test,
+      "com.spotify" %% "magnolify-tensorflow" % magnolifyVersion % Test,
       "com.spotify" % "zoltar-core" % zoltarVersion,
       "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamVendorVersion,
       "org.tensorflow" % "libtensorflow" % tensorFlowVersion
-        =======
-          "com.spotify" %% "magnolify-tensorflow" % magnolifyVersion % Test
-            >>>>>>> Fix build
     ),
     javaOptions += "-Dscio.ignoreVersionWarning=true"
   )
@@ -1530,14 +1513,9 @@ ThisBuild / dependencyOverrides ++= Seq(
   "org.typelevel" %% "algebra" % algebraVersion,
   "org.typelevel" %% "cats-core" % catsVersion,
   "org.xerial.snappy" % "snappy-java" % "1.1.4",
-  "org.yaml" % "snakeyaml" % "1.12"
-) ++ {
-  if (scalaBinaryVersion.value == "2.11") {
-    Seq("com.nrinaudo" %% "kantan.codecs" % "0.5.0")
-  } else {
-    Seq("com.nrinaudo" %% "kantan.codecs" % kantanCsvVersion)
-  }
-} ++ Seq(
+  "org.yaml" % "snakeyaml" % "1.12",
+  "com.nrinaudo" %% "kantan.codecs" % kantanCodecsVersion
+) ++ Seq(
   "io.circe" %% "circe-core",
   "io.circe" %% "circe-generic",
   "io.circe" %% "circe-parser"

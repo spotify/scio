@@ -184,7 +184,7 @@ object CsvIO {
     override def value: Iterator[T] =
       BinaryIO
         .openInputStreamsFor(ScioUtil.addPartSuffix(path))
-        .flatMap(_.asUnsafeCsvReader[T](params.csvConfiguration).toIterator)
+        .flatMap(_.asUnsafeCsvReader[T](params.csvConfiguration).iterator)
 
     override def open(sc: ScioContext): SCollection[T] = CsvIO.read(sc, path, params)
   }
