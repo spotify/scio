@@ -32,8 +32,6 @@ import org.apache.commons.io.IOUtils
 
 import scala.collection.JavaConverters._
 import scala.util.Try
-import org.apache.beam.sdk.io.DefaultFilenamePolicy
-import org.apache.beam.sdk.io.FileBasedSink.FilenamePolicy
 import org.apache.beam.sdk.io.ShardNameTemplate
 
 final case class TextIO(path: String) extends ScioIO[String] {
@@ -60,19 +58,11 @@ final case class TextIO(path: String) extends ScioIO[String] {
     TextTap(ScioUtil.addPartSuffix(path))
 
   private def textOut(path: String, params: WriteP) = {
-    val policy: FilenamePolicy = DefaultFilenamePolicy.fromParams(
-      new DefaultFilenamePolicy.Params()
-        .withSuffix(params.suffix)
-        .withBaseFilename(
-          FileBasedSink
-            .convertToFileResourceIfPossible(path.replaceAll("\\/+$", ""))
-        )
-        .withShardTemplate(params.shardNameTemplate)
-    )
-
     var transform = BTextIO
       .write()
-      .to(policy)
+      .to(path.replaceAll("\\/+$", ""))
+      .withSuffix(params.suffix)
+      .withShardNameTemplate(params.shardNameTemplate)
       .withNumShards(params.numShards)
       .withWritableByteChannelFactory(
         FileBasedSink.CompressionType.fromCanonical(params.compression)
