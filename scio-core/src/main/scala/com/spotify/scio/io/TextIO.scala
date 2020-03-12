@@ -32,6 +32,7 @@ import org.apache.commons.io.IOUtils
 
 import scala.collection.JavaConverters._
 import scala.util.Try
+import org.apache.beam.sdk.io.ShardNameTemplate
 
 final case class TextIO(path: String) extends ScioIO[String] {
   override type ReadP = TextIO.ReadParam
@@ -56,32 +57,43 @@ final case class TextIO(path: String) extends ScioIO[String] {
   override def tap(params: ReadP): Tap[String] =
     TextTap(ScioUtil.addPartSuffix(path))
 
-  private def textOut(path: String, params: WriteP) =
-    BTextIO
+  private def textOut(path: String, params: WriteP) = {
+    var transform = BTextIO
       .write()
-      .to(pathWithShards(path))
+      .to(path.replaceAll("\\/+$", ""))
       .withSuffix(params.suffix)
+      .withShardNameTemplate(params.shardNameTemplate)
       .withNumShards(params.numShards)
       .withWritableByteChannelFactory(
         FileBasedSink.CompressionType.fromCanonical(params.compression)
       )
 
-  private[scio] def pathWithShards(path: String) =
-    path.replaceAll("\\/+$", "") + "/part"
+    transform = params.header.fold(transform)(transform.withHeader)
+    transform = params.header.fold(transform)(transform.withFooter)
+
+    transform
+  }
+
 }
 
 object TextIO {
   final case class ReadParam(compression: Compression = Compression.AUTO)
 
   object WriteParam {
+    private[scio] val DefaultHeader = Option.empty[String]
+    private[scio] val DefaultFooter = Option.empty[String]
     private[scio] val DefaultSuffix = ".txt"
     private[scio] val DefaultNumShards = 0
     private[scio] val DefaultCompression = Compression.UNCOMPRESSED
+    private[scio] val DefaultShardNameTemplate = "/part" + ShardNameTemplate.INDEX_OF_MAX
   }
   final case class WriteParam(
     suffix: String = WriteParam.DefaultSuffix,
     numShards: Int = WriteParam.DefaultNumShards,
-    compression: Compression = WriteParam.DefaultCompression
+    compression: Compression = WriteParam.DefaultCompression,
+    header: Option[String] = WriteParam.DefaultHeader,
+    footer: Option[String] = WriteParam.DefaultFooter,
+    shardNameTemplate: String = WriteParam.DefaultShardNameTemplate
   )
 
   private[scio] def textFile(path: String): Iterator[String] = {
