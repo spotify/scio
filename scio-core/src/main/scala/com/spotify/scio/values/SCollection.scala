@@ -1101,7 +1101,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @see [[readFilesAsBytes]], [[readFilesAsString]]
    */
   def readFiles(implicit ev: T <:< String): SCollection[String] =
-    readFiles(beam.TextIO.readFiles(), DirectoryTreatment.SKIP, Compression.AUTO)
+    readFiles(beam.TextIO.readFiles())
 
   /**
    * Reads each file, represented as a pattern, in this [[SCollection]].
@@ -1159,8 +1159,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    */
   def readFiles[A: Coder](
     filesTransform: PTransform[PCollection[beam.FileIO.ReadableFile], PCollection[A]],
-    directoryTreatment: DirectoryTreatment,
-    compression: Compression
+    directoryTreatment: DirectoryTreatment = DirectoryTreatment.SKIP,
+    compression: Compression = Compression.AUTO
   )(implicit ev: T <:< String): SCollection[A] =
     if (context.isTest) {
       val id = context.testId.get
