@@ -294,6 +294,32 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
       .filter { case ((k, _), sideInputCtx) => sideInputCtx(sideInput).contains(k) }
       .toSCollection
 
+  /**
+   * Return an SCollection with the pairs from `this` whose keys are not in SideInput[Set] `rhs`.
+   *
+   * @group per key
+   */
+  def hashSubtractByKey(
+    sideInput: SideInput[Set[K]]
+  )(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, V)] = {
+    self
+      .withSideInputs(sideInput)
+      .filter { case ((k, _), sideInputCtx) => !sideInputCtx(sideInput).contains(k) }
+      .toSCollection
+  }
+
+  /**
+   * Return an SCollection with the pairs from `this` whose keys are not in SCollection[V] `rhs`.
+   *
+   * Rhs must be small enough to fit into memory.
+   *
+   * @group per key
+   */
+  def hashSubtractByKey(
+    rhs: SCollection[K]
+  )(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, V)] =
+    hashSubtractByKey(rhs.asSetSingletonSideInput)
+
   @deprecated("Use SCollection[(K, V)]#asMultiMapSingletonSideInput instead", "0.8.0")
   def toSideMap(implicit koder: Coder[K], voder: Coder[V]): SideMap[K, V] =
     SideMap[K, V](combineAsMapSideInput(self))
