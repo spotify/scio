@@ -209,7 +209,7 @@ object ReadAllBytesJob {
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
     sc.textFile(args("input"))
-      .readAllBytes
+      .readFilesAsBytes
       .map(new String(_))
       .saveAsTextFile(args("output"))
     sc.run()

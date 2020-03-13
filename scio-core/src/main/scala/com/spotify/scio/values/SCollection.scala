@@ -33,6 +33,8 @@ import com.twitter.algebird.{Aggregator, Monoid, Semigroup}
 import org.apache.avro.file.CodecFactory
 import org.apache.beam.sdk.coders.{Coder => BCoder}
 import org.apache.beam.sdk.io.{Compression, FileBasedSink}
+import org.apache.beam.sdk.io.FileIO.ReadMatches.DirectoryTreatment
+import org.apache.beam.sdk.io.FileIO.Write.FileNaming
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
 import org.apache.beam.sdk.transforms._
 import org.apache.beam.sdk.transforms.windowing._
@@ -47,7 +49,6 @@ import scala.collection.JavaConverters._
 import scala.collection.immutable.TreeMap
 import scala.reflect.ClassTag
 import scala.util.Try
-import org.apache.beam.sdk.io.FileIO.Write.FileNaming
 
 /** Convenience functions for creating SCollections. */
 object SCollection {
@@ -1127,21 +1128,39 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    */
   def readFiles[A: Coder](
     f: beam.FileIO.ReadableFile => A
+  )(implicit ev: T <:< String): SCollection[A] =
+    readFiles(DirectoryTreatment.SKIP, Compression.AUTO)(f)
+
+  /**
+   * Reads each file, represented as a pattern, in this [[SCollection]].
+   *
+   * @see [[readFilesAsBytes]], [[readFilesAsString]]
+   *
+   * @param directoryTreatment Controls how to handle directories in the input.
+   * @param compression  Reads files using the given [[org.apache.beam.sdk.io.Compression]].
+   */
+  def readFiles[A: Coder](directoryTreatment: DirectoryTreatment, compression: Compression)(
+    f: beam.FileIO.ReadableFile => A
   )(implicit ev: T <:< String): SCollection[A] = {
     val transform =
       ParDo
         .of(Functions.mapFn[beam.FileIO.ReadableFile, A](f))
         .asInstanceOf[PTransform[PCollection[beam.FileIO.ReadableFile], PCollection[A]]]
-    readFiles(transform)
+    readFiles(transform, directoryTreatment, compression)
   }
 
   /**
    * Reads each file, represented as a pattern, in this [[SCollection]].
    *
    * @see [[readFilesAsBytes]], [[readFilesAsString]], [[readFiles]]
+   *
+   * @param directoryTreatment Controls how to handle directories in the input.
+   * @param compression  Reads files using the given [[org.apache.beam.sdk.io.Compression]].
    */
   def readFiles[A: Coder](
-    filesTransform: PTransform[PCollection[beam.FileIO.ReadableFile], PCollection[A]]
+    filesTransform: PTransform[PCollection[beam.FileIO.ReadableFile], PCollection[A]],
+    directoryTreatment: DirectoryTreatment = DirectoryTreatment.SKIP,
+    compression: Compression = Compression.AUTO
   )(implicit ev: T <:< String): SCollection[A] =
     if (context.isTest) {
       val id = context.testId.get
@@ -1155,7 +1174,12 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
           override def expand(input: PCollection[String]): PCollection[A] =
             input
               .apply(beam.FileIO.matchAll())
-              .apply(beam.FileIO.readMatches())
+              .apply(
+                beam.FileIO
+                  .readMatches()
+                  .withCompression(compression)
+                  .withDirectoryTreatment(directoryTreatment)
+              )
               .apply(filesTransform)
         })
     }

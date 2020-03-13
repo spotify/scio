@@ -20,21 +20,22 @@ import java.io.{Reader, Writer}
 import java.nio.channels.{Channels, WritableByteChannel}
 import java.nio.charset.StandardCharsets
 
-import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.io._
+import com.spotify.scio.ScioContext
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
-import kantan.csv.CsvConfiguration.{Header, QuotePolicy}
 import kantan.csv._
+import kantan.csv.CsvConfiguration.{Header, QuotePolicy}
 import kantan.csv.engine.ReaderEngine
-import org.apache.beam.sdk.io.FileIO.ReadMatches.DirectoryTreatment
-import org.apache.beam.sdk.io.FileIO.ReadableFile
-import org.apache.beam.sdk.io.FileIO
-import org.apache.beam.sdk.transforms.{DoFn, ParDo}
-import org.apache.beam.sdk.transforms.DoFn.ProcessElement
-import org.apache.beam.sdk.{io => beam}
 import kantan.csv.ops._
+import org.apache.beam.sdk.{io => beam}
+import org.apache.beam.sdk.io.FileIO
+import org.apache.beam.sdk.io.FileIO.ReadableFile
+import org.apache.beam.sdk.io.FileIO.ReadMatches.DirectoryTreatment
+import org.apache.beam.sdk.transforms.{DoFn, PTransform, ParDo}
+import org.apache.beam.sdk.transforms.DoFn.ProcessElement
+import org.apache.beam.sdk.values.PCollection
 
 /**
  * This package uses a CSV mapper called [[https://nrinaudo.github.io/kantan.csv/ Kantan]].
@@ -169,16 +170,14 @@ object CsvIO {
 
   private def read[T: HeaderDecoder: Coder](sc: ScioContext, path: String, params: ReadParam) =
     sc.parallelize(Seq(path))
-      .transform("Read CSV") {
-        _.readAll(beam.FileIO.matchAll())
-          .applyTransform(
-            beam.FileIO
-              .readMatches()
-              .withDirectoryTreatment(DirectoryTreatment.PROHIBIT)
-              .withCompression(params.compression)
-          )
-          .applyTransform(ParDo.of(CsvIO.ReadDoFn[T](params.csvConfiguration)))
-      }
+      .withName("Read CSV")
+      .readFiles(
+        ParDo
+          .of(CsvIO.ReadDoFn[T](params.csvConfiguration))
+          .asInstanceOf[PTransform[PCollection[beam.FileIO.ReadableFile], PCollection[T]]],
+        DirectoryTreatment.PROHIBIT,
+        params.compression
+      )
 
   final private class CsvTap[T: HeaderDecoder: Coder](path: String, params: ReadParam)
       extends Tap[T] {
@@ -215,7 +214,10 @@ object CsvIO {
       csvWriter = byteChannelWriter.asCsvWriter[T](csvConfig)
     }
 
-    override def write(element: T): Unit = csvWriter.write(element)
+    override def write(element: T): Unit = {
+      csvWriter.write(element)
+      ()
+    }
 
     override def flush(): Unit =
       byteChannelWriter.flush()
