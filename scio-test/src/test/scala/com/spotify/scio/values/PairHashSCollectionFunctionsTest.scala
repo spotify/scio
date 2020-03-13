@@ -292,7 +292,7 @@ class PairHashSCollectionFunctionsTest extends PipelineSpec {
       val p1 = sc.parallelize(Seq(("a", 1), ("b", 2)))
       val p2 = sc.parallelize(Seq.empty[String])
       val output = p1.hashSubtractByKey(p2)
-      output should haveSize (2)
+      output should haveSize(2)
       output should containInAnyOrder(Seq(("a", 1), ("b", 2)))
     }
   }
@@ -321,8 +321,8 @@ class PairHashSCollectionFunctionsTest extends PipelineSpec {
       val p1 = sc.parallelize(Seq(("a", 1), ("b", 2), ("c", 3), ("b", 4), ("d", 5)))
       val p2 = sc.parallelize(Seq("a", "c"))
       val output = p1.hashSubtractByKey(p2)
-      output should haveSize (3)
-      output should containInAnyOrder (Seq(("b", 2), ("b", 4), ("d", 5)))
+      output should haveSize(3)
+      output should containInAnyOrder(Seq(("b", 2), ("b", 4), ("d", 5)))
     }
   }
 
@@ -331,8 +331,8 @@ class PairHashSCollectionFunctionsTest extends PipelineSpec {
       val p1 = sc.parallelize(Seq(("a", 1), ("b", 2), ("b", 3), ("c", 4)))
       val p2 = sc.parallelize(Seq[String]("a", "b")).asSetSingletonSideInput
       val output = p1.hashSubtractByKey(p2)
-      output should haveSize (1)
-      output should containInAnyOrder (Seq(("c", 4)))
+      output should haveSize(1)
+      output should containInAnyOrder(Seq(("c", 4)))
     }
   }
 

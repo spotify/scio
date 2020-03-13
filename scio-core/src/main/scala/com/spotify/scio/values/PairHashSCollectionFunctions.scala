@@ -301,12 +301,11 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    */
   def hashSubtractByKey(
     sideInput: SideInput[Set[K]]
-  )(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, V)] = {
+  )(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, V)] =
     self
       .withSideInputs(sideInput)
       .filter { case ((k, _), sideInputCtx) => !sideInputCtx(sideInput).contains(k) }
       .toSCollection
-  }
 
   /**
    * Return an SCollection with the pairs from `this` whose keys are not in SCollection[V] `rhs`.
