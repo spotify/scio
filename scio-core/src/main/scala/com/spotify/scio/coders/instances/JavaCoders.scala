@@ -103,7 +103,10 @@ trait JavaCoders extends JavaBeanCoders {
     )
 
   implicit def coderJEnum[E <: java.lang.Enum[E]: ClassTag]: Coder[E] =
-    Coder.beam(SerializableCoder.of(ScioUtil.classOf[E]))
+    Coder.xmap(Coder[String])(
+      value => java.lang.Enum.valueOf(ScioUtil.classOf[E], value),
+      _.name
+    )
 }
 
 trait JavaBeanCoders {

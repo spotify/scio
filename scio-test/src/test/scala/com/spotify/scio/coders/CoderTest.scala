@@ -435,6 +435,10 @@ final class CoderTest extends AnyFlatSpec with Matchers {
     JavaEnumExample.BAD_THING coderShould roundtrip()
   }
 
+  it should "be deterministic for java enums" in {
+    materialize(Coder[JavaEnumExample]).verifyDeterministic()
+  }
+
   it should "support specific fixed data" in {
     val bytes = (0 to 15).map(_.toByte).toArray
     new FixedSpecificDataExample(bytes) coderShould roundtrip()
