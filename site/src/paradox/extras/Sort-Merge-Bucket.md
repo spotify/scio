@@ -87,11 +87,12 @@ an optimal number of output files. With SMB, you must specify the number of buck
   to get an idea of where your job fails), you can increase sorter memory (default is 128MB):
 
 ```scala
-     data.saveAsSortedBucket(
-       AvroSortedBucketIO
-         .write[K, V](classOf[K], "keyField", classOf[V])
-          .to(...)
-          .withSorterMemoryMb(256)
+data.saveAsSortedBucket(
+  AvroSortedBucketIO
+    .write[K, V](classOf[K], "keyField", classOf[V])
+    .to(...)
+    .withSorterMemoryMb(256)
+)
 ```
 
   You can also tweak the `--workerMachineType` pipeline option [see: machine specs for Google Cloud
@@ -99,6 +100,6 @@ an optimal number of output files. With SMB, you must specify the number of buck
   machine type has several GB of RAM.
 
 ## Testing
-Currently, mocking data for SMB transforms is not supported in the `JobTest` framework. See
+Currently, mocking data for SMB transforms is not supported in the `com.spotify.scio.testing.JobTest` framework. See
 @github[SortMergeBucketExampleTest](/scio-examples/src/test/scala/com/spotify/scio/examples/extra/SortMergeBucketExampleTest.scala)
 for an example of using local temp directories to test SMB reads and writes.
