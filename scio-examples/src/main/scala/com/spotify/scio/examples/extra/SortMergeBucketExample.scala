@@ -139,7 +139,7 @@ object SortMergeBucketJoinExample {
           .read(new TupleTag[Account]("rhs"), classOf[Account])
           .from(args("rhsInput"))
       )
-      .map(mapFn) // Apply user-defined mapping function
+      .map(mapFn) // Apply mapping function
       .saveAsTextFile(args("output"))
     // #SortMergeBucketExample_join
 

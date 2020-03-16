@@ -15,7 +15,7 @@ to a bucket, sort values within the bucket, and write these values to a correspo
 | {key:"b", value: 2} |   "b"   |      0     | bucket-00000-of-00001.avro |
 | {key:"a", value: 3} |   "a"   |      1     | bucket-00001-of-00001.avro |
 
-Two sources can be joined by opening file readers on corresponding buckets of each source and
+Two sources can be joined by opening file readers on corresponding buckets of eachT source and
 merging key-groups as we go.
 
 ## What are SMB transforms?
@@ -78,22 +78,27 @@ Additionally, non-SMB writes (i.e. implementations of
 an optimal number of output files. With SMB, you must specify the number of buckets and shards
 (`numBuckets` * `numShards` = total # of files) up front.
  
-    - A good starting point is to look at your output data as it has been written by a non-SMB sink,
-      and pick the closest power of 2 as your initial `numBuckets`, and set `numShards` to 1.
-    - If you anticipate having hot keys, try increasing `numShards` to randomly split data within a bucket.
-    - If your job gets stuck in the sorting phase (since the `GroupByKey` and `SortValues` transforms
-      may get fused--you can reference the @javadoc[Counter](org.apache.beam.sdk.metrics.Counter)s
-      `SortedBucketSink-bucketsInitiatedSorting` and `SortedBucketSink-bucketsCompletedSorting
-      to get an idea of where your job fails), you can increase sorter memory (default is 128MB):
+- A good starting point is to look at your output data as it has been written by a non-SMB sink,
+  and pick the closest power of 2 as your initial `numBuckets`, and set `numShards` to 1.
+- If you anticipate having hot keys, try increasing `numShards` to randomly split data within a bucket.
+- If your job gets stuck in the sorting phase (since the `GroupByKey` and `SortValues` transforms
+  may get fused--you can reference the @javadoc[Counter](org.apache.beam.sdk.metrics.Counter)s
+  `SortedBucketSink-bucketsInitiatedSorting` and `SortedBucketSink-bucketsCompletedSorting`
+  to get an idea of where your job fails), you can increase sorter memory (default is 128MB):
 
-     ```scala
-         data.saveAsSortedBucket(
-           AvroSortedBucketIO
-             .write[K, V](classOf[K], "keyField", classOf[V])
-              .to(...)
-              .withSorterMemoryMb(256)
-      ```
- 
-      You can also tweak the `--workerMachineType` pipeline option [see: machine specs for Google Cloud
-      Dataflow](https://cloud.google.com/compute/docs/machine-types)--although even the smallest
-      machine type has several GB of RAM.
+```scala
+     data.saveAsSortedBucket(
+       AvroSortedBucketIO
+         .write[K, V](classOf[K], "keyField", classOf[V])
+          .to(...)
+          .withSorterMemoryMb(256)
+```
+
+  You can also tweak the `--workerMachineType` pipeline option [see: machine specs for Google Cloud
+  Dataflow](https://cloud.google.com/compute/docs/machine-types)--although even the smallest
+  machine type has several GB of RAM.
+
+## Testing
+Currently, mocking data for SMB transforms is not supported in the `JobTest` framework. See
+@github[SortMergeBucketExampleTest](/scio-examples/src/test/scala/com/spotify/scio/examples/extra/SortMergeBucketExampleTest.scala)
+for an example of using local temp directories to test SMB reads and writes.
