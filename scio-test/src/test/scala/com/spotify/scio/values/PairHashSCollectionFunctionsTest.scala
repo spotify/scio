@@ -287,6 +287,55 @@ class PairHashSCollectionFunctionsTest extends PipelineSpec {
     }
   }
 
+  it should "support hashSubtractByKey() with empty RHS" in {
+    runWithContext { sc =>
+      val p1 = sc.parallelize(Seq(("a", 1), ("b", 2)))
+      val p2 = sc.parallelize(Seq.empty[String])
+      val output = p1.hashSubtractByKey(p2)
+      output should haveSize(2)
+      output should containInAnyOrder(Seq(("a", 1), ("b", 2)))
+    }
+  }
+
+  it should "support hashSubtractByKey() with empty LHS" in {
+    runWithContext { sc =>
+      val p1 = sc.parallelize(Seq.empty[(String, Any)])
+      val p2 = sc.parallelize(Seq("1", "2", "3"))
+      val output = p1.hashSubtractByKey(p2)
+      output should beEmpty
+    }
+  }
+
+  it should "support hashSubtractByKey() with non-empty RHS / LHS and no duplicates" in {
+    runWithContext { sc =>
+      val p1 = sc.parallelize(Seq(("a", 1), ("b", 2), ("c", 3), ("d", 3)))
+      val p2 = sc.parallelize(Seq("a", "d"))
+      val output = p1.hashSubtractByKey(p2)
+      output should haveSize(2)
+      output should containInAnyOrder(Seq(("b", 2), ("c", 3)))
+    }
+  }
+
+  it should "support hashSubtractByKey() with duplicate keys in LHS" in {
+    runWithContext { sc =>
+      val p1 = sc.parallelize(Seq(("a", 1), ("b", 2), ("c", 3), ("b", 4), ("d", 5)))
+      val p2 = sc.parallelize(Seq("a", "c"))
+      val output = p1.hashSubtractByKey(p2)
+      output should haveSize(3)
+      output should containInAnyOrder(Seq(("b", 2), ("b", 4), ("d", 5)))
+    }
+  }
+
+  it should "support hashSubtractByKey() with set singleton side input RHS" in {
+    runWithContext { sc =>
+      val p1 = sc.parallelize(Seq(("a", 1), ("b", 2), ("b", 3), ("c", 4)))
+      val p2 = sc.parallelize(Seq[String]("a", "b")).asSetSingletonSideInput
+      val output = p1.hashSubtractByKey(p2)
+      output should haveSize(1)
+      output should containInAnyOrder(Seq(("c", 4)))
+    }
+  }
+
   it should "support hashFilter() with asSetSingletonSideInput" in {
     runWithContext { sc =>
       val p1 = sc.parallelize(Seq("a", "b", "c", "b"))
