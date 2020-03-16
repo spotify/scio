@@ -22,30 +22,27 @@ import java.nio.file.Files
 
 import com.spotify.scio.avro.{Account, GenericRecordTap, SpecificRecordTap}
 import com.spotify.scio.io.TextTap
-import org.apache.commons.io.FileUtils
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.flatspec.AnyFlatSpec
 
 class SortMergeBucketExampleTest extends AnyFlatSpec with Matchers {
   def withTempFolders(testCode: (File, File, File) => Unit): Unit = {
     val tempFolder = Files.createTempDirectory("smb")
-    try {
-      testCode(
-        tempFolder.resolve("userData").toFile,
-        tempFolder.resolve("accountData").toFile,
-        tempFolder.resolve("joinOutput").toFile
-      )
-    } finally {
-      FileUtils.deleteDirectory(tempFolder.toFile)
-    }
+    tempFolder.toFile.deleteOnExit()
+
+    testCode(
+      tempFolder.resolve("userData").toFile,
+      tempFolder.resolve("accountData").toFile,
+      tempFolder.resolve("joinOutput").toFile
+    )
   }
 
   "SortMergeBucketExample" should "join user and account data" in withTempFolders {
     (userDir, accountDir, joinOutputDir) =>
       SortMergeBucketWriteExample.main(
         Array(
-          s"--outputL=$userDir",
-          s"--outputR=$accountDir"
+          s"--userOutput=$userDir",
+          s"--accountOutput=$accountDir"
         )
       )
 
@@ -58,8 +55,8 @@ class SortMergeBucketExampleTest extends AnyFlatSpec with Matchers {
 
       SortMergeBucketJoinExample.main(
         Array(
-          s"--inputL=$userDir",
-          s"--inputR=$accountDir",
+          s"--lhsInput=$userDir",
+          s"--rhsInput=$accountDir",
           s"--output=$joinOutputDir"
         )
       )
@@ -71,15 +68,15 @@ class SortMergeBucketExampleTest extends AnyFlatSpec with Matchers {
     (userDir, accountDir, joinOutputDir) =>
       SortMergeBucketWriteExample.main(
         Array(
-          s"--outputL=$userDir",
-          s"--outputR=$accountDir"
+          s"--userOutput=$userDir",
+          s"--accountOutput=$accountDir"
         )
       )
 
       SortMergeBucketTransformExample.main(
         Array(
-          s"--inputL=$userDir",
-          s"--inputR=$accountDir",
+          s"--lhsInput=$userDir",
+          s"--rhsInput=$accountDir",
           s"--output=$joinOutputDir"
         )
       )
