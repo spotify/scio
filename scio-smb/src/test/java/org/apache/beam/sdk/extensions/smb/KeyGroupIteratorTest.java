@@ -24,6 +24,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.function.Function;
+import java.util.stream.Collectors;
+
 import org.apache.beam.sdk.values.KV;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Iterators;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Lists;
@@ -138,6 +140,24 @@ public class KeyGroupIteratorTest {
             KV.of("a", Lists.newArrayList("a1")),
             KV.of("b", Lists.newArrayList("b1", "b2")),
             KV.of("c", Lists.newArrayList("c1", "c2", "c3"))));
+  }
+
+  @Test
+  public void testMultiIterators() {
+    List<Iterator<String>> iterators = Lists.newArrayList(
+        Lists.newArrayList("a1", "b1", "b3", "c2", "c4").iterator(),
+        Lists.newArrayList("b2", "b4", "c1", "c3", "d1").iterator());
+    List<KV<String, List<String>>> expected = Lists.newArrayList(
+        KV.of("a", Lists.newArrayList("a1")),
+        KV.of("b", Lists.newArrayList("b1", "b2", "b3", "b4")),
+        KV.of("c", Lists.newArrayList("c1", "c2", "c3", "c4")),
+        KV.of("d", Lists.newArrayList("d1")));
+    KeyGroupIterator<String, String> iterator =
+        new KeyGroupIterator<>(iterators, keyFn, keyComparator);
+    List<KV<String, List<String>>> actual = new ArrayList<>();
+    iterator.forEachRemaining(
+        kv -> actual.add(KV.of(kv.getKey(), Lists.newArrayList(kv.getValue()).stream().sorted().collect(Collectors.toList()))));
+    Assert.assertEquals(expected, actual);
   }
 
   private void testIterator(List<String> data, List<KV<String, List<String>>> expected) {
