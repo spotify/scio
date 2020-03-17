@@ -37,7 +37,6 @@ class KeyGroupIterator<KeyT, ValueT> implements Iterator<KV<KeyT, Iterator<Value
   private final Comparator<KeyT> keyComparator;
 
   private Iterator<ValueT> currentGroup = null;
-  private int currentIterator = 0;
 
   // FIXME: remove
   KeyGroupIterator(
@@ -78,10 +77,10 @@ class KeyGroupIterator<KeyT, ValueT> implements Iterator<KV<KeyT, Iterator<Value
     checkState();
     KeyT k = min();
 
-    currentIterator = 0;
-
     Iterator<ValueT> vi =
         new Iterator<ValueT>() {
+          private int currentIterator = 0;
+
           @Override
           public boolean hasNext() {
             boolean r = false;
@@ -105,26 +104,10 @@ class KeyGroupIterator<KeyT, ValueT> implements Iterator<KV<KeyT, Iterator<Value
 
           @Override
           public ValueT next() {
-            if (currentIterator >= iterators.size()) {
+            if (!hasNext()) {
               throw new NoSuchElementException();
             }
-            PeekingIterator<ValueT> currentIt = iterators.get(currentIterator);
-            ValueT nextV = currentIt.peek();
-            KeyT nextK = keyFn.apply(nextV);
-
-            while (currentIterator < iterators.size() && keyComparator.compare(k, nextK) != 0) {
-              currentIterator++;
-              currentIt = iterators.get(currentIterator);
-              nextV = currentIt.peek();
-              nextK = keyFn.apply(nextV);
-            }
-
-            if (keyComparator.compare(k, nextK) != 0) {
-              currentGroup = null;
-              throw new NoSuchElementException();
-            }
-            currentIt.next();
-            return nextV;
+            return iterators.get(currentIterator).next();
           }
         };
 
