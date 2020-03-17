@@ -30,21 +30,17 @@ import scala.reflect.runtime.universe._
 import com.spotify.scio.util.Cache
 
 private[types] object SchemaProvider {
-
-  private val avroSchemaCache =
-    Cache.concurrentHashMap[String, Schema]
+  private[this] val AvroSchemaCache = Cache.concurrentHashMap[String, Schema]
+  private[this] val TableSchemaCache = Cache.concurrentHashMap[Type, TableSchema]
 
   def avroSchemaOf[T: TypeTag]: Schema =
-    avroSchemaCache.get(
+    AvroSchemaCache.get(
       typeTag[T].tpe.toString,
       BigQueryUtils.toGenericAvroSchema(typeTag[T].tpe.toString, schemaOf[T].getFields)
     )
 
-  private val tableSchemaCache =
-    Cache.concurrentHashMap[Type, TableSchema]
-
   def schemaOf[T: TypeTag]: TableSchema =
-    tableSchemaCache.get(
+    TableSchemaCache.get(
       typeOf[T].erasure, {
         val fields = typeOf[T].erasure match {
           case t if isCaseClass(t) => toFields(t)
