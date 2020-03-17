@@ -665,6 +665,39 @@ and fit in memory.
                <ol><li class="cmt"><p></p><pre><span class="kw">val</span> si = pairSCollRight  <span class="cmt">// Should be tiny</span>
 <span class="kw">val</span> joined = pairSColl1Left.hashLeftOuterJoin(pairSCollRight)</pre></li></ol>
             </div></dl></div>
+    </li><li name="com.spotify.scio.values.PairHashSCollectionFunctions#hashSubtractByKey" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="per key">
+      <a id="hashSubtractByKey(rhs:com.spotify.scio.values.SCollection[K])(implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SCollection[(K,V)]"></a><a id="hashSubtractByKey(SCollection[K])(Coder[K],Coder[V]):SCollection[(K,V)]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/values/PairHashSCollectionFunctions.html#hashSubtractByKey(rhs:com.spotify.scio.values.SCollection[K])(implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SCollection[(K,V)]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">hashSubtractByKey</span><span class="params">(<span name="rhs">rhs: <a href="SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.K">K</span>]</span>)</span><span class="params">(<span class="implicit">implicit </span><span name="koder">koder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.K">K</span>]</span>, <span name="voder">voder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.V">V</span>]</span>)</span><span class="result">: <a href="SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[(<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.K">K</span>, <span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.V">V</span>)]</span>
+      </span>
+      
+      <p class="shortcomment cmt">Return an SCollection with the pairs from <code>this</code> whose keys are not in SCollection[V] <code>rhs</code>.</p><div class="fullcomment"><div class="comment cmt"><p>Return an SCollection with the pairs from <code>this</code> whose keys are not in SCollection[V] <code>rhs</code>.</p><p>Rhs must be small enough to fit into memory.
+</p></div></div>
+    </li><li name="com.spotify.scio.values.PairHashSCollectionFunctions#hashSubtractByKey" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="per key">
+      <a id="hashSubtractByKey(sideInput:com.spotify.scio.values.SideInput[Set[K]])(implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SCollection[(K,V)]"></a><a id="hashSubtractByKey(SideInput[Set[K]])(Coder[K],Coder[V]):SCollection[(K,V)]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/values/PairHashSCollectionFunctions.html#hashSubtractByKey(sideInput:com.spotify.scio.values.SideInput[Set[K]])(implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SCollection[(K,V)]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">hashSubtractByKey</span><span class="params">(<span name="sideInput">sideInput: <a href="SideInput.html" class="extype" name="com.spotify.scio.values.SideInput">SideInput</a>[<span class="extype" name="scala.Predef.Set">Set</span>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.K">K</span>]]</span>)</span><span class="params">(<span class="implicit">implicit </span><span name="koder">koder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.K">K</span>]</span>, <span name="voder">voder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.V">V</span>]</span>)</span><span class="result">: <a href="SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[(<span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.K">K</span>, <span class="extype" name="com.spotify.scio.values.PairHashSCollectionFunctions.V">V</span>)]</span>
+      </span>
+      
+      <p class="shortcomment cmt">Return an SCollection with the pairs from <code>this</code> whose keys are not in SideInput[Set] <code>rhs</code>.</p>
     </li><li name="scala.Any#isInstanceOf" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="isInstanceOf[T0]:Boolean"></a>
       <span class="permalink">

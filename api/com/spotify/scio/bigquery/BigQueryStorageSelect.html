@@ -776,7 +776,11 @@ detects the query's dialect. To override this, start the query with either <code
         <span class="name">tap</span><span class="params">(<span name="params">params: <a href="#ReadP=Unit" class="extmbr" name="com.spotify.scio.bigquery.BigQueryStorageSelect.ReadP">ReadP</a></span>)</span><span class="result">: <a href="../io/Tap.html" class="extype" name="com.spotify.scio.io.Tap">Tap</a>[<a href="index.html#TableRow=com.google.api.services.bigquery.model.TableRow" class="extmbr" name="com.spotify.scio.bigquery.TableRow">TableRow</a>]</span>
       </span>
       
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="" class="extype" name="com.spotify.scio.bigquery.BigQueryStorageSelect">BigQueryStorageSelect</a> → <a href="../io/ScioIO.html" class="extype" name="com.spotify.scio.io.ScioIO">ScioIO</a></dd></dl></div>
+      <p class="shortcomment cmt">Write options also return a <code>ClosedTap</code>.</p><div class="fullcomment"><div class="comment cmt"><p>Write options also return a <code>ClosedTap</code>. Once the job completes you can open the <code>Tap</code>.
+Tap abstracts away the logic of reading the dataset directly as an Iterator[T] or
+re-opening it in another ScioContext. The Future is complete once the job finishes.
+This can be used to do light weight pipeline orchestration e.g. WordCountOrchestration.scala.
+</p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="" class="extype" name="com.spotify.scio.bigquery.BigQueryStorageSelect">BigQueryStorageSelect</a> → <a href="../io/ScioIO.html" class="extype" name="com.spotify.scio.io.ScioIO">ScioIO</a></dd></dl></div>
     </li><li name="com.spotify.scio.bigquery.BigQueryIO#tapT" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="tapT:com.spotify.scio.io.TapT.Aux[T,T]"></a><a id="tapT:Aux[TableRow,TableRow]"></a>
       <span class="permalink">

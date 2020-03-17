@@ -380,7 +380,11 @@
         <span class="name">tap</span><span class="params">(<span name="read">read: <a href="#ReadP" class="extmbr" name="com.spotify.scio.avro.AvroIO.ReadP">ReadP</a></span>)</span><span class="result">: <a href="../io/Tap.html" class="extype" name="com.spotify.scio.io.Tap">Tap</a>[(<a href="#tapT:com.spotify.scio.io.TapT.Aux[T,T]" class="extmbr" name="com.spotify.scio.avro.AvroIO#tapT">tapT</a>)#<span class="extype" name="com.spotify.scio.io.TapT.&lt;refinement&gt;.T">T</span>]</span>
       </span>
       
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../io/ScioIO.html" class="extype" name="com.spotify.scio.io.ScioIO">ScioIO</a></dd></dl></div>
+      <p class="shortcomment cmt">Write options also return a <code>ClosedTap</code>.</p><div class="fullcomment"><div class="comment cmt"><p>Write options also return a <code>ClosedTap</code>. Once the job completes you can open the <code>Tap</code>.
+Tap abstracts away the logic of reading the dataset directly as an Iterator[T] or
+re-opening it in another ScioContext. The Future is complete once the job finishes.
+This can be used to do light weight pipeline orchestration e.g. WordCountOrchestration.scala.
+</p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../io/ScioIO.html" class="extype" name="com.spotify.scio.io.ScioIO">ScioIO</a></dd></dl></div>
     </li><li name="com.spotify.scio.io.ScioIO#write" visbl="prt" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
       <a id="write(data:com.spotify.scio.values.SCollection[T],params:ScioIO.this.WriteP):com.spotify.scio.io.Tap[ScioIO.this.tapT.T]"></a><a id="write(SCollection[T],WriteP):Tap[(tapT)#T]"></a>
       <span class="permalink">

@@ -665,7 +665,11 @@ Like TextIO, but without newline delimiters and operating over Array[Byte] inste
         <span class="name">tap</span><span class="params">(<span name="params">params: <span class="extype" name="scala.Nothing">Nothing</span></span>)</span><span class="result">: <a href="Tap.html" class="extype" name="com.spotify.scio.io.Tap">Tap</a>[<span class="extype" name="scala.Nothing">Nothing</span>]</span>
       </span>
       
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="" class="extype" name="com.spotify.scio.io.BinaryIO">BinaryIO</a> → <a href="ScioIO.html" class="extype" name="com.spotify.scio.io.ScioIO">ScioIO</a></dd></dl></div>
+      <p class="shortcomment cmt">Write options also return a <code>ClosedTap</code>.</p><div class="fullcomment"><div class="comment cmt"><p>Write options also return a <code>ClosedTap</code>. Once the job completes you can open the <code>Tap</code>.
+Tap abstracts away the logic of reading the dataset directly as an Iterator[T] or
+re-opening it in another ScioContext. The Future is complete once the job finishes.
+This can be used to do light weight pipeline orchestration e.g. WordCountOrchestration.scala.
+</p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="" class="extype" name="com.spotify.scio.io.BinaryIO">BinaryIO</a> → <a href="ScioIO.html" class="extype" name="com.spotify.scio.io.ScioIO">ScioIO</a></dd></dl></div>
     </li><li name="com.spotify.scio.io.BinaryIO#tapT" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="tapT:com.spotify.scio.io.TapT.Aux[Array[Byte],Nothing]"></a><a id="tapT:Aux[Array[Byte],Nothing]"></a>
       <span class="permalink">

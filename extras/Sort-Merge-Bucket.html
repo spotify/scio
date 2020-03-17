@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en" class="no-js">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="x-ua-compatible" content="ie=edge">
+<meta name="description" content="Scio - Documentation">
+<meta name="generator" content="Paradox, paradox-material-theme=0.6.0, mkdocs-material=3.0.3">
+
+<meta name="lang:clipboard.copy" content="Copy to clipboard">
+<meta name="lang:clipboard.copied" content="Copied to clipboard">
+<meta name="lang:search.language" content="">
+<meta name="lang:search.pipeline.stopwords" content="true">
+<meta name="lang:search.pipeline.trimmer" content="true">
+<meta name="lang:search.result.none" content="No matching documents">
+<meta name="lang:search.result.one" content="1 matching document">
+<meta name="lang:search.result.other" content="# matching documents">
+<meta name="lang:search.tokenizer" content="[\s\-]+">
+
+
+<meta name="description" content="Scio - Documentation">
+<link rel="shortcut icon" href="../images/favicon.ico">
+<title>Sort Merge Bucket · Scio</title>
+<link rel="stylesheet" href="../assets/stylesheets/application.451f80e5.css">
+<link rel="stylesheet" href="../assets/stylesheets/application-palette.22915126.css">
+<link rel="stylesheet" href="../lib/material__tabs/dist/mdc.tabs.min.css">
+<link rel="stylesheet" href="../lib/prettify/prettify.css">
+<script src="../assets/javascripts/modernizr.1aa3b519.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700|Roboto+Mono">
+<style>
+body,input{font-family:"Roboto","Helvetica Neue",Helvetica,Arial,sans-serif}
+code,kbd,pre{font-family:"Roboto Mono","Courier New",Courier,monospace}
+</style>
+<link rel="stylesheet" href="../assets/fonts/font-awesome.css">
+<link rel="stylesheet" href="../assets/fonts/material-icons.css">
+<link rel="stylesheet" href="../assets/stylesheets/paradox-material-theme.css">
+</head>
+<body
+data-md-color-primary="white"
+data-md-color-accent="indigo"
+>
+<input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+<input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+<label class="md-overlay" data-md-component="overlay" for="__drawer"></label>
+<header class="md-header" data-md-component="header">
+<nav class="md-header-nav md-grid">
+<div class="md-flex">
+<div class="md-flex__cell md-flex__cell--shrink">
+<a href="../index.html" title="Scio" class="md-header-nav__button md-logo">
+<img src="../images/logo.png" width="24" height="24">
+</a>
+</div>
+<div class="md-flex__cell md-flex__cell--shrink">
+<label class="md-icon md-icon--menu md-header-nav__button" for="__drawer"></label>
+</div>
+<div class="md-flex__cell md-flex__cell--stretch">
+<div class="md-flex__ellipsis md-header-nav__title" data-md-component="title">
+<span class="md-header-nav__topic">
+Scio
+</span>
+<span class="md-header-nav__topic">
+Sort Merge Bucket
+</span>
+</div>
+</div>
+<div class="md-flex__cell md-flex__cell--shrink">
+<label class="md-icon md-icon--search md-header-nav__button" for="__search"></label>
+<div class="md-search" data-md-component="search" role="dialog">
+<label class="md-search__overlay" for="__search"></label>
+<div class="md-search__inner" role="search">
+<form class="md-search__form" name="search">
+<input type="text" class="md-search__input" name="query" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="query" data-md-state="active">
+<label class="md-icon md-search__icon" for="__search"></label>
+<button type="reset" class="md-icon md-search__icon" data-md-component="reset" tabindex="-1">&#xE5CD;</button>
+</form>
+<div class="md-search__output">
+<div class="md-search__scrollwrap" data-md-scrollfix>
+<div class="md-search-result" data-md-component="result">
+<div class="md-search-result__meta">
+Type to start searching
+</div>
+<ol class="md-search-result__list"></ol>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+</div>
+<div class="md-flex__cell md-flex__cell--shrink">
+<div class="md-header-nav__source">
+<a href="https://github.com/spotify/scio"
+title="Go to repository"
+class="md-source"
+data-md-source="github">
+<div class="md-source__icon">
+<i class="fa fa-github"></i>
+</div>
+<div class="md-source__repository">
+spotify/scio
+</div>
+</a>
+
+</div>
+</div>
+</div>
+</nav>
+</header>
+
+<div class="md-container">
+<main class="md-main">
+<div class="md-main__inner md-grid" data-md-component="container">
+<div class="md-sidebar md-sidebar--primary" data-md-component="navigation">
+<div class="md-sidebar__scrollwrap">
+<div class="md-sidebar__inner">
+<nav class="md-nav md-nav--primary" data-md-level="0" style="visibility: hidden">
+<label class="md-nav__title md-nav__title--site" for="drawer">
+<a href="../index.html" title="Scio" class="md-nav__button md-logo">
+<span class="md-nav__button md-logo">
+<img src="../images/logo.png" width="24" height="24">
+</a>
+<a href="../index.html" title="Scio">
+Scio
+</a>
+</label>
+<div class="md-nav__source">
+<a href="https://github.com/spotify/scio"
+title="Go to repository"
+class="md-source"
+data-md-source="github">
+<div class="md-source__icon">
+<i class="fa fa-github"></i>
+</div>
+<div class="md-source__repository">
+spotify/scio
+</div>
+</a>
+
+</div>
+<ul>
+  <li><a href="../Getting-Started.html" class="page">Getting Started</a></li>
+  <li><a href="../examples.html" class="page">Examples</a></li>
+  <li><a href="../io/index.html" class="page">IO</a>
+  <ul>
+    <li><a href="../io/Type-Safe-BigQuery.html" class="page">BigQuery</a></li>
+    <li><a href="../io/Bigtable.html" class="page">Bigtable</a></li>
+    <li><a href="../io/Avro.html" class="page">Avro</a></li>
+    <li><a href="../io/Protobuf.html" class="page">Protobuf</a></li>
+    <li><a href="../io/Parquet.html" class="page">Parquet</a></li>
+  </ul></li>
+  <li><a href="../Scio-Unit-Tests.html" class="page">Testing</a></li>
+  <li><a href="../Scio-REPL.html" class="page">REPL</a></li>
+  <li><a href="../internals/index.html" class="page">Internals</a>
+  <ul>
+    <li><a href="../internals/Coders.html" class="page">Coder Typeclass</a></li>
+    <li><a href="../internals/Kryo.html" class="page">Kryo</a></li>
+    <li><a href="../internals/OverrideTypeProvider.html" class="page">OverrideTypeProvider</a></li>
+    <li><a href="../internals/ScioIO.html" class="page">ScioIO</a></li>
+  </ul></li>
+  <li><a href="../extras/index.html" class="page">Extras</a>
+  <ul>
+    <li><a href="../extras/Algebird.html" class="page">Algebird</a></li>
+    <li><a href="../extras/Sort-Merge-Bucket.html" class="active page">Sort Merge Bucket</a></li>
+  </ul></li>
+  <li><a href="../migrations/index.html" class="page">Migration Guides</a>
+  <ul>
+    <li><a href="../migrations/v0.7.0-Migration-Guide.html" class="page">Scio v0.7.0</a></li>
+    <li><a href="../migrations/v0.8.0-Migration-Guide.html" class="page">Scio v0.8.0</a></li>
+  </ul></li>
+  <li><a href="../dev/index.html" class="page">Development</a>
+  <ul>
+    <li><a href="../dev/build.html" class="page">Build</a></li>
+    <li><a href="../dev/Style-Guide.html" class="page">Style Guide</a></li>
+    <li><a href="../dev/How-to-Release.html" class="page">How to Release</a></li>
+    <li><a href="../dev/Design-Philosophy.html" class="page">Design Philosophy</a></li>
+  </ul></li>
+  <li><a href="../scaladoc.html" class="page">Scaladoc</a></li>
+  <li><a href="../Scio,-Beam-and-Dataflow.html" class="page">Scio, Beam and Dataflow</a></li>
+  <li><a href="../Scio,-Scalding-and-Spark.html" class="page">Scio, Spark and Scalding</a></li>
+  <li><a href="../Runners.html" class="page">Runners</a></li>
+  <li><a href="../Scio-data-guideline.html" class="page">Data Guidelines</a></li>
+  <li><a href="../Apache-Beam.html" class="page">Versions</a></li>
+  <li><a href="../Changelog.html" class="page">Changelog</a></li>
+  <li><a href="../FAQ.html" class="page">FAQ</a></li>
+  <li><a href="../Powered-By.html" class="page">Powered By</a></li>
+</ul>
+<nav class="md-nav md-nav--secondary">
+<label class="md-nav__title" for="__toc">Table of contents</label>
+<ul>
+  <li><a href="../extras/Sort-Merge-Bucket.html#sort-merge-bucket" class="header">Sort Merge Bucket</a>
+  <ul>
+    <li><a href="../extras/Sort-Merge-Bucket.html#what-are-smb-transforms-" class="header">What are SMB transforms?</a></li>
+    <li><a href="../extras/Sort-Merge-Bucket.html#what-kind-of-data-can-i-write-using-smb-" class="header">What kind of data can I write using SMB?</a></li>
+    <li><a href="../extras/Sort-Merge-Bucket.html#tuning-parameters-for-smb-transforms" class="header">Tuning parameters for SMB transforms</a></li>
+    <li><a href="../extras/Sort-Merge-Bucket.html#testing" class="header">Testing</a></li>
+  </ul></li>
+</ul>
+</nav>
+
+</nav>
+<ul style="display: none">
+<li class="md-nav__item md-version" id="project.version">
+<label class="md-nav__link" for="__version">
+<i class="md-icon" title="Version">label_outline</i> 0.8.3*
+</label>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="md-sidebar md-sidebar--secondary" data-md-component="toc">
+<div class="md-sidebar__scrollwrap">
+<div class="md-sidebar__inner">
+<nav class="md-nav md-nav--secondary">
+<label class="md-nav__title" for="__toc">Table of contents</label>
+<ul>
+  <li><a href="../extras/Sort-Merge-Bucket.html#sort-merge-bucket" class="header">Sort Merge Bucket</a>
+  <ul>
+    <li><a href="../extras/Sort-Merge-Bucket.html#what-are-smb-transforms-" class="header">What are SMB transforms?</a></li>
+    <li><a href="../extras/Sort-Merge-Bucket.html#what-kind-of-data-can-i-write-using-smb-" class="header">What kind of data can I write using SMB?</a></li>
+    <li><a href="../extras/Sort-Merge-Bucket.html#tuning-parameters-for-smb-transforms" class="header">Tuning parameters for SMB transforms</a></li>
+    <li><a href="../extras/Sort-Merge-Bucket.html#testing" class="header">Testing</a></li>
+  </ul></li>
+</ul>
+</nav>
+
+</div>
+</div>
+</div>
+<div class="md-content">
+<article class="md-content__inner md-typeset">
+<div class="md-content__searchable">
+<h1><a href="#sort-merge-bucket" name="sort-merge-bucket" class="anchor"><span class="anchor-link"></span></a>Sort Merge Bucket</h1>
+<p>Sort Merge Bucket is a technique for writing data to file system in deterministic file locations, sorted according by some pre-determined key, so that it can later be read in as key groups with no shuffle required. Since each element is assigned a file destination (bucket) based on a hash of its join key, we can use the same technique to cogroup multiple Sources as long as they&rsquo;re written using the same key and hashing scheme.</p>
+<p>For example, given these input records, and SMB write will first extract the key, assign the record to a bucket, sort values within the bucket, and write these values to a corresponding file.</p>
+<table>
+  <thead>
+    <tr>
+      <th>Input </th>
+      <th>Key </th>
+      <th>Bucket </th>
+      <th>File Assignment </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>{key:&ldquo;b&rdquo;, value: 1} </td>
+      <td>&ldquo;b&rdquo; </td>
+      <td>0 </td>
+      <td>bucket-00000-of-00001.avro </td>
+    </tr>
+    <tr>
+      <td>{key:&ldquo;b&rdquo;, value: 2} </td>
+      <td>&ldquo;b&rdquo; </td>
+      <td>0 </td>
+      <td>bucket-00000-of-00001.avro </td>
+    </tr>
+    <tr>
+      <td>{key:&ldquo;a&rdquo;, value: 3} </td>
+      <td>&ldquo;a&rdquo; </td>
+      <td>1 </td>
+      <td>bucket-00001-of-00001.avro </td>
+    </tr>
+  </tbody>
+</table>
+<p>Two sources can be joined by opening file readers on corresponding buckets of eachT source and merging key-groups as we go.</p>
+<h2><a href="#what-are-smb-transforms-" name="what-are-smb-transforms-" class="anchor"><span class="anchor-link"></span></a>What are SMB transforms?</h2>
+<p><code>scio-smb</code> provides three <a href="https://beam.apache.org/releases/javadoc/2.19.0/?org/apache/beam/sdk/transforms/PTransform.html" title="org.apache.beam.sdk.transforms.PTransform"><code>PTransform</code></a>s, as well as corresponding Scala API bindings, for SMB operations:</p>
+<ul>
+  <li>
+    <p><a href="https://spotify.github.io/scio/api/org/apache/beam/sdk/extensions/smb/?org/apache/beam/sdk/extensions/smb/SortedBucketSink.html" title="org.apache.beam.sdk.extensions.smb.SortedBucketSink"><code>SortedBucketSink</code></a> writes data to file system in SMB format. Scala APIs (see: <a href="https://spotify.github.io/scio/api/com/spotify/scio/smb/syntax/SortedBucketSCollection.html" title="com.spotify.scio.smb.syntax.SortedBucketSCollection"><code>SortedBucketSCollection</code></a>):</p>
+    <ul>
+      <li>
+      <p><code>SCollection[T: Coder]#saveAsSortedBucket</code></p></li>
+    </ul>
+    <pre class="prettyprint"><a class="icon go-to-source" href="https://github.com/spotify/scio/tree/master/scio-examples/src/main/scala/com/spotify/scio/examples/extra/SortMergeBucketExample.scala#L87-L107" target="_blank" title="Go to snippet source"></a><code class="language-scala">sc.parallelize(250 until 750)
+  .map { i =&gt;
+    Account
+      .newBuilder()
+      .setId(i)
+      .setName(s&quot;user$i&quot;)
+      .setType(s&quot;type${i % 5}&quot;)
+      .setAmount(Random.nextDouble() * 1000)
+      .build()
+  }
+  .saveAsSortedBucket(
+    AvroSortedBucketIO
+      .write[Integer, Account](classOf[Integer], &quot;id&quot;, classOf[Account])
+      .to(args(&quot;accountOutput&quot;))
+      .withSorterMemoryMb(128)
+      .withTempDirectory(sc.options.getTempLocation)
+      .withCodec(CodecFactory.snappyCodec())
+      .withHashType(HashType.MURMUR3_32)
+      .withNumBuckets(1)
+      .withNumShards(1)
+  )</code></pre>
+    <p>Note the use of <code>Integer</code> for parameterized key type instead of a Scala <code>Int</code>. The key class must have a Coder available in the default Beam (Java) coder registry.</p>
+    <p>Also note that the number of buckets specified must be a power of 2. This allows sources of different bucket sizes to still be joinable.</p>
+  </li>
+  <li>
+    <p><a href="https://spotify.github.io/scio/api/org/apache/beam/sdk/extensions/smb/?org/apache/beam/sdk/extensions/smb/SortedBucketSource.html" title="org.apache.beam.sdk.extensions.smb.SortedBucketSource"><code>SortedBucketSource</code></a> reads data that has been written to file system using <code>SortedBucketSink</code> into a collection of <a href="https://beam.apache.org/releases/javadoc/2.19.0/?org/apache/beam/sdk/transforms/join/CoGbkResult.html" title="org.apache.beam.sdk.transforms.join.CoGbkResult"><code>CoGbkResult</code></a>s. Scala APIs (see: <a href="https://spotify.github.io/scio/api/com/spotify/scio/smb/syntax/SortedBucketScioContext.html" title="com.spotify.scio.smb.syntax.SortedBucketScioContext"><code>SortedBucketScioContext</code></a>):</p>
+    <ul>
+      <li><code>ScioContext#sortMergeGroupByKey</code> (1 source)</li>
+      <li><code>ScioContext#sortMergeJoin</code> (2 sources)</li>
+      <li><code>ScioContext#sortMergeCoGroup</code> (1-4 sources)</li>
+    </ul>
+    <pre class="prettyprint"><a class="icon go-to-source" href="https://github.com/spotify/scio/tree/master/scio-examples/src/main/scala/com/spotify/scio/examples/extra/SortMergeBucketExample.scala#L133-L143" target="_blank" title="Go to snippet source"></a><code class="language-scala">sc.sortMergeJoin(
+    classOf[Integer],
+    AvroSortedBucketIO
+      .read(new TupleTag[GenericRecord](&quot;lhs&quot;), SortMergeBucketExample.UserDataSchema)
+      .from(args(&quot;lhsInput&quot;)),
+    AvroSortedBucketIO
+      .read(new TupleTag[Account](&quot;rhs&quot;), classOf[Account])
+      .from(args(&quot;rhsInput&quot;))
+  )
+  .map(mapFn) // Apply mapping function
+  .saveAsTextFile(args(&quot;output&quot;))</code></pre>
+  </li>
+  <li>
+    <p><a href="https://spotify.github.io/scio/api/org/apache/beam/sdk/extensions/smb/?org/apache/beam/sdk/extensions/smb/SortedBucketTransform.html" title="org.apache.beam.sdk.extensions.smb.SortedBucketTransform"><code>SortedBucketTransform</code></a> reads data that has been written to file system using <code>SortedBucketSink</code>, transforms each <a href="https://beam.apache.org/releases/javadoc/2.19.0/?org/apache/beam/sdk/transforms/join/CoGbkResult.html" title="org.apache.beam.sdk.transforms.join.CoGbkResult"><code>CoGbkResult</code></a> using a user-supplied function, and immediately rewrites them using the same bucketing scheme. Scala APIs (see: <a href="https://spotify.github.io/scio/api/com/spotify/scio/smb/syntax/SortedBucketScioContext.html" title="com.spotify.scio.smb.syntax.SortedBucketScioContext"><code>SortedBucketScioContext</code></a>):</p>
+    <ul>
+      <li>
+      <p><code>ScioContext#sortMergeTransform</code> (1-3 sources)</p></li>
+    </ul>
+    <pre class="prettyprint"><a class="icon go-to-source" href="https://github.com/spotify/scio/tree/master/scio-examples/src/main/scala/com/spotify/scio/examples/extra/SortMergeBucketExample.scala#L158-L188" target="_blank" title="Go to snippet source"></a><code class="language-scala">sc.sortMergeTransform(
+    classOf[Integer],
+    AvroSortedBucketIO
+      .read(new TupleTag[GenericRecord](&quot;lhs&quot;), SortMergeBucketExample.UserDataSchema)
+      .from(args(&quot;lhsInput&quot;)),
+    AvroSortedBucketIO
+      .read(new TupleTag[Account](&quot;rhs&quot;), classOf[Account])
+      .from(args(&quot;rhsInput&quot;))
+  )
+  .to(
+    AvroSortedBucketIO
+      .write(classOf[Integer], &quot;userId&quot;, classOf[Account])
+      .to(args(&quot;output&quot;))
+      .withNumBuckets(2)
+      .withNumShards(1)
+      .withHashType(HashType.MURMUR3_32)
+  )
+  .via {
+    case (key, (users, accounts), outputCollector) =&gt;
+      users.foreach { user =&gt;
+        outputCollector.accept(
+          Account
+            .newBuilder()
+            .setId(key)
+            .setName(user.get(&quot;userId&quot;).toString)
+            .setType(&quot;combinedAmount&quot;)
+            .setAmount(accounts.foldLeft(0.0)(_ + _.getAmount))
+            .build()
+        )
+      }
+  }</code></pre>
+  </li>
+</ul>
+<h2><a href="#what-kind-of-data-can-i-write-using-smb-" name="what-kind-of-data-can-i-write-using-smb-" class="anchor"><span class="anchor-link"></span></a>What kind of data can I write using SMB?</h2>
+<p>SMB writes are supported for Avro (GenericRecord and SpecificRecord), JSON, and Tensorflow records. See API bindings in:</p>
+<ul>
+  <li><a href="https://spotify.github.io/scio/api/org/apache/beam/sdk/extensions/smb/?org/apache/beam/sdk/extensions/smb/AvroSortedBucketIO.html" title="org.apache.beam.sdk.extensions.smb.AvroSortedBucketIO"><code>AvroSortedBucketIO</code></a></li>
+  <li><a href="https://spotify.github.io/scio/api/org/apache/beam/sdk/extensions/smb/?org/apache/beam/sdk/extensions/smb/JsonSortedBucketIO.html" title="org.apache.beam.sdk.extensions.smb.JsonSortedBucketIO"><code>JsonSortedBucketIO</code></a></li>
+  <li><a href="https://spotify.github.io/scio/api/org/apache/beam/sdk/extensions/smb/?org/apache/beam/sdk/extensions/smb/TensorFlowBucketIO.html" title="org.apache.beam.sdk.extensions.smb.TensorFlowBucketIO"><code>TensorFlowBucketIO</code></a></li>
+</ul>
+<h2><a href="#tuning-parameters-for-smb-transforms" name="tuning-parameters-for-smb-transforms" class="anchor"><span class="anchor-link"></span></a>Tuning parameters for SMB transforms</h2>
+<p>SMB reads should be more performant and less resource-intensive than regular joins or groupBys. However, SMB writes are more expensive than their regular counterparts, since they involve an extra group-by (bucketing) and sorting step.</p>
+<p>Additionally, non-SMB writes (i.e. implementations of <a href="https://beam.apache.org/releases/javadoc/2.19.0/?org/apache/beam/sdk/io/FileBasedSink.html" title="org.apache.beam.sdk.io.FileBasedSink"><code>FileBasedSink</code></a>) use hints from the runner to determine an optimal number of output files. With SMB, you must specify the number of buckets and shards (<code>numBuckets</code> * <code>numShards</code> = total # of files) up front.</p>
+<ul>
+  <li>A good starting point is to look at your output data as it has been written by a non-SMB sink,  and pick the closest power of 2 as your initial <code>numBuckets</code>, and set <code>numShards</code> to 1.</li>
+  <li>If you anticipate having hot keys, try increasing <code>numShards</code> to randomly split data within a bucket.</li>
+  <li>If your job gets stuck in the sorting phase (since the <code>GroupByKey</code> and <code>SortValues</code> transforms  may get fused&ndash;you can reference the <a href="https://beam.apache.org/releases/javadoc/2.19.0/?org/apache/beam/sdk/metrics/Counter.html" title="org.apache.beam.sdk.metrics.Counter"><code>Counter</code></a>s  <code>SortedBucketSink-bucketsInitiatedSorting</code> and <code>SortedBucketSink-bucketsCompletedSorting</code>  to get an idea of where your job fails), you can increase sorter memory (default is 128MB):</li>
+</ul>
+<pre class="prettyprint"><code class="language-scala">data.saveAsSortedBucket(
+  AvroSortedBucketIO
+    .write[K, V](classOf[K], &quot;keyField&quot;, classOf[V])
+    .to(...)
+    .withSorterMemoryMb(256)
+)
+</code></pre>
+<p>You can also tweak the <code>--workerMachineType</code> pipeline option <a href="https://cloud.google.com/compute/docs/machine-types">see: machine specs for Google Cloud  Dataflow</a>&ndash;although even the smallest  machine type has several GB of RAM.</p>
+<h2><a href="#testing" name="testing" class="anchor"><span class="anchor-link"></span></a>Testing</h2>
+<p>Currently, mocking data for SMB transforms is not supported in the <code>com.spotify.scio.testing.JobTest</code> framework. See <a href="https://github.com/spotify/scio/tree/master/scio-examples/src/test/scala/com/spotify/scio/examples/extra/SortMergeBucketExampleTest.scala">SortMergeBucketExampleTest</a> for an example of using local temp directories to test SMB reads and writes.</p>
+</div>
+<div>
+<a href="https://github.com/spotify/scio/tree/master/site/target/mdoc/extras/Sort-Merge-Bucket.md" title="Edit this page" class="md-source-file md-edit">
+Edit this page
+</a>
+</div>
+<div class="print-only">
+<span class="md-source-file md-version">
+0.8.3*
+</span>
+</div>
+</article>
+</div>
+</div>
+</main>
+<footer class="md-footer">
+<div class="md-footer-nav">
+<nav class="md-footer-nav__inner md-grid">
+<a href="../extras/Algebird.html" title="Algebird" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+<div class="md-flex__cell md-flex__cell--shrink">
+<i class="md-icon md-icon--arrow-back md-footer-nav__button"></i>
+</div>
+<div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
+<span class="md-flex__ellipsis">
+<span class="md-footer-nav__direction">
+Previous
+</span>
+Algebird
+</span>
+</div>
+</a>
+<a href="../migrations/index.html" title="Migration Guides" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
+<div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
+<span class="md-flex__ellipsis">
+<span class="md-footer-nav__direction">
+Next
+</span>
+Migration Guides
+</span>
+</div>
+<div class="md-flex__cell md-flex__cell--shrink">
+<i class="md-icon md-icon--arrow-forward md-footer-nav__button"></i>
+</div>
+</a>
+</nav>
+</div>
+<div class="md-footer-meta md-typeset">
+<div class="md-footer-meta__inner md-grid">
+<div class="md-footer-copyright">
+<div class="md-footer-copyright__highlight">
+Copyright (C) 2020 Spotify AB
+</div>
+Powered by
+<a href="https://github.com/lightbend/paradox">Paradox</a>
+and
+<a href="https://jonas.github.io/paradox-material-theme/">Paradox Material Theme</a>
+
+</div>
+<div class="md-footer-social">
+<a href="https://github.com/spotify" class="md-footer-social__link fa fa-github"></a><a href="https://twitter.com/spotifyeng" class="md-footer-social__link fa fa-twitter"></a>
+</div>
+
+</div>
+</div>
+</footer>
+
+</div>
+<script src="../assets/javascripts/application.583bbe55.js"></script>
+<script src="../assets/javascripts/paradox-material-theme.js"></script>
+<script>app.initialize({version:"0.17",url:{base:"../."}})</script>
+<script type="text/javascript" src="../lib/prettify/prettify.js"></script>
+<script type="text/javascript" src="../lib/prettify/lang-scala.js"></script>
+<script type="text/javascript">
+document.addEventListener("DOMContentLoaded", function(event) {
+window.prettyPrint && prettyPrint();
+});
+</script>
+</body>
+</html>

@@ -182,7 +182,7 @@
         <span class="kind">case class</span>
       </span>
       <span class="symbol">
-        <span class="name">WriteParam</span><span class="params">(<span name="suffix">suffix: <span class="extype" name="scala.Predef.String">String</span> = <span class="symbol"><span class="name"><a href="TextIO$$WriteParam$.html">WriteParam.DefaultSuffix</a></span></span></span>, <span name="numShards">numShards: <span class="extype" name="scala.Int">Int</span> = <span class="symbol"><span class="name"><a href="TextIO$$WriteParam$.html">WriteParam.DefaultNumShards</a></span></span></span>, <span name="compression">compression: <span class="extype" name="org.apache.beam.sdk.io.Compression">Compression</span> = <span class="symbol"><span class="name"><a href="TextIO$$WriteParam$.html">WriteParam.DefaultCompression</a></span></span></span>)</span><span class="result"> extends <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+        <span class="name">WriteParam</span><span class="params">(<span name="suffix">suffix: <span class="extype" name="scala.Predef.String">String</span> = <span class="symbol"><span class="name"><a href="TextIO$$WriteParam$.html">WriteParam.DefaultSuffix</a></span></span></span>, <span name="numShards">numShards: <span class="extype" name="scala.Int">Int</span> = <span class="symbol"><span class="name"><a href="TextIO$$WriteParam$.html">WriteParam.DefaultNumShards</a></span></span></span>, <span name="compression">compression: <span class="extype" name="org.apache.beam.sdk.io.Compression">Compression</span> = <span class="symbol"><span class="name"><a href="TextIO$$WriteParam$.html">WriteParam.DefaultCompression</a></span></span></span>, <span name="header">header: <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="scala.Predef.String">String</span>] = <span class="symbol"><span class="name"><a href="TextIO$$WriteParam$.html">WriteParam.DefaultHeader</a></span></span></span>, <span name="footer">footer: <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="scala.Predef.String">String</span>] = <span class="symbol"><span class="name"><a href="TextIO$$WriteParam$.html">WriteParam.DefaultFooter</a></span></span></span>, <span name="shardNameTemplate">shardNameTemplate: <span class="extype" name="scala.Predef.String">String</span> = <span class="symbol"><span class="name"><a href="TextIO$$WriteParam$.html">WriteParam.DefaultShardNameTemplate</a></span></span></span>)</span><span class="result"> extends <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
       </span>
       </h4>
 
@@ -238,9 +238,9 @@
         <div id="constructors" class="members">
               <h3>Instance Constructors</h3>
               <ol><li name="com.spotify.scio.io.TextIO.WriteParam#&lt;init&gt;" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="&lt;init&gt;(suffix:String,numShards:Int,compression:org.apache.beam.sdk.io.Compression):com.spotify.scio.io.TextIO.WriteParam"></a><a id="&lt;init&gt;:WriteParam"></a>
+      <a id="&lt;init&gt;(suffix:String,numShards:Int,compression:org.apache.beam.sdk.io.Compression,header:Option[String],footer:Option[String],shardNameTemplate:String):com.spotify.scio.io.TextIO.WriteParam"></a><a id="&lt;init&gt;:WriteParam"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/io/TextIO$$WriteParam.html#&lt;init&gt;(suffix:String,numShards:Int,compression:org.apache.beam.sdk.io.Compression):com.spotify.scio.io.TextIO.WriteParam" title="Permalink">
+      <a href="../../../../com/spotify/scio/io/TextIO$$WriteParam.html#&lt;init&gt;(suffix:String,numShards:Int,compression:org.apache.beam.sdk.io.Compression,header:Option[String],footer:Option[String],shardNameTemplate:String):com.spotify.scio.io.TextIO.WriteParam" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -249,7 +249,7 @@
         <span class="kind">new</span>
       </span>
       <span class="symbol">
-        <span class="name">WriteParam</span><span class="params">(<span name="suffix">suffix: <span class="extype" name="scala.Predef.String">String</span> = <span class="symbol"><span class="name"><a href="TextIO$$WriteParam$.html">WriteParam.DefaultSuffix</a></span></span></span>, <span name="numShards">numShards: <span class="extype" name="scala.Int">Int</span> = <span class="symbol"><span class="name"><a href="TextIO$$WriteParam$.html">WriteParam.DefaultNumShards</a></span></span></span>, <span name="compression">compression: <span class="extype" name="org.apache.beam.sdk.io.Compression">Compression</span> = <span class="symbol"><span class="name"><a href="TextIO$$WriteParam$.html">WriteParam.DefaultCompression</a></span></span></span>)</span>
+        <span class="name">WriteParam</span><span class="params">(<span name="suffix">suffix: <span class="extype" name="scala.Predef.String">String</span> = <span class="symbol"><span class="name"><a href="TextIO$$WriteParam$.html">WriteParam.DefaultSuffix</a></span></span></span>, <span name="numShards">numShards: <span class="extype" name="scala.Int">Int</span> = <span class="symbol"><span class="name"><a href="TextIO$$WriteParam$.html">WriteParam.DefaultNumShards</a></span></span></span>, <span name="compression">compression: <span class="extype" name="org.apache.beam.sdk.io.Compression">Compression</span> = <span class="symbol"><span class="name"><a href="TextIO$$WriteParam$.html">WriteParam.DefaultCompression</a></span></span></span>, <span name="header">header: <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="scala.Predef.String">String</span>] = <span class="symbol"><span class="name"><a href="TextIO$$WriteParam$.html">WriteParam.DefaultHeader</a></span></span></span>, <span name="footer">footer: <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="scala.Predef.String">String</span>] = <span class="symbol"><span class="name"><a href="TextIO$$WriteParam$.html">WriteParam.DefaultFooter</a></span></span></span>, <span name="shardNameTemplate">shardNameTemplate: <span class="extype" name="scala.Predef.String">String</span> = <span class="symbol"><span class="name"><a href="TextIO$$WriteParam$.html">WriteParam.DefaultShardNameTemplate</a></span></span></span>)</span>
       </span>
       
       
@@ -405,6 +405,22 @@
     </span>)</span>
               
         </dd></dl></div>
+    </li><li name="com.spotify.scio.io.TextIO.WriteParam#footer" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="footer:Option[String]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/io/TextIO$$WriteParam.html#footer:Option[String]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">val</span>
+      </span>
+      <span class="symbol">
+        <span class="name">footer</span><span class="result">: <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>
+      </span>
+      
+      
     </li><li name="scala.AnyRef#getClass" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="getClass():Class[_]"></a>
       <span class="permalink">
@@ -424,6 +440,22 @@
                 <span class="name">@native</span><span class="args">()</span>
               
         </dd></dl></div>
+    </li><li name="com.spotify.scio.io.TextIO.WriteParam#header" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="header:Option[String]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/io/TextIO$$WriteParam.html#header:Option[String]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">val</span>
+      </span>
+      <span class="symbol">
+        <span class="name">header</span><span class="result">: <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>
+      </span>
+      
+      
     </li><li name="scala.Any#isInstanceOf" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="isInstanceOf[T0]:Boolean"></a>
       <span class="permalink">
@@ -507,6 +539,22 @@
       </span>
       <span class="symbol">
         <span class="name">numShards</span><span class="result">: <span class="extype" name="scala.Int">Int</span></span>
+      </span>
+      
+      
+    </li><li name="com.spotify.scio.io.TextIO.WriteParam#shardNameTemplate" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="shardNameTemplate:String"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/io/TextIO$$WriteParam.html#shardNameTemplate:String" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">val</span>
+      </span>
+      <span class="symbol">
+        <span class="name">shardNameTemplate</span><span class="result">: <span class="extype" name="scala.Predef.String">String</span></span>
       </span>
       
       

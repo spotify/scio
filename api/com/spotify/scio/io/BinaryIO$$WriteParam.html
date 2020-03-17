@@ -178,7 +178,7 @@
         <span class="kind">case class</span>
       </span>
       <span class="symbol">
-        <span class="name">WriteParam</span><span class="params">(<span name="suffix">suffix: <span class="extype" name="scala.Predef.String">String</span> = <span class="symbol"><span class="name"><a href="BinaryIO$$WriteParam$.html">WriteParam.DefaultSuffix</a></span></span></span>, <span name="numShards">numShards: <span class="extype" name="scala.Int">Int</span> = <span class="symbol"><span class="name"><a href="BinaryIO$$WriteParam$.html">WriteParam.DefaultNumShards</a></span></span></span>, <span name="compression">compression: <span class="extype" name="org.apache.beam.sdk.io.Compression">Compression</span> = <span class="symbol"><span class="name"><a href="BinaryIO$$WriteParam$.html">WriteParam.DefaultCompression</a></span></span></span>, <span name="header">header: <span class="extype" name="scala.Array">Array</span>[<span class="extype" name="scala.Byte">Byte</span>] = <span class="symbol"><span class="name"><a href="BinaryIO$$WriteParam$.html">WriteParam.DefaultHeader</a></span></span></span>, <span name="footer">footer: <span class="extype" name="scala.Array">Array</span>[<span class="extype" name="scala.Byte">Byte</span>] = <span class="symbol"><span class="name"><a href="BinaryIO$$WriteParam$.html">WriteParam.DefaultFooter</a></span></span></span>, <span name="framePrefix">framePrefix: (<span class="extype" name="scala.Array">Array</span>[<span class="extype" name="scala.Byte">Byte</span>]) ⇒ <span class="extype" name="scala.Array">Array</span>[<span class="extype" name="scala.Byte">Byte</span>] = <span class="symbol"><span class="name"><a href="BinaryIO$$WriteParam$.html">WriteParam.DefaultFramePrefix</a></span></span></span>, <span name="frameSuffix">frameSuffix: (<span class="extype" name="scala.Array">Array</span>[<span class="extype" name="scala.Byte">Byte</span>]) ⇒ <span class="extype" name="scala.Array">Array</span>[<span class="extype" name="scala.Byte">Byte</span>] = <span class="symbol"><span class="name"><a href="BinaryIO$$WriteParam$.html">WriteParam.DefaultFrameSuffix</a></span></span></span>)</span><span class="result"> extends <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+        <span class="name">WriteParam</span><span class="params">(<span name="prefix">prefix: <span class="extype" name="scala.Predef.String">String</span> = <span class="symbol"><span class="name"><a href="BinaryIO$$WriteParam$.html">WriteParam.DefaultPrefix</a></span></span></span>, <span name="suffix">suffix: <span class="extype" name="scala.Predef.String">String</span> = <span class="symbol"><span class="name"><a href="BinaryIO$$WriteParam$.html">WriteParam.DefaultSuffix</a></span></span></span>, <span name="numShards">numShards: <span class="extype" name="scala.Int">Int</span> = <span class="symbol"><span class="name"><a href="BinaryIO$$WriteParam$.html">WriteParam.DefaultNumShards</a></span></span></span>, <span name="compression">compression: <span class="extype" name="org.apache.beam.sdk.io.Compression">Compression</span> = <span class="symbol"><span class="name"><a href="BinaryIO$$WriteParam$.html">WriteParam.DefaultCompression</a></span></span></span>, <span name="header">header: <span class="extype" name="scala.Array">Array</span>[<span class="extype" name="scala.Byte">Byte</span>] = <span class="symbol"><span class="name"><a href="BinaryIO$$WriteParam$.html">WriteParam.DefaultHeader</a></span></span></span>, <span name="footer">footer: <span class="extype" name="scala.Array">Array</span>[<span class="extype" name="scala.Byte">Byte</span>] = <span class="symbol"><span class="name"><a href="BinaryIO$$WriteParam$.html">WriteParam.DefaultFooter</a></span></span></span>, <span name="framePrefix">framePrefix: (<span class="extype" name="scala.Array">Array</span>[<span class="extype" name="scala.Byte">Byte</span>]) ⇒ <span class="extype" name="scala.Array">Array</span>[<span class="extype" name="scala.Byte">Byte</span>] = <span class="symbol"><span class="name"><a href="BinaryIO$$WriteParam$.html">WriteParam.DefaultFramePrefix</a></span></span></span>, <span name="frameSuffix">frameSuffix: (<span class="extype" name="scala.Array">Array</span>[<span class="extype" name="scala.Byte">Byte</span>]) ⇒ <span class="extype" name="scala.Array">Array</span>[<span class="extype" name="scala.Byte">Byte</span>] = <span class="symbol"><span class="name"><a href="BinaryIO$$WriteParam$.html">WriteParam.DefaultFrameSuffix</a></span></span></span>, <span name="fileNaming">fileNaming: <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="org.apache.beam.sdk.io.FileIO.Write.FileNaming">FileNaming</span>] = <span class="symbol"><span class="name"><a href="BinaryIO$$WriteParam$.html">WriteParam.DefaultFileNaming</a></span></span></span>)</span><span class="result"> extends <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
       </span>
       </h4>
 
@@ -234,9 +234,9 @@
         <div id="constructors" class="members">
               <h3>Instance Constructors</h3>
               <ol><li name="com.spotify.scio.io.BinaryIO.WriteParam#&lt;init&gt;" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="&lt;init&gt;(suffix:String,numShards:Int,compression:org.apache.beam.sdk.io.Compression,header:Array[Byte],footer:Array[Byte],framePrefix:Array[Byte]=&gt;Array[Byte],frameSuffix:Array[Byte]=&gt;Array[Byte]):com.spotify.scio.io.BinaryIO.WriteParam"></a><a id="&lt;init&gt;:WriteParam"></a>
+      <a id="&lt;init&gt;(prefix:String,suffix:String,numShards:Int,compression:org.apache.beam.sdk.io.Compression,header:Array[Byte],footer:Array[Byte],framePrefix:Array[Byte]=&gt;Array[Byte],frameSuffix:Array[Byte]=&gt;Array[Byte],fileNaming:Option[org.apache.beam.sdk.io.FileIO.Write.FileNaming]):com.spotify.scio.io.BinaryIO.WriteParam"></a><a id="&lt;init&gt;:WriteParam"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/io/BinaryIO$$WriteParam.html#&lt;init&gt;(suffix:String,numShards:Int,compression:org.apache.beam.sdk.io.Compression,header:Array[Byte],footer:Array[Byte],framePrefix:Array[Byte]=&gt;Array[Byte],frameSuffix:Array[Byte]=&gt;Array[Byte]):com.spotify.scio.io.BinaryIO.WriteParam" title="Permalink">
+      <a href="../../../../com/spotify/scio/io/BinaryIO$$WriteParam.html#&lt;init&gt;(prefix:String,suffix:String,numShards:Int,compression:org.apache.beam.sdk.io.Compression,header:Array[Byte],footer:Array[Byte],framePrefix:Array[Byte]=&gt;Array[Byte],frameSuffix:Array[Byte]=&gt;Array[Byte],fileNaming:Option[org.apache.beam.sdk.io.FileIO.Write.FileNaming]):com.spotify.scio.io.BinaryIO.WriteParam" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -245,7 +245,7 @@
         <span class="kind">new</span>
       </span>
       <span class="symbol">
-        <span class="name">WriteParam</span><span class="params">(<span name="suffix">suffix: <span class="extype" name="scala.Predef.String">String</span> = <span class="symbol"><span class="name"><a href="BinaryIO$$WriteParam$.html">WriteParam.DefaultSuffix</a></span></span></span>, <span name="numShards">numShards: <span class="extype" name="scala.Int">Int</span> = <span class="symbol"><span class="name"><a href="BinaryIO$$WriteParam$.html">WriteParam.DefaultNumShards</a></span></span></span>, <span name="compression">compression: <span class="extype" name="org.apache.beam.sdk.io.Compression">Compression</span> = <span class="symbol"><span class="name"><a href="BinaryIO$$WriteParam$.html">WriteParam.DefaultCompression</a></span></span></span>, <span name="header">header: <span class="extype" name="scala.Array">Array</span>[<span class="extype" name="scala.Byte">Byte</span>] = <span class="symbol"><span class="name"><a href="BinaryIO$$WriteParam$.html">WriteParam.DefaultHeader</a></span></span></span>, <span name="footer">footer: <span class="extype" name="scala.Array">Array</span>[<span class="extype" name="scala.Byte">Byte</span>] = <span class="symbol"><span class="name"><a href="BinaryIO$$WriteParam$.html">WriteParam.DefaultFooter</a></span></span></span>, <span name="framePrefix">framePrefix: (<span class="extype" name="scala.Array">Array</span>[<span class="extype" name="scala.Byte">Byte</span>]) ⇒ <span class="extype" name="scala.Array">Array</span>[<span class="extype" name="scala.Byte">Byte</span>] = <span class="symbol"><span class="name"><a href="BinaryIO$$WriteParam$.html">WriteParam.DefaultFramePrefix</a></span></span></span>, <span name="frameSuffix">frameSuffix: (<span class="extype" name="scala.Array">Array</span>[<span class="extype" name="scala.Byte">Byte</span>]) ⇒ <span class="extype" name="scala.Array">Array</span>[<span class="extype" name="scala.Byte">Byte</span>] = <span class="symbol"><span class="name"><a href="BinaryIO$$WriteParam$.html">WriteParam.DefaultFrameSuffix</a></span></span></span>)</span>
+        <span class="name">WriteParam</span><span class="params">(<span name="prefix">prefix: <span class="extype" name="scala.Predef.String">String</span> = <span class="symbol"><span class="name"><a href="BinaryIO$$WriteParam$.html">WriteParam.DefaultPrefix</a></span></span></span>, <span name="suffix">suffix: <span class="extype" name="scala.Predef.String">String</span> = <span class="symbol"><span class="name"><a href="BinaryIO$$WriteParam$.html">WriteParam.DefaultSuffix</a></span></span></span>, <span name="numShards">numShards: <span class="extype" name="scala.Int">Int</span> = <span class="symbol"><span class="name"><a href="BinaryIO$$WriteParam$.html">WriteParam.DefaultNumShards</a></span></span></span>, <span name="compression">compression: <span class="extype" name="org.apache.beam.sdk.io.Compression">Compression</span> = <span class="symbol"><span class="name"><a href="BinaryIO$$WriteParam$.html">WriteParam.DefaultCompression</a></span></span></span>, <span name="header">header: <span class="extype" name="scala.Array">Array</span>[<span class="extype" name="scala.Byte">Byte</span>] = <span class="symbol"><span class="name"><a href="BinaryIO$$WriteParam$.html">WriteParam.DefaultHeader</a></span></span></span>, <span name="footer">footer: <span class="extype" name="scala.Array">Array</span>[<span class="extype" name="scala.Byte">Byte</span>] = <span class="symbol"><span class="name"><a href="BinaryIO$$WriteParam$.html">WriteParam.DefaultFooter</a></span></span></span>, <span name="framePrefix">framePrefix: (<span class="extype" name="scala.Array">Array</span>[<span class="extype" name="scala.Byte">Byte</span>]) ⇒ <span class="extype" name="scala.Array">Array</span>[<span class="extype" name="scala.Byte">Byte</span>] = <span class="symbol"><span class="name"><a href="BinaryIO$$WriteParam$.html">WriteParam.DefaultFramePrefix</a></span></span></span>, <span name="frameSuffix">frameSuffix: (<span class="extype" name="scala.Array">Array</span>[<span class="extype" name="scala.Byte">Byte</span>]) ⇒ <span class="extype" name="scala.Array">Array</span>[<span class="extype" name="scala.Byte">Byte</span>] = <span class="symbol"><span class="name"><a href="BinaryIO$$WriteParam$.html">WriteParam.DefaultFrameSuffix</a></span></span></span>, <span name="fileNaming">fileNaming: <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="org.apache.beam.sdk.io.FileIO.Write.FileNaming">FileNaming</span>] = <span class="symbol"><span class="name"><a href="BinaryIO$$WriteParam$.html">WriteParam.DefaultFileNaming</a></span></span></span>)</span>
       </span>
       
       
@@ -379,6 +379,22 @@
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
+    </li><li name="com.spotify.scio.io.BinaryIO.WriteParam#fileNaming" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="fileNaming:Option[org.apache.beam.sdk.io.FileIO.Write.FileNaming]"></a><a id="fileNaming:Option[FileNaming]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/io/BinaryIO$$WriteParam.html#fileNaming:Option[org.apache.beam.sdk.io.FileIO.Write.FileNaming]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">val</span>
+      </span>
+      <span class="symbol">
+        <span class="name">fileNaming</span><span class="result">: <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="org.apache.beam.sdk.io.FileIO.Write.FileNaming">FileNaming</span>]</span>
+      </span>
+      
+      
     </li><li name="scala.AnyRef#finalize" visbl="prt" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="finalize():Unit"></a>
       <span class="permalink">
@@ -567,6 +583,22 @@
       </span>
       <span class="symbol">
         <span class="name">numShards</span><span class="result">: <span class="extype" name="scala.Int">Int</span></span>
+      </span>
+      
+      
+    </li><li name="com.spotify.scio.io.BinaryIO.WriteParam#prefix" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="prefix:String"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/io/BinaryIO$$WriteParam.html#prefix:String" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">val</span>
+      </span>
+      <span class="symbol">
+        <span class="name">prefix</span><span class="result">: <span class="extype" name="scala.Predef.String">String</span></span>
       </span>
       
       

@@ -604,7 +604,11 @@
         <span class="name">tap</span><span class="params">(<span name="params">params: <a href="#ReadP=com.spotify.scio.parquet.tensorflow.ParquetExampleIO.ReadParam" class="extmbr" name="com.spotify.scio.parquet.tensorflow.ParquetExampleIO.ReadP">ReadP</a></span>)</span><span class="result">: <a href="../../io/Tap.html" class="extype" name="com.spotify.scio.io.Tap">Tap</a>[<span class="extype" name="org.tensorflow.example.Example">Example</span>]</span>
       </span>
       
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="" class="extype" name="com.spotify.scio.parquet.tensorflow.ParquetExampleIO">ParquetExampleIO</a> → <a href="../../io/ScioIO.html" class="extype" name="com.spotify.scio.io.ScioIO">ScioIO</a></dd></dl></div>
+      <p class="shortcomment cmt">Write options also return a <code>ClosedTap</code>.</p><div class="fullcomment"><div class="comment cmt"><p>Write options also return a <code>ClosedTap</code>. Once the job completes you can open the <code>Tap</code>.
+Tap abstracts away the logic of reading the dataset directly as an Iterator[T] or
+re-opening it in another ScioContext. The Future is complete once the job finishes.
+This can be used to do light weight pipeline orchestration e.g. WordCountOrchestration.scala.
+</p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="" class="extype" name="com.spotify.scio.parquet.tensorflow.ParquetExampleIO">ParquetExampleIO</a> → <a href="../../io/ScioIO.html" class="extype" name="com.spotify.scio.io.ScioIO">ScioIO</a></dd></dl></div>
     </li><li name="com.spotify.scio.parquet.tensorflow.ParquetExampleIO#tapT" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="tapT:com.spotify.scio.io.TapT.Aux[org.tensorflow.example.Example,org.tensorflow.example.Example]"></a><a id="tapT:Aux[Example,Example]"></a>
       <span class="permalink">
