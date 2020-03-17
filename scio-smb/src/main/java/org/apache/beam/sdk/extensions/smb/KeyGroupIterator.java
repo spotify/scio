@@ -17,10 +17,14 @@
 
 package org.apache.beam.sdk.extensions.smb;
 
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.function.Function;
+import java.util.stream.Collectors;
+
 import org.apache.beam.sdk.values.KV;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Iterators;
@@ -28,15 +32,27 @@ import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.PeekingI
 
 // FIXME: current limitation: must exhaust Iterator<ValueT> before starting the next key group
 class KeyGroupIterator<KeyT, ValueT> implements Iterator<KV<KeyT, Iterator<ValueT>>> {
-  private final PeekingIterator<ValueT> iterator;
+  private final List<PeekingIterator<ValueT>> iterators;
   private final Function<ValueT, KeyT> keyFn;
   private final Comparator<KeyT> keyComparator;
 
   private Iterator<ValueT> currentGroup = null;
+  private int currentIterator = 0;
 
+  // FIXME: remove
   KeyGroupIterator(
       Iterator<ValueT> iterator, Function<ValueT, KeyT> keyFn, Comparator<KeyT> keyComparator) {
-    this.iterator = Iterators.peekingIterator(iterator);
+    this.iterators = Collections.singletonList(Iterators.peekingIterator(iterator));
+    this.keyFn = keyFn;
+    this.keyComparator = keyComparator;
+  }
+
+  KeyGroupIterator(
+      List<Iterator<ValueT>> iterators, Function<ValueT, KeyT> keyFn, Comparator<KeyT> keyComparator) {
+    this.iterators = iterators
+        .stream()
+        .map(Iterators::peekingIterator)
+        .collect(Collectors.toList());
     this.keyFn = keyFn;
     this.keyComparator = keyComparator;
   }
@@ -44,26 +60,43 @@ class KeyGroupIterator<KeyT, ValueT> implements Iterator<KV<KeyT, Iterator<Value
   @Override
   public boolean hasNext() {
     checkState();
-    return iterator.hasNext();
+    return iterators.stream().anyMatch(PeekingIterator::hasNext);
+  }
+
+  private KeyT min() {
+    checkState();
+
+    return iterators.stream()
+        .filter(Iterator::hasNext)
+        .map(it -> keyFn.apply(it.peek()))
+        .min(keyComparator)
+        .get();
   }
 
   @Override
   public KV<KeyT, Iterator<ValueT>> next() {
     checkState();
-    KeyT k = keyFn.apply(iterator.peek());
+    KeyT k = min();
+
+    currentIterator = 0;
 
     Iterator<ValueT> vi =
         new Iterator<ValueT>() {
           @Override
           public boolean hasNext() {
-            boolean r;
-            if (iterator.hasNext()) {
-              ValueT nextV = iterator.peek();
-              KeyT nextK = keyFn.apply(nextV);
-              r = keyComparator.compare(k, nextK) == 0;
-            } else {
-              r = false;
+            boolean r = false;
+            PeekingIterator<ValueT> currentIt;
+            while (currentIterator < iterators.size() && !r) {
+              currentIt = iterators.get(currentIterator);
+              if (currentIt.hasNext()) {
+                KeyT nextK = keyFn.apply(currentIt.peek());
+                r = keyComparator.compare(k, nextK) == 0;
+              }
+              if (!r) {
+                currentIterator++;
+              }
             }
+
             if (!r) {
               currentGroup = null;
             }
@@ -72,13 +105,25 @@ class KeyGroupIterator<KeyT, ValueT> implements Iterator<KV<KeyT, Iterator<Value
 
           @Override
           public ValueT next() {
-            ValueT nextV = iterator.peek();
+            if (currentIterator >= iterators.size()) {
+              throw new NoSuchElementException();
+            }
+            PeekingIterator<ValueT> currentIt = iterators.get(currentIterator);
+            ValueT nextV = currentIt.peek();
             KeyT nextK = keyFn.apply(nextV);
+
+            while (currentIterator < iterators.size() && keyComparator.compare(k, nextK) != 0) {
+              currentIterator++;
+              currentIt = iterators.get(currentIterator);
+              nextV = currentIt.peek();
+              nextK = keyFn.apply(nextV);
+            }
+
             if (keyComparator.compare(k, nextK) != 0) {
               currentGroup = null;
               throw new NoSuchElementException();
             }
-            iterator.next();
+            currentIt.next();
             return nextV;
           }
         };
