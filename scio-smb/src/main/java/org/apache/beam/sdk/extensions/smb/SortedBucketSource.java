@@ -30,6 +30,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -283,28 +284,24 @@ public class SortedBucketSource<FinalKeyT>
         final Iterator<Map.Entry<TupleTag, KV<byte[], Iterator<?>>>> nextKeyGroupsIt =
             nextKeyGroups.entrySet().iterator();
         final List<Iterable<?>> valueMap = new ArrayList<>();
+        final KeyGroupMetrics keyGroupMetrics =
+            new KeyGroupMetrics(elementsRead, keyGroupSize, resultSchema.size());
         for (int i = 0; i < resultSchema.size(); i++) {
-          valueMap.add(new ArrayList<>());
+          valueMap.add(new LazyIterable<>(keyGroupMetrics));
         }
 
-        int keyGroupCount = 0;
         while (nextKeyGroupsIt.hasNext()) {
           final Map.Entry<TupleTag, KV<byte[], Iterator<?>>> entry = nextKeyGroupsIt.next();
           if (keyComparator.compare(entry, minKeyEntry) == 0) {
             int index = resultSchema.getIndex(entry.getKey());
             @SuppressWarnings("unchecked")
-            final List<Object> values = (List<Object>) valueMap.get(index);
-            // TODO: this exhausts everything from the "lazy" iterator and can be expensive.
-            // To fix we have to make the underlying Reader range aware so that it's safe to
-            // re-iterate or stop without exhausting remaining elements in the value group.
-            entry.getValue().getValue().forEachRemaining(values::add);
+            final LazyIterable<Object> values = (LazyIterable<Object>) valueMap.get(index);
+            @SuppressWarnings("unchecked")
+            final Iterator<Object> it = (Iterator<Object>) entry.getValue().getValue();
+            values.set(it);
             nextKeyGroupsIt.remove();
-            keyGroupCount += values.size();
           }
         }
-
-        keyGroupSize.update(keyGroupCount);
-        elementsRead.inc(keyGroupCount);
 
         final KV<byte[], CoGbkResult> mergedKeyGroup =
             KV.of(
@@ -508,6 +505,118 @@ public class SortedBucketSource<FinalKeyT>
                   MapCoder.of(ResourceIdCoder.of(), SerializableCoder.of(DirectoryMetadata.class)))
               .decode(inStream);
       this.canonicalMetadata = NullableCoder.of(new BucketMetadataCoder<K, V>()).decode(inStream);
+    }
+  }
+
+  /** Lazily wraps an Iterator in an Iterable and populates a buffer in the first iteration. */
+  static class LazyIterable<T> implements Iterable<T> {
+    private final KeyGroupMetrics metrics;
+    private Iterator<T> iterator = null;
+    private List<T> buffer = null;
+    private boolean reiterate = false; // when iterator() is called again
+    private boolean exhausted = false; // when the first iterator() has reached its last element
+    private int count = 0;
+
+    private LazyIterable(KeyGroupMetrics metrics) {
+      this.metrics = metrics;
+    }
+
+    private void set(Iterator<T> iterator) {
+      Preconditions.checkState(this.iterator == null, "Iterator already set");
+      this.iterator = iterator;
+    }
+
+    @Override
+    public Iterator<T> iterator() {
+      if (reiterate) {
+        // the first iteration is still in progress and the buffer is not fully populated yet
+        Preconditions.checkState(exhausted, "Previous Iterator has not exhausted");
+        Preconditions.checkNotNull(buffer, "No buffer, did you call iteratorOnce() before");
+        return buffer.iterator();
+      } else {
+        reiterate = true;
+        buffer = new ArrayList<>();
+        return new LazyIterator(iterator == null ? Collections.emptyIterator() : iterator);
+      }
+    }
+
+    Iterator<T> iteratorOnce() {
+      Preconditions.checkState(!reiterate, "Iterator already started");
+      reiterate = true;
+      return new LazyIterator(iterator == null ? Collections.emptyIterator() : iterator);
+    }
+
+    // exhaust unconsumed elements so that KeyGroupIterator can proceed properly
+    void exhaust() {
+      if (iterator != null && !exhausted) {
+        iterator.forEachRemaining(x -> count++);
+        metrics.report(count);
+        exhausted = true;
+      }
+    }
+
+    // a lazy wrapper that populates a buffer while iterating and reports metrics at the end
+    private class LazyIterator implements Iterator<T> {
+      private final Iterator<T> inner;
+      private boolean reported = false;
+
+      private LazyIterator(Iterator<T> inner) {
+        this.inner = inner;
+      }
+
+      @Override
+      public boolean hasNext() {
+        boolean hasNext = inner.hasNext();
+        if (!hasNext && !reported) {
+          metrics.report(count);
+          reported = true;
+          exhausted = true;
+        }
+        return hasNext;
+      }
+
+      @Override
+      public T next() {
+        try {
+          T value = inner.next();
+          if (buffer != null) {
+            buffer.add(value);
+          }
+          count++;
+          return value;
+        } catch (NoSuchElementException e) {
+          if (!reported) {
+            metrics.report(count);
+            reported = true;
+            exhausted = true;
+          }
+          throw e;
+        }
+      }
+    };
+  }
+
+  /** Allows key group metrics to be reported lazily by LazyIterable. */
+  private static class KeyGroupMetrics {
+    private final Counter elementsRead;
+    private final Distribution keyGroupSize;
+    private int numSourcesPending;
+    private int keyGroupCount = 0;
+
+    private KeyGroupMetrics(
+        Counter elementsRead, Distribution keyGroupSize, int numSourcesPending) {
+      this.elementsRead = elementsRead;
+      this.keyGroupSize = keyGroupSize;
+      this.numSourcesPending = numSourcesPending;
+    }
+
+    public void report(int count) {
+      elementsRead.inc(count);
+      numSourcesPending--;
+      keyGroupCount += count;
+      if (numSourcesPending == 0) {
+        keyGroupSize.update(keyGroupCount);
+      }
     }
   }
 }

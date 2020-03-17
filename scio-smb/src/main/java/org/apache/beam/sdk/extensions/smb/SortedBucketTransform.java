@@ -267,6 +267,13 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
             } catch (Exception e) {
               throw new RuntimeException("Failed to decode and merge key group", e);
             }
+
+            // exhaust any unconsumed elements in the underlying LazyIterable so that
+            // KeyGroupIterator can proceed properly
+            CoGbkResult result = mergedKeyGroup.getValue();
+            for (TupleTag<?> tupleTag : result.getSchema().getTupleTagList().getAll()) {
+              ((SortedBucketSource.LazyIterable<?>) result.getAll(tupleTag)).exhaust();
+            }
           },
           elementsRead,
           keyGroupSize);
