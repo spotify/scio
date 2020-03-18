@@ -38,14 +38,6 @@ class KeyGroupIterator<KeyT, ValueT> implements Iterator<KV<KeyT, Iterator<Value
 
   private Iterator<ValueT> currentGroup = null;
 
-  // FIXME: remove
-  KeyGroupIterator(
-      Iterator<ValueT> iterator, Function<ValueT, KeyT> keyFn, Comparator<KeyT> keyComparator) {
-    this.iterators = Collections.singletonList(Iterators.peekingIterator(iterator));
-    this.keyFn = keyFn;
-    this.keyComparator = keyComparator;
-  }
-
   KeyGroupIterator(
       List<Iterator<ValueT>> iterators,
       Function<ValueT, KeyT> keyFn,
