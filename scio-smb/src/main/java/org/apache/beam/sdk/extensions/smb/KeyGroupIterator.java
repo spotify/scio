@@ -63,8 +63,6 @@ class KeyGroupIterator<KeyT, ValueT> implements Iterator<KV<KeyT, Iterator<Value
   }
 
   private KeyT min() {
-    checkState();
-
     return iterators.stream()
         .filter(Iterator::hasNext)
         .map(it -> keyFn.apply(it.peek()))
@@ -83,23 +81,20 @@ class KeyGroupIterator<KeyT, ValueT> implements Iterator<KV<KeyT, Iterator<Value
 
           @Override
           public boolean hasNext() {
-            boolean r = false;
             PeekingIterator<ValueT> currentIt;
-            while (currentIterator < iterators.size() && !r) {
+            while (currentIterator < iterators.size()) {
               currentIt = iterators.get(currentIterator);
               if (currentIt.hasNext()) {
                 KeyT nextK = keyFn.apply(currentIt.peek());
-                r = keyComparator.compare(k, nextK) == 0;
+                if (keyComparator.compare(k, nextK) == 0) {
+                  return true;
+                }
               }
-              if (!r) {
-                currentIterator++;
-              }
+              currentIterator++;
             }
 
-            if (!r) {
-              currentGroup = null;
-            }
-            return r;
+            currentGroup = null;
+            return false;
           }
 
           @Override
