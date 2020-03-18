@@ -601,6 +601,8 @@ lazy val `scio-bigquery`: Project = project
   .settings(
     description := "Scio add-on for Google BigQuery",
     libraryDependencies ++= Seq(
+      //this dep seems to be required only when compilling with 2.11
+      "com.github.ben-manes.caffeine" % "caffeine" % caffeineVersion % "provided",
       "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamVendorVersion,
       "com.twitter" %% "chill" % chillVersion,
       "com.google.protobuf" % "protobuf-java" % protobufVersion,
