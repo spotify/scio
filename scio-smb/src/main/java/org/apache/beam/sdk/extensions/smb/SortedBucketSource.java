@@ -32,7 +32,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.apache.beam.sdk.coders.CannotProvideCoderException;
@@ -68,8 +67,6 @@ import org.apache.beam.sdk.values.PCollection;
 import org.apache.beam.sdk.values.TupleTag;
 import org.apache.beam.sdk.values.TupleTagList;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Iterators;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.UnmodifiableIterator;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.primitives.UnsignedBytes;
 
 /**
@@ -98,8 +95,7 @@ import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.primitives.Unsig
 public class SortedBucketSource<FinalKeyT>
     extends PTransform<PBegin, PCollection<KV<FinalKeyT, CoGbkResult>>> {
 
-  private static final Comparator<byte[]> bytesComparator =
-      UnsignedBytes.lexicographicalComparator();
+  private static final Comparator<byte[]> bytesComparator = UnsignedBytes.lexicographicalComparator();
 
   private final Class<FinalKeyT> finalKeyClass;
   private final transient List<BucketedInput<?, ?>> sources;
