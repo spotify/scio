@@ -40,6 +40,17 @@ trait MultiJoin extends Serializable {
 
   def toOptions[T](xs: Iterator[T]): Iterator[Option[T]] = if (xs.isEmpty) Iterator(None) else xs.map(Option(_))
 
+  def cogroup[KEY: Coder, A: Coder](l: Seq[SCollection[(KEY, A)]]): SCollection[(KEY, Iterable[A])] = {
+    val tags = List.fill(l.length)({new TupleTag[A]()})
+    val keyed = l.tail.zip(tags.tail).foldLeft(KeyedPCollectionTuple
+        .of(tags.head, l.head.toKV.internal))({case (kt, (collect, tag)) => kt.and(tag, collect.toKV.internal)})
+        .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
+    l.head.context.wrap(keyed).withName(tfName).map { kv =>
+      val (key, result) = (kv.getKey, kv.getValue)
+      (key, tags.flatMap(tag => result.getAll(tag).asScala))
+    }
+  }
+
   def cogroup[KEY: Coder, A: Coder, B: Coder](a: SCollection[(KEY, A)], b: SCollection[(KEY, B)]): SCollection[(KEY, (Iterable[A], Iterable[B]))] = {
     val (tagA, tagB) = (new TupleTag[A](), new TupleTag[B]())
     val keyed = KeyedPCollectionTuple
