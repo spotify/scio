@@ -94,7 +94,7 @@ private object ScioMatchers {
  * Trait with ScalaTest [[org.scalatest.matchers.Matcher Matcher]]s for
  * [[com.spotify.scio.values.SCollection SCollection]]s.
  */
-trait SCollectionMatchers {
+trait SCollectionMatchers extends EqInstances {
 
   sealed trait MatcherBuilder[T] {
     _: Matcher[T] =>

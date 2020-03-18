@@ -33,8 +33,6 @@ import scala.reflect.ClassTag
  */
 trait BigtableMatchers extends SCollectionMatchers {
 
-  import EqInstances._
-
   type BTRow = (ByteString, Iterable[Mutation])
   type BTCollection = SCollection[BTRow]
 
