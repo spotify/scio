@@ -97,6 +97,7 @@ public class JsonFileOperations extends FileOperations<TableRow> {
       reader =
           new BufferedReader(
               new InputStreamReader(Channels.newInputStream(channel), Charset.defaultCharset()));
+      next = reader.readLine();
     }
 
     @Override
@@ -104,12 +105,13 @@ public class JsonFileOperations extends FileOperations<TableRow> {
       if (next == null) {
         throw new NoSuchElementException();
       }
-      return objectMapper.readValue(next, TableRow.class);
+      String curr = next;
+      next = reader.readLine();
+      return objectMapper.readValue(curr, TableRow.class);
     }
 
     @Override
     public boolean hasNextElement() throws IOException {
-      next = reader.readLine();
       return next != null;
     }
 

@@ -32,7 +32,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.apache.beam.sdk.coders.CannotProvideCoderException;
@@ -68,8 +67,6 @@ import org.apache.beam.sdk.values.PCollection;
 import org.apache.beam.sdk.values.TupleTag;
 import org.apache.beam.sdk.values.TupleTagList;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Iterators;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.UnmodifiableIterator;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.primitives.UnsignedBytes;
 
 /**
@@ -455,14 +452,7 @@ public class SortedBucketSource<FinalKeyT>
             }
           });
 
-      final Function<V, byte[]> keyBytesFn = canonicalMetadata::getKeyBytes;
-
-      // Merge-sort key-values from shards
-      final UnmodifiableIterator<V> iterator =
-          Iterators.mergeSorted(
-              iterators,
-              (o1, o2) -> bytesComparator.compare(keyBytesFn.apply(o1), keyBytesFn.apply(o2)));
-      return new KeyGroupIterator<>(iterator, keyBytesFn, bytesComparator);
+      return new KeyGroupIterator<>(iterators, canonicalMetadata::getKeyBytes, bytesComparator);
     }
 
     @Override

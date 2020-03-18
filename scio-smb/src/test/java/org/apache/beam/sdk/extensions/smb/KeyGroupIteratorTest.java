@@ -24,6 +24,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.function.Function;
+import java.util.stream.Collectors;
+
 import org.apache.beam.sdk.values.KV;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Iterators;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Lists;
@@ -39,7 +41,8 @@ public class KeyGroupIteratorTest {
   @Test
   public void testEmptyIterator() {
     KeyGroupIterator<String, String> iterator =
-        new KeyGroupIterator<>(Collections.emptyIterator(), keyFn, keyComparator);
+        new KeyGroupIterator<>(
+            Collections.singletonList(Collections.emptyIterator()), keyFn, keyComparator);
     Assert.assertFalse(iterator.hasNext());
     Assert.assertThrows(NoSuchElementException.class, iterator::next);
   }
@@ -47,7 +50,8 @@ public class KeyGroupIteratorTest {
   @Test
   public void testSingleKeySingleValue() {
     KeyGroupIterator<String, String> iterator =
-        new KeyGroupIterator<>(Iterators.forArray("a1"), keyFn, keyComparator);
+        new KeyGroupIterator<>(
+            Collections.singletonList(Iterators.forArray("a1")), keyFn, keyComparator);
 
     Assert.assertTrue(iterator.hasNext());
     KV<String, Iterator<String>> kv = iterator.next();
@@ -66,7 +70,8 @@ public class KeyGroupIteratorTest {
   @Test
   public void testSingleKeyMultiValue() {
     KeyGroupIterator<String, String> iterator =
-        new KeyGroupIterator<>(Iterators.forArray("a1", "a2"), keyFn, keyComparator);
+        new KeyGroupIterator<>(
+            Collections.singletonList(Iterators.forArray("a1", "a2")), keyFn, keyComparator);
 
     Assert.assertTrue(iterator.hasNext());
     KV<String, Iterator<String>> kv = iterator.next();
@@ -87,7 +92,8 @@ public class KeyGroupIteratorTest {
   @Test
   public void testMultiKeySingleValue() {
     KeyGroupIterator<String, String> iterator =
-        new KeyGroupIterator<>(Iterators.forArray("a1", "b1"), keyFn, keyComparator);
+        new KeyGroupIterator<>(
+            Collections.singletonList(Iterators.forArray("a1", "b1")), keyFn, keyComparator);
 
     KV<String, Iterator<String>> kv;
     String k;
@@ -140,9 +146,35 @@ public class KeyGroupIteratorTest {
             KV.of("c", Lists.newArrayList("c1", "c2", "c3"))));
   }
 
+  @Test
+  public void testMultiIterators() {
+    List<Iterator<String>> iterators =
+        Lists.newArrayList(
+            Lists.newArrayList("a1", "b1", "b3", "c2", "c4").iterator(),
+            Lists.newArrayList("b2", "b4", "c1", "c3", "d1").iterator());
+    List<KV<String, List<String>>> expected =
+        Lists.newArrayList(
+            KV.of("a", Lists.newArrayList("a1")),
+            KV.of("b", Lists.newArrayList("b1", "b2", "b3", "b4")),
+            KV.of("c", Lists.newArrayList("c1", "c2", "c3", "c4")),
+            KV.of("d", Lists.newArrayList("d1")));
+    KeyGroupIterator<String, String> iterator =
+        new KeyGroupIterator<>(iterators, keyFn, keyComparator);
+    List<KV<String, List<String>>> actual = new ArrayList<>();
+    iterator.forEachRemaining(
+        kv ->
+            actual.add(
+                KV.of(
+                    kv.getKey(),
+                    Lists.newArrayList(kv.getValue()).stream()
+                        .sorted()
+                        .collect(Collectors.toList()))));
+    Assert.assertEquals(expected, actual);
+  }
+
   private void testIterator(List<String> data, List<KV<String, List<String>>> expected) {
     KeyGroupIterator<String, String> iterator =
-        new KeyGroupIterator<>(data.iterator(), keyFn, keyComparator);
+        new KeyGroupIterator<>(Collections.singletonList(data.iterator()), keyFn, keyComparator);
     List<KV<String, List<String>>> actual = new ArrayList<>();
     iterator.forEachRemaining(
         kv -> actual.add(KV.of(kv.getKey(), Lists.newArrayList(kv.getValue()))));
@@ -152,7 +184,8 @@ public class KeyGroupIteratorTest {
   @Test
   public void testIllegalStates() {
     KeyGroupIterator<String, String> iterator =
-        new KeyGroupIterator<>(Iterators.forArray("a1", "a2", "b1"), keyFn, keyComparator);
+        new KeyGroupIterator<>(
+            Collections.singletonList(Iterators.forArray("a1", "a2", "b1")), keyFn, keyComparator);
     Assert.assertTrue(iterator.hasNext());
     KV<String, Iterator<String>> kv = iterator.next();
     String k = kv.getKey();
