@@ -40,7 +40,7 @@ import org.apache.beam.sdk.testing.SerializableMatchers
 import com.spotify.scio.coders.CoderMaterializer
 import com.spotify.scio.ScioContext
 
-private[testing] case class TestWrapper[T: Eq](value: T) {
+case class TestWrapper[T: Eq](value: T) {
   override def toString: String = Pretty.printer.apply(value).render
   override def equals(other: Any): Boolean =
     other match {
