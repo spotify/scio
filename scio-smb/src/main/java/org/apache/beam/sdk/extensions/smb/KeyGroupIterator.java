@@ -50,7 +50,7 @@ class KeyGroupIterator<KeyT, ValueT> implements Iterator<KV<KeyT, Iterator<Value
   @Override
   public boolean hasNext() {
     checkState();
-    return iterators.stream().anyMatch(it -> it.hasNext() && it.peek() != null);
+    return iterators.stream().anyMatch(PeekingIterator::hasNext);
   }
 
   private KeyT min() {

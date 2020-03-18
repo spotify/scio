@@ -101,6 +101,7 @@ public abstract class FileOperations<V> implements Serializable, HasDisplayData 
           if (finished) {
             return false;
           }
+
           try {
             boolean hasNext = hasNextElement();
 
@@ -117,9 +118,14 @@ public abstract class FileOperations<V> implements Serializable, HasDisplayData 
 
         @Override
         public V next() {
+          if (finished) {
+            throw new NoSuchElementException();
+          }
+
           try {
             return readNext();
           } catch (IOException e) {
+            finished = true;
             throw new RuntimeException(e);
           }
         }
