@@ -86,9 +86,10 @@ public class TensorFlowFileOperations extends FileOperations<Example> {
     private byte[] next;
 
     @Override
-    public void prepareRead(ReadableByteChannel channel) {
+    public void prepareRead(ReadableByteChannel channel) throws IOException {
       this.codec = new TFRecordCodec();
       this.channel = channel;
+      next = codec.read(channel);
     }
 
     @Override
@@ -96,12 +97,13 @@ public class TensorFlowFileOperations extends FileOperations<Example> {
       if (next == null) {
         throw new NoSuchElementException();
       }
-      return Example.parseFrom(next);
+      byte[] curr = next;
+      next = codec.read(channel);
+      return Example.parseFrom(curr);
     }
 
     @Override
     public boolean hasNextElement() throws IOException {
-      next = codec.read(channel);
       return next != null;
     }
 
