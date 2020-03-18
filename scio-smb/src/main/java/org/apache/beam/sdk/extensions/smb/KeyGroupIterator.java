@@ -47,11 +47,11 @@ class KeyGroupIterator<KeyT, ValueT> implements Iterator<KV<KeyT, Iterator<Value
   }
 
   KeyGroupIterator(
-      List<Iterator<ValueT>> iterators, Function<ValueT, KeyT> keyFn, Comparator<KeyT> keyComparator) {
-    this.iterators = iterators
-        .stream()
-        .map(Iterators::peekingIterator)
-        .collect(Collectors.toList());
+      List<Iterator<ValueT>> iterators,
+      Function<ValueT, KeyT> keyFn,
+      Comparator<KeyT> keyComparator) {
+    this.iterators =
+        iterators.stream().map(Iterators::peekingIterator).collect(Collectors.toList());
     this.keyFn = keyFn;
     this.keyComparator = keyComparator;
   }

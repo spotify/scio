@@ -95,7 +95,8 @@ import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.primitives.Unsig
 public class SortedBucketSource<FinalKeyT>
     extends PTransform<PBegin, PCollection<KV<FinalKeyT, CoGbkResult>>> {
 
-  private static final Comparator<byte[]> bytesComparator = UnsignedBytes.lexicographicalComparator();
+  private static final Comparator<byte[]> bytesComparator =
+      UnsignedBytes.lexicographicalComparator();
 
   private final Class<FinalKeyT> finalKeyClass;
   private final transient List<BucketedInput<?, ?>> sources;
