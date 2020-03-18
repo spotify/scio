@@ -67,7 +67,7 @@ class KeyGroupIterator<KeyT, ValueT> implements Iterator<KV<KeyT, Iterator<Value
         .filter(Iterator::hasNext)
         .map(it -> keyFn.apply(it.peek()))
         .min(keyComparator)
-        .get();
+        .orElse(null);
   }
 
   @Override

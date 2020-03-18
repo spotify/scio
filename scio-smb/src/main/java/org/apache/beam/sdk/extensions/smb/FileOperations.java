@@ -94,14 +94,19 @@ public abstract class FileOperations<V> implements Serializable, HasDisplayData 
 
     Iterator<V> iterator() {
       return new Iterator<V>() {
+        private boolean finished = false;
 
         @Override
         public boolean hasNext() {
+          if (finished) {
+            return false;
+          }
           try {
             boolean hasNext = hasNextElement();
 
             if (!hasNext) {
               finishRead();
+              finished = true;
             }
 
             return hasNext;

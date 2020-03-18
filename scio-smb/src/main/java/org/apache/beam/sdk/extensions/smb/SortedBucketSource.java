@@ -455,14 +455,7 @@ public class SortedBucketSource<FinalKeyT>
             }
           });
 
-      final Function<V, byte[]> keyBytesFn = canonicalMetadata::getKeyBytes;
-
-      // Merge-sort key-values from shards
-      final UnmodifiableIterator<V> iterator =
-          Iterators.mergeSorted(
-              iterators,
-              (o1, o2) -> bytesComparator.compare(keyBytesFn.apply(o1), keyBytesFn.apply(o2)));
-      return new KeyGroupIterator<>(iterator, keyBytesFn, bytesComparator);
+      return new KeyGroupIterator<>(iterators, canonicalMetadata::getKeyBytes, bytesComparator);
     }
 
     @Override
