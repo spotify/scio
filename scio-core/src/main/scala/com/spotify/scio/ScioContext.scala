@@ -77,7 +77,8 @@ private object RunnerContext {
     Map(
       "DirectRunner" -> DirectContext.getClass.getName,
       "DataflowRunner" -> "com.spotify.scio.runners.dataflow.DataflowContext$",
-      "SparkRunner" -> "com.spotify.scio.runners.spark.SparkContext$"
+      "SparkRunner" -> "com.spotify.scio.runners.spark.SparkContext$",
+      "FlinkRunner" -> "com.spotify.scio.runners.flink.FlinkContext$"
     ).withDefaultValue(NoOpContext.getClass.getName)
 
   // FIXME: this is ugly, is there a better way?

@@ -343,6 +343,11 @@ lazy val sparkRunnerDependencies = Seq(
   "org.apache.spark" %% "spark-core" % sparkVersion,
   "org.apache.spark" %% "spark-streaming" % sparkVersion
 )
+lazy val flinkRunnerDependencies = Seq(
+  "org.apache.beam" % "beam-runners-flink-1.9" % beamVersion exclude (
+    "com.twitter", "chill_2.11"
+  )
+)
 lazy val beamRunners = settingKey[String]("beam runners")
 lazy val beamRunnersEval = settingKey[Seq[ModuleID]]("beam runners")
 
@@ -359,6 +364,7 @@ def beamRunnerSettings: Seq[Setting[_]] = Seq(
           case "DirectRunner"   => directRunnerDependencies
           case "DataflowRunner" => dataflowRunnerDependencies
           case "SparkRunner"    => sparkRunnerDependencies
+          case "FlinkRunner"    => flinkRunnerDependencies
           case _                => Nil
         }.toSeq
       }
@@ -455,6 +461,9 @@ lazy val `scio-core`: Project = project
       "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion % Provided,
       "org.apache.beam" % "beam-runners-spark" % beamVersion % Provided exclude (
         "com.fasterxml.jackson.module", "jackson-module-scala_2.11"
+      ),
+      "org.apache.beam" % "beam-runners-flink-1.9" % beamVersion % Provided exclude (
+        "com.twitter", "chill_2.11"
       ),
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-extensions-google-cloud-platform-core" % beamVersion,
