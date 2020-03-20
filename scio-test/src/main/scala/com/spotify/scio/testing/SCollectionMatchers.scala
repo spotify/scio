@@ -29,6 +29,7 @@ import org.apache.beam.sdk.transforms.SerializableFunction
 import org.apache.beam.sdk.transforms.windowing.BoundedWindow
 import org.apache.beam.sdk.util.CoderUtils
 import org.scalatest.matchers.{MatchResult, Matcher}
+import org.{hamcrest => h}
 import org.hamcrest.Matchers
 import org.hamcrest.MatcherAssert.assertThat
 
@@ -39,25 +40,45 @@ import cats.kernel.Eq
 import org.apache.beam.sdk.testing.SerializableMatchers
 import com.spotify.scio.coders.CoderMaterializer
 import com.spotify.scio.ScioContext
+import java.{util => ju}
+import org.apache.beam.sdk.coders.{Coder => BCoder}
+import java.io.Externalizable
+import java.io.ObjectOutput
+import java.io.ObjectInput
+import java.io.ByteArrayOutputStream
+import java.io.ByteArrayInputStream
+import java.io.ObjectOutputStream
+import java.io.ObjectInputStream
+import org.apache.beam.sdk.util.SerializableUtils
 
-case class TestWrapper[T: Eq](value: T) {
-  override def toString: String = Pretty.printer.apply(value).render
+final private case class TestWrapper[T: Eq](get: T) {
+
+  override def toString: String = Pretty.printer.apply(get).render
+
   override def equals(other: Any): Boolean =
     other match {
-      case TestWrapper(o: T) => Eq[T].eqv(value, o)
-      case o                 => value.equals(o)
+      case TestWrapper(o: T) => Eq[T].eqv(get, o)
+      case o                 => get.equals(o)
     }
 }
 
-object TestWrapper {
+private object TestWrapper {
+
   def wrap[T: Coder: Eq](coll: SCollection[T]) =
     coll.map(t => TestWrapper(t))
 
+  def wrap[T: Eq](coll: JIterable[T]): JIterable[TestWrapper[T]] =
+    coll.asScala.map(t => TestWrapper(t)).asJava
+
   implicit def testWrapperCoder[T: Coder: Eq]: Coder[TestWrapper[T]] =
-    Coder.gen[TestWrapper[T]]
+    Coder.xmap(Coder[T])(t => TestWrapper(t), w => w.get)
 }
 
 private object ScioMatchers {
+
+  /**
+   * Create a hamcrest matcher that can be serialized using a Coder[T].
+   */
   private def supplierFromCoder[A: Coder, B](@transient a: A, @transient context: ScioContext)(
     builder: A => B
   ) = {
@@ -70,24 +91,77 @@ private object ScioMatchers {
   }
 
   /**
-   * Create a hamcrest matcher that can be serialized using a Coder[T].
    * This is equivalent to [[org.apache.beam.sdk.testing.PAssert#containsInAnyOrder()]]
    * but will but have a nicer message in case of failure.
    */
   def containsInAnyOrder[T: Coder](
     ts: Seq[T],
     context: ScioContext
-  ): org.hamcrest.Matcher[JIterable[T]] =
+  ): h.Matcher[JIterable[T]] =
     SerializableMatchers.fromSupplier {
       supplierFromCoder(ts, context) { ds =>
         val items = ds.mkString("\n\t\t", "\n\t\t", "\n")
         val message = s"Expected: iterable with items [$items]"
         val c = Matchers
           .containsInAnyOrder(ds: _*)
-          .asInstanceOf[org.hamcrest.Matcher[JIterable[T]]]
+          .asInstanceOf[h.Matcher[JIterable[T]]]
         Matchers.describedAs(message, c)
       }
     }
+
+  def makeFn[T](
+    f: JIterable[T] => Unit
+  ): SerializableFunction[JIterable[T], Void] =
+    new SerializableFunction[JIterable[T], Void] {
+      // delegate serialization to Kryo to avoid serialization issues in tests
+      // when a non-serializable object is captured by the closure
+      private[this] val impl = Externalizer(f)
+
+      override def apply(input: JIterable[T]): Void = {
+        impl.get(input)
+        null
+      }
+    }
+
+  def makeFnSingle[T](f: T => Unit): SerializableFunction[T, Void] =
+    new SerializableFunction[T, Void] {
+      // delegate serialization to Kryo to avoid serialization issues in tests
+      // when a non-serializable object is captured by the closure
+      private[this] val impl = Externalizer(f)
+
+      override def apply(input: T): Void = {
+        impl.get(input)
+        null
+      }
+    }
+
+  def assertThatFn[T: Eq: Coder](mm: h.Matcher[JIterable[TestWrapper[T]]]) =
+    makeFn[T](in => assertThat(TestWrapper.wrap(in), mm))
+
+  def assertThatNotFn[T: Eq: Coder](mm: h.Matcher[JIterable[TestWrapper[T]]]) =
+    makeFn[T](in => assertThat(TestWrapper.wrap(in), Matchers.not(mm)))
+
+  def assert[T: Eq: Coder](p: Iterable[TestWrapper[T]] => Boolean) =
+    makeFn[T](in => Predef.assert(p(TestWrapper.wrap(in).asScala)))
+
+  def assertSingle[T: Eq: Coder](p: TestWrapper[T] => Boolean) =
+    makeFnSingle[T](in => Predef.assert(p(TestWrapper(in))))
+
+  def assertNot[T: Eq: Coder](p: Iterable[TestWrapper[T]] => Boolean) =
+    makeFn[T](in => Predef.assert(!p(TestWrapper.wrap(in).asScala)))
+
+  def assertNotSingle[T: Eq: Coder](p: TestWrapper[T] => Boolean) =
+    makeFnSingle[T](in => Predef.assert(!p(TestWrapper(in))))
+
+  def isEqualTo[T: Eq: Coder](t: T): SerializableFunction[T, Void] = {
+    val mm = Matchers.equalTo[Any](TestWrapper(t))
+    makeFnSingle[T](in => assertThat(TestWrapper(in), mm))
+  }
+
+  def notEqualTo[T: Eq: Coder](t: T): SerializableFunction[T, Void] = {
+    val mm = Matchers.not(Matchers.equalTo[Any](TestWrapper(t)))
+    makeFnSingle[T](in => assertThat(TestWrapper(in), mm))
+  }
 }
 
 /**
@@ -95,6 +169,8 @@ private object ScioMatchers {
  * [[com.spotify.scio.values.SCollection SCollection]]s.
  */
 trait SCollectionMatchers extends EqInstances {
+
+  import ScioMatchers.{makeFn, makeFnSingle}
 
   sealed trait MatcherBuilder[T] {
     _: Matcher[T] =>
@@ -143,30 +219,6 @@ trait SCollectionMatchers extends EqInstances {
     }
     MatchResult(r, "", "")
   }
-
-  private def makeFn[T](f: JIterable[T] => Unit): SerializableFunction[JIterable[T], Void] =
-    new SerializableFunction[JIterable[T], Void] {
-      // delegate serialization to Kryo to avoid serialization issues in tests
-      // when a non-serializable object is captured by the closure
-      private[this] val impl = Externalizer(f)
-
-      override def apply(input: JIterable[T]): Void = {
-        impl.get(input)
-        null
-      }
-    }
-
-  private def makeFnSingle[T](f: T => Unit): SerializableFunction[T, Void] =
-    new SerializableFunction[T, Void] {
-      // delegate serialization to Kryo to avoid serialization issues in tests
-      // when a non-serializable object is captured by the closure
-      private[this] val impl = Externalizer(f)
-
-      override def apply(input: T): Void = {
-        impl.get(input)
-        null
-      }
-    }
 
   // Due to  https://github.com/GoogleCloudPlatform/DataflowJavaSDK/issues/434
   // SerDe cycle on each element to keep consistent with values on the expected side
@@ -238,16 +290,16 @@ trait SCollectionMatchers extends EqInstances {
   /** Assert that the SCollection in question contains the provided elements. */
   def containInAnyOrder[T: Coder: Eq](
     value: Iterable[T]
-  ): IterableMatcher[SCollection[T], TestWrapper[T]] =
-    new IterableMatcher[SCollection[T], TestWrapper[T]] {
-      val v = Externalizer(value.toSeq.map(x => TestWrapper(x))) // defeat closure
+  ): IterableMatcher[SCollection[T], T] =
+    new IterableMatcher[SCollection[T], T] {
       override def matcher(builder: AssertBuilder): Matcher[SCollection[T]] =
         new Matcher[SCollection[T]] {
           override def apply(left: SCollection[T]): MatchResult = {
+            val v = Externalizer(value.toSeq.map(x => TestWrapper(x))) // defeat closure
             val mm = ScioMatchers.containsInAnyOrder(v.get, left.context)
-            val f = makeFn[TestWrapper[T]](in => assertThat(in, Matchers.not(mm)))
-            val g = makeFn[TestWrapper[T]](in => assertThat(in, mm))
-            val assertion = builder(PAssert.that(serDeCycle(TestWrapper.wrap(left)).internal))
+            val f = ScioMatchers.assertThatNotFn[T](mm)
+            val g = ScioMatchers.assertThatFn[T](mm)
+            val assertion = builder(PAssert.that(serDeCycle(left).internal))
             m(
               () => assertion.satisfies(g),
               () => assertion.satisfies(f)
@@ -257,16 +309,16 @@ trait SCollectionMatchers extends EqInstances {
     }
 
   /** Assert that the SCollection in question contains a single provided element. */
-  def containSingleValue[T: Coder: Eq](value: T): SingleMatcher[SCollection[T], TestWrapper[T]] =
-    new SingleMatcher[SCollection[T], TestWrapper[T]] {
+  def containSingleValue[T: Coder: Eq](value: T): SingleMatcher[SCollection[T], T] =
+    new SingleMatcher[SCollection[T], T] {
       override def matcher(builder: AssertBuilder): Matcher[SCollection[T]] =
         new Matcher[SCollection[T]] {
           override def apply(left: SCollection[T]): MatchResult = {
-            val assertion =
-              builder(PAssert.thatSingleton(serDeCycle(TestWrapper.wrap(left)).internal))
+            ScioMatchers
+            val assertion = builder(PAssert.thatSingleton(serDeCycle(left).internal))
             m(
-              () => assertion.isEqualTo(TestWrapper[T](value)),
-              () => assertion.notEqualTo(TestWrapper[T](value))
+              () => assertion.satisfies(ScioMatchers.isEqualTo(value)),
+              () => assertion.satisfies(ScioMatchers.notEqualTo(value))
             )
           }
         }
@@ -274,19 +326,16 @@ trait SCollectionMatchers extends EqInstances {
 
   /** Assert that the SCollection in question contains the provided element without making
    *  assumptions about other elements in the collection. */
-  def containValue[T: Coder: Eq](value: T): IterableMatcher[SCollection[T], TestWrapper[T]] =
-    new IterableMatcher[SCollection[T], TestWrapper[T]] {
+  def containValue[T: Coder: Eq](value: T): IterableMatcher[SCollection[T], T] =
+    new IterableMatcher[SCollection[T], T] {
       override def matcher(builder: AssertBuilder): Matcher[SCollection[T]] =
         new Matcher[SCollection[T]] {
           override def apply(left: SCollection[T]): MatchResult = {
             val v = Externalizer(TestWrapper[T](value)) // defeat closure
-            val (should, shouldNot) = {
-              (
-                makeFn[TestWrapper[T]](in => assertThat(in, Matchers.hasItem(v.get))),
-                makeFn[TestWrapper[T]](in => assertThat(in, Matchers.not(Matchers.hasItem(v.get))))
-              )
-            }
-            val assertion = builder(PAssert.that(serDeCycle(TestWrapper.wrap(left)).internal))
+            val mm = Matchers.hasItem(v.get).asInstanceOf[h.Matcher[JIterable[TestWrapper[T]]]]
+            val should = ScioMatchers.assertThatFn[T](mm)
+            val shouldNot = ScioMatchers.assertThatNotFn[T](mm)
+            val assertion = builder(PAssert.that(serDeCycle(left).internal))
             m(
               () => assertion.satisfies(should),
               () => assertion.satisfies(shouldNot)
@@ -300,15 +349,15 @@ trait SCollectionMatchers extends EqInstances {
     new IterableMatcher[SCollection[_], Any] {
       override def matcher(builder: AssertBuilder): Matcher[SCollection[_]] =
         new Matcher[SCollection[_]] {
-          override def apply(left: SCollection[_]): MatchResult =
+          override def apply(left: SCollection[_]): MatchResult = {
+            val assertion = PAssert.that(left.asInstanceOf[SCollection[Any]].internal)
             m(
+              () => builder(assertion).empty(),
               () =>
-                builder(PAssert.that(left.asInstanceOf[SCollection[Any]].internal))
-                  .empty(),
-              () =>
-                builder(PAssert.that(left.asInstanceOf[SCollection[Any]].internal))
+                builder(assertion)
                   .satisfies(makeFn(in => assert(in.iterator().hasNext, "SCollection is empty")))
             )
+          }
         }
     }
 
@@ -318,7 +367,7 @@ trait SCollectionMatchers extends EqInstances {
       override def matcher(builder: AssertBuilder): Matcher[SCollection[_]] =
         new Matcher[SCollection[_]] {
           override def apply(left: SCollection[_]): MatchResult = {
-            val s = size // defeat closure
+            val s = size
             val f = makeFn[Any] { in =>
               val inSize = in.asScala.size
               assert(inSize == s, s"SCollection expected size: $s, actual: $inSize")
@@ -327,13 +376,10 @@ trait SCollectionMatchers extends EqInstances {
               val inSize = in.asScala.size
               assert(inSize != s, s"SCollection expected size: not $s, actual: $inSize")
             }
+            val assertion = PAssert.that(left.asInstanceOf[SCollection[Any]].internal)
             m(
-              () =>
-                builder(PAssert.that(left.asInstanceOf[SCollection[Any]].internal))
-                  .satisfies(f),
-              () =>
-                builder(PAssert.that(left.asInstanceOf[SCollection[Any]].internal))
-                  .satisfies(g)
+              () => builder(assertion).satisfies(f),
+              () => builder(assertion).satisfies(g)
             )
           }
         }
@@ -346,15 +392,13 @@ trait SCollectionMatchers extends EqInstances {
     new SingleMatcher[SCollection[(K, V)], JMap[K, V]] {
       override def matcher(builder: AssertBuilder): Matcher[SCollection[(K, V)]] =
         new Matcher[SCollection[(K, V)]] {
-          override def apply(left: SCollection[(K, V)]): MatchResult =
+          override def apply(left: SCollection[(K, V)]): MatchResult = {
+            val assertion = builder(PAssert.thatMap(serDeCycle(left).toKV.internal))
             m(
-              () =>
-                builder(PAssert.thatMap(serDeCycle(left).toKV.internal))
-                  .isEqualTo(value.asJava),
-              () =>
-                builder(PAssert.thatMap(serDeCycle(left).toKV.internal))
-                  .notEqualTo(value.asJava)
+              () => assertion.isEqualTo(value.asJava),
+              () => assertion.notEqualTo(value.asJava)
             )
+          }
         }
     }
 
@@ -363,16 +407,16 @@ trait SCollectionMatchers extends EqInstances {
   /** Assert that the SCollection in question satisfies the provided function. */
   def satisfy[T: Coder: Eq](
     predicate: Iterable[T] => Boolean
-  ): IterableMatcher[SCollection[T], TestWrapper[T]] =
-    new IterableMatcher[SCollection[T], TestWrapper[T]] {
+  ): IterableMatcher[SCollection[T], T] =
+    new IterableMatcher[SCollection[T], T] {
       override def matcher(builder: AssertBuilder): Matcher[SCollection[T]] =
         new Matcher[SCollection[T]] {
           override def apply(left: SCollection[T]): MatchResult = {
             val cleanedPredicate = ClosureCleaner.clean(predicate)
-            val p: Iterable[TestWrapper[T]] => Boolean = it => cleanedPredicate(it.map(_.value))
-            val f = makeFn[TestWrapper[T]](in => assert(p(in.asScala)))
-            val g = makeFn[TestWrapper[T]](in => assert(!p(in.asScala)))
-            val assertion = builder(PAssert.that(serDeCycle(TestWrapper.wrap(left)).internal))
+            val p: Iterable[TestWrapper[T]] => Boolean = it => cleanedPredicate(it.map(_.get))
+            val f = ScioMatchers.assert(p)
+            val g = ScioMatchers.assertNot(p)
+            val assertion = builder(PAssert.that(serDeCycle(left).internal))
             m(
               () => assertion.satisfies(f),
               () => assertion.satisfies(g)
@@ -387,18 +431,16 @@ trait SCollectionMatchers extends EqInstances {
    */
   def satisfySingleValue[T: Coder: Eq](
     predicate: T => Boolean
-  ): SingleMatcher[SCollection[T], TestWrapper[T]] =
-    new SingleMatcher[SCollection[T], TestWrapper[T]] {
+  ): SingleMatcher[SCollection[T], T] =
+    new SingleMatcher[SCollection[T], T] {
       override def matcher(builder: AssertBuilder): Matcher[SCollection[T]] =
         new Matcher[SCollection[T]] {
           override def apply(left: SCollection[T]): MatchResult = {
             val cleanedPredicate = ClosureCleaner.clean(predicate)
-            val p: TestWrapper[T] => Boolean = t => cleanedPredicate(t.value)
-            val f = makeFnSingle[TestWrapper[T]](in => assert(p(in)))
-            val g = makeFnSingle[TestWrapper[T]](in => assert(!p(in)))
-            val assertion = builder(
-              PAssert.thatSingleton(serDeCycle(TestWrapper.wrap(left)).internal)
-            )
+            val p: TestWrapper[T] => Boolean = t => cleanedPredicate(t.get)
+            val f = ScioMatchers.assertSingle(p)
+            val g = ScioMatchers.assertNotSingle(p)
+            val assertion = builder(PAssert.thatSingleton(serDeCycle(left).internal))
             m(
               () => assertion.satisfies(f),
               () => assertion.satisfies(g)
@@ -410,7 +452,7 @@ trait SCollectionMatchers extends EqInstances {
   /** Assert that all elements of the SCollection in question satisfy the provided function. */
   def forAll[T: Coder: Eq](
     predicate: T => Boolean
-  ): IterableMatcher[SCollection[T], TestWrapper[T]] = {
+  ): IterableMatcher[SCollection[T], T] = {
     val f = ClosureCleaner.clean(predicate)
     satisfy(_.forall(f))
   }
@@ -418,7 +460,7 @@ trait SCollectionMatchers extends EqInstances {
   /** Assert that some elements of the SCollection in question satisfy the provided function. */
   def exist[T: Coder: Eq](
     predicate: T => Boolean
-  ): IterableMatcher[SCollection[T], TestWrapper[T]] = {
+  ): IterableMatcher[SCollection[T], T] = {
     val f = ClosureCleaner.clean(predicate)
     satisfy(_.exists(f))
   }
