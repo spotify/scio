@@ -726,8 +726,9 @@ object BigQueryTyped {
       sc.read(underlying)
 
     override protected def write(data: SCollection[T], params: WriteP): Tap[T] = {
+      val (beamSchema, _, _) = SchemaMaterializer.materialize(Schema[T])
       val ps = BigQueryTypedTable.WriteParam(
-        null,
+        BigQueryUtils.toTableSchema(beamSchema),
         params.writeDisposition,
         params.createDisposition,
         params.tableDescription,
