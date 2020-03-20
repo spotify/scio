@@ -54,6 +54,7 @@ val elasticsearch5Version = "5.6.16"
 val elasticsearch6Version = "6.8.7"
 val elasticsearch7Version = "7.6.1"
 val featranVersion = "0.5.0"
+val flinkVersion = "1.9.2"
 val gaxVersion = "1.38.0"
 val gcsConnectorVersion = "hadoop2-2.1.1"
 val gcsVersion = "1.8.0"
@@ -344,9 +345,15 @@ lazy val sparkRunnerDependencies = Seq(
   "org.apache.spark" %% "spark-streaming" % sparkVersion
 )
 lazy val flinkRunnerDependencies = Seq(
-  "org.apache.beam" % "beam-runners-flink-1.9" % beamVersion exclude (
-    "com.twitter", "chill_2.11"
-  )
+  "org.apache.beam" % "beam-runners-flink-1.9" % beamVersion excludeAll (
+    ExclusionRule("com.twitter", "chill_2.11"),
+    ExclusionRule("org.apache.flink", "flink-clients_2.11"),
+    ExclusionRule("org.apache.flink", "flink-runtime_2.11"),
+    ExclusionRule("org.apache.flink", "flink-streaming-java_2.11")
+  ),
+  "org.apache.flink" %% "flink-clients" % flinkVersion,
+  "org.apache.flink" %% "flink-runtime" % flinkVersion,
+  "org.apache.flink" %% "flink-streaming-java" % flinkVersion
 )
 lazy val beamRunners = settingKey[String]("beam runners")
 lazy val beamRunnersEval = settingKey[Seq[ModuleID]]("beam runners")
@@ -462,8 +469,11 @@ lazy val `scio-core`: Project = project
       "org.apache.beam" % "beam-runners-spark" % beamVersion % Provided exclude (
         "com.fasterxml.jackson.module", "jackson-module-scala_2.11"
       ),
-      "org.apache.beam" % "beam-runners-flink-1.9" % beamVersion % Provided exclude (
-        "com.twitter", "chill_2.11"
+      "org.apache.beam" % "beam-runners-flink-1.9" % beamVersion % Provided excludeAll (
+        ExclusionRule("com.twitter", "chill_2.11"),
+        ExclusionRule("org.apache.flink", "flink-clients_2.11"),
+        ExclusionRule("org.apache.flink", "flink-runtime_2.11"),
+        ExclusionRule("org.apache.flink", "flink-streaming-java_2.11")
       ),
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-extensions-google-cloud-platform-core" % beamVersion,
