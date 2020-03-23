@@ -88,8 +88,9 @@ class SCollectionWithSideInputTest extends PipelineSpec {
         sc.parallelize(sideData ++ sideData.map(kv => (kv._1, kv._2 + 10))).asMultiMapSideInput
       val s = p1
         .withSideInputs(p2)
-        .flatMap((i, s) => s(p2).mapValues(_.toSet))
+        .flatMap((i, s) => s(p2).iterator.map { case (k, v) => (k, v.toSet) }.toMap)
         .toSCollection
+
       s should containInAnyOrder(sideData.map(kv => (kv._1, Set(kv._2, kv._2 + 10))))
     }
   }
@@ -278,9 +279,10 @@ class SCollectionWithSideInputTest extends PipelineSpec {
         .withFixedWindows(Duration.standardSeconds(1))
         .flatMap(x => (1 to x).map(x -> _))
         .asMultiMapSideInput
+
       val s = p1.withSideInputs(p2).map((x, s) => (x, s(p2))).toSCollection
       s should forAll[(Int, Map[Int, Iterable[Int]])] { t =>
-        Map(t._1 -> (1 to t._1).toSet) == t._2.mapValues(_.toSet)
+        Map(t._1 -> (1 to t._1).toSet) == t._2.iterator.map { case (k, v) => k -> v.toSet }.toMap
       }
     }
   }

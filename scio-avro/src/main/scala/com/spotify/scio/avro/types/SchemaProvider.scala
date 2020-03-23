@@ -90,7 +90,7 @@ private[types] object SchemaProvider {
   }
 
   private def toFields(t: Type): List[Field] =
-    getFields(t).map(toField)(scala.collection.breakOut)
+    getFields(t).iterator.map(toField).toList
 
   private def getFields(t: Type): Iterable[(Symbol, Option[String])] =
     t.decls.filter(isField) zip fieldDoc(t)

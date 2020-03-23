@@ -282,9 +282,8 @@ private[types] object TypeProvider {
         // note that if there are conflicting definitions of a nested record type, the Avro schema
         // parser itself will catch it before getting to this step.
         .map { case (_, cDefs) => cDefs.head } // Don't generate duplicate case classes
-        .toSeq
 
-      (fields, recordClasses)
+      (fields.toSeq, recordClasses.toSeq)
     }
 
     val r = annottees.map(_.tree) match {

@@ -69,7 +69,7 @@ trait ShardedSparkeyUri extends SparkeyUri {
             s"total shard count ($numShards), but found $numShardFiles"
         )
 
-        val basePaths = indexPaths.map(_.replaceAll("\\.spi$", ""))
+        val basePaths = indexPaths.iterator.map(_.replaceAll("\\.spi$", "")).toSeq
 
         (basePaths, numShards)
       case _ =>

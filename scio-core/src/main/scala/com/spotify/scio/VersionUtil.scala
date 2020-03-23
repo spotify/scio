@@ -114,7 +114,7 @@ private[scio] object VersionUtil {
           messages(v1, v2).foreach(buffer.append(_))
         }
       }
-      buffer
+      buffer.toSeq
     }
 
   def checkVersion(): Unit = checkVersion(BuildInfo.version).foreach(Logger.warn)
