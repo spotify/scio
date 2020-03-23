@@ -975,10 +975,11 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     offset: Duration = Duration.ZERO,
     options: WindowOptions = WindowOptions()
   ): SCollection[T] = {
-    var transform = SlidingWindows.of(size).withOffset(offset)
+    var transform = SlidingWindows.of(size)
     if (period != null) {
       transform = transform.every(period)
     }
+    transform = transform.withOffset(offset)
     this.withWindowFn(transform, options)
   }
 

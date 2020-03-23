@@ -501,6 +501,20 @@ class SCollectionTest extends PipelineSpec {
     }
   }
 
+  it should "#2745: not throw an exception for valid values" in runWithContext { sc =>
+    val p =
+      sc.parallelizeTimestamped(Seq("a", "b", "c", "d", "e", "f"), (0 to 5).map(new Instant(_)))
+    val r = p
+      .withSlidingWindows(
+        size = Duration.standardHours(24),
+        period = Duration.standardHours(25),
+        offset = Duration.standardHours(23)
+      )
+      .top(10)
+      .map(_.toSet)
+    r shouldNot beEmpty
+  }
+
   it should "support withSessionWindows()" in {
     runWithContext { sc =>
       val p =
