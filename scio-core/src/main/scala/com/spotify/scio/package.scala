@@ -24,7 +24,8 @@ package com.spotify
  * import com.spotify.scio._
  * }}}
  */
-package object scio {
+package object scio extends instances.AllInstances {
+
   import scala.concurrent.duration.Duration
   import scala.concurrent.Future
   import scala.concurrent.Await
