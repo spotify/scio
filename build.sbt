@@ -78,7 +78,8 @@ val jnaVersion = "5.5.0"
 val jodaTimeVersion = "2.10.5"
 val junitInterfaceVersion = "0.11"
 val junitVersion = "4.13"
-val kantanCsvVersion = "0.5.1"
+val kantanCodecsVersion = "0.5.1"
+val kantanCsvVersion = "0.6.0"
 val kryoVersion = "4.0.2" // explicitly depend on 4.0.1+ due to https://github.com/EsotericSoftware/kryo/pull/516
 val magnoliaVersion = "0.12.8"
 val magnolifyVersion = "0.1.6"
@@ -100,6 +101,11 @@ val sparkeyVersion = "3.0.1"
 val sparkVersion = "2.4.4"
 val tensorFlowVersion = "1.15.0"
 val zoltarVersion = "0.5.6"
+val scalaCollectionCompatVersion = "2.1.3"
+
+def isScala213x = Def.setting {
+  scalaBinaryVersion.value == "2.13"
+}
 
 lazy val mimaSettings = Seq(
   mimaPreviousArtifacts :=
@@ -132,19 +138,11 @@ val beamSDKIODependencies = Def.settings(
 )
 
 val magnoliaDependencies = Def.settings(
-  libraryDependencies ++= {
-    if (scalaBinaryVersion.value == "2.11") {
-      Seq(
-        "me.lyh" %% "magnolia" % "0.10.1-jto",
-        "com.propensive" %% "mercator" % "0.1.1"
-      )
-    } else {
-      Seq(
-        "com.propensive" %% "magnolia" % magnoliaVersion,
-        "com.propensive" %% "mercator" % mercatorVersion
-      )
-    }
-  }
+  libraryDependencies ++=
+    Seq(
+      "com.propensive" %% "magnolia" % magnoliaVersion,
+      "com.propensive" %% "mercator" % mercatorVersion
+    )
 )
 
 val circeDependencies = Def.settings(
@@ -153,13 +151,7 @@ val circeDependencies = Def.settings(
       "io.circe" %% "circe-core",
       "io.circe" %% "circe-generic",
       "io.circe" %% "circe-parser"
-    ).map { dep =>
-      if (scalaBinaryVersion.value == "2.11") {
-        dep % "0.11.2"
-      } else {
-        dep % circeVersion
-      }
-    }
+    ).map(_ % circeVersion)
 )
 
 def previousVersion(currentVersion: String): Option[String] = {
@@ -177,8 +169,15 @@ lazy val formatSettings = Seq(
 val commonSettings = Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
   organization := "com.spotify",
   scalaVersion := "2.12.11",
-  crossScalaVersions := Seq("2.11.12", scalaVersion.value),
+  crossScalaVersions := Seq("2.12.11"),
   scalacOptions ++= Scalac.commonsOptions.value,
+  scalacOptions ++= {
+    if (isScala213x.value) {
+      Seq("-Ymacro-annotations", "-Ywarn-unused")
+    } else {
+      Seq()
+    }
+  },
   scalacOptions in (Compile, doc) ++= Scalac.compileDocOptions.value,
   javacOptions ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint:unchecked"),
   javacOptions in (Compile, doc) := Seq("-source", "1.8"),
@@ -323,10 +322,17 @@ lazy val assemblySettings = Seq(
 
 lazy val macroSettings = Def.settings(
   libraryDependencies += "org.scala-lang" % "scala-reflect" % scalaVersion.value,
-  libraryDependencies +=
-    compilerPlugin(
-      "org.scalamacros" % "paradise" % scalaMacrosVersion cross CrossVersion.full
-    ),
+  libraryDependencies ++= {
+    if (isScala213x.value) {
+      Seq()
+    } else {
+      Seq(
+        compilerPlugin(
+          ("org.scalamacros" % "paradise" % scalaMacrosVersion).cross(CrossVersion.full)
+        )
+      )
+    }
+  },
   // see MacroSettings.scala
   scalacOptions += "-Xmacro-settings:cache-implicit-schemas=true"
 )
@@ -390,9 +396,7 @@ lazy val protobufSettings = Def.settings(
 lazy val root: Project = Project("scio", file("."))
   .settings(commonSettings)
   .settings(noPublishSettings)
-  .settings(
-    aggregate in assembly := false
-  )
+  .settings(aggregate in assembly := false)
   .aggregate(
     `scio-core`,
     `scio-test`,
@@ -425,6 +429,7 @@ lazy val `scio-core`: Project = project
   .settings(macroSettings)
   .settings(itSettings)
   .settings(
+    crossScalaVersions += "2.13.1",
     description := "Scio - A Scala API for Apache Beam and Google Cloud Dataflow",
     resources in Compile ++= Seq(
       (baseDirectory in ThisBuild).value / "build.sbt",
@@ -485,9 +490,10 @@ lazy val `scio-core`: Project = project
       "org.scalatest" %% "scalatest" % scalatestVersion % Test,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       "org.typelevel" %% "algebra" % algebraVersion,
-      "org.typelevel" %% "cats-kernel" % catsVersion
-    ),
-    magnoliaDependencies
+      "org.typelevel" %% "cats-kernel" % catsVersion,
+      "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
+      "com.propensive" %% "magnolia" % magnoliaVersion
+    )
   )
   .dependsOn(
     `scio-schemas` % "test->test",
@@ -504,6 +510,7 @@ lazy val `scio-sql`: Project = Project(
 ).settings(commonSettings)
   .settings(macroSettings)
   .settings(
+    crossScalaVersions += "2.13.1",
     description := "Scio - SQL extension",
     libraryDependencies ++= Seq(
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
@@ -524,6 +531,7 @@ lazy val `scio-test`: Project = project
   .settings(itSettings)
   .settings(macroSettings)
   .settings(
+    crossScalaVersions += "2.13.1",
     description := "Scio helpers for ScalaTest",
     libraryDependencies ++= Seq(
       "org.apache.beam" % "beam-runners-direct-java" % beamVersion,
@@ -572,14 +580,15 @@ lazy val `scio-macros`: Project = project
   .settings(commonSettings)
   .settings(macroSettings)
   .settings(
+    crossScalaVersions += "2.13.1",
     description := "Scio macros",
     libraryDependencies ++= Seq(
       "com.chuusai" %% "shapeless" % shapelessVersion,
       "com.esotericsoftware" % "kryo-shaded" % kryoVersion,
       "org.apache.beam" % "beam-sdks-java-extensions-sql" % beamVersion,
-      "org.apache.avro" % "avro" % avroVersion
-    ),
-    magnoliaDependencies
+      "org.apache.avro" % "avro" % avroVersion,
+      "com.propensive" %% "magnolia" % magnoliaVersion
+    )
   )
 
 lazy val `scio-avro`: Project = project
@@ -588,6 +597,7 @@ lazy val `scio-avro`: Project = project
   .settings(macroSettings)
   .settings(itSettings)
   .settings(
+    crossScalaVersions += "2.13.1",
     description := "Scio add-on for working with Avro",
     libraryDependencies ++= Seq(
       "me.lyh" %% "protobuf-generic" % protobufGenericVersion,
@@ -618,6 +628,7 @@ lazy val `scio-bigquery`: Project = project
   .settings(itSettings)
   .settings(beamRunnerSettings)
   .settings(
+    crossScalaVersions += "2.13.1",
     description := "Scio add-on for Google BigQuery",
     libraryDependencies ++= Seq(
       //this dep seems to be required only when compilling with 2.11
@@ -654,16 +665,7 @@ lazy val `scio-bigquery`: Project = project
       "org.hamcrest" % "hamcrest-core" % hamcrestVersion % "test,it",
       "org.hamcrest" % "hamcrest-library" % hamcrestVersion % "test,it"
     ),
-    beamSDKIODependencies,
-    // Workaround for https://github.com/spotify/scio/issues/2308
-    (Compile / doc) := Def.taskDyn {
-      val default = (Compile / doc).taskValue
-      if (scalaBinaryVersion.value == "2.11") {
-        (Compile / doc / target).toTask
-      } else {
-        Def.task(default.value)
-      }
-    }.value
+    beamSDKIODependencies
   )
   .dependsOn(
     `scio-core` % "compile;it->it"
@@ -675,6 +677,7 @@ lazy val `scio-bigtable`: Project = project
   .settings(commonSettings)
   .settings(itSettings)
   .settings(
+    crossScalaVersions += "2.13.1",
     description := "Scio add-on for Google Cloud Bigtable",
     libraryDependencies ++= Seq(
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
@@ -706,6 +709,7 @@ lazy val `scio-cassandra2`: Project = project
   .settings(commonSettings)
   .settings(itSettings)
   .settings(
+    crossScalaVersions += "2.13.1",
     description := "Scio add-on for Apache Cassandra 2.x",
     libraryDependencies ++= Seq(
       "com.google.protobuf" % "protobuf-java" % protobufVersion,
@@ -734,6 +738,7 @@ lazy val `scio-cassandra3`: Project = project
   .settings(commonSettings)
   .settings(itSettings)
   .settings(
+    crossScalaVersions += "2.13.1",
     description := "Scio add-on for Apache Cassandra 3.x",
     libraryDependencies ++= Seq(
       "com.google.protobuf" % "protobuf-java" % protobufVersion,
@@ -762,6 +767,7 @@ lazy val `scio-elasticsearch2`: Project = project
   .in(file("scio-elasticsearch/es2"))
   .settings(commonSettings)
   .settings(
+    crossScalaVersions += "2.13.1",
     description := "Scio add-on for writing to Elasticsearch",
     libraryDependencies ++= Seq(
       "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamVendorVersion,
@@ -780,6 +786,7 @@ lazy val `scio-elasticsearch5`: Project = project
   .in(file("scio-elasticsearch/es5"))
   .settings(commonSettings)
   .settings(
+    crossScalaVersions += "2.13.1",
     description := "Scio add-on for writing to Elasticsearch",
     libraryDependencies ++= Seq(
       "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamVendorVersion,
@@ -799,6 +806,7 @@ lazy val `scio-elasticsearch6`: Project = project
   .in(file("scio-elasticsearch/es6"))
   .settings(commonSettings)
   .settings(
+    crossScalaVersions += "2.13.1",
     description := "Scio add-on for writing to Elasticsearch",
     libraryDependencies ++= Seq(
       "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamVendorVersion,
@@ -819,6 +827,7 @@ lazy val `scio-elasticsearch7`: Project = project
   .in(file("scio-elasticsearch/es7"))
   .settings(commonSettings)
   .settings(
+    crossScalaVersions += "2.13.1",
     description := "Scio add-on for writing to Elasticsearch",
     libraryDependencies ++= Seq(
       "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamVendorVersion,
@@ -843,6 +852,7 @@ lazy val `scio-extra`: Project = project
   .settings(commonSettings)
   .settings(itSettings)
   .settings(
+    crossScalaVersions += "2.13.1",
     description := "Scio extra utilities",
     libraryDependencies ++= Seq(
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
@@ -891,6 +901,7 @@ lazy val `scio-jdbc`: Project = project
   .in(file("scio-jdbc"))
   .settings(commonSettings)
   .settings(
+    crossScalaVersions += "2.13.1",
     description := "Scio add-on for JDBC",
     libraryDependencies ++= Seq(
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
@@ -908,6 +919,7 @@ lazy val `scio-parquet`: Project = project
   .in(file("scio-parquet"))
   .settings(commonSettings)
   .settings(
+    crossScalaVersions += "2.13.1",
     // change annotation processor output directory so IntelliJ can pick them up
     ensureSourceManaged := IO.createDirectory(sourceManaged.value / "main"),
     (compile in Compile) := Def.task {
@@ -947,6 +959,7 @@ lazy val `scio-spanner`: Project = project
   .settings(itSettings)
   .settings(beamRunnerSettings)
   .settings(
+    crossScalaVersions += "2.13.1",
     description := "Scio add-on for Google Cloud Spanner",
     libraryDependencies ++= Seq(
       "com.google.cloud" % "google-cloud-core" % "1.61.0",
@@ -968,6 +981,7 @@ lazy val `scio-tensorflow`: Project = project
   .settings(itSettings)
   .settings(protobufSettings)
   .settings(
+    crossScalaVersions := Seq("2.12.11"),
     description := "Scio add-on for TensorFlow",
     Compile / sourceDirectories := (Compile / sourceDirectories).value
       .filterNot(_.getPath.endsWith("/src_managed/main")),
@@ -1004,6 +1018,7 @@ lazy val `scio-schemas`: Project = project
   .settings(noPublishSettings)
   .settings(protobufSettings)
   .settings(
+    crossScalaVersions += "2.13.1",
     description := "Avro/Proto schemas for testing",
     version in AvroConfig := avroVersion,
     Compile / sourceDirectories := (Compile / sourceDirectories).value
@@ -1094,6 +1109,7 @@ lazy val `scio-repl`: Project = project
   .settings(commonSettings)
   .settings(macroSettings)
   .settings(
+    crossScalaVersions += "2.13.1",
     libraryDependencies ++= Seq(
       "org.apache.beam" % "beam-runners-direct-java" % beamVersion,
       "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion,
@@ -1106,14 +1122,13 @@ lazy val `scio-repl`: Project = project
       "org.slf4j" % "slf4j-simple" % slf4jVersion,
       "jline" % "jline" % jlineVersion,
       "org.scala-lang" % "scala-compiler" % scalaVersion.value,
-      "com.nrinaudo" %% "kantan.csv" % kantanCsvVersion,
-      "org.scalamacros" % "paradise" % scalaMacrosVersion cross CrossVersion.full
+      "com.nrinaudo" %% "kantan.csv" % kantanCsvVersion
     ),
     libraryDependencies ++= {
-      if (scalaBinaryVersion.value == "2.11") {
-        Seq("com.nrinaudo" %% "kantan.codecs" % "0.5.0")
+      if (isScala213x.value) {
+        Seq()
       } else {
-        Seq("com.nrinaudo" %% "kantan.codecs" % kantanCsvVersion)
+        Seq("org.scalamacros" % "paradise" % scalaMacrosVersion cross CrossVersion.full)
       }
     },
     assemblyJarName in assembly := s"scio-repl-${version.value}.jar"
@@ -1130,6 +1145,7 @@ lazy val `scio-jmh`: Project = project
   .settings(macroSettings)
   .settings(noPublishSettings)
   .settings(
+    crossScalaVersions += "2.13.1",
     description := "Scio JMH Microbenchmarks",
     sourceDirectory in Jmh := (sourceDirectory in Test).value,
     classDirectory in Jmh := (classDirectory in Test).value,
@@ -1153,6 +1169,7 @@ lazy val `scio-smb`: Project = project
   .settings(itSettings)
   .settings(beamRunnerSettings)
   .settings(
+    crossScalaVersions += "2.13.1",
     description := "Sort Merge Bucket source/sink implementations for Apache Beam",
     libraryDependencies ++= Seq(
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
@@ -1239,6 +1256,7 @@ def fixJavaDocLinks(bases: Seq[String], doc: String): String =
 lazy val soccoIndex = taskKey[File]("Generates examples/index.html")
 
 lazy val siteSettings = Def.settings(
+  crossScalaVersions := Seq("2.12.11"),
   publish / skip := true,
   description := "Scio - Documentation",
   autoAPIMappings := true,
@@ -1425,14 +1443,9 @@ ThisBuild / dependencyOverrides ++= Seq(
   "org.typelevel" %% "algebra" % algebraVersion,
   "org.typelevel" %% "cats-core" % catsVersion,
   "org.xerial.snappy" % "snappy-java" % "1.1.4",
-  "org.yaml" % "snakeyaml" % "1.12"
-) ++ {
-  if (scalaBinaryVersion.value == "2.11") {
-    Seq("com.nrinaudo" %% "kantan.codecs" % "0.5.0")
-  } else {
-    Seq("com.nrinaudo" %% "kantan.codecs" % kantanCsvVersion)
-  }
-} ++ Seq(
+  "org.yaml" % "snakeyaml" % "1.12",
+  "com.nrinaudo" %% "kantan.codecs" % kantanCodecsVersion
+) ++ Seq(
   "io.circe" %% "circe-core",
   "io.circe" %% "circe-generic",
   "io.circe" %% "circe-parser"

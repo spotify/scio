@@ -27,7 +27,6 @@ import org.apache.beam.sdk.util.MimeTypes
 import scala.collection.JavaConverters._
 
 class SparkeyIT extends PipelineSpec {
-  import com.spotify.scio.extra.sparkey._
 
   val sideData = Seq(("a", "1"), ("b", "2"), ("c", "3"))
 

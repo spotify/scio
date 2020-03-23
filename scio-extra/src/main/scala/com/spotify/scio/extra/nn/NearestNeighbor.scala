@@ -167,7 +167,7 @@ private class MatrixNNBuilder[
       keyToId.toMap,
       idToKey.toArray,
       vectors.toArray,
-      DenseMatrix(vectors.map(_.toArray): _*)
+      DenseMatrix(vectors.iterator.map(_.toArray).toSeq: _*)
     )
 }
 

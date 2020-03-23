@@ -82,7 +82,7 @@ object CoderMaterializer {
             typeName,
             beamImpl(o, idCoder),
             id,
-            coders.mapValues(u => beamImpl(o, u)).map(identity)
+            coders.iterator.map { case (k, u) => (k, beamImpl(o, u)) }.toMap
           )
         )
       case KVCoder(koder, voder) =>

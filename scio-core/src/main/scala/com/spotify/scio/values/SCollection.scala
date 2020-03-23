@@ -269,8 +269,10 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       this
         .applyInternal(Partition.of[T](numPartitions, Functions.partitionFn[T](numPartitions, f)))
         .getAll
+        .iterator
         .asScala
-        .map(p => context.wrap(p))
+        .map(context.wrap)
+        .toSeq
     }
   }
 
