@@ -46,7 +46,7 @@ abstract private[scio] class FileDistCache[F](options: PipelineOptions) extends 
   private val isRemoteRunner = ScioUtil.isRemoteRunner(options.getRunner)
 
   protected def prepareFiles(uris: Seq[URI]): Seq[File] =
-    rfu.download(uris.asJava).asScala.map(_.toFile)
+    rfu.download(uris.asJava).iterator.asScala.map(_.toFile).toSeq
 
   protected def verifyUri(uri: URI): Unit =
     if (isRemoteRunner) {

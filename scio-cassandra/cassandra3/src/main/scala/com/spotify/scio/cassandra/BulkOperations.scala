@@ -64,13 +64,13 @@ private[cassandra] class BulkOperations(val opts: CassandraOptions, val parallel
     val variables =
       cluster.connect().prepare(opts.cql).getVariables.asList().asScala
     val partitionKeys = table.get.getPartitionKey.asScala.map(_.getName).toSet
-    val partitionKeyIndices = variables
+    val partitionKeyIndices = variables.iterator
       .map(_.getName)
       .zipWithIndex
       .filter(t => partitionKeys.contains(t._1))
       .map(_._2)
       .toArray
-    val dataTypes = variables.map(v => DataTypeExternalizer(v.getType))
+    val dataTypes = variables.iterator.map(v => DataTypeExternalizer(v.getType)).toSeq
     cluster.close()
 
     BulkConfig(protocol, partitioner, numOfNodes, tableSchema, partitionKeyIndices, dataTypes)

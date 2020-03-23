@@ -20,20 +20,20 @@ executors:
     environment:
       <<: *env
       SCALA_VERSION: 2.12.11
-  scala_211: &scala_211
+  scala_213: &scala_213
     <<: [*settings]
     docker:
       - image: circleci/openjdk:8-jdk
     environment:
       <<: *env
-      SCALA_VERSION: 2.11.12
+      SCALA_VERSION: 2.13.1
 
   scala_212_jdk11:
     <<: [*scala_212]
     docker:
       - image: circleci/openjdk:11-jdk
-  scala_211_jdk11:
-    <<: [*scala_211]
+  scala_213_jdk11:
+    <<: [*scala_213]
     docker:
       - image: circleci/openjdk:11-jdk
 
@@ -115,52 +115,69 @@ jobs:
                 command: |
                   cd scalafix; sbt -v $SBT_OPTS  scalafmtCheckAll scalafmtSbtCheck
 
-  build_211:
-    executor: scala_211
+  build_scalafix_rules_212:
+    executor: scala_212
     steps:
       - build:
           build-steps:
-            - run: sbt -v $SBT_OPTS ++$SCALA_VERSION test
-            - run: ./scripts/circleci_repl.sh
+            - run: cd scalafix; sbt -v $SBT_OPTS "++$SCALA_VERSION test"
 
   build_212:
     executor: scala_212
     steps:
       - build:
           build-steps:
-            - run: sbt -v $SBT_OPTS ++$SCALA_VERSION coverage test coverageReport coverageAggregate
+            - run:
+                command: |
+                  sbt -v $SBT_OPTS \
+                  coverage \
+                  "++$SCALA_VERSION test" \
+                  "++$SCALA_VERSION coverageReport" \
+                  "++$SCALA_VERSION coverageAggregate"
             - run: ./scripts/circleci_repl.sh
             - run: bash <(curl -s https://codecov.io/bash)
 
-  build_scalafix_rules_212:
-    executor: scala_212
-    steps:
-      - build:
-          build-steps:
-            - run: cd scalafix; sbt -v $SBT_OPTS ++$SCALA_VERSION test
-
-  build_it_211: &build_it_211
-    executor: scala_211
-    steps:
-      - build:
-          build-steps:
-            - run: sbt -v $SBT_OPTS ++$SCALA_VERSION it:test
-
   build_it_212: &build_it_212
-    <<: [*build_it_211]
     executor: scala_212
+    steps:
+      - build:
+          build-steps:
+            - run: sbt -v $SBT_OPTS "++$SCALA_VERSION it:test"
 
   build_212-jdk11:
     executor: scala_212_jdk11
     steps:
       - build:
           build-steps:
-            - run: sbt -v $SBT_OPTS ++$SCALA_VERSION test
+            - run: sbt -v $SBT_OPTS "++$SCALA_VERSION test"
             - run: ./scripts/circleci_repl.sh
 
   build_212-it-jdk11:
     <<: [*build_it_212]
     executor: scala_212_jdk11
+
+  build_213: &build_213
+    executor: scala_213
+    steps:
+      - build:
+          build-steps:
+            - run: sbt -v $SBT_OPTS "++$SCALA_VERSION test"
+            - run: ./scripts/circleci_repl.sh
+
+  build_it_213: &build_it_213
+    executor: scala_213
+    steps:
+      - build:
+          build-steps:
+            - run: sbt -v $SBT_OPTS "++$SCALA_VERSION it:test"
+
+  build_213-jdk11:
+    <<: [*build_213]
+    executor: scala_213_jdk11
+
+  build_213-it-jdk11:
+    <<: [*build_it_213]
+    executor: scala_213_jdk11
 
   deploy:
     executor: deploy
@@ -173,16 +190,16 @@ jobs:
             - run: go get -u github.com/tcnksm/ghr
             - run: ghr -u spotify -draft $CIRCLE_TAG scio-repl/target/scala-*/scio-repl-*.jar
 
-  publish_211: &publish_211
-    executor: scala_211
+  publish_212: &publish_212
+    executor: scala_212
     steps:
       - build:
           build-steps:
-            - run: sbt -v $SBT_OPTS ++$SCALA_VERSION publish
+            - run: sbt -v $SBT_OPTS "++$SCALA_VERSION publish"
 
-  publish_212:
-    <<: [*publish_211]
-    executor: scala_212
+  publish_213:
+    <<: [*publish_212]
+    executor: scala_213
 
   bench_io:
     executor: scala_212
@@ -190,7 +207,7 @@ jobs:
       - build:
           build-steps:
             - run:
-                command: sbt -v $SBT_OPTS ++$SCALA_VERSION "scio-test/it:runMain com.spotify.scio.benchmarks.ScioIOBenchmark --name=ci"
+                command: sbt -v $SBT_OPTS "++$SCALA_VERSION scio-test/it:runMain com.spotify.scio.benchmarks.ScioIOBenchmark --name=ci"
                 no_output_timeout: 30m
 
   bench_bigtable:
@@ -199,7 +216,7 @@ jobs:
       - build:
           build-steps:
             - run:
-                command: sbt -v $SBT_OPTS ++$SCALA_VERSION "scio-bigtable/it:runMain com.spotify.scio.bigtable.BigtableBenchmark --name=ci"
+                command: sbt -v $SBT_OPTS "++$SCALA_VERSION scio-bigtable/it:runMain com.spotify.scio.bigtable.BigtableBenchmark --name=ci"
                 no_output_timeout: 30m
 
   bench_batch:
@@ -208,7 +225,7 @@ jobs:
       - build:
           build-steps:
             - run:
-                command: sbt -v $SBT_OPTS ++$SCALA_VERSION "scio-test/it:runMain com.spotify.scio.benchmarks.ScioBatchBenchmark --name=ci"
+                command: sbt -v $SBT_OPTS "++$SCALA_VERSION scio-test/it:runMain com.spotify.scio.benchmarks.ScioBatchBenchmark --name=ci"
                 no_output_timeout: 30m
 
   bench_streaming:
@@ -217,7 +234,7 @@ jobs:
       - build:
           build-steps:
             - run:
-                command: sbt -v $SBT_OPTS ++$SCALA_VERSION "scio-test/it:runMain com.spotify.scio.benchmarks.ScioStreamingBenchmark --name=ci"
+                command: sbt -v $SBT_OPTS "++$SCALA_VERSION scio-test/it:runMain com.spotify.scio.benchmarks.ScioStreamingBenchmark --name=ci"
                 no_output_timeout: 30m
 
   bench_streaming_metrics:
@@ -226,7 +243,7 @@ jobs:
       - build:
           build-steps:
             - run:
-                command: sbt -v $SBT_OPTS ++$SCALA_VERSION "scio-test/it:runMain com.spotify.scio.benchmarks.ScioStreamingBenchmarkMetrics --name=ci"
+                command: sbt -v $SBT_OPTS "++$SCALA_VERSION scio-test/it:runMain com.spotify.scio.benchmarks.ScioStreamingBenchmarkMetrics --name=ci"
                 no_output_timeout: 30m
 
 ####################
@@ -243,14 +260,10 @@ workflows:
           filters:
             tags:
               only: /^v.*/
-      - build_211:
+      - build_scalafix_rules_212:
           filters:
             tags:
               only: /^v.*/
-      - build_it_211:
-          filters:
-            branches:
-              ignore: /^pull.*/
       - build_212:
           filters:
             tags:
@@ -259,10 +272,6 @@ workflows:
           filters:
             branches:
               ignore: /^pull.*/
-      - build_scalafix_rules_212:
-          filters:
-            tags:
-              only: /^v.*/
       - build_212-jdk11:
           filters:
             tags:
@@ -271,10 +280,26 @@ workflows:
           filters:
             branches:
               ignore: /^pull.*/
+      - build_213:
+          filters:
+            tags:
+              only: /^v.*/
+      - build_it_213:
+          filters:
+            branches:
+              ignore: /^pull.*/
+      - build_213-jdk11:
+          filters:
+            tags:
+              only: /^v.*/
+      - build_213-it-jdk11:
+          filters:
+            branches:
+              ignore: /^pull.*/
       - deploy:
           requires:
-            - build_211
             - build_212
+            - build_213
           filters:
             tags:
               only: /^v.*/
@@ -291,8 +316,8 @@ workflows:
               only:
                 - master
     jobs:
-      - publish_211
       - publish_212
+      - publish_213
 
   # Nightly build with latest Beam SNAPSHOTs
   snapshot:
@@ -304,10 +329,11 @@ workflows:
               only:
                 - beam-master
     jobs:
-      - build_211
       - build_212
       - build_212-jdk11
-  # Nightly benchmarks
+      - build_213
+      - build_213-jdk11
+# Nightly benchmarks
 #  bench:
 #    triggers:
 #      - schedule:

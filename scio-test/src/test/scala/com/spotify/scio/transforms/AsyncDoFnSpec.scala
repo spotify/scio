@@ -235,7 +235,7 @@ abstract class AsyncDoFnTester[P[_], F[_]] extends BaseDoFnTester {
         completePromise(promise, input.toString)
     }
     fn.finishBundle(finishBundleContext)
-    val result = Seq(outputBuffer: _*)
+    val result = Seq(outputBuffer.toSeq: _*)
 
     nextElement = 0
     pending.clear()
