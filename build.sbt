@@ -981,7 +981,7 @@ lazy val `scio-tensorflow`: Project = project
   .settings(itSettings)
   .settings(protobufSettings)
   .settings(
-    crossScalaVersions := Seq("2.12.10"),
+    crossScalaVersions := Seq("2.12.11"),
     description := "Scio add-on for TensorFlow",
     Compile / sourceDirectories := (Compile / sourceDirectories).value
       .filterNot(_.getPath.endsWith("/src_managed/main")),
@@ -1256,7 +1256,7 @@ def fixJavaDocLinks(bases: Seq[String], doc: String): String =
 lazy val soccoIndex = taskKey[File]("Generates examples/index.html")
 
 lazy val siteSettings = Def.settings(
-  crossScalaVersions := Seq("2.12.10"),
+  crossScalaVersions := Seq("2.12.11"),
   publish / skip := true,
   description := "Scio - Documentation",
   autoAPIMappings := true,
