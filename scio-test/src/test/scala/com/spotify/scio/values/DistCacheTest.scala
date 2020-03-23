@@ -102,7 +102,7 @@ object DistCacheTest {
     in.map { x =>
       val id = x.toInt
       val ann = dc()
-      ann.getNearest(ann.getItemVector(id), 5).asScala.asInstanceOf[Seq[Int]]
+      ann.getNearest(ann.getItemVector(id), 5).iterator().asScala.map(_.toInt).toSeq
     }
 
   def sparkeyTransform(in: SCollection[String], dc: DistCache[SparkeyReader]): SCollection[String] =
@@ -203,7 +203,7 @@ class DistCacheTest extends PipelineSpec {
       _.map { x =>
         val id = x.toInt
         val ann = dc()
-        ann.getNearest(ann.getItemVector(id), 5).asScala.asInstanceOf[Seq[Int]]
+        ann.getNearest(ann.getItemVector(id), 5).iterator().asScala.map(_.toInt).toSeq
       }
     } should contain theSameElementsAs expected
   }

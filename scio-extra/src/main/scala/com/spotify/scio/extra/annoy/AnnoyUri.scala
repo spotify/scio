@@ -84,8 +84,8 @@ private class RemoteAnnoyUri(val path: String, options: PipelineOptions) extends
 
 private[annoy] class AnnoyWriter(metric: AnnoyMetric, dim: Int, nTrees: Int) {
   private[this] val annoy4sIndex = metric match {
-    case Angular   => Annoy.annoyLib.createAngular(dim)
-    case Euclidean => Annoy.annoyLib.createEuclidean(dim)
+    case com.spotify.scio.extra.annoy.Angular   => Annoy.annoyLib.createAngular(dim)
+    case com.spotify.scio.extra.annoy.Euclidean => Annoy.annoyLib.createEuclidean(dim)
   }
 
   def addItem(item: Int, w: Array[Float]): Unit = {

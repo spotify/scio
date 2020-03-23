@@ -65,7 +65,7 @@ object Iterators {
       while (bi.hasNext && timestampFn(bi.head) < end) {
         buf.append(bi.next())
       }
-      buf
+      buf.toSeq
     }
   }
 
@@ -82,7 +82,7 @@ object Iterators {
         buf.append(n)
         last = timestampFn(n)
       }
-      buf
+      buf.toSeq
     }
   }
 
@@ -99,7 +99,7 @@ object Iterators {
 
     override def hasNext: Boolean = queue.nonEmpty
     override def next(): Seq[T] = {
-      val result = Seq(queue: _*)
+      val result = Seq(queue.toSeq: _*)
       val start = timestampFn(queue.head)
       val upper = upperBound(start, period, offset)
       while (queue.nonEmpty && start < upper) {

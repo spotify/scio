@@ -34,7 +34,7 @@ class JTraversableSerializerTest extends AnyFlatSpec with Matchers {
     ser.write(k, new Output(o), elems)
     val back = ser.read(k, new Input(o), null)
     elems.size shouldBe back.size
-    elems should contain theSameElementsAs back
+    (elems: Iterable[T]) should contain theSameElementsAs back
     ()
   }
 

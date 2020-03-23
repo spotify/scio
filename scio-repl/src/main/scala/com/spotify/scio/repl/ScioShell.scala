@@ -115,7 +115,7 @@ trait BaseScioShell extends MainGenericRunner {
       BootClassLoader
     )
 
-    val repl = new ScioILoop(scioClassLoader, args.toList)
+    val repl = new ScioILoop(command, scioClassLoader, args.toList)
     scioClassLoader.setRepl(repl)
 
     // Set classloader chain - expose top level abstract class loader down
@@ -123,7 +123,7 @@ trait BaseScioShell extends MainGenericRunner {
     // See https://gist.github.com/harrah/404272
     command.settings.embeddedDefaults(scioClassLoader)
 
-    repl.process(command.settings)
+    repl.run(command.settings)
   }
 
   /** Runs an instance of the shell. */

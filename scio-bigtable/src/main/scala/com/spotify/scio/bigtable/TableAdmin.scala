@@ -81,8 +81,12 @@ object TableAdmin {
   def ensureTables(
     bigtableOptions: BigtableOptions,
     tablesAndColumnFamilies: Map[String, List[String]]
-  ): Unit =
-    ensureTablesImpl(bigtableOptions, tablesAndColumnFamilies.mapValues(l => l.map(_ -> None))).get
+  ): Unit = {
+    val tcf = tablesAndColumnFamilies.iterator.map {
+      case (k, l) => k -> l.map(_ -> None)
+    }.toMap
+    ensureTablesImpl(bigtableOptions, tcf).get
+  }
 
   /**
    * Ensure that tables and column families exist.
@@ -102,9 +106,12 @@ object TableAdmin {
     tablesAndColumnFamilies: Map[String, List[(String, Option[Duration])]]
   ): Unit = {
     // Convert Duration to GcRule
-    val x = tablesAndColumnFamilies.mapValues(_.map {
-      case (columnFamily, duration) => (columnFamily, duration.map(gcRuleFromDuration))
-    })
+    val x = tablesAndColumnFamilies.iterator.map {
+      case (k, v) =>
+        k -> v.map {
+          case (columnFamily, duration) => (columnFamily, duration.map(gcRuleFromDuration))
+        }
+    }.toMap
 
     ensureTablesImpl(bigtableOptions, x).get
   }
