@@ -26,6 +26,7 @@ import com.spotify.scio.ScioContext
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
 import kantan.csv._
+import kantan.codecs.compat._
 import kantan.csv.CsvConfiguration.{Header, QuotePolicy}
 import kantan.csv.engine.ReaderEngine
 import kantan.csv.ops._

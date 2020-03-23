@@ -470,19 +470,6 @@ package object sparkey extends SparkeyReaderInstances {
       sparkeys.values.map(_.iterator.asScala).reduce(_ ++ _).asJava
   }
 
-  /** Enhanced version of `SparkeyReader` that mimics a `Map`. */
-  implicit class RichStringSparkeyReader(val self: SparkeyReader) extends Map[String, String] {
-    override def get(key: String): Option[String] =
-      Option(self.getAsString(key))
-    override def iterator: Iterator[(String, String)] =
-      self.iterator.asScala.map(e => (e.getKeyAsString, e.getValueAsString))
-
-    override def updated[B1 >: String](k: String, v: B1): Map[String, B1] =
-      throw new NotImplementedError("Sparkey-backed map; operation not supported.")
-    override def removed(key: String): Map[String, String] =
-      throw new NotImplementedError("Sparkey-backed map; operation not supported.")
-  }
-
   private class SparkeySideInput(val view: PCollectionView[SparkeyUri])
       extends SideInput[SparkeyReader] {
     override def updateCacheOnGlobalWindow: Boolean = false
