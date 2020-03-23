@@ -40,16 +40,6 @@ import cats.kernel.Eq
 import org.apache.beam.sdk.testing.SerializableMatchers
 import com.spotify.scio.coders.CoderMaterializer
 import com.spotify.scio.ScioContext
-import java.{util => ju}
-import org.apache.beam.sdk.coders.{Coder => BCoder}
-import java.io.Externalizable
-import java.io.ObjectOutput
-import java.io.ObjectInput
-import java.io.ByteArrayOutputStream
-import java.io.ByteArrayInputStream
-import java.io.ObjectOutputStream
-import java.io.ObjectInputStream
-import org.apache.beam.sdk.util.SerializableUtils
 
 final private case class TestWrapper[T: Eq](get: T) {
 
@@ -170,7 +160,7 @@ private object ScioMatchers {
  */
 trait SCollectionMatchers extends EqInstances {
 
-  import ScioMatchers.{makeFn, makeFnSingle}
+  import ScioMatchers.makeFn
 
   sealed trait MatcherBuilder[T] {
     _: Matcher[T] =>
