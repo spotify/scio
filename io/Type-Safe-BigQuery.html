@@ -243,9 +243,26 @@ spotify/scio
 </ul>
 <p>See documentation for <a href="https://spotify.github.io/scio/api/com/spotify/scio/bigquery/types/BigQueryType$.html" title="com.spotify.scio.bigquery.types.BigQueryType"><code>BigQueryType</code></a> for the complete list of supported types.</p>
 <h2><a href="#type-annotations" name="type-annotations" class="anchor"><span class="anchor-link"></span></a>Type annotations</h2>
-<p>There are 4 annotations for type safe code generation.</p>
+<p>There are 5 annotations for type safe code generation.</p>
+<h3><a href="#bigquerytype-fromstorage" name="bigquerytype-fromstorage" class="anchor"><span class="anchor-link"></span></a>BigQueryType.fromStorage</h3>
+<p>This expands a class with output fields from a <a href="https://cloud.google.com/bigquery/docs/reference/storage">BigQuery Storage API</a> read. Note that <code>class Row</code> has no body definition and is expanded by the annotation at compile time based on actual table schema.</p>
+<p>Storage API provides fast access to BigQuery-managed storage by using an rpc-based protocol. It is preferred over <code>@BigQueryType.fromTable</code> and <code>@bigQueryType.fromQuery</code>. For comparison:</p>
+<ul>
+  <li><code>fromTable</code> exports the entire table to Avro files on GCS and reads from them. This incurs export cost and export quota. It can also be wasteful if only a fraction of the columns/rows are needed.</li>
+  <li><code>fromQuery</code> executes the query and saves result as a temporary table before reading it like <code>fromTable</code>. This incurs both query and export cost plus export quota.</li>
+  <li><code>fromStorage</code> accesses the underlying BigQuery storage directly, reading only columns and rows based on <code>selectedFields</code> and <code>rowRestriction</code>. No query, export cost or quota hit.</li>
+</ul>
+<pre class="prettyprint"><code class="language-scala">import com.spotify.scio.bigquery.types.BigQueryType
+
+@BigQueryType.fromStorage(
+    &quot;publicdata:samples.gsod&quot;,
+    selectedFields = List(&quot;tornado&quot;, &quot;month&quot;),
+    rowRestriction = &quot;tornado = true&quot;
+  )
+  class Row
+</code></pre>
 <h3><a href="#bigquerytype-fromtable" name="bigquerytype-fromtable" class="anchor"><span class="anchor-link"></span></a>BigQueryType.fromTable</h3>
-<p>This expands a class with fields that map to a BigQuery table. Note that <code>class Row</code> has no body definition and is expanded by the annotation at compile time based on actual table schema.</p>
+<p>This expands a class with fields that map to a BigQuery table.</p>
 <pre class="prettyprint"><code class="language-scala">import com.spotify.scio.bigquery.types.BigQueryType
 
 @BigQueryType.fromTable(&quot;publicdata:samples.gsod&quot;)
@@ -360,7 +377,7 @@ class Row2
 class Row
 
 Row.toPrettyString(2)
-// res8: String = &quot;&quot;&quot;@BigQueryType.toTable
+// res9: String = &quot;&quot;&quot;@BigQueryType.toTable
 // case class Row(
 //   station_number: Long,
 //   wban_number: Option[Long],
