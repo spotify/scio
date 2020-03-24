@@ -53,7 +53,8 @@ public class BucketMetadataUtil {
           canonicalMetadata, partitionMetadata);
     }
 
-    @Nullable public abstract BucketMetadata<K, V> getCanonicalMetadata();
+    @Nullable
+    public abstract BucketMetadata<K, V> getCanonicalMetadata();
 
     public abstract Map<ResourceId, PartitionMetadata> getPartitionMetadata();
 
@@ -84,12 +85,13 @@ public class BucketMetadataUtil {
     this.batchSize = batchSize;
   }
 
-  public <K, V> SourceMetadata<K, V> getSourceMetadata(List<ResourceId> directories, String filenameSuffix) {
-    final List<FileAssignment> fileAssignments = directories
-        .stream()
-        .sorted(Comparator.comparing(ResourceId::toString).reversed())
-        .map(dir -> getFileAssignment(dir, filenameSuffix))
-        .collect(Collectors.toList());
+  public <K, V> SourceMetadata<K, V> getSourceMetadata(
+      List<ResourceId> directories, String filenameSuffix) {
+    final List<FileAssignment> fileAssignments =
+        directories.stream()
+            .sorted(Comparator.comparing(ResourceId::toString).reversed())
+            .map(dir -> getFileAssignment(dir, filenameSuffix))
+            .collect(Collectors.toList());
 
     final int total = fileAssignments.size();
     final Map<ResourceId, PartitionMetadata> partitionMetadata = new HashMap<>();
@@ -99,10 +101,11 @@ public class BucketMetadataUtil {
     while (start < total) {
       final List<FileAssignment> input =
           fileAssignments.subList(start, Math.min(total, start + batchSize));
-      final List<Optional<BucketMetadata<K, V>>> result = input
-          .parallelStream()
-          .map(BucketMetadataUtil::<K, V>getMetadata)
-          .collect(Collectors.toList());
+      final List<Optional<BucketMetadata<K, V>>> result =
+          input
+              .parallelStream()
+              .map(BucketMetadataUtil::<K, V>getMetadata)
+              .collect(Collectors.toList());
 
       if (result.stream().anyMatch(o -> !o.isPresent())) {
         // Fail fast if any partition is missing metadata
@@ -120,24 +123,22 @@ public class BucketMetadataUtil {
         }
 
         Preconditions.checkState(
-            metadata.isCompatibleWith(canonicalMetadata) &&
-                metadata.isPartitionCompatible(canonicalMetadata),
+            metadata.isCompatibleWith(canonicalMetadata)
+                && metadata.isPartitionCompatible(canonicalMetadata),
             "Incompatible partitions. Metadata %s is incompatible with metadata %s. %s != %s",
             dir,
             canonicalMetadataDir,
             metadata,
-            canonicalMetadata
-        );
+            canonicalMetadata);
 
         if (metadata.getNumBuckets() < canonicalMetadata.getNumBuckets()) {
           canonicalMetadata = metadata;
           canonicalMetadataDir = dir;
         }
 
-        final PartitionMetadata value = PartitionMetadata.create(
-            fileAssignment,
-            metadata.getNumBuckets(),
-            metadata.getNumShards());
+        final PartitionMetadata value =
+            PartitionMetadata.create(
+                fileAssignment, metadata.getNumBuckets(), metadata.getNumShards());
         partitionMetadata.put(dir, value);
       }
 

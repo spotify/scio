@@ -390,26 +390,29 @@ public class SortedBucketSource<FinalKeyT>
       final List<Iterator<V>> iterators = new ArrayList<>();
 
       // Create one iterator per shard
-      sourceMetadata.getPartitionMetadata().forEach(
-          (resourceId, partitionMetadata) -> {
-            final int directoryBuckets = partitionMetadata.getNumBuckets();
-            final int directoryShards = partitionMetadata.getNumShards();
+      sourceMetadata
+          .getPartitionMetadata()
+          .forEach(
+              (resourceId, partitionMetadata) -> {
+                final int directoryBuckets = partitionMetadata.getNumBuckets();
+                final int directoryShards = partitionMetadata.getNumShards();
 
-            // Since all BucketedInputs have a bucket count that's a power of two, we can infer
-            // which buckets should be merged together for the join.
-            for (int i = bucketId; i < directoryBuckets; i += leastNumBuckets) {
-              for (int j = 0; j < directoryShards; j++) {
-                final ResourceId file =
-                    partitionMetadata.getFileAssignment().forBucket(
-                        BucketShardId.of(i, j), directoryBuckets, directoryShards);
-                try {
-                  iterators.add(fileOperations.iterator(file));
-                } catch (Exception e) {
-                  throw new RuntimeException(e);
+                // Since all BucketedInputs have a bucket count that's a power of two, we can infer
+                // which buckets should be merged together for the join.
+                for (int i = bucketId; i < directoryBuckets; i += leastNumBuckets) {
+                  for (int j = 0; j < directoryShards; j++) {
+                    final ResourceId file =
+                        partitionMetadata
+                            .getFileAssignment()
+                            .forBucket(BucketShardId.of(i, j), directoryBuckets, directoryShards);
+                    try {
+                      iterators.add(fileOperations.iterator(file));
+                    } catch (Exception e) {
+                      throw new RuntimeException(e);
+                    }
+                  }
                 }
-              }
-            }
-          });
+              });
 
       BucketMetadata<K, V> canonicalMetadata = sourceMetadata.getCanonicalMetadata();
       return new KeyGroupIterator<>(iterators, canonicalMetadata::getKeyBytes, bytesComparator);
@@ -437,7 +440,8 @@ public class SortedBucketSource<FinalKeyT>
       SerializableCoder.of(FileOperations.class).encode(fileOperations, outStream);
 
       // Depending on when .writeObject is called, metadata may not have been computed.
-      NullableCoder.of(SerializableCoder.of(SourceMetadata.class)).encode(sourceMetadata, outStream);
+      NullableCoder.of(SerializableCoder.of(SourceMetadata.class))
+          .encode(sourceMetadata, outStream);
     }
 
     @SuppressWarnings("unchecked")
@@ -446,7 +450,8 @@ public class SortedBucketSource<FinalKeyT>
       this.filenameSuffix = StringUtf8Coder.of().decode(inStream);
       this.fileOperations = SerializableCoder.of(FileOperations.class).decode(inStream);
 
-      this.sourceMetadata = NullableCoder.of(SerializableCoder.of(SourceMetadata.class)).decode(inStream);
+      this.sourceMetadata =
+          NullableCoder.of(SerializableCoder.of(SourceMetadata.class)).decode(inStream);
     }
   }
 }
