@@ -21,11 +21,32 @@ See documentation for @scaladoc[BigQueryType](com.spotify.scio.bigquery.types.Bi
 
 ## Type annotations
 
-There are 4 annotations for type safe code generation.
+There are 5 annotations for type safe code generation.
+
+### BigQueryType.fromStorage
+
+This expands a class with output fields from a [BigQuery Storage API](https://cloud.google.com/bigquery/docs/reference/storage) read. Note that `class Row` has no body definition and is expanded by the annotation at compile time based on actual table schema.
+
+Storage API provides fast access to BigQuery-managed storage by using an rpc-based protocol. It is preferred over `@BigQueryType.fromTable` and `@bigQueryType.fromQuery`. For comparison:
+
+- `fromTable` exports the entire table to Avro files on GCS and reads from them. This incurs export cost and export quota. It can also be wasteful if only a fraction of the columns/rows are needed.
+- `fromQuery` executes the query and saves result as a temporary table before reading it like `fromTable`. This incurs both query and export cost plus export quota.
+- `fromStorage` accesses the underlying BigQuery storage directly, reading only columns and rows based on `selectedFields` and `rowRestriction`. No query, export cost or quota hit.
+
+```scala mdoc:reset:silent
+import com.spotify.scio.bigquery.types.BigQueryType
+
+@BigQueryType.fromStorage(
+    "publicdata:samples.gsod",
+    selectedFields = List("tornado", "month"),
+    rowRestriction = "tornado = true"
+  )
+  class Row
+```
 
 ### BigQueryType.fromTable
 
-This expands a class with fields that map to a BigQuery table. Note that `class Row` has no body definition and is expanded by the annotation at compile time based on actual table schema.
+This expands a class with fields that map to a BigQuery table.
 
 ```scala mdoc:reset:silent
 import com.spotify.scio.bigquery.types.BigQueryType
