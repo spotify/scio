@@ -43,6 +43,8 @@ import org.apache.beam.sdk.coders.SerializableCoder;
 import org.apache.beam.sdk.coders.StringUtf8Coder;
 import org.apache.beam.sdk.coders.VarIntCoder;
 import org.apache.beam.sdk.extensions.smb.BucketMetadata.BucketMetadataCoder;
+import org.apache.beam.sdk.extensions.smb.BucketMetadataUtil.PartitionMetadata;
+import org.apache.beam.sdk.extensions.smb.BucketMetadataUtil.SourceMetadata;
 import org.apache.beam.sdk.extensions.smb.SMBFilenamePolicy.FileAssignment;
 import org.apache.beam.sdk.io.FileSystems;
 import org.apache.beam.sdk.io.fs.ResourceId;
@@ -337,20 +339,7 @@ public class SortedBucketSource<FinalKeyT>
     private FileOperations<V> fileOperations;
     private List<ResourceId> inputDirectories;
 
-    private transient Map<ResourceId, DirectoryMetadata> inputMetadata;
-    private transient BucketMetadata<K, V> canonicalMetadata;
-
-    private static class DirectoryMetadata implements Serializable {
-      final FileAssignment fileAssignment;
-      final int numBuckets;
-      final int numShards;
-
-      DirectoryMetadata(FileAssignment fileAssignment, BucketMetadata<?, ?> bucketMetadata) {
-        this.fileAssignment = fileAssignment;
-        this.numBuckets = bucketMetadata.getNumBuckets();
-        this.numShards = bucketMetadata.getNumShards();
-      }
-    }
+    private transient SourceMetadata<K, V> sourceMetadata;
 
     public BucketedInput(
         TupleTag<V> tupleTag,
@@ -386,65 +375,32 @@ public class SortedBucketSource<FinalKeyT>
 
     public BucketMetadata<K, V> getMetadata() {
       computeMetadataIfAbsent();
-      return canonicalMetadata;
+      return sourceMetadata.getCanonicalMetadata();
     }
 
     private void computeMetadataIfAbsent() {
-      if (this.inputMetadata != null && this.canonicalMetadata != null) {
+      if (this.sourceMetadata != null) {
         return;
       }
 
-      this.inputMetadata = new HashMap<>();
-      this.canonicalMetadata = null;
-      ResourceId canonicalMetadataDir = null;
-
-      for (ResourceId dir : inputDirectories) {
-        final FileAssignment fileAssignment =
-            new SMBFilenamePolicy(dir, filenameSuffix).forDestination();
-        BucketMetadata<K, V> metadata;
-        try {
-          metadata =
-              BucketMetadata.from(
-                  Channels.newInputStream(FileSystems.open(fileAssignment.forMetadata())));
-        } catch (IOException e) {
-          throw new RuntimeException("Error fetching metadata for " + dir, e);
-        }
-        if (this.canonicalMetadata == null
-            || metadata.getNumBuckets() < this.canonicalMetadata.getNumBuckets()) {
-          this.canonicalMetadata = metadata;
-          canonicalMetadataDir = dir;
-        }
-
-        Preconditions.checkState(
-            metadata.isCompatibleWith(this.canonicalMetadata)
-                && metadata.isPartitionCompatible(this.canonicalMetadata),
-            "%s cannot be read as a single input source. Metadata in directory "
-                + "%s is incompatible with metadata in directory %s. %s != %s",
-            this,
-            dir,
-            canonicalMetadataDir,
-            metadata,
-            canonicalMetadata);
-
-        this.inputMetadata.put(dir, new DirectoryMetadata(fileAssignment, metadata));
-      }
+      sourceMetadata = BucketMetadataUtil.get().getSourceMetadata(inputDirectories, filenameSuffix);
     }
 
     KeyGroupIterator<byte[], V> createIterator(int bucketId, int leastNumBuckets) {
       final List<Iterator<V>> iterators = new ArrayList<>();
 
       // Create one iterator per shard
-      inputMetadata.forEach(
-          (resourceId, directoryMetadata) -> {
-            final int directoryBuckets = directoryMetadata.numBuckets;
-            final int directoryShards = directoryMetadata.numShards;
+      sourceMetadata.getPartitionMetadata().forEach(
+          (resourceId, partitionMetadata) -> {
+            final int directoryBuckets = partitionMetadata.getNumBuckets();
+            final int directoryShards = partitionMetadata.getNumShards();
 
             // Since all BucketedInputs have a bucket count that's a power of two, we can infer
             // which buckets should be merged together for the join.
             for (int i = bucketId; i < directoryBuckets; i += leastNumBuckets) {
               for (int j = 0; j < directoryShards; j++) {
                 final ResourceId file =
-                    directoryMetadata.fileAssignment.forBucket(
+                    partitionMetadata.getFileAssignment().forBucket(
                         BucketShardId.of(i, j), directoryBuckets, directoryShards);
                 try {
                   iterators.add(fileOperations.iterator(file));
@@ -455,6 +411,7 @@ public class SortedBucketSource<FinalKeyT>
             }
           });
 
+      BucketMetadata<K, V> canonicalMetadata = sourceMetadata.getCanonicalMetadata();
       return new KeyGroupIterator<>(iterators, canonicalMetadata::getKeyBytes, bytesComparator);
     }
 
@@ -468,7 +425,7 @@ public class SortedBucketSource<FinalKeyT>
                   + "..."
                   + inputDirectories.get(inputDirectories.size() - 1)
               : inputDirectories,
-          canonicalMetadata);
+          sourceMetadata.getCanonicalMetadata());
     }
 
     // Not all instance members can be natively serialized, so override writeObject/readObject
@@ -480,11 +437,7 @@ public class SortedBucketSource<FinalKeyT>
       SerializableCoder.of(FileOperations.class).encode(fileOperations, outStream);
 
       // Depending on when .writeObject is called, metadata may not have been computed.
-      NullableCoder.of(
-              MapCoder.of(ResourceIdCoder.of(), SerializableCoder.of(DirectoryMetadata.class)))
-          .encode(inputMetadata, outStream);
-
-      NullableCoder.of(new BucketMetadataCoder<K, V>()).encode(canonicalMetadata, outStream);
+      NullableCoder.of(SerializableCoder.of(SourceMetadata.class)).encode(sourceMetadata, outStream);
     }
 
     @SuppressWarnings("unchecked")
@@ -493,11 +446,7 @@ public class SortedBucketSource<FinalKeyT>
       this.filenameSuffix = StringUtf8Coder.of().decode(inStream);
       this.fileOperations = SerializableCoder.of(FileOperations.class).decode(inStream);
 
-      this.inputMetadata =
-          NullableCoder.of(
-                  MapCoder.of(ResourceIdCoder.of(), SerializableCoder.of(DirectoryMetadata.class)))
-              .decode(inStream);
-      this.canonicalMetadata = NullableCoder.of(new BucketMetadataCoder<K, V>()).decode(inStream);
+      this.sourceMetadata = NullableCoder.of(SerializableCoder.of(SourceMetadata.class)).decode(inStream);
     }
   }
 }
