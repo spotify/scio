@@ -150,10 +150,13 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
 
   @FunctionalInterface
   public interface TransformFn<KeyT, ValueT> extends Serializable {
-    void writeTransform(KV<KeyT, CoGbkResult> keyGroup, OutputCollector<ValueT> outputConsumer);
+    void writeTransform(
+        KV<KeyT, CoGbkResult> keyGroup, SerializableConsumer<ValueT> outputConsumer);
   }
 
-  public static class OutputCollector<ValueT> implements Consumer<ValueT>, Serializable {
+  public interface SerializableConsumer<ValueT> extends Consumer<ValueT>, Serializable {}
+
+  private static class OutputCollector<ValueT> implements SerializableConsumer<ValueT> {
     private final Writer<ValueT> writer;
     private final Counter elementsWritten;
 

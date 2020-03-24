@@ -350,12 +350,12 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
   ) extends Serializable {
 
     def via(
-      transformFn: (K, R, SortedBucketTransform.OutputCollector[W]) => Unit
+      transformFn: (K, R, SortedBucketTransform.SerializableConsumer[W]) => Unit
     ): ClosedTap[Nothing] = {
       val fn = new SortedBucketTransform.TransformFn[K, W]() {
         override def writeTransform(
           keyGroup: KV[K, CoGbkResult],
-          outputConsumer: SortedBucketTransform.OutputCollector[W]
+          outputConsumer: SortedBucketTransform.SerializableConsumer[W]
         ): Unit =
           transformFn.apply(
             keyGroup.getKey,
