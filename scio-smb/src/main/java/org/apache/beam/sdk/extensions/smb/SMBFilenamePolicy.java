@@ -140,6 +140,10 @@ public final class SMBFilenamePolicy implements Serializable {
           timestamp + METADATA_FILENAME, StandardResolveOptions.RESOLVE_FILE);
     }
 
+    public ResourceId getDirectory() {
+      return filenamePrefix;
+    }
+
     @Override
     public void populateDisplayData(Builder builder) {
       builder.add(DisplayData.item("directory", filenamePrefix.toString()));
