@@ -24,6 +24,7 @@ import org.apache.beam.sdk.io.fs.ResourceId;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.annotations.VisibleForTesting;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions;
 
+import javax.annotation.Nullable;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -46,13 +47,13 @@ public class BucketMetadataUtil {
   @AutoValue
   public abstract static class SourceMetadata<K, V> implements Serializable {
     public static <K, V> SourceMetadata<K, V> create(
-        BucketMetadata<K, V> canonicalMetadata,
+        @Nullable BucketMetadata<K, V> canonicalMetadata,
         Map<ResourceId, PartitionMetadata> partitionMetadata) {
       return new AutoValue_BucketMetadataUtil_SourceMetadata<>(
           canonicalMetadata, partitionMetadata);
     }
 
-    public abstract BucketMetadata<K, V> getCanonicalMetadata();
+    @Nullable public abstract BucketMetadata<K, V> getCanonicalMetadata();
 
     public abstract Map<ResourceId, PartitionMetadata> getPartitionMetadata();
 
