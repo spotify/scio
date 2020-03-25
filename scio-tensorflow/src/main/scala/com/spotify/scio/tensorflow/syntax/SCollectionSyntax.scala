@@ -142,20 +142,6 @@ final class ExampleSCollectionOps[T <: Example](private val self: SCollection[T]
    *
    * @return
    */
-  @deprecated("saveAsTfExampleFile is deprecated: use saveAsTfRecordFile instead", "0.7.4")
-  def saveAsTfExampleFile(
-    path: String,
-    suffix: String = TFExampleIO.WriteParam.DefaultSuffix,
-    compression: Compression = TFExampleIO.WriteParam.DefaultCompression,
-    numShards: Int = TFExampleIO.WriteParam.DefaultNumShards
-  ): ClosedTap[Example] =
-    saveAsTfRecordFile(path, suffix = suffix, compression = compression, numShards = numShards)
-
-  /**
-   * Saves this SCollection of `org.tensorflow.example.Example` as a TensorFlow TFRecord file.
-   *
-   * @return
-   */
   def saveAsTfRecordFile(
     path: String,
     suffix: String = TFExampleIO.WriteParam.DefaultSuffix,
@@ -175,21 +161,6 @@ object SeqExampleSCollectionOps {
 final class SeqExampleSCollectionOps[T <: Example](private val self: SCollection[Seq[T]])
     extends AnyVal {
   def mergeExamples(e: Seq[Example]): Example = SeqExampleSCollectionOps.mergeExamples(e)
-
-  /**
-   * Merge each [[Seq]] of [[Example]] and save them as TensorFlow TFRecord files.
-   * Caveat: if some feature names are repeated in different feature specs, they will be collapsed.
-   *
-   * @group output
-   */
-  @deprecated("saveAsTfExampleFile is deprecated: use saveAsTfRecordFile instead", "0.7.4")
-  def saveAsTfExampleFile(
-    path: String,
-    suffix: String = TFExampleIO.WriteParam.DefaultSuffix,
-    compression: Compression = TFExampleIO.WriteParam.DefaultCompression,
-    numShards: Int = TFExampleIO.WriteParam.DefaultNumShards
-  ): ClosedTap[Example] =
-    saveAsTfRecordFile(path, suffix = suffix, compression = compression, numShards = numShards)
 
   /**
    * Merge each [[Seq]] of [[Example]] and save them as TensorFlow TFRecord files.
