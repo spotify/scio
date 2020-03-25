@@ -132,9 +132,7 @@ private object Queries {
     expectedSchema: BSchema,
     udfs: List[Udf]
   ): Either[String, String] =
-    ScioUtil
-      .toEither(schema(query, inferredSchemas, udfs))
-      .left
+    schema(query, inferredSchemas, udfs).toEither.left
       .map { ex =>
         val mess = ExceptionUtils.getRootCauseMessage(ex) match {
           case TableNotFound(msg, _) =>
