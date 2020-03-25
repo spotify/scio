@@ -403,7 +403,6 @@ lazy val root: Project = Project("scio", file("."))
     `scio-avro`,
     `scio-bigquery`,
     `scio-bigtable`,
-    `scio-cassandra2`,
     `scio-cassandra3`,
     `scio-elasticsearch2`,
     `scio-elasticsearch5`,
@@ -702,35 +701,6 @@ lazy val `scio-bigtable`: Project = project
   .dependsOn(
     `scio-core`,
     `scio-test` % "test;it->it"
-  )
-  .configs(IntegrationTest)
-
-lazy val `scio-cassandra2`: Project = project
-  .in(file("scio-cassandra/cassandra2"))
-  .settings(commonSettings)
-  .settings(itSettings)
-  .settings(
-    crossScalaVersions += "2.13.1",
-    description := "Scio add-on for Apache Cassandra 2.x",
-    libraryDependencies ++= Seq(
-      "com.google.protobuf" % "protobuf-java" % protobufVersion,
-      "com.google.guava" % "guava" % guavaVersion,
-      "com.twitter" %% "chill" % chillVersion,
-      "com.datastax.cassandra" % "cassandra-driver-core" % "3.8.0",
-      ("org.apache.cassandra" % "cassandra-all" % "2.2.16")
-        .exclude("ch.qos.logback", "logback-classic")
-        .exclude("org.slf4j", "log4j-over-slf4j"),
-      "org.apache.hadoop" % "hadoop-common" % hadoopVersion,
-      "org.apache.hadoop" % "hadoop-mapreduce-client-core" % hadoopVersion,
-      "com.esotericsoftware" % "kryo-shaded" % kryoVersion,
-      "com.google.guava" % "guava" % guavaVersion,
-      "com.twitter" % "chill-java" % chillVersion,
-      "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamVendorVersion
-    )
-  )
-  .dependsOn(
-    `scio-core`,
-    `scio-test` % "test;it"
   )
   .configs(IntegrationTest)
 
