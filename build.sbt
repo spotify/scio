@@ -49,7 +49,6 @@ val commonsLang3Version = "3.9"
 val commonsMath3Version = "3.6.1"
 val commonsTextVersion = "1.8"
 val datastoreV1ProtoClientVersion = "1.6.3"
-val elasticsearch2Version = "2.4.6"
 val elasticsearch5Version = "5.6.16"
 val elasticsearch6Version = "6.8.7"
 val elasticsearch7Version = "7.6.1"
@@ -405,7 +404,6 @@ lazy val root: Project = Project("scio", file("."))
     `scio-bigtable`,
     `scio-cassandra2`,
     `scio-cassandra3`,
-    `scio-elasticsearch2`,
     `scio-elasticsearch5`,
     `scio-elasticsearch6`,
     `scio-elasticsearch7`,
@@ -763,25 +761,6 @@ lazy val `scio-cassandra3`: Project = project
     `scio-test` % "test;it"
   )
   .configs(IntegrationTest)
-
-lazy val `scio-elasticsearch2`: Project = project
-  .in(file("scio-elasticsearch/es2"))
-  .settings(commonSettings)
-  .settings(
-    crossScalaVersions += "2.13.1",
-    description := "Scio add-on for writing to Elasticsearch",
-    libraryDependencies ++= Seq(
-      "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamVendorVersion,
-      "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
-      "joda-time" % "joda-time" % jodaTimeVersion,
-      "org.slf4j" % "slf4j-api" % slf4jVersion,
-      "org.elasticsearch" % "elasticsearch" % elasticsearch2Version
-    )
-  )
-  .dependsOn(
-    `scio-core`,
-    `scio-test` % "test"
-  )
 
 lazy val `scio-elasticsearch5`: Project = project
   .in(file("scio-elasticsearch/es5"))
