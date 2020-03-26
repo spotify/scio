@@ -150,7 +150,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       case c if c.getClass.getPackage.getName.startsWith("org.apache.beam") =>
         Right(c)
       case _ =>
-        ScioUtil.toEither(Try(SerializableUtils.ensureSerializable(coder)))
+        Try[BCoder[A]](SerializableUtils.ensureSerializable(coder)).toEither
     }
 
   /**
