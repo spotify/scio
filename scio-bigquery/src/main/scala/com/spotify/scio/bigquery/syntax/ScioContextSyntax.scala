@@ -17,7 +17,6 @@
 
 package com.spotify.scio.bigquery.syntax
 
-import com.google.api.services.bigquery.model.TableReference
 import com.spotify.scio.ScioContext
 import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
 import com.spotify.scio.bigquery.{
