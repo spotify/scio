@@ -52,23 +52,6 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
    * supported. By default the query dialect will be automatically detected. To override this
    * behavior, start the query string with `#legacysql` or `#standardsql`.
    */
-  @deprecated(
-    "this method will be removed; use bigQuerySelect(Query(sql), flattenResults) instead",
-    "0.8.0"
-  )
-  def bigQuerySelect(
-    sqlQuery: String,
-    flattenResults: Boolean = BigQuerySelect.ReadParam.DefaultFlattenResults
-  ): SCollection[TableRow] =
-    bigQuerySelect(Query(sqlQuery), flattenResults)
-
-  /**
-   * Get an SCollection for a BigQuery SELECT query.
-   * Both [[https://cloud.google.com/bigquery/docs/reference/legacy-sql Legacy SQL]] and
-   * [[https://cloud.google.com/bigquery/docs/reference/standard-sql/ Standard SQL]] dialects are
-   * supported. By default the query dialect will be automatically detected. To override this
-   * behavior, start the query string with `#legacysql` or `#standardsql`.
-   */
   def bigQuerySelect(
     sqlQuery: Query,
     flattenResults: Boolean
@@ -86,20 +69,6 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
     sqlQuery: Query
   ): SCollection[TableRow] =
     bigQuerySelect(sqlQuery, BigQuerySelect.ReadParam.DefaultFlattenResults)
-
-  /**
-   * Get an SCollection for a BigQuery table.
-   */
-  @deprecated("this method will be removed; use bigQueryTable(Table.Ref(table)) instead", "0.8.0")
-  def bigQueryTable(table: TableReference): SCollection[TableRow] =
-    bigQueryTable(Table.Ref(table))
-
-  /**
-   * Get an SCollection for a BigQuery table.
-   */
-  @deprecated("this method will be removed; use bigQueryTable(Table.Spec(table)) instead", "0.8.0")
-  def bigQueryTable(tableSpec: String): SCollection[TableRow] =
-    bigQueryTable(Table.Spec(tableSpec))
 
   /**
    * Get an SCollection for a BigQuery table.
@@ -138,46 +107,6 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
    */
   def bigQueryStorage(query: Query): SCollection[TableRow] =
     self.read(BigQueryStorageSelect(query))
-
-  /**
-   * Get a typed SCollection for a BigQuery SELECT query, table or storage.
-   *
-   * Note that `T` must be annotated with
-   * [[com.spotify.scio.bigquery.types.BigQueryType.fromSchema BigQueryType.fromSchema]],
-   * [[com.spotify.scio.bigquery.types.BigQueryType.fromStorage BigQueryType.fromStorage]],
-   * [[com.spotify.scio.bigquery.types.BigQueryType.fromTable BigQueryType.fromTable]],
-   * [[com.spotify.scio.bigquery.types.BigQueryType.fromQuery BigQueryType.fromQuery]], or
-   * [[com.spotify.scio.bigquery.types.BigQueryType.toTable BigQueryType.toTable]].
-   *
-   * By default the source (table or query) specified in the annotation will be used, but it can
-   * be overridden with the `newSource` parameter. For example:
-   *
-   * {{{
-   * @BigQueryType.fromTable("publicdata:samples.gsod")
-   * class Row
-   *
-   * // Read from [publicdata:samples.gsod] as specified in the annotation.
-   * sc.typedBigQuery[Row]()
-   *
-   * // Read from [myproject:samples.gsod] instead.
-   * sc.typedBigQuery[Row]("myproject:samples.gsod")
-   *
-   * // Read from a query instead.
-   * sc.typedBigQuery[Row]("SELECT * FROM [publicdata:samples.gsod] LIMIT 1000")
-   * }}}
-   *
-   * Both [[https://cloud.google.com/bigquery/docs/reference/legacy-sql Legacy SQL]] and
-   * [[https://cloud.google.com/bigquery/docs/reference/standard-sql/ Standard SQL]] dialects are
-   * supported. By default the query dialect will be automatically detected. To override this
-   * behavior, start the query string with `#legacysql` or `#standardsql`.
-   */
-  @deprecated("this method will be removed; use typedBigQuery(Source) instead", "0.8.0")
-  def typedBigQuery[T <: HasAnnotation: ClassTag: TypeTag: Coder](
-    newSource: String
-  ): SCollection[T] = {
-    val src = Option(newSource).map(s => Try(Table.Spec(s)).getOrElse(Query(s))).orNull
-    typedBigQuery(src)
-  }
 
   def typedBigQuery[T <: HasAnnotation: ClassTag: TypeTag: Coder](): SCollection[T] =
     typedBigQuery(None)
