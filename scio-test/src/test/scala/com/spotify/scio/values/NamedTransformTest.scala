@@ -207,6 +207,16 @@ class NamedTransformTest extends PipelineSpec {
     }
   }
 
+  it should "support fall back to default transform names" in {
+    runWithContext { sc =>
+      val defaultName = sc.tfName(default = Some("default"))
+      defaultName should be("default")
+
+      val userNamed = sc.withName("UserNamed").tfName(default = Some("default"))
+      userNamed should be("UserNamed")
+    }
+  }
+
   private def assertTransformNameStartsWith(p: PCollectionWrapper[_], tfName: String) = {
     val visitor = new AssertTransformNameVisitor(p.internal, tfName)
     p.context.pipeline.traverseTopologically(visitor)
