@@ -208,7 +208,7 @@ class NamedTransformTest extends PipelineSpec {
   }
 
   it should "support fall back to default transform names" in {
-    runWithContext{ sc =>
+    runWithContext { sc =>
       val defaultName = sc.tfName(default = Some("default"))
       defaultName should be("default")
 
