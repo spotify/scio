@@ -279,7 +279,7 @@ final case class BigQueryTypedTable[T: Coder](
 
   override protected def read(sc: ScioContext, params: ReadP): SCollection[T] = {
     val io = reader.from(table.ref).withCoder(CoderMaterializer.beam(sc, Coder[T]))
-    sc.wrap(sc.pipeline.apply(s"Read BQ table ${table.spec}", io))
+    sc.wrap(sc.applyInternal(s"Read BQ table ${table.spec}", io))
   }
 
   override protected def write(data: SCollection[T], params: WriteP): Tap[T] = {

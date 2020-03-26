@@ -23,8 +23,13 @@ import com.spotify.scio.util.CallSites
 trait TransformNameable {
   private var nameProvider: TransformNameProvider = CallSiteNameProvider
 
-  private[scio] def tfName: String = {
-    val n = nameProvider.name
+  private[scio] def tfName: String = tfName(None)
+
+  private[scio] def tfName(default: Option[String]): String = {
+    val n = nameProvider match {
+      case p: CallSiteNameProvider.type => default.getOrElse(p.name)
+      case ConstNameProvider(name)      => name
+    }
     nameProvider = CallSiteNameProvider
     n
   }
@@ -48,4 +53,4 @@ private object CallSiteNameProvider extends TransformNameProvider {
   def name: String = CallSites.getCurrent
 }
 
-private class ConstNameProvider(val name: String) extends TransformNameProvider
+private case class ConstNameProvider(name: String) extends TransformNameProvider

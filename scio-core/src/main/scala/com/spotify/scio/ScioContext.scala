@@ -717,7 +717,13 @@ class ScioContext private[scio] (
   private[scio] def applyInternal[Output <: POutput](
     root: PTransform[_ >: PBegin, Output]
   ): Output =
-    pipeline.apply(this.tfName, root)
+    applyInternal(null, root)
+
+  private[scio] def applyInternal[Output <: POutput](
+    name: String,
+    root: PTransform[_ >: PBegin, Output]
+  ): Output =
+    pipeline.apply(this.tfName(Option(name)), root)
 
   /**
    * Get an SCollection for a Datastore query.
