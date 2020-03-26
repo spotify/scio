@@ -210,6 +210,9 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   // Collection operations
   // =======================================================================
 
+  /** lifts this [[SCollection]] to the specified type */
+  def covary[U]: SCollection[U] = this.asInstanceOf[SCollection[U]]
+
   /**
    * Convert this SCollection to an [[SCollectionWithFanout]] that uses an intermediate node to
    * combine parts of the data to reduce load on the final global combine step.
@@ -393,7 +396,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @group transform
    */
   def count: SCollection[Long] =
-    this.pApply(Count.globally[T]()).asInstanceOf[SCollection[Long]]
+    this.pApply(Count.globally[T]()).covary[Long]
 
   /**
    * Count approximate number of distinct elements in the SCollection.
@@ -404,7 +407,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   def countApproxDistinct(sampleSize: Int): SCollection[Long] =
     this
       .pApply(ApproximateUnique.globally[T](sampleSize))
-      .asInstanceOf[SCollection[Long]]
+      .covary[Long]
 
   /**
    * Count approximate number of distinct elements in the SCollection.
@@ -415,7 +418,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   def countApproxDistinct(maximumEstimationError: Double = 0.02): SCollection[Long] =
     this
       .pApply(ApproximateUnique.globally[T](maximumEstimationError))
-      .asInstanceOf[SCollection[Long]]
+      .covary[Long]
 
   /**
    * Count of each unique value in this SCollection as an SCollection of (value, count) pairs.
@@ -558,9 +561,9 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   def mean(implicit ev: Numeric[T]): SCollection[Double] = this.transform { in =>
     val e = ev // defeat closure
     in.map(e.toDouble)
-      .asInstanceOf[SCollection[JDouble]]
+      .covary[JDouble]
       .pApply(Mean.globally())
-      .asInstanceOf[SCollection[Double]]
+      .covary[Double]
   }
 
   /**
@@ -1077,7 +1080,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
         ): Unit =
           c.output((c.element(), window))
       })
-      .asInstanceOf[SCollection[(T, W)]]
+      .covary[(T, W)]
 
   /**
    * Assign timestamps to values.
@@ -1168,11 +1171,11 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     if (context.isTest) {
       val id = context.testId.get
       this
-        .asInstanceOf[SCollection[String]]
+        .covary[String]
         .flatMap(s => TestDataManager.getInput(id)(ReadIO(s)).asIterable.get)
     } else {
       this
-        .asInstanceOf[SCollection[String]]
+        .covary[String]
         .applyTransform(new PTransform[PCollection[String], PCollection[A]]() {
           override def expand(input: PCollection[String]): PCollection[A] =
             input
@@ -1201,10 +1204,10 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     if (context.isTest) {
       val id = context.testId.get
       this
-        .asInstanceOf[SCollection[String]]
+        .covary[String]
         .flatMap(s => TestDataManager.getInput(id)(ReadIO(s)).asIterable.get)
     } else {
-      this.asInstanceOf[SCollection[String]].applyTransform(read)
+      this.covary[String].applyTransform(read)
     }
 
   /**
@@ -1275,7 +1278,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @group output
    */
   def saveAsDatastore(projectId: String)(implicit ev: T <:< Entity): ClosedTap[Nothing] =
-    this.asInstanceOf[SCollection[Entity]].write(DatastoreIO(projectId))
+    this.covary[Entity].write(DatastoreIO(projectId))
 
   /**
    * Save this SCollection as a Pub/Sub topic.
@@ -1305,7 +1308,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   )(implicit ev: T <:< (V, Map[String, String])): ClosedTap[Nothing] = {
     val io = PubsubIO.withAttributes[V](topic, idAttribute, timestampAttribute)
     this
-      .asInstanceOf[SCollection[(V, Map[String, String])]]
+      .covary[(V, Map[String, String])]
       .write(io)(PubsubIO.WriteParam(maxBatchSize, maxBatchBytesSize))
   }
 
@@ -1323,7 +1326,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     shardNameTemplate: String = TextIO.WriteParam.DefaultShardNameTemplate
   )(implicit ct: ClassTag[T]): ClosedTap[String] = {
     val s = if (classOf[String] isAssignableFrom ct.runtimeClass) {
-      this.asInstanceOf[SCollection[String]]
+      this.covary[String]
     } else {
       this.map(_.toString)
     }
@@ -1349,7 +1352,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     fileNaming: Option[FileNaming] = BinaryIO.WriteParam.DefaultFileNaming
   )(implicit ev: T <:< Array[Byte]): ClosedTap[Nothing] =
     this
-      .asInstanceOf[SCollection[Array[Byte]]]
+      .covary[Array[Byte]]
       .write(BinaryIO(path))(
         BinaryIO
           .WriteParam(

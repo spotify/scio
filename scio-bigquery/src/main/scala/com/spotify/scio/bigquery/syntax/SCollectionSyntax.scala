@@ -64,7 +64,7 @@ final class SCollectionTableRowOps[T <: TableRow](private val self: SCollection[
         timePartitioning
       )
     self
-      .asInstanceOf[SCollection[TableRow]]
+      .covary[TableRow]
       .write(BigQueryTable(table))(param)
   }
 
@@ -78,7 +78,7 @@ final class SCollectionTableRowOps[T <: TableRow](private val self: SCollection[
     compression: Compression = TableRowJsonWriteParam.DefaultCompression
   ): ClosedTap[TableRow] = {
     val param = TableRowJsonWriteParam(numShards, compression)
-    self.asInstanceOf[SCollection[TableRow]].write(TableRowJsonIO(path))(param)
+    self.covary[TableRow].write(TableRowJsonIO(path))(param)
   }
 }
 
