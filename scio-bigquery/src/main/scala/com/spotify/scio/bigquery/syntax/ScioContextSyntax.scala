@@ -39,7 +39,6 @@ import org.apache.beam.sdk.io.gcp.bigquery.SchemaAndRecord
 
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
-import scala.util.Try
 
 /** Enhanced version of [[ScioContext]] with BigQuery methods. */
 final class ScioContextOps(private val self: ScioContext) extends AnyVal {
