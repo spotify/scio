@@ -209,17 +209,15 @@ public abstract class BucketMetadata<K, V> implements Serializable, HasDisplayDa
 
   @JsonIgnore private static ObjectMapper objectMapper = new ObjectMapper();
 
-  @VisibleForTesting
   public static <K, V> BucketMetadata<K, V> from(String src) throws IOException {
     return objectMapper.readerFor(BucketMetadata.class).readValue(src);
   }
 
-  @VisibleForTesting
   public static <K, V> BucketMetadata<K, V> from(InputStream src) throws IOException {
+    // readValue will close the input stream
     return objectMapper.readerFor(BucketMetadata.class).readValue(src);
   }
 
-  @VisibleForTesting
   public static <K, V> void to(BucketMetadata<K, V> bucketMetadata, OutputStream outputStream)
       throws IOException {
 
