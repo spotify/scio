@@ -19,6 +19,7 @@ addSbtPlugin("ch.epfl.scala" % "sbt-bloop" % "1.3.5")
 addSbtPlugin("org.scalameta" % "sbt-mdoc" % "2.1.5")
 addSbtPlugin("com.lightbend.sbt" % "sbt-java-formatter" % "0.5.1")
 addSbtPlugin("com.github.cb372" % "sbt-explicit-dependencies" % "0.2.13")
+addSbtPlugin("com.thoughtworks.sbt-api-mappings" % "sbt-api-mappings" % "3.0.0")
 
 libraryDependencies ++= Seq(
   "com.github.os72" % "protoc-jar" % "3.11.4"
