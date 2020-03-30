@@ -34,11 +34,24 @@ private[values] trait PCollectionWrapper[T] extends TransformNameable {
   val context: ScioContext
 
   private[scio] def applyInternal[Output <: POutput](
-    transform: PTransform[_ >: PCollection[T], Output]
+    name: Option[String],
+    root: PTransform[_ >: PCollection[T], Output]
   ): Output =
-    internal.apply(this.tfName, transform)
+    internal.apply(this.tfName(name), root)
+
+  private[scio] def applyInternal[Output <: POutput](
+    root: PTransform[_ >: PCollection[T], Output]
+  ): Output =
+    applyInternal(None, root)
+
+  private[scio] def applyInternal[Output <: POutput](
+    name: String,
+    root: PTransform[_ >: PCollection[T], Output]
+  ): Output =
+    applyInternal(Option(name), root)
 
   protected def pApply[U](
+    name: Option[String],
     transform: PTransform[_ >: PCollection[T], PCollection[U]]
   ): SCollection[U] = {
     val t =
@@ -49,8 +62,19 @@ private[values] trait PCollectionWrapper[T] extends TransformNameable {
       } else {
         transform
       }
-    context.wrap(this.applyInternal(t))
+    context.wrap(this.applyInternal(name, t))
   }
+
+  protected def pApply[U](
+    transform: PTransform[_ >: PCollection[T], PCollection[U]]
+  ): SCollection[U] =
+    pApply(None, transform)
+
+  protected def pApply[U](
+    name: String,
+    transform: PTransform[_ >: PCollection[T], PCollection[U]]
+  ): SCollection[U] =
+    pApply(Option(name), transform)
 
   private[scio] def parDo[U: Coder](fn: DoFn[T, U]): SCollection[U] =
     this
