@@ -134,9 +134,17 @@ private[types] object TypeProvider {
     val queryArgTypes = queryArgs.map(t => t._2 -> TermName(c.freshName("queryArg$")))
     val queryFnDef = if (queryArgTypes.nonEmpty) {
       val typesQ = queryArgTypes.map { case (tpt, termName) => q"$termName: $tpt" }
-      Some(q"def query(..$typesQ): String = $queryFormat.format(..${queryArgTypes.map(_._2)})")
+      val queryFn = q"""
+        def query(..$typesQ): String = $queryFormat.format(..${queryArgTypes.map(_._2)})
+      """
+
+      val queryAsSource = q"""
+        def queryAsSource(..$typesQ): ${p(c, SBQ)}.Query =
+          ${p(c, SBQ)}.Query(query(..${queryArgTypes.map(_._2)}))
+      """
+      List(queryFn, queryAsSource)
     } else {
-      None
+      List.empty[c.Tree]
     }
 
     val qa =
@@ -151,7 +159,7 @@ private[types] object TypeProvider {
         case _ =>
           Nil
       }
-    val overrides = queryFnDef.getOrElse(EmptyTree) :: queryDef :: qa
+    val overrides = queryFnDef ::: queryDef :: qa
 
     schemaToType(c)(schema, annottees, traits, overrides)
   }
