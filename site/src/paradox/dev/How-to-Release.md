@@ -36,6 +36,7 @@ credentials ++= Seq(
 ## Past release names
 
 ### 0.8.x
+- [v0.8.4](https://github.com/spotify/scio/releases/tag/v0.8.4) - _"Expecto Patronum"_
 - [v0.8.3](https://github.com/spotify/scio/releases/tag/v0.8.3) - _"Draconifors"_
 - [v0.8.2](https://github.com/spotify/scio/releases/tag/v0.8.2) - _"Capacious Extremis"_
 - [v0.8.1](https://github.com/spotify/scio/releases/tag/v0.8.1) - _"Bombarda Maxima"_
