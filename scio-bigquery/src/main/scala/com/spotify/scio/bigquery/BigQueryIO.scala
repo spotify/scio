@@ -20,7 +20,7 @@ package com.spotify.scio.bigquery
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function
 
-import com.google.api.services.bigquery.model.{TableReference, TableSchema}
+import com.google.api.services.bigquery.model.TableSchema
 import com.spotify.scio.ScioContext
 import com.spotify.scio.bigquery.ExtendedErrorInfo._
 import com.spotify.scio.bigquery.client.BigQuery
@@ -353,14 +353,6 @@ final case class BigQueryTable(table: Table) extends BigQueryIO[TableRow] {
 object BigQueryTable {
   type WriteParam = BigQueryTypedTable.WriteParam
   val WriteParam = BigQueryTypedTable.WriteParam
-
-  @deprecated("this method will be removed; use apply(Table.Ref(table)) instead", "0.8.0")
-  @inline final def apply(table: TableReference): BigQueryTable =
-    BigQueryTable(Table.Ref(table))
-
-  @deprecated("this method will be removed; use apply(Table.Spec(table)) instead", "0.8.0")
-  @inline final def apply(spec: String): BigQueryTable =
-    BigQueryTable(Table.Spec(spec))
 }
 
 /**
@@ -399,14 +391,6 @@ object BigQueryStorage {
     private[bigquery] val DefaultSelectFields: List[String] = Nil
     private[bigquery] val DefaultRowRestriction: Option[String] = None
   }
-
-  @deprecated("this method will be removed; use apply(Table.Ref(table)) instead", "0.8.0")
-  @inline final def apply(table: TableReference): BigQueryStorage =
-    BigQueryStorage(Table.Ref(table))
-
-  @deprecated("this method will be removed; use apply(Table.Spec(table)) instead", "0.8.0")
-  @inline final def apply(spec: String): BigQueryStorage =
-    BigQueryStorage(Table.Spec(spec))
 }
 
 final case class BigQueryStorageSelect(sqlQuery: Query) extends BigQueryIO[TableRow] {
@@ -642,15 +626,6 @@ object BigQueryTyped {
       ): WriteParam = apply(wd, cd, tp, DefaultExtendedErrorInfo)(defaultInsertErrorTransform)
     }
 
-    @deprecated("this method will be removed; use apply(Table.Ref(table)) instead", "0.8.0")
-    @inline
-    final def apply[T <: HasAnnotation: ClassTag: TypeTag: Coder](spec: String): Table[T] =
-      Table[T](STable.Spec(spec))
-
-    @deprecated("this method will be removed; use apply(Table.Spec(table)) instead", "0.8.0")
-    @inline
-    final def apply[T <: HasAnnotation: ClassTag: TypeTag: Coder](table: TableReference): Table[T] =
-      Table[T](STable.Ref(table))
   }
 
   object BeamSchema {
