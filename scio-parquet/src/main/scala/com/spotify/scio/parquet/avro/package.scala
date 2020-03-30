@@ -93,7 +93,7 @@ package object avro {
       this
       // HadoopInputFormatIO does not support custom coder, force SerializableCoder
         .map(x => f(x).asInstanceOf[Serializable])
-        .covary[TraversableOnce[U]]
+        .asInstanceOf[SCollection[TraversableOnce[U]]]
         .flatten
 
     private def toSCollection(implicit c: Coder[T]): SCollection[T] = {
