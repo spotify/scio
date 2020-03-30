@@ -163,7 +163,7 @@ class StorageIT extends AnyFlatSpec with Matchers {
       Array("--project=data-integration-test", "--tempLocation=gs://data-integration-test-eu/temp")
     )
     val p = sc
-      .typedBigQuery[NestedWithAll](NestedWithAll.table.format("nested"))
+      .typedBigQueryTable[NestedWithAll](Table.Spec(NestedWithAll.table.format("nested")))
       .map(r => (r.required.int, r.required.string, r.optional.get.int))
       .internal
     PAssert.that(p).containsInAnyOrder(expected)

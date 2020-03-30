@@ -22,7 +22,6 @@ import com.spotify.scio._
 import com.spotify.scio.bigquery.client.BigQuery
 import com.spotify.scio.testing._
 import magnolify.scalacheck.auto._
-import org.apache.beam.sdk.io.gcp.bigquery.BigQueryHelpers
 import org.apache.beam.sdk.options.PipelineOptionsFactory
 import org.joda.time.format.DateTimeFormat
 import org.joda.time.{Instant, LocalDate, LocalDateTime, LocalTime}
@@ -62,7 +61,9 @@ object TypedBigQueryIT {
   private val table = {
     val TIME_FORMATTER = DateTimeFormat.forPattern("yyyyMMddHHmmss")
     val now = Instant.now().toString(TIME_FORMATTER)
-    "data-integration-test:bigquery_avro_it.records_" + now + "_" + Random.nextInt(Int.MaxValue)
+    val spec =
+      "data-integration-test:bigquery_avro_it.records_" + now + "_" + Random.nextInt(Int.MaxValue)
+    Table.Spec(spec)
   }
   private val records = Gen.listOfN(1000, recordGen).sample.get
   private val options = PipelineOptionsFactory
@@ -78,14 +79,14 @@ class TypedBigQueryIT extends PipelineSpec with BeforeAndAfterAll {
 
   override protected def beforeAll(): Unit = {
     val sc = ScioContext(options)
-    sc.parallelize(records).saveAsTypedBigQuery(table)
+    sc.parallelize(records).saveAsTypedBigQueryTable(table)
 
     sc.run()
     ()
   }
 
   override protected def afterAll(): Unit =
-    BigQuery.defaultInstance().tables.delete(BigQueryHelpers.parseTableSpec(table))
+    BigQuery.defaultInstance().tables.delete(table.ref)
 
   "TypedBigQuery" should "read records" in {
     val sc = ScioContext(options)

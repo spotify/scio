@@ -16,7 +16,7 @@
  */
 package com.spotify.scio.bigquery.syntax
 
-import com.google.api.services.bigquery.model.{TableReference, TableSchema}
+import com.google.api.services.bigquery.model.TableSchema
 import com.spotify.scio.bigquery.BigQueryTyped.Table.{WriteParam => TableWriteParam}
 import com.spotify.scio.bigquery.BigQueryTyped.BeamSchema.{WriteParam => TypedWriteParam}
 import com.spotify.scio.bigquery.TableRowJsonIO.{WriteParam => TableRowJsonWriteParam}
@@ -42,62 +42,6 @@ import com.spotify.scio.schemas.Schema
 
 /** Enhanced version of [[SCollection]] with BigQuery methods. */
 final class SCollectionTableRowOps[T <: TableRow](private val self: SCollection[T]) extends AnyVal {
-
-  /**
-   * Save this SCollection as a BigQuery table. Note that elements must be of type
-   * [[com.google.api.services.bigquery.model.TableRow TableRow]].
-   */
-  @deprecated(
-    "this method will be removed; use saveAsBigQueryTable(Table.Ref(table)) instead",
-    "0.8.0"
-  )
-  def saveAsBigQuery(
-    table: TableReference,
-    schema: TableSchema,
-    writeDisposition: WriteDisposition,
-    createDisposition: CreateDisposition,
-    tableDescription: String,
-    timePartitioning: TimePartitioning
-  ): ClosedTap[TableRow] = {
-    val param =
-      BigQueryTable.WriteParam(
-        schema,
-        writeDisposition,
-        createDisposition,
-        tableDescription,
-        timePartitioning
-      )
-    self.asInstanceOf[SCollection[TableRow]].write(BigQueryTable(Table.Ref(table)))(param)
-  }
-
-  /**
-   * Save this SCollection as a BigQuery table. Note that elements must be of type
-   * [[com.google.api.services.bigquery.model.TableRow TableRow]].
-   */
-  @deprecated(
-    "this method will be removed; use saveAsBigQueryTable(Table.Ref(table)) instead",
-    "0.8.0"
-  )
-  def saveAsBigQuery(
-    tableSpec: String,
-    schema: TableSchema = BigQueryTable.WriteParam.DefaultSchema,
-    writeDisposition: WriteDisposition = BigQueryTable.WriteParam.DefaultWriteDisposition,
-    createDisposition: CreateDisposition = BigQueryTable.WriteParam.DefaultCreateDisposition,
-    tableDescription: String = BigQueryTable.WriteParam.DefaultTableDescription,
-    timePartitioning: TimePartitioning = BigQueryTable.WriteParam.DefaultTimePartitioning
-  ): ClosedTap[TableRow] = {
-    val param =
-      BigQueryTable.WriteParam(
-        schema,
-        writeDisposition,
-        createDisposition,
-        tableDescription,
-        timePartitioning
-      )
-    self
-      .asInstanceOf[SCollection[TableRow]]
-      .write(BigQueryTable(Table.Spec(tableSpec)))(param)
-  }
 
   /**
    * Save this SCollection as a BigQuery table. Note that elements must be of type
@@ -162,68 +106,6 @@ final class SCollectionBeamSchemaOps[T: ClassTag](private val self: SCollection[
 /** Enhanced version of [[SCollection]] with BigQuery methods. */
 final class SCollectionTypedOps[T <: HasAnnotation](private val self: SCollection[T])
     extends AnyVal {
-
-  /**
-   * Save this SCollection as a BigQuery table. Note that element type `T` must be a case class
-   * annotated with [[com.spotify.scio.bigquery.types.BigQueryType.toTable BigQueryType.toTable]].
-   */
-  @deprecated(
-    "this method will be removed; use saveAsTypedBigQueryTable(Table.Ref(table)) instead",
-    "0.8.0"
-  )
-  def saveAsTypedBigQuery(
-    table: TableReference,
-    writeDisposition: WriteDisposition,
-    createDisposition: CreateDisposition,
-    timePartitioning: TimePartitioning
-  )(implicit tt: TypeTag[T], ct: ClassTag[T], coder: Coder[T]): ClosedTap[T] = {
-    val param = TableWriteParam(writeDisposition, createDisposition, timePartitioning)
-    self.write(BigQueryTyped.Table(Table.Ref(table)))(param)
-  }
-
-  /**
-   * Save this SCollection as a BigQuery table. Note that element type `T` must be annotated with
-   * [[com.spotify.scio.bigquery.types.BigQueryType BigQueryType]].
-   *
-   * This could be a complete case class with
-   * [[com.spotify.scio.bigquery.types.BigQueryType.toTable BigQueryType.toTable]]. For example:
-   *
-   * {{{
-   * @BigQueryType.toTable
-   * case class Result(name: String, score: Double)
-   *
-   * val p: SCollection[Result] = // process data and convert elements to Result
-   * p.saveAsTypedBigQuery("myproject:mydataset.mytable")
-   * }}}
-   *
-   * It could also be an empty class with schema from
-   * [[com.spotify.scio.bigquery.types.BigQueryType.fromSchema BigQueryType.fromSchema]],
-   * [[com.spotify.scio.bigquery.types.BigQueryType.fromTable BigQueryType.fromTable]], or
-   * [[com.spotify.scio.bigquery.types.BigQueryType.fromQuery BigQueryType.fromQuery]]. For
-   * example:
-   *
-   * {{{
-   * @BigQueryType.fromTable("publicdata:samples.gsod")
-   * class Row
-   *
-   * sc.typedBigQuery[Row]()
-   *   .sample(withReplacement = false, fraction = 0.1)
-   *   .saveAsTypedBigQuery("myproject:samples.gsod")
-   * }}}
-   */
-  @deprecated(
-    "this method will be removed; use saveAsTypedBigQueryTable(Table.Ref(table)) instead",
-    "0.8.0"
-  )
-  def saveAsTypedBigQuery(
-    tableSpec: String,
-    writeDisposition: WriteDisposition = TableWriteParam.DefaultWriteDisposition,
-    createDisposition: CreateDisposition = TableWriteParam.DefaultCreateDisposition,
-    timePartitioning: TimePartitioning = TableWriteParam.DefaultTimePartitioning
-  )(implicit tt: TypeTag[T], ct: ClassTag[T], coder: Coder[T]): ClosedTap[T] = {
-    val param = TableWriteParam(writeDisposition, createDisposition, timePartitioning)
-    self.write(BigQueryTyped.Table[T](Table.Spec(tableSpec)))(param)
-  }
 
   /**
    * Save this SCollection as a BigQuery table. Note that element type `T` must be annotated with
