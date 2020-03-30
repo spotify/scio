@@ -25,6 +25,7 @@ import org.scalatest.matchers.should.Matchers
 import scala.annotation.StaticAnnotation
 import scala.collection.JavaConverters._
 import scala.reflect.runtime.universe._
+import com.spotify.scio.bigquery.Query
 
 object BigQueryTypeIT {
   @BigQueryType.fromQuery(
@@ -163,6 +164,11 @@ class BigQueryTypeIT extends AnyFlatSpec with Matchers {
   it should "format query" in {
     LegacyLatestT.query("TABLE") shouldBe legacyLatestQuery.format("TABLE")
     SqlLatestT.query("TABLE") shouldBe sqlLatestQuery.format("TABLE")
+  }
+
+  it should "format and return query as source" in {
+    LegacyLatestT.queryAsSource("TABLE") shouldBe Query(legacyLatestQuery.format("TABLE"))
+    SqlLatestT.queryAsSource("TABLE") shouldBe Query(sqlLatestQuery.format("TABLE"))
   }
 
   it should "type check annotation arguments" in {
