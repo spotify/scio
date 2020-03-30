@@ -208,9 +208,7 @@ final private case class StringPubsubIOWithoutAttributes(
 
   override protected def write(data: SCollection[String], params: WriteP): Tap[Nothing] = {
     val t = setup(beam.PubsubIO.writeStrings(), params)
-    data
-      .covary[String]
-      .applyInternal(t)
+    data.applyInternal(t)
     EmptyTap
   }
 }
@@ -242,13 +240,13 @@ final private case class MessagePubsubIOWithoutAttributes[T <: Message: ClassTag
   private[this] val cls = ScioUtil.classOf[T]
 
   override protected def read(sc: ScioContext, params: ReadP): SCollection[T] = {
-    val t = setup(beam.PubsubIO.readProtos(cls.asSubclass(classOf[Message])), params)
-    sc.wrap(sc.applyInternal(t)).covary[T]
+    val t = setup(beam.PubsubIO.readProtos(cls), params)
+    sc.wrap(sc.applyInternal(t))
   }
 
   override protected def write(data: SCollection[T], params: WriteP): Tap[Nothing] = {
-    val t = setup(beam.PubsubIO.writeProtos(cls.asInstanceOf[Class[Message]]), params)
-    data.covary[Message].applyInternal(t)
+    val t = setup(beam.PubsubIO.writeProtos(cls), params)
+    data.applyInternal(t)
     EmptyTap
   }
 }
@@ -260,7 +258,7 @@ final private case class PubSubMessagePubsubIOWithoutAttributes[T <: beam.Pubsub
 ) extends PubsubIOWithoutAttributes[T] {
   override protected def read(sc: ScioContext, params: ReadP): SCollection[T] = {
     val t = setup(beam.PubsubIO.readMessages(), params)
-    sc.wrap(sc.applyInternal(t)).covary[T]
+    sc.wrap(sc.applyInternal(t)).contravary[T]
   }
 
   override protected def write(data: SCollection[T], params: WriteP): Tap[Nothing] = {

@@ -340,7 +340,7 @@ trait SCollectionMatchers extends EqInstances {
       override def matcher(builder: AssertBuilder): Matcher[SCollection[_]] =
         new Matcher[SCollection[_]] {
           override def apply(left: SCollection[_]): MatchResult = {
-            val assertion = PAssert.that(left.covary[Any].internal)
+            val assertion = PAssert.that(left.asInstanceOf[SCollection[Any]].internal)
             m(
               () => builder(assertion).empty(),
               () =>
@@ -366,7 +366,7 @@ trait SCollectionMatchers extends EqInstances {
               val inSize = in.asScala.size
               assert(inSize != s, s"SCollection expected size: not $s, actual: $inSize")
             }
-            val assertion = PAssert.that(left.covary[Any].internal)
+            val assertion = PAssert.that(left.asInstanceOf[SCollection[Any]].internal)
             m(
               () => builder(assertion).satisfies(f),
               () => builder(assertion).satisfies(g)

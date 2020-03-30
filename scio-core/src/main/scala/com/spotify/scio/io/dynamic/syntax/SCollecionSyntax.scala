@@ -155,7 +155,7 @@ final class DynamicSCollectionOps[T](private val self: SCollection[T]) extends A
     compression: Compression = Compression.UNCOMPRESSED
   )(destinationFn: String => String)(implicit ct: ClassTag[T]): ClosedTap[Nothing] = {
     val s = if (classOf[String] isAssignableFrom ct.runtimeClass) {
-      self.covary[String]
+      self.asInstanceOf[SCollection[String]]
     } else {
       self.map(_.toString)
     }
