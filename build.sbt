@@ -25,7 +25,7 @@ import bloop.integrations.sbt.BloopDefaults
 ThisBuild / turbo := true
 
 val algebirdVersion = "0.13.6"
-val algebraVersion = "2.0.0"
+val algebraVersion = "2.0.1"
 val annoy4sVersion = "0.9.0"
 val annoyVersion = "0.2.6"
 val asmVersion = "4.13"
