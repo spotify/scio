@@ -384,15 +384,15 @@ main.withSideInputs(side)
       </h4>
 
       
-          <div id="comment" class="fullcommenttop"><div class="comment cmt"><p>Utilities for Breeze.</p><p>Includes <span class="extype" name="com.twitter.algebird.Semigroup">Semigroup</span>s for Breeze data types like
-<span class="extype" name="breeze.linalg.DenseVector">DenseVector</span>s and <span class="extype" name="breeze.linalg.DenseMatrix">DenseMatrix</span>s.</p><pre><span class="kw">import</span> com.spotify.scio.extra.Breeze._
+          <div id="comment" class="fullcommenttop"><div class="comment cmt"><p>Utilities for Breeze.</p><p>Includes <a href="https://javadoc.io/page/com.twitter/algebird-core_2.12/0.13.6/com/twitter/algebird/Semigroup.html" class="extype" name="com.twitter.algebird.Semigroup">Semigroup</a>s for Breeze data types like
+<a href="https://javadoc.io/page/org.scalanlp/breeze_2.12/1.0/breeze/linalg/DenseVector.html" class="extype" name="breeze.linalg.DenseVector">DenseVector</a>s and <span class="extype" name="breeze.linalg.DenseMatrix">DenseMatrix</span>s.</p><pre><span class="kw">import</span> com.spotify.scio.extra.Breeze._
 
 <span class="kw">val</span> vectors: SCollection[DenseVector[<span class="std">Double</span>]] = <span class="cmt">// ...</span>
 vectors.sum  <span class="cmt">// implicit Semigroup[T]</span></pre></div><div class="toggleContainer block">
           <span class="toggle">
             Linear Supertypes
           </span>
-          <div class="superTypes hiddenContent"><span class="extype" name="scala.AnyRef">AnyRef</span>, <span class="extype" name="scala.Any">Any</span></div>
+          <div class="superTypes hiddenContent"><a href="https://www.scala-lang.org/api/2.12.11/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a>, <a href="https://www.scala-lang.org/api/2.12.11/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></div>
         </div></div>
         
 
@@ -457,7 +457,7 @@ vectors.sum  <span class="cmt">// implicit Semigroup[T]</span></pre></div><div c
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span title="gt4s: $bang$eq" class="name">!=</span><span class="params">(<span name="arg0">arg0: <span class="extype" name="scala.Any">Any</span></span>)</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
+        <span title="gt4s: $bang$eq" class="name">!=</span><span class="params">(<span name="arg0">arg0: <a href="https://www.scala-lang.org/api/2.12.11/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="https://www.scala-lang.org/api/2.12.11/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
@@ -473,7 +473,7 @@ vectors.sum  <span class="cmt">// implicit Semigroup[T]</span></pre></div><div c
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span title="gt4s: $hash$hash" class="name">##</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Int">Int</span></span>
+        <span title="gt4s: $hash$hash" class="name">##</span><span class="params">()</span><span class="result">: <a href="https://www.scala-lang.org/api/2.12.11/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
@@ -489,7 +489,7 @@ vectors.sum  <span class="cmt">// implicit Semigroup[T]</span></pre></div><div c
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span title="gt4s: $eq$eq" class="name">==</span><span class="params">(<span name="arg0">arg0: <span class="extype" name="scala.Any">Any</span></span>)</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
+        <span title="gt4s: $eq$eq" class="name">==</span><span class="params">(<span name="arg0">arg0: <a href="https://www.scala-lang.org/api/2.12.11/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="https://www.scala-lang.org/api/2.12.11/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
@@ -521,7 +521,7 @@ vectors.sum  <span class="cmt">// implicit Semigroup[T]</span></pre></div><div c
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">breezeSemigroup</span><span class="tparams">[<span name="M">M<span class="tparams">[<span name="_">_</span>]</span></span>, <span name="T">T</span>]</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <span class="extype" name="scala.reflect.ClassTag">ClassTag</span>[<span class="extype" name="com.spotify.scio.extra.Breeze.breezeSemigroup.T">T</span>]</span>, <span name="add">add: <span class="extype" name="breeze.generic.UFunc.Impl2">breeze.linalg.operators.OpAdd.Impl2</span>[<span class="extype" name="com.spotify.scio.extra.Breeze.breezeSemigroup.M">M</span>[<span class="extype" name="com.spotify.scio.extra.Breeze.breezeSemigroup.T">T</span>], <span class="extype" name="com.spotify.scio.extra.Breeze.breezeSemigroup.M">M</span>[<span class="extype" name="com.spotify.scio.extra.Breeze.breezeSemigroup.T">T</span>], <span class="extype" name="com.spotify.scio.extra.Breeze.breezeSemigroup.M">M</span>[<span class="extype" name="com.spotify.scio.extra.Breeze.breezeSemigroup.T">T</span>]]</span>, <span name="addInto">addInto: <span class="extype" name="breeze.generic.UFunc.InPlaceImpl2">breeze.linalg.operators.OpAdd.InPlaceImpl2</span>[<span class="extype" name="com.spotify.scio.extra.Breeze.breezeSemigroup.M">M</span>[<span class="extype" name="com.spotify.scio.extra.Breeze.breezeSemigroup.T">T</span>], <span class="extype" name="com.spotify.scio.extra.Breeze.breezeSemigroup.M">M</span>[<span class="extype" name="com.spotify.scio.extra.Breeze.breezeSemigroup.T">T</span>]]</span>, <span name="copy">copy: <span class="extype" name="breeze.linalg.support.CanCopy">CanCopy</span>[<span class="extype" name="com.spotify.scio.extra.Breeze.breezeSemigroup.M">M</span>[<span class="extype" name="com.spotify.scio.extra.Breeze.breezeSemigroup.T">T</span>]]</span>)</span><span class="result">: <span class="extype" name="com.twitter.algebird.Semigroup">Semigroup</span>[<span class="extype" name="com.spotify.scio.extra.Breeze.breezeSemigroup.M">M</span>[<span class="extype" name="com.spotify.scio.extra.Breeze.breezeSemigroup.T">T</span>]]</span>
+        <span class="name">breezeSemigroup</span><span class="tparams">[<span name="M">M<span class="tparams">[<span name="_">_</span>]</span></span>, <span name="T">T</span>]</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="https://www.scala-lang.org/api/2.12.11/scala/reflect/ClassTag.html#scala.reflect.ClassTag" class="extype" name="scala.reflect.ClassTag">ClassTag</a>[<span class="extype" name="com.spotify.scio.extra.Breeze.breezeSemigroup.T">T</span>]</span>, <span name="add">add: <span class="extype" name="breeze.generic.UFunc.Impl2">breeze.linalg.operators.OpAdd.Impl2</span>[<span class="extype" name="com.spotify.scio.extra.Breeze.breezeSemigroup.M">M</span>[<span class="extype" name="com.spotify.scio.extra.Breeze.breezeSemigroup.T">T</span>], <span class="extype" name="com.spotify.scio.extra.Breeze.breezeSemigroup.M">M</span>[<span class="extype" name="com.spotify.scio.extra.Breeze.breezeSemigroup.T">T</span>], <span class="extype" name="com.spotify.scio.extra.Breeze.breezeSemigroup.M">M</span>[<span class="extype" name="com.spotify.scio.extra.Breeze.breezeSemigroup.T">T</span>]]</span>, <span name="addInto">addInto: <span class="extype" name="breeze.generic.UFunc.InPlaceImpl2">breeze.linalg.operators.OpAdd.InPlaceImpl2</span>[<span class="extype" name="com.spotify.scio.extra.Breeze.breezeSemigroup.M">M</span>[<span class="extype" name="com.spotify.scio.extra.Breeze.breezeSemigroup.T">T</span>], <span class="extype" name="com.spotify.scio.extra.Breeze.breezeSemigroup.M">M</span>[<span class="extype" name="com.spotify.scio.extra.Breeze.breezeSemigroup.T">T</span>]]</span>, <span name="copy">copy: <a href="https://javadoc.io/page/org.scalanlp/breeze_2.12/1.0/breeze/linalg/support/CanCopy.html#breeze.linalg.support.CanCopy" class="extype" name="breeze.linalg.support.CanCopy">CanCopy</a>[<span class="extype" name="com.spotify.scio.extra.Breeze.breezeSemigroup.M">M</span>[<span class="extype" name="com.spotify.scio.extra.Breeze.breezeSemigroup.T">T</span>]]</span>)</span><span class="result">: <a href="https://javadoc.io/page/com.twitter/algebird-core_2.12/0.13.6/com/twitter/algebird/Semigroup.html#com.twitter.algebird.Semigroup" class="extype" name="com.twitter.algebird.Semigroup">Semigroup</a>[<span class="extype" name="com.spotify.scio.extra.Breeze.breezeSemigroup.M">M</span>[<span class="extype" name="com.spotify.scio.extra.Breeze.breezeSemigroup.T">T</span>]]</span>
       </span>
       
       
@@ -537,7 +537,7 @@ vectors.sum  <span class="cmt">// implicit Semigroup[T]</span></pre></div><div c
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">clone</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.AnyRef">AnyRef</span></span>
+        <span class="name">clone</span><span class="params">()</span><span class="result">: <a href="https://www.scala-lang.org/api/2.12.11/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected[<span class="extype" name="java.lang">lang</span>] </dd><dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -561,7 +561,7 @@ vectors.sum  <span class="cmt">// implicit Semigroup[T]</span></pre></div><div c
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">eq</span><span class="params">(<span name="arg0">arg0: <span class="extype" name="scala.AnyRef">AnyRef</span></span>)</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
+        <span class="name">eq</span><span class="params">(<span name="arg0">arg0: <a href="https://www.scala-lang.org/api/2.12.11/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>)</span><span class="result">: <a href="https://www.scala-lang.org/api/2.12.11/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
@@ -577,7 +577,7 @@ vectors.sum  <span class="cmt">// implicit Semigroup[T]</span></pre></div><div c
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">equals</span><span class="params">(<span name="arg0">arg0: <span class="extype" name="scala.Any">Any</span></span>)</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
+        <span class="name">equals</span><span class="params">(<span name="arg0">arg0: <a href="https://www.scala-lang.org/api/2.12.11/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="https://www.scala-lang.org/api/2.12.11/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
@@ -593,7 +593,7 @@ vectors.sum  <span class="cmt">// implicit Semigroup[T]</span></pre></div><div c
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">finalize</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+        <span class="name">finalize</span><span class="params">()</span><span class="result">: <a href="https://www.scala-lang.org/api/2.12.11/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected[<span class="extype" name="java.lang">lang</span>] </dd><dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -615,7 +615,7 @@ vectors.sum  <span class="cmt">// implicit Semigroup[T]</span></pre></div><div c
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">getClass</span><span class="params">()</span><span class="result">: <span class="extype" name="java.lang.Class">Class</span>[_]</span>
+        <span class="name">getClass</span><span class="params">()</span><span class="result">: <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/Class.html#java.lang.Class" class="extype" name="java.lang.Class">Class</a>[_]</span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd><dt>Annotations</dt><dd>
@@ -634,7 +634,7 @@ vectors.sum  <span class="cmt">// implicit Semigroup[T]</span></pre></div><div c
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">hashCode</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Int">Int</span></span>
+        <span class="name">hashCode</span><span class="params">()</span><span class="result">: <a href="https://www.scala-lang.org/api/2.12.11/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd><dt>Annotations</dt><dd>
@@ -653,7 +653,7 @@ vectors.sum  <span class="cmt">// implicit Semigroup[T]</span></pre></div><div c
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">isInstanceOf</span><span class="tparams">[<span name="T0">T0</span>]</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
+        <span class="name">isInstanceOf</span><span class="tparams">[<span name="T0">T0</span>]</span><span class="result">: <a href="https://www.scala-lang.org/api/2.12.11/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
@@ -669,7 +669,7 @@ vectors.sum  <span class="cmt">// implicit Semigroup[T]</span></pre></div><div c
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">ne</span><span class="params">(<span name="arg0">arg0: <span class="extype" name="scala.AnyRef">AnyRef</span></span>)</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
+        <span class="name">ne</span><span class="params">(<span name="arg0">arg0: <a href="https://www.scala-lang.org/api/2.12.11/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>)</span><span class="result">: <a href="https://www.scala-lang.org/api/2.12.11/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
@@ -685,7 +685,7 @@ vectors.sum  <span class="cmt">// implicit Semigroup[T]</span></pre></div><div c
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">notify</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+        <span class="name">notify</span><span class="params">()</span><span class="result">: <a href="https://www.scala-lang.org/api/2.12.11/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -704,7 +704,7 @@ vectors.sum  <span class="cmt">// implicit Semigroup[T]</span></pre></div><div c
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">notifyAll</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+        <span class="name">notifyAll</span><span class="params">()</span><span class="result">: <a href="https://www.scala-lang.org/api/2.12.11/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -739,7 +739,7 @@ vectors.sum  <span class="cmt">// implicit Semigroup[T]</span></pre></div><div c
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">toString</span><span class="params">()</span><span class="result">: <span class="extype" name="java.lang.String">String</span></span>
+        <span class="name">toString</span><span class="params">()</span><span class="result">: <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/String.html#java.lang.String" class="extype" name="java.lang.String">String</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
@@ -755,7 +755,7 @@ vectors.sum  <span class="cmt">// implicit Semigroup[T]</span></pre></div><div c
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">wait</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+        <span class="name">wait</span><span class="params">()</span><span class="result">: <a href="https://www.scala-lang.org/api/2.12.11/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -777,7 +777,7 @@ vectors.sum  <span class="cmt">// implicit Semigroup[T]</span></pre></div><div c
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <span class="extype" name="scala.Long">Long</span></span>, <span name="arg1">arg1: <span class="extype" name="scala.Int">Int</span></span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <a href="https://www.scala-lang.org/api/2.12.11/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a></span>, <span name="arg1">arg1: <a href="https://www.scala-lang.org/api/2.12.11/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>)</span><span class="result">: <a href="https://www.scala-lang.org/api/2.12.11/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -799,7 +799,7 @@ vectors.sum  <span class="cmt">// implicit Semigroup[T]</span></pre></div><div c
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <span class="extype" name="scala.Long">Long</span></span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <a href="https://www.scala-lang.org/api/2.12.11/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a></span>)</span><span class="result">: <a href="https://www.scala-lang.org/api/2.12.11/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -822,9 +822,9 @@ vectors.sum  <span class="cmt">// implicit Semigroup[T]</span></pre></div><div c
 
         <div id="inheritedMembers">
         <div class="parent" name="scala.AnyRef">
-              <h3>Inherited from <span class="extype" name="scala.AnyRef">AnyRef</span></h3>
+              <h3>Inherited from <a href="https://www.scala-lang.org/api/2.12.11/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></h3>
             </div><div class="parent" name="scala.Any">
-              <h3>Inherited from <span class="extype" name="scala.Any">Any</span></h3>
+              <h3>Inherited from <a href="https://www.scala-lang.org/api/2.12.11/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></h3>
             </div>
         
         </div>

@@ -631,7 +631,7 @@ detects the query's dialect. To override this, start the query with either <code
         <span class="kind">case class</span>
       </span>
       <span class="symbol">
-        <a title="" href="ArrayType.html"><span class="name">ArrayType</span></a><span class="tparams">[<span name="F">F<span class="tparams">[<span name="_">_</span>]</span></span>, <span name="T">T</span>]</span><span class="params">(<span name="schema">schema: <a href="Schema.html" class="extype" name="com.spotify.scio.schemas.Schema">Schema</a>[<span class="extype" name="com.spotify.scio.schemas.ArrayType.T">T</span>]</span>, <span name="toList">toList: (<span class="extype" name="com.spotify.scio.schemas.ArrayType.F">F</span>[<span class="extype" name="com.spotify.scio.schemas.ArrayType.T">T</span>]) ⇒ <span class="extype" name="java.util.List">List</span>[<span class="extype" name="com.spotify.scio.schemas.ArrayType.T">T</span>]</span>, <span name="fromList">fromList: (<span class="extype" name="java.util.List">List</span>[<span class="extype" name="com.spotify.scio.schemas.ArrayType.T">T</span>]) ⇒ <span class="extype" name="com.spotify.scio.schemas.ArrayType.F">F</span>[<span class="extype" name="com.spotify.scio.schemas.ArrayType.T">T</span>]</span>)</span><span class="result"> extends <a href="Schema.html" class="extype" name="com.spotify.scio.schemas.Schema">Schema</a>[<span class="extype" name="com.spotify.scio.schemas.ArrayType.F">F</span>[<span class="extype" name="com.spotify.scio.schemas.ArrayType.T">T</span>]] with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+        <a title="" href="ArrayType.html"><span class="name">ArrayType</span></a><span class="tparams">[<span name="F">F<span class="tparams">[<span name="_">_</span>]</span></span>, <span name="T">T</span>]</span><span class="params">(<span name="schema">schema: <a href="Schema.html" class="extype" name="com.spotify.scio.schemas.Schema">Schema</a>[<span class="extype" name="com.spotify.scio.schemas.ArrayType.T">T</span>]</span>, <span name="toList">toList: (<span class="extype" name="com.spotify.scio.schemas.ArrayType.F">F</span>[<span class="extype" name="com.spotify.scio.schemas.ArrayType.T">T</span>]) ⇒ <a href="https://docs.oracle.com/javase/8/docs/api/java/util/List.html#java.util.List" class="extype" name="java.util.List">List</a>[<span class="extype" name="com.spotify.scio.schemas.ArrayType.T">T</span>]</span>, <span name="fromList">fromList: (<a href="https://docs.oracle.com/javase/8/docs/api/java/util/List.html#java.util.List" class="extype" name="java.util.List">List</a>[<span class="extype" name="com.spotify.scio.schemas.ArrayType.T">T</span>]) ⇒ <span class="extype" name="com.spotify.scio.schemas.ArrayType.F">F</span>[<span class="extype" name="com.spotify.scio.schemas.ArrayType.T">T</span>]</span>)</span><span class="result"> extends <a href="Schema.html" class="extype" name="com.spotify.scio.schemas.Schema">Schema</a>[<span class="extype" name="com.spotify.scio.schemas.ArrayType.F">F</span>[<span class="extype" name="com.spotify.scio.schemas.ArrayType.T">T</span>]] with <a href="https://www.scala-lang.org/api/2.12.11/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="https://www.scala-lang.org/api/2.12.11/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
       </span>
       
       
@@ -663,7 +663,7 @@ detects the query's dialect. To override this, start the query with either <code
         <span class="kind">case class</span>
       </span>
       <span class="symbol">
-        <a title="" href="MapType.html"><span class="name">MapType</span></a><span class="tparams">[<span name="F">F<span class="tparams">[<span name="_">_</span>, <span name="_">_</span>]</span></span>, <span name="K">K</span>, <span name="V">V</span>]</span><span class="params">(<span name="keySchema">keySchema: <a href="Schema.html" class="extype" name="com.spotify.scio.schemas.Schema">Schema</a>[<span class="extype" name="com.spotify.scio.schemas.MapType.K">K</span>]</span>, <span name="valueSchema">valueSchema: <a href="Schema.html" class="extype" name="com.spotify.scio.schemas.Schema">Schema</a>[<span class="extype" name="com.spotify.scio.schemas.MapType.V">V</span>]</span>, <span name="toMap">toMap: (<span class="extype" name="com.spotify.scio.schemas.MapType.F">F</span>[<span class="extype" name="com.spotify.scio.schemas.MapType.K">K</span>, <span class="extype" name="com.spotify.scio.schemas.MapType.V">V</span>]) ⇒ <span class="extype" name="java.util.Map">Map</span>[<span class="extype" name="com.spotify.scio.schemas.MapType.K">K</span>, <span class="extype" name="com.spotify.scio.schemas.MapType.V">V</span>]</span>, <span name="fromMap">fromMap: (<span class="extype" name="java.util.Map">Map</span>[<span class="extype" name="com.spotify.scio.schemas.MapType.K">K</span>, <span class="extype" name="com.spotify.scio.schemas.MapType.V">V</span>]) ⇒ <span class="extype" name="com.spotify.scio.schemas.MapType.F">F</span>[<span class="extype" name="com.spotify.scio.schemas.MapType.K">K</span>, <span class="extype" name="com.spotify.scio.schemas.MapType.V">V</span>]</span>)</span><span class="result"> extends <a href="Schema.html" class="extype" name="com.spotify.scio.schemas.Schema">Schema</a>[<span class="extype" name="com.spotify.scio.schemas.MapType.F">F</span>[<span class="extype" name="com.spotify.scio.schemas.MapType.K">K</span>, <span class="extype" name="com.spotify.scio.schemas.MapType.V">V</span>]] with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+        <a title="" href="MapType.html"><span class="name">MapType</span></a><span class="tparams">[<span name="F">F<span class="tparams">[<span name="_">_</span>, <span name="_">_</span>]</span></span>, <span name="K">K</span>, <span name="V">V</span>]</span><span class="params">(<span name="keySchema">keySchema: <a href="Schema.html" class="extype" name="com.spotify.scio.schemas.Schema">Schema</a>[<span class="extype" name="com.spotify.scio.schemas.MapType.K">K</span>]</span>, <span name="valueSchema">valueSchema: <a href="Schema.html" class="extype" name="com.spotify.scio.schemas.Schema">Schema</a>[<span class="extype" name="com.spotify.scio.schemas.MapType.V">V</span>]</span>, <span name="toMap">toMap: (<span class="extype" name="com.spotify.scio.schemas.MapType.F">F</span>[<span class="extype" name="com.spotify.scio.schemas.MapType.K">K</span>, <span class="extype" name="com.spotify.scio.schemas.MapType.V">V</span>]) ⇒ <a href="https://docs.oracle.com/javase/8/docs/api/java/util/Map.html#java.util.Map" class="extype" name="java.util.Map">Map</a>[<span class="extype" name="com.spotify.scio.schemas.MapType.K">K</span>, <span class="extype" name="com.spotify.scio.schemas.MapType.V">V</span>]</span>, <span name="fromMap">fromMap: (<a href="https://docs.oracle.com/javase/8/docs/api/java/util/Map.html#java.util.Map" class="extype" name="java.util.Map">Map</a>[<span class="extype" name="com.spotify.scio.schemas.MapType.K">K</span>, <span class="extype" name="com.spotify.scio.schemas.MapType.V">V</span>]) ⇒ <span class="extype" name="com.spotify.scio.schemas.MapType.F">F</span>[<span class="extype" name="com.spotify.scio.schemas.MapType.K">K</span>, <span class="extype" name="com.spotify.scio.schemas.MapType.V">V</span>]</span>)</span><span class="result"> extends <a href="Schema.html" class="extype" name="com.spotify.scio.schemas.Schema">Schema</a>[<span class="extype" name="com.spotify.scio.schemas.MapType.F">F</span>[<span class="extype" name="com.spotify.scio.schemas.MapType.K">K</span>, <span class="extype" name="com.spotify.scio.schemas.MapType.V">V</span>]] with <a href="https://www.scala-lang.org/api/2.12.11/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="https://www.scala-lang.org/api/2.12.11/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
       </span>
       
       
@@ -679,7 +679,7 @@ detects the query's dialect. To override this, start the query with either <code
         <span class="kind">case class</span>
       </span>
       <span class="symbol">
-        <a title="" href="OptionType.html"><span class="name">OptionType</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="schema">schema: <a href="Schema.html" class="extype" name="com.spotify.scio.schemas.Schema">Schema</a>[<span class="extype" name="com.spotify.scio.schemas.OptionType.T">T</span>]</span>)</span><span class="result"> extends <a href="Schema.html" class="extype" name="com.spotify.scio.schemas.Schema">Schema</a>[<span class="extype" name="scala.Option">Option</span>[<span class="extype" name="com.spotify.scio.schemas.OptionType.T">T</span>]] with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+        <a title="" href="OptionType.html"><span class="name">OptionType</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="schema">schema: <a href="Schema.html" class="extype" name="com.spotify.scio.schemas.Schema">Schema</a>[<span class="extype" name="com.spotify.scio.schemas.OptionType.T">T</span>]</span>)</span><span class="result"> extends <a href="Schema.html" class="extype" name="com.spotify.scio.schemas.Schema">Schema</a>[<a href="https://www.scala-lang.org/api/2.12.11/scala/Option.html#scala.Option" class="extype" name="scala.Option">Option</a>[<span class="extype" name="com.spotify.scio.schemas.OptionType.T">T</span>]] with <a href="https://www.scala-lang.org/api/2.12.11/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="https://www.scala-lang.org/api/2.12.11/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
       </span>
       
       
@@ -695,7 +695,7 @@ detects the query's dialect. To override this, start the query with either <code
         <span class="kind">case class</span>
       </span>
       <span class="symbol">
-        <a title="" href="RawRecord.html"><span class="name">RawRecord</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="schema">schema: <span class="extype" name="org.apache.beam.sdk.schemas.Schema">org.apache.beam.sdk.schemas.Schema</span></span>, <span name="fromRow">fromRow: <span class="extype" name="org.apache.beam.sdk.transforms.SerializableFunction">SerializableFunction</span>[<span class="extype" name="org.apache.beam.sdk.values.Row">Row</span>, <span class="extype" name="com.spotify.scio.schemas.RawRecord.T">T</span>]</span>, <span name="toRow">toRow: <span class="extype" name="org.apache.beam.sdk.transforms.SerializableFunction">SerializableFunction</span>[<span class="extype" name="com.spotify.scio.schemas.RawRecord.T">T</span>, <span class="extype" name="org.apache.beam.sdk.values.Row">Row</span>]</span>)</span><span class="result"> extends <a href="Schema.html" class="extype" name="com.spotify.scio.schemas.Schema">Schema</a>[<span class="extype" name="com.spotify.scio.schemas.RawRecord.T">T</span>] with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+        <a title="" href="RawRecord.html"><span class="name">RawRecord</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="schema">schema: <span class="extype" name="org.apache.beam.sdk.schemas.Schema">org.apache.beam.sdk.schemas.Schema</span></span>, <span name="fromRow">fromRow: <a href="https://javadoc.io/page/org.apache.beam/beam-sdks-java-core/2.19.0/org/apache/beam/sdk/transforms/SerializableFunction.html#org.apache.beam.sdk.transforms.SerializableFunction" class="extype" name="org.apache.beam.sdk.transforms.SerializableFunction">SerializableFunction</a>[<a href="https://javadoc.io/page/org.apache.beam/beam-sdks-java-core/2.19.0/org/apache/beam/sdk/values/Row.html#org.apache.beam.sdk.values.Row" class="extype" name="org.apache.beam.sdk.values.Row">Row</a>, <span class="extype" name="com.spotify.scio.schemas.RawRecord.T">T</span>]</span>, <span name="toRow">toRow: <a href="https://javadoc.io/page/org.apache.beam/beam-sdks-java-core/2.19.0/org/apache/beam/sdk/transforms/SerializableFunction.html#org.apache.beam.sdk.transforms.SerializableFunction" class="extype" name="org.apache.beam.sdk.transforms.SerializableFunction">SerializableFunction</a>[<span class="extype" name="com.spotify.scio.schemas.RawRecord.T">T</span>, <a href="https://javadoc.io/page/org.apache.beam/beam-sdks-java-core/2.19.0/org/apache/beam/sdk/values/Row.html#org.apache.beam.sdk.values.Row" class="extype" name="org.apache.beam.sdk.values.Row">Row</a>]</span>)</span><span class="result"> extends <a href="Schema.html" class="extype" name="com.spotify.scio.schemas.Schema">Schema</a>[<span class="extype" name="com.spotify.scio.schemas.RawRecord.T">T</span>] with <a href="https://www.scala-lang.org/api/2.12.11/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="https://www.scala-lang.org/api/2.12.11/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
       </span>
       
       
@@ -711,7 +711,7 @@ detects the query's dialect. To override this, start the query with either <code
         <span class="kind">case class</span>
       </span>
       <span class="symbol">
-        <a title="" href="Record.html"><span class="name">Record</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <a href="Schema.html" class="extype" name="com.spotify.scio.schemas.Schema">Schema</a>[<span class="extype" name="com.spotify.scio.schemas.Record.T">T</span>] with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+        <a title="" href="Record.html"><span class="name">Record</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <a href="Schema.html" class="extype" name="com.spotify.scio.schemas.Schema">Schema</a>[<span class="extype" name="com.spotify.scio.schemas.Record.T">T</span>] with <a href="https://www.scala-lang.org/api/2.12.11/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="https://www.scala-lang.org/api/2.12.11/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
       </span>
       
       
@@ -727,7 +727,7 @@ detects the query's dialect. To override this, start the query with either <code
         <span class="kind">trait</span>
       </span>
       <span class="symbol">
-        <a title="" href="Schema.html"><span class="name">Schema</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <span class="extype" name="scala.Serializable">Serializable</span></span>
+        <a title="" href="Schema.html"><span class="name">Schema</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <a href="https://www.scala-lang.org/api/2.12.11/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
       </span>
       
       
@@ -743,7 +743,7 @@ detects the query's dialect. To override this, start the query with either <code
         <span class="kind">trait</span>
       </span>
       <span class="symbol">
-        <a title="" href="To.html"><span class="name">To</span></a><span class="tparams">[<span name="I">I</span>, <span name="O">O</span>]</span><span class="result"> extends (<a href="../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.schemas.To.I">I</span>]) ⇒ <a href="../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.schemas.To.O">O</span>] with <span class="extype" name="scala.Serializable">Serializable</span></span>
+        <a title="" href="To.html"><span class="name">To</span></a><span class="tparams">[<span name="I">I</span>, <span name="O">O</span>]</span><span class="result"> extends (<a href="../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.schemas.To.I">I</span>]) ⇒ <a href="../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.schemas.To.O">O</span>] with <a href="https://www.scala-lang.org/api/2.12.11/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
       </span>
       
       
@@ -759,7 +759,7 @@ detects the query's dialect. To override this, start the query with either <code
         <span class="kind">case class</span>
       </span>
       <span class="symbol">
-        <a title="" href="Type.html"><span class="name">Type</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="fieldType">fieldType: <span class="extype" name="org.apache.beam.sdk.schemas.Schema.FieldType">FieldType</span></span>)</span><span class="result"> extends <a href="Schema.html" class="extype" name="com.spotify.scio.schemas.Schema">Schema</a>[<span class="extype" name="com.spotify.scio.schemas.Type.T">T</span>] with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+        <a title="" href="Type.html"><span class="name">Type</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="fieldType">fieldType: <span class="extype" name="org.apache.beam.sdk.schemas.Schema.FieldType">FieldType</span></span>)</span><span class="result"> extends <a href="Schema.html" class="extype" name="com.spotify.scio.schemas.Schema">Schema</a>[<span class="extype" name="com.spotify.scio.schemas.Type.T">T</span>] with <a href="https://www.scala-lang.org/api/2.12.11/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="https://www.scala-lang.org/api/2.12.11/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
       </span>
       
       
@@ -783,7 +783,7 @@ detects the query's dialect. To override this, start the query with either <code
         <span class="kind">object</span>
       </span>
       <span class="symbol">
-        <a title="" href="LogicalType$.html"><span class="name">LogicalType</span></a><span class="result"> extends <span class="extype" name="scala.Serializable">Serializable</span></span>
+        <a title="" href="LogicalType$.html"><span class="name">LogicalType</span></a><span class="result"> extends <a href="https://www.scala-lang.org/api/2.12.11/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
       </span>
       
       
@@ -799,7 +799,7 @@ detects the query's dialect. To override this, start the query with either <code
         <span class="kind">object</span>
       </span>
       <span class="symbol">
-        <a title="" href="RawRecord$.html"><span class="name">RawRecord</span></a><span class="result"> extends <span class="extype" name="scala.Serializable">Serializable</span></span>
+        <a title="" href="RawRecord$.html"><span class="name">RawRecord</span></a><span class="result"> extends <a href="https://www.scala-lang.org/api/2.12.11/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
       </span>
       
       
@@ -815,7 +815,7 @@ detects the query's dialect. To override this, start the query with either <code
         <span class="kind">object</span>
       </span>
       <span class="symbol">
-        <a title="" href="Record$.html"><span class="name">Record</span></a><span class="result"> extends <span class="extype" name="scala.Serializable">Serializable</span></span>
+        <a title="" href="Record$.html"><span class="name">Record</span></a><span class="result"> extends <a href="https://www.scala-lang.org/api/2.12.11/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
       </span>
       
       
@@ -831,7 +831,7 @@ detects the query's dialect. To override this, start the query with either <code
         <span class="kind">object</span>
       </span>
       <span class="symbol">
-        <a title="" href="Schema$.html"><span class="name">Schema</span></a><span class="result"> extends <a href="instances/JodaInstances.html" class="extype" name="com.spotify.scio.schemas.instances.JodaInstances">JodaInstances</a> with <a href="instances/AvroInstances.html" class="extype" name="com.spotify.scio.schemas.instances.AvroInstances">AvroInstances</a> with <a href="instances/LowPrioritySchemaDerivation.html" class="extype" name="com.spotify.scio.schemas.instances.LowPrioritySchemaDerivation">LowPrioritySchemaDerivation</a> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+        <a title="" href="Schema$.html"><span class="name">Schema</span></a><span class="result"> extends <a href="instances/JodaInstances.html" class="extype" name="com.spotify.scio.schemas.instances.JodaInstances">JodaInstances</a> with <a href="instances/AvroInstances.html" class="extype" name="com.spotify.scio.schemas.instances.AvroInstances">AvroInstances</a> with <a href="instances/LowPrioritySchemaDerivation.html" class="extype" name="com.spotify.scio.schemas.instances.LowPrioritySchemaDerivation">LowPrioritySchemaDerivation</a> with <a href="https://www.scala-lang.org/api/2.12.11/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
       </span>
       
       
@@ -863,7 +863,7 @@ detects the query's dialect. To override this, start the query with either <code
         <span class="kind">object</span>
       </span>
       <span class="symbol">
-        <a title="" href="To$.html"><span class="name">To</span></a><span class="result"> extends <span class="extype" name="scala.Serializable">Serializable</span></span>
+        <a title="" href="To$.html"><span class="name">To</span></a><span class="result"> extends <a href="https://www.scala-lang.org/api/2.12.11/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
       </span>
       
       

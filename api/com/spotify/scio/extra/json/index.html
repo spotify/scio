@@ -402,7 +402,7 @@ sc.parallelize((<span class="num">1</span> to <span class="num">10</span>).map(x
           <span class="toggle">
             Linear Supertypes
           </span>
-          <div class="superTypes hiddenContent"><span class="extype" name="io.circe.generic.AutoDerivation">AutoDerivation</span>, <span class="extype" name="scala.AnyRef">AnyRef</span>, <span class="extype" name="scala.Any">Any</span></div>
+          <div class="superTypes hiddenContent"><a href="https://circe.github.io/circe/api/io/circe/generic/AutoDerivation.html#io.circe.generic.AutoDerivation" class="extype" name="io.circe.generic.AutoDerivation">AutoDerivation</a>, <a href="https://www.scala-lang.org/api/2.12.11/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a>, <a href="https://www.scala-lang.org/api/2.12.11/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></div>
         </div></div>
         
 
@@ -462,7 +462,7 @@ sc.parallelize((<span class="num">1</span> to <span class="num">10</span>).map(x
         <span class="kind">case class</span>
       </span>
       <span class="symbol">
-        <a title="A wrapper for io.circe.Error that also retains the original input string." href="package$$DecodeError.html"><span class="name">DecodeError</span></a><span class="params">(<span name="error">error: <span class="extype" name="io.circe.Error">Error</span></span>, <span name="input">input: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result"> extends <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+        <a title="A wrapper for io.circe.Error that also retains the original input string." href="package$$DecodeError.html"><span class="name">DecodeError</span></a><span class="params">(<span name="error">error: <a href="https://circe.github.io/circe/api/io/circe/Error.html#io.circe.Error" class="extype" name="io.circe.Error">Error</a></span>, <span name="input">input: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result"> extends <a href="https://www.scala-lang.org/api/2.12.11/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="https://www.scala-lang.org/api/2.12.11/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
       </span>
       
       <p class="shortcomment cmt">A wrapper for <code>io.circe.Error</code> that also retains the original input string.</p>
@@ -478,7 +478,7 @@ sc.parallelize((<span class="num">1</span> to <span class="num">10</span>).map(x
         <span class="kind">type</span>
       </span>
       <span class="symbol">
-        <span class="name">Decoder</span><span class="tparams">[<span name="T">T</span>]</span><span class="result alias"> = <span class="extype" name="io.circe.Decoder">io.circe.Decoder</span>[<span class="extype" name="com.spotify.scio.extra.json.Decoder.T">T</span>]</span>
+        <span class="name">Decoder</span><span class="tparams">[<span name="T">T</span>]</span><span class="result alias"> = <a href="https://circe.github.io/circe/api/io/circe/Decoder.html#io.circe.Decoder" class="extype" name="io.circe.Decoder">io.circe.Decoder</a>[<span class="extype" name="com.spotify.scio.extra.json.Decoder.T">T</span>]</span>
       </span>
       
       
@@ -494,7 +494,7 @@ sc.parallelize((<span class="num">1</span> to <span class="num">10</span>).map(x
         <span class="kind">type</span>
       </span>
       <span class="symbol">
-        <span class="name">Encoder</span><span class="tparams">[<span name="T">T</span>]</span><span class="result alias"> = <span class="extype" name="io.circe.Encoder">io.circe.Encoder</span>[<span class="extype" name="com.spotify.scio.extra.json.Encoder.T">T</span>]</span>
+        <span class="name">Encoder</span><span class="tparams">[<span name="T">T</span>]</span><span class="result alias"> = <a href="https://circe.github.io/circe/api/io/circe/Encoder.html#io.circe.Encoder" class="extype" name="io.circe.Encoder">io.circe.Encoder</a>[<span class="extype" name="com.spotify.scio.extra.json.Encoder.T">T</span>]</span>
       </span>
       
       
@@ -510,7 +510,7 @@ sc.parallelize((<span class="num">1</span> to <span class="num">10</span>).map(x
         <span class="kind">case class</span>
       </span>
       <span class="symbol">
-        <a title="" href="JsonIO.html"><span class="name">JsonIO</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="evidence$1">evidence$1: <a href="#Encoder[T]=io.circe.Encoder[T]" class="extmbr" name="com.spotify.scio.extra.json.Encoder">Encoder</a>[<span class="extype" name="com.spotify.scio.extra.json.JsonIO.T">T</span>]</span>, <span name="evidence$2">evidence$2: <a href="#Decoder[T]=io.circe.Decoder[T]" class="extmbr" name="com.spotify.scio.extra.json.Decoder">Decoder</a>[<span class="extype" name="com.spotify.scio.extra.json.JsonIO.T">T</span>]</span>, <span name="evidence$3">evidence$3: <a href="../../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.extra.json.JsonIO.T">T</span>]</span>)</span><span class="result"> extends <a href="../../io/ScioIO.html" class="extype" name="com.spotify.scio.io.ScioIO">ScioIO</a>[<span class="extype" name="com.spotify.scio.extra.json.JsonIO.T">T</span>] with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+        <a title="" href="JsonIO.html"><span class="name">JsonIO</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="evidence$1">evidence$1: <a href="#Encoder[T]=io.circe.Encoder[T]" class="extmbr" name="com.spotify.scio.extra.json.Encoder">Encoder</a>[<span class="extype" name="com.spotify.scio.extra.json.JsonIO.T">T</span>]</span>, <span name="evidence$2">evidence$2: <a href="#Decoder[T]=io.circe.Decoder[T]" class="extmbr" name="com.spotify.scio.extra.json.Decoder">Decoder</a>[<span class="extype" name="com.spotify.scio.extra.json.JsonIO.T">T</span>]</span>, <span name="evidence$3">evidence$3: <a href="../../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.extra.json.JsonIO.T">T</span>]</span>)</span><span class="result"> extends <a href="../../io/ScioIO.html" class="extype" name="com.spotify.scio.io.ScioIO">ScioIO</a>[<span class="extype" name="com.spotify.scio.extra.json.JsonIO.T">T</span>] with <a href="https://www.scala-lang.org/api/2.12.11/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="https://www.scala-lang.org/api/2.12.11/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
       </span>
       
       
@@ -526,7 +526,7 @@ sc.parallelize((<span class="num">1</span> to <span class="num">10</span>).map(x
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <a title="Enhanced version of SCollection with JSON methods." href="package$$JsonSCollection.html"><span class="name">JsonSCollection</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <span class="extype" name="scala.Serializable">Serializable</span></span>
+        <a title="Enhanced version of SCollection with JSON methods." href="package$$JsonSCollection.html"><span class="name">JsonSCollection</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <a href="https://www.scala-lang.org/api/2.12.11/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
       </span>
       
       <p class="shortcomment cmt">Enhanced version of <a href="../../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a> with JSON methods.</p>
@@ -542,7 +542,7 @@ sc.parallelize((<span class="num">1</span> to <span class="num">10</span>).map(x
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <a title="Enhanced version of ScioContext with JSON methods." href="package$$JsonScioContext.html"><span class="name">JsonScioContext</span></a><span class="result"> extends <span class="extype" name="scala.AnyVal">AnyVal</span></span>
+        <a title="Enhanced version of ScioContext with JSON methods." href="package$$JsonScioContext.html"><span class="name">JsonScioContext</span></a><span class="result"> extends <a href="https://www.scala-lang.org/api/2.12.11/scala/AnyVal.html#scala.AnyVal" class="extype" name="scala.AnyVal">AnyVal</a></span>
       </span>
       
       <p class="shortcomment cmt">Enhanced version of <a href="../../ScioContext.html" class="extype" name="com.spotify.scio.ScioContext">ScioContext</a> with JSON methods.</p>
@@ -566,7 +566,7 @@ sc.parallelize((<span class="num">1</span> to <span class="num">10</span>).map(x
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">exportDecoder</span><span class="tparams">[<span name="A">A</span>]</span><span class="result">: <span class="extype" name="io.circe.export.Exported">Exported</span>[<span class="extype" name="io.circe.Decoder">io.circe.Decoder</span>[<span class="extype" name="io.circe.generic.AutoDerivation.exportDecoder.A">A</span>]]</span>
+        <span class="name">exportDecoder</span><span class="tparams">[<span name="A">A</span>]</span><span class="result">: <a href="https://circe.github.io/circe/api/io/circe/export/Exported.html#io.circe.export.Exported" class="extype" name="io.circe.export.Exported">Exported</a>[<a href="https://circe.github.io/circe/api/io/circe/Decoder.html#io.circe.Decoder" class="extype" name="io.circe.Decoder">io.circe.Decoder</a>[<span class="extype" name="io.circe.generic.AutoDerivation.exportDecoder.A">A</span>]]</span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AutoDerivation</dd></dl></div>
@@ -582,7 +582,7 @@ sc.parallelize((<span class="num">1</span> to <span class="num">10</span>).map(x
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">exportEncoder</span><span class="tparams">[<span name="A">A</span>]</span><span class="result">: <span class="extype" name="io.circe.export.Exported">Exported</span>[<span class="extype" name="io.circe.Encoder.AsObject">AsObject</span>[<span class="extype" name="io.circe.generic.AutoDerivation.exportEncoder.A">A</span>]]</span>
+        <span class="name">exportEncoder</span><span class="tparams">[<span name="A">A</span>]</span><span class="result">: <a href="https://circe.github.io/circe/api/io/circe/export/Exported.html#io.circe.export.Exported" class="extype" name="io.circe.export.Exported">Exported</a>[<span class="extype" name="io.circe.Encoder.AsObject">AsObject</span>[<span class="extype" name="io.circe.generic.AutoDerivation.exportEncoder.A">A</span>]]</span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AutoDerivation</dd></dl></div>
@@ -598,7 +598,7 @@ sc.parallelize((<span class="num">1</span> to <span class="num">10</span>).map(x
         <span class="kind">object</span>
       </span>
       <span class="symbol">
-        <a title="" href="JsonIO$.html"><span class="name">JsonIO</span></a><span class="result"> extends <span class="extype" name="scala.Serializable">Serializable</span></span>
+        <a title="" href="JsonIO$.html"><span class="name">JsonIO</span></a><span class="result"> extends <a href="https://www.scala-lang.org/api/2.12.11/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
       </span>
       
       
@@ -613,11 +613,11 @@ sc.parallelize((<span class="num">1</span> to <span class="num">10</span>).map(x
 
         <div id="inheritedMembers">
         <div class="parent" name="io.circe.generic.AutoDerivation">
-              <h3>Inherited from <span class="extype" name="io.circe.generic.AutoDerivation">AutoDerivation</span></h3>
+              <h3>Inherited from <a href="https://circe.github.io/circe/api/io/circe/generic/AutoDerivation.html#io.circe.generic.AutoDerivation" class="extype" name="io.circe.generic.AutoDerivation">AutoDerivation</a></h3>
             </div><div class="parent" name="scala.AnyRef">
-              <h3>Inherited from <span class="extype" name="scala.AnyRef">AnyRef</span></h3>
+              <h3>Inherited from <a href="https://www.scala-lang.org/api/2.12.11/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></h3>
             </div><div class="parent" name="scala.Any">
-              <h3>Inherited from <span class="extype" name="scala.Any">Any</span></h3>
+              <h3>Inherited from <a href="https://www.scala-lang.org/api/2.12.11/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></h3>
             </div>
         
         </div>
