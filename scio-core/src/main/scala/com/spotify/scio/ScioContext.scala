@@ -607,22 +607,15 @@ class ScioContext private[scio] (
       override val awaitDuration: Duration = sc.awaitDuration
 
       override def waitUntilFinish(duration: Duration, cancelJob: Boolean): ScioResult = {
-        try {
-          val wait = duration match {
-            // according to PipelineResult values <= 1 ms mean `Duration.Inf`
-            case Duration.Inf => -1
-            case d            => d.toMillis
-          }
-          pipelineResult.waitUntilFinish(time.Duration.millis(wait))
-        } catch {
-          case e: InterruptedException =>
-            val cause = if (cancelJob) {
-              pipelineResult.cancel()
-              new InterruptedException(s"Job cancelled after exceeding timeout value $duration")
-            } else {
-              e
-            }
-            throw new PipelineExecutionException(cause)
+        val wait = duration match {
+          // according to PipelineResult values <= 1 ms mean `Duration.Inf`
+          case Duration.Inf => -1
+          case d            => d.toMillis
+        }
+        val state = pipelineResult.waitUntilFinish(time.Duration.millis(wait))
+        if (state == null && cancelJob) {
+          pipelineResult.cancel()
+          throw new InterruptedException(s"Job cancelled after exceeding timeout value $duration")
         }
 
         new ScioResult(pipelineResult) {
