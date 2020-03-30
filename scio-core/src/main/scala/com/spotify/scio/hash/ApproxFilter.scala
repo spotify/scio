@@ -206,6 +206,21 @@ sealed trait ApproxFilterCompanion {
     }
   }
 
+  final def createSideInput[T: Hash](
+    elems: SCollection[T],
+    expectedInsertions: Long
+  ): SideInput[Filter[T]] =
+    create(elems, expectedInsertions)
+      .asSingletonSideInput(defaultValue = create(elems = Nil, expectedInsertions = 1L))
+
+  final def createSideInput[T: Hash](
+    elems: SCollection[T],
+    expectedInsertions: Long,
+    fpp: Double
+  ): SideInput[Filter[T]] =
+    create(elems, expectedInsertions, fpp)
+      .asSingletonSideInput(defaultValue = create(elems = Nil, expectedInsertions = 1L, fpp = fpp))
+
   final private[scio] def createPartitionedSideInputs[T: Hash](
     elems: SCollection[T],
     expectedInsertions: Long,
@@ -214,8 +229,7 @@ sealed trait ApproxFilterCompanion {
     if (elems.context.isTest) {
       // use exact element count to avoid OOM from very large `expectedInsertions`
       Seq(
-        create(elems, 0L, fpp)
-          .asSingletonSideInput(create(Nil, 1L, fpp))
+        createSideInput(elems, 0L, fpp)
       )
     } else {
       val settings = partitionSettings(expectedInsertions, fpp, 100 * 1024 * 1024)
@@ -231,10 +245,7 @@ sealed trait ApproxFilterCompanion {
       )
       elems
         .hashPartition(settings.partitions)
-        .map { xs =>
-          create(xs, settings.expectedInsertions, fpp)
-            .asSingletonSideInput(create(Nil, 1L, fpp))
-        }
+        .map(xs => createSideInput(xs, settings.expectedInsertions, fpp))
     }
 }
 

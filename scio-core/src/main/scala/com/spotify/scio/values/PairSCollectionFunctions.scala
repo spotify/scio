@@ -806,6 +806,26 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
   }
 
   /**
+   * Return an SCollection with the pairs from `this` whose keys might be present
+   * in the [[SideInput]].
+   *
+   * The SideInput of the ApproxFilter can be used reused for multiple sparse operations
+   * across multiple SCollections.
+   *
+   * @example
+   * {{{
+   *   val si = pairSCollRight.asApproxFilterSideInput(BloomFilter, 1000000)
+   *   val filtered1 = pairSColl1.sparseIntersectByKey(si)
+   *   val filtered2 = pairSColl2.sparseIntersectByKey(si)
+   * }}}
+   * @group per_key
+   */
+  def sparseIntersectByKey[AF <: ApproxFilter[K]](sideInput: SideInput[AF]): SCollection[(K, V)] =
+    self.transform {
+      _.withSideInputs(sideInput).filter { case ((k, _), c) => c(sideInput).mightContain(k) }.toSCollection
+    }
+
+  /**
    * Return an SCollection with the pairs from `this` whose keys are in `rhs`
    * when the cardinality of `this` >> `rhs`, but neither can fit in memory
    * (see [[PairHashSCollectionFunctions.hashIntersectByKey]]).
@@ -833,7 +853,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    *                     Note: having fpProb = 0 doesn't mean an exact computation. This value
    *                     along with `rhsNumKeys` is used for creating a BloomFilter.
    *
-   * @group per key
+   * @group per_key
    */
   def sparseIntersectByKey(
     rhs: SCollection[K],
