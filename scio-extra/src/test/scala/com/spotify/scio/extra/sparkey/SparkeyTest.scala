@@ -59,7 +59,13 @@ object TestCache {
 }
 
 class SparkeyTest extends PipelineSpec {
-  val sideData = Seq(("a", "1"), ("b", "2"), ("c", "3"))
+  /* We're using keys longer than a single character here to trigger edge-case behaviour
+   * in MurmurHash3, which is used by ShardedSparkeyReader.
+   * tl;dr:
+   *   MurmurHash3.stringHash(x) == MurmurHash3.bytesHash(x.getBytes) if x.length == 1
+   *   MurmurHash3.stringHash(x) != MurmurHash3.bytesHash(x.getBytes) if x.length > 1
+   */
+  val sideData = Seq(("ab", "1"), ("bc", "2"), ("cd", "3"))
   val bigSideData = (0 until 100).map(i => (('a' + i).toString, i.toString))
 
   "SCollection" should "support .asSparkey with temporary local file" in {
@@ -143,8 +149,10 @@ class SparkeyTest extends PipelineSpec {
     val shardedReader = sparkeyUri.getReader
     shardedReader.toMap shouldBe bigSideData.toMap
 
-    bigSideData.foreach { case (expectedKey, expectedValue) =>
-      shardedReader.get(expectedKey) shouldBe Some(expectedValue) }
+    bigSideData.foreach {
+      case (expectedKey, expectedValue) =>
+        shardedReader.get(expectedKey) shouldBe Some(expectedValue)
+    }
 
     FileUtils.deleteDirectory(new File(sparkeyUri.basePath))
   }
@@ -190,7 +198,7 @@ class SparkeyTest extends PipelineSpec {
   it should "support .asSparkeySideInput" in {
     val sc = ScioContext()
 
-    val input = Seq("a", "b", "a", "b")
+    val input = Seq("ab", "bc", "ab", "bc")
 
     val sparkey = sc.parallelize(sideData).asSparkey
     val sparkeyMaterialized = sparkey.materialize
@@ -213,7 +221,7 @@ class SparkeyTest extends PipelineSpec {
   it should "support .asSparkeySideInput with shards" in {
     val sc = ScioContext()
 
-    val input = Seq("a", "b", "a", "b")
+    val input = Seq("ab", "bc", "ab", "bc")
 
     val sparkey = sc.parallelize(sideData).asSparkey(numShards = 10)
     val sparkeyMaterialized = sparkey.materialize
@@ -230,8 +238,10 @@ class SparkeyTest extends PipelineSpec {
     scioResult.tap(result).value.toList.sorted shouldBe input.map(sideData.toMap).sorted
     val sparkeyUri = scioResult.tap(sparkeyMaterialized).value.next()
     val shardedReader = sparkeyUri.getReader
-    sideData.foreach { case (expectedKey, expectedValue) =>
-      shardedReader.get(expectedKey) shouldBe Some(expectedValue) }
+    sideData.foreach {
+      case (expectedKey, expectedValue) =>
+        shardedReader.get(expectedKey) shouldBe Some(expectedValue)
+    }
 
     FileUtils.deleteDirectory(new File(sparkeyUri.basePath))
   }
@@ -239,7 +249,7 @@ class SparkeyTest extends PipelineSpec {
   it should "support .asSparkeySideInput with shards and missing values" in {
     val sc = ScioContext()
 
-    val input = Seq("a", "b", "a", "b", "d", "e")
+    val input = Seq("ab", "bc", "ab", "bc", "de", "ef")
 
     val sparkey = sc.parallelize(sideData).asSparkey(numShards = 10)
     val sparkeyMaterialized = sparkey.materialize
@@ -258,8 +268,10 @@ class SparkeyTest extends PipelineSpec {
 
     val sparkeyUri = scioResult.tap(sparkeyMaterialized).value.next()
     val shardedReader = sparkeyUri.getReader
-    sideData.foreach { case (expectedKey, expectedValue) =>
-      shardedReader.get(expectedKey) shouldBe Some(expectedValue) }
+    sideData.foreach {
+      case (expectedKey, expectedValue) =>
+        shardedReader.get(expectedKey) shouldBe Some(expectedValue)
+    }
 
     FileUtils.deleteDirectory(new File(sparkeyUri.basePath))
   }
@@ -267,7 +279,7 @@ class SparkeyTest extends PipelineSpec {
   it should "support .asCachedStringSparkeySideInput" in {
     val sc = ScioContext()
 
-    val input = Seq("a", "b", "a", "b")
+    val input = Seq("ab", "bc", "ab", "bc")
 
     val cache = TestCache[String, String]()
 
@@ -296,7 +308,7 @@ class SparkeyTest extends PipelineSpec {
   it should "support .asCachedStringSparkeySideInput with shards" in {
     val sc = ScioContext()
 
-    val input = Seq("a", "b", "a", "b")
+    val input = Seq("ab", "bc", "ab", "bc")
 
     val cache = TestCache[String, String]()
 
@@ -325,8 +337,8 @@ class SparkeyTest extends PipelineSpec {
   it should "support .asTypedSparkeySideInput" in {
     val sc = ScioContext()
 
-    val input = Seq("a", "b", "c", "d")
-    val typedSideData = Seq(("a", Seq(1, 2)), ("b", Seq(2, 3)), ("c", Seq(3, 4)))
+    val input = Seq("ab", "bc", "cd", "de")
+    val typedSideData = Seq(("ab", Seq(1, 2)), ("bc", Seq(2, 3)), ("cd", Seq(3, 4)))
     val typedSideDataMap = typedSideData.toMap
 
     val sparkey = sc.parallelize(typedSideData).mapValues(_.map(_.toString).mkString(",")).asSparkey
@@ -355,8 +367,8 @@ class SparkeyTest extends PipelineSpec {
   it should "support .asTypedSparkeySideInput with a cache" in {
     val sc = ScioContext()
 
-    val input = Seq("a", "b", "c", "d")
-    val typedSideData = Seq(("a", Seq(1, 2)), ("b", Seq(2, 3)), ("c", Seq(3, 4)))
+    val input = Seq("ab", "bc", "cd", "de")
+    val typedSideData = Seq(("ab", Seq(1, 2)), ("bc", Seq(2, 3)), ("cd", Seq(3, 4)))
     val typedSideDataMap = typedSideData.toMap
 
     val cache = TestCache[String, AnyRef]()
@@ -391,7 +403,7 @@ class SparkeyTest extends PipelineSpec {
     val sc = ScioContext()
 
     val input = Seq("1")
-    val typedSideData = Seq(("a", Seq(1, 2)), ("b", Seq(2, 3)), ("c", Seq(3, 4)))
+    val typedSideData = Seq(("ab", Seq(1, 2)), ("bc", Seq(2, 3)), ("cd", Seq(3, 4)))
 
     val sparkey = sc.parallelize(typedSideData).mapValues(_.map(_.toString).mkString(",")).asSparkey
     val sparkeyMaterialized = sparkey.materialize
@@ -420,7 +432,7 @@ class SparkeyTest extends PipelineSpec {
     val sc = ScioContext()
 
     val input = Seq("1")
-    val typedSideData = Seq(("a", Seq(1, 2)), ("b", Seq(2, 3)), ("c", Seq(3, 4)))
+    val typedSideData = Seq(("ab", Seq(1, 2)), ("bc", Seq(2, 3)), ("cd", Seq(3, 4)))
 
     val cache = TestCache[String, AnyRef]()
 
@@ -454,7 +466,7 @@ class SparkeyTest extends PipelineSpec {
     val sc = ScioContext()
 
     val input = Seq("1")
-    val typedSideData = Seq(("a", Seq(1, 2)), ("b", Seq(2, 3)), ("c", Seq(3, 4)))
+    val typedSideData = Seq(("ab", Seq(1, 2)), ("bc", Seq(2, 3)), ("cd", Seq(3, 4)))
 
     val cache = TestCache[String, AnyRef]()
 
