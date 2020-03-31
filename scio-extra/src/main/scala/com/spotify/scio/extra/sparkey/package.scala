@@ -426,7 +426,8 @@ package object sparkey extends SparkeyReaderInstances {
     def hashKey(arr: Array[Byte]): Short =
       floorMod(MurmurHash3.bytesHash(arr, 1), numShards).toShort
 
-    def hashKey(str: String): Short = hashKey(str.getBytes)
+    def hashKey(str: String): Short =
+      floorMod(MurmurHash3.stringHash(str, 1), numShards).toShort
 
     override def getAsString(key: String): String = {
       val hashed = hashKey(key)
