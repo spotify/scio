@@ -25,7 +25,7 @@ import bloop.integrations.sbt.BloopDefaults
 ThisBuild / turbo := true
 
 val algebirdVersion = "0.13.6"
-val algebraVersion = "2.0.0"
+val algebraVersion = "2.0.1"
 val annoy4sVersion = "0.9.0"
 val annoyVersion = "0.2.6"
 val asmVersion = "4.13"
@@ -40,12 +40,12 @@ val bigtableClientVersion = "1.8.0"
 val breezeVersion = "1.0"
 val caffeineVersion = "2.8.1"
 val caseappVersion = "2.0.0-M16"
-val catsVersion = "2.0.0"
+val catsVersion = "2.1.1"
 val chillVersion = "0.9.5"
 val circeVersion = "0.13.0"
 val commonsCompressVersion = "1.20"
 val commonsIoVersion = "2.6"
-val commonsLang3Version = "3.9"
+val commonsLang3Version = "3.10"
 val commonsMath3Version = "3.6.1"
 val commonsTextVersion = "1.8"
 val datastoreV1ProtoClientVersion = "1.6.3"
@@ -82,7 +82,7 @@ val kantanCodecsVersion = "0.5.1"
 val kantanCsvVersion = "0.6.0"
 val kryoVersion = "4.0.2" // explicitly depend on 4.0.1+ due to https://github.com/EsotericSoftware/kryo/pull/516
 val magnoliaVersion = "0.12.8"
-val magnolifyVersion = "0.1.5"
+val magnolifyVersion = "0.1.6"
 val mercatorVersion = "0.3.0"
 val nettyVersion = "4.1.30.Final"
 val opencensusVersion = "0.17.0"
@@ -101,7 +101,7 @@ val sparkeyVersion = "3.0.1"
 val sparkVersion = "2.4.4"
 val tensorFlowVersion = "1.15.0"
 val zoltarVersion = "0.5.6"
-val scalaCollectionCompatVersion = "2.1.3"
+val scalaCollectionCompatVersion = "2.1.4"
 
 def isScala213x = Def.setting {
   scalaBinaryVersion.value == "2.13"
@@ -1277,41 +1277,6 @@ lazy val siteSettings = Def.settings(
   mdocExtraArguments ++= Seq("--no-link-hygiene"),
   sourceDirectory in Paradox := mdocOut.value,
   makeSite := makeSite.dependsOn(mdoc.toTask("")).value,
-  makeSite := {
-    // Fix JavaDoc links before makeSite
-    (doc in ScalaUnidoc).value
-    val bases = javaMappings.map(m => m._3 + "/index.html")
-    val t = (target in ScalaUnidoc).value
-    (t ** "*.html").get.foreach { f =>
-      val doc = fixJavaDocLinks(bases, IO.read(f))
-      IO.write(f, doc)
-    }
-    makeSite.value
-  },
-  // Mappings from dependencies to external ScalaDoc/JavaDoc sites
-  apiMappings ++= {
-    def mappingFn(organization: String, name: String, apiUrl: String) =
-      (for {
-        entry <- (fullClasspath in Compile).value
-        module <- entry.get(moduleID.key)
-        if module.organization == organization
-        if module.name.startsWith(name)
-      } yield entry.data).toList.map((_, url(apiUrl)))
-    val rtJar = sys.props
-      .get("sun.boot.class.path")
-      .flatMap { cp =>
-        cp.split(java.io.File.pathSeparator)
-          .map(file)
-          .find(_.getPath.endsWith("rt.jar"))
-      }
-
-    val jdkMapping =
-      rtJar.fold(Map.empty[File, URL])(jar =>
-        Map(jar -> url("http://docs.oracle.com/javase/8/docs/api/"))
-      )
-
-    docMappings.flatMap((mappingFn _).tupled).toMap ++ jdkMapping
-  },
   unidocProjectFilter in (ScalaUnidoc, unidoc) :=
     inProjects(
       `scio-core`,
@@ -1377,41 +1342,6 @@ lazy val soccoSettings = if (sys.env.contains("SOCCO")) {
 } else {
   Nil
 }
-
-// =======================================================================
-// API mappings
-// =======================================================================
-
-val beamMappings = Seq(
-  "beam-sdks-java-core",
-  "beam-runners-direct-java",
-  "beam-runners-google-cloud-dataflow-java",
-  "beam-sdks-java-io-google-cloud-platform"
-).map { artifact =>
-  ("org.apache.beam", artifact, s"https://beam.apache.org/documentation/sdks/javadoc/$beamVersion")
-}
-val javaMappings = beamMappings ++ Seq(
-  (
-    "com.google.apis",
-    "google-api-services-bigquery",
-    "https://developers.google.com/resources/api-libraries/documentation/bigquery/v2/java/latest"
-  ),
-  (
-    "com.google.apis",
-    "google-api-services-dataflow",
-    "https://developers.google.com/resources/api-libraries/documentation/dataflow/v1b3/java/latest"
-  ),
-  // FIXME: investigate why joda-time won't link
-  ("joda-time", "joda-time", "http://www.joda.org/joda-time/apidocs"),
-  ("org.apache.avro", "avro", "https://avro.apache.org/docs/current/api/java"),
-  ("org.tensorflow", "libtensorflow", "https://www.tensorflow.org/api_docs/java/reference")
-)
-val scalaMappings = Seq(
-  ("com.twitter", "algebird-core", "https://twitter.github.io/algebird/api"),
-  ("org.scalanlp", "breeze", "http://www.scalanlp.org/api/breeze"),
-  ("org.scalatest", "scalatest", "http://doc.scalatest.org/3.0.0")
-)
-val docMappings = javaMappings ++ scalaMappings
 
 //strict should only be enabled when updating/adding depedencies
 //ThisBuild / conflictManager := ConflictManager.strict

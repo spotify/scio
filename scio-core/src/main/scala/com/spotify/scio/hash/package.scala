@@ -17,7 +17,7 @@
 
 package com.spotify.scio
 
-import com.spotify.scio.values.{SCollection, SideInput}
+import com.spotify.scio.values.SCollection
 
 /**
  * Main package for hash APIs. Import all.
@@ -113,22 +113,5 @@ package object hash {
       implicit hash: c.Hash[T]
     ): SCollection[c.Filter[T]] =
       c.create(self, expectedInsertions, fpp)
-
-    def asApproxFilterSideInput[C <: ApproxFilterCompanion](
-      c: C,
-      expectedInsertions: Long
-    )(
-      implicit hash: c.Hash[T]
-    ): SideInput[c.Filter[T]] =
-      c.createSideInput(self, expectedInsertions)
-
-    def asApproxFilterSideInput[C <: ApproxFilterCompanion](
-      c: C,
-      expectedInsertions: Long,
-      fpp: Double
-    )(
-      implicit hash: c.Hash[T]
-    ): SideInput[c.Filter[T]] =
-      c.createSideInput(self, expectedInsertions, fpp)
   }
 }
