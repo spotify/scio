@@ -140,6 +140,12 @@ class SparkeyTest extends PipelineSpec {
     val readers = basePaths.map(basePath => Sparkey.open(new File(basePath)))
     readers.map(_.toMap.toList.toMap).reduce(_ ++ _) shouldBe bigSideData.toMap
 
+    val shardedReader = sparkeyUri.getReader
+    shardedReader.toMap shouldBe bigSideData.toMap
+
+    bigSideData.foreach { case (expectedKey, expectedValue) =>
+      shardedReader.get(expectedKey) shouldBe Some(expectedValue) }
+
     FileUtils.deleteDirectory(new File(sparkeyUri.basePath))
   }
 
@@ -209,7 +215,7 @@ class SparkeyTest extends PipelineSpec {
 
     val input = Seq("a", "b", "a", "b")
 
-    val sparkey = sc.parallelize(sideData).asSparkey(numShards = 2)
+    val sparkey = sc.parallelize(sideData).asSparkey(numShards = 10)
     val sparkeyMaterialized = sparkey.materialize
     val si = sparkey.asSparkeySideInput
     val result = sc
@@ -222,9 +228,12 @@ class SparkeyTest extends PipelineSpec {
     val scioResult = sc.run().waitUntilFinish()
 
     scioResult.tap(result).value.toList.sorted shouldBe input.map(sideData.toMap).sorted
+    val sparkeyUri = scioResult.tap(sparkeyMaterialized).value.next()
+    val shardedReader = sparkeyUri.getReader
+    sideData.foreach { case (expectedKey, expectedValue) =>
+      shardedReader.get(expectedKey) shouldBe Some(expectedValue) }
 
-    val basePath = scioResult.tap(sparkeyMaterialized).value.next().basePath
-    FileUtils.deleteDirectory(new File(basePath))
+    FileUtils.deleteDirectory(new File(sparkeyUri.basePath))
   }
 
   it should "support .asSparkeySideInput with shards and missing values" in {
@@ -247,8 +256,12 @@ class SparkeyTest extends PipelineSpec {
     val sideDataMap = sideData.toMap
     scioResult.tap(result).value.toList.sorted shouldBe input.flatMap(sideDataMap.get).sorted
 
-    val basePath = scioResult.tap(sparkeyMaterialized).value.next().basePath
-    FileUtils.deleteDirectory(new File(basePath))
+    val sparkeyUri = scioResult.tap(sparkeyMaterialized).value.next()
+    val shardedReader = sparkeyUri.getReader
+    sideData.foreach { case (expectedKey, expectedValue) =>
+      shardedReader.get(expectedKey) shouldBe Some(expectedValue) }
+
+    FileUtils.deleteDirectory(new File(sparkeyUri.basePath))
   }
 
   it should "support .asCachedStringSparkeySideInput" in {
