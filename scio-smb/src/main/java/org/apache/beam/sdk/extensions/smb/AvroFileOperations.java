@@ -111,14 +111,14 @@ public class AvroFileOperations<ValueT> extends FileOperations<ValueT> {
             // force GenericDatumWriter instead of ReflectDatumWriter
             ? (AvroIO.Sink<ValueT>)
                 AvroIO.sinkViaGenericRecords(
-                    getSchema(),
-                    new AvroIO.RecordFormatter<ValueT>() {
-                      @Override
-                      public GenericRecord formatRecord(ValueT element, Schema schema) {
-                        return (GenericRecord) element;
-                      }
-                    })
-                .withCodec(codec.getCodec())
+                        getSchema(),
+                        new AvroIO.RecordFormatter<ValueT>() {
+                          @Override
+                          public GenericRecord formatRecord(ValueT element, Schema schema) {
+                            return (GenericRecord) element;
+                          }
+                        })
+                    .withCodec(codec.getCodec())
             : AvroIO.sink(recordClass).withCodec(codec.getCodec());
 
     if (metadata != null) {
