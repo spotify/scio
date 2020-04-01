@@ -201,51 +201,6 @@ jobs:
     <<: [*publish_212]
     executor: scala_213
 
-  bench_io:
-    executor: scala_212
-    steps:
-      - build:
-          build-steps:
-            - run:
-                command: sbt -v $SBT_OPTS "++$SCALA_VERSION scio-test/it:runMain com.spotify.scio.benchmarks.ScioIOBenchmark --name=ci"
-                no_output_timeout: 30m
-
-  bench_bigtable:
-    executor: scala_212
-    steps:
-      - build:
-          build-steps:
-            - run:
-                command: sbt -v $SBT_OPTS "++$SCALA_VERSION scio-bigtable/it:runMain com.spotify.scio.bigtable.BigtableBenchmark --name=ci"
-                no_output_timeout: 30m
-
-  bench_batch:
-    executor: scala_212
-    steps:
-      - build:
-          build-steps:
-            - run:
-                command: sbt -v $SBT_OPTS "++$SCALA_VERSION scio-test/it:runMain com.spotify.scio.benchmarks.ScioBatchBenchmark --name=ci"
-                no_output_timeout: 30m
-
-  bench_streaming:
-    executor: scala_212
-    steps:
-      - build:
-          build-steps:
-            - run:
-                command: sbt -v $SBT_OPTS "++$SCALA_VERSION scio-test/it:runMain com.spotify.scio.benchmarks.ScioStreamingBenchmark --name=ci"
-                no_output_timeout: 30m
-
-  bench_streaming_metrics:
-    executor: scala_212
-    steps:
-      - build:
-          build-steps:
-            - run:
-                command: sbt -v $SBT_OPTS "++$SCALA_VERSION scio-test/it:runMain com.spotify.scio.benchmarks.ScioStreamingBenchmarkMetrics --name=ci"
-                no_output_timeout: 30m
-
 ####################
 # Workflows
 ####################
@@ -333,27 +288,3 @@ workflows:
       - build_212-jdk11
       - build_213
       - build_213-jdk11
-# Nightly benchmarks
-#  bench:
-#    triggers:
-#      - schedule:
-#          cron: "0 18 * * *"
-#          filters:
-#            branches:
-#              only:
-#                - master
-#    jobs:
-#      - bench_io
-#      - bench_bigtable
-#      - bench_batch
-#      - bench_streaming
-#  bench_streaming_metrics:
-#    triggers:
-#      - schedule:
-#          cron: "0 * * * *"
-#          filters:
-#            branches:
-#              only:
-#                - master
-#    jobs:
-#      - bench_streaming_metrics
