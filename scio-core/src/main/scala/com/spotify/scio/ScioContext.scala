@@ -343,9 +343,10 @@ object ScioContext {
     withValidation: Boolean = false
   ): (T, Args) = {
     val optClass = ScioUtil.classOf[T]
+    PipelineOptionsFactory.register(optClass)
 
     // Extract --pattern of all registered derived types of PipelineOptions
-    val classes = PipelineOptionsFactory.getRegisteredOptions.asScala + optClass
+    val classes = PipelineOptionsFactory.getRegisteredOptions.asScala
     val optPatterns = classes.flatMap { cls =>
       cls.getMethods
         .flatMap { m =>
@@ -358,7 +359,7 @@ object ScioContext {
           }
         }
         .map(s => s"--$s($$|=)".r)
-    }
+    } + "--help($$|=)".r
 
     // Split cmdlineArgs into 2 parts, optArgs for PipelineOptions and appArgs for Args
     val (optArgs, appArgs) =
