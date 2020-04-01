@@ -346,24 +346,23 @@ object ScioContext {
     PipelineOptionsFactory.register(optClass)
 
     // Extract --pattern of all registered derived types of PipelineOptions
-    val classes = PipelineOptionsFactory.getRegisteredOptions.asScala
-    val optPatterns = classes.flatMap { cls =>
-      cls.getMethods
-        .flatMap { m =>
-          val n = m.getName
-          if ((!n.startsWith("get") && !n.startsWith("is")) ||
-              m.getParameterTypes.nonEmpty || m.getReturnType == classOf[Unit]) {
-            None
-          } else {
-            Some(Introspector.decapitalize(n.substring(if (n.startsWith("is")) 2 else 3)))
-          }
-        }
-        .map(s => s"--$s($$|=)".r)
-    } + "--help($$|=)".r
+    val registeredPatterns = for {
+      cls <- PipelineOptionsFactory.getRegisteredOptions.asScala
+      method <- cls.getMethods()
+      name = method.getName
+      str <- if ((!name.startsWith("get") && !name.startsWith("is")) ||
+                 method.getParameterTypes.nonEmpty || method.getReturnType == classOf[Unit]) {
+        None
+      } else {
+        Some(Introspector.decapitalize(name.substring(if (name.startsWith("is")) 2 else 3)))
+      }
+    } yield s"--$str($$|=)".r
+
+    val patterns = registeredPatterns + "--help($$|=)".r
 
     // Split cmdlineArgs into 2 parts, optArgs for PipelineOptions and appArgs for Args
     val (optArgs, appArgs) =
-      cmdlineArgs.partition(arg => optPatterns.exists(_.findFirstIn(arg).isDefined))
+      cmdlineArgs.partition(arg => patterns.exists(_.findFirstIn(arg).isDefined))
 
     val pipelineOpts = if (withValidation) {
       PipelineOptionsFactory.fromArgs(optArgs: _*).withValidation().as(optClass)
