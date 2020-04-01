@@ -20,25 +20,31 @@ package org.apache.beam.sdk.extensions.smb;
 import static org.apache.beam.sdk.extensions.smb.TestUtils.fromFolder;
 import static org.apache.beam.sdk.transforms.display.DisplayDataMatchers.hasDisplayItem;
 
+import java.nio.channels.Channels;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import org.apache.avro.JsonProperties;
 import org.apache.avro.Schema;
 import org.apache.avro.file.CodecFactory;
+import org.apache.avro.file.DataFileStream;
+import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.generic.GenericRecordBuilder;
 import org.apache.beam.sdk.coders.AvroCoder;
 import org.apache.beam.sdk.io.AvroGeneratedUser;
 import org.apache.beam.sdk.io.Compression;
+import org.apache.beam.sdk.io.FileSystems;
 import org.apache.beam.sdk.io.fs.ResolveOptions.StandardResolveOptions;
 import org.apache.beam.sdk.io.fs.ResourceId;
 import org.apache.beam.sdk.transforms.display.DisplayData;
 import org.apache.beam.sdk.util.CoderUtils;
 import org.apache.beam.sdk.util.MimeTypes;
+import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ImmutableMap;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Lists;
 import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
@@ -60,9 +66,12 @@ public class AvroFileOperationsTest {
               new Schema.Field("name", Schema.create(Schema.Type.STRING), "", ""),
               new Schema.Field("age", Schema.create(Schema.Type.INT), "", 0)));
 
+  private static final Map<String, Object> TEST_METADATA = ImmutableMap.of("foo", "bar");
+
   @Test
   public void testGenericRecord() throws Exception {
-    final AvroFileOperations<GenericRecord> fileOperations = AvroFileOperations.of(USER_SCHEMA);
+    final AvroFileOperations<GenericRecord> fileOperations =
+        AvroFileOperations.of(USER_SCHEMA, CodecFactory.snappyCodec(), TEST_METADATA);
     final ResourceId file =
         fromFolder(output).resolve("file.avro", StandardResolveOptions.RESOLVE_FILE);
 
@@ -81,6 +90,8 @@ public class AvroFileOperationsTest {
     }
     writer.close();
 
+    assertMetadata(file, TEST_METADATA);
+
     final List<GenericRecord> actual = new ArrayList<>();
     fileOperations.iterator(file).forEachRemaining(actual::add);
 
@@ -90,7 +101,7 @@ public class AvroFileOperationsTest {
   @Test
   public void testSpecificRecord() throws Exception {
     final AvroFileOperations<AvroGeneratedUser> fileOperations =
-        AvroFileOperations.of(AvroGeneratedUser.class);
+        AvroFileOperations.of(AvroGeneratedUser.class, CodecFactory.snappyCodec(), TEST_METADATA);
     final ResourceId file =
         fromFolder(output).resolve("file.avro", StandardResolveOptions.RESOLVE_FILE);
 
@@ -109,6 +120,8 @@ public class AvroFileOperationsTest {
       writer.write(record);
     }
     writer.close();
+
+    assertMetadata(file, TEST_METADATA);
 
     final List<AvroGeneratedUser> actual = new ArrayList<>();
     fileOperations.iterator(file).forEachRemaining(actual::add);
@@ -170,5 +183,14 @@ public class AvroFileOperationsTest {
 
     GenericRecord actual = fileOperations.iterator(file).next();
     Assert.assertEquals(record, actual);
+  }
+
+  private void assertMetadata(ResourceId file, Map<String, Object> expected) throws Exception {
+    final DataFileStream<GenericRecord> dfs =
+        new DataFileStream<>(
+            Channels.newInputStream(FileSystems.open(file)), new GenericDatumReader<>());
+
+    expected.forEach((k, v) -> Assert.assertEquals(v, dfs.getMetaString(k)));
+    dfs.close();
   }
 }

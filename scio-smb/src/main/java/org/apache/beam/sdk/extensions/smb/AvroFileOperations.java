@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
+import java.util.Map;
 import org.apache.avro.Schema;
 import org.apache.avro.file.CodecFactory;
 import org.apache.avro.file.DataFileStream;
@@ -48,12 +49,15 @@ public class AvroFileOperations<ValueT> extends FileOperations<ValueT> {
   private final Class<ValueT> recordClass;
   private final SerializableSchemaSupplier schemaSupplier;
   private final PatchedSerializableAvroCodecFactory codec;
+  private final Map<String, Object> metadata;
 
-  private AvroFileOperations(Class<ValueT> recordClass, Schema schema, CodecFactory codec) {
+  private AvroFileOperations(
+      Class<ValueT> recordClass, Schema schema, CodecFactory codec, Map<String, Object> metadata) {
     super(Compression.UNCOMPRESSED, MimeTypes.BINARY); // Avro has its own compression via codec
     this.recordClass = recordClass;
     this.schemaSupplier = new SerializableSchemaSupplier(schema);
     this.codec = new PatchedSerializableAvroCodecFactory(codec);
+    this.metadata = metadata;
   }
 
   public static <V extends GenericRecord> AvroFileOperations<V> of(Schema schema) {
@@ -62,7 +66,12 @@ public class AvroFileOperations<ValueT> extends FileOperations<ValueT> {
 
   public static <V extends GenericRecord> AvroFileOperations<V> of(
       Schema schema, CodecFactory codec) {
-    return new AvroFileOperations<>(null, schema, codec);
+    return of(schema, codec, null);
+  }
+
+  public static <V extends GenericRecord> AvroFileOperations<V> of(
+      Schema schema, CodecFactory codec, Map<String, Object> metadata) {
+    return new AvroFileOperations<>(null, schema, codec, metadata);
   }
 
   public static <V extends SpecificRecordBase> AvroFileOperations<V> of(Class<V> recordClass) {
@@ -71,9 +80,14 @@ public class AvroFileOperations<ValueT> extends FileOperations<ValueT> {
 
   public static <V extends SpecificRecordBase> AvroFileOperations<V> of(
       Class<V> recordClass, CodecFactory codec) {
+    return of(recordClass, codec, null);
+  }
+
+  public static <V extends SpecificRecordBase> AvroFileOperations<V> of(
+      Class<V> recordClass, CodecFactory codec, Map<String, Object> metadata) {
     // Use reflection to get SR schema
     final Schema schema = new ReflectData(recordClass.getClassLoader()).getSchema(recordClass);
-    return new AvroFileOperations<>(recordClass, schema, codec);
+    return new AvroFileOperations<>(recordClass, schema, codec, metadata);
   }
 
   @Override
@@ -97,15 +111,21 @@ public class AvroFileOperations<ValueT> extends FileOperations<ValueT> {
             // force GenericDatumWriter instead of ReflectDatumWriter
             ? (AvroIO.Sink<ValueT>)
                 AvroIO.sinkViaGenericRecords(
-                    getSchema(),
-                    new AvroIO.RecordFormatter<ValueT>() {
-                      @Override
-                      public GenericRecord formatRecord(ValueT element, Schema schema) {
-                        return (GenericRecord) element;
-                      }
-                    })
-            : AvroIO.sink(recordClass);
-    return sink.withCodec(codec.getCodec());
+                        getSchema(),
+                        new AvroIO.RecordFormatter<ValueT>() {
+                          @Override
+                          public GenericRecord formatRecord(ValueT element, Schema schema) {
+                            return (GenericRecord) element;
+                          }
+                        })
+                    .withCodec(codec.getCodec())
+            : AvroIO.sink(recordClass).withCodec(codec.getCodec());
+
+    if (metadata != null) {
+      return sink.withMetadata(metadata);
+    }
+
+    return sink;
   }
 
   @SuppressWarnings("unchecked")
