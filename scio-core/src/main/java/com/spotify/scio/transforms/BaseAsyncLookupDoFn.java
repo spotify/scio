@@ -237,6 +237,7 @@ public abstract class BaseAsyncLookupDoFn<A, B, C, F, T> extends DoFn<A, KV<A, T
     }
 
     public Try(Throwable exception) {
+      Preconditions.checkNotNull(exception, "exception must not be null");
       isSuccess = false;
       this.value = null;
       this.exception = exception;
@@ -260,7 +261,11 @@ public abstract class BaseAsyncLookupDoFn<A, B, C, F, T> extends DoFn<A, KV<A, T
 
     @Override
     public int hashCode() {
-      return isSuccess ? value.hashCode() : exception.hashCode();
+      if (isSuccess) {
+        return value == null ? 0 : value.hashCode();
+      } else {
+        return exception.hashCode();
+      }
     }
 
     @Override
