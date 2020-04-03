@@ -30,7 +30,7 @@ import org.scalatest.matchers.should.Matchers
 
 import scala.collection.JavaConverters._
 
-class ToTableRowTest extends AnyFlatSpec with Matchers with ToTableRow {
+class ToTableRowTest extends AnyFlatSpec with Matchers {
   val expectedOutput: TableRow = new TableRow()
     .set("booleanField", true)
     .set("intField", 1)
@@ -65,7 +65,7 @@ class ToTableRowTest extends AnyFlatSpec with Matchers with ToTableRow {
       .setFixedField(new fixedType("1234567890123456".getBytes()))
       .build()
 
-    toTableRow(specificRecord) shouldEqual expectedOutput
+    AvroConverters.toTableRow(specificRecord) shouldEqual expectedOutput
   }
 
   it should "convert a GenericRecord to TableRow" in {
@@ -93,7 +93,7 @@ class ToTableRowTest extends AnyFlatSpec with Matchers with ToTableRow {
     genericRecord.put("enumField", Kind.FOO)
     genericRecord.put("fixedField", new fixedType("1234567890123456".getBytes()))
 
-    toTableRow(genericRecord) shouldEqual expectedOutput
+    AvroConverters.toTableRow(genericRecord) shouldEqual expectedOutput
   }
 
   val date = LocalDate.parse("2019-10-29")
@@ -136,6 +136,6 @@ class ToTableRowTest extends AnyFlatSpec with Matchers with ToTableRow {
       .setDecimalField(decimal)
       .build()
 
-    toTableRow(specificRecord) shouldEqual expectedLogicalTypeOutput
+    AvroConverters.toTableRow(specificRecord) shouldEqual expectedLogicalTypeOutput
   }
 }
