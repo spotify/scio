@@ -310,21 +310,29 @@ final private[client] class QueryOps(client: Client, tableService: TableOps, job
     extractTables(QueryJobConfig(sqlQuery, dryRun = true, useLegacySql = isLegacySql(sqlQuery))).get
 
   private def extractTables(config: QueryJobConfig): Try[Set[TableReference]] =
-    run(config)
+    extractTables(run(config))
+
+  private def extractTables(job: Try[Job]): Try[Set[TableReference]] =
+    job
       .map(_.getStatistics.getQuery.getReferencedTables)
       .map(Option(_))
       .map(_.map(_.asScala.toSet).getOrElse(Set.empty))
 
   /** Extract locations of tables to be accessed by a query. */
   def extractLocation(sqlQuery: String): Option[String] = {
-    val locations = extractTables(sqlQuery)
-      .map(t => (t.getProjectId, t.getDatasetId))
-      .map {
-        case (pId, dId) =>
-          val l = client.underlying.datasets().get(pId, dId).execute().getLocation
-          if (l != null) l else BigQueryConfig.location
-      }
-    require(locations.size <= 1, "Tables in the query must be in the same location")
-    locations.headOption
+    val job = run(QueryJobConfig(sqlQuery, dryRun = true, useLegacySql = isLegacySql(sqlQuery)))
+    job.map(_.getJobReference.getLocation) match {
+      case Success(l) if l != null => Some(l)
+      case _ =>
+        val locations = extractTables(job).get
+          .map(t => (t.getProjectId, t.getDatasetId))
+          .map {
+            case (pId, dId) =>
+              val l = client.underlying.datasets().get(pId, dId).execute().getLocation
+              if (l != null) l else BigQueryConfig.location
+          }
+        require(locations.size <= 1, "Tables in the query must be in the same location")
+        locations.headOption
+    }
   }
 }
