@@ -820,7 +820,9 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * }}}
    * @group per_key
    */
-  def sparseIntersectByKey[AF <: ApproxFilter[K]](sideInput: SideInput[AF]): SCollection[(K, V)] =
+  def sparseIntersectByKey[AF <: ApproxFilter[K]](
+    sideInput: SideInput[AF]
+  )(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, V)] =
     self.transform {
       _.withSideInputs(sideInput).filter { case ((k, _), c) => c(sideInput).mightContain(k) }.toSCollection
     }
