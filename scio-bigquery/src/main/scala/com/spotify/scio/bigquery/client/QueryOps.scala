@@ -323,7 +323,7 @@ final private[client] class QueryOps(client: Client, tableService: TableOps, job
     val job = run(QueryJobConfig(sqlQuery, dryRun = true, useLegacySql = isLegacySql(sqlQuery)))
     job.map(_.getJobReference.getLocation) match {
       case Success(l) if l != null => Some(l)
-      case Failure(_) =>
+      case _ =>
         val locations = extractTables(job).get
           .map(t => (t.getProjectId, t.getDatasetId))
           .map {
