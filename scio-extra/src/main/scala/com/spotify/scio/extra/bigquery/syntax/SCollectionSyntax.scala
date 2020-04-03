@@ -33,10 +33,10 @@ import scala.reflect.ClassTag
 trait SCollectionSyntax {
   implicit def toAvroToBigQuerySCollection[T <: IndexedRecord: ClassTag](
     data: SCollection[T]
-  ): AvroToBigQuerySCollection[T] = new AvroToBigQuerySCollection[T](data)
+  ): AvroToBigQuerySCollectionOps[T] = new AvroToBigQuerySCollectionOps[T](data)
 }
 
-final class AvroToBigQuerySCollection[T <: IndexedRecord: ClassTag](
+final class AvroToBigQuerySCollectionOps[T <: IndexedRecord: ClassTag](
   private val self: SCollection[T]
 ) extends Serializable {
   import com.spotify.scio.extra.bigquery.AvroConverters._
