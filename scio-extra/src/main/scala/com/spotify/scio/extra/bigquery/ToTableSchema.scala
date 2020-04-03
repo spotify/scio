@@ -17,7 +17,7 @@
 
 package com.spotify.scio.extra.bigquery
 
-import AvroConverters.AvroConversionException
+import com.spotify.scio.extra.bigquery.AvroConverters.AvroConversionException
 
 import com.google.api.services.bigquery.model.TableFieldSchema
 import org.apache.avro.LogicalTypes._
