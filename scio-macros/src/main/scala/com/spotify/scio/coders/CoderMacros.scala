@@ -132,7 +132,8 @@ private[coders] object CoderMacros {
     imp.map(_ => EmptyTree).getOrElse {
       // Magnolia does not support classes with a private constructor.
       // Workaround the limitation by using a fallback in that case
-      privateConstructor(c)(wtt).fold(MagnoliaMacros.genWithoutAnnotations[T](c)) { _ =>
+      val tree = MagnoliaMacros.genWithoutAnnotations[T](c)
+      privateConstructor(c)(wtt).fold(tree) { _ =>
         q"_root_.com.spotify.scio.coders.Coder.fallback[$wtt](null)"
       }
     }
