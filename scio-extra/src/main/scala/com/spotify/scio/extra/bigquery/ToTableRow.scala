@@ -17,7 +17,7 @@
 
 package com.spotify.scio.extra.bigquery
 
-import AvroConverters.AvroConversionException
+import com.spotify.scio.extra.bigquery.AvroConverters.AvroConversionException
 
 import java.math.{BigDecimal => JBigDecimal}
 import java.nio.ByteBuffer
