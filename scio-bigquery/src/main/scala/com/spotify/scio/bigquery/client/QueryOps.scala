@@ -324,8 +324,7 @@ final private[client] class QueryOps(client: Client, tableService: TableOps, job
     job.map(_.getJobReference.getLocation) match {
       case Success(l) if l != null => Some(l)
       case Failure(_) =>
-        val locations = extractTables(job)
-          .get
+        val locations = extractTables(job).get
           .map(t => (t.getProjectId, t.getDatasetId))
           .map {
             case (pId, dId) =>
