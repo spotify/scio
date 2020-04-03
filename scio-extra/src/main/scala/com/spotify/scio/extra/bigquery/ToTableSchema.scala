@@ -17,9 +17,9 @@
 
 package com.spotify.scio.extra.bigquery
 
-import com.google.api.services.bigquery.model.{TableFieldSchema, TableSchema}
-import com.spotify.scio.annotations.experimental
-import com.spotify.scio.extra.bigquery.Implicits.AvroConversionException
+import com.spotify.scio.extra.bigquery.AvroConverters.AvroConversionException
+
+import com.google.api.services.bigquery.model.TableFieldSchema
 import org.apache.avro.LogicalTypes._
 import org.apache.avro.Schema.Type
 import org.apache.avro.Schema.Type._
@@ -32,7 +32,7 @@ import scala.collection.JavaConverters._
  * [[com.google.api.services.bigquery.model.TableSchema]] TableSchema.
  * All Avro primitive and complex types are supported.
  */
-trait ToTableSchema {
+private[bigquery] trait ToTableSchema {
   private lazy val avroToBQTypes: Map[Type, String] = Map(
     STRING -> "STRING",
     ENUM -> "STRING",
@@ -49,21 +49,7 @@ trait ToTableSchema {
   private lazy val supportedAvroTypes: Set[Type] =
     (avroToBQTypes.keys ++ Seq(UNION, ARRAY, RECORD, MAP)).toSet
 
-  /**
-   * Traverses all fields of the supplied avroSchema and converts it into
-   * a TableSchema containing TableFieldSchemas.
-   *
-   * @param avroSchema
-   * @return the equivalent BigQuery schema
-   */
-  @experimental
-  def toTableSchema(avroSchema: Schema): TableSchema = {
-    val fields = getFieldSchemas(avroSchema)
-
-    new TableSchema().setFields(fields.asJava)
-  }
-
-  private def getFieldSchemas(avroSchema: Schema): List[TableFieldSchema] =
+  private[bigquery] def getFieldSchemas(avroSchema: Schema): List[TableFieldSchema] =
     avroSchema.getFields.asScala.map { field =>
       val tableField = new TableFieldSchema()
         .setName(field.name)

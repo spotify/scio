@@ -17,13 +17,13 @@
 
 package com.spotify.scio.extra.bigquery
 
+import com.spotify.scio.extra.bigquery.AvroConverters.AvroConversionException
+
 import java.math.{BigDecimal => JBigDecimal}
 import java.nio.ByteBuffer
 import java.util
 
-import com.spotify.scio.annotations.experimental
 import com.spotify.scio.bigquery.TableRow
-import com.spotify.scio.extra.bigquery.Implicits.AvroConversionException
 import org.apache.avro.Schema
 import org.apache.avro.generic.{GenericFixed, IndexedRecord}
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.io.BaseEncoding
@@ -36,23 +36,11 @@ import scala.collection.JavaConverters._
  * Converts an [[org.apache.avro.generic.IndexedRecord IndexedRecord]] into a
  * [[com.spotify.scio.bigquery.TableRow TableRow]].
  */
-trait ToTableRow {
+private[bigquery] trait ToTableRow {
   private lazy val encodingPropName: String = "bigquery.bytes.encoder"
   private lazy val base64Encoding: BaseEncoding = BaseEncoding.base64Url()
   private lazy val hexEncoding: BaseEncoding = BaseEncoding.base16()
 
-  @experimental
-  def toTableRow[T](record: T)(implicit ev: T <:< IndexedRecord): TableRow = {
-    val row = new TableRow
-
-    record.getSchema.getFields.asScala.foreach { field =>
-      Option(record.get(field.pos)).foreach { fieldValue =>
-        row.set(field.name, toTableRowField(fieldValue, field))
-      }
-    }
-
-    row
-  }
   // YYYY-[M]M-[D]D
   private[this] val localDateFormatter =
     DateTimeFormat.forPattern("yyyy-MM-dd").withZoneUTC()
@@ -65,7 +53,7 @@ trait ToTableRow {
   private[this] val timestampFormatter =
     DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSS")
 
-  private def toTableRowField(fieldValue: Any, field: Schema.Field): Any =
+  private[bigquery] def toTableRowField(fieldValue: Any, field: Schema.Field): Any =
     fieldValue match {
       case x: CharSequence          => x.toString
       case x: Enum[_]               => x.name()
@@ -76,7 +64,7 @@ trait ToTableRow {
       case x: ByteBuffer            => encodeByteArray(toByteArray(x), field.schema())
       case x: util.Map[_, _]        => toTableRowFromMap(x.asScala, field)
       case x: java.lang.Iterable[_] => toTableRowFromIterable(x.asScala, field)
-      case x: IndexedRecord         => toTableRow(x)
+      case x: IndexedRecord         => AvroConverters.toTableRow(x)
       case x: LocalDate             => localDateFormatter.print(x)
       case x: LocalTime             => localTimeFormatter.print(x)
       case x: DateTime              => timestampFormatter.print(x)
