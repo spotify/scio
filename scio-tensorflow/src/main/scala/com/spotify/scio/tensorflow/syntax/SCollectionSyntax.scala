@@ -163,7 +163,7 @@ final class ExampleSCollectionOps[T <: Example](private val self: SCollection[T]
     numShards: Int = TFExampleIO.WriteParam.DefaultNumShards
   ): ClosedTap[Example] = {
     val param = TFExampleIO.WriteParam(suffix, compression, numShards)
-    self.asInstanceOf[SCollection[Example]].write(TFExampleIO(path))(param)
+    self.covary[Example].write(TFExampleIO(path))(param)
   }
 }
 
@@ -224,7 +224,7 @@ final class TFRecordSCollectionOps[T <: Array[Byte]](private val self: SCollecti
     numShards: Int = TFRecordIO.WriteParam.DefaultNumShards
   )(implicit ev: T <:< Array[Byte]): ClosedTap[Array[Byte]] = {
     val param = TFRecordIO.WriteParam(suffix, compression, numShards)
-    self.asInstanceOf[SCollection[Array[Byte]]].write(TFRecordIO(path))(param)
+    self.covary[Array[Byte]].write(TFRecordIO(path))(param)
   }
 }
 
@@ -244,7 +244,7 @@ final class SequenceExampleSCollectionOps[T <: SequenceExample](private val self
     numShards: Int = TFExampleIO.WriteParam.DefaultNumShards
   ): ClosedTap[SequenceExample] = {
     val param = TFExampleIO.WriteParam(suffix, compression, numShards)
-    self.asInstanceOf[SCollection[SequenceExample]].write(TFSequenceExampleIO(path))(param)
+    self.covary[SequenceExample].write(TFSequenceExampleIO(path))(param)
   }
 }
 

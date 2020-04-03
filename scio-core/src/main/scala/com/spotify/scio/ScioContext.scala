@@ -343,9 +343,10 @@ object ScioContext {
     withValidation: Boolean = false
   ): (T, Args) = {
     val optClass = ScioUtil.classOf[T]
+    PipelineOptionsFactory.register(optClass)
 
     // Extract --pattern of all registered derived types of PipelineOptions
-    val classes = PipelineOptionsFactory.getRegisteredOptions.asScala + optClass
+    val classes = PipelineOptionsFactory.getRegisteredOptions.asScala
     val optPatterns = classes.flatMap { cls =>
       cls.getMethods
         .flatMap { m =>
@@ -358,7 +359,7 @@ object ScioContext {
           }
         }
         .map(s => s"--$s($$|=)".r)
-    }
+    } + "--help($$|=)".r
 
     // Split cmdlineArgs into 2 parts, optArgs for PipelineOptions and appArgs for Args
     val (optArgs, appArgs) =
@@ -607,22 +608,19 @@ class ScioContext private[scio] (
       override val awaitDuration: Duration = sc.awaitDuration
 
       override def waitUntilFinish(duration: Duration, cancelJob: Boolean): ScioResult = {
-        try {
-          val wait = duration match {
-            // according to PipelineResult values <= 1 ms mean `Duration.Inf`
-            case Duration.Inf => -1
-            case d            => d.toMillis
-          }
-          pipelineResult.waitUntilFinish(time.Duration.millis(wait))
-        } catch {
-          case e: InterruptedException =>
-            val cause = if (cancelJob) {
-              pipelineResult.cancel()
-              new InterruptedException(s"Job cancelled after exceeding timeout value $duration")
-            } else {
-              e
-            }
-            throw new PipelineExecutionException(cause)
+        val wait = duration match {
+          // according to PipelineResult values <= 1 ms mean `Duration.Inf`
+          case Duration.Inf => -1
+          case d            => d.toMillis
+        }
+        // according to PipelineResult returns null on timeout
+        val state = pipelineResult.waitUntilFinish(time.Duration.millis(wait))
+        if (state == null && cancelJob) {
+          pipelineResult.cancel()
+          val cause = new InterruptedException(
+            s"Job cancelled after exceeding timeout value $duration"
+          )
+          throw new PipelineExecutionException(cause)
         }
 
         new ScioResult(pipelineResult) {

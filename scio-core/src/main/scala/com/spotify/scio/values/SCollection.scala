@@ -210,6 +210,15 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   // Collection operations
   // =======================================================================
 
+  /** lifts this [[SCollection]] to the specified type */
+  def covary[U >: T]: SCollection[U] = this.asInstanceOf[SCollection[U]]
+
+  /** lifts this [[SCollection]] to the specified type */
+  def covary_[U](implicit ev: T <:< U): SCollection[U] = this.asInstanceOf[SCollection[U]]
+
+  /** lifts this [[SCollection]] to the specified type */
+  def contravary[U <: T]: SCollection[U] = this.asInstanceOf[SCollection[U]]
+
   /**
    * Convert this SCollection to an [[SCollectionWithFanout]] that uses an intermediate node to
    * combine parts of the data to reduce load on the final global combine step.
@@ -1167,12 +1176,10 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   )(implicit ev: T <:< String): SCollection[A] =
     if (context.isTest) {
       val id = context.testId.get
-      this
-        .asInstanceOf[SCollection[String]]
-        .flatMap(s => TestDataManager.getInput(id)(ReadIO(s)).asIterable.get)
+      this.flatMap(s => TestDataManager.getInput(id)(ReadIO(ev(s))).asIterable.get)
     } else {
       this
-        .asInstanceOf[SCollection[String]]
+        .covary_[String]
         .applyTransform(new PTransform[PCollection[String], PCollection[A]]() {
           override def expand(input: PCollection[String]): PCollection[A] =
             input
@@ -1200,11 +1207,9 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   ): SCollection[U] =
     if (context.isTest) {
       val id = context.testId.get
-      this
-        .asInstanceOf[SCollection[String]]
-        .flatMap(s => TestDataManager.getInput(id)(ReadIO(s)).asIterable.get)
+      this.flatMap(s => TestDataManager.getInput(id)(ReadIO(ev(s))).asIterable.get)
     } else {
-      this.asInstanceOf[SCollection[String]].applyTransform(read)
+      this.covary_[String].applyTransform(read)
     }
 
   /**
@@ -1275,7 +1280,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @group output
    */
   def saveAsDatastore(projectId: String)(implicit ev: T <:< Entity): ClosedTap[Nothing] =
-    this.asInstanceOf[SCollection[Entity]].write(DatastoreIO(projectId))
+    this.covary_[Entity].write(DatastoreIO(projectId))
 
   /**
    * Save this SCollection as a Pub/Sub topic.
@@ -1305,7 +1310,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   )(implicit ev: T <:< (V, Map[String, String])): ClosedTap[Nothing] = {
     val io = PubsubIO.withAttributes[V](topic, idAttribute, timestampAttribute)
     this
-      .asInstanceOf[SCollection[(V, Map[String, String])]]
+      .covary_[(V, Map[String, String])]
       .write(io)(PubsubIO.WriteParam(maxBatchSize, maxBatchBytesSize))
   }
 
@@ -1349,7 +1354,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     fileNaming: Option[FileNaming] = BinaryIO.WriteParam.DefaultFileNaming
   )(implicit ev: T <:< Array[Byte]): ClosedTap[Nothing] =
     this
-      .asInstanceOf[SCollection[Array[Byte]]]
+      .covary_[Array[Byte]]
       .write(BinaryIO(path))(
         BinaryIO
           .WriteParam(

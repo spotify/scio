@@ -18,7 +18,6 @@
 package com.spotify.scio.smb.syntax
 
 import com.spotify.scio.annotations.experimental
-import com.spotify.scio.coders.Coder
 import com.spotify.scio.io.{ClosedTap, EmptyTap}
 import com.spotify.scio.values._
 import org.apache.beam.sdk.extensions.smb.SortedBucketSink
@@ -26,12 +25,12 @@ import org.apache.beam.sdk.transforms.PTransform
 import org.apache.beam.sdk.values.PCollection
 
 trait SortMergeBucketSCollectionSyntax {
-  implicit def toSortMergeBucketSCollection[T: Coder](
+  implicit def toSortMergeBucketSCollection[T](
     data: SCollection[T]
   ): SortedBucketSCollection[T] = new SortedBucketSCollection(data)
 }
 
-final class SortedBucketSCollection[T: Coder](private val self: SCollection[T]) {
+final class SortedBucketSCollection[T](private val self: SCollection[T]) {
   type Write = PTransform[PCollection[T], SortedBucketSink.WriteResult]
 
   /**

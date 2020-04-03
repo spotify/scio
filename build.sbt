@@ -51,12 +51,12 @@ val commonsTextVersion = "1.8"
 val datastoreV1ProtoClientVersion = "1.6.3"
 val elasticsearch2Version = "2.4.6"
 val elasticsearch5Version = "5.6.16"
-val elasticsearch6Version = "6.8.7"
-val elasticsearch7Version = "7.6.1"
+val elasticsearch6Version = "6.8.8"
+val elasticsearch7Version = "7.6.2"
 val featranVersion = "0.5.0"
-val flinkVersion = "1.9.2"
+val flinkVersion = "1.9.1"
 val gaxVersion = "1.38.0"
-val gcsConnectorVersion = "hadoop2-2.1.1"
+val gcsConnectorVersion = "hadoop2-2.1.2"
 val gcsVersion = "1.8.0"
 val generatedGrpcBetaVersion = "0.44.0"
 val generatedGrpcGaVersion = "1.83.0"
@@ -1052,6 +1052,7 @@ lazy val `scio-examples`: Project = project
       "com.spotify" %% "magnolify-avro" % magnolifyVersion,
       "com.spotify" %% "magnolify-datastore" % magnolifyVersion,
       "com.spotify" %% "magnolify-tensorflow" % magnolifyVersion,
+      "com.spotify" %% "magnolify-bigtable" % magnolifyVersion,
       "mysql" % "mysql-connector-java" % "8.0.19",
       "joda-time" % "joda-time" % jodaTimeVersion,
       "com.github.alexarchambault" %% "case-app" % caseappVersion,

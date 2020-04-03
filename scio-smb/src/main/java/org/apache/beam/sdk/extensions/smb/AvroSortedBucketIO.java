@@ -20,6 +20,7 @@ package org.apache.beam.sdk.extensions.smb;
 import com.google.auto.value.AutoValue;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.apache.avro.Schema;
@@ -108,6 +109,9 @@ public class AvroSortedBucketIO {
 
     abstract CodecFactory getCodec();
 
+    @Nullable
+    abstract Map<String, Object> getMetadata();
+
     abstract Builder<T> toBuilder();
 
     @AutoValue.Builder
@@ -125,6 +129,8 @@ public class AvroSortedBucketIO {
       abstract Builder<T> setRecordClass(Class<T> recordClass);
 
       abstract Builder<T> setCodec(CodecFactory codec);
+
+      abstract Builder<T> setMetadata(Map<String, Object> metadata);
 
       abstract Read<T> build();
     }
@@ -154,9 +160,10 @@ public class AvroSortedBucketIO {
       @SuppressWarnings("unchecked")
       final AvroFileOperations<T> fileOperations =
           getRecordClass() == null
-              ? AvroFileOperations.of(getSchema(), getCodec())
+              ? AvroFileOperations.of(getSchema(), getCodec(), getMetadata())
               : (AvroFileOperations<T>)
-                  AvroFileOperations.of((Class<SpecificRecordBase>) getRecordClass(), getCodec());
+                  AvroFileOperations.of(
+                      (Class<SpecificRecordBase>) getRecordClass(), getCodec(), getMetadata());
       return new BucketedInput<>(
           getTupleTag(), getInputDirectories(), getFilenameSuffix(), fileOperations);
     }
