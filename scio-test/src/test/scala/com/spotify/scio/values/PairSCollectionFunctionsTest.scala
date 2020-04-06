@@ -19,6 +19,7 @@ package com.spotify.scio.values
 
 import com.spotify.scio.testing.PipelineSpec
 import com.spotify.scio.util.random.RandomSamplerUtils
+import com.spotify.scio.hash._
 import com.twitter.algebird.Aggregator
 import magnolify.guava.auto._
 
@@ -415,6 +416,15 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
       val p2 = sc.parallelize(Seq[String]())
       val p = p1.sparseIntersectByKey(p2, 5)
       p should beEmpty
+    }
+  }
+
+  it should "support sparseIntersectByKey() with SideInput[ApproxFilter]" in {
+    runWithContext { sc =>
+      val p1 = sc.parallelize(Seq(("a", 1), ("b", 2), ("c", 3), ("b", 4)))
+      val p2 = sc.parallelize(Seq("a", "b", "d")).asApproxFilterSideInput(BloomFilter)
+      val p = p1.sparseIntersectByKey(p2)
+      p should containInAnyOrder(Seq(("a", 1), ("b", 2), ("b", 4)))
     }
   }
 
