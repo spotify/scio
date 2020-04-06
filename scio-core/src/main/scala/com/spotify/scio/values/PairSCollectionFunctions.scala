@@ -809,7 +809,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * Return an SCollection with the pairs from `this` whose keys might be present
    * in the [[SideInput]].
    *
-   * The SideInput of the ApproxFilter can be used reused for multiple sparse operations
+   * The `SideInput[ApproxFilter]` can be used reused for multiple sparse operations
    * across multiple SCollections.
    *
    * @example
