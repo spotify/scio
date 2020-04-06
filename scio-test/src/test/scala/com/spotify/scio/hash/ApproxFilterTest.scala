@@ -17,8 +17,10 @@
 
 package com.spotify.scio.hash
 
-import com.spotify.scio.coders.CoderMaterializer
+import com.spotify.scio.ScioContext
+import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import com.spotify.scio.testing._
+import com.spotify.scio.values.{SCollection, SideInput}
 import magnolify.guava.auto._
 import org.apache.beam.sdk.util.{CoderUtils, SerializableUtils}
 
@@ -69,6 +71,45 @@ class ApproxFilterTest extends PipelineSpec {
       }
     }
 
+    // Helper to bring out a single value in a side input as an element in an SCollection.
+    def reifySingleValueSideInput[T: Coder](
+      sc: ScioContext,
+      sideInput: SideInput[T]
+    ): SCollection[T] =
+      sc.parallelize(Seq(1)) // reify single value side input.
+        .withSideInputs(sideInput)
+        .map {
+          case (_, ctx) =>
+            ctx(sideInput)
+        }
+        .toSCollection
+
+    it should "allow creating SideInput" in {
+      runWithContext { sc =>
+        implicit val filterCoder: Coder[c.Filter[Int]] = c.filterCoder
+        val sideInput = c.createSideInput(sc.parallelize(paddedInput))
+        val reifiedSideInput = reifySingleValueSideInput(sc, sideInput)
+
+        reifiedSideInput should satisfySingleValue[c.Filter[Int]] { bf1 =>
+          val bf2 = c.create(paddedInput)
+          eq(bf1, bf2)
+        }
+      }
+    }
+
+    it should "allow creating SideInput with empty windows" in {
+      runWithContext { sc =>
+        implicit val filterCoder: Coder[c.Filter[Int]] = c.filterCoder
+        val sideInput = c.createSideInput(sc.parallelize(Seq.empty[Int]))
+        val reifiedSideInput = reifySingleValueSideInput(sc, sideInput)
+
+        reifiedSideInput should satisfySingleValue[c.Filter[Int]] { bf1 =>
+          val bf2 = c.create(Seq.empty[Int])
+          eq(bf1, bf2)
+        }
+      }
+    }
+
     it should "support Iterable syntax" in {
       eq(paddedInput.asApproxFilter(c), c.create(paddedInput))
       eq(paddedInput.asApproxFilter(c, 2000), c.create(paddedInput, 2000))
@@ -86,6 +127,27 @@ class ApproxFilterTest extends PipelineSpec {
           eq(_, c.create(paddedInput, 2000))
         }
         coll.asApproxFilter(c, 2000, 0.01) should satisfySingleValue[c.Filter[Int]] {
+          eq(_, c.create(paddedInput, 2000, 0.01))
+        }
+
+        reifySingleValueSideInput(
+          sc,
+          coll.asApproxFilterSideInput(c)
+        ) should satisfySingleValue[c.Filter[Int]] {
+          eq(_, c.create(paddedInput))
+        }
+
+        reifySingleValueSideInput(
+          sc,
+          coll.asApproxFilterSideInput(c, 2000)
+        ) should satisfySingleValue[c.Filter[Int]] {
+          eq(_, c.create(paddedInput, 2000))
+        }
+
+        reifySingleValueSideInput(
+          sc,
+          coll.asApproxFilterSideInput(c, 2000, 0.01)
+        ) should satisfySingleValue[c.Filter[Int]] {
           eq(_, c.create(paddedInput, 2000, 0.01))
         }
       }

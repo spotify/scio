@@ -206,6 +206,38 @@ sealed trait ApproxFilterCompanion {
     }
   }
 
+  /**
+   * Creates a `SideInput[ApproxFilter]` from an [[SCollection]] with the collection size as
+   * `expectedInsertions` and false positive probability of 0.03.
+   *
+   * Note that overflowing an [[ApproxFilter]] with significantly more elements than specified,
+   * will result in its saturation, and a sharp deterioration of its false positive probability.
+   *
+   * Since this results in one filter as a [[SideInput]] care should be taken that the size of the
+   * filter does not exceed the runner recommended max size of Side Inputs (100 MB for Dataflow)
+   * This implies that `expectedInsertions` should not exceed 112 Million with a fp of 0.03 on Dataflow.
+   */
+  final def createSideInput[T: Hash](
+    elems: SCollection[T]
+  ): SideInput[Filter[T]] =
+    create(elems, 0)
+      .asSingletonSideInput(defaultValue = create(elems = Nil, expectedInsertions = 1L))
+
+  /**
+   * Creates a `SideInput[ApproxFilter]` from an [[SCollection]] with the expected number of insertions and
+   * expected false positive probability.
+   *
+   * The `expectedInsertions` should be approximately the number of unique elements in the SCollection.
+   *
+   * The default false positive probability is 0.03
+   *
+   * Note that overflowing an [[ApproxFilter]] with significantly more elements than specified,
+   * will result in its saturation, and a sharp deterioration of its false positive probability.
+   *
+   * Since this results in one filter as a [[SideInput]] care should be taken that the size of the
+   * filter does not exceed the runner recommended max size of Side Inputs (100 MB for Dataflow)
+   * This implies that `expectedInsertions` should not exceed 112 Million with a fp of 0.03 on Dataflow.
+   */
   final def createSideInput[T: Hash](
     elems: SCollection[T],
     expectedInsertions: Long
@@ -213,6 +245,19 @@ sealed trait ApproxFilterCompanion {
     create(elems, expectedInsertions)
       .asSingletonSideInput(defaultValue = create(elems = Nil, expectedInsertions = 1L))
 
+  /**
+   * Creates a `SideInput[ApproxFilter]` from an [[SCollection]] with the expected number of insertions and
+   * expected false positive probability.
+   *
+   * The `expectedInsertions` should be approximately the number of unique elements in the SCollection.
+   *
+   * Note that overflowing an [[ApproxFilter]] with significantly more elements than specified,
+   * will result in its saturation, and a sharp deterioration of its false positive probability.
+   *
+   * Since this results in one filter as a [[SideInput]] care should be taken that the size of the
+   * filter does not exceed the runner recommended max size of Side Inputs (100 MB for Dataflow)
+   * This implies that `expectedInsertions` should not exceed 112 Million with a fp of 0.03 on Dataflow.
+   */
   final def createSideInput[T: Hash](
     elems: SCollection[T],
     expectedInsertions: Long,
