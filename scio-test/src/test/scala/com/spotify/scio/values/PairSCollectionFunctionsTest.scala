@@ -424,7 +424,7 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
       val p1 = sc.parallelize(Seq(("a", 1), ("b", 2), ("c", 3), ("b", 4)))
       val p2 = sc.parallelize(Seq("a", "b", "d")).asApproxFilterSideInput(BloomFilter)
       val p = p1.sparseIntersectByKey(p2)
-      p should containInAnyOrder(Seq(("a", 1), ("b", 2)))
+      p should containInAnyOrder(Seq(("a", 1), ("b", 2), ("b", 4)))
     }
   }
 
