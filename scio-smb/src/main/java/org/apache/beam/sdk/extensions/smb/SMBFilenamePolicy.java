@@ -18,7 +18,7 @@
 package org.apache.beam.sdk.extensions.smb;
 
 import java.io.Serializable;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.UUID;
 import org.apache.beam.sdk.io.fs.ResolveOptions.StandardResolveOptions;
 import org.apache.beam.sdk.io.fs.ResourceId;
 import org.apache.beam.sdk.transforms.display.DisplayData;
@@ -42,12 +42,7 @@ import org.joda.time.format.DateTimeFormatter;
 public final class SMBFilenamePolicy implements Serializable {
 
   private static final String TEMP_DIRECTORY_PREFIX = ".temp-beam";
-  private static final AtomicLong TEMP_COUNT = new AtomicLong(0);
-  private static final DateTimeFormatter TEMPDIR_TIMESTAMP =
-      DateTimeFormat.forPattern("yyyy-MM-dd_HH-mm-ss");
-
-  private final String timestamp = Instant.now().toString(TEMPDIR_TIMESTAMP);
-  private final Long tempId = TEMP_COUNT.getAndIncrement();
+  private final String tempId = UUID.randomUUID().toString();
 
   private final ResourceId directory;
   private final String filenameSuffix;
@@ -63,8 +58,7 @@ public final class SMBFilenamePolicy implements Serializable {
   }
 
   FileAssignment forTempFiles(ResourceId tempDirectory) {
-    final String tempDirName =
-        String.format(TEMP_DIRECTORY_PREFIX + "-%s-%08d", timestamp, getTempId());
+    final String tempDirName = String.format(TEMP_DIRECTORY_PREFIX + "-%s", getTempId());
     return new FileAssignment(
         tempDirectory
             .getCurrentDirectory()
@@ -74,7 +68,7 @@ public final class SMBFilenamePolicy implements Serializable {
   }
 
   @VisibleForTesting
-  Long getTempId() {
+  String getTempId() {
     return tempId;
   }
 

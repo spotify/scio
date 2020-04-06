@@ -94,7 +94,6 @@ public class SMBFilenamePolicyTest {
     final ResourceId tmpDstResource = TestUtils.fromFolder(tmpDestination);
 
     SMBFilenamePolicy policy = testFilenamePolicy(destination);
-    final Long oldTempId = policy.getTempId();
 
     Assert.assertTrue(
         policy
@@ -107,9 +106,6 @@ public class SMBFilenamePolicyTest {
 
     // Recreate the policy to test tempId is incremented
     policy = testFilenamePolicy(destination);
-    final Long newTempId = policy.getTempId();
-
-    Assert.assertEquals(1, newTempId - oldTempId);
 
     // Test valid shard-bucket combination
     Assert.assertTrue(
@@ -169,9 +165,10 @@ public class SMBFilenamePolicyTest {
   private static String tmpFileRegex(ResourceId directory, String filename, String suffix) {
     final String timestampMinutePrefix =
         Instant.now().toString(DateTimeFormat.forPattern("yyyy-MM-dd_HH-mm-"));
+    final String uuidPattern = "([a-f0-9]{8}(-[a-f0-9]{4}){4}[a-f0-9]{8})";
 
     return String.format(
-        "%s.temp-beam-%s\\d{2}-\\d{8}/%s\\d{2}-%s%s",
-        directory.toString(), timestampMinutePrefix, timestampMinutePrefix, filename, suffix);
+        "%s.temp-beam-%s/%s\\d{2}-%s%s",
+        directory.toString(), uuidPattern, timestampMinutePrefix, filename, suffix);
   }
 }
