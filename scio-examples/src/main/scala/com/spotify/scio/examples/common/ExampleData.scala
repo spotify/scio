@@ -29,7 +29,7 @@ object ExampleData {
   val GAMING = "gs://apache-beam-samples/game/gaming_data*.csv"
 
   val WEATHER_SAMPLES_TABLE = "clouddataflow-readonly:samples.weather_stations"
-  val SHAKESPEARE_TABLE = "publicdata:samples.shakespeare"
+  val SHAKESPEARE_TABLE = "bigquery-public-data:samples.shakespeare"
   val EVENT_TABLE = "clouddataflow-readonly:samples.gdelt_sample"
   val COUNTRY_TABLE = "gdelt-bq:full.crosswalk_geocountrycodetohuman"
 }

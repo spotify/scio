@@ -129,7 +129,7 @@ final class SCollectionTypedOps[T <: HasAnnotation](private val self: SCollectio
    * example:
    *
    * {{{
-   * @BigQueryType.fromTable("publicdata:samples.gsod")
+   * @BigQueryType.fromTable("bigquery-public-data:samples.gsod")
    * class Row
    *
    * sc.typedBigQuery[Row]()

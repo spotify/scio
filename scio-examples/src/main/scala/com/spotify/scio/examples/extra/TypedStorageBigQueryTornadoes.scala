@@ -32,7 +32,7 @@ object TypedStorageBigQueryTornadoes {
   // object will also be generated to provide easy access to original table from annotation,
   // `TableSchema` and converter methods between the generated case class and `TableRow`.
   @BigQueryType.fromStorage(
-    "publicdata:samples.gsod",
+    "bigquery-public-data:samples.gsod",
     selectedFields = List("tornado", "month"),
     rowRestriction = "tornado = true"
   )

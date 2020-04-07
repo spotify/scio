@@ -75,7 +75,7 @@ import org.apache.beam.sdk.values.PCollectionView;
  * and can be overridden with {@code --input}.
  */
 public class FilterExamples {
-  // Default to using a 1000 row subset of the public weather station table publicdata:samples.gsod.
+  // Default to using a 1000 row subset of the public weather station table bigquery-public-data:samples.gsod.
   private static final String WEATHER_SAMPLES_TABLE =
       "clouddataflow-readonly:samples.weather_stations";
   static final Logger LOG = Logger.getLogger(FilterExamples.class.getName());
