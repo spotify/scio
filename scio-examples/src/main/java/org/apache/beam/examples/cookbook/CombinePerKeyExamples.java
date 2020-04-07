@@ -61,8 +61,8 @@ import org.apache.beam.sdk.values.PCollection;
  *
  * See examples/java/README.md for instructions about how to configure different runners.
  *
- * <p>The BigQuery input table defaults to {@code bigquery-public-data:samples.shakespeare} and can be
- * overridden with {@code --input}.
+ * <p>The BigQuery input table defaults to {@code bigquery-public-data:samples.shakespeare} and can
+ * be overridden with {@code --input}.
  */
 public class CombinePerKeyExamples {
   // Use the shakespeare public BigQuery sample
