@@ -19,7 +19,6 @@ package com.spotify.scio.avro.types
 import com.spotify.scio.avro.AvroTaps
 import com.spotify.scio.io.Taps
 import org.apache.avro.Schema.Parser
-import org.apache.avro.generic.GenericRecord
 import org.apache.beam.sdk.io.FileSystems
 import org.apache.beam.sdk.options.PipelineOptionsFactory
 import org.scalatest.flatspec.AnyFlatSpec
@@ -51,11 +50,11 @@ final class AvroTapIT extends AnyFlatSpec with Matchers {
   it should "read avro file" in {
     FileSystems.setDefaultPipelineOptions(PipelineOptionsFactory.create)
 
-    val asd = AvroTaps(Taps()).avroFile(
+    val tap = AvroTaps(Taps()).avroFile(
       "gs://data-integration-test-eu/avro-integration-test/folder-a/folder-b/shakespeare.avro",
       schema = schema
     )
-    val result = Await.result(asd, Duration.Inf)
+    val result = Await.result(tap, Duration.Inf)
 
     result.value.hasNext shouldBe true
   }

@@ -25,7 +25,6 @@ import com.spotify.scio._
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.avro._
 import com.spotify.scio.examples.common.ExampleData
-import org.apache.avro.generic.GenericRecord
 
 object MagnolifyAvroExample {
   // limit import scope to avoid polluting namespace
