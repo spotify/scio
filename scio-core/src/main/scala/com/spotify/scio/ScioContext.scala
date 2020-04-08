@@ -652,34 +652,6 @@ class ScioContext private[scio] (
     }
   }
 
-  /**
-   * Close the context. No operation can be performed once the context is closed.
-   *
-   * This method is deprecated and with it the `--blocking` flag.
-   *
-   * Use [[ScioContext#run]].
-   *
-   * To achieve the same behaviour when `--blocking` was enabled use:
-   *
-   * {{{
-   * val sc: ScioContext = ???
-   *
-   * sc.run().waitUntilDone(Duration.Inf)
-   * }}}
-   *
-   * @see [[ScioContext#run]]
-   */
-  @deprecated("this method will be removed in next scio version; use run() instead.", "0.8.0")
-  def close(): ScioExecutionContext = requireNotClosed {
-    val closedContext = run()
-
-    if (optionsAs[ScioOptions].isBlocking && awaitDuration == Duration.Inf) {
-      closedContext.waitUntilDone()
-    }
-
-    closedContext
-  }
-
   /** Whether the context is closed. */
   def isClosed: Boolean = _isClosed
 
