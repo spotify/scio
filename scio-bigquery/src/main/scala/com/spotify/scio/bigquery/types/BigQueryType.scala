@@ -128,8 +128,18 @@ object BigQueryType {
    */
   trait HasQuery {
 
-    /** SELECT query for case class schema. */
+    /**
+     * SELECT query for case class schema.
+     * @return unformatted query
+     */
+    @deprecated("use queryRaw instead", "0.9.0")
     def query: String
+
+    /**
+     * SELECT query for case class schema.
+     * @return unformatted query
+     */
+    def queryRaw: String
   }
 
   /**

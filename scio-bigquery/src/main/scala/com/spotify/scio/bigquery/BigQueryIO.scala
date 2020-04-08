@@ -484,7 +484,7 @@ object BigQueryTyped {
     ): Aux[T, Select] =
       new IO[T] {
         type F[A <: HasAnnotation] = Select[A]
-        def impl: Select[T] = Select(Query(t.query))
+        def impl: Select[T] = Select(Query(t.queryRaw))
       }
 
     implicit def storageIO[T <: HasAnnotation: ClassTag: TypeTag: Coder](
