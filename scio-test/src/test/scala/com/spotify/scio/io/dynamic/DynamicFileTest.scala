@@ -109,8 +109,8 @@ class DynamicFileTest extends PipelineSpec {
     verifyOutput(tmpDir, "0", "1")
 
     val sc2 = ScioContext()
-    val lines0 = sc2.avroFile[GenericRecord](s"$tmpDir/0/*.avro", schema)
-    val lines1 = sc2.avroFile[GenericRecord](s"$tmpDir/1/*.avro", schema)
+    val lines0 = sc2.avroFile(s"$tmpDir/0/*.avro", schema)
+    val lines1 = sc2.avroFile(s"$tmpDir/1/*.avro", schema)
     lines0 should containInAnyOrder((1 to 10).filter(_ % 2 == 0).map(newGenericRecord))
     lines1 should containInAnyOrder((1 to 10).filter(_ % 2 == 1).map(newGenericRecord))
     sc2.run()

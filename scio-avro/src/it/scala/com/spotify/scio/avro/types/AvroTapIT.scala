@@ -51,7 +51,7 @@ final class AvroTapIT extends AnyFlatSpec with Matchers {
   it should "read avro file" in {
     FileSystems.setDefaultPipelineOptions(PipelineOptionsFactory.create)
 
-    val asd = AvroTaps(Taps()).avroFile[GenericRecord](
+    val asd = AvroTaps(Taps()).avroFile(
       "gs://data-integration-test-eu/avro-integration-test/folder-a/folder-b/shakespeare.avro",
       schema = schema
     )

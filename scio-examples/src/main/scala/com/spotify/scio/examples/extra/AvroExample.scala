@@ -127,7 +127,7 @@ object AvroExample {
 
   private def genericIn(sc: ScioContext, args: Args): ClosedTap[String] = {
     implicit def genericCoder = Coder.avroGenericRecordCoder(schema)
-    sc.avroFile[GenericRecord](args("input"), schema)
+    sc.avroFile(args("input"), schema)
       .map(_.toString)
       .saveAsTextFile(args("output"))
   }

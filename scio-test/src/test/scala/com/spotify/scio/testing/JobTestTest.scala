@@ -62,7 +62,7 @@ object GenericAvroFileJob {
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
     implicit val coder = Coder.avroGenericRecordCoder(AvroUtils.schema)
-    sc.avroFile[GenericRecord](args("input"), AvroUtils.schema)
+    sc.avroFile(args("input"), AvroUtils.schema)
       .saveAsAvroFile(args("output"), schema = AvroUtils.schema)
     sc.run()
     ()
@@ -70,6 +70,9 @@ object GenericAvroFileJob {
 }
 
 object GenericParseFnAvroFileJob {
+
+  implicit val coder = Coder.avroGenericRecordCoder(AvroUtils.schema)
+
   // A class with some fields from the Avro Record
   case class PartialFieldsAvro(intField: Int)
 
