@@ -131,6 +131,9 @@ private[types] object TypeProvider {
     val queryDef =
       q"override def query: _root_.java.lang.String = $queryFormat"
 
+    val queryRawDef =
+      q"override def queryRaw: _root_.java.lang.String = $queryFormat"
+
     val queryArgTypes = queryArgs.map(t => t._2 -> TermName(c.freshName("queryArg$")))
     val queryFnDef = if (queryArgTypes.nonEmpty) {
       val typesQ = queryArgTypes.map { case (tpt, termName) => q"$termName: $tpt" }
@@ -154,12 +157,13 @@ private[types] object TypeProvider {
             implicit def bqQuery: ${p(c, SType)}.Query[$cName] =
               new ${p(c, SType)}.Query[$cName]{
                 $queryDef
+                $queryRawDef
               }
           """)
         case _ =>
           Nil
       }
-    val overrides = queryFnDef ::: queryDef :: qa
+    val overrides = queryFnDef ::: queryDef :: queryRawDef :: qa
 
     schemaToType(c)(schema, annottees, traits, overrides)
   }
