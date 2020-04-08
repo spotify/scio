@@ -68,17 +68,17 @@ final class BigQuery private (val client: Client) {
    * be overridden with the `newSource` parameter. For example:
    *
    * {{{
-   * @BigQueryType.fromTable("publicdata:samples.gsod")
+   * @BigQueryType.fromTable("bigquery-public-data:samples.gsod")
    * class Row
    *
-   * // Read from [publicdata:samples.gsod] as specified in the annotation.
+   * // Read from [bigquery-public-data:samples.gsod] as specified in the annotation.
    * bq.getTypedRows[Row]()
    *
    * // Read from [myproject:samples.gsod] instead.
    * bq.getTypedRows[Row]("myproject:samples.gsod")
    *
    * // Read from a query instead.
-   * bq.getTypedRows[Row]("SELECT * FROM [publicdata:samples.gsod] LIMIT 1000")
+   * bq.getTypedRows[Row]("SELECT * FROM [bigquery-public-data:samples.gsod] LIMIT 1000")
    * }}}
    */
   def getTypedRows[T <: HasAnnotation: TypeTag](newSource: String = null): Iterator[T] = {

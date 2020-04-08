@@ -61,12 +61,12 @@ import org.apache.beam.sdk.values.PCollection;
  *
  * See examples/java/README.md for instructions about how to configure different runners.
  *
- * <p>The BigQuery input table defaults to {@code publicdata:samples.shakespeare} and can be
- * overridden with {@code --input}.
+ * <p>The BigQuery input table defaults to {@code bigquery-public-data:samples.shakespeare} and can
+ * be overridden with {@code --input}.
  */
 public class CombinePerKeyExamples {
   // Use the shakespeare public BigQuery sample
-  private static final String SHAKESPEARE_TABLE = "publicdata:samples.shakespeare";
+  private static final String SHAKESPEARE_TABLE = "bigquery-public-data:samples.shakespeare";
   // We'll track words >= this word length across all plays in the table.
   private static final int MIN_WORD_LENGTH = 9;
 

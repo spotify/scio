@@ -46,30 +46,36 @@ public class BucketMetadataUtilTest {
 
   @Test
   public void testIncompatibleMetadata() throws Exception {
-    final List<TestBucketMetadata> metadataList1 = IntStream.range(0, 10).mapToObj(i ->
-            {
-              try {
-                return TestBucketMetadata.of((int) Math.pow(2.0, 1.0 * i), 1).withKeyIndex(i != 9 ? 0 : 1);
-              } catch (CannotProvideCoderException | Coder.NonDeterministicException e) {
-                throw new RuntimeException(e);
-              }
-            }
-    ).collect(Collectors.toList());
+    final List<TestBucketMetadata> metadataList1 =
+        IntStream.range(0, 10)
+            .mapToObj(
+                i -> {
+                  try {
+                    return TestBucketMetadata.of((int) Math.pow(2.0, 1.0 * i), 1)
+                        .withKeyIndex(i != 9 ? 0 : 1);
+                  } catch (CannotProvideCoderException | Coder.NonDeterministicException e) {
+                    throw new RuntimeException(e);
+                  }
+                })
+            .collect(Collectors.toList());
 
     testIncompatibleMetadata(metadataList1, 0, 9);
 
     Collections.reverse(metadataList1);
     testIncompatibleMetadata(metadataList1, 9, 0);
 
-    final List<TestBucketMetadata> metadataList2 = IntStream.range(0, 10).mapToObj(i ->
-            {
-              try {
-                return TestBucketMetadata.of((int) Math.pow(2.0, 1.0 * i), 1).withKeyIndex(i != 4 ? 0 : 1);
-              } catch (CannotProvideCoderException | Coder.NonDeterministicException e) {
-                throw new RuntimeException(e);
-              }
-            }
-    ).collect(Collectors.toList());
+    final List<TestBucketMetadata> metadataList2 =
+        IntStream.range(0, 10)
+            .mapToObj(
+                i -> {
+                  try {
+                    return TestBucketMetadata.of((int) Math.pow(2.0, 1.0 * i), 1)
+                        .withKeyIndex(i != 4 ? 0 : 1);
+                  } catch (CannotProvideCoderException | Coder.NonDeterministicException e) {
+                    throw new RuntimeException(e);
+                  }
+                })
+            .collect(Collectors.toList());
 
     testIncompatibleMetadata(metadataList2, 0, 4);
 
@@ -77,7 +83,8 @@ public class BucketMetadataUtilTest {
     testIncompatibleMetadata(metadataList2, 9, 5);
   }
 
-  private void testIncompatibleMetadata(List<TestBucketMetadata> metadataList, int canonicalIdx, int badIdx) throws Exception {
+  private void testIncompatibleMetadata(
+      List<TestBucketMetadata> metadataList, int canonicalIdx, int badIdx) throws Exception {
     final List<ResourceId> directories = new ArrayList<>();
     final List<ResourceId> goodDirectories = new ArrayList<>();
 
@@ -85,10 +92,10 @@ public class BucketMetadataUtilTest {
     for (int i = 0; i < metadataList.size(); i++) {
       final File dest = folder.newFolder(String.valueOf(i));
       final OutputStream outputStream =
-              Channels.newOutputStream(
-                      FileSystems.create(
-                              LocalResources.fromFile(folder.newFile(i + "/metadata.json"), false),
-                              "application/json"));
+          Channels.newOutputStream(
+              FileSystems.create(
+                  LocalResources.fromFile(folder.newFile(i + "/metadata.json"), false),
+                  "application/json"));
 
       BucketMetadata.to(metadataList.get(i), outputStream);
       ResourceId dir = LocalResources.fromFile(dest, true);
@@ -101,30 +108,33 @@ public class BucketMetadataUtilTest {
     final TestBucketMetadata canonicalMetadata = metadataList.get(canonicalIdx);
 
     final SourceMetadata<String, String> sourceMetadata =
-            util.getSourceMetadata(goodDirectories, ".txt");
+        util.getSourceMetadata(goodDirectories, ".txt");
     Assert.assertEquals(canonicalMetadata, sourceMetadata.getCanonicalMetadata());
     Assert.assertEquals(goodDirectories.size(), sourceMetadata.getPartitionMetadata().size());
 
-    Assert.assertThrows(IllegalStateException.class, () -> util.getSourceMetadata(directories, ".txt"));
+    Assert.assertThrows(
+        IllegalStateException.class, () -> util.getSourceMetadata(directories, ".txt"));
 
     folder.delete();
   }
 
   @Test
   public void testMissingMetadata() throws Exception {
-    final List<Optional<TestBucketMetadata>> metadataList = IntStream.range(0, 10).mapToObj(i ->
-            {
-              if (i == 9) {
-                return Optional.<TestBucketMetadata>empty();
-              } else {
-                try {
-                  return  Optional.of(TestBucketMetadata.of((int) Math.pow(2.0, 1.0 * i), 1));
-                } catch (CannotProvideCoderException | Coder.NonDeterministicException e) {
-                  throw new RuntimeException(e);
-                }
-              }
-            }
-    ).collect(Collectors.toList());
+    final List<Optional<TestBucketMetadata>> metadataList =
+        IntStream.range(0, 10)
+            .mapToObj(
+                i -> {
+                  if (i == 9) {
+                    return Optional.<TestBucketMetadata>empty();
+                  } else {
+                    try {
+                      return Optional.of(TestBucketMetadata.of((int) Math.pow(2.0, 1.0 * i), 1));
+                    } catch (CannotProvideCoderException | Coder.NonDeterministicException e) {
+                      throw new RuntimeException(e);
+                    }
+                  }
+                })
+            .collect(Collectors.toList());
 
     testMissingMetadata(metadataList);
 
@@ -132,7 +142,8 @@ public class BucketMetadataUtilTest {
     testMissingMetadata(metadataList);
   }
 
-  private void testMissingMetadata(List<Optional<TestBucketMetadata>> metadataList) throws Exception {
+  private void testMissingMetadata(List<Optional<TestBucketMetadata>> metadataList)
+      throws Exception {
     final List<ResourceId> directories = new ArrayList<>();
 
     // all but one metadata are compatible
@@ -146,10 +157,10 @@ public class BucketMetadataUtilTest {
 
       final TestBucketMetadata metadata = metadataList.get(i).get();
       final OutputStream outputStream =
-              Channels.newOutputStream(
-                      FileSystems.create(
-                              LocalResources.fromFile(folder.newFile(i + "/metadata.json"), false),
-                              "application/json"));
+          Channels.newOutputStream(
+              FileSystems.create(
+                  LocalResources.fromFile(folder.newFile(i + "/metadata.json"), false),
+                  "application/json"));
 
       BucketMetadata.to(metadata, outputStream);
     }

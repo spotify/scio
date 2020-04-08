@@ -33,8 +33,8 @@ final class StorageBigQueryTornadoesTest extends PipelineSpec {
 
   "BigQueryTornadoes" should "work" in {
     JobTest[com.spotify.scio.examples.cookbook.StorageBigQueryTornadoes.type]
-      .args("--input=publicdata:samples.gsod", "--output=dataset.table")
-      .input(BigQueryIO("publicdata:samples.gsod"), inData)
+      .args("--input=bigquery-public-data:samples.gsod", "--output=dataset.table")
+      .input(BigQueryIO("bigquery-public-data:samples.gsod"), inData)
       .output(BigQueryIO[TableRow]("dataset.table")) { coll =>
         coll should containInAnyOrder(expected)
       }
