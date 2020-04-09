@@ -75,7 +75,7 @@ class GroupByBenchmark {
   @Benchmark
   def testScioGroupByKey: ScioExecutionContext =
     runWithContext { sc =>
-      sc.avroFile[GenericRecord](source, schema = avroSchema)
+      sc.avroFile(source, schema = avroSchema)
         .map(rec => (rec.get("id").toString.head, rec.get("value").asInstanceOf[Double]))
         .groupByKey
     }
@@ -84,7 +84,7 @@ class GroupByBenchmark {
   def testBeamGroupByKey: ScioExecutionContext =
     runWithContext { sc =>
       sc.wrap {
-          sc.avroFile[GenericRecord](source, schema = avroSchema)
+          sc.avroFile(source, schema = avroSchema)
             .map { rec =>
               KV.of(rec.get("id").toString.head, rec.get("value").asInstanceOf[Double])
             }
