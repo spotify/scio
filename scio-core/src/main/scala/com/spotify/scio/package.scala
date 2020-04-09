@@ -24,32 +24,4 @@ package com.spotify
  * import com.spotify.scio._
  * }}}
  */
-package object scio extends instances.AllInstances {
-
-  import scala.concurrent.duration.Duration
-  import scala.concurrent.Future
-  import scala.concurrent.Await
-  import com.spotify.scio.io.Tap
-  @deprecated("Scio does not rely on Future anymore. See https://git.io/JeAt1", since = "0.8.0")
-  implicit class WaitableFutureTap[T](self: Future[Tap[T]]) {
-    def waitForResult(atMost: Duration = Duration.Inf): Tap[T] =
-      Await.result(self, atMost)
-  }
-
-  @deprecated("Scio does not rely on Future anymore. See https://git.io/JeAt1", since = "0.8.0")
-  implicit class WaitableClosedTap[T](self: com.spotify.scio.io.ClosedTap[T]) {
-    def waitForResult(atMost: Duration = Duration.Inf): Tap[T] =
-      self.underlying
-  }
-
-  /**
-   * Wait for nested [[com.spotify.scio.io.Tap Tap]] to be available, flatten result and get Tap
-   * reference from `Future`.
-   */
-  @deprecated("Scio does not rely on Future anymore. See https://git.io/JeAt1", since = "0.8.0")
-  implicit class WaitableNestedFutureTap[T](self: Future[Future[Tap[T]]]) {
-    import scala.concurrent.ExecutionContext.Implicits.global
-    def waitForResult(atMost: Duration = Duration.Inf): Tap[T] =
-      Await.result(self.flatMap(identity), atMost)
-  }
-}
+package object scio extends instances.AllInstances

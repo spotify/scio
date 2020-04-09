@@ -53,7 +53,6 @@ import scala.io.Source
 import scala.reflect.ClassTag
 import scala.util.control.NoStackTrace
 import scala.util.{Failure, Success, Try}
-import scala.concurrent.Future
 
 /** Runner specific context. */
 trait RunnerContext {
@@ -296,15 +295,6 @@ trait ScioExecutionContext {
     duration: Duration = awaitDuration,
     cancelJob: Boolean = cancelJob
   ): ScioResult
-}
-
-object ScioExecutionContext {
-  @deprecated(
-    "close() now returns a ScioExecutionContext instead of a ScioResult. See https://git.io/JvvLu",
-    since = "0.8.0"
-  )
-  implicit def toResult(sec: ScioExecutionContext): ScioResult =
-    sec.waitUntilDone(Duration.Inf)
 }
 
 /** Companion object for [[ScioContext]]. */
@@ -834,15 +824,6 @@ class ScioContext private[scio] (
         )
       )
     }
-  @deprecated("""
-⛔️  makeFuture is PRIVATE and you should NOT be using it
-⛔️     - Scio's internals were simplified and it removed the need for makeFuture
-⛔️     - The current implementation is only there for back-compatibility
-⛔️     - There's NO GUARANTEE that its behavior is 100% similar to Scio < 0.8
-⛔️     - IT WILL BE REMOVED VERY SOON!
-⛔️ https://git.io/JeAt1""", since = "0.8.0")
-  private[scio] def makeFuture[T](value: Tap[T]): Future[Tap[T]] =
-    Future.successful(value)
 
   /**
    * Distribute a local Scala `Map` to form an SCollection.

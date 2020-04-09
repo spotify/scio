@@ -32,7 +32,6 @@ import org.apache.beam.sdk.{PipelineResult, metrics => beam}
 import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
 import scala.util.Try
-import scala.concurrent.Future
 
 /** Represent a Beam runner specific result. */
 trait RunnerResult {
@@ -62,16 +61,6 @@ abstract class ScioResult private[scio] (val internal: PipelineResult) {
 
   /** Whether this is the result of a test. */
   def isTest: Boolean = false
-
-  @deprecated("ScioResult is guaranteed to be completed in Scio > 0.8.0", since = "0.8.0")
-  def isCompleted: Boolean = true
-
-  @deprecated(
-    "Scio 0.8 does not use Futures anymore. You can simply use the 'state' directly to get a State",
-    since = "0.8.0"
-  )
-  def finalState: Future[State] =
-    Future.successful(state)
 
   /** Pipeline's current state. */
   def state: State = Try(internal.getState).getOrElse(State.UNKNOWN)
