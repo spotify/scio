@@ -132,7 +132,6 @@ jobs:
                   sbt -v $SBT_OPTS \
                   coverage \
                   "++$SCALA_VERSION test" \
-                  "++$SCALA_VERSION coverageReport" \
                   "++$SCALA_VERSION coverageAggregate"
             - run: ./scripts/circleci_repl.sh
             - run: bash <(curl -s https://codecov.io/bash)
