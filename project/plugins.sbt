@@ -1,4 +1,4 @@
-addSbtPlugin("com.cavorite" % "sbt-avro-1-8" % "1.1.9")
+addSbtPlugin("com.cavorite" % "sbt-avro" % "2.0.0")
 addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "0.14.10")
 addSbtPlugin("com.eed3si9n" % "sbt-unidoc" % "0.4.3")
 addSbtPlugin("com.github.gseitz" % "sbt-protobuf" % "0.6.5")
@@ -23,4 +23,7 @@ addSbtPlugin("com.thoughtworks.sbt-api-mappings" % "sbt-api-mappings" % "3.0.0")
 
 libraryDependencies ++= Seq(
   "com.github.os72" % "protoc-jar" % "3.11.4"
+)
+dependencyOverrides ++= Seq(
+  "org.apache.avro" % "avro-compiler" % "1.8.2"
 )

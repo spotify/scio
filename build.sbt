@@ -826,8 +826,7 @@ lazy val `scio-extra`: Project = project
     magnoliaDependencies,
     beamSDKIODependencies,
     circeDependencies,
-    AvroConfig / version := avroVersion,
-    AvroConfig / sourceDirectory := baseDirectory.value / "src" / "test" / "avro",
+    avroLibVersion := avroVersion,
     Compile / sourceDirectories := (Compile / sourceDirectories).value
       .filterNot(_.getPath.endsWith("/src_managed/main")),
     Compile / managedSourceDirectories := (Compile / managedSourceDirectories).value
@@ -967,7 +966,7 @@ lazy val `scio-schemas`: Project = project
   .settings(
     crossScalaVersions += "2.13.1",
     description := "Avro/Proto schemas for testing",
-    version in AvroConfig := avroVersion,
+    avroLibVersion := avroVersion,
     Compile / sourceDirectories := (Compile / sourceDirectories).value
       .filterNot(_.getPath.endsWith("/src_managed/main")),
     Compile / managedSourceDirectories := (Compile / managedSourceDirectories).value
