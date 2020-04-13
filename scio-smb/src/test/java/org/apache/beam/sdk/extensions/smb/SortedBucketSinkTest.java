@@ -31,8 +31,12 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
+import org.apache.beam.sdk.coders.StringUtf8Coder;
+import org.apache.beam.sdk.extensions.smb.SMBFilenamePolicy.FileAssignment;
 import org.apache.beam.sdk.extensions.smb.SortedBucketSink.WriteResult;
 import org.apache.beam.sdk.io.FileSystems;
+import org.apache.beam.sdk.io.fs.EmptyMatchTreatment;
+import org.apache.beam.sdk.io.fs.MatchResult.Status;
 import org.apache.beam.sdk.io.fs.ResourceId;
 import org.apache.beam.sdk.testing.NeedsRunner;
 import org.apache.beam.sdk.testing.PAssert;
@@ -163,6 +167,37 @@ public class SortedBucketSinkTest {
           Assert.assertFalse(Sets.intersection(key1a, key1b).isEmpty());
           Assert.assertFalse(Sets.intersection(key2a, key2b).isEmpty());
         });
+  }
+
+  @Test
+  @Category(NeedsRunner.class)
+  public void testWritesEmptyBucketFiles() throws Exception {
+    final TestBucketMetadata metadata = TestBucketMetadata.of(2, 2);
+
+    final ResourceId outputDirectory = fromFolder(output);
+    final SortedBucketSink<String, String> sink =
+        new SortedBucketSink<>(
+            metadata, outputDirectory, fromFolder(temp), ".txt", new TestFileOperations(), 1);
+
+    pipeline.apply(Create.empty(StringUtf8Coder.of())).apply(sink);
+    pipeline.run().waitUntilFinish();
+
+    final FileAssignment dstFiles =
+        new SMBFilenamePolicy.FileAssignment(outputDirectory, ".txt", false);
+
+    for (int bucketId = 0; bucketId < metadata.getNumBuckets(); bucketId++) {
+      for (int shardId = 0; shardId < metadata.getNumShards(); shardId++) {
+        Assert.assertSame(
+            FileSystems.match(
+                    dstFiles.forBucket(BucketShardId.of(bucketId, shardId), metadata).toString(),
+                    EmptyMatchTreatment.DISALLOW)
+                .status(),
+            Status.OK);
+      }
+    }
+    Assert.assertSame(
+        FileSystems.match(dstFiles.forMetadata().toString(), EmptyMatchTreatment.DISALLOW).status(),
+        Status.OK);
   }
 
   private void test(
