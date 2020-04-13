@@ -177,8 +177,7 @@ public abstract class FileOperations<V> implements Serializable, HasDisplayData 
               ? Compression.detect(resourceId.getFilename())
               : compression);
     } catch (IOException e) {
-      throw new RuntimeException(
-          String.format("Exception fetching metadata for %s", resourceId), e);
+      throw new RuntimeException(String.format("Exception opening bucket file %s", resourceId), e);
     }
   }
 }
