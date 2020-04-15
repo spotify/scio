@@ -26,6 +26,8 @@ import org.apache.beam.sdk.coders.Coder.NonDeterministicException
 import org.apache.beam.sdk.coders.{Coder => BCoder, _}
 import org.apache.beam.sdk.util.CoderUtils
 import org.apache.beam.sdk.util.common.ElementByteSizeObserver
+import org.apache.beam.sdk.util.BufferedElementCountingOutputStream
+import org.apache.beam.sdk.util.VarInt
 
 import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
@@ -151,27 +153,54 @@ abstract private class BaseSeqLikeCoder[M[_], T](val elemCoder: BCoder[T])(
 }
 
 abstract private class SeqLikeCoder[M[_], T](bc: BCoder[T])(
-  implicit toSeq: M[T] => TraversableOnce[T]
+  implicit ev: M[T] => TraversableOnce[T]
 ) extends BaseSeqLikeCoder[M, T](bc) {
-  protected val lc = VarIntCoder.of()
   override def encode(value: M[T], outStream: OutputStream): Unit = {
-    val traversable = toSeq(value)
-    lc.encode(traversable.size, outStream)
+    val traversable = ev(value)
+    VarInt.encode(traversable.size, outStream)
     traversable.foreach(bc.encode(_, outStream))
   }
+
   def decode(inStream: InputStream, builder: m.Builder[T, M[T]]): M[T] = {
-    val size = lc.decode(inStream)
+    val size = VarInt.decodeInt(inStream)
     builder.sizeHint(size)
     var i = 0
     while (i < size) {
       builder += bc.decode(inStream)
-      i = i + 1
+      i += 1
     }
     builder.result()
   }
 
-  override def toString: String =
-    s"SeqLikeCoder($bc)"
+  override def toString: String = s"SeqLikeCoder($bc)"
+}
+
+abstract private class BufferedSeqLikeCoder[M[_], T](bc: BCoder[T])(
+  implicit ev: M[T] => TraversableOnce[T]
+) extends BaseSeqLikeCoder[M, T](bc) {
+
+  override def encode(value: M[T], outStream: OutputStream): Unit = {
+    val buff = new BufferedElementCountingOutputStream(outStream)
+    ev(value).foreach { elem =>
+      buff.markElementStart()
+      bc.encode(elem, buff)
+    }
+    buff.finish()
+  }
+
+  def decode(inStream: InputStream, builder: m.Builder[T, M[T]]): M[T] = {
+    var count = VarInt.decodeLong(inStream);
+    while (count > 0L) {
+      builder += bc.decode(inStream)
+      count -= 1
+      if (count == 0L) {
+        count = VarInt.decodeLong(inStream);
+      }
+    }
+    builder.result()
+  }
+
+  override def toString: String = s"BufferedSeqLikeCoder($bc)"
 }
 
 private class OptionCoder[T](bc: BCoder[T]) extends SeqLikeCoder[Option, T](bc) {
@@ -198,14 +227,13 @@ private class ListCoder[T](bc: BCoder[T]) extends SeqLikeCoder[List, T](bc) {
   override def decode(inStream: InputStream): List[T] = decode(inStream, List.newBuilder[T])
 }
 
-// TODO: implement chunking
-private class TraversableOnceCoder[T](bc: BCoder[T]) extends SeqLikeCoder[TraversableOnce, T](bc) {
+private class TraversableOnceCoder[T](bc: BCoder[T])
+    extends BufferedSeqLikeCoder[TraversableOnce, T](bc) {
   override def decode(inStream: InputStream): TraversableOnce[T] =
     decode(inStream, Seq.newBuilder[T])
 }
 
-// TODO: implement chunking
-private class IterableCoder[T](bc: BCoder[T]) extends SeqLikeCoder[Iterable, T](bc) {
+private class IterableCoder[T](bc: BCoder[T]) extends BufferedSeqLikeCoder[Iterable, T](bc) {
   override def decode(inStream: InputStream): Iterable[T] =
     decode(inStream, Iterable.newBuilder[T])
 }
@@ -218,7 +246,7 @@ private class ArrayCoder[@specialized(Short, Int, Long, Float, Double, Boolean, 
   bc: BCoder[T]
 ) extends SeqLikeCoder[Array, T](bc) {
   override def decode(inStream: InputStream): Array[T] = {
-    val size = lc.decode(inStream)
+    val size = VarInt.decodeInt(inStream)
     val arr = new Array[T](size)
     var i = 0
     while (i < size) {
