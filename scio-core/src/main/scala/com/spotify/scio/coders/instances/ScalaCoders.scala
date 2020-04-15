@@ -130,16 +130,6 @@ abstract private class BaseSeqLikeCoder[M[_], T](val elemCoder: BCoder[T])(
   // delegate methods for determinism and equality checks
   override def verifyDeterministic(): Unit = elemCoder.verifyDeterministic()
   override def consistentWithEquals(): Boolean = elemCoder.consistentWithEquals()
-  override def structuralValue(value: M[T]): AnyRef =
-    if (consistentWithEquals()) {
-      value.asInstanceOf[AnyRef]
-    } else {
-      val b = Seq.newBuilder[AnyRef]
-      val traversable = toSeq(value)
-      b.sizeHint(traversable.size)
-      traversable.foreach(v => b += elemCoder.structuralValue(v))
-      b.result()
-    }
 
   // delegate methods for byte size estimation
   override def isRegisterByteSizeObserverCheap(value: M[T]): Boolean = false
@@ -172,6 +162,17 @@ abstract private class SeqLikeCoder[M[_], T](bc: BCoder[T])(
     builder.result()
   }
 
+  override def structuralValue(value: M[T]): AnyRef =
+    if (consistentWithEquals()) {
+      value.asInstanceOf[AnyRef]
+    } else {
+      val b = Seq.newBuilder[AnyRef]
+      val traversable = ev(value)
+      b.sizeHint(traversable.size)
+      traversable.foreach(v => b += elemCoder.structuralValue(v))
+      b.result()
+    }
+
   override def toString: String = s"SeqLikeCoder($bc)"
 }
 
@@ -198,6 +199,12 @@ abstract private class BufferedSeqLikeCoder[M[_], T](bc: BCoder[T])(
       }
     }
     builder.result()
+  }
+
+  override def structuralValue(value: M[T]): AnyRef = {
+    val b = Seq.newBuilder[AnyRef]
+    ev(value).foreach(v => b += elemCoder.structuralValue(v))
+    b.result()
   }
 
   override def toString: String = s"BufferedSeqLikeCoder($bc)"
