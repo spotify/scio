@@ -100,7 +100,7 @@ val sparkeyVersion = "3.0.1"
 val sparkVersion = "2.4.4"
 val tensorFlowVersion = "1.15.0"
 val zoltarVersion = "0.5.6"
-val scalaCollectionCompatVersion = "2.1.4"
+val scalaCollectionCompatVersion = "2.1.5"
 
 def isScala213x = Def.setting {
   scalaBinaryVersion.value == "2.13"
