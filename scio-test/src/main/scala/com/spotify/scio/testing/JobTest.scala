@@ -294,21 +294,21 @@ object JobTest {
       val metricsFn = (result: ScioResult) => {
         state.counters.foreach {
           case a: SingleMetricAssertion[beam.Counter, Long] =>
-            a.assert(result.counter(a.metric).committed.get)
+            a.assert(result.counter(a.metric).attempted)
           case a: AllMetricsAssertion[beam.Counter, Long] =>
-            a.assert(result.allCounters.map(c => c._1 -> c._2.committed.get))
+            a.assert(result.allCounters.map(c => c._1 -> c._2.attempted))
         }
         state.gauges.foreach {
           case a: SingleMetricAssertion[beam.Gauge, beam.GaugeResult] =>
-            a.assert(result.gauge(a.metric).committed.get)
+            a.assert(result.gauge(a.metric).attempted)
           case a: AllMetricsAssertion[beam.Gauge, beam.GaugeResult] =>
-            a.assert(result.allGauges.map(c => c._1 -> c._2.committed.get))
+            a.assert(result.allGauges.map(c => c._1 -> c._2.attempted))
         }
         state.distributions.foreach {
           case a: SingleMetricAssertion[beam.Distribution, beam.DistributionResult] =>
-            a.assert(result.distribution(a.metric).committed.get)
+            a.assert(result.distribution(a.metric).attempted)
           case a: AllMetricsAssertion[beam.Distribution, beam.DistributionResult] =>
-            a.assert(result.allDistributions.map(c => c._1 -> c._2.committed.get))
+            a.assert(result.allDistributions.map(c => c._1 -> c._2.attempted))
         }
       }
       TestDataManager.tearDown(testId, metricsFn)
