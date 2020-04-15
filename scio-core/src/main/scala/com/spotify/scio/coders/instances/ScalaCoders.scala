@@ -174,8 +174,9 @@ abstract private class SeqLikeCoder[M[_], T](bc: BCoder[T])(
     s"SeqLikeCoder($bc)"
 }
 
-private class OptionCoder[T](bc: BCoder[T]) extends SeqLikeCoder[Option, T](bc) {
-  private[this] val bcoder = BooleanCoder.of().asInstanceOf[BCoder[Boolean]]
+private class OptionCoder[T](bc: BCoder[T]) extends AtomicCoder[Option[T]] {
+  private[this] val bcoder = BooleanCoder.of()
+
   override def encode(value: Option[T], os: OutputStream): Unit = {
     bcoder.encode(value.isDefined, os)
     value.foreach(bc.encode(_, os))
@@ -186,8 +187,14 @@ private class OptionCoder[T](bc: BCoder[T]) extends SeqLikeCoder[Option, T](bc) 
     if (isDefined) Some(bc.decode(is)) else None
   }
 
-  override def toString: String =
-    s"OptionCoder($bc)"
+  override def getCoderArguments: java.util.List[_ <: BCoder[_]] =
+    Collections.singletonList(bc)
+
+  override def verifyDeterministic(): Unit = bc.verifyDeterministic()
+
+  override def consistentWithEquals(): Boolean = bc.consistentWithEquals()
+
+  override def toString: String = s"OptionCoder($bc)"
 }
 
 private class SeqCoder[T](bc: BCoder[T]) extends SeqLikeCoder[Seq, T](bc) {
