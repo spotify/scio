@@ -65,7 +65,14 @@ private case object NoOpContext extends RunnerContext {
 
 /** Direct runner specific context. */
 private case object DirectContext extends RunnerContext {
-  override def prepareOptions(options: PipelineOptions, artifacts: List[String]): Unit = ()
+  override def prepareOptions(options: PipelineOptions, artifacts: List[String]): Unit =
+    // if in local runner, temp location may be needed, but is not currently required by
+    // the runner, which may end up with NPE. If not set but user generate new temp dir
+    if (options.getTempLocation == null) {
+      val tmpDir = Files.createTempDirectory("scio-temp-")
+      ScioContext.log.debug(s"New temp directory at $tmpDir")
+      options.setTempLocation(tmpDir.toString)
+    }
 }
 
 /** Companion object for [[RunnerContext]]. */
@@ -299,7 +306,7 @@ trait ScioExecutionContext {
 
 /** Companion object for [[ScioContext]]. */
 object ScioContext {
-  private val log = LoggerFactory.getLogger(this.getClass)
+  private[scio] val log = LoggerFactory.getLogger(this.getClass)
 
   import org.apache.beam.sdk.options.PipelineOptionsFactory
 
@@ -396,6 +403,23 @@ object ScioContext {
     new DistCacheScioContext(self)
 
   private def defaultOptions: PipelineOptions = PipelineOptionsFactory.create()
+
+  private[scio] def validateOptions(o: PipelineOptions): Unit = {
+    VersionUtil.checkVersion()
+    VersionUtil.checkRunnerVersion(o.getRunner)
+
+    // Check if running within scala.App. See https://github.com/spotify/scio/issues/449
+    if (Thread
+          .currentThread()
+          .getStackTrace
+          .toList
+          .map(_.getClassName.split('$').head)
+          .exists(_.equals(classOf[App].getName))) {
+      ScioContext.log.warn(
+        "Applications defined within scala.App might not work properly. Please use main method!"
+      )
+    }
+  }
 }
 
 /**
@@ -432,25 +456,9 @@ class ScioContext private[scio] (
   }
 
   {
-    VersionUtil.checkVersion()
-    VersionUtil.checkRunnerVersion(options.getRunner)
     val o = optionsAs[ScioOptions]
     o.setScalaVersion(BuildInfo.scalaVersion)
     o.setScioVersion(BuildInfo.version)
-  }
-
-  {
-    // Check if running within scala.App. See https://github.com/spotify/scio/issues/449
-    if (Thread
-          .currentThread()
-          .getStackTrace
-          .toList
-          .map(_.getClassName.split('$').head)
-          .exists(_.equals(classOf[App].getName))) {
-      ScioContext.log.warn(
-        "Applications defined within scala.App might not work properly. Please use main method!"
-      )
-    }
   }
 
   private[scio] val testId: Option[String] =
@@ -472,23 +480,20 @@ class ScioContext private[scio] (
     }
   }
 
-  // if in local runner, temp location may be needed, but is not currently required by
-  // the runner, which may end up with NPE. If not set but user generate new temp dir
-  if (ScioUtil.isLocalRunner(options.getRunner) && options.getTempLocation == null) {
-    val tmpDir = Files.createTempDirectory("scio-temp-")
-    ScioContext.log.debug(s"New temp directory at $tmpDir")
-    options.setTempLocation(tmpDir.toString)
-  }
-
   if (isTest) {
     FileSystems.setDefaultPipelineOptions(PipelineOptionsFactory.create)
+  }
+
+  private[scio] def prepare(): Unit = {
+    // TODO: make sure this works for other PipelineOptions
+    RunnerContext.prepareOptions(options, artifacts)
+    ScioContext.validateOptions(options)
   }
 
   /** Underlying pipeline. */
   def pipeline: Pipeline = {
     if (_pipeline == null) {
-      // TODO: make sure this works for other PipelineOptions
-      RunnerContext.prepareOptions(options, artifacts)
+      prepare()
       _pipeline = if (testId.isEmpty) {
         Pipeline.create(options)
       } else {
@@ -499,6 +504,7 @@ class ScioContext private[scio] (
         // propagate options
         val opts = PipelineOptionsFactory.create()
         opts.setStableUniqueNames(options.getStableUniqueNames)
+        opts.setRunner(options.getRunner)
         val tp = cls
           .getMethod("fromOptions", classOf[PipelineOptions])
           .invoke(null, opts)
