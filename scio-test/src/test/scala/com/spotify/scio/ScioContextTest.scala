@@ -41,14 +41,18 @@ class ScioContextTest extends PipelineSpec {
   }
 
   it should "have temp location for default runner" in {
-    val opts = ScioContext().options
+    val sc = ScioContext()
+    sc.prepare()
+    val opts = sc.options
     opts.getTempLocation should not be null
   }
 
   it should "have temp location for DirectRunner" in {
     val opts = PipelineOptionsFactory.create()
     opts.setRunner(classOf[DirectRunner])
-    ScioContext(opts).options.getTempLocation should not be null
+    val sc = ScioContext(opts)
+    sc.prepare()
+    sc.options.getTempLocation should not be null
   }
 
   it should "support user defined temp location" in {
