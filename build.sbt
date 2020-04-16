@@ -33,10 +33,10 @@ val autoServiceVersion = "1.0-rc6"
 val autoValueVersion = "1.7"
 val avroVersion = "1.8.2"
 val beamVendorVersion = "0.1"
-val beamVersion = "2.19.0"
-val bigdataossVersion = "1.9.16"
-val bigQueryStorageVersion = "0.79.0-alpha"
-val bigtableClientVersion = "1.8.0"
+val beamVersion = "2.20.0"
+val bigdataossVersion = "2.0.0"
+val bigQueryStorageVersion = "0.120.1-beta"
+val bigtableClientVersion = "1.13.0"
 val breezeVersion = "1.0"
 val caffeineVersion = "2.8.1"
 val caseappVersion = "2.0.0-M16"
@@ -54,22 +54,23 @@ val elasticsearch6Version = "6.8.8"
 val elasticsearch7Version = "7.6.2"
 val featranVersion = "0.5.0"
 val flinkVersion = "1.9.1"
-val gaxVersion = "1.38.0"
+val gaxVersion = "1.53.0"
 val gcsConnectorVersion = "hadoop2-2.1.2"
 val gcsVersion = "1.8.0"
-val generatedGrpcBetaVersion = "0.44.0"
+val generatedGrpcBetaVersion = "1.9.1"
+val generatedDatastoreProtoVersion = "0.85.0"
 val generatedGrpcGaVersion = "1.83.0"
 val googleApiServicesBigQuery = "v2-rev20190917-1.30.3"
 val googleApiServicesDataflow = "v1b3-rev20190927-1.30.3"
 val googleAuthVersion = "0.19.0"
 val googleClientsVersion = "1.30.5"
-val googleCloudSpannerVersion = "1.6.0"
-val googleHttpClientsVersion = "1.33.0"
-val grpcVersion = "1.17.1"
+val googleCloudSpannerVersion = "1.49.1"
+val googleHttpClientsVersion = "1.34.0"
+val grpcVersion = "1.25.0"
 val guavaVersion = "27.0.1-jre"
 val hadoopVersion = "2.7.7"
 val hamcrestVersion = "2.2"
-val httpCoreVersion = "4.4.11"
+val httpCoreVersion = "4.4.12"
 val jacksonVersion = "2.10.3"
 val javaLshVersion = "0.12"
 val jlineVersion = "2.14.6"
@@ -84,7 +85,7 @@ val magnoliaVersion = "0.14.5"
 val magnolifyVersion = "0.1.6"
 val mercatorVersion = "0.3.0"
 val nettyVersion = "4.1.30.Final"
-val opencensusVersion = "0.17.0"
+val opencensusVersion = "0.24.0"
 val parquetAvroVersion = "0.3.4"
 val parquetExtraVersion = "0.3.4"
 val parquetVersion = "1.11.0"
@@ -97,7 +98,7 @@ val scalatestVersion = "3.1.1"
 val shapelessVersion = "2.3.3"
 val slf4jVersion = "1.7.30"
 val sparkeyVersion = "3.0.1"
-val sparkVersion = "2.4.4"
+val sparkVersion = "2.4.5"
 val tensorFlowVersion = "1.15.0"
 val zoltarVersion = "0.5.6"
 val scalaCollectionCompatVersion = "2.1.5"
@@ -131,6 +132,8 @@ val beamSDKIODependencies = Def.settings(
     "io.grpc" % "grpc-netty" % grpcVersion,
     "io.grpc" % "grpc-stub" % grpcVersion,
     "io.grpc" % "grpc-okhttp" % grpcVersion,
+    "io.grpc" % "grpc-api" % grpcVersion,
+    "io.grpc" % "grpc-alts" % grpcVersion,
     "com.google.api" % "gax" % gaxVersion,
     "com.google.api" % "gax-grpc" % gaxVersion
   )
@@ -442,7 +445,7 @@ lazy val `scio-core`: Project = project
       "com.github.ben-manes.caffeine" % "caffeine" % caffeineVersion % "provided",
       "com.google.api-client" % "google-api-client" % googleClientsVersion,
       "com.google.api.grpc" % "grpc-google-cloud-pubsub-v1" % generatedGrpcGaVersion,
-      "com.google.api.grpc" % "proto-google-cloud-datastore-v1" % generatedGrpcBetaVersion,
+      "com.google.api.grpc" % "proto-google-cloud-datastore-v1" % generatedDatastoreProtoVersion,
       "com.google.api.grpc" % "proto-google-cloud-pubsub-v1" % generatedGrpcGaVersion,
       "com.google.apis" % "google-api-services-bigquery" % googleApiServicesBigQuery,
       "com.google.apis" % "google-api-services-dataflow" % googleApiServicesDataflow,
@@ -461,6 +464,9 @@ lazy val `scio-core`: Project = project
       "io.grpc" % "grpc-auth" % grpcVersion,
       "io.grpc" % "grpc-core" % grpcVersion,
       "io.grpc" % "grpc-netty" % grpcVersion,
+      "io.grpc" % "grpc-api" % grpcVersion,
+      "io.grpc" % "grpc-stub" % grpcVersion,
+      "io.netty" % "netty-handler" % nettyVersion,
       "com.spotify" %% "magnolify-guava" % magnolifyVersion,
       "joda-time" % "joda-time" % jodaTimeVersion,
       "me.lyh" %% "protobuf-generic" % protobufGenericVersion,
@@ -636,7 +642,7 @@ lazy val `scio-bigquery`: Project = project
       "com.google.api" % "gax" % gaxVersion,
       "com.google.api-client" % "google-api-client" % googleClientsVersion,
       "com.google.apis" % "google-api-services-bigquery" % googleApiServicesBigQuery,
-      "com.google.api.grpc" % "proto-google-cloud-bigquerystorage-v1beta1" % "0.83.0",
+      "com.google.api.grpc" % "proto-google-cloud-bigquerystorage-v1beta1" % "0.85.1",
       "com.google.http-client" % "google-http-client" % googleHttpClientsVersion,
       "com.google.http-client" % "google-http-client-jackson" % "1.29.2",
       "com.google.http-client" % "google-http-client-jackson2" % googleHttpClientsVersion,
@@ -907,7 +913,7 @@ lazy val `scio-spanner`: Project = project
     crossScalaVersions += "2.13.1",
     description := "Scio add-on for Google Cloud Spanner",
     libraryDependencies ++= Seq(
-      "com.google.cloud" % "google-cloud-core" % "1.61.0",
+      "com.google.cloud" % "google-cloud-core" % "1.92.2",
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "com.google.cloud" % "google-cloud-spanner" % googleCloudSpannerVersion,
       "org.scalatest" %% "scalatest" % scalatestVersion % "it"
@@ -989,7 +995,7 @@ lazy val `scio-examples`: Project = project
       "org.apache.avro" % "avro" % avroVersion,
       "com.google.cloud.datastore" % "datastore-v1-proto-client" % datastoreV1ProtoClientVersion,
       "com.google.http-client" % "google-http-client" % googleHttpClientsVersion,
-      "com.google.api.grpc" % "proto-google-cloud-datastore-v1" % generatedGrpcBetaVersion,
+      "com.google.api.grpc" % "proto-google-cloud-datastore-v1" % generatedDatastoreProtoVersion,
       "com.google.api.grpc" % "proto-google-cloud-bigtable-v2" % generatedGrpcBetaVersion,
       "com.google.cloud.sql" % "mysql-socket-factory" % "1.0.15",
       "com.google.apis" % "google-api-services-bigquery" % googleApiServicesBigQuery,
@@ -1298,9 +1304,9 @@ ThisBuild / dependencyOverrides ++= Seq(
   "com.fasterxml.jackson.core" % "jackson-databind" % jacksonVersion,
   "com.fasterxml.jackson.module" %% "jackson-module-scala" % jacksonVersion,
   "com.google.api-client" % "google-api-client" % googleClientsVersion,
-  "com.google.api.grpc" % "proto-google-cloud-bigquerystorage-v1beta1" % "0.83.0",
+  "com.google.api.grpc" % "proto-google-cloud-bigquerystorage-v1beta1" % "0.85.1",
   "com.google.api.grpc" % "proto-google-cloud-bigtable-v2" % generatedGrpcBetaVersion,
-  "com.google.api.grpc" % "proto-google-cloud-datastore-v1" % generatedGrpcBetaVersion,
+  "com.google.api.grpc" % "proto-google-cloud-datastore-v1" % generatedDatastoreProtoVersion,
   "com.google.api.grpc" % "proto-google-common-protos" % "1.17.0",
   "com.google.api.grpc" % "proto-google-iam-v1" % "0.13.0",
   "com.google.api" % "api-common" % "1.8.1",
@@ -1315,9 +1321,9 @@ ThisBuild / dependencyOverrides ++= Seq(
   "com.google.auto.value" % "auto-value" % autoValueVersion,
   "com.google.cloud.bigdataoss" % "gcsio" % "2.0.1",
   "com.google.cloud.bigdataoss" % "util" % "2.0.1",
-  "com.google.cloud" % "google-cloud-core-grpc" % "1.61.0",
-  "com.google.cloud" % "google-cloud-core-http" % "1.55.0",
-  "com.google.cloud" % "google-cloud-core" % "1.61.0",
+  "com.google.cloud" % "google-cloud-core-grpc" % "1.92.2",
+  "com.google.cloud" % "google-cloud-core-http" % "1.92.2",
+  "com.google.cloud" % "google-cloud-core" % "1.92.2",
   "com.google.cloud" % "google-cloud-storage" % gcsVersion,
   "com.google.code.findbugs" % "jsr305" % "3.0.2",
   "com.google.code.gson" % "gson" % "2.7",
@@ -1329,7 +1335,7 @@ ThisBuild / dependencyOverrides ++= Seq(
   "com.google.oauth-client" % "google-oauth-client" % "1.30.4",
   "com.google.protobuf" % "protobuf-java-util" % protobufVersion,
   "com.google.protobuf" % "protobuf-java" % protobufVersion,
-  "com.propensive" %% "magnolia" % "0.12.6",
+  "com.propensive" %% "magnolia" % magnoliaVersion,
   "com.squareup.okio" % "okio" % "1.13.0",
   "com.thoughtworks.paranamer" % "paranamer" % "2.8",
   "commons-cli" % "commons-cli" % "1.2",
@@ -1345,6 +1351,8 @@ ThisBuild / dependencyOverrides ++= Seq(
   "io.grpc" % "grpc-netty-shaded" % grpcVersion,
   "io.grpc" % "grpc-protobuf" % grpcVersion,
   "io.grpc" % "grpc-stub" % grpcVersion,
+  "io.grpc" % "grpc-api" % grpcVersion,
+  "io.grpc" % "grpc-alts" % grpcVersion,
   "io.netty" % "netty-buffer" % nettyVersion,
   "io.netty" % "netty-codec-http" % nettyVersion,
   "io.netty" % "netty-codec-http2" % nettyVersion,
@@ -1384,7 +1392,7 @@ ThisBuild / dependencyOverrides ++= Seq(
   "org.scalactic" %% "scalactic" % scalatestVersion,
   "org.scalatest" %% "scalatest" % scalatestVersion,
   "org.slf4j" % "slf4j-api" % slf4jVersion,
-  "org.slf4j" % "slf4j-log4j12" % "1.7.10",
+  "org.slf4j" % "slf4j-log4j12" % slf4jVersion,
   "org.tukaani" % "xz" % "1.8",
   "org.typelevel" %% "algebra" % algebraVersion,
   "org.typelevel" %% "cats-core" % catsVersion,
