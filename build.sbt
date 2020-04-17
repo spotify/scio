@@ -21,6 +21,7 @@ import sbtassembly.AssemblyPlugin.autoImport._
 import com.typesafe.sbt.SbtGit.GitKeys.gitRemoteRepo
 import org.scalafmt.sbt.ScalafmtPlugin.scalafmtConfigSettings
 import bloop.integrations.sbt.BloopDefaults
+import sbtrelease.ReleaseStateTransformations._
 
 ThisBuild / turbo := true
 
@@ -195,12 +196,29 @@ val commonSettings = Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
   ).mkString(";"),
   coverageHighlighting := true,
   // Release settings
-  publishTo := Some(
-    if (isSnapshot.value) Opts.resolver.sonatypeSnapshots
-    else Opts.resolver.sonatypeStaging
-  ),
+  publishTo := sonatypePublishToBundle.value,
   releaseCrossBuild := true,
   releasePublishArtifactsAction := PgpKeys.publishSigned.value,
+  releaseProcess := Seq[ReleaseStep](
+    checkSnapshotDependencies,
+    inquireVersions,
+    runClean,
+    ReleaseStep { st: State =>
+      if (!st.get(ReleaseKeys.skipTests).getOrElse(false)) {
+        releaseStepCommandAndRemaining("+test")(st)
+      } else {
+        st
+      }
+    },
+    setReleaseVersion,
+    commitReleaseVersion,
+    tagRelease,
+    releaseStepCommandAndRemaining("+publishSigned"),
+    releaseStepCommand("sonatypeBundleRelease"),
+    setNextVersion,
+    commitNextVersion,
+    pushChanges
+  ),
   publishMavenStyle := true,
   publishArtifact in Test := false,
   sonatypeProfileName := "com.spotify",
