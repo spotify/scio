@@ -147,15 +147,6 @@ val magnoliaDependencies = Def.settings(
     )
 )
 
-val circeDependencies = Def.settings(
-  libraryDependencies ++=
-    Seq(
-      "io.circe" %% "circe-core",
-      "io.circe" %% "circe-generic",
-      "io.circe" %% "circe-parser"
-    ).map(_ % circeVersion)
-)
-
 def previousVersion(currentVersion: String): Option[String] = {
   val Version = """(\d+)\.(\d+)\.(\d+).*""".r
   val Version(x, y, z) = currentVersion
@@ -827,11 +818,13 @@ lazy val `scio-extra`: Project = project
       "joda-time" % "joda-time" % jodaTimeVersion,
       "net.java.dev.jna" % "jna" % jnaVersion,
       "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamVendorVersion,
-      "org.typelevel" %% "algebra" % algebraVersion
+      "org.typelevel" %% "algebra" % algebraVersion,
+      "io.circe" %% "circe-core" % circeVersion,
+      "io.circe" %% "circe-generic" % circeVersion,
+      "io.circe" %% "circe-parser" % circeVersion
     ),
     magnoliaDependencies,
     beamSDKIODependencies,
-    circeDependencies,
     Compile / sourceDirectories := (Compile / sourceDirectories).value
       .filterNot(_.getPath.endsWith("/src_managed/main")),
     Compile / managedSourceDirectories := (Compile / managedSourceDirectories).value
@@ -1344,6 +1337,9 @@ ThisBuild / dependencyOverrides ++= Seq(
   "commons-io" % "commons-io" % commonsIoVersion,
   "commons-lang" % "commons-lang" % "2.6",
   "commons-logging" % "commons-logging" % "1.2",
+  "io.circe" %% "circe-core" % circeVersion,
+  "io.circe" %% "circe-generic" % circeVersion,
+  "io.circe" %% "circe-parser" % circeVersion,
   "io.dropwizard.metrics" % "metrics-core" % "3.2.2",
   "io.grpc" % "grpc-auth" % grpcVersion,
   "io.grpc" % "grpc-context" % grpcVersion,
@@ -1399,14 +1395,4 @@ ThisBuild / dependencyOverrides ++= Seq(
   "org.xerial.snappy" % "snappy-java" % "1.1.4",
   "org.yaml" % "snakeyaml" % "1.12",
   "com.nrinaudo" %% "kantan.codecs" % kantanCodecsVersion
-) ++ Seq(
-  "io.circe" %% "circe-core",
-  "io.circe" %% "circe-generic",
-  "io.circe" %% "circe-parser"
-).map { dep =>
-  if (scalaBinaryVersion.value == "2.11") {
-    dep % "0.11.2"
-  } else {
-    dep % circeVersion
-  }
-}
+)
