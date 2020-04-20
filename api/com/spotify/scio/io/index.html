@@ -255,6 +255,38 @@ detects the query's dialect. To override this, start the query with either <code
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../index.html" class="extype" name="com.spotify.scio">scio</a></dd></dl></div>
+    </li><li name="com.spotify.scio.hash" visbl="pub" class="indented4 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="hash"></a><a id="hash:hash"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/hash/index.html" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">package</span>
+      </span>
+      <span class="symbol">
+        <a title="Main package for hash APIs." href="../hash/index.html"><span class="name">hash</span></a>
+      </span>
+      
+      <p class="shortcomment cmt">Main package for hash APIs.</p><div class="fullcomment"><div class="comment cmt"><p>Main package for hash APIs. Import all.</p><pre><span class="kw">import</span> com.spotify.scio.hash._</pre></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../index.html" class="extype" name="com.spotify.scio">scio</a></dd></dl></div>
+    </li><li name="com.spotify.scio.instances" visbl="pub" class="indented4 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="instances"></a><a id="instances:instances"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/instances/index.html" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">package</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="../instances/index.html"><span class="name">instances</span></a>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../index.html" class="extype" name="com.spotify.scio">scio</a></dd></dl></div>
     </li><li name="com.spotify.scio.io" visbl="pub" class="indented4 current" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="io"></a><a id="io:io"></a>
       <span class="permalink">
@@ -717,7 +749,7 @@ Like TextIO, but without newline delimiters and operating over Array[Byte] inste
         <span class="kind">case class</span>
       </span>
       <span class="symbol">
-        <a title="" href="DatastoreIO.html"><span class="name">DatastoreIO</span></a><span class="params">(<span name="projectId">projectId: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result"> extends <a href="ScioIO.html" class="extype" name="com.spotify.scio.io.ScioIO">ScioIO</a>[<a href="https://javadoc.io/page/com.google.api.grpc/proto-google-cloud-datastore-v1/0.44.0/com/google/datastore/v1/Entity.html#com.google.datastore.v1.Entity" class="extype" name="com.google.datastore.v1.Entity">Entity</a>] with <a href="https://www.scala-lang.org/api/2.12.11/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="https://www.scala-lang.org/api/2.12.11/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+        <a title="" href="DatastoreIO.html"><span class="name">DatastoreIO</span></a><span class="params">(<span name="projectId">projectId: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result"> extends <a href="ScioIO.html" class="extype" name="com.spotify.scio.io.ScioIO">ScioIO</a>[<a href="https://javadoc.io/page/com.google.api.grpc/proto-google-cloud-datastore-v1/0.85.0/com/google/datastore/v1/Entity.html#com.google.datastore.v1.Entity" class="extype" name="com.google.datastore.v1.Entity">Entity</a>] with <a href="https://www.scala-lang.org/api/2.12.11/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="https://www.scala-lang.org/api/2.12.11/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
       </span>
       
       
@@ -782,7 +814,7 @@ Like TextIO, but without newline delimiters and operating over Array[Byte] inste
         <span class="kind">trait</span>
       </span>
       <span class="symbol">
-        <a title="Base trait for all Read/Write IO classes." href="ScioIO.html"><span class="name">ScioIO</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <a href="https://www.scala-lang.org/api/2.12.11/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
+        <a title="Base trait for all Read/Write IO classes." href="ScioIO.html"><span class="name">ScioIO</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <a href="../../../../scala/index.html#AnyRef=Object" class="extmbr" name="scala.AnyRef">AnyRef</a></span>
       </span>
       
       <p class="shortcomment cmt">Base trait for all Read/Write IO classes.</p><div class="fullcomment"><div class="comment cmt"><p>Base trait for all Read/Write IO classes. Every IO connector must implement this.
@@ -820,7 +852,7 @@ opened in a new <a href="../ScioContext.html" class="extype" name="com.spotify.s
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <a title="Exception for when a tap is not available." href="TapNotAvailableException.html"><span class="name">TapNotAvailableException</span></a><span class="result"> extends <span class="extype" name="scala.Exception">Exception</span></span>
+        <a title="Exception for when a tap is not available." href="TapNotAvailableException.html"><span class="name">TapNotAvailableException</span></a><span class="result"> extends <a href="../../../../scala/index.html#Exception=Exception" class="extmbr" name="scala.Exception">Exception</a></span>
       </span>
       
       <p class="shortcomment cmt">Exception for when a tap is not available.</p>
@@ -868,7 +900,7 @@ opened in a new <a href="../ScioContext.html" class="extype" name="com.spotify.s
         <span class="kind">trait</span>
       </span>
       <span class="symbol">
-        <a title="Utility for managing Future[Tap[T]]s." href="Taps.html"><span class="name">Taps</span></a><span class="result"> extends <a href="https://www.scala-lang.org/api/2.12.11/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
+        <a title="Utility for managing Future[Tap[T]]s." href="Taps.html"><span class="name">Taps</span></a><span class="result"> extends <a href="../../../../scala/index.html#AnyRef=Object" class="extmbr" name="scala.AnyRef">AnyRef</a></span>
       </span>
       
       <p class="shortcomment cmt">Utility for managing <code>Future[Tap[T]]</code>s.</p>

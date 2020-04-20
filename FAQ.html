@@ -204,7 +204,7 @@ spotify/scio
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.8.5*
+<i class="md-icon" title="Version">label_outline</i> 0.9.1*
 </label>
 </li>
 </ul>
@@ -552,7 +552,7 @@ def main(cmdlineArgs: Array[String]): Unit = {
 <ul>
   <li>For Scio version &gt;= <code>0.4.0</code></li>
 </ul>
-<p>Starting from Scio <code>0.4.0</code> you can use Apache Beam&rsquo;s <a href="https://beam.apache.org/releases/javadoc/2.19.0/?org/apache/beam/sdk/io/FileSystems.html" title="org.apache.beam.sdk.io.FileSystems"><code>Filesystems</code></a> abstraction:</p>
+<p>Starting from Scio <code>0.4.0</code> you can use Apache Beam&rsquo;s <a href="https://beam.apache.org/releases/javadoc/2.20.0/?org/apache/beam/sdk/io/FileSystems.html" title="org.apache.beam.sdk.io.FileSystems"><code>Filesystems</code></a> abstraction:</p>
 <pre class="prettyprint"><code class="language-scala">import org.apache.beam.sdk.io.FileSystems
 // the path can be any of the supported Filesystems, e.g. local, GCS, HDFS
 def readmeResource = FileSystems.matchNewResource(&quot;gs://&lt;bucket&gt;/README.md&quot;, false)
@@ -562,7 +562,7 @@ def readme = FileSystems.open(readmeResource)
   <li>For Scio version &lt; <code>0.4.0</code></li>
 </ul><div class="callout note "><div class="callout-title">Note</div>
 <p>This part is GCS specific.</p></div>
-<p>You can get a <a href="https://beam.apache.org/releases/javadoc/2.19.0/?org/apache/beam/sdk/extensions/gcp/options/GcsOptions.html#getGcsUtil--" title="org.apache.beam.sdk.extensions.gcp.options.GcsOptions"><code>`GcsUtil`</code></a> instance from <code>ScioContext</code>, which can be used to open GCS files in read or write mode.</p>
+<p>You can get a <a href="https://beam.apache.org/releases/javadoc/2.20.0/?org/apache/beam/sdk/extensions/gcp/options/GcsOptions.html#getGcsUtil--" title="org.apache.beam.sdk.extensions.gcp.options.GcsOptions"><code>`GcsUtil`</code></a> instance from <code>ScioContext</code>, which can be used to open GCS files in read or write mode.</p>
 <pre class="prettyprint"><code class="language-scala">import com.spotify.scio.ContextAndArgs
 import org.apache.beam.sdk.extensions.gcp.options.GcsOptions
 
@@ -698,7 +698,7 @@ def main(cmdlineArgs: Array[String]): Unit = {
   val p: SCollection[(String, Int)] = ???
 
   p.map(kv =&gt; Result(kv._1, kv._2))
-   .saveAsTypedBigQuery(args(&quot;output&quot;))
+   .saveAsTypedBigQueryTable(Table.Spec(args(&quot;output&quot;)))
 }
 </code></pre><div class="callout note "><div class="callout-title">Note</div>
 <p>Scio uses <a href="https://docs.scala-lang.org/overviews/macros/annotations.html">Macro Annotations</a> and <a href="https://docs.scala-lang.org/overviews/macros/paradise.html">Macro Paradise</a> plugin to implement annotations. You need to add Macro Paradise plugin to your scala compiler as described <a href="https://docs.scala-lang.org/overviews/macros/paradise.html">here</a>.</p></div>
@@ -728,7 +728,7 @@ def main(cmdlineArgs: Array[String]): Unit = {
 <h4><a href="#how-to-inspect-the-content-of-an-scollection-" name="how-to-inspect-the-content-of-an-scollection-" class="anchor"><span class="anchor-link"></span></a>How to inspect the content of an <code>SCollection</code>?</h4>
 <p>There is multiple options here: - Use <code>debug()</code> method on an <code>SCollection</code> to print its content as the data flows through the DAG during the execution (after the <code>run</code> or <code>runAndCollect</code>) - Use a debugger and setup break points - make sure to break inside of your functions to stop control at the execution not the pipeline construction time - In <a href="./Scio-REPL.html">Scio-REPL</a>, use <code>runAndCollect()</code> to execute the pipeline and materialize the contents of an <code>SCollection</code></p>
 <h4><a href="#how-do-i-improve-side-input-performance-" name="how-do-i-improve-side-input-performance-" class="anchor"><span class="anchor-link"></span></a>How do I improve side input performance?</h4>
-<p>By default Dataflow workers allocate 100MB (see <a href="https://beam.apache.org/releases/javadoc/2.19.0/?org/apache/beam/runners/dataflow/options/DataflowWorkerHarnessOptions.html#getWorkerCacheMb--" title="org.apache.beam.runners.dataflow.options.DataflowWorkerHarnessOptions"><code>DataflowWorkerHarnessOptions#getWorkerCacheMb</code></a>) of memory for caching side inputs, and falls back to disk or network. Therefore jobs with large side inputs may be slow. To override this default, register <code>DataflowWorkerHarnessOptions</code> before parsing command line arguments and then pass <code>--workerCacheMb=N</code> when submitting the job.</p>
+<p>By default Dataflow workers allocate 100MB (see <a href="https://beam.apache.org/releases/javadoc/2.20.0/?org/apache/beam/runners/dataflow/options/DataflowWorkerHarnessOptions.html#getWorkerCacheMb--" title="org.apache.beam.runners.dataflow.options.DataflowWorkerHarnessOptions"><code>DataflowWorkerHarnessOptions#getWorkerCacheMb</code></a>) of memory for caching side inputs, and falls back to disk or network. Therefore jobs with large side inputs may be slow. To override this default, register <code>DataflowWorkerHarnessOptions</code> before parsing command line arguments and then pass <code>--workerCacheMb=N</code> when submitting the job.</p>
 <pre class="prettyprint"><code class="language-scala">import com.spotify.scio._
 import org.apache.beam.sdk.options.PipelineOptionsFactory
 import org.apache.beam.runners.dataflow.options.DataflowWorkerHarnessOptions
@@ -772,7 +772,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.8.5*
+0.9.1*
 </span>
 </div>
 </article>

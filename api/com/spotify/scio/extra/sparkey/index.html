@@ -344,15 +344,23 @@ main.withSideInputs(side)
   .withSideInputs(side)
   .map { (x, s) <span class="kw">=&gt;</span> s(side).get(x) }
   .toSCollection</pre></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../index.html" class="extype" name="com.spotify.scio.extra">extra</a></dd></dl></div>
+    </li><li name="com.spotify.scio.extra.sparkey.instances" visbl="pub" class="indented6 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="instances"></a><a id="instances:instances"></a>
+      <span class="permalink">
+      <a href="../../../../../com/spotify/scio/extra/sparkey/instances/index.html" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">package</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="instances/index.html"><span class="name">instances</span></a>
+      </span>
+      
+      
     </li><li class="current-entities indented5">
-                        <span class="separator"></span>
-                        <a class="class" href="package$$CachedStringSparkeyReader.html" title="A wrapper around SparkeyReader that includes an in-memory Caffeine cache."></a>
-                        <a href="package$$CachedStringSparkeyReader.html" title="A wrapper around SparkeyReader that includes an in-memory Caffeine cache.">CachedStringSparkeyReader</a>
-                      </li><li class="current-entities indented5">
-                        <span class="separator"></span>
-                        <a class="class" href="package$$RichStringSparkeyReader.html" title="Enhanced version of SparkeyReader that mimics a Map."></a>
-                        <a href="package$$RichStringSparkeyReader.html" title="Enhanced version of SparkeyReader that mimics a Map.">RichStringSparkeyReader</a>
-                      </li><li class="current-entities indented5">
                         <span class="separator"></span>
                         <a class="class" href="package$$ShardedSparkeyReader.html" title="A wrapper class around SparkeyReader that allows the reading of multiple Sparkey files, sharded by their keys (via MurmurHash3)."></a>
                         <a href="package$$ShardedSparkeyReader.html" title="A wrapper class around SparkeyReader that allows the reading of multiple Sparkey files, sharded by their keys (via MurmurHash3).">ShardedSparkeyReader</a>
@@ -380,10 +388,6 @@ main.withSideInputs(side)
                         <span class="separator"></span>
                         <a class="trait" href="package$$SparkeyWritable.html" title=""></a>
                         <a href="package$$SparkeyWritable.html" title="">SparkeyWritable</a>
-                      </li><li class="current-entities indented5">
-                        <span class="separator"></span>
-                        <a class="class" href="package$$TypedSparkeyReader.html" title="A wrapper around SparkeyReader that includes both a decoder (to map from each byte array to a JVM type) and an optional in-memory cache."></a>
-                        <a href="package$$TypedSparkeyReader.html" title="A wrapper around SparkeyReader that includes both a decoder (to map from each byte array to a JVM type) and an optional in-memory cache.">TypedSparkeyReader</a>
                       </li>
               </ul>
             </div>
@@ -450,7 +454,7 @@ main.withSideInputs(side)
           <span class="toggle">
             Linear Supertypes
           </span>
-          <div class="superTypes hiddenContent"><a href="https://www.scala-lang.org/api/2.12.11/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a>, <a href="https://www.scala-lang.org/api/2.12.11/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></div>
+          <div class="superTypes hiddenContent"><a href="instances/SparkeyReaderInstances.html" class="extype" name="com.spotify.scio.extra.sparkey.instances.SparkeyReaderInstances">SparkeyReaderInstances</a>, <a href="../../../../../scala/index.html#AnyRef=Object" class="extmbr" name="scala.AnyRef">AnyRef</a>, <a href="https://www.scala-lang.org/api/2.12.11/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></div>
         </div></div>
         
 
@@ -476,7 +480,7 @@ main.withSideInputs(side)
                   <span class="filtertype">Inherited<br />
                   </span>
                   <ol id="linearization">
-                    <li class="in" name="com.spotify.scio.extra.sparkey"><span>sparkey</span></li><li class="in" name="scala.AnyRef"><span>AnyRef</span></li><li class="in" name="scala.Any"><span>Any</span></li>
+                    <li class="in" name="com.spotify.scio.extra.sparkey"><span>sparkey</span></li><li class="in" name="com.spotify.scio.extra.sparkey.instances.SparkeyReaderInstances"><span>SparkeyReaderInstances</span></li><li class="in" name="scala.AnyRef"><span>AnyRef</span></li><li class="in" name="scala.Any"><span>Any</span></li>
                   </ol>
                 </div><div class="ancestors">
               <span class="filtertype"></span>
@@ -498,39 +502,7 @@ main.withSideInputs(side)
 
         <div id="types" class="types members">
               <h3>Type Members</h3>
-              <ol><li name="com.spotify.scio.extra.sparkey.CachedStringSparkeyReader" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="CachedStringSparkeyReaderextendspackage.RichStringSparkeyReader"></a><a id="CachedStringSparkeyReader:CachedStringSparkeyReader"></a>
-      <span class="permalink">
-      <a href="../../../../../com/spotify/scio/extra/sparkey/package$$CachedStringSparkeyReader.html" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">class</span>
-      </span>
-      <span class="symbol">
-        <a title="A wrapper around SparkeyReader that includes an in-memory Caffeine cache." href="package$$CachedStringSparkeyReader.html"><span class="name">CachedStringSparkeyReader</span></a><span class="result"> extends <a href="package$$RichStringSparkeyReader.html" class="extype" name="com.spotify.scio.extra.sparkey.RichStringSparkeyReader">RichStringSparkeyReader</a></span>
-      </span>
-      
-      <p class="shortcomment cmt">A wrapper around <code>SparkeyReader</code> that includes an in-memory Caffeine cache.</p>
-    </li><li name="com.spotify.scio.extra.sparkey.RichStringSparkeyReader" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="RichStringSparkeyReaderextendsMap[String,String]"></a><a id="RichStringSparkeyReader:RichStringSparkeyReader"></a>
-      <span class="permalink">
-      <a href="../../../../../com/spotify/scio/extra/sparkey/package$$RichStringSparkeyReader.html" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier">implicit </span>
-        <span class="kind">class</span>
-      </span>
-      <span class="symbol">
-        <a title="Enhanced version of SparkeyReader that mimics a Map." href="package$$RichStringSparkeyReader.html"><span class="name">RichStringSparkeyReader</span></a><span class="result"> extends <span class="extype" name="scala.Predef.Map">Map</span>[<span class="extype" name="scala.Predef.String">String</span>, <span class="extype" name="scala.Predef.String">String</span>]</span>
-      </span>
-      
-      <p class="shortcomment cmt">Enhanced version of <code>SparkeyReader</code> that mimics a <code>Map</code>.</p>
-    </li><li name="com.spotify.scio.extra.sparkey.ShardedSparkeyReader" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+              <ol><li name="com.spotify.scio.extra.sparkey.ShardedSparkeyReader" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="ShardedSparkeyReaderextendsSparkeyReader"></a><a id="ShardedSparkeyReader:ShardedSparkeyReader"></a>
       <span class="permalink">
       <a href="../../../../../com/spotify/scio/extra/sparkey/package$$ShardedSparkeyReader.html" title="Permalink">
@@ -577,7 +549,7 @@ sharded by their keys (via MurmurHash3). At most 32,768 Sparkey files are suppor
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <a title="Enhanced version of SCollection with Sparkey methods." href="package$$SparkeyPairSCollection.html"><span class="name">SparkeyPairSCollection</span></a><span class="tparams">[<span name="K">K</span>, <span name="V">V</span>]</span><span class="result"> extends <a href="https://www.scala-lang.org/api/2.12.11/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
+        <a title="Enhanced version of SCollection with Sparkey methods." href="package$$SparkeyPairSCollection.html"><span class="name">SparkeyPairSCollection</span></a><span class="tparams">[<span name="K">K</span>, <span name="V">V</span>]</span><span class="result"> extends <a href="../../../../../scala/index.html#AnyRef=Object" class="extmbr" name="scala.AnyRef">AnyRef</a></span>
       </span>
       
       <p class="shortcomment cmt">Enhanced version of <a href="../../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a> with Sparkey methods.</p>
@@ -651,23 +623,6 @@ a base path representing two files - &lt;sparkey-prefix&gt;.spi and &lt;sparkey-
       </span>
       
       
-    </li><li name="com.spotify.scio.extra.sparkey.TypedSparkeyReader" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="TypedSparkeyReader[T]extendsMap[String,T]"></a><a id="TypedSparkeyReader[T]:TypedSparkeyReader[T]"></a>
-      <span class="permalink">
-      <a href="../../../../../com/spotify/scio/extra/sparkey/package$$TypedSparkeyReader.html" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">class</span>
-      </span>
-      <span class="symbol">
-        <a title="A wrapper around SparkeyReader that includes both a decoder (to map from each byte array to a JVM type) and an optional in-memory cache." href="package$$TypedSparkeyReader.html"><span class="name">TypedSparkeyReader</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <span class="extype" name="scala.Predef.Map">Map</span>[<span class="extype" name="scala.Predef.String">String</span>, <span class="extype" name="com.spotify.scio.extra.sparkey.TypedSparkeyReader.T">T</span>]</span>
-      </span>
-      
-      <p class="shortcomment cmt">A wrapper around <code>SparkeyReader</code> that includes both a decoder (to map from each byte array
-to a JVM type) and an optional in-memory cache.</p>
     </li></ol>
             </div>
 
@@ -692,6 +647,22 @@ to a JVM type) and an optional in-memory cache.</p>
       </span>
       
       
+    </li><li name="com.spotify.scio.extra.sparkey.instances.SparkeyReaderInstances#stringSparkeyReader" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="stringSparkeyReader(reader:com.spotify.sparkey.SparkeyReader):com.spotify.scio.extra.sparkey.instances.StringSparkeyReader"></a><a id="stringSparkeyReader(SparkeyReader):StringSparkeyReader"></a>
+      <span class="permalink">
+      <a href="../../../../../com/spotify/scio/extra/sparkey/index.html#stringSparkeyReader(reader:com.spotify.sparkey.SparkeyReader):com.spotify.scio.extra.sparkey.instances.StringSparkeyReader" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">implicit </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">stringSparkeyReader</span><span class="params">(<span name="reader">reader: <a href="https://javadoc.io/page/com.spotify.sparkey/sparkey/3.0.1/com/spotify/sparkey/SparkeyReader.html#com.spotify.sparkey.SparkeyReader" class="extype" name="com.spotify.sparkey.SparkeyReader">SparkeyReader</a></span>)</span><span class="result">: <a href="instances/StringSparkeyReader.html" class="extype" name="com.spotify.scio.extra.sparkey.instances.StringSparkeyReader">StringSparkeyReader</a></span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="instances/SparkeyReaderInstances.html" class="extype" name="com.spotify.scio.extra.sparkey.instances.SparkeyReaderInstances">SparkeyReaderInstances</a></dd></dl></div>
     </li><li name="com.spotify.scio.extra.sparkey#stringSparkeyWritable" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="stringSparkeyWritable:com.spotify.scio.extra.sparkey.package.SparkeyWritable[String,String]"></a><a id="stringSparkeyWritable:SparkeyWritable[String,String]"></a>
       <span class="permalink">
@@ -718,8 +689,10 @@ to a JVM type) and an optional in-memory cache.</p>
         </div>
 
         <div id="inheritedMembers">
-        <div class="parent" name="scala.AnyRef">
-              <h3>Inherited from <a href="https://www.scala-lang.org/api/2.12.11/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></h3>
+        <div class="parent" name="com.spotify.scio.extra.sparkey.instances.SparkeyReaderInstances">
+              <h3>Inherited from <a href="instances/SparkeyReaderInstances.html" class="extype" name="com.spotify.scio.extra.sparkey.instances.SparkeyReaderInstances">SparkeyReaderInstances</a></h3>
+            </div><div class="parent" name="scala.AnyRef">
+              <h3>Inherited from <a href="../../../../../scala/index.html#AnyRef=Object" class="extmbr" name="scala.AnyRef">AnyRef</a></h3>
             </div><div class="parent" name="scala.Any">
               <h3>Inherited from <a href="https://www.scala-lang.org/api/2.12.11/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></h3>
             </div>

@@ -150,17 +150,9 @@
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../index.html" class="extype" name="com.spotify.scio.avro">avro</a></dd></dl></div>
     </li><li class="current-entities indented5">
-                        <a class="object" href="AvroFileImpl$.html" title=""></a>
-                        <a class="trait" href="AvroFileImpl.html" title=""></a>
-                        <a href="AvroFileImpl.html" title="">AvroFileImpl</a>
-                      </li><li class="current-entities indented5">
                         <span class="separator"></span>
                         <a class="class" href="GenericRecordSCollectionOps.html" title=""></a>
                         <a href="GenericRecordSCollectionOps.html" title="">GenericRecordSCollectionOps</a>
-                      </li><li class="current-entities indented5">
-                        <span class="separator"></span>
-                        <a class="trait" href="LowPriorityAvroFileImpl.html" title=""></a>
-                        <a href="LowPriorityAvroFileImpl.html" title="">LowPriorityAvroFileImpl</a>
                       </li><li class="current-entities indented5">
                         <span class="separator"></span>
                         <a class="class" href="ObjectFileSCollectionOps.html" title=""></a>
@@ -193,10 +185,6 @@
                         <span class="separator"></span>
                         <a class="class" href="TypedAvroSCollectionOps.html" title=""></a>
                         <a href="TypedAvroSCollectionOps.html" title="">TypedAvroSCollectionOps</a>
-                      </li><li class="current-entities indented5">
-                        <span class="separator"></span>
-                        <a class="class" href="UnsafeReflectiveRecordSCollectionOps.html" title=""></a>
-                        <a href="UnsafeReflectiveRecordSCollectionOps.html" title="">UnsafeReflectiveRecordSCollectionOps</a>
                       </li>
               </ul>
             </div>
@@ -366,9 +354,9 @@
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
     </li><li name="com.spotify.scio.avro.syntax.ScioContextOps#avroFile" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="avroFile[T&lt;:org.apache.avro.specific.SpecificRecord](path:String)(implicitevidence$5:scala.reflect.ClassTag[T],implicitevidence$6:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]"></a><a id="avroFile[T&lt;:SpecificRecord](String)(ClassTag[T],Coder[T]):SCollection[T]"></a>
+      <a id="avroFile[T&lt;:org.apache.avro.specific.SpecificRecord](path:String)(implicitevidence$3:scala.reflect.ClassTag[T],implicitevidence$4:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]"></a><a id="avroFile[T&lt;:SpecificRecord](String)(ClassTag[T],Coder[T]):SCollection[T]"></a>
       <span class="permalink">
-      <a href="../../../../../com/spotify/scio/avro/syntax/ScioContextOps.html#avroFile[T&lt;:org.apache.avro.specific.SpecificRecord](path:String)(implicitevidence$5:scala.reflect.ClassTag[T],implicitevidence$6:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]" title="Permalink">
+      <a href="../../../../../com/spotify/scio/avro/syntax/ScioContextOps.html#avroFile[T&lt;:org.apache.avro.specific.SpecificRecord](path:String)(implicitevidence$3:scala.reflect.ClassTag[T],implicitevidence$4:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -383,9 +371,9 @@
       <p class="shortcomment cmt">Get an SCollection of type <a href="https://javadoc.io/page/org.apache.avro/avro/1.8.2/org/apache/avro/specific/SpecificRecord.html" class="extype" name="org.apache.avro.specific.SpecificRecord">SpecificRecord</a>
 for an Avro file.</p>
     </li><li name="com.spotify.scio.avro.syntax.ScioContextOps#avroFile" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="avroFile[T](path:String,schema:org.apache.avro.Schema)(implicitevidence$3:com.spotify.scio.coders.Coder[T],implicitimpl:com.spotify.scio.avro.syntax.AvroFileImpl[T]):com.spotify.scio.values.SCollection[T]"></a><a id="avroFile[T](String,Schema)(Coder[T],AvroFileImpl[T]):SCollection[T]"></a>
+      <a id="avroFile(path:String,schema:org.apache.avro.Schema):com.spotify.scio.values.SCollection[org.apache.avro.generic.GenericRecord]"></a><a id="avroFile(String,Schema):SCollection[GenericRecord]"></a>
       <span class="permalink">
-      <a href="../../../../../com/spotify/scio/avro/syntax/ScioContextOps.html#avroFile[T](path:String,schema:org.apache.avro.Schema)(implicitevidence$3:com.spotify.scio.coders.Coder[T],implicitimpl:com.spotify.scio.avro.syntax.AvroFileImpl[T]):com.spotify.scio.values.SCollection[T]" title="Permalink">
+      <a href="../../../../../com/spotify/scio/avro/syntax/ScioContextOps.html#avroFile(path:String,schema:org.apache.avro.Schema):com.spotify.scio.values.SCollection[org.apache.avro.generic.GenericRecord]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -394,7 +382,7 @@ for an Avro file.</p>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">avroFile</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="schema">schema: <a href="https://javadoc.io/page/org.apache.avro/avro/1.8.2/org/apache/avro/Schema.html#org.apache.avro.Schema" class="extype" name="org.apache.avro.Schema">Schema</a></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="../../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.avro.syntax.ScioContextOps.avroFile.T">T</span>]</span>, <span name="impl">impl: <a href="AvroFileImpl.html" class="extype" name="com.spotify.scio.avro.syntax.AvroFileImpl">AvroFileImpl</a>[<span class="extype" name="com.spotify.scio.avro.syntax.ScioContextOps.avroFile.T">T</span>]</span>)</span><span class="result">: <a href="../../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.avro.syntax.ScioContextOps.avroFile.T">T</span>]</span>
+        <span class="name">avroFile</span><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="schema">schema: <a href="https://javadoc.io/page/org.apache.avro/avro/1.8.2/org/apache/avro/Schema.html#org.apache.avro.Schema" class="extype" name="org.apache.avro.Schema">Schema</a></span>)</span><span class="result">: <a href="../../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<a href="https://javadoc.io/page/org.apache.avro/avro/1.8.2/org/apache/avro/generic/GenericRecord.html#org.apache.avro.generic.GenericRecord" class="extype" name="org.apache.avro.generic.GenericRecord">GenericRecord</a>]</span>
       </span>
       
       
@@ -431,9 +419,9 @@ for an Avro file.</p>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
     </li><li name="com.spotify.scio.avro.syntax.ScioContextOps#objectFile" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="objectFile[T](path:String)(implicitevidence$2:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]"></a><a id="objectFile[T](String)(Coder[T]):SCollection[T]"></a>
+      <a id="objectFile[T](path:String)(implicitevidence$1:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]"></a><a id="objectFile[T](String)(Coder[T]):SCollection[T]"></a>
       <span class="permalink">
-      <a href="../../../../../com/spotify/scio/avro/syntax/ScioContextOps.html#objectFile[T](path:String)(implicitevidence$2:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]" title="Permalink">
+      <a href="../../../../../com/spotify/scio/avro/syntax/ScioContextOps.html#objectFile[T](path:String)(implicitevidence$1:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -449,9 +437,9 @@ for an Avro file.</p>
 serialization is not guaranteed to be compatible across Scio releases.
 </p></div></div>
     </li><li name="com.spotify.scio.avro.syntax.ScioContextOps#parseAvroFile" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="parseAvroFile[T](path:String)(parseFn:org.apache.avro.generic.GenericRecord=&gt;T)(implicitevidence$4:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]"></a><a id="parseAvroFile[T](String)((GenericRecord)⇒T)(Coder[T]):SCollection[T]"></a>
+      <a id="parseAvroFile[T](path:String)(parseFn:org.apache.avro.generic.GenericRecord=&gt;T)(implicitevidence$2:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]"></a><a id="parseAvroFile[T](String)((GenericRecord)⇒T)(Coder[T]):SCollection[T]"></a>
       <span class="permalink">
-      <a href="../../../../../com/spotify/scio/avro/syntax/ScioContextOps.html#parseAvroFile[T](path:String)(parseFn:org.apache.avro.generic.GenericRecord=&gt;T)(implicitevidence$4:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]" title="Permalink">
+      <a href="../../../../../com/spotify/scio/avro/syntax/ScioContextOps.html#parseAvroFile[T](path:String)(parseFn:org.apache.avro.generic.GenericRecord=&gt;T)(implicitevidence$2:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -481,9 +469,9 @@ This code reads Avro fields &quot;id&quot; and &quot;name&quot; and de-serialize
               
         </dd></dl></div>
     </li><li name="com.spotify.scio.avro.syntax.ScioContextOps#protobufFile" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="protobufFile[T&lt;:com.google.protobuf.Message](path:String)(implicitevidence$10:scala.reflect.ClassTag[T],implicitevidence$11:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]"></a><a id="protobufFile[T&lt;:Message](String)(ClassTag[T],Coder[T]):SCollection[T]"></a>
+      <a id="protobufFile[T&lt;:com.google.protobuf.Message](path:String)(implicitevidence$8:scala.reflect.ClassTag[T],implicitevidence$9:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]"></a><a id="protobufFile[T&lt;:Message](String)(ClassTag[T],Coder[T]):SCollection[T]"></a>
       <span class="permalink">
-      <a href="../../../../../com/spotify/scio/avro/syntax/ScioContextOps.html#protobufFile[T&lt;:com.google.protobuf.Message](path:String)(implicitevidence$10:scala.reflect.ClassTag[T],implicitevidence$11:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]" title="Permalink">
+      <a href="../../../../../com/spotify/scio/avro/syntax/ScioContextOps.html#protobufFile[T&lt;:com.google.protobuf.Message](path:String)(implicitevidence$8:scala.reflect.ClassTag[T],implicitevidence$9:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -515,9 +503,9 @@ Avro's block file format.
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
     </li><li name="com.spotify.scio.avro.syntax.ScioContextOps#typedAvroFile" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="typedAvroFile[T&lt;:com.spotify.scio.avro.types.AvroType.HasAvroAnnotation](path:String)(implicitevidence$7:scala.reflect.ClassTag[T],implicitevidence$8:reflect.runtime.universe.TypeTag[T],implicitevidence$9:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]"></a><a id="typedAvroFile[T&lt;:HasAvroAnnotation](String)(ClassTag[T],scala.reflect.api.JavaUniverse.TypeTag[T],Coder[T]):SCollection[T]"></a>
+      <a id="typedAvroFile[T&lt;:com.spotify.scio.avro.types.AvroType.HasAvroAnnotation](path:String)(implicitevidence$5:scala.reflect.ClassTag[T],implicitevidence$6:reflect.runtime.universe.TypeTag[T],implicitevidence$7:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]"></a><a id="typedAvroFile[T&lt;:HasAvroAnnotation](String)(ClassTag[T],scala.reflect.api.JavaUniverse.TypeTag[T],Coder[T]):SCollection[T]"></a>
       <span class="permalink">
-      <a href="../../../../../com/spotify/scio/avro/syntax/ScioContextOps.html#typedAvroFile[T&lt;:com.spotify.scio.avro.types.AvroType.HasAvroAnnotation](path:String)(implicitevidence$7:scala.reflect.ClassTag[T],implicitevidence$8:reflect.runtime.universe.TypeTag[T],implicitevidence$9:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]" title="Permalink">
+      <a href="../../../../../com/spotify/scio/avro/syntax/ScioContextOps.html#typedAvroFile[T&lt;:com.spotify.scio.avro.types.AvroType.HasAvroAnnotation](path:String)(implicitevidence$5:scala.reflect.ClassTag[T],implicitevidence$6:reflect.runtime.universe.TypeTag[T],implicitevidence$7:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>

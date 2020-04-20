@@ -183,15 +183,23 @@ main.withSideInputs(side)
   .withSideInputs(side)
   .map { (x, s) <span class="kw">=&gt;</span> s(side).get(x) }
   .toSCollection</pre></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../index.html" class="extype" name="com.spotify.scio.extra">extra</a></dd></dl></div>
+    </li><li name="com.spotify.scio.extra.sparkey.instances" visbl="pub" class="indented6 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="instances"></a><a id="instances:instances"></a>
+      <span class="permalink">
+      <a href="../../../../../com/spotify/scio/extra/sparkey/instances/index.html" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">package</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="instances/index.html"><span class="name">instances</span></a>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="index.html" class="extype" name="com.spotify.scio.extra.sparkey">sparkey</a></dd></dl></div>
     </li><li class="current-entities indented5">
-                        <span class="separator"></span>
-                        <a class="class" href="package$$CachedStringSparkeyReader.html" title="A wrapper around SparkeyReader that includes an in-memory Caffeine cache."></a>
-                        <a href="package$$CachedStringSparkeyReader.html" title="A wrapper around SparkeyReader that includes an in-memory Caffeine cache.">CachedStringSparkeyReader</a>
-                      </li><li class="current-entities indented5">
-                        <span class="separator"></span>
-                        <a class="class" href="package$$RichStringSparkeyReader.html" title="Enhanced version of SparkeyReader that mimics a Map."></a>
-                        <a href="package$$RichStringSparkeyReader.html" title="Enhanced version of SparkeyReader that mimics a Map.">RichStringSparkeyReader</a>
-                      </li><li class="current-entities indented5">
                         <span class="separator"></span>
                         <a class="class" href="package$$ShardedSparkeyReader.html" title="A wrapper class around SparkeyReader that allows the reading of multiple Sparkey files, sharded by their keys (via MurmurHash3)."></a>
                         <a href="package$$ShardedSparkeyReader.html" title="A wrapper class around SparkeyReader that allows the reading of multiple Sparkey files, sharded by their keys (via MurmurHash3).">ShardedSparkeyReader</a>
@@ -219,10 +227,6 @@ main.withSideInputs(side)
                         <span class="separator"></span>
                         <a class="trait" href="package$$SparkeyWritable.html" title=""></a>
                         <a href="package$$SparkeyWritable.html" title="">SparkeyWritable</a>
-                      </li><li class="current-entities indented5">
-                        <span class="separator"></span>
-                        <a class="class" href="package$$TypedSparkeyReader.html" title="A wrapper around SparkeyReader that includes both a decoder (to map from each byte array to a JVM type) and an optional in-memory cache."></a>
-                        <a href="package$$TypedSparkeyReader.html" title="A wrapper around SparkeyReader that includes both a decoder (to map from each byte array to a JVM type) and an optional in-memory cache.">TypedSparkeyReader</a>
                       </li>
               </ul>
             </div>
@@ -246,7 +250,7 @@ main.withSideInputs(side)
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <span class="name">SparkeyPairSCollection</span><span class="tparams">[<span name="K">K</span>, <span name="V">V</span>]</span><span class="result"> extends <a href="https://www.scala-lang.org/api/2.12.11/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
+        <span class="name">SparkeyPairSCollection</span><span class="tparams">[<span name="K">K</span>, <span name="V">V</span>]</span><span class="result"> extends <a href="../../../../../scala/index.html#AnyRef=Object" class="extmbr" name="scala.AnyRef">AnyRef</a></span>
       </span>
       </h4>
 
@@ -256,7 +260,7 @@ main.withSideInputs(side)
           <span class="toggle">
             Linear Supertypes
           </span>
-          <div class="superTypes hiddenContent"><a href="https://www.scala-lang.org/api/2.12.11/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a>, <a href="https://www.scala-lang.org/api/2.12.11/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></div>
+          <div class="superTypes hiddenContent"><a href="../../../../../scala/index.html#AnyRef=Object" class="extmbr" name="scala.AnyRef">AnyRef</a>, <a href="https://www.scala-lang.org/api/2.12.11/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></div>
         </div></div>
         
 
@@ -377,9 +381,9 @@ main.withSideInputs(side)
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
     </li><li name="com.spotify.scio.extra.sparkey.SparkeyPairSCollection#asCachedStringSparkeySideInput" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="asCachedStringSparkeySideInput(cache:com.spotify.scio.util.Cache[String,String],numShards:Short)(implicitw:com.spotify.scio.extra.sparkey.package.SparkeyWritable[K,V],implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SideInput[com.spotify.scio.extra.sparkey.package.CachedStringSparkeyReader]"></a><a id="asCachedStringSparkeySideInput(Cache[String,String],Short)(SparkeyWritable[K,V],Coder[K],Coder[V]):SideInput[CachedStringSparkeyReader]"></a>
+      <a id="asCachedStringSparkeySideInput(cache:com.spotify.scio.util.Cache[String,String],numShards:Short)(implicitw:com.spotify.scio.extra.sparkey.package.SparkeyWritable[K,V],implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SideInput[com.spotify.scio.extra.sparkey.instances.CachedStringSparkeyReader]"></a><a id="asCachedStringSparkeySideInput(Cache[String,String],Short)(SparkeyWritable[K,V],Coder[K],Coder[V]):SideInput[CachedStringSparkeyReader]"></a>
       <span class="permalink">
-      <a href="../../../../../com/spotify/scio/extra/sparkey/package$$SparkeyPairSCollection.html#asCachedStringSparkeySideInput(cache:com.spotify.scio.util.Cache[String,String],numShards:Short)(implicitw:com.spotify.scio.extra.sparkey.package.SparkeyWritable[K,V],implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SideInput[com.spotify.scio.extra.sparkey.package.CachedStringSparkeyReader]" title="Permalink">
+      <a href="../../../../../com/spotify/scio/extra/sparkey/package$$SparkeyPairSCollection.html#asCachedStringSparkeySideInput(cache:com.spotify.scio.util.Cache[String,String],numShards:Short)(implicitw:com.spotify.scio.extra.sparkey.package.SparkeyWritable[K,V],implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SideInput[com.spotify.scio.extra.sparkey.instances.CachedStringSparkeyReader]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -388,7 +392,7 @@ main.withSideInputs(side)
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">asCachedStringSparkeySideInput</span><span class="params">(<span name="cache">cache: <a href="../../util/Cache.html" class="extype" name="com.spotify.scio.util.Cache">Cache</a>[<span class="extype" name="scala.Predef.String">String</span>, <span class="extype" name="scala.Predef.String">String</span>]</span>, <span name="numShards">numShards: <a href="https://www.scala-lang.org/api/2.12.11/scala/Short.html#scala.Short" class="extype" name="scala.Short">Short</a> = <span class="symbol">DefaultSideInputNumShards</span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="w">w: <a href="package$$SparkeyWritable.html" class="extype" name="com.spotify.scio.extra.sparkey.SparkeyWritable">SparkeyWritable</a>[<span class="extype" name="com.spotify.scio.extra.sparkey.SparkeyPairSCollection.K">K</span>, <span class="extype" name="com.spotify.scio.extra.sparkey.SparkeyPairSCollection.V">V</span>]</span>, <span name="koder">koder: <a href="../../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.extra.sparkey.SparkeyPairSCollection.K">K</span>]</span>, <span name="voder">voder: <a href="../../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.extra.sparkey.SparkeyPairSCollection.V">V</span>]</span>)</span><span class="result">: <a href="../../values/SideInput.html" class="extype" name="com.spotify.scio.values.SideInput">SideInput</a>[<a href="package$$CachedStringSparkeyReader.html" class="extype" name="com.spotify.scio.extra.sparkey.CachedStringSparkeyReader">CachedStringSparkeyReader</a>]</span>
+        <span class="name">asCachedStringSparkeySideInput</span><span class="params">(<span name="cache">cache: <a href="../../util/Cache.html" class="extype" name="com.spotify.scio.util.Cache">Cache</a>[<span class="extype" name="scala.Predef.String">String</span>, <span class="extype" name="scala.Predef.String">String</span>]</span>, <span name="numShards">numShards: <a href="https://www.scala-lang.org/api/2.12.11/scala/Short.html#scala.Short" class="extype" name="scala.Short">Short</a> = <span class="symbol">DefaultSideInputNumShards</span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="w">w: <a href="package$$SparkeyWritable.html" class="extype" name="com.spotify.scio.extra.sparkey.SparkeyWritable">SparkeyWritable</a>[<span class="extype" name="com.spotify.scio.extra.sparkey.SparkeyPairSCollection.K">K</span>, <span class="extype" name="com.spotify.scio.extra.sparkey.SparkeyPairSCollection.V">V</span>]</span>, <span name="koder">koder: <a href="../../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.extra.sparkey.SparkeyPairSCollection.K">K</span>]</span>, <span name="voder">voder: <a href="../../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.extra.sparkey.SparkeyPairSCollection.V">V</span>]</span>)</span><span class="result">: <a href="../../values/SideInput.html" class="extype" name="com.spotify.scio.values.SideInput">SideInput</a>[<a href="instances/CachedStringSparkeyReader.html" class="extype" name="com.spotify.scio.extra.sparkey.instances.CachedStringSparkeyReader">CachedStringSparkeyReader</a>]</span>
       </span>
       
       <p class="shortcomment cmt">Convert this SCollection to a SideInput, mapping key-value pairs of each window to a
@@ -510,9 +514,9 @@ required that each key of the input be associated with a single value.
               
         </dd></dl></div>
     </li><li name="com.spotify.scio.extra.sparkey.SparkeyPairSCollection#asTypedSparkeySideInput" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="asTypedSparkeySideInput[T](cache:com.spotify.scio.util.Cache[String,T],numShards:Short)(decoder:Array[Byte]=&gt;T)(implicitw:com.spotify.scio.extra.sparkey.package.SparkeyWritable[K,V],implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SideInput[com.spotify.scio.extra.sparkey.package.TypedSparkeyReader[T]]"></a><a id="asTypedSparkeySideInput[T](Cache[String,T],Short)((Array[Byte])⇒T)(SparkeyWritable[K,V],Coder[K],Coder[V]):SideInput[TypedSparkeyReader[T]]"></a>
+      <a id="asTypedSparkeySideInput[T](cache:com.spotify.scio.util.Cache[String,T],numShards:Short)(decoder:Array[Byte]=&gt;T)(implicitw:com.spotify.scio.extra.sparkey.package.SparkeyWritable[K,V],implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SideInput[com.spotify.scio.extra.sparkey.instances.TypedSparkeyReader[T]]"></a><a id="asTypedSparkeySideInput[T](Cache[String,T],Short)((Array[Byte])⇒T)(SparkeyWritable[K,V],Coder[K],Coder[V]):SideInput[TypedSparkeyReader[T]]"></a>
       <span class="permalink">
-      <a href="../../../../../com/spotify/scio/extra/sparkey/package$$SparkeyPairSCollection.html#asTypedSparkeySideInput[T](cache:com.spotify.scio.util.Cache[String,T],numShards:Short)(decoder:Array[Byte]=&gt;T)(implicitw:com.spotify.scio.extra.sparkey.package.SparkeyWritable[K,V],implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SideInput[com.spotify.scio.extra.sparkey.package.TypedSparkeyReader[T]]" title="Permalink">
+      <a href="../../../../../com/spotify/scio/extra/sparkey/package$$SparkeyPairSCollection.html#asTypedSparkeySideInput[T](cache:com.spotify.scio.util.Cache[String,T],numShards:Short)(decoder:Array[Byte]=&gt;T)(implicitw:com.spotify.scio.extra.sparkey.package.SparkeyWritable[K,V],implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SideInput[com.spotify.scio.extra.sparkey.instances.TypedSparkeyReader[T]]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -521,7 +525,7 @@ required that each key of the input be associated with a single value.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">asTypedSparkeySideInput</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="cache">cache: <a href="../../util/Cache.html" class="extype" name="com.spotify.scio.util.Cache">Cache</a>[<span class="extype" name="scala.Predef.String">String</span>, <span class="extype" name="com.spotify.scio.extra.sparkey.SparkeyPairSCollection.asTypedSparkeySideInput.T">T</span>]</span>, <span name="numShards">numShards: <a href="https://www.scala-lang.org/api/2.12.11/scala/Short.html#scala.Short" class="extype" name="scala.Short">Short</a> = <span class="symbol">DefaultSideInputNumShards</span></span>)</span><span class="params">(<span name="decoder">decoder: (<a href="https://www.scala-lang.org/api/2.12.11/scala/Array.html#scala.Array" class="extype" name="scala.Array">Array</a>[<a href="https://www.scala-lang.org/api/2.12.11/scala/Byte.html#scala.Byte" class="extype" name="scala.Byte">Byte</a>]) ⇒ <span class="extype" name="com.spotify.scio.extra.sparkey.SparkeyPairSCollection.asTypedSparkeySideInput.T">T</span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="w">w: <a href="package$$SparkeyWritable.html" class="extype" name="com.spotify.scio.extra.sparkey.SparkeyWritable">SparkeyWritable</a>[<span class="extype" name="com.spotify.scio.extra.sparkey.SparkeyPairSCollection.K">K</span>, <span class="extype" name="com.spotify.scio.extra.sparkey.SparkeyPairSCollection.V">V</span>]</span>, <span name="koder">koder: <a href="../../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.extra.sparkey.SparkeyPairSCollection.K">K</span>]</span>, <span name="voder">voder: <a href="../../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.extra.sparkey.SparkeyPairSCollection.V">V</span>]</span>)</span><span class="result">: <a href="../../values/SideInput.html" class="extype" name="com.spotify.scio.values.SideInput">SideInput</a>[<a href="package$$TypedSparkeyReader.html" class="extype" name="com.spotify.scio.extra.sparkey.TypedSparkeyReader">TypedSparkeyReader</a>[<span class="extype" name="com.spotify.scio.extra.sparkey.SparkeyPairSCollection.asTypedSparkeySideInput.T">T</span>]]</span>
+        <span class="name">asTypedSparkeySideInput</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="cache">cache: <a href="../../util/Cache.html" class="extype" name="com.spotify.scio.util.Cache">Cache</a>[<span class="extype" name="scala.Predef.String">String</span>, <span class="extype" name="com.spotify.scio.extra.sparkey.SparkeyPairSCollection.asTypedSparkeySideInput.T">T</span>]</span>, <span name="numShards">numShards: <a href="https://www.scala-lang.org/api/2.12.11/scala/Short.html#scala.Short" class="extype" name="scala.Short">Short</a> = <span class="symbol">DefaultSideInputNumShards</span></span>)</span><span class="params">(<span name="decoder">decoder: (<a href="https://www.scala-lang.org/api/2.12.11/scala/Array.html#scala.Array" class="extype" name="scala.Array">Array</a>[<a href="https://www.scala-lang.org/api/2.12.11/scala/Byte.html#scala.Byte" class="extype" name="scala.Byte">Byte</a>]) ⇒ <span class="extype" name="com.spotify.scio.extra.sparkey.SparkeyPairSCollection.asTypedSparkeySideInput.T">T</span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="w">w: <a href="package$$SparkeyWritable.html" class="extype" name="com.spotify.scio.extra.sparkey.SparkeyWritable">SparkeyWritable</a>[<span class="extype" name="com.spotify.scio.extra.sparkey.SparkeyPairSCollection.K">K</span>, <span class="extype" name="com.spotify.scio.extra.sparkey.SparkeyPairSCollection.V">V</span>]</span>, <span name="koder">koder: <a href="../../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.extra.sparkey.SparkeyPairSCollection.K">K</span>]</span>, <span name="voder">voder: <a href="../../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.extra.sparkey.SparkeyPairSCollection.V">V</span>]</span>)</span><span class="result">: <a href="../../values/SideInput.html" class="extype" name="com.spotify.scio.values.SideInput">SideInput</a>[<a href="instances/TypedSparkeyReader.html" class="extype" name="com.spotify.scio.extra.sparkey.instances.TypedSparkeyReader">TypedSparkeyReader</a>[<span class="extype" name="com.spotify.scio.extra.sparkey.SparkeyPairSCollection.asTypedSparkeySideInput.T">T</span>]]</span>
       </span>
       
       <p class="shortcomment cmt">Convert this SCollection to a SideInput, mapping key-value pairs of each window to a
@@ -536,9 +540,9 @@ required that each key of the input be associated with a single value. The provi
               
         </dd></dl></div>
     </li><li name="com.spotify.scio.extra.sparkey.SparkeyPairSCollection#asTypedSparkeySideInput" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="asTypedSparkeySideInput[T](decoder:Array[Byte]=&gt;T)(implicitw:com.spotify.scio.extra.sparkey.package.SparkeyWritable[K,V],implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SideInput[com.spotify.scio.extra.sparkey.package.TypedSparkeyReader[T]]"></a><a id="asTypedSparkeySideInput[T]((Array[Byte])⇒T)(SparkeyWritable[K,V],Coder[K],Coder[V]):SideInput[TypedSparkeyReader[T]]"></a>
+      <a id="asTypedSparkeySideInput[T](decoder:Array[Byte]=&gt;T)(implicitw:com.spotify.scio.extra.sparkey.package.SparkeyWritable[K,V],implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SideInput[com.spotify.scio.extra.sparkey.instances.TypedSparkeyReader[T]]"></a><a id="asTypedSparkeySideInput[T]((Array[Byte])⇒T)(SparkeyWritable[K,V],Coder[K],Coder[V]):SideInput[TypedSparkeyReader[T]]"></a>
       <span class="permalink">
-      <a href="../../../../../com/spotify/scio/extra/sparkey/package$$SparkeyPairSCollection.html#asTypedSparkeySideInput[T](decoder:Array[Byte]=&gt;T)(implicitw:com.spotify.scio.extra.sparkey.package.SparkeyWritable[K,V],implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SideInput[com.spotify.scio.extra.sparkey.package.TypedSparkeyReader[T]]" title="Permalink">
+      <a href="../../../../../com/spotify/scio/extra/sparkey/package$$SparkeyPairSCollection.html#asTypedSparkeySideInput[T](decoder:Array[Byte]=&gt;T)(implicitw:com.spotify.scio.extra.sparkey.package.SparkeyWritable[K,V],implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SideInput[com.spotify.scio.extra.sparkey.instances.TypedSparkeyReader[T]]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -547,7 +551,7 @@ required that each key of the input be associated with a single value. The provi
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">asTypedSparkeySideInput</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="decoder">decoder: (<a href="https://www.scala-lang.org/api/2.12.11/scala/Array.html#scala.Array" class="extype" name="scala.Array">Array</a>[<a href="https://www.scala-lang.org/api/2.12.11/scala/Byte.html#scala.Byte" class="extype" name="scala.Byte">Byte</a>]) ⇒ <span class="extype" name="com.spotify.scio.extra.sparkey.SparkeyPairSCollection.asTypedSparkeySideInput.T">T</span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="w">w: <a href="package$$SparkeyWritable.html" class="extype" name="com.spotify.scio.extra.sparkey.SparkeyWritable">SparkeyWritable</a>[<span class="extype" name="com.spotify.scio.extra.sparkey.SparkeyPairSCollection.K">K</span>, <span class="extype" name="com.spotify.scio.extra.sparkey.SparkeyPairSCollection.V">V</span>]</span>, <span name="koder">koder: <a href="../../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.extra.sparkey.SparkeyPairSCollection.K">K</span>]</span>, <span name="voder">voder: <a href="../../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.extra.sparkey.SparkeyPairSCollection.V">V</span>]</span>)</span><span class="result">: <a href="../../values/SideInput.html" class="extype" name="com.spotify.scio.values.SideInput">SideInput</a>[<a href="package$$TypedSparkeyReader.html" class="extype" name="com.spotify.scio.extra.sparkey.TypedSparkeyReader">TypedSparkeyReader</a>[<span class="extype" name="com.spotify.scio.extra.sparkey.SparkeyPairSCollection.asTypedSparkeySideInput.T">T</span>]]</span>
+        <span class="name">asTypedSparkeySideInput</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="decoder">decoder: (<a href="https://www.scala-lang.org/api/2.12.11/scala/Array.html#scala.Array" class="extype" name="scala.Array">Array</a>[<a href="https://www.scala-lang.org/api/2.12.11/scala/Byte.html#scala.Byte" class="extype" name="scala.Byte">Byte</a>]) ⇒ <span class="extype" name="com.spotify.scio.extra.sparkey.SparkeyPairSCollection.asTypedSparkeySideInput.T">T</span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="w">w: <a href="package$$SparkeyWritable.html" class="extype" name="com.spotify.scio.extra.sparkey.SparkeyWritable">SparkeyWritable</a>[<span class="extype" name="com.spotify.scio.extra.sparkey.SparkeyPairSCollection.K">K</span>, <span class="extype" name="com.spotify.scio.extra.sparkey.SparkeyPairSCollection.V">V</span>]</span>, <span name="koder">koder: <a href="../../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.extra.sparkey.SparkeyPairSCollection.K">K</span>]</span>, <span name="voder">voder: <a href="../../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.extra.sparkey.SparkeyPairSCollection.V">V</span>]</span>)</span><span class="result">: <a href="../../values/SideInput.html" class="extype" name="com.spotify.scio.values.SideInput">SideInput</a>[<a href="instances/TypedSparkeyReader.html" class="extype" name="com.spotify.scio.extra.sparkey.instances.TypedSparkeyReader">TypedSparkeyReader</a>[<span class="extype" name="com.spotify.scio.extra.sparkey.SparkeyPairSCollection.asTypedSparkeySideInput.T">T</span>]]</span>
       </span>
       
       <p class="shortcomment cmt">Convert this SCollection to a SideInput, mapping key-value pairs of each window to a
@@ -573,7 +577,7 @@ required that each key of the input be associated with a single value. The provi
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">clone</span><span class="params">()</span><span class="result">: <a href="https://www.scala-lang.org/api/2.12.11/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
+        <span class="name">clone</span><span class="params">()</span><span class="result">: <a href="../../../../../scala/index.html#AnyRef=Object" class="extmbr" name="scala.AnyRef">AnyRef</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected[<span class="extype" name="java.lang">lang</span>] </dd><dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -597,7 +601,7 @@ required that each key of the input be associated with a single value. The provi
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">eq</span><span class="params">(<span name="arg0">arg0: <a href="https://www.scala-lang.org/api/2.12.11/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>)</span><span class="result">: <a href="https://www.scala-lang.org/api/2.12.11/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+        <span class="name">eq</span><span class="params">(<span name="arg0">arg0: <a href="../../../../../scala/index.html#AnyRef=Object" class="extmbr" name="scala.AnyRef">AnyRef</a></span>)</span><span class="result">: <a href="https://www.scala-lang.org/api/2.12.11/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
@@ -705,7 +709,7 @@ required that each key of the input be associated with a single value. The provi
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">ne</span><span class="params">(<span name="arg0">arg0: <a href="https://www.scala-lang.org/api/2.12.11/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>)</span><span class="result">: <a href="https://www.scala-lang.org/api/2.12.11/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+        <span class="name">ne</span><span class="params">(<span name="arg0">arg0: <a href="../../../../../scala/index.html#AnyRef=Object" class="extmbr" name="scala.AnyRef">AnyRef</a></span>)</span><span class="result">: <a href="https://www.scala-lang.org/api/2.12.11/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
@@ -858,7 +862,7 @@ required that each key of the input be associated with a single value. The provi
 
         <div id="inheritedMembers">
         <div class="parent" name="scala.AnyRef">
-              <h3>Inherited from <a href="https://www.scala-lang.org/api/2.12.11/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></h3>
+              <h3>Inherited from <a href="../../../../../scala/index.html#AnyRef=Object" class="extmbr" name="scala.AnyRef">AnyRef</a></h3>
             </div><div class="parent" name="scala.Any">
               <h3>Inherited from <a href="https://www.scala-lang.org/api/2.12.11/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></h3>
             </div>

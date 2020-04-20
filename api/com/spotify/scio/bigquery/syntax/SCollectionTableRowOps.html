@@ -433,7 +433,7 @@ detects the query's dialect. To override this, start the query with either <code
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">saveAsTableRowJsonFile</span><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="numShards">numShards: <a href="https://www.scala-lang.org/api/2.12.11/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a> = <span class="defval" name='<span class="name"><a href="../../../../index.html">TableRowJsonWriteParam.DefaultNumShards</a></span>'>...</span></span>, <span name="compression">compression: <a href="https://javadoc.io/page/org.apache.beam/beam-sdks-java-core/2.19.0/org/apache/beam/sdk/io/Compression.html#org.apache.beam.sdk.io.Compression" class="extype" name="org.apache.beam.sdk.io.Compression">Compression</a> = <span class="defval" name='<span class="name"><a href="../../../../index.html">TableRowJsonWriteParam.DefaultCompression</a></span>'>...</span></span>)</span><span class="result">: <a href="../../io/ClosedTap.html" class="extype" name="com.spotify.scio.io.ClosedTap">ClosedTap</a>[<a href="../index.html#TableRow=com.google.api.services.bigquery.model.TableRow" class="extmbr" name="com.spotify.scio.bigquery.TableRow">TableRow</a>]</span>
+        <span class="name">saveAsTableRowJsonFile</span><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="numShards">numShards: <a href="https://www.scala-lang.org/api/2.12.11/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a> = <span class="defval" name='<span class="name"><a href="../../../../index.html">TableRowJsonWriteParam.DefaultNumShards</a></span>'>...</span></span>, <span name="compression">compression: <a href="https://javadoc.io/page/org.apache.beam/beam-sdks-java-core/2.20.0/org/apache/beam/sdk/io/Compression.html#org.apache.beam.sdk.io.Compression" class="extype" name="org.apache.beam.sdk.io.Compression">Compression</a> = <span class="defval" name='<span class="name"><a href="../../../../index.html">TableRowJsonWriteParam.DefaultCompression</a></span>'>...</span></span>)</span><span class="result">: <a href="../../io/ClosedTap.html" class="extype" name="com.spotify.scio.io.ClosedTap">ClosedTap</a>[<a href="../index.html#TableRow=com.google.api.services.bigquery.model.TableRow" class="extmbr" name="com.spotify.scio.bigquery.TableRow">TableRow</a>]</span>
       </span>
       
       <p class="shortcomment cmt">Save this SCollection as a BigQuery TableRow JSON text file.</p><div class="fullcomment"><div class="comment cmt"><p>Save this SCollection as a BigQuery TableRow JSON text file. Note that elements must be of
@@ -461,52 +461,7 @@ type <a href="https://javadoc.io/page/com.google.apis/google-api-services-bigque
 
         
 
-        <div class="values members">
-              <h3>Deprecated Value Members</h3>
-              <ol><li name="com.spotify.scio.bigquery.syntax.SCollectionTableRowOps#saveAsBigQuery" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="saveAsBigQuery(tableSpec:String,schema:com.google.api.services.bigquery.model.TableSchema,writeDisposition:org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.WriteDisposition,createDisposition:org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.CreateDisposition,tableDescription:String,timePartitioning:com.spotify.scio.bigquery.TimePartitioning):com.spotify.scio.io.ClosedTap[com.spotify.scio.bigquery.TableRow]"></a><a id="saveAsBigQuery(String,TableSchema,WriteDisposition,CreateDisposition,String,TimePartitioning):ClosedTap[TableRow]"></a>
-      <span class="permalink">
-      <a href="../../../../../com/spotify/scio/bigquery/syntax/SCollectionTableRowOps.html#saveAsBigQuery(tableSpec:String,schema:com.google.api.services.bigquery.model.TableSchema,writeDisposition:org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.WriteDisposition,createDisposition:org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.CreateDisposition,tableDescription:String,timePartitioning:com.spotify.scio.bigquery.TimePartitioning):com.spotify.scio.io.ClosedTap[com.spotify.scio.bigquery.TableRow]" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name deprecated" title="Deprecated: (Since version 0.8.0) this method will be removed; use saveAsBigQueryTable(Table.Ref(table)) instead">saveAsBigQuery</span><span class="params">(<span name="tableSpec">tableSpec: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="schema">schema: <a href="https://javadoc.io/page/com.google.apis/google-api-services-bigquery/v2-rev20190917-1.30.3/com/google/api/services/bigquery/model/TableSchema.html#com.google.api.services.bigquery.model.TableSchema" class="extype" name="com.google.api.services.bigquery.model.TableSchema">TableSchema</a> = <span class="defval" name='<span class="name"><a href="../../../../index.html">BigQueryTable.WriteParam.DefaultSchema</a></span>'>...</span></span>, <span name="writeDisposition">writeDisposition: <span class="extype" name="org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.WriteDisposition">WriteDisposition</span> = <span class="defval" name='<span class="name"><a href="../../../../index.html">BigQueryTable.WriteParam.DefaultWriteDisposition</a></span>'>...</span></span>, <span name="createDisposition">createDisposition: <span class="extype" name="org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.CreateDisposition">CreateDisposition</span> = <span class="defval" name='<span class="name"><a href="../../../../index.html">BigQueryTable.WriteParam.DefaultCreateDisposition</a></span>'>...</span></span>, <span name="tableDescription">tableDescription: <span class="extype" name="scala.Predef.String">String</span> = <span class="defval" name='<span class="name"><a href="../../../../index.html">BigQueryTable.WriteParam.DefaultTableDescription</a></span>'>...</span></span>, <span name="timePartitioning">timePartitioning: <a href="../TimePartitioning.html" class="extype" name="com.spotify.scio.bigquery.TimePartitioning">TimePartitioning</a> = <span class="defval" name='<span class="name"><a href="../../../../index.html">BigQueryTable.WriteParam.DefaultTimePartitioning</a></span>'>...</span></span>)</span><span class="result">: <a href="../../io/ClosedTap.html" class="extype" name="com.spotify.scio.io.ClosedTap">ClosedTap</a>[<a href="../index.html#TableRow=com.google.api.services.bigquery.model.TableRow" class="extmbr" name="com.spotify.scio.bigquery.TableRow">TableRow</a>]</span>
-      </span>
-      
-      <p class="shortcomment cmt">Save this SCollection as a BigQuery table.</p><div class="fullcomment"><div class="comment cmt"><p>Save this SCollection as a BigQuery table. Note that elements must be of type
-<a href="https://javadoc.io/page/com.google.apis/google-api-services-bigquery/v2-rev20190917-1.30.3/com/google/api/services/bigquery/model/TableRow.html" class="extype" name="com.google.api.services.bigquery.model.TableRow">TableRow</a>.
-</p></div><dl class="attributes block"> <dt>Annotations</dt><dd>
-                <span class="name">@deprecated</span>
-              
-        </dd><dt>Deprecated</dt><dd class="cmt"><p><i>(Since version 0.8.0)</i> this method will be removed; use saveAsBigQueryTable(Table.Ref(table)) instead</p></dd></dl></div>
-    </li><li name="com.spotify.scio.bigquery.syntax.SCollectionTableRowOps#saveAsBigQuery" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="saveAsBigQuery(table:com.google.api.services.bigquery.model.TableReference,schema:com.google.api.services.bigquery.model.TableSchema,writeDisposition:org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.WriteDisposition,createDisposition:org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.CreateDisposition,tableDescription:String,timePartitioning:com.spotify.scio.bigquery.TimePartitioning):com.spotify.scio.io.ClosedTap[com.spotify.scio.bigquery.TableRow]"></a><a id="saveAsBigQuery(TableReference,TableSchema,WriteDisposition,CreateDisposition,String,TimePartitioning):ClosedTap[TableRow]"></a>
-      <span class="permalink">
-      <a href="../../../../../com/spotify/scio/bigquery/syntax/SCollectionTableRowOps.html#saveAsBigQuery(table:com.google.api.services.bigquery.model.TableReference,schema:com.google.api.services.bigquery.model.TableSchema,writeDisposition:org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.WriteDisposition,createDisposition:org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.CreateDisposition,tableDescription:String,timePartitioning:com.spotify.scio.bigquery.TimePartitioning):com.spotify.scio.io.ClosedTap[com.spotify.scio.bigquery.TableRow]" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name deprecated" title="Deprecated: (Since version 0.8.0) this method will be removed; use saveAsBigQueryTable(Table.Ref(table)) instead">saveAsBigQuery</span><span class="params">(<span name="table">table: <a href="https://javadoc.io/page/com.google.apis/google-api-services-bigquery/v2-rev20190917-1.30.3/com/google/api/services/bigquery/model/TableReference.html#com.google.api.services.bigquery.model.TableReference" class="extype" name="com.google.api.services.bigquery.model.TableReference">TableReference</a></span>, <span name="schema">schema: <a href="https://javadoc.io/page/com.google.apis/google-api-services-bigquery/v2-rev20190917-1.30.3/com/google/api/services/bigquery/model/TableSchema.html#com.google.api.services.bigquery.model.TableSchema" class="extype" name="com.google.api.services.bigquery.model.TableSchema">TableSchema</a></span>, <span name="writeDisposition">writeDisposition: <span class="extype" name="org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.WriteDisposition">WriteDisposition</span></span>, <span name="createDisposition">createDisposition: <span class="extype" name="org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.CreateDisposition">CreateDisposition</span></span>, <span name="tableDescription">tableDescription: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="timePartitioning">timePartitioning: <a href="../TimePartitioning.html" class="extype" name="com.spotify.scio.bigquery.TimePartitioning">TimePartitioning</a></span>)</span><span class="result">: <a href="../../io/ClosedTap.html" class="extype" name="com.spotify.scio.io.ClosedTap">ClosedTap</a>[<a href="../index.html#TableRow=com.google.api.services.bigquery.model.TableRow" class="extmbr" name="com.spotify.scio.bigquery.TableRow">TableRow</a>]</span>
-      </span>
-      
-      <p class="shortcomment cmt">Save this SCollection as a BigQuery table.</p><div class="fullcomment"><div class="comment cmt"><p>Save this SCollection as a BigQuery table. Note that elements must be of type
-<a href="https://javadoc.io/page/com.google.apis/google-api-services-bigquery/v2-rev20190917-1.30.3/com/google/api/services/bigquery/model/TableRow.html" class="extype" name="com.google.api.services.bigquery.model.TableRow">TableRow</a>.
-</p></div><dl class="attributes block"> <dt>Annotations</dt><dd>
-                <span class="name">@deprecated</span>
-              
-        </dd><dt>Deprecated</dt><dd class="cmt"><p><i>(Since version 0.8.0)</i> this method will be removed; use saveAsBigQueryTable(Table.Ref(table)) instead</p></dd></dl></div>
-    </li></ol>
-            </div>
+        
         </div>
 
         <div id="inheritedMembers">

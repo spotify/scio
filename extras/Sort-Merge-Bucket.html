@@ -201,7 +201,7 @@ spotify/scio
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.8.5*
+<i class="md-icon" title="Version">label_outline</i> 0.9.1*
 </label>
 </li>
 </ul>
@@ -265,7 +265,7 @@ spotify/scio
 </table>
 <p>Two sources can be joined by opening file readers on corresponding buckets of eachT source and merging key-groups as we go.</p>
 <h2><a href="#what-are-smb-transforms-" name="what-are-smb-transforms-" class="anchor"><span class="anchor-link"></span></a>What are SMB transforms?</h2>
-<p><code>scio-smb</code> provides three <a href="https://beam.apache.org/releases/javadoc/2.19.0/?org/apache/beam/sdk/transforms/PTransform.html" title="org.apache.beam.sdk.transforms.PTransform"><code>PTransform</code></a>s, as well as corresponding Scala API bindings, for SMB operations:</p>
+<p><code>scio-smb</code> provides three <a href="https://beam.apache.org/releases/javadoc/2.20.0/?org/apache/beam/sdk/transforms/PTransform.html" title="org.apache.beam.sdk.transforms.PTransform"><code>PTransform</code></a>s, as well as corresponding Scala API bindings, for SMB operations:</p>
 <ul>
   <li>
     <p><a href="https://spotify.github.io/scio/api/org/apache/beam/sdk/extensions/smb/?org/apache/beam/sdk/extensions/smb/SortedBucketSink.html" title="org.apache.beam.sdk.extensions.smb.SortedBucketSink"><code>SortedBucketSink</code></a> writes data to file system in SMB format. Scala APIs (see: <a href="https://spotify.github.io/scio/api/com/spotify/scio/smb/syntax/SortedBucketSCollection.html" title="com.spotify.scio.smb.syntax.SortedBucketSCollection"><code>SortedBucketSCollection</code></a>):</p>
@@ -298,7 +298,7 @@ spotify/scio
     <p>Also note that the number of buckets specified must be a power of 2. This allows sources of different bucket sizes to still be joinable.</p>
   </li>
   <li>
-    <p><a href="https://spotify.github.io/scio/api/org/apache/beam/sdk/extensions/smb/?org/apache/beam/sdk/extensions/smb/SortedBucketSource.html" title="org.apache.beam.sdk.extensions.smb.SortedBucketSource"><code>SortedBucketSource</code></a> reads data that has been written to file system using <code>SortedBucketSink</code> into a collection of <a href="https://beam.apache.org/releases/javadoc/2.19.0/?org/apache/beam/sdk/transforms/join/CoGbkResult.html" title="org.apache.beam.sdk.transforms.join.CoGbkResult"><code>CoGbkResult</code></a>s. Scala APIs (see: <a href="https://spotify.github.io/scio/api/com/spotify/scio/smb/syntax/SortedBucketScioContext.html" title="com.spotify.scio.smb.syntax.SortedBucketScioContext"><code>SortedBucketScioContext</code></a>):</p>
+    <p><a href="https://spotify.github.io/scio/api/org/apache/beam/sdk/extensions/smb/?org/apache/beam/sdk/extensions/smb/SortedBucketSource.html" title="org.apache.beam.sdk.extensions.smb.SortedBucketSource"><code>SortedBucketSource</code></a> reads data that has been written to file system using <code>SortedBucketSink</code> into a collection of <a href="https://beam.apache.org/releases/javadoc/2.20.0/?org/apache/beam/sdk/transforms/join/CoGbkResult.html" title="org.apache.beam.sdk.transforms.join.CoGbkResult"><code>CoGbkResult</code></a>s. Scala APIs (see: <a href="https://spotify.github.io/scio/api/com/spotify/scio/smb/syntax/SortedBucketScioContext.html" title="com.spotify.scio.smb.syntax.SortedBucketScioContext"><code>SortedBucketScioContext</code></a>):</p>
     <ul>
       <li><code>ScioContext#sortMergeGroupByKey</code> (1 source)</li>
       <li><code>ScioContext#sortMergeJoin</code> (2 sources)</li>
@@ -317,7 +317,7 @@ spotify/scio
   .saveAsTextFile(args(&quot;output&quot;))</code></pre>
   </li>
   <li>
-    <p><a href="https://spotify.github.io/scio/api/org/apache/beam/sdk/extensions/smb/?org/apache/beam/sdk/extensions/smb/SortedBucketTransform.html" title="org.apache.beam.sdk.extensions.smb.SortedBucketTransform"><code>SortedBucketTransform</code></a> reads data that has been written to file system using <code>SortedBucketSink</code>, transforms each <a href="https://beam.apache.org/releases/javadoc/2.19.0/?org/apache/beam/sdk/transforms/join/CoGbkResult.html" title="org.apache.beam.sdk.transforms.join.CoGbkResult"><code>CoGbkResult</code></a> using a user-supplied function, and immediately rewrites them using the same bucketing scheme. Scala APIs (see: <a href="https://spotify.github.io/scio/api/com/spotify/scio/smb/syntax/SortedBucketScioContext.html" title="com.spotify.scio.smb.syntax.SortedBucketScioContext"><code>SortedBucketScioContext</code></a>):</p>
+    <p><a href="https://spotify.github.io/scio/api/org/apache/beam/sdk/extensions/smb/?org/apache/beam/sdk/extensions/smb/SortedBucketTransform.html" title="org.apache.beam.sdk.extensions.smb.SortedBucketTransform"><code>SortedBucketTransform</code></a> reads data that has been written to file system using <code>SortedBucketSink</code>, transforms each <a href="https://beam.apache.org/releases/javadoc/2.20.0/?org/apache/beam/sdk/transforms/join/CoGbkResult.html" title="org.apache.beam.sdk.transforms.join.CoGbkResult"><code>CoGbkResult</code></a> using a user-supplied function, and immediately rewrites them using the same bucketing scheme. Scala APIs (see: <a href="https://spotify.github.io/scio/api/com/spotify/scio/smb/syntax/SortedBucketScioContext.html" title="com.spotify.scio.smb.syntax.SortedBucketScioContext"><code>SortedBucketScioContext</code></a>):</p>
     <ul>
       <li>
       <p><code>ScioContext#sortMergeTransform</code> (1-3 sources)</p></li>
@@ -364,11 +364,11 @@ spotify/scio
 </ul>
 <h2><a href="#tuning-parameters-for-smb-transforms" name="tuning-parameters-for-smb-transforms" class="anchor"><span class="anchor-link"></span></a>Tuning parameters for SMB transforms</h2>
 <p>SMB reads should be more performant and less resource-intensive than regular joins or groupBys. However, SMB writes are more expensive than their regular counterparts, since they involve an extra group-by (bucketing) and sorting step.</p>
-<p>Additionally, non-SMB writes (i.e. implementations of <a href="https://beam.apache.org/releases/javadoc/2.19.0/?org/apache/beam/sdk/io/FileBasedSink.html" title="org.apache.beam.sdk.io.FileBasedSink"><code>FileBasedSink</code></a>) use hints from the runner to determine an optimal number of output files. With SMB, you must specify the number of buckets and shards (<code>numBuckets</code> * <code>numShards</code> = total # of files) up front.</p>
+<p>Additionally, non-SMB writes (i.e. implementations of <a href="https://beam.apache.org/releases/javadoc/2.20.0/?org/apache/beam/sdk/io/FileBasedSink.html" title="org.apache.beam.sdk.io.FileBasedSink"><code>FileBasedSink</code></a>) use hints from the runner to determine an optimal number of output files. With SMB, you must specify the number of buckets and shards (<code>numBuckets</code> * <code>numShards</code> = total # of files) up front.</p>
 <ul>
   <li>A good starting point is to look at your output data as it has been written by a non-SMB sink,  and pick the closest power of 2 as your initial <code>numBuckets</code>, and set <code>numShards</code> to 1.</li>
   <li>If you anticipate having hot keys, try increasing <code>numShards</code> to randomly split data within a bucket.</li>
-  <li>If your job gets stuck in the sorting phase (since the <code>GroupByKey</code> and <code>SortValues</code> transforms  may get fused&ndash;you can reference the <a href="https://beam.apache.org/releases/javadoc/2.19.0/?org/apache/beam/sdk/metrics/Counter.html" title="org.apache.beam.sdk.metrics.Counter"><code>Counter</code></a>s  <code>SortedBucketSink-bucketsInitiatedSorting</code> and <code>SortedBucketSink-bucketsCompletedSorting</code>  to get an idea of where your job fails), you can increase sorter memory (default is 128MB):</li>
+  <li>If your job gets stuck in the sorting phase (since the <code>GroupByKey</code> and <code>SortValues</code> transforms  may get fused&ndash;you can reference the <a href="https://beam.apache.org/releases/javadoc/2.20.0/?org/apache/beam/sdk/metrics/Counter.html" title="org.apache.beam.sdk.metrics.Counter"><code>Counter</code></a>s  <code>SortedBucketSink-bucketsInitiatedSorting</code> and <code>SortedBucketSink-bucketsCompletedSorting</code>  to get an idea of where your job fails), you can increase sorter memory (default is 128MB):</li>
 </ul>
 <pre class="prettyprint"><code class="language-scala">data.saveAsSortedBucket(
   AvroSortedBucketIO
@@ -388,7 +388,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.8.5*
+0.9.1*
 </span>
 </div>
 </article>

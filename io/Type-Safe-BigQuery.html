@@ -200,7 +200,7 @@ spotify/scio
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.8.5*
+<i class="md-icon" title="Version">label_outline</i> 0.9.1*
 </label>
 </li>
 </ul>
@@ -432,7 +432,7 @@ def main(cmdlineArgs: Array[String]): Unit = {
     .flatMap(r =&gt; if (r.tornado.getOrElse(false)) Seq(r.month) else Nil)
     .countByValue
     .map(kv =&gt; Result(kv._1, kv._2))
-    .saveAsTypedBigQuery(args(&quot;output&quot;))  // schema from Row.schema
+    .saveAsTypedBigQueryTable(Table.Spec(args(&quot;output&quot;)))  // schema from Row.schema
   sc.run()
   ()
 }
@@ -487,7 +487,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.8.5*
+0.9.1*
 </span>
 </div>
 </article>
