@@ -20,7 +20,7 @@
 
 <meta name="description" content="Scio - Documentation">
 <link rel="shortcut icon" href="../images/favicon.ico">
-<title>Algebird · Scio</title>
+<title>Scio v0.8.0 · Scio</title>
 <link rel="stylesheet" href="../assets/stylesheets/application.451f80e5.css">
 <link rel="stylesheet" href="../assets/stylesheets/application-palette.22915126.css">
 <link rel="stylesheet" href="../lib/material__tabs/dist/mdc.tabs.min.css">
@@ -59,7 +59,7 @@ data-md-color-accent="indigo"
 Scio
 </span>
 <span class="md-header-nav__topic">
-Algebird
+Scio v0.8.0
 </span>
 </div>
 </div>
@@ -159,14 +159,14 @@ spotify/scio
   </ul></li>
   <li><a href="../extras/index.html" class="page">Extras</a>
   <ul>
-    <li><a href="../extras/Algebird.html" class="active page">Algebird</a></li>
+    <li><a href="../extras/Algebird.html" class="page">Algebird</a></li>
     <li><a href="../extras/Sort-Merge-Bucket.html" class="page">Sort Merge Bucket</a></li>
   </ul></li>
   <li><a href="../migrations/index.html" class="page">Migration Guides</a>
   <ul>
     <li><a href="../migrations/v0.7.0-Migration-Guide.html" class="page">Scio v0.7.0</a></li>
     <li><a href="../migrations/v0.8.0-Migration-Guide.html" class="page">Scio v0.8.0</a></li>
-    <li><a href="../migrations/v0.9.0-Migration-Guide.html" class="page">Scio v0.8.0</a></li>
+    <li><a href="../migrations/v0.9.0-Migration-Guide.html" class="active page">Scio v0.8.0</a></li>
   </ul></li>
   <li><a href="../dev/index.html" class="page">Development</a>
   <ul>
@@ -188,9 +188,9 @@ spotify/scio
 <nav class="md-nav md-nav--secondary">
 <label class="md-nav__title" for="__toc">Table of contents</label>
 <ul>
-  <li><a href="../extras/Algebird.html#algebird" class="header">Algebird</a>
+  <li><a href="../migrations/v0.9.0-Migration-Guide.html#scio-v0-8-0" class="header">Scio v0.8.0</a>
   <ul>
-    <li><a href="../extras/Algebird.html#algebird-in-repl" class="header">Algebird in REPL</a></li>
+    <li><a href="../migrations/v0.9.0-Migration-Guide.html#tl-dr" class="header">TL;DR</a></li>
   </ul></li>
 </ul>
 </nav>
@@ -212,9 +212,9 @@ spotify/scio
 <nav class="md-nav md-nav--secondary">
 <label class="md-nav__title" for="__toc">Table of contents</label>
 <ul>
-  <li><a href="../extras/Algebird.html#algebird" class="header">Algebird</a>
+  <li><a href="../migrations/v0.9.0-Migration-Guide.html#scio-v0-8-0" class="header">Scio v0.8.0</a>
   <ul>
-    <li><a href="../extras/Algebird.html#algebird-in-repl" class="header">Algebird in REPL</a></li>
+    <li><a href="../migrations/v0.9.0-Migration-Guide.html#tl-dr" class="header">TL;DR</a></li>
   </ul></li>
 </ul>
 </nav>
@@ -225,30 +225,39 @@ spotify/scio
 <div class="md-content">
 <article class="md-content__inner md-typeset">
 <div class="md-content__searchable">
-<h1><a href="#algebird" name="algebird" class="anchor"><span class="anchor-link"></span></a>Algebird</h1>
-<p><a href="https://github.com/twitter/algebird">Algebird</a> is Twitter&rsquo;s abstract algebra library. It has a lot of reusable modules for parallel aggregation and approximation. One can use any Algebird <code>Aggregator</code> or <code>Semigroup</code> with: - <code>aggregate</code> and <code>sum</code> on <a href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html" title="com.spotify.scio.values.SCollection"><code>`SCollection[T]`</code></a> - <code>aggregateByKey</code> and <code>sumByKey</code> on <a href="https://spotify.github.io/scio/api/com/spotify/scio/values/PairSCollectionFunctions.html" title="com.spotify.scio.values.PairSCollectionFunctions"><code>`SCollection[(K, V)]`</code></a></p>
-<p>See <a href="https://github.com/spotify/scio/tree/master/scio-examples/src/test/scala/com/spotify/scio/examples/extra/AlgebirdSpec.scala">AlgebirdSpec.scala</a> and <a href="https://github.com/twitter/algebird/wiki">Algebird wiki</a> for more details. Also see these <a href="http://www.lyh.me/slides/semigroups.html">slides</a> on semigroups.</p>
-<h3><a href="#algebird-in-repl" name="algebird-in-repl" class="anchor"><span class="anchor-link"></span></a>Algebird in REPL</h3>
-<pre class="prettyprint"><code class="language-scala">scio&gt; import com.twitter.algebird._
-scio&gt; import com.twitter.algebird.CMSHasherImplicits._
-scio&gt; val words = sc.textFile(&quot;README.md&quot;).
-     | flatMap(_.split(&quot;[^a-zA-Z0-9]+&quot;)).
-     | filter(_.nonEmpty).
-     | aggregate(CMS.aggregator[String](0.001, 1E-10, 1)).
-     | materialize
-scio&gt; sc.run()
-scio&gt; val cms = words.waitForResult().value.next
-scio&gt; cms.frequency(&quot;scio&quot;).estimate
-res2: Long = 19
+<h1><a href="#scio-v0-8-0" name="scio-v0-8-0" class="anchor"><span class="anchor-link"></span></a>Scio v0.8.0</h1>
+<h2><a href="#tl-dr" name="tl-dr" class="anchor"><span class="anchor-link"></span></a>TL;DR</h2>
+<ul>
+  <li><a href="#bloom-filter">Bloom Filter</a></li>
+</ul>
+<h3><a href="#bloom-filter" name="bloom-filter" class="anchor"><span class="anchor-link"></span></a>Bloom Filter</h3>
+<p>In 0.9.0 we switched from our custom Bloom Filter implementation to Guava Bloom Filter for <code>sparse</code> transforms, e.g. <code>sparseJoin</code>, <code>sparseLookup</code>. As a result we also switched from Algebird <a href="http://twitter.github.io/algebird/api/#com.twitter.algebird.Hash128"><code>Hash128[K]</code></a> to Guava <a href="https://guava.dev/releases/snapshot-jre/api/docs/com/google/common/hash/Funnel.html"><code>Funnel[K]</code></a> type class for hashing items into the Bloom Filter. Implicit <code>Funnel[K]</code> instances are available through <code>magnolify-guava</code> and need to be imported like this:</p>
+<pre class="prettyprint"><code class="language-scala">import magnolify.guava.auto._
+</code></pre>
+<p>If for error messages like this:</p>
+<pre><code>could not find implicit value for parameter hash: com.spotify.scio.hash.BloomFilter.Hash[T]
+</code></pre>
+<p>The switch also adds the follow benefits:</p>
+<p>Previously <code>Hash128[K]</code> only provides instances for <code>Int</code>, <code>Long</code>, <code>String</code>, <code>Array[Byte]</code>, <code>Array[Int]</code> and <code>Array[Long]</code>, while <code>magnolify-guava</code> can derive <code>Funnel[K]</code> for most common types including tuples, case classes, etc.</p>
+<p>We also added an <a href="https://spotify.github.io/scio/api/com/spotify/scio/hash/index.html"><code>ApproxFilter</code></a> abstraction to allow extensible approximate filter implementations. <a href="https://spotify.github.io/scio/api/com/spotify/scio/hash/BloomFilter$.html"><code>BloomFilter</code></a> extends <code>ApproxFilter</code> and allows us to create filters &amp; side inputs from <code>Iterable[T]</code> &amp; <code>SCollection[T]</code>. The result filter instances are serializable. For example:</p>
+<pre class="prettyprint"><code class="language-scala">import com.spotify.scio._
+import com.spotify.scio.coders.Coder
+import com.spotify.scio.hash._
+import com.spotify.scio.values._
+import magnolify.guava._
 
-scio&gt; // let&#39;s validate:
-scio&gt; import sys.process._
-scio&gt; &quot;grep -o scio README.md&quot;  #| &quot;wc -l&quot;!
-      19
+val bf: BloomFilter[String] = Seq(&quot;a&quot;, &quot;b&quot;, &quot;c&quot;).asApproxFilter(BloomFilter)
+
+val sc = ScioContext()
+val data = sc.parallelize(Seq(&quot;a&quot;, &quot;b&quot;, &quot;c&quot;))
+val bfs: SCollection[BloomFilter[String]] = data.asApproxFilter(BloomFilter)
+val bfsi: SideInput[BloomFilter[String]] = data.asApproxFilterSideInput(BloomFilter)
+
+val bfCoder: Coder[BloomFilter[String]] = BloomFilter.filterCoder
 </code></pre>
 </div>
 <div>
-<a href="https://github.com/spotify/scio/tree/master/site/target/mdoc/extras/Algebird.md" title="Edit this page" class="md-source-file md-edit">
+<a href="https://github.com/spotify/scio/tree/master/site/target/mdoc/migrations/v0.9.0-Migration-Guide.md" title="Edit this page" class="md-source-file md-edit">
 Edit this page
 </a>
 </div>
@@ -264,7 +273,7 @@ Edit this page
 <footer class="md-footer">
 <div class="md-footer-nav">
 <nav class="md-footer-nav__inner md-grid">
-<a href="../extras/index.html" title="Extras" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+<a href="../migrations/v0.8.0-Migration-Guide.html" title="Scio v0.8.0" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
 <div class="md-flex__cell md-flex__cell--shrink">
 <i class="md-icon md-icon--arrow-back md-footer-nav__button"></i>
 </div>
@@ -273,17 +282,17 @@ Edit this page
 <span class="md-footer-nav__direction">
 Previous
 </span>
-Extras
+Scio v0.8.0
 </span>
 </div>
 </a>
-<a href="../extras/Sort-Merge-Bucket.html" title="Sort Merge Bucket" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
+<a href="../dev/index.html" title="Development" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
 <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
 <span class="md-flex__ellipsis">
 <span class="md-footer-nav__direction">
 Next
 </span>
-Sort Merge Bucket
+Development
 </span>
 </div>
 <div class="md-flex__cell md-flex__cell--shrink">
