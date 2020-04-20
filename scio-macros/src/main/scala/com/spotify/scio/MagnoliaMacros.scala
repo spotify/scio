@@ -62,7 +62,6 @@ private[scio] object MagnoliaMacros {
               q"""_root_.magnolia.Subtype.apply[$tc, $t, $p]($typeName, $id, Array(), $coder, $cast0, $cast1)"""
             super.transform(t2)
           case t =>
-            println(t)
             super.transform(t)
         }
     }
