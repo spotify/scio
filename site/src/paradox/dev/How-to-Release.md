@@ -35,6 +35,9 @@ credentials ++= Seq(
 
 ## Past release names
 
+### 0.9.x
+- [v0.9.0](https://github.com/spotify/scio/releases/tag/v0.9.0) - _"Furnunculus"_
+
 ### 0.8.x
 - [v0.8.4](https://github.com/spotify/scio/releases/tag/v0.8.4) - _"Expecto Patronum"_
 - [v0.8.3](https://github.com/spotify/scio/releases/tag/v0.8.3) - _"Draconifors"_
