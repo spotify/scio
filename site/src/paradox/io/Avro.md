@@ -31,7 +31,7 @@ def yourAvroSchema: Schema = ???
 
 def sc: ScioContext = ???
 
-def result = sc.avroFile[GenericRecord]("gs://path-to-data/lake/part-*.avro", yourAvroSchema)
+def result = sc.avroFile("gs://path-to-data/lake/part-*.avro", yourAvroSchema)
 // `record` is of GenericRecord type
 ```
 

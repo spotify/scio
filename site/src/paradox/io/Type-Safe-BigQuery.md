@@ -222,7 +222,7 @@ def main(cmdlineArgs: Array[String]): Unit = {
     .flatMap(r => if (r.tornado.getOrElse(false)) Seq(r.month) else Nil)
     .countByValue
     .map(kv => Result(kv._1, kv._2))
-    .saveAsTypedBigQuery(args("output"))  // schema from Row.schema
+    .saveAsTypedBigQueryTable(Table.Spec(args("output")))  // schema from Row.schema
   sc.run()
   ()
 }

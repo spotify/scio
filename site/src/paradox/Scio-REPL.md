@@ -227,7 +227,7 @@ def sc: ScioContext = ???
 ```
 
 ```scala mdoc
-def tornadoes = sc.bigQuerySelect("SELECT tornado, month FROM [clouddataflow-readonly:samples.weather_stations]")
+def tornadoes = sc.bigQuerySelect(Query("SELECT tornado, month FROM [clouddataflow-readonly:samples.weather_stations]"))
  
 def counts = tornadoes
     .flatMap(r => if (r.getBoolean("tornado")) Seq(r.getLong("month")) else Nil)
