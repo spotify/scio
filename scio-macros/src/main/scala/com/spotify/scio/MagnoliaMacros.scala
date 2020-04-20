@@ -50,18 +50,19 @@ private[scio] object MagnoliaMacros {
               List(typeName, isObject, isValueClass, params, q"""Array()""")
             )
             super.transform(t2)
-          case q"""magnolia.Magnolia.param[$tc, $t, $p]($name, $idx, $repeated, $tcParam, $defaultVal, $annotations)""" =>
+          case q"""magnolia.Param.apply[$tc, $t, $p]($name, $idx, $repeated, $tcParam, $defaultVal, $annotations)""" =>
             val t2 =
-              q"""_root_.magnolia.Magnolia.param[$tc, $t, $p]($name, $idx, $repeated, $tcParam, $defaultVal, Array())"""
+              q"""_root_.magnolia.Param.apply[$tc, $t, $p]($name, $idx, $repeated, $tcParam, $defaultVal, Array())"""
             super.transform(t2)
           case q"""new magnolia.SealedTrait($typeName, $subtypes, $annotations)""" =>
             val t2 = q"""new _root_.magnolia.SealedTrait($typeName, $subtypes, Array())"""
             super.transform(t2)
-          case q"""magnolia.Magnolia.subtype[$tc, $t, $p]($typeName, $id, $annotations, $coder, $cast0, $cast1)""" =>
+          case q"""magnolia.Subtype.apply[$tc, $t, $p]($typeName, $id, $annotations, $coder, $cast0, $cast1)""" =>
             val t2 =
-              q"""_root_.magnolia.Magnolia.subtype[$tc, $t, $p]($typeName, $id, Array(), $coder, $cast0, $cast1)"""
+              q"""_root_.magnolia.Subtype.apply[$tc, $t, $p]($typeName, $id, Array(), $coder, $cast0, $cast1)"""
             super.transform(t2)
           case t =>
+            println(t)
             super.transform(t)
         }
     }
