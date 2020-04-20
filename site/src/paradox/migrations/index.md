@@ -6,5 +6,6 @@
 
 * @ref:[v0.7.0](v0.7.0-Migration-Guide.md)
 * @ref:[v0.8.0](v0.8.0-Migration-Guide.md)
+* @ref:[v0.9.0](v0.9.0-Migration-Guide.md)
 
 @@@
