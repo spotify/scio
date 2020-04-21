@@ -268,6 +268,15 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
       this.writtenFiles = writtenFiles;
     }
 
+    static WriteResult fromTuple(Pipeline pipeline, PCollectionTuple tuple) {
+      return new WriteResult(
+          pipeline,
+          tuple.get(new TupleTag<ResourceId>("writtenMetadata")).setCoder(ResourceIdCoder.of()),
+          tuple
+              .get(new TupleTag<KV<BucketShardId, ResourceId>>("writtenBuckets"))
+              .setCoder(KvCoder.of(BucketShardIdCoder.of(), ResourceIdCoder.of())));
+    }
+
     @Override
     public Pipeline getPipeline() {
       return pipeline;
@@ -289,7 +298,6 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
    * Handles writing bucket data and SMB metadata to a uniquely named temp directory. Abstract
    * operation that manages the process of writing to {@link SortedBucketSink}.
    */
-  // TODO: Retry policy, etc...
   static class WriteOperation<V>
       extends PTransform<
           PCollection<KV<BucketShardId, Iterable<KV<byte[], byte[]>>>>, WriteResult> {
@@ -314,19 +322,22 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
 
     @Override
     public WriteResult expand(PCollection<KV<BucketShardId, Iterable<KV<byte[], byte[]>>>> input) {
-      return input
-          .apply(
-              "WriteTempFiles",
-              ParDo.of(
-                  new WriteTempFiles<>(
-                      filenamePolicy.forTempFiles(tempDirectory),
-                      bucketMetadata,
-                      fileOperations,
-                      valueCoder)))
-          .apply(
-              "FinalizeTempFiles",
-              new FinalizeTempFiles<>(
-                  filenamePolicy.forDestination(), bucketMetadata, fileOperations));
+      final PCollectionTuple tuple =
+          input
+              .apply(
+                  "WriteTempFiles",
+                  ParDo.of(
+                      new WriteTempFiles<>(
+                          filenamePolicy.forTempFiles(tempDirectory),
+                          bucketMetadata,
+                          fileOperations,
+                          valueCoder)))
+              .apply(
+                  "FinalizeTempFiles",
+                  new RenameBuckets<>(
+                      filenamePolicy.forDestination(), bucketMetadata, fileOperations));
+
+      return WriteResult.fromTuple(input.getPipeline(), tuple);
     }
   }
 
@@ -380,15 +391,15 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
     }
   }
 
-  /** Moves temporary files to final destinations. */
-  static class FinalizeTempFiles<V>
-      extends PTransform<PCollection<KV<BucketShardId, ResourceId>>, WriteResult> {
+  /** Renames temp bucket files to final destinations. */
+  static class RenameBuckets<V>
+      extends PTransform<PCollection<KV<BucketShardId, ResourceId>>, PCollectionTuple> {
 
     private final FileAssignment fileAssignment;
     private final BucketMetadata bucketMetadata;
     private final FileOperations<V> fileOperations;
 
-    FinalizeTempFiles(
+    RenameBuckets(
         FileAssignment fileAssignment,
         BucketMetadata bucketMetadata,
         FileOperations<V> fileOperations) {
@@ -398,136 +409,102 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
     }
 
     @Override
-    public WriteResult expand(PCollection<KV<BucketShardId, ResourceId>> input) {
-      final PCollectionTuple output =
-          input.apply(
-              "MoveToFinalDestinations",
-              new RenameBuckets<>(fileAssignment, bucketMetadata, fileOperations));
+    public PCollectionTuple expand(PCollection<KV<BucketShardId, ResourceId>> input) {
+      final PCollectionView<Map<BucketShardId, ResourceId>> writtenBuckets =
+          input.apply("WrittenBucketsShards", View.asMap());
 
-      return new WriteResult(
-          input.getPipeline(),
-          output.get(new TupleTag<ResourceId>("writtenMetadata")).setCoder(ResourceIdCoder.of()),
-          output
-              .get(new TupleTag<KV<BucketShardId, ResourceId>>("writtenBuckets"))
-              .setCoder(KvCoder.of(BucketShardIdCoder.of(), ResourceIdCoder.of())));
+      List<BucketShardId> allBucketsAndShards = new ArrayList<>();
+      for (int i = 0; i < bucketMetadata.getNumBuckets(); i++) {
+        for (int j = 0; j < bucketMetadata.getNumShards(); j++) {
+          allBucketsAndShards.add(BucketShardId.of(i, j));
+        }
+      }
+      final TupleTag<KV<BucketShardId, ResourceId>> bucketsTag = new TupleTag<>("writtenBuckets");
+      final TupleTag<ResourceId> metadataTag = new TupleTag<>("writtenMetadata");
+      final Values<BucketShardId> createBuckets =
+          Create.of(allBucketsAndShards).withCoder(BucketShardIdCoder.of());
+
+      return input
+          .getPipeline()
+          .apply("EmptyBucketsShards", createBuckets)
+          .apply("GroupAll", Group.globally())
+          .apply(
+              "PopulateFinalDst",
+              ParDo.of(
+                      new DoFn<Iterable<BucketShardId>, KV<BucketShardId, ResourceId>>() {
+                        @ProcessElement
+                        public void processElement(ProcessContext c) {
+                          // Write metadata file first
+                          final ResourceId metadataDst = writeMetadataFile();
+
+                          final List<ResourceId> filesToCleanUp = new ArrayList<>();
+                          filesToCleanUp.add(metadataDst);
+
+                          // Transfer bucket files once metadata has been written
+                          final List<ResourceId> srcFiles = new ArrayList<>();
+                          final List<ResourceId> dstFiles = new ArrayList<>();
+                          final List<KV<BucketShardId, ResourceId>> bucketDsts = new ArrayList<>();
+
+                          final Map<BucketShardId, ResourceId> tmpDsts =
+                              c.sideInput(writtenBuckets);
+
+                          for (BucketShardId id : c.element()) {
+                            final ResourceId finalDst =
+                                fileAssignment.forBucket(id, bucketMetadata);
+
+                            // If bucket hasn't been written, write empty file
+                            if (!tmpDsts.containsKey(id)) {
+                              try {
+                                fileOperations.createWriter(finalDst).close();
+                                filesToCleanUp.add(finalDst);
+                              } catch (IOException e) {
+                                cleanupTempFiles(e, filesToCleanUp);
+                                throw new RuntimeException("Failed to write empty file", e);
+                              }
+
+                              c.output(bucketsTag, KV.of(id, finalDst));
+                            } else {
+                              srcFiles.add(tmpDsts.get(id));
+                              dstFiles.add(finalDst);
+                              bucketDsts.add(KV.of(id, finalDst));
+                            }
+                          }
+
+                          LOG.info("Renaming bucket files");
+                          try {
+                            FileSystems.rename(srcFiles, dstFiles);
+                          } catch (IOException e) {
+                            cleanupTempFiles(e, filesToCleanUp);
+                            throw new RuntimeException("Failed to rename temporary files", e);
+                          }
+
+                          bucketDsts.forEach(kv -> c.output(bucketsTag, kv));
+                          c.output(metadataTag, metadataDst);
+                        }
+                      })
+                  .withSideInputs(writtenBuckets)
+                  .withOutputTags(bucketsTag, TupleTagList.of(metadataTag)));
     }
 
-    /** Renames temp bucket files to final destinations. */
-    private static class RenameBuckets<V>
-        extends PTransform<PCollection<KV<BucketShardId, ResourceId>>, PCollectionTuple> {
+    @SuppressWarnings("unchecked")
+    private ResourceId writeMetadataFile() {
+      final ResourceId dst = fileAssignment.forMetadata();
+      LOG.info("Writing metadata to file {}", dst);
 
-      private final FileAssignment fileAssignment;
-      private final BucketMetadata bucketMetadata;
-      private final FileOperations<V> fileOperations;
-
-      RenameBuckets(
-          FileAssignment fileAssignment,
-          BucketMetadata bucketMetadata,
-          FileOperations<V> fileOperations) {
-        this.fileAssignment = fileAssignment;
-        this.bucketMetadata = bucketMetadata;
-        this.fileOperations = fileOperations;
+      try (final OutputStream outputStream =
+          Channels.newOutputStream(FileSystems.create(dst, "application/json"))) {
+        BucketMetadata.to(bucketMetadata, outputStream);
+        return dst;
+      } catch (IOException e) {
+        cleanupTempFiles(e, Collections.singleton(dst));
+        throw new RuntimeException("Failed to write metadata file", e);
       }
+    }
 
-      @Override
-      public PCollectionTuple expand(PCollection<KV<BucketShardId, ResourceId>> input) {
-        final PCollectionView<Map<BucketShardId, ResourceId>> writtenBuckets =
-            input.apply("WrittenBucketsShards", View.asMap());
-
-        List<BucketShardId> allBucketsAndShards = new ArrayList<>();
-        for (int i = 0; i < bucketMetadata.getNumBuckets(); i++) {
-          for (int j = 0; j < bucketMetadata.getNumShards(); j++) {
-            allBucketsAndShards.add(BucketShardId.of(i, j));
-          }
-        }
-        final TupleTag<KV<BucketShardId, ResourceId>> bucketsTag = new TupleTag<>("writtenBuckets");
-        final TupleTag<ResourceId> metadataTag = new TupleTag<>("writtenMetadata");
-        final Values<BucketShardId> createBuckets =
-            Create.of(allBucketsAndShards).withCoder(BucketShardIdCoder.of());
-        return input
-            .getPipeline()
-            .apply("EmptyBucketsShards", createBuckets)
-            .apply("GroupAll", Group.globally())
-            .apply(
-                "PopulateFinalDst",
-                ParDo.of(
-                        new DoFn<Iterable<BucketShardId>, KV<BucketShardId, ResourceId>>() {
-                          @ProcessElement
-                          public void processElement(ProcessContext c) {
-                            // Write metadata file first
-                            final ResourceId metadataDst = writeMetadataFile();
-
-                            final List<ResourceId> filesToCleanUp = new ArrayList<>();
-                            filesToCleanUp.add(metadataDst);
-
-                            // Transfer bucket files once metadata has been written
-                            final List<ResourceId> srcFiles = new ArrayList<>();
-                            final List<ResourceId> dstFiles = new ArrayList<>();
-
-                            final List<KV<BucketShardId, ResourceId>> finalBucketDsts =
-                                new ArrayList<>();
-
-                            final Map<BucketShardId, ResourceId> side = c.sideInput(writtenBuckets);
-
-                            for (BucketShardId id : c.element()) {
-                              final ResourceId tmpDst = side.get(id);
-                              final ResourceId finalDst =
-                                  fileAssignment.forBucket(id, bucketMetadata);
-
-                              // If bucket hasn't been written, write empty file
-                              if (tmpDst == null) {
-                                try {
-                                  fileOperations.createWriter(finalDst).close();
-                                  filesToCleanUp.add(finalDst);
-                                } catch (IOException e) {
-                                  cleanupTempFiles(e, filesToCleanUp);
-                                  throw new RuntimeException("Failed to write empty file", e);
-                                }
-
-                                c.output(bucketsTag, KV.of(id, finalDst));
-                              } else {
-                                srcFiles.add(tmpDst);
-                                dstFiles.add(finalDst);
-                                finalBucketDsts.add(KV.of(id, finalDst));
-                              }
-                            }
-
-                            LOG.info("Renaming bucket files");
-                            try {
-                              FileSystems.rename(srcFiles, dstFiles);
-                            } catch (IOException e) {
-                              cleanupTempFiles(e, filesToCleanUp);
-                              throw new RuntimeException("Failed to rename temporary files", e);
-                            }
-
-                            finalBucketDsts.forEach(kv -> c.output(bucketsTag, kv));
-                            c.output(metadataTag, metadataDst);
-                          }
-                        })
-                    .withSideInputs(writtenBuckets)
-                    .withOutputTags(bucketsTag, TupleTagList.of(metadataTag)));
-      }
-
-      @SuppressWarnings("unchecked")
-      private ResourceId writeMetadataFile() {
-        final ResourceId dst = fileAssignment.forMetadata();
-        LOG.info("Writing metadata to file {}", dst);
-
-        try (final OutputStream outputStream =
-            Channels.newOutputStream(FileSystems.create(dst, "application/json"))) {
-          BucketMetadata.to(bucketMetadata, outputStream);
-          return dst;
-        } catch (IOException e) {
-          cleanupTempFiles(e, Collections.singleton(dst));
-          throw new RuntimeException("Failed to write metadata file", e);
-        }
-      }
-
-      @Override
-      public void populateDisplayData(Builder builder) {
-        super.populateDisplayData(builder);
-        builder.delegate(fileAssignment);
-      }
+    @Override
+    public void populateDisplayData(Builder builder) {
+      super.populateDisplayData(builder);
+      builder.delegate(fileAssignment);
     }
   }
 

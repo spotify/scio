@@ -51,6 +51,8 @@ import org.apache.beam.sdk.transforms.display.DisplayData.Builder;
 import org.apache.beam.sdk.transforms.join.CoGbkResult;
 import org.apache.beam.sdk.values.KV;
 import org.apache.beam.sdk.values.PBegin;
+import org.apache.beam.sdk.values.PCollectionTuple;
+import org.apache.beam.sdk.values.TupleTag;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions;
 
 /**
@@ -113,26 +115,29 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
     @SuppressWarnings("deprecation")
     final Reshuffle.ViaRandomKey<Integer> reshuffle = Reshuffle.viaRandomKey();
 
-    return begin
-        .getPipeline()
-        .apply("CreateBuckets", createBuckets)
-        .apply("ReshuffleKeys", reshuffle)
-        .apply(
-            "MergeTransformWrite",
-            ParDo.of(
-                new MergeAndWriteBuckets<>(
-                    this.getName(),
-                    sources,
-                    sourceSpec,
-                    tempFileAssignment,
-                    fileOperations,
-                    bucketMetadata,
-                    transformFn)))
-        .setCoder(KvCoder.of(BucketShardIdCoder.of(), ResourceIdCoder.of()))
-        .apply(
-            "FinalizeTempFiles",
-            new SortedBucketSink.FinalizeTempFiles<>(
-                filenamePolicy.forDestination(), bucketMetadata, fileOperations));
+    final PCollectionTuple tuple =
+        begin
+            .getPipeline()
+            .apply("CreateBuckets", createBuckets)
+            .apply("ReshuffleKeys", reshuffle)
+            .apply(
+                "MergeTransformWrite",
+                ParDo.of(
+                    new MergeAndWriteBuckets<>(
+                        this.getName(),
+                        sources,
+                        sourceSpec,
+                        tempFileAssignment,
+                        fileOperations,
+                        bucketMetadata,
+                        transformFn)))
+            .setCoder(KvCoder.of(BucketShardIdCoder.of(), ResourceIdCoder.of()))
+            .apply(
+                "FinalizeTempFiles",
+                new SortedBucketSink.RenameBuckets<>(
+                    filenamePolicy.forDestination(), bucketMetadata, fileOperations));
+
+    return WriteResult.fromTuple(begin.getPipeline(), tuple);
   }
 
   @FunctionalInterface
