@@ -32,6 +32,7 @@ import org.apache.beam.sdk.coders.ByteArrayCoder;
 import org.apache.beam.sdk.coders.Coder;
 import org.apache.beam.sdk.coders.CoderException;
 import org.apache.beam.sdk.coders.KvCoder;
+import org.apache.beam.sdk.coders.ListCoder;
 import org.apache.beam.sdk.extensions.smb.BucketShardId.BucketShardIdCoder;
 import org.apache.beam.sdk.extensions.smb.SMBFilenamePolicy.FileAssignment;
 import org.apache.beam.sdk.extensions.smb.SortedBucketSink.WriteResult;
@@ -409,7 +410,7 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
     @Override
     public PCollectionTuple expand(PCollection<KV<BucketShardId, ResourceId>> input) {
       final PCollectionView<Map<BucketShardId, ResourceId>> writtenBuckets =
-          input.apply("WrittenBucketsShards", View.asMap());
+          input.apply("WrittenBucketShardIds", View.asMap());
 
       List<BucketShardId> allBucketsAndShards = new ArrayList<>();
       for (int i = 0; i < bucketMetadata.getNumBuckets(); i++) {
@@ -419,13 +420,13 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
       }
       final TupleTag<KV<BucketShardId, ResourceId>> bucketsTag = new TupleTag<>("writtenBuckets");
       final TupleTag<ResourceId> metadataTag = new TupleTag<>("writtenMetadata");
-      final Values<BucketShardId> createBuckets =
-          Create.of(allBucketsAndShards).withCoder(BucketShardIdCoder.of());
+      final Values<List<BucketShardId>> createBuckets =
+          Create.of(Collections.singletonList(allBucketsAndShards))
+              .withCoder(ListCoder.of(BucketShardIdCoder.of()));
 
       return input
           .getPipeline()
-          .apply("EmptyBucketsShards", createBuckets)
-          .apply("GroupAll", Group.globally())
+          .apply("EmptyBucketShardIds", createBuckets)
           .apply(
               "PopulateFinalDst",
               ParDo.of(
