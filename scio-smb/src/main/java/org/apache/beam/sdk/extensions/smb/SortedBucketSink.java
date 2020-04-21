@@ -455,7 +455,10 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
                           @ProcessElement
                           public void processElement(ProcessContext c) {
                             // Write metadata file first
-                            c.output(metadataTag, writeMetadataFile(fileAssignment.forMetadata()));
+                            final ResourceId metadataDst = writeMetadataFile();
+
+                            final List<ResourceId> filesToCleanUp = new ArrayList<>();
+                            filesToCleanUp.add(metadataDst);
 
                             // Transfer bucket files once metadata has been written
                             final List<ResourceId> srcFiles = new ArrayList<>();
@@ -463,7 +466,6 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
 
                             final List<KV<BucketShardId, ResourceId>> finalBucketDsts =
                                 new ArrayList<>();
-                            final List<ResourceId> filesToCleanUp = new ArrayList<>();
 
                             final Map<BucketShardId, ResourceId> side = c.sideInput(writtenBuckets);
 
@@ -499,6 +501,7 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
                             }
 
                             finalBucketDsts.forEach(kv -> c.output(bucketsTag, kv));
+                            c.output(metadataTag, metadataDst);
                           }
                         })
                     .withSideInputs(writtenBuckets)
@@ -506,7 +509,8 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
       }
 
       @SuppressWarnings("unchecked")
-      private ResourceId writeMetadataFile(ResourceId dst) {
+      private ResourceId writeMetadataFile() {
+        final ResourceId dst = fileAssignment.forMetadata();
         LOG.info("Writing metadata to file {}", dst);
 
         try (final OutputStream outputStream =
