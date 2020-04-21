@@ -115,7 +115,7 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
     @SuppressWarnings("deprecation")
     final Reshuffle.ViaRandomKey<Integer> reshuffle = Reshuffle.viaRandomKey();
 
-    final PCollectionTuple tuple =
+    return WriteResult.fromTuple(
         begin
             .getPipeline()
             .apply("CreateBuckets", createBuckets)
@@ -135,9 +135,7 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
             .apply(
                 "FinalizeTempFiles",
                 new SortedBucketSink.RenameBuckets<>(
-                    filenamePolicy.forDestination(), bucketMetadata, fileOperations));
-
-    return WriteResult.fromTuple(begin.getPipeline(), tuple);
+                    filenamePolicy.forDestination(), bucketMetadata, fileOperations)));
   }
 
   @FunctionalInterface

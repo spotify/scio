@@ -268,9 +268,9 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
       this.writtenFiles = writtenFiles;
     }
 
-    static WriteResult fromTuple(Pipeline pipeline, PCollectionTuple tuple) {
+    static WriteResult fromTuple(PCollectionTuple tuple) {
       return new WriteResult(
-          pipeline,
+          tuple.getPipeline(),
           tuple.get(new TupleTag<ResourceId>("writtenMetadata")).setCoder(ResourceIdCoder.of()),
           tuple
               .get(new TupleTag<KV<BucketShardId, ResourceId>>("writtenBuckets"))
@@ -322,7 +322,7 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
 
     @Override
     public WriteResult expand(PCollection<KV<BucketShardId, Iterable<KV<byte[], byte[]>>>> input) {
-      final PCollectionTuple tuple =
+      return WriteResult.fromTuple(
           input
               .apply(
                   "WriteTempFiles",
@@ -335,9 +335,7 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
               .apply(
                   "FinalizeTempFiles",
                   new RenameBuckets<>(
-                      filenamePolicy.forDestination(), bucketMetadata, fileOperations));
-
-      return WriteResult.fromTuple(input.getPipeline(), tuple);
+                      filenamePolicy.forDestination(), bucketMetadata, fileOperations)));
     }
   }
 
