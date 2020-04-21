@@ -19,8 +19,16 @@ package com.spotify.scio.testing
 import org.apache.avro.generic.GenericRecord
 import org.apache.avro.specific.SpecificRecordBase
 import scala.collection.JavaConverters._
+import com.spotify.scio.{registerSysProps, SysProp}
+import scala.util.Try
 
-private[testing] object Pretty {
+@registerSysProps
+object PrettySysProps {
+  val PrettyPrint =
+    SysProp("tests.prettyprint.colors", "Should pretty printed values be rendered with colors")
+}
+
+object Pretty {
   import pprint.Tree
   import fansi.{Color, Str}
 
@@ -77,5 +85,24 @@ private[testing] object Pretty {
     case x: GenericRecord => treeifyAvro(x)
   }
 
-  val printer = pprint.PPrinter(additionalHandlers = handlers)
+  private val useColors =
+    PrettySysProps.PrettyPrint.valueOption
+      .flatMap(x => Try(x.toBoolean).toOption)
+      .getOrElse {
+        // Crude test to check if the terminal seems to support colors
+        (System.console() != null) && (System.getenv().get("TERM") != null)
+      }
+
+  val printer =
+    if (useColors) {
+      pprint.PPrinter(
+        additionalHandlers = handlers
+      )
+    } else {
+      pprint.PPrinter(
+        additionalHandlers = handlers,
+        colorLiteral = fansi.Attrs.Empty,
+        colorApplyPrefix = fansi.Attrs.Empty
+      )
+    }
 }
