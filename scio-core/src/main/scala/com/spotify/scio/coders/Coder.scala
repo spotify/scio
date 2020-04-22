@@ -541,6 +541,7 @@ object Coder
   implicit val jBigDecimalCoder: Coder[JBigDecimal] = JavaCoders.jBigDecimalCoder
   implicit val serializableCoder: Coder[Serializable] = Coder.kryo[Serializable]
   implicit val jInstantCoder: Coder[Instant] = JavaCoders.jInstantCoder
+  implicit val jSqlTimestamp: Coder[java.sql.Timestamp] = JavaCoders.jSqlTimestamp
   implicit def coderJEnum[E <: java.lang.Enum[E]: ClassTag]: Coder[E] = JavaCoders.coderJEnum
 }
 

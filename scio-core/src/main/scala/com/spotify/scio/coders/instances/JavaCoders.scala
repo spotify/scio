@@ -102,6 +102,9 @@ trait JavaCoders extends JavaBeanCoders {
       instant => (instant.getEpochSecond, instant.getNano)
     )
 
+  implicit val jSqlTimestamp: Coder[java.sql.Timestamp] =
+    Coder.xmap(jInstantCoder)(java.sql.Timestamp.from, _.toInstant())
+
   implicit def coderJEnum[E <: java.lang.Enum[E]: ClassTag]: Coder[E] =
     Coder.xmap(Coder[String])(
       value => java.lang.Enum.valueOf(ScioUtil.classOf[E], value),

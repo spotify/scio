@@ -285,6 +285,7 @@ final class CoderTest extends AnyFlatSpec with Matchers {
     // Message
     // ByteString
     BigDecimal("1234") coderShould notFallback()
+    new java.sql.Timestamp(1) coderShould notFallback()
     new Instant coderShould notFallback()
     new LocalDate coderShould notFallback()
     new LocalTime coderShould notFallback()
