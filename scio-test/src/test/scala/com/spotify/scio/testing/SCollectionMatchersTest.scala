@@ -46,7 +46,7 @@ object SCollectionMatchersTest {
   }
 }
 
-final case class DoesNotSerialize(a: String, b: Int) extends Serializable {
+final case class DoesNotSerialize[B](a: String, b: B) extends Serializable {
   @throws(classOf[IOException])
   private def writeObject(o: ObjectOutputStream): Unit =
     throw new NotSerializableException("DoesNotSerialize can't be serialized")
@@ -366,23 +366,33 @@ class SCollectionMatchersTest extends PipelineSpec {
     }
   }
 
-  it should "support satisfy when the closure does not serialize" in {
+  it should "work when the content does not serialize (even using Externalizer)" in {
     runWithContext { ctx =>
       import CoderAssertions._
-      import org.apache.beam.sdk.util.SerializableUtils
+      import org.apache.beam.sdk.util.SerializableUtils._
 
+      type DNS = DoesNotSerialize[Int]
       val v = new DoesNotSerialize("foo", 42)
-      val coder = CoderMaterializer.beam(ctx, Coder[DoesNotSerialize])
+      val coder = CoderMaterializer.beam(ctx, Coder[DNS])
 
-      assume(Try(SerializableUtils.ensureSerializable(v)).isFailure)
-      assume(Try(SerializableUtils.ensureSerializableByCoder(coder, v, "?")).isSuccess)
+      assume(Try(ensureSerializable(v)).isFailure)
+      // XXX jto: I can't get Externalizer to fail on a simple example.
+      // We've seen the exception happen in real world pipeline,
+      // but this test does not really cover it
+      // assume(Try(ensureSerializable(Externalizer(v))).isFailure)
+      assume(Try(ensureSerializableByCoder(coder, v, "?")).isSuccess)
 
       v coderShould roundtrip()
-      coderIsSerializable[DoesNotSerialize]
+      coderIsSerializable[DNS]
 
       val coll = ctx.parallelize(List(v))
       coll shouldNot beEmpty // just make sure the SCollection can be built
-      coll should satisfySingleValue[DoesNotSerialize](_.a == v.a)
+
+      coll should satisfy[DNS](_.head.a == v.a)
+      coll should satisfySingleValue[DNS](_.a == v.a)
+      coll should containInAnyOrder(List(v))
+      coll should containSingleValue(v)
+      coll should containValue(v)
     }
   }
 

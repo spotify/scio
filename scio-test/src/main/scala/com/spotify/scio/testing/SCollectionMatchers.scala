@@ -143,13 +143,20 @@ private object ScioMatchers {
   def assertNotSingle[T: Eq: Coder](p: TestWrapper[T] => Boolean) =
     makeFnSingle[T](in => Predef.assert(!p(TestWrapper(in))))
 
-  def isEqualTo[T: Eq: Coder](t: T): SerializableFunction[T, Void] = {
-    val mm = Matchers.equalTo[Any](TestWrapper(t))
+  def isEqualTo[T: Eq: Coder](context: ScioContext, t: T): SerializableFunction[T, Void] = {
+    val mm =
+      SerializableMatchers.fromSupplier {
+        supplierFromCoder(t, context)(t => Matchers.equalTo[Any](TestWrapper(t)))
+      }
     makeFnSingle[T](in => assertThat(TestWrapper(in), mm))
   }
 
-  def notEqualTo[T: Eq: Coder](t: T): SerializableFunction[T, Void] = {
-    val mm = Matchers.not(Matchers.equalTo[Any](TestWrapper(t)))
+  def notEqualTo[T: Eq: Coder](context: ScioContext, t: T): SerializableFunction[T, Void] = {
+    val mm =
+      SerializableMatchers.fromSupplier {
+        supplierFromCoder(t, context)(t => Matchers.not(Matchers.equalTo[Any](TestWrapper(t))))
+      }
+
     makeFnSingle[T](in => assertThat(TestWrapper(in), mm))
   }
 }
@@ -307,8 +314,8 @@ trait SCollectionMatchers extends EqInstances {
             ScioMatchers
             val assertion = builder(PAssert.thatSingleton(serDeCycle(left).internal))
             m(
-              () => assertion.satisfies(ScioMatchers.isEqualTo(value)),
-              () => assertion.satisfies(ScioMatchers.notEqualTo(value))
+              () => assertion.satisfies(ScioMatchers.isEqualTo(left.context, value)),
+              () => assertion.satisfies(ScioMatchers.notEqualTo(left.context, value))
             )
           }
         }
