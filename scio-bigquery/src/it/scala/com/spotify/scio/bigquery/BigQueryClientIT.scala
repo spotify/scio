@@ -85,7 +85,7 @@ class BigQueryClientIT extends AnyFlatSpec with Matchers {
   }
 
   it should "support missing source tables" in {
-    bq.query.extractLocation("SELECT 6") shouldBe Some("EU")
+    bq.query.extractLocation("SELECT 6") shouldBe Some("US")
   }
 
   "QueryService.extractTables" should "work with legacy syntax" in {
