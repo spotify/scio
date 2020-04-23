@@ -23,7 +23,6 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 import scala.util.{Failure, Success, Try}
-import caseapp.core.help.Help
 
 class ArgsTest extends AnyFlatSpec with Matchers {
   "Args" should "support String" in {
@@ -173,7 +172,12 @@ class ArgsTest extends AnyFlatSpec with Matchers {
   }
 
   it should "print camelCase in help messages" in {
-    val msg = Help[CamelCaseArguments].help
+    val msg =
+      TypedParser[CamelCaseArguments]()
+        .parse(Array("--help"))
+        .toOption
+        .flatMap(_.left.toOption)
+        .getOrElse("no help message")
     val expected =
       s"""Scio Examples ${BuildInfo.version}
          |Usage: com.spotify.scio.examples.MinimalWordCount [options]
@@ -184,7 +188,7 @@ class ArgsTest extends AnyFlatSpec with Matchers {
          |  --camelCaseTest  <string>
          |""".stripMargin
 
-    assert(msg == expected)
+    assert(msg.contains(expected))
   }
 
   "ContextAndArgs" should "rethrow parser exception" in {

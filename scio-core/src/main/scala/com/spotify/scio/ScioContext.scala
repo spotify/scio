@@ -167,8 +167,21 @@ object ContextAndArgs {
 
   import caseapp._
   import caseapp.core.help._
+  import caseapp.core.parser.ParserWithNameFormatter
 
-  final case class TypedParser[T: Parser: Help] private () extends ArgsParser[Try] {
+  object TypedParser {
+    final def apply[T]()(implicit parser: Parser[T], help: Help[T]): TypedParser[T] = {
+      val parserOverride = parser match {
+        case p: ParserWithNameFormatter[T] => p
+        case p                             => p.nameFormatter(_.name)
+      }
+      val helpOverride =
+        help.withNameFormatter(parserOverride.defaultNameFormatter).asInstanceOf[Help[T]]
+      new TypedParser()(parserOverride, helpOverride)
+    }
+  }
+
+  final class TypedParser[T: Parser: Help] private () extends ArgsParser[Try] {
     override type ArgsType = T
 
     override def parse(args: Array[String]): Try[Result] = {
@@ -177,9 +190,8 @@ object ContextAndArgs {
       // fail if there are unsupported options
       val supportedCustomArgs =
         Parser[T].args
-          .flatMap { a =>
-            a.name.name +: a.extraNames.map(_.name)
-          } ++ List("help", "usage")
+          .flatMap(a => a.name +: a.extraNames)
+          .map(Parser[T].defaultNameFormatter.format) ++ List("help", "usage")
 
       val Reg = "^-{1,2}(.+)$".r
       val (customArgs, remainingArgs) =
