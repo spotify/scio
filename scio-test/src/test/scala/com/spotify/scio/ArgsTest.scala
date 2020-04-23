@@ -23,7 +23,6 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 import scala.util.{Failure, Success, Try}
-import caseapp.core.help.Help
 
 class ArgsTest extends AnyFlatSpec with Matchers {
   "Args" should "support String" in {
