@@ -37,7 +37,7 @@ final case class JsonIO[T: Encoder: Decoder: Coder](path: String) extends ScioIO
 
   override protected def write(data: SCollection[T], params: WriteP): Tap[T] = {
     data
-      .map(x => params.printer.pretty(x.asJson))
+      .map(x => params.printer.print(x.asJson))
       .write(TextIO(path))(TextIO.WriteParam(params.suffix, params.numShards, params.compression))
     tap(JsonIO.ReadParam(params.compression))
   }
