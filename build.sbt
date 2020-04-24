@@ -1008,7 +1008,7 @@ lazy val `scio-examples`: Project = project
       "com.google.http-client" % "google-http-client" % googleHttpClientsVersion,
       "com.google.api.grpc" % "proto-google-cloud-datastore-v1" % generatedDatastoreProtoVersion,
       "com.google.api.grpc" % "proto-google-cloud-bigtable-v2" % generatedGrpcBetaVersion,
-      "com.google.cloud.sql" % "mysql-socket-factory" % "1.0.15",
+      "com.google.cloud.sql" % "mysql-socket-factory" % "1.0.16",
       "com.google.apis" % "google-api-services-bigquery" % googleApiServicesBigQuery,
       "org.tensorflow" % "proto" % tensorFlowVersion,
       "com.spotify" %% "magnolify-avro" % magnolifyVersion,
