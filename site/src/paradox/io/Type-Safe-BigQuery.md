@@ -37,7 +37,7 @@ Storage API provides fast access to BigQuery-managed storage by using an rpc-bas
 import com.spotify.scio.bigquery.types.BigQueryType
 
 @BigQueryType.fromStorage(
-    "publicdata:samples.gsod",
+    "bigquery-public-data:samples.gsod",
     selectedFields = List("tornado", "month"),
     rowRestriction = "tornado = true"
   )
@@ -51,7 +51,7 @@ This expands a class with fields that map to a BigQuery table.
 ```scala mdoc:reset:silent
 import com.spotify.scio.bigquery.types.BigQueryType
 
-@BigQueryType.fromTable("publicdata:samples.gsod")
+@BigQueryType.fromTable("bigquery-public-data:samples.gsod")
 class Row
 ```
 
@@ -62,7 +62,7 @@ This expands a class with output fields from a SELECT query. A dry run is execut
 ```scala mdoc:reset:silent
 import com.spotify.scio.bigquery.types.BigQueryType
 
-@BigQueryType.fromQuery("SELECT tornado, month FROM [publicdata:samples.gsod]")
+@BigQueryType.fromQuery("SELECT tornado, month FROM [bigquery-public-data:samples.gsod]")
 class Row
 ```
 
@@ -189,7 +189,7 @@ Classes annotated with the type safe BigQuery API have a few more convenience me
 ```scala mdoc:reset
 import com.spotify.scio.bigquery.types.BigQueryType
 
-@BigQueryType.fromTable("publicdata:samples.gsod")
+@BigQueryType.fromTable("bigquery-public-data:samples.gsod")
 class Row
 
 Row.toPrettyString(2)
@@ -210,7 +210,7 @@ import com.spotify.scio._
 import com.spotify.scio.bigquery._
 import com.spotify.scio.bigquery.types.BigQueryType
 
-@BigQueryType.fromQuery("SELECT tornado, month FROM [publicdata:samples.gsod]")
+@BigQueryType.fromQuery("SELECT tornado, month FROM [bigquery-public-data:samples.gsod]")
 class Row
 
 @BigQueryType.toTable
@@ -236,7 +236,7 @@ Annotated classes can be used with the `BigQueryClient` directly too.
 import com.spotify.scio.bigquery.types.BigQueryType
 import com.spotify.scio.bigquery.client.BigQuery
 
-@BigQueryType.fromQuery("SELECT tornado, month FROM [publicdata:samples.gsod]")
+@BigQueryType.fromQuery("SELECT tornado, month FROM [bigquery-public-data:samples.gsod]")
 class Row
 
 def bq = BigQuery.defaultInstance()
@@ -253,7 +253,7 @@ import com.spotify.scio.values.SCollection
 import com.spotify.scio.bigquery.types.BigQueryType
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO
 
-@BigQueryType.fromQuery("SELECT tornado, month FROM [publicdata:samples.gsod]")
+@BigQueryType.fromQuery("SELECT tornado, month FROM [bigquery-public-data:samples.gsod]")
 class Foo
 
 def bigQueryType = BigQueryType[Foo]

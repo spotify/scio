@@ -501,7 +501,7 @@ First start Scio REPL and generate case classes from your query or table.
 ```scala mdoc:reset
 import com.spotify.scio.bigquery.types.BigQueryType
 
-@BigQueryType.fromQuery("SELECT tornado, month FROM [publicdata:samples.gsod]")
+@BigQueryType.fromQuery("SELECT tornado, month FROM [bigquery-public-data:samples.gsod]")
 class Tornado
 ```
 
