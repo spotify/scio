@@ -119,6 +119,13 @@ lazy val mimaSettings = Seq(
   mimaBinaryIssueFilters ++= Seq()
 )
 
+val beamSDKIODependency =
+  "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion excludeAll (
+    ExclusionRule("com.google.cloud", "google-cloud-spanner"),
+    ExclusionRule("com.google.cloud.bigtable", "bigtable-client-core"),
+    ExclusionRule("com.google.cloud", "google-cloud-core-grpc")
+)
+
 val magnoliaDependencies = Def.settings(
   libraryDependencies ++=
     Seq(
@@ -593,6 +600,7 @@ lazy val `scio-avro`: Project = project
       "me.lyh" %% "protobuf-generic" % protobufGenericVersion,
       "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamVendorVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
+      beamSDKIODependency,
       "com.twitter" %% "chill" % chillVersion,
       "com.google.protobuf" % "protobuf-java" % protobufVersion,
       "org.apache.avro" % "avro" % avroVersion exclude ("com.thoughtworks.paranamer", "paranamer"),
@@ -637,11 +645,7 @@ lazy val `scio-bigquery`: Project = project
       "com.google.cloud" % "google-cloud-bigquerystorage" % bigQueryStorageVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-extensions-google-cloud-platform-core" % beamVersion,
-      "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion excludeAll (
-        ExclusionRule("com.google.cloud", "google-cloud-spanner"),
-        ExclusionRule("com.google.cloud.bigtable", "bigtable-client-core"),
-        ExclusionRule("com.google.cloud", "google-cloud-core-grpc")
-      ),
+      beamSDKIODependency,
       "commons-io" % "commons-io" % commonsIoVersion,
       "joda-time" % "joda-time" % jodaTimeVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
@@ -674,11 +678,7 @@ lazy val `scio-bigtable`: Project = project
       "joda-time" % "joda-time" % jodaTimeVersion,
       "com.google.protobuf" % "protobuf-java" % protobufVersion,
       "com.google.api.grpc" % "proto-google-cloud-bigtable-v2" % generatedGrpcBetaVersion,
-      "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion excludeAll (
-        ExclusionRule("com.google.cloud", "google-cloud-spanner"),
-        ExclusionRule("com.google.cloud.bigtable", "bigtable-client-core"),
-        ExclusionRule("com.google.cloud", "google-cloud-core-grpc"),
-      ),
+      beamSDKIODependency,
       "com.google.cloud.bigtable" % "bigtable-client-core" % bigtableClientVersion excludeAll (
         ExclusionRule(organization = "io.grpc")
       ),
@@ -805,11 +805,7 @@ lazy val `scio-extra`: Project = project
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-extensions-sorter" % beamVersion,
       "com.google.apis" % "google-api-services-bigquery" % googleApiServicesBigQuery,
-      "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion excludeAll (
-        ExclusionRule("com.google.cloud", "google-cloud-spanner"),
-        ExclusionRule("com.google.cloud.bigtable", "bigtable-client-core"),
-        ExclusionRule("com.google.cloud", "google-cloud-core-grpc"),
-      ),
+      beamSDKIODependency,
       "org.apache.avro" % "avro" % avroVersion,
       "com.spotify" % "annoy" % annoyVersion,
       "com.spotify.sparkey" % "sparkey" % sparkeyVersion,
@@ -914,11 +910,7 @@ lazy val `scio-spanner`: Project = project
     libraryDependencies ++= Seq(
       "com.google.cloud" % "google-cloud-core" % "1.92.2",
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
-      "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion excludeAll (
-        ExclusionRule("com.google.cloud", "google-cloud-spanner"),
-        ExclusionRule("com.google.cloud.bigtable", "bigtable-client-core"),
-        ExclusionRule("com.google.cloud", "google-cloud-core-grpc"),
-      ),
+      beamSDKIODependency,
       "com.google.cloud" % "google-cloud-spanner" % googleCloudSpannerVersion excludeAll (
         ExclusionRule(organization = "io.grpc")
       ),
@@ -997,14 +989,7 @@ lazy val `scio-examples`: Project = project
     libraryDependencies ++= Seq(
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-extensions-google-cloud-platform-core" % beamVersion,
-      "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion excludeAll (
-        ExclusionRule("com.google.cloud", "google-cloud-spanner"),
-        ExclusionRule("com.google.cloud.bigtable", "bigtable-client-core"),
-        ExclusionRule("com.google.cloud", "google-cloud-core-grpc")
-      ),
-      "com.google.cloud" % "google-cloud-core-grpc" % "1.92.2" excludeAll (
-        ExclusionRule(organization = "io.grpc")
-      ),
+      beamSDKIODependency,
       "org.apache.avro" % "avro" % avroVersion,
       "com.google.cloud.datastore" % "datastore-v1-proto-client" % datastoreV1ProtoClientVersion,
       "com.google.http-client" % "google-http-client" % googleHttpClientsVersion,
@@ -1076,11 +1061,7 @@ lazy val `scio-repl`: Project = project
     crossScalaVersions += "2.13.1",
     libraryDependencies ++= Seq(
       "org.apache.beam" % "beam-runners-direct-java" % beamVersion,
-      "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion excludeAll (
-        ExclusionRule("com.google.cloud", "google-cloud-spanner"),
-        ExclusionRule("com.google.cloud.bigtable", "bigtable-client-core"),
-        ExclusionRule("com.google.cloud", "google-cloud-core-grpc")
-      ),
+      beamSDKIODependency,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-extensions-google-cloud-platform-core" % beamVersion,
       "org.apache.avro" % "avro" % avroVersion,
@@ -1143,7 +1124,7 @@ lazy val `scio-smb`: Project = project
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion % "it,test" classifier "tests",
       "org.apache.beam" % "beam-sdks-java-extensions-sorter" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-extensions-protobuf" % beamVersion,
-      "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
+      beamSDKIODependency,
       "com.google.apis" % "google-api-services-bigquery" % googleApiServicesBigQuery,
       "org.tensorflow" % "proto" % tensorFlowVersion,
       "com.google.auto.value" % "auto-value-annotations" % autoValueVersion,
