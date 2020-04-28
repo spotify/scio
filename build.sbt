@@ -119,27 +119,6 @@ lazy val mimaSettings = Seq(
   mimaBinaryIssueFilters ++= Seq()
 )
 
-val beamSDKIODependencies = Def.settings(
-  libraryDependencies ++= Seq(
-    "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion excludeAll (
-      ExclusionRule("com.google.cloud", "google-cloud-spanner"),
-      ExclusionRule("com.google.cloud", "google-cloud-core"),
-      ExclusionRule("com.google.api.grpc", "proto-google-cloud-spanner-admin-database-v1"),
-      ExclusionRule("com.google.api.grpc", "proto-google-common-protos")
-    ),
-    "io.grpc" % "grpc-core" % grpcVersion,
-    "io.grpc" % "grpc-context" % grpcVersion,
-    "io.grpc" % "grpc-auth" % grpcVersion,
-    "io.grpc" % "grpc-netty" % grpcVersion,
-    "io.grpc" % "grpc-stub" % grpcVersion,
-    "io.grpc" % "grpc-okhttp" % grpcVersion,
-    "io.grpc" % "grpc-api" % grpcVersion,
-    "io.grpc" % "grpc-alts" % grpcVersion,
-    "com.google.api" % "gax" % gaxVersion,
-    "com.google.api" % "gax-grpc" % gaxVersion
-  )
-)
-
 val magnoliaDependencies = Def.settings(
   libraryDependencies ++=
     Seq(
@@ -494,7 +473,6 @@ lazy val `scio-core`: Project = project
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-extensions-google-cloud-platform-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-extensions-protobuf" % beamVersion,
-      "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
       "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamVendorVersion,
       "org.apache.commons" % "commons-compress" % commonsCompressVersion,
       "org.apache.commons" % "commons-math3" % commonsMath3Version,
@@ -625,8 +603,7 @@ lazy val `scio-avro`: Project = project
       "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test,it",
       "com.spotify" %% "magnolify-cats" % magnolifyVersion % "test",
       "com.spotify" %% "magnolify-scalacheck" % magnolifyVersion % "test"
-    ),
-    beamSDKIODependencies
+    )
   )
   .dependsOn(
     `scio-core` % "compile;it->it"
@@ -647,8 +624,8 @@ lazy val `scio-bigquery`: Project = project
       "com.twitter" %% "chill" % chillVersion,
       "com.google.protobuf" % "protobuf-java" % protobufVersion,
       "org.apache.avro" % "avro" % avroVersion,
-      "com.google.cloud.bigdataoss" % "util" % bigdataossVersion,
       "com.google.api" % "gax" % gaxVersion,
+      "com.google.api" % "gax-grpc" % gaxVersion,
       "com.google.api-client" % "google-api-client" % googleClientsVersion,
       "com.google.apis" % "google-api-services-bigquery" % googleApiServicesBigQuery,
       "com.google.api.grpc" % "proto-google-cloud-bigquerystorage-v1beta1" % "0.85.1",
@@ -660,7 +637,11 @@ lazy val `scio-bigquery`: Project = project
       "com.google.cloud" % "google-cloud-bigquerystorage" % bigQueryStorageVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-extensions-google-cloud-platform-core" % beamVersion,
-      "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
+      "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion excludeAll (
+        ExclusionRule("com.google.cloud", "google-cloud-spanner"),
+        ExclusionRule("com.google.cloud.bigtable", "bigtable-client-core"),
+        ExclusionRule("com.google.cloud", "google-cloud-core-grpc")
+      ),
       "commons-io" % "commons-io" % commonsIoVersion,
       "joda-time" % "joda-time" % jodaTimeVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
@@ -674,8 +655,7 @@ lazy val `scio-bigquery`: Project = project
       // DataFlow testing requires junit and hamcrest
       "org.hamcrest" % "hamcrest-core" % hamcrestVersion % "test,it",
       "org.hamcrest" % "hamcrest-library" % hamcrestVersion % "test,it"
-    ),
-    beamSDKIODependencies
+    )
   )
   .dependsOn(
     `scio-core` % "compile;it->it"
@@ -693,20 +673,25 @@ lazy val `scio-bigtable`: Project = project
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "joda-time" % "joda-time" % jodaTimeVersion,
       "com.google.protobuf" % "protobuf-java" % protobufVersion,
-      "com.google.cloud.bigtable" % "bigtable-client-core" % bigtableClientVersion,
       "com.google.api.grpc" % "proto-google-cloud-bigtable-v2" % generatedGrpcBetaVersion,
-      "com.novocode" % "junit-interface" % junitInterfaceVersion,
+      "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion excludeAll (
+        ExclusionRule("com.google.cloud", "google-cloud-spanner"),
+        ExclusionRule("com.google.cloud.bigtable", "bigtable-client-core"),
+        ExclusionRule("com.google.cloud", "google-cloud-core-grpc"),
+      ),
+      "com.google.cloud.bigtable" % "bigtable-client-core" % bigtableClientVersion excludeAll (
+        ExclusionRule(organization = "io.grpc")
+      ),
       "org.apache.beam" % "beam-runners-direct-java" % beamVersion % "test",
       "org.scalatest" %% "scalatest" % scalatestVersion % "test",
       "org.hamcrest" % "hamcrest-core" % hamcrestVersion % "test",
       "org.hamcrest" % "hamcrest-library" % hamcrestVersion % "test",
       "junit" % "junit" % junitVersion % "test",
       "com.chuusai" %% "shapeless" % shapelessVersion,
-      "com.google.api.grpc" % "proto-google-cloud-bigtable-admin-v2" % "0.38.0",
+      "com.google.api.grpc" % "proto-google-cloud-bigtable-admin-v2" % generatedGrpcBetaVersion,
       "com.google.guava" % "guava" % guavaVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion
-    ),
-    beamSDKIODependencies
+    )
   )
   .dependsOn(
     `scio-core`,
@@ -820,6 +805,11 @@ lazy val `scio-extra`: Project = project
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-extensions-sorter" % beamVersion,
       "com.google.apis" % "google-api-services-bigquery" % googleApiServicesBigQuery,
+      "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion excludeAll (
+        ExclusionRule("com.google.cloud", "google-cloud-spanner"),
+        ExclusionRule("com.google.cloud.bigtable", "bigtable-client-core"),
+        ExclusionRule("com.google.cloud", "google-cloud-core-grpc"),
+      ),
       "org.apache.avro" % "avro" % avroVersion,
       "com.spotify" % "annoy" % annoyVersion,
       "com.spotify.sparkey" % "sparkey" % sparkeyVersion,
@@ -841,8 +831,6 @@ lazy val `scio-extra`: Project = project
       "io.circe" %% "circe-generic" % circeVersion,
       "io.circe" %% "circe-parser" % circeVersion
     ),
-    magnoliaDependencies,
-    beamSDKIODependencies,
     Compile / sourceDirectories := (Compile / sourceDirectories).value
       .filterNot(_.getPath.endsWith("/src_managed/main")),
     Compile / managedSourceDirectories := (Compile / managedSourceDirectories).value
@@ -926,10 +914,16 @@ lazy val `scio-spanner`: Project = project
     libraryDependencies ++= Seq(
       "com.google.cloud" % "google-cloud-core" % "1.92.2",
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
-      "com.google.cloud" % "google-cloud-spanner" % googleCloudSpannerVersion,
+      "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion excludeAll (
+        ExclusionRule("com.google.cloud", "google-cloud-spanner"),
+        ExclusionRule("com.google.cloud.bigtable", "bigtable-client-core"),
+        ExclusionRule("com.google.cloud", "google-cloud-core-grpc"),
+      ),
+      "com.google.cloud" % "google-cloud-spanner" % googleCloudSpannerVersion excludeAll (
+        ExclusionRule(organization = "io.grpc")
+      ),
       "org.scalatest" %% "scalatest" % scalatestVersion % "it"
-    ),
-    beamSDKIODependencies
+    )
   )
   .dependsOn(
     `scio-core`,
@@ -1003,6 +997,14 @@ lazy val `scio-examples`: Project = project
     libraryDependencies ++= Seq(
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-extensions-google-cloud-platform-core" % beamVersion,
+      "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion excludeAll (
+        ExclusionRule("com.google.cloud", "google-cloud-spanner"),
+        ExclusionRule("com.google.cloud.bigtable", "bigtable-client-core"),
+        ExclusionRule("com.google.cloud", "google-cloud-core-grpc")
+      ),
+      "com.google.cloud" % "google-cloud-core-grpc" % "1.92.2" excludeAll (
+        ExclusionRule(organization = "io.grpc")
+      ),
       "org.apache.avro" % "avro" % avroVersion,
       "com.google.cloud.datastore" % "datastore-v1-proto-client" % datastoreV1ProtoClientVersion,
       "com.google.http-client" % "google-http-client" % googleHttpClientsVersion,
@@ -1038,7 +1040,6 @@ lazy val `scio-examples`: Project = project
       "org.apache.httpcomponents" % "httpcore" % httpCoreVersion,
       "org.elasticsearch" % "elasticsearch" % elasticsearch7Version
     ),
-    beamSDKIODependencies,
     magnoliaDependencies,
     // exclude problematic sources if we don't have GCP credentials
     excludeFilter in unmanagedSources := {
@@ -1075,7 +1076,11 @@ lazy val `scio-repl`: Project = project
     crossScalaVersions += "2.13.1",
     libraryDependencies ++= Seq(
       "org.apache.beam" % "beam-runners-direct-java" % beamVersion,
-      "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion,
+      "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion excludeAll (
+        ExclusionRule("com.google.cloud", "google-cloud-spanner"),
+        ExclusionRule("com.google.cloud.bigtable", "bigtable-client-core"),
+        ExclusionRule("com.google.cloud", "google-cloud-core-grpc")
+      ),
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-extensions-google-cloud-platform-core" % beamVersion,
       "org.apache.avro" % "avro" % avroVersion,
@@ -1083,7 +1088,6 @@ lazy val `scio-repl`: Project = project
       "org.apache.commons" % "commons-text" % commonsTextVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       "org.slf4j" % "slf4j-simple" % slf4jVersion,
-      "jline" % "jline" % jlineVersion,
       "org.scala-lang" % "scala-compiler" % scalaVersion.value,
       "com.nrinaudo" %% "kantan.csv" % kantanCsvVersion
     ),
@@ -1307,29 +1311,24 @@ lazy val soccoSettings = if (sys.env.contains("SOCCO")) {
 }
 
 //strict should only be enabled when updating/adding depedencies
-//ThisBuild / conflictManager := ConflictManager.strict
+// ThisBuild / conflictManager := ConflictManager.strict
 //To update this list we need to check against the dependencies being evicted
 ThisBuild / dependencyOverrides ++= Seq(
+  "org.threeten" % "threetenbp" % "1.4.1",
+  "org.conscrypt" % "conscrypt-openjdk-uber" % "2.2.1",
   "com.fasterxml.jackson.core" % "jackson-annotations" % jacksonVersion,
   "com.fasterxml.jackson.core" % "jackson-core" % jacksonVersion,
   "com.fasterxml.jackson.core" % "jackson-databind" % jacksonVersion,
   "com.fasterxml.jackson.module" %% "jackson-module-scala" % jacksonVersion,
   "com.google.api-client" % "google-api-client" % googleClientsVersion,
-  "com.google.api.grpc" % "proto-google-cloud-bigquerystorage-v1beta1" % "0.85.1",
-  "com.google.api.grpc" % "proto-google-cloud-bigtable-v2" % generatedGrpcBetaVersion,
   "com.google.api.grpc" % "proto-google-cloud-datastore-v1" % generatedDatastoreProtoVersion,
   "com.google.api.grpc" % "proto-google-common-protos" % "1.17.0",
-  "com.google.api.grpc" % "proto-google-iam-v1" % "0.13.0",
-  "com.google.api" % "api-common" % "1.8.1",
   "com.google.api" % "gax-grpc" % gaxVersion,
   "com.google.api" % "gax" % gaxVersion,
-  "com.google.apis" % "google-api-services-bigquery" % "v2-rev20190917-1.30.3",
-  "com.google.apis" % "google-api-services-dataflow" % "v1b3-rev20190927-1.30.3",
   "com.google.apis" % "google-api-services-storage" % "v1-rev20181109-1.28.0",
   "com.google.auth" % "google-auth-library-credentials" % googleAuthVersion,
   "com.google.auth" % "google-auth-library-oauth2-http" % googleAuthVersion,
   "com.google.auto.value" % "auto-value-annotations" % autoValueVersion,
-  "com.google.auto.value" % "auto-value" % autoValueVersion,
   "com.google.cloud.bigdataoss" % "gcsio" % "2.0.1",
   "com.google.cloud.bigdataoss" % "util" % "2.0.1",
   "com.google.cloud" % "google-cloud-core-grpc" % "1.92.2",
@@ -1347,6 +1346,7 @@ ThisBuild / dependencyOverrides ++= Seq(
   "com.google.protobuf" % "protobuf-java-util" % protobufVersion,
   "com.google.protobuf" % "protobuf-java" % protobufVersion,
   "com.propensive" %% "magnolia" % magnoliaVersion,
+  "com.propensive" %% "mercator" % mercatorVersion,
   "com.squareup.okio" % "okio" % "1.13.0",
   "com.thoughtworks.paranamer" % "paranamer" % "2.8",
   "commons-cli" % "commons-cli" % "1.2",
@@ -1362,11 +1362,16 @@ ThisBuild / dependencyOverrides ++= Seq(
   "io.grpc" % "grpc-auth" % grpcVersion,
   "io.grpc" % "grpc-context" % grpcVersion,
   "io.grpc" % "grpc-core" % grpcVersion,
+  "io.grpc" % "grpc-netty" % grpcVersion,
+  "io.grpc" % "grpc-grpclb" % grpcVersion,
   "io.grpc" % "grpc-netty-shaded" % grpcVersion,
   "io.grpc" % "grpc-protobuf" % grpcVersion,
+  "io.grpc" % "grpc-protobuf-lite" % grpcVersion,
   "io.grpc" % "grpc-stub" % grpcVersion,
   "io.grpc" % "grpc-api" % grpcVersion,
   "io.grpc" % "grpc-alts" % grpcVersion,
+  "io.grpc" % "grpc-all" % grpcVersion,
+  "io.grpc" % "grpc-okhttp" % grpcVersion,
   "io.netty" % "netty-buffer" % nettyVersion,
   "io.netty" % "netty-codec-http" % nettyVersion,
   "io.netty" % "netty-codec-http2" % nettyVersion,
