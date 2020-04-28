@@ -579,12 +579,19 @@ lazy val `scio-test`: Project = project
   .configs(
     IntegrationTest
   )
+//  .dependsOn(
+//    `scio-core` % "test->test;compile->compile;it->it",
+//    `scio-schemas` % "test;it",
+//    `scio-avro` % "compile->test;it->it",
+//    `scio-sql` % "compile->test;it->it",
+//    `scio-bigquery` % "compile->test;it->it"
+//  )
   .dependsOn(
-    `scio-core` % "test->test;compile->compile;it->it",
-    `scio-schemas` % "test;it",
-    `scio-avro` % "compile->test;it->it",
-    `scio-sql` % "compile->test;it->it",
-    `scio-bigquery` % "compile->test;it->it"
+    `scio-core` % "compile->compile",
+    `scio-schemas` % "compile->compile",
+    `scio-avro` % "compile->compile",
+    `scio-sql` % "compile->compile",
+    `scio-bigquery` % "compile->compile"
   )
 
 lazy val `scio-macros`: Project = project

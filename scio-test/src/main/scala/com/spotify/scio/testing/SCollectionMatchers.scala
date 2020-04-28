@@ -274,7 +274,7 @@ trait SCollectionMatchers extends EqInstances {
    * running the checker only on the late pane for each key.
    */
   def inLatePane[T: ClassTag, B: ClassTag](
-      window: BoundedWindow
+    window: BoundedWindow
   )(matcher: MatcherBuilder[T]): Matcher[T] =
     matcher match {
       case value: SingleMatcher[T, _] =>

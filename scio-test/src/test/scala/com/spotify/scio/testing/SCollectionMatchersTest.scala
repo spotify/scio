@@ -604,7 +604,7 @@ class SCollectionMatchersTest extends PipelineSpec {
     val windowDuration = Duration.standardMinutes(10)
     val allowedLateness = Duration.standardMinutes(5)
     val stream = testStreamOf[Int]
-      // Start at the epoch
+    // Start at the epoch
       .advanceWatermarkTo(baseTime)
       // On-time element
       .addElements(
