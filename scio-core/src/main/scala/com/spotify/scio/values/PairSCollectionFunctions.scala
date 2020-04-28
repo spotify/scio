@@ -902,7 +902,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * the values.
    * @group transform
    */
-  def mapKeys[U: Coder](f: K => U)(implicit koder: Coder[K], voder: Coder[V]): SCollection[(U, V)] =
+  def mapKeys[U: Coder](f: K => U)(implicit voder: Coder[V]): SCollection[(U, V)] =
     self.map(kv => (f(kv._1), kv._2))
 
   /**
