@@ -135,7 +135,7 @@ package object annoy {
      * Gets maxNumResults nearest neighbors for vector v.
      */
     def getNearest(v: Array[Float], maxNumResults: Int): Seq[Int] =
-      index.getNearest(v, maxNumResults).asScala.asInstanceOf[Seq[Int]]
+      index.getNearest(v, maxNumResults).asScala.toSeq.asInstanceOf[Seq[Int]]
   }
 
   /** Enhanced version of [[ScioContext]] with Annoy methods. */

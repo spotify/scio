@@ -68,7 +68,7 @@ object MagnolifyBigtableWriteExample {
       .map {
         case (word, count) =>
           val mutations =
-            WordCountType(WordCount(count), columnFamily = "counts").to(Iterable)
+            WordCountType(WordCount(count), columnFamily = "counts").iterator.toIterable
           ByteString.copyFromUtf8(word) -> mutations
       }
       .saveAsBigtable(btProjectId, btInstanceId, btTableId)
