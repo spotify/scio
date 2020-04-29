@@ -335,11 +335,11 @@ final class CoderTest extends AnyFlatSpec with Matchers {
 
     implicit val coderRow = Coder.row(beamSchema)
     List[(jInt, jString, jDouble)]((1, "row", 1.0), (2, "row", 2.0), (3, "row", 3.0))
-        .map {
-          case (a, b, c) =>
-            Row.withSchema(beamSchema).addValues(a, b, c).build()
-        }
-        .foreach(r => r coderShould notFallback())
+      .map {
+        case (a, b, c) =>
+          Row.withSchema(beamSchema).addValues(a, b, c).build()
+      }
+      .foreach(r => r coderShould notFallback())
   }
 
   it should "Serialize objects" in {
