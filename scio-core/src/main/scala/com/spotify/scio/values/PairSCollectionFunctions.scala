@@ -28,6 +28,7 @@ import com.spotify.scio.util._
 import com.spotify.scio.util.random.{BernoulliValueSampler, PoissonValueSampler}
 import com.twitter.algebird.{Aggregator, Monoid, Semigroup}
 import org.apache.beam.sdk.transforms._
+import org.apache.beam.sdk.transforms.{View => BView}
 import org.apache.beam.sdk.values.{KV, PCollection, PCollectionView}
 import org.slf4j.LoggerFactory
 
@@ -1079,7 +1080,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
         input
           .apply(toKvTransform)
           .setCoder(CoderMaterializer.kvCoder[K, V](context))
-          .apply(View.asMap())
+          .apply(BView.asMap())
     })
     new MapSideInput[K, V](o)
   }
@@ -1102,7 +1103,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
           input
             .apply(toKvTransform)
             .setCoder(CoderMaterializer.kvCoder[K, V](context))
-            .apply(View.asMultimap())
+            .apply(BView.asMultimap())
       }
     )
     new MultiMapSideInput[K, V](o)
