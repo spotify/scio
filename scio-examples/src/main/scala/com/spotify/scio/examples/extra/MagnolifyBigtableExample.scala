@@ -30,7 +30,6 @@ import com.spotify.scio._
 import com.spotify.scio.bigtable._
 import com.spotify.scio.examples.common.ExampleData
 import magnolify.bigtable._
-import scala.collection.compat._
 
 object MagnolifyBigtableExample {
   // Define case class representation of TensorFlow `Example`

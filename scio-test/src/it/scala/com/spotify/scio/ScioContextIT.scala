@@ -71,7 +71,7 @@ class ScioContextIT extends AnyFlatSpec with Matchers {
     opts.setRunner(classOf[DataflowRunner])
     opts.as(classOf[GcpOptions]).setProject(ItUtils.project)
     val sc = ScioContext(opts)
-    val job = sc.parallelize(1 to 100)
+    sc.parallelize(1 to 100)
     val runner = DataflowRunner.fromOptions(sc.options)
     val packages =
       sc.options.as(classOf[DataflowPipelineDebugOptions]).getStager().stageDefaultFiles()

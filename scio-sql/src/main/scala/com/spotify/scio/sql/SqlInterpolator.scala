@@ -21,7 +21,6 @@ import com.spotify.scio.values.SCollection
 import com.spotify.scio.schemas.Schema
 import org.apache.beam.sdk.values.TupleTag
 
-import scala.language.experimental.macros
 import scala.reflect.macros.{blackbox, whitebox}
 import com.spotify.scio.schemas.SchemaMacroHelpers
 

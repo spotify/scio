@@ -18,7 +18,6 @@
 package com.spotify.scio.bigquery.validation
 
 import scala.annotation.{compileTimeOnly, StaticAnnotation}
-import scala.language.experimental.macros
 import scala.reflect.macros.blackbox
 
 // This shouldn't be necessary in most production use cases. However passing System properties from

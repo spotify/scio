@@ -154,6 +154,7 @@ class ScioILoop(command: CompilerCommand, scioClassLoader: ScioReplClassLoader, 
   private val scioCommands = List(newScioCmd, newLocalScioCmd, scioOptsCmd)
 
   // TODO: find way to inject those into power commands. For now unused.
+  // scalafix:ok
   private val scioPowerCommands = List(createJarCmd, getNextJarCmd, runScioCmd)
 
   override def commands: List[LoopCommand] = super.commands ++ scioCommands

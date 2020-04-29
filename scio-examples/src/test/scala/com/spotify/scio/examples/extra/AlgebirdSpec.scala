@@ -135,7 +135,7 @@ class AlgebirdSpec extends AnyPropSpec with ScalaCheckDrivenPropertyChecks with 
   // x or y could be NaN, Infinity or NegativeInfinity
   def error(x: Double, y: Double): Double = {
     val e = (x - y) / math.max(x, y)
-    if (e.isWhole()) e else 0.0
+    if (e.isWhole) e else 0.0
   }
 
   property("aggregate of tuples with custom Aggregator") {

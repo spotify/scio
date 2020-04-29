@@ -84,14 +84,14 @@ object BeamExample {
     val sc = ScioContext(opts)
 
     // Underlying Beam `Pipeline`
-    val pipeline: Pipeline = sc.pipeline
+    sc.pipeline
 
     // Custom input with a Beam source `PTransform`
     val accounts: SCollection[Account] =
       sc.customInput("Input", pubsubIn(args("inputTopic")))
 
-    // Underlying Beam `PCollection`
-    val p: PCollection[Account] = accounts.internal
+    // Underlying Beam `PCollection[Account]`
+    accounts.internal
 
     accounts
     // Beam `PTransform`
@@ -108,7 +108,7 @@ object BeamExample {
     // This calls sc.pipeline.run() under the hood
     val executedContext = sc.run()
 
-    // Underlying Beam pipeline result
-    val pipelineResult: PipelineResult = executedContext.pipelineResult
+    // Underlying Beam pipeline result `PipelineResult`
+    executedContext.pipelineResult
   }
 }
