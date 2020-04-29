@@ -898,6 +898,14 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     self.map(_._1)
 
   /**
+   * Pass each key in the key-value pair SCollection through a `map` function without changing
+   * the values.
+   * @group transform
+   */
+  def mapKeys[U: Coder](f: K => U)(implicit voder: Coder[V]): SCollection[(U, V)] =
+    self.map(kv => (f(kv._1), kv._2))
+
+  /**
    * Pass each value in the key-value pair SCollection through a `map` function without changing
    * the keys.
    * @group transform

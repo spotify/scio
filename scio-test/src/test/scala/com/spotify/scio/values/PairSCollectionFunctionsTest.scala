@@ -435,6 +435,13 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
     }
   }
 
+  it should "support mapKeys()" in {
+    runWithContext { sc =>
+      val p = sc.parallelize(Seq((1, "a"), (2, "b"))).mapKeys(_ + 10.0)
+      p should containInAnyOrder(Seq((11.0, "a"), (12.0, "b")))
+    }
+  }
+
   it should "support mapValues()" in {
     runWithContext { sc =>
       val p = sc.parallelize(Seq(("a", 1), ("b", 2))).mapValues(_ + 10.0)
