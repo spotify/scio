@@ -599,6 +599,53 @@ class SCollectionMatchersTest extends PipelineSpec {
     }
   }
 
+  it should "support late pane windowing" in {
+    val baseTime = new Instant(0)
+    val windowDuration = Duration.standardMinutes(10)
+    val allowedLateness = Duration.standardMinutes(5)
+    val stream = testStreamOf[Int]
+    // Start at the epoch
+      .advanceWatermarkTo(baseTime)
+      // On-time element
+      .addElements(
+        TimestampedValue.of(1, baseTime.plus(Duration.standardMinutes(1)))
+      )
+      // Advance watermark to the end of window
+      .advanceWatermarkTo(baseTime.plus(windowDuration))
+      .addElements(
+        // Late element in allowed lateness
+        TimestampedValue.of(2, baseTime.plus(Duration.standardMinutes(9)))
+      )
+      .advanceWatermarkToInfinity()
+
+    runWithContext { sc =>
+      val windowedStream = sc
+        .testStream(stream)
+        .withFixedWindows(
+          windowDuration,
+          options = WindowOptions(
+            trigger = AfterWatermark
+              .pastEndOfWindow()
+              .withLateFirings(
+                AfterProcessingTime.pastFirstElementInPane()
+              ),
+            accumulationMode = ACCUMULATING_FIRED_PANES,
+            allowedLateness = allowedLateness
+          )
+        )
+        .sum
+
+      val window = new IntervalWindow(baseTime, windowDuration)
+      windowedStream should inOnTimePane(window) {
+        containSingleValue(1)
+      }
+
+      windowedStream should inLatePane(window) {
+        containSingleValue(1 + 2)
+      }
+    }
+  }
+
   it should "customize equality" in {
     val in = 1 to 10
     val out = 2 to 11
