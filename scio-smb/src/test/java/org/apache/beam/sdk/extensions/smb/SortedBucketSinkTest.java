@@ -31,9 +31,13 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
+import org.apache.beam.sdk.Pipeline.PipelineExecutionException;
+import org.apache.beam.sdk.coders.Coder;
 import org.apache.beam.sdk.coders.StringUtf8Coder;
 import org.apache.beam.sdk.extensions.smb.SMBFilenamePolicy.FileAssignment;
 import org.apache.beam.sdk.extensions.smb.SortedBucketSink.WriteResult;
+import org.apache.beam.sdk.io.Compression;
+import org.apache.beam.sdk.io.FileIO.Sink;
 import org.apache.beam.sdk.io.FileSystems;
 import org.apache.beam.sdk.io.fs.EmptyMatchTreatment;
 import org.apache.beam.sdk.io.fs.MatchResult.Status;
@@ -43,6 +47,7 @@ import org.apache.beam.sdk.testing.PAssert;
 import org.apache.beam.sdk.testing.TestPipeline;
 import org.apache.beam.sdk.transforms.Create;
 import org.apache.beam.sdk.transforms.Reshuffle;
+import org.apache.beam.sdk.util.MimeTypes;
 import org.apache.beam.sdk.values.KV;
 import org.apache.beam.sdk.values.PCollection;
 import org.apache.beam.sdk.values.TupleTag;
@@ -200,6 +205,30 @@ public class SortedBucketSinkTest {
         Status.OK);
   }
 
+  @Test
+  @Category(NeedsRunner.class)
+  public void testWritesNoFilesIfPriorStepsFail() throws Exception {
+    // An exception will be thrown during the temp file write transform
+    final SortedBucketSink<String, String> sink =
+        new SortedBucketSink<>(
+            TestBucketMetadata.of(1, 1),
+            fromFolder(output),
+            fromFolder(temp),
+            ".txt",
+            new ExceptionThrowingFileOperations(),
+            1);
+
+    pipeline.apply(Create.of(Stream.of(input).collect(Collectors.toList()))).apply(sink);
+
+    try {
+      pipeline.run();
+    } catch (PipelineExecutionException ignored) {
+    }
+
+    Assert.assertEquals(0, temp.getRoot().listFiles().length);
+    Assert.assertEquals(0, output.getRoot().listFiles().length);
+  }
+
   private void test(
       int numBuckets, int numShards, SerializableConsumer<Map<BucketShardId, List<String>>> checkFn)
       throws Exception {
@@ -270,4 +299,25 @@ public class SortedBucketSinkTest {
   }
 
   private interface SerializableConsumer<T> extends Consumer<T>, Serializable {}
+
+  static class ExceptionThrowingFileOperations extends FileOperations<String> {
+    ExceptionThrowingFileOperations() {
+      super(Compression.UNCOMPRESSED, MimeTypes.TEXT);
+    }
+
+    @Override
+    protected Reader<String> createReader() {
+      throw new RuntimeException("Not implemented");
+    }
+
+    @Override
+    protected Sink<String> createSink() {
+      throw new RuntimeException();
+    }
+
+    @Override
+    public Coder<String> getCoder() {
+      return StringUtf8Coder.of();
+    }
+  }
 }

@@ -112,40 +112,30 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
                 IntStream.range(0, sourceSpec.leastNumBuckets).boxed().collect(Collectors.toList()))
             .withCoder(VarIntCoder.of());
 
-    final Create.Values<ResourceId> writeTempMetadata =
-        SortedBucketSink.WriteTempFiles.writeMetadataTransform(tempFileAssignment, bucketMetadata);
-
     @SuppressWarnings("deprecation")
     final Reshuffle.ViaRandomKey<Integer> reshuffle = Reshuffle.viaRandomKey();
 
-    return PCollectionTuple.of(
-            new TupleTag<>("TempMetadata"),
-            begin
-                .getPipeline()
-                .apply("WriteTempMetadata", writeTempMetadata)
-                .setCoder(ResourceIdCoder.of()))
-        .and(
-            new TupleTag<>("TempBuckets"),
-            begin
-                .getPipeline()
-                .apply("CreateBuckets", createBuckets)
-                .apply("ReshuffleKeys", reshuffle)
-                .apply(
-                    "MergeTransformWrite",
-                    ParDo.of(
-                        new MergeAndWriteBuckets<>(
-                            this.getName(),
-                            sources,
-                            sourceSpec,
-                            tempFileAssignment,
-                            fileOperations,
-                            bucketMetadata,
-                            transformFn)))
-                .setCoder(KvCoder.of(BucketShardIdCoder.of(), ResourceIdCoder.of())))
-        .apply(
-            "FinalizeTempFiles",
-            new SortedBucketSink.FinalizeTempFiles<>(
-                filenamePolicy.forDestination(), bucketMetadata, fileOperations));
+    return WriteResult.fromTuple(
+        begin
+            .getPipeline()
+            .apply("CreateBuckets", createBuckets)
+            .apply("ReshuffleKeys", reshuffle)
+            .apply(
+                "MergeTransformWrite",
+                ParDo.of(
+                    new MergeAndWriteBuckets<>(
+                        this.getName(),
+                        sources,
+                        sourceSpec,
+                        tempFileAssignment,
+                        fileOperations,
+                        bucketMetadata,
+                        transformFn)))
+            .setCoder(KvCoder.of(BucketShardIdCoder.of(), ResourceIdCoder.of()))
+            .apply(
+                "FinalizeTempFiles",
+                new SortedBucketSink.RenameBuckets<>(
+                    filenamePolicy.forDestination(), bucketMetadata, fileOperations)));
   }
 
   @FunctionalInterface
