@@ -17,7 +17,6 @@
 
 package com.spotify.scio.tensorflow.syntax
 
-import scala.language.implicitConversions
 import scala.reflect.ClassTag
 
 import org.apache.beam.sdk.io.Compression

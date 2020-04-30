@@ -10,14 +10,17 @@ set -o pipefail
 SOCCO=true sbt ++2.12.8 scio-examples/clean scio-examples/compile
 # using latest scala for scaladoc due to
 # https://github.com/scala/bug/issues/11635
-sbt site/makeSite
+sbt ++2.12.11 site/makeSite
 
 # push to GitHub
 while true; do
     read -p "Push site to GitHub? (y/n)" yn
     case $yn in
-        [Yy]* ) sbt site/ghpagesPushSite; break;;
-        [Nn]* ) exit;;
-        * ) echo "Please answer yes or no.";;
+    [Yy]*)
+        sbt site/ghpagesPushSite
+        break
+        ;;
+    [Nn]*) exit ;;
+    *) echo "Please answer yes or no." ;;
     esac
 done

@@ -42,9 +42,9 @@ object MetricsExample {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
 
     // Create and initialize counters from ScioContext
-    val ctxCount1 = sc.initCounter("ctxcount")
-    val ctxCount2 = sc.initCounter("namespace", "ctxcount")
-    val ctxCount3 = sc.initCounter(count)
+    sc.initCounter("ctxcount")
+    sc.initCounter("namespace", "ctxcount")
+    sc.initCounter(count)
 
     // ## Accessing metrics
     sc.parallelize(1 to 100)

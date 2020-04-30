@@ -175,8 +175,8 @@ class TypedBeamSQLTest extends PipelineSpec {
   }
 
   it should "support sub-queries" in runWithContext { sc =>
-    val a = sc.parallelize(users)
-    val b = sc.parallelize(users)
+    val a = sc.parallelize(users) // scalafix:ok
+    val b = sc.parallelize(users) // scalafix:ok
 
     """
     tsql"SELECT * FROM (SELECT * FROM $a) A INNER JOIN $b ON A.username = $b.username"
@@ -216,8 +216,7 @@ class TypedBeamSQLTest extends PipelineSpec {
     val orders: SCollection[j.Order] = sc.parallelize(os)
 
     // example taken from Beam's tests
-    val r: SCollection[(String, String)] =
-      tsql"""
+    tsql"""
         SELECT $customers.name, ('order id:' || CAST($orders.id AS VARCHAR))
         FROM $orders
         JOIN $customers ON $orders.customerId = $customers.id

@@ -22,7 +22,7 @@ import java.nio.channels.Channels
 import java.nio.charset.StandardCharsets
 
 import com.spotify.scio.util.ScioUtil
-import com.spotify.scio.repl.compat._
+import com.spotify.scio.repl.compat._ // scalafix:ok
 import kantan.csv.{rfc, RowDecoder, RowEncoder}
 import org.apache.avro.file.{DataFileStream, DataFileWriter}
 import org.apache.avro.generic.{GenericDatumReader, GenericDatumWriter, GenericRecord}

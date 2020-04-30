@@ -22,7 +22,6 @@ import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecord
 
 import scala.annotation.{compileTimeOnly, StaticAnnotation}
-import scala.language.experimental.macros
 import scala.reflect.runtime.universe._
 import scala.util.Try
 

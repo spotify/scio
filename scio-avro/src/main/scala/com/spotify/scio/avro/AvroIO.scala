@@ -330,7 +330,6 @@ object AvroTyped {
 
     override def tap(read: ReadP): Tap[T] = {
       val avroT = AvroType[T]
-      val bcoder = Coder.avroGenericRecordCoder(avroT.schema)
       GenericRecordTap(ScioUtil.addPartSuffix(path), avroT.schema)
         .map(avroT.fromGenericRecord)
     }

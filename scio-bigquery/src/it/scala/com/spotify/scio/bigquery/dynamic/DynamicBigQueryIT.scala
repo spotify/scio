@@ -56,13 +56,13 @@ class DynamicBigQueryIT extends AnyFlatSpec with Matchers {
   "Dynamic BigQuery" should "support typed output" in {
     val prefix = UUID.randomUUID().toString.replaceAll("-", "")
     val sc = ScioContext(options)
-    val coll = // Assigning the value to coll to workaround a bug in scalac...
-      sc.parallelize(1 to 10)
-        .map(newRecord)
-        .saveAsTypedBigQuery(WRITE_EMPTY, CREATE_IF_NEEDED) { v =>
-          val mod = v.getValue.key % 2
-          new TableDestination(tableRef(prefix, mod.toString), s"key % 10 == $mod")
-        }
+    // Assigning the value to coll to workaround a bug in scalac...
+    sc.parallelize(1 to 10)
+      .map(newRecord)
+      .saveAsTypedBigQuery(WRITE_EMPTY, CREATE_IF_NEEDED) { v =>
+        val mod = v.getValue.key % 2
+        new TableDestination(tableRef(prefix, mod.toString), s"key % 10 == $mod")
+      }
     sc.run()
 
     val expected = (1 to 10).map(newRecord).toSet
@@ -75,14 +75,14 @@ class DynamicBigQueryIT extends AnyFlatSpec with Matchers {
   it should "support TableRow output" in {
     val prefix = UUID.randomUUID().toString.replaceAll("-", "")
     val sc = ScioContext(options)
-    val coll = // Assigning the value to coll to workaround a bug in scalac...
-      sc.parallelize(1 to 10)
-        .map(newRecord)
-        .map(Record.toTableRow)
-        .saveAsBigQuery(Record.schema, WRITE_EMPTY, CREATE_IF_NEEDED) { v =>
-          val mod = v.getValue.get("key").toString.toInt % 2
-          new TableDestination(tableRef(prefix, mod.toString), s"key % 10 == $mod")
-        }
+    // Assigning the value to coll to workaround a bug in scalac...
+    sc.parallelize(1 to 10)
+      .map(newRecord)
+      .map(Record.toTableRow)
+      .saveAsBigQuery(Record.schema, WRITE_EMPTY, CREATE_IF_NEEDED) { v =>
+        val mod = v.getValue.get("key").toString.toInt % 2
+        new TableDestination(tableRef(prefix, mod.toString), s"key % 10 == $mod")
+      }
     sc.run()
 
     val expected = (1 to 10).map(newRecord).toSet

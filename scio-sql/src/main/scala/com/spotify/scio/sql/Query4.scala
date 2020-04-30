@@ -28,7 +28,6 @@ import org.apache.beam.sdk.extensions.sql.SqlTransform
 import org.apache.beam.sdk.extensions.sql.impl.ParseException
 import org.apache.beam.sdk.values._
 
-import scala.language.experimental.macros
 import scala.reflect.ClassTag
 
 final case class Query4[A, B, C, D, R](

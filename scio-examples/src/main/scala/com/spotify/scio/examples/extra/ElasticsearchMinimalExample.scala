@@ -66,7 +66,7 @@ object ElasticsearchMinimalExample {
       .saveAsElasticsearch(clusterOpts)(indexRequestBuilder)
 
     // Run pipeline
-    val result = sc.run().waitUntilFinish()
+    sc.run().waitUntilFinish()
   }
 
   private val indexer = (index: String) =>

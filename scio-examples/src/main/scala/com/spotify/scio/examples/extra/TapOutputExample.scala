@@ -58,7 +58,7 @@ object TapOutputExample {
     // Second job and its associated `ScioContext`
     val (sc2, _) = ContextAndArgs(cmdlineArgs)
     // Re-open taps in new `ScioContext`
-    val s = (t1.open(sc2) ++ t2.open(sc2).map(_.toInt)).sum
+    (t1.open(sc2) ++ t2.open(sc2).map(_.toInt)).sum
     // Execute the pipeline and block until it completes
     val result = sc2.run().waitUntilFinish()
 
