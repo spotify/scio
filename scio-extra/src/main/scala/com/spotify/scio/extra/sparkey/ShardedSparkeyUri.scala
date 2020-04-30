@@ -25,7 +25,7 @@ import com.spotify.scio.util.{RemoteFileUtil, ScioUtil}
 import com.spotify.sparkey.SparkeyReader
 import com.spotify.sparkey.extra.ThreadLocalSparkeyReader
 import org.apache.beam.sdk.io.FileSystems
-import org.apache.beam.sdk.io.fs.MatchResult
+import org.apache.beam.sdk.io.fs.{EmptyMatchTreatment, MatchResult}
 import org.apache.beam.sdk.options.PipelineOptions
 
 import scala.collection.JavaConverters._
@@ -49,9 +49,12 @@ trait ShardedSparkeyUri extends SparkeyUri {
 
   val globExpression = s"$basePath/part-*"
 
-  private[sparkey] def basePathsAndCount(): (Seq[String], Short) = {
-    val matchResult: MatchResult = FileSystems.`match`(globExpression)
+  private[sparkey] def basePathsAndCount(
+    emptyMatchTreatment: EmptyMatchTreatment
+  ): (Seq[String], Short) = {
+    val matchResult: MatchResult = FileSystems.`match`(globExpression, emptyMatchTreatment)
     val paths = matchResult.metadata().asScala.map(_.resourceId.toString)
+
     val indexPaths = paths.filter(_.endsWith(".spi")).sorted
 
     val allStartParts = indexPaths.map(ShardedSparkeyUri.shardIndexFromPath)
@@ -108,12 +111,12 @@ private[sparkey] object ShardedSparkeyUri {
 
 private case class LocalShardedSparkeyUri(basePath: String) extends ShardedSparkeyUri {
   override def getReader: ShardedSparkeyReader = {
-    val (basePaths, numShards) = basePathsAndCount()
+    val (basePaths, numShards) = basePathsAndCount(EmptyMatchTreatment.DISALLOW)
     new ShardedSparkeyReader(ShardedSparkeyUri.localReadersByShard(basePaths), numShards)
   }
 
   override private[sparkey] def exists: Boolean =
-    basePathsAndCount()._1
+    basePathsAndCount(EmptyMatchTreatment.ALLOW)._1
       .exists(path => SparkeyUri.extensions.map(e => new File(path + e)).exists(_.exists))
 
   override def sparkeyUriForShard(shardIndex: Short, numShards: Short): LocalSparkeyUri =
@@ -123,7 +126,7 @@ private case class LocalShardedSparkeyUri(basePath: String) extends ShardedSpark
 private case class RemoteShardedSparkeyUri(basePath: String, rfu: RemoteFileUtil)
     extends ShardedSparkeyUri {
   override def getReader: ShardedSparkeyReader = {
-    val (basePaths, numShards) = basePathsAndCount()
+    val (basePaths, numShards) = basePathsAndCount(EmptyMatchTreatment.DISALLOW)
 
     // This logic is copied here so we can download all of the relevant shards in parallel.
     val paths = rfu
@@ -148,6 +151,6 @@ private case class RemoteShardedSparkeyUri(basePath: String, rfu: RemoteFileUtil
     RemoteSparkeyUri(basePathForShard(shardIndex, numShards), rfu)
 
   override private[sparkey] def exists: Boolean =
-    basePathsAndCount()._1
+    basePathsAndCount(EmptyMatchTreatment.ALLOW)._1
       .exists(path => SparkeyUri.extensions.exists(e => rfu.remoteExists(new URI(path + e))))
 }
