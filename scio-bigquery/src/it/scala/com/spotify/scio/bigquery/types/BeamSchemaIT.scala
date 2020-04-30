@@ -98,7 +98,7 @@ final class BeamSchemaIT extends AnyFlatSpec with Matchers {
 
     val closedTap = sc
       .parallelize(AlienExpected)
-      .saveAsBigQuery(table, writeDisposition = WriteDisposition.WRITE_TRUNCATE)
+      .saveAsBigQueryTable(table, writeDisposition = WriteDisposition.WRITE_TRUNCATE)
     val result = sc.run().waitUntilDone()
 
     val (readContext, _) = ContextAndArgs(args)
