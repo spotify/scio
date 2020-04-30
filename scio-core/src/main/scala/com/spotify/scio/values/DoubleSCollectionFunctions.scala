@@ -170,7 +170,7 @@ class DoubleSCollectionFunctions(self: SCollection[Double]) {
     self.context
       .parallelize(Seq(0))
       .withSideInputs(bSide, hSide)
-      .map { (z, c) =>
+      .map { (_, c) =>
         val h = c(hSide)
         if (h.isEmpty) {
           Array.fill(c(bSide))(0L)

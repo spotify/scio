@@ -77,7 +77,7 @@ final private class ViewImpl[T, U, V, W <: BoundedWindow](
   override def hashCode(): Int = ju.Objects.hash(tag)
 
   override def equals(obj: Any): Boolean = obj match {
-    case o: PCollectionView[V] =>
+    case _: PCollectionView[V] =>
       tag.equals(obj.asInstanceOf[PCollectionView[T]].getTagInternal())
     case _ =>
       false

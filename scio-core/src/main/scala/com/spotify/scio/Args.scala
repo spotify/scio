@@ -46,7 +46,8 @@ object Args {
         (k, Splitter.onPattern(",(?=([^\"]*\"[^\"]*\")*[^\"]*$)").split(v).asScala)
       }
       .groupBy(_._1)
-      .mapValues(_.flatMap(_._2).toList)
+      .iterator
+      .map { case (k, v) => k -> v.flatMap(_._2).toList }
       .toMap
 
     val booleanMap: Map[String, List[String]] =
