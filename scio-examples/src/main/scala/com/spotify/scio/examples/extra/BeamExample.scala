@@ -33,7 +33,6 @@ import org.apache.beam.sdk.options.PipelineOptions
 import org.apache.beam.sdk.transforms.windowing._
 import org.apache.beam.sdk.transforms.{PTransform, Sum}
 import org.apache.beam.sdk.values._
-import org.apache.beam.sdk.{Pipeline, PipelineResult}
 import org.joda.time.Duration
 
 object BeamExample {
