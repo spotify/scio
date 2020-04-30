@@ -354,12 +354,11 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * some cases.
    * @group transform
    */
-  def aggregate[A: Coder, U: Coder](
-    aggregator: Aggregator[T, A, U]
-  )(implicit coder: Coder[T]): SCollection[U] = this.transform { in =>
-    val a = aggregator // defeat closure
-    in.map(a.prepare).sum(a.semigroup, Coder[A]).map(a.present)
-  }
+  def aggregate[A: Coder, U: Coder](aggregator: Aggregator[T, A, U]): SCollection[U] =
+    this.transform { in =>
+      val a = aggregator // defeat closure
+      in.map(a.prepare).sum(a.semigroup, Coder[A]).map(a.present)
+    }
 
   /**
    * Filter the elements for which the given `PartialFunction` is defined, and then map.
@@ -610,9 +609,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @return split SCollections in an array
    * @group transform
    */
-  def randomSplit(
-    weights: Array[Double]
-  )(implicit coder: Coder[T], ct: ClassTag[T]): Array[SCollection[T]] = {
+  def randomSplit(weights: Array[Double])(implicit coder: Coder[T]): Array[SCollection[T]] = {
     val sum = weights.sum
     val normalizedCumWeights = weights.map(_ / sum).scanLeft(0.0d)(_ + _)
     val m = TreeMap(normalizedCumWeights.zipWithIndex: _*) // Map[lower bound, split]
@@ -639,9 +636,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @return split SCollections in a Tuple2
    * @group transform
    */
-  def randomSplit(
-    weight: Double
-  )(implicit coder: Coder[T], ct: ClassTag[T]): (SCollection[T], SCollection[T]) = {
+  def randomSplit(weight: Double)(implicit coder: Coder[T]): (SCollection[T], SCollection[T]) = {
     require(weight > 0.0 && weight < 1.0)
     val splits = randomSplit(Array(weight, 1d - weight))
     (splits(0), splits(1))
@@ -656,10 +651,9 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @return split SCollections in a Tuple3
    * @group transform
    */
-  def randomSplit(
-    weightA: Double,
-    weightB: Double
-  )(implicit coder: Coder[T], ct: ClassTag[T]): (SCollection[T], SCollection[T], SCollection[T]) = {
+  def randomSplit(weightA: Double, weightB: Double)(
+    implicit coder: Coder[T]
+  ): (SCollection[T], SCollection[T], SCollection[T]) = {
     require(weightA > 0.0 && weightB > 0.0 && (weightA + weightB) < 1.0)
     val splits = randomSplit(Array(weightA, weightB, 1d - (weightA + weightB)))
     (splits(0), splits(1), splits(2))
