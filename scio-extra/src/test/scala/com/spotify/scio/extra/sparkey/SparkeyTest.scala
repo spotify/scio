@@ -168,6 +168,30 @@ class SparkeyTest extends PipelineSpec {
     }
   }
 
+  it should "support .asSparkey with specified local file and shards" in {
+    val tmpDir = Files.createTempDirectory("sparkey-test-")
+    val basePath = tmpDir.resolve("new-sharded")
+    Files.createDirectory(basePath)
+    runWithContext(sc => sc.parallelize(bigSideData).asSparkey(basePath.toString, numShards=2))
+
+    val allSparkeyFiles = FileSystems
+      .`match`(s"$basePath/part-*")
+      .metadata
+      .asScala
+      .map(_.resourceId.toString)
+
+    val basePaths = allSparkeyFiles.map(_.replaceAll("\\.sp[il]$", "")).toSet
+    basePaths.size shouldBe 2
+
+    val readers = basePaths.map(basePath => Sparkey.open(new File(basePath)))
+    readers.map(_.toMap.toList.toMap).reduce(_ ++ _) shouldBe bigSideData.toMap
+
+
+    for (ext <- allSparkeyFiles) {
+      new File(basePath + ext).delete()
+    }
+  }
+
   it should "throw exception when Sparkey file exists" in {
     val tmpDir = Files.createTempDirectory("sparkey-test-")
     val basePath = tmpDir.resolve("sparkey").toString

@@ -25,7 +25,8 @@ import com.spotify.scio.util.{RemoteFileUtil, ScioUtil}
 import com.spotify.sparkey.SparkeyReader
 import com.spotify.sparkey.extra.ThreadLocalSparkeyReader
 import org.apache.beam.sdk.io.FileSystems
-import org.apache.beam.sdk.io.fs.MatchResult
+import org.apache.beam.sdk.io.fs.EmptyMatchTreatment.DISALLOW
+import org.apache.beam.sdk.io.fs.{EmptyMatchTreatment, MatchResult}
 import org.apache.beam.sdk.options.PipelineOptions
 
 import scala.collection.JavaConverters._
@@ -49,9 +50,11 @@ trait ShardedSparkeyUri extends SparkeyUri {
 
   val globExpression = s"$basePath/part-*"
 
-  private[sparkey] def basePathsAndCount(): (Seq[String], Short) = {
-    val matchResult: MatchResult = FileSystems.`match`(globExpression)
+  private[sparkey] def basePathsAndCount(emptyMatchTreatment: EmptyMatchTreatment = DISALLOW):
+  (Seq[String], Short) = {
+    val matchResult: MatchResult = FileSystems.`match`(globExpression, emptyMatchTreatment)
     val paths = matchResult.metadata().asScala.map(_.resourceId.toString)
+
     val indexPaths = paths.filter(_.endsWith(".spi")).sorted
 
     val allStartParts = indexPaths.map(ShardedSparkeyUri.shardIndexFromPath)
@@ -113,7 +116,7 @@ private case class LocalShardedSparkeyUri(basePath: String) extends ShardedSpark
   }
 
   override private[sparkey] def exists: Boolean =
-    basePathsAndCount()._1
+    basePathsAndCount(EmptyMatchTreatment.ALLOW)._1
       .exists(path => SparkeyUri.extensions.map(e => new File(path + e)).exists(_.exists))
 
   override def sparkeyUriForShard(shardIndex: Short, numShards: Short): LocalSparkeyUri =
@@ -148,6 +151,6 @@ private case class RemoteShardedSparkeyUri(basePath: String, rfu: RemoteFileUtil
     RemoteSparkeyUri(basePathForShard(shardIndex, numShards), rfu)
 
   override private[sparkey] def exists: Boolean =
-    basePathsAndCount()._1
+    basePathsAndCount(EmptyMatchTreatment.ALLOW)._1
       .exists(path => SparkeyUri.extensions.exists(e => rfu.remoteExists(new URI(path + e))))
 }
