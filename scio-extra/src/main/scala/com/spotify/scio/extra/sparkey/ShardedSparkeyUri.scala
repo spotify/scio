@@ -50,8 +50,9 @@ trait ShardedSparkeyUri extends SparkeyUri {
 
   val globExpression = s"$basePath/part-*"
 
-  private[sparkey] def basePathsAndCount(emptyMatchTreatment: EmptyMatchTreatment = DISALLOW):
-  (Seq[String], Short) = {
+  private[sparkey] def basePathsAndCount(
+    emptyMatchTreatment: EmptyMatchTreatment = DISALLOW
+  ): (Seq[String], Short) = {
     val matchResult: MatchResult = FileSystems.`match`(globExpression, emptyMatchTreatment)
     val paths = matchResult.metadata().asScala.map(_.resourceId.toString)
 

@@ -172,7 +172,7 @@ class SparkeyTest extends PipelineSpec {
     val tmpDir = Files.createTempDirectory("sparkey-test-")
     val basePath = tmpDir.resolve("new-sharded")
     Files.createDirectory(basePath)
-    runWithContext(sc => sc.parallelize(bigSideData).asSparkey(basePath.toString, numShards=2))
+    runWithContext(sc => sc.parallelize(bigSideData).asSparkey(basePath.toString, numShards = 2))
 
     val allSparkeyFiles = FileSystems
       .`match`(s"$basePath/part-*")
@@ -185,7 +185,6 @@ class SparkeyTest extends PipelineSpec {
 
     val readers = basePaths.map(basePath => Sparkey.open(new File(basePath)))
     readers.map(_.toMap.toList.toMap).reduce(_ ++ _) shouldBe bigSideData.toMap
-
 
     for (ext <- allSparkeyFiles) {
       new File(basePath + ext).delete()
