@@ -80,7 +80,7 @@ object TableAdmin {
    */
   def ensureTables(
     bigtableOptions: BigtableOptions,
-    tablesAndColumnFamilies: Map[String, List[String]]
+    tablesAndColumnFamilies: Map[String, Iterable[String]]
   ): Unit = {
     val tcf = tablesAndColumnFamilies.iterator.map {
       case (k, l) => k -> l.map(_ -> None)
@@ -93,17 +93,17 @@ object TableAdmin {
    * Checks for existence of tables or creates them if they do not exist.  Also checks for
    * existence of column families within each table and creates them if they do not exist.
    *
-   * @param tablesAndColumnFamiliesWithExpiration A map of tables and column families.
-   *                                              Keys are table names. Values are a
-   *                                              list of column family names along with
-   *                                              the desired cell expiration. Cell
-   *                                              expiration is the duration before which
-   *                                              garbage collection of a cell may occur.
-   *                                              Note: minimum granularity is second.
+   * @param tablesAndColumnFamilies A map of tables and column families.
+   *                                Keys are table names. Values are a
+   *                                list of column family names along with
+   *                                the desired cell expiration. Cell
+   *                                expiration is the duration before which
+   *                                garbage collection of a cell may occur.
+   *                                Note: minimum granularity is one second.
    */
   def ensureTablesWithExpiration(
     bigtableOptions: BigtableOptions,
-    tablesAndColumnFamilies: Map[String, List[(String, Option[Duration])]]
+    tablesAndColumnFamilies: Map[String, Iterable[(String, Option[Duration])]]
   ): Unit = {
     // Convert Duration to GcRule
     val x = tablesAndColumnFamilies.iterator.map {
@@ -127,7 +127,7 @@ object TableAdmin {
    */
   def ensureTablesWithGcRules(
     bigtableOptions: BigtableOptions,
-    tablesAndColumnFamilies: Map[String, List[(String, Option[GcRule])]]
+    tablesAndColumnFamilies: Map[String, Iterable[(String, Option[GcRule])]]
   ): Unit =
     ensureTablesImpl(bigtableOptions, tablesAndColumnFamilies).get
 
@@ -141,7 +141,7 @@ object TableAdmin {
    */
   private def ensureTablesImpl(
     bigtableOptions: BigtableOptions,
-    tablesAndColumnFamilies: Map[String, List[(String, Option[GcRule])]]
+    tablesAndColumnFamilies: Map[String, Iterable[(String, Option[GcRule])]]
   ): Try[Unit] = {
     val project = bigtableOptions.getProjectId
     val instance = bigtableOptions.getInstanceId
@@ -185,7 +185,7 @@ object TableAdmin {
   private def ensureColumnFamilies(
     client: BigtableTableAdminClient,
     tablePath: String,
-    columnFamilies: List[(String, Option[GcRule])]
+    columnFamilies: Iterable[(String, Option[GcRule])]
   ): Unit = {
     val tableInfo =
       client.getTable(GetTableRequest.newBuilder().setName(tablePath).build)
