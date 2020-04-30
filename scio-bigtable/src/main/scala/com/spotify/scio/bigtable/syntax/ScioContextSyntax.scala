@@ -129,7 +129,7 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
   def ensureTables(
     projectId: String,
     instanceId: String,
-    tablesAndColumnFamilies: Map[String, List[String]]
+    tablesAndColumnFamilies: Map[String, Iterable[String]]
   ): Unit =
     if (!self.isTest) {
       val bigtableOptions = BigtableOptions
@@ -150,7 +150,7 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
    */
   def ensureTables(
     bigtableOptions: BigtableOptions,
-    tablesAndColumnFamilies: Map[String, List[String]]
+    tablesAndColumnFamilies: Map[String, Iterable[String]]
   ): Unit =
     if (!self.isTest) {
       TableAdmin.ensureTables(bigtableOptions, tablesAndColumnFamilies)
@@ -172,7 +172,7 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
   def ensureTablesWithExpiration(
     projectId: String,
     instanceId: String,
-    tablesAndColumnFamiliesWithExpiration: Map[String, List[(String, Option[Duration])]]
+    tablesAndColumnFamiliesWithExpiration: Map[String, Iterable[(String, Option[Duration])]]
   ): Unit =
     if (!self.isTest) {
       val bigtableOptions = BigtableOptions
@@ -201,7 +201,7 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
    */
   def ensureTablesWithExpiration(
     bigtableOptions: BigtableOptions,
-    tablesAndColumnFamiliesWithExpiration: Map[String, List[(String, Option[Duration])]]
+    tablesAndColumnFamiliesWithExpiration: Map[String, Iterable[(String, Option[Duration])]]
   ): Unit =
     if (!self.isTest) {
       TableAdmin.ensureTablesWithExpiration(
@@ -222,7 +222,7 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
   def ensureTablesWithGcRules(
     projectId: String,
     instanceId: String,
-    tablesAndColumnFamiliesWithGcRules: Map[String, List[(String, Option[GcRule])]]
+    tablesAndColumnFamiliesWithGcRules: Map[String, Iterable[(String, Option[GcRule])]]
   ): Unit =
     if (!self.isTest) {
       val bigtableOptions = BigtableOptions
@@ -251,7 +251,7 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
    */
   def ensureTablesWithGcRules(
     bigtableOptions: BigtableOptions,
-    tablesAndColumnFamiliesWithGcRule: Map[String, List[(String, Option[GcRule])]]
+    tablesAndColumnFamiliesWithGcRule: Map[String, Iterable[(String, Option[GcRule])]]
   ): Unit =
     if (!self.isTest) {
       TableAdmin.ensureTablesWithGcRules(
