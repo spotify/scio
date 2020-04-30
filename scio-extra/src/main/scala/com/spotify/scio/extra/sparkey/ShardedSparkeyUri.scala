@@ -25,7 +25,6 @@ import com.spotify.scio.util.{RemoteFileUtil, ScioUtil}
 import com.spotify.sparkey.SparkeyReader
 import com.spotify.sparkey.extra.ThreadLocalSparkeyReader
 import org.apache.beam.sdk.io.FileSystems
-import org.apache.beam.sdk.io.fs.EmptyMatchTreatment.DISALLOW
 import org.apache.beam.sdk.io.fs.{EmptyMatchTreatment, MatchResult}
 import org.apache.beam.sdk.options.PipelineOptions
 
@@ -51,7 +50,7 @@ trait ShardedSparkeyUri extends SparkeyUri {
   val globExpression = s"$basePath/part-*"
 
   private[sparkey] def basePathsAndCount(
-    emptyMatchTreatment: EmptyMatchTreatment = DISALLOW
+    emptyMatchTreatment: EmptyMatchTreatment
   ): (Seq[String], Short) = {
     val matchResult: MatchResult = FileSystems.`match`(globExpression, emptyMatchTreatment)
     val paths = matchResult.metadata().asScala.map(_.resourceId.toString)
@@ -112,7 +111,7 @@ private[sparkey] object ShardedSparkeyUri {
 
 private case class LocalShardedSparkeyUri(basePath: String) extends ShardedSparkeyUri {
   override def getReader: ShardedSparkeyReader = {
-    val (basePaths, numShards) = basePathsAndCount()
+    val (basePaths, numShards) = basePathsAndCount(EmptyMatchTreatment.DISALLOW)
     new ShardedSparkeyReader(ShardedSparkeyUri.localReadersByShard(basePaths), numShards)
   }
 
@@ -127,7 +126,7 @@ private case class LocalShardedSparkeyUri(basePath: String) extends ShardedSpark
 private case class RemoteShardedSparkeyUri(basePath: String, rfu: RemoteFileUtil)
     extends ShardedSparkeyUri {
   override def getReader: ShardedSparkeyReader = {
-    val (basePaths, numShards) = basePathsAndCount()
+    val (basePaths, numShards) = basePathsAndCount(EmptyMatchTreatment.DISALLOW)
 
     // This logic is copied here so we can download all of the relevant shards in parallel.
     val paths = rfu
