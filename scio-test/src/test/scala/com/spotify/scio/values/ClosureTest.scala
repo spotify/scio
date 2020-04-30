@@ -134,8 +134,7 @@ class NestedClosuresNotSerializable {
   val irrelevantInt: Int = 1
   def closure(name: String)(body: => Int => Int): Int => Int = body
   def getMapFn: Int => Int = closure("one") {
-    // scalafix:ok
-    def x = irrelevantInt
+    def x = irrelevantInt // scalafix:ok
     def y = 2
     val fn = { a: Int => a + y }
     fn
