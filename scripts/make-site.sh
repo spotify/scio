@@ -14,10 +14,10 @@ sbt ++2.12.11 site/makeSite
 
 # push to GitHub
 while true; do
-    read -p "Push site to GitHub? (y/n)" yn
+    read -r -p "Push site to GitHub? (y/n)" yn
     case $yn in
     [Yy]*)
-        sbt site/ghpagesPushSite
+        sbt ++2.12.11 site/ghpagesPushSite
         break
         ;;
     [Nn]*) exit ;;
