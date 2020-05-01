@@ -18,6 +18,7 @@
 package com.spotify.scio.values
 
 import com.spotify.scio.testing.PipelineSpec
+import com.spotify.scio.values.{View => SView}
 import org.apache.beam.sdk.transforms.{View => BView}
 import org.joda.time.{DateTimeConstants, Duration, Instant}
 
@@ -220,7 +221,7 @@ class SCollectionWithSideInputTest extends PipelineSpec {
         .flatMap(x => 1 to x)
         .asListSideInput
       val s = p1.withSideInputs(p2).map((x, s) => (x, s(p2))).toSCollection
-      s should forAll[(Int, Seq[Int])](t => (1 to t._1).toSet == t._2.toSet)
+      s should forAll[(Int, List[Int])](t => (1 to t._1).toSet == t._2.toSet)
     }
   }
 
@@ -291,7 +292,7 @@ class SCollectionWithSideInputTest extends PipelineSpec {
     runWithContext { sc =>
       val p1 = sc.parallelize(Seq(1))
       val i2 = sc.parallelize(Seq(sideData)).internal.apply(BView.asSingleton())
-      val p2 = SideInput.wrapSingleton(i2)
+      val p2 = SideInput(i2)
       val s = p1.withSideInputs(p2).map((i, s) => (i, s(p2))).toSCollection
       s should containSingleValue((1, sideData))
     }
@@ -300,9 +301,9 @@ class SCollectionWithSideInputTest extends PipelineSpec {
   it should "allow to wrap a view of a List" in {
     runWithContext { sc =>
       val p1 = sc.parallelize(Seq(1))
-      val i2 = sc.parallelize(sideData).internal.apply(BView.asList())
-      val p2 = SideInput.wrapList(i2)
-      val s = p1.withSideInputs(p2).flatMap((i, s) => s(p2)).toSCollection
+      val i2 = sc.parallelize(sideData).applyInternal(SView.asScalaList)
+      val p2 = SideInput(i2)
+      val s = p1.withSideInputs(p2).flatMap((_, s) => s(p2)).toSCollection
       s should containInAnyOrder(sideData)
     }
   }
@@ -310,9 +311,9 @@ class SCollectionWithSideInputTest extends PipelineSpec {
   it should "allow to wrap a view of a Iterable" in {
     runWithContext { sc =>
       val p1 = sc.parallelize(Seq(1))
-      val i2 = sc.parallelize(sideData).internal.apply(BView.asIterable())
-      val p2 = SideInput.wrapIterable(i2)
-      val s = p1.withSideInputs(p2).flatMap((i, s) => s(p2)).toSCollection
+      val i2 = sc.parallelize(sideData).applyInternal(SView.asScalaIterable)
+      val p2 = SideInput(i2)
+      val s = p1.withSideInputs(p2).flatMap((_, s) => s(p2)).toSCollection
       s should containInAnyOrder(sideData)
     }
   }
@@ -320,8 +321,8 @@ class SCollectionWithSideInputTest extends PipelineSpec {
   it should "allow to wrap a view of a Map" in {
     runWithContext { sc =>
       val p1 = sc.parallelize(Seq(1))
-      val i2 = sc.parallelize(sideData).toKV.internal.apply(BView.asMap())
-      val p2 = SideInput.wrapMap(i2)
+      val i2 = sc.parallelize(sideData).applyInternal(SView.asScalaMap)
+      val p2 = SideInput(i2)
       val s = p1.withSideInputs(p2).flatMap((i, s) => s(p2).toSeq).toSCollection
       s should containInAnyOrder(sideData)
     }
@@ -332,10 +333,8 @@ class SCollectionWithSideInputTest extends PipelineSpec {
       val p1 = sc.parallelize(Seq(1))
       val i2 =
         sc.parallelize(sideData ++ sideData.map(kv => (kv._1, kv._2 + 10)))
-          .toKV
-          .internal
-          .apply(BView.asMultimap())
-      val p2 = SideInput.wrapMultiMap(i2)
+          .applyInternal(SView.asScalaMultimap)
+      val p2 = SideInput(i2)
       val s = p1
         .withSideInputs(p2)
         .flatMap((i, s) => s(p2).mapValues(_.toSet))
@@ -376,7 +375,7 @@ class SCollectionWithSideInputTest extends PipelineSpec {
         .asListSideInput
         .map(seq => seq.map(_ * 2))
       val s = p1.withSideInputs(p2).map((x, s) => (x, s(p2))).toSCollection
-      s should forAll[(Int, Seq[Int])](t => (1 to t._1).map(_ * 2).toSet == t._2.toSet)
+      s should forAll[(Int, List[Int])](t => (1 to t._1).map(_ * 2).toSet == t._2.toSet)
     }
   }
 }

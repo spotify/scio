@@ -260,6 +260,7 @@ package object annoy {
 
   private class AnnoySideInput(val view: PCollectionView[AnnoyUri], metric: AnnoyMetric, dim: Int)
       extends SideInput[AnnoyReader] {
+    override type ViewType = AnnoyUri
     override def get[I, O](context: DoFn[I, O]#ProcessContext): AnnoyReader =
       context.sideInput(view).getReader(metric, dim)
   }

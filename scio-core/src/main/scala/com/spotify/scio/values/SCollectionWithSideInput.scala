@@ -100,9 +100,9 @@ class SCollectionWithSideInput[T: Coder] private[values] (
         val g = ClosureCleaner.clean(f) // defeat closure
 
         @ProcessElement
-        private[scio] def processElement(c: DoFn[T, T]#ProcessContext, w: BoundedWindow): Unit = {
+        private[scio] def processElement(c: DoFn[T, T]#ProcessContext): Unit = {
           val elem = c.element()
-          val partition = g(elem, sideInputContext(c, w))
+          val partition = g(elem, sideInputContext(c))
           if (!partitions.exists(_.tupleTag == partition.tupleTag)) {
             throw new IllegalStateException(s"""${partition.tupleTag.getId} is not part of
             ${partitions.map(_.tupleTag.getId).mkString}""")

@@ -29,6 +29,7 @@ import com.spotify.scio.schemas.{Schema, SchemaMaterializer, To}
 import com.spotify.scio.testing.TestDataManager
 import com.spotify.scio.util._
 import com.spotify.scio.util.random.{BernoulliSampler, PoissonSampler}
+import com.spotify.scio.values.{View => SView}
 import com.twitter.algebird.{Aggregator, Monoid, Semigroup}
 import org.apache.avro.file.CodecFactory
 import org.apache.beam.sdk.coders.{Coder => BCoder}
@@ -805,7 +806,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @group side
    */
   def asSingletonSideInput: SideInput[T] =
-    new SingletonSideInput[T](this.applyInternal(BView.asSingleton()))
+    SideInput(this.applyInternal(BView.asSingleton()))
 
   /**
    * Convert this SCollection of a single value per window to a [[SideInput]] with a default value,
@@ -813,9 +814,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @group side
    */
   def asSingletonSideInput(defaultValue: T): SideInput[T] =
-    new SingletonSideInput[T](
-      this.applyInternal(BView.asSingleton().withDefaultValue(defaultValue))
-    )
+    SideInput(this.applyInternal(BView.asSingleton().withDefaultValue(defaultValue)))
 
   /**
    * Convert this SCollection to a [[SideInput]], mapping each window to a `Seq`, to be used with
@@ -826,8 +825,10 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    */
   // j.u.List#asScala returns s.c.mutable.Buffer which has an O(n) .toList method
   // returning Seq[T] here to avoid copying
-  def asListSideInput: SideInput[Seq[T]] =
-    new ListSideInput[T](this.applyInternal(BView.asList()))
+  def asListSideInput: SideInput[List[T]] =
+    SideInput(
+      this.applyInternal(SView.asScalaList(Coder.beam(this.internal.getCoder())))
+    )
 
   /**
    * Convert this SCollection to a [[SideInput]], mapping each window to an `Iterable`, to be used
@@ -839,7 +840,9 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @group side
    */
   def asIterableSideInput: SideInput[Iterable[T]] =
-    new IterableSideInput[T](this.applyInternal(BView.asIterable()))
+    SideInput(
+      this.applyInternal(SView.asScalaIterable(Coder.beam(this.internal.getCoder())))
+    )
 
   /**
    * Convert this SCollection to a [[SideInput]], mapping each window to a `Set[T]`, to be used
