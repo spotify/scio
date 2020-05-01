@@ -83,7 +83,7 @@ final class SCollectionTableRowOps[T <: TableRow](private val self: SCollection[
 }
 
 final class SCollectionBeamSchemaOps[T: ClassTag](private val self: SCollection[T]) {
-  def saveAsBigQuery(
+  def saveAsBigQueryTable(
     table: Table,
     writeDisposition: WriteDisposition = TypedWriteParam.DefaultWriteDisposition,
     createDisposition: CreateDisposition = TypedWriteParam.DefaultCreateDisposition,
