@@ -256,7 +256,7 @@ spotify/scio
 <pre class="prettyprint"><code class="language-scala">import com.spotify.scio.bigquery.types.BigQueryType
 
 @BigQueryType.fromStorage(
-    &quot;publicdata:samples.gsod&quot;,
+    &quot;bigquery-public-data:samples.gsod&quot;,
     selectedFields = List(&quot;tornado&quot;, &quot;month&quot;),
     rowRestriction = &quot;tornado = true&quot;
   )
@@ -266,14 +266,14 @@ spotify/scio
 <p>This expands a class with fields that map to a BigQuery table.</p>
 <pre class="prettyprint"><code class="language-scala">import com.spotify.scio.bigquery.types.BigQueryType
 
-@BigQueryType.fromTable(&quot;publicdata:samples.gsod&quot;)
+@BigQueryType.fromTable(&quot;bigquery-public-data:samples.gsod&quot;)
 class Row
 </code></pre>
 <h3><a href="#bigquerytype-fromquery" name="bigquerytype-fromquery" class="anchor"><span class="anchor-link"></span></a>BigQueryType.fromQuery</h3>
 <p>This expands a class with output fields from a SELECT query. A dry run is executed at compile time to get output schema and does not incur additional cost.</p>
 <pre class="prettyprint"><code class="language-scala">import com.spotify.scio.bigquery.types.BigQueryType
 
-@BigQueryType.fromQuery(&quot;SELECT tornado, month FROM [publicdata:samples.gsod]&quot;)
+@BigQueryType.fromQuery(&quot;SELECT tornado, month FROM [bigquery-public-data:samples.gsod]&quot;)
 class Row
 </code></pre>
 <p>The query string may also contain <code>&quot;%s&quot;</code>s and additional arguments for parameterized query. This could be handy for log type data.</p>
@@ -374,7 +374,7 @@ class Row2
 </ul>
 <pre class="prettyprint"><code class="language-scala">import com.spotify.scio.bigquery.types.BigQueryType
 
-@BigQueryType.fromTable(&quot;publicdata:samples.gsod&quot;)
+@BigQueryType.fromTable(&quot;bigquery-public-data:samples.gsod&quot;)
 class Row
 
 Row.toPrettyString(2)
@@ -421,7 +421,7 @@ Row.toPrettyString(2)
 import com.spotify.scio.bigquery._
 import com.spotify.scio.bigquery.types.BigQueryType
 
-@BigQueryType.fromQuery(&quot;SELECT tornado, month FROM [publicdata:samples.gsod]&quot;)
+@BigQueryType.fromQuery(&quot;SELECT tornado, month FROM [bigquery-public-data:samples.gsod]&quot;)
 class Row
 
 @BigQueryType.toTable
@@ -443,7 +443,7 @@ def main(cmdlineArgs: Array[String]): Unit = {
 <pre class="prettyprint"><code class="language-scala">import com.spotify.scio.bigquery.types.BigQueryType
 import com.spotify.scio.bigquery.client.BigQuery
 
-@BigQueryType.fromQuery(&quot;SELECT tornado, month FROM [publicdata:samples.gsod]&quot;)
+@BigQueryType.fromQuery(&quot;SELECT tornado, month FROM [bigquery-public-data:samples.gsod]&quot;)
 class Row
 
 def bq = BigQuery.defaultInstance()
@@ -456,7 +456,7 @@ def result = bq.writeTypedRows(&quot;project-id:dataset-id.table-id&quot;, rows.
 import com.spotify.scio.bigquery.types.BigQueryType
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO
 
-@BigQueryType.fromQuery(&quot;SELECT tornado, month FROM [publicdata:samples.gsod]&quot;)
+@BigQueryType.fromQuery(&quot;SELECT tornado, month FROM [bigquery-public-data:samples.gsod]&quot;)
 class Foo
 
 def bigQueryType = BigQueryType[Foo]

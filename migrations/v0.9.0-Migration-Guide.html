@@ -191,6 +191,10 @@ spotify/scio
   <li><a href="../migrations/v0.9.0-Migration-Guide.html#scio-v0-9-0" class="header">Scio v0.9.0</a>
   <ul>
     <li><a href="../migrations/v0.9.0-Migration-Guide.html#tl-dr" class="header">TL;DR</a></li>
+    <li><a href="../migrations/v0.9.0-Migration-Guide.html#bloom-filter" class="header">Bloom Filter</a></li>
+    <li><a href="../migrations/v0.9.0-Migration-Guide.html#ios" class="header">IO&rsquo;s</a></li>
+    <li><a href="../migrations/v0.9.0-Migration-Guide.html#sciocontext" class="header">ScioContext</a></li>
+    <li><a href="../migrations/v0.9.0-Migration-Guide.html#scala-2-11-drop" class="header">Scala 2.11 drop</a></li>
   </ul></li>
 </ul>
 </nav>
@@ -215,6 +219,10 @@ spotify/scio
   <li><a href="../migrations/v0.9.0-Migration-Guide.html#scio-v0-9-0" class="header">Scio v0.9.0</a>
   <ul>
     <li><a href="../migrations/v0.9.0-Migration-Guide.html#tl-dr" class="header">TL;DR</a></li>
+    <li><a href="../migrations/v0.9.0-Migration-Guide.html#bloom-filter" class="header">Bloom Filter</a></li>
+    <li><a href="../migrations/v0.9.0-Migration-Guide.html#ios" class="header">IO&rsquo;s</a></li>
+    <li><a href="../migrations/v0.9.0-Migration-Guide.html#sciocontext" class="header">ScioContext</a></li>
+    <li><a href="../migrations/v0.9.0-Migration-Guide.html#scala-2-11-drop" class="header">Scala 2.11 drop</a></li>
   </ul></li>
 </ul>
 </nav>
@@ -229,15 +237,19 @@ spotify/scio
 <h2><a href="#tl-dr" name="tl-dr" class="anchor"><span class="anchor-link"></span></a>TL;DR</h2>
 <ul>
   <li><a href="#bloom-filter">Bloom Filter</a></li>
-</ul>
-<h3><a href="#bloom-filter" name="bloom-filter" class="anchor"><span class="anchor-link"></span></a>Bloom Filter</h3>
-<p>In 0.9.0 we switched from our custom Bloom Filter implementation to Guava Bloom Filter for <code>sparse</code> transforms, e.g. <code>sparseJoin</code>, <code>sparseLookup</code>. As a result we also switched from Algebird <a href="http://twitter.github.io/algebird/api/#com.twitter.algebird.Hash128"><code>Hash128[K]</code></a> to Guava <a href="https://guava.dev/releases/snapshot-jre/api/docs/com/google/common/hash/Funnel.html"><code>Funnel[K]</code></a> type class for hashing items into the Bloom Filter. Implicit <code>Funnel[K]</code> instances are available through <code>magnolify-guava</code> and need to be imported like this:</p>
+  <li><a href="#ios">IO&rsquo;s</a></li>
+  <li><a href="#sciocontext">ScioContext</a></li>
+  <li><a href="#scala-2-11-drop">Scala 2.11 drop</a></li>
+</ul><div class="callout warning "><div class="callout-title">Warning</div>
+<p>For all the details, refer to the <a href="https://github.com/spotify/scio/releases/tag/v0.9.0">release notes</a> on GitHub.</p></div>
+<h2><a href="#bloom-filter" name="bloom-filter" class="anchor"><span class="anchor-link"></span></a>Bloom Filter</h2>
+<p>In 0.9.0 we switched from our custom Bloom Filter implementation to Guava Bloom Filter for <code>sparse</code> transforms, e.g. <code>sparseJoin</code>, <code>sparseLookup</code>. As a result, we also switched from Algebird <a href="http://twitter.github.io/algebird/api/#com.twitter.algebird.Hash128"><code>Hash128[K]</code></a> to Guava <a href="https://guava.dev/releases/snapshot-jre/api/docs/com/google/common/hash/Funnel.html"><code>Funnel[K]</code></a> type class for hashing items into the Bloom Filter. Implicit <code>Funnel[K]</code> instances are available through <code>magnolify-guava</code> and need to be imported like this:</p>
 <pre class="prettyprint"><code class="language-scala">import magnolify.guava.auto._
 </code></pre>
 <p>If for error messages like this:</p>
 <pre><code>could not find implicit value for parameter hash: com.spotify.scio.hash.BloomFilter.Hash[T]
 </code></pre>
-<p>The switch also adds the follow benefits:</p>
+<p>The switch also adds the following benefits:</p>
 <p>Previously <code>Hash128[K]</code> only provides instances for <code>Int</code>, <code>Long</code>, <code>String</code>, <code>Array[Byte]</code>, <code>Array[Int]</code> and <code>Array[Long]</code>, while <code>magnolify-guava</code> can derive <code>Funnel[K]</code> for most common types including tuples, case classes, etc.</p>
 <p>We also added an <a href="https://spotify.github.io/scio/api/com/spotify/scio/hash/index.html"><code>ApproxFilter</code></a> abstraction to allow extensible approximate filter implementations. <a href="https://spotify.github.io/scio/api/com/spotify/scio/hash/BloomFilter$.html"><code>BloomFilter</code></a> extends <code>ApproxFilter</code> and allows us to create filters &amp; side inputs from <code>Iterable[T]</code> &amp; <code>SCollection[T]</code>. The result filter instances are serializable. For example:</p>
 <pre class="prettyprint"><code class="language-scala">import com.spotify.scio._
@@ -255,6 +267,44 @@ val bfsi: SideInput[BloomFilter[String]] = data.asApproxFilterSideInput(BloomFil
 
 val bfCoder: Coder[BloomFilter[String]] = BloomFilter.filterCoder
 </code></pre>
+<h2><a href="#ios" name="ios" class="anchor"><span class="anchor-link"></span></a>IO&rsquo;s</h2>
+<h3><a href="#avro" name="avro" class="anchor"><span class="anchor-link"></span></a>Avro</h3>
+<p><code>ReflectiveRecordIO</code> was removed in this release and this means that we no longer need to pass a type param when reading <code>GenericRecord</code> making things a little bit cleaner. This unfortunately means that you will need to update your code by removing the type param from <code>avroFile</code>.</p>
+<pre class="prettyprint"><code class="language-diff">val sc: ScioContext = ???
+
+- sc.avroFile[GenericRecord](path, schema)
++ sc.avroFile(path, schema)
+</code></pre>
+<h3><a href="#tensorflow" name="tensorflow" class="anchor"><span class="anchor-link"></span></a>Tensorflow</h3>
+<p>Removed <code>saveAsTfExampleFile</code> in favor of <code>saveAsTfRecordFile</code> as they express better underlying format in each <code>Example</code>&rsquo;s are being written.</p>
+<pre class="prettyprint"><code class="language-diff">val coll: SCollection[T &lt;: Example] = ???
+
+- coll.saveAsTfExampleFile(...)
++ coll.saveAsTfRecordFile(...)
+</code></pre>
+<h3><a href="#end-of-life" name="end-of-life" class="anchor"><span class="anchor-link"></span></a>End-of-Life</h3>
+<p><code>scio-cassandra2</code> and <code>scio-elasticsearch2</code> reached end-of-life and were removed.</p>
+<h2><a href="#sciocontext" name="sciocontext" class="anchor"><span class="anchor-link"></span></a>ScioContext</h2>
+<p>All the deprecated behavior around execution and pipeline result in <code>0.8.x</code> was removed!</p>
+<p>This means that to start your pipeline you need to:</p>
+<pre class="prettyprint"><code class="language-diff">val sc: ScioContext = ???
+
+- val result: ScioResult = sc.close()
++ val execution: ScioExecutionContext = sc.run()
+</code></pre>
+<p>and to get a <a href="https://spotify.github.io/scio/api/com/spotify/scio/ScioResult.html" title="com.spotify.scio.ScioResult"><code>ScioResult</code></a> you need to:</p>
+<pre class="prettyprint"><code class="language-diff">val sc: ScioContext = ???
+
+- val result: ScioResult = sc.close()
++ val result: ScioResult = sc.run().waitUntilDone(Duration.Inf)
+</code></pre>
+<h2><a href="#scala-2-11-drop" name="scala-2-11-drop" class="anchor"><span class="anchor-link"></span></a>Scala 2.11 drop</h2>
+<p><code>2.11</code> served us well! The ecosystem is moving on and so are we! From this version forward we will only support <code>2.12</code> and <code>2.13</code>!</p>
+<p>Migrating from <code>2.11</code> to <code>2.12</code> should not imply any code update, it should be as easy as updating your <code>build.sbt</code>:</p>
+<pre class="prettyprint"><code class="language-diff">- scalaVersion := &quot;2.11.12&quot;
++ scalaVersion := &quot;2.12.11&quot;
+</code></pre>
+<p>However, migrating to <code>2.13</code> might require some changes, especially around collections! we advise you to look at the <code>Scala</code> migration <a href="https://docs.scala-lang.org/overviews/core/collections-migration-213.html">guide</a> for an in-depth overview of the most important changes.</p>
 </div>
 <div>
 <a href="https://github.com/spotify/scio/tree/master/site/target/mdoc/migrations/v0.9.0-Migration-Guide.md" title="Edit this page" class="md-source-file md-edit">

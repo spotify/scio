@@ -113,10 +113,10 @@
         <span class="kind">package</span>
       </span>
       <span class="symbol">
-        <a title="Main package for public APIs." href="../index.html"><span class="name">scio</span></a>
+        <a title="" href="../index.html"><span class="name">scio</span></a>
       </span>
       
-      <p class="shortcomment cmt">Main package for public APIs.</p><div class="fullcomment"><div class="comment cmt"><p>Main package for public APIs. Import all.</p><pre><span class="kw">import</span> com.spotify.scio._</pre></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../../index.html" class="extype" name="com.spotify">spotify</a></dd></dl></div>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../../index.html" class="extype" name="com.spotify">spotify</a></dd></dl></div>
     </li><li name="com.spotify.scio.io" visbl="pub" class="indented4 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="io"></a><a id="io:io"></a>
       <span class="permalink">
@@ -261,7 +261,7 @@
           <span class="toggle">
             Linear Supertypes
           </span>
-          <div class="superTypes hiddenContent"><a href="https://docs.oracle.com/javase/8/docs/api/java/lang/Exception.html#java.lang.Exception" class="extype" name="java.lang.Exception">Exception</a>, <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/Throwable.html#java.lang.Throwable" class="extype" name="java.lang.Throwable">Throwable</a>, <a href="https://docs.oracle.com/javase/8/docs/api/java/io/Serializable.html#java.io.Serializable" class="extype" name="java.io.Serializable">Serializable</a>, <a href="../../../../scala/index.html#AnyRef=Object" class="extmbr" name="scala.AnyRef">AnyRef</a>, <a href="https://www.scala-lang.org/api/2.12.11/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></div>
+          <div class="superTypes hiddenContent"><a href="https://docs.oracle.com/en/java/javase/11/docs/api/java/lang/Exception.html#java.lang.Exception" class="extype" name="java.lang.Exception">Exception</a>, <a href="https://docs.oracle.com/en/java/javase/11/docs/api/java/lang/Throwable.html#java.lang.Throwable" class="extype" name="java.lang.Throwable">Throwable</a>, <a href="https://docs.oracle.com/en/java/javase/11/docs/api/java/io/Serializable.html#java.io.Serializable" class="extype" name="java.io.Serializable">Serializable</a>, <a href="../../../../scala/index.html#AnyRef=Object" class="extmbr" name="scala.AnyRef">AnyRef</a>, <a href="https://www.scala-lang.org/api/2.12.11/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></div>
         </div></div>
         
 
@@ -393,7 +393,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">addSuppressed</span><span class="params">(<span name="arg0">arg0: <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/Throwable.html#java.lang.Throwable" class="extype" name="java.lang.Throwable">Throwable</a></span>)</span><span class="result">: <a href="https://www.scala-lang.org/api/2.12.11/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+        <span class="name">addSuppressed</span><span class="params">(<span name="arg0">arg0: <a href="https://docs.oracle.com/en/java/javase/11/docs/api/java/lang/Throwable.html#java.lang.Throwable" class="extype" name="java.lang.Throwable">Throwable</a></span>)</span><span class="result">: <a href="https://www.scala-lang.org/api/2.12.11/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Throwable</dd></dl></div>
@@ -435,6 +435,8 @@
     </span>)</span>
               
                 <span class="name">@native</span><span class="args">()</span>
+              
+                <span class="name">@HotSpotIntrinsicCandidate</span><span class="args">()</span>
               
         </dd></dl></div>
     </li><li name="scala.AnyRef#eq" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
@@ -481,32 +483,10 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">fillInStackTrace</span><span class="params">()</span><span class="result">: <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/Throwable.html#java.lang.Throwable" class="extype" name="java.lang.Throwable">Throwable</a></span>
+        <span class="name">fillInStackTrace</span><span class="params">()</span><span class="result">: <a href="https://docs.oracle.com/en/java/javase/11/docs/api/java/lang/Throwable.html#java.lang.Throwable" class="extype" name="java.lang.Throwable">Throwable</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Throwable</dd></dl></div>
-    </li><li name="scala.AnyRef#finalize" visbl="prt" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="finalize():Unit"></a>
-      <span class="permalink">
-      <a href="../../../../com/spotify/scio/io/TapNotAvailableException.html#finalize():Unit" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">finalize</span><span class="params">()</span><span class="result">: <a href="https://www.scala-lang.org/api/2.12.11/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
-      </span>
-      
-      <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected[<span class="extype" name="java.lang">lang</span>] </dd><dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
-                <span class="name">@throws</span><span class="args">(<span>
-      
-      <span class="symbol">classOf[java.lang.Throwable]</span>
-    </span>)</span>
-              
-        </dd></dl></div>
     </li><li name="java.lang.Throwable#getCause" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="getCause():Throwable"></a>
       <span class="permalink">
@@ -519,7 +499,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">getCause</span><span class="params">()</span><span class="result">: <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/Throwable.html#java.lang.Throwable" class="extype" name="java.lang.Throwable">Throwable</a></span>
+        <span class="name">getCause</span><span class="params">()</span><span class="result">: <a href="https://docs.oracle.com/en/java/javase/11/docs/api/java/lang/Throwable.html#java.lang.Throwable" class="extype" name="java.lang.Throwable">Throwable</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Throwable</dd></dl></div>
@@ -535,11 +515,13 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">getClass</span><span class="params">()</span><span class="result">: <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/Class.html#java.lang.Class" class="extype" name="java.lang.Class">Class</a>[_]</span>
+        <span class="name">getClass</span><span class="params">()</span><span class="result">: <a href="https://docs.oracle.com/en/java/javase/11/docs/api/java/lang/Class.html#java.lang.Class" class="extype" name="java.lang.Class">Class</a>[_]</span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd><dt>Annotations</dt><dd>
                 <span class="name">@native</span><span class="args">()</span>
+              
+                <span class="name">@HotSpotIntrinsicCandidate</span><span class="args">()</span>
               
         </dd></dl></div>
     </li><li name="java.lang.Throwable#getLocalizedMessage" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
@@ -554,7 +536,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">getLocalizedMessage</span><span class="params">()</span><span class="result">: <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/String.html#java.lang.String" class="extype" name="java.lang.String">String</a></span>
+        <span class="name">getLocalizedMessage</span><span class="params">()</span><span class="result">: <a href="https://docs.oracle.com/en/java/javase/11/docs/api/java/lang/String.html#java.lang.String" class="extype" name="java.lang.String">String</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Throwable</dd></dl></div>
@@ -570,7 +552,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">getMessage</span><span class="params">()</span><span class="result">: <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/String.html#java.lang.String" class="extype" name="java.lang.String">String</a></span>
+        <span class="name">getMessage</span><span class="params">()</span><span class="result">: <a href="https://docs.oracle.com/en/java/javase/11/docs/api/java/lang/String.html#java.lang.String" class="extype" name="java.lang.String">String</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Throwable</dd></dl></div>
@@ -586,7 +568,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">getStackTrace</span><span class="params">()</span><span class="result">: <a href="https://www.scala-lang.org/api/2.12.11/scala/Array.html#scala.Array" class="extype" name="scala.Array">Array</a>[<a href="https://docs.oracle.com/javase/8/docs/api/java/lang/StackTraceElement.html#java.lang.StackTraceElement" class="extype" name="java.lang.StackTraceElement">StackTraceElement</a>]</span>
+        <span class="name">getStackTrace</span><span class="params">()</span><span class="result">: <a href="https://www.scala-lang.org/api/2.12.11/scala/Array.html#scala.Array" class="extype" name="scala.Array">Array</a>[<a href="https://docs.oracle.com/en/java/javase/11/docs/api/java/lang/StackTraceElement.html#java.lang.StackTraceElement" class="extype" name="java.lang.StackTraceElement">StackTraceElement</a>]</span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Throwable</dd></dl></div>
@@ -602,7 +584,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">getSuppressed</span><span class="params">()</span><span class="result">: <a href="https://www.scala-lang.org/api/2.12.11/scala/Array.html#scala.Array" class="extype" name="scala.Array">Array</a>[<a href="https://docs.oracle.com/javase/8/docs/api/java/lang/Throwable.html#java.lang.Throwable" class="extype" name="java.lang.Throwable">Throwable</a>]</span>
+        <span class="name">getSuppressed</span><span class="params">()</span><span class="result">: <a href="https://www.scala-lang.org/api/2.12.11/scala/Array.html#scala.Array" class="extype" name="scala.Array">Array</a>[<a href="https://docs.oracle.com/en/java/javase/11/docs/api/java/lang/Throwable.html#java.lang.Throwable" class="extype" name="java.lang.Throwable">Throwable</a>]</span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Throwable</dd></dl></div>
@@ -624,6 +606,8 @@
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd><dt>Annotations</dt><dd>
                 <span class="name">@native</span><span class="args">()</span>
               
+                <span class="name">@HotSpotIntrinsicCandidate</span><span class="args">()</span>
+              
         </dd></dl></div>
     </li><li name="java.lang.Throwable#initCause" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="initCause(x$1:Throwable):Throwable"></a><a id="initCause(Throwable):Throwable"></a>
@@ -637,7 +621,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">initCause</span><span class="params">(<span name="arg0">arg0: <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/Throwable.html#java.lang.Throwable" class="extype" name="java.lang.Throwable">Throwable</a></span>)</span><span class="result">: <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/Throwable.html#java.lang.Throwable" class="extype" name="java.lang.Throwable">Throwable</a></span>
+        <span class="name">initCause</span><span class="params">(<span name="arg0">arg0: <a href="https://docs.oracle.com/en/java/javase/11/docs/api/java/lang/Throwable.html#java.lang.Throwable" class="extype" name="java.lang.Throwable">Throwable</a></span>)</span><span class="result">: <a href="https://docs.oracle.com/en/java/javase/11/docs/api/java/lang/Throwable.html#java.lang.Throwable" class="extype" name="java.lang.Throwable">Throwable</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Throwable</dd></dl></div>
@@ -691,6 +675,8 @@
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
                 <span class="name">@native</span><span class="args">()</span>
               
+                <span class="name">@HotSpotIntrinsicCandidate</span><span class="args">()</span>
+              
         </dd></dl></div>
     </li><li name="scala.AnyRef#notifyAll" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="notifyAll():Unit"></a>
@@ -710,6 +696,8 @@
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
                 <span class="name">@native</span><span class="args">()</span>
               
+                <span class="name">@HotSpotIntrinsicCandidate</span><span class="args">()</span>
+              
         </dd></dl></div>
     </li><li name="java.lang.Throwable#printStackTrace" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="printStackTrace(x$1:java.io.PrintWriter):Unit"></a><a id="printStackTrace(PrintWriter):Unit"></a>
@@ -723,7 +711,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">printStackTrace</span><span class="params">(<span name="arg0">arg0: <a href="https://docs.oracle.com/javase/8/docs/api/java/io/PrintWriter.html#java.io.PrintWriter" class="extype" name="java.io.PrintWriter">PrintWriter</a></span>)</span><span class="result">: <a href="https://www.scala-lang.org/api/2.12.11/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+        <span class="name">printStackTrace</span><span class="params">(<span name="arg0">arg0: <a href="https://docs.oracle.com/en/java/javase/11/docs/api/java/io/PrintWriter.html#java.io.PrintWriter" class="extype" name="java.io.PrintWriter">PrintWriter</a></span>)</span><span class="result">: <a href="https://www.scala-lang.org/api/2.12.11/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Throwable</dd></dl></div>
@@ -739,7 +727,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">printStackTrace</span><span class="params">(<span name="arg0">arg0: <a href="https://docs.oracle.com/javase/8/docs/api/java/io/PrintStream.html#java.io.PrintStream" class="extype" name="java.io.PrintStream">PrintStream</a></span>)</span><span class="result">: <a href="https://www.scala-lang.org/api/2.12.11/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+        <span class="name">printStackTrace</span><span class="params">(<span name="arg0">arg0: <a href="https://docs.oracle.com/en/java/javase/11/docs/api/java/io/PrintStream.html#java.io.PrintStream" class="extype" name="java.io.PrintStream">PrintStream</a></span>)</span><span class="result">: <a href="https://www.scala-lang.org/api/2.12.11/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Throwable</dd></dl></div>
@@ -771,7 +759,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">setStackTrace</span><span class="params">(<span name="arg0">arg0: <a href="https://www.scala-lang.org/api/2.12.11/scala/Array.html#scala.Array" class="extype" name="scala.Array">Array</a>[<a href="https://docs.oracle.com/javase/8/docs/api/java/lang/StackTraceElement.html#java.lang.StackTraceElement" class="extype" name="java.lang.StackTraceElement">StackTraceElement</a>]</span>)</span><span class="result">: <a href="https://www.scala-lang.org/api/2.12.11/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+        <span class="name">setStackTrace</span><span class="params">(<span name="arg0">arg0: <a href="https://www.scala-lang.org/api/2.12.11/scala/Array.html#scala.Array" class="extype" name="scala.Array">Array</a>[<a href="https://docs.oracle.com/en/java/javase/11/docs/api/java/lang/StackTraceElement.html#java.lang.StackTraceElement" class="extype" name="java.lang.StackTraceElement">StackTraceElement</a>]</span>)</span><span class="result">: <a href="https://www.scala-lang.org/api/2.12.11/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Throwable</dd></dl></div>
@@ -803,32 +791,10 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">toString</span><span class="params">()</span><span class="result">: <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/String.html#java.lang.String" class="extype" name="java.lang.String">String</a></span>
+        <span class="name">toString</span><span class="params">()</span><span class="result">: <a href="https://docs.oracle.com/en/java/javase/11/docs/api/java/lang/String.html#java.lang.String" class="extype" name="java.lang.String">String</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Throwable → AnyRef → Any</dd></dl></div>
-    </li><li name="scala.AnyRef#wait" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="wait():Unit"></a>
-      <span class="permalink">
-      <a href="../../../../com/spotify/scio/io/TapNotAvailableException.html#wait():Unit" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier">final </span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">wait</span><span class="params">()</span><span class="result">: <a href="https://www.scala-lang.org/api/2.12.11/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
-      </span>
-      
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
-                <span class="name">@throws</span><span class="args">(<span>
-      
-      <span class="defval" name="classOf[java.lang.InterruptedException]">...</span>
-    </span>)</span>
-              
-        </dd></dl></div>
     </li><li name="scala.AnyRef#wait" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="wait(x$1:Long,x$2:Int):Unit"></a><a id="wait(Long,Int):Unit"></a>
       <span class="permalink">
@@ -875,22 +841,73 @@
                 <span class="name">@native</span><span class="args">()</span>
               
         </dd></dl></div>
+    </li><li name="scala.AnyRef#wait" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="wait():Unit"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/io/TapNotAvailableException.html#wait():Unit" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">wait</span><span class="params">()</span><span class="result">: <a href="https://www.scala-lang.org/api/2.12.11/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
+                <span class="name">@throws</span><span class="args">(<span>
+      
+      <span class="defval" name="classOf[java.lang.InterruptedException]">...</span>
+    </span>)</span>
+              
+        </dd></dl></div>
     </li>
               </ol>
             </div>
 
         
 
-        
+        <div class="values members">
+              <h3>Deprecated Value Members</h3>
+              <ol><li name="scala.AnyRef#finalize" visbl="prt" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="finalize():Unit"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/io/TapNotAvailableException.html#finalize():Unit" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name deprecated" title="Deprecated: (Since version ) see corresponding Javadoc for more information.">finalize</span><span class="params">()</span><span class="result">: <a href="https://www.scala-lang.org/api/2.12.11/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected[<span class="extype" name="java.lang">lang</span>] </dd><dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
+                <span class="name">@throws</span><span class="args">(<span>
+      
+      <span class="symbol">classOf[java.lang.Throwable]</span>
+    </span>)</span>
+              
+                <span class="name">@Deprecated</span>
+              
+                <span class="name">@deprecated</span>
+              
+        </dd><dt>Deprecated</dt><dd class="cmt"><p><i>(Since version )</i> see corresponding Javadoc for more information.</p></dd></dl></div>
+    </li></ol>
+            </div>
         </div>
 
         <div id="inheritedMembers">
         <div class="parent" name="java.lang.Exception">
-              <h3>Inherited from <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/Exception.html#java.lang.Exception" class="extype" name="java.lang.Exception">Exception</a></h3>
+              <h3>Inherited from <a href="https://docs.oracle.com/en/java/javase/11/docs/api/java/lang/Exception.html#java.lang.Exception" class="extype" name="java.lang.Exception">Exception</a></h3>
             </div><div class="parent" name="java.lang.Throwable">
-              <h3>Inherited from <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/Throwable.html#java.lang.Throwable" class="extype" name="java.lang.Throwable">Throwable</a></h3>
+              <h3>Inherited from <a href="https://docs.oracle.com/en/java/javase/11/docs/api/java/lang/Throwable.html#java.lang.Throwable" class="extype" name="java.lang.Throwable">Throwable</a></h3>
             </div><div class="parent" name="java.io.Serializable">
-              <h3>Inherited from <a href="https://docs.oracle.com/javase/8/docs/api/java/io/Serializable.html#java.io.Serializable" class="extype" name="java.io.Serializable">Serializable</a></h3>
+              <h3>Inherited from <a href="https://docs.oracle.com/en/java/javase/11/docs/api/java/io/Serializable.html#java.io.Serializable" class="extype" name="java.io.Serializable">Serializable</a></h3>
             </div><div class="parent" name="scala.AnyRef">
               <h3>Inherited from <a href="../../../../scala/index.html#AnyRef=Object" class="extmbr" name="scala.AnyRef">AnyRef</a></h3>
             </div><div class="parent" name="scala.Any">

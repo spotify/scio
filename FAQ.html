@@ -660,7 +660,7 @@ class MyKryoRegistrar extends IKryoRegistrar {
 <p>First start Scio REPL and generate case classes from your query or table.</p>
 <pre class="prettyprint"><code class="language-scala">import com.spotify.scio.bigquery.types.BigQueryType
 
-@BigQueryType.fromQuery(&quot;SELECT tornado, month FROM [publicdata:samples.gsod]&quot;)
+@BigQueryType.fromQuery(&quot;SELECT tornado, month FROM [bigquery-public-data:samples.gsod]&quot;)
 class Tornado
 </code></pre>
 <p>Next print Scala code of the generated classes.</p>
