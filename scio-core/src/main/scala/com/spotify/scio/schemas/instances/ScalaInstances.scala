@@ -99,8 +99,8 @@ trait ScalaInstances {
 
   // TODO: WrappedArray ?
 
-  implicit def mutableMapSchema[K, V](
-    implicit k: Schema[K],
+  implicit def mutableMapSchema[K, V](implicit
+    k: Schema[K],
     v: Schema[V]
   ): Schema[mutable.Map[K, V]] =
     MapType(k, v, _.asJava, _.asScala)

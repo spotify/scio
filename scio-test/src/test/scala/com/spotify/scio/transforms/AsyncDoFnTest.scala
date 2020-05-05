@@ -110,9 +110,12 @@ private class JavaClient(val numThreads: Int) {
     Executors.newFixedThreadPool(numThreads).asInstanceOf[ThreadPoolExecutor]
   )
   def request(input: Int): CompletableFuture[String] =
-    CompletableFuture.supplyAsync(new Supplier[String] {
-      override def get(): String = Client.process(input)
-    }, es)
+    CompletableFuture.supplyAsync(
+      new Supplier[String] {
+        override def get(): String = Client.process(input)
+      },
+      es
+    )
 }
 
 private class ScalaClient(val numThreads: Int) {

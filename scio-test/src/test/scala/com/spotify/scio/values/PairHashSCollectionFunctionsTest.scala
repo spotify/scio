@@ -86,7 +86,8 @@ class PairHashSCollectionFunctionsTest extends PipelineSpec {
   it should "support hashJoin() with SideMap" in {
     runWithContext { sc =>
       val p1 = sc.parallelize(Seq(("a", 1), ("a", 2), ("b", 3)))
-      val p2 = sc.parallelize(Seq(("a", 11), ("b", 12), ("b", 13))).toSideMap // Test deprecated method.
+      val p2 =
+        sc.parallelize(Seq(("a", 11), ("b", 12), ("b", 13))).toSideMap // Test deprecated method.
       val p = p1.hashJoin(p2)
       p should
         containInAnyOrder(Seq(("a", (1, 11)), ("a", (2, 11)), ("b", (3, 12)), ("b", (3, 13))))
@@ -156,7 +157,8 @@ class PairHashSCollectionFunctionsTest extends PipelineSpec {
   it should "support hashLeftOuterJoin() with SideMap" in {
     runWithContext { sc =>
       val p1 = sc.parallelize(Seq(("a", 1), ("b", 2), ("c", 3)))
-      val p2 = sc.parallelize(Seq(("a", 11), ("b", 12), ("d", 14))).toSideMap // Test deprecated method.
+      val p2 =
+        sc.parallelize(Seq(("a", 11), ("b", 12), ("d", 14))).toSideMap // Test deprecated method.
       val p = p1.hashLeftJoin(p2)
       p should containInAnyOrder(Seq(("a", (1, Some(11))), ("b", (2, Some(12))), ("c", (3, None))))
     }

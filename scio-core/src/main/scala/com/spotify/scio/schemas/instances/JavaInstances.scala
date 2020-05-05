@@ -60,8 +60,8 @@ trait JavaInstances {
   implicit def jArrayListSchema[T](implicit s: Schema[T]): Schema[java.util.ArrayList[T]] =
     ArrayType(s, identity, l => new util.ArrayList[T](l))
 
-  implicit def jMapSchema[K, V](
-    implicit ks: Schema[K],
+  implicit def jMapSchema[K, V](implicit
+    ks: Schema[K],
     vs: Schema[V]
   ): Schema[java.util.Map[K, V]] =
     MapType(ks, vs, identity, identity)

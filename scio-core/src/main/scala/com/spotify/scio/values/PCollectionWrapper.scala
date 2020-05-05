@@ -55,8 +55,10 @@ private[values] trait PCollectionWrapper[T] extends TransformNameable {
     transform: PTransform[_ >: PCollection[T], PCollection[U]]
   ): SCollection[U] = {
     val t =
-      if ((classOf[Combine.Globally[T, U]] isAssignableFrom transform.getClass)
-          && internal.getWindowingStrategy != WindowingStrategy.globalDefault()) {
+      if (
+        (classOf[Combine.Globally[T, U]] isAssignableFrom transform.getClass)
+        && internal.getWindowingStrategy != WindowingStrategy.globalDefault()
+      ) {
         // In case PCollection is windowed
         transform.asInstanceOf[Combine.Globally[T, U]].withoutDefaults()
       } else {

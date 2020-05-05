@@ -220,15 +220,19 @@ private[types] object TypeProvider {
         val caseClassTree =
           q"""${caseClass(c)(mods, cName, taggedFields, body)}"""
         val maybeCompanion = tail.headOption
-        (q"""$caseClassTree
+        (
+          q"""$caseClassTree
             ${companion(c)(
-          cName,
-          traits,
-          Seq(defSchema, defAvroSchema, defToPrettyString) ++ defTblDesc,
-          taggedFields.asInstanceOf[Seq[Tree]].size,
-          maybeCompanion
-        )}
-        """, caseClassTree, cName.toString())
+            cName,
+            traits,
+            Seq(defSchema, defAvroSchema, defToPrettyString) ++ defTblDesc,
+            taggedFields.asInstanceOf[Seq[Tree]].size,
+            maybeCompanion
+          )}
+        """,
+          caseClassTree,
+          cName.toString()
+        )
       case t =>
         val error =
           s"""Invalid annotation:
@@ -338,16 +342,20 @@ private[types] object TypeProvider {
 
         val caseClassTree = q"""${caseClass(c)(mods, cName, fields, body)}"""
         val maybeCompanion = tail.headOption
-        (q"""$caseClassTree
+        (
+          q"""$caseClassTree
             ${companion(c)(
-          cName,
-          traits ++ defTblTrait,
-          Seq(defSchema, defAvroSchema, defToPrettyString) ++ overrides ++ defTblDesc,
-          fields.size,
-          maybeCompanion
-        )}
+            cName,
+            traits ++ defTblTrait,
+            Seq(defSchema, defAvroSchema, defToPrettyString) ++ overrides ++ defTblDesc,
+            fields.size,
+            maybeCompanion
+          )}
             ..$records
-        """, caseClassTree, cName.toString)
+        """,
+          caseClassTree,
+          cName.toString
+        )
       case t => c.abort(c.enclosingPosition, s"Invalid annotation $t")
     }
     debug(s"TypeProvider.schemaToType[$schema]:")

@@ -219,8 +219,8 @@ package object sparkey extends SparkeyReaderInstances {
       path: String = null,
       maxMemoryUsage: Long = -1,
       numShards: Short = DefaultNumShards
-    )(
-      implicit w: SparkeyWritable[K, V],
+    )(implicit
+      w: SparkeyWritable[K, V],
       koder: Coder[K],
       voder: Coder[V]
     ): SCollection[SparkeyUri] = {
@@ -276,8 +276,8 @@ package object sparkey extends SparkeyReaderInstances {
      * @return A singleton SCollection containing the [[SparkeyUri]] of the saved files.
      */
     @experimental
-    def asSparkey(
-      implicit w: SparkeyWritable[K, V],
+    def asSparkey(implicit
+      w: SparkeyWritable[K, V],
       koder: Coder[K],
       voder: Coder[V]
     ): SCollection[SparkeyUri] = this.asSparkey()
@@ -291,8 +291,8 @@ package object sparkey extends SparkeyReaderInstances {
      * @param numShards the number of shards to use when writing the Sparkey file(s).
      */
     @experimental
-    def asSparkeySideInput(numShards: Short = DefaultSideInputNumShards)(
-      implicit w: SparkeyWritable[K, V],
+    def asSparkeySideInput(numShards: Short = DefaultSideInputNumShards)(implicit
+      w: SparkeyWritable[K, V],
       koder: Coder[K],
       voder: Coder[V]
     ): SideInput[SparkeyReader] =
@@ -305,8 +305,8 @@ package object sparkey extends SparkeyReaderInstances {
      * required that each key of the input be associated with a single value.
      */
     @experimental
-    def asSparkeySideInput(
-      implicit w: SparkeyWritable[K, V],
+    def asSparkeySideInput(implicit
+      w: SparkeyWritable[K, V],
       koder: Coder[K],
       voder: Coder[V]
     ): SideInput[SparkeyReader] =
@@ -320,8 +320,8 @@ package object sparkey extends SparkeyReaderInstances {
      * [[Cache]] will be used to cache reads from the resulting [[SparkeyReader]].
      */
     @experimental
-    def asTypedSparkeySideInput[T](decoder: Array[Byte] => T)(
-      implicit w: SparkeyWritable[K, V],
+    def asTypedSparkeySideInput[T](decoder: Array[Byte] => T)(implicit
+      w: SparkeyWritable[K, V],
       koder: Coder[K],
       voder: Coder[V]
     ): SideInput[TypedSparkeyReader[T]] =
@@ -340,8 +340,8 @@ package object sparkey extends SparkeyReaderInstances {
       numShards: Short = DefaultSideInputNumShards
     )(
       decoder: Array[Byte] => T
-    )(
-      implicit w: SparkeyWritable[K, V],
+    )(implicit
+      w: SparkeyWritable[K, V],
       koder: Coder[K],
       voder: Coder[V]
     ): SideInput[TypedSparkeyReader[T]] =
@@ -356,8 +356,8 @@ package object sparkey extends SparkeyReaderInstances {
     def asCachedStringSparkeySideInput(
       cache: Cache[String, String],
       numShards: Short = DefaultSideInputNumShards
-    )(
-      implicit w: SparkeyWritable[K, V],
+    )(implicit
+      w: SparkeyWritable[K, V],
       koder: Coder[K],
       voder: Coder[V]
     ): SideInput[CachedStringSparkeyReader] =

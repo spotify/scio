@@ -181,10 +181,13 @@ object SavedBundlePredictDoFn {
     }
 
     override def extractOutput(input: T, out: Map[String, Tensor[_]]): V =
-      outFn(input, requestedFetchOps.iterator.map {
-        case (tensorId, opName) =>
-          tensorId -> out(opName)
-      }.toMap)
+      outFn(
+        input,
+        requestedFetchOps.iterator.map {
+          case (tensorId, opName) =>
+            tensorId -> out(opName)
+        }.toMap
+      )
 
     override def outputTensorNames: Seq[String] = requestedFetchOps.values.toSeq
 
@@ -220,9 +223,12 @@ object SavedBundlePredictDoFn {
       }
 
       override def extractOutput(input: T, out: Map[String, Tensor[_]]): V =
-        outFn(input, requestedFetchOps.iterator.map {
-          case (tensorId, opName) => tensorId -> out(opName)
-        }.toMap)
+        outFn(
+          input,
+          requestedFetchOps.iterator.map {
+            case (tensorId, opName) => tensorId -> out(opName)
+          }.toMap
+        )
 
       override def modelId: String = s"${super.modelId}:${fetchOps.toList.mkString(":")}"
     }

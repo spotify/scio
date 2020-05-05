@@ -359,12 +359,15 @@ object ScioContext {
       cls <- PipelineOptionsFactory.getRegisteredOptions.asScala
       method <- cls.getMethods()
       name = method.getName
-      str <- if ((!name.startsWith("get") && !name.startsWith("is")) ||
-                 method.getParameterTypes.nonEmpty || method.getReturnType == classOf[Unit]) {
-        None
-      } else {
-        Some(Introspector.decapitalize(name.substring(if (name.startsWith("is")) 2 else 3)))
-      }
+      str <-
+        if (
+          (!name.startsWith("get") && !name.startsWith("is")) ||
+          method.getParameterTypes.nonEmpty || method.getReturnType == classOf[Unit]
+        ) {
+          None
+        } else {
+          Some(Introspector.decapitalize(name.substring(if (name.startsWith("is")) 2 else 3)))
+        }
     } yield s"--$str($$|=)".r
 
     val patterns = registeredPatterns + "--help($$|=)".r
@@ -421,12 +424,14 @@ object ScioContext {
     VersionUtil.checkRunnerVersion(o.getRunner)
 
     // Check if running within scala.App. See https://github.com/spotify/scio/issues/449
-    if (Thread
-          .currentThread()
-          .getStackTrace
-          .toList
-          .map(_.getClassName.split('$').head)
-          .exists(_.equals(classOf[App].getName))) {
+    if (
+      Thread
+        .currentThread()
+        .getStackTrace
+        .toList
+        .map(_.getClassName.split('$').head)
+        .exists(_.equals(classOf[App].getName))
+    ) {
       ScioContext.log.warn(
         "Applications defined within scala.App might not work properly. Please use main method!"
       )
