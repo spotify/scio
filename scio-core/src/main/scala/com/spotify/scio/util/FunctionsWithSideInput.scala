@@ -20,21 +20,22 @@ package com.spotify.scio.util
 import com.spotify.scio.values.SideInputContext
 import org.apache.beam.sdk.transforms.DoFn
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
+import org.apache.beam.sdk.transforms.windowing.BoundedWindow
 import com.twitter.chill.ClosureCleaner
 
 private[scio] object FunctionsWithSideInput {
   trait SideInputDoFn[T, U] extends NamedDoFn[T, U] {
-    def sideInputContext(c: DoFn[T, U]#ProcessContext): SideInputContext[T] =
+    def sideInputContext(c: DoFn[T, U]#ProcessContext, w: BoundedWindow): SideInputContext[T] =
       // Workaround for type inference limit
-      new SideInputContext(c.asInstanceOf[DoFn[T, AnyRef]#ProcessContext])
+      new SideInputContext(c.asInstanceOf[DoFn[T, AnyRef]#ProcessContext], w)
   }
 
   def filterFn[T](f: (T, SideInputContext[T]) => Boolean): DoFn[T, T] =
     new SideInputDoFn[T, T] {
       val g = ClosureCleaner.clean(f) // defeat closure
       @ProcessElement
-      private[scio] def processElement(c: DoFn[T, T]#ProcessContext): Unit =
-        if (g(c.element(), sideInputContext(c))) {
+      private[scio] def processElement(c: DoFn[T, T]#ProcessContext, w: BoundedWindow): Unit =
+        if (g(c.element(), sideInputContext(c, w))) {
           c.output(c.element())
         }
     }
@@ -43,8 +44,8 @@ private[scio] object FunctionsWithSideInput {
     new SideInputDoFn[T, U] {
       val g = ClosureCleaner.clean(f) // defeat closure
       @ProcessElement
-      private[scio] def processElement(c: DoFn[T, U]#ProcessContext): Unit = {
-        val i = g(c.element(), sideInputContext(c)).toIterator
+      private[scio] def processElement(c: DoFn[T, U]#ProcessContext, w: BoundedWindow): Unit = {
+        val i = g(c.element(), sideInputContext(c, w)).toIterator
         while (i.hasNext) c.output(i.next())
       }
     }
@@ -53,7 +54,7 @@ private[scio] object FunctionsWithSideInput {
     new SideInputDoFn[T, U] {
       val g = ClosureCleaner.clean(f) // defeat closure
       @ProcessElement
-      private[scio] def processElement(c: DoFn[T, U]#ProcessContext): Unit =
-        c.output(g(c.element(), sideInputContext(c)))
+      private[scio] def processElement(c: DoFn[T, U]#ProcessContext, w: BoundedWindow): Unit =
+        c.output(g(c.element(), sideInputContext(c, w)))
     }
 }
