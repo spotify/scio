@@ -39,7 +39,6 @@ import org.apache.beam.sdk.coders.StringUtf8Coder;
 import org.apache.beam.sdk.transforms.display.DisplayData;
 import org.apache.beam.sdk.transforms.display.DisplayData.Builder;
 import org.apache.beam.sdk.transforms.display.HasDisplayData;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.annotations.VisibleForTesting;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.hash.HashFunction;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.hash.Hashing;
@@ -201,6 +200,10 @@ public abstract class BucketMetadata<K, V> implements Serializable, HasDisplayDa
 
   int getBucketId(byte[] keyBytes) {
     return Math.abs(hashFunction.hashBytes(keyBytes).asInt()) % numBuckets;
+  }
+
+  int rehashBucket(byte[] keyBytes, int newNumBuckets) {
+    return Math.abs(hashFunction.hashBytes(keyBytes).asInt()) % newNumBuckets;
   }
 
   ////////////////////////////////////////

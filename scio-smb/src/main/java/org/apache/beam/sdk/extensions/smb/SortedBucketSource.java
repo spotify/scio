@@ -22,7 +22,6 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
-import java.nio.channels.Channels;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -31,24 +30,21 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 import org.apache.beam.sdk.coders.CannotProvideCoderException;
 import org.apache.beam.sdk.coders.Coder;
 import org.apache.beam.sdk.coders.Coder.NonDeterministicException;
 import org.apache.beam.sdk.coders.KvCoder;
-import org.apache.beam.sdk.coders.MapCoder;
 import org.apache.beam.sdk.coders.NullableCoder;
 import org.apache.beam.sdk.coders.SerializableCoder;
 import org.apache.beam.sdk.coders.StringUtf8Coder;
 import org.apache.beam.sdk.coders.VarIntCoder;
-import org.apache.beam.sdk.extensions.smb.BucketMetadata.BucketMetadataCoder;
 import org.apache.beam.sdk.extensions.smb.BucketMetadataUtil.PartitionMetadata;
 import org.apache.beam.sdk.extensions.smb.BucketMetadataUtil.SourceMetadata;
-import org.apache.beam.sdk.extensions.smb.SMBFilenamePolicy.FileAssignment;
-import org.apache.beam.sdk.io.FileSystems;
 import org.apache.beam.sdk.io.fs.ResourceId;
-import org.apache.beam.sdk.io.fs.ResourceIdCoder;
 import org.apache.beam.sdk.metrics.Counter;
 import org.apache.beam.sdk.metrics.Distribution;
 import org.apache.beam.sdk.metrics.Metrics;
@@ -96,20 +92,51 @@ import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.primitives.Unsig
 public class SortedBucketSource<FinalKeyT>
     extends PTransform<PBegin, PCollection<KV<FinalKeyT, CoGbkResult>>> {
 
+  public abstract static class TargetParallelism {
+    public static MinParallelism MIN = new MinParallelism();
+    public static MaxParallelism MAX = new MaxParallelism();
+
+    public static CustomParallelism of(int value) {
+      return new CustomParallelism(value);
+    }
+  }
+
+  private static class MaxParallelism extends TargetParallelism {}
+
+  private static class MinParallelism extends TargetParallelism {}
+
+  private static class CustomParallelism extends TargetParallelism {
+    int value;
+
+    CustomParallelism(int value) {
+      this.value = value;
+    }
+  }
+
   private static final Comparator<byte[]> bytesComparator =
       UnsignedBytes.lexicographicalComparator();
 
   private final Class<FinalKeyT> finalKeyClass;
   private final transient List<BucketedInput<?, ?>> sources;
+  private final TargetParallelism targetParallelism;
 
   public SortedBucketSource(Class<FinalKeyT> finalKeyClass, List<BucketedInput<?, ?>> sources) {
+    this(finalKeyClass, sources, TargetParallelism.MIN);
+  }
+
+  public SortedBucketSource(
+      Class<FinalKeyT> finalKeyClass,
+      List<BucketedInput<?, ?>> sources,
+      TargetParallelism targetParallelism) {
     this.finalKeyClass = finalKeyClass;
     this.sources = sources;
+    this.targetParallelism = targetParallelism;
   }
 
   @Override
   public final PCollection<KV<FinalKeyT, CoGbkResult>> expand(PBegin begin) {
     final SourceSpec<FinalKeyT> sourceSpec = getSourceSpec(finalKeyClass, sources);
+    int parallelism = sourceSpec.getParallelism(targetParallelism);
 
     @SuppressWarnings("deprecation")
     final Reshuffle.ViaRandomKey<Integer> reshuffle = Reshuffle.viaRandomKey();
@@ -123,28 +150,47 @@ public class SortedBucketSource<FinalKeyT>
     return begin
         .getPipeline()
         .apply(
-            "CreateBuckets",
-            Create.of(
-                    IntStream.range(0, sourceSpec.leastNumBuckets)
-                        .boxed()
-                        .collect(Collectors.toList()))
+            "CreateWorkers",
+            Create.of(IntStream.range(0, parallelism).boxed().collect(Collectors.toList()))
                 .withCoder(VarIntCoder.of()))
         .apply("ReshuffleKeys", reshuffle)
         .apply(
             "MergeBuckets",
-            ParDo.of(
-                new MergeBuckets<>(
-                    this.getName(), sources, sourceSpec.leastNumBuckets, sourceSpec.keyCoder)))
+            ParDo.of(new MergeBuckets<>(this.getName(), sources, parallelism, sourceSpec)))
         .setCoder(KvCoder.of(sourceSpec.keyCoder, resultCoder));
   }
 
   static class SourceSpec<K> {
     int leastNumBuckets;
+    int greatestNumBuckets;
     Coder<K> keyCoder;
 
-    SourceSpec(int leastNumBuckets, Coder<K> keyCoder) {
+    SourceSpec(int leastNumBuckets, int greatestNumBuckets, Coder<K> keyCoder) {
       this.leastNumBuckets = leastNumBuckets;
+      this.greatestNumBuckets = greatestNumBuckets;
       this.keyCoder = keyCoder;
+    }
+
+    int getParallelism(TargetParallelism targetParallelism) {
+      int parallelism;
+      if (targetParallelism == TargetParallelism.MIN) {
+        return leastNumBuckets;
+      } else if (targetParallelism == TargetParallelism.MAX) {
+        return greatestNumBuckets;
+      } else {
+        parallelism = ((CustomParallelism) targetParallelism).value;
+
+        Preconditions.checkArgument(
+            ((parallelism & parallelism - 1) == 0)
+                && parallelism >= leastNumBuckets
+                && parallelism <= greatestNumBuckets,
+            String.format(
+                "Target parallelism must be a power of 2 between the least (%d) and "
+                    + "greatest (%d) number of buckets in sources. Was: %d",
+                leastNumBuckets, greatestNumBuckets, parallelism));
+
+        return parallelism;
+      }
     }
   }
 
@@ -153,7 +199,6 @@ public class SortedBucketSource<FinalKeyT>
     BucketMetadata<?, ?> first = null;
     Coder<KeyT> finalKeyCoder = null;
 
-    int leastNumBuckets = Integer.MAX_VALUE;
     // Check metadata of each source
     for (BucketedInput<?, ?> source : sources) {
       final BucketMetadata<?, ?> current = source.getMetadata();
@@ -166,8 +211,6 @@ public class SortedBucketSource<FinalKeyT>
             sources.get(0),
             source);
       }
-
-      leastNumBuckets = Math.min(current.getNumBuckets(), leastNumBuckets);
 
       if (current.getKeyClass() == finalKeyClass && finalKeyCoder == null) {
         try {
@@ -182,10 +225,24 @@ public class SortedBucketSource<FinalKeyT>
       }
     }
 
+    int leastNumBuckets =
+        sources.stream()
+            .flatMap(source -> source.getPartitionMetadata().values().stream())
+            .map(PartitionMetadata::getNumBuckets)
+            .min(Integer::compareTo)
+            .get();
+
+    int greatestNumBuckets =
+        sources.stream()
+            .flatMap(source -> source.getPartitionMetadata().values().stream())
+            .map(PartitionMetadata::getNumBuckets)
+            .max(Integer::compareTo)
+            .get();
+
     Preconditions.checkNotNull(
         finalKeyCoder, "Could not infer coder for key class %s", finalKeyClass);
 
-    return new SourceSpec<>(leastNumBuckets, finalKeyCoder);
+    return new SourceSpec<>(leastNumBuckets, greatestNumBuckets, finalKeyCoder);
   }
 
   /** Merge key-value groups in matching buckets. */
@@ -193,6 +250,7 @@ public class SortedBucketSource<FinalKeyT>
     private static final Comparator<Map.Entry<TupleTag, KV<byte[], Iterator<?>>>> keyComparator =
         (o1, o2) -> bytesComparator.compare(o1.getValue().getKey(), o2.getValue().getKey());
 
+    private final Integer targetParallelism;
     private final Integer leastNumBuckets;
     private final Coder<FinalKeyT> keyCoder;
     private final List<BucketedInput<?, ?>> sources;
@@ -203,10 +261,11 @@ public class SortedBucketSource<FinalKeyT>
     MergeBuckets(
         String transformName,
         List<BucketedInput<?, ?>> sources,
-        int leastNumBuckets,
-        Coder<FinalKeyT> keyCoder) {
-      this.leastNumBuckets = leastNumBuckets;
-      this.keyCoder = keyCoder;
+        int targetParallelism,
+        SourceSpec<FinalKeyT> sourceSpec) {
+      this.targetParallelism = targetParallelism;
+      this.leastNumBuckets = sourceSpec.leastNumBuckets;
+      this.keyCoder = sourceSpec.keyCoder;
       this.sources = sources;
 
       elementsRead = Metrics.counter(SortedBucketSource.class, transformName + "-ElementsRead");
@@ -216,10 +275,28 @@ public class SortedBucketSource<FinalKeyT>
 
     @ProcessElement
     public void processElement(ProcessContext c) {
+      int bucketId = c.element();
+
+      final KeyGroupIterator[] iterators;
+      iterators =
+          sources.stream()
+              .map(i -> i.createIterator(bucketId, targetParallelism))
+              .toArray(KeyGroupIterator[]::new);
+
+      Function<byte[], Boolean> keyGroupFilter;
+
+      if (targetParallelism.equals(leastNumBuckets)) {
+        keyGroupFilter = (bytes) -> true;
+      } else {
+        keyGroupFilter =
+            (bytes) ->
+                sources.get(0).getMetadata().rehashBucket(bytes, targetParallelism) == bucketId;
+      }
+
       merge(
-          c.element(),
-          sources,
-          leastNumBuckets,
+          iterators,
+          BucketedInput.schemaOf(sources),
+          keyGroupFilter,
           mergedKeyGroup -> {
             try {
               c.output(
@@ -235,23 +312,15 @@ public class SortedBucketSource<FinalKeyT>
     }
 
     static void merge(
-        int bucketId,
-        List<BucketedInput<?, ?>> sources,
-        int leastNumBuckets,
+        KeyGroupIterator[] iterators,
+        CoGbkResultSchema resultSchema,
+        Function<byte[], Boolean> keyGroupFilter,
         Consumer<KV<byte[], CoGbkResult>> consumer,
         Counter elementsRead,
         Distribution keyGroupSize) {
-      final int numSources = sources.size();
+      final int numSources = iterators.length;
 
-      // Initialize iterators and tuple tags for sources
-      final KeyGroupIterator[] iterators =
-          sources.stream()
-              .map(i -> i.createIterator(bucketId, leastNumBuckets))
-              .toArray(KeyGroupIterator[]::new);
-
-      final CoGbkResultSchema resultSchema = BucketedInput.schemaOf(sources);
       final TupleTagList tupleTags = resultSchema.getTupleTagList();
-
       final Map<TupleTag, KV<byte[], Iterator<?>>> nextKeyGroups = new HashMap<>();
 
       while (true) {
@@ -279,6 +348,8 @@ public class SortedBucketSource<FinalKeyT>
         final Map.Entry<TupleTag, KV<byte[], Iterator<?>>> minKeyEntry =
             nextKeyGroups.entrySet().stream().min(keyComparator).orElse(null);
 
+        final boolean acceptKeyGroup = keyGroupFilter.apply(minKeyEntry.getValue().getKey());
+
         final Iterator<Map.Entry<TupleTag, KV<byte[], Iterator<?>>>> nextKeyGroupsIt =
             nextKeyGroups.entrySet().iterator();
         final List<Iterable<?>> valueMap = new ArrayList<>();
@@ -296,21 +367,24 @@ public class SortedBucketSource<FinalKeyT>
             // TODO: this exhausts everything from the "lazy" iterator and can be expensive.
             // To fix we have to make the underlying Reader range aware so that it's safe to
             // re-iterate or stop without exhausting remaining elements in the value group.
+
             entry.getValue().getValue().forEachRemaining(values::add);
+
             nextKeyGroupsIt.remove();
             keyGroupCount += values.size();
           }
         }
 
-        keyGroupSize.update(keyGroupCount);
-        elementsRead.inc(keyGroupCount);
+        if (acceptKeyGroup) {
+          keyGroupSize.update(keyGroupCount);
+          elementsRead.inc(keyGroupCount);
 
-        final KV<byte[], CoGbkResult> mergedKeyGroup =
-            KV.of(
-                minKeyEntry.getValue().getKey(),
-                CoGbkResultUtil.newCoGbkResult(resultSchema, valueMap));
-
-        consumer.accept(mergedKeyGroup);
+          final KV<byte[], CoGbkResult> mergedKeyGroup =
+              KV.of(
+                  minKeyEntry.getValue().getKey(),
+                  CoGbkResultUtil.newCoGbkResult(resultSchema, valueMap));
+          consumer.accept(mergedKeyGroup);
+        }
 
         if (completedSources == numSources) {
           break;
@@ -374,37 +448,39 @@ public class SortedBucketSource<FinalKeyT>
     }
 
     public BucketMetadata<K, V> getMetadata() {
-      computeMetadataIfAbsent();
-      return sourceMetadata.getCanonicalMetadata();
+      return getOrComputeMetadata().getCanonicalMetadata();
     }
 
-    private void computeMetadataIfAbsent() {
-      if (this.sourceMetadata != null) {
-        return;
+    public Map<ResourceId, PartitionMetadata> getPartitionMetadata() {
+      return getOrComputeMetadata().getPartitionMetadata();
+    }
+
+    private SourceMetadata<K, V> getOrComputeMetadata() {
+      if (sourceMetadata == null) {
+        sourceMetadata =
+            BucketMetadataUtil.get().getSourceMetadata(inputDirectories, filenameSuffix);
       }
-
-      sourceMetadata = BucketMetadataUtil.get().getSourceMetadata(inputDirectories, filenameSuffix);
+      return sourceMetadata;
     }
 
-    KeyGroupIterator<byte[], V> createIterator(int bucketId, int leastNumBuckets) {
+    KeyGroupIterator<byte[], V> createIterator(int workerId, int targetParallelism) {
       final List<Iterator<V>> iterators = new ArrayList<>();
-
       // Create one iterator per shard
-      sourceMetadata
+      getOrComputeMetadata()
           .getPartitionMetadata()
           .forEach(
               (resourceId, partitionMetadata) -> {
-                final int directoryBuckets = partitionMetadata.getNumBuckets();
-                final int directoryShards = partitionMetadata.getNumShards();
+                final int numBuckets = partitionMetadata.getNumBuckets();
+                final int numShards = partitionMetadata.getNumShards();
 
                 // Since all BucketedInputs have a bucket count that's a power of two, we can infer
                 // which buckets should be merged together for the join.
-                for (int i = bucketId; i < directoryBuckets; i += leastNumBuckets) {
-                  for (int j = 0; j < directoryShards; j++) {
+                for (int i = (workerId % numBuckets); i < numBuckets; i += targetParallelism) {
+                  for (int j = 0; j < numShards; j++) {
                     final ResourceId file =
                         partitionMetadata
                             .getFileAssignment()
-                            .forBucket(BucketShardId.of(i, j), directoryBuckets, directoryShards);
+                            .forBucket(BucketShardId.of(i, j), numBuckets, numShards);
                     try {
                       iterators.add(fileOperations.iterator(file));
                     } catch (Exception e) {

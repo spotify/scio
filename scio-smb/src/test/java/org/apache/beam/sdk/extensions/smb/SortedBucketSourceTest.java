@@ -38,6 +38,7 @@ import java.util.stream.StreamSupport;
 import org.apache.beam.sdk.PipelineResult;
 import org.apache.beam.sdk.extensions.smb.FileOperations.Writer;
 import org.apache.beam.sdk.extensions.smb.SMBFilenamePolicy.FileAssignment;
+import org.apache.beam.sdk.extensions.smb.SortedBucketSource.TargetParallelism;
 import org.apache.beam.sdk.io.FileSystems;
 import org.apache.beam.sdk.io.LocalResources;
 import org.apache.beam.sdk.io.fs.ResourceId;
@@ -304,8 +305,67 @@ public class SortedBucketSourceTest {
                 BucketShardId.of(1, 0), Lists.newArrayList("c7", "c8"))));
   }
 
+  // For custom parallelism, test input keys *must* hash to their corresponding bucket IDs,
+  // since a rehash is required in the merge step
+  @Test
+  @Category(NeedsRunner.class)
+  public void testPartitionedInputsMixedBucketsMaxParallelism() throws Exception {
+    testPartitioned(
+        ImmutableList.of(
+            ImmutableMap.of(
+                BucketShardId.of(0, 0), Lists.newArrayList("w1", "w2"),
+                BucketShardId.of(1, 0), Lists.newArrayList("c1", "c2")),
+            ImmutableMap.of(BucketShardId.of(0, 0), Lists.newArrayList("w3", "w4"))),
+        ImmutableList.of(
+            ImmutableMap.of(BucketShardId.of(0, 0), Lists.newArrayList("w5", "w6")),
+            ImmutableMap.of(
+                BucketShardId.of(0, 0), Lists.newArrayList("w7", "w8"),
+                BucketShardId.of(1, 0), Lists.newArrayList("c7", "c8"))),
+        TargetParallelism.MAX);
+  }
+
+  @Test
+  @Category(NeedsRunner.class)
+  public void testMixedBucketsMixedShardMaxParallelism() throws Exception {
+    test(
+        ImmutableMap.of(
+            BucketShardId.of(0, 0), Lists.newArrayList("e1", "e2"),
+            BucketShardId.of(1, 0), Lists.newArrayList("c1", "c2", "c3"),
+            BucketShardId.of(2, 0), Lists.newArrayList("i1", "i2", "i1", "i2"),
+            BucketShardId.of(3, 0), Lists.newArrayList("k1", "k2", "k1", "k2")),
+        ImmutableMap.of(
+            BucketShardId.of(0, 0), Lists.newArrayList("e3", "e3"),
+            BucketShardId.of(0, 1), Lists.newArrayList("m4", "m4"),
+            BucketShardId.of(1, 0), Lists.newArrayList("t3", "t3"),
+            BucketShardId.of(1, 1), Lists.newArrayList("h4", "h4")),
+        TargetParallelism.MAX);
+  }
+
+  @Test
+  @Category(NeedsRunner.class)
+  public void testMixedBucketsMixedShardCustomParallelism() throws Exception {
+    test(
+        ImmutableMap.of(
+            BucketShardId.of(0, 0), Lists.newArrayList("e1", "e2"),
+            BucketShardId.of(1, 0), Lists.newArrayList("c1", "c2", "c3"),
+            BucketShardId.of(2, 0), Lists.newArrayList("i1", "i2", "i1", "i2"),
+            BucketShardId.of(3, 0), Lists.newArrayList("k1", "k2", "k1", "k2")),
+        ImmutableMap.of(
+            BucketShardId.of(0, 0), Lists.newArrayList("e3", "e3"),
+            BucketShardId.of(0, 1), Lists.newArrayList("m4", "m4")),
+        TargetParallelism.of(2));
+  }
+
   private void test(
       Map<BucketShardId, List<String>> lhsInput, Map<BucketShardId, List<String>> rhsInput)
+      throws Exception {
+    test(lhsInput, rhsInput, TargetParallelism.MIN);
+  }
+
+  private void test(
+      Map<BucketShardId, List<String>> lhsInput,
+      Map<BucketShardId, List<String>> rhsInput,
+      TargetParallelism targetParallelism)
       throws Exception {
     int lhsNumBuckets = maxId(lhsInput.keySet(), BucketShardId::getBucketId) + 1;
     int lhsNumShards = maxId(lhsInput.keySet(), BucketShardId::getShardId) + 1;
@@ -324,7 +384,8 @@ public class SortedBucketSourceTest {
         Collections.singletonList(fromFolder(lhsFolder)),
         Collections.singletonList(fromFolder(rhsFolder)),
         lhsInput,
-        rhsInput);
+        rhsInput,
+        targetParallelism);
 
     final PipelineResult result = pipeline.run();
 
@@ -353,13 +414,23 @@ public class SortedBucketSourceTest {
       List<Map<BucketShardId, List<String>>> lhsInputs,
       List<Map<BucketShardId, List<String>>> rhsInputs)
       throws Exception {
+    testPartitioned(lhsInputs, rhsInputs, TargetParallelism.MIN);
+  }
+
+  private void testPartitioned(
+      List<Map<BucketShardId, List<String>>> lhsInputs,
+      List<Map<BucketShardId, List<String>>> rhsInputs,
+      TargetParallelism targetParallelism)
+      throws Exception {
 
     List<ResourceId> lhsPaths = new ArrayList<>();
     Map<BucketShardId, List<String>> allLhsValues = new HashMap<>();
 
+    int maxNumBuckets = Integer.MIN_VALUE;
     for (Map<BucketShardId, List<String>> input : lhsInputs) {
       int numBuckets = maxId(input.keySet(), BucketShardId::getBucketId) + 1;
       int numShards = maxId(input.keySet(), BucketShardId::getShardId) + 1;
+      maxNumBuckets = Math.max(maxNumBuckets, numBuckets);
       TestBucketMetadata metadata = TestBucketMetadata.of(numBuckets, numShards);
       ResourceId destination =
           LocalResources.fromFile(
@@ -381,9 +452,11 @@ public class SortedBucketSourceTest {
 
     List<ResourceId> rhsPaths = new ArrayList<>();
     Map<BucketShardId, List<String>> allRhsValues = new HashMap<>();
+
     for (Map<BucketShardId, List<String>> input : rhsInputs) {
       int numBuckets = maxId(input.keySet(), BucketShardId::getBucketId) + 1;
       int numShards = maxId(input.keySet(), BucketShardId::getShardId) + 1;
+      maxNumBuckets = Math.max(maxNumBuckets, numBuckets);
       TestBucketMetadata metadata = TestBucketMetadata.of(numBuckets, numShards);
       ResourceId destination =
           LocalResources.fromFile(
@@ -403,7 +476,7 @@ public class SortedBucketSourceTest {
                   }));
     }
 
-    checkJoin(pipeline, lhsPaths, rhsPaths, allLhsValues, allRhsValues);
+    checkJoin(pipeline, lhsPaths, rhsPaths, allLhsValues, allRhsValues, targetParallelism);
     pipeline.run();
   }
 
@@ -412,7 +485,8 @@ public class SortedBucketSourceTest {
       List<ResourceId> lhsPaths,
       List<ResourceId> rhsPaths,
       Map<BucketShardId, List<String>> lhsValues,
-      Map<BucketShardId, List<String>> rhsValues)
+      Map<BucketShardId, List<String>> rhsValues,
+      TargetParallelism targetParallelism)
       throws Exception {
     final TupleTag<String> lhsTag = new TupleTag<>("LHS");
     final TupleTag<String> rhsTag = new TupleTag<>("RHS");
@@ -423,7 +497,7 @@ public class SortedBucketSourceTest {
             new BucketedInput<>(rhsTag, rhsPaths, ".txt", fileOperations));
 
     PCollection<KV<String, CoGbkResult>> output =
-        pipeline.apply(new SortedBucketSource<>(String.class, inputs));
+        pipeline.apply(new SortedBucketSource<>(String.class, inputs, targetParallelism));
 
     Function<String, String> extractKeyFn = TestBucketMetadata.of(2, 1)::extractKey;
 
