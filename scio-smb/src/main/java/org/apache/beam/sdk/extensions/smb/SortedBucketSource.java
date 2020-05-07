@@ -267,7 +267,7 @@ public class SortedBucketSource<FinalKeyT>
     private final Integer parallelism;
     private final Coder<FinalKeyT> keyCoder;
     private final List<BucketedInput<?, ?>> sources;
-    private final BiFunction<byte[], Integer, Boolean> keyGroupFilter;
+    private final int leastNumBuckets;
 
     private final Counter elementsRead;
     private final Distribution keyGroupSize;
@@ -280,13 +280,7 @@ public class SortedBucketSource<FinalKeyT>
       this.parallelism = targetParallelism;
       this.keyCoder = sourceSpec.keyCoder;
       this.sources = sources;
-
-      if (parallelism.equals(sourceSpec.leastNumBuckets)) {
-        keyGroupFilter = (bytes, bucket) -> true;
-      } else {
-        final BucketMetadata<?, ?> metadata = sources.get(0).getMetadata();
-        keyGroupFilter = (bytes, bucket) -> metadata.rehashBucket(bytes, parallelism) == bucket;
-      }
+      this.leastNumBuckets = sourceSpec.leastNumBuckets;
 
       elementsRead = Metrics.counter(SortedBucketSource.class, transformName + "-ElementsRead");
       keyGroupSize =
@@ -302,10 +296,17 @@ public class SortedBucketSource<FinalKeyT>
               .map(i -> i.createIterator(bucketId, parallelism))
               .toArray(KeyGroupIterator[]::new);
 
+      Function<byte[], Boolean> keyGroupFilter;
+      if (parallelism.equals(leastNumBuckets)) {
+        keyGroupFilter = (bytes) -> true;
+      } else {
+        keyGroupFilter = sources.get(0).getMetadata().checkRehashedBucketFn(parallelism, bucketId);
+      }
+
       merge(
           iterators,
           BucketedInput.schemaOf(sources),
-          bytes -> keyGroupFilter.apply(bytes, bucketId),
+          keyGroupFilter,
           mergedKeyGroup -> {
             try {
               c.output(
