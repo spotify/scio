@@ -321,7 +321,7 @@ public class SortedBucketSourceTest {
             ImmutableMap.of(
                 BucketShardId.of(0, 0), Lists.newArrayList("w7", "w8"),
                 BucketShardId.of(1, 0), Lists.newArrayList("c7", "c8"))),
-        TargetParallelism.MAX);
+        TargetParallelism.max());
   }
 
   @Test
@@ -338,7 +338,7 @@ public class SortedBucketSourceTest {
             BucketShardId.of(0, 1), Lists.newArrayList("m4", "m4"),
             BucketShardId.of(1, 0), Lists.newArrayList("t3", "t3"),
             BucketShardId.of(1, 1), Lists.newArrayList("h4", "h4")),
-        TargetParallelism.MAX);
+        TargetParallelism.max());
   }
 
   @Test
@@ -359,7 +359,7 @@ public class SortedBucketSourceTest {
   private void test(
       Map<BucketShardId, List<String>> lhsInput, Map<BucketShardId, List<String>> rhsInput)
       throws Exception {
-    test(lhsInput, rhsInput, TargetParallelism.MIN);
+    test(lhsInput, rhsInput, TargetParallelism.min());
   }
 
   private void test(
@@ -414,7 +414,7 @@ public class SortedBucketSourceTest {
       List<Map<BucketShardId, List<String>>> lhsInputs,
       List<Map<BucketShardId, List<String>>> rhsInputs)
       throws Exception {
-    testPartitioned(lhsInputs, rhsInputs, TargetParallelism.MIN);
+    testPartitioned(lhsInputs, rhsInputs, TargetParallelism.min());
   }
 
   private void testPartitioned(

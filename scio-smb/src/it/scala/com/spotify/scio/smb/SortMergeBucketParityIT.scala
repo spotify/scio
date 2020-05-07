@@ -26,6 +26,7 @@ import com.spotify.scio.values.SCollection
 import org.apache.avro.Schema
 import org.apache.avro.Schema.Field
 import org.apache.avro.generic.{GenericData, GenericRecord}
+import org.apache.beam.sdk.extensions.smb.SortedBucketSource.TargetParallelism
 import org.apache.beam.sdk.extensions.smb.{AvroSortedBucketIO, SortedBucketIO}
 import org.apache.beam.sdk.values.TupleTag
 import org.apache.commons.io.FileUtils
@@ -57,7 +58,12 @@ class SortMergeBucketParityIT extends AnyFlatSpec with Matchers {
 
   "sortMergeCoGroup" should "have parity with a 2-way CoGroup" in withNumSources(2) { inputs =>
     compareResults(
-      _.sortMergeCoGroup(classOf[Integer], mkRead(inputs(0)), mkRead(inputs(1)))
+      _.sortMergeCoGroup(
+        classOf[Integer],
+        mkRead(inputs(0)),
+        mkRead(inputs(1)),
+        TargetParallelism.min()
+      )
     ) { sc =>
       val (avroA, avroB) = (
         sc.avroFile(s"${inputs(0)}/*.avro", schema),
@@ -78,7 +84,8 @@ class SortMergeBucketParityIT extends AnyFlatSpec with Matchers {
             .from(inputs(0).toString, inputs(1).toString),
           AvroSortedBucketIO
             .read(new TupleTag[GenericRecord]("rhs"), schema)
-            .from(inputs(2).toString, inputs(3).toString)
+            .from(inputs(2).toString, inputs(3).toString),
+          TargetParallelism.max()
         )
       ) { sc =>
         val (lhs, rhs) = (
@@ -102,7 +109,13 @@ class SortMergeBucketParityIT extends AnyFlatSpec with Matchers {
 
   it should "have parity with a 3-way CoGroup" in withNumSources(3) { inputs =>
     compareResults(
-      _.sortMergeCoGroup(classOf[Integer], mkRead(inputs(0)), mkRead(inputs(1)), mkRead(inputs(2)))
+      _.sortMergeCoGroup(
+        classOf[Integer],
+        mkRead(inputs(0)),
+        mkRead(inputs(1)),
+        mkRead(inputs(2)),
+        TargetParallelism.min()
+      )
     ) { sc =>
       val (avroA, avroB, avroC) = (
         sc.avroFile(s"${inputs(0)}/*.avro", schema),
@@ -121,7 +134,8 @@ class SortMergeBucketParityIT extends AnyFlatSpec with Matchers {
         mkRead(inputs(0)),
         mkRead(inputs(1)),
         mkRead(inputs(2)),
-        mkRead(inputs(3))
+        mkRead(inputs(3)),
+        TargetParallelism.max()
       )
     ) { sc =>
       val (avroA, avroB, avroC, avroD) = (
