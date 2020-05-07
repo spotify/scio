@@ -426,11 +426,9 @@ public class SortedBucketSourceTest {
     List<ResourceId> lhsPaths = new ArrayList<>();
     Map<BucketShardId, List<String>> allLhsValues = new HashMap<>();
 
-    int maxNumBuckets = Integer.MIN_VALUE;
     for (Map<BucketShardId, List<String>> input : lhsInputs) {
       int numBuckets = maxId(input.keySet(), BucketShardId::getBucketId) + 1;
       int numShards = maxId(input.keySet(), BucketShardId::getShardId) + 1;
-      maxNumBuckets = Math.max(maxNumBuckets, numBuckets);
       TestBucketMetadata metadata = TestBucketMetadata.of(numBuckets, numShards);
       ResourceId destination =
           LocalResources.fromFile(
@@ -452,11 +450,9 @@ public class SortedBucketSourceTest {
 
     List<ResourceId> rhsPaths = new ArrayList<>();
     Map<BucketShardId, List<String>> allRhsValues = new HashMap<>();
-
     for (Map<BucketShardId, List<String>> input : rhsInputs) {
       int numBuckets = maxId(input.keySet(), BucketShardId::getBucketId) + 1;
       int numShards = maxId(input.keySet(), BucketShardId::getShardId) + 1;
-      maxNumBuckets = Math.max(maxNumBuckets, numBuckets);
       TestBucketMetadata metadata = TestBucketMetadata.of(numBuckets, numShards);
       ResourceId destination =
           LocalResources.fromFile(
