@@ -121,7 +121,7 @@ public class SortedBucketSource<FinalKeyT>
   private final TargetParallelism targetParallelism;
 
   public SortedBucketSource(Class<FinalKeyT> finalKeyClass, List<BucketedInput<?, ?>> sources) {
-    this(finalKeyClass, sources, TargetParallelism.MIN);
+    this(finalKeyClass, sources, TargetParallelism.of(1024));
   }
 
   public SortedBucketSource(
@@ -250,7 +250,7 @@ public class SortedBucketSource<FinalKeyT>
     private static final Comparator<Map.Entry<TupleTag, KV<byte[], Iterator<?>>>> keyComparator =
         (o1, o2) -> bytesComparator.compare(o1.getValue().getKey(), o2.getValue().getKey());
 
-    private final Integer targetParallelism;
+    private final Integer parallelism;
     private final Integer leastNumBuckets;
     private final Coder<FinalKeyT> keyCoder;
     private final List<BucketedInput<?, ?>> sources;
@@ -263,7 +263,7 @@ public class SortedBucketSource<FinalKeyT>
         List<BucketedInput<?, ?>> sources,
         int targetParallelism,
         SourceSpec<FinalKeyT> sourceSpec) {
-      this.targetParallelism = targetParallelism;
+      this.parallelism = targetParallelism;
       this.leastNumBuckets = sourceSpec.leastNumBuckets;
       this.keyCoder = sourceSpec.keyCoder;
       this.sources = sources;
@@ -280,17 +280,17 @@ public class SortedBucketSource<FinalKeyT>
       final KeyGroupIterator[] iterators;
       iterators =
           sources.stream()
-              .map(i -> i.createIterator(bucketId, targetParallelism))
+              .map(i -> i.createIterator(bucketId, parallelism))
               .toArray(KeyGroupIterator[]::new);
 
       Function<byte[], Boolean> keyGroupFilter;
 
-      if (targetParallelism.equals(leastNumBuckets)) {
+      if (parallelism.equals(leastNumBuckets)) {
         keyGroupFilter = (bytes) -> true;
       } else {
         keyGroupFilter =
             (bytes) ->
-                sources.get(0).getMetadata().rehashBucket(bytes, targetParallelism) == bucketId;
+                sources.get(0).getMetadata().rehashBucket(bytes, parallelism) == bucketId;
       }
 
       merge(
@@ -361,17 +361,22 @@ public class SortedBucketSource<FinalKeyT>
         while (nextKeyGroupsIt.hasNext()) {
           final Map.Entry<TupleTag, KV<byte[], Iterator<?>>> entry = nextKeyGroupsIt.next();
           if (keyComparator.compare(entry, minKeyEntry) == 0) {
-            int index = resultSchema.getIndex(entry.getKey());
-            @SuppressWarnings("unchecked")
-            final List<Object> values = (List<Object>) valueMap.get(index);
-            // TODO: this exhausts everything from the "lazy" iterator and can be expensive.
-            // To fix we have to make the underlying Reader range aware so that it's safe to
-            // re-iterate or stop without exhausting remaining elements in the value group.
+            if (acceptKeyGroup) {
+              int index = resultSchema.getIndex(entry.getKey());
+              @SuppressWarnings("unchecked") final List<Object> values = (List<Object>) valueMap
+                  .get(index);
+              // TODO: this exhausts everything from the "lazy" iterator and can be expensive.
+              // To fix we have to make the underlying Reader range aware so that it's safe to
+              // re-iterate or stop without exhausting remaining elements in the value group.
+              entry.getValue().getValue().forEachRemaining(values::add);
 
-            entry.getValue().getValue().forEachRemaining(values::add);
-
-            nextKeyGroupsIt.remove();
-            keyGroupCount += values.size();
+              nextKeyGroupsIt.remove();
+              keyGroupCount += values.size();
+            } else {
+              // Still have to exhaust iterator
+              entry.getValue().getValue().forEachRemaining(value -> {});
+              nextKeyGroupsIt.remove();
+            }
           }
         }
 
@@ -396,7 +401,7 @@ public class SortedBucketSource<FinalKeyT>
     public void populateDisplayData(Builder builder) {
       super.populateDisplayData(builder);
       builder.add(DisplayData.item("keyCoder", keyCoder.getClass()));
-      builder.add(DisplayData.item("leastNumBuckets", leastNumBuckets));
+      builder.add(DisplayData.item("parallelism", parallelism));
     }
   }
 
