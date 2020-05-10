@@ -571,7 +571,7 @@ lazy val `scio-test`: Project = project
       "commons-io" % "commons-io" % commonsIoVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.hamcrest" % "hamcrest" % hamcrestVersion,
-      "org.scalactic" %% "scalactic" % "3.1.1"
+      "org.scalactic" %% "scalactic" % "3.1.2"
     ),
     magnoliaDependencies,
     beamSDKIODependencies,
