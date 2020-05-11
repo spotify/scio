@@ -23,9 +23,8 @@ import java.util.concurrent.atomic.AtomicInteger
 
 import com.esotericsoftware.kryo.KryoException
 import com.esotericsoftware.kryo.io.{InputChunked, OutputChunked}
-import com.esotericsoftware.kryo.serializers.JavaSerializer
 import com.google.protobuf.{ByteString, Message}
-import com.spotify.scio.coders.instances.kryo._
+import com.spotify.scio.coders.instances.kryo.{GrpcSerializers => grpc, _}
 import com.spotify.scio.options.ScioOptions
 import com.twitter.chill._
 import com.twitter.chill.algebird.AlgebirdRegistrar
@@ -112,6 +111,7 @@ final private class ScioKryoRegistrar extends IKryoRegistrar {
       classOf[Wrappers.JListWrapper[_]],
       new JTraversableSerializer[Any, mutable.Buffer[Any]]
     )
+
     k.forSubclass[SpecificRecordBase](new SpecificAvroSerializer)
     k.forSubclass[GenericRecord](new GenericAvroSerializer)
     k.forSubclass[Message](new ProtobufSerializer)
@@ -122,7 +122,9 @@ final private class ScioKryoRegistrar extends IKryoRegistrar {
     k.forSubclass[Path](new JPathSerializer)
     k.forSubclass[ByteString](new ByteStringSerializer)
     k.forClass(new KVSerializer)
-    k.addDefaultSerializer(classOf[Throwable], new JavaSerializer())
+    k.forClass[io.grpc.Status](new grpc.StatusSerializer())
+    k.javaForClass[Throwable]
+    k.forSubclass[io.grpc.StatusRuntimeException](new grpc.StatusRuntimeExceptionSerializer())
     ()
   }
 }
