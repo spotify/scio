@@ -39,7 +39,7 @@ class FixAvroIO extends SemanticRule("FixAvroIO") {
       case t @ Term.Apply(
             Term.Select(parent, Term.Name("input")),
             List(Term.Apply(name @ Term.Name("AvroIO"), path), value @ Term.Name(_))
-          ) if (isJobTest(parent)) =>
+          ) if isJobTest(parent) =>
         value.symbol.info.get.signature match {
           case s @ MethodSignature(_, _, TypeRef(_, symbol, List(arg))) =>
             addImport(t.pos, importer"com.spotify.scio.avro._") +
@@ -51,7 +51,7 @@ class FixAvroIO extends SemanticRule("FixAvroIO") {
       case t @ Term.Apply(
             Term.Select(parent, Term.Name("input")),
             List(Term.Apply(name @ Term.Name("AvroIO"), path), _)
-          ) if (isJobTest(parent)) =>
+          ) if isJobTest(parent) =>
         addImport(t.pos, importer"com.spotify.scio.avro._") +
           Patch.addRight(name, s"[GenericRecord]")
       // fix IO imports

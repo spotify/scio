@@ -157,23 +157,23 @@ final class ConsistenceJoinNames extends SemanticRule("ConsistenceJoinNames") {
         fun match {
           case Term.Select(qual, name) =>
             name match {
-              case t @ Term.Name("hashLeftJoin") if (expectedType(qual, pairedHashScol)) =>
+              case t @ Term.Name("hashLeftJoin") if expectedType(qual, pairedHashScol) =>
                 Patch.replaceTree(t, "hashLeftOuterJoin") + renameNamedArgs(args)
-              case t @ Term.Name("skewedLeftJoin") if (expectedType(qual, pairedSkewedScol)) =>
+              case t @ Term.Name("skewedLeftJoin") if expectedType(qual, pairedSkewedScol) =>
                 Patch.replaceTree(t, "skewedLeftOuterJoin") + renameNamedArgs(args)
-              case t @ Term.Name("sparseOuterJoin") if (expectedType(qual, pairedScol)) =>
+              case t @ Term.Name("sparseOuterJoin") if expectedType(qual, pairedScol) =>
                 Patch.replaceTree(t, "sparseFullOuterJoin") + renameNamedArgs(args)
               case _ @(Term.Name("join") | Term.Name("fullOuterJoin") | Term.Name("leftOuterJoin") |
                   Term.Name("rightOuterJoin") | Term.Name("sparseLeftOuterJoin") |
                   Term.Name("sparseRightOuterJoin") | Term.Name("cogroup") |
                   Term.Name("groupWith") | Term.Name("sparseLookup"))
-                  if (expectedType(qual, pairedScol)) =>
+                  if expectedType(qual, pairedScol) =>
                 renameNamedArgs(args)
               case _ @(Term.Name("skewedJoin") | Term.Name("skewedFullOuterJoin"))
-                  if (expectedType(qual, pairedSkewedScol)) =>
+                  if expectedType(qual, pairedSkewedScol) =>
                 renameNamedArgs(args)
               case _ @(Term.Name("hashJoin") | Term.Name("hashFullOuterJoin") |
-                  Term.Name("hashIntersectByKey")) if (expectedType(qual, pairedHashScol)) =>
+                  Term.Name("hashIntersectByKey")) if expectedType(qual, pairedHashScol) =>
                 renameNamedArgs(args)
               case _ => Patch.empty
             }

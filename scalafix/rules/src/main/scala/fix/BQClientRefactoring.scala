@@ -39,8 +39,8 @@ class BQClientRefactoring extends SyntacticRule("BQClientRefactoring") {
       case BQDef(t, "extractLocation" | "extractTables") =>
         Patch.addLeft(t, "query.") + addBQImport(t)
       case Term.Apply(
-          Term.Select(n @ Term.Name("BigQueryClient"), Term.Name("defaultInstance")),
-          _
+            Term.Select(n @ Term.Name("BigQueryClient"), Term.Name("defaultInstance")),
+            _
           ) =>
         Patch.replaceTree(n, "BigQuery") + addBQImport(n)
       case BQDef(t, "getQuerySchema") =>
