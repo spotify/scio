@@ -77,6 +77,8 @@ object PrivateClass {
   def apply(l: Long): PrivateClass = new PrivateClass(l)
 }
 
+case class UsesPrivateClass(privateClass: PrivateClass)
+
 case class ClassWithProtoEnum(s: String, enum: OuterClassForProto.EnumExample)
 
 @SerialVersionUID(1)
@@ -361,6 +363,11 @@ final class CoderTest extends AnyFlatSpec with Matchers {
   it should "support classes with private constructors" in {
     Coder.gen[PrivateClass]
     PrivateClass(42L) coderShould fallback()
+  }
+
+  it should "support classes that contain classes with private constructors" in {
+    Coder.gen[UsesPrivateClass]
+    UsesPrivateClass(PrivateClass(1L)) coderShould notFallback()
   }
 
   it should "not derive Coders for org.apache.beam.sdk.values.Row" in {
