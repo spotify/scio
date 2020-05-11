@@ -56,9 +56,8 @@ val elasticsearch7Version = "7.6.2"
 val featranVersion = "0.6.0"
 val flinkVersion = "1.9.1"
 val gaxVersion = "1.53.0"
-val gcsConnectorVersion = "hadoop2-2.1.2"
 val gcsVersion = "1.8.0"
-val gcsioVesion = "2.1.2"
+val bigdataossVesion = "2.1.2"
 val generatedGrpcBetaVersion = "1.9.1"
 val generatedDatastoreProtoVersion = "0.85.0"
 val generatedGrpcGaVersion = "1.83.0"
@@ -142,7 +141,7 @@ val beamSDKGoogleCloudCoreDependencies = Def.settings(
         "gcsio"
       )
     ),
-    "com.google.cloud.bigdataoss" % "gcsio" % gcsioVesion
+    "com.google.cloud.bigdataoss" % "gcsio" % bigdataossVersion
   )
 )
 
@@ -888,7 +887,7 @@ lazy val `scio-parquet`: Project = project
     libraryDependencies ++= Seq(
       "me.lyh" %% "parquet-avro" % parquetExtraVersion,
       "me.lyh" % "parquet-tensorflow" % parquetExtraVersion,
-      "com.google.cloud.bigdataoss" % "gcs-connector" % gcsConnectorVersion,
+      "com.google.cloud.bigdataoss" % "gcs-connector" % s"hadoop2-$bigdataossVersion",
       "org.apache.beam" % "beam-sdks-java-io-hadoop-format" % beamVersion,
       "org.apache.hadoop" % "hadoop-client" % hadoopVersion,
       "org.apache.parquet" % "parquet-avro" % parquetVersion,
@@ -1317,8 +1316,8 @@ ThisBuild / dependencyOverrides ++= Seq(
   "com.google.auth" % "google-auth-library-credentials" % googleAuthVersion,
   "com.google.auth" % "google-auth-library-oauth2-http" % googleAuthVersion,
   "com.google.auto.value" % "auto-value-annotations" % autoValueVersion,
-  "com.google.cloud.bigdataoss" % "gcsio" % gcsioVesion,
-  "com.google.cloud.bigdataoss" % "util" % gcsioVesion,
+  "com.google.cloud.bigdataoss" % "gcsio" % bigdataossVersion,
+  "com.google.cloud.bigdataoss" % "util" % bigdataossVersion,
   "com.google.cloud" % "google-cloud-core-grpc" % "1.92.2",
   "com.google.cloud" % "google-cloud-core-http" % "1.92.2",
   "com.google.cloud" % "google-cloud-core" % "1.92.2",
