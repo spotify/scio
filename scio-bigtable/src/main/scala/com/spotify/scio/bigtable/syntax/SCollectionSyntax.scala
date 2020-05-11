@@ -37,16 +37,16 @@ final class SCollectionMutationOps[T <: Mutation](
   /**
    * Save this SCollection as a Bigtable table. Note that elements must be of type `Mutation`.
    */
-  def saveAsBigtable(projectId: String, instanceId: String, tableId: String)(
-    implicit coder: Coder[T]
+  def saveAsBigtable(projectId: String, instanceId: String, tableId: String)(implicit
+    coder: Coder[T]
   ): ClosedTap[Nothing] =
     self.write(BigtableWrite[T](projectId, instanceId, tableId))(BigtableWrite.Default)
 
   /**
    * Save this SCollection as a Bigtable table. Note that elements must be of type `Mutation`.
    */
-  def saveAsBigtable(bigtableOptions: BigtableOptions, tableId: String)(
-    implicit coder: Coder[T]
+  def saveAsBigtable(bigtableOptions: BigtableOptions, tableId: String)(implicit
+    coder: Coder[T]
   ): ClosedTap[Nothing] =
     self.write(BigtableWrite[T](bigtableOptions, tableId))(BigtableWrite.Default)
 

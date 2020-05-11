@@ -471,24 +471,24 @@ object BigQueryTyped {
     type Aux[T <: HasAnnotation, F0[_ <: HasAnnotation] <: ScioIO[_]] =
       IO[T] { type F[A <: HasAnnotation] = F0[A] }
 
-    implicit def tableIO[T <: HasAnnotation: ClassTag: TypeTag: Coder](
-      implicit t: BigQueryType.Table[T]
+    implicit def tableIO[T <: HasAnnotation: ClassTag: TypeTag: Coder](implicit
+      t: BigQueryType.Table[T]
     ): Aux[T, Table] =
       new IO[T] {
         type F[A <: HasAnnotation] = Table[A]
         def impl: Table[T] = Table(STable.Spec(t.table))
       }
 
-    implicit def queryIO[T <: HasAnnotation: ClassTag: TypeTag: Coder](
-      implicit t: BigQueryType.Query[T]
+    implicit def queryIO[T <: HasAnnotation: ClassTag: TypeTag: Coder](implicit
+      t: BigQueryType.Query[T]
     ): Aux[T, Select] =
       new IO[T] {
         type F[A <: HasAnnotation] = Select[A]
         def impl: Select[T] = Select(Query(t.queryRaw))
       }
 
-    implicit def storageIO[T <: HasAnnotation: ClassTag: TypeTag: Coder](
-      implicit t: BigQueryType.StorageOptions[T]
+    implicit def storageIO[T <: HasAnnotation: ClassTag: TypeTag: Coder](implicit
+      t: BigQueryType.StorageOptions[T]
     ): Aux[T, Storage] =
       new IO[T] {
         type F[A <: HasAnnotation] = Storage[A]

@@ -57,9 +57,12 @@ object Cache {
       override def get(k: K): Option[V] = Option(chm.get(k))
 
       override def get(k: K, default: => V): V =
-        chm.computeIfAbsent(k, new JFunction[K, V] {
-          override def apply(key: K): V = default
-        })
+        chm.computeIfAbsent(
+          k,
+          new JFunction[K, V] {
+            override def apply(key: K): V = default
+          }
+        )
 
       override def put(k: K, value: V): Unit = {
         chm.put(k, value)
@@ -80,9 +83,12 @@ object Cache {
         Option(underlying.getIfPresent(key))
 
       override def get(key: K, default: => V): V =
-        underlying.get(key, new JFunction[K, V] {
-          override def apply(key: K): V = default
-        })
+        underlying.get(
+          key,
+          new JFunction[K, V] {
+            override def apply(key: K): V = default
+          }
+        )
 
       override def put(key: K, value: V): Unit =
         underlying.put(key, value)
@@ -102,9 +108,12 @@ object Cache {
         Option(underlying.getIfPresent(key))
 
       override def get(key: K, default: => V): V =
-        underlying.get(key, new JCallable[V] {
-          override def call(): V = default
-        })
+        underlying.get(
+          key,
+          new JCallable[V] {
+            override def call(): V = default
+          }
+        )
 
       override def put(key: K, value: V): Unit =
         underlying.put(key, value)

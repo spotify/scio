@@ -49,8 +49,8 @@ final class SorterOps[K1, K2: SortingKey, V](self: SCollection[(K1, Iterable[(K2
    *                 than 2048.
    */
   @experimental
-  def sortValues(memoryMB: Int)(
-    implicit k1Coder: Coder[K1],
+  def sortValues(memoryMB: Int)(implicit
+    k1Coder: Coder[K1],
     k2Coder: Coder[K2],
     vCoder: Coder[V],
     kvCoder: Coder[KV[K1, JIterable[KV[K2, V]]]]

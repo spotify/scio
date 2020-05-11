@@ -57,9 +57,13 @@ private[scio] object CallSites {
 
   def getCurrent: String = {
     val (method, location, nested) = getCurrentName
-    val idx = nameCache.merge((method, location, nested), 1, new BiFunction[Int, Int, Int] {
-      override def apply(t: Int, u: Int): Int = t + u
-    })
+    val idx = nameCache.merge(
+      (method, location, nested),
+      1,
+      new BiFunction[Int, Int, Int] {
+        override def apply(t: Int, u: Int): Int = t + u
+      }
+    )
 
     if (nested) {
       s"$method:$idx"

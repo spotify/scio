@@ -30,7 +30,13 @@ class AddMissingImports extends SyntacticRule("AddMissingImports") {
 
   object BQ {
     val fns =
-      List("bigQuerySelect", "bigQueryTable", "bigQueryTable", "typedBigQuery", "tableRowJsonFile") ++
+      List(
+        "bigQuerySelect",
+        "bigQueryTable",
+        "bigQueryTable",
+        "typedBigQuery",
+        "tableRowJsonFile"
+      ) ++
         List(
           "saveAsBigQuery",
           "saveAsBigQuery",

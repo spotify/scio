@@ -42,8 +42,8 @@ private[scio] object MagnoliaMacros {
       override def transform(tree: Tree): c.universe.Tree =
         tree match {
           case Apply(
-              AppliedTypeTree(Select(pack, TypeName("CaseClass")), ps),
-              List(typeName, isObject, isValueClass, params, annotations)
+                AppliedTypeTree(Select(pack, TypeName("CaseClass")), ps),
+                List(typeName, isObject, isValueClass, params, annotations)
               ) =>
             val t2 = Apply(
               AppliedTypeTree(Select(pack, TypeName("CaseClass")), ps),

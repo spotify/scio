@@ -193,8 +193,8 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     delta: Double = 1e-10,
     sampleFraction: Double = 1.0,
     withReplacement: Boolean = true
-  )(
-    implicit hasher: CMSHasher[K],
+  )(implicit
+    hasher: CMSHasher[K],
     koder: Coder[K],
     voder: Coder[V]
   ): SCollection[(K, (V, Option[W]))] =
@@ -282,8 +282,8 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     delta: Double = 1e-10,
     sampleFraction: Double = 1.0,
     withReplacement: Boolean = true
-  )(
-    implicit hasher: CMSHasher[K],
+  )(implicit
+    hasher: CMSHasher[K],
     koder: Coder[K],
     voder: Coder[V]
   ): SCollection[(K, (V, Option[W]))] = {
@@ -399,8 +399,8 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     delta: Double = 1e-10,
     sampleFraction: Double = 1.0,
     withReplacement: Boolean = true
-  )(
-    implicit hasher: CMSHasher[K],
+  )(implicit
+    hasher: CMSHasher[K],
     koder: Coder[K],
     voder: Coder[V]
   ): SCollection[(K, (Option[V], Option[W]))] = {
@@ -491,10 +491,12 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     val partitionedSelf = self
       .withSideInputs(keyCMS, error)
       .transformWithSideOutputs(Seq(hotSelf, chillSelf), "Partition LHS") { (e, c) =>
-        if (c(keyCMS).nonEmpty &&
-            c(keyCMS).head
-              .frequency(e._1)
-              .estimate >= c(error) + hotKeyThreshold) {
+        if (
+          c(keyCMS).nonEmpty &&
+          c(keyCMS).head
+            .frequency(e._1)
+            .estimate >= c(error) + hotKeyThreshold
+        ) {
           hotSelf
         } else {
           chillSelf
@@ -505,10 +507,12 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     val partitionedRHS = rhs
       .withSideInputs(keyCMS, error)
       .transformWithSideOutputs(Seq(hotRHS, chillRHS), "Partition RHS") { (e, c) =>
-        if (c(keyCMS).nonEmpty &&
-            c(keyCMS).head
-              .frequency(e._1)
-              .estimate >= c(error) + hotKeyThreshold) {
+        if (
+          c(keyCMS).nonEmpty &&
+          c(keyCMS).head
+            .frequency(e._1)
+            .estimate >= c(error) + hotKeyThreshold
+        ) {
           hotRHS
         } else {
           chillRHS

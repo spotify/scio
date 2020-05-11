@@ -36,8 +36,8 @@ import org.joda.time.Duration
 package object elasticsearch extends CoderInstances {
   final case class ElasticsearchOptions(nodes: Seq[HttpHost])
 
-  implicit class ElasticsearchSCollection[T](@transient private val self: SCollection[T])
-      extends AnyVal {
+  implicit
+  class ElasticsearchSCollection[T](@transient private val self: SCollection[T]) extends AnyVal {
 
     /**
      * Save this SCollection into Elasticsearch.

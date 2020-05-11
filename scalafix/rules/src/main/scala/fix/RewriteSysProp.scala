@@ -27,8 +27,8 @@ class RewriteSysProp extends SyntacticRule("RewriteSysProp") {
     def unapply(s: Term) =
       s match {
         case Term.Apply(
-            Term.Select(Term.Name("sys"), Term.Name("props")),
-            List(Term.Select(Term.Name(clazz), Term.Name(key)))
+              Term.Select(Term.Name("sys"), Term.Name("props")),
+              List(Term.Select(Term.Name(clazz), Term.Name(key)))
             ) =>
           Option((clazz, key))
         case _ => None

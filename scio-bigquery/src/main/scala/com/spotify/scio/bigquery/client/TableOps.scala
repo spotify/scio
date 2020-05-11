@@ -132,8 +132,11 @@ final private[client] class TableOps(client: Client) {
     selectedFields: List[String] = Nil,
     rowRestriction: Option[String] = None
   ): Schema =
-    Cache.getOrElse(s"""$tableSpec;${selectedFields
-      .mkString(",")};$rowRestriction""", Cache.SchemaCache) {
+    Cache.getOrElse(
+      s"""$tableSpec;${selectedFields
+        .mkString(",")};$rowRestriction""",
+      Cache.SchemaCache
+    ) {
       val tableRef = bq.BigQueryHelpers.parseTableSpec(tableSpec)
       val tableRefProto = TableReferenceProto.TableReference.newBuilder()
       if (tableRef.getProjectId != null) {

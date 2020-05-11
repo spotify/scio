@@ -67,8 +67,8 @@ trait ScioIO[T] {
   // identifier for JobTest IO matching
   def testId: String = this.toString
 
-  private[scio] def readWithContext(sc: ScioContext, params: ReadP)(
-    implicit coder: Coder[T]
+  private[scio] def readWithContext(sc: ScioContext, params: ReadP)(implicit
+    coder: Coder[T]
   ): SCollection[T] =
     sc.requireNotClosed {
       if (sc.isTest) {
@@ -78,15 +78,15 @@ trait ScioIO[T] {
       }
     }
 
-  protected def readTest(sc: ScioContext, params: ReadP)(
-    implicit coder: Coder[T]
+  protected def readTest(sc: ScioContext, params: ReadP)(implicit
+    coder: Coder[T]
   ): SCollection[T] =
     TestDataManager.getInput(sc.testId.get)(this).toSCollection(sc)
 
   protected def read(sc: ScioContext, params: ReadP): SCollection[T]
 
-  private[scio] def writeWithContext(data: SCollection[T], params: WriteP)(
-    implicit coder: Coder[T]
+  private[scio] def writeWithContext(data: SCollection[T], params: WriteP)(implicit
+    coder: Coder[T]
   ): ClosedTap[tapT.T] = ClosedTap {
     if (data.context.isTest) {
       writeTest(data, params)
@@ -97,8 +97,8 @@ trait ScioIO[T] {
 
   protected def write(data: SCollection[T], params: WriteP): Tap[tapT.T]
 
-  protected def writeTest(data: SCollection[T], params: WriteP)(
-    implicit coder: Coder[T]
+  protected def writeTest(data: SCollection[T], params: WriteP)(implicit
+    coder: Coder[T]
   ): Tap[tapT.T] = {
     TestDataManager.getOutput(data.context.testId.get)(this)(data)
     tapT.saveForTest(data)

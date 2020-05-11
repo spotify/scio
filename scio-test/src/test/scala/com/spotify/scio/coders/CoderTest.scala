@@ -192,7 +192,7 @@ final class CoderTest extends AnyFlatSpec with Matchers {
     val bnc = CoderMaterializer.beamWithDefault[Nothing](Coder[Nothing])
     bnc
       .asInstanceOf[BCoder[Any]]
-      .encode(null, null) shouldBe (()) // make sure the code does nothing
+      .encode(null, null) shouldBe () // make sure the code does nothing
     an[IllegalStateException] should be thrownBy {
       bnc.decode(new ByteArrayInputStream(Array()))
     }
@@ -200,7 +200,7 @@ final class CoderTest extends AnyFlatSpec with Matchers {
 
   it should "support Java collections" in {
     import java.util.{List => jList, Map => jMap, ArrayList => jArrayList}
-    val is = (1 to 10)
+    val is = 1 to 10
     val s: jList[String] = is.map(_.toString).asJava
     val m: jMap[String, Int] = is
       .map(v => v.toString -> v)
