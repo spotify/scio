@@ -54,7 +54,10 @@ private object Derived extends Serializable {
           var i = 0
           while (i < ps.length) {
             val p = ps(i)
-            catching(s"Error while dereferencing parameter ${p.label} in $v", materializationStack) {
+            catching(
+              s"Error while dereferencing parameter ${p.label} in $v",
+              materializationStack
+            ) {
               arr.update(i, p.dereference(v))
               i = i + 1
             }

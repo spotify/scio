@@ -82,7 +82,8 @@ val junitInterfaceVersion = "0.11"
 val junitVersion = "4.13"
 val kantanCodecsVersion = "0.5.1"
 val kantanCsvVersion = "0.6.0"
-val kryoVersion = "4.0.2" // explicitly depend on 4.0.1+ due to https://github.com/EsotericSoftware/kryo/pull/516
+val kryoVersion =
+  "4.0.2" // explicitly depend on 4.0.1+ due to https://github.com/EsotericSoftware/kryo/pull/516
 val magnoliaVersion = "0.16.0"
 val magnolifyVersion = "0.1.7"
 val mercatorVersion = "0.3.0"
@@ -285,7 +286,12 @@ val commonSettings = Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
   credentials ++= (for {
     username <- sys.env.get("SONATYPE_USERNAME")
     password <- sys.env.get("SONATYPE_PASSWORD")
-  } yield Credentials("Sonatype Nexus Repository Manager", "oss.sonatype.org", username, password)).toSeq,
+  } yield Credentials(
+    "Sonatype Nexus Repository Manager",
+    "oss.sonatype.org",
+    username,
+    password
+  )).toSeq,
   buildInfoKeys := Seq[BuildInfoKey](scalaVersion, version, "beamVersion" -> beamVersion),
   buildInfoPackage := "com.spotify.scio"
 ) ++ mimaSettings ++ formatSettings
@@ -1193,11 +1199,14 @@ lazy val site: Project = project
 def fixJavaDocLinks(bases: Seq[String], doc: String): String =
   bases.foldLeft(doc) { (d, base) =>
     val regex = s"""\"($base)#([^"]*)\"""".r
-    regex.replaceAllIn(d, m => {
-      val b = base.replaceAll("/index.html$", "")
-      val c = m.group(2).replace(".", "/")
-      s"$b/$c.html"
-    })
+    regex.replaceAllIn(
+      d,
+      m => {
+        val b = base.replaceAll("/index.html$", "")
+        val c = m.group(2).replace(".", "/")
+        s"$b/$c.html"
+      }
+    )
   }
 
 lazy val soccoIndex = taskKey[File]("Generates examples/index.html")

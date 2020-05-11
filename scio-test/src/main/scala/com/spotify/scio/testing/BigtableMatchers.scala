@@ -70,8 +70,8 @@ trait BigtableMatchers extends SCollectionMatchers {
    * Check that the BT collection contains a cell with the given row key, column family, and
    * deserialized cell value. Column qualifier defaults to the same as column family.
    */
-  def containSetCellValue[V: ClassTag](key: ByteString, cf: String, value: V)(
-    implicit ser: V => ByteString
+  def containSetCellValue[V: ClassTag](key: ByteString, cf: String, value: V)(implicit
+    ser: V => ByteString
   ): Matcher[BTCollection] =
     containSetCellValue(key, cf, cf, value)
 
@@ -85,8 +85,8 @@ trait BigtableMatchers extends SCollectionMatchers {
    * @param ser Serializer to convert value type V to ByteString for BT format
    * @tparam V Class of expected value
    */
-  def containSetCellValue[V: ClassTag](key: ByteString, cf: String, cq: String, value: V)(
-    implicit ser: V => ByteString
+  def containSetCellValue[V: ClassTag](key: ByteString, cf: String, cq: String, value: V)(implicit
+    ser: V => ByteString
   ): Matcher[BTCollection] =
     new Matcher[BTCollection] {
       override def apply(left: BTCollection): MatchResult = {

@@ -121,8 +121,8 @@ final private class PairCoder[A, B](ac: BCoder[A], bc: BCoder[B]) extends Atomic
   }
 }
 
-abstract private class BaseSeqLikeCoder[M[_], T](val elemCoder: BCoder[T])(
-  implicit toSeq: M[T] => TraversableOnce[T]
+abstract private class BaseSeqLikeCoder[M[_], T](val elemCoder: BCoder[T])(implicit
+  toSeq: M[T] => TraversableOnce[T]
 ) extends AtomicCoder[M[T]] {
   override def getCoderArguments: java.util.List[_ <: BCoder[_]] =
     Collections.singletonList(elemCoder)
@@ -142,8 +142,8 @@ abstract private class BaseSeqLikeCoder[M[_], T](val elemCoder: BCoder[T])(
     }
 }
 
-abstract private class SeqLikeCoder[M[_], T](bc: BCoder[T])(
-  implicit ev: M[T] => TraversableOnce[T]
+abstract private class SeqLikeCoder[M[_], T](bc: BCoder[T])(implicit
+  ev: M[T] => TraversableOnce[T]
 ) extends BaseSeqLikeCoder[M, T](bc) {
   override def encode(value: M[T], outStream: OutputStream): Unit = {
     val traversable = ev(value)
@@ -176,8 +176,8 @@ abstract private class SeqLikeCoder[M[_], T](bc: BCoder[T])(
   override def toString: String = s"SeqLikeCoder($bc)"
 }
 
-abstract private class BufferedSeqLikeCoder[M[_], T](bc: BCoder[T])(
-  implicit ev: M[T] => TraversableOnce[T]
+abstract private class BufferedSeqLikeCoder[M[_], T](bc: BCoder[T])(implicit
+  ev: M[T] => TraversableOnce[T]
 ) extends BaseSeqLikeCoder[M, T](bc) {
 
   override def encode(value: M[T], outStream: OutputStream): Unit = {
@@ -571,8 +571,8 @@ trait ScalaCoders {
   implicit def arrayByteCoder: Coder[Array[Byte]] =
     Coder.beam(ByteArrayCoder.of())
 
-  implicit def wrappedArrayCoder[T: Coder: ClassTag](
-    implicit wrap: Array[T] => m.WrappedArray[T]
+  implicit def wrappedArrayCoder[T: Coder: ClassTag](implicit
+    wrap: Array[T] => m.WrappedArray[T]
   ): Coder[m.WrappedArray[T]] =
     Coder.xmap(Coder[Array[T]])(wrap, _.toArray)
 

@@ -41,9 +41,12 @@ private[types] object SchemaProvider {
       throw new RuntimeException(s"Unsupported type $tpe.erasure")
     }
 
-    m.computeIfAbsent(tpe, new function.Function[Type, Schema] {
-      override def apply(t: universe.Type): Schema = toSchema(tpe)._1
-    })
+    m.computeIfAbsent(
+      tpe,
+      new function.Function[Type, Schema] {
+        override def apply(t: universe.Type): Schema = toSchema(tpe)._1
+      }
+    )
   }
 
   private def toSchema(tpe: Type): (Schema, Any) = tpe match {

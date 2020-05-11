@@ -513,8 +513,8 @@ object Coder
   implicit def listBufferCoder[T: Coder]: Coder[m.ListBuffer[T]] = ScalaCoders.listBufferCoder
   implicit def arrayCoder[T: Coder: ClassTag]: Coder[Array[T]] = ScalaCoders.arrayCoder
   implicit val arrayByteCoder: Coder[Array[Byte]] = ScalaCoders.arrayByteCoder
-  implicit def wrappedArrayCoder[T: Coder: ClassTag](
-    implicit wrap: Array[T] => m.WrappedArray[T]
+  implicit def wrappedArrayCoder[T: Coder: ClassTag](implicit
+    wrap: Array[T] => m.WrappedArray[T]
   ): Coder[m.WrappedArray[T]] = ScalaCoders.wrappedArrayCoder
   implicit def mutableMapCoder[K: Coder, V: Coder]: Coder[m.Map[K, V]] = ScalaCoders.mutableMapCoder
   implicit def mapCoder[K: Coder, V: Coder]: Coder[Map[K, V]] = ScalaCoders.mapCoder

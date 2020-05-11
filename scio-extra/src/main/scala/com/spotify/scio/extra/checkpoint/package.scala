@@ -72,8 +72,10 @@ package object checkpoint {
     }
 
     private def isCheckpointAvailable(path: String): Boolean =
-      if (self.isTest &&
-          TestDataManager.getInput(self.testId.get).m.contains(CheckpointIO[Unit](path).testId)) {
+      if (
+        self.isTest &&
+        TestDataManager.getInput(self.testId.get).m.contains(CheckpointIO[Unit](path).testId)
+      ) {
         // if it's test and checkpoint was registered in test
         true
       } else {

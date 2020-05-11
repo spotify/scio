@@ -50,8 +50,9 @@ private[cassandra] class BulkOperations(val opts: CassandraOptions, val parallel
     val cluster = b.build()
 
     val table = for {
-      k <- cluster.getMetadata.getKeyspaces.asScala
-        .find(_.getName == opts.keyspace)
+      k <-
+        cluster.getMetadata.getKeyspaces.asScala
+          .find(_.getName == opts.keyspace)
       t <- k.getTables.asScala.find(_.getName == opts.table)
     } yield t
     require(table.isDefined, s"Invalid keyspace.table: ${opts.keyspace}.${opts.table}")

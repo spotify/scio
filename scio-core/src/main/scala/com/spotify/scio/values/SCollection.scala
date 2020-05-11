@@ -182,10 +182,13 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
 
   def transform[U](name: String)(f: SCollection[T] => SCollection[U]): SCollection[U] =
     context.wrap {
-      internal.apply(name, new PTransform[PCollection[T], PCollection[U]]() {
-        override def expand(input: PCollection[T]): PCollection[U] =
-          f(context.wrap(input)).internal
-      })
+      internal.apply(
+        name,
+        new PTransform[PCollection[T], PCollection[U]]() {
+          override def expand(input: PCollection[T]): PCollection[U] =
+            f(context.wrap(input)).internal
+        }
+      )
     }
 
   /**
@@ -595,8 +598,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   )(implicit ord: Ordering[T], coder: Coder[T], dummy: DummyImplicit): SCollection[Iterable[T]] =
     quantilesApprox(numQuantiles, ord)
 
-  def quantilesApprox(numQuantiles: Int, ord: Ordering[T])(
-    implicit coder: Coder[T]
+  def quantilesApprox(numQuantiles: Int, ord: Ordering[T])(implicit
+    coder: Coder[T]
   ): SCollection[Iterable[T]] = this.transform {
     _.pApply(ApproximateQuantiles.globally(numQuantiles, ord))
       .map((_: JIterable[T]).asScala)
@@ -651,8 +654,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @return split SCollections in a Tuple3
    * @group transform
    */
-  def randomSplit(weightA: Double, weightB: Double)(
-    implicit coder: Coder[T]
+  def randomSplit(weightA: Double, weightB: Double)(implicit
+    coder: Coder[T]
   ): (SCollection[T], SCollection[T], SCollection[T]) = {
     require(weightA > 0.0 && weightB > 0.0 && (weightA + weightB) < 1.0)
     val splits = randomSplit(Array(weightA, weightB, 1d - (weightA + weightB)))
@@ -680,8 +683,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * Return a sampled subset of this SCollection.
    * @group transform
    */
-  def sample(withReplacement: Boolean, fraction: Double)(
-    implicit coder: Coder[T]
+  def sample(withReplacement: Boolean, fraction: Double)(implicit
+    coder: Coder[T]
   ): SCollection[T] =
     if (withReplacement) {
       this.parDo(new PoissonSampler[T](fraction))
@@ -1090,8 +1093,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * With a optional skew
    * @group window
    */
-  def timestampBy(f: T => Instant, allowedTimestampSkew: Duration = Duration.ZERO)(
-    implicit coder: Coder[T]
+  def timestampBy(f: T => Instant, allowedTimestampSkew: Duration = Duration.ZERO)(implicit
+    coder: Coder[T]
   ): SCollection[T] =
     this.applyTransform(
       WithTimestamps
@@ -1199,8 +1202,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * }}}
    */
   @deprecated("Use readFiles instead", "0.8.1")
-  def readAll[U: Coder](read: PTransform[PCollection[String], PCollection[U]])(
-    implicit ev: T <:< String
+  def readAll[U: Coder](read: PTransform[PCollection[String], PCollection[U]])(implicit
+    ev: T <:< String
   ): SCollection[U] =
     if (context.isTest) {
       val id = context.testId.get
@@ -1234,8 +1237,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   def materialize(implicit coder: Coder[T]): ClosedTap[T] =
     materialize(ScioUtil.getTempFile(context), isCheckpoint = false)
 
-  private[scio] def materialize(path: String, isCheckpoint: Boolean)(
-    implicit coder: Coder[T]
+  private[scio] def materialize(path: String, isCheckpoint: Boolean)(implicit
+    coder: Coder[T]
   ): ClosedTap[T] =
     if (context.isTest) {
       // Do not run assertions on materialized value but still access test context to trigger
