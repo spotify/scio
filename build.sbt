@@ -167,7 +167,7 @@ lazy val formatSettings = Seq(
 
 val commonSettings = Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
   organization := "com.spotify",
-  scalaVersion := "2.13.1",
+  scalaVersion := "2.13.2",
   crossScalaVersions := Seq("2.12.11", scalaVersion.value),
   scalacOptions ++= Scalac.commonsOptions.value,
   scalacOptions ++= {
@@ -1393,7 +1393,7 @@ ThisBuild / dependencyOverrides ++= Seq(
   "org.hamcrest" % "hamcrest-core" % hamcrestVersion,
   "org.objenesis" % "objenesis" % "2.5.1",
   "org.ow2.asm" % "asm" % "5.0.4",
-  "org.scala-lang.modules" %% "scala-collection-compat" % "2.1.2",
+  "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
   "org.scala-lang.modules" %% "scala-xml" % "1.2.0",
   "org.scalacheck" %% "scalacheck" % scalacheckVersion,
   "org.scalactic" %% "scalactic" % scalatestVersion,
