@@ -26,8 +26,7 @@ import com.spotify.scio.values.SCollection
 import org.apache.avro.Schema
 import org.apache.avro.Schema.Field
 import org.apache.avro.generic.{GenericData, GenericRecord}
-import org.apache.beam.sdk.extensions.smb.SortedBucketSource.TargetParallelism
-import org.apache.beam.sdk.extensions.smb.{AvroSortedBucketIO, SortedBucketIO}
+import org.apache.beam.sdk.extensions.smb.{AvroSortedBucketIO, SortedBucketIO, TargetParallelism}
 import org.apache.beam.sdk.values.TupleTag
 import org.apache.commons.io.FileUtils
 import org.scalatest.Assertion
