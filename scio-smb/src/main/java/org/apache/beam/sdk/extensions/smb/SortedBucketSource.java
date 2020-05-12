@@ -29,7 +29,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -112,40 +111,6 @@ public class SortedBucketSource<FinalKeyT>
     this.targetParallelism = targetParallelism;
   }
 
-  public abstract static class TargetParallelism {
-    public static MinParallelism min() {
-      return MinParallelism.INSTANCE;
-    }
-
-    public static MaxParallelism max() {
-      return MaxParallelism.INSTANCE;
-    }
-
-    public static CustomParallelism of(int value) {
-      return new CustomParallelism(value);
-    }
-  }
-
-  private static class MaxParallelism extends TargetParallelism {
-    static MaxParallelism INSTANCE = new MaxParallelism();
-
-    private MaxParallelism() {}
-  }
-
-  private static class MinParallelism extends TargetParallelism {
-    static MinParallelism INSTANCE = new MinParallelism();
-
-    private MinParallelism() {}
-  }
-
-  private static class CustomParallelism extends TargetParallelism {
-    int value;
-
-    CustomParallelism(int value) {
-      this.value = value;
-    }
-  }
-
   @Override
   public final PCollection<KV<FinalKeyT, CoGbkResult>> expand(PBegin begin) {
     final SourceSpec<FinalKeyT> sourceSpec = getSourceSpec(finalKeyClass, sources);
@@ -187,12 +152,12 @@ public class SortedBucketSource<FinalKeyT>
     int getParallelism(TargetParallelism targetParallelism) {
       int parallelism;
 
-      if (targetParallelism == MinParallelism.INSTANCE) {
+      if (targetParallelism.isMin()) {
         return leastNumBuckets;
-      } else if (targetParallelism == MaxParallelism.INSTANCE) {
+      } else if (targetParallelism.isMax()) {
         return greatestNumBuckets;
       } else {
-        parallelism = ((CustomParallelism) targetParallelism).value;
+        parallelism = targetParallelism.getValue();
 
         Preconditions.checkArgument(
             ((parallelism & parallelism - 1) == 0)

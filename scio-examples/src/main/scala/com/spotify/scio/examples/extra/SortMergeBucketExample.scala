@@ -35,7 +35,7 @@ import org.apache.avro.generic.{GenericData, GenericRecord}
 import org.apache.avro.{JsonProperties, Schema}
 import org.apache.beam.sdk.extensions.smb.AvroSortedBucketIO
 import org.apache.beam.sdk.extensions.smb.BucketMetadata.HashType
-import org.apache.beam.sdk.extensions.smb.SortedBucketSource.TargetParallelism
+import org.apache.beam.sdk.extensions.smb.TargetParallelism
 import org.apache.beam.sdk.values.TupleTag
 
 import scala.collection.JavaConverters._

@@ -22,8 +22,7 @@ import com.spotify.scio.annotations.experimental
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.io.{ClosedTap, EmptyTap}
 import com.spotify.scio.values._
-import org.apache.beam.sdk.extensions.smb.SortedBucketSource.TargetParallelism
-import org.apache.beam.sdk.extensions.smb.{SortedBucketIO, SortedBucketTransform}
+import org.apache.beam.sdk.extensions.smb.{SortedBucketIO, SortedBucketTransform, TargetParallelism}
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
 import org.apache.beam.sdk.transforms.join.CoGbkResult
 import org.apache.beam.sdk.transforms.{DoFn, ParDo}
@@ -56,6 +55,8 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
    *                 supported yet.
    * @param lhs
    * @param rhs
+   * @param targetParallelism the desired parallelism of the job. See
+   *                 [[org.apache.beam.sdk.extensions.smb.TargetParallelism]] for more information.
    */
   @experimental
   def sortMergeJoin[K: Coder, L: Coder, R: Coder](
@@ -138,6 +139,8 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
    * @param keyClass cogroup key class. Must have a Coder in Beam's default
    *                 [[org.apache.beam.sdk.coders.CoderRegistry]] as custom key coders are not
    *                 supported yet.
+   * @param targetParallelism the desired parallelism of the job. See
+   *                 [[org.apache.beam.sdk.extensions.smb.TargetParallelism]] for more information.
    */
   @experimental
   def sortMergeCoGroup[K: Coder, A: Coder, B: Coder](
@@ -169,6 +172,14 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
       }
   }
 
+  @experimental
+  def sortMergeCoGroup[K: Coder, A: Coder, B: Coder](
+    keyClass: Class[K],
+    a: SortedBucketIO.Read[A],
+    b: SortedBucketIO.Read[B]
+  ): SCollection[(K, (Iterable[A], Iterable[B]))] =
+    sortMergeCoGroup(keyClass, a, b, TargetParallelism.min())
+
   /**
    * For each key K in `a` or `b` or `c`, return a resulting SCollection that contains a tuple
    * with the list of values for that key in `a`, `b` and `c`.
@@ -181,6 +192,8 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
    * @param keyClass cogroup key class. Must have a Coder in Beam's default
    *                 [[org.apache.beam.sdk.coders.CoderRegistry]] as custom key coders are not
    *                 supported yet.
+   * @param targetParallelism the desired parallelism of the job. See
+   *                 [[org.apache.beam.sdk.extensions.smb.TargetParallelism]] for more information.
    */
   @experimental
   def sortMergeCoGroup[K: Coder, A: Coder, B: Coder, C: Coder](
@@ -220,6 +233,15 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
       }
   }
 
+  @experimental
+  def sortMergeCoGroup[K: Coder, A: Coder, B: Coder, C: Coder](
+    keyClass: Class[K],
+    a: SortedBucketIO.Read[A],
+    b: SortedBucketIO.Read[B],
+    c: SortedBucketIO.Read[C]
+  ): SCollection[(K, (Iterable[A], Iterable[B], Iterable[C]))] =
+    sortMergeCoGroup(keyClass, a, b, c, TargetParallelism.min())
+
   /**
    * For each key K in `a` or `b` or `c` or `d`, return a resulting SCollection that contains a
    * tuple with the list of values for that key in `a`, `b`, `c` and `d`.
@@ -232,6 +254,8 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
    * @param keyClass cogroup key class. Must have a Coder in Beam's default
    *                 [[org.apache.beam.sdk.coders.CoderRegistry]] as custom key coders are not
    *                 supported yet.
+   * @param targetParallelism the desired parallelism of the job. See
+   *                 [[org.apache.beam.sdk.extensions.smb.TargetParallelism]] for more information.
    */
   @experimental
   def sortMergeCoGroup[K: Coder, A: Coder, B: Coder, C: Coder, D: Coder](
@@ -274,6 +298,15 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
         )
       }
   }
+  @experimental
+  def sortMergeCoGroup[K: Coder, A: Coder, B: Coder, C: Coder, D: Coder](
+    keyClass: Class[K],
+    a: SortedBucketIO.Read[A],
+    b: SortedBucketIO.Read[B],
+    c: SortedBucketIO.Read[C],
+    d: SortedBucketIO.Read[D]
+  ): SCollection[(K, (Iterable[A], Iterable[B], Iterable[C], Iterable[D]))] =
+    sortMergeCoGroup(keyClass, a, b, c, d, TargetParallelism.min())
 
   /**
    * Perform a [[SortedBucketScioContext.sortMergeGroupByKey()]] operation, then immediately apply

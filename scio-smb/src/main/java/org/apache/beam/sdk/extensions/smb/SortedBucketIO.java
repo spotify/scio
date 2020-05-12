@@ -24,7 +24,7 @@ import javax.annotation.Nullable;
 import org.apache.beam.sdk.extensions.smb.BucketMetadata.HashType;
 import org.apache.beam.sdk.extensions.smb.SortedBucketSink.WriteResult;
 import org.apache.beam.sdk.extensions.smb.SortedBucketSource.BucketedInput;
-import org.apache.beam.sdk.extensions.smb.SortedBucketSource.TargetParallelism;
+import org.apache.beam.sdk.extensions.smb.TargetParallelism;
 import org.apache.beam.sdk.extensions.smb.SortedBucketTransform.TransformFn;
 import org.apache.beam.sdk.io.fs.ResourceId;
 import org.apache.beam.sdk.transforms.PTransform;

@@ -38,7 +38,6 @@ import java.util.stream.StreamSupport;
 import org.apache.beam.sdk.PipelineResult;
 import org.apache.beam.sdk.extensions.smb.FileOperations.Writer;
 import org.apache.beam.sdk.extensions.smb.SMBFilenamePolicy.FileAssignment;
-import org.apache.beam.sdk.extensions.smb.SortedBucketSource.TargetParallelism;
 import org.apache.beam.sdk.io.FileSystems;
 import org.apache.beam.sdk.io.LocalResources;
 import org.apache.beam.sdk.io.fs.ResourceId;
