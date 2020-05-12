@@ -24,53 +24,45 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 import scala.collection.JavaConverters._
-import scala.util.{Failure, Try}
 
 class GrpcSerializersTest extends AnyFlatSpec with Matchers {
 
-  "StatusRuntimeException" should "roundtrip with all fields present" in {
+  "StatusRuntimeException" should "roundtrip with nullable fields present" in {
     val metadata = new Metadata()
     metadata.put(Metadata.Key.of[String]("k", Metadata.ASCII_STRING_MARSHALLER), "v")
 
     roundtrip(
-      Failure(
-        new StatusRuntimeException(
-          Status.OK.withCause(new RuntimeException("bar")).withDescription("bar"),
-          metadata
-        )
+      new StatusRuntimeException(
+        Status.OK.withCause(new RuntimeException("bar")).withDescription("bar"),
+        metadata
       )
     )
   }
 
-  it should "roundtrip with all nullable fields absent" in {
-    roundtrip(Failure(new StatusRuntimeException(Status.OK)))
+  it should "roundtrip with nullable fields absent" in {
+    roundtrip(new StatusRuntimeException(Status.OK))
   }
 
-  private def roundtrip(t: Try[String]): Unit = {
-    val kryoBCoder = CoderMaterializer.beamWithDefault(Coder[Try[String]])
+  private def roundtrip(t: StatusRuntimeException): Unit = {
+    val kryoBCoder = CoderMaterializer.beamWithDefault(Coder[StatusRuntimeException])
 
     val bytes = CoderUtils.encodeToByteArray(kryoBCoder, t)
     val copy = CoderUtils.decodeFromByteArray(kryoBCoder, bytes)
 
-    (t, copy) match {
-      case (Failure(t1), Failure(t2)) =>
-        (t1, t2) match {
-          case (s1: StatusRuntimeException, s2: StatusRuntimeException) =>
-            checkStatusEq(s1.getStatus, s2.getStatus)
-            checkTrailersEq(s1.getTrailers, s2.getTrailers)
-          case _ => fail(s"Exceptions ($t1, $t2) were not StatusRuntimeExceptions")
-        }
-      case _ => fail(s"Roundtrip value $copy was not equal to original value $t")
-    }
+    checkStatusEq(t.getStatus, copy.getStatus)
+    checkTrailersEq(t.getTrailers, copy.getTrailers)
   }
 
-  private def checkTrailersEq(t1: Metadata, t2: Metadata): Unit =
-    if (t1 != null && t2 != null) {
-      t1.keys.size shouldEqual t2.keys.size
-      t1.keys.asScala.foreach { k =>
-        t1.get(Metadata.Key.of[String](k, Metadata.ASCII_STRING_MARSHALLER)) shouldEqual
-          t2.get(Metadata.Key.of[String](k, Metadata.ASCII_STRING_MARSHALLER))
-      }
+  private def checkTrailersEq(metadata1: Metadata, metadata2: Metadata): Unit =
+    (Option(metadata1), Option(metadata2)) match {
+      case (Some(m1), Some(m2)) =>
+        m1.keys.size shouldEqual m2.keys.size
+        m1.keys.asScala.foreach { k =>
+          m1.get(Metadata.Key.of[String](k, Metadata.ASCII_STRING_MARSHALLER)) shouldEqual
+            m2.get(Metadata.Key.of[String](k, Metadata.ASCII_STRING_MARSHALLER))
+        }
+      case (None, None) =>
+      case _            => fail(s"Metadata were unequal: ($metadata1, $metadata2)")
     }
 
   private def checkStatusEq(s1: Status, s2: Status): Unit = {
