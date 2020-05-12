@@ -30,7 +30,7 @@ import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecord
 import org.openjdk.jmh.annotations._
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 @BenchmarkMode(Array(Mode.AverageTime))
 @OutputTimeUnit(TimeUnit.SECONDS)
 @State(Scope.Thread)

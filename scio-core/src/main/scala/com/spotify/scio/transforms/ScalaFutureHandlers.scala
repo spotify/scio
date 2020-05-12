@@ -20,7 +20,7 @@ package com.spotify.scio.transforms
 import java.lang
 import java.util.function.{Function => JFunction}
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.concurrent.duration.Duration
 

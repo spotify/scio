@@ -33,7 +33,7 @@ import org.apache.beam.sdk.util.MimeTypes
 import org.apache.commons.io.IOUtils
 import org.slf4j.LoggerFactory
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.reflect.ClassTag
 
 /** Commands for simple file I/O in the REPL. */

@@ -28,7 +28,7 @@ import com.spotify.scio.ContextAndArgs
 import com.spotify.scio.examples.common.ExampleData
 import com.google.api.services.bigquery.model.{TableFieldSchema, TableSchema}
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 object StorageBigQueryTornadoes {
   def main(cmdlineArgs: Array[String]): Unit = {

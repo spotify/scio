@@ -46,7 +46,7 @@ import org.apache.parquet.hadoop.ParquetInputFormat
 import org.apache.parquet.hadoop.metadata.CompressionCodecName
 import org.tensorflow.example.Example
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 final case class ParquetExampleIO(path: String) extends ScioIO[Example] {
   override type ReadP = ParquetExampleIO.ReadParam

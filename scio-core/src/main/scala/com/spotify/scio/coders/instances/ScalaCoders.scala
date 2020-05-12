@@ -29,7 +29,7 @@ import org.apache.beam.sdk.util.common.ElementByteSizeObserver
 import org.apache.beam.sdk.util.BufferedElementCountingOutputStream
 import org.apache.beam.sdk.util.VarInt
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.reflect.ClassTag
 import scala.collection.{BitSet, SortedSet, TraversableOnce, mutable => m}
 import scala.util.Try

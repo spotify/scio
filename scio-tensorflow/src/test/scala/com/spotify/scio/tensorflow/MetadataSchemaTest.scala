@@ -20,7 +20,7 @@ package com.spotify.scio.tensorflow
 import com.google.protobuf.ByteString
 import org.tensorflow.example._
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 object MetadataSchemaTest {
   // Keep byte list the same length across examples to be parsed as a fixed shape.

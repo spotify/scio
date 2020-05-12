@@ -22,7 +22,7 @@ import com.spotify.scio.util.ScioUtil
 import org.apache.beam.sdk.values._
 import org.apache.beam.sdk.schemas.{SchemaCoder, Schema => BSchema}
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.language.experimental.macros
 import scala.annotation.tailrec
 import scala.reflect.ClassTag

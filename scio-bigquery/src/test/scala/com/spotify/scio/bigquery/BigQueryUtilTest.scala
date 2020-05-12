@@ -22,7 +22,7 @@ import com.google.api.services.bigquery.model.{TableFieldSchema, TableSchema}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.flatspec.AnyFlatSpec
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 class BigQueryUtilTest extends AnyFlatSpec with Matchers {
   "parseSchema" should "work" in {

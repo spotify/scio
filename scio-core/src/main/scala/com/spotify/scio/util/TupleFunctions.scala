@@ -22,7 +22,7 @@ import java.util.{List => JList}
 
 import org.apache.beam.sdk.values.KV
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 private[scio] object TupleFunctions {
   def kvToTuple[K, V](kv: KV[K, V]): (K, V) = (kv.getKey, kv.getValue)

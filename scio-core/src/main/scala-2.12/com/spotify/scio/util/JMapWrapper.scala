@@ -20,7 +20,7 @@ package com.spotify.scio.util
 import java.lang.{Iterable => JIterable}
 import java.util.{Map => JMap}
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 /**
  * Immutable wrappers for [[java.util.Map]].

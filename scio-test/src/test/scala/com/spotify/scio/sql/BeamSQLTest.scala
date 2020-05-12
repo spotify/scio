@@ -33,7 +33,7 @@ import org.joda.time.{DateTime, Instant}
 import org.joda.time.DateTimeZone.UTC
 import org.scalatest.Assertion
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import com.spotify.scio.avro
 import com.spotify.scio.avro.MessageRecord
 import org.apache.avro.generic.GenericRecord

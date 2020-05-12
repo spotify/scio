@@ -28,7 +28,7 @@ import com.spotify.scio._
 import com.spotify.scio.testing._
 import org.joda.time.Duration
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 object BigtableIT {
   val projectId = "data-integration-test"

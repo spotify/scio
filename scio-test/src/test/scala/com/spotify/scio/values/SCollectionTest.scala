@@ -37,7 +37,7 @@ import org.apache.beam.sdk.transforms.windowing.{
 import org.apache.beam.sdk.values.KV
 import org.joda.time.{DateTimeConstants, Duration, Instant}
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import com.spotify.scio.coders.Coder
 
 class SCollectionTest extends PipelineSpec {

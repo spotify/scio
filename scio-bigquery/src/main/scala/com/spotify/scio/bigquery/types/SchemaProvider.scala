@@ -25,7 +25,7 @@ import org.apache.avro.Schema
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryUtils
 import org.joda.time.{Instant, LocalDate, LocalDateTime, LocalTime}
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.reflect.runtime.universe._
 import com.spotify.scio.util.Cache
 

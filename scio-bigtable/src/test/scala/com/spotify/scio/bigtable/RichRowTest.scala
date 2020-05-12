@@ -22,7 +22,7 @@ import com.google.protobuf.ByteString
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.flatspec.AnyFlatSpec
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.collection.immutable.ListMap
 
 class RichRowTest extends AnyFlatSpec with Matchers {

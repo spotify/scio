@@ -29,7 +29,7 @@ import org.apache.beam.sdk.transforms.SerializableFunction
 import org.apache.beam.sdk.values.KV
 import org.joda.time.Duration
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 sealed trait BigtableIO[T] extends ScioIO[T] {
   final override val tapT = EmptyTapOf[T]

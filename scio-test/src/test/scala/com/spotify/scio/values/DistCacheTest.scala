@@ -26,7 +26,7 @@ import com.spotify.scio.avro._
 import com.spotify.sparkey.SparkeyReader.Entry
 import com.spotify.sparkey.{IndexHeader, LogHeader, Sparkey, SparkeyReader}
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.io.Source
 
 // =======================================================================

@@ -36,7 +36,7 @@ import org.apache.beam.sdk.transforms.{DoFn, Reify, View}
 import org.apache.beam.sdk.values.PCollectionView
 import org.slf4j.LoggerFactory
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.util.hashing.MurmurHash3
 import java.lang.Math.floorMod
 

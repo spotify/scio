@@ -23,7 +23,7 @@ import java.net.URI
 import com.spotify.scio.util.{RemoteFileUtil, ScioUtil}
 import org.apache.beam.sdk.options.PipelineOptions
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 /**
  * Encapsulate arbitrary data that can be distributed to all workers. Similar to Hadoop

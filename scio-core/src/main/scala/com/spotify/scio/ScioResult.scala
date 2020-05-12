@@ -29,7 +29,7 @@ import org.apache.beam.sdk.metrics.{DistributionResult, GaugeResult}
 import org.apache.beam.sdk.util.MimeTypes
 import org.apache.beam.sdk.{PipelineResult, metrics => beam}
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.reflect.ClassTag
 import scala.util.Try
 

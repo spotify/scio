@@ -26,7 +26,7 @@ import org.joda.time.Period
 import org.joda.time.format.PeriodFormatterBuilder
 import org.slf4j.LoggerFactory
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 private[client] object JobOps {
   private val Logger = LoggerFactory.getLogger(this.getClass)

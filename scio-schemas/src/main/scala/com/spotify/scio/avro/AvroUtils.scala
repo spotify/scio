@@ -20,7 +20,7 @@ package com.spotify.scio.avro
 import org.apache.avro.Schema
 import org.apache.avro.generic.{GenericData, GenericRecord}
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 object AvroUtils {
   private def f(name: String, tpe: Schema.Type) =

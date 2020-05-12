@@ -44,7 +44,7 @@ trait SysProps {
 }
 
 object SysProps {
-  import scala.collection.JavaConverters._
+  import scala.jdk.CollectionConverters._
   import scala.reflect.runtime.universe
 
   def properties: Iterable[SysProps] = {

@@ -30,7 +30,7 @@ import org.apache.beam.sdk.transforms.{DoFn, ParDo}
 import org.apache.beam.sdk.values.{KV, TupleTag}
 import org.slf4j.LoggerFactory
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 private[scio] object ArtisanJoin {
   private val log = LoggerFactory.getLogger(this.getClass)

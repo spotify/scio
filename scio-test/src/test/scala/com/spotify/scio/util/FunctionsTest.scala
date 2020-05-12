@@ -23,7 +23,7 @@ import org.apache.beam.sdk.transforms.Combine.CombineFn
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 class FunctionsTest extends AnyFlatSpec with Matchers {
   private def testFn[VA](fn: CombineFn[Int, VA, Int]) = {

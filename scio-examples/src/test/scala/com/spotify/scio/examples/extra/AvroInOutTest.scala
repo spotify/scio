@@ -20,7 +20,7 @@ package com.spotify.scio.examples.extra
 import com.spotify.scio.avro._
 import com.spotify.scio.testing._
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 class AvroInOutTest extends PipelineSpec {
   val input = Seq(

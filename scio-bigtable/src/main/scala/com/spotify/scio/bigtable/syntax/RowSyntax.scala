@@ -3,7 +3,7 @@ package com.spotify.scio.bigtable.syntax
 import com.google.bigtable.v2.Row
 import com.google.protobuf.ByteString
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import com.google.bigtable.v2.Cell
 
 /** Enhanced version of `Row` with convenience methods. */

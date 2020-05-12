@@ -31,7 +31,7 @@ import org.apache.beam.sdk.transforms.PTransform
 import org.apache.beam.sdk.values.{PInput, POutput}
 import org.apache.beam.sdk.{Pipeline, PipelineResult}
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 /** Represent a Dataflow runner specific result. */
 class DataflowResult(val internal: DataflowPipelineJob) extends RunnerResult {

@@ -20,7 +20,7 @@ package com.spotify.scio.avro.types
 import org.apache.avro.Schema
 import org.apache.avro.Schema.Type._
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 /** Utility for Avro schemas. */
 object SchemaUtil {

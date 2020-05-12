@@ -28,7 +28,7 @@ import org.apache.beam.sdk.transforms.DoFn.{ProcessElement, Setup, Teardown}
 import org.slf4j.LoggerFactory
 import org.tensorflow._
 import org.tensorflow.example.Example
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 import com.spotify.scio.transforms.DoFnWithResource
 import com.spotify.scio.transforms.DoFnWithResource.ResourceType

@@ -25,7 +25,7 @@ import com.spotify.scio.{ScioContext, ScioResult}
 import org.apache.beam.sdk.io.FileSystems
 import org.apache.beam.sdk.util.MimeTypes
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.reflect.ClassTag
 
 class DistCacheIT extends PipelineSpec {

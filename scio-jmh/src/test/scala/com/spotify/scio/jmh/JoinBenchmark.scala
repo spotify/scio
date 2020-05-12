@@ -24,7 +24,7 @@ import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Abstract
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.Blackhole
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 @BenchmarkMode(Array(Mode.AverageTime))
 @OutputTimeUnit(TimeUnit.NANOSECONDS)
 @State(Scope.Thread)

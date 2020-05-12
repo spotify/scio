@@ -27,7 +27,7 @@ import org.apache.parquet.filter2.predicate.FilterApi
 import org.scalatest.BeforeAndAfterAll
 import org.tensorflow.example.{BytesList, Example, Feature, Features, FloatList, Int64List}
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 class ParquetExampleIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
   private val dir = tmpDir

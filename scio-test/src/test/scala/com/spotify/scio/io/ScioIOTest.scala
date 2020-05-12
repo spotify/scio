@@ -37,7 +37,7 @@ import org.apache.beam.sdk.values.PValue
 import org.apache.commons.io.FileUtils
 
 import scala.collection.mutable
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 object ScioIOTest {
   @AvroType.toSchema
