@@ -423,26 +423,26 @@ class BeamSQLTest extends PipelineSpec {
   it should "provide a typecheck method for tests" in {
     object checkOK {
       def apply[A: Schema, B: Schema](q: String): Assertion =
-        Query1.typecheck(Query1[A, B](q, Sql.defaultTag)) should be('right)
+        Query1.typecheck(Query1[A, B](q, Sql.defaultTag)) should be(Symbol("right"))
 
       def apply[A: Schema, B: Schema, C: Schema](
         q: String,
         a: TupleTag[A],
         b: TupleTag[B]
       ): Assertion =
-        Query2.typecheck(Query2[A, B, C](q, a, b)) should be('right)
+        Query2.typecheck(Query2[A, B, C](q, a, b)) should be(Symbol("right"))
     }
 
     object checkNOK {
       def apply[A: Schema, B: Schema](q: String): Assertion =
-        Query1.typecheck(Query1[A, B](q, Sql.defaultTag)) should be('left)
+        Query1.typecheck(Query1[A, B](q, Sql.defaultTag)) should be(Symbol("left"))
 
       def apply[A: Schema, B: Schema, C: Schema](
         q: String,
         a: TupleTag[A],
         b: TupleTag[B]
       ): Assertion =
-        Query2.typecheck(Query2[A, B, C](q, a, b)) should be('left)
+        Query2.typecheck(Query2[A, B, C](q, a, b)) should be(Symbol("left"))
     }
 
     checkOK[Bar, Long]("select l from SCOLLECTION")

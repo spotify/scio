@@ -52,25 +52,25 @@ class SchemaCompatTest extends AnyFlatSpec with Matchers {
   }
 
   it should "fail incompatible schemas" in {
-    check[Required, Nullable] should be('left)
-    check[Required, Repeated] should be('left)
-    check[Required, MapField] should be('left)
+    check[Required, Nullable] should be(Symbol("left"))
+    check[Required, Repeated] should be(Symbol("left"))
+    check[Required, MapField] should be(Symbol("left"))
   }
 
   it should "support projection" in {
     check[Required, RequiredP] shouldBe Right(())
-    check[RequiredP, Required] should be('left)
+    check[RequiredP, Required] should be(Symbol("left"))
 
     check[Nullable, NullableP] shouldBe Right(())
-    check[NullableP, Nullable] should be('left)
+    check[NullableP, Nullable] should be(Symbol("left"))
 
     check[Repeated, RepeatedP] shouldBe Right(())
-    check[RepeatedP, Repeated] should be('left)
+    check[RepeatedP, Repeated] should be(Symbol("left"))
 
     check[MapField, MapFieldP] shouldBe Right(())
-    check[MapFieldP, MapField] should be('left)
+    check[MapFieldP, MapField] should be(Symbol("left"))
 
     check[Nested, NestedP] shouldBe Right(())
-    check[NestedP, Nested] should be('left)
+    check[NestedP, Nested] should be(Symbol("left"))
   }
 }
