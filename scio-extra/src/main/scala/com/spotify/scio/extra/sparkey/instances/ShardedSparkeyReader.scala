@@ -5,7 +5,7 @@ import java.util
 import com.spotify.sparkey.{IndexHeader, LogHeader, SparkeyReader}
 
 import scala.util.hashing.MurmurHash3
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 /**
  * A wrapper class around SparkeyReader that allows the reading of multiple Sparkey files,

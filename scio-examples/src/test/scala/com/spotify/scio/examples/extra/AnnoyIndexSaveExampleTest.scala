@@ -22,7 +22,7 @@ import java.nio.file.Files
 import com.spotify.annoy.ANNIndex
 import com.spotify.scio.testing._
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 class AnnoyIndexSaveExampleTest extends PipelineSpec {
   "AnnoyIndexSaveExample" should "work" in {

@@ -21,7 +21,7 @@ package com.spotify.scio.bigquery.syntax
 import com.spotify.scio.bigquery.{Date, DateTime, TableRow, Time, Timestamp}
 import org.joda.time.{Instant, LocalDate, LocalDateTime, LocalTime}
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 import scala.util.Try
 

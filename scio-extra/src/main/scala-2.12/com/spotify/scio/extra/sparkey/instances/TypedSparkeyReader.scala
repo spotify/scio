@@ -5,7 +5,7 @@ import java.nio.charset.Charset
 import com.spotify.scio.util.Cache
 import com.spotify.sparkey.SparkeyReader
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 /**
  * A wrapper around `SparkeyReader` that includes both a decoder (to map from each byte array

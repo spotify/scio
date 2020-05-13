@@ -28,7 +28,7 @@ import org.apache.beam.sdk.testing.PAssert
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 object BeamSchemaIT {
   final case class Shakespeare(word: String, word_count: Long, corpus: String, corpus_date: Long)

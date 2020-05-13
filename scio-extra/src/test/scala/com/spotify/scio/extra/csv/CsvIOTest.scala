@@ -29,7 +29,7 @@ import org.apache.beam.sdk.util.SerializableUtils
 import org.apache.commons.io.FileUtils
 import org.scalatest.BeforeAndAfterEach
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import kantan.csv._
 
 object CsvIOTest {

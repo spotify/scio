@@ -25,7 +25,7 @@ import org.apache.beam.sdk.transforms.DoFn
 import org.apache.beam.sdk.transforms.windowing.{BoundedWindow, GlobalWindow}
 import org.apache.beam.sdk.values.PCollectionView
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 /** Encapsulate an SCollection when it is being used as a side input. */
 trait SideInput[T] extends Serializable {

@@ -21,7 +21,7 @@ import java.util.{List => JList}
 
 import com.google.api.services.bigquery.model.{TableFieldSchema, TableSchema}
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 /** Utility for BigQuery schemas. */
 object SchemaUtil {

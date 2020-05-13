@@ -22,7 +22,7 @@ import com.google.cloud.bigquery.storage.v1beta1.ReadOptions.TableReadOptions
 import org.apache.avro.Schema
 import org.apache.avro.Schema.Type
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 /** Utility for BigQuery Storage API. */
 object StorageUtil {

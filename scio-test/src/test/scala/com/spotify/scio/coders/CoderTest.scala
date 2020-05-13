@@ -28,7 +28,7 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.apache.beam.sdk.util.SerializableUtils
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.collection.{mutable => mut}
 import java.io.ByteArrayInputStream
 import org.apache.beam.sdk.testing.CoderProperties

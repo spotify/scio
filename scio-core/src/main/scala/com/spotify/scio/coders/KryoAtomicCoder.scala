@@ -45,7 +45,7 @@ import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.reflect.ClassPat
 import org.joda.time.{DateTime, LocalDate, LocalDateTime, LocalTime}
 import org.slf4j.LoggerFactory
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.collection.mutable
 import scala.collection.compat.extra.Wrappers
 

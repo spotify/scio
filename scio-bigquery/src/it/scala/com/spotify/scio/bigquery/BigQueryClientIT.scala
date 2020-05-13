@@ -28,7 +28,7 @@ import org.apache.beam.sdk.io.gcp.bigquery.BigQueryHelpers
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.flatspec.AnyFlatSpec
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.util.Success
 
 // scio-test/it:runMain PopulateTestData to re-populate data for integration tests

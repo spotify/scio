@@ -23,7 +23,7 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.tagobjects.Slow
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 object DataflowIT {
   val projectId = "data-integration-test"

@@ -28,7 +28,7 @@ import org.apache.beam.sdk.io.elasticsearch.ElasticsearchIO.Write.BulkExecutionE
 import org.apache.beam.sdk.transforms.SerializableFunction
 import org.joda.time.Duration
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 final case class ElasticsearchIO[T](esOptions: ElasticsearchOptions) extends ScioIO[T] {
   override type ReadP = Nothing

@@ -118,7 +118,7 @@ private[types] object ConverterProvider {
 
     val tn = TermName("r")
     q"""(r: ${p(c, ApacheAvro)}.generic.GenericRecord) => {
-          import _root_.scala.collection.JavaConverters._
+          import _root_.scala.jdk.CollectionConverters._
           ${constructor(tpe, tn)}
         }
     """
@@ -204,7 +204,7 @@ private[types] object ConverterProvider {
 
     val tn = TermName("r")
     q"""(r: $tpe) => {
-          import _root_.scala.collection.JavaConverters._
+          import _root_.scala.jdk.CollectionConverters._
           ${constructor(tpe, tn)}
         }
     """

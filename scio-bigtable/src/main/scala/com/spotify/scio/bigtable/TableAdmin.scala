@@ -27,7 +27,7 @@ import com.google.protobuf.{ByteString, Duration => ProtoDuration}
 import org.joda.time.Duration
 import org.slf4j.{Logger, LoggerFactory}
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.util.Try
 
 /**

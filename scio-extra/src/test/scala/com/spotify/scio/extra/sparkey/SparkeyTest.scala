@@ -29,7 +29,7 @@ import com.spotify.sparkey._
 import org.apache.beam.sdk.io.FileSystems
 import org.apache.commons.io.FileUtils
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 final case class TestCache[K, V](testId: String) extends CacheT[K, V, CCache[K, V]] {
   @transient private lazy val cache =

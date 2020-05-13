@@ -25,7 +25,7 @@ import org.apache.avro.Schema.Type
 import org.apache.avro.Schema.Type._
 import org.apache.avro.{LogicalType, Schema}
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 /**
  * Converts a [[org.apache.avro.Schema Schema]] object into a

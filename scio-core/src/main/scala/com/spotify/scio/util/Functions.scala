@@ -32,7 +32,7 @@ import org.apache.beam.sdk.transforms.DoFn.ProcessElement
 import org.apache.beam.sdk.transforms.Partition.PartitionFn
 import org.apache.beam.sdk.transforms.{DoFn, ProcessFunction, SerializableFunction, SimpleFunction}
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 private[scio] object Functions {
   private[this] val BufferSize = 20

@@ -23,7 +23,7 @@ import com.spotify.scio.bigquery.TableRow
 import org.apache.avro.Schema
 import org.apache.avro.generic.IndexedRecord
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 object AvroConverters extends ToTableRow with ToTableSchema {
 

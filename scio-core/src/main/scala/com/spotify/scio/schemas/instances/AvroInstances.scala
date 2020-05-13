@@ -24,7 +24,7 @@ import org.apache.beam.sdk.schemas.{AvroRecordSchema, Schema => BSchema}
 import org.apache.beam.sdk.transforms.SerializableFunction
 import org.apache.beam.sdk.values.{Row, TypeDescriptor}
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.reflect.{classTag, ClassTag}
 
 trait AvroInstances {

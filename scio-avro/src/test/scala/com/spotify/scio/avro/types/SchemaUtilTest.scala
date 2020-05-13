@@ -23,7 +23,7 @@ import org.apache.avro.Schema
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 class SchemaUtilTest extends AnyFlatSpec with Matchers {
   "toPrettyString()" should "support primitive types" in {

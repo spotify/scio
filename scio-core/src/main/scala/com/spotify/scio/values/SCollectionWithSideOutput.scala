@@ -24,7 +24,7 @@ import com.spotify.scio.util.FunctionsWithSideOutput
 import org.apache.beam.sdk.transforms.{DoFn, ParDo}
 import org.apache.beam.sdk.values.{PCollection, TupleTag, TupleTagList}
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 /**
  * An enhanced SCollection that provides access to one or more [[SideOutput]]s for some transforms.

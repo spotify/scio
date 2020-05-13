@@ -26,7 +26,7 @@ import com.spotify.scio.avro.types.MacroUtil._
 import org.apache.avro.{JsonProperties, Schema}
 import org.apache.avro.Schema.Field
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.reflect.runtime.universe
 import scala.reflect.runtime.universe._
 

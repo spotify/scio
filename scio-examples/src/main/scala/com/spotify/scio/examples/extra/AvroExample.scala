@@ -32,7 +32,7 @@ import com.spotify.scio.io.ClosedTap
 import org.apache.avro.Schema
 import org.apache.avro.generic.{GenericData, GenericRecord}
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 object AvroExample {
   @AvroType.fromSchema("""{

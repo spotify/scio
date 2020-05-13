@@ -23,7 +23,7 @@ import com.spotify.scio.testing._
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Charsets
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.io.{Files => GFiles}
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 class FileDownloadDoFnTest extends PipelineSpec {
   "FileDownloadDoFn" should "work" in {

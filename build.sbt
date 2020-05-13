@@ -51,8 +51,8 @@ val commonsMath3Version = "3.6.1"
 val commonsTextVersion = "1.8"
 val datastoreV1ProtoClientVersion = "1.6.3"
 val elasticsearch5Version = "5.6.16"
-val elasticsearch6Version = "6.8.8"
-val elasticsearch7Version = "7.7.0"
+val elasticsearch6Version = "6.8.9"
+val elasticsearch7Version = "7.6.2"
 val featranVersion = "0.6.0"
 val flinkVersion = "1.9.1"
 val gaxVersion = "1.53.0"
@@ -531,6 +531,7 @@ lazy val `scio-sql`: Project = Project(
   .settings(
     description := "Scio - SQL extension",
     libraryDependencies ++= Seq(
+      "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-extensions-sql" % beamVersion,
       "org.apache.commons" % "commons-lang3" % commonsLang3Version,
@@ -551,6 +552,7 @@ lazy val `scio-test`: Project = project
   .settings(
     description := "Scio helpers for ScalaTest",
     libraryDependencies ++= Seq(
+      "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
       "org.apache.beam" % "beam-runners-direct-java" % beamVersion,
       "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion % "test,it",
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion % "test",
@@ -616,6 +618,7 @@ lazy val `scio-avro`: Project = project
   .settings(
     description := "Scio add-on for working with Avro",
     libraryDependencies ++= Seq(
+      "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
       "me.lyh" %% "protobuf-generic" % protobufGenericVersion,
       "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamVendorVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
@@ -646,6 +649,7 @@ lazy val `scio-bigquery`: Project = project
   .settings(
     description := "Scio add-on for Google BigQuery",
     libraryDependencies ++= Seq(
+      "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
       "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamVendorVersion,
       "com.twitter" %% "chill" % chillVersion,
       "com.google.protobuf" % "protobuf-java" % protobufVersion,
@@ -691,6 +695,7 @@ lazy val `scio-bigtable`: Project = project
   .settings(
     description := "Scio add-on for Google Cloud Bigtable",
     libraryDependencies ++= Seq(
+      "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "joda-time" % "joda-time" % jodaTimeVersion,
       "com.google.protobuf" % "protobuf-java" % protobufVersion,
@@ -723,6 +728,7 @@ lazy val `scio-cassandra3`: Project = project
   .settings(
     description := "Scio add-on for Apache Cassandra 3.x",
     libraryDependencies ++= Seq(
+      "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
       "com.google.protobuf" % "protobuf-java" % protobufVersion,
       "com.google.guava" % "guava" % guavaVersion,
       "com.twitter" %% "chill" % chillVersion,
@@ -751,6 +757,7 @@ lazy val `scio-elasticsearch5`: Project = project
   .settings(
     description := "Scio add-on for writing to Elasticsearch",
     libraryDependencies ++= Seq(
+      "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
       "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamVendorVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "joda-time" % "joda-time" % jodaTimeVersion,
@@ -770,6 +777,7 @@ lazy val `scio-elasticsearch6`: Project = project
   .settings(
     description := "Scio add-on for writing to Elasticsearch",
     libraryDependencies ++= Seq(
+      "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
       "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamVendorVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "joda-time" % "joda-time" % jodaTimeVersion,
@@ -790,6 +798,7 @@ lazy val `scio-elasticsearch7`: Project = project
   .settings(
     description := "Scio add-on for writing to Elasticsearch",
     libraryDependencies ++= Seq(
+      "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
       "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamVendorVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "joda-time" % "joda-time" % jodaTimeVersion,
@@ -814,6 +823,7 @@ lazy val `scio-extra`: Project = project
   .settings(
     description := "Scio extra utilities",
     libraryDependencies ++= Seq(
+      "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-extensions-sorter" % beamVersion,
       "com.google.apis" % "google-api-services-bigquery" % googleApiServicesBigQuery,
@@ -885,6 +895,7 @@ lazy val `scio-parquet`: Project = project
     javacOptions ++= Seq("-s", (sourceManaged.value / "main").toString),
     description := "Scio add-on for Parquet",
     libraryDependencies ++= Seq(
+      "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
       "me.lyh" %% "parquet-avro" % parquetExtraVersion,
       "me.lyh" % "parquet-tensorflow" % parquetExtraVersion,
       "com.google.cloud.bigdataoss" % "gcs-connector" % s"hadoop2-$bigdataossVersion",
@@ -917,6 +928,7 @@ lazy val `scio-spanner`: Project = project
   .settings(
     description := "Scio add-on for Google Cloud Spanner",
     libraryDependencies ++= Seq(
+      "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
       "com.google.cloud" % "google-cloud-core" % "1.92.2",
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "com.google.cloud" % "google-cloud-spanner" % googleCloudSpannerVersion excludeAll (
@@ -944,6 +956,7 @@ lazy val `scio-tensorflow`: Project = project
     Compile / managedSourceDirectories := (Compile / managedSourceDirectories).value
       .filterNot(_.getPath.endsWith("/src_managed/main")),
     libraryDependencies ++= Seq(
+      "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.tensorflow" % "tensorflow" % tensorFlowVersion,
       "org.tensorflow" % "proto" % tensorFlowVersion,
@@ -975,7 +988,10 @@ lazy val `scio-schemas`: Project = project
   .settings(protobufSettings)
   .settings(
     description := "Avro/Proto schemas for testing",
-    libraryDependencies += "org.apache.avro" % "avro" % avroVersion,
+    libraryDependencies ++= Seq(
+      "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
+      "org.apache.avro" % "avro" % avroVersion
+    ),
     Compile / sourceDirectories := (Compile / sourceDirectories).value
       .filterNot(_.getPath.endsWith("/src_managed/main")),
     Compile / managedSourceDirectories := (Compile / managedSourceDirectories).value
@@ -994,6 +1010,7 @@ lazy val `scio-examples`: Project = project
   .settings(macroSettings)
   .settings(
     libraryDependencies ++= Seq(
+      "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.avro" % "avro" % avroVersion,
       "com.google.cloud.datastore" % "datastore-v1-proto-client" % datastoreV1ProtoClientVersion,
@@ -1066,6 +1083,7 @@ lazy val `scio-repl`: Project = project
   .settings(macroSettings)
   .settings(
     libraryDependencies ++= Seq(
+      "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
       "org.apache.beam" % "beam-runners-direct-java" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.avro" % "avro" % avroVersion,
@@ -1104,6 +1122,7 @@ lazy val `scio-jmh`: Project = project
     classDirectory in Jmh := (classDirectory in Test).value,
     dependencyClasspath in Jmh := (dependencyClasspath in Test).value,
     libraryDependencies ++= directRunnerDependencies ++ Seq(
+      "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
       "junit" % "junit" % junitVersion % "test",
       "org.hamcrest" % "hamcrest-core" % hamcrestVersion % "test",
       "org.hamcrest" % "hamcrest-library" % hamcrestVersion % "test",
@@ -1124,6 +1143,7 @@ lazy val `scio-smb`: Project = project
   .settings(
     description := "Sort Merge Bucket source/sink implementations for Apache Beam",
     libraryDependencies ++= Seq(
+      "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion % "it,test" classifier "tests",
       "org.apache.beam" % "beam-sdks-java-extensions-sorter" % beamVersion,

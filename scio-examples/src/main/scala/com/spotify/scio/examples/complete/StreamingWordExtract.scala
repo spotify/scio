@@ -31,7 +31,7 @@ import com.spotify.scio.examples.common.ExampleData
 import org.apache.beam.examples.common.{ExampleOptions, ExampleUtils}
 import org.apache.beam.sdk.options.StreamingOptions
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 object StreamingWordExtract {
   def main(cmdlineArgs: Array[String]): Unit = {
