@@ -21,7 +21,7 @@ import com.google.api.services.bigquery.model.{TableFieldSchema, TableSchema}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 class ToTableSchemaTest extends AnyFlatSpec with Matchers {
   "toTableSchema" should "convert an Avro Schema to a BigQuery TableSchema" in {

@@ -25,7 +25,7 @@ import com.google.common.util.concurrent.{Futures, ListenableFuture}
 import com.spotify.scio.testing._
 import com.spotify.scio.transforms.BaseAsyncLookupDoFn.CacheSupplier
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.util.{Failure, Success}
 
 class BigtableDoFnTest extends PipelineSpec {

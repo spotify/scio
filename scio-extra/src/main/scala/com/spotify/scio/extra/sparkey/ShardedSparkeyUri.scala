@@ -28,7 +28,7 @@ import org.apache.beam.sdk.io.FileSystems
 import org.apache.beam.sdk.io.fs.{EmptyMatchTreatment, MatchResult}
 import org.apache.beam.sdk.options.PipelineOptions
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 /**
  * Sharded Sparkey support

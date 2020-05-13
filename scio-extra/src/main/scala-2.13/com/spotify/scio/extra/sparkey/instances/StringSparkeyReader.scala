@@ -2,7 +2,7 @@ package com.spotify.scio.extra.sparkey.instances
 
 import com.spotify.sparkey.SparkeyReader
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 /** Enhanced version of `SparkeyReader` that mimics a `Map`. */
 class StringSparkeyReader(self: SparkeyReader) extends Map[String, String] {

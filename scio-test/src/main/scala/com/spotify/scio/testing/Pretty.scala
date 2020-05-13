@@ -18,7 +18,7 @@ package com.spotify.scio.testing
 
 import org.apache.avro.generic.GenericRecord
 import org.apache.avro.specific.SpecificRecordBase
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import com.spotify.scio.{registerSysProps, SysProp}
 import scala.util.Try
 

@@ -35,7 +35,7 @@ import org.apache.beam.sdk.options.StreamingOptions
 import org.apache.beam.sdk.transforms.windowing.{GlobalWindows, SlidingWindows}
 import org.joda.time.Duration
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 object AutoComplete {
   case class Tag(tag: String, count: Long)

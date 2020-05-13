@@ -20,7 +20,7 @@ import java.util
 import java.util.function.BiConsumer
 
 import scala.reflect.ClassTag
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import org.apache.beam.sdk.schemas.{Schema => BSchema}
 import org.apache.beam.sdk.transforms.SerializableFunction
 import org.apache.beam.sdk.values.Row

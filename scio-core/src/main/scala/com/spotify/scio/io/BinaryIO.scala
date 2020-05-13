@@ -27,7 +27,7 @@ import org.apache.beam.sdk.io._
 import org.apache.beam.sdk.io.FileIO.Write.FileNaming
 import org.apache.beam.sdk.io.fs.MatchResult.Metadata
 import org.apache.commons.compress.compressors.CompressorStreamFactory
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 import scala.util.Try
 

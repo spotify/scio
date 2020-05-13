@@ -45,7 +45,7 @@ import org.apache.beam.sdk.values.TypeDescriptor
 import org.apache.beam.sdk.values.TypeParameter
 import org.apache.beam.sdk.values.WindowingStrategy
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.collection.mutable
 import scala.util._
 

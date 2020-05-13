@@ -30,7 +30,7 @@ import org.apache.beam.sdk.io.{Compression, FileBasedSink, FileSystems, TextIO =
 import org.apache.commons.compress.compressors.CompressorStreamFactory
 import org.apache.commons.io.IOUtils
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.util.Try
 import org.apache.beam.sdk.io.ShardNameTemplate
 

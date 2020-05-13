@@ -19,7 +19,7 @@ package com.spotify.scio.schemas.instances
 import com.spotify.scio.schemas._
 import org.apache.beam.sdk.schemas.Schema.FieldType
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.reflect.ClassTag
 import scala.collection.mutable
 import scala.collection.SortedSet

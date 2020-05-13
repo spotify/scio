@@ -76,7 +76,7 @@ class TFExampleTest extends PipelineSpec {
   }
 
   "MultiSpecFeatranJob" should "work" in {
-    import scala.collection.JavaConverters._
+    import scala.jdk.CollectionConverters._
     JobTest[MultiSpecFeatranJob.type]
       .args("--output=out")
       .output(TFExampleIO("out")) { out =>

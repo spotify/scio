@@ -29,7 +29,7 @@ import org.scalatest.BeforeAndAfterAll
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 class CassandraIT extends AnyFlatSpec with Matchers with BeforeAndAfterAll {
   import CassandraIT._

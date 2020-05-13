@@ -24,7 +24,7 @@ import com.spotify.scio.testing.util.ItUtils
 import org.apache.beam.sdk.io.FileSystems
 import org.apache.beam.sdk.util.MimeTypes
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 class SparkeyIT extends PipelineSpec {
 

@@ -27,7 +27,7 @@ import com.spotify.sparkey.extra.ThreadLocalSparkeyReader
 import com.spotify.sparkey.{Sparkey, SparkeyReader}
 import org.apache.beam.sdk.options.PipelineOptions
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 /**
  * Represents the base URI for a Sparkey index and log file, either on the local or a remote file

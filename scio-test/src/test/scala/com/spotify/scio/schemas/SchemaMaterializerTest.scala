@@ -20,7 +20,7 @@ import org.apache.beam.sdk.schemas.Schema.{Field, FieldType}
 
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import org.apache.beam.sdk.values.Row
 import org.apache.beam.sdk.schemas.{Schema => BSchema, SchemaCoder}
 import org.apache.beam.sdk.util.SerializableUtils.ensureSerializable

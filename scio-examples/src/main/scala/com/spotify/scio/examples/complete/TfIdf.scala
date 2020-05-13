@@ -31,7 +31,7 @@ import com.spotify.scio.examples.common.ExampleData
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.io.FileSystems
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.io.Source
 
 object TfIdf {

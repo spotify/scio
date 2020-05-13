@@ -24,7 +24,7 @@ import org.apache.avro.generic.{GenericData, GenericRecord}
 import org.apache.beam.sdk.coders.{Coder => BCoder}
 import org.apache.beam.sdk.util.CoderUtils
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 private[scio] object AvroBytesUtil {
   val schema: ASchema = {

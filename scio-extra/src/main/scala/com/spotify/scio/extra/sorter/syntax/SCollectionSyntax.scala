@@ -29,7 +29,7 @@ import org.apache.beam.sdk.extensions.sorter.{BufferedExternalSorter, SortValues
 import org.apache.beam.sdk.values.KV
 
 import scala.collection.AbstractIterator
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 final class SorterOps[K1, K2: SortingKey, V](self: SCollection[(K1, Iterable[(K2, V)])]) {
 

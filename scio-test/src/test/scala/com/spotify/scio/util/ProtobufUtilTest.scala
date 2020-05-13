@@ -31,7 +31,7 @@ import org.apache.beam.sdk.io.{FileSystems, LocalResources}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 class ProtobufUtilTest extends AnyFlatSpec with Matchers {
 

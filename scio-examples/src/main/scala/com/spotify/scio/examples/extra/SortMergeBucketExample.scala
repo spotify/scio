@@ -37,7 +37,7 @@ import org.apache.beam.sdk.extensions.smb.AvroSortedBucketIO
 import org.apache.beam.sdk.extensions.smb.BucketMetadata.HashType
 import org.apache.beam.sdk.values.TupleTag
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.util.Random
 
 object SortMergeBucketExample {

@@ -23,7 +23,7 @@ import org.scalacheck._
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatestplus.scalacheck.Checkers
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.util.Try
 
 class JodaSerializerTest extends AnyFlatSpec with Checkers {

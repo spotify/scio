@@ -28,7 +28,7 @@ import com.spotify.scio.bigquery._
 import com.spotify.scio._
 import com.spotify.scio.examples.common.ExampleData
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.collection.SortedSet
 
 object CombinePerKeyExamples {

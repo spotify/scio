@@ -20,7 +20,7 @@ import com.spotify.scio.RunnerContext
 import org.apache.beam.runners.flink.{FlinkPipelineOptions, FlinkRunner}
 import org.apache.beam.sdk.options.PipelineOptions
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 /** Flink runner specific context. */
 case object FlinkContext extends RunnerContext {

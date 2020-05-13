@@ -27,7 +27,7 @@ import com.spotify.scio.util.ScioUtil
 import org.apache.beam.sdk.Pipeline.PipelineExecutionException
 import org.apache.commons.io.FileUtils
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.io.Source
 
 object JsonIOTest {

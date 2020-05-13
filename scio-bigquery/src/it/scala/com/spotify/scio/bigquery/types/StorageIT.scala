@@ -29,7 +29,7 @@ import org.joda.time.{DateTimeZone, Duration, Instant}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 // scio-test/it:runMain PopulateTestData to re-populate data for integration tests
 class StorageIT extends AnyFlatSpec with Matchers {

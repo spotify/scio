@@ -26,7 +26,7 @@ import org.apache.cassandra.hadoop.cql3._
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.mapred.TaskAttemptContext
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 private[cassandra] class BulkOperations(val opts: CassandraOptions, val parallelism: Int)
     extends Serializable {

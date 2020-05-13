@@ -28,7 +28,7 @@ import com.spotify.scio.ContextAndArgs
 import com.spotify.scio.bigquery._
 import com.spotify.scio.examples.common.ExampleData
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 object DistinctByKeyExample {
   def main(cmdlineArgs: Array[String]): Unit = {

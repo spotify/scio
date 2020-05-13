@@ -22,7 +22,7 @@ import org.apache.beam.runners.dataflow.DataflowRunner
 import org.apache.beam.runners.dataflow.options.DataflowPipelineWorkerPoolOptions
 import org.apache.beam.sdk.options.PipelineOptions
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 /** Dataflow runner specific context. */
 case object DataflowContext extends RunnerContext {

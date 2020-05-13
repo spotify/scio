@@ -31,7 +31,7 @@ import org.apache.beam.sdk.options.PipelineOptionsFactory
 import org.apache.beam.sdk.util.MimeTypes
 import org.joda.time._
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.util.control.NonFatal
 
 object PopulateTestData {

@@ -30,7 +30,7 @@ import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.io.BaseEncoding
 import org.joda.time.format.DateTimeFormat
 import org.joda.time.{DateTime, LocalDate, LocalTime}
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 /**
  * Converts an [[org.apache.avro.generic.IndexedRecord IndexedRecord]] into a

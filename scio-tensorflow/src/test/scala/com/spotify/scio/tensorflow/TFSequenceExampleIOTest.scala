@@ -21,7 +21,7 @@ import com.google.protobuf.ByteString
 import com.spotify.scio.testing.ScioIOSpec
 import org.tensorflow.example._
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 object TFSequenceExampleIOTest {
   case class Record(i: Int, ss: Seq[String])

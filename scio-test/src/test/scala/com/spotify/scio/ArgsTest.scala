@@ -129,21 +129,21 @@ class ArgsTest extends AnyFlatSpec with Matchers {
     val rawArgs = Array("--input=value1", "--output=value2")
     val result = TypedParser[Arguments]().parse(rawArgs)
 
-    result should be a 'success
+    result should be a Symbol("success")
   }
 
   it should "fail on missing args" in {
     val rawArgs = Array("--input=value1")
     val result = TypedParser[Arguments]().parse(rawArgs)
 
-    result should be a 'failure
+    result should be a Symbol("failure")
   }
 
   it should "fail on unused args" in {
     val rawArgs = Array("--input=value1", "--output=value2", "--unused")
     val result = TypedParser[Arguments]().parse(rawArgs)
 
-    result should be a 'failure
+    result should be a Symbol("failure")
   }
 
   @AppName("Scio Examples")
@@ -162,13 +162,13 @@ class ArgsTest extends AnyFlatSpec with Matchers {
   it should "#1436: support camelCase" in {
     val rawArgs = Array("--output=/path/to/output", "--camelCaseTest=value1")
     val result = TypedParser[CamelCaseArguments]().parse(rawArgs)
-    result should be a 'success
+    result should be a Symbol("success")
   }
 
   it should "#1770: fail kebab-case" in {
     val rawArgs = Array("--output=/path/to/output", "--camel-case-test=value1")
     val result = TypedParser[CamelCaseArguments]().parse(rawArgs)
-    result should be a 'failure
+    result should be a Symbol("failure")
   }
 
   it should "print camelCase in help messages" in {

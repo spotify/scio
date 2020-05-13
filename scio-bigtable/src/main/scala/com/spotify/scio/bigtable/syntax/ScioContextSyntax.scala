@@ -28,7 +28,7 @@ import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.io.range.ByteKeyRange
 import org.joda.time.Duration
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 object ScioContextOps {
   private val DefaultSleepDuration = Duration.standardMinutes(20)

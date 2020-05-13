@@ -24,7 +24,7 @@ import com.datastax.driver.core.DataType
 import com.google.common.collect.{ImmutableList, ImmutableSet}
 import com.twitter.chill._
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 private[cassandra] object DataTypeExternalizer {
   final def apply(dt: DataType): DataTypeExternalizer = {

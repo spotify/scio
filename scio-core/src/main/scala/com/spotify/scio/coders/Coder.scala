@@ -30,7 +30,7 @@ import org.apache.beam.sdk.util.common.ElementByteSizeObserver
 import org.apache.beam.sdk.values.KV
 
 import scala.annotation.implicitNotFound
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.collection.{BitSet, SortedSet, TraversableOnce, mutable => m}
 import scala.reflect.ClassTag
 import scala.util.Try

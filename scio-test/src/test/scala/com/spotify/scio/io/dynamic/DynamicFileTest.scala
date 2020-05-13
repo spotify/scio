@@ -30,7 +30,7 @@ import org.apache.beam.sdk.options.PipelineOptionsFactory
 import org.apache.commons.io.FileUtils
 import org.joda.time.{Duration, Instant}
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 class DynamicFileTest extends PipelineSpec {
   private def verifyOutput(path: Path, expected: String*): Unit = {

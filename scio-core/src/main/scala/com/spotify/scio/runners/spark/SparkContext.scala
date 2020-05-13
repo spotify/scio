@@ -21,7 +21,7 @@ import com.spotify.scio.RunnerContext
 import org.apache.beam.runners.spark.{SparkPipelineOptions, SparkRunner}
 import org.apache.beam.sdk.options.PipelineOptions
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 /** Spark runner specific context. */
 case object SparkContext extends RunnerContext {
