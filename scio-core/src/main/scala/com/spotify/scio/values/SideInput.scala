@@ -27,7 +27,7 @@ import org.apache.beam.sdk.transforms.windowing.GlobalWindow
 
 import com.spotify.scio.util.JMapWrapper
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 /** Encapsulate an SCollection when it is being used as a side input. */
 trait SideInput[T] extends Serializable {
@@ -183,8 +183,10 @@ private[values] trait CachedSideInput[T] extends SideInput[T] {
   protected def updateCacheOnGlobalWindow = true
 
   override def getCache[I, O](context: DoFn[I, O]#ProcessContext, window: BoundedWindow): T = {
-    if (cache == null || this.window != window ||
-        (updateCacheOnGlobalWindow && window == GlobalWindow.INSTANCE)) {
+    if (
+      cache == null || this.window != window ||
+      (updateCacheOnGlobalWindow && window == GlobalWindow.INSTANCE)
+    ) {
       this.window = window
       cache = get(context)
     }
