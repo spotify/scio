@@ -24,6 +24,7 @@ import javax.annotation.Nullable;
 import org.apache.beam.sdk.extensions.smb.BucketMetadata.HashType;
 import org.apache.beam.sdk.extensions.smb.SortedBucketSink.WriteResult;
 import org.apache.beam.sdk.extensions.smb.SortedBucketSource.BucketedInput;
+import org.apache.beam.sdk.extensions.smb.TargetParallelism;
 import org.apache.beam.sdk.extensions.smb.SortedBucketTransform.TransformFn;
 import org.apache.beam.sdk.io.fs.ResourceId;
 import org.apache.beam.sdk.transforms.PTransform;
@@ -47,6 +48,7 @@ public class SortedBucketIO {
   static final int DEFAULT_NUM_SHARDS = 1;
   static final HashType DEFAULT_HASH_TYPE = HashType.MURMUR3_128;
   static final int DEFAULT_SORTER_MEMORY_MB = 128;
+  static final TargetParallelism DEFAULT_PARALLELISM = TargetParallelism.min();
 
   /** Co-groups sorted-bucket sources with the same sort key. */
   public static <FinalKeyT> CoGbkBuilder<FinalKeyT> read(Class<FinalKeyT> finalKeyClass) {
@@ -63,7 +65,7 @@ public class SortedBucketIO {
 
     /** Returns a new {@link CoGbk} with the given first sorted-bucket source in {@link Read}. */
     public CoGbk<K> of(Read<?> read) {
-      return new CoGbk<>(finalKeyClass, Collections.singletonList(read));
+      return new CoGbk<>(finalKeyClass, Collections.singletonList(read), DEFAULT_PARALLELISM);
     }
   }
 
@@ -73,10 +75,12 @@ public class SortedBucketIO {
   public static class CoGbk<K> extends PTransform<PBegin, PCollection<KV<K, CoGbkResult>>> {
     private final Class<K> keyClass;
     private final List<Read<?>> reads;
+    private final TargetParallelism targetParallelism;
 
-    private CoGbk(Class<K> keyClass, List<Read<?>> reads) {
+    private CoGbk(Class<K> keyClass, List<Read<?>> reads, TargetParallelism targetParallelism) {
       this.keyClass = keyClass;
       this.reads = reads;
+      this.targetParallelism = targetParallelism;
     }
 
     /**
@@ -86,7 +90,11 @@ public class SortedBucketIO {
     public CoGbk<K> and(Read<?> read) {
       ImmutableList<Read<?>> newReads =
           ImmutableList.<Read<?>>builder().addAll(reads).add(read).build();
-      return new CoGbk<>(keyClass, newReads);
+      return new CoGbk<>(keyClass, newReads, targetParallelism);
+    }
+
+    public CoGbk<K> withTargetParallelism(TargetParallelism targetParallelism) {
+      return new CoGbk<>(keyClass, reads, targetParallelism);
     }
 
     public <V> CoGbkTransform<K, V> to(SortedBucketIO.Write<K, V> write) {

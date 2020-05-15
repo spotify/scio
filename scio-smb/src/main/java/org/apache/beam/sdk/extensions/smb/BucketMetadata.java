@@ -29,6 +29,7 @@ import java.io.OutputStream;
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.Map;
+import java.util.function.Function;
 import org.apache.beam.sdk.coders.AtomicCoder;
 import org.apache.beam.sdk.coders.CannotProvideCoderException;
 import org.apache.beam.sdk.coders.Coder;
@@ -39,7 +40,6 @@ import org.apache.beam.sdk.coders.StringUtf8Coder;
 import org.apache.beam.sdk.transforms.display.DisplayData;
 import org.apache.beam.sdk.transforms.display.DisplayData.Builder;
 import org.apache.beam.sdk.transforms.display.HasDisplayData;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.annotations.VisibleForTesting;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.hash.HashFunction;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.hash.Hashing;
@@ -201,6 +201,11 @@ public abstract class BucketMetadata<K, V> implements Serializable, HasDisplayDa
 
   int getBucketId(byte[] keyBytes) {
     return Math.abs(hashFunction.hashBytes(keyBytes).asInt()) % numBuckets;
+  }
+
+  Function<byte[], Boolean> checkRehashedBucketFn(int newNumBuckets, int currentBucket) {
+    return (keyBytes) ->
+        Math.abs(hashFunction.hashBytes(keyBytes).asInt()) % newNumBuckets == currentBucket;
   }
 
   ////////////////////////////////////////

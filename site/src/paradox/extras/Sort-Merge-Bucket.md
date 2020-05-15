@@ -99,6 +99,31 @@ data.saveAsSortedBucket(
   Dataflow](https://cloud.google.com/compute/docs/machine-types)--although even the smallest
   machine type has several GB of RAM.
 
+### Parallelism
+The `SortedBucketSource` API accepts an optional
+@javadoc[TargetParallelism](org.apache.beam.sdk.extensions.smb.TargetParallelism) parameter to set the
+desired parallelism of the SMB read operation. For a given set of sources, `targetParallelism` can be
+set to any number between the least and greatest numbers of buckets among sources. This can be
+dynamically configured using `TargetParallelism.min()` or `TargetParallelism.max()`, which at graph
+construction time will determine the least or greatest amount of parallelism based on sources.
+Alternately, `TargetParallelism.of(Integer value)` can be used to statically configure a custom value.
+
+If no value is specified, SMB read operations will use the minimum parallelism.
+
+When selecting a target parallelism for your SMB operation, there are tradeoffs to consider:
+
+  - Minimal parallelism means a fewer number of workers merging data from potentially many
+    buckets. For example, if source A has 4 buckets and source B has 64, a minimally parallel
+    SMB read would have 4 workers, each one merging 1 bucket from source A and 16 buckets from
+    source B. This read may have low throughput.
+  - Maximal parallelism means that each bucket is read by at least one worker. For example, if
+    source A has 4 buckets and source B has 64, a maximally parallel SMB read would have 64 workers,
+    each one merging 1 bucket from source B and 1 bucket from source A, replicated 16 times. This
+    may have better throughput than the minimal example, but more expensive because every key group
+    from the replicated sources must be re-hashed to avoid emitting duplicate records.
+  - A custom parallelism in the middle of these bounds may be the best balance of speed and
+    computing cost.
+
 ## Testing
 Currently, mocking data for SMB transforms is not supported in the `com.spotify.scio.testing.JobTest` framework. See
 @github[SortMergeBucketExampleTest](/scio-examples/src/test/scala/com/spotify/scio/examples/extra/SortMergeBucketExampleTest.scala)

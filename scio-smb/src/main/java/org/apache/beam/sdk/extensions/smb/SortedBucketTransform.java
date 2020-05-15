@@ -51,8 +51,6 @@ import org.apache.beam.sdk.transforms.display.DisplayData.Builder;
 import org.apache.beam.sdk.transforms.join.CoGbkResult;
 import org.apache.beam.sdk.values.KV;
 import org.apache.beam.sdk.values.PBegin;
-import org.apache.beam.sdk.values.PCollectionTuple;
-import org.apache.beam.sdk.values.TupleTag;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions;
 
 /**
@@ -242,11 +240,15 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
           throw new RuntimeException(e);
         }
       }
+      final KeyGroupIterator[] iterators =
+          sources.stream()
+              .map(i -> i.createIterator(c.element(), leastNumBuckets))
+              .toArray(KeyGroupIterator[]::new);
 
       SortedBucketSource.MergeBuckets.merge(
-          bucketId,
-          sources,
-          leastNumBuckets,
+          iterators,
+          BucketedInput.schemaOf(sources),
+          (bytes) -> true,
           mergedKeyGroup -> {
             int assignedBucket =
                 reHashBucket ? bucketMetadata.getBucketId(mergedKeyGroup.getKey()) : bucketId;
