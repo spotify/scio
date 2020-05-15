@@ -935,8 +935,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * Window values with the given function.
    * @group window
    */
-  def withWindowFn[A <: AnyRef, W <: BoundedWindow](
-    fn: WindowFn[A, W],
+  def withWindowFn[W <: BoundedWindow](
+    fn: WindowFn[_ >: T, W],
     options: WindowOptions = WindowOptions()
   ): SCollection[T] = {
     var transform = Window.into(fn).asInstanceOf[Window[T]]
