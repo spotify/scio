@@ -877,6 +877,12 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   def asIterableSideInput: SideInput[Iterable[T]] =
     new IterableSideInput[T](this.applyInternal(View.asIterable()))
 
+  // def asMapSideInput: SideInput[[T]] =
+  // new IterableSideInput[T](this.applyInternal(View.asIterable()))
+
+  // def asMultimapSideInput: SideInput[Iterable[T]] =
+  // new IterableSideInput[T](this.applyInternal(View.asIterable()))
+
   /**
    * Convert this SCollection to a [[SideInput]], mapping each window to a `Set[T]`, to be used
    * with [[withSideInputs]].
@@ -1253,6 +1259,38 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    */
   @deprecated("Use readAllAsBytes instead", "0.8.1")
   def readAllBytes(implicit ev: T <:< String): SCollection[Array[Byte]] = readFilesAsBytes
+
+  /**
+   * Pairs each element with the value of the provided [[SideInput]] in the element's window.
+   *
+   * Reify as List:
+   * {{{
+   *  val other: SCollection[Int] = sc.parallelize(Seq(1))
+   *  val coll: SCollection[(Int, Seq[Int])] = sc.parallelize(Seq(1, 2)).reify(other.asListSideInput)
+   * }}}
+   *
+   * Reify as Iterable:
+   * {{{
+   *  val other: SCollection[Int] = sc.parallelize(Seq(1))
+   *  val coll: SCollection[(Int, Iterable[Int])] = sc.parallelize(Seq(1, 2)).reify(other.asIterableSideInput)
+   * }}}
+   *
+   * Reify as Map:
+   * {{{
+   *  val other: SCollection[(Int, Int)] = sc.parallelize(Seq((1, 1)))
+   *  val coll: SCollection[(Int, Map[Int, Int])] = sc.parallelize(Seq(1, 2)).reify(other.asMapSideInput)
+   * }}}
+   *
+   * Reify as Multimap:
+   * {{{
+   *  val other: SCollection[(Int, Int)]  = sc.parallelize(Seq((1, 1)))
+   *  val coll: SCollection[(Int, Map[Int, Iterable[Int]])]  = sc.parallelize(Seq(1, 2)).reify(other.asMultiMapSideInput)
+   * }}}
+   */
+  def reify[U: Coder](side: SideInput[U]): SCollection[(T, U)] = {
+    implicit val tc = Coder.beam(internal.getCoder)
+    this.transform(_.withSideInputs(side).map((t, s) => (t, s(side))).toSCollection)
+  }
 
   // =======================================================================
   // Write operations

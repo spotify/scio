@@ -698,4 +698,37 @@ class SCollectionTest extends PipelineSpec {
       count should containSingleValue(0L)
     }
   }
+
+  it should "reify as List" in {
+    runWithContext { sc =>
+      val other = sc.parallelize(Seq(1))
+      val coll = sc.parallelize(Seq(1, 2)).reify(other.asListSideInput)
+      coll should containInAnyOrder(Seq((1, Seq(1)), (2, Seq(1))))
+    }
+  }
+
+  it should "reify as Iterable" in {
+    runWithContext { sc =>
+      val other = sc.parallelize(Seq(1))
+      val coll = sc.parallelize(Seq(1, 2)).reify(other.asIterableSideInput)
+      coll should containInAnyOrder(Seq((1, Iterable(1)), (2, Iterable(1))))
+    }
+  }
+
+  it should "reify as Map" in {
+    runWithContext { sc =>
+      val other = sc.parallelize(Seq((1, 1)))
+      val coll = sc.parallelize(Seq(1, 2)).reify(other.asMapSideInput)
+      coll should containInAnyOrder(Seq((1, Map(1 -> 1)), (2, Map(1 -> 1))))
+    }
+  }
+
+  it should "reify as Multimap" in {
+    runWithContext { sc =>
+      val other = sc.parallelize(Seq((1, 1)))
+      val coll = sc.parallelize(Seq(1, 2)).reify(other.asMultiMapSideInput)
+      coll should containInAnyOrder(Seq((1, Map(1 -> Iterable(1))), (2, Map(1 -> Iterable(1)))))
+    }
+  }
+
 }
