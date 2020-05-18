@@ -37,7 +37,6 @@ import org.apache.beam.sdk.io.FileIO.ReadMatches.DirectoryTreatment
 import org.apache.beam.sdk.io.FileIO.Write.FileNaming
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
 import org.apache.beam.sdk.transforms._
-import org.apache.beam.sdk.transforms.{View => BView}
 import org.apache.beam.sdk.transforms.windowing._
 import org.apache.beam.sdk.util.SerializableUtils
 import org.apache.beam.sdk.values.WindowingStrategy.AccumulationMode
@@ -805,7 +804,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @group side
    */
   def asSingletonSideInput: SideInput[T] =
-    new SingletonSideInput[T](this.applyInternal(BView.asSingleton()))
+    new SingletonSideInput[T](this.applyInternal(View.asSingleton()))
 
   /**
    * Convert this SCollection of a single value per window to a [[SideInput]] with a default value,
@@ -813,9 +812,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @group side
    */
   def asSingletonSideInput(defaultValue: T): SideInput[T] =
-    new SingletonSideInput[T](
-      this.applyInternal(BView.asSingleton().withDefaultValue(defaultValue))
-    )
+    new SingletonSideInput[T](this.applyInternal(View.asSingleton().withDefaultValue(defaultValue)))
 
   /**
    * Convert this SCollection to a [[SideInput]], mapping each window to a `Seq`, to be used with
@@ -827,7 +824,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   // j.u.List#asScala returns s.c.mutable.Buffer which has an O(n) .toList method
   // returning Seq[T] here to avoid copying
   def asListSideInput: SideInput[Seq[T]] =
-    new ListSideInput[T](this.applyInternal(BView.asList()))
+    new ListSideInput[T](this.applyInternal(View.asList()))
 
   /**
    * Convert this SCollection to a [[SideInput]], mapping each window to an `Iterable`, to be used
@@ -839,7 +836,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @group side
    */
   def asIterableSideInput: SideInput[Iterable[T]] =
-    new IterableSideInput[T](this.applyInternal(BView.asIterable()))
+    new IterableSideInput[T](this.applyInternal(View.asIterable()))
 
   /**
    * Convert this SCollection to a [[SideInput]], mapping each window to a `Set[T]`, to be used
