@@ -186,7 +186,7 @@ package object sparkey extends SparkeyReaderInstances {
   private def writeToSparkey[K, V](
     uri: SparkeyUri,
     maxMemoryUsage: Long,
-    elements: JIterable[(K, V)]
+    elements: Iterable[(K, V)]
   )(implicit w: SparkeyWritable[K, V], koder: Coder[K], voder: Coder[V]): SparkeyUri = {
     val writer = new SparkeyWriter(uri, maxMemoryUsage)
     val it = elements.iterator

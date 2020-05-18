@@ -731,4 +731,18 @@ class SCollectionTest extends PipelineSpec {
     }
   }
 
+  it should "reify in Golbal Window as List" in {
+    runWithContext { sc =>
+      val coll = sc.parallelize(Seq(1)).reifyInGlobalWindow(_.asListSideInput)
+      coll should containInAnyOrder(Seq(Seq(1)))
+    }
+  }
+
+  it should "reify empty in Golbal Window as List" in {
+    runWithContext { sc =>
+      val coll = sc.empty[Int].reifyInGlobalWindow(_.asListSideInput)
+      coll should containInAnyOrder(Seq(Seq.empty[Int]))
+    }
+  }
+
 }

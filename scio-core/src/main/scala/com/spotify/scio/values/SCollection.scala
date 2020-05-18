@@ -1292,6 +1292,25 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     this.transform(_.withSideInputs(side).map((t, s) => (t, s(side))).toSCollection)
   }
 
+  /**
+   * Returns an [[SCollection]] consisting of a single element, containing the value of the given
+   * side input in the global window.
+   *
+   * Reify as List:
+   * {{{
+   *  val coll: SCollection[Seq[Int]] =
+   *    sc.parallelize(Seq(1, 2)).reifyInGlobalWindow(_.asListSideInput)
+   * }}}
+   *
+   * Can be used to replace patterns like:
+   * {{{
+   *  val coll: SCollection[Iterable[Int]] = sc.parallelize(Seq(1, 2)).groupBy(_ => ())
+   * }}}
+   * where you want to actually get an empty [[Iterable]] even if no data is present.
+   */
+  def reifyInGlobalWindow[U: Coder](view: SCollection[T] => SideInput[U]): SCollection[U] =
+    this.transform(coll => context.parallelize[Unit](Seq(())).reify(view(coll)).values)
+
   // =======================================================================
   // Write operations
   // =======================================================================
