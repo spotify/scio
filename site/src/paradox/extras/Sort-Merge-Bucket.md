@@ -84,7 +84,8 @@ an optimal number of output files. With SMB, you must specify the number of buck
 - If your job gets stuck in the sorting phase (since the `GroupByKey` and `SortValues` transforms
   may get fused--you can reference the @javadoc[Counter](org.apache.beam.sdk.metrics.Counter)s
   `SortedBucketSink-bucketsInitiatedSorting` and `SortedBucketSink-bucketsCompletedSorting`
-  to get an idea of where your job fails), you can increase sorter memory (default is 128MB):
+  to get an idea of where your job fails), you can increase sorter memory
+  (default is 2048MB, or 128MB for Scio <= 0.9.0):
 
 ```scala
 data.saveAsSortedBucket(
@@ -95,9 +96,17 @@ data.saveAsSortedBucket(
 )
 ```
 
-  You can also tweak the `--workerMachineType` pipeline option [see: machine specs for Google Cloud
-  Dataflow](https://cloud.google.com/compute/docs/machine-types)--although even the smallest
-  machine type has several GB of RAM.
+The amount of data each external sorter instance needs to handle is `total output size / numBuckets
+/ numShards`, and when this exceeds sorter memory, the sorter will spill to disk. `n1-standard`
+workers has 3.75GB RAM per CPU, so 1GB sorter memory is a decent default, especially if the output
+files are kept under that size. If you have to spill to disk, note that worker disk IO depends on
+disk type, size, and worker number of CPUs.
+
+See [specifying pipeline execution
+parameters](https://cloud.google.com/dataflow/docs/guides/specifying-exec-params) for more details,
+e.g. `--workerMachineType`, `--workerDiskType`, and `--diskSizeGb`. Also read more about [machine
+types](https://cloud.google.com/compute/docs/machine-types) and [block storage
+performance](https://cloud.google.com/compute/docs/disks/performance)
 
 ### Parallelism
 The `SortedBucketSource` API accepts an optional
