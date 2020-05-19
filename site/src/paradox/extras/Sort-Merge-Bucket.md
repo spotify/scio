@@ -85,7 +85,7 @@ an optimal number of output files. With SMB, you must specify the number of buck
   may get fused--you can reference the @javadoc[Counter](org.apache.beam.sdk.metrics.Counter)s
   `SortedBucketSink-bucketsInitiatedSorting` and `SortedBucketSink-bucketsCompletedSorting`
   to get an idea of where your job fails), you can increase sorter memory
-  (default is 2048MB, or 128MB for Scio <= 0.9.0):
+  (default is 1024MB, or 128MB for Scio <= 0.9.0):
 
 ```scala
 data.saveAsSortedBucket(
