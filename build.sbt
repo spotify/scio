@@ -85,7 +85,6 @@ val kryoVersion =
   "4.0.2" // explicitly depend on 4.0.1+ due to https://github.com/EsotericSoftware/kryo/pull/516
 val magnoliaVersion = "0.16.0"
 val magnolifyVersion = "0.1.7"
-val mercatorVersion = "0.3.0"
 val nettyVersion = "4.1.30.Final"
 val nettyTcNativeVersion = "2.0.30.Final"
 val opencensusVersion = "0.24.0"
@@ -143,14 +142,6 @@ val beamSDKGoogleCloudCoreDependencies = Def.settings(
     ),
     "com.google.cloud.bigdataoss" % "gcsio" % bigdataossVersion
   )
-)
-
-val magnoliaDependencies = Def.settings(
-  libraryDependencies ++=
-    Seq(
-      "com.propensive" %% "magnolia" % magnoliaVersion,
-      "com.propensive" %% "mercator" % mercatorVersion
-    )
 )
 
 def previousVersion(currentVersion: String): Option[String] = {
@@ -578,9 +569,9 @@ lazy val `scio-test`: Project = project
       "commons-io" % "commons-io" % commonsIoVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.hamcrest" % "hamcrest" % hamcrestVersion,
-      "org.scalactic" %% "scalactic" % "3.1.2"
+      "org.scalactic" %% "scalactic" % "3.1.2",
+      "com.propensive" %% "magnolia" % magnoliaVersion
     ),
-    magnoliaDependencies,
     beamSDKIODependencies,
     (Test / compileOrder) := CompileOrder.JavaThenScala
   )
@@ -1045,9 +1036,9 @@ lazy val `scio-examples`: Project = project
       "com.twitter" %% "algebird-core" % algebirdVersion,
       "org.apache.beam" % "beam-sdks-java-extensions-sql" % beamVersion,
       "org.apache.httpcomponents" % "httpcore" % httpCoreVersion,
-      "org.elasticsearch" % "elasticsearch" % elasticsearch7Version
+      "org.elasticsearch" % "elasticsearch" % elasticsearch7Version,
+      "com.propensive" %% "magnolia" % magnoliaVersion
     ),
-    magnoliaDependencies,
     beamSDKIODependencies,
     beamSDKGoogleCloudCoreDependencies,
     // exclude problematic sources if we don't have GCP credentials
@@ -1353,7 +1344,6 @@ ThisBuild / dependencyOverrides ++= Seq(
   "com.google.protobuf" % "protobuf-java-util" % protobufVersion,
   "com.google.protobuf" % "protobuf-java" % protobufVersion,
   "com.propensive" %% "magnolia" % magnoliaVersion,
-  "com.propensive" %% "mercator" % mercatorVersion,
   "com.squareup.okio" % "okio" % "1.13.0",
   "com.thoughtworks.paranamer" % "paranamer" % "2.8",
   "commons-cli" % "commons-cli" % "1.2",
