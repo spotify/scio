@@ -877,12 +877,6 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   def asIterableSideInput: SideInput[Iterable[T]] =
     new IterableSideInput[T](this.applyInternal(View.asIterable()))
 
-  // def asMapSideInput: SideInput[[T]] =
-  // new IterableSideInput[T](this.applyInternal(View.asIterable()))
-
-  // def asMultimapSideInput: SideInput[Iterable[T]] =
-  // new IterableSideInput[T](this.applyInternal(View.asIterable()))
-
   /**
    * Convert this SCollection to a [[SideInput]], mapping each window to a `Set[T]`, to be used
    * with [[withSideInputs]].
