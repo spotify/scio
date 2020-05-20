@@ -141,70 +141,81 @@ object IndexAdmin {
    * If index already exists or some other error occurs this results in a [[scala.util.Failure]].
    *
    * @param alias        to be re-assigned
-   * @param newIndexName index to point the alias to
+   * @param indexName index to point the alias to
    * @param timeout defaults to 1 minute
    */
-  def swapIndexAlias(
+  def createAlias(
     nodes: Iterable[HttpHost],
     alias: String,
-    newIndexName: String,
+    indexName: String,
+    removePrevious: Boolean,
     timeout: TimeValue = TimeValue.timeValueMinutes(1)
   ): Try[AcknowledgedResponse] = {
     val esOptions = ElasticsearchOptions(nodes.toSeq)
-    swapIndexAlias(esOptions, alias, newIndexName, timeout)
+    createAlias(esOptions, alias, indexName, removePrevious, timeout)
   }
 
   /**
-   * Add index alias and remove the alias from all other indexes if it is already pointed to any.
+   * Add index alias with an option to remove the alias from all other indexes if it is already
+   * pointed to any.
    * If index already exists or some other error occurs this results in a [[scala.util.Failure]].
    *
-   * @param alias        to be re-assigned
-   * @param newIndexName index to point the alias to
+   * @param alias            to be re-assigned
+   * @param indexName        index to point the alias to
+   * @param removePrevious   When set to true, the indexAlias would be removed from all indices it
+   *                         was assigned to before adding new index alias assignment.
    */
-  def swapIndexAlias(
+  def createAlias(
     esOptions: ElasticsearchOptions,
     alias: String,
-    newIndexName: String,
+    indexName: String,
+    removePrevious: Boolean,
     timeout: TimeValue
   ): Try[AcknowledgedResponse] =
     indicesClient(esOptions)(client =>
-      swapIndexAlias(esOptions, alias, newIndexName, client, timeout))
+      createAlias(esOptions, alias, indexName, removePrevious, client, timeout))
 
   /**
    * Add index alias and remove the alias from all other indexes if it is already pointed to any.
    * If index already exists or some other error occurs this results in a [[scala.util.Failure]].
    *
-   * @param alias        to be re-assigned
-   * @param newIndexName index to point the alias to
+   * @param alias            to be re-assigned
+   * @param indexName        index to point the alias to
+   * @param removePrevious   When set to true, the indexAlias would be removed from all indices it
+   *                         was assigned to before adding new index alias assignment
+   *
    */
-  private def swapIndexAlias(
+  private def createAlias(
     esOptions: ElasticsearchOptions,
     alias: String,
-    newIndexName: String,
+    indexName: String,
+    removePrevious: Boolean,
     client: IndicesClient,
     timeout: TimeValue
   ): AcknowledgedResponse = {
 
-    val getAliasesResponse = client.getAlias(new GetAliasesRequest(alias), RequestOptions.DEFAULT)
+    val getAliasesResponse =
+      client.getAlias(new GetAliasesRequest(alias), RequestOptions.DEFAULT)
 
     val request = new IndicesAliasesRequest()
       .addAliasAction(
         new AliasActions(AliasActions.Type.ADD)
-          .index(newIndexName)
+          .index(indexName)
           .alias(alias)
       )
 
-    val indexAliacesToRemove = getAliasesResponse.getAliases.asScala.map(_._1)
-    Logger.info(s"Removing alias $alias from ${indexAliacesToRemove.mkString(", ")}")
+    if (removePrevious) {
+      val indexAliacesToRemove = getAliasesResponse.getAliases.asScala.map(_._1)
+      Logger.info(s"Removing alias $alias from ${indexAliacesToRemove.mkString(", ")}")
 
-    indexAliacesToRemove.foreach(
-      indexName =>
-        request.addAliasAction(
-          new AliasActions(AliasActions.Type.REMOVE)
-            .index(indexName)
-            .alias(alias)
-      ))
+      indexAliacesToRemove.foreach(
+        indexName =>
+          request.addAliasAction(
+            new AliasActions(AliasActions.Type.REMOVE)
+              .index(indexName)
+              .alias(alias)
+        ))
+    }
     client.updateAliases(request, RequestOptions.DEFAULT);
   }
-
 }
