@@ -305,6 +305,13 @@ class SCollectionTest extends PipelineSpec {
     }
   }
 
+  it should "support groupMapReduce()" in {
+    runWithContext { sc =>
+      val p = sc.parallelize(Seq(1, 2, 3, 4)).groupMapReduce(_ % 2)(_ + _)
+      p should containInAnyOrder(Seq((0, 6), (1, 4)))
+    }
+  }
+
   it should "support keyBy()" in {
     runWithContext { sc =>
       val p = sc.parallelize(Seq("hello", "world")).keyBy(_.substring(0, 1))

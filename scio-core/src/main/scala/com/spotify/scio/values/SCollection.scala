@@ -536,6 +536,28 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     }
 
   /**
+   * Return an SCollection of grouped items. Each group consists of a key and the result of an associative
+   * reduce function. The ordering of elements within each group is not guaranteed, and may even differ each
+   * time the resulting SCollection is evaluated.
+   *
+   * The associative function is performed locally on each mapper before sending results to
+   * a reducer, similarly to a "combiner" in MapReduce
+   *
+   * @group transform
+   */
+  def groupMapReduce[K](f: T => K)(
+    g: (T, T) => T
+  )(implicit kc: Coder[K], tc: Coder[T]): SCollection[(K, T)] =
+    this.transform {
+      val cf = ClosureCleaner.clean(f)
+
+      _.map(t => KV.of(cf(t), t))
+        .setCoder(CoderMaterializer.kvCoder[K, T](context))
+        .pApply(Combine.perKey(Functions.reduceFn(context, g)))
+        .map(kvToTuple)
+    }
+
+  /**
    * Return a new SCollection containing only the elements that also exist in the SideSet.
    *
    * @group transform
