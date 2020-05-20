@@ -41,7 +41,6 @@ import scala.jdk.CollectionConverters._
 import scala.collection.mutable.ArrayBuffer
 import scala.util.Random
 import scala.util.control.NonFatal
-import com.spotify.scio.bigquery.BigQuerySysProps
 
 private[client] object TableOps {
   private val Logger = LoggerFactory.getLogger(this.getClass)
