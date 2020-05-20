@@ -49,6 +49,7 @@ import scala.jdk.CollectionConverters._
 import scala.collection.immutable.TreeMap
 import scala.reflect.ClassTag
 import scala.util.Try
+import com.twitter.chill.ClosureCleaner
 
 /** Convenience functions for creating SCollections. */
 object SCollection {
@@ -510,11 +511,27 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   def groupBy[K](
     f: T => K
   )(implicit kcoder: Coder[K], vcoder: Coder[T]): SCollection[(K, Iterable[T])] =
+    groupMap(f)(identity)
+
+  /**
+   * Return an SCollection of grouped items. Each group consists of a key and a sequence of
+   * elements transformed into a value of type `U`. The ordering of elements within each group is not guaranteed,
+   * and may even differ each time the resulting SCollection is evaluated.
+   *
+   * It is equivalent to groupBy(key).mapValues(_.map(f)), but more efficient.
+   *
+   * @group transform
+   */
+  def groupMap[K, U](f: T => K)(
+    g: T => U
+  )(implicit kc: Coder[K], uc: Coder[U]): SCollection[(K, Iterable[U])] =
     this.transform {
-      val coder = CoderMaterializer.kvCoder[K, T](context)
-      _.pApply(WithKeys.of(Functions.serializableFn(f)))
-        .setCoder(coder)
-        .pApply(GroupByKey.create[K, T]())
+      val cf = ClosureCleaner.clean(f)
+      val cg = ClosureCleaner.clean(g)
+
+      _.map(t => KV.of(cf(t), cg(t)))
+        .setCoder(CoderMaterializer.kvCoder[K, U](context))
+        .pApply(GroupByKey.create[K, U]())
         .map(kvIterableToTuple)
     }
 
