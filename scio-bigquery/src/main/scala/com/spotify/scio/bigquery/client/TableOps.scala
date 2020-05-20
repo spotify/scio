@@ -41,6 +41,7 @@ import scala.jdk.CollectionConverters._
 import scala.collection.mutable.ArrayBuffer
 import scala.util.Random
 import scala.util.control.NonFatal
+import com.spotify.scio.bigquery.BigQuerySysProps
 
 private[client] object TableOps {
   private val Logger = LoggerFactory.getLogger(this.getClass)
@@ -75,9 +76,7 @@ final private[client] class TableOps(client: Client) {
       .newBuilder()
       .setDatasetId(table.ref.getDatasetId)
       .setTableId(table.ref.getTableId)
-    if (table.ref.getProjectId != null) {
-      tableRefProto.setProjectId(table.ref.getProjectId)
-    }
+      .setProjectId(Option(table.ref.getProjectId).getOrElse(client.project))
 
     val request = CreateReadSessionRequest
       .newBuilder()
@@ -138,18 +137,15 @@ final private[client] class TableOps(client: Client) {
       Cache.SchemaCache
     ) {
       val tableRef = bq.BigQueryHelpers.parseTableSpec(tableSpec)
-      val tableRefProto = TableReferenceProto.TableReference.newBuilder()
-      if (tableRef.getProjectId != null) {
-        tableRefProto.setProjectId(tableRef.getProjectId)
-      }
-      tableRefProto
+      val tableRefProto = TableReferenceProto.TableReference
+        .newBuilder()
+        .setProjectId(Option(tableRef.getProjectId).getOrElse(client.project))
         .setDatasetId(tableRef.getDatasetId)
         .setTableId(tableRef.getTableId)
-        .build()
 
       val request = CreateReadSessionRequest
         .newBuilder()
-        .setTableReference(tableRefProto.build())
+        .setTableReference(tableRefProto)
         .setReadOptions(StorageUtil.tableReadOptions(selectedFields, rowRestriction))
         .setParent(s"projects/${client.project}")
         .build()
@@ -166,6 +162,13 @@ final private[client] class TableOps(client: Client) {
     val p = Option(tableRef.getProjectId).getOrElse(client.project)
     client.underlying.tables().get(p, tableRef.getDatasetId, tableRef.getTableId).execute()
   }
+
+  /** Get list of tables in a dataset. */
+  def tableReferences(tableRef: TableReference): Seq[TableReference] =
+    tableReferences(
+      Option(tableRef.getProjectId).getOrElse(client.project),
+      tableRef.getDatasetId()
+    )
 
   /** Get list of tables in a dataset. */
   def tableReferences(projectId: String, datasetId: String): Seq[TableReference] = {
@@ -271,7 +274,11 @@ final private[client] class TableOps(client: Client) {
   private[bigquery] def delete(table: TableReference): Unit = {
     client.underlying
       .tables()
-      .delete(table.getProjectId, table.getDatasetId, table.getTableId)
+      .delete(
+        Option(table.getProjectId).getOrElse(client.project),
+        table.getDatasetId,
+        table.getTableId
+      )
       .execute()
     ()
   }
