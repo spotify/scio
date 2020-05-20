@@ -173,7 +173,8 @@ object IndexAdmin {
     timeout: TimeValue
   ): Try[AcknowledgedResponse] =
     indicesClient(esOptions)(client =>
-      createAlias(esOptions, alias, indexName, removePrevious, client, timeout))
+      createAlias(esOptions, alias, indexName, removePrevious, client, timeout)
+    )
 
   /**
    * Add index alias and remove the alias from all other indexes if it is already pointed to any.
@@ -208,13 +209,13 @@ object IndexAdmin {
       val indexAliacesToRemove = getAliasesResponse.getAliases.asScala.map(_._1)
       Logger.info(s"Removing alias $alias from ${indexAliacesToRemove.mkString(", ")}")
 
-      indexAliacesToRemove.foreach(
-        indexName =>
-          request.addAliasAction(
-            new AliasActions(AliasActions.Type.REMOVE)
-              .index(indexName)
-              .alias(alias)
-        ))
+      indexAliacesToRemove.foreach(indexName =>
+        request.addAliasAction(
+          new AliasActions(AliasActions.Type.REMOVE)
+            .index(indexName)
+            .alias(alias)
+        )
+      )
     }
     client.updateAliases(request, RequestOptions.DEFAULT);
   }
