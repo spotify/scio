@@ -17,6 +17,8 @@
 
 package org.apache.beam.sdk.extensions.smb;
 
+import java.io.Serializable;
+
 /**
  * Represents the desired parallelism of an SMB read operation. For a given set of sources,
  * targetParallelism can be set to any number between the least and greatest numbers of buckets
@@ -40,7 +42,7 @@ package org.apache.beam.sdk.extensions.smb;
  * emitting duplicate records. - A custom parallelism in the middle of these bounds may be the best
  * balance of speed and computing cost.
  */
-public abstract class TargetParallelism {
+public abstract class TargetParallelism implements Serializable {
 
   public static MinParallelism min() {
     return MinParallelism.INSTANCE;
@@ -48,6 +50,10 @@ public abstract class TargetParallelism {
 
   public static MaxParallelism max() {
     return MaxParallelism.INSTANCE;
+  }
+
+  public static AutoParallelism auto() {
+    return AutoParallelism.INSTANCE;
   }
 
   public static CustomParallelism of(int value) {
@@ -62,12 +68,25 @@ public abstract class TargetParallelism {
     return this.getClass().equals(MinParallelism.class);
   }
 
+  boolean isCustom() {
+    return this.getClass().equals(CustomParallelism.class);
+  }
+
+  boolean isAuto() {
+    return this.getClass().equals(AutoParallelism.class);
+  }
+
   abstract int getValue();
 
   static class MaxParallelism extends TargetParallelism {
     static MaxParallelism INSTANCE = new MaxParallelism();
 
     private MaxParallelism() {}
+
+    @Override
+    public String toString() {
+      return "MaxParallelism";
+    }
 
     @Override
     int getValue() {
@@ -79,6 +98,11 @@ public abstract class TargetParallelism {
     static MinParallelism INSTANCE = new MinParallelism();
 
     private MinParallelism() {}
+
+    @Override
+    public String toString() {
+      return "MinParallelism";
+    }
 
     @Override
     int getValue() {
@@ -94,8 +118,29 @@ public abstract class TargetParallelism {
     }
 
     @Override
+    public String toString() {
+      return "CustomParallelism (" + value + ")";
+    }
+
+    @Override
     int getValue() {
       return value;
+    }
+  }
+
+  static class AutoParallelism extends TargetParallelism {
+    static AutoParallelism INSTANCE = new AutoParallelism();
+
+    AutoParallelism() {}
+
+    @Override
+    public String toString() {
+      return "AutoParallelism";
+    }
+
+    @Override
+    int getValue() {
+      throw new UnsupportedOperationException();
     }
   }
 }

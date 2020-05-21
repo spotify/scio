@@ -24,7 +24,6 @@ import javax.annotation.Nullable;
 import org.apache.beam.sdk.extensions.smb.BucketMetadata.HashType;
 import org.apache.beam.sdk.extensions.smb.SortedBucketSink.WriteResult;
 import org.apache.beam.sdk.extensions.smb.SortedBucketSource.BucketedInput;
-import org.apache.beam.sdk.extensions.smb.TargetParallelism;
 import org.apache.beam.sdk.extensions.smb.SortedBucketTransform.TransformFn;
 import org.apache.beam.sdk.io.fs.ResourceId;
 import org.apache.beam.sdk.transforms.PTransform;
@@ -105,7 +104,9 @@ public class SortedBucketIO {
     public PCollection<KV<K, CoGbkResult>> expand(PBegin input) {
       List<BucketedInput<?, ?>> bucketedInputs =
           reads.stream().map(Read::toBucketedInput).collect(Collectors.toList());
-      return input.apply(new SortedBucketSource<>(keyClass, bucketedInputs, targetParallelism));
+      return input.apply(
+          org.apache.beam.sdk.io.Read.from(
+              new SortedBucketSource<>(keyClass, bucketedInputs, targetParallelism)));
     }
   }
 

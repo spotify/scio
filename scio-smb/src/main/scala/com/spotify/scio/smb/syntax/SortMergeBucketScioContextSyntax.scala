@@ -63,7 +63,7 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
     keyClass: Class[K],
     lhs: SortedBucketIO.Read[L],
     rhs: SortedBucketIO.Read[R],
-    targetParallelism: TargetParallelism = TargetParallelism.min()
+    targetParallelism: TargetParallelism = TargetParallelism.auto()
   ): SCollection[(K, (L, R))] = {
     val t = SortedBucketIO.read(keyClass).of(lhs).and(rhs).withTargetParallelism(targetParallelism)
     val (tupleTagA, tupleTagB) = (lhs.getTupleTag, rhs.getTupleTag)
@@ -178,7 +178,7 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
     a: SortedBucketIO.Read[A],
     b: SortedBucketIO.Read[B]
   ): SCollection[(K, (Iterable[A], Iterable[B]))] =
-    sortMergeCoGroup(keyClass, a, b, TargetParallelism.min())
+    sortMergeCoGroup(keyClass, a, b, TargetParallelism.auto())
 
   /**
    * For each key K in `a` or `b` or `c`, return a resulting SCollection that contains a tuple
@@ -240,7 +240,7 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
     b: SortedBucketIO.Read[B],
     c: SortedBucketIO.Read[C]
   ): SCollection[(K, (Iterable[A], Iterable[B], Iterable[C]))] =
-    sortMergeCoGroup(keyClass, a, b, c, TargetParallelism.min())
+    sortMergeCoGroup(keyClass, a, b, c, TargetParallelism.auto())
 
   /**
    * For each key K in `a` or `b` or `c` or `d`, return a resulting SCollection that contains a
@@ -306,7 +306,7 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
     c: SortedBucketIO.Read[C],
     d: SortedBucketIO.Read[D]
   ): SCollection[(K, (Iterable[A], Iterable[B], Iterable[C], Iterable[D]))] =
-    sortMergeCoGroup(keyClass, a, b, c, d, TargetParallelism.min())
+    sortMergeCoGroup(keyClass, a, b, c, d, TargetParallelism.auto())
 
   /**
    * Perform a [[SortedBucketScioContext.sortMergeGroupByKey()]] operation, then immediately apply

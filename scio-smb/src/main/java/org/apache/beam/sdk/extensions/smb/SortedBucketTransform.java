@@ -21,10 +21,14 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.apache.beam.sdk.coders.Coder;
@@ -35,7 +39,6 @@ import org.apache.beam.sdk.extensions.smb.FileOperations.Writer;
 import org.apache.beam.sdk.extensions.smb.SMBFilenamePolicy.FileAssignment;
 import org.apache.beam.sdk.extensions.smb.SortedBucketSink.WriteResult;
 import org.apache.beam.sdk.extensions.smb.SortedBucketSource.BucketedInput;
-import org.apache.beam.sdk.extensions.smb.SortedBucketSource.SourceSpec;
 import org.apache.beam.sdk.io.fs.ResourceId;
 import org.apache.beam.sdk.io.fs.ResourceIdCoder;
 import org.apache.beam.sdk.metrics.Counter;
@@ -49,9 +52,13 @@ import org.apache.beam.sdk.transforms.Reshuffle;
 import org.apache.beam.sdk.transforms.display.DisplayData;
 import org.apache.beam.sdk.transforms.display.DisplayData.Builder;
 import org.apache.beam.sdk.transforms.join.CoGbkResult;
+import org.apache.beam.sdk.transforms.join.CoGbkResultSchema;
 import org.apache.beam.sdk.values.KV;
 import org.apache.beam.sdk.values.PBegin;
+import org.apache.beam.sdk.values.TupleTag;
+import org.apache.beam.sdk.values.TupleTagList;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions;
+import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.primitives.UnsignedBytes;
 
 /**
  * A {@link PTransform} that encapsulates both a {@link SortedBucketSource} and {@link
@@ -95,8 +102,7 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
         bucketMetadata.getNumShards() == 1,
         "Sharding is not supported in SortedBucketTransform. numShards must == 1.");
 
-    final SourceSpec<FinalKeyT> sourceSpec =
-        SortedBucketSource.getSourceSpec(finalKeyClass, sources);
+    final SourceSpec<FinalKeyT> sourceSpec = SourceSpec.from(finalKeyClass, sources);
 
     Preconditions.checkArgument(
         bucketMetadata.getNumBuckets() >= sourceSpec.leastNumBuckets,
@@ -174,6 +180,12 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
 
   private static class MergeAndWriteBuckets<FinalKeyT, FinalValueT>
       extends DoFn<Integer, KV<BucketShardId, ResourceId>> {
+    private static final Comparator<byte[]> bytesComparator =
+        UnsignedBytes.lexicographicalComparator();
+
+    private static final Comparator<Entry<TupleTag, KV<byte[], Iterator<?>>>> keyComparator =
+        (o1, o2) -> bytesComparator.compare(o1.getValue().getKey(), o2.getValue().getKey());
+
     private final List<BucketedInput<?, ?>> sources;
     private final FileAssignment fileAssignment;
     private final FileOperations<FinalValueT> fileOperations;
@@ -245,7 +257,7 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
               .map(i -> i.createIterator(c.element(), leastNumBuckets))
               .toArray(KeyGroupIterator[]::new);
 
-      SortedBucketSource.MergeBuckets.merge(
+      merge(
           iterators,
           BucketedInput.schemaOf(sources),
           (bytes) -> true,
@@ -271,6 +283,92 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
             bucketsToWriters.get(bucketShardAndDst.getKey().getBucketId()).onComplete();
             c.output(bucketShardAndDst);
           });
+    }
+
+    static void merge(
+        KeyGroupIterator[] iterators,
+        CoGbkResultSchema resultSchema,
+        Function<byte[], Boolean> keyGroupFilter,
+        Consumer<KV<byte[], CoGbkResult>> consumer,
+        Counter elementsRead,
+        Distribution keyGroupSize) {
+      final int numSources = iterators.length;
+
+      final TupleTagList tupleTags = resultSchema.getTupleTagList();
+      final Map<TupleTag, KV<byte[], Iterator<?>>> nextKeyGroups = new HashMap<>();
+
+      while (true) {
+        int completedSources = 0;
+        // Advance key-value groups from each source
+        for (int i = 0; i < numSources; i++) {
+          final KeyGroupIterator it = iterators[i];
+          if (nextKeyGroups.containsKey(tupleTags.get(i))) {
+            continue;
+          }
+          if (it.hasNext()) {
+            @SuppressWarnings("unchecked")
+            final KV<byte[], Iterator<?>> next = it.next();
+            nextKeyGroups.put(tupleTags.get(i), next);
+          } else {
+            completedSources++;
+          }
+        }
+
+        if (nextKeyGroups.isEmpty()) {
+          break;
+        }
+
+        // Find next key-value groups
+        final Map.Entry<TupleTag, KV<byte[], Iterator<?>>> minKeyEntry =
+            nextKeyGroups.entrySet().stream().min(keyComparator).orElse(null);
+
+        final boolean acceptKeyGroup = keyGroupFilter.apply(minKeyEntry.getValue().getKey());
+
+        final Iterator<Map.Entry<TupleTag, KV<byte[], Iterator<?>>>> nextKeyGroupsIt =
+            nextKeyGroups.entrySet().iterator();
+        final List<Iterable<?>> valueMap = new ArrayList<>();
+        for (int i = 0; i < resultSchema.size(); i++) {
+          valueMap.add(new ArrayList<>());
+        }
+
+        int keyGroupCount = 0;
+        while (nextKeyGroupsIt.hasNext()) {
+          final Map.Entry<TupleTag, KV<byte[], Iterator<?>>> entry = nextKeyGroupsIt.next();
+          if (keyComparator.compare(entry, minKeyEntry) == 0) {
+            if (acceptKeyGroup) {
+              int index = resultSchema.getIndex(entry.getKey());
+              @SuppressWarnings("unchecked")
+              final List<Object> values = (List<Object>) valueMap.get(index);
+              // TODO: this exhausts everything from the "lazy" iterator and can be expensive.
+              // To fix we have to make the underlying Reader range aware so that it's safe to
+              // re-iterate or stop without exhausting remaining elements in the value group.
+              entry.getValue().getValue().forEachRemaining(values::add);
+
+              nextKeyGroupsIt.remove();
+              keyGroupCount += values.size();
+            } else {
+              // Still have to exhaust iterator
+              entry.getValue().getValue().forEachRemaining(value -> {});
+              nextKeyGroupsIt.remove();
+            }
+          }
+        }
+
+        if (acceptKeyGroup) {
+          keyGroupSize.update(keyGroupCount);
+          elementsRead.inc(keyGroupCount);
+
+          final KV<byte[], CoGbkResult> mergedKeyGroup =
+              KV.of(
+                  minKeyEntry.getValue().getKey(),
+                  CoGbkResultUtil.newCoGbkResult(resultSchema, valueMap));
+          consumer.accept(mergedKeyGroup);
+        }
+
+        if (completedSources == numSources) {
+          break;
+        }
+      }
     }
   }
 }
