@@ -144,7 +144,7 @@ object IndexAdmin {
    * @param indexName index to point the alias to
    * @param timeout defaults to 1 minute
    */
-  def createAlias(
+  def createOrUpdateAlias(
     nodes: Iterable[HttpHost],
     alias: String,
     indexName: String,
@@ -152,7 +152,7 @@ object IndexAdmin {
     timeout: TimeValue = TimeValue.timeValueMinutes(1)
   ): Try[AcknowledgedResponse] = {
     val esOptions = ElasticsearchOptions(nodes.toSeq)
-    createAlias(esOptions, alias, indexName, removePrevious, timeout)
+    createOrUpdateAlias(esOptions, alias, indexName, removePrevious, timeout)
   }
 
   /**
@@ -165,7 +165,7 @@ object IndexAdmin {
    * @param removePrevious   When set to true, the indexAlias would be removed from all indices it
    *                         was assigned to before adding new index alias assignment.
    */
-  def createAlias(
+  def createOrUpdateAlias(
     esOptions: ElasticsearchOptions,
     alias: String,
     indexName: String,
@@ -173,7 +173,7 @@ object IndexAdmin {
     timeout: TimeValue
   ): Try[AcknowledgedResponse] =
     indicesClient(esOptions)(client =>
-      createAlias(esOptions, alias, indexName, removePrevious, client, timeout)
+      createOrUpdateAlias(esOptions, alias, indexName, removePrevious, client, timeout)
     )
 
   /**
@@ -186,7 +186,7 @@ object IndexAdmin {
    *                         was assigned to before adding new index alias assignment
    *
    */
-  private def createAlias(
+  private def createOrUpdateAlias(
     esOptions: ElasticsearchOptions,
     alias: String,
     indexName: String,
