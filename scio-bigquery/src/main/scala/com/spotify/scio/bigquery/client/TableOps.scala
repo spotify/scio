@@ -163,16 +163,13 @@ final private[client] class TableOps(client: Client) {
   }
 
   /** Get list of tables in a dataset. */
-  def tableReferences(tableRef: TableReference): Seq[TableReference] =
-    tableReferences(
-      Option(tableRef.getProjectId).getOrElse(client.project),
-      tableRef.getDatasetId()
-    )
+  def tableReferences(projectId: String, datasetId: String): Seq[TableReference] =
+    tableReferences(Option(projectId), datasetId)
 
   /** Get list of tables in a dataset. */
-  def tableReferences(projectId: String, datasetId: String): Seq[TableReference] = {
+  def tableReferences(projectId: Option[String], datasetId: String): Seq[TableReference] = {
     val b = Seq.newBuilder[TableReference]
-    val req = client.underlying.tables().list(projectId, datasetId)
+    val req = client.underlying.tables().list(projectId.getOrElse(client.project), datasetId)
     var rep = req.execute()
     Option(rep.getTables).foreach(_.asScala.foreach(b += _.getTableReference))
     while (rep.getNextPageToken != null) {
