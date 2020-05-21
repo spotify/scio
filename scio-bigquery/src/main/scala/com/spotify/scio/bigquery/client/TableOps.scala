@@ -75,9 +75,7 @@ final private[client] class TableOps(client: Client) {
       .newBuilder()
       .setDatasetId(table.ref.getDatasetId)
       .setTableId(table.ref.getTableId)
-    if (table.ref.getProjectId != null) {
-      tableRefProto.setProjectId(table.ref.getProjectId)
-    }
+      .setProjectId(Option(table.ref.getProjectId).getOrElse(client.project))
 
     val request = CreateReadSessionRequest
       .newBuilder()
@@ -138,18 +136,15 @@ final private[client] class TableOps(client: Client) {
       Cache.SchemaCache
     ) {
       val tableRef = bq.BigQueryHelpers.parseTableSpec(tableSpec)
-      val tableRefProto = TableReferenceProto.TableReference.newBuilder()
-      if (tableRef.getProjectId != null) {
-        tableRefProto.setProjectId(tableRef.getProjectId)
-      }
-      tableRefProto
+      val tableRefProto = TableReferenceProto.TableReference
+        .newBuilder()
+        .setProjectId(Option(tableRef.getProjectId).getOrElse(client.project))
         .setDatasetId(tableRef.getDatasetId)
         .setTableId(tableRef.getTableId)
-        .build()
 
       val request = CreateReadSessionRequest
         .newBuilder()
-        .setTableReference(tableRefProto.build())
+        .setTableReference(tableRefProto)
         .setReadOptions(StorageUtil.tableReadOptions(selectedFields, rowRestriction))
         .setParent(s"projects/${client.project}")
         .build()
@@ -168,9 +163,13 @@ final private[client] class TableOps(client: Client) {
   }
 
   /** Get list of tables in a dataset. */
-  def tableReferences(projectId: String, datasetId: String): Seq[TableReference] = {
+  def tableReferences(projectId: String, datasetId: String): Seq[TableReference] =
+    tableReferences(Option(projectId), datasetId)
+
+  /** Get list of tables in a dataset. */
+  def tableReferences(projectId: Option[String], datasetId: String): Seq[TableReference] = {
     val b = Seq.newBuilder[TableReference]
-    val req = client.underlying.tables().list(projectId, datasetId)
+    val req = client.underlying.tables().list(projectId.getOrElse(client.project), datasetId)
     var rep = req.execute()
     Option(rep.getTables).foreach(_.asScala.foreach(b += _.getTableReference))
     while (rep.getNextPageToken != null) {
@@ -271,7 +270,11 @@ final private[client] class TableOps(client: Client) {
   private[bigquery] def delete(table: TableReference): Unit = {
     client.underlying
       .tables()
-      .delete(table.getProjectId, table.getDatasetId, table.getTableId)
+      .delete(
+        Option(table.getProjectId).getOrElse(client.project),
+        table.getDatasetId,
+        table.getTableId
+      )
       .execute()
     ()
   }

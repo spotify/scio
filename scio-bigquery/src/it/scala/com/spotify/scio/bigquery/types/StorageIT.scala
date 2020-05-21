@@ -316,6 +316,9 @@ object StorageIT {
   @BigQueryType.fromStorage("data-integration-test:partition_a.table_%s", List("$LATEST"))
   class StorageLatest
 
+  @BigQueryType.fromStorage("partition_a.table_%s", List("$LATEST"))
+  class StorageEnvProject
+
   @BigQueryType.fromTable("data-integration-test:storage.required")
   class FromTable
 
