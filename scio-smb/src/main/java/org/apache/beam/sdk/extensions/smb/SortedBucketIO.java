@@ -105,7 +105,7 @@ public class SortedBucketIO {
     public PCollection<KV<K, CoGbkResult>> expand(PBegin input) {
       List<BucketedInput<?, ?>> bucketedInputs =
           reads.stream().map(Read::toBucketedInput).collect(Collectors.toList());
-      return input.apply(new SortedBucketSource<>(keyClass, bucketedInputs));
+      return input.apply(new SortedBucketSource<>(keyClass, bucketedInputs, targetParallelism));
     }
   }
 
