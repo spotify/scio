@@ -58,7 +58,7 @@ private[bigquery] object BigQueryPartitionUtil {
   private def getPartitions(bq: BigQuery, tableRef: TableReference): Set[String] = {
     val prefix = tableRef.getTableId.split('$')(0)
     bq.tables
-      .tableReferences(Option(tableRef.getProjectId()), tableRef.getDatasetId())
+      .tableReferences(tableRef.getProjectId(), tableRef.getDatasetId())
       .filter(_.getTableId.startsWith(prefix))
       .map(_.getTableId.substring(prefix.length))
       .toSet
