@@ -36,6 +36,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.apache.beam.sdk.coders.Coder;
 import org.apache.beam.sdk.coders.KvCoder;
+import org.apache.beam.sdk.coders.ListCoder;
 import org.apache.beam.sdk.coders.NullableCoder;
 import org.apache.beam.sdk.coders.SerializableCoder;
 import org.apache.beam.sdk.coders.StringUtf8Coder;
@@ -45,6 +46,7 @@ import org.apache.beam.sdk.io.BoundedSource;
 import org.apache.beam.sdk.io.FileSystems;
 import org.apache.beam.sdk.io.fs.MatchResult.Metadata;
 import org.apache.beam.sdk.io.fs.ResourceId;
+import org.apache.beam.sdk.io.fs.ResourceIdCoder;
 import org.apache.beam.sdk.metrics.Distribution;
 import org.apache.beam.sdk.metrics.Metrics;
 import org.apache.beam.sdk.options.PipelineOptions;
@@ -397,7 +399,6 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
     private String filenameSuffix;
     private FileOperations<V> fileOperations;
     private List<ResourceId> inputDirectories;
-
     private transient SourceMetadata<K, V> sourceMetadata;
 
     public BucketedInput(
@@ -501,18 +502,14 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
 
     @Override
     public String toString() {
-      List<ResourceId> inputDirectories =
-          new ArrayList<>(getOrComputeMetadata().getPartitionMetadata().keySet());
-
       return String.format(
-          "BucketedInput[tupleTag=%s, inputDirectories=[%s], metadata=%s]",
+          "BucketedInput[tupleTag=%s, inputDirectories=[%s]]",
           tupleTag.getId(),
           inputDirectories.size() > 5
               ? inputDirectories.subList(0, 4)
                   + "..."
                   + inputDirectories.get(inputDirectories.size() - 1)
-              : inputDirectories,
-          sourceMetadata.getCanonicalMetadata());
+              : inputDirectories);
     }
 
     // Not all instance members can be natively serialized, so override writeObject/readObject
@@ -522,10 +519,7 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
       SerializableCoder.of(TupleTag.class).encode(tupleTag, outStream);
       StringUtf8Coder.of().encode(filenameSuffix, outStream);
       SerializableCoder.of(FileOperations.class).encode(fileOperations, outStream);
-
-      // Depending on when .writeObject is called, metadata may not have been computed.
-      NullableCoder.of(SerializableCoder.of(SourceMetadata.class))
-          .encode(sourceMetadata, outStream);
+      ListCoder.of(ResourceIdCoder.of()).encode(inputDirectories, outStream);
     }
 
     @SuppressWarnings("unchecked")
@@ -533,9 +527,7 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
       this.tupleTag = SerializableCoder.of(TupleTag.class).decode(inStream);
       this.filenameSuffix = StringUtf8Coder.of().decode(inStream);
       this.fileOperations = SerializableCoder.of(FileOperations.class).decode(inStream);
-
-      this.sourceMetadata =
-          NullableCoder.of(SerializableCoder.of(SourceMetadata.class)).decode(inStream);
+      this.inputDirectories = ListCoder.of(ResourceIdCoder.of()).decode(inStream);
     }
   }
 }
