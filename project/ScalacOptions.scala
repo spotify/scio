@@ -20,6 +20,8 @@ import sbt._, Keys._
 object Scalac {
   // see: https://tpolecat.github.io/2017/04/25/scalac-flags.html
   val baseOptions = List(
+    "-release",
+    "8",
     "-target:jvm-1.8",
     "-deprecation", // Emit warning and location for usages of deprecated APIs.
     "-feature", // Emit warning and location for usages of features that should be imported explicitly.
@@ -57,9 +59,7 @@ object Scalac {
     // "-Ywarn-unused:privates", // Warn if a private member is unused.
     "-Ywarn-value-discard", // Warn when non-Unit expression results are unused.
     "-Xmacro-settings:show-coder-fallback=true",
-    "-Ydelambdafy:inline", // Set the strategy used for translating lambdas into JVM code to "inline"
-    "-Ybackend-parallelism",
-    "8"
+    "-Ydelambdafy:inline" // Set the strategy used for translating lambdas into JVM code to "inline"
   )
 
   def scala212settings = Def.setting {
