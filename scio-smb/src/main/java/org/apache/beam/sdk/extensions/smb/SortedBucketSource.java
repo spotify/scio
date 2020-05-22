@@ -88,7 +88,7 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
 
   // Dataflow calls split() with a suggested byte size that assumes a higher throughput than
   // SMB joins have. By adjusting this suggestion we can arrive at a more optimal parallelism.
-  static final Double DESIRED_SIZE_BYTES_ADJUSTMENT_FACTOR = 0.5;
+  static final Double DESIRED_SIZE_BYTES_ADJUSTMENT_FACTOR = 0.33;
 
   private static final Comparator<byte[]> bytesComparator =
       UnsignedBytes.lexicographicalComparator();

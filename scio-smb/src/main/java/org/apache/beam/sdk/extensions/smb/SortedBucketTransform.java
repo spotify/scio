@@ -28,7 +28,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.apache.beam.sdk.coders.Coder;
@@ -260,7 +259,6 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
       merge(
           iterators,
           BucketedInput.schemaOf(sources),
-          (bytes) -> true,
           mergedKeyGroup -> {
             int assignedBucket =
                 reHashBucket ? bucketMetadata.getBucketId(mergedKeyGroup.getKey()) : bucketId;
@@ -288,7 +286,6 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
     static void merge(
         KeyGroupIterator[] iterators,
         CoGbkResultSchema resultSchema,
-        Function<byte[], Boolean> keyGroupFilter,
         Consumer<KV<byte[], CoGbkResult>> consumer,
         Counter elementsRead,
         Distribution keyGroupSize) {
@@ -322,8 +319,6 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
         final Map.Entry<TupleTag, KV<byte[], Iterator<?>>> minKeyEntry =
             nextKeyGroups.entrySet().stream().min(keyComparator).orElse(null);
 
-        final boolean acceptKeyGroup = keyGroupFilter.apply(minKeyEntry.getValue().getKey());
-
         final Iterator<Map.Entry<TupleTag, KV<byte[], Iterator<?>>>> nextKeyGroupsIt =
             nextKeyGroups.entrySet().iterator();
         final List<Iterable<?>> valueMap = new ArrayList<>();
@@ -335,35 +330,27 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
         while (nextKeyGroupsIt.hasNext()) {
           final Map.Entry<TupleTag, KV<byte[], Iterator<?>>> entry = nextKeyGroupsIt.next();
           if (keyComparator.compare(entry, minKeyEntry) == 0) {
-            if (acceptKeyGroup) {
-              int index = resultSchema.getIndex(entry.getKey());
-              @SuppressWarnings("unchecked")
-              final List<Object> values = (List<Object>) valueMap.get(index);
-              // TODO: this exhausts everything from the "lazy" iterator and can be expensive.
-              // To fix we have to make the underlying Reader range aware so that it's safe to
-              // re-iterate or stop without exhausting remaining elements in the value group.
-              entry.getValue().getValue().forEachRemaining(values::add);
+            int index = resultSchema.getIndex(entry.getKey());
+            @SuppressWarnings("unchecked")
+            final List<Object> values = (List<Object>) valueMap.get(index);
+            // TODO: this exhausts everything from the "lazy" iterator and can be expensive.
+            // To fix we have to make the underlying Reader range aware so that it's safe to
+            // re-iterate or stop without exhausting remaining elements in the value group.
+            entry.getValue().getValue().forEachRemaining(values::add);
 
-              nextKeyGroupsIt.remove();
-              keyGroupCount += values.size();
-            } else {
-              // Still have to exhaust iterator
-              entry.getValue().getValue().forEachRemaining(value -> {});
-              nextKeyGroupsIt.remove();
-            }
+            nextKeyGroupsIt.remove();
+            keyGroupCount += values.size();
           }
         }
 
-        if (acceptKeyGroup) {
-          keyGroupSize.update(keyGroupCount);
-          elementsRead.inc(keyGroupCount);
+        keyGroupSize.update(keyGroupCount);
+        elementsRead.inc(keyGroupCount);
 
-          final KV<byte[], CoGbkResult> mergedKeyGroup =
-              KV.of(
-                  minKeyEntry.getValue().getKey(),
-                  CoGbkResultUtil.newCoGbkResult(resultSchema, valueMap));
-          consumer.accept(mergedKeyGroup);
-        }
+        final KV<byte[], CoGbkResult> mergedKeyGroup =
+            KV.of(
+                minKeyEntry.getValue().getKey(),
+                CoGbkResultUtil.newCoGbkResult(resultSchema, valueMap));
+        consumer.accept(mergedKeyGroup);
 
         if (completedSources == numSources) {
           break;

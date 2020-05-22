@@ -217,7 +217,7 @@ public class SortedBucketSourceTest {
 
   @Test
   @Category(NeedsRunner.class)
-  public void testNullKeysTestd() throws Exception {
+  public void testNullKeysIgnored() throws Exception {
     test(
         ImmutableMap.of(
             BucketShardId.ofNullKey(0), Lists.newArrayList(""),
@@ -310,7 +310,7 @@ public class SortedBucketSourceTest {
                 BucketShardId.of(1, 0), Lists.newArrayList("c7", "c8"))));
   }
 
-  // For non-minimum parallelism, test input keys *must* hash to their corresponding bucket IDs,
+  // For non-minimal parallelism, test input keys *must* hash to their corresponding bucket IDs,
   // since a rehash is required in the merge step
   @Test
   @Category(NeedsRunner.class)
@@ -422,25 +422,16 @@ public class SortedBucketSourceTest {
     final SortedBucketSource source =
         new SortedBucketSource(String.class, inputs, TargetParallelism.auto());
 
-    final List<SortedBucketSource<String>> splitSources1 =
-        source.split(
-            (long) (100 / DESIRED_SIZE_BYTES_ADJUSTMENT_FACTOR), PipelineOptionsFactory.create());
-    splitSources1.sort(Comparator.comparingInt(SortedBucketSource::getBucketOffset));
-
-    Assert.assertEquals(2, splitSources1.size());
-    Assert.assertEquals(0, splitSources1.get(0).getBucketOffset());
-    Assert.assertEquals(1, splitSources1.get(1).getBucketOffset());
-
-    final List<SortedBucketSource<String>> splitSources2 =
+    final List<SortedBucketSource<String>> splitSources =
         source.split(
             (long) (50 / DESIRED_SIZE_BYTES_ADJUSTMENT_FACTOR), PipelineOptionsFactory.create());
-    splitSources2.sort(Comparator.comparingInt(SortedBucketSource::getBucketOffset));
+    splitSources.sort(Comparator.comparingInt(SortedBucketSource::getBucketOffset));
 
-    Assert.assertEquals(4, splitSources2.size());
-    Assert.assertEquals(0, splitSources2.get(0).getBucketOffset());
-    Assert.assertEquals(1, splitSources2.get(1).getBucketOffset());
-    Assert.assertEquals(2, splitSources2.get(2).getBucketOffset());
-    Assert.assertEquals(3, splitSources2.get(3).getBucketOffset());
+    Assert.assertEquals(4, splitSources.size());
+    Assert.assertEquals(0, splitSources.get(0).getBucketOffset());
+    Assert.assertEquals(1, splitSources.get(1).getBucketOffset());
+    Assert.assertEquals(2, splitSources.get(2).getBucketOffset());
+    Assert.assertEquals(3, splitSources.get(3).getBucketOffset());
   }
 
   private void writeSmbSourceWithBytes(
