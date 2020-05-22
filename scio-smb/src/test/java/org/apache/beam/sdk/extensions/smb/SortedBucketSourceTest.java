@@ -18,6 +18,7 @@
 package org.apache.beam.sdk.extensions.smb;
 
 import static org.apache.beam.sdk.extensions.smb.SortedBucketSource.BucketedInput;
+import static org.apache.beam.sdk.extensions.smb.SortedBucketSource.DESIRED_SIZE_BYTES_ADJUSTMENT_FACTOR;
 import static org.apache.beam.sdk.extensions.smb.TestUtils.fromFolder;
 
 import java.io.File;
@@ -378,16 +379,23 @@ public class SortedBucketSourceTest {
   @Test
   @Category(NeedsRunner.class)
   public void testPartitionedInputsMixedBucketsAutoParallelism() throws Exception {
+    Map<BucketShardId, List<String>> partition1Map = new HashMap<>();
+    partition1Map.put(BucketShardId.of(0, 0), Lists.newArrayList("w9"));
+    partition1Map.put(BucketShardId.of(0, 1), Lists.newArrayList("p1"));
+    partition1Map.put(BucketShardId.of(1, 0), Lists.newArrayList("c9"));
+    partition1Map.put(BucketShardId.of(1, 1), Lists.newArrayList("c2"));
+    partition1Map.put(BucketShardId.of(2, 0), Lists.newArrayList("u1"));
+    partition1Map.put(BucketShardId.of(2, 1), Lists.newArrayList("u2"));
+    partition1Map.put(BucketShardId.of(3, 0), Lists.newArrayList("b1"));
+    partition1Map.put(BucketShardId.of(3, 1), Lists.newArrayList());
+
     testPartitioned(
         ImmutableList.of(
-            ImmutableMap.of(
-                BucketShardId.of(0, 0), Lists.newArrayList("w1", "w2"),
-                BucketShardId.of(1, 0), Lists.newArrayList("c1", "c2")),
-            ImmutableMap.of(BucketShardId.of(0, 0), Lists.newArrayList("w3", "w4"))),
+            partition1Map, ImmutableMap.of(BucketShardId.of(0, 0), Lists.newArrayList("w3", "w4"))),
         ImmutableList.of(
             ImmutableMap.of(BucketShardId.of(0, 0), Lists.newArrayList("w5", "w6")),
             ImmutableMap.of(
-                BucketShardId.of(0, 0), Lists.newArrayList("w7", "w8"),
+                BucketShardId.of(0, 0), Lists.newArrayList(),
                 BucketShardId.of(1, 0), Lists.newArrayList("c7", "c8"))),
         TargetParallelism.auto());
   }
@@ -395,7 +403,7 @@ public class SortedBucketSourceTest {
   @SuppressWarnings("unchecked")
   @Test
   public void testSourceSplit() throws Exception {
-    writeSmbSourceWithBytes(80, 4, 1, lhsPolicy);
+    writeSmbSourceWithBytes(120, 4, 1, lhsPolicy);
     writeSmbSourceWithBytes(60, 1, 2, rhsPolicy);
 
     final List<BucketedInput<?, ?>> inputs =
@@ -415,7 +423,8 @@ public class SortedBucketSourceTest {
         new SortedBucketSource(String.class, inputs, TargetParallelism.auto());
 
     final List<SortedBucketSource<String>> splitSources1 =
-        source.split(150, PipelineOptionsFactory.create());
+        source.split(
+            (long) (100 / DESIRED_SIZE_BYTES_ADJUSTMENT_FACTOR), PipelineOptionsFactory.create());
     splitSources1.sort(Comparator.comparingInt(SortedBucketSource::getBucketOffset));
 
     Assert.assertEquals(2, splitSources1.size());
@@ -423,7 +432,8 @@ public class SortedBucketSourceTest {
     Assert.assertEquals(1, splitSources1.get(1).getBucketOffset());
 
     final List<SortedBucketSource<String>> splitSources2 =
-        source.split(90, PipelineOptionsFactory.create());
+        source.split(
+            (long) (50 / DESIRED_SIZE_BYTES_ADJUSTMENT_FACTOR), PipelineOptionsFactory.create());
     splitSources2.sort(Comparator.comparingInt(SortedBucketSource::getBucketOffset));
 
     Assert.assertEquals(4, splitSources2.size());

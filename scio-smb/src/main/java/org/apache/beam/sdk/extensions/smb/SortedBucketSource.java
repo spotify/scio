@@ -57,7 +57,6 @@ import org.apache.beam.sdk.transforms.join.UnionCoder;
 import org.apache.beam.sdk.values.KV;
 import org.apache.beam.sdk.values.TupleTag;
 import org.apache.beam.sdk.values.TupleTagList;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ImmutableList;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.primitives.UnsignedBytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -89,7 +88,7 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
 
   // Dataflow calls split() with a suggested byte size that assumes a higher throughput than
   // SMB joins have. By adjusting this suggestion we can arrive at a more optimal parallelism.
-  static final Double DESIRED_SIZE_BYTES_ADJUSTMENT_FACTOR = 0.33;
+  static final Double DESIRED_SIZE_BYTES_ADJUSTMENT_FACTOR = 0.5;
 
   private static final Comparator<byte[]> bytesComparator =
       UnsignedBytes.lexicographicalComparator();
@@ -176,7 +175,7 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
                     try {
                       return matchResult.metadata().stream().map(Metadata::sizeBytes);
                     } catch (IOException e) {
-                      throw new RuntimeException(e);
+                      throw new RuntimeException("Caught exception fetching source metadata", e);
                     }
                   })
               .reduce(0L, Long::sum);
@@ -188,23 +187,25 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
   @Override
   public List<? extends BoundedSource<KV<FinalKeyT, CoGbkResult>>> split(
       long desiredBundleSizeBytes, PipelineOptions options) throws Exception {
+    desiredBundleSizeBytes *= DESIRED_SIZE_BYTES_ADJUSTMENT_FACTOR;
 
     int greatestNumBuckets = getOrComputeSourceSpec().greatestNumBuckets;
 
     if (effectiveParallelism == greatestNumBuckets) {
       LOG.info("Parallelism is already maxed, can't split further.");
-      return ImmutableList.of(this);
+      return Collections.singletonList(this);
     }
     int parallelism;
 
     if (!targetParallelism.isAuto()) {
       parallelism = getOrComputeSourceSpec().getParallelism(targetParallelism);
     } else {
-      long size = getEstimatedSizeBytes(options);
-      int fanout = (int) (size / (DESIRED_SIZE_BYTES_ADJUSTMENT_FACTOR * desiredBundleSizeBytes));
+      int fanout =
+          (int) Math.round(getEstimatedSizeBytes(options) / (desiredBundleSizeBytes * 1.0));
 
       if (fanout <= 1) {
-        return ImmutableList.of(this);
+        LOG.info("Desired byte size is <= total input size, can't split further.");
+        return Collections.singletonList(this);
       }
 
       // round up to nearest power of 2, bounded by greatest # of buckets
@@ -254,8 +255,9 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
     private final CoGbkResultSchema resultSchema;
     private final TupleTagList tupleTags;
 
+    private KV<byte[], CoGbkResult> next;
+
     private Map<TupleTag, KV<byte[], Iterator<?>>> nextKeyGroups;
-    private Map.Entry<TupleTag, KV<byte[], Iterator<?>>> minKeyEntry;
 
     MergeBucketsReader(
         List<BucketedInput<?, ?>> sources,
@@ -293,51 +295,18 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
 
     @Override
     public KV<FinalKeyT, CoGbkResult> getCurrent() throws NoSuchElementException {
-      // Find next key-value groups
-      final Iterator<Map.Entry<TupleTag, KV<byte[], Iterator<?>>>> nextKeyGroupsIt =
-          nextKeyGroups.entrySet().iterator();
-      final List<Iterable<?>> valueMap = new ArrayList<>();
-      for (int i = 0; i < resultSchema.size(); i++) {
-        valueMap.add(new ArrayList<>());
-      }
-
-      int keyGroupCount = 0;
-      while (nextKeyGroupsIt.hasNext()) {
-        final Map.Entry<TupleTag, KV<byte[], Iterator<?>>> entry = nextKeyGroupsIt.next();
-        if (keyComparator.compare(entry, minKeyEntry) == 0) {
-          int index = resultSchema.getIndex(entry.getKey());
-          @SuppressWarnings("unchecked")
-          final List<Object> values = (List<Object>) valueMap.get(index);
-          // TODO: this exhausts everything from the "lazy" iterator and can be expensive.
-          // To fix we have to make the underlying Reader range aware so that it's safe to
-          // re-iterate or stop without exhausting remaining elements in the value group.
-          entry.getValue().getValue().forEachRemaining(values::add);
-
-          nextKeyGroupsIt.remove();
-          keyGroupCount += values.size();
-        }
-      }
-
-      keyGroupSize.update(keyGroupCount);
-      final KV<byte[], CoGbkResult> mergedKeyGroup =
-          KV.of(
-              minKeyEntry.getValue().getKey(),
-              CoGbkResultUtil.newCoGbkResult(resultSchema, valueMap));
       try {
-        return KV.of(
-            keyCoder.decode(new ByteArrayInputStream(mergedKeyGroup.getKey())),
-            mergedKeyGroup.getValue());
+        return KV.of(keyCoder.decode(new ByteArrayInputStream(next.getKey())), next.getValue());
       } catch (Exception e) {
-        throw new RuntimeException("Failed to decode and merge key group", e);
+        throw new RuntimeException("Failed to decode key group", e);
       }
     }
 
     @Override
     public boolean advance() throws IOException {
-      int completedSources = 0;
-
-      // Advance key-value groups from each source
-      do {
+      while (true) {
+        int completedSources = 0;
+        // Advance key-value groups from each source
         for (int i = 0; i < numSources; i++) {
           final KeyGroupIterator it = iterators[i];
           if (nextKeyGroups.containsKey(tupleTags.get(i))) {
@@ -353,33 +322,58 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
         }
 
         if (nextKeyGroups.isEmpty()) {
-          return false;
+          break;
         }
-        minKeyEntry = nextKeyGroups.entrySet().stream().min(keyComparator).orElse(null);
 
-        if (keyGroupFilter.apply(minKeyEntry.getValue().getKey())) {
+        // Find next key-value groups
+        final Map.Entry<TupleTag, KV<byte[], Iterator<?>>> minKeyEntry =
+            nextKeyGroups.entrySet().stream().min(keyComparator).orElse(null);
+
+        final boolean acceptKeyGroup = keyGroupFilter.apply(minKeyEntry.getValue().getKey());
+
+        final Iterator<Map.Entry<TupleTag, KV<byte[], Iterator<?>>>> nextKeyGroupsIt =
+            nextKeyGroups.entrySet().iterator();
+        final List<Iterable<?>> valueMap = new ArrayList<>();
+        for (int i = 0; i < resultSchema.size(); i++) {
+          valueMap.add(new ArrayList<>());
+        }
+
+        int keyGroupCount = 0;
+        while (nextKeyGroupsIt.hasNext()) {
+          final Map.Entry<TupleTag, KV<byte[], Iterator<?>>> entry = nextKeyGroupsIt.next();
+          if (keyComparator.compare(entry, minKeyEntry) == 0) {
+            if (acceptKeyGroup) {
+              int index = resultSchema.getIndex(entry.getKey());
+              @SuppressWarnings("unchecked")
+              final List<Object> values = (List<Object>) valueMap.get(index);
+              // TODO: this exhausts everything from the "lazy" iterator and can be expensive.
+              // To fix we have to make the underlying Reader range aware so that it's safe to
+              // re-iterate or stop without exhausting remaining elements in the value group.
+              entry.getValue().getValue().forEachRemaining(values::add);
+              keyGroupCount += values.size();
+            } else {
+              // Still have to exhaust iterator
+              entry.getValue().getValue().forEachRemaining(value -> {});
+            }
+            nextKeyGroupsIt.remove();
+          }
+        }
+
+        if (acceptKeyGroup) {
+          keyGroupSize.update(keyGroupCount);
+
+          next =
+              KV.of(
+                  minKeyEntry.getValue().getKey(),
+                  CoGbkResultUtil.newCoGbkResult(resultSchema, valueMap));
           return true;
         } else {
-          // Still have to exhaust iterator
-
-          final Iterator<Map.Entry<TupleTag, KV<byte[], Iterator<?>>>> nextKeyGroupsIt =
-              nextKeyGroups.entrySet().iterator();
-          final List<Iterable<?>> valueMap = new ArrayList<>();
-          for (int i = 0; i < resultSchema.size(); i++) {
-            valueMap.add(new ArrayList<>());
-          }
-
-          while (nextKeyGroupsIt.hasNext()) {
-            final Map.Entry<TupleTag, KV<byte[], Iterator<?>>> entry = nextKeyGroupsIt.next();
-            if (keyComparator.compare(entry, minKeyEntry) == 0) {
-              entry.getValue().getValue().forEachRemaining(value -> {});
-              nextKeyGroupsIt.remove();
-            }
+          if (completedSources == numSources) {
+            break;
           }
         }
-      } while (completedSources != numSources);
-
-      return !nextKeyGroups.isEmpty();
+      }
+      return false;
     }
 
     @Override
@@ -456,15 +450,12 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
 
     List<ResourceId> listFilesForBucket(int bucketId, int targetParallelism) {
       final List<ResourceId> files = new ArrayList<>();
-      // Create one iterator per shard
       getPartitionMetadata()
           .forEach(
               (resourceId, partitionMetadata) -> {
                 final int numBuckets = partitionMetadata.getNumBuckets();
                 final int numShards = partitionMetadata.getNumShards();
 
-                // Since all BucketedInputs have a bucket count that's a power of two, we can infer
-                // which buckets should be merged together for the join.
                 for (int i = (bucketId % numBuckets); i < numBuckets; i += targetParallelism) {
                   for (int j = 0; j < numShards; j++) {
                     files.add(

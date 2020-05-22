@@ -25,9 +25,11 @@ import java.io.Serializable;
  * among sources. This can be dynamically configured using {@link TargetParallelism#min()} or {@link
  * TargetParallelism#max()}, which at graph construction time will determine the least or greatest
  * amount of parallelism based on sources. Alternately, {@link TargetParallelism#of(int)} can be
- * used to statically configure a custom value.
+ * used to statically configure a custom value, or {@link TargetParallelism#auto()} can be used to
+ * let the runner decide how to split the SMB read at runtime based on the combined byte size of the
+ * inputs.
  *
- * <p>If no value is specified, SMB read operations will use the minimum parallelism.
+ * <p>If no value is specified, SMB read operations will use Auto parallelism.
  *
  * <p>When selecting a target parallelism for your SMB operation, there are tradeoffs to consider:
  *
@@ -66,10 +68,6 @@ public abstract class TargetParallelism implements Serializable {
 
   boolean isMin() {
     return this.getClass().equals(MinParallelism.class);
-  }
-
-  boolean isCustom() {
-    return this.getClass().equals(CustomParallelism.class);
   }
 
   boolean isAuto() {

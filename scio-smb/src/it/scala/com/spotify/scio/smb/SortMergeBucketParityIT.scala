@@ -61,7 +61,7 @@ class SortMergeBucketParityIT extends AnyFlatSpec with Matchers {
         classOf[Integer],
         mkRead(inputs(0)),
         mkRead(inputs(1)),
-        TargetParallelism.min()
+        TargetParallelism.auto()
       )
     ) { sc =>
       val (avroA, avroB) = (
@@ -84,7 +84,7 @@ class SortMergeBucketParityIT extends AnyFlatSpec with Matchers {
           AvroSortedBucketIO
             .read(new TupleTag[GenericRecord]("rhs"), schema)
             .from(inputs(2).toString, inputs(3).toString),
-          TargetParallelism.max()
+          TargetParallelism.auto()
         )
       ) { sc =>
         val (lhs, rhs) = (
@@ -113,7 +113,7 @@ class SortMergeBucketParityIT extends AnyFlatSpec with Matchers {
         mkRead(inputs(0)),
         mkRead(inputs(1)),
         mkRead(inputs(2)),
-        TargetParallelism.min()
+        TargetParallelism.auto()
       )
     ) { sc =>
       val (avroA, avroB, avroC) = (
@@ -134,7 +134,7 @@ class SortMergeBucketParityIT extends AnyFlatSpec with Matchers {
         mkRead(inputs(1)),
         mkRead(inputs(2)),
         mkRead(inputs(3)),
-        TargetParallelism.max()
+        TargetParallelism.auto()
       )
     ) { sc =>
       val (avroA, avroB, avroC, avroD) = (
@@ -156,7 +156,12 @@ class SortMergeBucketParityIT extends AnyFlatSpec with Matchers {
 
   "sortMergeJoin" should "have parity with a 2-way Join" in withNumSources(2) { inputs =>
     compareResults(
-      _.sortMergeJoin(classOf[Integer], mkRead(inputs(0)), mkRead(inputs(1)))
+      _.sortMergeJoin(
+        classOf[Integer],
+        mkRead(inputs(0)),
+        mkRead(inputs(1)),
+        TargetParallelism.auto()
+      )
     ) { sc =>
       val (avroA, avroB) = (
         sc.avroFile(s"${inputs(0)}/*.avro", schema),
