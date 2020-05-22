@@ -37,7 +37,6 @@ import java.util.stream.IntStream;
 import org.apache.beam.sdk.coders.Coder;
 import org.apache.beam.sdk.coders.KvCoder;
 import org.apache.beam.sdk.coders.ListCoder;
-import org.apache.beam.sdk.coders.NullableCoder;
 import org.apache.beam.sdk.coders.SerializableCoder;
 import org.apache.beam.sdk.coders.StringUtf8Coder;
 import org.apache.beam.sdk.extensions.smb.BucketMetadataUtil.PartitionMetadata;
@@ -90,7 +89,7 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
 
   // Dataflow calls split() with a suggested byte size that assumes a higher throughput than
   // SMB joins have. By adjusting this suggestion we can arrive at a more optimal parallelism.
-  static final Double DESIRED_SIZE_BYTES_ADJUSTMENT_FACTOR = 0.33;
+  static final Double DESIRED_SIZE_BYTES_ADJUSTMENT_FACTOR = 0.5;
 
   private static final Comparator<byte[]> bytesComparator =
       UnsignedBytes.lexicographicalComparator();
