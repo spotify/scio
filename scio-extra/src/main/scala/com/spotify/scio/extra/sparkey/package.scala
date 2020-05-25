@@ -273,15 +273,14 @@ package object sparkey extends SparkeyReaderInstances {
               .withSideInputs(shardsMap)
               .map {
                 case (shard, sideContext) =>
-                  sideContext(shardsMap)
-                    .getOrElse(
-                      shard,
-                      writeToSparkey(
-                        uri.sparkeyUriForShard(shard, shardCount),
-                        maxMemoryUsage,
-                        Iterable.empty[(K, V)].asJava
-                      )
+                  sideContext(shardsMap).getOrElse(
+                    shard,
+                    writeToSparkey(
+                      uri.sparkeyUriForShard(shard, shardCount),
+                      maxMemoryUsage,
+                      Iterable.empty[(K, V)].asJava
                     )
+                  )
               }
               .toSCollection
 
