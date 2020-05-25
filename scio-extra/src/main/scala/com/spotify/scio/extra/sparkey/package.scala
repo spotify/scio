@@ -39,6 +39,8 @@ import org.slf4j.LoggerFactory
 import scala.jdk.CollectionConverters._
 import scala.util.hashing.MurmurHash3
 import java.lang.Math.floorMod
+import org.apache.beam.sdk.io.FileSystems
+import org.apache.beam.sdk.io.fs.ResourceId
 
 /**
  * Main package for Sparkey side input APIs. Import all.
@@ -224,72 +226,75 @@ package object sparkey extends SparkeyReaderInstances {
       koder: Coder[K],
       voder: Coder[V]
     ): SCollection[SparkeyUri] = {
-      val basePath = if (path == null) {
-        val uuid = UUID.randomUUID()
-        self.context.options.getTempLocation + s"/sparkey-$uuid"
-      } else {
-        path
-      }
-
-      val coder = CoderMaterializer.beam(self.context, Coder[JList[(K, V)]])
-      val uriCoder = CoderMaterializer.beam(self.context, Coder[JList[SparkeyUri]])
       require(numShards > 0, s"numShards must be greater than 0, found $numShards")
 
-      numShards match {
-        case 1 =>
-          val uri = SparkeyUri(basePath, self.context.options)
-          require(!uri.exists, s"Sparkey URI $uri already exists")
-          logger.info(s"Saving as Sparkey: $uri")
+      val tempLocation = self.context.options.getTempLocation()
+      val tempPath = s"$tempLocation/sparkey-${UUID.randomUUID}"
+      val basePath = if (path == null) tempPath else path
+      val nonShardedUri = SparkeyUri(basePath, self.context.options)
+      require(!nonShardedUri.exists, s"Sparkey URI $nonShardedUri already exists")
+      val uri = ShardedSparkeyUri(basePath, self.context.options)
+      require(!uri.exists, s"Sparkey URI $uri already exists")
 
-          self.transform { coll =>
-            coll.context
-              .wrap {
-                val view = coll.applyInternal(View.asList[(K, V)]())
-                coll.internal.getPipeline.apply(Reify.viewInGlobalWindow(view, coder))
-              }
-              .map(writeToSparkey(uri, maxMemoryUsage, _))
+      logger.info(s"Saving as Sparkey with $numShards shards: $basePath")
+
+      val uriCoder = CoderMaterializer.beam(self.context, Coder[JList[SparkeyUri]])
+
+      self.transform { collection =>
+        val shards = collection
+          .groupBy { case (k, _) => floorMod(w.shardHash(k), numShards).toShort }
+          .map {
+            case (shard, xs) =>
+              shard -> writeToSparkey(
+                uri.sparkeyUriForShard(shard, numShards),
+                maxMemoryUsage,
+                xs.asJava
+              )
           }
-        case shardCount =>
-          val uri = ShardedSparkeyUri(basePath, self.context.options)
-          require(!uri.exists, s"Sparkey URI $uri already exists")
-          logger.info(s"Saving as Sparkey with $shardCount shards: $uri")
 
-          self.transform { collection =>
-            val shards = collection
-              .groupBy { case (k, _) => floorMod(w.shardHash(k), shardCount).toShort }
-              .map {
-                case (shard, xs) =>
-                  shard -> writeToSparkey(
-                    uri.sparkeyUriForShard(shard, shardCount),
-                    maxMemoryUsage,
-                    xs.asJava
-                  )
-              }
+        val shardsMap = shards.asMapSideInput
 
-            val shardsMap = shards.asMapSideInput
+        val uris = shards.context
+          .parallelize((0 until numShards).map(_.toShort))
+          .withSideInputs(shardsMap)
+          .map {
+            case (shard, sideContext) =>
+              sideContext(shardsMap).getOrElse(
+                shard,
+                writeToSparkey(
+                  uri.sparkeyUriForShard(shard, numShards),
+                  maxMemoryUsage,
+                  Iterable.empty[(K, V)].asJava
+                )
+              )
+          }
+          .toSCollection
 
-            val uris = shards.context
-              .parallelize((0 until shardCount).map(_.toShort))
-              .withSideInputs(shardsMap)
-              .map {
-                case (shard, sideContext) =>
-                  sideContext(shardsMap).getOrElse(
-                    shard,
-                    writeToSparkey(
-                      uri.sparkeyUriForShard(shard, shardCount),
-                      maxMemoryUsage,
-                      Iterable.empty[(K, V)].asJava
-                    )
-                  )
-              }
-              .toSCollection
+        uris.context
+          .wrap {
+            val view = uris.applyInternal(View.asList())
+            uris.internal.getPipeline.apply(Reify.viewInGlobalWindow(view, uriCoder))
+          }
+          .map { _ =>
+            if (numShards <= 1) {
+              val src = FileSystems
+                .`match`(basePath + "/*")
+                .metadata()
+                .asScala
+                .map(_.resourceId())
+                .sortWith(_.getFilename < _.getFilename)
+                .asJava
+              val dst = SparkeyUri.extensions
+                .map(ext => FileSystems.matchNewResource(s"$basePath$ext", false))
+                .asJava
 
-            uris.context
-              .wrap {
-                val view = uris.applyInternal(View.asList())
-                uris.internal.getPipeline.apply(Reify.viewInGlobalWindow(view, uriCoder))
-              }
-              .map(_ => uri)
+              FileSystems.rename(src, dst)
+
+              nonShardedUri
+            } else {
+              uri
+            }
+
           }
       }
     }
