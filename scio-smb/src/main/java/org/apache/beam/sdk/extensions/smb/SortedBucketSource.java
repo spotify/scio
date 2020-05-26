@@ -449,54 +449,46 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
     }
 
     List<ResourceId> listFilesForBucket(int bucketId, int targetParallelism) {
-      final List<ResourceId> files = new ArrayList<>();
-      getPartitionMetadata()
-          .forEach(
-              (resourceId, partitionMetadata) -> {
-                final int numBuckets = partitionMetadata.getNumBuckets();
-                final int numShards = partitionMetadata.getNumShards();
-
-                for (int i = (bucketId % numBuckets); i < numBuckets; i += targetParallelism) {
-                  for (int j = 0; j < numShards; j++) {
-                    files.add(
-                        partitionMetadata
-                            .getFileAssignment()
-                            .forBucket(BucketShardId.of(i, j), numBuckets, numShards));
-                  }
-                }
-              });
-
-      return files;
+      return mapBucketFiles(bucketId, targetParallelism, Function.identity());
     }
 
     KeyGroupIterator<byte[], V> createIterator(int bucketId, int targetParallelism) {
-      final List<Iterator<V>> iterators = new ArrayList<>();
-      // Create one iterator per shard
-      getPartitionMetadata()
-          .forEach(
-              (resourceId, partitionMetadata) -> {
-                final int numBuckets = partitionMetadata.getNumBuckets();
-                final int numShards = partitionMetadata.getNumShards();
-
-                // Since all BucketedInputs have a bucket count that's a power of two, we can infer
-                // which buckets should be merged together for the join.
-                for (int i = (bucketId % numBuckets); i < numBuckets; i += targetParallelism) {
-                  for (int j = 0; j < numShards; j++) {
-                    final ResourceId file =
-                        partitionMetadata
-                            .getFileAssignment()
-                            .forBucket(BucketShardId.of(i, j), numBuckets, numShards);
-                    try {
-                      iterators.add(fileOperations.iterator(file));
-                    } catch (Exception e) {
-                      throw new RuntimeException(e);
-                    }
-                  }
+      final List<Iterator<V>> iterators =
+          mapBucketFiles(
+              bucketId,
+              targetParallelism,
+              file -> {
+                try {
+                  return fileOperations.iterator(file);
+                } catch (Exception e) {
+                  throw new RuntimeException(e);
                 }
               });
 
       BucketMetadata<K, V> canonicalMetadata = sourceMetadata.getCanonicalMetadata();
       return new KeyGroupIterator<>(iterators, canonicalMetadata::getKeyBytes, bytesComparator);
+    }
+
+    private <T> List<T> mapBucketFiles(
+        int bucketId, int targetParallelism, Function<ResourceId, T> mapFn) {
+      final List<T> results = new ArrayList<>();
+      getPartitionMetadata()
+          .forEach(
+              (resourceId, partitionMetadata) -> {
+                final int numBuckets = partitionMetadata.getNumBuckets();
+                final int numShards = partitionMetadata.getNumShards();
+
+                for (int i = (bucketId % numBuckets); i < numBuckets; i += targetParallelism) {
+                  for (int j = 0; j < numShards; j++) {
+                    results.add(
+                        mapFn.apply(
+                            partitionMetadata
+                                .getFileAssignment()
+                                .forBucket(BucketShardId.of(i, j), numBuckets, numShards)));
+                  }
+                }
+              });
+      return results;
     }
 
     @Override
