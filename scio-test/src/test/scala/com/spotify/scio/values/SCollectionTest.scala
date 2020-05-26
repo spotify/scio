@@ -702,7 +702,7 @@ class SCollectionTest extends PipelineSpec {
   it should "reify as List" in {
     runWithContext { sc =>
       val other = sc.parallelize(Seq(1))
-      val coll = sc.parallelize(Seq(1, 2)).reify(other.asListSideInput)
+      val coll = sc.parallelize(Seq(1, 2)).reifySideInputAsValues(other.asListSideInput)
       coll should containInAnyOrder(Seq((1, Seq(1)), (2, Seq(1))))
     }
   }
@@ -710,7 +710,7 @@ class SCollectionTest extends PipelineSpec {
   it should "reify as Iterable" in {
     runWithContext { sc =>
       val other = sc.parallelize(Seq(1))
-      val coll = sc.parallelize(Seq(1, 2)).reify(other.asIterableSideInput)
+      val coll = sc.parallelize(Seq(1, 2)).reifySideInputAsValues(other.asIterableSideInput)
       coll should containInAnyOrder(Seq((1, Iterable(1)), (2, Iterable(1))))
     }
   }
@@ -718,7 +718,7 @@ class SCollectionTest extends PipelineSpec {
   it should "reify as Map" in {
     runWithContext { sc =>
       val other = sc.parallelize(Seq((1, 1)))
-      val coll = sc.parallelize(Seq(1, 2)).reify(other.asMapSideInput)
+      val coll = sc.parallelize(Seq(1, 2)).reifySideInputAsValues(other.asMapSideInput)
       coll should containInAnyOrder(Seq((1, Map(1 -> 1)), (2, Map(1 -> 1))))
     }
   }
@@ -726,21 +726,21 @@ class SCollectionTest extends PipelineSpec {
   it should "reify as Multimap" in {
     runWithContext { sc =>
       val other = sc.parallelize(Seq((1, 1)))
-      val coll = sc.parallelize(Seq(1, 2)).reify(other.asMultiMapSideInput)
+      val coll = sc.parallelize(Seq(1, 2)).reifySideInputAsValues(other.asMultiMapSideInput)
       coll should containInAnyOrder(Seq((1, Map(1 -> Iterable(1))), (2, Map(1 -> Iterable(1)))))
     }
   }
 
   it should "reify in Golbal Window as List" in {
     runWithContext { sc =>
-      val coll = sc.parallelize(Seq(1)).reifyInGlobalWindow(_.asListSideInput)
+      val coll = sc.parallelize(Seq(1)).reifyAsListInGlobalWindow
       coll should containInAnyOrder(Seq(Seq(1)))
     }
   }
 
   it should "reify empty in Golbal Window as List" in {
     runWithContext { sc =>
-      val coll = sc.empty[Int].reifyInGlobalWindow(_.asListSideInput)
+      val coll = sc.empty[Int].reifyAsListInGlobalWindow
       coll should containInAnyOrder(Seq(Seq.empty[Int]))
     }
   }
