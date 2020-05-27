@@ -1260,7 +1260,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * Reify as List:
    * {{{
    *  val other: SCollection[Int] = sc.parallelize(Seq(1))
-   *  val coll: SCollection[(Int, Seq[Int])] = 
+   *  val coll: SCollection[(Int, Seq[Int])] =
    *    sc.parallelize(Seq(1, 2))
    *      .reifySideInputAsValues(other.asListSideInput)
    * }}}
