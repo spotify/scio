@@ -40,7 +40,6 @@ import scala.jdk.CollectionConverters._
 import scala.util.hashing.MurmurHash3
 import java.lang.Math.floorMod
 import org.apache.beam.sdk.io.FileSystems
-import org.apache.beam.sdk.io.fs.ResourceId
 
 /**
  * Main package for Sparkey side input APIs. Import all.
@@ -276,7 +275,7 @@ package object sparkey extends SparkeyReaderInstances {
             uris.internal.getPipeline.apply(Reify.viewInGlobalWindow(view, uriCoder))
           }
           .map { _ =>
-            if (numShards <= 1) {
+            if (numShards == 1) {
               val src = FileSystems
                 .`match`(basePath + "/*")
                 .metadata()
