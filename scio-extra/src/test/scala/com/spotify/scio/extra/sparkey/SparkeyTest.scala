@@ -157,6 +157,28 @@ class SparkeyTest extends PipelineSpec {
     FileUtils.deleteDirectory(new File(sparkeyUri.basePath))
   }
 
+  it should "write empty shards when no data" in {
+    val sc = ScioContext()
+    val p = sc.parallelize(Seq.empty[(String, String)]).asSparkey(numShards = 2).materialize
+    val scioResult = sc.run().waitUntilFinish()
+
+    val sparkeyUri = scioResult.tap(p).value.next().asInstanceOf[LocalShardedSparkeyUri]
+
+    val allSparkeyFiles = FileSystems
+      .`match`(sparkeyUri.globExpression)
+      .metadata
+      .asScala
+      .map(_.resourceId.toString)
+
+    val basePaths = allSparkeyFiles.map(_.replaceAll("\\.sp[il]$", "")).toSet
+    basePaths.size shouldBe 2
+
+    val readers = basePaths.map(basePath => Sparkey.open(new File(basePath)))
+    readers.flatMap(_.iterator().asScala).size shouldBe 0
+
+    FileUtils.deleteDirectory(new File(sparkeyUri.basePath))
+  }
+
   it should "support .asSparkey with specified local file" in {
     val tmpDir = Files.createTempDirectory("sparkey-test-")
     val basePath = tmpDir.resolve("sparkey").toString

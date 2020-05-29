@@ -232,6 +232,7 @@ package object sparkey extends SparkeyReaderInstances {
       }
 
       val coder = CoderMaterializer.beam(self.context, Coder[JList[(K, V)]])
+      val uriCoder = CoderMaterializer.beam(self.context, Coder[JList[SparkeyUri]])
       require(numShards > 0, s"numShards must be greater than 0, found $numShards")
 
       numShards match {
@@ -254,18 +255,41 @@ package object sparkey extends SparkeyReaderInstances {
           logger.info(s"Saving as Sparkey with $shardCount shards: $uri")
 
           self.transform { collection =>
-            collection
+            val shards = collection
               .groupBy { case (k, _) => floorMod(w.shardHash(k), shardCount).toShort }
               .map {
                 case (shard, xs) =>
-                  writeToSparkey(
+                  shard -> writeToSparkey(
                     uri.sparkeyUriForShard(shard, shardCount),
                     maxMemoryUsage,
                     xs.asJava
                   )
               }
-              .groupBy(_ => ())
-              .map(_ => uri: SparkeyUri)
+
+            val shardsMap = shards.asMapSideInput
+
+            val uris = shards.context
+              .parallelize((0 until shardCount).map(_.toShort))
+              .withSideInputs(shardsMap)
+              .map {
+                case (shard, sideContext) =>
+                  sideContext(shardsMap).getOrElse(
+                    shard,
+                    writeToSparkey(
+                      uri.sparkeyUriForShard(shard, shardCount),
+                      maxMemoryUsage,
+                      Iterable.empty[(K, V)].asJava
+                    )
+                  )
+              }
+              .toSCollection
+
+            uris.context
+              .wrap {
+                val view = uris.applyInternal(View.asList())
+                uris.internal.getPipeline.apply(Reify.viewInGlobalWindow(view, uriCoder))
+              }
+              .map(_ => uri)
           }
       }
     }
