@@ -381,7 +381,7 @@ private[types] object ConverterProvider {
         case t if t =:= typeOf[String]              => tree
 
         case t if t =:= typeOf[BigDecimal] =>
-          q"_root_.com.spotify.scio.bigquery.Numeric($tree).toString"
+          q"_root_.com.spotify.scio.bigquery.Numeric($tree.bigDecimal).toString"
         case t if t =:= typeOf[ByteString] =>
           q"_root_.com.google.common.io.BaseEncoding.base64().encode($tree.toByteArray)"
         case t if t =:= typeOf[Array[Byte]] =>
