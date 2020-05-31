@@ -274,7 +274,7 @@ spotify/scio
       <li>
       <p><code>SCollection[T: Coder]#saveAsSortedBucket</code></p></li>
     </ul>
-    <pre class="prettyprint"><a class="icon go-to-source" href="https://github.com/spotify/scio/tree/master/scio-examples/src/main/scala/com/spotify/scio/examples/extra/SortMergeBucketExample.scala#L87-L107" target="_blank" title="Go to snippet source"></a><code class="language-scala">sc.parallelize(250 until 750)
+    <pre class="prettyprint"><a class="icon go-to-source" href="https://github.com/spotify/scio/tree/master/scio-examples/src/main/scala/com/spotify/scio/examples/extra/SortMergeBucketExample.scala#L88-L108" target="_blank" title="Go to snippet source"></a><code class="language-scala">sc.parallelize(250 until 750)
   .map { i =&gt;
     Account
       .newBuilder()
@@ -305,14 +305,15 @@ spotify/scio
       <li><code>ScioContext#sortMergeJoin</code> (2 sources)</li>
       <li><code>ScioContext#sortMergeCoGroup</code> (1-4 sources)</li>
     </ul>
-    <pre class="prettyprint"><a class="icon go-to-source" href="https://github.com/spotify/scio/tree/master/scio-examples/src/main/scala/com/spotify/scio/examples/extra/SortMergeBucketExample.scala#L133-L143" target="_blank" title="Go to snippet source"></a><code class="language-scala">sc.sortMergeJoin(
+    <pre class="prettyprint"><a class="icon go-to-source" href="https://github.com/spotify/scio/tree/master/scio-examples/src/main/scala/com/spotify/scio/examples/extra/SortMergeBucketExample.scala#L134-L145" target="_blank" title="Go to snippet source"></a><code class="language-scala">sc.sortMergeJoin(
     classOf[Integer],
     AvroSortedBucketIO
       .read(new TupleTag[GenericRecord](&quot;lhs&quot;), SortMergeBucketExample.UserDataSchema)
       .from(args(&quot;lhsInput&quot;)),
     AvroSortedBucketIO
       .read(new TupleTag[Account](&quot;rhs&quot;), classOf[Account])
-      .from(args(&quot;rhsInput&quot;))
+      .from(args(&quot;rhsInput&quot;)),
+    TargetParallelism.max()
   )
   .map(mapFn) // Apply mapping function
   .saveAsTextFile(args(&quot;output&quot;))</code></pre>
@@ -323,7 +324,7 @@ spotify/scio
       <li>
       <p><code>ScioContext#sortMergeTransform</code> (1-3 sources)</p></li>
     </ul>
-    <pre class="prettyprint"><a class="icon go-to-source" href="https://github.com/spotify/scio/tree/master/scio-examples/src/main/scala/com/spotify/scio/examples/extra/SortMergeBucketExample.scala#L158-L188" target="_blank" title="Go to snippet source"></a><code class="language-scala">sc.sortMergeTransform(
+    <pre class="prettyprint"><a class="icon go-to-source" href="https://github.com/spotify/scio/tree/master/scio-examples/src/main/scala/com/spotify/scio/examples/extra/SortMergeBucketExample.scala#L160-L190" target="_blank" title="Go to snippet source"></a><code class="language-scala">sc.sortMergeTransform(
     classOf[Integer],
     AvroSortedBucketIO
       .read(new TupleTag[GenericRecord](&quot;lhs&quot;), SortMergeBucketExample.UserDataSchema)
@@ -369,7 +370,7 @@ spotify/scio
 <ul>
   <li>A good starting point is to look at your output data as it has been written by a non-SMB sink,  and pick the closest power of 2 as your initial <code>numBuckets</code>, and set <code>numShards</code> to 1.</li>
   <li>If you anticipate having hot keys, try increasing <code>numShards</code> to randomly split data within a bucket.</li>
-  <li>If your job gets stuck in the sorting phase (since the <code>GroupByKey</code> and <code>SortValues</code> transforms  may get fused&ndash;you can reference the <a href="https://beam.apache.org/releases/javadoc/2.20.0/?org/apache/beam/sdk/metrics/Counter.html" title="org.apache.beam.sdk.metrics.Counter"><code>Counter</code></a>s  <code>SortedBucketSink-bucketsInitiatedSorting</code> and <code>SortedBucketSink-bucketsCompletedSorting</code>  to get an idea of where your job fails), you can increase sorter memory (default is 128MB):</li>
+  <li>If your job gets stuck in the sorting phase (since the <code>GroupByKey</code> and <code>SortValues</code> transforms  may get fused&ndash;you can reference the <a href="https://beam.apache.org/releases/javadoc/2.20.0/?org/apache/beam/sdk/metrics/Counter.html" title="org.apache.beam.sdk.metrics.Counter"><code>Counter</code></a>s  <code>SortedBucketSink-bucketsInitiatedSorting</code> and <code>SortedBucketSink-bucketsCompletedSorting</code>  to get an idea of where your job fails), you can increase sorter memory  (default is 1024MB, or 128MB for Scio &lt;= 0.9.0):</li>
 </ul>
 <pre class="prettyprint"><code class="language-scala">data.saveAsSortedBucket(
   AvroSortedBucketIO
@@ -378,7 +379,18 @@ spotify/scio
     .withSorterMemoryMb(256)
 )
 </code></pre>
-<p>You can also tweak the <code>--workerMachineType</code> pipeline option <a href="https://cloud.google.com/compute/docs/machine-types">see: machine specs for Google Cloud  Dataflow</a>&ndash;although even the smallest  machine type has several GB of RAM.</p>
+<p>The amount of data each external sorter instance needs to handle is <code>total output size / numBuckets
+/ numShards</code>, and when this exceeds sorter memory, the sorter will spill to disk. <code>n1-standard</code> workers has 3.75GB RAM per CPU, so 1GB sorter memory is a decent default, especially if the output files are kept under that size. If you have to spill to disk, note that worker disk IO depends on disk type, size, and worker number of CPUs.</p>
+<p>See <a href="https://cloud.google.com/dataflow/docs/guides/specifying-exec-params">specifying pipeline execution parameters</a> for more details, e.g. <code>--workerMachineType</code>, <code>--workerDiskType</code>, and <code>--diskSizeGb</code>. Also read more about <a href="https://cloud.google.com/compute/docs/machine-types">machine types</a> and <a href="https://cloud.google.com/compute/docs/disks/performance">block storage performance</a></p>
+<h3><a href="#parallelism" name="parallelism" class="anchor"><span class="anchor-link"></span></a>Parallelism</h3>
+<p>The <code>SortedBucketSource</code> API accepts an optional <a href="https://spotify.github.io/scio/api/org/apache/beam/sdk/extensions/smb/?org/apache/beam/sdk/extensions/smb/TargetParallelism.html" title="org.apache.beam.sdk.extensions.smb.TargetParallelism"><code>TargetParallelism</code></a> parameter to set the desired parallelism of the SMB read operation. For a given set of sources, <code>targetParallelism</code> can be set to any number between the least and greatest numbers of buckets among sources. This can be dynamically configured using <code>TargetParallelism.min()</code> or <code>TargetParallelism.max()</code>, which at graph construction time will determine the least or greatest amount of parallelism based on sources. Alternately, <code>TargetParallelism.of(Integer value)</code> can be used to statically configure a custom value.</p>
+<p>If no value is specified, SMB read operations will use the minimum parallelism.</p>
+<p>When selecting a target parallelism for your SMB operation, there are tradeoffs to consider:</p>
+<ul>
+  <li>Minimal parallelism means a fewer number of workers merging data from potentially many buckets. For example, if source A has 4 buckets and source B has 64, a minimally parallel SMB read would have 4 workers, each one merging 1 bucket from source A and 16 buckets from source B. This read may have low throughput.</li>
+  <li>Maximal parallelism means that each bucket is read by at least one worker. For example, if source A has 4 buckets and source B has 64, a maximally parallel SMB read would have 64 workers, each one merging 1 bucket from source B and 1 bucket from source A, replicated 16 times. This may have better throughput than the minimal example, but more expensive because every key group from the replicated sources must be re-hashed to avoid emitting duplicate records.</li>
+  <li>A custom parallelism in the middle of these bounds may be the best balance of speed and computing cost.</li>
+</ul>
 <h2><a href="#testing" name="testing" class="anchor"><span class="anchor-link"></span></a>Testing</h2>
 <p>Currently, mocking data for SMB transforms is not supported in the <code>com.spotify.scio.testing.JobTest</code> framework. See <a href="https://github.com/spotify/scio/tree/master/scio-examples/src/test/scala/com/spotify/scio/examples/extra/SortMergeBucketExampleTest.scala">SortMergeBucketExampleTest</a> for an example of using local temp directories to test SMB reads and writes.</p>
 </div>

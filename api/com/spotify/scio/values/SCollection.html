@@ -211,10 +211,6 @@
                         <a href="TransformNameable.html" title="Trait for setting custom names on transforms.">TransformNameable</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
-                        <a class="object" href="View$.html" title=""></a>
-                        <a href="View$.html" title="">View</a>
-                      </li><li class="current-entities indented4">
-                        <span class="separator"></span>
                         <a class="class" href="WindowOptions.html" title="Window options for an SCollection."></a>
                         <a href="WindowOptions.html" title="Window options for an SCollection.">WindowOptions</a>
                       </li><li class="current-entities indented4">
@@ -433,11 +429,11 @@ multiple times (use <a href="#distinct:com.spotify.scio.values.SCollection[T]" c
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">aggregate</span><span class="tparams">[<span name="A">A</span>, <span name="U">U</span>]</span><span class="params">(<span name="aggregator">aggregator: <a href="https://javadoc.io/page/com.twitter/algebird-core_2.12/0.13.6/com/twitter/algebird/Aggregator.html#com.twitter.algebird.Aggregator" class="extype" name="com.twitter.algebird.Aggregator">Aggregator</a>[<span class="extype" name="com.spotify.scio.values.SCollection.T">T</span>, <span class="extype" name="com.spotify.scio.values.SCollection.aggregate.A">A</span>, <span class="extype" name="com.spotify.scio.values.SCollection.aggregate.U">U</span>]</span>)</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.SCollection.aggregate.A">A</span>]</span>, <span name="arg1">arg1: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.SCollection.aggregate.U">U</span>]</span>)</span><span class="result">: <a href="" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.values.SCollection.aggregate.U">U</span>]</span>
+        <span class="name">aggregate</span><span class="tparams">[<span name="A">A</span>, <span name="U">U</span>]</span><span class="params">(<span name="aggregator">aggregator: <a href="https://javadoc.io/page/com.twitter/algebird-core_2.12/0.13.7/com/twitter/algebird/Aggregator.html#com.twitter.algebird.Aggregator" class="extype" name="com.twitter.algebird.Aggregator">Aggregator</a>[<span class="extype" name="com.spotify.scio.values.SCollection.T">T</span>, <span class="extype" name="com.spotify.scio.values.SCollection.aggregate.A">A</span>, <span class="extype" name="com.spotify.scio.values.SCollection.aggregate.U">U</span>]</span>)</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.SCollection.aggregate.A">A</span>]</span>, <span name="arg1">arg1: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.SCollection.aggregate.U">U</span>]</span>)</span><span class="result">: <a href="" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.values.SCollection.aggregate.U">U</span>]</span>
       </span>
       
-      <p class="shortcomment cmt">Aggregate with <a href="https://javadoc.io/page/com.twitter/algebird-core_2.12/0.13.6/com/twitter/algebird/Aggregator.html" class="extype" name="com.twitter.algebird.Aggregator">Aggregator</a>.</p><div class="fullcomment"><div class="comment cmt"><p>Aggregate with <a href="https://javadoc.io/page/com.twitter/algebird-core_2.12/0.13.6/com/twitter/algebird/Aggregator.html" class="extype" name="com.twitter.algebird.Aggregator">Aggregator</a>. First each item <code>T</code> is mapped
-to <code>A</code>, then we reduce with a <a href="https://javadoc.io/page/com.twitter/algebird-core_2.12/0.13.6/com/twitter/algebird/Semigroup.html" class="extype" name="com.twitter.algebird.Semigroup">Semigroup</a> of <code>A</code>, then
+      <p class="shortcomment cmt">Aggregate with <a href="https://javadoc.io/page/com.twitter/algebird-core_2.12/0.13.7/com/twitter/algebird/Aggregator.html" class="extype" name="com.twitter.algebird.Aggregator">Aggregator</a>.</p><div class="fullcomment"><div class="comment cmt"><p>Aggregate with <a href="https://javadoc.io/page/com.twitter/algebird-core_2.12/0.13.7/com/twitter/algebird/Aggregator.html" class="extype" name="com.twitter.algebird.Aggregator">Aggregator</a>. First each item <code>T</code> is mapped
+to <code>A</code>, then we reduce with a <a href="https://javadoc.io/page/com.twitter/algebird-core_2.12/0.13.7/com/twitter/algebird/Semigroup.html" class="extype" name="com.twitter.algebird.Semigroup">Semigroup</a> of <code>A</code>, then
 finally we present the results as <code>U</code>. This could be more powerful and better optimized in
 some cases.</p></div></div>
     </li><li name="com.spotify.scio.values.SCollection#aggregate" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="transform">
@@ -943,11 +939,11 @@ this SCollection, and then flattening the results.</p>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">fold</span><span class="params">(<span class="implicit">implicit </span><span name="mon">mon: <a href="https://javadoc.io/page/com.twitter/algebird-core_2.12/0.13.6/com/twitter/algebird/Monoid.html#com.twitter.algebird.Monoid" class="extype" name="com.twitter.algebird.Monoid">Monoid</a>[<span class="extype" name="com.spotify.scio.values.SCollection.T">T</span>]</span>, <span name="coder">coder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.SCollection.T">T</span>]</span>)</span><span class="result">: <a href="" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.values.SCollection.T">T</span>]</span>
+        <span class="name">fold</span><span class="params">(<span class="implicit">implicit </span><span name="mon">mon: <a href="https://javadoc.io/page/com.twitter/algebird-core_2.12/0.13.7/com/twitter/algebird/Monoid.html#com.twitter.algebird.Monoid" class="extype" name="com.twitter.algebird.Monoid">Monoid</a>[<span class="extype" name="com.spotify.scio.values.SCollection.T">T</span>]</span>, <span name="coder">coder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.SCollection.T">T</span>]</span>)</span><span class="result">: <a href="" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.values.SCollection.T">T</span>]</span>
       </span>
       
-      <p class="shortcomment cmt">Fold with <a href="https://javadoc.io/page/com.twitter/algebird-core_2.12/0.13.6/com/twitter/algebird/Monoid.html" class="extype" name="com.twitter.algebird.Monoid">Monoid</a>, which defines the associative function and
-&quot;zero value&quot; for <code>T</code>.</p><div class="fullcomment"><div class="comment cmt"><p>Fold with <a href="https://javadoc.io/page/com.twitter/algebird-core_2.12/0.13.6/com/twitter/algebird/Monoid.html" class="extype" name="com.twitter.algebird.Monoid">Monoid</a>, which defines the associative function and
+      <p class="shortcomment cmt">Fold with <a href="https://javadoc.io/page/com.twitter/algebird-core_2.12/0.13.7/com/twitter/algebird/Monoid.html" class="extype" name="com.twitter.algebird.Monoid">Monoid</a>, which defines the associative function and
+&quot;zero value&quot; for <code>T</code>.</p><div class="fullcomment"><div class="comment cmt"><p>Fold with <a href="https://javadoc.io/page/com.twitter/algebird-core_2.12/0.13.7/com/twitter/algebird/Monoid.html" class="extype" name="com.twitter.algebird.Monoid">Monoid</a>, which defines the associative function and
 &quot;zero value&quot; for <code>T</code>. This could be more powerful and better optimized in some cases.</p></div></div>
     </li><li name="com.spotify.scio.values.SCollection#fold" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="transform">
       <a id="fold(zeroValue:T)(op:(T,T)=&gt;T)(implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]"></a><a id="fold(T)((T,T)⇒T)(Coder[T]):SCollection[T]"></a>
@@ -1009,6 +1005,45 @@ and may even differ each time the resulting SCollection is evaluated.</p><p>Note
 aggregation (such as a sum or average) over each key, using
 <a href="PairSCollectionFunctions.html#aggregateByKey[U](zeroValue:U)(seqOp:(U,V)=&gt;U,combOp:(U,U)=&gt;U)(implicitevidence$32:com.spotify.scio.coders.Coder[U],implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SCollection[(K,U)]" class="extmbr" name="com.spotify.scio.values.PairSCollectionFunctions#aggregateByKey">PairSCollectionFunctions.aggregateByKey</a> or
 <a href="PairSCollectionFunctions.html#reduceByKey(op:(V,V)=&gt;V)(implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SCollection[(K,V)]" class="extmbr" name="com.spotify.scio.values.PairSCollectionFunctions#reduceByKey">PairSCollectionFunctions.reduceByKey</a> will provide much better performance.</p></div></div>
+    </li><li name="com.spotify.scio.values.SCollection#groupMap" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="transform">
+      <a id="groupMap[K,U](f:T=&gt;K)(g:T=&gt;U)(implicitkc:com.spotify.scio.coders.Coder[K],implicituc:com.spotify.scio.coders.Coder[U]):com.spotify.scio.values.SCollection[(K,Iterable[U])]"></a><a id="groupMap[K,U]((T)⇒K)((T)⇒U)(Coder[K],Coder[U]):SCollection[(K,Iterable[U])]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/values/SCollection.html#groupMap[K,U](f:T=&gt;K)(g:T=&gt;U)(implicitkc:com.spotify.scio.coders.Coder[K],implicituc:com.spotify.scio.coders.Coder[U]):com.spotify.scio.values.SCollection[(K,Iterable[U])]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">groupMap</span><span class="tparams">[<span name="K">K</span>, <span name="U">U</span>]</span><span class="params">(<span name="f">f: (<span class="extype" name="com.spotify.scio.values.SCollection.T">T</span>) ⇒ <span class="extype" name="com.spotify.scio.values.SCollection.groupMap.K">K</span></span>)</span><span class="params">(<span name="g">g: (<span class="extype" name="com.spotify.scio.values.SCollection.T">T</span>) ⇒ <span class="extype" name="com.spotify.scio.values.SCollection.groupMap.U">U</span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="kc">kc: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.SCollection.groupMap.K">K</span>]</span>, <span name="uc">uc: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.SCollection.groupMap.U">U</span>]</span>)</span><span class="result">: <a href="" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[(<span class="extype" name="com.spotify.scio.values.SCollection.groupMap.K">K</span>, <a href="../../../../scala/index.html#Iterable[+A]=Iterable[A]" class="extmbr" name="scala.Iterable">Iterable</a>[<span class="extype" name="com.spotify.scio.values.SCollection.groupMap.U">U</span>])]</span>
+      </span>
+      
+      <p class="shortcomment cmt">Return an SCollection of grouped items.</p><div class="fullcomment"><div class="comment cmt"><p>Return an SCollection of grouped items. Each group consists of a key and a sequence of
+elements transformed into a value of type <code>U</code>. The ordering of elements within each group is not guaranteed,
+and may even differ each time the resulting SCollection is evaluated.</p><p>It is equivalent to groupBy(key).mapValues(_.map(f)), but more efficient.
+</p></div></div>
+    </li><li name="com.spotify.scio.values.SCollection#groupMapReduce" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="transform">
+      <a id="groupMapReduce[K](f:T=&gt;K)(g:(T,T)=&gt;T)(implicitkc:com.spotify.scio.coders.Coder[K],implicittc:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[(K,T)]"></a><a id="groupMapReduce[K]((T)⇒K)((T,T)⇒T)(Coder[K],Coder[T]):SCollection[(K,T)]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/values/SCollection.html#groupMapReduce[K](f:T=&gt;K)(g:(T,T)=&gt;T)(implicitkc:com.spotify.scio.coders.Coder[K],implicittc:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[(K,T)]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">groupMapReduce</span><span class="tparams">[<span name="K">K</span>]</span><span class="params">(<span name="f">f: (<span class="extype" name="com.spotify.scio.values.SCollection.T">T</span>) ⇒ <span class="extype" name="com.spotify.scio.values.SCollection.groupMapReduce.K">K</span></span>)</span><span class="params">(<span name="g">g: (<span class="extype" name="com.spotify.scio.values.SCollection.T">T</span>, <span class="extype" name="com.spotify.scio.values.SCollection.T">T</span>) ⇒ <span class="extype" name="com.spotify.scio.values.SCollection.T">T</span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="kc">kc: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.SCollection.groupMapReduce.K">K</span>]</span>, <span name="tc">tc: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.SCollection.T">T</span>]</span>)</span><span class="result">: <a href="" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[(<span class="extype" name="com.spotify.scio.values.SCollection.groupMapReduce.K">K</span>, <span class="extype" name="com.spotify.scio.values.SCollection.T">T</span>)]</span>
+      </span>
+      
+      <p class="shortcomment cmt">Return an SCollection of grouped items.</p><div class="fullcomment"><div class="comment cmt"><p>Return an SCollection of grouped items. Each group consists of a key and the result of an associative
+reduce function. The ordering of elements within each group is not guaranteed, and may even differ each
+time the resulting SCollection is evaluated.</p><p>The associative function is performed locally on each mapper before sending results to
+a reducer, similarly to a &quot;combiner&quot; in MapReduce
+</p></div></div>
     </li><li name="scala.AnyRef#hashCode" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="hashCode():Int"></a>
       <span class="permalink">
@@ -1816,10 +1851,10 @@ binary operator.</p>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">sum</span><span class="params">(<span class="implicit">implicit </span><span name="sg">sg: <a href="https://javadoc.io/page/com.twitter/algebird-core_2.12/0.13.6/com/twitter/algebird/Semigroup.html#com.twitter.algebird.Semigroup" class="extype" name="com.twitter.algebird.Semigroup">Semigroup</a>[<span class="extype" name="com.spotify.scio.values.SCollection.T">T</span>]</span>, <span name="coder">coder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.SCollection.T">T</span>]</span>)</span><span class="result">: <a href="" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.values.SCollection.T">T</span>]</span>
+        <span class="name">sum</span><span class="params">(<span class="implicit">implicit </span><span name="sg">sg: <a href="https://javadoc.io/page/com.twitter/algebird-core_2.12/0.13.7/com/twitter/algebird/Semigroup.html#com.twitter.algebird.Semigroup" class="extype" name="com.twitter.algebird.Semigroup">Semigroup</a>[<span class="extype" name="com.spotify.scio.values.SCollection.T">T</span>]</span>, <span name="coder">coder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.SCollection.T">T</span>]</span>)</span><span class="result">: <a href="" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.values.SCollection.T">T</span>]</span>
       </span>
       
-      <p class="shortcomment cmt">Reduce with <a href="https://javadoc.io/page/com.twitter/algebird-core_2.12/0.13.6/com/twitter/algebird/Semigroup.html" class="extype" name="com.twitter.algebird.Semigroup">Semigroup</a>.</p><div class="fullcomment"><div class="comment cmt"><p>Reduce with <a href="https://javadoc.io/page/com.twitter/algebird-core_2.12/0.13.6/com/twitter/algebird/Semigroup.html" class="extype" name="com.twitter.algebird.Semigroup">Semigroup</a>. This could be more powerful and
+      <p class="shortcomment cmt">Reduce with <a href="https://javadoc.io/page/com.twitter/algebird-core_2.12/0.13.7/com/twitter/algebird/Semigroup.html" class="extype" name="com.twitter.algebird.Semigroup">Semigroup</a>.</p><div class="fullcomment"><div class="comment cmt"><p>Reduce with <a href="https://javadoc.io/page/com.twitter/algebird-core_2.12/0.13.7/com/twitter/algebird/Semigroup.html" class="extype" name="com.twitter.algebird.Semigroup">Semigroup</a>. This could be more powerful and
 better optimized than <a href="#reduce(op:(T,T)=&gt;T)(implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]" class="extmbr" name="com.spotify.scio.values.SCollection#reduce">reduce</a> in some cases.</p></div></div>
     </li><li name="scala.AnyRef#synchronized" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="synchronized[T0](x$1:=&gt;T0):T0"></a><a id="synchronized[T0](⇒T0):T0"></a>
@@ -2369,9 +2404,9 @@ p.withSideOutputs(side1, side2).map { (x, s) <span class="kw">=&gt;</span>
           <a href="https://javadoc.io/page/org.apache.beam/beam-sdks-java-core/2.20.0/org/apache/beam/sdk/transforms/windowing/IntervalWindow.html" class="extype" name="org.apache.beam.sdk.transforms.windowing.IntervalWindow">IntervalWindow</a> if it is
           windowed.</p></dd></dl></div>
     </li><li name="com.spotify.scio.values.SCollection#withWindowFn" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="window">
-      <a id="withWindowFn[W&lt;:org.apache.beam.sdk.transforms.windowing.BoundedWindow](fn:org.apache.beam.sdk.transforms.windowing.WindowFn[AnyRef,W],options:com.spotify.scio.values.WindowOptions):com.spotify.scio.values.SCollection[T]"></a><a id="withWindowFn[W&lt;:BoundedWindow](WindowFn[AnyRef,W],WindowOptions):SCollection[T]"></a>
+      <a id="withWindowFn[W&lt;:org.apache.beam.sdk.transforms.windowing.BoundedWindow](fn:org.apache.beam.sdk.transforms.windowing.WindowFn[_,W],options:com.spotify.scio.values.WindowOptions):com.spotify.scio.values.SCollection[T]"></a><a id="withWindowFn[W&lt;:BoundedWindow](WindowFn[_,W],WindowOptions):SCollection[T]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/values/SCollection.html#withWindowFn[W&lt;:org.apache.beam.sdk.transforms.windowing.BoundedWindow](fn:org.apache.beam.sdk.transforms.windowing.WindowFn[AnyRef,W],options:com.spotify.scio.values.WindowOptions):com.spotify.scio.values.SCollection[T]" title="Permalink">
+      <a href="../../../../com/spotify/scio/values/SCollection.html#withWindowFn[W&lt;:org.apache.beam.sdk.transforms.windowing.BoundedWindow](fn:org.apache.beam.sdk.transforms.windowing.WindowFn[_,W],options:com.spotify.scio.values.WindowOptions):com.spotify.scio.values.SCollection[T]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -2380,7 +2415,7 @@ p.withSideOutputs(side1, side2).map { (x, s) <span class="kw">=&gt;</span>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">withWindowFn</span><span class="tparams">[<span name="W">W &lt;: <a href="https://javadoc.io/page/org.apache.beam/beam-sdks-java-core/2.20.0/org/apache/beam/sdk/transforms/windowing/BoundedWindow.html#org.apache.beam.sdk.transforms.windowing.BoundedWindow" class="extype" name="org.apache.beam.sdk.transforms.windowing.BoundedWindow">BoundedWindow</a></span>]</span><span class="params">(<span name="fn">fn: <a href="https://javadoc.io/page/org.apache.beam/beam-sdks-java-core/2.20.0/org/apache/beam/sdk/transforms/windowing/WindowFn.html#org.apache.beam.sdk.transforms.windowing.WindowFn" class="extype" name="org.apache.beam.sdk.transforms.windowing.WindowFn">WindowFn</a>[<a href="../../../../scala/index.html#AnyRef=Object" class="extmbr" name="scala.AnyRef">AnyRef</a>, <span class="extype" name="com.spotify.scio.values.SCollection.withWindowFn.W">W</span>]</span>, <span name="options">options: <a href="WindowOptions.html" class="extype" name="com.spotify.scio.values.WindowOptions">WindowOptions</a> = <span class="symbol">WindowOptions()</span></span>)</span><span class="result">: <a href="" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.values.SCollection.T">T</span>]</span>
+        <span class="name">withWindowFn</span><span class="tparams">[<span name="W">W &lt;: <a href="https://javadoc.io/page/org.apache.beam/beam-sdks-java-core/2.20.0/org/apache/beam/sdk/transforms/windowing/BoundedWindow.html#org.apache.beam.sdk.transforms.windowing.BoundedWindow" class="extype" name="org.apache.beam.sdk.transforms.windowing.BoundedWindow">BoundedWindow</a></span>]</span><span class="params">(<span name="fn">fn: <a href="https://javadoc.io/page/org.apache.beam/beam-sdks-java-core/2.20.0/org/apache/beam/sdk/transforms/windowing/WindowFn.html#org.apache.beam.sdk.transforms.windowing.WindowFn" class="extype" name="org.apache.beam.sdk.transforms.windowing.WindowFn">WindowFn</a>[_, <span class="extype" name="com.spotify.scio.values.SCollection.withWindowFn.W">W</span>]</span>, <span name="options">options: <a href="WindowOptions.html" class="extype" name="com.spotify.scio.values.WindowOptions">WindowOptions</a> = <span class="symbol">WindowOptions()</span></span>)</span><span class="result">: <a href="" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.values.SCollection.T">T</span>]</span>
       </span>
       
       <p class="shortcomment cmt">Window values with the given function.</p>

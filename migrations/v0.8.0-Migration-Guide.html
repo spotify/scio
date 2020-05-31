@@ -515,11 +515,13 @@ def scioResult(sc: ScioContext): ScioResult = sc.run().waitUntilDone(Duration.In
 <pre class="prettyprint"><code class="language-scala">// method bigQueryTable in class ScioContextOps is deprecated (since Scio 0.8):
 // this method will be removed; use bigQueryTable(Table.Spec(table)) instead
 </code></pre>
-<p>All <code>BigQuery</code> io operations now support a new data type <a href="https://spotify.github.io/scio/api/com/spotify/scio/bigquery/Table$.html" title="com.spotify.scio.bigquery.Table"><code>Table</code></a> to reference a specific table and every method that uses <code>tableSpec: String</code> or <code>tableReference: TableReference</code> has been deprecated.</p>
+<p>All <code>BigQuery</code> io operations now support new data types <a href="https://spotify.github.io/scio/api/com/spotify/scio/bigquery/Table$.html" title="com.spotify.scio.bigquery.Table"><code>Table</code></a> to reference a specific table and <a href="https://spotify.github.io/scio/api/com/spotify/scio/bigquery/Query$.html" title="com.spotify.scio.bigquery.Query"><code>Query</code></a> to a query. Every method that uses <code>tableSpec: String</code>, <code>tableReference: TableReference</code>, or <code>query: String</code> has been deprecated.</p>
 <pre class="prettyprint"><code class="language-diff">- def bigQueryTable(tableSpec: String): SCollection[TableRow]
 - def bigQueryTable(tableReference: TableReference): SCollection[TableRow]
+- def bigQuerySelect(query: String): SCollection[TableRow]
 
 + def bigQueryTable(table: Table): SCollection[TableRow]
++ def bigQuerySelect(query: Query): SCollection[TableRow]
 </code></pre>
 <p>The new <code>Table</code> type can be created according to the following examples:</p>
 <pre class="prettyprint"><code class="language-scala">def tableSpecString: String = ???

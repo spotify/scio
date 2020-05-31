@@ -268,6 +268,48 @@ val bfsi: SideInput[BloomFilter[String]] = data.asApproxFilterSideInput(BloomFil
 val bfCoder: Coder[BloomFilter[String]] = BloomFilter.filterCoder
 </code></pre>
 <h2><a href="#ios" name="ios" class="anchor"><span class="anchor-link"></span></a>IO&rsquo;s</h2>
+<h3><a href="#bigquery" name="bigquery" class="anchor"><span class="anchor-link"></span></a>BigQuery</h3>
+<p>In <code>scio</code> <code>0.8.0</code> we introduced some <a href="https://spotify.github.io/scio/migrations/v0.8.0-Migration-Guide.html#bigquery">deprecations</a> and with this version, we are enforcing them. What this means is that all <code>BigQuery</code> operations should expect a <code>Table</code> type that can be created either from a table reference of spec:</p>
+<pre class="prettyprint"><code class="language-scala">def tableSpecString: String = ???
+
+def table: Table = Table.Spec(tableSpecString)
+</code></pre>
+<p>or</p>
+<pre class="prettyprint"><code class="language-scala">def tableReference: TableReference = ???
+
+def table: Table = Table.Ref(tableReference)
+</code></pre>
+<p>Bellow are some of the affected methods and suggestion on how you can migrate:</p>
+<pre class="prettyprint"><code class="language-diff">- typedBigQuery(table: TableReference, ...)
++ typedBigQueryTable(table: Table.Ref(tableReference), ...)
+
+- typedBigQuery(tableSpec: String, ...)
++ typedBigQueryTable(tableSpec: Table.Spec(tableSpec), ...)
+
+- saveAsBigQuery(table: TableReference, ...)
++ saveAsBigQueryTable(table: Table.Ref(tableReference), ...)
+
+- saveAsBigQuery(tableSpec: String, ...)
++ saveAsBigQueryTable(tableSpec: Table.Spec(tableSpec), ...)
+
+- saveAsTypedBigQuery(table: TableReference, ...)
++ saveAsTypedBigQueryTable(table: Table.Ref(tableReference), ...)
+
+- saveAsTypedBigQuery(tableSpec: String, ...)
++ saveAsTypedBigQueryTable(tableSpec: Table.Spec(tableSpec), ...)
+</code></pre>
+<p>Methods with only argument type change:</p>
+<pre class="prettyprint"><code class="language-diff">- bigQuerySelect(query: String, ...)
++ bigQuerySelect(query: Query(sql), ...)
+
+- saveAsTypedBigQuery(table: TableReference, ...)
++ saveAsTypedBigQuery(table: Table.Ref(tableReference), ...)
+
+- saveAsTypedBigQuery(tableSpec: String, ...)
++ saveAsTypedBigQuery(tableSpec: Table.Spec(tableSpec), ...)
+</code></pre>
+<h4><a href="#bigquery-deprecations" name="bigquery-deprecations" class="anchor"><span class="anchor-link"></span></a>BigQuery deprecations</h4>
+<p>With <code>0.9.0</code> we introduced a new method <code>queryRaw</code> to <code>BigQueryType.fromQuery</code> and deprecated the existing one <code>query</code>. This is scheduled for removal in the next release.</p>
 <h3><a href="#avro" name="avro" class="anchor"><span class="anchor-link"></span></a>Avro</h3>
 <p><code>ReflectiveRecordIO</code> was removed in this release and this means that we no longer need to pass a type param when reading <code>GenericRecord</code> making things a little bit cleaner. This unfortunately means that you will need to update your code by removing the type param from <code>avroFile</code>.</p>
 <pre class="prettyprint"><code class="language-diff">val sc: ScioContext = ???
