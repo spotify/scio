@@ -168,6 +168,7 @@ val commonSettings = Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
       Seq()
     }
   },
+  Compile / doc / scalacOptions --= Seq("-release", "8"),
   scalacOptions in (Compile, doc) ++= Scalac.compileDocOptions.value,
   javacOptions ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint:unchecked"),
   javacOptions in (Compile, doc) := Seq("-source", "1.8"),
@@ -1074,6 +1075,7 @@ lazy val `scio-repl`: Project = project
   .settings(commonSettings)
   .settings(macroSettings)
   .settings(
+    scalacOptions --= Seq("-release", "8"),
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
       "org.apache.beam" % "beam-runners-direct-java" % beamVersion,

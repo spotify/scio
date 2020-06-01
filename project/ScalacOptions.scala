@@ -20,6 +20,8 @@ import sbt._, Keys._
 object Scalac {
   // see: https://tpolecat.github.io/2017/04/25/scalac-flags.html
   val baseOptions = List(
+    "-release",
+    "8",
     "-target:jvm-1.8",
     "-deprecation", // Emit warning and location for usages of deprecated APIs.
     "-feature", // Emit warning and location for usages of features that should be imported explicitly.
