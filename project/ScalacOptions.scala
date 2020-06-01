@@ -21,9 +21,7 @@ import sbt.librarymanagement.{SemanticSelector, VersionNumber}
 object Scalac {
   // see: https://tpolecat.github.io/2017/04/25/scalac-flags.html
   val baseOptions = Def.setting {
-    List(
-      "-release",
-      "8",
+    val base = List(
       "-target:jvm-1.8",
       "-deprecation", // Emit warning and location for usages of deprecated APIs.
       "-feature", // Emit warning and location for usages of features that should be imported explicitly.
@@ -63,6 +61,11 @@ object Scalac {
       "-Xmacro-settings:show-coder-fallback=true",
       "-Ydelambdafy:inline" // Set the strategy used for translating lambdas into JVM code to "inline"
     )
+
+    VersionNumber(sys.props("java.version")) match {
+      case v if v.matchesSemVer(SemanticSelector(">1.8")) => base ++ List("-release", "8")
+      case _                                              => base
+    }
   }
 
   val scalaVersionOptions = Def.setting {
