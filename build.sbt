@@ -811,6 +811,7 @@ lazy val `scio-extra`: Project = project
   .in(file("scio-extra"))
   .settings(commonSettings)
   .settings(itSettings)
+  .settings(macroSettings)
   .settings(
     description := "Scio extra utilities",
     libraryDependencies ++= Seq(

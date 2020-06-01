@@ -18,7 +18,7 @@
 package com.spotify.scio.extra
 
 import java.lang.Math.floorMod
-import java.util.{UUID, List => JList, Iterator => JIterator}
+import java.util.{UUID, Iterator => JIterator}
 
 import com.spotify.scio.ScioContext
 import com.spotify.scio.annotations.experimental
