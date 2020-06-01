@@ -38,7 +38,7 @@ import scala.jdk.CollectionConverters._
  */
 private[bigquery] trait ToTableRow {
   private lazy val encodingPropName: String = "bigquery.bytes.encoder"
-  private lazy val base64Encoding: BaseEncoding = BaseEncoding.base64Url()
+  private lazy val base64Encoding: BaseEncoding = BaseEncoding.base64()
   private lazy val hexEncoding: BaseEncoding = BaseEncoding.base16()
 
   // YYYY-[M]M-[D]D

@@ -38,12 +38,12 @@ class ToTableRowTest extends AnyFlatSpec with Matchers {
     .set("longField", 1L)
     .set("doubleField", 1.0)
     .set("floatField", 1f)
-    .set("bytesField", BaseEncoding.base64Url().encode("someBytes".getBytes))
+    .set("bytesField", BaseEncoding.base64().encode("%20cフーバー".getBytes))
     .set("unionField", "someUnion")
     .set("arrayField", List(new TableRow().set("nestedField", "nestedValue")).asJava)
     .set("mapField", List(new TableRow().set("key", "mapKey").set("value", 1.0d)).asJava)
     .set("enumField", Kind.FOO.toString)
-    .set("fixedField", BaseEncoding.base64Url().encode("1234567890123456".getBytes))
+    .set("fixedField", BaseEncoding.base64().encode("%20cフーバー".getBytes))
 
   "ToTableRow" should "convert a SpecificRecord to TableRow" in {
     val specificRecord = AvroExample
@@ -54,7 +54,7 @@ class ToTableRowTest extends AnyFlatSpec with Matchers {
       .setLongField(1L)
       .setIntField(1)
       .setFloatField(1f)
-      .setBytesField(ByteBuffer.wrap(ByteString.copyFromUtf8("someBytes").toByteArray))
+      .setBytesField(ByteBuffer.wrap(ByteString.copyFromUtf8("%20cフーバー").toByteArray))
       .setArrayField(List(NestedAvro.newBuilder().setNestedField("nestedValue").build()).asJava)
       .setUnionField("someUnion")
       .setMapField(
@@ -62,7 +62,7 @@ class ToTableRowTest extends AnyFlatSpec with Matchers {
           .asInstanceOf[java.util.Map[java.lang.CharSequence, java.lang.Double]]
       )
       .setEnumField(Kind.FOO)
-      .setFixedField(new fixedType("1234567890123456".getBytes()))
+      .setFixedField(new fixedType("%20cフーバー".getBytes()))
       .build()
 
     AvroConverters.toTableRow(specificRecord) shouldEqual expectedOutput
@@ -81,7 +81,7 @@ class ToTableRowTest extends AnyFlatSpec with Matchers {
     genericRecord.put("floatField", 1f)
     genericRecord.put(
       "bytesField",
-      ByteBuffer.wrap(ByteString.copyFromUtf8("someBytes").toByteArray)
+      ByteBuffer.wrap(ByteString.copyFromUtf8("%20cフーバー").toByteArray)
     )
     genericRecord.put("arrayField", List(nestedAvro).asJava)
     genericRecord.put("unionField", "someUnion")
@@ -91,7 +91,7 @@ class ToTableRowTest extends AnyFlatSpec with Matchers {
         .asInstanceOf[java.util.Map[java.lang.CharSequence, java.lang.Double]]
     )
     genericRecord.put("enumField", Kind.FOO)
-    genericRecord.put("fixedField", new fixedType("1234567890123456".getBytes()))
+    genericRecord.put("fixedField", new fixedType("%20cフーバー".getBytes()))
 
     AvroConverters.toTableRow(genericRecord) shouldEqual expectedOutput
   }
@@ -110,7 +110,7 @@ class ToTableRowTest extends AnyFlatSpec with Matchers {
     .set("longField", 1L)
     .set("doubleField", 1.0)
     .set("floatField", 1f)
-    .set("bytesField", BaseEncoding.base64Url().encode("someBytes".getBytes))
+    .set("bytesField", BaseEncoding.base64().encode("%20cフーバー".getBytes))
     .set("dateField", "2019-10-29")
     .set("decimalField", decimal.toString)
     .set("timeMillisField", "01:24:52.211000")
@@ -127,7 +127,7 @@ class ToTableRowTest extends AnyFlatSpec with Matchers {
       .setLongField(1L)
       .setIntField(1)
       .setFloatField(1f)
-      .setBytesField(ByteBuffer.wrap(ByteString.copyFromUtf8("someBytes").toByteArray))
+      .setBytesField(ByteBuffer.wrap(ByteString.copyFromUtf8("%20cフーバー").toByteArray))
       .setDateField(date)
       .setTimeMillisField(timeMillis)
       .setTimeMicrosField(timeMicros)
