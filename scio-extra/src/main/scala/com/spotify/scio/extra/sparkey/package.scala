@@ -17,13 +17,12 @@
 
 package com.spotify.scio.extra
 
-import java.util
-import java.lang.{Iterable => JIterable}
-import java.util.{UUID, List => JList}
+import java.lang.Math.floorMod
+import java.util.{UUID, List => JList, Iterator => JIterator}
 
 import com.spotify.scio.ScioContext
 import com.spotify.scio.annotations.experimental
-import com.spotify.scio.coders.{Coder, CoderMaterializer}
+import com.spotify.scio.coders.Coder
 import com.spotify.scio.extra.sparkey.instances.{
   CachedStringSparkeyReader,
   SparkeyReaderInstances,
@@ -32,14 +31,13 @@ import com.spotify.scio.extra.sparkey.instances.{
 import com.spotify.scio.util.Cache
 import com.spotify.scio.values.{SCollection, SideInput}
 import com.spotify.sparkey.{IndexHeader, LogHeader, SparkeyReader}
-import org.apache.beam.sdk.transforms.{DoFn, Reify, View}
+import org.apache.beam.sdk.io.FileSystems
+import org.apache.beam.sdk.transforms.{DoFn, View}
 import org.apache.beam.sdk.values.PCollectionView
 import org.slf4j.LoggerFactory
 
 import scala.jdk.CollectionConverters._
 import scala.util.hashing.MurmurHash3
-import java.lang.Math.floorMod
-import org.apache.beam.sdk.io.FileSystems
 
 /**
  * Main package for Sparkey side input APIs. Import all.
@@ -186,7 +184,7 @@ package object sparkey extends SparkeyReaderInstances {
   private def writeToSparkey[K, V](
     uri: SparkeyUri,
     maxMemoryUsage: Long,
-    elements: JIterable[(K, V)]
+    elements: Iterable[(K, V)]
   )(implicit w: SparkeyWritable[K, V], koder: Coder[K], voder: Coder[V]): SparkeyUri = {
     val writer = new SparkeyWriter(uri, maxMemoryUsage)
     val it = elements.iterator
@@ -237,8 +235,6 @@ package object sparkey extends SparkeyReaderInstances {
 
       logger.info(s"Saving as Sparkey with $numShards shards: $basePath")
 
-      val uriCoder = CoderMaterializer.beam(self.context, Coder[JList[SparkeyUri]])
-
       self.transform { collection =>
         val shards = collection
           .groupBy { case (k, _) => floorMod(w.shardHash(k), numShards).toShort }
@@ -247,7 +243,7 @@ package object sparkey extends SparkeyReaderInstances {
               shard -> writeToSparkey(
                 uri.sparkeyUriForShard(shard, numShards),
                 maxMemoryUsage,
-                xs.asJava
+                xs
               )
           }
 
@@ -263,17 +259,13 @@ package object sparkey extends SparkeyReaderInstances {
                 writeToSparkey(
                   uri.sparkeyUriForShard(shard, numShards),
                   maxMemoryUsage,
-                  Iterable.empty[(K, V)].asJava
+                  Iterable.empty[(K, V)]
                 )
               )
           }
           .toSCollection
 
-        uris.context
-          .wrap {
-            val view = uris.applyInternal(View.asList())
-            uris.internal.getPipeline.apply(Reify.viewInGlobalWindow(view, uriCoder))
-          }
+        uris.reifyAsListInGlobalWindow
           .map { _ =>
             if (numShards == 1) {
               val src = FileSystems
@@ -495,7 +487,7 @@ package object sparkey extends SparkeyReaderInstances {
 
     override def close(): Unit = sparkeys.values.foreach(_.close())
 
-    override def iterator(): util.Iterator[SparkeyReader.Entry] =
+    override def iterator(): JIterator[SparkeyReader.Entry] =
       sparkeys.values.map(_.iterator.asScala).reduce(_ ++ _).asJava
   }
 

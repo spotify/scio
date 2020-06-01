@@ -1254,6 +1254,81 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   @deprecated("Use readAllAsBytes instead", "0.8.1")
   def readAllBytes(implicit ev: T <:< String): SCollection[Array[Byte]] = readFilesAsBytes
 
+  /**
+   * Pairs each element with the value of the provided [[SideInput]] in the element's window.
+   *
+   * Reify as List:
+   * {{{
+   *  val other: SCollection[Int] = sc.parallelize(Seq(1))
+   *  val coll: SCollection[(Int, Seq[Int])] =
+   *    sc.parallelize(Seq(1, 2))
+   *      .reifySideInputAsValues(other.asListSideInput)
+   * }}}
+   *
+   * Reify as Iterable:
+   * {{{
+   *  val other: SCollection[Int] = sc.parallelize(Seq(1))
+   *  val coll: SCollection[(Int, Iterable[Int])] =
+   *    sc.parallelize(Seq(1, 2))
+   *      .reifySideInputAsValues(other.asIterableSideInput)
+   * }}}
+   *
+   * Reify as Map:
+   * {{{
+   *  val other: SCollection[(Int, Int)] = sc.parallelize(Seq((1, 1)))
+   *  val coll: SCollection[(Int, Map[Int, Int])] =
+   *    sc.parallelize(Seq(1, 2))
+   *      .reifySideInputAsValues(other.asMapSideInput)
+   * }}}
+   *
+   * Reify as Multimap:
+   * {{{
+   *  val other: SCollection[(Int, Int)]  = sc.parallelize(Seq((1, 1)))
+   *  val coll: SCollection[(Int, Map[Int, Iterable[Int]])]  =
+   *    sc.parallelize(Seq(1, 2))
+   *      .reifySideInputAsValues(other.asMultiMapSideInput)
+   * }}}
+   */
+  def reifySideInputAsValues[U: Coder](side: SideInput[U]): SCollection[(T, U)] = {
+    implicit val tc = Coder.beam(internal.getCoder)
+    this.transform(_.withSideInputs(side).map((t, s) => (t, s(side))).toSCollection)
+  }
+
+  /**
+   * Returns an [[SCollection]] consisting of a single `Seq[T]` element.
+   */
+  def reifyAsListInGlobalWindow(implicit coder: Coder[T]): SCollection[Seq[T]] =
+    reifyInGlobalWindow(_.asListSideInput)
+
+  /**
+   * Returns an [[SCollection]] consisting of a single `Iterable[T]` element.
+   */
+  def reifyAsIterableInGlobalWindow(implicit coder: Coder[T]): SCollection[Iterable[T]] =
+    reifyInGlobalWindow(_.asIterableSideInput)
+
+  /**
+   * Returns an [[SCollection]] consisting of a single element, containing the value of the given
+   * side input in the global window.
+   *
+   * Reify as List:
+   * {{{
+   *  val coll: SCollection[Seq[Int]] =
+   *    sc.parallelize(Seq(1, 2)).reifyInGlobalWindow(_.asListSideInput)
+   * }}}
+   *
+   * Can be used to replace patterns like:
+   * {{{
+   *  val coll: SCollection[Iterable[Int]] = sc.parallelize(Seq(1, 2)).groupBy(_ => ())
+   * }}}
+   * where you want to actually get an empty [[Iterable]] even if no data is present.
+   */
+  private[scio] def reifyInGlobalWindow[U: Coder](
+    view: SCollection[T] => SideInput[U]
+  ): SCollection[U] =
+    this.transform(coll =>
+      context.parallelize[Unit](Seq(())).reifySideInputAsValues(view(coll)).values
+    )
+
   // =======================================================================
   // Write operations
   // =======================================================================

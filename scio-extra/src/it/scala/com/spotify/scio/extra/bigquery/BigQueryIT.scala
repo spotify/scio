@@ -16,7 +16,6 @@ import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.WriteDisposition
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-
 object BigQueryIT {
   @AvroType.fromSchema("""{
       | "type":"record",
