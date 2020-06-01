@@ -59,7 +59,9 @@ object Scalac {
     // "-Ywarn-unused:privates", // Warn if a private member is unused.
     "-Ywarn-value-discard", // Warn when non-Unit expression results are unused.
     "-Xmacro-settings:show-coder-fallback=true",
-    "-Ydelambdafy:inline" // Set the strategy used for translating lambdas into JVM code to "inline"
+    "-Ydelambdafy:inline", // Set the strategy used for translating lambdas into JVM code to "inline"
+    "-Ybackend-parallelism",
+    "8"
   )
 
   def scala212settings = Def.setting {
