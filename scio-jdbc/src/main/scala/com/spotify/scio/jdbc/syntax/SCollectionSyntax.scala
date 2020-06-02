@@ -22,7 +22,7 @@ import com.spotify.scio.coders.Coder
 
 import scala.reflect.ClassTag
 import com.spotify.scio.ScioContext
-import com.spotify.scio.jdbc.sharded.{JdbcShardedReadOptions, JdbcShardedSelect}
+import com.spotify.scio.jdbc.sharded.{JdbcShardable, JdbcShardedReadOptions, JdbcShardedSelect}
 import com.spotify.scio.jdbc.{JdbcReadOptions, JdbcSelect}
 
 /** Enhanced version of [[ScioContext]] with JDBC methods. */
@@ -52,9 +52,10 @@ final class JdbcScioContextOps(private val self: ScioContext) extends AnyVal {
    *                    JDBC source per one call to a database. Default value is 100,000. Set to
    *                    -1 to make it unbounded.
    */
-  def jdbcShardedSelect[T: ClassTag: Coder](
-    readOptions: JdbcShardedReadOptions[T]
-  ): SCollection[T] = self.read(JdbcShardedSelect(readOptions))
+  def jdbcShardedSelect[T: ClassTag: Coder, S](
+    readOptions: JdbcShardedReadOptions[T],
+    jdbcShardable: JdbcShardable[S]
+  ): SCollection[T] = self.read(JdbcShardedSelect(readOptions, jdbcShardable))
 
 }
 

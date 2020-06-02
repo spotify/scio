@@ -23,8 +23,10 @@ import com.spotify.scio.io.{EmptyTap, EmptyTapOf, ScioIO, Tap}
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.io.Read
 
-final case class JdbcShardedSelect[T: Coder](readOptions: JdbcShardedReadOptions[T])
-    extends ScioIO[T] {
+final case class JdbcShardedSelect[T: Coder, S](
+  readOptions: JdbcShardedReadOptions[T],
+  jdbcShardable: JdbcShardable[S]
+) extends ScioIO[T] {
   override type ReadP = Unit
   override type WriteP = Nothing
   final override val tapT = EmptyTapOf[T]
@@ -34,7 +36,7 @@ final case class JdbcShardedSelect[T: Coder](readOptions: JdbcShardedReadOptions
   override protected def read(sc: ScioContext, params: ReadP): SCollection[T] = {
 
     val transform = Read.from(
-      new JdbcShardedSource[T](readOptions, CoderMaterializer.beam(sc, Coder[T]), null)
+      new JdbcShardedSource(readOptions, CoderMaterializer.beam(sc, Coder[T]), jdbcShardable)
     )
 
     sc.wrap(sc.applyInternal(transform))

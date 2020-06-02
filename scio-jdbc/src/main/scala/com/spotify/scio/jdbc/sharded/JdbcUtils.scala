@@ -15,6 +15,26 @@
  * under the License.
  */
 
-package com.spotify.scio.jdbc.sharded
+package com.spotify.scio.jdbc
+package sharded
 
-case class Range[A](lowerBound: A, upperBound: A)
+import java.sql.{Connection, DriverManager}
+import org.slf4j.LoggerFactory
+
+private[jdbc] object JdbcUtils {
+
+  private val log = LoggerFactory.getLogger(this.getClass)
+
+  def createConnection(connectionOptions: JdbcConnectionOptions): Connection = {
+    val connection = DriverManager.getConnection(
+      connectionOptions.connectionUrl,
+      connectionOptions.username,
+      connectionOptions.password.get
+    )
+    connection.setAutoCommit(false)
+    log.info("Created connection to [{}]", connectionOptions.connectionUrl)
+
+    connection
+  }
+
+}

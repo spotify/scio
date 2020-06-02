@@ -17,4 +17,19 @@
 
 package com.spotify.scio.jdbc.sharded
 
-case class Range[A](lowerBound: A, upperBound: A)
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.must.Matchers._
+
+class JdbcPrefixShardableTests extends AnyFlatSpec {
+
+  "string prefix shardable" must "correctly partition a range of strings" in {
+
+    val shardable = ShardBy.prefix.of[String](prefixLength = 3)
+    val queries = shardable.partition(Range("aaaaa", "vvvvvv"), 1)
+
+    queries must contain theSameElementsAs (
+      Seq(PrefixShardQuery(""))
+    )
+  }
+
+}
