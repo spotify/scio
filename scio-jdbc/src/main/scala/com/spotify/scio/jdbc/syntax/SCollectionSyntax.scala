@@ -22,7 +22,7 @@ import com.spotify.scio.coders.Coder
 
 import scala.reflect.ClassTag
 import com.spotify.scio.ScioContext
-import com.spotify.scio.jdbc.sharded.{Shard, JdbcShardedReadOptions, JdbcShardedSelect}
+import com.spotify.scio.jdbc.sharded.{JdbcShardedReadOptions, JdbcShardedSelect, Shard}
 import com.spotify.scio.jdbc.{JdbcReadOptions, JdbcSelect}
 
 /** Enhanced version of [[ScioContext]] with JDBC methods. */

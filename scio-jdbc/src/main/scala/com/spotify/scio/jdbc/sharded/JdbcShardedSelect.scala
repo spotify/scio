@@ -24,8 +24,8 @@ import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.io.Read
 
 final case class JdbcShardedSelect[T: Coder, S](
-                                                 readOptions: JdbcShardedReadOptions[T],
-                                                 shard: Shard[S]
+  readOptions: JdbcShardedReadOptions[T],
+  shard: Shard[S]
 ) extends ScioIO[T] {
   override type ReadP = Unit
   override type WriteP = Nothing

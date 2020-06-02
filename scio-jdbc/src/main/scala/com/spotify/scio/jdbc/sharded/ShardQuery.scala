@@ -19,8 +19,8 @@ package com.spotify.scio.jdbc.sharded
 
 sealed trait ShardQuery extends Serializable
 
-final case class RangeShardQuery[T](range: Range[T],
-                                    upperBoundInclusive: Boolean) extends ShardQuery
+final case class RangeShardQuery[T](range: Range[T], upperBoundInclusive: Boolean)
+    extends ShardQuery
 final case class PrefixShardQuery[T](prefix: T) extends ShardQuery
 
 object ShardQuery {

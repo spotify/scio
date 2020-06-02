@@ -29,10 +29,10 @@ import java.util.{List => jList}
 import scala.jdk.CollectionConverters._
 
 final private[jdbc] class JdbcShardedSource[T, S](
-                                                   private val readOptions: JdbcShardedReadOptions[T],
-                                                   coder: BCoder[T],
-                                                   shard: Shard[S],
-                                                   private val query: Option[ShardQuery] = None
+  private val readOptions: JdbcShardedReadOptions[T],
+  coder: BCoder[T],
+  shard: Shard[S],
+  private val query: Option[ShardQuery] = None
 ) extends BoundedSource[T] {
 
   private val ShardBoundsQueryTemplate = "SELECT min(%s) min, max(%s) max FROM %s"
@@ -103,7 +103,7 @@ final private[jdbc] class JdbcShardedSource[T, S](
     }
 
   private class JdbcShardedReader(source: JdbcShardedSource[T, S], query: ShardQuery)
-    extends BoundedSource.BoundedReader[T] {
+      extends BoundedSource.BoundedReader[T] {
     private var connection: Connection = _
     private var resultSet: ResultSet = _
 
