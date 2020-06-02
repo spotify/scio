@@ -20,12 +20,12 @@ package com.spotify.scio.jdbc.sharded
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.must.Matchers._
 
-class JdbcRangeShardableTests extends AnyFlatSpec {
+class JdbcRangeShardTests extends AnyFlatSpec {
 
   "long shardable" must "correctly partition a range of longs" in {
 
-    val shardable = ShardBy.range.of[Long]
-    val queries = shardable.partition(Range(1, 39), 3)
+    val shard = ShardBy.range.of[Long]
+    val queries = shard.partition(Range(1, 39), 3)
 
     queries must contain theSameElementsAs (
       Seq(
@@ -38,8 +38,8 @@ class JdbcRangeShardableTests extends AnyFlatSpec {
 
   "long shardable" must "correctly partition a range of longs into a single partition" in {
 
-    val shardable = ShardBy.range.of[Long]
-    val queries = shardable.partition(Range(1, 39), 1)
+    val shard = ShardBy.range.of[Long]
+    val queries = shard.partition(Range(1, 39), 1)
 
     queries must contain theSameElementsAs (
       Seq(RangeShardQuery(Range(1, 39), upperBoundInclusive = true))

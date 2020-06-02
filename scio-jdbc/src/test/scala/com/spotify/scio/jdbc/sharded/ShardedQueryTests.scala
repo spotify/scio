@@ -26,7 +26,7 @@ class ShardedQueryTests extends AnyFlatSpec {
 
     val shardQuery = RangeShardQuery[Long](Range(1, 9), upperBoundInclusive = false)
 
-    ShardQuery.toSelectStatement(shardQuery)("t", "c") mustBe
+    ShardQuery.toSelectStatement(shardQuery, "t", "c") mustBe
       "SELECT * FROM t WHERE c >= 1 and c < 9"
   }
 
@@ -34,7 +34,7 @@ class ShardedQueryTests extends AnyFlatSpec {
 
     val shardQuery = RangeShardQuery[Long](Range(1, 9), upperBoundInclusive = true)
 
-    ShardQuery.toSelectStatement(shardQuery)("t", "c") mustBe
+    ShardQuery.toSelectStatement(shardQuery, "t", "c") mustBe
       "SELECT * FROM t WHERE c >= 1 and c <= 9"
   }
 
@@ -42,7 +42,7 @@ class ShardedQueryTests extends AnyFlatSpec {
 
     val shardQuery = PrefixShardQuery("abc")
 
-    ShardQuery.toSelectStatement(shardQuery)("t", "c") mustBe
+    ShardQuery.toSelectStatement(shardQuery, "t", "c") mustBe
       "SELECT * FROM t WHERE c LIKE 'abc%'"
   }
 

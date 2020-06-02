@@ -15,9 +15,7 @@
  * under the License.
  */
 
-package com.spotify.scio
-package jdbc
-package sharded
+package com.spotify.scio.jdbc.sharded
 
 import java.sql.Connection
 import java.sql.ResultSet
@@ -31,20 +29,20 @@ import java.util.{List => jList}
 import scala.jdk.CollectionConverters._
 
 final private[jdbc] class JdbcShardedSource[T, S](
-  private val readOptions: JdbcShardedReadOptions[T],
-  coder: BCoder[T],
-  jdbcShardable: JdbcShardable[S],
-  private val query: Option[ShardQuery] = None
+                                                   private val readOptions: JdbcShardedReadOptions[T],
+                                                   coder: BCoder[T],
+                                                   shard: Shard[S],
+                                                   private val query: Option[ShardQuery] = None
 ) extends BoundedSource[T] {
 
-  private val SHARD_BOUNDS_QUERY_TEMPLATE = "SELECT min(%s) min, max(%s) max FROM %s"
+  private val ShardBoundsQueryTemplate = "SELECT min(%s) min, max(%s) max FROM %s"
 
   private val log = LoggerFactory.getLogger(this.getClass)
 
   private def getShardColumnRange: Option[Range[S]] = {
     val connection = JdbcUtils.createConnection(readOptions.connectionOptions)
     try {
-      val query = SHARD_BOUNDS_QUERY_TEMPLATE.format(
+      val query = ShardBoundsQueryTemplate.format(
         readOptions.shardColumn,
         readOptions.shardColumn,
         readOptions.tableName
@@ -55,8 +53,8 @@ final private[jdbc] class JdbcShardedSource[T, S](
       if (rs.next) {
         Some(
           new Range(
-            jdbcShardable.columnValueDecoder(rs, "min"),
-            jdbcShardable.columnValueDecoder(rs, "max")
+            shard.columnValueDecoder(rs, "min"),
+            shard.columnValueDecoder(rs, "max")
           )
         )
       } else {
@@ -78,10 +76,10 @@ final private[jdbc] class JdbcShardedSource[T, S](
       case None =>
         List.empty.asJava
       case Some(range) =>
-        jdbcShardable
+        shard
           .partition(range, readOptions.numShards)
           .map { query =>
-            new JdbcShardedSource(readOptions, coder, jdbcShardable, Some(query))
+            new JdbcShardedSource(readOptions, coder, shard, Some(query))
           }
           .asJava
     }
@@ -104,27 +102,25 @@ final private[jdbc] class JdbcShardedSource[T, S](
         )
     }
 
-  private class JdbcShardedReader(
-    private val source: JdbcShardedSource[T, S],
-    private val query: ShardQuery
-  ) extends BoundedSource.BoundedReader[T] {
+  private class JdbcShardedReader(source: JdbcShardedSource[T, S], query: ShardQuery)
+    extends BoundedSource.BoundedReader[T] {
     private var connection: Connection = _
     private var resultSet: ResultSet = _
 
-    override def start: Boolean = {
+    override def start(): Boolean = {
       connection = JdbcUtils.createConnection(source.readOptions.connectionOptions)
       val statement = connection.createStatement(
         ResultSet.TYPE_FORWARD_ONLY,
         ResultSet.CONCUR_READ_ONLY
       )
 
-      if (source.readOptions.fetchSize == JdbcShardedReadOptions.UnboundedFetchSize) {
+      if (source.readOptions.fetchSize != JdbcShardedReadOptions.UnboundedFetchSize) {
         log.info("Setting a user defined fetch size: [%s]".format(source.readOptions.fetchSize))
         statement.setFetchSize(source.readOptions.fetchSize)
       }
 
       val queryString =
-        ShardQuery.toSelectStatement(query)(readOptions.tableName, readOptions.shardColumn)
+        ShardQuery.toSelectStatement(query, readOptions.tableName, readOptions.shardColumn)
 
       log.info(s"Running a query: [$queryString]")
       resultSet = statement.executeQuery(queryString)

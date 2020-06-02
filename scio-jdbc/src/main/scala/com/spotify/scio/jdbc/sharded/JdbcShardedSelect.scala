@@ -24,8 +24,8 @@ import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.io.Read
 
 final case class JdbcShardedSelect[T: Coder, S](
-  readOptions: JdbcShardedReadOptions[T],
-  jdbcShardable: JdbcShardable[S]
+                                                 readOptions: JdbcShardedReadOptions[T],
+                                                 shard: Shard[S]
 ) extends ScioIO[T] {
   override type ReadP = Unit
   override type WriteP = Nothing
@@ -36,7 +36,7 @@ final case class JdbcShardedSelect[T: Coder, S](
   override protected def read(sc: ScioContext, params: ReadP): SCollection[T] = {
 
     val transform = Read.from(
-      new JdbcShardedSource(readOptions, CoderMaterializer.beam(sc, Coder[T]), jdbcShardable)
+      new JdbcShardedSource(readOptions, CoderMaterializer.beam(sc, Coder[T]), shard)
     )
 
     sc.wrap(sc.applyInternal(transform))

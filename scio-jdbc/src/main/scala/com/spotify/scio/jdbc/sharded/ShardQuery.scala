@@ -19,19 +19,20 @@ package com.spotify.scio.jdbc.sharded
 
 sealed trait ShardQuery extends Serializable
 
-case class RangeShardQuery[T](range: Range[T], upperBoundInclusive: Boolean) extends ShardQuery
-case class PrefixShardQuery[T](prefix: T) extends ShardQuery
+final case class RangeShardQuery[T](range: Range[T],
+                                    upperBoundInclusive: Boolean) extends ShardQuery
+final case class PrefixShardQuery[T](prefix: T) extends ShardQuery
 
 object ShardQuery {
 
-  private val RANGE_QUERY_TEMPLATE = "SELECT * FROM %s WHERE %s >= %s and %s %s %s"
-  private val PREFIX_QUERY_TEMPLATE = "SELECT * FROM %s WHERE %s LIKE '%s%%'"
+  private val RangeQueryTemplate = "SELECT * FROM %s WHERE %s >= %s and %s %s %s"
+  private val PrefixQueryTemplate = "SELECT * FROM %s WHERE %s LIKE '%s%%'"
 
-  def toSelectStatement(shardQuery: ShardQuery)(tableName: String, shardColumn: String): String =
+  def toSelectStatement(shardQuery: ShardQuery, tableName: String, shardColumn: String): String =
     shardQuery match {
       case RangeShardQuery(range, upperBoundInclusive) =>
         val uppBoundOp = if (upperBoundInclusive) "<=" else "<"
-        RANGE_QUERY_TEMPLATE.format(
+        RangeQueryTemplate.format(
           tableName,
           shardColumn,
           range.lowerBound.toString,
@@ -40,7 +41,7 @@ object ShardQuery {
           range.upperBound.toString
         )
       case PrefixShardQuery(prefix: String) =>
-        PREFIX_QUERY_TEMPLATE.format(tableName, shardColumn, prefix)
+        PrefixQueryTemplate.format(tableName, shardColumn, prefix)
       case _ =>
         throw new UnsupportedOperationException("The shard query isn't supported")
     }

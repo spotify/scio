@@ -22,7 +22,7 @@ import com.spotify.scio.coders.Coder
 
 import scala.reflect.ClassTag
 import com.spotify.scio.ScioContext
-import com.spotify.scio.jdbc.sharded.{JdbcShardable, JdbcShardedReadOptions, JdbcShardedSelect}
+import com.spotify.scio.jdbc.sharded.{Shard, JdbcShardedReadOptions, JdbcShardedSelect}
 import com.spotify.scio.jdbc.{JdbcReadOptions, JdbcSelect}
 
 /** Enhanced version of [[ScioContext]] with JDBC methods. */
@@ -51,11 +51,16 @@ final class JdbcScioContextOps(private val self: ScioContext) extends AnyVal {
    *                    fetchSize: number of records to read from the
    *                    JDBC source per one call to a database. Default value is 100,000. Set to
    *                    -1 to make it unbounded.
+   * @param shard An implementation of the [[Shard]] trait which knows how to shard a column of a
+   *              given type S. Example of sharding by a column of type Long:
+   *              {{{
+   *                sc.jdbcShardedSelect(getShardedReadOptions(opts), ShardBy.range.of[Long])
+   *              }}}
    */
-  def jdbcShardedSelect[T: ClassTag: Coder, S](
+  def jdbcShardedSelect[T: Coder, S](
     readOptions: JdbcShardedReadOptions[T],
-    jdbcShardable: JdbcShardable[S]
-  ): SCollection[T] = self.read(JdbcShardedSelect(readOptions, jdbcShardable))
+    shard: Shard[S]
+  ): SCollection[T] = self.read(JdbcShardedSelect(readOptions, shard))
 
 }
 

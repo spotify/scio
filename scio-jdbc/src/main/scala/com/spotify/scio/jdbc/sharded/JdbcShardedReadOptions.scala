@@ -15,11 +15,10 @@
  * under the License.
  */
 
-package com.spotify.scio
-package jdbc
-package sharded
+package com.spotify.scio.jdbc.sharded
 
 import java.sql.ResultSet
+import com.spotify.scio.jdbc.JdbcConnectionOptions
 
 /**
  * A bag of options for the JDBC sharded read.

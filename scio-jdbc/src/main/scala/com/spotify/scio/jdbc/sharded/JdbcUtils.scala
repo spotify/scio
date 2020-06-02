@@ -15,10 +15,11 @@
  * under the License.
  */
 
-package com.spotify.scio.jdbc
-package sharded
+package com.spotify.scio.jdbc.sharded
 
 import java.sql.{Connection, DriverManager}
+
+import com.spotify.scio.jdbc.JdbcConnectionOptions
 import org.slf4j.LoggerFactory
 
 private[jdbc] object JdbcUtils {

@@ -17,4 +17,4 @@
 
 package com.spotify.scio.jdbc.sharded
 
-case class Range[A](lowerBound: A, upperBound: A)
+final case class Range[A](lowerBound: A, upperBound: A)

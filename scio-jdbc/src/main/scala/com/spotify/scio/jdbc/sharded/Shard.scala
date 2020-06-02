@@ -20,7 +20,7 @@ package com.spotify.scio.jdbc.sharded
 import java.sql.ResultSet
 import org.slf4j.LoggerFactory
 
-trait JdbcShardable[T] extends Serializable {
+trait Shard[T] extends Serializable {
 
   def columnValueDecoder(resultSet: ResultSet, columnName: String): T
 
@@ -31,63 +31,54 @@ trait JdbcShardable[T] extends Serializable {
 object ShardBy {
 
   object range {
-    def of[T: RangeJdbcShardable]: JdbcShardable[T] = implicitly[RangeJdbcShardable[T]]
+    def of[T: RangeShard]: Shard[T] = implicitly[RangeShard[T]]
   }
 
   object prefix {
     def of[T](
       prefixLength: Int
-    )(implicit shardeableF: Int => PrefixJdbcShardable[T]): JdbcShardable[T] =
-      shardeableF(prefixLength)
+    )(implicit shardF: Int => PrefixShard[T]): Shard[T] = shardF(prefixLength)
   }
 
 }
 
-object JdbcShardable {
+object Shard {
 
-  implicit val longRangeJdbcShardable: RangeJdbcShardable[Long] = RangeJdbcShardable[Long](
+  implicit val longRangeJdbcShardable: RangeShard[Long] = RangeShard[Long](
     (rs, colName) => rs.getLong(colName),
     (range, numShards) => (range.upperBound - range.lowerBound) / numShards
   )
 
-  implicit val intRangeJdbcShardable: RangeJdbcShardable[Int] = RangeJdbcShardable[Int](
+  implicit val intRangeJdbcShardable: RangeShard[Int] = RangeShard[Int](
     (rs, colName) => rs.getInt(colName),
     (range, numShards) => (range.upperBound - range.lowerBound) / numShards
   )
 
-  implicit val decimalRangeJdbcShardable: RangeJdbcShardable[BigDecimal] =
-    RangeJdbcShardable[BigDecimal](
+  implicit val decimalRangeJdbcShardable: RangeShard[BigDecimal] =
+    RangeShard[BigDecimal](
       (rs, colName) => rs.getBigDecimal(colName),
       (range, numShards) => (range.upperBound - range.lowerBound) / numShards
     )
 
-  implicit val doubleRangeJdbcShardable: RangeJdbcShardable[Double] =
-    RangeJdbcShardable[Double](
+  implicit val doubleRangeJdbcShardable: RangeShard[Double] =
+    RangeShard[Double](
       (rs, colName) => rs.getDouble(colName),
       (range, numShards) => (range.upperBound - range.lowerBound) / numShards
     )
 
-  implicit val floatRangeJdbcShardable: RangeJdbcShardable[Float] =
-    RangeJdbcShardable[Float](
+  implicit val floatRangeJdbcShardable: RangeShard[Float] =
+    RangeShard[Float](
       (rs, colName) => rs.getFloat(colName),
       (range, numShards) => (range.upperBound - range.lowerBound) / numShards
     )
 
-  implicit val stringPrefixJdbcShardable: Int => PrefixJdbcShardable[String] = prefixLength =>
-    new PrefixJdbcShardable[String](
-      (rs, colName) => rs.getString(colName),
-      // TODO: implement the proper string space partitiong, the empty string prefix effectively
-      //  creates only a single shard
-      range => Seq("")
-    )
-
 }
 
-final class RangeJdbcShardable[T](
+final class RangeShard[T](
   decoder: (ResultSet, String) => T,
   partitionLength: (Range[T], Int) => T
 )(implicit numeric: Numeric[T])
-    extends JdbcShardable[T] {
+    extends Shard[T] {
 
   private val log = LoggerFactory.getLogger(this.getClass)
 
@@ -142,17 +133,17 @@ final class RangeJdbcShardable[T](
 
 }
 
-object RangeJdbcShardable {
+object RangeShard {
 
   def apply[T: Numeric](decoder: (ResultSet, String) => T, partitionLength: (Range[T], Int) => T) =
-    new RangeJdbcShardable[T](decoder, partitionLength)
+    new RangeShard[T](decoder, partitionLength)
 
 }
 
-final class PrefixJdbcShardable[T](
+final class PrefixShard[T](
   decoder: (ResultSet, String) => T,
   partitioner: Range[T] => Seq[T]
-) extends JdbcShardable[T] {
+) extends Shard[T] {
 
   def columnValueDecoder(resultSet: ResultSet, columnName: String): T =
     decoder(resultSet, columnName)
