@@ -105,10 +105,6 @@ val tensorFlowVersion = "1.15.0"
 val zoltarVersion = "0.5.6"
 val scalaCollectionCompatVersion = "2.1.6"
 
-def isScala213x = Def.setting {
-  scalaBinaryVersion.value == "2.13"
-}
-
 lazy val mimaSettings = Seq(
   mimaPreviousArtifacts :=
     previousVersion(version.value)
@@ -161,15 +157,8 @@ val commonSettings = Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
   scalaVersion := "2.13.2",
   crossScalaVersions := Seq("2.12.11", scalaVersion.value),
   scalacOptions ++= Scalac.commonsOptions.value,
-  scalacOptions ++= {
-    if (isScala213x.value) {
-      Seq("-Ymacro-annotations", "-Ywarn-unused")
-    } else {
-      Seq()
-    }
-  },
   Compile / doc / scalacOptions --= Seq("-release", "8"),
-  scalacOptions in (Compile, doc) ++= Scalac.compileDocOptions.value,
+  Compile / doc / scalacOptions ++= Scalac.compileDocOptions.value,
   javacOptions ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint:unchecked"),
   javacOptions in (Compile, doc) := Seq("-source", "1.8"),
   // protobuf-lite is an older subset of protobuf-java and causes issues
@@ -336,14 +325,14 @@ lazy val assemblySettings = Seq(
 lazy val macroSettings = Def.settings(
   libraryDependencies += "org.scala-lang" % "scala-reflect" % scalaVersion.value,
   libraryDependencies ++= {
-    if (isScala213x.value) {
-      Seq()
-    } else {
-      Seq(
-        compilerPlugin(
-          ("org.scalamacros" % "paradise" % scalaMacrosVersion).cross(CrossVersion.full)
+    VersionNumber(scalaVersion.value) match {
+      case v if v.matchesSemVer(SemanticSelector("2.12.x")) =>
+        Seq(
+          compilerPlugin(
+            ("org.scalamacros" % "paradise" % scalaMacrosVersion).cross(CrossVersion.full)
+          )
         )
-      )
+      case _ => Nil
     }
   },
   // see MacroSettings.scala
@@ -1091,10 +1080,11 @@ lazy val `scio-repl`: Project = project
     beamSDKIODependencies,
     beamSDKGoogleCloudCoreDependencies,
     libraryDependencies ++= {
-      if (isScala213x.value) {
-        Seq()
-      } else {
-        Seq("org.scalamacros" % "paradise" % scalaMacrosVersion cross CrossVersion.full)
+      VersionNumber(scalaVersion.value) match {
+        case v if v.matchesSemVer(SemanticSelector("2.12.x")) =>
+          Seq("org.scalamacros" % "paradise" % scalaMacrosVersion cross CrossVersion.full)
+        case _ =>
+          Nil
       }
     },
     assemblyJarName in assembly := s"scio-repl-${version.value}.jar"
