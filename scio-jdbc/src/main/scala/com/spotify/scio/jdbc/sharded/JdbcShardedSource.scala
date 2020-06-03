@@ -42,6 +42,19 @@ final private[jdbc] class JdbcShardedSource[T, S](
   private def getShardColumnRange: Option[Range[S]] = {
     val connection = JdbcUtils.createConnection(readOptions.connectionOptions)
     try {
+      if (
+        JdbcUtils
+          .getIndexedColumns(connection, readOptions.tableName)
+          .find(_.equalsIgnoreCase(readOptions.shardColumn))
+          .isEmpty
+      ) {
+
+        throw new UnsupportedOperationException(
+          s"Shard column '${readOptions.shardColumn}' isn't indexed. Sharding would be " +
+            s"inefficient'"
+        )
+      }
+
       val query = ShardBoundsQueryTemplate.format(
         readOptions.shardColumn,
         readOptions.shardColumn,

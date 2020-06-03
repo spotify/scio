@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory
 
 private[jdbc] object JdbcUtils {
 
+  private val IndexInfoTableNameField = "COLUMN_NAME"
   private val log = LoggerFactory.getLogger(this.getClass)
 
   def createConnection(connectionOptions: JdbcConnectionOptions): Connection = {
@@ -36,6 +37,18 @@ private[jdbc] object JdbcUtils {
     log.info("Created connection to [{}]", connectionOptions.connectionUrl)
 
     connection
+  }
+
+  def getIndexedColumns(connection: Connection, tableName: String): Iterator[String] = {
+    val dbMetadata = connection.getMetaData
+
+    val resultSet = dbMetadata.getIndexInfo(null, null, tableName, false, false)
+
+    new Iterator[String] {
+      def hasNext: Boolean = resultSet.next()
+
+      def next(): String = resultSet.getString(IndexInfoTableNameField)
+    }.flatMap(Option(_))
   }
 
 }
