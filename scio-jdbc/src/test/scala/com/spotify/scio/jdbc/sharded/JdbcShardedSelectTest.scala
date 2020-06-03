@@ -28,17 +28,18 @@ object JdbcShardedSelectJob {
   def main(cmdlineArgs: Array[String]): Unit = {
     val (opts, _) = ScioContext.parseArguments[CloudSqlOptions](cmdlineArgs)
     val sc = ScioContext(opts)
-    sc.jdbcShardedSelect(getShardedReadOptions(opts), ShardBy.range.of[Long])
+    sc.jdbcShardedSelect(getShardedReadOptions(opts))
       .map(_ + "J")
       .saveAsTextFile("output")
     sc.run()
     ()
   }
 
-  def getShardedReadOptions(opts: CloudSqlOptions): JdbcShardedReadOptions[String] =
+  def getShardedReadOptions(opts: CloudSqlOptions): JdbcShardedReadOptions[String, Long] =
     JdbcShardedReadOptions(
       connectionOptions = JdbcJob.getConnectionOptions(opts),
       tableName = "test_table",
+      shard = ShardBy.range.of[Long],
       rowMapper = (rs: ResultSet) => rs.getString("id"),
       fetchSize = 100000,
       numShards = 8,
@@ -60,7 +61,7 @@ class JdbcShardedSelectTest extends PipelineSpec {
 
     JobTest[JdbcShardedSelectJob.type]
       .args(args: _*)
-      .input(JdbcShardedSelect(readOpts, ShardBy.range.of[Long]), Seq("a", "b", "c"))
+      .input(JdbcShardedSelect(readOpts), Seq("a", "b", "c"))
       .output(TextIO("output")) { coll =>
         coll should containInAnyOrder(Seq("aJ", "bJ", "cJ"))
       }

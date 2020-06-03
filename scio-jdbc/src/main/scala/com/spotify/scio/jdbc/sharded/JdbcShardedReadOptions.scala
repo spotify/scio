@@ -36,11 +36,19 @@ import com.spotify.scio.jdbc.JdbcConnectionOptions
  *                  (number of workers and threads per worker). But the behavior could be
  *                  controlled with maxNumWorkers and numberOfWorkerHarnessThreads parameters
  *                  (see more details about these parameters here). Defaults to 4
+ * @param shard An implementation of the [[com.spotify.scio.jdbc.sharded.Shard]] trait which
+ *              knows how to shard a column of a type S. Example of sharding by a column of type
+ *              Long:
+ *              {{{
+ *              sc.jdbcShardedSelect(getShardedReadOptions(opts), ShardBy.range
+ *              .of[Long])
+ *              }}}
  */
-final case class JdbcShardedReadOptions[T](
+final case class JdbcShardedReadOptions[T, S](
   connectionOptions: JdbcConnectionOptions,
   tableName: String,
   shardColumn: String,
+  shard: Shard[S],
   rowMapper: ResultSet => T,
   fetchSize: Int = JdbcShardedReadOptions.DefaultFetchSize,
   numShards: Int = JdbcShardedReadOptions.DefaultNumShards

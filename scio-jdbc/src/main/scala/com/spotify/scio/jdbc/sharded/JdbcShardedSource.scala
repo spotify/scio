@@ -29,9 +29,8 @@ import java.util.{List => jList}
 import scala.jdk.CollectionConverters._
 
 final private[jdbc] class JdbcShardedSource[T, S](
-  private val readOptions: JdbcShardedReadOptions[T],
+  private val readOptions: JdbcShardedReadOptions[T, S],
   coder: BCoder[T],
-  shard: Shard[S],
   private val query: Option[ShardQuery] = None
 ) extends BoundedSource[T] {
 
@@ -65,9 +64,9 @@ final private[jdbc] class JdbcShardedSource[T, S](
 
       if (rs.next) {
         Some(
-          new Range(
-            shard.columnValueDecoder(rs, "min"),
-            shard.columnValueDecoder(rs, "max")
+          Range(
+            readOptions.shard.columnValueDecoder(rs, "min"),
+            readOptions.shard.columnValueDecoder(rs, "max")
           )
         )
       } else {
@@ -89,10 +88,10 @@ final private[jdbc] class JdbcShardedSource[T, S](
       case None =>
         List.empty.asJava
       case Some(range) =>
-        shard
+        readOptions.shard
           .partition(range, readOptions.numShards)
           .map { query =>
-            new JdbcShardedSource(readOptions, coder, shard, Some(query))
+            new JdbcShardedSource(readOptions, coder, Some(query))
           }
           .asJava
     }
