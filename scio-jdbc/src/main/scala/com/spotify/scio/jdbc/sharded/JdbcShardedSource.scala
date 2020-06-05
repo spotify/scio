@@ -141,7 +141,7 @@ final private[jdbc] class JdbcShardedSource[T, S](
 
     override def advance: Boolean = resultSet.next
 
-    override def getCurrent: T = source.readOptions.rowMapper.apply(resultSet)
+    override def getCurrent: T = source.readOptions.rowMapper(resultSet)
 
     override def getCurrentTimestamp: Instant = BoundedWindow.TIMESTAMP_MIN_VALUE
 
