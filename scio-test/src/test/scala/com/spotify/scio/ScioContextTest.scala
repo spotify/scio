@@ -234,7 +234,7 @@ class ScioContextTest extends PipelineSpec {
 
     val (opts, _) = ScioContext.parseArguments[Options](
       // test appName will switch ScioContext into test mode
-      Array("--stringValue=foobar", s"--appName=${TestUtil.newTestId()}"),
+      Array("--stringValue=foobar", s"--appName=${TestUtil.newTestId()}", "--project=dummy"),
       withValidation = true
     )
     val sc = ScioContext(opts)
