@@ -31,6 +31,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -91,6 +92,8 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
   // SMB joins have. By adjusting this suggestion we can arrive at a more optimal parallelism.
   static final Double DESIRED_SIZE_BYTES_ADJUSTMENT_FACTOR = 0.5;
 
+  private static final AtomicInteger metricsId = new AtomicInteger(1);
+
   private static final Comparator<byte[]> bytesComparator =
       UnsignedBytes.lexicographicalComparator();
 
@@ -104,6 +107,7 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
   private SourceSpec<FinalKeyT> sourceSpec;
   private final Distribution keyGroupSize;
   private Long estimatedSizeBytes;
+  private final String metricsKey;
 
   public SortedBucketSource(Class<FinalKeyT> finalKeyClass, List<BucketedInput<?, ?>> sources) {
     this(finalKeyClass, sources, TargetParallelism.min());
@@ -114,7 +118,16 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
       List<BucketedInput<?, ?>> sources,
       TargetParallelism targetParallelism) {
     // Initialize with absolute minimal parallelism and allow split() to create parallelism
-    this(finalKeyClass, sources, targetParallelism, 0, 1);
+    this(finalKeyClass, sources, targetParallelism, 0, 1, null);
+  }
+
+  public SortedBucketSource(
+      Class<FinalKeyT> finalKeyClass,
+      List<BucketedInput<?, ?>> sources,
+      TargetParallelism targetParallelism,
+      String metricsKey) {
+    // Initialize with absolute minimal parallelism and allow split() to create parallelism
+    this(finalKeyClass, sources, targetParallelism, 0, 1, metricsKey);
   }
 
   private SortedBucketSource(
@@ -122,14 +135,27 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
       List<BucketedInput<?, ?>> sources,
       TargetParallelism targetParallelism,
       int bucketOffsetId,
-      int effectiveParallelism) {
+      int effectiveParallelism,
+      String metricsKey) {
     this.finalKeyClass = finalKeyClass;
     this.sources = sources;
     this.targetParallelism = targetParallelism;
     this.bucketOffsetId = bucketOffsetId;
     this.effectiveParallelism = effectiveParallelism;
+
+    if (metricsKey == null) {
+      final int nextMetricsId = metricsId.getAndAdd(1);
+      if (nextMetricsId != 1) {
+        metricsKey = "SortedBucketSource{" + nextMetricsId + "}";
+      } else {
+        metricsKey = "SortedBucketSource";
+      }
+    }
+    this.metricsKey = metricsKey;
+
+    LOG.info("Initializing SortedBucketSource with metrics namespace " + metricsKey);
     this.keyGroupSize =
-        Metrics.distribution(SortedBucketSource.class, "SortedBucketSource-KeyGroupSize");
+        Metrics.distribution(SortedBucketSource.class, metricsKey + "-KeyGroupSize");
   }
 
   @VisibleForTesting
@@ -221,7 +247,7 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
         .map(
             i ->
                 new SortedBucketSource<>(
-                    finalKeyClass, sources, targetParallelism, i, effectiveParallelism))
+                    finalKeyClass, sources, targetParallelism, i, effectiveParallelism, metricsKey))
         .collect(Collectors.toList());
   }
 

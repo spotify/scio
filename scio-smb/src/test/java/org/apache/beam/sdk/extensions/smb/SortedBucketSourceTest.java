@@ -674,7 +674,9 @@ public class SortedBucketSourceTest {
     final Map<String, DistributionResult> actualDistributions =
         ImmutableList.copyOf(result.metrics().allMetrics().getDistributions().iterator()).stream()
             .collect(
-                Collectors.toMap(metric -> metric.getName().getName(), MetricResult::getCommitted));
+                Collectors.toMap(
+                    metric -> metric.getName().getName().replaceAll("\\{\\d+}", ""),
+                    MetricResult::getCommitted));
 
     Assert.assertEquals(expectedDistributions, actualDistributions);
   }

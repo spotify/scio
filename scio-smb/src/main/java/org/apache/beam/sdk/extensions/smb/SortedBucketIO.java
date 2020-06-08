@@ -64,7 +64,7 @@ public class SortedBucketIO {
 
     /** Returns a new {@link CoGbk} with the given first sorted-bucket source in {@link Read}. */
     public CoGbk<K> of(Read<?> read) {
-      return new CoGbk<>(finalKeyClass, Collections.singletonList(read), DEFAULT_PARALLELISM);
+      return new CoGbk<>(finalKeyClass, Collections.singletonList(read), DEFAULT_PARALLELISM, null);
     }
   }
 
@@ -75,11 +75,17 @@ public class SortedBucketIO {
     private final Class<K> keyClass;
     private final List<Read<?>> reads;
     private final TargetParallelism targetParallelism;
+    private final String metricsKey;
 
-    private CoGbk(Class<K> keyClass, List<Read<?>> reads, TargetParallelism targetParallelism) {
+    private CoGbk(
+        Class<K> keyClass,
+        List<Read<?>> reads,
+        TargetParallelism targetParallelism,
+        String metricsKey) {
       this.keyClass = keyClass;
       this.reads = reads;
       this.targetParallelism = targetParallelism;
+      this.metricsKey = metricsKey;
     }
 
     /**
@@ -89,11 +95,15 @@ public class SortedBucketIO {
     public CoGbk<K> and(Read<?> read) {
       ImmutableList<Read<?>> newReads =
           ImmutableList.<Read<?>>builder().addAll(reads).add(read).build();
-      return new CoGbk<>(keyClass, newReads, targetParallelism);
+      return new CoGbk<>(keyClass, newReads, targetParallelism, metricsKey);
     }
 
     public CoGbk<K> withTargetParallelism(TargetParallelism targetParallelism) {
-      return new CoGbk<>(keyClass, reads, targetParallelism);
+      return new CoGbk<>(keyClass, reads, targetParallelism, metricsKey);
+    }
+
+    public CoGbk<K> withMetricsKey(String metricsKey) {
+      return new CoGbk<>(keyClass, reads, targetParallelism, metricsKey);
     }
 
     public <V> CoGbkTransform<K, V> to(SortedBucketIO.Write<K, V> write) {
@@ -106,7 +116,7 @@ public class SortedBucketIO {
           reads.stream().map(Read::toBucketedInput).collect(Collectors.toList());
       return input.apply(
           org.apache.beam.sdk.io.Read.from(
-              new SortedBucketSource<>(keyClass, bucketedInputs, targetParallelism)));
+              new SortedBucketSource<>(keyClass, bucketedInputs, targetParallelism, metricsKey)));
     }
   }
 
