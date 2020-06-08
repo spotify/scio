@@ -115,9 +115,11 @@ desired parallelism of the SMB read operation. For a given set of sources, `targ
 set to any number between the least and greatest numbers of buckets among sources. This can be
 dynamically configured using `TargetParallelism.min()` or `TargetParallelism.max()`, which at graph
 construction time will determine the least or greatest amount of parallelism based on sources.
-Alternately, `TargetParallelism.of(Integer value)` can be used to statically configure a custom value.
+Alternately, `TargetParallelism.of(Integer value)` can be used to statically configure a custom value,
+or {@link TargetParallelism#auto()} can be used to let the runner decide how to split the SMB read
+at runtime based on the combined byte size of the inputs.
 
-If no value is specified, SMB read operations will use the minimum parallelism.
+If no value is specified, SMB read operations will use Auto parallelism.
 
 When selecting a target parallelism for your SMB operation, there are tradeoffs to consider:
 
@@ -132,6 +134,8 @@ When selecting a target parallelism for your SMB operation, there are tradeoffs 
     from the replicated sources must be re-hashed to avoid emitting duplicate records.
   - A custom parallelism in the middle of these bounds may be the best balance of speed and
     computing cost.
+  - Auto parallelism is more likely to pick an ideal value for most use cases. When using this option,
+    you can check the worker logs to find out which value was selected.
 
 ## Testing
 Currently, mocking data for SMB transforms is not supported in the `com.spotify.scio.testing.JobTest` framework. See

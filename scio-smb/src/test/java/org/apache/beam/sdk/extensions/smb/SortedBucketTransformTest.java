@@ -23,12 +23,16 @@ import static org.apache.beam.sdk.extensions.smb.TestUtils.fromFolder;
 import java.nio.channels.Channels;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import org.apache.beam.sdk.PipelineResult;
 import org.apache.beam.sdk.extensions.smb.SMBFilenamePolicy.FileAssignment;
 import org.apache.beam.sdk.extensions.smb.SortedBucketTransform.TransformFn;
 import org.apache.beam.sdk.io.FileSystems;
 import org.apache.beam.sdk.metrics.DistributionResult;
+import org.apache.beam.sdk.metrics.MetricResult;
+import org.apache.beam.sdk.testing.PAssert;
 import org.apache.beam.sdk.testing.TestPipeline;
 import org.apache.beam.sdk.transforms.Create;
 import org.apache.beam.sdk.values.KV;
@@ -139,7 +143,7 @@ public class SortedBucketTransformTest {
     Assert.assertEquals(expected, outputs.getValue());
     Assert.assertEquals(outputMetadata, outputs.getKey());
 
-    SortedBucketSourceTest.verifyMetrics(
+    verifyMetrics(
         result,
         ImmutableMap.of(
             "SortedBucketTransform-ElementsWritten", 3L,
@@ -170,7 +174,7 @@ public class SortedBucketTransformTest {
     Assert.assertEquals(expected, outputs.getValue());
     Assert.assertEquals(outputMetadata, outputs.getKey());
 
-    SortedBucketSourceTest.verifyMetrics(
+    verifyMetrics(
         result,
         ImmutableMap.of(
             "SortedBucketTransform-ElementsWritten", 3L,
@@ -198,5 +202,25 @@ public class SortedBucketTransformTest {
         BucketMetadata.from(
             Channels.newInputStream(FileSystems.open(fileAssignment.forMetadata()))),
         outputElements);
+  }
+
+  private static void verifyMetrics(
+      PipelineResult result,
+      Map<String, Long> expectedCounters,
+      Map<String, DistributionResult> expectedDistributions) {
+    final Map<String, Long> actualCounters =
+        ImmutableList.copyOf(result.metrics().allMetrics().getCounters().iterator()).stream()
+            .filter(metric -> !metric.getName().getName().equals(PAssert.SUCCESS_COUNTER))
+            .collect(
+                Collectors.toMap(metric -> metric.getName().getName(), MetricResult::getCommitted));
+
+    Assert.assertEquals(expectedCounters, actualCounters);
+
+    final Map<String, DistributionResult> actualDistributions =
+        ImmutableList.copyOf(result.metrics().allMetrics().getDistributions().iterator()).stream()
+            .collect(
+                Collectors.toMap(metric -> metric.getName().getName(), MetricResult::getCommitted));
+
+    Assert.assertEquals(expectedDistributions, actualDistributions);
   }
 }

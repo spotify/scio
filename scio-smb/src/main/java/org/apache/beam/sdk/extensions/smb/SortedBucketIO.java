@@ -24,7 +24,6 @@ import javax.annotation.Nullable;
 import org.apache.beam.sdk.extensions.smb.BucketMetadata.HashType;
 import org.apache.beam.sdk.extensions.smb.SortedBucketSink.WriteResult;
 import org.apache.beam.sdk.extensions.smb.SortedBucketSource.BucketedInput;
-import org.apache.beam.sdk.extensions.smb.TargetParallelism;
 import org.apache.beam.sdk.extensions.smb.SortedBucketTransform.TransformFn;
 import org.apache.beam.sdk.io.fs.ResourceId;
 import org.apache.beam.sdk.transforms.PTransform;
@@ -48,7 +47,7 @@ public class SortedBucketIO {
   static final int DEFAULT_NUM_SHARDS = 1;
   static final HashType DEFAULT_HASH_TYPE = HashType.MURMUR3_128;
   static final int DEFAULT_SORTER_MEMORY_MB = 1024;
-  static final TargetParallelism DEFAULT_PARALLELISM = TargetParallelism.min();
+  static final TargetParallelism DEFAULT_PARALLELISM = TargetParallelism.auto();
 
   /** Co-groups sorted-bucket sources with the same sort key. */
   public static <FinalKeyT> CoGbkBuilder<FinalKeyT> read(Class<FinalKeyT> finalKeyClass) {
@@ -65,7 +64,7 @@ public class SortedBucketIO {
 
     /** Returns a new {@link CoGbk} with the given first sorted-bucket source in {@link Read}. */
     public CoGbk<K> of(Read<?> read) {
-      return new CoGbk<>(finalKeyClass, Collections.singletonList(read), DEFAULT_PARALLELISM);
+      return new CoGbk<>(finalKeyClass, Collections.singletonList(read), DEFAULT_PARALLELISM, null);
     }
   }
 
@@ -76,11 +75,17 @@ public class SortedBucketIO {
     private final Class<K> keyClass;
     private final List<Read<?>> reads;
     private final TargetParallelism targetParallelism;
+    private final String metricsKey;
 
-    private CoGbk(Class<K> keyClass, List<Read<?>> reads, TargetParallelism targetParallelism) {
+    private CoGbk(
+        Class<K> keyClass,
+        List<Read<?>> reads,
+        TargetParallelism targetParallelism,
+        String metricsKey) {
       this.keyClass = keyClass;
       this.reads = reads;
       this.targetParallelism = targetParallelism;
+      this.metricsKey = metricsKey;
     }
 
     /**
@@ -90,11 +95,15 @@ public class SortedBucketIO {
     public CoGbk<K> and(Read<?> read) {
       ImmutableList<Read<?>> newReads =
           ImmutableList.<Read<?>>builder().addAll(reads).add(read).build();
-      return new CoGbk<>(keyClass, newReads, targetParallelism);
+      return new CoGbk<>(keyClass, newReads, targetParallelism, metricsKey);
     }
 
     public CoGbk<K> withTargetParallelism(TargetParallelism targetParallelism) {
-      return new CoGbk<>(keyClass, reads, targetParallelism);
+      return new CoGbk<>(keyClass, reads, targetParallelism, metricsKey);
+    }
+
+    public CoGbk<K> withMetricsKey(String metricsKey) {
+      return new CoGbk<>(keyClass, reads, targetParallelism, metricsKey);
     }
 
     public <V> CoGbkTransform<K, V> to(SortedBucketIO.Write<K, V> write) {
@@ -103,9 +112,15 @@ public class SortedBucketIO {
 
     @Override
     public PCollection<KV<K, CoGbkResult>> expand(PBegin input) {
-      List<BucketedInput<?, ?>> bucketedInputs =
+      final List<BucketedInput<?, ?>> bucketedInputs =
           reads.stream().map(Read::toBucketedInput).collect(Collectors.toList());
-      return input.apply(new SortedBucketSource<>(keyClass, bucketedInputs, targetParallelism));
+      SortedBucketSource<K> source;
+      if (metricsKey == null) {
+        source = new SortedBucketSource<>(keyClass, bucketedInputs, targetParallelism);
+      } else {
+        source = new SortedBucketSource<>(keyClass, bucketedInputs, targetParallelism, metricsKey);
+      }
+      return input.apply(org.apache.beam.sdk.io.Read.from(source));
     }
   }
 
