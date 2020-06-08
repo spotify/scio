@@ -518,13 +518,9 @@ class ScioContext private[scio] (
         // load TestPipeline dynamically to avoid ClassNotFoundException when running src/main
         // https://issues.apache.org/jira/browse/BEAM-298
         val cls = Class.forName("org.apache.beam.sdk.testing.TestPipeline")
-        // propagate options
-        val opts = PipelineOptionsFactory.create()
-        opts.setStableUniqueNames(options.getStableUniqueNames)
-        opts.setRunner(options.getRunner)
         val tp = cls
           .getMethod("fromOptions", classOf[PipelineOptions])
-          .invoke(null, opts)
+          .invoke(null, options)
           .asInstanceOf[Pipeline]
         // workaround for @Rule enforcement introduced by
         // https://issues.apache.org/jira/browse/BEAM-1205
