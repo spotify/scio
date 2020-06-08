@@ -118,7 +118,7 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
       List<BucketedInput<?, ?>> sources,
       TargetParallelism targetParallelism) {
     // Initialize with absolute minimal parallelism and allow split() to create parallelism
-    this(finalKeyClass, sources, targetParallelism, 0, 1, null);
+    this(finalKeyClass, sources, targetParallelism, 0, 1, getDefaultMetricsKey());
   }
 
   public SortedBucketSource(
@@ -142,20 +142,20 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
     this.targetParallelism = targetParallelism;
     this.bucketOffsetId = bucketOffsetId;
     this.effectiveParallelism = effectiveParallelism;
-
-    if (metricsKey == null) {
-      final int nextMetricsId = metricsId.getAndAdd(1);
-      if (nextMetricsId != 1) {
-        metricsKey = "SortedBucketSource{" + nextMetricsId + "}";
-      } else {
-        metricsKey = "SortedBucketSource";
-      }
-    }
     this.metricsKey = metricsKey;
 
-    LOG.info("Initializing SortedBucketSource with metrics namespace " + metricsKey);
+    LOG.error("Initializing SortedBucketSource with metrics namespace " + metricsKey);
     this.keyGroupSize =
         Metrics.distribution(SortedBucketSource.class, metricsKey + "-KeyGroupSize");
+  }
+
+  private static String getDefaultMetricsKey() {
+    final int nextMetricsId = metricsId.getAndAdd(1);
+    if (nextMetricsId != 1) {
+      return "SortedBucketSource{" + nextMetricsId + "}";
+    } else {
+      return "SortedBucketSource";
+    }
   }
 
   @VisibleForTesting

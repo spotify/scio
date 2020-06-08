@@ -112,11 +112,15 @@ public class SortedBucketIO {
 
     @Override
     public PCollection<KV<K, CoGbkResult>> expand(PBegin input) {
-      List<BucketedInput<?, ?>> bucketedInputs =
+      final List<BucketedInput<?, ?>> bucketedInputs =
           reads.stream().map(Read::toBucketedInput).collect(Collectors.toList());
-      return input.apply(
-          org.apache.beam.sdk.io.Read.from(
-              new SortedBucketSource<>(keyClass, bucketedInputs, targetParallelism, metricsKey)));
+      SortedBucketSource<K> source;
+      if (metricsKey == null) {
+        source = new SortedBucketSource<>(keyClass, bucketedInputs, targetParallelism);
+      } else {
+        source = new SortedBucketSource<>(keyClass, bucketedInputs, targetParallelism, metricsKey);
+      }
+      return input.apply(org.apache.beam.sdk.io.Read.from(source));
     }
   }
 
