@@ -143,8 +143,6 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
     this.bucketOffsetId = bucketOffsetId;
     this.effectiveParallelism = effectiveParallelism;
     this.metricsKey = metricsKey;
-
-    LOG.error("Initializing SortedBucketSource with metrics namespace " + metricsKey);
     this.keyGroupSize =
         Metrics.distribution(SortedBucketSource.class, metricsKey + "-KeyGroupSize");
   }
@@ -185,6 +183,7 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
     super.populateDisplayData(builder);
     builder.add(DisplayData.item("targetParallelism", targetParallelism.toString()));
     builder.add(DisplayData.item("keyClass", finalKeyClass.toString()));
+    builder.add(DisplayData.item("metricsKey", metricsKey));
   }
 
   // `getEstimatedSizeBytes` is called frequently by Dataflow, don't recompute every time
