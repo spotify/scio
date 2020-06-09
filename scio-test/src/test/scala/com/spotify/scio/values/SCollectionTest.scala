@@ -37,6 +37,7 @@ import org.apache.beam.sdk.transforms.windowing.{
 import org.apache.beam.sdk.values.KV
 import org.joda.time.{DateTimeConstants, Duration, Instant}
 
+import scala.collection.mutable
 import scala.jdk.CollectionConverters._
 import com.spotify.scio.coders.Coder
 
@@ -192,6 +193,16 @@ class SCollectionTest extends PipelineSpec {
     }
   }
 
+  it should "support aggregate() with mutation" in {
+    runWithContext { sc =>
+      val p = sc
+        .parallelize(1 to 100)
+        .aggregate(mutable.Buffer.empty[Int])(_.addOne(_), _.addAll(_))
+        .map(_.sorted)
+      p should containSingleValue(mutable.Buffer(1 to 100: _*))
+    }
+  }
+
   it should "support collect" in {
     runWithContext { sc =>
       val records = Seq(
@@ -208,6 +219,16 @@ class SCollectionTest extends PipelineSpec {
     runWithContext { sc =>
       val p = sc.parallelize(1 to 100).combine(_.toDouble)(_ + _)(_ + _)
       p should containSingleValue(5050.0)
+    }
+  }
+
+  it should "support combine() with mutation" in {
+    runWithContext { sc =>
+      val p = sc
+        .parallelize(1 to 100)
+        .combine(mutable.Buffer(_))(_.addOne(_))(_.addAll(_))
+        .map(_.sorted)
+      p should containSingleValue(mutable.Buffer(1 to 100: _*))
     }
   }
 
@@ -288,6 +309,17 @@ class SCollectionTest extends PipelineSpec {
       val r2 = p.fold
       r1 should containSingleValue(5050)
       r2 should containSingleValue(5050)
+    }
+  }
+
+  it should "support fold() with mutation" in {
+    runWithContext { sc =>
+      val p = sc
+        .parallelize(1 to 100)
+        .map(mutable.Buffer(_))
+        .fold(mutable.Buffer.empty)(_.addAll(_))
+        .map(_.sorted)
+      p should containSingleValue(mutable.Buffer(1 to 100: _*))
     }
   }
 

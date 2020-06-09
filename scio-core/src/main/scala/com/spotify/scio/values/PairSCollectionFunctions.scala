@@ -605,7 +605,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * modify and return their first argument instead of creating a new `U`.
    * @group per_key
    */
-  def aggregateByKey[U: Coder](zeroValue: U)(
+  def aggregateByKey[U: Coder](zeroValue: => U)(
     seqOp: (U, V) => U,
     combOp: (U, U) => U
   )(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, U)] =
@@ -662,6 +662,10 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * - `mergeValue`, to merge a `V` into a `C` (e.g., adds it to the end of a list)
    *
    * - `mergeCombiners`, to combine two `C`'s into a single one.
+   *
+   * Both `mergeValue` and `mergeCombiners` are allowed to modify and return their first argument
+   * instead of creating a new `U` to avoid memory allocation.
+   *
    * @group per_key
    */
   def combineByKey[C: Coder](createCombiner: V => C)(
@@ -739,11 +743,14 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
   /**
    * Merge the values for each key using an associative function and a neutral "zero value" which
    * may be added to the result an arbitrary number of times, and must not change the result
-   * (e.g., Nil for list concatenation, 0 for addition, or 1 for multiplication.).
+   * (e.g., Nil for list concatenation, 0 for addition, or 1 for multiplication.). The
+   * function op(t1, t2) is allowed to modify t1 and return it as its result value to avoid object
+   * allocation; however, it should not modify t2.
+   *
    * @group per_key
    */
   def foldByKey(
-    zeroValue: V
+    zeroValue: => V
   )(op: (V, V) => V)(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, V)] =
     this.applyPerKey(Combine.perKey(Functions.aggregateFn(context, zeroValue)(op, op)))(
       kvToTuple
