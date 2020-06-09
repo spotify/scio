@@ -11,7 +11,7 @@ As per [Beam's documentation](https://beam.apache.org/documentation/programming-
 For the most part, coders are used when Beam transfer intermediate data between workers over the network. They may also be used by beam to test instances for equality.
 Anytime you create a `SCollection[T]`, Beam needs to know how to go from an instance of `T` to an array of bytes, and from that array of bytes to an instance of `T`.
 
-The Beam SDK defines class called `Coder` that roughly looks like this:
+The Beam SDK defines a class called `Coder` that roughly looks like this:
 
 ```java
 public abstract class Coder<T> implements Serializable {
