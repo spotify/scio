@@ -28,7 +28,7 @@ import scala.jdk.CollectionConverters._
 object AvroConverters extends ToTableRow with ToTableSchema {
 
   @experimental
-  def toTableRow[T](record: T)(implicit ev: T <:< IndexedRecord): TableRow = {
+  def toTableRow[T <: IndexedRecord](record: T): TableRow = {
     val row = new TableRow
 
     record.getSchema.getFields.asScala.foreach { field =>
