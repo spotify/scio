@@ -39,6 +39,7 @@ import org.joda.time.{DateTimeConstants, Duration, Instant}
 
 import scala.jdk.CollectionConverters._
 import com.spotify.scio.coders.Coder
+import com.spotify.scio.schemas.Schema
 
 class SCollectionTest extends PipelineSpec {
   "SCollection" should "support applyTransform()" in {
@@ -54,6 +55,15 @@ class SCollectionTest extends PipelineSpec {
     def processElement(c: DoFn[Int, KV[Int, String]]#ProcessContext): Unit = {
       val x = c.element()
       c.output(KV.of(x, x.toString))
+    }
+  }
+
+  it should "set schema" in {
+    runWithContext { sc =>
+      val empty = sc.empty[(Int, Int)]
+      empty.keyBy(_._1)
+
+      empty.setSchema(Schema[(Int, Int)])
     }
   }
 
