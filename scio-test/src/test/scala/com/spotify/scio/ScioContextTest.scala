@@ -24,12 +24,16 @@ import com.spotify.scio.metrics.Metrics
 import com.spotify.scio.options.ScioOptions
 import com.spotify.scio.testing.{PipelineSpec, TestValidationOptions}
 import com.spotify.scio.util.ScioUtil
+import com.spotify.scio.testing.TestUtil
 import java.nio.charset.StandardCharsets
 import org.apache.beam.runners.direct.DirectRunner
 import org.apache.beam.sdk.options.{PipelineOptions, PipelineOptionsFactory}
 import org.apache.beam.sdk.testing.PAssert
 import org.apache.beam.sdk.transforms.Create
 import scala.concurrent.duration.Duration
+import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions
+import org.apache.beam.sdk.options.Validation.Required
+
 import scala.jdk.CollectionConverters._
 
 class ScioContextTest extends PipelineSpec {
@@ -221,6 +225,30 @@ class ScioContextTest extends PipelineSpec {
     actualCommitedCounterValue shouldBe Some(0)
   }
 
+  "PipelineOptions" should "propagate" in {
+    trait Options extends DataflowPipelineOptions {
+      @Required
+      def getStringValue: String
+      def setStringValue(value: String): Unit
+    }
+
+    val (opts, _) = ScioContext.parseArguments[Options](
+      // test appName will switch ScioContext into test mode
+      Array("--stringValue=foobar", s"--appName=${TestUtil.newTestId()}", "--project=dummy"),
+      withValidation = true
+    )
+    val sc = ScioContext(opts)
+    val internalOptions =
+      sc.parallelize(Seq(1, 2, 3, 4))
+        .map(_ + 1)
+        .internal
+        .getPipeline()
+        .getOptions()
+        .as(classOf[Options])
+
+    internalOptions.getStringValue shouldBe "foobar"
+  }
+
   it should "#1323: generate unique SCollection names" in {
     val options = PipelineOptionsFactory.create()
     options.setStableUniqueNames(PipelineOptions.CheckEnabled.ERROR)
@@ -232,4 +260,5 @@ class ScioContextTest extends PipelineSpec {
 
     noException shouldBe thrownBy(sc.run())
   }
+
 }
