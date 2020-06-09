@@ -197,7 +197,13 @@ class SCollectionTest extends PipelineSpec {
     runWithContext { sc =>
       val p = sc
         .parallelize(1 to 100)
-        .aggregate(mutable.Buffer.empty[Int])(_.addOne(_), _.addAll(_))
+        .aggregate(mutable.Buffer.empty[Int])((xs, x) => {
+          xs.append(x)
+          xs
+        }, (xs, ys) => {
+          xs.appendAll(ys)
+          xs
+        })
         .map(_.sorted)
       p should containSingleValue(mutable.Buffer(1 to 100: _*))
     }
@@ -226,7 +232,13 @@ class SCollectionTest extends PipelineSpec {
     runWithContext { sc =>
       val p = sc
         .parallelize(1 to 100)
-        .combine(mutable.Buffer(_))(_.addOne(_))(_.addAll(_))
+        .combine(mutable.Buffer(_)) { (xs, x) =>
+          xs.append(x)
+          xs
+        } { (xs, ys) =>
+          xs.appendAll(ys)
+          xs
+        }
         .map(_.sorted)
       p should containSingleValue(mutable.Buffer(1 to 100: _*))
     }
@@ -317,7 +329,10 @@ class SCollectionTest extends PipelineSpec {
       val p = sc
         .parallelize(1 to 100)
         .map(mutable.Buffer(_))
-        .fold(mutable.Buffer.empty)(_.addAll(_))
+        .fold(mutable.Buffer.empty) { (xs, ys) =>
+          xs.appendAll(ys)
+          xs
+        }
         .map(_.sorted)
       p should containSingleValue(mutable.Buffer(1 to 100: _*))
     }
