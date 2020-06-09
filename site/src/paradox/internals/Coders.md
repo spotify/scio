@@ -105,12 +105,12 @@ Scio `Coder` and its implementations simply form an [ADT](https://en.wikipedia.o
 - `Transform`: A Coder implemented by "transforming" another Coder.
 - `Fallback`: A default `Coder`. Used when there is no better option.
 
-There is also a "special" coder called `KVCoder`. It is a specific coder for Key-Value pairs. Internally Beam treats [KV](https://beam.apache.org/releases/javadoc/2.20.0/org/apache/beam/sdk/values/KV.html) differently from other types so Scio needs to do the same.
+There is also a "special" coder called `KVCoder`. It is a specific coder for Key-Value pairs. Internally Beam treats @javadoc[KV](org.apache.beam.sdk.values.KV) differently from other types so Scio needs to do the same.
 
-It is important to note that **Scio's coders are only representations** of those cases but **do not actually implement any serialization logic**. Before the job starts, those coders will be *materialized*, meaning they will be converted to instances of [`org.apache.beam.sdk.coders.Coder`](https://beam.apache.org/releases/javadoc/2.20.0/org/apache/beam/sdk/coders/Coder.html).
+It is important to note that **Scio's coders are only representations** of those cases but **do not actually implement any serialization logic**. Before the job starts, those coders will be *materialized*, meaning they will be converted to instances of @javadoc[`org.apache.beam.sdk.coders.Coder`](org.apache.beam.sdk.coders.Coder).
 Thanks to this technique, Scio can dynamically change the behavior of coders depending on the execution context. For example coders may handle nullable values differently depending on options passed to the job.
 
-[`org.apache.beam.sdk.coders.Coder`](https://beam.apache.org/releases/javadoc/2.20.0/org/apache/beam/sdk/coders/Coder.html) instances on the other hand are the actual implementations of serialization and deserialization logic. Among other thing, each instance of `org.apache.beam.sdk.coders.Coder[T]` defines two methods:
+@javadoc[`org.apache.beam.sdk.coders.Coder`](org.apache.beam.sdk.coders.Coder) instances on the other hand are the actual implementations of serialization and deserialization logic. Among other thing, each instance of `org.apache.beam.sdk.coders.Coder[T]` defines two methods:
 
 ```scala
 class ExampleCoder extends org.apache.beam.sdk.coders.Coder[Example] {
