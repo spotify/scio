@@ -32,6 +32,7 @@ import com.spotify.scio.util.random.{BernoulliSampler, PoissonSampler}
 import com.twitter.algebird.{Aggregator, Monoid, Semigroup}
 import org.apache.avro.file.CodecFactory
 import org.apache.beam.sdk.coders.{Coder => BCoder}
+import org.apache.beam.sdk.schemas.SchemaCoder
 import org.apache.beam.sdk.io.{Compression, FileBasedSink}
 import org.apache.beam.sdk.io.FileIO.ReadMatches.DirectoryTreatment
 import org.apache.beam.sdk.io.FileIO.Write.FileNaming
@@ -140,7 +141,13 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     if (!internal.hasSchema) {
       val (s, to, from) = SchemaMaterializer.materialize(schema)
       val td = TypeDescriptor.of(ScioUtil.classOf[T])
-      context.wrap(internal.setSchema(s, td, to, from))
+      try {
+        context.wrap(internal.setSchema(s, td, to, from))
+      } catch {
+        case _: IllegalStateException =>
+          // Coder has already been set
+          map(identity)(Coder.beam(SchemaCoder.of(s, td, to, from)))
+      }
     } else this
 
   private def ensureSerializable[A](coder: BCoder[A]): Either[Throwable, BCoder[A]] =
