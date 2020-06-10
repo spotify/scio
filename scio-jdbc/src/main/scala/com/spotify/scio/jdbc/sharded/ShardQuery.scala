@@ -19,8 +19,11 @@ package com.spotify.scio.jdbc.sharded
 
 sealed trait ShardQuery extends Serializable
 
-final case class RangeShardQuery[T](range: Range[T], upperBoundInclusive: Boolean)
-    extends ShardQuery
+final case class RangeShardQuery[T](
+  range: Range[T],
+  upperBoundInclusive: Boolean,
+  quoteValues: Boolean
+) extends ShardQuery
 final case class PrefixShardQuery[T](prefix: T) extends ShardQuery
 
 object ShardQuery {
@@ -28,18 +31,28 @@ object ShardQuery {
   private val RangeQueryTemplate = "SELECT * FROM %s WHERE %s >= %s and %s %s %s"
   private val PrefixQueryTemplate = "SELECT * FROM %s WHERE %s LIKE '%s%%'"
 
+  private def toSelectRangeStatement[T](
+    shardQuery: RangeShardQuery[T],
+    tableName: String,
+    shardColumn: String
+  ): String = {
+    def applyQuotes(str: String): String = if (shardQuery.quoteValues) "'" + str + "'" else str
+
+    val uppBoundOp = if (shardQuery.upperBoundInclusive) "<=" else "<"
+    RangeQueryTemplate.format(
+      tableName,
+      shardColumn,
+      applyQuotes(shardQuery.range.lowerBound.toString),
+      shardColumn,
+      uppBoundOp,
+      applyQuotes(shardQuery.range.upperBound.toString)
+    )
+  }
+
   def toSelectStatement(shardQuery: ShardQuery, tableName: String, shardColumn: String): String =
     shardQuery match {
-      case RangeShardQuery(range, upperBoundInclusive) =>
-        val uppBoundOp = if (upperBoundInclusive) "<=" else "<"
-        RangeQueryTemplate.format(
-          tableName,
-          shardColumn,
-          range.lowerBound.toString,
-          shardColumn,
-          uppBoundOp,
-          range.upperBound.toString
-        )
+      case rangeQuery @ RangeShardQuery(_, _, _) =>
+        toSelectRangeStatement(rangeQuery, tableName, shardColumn)
       case PrefixShardQuery(prefix: String) =>
         PrefixQueryTemplate.format(tableName, shardColumn, prefix)
       case _ =>

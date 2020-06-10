@@ -17,6 +17,7 @@
 
 package com.spotify.scio.jdbc.sharded
 
+import com.spotify.scio.jdbc.sharded.StringShard.{HexLowerString, HexUpperString}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.must.Matchers._
 
@@ -24,7 +25,8 @@ class ShardedQueryTests extends AnyFlatSpec {
 
   "toSelectStatement" must "produce the correct statement when upper bound is excluded" in {
 
-    val shardQuery = RangeShardQuery[Long](Range(1, 9), upperBoundInclusive = false)
+    val shardQuery =
+      RangeShardQuery[Long](Range(1, 9), upperBoundInclusive = false, quoteValues = false)
 
     ShardQuery.toSelectStatement(shardQuery, "t", "c") mustBe
       "SELECT * FROM t WHERE c >= 1 and c < 9"
@@ -32,7 +34,8 @@ class ShardedQueryTests extends AnyFlatSpec {
 
   "toSelectStatement" must "produce the correct statement when upper bound is included" in {
 
-    val shardQuery = RangeShardQuery[Long](Range(1, 9), upperBoundInclusive = true)
+    val shardQuery =
+      RangeShardQuery[Long](Range(1, 9), upperBoundInclusive = true, quoteValues = false)
 
     ShardQuery.toSelectStatement(shardQuery, "t", "c") mustBe
       "SELECT * FROM t WHERE c >= 1 and c <= 9"
@@ -44,6 +47,30 @@ class ShardedQueryTests extends AnyFlatSpec {
 
     ShardQuery.toSelectStatement(shardQuery, "t", "c") mustBe
       "SELECT * FROM t WHERE c LIKE 'abc%'"
+  }
+
+  "toSelectStatement" must "produce the correct statement for hex string in upper case" in {
+
+    val shardQuery = RangeShardQuery[HexUpperString](
+      Range(HexUpperString("a"), HexUpperString("f")),
+      upperBoundInclusive = true,
+      quoteValues = true
+    )
+
+    ShardQuery.toSelectStatement(shardQuery, "t", "c") mustBe
+      "SELECT * FROM t WHERE c >= 'A' and c <= 'F'"
+  }
+
+  "toSelectStatement" must "produce the correct statement for hex string in lower case" in {
+
+    val shardQuery = RangeShardQuery[HexLowerString](
+      Range(HexLowerString("a"), HexLowerString("f")),
+      upperBoundInclusive = true,
+      quoteValues = true
+    )
+
+    ShardQuery.toSelectStatement(shardQuery, "t", "c") mustBe
+      "SELECT * FROM t WHERE c >= 'a' and c <= 'f'"
   }
 
 }

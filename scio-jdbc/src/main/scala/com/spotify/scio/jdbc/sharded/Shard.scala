@@ -32,6 +32,11 @@ object ShardBy {
 
   object range {
     def of[T: RangeShard]: Shard[T] = implicitly[RangeShard[T]]
+
+    object string {
+      def of[T <: StringShard: RangeStringShard]: Shard[T] = implicitly[RangeStringShard[T]]
+    }
+
   }
 
   object prefix {
@@ -72,6 +77,15 @@ object Shard {
       (range, numShards) => (range.upperBound - range.lowerBound) / numShards
     )
 
+  implicit val hexUpperStringJdbcShardable: RangeStringShard[StringShard.HexUpperString] =
+    new RangeStringShard[StringShard.HexUpperString]
+
+  implicit val hexLowerStringJdbcShardable: RangeStringShard[StringShard.HexLowerString] =
+    new RangeStringShard[StringShard.HexLowerString]
+
+  implicit val base64StringJdbcShardable: RangeStringShard[StringShard.Base64String] =
+    new RangeStringShard[StringShard.Base64String]
+
 }
 
 final class RangeShard[T](
@@ -80,12 +94,23 @@ final class RangeShard[T](
 )(implicit numeric: Numeric[T])
     extends Shard[T] {
 
-  private val log = LoggerFactory.getLogger(this.getClass)
-
   def columnValueDecoder(resultSet: ResultSet, columnName: String): T =
     decoder(resultSet, columnName)
 
-  def partition(range: Range[T], numShards: Int): Seq[ShardQuery] = {
+  def partition(range: Range[T], numShards: Int): Seq[ShardQuery] =
+    RangeShard.partition(range, numShards, partitionLength)
+
+}
+
+object RangeShard {
+  private val log = LoggerFactory.getLogger(this.getClass)
+
+  def partition[T: Numeric](
+    range: Range[T],
+    numShards: Int,
+    partitionLength: (Range[T], Int) => T
+  ): Seq[RangeShardQuery[T]] = {
+    val numeric = implicitly[Numeric[T]]
 
     require(
       numeric.lt(range.lowerBound, range.upperBound) ||
@@ -114,14 +139,19 @@ final class RangeShard[T](
           else
             numeric.plus(range.lowerBound, numeric.times(numeric.fromInt(idx), partLength))
         if (idx == intPartitionsCount - 1)
-          RangeShardQuery(Range(lowerBound, range.upperBound), upperBoundInclusive = true)
+          RangeShardQuery(
+            Range(lowerBound, range.upperBound),
+            upperBoundInclusive = true,
+            quoteValues = false
+          )
         else
           RangeShardQuery(
             Range(
               lowerBound,
               numeric.plus(range.lowerBound, numeric.times(numeric.fromInt(idx + 1), partLength))
             ),
-            upperBoundInclusive = false
+            upperBoundInclusive = false,
+            quoteValues = false
           )
       }
       .map { query =>
@@ -131,13 +161,37 @@ final class RangeShard[T](
 
   }
 
-}
-
-object RangeShard {
-
   def apply[T: Numeric](decoder: (ResultSet, String) => T, partitionLength: (Range[T], Int) => T) =
     new RangeShard[T](decoder, partitionLength)
 
+}
+
+final class RangeStringShard[T <: StringShard](implicit
+  rangeStringShardCoder: RangeStringShardCoder[T]
+) extends Shard[T] {
+  def columnValueDecoder(resultSet: ResultSet, columnName: String): T =
+    rangeStringShardCoder.lift(resultSet.getString(columnName))
+
+  def partition(range: Range[T], numShards: Int): Seq[ShardQuery] = {
+    val lower = rangeStringShardCoder.decode(range.lowerBound)
+    val upper = rangeStringShardCoder.decode(range.upperBound)
+
+    RangeShard
+      .partition[BigInt](
+        Range(lower, upper),
+        numShards,
+        (rng, nShards) => (rng.upperBound - rng.lowerBound) / nShards
+      )
+      .map { rangeQuery =>
+        rangeQuery.copy(
+          range = Range(
+            rangeStringShardCoder.encode(rangeQuery.range.lowerBound),
+            rangeStringShardCoder.encode(rangeQuery.range.upperBound)
+          ),
+          quoteValues = true
+        )
+      }
+  }
 }
 
 final class PrefixShard[T](

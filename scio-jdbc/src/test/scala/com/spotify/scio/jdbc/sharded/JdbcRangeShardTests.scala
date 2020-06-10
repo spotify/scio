@@ -29,9 +29,9 @@ class JdbcRangeShardTests extends AnyFlatSpec {
 
     queries must contain theSameElementsAs (
       Seq(
-        RangeShardQuery(Range(1, 13), upperBoundInclusive = false),
-        RangeShardQuery(Range(13, 25), upperBoundInclusive = false),
-        RangeShardQuery(Range(25, 39), upperBoundInclusive = true)
+        RangeShardQuery(Range(1, 13), upperBoundInclusive = false, quoteValues = false),
+        RangeShardQuery(Range(13, 25), upperBoundInclusive = false, quoteValues = false),
+        RangeShardQuery(Range(25, 39), upperBoundInclusive = true, quoteValues = false)
       )
     )
   }
@@ -42,7 +42,7 @@ class JdbcRangeShardTests extends AnyFlatSpec {
     val queries = shard.partition(Range(1, 39), 1)
 
     queries must contain theSameElementsAs (
-      Seq(RangeShardQuery(Range(1, 39), upperBoundInclusive = true))
+      Seq(RangeShardQuery(Range(1, 39), upperBoundInclusive = true, quoteValues = false))
     )
   }
 
