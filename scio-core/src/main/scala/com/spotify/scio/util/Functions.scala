@@ -101,7 +101,7 @@ private[scio] object Functions {
 
   def aggregateFn[T: Coder, U: Coder](
     sc: ScioContext,
-    zeroValue: U
+    zeroValue: => U
   )(seqOp: (U, T) => U, combOp: (U, U) => U): BCombineFn[T, (U, JList[T]), U] =
     new CombineFn[T, (U, JList[T]), U] {
       override val vacoder = Coder[(U, JList[T])]

@@ -346,7 +346,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @group transform
    */
   def aggregate[U: Coder](
-    zeroValue: U
+    zeroValue: => U
   )(seqOp: (U, T) => U, combOp: (U, U) => U)(implicit coder: Coder[T]): SCollection[U] =
     this.pApply(Combine.globally(Functions.aggregateFn(context, zeroValue)(seqOp, combOp)))
 
@@ -383,6 +383,10 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * - `mergeValue`, to merge a `T` into a `C` (e.g., adds it to the end of a list)
    *
    * - `mergeCombiners`, to combine two `C`'s into a single one.
+   *
+   * Both `mergeValue` and `mergeCombiners` are allowed to modify and return their first argument
+   * instead of creating a new `U` to avoid memory allocation.
+   *
    * @group transform
    */
   def combine[C: Coder](createCombiner: T => C)(
@@ -486,7 +490,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * allocation; however, it should not modify t2.
    * @group transform
    */
-  def fold(zeroValue: T)(op: (T, T) => T)(implicit coder: Coder[T]): SCollection[T] =
+  def fold(zeroValue: => T)(op: (T, T) => T)(implicit coder: Coder[T]): SCollection[T] =
     this.pApply(Combine.globally(Functions.aggregateFn(context, zeroValue)(op, op)))
 
   /**
