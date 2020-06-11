@@ -38,31 +38,31 @@ object StringShard {
 
 }
 
-trait RangeStringShardCoder[T <: StringShard] extends Serializable {
+trait RangeShardShardCoder[T <: StringShard] extends Serializable {
   def encode(bigInt: BigInt): T
   def decode(str: T): BigInt
   def lift(str: String): T
 }
 
-object RangeStringShardCoder {
+object RangeShardShardCoder {
   import StringShard._
 
-  implicit val hexUpperRangeShardStringCoder: RangeStringShardCoder[HexUpperString] =
-    new RangeStringShardCoder[HexUpperString] {
+  implicit val hexUpperShardRangeStringCoder: RangeShardShardCoder[HexUpperString] =
+    new RangeShardShardCoder[HexUpperString] {
       def encode(bigInt: BigInt): HexUpperString = lift(bigInt.toString(16).toUpperCase)
       def decode(str: HexUpperString): BigInt = BigInt(str.value, 16)
       def lift(str: String): HexUpperString = HexUpperString(str)
     }
 
-  implicit val hexLowerRangeShardStringCoder: RangeStringShardCoder[HexLowerString] =
-    new RangeStringShardCoder[HexLowerString] {
+  implicit val hexLowerShardRangeStringCoder: RangeShardShardCoder[HexLowerString] =
+    new RangeShardShardCoder[HexLowerString] {
       def encode(bigInt: BigInt): HexLowerString = lift(bigInt.toString(16).toLowerCase)
       def decode(str: HexLowerString): BigInt = BigInt(str.value, 16)
       def lift(str: String): HexLowerString = HexLowerString(str)
     }
 
-  implicit val base64RangeShardStringCoder: RangeStringShardCoder[Base64String] =
-    new RangeStringShardCoder[Base64String] {
+  implicit val base64ShardRangeStringCoder: RangeShardShardCoder[Base64String] =
+    new RangeShardShardCoder[Base64String] {
       def encode(bigInt: BigInt): Base64String =
         lift(new String(Base64.encodeInteger(bigInt.bigInteger), StandardCharsets.UTF_8))
       def decode(str: Base64String): BigInt =

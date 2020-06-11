@@ -28,81 +28,69 @@ trait Shard[T] extends Serializable {
 
 }
 
-object ShardBy {
-
-  object range {
-    def of[T: RangeShard]: Shard[T] = implicitly[RangeShard[T]]
-
-    object string {
-      def of[T <: StringShard: RangeStringShard]: Shard[T] = implicitly[RangeStringShard[T]]
-    }
-
-  }
-
-  object prefix {
-    def of[T](
-      prefixLength: Int
-    )(implicit shardF: Int => PrefixShard[T]): Shard[T] = shardF(prefixLength)
-  }
-
-}
+trait RangeShard[T] extends Shard[T]
 
 object Shard {
 
-  implicit val longRangeJdbcShardable: RangeShard[Long] = RangeShard[Long](
+  def range[T: RangeShard]: Shard[T] = implicitly[RangeShard[T]]
+
+  def prefix[T](prefixLength: Int)(implicit shardF: Int => PrefixShard[T]): Shard[T] =
+    shardF(prefixLength)
+
+  implicit val longRangeJdbcShardable: RangeShard[Long] = NumericRangeShard[Long](
     (rs, colName) => rs.getLong(colName),
     (range, numShards) => (range.upperBound - range.lowerBound) / numShards
   )
 
-  implicit val intRangeJdbcShardable: RangeShard[Int] = RangeShard[Int](
+  implicit val intRangeJdbcShardable: RangeShard[Int] = NumericRangeShard[Int](
     (rs, colName) => rs.getInt(colName),
     (range, numShards) => (range.upperBound - range.lowerBound) / numShards
   )
 
   implicit val decimalRangeJdbcShardable: RangeShard[BigDecimal] =
-    RangeShard[BigDecimal](
+    NumericRangeShard[BigDecimal](
       (rs, colName) => rs.getBigDecimal(colName),
       (range, numShards) => (range.upperBound - range.lowerBound) / numShards
     )
 
   implicit val doubleRangeJdbcShardable: RangeShard[Double] =
-    RangeShard[Double](
+    NumericRangeShard[Double](
       (rs, colName) => rs.getDouble(colName),
       (range, numShards) => (range.upperBound - range.lowerBound) / numShards
     )
 
   implicit val floatRangeJdbcShardable: RangeShard[Float] =
-    RangeShard[Float](
+    NumericRangeShard[Float](
       (rs, colName) => rs.getFloat(colName),
       (range, numShards) => (range.upperBound - range.lowerBound) / numShards
     )
 
-  implicit val hexUpperStringJdbcShardable: RangeStringShard[StringShard.HexUpperString] =
+  implicit val hexUpperStringJdbcShardable: RangeShard[StringShard.HexUpperString] =
     new RangeStringShard[StringShard.HexUpperString]
 
-  implicit val hexLowerStringJdbcShardable: RangeStringShard[StringShard.HexLowerString] =
+  implicit val hexLowerStringJdbcShardable: RangeShard[StringShard.HexLowerString] =
     new RangeStringShard[StringShard.HexLowerString]
 
-  implicit val base64StringJdbcShardable: RangeStringShard[StringShard.Base64String] =
+  implicit val base64StringJdbcShardable: RangeShard[StringShard.Base64String] =
     new RangeStringShard[StringShard.Base64String]
 
 }
 
-final class RangeShard[T](
+final class NumericRangeShard[T](
   decoder: (ResultSet, String) => T,
   partitionLength: (Range[T], Int) => T
 )(implicit numeric: Numeric[T])
-    extends Shard[T] {
+    extends RangeShard[T] {
 
   def columnValueDecoder(resultSet: ResultSet, columnName: String): T =
     decoder(resultSet, columnName)
 
   def partition(range: Range[T], numShards: Int): Seq[ShardQuery] =
-    RangeShard.partition(range, numShards, partitionLength)
+    NumericRangeShard.partition(range, numShards, partitionLength)
 
 }
 
-object RangeShard {
+object NumericRangeShard {
   private val log = LoggerFactory.getLogger(this.getClass)
 
   def partition[T: Numeric](
@@ -162,13 +150,13 @@ object RangeShard {
   }
 
   def apply[T: Numeric](decoder: (ResultSet, String) => T, partitionLength: (Range[T], Int) => T) =
-    new RangeShard[T](decoder, partitionLength)
+    new NumericRangeShard[T](decoder, partitionLength)
 
 }
 
 final class RangeStringShard[T <: StringShard](implicit
-  rangeStringShardCoder: RangeStringShardCoder[T]
-) extends Shard[T] {
+  rangeStringShardCoder: RangeShardShardCoder[T]
+) extends RangeShard[T] {
   def columnValueDecoder(resultSet: ResultSet, columnName: String): T =
     rangeStringShardCoder.lift(resultSet.getString(columnName))
 
@@ -176,7 +164,7 @@ final class RangeStringShard[T <: StringShard](implicit
     val lower = rangeStringShardCoder.decode(range.lowerBound)
     val upper = rangeStringShardCoder.decode(range.upperBound)
 
-    RangeShard
+    NumericRangeShard
       .partition[BigInt](
         Range(lower, upper),
         numShards,

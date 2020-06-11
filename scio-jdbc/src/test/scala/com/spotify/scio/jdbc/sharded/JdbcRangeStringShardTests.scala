@@ -25,7 +25,7 @@ class JdbcRangeStringShardTests extends AnyFlatSpec {
 
   "hex upper shardable" must "correctly partition a range of hex strings in the upper case" in {
 
-    val shard = ShardBy.range.string.of[HexUpperString]
+    val shard = Shard.range[HexUpperString]
     val queries = shard.partition(Range(HexUpperString("1"), HexUpperString("27")), 3)
 
     queries must contain theSameElementsAs (
@@ -51,7 +51,7 @@ class JdbcRangeStringShardTests extends AnyFlatSpec {
 
   "base64 shardable" must "correctly partition a range of base64 strings" in {
 
-    val shard = ShardBy.range.string.of[Base64String]
+    val shard = Shard.range[Base64String]
     val queries = shard.partition(Range(Base64String("AQ=="), Base64String("Jw==")), 3)
 
     queries must contain theSameElementsAs (

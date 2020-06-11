@@ -39,7 +39,7 @@ object JdbcShardedSelectJob {
     JdbcShardedReadOptions(
       connectionOptions = JdbcJob.getConnectionOptions(opts),
       tableName = "test_table",
-      shard = ShardBy.range.of[Long],
+      shard = Shard.range[Long],
       rowMapper = (rs: ResultSet) => rs.getString("id"),
       fetchSize = 100000,
       numShards = 8,
