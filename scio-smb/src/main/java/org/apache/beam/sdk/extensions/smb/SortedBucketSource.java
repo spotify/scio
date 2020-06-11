@@ -31,7 +31,11 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Optional;
+import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -44,7 +48,7 @@ import org.apache.beam.sdk.extensions.smb.BucketMetadataUtil.PartitionMetadata;
 import org.apache.beam.sdk.extensions.smb.BucketMetadataUtil.SourceMetadata;
 import org.apache.beam.sdk.io.BoundedSource;
 import org.apache.beam.sdk.io.FileSystems;
-import org.apache.beam.sdk.io.fs.MatchResult.Metadata;
+import org.apache.beam.sdk.io.fs.MatchResult;
 import org.apache.beam.sdk.io.fs.ResourceId;
 import org.apache.beam.sdk.io.fs.ResourceIdCoder;
 import org.apache.beam.sdk.metrics.Distribution;
@@ -190,21 +194,12 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
   private long getOrComputeSizeBytes() throws Exception {
     if (estimatedSizeBytes == null) {
       estimatedSizeBytes =
-          FileSystems.matchResources(
-                  sources.stream()
-                      .flatMap(
-                          s -> s.listFilesForBucket(bucketOffsetId, effectiveParallelism).stream())
-                      .collect(Collectors.toList()))
-              .stream()
-              .flatMap(
-                  matchResult -> {
-                    try {
-                      return matchResult.metadata().stream().map(Metadata::sizeBytes);
-                    } catch (IOException e) {
-                      throw new RuntimeException("Caught exception fetching source metadata", e);
-                    }
-                  })
-              .reduce(0L, Long::sum);
+          sources
+              .parallelStream()
+              .mapToLong(source -> source.getOrSampleByteSize(bucketOffsetId, effectiveParallelism))
+              .sum();
+
+      LOG.error("Estimated byte size is " + estimatedSizeBytes);
     }
 
     return estimatedSizeBytes;
@@ -419,6 +414,8 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
    * @param <V> the type of the values in a bucket
    */
   public static class BucketedInput<K, V> implements Serializable {
+    private static int samplingNumFilesThreshold = 1000;
+
     private TupleTag<V> tupleTag;
     private String filenameSuffix;
     private FileOperations<V> fileOperations;
@@ -473,18 +470,93 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
       return sourceMetadata;
     }
 
-    List<ResourceId> listFilesForBucket(int bucketId, int targetParallelism) {
-      return mapBucketFiles(bucketId, targetParallelism, Function.identity());
+    long getOrSampleByteSize(int bucketId, int targetParallelism) {
+      final AtomicLong totalNumFiles = new AtomicLong(0L);
+      flatmapBucketShardIds(
+          bucketId,
+          targetParallelism,
+          (bucketShardId, metadata) -> {
+            totalNumFiles.incrementAndGet();
+            return Optional.empty();
+          });
+
+      double sampleFraction;
+      if (totalNumFiles.get() > samplingNumFilesThreshold) {
+        sampleFraction = samplingNumFilesThreshold / (totalNumFiles.get() * 1.0);
+      } else {
+        sampleFraction = 1.0;
+      }
+      final Random random = new Random();
+
+      final List<ResourceId> sampledFiles =
+          flatmapBucketShardIds(
+              bucketId,
+              targetParallelism,
+              (bucketShardId, partitionMetadata) -> {
+                if (sampleFraction == 1.0 || random.nextDouble() <= sampleFraction) {
+                  return Optional.of(
+                      partitionMetadata
+                          .getFileAssignment()
+                          .forBucket(
+                              bucketShardId,
+                              partitionMetadata.getNumBuckets(),
+                              partitionMetadata.getNumShards()));
+                } else {
+                  return Optional.empty();
+                }
+              });
+
+      long sampleMultiplier;
+
+      // If sample returned 0 results (unlikely but not impossible with Random()), take at least
+      // one file and adjust sample fraction accordingly.
+      if (sampledFiles.isEmpty()) {
+        final PartitionMetadata sampleMetadata =
+            getPartitionMetadata().entrySet().iterator().next().getValue();
+
+        sampledFiles.add(
+            sampleMetadata
+                .getFileAssignment()
+                .forBucket(
+                    BucketShardId.of(bucketId, 0),
+                    sampleMetadata.getNumBuckets(),
+                    sampleMetadata.getNumShards()));
+
+        sampleMultiplier = totalNumFiles.get();
+      } else {
+        sampleMultiplier = (long) (1 / sampleFraction);
+      }
+
+      long sampledByteSize = 0;
+
+      try {
+        for (MatchResult matchResult : FileSystems.matchResources(sampledFiles)) {
+          if (matchResult.status() == MatchResult.Status.OK && !matchResult.metadata().isEmpty()) {
+            sampledByteSize += matchResult.metadata().get(0).sizeBytes();
+          }
+        }
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+
+      return sampledByteSize * sampleMultiplier;
     }
 
     KeyGroupIterator<byte[], V> createIterator(int bucketId, int targetParallelism) {
       final List<Iterator<V>> iterators =
-          mapBucketFiles(
+          flatmapBucketShardIds(
               bucketId,
               targetParallelism,
-              file -> {
+              (bucketShardId, partitionMetadata) -> {
                 try {
-                  return fileOperations.iterator(file);
+                  return Optional.of(
+                      fileOperations.iterator(
+                          partitionMetadata
+                              .getFileAssignment()
+                              .forBucket(
+                                  bucketShardId,
+                                  partitionMetadata.getNumBuckets(),
+                                  partitionMetadata.getNumShards())));
                 } catch (Exception e) {
                   throw new RuntimeException(e);
                 }
@@ -494,8 +566,10 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
       return new KeyGroupIterator<>(iterators, canonicalMetadata::getKeyBytes, bytesComparator);
     }
 
-    private <T> List<T> mapBucketFiles(
-        int bucketId, int targetParallelism, Function<ResourceId, T> mapFn) {
+    private <T> List<T> flatmapBucketShardIds(
+        int bucketId,
+        int targetParallelism,
+        BiFunction<BucketShardId, PartitionMetadata, Optional<T>> mapFn) {
       final List<T> results = new ArrayList<>();
       getPartitionMetadata()
           .forEach(
@@ -505,11 +579,7 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
 
                 for (int i = (bucketId % numBuckets); i < numBuckets; i += targetParallelism) {
                   for (int j = 0; j < numShards; j++) {
-                    results.add(
-                        mapFn.apply(
-                            partitionMetadata
-                                .getFileAssignment()
-                                .forBucket(BucketShardId.of(i, j), numBuckets, numShards)));
+                    mapFn.apply(BucketShardId.of(i, j), partitionMetadata).ifPresent(results::add);
                   }
                 }
               });
