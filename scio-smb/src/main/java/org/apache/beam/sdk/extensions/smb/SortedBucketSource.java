@@ -199,7 +199,7 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
               .mapToLong(source -> source.getOrSampleByteSize(bucketOffsetId, effectiveParallelism))
               .sum();
 
-      LOG.error("Estimated byte size is " + estimatedSizeBytes);
+      LOG.info("Estimated byte size is " + estimatedSizeBytes);
     }
 
     return estimatedSizeBytes;
