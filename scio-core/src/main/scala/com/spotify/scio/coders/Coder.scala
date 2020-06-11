@@ -259,12 +259,15 @@ final private[scio] case class RecordCoder[T](
   construct: Seq[Any] => T,
   destruct: T => Array[Any]
 ) extends AtomicCoder[T] {
+  private[this] val materializationStackTrace: Array[StackTraceElement] = CoderStackTrace.prepare
+
   @inline def onErrorMsg[A](msg: => String)(f: => A): A =
     try {
       f
     } catch {
       case e: Exception =>
-        throw new RuntimeException(msg, e)
+        // allow Flink memory management, see WrappedBCoder#catching comment.
+        throw CoderStackTrace.append(e, Some(msg), materializationStackTrace)
     }
 
   override def encode(value: T, os: OutputStream): Unit = {

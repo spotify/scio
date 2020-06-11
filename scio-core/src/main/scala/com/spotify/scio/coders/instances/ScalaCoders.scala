@@ -21,7 +21,7 @@ import java.io.{InputStream, OutputStream}
 import java.util
 import java.util.Collections
 
-import com.spotify.scio.coders.Coder
+import com.spotify.scio.coders.{Coder, CoderStackTrace}
 import org.apache.beam.sdk.coders.Coder.NonDeterministicException
 import org.apache.beam.sdk.coders.{Coder => BCoder, _}
 import org.apache.beam.sdk.util.CoderUtils
@@ -52,15 +52,21 @@ private object NothingCoder extends AtomicCoder[Nothing] {
  * performance reasons given that pairs are really common and used in groupBy operations.
  */
 final private class PairCoder[A, B](ac: BCoder[A], bc: BCoder[B]) extends AtomicCoder[(A, B)] {
+  private[this] val materializationStackTrace: Array[StackTraceElement] = CoderStackTrace.prepare
+
   @inline def onErrorMsg[T](msg: => (String, String))(f: => T): T =
     try {
       f
     } catch {
       case e: Exception =>
-        throw new RuntimeException(
-          s"Exception while trying to `${msg._1}` an instance of Tuple2:" +
-            s" Can't decode field ${msg._2}",
-          e
+        // allow Flink memory management, see WrappedBCoder#catching comment.
+        throw CoderStackTrace.append(
+          e,
+          Some(
+            s"Exception while trying to `${msg._1}` an instance" +
+              s" of Tuple2: Can't decode field ${msg._2}"
+          ),
+          materializationStackTrace
         )
     }
 
