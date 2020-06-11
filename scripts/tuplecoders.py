@@ -49,7 +49,7 @@ def tupleFns(out, n):
 def main(out):
     print >> out, textwrap.dedent('''
         /*
-         * Copyright 2016 Spotify AB.
+         * Copyright 2020 Spotify AB.
          *
          * Licensed under the Apache License, Version 2.0 (the "License");
          * you may not use this file except in compliance with the License.
@@ -90,13 +90,6 @@ def main(out):
         tupleFns(out, i)
 
     print >> out, '}'
-    print >> out, textwrap.dedent('''
-        
-        
-        
-        
-        
-        
 
 if __name__ == '__main__':
     main(sys.stdout)
