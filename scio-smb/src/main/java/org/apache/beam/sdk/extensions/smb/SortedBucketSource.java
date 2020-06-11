@@ -142,14 +142,14 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
       int bucketOffsetId,
       int effectiveParallelism,
       String metricsKey) {
-    this.finalKeyClass = finalKeyClass;
-    this.sources = sources;
-    this.targetParallelism = targetParallelism;
-    this.bucketOffsetId = bucketOffsetId;
-    this.effectiveParallelism = effectiveParallelism;
-    this.metricsKey = metricsKey;
-    this.keyGroupSize =
-        Metrics.distribution(SortedBucketSource.class, metricsKey + "-KeyGroupSize");
+    this(
+        finalKeyClass,
+        sources,
+        targetParallelism,
+        bucketOffsetId,
+        effectiveParallelism,
+        metricsKey,
+        null);
   }
 
   private SortedBucketSource(
@@ -159,14 +159,15 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
       int bucketOffsetId,
       int effectiveParallelism,
       String metricsKey,
-      long estimatedSizeBytes) {
-    this(
-        finalKeyClass,
-        sources,
-        targetParallelism,
-        bucketOffsetId,
-        effectiveParallelism,
-        metricsKey);
+      Long estimatedSizeBytes) {
+    this.finalKeyClass = finalKeyClass;
+    this.sources = sources;
+    this.targetParallelism = targetParallelism;
+    this.bucketOffsetId = bucketOffsetId;
+    this.effectiveParallelism = effectiveParallelism;
+    this.metricsKey = metricsKey;
+    this.keyGroupSize =
+        Metrics.distribution(SortedBucketSource.class, metricsKey + "-KeyGroupSize");
     this.estimatedSizeBytes = estimatedSizeBytes;
   }
 
@@ -253,9 +254,9 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
     }
 
     final int effectiveParallelism = parallelism;
+    LOG.info("Parallelism was adjusted to " + effectiveParallelism);
+
     long estSplitSize = getOrComputeSizeBytes() / effectiveParallelism;
-    LOG.info(
-        "Parallelism was adjusted to " + effectiveParallelism + " split size = " + estSplitSize);
 
     return IntStream.range(0, effectiveParallelism)
         .boxed()
