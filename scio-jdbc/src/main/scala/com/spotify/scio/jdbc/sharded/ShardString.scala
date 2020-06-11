@@ -20,32 +20,32 @@ package com.spotify.scio.jdbc.sharded
 import java.nio.charset.StandardCharsets
 import org.apache.commons.codec.binary.Base64
 
-sealed trait StringShard extends Serializable {
+sealed trait ShardString extends Serializable {
   val value: String
 }
 
-object StringShard {
+object ShardString {
 
-  final case class HexUpperString(value: String) extends StringShard {
+  final case class HexUpperString(value: String) extends ShardString {
     override def toString: String = value.toUpperCase
   }
 
-  final case class HexLowerString(value: String) extends StringShard {
+  final case class HexLowerString(value: String) extends ShardString {
     override def toString: String = value.toLowerCase
   }
 
-  final case class Base64String(value: String) extends StringShard
+  final case class Base64String(value: String) extends ShardString
 
 }
 
-trait RangeShardShardCoder[T <: StringShard] extends Serializable {
+trait RangeShardShardCoder[T <: ShardString] extends Serializable {
   def encode(bigInt: BigInt): T
   def decode(str: T): BigInt
   def lift(str: String): T
 }
 
 object RangeShardShardCoder {
-  import StringShard._
+  import ShardString._
 
   implicit val hexUpperShardRangeStringCoder: RangeShardShardCoder[HexUpperString] =
     new RangeShardShardCoder[HexUpperString] {

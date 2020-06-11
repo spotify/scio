@@ -17,7 +17,7 @@
 
 package com.spotify.scio.jdbc.sharded
 
-import com.spotify.scio.jdbc.sharded.StringShard.{HexLowerString, HexUpperString}
+import com.spotify.scio.jdbc.sharded.ShardString.{HexLowerString, HexUpperString}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.must.Matchers._
 

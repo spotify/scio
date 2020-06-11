@@ -65,14 +65,14 @@ object Shard {
       (range, numShards) => (range.upperBound - range.lowerBound) / numShards
     )
 
-  implicit val hexUpperStringJdbcShardable: RangeShard[StringShard.HexUpperString] =
-    new RangeStringShard[StringShard.HexUpperString]
+  implicit val hexUpperStringJdbcShardable: RangeShard[ShardString.HexUpperString] =
+    new RangeStringShard[ShardString.HexUpperString]
 
-  implicit val hexLowerStringJdbcShardable: RangeShard[StringShard.HexLowerString] =
-    new RangeStringShard[StringShard.HexLowerString]
+  implicit val hexLowerStringJdbcShardable: RangeShard[ShardString.HexLowerString] =
+    new RangeStringShard[ShardString.HexLowerString]
 
-  implicit val base64StringJdbcShardable: RangeShard[StringShard.Base64String] =
-    new RangeStringShard[StringShard.Base64String]
+  implicit val base64StringJdbcShardable: RangeShard[ShardString.Base64String] =
+    new RangeStringShard[ShardString.Base64String]
 
 }
 
@@ -154,7 +154,7 @@ object NumericRangeShard {
 
 }
 
-final class RangeStringShard[T <: StringShard](implicit
+final class RangeStringShard[T <: ShardString](implicit
   rangeStringShardCoder: RangeShardShardCoder[T]
 ) extends RangeShard[T] {
   def columnValueDecoder(resultSet: ResultSet, columnName: String): T =

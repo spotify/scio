@@ -19,7 +19,7 @@ package com.spotify.scio.jdbc.sharded
 
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.must.Matchers._
-import StringShard._
+import ShardString._
 
 class JdbcRangeStringShardTests extends AnyFlatSpec {
 
