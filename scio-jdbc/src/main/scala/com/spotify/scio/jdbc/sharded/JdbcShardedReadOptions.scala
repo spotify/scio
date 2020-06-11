@@ -40,8 +40,7 @@ import com.spotify.scio.jdbc.JdbcConnectionOptions
  *              knows how to shard a column of a type S. Example of sharding by a column of type
  *              Long:
  *              {{{
- *              sc.jdbcShardedSelect(getShardedReadOptions(opts), ShardBy.range
- *              .of[Long])
+ *              sc.jdbcShardedSelect(getShardedReadOptions(opts), Shard.range[Long])
  *              }}}
  */
 final case class JdbcShardedReadOptions[T, S](
