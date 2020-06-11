@@ -74,17 +74,7 @@ object SchemaMaterializer {
     record.construct(values)
   }
 
-  private[scio] def decode[A](schema: Type[A])(v: schema.Repr): A =
-    schema match {
-      case Type(t) if t.getTypeName() == BSchema.TypeName.LOGICAL_TYPE =>
-        // XXX: The Beam API is not symetrical.
-        // It will happily convert from InputT to base when creating a Row
-        // but won't do the reverse conversion when reading values from a Row...
-        t.getLogicalType()
-          .asInstanceOf[BSchema.LogicalType[A, Object]]
-          .toInputType(v.asInstanceOf[Object])
-      case _ => v
-    }
+  private[scio] def decode[A](schema: Type[A])(v: schema.Repr): A = v
 
   private def decode[A](schema: OptionType[A])(v: schema.Repr): Option[A] =
     Option(v).map(dispatchDecode(schema.schema))

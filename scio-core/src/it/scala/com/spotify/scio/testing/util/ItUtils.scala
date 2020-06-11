@@ -35,6 +35,8 @@ private[scio] object ItUtils {
   // XXX: Copied from BigQueryClient
   val PROJECT_KEY: String = "bigquery.project"
 
+  val Region = "us-east"
+
   /** Get project for integration test. */
   def project: String =
     if (sys.props(PROJECT_KEY) != null) {

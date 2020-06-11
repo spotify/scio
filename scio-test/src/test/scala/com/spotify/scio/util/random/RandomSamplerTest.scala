@@ -49,7 +49,6 @@ class RandomSamplerTest extends PipelineSpec {
       override def sideInput[U](view: PCollectionView[U]): U = ???
       override def timestamp(): Instant = ???
       override def pane(): PaneInfo = ???
-      override def updateWatermark(watermark: Instant): Unit = ???
       override def getPipelineOptions: PipelineOptions = ???
       override def output(output: T): Unit = buffer.append(output)
       override def output[U](tag: TupleTag[U], output: U): Unit = ???

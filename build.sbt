@@ -34,9 +34,9 @@ val autoServiceVersion = "1.0-rc7"
 val autoValueVersion = "1.7.2"
 val avroVersion = "1.8.2"
 val beamVendorVersion = "0.1"
-val beamVersion = "2.20.0"
+val beamVersion = "2.21.0"
 val bigdataossVersion = "2.0.0"
-val bigQueryStorageVersion = "0.120.1-beta"
+val bigQueryStorageVersion = "0.125.0-beta"
 val bigtableClientVersion = "1.13.0"
 val breezeVersion = "1.0"
 val caffeineVersion = "2.8.4"
@@ -55,19 +55,18 @@ val elasticsearch6Version = "6.8.9"
 val elasticsearch7Version = "7.7.0"
 val featranVersion = "0.6.0"
 val flinkVersion = "1.9.1"
-val gaxVersion = "1.53.0"
+val gaxVersion = "1.54.0"
 val gcsVersion = "1.8.0"
-val bigdataossVesion = "2.1.2"
 val generatedGrpcBetaVersion = "1.9.1"
 val generatedDatastoreProtoVersion = "0.85.0"
-val generatedGrpcGaVersion = "1.83.0"
+val generatedGrpcGaVersion = "1.85.1"
 val googleApiServicesBigQuery = "v2-rev20190917-1.30.3"
 val googleApiServicesDataflow = "v1b3-rev20190927-1.30.3"
 val googleAuthVersion = "0.19.0"
 val googleClientsVersion = "1.30.5"
 val googleCloudSpannerVersion = "1.49.1"
 val googleHttpClientsVersion = "1.34.0"
-val grpcVersion = "1.25.0"
+val grpcVersion = "1.27.2"
 val guavaVersion = "28.2-jre"
 val hadoopVersion = "2.7.7"
 val hamcrestVersion = "2.2"
@@ -1316,7 +1315,7 @@ ThisBuild / dependencyOverrides ++= Seq(
   "com.google.api.grpc" % "proto-google-common-protos" % "1.17.0",
   "com.google.api" % "gax-grpc" % gaxVersion,
   "com.google.api" % "gax" % gaxVersion,
-  "com.google.apis" % "google-api-services-storage" % "v1-rev20181109-1.28.0",
+  "com.google.apis" % "google-api-services-storage" % "v1-rev20191011-1.30.3",
   "com.google.auth" % "google-auth-library-credentials" % googleAuthVersion,
   "com.google.auth" % "google-auth-library-oauth2-http" % googleAuthVersion,
   "com.google.auto.value" % "auto-value-annotations" % autoValueVersion,
