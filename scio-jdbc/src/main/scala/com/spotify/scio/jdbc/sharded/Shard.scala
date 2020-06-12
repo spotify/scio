@@ -155,7 +155,7 @@ object NumericRangeShard {
 }
 
 final class RangeStringShard[T <: ShardString](implicit
-  rangeStringShardCoder: RangeShardShardCoder[T]
+  rangeStringShardCoder: RangeShardStringCoder[T]
 ) extends RangeShard[T] {
   def columnValueDecoder(resultSet: ResultSet, columnName: String): T =
     rangeStringShardCoder.lift(resultSet.getString(columnName))
