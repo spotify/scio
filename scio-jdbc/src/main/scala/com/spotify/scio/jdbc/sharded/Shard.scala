@@ -155,14 +155,14 @@ object NumericRangeShard {
 }
 
 final class RangeStringShard[T <: ShardString](implicit
-  rangeStringShardCoder: RangeShardStringCoder[T]
+  rangeStringShardCodec: RangeShardStringCodec[T]
 ) extends RangeShard[T] {
   def columnValueDecoder(resultSet: ResultSet, columnName: String): T =
-    rangeStringShardCoder.lift(resultSet.getString(columnName))
+    rangeStringShardCodec.lift(resultSet.getString(columnName))
 
   def partition(range: Range[T], numShards: Int): Seq[ShardQuery] = {
-    val lower = rangeStringShardCoder.decode(range.lowerBound)
-    val upper = rangeStringShardCoder.decode(range.upperBound)
+    val lower = rangeStringShardCodec.decode(range.lowerBound)
+    val upper = rangeStringShardCodec.decode(range.upperBound)
 
     NumericRangeShard
       .partition[BigInt](
@@ -173,8 +173,8 @@ final class RangeStringShard[T <: ShardString](implicit
       .map { rangeQuery =>
         rangeQuery.copy(
           range = Range(
-            rangeStringShardCoder.encode(rangeQuery.range.lowerBound),
-            rangeStringShardCoder.encode(rangeQuery.range.upperBound)
+            rangeStringShardCodec.encode(rangeQuery.range.lowerBound),
+            rangeStringShardCodec.encode(rangeQuery.range.upperBound)
           ),
           quoteValues = true
         )
