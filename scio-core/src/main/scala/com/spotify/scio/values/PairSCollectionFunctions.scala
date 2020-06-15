@@ -26,7 +26,7 @@ import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import com.spotify.scio.hash._
 import com.spotify.scio.util._
 import com.spotify.scio.util.random.{BernoulliValueSampler, PoissonValueSampler}
-import com.twitter.algebird.{Aggregator, Monoid, Semigroup}
+import com.twitter.algebird.{Aggregator, Monoid, MonoidAggregator, Semigroup}
 import org.apache.beam.sdk.transforms._
 import org.apache.beam.sdk.values.{KV, PCollection, PCollectionView}
 import org.slf4j.LoggerFactory
@@ -625,9 +625,16 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     aggregator: Aggregator[V, A, U]
   )(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, U)] = self.transform { in =>
     val a = aggregator // defeat closure
-    in.mapValues(a.prepare)
-      .sumByKey(a.semigroup, Coder[K], Coder[A])
-      .mapValues(a.present)
+    a match {
+      case _a: MonoidAggregator[V, A, U] =>
+        in.mapValues(_a.prepare)
+          .foldByKey(_a.monoid, Coder[K], Coder[A])
+          .mapValues(_a.present)
+      case _ =>
+        in.mapValues(a.prepare)
+          .sumByKey(a.semigroup, Coder[K], Coder[A])
+          .mapValues(a.present)
+    }
   }
 
   /**

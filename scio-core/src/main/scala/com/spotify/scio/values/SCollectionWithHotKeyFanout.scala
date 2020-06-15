@@ -21,7 +21,7 @@ import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.util.Functions
 import com.spotify.scio.util.TupleFunctions._
-import com.twitter.algebird.{Aggregator, Monoid, Semigroup}
+import com.twitter.algebird.{Aggregator, Monoid, MonoidAggregator, Semigroup}
 import org.apache.beam.sdk.transforms.Combine.PerKeyWithHotKeyFanout
 import org.apache.beam.sdk.transforms.{Combine, SerializableFunction}
 
@@ -73,9 +73,16 @@ class SCollectionWithHotKeyFanout[K: Coder, V: Coder] private[values] (
   def aggregateByKey[A: Coder, U: Coder](aggregator: Aggregator[V, A, U]): SCollection[(K, U)] =
     self.self.context.wrap(self.self.internal).transform { in =>
       val a = aggregator // defeat closure
-      in.mapValues(a.prepare)
-        .sumByKey(a.semigroup, Coder[K], Coder[A])
-        .mapValues(a.present)
+      a match {
+        case _a: MonoidAggregator[V, A, U] =>
+          in.mapValues(_a.prepare)
+            .foldByKey(_a.monoid, Coder[K], Coder[A])
+            .mapValues(_a.present)
+        case _ =>
+          in.mapValues(a.prepare)
+            .sumByKey(a.semigroup, Coder[K], Coder[A])
+            .mapValues(a.present)
+      }
     }
 
   /** [[PairSCollectionFunctions.combineByKey]] with hot key fanout. */

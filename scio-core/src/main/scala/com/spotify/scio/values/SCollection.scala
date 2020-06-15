@@ -29,7 +29,7 @@ import com.spotify.scio.schemas.{Schema, SchemaMaterializer, To}
 import com.spotify.scio.testing.TestDataManager
 import com.spotify.scio.util._
 import com.spotify.scio.util.random.{BernoulliSampler, PoissonSampler}
-import com.twitter.algebird.{Aggregator, Monoid, Semigroup}
+import com.twitter.algebird.{Aggregator, Monoid, MonoidAggregator, Semigroup}
 import org.apache.avro.file.CodecFactory
 import org.apache.beam.sdk.coders.{Coder => BCoder}
 import org.apache.beam.sdk.schemas.SchemaCoder
@@ -367,7 +367,12 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   def aggregate[A: Coder, U: Coder](aggregator: Aggregator[T, A, U]): SCollection[U] =
     this.transform { in =>
       val a = aggregator // defeat closure
-      in.map(a.prepare).sum(a.semigroup, Coder[A]).map(a.present)
+      a match {
+        case _a: MonoidAggregator[T, A, U] =>
+          in.map(_a.prepare).fold(_a.monoid, Coder[A]).map(_a.present)
+        case _ =>
+          in.map(a.prepare).sum(a.semigroup, Coder[A]).map(a.present)
+      }
     }
 
   /**
