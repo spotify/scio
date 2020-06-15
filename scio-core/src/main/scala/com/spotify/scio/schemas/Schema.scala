@@ -61,6 +61,7 @@ object Schema extends JodaInstances with AvroInstances with LowPrioritySchemaDer
     JavaInstances.javaBeanSchema
   implicit def javaEnumSchema[T <: java.lang.Enum[T]: ClassTag]: Schema[T] =
     JavaInstances.javaEnumSchema
+  implicit def jLocalDate: Type[java.time.LocalDate] = JavaInstances.jLocalDate
 
   implicit val stringSchema: Type[String] = ScalaInstances.stringSchema
   implicit val byteSchema: Type[Byte] = ScalaInstances.byteSchema
