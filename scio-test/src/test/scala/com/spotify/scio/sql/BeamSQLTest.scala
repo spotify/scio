@@ -37,6 +37,7 @@ import scala.jdk.CollectionConverters._
 import com.spotify.scio.avro
 import com.spotify.scio.avro.MessageRecord
 import org.apache.avro.generic.GenericRecord
+import java.time.LocalDate
 
 object Schemas {
   // test logical type support
@@ -102,6 +103,10 @@ object TestData {
   case class UserWithInstant(username: String, created: Instant, dateString: String)
   val usersWithJoda =
     (1 to 10).map(i => UserWithInstant(s"user$i", Instant.now(), "19851026")).toList
+
+  case class UserWithLocalDate(username: String, created: LocalDate, dateString: String)
+  val usersWithLocalDate =
+    (1 to 10).map(i => UserWithLocalDate(s"user$i", LocalDate.now(), "19851026")).toList
 
   class IsOver18UdfFn extends SerializableFunction[Integer, Boolean] {
     override def apply(input: Integer): Boolean = input >= 18
@@ -302,9 +307,11 @@ class BeamSQLTest extends PipelineSpec {
       .queryAs[(String, Instant)]("select username, created from SCOLLECTION")
 
     r should containInAnyOrder(expected)
+  }
 
-    val expectedCast = usersWithJoda.map { u =>
-      (u.username, new DateTime(1985, 10, 26, 0, 0, UTC).toInstant())
+  it should "support cast" in runWithContext { sc =>
+    val expectedCast = usersWithLocalDate.map { u =>
+      (u.username, LocalDate.of(1985, 10, 26))
     }
 
     val query = """
@@ -319,8 +326,8 @@ class BeamSQLTest extends PipelineSpec {
     """.stripMargin
 
     val cast = sc
-      .parallelize(usersWithJoda)
-      .queryAs[(String, Instant)](query)
+      .parallelize(usersWithLocalDate)
+      .queryAs[(String, LocalDate)](query)
 
     cast should containInAnyOrder(expectedCast)
   }

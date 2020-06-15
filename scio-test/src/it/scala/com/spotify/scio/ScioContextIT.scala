@@ -21,13 +21,21 @@ import java.net.URI
 
 import com.spotify.scio.testing.util.ItUtils
 import com.spotify.scio.util.ScioUtil
-import org.apache.beam.runners.dataflow.DataflowRunner
+import org.apache.beam.runners.core.construction.{PipelineTranslation, SdkComponents}
+import org.apache.beam.runners.dataflow.{DataflowPipelineTranslator, DataflowRunner}
 import org.apache.beam.sdk.extensions.gcp.options.GcpOptions
 import org.apache.beam.sdk.io.FileSystems
 import org.apache.beam.sdk.options.{PipelineOptions, PipelineOptionsFactory}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions
+import scala.jdk.CollectionConverters._
+import com.spotify.scio.runners.dataflow.DataflowContext
+import org.apache.beam.runners.dataflow.options.DataflowPipelineWorkerPoolOptions
+import org.apache.beam.runners.dataflow.util.PackageUtil.StagedFile
+import org.apache.beam.model.pipeline.v1.RunnerApi
+import org.apache.beam.runners.core.construction.Environments
+import org.apache.beam.sdk.options.PortablePipelineOptions
 
 class ScioContextIT extends AnyFlatSpec with Matchers {
   "ScioContext" should "have temp location for DataflowRunner" in {
@@ -66,8 +74,6 @@ class ScioContextIT extends AnyFlatSpec with Matchers {
   }
 
   it should "#1734: generate a reasonably sized job graph" in {
-    import org.apache.beam.runners.dataflow.{DataflowPipelineTranslator, DataflowRunner}
-    import org.apache.beam.runners.dataflow.options.DataflowPipelineDebugOptions
     val opts = PipelineOptionsFactory.create()
     opts.setRunner(classOf[DataflowRunner])
     opts.as(classOf[GcpOptions]).setProject(ItUtils.project)
@@ -75,9 +81,23 @@ class ScioContextIT extends AnyFlatSpec with Matchers {
     val sc = ScioContext(opts)
     sc.parallelize(1 to 100)
     val runner = DataflowRunner.fromOptions(sc.options)
-    val packages =
-      sc.options.as(classOf[DataflowPipelineDebugOptions]).getStager().stageDefaultFiles()
-    val jobSpecification = runner.getTranslator.translate(sc.pipeline, runner, packages)
+    val sdkComponents = SdkComponents.create();
+    sdkComponents.registerEnvironment(
+      Environments
+        .createOrGetDefaultEnvironment(opts.as(classOf[PortablePipelineOptions]))
+        .toBuilder()
+        .addAllCapabilities(Environments.getJavaCapabilities())
+        .build()
+    )
+    val pipelineProto = PipelineTranslation.toProto(sc.pipeline, sdkComponents, true)
+    val jobSpecification =
+      runner.getTranslator.translate(
+        sc.pipeline,
+        pipelineProto,
+        sdkComponents,
+        runner,
+        Nil.asJava
+      )
     val newJob = jobSpecification.getJob()
     val graph = DataflowPipelineTranslator.jobToString(newJob)
 
