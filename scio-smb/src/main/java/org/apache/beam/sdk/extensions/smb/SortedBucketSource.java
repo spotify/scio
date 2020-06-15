@@ -442,7 +442,7 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
    * @param <V> the type of the values in a bucket
    */
   public static class BucketedInput<K, V> implements Serializable {
-    private static int samplingNumFilesThreshold = 1000;
+    private static int SAMPLING_NUM_FILES_THRESHOLD = 1000;
 
     private TupleTag<V> tupleTag;
     private String filenameSuffix;
@@ -509,8 +509,8 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
           });
 
       double sampleFraction;
-      if (totalNumFiles.get() > samplingNumFilesThreshold) {
-        sampleFraction = samplingNumFilesThreshold / (totalNumFiles.get() * 1.0);
+      if (totalNumFiles.get() > SAMPLING_NUM_FILES_THRESHOLD) {
+        sampleFraction = SAMPLING_NUM_FILES_THRESHOLD / (totalNumFiles.get() * 1.0);
       } else {
         sampleFraction = 1.0;
       }
