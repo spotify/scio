@@ -315,15 +315,15 @@ class BeamSQLTest extends PipelineSpec {
     }
 
     val query = """
-  | select username,
-  |        cast(
-  |         substring(trim(dateString) from 1 for 4)
-  |           ||'-'
-  |           ||substring(trim(dateString) from 5 for 2)
-  |           ||'-'
-  |           ||substring(trim(dateString) from 7 for 2) as date)
-  |         from SCOLLECTION
-  """.stripMargin
+    | select username,
+    |        cast(
+    |         substring(trim(dateString) from 1 for 4)
+    |           ||'-'
+    |           ||substring(trim(dateString) from 5 for 2)
+    |           ||'-'
+    |           ||substring(trim(dateString) from 7 for 2) as date)
+    |         from SCOLLECTION
+    """.stripMargin
 
     val cast = sc
       .parallelize(usersWithLocalDate)
