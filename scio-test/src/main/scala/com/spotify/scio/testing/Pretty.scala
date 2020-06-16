@@ -69,7 +69,7 @@ object Pretty {
         for {
           f <- x.getSchema().getFields().asScala
         } yield Tree.Infix(renderFieldName(f.name), "=", treeifyAvro(x.get(f.name())))
-      Tree.Apply(x.getClass().getSimpleName(), fs.toIterator)
+      Tree.Apply(x.getClass().getSimpleName(), fs.iterator)
   }
 
   private def treeifyAvro: PartialFunction[Any, Tree] = {

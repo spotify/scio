@@ -232,7 +232,7 @@ private[scio] object Functions {
       private[this] val g = ClosureCleaner.clean(f) // defeat closure
       @ProcessElement
       private[scio] def processElement(c: DoFn[T, U]#ProcessContext): Unit = {
-        val i = g(c.element()).toIterator
+        val i = g(c.element()).iterator
         while (i.hasNext) c.output(i.next())
       }
     }

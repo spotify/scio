@@ -110,7 +110,7 @@ final private[client] class TableOps(client: Client) {
         res += reader.read(null, decoder)
       }
 
-      res.toIterator
+      res.iterator
     }
   }
 

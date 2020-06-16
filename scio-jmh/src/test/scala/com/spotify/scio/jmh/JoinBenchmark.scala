@@ -70,7 +70,7 @@ class JoinBenchmark {
         a <- as.asScala.iterator
         b <- bs.asScala.iterator
       } yield (a, b)
-    val i = xs.toIterator
+    val i = xs.iterator
     while (i.hasNext) c.output(i.next())
   }
 

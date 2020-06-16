@@ -47,7 +47,7 @@ private[scio] object FunctionsWithSideOutput {
       val g = ClosureCleaner.clean(f) // defeat closure
       @ProcessElement
       private[scio] def processElement(c: DoFn[T, U]#ProcessContext): Unit = {
-        val i = g(c.element(), sideOutputContext(c)).toIterator
+        val i = g(c.element(), sideOutputContext(c)).iterator
         while (i.hasNext) c.output(i.next())
       }
     }
