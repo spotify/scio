@@ -6,7 +6,7 @@ object compat {
 
   implicit class ResourceIteratorCompatOps[T](private val underlying: ResourceIterator[T])
       extends AnyVal {
-    def iterator: Iterator[T] = underlying.toIterator
+    def iterator: Iterator[T] = underlying.iterator
   }
 
 }

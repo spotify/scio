@@ -4,6 +4,6 @@ import kantan.csv.CsvReader
 
 final class CsvReaderOps[A](val reader: CsvReader[A]) extends AnyVal {
 
-  def iterator: Iterator[A] = reader.toIterator
+  def iterator: Iterator[A] = reader.iterator
 
 }
