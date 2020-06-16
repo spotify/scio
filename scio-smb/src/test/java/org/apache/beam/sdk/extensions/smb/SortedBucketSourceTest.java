@@ -422,6 +422,8 @@ public class SortedBucketSourceTest {
     final SortedBucketSource source =
         new SortedBucketSource(String.class, inputs, TargetParallelism.auto());
 
+    Assert.assertEquals(180, source.getEstimatedSizeBytes(PipelineOptionsFactory.create()));
+
     final List<SortedBucketSource<String>> splitSources =
         source.split(
             (long) (50 / DESIRED_SIZE_BYTES_ADJUSTMENT_FACTOR), PipelineOptionsFactory.create());

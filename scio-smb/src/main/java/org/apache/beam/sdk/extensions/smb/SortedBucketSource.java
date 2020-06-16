@@ -27,16 +27,18 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
-import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.apache.beam.sdk.coders.Coder;
@@ -48,7 +50,8 @@ import org.apache.beam.sdk.extensions.smb.BucketMetadataUtil.PartitionMetadata;
 import org.apache.beam.sdk.extensions.smb.BucketMetadataUtil.SourceMetadata;
 import org.apache.beam.sdk.io.BoundedSource;
 import org.apache.beam.sdk.io.FileSystems;
-import org.apache.beam.sdk.io.fs.MatchResult;
+import org.apache.beam.sdk.io.fs.MatchResult.Metadata;
+import org.apache.beam.sdk.io.fs.ResolveOptions.StandardResolveOptions;
 import org.apache.beam.sdk.io.fs.ResourceId;
 import org.apache.beam.sdk.io.fs.ResourceIdCoder;
 import org.apache.beam.sdk.metrics.Distribution;
@@ -63,7 +66,6 @@ import org.apache.beam.sdk.transforms.join.UnionCoder;
 import org.apache.beam.sdk.values.KV;
 import org.apache.beam.sdk.values.TupleTag;
 import org.apache.beam.sdk.values.TupleTagList;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Lists;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.primitives.UnsignedBytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -210,21 +212,6 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
     builder.add(DisplayData.item("metricsKey", metricsKey));
   }
 
-  // `getEstimatedSizeBytes` is called frequently by Dataflow, don't recompute every time
-  private long getOrComputeSizeBytes() throws Exception {
-    if (estimatedSizeBytes == null) {
-      estimatedSizeBytes =
-          sources
-              .parallelStream()
-              .mapToLong(source -> source.getOrSampleByteSize(bucketOffsetId, effectiveParallelism))
-              .sum();
-
-      LOG.info("Estimated byte size is " + estimatedSizeBytes);
-    }
-
-    return estimatedSizeBytes;
-  }
-
   @Override
   public List<? extends BoundedSource<KV<FinalKeyT, CoGbkResult>>> split(
       long desiredBundleSizeBytes, PipelineOptions options) throws Exception {
@@ -238,11 +225,12 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
     }
     int parallelism;
 
+    long estSizeBytes = getEstimatedSizeBytes(options);
+
     if (!targetParallelism.isAuto()) {
       parallelism = getOrComputeSourceSpec().getParallelism(targetParallelism);
     } else {
-      int fanout =
-          (int) Math.round(getEstimatedSizeBytes(options) / (desiredBundleSizeBytes * 1.0));
+      int fanout = (int) Math.round(estSizeBytes / (desiredBundleSizeBytes * 1.0));
 
       if (fanout <= 1) {
         LOG.info("Desired byte size is <= total input size, can't split further.");
@@ -256,7 +244,7 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
     final int effectiveParallelism = parallelism;
     LOG.info("Parallelism was adjusted to " + effectiveParallelism);
 
-    long estSplitSize = getOrComputeSizeBytes() / effectiveParallelism;
+    final long estSplitSize = estSizeBytes / effectiveParallelism;
 
     return IntStream.range(0, effectiveParallelism)
         .boxed()
@@ -273,9 +261,17 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
         .collect(Collectors.toList());
   }
 
+  // `getEstimatedSizeBytes` is called frequently by Dataflow, don't recompute every time
   @Override
   public long getEstimatedSizeBytes(PipelineOptions options) throws Exception {
-    return getOrComputeSizeBytes();
+    if (estimatedSizeBytes == null) {
+      estimatedSizeBytes =
+          sources.parallelStream().mapToLong(BucketedInput::getOrSampleByteSize).sum();
+
+      LOG.info("Estimated byte size is " + estimatedSizeBytes);
+    }
+
+    return estimatedSizeBytes;
   }
 
   @Override
@@ -442,7 +438,7 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
    * @param <V> the type of the values in a bucket
    */
   public static class BucketedInput<K, V> implements Serializable {
-    private static int SAMPLING_NUM_FILES_THRESHOLD = 1000;
+    private static final Pattern BUCKET_PATTERN = Pattern.compile("bucket-(\\d+)-of-(\\d+)");
 
     private TupleTag<V> tupleTag;
     private String filenameSuffix;
@@ -498,84 +494,46 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
       return sourceMetadata;
     }
 
-    long getOrSampleByteSize(int bucketId, int targetParallelism) {
-      final AtomicLong totalNumFiles = new AtomicLong(0L);
-      flatmapBucketShardIds(
-          bucketId,
-          targetParallelism,
-          (bucketShardId, metadata) -> {
-            totalNumFiles.incrementAndGet();
-            return Optional.empty();
-          });
-
-      double sampleFraction;
-      if (totalNumFiles.get() > SAMPLING_NUM_FILES_THRESHOLD) {
-        sampleFraction = SAMPLING_NUM_FILES_THRESHOLD / (totalNumFiles.get() * 1.0);
-      } else {
-        sampleFraction = 1.0;
-      }
-      final Random random = new Random();
-
-      final List<ResourceId> sampledFiles =
-          flatmapBucketShardIds(
-              bucketId,
-              targetParallelism,
-              (bucketShardId, partitionMetadata) -> {
-                if (sampleFraction == 1.0 || random.nextDouble() <= sampleFraction) {
-                  return Optional.of(
-                      partitionMetadata
-                          .getFileAssignment()
-                          .forBucket(
-                              bucketShardId,
-                              partitionMetadata.getNumBuckets(),
-                              partitionMetadata.getNumShards()));
-                } else {
-                  return Optional.empty();
+    long getOrSampleByteSize() {
+      return inputDirectories
+          .parallelStream()
+          .mapToLong(
+              dir -> {
+                final List<Metadata> sampledFiles;
+                try {
+                  // Take at most 10 buckets from the directory to sample.
+                  sampledFiles =
+                      FileSystems.match(
+                              dir.resolve("bucket-0000?-*", StandardResolveOptions.RESOLVE_FILE)
+                                  .toString())
+                          .metadata();
+                } catch (IOException e) {
+                  throw new RuntimeException(e);
                 }
-              });
+                int numBuckets = 0;
+                long sampledBytes = 0L;
+                final Set<String> seenBuckets = new HashSet<>();
 
-      long sampleMultiplier;
-
-      // If sample returned 0 results (unlikely but not impossible with Random()), take at least
-      // one file and adjust sample fraction accordingly.
-      if (sampledFiles.isEmpty()) {
-        final PartitionMetadata sampleMetadata =
-            getPartitionMetadata().entrySet().iterator().next().getValue();
-
-        sampledFiles.add(
-            sampleMetadata
-                .getFileAssignment()
-                .forBucket(
-                    BucketShardId.of(bucketId, 0),
-                    sampleMetadata.getNumBuckets(),
-                    sampleMetadata.getNumShards()));
-
-        sampleMultiplier = totalNumFiles.get();
-      } else {
-        sampleMultiplier = (long) (1 / sampleFraction);
-      }
-
-      long sampledByteSize =
-          Lists.partition(sampledFiles, 50)
-              .parallelStream()
-              .mapToLong(
-                  files -> {
-                    long sum = 0L;
-                    try {
-                      for (MatchResult matchResult : FileSystems.matchResources(files)) {
-                        if (matchResult.status() == MatchResult.Status.OK
-                            && !matchResult.metadata().isEmpty()) {
-                          sum += matchResult.metadata().get(0).sizeBytes();
-                        }
-                      }
-                    } catch (IOException e) {
-                      throw new RuntimeException(e);
-                    }
-                    return sum;
-                  })
-              .sum();
-
-      return sampledByteSize * sampleMultiplier;
+                for (Metadata metadata : sampledFiles) {
+                  final Matcher matcher =
+                      BUCKET_PATTERN.matcher(metadata.resourceId().getFilename());
+                  matcher.find();
+                  seenBuckets.add(matcher.group(1));
+                  if (numBuckets == 0) {
+                    numBuckets = Integer.parseInt(matcher.group(2));
+                  }
+                  sampledBytes += metadata.sizeBytes();
+                }
+                if (numBuckets == 0) {
+                  throw new IllegalArgumentException("Directory " + dir + " has no bucket files");
+                }
+                if (seenBuckets.size() < numBuckets) {
+                  return (long) (sampledBytes * (numBuckets / (seenBuckets.size() * 1.0)));
+                } else {
+                  return sampledBytes;
+                }
+              })
+          .sum();
     }
 
     KeyGroupIterator<byte[], V> createIterator(int bucketId, int targetParallelism) {
