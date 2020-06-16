@@ -46,7 +46,7 @@ object Breeze {
       override def plus(l: M[T], r: M[T]): M[T] = add(l, r)
       override def sumOption(xs: TraversableOnce[M[T]]): Option[M[T]] = {
         var s: M[T] = null.asInstanceOf[M[T]]
-        val i = xs.iterator
+        val i = xs.toIterator
         while (i.hasNext) {
           val a = i.next()
           if (s == null) {

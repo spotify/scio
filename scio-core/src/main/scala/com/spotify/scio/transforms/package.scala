@@ -143,7 +143,7 @@ package object transforms {
       new ParallelLimitedFn[T, U](parallelism: Int) {
         val g = ClosureCleaner.clean(f) // defeat closure
         def parallelProcessElement(c: DoFn[T, U]#ProcessContext): Unit = {
-          val i = g(c.element()).iterator
+          val i = g(c.element()).toIterator
           while (i.hasNext) c.output(i.next())
         }
       }
@@ -262,7 +262,7 @@ package object transforms {
         private[scio] def processElement(c: DoFn[T, U]#ProcessContext): Unit = {
           val i =
             try {
-              g(c.element()).iterator
+              g(c.element()).toIterator
             } catch {
               case e: Throwable =>
                 c.output(errorTag, (c.element(), e))

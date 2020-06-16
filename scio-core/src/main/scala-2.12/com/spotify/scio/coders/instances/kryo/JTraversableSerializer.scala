@@ -34,7 +34,7 @@ private[coders] class JTraversableSerializer[T, C <: Traversable[T]](
 )(implicit cbf: CanBuildFrom[C, T, C])
     extends KSerializer[C] {
   override def write(kser: Kryo, out: Output, obj: C): Unit = {
-    val i = obj.iterator
+    val i = obj.toIterator
     val chunked = new OutputChunked(out, bufferSize)
     while (i.hasNext) {
       chunked.writeBoolean(true)
