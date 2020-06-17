@@ -70,7 +70,9 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
 
   /** Get an SCollection for a BigQuery table. */
   def bigQueryTable(table: Table): SCollection[TableRow] =
-    self.read(BigQueryTable(table))
+    self.read(BigQueryTable(table))(
+      BigQueryTable.ReadParam(BigQueryTable.ReadParam.DefaultTemplateCompat)
+    )
 
   /**
    * Get an SCollection for a BigQuery table using the storage API.
@@ -102,7 +104,7 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
    * @param query SQL query
    */
   def bigQueryStorage(query: Query): SCollection[TableRow] =
-    self.read(BigQueryStorageSelect(query))
+    self.read(BigQueryStorageSelect(query))(BigQueryStorageSelect.ReadParam())
 
   def typedBigQuery[T <: HasAnnotation: ClassTag: TypeTag: Coder](): SCollection[T] =
     typedBigQuery(None)
@@ -121,18 +123,18 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
         .map(typedBigQueryStorage(_))
         .getOrElse(typedBigQueryStorage())
     } else {
-      self.read(BigQueryTyped.dynamic[T](newSource))
+      self.read(BigQueryTyped.dynamic[T](newSource))(BigQueryTyped.ReadParam())
     }
   }
 
   def typedBigQueryTable[T: Schema: Coder: ClassTag](table: Table): SCollection[T] =
-    self.read(BigQueryTyped.BeamSchema(table))
+    self.read(BigQueryTyped.BeamSchema(table))(BigQueryTyped.BeamSchema.ReadParam())
 
   def typedBigQueryTable[T: Schema: Coder: ClassTag](
     table: Table,
     parseFn: SchemaAndRecord => T
   ): SCollection[T] =
-    self.read(BigQueryTyped.BeamSchema(table, parseFn))
+    self.read(BigQueryTyped.BeamSchema(table, parseFn))(BigQueryTyped.BeamSchema.ReadParam())
 
   /**
    * Get a typed SCollection for a BigQuery storage API.
@@ -144,7 +146,9 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
   def typedBigQueryStorage[T <: HasAnnotation: ClassTag: TypeTag: Coder](): SCollection[T] = {
     val bqt = BigQueryType[T]
     if (bqt.isQuery) {
-      self.read(BigQueryTyped.StorageQuery[T](Query(bqt.query.get)))
+      self.read(BigQueryTyped.StorageQuery[T](Query(bqt.query.get)))(
+        BigQueryTyped.StorageQuery.ReadParam()
+      )
     } else {
       val table = Table.Spec(bqt.table.get)
       val rr = bqt.rowRestriction

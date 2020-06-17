@@ -74,19 +74,25 @@ final case class BigQueryTaps(self: Taps) {
   private lazy val bqc = BigQuery.defaultInstance()
 
   /** Get a `Future[Tap[TableRow]]` for BigQuery SELECT query. */
-  def bigQuerySelect(sqlQuery: String, flattenResults: Boolean = false): Future[Tap[TableRow]] =
+  def bigQuerySelect(
+    sqlQuery: String,
+    flattenResults: Boolean = false,
+    templateCompat: Boolean = false
+  ): Future[Tap[TableRow]] =
     mkTap(
       s"BigQuery SELECT: $sqlQuery",
       () => isQueryDone(sqlQuery),
-      () => BigQuerySelect(Query(sqlQuery)).tap(BigQuerySelect.ReadParam(flattenResults))
+      () =>
+        BigQuerySelect(Query(sqlQuery))
+          .tap(BigQuerySelect.ReadParam(flattenResults, templateCompat))
     )
 
   /** Get a `Future[Tap[TableRow]]` for BigQuery table. */
-  def bigQueryTable(table: TableReference): Future[Tap[TableRow]] =
+  def bigQueryTable(table: TableReference, templateCompat: Boolean = false): Future[Tap[TableRow]] =
     mkTap(
       s"BigQuery Table: $table",
       () => bqc.tables.exists(table),
-      () => BigQueryTable(Table.Ref(table)).tap(())
+      () => BigQueryTable(Table.Ref(table)).tap(BigQueryTable.ReadParam(templateCompat))
     )
 
   /** Get a `Future[Tap[TableRow]]` for BigQuery table. */
