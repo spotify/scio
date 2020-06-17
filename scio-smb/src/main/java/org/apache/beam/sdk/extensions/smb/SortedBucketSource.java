@@ -27,12 +27,18 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.apache.beam.sdk.coders.Coder;
@@ -45,6 +51,7 @@ import org.apache.beam.sdk.extensions.smb.BucketMetadataUtil.SourceMetadata;
 import org.apache.beam.sdk.io.BoundedSource;
 import org.apache.beam.sdk.io.FileSystems;
 import org.apache.beam.sdk.io.fs.MatchResult.Metadata;
+import org.apache.beam.sdk.io.fs.ResolveOptions.StandardResolveOptions;
 import org.apache.beam.sdk.io.fs.ResourceId;
 import org.apache.beam.sdk.io.fs.ResourceIdCoder;
 import org.apache.beam.sdk.metrics.Distribution;
@@ -110,7 +117,7 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
   private final String metricsKey;
 
   public SortedBucketSource(Class<FinalKeyT> finalKeyClass, List<BucketedInput<?, ?>> sources) {
-    this(finalKeyClass, sources, TargetParallelism.min());
+    this(finalKeyClass, sources, TargetParallelism.auto());
   }
 
   public SortedBucketSource(
@@ -137,6 +144,24 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
       int bucketOffsetId,
       int effectiveParallelism,
       String metricsKey) {
+    this(
+        finalKeyClass,
+        sources,
+        targetParallelism,
+        bucketOffsetId,
+        effectiveParallelism,
+        metricsKey,
+        null);
+  }
+
+  private SortedBucketSource(
+      Class<FinalKeyT> finalKeyClass,
+      List<BucketedInput<?, ?>> sources,
+      TargetParallelism targetParallelism,
+      int bucketOffsetId,
+      int effectiveParallelism,
+      String metricsKey,
+      Long estimatedSizeBytes) {
     this.finalKeyClass = finalKeyClass;
     this.sources = sources;
     this.targetParallelism = targetParallelism;
@@ -145,6 +170,7 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
     this.metricsKey = metricsKey;
     this.keyGroupSize =
         Metrics.distribution(SortedBucketSource.class, metricsKey + "-KeyGroupSize");
+    this.estimatedSizeBytes = estimatedSizeBytes;
   }
 
   private static String getDefaultMetricsKey() {
@@ -186,30 +212,6 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
     builder.add(DisplayData.item("metricsKey", metricsKey));
   }
 
-  // `getEstimatedSizeBytes` is called frequently by Dataflow, don't recompute every time
-  private long getOrComputeSizeBytes() throws Exception {
-    if (estimatedSizeBytes == null) {
-      estimatedSizeBytes =
-          FileSystems.matchResources(
-                  sources.stream()
-                      .flatMap(
-                          s -> s.listFilesForBucket(bucketOffsetId, effectiveParallelism).stream())
-                      .collect(Collectors.toList()))
-              .stream()
-              .flatMap(
-                  matchResult -> {
-                    try {
-                      return matchResult.metadata().stream().map(Metadata::sizeBytes);
-                    } catch (IOException e) {
-                      throw new RuntimeException("Caught exception fetching source metadata", e);
-                    }
-                  })
-              .reduce(0L, Long::sum);
-    }
-
-    return estimatedSizeBytes;
-  }
-
   @Override
   public List<? extends BoundedSource<KV<FinalKeyT, CoGbkResult>>> split(
       long desiredBundleSizeBytes, PipelineOptions options) throws Exception {
@@ -223,11 +225,12 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
     }
     int parallelism;
 
+    long estSizeBytes = getEstimatedSizeBytes(options);
+
     if (!targetParallelism.isAuto()) {
       parallelism = getOrComputeSourceSpec().getParallelism(targetParallelism);
     } else {
-      int fanout =
-          (int) Math.round(getEstimatedSizeBytes(options) / (desiredBundleSizeBytes * 1.0));
+      int fanout = (int) Math.round(estSizeBytes / (desiredBundleSizeBytes * 1.0));
 
       if (fanout <= 1) {
         LOG.info("Desired byte size is <= total input size, can't split further.");
@@ -241,18 +244,34 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
     final int effectiveParallelism = parallelism;
     LOG.info("Parallelism was adjusted to " + effectiveParallelism);
 
+    final long estSplitSize = estSizeBytes / effectiveParallelism;
+
     return IntStream.range(0, effectiveParallelism)
         .boxed()
         .map(
             i ->
                 new SortedBucketSource<>(
-                    finalKeyClass, sources, targetParallelism, i, effectiveParallelism, metricsKey))
+                    finalKeyClass,
+                    sources,
+                    targetParallelism,
+                    i,
+                    effectiveParallelism,
+                    metricsKey,
+                    estSplitSize))
         .collect(Collectors.toList());
   }
 
+  // `getEstimatedSizeBytes` is called frequently by Dataflow, don't recompute every time
   @Override
   public long getEstimatedSizeBytes(PipelineOptions options) throws Exception {
-    return getOrComputeSizeBytes();
+    if (estimatedSizeBytes == null) {
+      estimatedSizeBytes =
+          sources.parallelStream().mapToLong(BucketedInput::getOrSampleByteSize).sum();
+
+      LOG.info("Estimated byte size is " + estimatedSizeBytes);
+    }
+
+    return estimatedSizeBytes;
   }
 
   @Override
@@ -419,6 +438,8 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
    * @param <V> the type of the values in a bucket
    */
   public static class BucketedInput<K, V> implements Serializable {
+    private static final Pattern BUCKET_PATTERN = Pattern.compile("bucket-(\\d+)-of-(\\d+)");
+
     private TupleTag<V> tupleTag;
     private String filenameSuffix;
     private FileOperations<V> fileOperations;
@@ -473,8 +494,46 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
       return sourceMetadata;
     }
 
-    List<ResourceId> listFilesForBucket(int bucketId, int targetParallelism) {
-      return mapBucketFiles(bucketId, targetParallelism, Function.identity());
+    long getOrSampleByteSize() {
+      return inputDirectories
+          .parallelStream()
+          .mapToLong(
+              dir -> {
+                final List<Metadata> sampledFiles;
+                try {
+                  // Take at most 10 buckets from the directory to sample.
+                  sampledFiles =
+                      FileSystems.match(
+                              dir.resolve("bucket-0000?-*", StandardResolveOptions.RESOLVE_FILE)
+                                  .toString())
+                          .metadata();
+                } catch (IOException e) {
+                  throw new RuntimeException(e);
+                }
+                int numBuckets = 0;
+                long sampledBytes = 0L;
+                final Set<String> seenBuckets = new HashSet<>();
+
+                for (Metadata metadata : sampledFiles) {
+                  final Matcher matcher =
+                      BUCKET_PATTERN.matcher(metadata.resourceId().getFilename());
+                  matcher.find();
+                  seenBuckets.add(matcher.group(1));
+                  if (numBuckets == 0) {
+                    numBuckets = Integer.parseInt(matcher.group(2));
+                  }
+                  sampledBytes += metadata.sizeBytes();
+                }
+                if (numBuckets == 0) {
+                  throw new IllegalArgumentException("Directory " + dir + " has no bucket files");
+                }
+                if (seenBuckets.size() < numBuckets) {
+                  return (long) (sampledBytes * (numBuckets / (seenBuckets.size() * 1.0)));
+                } else {
+                  return sampledBytes;
+                }
+              })
+          .sum();
     }
 
     KeyGroupIterator<byte[], V> createIterator(int bucketId, int targetParallelism) {
