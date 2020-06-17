@@ -391,13 +391,10 @@ final private[scio] case class RecordCoder[T](
  *   a Coder is known, use [[Coder.xmap]]
  *
  * - To explicitly use kryo Coder use [[Coder.kryo]]
- *
  */
 sealed trait CoderGrammar {
 
-  /**
-   * Create a ScioCoder from a Beam Coder
-   */
+  /** Create a ScioCoder from a Beam Coder */
   def beam[T](beam: BCoder[T]): Coder[T] =
     Beam(beam)
   def kv[K, V](koder: Coder[K], voder: Coder[V]): Coder[KV[K, V]] =

@@ -87,7 +87,8 @@ object ScioKryoRegistrar {
   private val logger = LoggerFactory.getLogger(this.getClass)
 }
 
-/** serializers we've written in Scio and want to add to Kryo serialization
+/**
+ * serializers we've written in Scio and want to add to Kryo serialization
  * @see com.spotify.scio.coders.instances.serializers */
 final private class ScioKryoRegistrar extends IKryoRegistrar {
   import ScioKryoRegistrar.logger

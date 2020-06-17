@@ -1259,9 +1259,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       this.covary_[String].applyTransform(read)
     }
 
-  /**
-   * Read files as byte arrays represented by elements of this [[SCollection]] as file patterns.
-   */
+  /** Read files as byte arrays represented by elements of this [[SCollection]] as file patterns. */
   @deprecated("Use readAllAsBytes instead", "0.8.1")
   def readAllBytes(implicit ev: T <:< String): SCollection[Array[Byte]] = readFilesAsBytes
 
@@ -1305,15 +1303,11 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     this.transform(_.withSideInputs(side).map((t, s) => (t, s(side))).toSCollection)
   }
 
-  /**
-   * Returns an [[SCollection]] consisting of a single `Seq[T]` element.
-   */
+  /** Returns an [[SCollection]] consisting of a single `Seq[T]` element. */
   def reifyAsListInGlobalWindow(implicit coder: Coder[T]): SCollection[Seq[T]] =
     reifyInGlobalWindow(_.asListSideInput)
 
-  /**
-   * Returns an [[SCollection]] consisting of a single `Iterable[T]` element.
-   */
+  /** Returns an [[SCollection]] consisting of a single `Iterable[T]` element. */
   def reifyAsIterableInGlobalWindow(implicit coder: Coder[T]): SCollection[Iterable[T]] =
     reifyInGlobalWindow(_.asIterableSideInput)
 

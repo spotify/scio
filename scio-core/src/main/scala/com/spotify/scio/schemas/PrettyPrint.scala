@@ -32,26 +32,25 @@ private[scio] object PrettyPrint {
 
   private def printContent(fs: List[BSchema.Field], prefix: String = ""): String =
     fs.map { f =>
-        val nullable = if (f.getType.getNullable) "YES" else "NO"
-        val `type` = f.getType
-        val typename =
-          `type`.getTypeName match {
-            case BSchema.TypeName.ARRAY =>
-              s"${`type`.getCollectionElementType.getTypeName}[]"
-            case BSchema.TypeName.LOGICAL_TYPE =>
-              `type`.getLogicalType().getIdentifier()
-            case t => t
-          }
-        val out =
-          f"│ ${prefix + f.getName}%-40s │ $typename%-20s │ $nullable%-8s │%n"
-        val underlying =
-          if (f.getType.getTypeName == BSchema.TypeName.ROW)
-            printContent(f.getType.getRowSchema.getFields.asScala.toList, s"$prefix${f.getName}.")
-          else ""
+      val nullable = if (f.getType.getNullable) "YES" else "NO"
+      val `type` = f.getType
+      val typename =
+        `type`.getTypeName match {
+          case BSchema.TypeName.ARRAY =>
+            s"${`type`.getCollectionElementType.getTypeName}[]"
+          case BSchema.TypeName.LOGICAL_TYPE =>
+            `type`.getLogicalType().getIdentifier()
+          case t => t
+        }
+      val out =
+        f"│ ${prefix + f.getName}%-40s │ $typename%-20s │ $nullable%-8s │%n"
+      val underlying =
+        if (f.getType.getTypeName == BSchema.TypeName.ROW)
+          printContent(f.getType.getRowSchema.getFields.asScala.toList, s"$prefix${f.getName}.")
+        else ""
 
-        out + underlying
-      }
-      .mkString("")
+      out + underlying
+    }.mkString("")
 
   def prettyPrint(fs: List[BSchema.Field]): String =
     header + printContent(fs) + footer

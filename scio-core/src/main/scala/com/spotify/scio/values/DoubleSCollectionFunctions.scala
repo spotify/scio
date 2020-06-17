@@ -19,9 +19,7 @@ package com.spotify.scio.values
 
 import com.spotify.scio.util.StatCounter
 
-/**
- * Extra functions available on SCollections of `Double`s through an implicit conversion.
- */
+/** Extra functions available on SCollections of `Double`s through an implicit conversion. */
 class DoubleSCollectionFunctions(self: SCollection[Double]) {
 
   /**

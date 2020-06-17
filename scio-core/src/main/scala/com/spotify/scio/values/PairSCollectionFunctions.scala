@@ -1163,15 +1163,11 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
       )
       .asSingletonSideInput(Map.empty[K, Iterable[V]])
 
-  /**
-   * Returns an [[SCollection]] consisting of a single `Map[K, V]` element.
-   */
+  /** Returns an [[SCollection]] consisting of a single `Map[K, V]` element. */
   def reifyAsMapInGlobalWindow(implicit ck: Coder[K], cv: Coder[V]): SCollection[Map[K, V]] =
     self.reifyInGlobalWindow(_.asMapSideInput)
 
-  /**
-   * Returns an [[SCollection]] consisting of a single `Map[K, Iterable[V]]` element.
-   */
+  /** Returns an [[SCollection]] consisting of a single `Map[K, Iterable[V]]` element. */
   def reifyAsMultiMapInGlobalWindow(implicit
     ck: Coder[K],
     cv: Coder[V]

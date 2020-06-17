@@ -34,9 +34,7 @@ import com.spotify.scio.values.SCollection
  */
 package object checkpoint {
 
-  /**
-   * For use in testing, see [[https://github.com/spotify/scio/blob/master/scio-examples/src/test/scala/com/spotify/scio/examples/extra/CheckpointExampleTest.scala CheckpointExampleTest]].
-   */
+  /** For use in testing, see [[https://github.com/spotify/scio/blob/master/scio-examples/src/test/scala/com/spotify/scio/examples/extra/CheckpointExampleTest.scala CheckpointExampleTest]]. */
   type CheckpointIO[T] = ObjectFileIO[T]
   val CheckpointIO = ObjectFileIO
 

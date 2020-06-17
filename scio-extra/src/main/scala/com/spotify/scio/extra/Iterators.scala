@@ -148,9 +148,7 @@ object Iterators {
       new FixedIterator[T](self, timestampFn, size, offset)
     }
 
-    /**
-     * Iterator of sessions separated by `gapDuration`-long periods with no elements.
-     */
+    /** Iterator of sessions separated by `gapDuration`-long periods with no elements. */
     def session(gapDuration: Long): Iterator[Seq[T]] = {
       require(gapDuration > 0, "size must be > 0")
       new SessionIterator(self, timestampFn, gapDuration)

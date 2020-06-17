@@ -66,9 +66,7 @@ private object TestWrapper {
 
 private object ScioMatchers {
 
-  /**
-   * Create a hamcrest matcher that can be serialized using a Coder[T].
-   */
+  /** Create a hamcrest matcher that can be serialized using a Coder[T]. */
   private def supplierFromCoder[A: Coder, B](@transient a: A, @transient context: ScioContext)(
     builder: A => B
   ) = {
@@ -335,7 +333,8 @@ trait SCollectionMatchers extends EqInstances {
         }
     }
 
-  /** Assert that the SCollection in question contains the provided element without making
+  /**
+   * Assert that the SCollection in question contains the provided element without making
    *  assumptions about other elements in the collection. */
   def containValue[T: Coder: Eq](value: T): IterableMatcher[SCollection[T], T] =
     new IterableMatcher[SCollection[T], T] {

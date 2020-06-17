@@ -184,7 +184,6 @@ final case class GenericRecordIO(path: String, schema: Schema) extends AvroIO[Ge
   /**
    * Get an SCollection of [[org.apache.avro.generic.GenericRecord GenericRecord]] from an Avro
    * file.
-   *
    */
   override protected def read(sc: ScioContext, params: ReadP): SCollection[GenericRecord] = {
     val t = beam.AvroIO
@@ -193,9 +192,7 @@ final case class GenericRecordIO(path: String, schema: Schema) extends AvroIO[Ge
     sc.wrap(sc.applyInternal(t))
   }
 
-  /**
-   * Save this SCollection [[org.apache.avro.generic.GenericRecord GenericRecord]] as a Avro file.
-   */
+  /** Save this SCollection [[org.apache.avro.generic.GenericRecord GenericRecord]] as a Avro file. */
   override protected def write(
     data: SCollection[GenericRecord],
     params: WriteP
@@ -240,9 +237,7 @@ final case class GenericRecordParseIO[T](path: String, parseFn: GenericRecord =>
     sc.wrap(sc.applyInternal(t))
   }
 
-  /**
-   * Writes are undefined for [[GenericRecordParseIO]] since it is used only for reading.
-   */
+  /** Writes are undefined for [[GenericRecordParseIO]] since it is used only for reading. */
   override protected def write(data: SCollection[T], params: Nothing): Tap[T] = ???
 
   override def tap(read: Unit): Tap[T] =

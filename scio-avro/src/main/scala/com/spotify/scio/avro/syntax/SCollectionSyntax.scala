@@ -78,7 +78,6 @@ final class SpecificRecordSCollectionOps[T <: SpecificRecord](private val self: 
   /**
    * Save this SCollection of type
    * [[org.apache.avro.specific.SpecificRecord SpecificRecord]] as an Avro file.
-   *
    */
   def saveAsAvroFile(
     path: String,

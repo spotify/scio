@@ -132,16 +132,15 @@ object SortMergeBucketJoinExample {
 
     // #SortMergeBucketExample_join
     sc.sortMergeJoin(
-        classOf[Integer],
-        AvroSortedBucketIO
-          .read(new TupleTag[GenericRecord]("lhs"), SortMergeBucketExample.UserDataSchema)
-          .from(args("lhsInput")),
-        AvroSortedBucketIO
-          .read(new TupleTag[Account]("rhs"), classOf[Account])
-          .from(args("rhsInput")),
-        TargetParallelism.max()
-      )
-      .map(mapFn) // Apply mapping function
+      classOf[Integer],
+      AvroSortedBucketIO
+        .read(new TupleTag[GenericRecord]("lhs"), SortMergeBucketExample.UserDataSchema)
+        .from(args("lhsInput")),
+      AvroSortedBucketIO
+        .read(new TupleTag[Account]("rhs"), classOf[Account])
+        .from(args("rhsInput")),
+      TargetParallelism.max()
+    ).map(mapFn) // Apply mapping function
       .saveAsTextFile(args("output"))
     // #SortMergeBucketExample_join
 
@@ -158,36 +157,34 @@ object SortMergeBucketTransformExample {
 
     // #SortMergeBucketExample_transform
     sc.sortMergeTransform(
-        classOf[Integer],
-        AvroSortedBucketIO
-          .read(new TupleTag[GenericRecord]("lhs"), SortMergeBucketExample.UserDataSchema)
-          .from(args("lhsInput")),
-        AvroSortedBucketIO
-          .read(new TupleTag[Account]("rhs"), classOf[Account])
-          .from(args("rhsInput"))
-      )
-      .to(
-        AvroSortedBucketIO
-          .write(classOf[Integer], "userId", classOf[Account])
-          .to(args("output"))
-          .withNumBuckets(2)
-          .withNumShards(1)
-          .withHashType(HashType.MURMUR3_32)
-      )
-      .via {
-        case (key, (users, accounts), outputCollector) =>
-          users.foreach { user =>
-            outputCollector.accept(
-              Account
-                .newBuilder()
-                .setId(key)
-                .setName(user.get("userId").toString)
-                .setType("combinedAmount")
-                .setAmount(accounts.foldLeft(0.0)(_ + _.getAmount))
-                .build()
-            )
-          }
-      }
+      classOf[Integer],
+      AvroSortedBucketIO
+        .read(new TupleTag[GenericRecord]("lhs"), SortMergeBucketExample.UserDataSchema)
+        .from(args("lhsInput")),
+      AvroSortedBucketIO
+        .read(new TupleTag[Account]("rhs"), classOf[Account])
+        .from(args("rhsInput"))
+    ).to(
+      AvroSortedBucketIO
+        .write(classOf[Integer], "userId", classOf[Account])
+        .to(args("output"))
+        .withNumBuckets(2)
+        .withNumShards(1)
+        .withHashType(HashType.MURMUR3_32)
+    ).via {
+      case (key, (users, accounts), outputCollector) =>
+        users.foreach { user =>
+          outputCollector.accept(
+            Account
+              .newBuilder()
+              .setId(key)
+              .setName(user.get("userId").toString)
+              .setType("combinedAmount")
+              .setAmount(accounts.foldLeft(0.0)(_ + _.getAmount))
+              .build()
+          )
+        }
+    }
     // #SortMergeBucketExample_transform
 
     sc.run().waitUntilDone()

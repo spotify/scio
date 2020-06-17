@@ -544,9 +544,7 @@ class ScioContext private[scio] (
   def wrap[T](p: PCollection[T]): SCollection[T] =
     new SCollectionImpl[T](p, this)
 
-  /**
-   * Add callbacks calls when the context is closed.
-   */
+  /** Add callbacks calls when the context is closed. */
   private[scio] def onClose(f: Unit => Unit): Unit =
     _onClose = _onClose compose f
 
@@ -674,7 +672,7 @@ class ScioContext private[scio] (
   // Test wiring
   // =======================================================================
 
-  /**  Whether this is a test context. */
+  /** Whether this is a test context. */
   def isTest: Boolean = testId.isDefined
 
   // =======================================================================
@@ -896,7 +894,7 @@ class ScioContext private[scio] (
   /**
    * Initialize a new [[org.apache.beam.sdk.metrics.Counter Counter]] metric from namespace and
    * name.
-   * */
+   */
   def initCounter(namespace: String, name: String): Counter =
     initCounter(ScioMetrics.counter(namespace, name)).head
 

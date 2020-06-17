@@ -38,9 +38,7 @@ final case class ElasticsearchIO[T](esOptions: ElasticsearchOptions) extends Sci
   override protected def read(sc: ScioContext, params: ReadP): SCollection[T] =
     throw new UnsupportedOperationException("Can't read from Elasticsearch")
 
-  /**
-   * Save this SCollection into Elasticsearch.
-   */
+  /** Save this SCollection into Elasticsearch. */
   override protected def write(data: SCollection[T], params: WriteP): Tap[Nothing] = {
     val shards = if (params.numOfShards > 0) {
       params.numOfShards
