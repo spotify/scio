@@ -45,16 +45,17 @@ class SCollectionWithFanout[T: Coder] private[values] (
   /** [[SCollection.aggregate[A,U]* SCollection.aggregate]] with fan out. */
   def aggregate[A: Coder, U: Coder](aggregator: Aggregator[T, A, U]): SCollection[U] = {
     val a = aggregator // defeat closure
-    a match {
-      case _a: MonoidAggregator[T, A, U] =>
-        context
-          .wrap(internal)
-          .transform(_.map(_a.prepare).fold(_a.monoid, Coder[A]).map(_a.present))
-      case _ =>
-        context
-          .wrap(internal)
-          .transform(_.map(a.prepare).sum(a.semigroup, Coder[A]).map(a.present))
-    }
+    context
+      .wrap(internal)
+      .transform(_.map(a.prepare).sum(a.semigroup, Coder[A]).map(a.present))
+  }
+
+  /** [[SCollection.aggregate[A,U]* SCollection.aggregate]] with fan out. */
+  def aggregate[A: Coder, U: Coder](aggregator: MonoidAggregator[T, A, U]): SCollection[U] = {
+    val a = aggregator // defeat closure
+    context
+      .wrap(internal)
+      .transform(_.map(a.prepare).fold(a.monoid, Coder[A]).map(a.present))
   }
 
   /** [[SCollection.combine]] with fan out. */

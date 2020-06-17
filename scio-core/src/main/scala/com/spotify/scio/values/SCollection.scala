@@ -367,12 +367,20 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   def aggregate[A: Coder, U: Coder](aggregator: Aggregator[T, A, U]): SCollection[U] =
     this.transform { in =>
       val a = aggregator // defeat closure
-      a match {
-        case _a: MonoidAggregator[T, A, U] =>
-          in.map(_a.prepare).fold(_a.monoid, Coder[A]).map(_a.present)
-        case _ =>
-          in.map(a.prepare).sum(a.semigroup, Coder[A]).map(a.present)
-      }
+      in.map(a.prepare).sum(a.semigroup, Coder[A]).map(a.present)
+    }
+
+  /**
+   * Aggregate with [[com.twitter.algebird.MonoidAggregator MonoidAggregator]]. First each item `T`
+   * is mapped to `A`, then we reduce with a [[com.twitter.algebird.Monoid Monoid]] of `A`, then
+   * finally we present the results as `U`. This could be more powerful and better optimized in
+   * some cases.
+   * @group transform
+   */
+  def aggregate[A: Coder, U: Coder](aggregator: MonoidAggregator[T, A, U]): SCollection[U] =
+    this.transform { in =>
+      val a = aggregator // defeat closure
+      in.map(a.prepare).fold(a.monoid, Coder[A]).map(a.present)
     }
 
   /**

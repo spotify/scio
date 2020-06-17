@@ -625,16 +625,25 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     aggregator: Aggregator[V, A, U]
   )(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, U)] = self.transform { in =>
     val a = aggregator // defeat closure
-    a match {
-      case _a: MonoidAggregator[V, A, U] =>
-        in.mapValues(_a.prepare)
-          .foldByKey(_a.monoid, Coder[K], Coder[A])
-          .mapValues(_a.present)
-      case _ =>
-        in.mapValues(a.prepare)
-          .sumByKey(a.semigroup, Coder[K], Coder[A])
-          .mapValues(a.present)
-    }
+    in.mapValues(a.prepare)
+      .sumByKey(a.semigroup, Coder[K], Coder[A])
+      .mapValues(a.present)
+  }
+
+  /**
+   * Aggregate the values of each key with
+   * [[com.twitter.algebird.MonoidAggregator MonoidAggregator]]. First each value `V` is mapped to
+   * `A`, then we reduce with a [[com.twitter.algebird.Monoid Monoid]] of `A`, then finally we
+   * present the results as `U`. This could be more powerful and better optimized in some cases.
+   * @group per_key
+   */
+  def aggregateByKey[A: Coder, U: Coder](
+    aggregator: MonoidAggregator[V, A, U]
+  )(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, U)] = self.transform { in =>
+    val a = aggregator // defeat closure
+    in.mapValues(a.prepare)
+      .foldByKey(a.monoid, Coder[K], Coder[A])
+      .mapValues(a.present)
   }
 
   /**

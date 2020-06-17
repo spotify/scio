@@ -73,16 +73,23 @@ class SCollectionWithHotKeyFanout[K: Coder, V: Coder] private[values] (
   def aggregateByKey[A: Coder, U: Coder](aggregator: Aggregator[V, A, U]): SCollection[(K, U)] =
     self.self.context.wrap(self.self.internal).transform { in =>
       val a = aggregator // defeat closure
-      a match {
-        case _a: MonoidAggregator[V, A, U] =>
-          in.mapValues(_a.prepare)
-            .foldByKey(_a.monoid, Coder[K], Coder[A])
-            .mapValues(_a.present)
-        case _ =>
-          in.mapValues(a.prepare)
-            .sumByKey(a.semigroup, Coder[K], Coder[A])
-            .mapValues(a.present)
-      }
+      in.mapValues(a.prepare)
+        .sumByKey(a.semigroup, Coder[K], Coder[A])
+        .mapValues(a.present)
+    }
+
+  /**
+   * [[PairSCollectionFunctions.aggregateByKey[A,U]* PairSCollectionFunctions.aggregateByKey]]
+   * with hot key fanout.
+   */
+  def aggregateByKey[A: Coder, U: Coder](
+    aggregator: MonoidAggregator[V, A, U]
+  ): SCollection[(K, U)] =
+    self.self.context.wrap(self.self.internal).transform { in =>
+      val a = aggregator // defeat closure
+      in.mapValues(a.prepare)
+        .foldByKey(a.monoid, Coder[K], Coder[A])
+        .mapValues(a.present)
     }
 
   /** [[PairSCollectionFunctions.combineByKey]] with hot key fanout. */
