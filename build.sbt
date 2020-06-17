@@ -1230,9 +1230,9 @@ lazy val siteSettings = Def.settings(
     file("scio-examples/target/site/index.html") -> "examples/index.html"
   ) ++ SoccoIndex.mappings,
   // pre-compile md using mdoc
-  mdocIn := baseDirectory.value / "src" / "paradox",
+  mdocIn := (Paradox / sourceDirectory).value,
   mdocExtraArguments ++= Seq("--no-link-hygiene"),
-  sourceDirectory in Paradox := mdocOut.value,
+  Paradox / sourceManaged := mdocOut.value,
   makeSite := makeSite.dependsOn(mdoc.toTask("")).value,
   unidocProjectFilter in (ScalaUnidoc, unidoc) :=
     inProjects(
