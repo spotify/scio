@@ -26,6 +26,7 @@ import org.apache.beam.sdk.transforms.windowing._
 import org.apache.beam.sdk.values.PCollection
 import org.apache.beam.sdk.values.WindowingStrategy.AccumulationMode
 import org.joda.time.{Duration, Instant}
+import org.apache.beam.sdk.transforms.windowing.Window.OnTimeBehavior
 
 /** Window options for an [[SCollection]]. */
 case class WindowOptions(
@@ -33,7 +34,8 @@ case class WindowOptions(
   accumulationMode: AccumulationMode = null,
   allowedLateness: Duration = null,
   closingBehavior: ClosingBehavior = null,
-  timestampCombiner: TimestampCombiner = null
+  timestampCombiner: TimestampCombiner = null,
+  onTimeBehavior: OnTimeBehavior = null
 )
 
 /** Value with window information to be used inside a [[WindowedSCollection]]. */
