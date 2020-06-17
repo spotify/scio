@@ -23,8 +23,8 @@ import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.util.concurrent.
  * DoFn which will rate limit the number of elements processed per second.
  *
  * <p>Used to rate limit throughput for a job writing to a database or making calls to external
- * services. The limit is applied per worker and should be used with a fixed/max num workers.
- * Having RateLimiterDoFn(1000) and 20 workers means your total rate will be 20000.
+ * services. The limit is applied per worker and should be used with a fixed/max num workers. Having
+ * RateLimiterDoFn(1000) and 20 workers means your total rate will be 20000.
  */
 public class RateLimiterDoFn<InputT> extends DoFnWithResource<InputT, InputT, RateLimiter> {
 
