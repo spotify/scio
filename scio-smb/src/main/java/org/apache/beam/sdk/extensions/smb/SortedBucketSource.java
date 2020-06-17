@@ -538,19 +538,12 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
 
     KeyGroupIterator<byte[], V> createIterator(int bucketId, int targetParallelism) {
       final List<Iterator<V>> iterators =
-          flatmapBucketShardIds(
+          mapBucketFiles(
               bucketId,
               targetParallelism,
-              (bucketShardId, partitionMetadata) -> {
+              file -> {
                 try {
-                  return Optional.of(
-                      fileOperations.iterator(
-                          partitionMetadata
-                              .getFileAssignment()
-                              .forBucket(
-                                  bucketShardId,
-                                  partitionMetadata.getNumBuckets(),
-                                  partitionMetadata.getNumShards())));
+                  return fileOperations.iterator(file);
                 } catch (Exception e) {
                   throw new RuntimeException(e);
                 }
@@ -560,10 +553,8 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
       return new KeyGroupIterator<>(iterators, canonicalMetadata::getKeyBytes, bytesComparator);
     }
 
-    private <T> List<T> flatmapBucketShardIds(
-        int bucketId,
-        int targetParallelism,
-        BiFunction<BucketShardId, PartitionMetadata, Optional<T>> mapFn) {
+    private <T> List<T> mapBucketFiles(
+        int bucketId, int targetParallelism, Function<ResourceId, T> mapFn) {
       final List<T> results = new ArrayList<>();
       getPartitionMetadata()
           .forEach(
@@ -573,7 +564,11 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
 
                 for (int i = (bucketId % numBuckets); i < numBuckets; i += targetParallelism) {
                   for (int j = 0; j < numShards; j++) {
-                    mapFn.apply(BucketShardId.of(i, j), partitionMetadata).ifPresent(results::add);
+                    results.add(
+                        mapFn.apply(
+                            partitionMetadata
+                                .getFileAssignment()
+                                .forBucket(BucketShardId.of(i, j), numBuckets, numShards)));
                   }
                 }
               });
