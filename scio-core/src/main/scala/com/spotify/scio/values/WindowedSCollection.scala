@@ -21,12 +21,11 @@ import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.Coder
 
 import com.spotify.scio.util.FunctionsWithWindowedValue
-import org.apache.beam.sdk.transforms.windowing.Window.ClosingBehavior
+import org.apache.beam.sdk.transforms.windowing.Window.{ClosingBehavior, OnTimeBehavior}
 import org.apache.beam.sdk.transforms.windowing._
 import org.apache.beam.sdk.values.PCollection
 import org.apache.beam.sdk.values.WindowingStrategy.AccumulationMode
 import org.joda.time.{Duration, Instant}
-import org.apache.beam.sdk.transforms.windowing.Window.OnTimeBehavior
 
 /** Window options for an [[SCollection]]. */
 case class WindowOptions(
