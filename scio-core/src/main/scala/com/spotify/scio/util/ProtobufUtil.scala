@@ -35,9 +35,7 @@ object ProtobufUtil {
   lazy val AvroMessageCoder: Coder[GenericRecord] =
     Coder.avroGenericRecordCoder(AvroBytesUtil.schema)
 
-  /**
-   * The Avro [[Schema]] corresponding to an Avro-encoded Protobuf [[Message]].
-   */
+  /** The Avro [[Schema]] corresponding to an Avro-encoded Protobuf [[Message]]. */
   lazy val AvroMessageSchema: Schema = AvroBytesUtil.schema
 
   /**

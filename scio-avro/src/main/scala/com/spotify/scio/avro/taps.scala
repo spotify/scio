@@ -32,9 +32,7 @@ import scala.concurrent.Future
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
 
-/**
- * Tap for [[org.apache.avro.generic.GenericRecord GenericRecord]] Avro files.
- */
+/** Tap for [[org.apache.avro.generic.GenericRecord GenericRecord]] Avro files. */
 final case class GenericRecordTap(
   path: String,
   @transient private val
@@ -50,9 +48,7 @@ final case class GenericRecordTap(
   }
 }
 
-/**
- * Tap for [[org.apache.avro.specific.SpecificRecord SpecificRecord]] Avro files.
- */
+/** Tap for [[org.apache.avro.specific.SpecificRecord SpecificRecord]] Avro files. */
 final case class SpecificRecordTap[T <: SpecificRecord: ClassTag: Coder](path: String)
     extends Tap[T] {
   override def value: Iterator[T] = FileStorage(path).avroFile[T]()
@@ -63,7 +59,7 @@ final case class SpecificRecordTap[T <: SpecificRecord: ClassTag: Coder](path: S
 /**
  * Tap for reading [[org.apache.avro.generic.GenericRecord GenericRecord]] Avro files and applying
  * a parseFn to parse it to the given type [[T]]
- * */
+ */
 final case class GenericRecordParseTap[T: Coder](
   path: String,
   parseFn: GenericRecord => T
@@ -101,7 +97,8 @@ final case class AvroTaps(self: Taps) {
   def objectFile[T: ClassTag: Coder](path: String): Future[Tap[T]] =
     self.mkTap(s"Object file: $path", () => self.isPathDone(path), () => ObjectFileTap[T](path))
 
-  /** Get a `Future[Tap[T]]` for [[org.apache.avro.generic.GenericRecord GenericRecord]] Avro
+  /**
+   * Get a `Future[Tap[T]]` for [[org.apache.avro.generic.GenericRecord GenericRecord]] Avro
    * file.
    */
   def avroFile(path: String, schema: Schema): Future[Tap[GenericRecord]] =
@@ -111,7 +108,8 @@ final case class AvroTaps(self: Taps) {
       () => GenericRecordTap(path, schema)
     )
 
-  /** Get a `Future[Tap[T]]` for
+  /**
+   * Get a `Future[Tap[T]]` for
    * [[org.apache.avro.specific.SpecificRecord SpecificRecord]] Avro file.
    */
   def avroFile[T <: SpecificRecord: ClassTag: Coder](path: String): Future[Tap[T]] =

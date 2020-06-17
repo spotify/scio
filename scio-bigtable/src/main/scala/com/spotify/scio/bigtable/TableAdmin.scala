@@ -30,9 +30,7 @@ import org.slf4j.{Logger, LoggerFactory}
 import scala.jdk.CollectionConverters._
 import scala.util.Try
 
-/**
- * Bigtable Table Admin API helper commands.
- */
+/** Bigtable Table Admin API helper commands. */
 object TableAdmin {
   private val log: Logger = LoggerFactory.getLogger(TableAdmin.getClass)
 

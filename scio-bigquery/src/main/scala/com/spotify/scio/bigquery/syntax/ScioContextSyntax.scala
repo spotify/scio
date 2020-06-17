@@ -68,9 +68,7 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
   ): SCollection[TableRow] =
     bigQuerySelect(sqlQuery, BigQuerySelect.ReadParam.DefaultFlattenResults)
 
-  /**
-   * Get an SCollection for a BigQuery table.
-   */
+  /** Get an SCollection for a BigQuery table. */
   def bigQueryTable(table: Table): SCollection[TableRow] =
     self.read(BigQueryTable(table))
 
@@ -190,9 +188,7 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
       )
     )
 
-  /**
-   * Get an SCollection for a BigQuery TableRow JSON file.
-   */
+  /** Get an SCollection for a BigQuery TableRow JSON file. */
   def tableRowJsonFile(path: String): SCollection[TableRow] =
     self.read(TableRowJsonIO(path))
 }

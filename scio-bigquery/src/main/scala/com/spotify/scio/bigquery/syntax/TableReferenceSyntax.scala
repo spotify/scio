@@ -19,9 +19,7 @@ package com.spotify.scio.bigquery.syntax
 
 import com.google.api.services.bigquery.model.TableReference
 
-/**
- * Enhanced version of [[com.google.api.services.bigquery.model.TableReference TableReference]].
- */
+/** Enhanced version of [[com.google.api.services.bigquery.model.TableReference TableReference]]. */
 final class TableReferenceOps(private val r: TableReference) extends AnyVal {
 
   /**

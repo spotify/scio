@@ -26,9 +26,7 @@ import com.spotify.scio.coders.Coder
 import com.spotify.scio.util.{RemoteFileUtil, ScioUtil}
 import org.apache.beam.sdk.options.PipelineOptions
 
-/**
- * Represents the base URI for an Annoy tree, either on the local or a remote file system.
- */
+/** Represents the base URI for an Annoy tree, either on the local or a remote file system. */
 trait AnnoyUri extends Serializable {
   val path: String
   private[annoy] def getReader(metric: AnnoyMetric, dim: Int): AnnoyReader

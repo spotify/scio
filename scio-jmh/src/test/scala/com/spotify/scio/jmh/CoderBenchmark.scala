@@ -260,9 +260,7 @@ class CoderBenchmark {
     CoderUtils.decodeFromByteArray(kryoJavaCoder, javaKryoEncoded)
 }
 
-/**
- * Counter to track the size of the serialized output
- */
+/** Counter to track the size of the serialized output */
 @State(Scope.Thread)
 @AuxCounters(AuxCounters.Type.EVENTS)
 class SerializedOutputSize(var outputSize: Int) {

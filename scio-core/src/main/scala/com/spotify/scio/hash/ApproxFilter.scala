@@ -312,7 +312,7 @@ class BloomFilter[T: g.Funnel] private (private val impl: g.BloomFilter[T])
   override val expectedFpp: Double = impl.expectedFpp()
 }
 
-/**  Companion object for [[BloomFilter]]. */
+/** Companion object for [[BloomFilter]]. */
 object BloomFilter extends ApproxFilterCompanion {
   override type Hash[T] = g.Funnel[T]
   override type Filter[T] = BloomFilter[T]

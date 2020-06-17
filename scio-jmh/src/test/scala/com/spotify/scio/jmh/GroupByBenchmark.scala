@@ -84,14 +84,13 @@ class GroupByBenchmark {
   def testBeamGroupByKey: ScioExecutionContext =
     runWithContext { sc =>
       sc.wrap {
-          sc.avroFile(source, schema = avroSchema)
-            .map { rec =>
-              KV.of(rec.get("id").toString.head, rec.get("value").asInstanceOf[Double])
-            }
-            .internal
-            .setCoder(kvCoder)
-            .apply(GroupByKey.create[Char, Double])
-        }
-        .map(kv => (kv.getKey, kv.getValue.asScala))
+        sc.avroFile(source, schema = avroSchema)
+          .map { rec =>
+            KV.of(rec.get("id").toString.head, rec.get("value").asInstanceOf[Double])
+          }
+          .internal
+          .setCoder(kvCoder)
+          .apply(GroupByKey.create[Char, Double])
+      }.map(kv => (kv.getKey, kv.getValue.asScala))
     }
 }

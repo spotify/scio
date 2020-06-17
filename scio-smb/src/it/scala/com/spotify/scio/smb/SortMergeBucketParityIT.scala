@@ -36,9 +36,7 @@ import org.scalatest.flatspec.AnyFlatSpec
 import scala.jdk.CollectionConverters._
 import scala.util.Random
 
-/**
- * Asserts that SMB join/cogroup operations have parity with the vanilla Scio join/cogroup.
- */
+/** Asserts that SMB join/cogroup operations have parity with the vanilla Scio join/cogroup. */
 class SortMergeBucketParityIT extends AnyFlatSpec with Matchers {
   private val schema = Schema.createRecord(
     "User",

@@ -205,9 +205,7 @@ object DateTime {
     Parser.parseLocalDateTime(datetime)
 }
 
-/**
- * Scala wrapper for [[com.google.api.services.bigquery.model.TimePartitioning]].
- */
+/** Scala wrapper for [[com.google.api.services.bigquery.model.TimePartitioning]]. */
 case class TimePartitioning(
   `type`: String,
   field: String = null,

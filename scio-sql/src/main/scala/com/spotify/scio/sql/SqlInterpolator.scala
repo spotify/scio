@@ -117,9 +117,7 @@ private trait SqlInterpolatorMacroHelpers {
 
 object SqlInterpolatorMacro {
 
-  /**
-   * This static annotation is used to pass (static) parameters to SqlInterpolatorMacro.expand
-   */
+  /** This static annotation is used to pass (static) parameters to SqlInterpolatorMacro.expand */
   final class SqlParts(parts: List[String], ps: Any*) extends scala.annotation.StaticAnnotation
 
   // For some reason this method needs to be a whitebox macro

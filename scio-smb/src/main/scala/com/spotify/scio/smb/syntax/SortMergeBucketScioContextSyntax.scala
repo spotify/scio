@@ -102,7 +102,7 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
    * differs from a regular [[org.apache.beam.sdk.transforms.GroupByKey]] operation.
    *
    * @group per_key
-
+   *
    * @param keyClass grouping key class. Must have a Coder in Beam's default
    *                 [[org.apache.beam.sdk.coders.CoderRegistry]] as custom key coders are not
    *                 supported yet.
@@ -135,7 +135,7 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
    * differs from a regular [[org.apache.beam.sdk.transforms.join.CoGroupByKey]] operation.
    *
    * @group cogroup
-
+   *
    * @param keyClass cogroup key class. Must have a Coder in Beam's default
    *                 [[org.apache.beam.sdk.coders.CoderRegistry]] as custom key coders are not
    *                 supported yet.
@@ -188,7 +188,7 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
    * differs from a regular [[org.apache.beam.sdk.transforms.join.CoGroupByKey]] operation.
    *
    * @group cogroup
-
+   *
    * @param keyClass cogroup key class. Must have a Coder in Beam's default
    *                 [[org.apache.beam.sdk.coders.CoderRegistry]] as custom key coders are not
    *                 supported yet.
@@ -250,7 +250,7 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
    * differs from a regular [[org.apache.beam.sdk.transforms.join.CoGroupByKey]] operation.
    *
    * @group cogroup
-
+   *
    * @param keyClass cogroup key class. Must have a Coder in Beam's default
    *                 [[org.apache.beam.sdk.coders.CoderRegistry]] as custom key coders are not
    *                 supported yet.

@@ -313,9 +313,7 @@ final case class BigQueryTypedTable[T: Coder](
   override def tap(read: ReadP): Tap[T] = BigQueryTypedTap(table, fn)
 }
 
-/**
- * Get an IO for a BigQuery table.
- */
+/** Get an IO for a BigQuery table. */
 final case class BigQueryTable(table: Table) extends BigQueryIO[TableRow] {
   private[this] val underlying =
     BigQueryTypedTable(
@@ -355,9 +353,7 @@ object BigQueryTable {
   val WriteParam = BigQueryTypedTable.WriteParam
 }
 
-/**
- * Get an IO for a BigQuery table using the storage API.
- */
+/** Get an IO for a BigQuery table using the storage API. */
 final case class BigQueryStorage(table: Table) extends BigQueryIO[TableRow] {
   override type ReadP = BigQueryStorage.ReadParam
   override type WriteP = Nothing // ReadOnly
@@ -415,9 +411,7 @@ final case class BigQueryStorageSelect(sqlQuery: Query) extends BigQueryIO[Table
   override def tap(params: ReadP): Tap[TableRow] = underlying.tap(BigQueryTypedSelect.ReadParam())
 }
 
-/**
- * Get an IO for a BigQuery TableRow JSON file.
- */
+/** Get an IO for a BigQuery TableRow JSON file. */
 final case class TableRowJsonIO(path: String) extends ScioIO[TableRow] {
   override type ReadP = Unit
   override type WriteP = TableRowJsonIO.WriteParam
@@ -549,9 +543,7 @@ object BigQueryTyped {
     ): Select[T] = new Select[T](Query(query))
   }
 
-  /**
-   * Get a typed SCollection for a BigQuery table.
-   */
+  /** Get a typed SCollection for a BigQuery table. */
   final case class Table[T <: HasAnnotation: ClassTag: TypeTag: Coder](table: STable)
       extends BigQueryIO[T] {
     private[this] val underlying = {
@@ -719,9 +711,7 @@ object BigQueryTyped {
     override def tap(read: ReadP): Tap[T] = BigQueryTypedTap[T](table, underlying.fn)
   }
 
-  /**
-   * Get a typed SCollection for a BigQuery table using the storage API.
-   */
+  /** Get a typed SCollection for a BigQuery table using the storage API. */
   final case class Storage[T <: HasAnnotation: ClassTag: TypeTag: Coder](table: STable)
       extends BigQueryIO[T] {
     override type ReadP = Storage.ReadParam

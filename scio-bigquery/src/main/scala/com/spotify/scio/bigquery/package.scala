@@ -62,9 +62,7 @@ package object bigquery extends AllSyntax {
   /** BigQuery tag for macro generated classes/fields. */
   type BigQueryTag = com.spotify.scio.bigquery.types.BigQueryTag
 
-  /**
-   * Annotation for BigQuery field [[com.spotify.scio.bigquery.types.description description]].
-   */
+  /** Annotation for BigQuery field [[com.spotify.scio.bigquery.types.description description]]. */
   type description = com.spotify.scio.bigquery.types.description
 
   /** Alias for BigQuery `TableRow`. */

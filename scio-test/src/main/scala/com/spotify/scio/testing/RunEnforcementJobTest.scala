@@ -24,9 +24,7 @@ import org.scalatest.{Failed, Outcome}
 import scala.collection.mutable.ArrayBuffer
 import scala.reflect.ClassTag
 
-/**
- * Trait that enforces [[JobTest.Builder.run]] is called.
- */
+/** Trait that enforces [[JobTest.Builder.run]] is called. */
 trait RunEnforcementJobTest extends AnyFlatSpec { this: PipelineSpec =>
 
   private val tests = ArrayBuffer.empty[InnerJobTest.Builder]

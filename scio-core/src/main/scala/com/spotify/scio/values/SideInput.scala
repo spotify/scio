@@ -49,9 +49,7 @@ trait SideInput[T] extends Serializable {
     cache
   }
 
-  /**
-   * Create a new [[SideInput]] by applying a function on the elements wrapped in this SideInput.
-   */
+  /** Create a new [[SideInput]] by applying a function on the elements wrapped in this SideInput. */
   def map[B](f: T => B): SideInput[B] = new DelegatingSideInput[T, B](this, f)
 
   private[values] val view: PCollectionView[_]

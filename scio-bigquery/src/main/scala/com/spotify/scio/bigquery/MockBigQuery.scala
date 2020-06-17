@@ -47,15 +47,11 @@ object MockBigQuery {
 class MockBigQuery private (private val bq: BigQuery) {
   private val mapping = MMap.empty[TableReference, TableReference]
 
-  /**
-   * Mock a BigQuery table. Each table can be mocked only once in a test class.
-   */
+  /** Mock a BigQuery table. Each table can be mocked only once in a test class. */
   def mockTable(original: String): MockTable =
     mockTable(BigQueryHelpers.parseTableSpec(original))
 
-  /**
-   * Mock a BigQuery table. Each table can be mocked only once in a test class.
-   */
+  /** Mock a BigQuery table. Each table can be mocked only once in a test class. */
   def mockTable(original: TableReference): MockTable = {
     require(
       !mapping.contains(original),
@@ -109,9 +105,7 @@ class MockBigQuery private (private val bq: BigQuery) {
     }
 }
 
-/**
- * A BigQuery table being mocked for test.
- */
+/** A BigQuery table being mocked for test. */
 class MockTable(
   private val bq: BigQuery,
   private val schema: TableSchema,
@@ -131,18 +125,14 @@ class MockTable(
   private def writeRows(rows: Seq[TableRow]): Long =
     bq.tables.writeRows(temp, rows.toList, schema, WRITE_EMPTY, CREATE_IF_NEEDED)
 
-  /**
-   * Populate the table with mock data.
-   */
+  /** Populate the table with mock data. */
   def withData(rows: Seq[TableRow]): Unit = {
     ensureUnique()
     writeRows(rows)
     ()
   }
 
-  /**
-   * Populate the table with mock data.
-   */
+  /** Populate the table with mock data. */
   def withTypedData[T <: HasAnnotation: ClassTag: TypeTag](rows: Seq[T]): Unit = {
     val bqt = BigQueryType[T]
     withData(rows.map(bqt.toTableRow))

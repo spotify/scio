@@ -27,7 +27,6 @@ import com.twitter.algebird.Max
 /**
  * Main package for reading the Lib SVM Format
  *
- *
  * {{{
  * import com.spotify.scio.extra.libsvm._
  *

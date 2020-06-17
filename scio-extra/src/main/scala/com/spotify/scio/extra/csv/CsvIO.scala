@@ -83,7 +83,6 @@ import org.apache.beam.sdk.values.PCollection
  *   val users: SCollection[User] = ???
  *   users.saveAsCsvFile(path)
  * }}}
- *
  */
 object CsvIO {
 

@@ -34,9 +34,7 @@ import com.google.common.util.concurrent.ListenableFuture
 import scala.jdk.CollectionConverters._
 import scala.util.{Failure, Success, Try}
 
-/**
- * Main package for transforms APIs. Import all.
- */
+/** Main package for transforms APIs. Import all. */
 package object transforms {
   @deprecated(
     "renamed to BaseAsyncLookupDoFn. see https://spotify.github.io/scio/migrations/v0.8.0-Migration-Guide.html#async-dofns",
@@ -188,9 +186,7 @@ package object transforms {
       self.parDo(parallelCollectFn(parallelism)(pfn))
   }
 
-  /**
-   * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with pipe methods.
-   */
+  /** Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with pipe methods. */
   implicit class PipeSCollection(@transient private val self: SCollection[String]) extends AnyVal {
 
     /**

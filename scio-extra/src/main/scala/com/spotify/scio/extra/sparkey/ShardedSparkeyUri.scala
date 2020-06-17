@@ -30,9 +30,7 @@ import org.apache.beam.sdk.options.PipelineOptions
 
 import scala.jdk.CollectionConverters._
 
-/**
- * Sharded Sparkey support
- */
+/** Sharded Sparkey support */
 trait ShardedSparkeyUri extends SparkeyUri {
   val basePath: String
   override def getReader: ShardedSparkeyReader

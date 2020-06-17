@@ -71,9 +71,7 @@ sealed trait PredictDoFn[T, V, M <: Model[_]]
     ()
   }
 
-  /**
-   * Process an element asynchronously.
-   */
+  /** Process an element asynchronously. */
   @ProcessElement
   def processElement(c: DoFn[T, V]#ProcessContext): Unit = {
     val result = withRunner { runner =>

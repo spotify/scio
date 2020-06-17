@@ -51,9 +51,7 @@ trait BigtableMatchers extends SCollectionMatchers {
         containInAnyOrder(expectedKeys).apply(left.keys)
     }
 
-  /**
-   * Check that the BT collection contains only the given column families, unique, in any order.
-   */
+  /** Check that the BT collection contains only the given column families, unique, in any order. */
   def containColumnFamilies(expectedCFs: String*): Matcher[BTCollection] =
     new Matcher[BTCollection] {
       override def apply(left: BTCollection): MatchResult = {

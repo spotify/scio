@@ -67,9 +67,7 @@ object To {
 
   private type Errors = List[Positional[Error]]
 
-  /**
-   * Test if Rows with Schema t0 can be safely converted to Rows with Schema t1
-   */
+  /** Test if Rows with Schema t0 can be safely converted to Rows with Schema t1 */
   private def areCompatible(
     context: Location
   )(t0: BSchema.FieldType, t1: BSchema.FieldType): Errors =
@@ -239,8 +237,7 @@ object ToMacro {
     val schemaIn: BSchema = SchemaMaterializer.fieldType(sIn).getRowSchema()
 
     To.checkCompatibility(schemaIn, schemaOut) {
-        q"""_root_.com.spotify.scio.schemas.To.unchecked[$tpeI, $tpeO]"""
-      }
-      .fold(message => c.abort(c.enclosingPosition, message), t => c.Expr[To[I, O]](t))
+      q"""_root_.com.spotify.scio.schemas.To.unchecked[$tpeI, $tpeO]"""
+    }.fold(message => c.abort(c.enclosingPosition, message), t => c.Expr[To[I, O]](t))
   }
 }

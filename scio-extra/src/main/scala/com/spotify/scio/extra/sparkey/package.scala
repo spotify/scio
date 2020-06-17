@@ -196,9 +196,7 @@ package object sparkey extends SparkeyReaderInstances {
     uri
   }
 
-  /**
-   * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with Sparkey methods.
-   */
+  /** Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with Sparkey methods. */
   implicit class SparkeyPairSCollection[K, V](@transient private val self: SCollection[(K, V)]) {
     private val logger = LoggerFactory.getLogger(this.getClass)
 
@@ -384,9 +382,7 @@ package object sparkey extends SparkeyReaderInstances {
       self.asSparkey(numShards = numShards).asCachedStringSparkeySideInput(cache)
   }
 
-  /**
-   * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with Sparkey methods.
-   */
+  /** Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with Sparkey methods. */
   implicit class SparkeySCollection(private val self: SCollection[SparkeyUri]) extends AnyVal {
 
     /**

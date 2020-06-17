@@ -205,9 +205,7 @@ object AvroType {
    */
   trait HasAvroAnnotation
 
-  /**
-   * Generate [[org.apache.avro.Schema Schema]] for a case class.
-   */
+  /** Generate [[org.apache.avro.Schema Schema]] for a case class. */
   def schemaOf[T: TypeTag]: Schema = SchemaProvider.schemaOf[T]
 
   /**

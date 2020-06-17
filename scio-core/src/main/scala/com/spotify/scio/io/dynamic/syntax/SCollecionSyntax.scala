@@ -57,9 +57,7 @@ final class DynamicSpecificRecordSCollectionOps[T <: SpecificRecord](
 ) extends AnyVal {
   import DynamicSCollectionOps.writeDynamic
 
-  /**
-   * Save this SCollection as Avro files specified by the destination function.
-   */
+  /** Save this SCollection as Avro files specified by the destination function. */
   def saveAsDynamicAvroFile(
     path: String,
     numShards: Int = 0,
@@ -100,9 +98,7 @@ final class DynamicGenericRecordSCollectionOps[T <: GenericRecord](private val s
     extends AnyVal {
   import DynamicSCollectionOps.writeDynamic
 
-  /**
-   * Save this SCollection as Avro files specified by the destination function.
-   */
+  /** Save this SCollection as Avro files specified by the destination function. */
   def saveAsDynamicAvroFile(
     path: String,
     schema: Schema,
@@ -148,9 +144,7 @@ final class DynamicGenericRecordSCollectionOps[T <: GenericRecord](private val s
 final class DynamicSCollectionOps[T](private val self: SCollection[T]) extends AnyVal {
   import DynamicSCollectionOps.writeDynamic
 
-  /**
-   * Save this SCollection as text files specified by the destination function.
-   */
+  /** Save this SCollection as text files specified by the destination function. */
   def saveAsDynamicTextFile(
     path: String,
     numShards: Int = 0,
