@@ -1009,7 +1009,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     if (options.timestampCombiner != null) {
       transform = transform.withTimestampCombiner(options.timestampCombiner)
     }
-    if(options.onTimeBehavior != null) {
+    if (options.onTimeBehavior != null) {
       transform = transform.withOnTimeBehavior(options.onTimeBehavior)
     }
 
