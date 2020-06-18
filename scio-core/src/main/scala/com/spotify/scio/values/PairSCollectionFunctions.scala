@@ -26,7 +26,7 @@ import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import com.spotify.scio.hash._
 import com.spotify.scio.util._
 import com.spotify.scio.util.random.{BernoulliValueSampler, PoissonValueSampler}
-import com.twitter.algebird.{Aggregator, Monoid, Semigroup}
+import com.twitter.algebird.{Aggregator, Monoid, MonoidAggregator, Semigroup}
 import org.apache.beam.sdk.transforms._
 import org.apache.beam.sdk.values.{KV, PCollection, PCollectionView}
 import org.slf4j.LoggerFactory
@@ -627,6 +627,22 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     val a = aggregator // defeat closure
     in.mapValues(a.prepare)
       .sumByKey(a.semigroup, Coder[K], Coder[A])
+      .mapValues(a.present)
+  }
+
+  /**
+   * Aggregate the values of each key with
+   * [[com.twitter.algebird.MonoidAggregator MonoidAggregator]]. First each value `V` is mapped to
+   * `A`, then we reduce with a [[com.twitter.algebird.Monoid Monoid]] of `A`, then finally we
+   * present the results as `U`. This could be more powerful and better optimized in some cases.
+   * @group per_key
+   */
+  def aggregateByKey[A: Coder, U: Coder](
+    aggregator: MonoidAggregator[V, A, U]
+  )(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, U)] = self.transform { in =>
+    val a = aggregator // defeat closure
+    in.mapValues(a.prepare)
+      .foldByKey(a.monoid, Coder[K], Coder[A])
       .mapValues(a.present)
   }
 
