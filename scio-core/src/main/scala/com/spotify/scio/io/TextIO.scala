@@ -26,15 +26,25 @@ import com.spotify.scio.ScioContext
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.io.fs.MatchResult.Metadata
-import org.apache.beam.sdk.io.{Compression, FileBasedSink, FileSystems, TextIO => BTextIO}
+import org.apache.beam.sdk.io.{
+  Compression,
+  FileBasedSink,
+  FileSystems,
+  TextIO => BTextIO,
+  ShardNameTemplate,
+  Read
+}
+import org.apache.beam.sdk.options.ValueProvider
+import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider
 import org.apache.commons.compress.compressors.CompressorStreamFactory
 import org.apache.commons.io.IOUtils
 
 import scala.jdk.CollectionConverters._
 import scala.util.Try
-import org.apache.beam.sdk.io.ShardNameTemplate
+import org.apache.beam.sdk.options.ValueProvider.NestedValueProvider
+import org.apache.beam.sdk.transforms.SerializableFunction
 
-final case class TextIO(path: String) extends ScioIO[String] {
+final case class TextIO(path: ValueProvider[String]) extends ScioIO[String] {
   override type ReadP = TextIO.ReadParam
   override type WriteP = TextIO.WriteParam
   final override val tapT = TapOf[String]
@@ -55,12 +65,18 @@ final case class TextIO(path: String) extends ScioIO[String] {
   }
 
   override def tap(params: ReadP): Tap[String] =
-    TextTap(ScioUtil.addPartSuffix(path))
+    TextTap(ScioUtil.addPartSuffix(path.get()))
 
-  private def textOut(path: String, params: WriteP) = {
+  private def textOut(path: ValueProvider[String], params: WriteP) = {
+    val cleanedPath = NestedValueProvider.of(
+      path,
+      new SerializableFunction[String, String] {
+        override def apply(input: String): String = input.replaceAll("\\/+$", "")
+      }
+    )
     var transform = BTextIO
       .write()
-      .to(path.replaceAll("\\/+$", ""))
+      .to(cleanedPath)
       .withSuffix(params.suffix)
       .withShardNameTemplate(params.shardNameTemplate)
       .withNumShards(params.numShards)
@@ -95,6 +111,9 @@ object TextIO {
     footer: Option[String] = WriteParam.DefaultFooter,
     shardNameTemplate: String = WriteParam.DefaultShardNameTemplate
   )
+
+  @inline final def apply(path: String): TextIO =
+    new TextIO(StaticValueProvider.of(path))
 
   private[scio] def textFile(path: String): Iterator[String] = {
     val factory = new CompressorStreamFactory()
