@@ -39,12 +39,12 @@ import org.apache.beam.sdk.io.gcp.bigquery.BigQueryUtils.ConversionOptions.Trunc
 import org.apache.beam.sdk.io.gcp.bigquery.{BigQueryUtils, SchemaAndRecord}
 import org.apache.beam.sdk.io.gcp.{bigquery => beam}
 import org.apache.beam.sdk.io.{Compression, TextIO}
+import org.apache.beam.sdk.options.ValueProvider
 import org.apache.beam.sdk.transforms.SerializableFunction
 
 import scala.jdk.CollectionConverters._
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
-import org.apache.beam.sdk.options.ValueProvider
 
 private object Reads {
   private[this] val cache = new ConcurrentHashMap[ScioContext, BigQuery]()
@@ -89,7 +89,9 @@ private object Reads {
       }
       query
     }
-    tr = if (templateCompat) tr.withTemplateCompatibility() else tr
+    if (templateCompat) {
+      tr = tr.withTemplateCompatibility()
+    }
 
     sc.applyInternal(tr)
   }
@@ -107,7 +109,10 @@ private object Reads {
       .withSelectedFields(selectedFields.asJava)
 
     read = rowRestriction.fold(read)(read.withRowRestriction)
-    read = if (templateCompat) read.withTemplateCompatibility() else read
+
+    if (templateCompat) {
+      read = read.withTemplateCompatibility()
+    }
 
     sc.applyInternal(read)
   }
@@ -304,7 +309,9 @@ final case class BigQueryTypedTable[T: Coder](
 
   override protected def read(sc: ScioContext, params: ReadP): SCollection[T] = {
     var io = reader.from(table.ref).withCoder(CoderMaterializer.beam(sc, Coder[T]))
-    io = if (params.templateCompat) io.withTemplateCompatibility() else io
+    if (params.templateCompat) {
+      io = io.withTemplateCompatibility()
+    }
 
     sc.wrap(sc.applyInternal(s"Read BQ table ${table.spec}", io))
   }
@@ -440,7 +447,7 @@ final case class BigQueryStorageSelect(sqlQuery: Query) extends BigQueryIO[Table
   override def testId: String = s"BigQueryIO(${sqlQuery.underlying})"
 
   override protected def read(sc: ScioContext, params: ReadP): SCollection[TableRow] =
-    sc.read(underlying)(BigQueryTypedSelect.ReadParam(params.flattenResults, params.templateCompat))
+    sc.read(underlying)(BigQueryTypedSelect.ReadParam(templateCompat = params.templateCompat))
 
   override protected def write(data: SCollection[TableRow], params: WriteP): Tap[TableRow] =
     throw new UnsupportedOperationException("BigQuerySelect is read-only")
@@ -449,13 +456,11 @@ final case class BigQueryStorageSelect(sqlQuery: Query) extends BigQueryIO[Table
 }
 
 object BigQueryStorageSelect {
-  type ReadParam = BigQueryTypedSelect.ReadParam
-  val ReadParam = BigQueryTypedSelect.ReadParam
+  type ReadParam = BigQueryStorage.ReadParam
+  val ReadParam = BigQueryStorage.ReadParam
 }
 
-/**
- * Get an IO for a BigQuery TableRow JSON file.
- */
+/** Get an IO for a BigQuery TableRow JSON file. */
 final case class TableRowJsonIO(path: String) extends ScioIO[TableRow] {
   override type ReadP = Unit
   override type WriteP = TableRowJsonIO.WriteParam
