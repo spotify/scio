@@ -21,7 +21,7 @@ import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.Coder
 
 import com.spotify.scio.util.FunctionsWithWindowedValue
-import org.apache.beam.sdk.transforms.windowing.Window.ClosingBehavior
+import org.apache.beam.sdk.transforms.windowing.Window.{ClosingBehavior, OnTimeBehavior}
 import org.apache.beam.sdk.transforms.windowing._
 import org.apache.beam.sdk.values.PCollection
 import org.apache.beam.sdk.values.WindowingStrategy.AccumulationMode
@@ -33,7 +33,8 @@ case class WindowOptions(
   accumulationMode: AccumulationMode = null,
   allowedLateness: Duration = null,
   closingBehavior: ClosingBehavior = null,
-  timestampCombiner: TimestampCombiner = null
+  timestampCombiner: TimestampCombiner = null,
+  onTimeBehavior: OnTimeBehavior = null
 )
 
 /** Value with window information to be used inside a [[WindowedSCollection]]. */
