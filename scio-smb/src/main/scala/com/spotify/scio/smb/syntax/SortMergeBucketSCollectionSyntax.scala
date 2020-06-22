@@ -62,15 +62,23 @@ final class SortedBucketPairSCollection[K, V: Coder](private val self: SCollecti
    * Save an `SCollection[(K, V)]` to a filesystem, where each file represents a bucket
    * whose records are lexicographically sorted by some key specified in the
    * [[org.apache.beam.sdk.extensions.smb.BucketMetadata]] corresponding to the provided
-   * [[SortedBucketSink]] transform and to the key K of each KV pair in the `SCollection`.
+   * [[SortedBucketSink]] transform and to the key K of each KV pair in this `SCollection`.
    *
    * @param write the [[PTransform]] that applies a [[SortedBucketSink]] transform to the input
    *              data. It contains information about key function, bucket and shard size, etc.
+   * @param verifyKeyExtraction if set, the SMB Sink will add two additional nodes to the job
+   *                            graph to sample this SCollection and verify that each key K
+   *                            in the collection matches the result of the given
+   *                            [[org.apache.beam.sdk.extensions.smb.BucketMetadata]]'s
+   *                            `extractKey` function.
    */
   @experimental
-  def saveAsPreKeyedSortedBucket(write: SortedBucketIO.Write[K, V]): ClosedTap[Nothing] = {
+  def saveAsPreKeyedSortedBucket(
+    write: SortedBucketIO.Write[K, V],
+    verifyKeyExtraction: Boolean = true
+  ): ClosedTap[Nothing] = {
     val vCoder = CoderMaterializer.beam(self.context, Coder[V])
-    self.applyInternal(write.onKeyedCollection(vCoder))
+    self.applyInternal(write.onKeyedCollection(vCoder, verifyKeyExtraction))
 
     // @Todo: Implement taps for metadata/bucket elements
     ClosedTap[Nothing](EmptyTap)

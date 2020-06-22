@@ -219,6 +219,7 @@ public class SortedBucketSinkTest {
             new TestFileOperations(),
             1,
             StringUtf8Coder.of(),
+            true,
             keyCacheSize);
 
     @SuppressWarnings("deprecation")

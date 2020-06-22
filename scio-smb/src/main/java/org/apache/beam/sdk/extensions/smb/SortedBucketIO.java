@@ -203,8 +203,8 @@ public class SortedBucketIO {
 
     abstract int getKeyCacheSize();
 
-    public PreKeyedWrite<K, V> onKeyedCollection(Coder<V> valueCoder) {
-      return new PreKeyedWrite<>(this, valueCoder);
+    public PreKeyedWrite<K, V> onKeyedCollection(Coder<V> valueCoder, boolean verifyKeyExtraction) {
+      return new PreKeyedWrite<>(this, valueCoder, verifyKeyExtraction);
     }
 
     @SuppressWarnings("unchecked")
@@ -232,10 +232,12 @@ public class SortedBucketIO {
   public static class PreKeyedWrite<K, V> extends PTransform<PCollection<KV<K, V>>, WriteResult> {
     private final Write<K, V> write;
     private final Coder<V> valueCoder;
+    private final boolean verifyKeyExtraction;
 
-    public PreKeyedWrite(Write<K, V> write, Coder<V> valueCoder) {
+    public PreKeyedWrite(Write<K, V> write, Coder<V> valueCoder, boolean verifyKeyExtraction) {
       this.write = write;
       this.valueCoder = valueCoder;
+      this.verifyKeyExtraction = verifyKeyExtraction;
     }
 
     @SuppressWarnings("unchecked")
@@ -257,6 +259,7 @@ public class SortedBucketIO {
               write.getFileOperations(),
               write.getSorterMemoryMb(),
               valueCoder,
+              verifyKeyExtraction,
               write.getKeyCacheSize()));
     }
   }

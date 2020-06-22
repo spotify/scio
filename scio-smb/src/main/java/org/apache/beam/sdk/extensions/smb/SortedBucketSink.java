@@ -686,6 +686,7 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
     private final int sorterMemoryMb;
     private final int keyCacheSize;
     private final Coder<V> valueCoder;
+    private final boolean verifyKeyExtraction;
 
     public SortedBucketPreKeyedSink(
         BucketMetadata<K, V> bucketMetadata,
@@ -703,6 +704,27 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
           fileOperations,
           sorterMemoryMb,
           valueCoder,
+          true);
+    }
+
+    public SortedBucketPreKeyedSink(
+        BucketMetadata<K, V> bucketMetadata,
+        ResourceId outputDirectory,
+        ResourceId tempDirectory,
+        String filenameSuffix,
+        FileOperations<V> fileOperations,
+        int sorterMemoryMb,
+        Coder<V> valueCoder,
+        boolean verifyKeyExtraction) {
+      this(
+          bucketMetadata,
+          outputDirectory,
+          tempDirectory,
+          filenameSuffix,
+          fileOperations,
+          sorterMemoryMb,
+          valueCoder,
+          verifyKeyExtraction,
           0);
     }
 
@@ -714,6 +736,7 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
         FileOperations<V> fileOperations,
         int sorterMemoryMb,
         Coder<V> valueCoder,
+        boolean verifyKeyExtraction,
         int keyCacheSize) {
       this.bucketMetadata = bucketMetadata;
       this.filenamePolicy = new SMBFilenamePolicy(outputDirectory, filenameSuffix);
@@ -721,6 +744,7 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
       this.fileOperations = fileOperations;
       this.sorterMemoryMb = sorterMemoryMb;
       this.keyCacheSize = keyCacheSize;
+      this.verifyKeyExtraction = verifyKeyExtraction;
       this.valueCoder = valueCoder;
     }
 
@@ -741,22 +765,24 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
                       DelegateCoder.of(valueCoder, KV::getValue, null),
                       keyCacheSize)));
 
-      input
-          .apply("VerifySample", Sample.any(100))
-          .apply(
-              "VerifyKeyFn",
-              ParDo.of(
-                  new DoFn<KV<K, V>, Void>() {
-                    @ProcessElement
-                    public void processElement(ProcessContext c) {
-                      if (!bucketMetadata
-                          .extractKey(c.element().getValue())
-                          .equals(c.element().getKey())) {
-                        throw new RuntimeException(
-                            "BucketMetadata's extractKey fn did not match pre-keyed PCollection");
+      if (verifyKeyExtraction) {
+        input
+            .apply("VerifySample", Sample.any(100))
+            .apply(
+                "VerifyKeyFn",
+                ParDo.of(
+                    new DoFn<KV<K, V>, Void>() {
+                      @ProcessElement
+                      public void processElement(ProcessContext c) {
+                        if (!bucketMetadata
+                            .extractKey(c.element().getValue())
+                            .equals(c.element().getKey())) {
+                          throw new RuntimeException(
+                              "BucketMetadata's extractKey fn did not match pre-keyed PCollection");
+                        }
                       }
-                    }
-                  }));
+                    }));
+      }
 
       return SortedBucketSink.sink(
           bucketedInput,
