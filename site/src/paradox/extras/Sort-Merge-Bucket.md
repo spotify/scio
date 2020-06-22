@@ -116,7 +116,7 @@ set to any number between the least and greatest numbers of buckets among source
 dynamically configured using `TargetParallelism.min()` or `TargetParallelism.max()`, which at graph
 construction time will determine the least or greatest amount of parallelism based on sources.
 Alternately, `TargetParallelism.of(Integer value)` can be used to statically configure a custom value,
-or {@link TargetParallelism#auto()} can be used to let the runner decide how to split the SMB read
+or `{@link TargetParallelism#auto()}` can be used to let the runner decide how to split the SMB read
 at runtime based on the combined byte size of the inputs.
 
 If no value is specified, SMB read operations will use Auto parallelism.
