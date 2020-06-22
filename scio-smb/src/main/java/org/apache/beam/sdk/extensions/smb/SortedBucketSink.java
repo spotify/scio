@@ -28,6 +28,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 import org.apache.beam.sdk.Pipeline;
@@ -294,7 +295,7 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
   /** Extract bucket and shard id for grouping, and key bytes for sorting. */
   private static class ExtractKeysWithCache<K, V>
       extends DoFnWithResource<
-          V, KV<BucketShardId, KV<byte[], byte[]>>, Cache<K, KV<BucketShardId, byte[]>>> {
+          V, KV<BucketShardId, KV<byte[], byte[]>>, Cache<K, KV<Integer, byte[]>>> {
     // Substitute null keys in the output KV<byte[], V> so that they survive serialization
     private final SerializableFunction<V, K> extractKeyFn;
     private final Coder<V> valueCoder;
@@ -323,7 +324,7 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
     }
 
     @Override
-    public Cache<K, KV<BucketShardId, byte[]>> createResource() {
+    public Cache<K, KV<Integer, byte[]>> createResource() {
       return Caffeine.newBuilder().maximumSize(cacheSize).build();
     }
 
@@ -338,14 +339,22 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
       final V record = c.element();
       final K key = extractKeyFn.apply(record);
 
-      KV<BucketShardId, byte[]> bucketIdAndSortBytes = getResource().getIfPresent(key);
-      if (bucketIdAndSortBytes == null) {
-        bucketIdAndSortBytes = ExtractKeys.processKey(key, bucketMetadata, shardId);
-        cacheMisses.inc();
-        getResource().put(key, bucketIdAndSortBytes);
-      } else {
-        cacheHits.inc();
-      }
+      final KV<BucketShardId, byte[]> bucketIdAndSortBytes =
+          Optional.ofNullable(getResource().getIfPresent(key))
+              .map(
+                  kv -> {
+                    cacheHits.inc();
+                    return KV.of(BucketShardId.of(kv.getKey(), shardId), kv.getValue());
+                  })
+              .orElseGet(
+                  () -> {
+                    cacheMisses.inc();
+                    final KV<BucketShardId, byte[]> kv =
+                        ExtractKeys.processKey(key, bucketMetadata, shardId);
+                    getResource().put(key, KV.of(kv.getKey().getBucketId(), kv.getValue()));
+                    return kv;
+                  });
+
       c.output(
           KV.of(
               bucketIdAndSortBytes.getKey(),
