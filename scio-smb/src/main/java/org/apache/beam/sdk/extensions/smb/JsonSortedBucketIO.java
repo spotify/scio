@@ -54,6 +54,7 @@ public class JsonSortedBucketIO {
         .setSorterMemoryMb(SortedBucketIO.DEFAULT_SORTER_MEMORY_MB)
         .setKeyClass(keyClass)
         .setKeyField(keyField)
+        .setKeyCacheSize(0)
         .setFilenameSuffix(DEFAULT_SUFFIX)
         .setCompression(Compression.UNCOMPRESSED)
         .build();
@@ -151,6 +152,8 @@ public class JsonSortedBucketIO {
 
       abstract Builder<K> setSorterMemoryMb(int sorterMemoryMb);
 
+      abstract Builder<K> setKeyCacheSize(int cacheSize);
+
       // JSON specific
       abstract Builder<K> setKeyField(String keyField);
 
@@ -196,6 +199,11 @@ public class JsonSortedBucketIO {
     /** Specifies the sorter memory in MB. */
     public Write<K> withSorterMemoryMb(int sorterMemoryMb) {
       return toBuilder().setSorterMemoryMb(sorterMemoryMb).build();
+    }
+
+    /** Specifies the size of an optional key-to-hash cache in the ExtractKeys transform. */
+    public Write<K> withKeyCacheOfSize(int keyCacheSize) {
+      return toBuilder().setKeyCacheSize(keyCacheSize).build();
     }
 
     /** Specifies the output file {@link Compression}. */
