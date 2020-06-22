@@ -335,7 +335,8 @@ trait SCollectionMatchers extends EqInstances {
 
   /**
    * Assert that the SCollection in question contains the provided element without making
-   *  assumptions about other elements in the collection. */
+   *  assumptions about other elements in the collection.
+   */
   def containValue[T: Coder: Eq](value: T): IterableMatcher[SCollection[T], T] =
     new IterableMatcher[SCollection[T], T] {
       override def matcher(builder: AssertBuilder): Matcher[SCollection[T]] =
