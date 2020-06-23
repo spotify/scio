@@ -1067,6 +1067,7 @@ lazy val `scio-repl`: Project = project
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
       "org.apache.beam" % "beam-runners-direct-java" % beamVersion,
+      "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.avro" % "avro" % avroVersion,
       "commons-io" % "commons-io" % commonsIoVersion,
