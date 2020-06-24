@@ -358,7 +358,7 @@ spotify/scio
 </ul>
 <h4><a href="#how-do-i-combine-multiple-input-sources-" name="how-do-i-combine-multiple-input-sources-" class="anchor"><span class="anchor-link"></span></a>How do I combine multiple input sources?</h4>
 <p>How do I combine multiple input sources, e.g. different BigQuery tables, files located in different GCS buckets? You can combine <code>SCollection</code>s from different sources into one using the companion method <code>SCollection.unionAll</code>, for example:</p>
-<pre class="prettyprint"><code class="language-scala">import com.spotify.scio._
+<pre class="prettyprint"><code class="language-scala mdoc:reset:silent">import com.spotify.scio._
 import com.spotify.scio.avro._
 import com.spotify.scio.values._
 import com.spotify.scio.avro.TestRecord
@@ -377,7 +377,7 @@ object MyJob {
 </code></pre>
 <h4><a href="#how-do-i-log-in-a-job-" name="how-do-i-log-in-a-job-" class="anchor"><span class="anchor-link"></span></a>How do I log in a job?</h4>
 <p>You can log in a Scio job with most common logging libraries but <code>slf4j</code> is included as a dependency. Define the logger instance as a member of the job <code>object</code> and use it inside a lambda.</p>
-<pre class="prettyprint"><code class="language-scala">import com.spotify.scio._
+<pre class="prettyprint"><code class="language-scala mdoc:reset:silent">import com.spotify.scio._
 import org.slf4j.LoggerFactory
 
 object MyJob {
@@ -418,7 +418,7 @@ object MyJob {
 <p>For Apache Beam based Scio (version &gt;= <code>0.3.0</code>) use <code>DataflowRunner</code> and specify <code>templateLocation</code> option. For example in CLI <code>--templateLocation=gs://&lt;bucket&gt;/job1</code>. Read more about templates <a href="https://cloud.google.com/dataflow/docs/templates/overview">here</a>.</p>
 <h4><a href="#how-do-i-cancel-a-job-after-certain-time-period-" name="how-do-i-cancel-a-job-after-certain-time-period-" class="anchor"><span class="anchor-link"></span></a>How do I cancel a job after certain time period?</h4>
 <p>You can wait on the <code>ScioResult</code> and call the internal <code>PipelineResult#cancel()</code> method if a timeout exception happens.</p>
-<pre class="prettyprint"><code class="language-scala">import com.spotify.scio._
+<pre class="prettyprint"><code class="language-scala mdoc:reset:silent">import com.spotify.scio._
 import scala.concurrent.duration._
 
 object MyJob {
@@ -451,7 +451,9 @@ object MyJob {
 </ul>
 <h4><a href="#how-do-i-work-with-nested-options-in-type-safe-bigquery-" name="how-do-i-work-with-nested-options-in-type-safe-bigquery-" class="anchor"><span class="anchor-link"></span></a>How do I work with nested Options in type safe BigQuery?</h4>
 <p>Any nullable field in BigQuery is translated to <code>Option[T]</code> by the type safe BigQuery API and it can be clunky to work with rows with multiple or nested fields. For example:</p>
-<pre class="prettyprint"><code class="language-scala">import com.spotify.scio.bigquery.types.BigQueryType
+<pre class="prettyprint"><code class="language-scala mdoc:reset:invisible">def doSomething(s: String): Unit = ()
+</code></pre>
+<pre class="prettyprint"><code class="language-scala mdoc:silent">import com.spotify.scio.bigquery.types.BigQueryType
 
 @BigQueryType.fromSchema(&quot;&quot;&quot;{
     |&quot;fields&quot;: [{
@@ -474,7 +476,7 @@ def doSomethingWithRow(row: Row) = {
 }
 </code></pre>
 <p>For comprehension is a nicer alternative in these cases:</p>
-<pre class="prettyprint"><code class="language-scala">def doSomethingWithRowUsingFor(row: Row) = {
+<pre class="prettyprint"><code class="language-scala mdoc:silent">def doSomethingWithRowUsingFor(row: Row) = {
   val e: Option[String] =
     for {
       u &lt;- row.user
@@ -489,7 +491,7 @@ def doSomethingWithRow(row: Row) = {
 <h4><a href="#how-do-i-stream-to-a-partitioned-bigquery-table-" name="how-do-i-stream-to-a-partitioned-bigquery-table-" class="anchor"><span class="anchor-link"></span></a>How do I stream to a partitioned BigQuery table?</h4>
 <p>Currently there is no way to create a <a href="https://cloud.google.com/bigquery/docs/partitioned-tables">partitioned</a> BigQuery table via Scio/Beam when streaming, however it is possible to stream to a partitioned table if it is already created.</p>
 <p>This can be done by using fixed windows and using the window bounds to infer date. As of Scio 0.4.0-beta2 this looks as follows:</p>
-<pre class="prettyprint"><code class="language-scala">import com.spotify.scio._
+<pre class="prettyprint"><code class="language-scala mdoc:reset:silent">import com.spotify.scio._
 import org.apache.beam.sdk.values.ValueInSingleWindow
 import org.apache.beam.sdk.transforms.SerializableFunction
 import org.apache.beam.sdk.transforms.windowing.IntervalWindow
@@ -538,7 +540,7 @@ object BQPartitionedJob {
 <h3><a href="#streaming-questions" name="streaming-questions" class="anchor"><span class="anchor-link"></span></a>Streaming questions</h3>
 <h4><a href="#how-do-i-update-a-streaming-job-" name="how-do-i-update-a-streaming-job-" class="anchor"><span class="anchor-link"></span></a>How do I update a streaming job?</h4>
 <p>Dataflow allows streaming jobs to be updated on the fly by specifying <code>--update</code>, along with <code>--jobName=[your_job]</code> on the command line. See <a href="https://cloud.google.com/dataflow/pipelines/updating-a-pipeline">https://cloud.google.com/dataflow/pipelines/updating-a-pipeline</a> for detailed docs. Note that for this to work, Dataflow needs to be able to identify which transformations from the original job map to those in the replacement job. The easiest way to do so is to give unique names to transforms in the code itself. In Scio, this can be achieved by calling <code>.withName()</code> before applying the transform. For example:</p>
-<pre class="prettyprint"><code class="language-scala">import com.spotify.scio._
+<pre class="prettyprint"><code class="language-scala mdoc:reset">import com.spotify.scio._
 
 def main(cmdlineArgs: Array[String]): Unit = {
   val (sc, args) = ContextAndArgs(cmdlineArgs)
@@ -553,8 +555,8 @@ def main(cmdlineArgs: Array[String]): Unit = {
 <ul>
   <li>For Scio version &gt;= <code>0.4.0</code></li>
 </ul>
-<p>Starting from Scio <code>0.4.0</code> you can use Apache Beam&rsquo;s <a href="https://beam.apache.org/releases/javadoc/2.20.0/?org/apache/beam/sdk/io/FileSystems.html" title="org.apache.beam.sdk.io.FileSystems"><code>Filesystems</code></a> abstraction:</p>
-<pre class="prettyprint"><code class="language-scala">import org.apache.beam.sdk.io.FileSystems
+<p>Starting from Scio <code>0.4.0</code> you can use Apache Beam&rsquo;s <a href="https://beam.apache.org/releases/javadoc/2.22.0/?org/apache/beam/sdk/io/FileSystems.html" title="org.apache.beam.sdk.io.FileSystems"><code>Filesystems</code></a> abstraction:</p>
+<pre class="prettyprint"><code class="language-scala mdoc:reset:silent">import org.apache.beam.sdk.io.FileSystems
 // the path can be any of the supported Filesystems, e.g. local, GCS, HDFS
 def readmeResource = FileSystems.matchNewResource(&quot;gs://&lt;bucket&gt;/README.md&quot;, false)
 def readme = FileSystems.open(readmeResource)
@@ -563,8 +565,8 @@ def readme = FileSystems.open(readmeResource)
   <li>For Scio version &lt; <code>0.4.0</code></li>
 </ul><div class="callout note "><div class="callout-title">Note</div>
 <p>This part is GCS specific.</p></div>
-<p>You can get a <a href="https://beam.apache.org/releases/javadoc/2.20.0/?org/apache/beam/sdk/extensions/gcp/options/GcsOptions.html#getGcsUtil--" title="org.apache.beam.sdk.extensions.gcp.options.GcsOptions"><code>`GcsUtil`</code></a> instance from <code>ScioContext</code>, which can be used to open GCS files in read or write mode.</p>
-<pre class="prettyprint"><code class="language-scala">import com.spotify.scio.ContextAndArgs
+<p>You can get a <a href="https://beam.apache.org/releases/javadoc/2.22.0/?org/apache/beam/sdk/extensions/gcp/options/GcsOptions.html#getGcsUtil--" title="org.apache.beam.sdk.extensions.gcp.options.GcsOptions"><code>`GcsUtil`</code></a> instance from <code>ScioContext</code>, which can be used to open GCS files in read or write mode.</p>
+<pre class="prettyprint"><code class="language-scala mdoc:reset:silent">import com.spotify.scio.ContextAndArgs
 import org.apache.beam.sdk.extensions.gcp.options.GcsOptions
 
 def main(cmdlineArgs: Array[String]): Unit = {
@@ -577,7 +579,11 @@ def main(cmdlineArgs: Array[String]): Unit = {
 <p>Datastore <code>Entity</code> class is actually generated from <a href="https://github.com/spotify/scio/tree/master/scio-examples/src/test/scala/com/spotify/scio/examples/extra/MagnolifyDatastoreExampleTest.scala">Protobuf</a> which uses the builder pattern and very boilerplate heavy. You can use the <a href="https://github.com/spotify/magnolify">Magnolify</a> library to seamlessly convert bewteen case classes and <code>Entity</code>s. See <a href="https://spotify.github.io/scio/examples/MagnolifyDatastoreExample.scala.html">MagnolifyDatastoreExample.scala</a> for an example job and <a href="https://github.com/spotify/scio/tree/master/scio-examples/src/test/scala/com/spotify/scio/examples/extra/MagnolifyDatastoreExampleTest.scala">MagnolifyDatastoreExampleTest.scala</a> for tests.</p>
 <h4><a href="#how-do-i-throttle-bigtable-writes-" name="how-do-i-throttle-bigtable-writes-" class="anchor"><span class="anchor-link"></span></a>How do I throttle Bigtable writes?</h4>
 <p>Currently Dataflow autoscaling may not work well with large writes BigtableIO. Specifically It does not take into account Bigtable IO rate limits and may scale up more workers and end up hitting the limit and eventually fail the job. As a workaround, you can enable throttling for Bigtable writes in Scio 0.4.0-alpha2 or later.</p>
-<pre class="prettyprint"><code class="language-scala">import com.spotify.scio.values._
+<pre class="prettyprint"><code class="language-scala mdoc:reset:invisible">val btProjectId = &quot;&quot;
+val btInstanceId = &quot;&quot;
+val btTableId = &quot;&quot;
+</code></pre>
+<pre class="prettyprint"><code class="language-scala mdoc:silent">import com.spotify.scio.values._
 import com.spotify.scio.bigtable._
 import com.google.cloud.bigtable.config.{BigtableOptions, BulkOptions}
 import com.google.bigtable.v2.Mutation
@@ -605,7 +611,22 @@ def main(cmdlineArgs: Array[String]): Unit = {
 <h4><a href="#how-do-i-use-custom-kryo-serializers-" name="how-do-i-use-custom-kryo-serializers-" class="anchor"><span class="anchor-link"></span></a>How do I use custom Kryo serializers?</h4>
 <p>See <a href="internals/Kryo.html">Kryo</a> for more.</p>
 <p>Define a registrar class that extends <code>IKryoRegistrar</code> and annotate it with <code>@KryoRegistrar</code>. Note that the class name must ends with <code>KryoRegistrar</code>, i.e. <code>MyKryoRegistrar</code> for Scio to find it.</p>
-<pre class="prettyprint"><code class="language-scala">import com.twitter.chill._
+<pre class="prettyprint"><code class="language-scala mdoc:reset:invisible">trait UserRecord
+trait AccountRecord
+import com.twitter.chill.KSerializer
+import com.esotericsoftware.kryo.Kryo
+import com.esotericsoftware.kryo.io.{Input, Output}
+
+class UserRecordSerializer extends KSerializer[UserRecord] {
+  def read(x$1: Kryo, x$2: Input, x$3: Class[UserRecord]): UserRecord = ???
+  def write(x$1: Kryo, x$2: Output, x$3: UserRecord): Unit = ???
+}
+class AccountRecordSerializer extends KSerializer[AccountRecord] {
+  def read(x$1: Kryo, x$2: Input, x$3: Class[AccountRecord]): AccountRecord = ???
+  def write(x$1: Kryo, x$2: Output, x$3: AccountRecord): Unit = ???
+}
+</code></pre>
+<pre class="prettyprint"><code class="language-scala mdoc:silent">import com.twitter.chill._
 import com.esotericsoftware.kryo.Kryo
 import com.spotify.scio.coders.KryoRegistrar
 import com.twitter.chill.IKryoRegistrar
@@ -621,7 +642,10 @@ class MyKryoRegistrar extends IKryoRegistrar {
 }
 </code></pre>
 <p>Registering just the classes can also improve Kryo performance. By registering, classes will be serialized as numeric IDs instead of fully qualified class names, hence saving space and network IO while shuffling. make</p>
-<pre class="prettyprint"><code class="language-scala">import com.twitter.chill._
+<pre class="prettyprint"><code class="language-scala mdoc:reset:invisible">trait MyRecord1
+trait MyRecord2
+</code></pre>
+<pre class="prettyprint"><code class="language-scala mdoc:silent">import com.twitter.chill._
 import com.esotericsoftware.kryo.Kryo
 import com.spotify.scio.coders.KryoRegistrar
 import com.twitter.chill.IKryoRegistrar
@@ -658,18 +682,16 @@ class MyKryoRegistrar extends IKryoRegistrar {
   <li>Use case class from <code>@BigQueryType.toTable</code></li>
 </ul>
 <p>First start Scio REPL and generate case classes from your query or table.</p>
-<pre class="prettyprint"><code class="language-scala">import com.spotify.scio.bigquery.types.BigQueryType
+<pre class="prettyprint"><code class="language-scala mdoc:reset">import com.spotify.scio.bigquery.types.BigQueryType
 
 @BigQueryType.fromQuery(&quot;SELECT tornado, month FROM [bigquery-public-data:samples.gsod]&quot;)
 class Tornado
 </code></pre>
 <p>Next print Scala code of the generated classes.</p>
-<pre class="prettyprint"><code class="language-scala">Tornado.toPrettyString()
-// res12: String = &quot;&quot;&quot;@BigQueryType.toTable
-// case class Tornado(tornado: Option[Boolean], month: Long)&quot;&quot;&quot;
+<pre class="prettyprint"><code class="language-scala mdoc">Tornado.toPrettyString()
 </code></pre>
 <p>You can then paste the <code>@BigQueryType.fromQuery</code> code into your pipeline and use it with <code>sc.typedBigQuery</code>.</p>
-<pre class="prettyprint"><code class="language-scala">import com.spotify.scio._
+<pre class="prettyprint"><code class="language-scala mdoc:silent">import com.spotify.scio._
 import com.spotify.scio.values._
 import com.spotify.scio.bigquery._
 
@@ -686,7 +708,7 @@ def main(cmdlineArgs: Array[String]): Unit = {
 <pre class="prettyprint"><code class="language-scala">def saveAsBigQuery(tableSpec: String)(implicit ev: T &lt;:&lt; TableRow)
 </code></pre>
 <p>In the case of <code>saveAsTypedBigQuery</code> you might get an <code>Cannot prove that T &lt;:&lt; com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation.</code> error message. This API requires an <code>SCollection[T]</code> where <code>T</code> is a case class annotated with <code>@BigQueryType.toTable</code>. For example:</p>
-<pre class="prettyprint"><code class="language-scala">import com.spotify.scio._
+<pre class="prettyprint"><code class="language-scala mdoc:reset:silent">import com.spotify.scio._
 import com.spotify.scio.values._
 import com.spotify.scio.bigquery._
 import com.spotify.scio.bigquery.types.BigQueryType
@@ -729,8 +751,8 @@ def main(cmdlineArgs: Array[String]): Unit = {
 <h4><a href="#how-to-inspect-the-content-of-an-scollection-" name="how-to-inspect-the-content-of-an-scollection-" class="anchor"><span class="anchor-link"></span></a>How to inspect the content of an <code>SCollection</code>?</h4>
 <p>There is multiple options here: - Use <code>debug()</code> method on an <code>SCollection</code> to print its content as the data flows through the DAG during the execution (after the <code>run</code> or <code>runAndCollect</code>) - Use a debugger and setup break points - make sure to break inside of your functions to stop control at the execution not the pipeline construction time - In <a href="./Scio-REPL.html">Scio-REPL</a>, use <code>runAndCollect()</code> to execute the pipeline and materialize the contents of an <code>SCollection</code></p>
 <h4><a href="#how-do-i-improve-side-input-performance-" name="how-do-i-improve-side-input-performance-" class="anchor"><span class="anchor-link"></span></a>How do I improve side input performance?</h4>
-<p>By default Dataflow workers allocate 100MB (see <a href="https://beam.apache.org/releases/javadoc/2.20.0/?org/apache/beam/runners/dataflow/options/DataflowWorkerHarnessOptions.html#getWorkerCacheMb--" title="org.apache.beam.runners.dataflow.options.DataflowWorkerHarnessOptions"><code>DataflowWorkerHarnessOptions#getWorkerCacheMb</code></a>) of memory for caching side inputs, and falls back to disk or network. Therefore jobs with large side inputs may be slow. To override this default, register <code>DataflowWorkerHarnessOptions</code> before parsing command line arguments and then pass <code>--workerCacheMb=N</code> when submitting the job.</p>
-<pre class="prettyprint"><code class="language-scala">import com.spotify.scio._
+<p>By default Dataflow workers allocate 100MB (see <a href="https://beam.apache.org/releases/javadoc/2.22.0/?org/apache/beam/runners/dataflow/options/DataflowWorkerHarnessOptions.html#getWorkerCacheMb--" title="org.apache.beam.runners.dataflow.options.DataflowWorkerHarnessOptions"><code>DataflowWorkerHarnessOptions#getWorkerCacheMb</code></a>) of memory for caching side inputs, and falls back to disk or network. Therefore jobs with large side inputs may be slow. To override this default, register <code>DataflowWorkerHarnessOptions</code> before parsing command line arguments and then pass <code>--workerCacheMb=N</code> when submitting the job.</p>
+<pre class="prettyprint"><code class="language-scala mdoc:reset:silent">import com.spotify.scio._
 import org.apache.beam.sdk.options.PipelineOptionsFactory
 import org.apache.beam.runners.dataflow.options.DataflowWorkerHarnessOptions
 
@@ -767,7 +789,7 @@ apt-get install default-jdk -y
 </code></pre>
 </div>
 <div>
-<a href="https://github.com/spotify/scio/tree/master/site/target/mdoc/FAQ.md" title="Edit this page" class="md-source-file md-edit">
+<a href="https://github.com/spotify/scio/tree/master/site/src/paradox/FAQ.md" title="Edit this page" class="md-source-file md-edit">
 Edit this page
 </a>
 </div>

@@ -234,7 +234,7 @@ spotify/scio
 </code></pre>
 <h2><a href="#runner-specific-logic" name="runner-specific-logic" class="anchor"><span class="anchor-link"></span></a>Runner specific logic</h2>
 <p>Dataflow specific logic, e.g. job ID, metrics, were also removed from <code>ScioResult</code>. You can convert between the generic <code>ScioResult</code> and runner specific result types like the example below. Note that currently only <code>DataflowResult</code> is implemented.</p>
-<pre class="prettyprint"><code class="language-scala">import com.spotify.scio.{ScioContext, ScioExecutionContext, ScioResult}
+<pre class="prettyprint"><code class="language-scala mdoc:silent">import com.spotify.scio.{ScioContext, ScioExecutionContext, ScioResult}
 
 object SuperAwesomeJob {
   def main(cmdlineArgs: Array[String]): Unit = {
@@ -261,7 +261,7 @@ object SuperAwesomeJob {
 
 </code></pre>
 <p>Given the Google Cloud project ID and Dataflow job ID, one can also create <code>DataflowResult</code> and <code>ScioResult</code> without running a pipeline. This could be when submitting jobs asynchronously and retrieving metrics later.</p>
-<pre class="prettyprint"><code class="language-scala">import com.spotify.scio.runners.dataflow.DataflowResult
+<pre class="prettyprint"><code class="language-scala mdoc:reset">import com.spotify.scio.runners.dataflow.DataflowResult
 
 object AnotherAwesomeJob {
   def main(cmdlineArgs: Array[String]): Unit = {
@@ -273,7 +273,7 @@ object AnotherAwesomeJob {
 </code></pre>
 </div>
 <div>
-<a href="https://github.com/spotify/scio/tree/master/site/target/mdoc/Runners.md" title="Edit this page" class="md-source-file md-edit">
+<a href="https://github.com/spotify/scio/tree/master/site/src/paradox/Runners.md" title="Edit this page" class="md-source-file md-edit">
 Edit this page
 </a>
 </div>

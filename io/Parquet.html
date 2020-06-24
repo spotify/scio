@@ -282,7 +282,7 @@ object ParquetJob {
 <h2><a href="#write-avro-parquet-files" name="write-avro-parquet-files" class="anchor"><span class="anchor-link"></span></a>Write Avro Parquet files</h2>
 <p>Both Avro <a href="https://avro.apache.org/docs/1.8.1/api/java/org/apache/avro/generic/GenericData.Record.html">generic</a> and <a href="https://avro.apache.org/docs/1.8.2/api/java/org/apache/avro/specific/package-summary.html">specific</a> records are supported when writing.</p>
 <p>Type of Avro specific records will hold information about schema, therefore Scio will figure out the schema by itself:</p>
-<pre class="prettyprint"><code class="language-scala">import com.spotify.scio.values._
+<pre class="prettyprint"><code class="language-scala mdoc:reset:silent">import com.spotify.scio.values._
 import com.spotify.scio.parquet.avro._
 import com.spotify.scio.avro.TestRecord
 
@@ -290,7 +290,7 @@ def input: SCollection[TestRecord] = ???
 def result = input.saveAsParquetAvroFile(&quot;gs://path-to-data/lake/output&quot;)
 </code></pre>
 <p>Writing Avro generic records requires additional argument <code>schema</code>:</p>
-<pre class="prettyprint"><code class="language-scala">import com.spotify.scio.values._
+<pre class="prettyprint"><code class="language-scala mdoc:reset:silent">import com.spotify.scio.values._
 import com.spotify.scio.parquet.avro._
 import org.apache.avro.generic.GenericRecord
 
@@ -301,7 +301,7 @@ def result = input.saveAsParquetAvroFile(&quot;gs://path-to-data/lake/output&quo
 </code></pre>
 </div>
 <div>
-<a href="https://github.com/spotify/scio/tree/master/site/target/mdoc/io/Parquet.md" title="Edit this page" class="md-source-file md-edit">
+<a href="https://github.com/spotify/scio/tree/master/site/src/paradox/io/Parquet.md" title="Edit this page" class="md-source-file md-edit">
 Edit this page
 </a>
 </div>

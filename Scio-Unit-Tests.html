@@ -251,10 +251,8 @@ spotify/scio
 <p>We will use the WordCountTest to explain how Scio tests work. <a href="https://spotify.github.io/scio/examples/WordCount.scala.html">WordCount</a> is the pipeline under test. Full example code for WordCountTest and other test examples can be found <a href="https://github.com/spotify/scio/tree/master/scio-examples/src/test">here</a>.</p>
 <p>Let’s walk through the details of the test: The test class should extend the <code>PipelineSpec</code> which is a trait for unit testing pipelines.</p>
 <p>The inData variable holds the input data for your test and the expected variable contains the expected results after your pipeline processes the inData. The WordCount pipeline counts the occurrence of each word, the given the input data , we should expect a count of a=3, b=3, c=1 etc</p>
-<pre class="prettyprint"><code class="language-scala">val inData = Seq(&quot;a b c d e&quot;, &quot;a b a b&quot;, &quot;&quot;)
-// inData: Seq[String] = List(&quot;a b c d e&quot;, &quot;a b a b&quot;, &quot;&quot;)
+<pre class="prettyprint"><code class="language-scala mdoc"> val inData = Seq(&quot;a b c d e&quot;, &quot;a b a b&quot;, &quot;&quot;)
  val expected = Seq(&quot;a: 3&quot;, &quot;b: 3&quot;, &quot;c: 1&quot;, &quot;d: 1&quot;, &quot;e: 1&quot;)
-// expected: Seq[String] = List(&quot;a: 3&quot;, &quot;b: 3&quot;, &quot;c: 1&quot;, &quot;d: 1&quot;, &quot;e: 1&quot;)
 </code></pre>
 <p>Using <code>JobTest</code>, you can test the entire pipeline. Specify the type of the class under test, in this case it is com.spotify.scio.examples.WordCount.type . The <code>args</code> function takes the list of command line arguments passed to the main function of WordCount. The WordCount’s main function expects input and output arguments passed to it.</p>
 <pre class="prettyprint"><a class="icon go-to-source" href="https://github.com/spotify/scio/tree/master/scio-examples/src/test/scala/com/spotify/scio/examples/WordCountTest.scala#L28-L34" target="_blank" title="Go to snippet source"></a><code class="language-scala">&quot;WordCount&quot; should &quot;work&quot; in {
@@ -355,7 +353,7 @@ spotify/scio
 <p>Scio provides more <code>SCollection</code> assertions such as <code>inWindow</code>, <code>inCombinedNonLatePanes</code>, <code>inFinalPane</code>, and <code>inOnlyPane</code>. You can find the full list <a href="https://spotify.github.io/scio/api/com/spotify/scio/testing/SCollectionMatchers.html">here</a>. More information on testing unbounded pipelines can be found <a href="https://beam.apache.org/blog/2016/10/20/test-stream.html">here</a>.</p>
 </div>
 <div>
-<a href="https://github.com/spotify/scio/tree/master/site/target/mdoc/Scio-Unit-Tests.md" title="Edit this page" class="md-source-file md-edit">
+<a href="https://github.com/spotify/scio/tree/master/site/src/paradox/Scio-Unit-Tests.md" title="Edit this page" class="md-source-file md-edit">
 Edit this page
 </a>
 </div>

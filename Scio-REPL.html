@@ -288,7 +288,11 @@ $ sbt scio-repl/assembly
 <h2><a href="#tutorial" name="tutorial" class="anchor"><span class="anchor-link"></span></a>Tutorial</h2>
 <h3><a href="#local-pipeline" name="local-pipeline" class="anchor"><span class="anchor-link"></span></a>Local pipeline</h3>
 <p>Let&rsquo;s start with simple local-mode word count example:</p>
-<pre class="prettyprint"><code class="language-scala">def wordCount = sc
+<pre class="prettyprint"><code class="language-scala mdoc:invisible">import com.spotify.scio._
+
+def sc: ScioContext = ???
+</code></pre>
+<pre class="prettyprint"><code class="language-scala mdoc">def wordCount = sc
     .textFile(&quot;README.md&quot;)
     .flatMap(_.split(&quot;[^a-zA-Z&#39;]+&quot;).filter(_.nonEmpty))
     .countByValue
@@ -299,12 +303,16 @@ def scioResult = sc.run().waitUntilDone()
 
 def values = scioResult.tap(wordCount).value.take(3)
 </code></pre>
-<p>Make sure <code>README.md</code> is in the current directory. This example counts words in local file using a local runner (<a href="https://beam.apache.org/releases/javadoc/2.20.0/?org/apache/beam/runners/direct/DirectRunner.html" title="org.apache.beam.runners.direct.DirectRunner"><code>`DirectRunner`</code></a> and writes result in a local file. The pipeline and actual computation starts on <code>sc.run()</code>. The last command take 3 lines from results and prints them.</p>
+<p>Make sure <code>README.md</code> is in the current directory. This example counts words in local file using a local runner (<a href="https://beam.apache.org/releases/javadoc/2.22.0/?org/apache/beam/runners/direct/DirectRunner.html" title="org.apache.beam.runners.direct.DirectRunner"><code>`DirectRunner`</code></a> and writes result in a local file. The pipeline and actual computation starts on <code>sc.run()</code>. The last command take 3 lines from results and prints them.</p>
 <h3><a href="#local-pipeline-" name="local-pipeline-" class="anchor"><span class="anchor-link"></span></a>Local pipeline ++</h3>
 <p>In the next example we will spice things up a bit and read data from GCS:</p>
 <pre><code>:newScio
 </code></pre>
-<pre class="prettyprint"><code class="language-scala">def shakespeare = sc.textFile(&quot;gs://dataflow-samples/shakespeare/hamlet.txt&quot;)
+<pre class="prettyprint"><code class="language-scala mdoc:reset:invisible">import com.spotify.scio._
+
+def sc: ScioContext = ???
+</code></pre>
+<pre class="prettyprint"><code class="language-scala mdoc">def shakespeare = sc.textFile(&quot;gs://dataflow-samples/shakespeare/hamlet.txt&quot;)
 
 def wordCount = shakespeare
     .flatMap(_.split(&quot;[^a-zA-Z&#39;]+&quot;).filter(_.nonEmpty))
@@ -340,7 +348,11 @@ Type :help for more information.
 BigQuery client available as &#39;bq&#39;
 Scio context available as &#39;sc&#39;
 </code></pre>
-<pre class="prettyprint"><code class="language-scala">def shakespeare = sc.textFile(&quot;gs://dataflow-samples/shakespeare/*&quot;)
+<pre class="prettyprint"><code class="language-scala mdoc:reset:invisible">import com.spotify.scio._
+
+def sc: ScioContext = ???
+</code></pre>
+<pre class="prettyprint"><code class="language-scala mdoc">def shakespeare = sc.textFile(&quot;gs://dataflow-samples/shakespeare/*&quot;)
 
 def wordCount = shakespeare
     .flatMap(_.split(&quot;[^a-zA-Z&#39;]+&quot;).filter(_.nonEmpty))
@@ -382,7 +394,12 @@ Type :help for more information.
 BigQuery client available as &#39;bq&#39;
 Scio context available as &#39;sc&#39;
 </code></pre>
-<pre class="prettyprint"><code class="language-scala">def tornadoes = sc.bigQuerySelect(Query(&quot;SELECT tornado, month FROM [clouddataflow-readonly:samples.weather_stations]&quot;))
+<pre class="prettyprint"><code class="language-scala mdoc:reset:invisible">import com.spotify.scio._
+import com.spotify.scio.bigquery._
+
+def sc: ScioContext = ???
+</code></pre>
+<pre class="prettyprint"><code class="language-scala mdoc">def tornadoes = sc.bigQuerySelect(Query(&quot;SELECT tornado, month FROM [clouddataflow-readonly:samples.weather_stations]&quot;))
  
 def counts = tornadoes
     .flatMap(r =&gt; if (r.getBoolean(&quot;tornado&quot;)) Seq(r.getLong(&quot;month&quot;)) else Nil)
@@ -411,7 +428,7 @@ def result = sc
 <p>This means that you can always set <code>bigquery.project</code> and it will take precedence over other configurations. Read more about gcloud configuration <a href="https://cloud.google.com/sdk/gcloud/reference/config/">here</a>.</p>
 <h3><a href="#i-o-commands" name="i-o-commands" class="anchor"><span class="anchor-link"></span></a>I/O Commands</h3>
 <p>There are few built-in commands for simple file I/O.</p>
-<pre class="prettyprint"><code class="language-scala">import scala.reflect._
+<pre class="prettyprint"><code class="language-scala mdoc">import scala.reflect._
 import kantan.csv._
 
 // Read from an Avro, text, CSV or TSV file on local filesystem or GCS.
@@ -439,7 +456,11 @@ def writeTsv[T: RowEncoder](path: String, data: Seq[T],
 <p>While in the REPL, use <code>:paste</code> magic command to paste or write multi-line code</p>
 <pre><code>:paste
 </code></pre>
-<pre class="prettyprint"><code class="language-scala">// Entering paste mode (ctrl-D to finish)
+<pre class="prettyprint"><code class="language-scala mdoc:reset:invisible">import com.spotify.scio._
+
+def sc: ScioContext = ???
+</code></pre>
+<pre class="prettyprint"><code class="language-scala mdoc">// Entering paste mode (ctrl-D to finish)
 import com.spotify.scio.io.ClosedTap
 import com.spotify.scio.values.SCollection
 
@@ -453,7 +474,7 @@ def tap: ClosedTap[String] = evenNumbers.saveAsTextFile(&quot;/tmp/even&quot;)
 def result = sc.run()
 </code></pre>
 <h3><a href="#running-jobs-asynchronously" name="running-jobs-asynchronously" class="anchor"><span class="anchor-link"></span></a>Running jobs asynchronously</h3>
-<p>When using REPL and Dataflow service consider using the non-blocking <a href="https://beam.apache.org/releases/javadoc/2.20.0/?org/apache/beam/runners/dataflow/DataflowRunner.html" title="org.apache.beam.runners.dataflow.DataflowRunner"><code>`DataflowRunner`</code></a> for a more interactive experience. To start:</p>
+<p>When using REPL and Dataflow service consider using the non-blocking <a href="https://beam.apache.org/releases/javadoc/2.22.0/?org/apache/beam/runners/dataflow/DataflowRunner.html" title="org.apache.beam.runners.dataflow.DataflowRunner"><code>`DataflowRunner`</code></a> for a more interactive experience. To start:</p>
 <pre><code>java -jar scio-repl-0.7.0.jar \
 &gt; --project=&lt;project-id&gt; \
 &gt; --stagingLocation=&lt;stagin-dir&gt; \
@@ -472,7 +493,11 @@ Type :help for more information.
 BigQuery client available as &#39;bq&#39;
 Scio context available as &#39;sc&#39;
 </code></pre>
-<pre class="prettyprint"><code class="language-scala">import com.spotify.scio.io.ClosedTap
+<pre class="prettyprint"><code class="language-scala mdoc:reset:invisible">import com.spotify.scio._
+
+def sc: ScioContext = ???
+</code></pre>
+<pre class="prettyprint"><code class="language-scala mdoc">import com.spotify.scio.io.ClosedTap
 
 def closedTap: ClosedTap[String] = sc
     .parallelize(1 to 100)
@@ -515,7 +540,12 @@ Type :help for more information.
 BigQuery client available as &#39;bq&#39;
 Scio context available as &#39;sc&#39;
 </code></pre>
-<pre class="prettyprint"><code class="language-scala">@BigQueryType.fromQuery(&quot;SELECT tornado, month FROM [clouddataflow-readonly:samples.weather_stations]&quot;) class Row
+<pre class="prettyprint"><code class="language-scala mdoc:reset:invisible">import com.spotify.scio.bigquery._
+import com.spotify.scio.bigquery.client._
+
+def bq: BigQuery = ???
+</code></pre>
+<pre class="prettyprint"><code class="language-scala mdoc">@BigQueryType.fromQuery(&quot;SELECT tornado, month FROM [clouddataflow-readonly:samples.weather_stations]&quot;) class Row
 
 def tornadoes = bq.getTypedRows[Row]()
 
@@ -525,9 +555,16 @@ def write = bq.writeTypedRows(&quot;project-id:dataset-id.table-id&quot;, tornad
 </code></pre>
 <h3><a href="#out-of-memory-exception" name="out-of-memory-exception" class="anchor"><span class="anchor-link"></span></a>Out of memory exception</h3>
 <p>In case of OOM exceptions, like for example:</p>
-<pre class="prettyprint"><code class="language-scala">def closedTap: ClosedTap[String] = ???
+<pre class="prettyprint"><code class="language-scala mdoc:reset:invisible">import com.spotify.scio._
+import com.spotify.scio.io._
+
+def sc: ScioContext = ???
+</code></pre>
+<pre class="prettyprint"><code class="language-scala mdoc">def closedTap: ClosedTap[String] = ???
 
 def result = sc.run().waitUntilDone().tap(closedTap).value.next
+// Exception in thread &quot;main&quot;
+// Exception: java.lang.OutOfMemoryError thrown from the UncaughtExceptionHandler in thread &quot;main&quot;
 </code></pre>
 <p>simply increase the size of the heap - be reasonable about the amount of data and heap size though.</p>
 <p>Example of REPL startup with 2GiB of heap size:</p>
@@ -558,7 +595,7 @@ com.spotify.scio.values.SCollection[Int]
 <p>Learn more about magic keywords via <code>scio&gt; :help</code></p>
 </div>
 <div>
-<a href="https://github.com/spotify/scio/tree/master/site/target/mdoc/Scio-REPL.md" title="Edit this page" class="md-source-file md-edit">
+<a href="https://github.com/spotify/scio/tree/master/site/src/paradox/Scio-REPL.md" title="Edit this page" class="md-source-file md-edit">
 Edit this page
 </a>
 </div>

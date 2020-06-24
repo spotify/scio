@@ -235,7 +235,7 @@ spotify/scio
 <h2><a href="#read-avro-files" name="read-avro-files" class="anchor"><span class="anchor-link"></span></a>Read Avro files</h2>
 <p>Scio comes with support for reading Avro files. Avro supports generic or specific records, Scio supports both via the same method (<code>avroFile</code>), but depending on the type parameter.</p>
 <h3><a href="#read-specific-records" name="read-specific-records" class="anchor"><span class="anchor-link"></span></a>Read Specific records</h3>
-<pre class="prettyprint"><code class="language-scala">import com.spotify.scio.ScioContext
+<pre class="prettyprint"><code class="language-scala mdoc:reset:silent">import com.spotify.scio.ScioContext
 import com.spotify.scio.avro._
 
 import org.apache.avro.specific.SpecificRecord
@@ -246,7 +246,7 @@ def sc: ScioContext = ???
 def result = sc.avroFile[SpecificRecord](&quot;gs://path-to-data/lake/part-*.avro&quot;)
 </code></pre>
 <h3><a href="#read-generic-records" name="read-generic-records" class="anchor"><span class="anchor-link"></span></a>Read Generic records</h3>
-<pre class="prettyprint"><code class="language-scala">import com.spotify.scio.ScioContext
+<pre class="prettyprint"><code class="language-scala mdoc:reset:silent">import com.spotify.scio.ScioContext
 import com.spotify.scio.avro._
 
 import org.apache.avro.generic.GenericRecord
@@ -262,7 +262,7 @@ def result = sc.avroFile(&quot;gs://path-to-data/lake/part-*.avro&quot;, yourAvr
 <h2><a href="#write-avro-files" name="write-avro-files" class="anchor"><span class="anchor-link"></span></a>Write Avro files</h2>
 <p>Scio comes with support for writing Avro files. Avro supports generic or specific records, Scio supports both via the same method (<code>saveAsAvroFile</code>), but depending on the type of the content of <code>SCollection</code>.</p>
 <h3><a href="#write-specific-records" name="write-specific-records" class="anchor"><span class="anchor-link"></span></a>Write Specific records</h3>
-<pre class="prettyprint"><code class="language-scala">import com.spotify.scio.values.SCollection
+<pre class="prettyprint"><code class="language-scala mdoc:reset:silent">import com.spotify.scio.values.SCollection
 import com.spotify.scio.avro._
 
 import org.apache.avro.specific.SpecificRecord
@@ -279,7 +279,7 @@ def fn(f: Foo): SpecificRecord = ???
 def result =  sc.map(fn).saveAsAvroFile(&quot;gs://path-to-data/lake/output&quot;)
 </code></pre>
 <h3><a href="#write-generic-records" name="write-generic-records" class="anchor"><span class="anchor-link"></span></a>Write Generic records</h3>
-<pre class="prettyprint"><code class="language-scala">import com.spotify.scio.values.SCollection
+<pre class="prettyprint"><code class="language-scala mdoc:reset:silent">import com.spotify.scio.values.SCollection
 import com.spotify.scio.avro._
 
 import org.apache.avro.generic.GenericRecord
@@ -312,7 +312,7 @@ def result =  sc.map(fn).saveAsAvroFile(&quot;gs://path-to-data/lake/output&quot
 </ul>
 </div>
 <div>
-<a href="https://github.com/spotify/scio/tree/master/site/target/mdoc/io/Avro.md" title="Edit this page" class="md-source-file md-edit">
+<a href="https://github.com/spotify/scio/tree/master/site/src/paradox/io/Avro.md" title="Edit this page" class="md-source-file md-edit">
 Edit this page
 </a>
 </div>

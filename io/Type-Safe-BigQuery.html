@@ -253,7 +253,7 @@ spotify/scio
   <li><code>fromQuery</code> executes the query and saves result as a temporary table before reading it like <code>fromTable</code>. This incurs both query and export cost plus export quota.</li>
   <li><code>fromStorage</code> accesses the underlying BigQuery storage directly, reading only columns and rows based on <code>selectedFields</code> and <code>rowRestriction</code>. No query, export cost or quota hit.</li>
 </ul>
-<pre class="prettyprint"><code class="language-scala">import com.spotify.scio.bigquery.types.BigQueryType
+<pre class="prettyprint"><code class="language-scala mdoc:reset:silent">import com.spotify.scio.bigquery.types.BigQueryType
 
 @BigQueryType.fromStorage(
     &quot;bigquery-public-data:samples.gsod&quot;,
@@ -264,14 +264,14 @@ spotify/scio
 </code></pre>
 <h3><a href="#bigquerytype-fromtable" name="bigquerytype-fromtable" class="anchor"><span class="anchor-link"></span></a>BigQueryType.fromTable</h3>
 <p>This expands a class with fields that map to a BigQuery table.</p>
-<pre class="prettyprint"><code class="language-scala">import com.spotify.scio.bigquery.types.BigQueryType
+<pre class="prettyprint"><code class="language-scala mdoc:reset:silent">import com.spotify.scio.bigquery.types.BigQueryType
 
 @BigQueryType.fromTable(&quot;bigquery-public-data:samples.gsod&quot;)
 class Row
 </code></pre>
 <h3><a href="#bigquerytype-fromquery" name="bigquerytype-fromquery" class="anchor"><span class="anchor-link"></span></a>BigQueryType.fromQuery</h3>
 <p>This expands a class with output fields from a SELECT query. A dry run is executed at compile time to get output schema and does not incur additional cost.</p>
-<pre class="prettyprint"><code class="language-scala">import com.spotify.scio.bigquery.types.BigQueryType
+<pre class="prettyprint"><code class="language-scala mdoc:reset:silent">import com.spotify.scio.bigquery.types.BigQueryType
 
 @BigQueryType.fromQuery(&quot;SELECT tornado, month FROM [bigquery-public-data:samples.gsod]&quot;)
 class Row
@@ -300,7 +300,7 @@ val newQuery = Row.query(args(0), args(0))
 </code></pre>
 <h3><a href="#bigquerytype-fromschema" name="bigquerytype-fromschema" class="anchor"><span class="anchor-link"></span></a>BigQueryType.fromSchema</h3>
 <p>This annotation gets schema from a string parameter and is useful in tests.</p>
-<pre class="prettyprint"><code class="language-scala">import com.spotify.scio.bigquery.types.BigQueryType
+<pre class="prettyprint"><code class="language-scala mdoc:reset:silent">import com.spotify.scio.bigquery.types.BigQueryType
 
 @BigQueryType.fromSchema(
   &quot;&quot;&quot;
@@ -318,13 +318,13 @@ class Row
 </code></pre>
 <h3><a href="#bigquerytype-totable" name="bigquerytype-totable" class="anchor"><span class="anchor-link"></span></a>BigQueryType.toTable</h3>
 <p>This annotation works the other way around. Instead of generating class definition from a BigQuery schema, it generates BigQuery schema from a case class definition.</p>
-<pre class="prettyprint"><code class="language-scala">import com.spotify.scio.bigquery.types.BigQueryType
+<pre class="prettyprint"><code class="language-scala mdoc:reset:silent">import com.spotify.scio.bigquery.types.BigQueryType
 
 @BigQueryType.toTable
 case class Result(user: String, url: String, time: Long)
 </code></pre>
 <p>Fields in the case class and the class itself can also be annotated with <code>@description</code> which propagates to BigQuery schema.</p>
-<pre class="prettyprint"><code class="language-scala">import com.spotify.scio.bigquery.types.BigQueryType
+<pre class="prettyprint"><code class="language-scala mdoc:reset:silent">import com.spotify.scio.bigquery.types.BigQueryType
 import com.spotify.scio.bigquery.description
 
 @BigQueryType.toTable
@@ -349,7 +349,9 @@ class Row1
 class Row2
 </code></pre>
 <p>And these are not:</p>
-<pre class="prettyprint"><code class="language-scala">import com.spotify.scio.bigquery.types.BigQueryType
+<pre class="prettyprint"><code class="language-scala mdoc:reset:invisible">val args: Array[String] = Array(&quot;&quot;, &quot;*&quot;, &quot;[project-id:dataset-id.table-id]&quot;)
+</code></pre>
+<pre class="prettyprint"><code class="language-scala mdoc:fail">import com.spotify.scio.bigquery.types.BigQueryType
 
 @BigQueryType.fromQuery(&quot;SELECT &quot; + args(1) + &quot; FROM [&quot; + args(2) + &quot;]&quot;)
 class Row1
@@ -357,12 +359,6 @@ class Row1
 val sql = &quot;SELECT &quot; + args(1) + &quot; FROM [&quot; + args(2) + &quot;]&quot;
 @BigQueryType.fromQuery(sql)
 class Row2
-// error: Unsupported argument &quot;SELECT &quot;.$plus(args(1)).$plus(&quot; FROM [&quot;).$plus(args(2)).$plus(&quot;]&quot;)
-// @BigQueryType.fromQuery(&quot;SELECT &quot; + args(1) + &quot; FROM [&quot; + args(2) + &quot;]&quot;)
-//  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-// error: Unsupported argument sql
-// @BigQueryType.fromQuery(sql)
-//  ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 </code></pre>
 <h3><a href="#companion-objects" name="companion-objects" class="anchor"><span class="anchor-link"></span></a>Companion objects</h3>
 <p>Classes annotated with the type safe BigQuery API have a few more convenience methods.</p>
@@ -372,52 +368,19 @@ class Row2
   <li><code>toTableRow: (T =&gt; TableRow)</code> - case class to <code>TableRow</code> converter</li>
   <li><code>toPrettyString(indent: Int = 0)</code> - pretty string representation of the schema</li>
 </ul>
-<pre class="prettyprint"><code class="language-scala">import com.spotify.scio.bigquery.types.BigQueryType
+<pre class="prettyprint"><code class="language-scala mdoc:reset">import com.spotify.scio.bigquery.types.BigQueryType
 
 @BigQueryType.fromTable(&quot;bigquery-public-data:samples.gsod&quot;)
 class Row
 
 Row.toPrettyString(2)
-// res9: String = &quot;&quot;&quot;@BigQueryType.toTable
-// case class Row(
-//   station_number: Long,
-//   wban_number: Option[Long],
-//   year: Long,
-//   month: Long,
-//   day: Long,
-//   mean_temp: Option[Double],
-//   num_mean_temp_samples: Option[Long],
-//   mean_dew_point: Option[Double],
-//   num_mean_dew_point_samples: Option[Long],
-//   mean_sealevel_pressure: Option[Double],
-//   num_mean_sealevel_pressure_samples: Option[Long],
-//   mean_station_pressure: Option[Double],
-//   num_mean_station_pressure_samples: Option[Long],
-//   mean_visibility: Option[Double],
-//   num_mean_visibility_samples: Option[Long],
-//   mean_wind_speed: Option[Double],
-//   num_mean_wind_speed_samples: Option[Long],
-//   max_sustained_wind_speed: Option[Double],
-//   max_gust_wind_speed: Option[Double],
-//   max_temperature: Option[Double],
-//   max_temperature_explicit: Option[Boolean],
-//   min_temperature: Option[Double],
-//   min_temperature_explicit: Option[Boolean],
-//   total_precipitation: Option[Double],
-//   snow_depth: Option[Double],
-//   fog: Option[Boolean],
-//   rain: Option[Boolean],
-//   snow: Option[Boolean],
-//   hail: Option[Boolean],
-//   thunder: Option[Boolean],
-//   tornado: Option[Boolean])&quot;&quot;&quot;
 </code></pre>
 <p>In addition, <code>BigQueryType.fromTable</code> and <code>BigQueryTable.fromQuery</code> generate <code>table: String</code> and <code>query: String</code> respectively that refers to parameters in the original annotation.</p>
 <p>import com.spotify.scio.bigquery.types.BigQueryTypeUser defined companion objects may interfere with macro code generation so for now do not provide one to a case class annotated with <code>@BigQueryType.toTable</code>, i.e. <code>object Row</code>.</p>
 <h2><a href="#using-type-safe-bigquery" name="using-type-safe-bigquery" class="anchor"><span class="anchor-link"></span></a>Using type safe BigQuery</h2>
 <h3><a href="#type-safe-bigquery-with-scio" name="type-safe-bigquery-with-scio" class="anchor"><span class="anchor-link"></span></a>Type safe BigQuery with Scio</h3>
 <p>To enable type safe BigQuery for <code>ScioContext</code>:</p>
-<pre class="prettyprint"><code class="language-scala">import com.spotify.scio._
+<pre class="prettyprint"><code class="language-scala mdoc:reset:silent">import com.spotify.scio._
 import com.spotify.scio.bigquery._
 import com.spotify.scio.bigquery.types.BigQueryType
 
@@ -440,7 +403,7 @@ def main(cmdlineArgs: Array[String]): Unit = {
 </code></pre>
 <h3><a href="#type-safe-bigqueryclient" name="type-safe-bigqueryclient" class="anchor"><span class="anchor-link"></span></a>Type safe BigQueryClient</h3>
 <p>Annotated classes can be used with the <code>BigQueryClient</code> directly too.</p>
-<pre class="prettyprint"><code class="language-scala">import com.spotify.scio.bigquery.types.BigQueryType
+<pre class="prettyprint"><code class="language-scala mdoc:reset:silent">import com.spotify.scio.bigquery.types.BigQueryType
 import com.spotify.scio.bigquery.client.BigQuery
 
 @BigQueryType.fromQuery(&quot;SELECT tornado, month FROM [bigquery-public-data:samples.gsod]&quot;)
@@ -452,7 +415,7 @@ def result = bq.writeTypedRows(&quot;project-id:dataset-id.table-id&quot;, rows.
 </code></pre>
 <h3><a href="#using-type-safe-bigquery-directly-with-beams-io-library" name="using-type-safe-bigquery-directly-with-beams-io-library" class="anchor"><span class="anchor-link"></span></a>Using type safe BigQuery directly with Beam&rsquo;s IO library</h3>
 <p>If there are any BigQuery I/O operations supported in the Apache Beam client but not exposed in Scio, you may choose to use the Beam transform directly using Scio&rsquo;s <code>.saveAsCustomOutput()</code> option:</p>
-<pre class="prettyprint"><code class="language-scala">import com.spotify.scio.values.SCollection
+<pre class="prettyprint"><code class="language-scala mdoc:reset:silent">import com.spotify.scio.values.SCollection
 import com.spotify.scio.bigquery.types.BigQueryType
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO
 
@@ -482,7 +445,7 @@ def result =
 <p>See <a href="../internals/OverrideTypeProvider.html">OverrideTypeProvider</a> for details about the custom types and validation mechanism.</p>
 </div>
 <div>
-<a href="https://github.com/spotify/scio/tree/master/site/target/mdoc/io/Type-Safe-BigQuery.md" title="Edit this page" class="md-source-file md-edit">
+<a href="https://github.com/spotify/scio/tree/master/site/src/paradox/io/Type-Safe-BigQuery.md" title="Edit this page" class="md-source-file md-edit">
 Edit this page
 </a>
 </div>

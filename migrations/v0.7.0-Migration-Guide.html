@@ -320,7 +320,7 @@ spotify/scio
 [error]                            ^
 </code></pre>
 <p>All you have to do to fix it is to import IOs from the correct package:</p>
-<pre class="prettyprint"><code class="language-scala">import com.spotify.scio.avro._
+<pre class="prettyprint"><code class="language-scala mdoc:silent">import com.spotify.scio.avro._
 </code></pre>
 <h3><a href="#avroio-or-other-type-of-io-not-found" name="avroio-or-other-type-of-io-not-found" class="anchor"><span class="anchor-link"></span></a><code>AvroIO</code> (or other type of IO) <code>not found</code></h3>
 <p>IOs have been moved out of the <code>com.spotify.scio.testing</code> package. To use them in unit tests (or elsewhere), you&rsquo;ll need to change the import:</p>
@@ -331,7 +331,22 @@ spotify/scio
 </ul>
 <p>A complete list of IO packages can be found <a href="https://spotify.github.com/scio/internals/ScioIO">here</a>.</p>
 <p>Additionally, some IOs are now parameterized. For example, <code>AvroIO</code> must now be parameterized with the Avro record type (either <code>GenericRecord</code> or an extension of <code>SpecificRecordBase</code>). In previous versions of Scio, it was possible in some cases to omit that type. For example:</p>
-<pre class="prettyprint"><code class="language-scala">import com.spotify.scio.io._
+<pre class="prettyprint"><code class="language-scala mdoc:invisible">import org.apache.avro.generic.GenericRecord
+
+object MyScioJob {}
+
+val inputAUri = &quot;&quot;
+val inputBUri = &quot;&quot;
+val output = &quot;output&quot;
+
+object Schemas {
+  def record1: GenericRecord = ???
+  def record2: GenericRecord = ???
+}
+
+implicit def bo: com.spotify.scio.testing.JobTest.BeamOptions = ??? // XXX: why do I need this ?
+</code></pre>
+<pre class="prettyprint"><code class="language-scala mdoc:silent">import com.spotify.scio.io._
 import com.spotify.scio.avro._
 import com.spotify.scio.testing._
 
@@ -466,7 +481,7 @@ def doSomething[T: Coder](coll: SCollection[T]): SCollection[T] =
 </ul>
 <p>In both cases you want to define a Coder in your own code. The only difference is how you&rsquo;ll implement it.</p>
 <p>Let&rsquo;s say you are using a <code>SCollection[java.util.Locale]</code>:</p>
-<pre class="prettyprint"><code class="language-scala">import com.spotify.scio.values.SCollection
+<pre class="prettyprint"><code class="language-scala mdoc:reset:silent">import com.spotify.scio.values.SCollection
 
 def doSomething(coll: SCollection[String]): SCollection[java.util.Locale] =
   coll.map { t =&gt;
@@ -477,7 +492,7 @@ def doSomething(coll: SCollection[String]): SCollection[java.util.Locale] =
 </code></pre>
 <h4><a href="#using-kryo-explicitly" name="using-kryo-explicitly" class="anchor"><span class="anchor-link"></span></a>Using Kryo explicitly</h4>
 <p>If you want to explicitly use <code>Kryo</code> (which will probably be the case) you can do the following:</p>
-<pre class="prettyprint"><code class="language-scala">import java.util.Locale
+<pre class="prettyprint"><code class="language-scala mdoc:reset:silent">import java.util.Locale
 import com.spotify.scio.coders.Coder
 
 object Coders {
@@ -485,7 +500,7 @@ object Coders {
 }
 </code></pre>
 <p>Now all you have to do is make that available at call site:</p>
-<pre class="prettyprint"><code class="language-scala">import com.spotify.scio.values.SCollection
+<pre class="prettyprint"><code class="language-scala mdoc:silent">import com.spotify.scio.values.SCollection
 import Coders._
 
 def doSomething(coll: SCollection[String]): SCollection[java.util.Locale] =
@@ -525,7 +540,7 @@ wartremoverErrors in (Test, compile) := {
 </code></pre>
 </div>
 <div>
-<a href="https://github.com/spotify/scio/tree/master/site/target/mdoc/migrations/v0.7.0-Migration-Guide.md" title="Edit this page" class="md-source-file md-edit">
+<a href="https://github.com/spotify/scio/tree/master/site/src/paradox/migrations/v0.7.0-Migration-Guide.md" title="Edit this page" class="md-source-file md-edit">
 Edit this page
 </a>
 </div>
