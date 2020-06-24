@@ -320,13 +320,28 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
   @experimental
   def sortMergeTransform[K, R](
     keyClass: Class[K],
+    read: => SortedBucketIO.Read[R]
+  ): SortMergeTransformReadBuilder[K, Iterable[R]] =
+    sortMergeTransform(keyClass, read, TargetParallelism.auto())
+
+  /**
+   * Perform a [[SortedBucketScioContext.sortMergeGroupByKey()]] operation, then immediately apply
+   * a transformation function to the merged groups and re-write using the same bucketing key and
+   * hashing scheme. By applying the write, transform, and write in the same transform, an extra
+   * shuffle step can be avoided.
+   *
+   * @group per_key
+   */
+  @experimental
+  def sortMergeTransform[K, R](
+    keyClass: Class[K],
     read: => SortedBucketIO.Read[R],
-    targetParallelism: TargetParallelism = TargetParallelism.auto()
+    targetParallelism: TargetParallelism
   ): SortMergeTransformReadBuilder[K, Iterable[R]] = {
     val tupleTag = read.getTupleTag
 
     new SortMergeTransformReadBuilder(
-      SortedBucketIO.read(keyClass).of(read),
+      SortedBucketIO.read(keyClass).of(read).withTargetParallelism(targetParallelism),
       _.getAll(tupleTag).asScala
     )
   }

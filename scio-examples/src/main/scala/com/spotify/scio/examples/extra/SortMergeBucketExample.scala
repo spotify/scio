@@ -163,7 +163,8 @@ object SortMergeBucketTransformExample {
         .from(args("lhsInput")),
       AvroSortedBucketIO
         .read(new TupleTag[Account]("rhs"), classOf[Account])
-        .from(args("rhsInput"))
+        .from(args("rhsInput")),
+      TargetParallelism.auto()
     ).to(
       AvroSortedBucketIO
         .transformOutput(classOf[Integer], "userId", classOf[Account])

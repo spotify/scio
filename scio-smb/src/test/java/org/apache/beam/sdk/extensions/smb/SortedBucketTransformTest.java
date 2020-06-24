@@ -162,7 +162,7 @@ public class SortedBucketTransformTest {
       Assert.assertEquals(expectedNumBuckets, numBucketsInMetadata);
     } else {
       Assert.assertTrue(numBucketsInMetadata <= 4);
-      Assert.assertTrue(numBucketsInMetadata >= 2);
+      Assert.assertTrue(numBucketsInMetadata >= 1);
     }
 
     Assert.assertEquals(1, outputs.getKey().getNumShards());
