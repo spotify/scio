@@ -399,12 +399,12 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
       extends PTransform<PCollection<KV<BucketShardId, ResourceId>>, PCollectionTuple> {
 
     private final FileAssignment fileAssignment;
-    private final BucketMetadata<?, ?> bucketMetadata;
+    private final BucketMetadata bucketMetadata;
     private final FileOperations<V> fileOperations;
 
     RenameBuckets(
         FileAssignment fileAssignment,
-        BucketMetadata<?, ?> bucketMetadata,
+        BucketMetadata bucketMetadata,
         FileOperations<V> fileOperations) {
       this.fileAssignment = fileAssignment;
       this.bucketMetadata = bucketMetadata;
@@ -442,7 +442,7 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
     }
 
     static void moveFiles(
-        BucketMetadata<?, ?> bucketMetadata,
+        BucketMetadata bucketMetadata,
         Map<BucketShardId, ResourceId> writtenTmpBuckets,
         FileAssignment dstFileAssignment,
         FileOperations fileOperations,
@@ -455,12 +455,19 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
       final List<ResourceId> filesToCleanUp = new ArrayList<>();
       filesToCleanUp.add(metadataDst);
 
+      final List<BucketShardId> allBucketShardIds = new ArrayList<>();
+      for (int i = 0; i < bucketMetadata.getNumBuckets(); i++) {
+        for (int j = 0; j < bucketMetadata.getNumShards(); j++) {
+          allBucketShardIds.add(BucketShardId.of(i, j));
+        }
+      }
+
       // Transfer bucket files once metadata has been written
       final List<ResourceId> srcFiles = new ArrayList<>();
       final List<ResourceId> dstFiles = new ArrayList<>();
       final List<KV<BucketShardId, ResourceId>> bucketDsts = new ArrayList<>();
 
-      for (BucketShardId id : bucketMetadata.allBucketShardIds()) {
+      for (BucketShardId id : allBucketShardIds) {
         final ResourceId finalDst = dstFileAssignment.forBucket(id, bucketMetadata);
 
         // If bucket hasn't been written, write empty file

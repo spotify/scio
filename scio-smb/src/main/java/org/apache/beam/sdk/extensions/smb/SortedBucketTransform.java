@@ -33,6 +33,7 @@ import org.apache.beam.sdk.coders.CannotProvideCoderException;
 import org.apache.beam.sdk.coders.Coder;
 import org.apache.beam.sdk.coders.Coder.NonDeterministicException;
 import org.apache.beam.sdk.coders.SerializableCoder;
+import org.apache.beam.sdk.extensions.smb.BucketMetadata.HashType;
 import org.apache.beam.sdk.extensions.smb.FileOperations.Writer;
 import org.apache.beam.sdk.extensions.smb.SMBFilenamePolicy.FileAssignment;
 import org.apache.beam.sdk.extensions.smb.SortedBucketSink.RenameBuckets;
@@ -49,6 +50,8 @@ import org.apache.beam.sdk.schemas.transforms.Group;
 import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.transforms.PTransform;
 import org.apache.beam.sdk.transforms.ParDo;
+import org.apache.beam.sdk.transforms.display.DisplayData;
+import org.apache.beam.sdk.transforms.display.DisplayData.Builder;
 import org.apache.beam.sdk.transforms.join.CoGbkResult;
 import org.apache.beam.sdk.values.KV;
 import org.apache.beam.sdk.values.PBegin;
@@ -60,44 +63,52 @@ import org.slf4j.LoggerFactory;
 /**
  * A {@link PTransform} that encapsulates both a {@link SortedBucketSource} and {@link
  * SortedBucketSink} operation, with a user-supplied transform function mapping merged {@link
- * CoGbkResult}s to their final writable outputs. The same hash function must be supplied in the
- * output {@link BucketMetadata} to preserve the same key distribution.
+ * CoGbkResult}s to their final writable outputs.
  *
  * @param <FinalKeyT>
  * @param <FinalValueT>
  */
 public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PBegin, WriteResult> {
+  // Dataflow calls split() with a suggested byte size that assumes a higher throughput than
+  // SMB joins have. By adjusting this suggestion we can arrive at a more optimal parallelism.
+  static final Double DESIRED_SIZE_BYTES_ADJUSTMENT_FACTOR = 0.33;
+
   private final MergeAndWriteBucketsSource<FinalKeyT, FinalValueT> boundedSource;
   private final FinalizeTransformedBuckets<FinalValueT> finalizeBuckets;
 
   public SortedBucketTransform(
       Class<FinalKeyT> finalKeyClass,
+      List<BucketedInput<?, ?>> sources,
       TargetParallelism targetParallelism,
+      TransformFn<FinalKeyT, FinalValueT> transformFn,
       ResourceId outputDirectory,
       ResourceId tempDirectory,
-      String filenameSuffix,
+      NewBucketMetadataFn<FinalKeyT, FinalValueT> newBucketMetadataFn,
       FileOperations<FinalValueT> fileOperations,
-      List<BucketedInput<?, ?>> sources,
-      TransformFn<FinalKeyT, FinalValueT> transformFn,
-      NewBucketMetadataFn<FinalKeyT, FinalValueT> newBucketMetadataFn) {
+      String filenameSuffix) {
     final SMBFilenamePolicy filenamePolicy = new SMBFilenamePolicy(outputDirectory, filenameSuffix);
-    this.boundedSource =
+    final SourceSpec<FinalKeyT> sourceSpec = SourceSpec.from(finalKeyClass, sources);
+
+    boundedSource =
         new MergeAndWriteBucketsSource<>(
             finalKeyClass,
             sources,
             targetParallelism,
             1,
             0,
-            SourceSpec.from(finalKeyClass, sources),
+            sourceSpec,
             Metrics.distribution(getName(), getName() + "-KeyGroupSize"),
             -1,
             filenamePolicy.forTempFiles(tempDirectory),
             fileOperations,
             transformFn);
 
-    this.finalizeBuckets =
+    finalizeBuckets =
         new FinalizeTransformedBuckets<>(
-            fileOperations, newBucketMetadataFn, filenamePolicy.forDestination());
+            fileOperations,
+            newBucketMetadataFn,
+            filenamePolicy.forDestination(),
+            sourceSpec.hashType);
   }
 
   @Override
@@ -124,7 +135,7 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
   public interface SerializableConsumer<ValueT> extends Consumer<ValueT>, Serializable {}
 
   public interface NewBucketMetadataFn<K, V> extends Serializable {
-    public BucketMetadata<K, V> createMetadata(int numBuckets, int numShards)
+    public BucketMetadata<K, V> createMetadata(int numBuckets, int numShards, HashType hashType)
         throws CannotProvideCoderException, NonDeterministicException;
   }
 
@@ -133,6 +144,7 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
     private final FileOperations<FinalValueT> fileOperations;
     private final NewBucketMetadataFn<?, ?> newBucketMetadataFn;
     private final FileAssignment dstFileAssignment;
+    private final HashType hashType;
 
     static final TupleTag<KV<BucketShardId, ResourceId>> BUCKETS_TAG =
         new TupleTag<>("writtenBuckets");
@@ -141,10 +153,12 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
     public FinalizeTransformedBuckets(
         FileOperations<FinalValueT> fileOperations,
         NewBucketMetadataFn<?, ?> newBucketMetadataFn,
-        FileAssignment dstFileAssignment) {
+        FileAssignment dstFileAssignment,
+        HashType hashType) {
       this.fileOperations = fileOperations;
       this.newBucketMetadataFn = newBucketMetadataFn;
       this.dstFileAssignment = dstFileAssignment;
+      this.hashType = hashType;
     }
 
     @ProcessElement
@@ -157,7 +171,8 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
         final MergedBucket bucket = mergedBuckets.next();
         if (bucketMetadata == null) {
           try {
-            bucketMetadata = newBucketMetadataFn.createMetadata(bucket.totalNumBuckets, 1);
+            bucketMetadata =
+                newBucketMetadataFn.createMetadata(bucket.totalNumBuckets, 1, hashType);
           } catch (Exception e) {
             throw new RuntimeException(e);
           }
@@ -295,13 +310,14 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
               effectiveParallelism,
               targetParallelism,
               getEstimatedSizeBytes(options),
-              desiredBundleSizeBytes);
+              desiredBundleSizeBytes,
+              DESIRED_SIZE_BYTES_ADJUSTMENT_FACTOR);
 
       if (adjustedParallelism == 1) {
         return Collections.singletonList(this);
       }
 
-      LOG.error("Parallelism was adjusted to " + adjustedParallelism);
+      LOG.info("Parallelism was adjusted to " + adjustedParallelism);
 
       final long estSplitSize = estimatedSizeBytes / adjustedParallelism;
 
@@ -329,17 +345,31 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
     }
 
     @Override
+    public void populateDisplayData(Builder builder) {
+      super.populateDisplayData(builder);
+      builder.add(DisplayData.item("targetParallelism", targetParallelism.toString()));
+    }
+
+    @Override
     public BoundedReader<MergedBucket> createReader(PipelineOptions options) throws IOException {
       final BoundedSource<MergedBucket> currentSource = this;
 
       return new BoundedReader<MergedBucket>() {
         private MergeBucketsReader<FinalKeyT> keyGroupReader;
+        private BucketShardId bucketShardId;
+        private ResourceId dst;
+        private OutputCollector<FinalValueT> outputCollector;
 
         @Override
         public boolean start() throws IOException {
           keyGroupReader =
               new MergeBucketsReader<>(
                   sources, bucketOffsetId, effectiveParallelism, sourceSpec, null, keyGroupSize);
+
+          bucketShardId = BucketShardId.of(bucketOffsetId, 0);
+          dst = fileAssignment.forBucket(bucketShardId, effectiveParallelism, 1);
+          outputCollector = new OutputCollector<>(fileOperations.createWriter(dst));
+
           return keyGroupReader.start();
         }
 
@@ -350,12 +380,7 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
 
         @Override
         public MergedBucket getCurrent() throws NoSuchElementException {
-          final BucketShardId bucketShardId = BucketShardId.of(bucketOffsetId, 0);
-          final ResourceId dst = fileAssignment.forBucket(bucketShardId, effectiveParallelism, 1);
-          final OutputCollector<FinalValueT> outputCollector;
-
           try {
-            outputCollector = new OutputCollector<>(fileOperations.createWriter(dst));
             KV<FinalKeyT, CoGbkResult> mergedKeyGroup = keyGroupReader.getCurrent();
             while (true) {
               transformFn.writeTransform(mergedKeyGroup, outputCollector);
@@ -365,8 +390,6 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
               }
               mergedKeyGroup = keyGroupReader.getCurrent();
             }
-
-            outputCollector.onComplete();
           } catch (Exception e) {
             throw new RuntimeException("Failed to write merged key group", e);
           }
@@ -375,7 +398,9 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
         }
 
         @Override
-        public void close() throws IOException {}
+        public void close() throws IOException {
+          outputCollector.onComplete();
+        }
 
         @Override
         public BoundedSource<MergedBucket> getCurrentSource() {

@@ -22,6 +22,7 @@ import com.spotify.scio.annotations.experimental
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.io.{ClosedTap, EmptyTap}
 import com.spotify.scio.values._
+import org.apache.beam.sdk.extensions.smb.SortedBucketTransform.NewBucketMetadataFn
 import org.apache.beam.sdk.extensions.smb.{SortedBucketIO, SortedBucketTransform, TargetParallelism}
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
 import org.apache.beam.sdk.transforms.join.CoGbkResult
@@ -319,7 +320,8 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
   @experimental
   def sortMergeTransform[K, R](
     keyClass: Class[K],
-    read: => SortedBucketIO.Read[R]
+    read: => SortedBucketIO.Read[R],
+    targetParallelism: TargetParallelism = TargetParallelism.auto()
   ): SortMergeTransformReadBuilder[K, Iterable[R]] = {
     val tupleTag = read.getTupleTag
 
@@ -342,12 +344,29 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
     keyClass: Class[K],
     readA: => SortedBucketIO.Read[A],
     readB: => SortedBucketIO.Read[B]
+  ): SortMergeTransformReadBuilder[K, (Iterable[A], Iterable[B])] =
+    sortMergeTransform(keyClass, readA, readB, TargetParallelism.auto())
+
+  /**
+   * Perform a 2-way [[SortedBucketScioContext.sortMergeCoGroup()]] operation, then immediately
+   * apply a transformation function to the merged cogroups and re-write using the same bucketing
+   * key and hashing scheme. By applying the write, transform, and write in the same transform,
+   * an extra shuffle step can be avoided.
+   *
+   * @group cogroup
+   */
+  @experimental
+  def sortMergeTransform[K, A, B](
+    keyClass: Class[K],
+    readA: => SortedBucketIO.Read[A],
+    readB: => SortedBucketIO.Read[B],
+    targetParallelism: TargetParallelism
   ): SortMergeTransformReadBuilder[K, (Iterable[A], Iterable[B])] = {
     val tupleTagA = readA.getTupleTag
     val tupleTagB = readB.getTupleTag
 
     new SortMergeTransformReadBuilder(
-      SortedBucketIO.read(keyClass).of(readA).and(readB),
+      SortedBucketIO.read(keyClass).of(readA).and(readB).withTargetParallelism(targetParallelism),
       cgbk => (cgbk.getAll(tupleTagA).asScala, cgbk.getAll(tupleTagB).asScala)
     )
   }
@@ -366,13 +385,36 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
     readA: => SortedBucketIO.Read[A],
     readB: => SortedBucketIO.Read[B],
     readC: => SortedBucketIO.Read[C]
+  ): SortMergeTransformReadBuilder[K, (Iterable[A], Iterable[B], Iterable[C])] =
+    sortMergeTransform(keyClass, readA, readB, readC, TargetParallelism.auto())
+
+  /**
+   * Perform a 3-way [[SortedBucketScioContext.sortMergeCoGroup()]] operation, then immediately
+   * apply a transformation function to the merged cogroups and re-write using the same bucketing
+   * key and hashing scheme. By applying the write, transform, and write in the same transform,
+   * an extra shuffle step can be avoided.
+   *
+   * @group cogroup
+   */
+  @experimental
+  def sortMergeTransform[K, A, B, C](
+    keyClass: Class[K],
+    readA: => SortedBucketIO.Read[A],
+    readB: => SortedBucketIO.Read[B],
+    readC: => SortedBucketIO.Read[C],
+    targetParallelism: TargetParallelism
   ): SortMergeTransformReadBuilder[K, (Iterable[A], Iterable[B], Iterable[C])] = {
     val tupleTagA = readA.getTupleTag
     val tupleTagB = readB.getTupleTag
     val tupleTagC = readC.getTupleTag
 
     new SortMergeTransformReadBuilder(
-      SortedBucketIO.read(keyClass).of(readA).and(readB).and(readC),
+      SortedBucketIO
+        .read(keyClass)
+        .of(readA)
+        .and(readB)
+        .and(readC)
+        .withTargetParallelism(targetParallelism),
       cgbk =>
         (
           cgbk.getAll(tupleTagA).asScala,
@@ -388,9 +430,9 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
   ) extends Serializable {
 
     def to[W: Coder](
-      write: => SortedBucketIO.Write[K, W]
+      output: => SortedBucketIO.TransformOutput[K, W]
     ): SortMergeTransformWriteBuilder[K, R, W] =
-      new SortMergeTransformWriteBuilder(coGbk.to(write), toR)
+      new SortMergeTransformWriteBuilder(coGbk.transform(output), toR)
   }
 
   class SortMergeTransformWriteBuilder[K, R, W](

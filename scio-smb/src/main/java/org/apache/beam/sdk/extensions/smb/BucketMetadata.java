@@ -27,9 +27,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import org.apache.beam.sdk.coders.AtomicCoder;
@@ -175,16 +173,6 @@ public abstract class BucketMetadata<K, V> implements Serializable, HasDisplayDa
 
   public HashType getHashType() {
     return hashType;
-  }
-
-  public List<BucketShardId> allBucketShardIds() {
-    List<BucketShardId> allBucketShardIds = new ArrayList<>();
-    for (int i = 0; i < getNumBuckets(); i++) {
-      for (int j = 0; j < getNumShards(); j++) {
-        allBucketShardIds.add(BucketShardId.of(i, j));
-      }
-    }
-    return allBucketShardIds;
   }
 
   /* Business logic */

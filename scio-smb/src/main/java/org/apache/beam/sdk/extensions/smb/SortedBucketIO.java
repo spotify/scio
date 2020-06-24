@@ -17,6 +17,7 @@
 
 package org.apache.beam.sdk.extensions.smb;
 
+import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -24,6 +25,7 @@ import javax.annotation.Nullable;
 import org.apache.beam.sdk.extensions.smb.BucketMetadata.HashType;
 import org.apache.beam.sdk.extensions.smb.SortedBucketSink.WriteResult;
 import org.apache.beam.sdk.extensions.smb.SortedBucketSource.BucketedInput;
+import org.apache.beam.sdk.extensions.smb.SortedBucketTransform.NewBucketMetadataFn;
 import org.apache.beam.sdk.extensions.smb.SortedBucketTransform.TransformFn;
 import org.apache.beam.sdk.io.fs.ResourceId;
 import org.apache.beam.sdk.transforms.PTransform;
@@ -106,8 +108,8 @@ public class SortedBucketIO {
       return new CoGbk<>(keyClass, reads, targetParallelism, metricsKey);
     }
 
-    public <V> CoGbkTransform<K, V> to(SortedBucketIO.Write<K, V> write) {
-      return new CoGbkTransform<>(this.keyClass, this.reads, write);
+    public <V> CoGbkTransform<K, V> transform(TransformOutput<K, V> transform) {
+      return new CoGbkTransform<>(keyClass, reads, targetParallelism, transform);
     }
 
     @Override
@@ -127,14 +129,28 @@ public class SortedBucketIO {
   public static class CoGbkTransform<K, V> extends PTransform<PBegin, WriteResult> {
     private final Class<K> keyClass;
     private final List<Read<?>> reads;
-    private final SortedBucketIO.Write<K, V> write;
+    private final TargetParallelism targetParallelism;
     private TransformFn<K, V> toFinalResultT;
 
+    private final ResourceId outputDirectory;
+    private final ResourceId tempDirectory;
+    private final NewBucketMetadataFn<K, V> newBucketMetadataFn;
+    private final FileOperations<V> fileOperations;
+    private final String filenameSuffix;
+
     private CoGbkTransform(
-        Class<K> keyClass, List<Read<?>> reads, SortedBucketIO.Write<K, V> write) {
+        Class<K> keyClass,
+        List<Read<?>> reads,
+        TargetParallelism targetParallelism,
+        TransformOutput<K, V> transform) {
       this.keyClass = keyClass;
       this.reads = reads;
-      this.write = write;
+      this.targetParallelism = targetParallelism;
+      this.outputDirectory = transform.getOutputDirectory();
+      this.tempDirectory = transform.getTempDirectory();
+      this.newBucketMetadataFn = transform.getNewBucketMetadataFn();
+      this.fileOperations = transform.getFileOperations();
+      this.filenameSuffix = transform.getFilenameSuffix();
     }
 
     public CoGbkTransform<K, V> via(TransformFn<K, V> toFinalResultT) {
@@ -144,30 +160,45 @@ public class SortedBucketIO {
 
     @Override
     public WriteResult expand(PBegin input) {
-      Preconditions.checkNotNull(write.getOutputDirectory(), "outputDirectory is not set");
-      Preconditions.checkNotNull(toFinalResultT, "TransformFn<K, V>v via() is not set");
+      Preconditions.checkNotNull(outputDirectory, "outputDirectory is not set");
+      Preconditions.checkNotNull(toFinalResultT, "TransformFn<K, V> via() is not set");
 
       final List<BucketedInput<?, ?>> bucketedInputs =
           reads.stream().map(Read::toBucketedInput).collect(Collectors.toList());
 
-      final ResourceId outputDirectory = write.getOutputDirectory();
-      ResourceId tempDirectory = write.getTempDirectory();
-      if (tempDirectory == null) {
-        tempDirectory = outputDirectory;
+      ResourceId tmpDir = tempDirectory;
+      if (tmpDir == null) {
+        tmpDir = outputDirectory;
       }
 
       return input.apply(
           new SortedBucketTransform<>(
               keyClass,
-              TargetParallelism.auto(),
-              outputDirectory,
-              tempDirectory,
-              write.getFilenameSuffix(),
-              write.getFileOperations(),
               bucketedInputs,
+              targetParallelism,
               toFinalResultT,
-              ((numBuckets, numShards) -> write.getBucketMetadata())));
+              outputDirectory,
+              tmpDir,
+              newBucketMetadataFn,
+              fileOperations,
+              filenameSuffix));
     }
+  }
+
+  public abstract static class TransformOutput<K, V> implements Serializable {
+    abstract Class<K> getKeyClass();
+
+    @Nullable
+    abstract ResourceId getOutputDirectory();
+
+    @Nullable
+    abstract ResourceId getTempDirectory();
+
+    abstract String getFilenameSuffix();
+
+    abstract FileOperations<V> getFileOperations();
+
+    abstract NewBucketMetadataFn<K, V> getNewBucketMetadataFn();
   }
 
   /** Represents a single sorted-bucket source written using {@link SortedBucketSink}. */

@@ -22,31 +22,41 @@ import java.util.List;
 import org.apache.beam.sdk.coders.CannotProvideCoderException;
 import org.apache.beam.sdk.coders.Coder;
 import org.apache.beam.sdk.coders.Coder.NonDeterministicException;
+import org.apache.beam.sdk.extensions.smb.BucketMetadata.HashType;
 import org.apache.beam.sdk.extensions.smb.BucketMetadataUtil.PartitionMetadata;
 import org.apache.beam.sdk.extensions.smb.SortedBucketSource.BucketedInput;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 class SourceSpec<K> implements Serializable {
+  private static Logger LOG = LoggerFactory.getLogger(SourceSpec.class);
+
   int leastNumBuckets;
   int greatestNumBuckets;
   Coder<K> keyCoder;
+  HashType hashType;
 
-  private SourceSpec(int leastNumBuckets, int greatestNumBuckets, Coder<K> keyCoder) {
+  private SourceSpec(
+      int leastNumBuckets, int greatestNumBuckets, Coder<K> keyCoder, HashType hashType) {
     this.leastNumBuckets = leastNumBuckets;
     this.greatestNumBuckets = greatestNumBuckets;
     this.keyCoder = keyCoder;
+    this.hashType = hashType;
   }
 
   static <KeyT> SourceSpec<KeyT> from(
       Class<KeyT> finalKeyClass, List<BucketedInput<?, ?>> sources) {
     BucketMetadata<?, ?> first = null;
     Coder<KeyT> finalKeyCoder = null;
+    HashType hashType = null;
 
     // Check metadata of each source
     for (BucketedInput<?, ?> source : sources) {
       final BucketMetadata<?, ?> current = source.getMetadata();
       if (first == null) {
         first = current;
+        hashType = current.getHashType();
       } else {
         Preconditions.checkState(
             first.isCompatibleWith(current),
@@ -85,7 +95,9 @@ class SourceSpec<K> implements Serializable {
     Preconditions.checkNotNull(
         finalKeyCoder, "Could not infer coder for key class %s", finalKeyClass);
 
-    return new SourceSpec<>(leastNumBuckets, greatestNumBuckets, finalKeyCoder);
+    Preconditions.checkNotNull(hashType, "Could not infer hash type for sources");
+
+    return new SourceSpec<>(leastNumBuckets, greatestNumBuckets, finalKeyCoder, hashType);
   }
 
   int getParallelism(TargetParallelism targetParallelism) {
@@ -96,6 +108,18 @@ class SourceSpec<K> implements Serializable {
     } else if (targetParallelism.isAuto()) {
       throw new UnsupportedOperationException("Can't derive a static value for AutoParallelism");
     } else {
+      Preconditions.checkArgument(
+          (targetParallelism.getValue() & targetParallelism.getValue() - 1) == 0,
+          String.format(
+              "Target parallelism must be a power of 2. Was: %d", targetParallelism.getValue()));
+
+      if (targetParallelism.getValue() > greatestNumBuckets) {
+        LOG.warn(
+            String.format(
+                "You have selected a parallelism > the greatest number of buckets (%d). "
+                    + "Unless you are applying a SortedBucketTransform, consider a lower number.",
+                greatestNumBuckets));
+      }
       return targetParallelism.getValue();
     }
   }
