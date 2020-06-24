@@ -177,7 +177,7 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
             throw new RuntimeException(e);
           }
         }
-        writtenBuckets.put(bucket.bucketShardId, bucket.destination);
+        writtenBuckets.put(BucketShardId.of(bucket.bucketId, 0), bucket.destination);
       }
       RenameBuckets.moveFiles(
           bucketMetadata,
@@ -216,12 +216,12 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
 
   private static class MergedBucket implements Serializable {
     final ResourceId destination;
-    final BucketShardId bucketShardId;
-    final Integer totalNumBuckets;
+    final int bucketId;
+    final int totalNumBuckets;
 
-    MergedBucket(BucketShardId bucketShardId, ResourceId destination, Integer totalNumBuckets) {
+    MergedBucket(Integer bucketId, ResourceId destination, Integer totalNumBuckets) {
       this.destination = destination;
-      this.bucketShardId = bucketShardId;
+      this.bucketId = bucketId;
       this.totalNumBuckets = totalNumBuckets;
     }
 
@@ -232,13 +232,13 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
       }
       MergedBucket that = (MergedBucket) o;
       return Objects.equals(destination, that.destination)
-          && Objects.equals(bucketShardId, that.bucketShardId)
+          && Objects.equals(bucketId, that.bucketId)
           && Objects.equals(totalNumBuckets, that.totalNumBuckets);
     }
 
     @Override
     public int hashCode() {
-      return Objects.hash(destination, bucketShardId, totalNumBuckets);
+      return Objects.hash(destination, bucketId, totalNumBuckets);
     }
   }
 
@@ -356,7 +356,7 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
 
       return new BoundedReader<MergedBucket>() {
         private MergeBucketsReader<FinalKeyT> keyGroupReader;
-        private BucketShardId bucketShardId;
+        private int bucketId;
         private ResourceId dst;
         private OutputCollector<FinalValueT> outputCollector;
 
@@ -366,8 +366,8 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
               new MergeBucketsReader<>(
                   sources, bucketOffsetId, effectiveParallelism, sourceSpec, null, keyGroupSize);
 
-          bucketShardId = BucketShardId.of(bucketOffsetId, 0);
-          dst = fileAssignment.forBucket(bucketShardId, effectiveParallelism, 1);
+          bucketId = bucketOffsetId;
+          dst = fileAssignment.forBucket(BucketShardId.of(bucketId, 0), effectiveParallelism, 1);
           outputCollector = new OutputCollector<>(fileOperations.createWriter(dst));
 
           return keyGroupReader.start();
@@ -394,7 +394,7 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
             throw new RuntimeException("Failed to write merged key group", e);
           }
 
-          return new MergedBucket(bucketShardId, dst, effectiveParallelism);
+          return new MergedBucket(bucketId, dst, effectiveParallelism);
         }
 
         @Override
