@@ -21,6 +21,7 @@ import com.google.auto.value.AutoValue;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.Serializable;
 import org.apache.beam.sdk.coders.AtomicCoder;
 import org.apache.beam.sdk.coders.CoderException;
 import org.apache.beam.sdk.coders.VarIntCoder;
@@ -35,7 +36,7 @@ import org.apache.beam.sdk.coders.VarIntCoder;
  * special-case this bucket ID.
  */
 @AutoValue
-public abstract class BucketShardId {
+public abstract class BucketShardId implements Serializable {
 
   private static final int NULL_KEYS_BUCKET_ID = -1;
 

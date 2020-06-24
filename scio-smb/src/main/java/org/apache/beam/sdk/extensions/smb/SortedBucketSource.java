@@ -261,6 +261,35 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
         .collect(Collectors.toList());
   }
 
+  static int getFanout(
+      SourceSpec sourceSpec,
+      int effectiveParallelism,
+      TargetParallelism targetParallelism,
+      long estimatedSizeBytes,
+      long desiredSizeBytes) {
+    desiredSizeBytes *= DESIRED_SIZE_BYTES_ADJUSTMENT_FACTOR;
+
+    int greatestNumBuckets = sourceSpec.greatestNumBuckets;
+
+    if (effectiveParallelism == greatestNumBuckets) {
+      LOG.info("Parallelism is already maxed, can't split further.");
+      return 1;
+    }
+    if (!targetParallelism.isAuto()) {
+      return sourceSpec.getParallelism(targetParallelism);
+    } else {
+      int fanout = (int) Math.round(estimatedSizeBytes / (desiredSizeBytes * 1.0));
+
+      if (fanout <= 1) {
+        LOG.info("Desired byte size is <= total input size, can't split further.");
+        return 1;
+      }
+
+      // round up to nearest power of 2, bounded by greatest # of buckets
+      return Math.min(Integer.highestOneBit(fanout - 1) * 2, greatestNumBuckets);
+    }
+  }
+
   // `getEstimatedSizeBytes` is called frequently by Dataflow, don't recompute every time
   @Override
   public long getEstimatedSizeBytes(PipelineOptions options) throws Exception {

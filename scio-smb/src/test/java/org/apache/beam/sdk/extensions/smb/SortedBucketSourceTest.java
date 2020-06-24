@@ -671,7 +671,7 @@ public class SortedBucketSourceTest {
                     Stream.concat(l.stream(), r.stream()).sorted().collect(Collectors.toList())));
   }
 
-  private static void verifyMetrics(
+  static void verifyMetrics(
       PipelineResult result, Map<String, DistributionResult> expectedDistributions) {
     final Map<String, DistributionResult> actualDistributions =
         ImmutableList.copyOf(result.metrics().allMetrics().getDistributions().iterator()).stream()

@@ -89,8 +89,6 @@ class SourceSpec<K> implements Serializable {
   }
 
   int getParallelism(TargetParallelism targetParallelism) {
-    int parallelism;
-
     if (targetParallelism.isMin()) {
       return leastNumBuckets;
     } else if (targetParallelism.isMax()) {
@@ -98,18 +96,7 @@ class SourceSpec<K> implements Serializable {
     } else if (targetParallelism.isAuto()) {
       throw new UnsupportedOperationException("Can't derive a static value for AutoParallelism");
     } else {
-      parallelism = targetParallelism.getValue();
-
-      Preconditions.checkArgument(
-          ((parallelism & parallelism - 1) == 0)
-              && parallelism >= leastNumBuckets
-              && parallelism <= greatestNumBuckets,
-          String.format(
-              "Target parallelism must be a power of 2 between the least (%d) and "
-                  + "greatest (%d) number of buckets in sources. Was: %d",
-              leastNumBuckets, greatestNumBuckets, parallelism));
-
-      return parallelism;
+      return targetParallelism.getValue();
     }
   }
 

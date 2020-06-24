@@ -128,13 +128,14 @@ public class SortedBucketTransformTest {
     transformPipeline.apply(
         new SortedBucketTransform<>(
             String.class,
-            outputMetadata,
+            TargetParallelism.min(),
             fromFolder(outputFolder),
             fromFolder(tempFolder),
             ".txt",
             new TestFileOperations(),
             sources,
-            mergeFunction));
+            mergeFunction,
+            TestBucketMetadata::of));
 
     final PipelineResult result = transformPipeline.run();
     result.waitUntilFinish();
@@ -143,11 +144,8 @@ public class SortedBucketTransformTest {
     Assert.assertEquals(expected, outputs.getValue());
     Assert.assertEquals(outputMetadata, outputs.getKey());
 
-    verifyMetrics(
+    SortedBucketSourceTest.verifyMetrics(
         result,
-        ImmutableMap.of(
-            "SortedBucketTransform-ElementsWritten", 3L,
-            "SortedBucketTransform-ElementsRead", 10L),
         ImmutableMap.of(
             "SortedBucketTransform-KeyGroupSize", DistributionResult.create(10, 7, 1, 2)));
   }
@@ -159,13 +157,14 @@ public class SortedBucketTransformTest {
     transformPipeline.apply(
         new SortedBucketTransform<>(
             String.class,
-            outputMetadata,
+            TargetParallelism.of(8),
             fromFolder(outputFolder),
             fromFolder(tempFolder),
             ".txt",
             new TestFileOperations(),
             sources,
-            mergeFunction));
+            mergeFunction,
+            TestBucketMetadata::of));
 
     final PipelineResult result = transformPipeline.run();
     result.waitUntilFinish();
@@ -174,11 +173,8 @@ public class SortedBucketTransformTest {
     Assert.assertEquals(expected, outputs.getValue());
     Assert.assertEquals(outputMetadata, outputs.getKey());
 
-    verifyMetrics(
+    SortedBucketSourceTest.verifyMetrics(
         result,
-        ImmutableMap.of(
-            "SortedBucketTransform-ElementsWritten", 3L,
-            "SortedBucketTransform-ElementsRead", 10L),
         ImmutableMap.of(
             "SortedBucketTransform-KeyGroupSize", DistributionResult.create(10, 7, 1, 2)));
   }
@@ -202,25 +198,5 @@ public class SortedBucketTransformTest {
         BucketMetadata.from(
             Channels.newInputStream(FileSystems.open(fileAssignment.forMetadata()))),
         outputElements);
-  }
-
-  private static void verifyMetrics(
-      PipelineResult result,
-      Map<String, Long> expectedCounters,
-      Map<String, DistributionResult> expectedDistributions) {
-    final Map<String, Long> actualCounters =
-        ImmutableList.copyOf(result.metrics().allMetrics().getCounters().iterator()).stream()
-            .filter(metric -> !metric.getName().getName().equals(PAssert.SUCCESS_COUNTER))
-            .collect(
-                Collectors.toMap(metric -> metric.getName().getName(), MetricResult::getCommitted));
-
-    Assert.assertEquals(expectedCounters, actualCounters);
-
-    final Map<String, DistributionResult> actualDistributions =
-        ImmutableList.copyOf(result.metrics().allMetrics().getDistributions().iterator()).stream()
-            .collect(
-                Collectors.toMap(metric -> metric.getName().getName(), MetricResult::getCommitted));
-
-    Assert.assertEquals(expectedDistributions, actualDistributions);
   }
 }

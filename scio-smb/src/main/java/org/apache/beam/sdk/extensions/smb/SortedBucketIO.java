@@ -159,13 +159,14 @@ public class SortedBucketIO {
       return input.apply(
           new SortedBucketTransform<>(
               keyClass,
-              write.getBucketMetadata(),
+              TargetParallelism.auto(),
               outputDirectory,
               tempDirectory,
               write.getFilenameSuffix(),
               write.getFileOperations(),
               bucketedInputs,
-              toFinalResultT));
+              toFinalResultT,
+              ((numBuckets, numShards) -> write.getBucketMetadata())));
     }
   }
 
