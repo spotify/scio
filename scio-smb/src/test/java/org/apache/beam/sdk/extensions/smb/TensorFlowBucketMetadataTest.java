@@ -90,6 +90,12 @@ public class TensorFlowBucketMetadataTest {
         () ->
             new TensorFlowBucketMetadata<>(1, 1, Float.class, HashType.MURMUR3_32, "float")
                 .extractKey(example));
+
+    Assert.assertThrows(
+        IllegalStateException.class,
+        () ->
+            new TensorFlowBucketMetadata<>(1, 1, Integer.class, HashType.MURMUR3_32, "bytes")
+                .extractKey(example));
   }
 
   @Test
