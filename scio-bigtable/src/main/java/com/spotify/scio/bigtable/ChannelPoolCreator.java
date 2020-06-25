@@ -22,31 +22,34 @@ import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.cloud.bigtable.grpc.io.ChannelPool;
 import com.google.cloud.bigtable.grpc.io.CredentialInterceptorCache;
 import io.grpc.ClientInterceptor;
-
 import java.io.IOException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ChannelPoolCreator {
-  private static final BigtableOptions options = BigtableOptions.builder().build();
-  private static ClientInterceptor[] interceptors;
+  private static final Logger LOG = LoggerFactory.getLogger(ChannelPoolCreator.class);
 
-  static {
+  private static ClientInterceptor[] getClientInterceptors(final BigtableOptions options) {
     try {
-      final ClientInterceptor interceptor =
-          CredentialInterceptorCache.getInstance()
-              .getCredentialsInterceptor(options.getCredentialOptions(), options.getRetryOptions());
-
+      final ClientInterceptor interceptor = CredentialInterceptorCache.getInstance()
+          .getCredentialsInterceptor(options.getCredentialOptions(), options.getRetryOptions());
       // If credentials are unset (i.e. via local emulator), CredentialsInterceptor will return null
       if (interceptor == null) {
-        interceptors = new ClientInterceptor[] {};
+        return new ClientInterceptor[] {};
       } else {
-        interceptors = new ClientInterceptor[] {interceptor};
+        return new ClientInterceptor[] {interceptor};
       }
     } catch (Exception e) {
-      e.printStackTrace();
+      LOG.error(
+          "Failed to get credentials interceptor. No interceptor will be used for the channel.",
+          e);
+      return new ClientInterceptor[] {};
     }
   }
 
   public static ChannelPool createPool(final BigtableOptions options) throws IOException {
+    final ClientInterceptor[] interceptors = getClientInterceptors(options);
+
     return new ChannelPool(
         () -> BigtableSession.createNettyChannel(options.getAdminHost(), options, interceptors), 1);
   }
