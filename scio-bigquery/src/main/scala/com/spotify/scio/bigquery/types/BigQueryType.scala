@@ -192,7 +192,9 @@ object BigQueryType {
    * Also generate a companion object with convenience methods.
    * @group annotation
    */
-  @compileTimeOnly("enable macro paradise to expand macro annotations")
+  @compileTimeOnly(
+    "enable macro paradise (2.12) or -Ymacro-annotations (2.13) to expand macro annotations"
+  )
   class fromTable(tableSpec: String, args: String*) extends StaticAnnotation {
     def macroTransform(annottees: Any*): Any = macro TypeProvider.tableImpl
   }
@@ -220,7 +222,9 @@ object BigQueryType {
    * Also generate a companion object with convenience methods.
    * @group annotation
    */
-  @compileTimeOnly("enable macro paradise to expand macro annotations")
+  @compileTimeOnly(
+    "enable macro paradise (2.12) or -Ymacro-annotations (2.13) to expand macro annotations"
+  )
   class fromSchema(schema: String) extends StaticAnnotation {
     def macroTransform(annottees: Any*): Any = macro TypeProvider.schemaImpl
   }
@@ -265,7 +269,9 @@ object BigQueryType {
    * Also generate a companion object with convenience methods.
    * @group annotation
    */
-  @compileTimeOnly("enable macro paradise to expand macro annotations")
+  @compileTimeOnly(
+    "enable macro paradise (2.12) or -Ymacro-annotations (2.13) to expand macro annotations"
+  )
   class fromStorage(
     tableSpec: String,
     args: List[Any] = Nil,
@@ -309,7 +315,9 @@ object BigQueryType {
    * behavior, start the query string with `#legacysql` or `#standardsql`.
    * @group annotation
    */
-  @compileTimeOnly("enable macro paradise to expand macro annotations")
+  @compileTimeOnly(
+    "enable macro paradise (2.12) or -Ymacro-annotations (2.13) to expand macro annotations"
+  )
   class fromQuery(query: String, args: Any*) extends StaticAnnotation {
     def macroTransform(annottees: Any*): Any = macro TypeProvider.queryImpl
   }
@@ -327,7 +335,9 @@ object BigQueryType {
    * }}}
    * @group annotation
    */
-  @compileTimeOnly("enable macro paradise to expand macro annotations")
+  @compileTimeOnly(
+    "enable macro paradise (2.12) or -Ymacro-annotations (2.13) to expand macro annotations"
+  )
   class toTable extends StaticAnnotation {
     def macroTransform(annottees: Any*): Any = macro TypeProvider.toTableImpl
   }

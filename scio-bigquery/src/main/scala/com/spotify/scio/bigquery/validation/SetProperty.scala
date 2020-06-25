@@ -23,7 +23,9 @@ import scala.reflect.macros.blackbox
 // This shouldn't be necessary in most production use cases. However passing System properties from
 // Intellij can cause issues. The ideal place to set this system property is in your build.sbt file.
 private[validation] object SetProperty {
-  @compileTimeOnly("enable macro paradise to expand macro annotations")
+  @compileTimeOnly(
+    "enable macro paradise (2.12) or -Ymacro-annotations (2.13) to expand macro annotations"
+  )
   class setProperty extends StaticAnnotation {
     def macroTransform(annottees: Any*): Any = macro setPropertyImpl
   }

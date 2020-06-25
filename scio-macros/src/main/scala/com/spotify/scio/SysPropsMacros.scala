@@ -20,7 +20,9 @@ package com.spotify.scio
 import scala.annotation.{compileTimeOnly, StaticAnnotation}
 import scala.reflect.macros.blackbox
 
-@compileTimeOnly("enable macro paradise to expand macro annotations")
+@compileTimeOnly(
+  "enable macro paradise (2.12) or -Ymacro-annotations (2.13) to expand macro annotations"
+)
 final class registerSysProps extends StaticAnnotation {
   def macroTransform(annottees: Any*): Any = macro registerSysPropsMacro.impl
 }
