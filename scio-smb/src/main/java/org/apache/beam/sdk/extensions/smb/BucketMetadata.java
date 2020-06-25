@@ -29,7 +29,6 @@ import java.io.OutputStream;
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.Map;
-import java.util.function.Function;
 import org.apache.beam.sdk.coders.AtomicCoder;
 import org.apache.beam.sdk.coders.CannotProvideCoderException;
 import org.apache.beam.sdk.coders.Coder;
@@ -203,9 +202,8 @@ public abstract class BucketMetadata<K, V> implements Serializable, HasDisplayDa
     return Math.abs(hashFunction.hashBytes(keyBytes).asInt()) % numBuckets;
   }
 
-  Function<byte[], Boolean> checkRehashedBucketFn(int newNumBuckets, int currentBucket) {
-    return (keyBytes) ->
-        Math.abs(hashFunction.hashBytes(keyBytes).asInt()) % newNumBuckets == currentBucket;
+  int rehashBucket(byte[] keyBytes, int newNumBuckets) {
+    return Math.abs(hashFunction.hashBytes(keyBytes).asInt()) % newNumBuckets;
   }
 
   ////////////////////////////////////////
