@@ -117,8 +117,13 @@ private object RunnerContext {
     extraLocalArtifacts: List[String]
   ): Iterable[String] = {
     val finalLocalArtifacts =
-      (detectClassPathResourcesToStage(pipelineOptions, classLoader) ++ extraLocalArtifacts)
-        .map(path => path.substring(path.lastIndexOf("/") + 1, path.length) -> path)
+      detectClassPathResourcesToStage(pipelineOptions, classLoader) ++ extraLocalArtifacts
+        .map {
+          case path if path.endsWith(".jar") =>
+            path.substring(path.lastIndexOf("/") + 1, path.length) -> path
+          case path =>
+            path -> path
+        }
         .toMap
         .values
 
