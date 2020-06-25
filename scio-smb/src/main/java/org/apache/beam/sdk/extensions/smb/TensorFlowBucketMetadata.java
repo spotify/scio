@@ -70,7 +70,7 @@ public class TensorFlowBucketMetadata<K> extends BucketMetadata<K, Example> {
     } else if (getKeyClass() == ByteString.class) {
       BytesList values = feature.getBytesList();
       Preconditions.checkState(values.getValueCount() == 1, "Number of feature in keyField != 1");
-      return (K) ByteString.copyFrom(values.getValue(0).toByteArray());
+      return (K) values.getValue(0);
     } else if (getKeyClass() == String.class) {
       BytesList values = feature.getBytesList();
       Preconditions.checkState(values.getValueCount() == 1, "Number of feature in keyField != 1");
