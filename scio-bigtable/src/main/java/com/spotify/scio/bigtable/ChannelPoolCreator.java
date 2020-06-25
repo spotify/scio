@@ -31,8 +31,9 @@ public class ChannelPoolCreator {
 
   private static ClientInterceptor[] getClientInterceptors(final BigtableOptions options) {
     try {
-      final ClientInterceptor interceptor = CredentialInterceptorCache.getInstance()
-          .getCredentialsInterceptor(options.getCredentialOptions(), options.getRetryOptions());
+      final ClientInterceptor interceptor =
+          CredentialInterceptorCache.getInstance()
+              .getCredentialsInterceptor(options.getCredentialOptions(), options.getRetryOptions());
       // If credentials are unset (i.e. via local emulator), CredentialsInterceptor will return null
       if (interceptor == null) {
         return new ClientInterceptor[] {};
@@ -41,8 +42,7 @@ public class ChannelPoolCreator {
       }
     } catch (Exception e) {
       LOG.error(
-          "Failed to get credentials interceptor. No interceptor will be used for the channel.",
-          e);
+          "Failed to get credentials interceptor. No interceptor will be used for the channel.", e);
       return new ClientInterceptor[] {};
     }
   }
