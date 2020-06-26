@@ -432,7 +432,7 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
       val cms =
         leftSideKeys.withName("Compute CMS of LHS keys").aggregate(keyAggregator)
       me.skewedFullOuterJoin(rhs, hotKeyThreshold, cms)
-   }
+    }
   }
 
   /**
