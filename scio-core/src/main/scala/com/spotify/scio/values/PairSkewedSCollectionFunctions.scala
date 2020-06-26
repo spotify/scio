@@ -136,7 +136,7 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
   )(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, (V, W))] = {
     self.transform { me =>
       val (selfPartitions, rhsPartitions) =
-        me.partitionInputs(rhs, hotKeyThreshold, cms)
+        partitionInputs(me, rhs, hotKeyThreshold, cms)
 
       // Use hash join for hot keys
       val hotJoined = selfPartitions.hot
@@ -348,7 +348,7 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
   )(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, (V, Option[W]))] = {
     self.transform { me =>
       val (selfPartitions, rhsPartitions) =
-        me.partitionInputs(rhs, hotKeyThreshold, cms)
+        partitionInputs(me, rhs, hotKeyThreshold, cms)
       // Use hash join for hot keys
       val hotJoined = selfPartitions.hot
         .withName("Hash left join hot partitions")
@@ -469,7 +469,7 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
   )(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, (Option[V], Option[W]))] = {
     self.transform { me =>
       val (selfPartitions, rhsPartitions) =
-        me.partitionInputs(rhs, hotKeyThreshold, cms)
+        partitionInputs(me, rhs, hotKeyThreshold, cms)
       // Use hash join for hot keys
       val hotJoined = selfPartitions.hot
         .withName("Hash left join hot partitions")
@@ -485,6 +485,7 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
   }
 
   private def partitionInputs[W: Coder](
+    lhs: SCollection[(K, V)],
     rhs: SCollection[(K, W)],
     hotKeyThreshold: Long,
     cms: SCollection[CMS[K]]
@@ -500,7 +501,7 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
       .map(c => c.totalCount * c.eps)
       .asSingletonSideInput
 
-    val partitionedSelf = self
+    val partitionedSelf = lhs
       .withSideInputs(keyCMS, error)
       .transformWithSideOutputs(Seq(hotSelf, chillSelf), "Partition LHS") { (e, c) =>
         if (
