@@ -61,14 +61,22 @@ public class FutureHandlers {
           new FutureCallback<V>() {
             @Override
             public void onSuccess(@Nullable V result) {
-              onSuccess.apply(result);
+              try {
+                onSuccess.apply(result);
+              } catch (RuntimeException | Error e) {
+                f.setException(e);
+                return;
+              }
               f.set(result);
             }
 
             @Override
             public void onFailure(Throwable t) {
-              onFailure.apply(t);
-              f.setException(t);
+              try {
+                onFailure.apply(t);
+              } finally {
+                f.setException(t);
+              }
             }
           },
           MoreExecutors.directExecutor());
