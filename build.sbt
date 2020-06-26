@@ -174,11 +174,11 @@ val commonSettings = Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
   },
   evictionWarningOptions in update := EvictionWarningOptions.default
     .withWarnTransitiveEvictions(false),
-  coverageExcludedPackages := Seq(
+  coverageExcludedPackages := (Seq(
     "com\\.spotify\\.scio\\.examples\\..*",
     "com\\.spotify\\.scio\\.repl\\..*",
     "com\\.spotify\\.scio\\.util\\.MultiJoin"
-  ).mkString(";"),
+  ) ++ (2 to 10).map(x => s"com\\.spotify\\.scio\\.sql\\.Query${x}")).mkString(";"),
   coverageHighlighting := true,
   // Release settings
   publishTo := sonatypePublishToBundle.value,
