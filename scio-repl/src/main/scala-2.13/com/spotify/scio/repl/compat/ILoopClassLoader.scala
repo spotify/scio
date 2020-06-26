@@ -1,12 +1,11 @@
 package com.spotify.scio.repl.compat
 
-import scala.tools.nsc.interpreter.shell.ILoop
-import com.spotify.scio.repl.ScioILoop
+import scala.tools.nsc.interpreter.shell
 
 private[repl] trait ILoopClassLoader {
 
-  protected var scioREPL: ScioILoop = _
+  protected var scioREPL: shell.ILoop = _
 
-  def setRepl(repl: ScioILoop): Unit = scioREPL = repl
+  def setRepl(repl: shell.ILoop): Unit = scioREPL = repl
 
 }

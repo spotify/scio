@@ -1,6 +1,5 @@
 package com.spotify.scio.repl.compat
 
-import scala.tools.nsc.interpreter.ILoop
 import com.spotify.scio.repl.ScioILoop
 
 private[repl] trait ILoopClassLoader {
