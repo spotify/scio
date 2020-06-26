@@ -71,6 +71,16 @@ public class TensorFlowBucketMetadataTest {
             .extractKey(example));
 
     Assert.assertEquals(
+        ByteString.copyFrom("data".getBytes()),
+        new TensorFlowBucketMetadata<>(1, 1, ByteString.class, HashType.MURMUR3_32, "bytes")
+            .extractKey(example));
+
+    Assert.assertEquals(
+        "data",
+        new TensorFlowBucketMetadata<>(1, 1, String.class, HashType.MURMUR3_32, "bytes")
+            .extractKey(example));
+
+    Assert.assertEquals(
         (Long) 12345L,
         new TensorFlowBucketMetadata<>(1, 1, Long.class, HashType.MURMUR3_32, "int")
             .extractKey(example));
@@ -84,7 +94,7 @@ public class TensorFlowBucketMetadataTest {
     Assert.assertThrows(
         IllegalStateException.class,
         () ->
-            new TensorFlowBucketMetadata<>(1, 1, String.class, HashType.MURMUR3_32, "bytes")
+            new TensorFlowBucketMetadata<>(1, 1, Integer.class, HashType.MURMUR3_32, "bytes")
                 .extractKey(example));
   }
 

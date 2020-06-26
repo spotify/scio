@@ -19,7 +19,7 @@ package org.apache.beam.sdk.extensions.smb;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import java.util.Objects;
+import com.google.protobuf.ByteString;
 import org.apache.beam.sdk.coders.CannotProvideCoderException;
 import org.apache.beam.sdk.coders.Coder.NonDeterministicException;
 import org.apache.beam.sdk.transforms.display.DisplayData;
@@ -67,6 +67,14 @@ public class TensorFlowBucketMetadata<K> extends BucketMetadata<K, Example> {
       BytesList values = feature.getBytesList();
       Preconditions.checkState(values.getValueCount() == 1, "Number of feature in keyField != 1");
       return (K) values.getValue(0).toByteArray();
+    } else if (getKeyClass() == ByteString.class) {
+      BytesList values = feature.getBytesList();
+      Preconditions.checkState(values.getValueCount() == 1, "Number of feature in keyField != 1");
+      return (K) values.getValue(0);
+    } else if (getKeyClass() == String.class) {
+      BytesList values = feature.getBytesList();
+      Preconditions.checkState(values.getValueCount() == 1, "Number of feature in keyField != 1");
+      return (K) values.getValue(0).toStringUtf8();
     } else if (getKeyClass() == Long.class) {
       Int64List values = feature.getInt64List();
       Preconditions.checkState(values.getValueCount() == 1, "Number of feature in keyField != 1");
