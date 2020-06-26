@@ -84,20 +84,22 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
       "Sample fraction has to be between (0.0, 1.0] - default is 1.0"
     )
 
-    import com.twitter.algebird._
-    // Key aggregator for `k->#values`
-    // TODO: might be better to use SparseCMS
-    val keyAggregator = CMS.aggregator[K](eps, delta, seed)
+    self.transform { me =>
+      import com.twitter.algebird._
+      // Key aggregator for `k->#values`
+      // TODO: might be better to use SparseCMS
+      val keyAggregator = CMS.aggregator[K](eps, delta, seed)
 
-    val leftSideKeys = if (sampleFraction < 1.0) {
-      self.withName("Sample LHS").sample(withReplacement, sampleFraction).keys
-    } else {
-      self.keys
+      val leftSideKeys = if (sampleFraction < 1.0) {
+        me.withName("Sample LHS").sample(withReplacement, sampleFraction).keys
+      } else {
+        me.keys
+      }
+
+      val cms =
+        leftSideKeys.withName("Compute CMS of LHS keys").aggregate(keyAggregator)
+      me.skewedJoin(rhs, hotKeyThreshold, cms)
     }
-
-    val cms =
-      leftSideKeys.withName("Compute CMS of LHS keys").aggregate(keyAggregator)
-    self.skewedJoin(rhs, hotKeyThreshold, cms)
   }
 
   /**
@@ -132,20 +134,22 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     hotKeyThreshold: Long,
     cms: SCollection[CMS[K]]
   )(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, (V, W))] = {
-    val (selfPartitions, rhsPartitions) =
-      partitionInputs(rhs, hotKeyThreshold, cms)
+    self.transform { me =>
+      val (selfPartitions, rhsPartitions) =
+        me.partitionInputs(rhs, hotKeyThreshold, cms)
 
-    // Use hash join for hot keys
-    val hotJoined = selfPartitions.hot
-      .withName("Hash join hot partitions")
-      .hashJoin(rhsPartitions.hot)
+      // Use hash join for hot keys
+      val hotJoined = selfPartitions.hot
+        .withName("Hash join hot partitions")
+        .hashJoin(rhsPartitions.hot)
 
-    // Use regular join for the rest of the keys
-    val chillJoined = selfPartitions.chill
-      .withName("Join chill partitions")
-      .join(rhsPartitions.chill)
+      // Use regular join for the rest of the keys
+      val chillJoined = selfPartitions.chill
+        .withName("Join chill partitions")
+        .join(rhsPartitions.chill)
 
-    hotJoined.withName("Union hot and chill join results") ++ chillJoined
+      hotJoined.withName("Union hot and chill join results") ++ chillJoined
+    }
   }
 
   /**
@@ -292,20 +296,22 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
       "Sample fraction has to be between (0.0, 1.0] - default is 1.0"
     )
 
-    import com.twitter.algebird._
-    // Key aggregator for `k->#values`
-    // TODO: might be better to use SparseCMS
-    val keyAggregator = CMS.aggregator[K](eps, delta, seed)
+    self.transform { me =>
+      import com.twitter.algebird._
+      // Key aggregator for `k->#values`
+      // TODO: might be better to use SparseCMS
+      val keyAggregator = CMS.aggregator[K](eps, delta, seed)
 
-    val leftSideKeys = if (sampleFraction < 1.0) {
-      self.withName("Sample LHS").sample(withReplacement, sampleFraction).keys
-    } else {
-      self.keys
+      val leftSideKeys = if (sampleFraction < 1.0) {
+        me.withName("Sample LHS").sample(withReplacement, sampleFraction).keys
+      } else {
+        me.keys
+      }
+
+      val cms =
+        leftSideKeys.withName("Compute CMS of LHS keys").aggregate(keyAggregator)
+      me.skewedLeftOuterJoin(rhs, hotKeyThreshold, cms)
     }
-
-    val cms =
-      leftSideKeys.withName("Compute CMS of LHS keys").aggregate(keyAggregator)
-    self.skewedLeftOuterJoin(rhs, hotKeyThreshold, cms)
   }
 
   /**
@@ -340,19 +346,21 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     hotKeyThreshold: Long,
     cms: SCollection[CMS[K]]
   )(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, (V, Option[W]))] = {
-    val (selfPartitions, rhsPartitions) =
-      partitionInputs(rhs, hotKeyThreshold, cms)
-    // Use hash join for hot keys
-    val hotJoined = selfPartitions.hot
-      .withName("Hash left join hot partitions")
-      .hashLeftOuterJoin(rhsPartitions.hot)
+    self.transform { me =>
+      val (selfPartitions, rhsPartitions) =
+        me.partitionInputs(rhs, hotKeyThreshold, cms)
+      // Use hash join for hot keys
+      val hotJoined = selfPartitions.hot
+        .withName("Hash left join hot partitions")
+        .hashLeftOuterJoin(rhsPartitions.hot)
 
-    // Use regular join for the rest of the keys
-    val chillJoined = selfPartitions.chill
-      .withName("Left join chill partitions")
-      .leftOuterJoin(rhsPartitions.chill)
+      // Use regular join for the rest of the keys
+      val chillJoined = selfPartitions.chill
+        .withName("Left join chill partitions")
+        .leftOuterJoin(rhsPartitions.chill)
 
-    hotJoined.withName("Union hot and chill join results") ++ chillJoined
+      hotJoined.withName("Union hot and chill join results") ++ chillJoined
+    }
   }
 
   /**
@@ -409,20 +417,22 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
       "Sample fraction has to be between (0.0, 1.0] - default is 1.0"
     )
 
-    import com.twitter.algebird._
-    // Key aggregator for `k->#values`
-    // TODO: might be better to use SparseCMS
-    val keyAggregator = CMS.aggregator[K](eps, delta, seed)
+    self.transform { me =>
+      import com.twitter.algebird._
+      // Key aggregator for `k->#values`
+      // TODO: might be better to use SparseCMS
+      val keyAggregator = CMS.aggregator[K](eps, delta, seed)
 
-    val leftSideKeys = if (sampleFraction < 1.0) {
-      self.withName("Sample LHS").sample(withReplacement, sampleFraction).keys
-    } else {
-      self.keys
-    }
+      val leftSideKeys = if (sampleFraction < 1.0) {
+        me.withName("Sample LHS").sample(withReplacement, sampleFraction).keys
+      } else {
+        me.keys
+      }
 
-    val cms =
-      leftSideKeys.withName("Compute CMS of LHS keys").aggregate(keyAggregator)
-    self.skewedFullOuterJoin(rhs, hotKeyThreshold, cms)
+      val cms =
+        leftSideKeys.withName("Compute CMS of LHS keys").aggregate(keyAggregator)
+      me.skewedFullOuterJoin(rhs, hotKeyThreshold, cms)
+   }
   }
 
   /**
@@ -457,19 +467,21 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     hotKeyThreshold: Long,
     cms: SCollection[CMS[K]]
   )(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, (Option[V], Option[W]))] = {
-    val (selfPartitions, rhsPartitions) =
-      partitionInputs(rhs, hotKeyThreshold, cms)
-    // Use hash join for hot keys
-    val hotJoined = selfPartitions.hot
-      .withName("Hash left join hot partitions")
-      .hashFullOuterJoin(rhsPartitions.hot)
+    self.transform { me =>
+      val (selfPartitions, rhsPartitions) =
+        me.partitionInputs(rhs, hotKeyThreshold, cms)
+      // Use hash join for hot keys
+      val hotJoined = selfPartitions.hot
+        .withName("Hash left join hot partitions")
+        .hashFullOuterJoin(rhsPartitions.hot)
 
-    // Use regular join for the rest of the keys
-    val chillJoined = selfPartitions.chill
-      .withName("Left join chill partitions")
-      .fullOuterJoin(rhsPartitions.chill)
+      // Use regular join for the rest of the keys
+      val chillJoined = selfPartitions.chill
+        .withName("Left join chill partitions")
+        .fullOuterJoin(rhsPartitions.chill)
 
-    hotJoined.withName("Union hot and chill join results") ++ chillJoined
+      hotJoined.withName("Union hot and chill join results") ++ chillJoined
+    }
   }
 
   private def partitionInputs[W: Coder](
