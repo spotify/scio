@@ -1289,7 +1289,7 @@ lazy val soccoSettings = if (sys.env.contains("SOCCO")) {
       "-P:socco:package_com.spotify.scio:https://spotify.github.io/scio/api"
     ),
     autoCompilerPlugins := true,
-    addCompilerPlugin("com.criteo.socco" %% "socco-plugin" % "0.1.9"),
+    addCompilerPlugin(("io.regadas" %% "socco-ng" % "0.1.1").cross(CrossVersion.full)),
     // Generate scio-examples/target/site/index.html
     soccoIndex := SoccoIndex.generate(target.value / "site" / "index.html"),
     compile in Compile := {
