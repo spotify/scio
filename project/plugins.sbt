@@ -23,5 +23,5 @@ addSbtPlugin("com.thoughtworks.sbt-api-mappings" % "sbt-api-mappings" % "3.0.0")
 
 libraryDependencies ++= Seq(
   "com.github.os72" % "protoc-jar" % "3.11.4",
-  "org.apache.avro" % "avro-compiler" % "1.8.2"
+  "org.apache.avro" % "avro-compiler" % "1.10.0"
 )
