@@ -1148,7 +1148,7 @@ lazy val `scio-smb`: Project = project
       "joda-time" % "joda-time" % jodaTimeVersion,
       "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamVendorVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
-      "com.github.ben-manes.caffeine" % "caffeine" % caffeineVersion
+      "com.github.ben-manes.caffeine" % "caffeine" % caffeineVersion % "provided"
     ),
     beamSDKIODependencies,
     javacOptions ++= {
