@@ -40,6 +40,30 @@ trait MultiJoin extends Serializable {
 
   def toOptions[T](xs: Iterator[T]): Iterator[Option[T]] = if (xs.isEmpty) Iterator(None) else xs.map(Option(_))
 
+  private def toKeyedPCollectionTuple(list: Seq[SCollection[(K, V)]], acc: KeyedPCollectionTuple[K]) = {
+    if (list.isEmpty) {
+      acc
+    } else {
+      val head = list.head
+      toKeyedPCollectionTuple(list.tail, acc.and(head._2, head._1.toKV.internal))
+    }
+  }
+
+  private def toKeyedPCollectionTuple(list: Seq[SCollection[(K, V)]]) = {
+    val head = list.head
+    toKeyedPCollectionTuple(list.tail, KeyedPCollectionTuple.of(head._2, head._1.toKV.internal))
+  }
+  
+  def cogroup[K: Coder, V: Coder](xs: Seq[SCollection[(K, V)]]): SCollection[(K, Seq[Iterable[V]])] = {
+    val tags = xs.map(s => s -> new TupleTag[V]())
+    var keyed = toKeyedPCollectionTuple(tags).apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
+    val a = xs.head
+    a.context.wrap(keyed).withName(tfName).map { kv =>
+      val (key, result) = (kv.getKey, kv.getValue)
+      (key, result.map(t => tags.get(t).asScala))
+    }
+  }
+  
   def cogroup[KEY: Coder, A: Coder, B: Coder](a: SCollection[(KEY, A)], b: SCollection[(KEY, B)]): SCollection[(KEY, (Iterable[A], Iterable[B]))] = {
     val (tagA, tagB) = (new TupleTag[A](), new TupleTag[B]())
     val keyed = KeyedPCollectionTuple
