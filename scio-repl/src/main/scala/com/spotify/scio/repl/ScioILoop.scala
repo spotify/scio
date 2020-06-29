@@ -19,14 +19,12 @@ package com.spotify.scio.repl
 
 import com.spotify.scio.BuildInfo
 import com.spotify.scio.bigquery.BigQuerySysProps
-
 import org.apache.beam.sdk.extensions.gcp.options.GcpOptions.DefaultProjectFactory
 import org.apache.beam.sdk.options.PipelineOptionsFactory
 import org.apache.commons.text.StringEscapeUtils
 
-import scala.tools.nsc.{CompilerCommand, Settings}
+import scala.tools.nsc.CompilerCommand
 import scala.tools.nsc.interpreter.Results
-import scala.tools.nsc.interpreter.shell.{ILoop, ShellConfig}
 
 /**
  * ScioILoop - core of Scio REPL.
@@ -34,7 +32,7 @@ import scala.tools.nsc.interpreter.shell.{ILoop, ShellConfig}
  * @param args user arguments for Scio REPL
  */
 class ScioILoop(command: CompilerCommand, scioClassLoader: ScioReplClassLoader, args: List[String])
-    extends ILoop(ShellConfig(command.settings)) {
+    extends compat.ILoop(command) {
 
   // Fail fast for illegal arguments
   try {
@@ -54,22 +52,6 @@ class ScioILoop(command: CompilerCommand, scioClassLoader: ScioReplClassLoader, 
   // =======================================================================
   // Scio REPL magic commands:
   // =======================================================================
-
-  // Hidden magics/helpers for REPL session jars.
-
-  private val createJarCmd =
-    LoopCommand.nullary(
-      "createJar",
-      "create a Scio REPL runtime jar",
-      () => Result.resultFromString(scioClassLoader.createReplCodeJar)
-    )
-
-  private val getNextJarCmd =
-    LoopCommand.nullary(
-      "nextJar",
-      "get the path of the next Scio REPL runtime jar",
-      () => Result.resultFromString(scioClassLoader.getNextReplCodeJarPath)
-    )
 
   /**
    * REPL magic to get a new Scio context using arguments from the command line or :scioOpts.
@@ -136,25 +118,7 @@ class ScioILoop(command: CompilerCommand, scioClassLoader: ScioReplClassLoader, 
   private val scioOptsCmd =
     LoopCommand.cmd("scioOpts", "<[opts]>", "show or update Scio options", scioOptsCmdImpl)
 
-  /**
-   * REPL magic to run a Scio context.
-   * User may specify a name for the context val, default is `sc`.
-   * It will take care of dumping in-memory classes to local jar.
-   */
-  private def runScioCmdImpl(name: String) = {
-    scioClassLoader.createReplCodeJar
-    val sc = if (name.nonEmpty) name else "sc"
-    intp.interpret(s"$sc.run()")
-    Result.default
-  }
-
-  private val runScioCmd =
-    LoopCommand.cmd("runScio", "<[context-name] | sc>", "run Scio pipeline", runScioCmdImpl)
-
   private val scioCommands = List(newScioCmd, newLocalScioCmd, scioOptsCmd)
-
-  // TODO: find way to inject those into power commands. For now unused.
-  private val scioPowerCommands = List(createJarCmd, getNextJarCmd, runScioCmd) // scalafix:ok
 
   override def commands: List[LoopCommand] = super.commands ++ scioCommands
 
@@ -171,7 +135,7 @@ class ScioILoop(command: CompilerCommand, scioClassLoader: ScioReplClassLoader, 
     s"""$factory.fromArgs($optionsAsStr).create()"""
   }
 
-  override def welcome(): String = {
+  override def welcome: String = {
     val p = scala.util.Properties
     val ascii =
       """Welcome to
@@ -236,15 +200,13 @@ class ScioILoop(command: CompilerCommand, scioClassLoader: ScioReplClassLoader, 
         |import _ioCommands._
       """.stripMargin)
 
-  override def createInterpreter(settings: Settings): Unit = {
-    super.createInterpreter(settings)
+  override def initCommand(): Unit = {
     intp.beQuietDuring {
       addImports()
       createBigQueryClient()
       newScioCmdImpl("sc")
       loadIoCommands()
     }
-    out.print(prompt)
-    out.flush()
   }
+
 }
