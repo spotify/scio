@@ -121,7 +121,7 @@ object JobTest {
       input(io, TestStreamInputSource(stream))
 
     private def input[T](io: ScioIO[T], value: JobInputSource[T]): Builder = {
-      require(!state.input.contains(io.toString), "Duplicate test input: " + io.toString)
+      require(!state.input.contains(io.testId), "Duplicate test input: " + io.testId)
       state = state.copy(input = state.input + (io.testId -> value))
       this
     }
@@ -135,7 +135,7 @@ object JobTest {
      *                  matchers on an [[com.spotify.scio.values.SCollection SCollection]].
      */
     def output[T](io: ScioIO[T])(assertion: SCollection[T] => Any): Builder = {
-      require(!state.output.contains(io.toString), "Duplicate test output: " + io.toString)
+      require(!state.output.contains(io.testId), "Duplicate test output: " + io.testId)
       state = state.copy(
         output = state.output + (io.testId -> assertion.asInstanceOf[SCollection[_] => AnyVal])
       )
