@@ -320,7 +320,7 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
 
     @Override
     public ResourceType getResourceType() {
-      return ResourceType.PER_CLASS;
+      return ResourceType.PER_INSTANCE;
     }
 
     @Override
