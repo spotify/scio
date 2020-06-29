@@ -53,22 +53,6 @@ class ScioILoop(command: CompilerCommand, scioClassLoader: ScioReplClassLoader, 
   // Scio REPL magic commands:
   // =======================================================================
 
-  // Hidden magics/helpers for REPL session jars.
-
-  private val createJarCmd =
-    LoopCommand.nullary(
-      "createJar",
-      "create a Scio REPL runtime jar",
-      () => Result.resultFromString(scioClassLoader.createReplCodeJar)
-    )
-
-  private val getNextJarCmd =
-    LoopCommand.nullary(
-      "nextJar",
-      "get the path of the next Scio REPL runtime jar",
-      () => Result.resultFromString(scioClassLoader.getNextReplCodeJarPath)
-    )
-
   /**
    * REPL magic to get a new Scio context using arguments from the command line or :scioOpts.
    * User may specify a name for the context val, default is `sc`.
@@ -133,21 +117,6 @@ class ScioILoop(command: CompilerCommand, scioClassLoader: ScioReplClassLoader, 
 
   private val scioOptsCmd =
     LoopCommand.cmd("scioOpts", "<[opts]>", "show or update Scio options", scioOptsCmdImpl)
-
-  /**
-   * REPL magic to run a Scio context.
-   * User may specify a name for the context val, default is `sc`.
-   * It will take care of dumping in-memory classes to local jar.
-   */
-  private def runScioCmdImpl(name: String) = {
-    scioClassLoader.createReplCodeJar
-    val sc = if (name.nonEmpty) name else "sc"
-    intp.interpret(s"$sc.run()")
-    Result.default
-  }
-
-  private val runScioCmd =
-    LoopCommand.cmd("runScio", "<[context-name] | sc>", "run Scio pipeline", runScioCmdImpl)
 
   private val scioCommands = List(newScioCmd, newLocalScioCmd, scioOptsCmd)
 
