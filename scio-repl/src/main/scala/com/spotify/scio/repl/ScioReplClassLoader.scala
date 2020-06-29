@@ -27,7 +27,6 @@ import com.spotify.scio.repl.compat.ILoopClassLoader
 import org.slf4j.LoggerFactory
 
 import scala.tools.nsc.io._
-import scala.collection.AbstractIterable
 
 object ScioReplClassLoader {
   private val Logger = LoggerFactory.getLogger(this.getClass)

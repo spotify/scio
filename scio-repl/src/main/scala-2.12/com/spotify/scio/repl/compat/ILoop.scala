@@ -22,6 +22,7 @@ import java.io.{PrintWriter => JPrintWriter}
 import scala.tools.nsc.interpreter
 import scala.tools.nsc.CompilerCommand
 import scala.tools.nsc.{CompilerCommand, Settings}
+import scala.reflect.io.AbstractFile
 
 abstract class ILoop(
   command: CompilerCommand
@@ -43,4 +44,7 @@ abstract class ILoop(
     out.print(prompt)
     out.flush()
   }
+
+  def outputDir: AbstractFile = intp.replOutput.dir
+
 }
