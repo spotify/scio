@@ -27,6 +27,7 @@ import com.spotify.scio.repl.compat.ILoopClassLoader
 import org.slf4j.LoggerFactory
 
 import scala.tools.nsc.io._
+import scala.collection.AbstractIterable
 
 object ScioReplClassLoader {
   private val Logger = LoggerFactory.getLogger(this.getClass)
@@ -109,18 +110,10 @@ class ScioReplClassLoader(urls: Array[URL], parent: ClassLoader)
    */
   private[scio] def createReplCodeJar: String = {
     require(scioREPL != null, "scioREPL can't be null - set it first!")
-    import scala.tools.nsc.interpreter.ReplOutput
-
-    val virtualDirectory = new ReplOutput(scioREPL.settings.Yreploutdir).dir
-
     val tempJar = new File(nextReplJarDir, replJarName)
-
     // Generate next repl jar dir
     nextReplJarDir = genNextReplCodeJarDir
-
-    val jarFile =
-      createJar(virtualDirectory.asInstanceOf[VirtualDirectory], tempJar)
-    jarFile.getPath
+    createJar(scioREPL.outputDir, tempJar).getPath()
   }
 
   /**
@@ -128,13 +121,10 @@ class ScioReplClassLoader(urls: Array[URL], parent: ClassLoader)
    *
    * @param virtualDirectory containing classes that should be added to the jar
    */
-  private def createJar(virtualDirectory: VirtualDirectory, jarFile: File): File = {
+  private def createJar(dir: Iterable[AbstractFile], jarFile: File): File = {
     val jarStream = new JarOutputStream(new FileOutputStream(jarFile))
-    try {
-      addVirtualDirectoryToJar(virtualDirectory, "", jarStream)
-    } finally {
-      jarStream.close()
-    }
+    try { addVirtualDirectoryToJar(dir, "", jarStream) }
+    finally { jarStream.close() }
 
     jarFile
   }
@@ -148,24 +138,21 @@ class ScioReplClassLoader(urls: Array[URL], parent: ClassLoader)
    * @param jarStream for writing the jar file
    */
   private def addVirtualDirectoryToJar(
-    dir: VirtualDirectory,
+    dir: Iterable[AbstractFile],
     entryPath: String,
     jarStream: JarOutputStream
-  ): Unit =
-    dir.foreach { file =>
-      if (file.isDirectory) {
-        // Recursively descend into subdirectories, adjusting the package name as we do.
-        val dirPath = entryPath + file.name + "/"
-        val entry: JarEntry = new JarEntry(dirPath)
-        jarStream.putNextEntry(entry)
-        jarStream.closeEntry()
-        addVirtualDirectoryToJar(file.asInstanceOf[VirtualDirectory], dirPath, jarStream)
-      } else if (file.hasExtension("class")) {
-        // Add class files as an entry in the jar file and write the class to the jar.
-        val entry: JarEntry = new JarEntry(entryPath + file.name)
-        jarStream.putNextEntry(entry)
-        jarStream.write(file.toByteArray)
-        jarStream.closeEntry()
-      }
+  ): Unit = dir.foreach { file =>
+    if (file.isDirectory) {
+      // Recursively descend into subdirectories, adjusting the package name as we do.
+      val dirPath = entryPath + file.name + "/"
+      jarStream.putNextEntry(new JarEntry(dirPath))
+      jarStream.closeEntry()
+      addVirtualDirectoryToJar(file, dirPath, jarStream)
+    } else if (file.hasExtension("class")) {
+      // Add class files as an entry in the jar file and write the class to the jar.
+      jarStream.putNextEntry(new JarEntry(entryPath + file.name))
+      jarStream.write(file.toByteArray)
+      jarStream.closeEntry()
     }
+  }
 }
