@@ -178,8 +178,10 @@ public abstract class BucketMetadata<K, V> implements Serializable, HasDisplayDa
   /* Business logic */
 
   byte[] getKeyBytes(V value) {
-    final K key = extractKey(value);
+    return encodeKeyBytes(extractKey(value));
+  }
 
+  byte[] encodeKeyBytes(K key) {
     if (key == null) {
       return null;
     }

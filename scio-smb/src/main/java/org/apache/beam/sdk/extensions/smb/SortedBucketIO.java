@@ -21,7 +21,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
+import org.apache.beam.sdk.coders.Coder;
 import org.apache.beam.sdk.extensions.smb.BucketMetadata.HashType;
+import org.apache.beam.sdk.extensions.smb.SortedBucketSink.SortedBucketPreKeyedSink;
 import org.apache.beam.sdk.extensions.smb.SortedBucketSink.WriteResult;
 import org.apache.beam.sdk.extensions.smb.SortedBucketSource.BucketedInput;
 import org.apache.beam.sdk.extensions.smb.SortedBucketTransform.TransformFn;
@@ -199,6 +201,13 @@ public class SortedBucketIO {
 
     abstract BucketMetadata<K, V> getBucketMetadata();
 
+    abstract int getKeyCacheSize();
+
+    public PreKeyedWrite<K, V> onKeyedCollection(Coder<V> valueCoder, boolean verifyKeyExtraction) {
+      return new PreKeyedWrite<>(this, valueCoder, verifyKeyExtraction);
+    }
+
+    @SuppressWarnings("unchecked")
     @Override
     public WriteResult expand(PCollection<V> input) {
       Preconditions.checkNotNull(getOutputDirectory(), "outputDirectory is not set");
@@ -208,7 +217,6 @@ public class SortedBucketIO {
       if (tempDirectory == null) {
         tempDirectory = outputDirectory;
       }
-
       return input.apply(
           new SortedBucketSink<>(
               getBucketMetadata(),
@@ -216,7 +224,43 @@ public class SortedBucketIO {
               tempDirectory,
               getFilenameSuffix(),
               getFileOperations(),
-              getSorterMemoryMb()));
+              getSorterMemoryMb(),
+              getKeyCacheSize()));
+    }
+  }
+
+  public static class PreKeyedWrite<K, V> extends PTransform<PCollection<KV<K, V>>, WriteResult> {
+    private final Write<K, V> write;
+    private final Coder<V> valueCoder;
+    private final boolean verifyKeyExtraction;
+
+    public PreKeyedWrite(Write<K, V> write, Coder<V> valueCoder, boolean verifyKeyExtraction) {
+      this.write = write;
+      this.valueCoder = valueCoder;
+      this.verifyKeyExtraction = verifyKeyExtraction;
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public WriteResult expand(PCollection<KV<K, V>> input) {
+      Preconditions.checkNotNull(write.getOutputDirectory(), "outputDirectory is not set");
+
+      final ResourceId outputDirectory = write.getOutputDirectory();
+      ResourceId tempDirectory = write.getTempDirectory();
+      if (tempDirectory == null) {
+        tempDirectory = outputDirectory;
+      }
+      return input.apply(
+          new SortedBucketPreKeyedSink<>(
+              write.getBucketMetadata(),
+              outputDirectory,
+              tempDirectory,
+              write.getFilenameSuffix(),
+              write.getFileOperations(),
+              write.getSorterMemoryMb(),
+              valueCoder,
+              verifyKeyExtraction,
+              write.getKeyCacheSize()));
     }
   }
 }

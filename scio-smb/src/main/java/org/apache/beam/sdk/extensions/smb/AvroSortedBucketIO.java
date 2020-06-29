@@ -85,6 +85,7 @@ public class AvroSortedBucketIO {
         .setSorterMemoryMb(SortedBucketIO.DEFAULT_SORTER_MEMORY_MB)
         .setKeyClass(keyClass)
         .setKeyField(keyField)
+        .setKeyCacheSize(0)
         .setFilenameSuffix(DEFAULT_SUFFIX)
         .setCodec(DEFAULT_CODEC);
   }
@@ -218,6 +219,8 @@ public class AvroSortedBucketIO {
 
       abstract Builder<K, T> setCodec(CodecFactory codec);
 
+      abstract Builder<K, T> setKeyCacheSize(int cacheSize);
+
       abstract Write<K, T> build();
     }
 
@@ -277,6 +280,11 @@ public class AvroSortedBucketIO {
     /** Specifies the sorter memory in MB. */
     public Write<K, T> withSorterMemoryMb(int sorterMemoryMb) {
       return toBuilder().setSorterMemoryMb(sorterMemoryMb).build();
+    }
+
+    /** Specifies the size of an optional key-to-hash cache in the ExtractKeys transform. */
+    public Write<K, T> withKeyCacheOfSize(int keyCacheSize) {
+      return toBuilder().setKeyCacheSize(keyCacheSize).build();
     }
 
     /** Specifies the output file {@link CodecFactory}. */

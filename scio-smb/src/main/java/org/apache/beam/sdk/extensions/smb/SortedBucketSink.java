@@ -17,6 +17,9 @@
 
 package org.apache.beam.sdk.extensions.smb;
 
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.spotify.scio.transforms.DoFnWithResource;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.channels.Channels;
@@ -25,12 +28,14 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.coders.ByteArrayCoder;
 import org.apache.beam.sdk.coders.Coder;
 import org.apache.beam.sdk.coders.CoderException;
+import org.apache.beam.sdk.coders.DelegateCoder;
 import org.apache.beam.sdk.coders.KvCoder;
 import org.apache.beam.sdk.coders.ListCoder;
 import org.apache.beam.sdk.extensions.smb.BucketShardId.BucketShardIdCoder;
@@ -45,14 +50,16 @@ import org.apache.beam.sdk.io.fs.ResourceId;
 import org.apache.beam.sdk.io.fs.ResourceIdCoder;
 import org.apache.beam.sdk.metrics.Counter;
 import org.apache.beam.sdk.metrics.Metrics;
-import org.apache.beam.sdk.schemas.transforms.Group;
 import org.apache.beam.sdk.transforms.Create;
 import org.apache.beam.sdk.transforms.Create.Values;
 import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.transforms.GroupByKey;
 import org.apache.beam.sdk.transforms.PTransform;
 import org.apache.beam.sdk.transforms.ParDo;
+import org.apache.beam.sdk.transforms.Sample;
+import org.apache.beam.sdk.transforms.SerializableFunction;
 import org.apache.beam.sdk.transforms.View;
+import org.apache.beam.sdk.transforms.display.DisplayData;
 import org.apache.beam.sdk.transforms.display.DisplayData.Builder;
 import org.apache.beam.sdk.util.CoderUtils;
 import org.apache.beam.sdk.values.KV;
@@ -86,7 +93,7 @@ import org.slf4j.LoggerFactory;
  *
  * <p>{@link SortedBucketSink} re-uses existing {@link PTransform}s to map over each element,
  * extract a {@code byte[]} representation of its sorting key using {@link
- * BucketMetadata#getKeyBytes(Object)}, and assign it to an Integer bucket using {@link
+ * BucketMetadata#extractKey(Object)} (Object)}, and assign it to an Integer bucket using {@link
  * BucketMetadata#getBucketId(byte[])}. Next, a {@link GroupByKey} transform is applied to create a
  * {@link PCollection} of {@code N} elements, where {@code N} is the number of buckets specified by
  * {@link BucketMetadata#getNumBuckets()}, then a {@link SortValues} transform is used to sort
@@ -118,6 +125,7 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
   private final ResourceId tempDirectory;
   private final FileOperations<V> fileOperations;
   private final int sorterMemoryMb;
+  private final int keyCacheSize;
 
   public SortedBucketSink(
       BucketMetadata<K, V> bucketMetadata,
@@ -126,11 +134,30 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
       String filenameSuffix,
       FileOperations<V> fileOperations,
       int sorterMemoryMb) {
+    this(
+        bucketMetadata,
+        outputDirectory,
+        tempDirectory,
+        filenameSuffix,
+        fileOperations,
+        sorterMemoryMb,
+        0);
+  }
+
+  public SortedBucketSink(
+      BucketMetadata<K, V> bucketMetadata,
+      ResourceId outputDirectory,
+      ResourceId tempDirectory,
+      String filenameSuffix,
+      FileOperations<V> fileOperations,
+      int sorterMemoryMb,
+      int keyCacheSize) {
     this.bucketMetadata = bucketMetadata;
     this.filenamePolicy = new SMBFilenamePolicy(outputDirectory, filenameSuffix);
     this.tempDirectory = tempDirectory;
     this.fileOperations = fileOperations;
     this.sorterMemoryMb = sorterMemoryMb;
+    this.keyCacheSize = keyCacheSize;
   }
 
   @Override
@@ -139,9 +166,36 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
     Preconditions.checkArgument(
         input.isBounded() == IsBounded.BOUNDED,
         "SortedBucketSink cannot be applied to a non-bounded PCollection");
-    final Coder<V> valueCoder = input.getCoder();
-    return input
-        .apply("ExtractKeys", ParDo.of(new ExtractKeys<>(this.bucketMetadata, valueCoder)))
+    final Coder<V> inputCoder = input.getCoder();
+
+    final PCollection<KV<BucketShardId, KV<byte[], byte[]>>> bucketedInput =
+        input.apply(
+            "ExtractKeys",
+            ParDo.of(
+                ExtractKeys.of(
+                    bucketMetadata, bucketMetadata::extractKey, inputCoder, keyCacheSize)));
+
+    return sink(
+        bucketedInput,
+        getName(),
+        inputCoder,
+        sorterMemoryMb,
+        filenamePolicy,
+        fileOperations,
+        bucketMetadata,
+        tempDirectory);
+  }
+
+  public static <KeyT, ValueT> WriteResult sink(
+      PCollection<KV<BucketShardId, KV<byte[], byte[]>>> bucketedInput,
+      String transformName,
+      Coder<ValueT> valueCoder,
+      int sorterMemoryMb,
+      SMBFilenamePolicy filenamePolicy,
+      FileOperations<ValueT> fileOperations,
+      BucketMetadata<KeyT, ValueT> bucketMetadata,
+      ResourceId tempDirectory) {
+    return bucketedInput
         .setCoder(
             KvCoder.of(
                 BucketShardIdCoder.of(), KvCoder.of(ByteArrayCoder.of(), ByteArrayCoder.of())))
@@ -150,7 +204,7 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
             "SortValues",
             ParDo.of(
                 new SortBytesDoFn<>(
-                    getName(),
+                    transformName,
                     BufferedExternalSorter.options()
                         .withExternalSorterType(ExternalSorter.Options.SorterType.NATIVE)
                         .withMemoryMB(sorterMemoryMb))))
@@ -164,15 +218,31 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
   private static class ExtractKeys<K, V> extends DoFn<V, KV<BucketShardId, KV<byte[], byte[]>>> {
     // Substitute null keys in the output KV<byte[], V> so that they survive serialization
     private static final byte[] NULL_SORT_KEY = new byte[0];
+    private final SerializableFunction<V, K> extractKeyFn;
+    private final Coder<V> valueCoder;
+    private final BucketMetadata<K, ?> bucketMetadata;
+    private transient int shardId;
 
-    ExtractKeys(BucketMetadata<K, V> bucketMetadata, Coder<V> valueCoder) {
-      this.bucketMetadata = bucketMetadata;
-      this.valueCoder = valueCoder;
+    static <KeyT, ValueT> DoFn<ValueT, KV<BucketShardId, KV<byte[], byte[]>>> of(
+        BucketMetadata<KeyT, ?> bucketMetadata,
+        SerializableFunction<ValueT, KeyT> extractKeyFn,
+        Coder<ValueT> valueCoder,
+        int keyCacheSize) {
+      if (keyCacheSize == 0) {
+        return new ExtractKeys<>(bucketMetadata, extractKeyFn, valueCoder);
+      } else {
+        return new ExtractKeysWithCache<>(bucketMetadata, extractKeyFn, valueCoder, keyCacheSize);
+      }
     }
 
-    private final BucketMetadata<K, V> bucketMetadata;
-    private final Coder<V> valueCoder;
-    private transient int shardId;
+    private ExtractKeys(
+        BucketMetadata<K, ?> bucketMetadata,
+        SerializableFunction<V, K> extractKeyFn,
+        Coder<V> valueCoder) {
+      this.bucketMetadata = bucketMetadata;
+      this.extractKeyFn = extractKeyFn;
+      this.valueCoder = valueCoder;
+    }
 
     // From Combine.PerKeyWithHotKeyFanout.
     @StartBundle
@@ -186,29 +256,117 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
           ThreadLocalRandom.current().nextInt(Integer.MAX_VALUE) % bucketMetadata.getNumShards();
     }
 
+    static <KeyT> KV<BucketShardId, byte[]> processKey(
+        KeyT key, BucketMetadata<KeyT, ?> metadata, int shardId) {
+      final byte[] keyBytes = metadata.encodeKeyBytes(key);
+
+      return (keyBytes != null)
+          ? KV.of(BucketShardId.of(metadata.getBucketId(keyBytes), shardId), keyBytes)
+          : KV.of(BucketShardId.ofNullKey(shardId), NULL_SORT_KEY);
+    }
+
+    static <ValueT> byte[] getValueBytes(Coder<ValueT> coder, ValueT value) {
+      try {
+        return CoderUtils.encodeToByteArray(coder, value);
+      } catch (CoderException e) {
+        throw new RuntimeException(e);
+      }
+    }
+
     @ProcessElement
     public void processElement(ProcessContext c) {
       final V record = c.element();
-      final byte[] keyBytes = bucketMetadata.getKeyBytes(record);
+      final KV<BucketShardId, byte[]> bucketAndSortKey =
+          processKey(extractKeyFn.apply(record), bucketMetadata, shardId);
 
-      final BucketShardId bucketShardId =
-          keyBytes != null
-              ? BucketShardId.of(bucketMetadata.getBucketId(keyBytes), shardId)
-              : BucketShardId.ofNullKey(shardId);
-
-      final byte[] sortKey = keyBytes != null ? keyBytes : NULL_SORT_KEY;
-      try {
-        final byte[] valueBytes = CoderUtils.encodeToByteArray(valueCoder, record);
-        c.output(KV.of(bucketShardId, KV.of(sortKey, valueBytes)));
-      } catch (CoderException e) {
-        throw new RuntimeException("Caught coder exception: " + e);
-      }
+      c.output(
+          KV.of(
+              bucketAndSortKey.getKey(),
+              KV.of(bucketAndSortKey.getValue(), getValueBytes(valueCoder, record))));
     }
 
     @Override
     public void populateDisplayData(Builder builder) {
       super.populateDisplayData(builder);
       builder.delegate(bucketMetadata);
+    }
+  }
+
+  /** Extract bucket and shard id for grouping, and key bytes for sorting. */
+  private static class ExtractKeysWithCache<K, V>
+      extends DoFnWithResource<
+          V, KV<BucketShardId, KV<byte[], byte[]>>, Cache<K, KV<Integer, byte[]>>> {
+    // Substitute null keys in the output KV<byte[], V> so that they survive serialization
+    private final SerializableFunction<V, K> extractKeyFn;
+    private final Coder<V> valueCoder;
+    private final BucketMetadata<K, ?> bucketMetadata;
+    private final int cacheSize;
+    private transient int shardId;
+    private Counter cacheHits;
+    private Counter cacheMisses;
+
+    ExtractKeysWithCache(
+        BucketMetadata<K, ?> bucketMetadata,
+        SerializableFunction<V, K> extractKeyFn,
+        Coder<V> valueCoder,
+        int cacheSize) {
+      this.bucketMetadata = bucketMetadata;
+      this.extractKeyFn = extractKeyFn;
+      this.valueCoder = valueCoder;
+      this.cacheSize = cacheSize;
+      cacheHits = Metrics.counter(SortedBucketSink.class, "cacheHits");
+      cacheMisses = Metrics.counter(SortedBucketSink.class, "cacheMisses");
+    }
+
+    @Override
+    public ResourceType getResourceType() {
+      return ResourceType.PER_INSTANCE;
+    }
+
+    @Override
+    public Cache<K, KV<Integer, byte[]>> createResource() {
+      return Caffeine.newBuilder().maximumSize(cacheSize).build();
+    }
+
+    @StartBundle
+    public void startBundle() {
+      shardId =
+          ThreadLocalRandom.current().nextInt(Integer.MAX_VALUE) % bucketMetadata.getNumShards();
+    }
+
+    @ProcessElement
+    public void processElement(ProcessContext c) {
+      final V record = c.element();
+      final K key = extractKeyFn.apply(record);
+
+      final KV<BucketShardId, byte[]> bucketIdAndSortBytes =
+          Optional.ofNullable(getResource().getIfPresent(key))
+              .map(
+                  kv -> {
+                    cacheHits.inc();
+                    return KV.of(BucketShardId.of(kv.getKey(), shardId), kv.getValue());
+                  })
+              .orElseGet(
+                  () -> {
+                    cacheMisses.inc();
+                    final KV<BucketShardId, byte[]> kv =
+                        ExtractKeys.processKey(key, bucketMetadata, shardId);
+                    getResource().put(key, KV.of(kv.getKey().getBucketId(), kv.getValue()));
+                    return kv;
+                  });
+
+      c.output(
+          KV.of(
+              bucketIdAndSortBytes.getKey(),
+              KV.of(
+                  bucketIdAndSortBytes.getValue(), ExtractKeys.getValueBytes(valueCoder, record))));
+    }
+
+    @Override
+    public void populateDisplayData(Builder builder) {
+      super.populateDisplayData(builder);
+      builder.delegate(bucketMetadata);
+      builder.add(DisplayData.item("keyCacheSize", cacheSize));
     }
   }
 
@@ -515,6 +673,126 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
       FileSystems.delete(files, MoveOptions.StandardMoveOptions.IGNORE_MISSING_FILES);
     } catch (IOException e) {
       cause.addSuppressed(e);
+    }
+  }
+
+  public static class SortedBucketPreKeyedSink<K, V>
+      extends PTransform<PCollection<KV<K, V>>, WriteResult> {
+
+    private final BucketMetadata<K, V> bucketMetadata;
+    private final SMBFilenamePolicy filenamePolicy;
+    private final ResourceId tempDirectory;
+    private final FileOperations<V> fileOperations;
+    private final int sorterMemoryMb;
+    private final int keyCacheSize;
+    private final Coder<V> valueCoder;
+    private final boolean verifyKeyExtraction;
+
+    public SortedBucketPreKeyedSink(
+        BucketMetadata<K, V> bucketMetadata,
+        ResourceId outputDirectory,
+        ResourceId tempDirectory,
+        String filenameSuffix,
+        FileOperations<V> fileOperations,
+        int sorterMemoryMb,
+        Coder<V> valueCoder) {
+      this(
+          bucketMetadata,
+          outputDirectory,
+          tempDirectory,
+          filenameSuffix,
+          fileOperations,
+          sorterMemoryMb,
+          valueCoder,
+          true);
+    }
+
+    public SortedBucketPreKeyedSink(
+        BucketMetadata<K, V> bucketMetadata,
+        ResourceId outputDirectory,
+        ResourceId tempDirectory,
+        String filenameSuffix,
+        FileOperations<V> fileOperations,
+        int sorterMemoryMb,
+        Coder<V> valueCoder,
+        boolean verifyKeyExtraction) {
+      this(
+          bucketMetadata,
+          outputDirectory,
+          tempDirectory,
+          filenameSuffix,
+          fileOperations,
+          sorterMemoryMb,
+          valueCoder,
+          verifyKeyExtraction,
+          0);
+    }
+
+    public SortedBucketPreKeyedSink(
+        BucketMetadata<K, V> bucketMetadata,
+        ResourceId outputDirectory,
+        ResourceId tempDirectory,
+        String filenameSuffix,
+        FileOperations<V> fileOperations,
+        int sorterMemoryMb,
+        Coder<V> valueCoder,
+        boolean verifyKeyExtraction,
+        int keyCacheSize) {
+      this.bucketMetadata = bucketMetadata;
+      this.filenamePolicy = new SMBFilenamePolicy(outputDirectory, filenameSuffix);
+      this.tempDirectory = tempDirectory;
+      this.fileOperations = fileOperations;
+      this.sorterMemoryMb = sorterMemoryMb;
+      this.keyCacheSize = keyCacheSize;
+      this.verifyKeyExtraction = verifyKeyExtraction;
+      this.valueCoder = valueCoder;
+    }
+
+    @Override
+    public final WriteResult expand(PCollection<KV<K, V>> input) {
+      // @Todo: should we allow windowed writes?
+      Preconditions.checkArgument(
+          input.isBounded() == IsBounded.BOUNDED,
+          "SortedBucketSink cannot be applied to a non-bounded PCollection");
+
+      final PCollection<KV<BucketShardId, KV<byte[], byte[]>>> bucketedInput =
+          input.apply(
+              "ExtractKeys",
+              ParDo.of(
+                  ExtractKeys.of(
+                      bucketMetadata,
+                      KV::getKey,
+                      DelegateCoder.of(valueCoder, KV::getValue, null),
+                      keyCacheSize)));
+
+      if (verifyKeyExtraction) {
+        input
+            .apply("VerifySample", Sample.any(100))
+            .apply(
+                "VerifyKeyFn",
+                ParDo.of(
+                    new DoFn<KV<K, V>, Void>() {
+                      @ProcessElement
+                      public void processElement(ProcessContext c) {
+                        if (!bucketMetadata
+                            .extractKey(c.element().getValue())
+                            .equals(c.element().getKey())) {
+                          throw new RuntimeException(
+                              "BucketMetadata's extractKey fn did not match pre-keyed PCollection");
+                        }
+                      }
+                    }));
+      }
+
+      return SortedBucketSink.sink(
+          bucketedInput,
+          getName(),
+          valueCoder,
+          sorterMemoryMb,
+          filenamePolicy,
+          fileOperations,
+          bucketMetadata,
+          tempDirectory);
     }
   }
 }
