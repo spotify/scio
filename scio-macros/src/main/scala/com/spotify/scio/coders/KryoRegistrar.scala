@@ -25,7 +25,9 @@ import scala.reflect.macros._
  *
  * Annotated class must extend `IKryoRegistrar` and has name that ends with "KryoRegistrar".
  */
-@compileTimeOnly("enable macro paradise to expand macro annotations")
+@compileTimeOnly(
+  "enable macro paradise (2.12) or -Ymacro-annotations (2.13) to expand macro annotations"
+)
 class KryoRegistrar extends StaticAnnotation {
   def macroTransform(annottees: Any*): Any = macro KryoRegistrarMacro.impl
 }
