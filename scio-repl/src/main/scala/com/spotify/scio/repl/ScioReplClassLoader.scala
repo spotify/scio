@@ -21,6 +21,7 @@ import java.io.{File, FileOutputStream}
 import java.net.{URL, URLClassLoader}
 import java.nio.file.Files
 import java.util.jar.{JarEntry, JarOutputStream}
+import java.lang.invoke.{MethodHandles, MethodType}
 
 import com.spotify.scio.repl.compat.ILoopClassLoader
 import org.slf4j.LoggerFactory
@@ -29,6 +30,33 @@ import scala.tools.nsc.io._
 
 object ScioReplClassLoader {
   private val Logger = LoggerFactory.getLogger(this.getClass)
+
+  private[this] val JDK9OrHigher: Boolean = util.Properties.isJavaAtLeast("9")
+
+  private[this] val BootClassLoader: ClassLoader = {
+    if (!JDK9OrHigher) null
+    else {
+      try {
+        MethodHandles
+          .lookup()
+          .findStatic(
+            classOf[ClassLoader],
+            "getPlatformClassLoader",
+            MethodType.methodType(classOf[ClassLoader])
+          )
+          .invoke()
+      } catch { case _: Throwable => null }
+    }
+  }
+
+  def classLoaderURLs(cl: ClassLoader): Array[java.net.URL] = cl match {
+    case null                       => Array.empty
+    case u: java.net.URLClassLoader => u.getURLs ++ classLoaderURLs(cl.getParent)
+    case _                          => classLoaderURLs(cl.getParent)
+  }
+
+  @inline final def apply(urls: Array[URL]) =
+    new ScioReplClassLoader(urls, BootClassLoader)
 }
 
 /**
