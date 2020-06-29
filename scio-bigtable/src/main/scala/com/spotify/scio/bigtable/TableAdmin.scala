@@ -37,6 +37,7 @@ object TableAdmin {
   object CreateDisposition {
     case object Never extends CreateDisposition
     case object CreateIfNeeded extends CreateDisposition
+    val default = CreateIfNeeded
   }
 
   private val log: Logger = LoggerFactory.getLogger(TableAdmin.getClass)
@@ -86,7 +87,7 @@ object TableAdmin {
   def ensureTables(
     bigtableOptions: BigtableOptions,
     tablesAndColumnFamilies: Map[String, Iterable[String]],
-    createDisposition: CreateDisposition /*= CreateDisposition.CreateIfNeeded*/
+    createDisposition: CreateDisposition = CreateDisposition.default
   ): Unit = {
     val tcf = tablesAndColumnFamilies.iterator.map {
       case (k, l) => k -> l.map(_ -> None)
@@ -110,7 +111,7 @@ object TableAdmin {
   def ensureTablesWithExpiration(
     bigtableOptions: BigtableOptions,
     tablesAndColumnFamilies: Map[String, Iterable[(String, Option[Duration])]],
-    createDisposition: CreateDisposition
+    createDisposition: CreateDisposition = CreateDisposition.default
   ): Unit = {
     // Convert Duration to GcRule
     val x = tablesAndColumnFamilies.iterator.map {
@@ -135,7 +136,7 @@ object TableAdmin {
   def ensureTablesWithGcRules(
     bigtableOptions: BigtableOptions,
     tablesAndColumnFamilies: Map[String, Iterable[(String, Option[GcRule])]],
-    createDisposition: CreateDisposition
+    createDisposition: CreateDisposition = CreateDisposition.default
   ): Unit =
     ensureTablesImpl(bigtableOptions, tablesAndColumnFamilies, createDisposition).get
 
@@ -199,7 +200,7 @@ object TableAdmin {
     client: BigtableTableAdminClient,
     tablePath: String,
     columnFamilies: Iterable[(String, Option[GcRule])],
-    createDisposition: CreateDisposition /*= CreateDisposition.CreateIfNeeded*/
+    createDisposition: CreateDisposition
   ): Unit = {
     val tableInfo =
       client.getTable(GetTableRequest.newBuilder().setName(tablePath).build)

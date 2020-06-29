@@ -141,6 +141,17 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
       TableAdmin.ensureTables(bigtableOptions, tablesAndColumnFamilies, createDisposition)
     }
 
+  def ensureTables(
+    projectId: String,
+    instanceId: String,
+    tablesAndColumnFamilies: Map[String, Iterable[String]]
+  ): Unit = ensureTables(
+    projectId,
+    instanceId,
+    tablesAndColumnFamilies,
+    TableAdmin.CreateDisposition.default
+  )
+
   /**
    * Ensure that tables and column families exist.
    * Checks for existence of tables or creates them if they do not exist.  Also checks for
@@ -157,6 +168,12 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
     if (!self.isTest) {
       TableAdmin.ensureTables(bigtableOptions, tablesAndColumnFamilies, createDisposition)
     }
+
+  def ensureTables(
+    bigtableOptions: BigtableOptions,
+    tablesAndColumnFamilies: Map[String, Iterable[String]]
+  ): Unit =
+    ensureTables(bigtableOptions, tablesAndColumnFamilies, TableAdmin.CreateDisposition.default)
 
   /**
    * Ensure that tables and column families exist.
@@ -190,6 +207,17 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
       )
     }
 
+  def ensureTablesWithExpiration(
+    projectId: String,
+    instanceId: String,
+    tablesAndColumnFamiliesWithExpiration: Map[String, Iterable[(String, Option[Duration])]]
+  ): Unit = ensureTablesWithExpiration(
+    projectId,
+    instanceId,
+    tablesAndColumnFamiliesWithExpiration,
+    TableAdmin.CreateDisposition.default
+  )
+
   /**
    * Ensure that tables and column families exist.
    * Checks for existence of tables or creates them if they do not exist.  Also checks for
@@ -215,6 +243,15 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
         createDisposition
       )
     }
+
+  def ensureTablesWithExpiration(
+    bigtableOptions: BigtableOptions,
+    tablesAndColumnFamiliesWithExpiration: Map[String, Iterable[(String, Option[Duration])]]
+  ): Unit = ensureTablesWithExpiration(
+    bigtableOptions,
+    tablesAndColumnFamiliesWithExpiration,
+    TableAdmin.CreateDisposition.default
+  )
 
   /**
    * Ensure that tables and column families exist.
@@ -244,6 +281,17 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
       )
     }
 
+  def ensureTablesWithGcRules(
+    projectId: String,
+    instanceId: String,
+    tablesAndColumnFamiliesWithGcRules: Map[String, Iterable[(String, Option[GcRule])]]
+  ): Unit = ensureTablesWithGcRules(
+    projectId,
+    instanceId,
+    tablesAndColumnFamiliesWithGcRules,
+    TableAdmin.CreateDisposition.default
+  )
+
   /**
    * Ensure that tables and column families exist.
    * Checks for existence of tables or creates them if they do not exist.  Also checks for
@@ -269,6 +317,16 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
         createDisposition
       )
     }
+
+  def ensureTablesWithGcRules(
+    bigtableOptions: BigtableOptions,
+    tablesAndColumnFamiliesWithGcRule: Map[String, Iterable[(String, Option[GcRule])]]
+  ): Unit =
+    ensureTablesWithGcRules(
+      bigtableOptions,
+      tablesAndColumnFamiliesWithGcRule,
+      TableAdmin.CreateDisposition.default
+    )
 
 }
 
