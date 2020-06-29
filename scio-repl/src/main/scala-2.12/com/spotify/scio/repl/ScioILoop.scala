@@ -28,6 +28,7 @@ import org.apache.commons.text.StringEscapeUtils
 import scala.tools.nsc.{CompilerCommand, Settings}
 import scala.tools.nsc.interpreter.Results
 import scala.tools.nsc.interpreter.ILoop
+import scala.reflect.io.AbstractFile
 
 /**
  * ScioILoop - core of Scio REPL.
@@ -254,4 +255,6 @@ class ScioILoop(command: CompilerCommand, scioClassLoader: ScioReplClassLoader, 
   }
 
   def run(settings: Settings): Boolean = process(settings)
+
+  def outputDir: AbstractFile = intp.replOutput.dir
 }

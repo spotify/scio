@@ -121,7 +121,7 @@ class ScioReplClassLoader(urls: Array[URL], parent: ClassLoader)
    *
    * @param virtualDirectory containing classes that should be added to the jar
    */
-  private def createJar(dir: AbstractIterable[AbstractFile], jarFile: File): File = {
+  private def createJar(dir: Iterable[AbstractFile], jarFile: File): File = {
     val jarStream = new JarOutputStream(new FileOutputStream(jarFile))
     try { addVirtualDirectoryToJar(dir, "", jarStream) }
     finally { jarStream.close() }
@@ -138,7 +138,7 @@ class ScioReplClassLoader(urls: Array[URL], parent: ClassLoader)
    * @param jarStream for writing the jar file
    */
   private def addVirtualDirectoryToJar(
-    dir: AbstractIterable[AbstractFile],
+    dir: Iterable[AbstractFile],
     entryPath: String,
     jarStream: JarOutputStream
   ): Unit = dir.foreach { file =>
