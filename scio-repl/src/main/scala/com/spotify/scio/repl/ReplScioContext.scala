@@ -71,7 +71,6 @@ class ReplScioContext private (options: PipelineOptions, replOutputDir: String, 
    * @param virtualDirectory containing classes that should be added to the jar
    */
   private def createJar(dir: Iterable[AbstractFile], jarFile: File): File = {
-    println(dir)
     val jarStream = new JarOutputStream(new FileOutputStream(jarFile))
     try { addVirtualDirectoryToJar(dir, "", jarStream) }
     finally { jarStream.close() }
