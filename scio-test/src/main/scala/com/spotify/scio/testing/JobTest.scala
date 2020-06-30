@@ -28,6 +28,7 @@ import org.apache.beam.sdk.{metrics => beam}
 
 import scala.reflect.ClassTag
 import scala.util.control.NonFatal
+import org.apache.beam.sdk.options.PipelineOptionsFactory
 
 /**
  * Set up a Scio job for end-to-end unit testing.
@@ -320,6 +321,7 @@ object JobTest {
       setUp()
 
       try {
+        PipelineOptionsFactory.resetCache()
         Class
           .forName(state.className)
           .getMethod("main", classOf[Array[String]])
