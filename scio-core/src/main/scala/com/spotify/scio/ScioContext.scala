@@ -247,7 +247,7 @@ object ContextAndArgs {
       val (opts, remainingArgs) = ScioContext.parseArguments[T](args, withValidation = true)
       Either.cond(remainingArgs.asMap.isEmpty, (opts, opts), s"Unused $remainingArgs")
     } match {
-      case r @ Success(Right(v)) => r
+      case r @ Success(Right(_)) => r
       case Success(Left(v))      => Failure(new Exception(v))
       case f                     => f
     }
