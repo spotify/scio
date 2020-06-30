@@ -15,20 +15,22 @@
  * under the License.
  */
 
-// Example: Minimal Word Count Example
-// Usage:
+// Example: Minimal Word Count Examples with typed arguments
+package com.spotify.scio.examples
 
-// `sbt "runMain com.spotify.scio.examples.MinimalWordCount
+import caseapp._
+import com.spotify.scio._
+import com.spotify.scio.examples.common.ExampleData
+import org.apache.beam.sdk.options.{Default, Description, PipelineOptions}
+import org.apache.beam.sdk.options.Validation.Required
+
+// Usage:
+// `sbt "runMain
+// com.spotify.scio.examples.MinimalWordCounCaseAppExample
 // --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
 // --input=gs://apache-beam-samples/shakespeare/kinglear.txt
 // --output=gs://[BUCKET]/[PATH]/minimal_wordcount"`
-package com.spotify.scio.examples
-
-import com.spotify.scio._
-import com.spotify.scio.examples.common.ExampleData
-import caseapp._
-
-object MinimalWordCountTypedArguments {
+object MinimalWordCounCaseAppExample {
   @AppName("Scio Examples")
   @AppVersion(BuildInfo.version)
   @ProgName("com.spotify.scio.examples.MinimalWordCount")
@@ -60,6 +62,51 @@ object MinimalWordCountTypedArguments {
       .map(t => t._1 + ": " + t._2)
       // Save result as text files under the output path
       .saveAsTextFile(args.output)
+
+    // Execute the pipeline
+    sc.run()
+    ()
+  }
+}
+
+// Usage:
+// `sbt "runMain
+// com.spotify.scio.examples.MinimalWordCounPipelineOptionsExample
+// --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
+// --input=gs://apache-beam-samples/shakespeare/kinglear.txt
+// --output=gs://[BUCKET]/[PATH]/minimal_wordcount"`
+object MinimalWordCounPipelineOptionsExample {
+  trait Arguments extends PipelineOptions {
+    @Default.String("gs://apache-beam-samples/shakespeare/kinglear.txt")
+    def getInput: String
+
+    def setInput(input: String): Unit
+
+    @Required
+    def getOutput: String
+
+    def setOutput(output: String): Unit
+  }
+
+  def main(cmdlineArgs: Array[String]): Unit = {
+    // Parse command line arguments, create `ScioContext` and `Args`.
+    // `ScioContext` is the entry point to a Scio pipeline. User arguments, e.g.
+    // `--input=gs://[BUCKET]/[PATH]/input.txt`, are accessed via `Args`.
+    val (sc, args) = ContextAndArgs.typed[Arguments](cmdlineArgs)
+
+    // Open text file as `SCollection[String]`. The input can be either a single file or a
+    // wildcard matching multiple files.
+    sc.textFile(args.getInput)
+      .transform("counter") {
+        // Split input lines, filter out empty tokens and expand into a collection of tokens
+        _.flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty))
+        // Count occurrences of each unique `String` to get `(String, Long)`
+        .countByValue
+      }
+      // Map `(String, Long)` tuples into strings
+      .map(t => t._1 + ": " + t._2)
+      // Save result as text files under the output path
+      .saveAsTextFile(args.getOutput)
 
     // Execute the pipeline
     sc.run()
