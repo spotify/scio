@@ -180,7 +180,7 @@ object TableAdmin {
                   .build()
               )
             case CreateDisposition.Never =>
-              log.info("Table {} does not exist", table)
+              throw new IllegalStateException(s"Table $table does not exist")
           }
 
           ensureColumnFamilies(client, tablePath, columnFamilies, createDisposition)
