@@ -209,4 +209,9 @@ class ScioILoop(command: CompilerCommand, scioClassLoader: ScioReplClassLoader, 
     }
   }
 
+  override def resetCommand(line: String): Unit = {
+    super.resetCommand(line)
+    initCommand()
+  }
+
 }
