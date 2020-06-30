@@ -201,24 +201,23 @@ object TableAdmin {
     tablePath: String,
     columnFamilies: Iterable[(String, Option[GcRule])],
     createDisposition: CreateDisposition
-  ): Unit = {
-    val tableInfo =
-      client.getTable(GetTableRequest.newBuilder().setName(tablePath).build)
-
-    val cfList = columnFamilies
-      .map {
-        case (n, gcRule) =>
-          val cf = tableInfo
-            .getColumnFamiliesOrDefault(n, ColumnFamily.newBuilder().build())
-            .toBuilder
-            .setGcRule(gcRule.getOrElse(GcRule.getDefaultInstance))
-            .build()
-
-          (n, cf)
-      }
-
+  ): Unit =
     createDisposition match {
       case CreateDisposition.CreateIfNeeded =>
+        val tableInfo =
+          client.getTable(GetTableRequest.newBuilder().setName(tablePath).build)
+
+        val cfList = columnFamilies
+          .map {
+            case (n, gcRule) =>
+              val cf = tableInfo
+                .getColumnFamiliesOrDefault(n, ColumnFamily.newBuilder().build())
+                .toBuilder
+                .setGcRule(gcRule.getOrElse(GcRule.getDefaultInstance))
+                .build()
+
+              (n, cf)
+          }
         val modifications =
           cfList.map {
             case (n, cf) =>
@@ -250,7 +249,6 @@ object TableAdmin {
       case CreateDisposition.Never =>
         ()
     }
-  }
 
   private def gcRuleFromDuration(duration: Duration): GcRule = {
     val protoDuration = ProtoDuration.newBuilder.setSeconds(duration.getStandardSeconds)
