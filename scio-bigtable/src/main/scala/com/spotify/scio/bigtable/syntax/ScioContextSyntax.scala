@@ -129,7 +129,8 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
   def ensureTables(
     projectId: String,
     instanceId: String,
-    tablesAndColumnFamilies: Map[String, Iterable[String]]
+    tablesAndColumnFamilies: Map[String, Iterable[String]],
+    createDisposition: TableAdmin.CreateDisposition
   ): Unit =
     if (!self.isTest) {
       val bigtableOptions = BigtableOptions
@@ -137,8 +138,19 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
         .setProjectId(projectId)
         .setInstanceId(instanceId)
         .build
-      TableAdmin.ensureTables(bigtableOptions, tablesAndColumnFamilies)
+      TableAdmin.ensureTables(bigtableOptions, tablesAndColumnFamilies, createDisposition)
     }
+
+  def ensureTables(
+    projectId: String,
+    instanceId: String,
+    tablesAndColumnFamilies: Map[String, Iterable[String]]
+  ): Unit = ensureTables(
+    projectId,
+    instanceId,
+    tablesAndColumnFamilies,
+    TableAdmin.CreateDisposition.default
+  )
 
   /**
    * Ensure that tables and column families exist.
@@ -150,11 +162,18 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
    */
   def ensureTables(
     bigtableOptions: BigtableOptions,
-    tablesAndColumnFamilies: Map[String, Iterable[String]]
+    tablesAndColumnFamilies: Map[String, Iterable[String]],
+    createDisposition: TableAdmin.CreateDisposition
   ): Unit =
     if (!self.isTest) {
-      TableAdmin.ensureTables(bigtableOptions, tablesAndColumnFamilies)
+      TableAdmin.ensureTables(bigtableOptions, tablesAndColumnFamilies, createDisposition)
     }
+
+  def ensureTables(
+    bigtableOptions: BigtableOptions,
+    tablesAndColumnFamilies: Map[String, Iterable[String]]
+  ): Unit =
+    ensureTables(bigtableOptions, tablesAndColumnFamilies, TableAdmin.CreateDisposition.default)
 
   /**
    * Ensure that tables and column families exist.
@@ -172,7 +191,8 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
   def ensureTablesWithExpiration(
     projectId: String,
     instanceId: String,
-    tablesAndColumnFamiliesWithExpiration: Map[String, Iterable[(String, Option[Duration])]]
+    tablesAndColumnFamiliesWithExpiration: Map[String, Iterable[(String, Option[Duration])]],
+    createDisposition: TableAdmin.CreateDisposition
   ): Unit =
     if (!self.isTest) {
       val bigtableOptions = BigtableOptions
@@ -182,9 +202,21 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
         .build
       TableAdmin.ensureTablesWithExpiration(
         bigtableOptions,
-        tablesAndColumnFamiliesWithExpiration
+        tablesAndColumnFamiliesWithExpiration,
+        createDisposition
       )
     }
+
+  def ensureTablesWithExpiration(
+    projectId: String,
+    instanceId: String,
+    tablesAndColumnFamiliesWithExpiration: Map[String, Iterable[(String, Option[Duration])]]
+  ): Unit = ensureTablesWithExpiration(
+    projectId,
+    instanceId,
+    tablesAndColumnFamiliesWithExpiration,
+    TableAdmin.CreateDisposition.default
+  )
 
   /**
    * Ensure that tables and column families exist.
@@ -201,14 +233,25 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
    */
   def ensureTablesWithExpiration(
     bigtableOptions: BigtableOptions,
-    tablesAndColumnFamiliesWithExpiration: Map[String, Iterable[(String, Option[Duration])]]
+    tablesAndColumnFamiliesWithExpiration: Map[String, Iterable[(String, Option[Duration])]],
+    createDisposition: TableAdmin.CreateDisposition
   ): Unit =
     if (!self.isTest) {
       TableAdmin.ensureTablesWithExpiration(
         bigtableOptions,
-        tablesAndColumnFamiliesWithExpiration
+        tablesAndColumnFamiliesWithExpiration,
+        createDisposition
       )
     }
+
+  def ensureTablesWithExpiration(
+    bigtableOptions: BigtableOptions,
+    tablesAndColumnFamiliesWithExpiration: Map[String, Iterable[(String, Option[Duration])]]
+  ): Unit = ensureTablesWithExpiration(
+    bigtableOptions,
+    tablesAndColumnFamiliesWithExpiration,
+    TableAdmin.CreateDisposition.default
+  )
 
   /**
    * Ensure that tables and column families exist.
@@ -222,7 +265,8 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
   def ensureTablesWithGcRules(
     projectId: String,
     instanceId: String,
-    tablesAndColumnFamiliesWithGcRules: Map[String, Iterable[(String, Option[GcRule])]]
+    tablesAndColumnFamiliesWithGcRules: Map[String, Iterable[(String, Option[GcRule])]],
+    createDisposition: TableAdmin.CreateDisposition
   ): Unit =
     if (!self.isTest) {
       val bigtableOptions = BigtableOptions
@@ -232,9 +276,21 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
         .build
       TableAdmin.ensureTablesWithGcRules(
         bigtableOptions,
-        tablesAndColumnFamiliesWithGcRules
+        tablesAndColumnFamiliesWithGcRules,
+        createDisposition
       )
     }
+
+  def ensureTablesWithGcRules(
+    projectId: String,
+    instanceId: String,
+    tablesAndColumnFamiliesWithGcRules: Map[String, Iterable[(String, Option[GcRule])]]
+  ): Unit = ensureTablesWithGcRules(
+    projectId,
+    instanceId,
+    tablesAndColumnFamiliesWithGcRules,
+    TableAdmin.CreateDisposition.default
+  )
 
   /**
    * Ensure that tables and column families exist.
@@ -251,14 +307,26 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
    */
   def ensureTablesWithGcRules(
     bigtableOptions: BigtableOptions,
-    tablesAndColumnFamiliesWithGcRule: Map[String, Iterable[(String, Option[GcRule])]]
+    tablesAndColumnFamiliesWithGcRule: Map[String, Iterable[(String, Option[GcRule])]],
+    createDisposition: TableAdmin.CreateDisposition
   ): Unit =
     if (!self.isTest) {
       TableAdmin.ensureTablesWithGcRules(
         bigtableOptions,
-        tablesAndColumnFamiliesWithGcRule
+        tablesAndColumnFamiliesWithGcRule,
+        createDisposition
       )
     }
+
+  def ensureTablesWithGcRules(
+    bigtableOptions: BigtableOptions,
+    tablesAndColumnFamiliesWithGcRule: Map[String, Iterable[(String, Option[GcRule])]]
+  ): Unit =
+    ensureTablesWithGcRules(
+      bigtableOptions,
+      tablesAndColumnFamiliesWithGcRule,
+      TableAdmin.CreateDisposition.default
+    )
 
 }
 
