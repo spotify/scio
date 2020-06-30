@@ -75,6 +75,12 @@ final case class TextTap(path: String) extends Tap[String] {
   override def open(sc: ScioContext): SCollection[String] = sc.textFile(path)
 }
 
+final case class TextReadFilesTap(paths: Iterable[String]) extends Tap[String] {
+  override def value: Iterator[String] = paths.iterator.flatMap(p => FileStorage(p).textFile)
+
+  override def open(sc: ScioContext): SCollection[String] = sc.textFiles(paths)
+}
+
 final private[scio] class InMemoryTap[T: Coder] extends Tap[T] {
   private[scio] val id: String = UUID.randomUUID().toString
   override def value: Iterator[T] = InMemorySink.get(id).iterator

@@ -782,6 +782,12 @@ class ScioContext private[scio] (
   ): SCollection[String] =
     this.read(TextIO(path))(TextIO.ReadParam(compression))
 
+  def textFiles(
+    paths: Iterable[String],
+    compression: beam.Compression = beam.Compression.AUTO
+  ): SCollection[String] =
+    this.read(TextReadFilesIO(paths))(TextIO.ReadParam(compression))
+
   /**
    * Get an SCollection with a custom input transform. The transform should have a unique name.
    * @group input

@@ -48,12 +48,33 @@ final case class GenericRecordTap(
   }
 }
 
+/** Tap for reading multiple Avro files/file-patterns as GenericRecords */
+final case class GenericRecordReadFilesTap(
+  paths: Iterable[String],
+  @transient private val schema: Schema
+) extends Tap[GenericRecord] {
+  private lazy val s = Externalizer(schema)
+
+  override def value: Iterator[GenericRecord] =
+    paths.iterator.flatMap(p => FileStorage(p).avroFile[GenericRecord](s.get))
+
+  override def open(sc: ScioContext): SCollection[GenericRecord] = sc.avroFiles(paths, s.get)
+}
+
 /** Tap for [[org.apache.avro.specific.SpecificRecord SpecificRecord]] Avro files. */
 final case class SpecificRecordTap[T <: SpecificRecord: ClassTag: Coder](path: String)
     extends Tap[T] {
   override def value: Iterator[T] = FileStorage(path).avroFile[T]()
 
   override def open(sc: ScioContext): SCollection[T] = sc.avroFile[T](path)
+}
+
+/** Tap for reading multiple Avro files/file-patterns as SpecificRecords. */
+final case class SpecificRecordReadFilesTap[T <: SpecificRecord: ClassTag: Coder](paths: Iterable[String])
+  extends Tap[T] {
+  override def value: Iterator[T] = paths.iterator.flatMap(p => FileStorage(p).avroFile[T])
+
+  override def open(sc: ScioContext): SCollection[T] = sc.avroFiles[T](paths)
 }
 
 /**

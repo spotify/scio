@@ -29,7 +29,7 @@ import org.apache.avro.file.CodecFactory
 import org.apache.avro.generic.GenericRecord
 import org.apache.avro.specific.SpecificRecord
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
-import org.apache.beam.sdk.transforms.{DoFn, SerializableFunction}
+import org.apache.beam.sdk.transforms.{Create, DoFn, SerializableFunction}
 import org.apache.beam.sdk.{io => beam}
 
 import scala.jdk.CollectionConverters._
@@ -175,6 +175,32 @@ final case class SpecificRecordIO[T <: SpecificRecord: ClassTag: Coder](path: St
     SpecificRecordTap[T](ScioUtil.addPartSuffix(path))
 }
 
+final case class SpecificRecordReadFilesIO[T <: SpecificRecord: ClassTag: Coder](
+  paths: Iterable[String]
+) extends AvroIO[T] {
+  override type ReadP = Unit
+  override type WriteP = Nothing
+
+  override def testId: String = s"AvroIO($paths)"
+
+  override protected def read(sc: ScioContext, params: ReadP): SCollection[T] = {
+    val cls = ScioUtil.classOf[T]
+    sc.wrap(
+      sc.applyInternal(
+        Create.of(paths.asJava)
+      ).apply(beam.FileIO.matchAll())
+        .apply(beam.FileIO.readMatches())
+        .apply(beam.AvroIO.readFiles(cls))
+    )
+  }
+
+  override protected def write(data: SCollection[T], params: WriteP): Tap[T] =
+    throw new UnsupportedOperationException(s"${getClass.getName} is read-only")
+
+  override def tap(read: ReadP): Tap[T] =
+    SpecificRecordReadFilesTap(paths)
+}
+
 final case class GenericRecordIO(path: String, schema: Schema) extends AvroIO[GenericRecord] {
   override type ReadP = Unit
   override type WriteP = AvroIO.WriteParam
@@ -206,6 +232,37 @@ final case class GenericRecordIO(path: String, schema: Schema) extends AvroIO[Ge
 
   override def tap(read: ReadP): Tap[GenericRecord] =
     GenericRecordTap(ScioUtil.addPartSuffix(path), schema)
+}
+
+/**
+ * Read multiple files/file-patterns in [[org.apache.avro.generic.GenericRecord GenericRecord]]
+ * format with beam AvroIO readFiles API
+ */
+final case class GenericRecordReadFilesIO(paths: Iterable[String], schema: Schema)
+    extends AvroIO[GenericRecord] {
+  override type ReadP = Unit
+  override type WriteP = Nothing
+
+  override def testId: String = s"AvroIO($paths)"
+
+  override protected def read(sc: ScioContext, params: ReadP): SCollection[GenericRecord] = {
+    sc.wrap(
+      sc.applyInternal(
+        Create.of(paths.asJava)
+      ).apply(beam.FileIO.matchAll())
+        .apply(beam.FileIO.readMatches())
+        .apply(beam.AvroIO.readFilesGenericRecords(schema))
+    )
+  }
+
+  override protected def write(
+    data: SCollection[GenericRecord],
+    params: WriteP
+  ): Tap[GenericRecord] =
+    throw new UnsupportedOperationException(s"${getClass.getName} is read-only")
+
+  override def tap(read: ReadP): Tap[GenericRecord] =
+    GenericRecordReadFilesTap(paths, schema)
 }
 
 /**

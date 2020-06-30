@@ -26,18 +26,27 @@ import com.spotify.scio.ScioContext
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.io.fs.MatchResult.Metadata
-import org.apache.beam.sdk.io.{Compression, FileBasedSink, FileSystems, TextIO => BTextIO}
+import org.apache.beam.sdk.io.{
+  Compression,
+  FileBasedSink,
+  FileIO => BFileIO,
+  FileSystems,
+  ShardNameTemplate,
+  TextIO => BTextIO
+}
+import org.apache.beam.sdk.transforms.Create
 import org.apache.commons.compress.compressors.CompressorStreamFactory
 import org.apache.commons.io.IOUtils
 
 import scala.jdk.CollectionConverters._
 import scala.util.Try
-import org.apache.beam.sdk.io.ShardNameTemplate
 
 final case class TextIO(path: String) extends ScioIO[String] {
   override type ReadP = TextIO.ReadParam
   override type WriteP = TextIO.WriteParam
   final override val tapT = TapOf[String]
+
+  override def testId: String = s"TextIO($path)"
 
   override protected def read(sc: ScioContext, params: ReadP): SCollection[String] =
     sc.wrap(
@@ -73,6 +82,34 @@ final case class TextIO(path: String) extends ScioIO[String] {
 
     transform
   }
+
+}
+
+/** Read multiple files/file-patterns with beam TextIO readFiles API */
+final case class TextReadFilesIO(paths: Iterable[String]) extends ScioIO[String] {
+  override type ReadP = TextIO.ReadParam
+  override type WriteP = Nothing
+  override val tapT = TapOf[String]
+
+  override protected def read(sc: ScioContext, params: ReadP): SCollection[String] = {
+    sc.wrap(
+      sc.applyInternal(
+        Create.of(paths.asJava)
+      ).apply(BFileIO.matchAll())
+        .apply(
+          BFileIO
+            .readMatches()
+            .withCompression(params.compression)
+        )
+        .apply(BTextIO.readFiles())
+    )
+  }
+
+  override protected def write(scoll: SCollection[String], params: WriteP): Tap[String] =
+    throw new UnsupportedOperationException("TextReadFilesIO is read-only")
+
+  override def tap(read: ReadP): Tap[String] =
+    TextReadFilesTap(paths)
 
 }
 

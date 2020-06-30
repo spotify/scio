@@ -46,6 +46,9 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
   def avroFile(path: String, schema: Schema): SCollection[GenericRecord] =
     self.read(GenericRecordIO(path, schema))(Coder.avroGenericRecordCoder(schema))
 
+  def avroFiles(paths: Iterable[String], schema: Schema): SCollection[GenericRecord] =
+    self.read(GenericRecordReadFilesIO(paths, schema))(Coder.avroGenericRecordCoder(schema))
+
   /**
    * Get an SCollection of type [[T]] for data stored in Avro format after applying
    * parseFn to map a serialized [[org.apache.avro.generic.GenericRecord GenericRecord]]
@@ -80,6 +83,13 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
    */
   def avroFile[T <: SpecificRecord: ClassTag: Coder](path: String): SCollection[T] =
     self.read(SpecificRecordIO[T](path))
+
+  /**
+   * Get an SCollection of type [[org.apache.avro.specific.SpecificRecord SpecificRecord]]
+   * for all Avro files/file-patterns.
+   */
+  def avroFiles[T <: SpecificRecord: ClassTag: Coder](paths: Iterable[String]): SCollection[T] =
+    self.read(SpecificRecordReadFilesIO[T](paths))
 
   /**
    * Get a typed SCollection from an Avro schema.
