@@ -95,11 +95,28 @@ final case class GenericRecordParseTap[T: Coder](
   override def open(sc: ScioContext): SCollection[T] = sc.parseAvroFile(path)(parseFn)
 }
 
+final case class GenericRecordParseFilesTap[T: Coder](
+  paths: Iterable[String],
+  parseFn: GenericRecord => T
+) extends Tap[T] {
+  /** Read data set into memory. */
+  override def value: Iterator[T] =
+    paths.iterator.flatMap(p =>
+      FileStorage(p)
+        .avroFile[GenericRecord](schema = null)
+        .map(parseFn)
+    )
+
+  /** Open data set as an [[com.spotify.scio.values.SCollection SCollection]]. */
+  override def open(sc: ScioContext): SCollection[T] =
+    sc.read(GenericRecordParseFilesIO(paths, parseFn))
+}
+
 /**
  * Tap for object files. Note that serialization is not guaranteed to be compatible across Scio
  * releases.
  */
-case class ObjectFileTap[T: Coder](path: String) extends Tap[T] {
+final case class ObjectFileTap[T: Coder](path: String) extends Tap[T] {
   override def value: Iterator[T] = {
     val elemCoder = CoderMaterializer.beamWithDefault(Coder[T])
     FileStorage(path).avroFile[GenericRecord](AvroBytesUtil.schema).map { r =>
@@ -107,6 +124,22 @@ case class ObjectFileTap[T: Coder](path: String) extends Tap[T] {
     }
   }
   override def open(sc: ScioContext): SCollection[T] = sc.objectFile[T](path)
+}
+
+final case class ObjectReadFilesTap[T: Coder](paths: Iterable[String]) extends Tap[T] {
+
+  /** Read data set into memory. */
+  override def value: Iterator[T] = {
+    val elemEncoder = CoderMaterializer.beamWithDefault(Coder[T])
+    paths.iterator.flatMap(p =>
+      FileStorage(p)
+        .avroFile[GenericRecord](AvroBytesUtil.schema)
+        .map(r => AvroBytesUtil.decode(elemEncoder, r))
+    )
+  }
+
+  /** Open data set as an [[com.spotify.scio.values.SCollection SCollection]]. */
+  override def open(sc: ScioContext): SCollection[T] = sc.objectFiles[T](paths)
 }
 
 final case class AvroTaps(self: Taps) {

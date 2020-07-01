@@ -43,6 +43,9 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
   def objectFile[T: Coder](path: String): SCollection[T] =
     self.read(ObjectFileIO[T](path))
 
+  def objectFiles[T: Coder](paths: Iterable[String]): SCollection[T] =
+    self.read(ObjectReadFilesIO[T](paths))
+
   def avroFile(path: String, schema: Schema): SCollection[GenericRecord] =
     self.read(GenericRecordIO(path, schema))(Coder.avroGenericRecordCoder(schema))
 
@@ -112,6 +115,9 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
    */
   def protobufFile[T <: Message: ClassTag: Coder](path: String): SCollection[T] =
     self.read(ProtobufIO[T](path))
+
+  def protobufFiles[T <: Message: ClassTag: Coder](paths: Iterable[String]): SCollection[T] =
+    self.read(ProtobufReadFilesIO[T](paths))
 }
 
 /** Enhanced with Avro methods. */

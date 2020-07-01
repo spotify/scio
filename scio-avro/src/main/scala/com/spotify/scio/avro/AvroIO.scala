@@ -86,6 +86,28 @@ object ObjectFileIO {
   val WriteParam = AvroIO.WriteParam
 }
 
+final case class ObjectReadFilesIO[T: Coder](paths: Iterable[String]) extends AvroIO[T] {
+  override type ReadP = Unit
+  override type WriteP = Nothing
+
+  override protected def read(sc: ScioContext, params: ReadP): SCollection[T] = {
+    val coder = CoderMaterializer.beamWithDefault(Coder[T])
+    implicit val bcoder = Coder.avroGenericRecordCoder(AvroBytesUtil.schema)
+    sc.read(GenericRecordReadFilesIO(paths, AvroBytesUtil.schema))
+      .parDo(new DoFn[GenericRecord, T] {
+        @ProcessElement
+        private[scio] def processElement(c: DoFn[GenericRecord, T]#ProcessContext): Unit =
+          c.output(AvroBytesUtil.decode(coder, c.element))
+      })
+  }
+
+  override protected def write(data: SCollection[T], params: WriteP): Tap[T] =
+    throw new UnsupportedOperationException(s"${getClass.getName} is read-only")
+
+  override def tap(read: ReadP): Tap[T] =
+    ObjectReadFilesTap[T](paths)
+}
+
 final case class ProtobufIO[T <: Message: ClassTag](path: String) extends ScioIO[T] {
   override type ReadP = Unit
   override type WriteP = ProtobufIO.WriteParam
@@ -119,6 +141,22 @@ final case class ProtobufIO[T <: Message: ClassTag](path: String) extends ScioIO
 object ProtobufIO {
   type WriteParam = AvroIO.WriteParam
   val WriteParam = AvroIO.WriteParam
+}
+
+final case class ProtobufReadFilesIO[T <: Message: ClassTag](paths: Iterable[String])
+    extends AvroIO[T] {
+  override type ReadP = Unit
+  override type WriteP = Nothing
+  private val protoCoder = Coder.protoMessageCoder[T]
+
+  override protected def read(sc: ScioContext, params: ReadP): SCollection[T] =
+    sc.read(ObjectReadFilesIO[T](paths)(protoCoder))
+
+  override protected def write(data: SCollection[T], params: WriteP): Tap[T] =
+    throw new UnsupportedOperationException(s"${getClass.getName} is read-only")
+
+  override def tap(read: ReadP): Tap[T] =
+    ObjectReadFilesTap[T](paths.map(p => ScioUtil.addPartSuffix(p)))(protoCoder)
 }
 
 sealed trait AvroIO[T] extends ScioIO[T] {
@@ -299,6 +337,28 @@ final case class GenericRecordParseIO[T](path: String, parseFn: GenericRecord =>
 
   override def tap(read: Unit): Tap[T] =
     GenericRecordParseTap[T](ScioUtil.addPartSuffix(path), parseFn)
+}
+
+final case class GenericRecordParseFilesIO[T](paths: Iterable[String], parseFn: GenericRecord => T)(
+  implicit coder: Coder[T]
+) extends AvroIO[T] {
+  override type ReadP = Unit
+  override type WriteP = Nothing
+
+  override protected def read(sc: ScioContext, params: ReadP): SCollection[T] =
+    sc.wrap(
+      sc.applyInternal(
+        Create.of(paths.asJava)
+      ).apply(beam.FileIO.matchAll())
+        .apply(beam.FileIO.readMatches())
+        .apply(beam.AvroIO.parseFilesGenericRecords(Functions.serializableFn(parseFn)))
+    )
+
+  override protected def write(data: SCollection[T], params: WriteP): Tap[T] =
+    throw new UnsupportedOperationException(s"${getClass.getName} is read-only")
+
+  override def tap(read: ReadP): Tap[T] =
+    GenericRecordParseFilesTap[T](paths.map(p => ScioUtil.addPartSuffix(p)), parseFn)
 }
 
 object AvroIO {
