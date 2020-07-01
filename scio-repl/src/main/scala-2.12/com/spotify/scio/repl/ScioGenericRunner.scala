@@ -44,10 +44,7 @@ trait ScioGenericRunner extends MainGenericRunner {
     ScioReplClassLoader
       .classLoaderURLs(Thread.currentThread.getContextClassLoader)
       .map(_.getPath)
-      .foreach { path =>
-        command.settings.classpath.append(path)
-        command.settings.bootclasspath.append(path)
-      }
+      .foreach(command.settings.classpath.append)
 
     // We have to make sure that scala macros are expandable. paradise plugin has to be added to
     // -Xplugin paths. In case of assembly - paradise is included in assembly jar - thus we add
@@ -66,9 +63,9 @@ trait ScioGenericRunner extends MainGenericRunner {
       .foreach(s => command.settings.plugin.tryToSet(List(s)))
 
     val scioClassLoader = ScioReplClassLoader(command.settings.classpathURLs.toArray)
-    val repl = new ScioILoop(command, scioClassLoader, args.toList)
-    scioClassLoader.setRepl(repl)
+    val repl = new ScioILoop(command, args.toList)
 
+    command.settings.Yreploutdir.value = ""
     // Workaround for https://github.com/spotify/scio/issues/867
     command.settings.Yreplclassbased.value = true
     // Force the repl to be synchronous, so all cmds are executed in the same thread

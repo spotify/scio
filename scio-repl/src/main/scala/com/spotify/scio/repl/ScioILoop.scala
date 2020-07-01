@@ -21,7 +21,6 @@ import com.spotify.scio.BuildInfo
 import com.spotify.scio.bigquery.BigQuerySysProps
 import org.apache.beam.sdk.extensions.gcp.options.GcpOptions.DefaultProjectFactory
 import org.apache.beam.sdk.options.PipelineOptionsFactory
-import org.apache.commons.text.StringEscapeUtils
 
 import scala.tools.nsc.CompilerCommand
 import scala.tools.nsc.interpreter.Results
@@ -31,8 +30,7 @@ import scala.tools.nsc.interpreter.Results
  * @param scioClassLoader [[ScioReplClassLoader]] used for runtime/in-memory classloading
  * @param args user arguments for Scio REPL
  */
-class ScioILoop(command: CompilerCommand, scioClassLoader: ScioReplClassLoader, args: List[String])
-    extends compat.ILoop(command) {
+class ScioILoop(command: CompilerCommand, args: List[String]) extends compat.ILoop(command) {
 
   // Fail fast for illegal arguments
   try {
@@ -61,10 +59,8 @@ class ScioILoop(command: CompilerCommand, scioClassLoader: ScioReplClassLoader, 
     val sc = if (name.nonEmpty) name else "sc"
     val rsc = "com.spotify.scio.repl.ReplScioContext"
     val opts = optsFromArgs(scioOpts)
-    val nextReplJar =
-      StringEscapeUtils.escapeJava(scioClassLoader.getNextReplCodeJarPath)
     intp.beQuietDuring {
-      intp.interpret(s"""val $sc: ScioContext = new $rsc($opts, List("$nextReplJar"))""")
+      intp.interpret(s"""val $sc: ScioContext = $rsc($opts, "${outputDir.path}")""")
     }
     this.echo("Scio context available as '" + sc + "'")
     Result.default

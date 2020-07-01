@@ -42,15 +42,12 @@ trait ScioGenericRunner extends MainGenericRunner {
     ScioReplClassLoader
       .classLoaderURLs(Thread.currentThread.getContextClassLoader)
       .map(_.getPath)
-      .foreach { path =>
-        command.settings.classpath.append(path)
-        command.settings.bootclasspath.append(path)
-      }
+      .foreach(command.settings.classpath.append)
 
     val scioClassLoader = ScioReplClassLoader(command.settings.classpathURLs.toArray)
-    val repl = new ScioILoop(command, scioClassLoader, args.toList)
-    scioClassLoader.setRepl(repl)
+    val repl = new ScioILoop(command, args.toList)
 
+    command.settings.Yreploutdir.value = ""
     command.settings.YmacroAnnotations.value = true
 
     // Set classloader chain - expose top level abstract class loader down
