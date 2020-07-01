@@ -157,6 +157,13 @@ private object ScioMatchers {
 
     makeFnSingle[T](in => assertThat(TestWrapper(in), mm))
   }
+
+  def hasItem[T: Coder](t: T, context: ScioContext): h.Matcher[JIterable[T]] =
+    SerializableMatchers.fromSupplier {
+      supplierFromCoder(t, context) { t =>
+        Matchers.hasItem(t).asInstanceOf[h.Matcher[JIterable[T]]]
+      }
+    }
 }
 
 /**
@@ -343,7 +350,7 @@ trait SCollectionMatchers extends EqInstances {
         new Matcher[SCollection[T]] {
           override def apply(left: SCollection[T]): MatchResult = {
             val v = Externalizer(TestWrapper[T](value)) // defeat closure
-            val mm = Matchers.hasItem(v.get).asInstanceOf[h.Matcher[JIterable[TestWrapper[T]]]]
+            val mm = ScioMatchers.hasItem(v.get, left.context)
             val should = ScioMatchers.assertThatFn[T](mm)
             val shouldNot = ScioMatchers.assertThatNotFn[T](mm)
             val assertion = builder(PAssert.that(serDeCycle(left).internal))
