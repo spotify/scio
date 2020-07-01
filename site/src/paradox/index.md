@@ -14,7 +14,7 @@ Example Scio pipelines and tests can be found under @github[scio-examples](/scio
 See @scaladoc[Scio Scaladocs](com.spotify.scio.index)  for current API documentation.
 
 ## Getting help
-- #scio channel on Spotify FOSS Slack, get an invite [here](https://slackin.spotify.com/)
+- `#scio` channel on Spotify FOSS Slack, get an invite [here](https://slackin.spotify.com/)
 - [![Google Group](https://img.shields.io/badge/Google%20Group-scio--users-blue.svg)](https://groups.google.com/forum/#!forum/scio-users)
 - [![Stack Overflow](https://img.shields.io/badge/Stack%20Overflow-spotify--scio-yellow.svg)](https://stackoverflow.com/questions/tagged/spotify-scio)
 
