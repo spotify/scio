@@ -70,8 +70,9 @@ final case class SpecificRecordTap[T <: SpecificRecord: ClassTag: Coder](path: S
 }
 
 /** Tap for reading multiple Avro files/file-patterns as SpecificRecords. */
-final case class SpecificRecordReadFilesTap[T <: SpecificRecord: ClassTag: Coder](paths: Iterable[String])
-  extends Tap[T] {
+final case class SpecificRecordReadFilesTap[T <: SpecificRecord: ClassTag: Coder](
+  paths: Iterable[String]
+) extends Tap[T] {
   override def value: Iterator[T] = paths.iterator.flatMap(p => FileStorage(p).avroFile[T])
 
   override def open(sc: ScioContext): SCollection[T] = sc.avroFiles[T](paths)
