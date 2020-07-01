@@ -394,6 +394,14 @@ lazy val protobufSettings = Def.settings(
   )
 )
 
+def splitTests(tests: Seq[TestDefinition], filter: Seq[String]) = {
+  val (filtered, default) = tests.partition(test => filter.contains(test.name))
+  val policy = Tests.SubProcess(ForkOptions())
+  new Tests.Group(name = "<default>", tests = default, runPolicy = policy) +: filtered.map { test =>
+    new Tests.Group(name = test.name, tests = Seq(test), runPolicy = policy)
+  }
+}
+
 lazy val root: Project = Project("scio", file("."))
   .settings(commonSettings)
   .settings(noPublishSettings)
@@ -562,7 +570,11 @@ lazy val `scio-test`: Project = project
       "com.propensive" %% "magnolia" % magnoliaVersion
     ),
     beamSDKIODependencies,
-    (Test / compileOrder) := CompileOrder.JavaThenScala
+    (Test / compileOrder) := CompileOrder.JavaThenScala,
+    Test / testGrouping := splitTests(
+      (Test / definedTests).value,
+      List("com.spotify.scio.ArgsTest")
+    )
   )
   .configs(
     IntegrationTest
@@ -1041,7 +1053,11 @@ lazy val `scio-examples`: Project = project
     },
     sources in doc in Compile := List(),
     run / classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.Flat,
-    Test / classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.Flat
+    Test / classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.Flat,
+    Test / testGrouping := splitTests(
+      (Test / definedTests).value,
+      List("com.spotify.scio.examples.WordCountTest")
+    )
   )
   .dependsOn(
     `scio-core`,
