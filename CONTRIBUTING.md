@@ -5,7 +5,7 @@ Scio is developed and maintained by an infrastructure team at Spotify. It is the
 
 # Submitting issues
 
-Feel free to discuss issues in our [Gitter room](https://gitter.im/spotify/scio) or [Google Group](https://groups.google.com/forum/#!forum/scio-users) first.
+Feel free to discuss issues in the #scio channel on Spotify FOSS Slack (get an invite [here](https://slackin.spotify.com/)) or [Google Group](https://groups.google.com/forum/#!forum/scio-users) first.
 
 Don't hesitate to create [GitHub issues](https://github.com/spotify/scio/issues) for bugs, feature requests, or questions. When reporting a bug, it would help to include a small, reproducible code snippet or unit test.
 

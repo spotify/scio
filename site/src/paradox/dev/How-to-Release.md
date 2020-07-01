@@ -28,7 +28,7 @@ credentials ++= Seq(
 - Bump version in the internal `scio-cookie` and monorepo
 - Send internal announcement to scio-users@spotify.com and flatmap-announce@spotify.com
 - Send external announcement to scio-users@googlegroups.com and user@beam.apache.org
-- Announce on internal Slack and public Gitter [room](https://gitter.im/spotify/scio)
+- Announce on internal and public [Slack](https://slackin.spotify.com/)
 - Announce on Twitter
 
 <sup>*</sup>Starting with `0.4.0` all release names are scientific names of animals with genus and species starting with the same letter, in ascending alphabetical order. Starting with `0.8.0` all release names are Harry Potter spells.
