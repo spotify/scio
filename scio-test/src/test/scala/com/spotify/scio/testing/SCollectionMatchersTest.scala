@@ -36,6 +36,10 @@ import java.io.ObjectInputStream
 import java.io.IOException
 import java.io.NotSerializableException
 import cats.kernel.Eq
+import com.twitter.chill.Externalizer
+import com.esotericsoftware.kryo.KryoSerializable
+import com.esotericsoftware.kryo.Kryo
+import com.esotericsoftware.kryo.io.{Input, Output}
 
 object SCollectionMatchersTest {
   // intentionally not serializable to test lambda ser/de
@@ -46,12 +50,22 @@ object SCollectionMatchersTest {
   }
 }
 
-final case class DoesNotSerialize[B](a: String, b: B) extends Serializable {
+final case class DoesNotSerialize[B](a: String, b: B) extends KryoSerializable with Serializable {
+
   @throws(classOf[IOException])
   private def writeObject(o: ObjectOutputStream): Unit =
     throw new NotSerializableException("DoesNotSerialize can't be serialized")
+
   @throws(classOf[IOException])
   private def readObject(o: ObjectInputStream): Unit =
+    throw new NotSerializableException("DoesNotSerialize can't be serialized")
+
+  @throws(classOf[IOException])
+  def write(kryo: Kryo, output: Output) =
+    throw new NotSerializableException("DoesNotSerialize can't be serialized")
+
+  @throws(classOf[IOException])
+  def read(kryo: Kryo, input: Input) =
     throw new NotSerializableException("DoesNotSerialize can't be serialized")
 }
 
@@ -376,10 +390,7 @@ class SCollectionMatchersTest extends PipelineSpec {
       val coder = CoderMaterializer.beam(ctx, Coder[DNS])
 
       assume(Try(ensureSerializable(v)).isFailure)
-      // XXX jto: I can't get Externalizer to fail on a simple example.
-      // We've seen the exception happen in real world pipeline,
-      // but this test does not really cover it
-      // assume(Try(ensureSerializable(Externalizer(v))).isFailure)
+      assume(Try(ensureSerializable(Externalizer(v))).isFailure)
       assume(Try(ensureSerializableByCoder(coder, v, "?")).isSuccess)
 
       v coderShould roundtrip()
@@ -388,8 +399,10 @@ class SCollectionMatchersTest extends PipelineSpec {
       val coll = ctx.parallelize(List(v))
       coll shouldNot beEmpty // just make sure the SCollection can be built
 
-      coll should satisfy[DNS](_.head.a == v.a)
-      coll should satisfySingleValue[DNS](_.a == v.a)
+      // satisfy and satisfySingleValue will fail bc. the closure
+      // cant be serialized by a Coder
+      // coll should satisfy[DNS](_.head.a == v.a)
+      // coll should satisfySingleValue[DNS](_.a == v.a)
       coll should containInAnyOrder(List(v))
       coll should containSingleValue(v)
       coll should containValue(v)
