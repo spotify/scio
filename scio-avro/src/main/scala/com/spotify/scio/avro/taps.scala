@@ -99,6 +99,7 @@ final case class GenericRecordParseFilesTap[T: Coder](
   paths: Iterable[String],
   parseFn: GenericRecord => T
 ) extends Tap[T] {
+
   /** Read data set into memory. */
   override def value: Iterator[T] =
     paths.iterator.flatMap(p =>
