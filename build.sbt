@@ -1063,7 +1063,6 @@ lazy val `scio-repl`: Project = project
   .settings(commonSettings)
   .settings(macroSettings)
   .settings(
-    scalacOptions --= Seq("-release", "8"),
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
       "org.apache.beam" % "beam-runners-direct-java" % beamVersion,
