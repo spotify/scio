@@ -291,6 +291,12 @@ object ContextAndArgs {
   def typed[T](args: Array[String])(implicit tap: TypedArgsParser[T, Try]): (ScioContext, T) =
     withParser(tap.parser).apply(args)
 
+  // def typed[T <: Product: Parser: Help](args: Array[String]): (ScioContext, T) =
+  //   withParser(TypedParser[T]()).apply(args)
+
+  // def typed[T <: PipelineOptions: ClassTag](args: Array[String]): (ScioContext, T) =
+  //   withParser(PipelineOptionsParser[T]()).apply(args)
+
   private[scio] class UsageOrHelpException extends Exception with NoStackTrace
 
   private[scio] object UsageOrHelpException {
