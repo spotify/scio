@@ -253,23 +253,6 @@ object ContextAndArgs {
     }
   }
 
-  sealed trait TypedArgsParser[T, F[_]] {
-    def parser: ArgsParser[F]
-  }
-
-  sealed trait LowPrioTypedArgsParser {
-    implicit def caseApp[T: Parser: Help]: TypedArgsParser[T, Try] = new TypedArgsParser[T, Try] {
-      override def parser: ArgsParser[Try] = TypedParser[T]()
-    }
-  }
-
-  object TypedArgsParser extends LowPrioTypedArgsParser {
-    implicit def pipelineOptions[T <: PipelineOptions: ClassTag]: TypedArgsParser[T, Try] =
-      new TypedArgsParser[T, Try] {
-        override def parser: ArgsParser[Try] = PipelineOptionsParser[T]()
-      }
-  }
-
   def withParser[T](parser: ArgsParser[Try]): Array[String] => (ScioContext, T) =
     args =>
       parser.parse(args) match {
@@ -288,14 +271,11 @@ object ContextAndArgs {
   def apply(args: Array[String]): (ScioContext, Args) =
     withParser(DefaultParser[PipelineOptions]()).apply(args)
 
-  def typed[T](args: Array[String])(implicit tap: TypedArgsParser[T, Try]): (ScioContext, T) =
-    withParser(tap.parser).apply(args)
+  def typed[T <: Product: Parser: Help](args: Array[String]): (ScioContext, T) =
+    withParser(TypedParser[T]()).apply(args)
 
-  // def typed[T <: Product: Parser: Help](args: Array[String]): (ScioContext, T) =
-  //   withParser(TypedParser[T]()).apply(args)
-
-  // def typed[T <: PipelineOptions: ClassTag](args: Array[String]): (ScioContext, T) =
-  //   withParser(PipelineOptionsParser[T]()).apply(args)
+  def typed[T <: PipelineOptions: ClassTag](args: Array[String]): (ScioContext, T) =
+    withParser(PipelineOptionsParser[T]()).apply(args)
 
   private[scio] class UsageOrHelpException extends Exception with NoStackTrace
 
