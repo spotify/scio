@@ -48,10 +48,31 @@ object ObjectFileJob {
   }
 }
 
+object ObjectReadFilesJob {
+  def main(cmdlineArgs: Array[String]): Unit = {
+    val (sc, args) = ContextAndArgs(cmdlineArgs)
+    sc.objectFiles[Int](args.list("inputs"))
+      .map(_ * 10)
+      .saveAsObjectFile(args("output"))
+    sc.run()
+    ()
+  }
+}
+
 object SpecificAvroFileJob {
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
     sc.avroFile[TestRecord](args("input"))
+      .saveAsAvroFile(args("output"))
+    sc.run()
+    ()
+  }
+}
+
+object SpecificAvroReadFilesJob {
+  def main(cmdlineArgs: Array[String]): Unit = {
+    val (sc, args) = ContextAndArgs(cmdlineArgs)
+    sc.avroFile[TestRecord](args("inputs"))
       .saveAsAvroFile(args("output"))
     sc.run()
     ()
@@ -69,6 +90,17 @@ object GenericAvroFileJob {
   }
 }
 
+object GenericAvroReadFilesJob {
+  def main(cmdlineArgs: Array[String]): Unit = {
+    val (sc, args) = ContextAndArgs(cmdlineArgs)
+    implicit val coder = Coder.avroGenericRecordCoder(AvroUtils.schema)
+    sc.avroFile(args("inputs"), AvroUtils.schema)
+      .saveAsAvroFile(args("output"), schema = AvroUtils.schema)
+    sc.run()
+    ()
+  }
+}
+
 object GenericParseFnAvroFileJob {
 
   implicit val coder = Coder.avroGenericRecordCoder(AvroUtils.schema)
@@ -79,6 +111,24 @@ object GenericParseFnAvroFileJob {
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
     sc.parseAvroFile[PartialFieldsAvro](args("input"))((gr: GenericRecord) =>
+      PartialFieldsAvro(gr.get("int_field").asInstanceOf[Int])
+    ).map(a => AvroUtils.newGenericRecord(a.intField))
+      .saveAsAvroFile(args("output"), schema = AvroUtils.schema)
+    sc.run()
+    ()
+  }
+}
+
+object GenericParseFnAvroFilesJob {
+
+  implicit val coder = Coder.avroGenericRecordCoder(AvroUtils.schema)
+
+  // A class with some fields from the Avro Record
+  case class PartialFieldsAvro(intField: Int)
+
+  def main(cmdlineArgs: Array[String]): Unit = {
+    val (sc, args) = ContextAndArgs(cmdlineArgs)
+    sc.parseAvroFile[PartialFieldsAvro](args("inputs"))((gr: GenericRecord) =>
       PartialFieldsAvro(gr.get("int_field").asInstanceOf[Int])
     ).map(a => AvroUtils.newGenericRecord(a.intField))
       .saveAsAvroFile(args("output"), schema = AvroUtils.schema)
@@ -289,6 +339,32 @@ class JobTestTest extends PipelineSpec {
     an[AssertionError] should be thrownBy { testObjectFileJob(10, 20, 30, 40) }
   }
 
+  def testObjectReadFilesJob(inputs: String, paths: List[String]): Unit = {
+    val xs = List(10, 20, 20)
+    JobTest[ObjectReadFilesJob.type]
+      .args(inputs, "--output=out.avro")
+      .input(ObjectReadFilesIO[Int](paths), Seq(1, 2, 3))
+      .output(ObjectFileIO[Int]("out.avro"))(coll => coll should containInAnyOrder(xs))
+      .run()
+  }
+
+  it should "fail incorrect paths" in {
+    val inputs = "--inputs=first.avro,second.avro"
+    val paths = List("first.avro", "second.avro")
+    an[IllegalArgumentException] should be thrownBy {
+      testObjectReadFilesJob("--inputs=second.avro", paths)
+    }
+    an[IllegalArgumentException] should be thrownBy {
+      testObjectReadFilesJob(inputs, paths.take(1))
+    }
+    an[IllegalArgumentException] should be thrownBy {
+      testObjectReadFilesJob(s"${inputs},third.avro", paths)
+    }
+    an[IllegalArgumentException] should be thrownBy {
+      testObjectReadFilesJob(inputs, List("First.avro", "second.avro"))
+    }
+  }
+
   def testSpecificAvroFileJob(xs: Seq[TestRecord]): Unit =
     JobTest[SpecificAvroFileJob.type]
       .args("--input=in.avro", "--output=out.avro")
@@ -306,6 +382,32 @@ class JobTestTest extends PipelineSpec {
     }
     an[AssertionError] should be thrownBy {
       testSpecificAvroFileJob((1 to 4).map(newSpecificRecord))
+    }
+  }
+
+  def testSpecificAvroReadFilesJob(inputs: String, paths: List[String]): Unit = {
+    val xs = (1 to 3).map(newSpecificRecord)
+    JobTest[ObjectReadFilesJob.type]
+      .args(inputs, "--output=out.avro")
+      .input(AvroReadFilesIO[TestRecord](paths), (1 to 3).map(newSpecificRecord))
+      .output(AvroIO[TestRecord]("out.avro"))(coll => coll should containInAnyOrder(xs))
+      .run()
+  }
+
+  it should "fail incorrect specific AvroReadFilesIO" in {
+    val inputs = "--inputs=first.avro,second.avro"
+    val paths = List("first.avro", "second.avro")
+    an[IllegalArgumentException] should be thrownBy {
+      testSpecificAvroReadFilesJob("--inputs=second.avro", paths)
+    }
+    an[IllegalArgumentException] should be thrownBy {
+      testSpecificAvroReadFilesJob(inputs, paths.take(1))
+    }
+    an[IllegalArgumentException] should be thrownBy {
+      testSpecificAvroReadFilesJob(s"${inputs},third.avro", paths)
+    }
+    an[IllegalArgumentException] should be thrownBy {
+      testSpecificAvroReadFilesJob(inputs, List("First.avro", "second.avro"))
     }
   }
 
@@ -328,6 +430,33 @@ class JobTestTest extends PipelineSpec {
     }
     an[AssertionError] should be thrownBy {
       testGenericAvroFileJob((1 to 4).map(newGenericRecord))
+    }
+  }
+
+  def testGenericAvroReadFilesJob(inputs: String, paths: Iterable[String]): Unit = {
+    val expected = (1 to 3).map(newGenericRecord)
+    implicit val coder = Coder.avroGenericRecordCoder
+    JobTest[GenericAvroReadFilesJob.type]
+      .args(inputs, "--output=out.avro")
+      .input(AvroReadFilesIO[GenericRecord](paths), (1 to 3).map(newGenericRecord))
+      .output(AvroIO[GenericRecord]("out.avro"))(coll => coll should containInAnyOrder(expected))
+      .run()
+  }
+
+  it should "fail incorrect generic AvroReadFilesIO" in {
+    val inputs = "--inputs=first.avro,second.avro"
+    val paths = List("first.avro", "second.avro")
+    an[IllegalArgumentException] should be thrownBy {
+      testGenericAvroReadFilesJob("--inputs=second.avro", paths)
+    }
+    an[IllegalArgumentException] should be thrownBy {
+      testGenericAvroReadFilesJob(inputs, paths.take(1))
+    }
+    an[IllegalArgumentException] should be thrownBy {
+      testGenericAvroReadFilesJob(s"${inputs},third.avro", paths)
+    }
+    an[IllegalArgumentException] should be thrownBy {
+      testGenericAvroReadFilesJob(inputs, List("First.avro", "second.avro"))
     }
   }
 

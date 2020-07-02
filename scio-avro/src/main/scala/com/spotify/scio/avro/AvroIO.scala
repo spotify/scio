@@ -447,3 +447,15 @@ object AvroTyped {
     }
   }
 }
+
+trait AvroReadFilesIO[T] extends ScioIO[T] {
+  final override val tapT = TapOf[T]
+}
+
+object AvroReadFilesIO {
+
+  @inline final def apply[T](paths: Iterable[String]): AvroReadFilesIO[T] =
+    new AvroReadFilesIO[T] with TestIO[T] {
+      override def testId: String = s"AvroReadFilesIO($paths)"
+    }
+}
