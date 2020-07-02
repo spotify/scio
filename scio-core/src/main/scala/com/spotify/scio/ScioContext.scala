@@ -239,6 +239,20 @@ object ContextAndArgs {
     }
   }
 
+  final case class PipelineOptionsParser[T <: PipelineOptions: ClassTag] private ()
+      extends ArgsParser[Try] {
+    override type ArgsType = T
+
+    override def parse(args: Array[String]): Try[Result] = Try {
+      val (opts, remainingArgs) = ScioContext.parseArguments[T](args, withValidation = true)
+      Either.cond(remainingArgs.asMap.isEmpty, (opts, opts), s"Unused $remainingArgs")
+    } match {
+      case r @ Success(Right(_)) => r
+      case Success(Left(v))      => Failure(new Exception(v))
+      case f                     => f
+    }
+  }
+
   def withParser[T](parser: ArgsParser[Try]): Array[String] => (ScioContext, T) =
     args =>
       parser.parse(args) match {
@@ -257,8 +271,11 @@ object ContextAndArgs {
   def apply(args: Array[String]): (ScioContext, Args) =
     withParser(DefaultParser[PipelineOptions]()).apply(args)
 
-  def typed[T: Parser: Help](args: Array[String]): (ScioContext, T) =
+  def typed[T <: Product: Parser: Help](args: Array[String]): (ScioContext, T) =
     withParser(TypedParser[T]()).apply(args)
+
+  def typed[T <: PipelineOptions: ClassTag](args: Array[String]): (ScioContext, T) =
+    withParser(PipelineOptionsParser[T]()).apply(args)
 
   private[scio] class UsageOrHelpException extends Exception with NoStackTrace
 
