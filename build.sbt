@@ -153,7 +153,7 @@ lazy val formatSettings = Seq(
 
 val commonSettings = Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
   organization := "com.spotify",
-  scalaVersion := "2.13.2",
+  scalaVersion := "2.13.3",
   crossScalaVersions := Seq("2.12.11", scalaVersion.value),
   scalacOptions ++= Scalac.commonsOptions.value,
   Compile / doc / scalacOptions --= Seq("-release", "8"),
@@ -1290,7 +1290,7 @@ lazy val soccoSettings = if (sys.env.contains("SOCCO")) {
       "-P:socco:package_com.spotify.scio:https://spotify.github.io/scio/api"
     ),
     autoCompilerPlugins := true,
-    addCompilerPlugin(("io.regadas" %% "socco-ng" % "0.1.1").cross(CrossVersion.full)),
+    addCompilerPlugin(("io.regadas" %% "socco-ng" % "0.1.2").cross(CrossVersion.full)),
     // Generate scio-examples/target/site/index.html
     soccoIndex := SoccoIndex.generate(target.value / "site" / "index.html"),
     compile in Compile := {
