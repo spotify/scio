@@ -19,16 +19,27 @@ package com.spotify.scio.elasticsearch
 
 import java.net.InetSocketAddress
 
+import org.elasticsearch.action.admin.indices.alias.get.GetAliasesRequest
+import org.elasticsearch.action.admin.indices.alias.IndicesAliasesRequest
+import org.elasticsearch.action.admin.indices.alias.IndicesAliasesRequest.AliasActions
 import org.elasticsearch.action.admin.indices.create.CreateIndexResponse
+import org.elasticsearch.action.support.master.AcknowledgedResponse
 import org.elasticsearch.client.AdminClient
+import org.elasticsearch.client.IndicesAdminClient
 import org.elasticsearch.common.settings.Settings
 import org.elasticsearch.common.transport.InetSocketTransportAddress
+import org.elasticsearch.common.unit.TimeValue
 import org.elasticsearch.common.xcontent.XContentType
 import org.elasticsearch.transport.client.PreBuiltTransportClient
 
+import org.slf4j.LoggerFactory
+
 import scala.util.Try
+import scala.jdk.CollectionConverters._
 
 object IndexAdmin {
+  private[this] val Logger = LoggerFactory.getLogger(getClass)
+
   private def adminClient[A](esOptions: ElasticsearchOptions)(f: AdminClient => A): Try[A] = {
     val settings: Settings =
       Settings.builder.put("cluster.name", esOptions.clusterName).build
@@ -91,4 +102,79 @@ object IndexAdmin {
       .prepareCreate(index)
       .setSource(mappingSource, XContentType.JSON)
       .get()
+
+  /**
+   * Add or update index alias with an option to remove the alias from all other indexes if it is already
+   * pointed to any.
+   *
+   * @param alias            to be re-assigned
+   * @param indices          Iterable of indicies to point the alias to
+   * @param removePrevious   When set to true, the indexAlias would be removed from all indices it
+   *                         was assigned to before adding new index alias assignment
+   */
+  def createOrUpdateAlias(
+    client: IndicesAdminClient,
+    indices: Iterable[String],
+    alias: String,
+    removePrevious: Boolean,
+    timeout: TimeValue
+  ): AcknowledgedResponse = {
+    val request = indices.foldLeft(new IndicesAliasesRequest()) {
+      case (request, idx) =>
+        request.addAliasAction(AliasActions.add().index(idx).alias(alias))
+    }
+
+    if (removePrevious) {
+      val getAliasesResponse =
+        client.getAliases(new GetAliasesRequest(alias)).actionGet(timeout)
+      val indexAliacesToRemove = getAliasesResponse.getAliases().keysIt().asScala
+      Logger.info(s"Removing alias $alias from ${indexAliacesToRemove.mkString(", ")}")
+
+      indexAliacesToRemove.foreach { indexName =>
+        request.addAliasAction(AliasActions.remove().index(indexName).alias(alias))
+      }
+    }
+
+    client.aliases(request.timeout(timeout)).get
+  }
+
+  /**
+   * Add index alias with an option to remove the alias from all other indexes if it is already
+   * pointed to any.
+   * If index already exists or some other error occurs this results in a [[scala.util.Failure]].
+   *
+   * @param alias            to be re-assigned
+   * @param index            index to point the alias to
+   * @param removePrevious   When set to true, the indexAlias would be removed from all indices it
+   *                         was assigned to before adding new index alias assignment.
+   */
+  def createOrUpdateAlias(
+    esOptions: ElasticsearchOptions,
+    alias: String,
+    index: String,
+    removePrevious: Boolean,
+    timeout: TimeValue
+  ): Try[AcknowledgedResponse] =
+    createOrUpdateAlias(esOptions, List(index), alias, removePrevious, timeout)
+
+  /**
+   * Add or update index alias with an option to remove the alias from all other indexes if it is already
+   * pointed to any.
+   * If index already exists or some other error occurs this results in a [[scala.util.Failure]].
+   *
+   * @param alias            to be re-assigned
+   * @param indices          indices to point the alias to
+   * @param removePrevious   When set to true, the indexAlias would be removed from all indices it
+   *                         was assigned to before adding new index alias assignment.
+   */
+  def createOrUpdateAlias(
+    esOptions: ElasticsearchOptions,
+    indices: Iterable[String],
+    alias: String,
+    removePrevious: Boolean,
+    timeout: TimeValue
+  ): Try[AcknowledgedResponse] =
+    adminClient(esOptions) { client =>
+      createOrUpdateAlias(client.indices(), indices, alias, removePrevious, timeout)
+    }
 }
