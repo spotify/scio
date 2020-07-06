@@ -287,11 +287,26 @@ public class AvroSortedBucketIO {
               AvroFileOperations.of((Class<SpecificRecordBase>) getRecordClass(), getCodec());
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     BucketMetadata<K, T> getBucketMetadata() {
       try {
-        return new AvroBucketMetadata<>(
-            getNumBuckets(), getNumShards(), getKeyClass(), getHashType(), getKeyField());
+        return getRecordClass() == null
+            ? AvroBucketMetadata.of(
+                getNumBuckets(),
+                getNumShards(),
+                getKeyClass(),
+                getHashType(),
+                getKeyField(),
+                getSchema())
+            : (AvroBucketMetadata<K, T>)
+                AvroBucketMetadata.of(
+                    getNumBuckets(),
+                    getNumShards(),
+                    getKeyClass(),
+                    getHashType(),
+                    getKeyField(),
+                    (Class<SpecificRecordBase>) getRecordClass());
       } catch (CannotProvideCoderException | Coder.NonDeterministicException e) {
         throw new IllegalStateException(e);
       }
