@@ -23,7 +23,6 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Preconditions;
-import com.google.protobuf.ByteString;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -31,7 +30,6 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
-import java.util.Set;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericRecord;
@@ -45,7 +43,6 @@ import org.apache.beam.sdk.coders.StringUtf8Coder;
 import org.apache.beam.sdk.transforms.display.DisplayData;
 import org.apache.beam.sdk.transforms.display.DisplayData.Builder;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ImmutableMap;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ImmutableSet;
 
 /**
  * {@link org.apache.beam.sdk.extensions.smb.BucketMetadata} for Avro {@link GenericRecord} records.
@@ -164,18 +161,18 @@ public class AvroBucketMetadata<K, V extends GenericRecord> extends BucketMetada
             "Leaf key field %s does not exist in schema %s",
             keyPath[keyPath.length - 1], currSchema));
 
-    final Set<Class<?>> finalKeyFieldClasses = getKeyClassFromSchema(finalKeyField.schema());
+    final Class<?> finalKeyFieldClass = getKeyClassFromSchema(finalKeyField.schema());
 
     Preconditions.checkArgument(
-        finalKeyFieldClasses.stream().anyMatch(c -> c.isAssignableFrom(keyClass)),
+        finalKeyFieldClass.isAssignableFrom(keyClass),
         String.format(
-            "Key class %s did not conform to its Avro schema. Must be one of: %s",
-            keyClass, finalKeyFieldClasses));
+            "Key class %s did not conform to its Avro schema. Must be of class: %s",
+            keyClass, finalKeyFieldClass));
 
     return keyField;
   }
 
-  private static Set<Class<?>> getKeyClassFromSchema(Schema schema) {
+  private static Class<?> getKeyClassFromSchema(Schema schema) {
     Schema.Type schemaType = schema.getType();
 
     if (schemaType == Schema.Type.UNION) {
@@ -196,37 +193,37 @@ public class AvroBucketMetadata<K, V extends GenericRecord> extends BucketMetada
               + schema);
     }
 
-    return getClassesForType(schemaType);
+    return getClassForType(schemaType);
   }
 
-  private static Set<Class<?>> getClassesForType(Schema.Type schemaType) {
+  private static Class<?> getClassForType(Schema.Type schemaType) {
     switch (schemaType) {
       case RECORD:
-        return ImmutableSet.of(GenericRecord.class);
+        return GenericRecord.class;
       case NULL:
         throw new IllegalArgumentException("Key field cannot be of type Null");
       case ARRAY:
-        return ImmutableSet.of(Collection.class);
+        return Collection.class;
       case BOOLEAN:
-        return ImmutableSet.of(Boolean.class);
+        return Boolean.class;
       case MAP:
-        return ImmutableSet.of(Map.class);
+        return Map.class;
       case ENUM:
-        return ImmutableSet.of(String.class);
+        return String.class;
       case INT:
-        return ImmutableSet.of(Integer.class);
+        return Integer.class;
       case DOUBLE:
-        return ImmutableSet.of(Double.class);
+        return Double.class;
       case LONG:
-        return ImmutableSet.of(Long.class);
+        return Long.class;
       case STRING:
-        return ImmutableSet.of(CharSequence.class);
+        return CharSequence.class;
       case FIXED:
-        return ImmutableSet.of(GenericData.Fixed.class);
+        return GenericData.Fixed.class;
       case FLOAT:
-        return ImmutableSet.of(Float.class);
+        return Float.class;
       case BYTES:
-        return ImmutableSet.of(byte[].class, ByteString.class, ByteBuffer.class);
+        return ByteBuffer.class;
       default:
         throw new IllegalStateException("Can't match key field schema type " + schemaType);
     }

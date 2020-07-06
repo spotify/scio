@@ -19,7 +19,6 @@ package org.apache.beam.sdk.extensions.smb;
 
 import static org.apache.beam.sdk.transforms.display.DisplayDataMatchers.hasDisplayItem;
 
-import com.google.protobuf.ByteString;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
@@ -189,12 +188,6 @@ public class AvroBucketMetadataTest {
   @Test
   public void testKeyTypeCheckingBytes()
       throws CannotProvideCoderException, NonDeterministicException {
-    new AvroBucketMetadata<>(
-        1, 1, byte[].class, HashType.MURMUR3_32, "location.countryId", RECORD_SCHEMA);
-
-    new AvroBucketMetadata<>(
-        1, 1, ByteString.class, HashType.MURMUR3_32, "location.countryId", RECORD_SCHEMA);
-
     new AvroBucketMetadata<>(
         1, 1, ByteBuffer.class, HashType.MURMUR3_32, "location.countryId", RECORD_SCHEMA);
 
