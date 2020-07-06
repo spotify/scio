@@ -26,7 +26,6 @@ import java.util.jar.JarEntry
 import org.apache.beam.sdk.options.PipelineOptions
 import com.spotify.scio.{ScioContext, ScioExecutionContext}
 
-import scala.jdk.CollectionConverters._
 import scala.reflect.io.AbstractFile
 import scala.reflect.io.Path
 

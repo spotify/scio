@@ -30,10 +30,6 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions
 import scala.jdk.CollectionConverters._
-import com.spotify.scio.runners.dataflow.DataflowContext
-import org.apache.beam.runners.dataflow.options.DataflowPipelineWorkerPoolOptions
-import org.apache.beam.runners.dataflow.util.PackageUtil.StagedFile
-import org.apache.beam.model.pipeline.v1.RunnerApi
 import org.apache.beam.runners.core.construction.Environments
 import org.apache.beam.sdk.options.PortablePipelineOptions
 
