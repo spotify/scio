@@ -29,8 +29,7 @@ import org.apache.beam.sdk.schemas.{Schema => BSchema}
 import org.apache.beam.sdk.transforms.Combine.CombineFn
 import org.apache.beam.sdk.transforms.SerializableFunction
 import org.apache.beam.sdk.values.{Row, TupleTag}
-import org.joda.time.{DateTime, Instant}
-import org.joda.time.DateTimeZone.UTC
+import org.joda.time.Instant
 import org.scalatest.Assertion
 
 import scala.jdk.CollectionConverters._

@@ -21,7 +21,7 @@ package com.spotify.scio.examples
 import caseapp._
 import com.spotify.scio._
 import com.spotify.scio.examples.common.ExampleData
-import org.apache.beam.sdk.options.{Default, Description, PipelineOptions}
+import org.apache.beam.sdk.options.{Default, PipelineOptions}
 import org.apache.beam.sdk.options.Validation.Required
 
 // Usage:

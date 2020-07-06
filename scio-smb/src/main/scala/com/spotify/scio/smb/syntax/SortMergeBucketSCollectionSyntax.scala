@@ -21,10 +21,8 @@ import com.spotify.scio.annotations.experimental
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import com.spotify.scio.io.{ClosedTap, EmptyTap}
 import com.spotify.scio.values._
-import org.apache.beam.sdk.extensions.smb.SortedBucketIO.PreKeyedWrite
-import org.apache.beam.sdk.extensions.smb.{SortedBucketIO, SortedBucketSink}
-import org.apache.beam.sdk.transforms.PTransform
-import org.apache.beam.sdk.values.{KV, PCollection}
+import org.apache.beam.sdk.extensions.smb.SortedBucketIO
+import org.apache.beam.sdk.values.KV
 
 trait SortMergeBucketSCollectionSyntax {
   implicit def toSortMergeBucketKeyedSCollection[K, V: Coder](
