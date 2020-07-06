@@ -66,7 +66,7 @@ final case class GenericRecordParseTap[T: Coder](
 ) extends Tap[T] {
   override def value: Iterator[T] =
     FileStorage(path)
-    // Read Avro GenericRecords, with the writer specified schema
+      // Read Avro GenericRecords, with the writer specified schema
       .avroFile[GenericRecord](schema = null)
       .map(parseFn)
 

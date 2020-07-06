@@ -46,7 +46,7 @@ class LeaderBoardTest extends PipelineSpec {
   "LeaderBoard.calculateTeamScores" should "work with on time elements" in {
     // #LeaderBoardTest_example_1
     val stream = testStreamOf[GameActionInfo]
-    // Start at the epoch
+      // Start at the epoch
       .advanceWatermarkTo(baseTime)
       // add some elements ahead of the watermark
       .addElements(

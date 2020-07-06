@@ -67,7 +67,7 @@ object FilterExamples {
     val globalMeanTemp = pipe.map(_.meanTemp).mean
 
     pipe
-    // Filter by month
+      // Filter by month
       .filter(_.month == monthFilter)
       // Cross product of elements in the two `SCollection`s, and since the right hand side is a
       // singleton, effectively decorate each `Record` as `(Record, Double)`

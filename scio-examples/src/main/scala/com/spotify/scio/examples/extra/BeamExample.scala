@@ -93,7 +93,7 @@ object BeamExample {
     accounts.internal
 
     accounts
-    // Beam `PTransform`
+      // Beam `PTransform`
       .applyTransform(window)
       // Scio `map` transform
       .map(a => KV.of(a.getName.toString, a.getAmount))

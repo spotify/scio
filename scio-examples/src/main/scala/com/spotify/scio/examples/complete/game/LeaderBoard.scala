@@ -81,8 +81,8 @@ object LeaderBoard {
       .flatMap(UserScore.parseEvent)
 
     calculateTeamScores(gameEvents, teamWindowDuration, allowedLateness)
-    // Add windowing information to team score results by converting to `WindowedSCollection`
-    .toWindowed
+      // Add windowing information to team score results by converting to `WindowedSCollection`
+      .toWindowed
       .map { wv =>
         // Convert from score tuple to `TeamScoreSums` case class with both tuple and windowing info
         val start = fmt.print(wv.window.asInstanceOf[IntervalWindow].start())
@@ -96,15 +96,15 @@ object LeaderBoard {
       .saveAsTypedBigQueryTable(Table.Spec(args("output") + "_team"))
 
     gameEvents
-    // Use a global window for unbounded data, which updates calculation every 10 minutes,
-    // starting 10 minutes after the first event arrives.
-    // Recalculates immediately when late data arrives, according to these rules:
-    // - Accumulates fired panes (rather than discarding), which means subsequent calculations
-    // use all data, not just data collected after the last calculation was done.
-    // - Accepts late entries (and recalculates based on them) only if they arrive within the
-    // allowedLateness duration.
-    // For more information on these options, see the Beam docs:
-    // https://beam.apache.org/documentation/programming-guide/#triggers
+      // Use a global window for unbounded data, which updates calculation every 10 minutes,
+      // starting 10 minutes after the first event arrives.
+      // Recalculates immediately when late data arrives, according to these rules:
+      // - Accumulates fired panes (rather than discarding), which means subsequent calculations
+      // use all data, not just data collected after the last calculation was done.
+      // - Accepts late entries (and recalculates based on them) only if they arrive within the
+      // allowedLateness duration.
+      // For more information on these options, see the Beam docs:
+      // https://beam.apache.org/documentation/programming-guide/#triggers
       .withGlobalWindow(
         WindowOptions(
           trigger = Repeatedly.forever(

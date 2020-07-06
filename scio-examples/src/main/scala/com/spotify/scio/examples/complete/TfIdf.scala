@@ -96,29 +96,29 @@ object TfIdf {
     }
 
     val uriToWordAndCount = uriToWords
-    // Count `(doc, terms)` occurrences to get `((doc, term), term-freq)`
-    .countByValue
-    // Remap tuple to key on doc, i.e. `(doc, (term, term-freq))`
+      // Count `(doc, terms)` occurrences to get `((doc, term), term-freq)`
+      .countByValue
+      // Remap tuple to key on doc, i.e. `(doc, (term, term-freq))`
       .map(t => (t._1._1, (t._1._2, t._2)))
 
     val wordToDf = uriToWords
-    // Compute unique `(doc, term)` pairs
-    .distinct
-    // Drop keys (`doc`) and keep values (`term`)
-    .values
-    // Count `term` occurrences to get `(term, doc-freq)`
-    .countByValue
-    // Cross product with unique number of `doc`s, or `N`
+      // Compute unique `(doc, term)` pairs
+      .distinct
+      // Drop keys (`doc`) and keep values (`term`)
+      .values
+      // Count `term` occurrences to get `(term, doc-freq)`
+      .countByValue
+      // Cross product with unique number of `doc`s, or `N`
       .cross(uriToContent.keys.distinct.count)
       // Compute `(term, DF)`
       .map { case ((t, df), numDocs) => (t, df.toDouble / numDocs) }
 
     uriToWords
-    // Drop values (`term`) and keep keys (`doc`)
-    .keys
-    // Count `doc` occurrences to get `(doc, doc-length)`
-    .countByValue
-    // Join with `(doc, (term, term-freq))` to get `(doc, (doc-length, (term, term-freq)))`
+      // Drop values (`term`) and keep keys (`doc`)
+      .keys
+      // Count `doc` occurrences to get `(doc, doc-length)`
+      .countByValue
+      // Join with `(doc, (term, term-freq))` to get `(doc, (doc-length, (term, term-freq)))`
       .join(uriToWordAndCount)
       // Compute `(term, (doc, TF))`
       .map { case (d, (dl, (t, tf))) => (t, (d, tf.toDouble / dl)) }
