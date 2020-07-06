@@ -167,7 +167,8 @@ object SortMergeBucketTransformExample {
       TargetParallelism.auto()
     ).to(
       AvroSortedBucketIO
-        .transformOutput(classOf[Integer], "userId", classOf[Account])
+        .transformOutput(classOf[Integer], "id", classOf[Account])
+        .write(classOf[Integer], "id", classOf[Account])
         .to(args("output"))
     ).via {
       case (key, (users, accounts), outputCollector) =>

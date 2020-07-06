@@ -82,12 +82,12 @@ public class AvroBucketMetadataTest {
 
     Assert.assertEquals(
         (Long) 10L,
-        AvroBucketMetadata.of(1, 1, Long.class, HashType.MURMUR3_32, "id", RECORD_SCHEMA)
+        new AvroBucketMetadata<>(1, 1, Long.class, HashType.MURMUR3_32, "id", RECORD_SCHEMA)
             .extractKey(user));
 
     Assert.assertEquals(
         countryIdAsBytes,
-        AvroBucketMetadata.of(
+        new AvroBucketMetadata<>(
                 1, 1, ByteBuffer.class, HashType.MURMUR3_32, "location.countryId", RECORD_SCHEMA)
             .extractKey(user));
 
@@ -95,7 +95,7 @@ public class AvroBucketMetadataTest {
     FIXME: BucketMetadata should allow custom coder?
     Assert.assertEquals(
         Arrays.asList("CN", "MX"),
-        AvroBucketMetadata.of(
+        new AvroBucketMetadata<>(
                 1, 1, ArrayList.class, HashType.MURMUR3_32, "location.prevCountries")
             .extractKey(user));
      */
@@ -107,13 +107,13 @@ public class AvroBucketMetadataTest {
 
     Assert.assertEquals(
         "green",
-        AvroBucketMetadata.of(
+        new AvroBucketMetadata<>(
                 1, 1, String.class, HashType.MURMUR3_32, "favorite_color", AvroGeneratedUser.class)
             .extractKey(user));
 
     Assert.assertEquals(
         (Integer) 50,
-        AvroBucketMetadata.of(
+        new AvroBucketMetadata<>(
                 1,
                 1,
                 Integer.class,
@@ -139,7 +139,7 @@ public class AvroBucketMetadataTest {
   @Test
   public void testVersionDefault() throws Exception {
     final AvroBucketMetadata<String, GenericRecord> metadata =
-        AvroBucketMetadata.of(
+        new AvroBucketMetadata<>(
             1, 1, String.class, HashType.MURMUR3_32, "favorite_color", AvroGeneratedUser.SCHEMA$);
 
     Assert.assertEquals(BucketMetadata.CURRENT_VERSION, metadata.getVersion());
@@ -148,7 +148,7 @@ public class AvroBucketMetadataTest {
   @Test
   public void testDisplayData() throws Exception {
     final AvroBucketMetadata<String, GenericRecord> metadata =
-        AvroBucketMetadata.of(
+        new AvroBucketMetadata<>(
             2, 1, String.class, HashType.MURMUR3_32, "favorite_color", AvroGeneratedUser.SCHEMA$);
 
     final DisplayData displayData = DisplayData.from(metadata);
@@ -166,19 +166,19 @@ public class AvroBucketMetadataTest {
   @Test
   public void testSameSourceCompatibility() throws Exception {
     final AvroBucketMetadata<String, GenericRecord> metadata1 =
-        AvroBucketMetadata.of(
+        new AvroBucketMetadata<>(
             2, 1, String.class, HashType.MURMUR3_32, "name", AvroGeneratedUser.SCHEMA$);
 
     final AvroBucketMetadata<String, GenericRecord> metadata2 =
-        AvroBucketMetadata.of(
+        new AvroBucketMetadata<>(
             2, 1, String.class, HashType.MURMUR3_32, "favorite_color", AvroGeneratedUser.SCHEMA$);
 
     final AvroBucketMetadata<String, GenericRecord> metadata3 =
-        AvroBucketMetadata.of(
+        new AvroBucketMetadata<>(
             4, 1, String.class, HashType.MURMUR3_32, "favorite_color", AvroGeneratedUser.SCHEMA$);
 
     final AvroBucketMetadata<Integer, GenericRecord> metadata4 =
-        AvroBucketMetadata.of(
+        new AvroBucketMetadata<>(
             4, 1, Integer.class, HashType.MURMUR3_32, "favorite_number", AvroGeneratedUser.SCHEMA$);
 
     Assert.assertFalse(metadata1.isPartitionCompatible(metadata2));
@@ -189,19 +189,19 @@ public class AvroBucketMetadataTest {
   @Test
   public void testKeyTypeCheckingBytes()
       throws CannotProvideCoderException, NonDeterministicException {
-    AvroBucketMetadata.of(
+    new AvroBucketMetadata<>(
         1, 1, byte[].class, HashType.MURMUR3_32, "location.countryId", RECORD_SCHEMA);
 
-    AvroBucketMetadata.of(
+    new AvroBucketMetadata<>(
         1, 1, ByteString.class, HashType.MURMUR3_32, "location.countryId", RECORD_SCHEMA);
 
-    AvroBucketMetadata.of(
+    new AvroBucketMetadata<>(
         1, 1, ByteBuffer.class, HashType.MURMUR3_32, "location.countryId", RECORD_SCHEMA);
 
     Assert.assertThrows(
         IllegalArgumentException.class,
         () ->
-            AvroBucketMetadata.of(
+            new AvroBucketMetadata<>(
                 1, 1, String.class, HashType.MURMUR3_32, "location.countryId", RECORD_SCHEMA));
   }
 
@@ -221,7 +221,7 @@ public class AvroBucketMetadataTest {
                     "",
                     "a")));
 
-    AvroBucketMetadata.of(1, 1, String.class, HashType.MURMUR3_32, "enumField", enumSchema);
+    new AvroBucketMetadata<>(1, 1, String.class, HashType.MURMUR3_32, "enumField", enumSchema);
   }
 
   @Test
@@ -233,18 +233,19 @@ public class AvroBucketMetadataTest {
     // Three types
     final Schema illegalUnionSchema2 = createUnionRecordOfTypes(Type.STRING, Type.BYTES, Type.NULL);
 
-    AvroBucketMetadata.of(1, 1, String.class, HashType.MURMUR3_32, "unionField", legalUnionSchema);
+    new AvroBucketMetadata<>(
+        1, 1, String.class, HashType.MURMUR3_32, "unionField", legalUnionSchema);
 
     Assert.assertThrows(
         IllegalArgumentException.class,
         () ->
-            AvroBucketMetadata.of(
+            new AvroBucketMetadata<>(
                 1, 1, String.class, HashType.MURMUR3_32, "unionField", illegalUnionSchema1));
 
     Assert.assertThrows(
         IllegalArgumentException.class,
         () ->
-            AvroBucketMetadata.of(
+            new AvroBucketMetadata<>(
                 1, 1, String.class, HashType.MURMUR3_32, "unionField", illegalUnionSchema2));
   }
 

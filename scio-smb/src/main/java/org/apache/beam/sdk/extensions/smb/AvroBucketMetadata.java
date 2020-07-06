@@ -36,7 +36,6 @@ import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.reflect.ReflectData;
-import org.apache.avro.specific.SpecificRecordBase;
 import org.apache.beam.sdk.coders.AtomicCoder;
 import org.apache.beam.sdk.coders.ByteArrayCoder;
 import org.apache.beam.sdk.coders.CannotProvideCoderException;
@@ -57,32 +56,15 @@ public class AvroBucketMetadata<K, V extends GenericRecord> extends BucketMetada
 
   @JsonIgnore private final String[] keyPath;
 
-  public static <KeyT, ValueT extends GenericRecord> AvroBucketMetadata<KeyT, ValueT> of(
+  public AvroBucketMetadata(
       int numBuckets,
       int numShards,
-      Class<KeyT> keyClass,
+      Class<K> keyClass,
       BucketMetadata.HashType hashType,
       String keyField,
-      Schema schema)
+      Class<V> recordClass)
       throws CannotProvideCoderException, NonDeterministicException {
-    return new AvroBucketMetadata<>(
-        BucketMetadata.CURRENT_VERSION,
-        numBuckets,
-        numShards,
-        keyClass,
-        hashType,
-        validateKeyField(keyField, keyClass, schema));
-  }
-
-  public static <KeyT, ValueT extends SpecificRecordBase> AvroBucketMetadata<KeyT, ValueT> of(
-      int numBuckets,
-      int numShards,
-      Class<KeyT> keyClass,
-      BucketMetadata.HashType hashType,
-      String keyField,
-      Class<ValueT> recordClass)
-      throws CannotProvideCoderException, NonDeterministicException {
-    return new AvroBucketMetadata<>(
+    this(
         BucketMetadata.CURRENT_VERSION,
         numBuckets,
         numShards,
@@ -92,6 +74,23 @@ public class AvroBucketMetadata<K, V extends GenericRecord> extends BucketMetada
             keyField,
             keyClass,
             new ReflectData(recordClass.getClassLoader()).getSchema(recordClass)));
+  }
+
+  public AvroBucketMetadata(
+      int numBuckets,
+      int numShards,
+      Class<K> keyClass,
+      BucketMetadata.HashType hashType,
+      String keyField,
+      Schema schema)
+      throws CannotProvideCoderException, NonDeterministicException {
+    this(
+        BucketMetadata.CURRENT_VERSION,
+        numBuckets,
+        numShards,
+        keyClass,
+        hashType,
+        validateKeyField(keyField, keyClass, schema));
   }
 
   @JsonCreator

@@ -292,7 +292,7 @@ public class AvroSortedBucketIO {
     BucketMetadata<K, T> getBucketMetadata() {
       try {
         return getRecordClass() == null
-            ? AvroBucketMetadata.of(
+            ? new AvroBucketMetadata<>(
                 getNumBuckets(),
                 getNumShards(),
                 getKeyClass(),
@@ -300,7 +300,7 @@ public class AvroSortedBucketIO {
                 getKeyField(),
                 getSchema())
             : (AvroBucketMetadata<K, T>)
-                AvroBucketMetadata.of(
+                new AvroBucketMetadata<>(
                     getNumBuckets(),
                     getNumShards(),
                     getKeyClass(),
