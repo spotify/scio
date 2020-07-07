@@ -108,6 +108,19 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
     self.read(AvroTyped.AvroIO[T](path))
 
   /**
+   * Get a typed SCollection from an Avro schema.
+   *
+   * Note that `T` must be annotated with
+   * [[com.spotify.scio.avro.types.AvroType AvroType.fromSchema]],
+   * [[com.spotify.scio.avro.types.AvroType AvroType.fromPath]], or
+   * [[com.spotify.scio.avro.types.AvroType AvroType.toSchema]].
+   */
+  def typedAvroFiles[T <: HasAvroAnnotation: ClassTag: TypeTag: Coder](
+    paths: Iterable[String]
+  ): SCollection[T] =
+    self.read(AvroTyped.AvroReadFilesIO[T](paths))
+
+  /**
    * Get an SCollection for a Protobuf file.
    *
    * Protobuf messages are serialized into `Array[Byte]` and stored in Avro files to leverage

@@ -446,6 +446,42 @@ object AvroTyped {
         .map(avroT.fromGenericRecord)
     }
   }
+
+  final case class AvroReadFilesIO[T <: HasAvroAnnotation: ClassTag: TypeTag: Coder](
+    paths: Iterable[String]
+  ) extends ScioIO[T] {
+    override type ReadP = Unit
+    override type WriteP = Nothing
+    final override val tapT = TapOf[T]
+
+    /**
+     * Get a typed SCollection from an Avro schema. Supports reading multiple files/file-patterns at once.
+     *
+     * Note that `T` must be annotated with
+     * [[com.spotify.scio.avro.types.AvroType AvroType.fromSchema]],
+     * [[com.spotify.scio.avro.types.AvroType AvroType.fromPath]], or
+     * [[com.spotify.scio.avro.types.AvroType AvroType.toSchema]].
+     */
+    override protected def read(sc: ScioContext, params: ReadP): SCollection[T] = {
+      val avroT = AvroType[T]
+      sc.wrap(
+        sc.applyInternal(
+          Create.of(paths.asJava)
+        ).apply(beam.FileIO.matchAll())
+          .apply(beam.FileIO.readMatches())
+          .apply(beam.AvroIO.readFilesGenericRecords(avroT.schema))
+      ).map(avroT.fromGenericRecord)
+    }
+
+    override protected def write(data: SCollection[T], params: WriteP): Tap[T] =
+      throw new UnsupportedOperationException(s"${getClass.getName} is read only")
+
+    override def tap(read: ReadP): Tap[T] = {
+      val avroT = AvroType[T]
+      GenericRecordReadFilesTap(paths.map(p => ScioUtil.addPartSuffix(p)), avroT.schema)
+        .map(avroT.fromGenericRecord)
+    }
+  }
 }
 
 trait AvroReadFilesIO[T] extends ScioIO[T] {
