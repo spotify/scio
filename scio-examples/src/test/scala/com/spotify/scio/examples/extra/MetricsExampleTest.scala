@@ -23,7 +23,7 @@ import com.spotify.scio.testing._
 class MetricsExampleTest extends PipelineSpec {
   "MetricsExample" should "work" in {
     JobTest[com.spotify.scio.examples.extra.MetricsExample.type]
-    // static metrics
+      // static metrics
       .counter(MetricsExample.sum)(x => x shouldBe (1 to 100).sum)
       .counter(MetricsExample.sum2)(x => x shouldBe (1 to 100).sum + (1 to 50).sum)
       .counter(MetricsExample.count)(x => x shouldBe 100)

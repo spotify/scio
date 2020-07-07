@@ -49,7 +49,7 @@ object TopWikipediaSessions {
     samplingThreshold: Double
   ): SCollection[String] =
     input
-    // Extract fields from `TableRow` JSON
+      // Extract fields from `TableRow` JSON
       .flatMap { row =>
         val username = row.getString("contributor_username")
         val timestamp = row.getLong("timestamp")

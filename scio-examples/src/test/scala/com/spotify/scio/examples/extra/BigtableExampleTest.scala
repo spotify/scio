@@ -41,12 +41,11 @@ class BigtableExampleTest extends PipelineSpec {
     JobTest[com.spotify.scio.examples.extra.BigtableWriteExample.type]
       .args(bigtableOptions :+ "--input=in.txt": _*)
       .input(TextIO("in.txt"), textIn)
-      // format: off
-      .output(BigtableIO[(ByteString, Iterable[Mutation])](
-        "my-project", "my-instance", "my-table")) {
+      .output(
+        BigtableIO[(ByteString, Iterable[Mutation])]("my-project", "my-instance", "my-table")
+      ) {
         _ should containInAnyOrder(expectedMutations)
       }
-      // format: on
       .run()
   }
 

@@ -67,7 +67,7 @@ object JoinExamples {
       sc.bigQueryTable(Table.Spec(ExampleData.COUNTRY_TABLE)).map(extractCountryInfo)
 
     eventsInfo
-    // Left outer join to produce `SCollection[(String, (String, Option[String]))]
+      // Left outer join to produce `SCollection[(String, (String, Option[String]))]
       .leftOuterJoin(countryInfo)
       .map { t =>
         val (countryCode, (eventInfo, countryNameOpt)) = t
@@ -98,7 +98,7 @@ object SideInputJoinExamples {
       .asMapSideInput
 
     eventsInfo
-    // Replicate right hand side to all workers as a side input
+      // Replicate right hand side to all workers as a side input
       .withSideInputs(countryInfo)
       // Specialized version of `map` with access to side inputs via `SideInputContext`
       .map { (kv, side) =>
@@ -131,7 +131,7 @@ object HashJoinExamples {
       sc.bigQueryTable(Table.Spec(ExampleData.COUNTRY_TABLE)).map(extractCountryInfo)
 
     eventsInfo
-    // Hash join uses side input under the hood and is a drop-in replacement for regular join
+      // Hash join uses side input under the hood and is a drop-in replacement for regular join
       .hashLeftOuterJoin(countryInfo)
       .map { t =>
         val (countryCode, (eventInfo, countryNameOpt)) = t

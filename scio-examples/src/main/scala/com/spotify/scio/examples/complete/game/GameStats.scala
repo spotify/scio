@@ -86,7 +86,7 @@ object GameStats {
     val spammyUsers = calculateSpammyUsers(userScores).asMapSideInput
 
     rawEvents
-    // Window over a fixed length of time
+      // Window over a fixed length of time
       .withFixedWindows(Duration.standardMinutes(fixedWindowDuration))
       // Convert to `SCollectionWithSideInput` to use side input at same time as `SCollection` entry
       .withSideInputs(spammyUsers)
@@ -113,7 +113,7 @@ object GameStats {
       .saveAsTypedBigQueryTable(Table.Spec(args("output") + "_team"))
 
     userEvents
-    // Window over a variable length of time - sessions end after sessionGap minutes no activity
+      // Window over a variable length of time - sessions end after sessionGap minutes no activity
       .withSessionWindows(
         Duration.standardMinutes(sessionGap),
         options = WindowOptions(timestampCombiner = TimestampCombiner.END_OF_WINDOW)
@@ -154,8 +154,8 @@ object GameStats {
     // Average of all user scores
     val globalMeanScore = sumScores.values.mean
     sumScores
-    // Cross product of global mean and user scores,
-    // effectively appending global mean to each (user, score) tuple.
+      // Cross product of global mean and user scores,
+      // effectively appending global mean to each (user, score) tuple.
       .cross(globalMeanScore)
       .filter {
         case ((_, score), gmc) =>

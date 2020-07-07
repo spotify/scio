@@ -91,7 +91,7 @@ package object avro {
      */
     def flatMap[U: ClassTag: Coder](f: T => TraversableOnce[U]): SCollection[U] =
       this
-      // HadoopInputFormatIO does not support custom coder, force SerializableCoder
+        // HadoopInputFormatIO does not support custom coder, force SerializableCoder
         .map(x => f(x).asInstanceOf[Serializable])
         .asInstanceOf[SCollection[TraversableOnce[U]]]
         .flatten

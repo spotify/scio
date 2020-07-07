@@ -72,8 +72,8 @@ object SideInOutExample {
     val threeLetter = SideOutput[(String, Long)]()
 
     val (fourOrMoreLetters, sideOutputs) = wordCount
-    // Begin side output operation. Any side outputs to be accessed in the following transforms
-    // must be specified.
+      // Begin side output operation. Any side outputs to be accessed in the following transforms
+      // must be specified.
       .withSideOutputs(oneLetter, twoLetter, threeLetter)
       // Specialized version of `map` with access to side outputs via `SideOutputContext`. Returns
       // a tuple 2 where the first element is the main output and the second element is a
