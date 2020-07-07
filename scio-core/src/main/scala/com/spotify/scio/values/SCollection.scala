@@ -192,7 +192,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   def applyKvTransform[K, V](
     transform: PTransform[_ >: PCollection[T], PCollection[KV[K, V]]]
   )(implicit koder: Coder[K], voder: Coder[V]): SCollection[KV[K, V]] =
-    applyTransform(tfName, transform)
+    applyKvTransform(tfName, transform)
 
   /**
    * Apply a [[org.apache.beam.sdk.transforms.PTransform PTransform]] and wrap the output in an
