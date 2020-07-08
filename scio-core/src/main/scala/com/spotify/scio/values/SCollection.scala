@@ -167,9 +167,21 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    */
   def applyTransform[U: Coder](
     transform: PTransform[_ >: PCollection[T], PCollection[U]]
+  ): SCollection[U] = applyTransform(tfName, transform)
+
+  /**
+   * Apply a [[org.apache.beam.sdk.transforms.PTransform PTransform]] and wrap the output in an
+   * [[SCollection]].
+   *
+   * @param name  default transform name
+   * @param transform [[org.apache.beam.sdk.transforms.PTransform PTransform]] to be applied
+   */
+  def applyTransform[U: Coder](
+    name: String,
+    transform: PTransform[_ >: PCollection[T], PCollection[U]]
   ): SCollection[U] = {
     val coder = CoderMaterializer.beam(context, Coder[U])
-    ensureSerializable(coder).fold(e => throw e, this.pApply(transform).setCoder)
+    ensureSerializable(coder).fold(throw _, pApply(name, transform).setCoder)
   }
 
   /**
@@ -179,9 +191,23 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    */
   def applyKvTransform[K, V](
     transform: PTransform[_ >: PCollection[T], PCollection[KV[K, V]]]
+  )(implicit koder: Coder[K], voder: Coder[V]): SCollection[KV[K, V]] =
+    applyKvTransform(tfName, transform)
+
+  /**
+   * Apply a [[org.apache.beam.sdk.transforms.PTransform PTransform]] and wrap the output in an
+   * [[SCollection]]. This is a special case of [[applyTransform]] for transforms with [[KV]]
+   * output.
+   *
+   * @param name  default transform name
+   * @param transform [[org.apache.beam.sdk.transforms.PTransform PTransform]] to be applied
+   */
+  def applyKvTransform[K, V](
+    name: String,
+    transform: PTransform[_ >: PCollection[T], PCollection[KV[K, V]]]
   )(implicit koder: Coder[K], voder: Coder[V]): SCollection[KV[K, V]] = {
     val bcoder = CoderMaterializer.kvCoder[K, V](context)
-    ensureSerializable(bcoder).fold(e => throw e, this.pApply(transform).setCoder)
+    ensureSerializable(bcoder).fold(throw _, pApply(name, transform).setCoder)
   }
 
   /** Apply a transform. */
