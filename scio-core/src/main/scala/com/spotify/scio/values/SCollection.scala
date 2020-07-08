@@ -33,7 +33,7 @@ import com.twitter.algebird.{Aggregator, Monoid, MonoidAggregator, Semigroup}
 import org.apache.avro.file.CodecFactory
 import org.apache.beam.sdk.coders.{Coder => BCoder}
 import org.apache.beam.sdk.schemas.SchemaCoder
-import org.apache.beam.sdk.io.{Compression, FileBasedSink}
+import org.apache.beam.sdk.io.Compression
 import org.apache.beam.sdk.io.FileIO.ReadMatches.DirectoryTreatment
 import org.apache.beam.sdk.io.FileIO.Write.FileNaming
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
@@ -1406,7 +1406,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       .to(ScioUtil.pathWithShards(path))
       .withSuffix(suffix)
       .withNumShards(numShards)
-      .withWritableByteChannelFactory(FileBasedSink.CompressionType.fromCanonical(compression))
+      .withCompression(compression)
 
   /**
    * Save this SCollection as a Datastore dataset. Note that elements must be of type `Entity`.
