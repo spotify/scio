@@ -155,7 +155,7 @@ final case class SpecificRecordIO[T <: SpecificRecord: ClassTag: Coder](path: St
   override protected def read(sc: ScioContext, params: ReadP): SCollection[T] = {
     val cls = ScioUtil.classOf[T]
     val t = beam.AvroIO.read(cls).from(path)
-    sc.wrap(sc.applyInternal(t))
+    sc.applyTransform(t)
   }
 
   /**
@@ -189,7 +189,7 @@ final case class GenericRecordIO(path: String, schema: Schema) extends AvroIO[Ge
     val t = beam.AvroIO
       .readGenericRecords(schema)
       .from(path)
-    sc.wrap(sc.applyInternal(t))
+    sc.applyTransform(t)
   }
 
   /** Save this SCollection [[org.apache.avro.generic.GenericRecord GenericRecord]] as a Avro file. */
@@ -234,7 +234,7 @@ final case class GenericRecordParseIO[T](path: String, parseFn: GenericRecord =>
       .from(path)
       .withCoder(CoderMaterializer.beam(sc, coder))
 
-    sc.wrap(sc.applyInternal(t))
+    sc.applyTransform(t)
   }
 
   /** Writes are undefined for [[GenericRecordParseIO]] since it is used only for reading. */
@@ -301,7 +301,7 @@ object AvroTyped {
     override protected def read(sc: ScioContext, params: ReadP): SCollection[T] = {
       val avroT = AvroType[T]
       val t = beam.AvroIO.readGenericRecords(avroT.schema).from(path)
-      sc.wrap(sc.applyInternal(t)).map(avroT.fromGenericRecord)
+      sc.applyTransform(t).map(avroT.fromGenericRecord)
     }
 
     /**

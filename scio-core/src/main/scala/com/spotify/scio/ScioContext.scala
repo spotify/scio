@@ -718,6 +718,23 @@ class ScioContext private[scio] (
   ): Output =
     applyInternal(Option(name), root)
 
+  private[scio] def applyTransform[U](
+    name: Option[String],
+    root: PTransform[_ >: PBegin, PCollection[U]]
+  ): SCollection[U] =
+    wrap(applyInternal(name, root))
+
+  private[scio] def applyTransform[U](
+    root: PTransform[_ >: PBegin, PCollection[U]]
+  ): SCollection[U] =
+    applyTransform(None, root)
+
+  private[scio] def applyTransform[U](
+    name: String,
+    root: PTransform[_ >: PBegin, PCollection[U]]
+  ): SCollection[U] =
+    applyTransform(Option(name), root)
+
   /**
    * Get an SCollection for a Datastore query.
    * @group input
@@ -811,7 +828,7 @@ class ScioContext private[scio] (
       if (this.isTest) {
         TestDataManager.getInput(testId.get)(CustomIO[T](name)).toSCollection(this)
       } else {
-        wrap(this.pipeline.apply(name, transform))
+        applyTransform(name, transform)
       }
     }
 
@@ -855,13 +872,7 @@ class ScioContext private[scio] (
   def parallelize[T: Coder](elems: Iterable[T]): SCollection[T] =
     requireNotClosed {
       val coder = CoderMaterializer.beam(this, Coder[T])
-      wrap(
-        this.applyInternal(
-          Create
-            .of(elems.asJava)
-            .withCoder(coder)
-        )
-      )
+      this.applyTransform(Create.of(elems.asJava).withCoder(coder))
     }
 
   /**
@@ -873,7 +884,8 @@ class ScioContext private[scio] (
   )(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, V)] =
     requireNotClosed {
       val kvc = CoderMaterializer.kvCoder[K, V](this)
-      wrap(this.applyInternal(Create.of(elems.asJava).withCoder(kvc)))
+      this
+        .applyTransform(Create.of(elems.asJava).withCoder(kvc))
         .map(kv => (kv.getKey, kv.getValue))
     }
 
@@ -885,7 +897,7 @@ class ScioContext private[scio] (
     requireNotClosed {
       val coder = CoderMaterializer.beam(this, Coder[T])
       val v = elems.map(t => TimestampedValue.of(t._1, t._2))
-      wrap(this.applyInternal(Create.timestamped(v.asJava).withCoder(coder)))
+      this.applyTransform(Create.timestamped(v.asJava).withCoder(coder))
     }
 
   /**
@@ -899,7 +911,7 @@ class ScioContext private[scio] (
     requireNotClosed {
       val coder = CoderMaterializer.beam(this, Coder[T])
       val v = elems.zip(timestamps).map(t => TimestampedValue.of(t._1, t._2))
-      wrap(this.applyInternal(Create.timestamped(v.asJava).withCoder(coder)))
+      this.applyTransform(Create.timestamped(v.asJava).withCoder(coder))
     }
 
   // =======================================================================

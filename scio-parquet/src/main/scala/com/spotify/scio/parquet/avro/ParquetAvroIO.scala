@@ -69,7 +69,7 @@ final case class ParquetAvroIO[T: ClassTag: Coder](path: String) extends ScioIO[
     sc.pipeline.getCoderRegistry.registerCoderForClass(ScioUtil.classOf[T], coder)
 
     val source = params.read.withConfiguration(job.getConfiguration)
-    sc.wrap(sc.applyInternal(source)).map(_.getValue)
+    sc.applyTransform(source).map(_.getValue)
   }
 
   override protected def write(data: SCollection[T], params: WriteP): Tap[T] = {

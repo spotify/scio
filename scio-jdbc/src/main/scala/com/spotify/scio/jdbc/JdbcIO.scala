@@ -91,7 +91,7 @@ final case class JdbcSelect[T: Coder](readOptions: JdbcReadOptions[T]) extends J
       // override default fetch size.
       transform = transform.withFetchSize(readOptions.fetchSize)
     }
-    sc.wrap(sc.applyInternal(transform))
+    sc.applyTransform(transform)
   }
 
   override protected def write(data: SCollection[T], params: WriteP): Tap[Nothing] =

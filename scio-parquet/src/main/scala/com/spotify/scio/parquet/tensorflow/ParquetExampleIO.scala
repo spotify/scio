@@ -75,7 +75,7 @@ final case class ParquetExampleIO(path: String) extends ScioIO[Example] {
         override def apply(input: Void): JBoolean = true
       })
       .withConfiguration(job.getConfiguration)
-    sc.wrap(sc.applyInternal(source)).map(_.getValue)
+    sc.applyTransform(source).map(_.getValue)
   }
 
   override protected def write(data: SCollection[Example], params: WriteP): Tap[Example] = {

@@ -70,7 +70,7 @@ final case class BigtableRead(bigtableOptions: BigtableOptions, tableId: String)
     if (params.rowFilter != null) {
       read = read.withRowFilter(params.rowFilter)
     }
-    sc.wrap(sc.applyInternal(read))
+    sc.applyTransform(read)
   }
 
   override protected def write(data: SCollection[Row], params: WriteP): Tap[Nothing] =
