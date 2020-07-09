@@ -1,1 +1,0 @@
-scio-test/src/it/scala/com/spotify/scio/benchmarks/ScioBatchBenchmark.scala
