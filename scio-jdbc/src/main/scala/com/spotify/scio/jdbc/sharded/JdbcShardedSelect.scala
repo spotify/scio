@@ -38,7 +38,7 @@ final case class JdbcShardedSelect[T: Coder, S](
       new JdbcShardedSource(readOptions, CoderMaterializer.beam(sc, Coder[T]))
     )
 
-    sc.wrap(sc.applyInternal(transform))
+    sc.applyTransform(transform)
   }
 
   override protected def write(data: SCollection[T], params: WriteP): Tap[Nothing] =

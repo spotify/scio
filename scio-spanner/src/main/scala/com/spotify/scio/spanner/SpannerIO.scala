@@ -58,7 +58,7 @@ final case class SpannerRead(config: SpannerConfig) extends SpannerIO[Struct] {
   override type ReadP = ReadParam
   override type WriteP = Nothing
 
-  override protected def read(sc: ScioContext, params: ReadP): SCollection[Struct] = sc.wrap {
+  override protected def read(sc: ScioContext, params: ReadP): SCollection[Struct] = {
     var transform = BSpannerIO
       .read()
       .withSpannerConfig(config)
@@ -74,7 +74,7 @@ final case class SpannerRead(config: SpannerConfig) extends SpannerIO[Struct] {
       transform = transform.withTransaction(sc.applyInternal(txn))
     }
 
-    sc.applyInternal(transform)
+    sc.applyTransform(transform)
   }
 
   override protected def write(data: SCollection[Struct], params: WriteP): Tap[Nothing] =

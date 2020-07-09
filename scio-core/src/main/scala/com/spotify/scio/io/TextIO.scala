@@ -40,13 +40,11 @@ final case class TextIO(path: String) extends ScioIO[String] {
   final override val tapT = TapOf[String]
 
   override protected def read(sc: ScioContext, params: ReadP): SCollection[String] =
-    sc.wrap(
-      sc.applyInternal(
-        BTextIO
-          .read()
-          .from(path)
-          .withCompression(params.compression)
-      )
+    sc.applyTransform(
+      BTextIO
+        .read()
+        .from(path)
+        .withCompression(params.compression)
     )
 
   override protected def write(data: SCollection[String], params: WriteP): Tap[String] = {

@@ -29,15 +29,13 @@ final case class DatastoreIO(projectId: String) extends ScioIO[Entity] {
   override val tapT = EmptyTapOf[Entity]
 
   override protected def read(sc: ScioContext, params: ReadP): SCollection[Entity] =
-    sc.wrap(
-      sc.applyInternal(
-        beam.DatastoreIO
-          .v1()
-          .read()
-          .withProjectId(projectId)
-          .withNamespace(params.namespace)
-          .withQuery(params.query)
-      )
+    sc.applyTransform(
+      beam.DatastoreIO
+        .v1()
+        .read()
+        .withProjectId(projectId)
+        .withNamespace(params.namespace)
+        .withQuery(params.query)
     )
 
   override protected def write(data: SCollection[Entity], params: WriteP): Tap[Nothing] = {

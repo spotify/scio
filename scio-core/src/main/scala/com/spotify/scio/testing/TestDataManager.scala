@@ -43,7 +43,7 @@ final private[scio] case class TestStreamInputSource[T](
   )
 
   override def toSCollection(sc: ScioContext)(implicit coder: Coder[T]): SCollection[T] =
-    sc.wrap(sc.applyInternal(stream))
+    sc.applyTransform(stream)
 
   override def toString: String = s"TestStream(${stream.getEvents})"
 }

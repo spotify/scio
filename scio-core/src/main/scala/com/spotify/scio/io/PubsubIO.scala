@@ -203,7 +203,7 @@ final private case class StringPubsubIOWithoutAttributes(
 ) extends PubsubIOWithoutAttributes[String] {
   override protected def read(sc: ScioContext, params: ReadP): SCollection[String] = {
     val t = setup(beam.PubsubIO.readStrings(), params)
-    sc.wrap(sc.applyInternal(t))
+    sc.applyTransform(t)
   }
 
   override protected def write(data: SCollection[String], params: WriteP): Tap[Nothing] = {
@@ -222,7 +222,7 @@ final private case class AvroPubsubIOWithoutAttributes[T <: SpecificRecordBase: 
 
   override protected def read(sc: ScioContext, params: ReadP): SCollection[T] = {
     val t = setup(beam.PubsubIO.readAvros(cls), params)
-    sc.wrap(sc.applyInternal(t))
+    sc.applyTransform(t)
   }
 
   override protected def write(data: SCollection[T], params: WriteP): Tap[Nothing] = {
@@ -241,7 +241,7 @@ final private case class MessagePubsubIOWithoutAttributes[T <: Message: ClassTag
 
   override protected def read(sc: ScioContext, params: ReadP): SCollection[T] = {
     val t = setup(beam.PubsubIO.readProtos(cls), params)
-    sc.wrap(sc.applyInternal(t))
+    sc.applyTransform(t)
   }
 
   override protected def write(data: SCollection[T], params: WriteP): Tap[Nothing] = {
@@ -258,7 +258,7 @@ final private case class PubSubMessagePubsubIOWithoutAttributes[T <: beam.Pubsub
 ) extends PubsubIOWithoutAttributes[T] {
   override protected def read(sc: ScioContext, params: ReadP): SCollection[T] = {
     val t = setup(beam.PubsubIO.readMessages(), params)
-    sc.wrap(sc.applyInternal(t)).contravary[T]
+    sc.applyTransform(t).contravary[T]
   }
 
   override protected def write(data: SCollection[T], params: WriteP): Tap[Nothing] = {
@@ -283,7 +283,7 @@ final private case class FallbackPubsubIOWithoutAttributes[T: Coder](
       params
     )
 
-    sc.wrap(sc.applyInternal(t))
+    sc.applyTransform(t)
   }
 
   override protected def write(data: SCollection[T], params: WriteP): Tap[Nothing] = {
@@ -318,7 +318,7 @@ final private case class PubsubIOWithAttributes[T: ClassTag: Coder](
     r = PubsubIO.setAttrs(r)(idAttribute, timestampAttribute)
 
     val coder = CoderMaterializer.beam(sc, Coder[T])
-    sc.wrap(sc.applyInternal(r))
+    sc.applyTransform(r)
       .map { m =>
         val payload = CoderUtils.decodeFromByteArray(coder, m.getPayload)
         val attributes = JMapWrapper.of(m.getAttributeMap)

@@ -112,13 +112,11 @@ final case class TFSequenceExampleIO(path: String) extends ScioIO[SequenceExampl
 
 private object TFRecordMethods {
   def read(sc: ScioContext, path: String, params: TFRecordIO.ReadParam): SCollection[Array[Byte]] =
-    sc.wrap(
-      sc.applyInternal(
-        beam.TFRecordIO
-          .read()
-          .from(path)
-          .withCompression(params.compression)
-      )
+    sc.applyTransform(
+      beam.TFRecordIO
+        .read()
+        .from(path)
+        .withCompression(params.compression)
     )
 
   def write(data: SCollection[Array[Byte]], path: String, params: TFRecordIO.WriteParam): Unit = {

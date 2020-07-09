@@ -63,7 +63,7 @@ private object Reads {
     typedRead: beam.BigQueryIO.TypedRead[T],
     sqlQuery: String,
     flattenResults: Boolean = false
-  ): SCollection[T] = sc.wrap {
+  ): SCollection[T] = {
     val bigQueryClient = client(sc)
     if (bigQueryClient.isCacheEnabled) {
       val read = bigQueryClient.query
@@ -73,7 +73,7 @@ private object Reads {
           typedRead.from(job.table).withoutValidation()
         }
 
-      sc.applyInternal(read.get)
+      sc.applyTransform(read.get)
     } else {
       val baseQuery = if (!flattenResults) {
         typedRead.fromQuery(sqlQuery).withoutResultFlattening()
@@ -85,7 +85,7 @@ private object Reads {
       } else {
         baseQuery.usingStandardSql()
       }
-      sc.applyInternal(query)
+      sc.applyTransform(query)
     }
   }
 
@@ -94,7 +94,7 @@ private object Reads {
     table: Table,
     selectedFields: List[String] = BigQueryStorage.ReadParam.DefaultSelectFields,
     rowRestriction: Option[String] = BigQueryStorage.ReadParam.DefaultRowRestriction
-  ): SCollection[T] = sc.wrap {
+  ): SCollection[T] = {
     var read = typedRead
       .from(table.spec)
       .withMethod(Method.DIRECT_READ)
@@ -102,7 +102,7 @@ private object Reads {
 
     read = rowRestriction.fold(read)(read.withRowRestriction)
 
-    sc.applyInternal(read)
+    sc.applyTransform(read)
   }
 }
 
@@ -279,7 +279,7 @@ final case class BigQueryTypedTable[T: Coder](
 
   override protected def read(sc: ScioContext, params: ReadP): SCollection[T] = {
     val io = reader.from(table.ref).withCoder(CoderMaterializer.beam(sc, Coder[T]))
-    sc.wrap(sc.applyInternal(s"Read BQ table ${table.spec}", io))
+    sc.applyTransform(s"Read BQ table ${table.spec}", io)
   }
 
   override protected def write(data: SCollection[T], params: WriteP): Tap[T] = {
@@ -418,7 +418,7 @@ final case class TableRowJsonIO(path: String) extends ScioIO[TableRow] {
   final override val tapT = TapOf[TableRow]
 
   override protected def read(sc: ScioContext, params: ReadP): SCollection[TableRow] =
-    sc.wrap(sc.applyInternal(TextIO.read().from(path)))
+    sc.applyTransform(TextIO.read().from(path))
       .map(e => ScioUtil.jsonFactory.fromString(e, classOf[TableRow]))
 
   override protected def write(data: SCollection[TableRow], params: WriteP): Tap[TableRow] = {
