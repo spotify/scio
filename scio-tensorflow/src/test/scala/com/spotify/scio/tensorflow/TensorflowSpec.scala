@@ -31,7 +31,6 @@ import org.tensorflow._
 import org.tensorflow.example.Example
 import scala.io.Source
 
-//scalastyle:off line.size.limit
 private[tensorflow] object TFSavedSpec {
   case class Iris(
     sepalLength: Option[Double],
@@ -362,4 +361,3 @@ class TensorflowSpec extends PipelineSpec {
       .run()
   }
 }
-//scalastyle:one line.size.limit
