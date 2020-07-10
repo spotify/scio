@@ -201,7 +201,7 @@ import com.spotify.scio.bigquery.types.BigQueryTypeUser defined companion object
 
 ## BigQuery reads using `Schema`
 Classes generated from `@BigQueryType` annotations extend the @scaladoc[HasAnnotation](com.spotify.scio.bigquery.types.BigQueryType$$HasAnnotation) trait, and most of Scio's @scaladoc[user-facing BigQuery APIs](com.spotify.scio.bigquery.syntax.ScioContextOps) expect a
-parameterized type `T <: HasAnnotation`. However, Scio also offers a typed BigQuery read API that accepts any type `T` with an explicit @github[Schema](/scio-core/src/main/scala/com/spotify/scio/schemas/Schema.scala) instance in scope:
+parameterized type `T <: HasAnnotation`. However, Scio also offers a typed BigQuery read API that accepts any type `T` with an implicit @github[Schema](/scio-core/src/main/scala/com/spotify/scio/schemas/Schema.scala) instance in scope:
 
 ```scala
 def typedBigQueryTable[T: Schema: Coder: ClassTag](table: Table): SCollection[T]
