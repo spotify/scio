@@ -199,6 +199,32 @@ In addition, `BigQueryType.fromTable` and `BigQueryTable.fromQuery` generate `ta
 
 import com.spotify.scio.bigquery.types.BigQueryTypeUser defined companion objects may interfere with macro code generation so for now do not provide one to a case class annotated with `@BigQueryType.toTable`, i.e. `object Row`.
 
+## BigQuery reads using `Schema`
+Classes generated from `@BigQueryType` annotations extend the @scaladoc[HasAnnotation](com.spotify.scio.bigquery.types.BigQueryType$$HasAnnotation) trait, and most of Scio's @scaladoc[user-facing BigQuery APIs](com.spotify.scio.bigquery.syntax.ScioContextOps) expect a
+parameterized type `T <: HasAnnotation`. However, Scio also offers a typed BigQuery read API that accepts any type `T` with an explicit @github[Schema](/scio-core/src/main/scala/com/spotify/scio/schemas/Schema.scala) instance in scope:
+
+```scala
+def typedBigQueryTable[T: Schema: Coder: ClassTag](table: Table): SCollection[T]
+```
+
+A `Schema` will be implicitly derived at compile time (similar to @ref[Coder](../internals/Coders.md)s) for case classes and certain traits like Lists, Maps, and Options.
+
+
+```scala mdoc:reset
+import com.spotify.scio.bigquery._
+import com.spotify.scio.ContextAndArgs
+
+case class Shakespeare(word: String, word_count: Long, corpus: String, corpus_date: Long)
+
+def main(cmdlineArgs: Array[String]): Unit = {
+  val (sc, args) = ContextAndArgs(cmdlineArgs)
+  sc
+    .typedBigQueryTable[Shakespeare](Table.Spec("bigquery-public-data:samples.shakespeare"))
+}
+```
+
+For more information on Schema materialization, see the @ref:[V0.8.0 Migration Guide](../migrations/v0.8.0-Migration-Guide.md).
+
 ## Using type safe BigQuery
 
 ### Type safe BigQuery with Scio
