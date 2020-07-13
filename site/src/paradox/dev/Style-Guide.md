@@ -2,9 +2,9 @@
 
 ## General Guidelines
 
-### Scalafmt
+### Code formatters
 
-We use [scalafmt](https://scalameta.org/scalafmt) to format code automatically and keep the code style consistent.
+We use [scalafmt](https://scalameta.org/scalafmt) and [sbt-java-formatter](https://github.com/sbt/sbt-java-formatter) to format code automatically and keep the code style consistent.
 
 #### `Sbt` plugin
 
@@ -37,20 +37,6 @@ We also want to avoid custom settings as much as possible to make on-boarding ne
   specific language governing permissions and limitations
   under the License.
 ```
-
-### ScalaStyle
-
-We use `ScalaStyle` to cover other rules that we don't cover with `scalafmt` and the entire code base should pass.
-In case of exceptions, on way of temporarily suppress the warnings is to wrap the violating code with a pair of comments:
-
-```scala
-// scalastyle:off regex
-println("hello")
-// scalastyle:on regex
-```
-
-Check `ScalaStyle` [configuration](http://www.scalastyle.org/configuration.html) doc for other ways of using comment filters.
-
 
 ### Scalafix
 
