@@ -65,7 +65,12 @@ public class AvroBucketMetadataTest {
           false,
           Lists.newArrayList(
               new Schema.Field("id", Schema.create(Schema.Type.LONG), "", 0L),
-              new Schema.Field("location", LOCATION_SCHEMA, "", Collections.emptyList())));
+              new Schema.Field("location", LOCATION_SCHEMA, "", Collections.emptyList()),
+              new Schema.Field(
+                  "suffix",
+                  Schema.createEnum("Suffix", "", "", Lists.newArrayList("Jr", "Sr", "None")),
+                  "",
+                  "None")));
 
   @Test
   public void testGenericRecord() throws Exception {
@@ -77,7 +82,11 @@ public class AvroBucketMetadataTest {
             .build();
 
     final GenericRecord user =
-        new GenericRecordBuilder(RECORD_SCHEMA).set("id", 10L).set("location", location).build();
+        new GenericRecordBuilder(RECORD_SCHEMA)
+            .set("id", 10L)
+            .set("location", location)
+            .set("suffix", "Jr")
+            .build();
 
     Assert.assertEquals(
         (Long) 10L,
@@ -88,6 +97,11 @@ public class AvroBucketMetadataTest {
         countryIdAsBytes,
         new AvroBucketMetadata<>(
                 1, 1, ByteBuffer.class, HashType.MURMUR3_32, "location.countryId", RECORD_SCHEMA)
+            .extractKey(user));
+
+    Assert.assertEquals(
+        "Jr",
+        new AvroBucketMetadata<>(1, 1, String.class, HashType.MURMUR3_32, "suffix", RECORD_SCHEMA)
             .extractKey(user));
 
     /*
@@ -196,25 +210,6 @@ public class AvroBucketMetadataTest {
         () ->
             new AvroBucketMetadata<>(
                 1, 1, String.class, HashType.MURMUR3_32, "location.countryId", RECORD_SCHEMA));
-  }
-
-  @Test
-  public void testKeyTypeCheckingEnum()
-      throws CannotProvideCoderException, NonDeterministicException {
-    final Schema enumSchema =
-        Schema.createRecord(
-            "enumSchema",
-            "",
-            "",
-            false,
-            Lists.newArrayList(
-                new Schema.Field(
-                    "enumField",
-                    Schema.createEnum("enumType", "", "", Lists.newArrayList("a", "b", "c")),
-                    "",
-                    "a")));
-
-    new AvroBucketMetadata<>(1, 1, String.class, HashType.MURMUR3_32, "enumField", enumSchema);
   }
 
   @Test
