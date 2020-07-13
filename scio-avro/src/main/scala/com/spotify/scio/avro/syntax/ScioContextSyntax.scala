@@ -43,12 +43,27 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
   def objectFile[T: Coder](path: String): SCollection[T] =
     self.read(ObjectFileIO[T](path))
 
+  /**
+   * Get an SCollection for an object file using default serialization.
+   *
+   * Serialized objects are stored in Avro files to leverage Avro's block file format. Note that
+   * serialization is not guaranteed to be compatible across Scio releases.
+   *
+   * Note: For better performance and scalability, input paths should match large number of files
+   * (i.e tens of thousands or more). If not use `SCollection.union(paths.map(sc.objectFile(_)))` instead.
+   * Calling this with a small number of matching files may decreased the performance.
+   */
   def objectFiles[T: Coder](paths: Iterable[String]): SCollection[T] =
     self.read(ObjectReadFilesIO[T](paths))
 
   def avroFile(path: String, schema: Schema): SCollection[GenericRecord] =
     self.read(GenericRecordIO(path, schema))(Coder.avroGenericRecordCoder(schema))
 
+  /**
+   * Note: For better performance and scalability, input paths should match large number of files
+   * (i.e tens of thousands or more). If not use `SCollection.union(paths.map(sc.avroFile(_)))` instead.
+   * Calling this with a small number of matching files may decreased the performance.
+   */
   def avroFiles(paths: Iterable[String], schema: Schema): SCollection[GenericRecord] =
     self.read(GenericRecordReadFilesIO(paths, schema))(Coder.avroGenericRecordCoder(schema))
 
@@ -90,6 +105,10 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
   /**
    * Get an SCollection of type [[org.apache.avro.specific.SpecificRecord SpecificRecord]]
    * for all Avro files/file-patterns.
+   *
+   * Note: For better performance and scalability, input paths should match large number of files
+   * (i.e tens of thousands or more). If not use `SCollection.union(paths.map(sc.avroFile(_)))` instead.
+   * Calling this with a small number of matching files may decreased the performance.
    */
   def avroFiles[T <: SpecificRecord: ClassTag: Coder](paths: Iterable[String]): SCollection[T] =
     self.read(SpecificRecordReadFilesIO[T](paths))
@@ -110,6 +129,10 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
   /**
    * Get a typed SCollection from an Avro schema.
    *
+   * Note: For better performance and scalability, input paths should match large number of files
+   * (i.e tens of thousands or more). If not use `SCollection.union(paths.map(sc.typedAvroFile(_)))` instead.
+   * Calling this with a small number of matching files may decreased the performance.
+   *
    * Note that `T` must be annotated with
    * [[com.spotify.scio.avro.types.AvroType AvroType.fromSchema]],
    * [[com.spotify.scio.avro.types.AvroType AvroType.fromPath]], or
@@ -129,6 +152,16 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
   def protobufFile[T <: Message: ClassTag: Coder](path: String): SCollection[T] =
     self.read(ProtobufIO[T](path))
 
+  /**
+   * Get an SCollection for all matching Protobuf files.
+   *
+   * Protobuf messages are serialized into `Array[Byte]` and stored in Avro files to leverage
+   * Avro's block file format.
+   *
+   * Note: For better performance and scalability, input paths should match large number of files
+   * (i.e tens of thousands or more). If not use `SCollection.union(paths.map(sc.protobufFile(_)))` instead.
+   * Calling this with a small number of matching files may decreased the performance.
+   */
   def protobufFiles[T <: Message: ClassTag: Coder](paths: Iterable[String]): SCollection[T] =
     self.read(ProtobufReadFilesIO[T](paths))
 }

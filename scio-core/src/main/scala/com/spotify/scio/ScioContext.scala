@@ -782,6 +782,13 @@ class ScioContext private[scio] (
   ): SCollection[String] =
     this.read(TextIO(path))(TextIO.ReadParam(compression))
 
+  /**
+   * Get an SCollection for a list of text files.
+   *
+   * Note: For better performance and scalability, input paths should match large number of files
+   * (i.e tens of thousands or more). If not use `SCollection.union(paths.map(sc.textFile(_)))` instead.
+   * Calling this with a small number of matching files may decreased the performance.
+   */
   def textFiles(
     paths: Iterable[String],
     compression: beam.Compression = beam.Compression.AUTO

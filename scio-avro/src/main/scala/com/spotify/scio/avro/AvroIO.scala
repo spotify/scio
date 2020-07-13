@@ -86,6 +86,7 @@ object ObjectFileIO {
   val WriteParam = AvroIO.WriteParam
 }
 
+/** Read multiple files/file-patterns with beam AvroIO readFiles API */
 final case class ObjectReadFilesIO[T: Coder](paths: Iterable[String]) extends AvroIO[T] {
   override type ReadP = Unit
   override type WriteP = Nothing
@@ -143,6 +144,7 @@ object ProtobufIO {
   val WriteParam = AvroIO.WriteParam
 }
 
+/** Read multiple files/file-patterns with beam AvroIO readFiles API */
 final case class ProtobufReadFilesIO[T <: Message: ClassTag](paths: Iterable[String])
     extends AvroIO[T] {
   override type ReadP = Unit
@@ -213,6 +215,7 @@ final case class SpecificRecordIO[T <: SpecificRecord: ClassTag: Coder](path: St
     SpecificRecordTap[T](ScioUtil.addPartSuffix(path))
 }
 
+/** Read multiple files/file-patterns with beam AvroIO readFiles API */
 final case class SpecificRecordReadFilesIO[T <: SpecificRecord: ClassTag: Coder](
   paths: Iterable[String]
 ) extends AvroIO[T] {
@@ -339,6 +342,15 @@ final case class GenericRecordParseIO[T](path: String, parseFn: GenericRecord =>
     GenericRecordParseTap[T](ScioUtil.addPartSuffix(path), parseFn)
 }
 
+/**
+ * Given a parseFn, read [[org.apache.avro.generic.GenericRecord GenericRecord]]
+ * and apply a function mapping [[GenericRecord => T]] before producing output.
+ * This IO applies the function at the time of de-serializing Avro GenericRecords.
+ *
+ * This IO doesn't define write, and should not be used to write Avro GenericRecords.
+ *
+ * This IO read multiple files/file-patterns with beam AvroIO readFiles API
+ */
 final case class GenericRecordParseFilesIO[T](paths: Iterable[String], parseFn: GenericRecord => T)(
   implicit coder: Coder[T]
 ) extends AvroIO[T] {
@@ -447,6 +459,7 @@ object AvroTyped {
     }
   }
 
+  /** Read multiple files/file-patterns with beam AvroIO readFiles API */
   final case class AvroReadFilesIO[T <: HasAvroAnnotation: ClassTag: TypeTag: Coder](
     paths: Iterable[String]
   ) extends ScioIO[T] {
@@ -488,8 +501,10 @@ trait AvroReadFilesIO[T] extends ScioIO[T] {
   final override val tapT = TapOf[T]
 }
 
+
 object AvroReadFilesIO {
 
+  /** TestIO implementation to use with JobTests. */
   @inline final def apply[T](paths: Iterable[String]): AvroReadFilesIO[T] =
     new AvroReadFilesIO[T] with TestIO[T] {
       override def testId: String = s"AvroReadFilesIO($paths)"
