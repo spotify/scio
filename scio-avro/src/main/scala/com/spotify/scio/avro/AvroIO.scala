@@ -501,7 +501,6 @@ trait AvroReadFilesIO[T] extends ScioIO[T] {
   final override val tapT = TapOf[T]
 }
 
-
 object AvroReadFilesIO {
 
   /** TestIO implementation to use with JobTests. */
