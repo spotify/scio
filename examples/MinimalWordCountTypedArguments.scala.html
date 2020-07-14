@@ -277,7 +277,7 @@ hr {
 <span class="keyword">import</span> <span class="identifier">caseapp</span>._
 <span class="keyword">import</span> <span class="identifier">com</span>.<span class="identifier">spotify</span>.<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/index.html" data-tooltip="<span>com.spotify.scio</span>">scio</a></span>._
 <span class="keyword">import</span> <span class="identifier">com</span>.<span class="identifier">spotify</span>.<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/index.html" data-tooltip="<span>com.spotify.scio</span>">scio</a></span>.<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/examples/index.html" data-tooltip="<span>com.spotify.scio.examples</span>">examples</a></span>.<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/examples/common/index.html" data-tooltip="<span>com.spotify.scio.examples.common</span>">common</a></span>.<span class="identifier">ExampleData</span>
-<span class="keyword">import</span> <span class="identifier">org</span>.<span class="identifier">apache</span>.<span class="identifier">beam</span>.<span class="identifier">sdk</span>.<span class="identifier">options</span>.{<span class="identifier">Default</span>, <span class="identifier">Description</span>, <span class="identifier">PipelineOptions</span>}
+<span class="keyword">import</span> <span class="identifier">org</span>.<span class="identifier">apache</span>.<span class="identifier">beam</span>.<span class="identifier">sdk</span>.<span class="identifier">options</span>.{<span class="identifier">Default</span>, <span class="identifier">PipelineOptions</span>}
 <span class="keyword">import</span> <span class="identifier">org</span>.<span class="identifier">apache</span>.<span class="identifier">beam</span>.<span class="identifier">sdk</span>.<span class="identifier">options</span>.<span class="identifier">Validation</span>.<span class="identifier">Required</span>
 &nbsp;</div>
               </section>
@@ -322,18 +322,18 @@ wildcard matching multiple files.</p></p></div>
             
               <section class="">
                 <div class="comment "><p>Split input lines, filter out empty tokens and expand into a collection of tokens</p></p></div>
-                <div class="code ">        _.<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#flatMap[U](f:T=>TraversableOnce[U])(implicitevidence$10:com.spotify.scio.coders.Coder[U])::com.spotify.scio.values.SCollection[U]" data-tooltip="<span>com.spotify.scio.values.SCollection.flatMap[U](f: T => TraversableOnce[U])(implicit evidence$10: com.spotify.scio.coders.Coder[U]): : com.spotify.scio.values.SCollection[U]</span>">flatMap</a></span>(_.<span class="identifier">split</span>(<span class="string">"[^a-zA-Z']+"</span>).<span class="identifier">filter</span>(_.<span class="identifier">nonEmpty</span>))&nbsp;</div>
+                <div class="code ">        _.<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#flatMap[U](f:T=>TraversableOnce[U])(implicitevidence$11:com.spotify.scio.coders.Coder[U])::com.spotify.scio.values.SCollection[U]" data-tooltip="<span>com.spotify.scio.values.SCollection.flatMap[U](f: T => TraversableOnce[U])(implicit evidence$11: com.spotify.scio.coders.Coder[U]): : com.spotify.scio.values.SCollection[U]</span>">flatMap</a></span>(_.<span class="identifier">split</span>(<span class="string">"[^a-zA-Z']+"</span>).<span class="identifier">filter</span>(_.<span class="identifier">nonEmpty</span>))&nbsp;</div>
               </section>
             
               <section class="">
                 <div class="comment "><p>Count occurrences of each unique <code>String</code> to get <code>(String, Long)</code></p></p></div>
-                <div class="code ">        .<span class="identifier">countByValue</span>
+                <div class="code ">          .<span class="identifier">countByValue</span>
       }&nbsp;</div>
               </section>
             
               <section class="">
                 <div class="comment "><p>Map <code>(String, Long)</code> tuples into strings</p></p></div>
-                <div class="code ">      .<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#map[U](f:T=>U)(implicitevidence$11:com.spotify.scio.coders.Coder[U])::com.spotify.scio.values.SCollection[U]" data-tooltip="<span>com.spotify.scio.values.SCollection.map[U](f: T => U)(implicit evidence$11: com.spotify.scio.coders.Coder[U]): : com.spotify.scio.values.SCollection[U]</span>">map</a></span>(<span class="identifier">t</span> => <span class="identifier">t</span>.<span class="identifier">_1</span> <span class="identifier">+</span> <span class="string">": "</span> <span class="identifier">+</span> <span class="identifier">t</span>.<span class="identifier">_2</span>)&nbsp;</div>
+                <div class="code ">      .<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#map[U](f:T=>U)(implicitevidence$12:com.spotify.scio.coders.Coder[U])::com.spotify.scio.values.SCollection[U]" data-tooltip="<span>com.spotify.scio.values.SCollection.map[U](f: T => U)(implicit evidence$12: com.spotify.scio.coders.Coder[U]): : com.spotify.scio.values.SCollection[U]</span>">map</a></span>(<span class="identifier">t</span> => <span class="identifier">t</span>.<span class="identifier">_1</span> <span class="identifier">+</span> <span class="string">": "</span> <span class="identifier">+</span> <span class="identifier">t</span>.<span class="identifier">_2</span>)&nbsp;</div>
               </section>
             
               <section class="">
@@ -391,18 +391,18 @@ wildcard matching multiple files.</p></p></div>
             
               <section class="">
                 <div class="comment "><p>Split input lines, filter out empty tokens and expand into a collection of tokens</p></p></div>
-                <div class="code ">        _.<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#flatMap[U](f:T=>TraversableOnce[U])(implicitevidence$10:com.spotify.scio.coders.Coder[U])::com.spotify.scio.values.SCollection[U]" data-tooltip="<span>com.spotify.scio.values.SCollection.flatMap[U](f: T => TraversableOnce[U])(implicit evidence$10: com.spotify.scio.coders.Coder[U]): : com.spotify.scio.values.SCollection[U]</span>">flatMap</a></span>(_.<span class="identifier">split</span>(<span class="string">"[^a-zA-Z']+"</span>).<span class="identifier">filter</span>(_.<span class="identifier">nonEmpty</span>))&nbsp;</div>
+                <div class="code ">        _.<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#flatMap[U](f:T=>TraversableOnce[U])(implicitevidence$11:com.spotify.scio.coders.Coder[U])::com.spotify.scio.values.SCollection[U]" data-tooltip="<span>com.spotify.scio.values.SCollection.flatMap[U](f: T => TraversableOnce[U])(implicit evidence$11: com.spotify.scio.coders.Coder[U]): : com.spotify.scio.values.SCollection[U]</span>">flatMap</a></span>(_.<span class="identifier">split</span>(<span class="string">"[^a-zA-Z']+"</span>).<span class="identifier">filter</span>(_.<span class="identifier">nonEmpty</span>))&nbsp;</div>
               </section>
             
               <section class="">
                 <div class="comment "><p>Count occurrences of each unique <code>String</code> to get <code>(String, Long)</code></p></p></div>
-                <div class="code ">        .<span class="identifier">countByValue</span>
+                <div class="code ">          .<span class="identifier">countByValue</span>
       }&nbsp;</div>
               </section>
             
               <section class="">
                 <div class="comment "><p>Map <code>(String, Long)</code> tuples into strings</p></p></div>
-                <div class="code ">      .<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#map[U](f:T=>U)(implicitevidence$11:com.spotify.scio.coders.Coder[U])::com.spotify.scio.values.SCollection[U]" data-tooltip="<span>com.spotify.scio.values.SCollection.map[U](f: T => U)(implicit evidence$11: com.spotify.scio.coders.Coder[U]): : com.spotify.scio.values.SCollection[U]</span>">map</a></span>(<span class="identifier">t</span> => <span class="identifier">t</span>.<span class="identifier">_1</span> <span class="identifier">+</span> <span class="string">": "</span> <span class="identifier">+</span> <span class="identifier">t</span>.<span class="identifier">_2</span>)&nbsp;</div>
+                <div class="code ">      .<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#map[U](f:T=>U)(implicitevidence$12:com.spotify.scio.coders.Coder[U])::com.spotify.scio.values.SCollection[U]" data-tooltip="<span>com.spotify.scio.values.SCollection.map[U](f: T => U)(implicit evidence$12: com.spotify.scio.coders.Coder[U]): : com.spotify.scio.values.SCollection[U]</span>">map</a></span>(<span class="identifier">t</span> => <span class="identifier">t</span>.<span class="identifier">_1</span> <span class="identifier">+</span> <span class="string">": "</span> <span class="identifier">+</span> <span class="identifier">t</span>.<span class="identifier">_2</span>)&nbsp;</div>
               </section>
             
               <section class="">

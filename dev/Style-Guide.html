@@ -200,7 +200,7 @@ spotify/scio
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.9.2
+<i class="md-icon" title="Version">label_outline</i> 0.9.3*
 </label>
 </li>
 </ul>
@@ -229,8 +229,8 @@ spotify/scio
 <div class="md-content__searchable">
 <h1><a href="#style-guide" name="style-guide" class="anchor"><span class="anchor-link"></span></a>Style Guide</h1>
 <h2><a href="#general-guidelines" name="general-guidelines" class="anchor"><span class="anchor-link"></span></a>General Guidelines</h2>
-<h3><a href="#scalafmt" name="scalafmt" class="anchor"><span class="anchor-link"></span></a>Scalafmt</h3>
-<p>We use <a href="https://scalameta.org/scalafmt">scalafmt</a> to format code automatically and keep the code style consistent.</p>
+<h3><a href="#code-formatters" name="code-formatters" class="anchor"><span class="anchor-link"></span></a>Code formatters</h3>
+<p>We use <a href="https://scalameta.org/scalafmt">scalafmt</a> and <a href="https://github.com/sbt/sbt-java-formatter">sbt-java-formatter</a> to format code automatically and keep the code style consistent.</p>
 <h4><a href="#sbt-plugin" name="sbt-plugin" class="anchor"><span class="anchor-link"></span></a><code>Sbt</code> plugin</h4>
 <p>Run the following command to format the entire codebase.</p>
 <p><code>sbt scalafmt test:scalafmt scalafmtSbt it:scalafmt</code></p>
@@ -256,13 +256,6 @@ spotify/scio
   specific language governing permissions and limitations
   under the License.
 </code></pre>
-<h3><a href="#scalastyle" name="scalastyle" class="anchor"><span class="anchor-link"></span></a>ScalaStyle</h3>
-<p>We use <code>ScalaStyle</code> to cover other rules that we don&rsquo;t cover with <code>scalafmt</code> and the entire code base should pass. In case of exceptions, on way of temporarily suppress the warnings is to wrap the violating code with a pair of comments:</p>
-<pre class="prettyprint"><code class="language-scala">// scalastyle:off regex
-println(&quot;hello&quot;)
-// scalastyle:on regex
-</code></pre>
-<p>Check <code>ScalaStyle</code> <a href="http://www.scalastyle.org/configuration.html">configuration</a> doc for other ways of using comment filters.</p>
 <h3><a href="#scalafix" name="scalafix" class="anchor"><span class="anchor-link"></span></a>Scalafix</h3>
 <p><a href="https://scalacenter.github.io/scalafix/">Scalafix</a> is a refactoring and linting tool that we rely on as well to keep our code tidy. Currently we use the following rules:</p>
 <pre><code>rules = [
@@ -409,7 +402,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.9.2
+0.9.3*
 </span>
 </div>
 </article>
