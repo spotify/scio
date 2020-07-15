@@ -19,7 +19,7 @@ executors:
       - image: circleci/openjdk:8-jdk
     environment:
       <<: *env
-      SCALA_VERSION: 2.12.11
+      SCALA_VERSION: 2.12.12
   scala_213: &scala_213
     <<: [*settings]
     docker:
@@ -44,7 +44,7 @@ executors:
       - image: circleci/golang:1.12.1-browsers
     environment:
       <<: *env
-      SCALA_VERSION: 2.12.11
+      SCALA_VERSION: 2.12.12
 
 setup_dependencies_key: &setup_dependencies_key
   run:
