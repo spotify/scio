@@ -26,6 +26,7 @@ import javax.annotation.Nullable;
 import org.apache.beam.sdk.coders.CannotProvideCoderException;
 import org.apache.beam.sdk.coders.Coder;
 import org.apache.beam.sdk.extensions.smb.SortedBucketSource.BucketedInput;
+import org.apache.beam.sdk.extensions.smb.SortedBucketTransform.NewBucketMetadataFn;
 import org.apache.beam.sdk.io.Compression;
 import org.apache.beam.sdk.io.FileSystems;
 import org.apache.beam.sdk.io.fs.ResourceId;
@@ -55,6 +56,17 @@ public class JsonSortedBucketIO {
         .setKeyClass(keyClass)
         .setKeyField(keyField)
         .setKeyCacheSize(0)
+        .setFilenameSuffix(DEFAULT_SUFFIX)
+        .setCompression(Compression.UNCOMPRESSED)
+        .build();
+  }
+
+  /** Returns a new {@link TransformOutput} for Avro generic records. */
+  public static <K> TransformOutput<K> transformOutput(Class<K> keyClass, String keyField) {
+    return new AutoValue_JsonSortedBucketIO_TransformOutput.Builder<K>()
+        .setFilenameSuffix(DEFAULT_SUFFIX)
+        .setKeyClass(keyClass)
+        .setKeyField(keyField)
         .setFilenameSuffix(DEFAULT_SUFFIX)
         .setCompression(Compression.UNCOMPRESSED)
         .build();
@@ -224,6 +236,86 @@ public class JsonSortedBucketIO {
       } catch (CannotProvideCoderException | Coder.NonDeterministicException e) {
         throw new IllegalStateException(e);
       }
+    }
+  }
+
+  /**
+   * Writes to BigQuery {@link TableRow} JSON sorted-bucket files using {@link
+   * SortedBucketTransform}.
+   */
+  @AutoValue
+  public abstract static class TransformOutput<K>
+      extends SortedBucketIO.TransformOutput<K, TableRow> {
+
+    // JSON specific
+    @Nullable
+    abstract String getKeyField();
+
+    abstract Compression getCompression();
+
+    abstract Builder<K> toBuilder();
+
+    @AutoValue.Builder
+    abstract static class Builder<K> {
+
+      // Common
+      abstract Builder<K> setKeyClass(Class<K> keyClass);
+
+      abstract Builder<K> setOutputDirectory(ResourceId outputDirectory);
+
+      abstract Builder<K> setTempDirectory(ResourceId tempDirectory);
+
+      abstract Builder<K> setFilenameSuffix(String filenameSuffix);
+
+      // JSON specific
+      abstract Builder<K> setKeyField(String keyField);
+
+      abstract Builder<K> setCompression(Compression compression);
+
+      abstract TransformOutput<K> build();
+    }
+
+    /** Writes to the given output directory. */
+    public TransformOutput<K> to(String outputDirectory) {
+      return toBuilder()
+          .setOutputDirectory(FileSystems.matchNewResource(outputDirectory, true))
+          .build();
+    }
+
+    /** Specifies the temporary directory for writing. */
+    public TransformOutput<K> withTempDirectory(String tempDirectory) {
+      return toBuilder()
+          .setTempDirectory(FileSystems.matchNewResource(tempDirectory, true))
+          .build();
+    }
+
+    /** Specifies the output filename suffix. */
+    public TransformOutput<K> withSuffix(String filenameSuffix) {
+      return toBuilder().setFilenameSuffix(filenameSuffix).build();
+    }
+
+    /** Specifies the output file {@link Compression}. */
+    public TransformOutput<K> withCompression(Compression compression) {
+      return toBuilder().setCompression(compression).build();
+    }
+
+    @Override
+    FileOperations<TableRow> getFileOperations() {
+      return JsonFileOperations.of(getCompression());
+    }
+
+    @Override
+    NewBucketMetadataFn<K, TableRow> getNewBucketMetadataFn() {
+      final String keyField = getKeyField();
+      final Class<K> keyClass = getKeyClass();
+
+      return (numBuckets, numShards, hashType) -> {
+        try {
+          return new JsonBucketMetadata<>(numBuckets, numShards, keyClass, hashType, keyField);
+        } catch (CannotProvideCoderException | Coder.NonDeterministicException e) {
+          throw new IllegalStateException(e);
+        }
+      };
     }
   }
 }

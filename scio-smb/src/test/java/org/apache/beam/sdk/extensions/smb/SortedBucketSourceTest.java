@@ -61,6 +61,7 @@ import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Lists;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Sets;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -310,25 +311,6 @@ public class SortedBucketSourceTest {
                 BucketShardId.of(1, 0), Lists.newArrayList("c7", "c8"))));
   }
 
-  // For non-minimal parallelism, test input keys *must* hash to their corresponding bucket IDs,
-  // since a rehash is required in the merge step
-  @Test
-  @Category(NeedsRunner.class)
-  public void testPartitionedInputsMixedBucketsMaxParallelism() throws Exception {
-    testPartitioned(
-        ImmutableList.of(
-            ImmutableMap.of(
-                BucketShardId.of(0, 0), Lists.newArrayList("w1", "w2"),
-                BucketShardId.of(1, 0), Lists.newArrayList("c1", "c2")),
-            ImmutableMap.of(BucketShardId.of(0, 0), Lists.newArrayList("w3", "w4"))),
-        ImmutableList.of(
-            ImmutableMap.of(BucketShardId.of(0, 0), Lists.newArrayList("w5", "w6")),
-            ImmutableMap.of(
-                BucketShardId.of(0, 0), Lists.newArrayList("w7", "w8"),
-                BucketShardId.of(1, 0), Lists.newArrayList("c7", "c8"))),
-        TargetParallelism.max());
-  }
-
   @Test
   @Category(NeedsRunner.class)
   public void testMixedBucketsMixedShardMaxParallelism() throws Exception {
@@ -376,6 +358,8 @@ public class SortedBucketSourceTest {
         TargetParallelism.auto());
   }
 
+  // For non-minimal parallelism, test input keys *must* hash to their corresponding bucket IDs,
+  // since a rehash is required in the merge step
   @Test
   @Category(NeedsRunner.class)
   public void testPartitionedInputsMixedBucketsAutoParallelism() throws Exception {
@@ -398,6 +382,44 @@ public class SortedBucketSourceTest {
                 BucketShardId.of(0, 0), Lists.newArrayList(),
                 BucketShardId.of(1, 0), Lists.newArrayList("c7", "c8"))),
         TargetParallelism.auto());
+  }
+
+  @Test
+  @Category(NeedsRunner.class)
+  public void testPartitionedInputsMixedBucketsMaxParallelism() throws Exception {
+    testPartitioned(
+        ImmutableList.of(
+            ImmutableMap.of(BucketShardId.of(0, 0), Lists.newArrayList("c1", "w1", "x1", "z1")),
+            ImmutableMap.of(BucketShardId.of(0, 0), Lists.newArrayList("w1", "w2"))),
+        ImmutableList.of(
+            ImmutableMap.of(
+                BucketShardId.of(0, 0), Lists.newArrayList("w5", "w6"),
+                BucketShardId.of(1, 0), Lists.newArrayList("t1", "t2", "x1")),
+            ImmutableMap.of(
+                BucketShardId.of(0, 0), Lists.newArrayList("w3", "w4"),
+                BucketShardId.of(1, 0), Lists.newArrayList("c1", "c2"),
+                BucketShardId.of(2, 0), Lists.newArrayList("u1", "u2"),
+                BucketShardId.of(3, 0), Lists.newArrayList("r1", "r2"))),
+        TargetParallelism.max());
+  }
+
+  @Test
+  @Category(NeedsRunner.class)
+  public void testPartitionedInputsMixedBucketsCustomParallelism() throws Exception {
+    testPartitioned(
+        ImmutableList.of(
+            ImmutableMap.of(BucketShardId.of(0, 0), Lists.newArrayList("c1", "w1", "x1", "z1")),
+            ImmutableMap.of(BucketShardId.of(0, 0), Lists.newArrayList("w1", "w2"))),
+        ImmutableList.of(
+            ImmutableMap.of(
+                BucketShardId.of(0, 0), Lists.newArrayList("w5", "w6"),
+                BucketShardId.of(1, 0), Lists.newArrayList("t1", "t2", "x1")),
+            ImmutableMap.of(
+                BucketShardId.of(0, 0), Lists.newArrayList("w3", "w4"),
+                BucketShardId.of(1, 0), Lists.newArrayList("c1", "c2"),
+                BucketShardId.of(2, 0), Lists.newArrayList("u1", "u2"),
+                BucketShardId.of(3, 0), Lists.newArrayList("r1", "r2"))),
+        TargetParallelism.of(2));
   }
 
   @SuppressWarnings("unchecked")
@@ -671,7 +693,7 @@ public class SortedBucketSourceTest {
                     Stream.concat(l.stream(), r.stream()).sorted().collect(Collectors.toList())));
   }
 
-  private static void verifyMetrics(
+  static void verifyMetrics(
       PipelineResult result, Map<String, DistributionResult> expectedDistributions) {
     final Map<String, DistributionResult> actualDistributions =
         ImmutableList.copyOf(result.metrics().allMetrics().getDistributions().iterator()).stream()

@@ -23,16 +23,12 @@ import static org.apache.beam.sdk.extensions.smb.TestUtils.fromFolder;
 import java.nio.channels.Channels;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 import org.apache.beam.sdk.PipelineResult;
 import org.apache.beam.sdk.extensions.smb.SMBFilenamePolicy.FileAssignment;
 import org.apache.beam.sdk.extensions.smb.SortedBucketTransform.TransformFn;
 import org.apache.beam.sdk.io.FileSystems;
 import org.apache.beam.sdk.metrics.DistributionResult;
-import org.apache.beam.sdk.metrics.MetricResult;
-import org.apache.beam.sdk.testing.PAssert;
 import org.apache.beam.sdk.testing.TestPipeline;
 import org.apache.beam.sdk.transforms.Create;
 import org.apache.beam.sdk.values.KV;
@@ -122,71 +118,69 @@ public class SortedBucketTransformTest {
   }
 
   @Test
-  public void testSortedBucketTransformNoFanout() throws Exception {
-    final TestBucketMetadata outputMetadata = TestBucketMetadata.of(2, 1);
-
-    transformPipeline.apply(
-        new SortedBucketTransform<>(
-            String.class,
-            outputMetadata,
-            fromFolder(outputFolder),
-            fromFolder(tempFolder),
-            ".txt",
-            new TestFileOperations(),
-            sources,
-            mergeFunction));
-
-    final PipelineResult result = transformPipeline.run();
-    result.waitUntilFinish();
-
-    final KV<BucketMetadata, Set<String>> outputs = readAllFrom(outputFolder, outputMetadata);
-    Assert.assertEquals(expected, outputs.getValue());
-    Assert.assertEquals(outputMetadata, outputs.getKey());
-
-    verifyMetrics(
-        result,
-        ImmutableMap.of(
-            "SortedBucketTransform-ElementsWritten", 3L,
-            "SortedBucketTransform-ElementsRead", 10L),
-        ImmutableMap.of(
-            "SortedBucketTransform-KeyGroupSize", DistributionResult.create(10, 7, 1, 2)));
+  public void testSortedBucketTransformMinParallelism() throws Exception {
+    test(TargetParallelism.min(), 2);
   }
 
   @Test
-  public void testWorksWithBucketFanout() throws Exception {
-    final TestBucketMetadata outputMetadata = TestBucketMetadata.of(8, 1);
+  public void testSortedBucketTransformMaxParallelism() throws Exception {
+    test(TargetParallelism.max(), 4);
+  }
 
+  @Test
+  public void testSortedBucketTransformAutoParallelism() throws Exception {
+    test(TargetParallelism.auto(), -1);
+  }
+
+  @Test
+  public void testSortedBucketTransformCustomParallelism() throws Exception {
+    test(TargetParallelism.of(8), 8);
+  }
+
+  private void test(TargetParallelism targetParallelism, int expectedNumBuckets) throws Exception {
     transformPipeline.apply(
         new SortedBucketTransform<>(
             String.class,
-            outputMetadata,
+            sources,
+            targetParallelism,
+            mergeFunction,
             fromFolder(outputFolder),
             fromFolder(tempFolder),
-            ".txt",
+            (numBuckets, numShards, hashType) -> TestBucketMetadata.of(numBuckets, numShards),
             new TestFileOperations(),
-            sources,
-            mergeFunction));
+            ".txt"));
 
     final PipelineResult result = transformPipeline.run();
     result.waitUntilFinish();
 
-    final KV<BucketMetadata, Set<String>> outputs = readAllFrom(outputFolder, outputMetadata);
+    final KV<BucketMetadata, Set<String>> outputs = readAllFrom(outputFolder);
     Assert.assertEquals(expected, outputs.getValue());
-    Assert.assertEquals(outputMetadata, outputs.getKey());
 
-    verifyMetrics(
+    int numBucketsInMetadata = outputs.getKey().getNumBuckets();
+
+    if (!targetParallelism.isAuto()) {
+      Assert.assertEquals(expectedNumBuckets, numBucketsInMetadata);
+    } else {
+      Assert.assertTrue(numBucketsInMetadata <= 4);
+      Assert.assertTrue(numBucketsInMetadata >= 1);
+    }
+
+    Assert.assertEquals(1, outputs.getKey().getNumShards());
+
+    SortedBucketSourceTest.verifyMetrics(
         result,
-        ImmutableMap.of(
-            "SortedBucketTransform-ElementsWritten", 3L,
-            "SortedBucketTransform-ElementsRead", 10L),
         ImmutableMap.of(
             "SortedBucketTransform-KeyGroupSize", DistributionResult.create(10, 7, 1, 2)));
   }
 
-  private static KV<BucketMetadata, Set<String>> readAllFrom(
-      TemporaryFolder folder, TestBucketMetadata metadata) throws Exception {
+  private static KV<BucketMetadata, Set<String>> readAllFrom(TemporaryFolder folder)
+      throws Exception {
     final FileAssignment fileAssignment =
         new SMBFilenamePolicy(fromFolder(folder), ".txt").forDestination();
+
+    BucketMetadata metadata =
+        BucketMetadata.from(
+            Channels.newInputStream(FileSystems.open(fileAssignment.forMetadata())));
 
     final Set<String> outputElements = new HashSet<>();
 
@@ -198,29 +192,6 @@ public class SortedBucketTransformTest {
       outputReader.iterator().forEachRemaining(outputElements::add);
     }
 
-    return KV.of(
-        BucketMetadata.from(
-            Channels.newInputStream(FileSystems.open(fileAssignment.forMetadata()))),
-        outputElements);
-  }
-
-  private static void verifyMetrics(
-      PipelineResult result,
-      Map<String, Long> expectedCounters,
-      Map<String, DistributionResult> expectedDistributions) {
-    final Map<String, Long> actualCounters =
-        ImmutableList.copyOf(result.metrics().allMetrics().getCounters().iterator()).stream()
-            .filter(metric -> !metric.getName().getName().equals(PAssert.SUCCESS_COUNTER))
-            .collect(
-                Collectors.toMap(metric -> metric.getName().getName(), MetricResult::getCommitted));
-
-    Assert.assertEquals(expectedCounters, actualCounters);
-
-    final Map<String, DistributionResult> actualDistributions =
-        ImmutableList.copyOf(result.metrics().allMetrics().getDistributions().iterator()).stream()
-            .collect(
-                Collectors.toMap(metric -> metric.getName().getName(), MetricResult::getCommitted));
-
-    Assert.assertEquals(expectedDistributions, actualDistributions);
+    return KV.of(metadata, outputElements);
   }
 }
