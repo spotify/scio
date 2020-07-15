@@ -287,11 +287,26 @@ public class AvroSortedBucketIO {
               AvroFileOperations.of((Class<SpecificRecordBase>) getRecordClass(), getCodec());
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     BucketMetadata<K, T> getBucketMetadata() {
       try {
-        return new AvroBucketMetadata<>(
-            getNumBuckets(), getNumShards(), getKeyClass(), getHashType(), getKeyField());
+        return getRecordClass() == null
+            ? new AvroBucketMetadata<>(
+                getNumBuckets(),
+                getNumShards(),
+                getKeyClass(),
+                getHashType(),
+                getKeyField(),
+                getSchema())
+            : (AvroBucketMetadata<K, T>)
+                new AvroBucketMetadata<>(
+                    getNumBuckets(),
+                    getNumShards(),
+                    getKeyClass(),
+                    getHashType(),
+                    getKeyField(),
+                    (Class<SpecificRecordBase>) getRecordClass());
       } catch (CannotProvideCoderException | Coder.NonDeterministicException e) {
         throw new IllegalStateException(e);
       }
@@ -394,10 +409,18 @@ public class AvroSortedBucketIO {
     NewBucketMetadataFn<K, T> getNewBucketMetadataFn() {
       final String keyField = getKeyField();
       final Class<K> keyClass = getKeyClass();
+      final Schema schema = getSchema();
+      final Class<T> recordClass = getRecordClass();
 
       return (numBuckets, numShards, hashType) -> {
         try {
-          return new AvroBucketMetadata<>(numBuckets, numShards, keyClass, hashType, keyField);
+          if (schema != null) {
+            return new AvroBucketMetadata<>(
+                numBuckets, numShards, keyClass, hashType, keyField, schema);
+          } else {
+            return new AvroBucketMetadata<>(
+                numBuckets, numShards, keyClass, hashType, keyField, recordClass);
+          }
         } catch (CannotProvideCoderException | Coder.NonDeterministicException e) {
           throw new IllegalStateException(e);
         }

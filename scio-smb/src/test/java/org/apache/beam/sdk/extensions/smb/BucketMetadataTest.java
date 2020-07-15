@@ -24,6 +24,7 @@ import org.apache.avro.generic.GenericRecord;
 import org.apache.beam.sdk.coders.Coder.NonDeterministicException;
 import org.apache.beam.sdk.coders.StringUtf8Coder;
 import org.apache.beam.sdk.extensions.smb.BucketMetadata.HashType;
+import org.apache.beam.sdk.io.AvroGeneratedUser;
 import org.apache.beam.sdk.transforms.display.DisplayData;
 import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
@@ -69,7 +70,8 @@ public class BucketMetadataTest {
   public void testSubTyping() throws Exception {
     final BucketMetadata<String, String> test = new TestBucketMetadata(16, 4, HashType.MURMUR3_32);
     final BucketMetadata<String, GenericRecord> avro =
-        new AvroBucketMetadata<>(16, 4, String.class, HashType.MURMUR3_32, "keyField");
+        new AvroBucketMetadata<>(
+            16, 4, String.class, HashType.MURMUR3_32, "favorite_color", AvroGeneratedUser.SCHEMA$);
     final BucketMetadata<String, TableRow> json =
         new JsonBucketMetadata<>(16, 4, String.class, HashType.MURMUR3_32, "keyField");
 
