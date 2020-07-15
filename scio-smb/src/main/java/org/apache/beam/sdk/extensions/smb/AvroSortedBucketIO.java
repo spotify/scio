@@ -409,15 +409,17 @@ public class AvroSortedBucketIO {
     NewBucketMetadataFn<K, T> getNewBucketMetadataFn() {
       final String keyField = getKeyField();
       final Class<K> keyClass = getKeyClass();
+      final Schema schema = getSchema();
+      final Class<T> recordClass = getRecordClass();
 
       return (numBuckets, numShards, hashType) -> {
         try {
-          if (getSchema() != null) {
+          if (schema != null) {
             return new AvroBucketMetadata<>(
-                numBuckets, numShards, keyClass, hashType, keyField, getSchema());
+                numBuckets, numShards, keyClass, hashType, keyField, schema);
           } else {
             return new AvroBucketMetadata<>(
-                numBuckets, numShards, keyClass, hashType, keyField, getRecordClass());
+                numBuckets, numShards, keyClass, hashType, keyField, recordClass);
           }
         } catch (CannotProvideCoderException | Coder.NonDeterministicException e) {
           throw new IllegalStateException(e);
