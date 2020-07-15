@@ -168,7 +168,6 @@ object SortMergeBucketTransformExample {
     ).to(
       AvroSortedBucketIO
         .transformOutput(classOf[Integer], "id", classOf[Account])
-        .write(classOf[Integer], "id", classOf[Account])
         .to(args("output"))
     ).via {
       case (key, (users, accounts), outputCollector) =>
