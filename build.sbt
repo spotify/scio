@@ -83,7 +83,7 @@ val kantanCsvVersion = "0.6.1"
 val kryoVersion =
   "4.0.2" // explicitly depend on 4.0.1+ due to https://github.com/EsotericSoftware/kryo/pull/516
 val magnoliaVersion = "0.16.0"
-val magnolifyVersion = "0.2.1"
+val magnolifyVersion = "0.2.2"
 val nettyVersion = "4.1.30.Final"
 val nettyTcNativeVersion = "2.0.30.Final"
 val opencensusVersion = "0.24.0"
