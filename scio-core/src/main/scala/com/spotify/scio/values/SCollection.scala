@@ -184,6 +184,39 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     ensureSerializable(coder).fold(throw _, pApply(name, transform).setCoder)
   }
 
+  private[scio] def pApply[U](
+    name: Option[String],
+    transform: PTransform[_ >: PCollection[T], PCollection[U]]
+  ): SCollection[U] = {
+    val t =
+      if (
+        (classOf[Combine.Globally[T, U]] isAssignableFrom transform.getClass)
+        && internal.getWindowingStrategy != WindowingStrategy.globalDefault()
+      ) {
+        // In case PCollection is windowed
+        transform.asInstanceOf[Combine.Globally[T, U]].withoutDefaults()
+      } else {
+        transform
+      }
+    context.wrap(this.applyInternal(name, t))
+  }
+
+  private[scio] def pApply[U](
+    transform: PTransform[_ >: PCollection[T], PCollection[U]]
+  ): SCollection[U] =
+    pApply(None, transform)
+
+  private[scio] def pApply[U](
+    name: String,
+    transform: PTransform[_ >: PCollection[T], PCollection[U]]
+  ): SCollection[U] =
+    pApply(Option(name), transform)
+
+  private[scio] def parDo[U: Coder](fn: DoFn[T, U]): SCollection[U] =
+    this
+      .pApply(ParDo.of(fn))
+      .setCoder(CoderMaterializer.beam(context, Coder[U]))
+
   /**
    * Apply a [[org.apache.beam.sdk.transforms.PTransform PTransform]] and wrap the output in an
    * [[SCollection]]. This is a special case of [[applyTransform]] for transforms with [[KV]]
@@ -260,7 +293,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @param fanout the number of intermediate keys that will be used
    */
   def withFanout(fanout: Int)(implicit coder: Coder[T]): SCollectionWithFanout[T] =
-    new SCollectionWithFanout[T](internal, context, fanout)
+    new SCollectionWithFanout[T](this, fanout)
 
   /**
    * Return the union of this SCollection and another one. Any identical elements will appear
@@ -977,7 +1010,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @group side
    */
   def withSideInputs(sides: SideInput[_]*)(implicit coder: Coder[T]): SCollectionWithSideInput[T] =
-    new SCollectionWithSideInput[T](internal, context, sides)
+    new SCollectionWithSideInput[T](this, sides)
 
   // =======================================================================
   // Side output operations
@@ -1013,7 +1046,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @group window
    */
   def toWindowed(implicit coder: Coder[T]): WindowedSCollection[T] =
-    new WindowedSCollection[T](internal, context)
+    new WindowedSCollection[T](this)
 
   /**
    * Window values with the given function.
