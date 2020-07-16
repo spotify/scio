@@ -245,13 +245,19 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   def transform[U](f: SCollection[T] => SCollection[U]): SCollection[U] = transform(this.tfName)(f)
 
   def transform[U](name: String)(f: SCollection[T] => SCollection[U]): SCollection[U] =
-    pApply(
+    context.wrap(transform_(name)(f(_).internal))
+
+  private[scio] def transform_[U <: POutput](f: SCollection[T] => U): U =
+    transform_(tfName)(f)
+
+  private[scio] def transform_[U <: POutput](name: String)(f: SCollection[T] => U): U = {
+    applyInternal(
       name,
-      new PTransform[PCollection[T], PCollection[U]]() {
-        override def expand(input: PCollection[T]): PCollection[U] =
-          f(context.wrap(input)).internal
+      new PTransform[PCollection[T], U]() {
+        override def expand(input: PCollection[T]): U = f(context.wrap(input))
       }
     )
+  }
 
   /**
    * Go from an SCollection of type [[T]] to an SCollection of [[U]]

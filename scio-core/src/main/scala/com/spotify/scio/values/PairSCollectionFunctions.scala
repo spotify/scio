@@ -17,9 +17,6 @@
 
 package com.spotify.scio.values
 
-import java.lang.{Iterable => JIterable}
-import java.util.{Map => JMap}
-
 import com.google.common.hash.Funnel
 import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
@@ -28,7 +25,7 @@ import com.spotify.scio.util._
 import com.spotify.scio.util.random.{BernoulliValueSampler, PoissonValueSampler}
 import com.twitter.algebird.{Aggregator, Monoid, MonoidAggregator, Semigroup}
 import org.apache.beam.sdk.transforms._
-import org.apache.beam.sdk.values.{KV, PCollection, PCollectionView}
+import org.apache.beam.sdk.values.{KV, PCollection}
 import org.slf4j.LoggerFactory
 
 private object PairSCollectionFunctions {
@@ -48,11 +45,8 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
 
   private[this] val context: ScioContext = self.context
 
-  private[this] val toKvTransform =
-    ParDo.of(Functions.mapFn((kv: (K, V)) => KV.of(kv._1, kv._2)))
-
   private[scio] def toKV(implicit koder: Coder[K], voder: Coder[V]): SCollection[KV[K, V]] =
-    self.applyTransform(toKvTransform)(Coder.raw(CoderMaterializer.kvCoder[K, V](context)))
+    self.map(kv => KV.of(kv._1, kv._2)).setCoder(CoderMaterializer.kvCoder[K, V](context))
 
   private[values] def applyPerKey[UI: Coder, UO: Coder](
     t: PTransform[_ >: PCollection[KV[K, V]], PCollection[KV[K, UI]]]
@@ -1070,16 +1064,8 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * Note: the underlying map implementation is runner specific and may have performance overhead.
    * Use [[asMapSingletonSideInput]] instead if the resulting map can fit into memory.
    */
-  def asMapSideInput(implicit koder: Coder[K], voder: Coder[V]): SideInput[Map[K, V]] = {
-    val o = self.applyInternal(new PTransform[PCollection[(K, V)], PCollectionView[JMap[K, V]]]() {
-      override def expand(input: PCollection[(K, V)]): PCollectionView[JMap[K, V]] =
-        input
-          .apply(toKvTransform)
-          .setCoder(CoderMaterializer.kvCoder[K, V](context))
-          .apply(View.asMap())
-    })
-    new MapSideInput[K, V](o)
-  }
+  def asMapSideInput(implicit koder: Coder[K], voder: Coder[V]): SideInput[Map[K, V]] =
+    new MapSideInput[K, V](self.transform_(_.toKV.applyInternal(View.asMap())))
 
   /**
    * Convert this SCollection to a SideInput, mapping key-value pairs of each window to a
@@ -1092,18 +1078,8 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
   def asMultiMapSideInput(implicit
     koder: Coder[K],
     voder: Coder[V]
-  ): SideInput[Map[K, Iterable[V]]] = {
-    val o = self.applyInternal(
-      new PTransform[PCollection[(K, V)], PCollectionView[JMap[K, JIterable[V]]]]() {
-        override def expand(input: PCollection[(K, V)]): PCollectionView[JMap[K, JIterable[V]]] =
-          input
-            .apply(toKvTransform)
-            .setCoder(CoderMaterializer.kvCoder[K, V](context))
-            .apply(View.asMultimap())
-      }
-    )
-    new MultiMapSideInput[K, V](o)
-  }
+  ): SideInput[Map[K, Iterable[V]]] =
+    new MultiMapSideInput[K, V](self.transform_(_.toKV.applyInternal(View.asMultimap())))
 
   /**
    * Convert this SCollection to a SideInput, mapping key-value pairs of each window to a

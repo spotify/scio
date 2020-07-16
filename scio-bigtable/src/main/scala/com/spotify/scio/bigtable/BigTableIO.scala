@@ -142,12 +142,13 @@ final case class BigtableWrite[T <: Mutation](bigtableOptions: BigtableOptions, 
         case BigtableWrite.Bulk(numOfShards, flushInterval) =>
           new BigtableBulkWriter(tableId, bigtableOptions, numOfShards, flushInterval)
       }
-    data
-      .map {
-        case (key, value) =>
-          KV.of(key, value.asJava.asInstanceOf[java.lang.Iterable[Mutation]])
-      }
-      .applyInternal(sink)
+    data.transform_("Bigtable write") { coll =>
+      coll
+        .map {
+          case (key, value) => KV.of(key, value.asJava.asInstanceOf[java.lang.Iterable[Mutation]])
+        }
+        .applyInternal(sink)
+    }
     EmptyTap
   }
 
