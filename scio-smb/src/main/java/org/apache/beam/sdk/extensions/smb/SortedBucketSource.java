@@ -398,34 +398,39 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
 
         int keyGroupCount = 0;
 
-        // Track the canonical # buckets of each source that the key is found in.
-        // If we find it in a source with a # buckets >= the parallelism of the job,
-        // we know that it doesn't need to be re-hashed as it's already in the right bucket.
-        boolean keyFoundInSourceWithMatchingNumBuckets = false;
+        // Set to 1 if subsequent key groups should be accepted or 0 if they should be filtered out
+        int acceptKeyGroup = -1;
+
         while (nextKeyGroupsIt.hasNext()) {
           final Map.Entry<TupleTag, KV<byte[], Iterator<?>>> entry = nextKeyGroupsIt.next();
 
           if (keyComparator.compare(entry, minKeyEntry) == 0) {
             final TupleTag tupleTag = entry.getKey();
-            keyFoundInSourceWithMatchingNumBuckets |= bucketsPerSource.get(tupleTag) >= parallelism;
-            int index = resultSchema.getIndex(tupleTag);
-            @SuppressWarnings("unchecked")
-            final List<Object> values = (List<Object>) valueMap.get(index);
-            // TODO: this exhausts everything from the "lazy" iterator and can be expensive.
-            // To fix we have to make the underlying Reader range aware so that it's safe to
-            // re-iterate or stop without exhausting remaining elements in the value group.
-            entry.getValue().getValue().forEachRemaining(values::add);
-            keyGroupCount += values.size();
+            final List<Object> values =
+                (List<Object>) valueMap.get(resultSchema.getIndex(tupleTag));
 
+            // Track the canonical # buckets of each source that the key is found in.
+            // If we find it in a source with a # buckets >= the parallelism of the job,
+            // we know that it doesn't need to be re-hashed as it's already in the right bucket.
+            if (acceptKeyGroup == 1) {
+              entry.getValue().getValue().forEachRemaining(values::add);
+            } else if (acceptKeyGroup == -1
+                && (bucketsPerSource.get(tupleTag) >= parallelism
+                    || keyGroupFilter.apply(minKeyEntry.getValue().getKey()))) {
+              entry.getValue().getValue().forEachRemaining(values::add);
+              acceptKeyGroup = 1;
+            } else {
+              // skip key but still have to exhaust iterator
+              entry.getValue().getValue().forEachRemaining(value -> {});
+              acceptKeyGroup = 0;
+            }
+
+            keyGroupCount += values.size();
             nextKeyGroupsIt.remove();
           }
         }
 
-        final boolean acceptKeyGroup =
-            keyFoundInSourceWithMatchingNumBuckets
-                || keyGroupFilter.apply(minKeyEntry.getValue().getKey());
-
-        if (acceptKeyGroup) {
+        if (acceptKeyGroup == 1) {
           keyGroupSize.update(keyGroupCount);
 
           next =
