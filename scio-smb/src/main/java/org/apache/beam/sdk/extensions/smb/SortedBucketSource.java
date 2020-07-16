@@ -398,7 +398,8 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
 
         int keyGroupCount = 0;
 
-        boolean acceptKeyGroup = false;
+        // Set to 1 if subsequent key groups should be accepted or 0 if they should be filtered out
+        int acceptKeyGroup = -1;
 
         while (nextKeyGroupsIt.hasNext()) {
           final Map.Entry<TupleTag, KV<byte[], Iterator<?>>> entry = nextKeyGroupsIt.next();
@@ -411,15 +412,17 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
             // Track the canonical # buckets of each source that the key is found in.
             // If we find it in a source with a # buckets >= the parallelism of the job,
             // we know that it doesn't need to be re-hashed as it's already in the right bucket.
-            if (acceptKeyGroup || bucketsPerSource.get(tupleTag) >= parallelism) {
+            if (acceptKeyGroup == 1) {
               entry.getValue().getValue().forEachRemaining(values::add);
-              acceptKeyGroup = true;
-            } else if (keyGroupFilter.apply(minKeyEntry.getValue().getKey())) {
+            } else if (acceptKeyGroup == -1
+                && (bucketsPerSource.get(tupleTag) >= parallelism
+                    || keyGroupFilter.apply(minKeyEntry.getValue().getKey()))) {
               entry.getValue().getValue().forEachRemaining(values::add);
-              acceptKeyGroup = true;
+              acceptKeyGroup = 1;
             } else {
               // skip key but still have to exhaust iterator
               entry.getValue().getValue().forEachRemaining(value -> {});
+              acceptKeyGroup = 0;
             }
 
             keyGroupCount += values.size();
@@ -427,7 +430,7 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
           }
         }
 
-        if (acceptKeyGroup) {
+        if (acceptKeyGroup == 1) {
           keyGroupSize.update(keyGroupCount);
 
           next =
