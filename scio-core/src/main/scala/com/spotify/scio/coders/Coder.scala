@@ -174,7 +174,7 @@ final private case class DisjunctionCoder[T, Id](
 final private[scio] case class LazyCoder[T](
   typeName: String,
   o: CoderMaterializer.CoderOptions
-)(coder: Coder[T])
+)(val coder: Coder[T])
     extends BCoder[T] {
 
   private lazy val bcoder = CoderMaterializer.beamImpl[T](o, coder)

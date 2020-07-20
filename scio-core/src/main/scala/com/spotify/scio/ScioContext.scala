@@ -878,7 +878,7 @@ class ScioContext private[scio] (
     }
 
   /** Form an empty SCollection. */
-  def empty[T: Coder](): SCollection[T] = parallelize(Seq())
+  def empty[T: Coder](): SCollection[T] = parallelize(Nil)
 
   /**
    * Distribute a local Scala `Iterable` to form an SCollection.
