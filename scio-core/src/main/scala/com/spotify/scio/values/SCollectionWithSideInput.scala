@@ -36,31 +36,37 @@ import com.twitter.chill.ClosureCleaner
  * [[SideInput]]s are accessed via the additional [[SideInputContext]] argument.
  */
 class SCollectionWithSideInput[T: Coder] private[values] (
-  val internal: PCollection[T],
-  val context: ScioContext,
+  coll: SCollection[T],
   sides: Iterable[SideInput[_]]
 ) extends PCollectionWrapper[T] {
+  override val internal: PCollection[T] = coll.internal
+
+  override val context: ScioContext = coll.context
+
+  override def withName(name: String): this.type = {
+    coll.withName(name)
+    this
+  }
+
   private def parDo[T0, U](fn: DoFn[T0, U]) =
     ParDo.of(fn).withSideInputs(sides.map(_.view).asJava)
 
   /** [[SCollection.filter]] with an additional [[SideInputContext]] argument. */
   def filter(f: (T, SideInputContext[T]) => Boolean): SCollectionWithSideInput[T] = {
-    val o = this
+    val o = coll
       .pApply(parDo(FunctionsWithSideInput.filterFn(f)))
-      .internal
       .setCoder(CoderMaterializer.beam(context, Coder[T]))
-    new SCollectionWithSideInput[T](o, context, sides)
+    new SCollectionWithSideInput[T](o, sides)
   }
 
   /** [[SCollection.flatMap]] with an additional [[SideInputContext]] argument. */
   def flatMap[U: Coder](
     f: (T, SideInputContext[T]) => TraversableOnce[U]
   ): SCollectionWithSideInput[U] = {
-    val o = this
+    val o = coll
       .pApply(parDo(FunctionsWithSideInput.flatMapFn(f)))
-      .internal
       .setCoder(CoderMaterializer.beam(context, Coder[U]))
-    new SCollectionWithSideInput[U](o, context, sides)
+    new SCollectionWithSideInput[U](o, sides)
   }
 
   /** [[SCollection.keyBy]] with an additional [[SideInputContext]] argument. */
@@ -69,11 +75,10 @@ class SCollectionWithSideInput[T: Coder] private[values] (
 
   /** [[SCollection.map]] with an additional [[SideInputContext]] argument. */
   def map[U: Coder](f: (T, SideInputContext[T]) => U): SCollectionWithSideInput[U] = {
-    val o = this
+    val o = coll
       .pApply(parDo(FunctionsWithSideInput.mapFn(f)))
-      .internal
       .setCoder(CoderMaterializer.beam(context, Coder[U]))
-    new SCollectionWithSideInput[U](o, context, sides)
+    new SCollectionWithSideInput[U](o, sides)
   }
 
   /**
@@ -128,5 +133,5 @@ class SCollectionWithSideInput[T: Coder] private[values] (
   }
 
   /** Convert back to a basic SCollection. */
-  def toSCollection: SCollection[T] = context.wrap(internal)
+  def toSCollection: SCollection[T] = coll
 }

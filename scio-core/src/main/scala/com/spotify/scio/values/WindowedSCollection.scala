@@ -54,20 +54,28 @@ case class WindowedValue[T](value: T, timestamp: Instant, window: BoundedWindow,
 }
 
 /** An enhanced SCollection that provides access to window information via [[WindowedValue]]. */
-class WindowedSCollection[T: Coder] private[values] (
-  val internal: PCollection[T],
-  val context: ScioContext
-) extends PCollectionWrapper[T] {
+class WindowedSCollection[T: Coder] private[values] (coll: SCollection[T])
+    extends PCollectionWrapper[T] {
+  override val internal: PCollection[T] = coll.internal
+
+  override val context: ScioContext = coll.context
+
+  override def withName(name: String): this.type = {
+    coll.withName(name)
+    this
+  }
+
+  // override def withName(name: String): WindowedSCollection[T] = coll.withName(name)
 
   /** [[SCollection.filter]] with access to window information via [[WindowedValue]]. */
   def filter(f: WindowedValue[T] => Boolean): WindowedSCollection[T] =
-    new WindowedSCollection(this.parDo(FunctionsWithWindowedValue.filterFn(f)).internal, context)
+    new WindowedSCollection(coll.parDo(FunctionsWithWindowedValue.filterFn(f)))
 
   /** [[SCollection.flatMap]] with access to window information via [[WindowedValue]]. */
   def flatMap[U: Coder](
     f: WindowedValue[T] => TraversableOnce[WindowedValue[U]]
   ): WindowedSCollection[U] =
-    new WindowedSCollection(this.parDo(FunctionsWithWindowedValue.flatMapFn(f)).internal, context)
+    new WindowedSCollection(coll.parDo(FunctionsWithWindowedValue.flatMapFn(f)))
 
   /** [[SCollection.keyBy]] with access to window information via [[WindowedValue]]. */
   def keyBy[K: Coder](f: WindowedValue[T] => K): WindowedSCollection[(K, T)] =
@@ -75,8 +83,8 @@ class WindowedSCollection[T: Coder] private[values] (
 
   /** [[SCollection.map]] with access to window information via [[WindowedValue]]. */
   def map[U: Coder](f: WindowedValue[T] => WindowedValue[U]): WindowedSCollection[U] =
-    new WindowedSCollection(this.parDo(FunctionsWithWindowedValue.mapFn(f)).internal, context)
+    new WindowedSCollection(coll.parDo(FunctionsWithWindowedValue.mapFn(f)))
 
   /** Convert back to a basic SCollection. */
-  def toSCollection: SCollection[T] = context.wrap(internal)
+  def toSCollection: SCollection[T] = coll
 }

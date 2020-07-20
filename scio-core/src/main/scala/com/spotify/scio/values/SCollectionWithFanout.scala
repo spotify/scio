@@ -28,15 +28,20 @@ import org.apache.beam.sdk.values.PCollection
  * An enhanced SCollection that uses an intermediate node to combine parts of the data to reduce
  * load on the final global combine step.
  */
-class SCollectionWithFanout[T: Coder] private[values] (
-  val internal: PCollection[T],
-  val context: ScioContext,
-  private val fanout: Int
-) extends PCollectionWrapper[T] {
+class SCollectionWithFanout[T: Coder] private[values] (coll: SCollection[T], fanout: Int)
+    extends PCollectionWrapper[T] {
+  override val internal: PCollection[T] = coll.internal
+
+  override val context: ScioContext = coll.context
+
+  override def withName(name: String): this.type = {
+    coll.withName(name)
+    this
+  }
 
   /** [[SCollection.aggregate[U]* SCollection.aggregate]] with fan out. */
   def aggregate[U: Coder](zeroValue: U)(seqOp: (U, T) => U, combOp: (U, U) => U): SCollection[U] =
-    this.pApply(
+    coll.pApply(
       Combine
         .globally(Functions.aggregateFn(context, zeroValue)(seqOp, combOp))
         .withFanout(fanout)
@@ -45,17 +50,13 @@ class SCollectionWithFanout[T: Coder] private[values] (
   /** [[SCollection.aggregate[A,U]* SCollection.aggregate]] with fan out. */
   def aggregate[A: Coder, U: Coder](aggregator: Aggregator[T, A, U]): SCollection[U] = {
     val a = aggregator // defeat closure
-    context
-      .wrap(internal)
-      .transform(_.map(a.prepare).sum(a.semigroup, Coder[A]).map(a.present))
+    coll.transform(_.map(a.prepare).sum(a.semigroup, Coder[A]).map(a.present))
   }
 
   /** [[SCollection.aggregate[A,U]* SCollection.aggregate]] with fan out. */
   def aggregate[A: Coder, U: Coder](aggregator: MonoidAggregator[T, A, U]): SCollection[U] = {
     val a = aggregator // defeat closure
-    context
-      .wrap(internal)
-      .transform(_.map(a.prepare).fold(a.monoid, Coder[A]).map(a.present))
+    coll.transform(_.map(a.prepare).fold(a.monoid, Coder[A]).map(a.present))
   }
 
   /** [[SCollection.combine]] with fan out. */
@@ -66,7 +67,7 @@ class SCollectionWithFanout[T: Coder] private[values] (
       "combine/sum does not support default value and may fail in some streaming scenarios. " +
         "Consider aggregate/fold instead."
     )
-    this.pApply(
+    coll.pApply(
       Combine
         .globally(Functions.combineFn(context, createCombiner, mergeValue, mergeCombiners))
         .withoutDefaults()
@@ -76,7 +77,7 @@ class SCollectionWithFanout[T: Coder] private[values] (
 
   /** [[SCollection.fold(zeroValue:T)* SCollection.fold]] with fan out. */
   def fold(zeroValue: T)(op: (T, T) => T): SCollection[T] =
-    this.pApply(
+    coll.pApply(
       Combine
         .globally(Functions.aggregateFn(context, zeroValue)(op, op))
         .withFanout(fanout)
@@ -84,11 +85,11 @@ class SCollectionWithFanout[T: Coder] private[values] (
 
   /** [[SCollection.fold(implicit* SCollection.fold]] with fan out. */
   def fold(implicit mon: Monoid[T]): SCollection[T] =
-    this.pApply(Combine.globally(Functions.reduceFn(context, mon)).withFanout(fanout))
+    coll.pApply(Combine.globally(Functions.reduceFn(context, mon)).withFanout(fanout))
 
   /** [[SCollection.reduce]] with fan out. */
   def reduce(op: (T, T) => T): SCollection[T] =
-    this.pApply(
+    coll.pApply(
       Combine.globally(Functions.reduceFn(context, op)).withoutDefaults().withFanout(fanout)
     )
 
@@ -98,7 +99,7 @@ class SCollectionWithFanout[T: Coder] private[values] (
       "combine/sum does not support default value and may fail in some streaming scenarios. " +
         "Consider aggregate/fold instead."
     )
-    this.pApply(
+    coll.pApply(
       Combine.globally(Functions.reduceFn(context, sg)).withoutDefaults().withFanout(fanout)
     )
   }
