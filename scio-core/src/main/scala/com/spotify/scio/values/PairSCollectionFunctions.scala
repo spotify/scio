@@ -52,7 +52,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     ParDo.of(Functions.mapFn((kv: (K, V)) => KV.of(kv._1, kv._2)))
 
   private[scio] def toKV(implicit koder: Coder[K], voder: Coder[V]): SCollection[KV[K, V]] =
-    self.applyTransform(toKvTransform).setCoder(CoderMaterializer.kvCoder[K, V](context))
+    self.applyTransform(toKvTransform)(Coder.raw(CoderMaterializer.kvCoder[K, V](context)))
 
   private[values] def applyPerKey[UI: Coder, UO: Coder](
     t: PTransform[_ >: PCollection[KV[K, V]], PCollection[KV[K, UI]]]
@@ -61,8 +61,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
   )(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, UO)] =
     self.transform(
       _.withName("TupleToKv").toKV
-        .applyTransform(t)
-        .setCoder(CoderMaterializer.kvCoder[K, UI](context))
+        .applyTransform(t)(Coder.raw(CoderMaterializer.kvCoder[K, UI](context)))
         .withName("KvToTuple")
         .map(f)
     )

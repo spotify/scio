@@ -55,6 +55,7 @@ object CoderMaterializer {
     coder: Coder[T]
   ): BCoder[T] =
     coder match {
+      case RawBeam(c) => c
       // #1734: do not wrap native beam coders
       case Beam(c) if c.getClass.getPackage.getName.startsWith("org.apache.beam") =>
         nullCoder(o, c)
