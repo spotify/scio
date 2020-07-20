@@ -35,7 +35,7 @@ import com.twitter.chill.ClosureCleaner
  * An enhanced SCollection that provides access to one or more [[SideInput]]s for some transforms.
  * [[SideInput]]s are accessed via the additional [[SideInputContext]] argument.
  */
-class SCollectionWithSideInput[T: Coder] private[values] (
+class SCollectionWithSideInput[T] private[values] (
   coll: SCollection[T],
   sides: Iterable[SideInput[_]]
 ) extends PCollectionWrapper[T] {
@@ -55,8 +55,8 @@ class SCollectionWithSideInput[T: Coder] private[values] (
   def filter(f: (T, SideInputContext[T]) => Boolean): SCollectionWithSideInput[T] = {
     val o = coll
       .pApply(parDo(FunctionsWithSideInput.filterFn(f)))
-      .setCoder(CoderMaterializer.beam(context, Coder[T]))
-    new SCollectionWithSideInput[T](o, sides)
+      .setCoder(internal.getCoder)
+    new SCollectionWithSideInput(o, sides)
   }
 
   /** [[SCollection.flatMap]] with an additional [[SideInputContext]] argument. */

@@ -354,7 +354,7 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
       val p2 = sc.parallelize(1 to 10).map(("b", _))
       val r = (p1 ++ p2)
         .mapValues(mutable.Buffer(_))
-        .foldByKey(mutable.Buffer.empty) { (xs, ys) =>
+        .foldByKey(mutable.Buffer.empty[Int]) { (xs, ys) =>
           xs.appendAll(ys)
           xs
         }
@@ -625,7 +625,7 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
     runWithContext { sc =>
       val p = sc.parallelize(Seq(("a", 1), ("b", 11), ("b", 12), ("c", 21), ("c", 22), ("c", 23)))
       val r1 = p.topByKey(1)
-      val r2 = p.topByKey(1, Ordering.by(-_))
+      val r2 = p.topByKey(1)(Ordering.by(-_))
       r1 should
         containInAnyOrder(Seq(("a", Iterable(1)), ("b", Iterable(12)), ("c", Iterable(23))))
       r2 should

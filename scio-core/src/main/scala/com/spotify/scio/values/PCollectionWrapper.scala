@@ -27,6 +27,8 @@ private[values] trait PCollectionWrapper[T] extends TransformNameable {
   /** The [[org.apache.beam.sdk.values.PCollection PCollection]] being wrapped internally. */
   val internal: PCollection[T]
 
+  implicit def coder: Coder[T] = Coder.beam(internal.getCoder)
+
   /**
    * The [[ScioContext]] associated with this
    * [[org.apache.beam.sdk.values.PCollection PCollection]].

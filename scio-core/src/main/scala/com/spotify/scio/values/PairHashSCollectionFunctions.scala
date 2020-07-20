@@ -29,6 +29,8 @@ import scala.collection.mutable.{ArrayBuffer, Map => MMap}
  */
 class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
 
+  implicit private[this] val (keyCoder, valueCoder): (Coder[K], Coder[V]) = KvCoders.get(self)
+
   /**
    * Perform an inner join by replicating `rhs` to all workers. The right side should be tiny and
    * fit in memory.
@@ -37,7 +39,7 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    */
   def hashJoin[W: Coder](
     rhs: SCollection[(K, W)]
-  )(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, (V, W))] =
+  ): SCollection[(K, (V, W))] =
     hashJoin(rhs.asMultiMapSingletonSideInput)
 
   /**
@@ -57,7 +59,7 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    */
   def hashJoin[W: Coder](
     sideInput: SideInput[Map[K, Iterable[W]]]
-  )(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, (V, W))] =
+  ): SCollection[(K, (V, W))] =
     self.transform { in =>
       in.withSideInputs(sideInput)
         .flatMap[(K, (V, W))] { (kv, sideInputCtx) =>
@@ -83,7 +85,7 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    */
   def hashLeftOuterJoin[W: Coder](
     rhs: SCollection[(K, W)]
-  )(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, (V, Option[W]))] =
+  ): SCollection[(K, (V, Option[W]))] =
     hashLeftOuterJoin(rhs.asMultiMapSingletonSideInput)
 
   /**
@@ -99,16 +101,15 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    */
   def hashLeftOuterJoin[W: Coder](
     sideInput: SideInput[Map[K, Iterable[W]]]
-  )(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, (V, Option[W]))] = self.transform {
-    in =>
-      in.withSideInputs(sideInput)
-        .flatMap[(K, (V, Option[W]))] {
-          case ((k, v), sideInputCtx) =>
-            val rhsSideMap = sideInputCtx(sideInput)
-            if (rhsSideMap.contains(k)) rhsSideMap(k).iterator.map(w => (k, (v, Some(w))))
-            else Iterator((k, (v, None)))
-        }
-        .toSCollection
+  ): SCollection[(K, (V, Option[W]))] = self.transform { in =>
+    in.withSideInputs(sideInput)
+      .flatMap[(K, (V, Option[W]))] {
+        case ((k, v), sideInputCtx) =>
+          val rhsSideMap = sideInputCtx(sideInput)
+          if (rhsSideMap.contains(k)) rhsSideMap(k).iterator.map(w => (k, (v, Some(w))))
+          else Iterator((k, (v, None)))
+      }
+      .toSCollection
   }
 
   /**
@@ -119,7 +120,7 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    */
   def hashFullOuterJoin[W: Coder](
     rhs: SCollection[(K, W)]
-  )(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, (Option[V], Option[W]))] =
+  ): SCollection[(K, (Option[V], Option[W]))] =
     hashFullOuterJoin(rhs.asMultiMapSingletonSideInput)
 
   /**
@@ -136,7 +137,7 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    */
   def hashFullOuterJoin[W: Coder](
     sideInput: SideInput[Map[K, Iterable[W]]]
-  )(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, (Option[V], Option[W]))] =
+  ): SCollection[(K, (Option[V], Option[W]))] =
     self.transform { in =>
       val leftHashed = in
         .withSideInputs(sideInput)
@@ -177,7 +178,7 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    */
   def hashIntersectByKey(
     rhs: SCollection[K]
-  )(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, V)] =
+  ): SCollection[(K, V)] =
     hashIntersectByKey(rhs.asSetSingletonSideInput)
 
   /**
@@ -189,7 +190,7 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    */
   def hashIntersectByKey(
     sideInput: SideInput[Set[K]]
-  )(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, V)] =
+  ): SCollection[(K, V)] =
     self
       .withSideInputs(sideInput)
       .filter { case ((k, _), sideInputCtx) => sideInputCtx(sideInput).contains(k) }
@@ -202,7 +203,7 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    */
   def hashSubtractByKey(
     sideInput: SideInput[Set[K]]
-  )(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, V)] =
+  ): SCollection[(K, V)] =
     self
       .withSideInputs(sideInput)
       .filter { case ((k, _), sideInputCtx) => !sideInputCtx(sideInput).contains(k) }
@@ -217,12 +218,12 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    */
   def hashSubtractByKey(
     rhs: SCollection[K]
-  )(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, V)] =
+  ): SCollection[(K, V)] =
     hashSubtractByKey(rhs.asSetSingletonSideInput)
 
   private def combineAsMapSideInput[W: Coder](
     rhs: SCollection[(K, W)]
-  )(implicit koder: Coder[K]): SideInput[MMap[K, ArrayBuffer[W]]] =
+  ): SideInput[MMap[K, ArrayBuffer[W]]] =
     rhs
       .combine {
         case (k, v) =>

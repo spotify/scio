@@ -34,6 +34,8 @@ final private case class Partitions[K, V](hot: SCollection[(K, V)], chill: SColl
  */
 class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
 
+  implicit private[this] val (keyCoder, valueCoder): (Coder[K], Coder[V]) = KvCoders.get(self)
+
   /**
    * N to 1 skew-proof flavor of [[PairSCollectionFunctions.join]].
    *
@@ -78,7 +80,7 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     delta: Double = 1e-10,
     sampleFraction: Double = 1.0,
     withReplacement: Boolean = true
-  )(implicit hasher: CMSHasher[K], koder: Coder[K], voder: Coder[V]): SCollection[(K, (V, W))] = {
+  )(implicit hasher: CMSHasher[K]): SCollection[(K, (V, W))] = {
     require(
       sampleFraction <= 1.0 && sampleFraction > 0.0,
       "Sample fraction has to be between (0.0, 1.0] - default is 1.0"
@@ -133,7 +135,7 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     rhs: SCollection[(K, W)],
     hotKeyThreshold: Long,
     cms: SCollection[CMS[K]]
-  )(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, (V, W))] = {
+  ): SCollection[(K, (V, W))] = {
     self.transform { me =>
       val (selfPartitions, rhsPartitions) =
         partitionInputs(me, rhs, hotKeyThreshold, cms)
@@ -196,11 +198,7 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     delta: Double = 1e-10,
     sampleFraction: Double = 1.0,
     withReplacement: Boolean = true
-  )(implicit
-    hasher: CMSHasher[K],
-    koder: Coder[K],
-    voder: Coder[V]
-  ): SCollection[(K, (V, Option[W]))] = {
+  )(implicit hasher: CMSHasher[K]): SCollection[(K, (V, Option[W]))] = {
     require(
       sampleFraction <= 1.0 && sampleFraction > 0.0,
       "Sample fraction has to be between (0.0, 1.0] - default is 1.0"
@@ -255,7 +253,7 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     rhs: SCollection[(K, W)],
     hotKeyThreshold: Long,
     cms: SCollection[CMS[K]]
-  )(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, (V, Option[W]))] = {
+  ): SCollection[(K, (V, Option[W]))] = {
     self.transform { me =>
       val (selfPartitions, rhsPartitions) =
         partitionInputs(me, rhs, hotKeyThreshold, cms)
@@ -317,11 +315,7 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     delta: Double = 1e-10,
     sampleFraction: Double = 1.0,
     withReplacement: Boolean = true
-  )(implicit
-    hasher: CMSHasher[K],
-    koder: Coder[K],
-    voder: Coder[V]
-  ): SCollection[(K, (Option[V], Option[W]))] = {
+  )(implicit hasher: CMSHasher[K]): SCollection[(K, (Option[V], Option[W]))] = {
     require(
       sampleFraction <= 1.0 && sampleFraction > 0.0,
       "Sample fraction has to be between (0.0, 1.0] - default is 1.0"
@@ -376,7 +370,7 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     rhs: SCollection[(K, W)],
     hotKeyThreshold: Long,
     cms: SCollection[CMS[K]]
-  )(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, (Option[V], Option[W]))] = {
+  ): SCollection[(K, (Option[V], Option[W]))] = {
     self.transform { me =>
       val (selfPartitions, rhsPartitions) =
         partitionInputs(me, rhs, hotKeyThreshold, cms)
@@ -399,7 +393,7 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     rhs: SCollection[(K, W)],
     hotKeyThreshold: Long,
     cms: SCollection[CMS[K]]
-  )(implicit koder: Coder[K], voder: Coder[V]): (Partitions[K, V], Partitions[K, W]) = {
+  ): (Partitions[K, V], Partitions[K, W]) = {
     val (hotSelf, chillSelf) = (SideOutput[(K, V)](), SideOutput[(K, V)]())
 
     // Use asIterableSideInput as workaround for:

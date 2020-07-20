@@ -51,7 +51,8 @@ private object NothingCoder extends AtomicCoder[Nothing] {
  * Most Coders TupleX are derived by Magnolia but we specialize Coder[(A, B)] for
  * performance reasons given that pairs are really common and used in groupBy operations.
  */
-final private class PairCoder[A, B](ac: BCoder[A], bc: BCoder[B]) extends AtomicCoder[(A, B)] {
+final private[scio] class PairCoder[A, B](val ac: BCoder[A], val bc: BCoder[B])
+    extends AtomicCoder[(A, B)] {
   private[this] val materializationStackTrace: Array[StackTraceElement] = CoderStackTrace.prepare
 
   @inline def onErrorMsg[T](msg: => (String, String))(f: => T): T =

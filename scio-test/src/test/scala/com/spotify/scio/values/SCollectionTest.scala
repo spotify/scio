@@ -317,9 +317,7 @@ class SCollectionTest extends PipelineSpec {
 
   it should "support flatten()" in {
     runWithContext { sc =>
-      val p1 = sc
-        .parallelize(Seq(Seq("a b", "c d"), Seq("e f", "g h")))
-        .flatten
+      val p1 = sc.parallelize(Seq(Seq("a b", "c d"), Seq("e f", "g h"))).flatten
       p1 should containInAnyOrder(Seq("a b", "c d", "e f", "g h"))
 
       val p2 = sc.parallelize(Seq(Some(1), None)).flatten
@@ -342,7 +340,7 @@ class SCollectionTest extends PipelineSpec {
       val p = sc
         .parallelize(1 to 100)
         .map(mutable.Buffer(_))
-        .fold(mutable.Buffer.empty) { (xs, ys) =>
+        .fold(mutable.Buffer.empty[Int]) { (xs, ys) =>
           xs.appendAll(ys)
           xs
         }
@@ -527,7 +525,7 @@ class SCollectionTest extends PipelineSpec {
     runWithContext { sc =>
       val p = sc.parallelize(Seq(1, 2, 3, 4, 5))
       val r1 = p.top(3)
-      val r2 = p.top(3, Ordering.by(-_))
+      val r2 = p.top(3)(Ordering.by(-_))
       r1 should containSingleValue(Iterable(5, 4, 3))
       r2 should containSingleValue(Iterable(1, 2, 3))
     }

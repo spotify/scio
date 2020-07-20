@@ -28,7 +28,7 @@ import org.apache.beam.sdk.values.PCollection
  * An enhanced SCollection that uses an intermediate node to combine parts of the data to reduce
  * load on the final global combine step.
  */
-class SCollectionWithFanout[T: Coder] private[values] (coll: SCollection[T], fanout: Int)
+class SCollectionWithFanout[T] private[values] (coll: SCollection[T], fanout: Int)
     extends PCollectionWrapper[T] {
   override val internal: PCollection[T] = coll.internal
 
@@ -50,13 +50,13 @@ class SCollectionWithFanout[T: Coder] private[values] (coll: SCollection[T], fan
   /** [[SCollection.aggregate[A,U]* SCollection.aggregate]] with fan out. */
   def aggregate[A: Coder, U: Coder](aggregator: Aggregator[T, A, U]): SCollection[U] = {
     val a = aggregator // defeat closure
-    coll.transform(_.map(a.prepare).sum(a.semigroup, Coder[A]).map(a.present))
+    coll.transform(_.map(a.prepare).sum(a.semigroup).map(a.present))
   }
 
   /** [[SCollection.aggregate[A,U]* SCollection.aggregate]] with fan out. */
   def aggregate[A: Coder, U: Coder](aggregator: MonoidAggregator[T, A, U]): SCollection[U] = {
     val a = aggregator // defeat closure
-    coll.transform(_.map(a.prepare).fold(a.monoid, Coder[A]).map(a.present))
+    coll.transform(_.map(a.prepare).fold(a.monoid).map(a.present))
   }
 
   /** [[SCollection.combine]] with fan out. */
