@@ -17,7 +17,7 @@
 
 package com.spotify.scio.coders
 
-import org.apache.beam.sdk.coders.{CoderRegistry, KvCoder, NullableCoder, Coder => BCoder}
+import org.apache.beam.sdk.coders.{KvCoder, NullableCoder, Coder => BCoder}
 import org.apache.beam.sdk.options.{PipelineOptions, PipelineOptionsFactory}
 
 object CoderMaterializer {
@@ -32,20 +32,18 @@ object CoderMaterializer {
   }
 
   final def beam[T](sc: ScioContext, c: Coder[T]): BCoder[T] =
-    beam(sc.pipeline.getCoderRegistry, sc.options, c)
+    beam(sc.options, c)
 
   final def beamWithDefault[T](
     coder: Coder[T],
-    r: CoderRegistry = CoderRegistry.createDefault(),
     o: PipelineOptions = PipelineOptionsFactory.create()
-  ): BCoder[T] = beam(r, o, coder)
+  ): BCoder[T] = beam(o, coder)
 
   @inline private def nullCoder[T](o: CoderOptions, c: BCoder[T]) =
     if (o.nullableCoders) NullableCoder.of(c)
     else c
 
   final def beam[T](
-    r: CoderRegistry,
     o: PipelineOptions,
     coder: Coder[T]
   ): BCoder[T] = beamImpl(CoderOptions(o), coder)

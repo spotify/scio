@@ -93,12 +93,7 @@ final class CoderTest extends AnyFlatSpec with Matchers {
   val user = User(userId, "johndoe", "johndoe@spotify.com")
 
   def materialize[T](coder: Coder[T]): BCoder[T] =
-    CoderMaterializer
-      .beam(
-        CoderRegistry.createDefault(),
-        PipelineOptionsFactory.create(),
-        coder
-      )
+    CoderMaterializer.beam(PipelineOptionsFactory.create(), coder)
 
   "Coders" should "support primitives" in {
     1 coderShould roundtrip()
