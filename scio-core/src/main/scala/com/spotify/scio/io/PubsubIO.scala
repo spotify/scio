@@ -352,7 +352,6 @@ final private case class PubsubIOWithAttributes[T: ClassTag: Coder](
           val attributes = kv._2.asJava
           new beam.PubsubMessage(payload, attributes)
         }
-        .setCoder(PubsubMessageWithAttributesCoder.of())
         .applyInternal("Write to Pubsub", w)
     }
     EmptyTap
