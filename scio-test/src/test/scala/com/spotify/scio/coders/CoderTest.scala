@@ -20,7 +20,7 @@ package com.spotify.scio.coders
 import com.spotify.scio.proto.OuterClassForProto
 import com.spotify.scio.testing.CoderAssertions._
 import org.apache.avro.generic.GenericRecord
-import org.apache.beam.sdk.coders.{CoderException, CoderRegistry, Coder => BCoder}
+import org.apache.beam.sdk.coders.{CoderException, Coder => BCoder}
 import org.apache.beam.sdk.coders.Coder.NonDeterministicException
 import org.apache.beam.sdk.options.{PipelineOptions, PipelineOptionsFactory}
 import org.scalactic.Equality
@@ -93,12 +93,7 @@ final class CoderTest extends AnyFlatSpec with Matchers {
   val user = User(userId, "johndoe", "johndoe@spotify.com")
 
   def materialize[T](coder: Coder[T]): BCoder[T] =
-    CoderMaterializer
-      .beam(
-        CoderRegistry.createDefault(),
-        PipelineOptionsFactory.create(),
-        coder
-      )
+    CoderMaterializer.beam(PipelineOptionsFactory.create(), coder)
 
   "Coders" should "support primitives" in {
     1 coderShould roundtrip()

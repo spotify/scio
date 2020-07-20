@@ -86,7 +86,7 @@ private[scio] object Functions {
     ): BCoder[VA] = {
       val options = PipelineOptionsFactory.create()
       options.as(classOf[ScioOptions]).setNullableCoders(context.useNullableCoders)
-      CoderMaterializer.beamWithDefault(vacoder, registry, options)
+      CoderMaterializer.beamWithDefault(vacoder, options)
     }
 
     override def getDefaultOutputCoder(
@@ -95,7 +95,7 @@ private[scio] object Functions {
     ): BCoder[VO] = {
       val options = PipelineOptionsFactory.create()
       options.as(classOf[ScioOptions]).setNullableCoders(context.useNullableCoders)
-      CoderMaterializer.beamWithDefault(vocoder, registry, options)
+      CoderMaterializer.beamWithDefault(vocoder, options)
     }
   }
 
