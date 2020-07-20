@@ -263,7 +263,7 @@ private[scio] object Functions {
       c.output(g(c.element()))
   }
 
-  def partitionFn[T](numPartitions: Int, f: T => Int): PartitionFn[T] =
+  def partitionFn[T](f: T => Int): PartitionFn[T] =
     new NamedPartitionFn[T] {
       private[this] val g = ClosureCleaner.clean(f) // defeat closure
       override def partitionFor(elem: T, numPartitions: Int): Int = g(elem)
