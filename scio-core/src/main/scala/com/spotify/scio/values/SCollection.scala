@@ -205,10 +205,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   def applyKvTransform[K, V](
     name: String,
     transform: PTransform[_ >: PCollection[T], PCollection[KV[K, V]]]
-  )(implicit koder: Coder[K], voder: Coder[V]): SCollection[KV[K, V]] = {
-    val bcoder = CoderMaterializer.kvCoder[K, V](context)
-    ensureSerializable(bcoder).fold(throw _, pApply(name, transform).setCoder)
-  }
+  )(implicit koder: Coder[K], voder: Coder[V]): SCollection[KV[K, V]] =
+    applyTransform(name, transform)(Coder.beam(CoderMaterializer.kvCoder[K, V](context)))
 
   /** Apply a transform. */
   def transform[U](f: SCollection[T] => SCollection[U]): SCollection[U] = transform(this.tfName)(f)
