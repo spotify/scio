@@ -148,8 +148,8 @@ package object transforms {
      */
     def filterWithParallelism(
       parallelism: Int
-    )(fn: T => Boolean)(implicit coder: Coder[T]): SCollection[T] =
-      self.parDo(parallelFilterFn(parallelism)(fn))
+    )(fn: T => Boolean): SCollection[T] =
+      self.parDo(parallelFilterFn(parallelism)(fn))(self.coder)
 
     /**
      * Return a new SCollection by applying a function to all elements of this SCollection.
@@ -234,7 +234,7 @@ package object transforms {
      */
     def safeFlatMap[U: Coder](
       f: T => TraversableOnce[U]
-    )(implicit coder: Coder[T]): (SCollection[U], SCollection[(T, Throwable)]) = {
+    ): (SCollection[U], SCollection[(T, Throwable)]) = {
       val (mainTag, errorTag) = (new TupleTag[U], new TupleTag[(T, Throwable)])
       val doFn = new NamedDoFn[T, U] {
         val g = ClosureCleaner.clean(f) // defeat closure
@@ -256,6 +256,7 @@ package object transforms {
       val main = tuple
         .get(mainTag)
         .setCoder(CoderMaterializer.beam(self.context, Coder[U]))
+      import self.coder
       val errorPipe =
         tuple
           .get(errorTag)
