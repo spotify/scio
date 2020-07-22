@@ -78,7 +78,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
   private[this] val toKvTransform =
     ParDo.of(Functions.mapFn((kv: (K, V)) => KV.of(kv._1, kv._2)))
 
-  implicit private[this] val (keyCoder, valueCoder): (Coder[K], Coder[V]) = KvCoders.get(self)
+  implicit private[scio] val (keyCoder, valueCoder): (Coder[K], Coder[V]) = KvCoders.get(self)
 
   private[scio] def toKV: SCollection[KV[K, V]] =
     self.applyTransform(toKvTransform)(Coder.raw(CoderMaterializer.kvCoder[K, V](context)))
