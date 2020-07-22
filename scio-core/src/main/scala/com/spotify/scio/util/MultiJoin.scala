@@ -17,13 +17,6 @@
 
 // generated with multijoin.py
 
-
-
-
-
-
-
-
 package com.spotify.scio.util
 
 import com.spotify.scio.coders.Coder
@@ -2709,7 +2702,6 @@ trait MultiJoin extends Serializable {
 
 }
 
-
 object MultiJoin extends MultiJoin {
   def withName(name: String): MultiJoin = new NamedMultiJoin(name)
 }
@@ -2717,10 +2709,3 @@ object MultiJoin extends MultiJoin {
 private class NamedMultiJoin(val name: String) extends MultiJoin {
   override def tfName: String = name
 }
-
-
-
-
-
-
-

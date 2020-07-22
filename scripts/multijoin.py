@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
 #  Copyright 2016 Spotify AB.
 #
@@ -23,7 +23,7 @@ import textwrap
 # Utilities
 
 def mkVals(n):
-    return list(string.uppercase[:n])
+    return list(string.ascii_uppercase[:n])
 
 
 def mkArgs(n):
@@ -50,111 +50,141 @@ def mkFnRetVal(n, aWrapper=None, otherWrapper=None):
 def cogroup(out, n):
     vals = mkVals(n)
 
-    print >> out, '  def cogroup[%s](%s): %s = {' % (
-        mkClassTags(n), mkFnArgs(n), mkFnRetVal(n, 'Iterable', 'Iterable'))
+    print('  def cogroup[%s](%s): %s = {' % (
+        mkClassTags(n), mkFnArgs(n), mkFnRetVal(n, 'Iterable', 'Iterable')),
+        file=out)
 
-    print >> out, '    val (%s) = (%s)' % (
+    print('    val (%s) = (%s)' % (
         ', '.join('tag' + x for x in vals),
-        ', '.join('new TupleTag[%s]()' % x for x in vals))
+        ', '.join('new TupleTag[%s]()' % x for x in vals)),
+        file=out)
 
-    print >> out, '    val keyed = KeyedPCollectionTuple'
-    print >> out, '      .of(tagA, a.toKV.internal)'
+    print('    val keyed = KeyedPCollectionTuple', file=out)
+    print('      .of(tagA, a.toKV.internal)', file=out)
     for x in vals[1:]:
-        print >> out, '      .and(tag%s, %s.toKV.internal)' % (x, x.lower())
-    print >> out, '      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())'
+        print('      .and(tag%s, %s.toKV.internal)' % (x, x.lower()), file=out)
+    print(
+        '      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())',
+        file=out)
 
-    print >> out, '    a.context.wrap(keyed).withName(tfName).map { kv =>'
-    print >> out, '      val (key, result) = (kv.getKey, kv.getValue)'
-    print >> out, '      (key, (%s))' % ', '.join('result.getAll(tag%s).asScala' % x for x in vals)  # NOQA
-    print >> out, '    }'
-    print >> out, '  }'
-    print >> out
+    print('    a.context.wrap(keyed).withName(tfName).map { kv =>', file=out)
+    print('      val (key, result) = (kv.getKey, kv.getValue)', file=out)
+    print('      (key, (%s))' % ', '.join(
+        'result.getAll(tag%s).asScala' % x for x in vals),
+        file=out)  # NOQA
+    print('    }', file=out)
+    print('  }', file=out)
+    print(file=out)
 
 
 def join(out, n):
     vals = mkVals(n)
 
-    print >> out, '  def apply[%s](%s): %s = {' % (
-        mkClassTags(n), mkFnArgs(n), mkFnRetVal(n))
+    print('  def apply[%s](%s): %s = {' % (
+        mkClassTags(n), mkFnArgs(n), mkFnRetVal(n)), file=out)
 
-    print >> out, '    val (%s) = (%s)' % (
+    print('    val (%s) = (%s)' % (
         ', '.join('tag' + x for x in vals),
-        ', '.join('new TupleTag[%s]()' % x for x in vals))
+        ', '.join('new TupleTag[%s]()' % x for x in vals)), file=out)
 
-    print >> out, '    val keyed = KeyedPCollectionTuple'
-    print >> out, '      .of(tagA, a.toKV.internal)'
+    print('    val keyed = KeyedPCollectionTuple', file=out)
+    print('      .of(tagA, a.toKV.internal)', file=out)
     for x in vals[1:]:
-        print >> out, '      .and(tag%s, %s.toKV.internal)' % (x, x.lower())
-    print >> out, '      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())'
+        print('      .and(tag%s, %s.toKV.internal)' % (x, x.lower()), file=out)
+    print(
+        '      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())',
+        file=out)
 
-    print >> out, '    a.context.wrap(keyed).withName(tfName).flatMap { kv =>'
-    print >> out, '      val (key, result) = (kv.getKey, kv.getValue)'
-    print >> out, '      for {'
+    print(
+        '    a.context.wrap(keyed).withName(tfName).flatMap { kv =>',
+        file=out)
+    print('      val (key, result) = (kv.getKey, kv.getValue)', file=out)
+    print('      for {', file=out)
     for x in reversed(vals):
-        print >> out, '        %s <- result.getAll(tag%s).asScala.iterator' % (x.lower(), x)
-    print >> out, '      } yield (key, (%s))' % mkArgs(n)
-    print >> out, '    }'
-    print >> out, '  }'
-    print >> out
+        print('        %s <- result.getAll(tag%s).asScala.iterator' % (
+            x.lower(), x),
+            file=out)
+    print('      } yield (key, (%s))' % mkArgs(n), file=out)
+    print('    }', file=out)
+    print('  }', file=out)
+    print(file=out)
 
 
 def left(out, n):
     vals = mkVals(n)
-    print >> out, '  def left[%s](%s): %s = {' % (
-        mkClassTags(n), mkFnArgs(n), mkFnRetVal(n, None, 'Option'))
+    print('  def left[%s](%s): %s = {' % (
+        mkClassTags(n), mkFnArgs(n), mkFnRetVal(n, None, 'Option')),
+        file=out)
 
-    print >> out, '    val (%s) = (%s)' % (
+    print('    val (%s) = (%s)' % (
         ', '.join('tag' + x for x in vals),
-        ', '.join('new TupleTag[%s]()' % x for x in vals))
+        ', '.join('new TupleTag[%s]()' % x for x in vals)),
+        file=out)
 
-    print >> out, '    val keyed = KeyedPCollectionTuple'
-    print >> out, '      .of(tagA, a.toKV.internal)'
+    print('    val keyed = KeyedPCollectionTuple', file=out)
+    print('      .of(tagA, a.toKV.internal)', file=out)
     for x in vals[1:]:
-        print >> out, '      .and(tag%s, %s.toKV.internal)' % (x, x.lower())
-    print >> out, '      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())'
+        print('      .and(tag%s, %s.toKV.internal)' % (x, x.lower()), file=out)
+    print(
+        '      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())',
+        file=out)
 
-    print >> out, '    a.context.wrap(keyed).withName(tfName).flatMap { kv =>'
-    print >> out, '      val (key, result) = (kv.getKey, kv.getValue)'
-    print >> out, '      for {'
+    print(
+        '    a.context.wrap(keyed).withName(tfName).flatMap { kv =>',
+        file=out)
+    print('      val (key, result) = (kv.getKey, kv.getValue)', file=out)
+    print('      for {', file=out)
     for (i, x) in enumerate(reversed(vals)):
         if (i == n - 1):
-            print >> out, '        %s <- result.getAll(tag%s).asScala.iterator' % (x.lower(), x)
+            print('        %s <- result.getAll(tag%s).asScala.iterator' % (
+                x.lower(), x),
+                file=out)
         else:
-            print >> out, '        %s <- toOptions(result.getAll(tag%s).asScala.iterator)' % (x.lower(), x)
-    print >> out, '      } yield (key, (%s))' % mkArgs(n)
-    print >> out, '    }'
-    print >> out, '  }'
-    print >> out
+            print('        %s <- toOptions(result.getAll(tag%s).asScala.iterator)' % ( # NOQA
+                x.lower(), x),
+                file=out)
+    print('      } yield (key, (%s))' % mkArgs(n), file=out)
+    print('    }', file=out)
+    print('  }', file=out)
+    print(file=out)
 
 
 def outer(out, n):
     vals = mkVals(n)
-    print >> out, '  def outer[%s](%s): %s = {' % (
-        mkClassTags(n), mkFnArgs(n), mkFnRetVal(n, 'Option', 'Option'))
+    print('  def outer[%s](%s): %s = {' % (
+        mkClassTags(n), mkFnArgs(n), mkFnRetVal(n, 'Option', 'Option')),
+        file=out)
 
-    print >> out, '    val (%s) = (%s)' % (
+    print('    val (%s) = (%s)' % (
         ', '.join('tag' + x for x in vals),
-        ', '.join('new TupleTag[%s]()' % x for x in vals))
+        ', '.join('new TupleTag[%s]()' % x for x in vals)),
+        file=out)
 
-    print >> out, '    val keyed = KeyedPCollectionTuple'
-    print >> out, '      .of(tagA, a.toKV.internal)'
+    print('    val keyed = KeyedPCollectionTuple', file=out)
+    print('      .of(tagA, a.toKV.internal)', file=out)
     for x in vals[1:]:
-        print >> out, '      .and(tag%s, %s.toKV.internal)' % (x, x.lower())
-    print >> out, '      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())'
+        print('      .and(tag%s, %s.toKV.internal)' % (x, x.lower()), file=out)
+    print(
+        '      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())',
+        file=out)
 
-    print >> out, '    a.context.wrap(keyed).withName(tfName).flatMap { kv =>'
-    print >> out, '      val (key, result) = (kv.getKey, kv.getValue)'
-    print >> out, '      for {'
+    print(
+        '    a.context.wrap(keyed).withName(tfName).flatMap { kv =>',
+        file=out)
+    print('      val (key, result) = (kv.getKey, kv.getValue)', file=out)
+    print('      for {', file=out)
     for (i, x) in enumerate(reversed(vals)):
-        print >> out, '        %s <- toOptions(result.getAll(tag%s).asScala.iterator)' % (x.lower(), x)
-    print >> out, '      } yield (key, (%s))' % mkArgs(n)
-    print >> out, '    }'
-    print >> out, '  }'
-    print >> out
+        print(
+            '        %s <- toOptions(result.getAll(tag%s).asScala.iterator)' % (x.lower(), x), # NOQA
+            file=out)
+    print('      } yield (key, (%s))' % mkArgs(n), file=out)
+    print('    }', file=out)
+    print('  }', file=out)
+    print(file=out)
 
 
 def main(out):
-    print >> out, textwrap.dedent('''
+    print(textwrap.dedent('''
         /*
          * Copyright 2019 Spotify AB.
          *
@@ -174,13 +204,6 @@ def main(out):
 
         // generated with multijoin.py
 
-        
-        
-        
-        
-        
-        
-
         package com.spotify.scio.util
 
         import com.spotify.scio.coders.Coder
@@ -196,20 +219,19 @@ def main(out):
           protected def tfName: String = CallSites.getCurrent
 
           def toOptions[T](xs: Iterator[T]): Iterator[Option[T]] = if (xs.isEmpty) Iterator(None) else xs.map(Option(_))
-        ''').replace('  # NOQA', '').lstrip('\n')
+        ''').replace('  # NOQA', '').lstrip('\n'), file=out)
 
     N = 22
-    for i in xrange(2, N + 1):
+    for i in range(2, N + 1):
         cogroup(out, i)
-    for i in xrange(2, N + 1):
+    for i in range(2, N + 1):
         join(out, i)
-    for i in xrange(2, N + 1):
+    for i in range(2, N + 1):
         left(out, i)
-    for i in xrange(2, N + 1):
+    for i in range(2, N + 1):
         outer(out, i)
-    print >> out, '}'
-    print >> out, textwrap.dedent('''
-
+    print('}', file=out)
+    print(textwrap.dedent('''
         object MultiJoin extends MultiJoin {
           def withName(name: String): MultiJoin = new NamedMultiJoin(name)
         }
@@ -217,13 +239,8 @@ def main(out):
         private class NamedMultiJoin(val name: String) extends MultiJoin {
           override def tfName: String = name
         }
+        ''').rstrip('\n'), file=out)
 
-        
-        
-        
-        
-        
-        
 
 if __name__ == '__main__':
     main(sys.stdout)
