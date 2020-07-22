@@ -608,8 +608,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       val cf = ClosureCleaner.clean(f)
       val cg = ClosureCleaner.clean(g)
 
-      _.map(t => KV.of(cf(t), cg(t)))
-        .setCoder(CoderMaterializer.kvCoder[K, U](context))
+      _.map(t => KV.of(cf(t), cg(t)))(Coder.raw(CoderMaterializer.kvCoder[K, U](context)))
         .pApply(GroupByKey.create[K, U]())
         .map(kvIterableToTuple)
     }
@@ -630,8 +629,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     this.transform {
       val cf = ClosureCleaner.clean(f)
 
-      _.map(t => KV.of(cf(t), t))
-        .setCoder(CoderMaterializer.kvCoder[K, T](context))
+      _.map(t => KV.of(cf(t), t))(Coder.raw(CoderMaterializer.kvCoder[K, T](context)))
         .pApply(Combine.perKey(Functions.reduceFn(context, g)))
         .map(kvToTuple)
     }

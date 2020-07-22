@@ -77,6 +77,9 @@ private[scio] object Ref {
   def unapply[T](c: Ref[T]): Option[(String, Coder[T])] = Option((c.typeName, c.value))
 }
 
+final case class RawBeam[T] private (beam: BCoder[T]) extends Coder[T] {
+  override def toString: String = s"RawBeam($beam)"
+}
 final case class Beam[T] private (beam: BCoder[T]) extends Coder[T] {
   override def toString: String = s"Beam($beam)"
 }
@@ -395,6 +398,8 @@ final private[scio] case class RecordCoder[T](
 sealed trait CoderGrammar {
 
   /** Create a ScioCoder from a Beam Coder */
+  def raw[T](beam: BCoder[T]): Coder[T] =
+    RawBeam(beam)
   def beam[T](beam: BCoder[T]): Coder[T] =
     Beam(beam)
   def kv[K, V](koder: Coder[K], voder: Coder[V]): Coder[KV[K, V]] =
