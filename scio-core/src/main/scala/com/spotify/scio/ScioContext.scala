@@ -866,6 +866,7 @@ class ScioContext private[scio] (
   // =======================================================================
 
   /** Create a union of multiple SCollections. Supports empty lists. */
+  // `T: Coder` context bound is required since `scs` might be empty.
   def unionAll[T: Coder](scs: Iterable[SCollection[T]]): SCollection[T] =
     scs match {
       case Nil => empty()
