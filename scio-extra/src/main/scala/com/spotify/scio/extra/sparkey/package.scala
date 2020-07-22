@@ -28,7 +28,7 @@ import com.spotify.scio.extra.sparkey.instances.{
   SparkeyReaderInstances,
   TypedSparkeyReader
 }
-import com.spotify.scio.util.Cache
+import com.spotify.scio.util.{Cache, RemoteFileUtil}
 import com.spotify.scio.values.{SCollection, SideInput}
 import com.spotify.sparkey.{IndexHeader, LogHeader, SparkeyReader}
 import org.apache.beam.sdk.io.FileSystems
@@ -126,13 +126,10 @@ package object sparkey extends SparkeyReaderInstances {
 
   /** Enhanced version of [[ScioContext]] with Sparkey methods. */
   implicit class SparkeyScioContext(private val self: ScioContext) extends AnyVal {
-    private def singleViewOf(basePath: String): PCollectionView[SparkeyUri] =
-      self.parallelize(Seq(SparkeyUri(basePath, self.options))).applyInternal(View.asSingleton())
 
-    private def shardedViewOf(basePath: String): PCollectionView[SparkeyUri] =
-      self
-        .parallelize(Seq[SparkeyUri](ShardedSparkeyUri(basePath, self.options)))
-        .applyInternal(View.asSingleton())
+    @experimental
+    def sparkeyUri(basePath: String): SCollection[SparkeyUri] =
+      self.read(SparkeyIO(basePath))(SparkeyIO.ReadP(self.options))
 
     /**
      * Create a SideInput of `SparkeyReader` from a [[SparkeyUri]] base path, to be used with
@@ -142,14 +139,11 @@ package object sparkey extends SparkeyReaderInstances {
      */
     @experimental
     def sparkeySideInput(basePath: String): SideInput[SparkeyReader] = {
-      val view = if (basePath.endsWith("*")) {
-        val basePathWithoutGlobPart = basePath.split("/").dropRight(1).mkString("/")
-        shardedViewOf(basePathWithoutGlobPart)
-      } else {
-        singleViewOf(basePath)
-      }
-
-      new SparkeySideInput(view)
+      new SparkeySideInput(
+        self
+          .read(SparkeyIO(basePath))(SparkeyIO.ReadP(self.options))
+          .applyInternal(View.asSingleton())
+      )
     }
 
     /**
@@ -221,14 +215,18 @@ package object sparkey extends SparkeyReaderInstances {
       koder: Coder[K],
       voder: Coder[V]
     ): SCollection[SparkeyUri] = {
+
+      // FIXME how to rewrite this to use SparkeyIO?
+
       require(numShards > 0, s"numShards must be greater than 0, found $numShards")
 
+      val rfuCreateFn: () => RemoteFileUtil = () => RemoteFileUtil.create(self.context.options)
       val tempLocation = self.context.options.getTempLocation()
       val tempPath = s"$tempLocation/sparkey-${UUID.randomUUID}"
       val basePath = if (path == null) tempPath else path
-      val nonShardedUri = SparkeyUri(basePath, self.context.options)
+      val nonShardedUri = SparkeyUri(basePath, rfuCreateFn)
       require(!nonShardedUri.exists, s"Sparkey URI $nonShardedUri already exists")
-      val uri = ShardedSparkeyUri(basePath, self.context.options)
+      val uri = ShardedSparkeyUri(basePath, rfuCreateFn)
       require(!uri.exists, s"Sparkey URI $uri already exists")
 
       logger.info(s"Saving as Sparkey with $numShards shards: $basePath")

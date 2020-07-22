@@ -24,7 +24,9 @@ import java.util.Arrays
 import com.spotify.scio.util._
 import com.github.benmanes.caffeine.cache.{Caffeine, Cache => CCache}
 import com.spotify.scio._
+import com.spotify.scio.io.TextIO
 import com.spotify.scio.testing._
+import com.spotify.scio.values.SideInput
 import com.spotify.sparkey._
 import org.apache.beam.sdk.io.FileSystems
 import org.apache.commons.io.FileUtils
@@ -56,6 +58,44 @@ object TestCache {
 
   @inline def apply[K, V](): TestCache[K, V] =
     TestCache[K, V](scala.util.Random.nextString(5))
+}
+
+object SparkeyJobTest {
+  def main(cmdlineArgs: Array[String]): Unit = {
+    val (sc, args) = ContextAndArgs(cmdlineArgs)
+    val si: SideInput[SparkeyReader] = sc.sparkeySideInput(args("sparkey"))
+    sc.textFile(args("input"))
+      .withSideInputs(si)
+      .flatMap {
+        case (v, ctx) =>
+          Option(ctx(si).getAsString(v)).map(vv => s"$v -> $vv")
+      }
+      .toSCollection
+      .saveAsTextFile(args("output"))
+
+    sc.run().waitUntilDone()
+  }
+}
+
+class SparkeyIOTest extends ScioIOSpec {
+  val items = List("a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n")
+
+  "SparkeyIO" should "work with input" in {
+    val uris = items.map(SparkeyUri(_, () => ???))
+    testJobTestInput(uris)(path => SparkeyIO(path)) { case (sc, path) => sc.sparkeyUri(path) }
+  }
+
+  it should "work in a job test" in {
+    val lookup = items.map(i => i -> i)
+    val expected = items.map(i => s"$i -> $i")
+    JobTest[SparkeyJobTest.type]
+      .args("--input=input.txt", "--sparkey=mySparkey", "--output=out.txt")
+      .input(SparkeyIO("mySparkey"), List(SparkeyIO.testUri(lookup)))
+      .input(TextIO("input.txt"), items)
+      .output(TextIO("out.txt"))(coll => coll should containInAnyOrder(expected))
+      .run()
+
+  }
 }
 
 class SparkeyTest extends PipelineSpec {

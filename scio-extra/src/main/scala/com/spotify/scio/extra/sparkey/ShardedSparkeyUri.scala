@@ -26,7 +26,6 @@ import com.spotify.sparkey.SparkeyReader
 import com.spotify.sparkey.extra.ThreadLocalSparkeyReader
 import org.apache.beam.sdk.io.FileSystems
 import org.apache.beam.sdk.io.fs.{EmptyMatchTreatment, MatchResult}
-import org.apache.beam.sdk.options.PipelineOptions
 
 import scala.jdk.CollectionConverters._
 
@@ -84,11 +83,11 @@ trait ShardedSparkeyUri extends SparkeyUri {
 }
 
 private[sparkey] object ShardedSparkeyUri {
-  def apply(basePath: String, options: PipelineOptions): ShardedSparkeyUri =
+  def apply(basePath: String, rfuCreateFn: () => RemoteFileUtil): ShardedSparkeyUri =
     if (ScioUtil.isLocalUri(new URI(basePath))) {
       LocalShardedSparkeyUri(basePath)
     } else {
-      RemoteShardedSparkeyUri(basePath, RemoteFileUtil.create(options))
+      RemoteShardedSparkeyUri(basePath, rfuCreateFn())
     }
 
   private[sparkey] def numShardsFromPath(path: String): Short =
