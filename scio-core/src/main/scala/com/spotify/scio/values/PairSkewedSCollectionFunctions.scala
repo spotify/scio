@@ -72,7 +72,7 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    *                        [[SCollection.sample(withReplacement:Boolean,fraction:Double)*
    *                        SCollection.sample]].
    */
-  def skewedJoin[W: Coder](
+  def skewedJoin[W](
     rhs: SCollection[(K, W)],
     hotKeyThreshold: Long = 9000,
     eps: Double = 0.001,
@@ -131,7 +131,7 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    *                        10K, keep upper estimation error in mind.
    * @param cms left hand side key [[com.twitter.algebird.CMSMonoid]]
    */
-  def skewedJoin[W: Coder](
+  def skewedJoin[W](
     rhs: SCollection[(K, W)],
     hotKeyThreshold: Long,
     cms: SCollection[CMS[K]]
@@ -190,7 +190,7 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    *                        [[SCollection.sample(withReplacement:Boolean,fraction:Double)*
    *                        SCollection.sample]].
    */
-  def skewedLeftOuterJoin[W: Coder](
+  def skewedLeftOuterJoin[W](
     rhs: SCollection[(K, W)],
     hotKeyThreshold: Long = 9000,
     eps: Double = 0.001,
@@ -249,7 +249,7 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    *                        10K, keep upper estimation error in mind.
    * @param cms left hand side key [[com.twitter.algebird.CMSMonoid]]
    */
-  def skewedLeftOuterJoin[W: Coder](
+  def skewedLeftOuterJoin[W](
     rhs: SCollection[(K, W)],
     hotKeyThreshold: Long,
     cms: SCollection[CMS[K]]
@@ -307,7 +307,7 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    *                        [[SCollection.sample(withReplacement:Boolean,fraction:Double)*
    *                        SCollection.sample]].
    */
-  def skewedFullOuterJoin[W: Coder](
+  def skewedFullOuterJoin[W](
     rhs: SCollection[(K, W)],
     hotKeyThreshold: Long = 9000,
     eps: Double = 0.001,
@@ -366,7 +366,7 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    *                        10K, keep upper estimation error in mind.
    * @param cms left hand side key [[com.twitter.algebird.CMSMonoid]]
    */
-  def skewedFullOuterJoin[W: Coder](
+  def skewedFullOuterJoin[W](
     rhs: SCollection[(K, W)],
     hotKeyThreshold: Long,
     cms: SCollection[CMS[K]]
@@ -388,12 +388,13 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     }
   }
 
-  private def partitionInputs[W: Coder](
+  private def partitionInputs[W](
     lhs: SCollection[(K, V)],
     rhs: SCollection[(K, W)],
     hotKeyThreshold: Long,
     cms: SCollection[CMS[K]]
   ): (Partitions[K, V], Partitions[K, W]) = {
+    implicit val wCoder = rhs.valueCoder
     val (hotSelf, chillSelf) = (SideOutput[(K, V)](), SideOutput[(K, V)]())
 
     // Use asIterableSideInput as workaround for:
