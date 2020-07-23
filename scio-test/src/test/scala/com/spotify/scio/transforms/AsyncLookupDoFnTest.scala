@@ -103,6 +103,12 @@ class AsyncLookupDoFnTest extends PipelineSpec {
   it should "work with failures" in {
     testFailure(new FailingScalaLookupDoFn)(identity)
   }
+
+  it should "work with failures on callback" in {
+    val errors =
+      runWithData(1 to 10)(_.parDo(new CallbackFailingScalaLookupDoFn)).filter(_.getValue.isFailure)
+    assert(errors.size == 10)
+  }
 }
 
 object AsyncLookupDoFnTest {
@@ -197,6 +203,25 @@ class FailingScalaLookupDoFn extends ScalaAsyncLookupDoFn[Int, String, AsyncClie
     } else {
       Future(throw new RuntimeException("failure" + input))
     }
+}
+
+class CallbackFailingScalaLookupDoFn extends ScalaAsyncLookupDoFn[Int, String, AsyncClient]() {
+  import scala.concurrent.ExecutionContext.Implicits.global
+  override protected def newClient(): AsyncClient = null
+  override def asyncLookup(session: AsyncClient, input: Int): Future[String] =
+    Future("success" + input)
+  override def addCallback(
+    future: Future[String],
+    onSuccess: java.util.function.Function[String, Void],
+    onFailure: java.util.function.Function[Throwable, Void]
+  ): Future[String] =
+    super.addCallback(
+      future,
+      onSuccess.compose((_: String) =>
+        throw new RuntimeException("something went wrong in the init of onSucess")
+      ),
+      onFailure
+    )
 }
 
 class TestCacheSupplier extends CacheSupplier[Int, String, java.lang.Long] {
