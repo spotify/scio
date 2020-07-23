@@ -193,7 +193,11 @@ public abstract class BaseAsyncLookupDoFn<A, B, C, F, T> extends DoFn<A, KV<A, T
     flush(r -> c.output(KV.of(r.input, r.output), r.timestamp, r.window));
 
     // Make sure all requests are processed
-    Preconditions.checkState(requestCount == resultCount);
+    Preconditions.checkState(
+        requestCount == resultCount,
+        "Expected requestCount == resultCount, but %s != %s",
+        requestCount,
+        resultCount);
   }
 
   // Flush pending errors and results
