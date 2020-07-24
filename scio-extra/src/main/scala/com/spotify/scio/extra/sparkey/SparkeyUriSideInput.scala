@@ -28,7 +28,7 @@ object SparkeyUriSideInput {
     override def iterator(): util.Iterator[SparkeyReader.Entry] = ???
   }
 
-  def forTest[T](items: Map[String, String]): SparkeyUri = new SparkeyUri {
+  def forTest(items: Map[String, String]): SparkeyUri = new SparkeyUri {
     override val basePath: String = "i should be ignored"
     override private[sparkey] def exists = true
     override def getReader: SparkeyReader = new TestSparkeyReader {
@@ -36,8 +36,8 @@ object SparkeyUriSideInput {
     }
   }
 
-  def forTest(items: Map[Array[Byte], Array[Byte]])(implicit d: DummyImplicit): SparkeyUri = new SparkeyUri {
-    private val byteStrItems = items.map { case (k, v) => ByteString.copyFrom(k) -> v }
+  def forTest(items: Seq[(Array[Byte], Array[Byte])]): SparkeyUri = new SparkeyUri {
+    private val byteStrItems = items.map { case (k, v) => ByteString.copyFrom(k) -> v }.toMap
     override val basePath: String = "i should be ignored"
     override private[sparkey] def exists = true
     override def getReader: SparkeyReader = new TestSparkeyReader {

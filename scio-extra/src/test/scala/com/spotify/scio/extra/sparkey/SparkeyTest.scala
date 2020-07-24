@@ -104,7 +104,7 @@ class SparkeyUriSideInputTest extends PipelineSpec {
   }
 
   it should "work with byte arrays" in {
-    val lookup = items.map(_.getBytes).map { i => i -> (i ++ i) }.toMap
+    val lookup = items.map(_.getBytes).map { i => (i, i ++ i) }
     val expected = items.map { i => s"$i$i"}
     JobTest[SparkeyByteArrayJobTest.type]
       .args("--input=input.txt", "--sparkey=mySparkey", "--output=out.txt")
