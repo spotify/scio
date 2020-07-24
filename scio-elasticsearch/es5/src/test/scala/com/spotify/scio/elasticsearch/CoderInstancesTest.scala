@@ -34,10 +34,10 @@ class CoderInstancesTest extends AnyFlatSpec with Matchers with CoderInstances {
   import com.spotify.scio.testing.CoderAssertions._
 
   val indexRequest = new IndexRequest("index1", "type1", "id1")
-  val deleteRequest = new DeleteRequest("index2", "type2", "id2").version(2)
-  val updateRequest =
+  val deleteRequest: DeleteRequest = new DeleteRequest("index2", "type2", "id2").version(2)
+  val updateRequest: UpdateRequest =
     new UpdateRequest("index3", "type3", "id3").doc(Map("key" -> 4).asJava, XContentType.JSON)
-  val fooRequest = FooDocWriteRequest("index3", "id3")
+  val fooRequest: FooDocWriteRequest = FooDocWriteRequest("index3", "id3")
 
   // DocWriteRequests don't have a well-defined equals method it seems
   implicit def indexRequestEq[T <: DocWriteRequest[_]]: Equality[T] = new Equality[T] {

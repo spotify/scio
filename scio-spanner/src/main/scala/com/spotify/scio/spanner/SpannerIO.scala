@@ -25,9 +25,10 @@ import org.apache.beam.sdk.io.gcp.spanner.SpannerIO.FailureMode
 import org.apache.beam.sdk.io.gcp.spanner.{SpannerConfig, SpannerIO => BSpannerIO}
 
 import scala.jdk.CollectionConverters._
+import com.spotify.scio.io.TapT
 
 sealed trait SpannerIO[T] extends ScioIO[T] {
-  final override val tapT = EmptyTapOf[T]
+  final override val tapT: TapT.Aux[T, Nothing] = EmptyTapOf[T]
   val config: SpannerConfig
 
   override def testId: String =

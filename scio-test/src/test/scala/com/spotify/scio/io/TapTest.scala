@@ -38,6 +38,7 @@ import com.spotify.scio.coders.Coder
 import com.spotify.scio.options.ScioOptions
 import org.apache.avro.generic.GenericRecord
 import org.apache.avro.generic.GenericData
+import org.apache.avro.Schema
 
 trait TapSpec extends PipelineSpec {
   def verifyTap[T: Coder](tap: Tap[T], expected: Set[T]): Unit = {
@@ -66,14 +67,14 @@ trait TapSpec extends PipelineSpec {
 }
 
 class TapTest extends TapSpec {
-  val schema = newGenericRecord(1).getSchema
-  implicit val coder = Coder.avroGenericRecordCoder(schema)
+  val schema: Schema = newGenericRecord(1).getSchema
+  implicit def coder: Coder[GenericRecord] = Coder.avroGenericRecordCoder(schema)
 
   private def makeRecords(sc: ScioContext) =
     sc.parallelize(Seq(1, 2, 3))
       .map(i => (newSpecificRecord(i), newGenericRecord(i)))
 
-  val expectedRecords =
+  val expectedRecords: Set[(TestRecord, GenericRecord)] =
     Set(1, 2, 3).map(i => (newSpecificRecord(i), newGenericRecord(i)))
 
   "Future" should "support saveAsInMemoryTap" in {

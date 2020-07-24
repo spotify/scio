@@ -21,8 +21,8 @@ import com.spotify.scio.io._
 import com.spotify.scio.testing._
 
 class TsvExampleTest extends PipelineSpec {
-  val inData = Seq("a b c d e", "a b a b", "")
-  val tsvData = Seq("a\t3", "b\t3", "c\t1", "d\t1", "e\t1")
+  val inData: Seq[String] = Seq("a b c d e", "a b a b", "")
+  val tsvData: Seq[String] = Seq("a\t3", "b\t3", "c\t1", "d\t1", "e\t1")
 
   "TsvExample" should "write a TSV data" in {
     JobTest[TsvExampleWrite.type]

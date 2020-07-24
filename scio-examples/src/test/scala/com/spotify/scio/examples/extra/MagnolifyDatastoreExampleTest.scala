@@ -23,9 +23,9 @@ import com.spotify.scio.io._
 import com.spotify.scio.testing._
 
 class MagnolifyDatastoreExampleTest extends PipelineSpec {
-  val textIn = Seq("a b c d e", "a b a b")
-  val wordCount = Seq(("a", 3L), ("b", 3L), ("c", 1L), ("d", 1L), ("e", 1L))
-  val entities = wordCount.map { kv =>
+  val textIn: Seq[String] = Seq("a b c d e", "a b a b")
+  val wordCount: Seq[(String, Long)] = Seq(("a", 3L), ("b", 3L), ("c", 1L), ("d", 1L), ("e", 1L))
+  val entities: Seq[Entity] = wordCount.map { kv =>
     Entity
       .newBuilder()
       .setKey(makeKey(MagnolifyDatastoreExample.kind, kv._1))
@@ -33,7 +33,7 @@ class MagnolifyDatastoreExampleTest extends PipelineSpec {
       .putProperties("count", makeValue(kv._2).build())
       .build()
   }
-  val textOut = wordCount.map(kv => kv._1 + ": " + kv._2)
+  val textOut: Seq[String] = wordCount.map(kv => kv._1 + ": " + kv._2)
 
   "MagnolifyDatastoreWriteExample" should "work" in {
     JobTest[com.spotify.scio.examples.extra.MagnolifyDatastoreWriteExample.type]

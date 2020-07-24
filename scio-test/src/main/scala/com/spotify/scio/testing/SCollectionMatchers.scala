@@ -54,7 +54,7 @@ final private case class TestWrapper[T: Eq](get: T) {
 
 private object TestWrapper {
 
-  def wrap[T: Coder: Eq](coll: SCollection[T]) =
+  def wrap[T: Coder: Eq](coll: SCollection[T]): SCollection[TestWrapper[T]] =
     coll.map(t => TestWrapper(t))
 
   def wrap[T: Eq](coll: JIterable[T]): JIterable[TestWrapper[T]] =
@@ -123,22 +123,30 @@ private object ScioMatchers {
       }
     }
 
-  def assertThatFn[T: Eq: Coder](mm: h.Matcher[JIterable[TestWrapper[T]]]) =
+  def assertThatFn[T: Eq: Coder](
+    mm: h.Matcher[JIterable[TestWrapper[T]]]
+  ): SerializableFunction[JIterable[T], Void] =
     makeFn[T](in => assertThat(TestWrapper.wrap(in), mm))
 
-  def assertThatNotFn[T: Eq: Coder](mm: h.Matcher[JIterable[TestWrapper[T]]]) =
+  def assertThatNotFn[T: Eq: Coder](
+    mm: h.Matcher[JIterable[TestWrapper[T]]]
+  ): SerializableFunction[JIterable[T], Void] =
     makeFn[T](in => assertThat(TestWrapper.wrap(in), Matchers.not(mm)))
 
-  def assert[T: Eq: Coder](p: Iterable[TestWrapper[T]] => Boolean) =
+  def assert[T: Eq: Coder](
+    p: Iterable[TestWrapper[T]] => Boolean
+  ): SerializableFunction[JIterable[T], Void] =
     makeFn[T](in => Predef.assert(p(TestWrapper.wrap(in).asScala)))
 
-  def assertSingle[T: Eq: Coder](p: TestWrapper[T] => Boolean) =
+  def assertSingle[T: Eq: Coder](p: TestWrapper[T] => Boolean): SerializableFunction[T, Void] =
     makeFnSingle[T](in => Predef.assert(p(TestWrapper(in))))
 
-  def assertNot[T: Eq: Coder](p: Iterable[TestWrapper[T]] => Boolean) =
+  def assertNot[T: Eq: Coder](
+    p: Iterable[TestWrapper[T]] => Boolean
+  ): SerializableFunction[JIterable[T], Void] =
     makeFn[T](in => Predef.assert(!p(TestWrapper.wrap(in).asScala)))
 
-  def assertNotSingle[T: Eq: Coder](p: TestWrapper[T] => Boolean) =
+  def assertNotSingle[T: Eq: Coder](p: TestWrapper[T] => Boolean): SerializableFunction[T, Void] =
     makeFnSingle[T](in => Predef.assert(!p(TestWrapper(in))))
 
   def isEqualTo[T: Eq: Coder](context: ScioContext, t: T): SerializableFunction[T, Void] = {

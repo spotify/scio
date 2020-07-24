@@ -54,7 +54,7 @@ class GroupByBenchmark {
       }
     """
 
-  val avroSchema =
+  val avroSchema: Schema =
     new Schema.Parser().parse(schema)
 
   private def runWithContext[T](fn: ScioContext => T): ScioExecutionContext = {
@@ -68,8 +68,8 @@ class GroupByBenchmark {
   implicit val coderGenericRecord: Coder[GenericRecord] =
     Coder.avroGenericRecordCoder(avroSchema)
 
-  val charCoder = CoderMaterializer.beamWithDefault(Coder[Char])
-  val doubleCoder = CoderMaterializer.beamWithDefault(Coder[Double])
+  val charCoder: BCoder[Char] = CoderMaterializer.beamWithDefault(Coder[Char])
+  val doubleCoder: BCoder[Double] = CoderMaterializer.beamWithDefault(Coder[Double])
   val kvCoder: BCoder[KV[Char, Double]] = KvCoder.of(charCoder, doubleCoder)
 
   @Benchmark

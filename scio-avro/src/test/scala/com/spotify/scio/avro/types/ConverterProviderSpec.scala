@@ -33,10 +33,12 @@ class ConverterProviderSpec extends AnyPropSpec with ScalaCheckDrivenPropertyChe
 
   import Schemas._
 
-  implicit val arbByteArray = Arbitrary(Gen.alphaStr.map(_.getBytes))
-  implicit val arbByteString = Arbitrary(Gen.alphaStr.map(ByteString.copyFromUtf8))
-  implicit val eqByteArrays = Eq.instance[Array[Byte]](_.toList == _.toList)
-  implicit val eqByteString = Eq.instance[ByteString](_ == _)
+  implicit val arbByteArray: Arbitrary[Array[Byte]] = Arbitrary(Gen.alphaStr.map(_.getBytes))
+  implicit val arbByteString: Arbitrary[ByteString] = Arbitrary(
+    Gen.alphaStr.map(ByteString.copyFromUtf8)
+  )
+  implicit val eqByteArrays: Eq[Array[Byte]] = Eq.instance[Array[Byte]](_.toList == _.toList)
+  implicit val eqByteString: Eq[ByteString] = Eq.instance[ByteString](_ == _)
 
   property("round trip basic primitive types") {
     forAll { r1: BasicFields =>

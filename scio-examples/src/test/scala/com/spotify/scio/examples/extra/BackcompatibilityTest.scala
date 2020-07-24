@@ -25,12 +25,12 @@ import com.spotify.scio.proto.SimpleV2.SimplePB
 import com.spotify.scio.testing._
 
 class BackcompatibilityTest extends PipelineSpec {
-  val input = Seq(
+  val input: Seq[SimplePB] = Seq(
     SimplePB.newBuilder().setPlays(1).setTrackId("track1").build(),
     SimplePB.newBuilder().setPlays(2).setTrackId("track2").build()
   )
 
-  val pwd = Paths.get(".").toAbsolutePath.toString
+  val pwd: String = Paths.get(".").toAbsolutePath.toString
   val path_07 = "scio-examples/src/test/resources/scio-0.7-protobuf"
   val path_06 = "scio-examples/src/test/resources/scio-0.6-protobuf"
   // The protobuf files for that tests were generated using

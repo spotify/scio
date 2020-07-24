@@ -78,9 +78,9 @@ private[types] object MacroUtil {
   val SBQ = "_root_.com.spotify.scio.bigquery"
   val GModel = "_root_.com.google.api.services.bigquery.model"
   val GBQIO = "_root_.org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO"
-  val SType = s"$SBQ.types.BigQueryType"
-  val SUtil = s"$SBQ.BigQueryUtil"
-  val BigQueryUtils = s"_root_.org.apache.beam.sdk.io.gcp.bigquery.BigQueryUtils"
+  val SType: String = s"$SBQ.types.BigQueryType"
+  val SUtil: String = s"$SBQ.BigQueryUtil"
+  val BigQueryUtils: String = s"_root_.org.apache.beam.sdk.io.gcp.bigquery.BigQueryUtils"
 
   def p(c: blackbox.Context, code: String): c.Tree = c.parse(code)
 }

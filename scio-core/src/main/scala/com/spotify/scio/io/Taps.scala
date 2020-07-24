@@ -179,16 +179,16 @@ object Taps extends {
 
 @registerSysProps
 object TapsSysProps {
-  val Algorithm = SysProp("taps.algorithm", "System property key for taps algorithm")
-  val PollingMaximumInterval = SysProp(
+  val Algorithm: SysProp = SysProp("taps.algorithm", "System property key for taps algorithm")
+  val PollingMaximumInterval: SysProp = SysProp(
     "taps.polling.maximum_interval",
     "System property key for polling taps maximum interval in milliseconds"
   )
-  val PollingInitialInterval = SysProp(
+  val PollingInitialInterval: SysProp = SysProp(
     "taps.polling.initial_interval",
     "System property key for polling taps initial interval in milliseconds"
   )
-  val PollingMaximumAttempts = SysProp(
+  val PollingMaximumAttempts: SysProp = SysProp(
     "taps.polling.maximum_attempts",
     "System property key for polling taps maximum number of attempts, unlimited if <= 0. " +
       "Default is 0"

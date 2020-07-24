@@ -20,13 +20,13 @@ import scala.jdk.CollectionConverters._
 import org.apache.beam.sdk.schemas.{Schema => BSchema}
 
 private[scio] object PrettyPrint {
-  val header =
+  val header: String =
     f"""
     |┌──────────────────────────────────────────┬──────────────────────┬──────────┐
     |│ NAME                                     │ TYPE                 │ NULLABLE │
     |├──────────────────────────────────────────┼──────────────────────┼──────────┤%n""".stripMargin
       .drop(1)
-  val footer =
+  val footer: String =
     f"""
     |└──────────────────────────────────────────┴──────────────────────┴──────────┘%n""".stripMargin.trim
 

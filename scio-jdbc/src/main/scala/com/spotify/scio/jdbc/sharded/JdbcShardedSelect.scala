@@ -22,13 +22,14 @@ import com.spotify.scio.coders._
 import com.spotify.scio.io.{EmptyTap, EmptyTapOf, ScioIO, Tap}
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.io.Read
+import com.spotify.scio.io.TapT
 
 final case class JdbcShardedSelect[T: Coder, S](
   readOptions: JdbcShardedReadOptions[T, S]
 ) extends ScioIO[T] {
   override type ReadP = Unit
   override type WriteP = Nothing
-  final override val tapT = EmptyTapOf[T]
+  final override val tapT: TapT.Aux[T, Nothing] = EmptyTapOf[T]
 
   override def testId: String = s"JdbcShardedSelect(${JdbcShardedSelect.jdbcIoId(readOptions)})"
 

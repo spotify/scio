@@ -23,7 +23,7 @@ import com.spotify.scio.io._
 import com.spotify.scio.testing._
 
 class UserScoreTest extends PipelineSpec {
-  val inData1 = Seq(
+  val inData1: Seq[String] = Seq(
     "user0_MagentaKangaroo,MagentaKangaroo,3,1447955630000,2015-11-19 09:53:53.444",
     "user13_ApricotQuokka,ApricotQuokka,15,1447955630000,2015-11-19 09:53:53.444",
     "user6_AmberNumbat,AmberNumbat,11,1447955630000,2015-11-19 09:53:53.444",
@@ -36,13 +36,13 @@ class UserScoreTest extends PipelineSpec {
     "user19_BisqueBilby,BisqueBilby,8,1447955630000,2015-11-19 09:53:53.444"
   )
 
-  val inData2 = Seq(
+  val inData2: Seq[String] = Seq(
     "user6_AliceBlueDingo,AliceBlueDingo,4,xxxxxxx,2015-11-19 09:53:53.444",
     "THIS IS A PARSE ERROR,2015-11-19 09:53:53.444",
     "user13_BisqueBilby,BisqueBilby,xxx,1447955630000,2015-11-19 09:53:53.444"
   )
 
-  val expected = Seq(
+  val expected: Seq[UserScoreSums] = Seq(
     UserScoreSums("user0_MagentaKangaroo", 3),
     UserScoreSums("user13_ApricotQuokka", 15),
     UserScoreSums("user6_AmberNumbat", 11),

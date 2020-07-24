@@ -25,15 +25,15 @@ import org.apache.avro.generic.{GenericData, GenericRecord}
 class MagnolifyAvroExampleTest extends PipelineSpec {
   import MagnolifyAvroExample._
 
-  val textIn = Seq("a b c d e", "a b a b")
-  val wordCount = Seq(("a", 3L), ("b", 3L), ("c", 1L), ("d", 1L), ("e", 1L))
+  val textIn: Seq[String] = Seq("a b c d e", "a b a b")
+  val wordCount: Seq[(String, Long)] = Seq(("a", 3L), ("b", 3L), ("c", 1L), ("d", 1L), ("e", 1L))
   val records: Seq[GenericRecord] = wordCount.map { kv =>
     val r = new GenericData.Record(wordCountType.schema)
     r.put("word", kv._1)
     r.put("count", kv._2)
     r
   }
-  val textOut = wordCount.map(kv => kv._1 + ": " + kv._2)
+  val textOut: Seq[String] = wordCount.map(kv => kv._1 + ": " + kv._2)
 
   "MagnolifyAvroWriteExample" should "work" in {
     JobTest[com.spotify.scio.examples.extra.MagnolifyAvroWriteExample.type]

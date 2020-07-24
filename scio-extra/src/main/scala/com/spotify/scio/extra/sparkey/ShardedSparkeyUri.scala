@@ -45,7 +45,7 @@ trait ShardedSparkeyUri extends SparkeyUri {
 
   def sparkeyUriForShard(shardIndex: Short, numShards: Short): SparkeyUri
 
-  val globExpression = s"$basePath/part-*"
+  val globExpression: String = s"$basePath/part-*"
 
   private[sparkey] def basePathsAndCount(
     emptyMatchTreatment: EmptyMatchTreatment

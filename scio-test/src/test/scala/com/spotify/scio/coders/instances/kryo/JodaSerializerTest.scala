@@ -31,7 +31,7 @@ class JodaSerializerTest extends AnyFlatSpec with Checkers {
   implicit override val generatorDrivenConfig: PropertyCheckConfiguration =
     PropertyCheckConfiguration(minSuccessful = 100)
 
-  implicit val dateTimeArb = Arbitrary {
+  implicit val dateTimeArb: Arbitrary[DateTime] = Arbitrary {
     for {
       year <- Gen.choose(-292275054, 292278993)
       month <- Gen.choose(1, 12)
@@ -51,15 +51,15 @@ class JodaSerializerTest extends AnyFlatSpec with Checkers {
     } yield attempt
   }
 
-  implicit val localDateTimeArb = Arbitrary {
+  implicit val localDateTimeArb: Arbitrary[LocalDateTime] = Arbitrary {
     Arbitrary.arbitrary[DateTime].map(_.toLocalDateTime)
   }
 
-  implicit val localTimeArb = Arbitrary {
+  implicit val localTimeArb: Arbitrary[LocalTime] = Arbitrary {
     Arbitrary.arbitrary[LocalDateTime].map(_.toLocalTime)
   }
 
-  implicit val localDateArb = Arbitrary {
+  implicit val localDateArb: Arbitrary[LocalDate] = Arbitrary {
     Arbitrary.arbitrary[LocalDateTime].map(_.toLocalDate)
   }
 

@@ -34,7 +34,7 @@ object AvroUtils {
   private def fArr(name: String, tpe: Schema.Type) =
     new Schema.Field(name, Schema.createArray(Schema.create(tpe)), null: String, null: AnyRef)
 
-  val schema = Schema.createRecord("GenericTestRecord", null, null, false)
+  val schema: Schema = Schema.createRecord("GenericTestRecord", null, null, false)
   schema.setFields(
     List(
       f("int_field", Schema.Type.INT),

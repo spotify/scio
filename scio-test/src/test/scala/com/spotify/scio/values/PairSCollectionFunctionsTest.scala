@@ -659,9 +659,9 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
     }
   }
 
-  val sparseLhs = Seq(("a", 1), ("a", 2), ("b", 3), ("c", 4))
-  val sparseRhs = Seq(("a", 11), ("d", 5))
-  val sparseFullOuterJoinExpected = Seq(
+  val sparseLhs: Seq[(String, Int)] = Seq(("a", 1), ("a", 2), ("b", 3), ("c", 4))
+  val sparseRhs: Seq[(String, Int)] = Seq(("a", 11), ("d", 5))
+  val sparseFullOuterJoinExpected: Seq[(String, (Option[Int], Option[Int]))] = Seq(
     ("a", (Some(1), Some(11))),
     ("a", (Some(2), Some(11))),
     ("b", (Some(3), None)),
@@ -669,12 +669,12 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
     ("d", (None, Some(5)))
   )
 
-  val sparseJoinExpected =
+  val sparseJoinExpected: Seq[(String, (Int, Int))] =
     Seq(("a", (1, 11)), ("a", (2, 11)))
 
-  val sparseRightOuterJoinExpected =
+  val sparseRightOuterJoinExpected: Seq[(String, (Option[Int], Int))] =
     Seq(("a", (Some(1), 11)), ("a", (Some(2), 11)), ("d", (None, 5)))
-  val sparseLeftOuterJoinExpected =
+  val sparseLeftOuterJoinExpected: Seq[(String, (Int, Option[Int]))] =
     Seq(("a", (1, Some(11))), ("a", (2, Some(11))), ("b", (3, None)), ("c", (4, None)))
 
   it should "support sparseFullOuterJoin()" in {
@@ -812,8 +812,8 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
     }
   }
 
-  val sparseLookup1 = Seq(("a", 11), ("a", 12), ("b", 13), ("d", 15), ("e", 16))
-  val sparseLookup2 = Seq(("a", 21), ("a", 22), ("b", 23), ("d", 25), ("e", 26))
+  val sparseLookup1: Seq[(String, Int)] = Seq(("a", 11), ("a", 12), ("b", 13), ("d", 15), ("e", 16))
+  val sparseLookup2: Seq[(String, Int)] = Seq(("a", 21), ("a", 22), ("b", 23), ("d", 25), ("e", 26))
   val expected1: Seq[(String, (Int, Set[Int]))] =
     Seq(("a", (1, Set(11, 12))), ("a", (2, Set(11, 12))), ("b", (3, Set(13))), ("c", (4, Set())))
   val expected12: Seq[(String, (Int, Set[Int], Set[Int]))] =

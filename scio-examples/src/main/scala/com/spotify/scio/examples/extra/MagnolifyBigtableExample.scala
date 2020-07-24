@@ -36,7 +36,7 @@ object MagnolifyBigtableExample {
   case class WordCount(cnt: Long)
   // `BigtableType` provides mapping between case classes and `Seq[Mutation]`/`Row`
   // for writing/reading.
-  val WordCountType = BigtableType[WordCount]
+  val WordCountType: BigtableType[WordCount] = BigtableType[WordCount]
 }
 
 // ## Magnolify Bigtable Write Example

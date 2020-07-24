@@ -43,7 +43,7 @@ case class RecordB(name: String, value: Int)
 
 class KryoAtomicCoderTest extends PipelineSpec {
   type CoderFactory = () => BCoder[Any]
-  val cf = () => new KryoAtomicCoder[Any](KryoOptions())
+  val cf: () => KryoAtomicCoder[Any] = () => new KryoAtomicCoder[Any](KryoOptions())
 
   "KryoAtomicCoder" should "support Scala collections" in {
     Seq(1, 2, 3) coderShould roundtripKryo()

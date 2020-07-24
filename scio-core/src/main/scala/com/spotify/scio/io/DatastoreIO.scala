@@ -26,7 +26,7 @@ final case class DatastoreIO(projectId: String) extends ScioIO[Entity] {
   override type ReadP = DatastoreIO.ReadParam
   override type WriteP = Unit
 
-  override val tapT = EmptyTapOf[Entity]
+  override val tapT: TapT.Aux[Entity, Nothing] = EmptyTapOf[Entity]
 
   override protected def read(sc: ScioContext, params: ReadP): SCollection[Entity] =
     sc.applyTransform(

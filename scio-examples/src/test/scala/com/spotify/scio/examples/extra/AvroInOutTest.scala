@@ -23,12 +23,12 @@ import com.spotify.scio.testing._
 import scala.jdk.CollectionConverters._
 
 class AvroInOutTest extends PipelineSpec {
-  val input = Seq(
+  val input: Seq[TestRecord] = Seq(
     new TestRecord(1, 0L, 0f, 1000.0, false, "Alice", List[CharSequence]("a").asJava),
     new TestRecord(2, 0L, 0f, 1500.0, false, "Bob", List[CharSequence]("b").asJava)
   )
 
-  val expected =
+  val expected: Seq[Account] =
     Seq(new Account(1, "checking", "Alice", 1000.0), new Account(2, "checking", "Bob", 1500.0))
 
   "AvroInOut" should "work" in {

@@ -132,7 +132,7 @@ object AvroExample {
       .saveAsTextFile(args("output"))
   }
 
-  val schema = {
+  val schema: Schema = {
     def f(name: String, tpe: Schema.Type) =
       new Schema.Field(
         name,

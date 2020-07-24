@@ -30,7 +30,7 @@ object MagnolifyAvroExample {
   // limit import scope to avoid polluting namespace
   import magnolify.avro._
 
-  val wordCountType = AvroType[WordCount]
+  val wordCountType: AvroType[WordCount] = AvroType[WordCount]
   case class WordCount(word: String, count: Long)
 }
 

@@ -49,17 +49,17 @@ class JoinExamplesTest extends PipelineSpec {
     s"Country code: $countryCode, Country name: $countryName, " +
       s"Event info: Date: $date, Actor1: $actor1, url: $url"
 
-  val eventData = Seq(
+  val eventData: Seq[TableRow] = Seq(
     ("US", "2015-01-01", "Alice", "URL1"),
     ("US", "2015-01-02", "Bob", "URL2"),
     ("UK", "2015-01-03", "Carol", "URL3"),
     ("SE", "2015-01-04", "Dan", "URL4")
   ).map((eventRow _).tupled)
 
-  val countryData = Seq(("US", "United States"), ("UK", "United Kingdom"))
+  val countryData: Seq[TableRow] = Seq(("US", "United States"), ("UK", "United Kingdom"))
     .map((countryRow _).tupled)
 
-  val expected = Seq(
+  val expected: Seq[String] = Seq(
     ("US", "United States", "2015-01-01", "Alice", "URL1"),
     ("US", "United States", "2015-01-02", "Bob", "URL2"),
     ("UK", "United Kingdom", "2015-01-03", "Carol", "URL3"),

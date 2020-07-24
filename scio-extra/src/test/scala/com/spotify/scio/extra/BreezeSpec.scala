@@ -27,7 +27,7 @@ trait BreezeSpec[M[_], T] extends PropertySpec {
   val dimension = 10
   val rows = 20
   val cols = 10
-  val fRand = Rand.uniform.map(_.toFloat)
+  val fRand: Rand[Float] = Rand.uniform.map(_.toFloat)
   val m: Gen[M[T]]
   def ms: Gen[List[M[T]]] = Gen.listOf[M[T]](m)
   def plus(x: M[T], y: M[T])(implicit sg: Semigroup[M[T]]): M[T] = sg.plus(x, y)
@@ -35,7 +35,7 @@ trait BreezeSpec[M[_], T] extends PropertySpec {
 }
 
 class FloatDenseVectorSpec extends BreezeSpec[DenseVector, Float] {
-  val m = Gen.const(dimension).map(DenseVector.rand[Float](_, fRand))
+  val m: Gen[DenseVector[Float]] = Gen.const(dimension).map(DenseVector.rand[Float](_, fRand))
 
   property("plus") {
     forAll(m, m)((x, y) => plus(x, y) == x + y)
@@ -46,7 +46,7 @@ class FloatDenseVectorSpec extends BreezeSpec[DenseVector, Float] {
 }
 
 class DoubleDenseVectorSpec extends BreezeSpec[DenseVector, Double] {
-  val m = Gen.const(dimension).map(DenseVector.rand[Double](_))
+  val m: Gen[DenseVector[Double]] = Gen.const(dimension).map(DenseVector.rand[Double](_))
   property("plus") {
     forAll(m, m)((x, y) => plus(x, y) == x + y)
   }
@@ -56,7 +56,7 @@ class DoubleDenseVectorSpec extends BreezeSpec[DenseVector, Double] {
 }
 
 class FloatDenseMatrixSpec extends BreezeSpec[DenseMatrix, Float] {
-  val m = Gen.const((rows, cols)).map {
+  val m: Gen[DenseMatrix[Float]] = Gen.const((rows, cols)).map {
     case (r, c) => DenseMatrix.rand[Float](r, c, fRand)
   }
   property("plus") {
@@ -68,7 +68,7 @@ class FloatDenseMatrixSpec extends BreezeSpec[DenseMatrix, Float] {
 }
 
 class DoubleDenseMatrixSpec extends BreezeSpec[DenseMatrix, Double] {
-  val m = Gen.const((rows, cols)).map {
+  val m: Gen[DenseMatrix[Double]] = Gen.const((rows, cols)).map {
     case (r, c) => DenseMatrix.rand[Double](r, c)
   }
   property("plus") {
@@ -80,7 +80,7 @@ class DoubleDenseMatrixSpec extends BreezeSpec[DenseMatrix, Double] {
 }
 
 class FloatSparseVectorSpec extends BreezeSpec[SparseVector, Float] {
-  val m = Gen
+  val m: Gen[SparseVector[Float]] = Gen
     .const(dimension)
     .map(d => SparseVector(DenseVector.rand[Float](d, fRand).data))
 
@@ -93,7 +93,7 @@ class FloatSparseVectorSpec extends BreezeSpec[SparseVector, Float] {
 }
 
 class DoubleSparseVectorSpec extends BreezeSpec[SparseVector, Double] {
-  val m = Gen
+  val m: Gen[SparseVector[Double]] = Gen
     .const(dimension)
     .map(d => SparseVector(DenseVector.rand[Double](d).data))
 

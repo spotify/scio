@@ -20,11 +20,12 @@ package com.spotify.scio.cassandra
 import com.spotify.scio.values.SCollection
 import com.spotify.scio.ScioContext
 import com.spotify.scio.io.{EmptyTap, EmptyTapOf, ScioIO, Tap}
+import com.spotify.scio.io.TapT
 
 final case class CassandraIO[T](opts: CassandraOptions) extends ScioIO[T] {
   override type ReadP = Nothing
   override type WriteP = CassandraIO.WriteParam[T]
-  override val tapT = EmptyTapOf[T]
+  override val tapT: TapT.Aux[T, Nothing] = EmptyTapOf[T]
 
   override protected def read(sc: ScioContext, params: ReadP): SCollection[T] =
     throw new UnsupportedOperationException("Can't read from Cassandra")

@@ -85,7 +85,7 @@ object BigQueryTypeIT {
 class BigQueryTypeIT extends AnyFlatSpec with Matchers {
   import BigQueryTypeIT._
 
-  val bq = BigQuery.defaultInstance()
+  val bq: BigQuery = BigQuery.defaultInstance()
 
   val legacyQuery =
     "SELECT word, word_count FROM [bigquery-public-data:samples.shakespeare] WHERE word = 'Romeo'"

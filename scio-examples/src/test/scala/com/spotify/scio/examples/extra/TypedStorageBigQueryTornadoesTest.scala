@@ -23,14 +23,14 @@ import com.spotify.scio.testing._
 final class TypedStorageBigQueryTornadoesTest extends PipelineSpec {
   import TypedStorageBigQueryTornadoes.{Result, Row}
 
-  val inData = Seq(
+  val inData: Seq[Row] = Seq(
     Row(1, Some(true)),
     Row(3, Some(true)),
     Row(4, Some(true)),
     Row(4, Some(true))
   )
 
-  val expected = Seq(Result(1, 1), Result(3, 1), Result(4, 2))
+  val expected: Seq[Result] = Seq(Result(1, 1), Result(3, 1), Result(4, 2))
 
   "StorageTypedBigQueryTornadoes" should "work" in {
     JobTest[com.spotify.scio.examples.extra.TypedStorageBigQueryTornadoes.type]

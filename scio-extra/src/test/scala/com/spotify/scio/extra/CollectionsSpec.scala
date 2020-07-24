@@ -22,9 +22,9 @@ import org.scalacheck._
 import org.scalatest._
 
 class CollectionsSpec extends PropertySpec {
-  val posInts = Gen.posNum[Int]
-  val intLists = Arbitrary.arbitrary[List[Int]]
-  val tupleLists = Arbitrary.arbitrary[List[(String, Int)]]
+  val posInts: Gen[Int] = Gen.posNum[Int]
+  val intLists: Gen[List[Int]] = Arbitrary.arbitrary[List[Int]]
+  val tupleLists: Gen[List[(String, Int)]] = Arbitrary.arbitrary[List[(String, Int)]]
 
   property("top") {
     forAll(intLists, posInts) { (xs, num) =>

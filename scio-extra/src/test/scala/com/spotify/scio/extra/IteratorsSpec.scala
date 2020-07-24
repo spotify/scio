@@ -32,7 +32,7 @@ class IteratorsSpec extends PropertySpec {
 
   val maxInterval = 10L
 
-  val timeSeries = Gen.listOf[Long](Gen.choose(0L, maxInterval)).map {
+  val timeSeries: Gen[List[Long]] = Gen.listOf[Long](Gen.choose(0L, maxInterval)).map {
     case head :: tail => tail.scanLeft(head)(_ + _)
     case Nil          => Nil
   }
@@ -42,7 +42,7 @@ class IteratorsSpec extends PropertySpec {
 
   def windowSize(xs: Seq[Long]): Long = xs.last - xs.head
 
-  val fixedParams = for {
+  val fixedParams: Gen[(Long, Long)] = for {
     size <- Gen.choose(1L, maxInterval)
     offset <- Gen.choose(0L, size - 1L)
   } yield (size, offset)
@@ -68,7 +68,7 @@ class IteratorsSpec extends PropertySpec {
     }
   }
 
-  val slidingParams = for {
+  val slidingParams: Gen[(Long, Long, Long)] = for {
     size <- Gen.choose(1L, maxInterval)
     offset <- Gen.choose(0L, size - 1L)
     period <- Gen.choose(offset + 1L, maxInterval)

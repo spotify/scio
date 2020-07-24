@@ -53,7 +53,7 @@ case class CaseClassWithExplicitCoder(i: Int, s: String)
 object CaseClassWithExplicitCoder {
   import org.apache.beam.sdk.coders.{AtomicCoder, StringUtf8Coder, VarIntCoder}
   import java.io.{InputStream, OutputStream}
-  implicit val caseClassWithExplicitCoderCoder =
+  implicit val caseClassWithExplicitCoderCoder: Coder[CaseClassWithExplicitCoder] =
     Coder.beam(new AtomicCoder[CaseClassWithExplicitCoder] {
       val sc = StringUtf8Coder.of()
       val ic = VarIntCoder.of()
@@ -89,8 +89,8 @@ final case class FirstImplementationWithAnnotation(s: String) extends TraitWithA
 final case class SecondImplementationWithAnnotation(i: Int) extends TraitWithAnnotation
 
 final class CoderTest extends AnyFlatSpec with Matchers {
-  val userId = UserId(Array[Byte](1, 2, 3, 4))
-  val user = User(userId, "johndoe", "johndoe@spotify.com")
+  val userId: UserId = UserId(Array[Byte](1, 2, 3, 4))
+  val user: User = User(userId, "johndoe", "johndoe@spotify.com")
 
   def materialize[T](coder: Coder[T]): BCoder[T] =
     CoderMaterializer.beam(PipelineOptionsFactory.create(), coder)
@@ -218,7 +218,7 @@ final class CoderTest extends AnyFlatSpec with Matchers {
       new Address("street1", "street2", "city", "state", "01234", "Sweden")
     val user = new AvUser(1, "lastname", "firstname", "email@foobar.com", accounts.asJava, address)
 
-    val eq = new Equality[GenericRecord] {
+    val eq: Equality[GenericRecord] = new Equality[GenericRecord] {
       def areEqual(a: GenericRecord, b: Any): Boolean =
         a.toString === b.toString // YOLO
     }
@@ -594,7 +594,7 @@ object RecursiveCase {
   case object StringType extends SampleFieldType
   case class RecordType(fields: List[SampleField]) extends SampleFieldType
 
-  implicit val coderSampleFieldType = Coder.gen[SampleField]
+  implicit val coderSampleFieldType = Coder.gen[SampleField] // scalafix:ok
 
   case class Recursive(a: Int, rec: Option[Recursive] = None)
 }

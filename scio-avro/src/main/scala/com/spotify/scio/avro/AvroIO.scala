@@ -39,7 +39,7 @@ import scala.reflect.ClassTag
 final case class ObjectFileIO[T: Coder](path: String) extends ScioIO[T] {
   override type ReadP = Unit
   override type WriteP = ObjectFileIO.WriteParam
-  final override val tapT = TapOf[T]
+  final override val tapT: TapT.Aux[T, T] = TapOf[T]
 
   /**
    * Get an SCollection for an object file using default serialization.
@@ -89,7 +89,7 @@ object ObjectFileIO {
 final case class ProtobufIO[T <: Message: ClassTag](path: String) extends ScioIO[T] {
   override type ReadP = Unit
   override type WriteP = ProtobufIO.WriteParam
-  final override val tapT = TapOf[T]
+  final override val tapT: TapT.Aux[T, T] = TapOf[T]
   private val protoCoder = Coder.protoMessageCoder[T]
 
   /**
@@ -122,7 +122,7 @@ object ProtobufIO {
 }
 
 sealed trait AvroIO[T] extends ScioIO[T] {
-  final override val tapT = TapOf[T]
+  final override val tapT: TapT.Aux[T, T] = TapOf[T]
 
   protected def avroOut[U](
     sc: SCollection[T],
@@ -272,7 +272,7 @@ object AvroTyped {
       extends ScioIO[T] {
     override type ReadP = Unit
     override type WriteP = avro.AvroIO.WriteParam
-    final override val tapT = TapOf[T]
+    final override val tapT: TapT.Aux[T, T] = TapOf[T]
 
     private def typedAvroOut[U](
       sc: SCollection[T],

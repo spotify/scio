@@ -22,7 +22,7 @@ import java.io.PrintStream
 import scala.collection.mutable.ListBuffer
 
 class MockedPrintStream extends PrintStream("/dev/null") with Serializable {
-  val message = ListBuffer[String]()
+  val message: ListBuffer[String] = ListBuffer[String]()
 
   override def write(buf: Array[Byte], off: Int, len: Int): Unit = {
     super.write(buf, off, len)

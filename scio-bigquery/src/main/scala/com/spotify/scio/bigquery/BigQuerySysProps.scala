@@ -21,33 +21,34 @@ import com.spotify.scio.{registerSysProps, SysProp}
 
 @registerSysProps
 object BigQuerySysProps {
-  val Debug = SysProp("bigquery.types.debug", "debug")
+  val Debug: SysProp = SysProp("bigquery.types.debug", "debug")
 
-  val DisableDump = SysProp("bigquery.plugin.disable.dump", "disable class dump")
+  val DisableDump: SysProp = SysProp("bigquery.plugin.disable.dump", "disable class dump")
 
-  val ClassCacheDirectory = SysProp("generated.class.cache.directory", "class cache directory")
+  val ClassCacheDirectory: SysProp =
+    SysProp("generated.class.cache.directory", "class cache directory")
 
-  val CacheDirectory =
+  val CacheDirectory: SysProp =
     SysProp("bigquery.cache.directory", "System property key for local schema cache directory")
 
-  val CacheEnabled = SysProp(
+  val CacheEnabled: SysProp = SysProp(
     "bigquery.cache.enabled",
     "System property key for enabling or disabling scio bigquery caching"
   )
 
-  val Project = SysProp("bigquery.project", "System property key for billing project.")
+  val Project: SysProp = SysProp("bigquery.project", "System property key for billing project.")
 
-  val Secret = SysProp("bigquery.secret", "")
+  val Secret: SysProp = SysProp("bigquery.secret", "")
 
-  val Priority = SysProp("bigquery.priority", "\"BATCH\" or \"INTERACTIVE\"")
+  val Priority: SysProp = SysProp("bigquery.priority", "\"BATCH\" or \"INTERACTIVE\"")
 
-  val ConnectTimeoutMs = SysProp(
+  val ConnectTimeoutMs: SysProp = SysProp(
     "bigquery.connect_timeout",
     "Timeout in milliseconds to establish a connection. " +
       "Default is 20000 (20 seconds). 0 for an infinite timeout."
   )
 
-  val ReadTimeoutMs = SysProp(
+  val ReadTimeoutMs: SysProp = SysProp(
     "bigquery.read_timeout",
     "Timeout in milliseconds to read data from an established connection. " +
       "Default is 20000 (20 seconds). 0 for an infinite timeout."

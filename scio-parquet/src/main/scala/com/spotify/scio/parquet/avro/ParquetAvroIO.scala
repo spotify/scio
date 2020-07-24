@@ -42,11 +42,12 @@ import org.apache.parquet.hadoop.metadata.CompressionCodecName
 
 import scala.jdk.CollectionConverters._
 import scala.reflect.ClassTag
+import com.spotify.scio.io.TapT
 
 final case class ParquetAvroIO[T: ClassTag: Coder](path: String) extends ScioIO[T] {
   override type ReadP = ParquetAvroIO.ReadParam[_, T]
   override type WriteP = ParquetAvroIO.WriteParam
-  override val tapT = TapOf[T]
+  override val tapT: TapT.Aux[T, T] = TapOf[T]
 
   private val cls = ScioUtil.classOf[T]
 

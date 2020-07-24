@@ -71,9 +71,9 @@ object SysProps {
 
 @registerSysProps
 object CoreSysProps {
-  val Project = SysProp("project", "")
-  val Home = SysProp("java.home", "java home directory")
-  val TmpDir = SysProp("java.io.tmpdir", "java temporary directory")
-  val User = SysProp("user.name", "system username")
-  val UserDir = SysProp("user.dir", "user dir")
+  val Project: SysProp = SysProp("project", "")
+  val Home: SysProp = SysProp("java.home", "java home directory")
+  val TmpDir: SysProp = SysProp("java.io.tmpdir", "java temporary directory")
+  val User: SysProp = SysProp("user.name", "system username")
+  val UserDir: SysProp = SysProp("user.dir", "user dir")
 }

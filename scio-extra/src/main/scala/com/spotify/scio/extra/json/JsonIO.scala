@@ -26,11 +26,12 @@ import io.circe.Printer
 import io.circe.parser._
 import io.circe.syntax._
 import org.apache.beam.sdk.{io => beam}
+import com.spotify.scio.io.TapT
 
 final case class JsonIO[T: Encoder: Decoder: Coder](path: String) extends ScioIO[T] {
   override type ReadP = JsonIO.ReadParam
   override type WriteP = JsonIO.WriteParam
-  final override val tapT = TapOf[T]
+  final override val tapT: TapT.Aux[T, T] = TapOf[T]
 
   override protected def read(sc: ScioContext, params: ReadP): SCollection[T] =
     sc.read(TextIO(path))(TextIO.ReadParam(params.compression)).map(decodeJson)

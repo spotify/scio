@@ -29,11 +29,12 @@ import org.apache.beam.sdk.transforms.SerializableFunction
 import org.joda.time.Duration
 
 import scala.jdk.CollectionConverters._
+import com.spotify.scio.io.TapT
 
 final case class ElasticsearchIO[T](esOptions: ElasticsearchOptions) extends ScioIO[T] {
   override type ReadP = Nothing
   override type WriteP = ElasticsearchIO.WriteParam[T]
-  override val tapT = EmptyTapOf[T]
+  override val tapT: TapT.Aux[T, Nothing] = EmptyTapOf[T]
 
   override protected def read(sc: ScioContext, params: ReadP): SCollection[T] =
     throw new UnsupportedOperationException("Can't read from Elacticsearch")

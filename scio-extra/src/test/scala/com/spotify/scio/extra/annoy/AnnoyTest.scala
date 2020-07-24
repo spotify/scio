@@ -30,7 +30,7 @@ class AnnoyTest extends PipelineSpec {
   val dim = 2
   val nTrees = 10
 
-  val sideData =
+  val sideData: Seq[(Int, Array[Float])] =
     Seq((1, Array(2.5f, 7.2f)), (2, Array(1.2f, 2.2f)), (3, Array(5.6f, 3.4f)))
 
   "SCollection" should "support .asAnnoy with temporary local file" in {
