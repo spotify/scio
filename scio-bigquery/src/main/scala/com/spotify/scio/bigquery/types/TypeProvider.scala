@@ -172,7 +172,7 @@ private[types] object TypeProvider {
     c: blackbox.Context
   )(cd: c.universe.ClassDef): List[c.universe.Tree] =
     cd.mods.annotations
-      .filter(_.children.head.toString().matches("^new description$"))
+      .filter(_.children.head.toString.matches("^new description$"))
       .map(_.children.tail.head)
 
   def toTableImpl(c: blackbox.Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
@@ -183,7 +183,7 @@ private[types] object TypeProvider {
     val (r, caseClassTree, name) = annottees.map(_.tree) match {
       case (clazzDef @ q"$mods class $cName[..$tparams] $ctorMods(..$fields) extends { ..$earlydefns } with ..$parents { $self => ..$body }") :: tail
           if mods.asInstanceOf[Modifiers].hasFlag(Flag.CASE) =>
-        if (parents.map(_.toString()).toSet != Set("scala.Product", "scala.Serializable")) {
+        if (parents.map(_.toString).toSet != Set("scala.Product", "scala.Serializable")) {
           c.abort(c.enclosingPosition, s"Invalid annotation, don't extend the case class $clazzDef")
         }
         val desc = getTableDescription(c)(clazzDef.asInstanceOf[ClassDef])
@@ -231,7 +231,7 @@ private[types] object TypeProvider {
           )}
         """,
           caseClassTree,
-          cName.toString()
+          cName.toString
         )
       case t =>
         val error =
@@ -319,7 +319,7 @@ private[types] object TypeProvider {
     val (r, caseClassTree, name) = annottees.map(_.tree) match {
       case (clazzDef @ q"$mods class $cName[..$tparams] $ctorMods(..$cfields) extends { ..$earlydefns } with ..$parents { $self => ..$body }") :: tail
           if mods.asInstanceOf[Modifiers].flags == NoFlags =>
-        if (parents.map(_.toString()).toSet != Set("scala.AnyRef")) {
+        if (parents.map(_.toString).toSet != Set("scala.AnyRef")) {
           c.abort(c.enclosingPosition, s"Invalid annotation, don't extend the class $clazzDef")
         }
         if (cfields.nonEmpty) {
@@ -459,7 +459,7 @@ private[types] object TypeProvider {
     import c.universe._
 
     val overrideFlag =
-      if (traits.exists(_.toString().contains("Function"))) Flag.OVERRIDE
+      if (traits.exists(_.toString.contains("Function"))) Flag.OVERRIDE
       else NoFlags
     val tupled =
       if (numFields > 1 && numFields <= 22)
@@ -598,6 +598,6 @@ private[types] object NameProvider {
   private def toPascalCase(s: String): String =
     s.split('_')
       .filter(_.nonEmpty)
-      .map(t => t(0).toUpper + t.drop(1).toLowerCase)
+      .map(t => s"${t(0).toUpper}${t.drop(1).toLowerCase}")
       .mkString("")
 }

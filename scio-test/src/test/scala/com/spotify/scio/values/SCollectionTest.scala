@@ -61,7 +61,7 @@ class SCollectionTest extends PipelineSpec {
 
   it should "set schema" in {
     runWithContext { sc =>
-      val empty = sc.empty[(Int, Int)]
+      val empty = sc.empty[(Int, Int)]()
       empty.keyBy(_._1)
 
       empty.setSchema(Schema[(Int, Int)])
@@ -800,7 +800,7 @@ class SCollectionTest extends PipelineSpec {
 
   it should "reify empty in Golbal Window as List" in {
     runWithContext { sc =>
-      val coll = sc.empty[Int].reifyAsListInGlobalWindow
+      val coll = sc.empty[Int]().reifyAsListInGlobalWindow
       coll should containInAnyOrder(Seq(Seq.empty[Int]))
     }
   }

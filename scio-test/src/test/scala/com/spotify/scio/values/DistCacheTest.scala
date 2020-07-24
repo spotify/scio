@@ -53,7 +53,7 @@ class NonSerializable(val noDefaultCntr: String) extends Serializable {
 object NonSerializableDistCacheJob {
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
-    val dc = sc.distCache(args("distCache"))(f => new NonSerializable("foobar"))
+    val dc = sc.distCache(args("distCache"))(_ => new NonSerializable("foobar"))
     sc.textFile(args("input"))
       .map(_ => dc().noDefaultCntr)
       .saveAsTextFile(args("output"))
@@ -149,7 +149,7 @@ class DistCacheTest extends PipelineSpec {
   it should "work with runWithData and non-serializable dist cache" in {
     val dc = MockDistCache(() => new NonSerializable("foobar"))
     runWithData(Seq("a", "b")) {
-      _.map(x => dc().noDefaultCntr)
+      _.map(_ => dc().noDefaultCntr)
     } should contain theSameElementsAs Seq("foobar", "foobar")
   }
 

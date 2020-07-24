@@ -90,7 +90,7 @@ object BeamExample {
       sc.customInput("Input", pubsubIn(args("inputTopic")))
 
     // Underlying Beam `PCollection[Account]`
-    accounts.internal
+    val p: PCollection[Account] = accounts.internal
 
     accounts
       // Beam `PTransform`
@@ -109,5 +109,7 @@ object BeamExample {
 
     // Underlying Beam pipeline result `PipelineResult`
     executedContext.pipelineResult
+
+    ()
   }
 }

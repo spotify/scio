@@ -114,7 +114,7 @@ object Iterators {
 
     private def fill(): Unit = {
       if (queue.isEmpty && bi.hasNext) {
-        queue.enqueue(bi.next)
+        queue.enqueue(bi.next())
       }
       if (queue.nonEmpty) {
         val start = timestampFn(queue.head)

@@ -52,7 +52,7 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
     val sc = ScioContext()
     val projection = Projection[TestRecord](_.getIntField)
     val data = sc
-      .parquetAvroFile[TestRecord](dir + "/*.parquet", projection = projection)
+      .parquetAvroFile[TestRecord](s"$dir/*.parquet", projection = projection)
     data.map(_.getIntField.toInt) should containInAnyOrder(1 to 10)
     data.map(identity) should forAll[TestRecord] { r =>
       r.getLongField == null && r.getFloatField == null && r.getDoubleField == null &&
@@ -67,7 +67,7 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
     val sc = ScioContext()
     val predicate = Predicate[TestRecord](_.getIntField <= 5)
     val data =
-      sc.parquetAvroFile[TestRecord](dir + "/*.parquet", predicate = predicate)
+      sc.parquetAvroFile[TestRecord](s"$dir/*.parquet", predicate = predicate)
     data.map(identity) should containInAnyOrder(specificRecords.filter(_.getIntField <= 5))
     sc.run()
     ()
@@ -78,7 +78,7 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
     val projection = Projection[TestRecord](_.getIntField)
     val predicate = Predicate[TestRecord](_.getIntField <= 5)
     val data =
-      sc.parquetAvroFile[TestRecord](dir + "/*.parquet", projection, predicate)
+      sc.parquetAvroFile[TestRecord](s"$dir/*.parquet", projection, predicate)
     data.map(_.getIntField.toInt) should containInAnyOrder(1 to 5)
     data.map(identity) should forAll[TestRecord] { r =>
       r.getLongField == null && r.getFloatField == null && r.getDoubleField == null &&
@@ -103,7 +103,7 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
     val sc2 = ScioContext()
     val projection = Projection[Account](_.getName)
     val data =
-      sc2.parquetAvroFile[Account](dir + "/*.parquet", projection = projection)
+      sc2.parquetAvroFile[Account](s"$dir/*.parquet", projection = projection)
     val expected = nestedRecords.map(_.getName.toString)
     data.map(_.getName.toString) should containInAnyOrder(expected)
     data.flatMap(a => Some(a.getName.toString)) should containInAnyOrder(expected)

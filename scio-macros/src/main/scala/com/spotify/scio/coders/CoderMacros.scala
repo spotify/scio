@@ -53,7 +53,7 @@ private[coders] object CoderMacros {
     val params = args.headOption
       .map(_ => args.mkString("[", ",", "]"))
       .getOrElse("")
-    val fullType = typeName + params
+    val fullType = s"$typeName$params"
 
     val toReport = c.enclosingPosition.toString -> wtt.toString
     val alreadyReported = reported.contains(toReport)

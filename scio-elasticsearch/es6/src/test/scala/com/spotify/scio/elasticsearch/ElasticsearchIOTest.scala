@@ -27,7 +27,7 @@ class ElasticsearchIOTest extends ScioIOSpec {
       ElasticsearchOptions(clusterName, Nil)
     testJobTestOutput(xs)(c => ElasticsearchIO(opts(c))) {
       case (data, c) =>
-        data.saveAsElasticsearch(opts(c))(x => Seq(new IndexRequest))
+        data.saveAsElasticsearch(opts(c))(_ => Seq(new IndexRequest))
     }
   }
 }

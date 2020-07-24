@@ -74,5 +74,6 @@ class GrpcSerializersTest extends AnyFlatSpec with Matchers {
     } else if (s2.getCause != null) {
       fail(s"Status $s1 is missing a cause")
     }
+    ()
   }
 }

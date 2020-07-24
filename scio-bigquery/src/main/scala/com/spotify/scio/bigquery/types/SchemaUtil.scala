@@ -73,7 +73,7 @@ object SchemaUtil {
     val lines = xs.map(_._1)
     val nested = xs.flatMap(_._2)
 
-    val sb = StringBuilder.newBuilder
+    val sb = new StringBuilder
     sb.append(s"case class $name(")
     if (indent > 0) {
       sb.append("\n")
@@ -86,7 +86,7 @@ object SchemaUtil {
     }
     sb.append(body)
     sb.append(")")
-    (sb.toString() +: nested).mkString("\n")
+    (sb.toString +: nested).mkString("\n")
   }
 
   private[types] def escapeNameIfReserved(name: String): String =
