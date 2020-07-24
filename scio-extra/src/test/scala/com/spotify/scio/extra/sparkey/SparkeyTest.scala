@@ -26,7 +26,7 @@ import com.github.benmanes.caffeine.cache.{Caffeine, Cache => CCache}
 import com.spotify.scio._
 import com.spotify.scio.io.TextIO
 import com.spotify.scio.testing._
-import com.spotify.scio.values.SideInput
+import com.spotify.scio.values.{SCollection, SideInput}
 import com.spotify.sparkey._
 import org.apache.beam.sdk.io.FileSystems
 import org.apache.commons.io.FileUtils
@@ -60,41 +60,58 @@ object TestCache {
     TestCache[K, V](scala.util.Random.nextString(5))
 }
 
-object SparkeyJobTest {
+object SparkeyStringJobTest {
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
-    val si: SideInput[SparkeyReader] = sc.sparkeySideInput(args("sparkey"))
+    val si = sc.sparkeySideInput(args("sparkey"))
     sc.textFile(args("input"))
       .withSideInputs(si)
-      .flatMap {
-        case (v, ctx) =>
-          Option(ctx(si).getAsString(v)).map(vv => s"$v -> $vv")
-      }
+      .flatMap { case (v, ctx) => Option(ctx(si).getAsString(v)) }
       .toSCollection
       .saveAsTextFile(args("output"))
-
     sc.run().waitUntilDone()
   }
 }
 
-class SparkeyIOTest extends ScioIOSpec {
+object SparkeyByteArrayJobTest {
+  def main(cmdlineArgs: Array[String]): Unit = {
+    val (sc, args) = ContextAndArgs(cmdlineArgs)
+    val si: SideInput[SparkeyReader] = sc.sparkeySideInput(args("sparkey"))
+    sc.textFile(args("input"))
+      .map(_.getBytes)
+      .withSideInputs(si)
+      .flatMap { case (v, ctx) =>
+        Option(ctx(si).getAsByteArray(v)).map(new String(_))
+      }
+      .toSCollection
+      .saveAsTextFile(args("output"))
+    sc.run().waitUntilDone()
+  }
+}
+
+class SparkeyUriSideInputTest extends PipelineSpec {
   val items = List("a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n")
 
-  "SparkeyIO" should "work with input" in {
-    val uris = items.map(SparkeyUri(_, () => ???))
-    testJobTestInput(uris)(path => SparkeyIO(path)) { case (sc, path) => sc.sparkeyUri(path) }
-  }
-
-  it should "work in a job test" in {
-    val lookup = items.map(i => i -> i)
-    val expected = items.map(i => s"$i -> $i")
-    JobTest[SparkeyJobTest.type]
+  "SparkeyUriSideInput" should "work with strings" in {
+    val lookup = items.map(i => i -> s"$i$i").toMap
+    val expected = lookup.values
+    JobTest[SparkeyStringJobTest.type]
       .args("--input=input.txt", "--sparkey=mySparkey", "--output=out.txt")
-      .input(SparkeyIO("mySparkey"), List(SparkeyIO.testUri(lookup)))
+      .input(SparkeyUriSideInput("mySparkey"), List(SparkeyUriSideInput.forTest(lookup)))
       .input(TextIO("input.txt"), items)
       .output(TextIO("out.txt"))(coll => coll should containInAnyOrder(expected))
       .run()
+  }
 
+  it should "work with byte arrays" in {
+    val lookup = items.map(_.getBytes).map { i => i -> (i ++ i) }.toMap
+    val expected = items.map { i => s"$i$i"}
+    JobTest[SparkeyByteArrayJobTest.type]
+      .args("--input=input.txt", "--sparkey=mySparkey", "--output=out.txt")
+      .input(SparkeyUriSideInput("mySparkey"), List(SparkeyUriSideInput.forTest(lookup)))
+      .input(TextIO("input.txt"), items)
+      .output(TextIO("out.txt"))(coll => coll should containInAnyOrder(expected))
+      .run()
   }
 }
 

@@ -129,7 +129,7 @@ package object sparkey extends SparkeyReaderInstances {
 
     @experimental
     def sparkeyUri(basePath: String): SCollection[SparkeyUri] =
-      self.read(SparkeyIO(basePath))(SparkeyIO.ReadP(self.options))
+      self.read(SparkeyUriSideInput(basePath))(SparkeyUriSideInput.ReadP(self.options))
 
     /**
      * Create a SideInput of `SparkeyReader` from a [[SparkeyUri]] base path, to be used with
@@ -141,7 +141,7 @@ package object sparkey extends SparkeyReaderInstances {
     def sparkeySideInput(basePath: String): SideInput[SparkeyReader] = {
       new SparkeySideInput(
         self
-          .read(SparkeyIO(basePath))(SparkeyIO.ReadP(self.options))
+          .read(SparkeyUriSideInput(basePath))(SparkeyUriSideInput.ReadP(self.options))
           .applyInternal(View.asSingleton())
       )
     }
