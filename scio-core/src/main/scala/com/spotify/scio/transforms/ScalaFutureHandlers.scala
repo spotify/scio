@@ -43,5 +43,5 @@ trait ScalaFutureHandlers[T] extends FutureHandlers.Base[Future[T], T] {
     onSuccess: JFunction[T, Void],
     onFailure: JFunction[Throwable, Void]
   ): Future[T] =
-    future.transform(r => { onSuccess(r); r }, t => { onFailure(t); t })
+    future.map { r => onSuccess(r); r }.transform(identity, t => { onFailure(t); t })
 }
