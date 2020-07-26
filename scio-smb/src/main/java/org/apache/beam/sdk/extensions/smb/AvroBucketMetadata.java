@@ -149,8 +149,10 @@ public class AvroBucketMetadata<K, V extends GenericRecord> extends BucketMetada
           field, String.format("Key path %s does not exist in schema %s", keyPath[i], currSchema));
 
       currSchema = field.schema();
+      Schema.Type schemaTypeForUnionType = getSchemaTypeForUnionType(currSchema);
       Preconditions.checkArgument(
-          currSchema.getType() == Schema.Type.RECORD,
+          currSchema.getType() == Schema.Type.RECORD
+              || schemaTypeForUnionType == Schema.Type.RECORD,
           "Non-leaf key field " + keyPath[i] + " is not a Record type");
     }
 
@@ -173,6 +175,12 @@ public class AvroBucketMetadata<K, V extends GenericRecord> extends BucketMetada
   }
 
   private static Class<?> getKeyClassFromSchema(Schema schema) {
+    Schema.Type schemaType = getSchemaTypeForUnionType(schema);
+
+    return getClassForType(schemaType);
+  }
+
+  private static Schema.Type getSchemaTypeForUnionType(Schema schema) {
     Schema.Type schemaType = schema.getType();
 
     if (schemaType == Schema.Type.UNION) {
@@ -193,7 +201,7 @@ public class AvroBucketMetadata<K, V extends GenericRecord> extends BucketMetada
               + schema);
     }
 
-    return getClassForType(schemaType);
+    return schemaType;
   }
 
   private static Class<?> getClassForType(Schema.Type schemaType) {
