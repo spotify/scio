@@ -51,6 +51,7 @@ public class AvroBucketMetadataTest {
           false,
           Lists.newArrayList(
               new Schema.Field("countryId", Schema.create(Type.BYTES), "", ""),
+              new Schema.Field("postalCode", Schema.createUnion(Schema.create(Type.NULL), Schema.create(Type.BYTES)), "", ""),
               new Schema.Field(
                   "prevCountries",
                   Schema.createArray(Schema.create(Schema.Type.STRING)),
@@ -75,10 +76,12 @@ public class AvroBucketMetadataTest {
   @Test
   public void testGenericRecord() throws Exception {
     final ByteBuffer countryIdAsBytes = ByteBuffer.wrap("US".getBytes(Charset.defaultCharset()));
+    final ByteBuffer postalCodeBytes = ByteBuffer.wrap("11".getBytes(Charset.defaultCharset()));
     final GenericRecord location =
         new GenericRecordBuilder(LOCATION_SCHEMA)
             .set("countryId", countryIdAsBytes)
             .set("prevCountries", Arrays.asList("CN", "MX"))
+            .set("postalCode", postalCodeBytes)
             .build();
 
     final GenericRecord user =
@@ -97,6 +100,12 @@ public class AvroBucketMetadataTest {
         countryIdAsBytes,
         new AvroBucketMetadata<>(
                 1, 1, ByteBuffer.class, HashType.MURMUR3_32, "location.countryId", RECORD_SCHEMA)
+            .extractKey(user));
+
+    Assert.assertEquals(
+        postalCodeBytes,
+        new AvroBucketMetadata<>(
+            1, 1, ByteBuffer.class, HashType.MURMUR3_32, "location.postalCode", RECORD_SCHEMA)
             .extractKey(user));
 
     Assert.assertEquals(
