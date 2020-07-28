@@ -51,12 +51,15 @@ public class AvroBucketMetadataTest {
           false,
           Lists.newArrayList(
               new Schema.Field("countryId", Schema.create(Type.BYTES), "", ""),
-              new Schema.Field("postalCode", Schema.createUnion(Schema.create(Type.NULL), Schema.create(Type.BYTES)), "", ""),
+              new Schema.Field("postalCode", Schema
+                  .createUnion(Schema.create(Type.NULL), Schema.create(Type.BYTES)), "", ""),
               new Schema.Field(
                   "prevCountries",
                   Schema.createArray(Schema.create(Schema.Type.STRING)),
                   "",
                   Collections.<String>emptyList())));
+
+  private static final Schema LOCATION_UNION_SCHEMA = Schema.createUnion(Schema.create(Type.NULL), LOCATION_SCHEMA);
 
   private static final Schema RECORD_SCHEMA =
       Schema.createRecord(
@@ -67,6 +70,7 @@ public class AvroBucketMetadataTest {
           Lists.newArrayList(
               new Schema.Field("id", Schema.create(Schema.Type.LONG), "", 0L),
               new Schema.Field("location", LOCATION_SCHEMA, "", Collections.emptyList()),
+              new Schema.Field("locationUnion", LOCATION_UNION_SCHEMA, "", Collections.emptyList()),
               new Schema.Field(
                   "suffix",
                   Schema.createEnum("Suffix", "", "", Lists.newArrayList("Jr", "Sr", "None")),
@@ -88,6 +92,7 @@ public class AvroBucketMetadataTest {
         new GenericRecordBuilder(RECORD_SCHEMA)
             .set("id", 10L)
             .set("location", location)
+            .set("locationUnion", location)
             .set("suffix", "Jr")
             .build();
 
@@ -103,9 +108,15 @@ public class AvroBucketMetadataTest {
             .extractKey(user));
 
     Assert.assertEquals(
+        countryIdAsBytes,
+        new AvroBucketMetadata<>(
+            1, 1, ByteBuffer.class, HashType.MURMUR3_32, "locationUnion.countryId", RECORD_SCHEMA)
+            .extractKey(user));
+
+    Assert.assertEquals(
         postalCodeBytes,
         new AvroBucketMetadata<>(
-            1, 1, ByteBuffer.class, HashType.MURMUR3_32, "location.postalCode", RECORD_SCHEMA)
+            1, 1, ByteBuffer.class, HashType.MURMUR3_32, "locationUnion.postalCode", RECORD_SCHEMA)
             .extractKey(user));
 
     Assert.assertEquals(

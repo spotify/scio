@@ -148,10 +148,9 @@ public class AvroBucketMetadata<K, V extends GenericRecord> extends BucketMetada
       Preconditions.checkNotNull(
           field, String.format("Key path %s does not exist in schema %s", keyPath[i], currSchema));
 
-      currSchema = field.schema();
+      currSchema = getSchemaOrInnerUnionSchema(field.schema());
       Preconditions.checkArgument(
-          currSchema.getType() == Schema.Type.RECORD
-              || getSchemaOrInnerUnionType(currSchema) == Schema.Type.RECORD,
+          currSchema.getType() == Schema.Type.RECORD,
           "Non-leaf key field " + keyPath[i] + " is not a Record type");
     }
 
@@ -174,22 +173,24 @@ public class AvroBucketMetadata<K, V extends GenericRecord> extends BucketMetada
   }
 
   private static Class<?> getKeyClassFromSchema(Schema schema) {
-    Schema.Type schemaType = getSchemaOrInnerUnionType(schema);
+    Schema.Type schemaType = getSchemaOrInnerUnionSchema(schema).getType();
 
     return getClassForType(schemaType);
   }
 
-  private static Schema.Type getSchemaOrInnerUnionType(Schema schema) {
-    Schema.Type schemaType = schema.getType();
+  // return the passed schema unless it is a union type, in this case, it will
+  // return the non null type and will fail if there are multiple non-null types.
+  private static Schema getSchemaOrInnerUnionSchema(Schema schema) {
+    Schema returnSchema = schema;
 
-    if (schemaType == Schema.Type.UNION) {
+    if (schema.getType() == Schema.Type.UNION) {
       boolean hasNull = false;
 
       for (Schema typeSchema : schema.getTypes()) {
         if (typeSchema.getType() == Schema.Type.NULL) {
           hasNull = true;
         } else {
-          schemaType = typeSchema.getType();
+          returnSchema = typeSchema;
         }
       }
 
@@ -200,7 +201,7 @@ public class AvroBucketMetadata<K, V extends GenericRecord> extends BucketMetada
               + schema);
     }
 
-    return schemaType;
+    return returnSchema;
   }
 
   private static Class<?> getClassForType(Schema.Type schemaType) {
