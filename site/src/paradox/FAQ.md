@@ -630,7 +630,7 @@ def main(cmdlineArgs: Array[String]): Unit = {
 
 #### How do I control concurrency (number of DoFn threads) in Dataflow workers
 
-By default Google Cloud Dataflow will use as many threads (concurrent DoFns) per worker as appropriate (precise definition is an implementation detail), in same cases you might want to control this. Use `NumberOfWorkerHarnessThreads` option from `DataflowPipelineDebugOptions`. For example to use a single thread per worker on 8 vCPU machine, simply specify 8 vCPU worker machine type, and `--numberOfWorkerHarnessThreads=1` in CLI or set corresponding option in `DataflowPipelineDebugOptions`.
+By default Google Cloud Dataflow will use as many threads (concurrent DoFns) per worker as appropriate (precise definition is an implementation detail), in some cases you might want to control this. Use `NumberOfWorkerHarnessThreads` option from `DataflowPipelineDebugOptions`. For example to use a single thread per worker on 8 vCPU machine, simply specify 8 vCPU worker machine type, and `--numberOfWorkerHarnessThreads=1` in CLI or set corresponding option in `DataflowPipelineDebugOptions`.
 
 #### How to manually investigate a Cloud Dataflow worker
 
