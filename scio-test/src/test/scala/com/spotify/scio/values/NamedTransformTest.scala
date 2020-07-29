@@ -225,7 +225,7 @@ class NamedTransformTest extends PipelineSpec {
 
   private class AssertTransformNameVisitor(pcoll: PCollection[_], tfName: String)
       extends Pipeline.PipelineVisitor.Defaults {
-    val prefix = tfName.split("[(/]").toList
+    val prefix: List[String] = tfName.split("[(/]").toList
     var success = false
     var nodeFullName = "<unknown>"
 

@@ -22,7 +22,7 @@ import com.spotify.scio.testing._
 
 class SideInOutExampleTest extends PipelineSpec {
   // #SideInOutExampleTest_example
-  val inData = Seq("The quick brown fox jumps over the lazy dog.")
+  val inData: Seq[String] = Seq("The quick brown fox jumps over the lazy dog.")
 
   "SideInOutExample" should "work" in {
     JobTest[SideInOutExample.type]

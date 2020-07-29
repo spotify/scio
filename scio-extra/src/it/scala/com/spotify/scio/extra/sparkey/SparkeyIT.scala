@@ -28,7 +28,7 @@ import scala.jdk.CollectionConverters._
 
 class SparkeyIT extends PipelineSpec {
 
-  val sideData = Seq(("a", "1"), ("b", "2"), ("c", "3"))
+  val sideData: Seq[(String, String)] = Seq(("a", "1"), ("b", "2"), ("c", "3"))
 
   "SCollection" should "support .asSparkeySideInput using GCS tempLocation" in {
     runWithContext { sc =>

@@ -23,7 +23,7 @@ import com.spotify.scio.io._
 import com.spotify.scio.testing._
 
 class HourlyTeamScoreTest extends PipelineSpec {
-  val inData = Seq(
+  val inData: Seq[String] = Seq(
     "user0_MagentaKangaroo,MagentaKangaroo,3,1447955630000,2015-11-19 09:53:53.444",
     "user13_ApricotQuokka,ApricotQuokka,15,1447955630000,2015-11-19 09:53:53.444",
     "user6_AmberNumbat,AmberNumbat,11,1447955630000,2015-11-19 09:53:53.444",
@@ -42,7 +42,7 @@ class HourlyTeamScoreTest extends PipelineSpec {
     "user18_ApricotCaneToad,ApricotCaneToad,14,1447965690000,2015-11-19 12:41:31.053"
   )
 
-  val expected = Seq(
+  val expected: Seq[TeamScoreSums] = Seq(
     TeamScoreSums("AlmondWallaby", 15, "2015-11-19 09:00:00.000"),
     TeamScoreSums("AmberCockatoo", 13, "2015-11-19 12:00:00.000"),
     TeamScoreSums("AmberNumbat", 11, "2015-11-19 09:00:00.000"),

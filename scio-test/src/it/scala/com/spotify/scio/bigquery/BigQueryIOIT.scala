@@ -32,14 +32,14 @@ object BigQueryIOIT {
   )
   class ShakespeareFromQuery
 
-  val tempLocation = ItUtils.gcpTempLocation("bigquery-it")
+  val tempLocation: String = ItUtils.gcpTempLocation("bigquery-it")
 }
 
 class BigQueryIOIT extends PipelineSpec {
   import BigQueryIOIT._
   import ItUtils.project
 
-  val options = PipelineOptionsFactory
+  val options: PipelineOptions = PipelineOptionsFactory
     .fromArgs(s"--project=$project", s"--tempLocation=$tempLocation")
     .create()
 

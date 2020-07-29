@@ -23,7 +23,7 @@ import com.spotify.scio.testing._
 class TypedBigQueryTornadoesTest extends PipelineSpec {
   import TypedBigQueryTornadoes.{Result, Row}
 
-  val inData = Seq(
+  val inData: Seq[Row] = Seq(
     Row(Some(true), 1),
     Row(Some(false), 1),
     Row(Some(false), 2),
@@ -32,7 +32,7 @@ class TypedBigQueryTornadoesTest extends PipelineSpec {
     Row(Some(true), 4)
   )
 
-  val expected = Seq(Result(1, 1), Result(3, 1), Result(4, 2))
+  val expected: Seq[Result] = Seq(Result(1, 1), Result(3, 1), Result(4, 2))
 
   "TypedBigQueryTornadoes" should "work" in {
     JobTest[com.spotify.scio.examples.extra.TypedBigQueryTornadoes.type]

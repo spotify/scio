@@ -24,7 +24,7 @@ import scala.jdk.CollectionConverters._
 
 object MetadataSchemaTest {
   // Keep byte list the same length across examples to be parsed as a fixed shape.
-  val e1Features = Map[String, Feature](
+  val e1Features: Map[String, Feature] = Map[String, Feature](
     "long" -> longFeature(Seq(1, 2, 3)),
     "bytes" -> byteStrFeature(Seq("a", "b", "c").map(ByteString.copyFromUtf8)),
     "floats" -> floatFeature(Seq(1.0f, 2.0f, 3.0f)),
@@ -33,7 +33,7 @@ object MetadataSchemaTest {
     "dense_shape" -> longFeature(Seq(100)),
     "missing_feature" -> longFeature(Seq(10))
   )
-  val e2Features = Map[String, Feature](
+  val e2Features: Map[String, Feature] = Map[String, Feature](
     "long" -> longFeature(Seq(6)),
     "bytes" -> byteStrFeature(Seq("d", "e", "f").map(ByteString.copyFromUtf8)),
     "floats" -> floatFeature(Seq(4.0f, 5.0f)),
@@ -42,7 +42,7 @@ object MetadataSchemaTest {
     "dense_shape" -> longFeature(Seq(100))
   )
 
-  val e1FeatureList = Map[String, FeatureList](
+  val e1FeatureList: Map[String, FeatureList] = Map[String, FeatureList](
     "string_list" -> featureList(
       Seq("one", "two", "eighty")
         .map(v => Seq(ByteString.copyFromUtf8(v)))
@@ -52,8 +52,9 @@ object MetadataSchemaTest {
     "floats_list" -> featureList(Seq(1.0f, 2.0f, 3.0f).map(Seq(_)).map(floatFeature))
   )
 
-  val examples = Seq(e1Features, e2Features).map(mkExample)
-  val sequenceExamples = Seq(e1Features, e2Features).map(m => mkSequenceExample(m, e1FeatureList))
+  val examples: Seq[Example] = Seq(e1Features, e2Features).map(mkExample)
+  val sequenceExamples: Seq[SequenceExample] =
+    Seq(e1Features, e2Features).map(m => mkSequenceExample(m, e1FeatureList))
 
   private def longFeature(raw: Seq[Long]): Feature = {
     val fb = Feature.newBuilder()

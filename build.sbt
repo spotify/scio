@@ -151,6 +151,8 @@ lazy val formatSettings = Seq(
   javafmtOnCompile := false
 )
 
+scalafixScalaBinaryVersion in ThisBuild := CrossVersion.binaryScalaVersion(scalaVersion.value)
+
 val commonSettings = Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
   organization := "com.spotify",
   scalaVersion := "2.13.3",

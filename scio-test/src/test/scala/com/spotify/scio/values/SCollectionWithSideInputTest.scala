@@ -22,7 +22,7 @@ import org.apache.beam.sdk.transforms.View
 import org.joda.time.{DateTimeConstants, Duration, Instant}
 
 class SCollectionWithSideInputTest extends PipelineSpec {
-  val sideData = Seq(("a", 1), ("b", 2), ("c", 3))
+  val sideData: Seq[(String, Int)] = Seq(("a", 1), ("b", 2), ("c", 3))
 
   "SCollectionWithSideInput" should "support asSingletonSideInput" in {
     runWithContext { sc =>
@@ -192,7 +192,7 @@ class SCollectionWithSideInputTest extends PipelineSpec {
     }
   }
 
-  val timestampedData =
+  val timestampedData: IndexedSeq[(Int, Instant)] =
     (1 to 100).map(x => (x, new Instant(x * DateTimeConstants.MILLIS_PER_SECOND)))
 
   it should "support windowed asSingletonSideInput" in {

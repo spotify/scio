@@ -21,10 +21,11 @@ import org.apache.avro.specific.SpecificRecordBase
 import scala.jdk.CollectionConverters._
 import com.spotify.scio.{registerSysProps, SysProp}
 import scala.util.Try
+import pprint.PPrinter
 
 @registerSysProps
 object PrettySysProps {
-  val PrettyPrint =
+  val PrettyPrint: SysProp =
     SysProp("tests.prettyprint.colors", "Should pretty printed values be rendered with colors")
 }
 
@@ -93,7 +94,7 @@ object Pretty {
         (System.console() != null) && (System.getenv().get("TERM") != null)
       }
 
-  val printer =
+  val printer: PPrinter =
     if (useColors) {
       pprint.PPrinter(
         additionalHandlers = handlers

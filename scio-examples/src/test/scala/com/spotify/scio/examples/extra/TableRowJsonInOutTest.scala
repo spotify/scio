@@ -21,7 +21,7 @@ import com.spotify.scio.bigquery._
 import com.spotify.scio.testing._
 
 class TableRowJsonInOutTest extends PipelineSpec {
-  val input = Seq(
+  val input: Seq[TableRow] = Seq(
     TableRow("field1" -> "str1", "field2" -> 100),
     TableRow("field1" -> "str2", "field2" -> 200)
   )

@@ -27,7 +27,7 @@ import scala.concurrent.duration.Duration
 /** A [[FutureHandlers.Base]] implementation for Scala [[Future]]. */
 trait ScalaFutureHandlers[T] extends FutureHandlers.Base[Future[T], T] {
   @transient
-  implicit private lazy val immediateExecutionContext = new ExecutionContext {
+  implicit private lazy val immediateExecutionContext: ExecutionContext = new ExecutionContext {
     override def execute(runnable: Runnable): Unit = runnable.run()
     override def reportFailure(cause: Throwable): Unit =
       ExecutionContext.defaultReporter(cause)

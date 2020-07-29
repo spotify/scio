@@ -25,14 +25,14 @@ class FilterExamplesTest extends PipelineSpec {
   private def gsodRow(year: Int, month: Int, day: Int, meanTemp: Double) =
     TableRow("year" -> year, "month" -> month, "day" -> day, "mean_temp" -> meanTemp)
 
-  val input = Seq(
+  val input: Seq[TableRow] = Seq(
     (2015, 1, 1, 40.0),
     (2015, 2, 1, 50.0),
     (2015, 7, 1, 40.0),
     (2015, 7, 2, 50.0)
   ).map((gsodRow _).tupled)
 
-  val expected = Seq(
+  val expected: Seq[TableRow] = Seq(
     (2015, 7, 1, 40.0)
   ).map((gsodRow _).tupled)
 

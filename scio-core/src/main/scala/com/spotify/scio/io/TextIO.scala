@@ -37,7 +37,7 @@ import org.apache.beam.sdk.io.ShardNameTemplate
 final case class TextIO(path: String) extends ScioIO[String] {
   override type ReadP = TextIO.ReadParam
   override type WriteP = TextIO.WriteParam
-  final override val tapT = TapOf[String]
+  final override val tapT: TapT.Aux[String, String] = TapOf[String]
 
   override protected def read(sc: ScioContext, params: ReadP): SCollection[String] =
     sc.applyTransform(

@@ -25,12 +25,12 @@ import org.scalacheck._
 class NearestNeighborSpec extends PropertySpec {
   val dimension = 40
   private def randVec = DenseVector.rand[Double](dimension)
-  val vector = Gen.resultOf { _: Int => randVec }
-  val vecs = Gen
+  val vector: Gen[DenseVector[Double]] = Gen.resultOf { _: Int => randVec }
+  val vecs: Gen[List[(String, DenseVector[Double])]] = Gen
     .nonEmptyListOf(vector)
     .map(_.zipWithIndex.map(kv => ("key" + kv._2, kv._1)))
-  val maxResult = Gen.posNum[Int]
-  val minSims = Gen.chooseNum[Double](-1.0, 1.0)
+  val maxResult: Gen[Int] = Gen.posNum[Int]
+  val minSims: Gen[Double] = Gen.chooseNum[Double](-1.0, 1.0)
 
   property("MatrixNN") {
     forAll(vecs, maxResult, minSims) { (vectors, maxResult, minSimilarity) =>

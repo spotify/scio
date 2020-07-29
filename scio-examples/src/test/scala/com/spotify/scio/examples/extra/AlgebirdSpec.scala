@@ -190,7 +190,7 @@ class AlgebirdSpec extends AnyPropSpec with ScalaCheckDrivenPropertyChecks with 
   case class Record(i: Int, d: Double, s: Set[String])
 
   // Compose a Record generator from existing arbitrary generators
-  val recordGen = for {
+  val recordGen: Gen[Record] = for {
     i <- Arbitrary.arbitrary[Int]
     d <- Arbitrary.arbitrary[Double]
     s <- Arbitrary.arbitrary[Set[String]]
@@ -217,8 +217,8 @@ class AlgebirdSpec extends AnyPropSpec with ScalaCheckDrivenPropertyChecks with 
   // =======================================================================
 
   val hllBits = 8
-  val hllError = 1.04 / math.sqrt(math.pow(2, hllBits)) // 0.065
-  val hllInput = Gen.listOfN(100, sCollOf(Gen.alphaStr))
+  val hllError: Double = 1.04 / math.sqrt(math.pow(2, hllBits)) // 0.065
+  val hllInput: Gen[List[SColl[String]]] = Gen.listOfN(100, sCollOf(Gen.alphaStr))
 
   property("sum with HyperLogLog") {
     forAll(hllInput) { xss =>
@@ -280,7 +280,7 @@ class AlgebirdSpec extends AnyPropSpec with ScalaCheckDrivenPropertyChecks with 
   // =======================================================================
 
   // Generator for SColl[Int]
-  val posInts = Gen.listOfN(1000, Gen.posNum[Int]).map(new SColl(_))
+  val posInts: Gen[SColl[Int]] = Gen.listOfN(1000, Gen.posNum[Int]).map(new SColl(_))
 
   property("sum with QTree") {
     forAll(posInts) { xs =>
@@ -346,7 +346,7 @@ class AlgebirdSpec extends AnyPropSpec with ScalaCheckDrivenPropertyChecks with 
   // =======================================================================
 
   // Generator for SColl[(Double, Int)]
-  val timeSeries =
+  val timeSeries: Gen[SColl[(Double, Int)]] =
     Gen.listOfN(1000, Gen.posNum[Double]).map(_.zipWithIndex).map(new SColl(_))
 
   property("sum with DecayedValue") {

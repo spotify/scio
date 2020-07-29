@@ -30,9 +30,10 @@ import org.apache.beam.sdk.values.KV
 import org.joda.time.Duration
 
 import scala.jdk.CollectionConverters._
+import com.spotify.scio.io.TapT
 
 sealed trait BigtableIO[T] extends ScioIO[T] {
-  final override val tapT = EmptyTapOf[T]
+  final override val tapT: TapT.Aux[T, Nothing] = EmptyTapOf[T]
 }
 
 object BigtableIO {

@@ -499,14 +499,15 @@ package object sparkey extends SparkeyReaderInstances {
     private[sparkey] def shardHash(key: K): Int
   }
 
-  implicit val stringSparkeyWritable = new SparkeyWritable[String, String] {
-    def put(w: SparkeyWriter, key: String, value: String): Unit =
-      w.put(key, value)
+  implicit val stringSparkeyWritable: SparkeyWritable[String, String] =
+    new SparkeyWritable[String, String] {
+      def put(w: SparkeyWriter, key: String, value: String): Unit =
+        w.put(key, value)
 
-    def shardHash(key: String): Int = MurmurHash3.stringHash(key, 1)
-  }
+      def shardHash(key: String): Int = MurmurHash3.stringHash(key, 1)
+    }
 
-  implicit val ByteArraySparkeyWritable =
+  implicit val ByteArraySparkeyWritable: SparkeyWritable[Array[Byte], Array[Byte]] =
     new SparkeyWritable[Array[Byte], Array[Byte]] {
       def put(w: SparkeyWriter, key: Array[Byte], value: Array[Byte]): Unit =
         w.put(key, value)

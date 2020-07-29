@@ -23,12 +23,12 @@ import com.spotify.scio.proto.Track.TrackPB
 import com.spotify.scio.testing._
 
 class ProtobufExampleTest extends PipelineSpec {
-  val input = Seq(
+  val input: Seq[SimplePB] = Seq(
     SimplePB.newBuilder().setPlays(1).setTrackId("track1").build(),
     SimplePB.newBuilder().setPlays(2).setTrackId("track2").build()
   )
 
-  val expected = Seq(
+  val expected: Seq[TrackPB] = Seq(
     TrackPB.newBuilder().setTrackId("track1").build(),
     TrackPB.newBuilder().setTrackId("track2").build()
   )

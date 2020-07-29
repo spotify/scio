@@ -68,7 +68,7 @@ class SchemaProviderTest extends AnyFlatSpec with Matchers {
   @doc("Account record schema")
   case class Account(@doc("account user") user: User, @doc("in USD") balance: Double)
 
-  val userSchema =
+  val userSchema: String =
     s"""
        |{
        |  "type": "record",
@@ -82,7 +82,7 @@ class SchemaProviderTest extends AnyFlatSpec with Matchers {
        |}
        |""".stripMargin
 
-  val accountSchema =
+  val accountSchema: String =
     s"""
        |{
        |  "type": "record",

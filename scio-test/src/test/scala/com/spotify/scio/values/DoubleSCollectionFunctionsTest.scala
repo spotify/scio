@@ -21,11 +21,11 @@ import com.spotify.scio.testing.PipelineSpec
 import com.spotify.scio.util.StatCounter
 
 class DoubleSCollectionFunctionsTest extends PipelineSpec {
-  val ints = 1 to 100
-  val longs = ints.map(_.toLong)
-  val floats = ints.map(_.toFloat)
-  val doubles = ints.map(_.toDouble)
-  val expected = StatCounter(ints.map(_.toDouble): _*)
+  val ints: Range.Inclusive = 1 to 100
+  val longs: IndexedSeq[Long] = ints.map(_.toLong)
+  val floats: IndexedSeq[Float] = ints.map(_.toFloat)
+  val doubles: IndexedSeq[Double] = ints.map(_.toDouble)
+  val expected: StatCounter = StatCounter(ints.map(_.toDouble): _*)
 
   def test(s: Seq[Double], e: Double): Unit = {
     s.size shouldBe 1L

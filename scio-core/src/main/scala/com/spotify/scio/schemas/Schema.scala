@@ -239,7 +239,7 @@ private[scio] trait SchemaMacroHelpers {
   val ctx: blackbox.Context
   import ctx.universe._
 
-  val cacheImplicitSchemas = MacroSettings.cacheImplicitSchemas(ctx)
+  val cacheImplicitSchemas: FeatureFlag = MacroSettings.cacheImplicitSchemas(ctx)
 
   def untyped[A: ctx.WeakTypeTag](expr: ctx.Expr[Schema[A]]): ctx.Expr[Schema[A]] =
     ctx.Expr[Schema[A]](ctx.untypecheck(expr.tree.duplicate))

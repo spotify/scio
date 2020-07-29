@@ -96,14 +96,14 @@ class ToTableRowTest extends AnyFlatSpec with Matchers {
     AvroConverters.toTableRow(genericRecord) shouldEqual expectedOutput
   }
 
-  val date = LocalDate.parse("2019-10-29")
+  val date: LocalDate = LocalDate.parse("2019-10-29")
   val timeMillis: LocalTime = LocalTime.parse("01:24:52.211")
   val timeMicros = 1234L
   val timestampMillis: DateTime = DateTime.parse("2019-10-29T05:24:52.215")
   val timestampMicros = 4325L
   val decimal = new JBigDecimal("3.14")
 
-  val expectedLogicalTypeOutput = new TableRow()
+  val expectedLogicalTypeOutput: TableRow = new TableRow()
     .set("intField", 1)
     .set("stringField", "someString")
     .set("booleanField", true)

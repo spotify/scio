@@ -80,15 +80,15 @@ class SchemaProviderTest extends AnyFlatSpec with Matchers {
     SchemaProvider.schemaOf[RepeatedNested] shouldBe parseSchema(recordFields("REPEATED"))
   }
 
-  val userFields =
+  val userFields: String =
     s"""
        |"fields": [
        |  {"mode": "REQUIRED", "name": "name", "type": "STRING", "description": "user name"},
        |  {"mode": "REQUIRED", "name": "age", "type": "INTEGER", "description": "user age"}
        |]
      """.stripMargin
-  val userSchema = s"{$userFields}"
-  val accountSchema =
+  val userSchema: String = s"{$userFields}"
+  val accountSchema: String =
     s"""
        |{
        |  "fields": [

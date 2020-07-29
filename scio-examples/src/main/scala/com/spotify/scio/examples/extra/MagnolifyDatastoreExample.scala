@@ -33,7 +33,7 @@ object MagnolifyDatastoreExample {
   // Define case class representation of Datastore entities
   case class WordCount(word: String, count: Long)
   // `DatastoreType` provides mapping between case classes and Datatore entities
-  val wordCountType = EntityType[WordCount]
+  val wordCountType: EntityType[WordCount] = EntityType[WordCount]
 }
 
 // ## Magnolify Datastore Write Example

@@ -24,9 +24,9 @@ import com.spotify.scio.testing._
 import org.tensorflow.example._
 
 class MagnolifyTensorFlowExampleTest extends PipelineSpec {
-  val textIn = Seq("a b c d e", "a b a b")
-  val wordCount = Seq(("a", 3L), ("b", 3L), ("c", 1L), ("d", 1L), ("e", 1L))
-  val examples = wordCount.map { kv =>
+  val textIn: Seq[String] = Seq("a b c d e", "a b a b")
+  val wordCount: Seq[(String, Long)] = Seq(("a", 3L), ("b", 3L), ("c", 1L), ("d", 1L), ("e", 1L))
+  val examples: Seq[Example] = wordCount.map { kv =>
     Example
       .newBuilder()
       .setFeatures(
@@ -49,7 +49,7 @@ class MagnolifyTensorFlowExampleTest extends PipelineSpec {
       )
       .build()
   }
-  val textOut = wordCount.map(kv => kv._1 + ": " + kv._2)
+  val textOut: Seq[String] = wordCount.map(kv => kv._1 + ": " + kv._2)
 
   "MagnolifyTensorFlowWriteExample" should "work" in {
     JobTest[com.spotify.scio.examples.extra.MagnolifyTensorFlowWriteExample.type]

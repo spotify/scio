@@ -22,12 +22,13 @@ import com.spotify.scio.examples.common.ExampleData
 import com.spotify.scio.io._
 import com.spotify.scio.testing._
 import org.joda.time.format.DateTimeFormat
+import org.joda.time.format.DateTimeFormatter
 
 class DistCacheExampleTest extends PipelineSpec {
-  val fmt = DateTimeFormat.forPattern("yyyyMMdd")
+  val fmt: DateTimeFormatter = DateTimeFormat.forPattern("yyyyMMdd")
   def d2t(date: String): Long = fmt.parseDateTime(date).getMillis / 1000
 
-  val in = Seq(
+  val in: Seq[TableRow] = Seq(
     TableRow("timestamp" -> d2t("20150101")),
     TableRow("timestamp" -> d2t("20150102")),
     TableRow("timestamp" -> d2t("20150103")),
@@ -36,9 +37,9 @@ class DistCacheExampleTest extends PipelineSpec {
     TableRow("timestamp" -> d2t("20150301"))
   )
 
-  val distCache = Map(1 -> "Jan", 2 -> "Feb", 3 -> "Mar")
+  val distCache: Map[Int, String] = Map(1 -> "Jan", 2 -> "Feb", 3 -> "Mar")
 
-  val expected = Seq("Jan 3", "Feb 2", "Mar 1")
+  val expected: Seq[String] = Seq("Jan 3", "Feb 2", "Mar 1")
 
   "DistCacheExample" should "work" in {
     JobTest[com.spotify.scio.examples.extra.DistCacheExample.type]

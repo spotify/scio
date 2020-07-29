@@ -61,17 +61,17 @@ final case class DoesNotSerialize[B](a: String, b: B) extends KryoSerializable w
     throw new NotSerializableException("DoesNotSerialize can't be serialized")
 
   @throws(classOf[IOException])
-  def write(kryo: Kryo, output: Output) =
+  def write(kryo: Kryo, output: Output): Unit =
     throw new NotSerializableException("DoesNotSerialize can't be serialized")
 
   @throws(classOf[IOException])
-  def read(kryo: Kryo, input: Input) =
+  def read(kryo: Kryo, input: Input): Unit =
     throw new NotSerializableException("DoesNotSerialize can't be serialized")
 }
 
 class SCollectionMatchersTest extends PipelineSpec {
   import SCollectionMatchersTest.TestRecord
-  implicit val coder = Coder.kryo[TestRecord]
+  implicit val coder: Coder[TestRecord] = Coder.kryo[TestRecord]
   private def newTR(x: Int) = new TestRecord(x)
 
   "SCollectionMatchers" should "support containInAnyOrder" in {

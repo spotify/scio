@@ -21,7 +21,7 @@ import com.spotify.scio.io._
 import com.spotify.scio.testing._
 
 class TemplateExampleTest extends PipelineSpec {
-  val inData = (1 to 10).map(_.toString)
+  val inData: IndexedSeq[String] = (1 to 10).map(_.toString)
 
   "TemplateExample" should "write to a Pubsub topic" in {
     JobTest[TemplateExample.type]

@@ -40,13 +40,15 @@ final class ConverterProviderSpec
 
   import Schemas._
 
-  implicit val arbByteArray = Arbitrary(Gen.alphaStr.map(_.getBytes))
-  implicit val arbByteString = Arbitrary(Gen.alphaStr.map(ByteString.copyFromUtf8))
-  implicit val arbInstant = Arbitrary(Gen.const(Instant.now()))
-  implicit val arbDate = Arbitrary(Gen.const(LocalDate.now()))
-  implicit val arbTime = Arbitrary(Gen.const(LocalTime.now()))
-  implicit val arbDatetime = Arbitrary(Gen.const(LocalDateTime.now()))
-  implicit val arbNumericBigDecimal = Arbitrary {
+  implicit val arbByteArray: Arbitrary[Array[Byte]] = Arbitrary(Gen.alphaStr.map(_.getBytes))
+  implicit val arbByteString: Arbitrary[ByteString] = Arbitrary(
+    Gen.alphaStr.map(ByteString.copyFromUtf8)
+  )
+  implicit val arbInstant: Arbitrary[Instant] = Arbitrary(Gen.const(Instant.now()))
+  implicit val arbDate: Arbitrary[LocalDate] = Arbitrary(Gen.const(LocalDate.now()))
+  implicit val arbTime: Arbitrary[LocalTime] = Arbitrary(Gen.const(LocalTime.now()))
+  implicit val arbDatetime: Arbitrary[LocalDateTime] = Arbitrary(Gen.const(LocalDateTime.now()))
+  implicit val arbNumericBigDecimal = Arbitrary { // scalafix:ok
     for {
       bd <- Arbitrary.arbitrary[BigDecimal]
     } yield {
@@ -54,12 +56,12 @@ final class ConverterProviderSpec
       Numeric(rounded)
     }
   }
-  implicit val eqByteArrays = Eq.instance[Array[Byte]](_.toList == _.toList)
-  implicit val eqByteString = Eq.instance[ByteString](_ == _)
-  implicit val eqInstant = Eq.instance[Instant](_ == _)
-  implicit val eqDate = Eq.instance[LocalDate](_ == _)
-  implicit val eqTime = Eq.instance[LocalTime](_ == _)
-  implicit val eqDateTime = Eq.instance[LocalDateTime](_ == _)
+  implicit val eqByteArrays: Eq[Array[Byte]] = Eq.instance[Array[Byte]](_.toList == _.toList)
+  implicit val eqByteString: Eq[ByteString] = Eq.instance[ByteString](_ == _)
+  implicit val eqInstant: Eq[Instant] = Eq.instance[Instant](_ == _)
+  implicit val eqDate: Eq[LocalDate] = Eq.instance[LocalDate](_ == _)
+  implicit val eqTime: Eq[LocalTime] = Eq.instance[LocalTime](_ == _)
+  implicit val eqDateTime: Eq[LocalDateTime] = Eq.instance[LocalDateTime](_ == _)
 
   property("round trip required primitive types") {
     forAll { r1: Required =>

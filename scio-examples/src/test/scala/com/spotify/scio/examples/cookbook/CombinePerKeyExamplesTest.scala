@@ -22,7 +22,7 @@ import com.spotify.scio.examples.common.ExampleData
 import com.spotify.scio.testing._
 
 class CombinePerKeyExamplesTest extends PipelineSpec {
-  val input = Seq(
+  val input: Seq[TableRow] = Seq(
     ("c1", "verylongword1"),
     ("c2", "verylongword1"),
     ("c3", "verylongword1"),
@@ -33,7 +33,7 @@ class CombinePerKeyExamplesTest extends PipelineSpec {
     ("c2", "sw2")
   ).map(kv => TableRow("corpus" -> kv._1, "word" -> kv._2))
 
-  val expected = Seq(
+  val expected: Seq[TableRow] = Seq(
     ("verylongword1", "c1,c2,c3"),
     ("verylongword2", "c1,c2"),
     ("verylongword3", "c1")

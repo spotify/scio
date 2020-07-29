@@ -134,8 +134,9 @@ object RandomSamplerUtils extends Serializable {
     t(m / 2)
   }
 
-  val population = 1 to populationSize
-  val keyedPopulation = population.map(("a", _)) ++ population.map(("b", _))
+  val population: Range.Inclusive = 1 to populationSize
+  val keyedPopulation: IndexedSeq[(String, Int)] =
+    population.map(("a", _)) ++ population.map(("b", _))
   def expectedSamples(withReplacement: Boolean, fraction: Double): Array[Int] = {
     val i = population.iterator
     val s = if (withReplacement) sampleWR(i, fraction) else sample(i, fraction)

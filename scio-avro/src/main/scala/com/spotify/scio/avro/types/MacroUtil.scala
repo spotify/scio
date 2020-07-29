@@ -49,7 +49,7 @@ private[types] object MacroUtil {
 
   val ScioAvro = "_root_.com.spotify.scio.avro"
   val ApacheAvro = "_root_.org.apache.avro"
-  val ScioAvroType = s"$ScioAvro.types.AvroType"
+  val ScioAvroType: String = s"$ScioAvro.types.AvroType"
 
   def p(c: blackbox.Context, code: String): c.Tree = c.parse(code)
 }

@@ -67,7 +67,7 @@ object TypeProviderTest {
 
 // TODO: mock BigQueryClient for fromTable and fromQuery
 class TypeProviderTest extends AnyFlatSpec with Matchers {
-  val NOW = Instant.now()
+  val NOW: Instant = Instant.now()
 
   import TypeProviderTest._
 

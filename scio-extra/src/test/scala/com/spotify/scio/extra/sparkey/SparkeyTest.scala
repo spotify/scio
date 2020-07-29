@@ -65,8 +65,9 @@ class SparkeyTest extends PipelineSpec {
    *   MurmurHash3.stringHash(x) == MurmurHash3.bytesHash(x.getBytes) if x.length == 1
    *   MurmurHash3.stringHash(x) != MurmurHash3.bytesHash(x.getBytes) if x.length > 1
    */
-  val sideData = Seq(("ab", "1"), ("bc", "2"), ("cd", "3"))
-  val bigSideData = (0 until 100).map(i => (('a' + i).toString, i.toString))
+  val sideData: Seq[(String, String)] = Seq(("ab", "1"), ("bc", "2"), ("cd", "3"))
+  val bigSideData: IndexedSeq[(String, String)] =
+    (0 until 100).map(i => (('a' + i).toString, i.toString))
 
   "SCollection" should "support .asSparkey with temporary local file" in {
     val sc = ScioContext()

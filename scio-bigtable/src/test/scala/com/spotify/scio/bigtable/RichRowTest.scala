@@ -24,13 +24,14 @@ import org.scalatest.flatspec.AnyFlatSpec
 
 import scala.jdk.CollectionConverters._
 import scala.collection.immutable.ListMap
+import scala.collection.immutable
 
 class RichRowTest extends AnyFlatSpec with Matchers {
   def bs(s: String): ByteString = ByteString.copyFromUtf8(s)
 
   val FAMILY_NAME = "family"
 
-  val dataMap = Seq(
+  val dataMap: Map[ByteString, ListMap[Long, ByteString]] = Seq(
     "a" -> Seq(10 -> "x", 9 -> "y", 8 -> "z"),
     "b" -> Seq(7 -> "u", 6 -> "v", 5 -> "w"),
     "c" -> Seq(4 -> "r", 3 -> "s", 2 -> "t")
@@ -40,7 +41,7 @@ class RichRowTest extends AnyFlatSpec with Matchers {
       (bs(q), ListMap(kvs: _*))
   }.toMap
 
-  val columns = dataMap.map {
+  val columns: immutable.Iterable[Column] = dataMap.map {
     case (q, cs) =>
       val cells = cs.map {
         case (t, v) =>
@@ -53,7 +54,7 @@ class RichRowTest extends AnyFlatSpec with Matchers {
         .build()
   }
 
-  val row = Row
+  val row: Row = Row
     .newBuilder()
     .addFamilies(
       Family

@@ -23,7 +23,7 @@ import com.spotify.scio.testing._
 class JavaConvertersExampleTest extends PipelineSpec {
   val output = "gs://bucket/path/to/file"
   val expected: List[String] = (1 to 10).toList.map(_.toString)
-  val io = CustomIO[String](output)
+  val io: CustomIO[String] = CustomIO[String](output)
 
   "JavaConverters" should "convert filename prefix String to ResourceId" in {
     JobTest[com.spotify.scio.examples.extra.JavaConvertersExample.type]

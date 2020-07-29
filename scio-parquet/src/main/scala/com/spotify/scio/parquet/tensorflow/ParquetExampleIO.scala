@@ -47,11 +47,12 @@ import org.apache.parquet.hadoop.metadata.CompressionCodecName
 import org.tensorflow.example.Example
 
 import scala.jdk.CollectionConverters._
+import com.spotify.scio.io.TapT
 
 final case class ParquetExampleIO(path: String) extends ScioIO[Example] {
   override type ReadP = ParquetExampleIO.ReadParam
   override type WriteP = ParquetExampleIO.WriteParam
-  override val tapT = TapOf[Example]
+  override val tapT: TapT.Aux[Example, Example] = TapOf[Example]
 
   override protected def read(sc: ScioContext, params: ReadP): SCollection[Example] = {
     val job = Job.getInstance()

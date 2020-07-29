@@ -49,15 +49,15 @@ final case class SpecializedUserForDerived(id: UserId, username: String, email: 
 @State(Scope.Thread)
 class CoderBenchmark {
   // please don't use arrays outside of benchmarks
-  val userId = UserId(Array[Byte](1, 2, 3, 4))
+  val userId: UserId = UserId(Array[Byte](1, 2, 3, 4))
 
   // use standard coders
-  val user = User(userId, "johndoe", "johndoe@spotify.com")
+  val user: User = User(userId, "johndoe", "johndoe@spotify.com")
 
   // use hand-optimized coders
-  val specializedUser =
+  val specializedUser: SpecializedUser =
     SpecializedUser(userId, "johndoe", "johndoe@spotify.com")
-  val specializedUserForDerived =
+  val specializedUserForDerived: SpecializedUserForDerived =
     SpecializedUserForDerived(userId, "johndoe", "johndoe@spotify.com")
 
   val javaUser =
@@ -67,25 +67,27 @@ class CoderBenchmark {
       "johndoe@spotify.com"
     )
 
-  val tenTimes = List.fill(10)(specializedUserForDerived)
+  val tenTimes: List[SpecializedUserForDerived] = List.fill(10)(specializedUserForDerived)
 
   val kryoCoder = new KryoAtomicCoder[User](KryoOptions())
   val kryoJavaCoder = new KryoAtomicCoder[j.User](KryoOptions())
-  val javaCoder = SerializableCoder.of(classOf[User])
+  val javaCoder: SerializableCoder[User] = SerializableCoder.of(classOf[User])
   val specializedCoder = new SpecializedCoder
   val specializedKryoCoder = new KryoAtomicCoder[SpecializedUser](KryoOptions())
-  val derivedCoder =
+  val derivedCoder: BCoder[SpecializedUserForDerived] =
     CoderMaterializer.beamWithDefault(Coder[SpecializedUserForDerived])
-  val derivedListCoder =
+  val derivedListCoder: BCoder[List[SpecializedUserForDerived]] =
     CoderMaterializer.beamWithDefault(Coder[List[SpecializedUserForDerived]])
 
   val specializedMapKryoCoder = new KryoAtomicCoder[Map[String, Long]](KryoOptions())
-  val derivedMapCoder = CoderMaterializer.beamWithDefault(Coder[Map[String, Long]])
-  val mapExample = (1 to 1000).map(x => (s"stringvalue$x", x.toLong)).toMap
+  val derivedMapCoder: BCoder[Map[String, Long]] =
+    CoderMaterializer.beamWithDefault(Coder[Map[String, Long]])
+  val mapExample: Map[String, Long] = (1 to 1000).map(x => (s"stringvalue$x", x.toLong)).toMap
 
   val specializedStringListKryoCoder = new KryoAtomicCoder[List[String]](KryoOptions())
-  val derivedStringListCoder = CoderMaterializer.beamWithDefault(Coder[List[String]])
-  val stringListExample = (1 to 1000).map(x => s"stringvalue$x").toList
+  val derivedStringListCoder: BCoder[List[String]] =
+    CoderMaterializer.beamWithDefault(Coder[List[String]])
+  val stringListExample: List[String] = (1 to 1000).map(x => s"stringvalue$x").toList
 
   @Benchmark
   def kryoEncode(o: SerializedOutputSize): Array[Byte] =
@@ -147,16 +149,16 @@ class CoderBenchmark {
       CoderUtils.encodeToByteArray(derivedStringListCoder, stringListExample)
     }
 
-  val kryoEncoded = kryoEncode(new SerializedOutputSize)
-  val javaEncoded = javaEncode(new SerializedOutputSize)
-  val customEncoded = customEncode(new SerializedOutputSize)
-  val customKryoEncoded = customKryoEncode(new SerializedOutputSize)
-  val derivedEncoded = derivedEncode(new SerializedOutputSize)
-  val derivedListEncoded = derivedListEncode(new SerializedOutputSize)
-  val kryoMapEncoded = kryoMapEncode(new SerializedOutputSize)
-  val derivedMapEncoded = derivedMapEncode(new SerializedOutputSize)
-  val kryoStringListEncoded = kryoStringListEncode(new SerializedOutputSize)
-  val derivedStringListEncoded = derivedStringListEncode(new SerializedOutputSize)
+  val kryoEncoded: Array[Byte] = kryoEncode(new SerializedOutputSize)
+  val javaEncoded: Array[Byte] = javaEncode(new SerializedOutputSize)
+  val customEncoded: Array[Byte] = customEncode(new SerializedOutputSize)
+  val customKryoEncoded: Array[Byte] = customKryoEncode(new SerializedOutputSize)
+  val derivedEncoded: Array[Byte] = derivedEncode(new SerializedOutputSize)
+  val derivedListEncoded: Array[Byte] = derivedListEncode(new SerializedOutputSize)
+  val kryoMapEncoded: Array[Byte] = kryoMapEncode(new SerializedOutputSize)
+  val derivedMapEncoded: Array[Byte] = derivedMapEncode(new SerializedOutputSize)
+  val kryoStringListEncoded: Array[Byte] = kryoStringListEncode(new SerializedOutputSize)
+  val derivedStringListEncoded: Array[Byte] = derivedStringListEncode(new SerializedOutputSize)
 
   @Benchmark
   def kryoDecode: User =
@@ -219,7 +221,7 @@ class CoderBenchmark {
       CoderUtils.encodeToByteArray(specializedSchemaCoder, specializedUserForDerived)
     }
 
-  val shemaEncoded = schemaCoderEncode(new SerializedOutputSize)
+  val shemaEncoded: Array[Byte] = schemaCoderEncode(new SerializedOutputSize)
 
   @Benchmark
   def schemaCoderDecode: SpecializedUserForDerived =
@@ -241,7 +243,7 @@ class CoderBenchmark {
       CoderUtils.encodeToByteArray(javaSchemaCoder, javaUser)
     }
 
-  val javaShemaEncoded = javaSchemaCoderEncode(new SerializedOutputSize)
+  val javaShemaEncoded: Array[Byte] = javaSchemaCoderEncode(new SerializedOutputSize)
 
   @Benchmark
   def javaSchemaCoderDecode: j.User =
@@ -253,7 +255,7 @@ class CoderBenchmark {
       CoderUtils.encodeToByteArray(kryoJavaCoder, javaUser)
     }
 
-  val javaKryoEncoded = javaKryoCoderEncode(new SerializedOutputSize)
+  val javaKryoEncoded: Array[Byte] = javaKryoCoderEncode(new SerializedOutputSize)
 
   @Benchmark
   def javaKryoCoderDecode: j.User =

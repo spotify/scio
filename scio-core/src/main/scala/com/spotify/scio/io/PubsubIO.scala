@@ -39,7 +39,7 @@ import com.spotify.scio.io.PubsubIO.Topic
 sealed trait PubsubIO[T] extends ScioIO[T] {
   override type ReadP = PubsubIO.ReadParam
   override type WriteP = PubsubIO.WriteParam
-  final override val tapT = EmptyTapOf[T]
+  final override val tapT: TapT.Aux[T, Nothing] = EmptyTapOf[T]
 
   override def tap(params: ReadP): Tap[Nothing] =
     EmptyTap
@@ -51,7 +51,7 @@ object PubsubIO {
   case object Topic extends ReadType
 
   final case class ReadParam(readType: ReadType) {
-    val isSubscription = readType match {
+    val isSubscription: Boolean = readType match {
       case Subscription => true
       case _            => false
     }

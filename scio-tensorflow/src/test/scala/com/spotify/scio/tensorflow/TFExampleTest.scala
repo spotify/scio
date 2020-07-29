@@ -49,7 +49,7 @@ object MultiSpecFeatranJob {
     .of[Iris]
     .optional(_.className)(OneHotEncoder("class_name"))
 
-  val spec = MultiFeatureSpec(fSpec, lSpec)
+  val spec: MultiFeatureSpec[Iris] = MultiFeatureSpec(fSpec, lSpec)
 
   def main(argv: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(argv)

@@ -36,15 +36,18 @@ class FunctionsBenchmark {
   type T = Set[Int]
 
   val input = new util.ArrayList((1 to 100).map(Set(_)).asJava)
-  val output = (1 to 100).toSet
+  val output: Set[Int] = (1 to 100).toSet
 
-  val aggregateFn =
+  val aggregateFn: CombineFn[T, (T, util.List[T]), T] =
     Functions.aggregateFn[T, T](ScioContext(), Set.empty[Int])(_ ++ _, _ ++ _)
-  val combineFn =
+  val combineFn: CombineFn[T, (Option[T], util.List[T]), T] =
     Functions.combineFn[T, T](ScioContext(), identity, _ ++ _, _ ++ _)
-  val reduceFn = Functions.reduceFn(ScioContext(), (x: T, y: T) => x ++ y)
-  val sgFn = Functions.reduceFn(ScioContext(), Semigroup.setSemigroup[Int])
-  val monFn = Functions.reduceFn(ScioContext(), Monoid.setMonoid[Int])
+  val reduceFn: CombineFn[Set[Int], util.List[Set[Int]], Set[Int]] =
+    Functions.reduceFn(ScioContext(), (x: T, y: T) => x ++ y)
+  val sgFn: CombineFn[Set[Int], util.List[Set[Int]], Set[Int]] =
+    Functions.reduceFn(ScioContext(), Semigroup.setSemigroup[Int])
+  val monFn: CombineFn[Set[Int], util.List[Set[Int]], Set[Int]] =
+    Functions.reduceFn(ScioContext(), Monoid.setMonoid[Int])
 
   def test(fn: CombineFn[T, _, T], input: java.util.List[T], output: T): T = {
     CombineFnTester.testCombineFn(fn, input, output)

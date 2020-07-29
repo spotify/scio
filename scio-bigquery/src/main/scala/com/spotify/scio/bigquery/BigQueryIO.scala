@@ -44,6 +44,7 @@ import org.apache.beam.sdk.transforms.SerializableFunction
 import scala.jdk.CollectionConverters._
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
+import com.spotify.scio.io.TapT
 
 private object Reads {
   private[this] val cache = new ConcurrentHashMap[ScioContext, BigQuery]()
@@ -124,7 +125,7 @@ private[bigquery] object Writes {
 }
 
 sealed trait BigQueryIO[T] extends ScioIO[T] {
-  final override val tapT = TapOf[T]
+  final override val tapT: TapT.Aux[T, T] = TapOf[T]
 }
 
 object BigQueryIO {
@@ -415,7 +416,7 @@ final case class BigQueryStorageSelect(sqlQuery: Query) extends BigQueryIO[Table
 final case class TableRowJsonIO(path: String) extends ScioIO[TableRow] {
   override type ReadP = Unit
   override type WriteP = TableRowJsonIO.WriteParam
-  final override val tapT = TapOf[TableRow]
+  final override val tapT: TapT.Aux[TableRow, TableRow] = TapOf[TableRow]
 
   override protected def read(sc: ScioContext, params: ReadP): SCollection[TableRow] =
     sc.applyTransform(TextIO.read().from(path))

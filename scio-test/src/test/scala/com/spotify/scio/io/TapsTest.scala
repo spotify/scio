@@ -29,7 +29,7 @@ import scala.concurrent.Await
 import scala.concurrent.duration._
 
 class TapsTest extends AnyFlatSpec with Matchers {
-  val data = Seq("a", "b", "c")
+  val data: Seq[String] = Seq("a", "b", "c")
 
   private def tmpFile: Path =
     new File(new File(CoreSysProps.TmpDir.value), "taps-test-" + UUID.randomUUID()).toPath

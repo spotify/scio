@@ -33,7 +33,7 @@ import scala.jdk.CollectionConverters._
 object BeamSchemaIT {
   final case class Shakespeare(word: String, word_count: Long, corpus: String, corpus_date: Long)
 
-  val AlienExpected = Set(
+  val AlienExpected: Set[Shakespeare] = Set(
     Shakespeare("alien", 1, "sonnets", 0),
     Shakespeare("alien", 1, "merchantofvenice", 1596),
     Shakespeare("alien", 1, "1kinghenryiv", 1597)
