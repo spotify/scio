@@ -111,8 +111,8 @@ class AlgebirdSpec extends AnyPropSpec with ScalaCheckDrivenPropertyChecks with 
     forAll { xs: SColl[(Double, Double, Double)] =>
       // Apply sum, max, and min operation on the 3 columns
       val sumOp = Semigroup.doubleSemigroup
-      val maxOp = MaxAggregator[Double].semigroup
-      val minOp = MinAggregator[Double].semigroup
+      val maxOp = MaxAggregator[Double]().semigroup
+      val minOp = MinAggregator[Double]().semigroup
       // Combine 3 Semigroup[Double] into 1 Semigroup[(Double, Double, Double)]
       val colSg = Semigroup.semigroup3(sumOp, maxOp, minOp)
 

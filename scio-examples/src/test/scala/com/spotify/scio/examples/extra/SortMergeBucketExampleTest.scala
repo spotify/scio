@@ -62,6 +62,7 @@ class SortMergeBucketExampleTest extends AnyFlatSpec with Matchers {
       )
 
       TextTap(s"$joinOutputDir/*.txt").value.size shouldBe 250
+      ()
   }
 
   it should "transform user and account data" in withTempFolders {
@@ -84,5 +85,6 @@ class SortMergeBucketExampleTest extends AnyFlatSpec with Matchers {
       SpecificRecordTap[Account](s"$joinOutputDir/*.avro").value
         .map(account => (account.getId, account.getType.toString))
         .toList should contain theSameElementsAs (0 until 500).map((_, "combinedAmount"))
+      ()
   }
 }

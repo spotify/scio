@@ -266,7 +266,7 @@ class CoderBenchmark {
 @State(Scope.Thread)
 @AuxCounters(AuxCounters.Type.EVENTS)
 class SerializedOutputSize(var outputSize: Int) {
-  def this() { this(0) }
+  def this() = { this(0) }
 }
 
 object Counter {

@@ -331,7 +331,7 @@ private class MapCoder[K, V](kc: BCoder[K], vc: BCoder[V]) extends AtomicCoder[M
     lc.encode(value.size, os)
     val it = value.iterator
     while (it.hasNext) {
-      val (k, v) = it.next
+      val (k, v) = it.next()
       kc.encode(k, os)
       vc.encode(v, os)
     }

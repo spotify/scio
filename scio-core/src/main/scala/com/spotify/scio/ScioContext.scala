@@ -210,9 +210,9 @@ object ContextAndArgs {
       CaseApp.detailedParseWithHelp[T](customArgs) match {
         case Left(error) =>
           Failure(new Exception(error.message))
-        case Right((_, usage, help, _)) if help =>
+        case Right((_, _, help, _)) if help =>
           Success(Left(Help[T].help))
-        case Right((_, usage, help, _)) if usage =>
+        case Right((_, usage, _, _)) if usage =>
           val sysProps = SysProps.properties.map(_.show).mkString("\n")
           val baos = new ByteArrayOutputStream()
           val pos = new PrintStream(baos)
@@ -224,7 +224,7 @@ object ContextAndArgs {
 
           val msg = sysProps + Help[T].help + new String(baos.toByteArray, StandardCharsets.UTF_8)
           Success(Left(msg))
-        case Right((Right(t), usage, help, _)) =>
+        case Right((Right(t), _, _, _)) =>
           val (opts, unused) = ScioContext.parseArguments[PipelineOptions](remainingArgs)
           val unusedMap = unused.asMap
           if (unusedMap.isEmpty) {
@@ -233,7 +233,7 @@ object ContextAndArgs {
             val msg = "Unknown arguments: " + unusedMap.keys.mkString(", ")
             Failure(new Exception(msg))
           }
-        case Right((Left(error), usage, help, _)) =>
+        case Right((Left(error), _, _, _)) =>
           Failure(new Exception(error.message))
       }
     }

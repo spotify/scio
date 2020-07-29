@@ -102,7 +102,7 @@ class NamedTransformTest extends PipelineSpec {
       val s = p1
         .withSideInputs(p2)
         .withName("GetX")
-        .filter((x, s) => x == "a")
+        .filter((x, _) => x == "a")
       assertTransformNameStartsWith(s, "GetX")
     }
   }

@@ -67,6 +67,8 @@ object ElasticsearchMinimalExample {
 
     // Run pipeline
     sc.run().waitUntilFinish()
+
+    ()
   }
 
   private val indexer = (index: String) =>

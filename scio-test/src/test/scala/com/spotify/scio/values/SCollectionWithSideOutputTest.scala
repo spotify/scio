@@ -47,7 +47,7 @@ class SCollectionWithSideOutputTest extends PipelineSpec {
     val nSideOut = SideOutput[Int]()
     val expected = List(2, 4, 6, 8, 10)
     val elements = sc.parallelize(1 to 10)
-    val (even, side) =
+    val (even, _) =
       elements
         .withSideOutputs(nSideOut)
         .flatMap {

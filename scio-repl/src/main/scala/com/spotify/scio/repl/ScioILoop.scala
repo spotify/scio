@@ -61,6 +61,7 @@ class ScioILoop(command: CompilerCommand, args: List[String]) extends compat.ILo
     val opts = optsFromArgs(scioOpts)
     intp.beQuietDuring {
       intp.interpret(s"""val $sc: ScioContext = $rsc($opts, "${outputDir.path}")""")
+      ()
     }
     this.echo("Scio context available as '" + sc + "'")
     Result.default
@@ -78,6 +79,7 @@ class ScioILoop(command: CompilerCommand, args: List[String]) extends compat.ILo
     intp.beQuietDuring {
       // TODO: pass BQ settings + non distributed settings
       intp.interpret(s"val $sc = ScioContext()")
+      ()
     }
     this.echo(s"Local Scio context available as '$sc'")
     Result.default
@@ -202,6 +204,7 @@ class ScioILoop(command: CompilerCommand, args: List[String]) extends compat.ILo
       createBigQueryClient()
       newScioCmdImpl("sc")
       loadIoCommands()
+      ()
     }
   }
 

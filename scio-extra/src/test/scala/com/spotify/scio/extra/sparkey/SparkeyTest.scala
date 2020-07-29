@@ -210,7 +210,7 @@ class SparkeyTest extends PipelineSpec {
     readers.map(_.toMap.toList.toMap).reduce(_ ++ _) shouldBe bigSideData.toMap
 
     for (ext <- allSparkeyFiles) {
-      new File(basePath + ext).delete()
+      new File(s"$basePath$ext").delete()
     }
   }
 
@@ -232,7 +232,7 @@ class SparkeyTest extends PipelineSpec {
   it should "support .asSparkey with Array[Byte] key, value" in {
     val tmpDir = Files.createTempDirectory("sparkey-test-")
     val sideDataBytes = sideData.map(kv => (kv._1.getBytes, kv._2.getBytes))
-    val basePath = tmpDir + "/my-sparkey-file"
+    val basePath = s"$tmpDir/my-sparkey-file"
     runWithContext(sc => sc.parallelize(sideDataBytes).asSparkey(basePath))
     val reader = Sparkey.open(new File(basePath + ".spi"))
     sideDataBytes.foreach(kv => Arrays.equals(reader.getAsByteArray(kv._1), kv._2) shouldBe true)
