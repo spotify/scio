@@ -65,6 +65,7 @@ public class TensorFlowBucketIO {
         .setKeyField(keyField)
         .setKeyCacheSize(0)
         .setFilenameSuffix(DEFAULT_SUFFIX)
+        .setFilenamePrefix(SortedBucketIO.DEFAULT_FILENAME_PREFIX)
         .setCompression(Compression.UNCOMPRESSED)
         .build();
   }
@@ -73,6 +74,7 @@ public class TensorFlowBucketIO {
   public static <K> TransformOutput<K> transformOutput(Class<K> keyClass, String keyField) {
     return new AutoValue_TensorFlowBucketIO_TransformOutput.Builder<K>()
         .setFilenameSuffix(DEFAULT_SUFFIX)
+        .setFilenamePrefix(SortedBucketIO.DEFAULT_FILENAME_PREFIX)
         .setKeyClass(keyClass)
         .setKeyField(keyField)
         .setFilenameSuffix(DEFAULT_SUFFIX)
@@ -172,6 +174,8 @@ public class TensorFlowBucketIO {
 
       abstract Builder<K> setTempDirectory(ResourceId tempDirectory);
 
+      abstract Builder<K> setFilenamePrefix(String filenamePrefix);
+
       abstract Builder<K> setFilenameSuffix(String filenameSuffix);
 
       abstract Builder<K> setSorterMemoryMb(int sorterMemoryMb);
@@ -220,6 +224,11 @@ public class TensorFlowBucketIO {
       return toBuilder().setFilenameSuffix(filenameSuffix).build();
     }
 
+    /** Specifies the output filename prefix (i.e. "bucket" or "part"). */
+    public Write<K> withFilenamePrefix(String filenamePrefix) {
+      return toBuilder().setFilenamePrefix(filenamePrefix).build();
+    }
+
     /** Specifies the sorter memory in MB. */
     public Write<K> withSorterMemoryMb(int sorterMemoryMb) {
       return toBuilder().setSorterMemoryMb(sorterMemoryMb).build();
@@ -244,7 +253,12 @@ public class TensorFlowBucketIO {
     BucketMetadata<K, Example> getBucketMetadata() {
       try {
         return new TensorFlowBucketMetadata<>(
-            getNumBuckets(), getNumShards(), getKeyClass(), getHashType(), getKeyField());
+            getNumBuckets(),
+            getNumShards(),
+            getKeyClass(),
+            getHashType(),
+            getKeyField(),
+            getFilenamePrefix());
       } catch (CannotProvideCoderException | Coder.NonDeterministicException e) {
         throw new IllegalStateException(e);
       }
@@ -279,6 +293,8 @@ public class TensorFlowBucketIO {
 
       abstract Builder<K> setFilenameSuffix(String filenameSuffix);
 
+      abstract Builder<K> setFilenamePrefix(String filenamePrefix);
+
       // JSON specific
       abstract Builder<K> setKeyField(String keyField);
 
@@ -306,6 +322,11 @@ public class TensorFlowBucketIO {
       return toBuilder().setFilenameSuffix(filenameSuffix).build();
     }
 
+    /** Specifies the output filename prefix. */
+    public TransformOutput<K> withFilenamePrefix(String filenamePrefix) {
+      return toBuilder().setFilenamePrefix(filenamePrefix).build();
+    }
+
     /** Specifies the output file {@link Compression}. */
     public TransformOutput<K> withCompression(Compression compression) {
       return toBuilder().setCompression(compression).build();
@@ -320,11 +341,12 @@ public class TensorFlowBucketIO {
     NewBucketMetadataFn<K, Example> getNewBucketMetadataFn() {
       final String keyField = getKeyField();
       final Class<K> keyClass = getKeyClass();
+      final String filenamePrefix = getFilenamePrefix();
 
       return (numBuckets, numShards, hashType) -> {
         try {
           return new TensorFlowBucketMetadata<>(
-              numBuckets, numShards, keyClass, hashType, keyField);
+              numBuckets, numShards, keyClass, hashType, keyField, filenamePrefix);
         } catch (CannotProvideCoderException | Coder.NonDeterministicException e) {
           throw new IllegalStateException(e);
         }

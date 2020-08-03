@@ -78,12 +78,25 @@ public abstract class BucketMetadata<K, V> implements Serializable, HasDisplayDa
 
   @JsonProperty private final HashType hashType;
 
+  @JsonProperty private final String filenamePrefix;
+
   @JsonIgnore private final HashFunction hashFunction;
 
   @JsonIgnore private final Coder<K> keyCoder;
 
   public BucketMetadata(
       int version, int numBuckets, int numShards, Class<K> keyClass, HashType hashType)
+      throws CannotProvideCoderException, NonDeterministicException {
+    this(version, numBuckets, numShards, keyClass, hashType, null);
+  }
+
+  public BucketMetadata(
+      int version,
+      int numBuckets,
+      int numShards,
+      Class<K> keyClass,
+      HashType hashType,
+      String filenamePrefix)
       throws CannotProvideCoderException, NonDeterministicException {
     Preconditions.checkArgument(
         numBuckets > 0 && ((numBuckets & (numBuckets - 1)) == 0),
@@ -97,6 +110,7 @@ public abstract class BucketMetadata<K, V> implements Serializable, HasDisplayDa
     this.hashFunction = hashType.create();
     this.keyCoder = getKeyCoder();
     this.version = version;
+    this.filenamePrefix = filenamePrefix != null ? filenamePrefix : SortedBucketIO.DEFAULT_FILENAME_PREFIX;
   }
 
   @JsonIgnore
@@ -123,6 +137,7 @@ public abstract class BucketMetadata<K, V> implements Serializable, HasDisplayDa
     builder.add(DisplayData.item("hashType", hashType.toString()));
     builder.add(DisplayData.item("keyClass", keyClass));
     builder.add(DisplayData.item("keyCoder", keyCoder.getClass()));
+    builder.add(DisplayData.item("filenamePrefix", filenamePrefix));
   }
 
   /** Enumerated hashing schemes available for an SMB write. */
@@ -172,6 +187,10 @@ public abstract class BucketMetadata<K, V> implements Serializable, HasDisplayDa
 
   public HashType getHashType() {
     return hashType;
+  }
+
+  public String getFilenamePrefix() {
+    return filenamePrefix;
   }
 
   /* Business logic */

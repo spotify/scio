@@ -148,7 +148,8 @@ public class SortedBucketTransformTest {
             fromFolder(tempFolder),
             (numBuckets, numShards, hashType) -> TestBucketMetadata.of(numBuckets, numShards),
             new TestFileOperations(),
-            ".txt"));
+            ".txt",
+            SortedBucketIO.DEFAULT_FILENAME_PREFIX));
 
     final PipelineResult result = transformPipeline.run();
     result.waitUntilFinish();
@@ -176,7 +177,8 @@ public class SortedBucketTransformTest {
   private static KV<BucketMetadata, Set<String>> readAllFrom(TemporaryFolder folder)
       throws Exception {
     final FileAssignment fileAssignment =
-        new SMBFilenamePolicy(fromFolder(folder), ".txt").forDestination();
+        new SMBFilenamePolicy(fromFolder(folder), SortedBucketIO.DEFAULT_FILENAME_PREFIX, ".txt")
+            .forDestination();
 
     BucketMetadata metadata =
         BucketMetadata.from(

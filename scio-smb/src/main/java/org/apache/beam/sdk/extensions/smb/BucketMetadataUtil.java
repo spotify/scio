@@ -32,6 +32,7 @@ import java.io.Serializable;
 import java.nio.channels.Channels;
 import java.util.*;
 import java.util.stream.Collectors;
+import org.slf4j.LoggerFactory;
 
 public class BucketMetadataUtil {
   private static final int BATCH_SIZE = 100;
@@ -87,20 +88,13 @@ public class BucketMetadataUtil {
 
   public <K, V> SourceMetadata<K, V> getSourceMetadata(
       List<ResourceId> directories, String filenameSuffix) {
-    final List<FileAssignment> fileAssignments =
-        directories.stream()
-            .sorted(Comparator.comparing(ResourceId::toString).reversed())
-            .map(dir -> getFileAssignment(dir, filenameSuffix))
-            .collect(Collectors.toList());
-
-    final int total = fileAssignments.size();
+    final int total = directories.size();
     final Map<ResourceId, PartitionMetadata> partitionMetadata = new HashMap<>();
     BucketMetadata<K, V> canonicalMetadata = null;
     ResourceId canonicalMetadataDir = null;
     int start = 0;
     while (start < total) {
-      final List<FileAssignment> input =
-          fileAssignments.subList(start, Math.min(total, start + batchSize));
+      final List<ResourceId> input = directories.subList(start, Math.min(total, start + batchSize));
       final List<Optional<BucketMetadata<K, V>>> result =
           input
               .parallelStream()
@@ -114,8 +108,10 @@ public class BucketMetadataUtil {
 
       for (int i = 0; i < result.size(); i++) {
         final BucketMetadata<K, V> metadata = result.get(i).get();
-        final FileAssignment fileAssignment = input.get(i);
-        final ResourceId dir = fileAssignment.getDirectory();
+        final ResourceId dir = input.get(i);
+        final FileAssignment fileAssignment =
+            new SMBFilenamePolicy(dir, metadata.getFilenamePrefix(), filenameSuffix)
+                .forDestination();
 
         if (canonicalMetadata == null) {
           canonicalMetadata = metadata;
@@ -149,12 +145,13 @@ public class BucketMetadataUtil {
 
   ////////////////////////////////////////////////////////////////////////////////
 
-  private static FileAssignment getFileAssignment(ResourceId directory, String filenameSuffix) {
-    return new SMBFilenamePolicy(directory, filenameSuffix).forDestination();
+  private static FileAssignment getFileAssignment(
+      ResourceId directory, String filenamePrefix, String filenameSuffix) {
+    return new SMBFilenamePolicy(directory, filenamePrefix, filenameSuffix).forDestination();
   }
 
-  private static <K, V> Optional<BucketMetadata<K, V>> getMetadata(FileAssignment fileAssignment) {
-    final ResourceId resourceId = fileAssignment.forMetadata();
+  private static <K, V> Optional<BucketMetadata<K, V>> getMetadata(ResourceId directory) {
+    final ResourceId resourceId = FileAssignment.forDstMetadata(directory);
     try {
       InputStream inputStream = Channels.newInputStream(FileSystems.open(resourceId));
       return Optional.of(BucketMetadata.from(inputStream));

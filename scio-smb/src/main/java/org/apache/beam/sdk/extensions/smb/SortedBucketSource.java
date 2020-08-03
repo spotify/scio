@@ -19,6 +19,7 @@ package org.apache.beam.sdk.extensions.smb;
 
 import com.google.common.annotations.VisibleForTesting;
 import java.io.ByteArrayInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -464,7 +465,7 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
    * @param <V> the type of the values in a bucket
    */
   public static class BucketedInput<K, V> implements Serializable {
-    private static final Pattern BUCKET_PATTERN = Pattern.compile("bucket-(\\d+)-of-(\\d+)");
+    private static final Pattern BUCKET_PATTERN = Pattern.compile("(\\d+)-of-(\\d+)");
 
     private TupleTag<V> tupleTag;
     private String filenameSuffix;
@@ -520,22 +521,32 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
       return sourceMetadata;
     }
 
+    private static List<Metadata> sampleDirectory(ResourceId directory, String filepattern) {
+      try {
+        return FileSystems.match(
+                directory.resolve(filepattern, StandardResolveOptions.RESOLVE_FILE).toString())
+            .metadata();
+      } catch (FileNotFoundException e) {
+        return Collections.emptyList();
+      } catch (IOException e) {
+        throw new RuntimeException();
+      }
+    }
+
     long getOrSampleByteSize() {
       return inputDirectories
           .parallelStream()
           .mapToLong(
               dir -> {
-                final List<Metadata> sampledFiles;
-                try {
-                  // Take at most 10 buckets from the directory to sample.
+                // Take at most 10 buckets from the directory to sample
+                // Check for single-shard filenames template first, then multi-shard
+                List<Metadata> sampledFiles =
+                    sampleDirectory(dir, "*-0000?-of-?????" + filenameSuffix);
+                if (sampledFiles.isEmpty()) {
                   sampledFiles =
-                      FileSystems.match(
-                              dir.resolve("bucket-0000?-*", StandardResolveOptions.RESOLVE_FILE)
-                                  .toString())
-                          .metadata();
-                } catch (IOException e) {
-                  throw new RuntimeException(e);
+                      sampleDirectory(dir, "*-0000?-of-*-shard-00000-of-?????" + filenameSuffix);
                 }
+
                 int numBuckets = 0;
                 long sampledBytes = 0L;
                 final Set<String> seenBuckets = new HashSet<>();
@@ -543,7 +554,11 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
                 for (Metadata metadata : sampledFiles) {
                   final Matcher matcher =
                       BUCKET_PATTERN.matcher(metadata.resourceId().getFilename());
-                  matcher.find();
+                  if (!matcher.find()) {
+                    throw new RuntimeException(
+                        "Couldn't match bucket information from filename: "
+                            + metadata.resourceId().getFilename());
+                  }
                   seenBuckets.add(matcher.group(1));
                   if (numBuckets == 0) {
                     numBuckets = Integer.parseInt(matcher.group(2));

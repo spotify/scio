@@ -44,7 +44,9 @@ import org.apache.beam.sdk.io.Compression;
 import org.apache.beam.sdk.io.FileIO.Sink;
 import org.apache.beam.sdk.io.FileSystems;
 import org.apache.beam.sdk.io.fs.EmptyMatchTreatment;
+import org.apache.beam.sdk.io.fs.MatchResult;
 import org.apache.beam.sdk.io.fs.MatchResult.Status;
+import org.apache.beam.sdk.io.fs.ResolveOptions.StandardResolveOptions;
 import org.apache.beam.sdk.io.fs.ResourceId;
 import org.apache.beam.sdk.testing.NeedsRunner;
 import org.apache.beam.sdk.testing.PAssert;
@@ -125,6 +127,31 @@ public class SortedBucketSinkTest {
 
   @Test
   @Category(NeedsRunner.class)
+  public void testCustomFilenamePrefix() throws Exception {
+    final TestBucketMetadata metadata = TestBucketMetadata.of(1, 1, "custom-prefix");
+
+    final ResourceId outputDirectory = fromFolder(output);
+    final SortedBucketSink<String, String> sink =
+        new SortedBucketSink<>(
+            metadata, outputDirectory, fromFolder(temp), ".txt", new TestFileOperations(), 1);
+
+    pipeline.apply(Create.empty(StringUtf8Coder.of())).apply(sink);
+    pipeline.run().waitUntilFinish();
+
+    final MatchResult outputFiles =
+        FileSystems.match(
+            TestUtils.fromFolder(output)
+                .resolve("*.txt", StandardResolveOptions.RESOLVE_FILE)
+                .toString());
+
+    Assert.assertEquals(1, outputFiles.metadata().size());
+    Assert.assertEquals(
+        "custom-prefix-00000-of-00001.txt",
+        outputFiles.metadata().get(0).resourceId().getFilename());
+  }
+
+  @Test
+  @Category(NeedsRunner.class)
   public void testWritesEmptyBucketFiles() throws Exception {
     final TestBucketMetadata metadata = TestBucketMetadata.of(2, 2);
 
@@ -137,7 +164,8 @@ public class SortedBucketSinkTest {
     pipeline.run().waitUntilFinish();
 
     final FileAssignment dstFiles =
-        new SMBFilenamePolicy.FileAssignment(outputDirectory, ".txt", false);
+        new SMBFilenamePolicy.FileAssignment(
+            outputDirectory, SortedBucketIO.DEFAULT_FILENAME_PREFIX, ".txt", false);
 
     for (int bucketId = 0; bucketId < metadata.getNumBuckets(); bucketId++) {
       for (int shardId = 0; shardId < metadata.getNumShards(); shardId++) {
@@ -178,8 +206,10 @@ public class SortedBucketSinkTest {
     Assert.assertEquals(0, output.getRoot().listFiles().length);
   }
 
-  private void test(int numBuckets, int numShards, boolean useKeyCache) throws Exception {
+  private void test(int numBuckets, int numShards, boolean useKeyCache)
+      throws Exception {
     final TestBucketMetadata metadata = TestBucketMetadata.of(numBuckets, numShards);
+
     final int keyCacheSize = useKeyCache ? 100 : 0;
     final SortedBucketSink<String, String> sink =
         new SortedBucketSink<>(

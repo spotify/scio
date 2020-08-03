@@ -157,7 +157,8 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
       int sorterMemoryMb,
       int keyCacheSize) {
     this.bucketMetadata = bucketMetadata;
-    this.filenamePolicy = new SMBFilenamePolicy(outputDirectory, filenameSuffix);
+    this.filenamePolicy =
+        new SMBFilenamePolicy(outputDirectory, bucketMetadata.getFilenamePrefix(), filenameSuffix);
     this.tempDirectory = tempDirectory;
     this.fileOperations = fileOperations;
     this.sorterMemoryMb = sorterMemoryMb;
@@ -753,7 +754,9 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
         boolean verifyKeyExtraction,
         int keyCacheSize) {
       this.bucketMetadata = bucketMetadata;
-      this.filenamePolicy = new SMBFilenamePolicy(outputDirectory, filenameSuffix);
+      this.filenamePolicy =
+          new SMBFilenamePolicy(
+              outputDirectory, bucketMetadata.getFilenamePrefix(), filenameSuffix);
       this.tempDirectory = tempDirectory;
       this.fileOperations = fileOperations;
       this.sorterMemoryMb = sorterMemoryMb;

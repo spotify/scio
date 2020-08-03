@@ -52,6 +52,7 @@ public class JsonSortedBucketIO {
         .setNumBuckets(SortedBucketIO.DEFAULT_NUM_BUCKETS)
         .setNumShards(SortedBucketIO.DEFAULT_NUM_SHARDS)
         .setHashType(SortedBucketIO.DEFAULT_HASH_TYPE)
+        .setFilenamePrefix(SortedBucketIO.DEFAULT_FILENAME_PREFIX)
         .setSorterMemoryMb(SortedBucketIO.DEFAULT_SORTER_MEMORY_MB)
         .setKeyClass(keyClass)
         .setKeyField(keyField)
@@ -65,6 +66,7 @@ public class JsonSortedBucketIO {
   public static <K> TransformOutput<K> transformOutput(Class<K> keyClass, String keyField) {
     return new AutoValue_JsonSortedBucketIO_TransformOutput.Builder<K>()
         .setFilenameSuffix(DEFAULT_SUFFIX)
+        .setFilenamePrefix(SortedBucketIO.DEFAULT_FILENAME_PREFIX)
         .setKeyClass(keyClass)
         .setKeyField(keyField)
         .setFilenameSuffix(DEFAULT_SUFFIX)
@@ -160,6 +162,8 @@ public class JsonSortedBucketIO {
 
       abstract Builder<K> setTempDirectory(ResourceId tempDirectory);
 
+      abstract Builder<K> setFilenamePrefix(String filenamePrefix);
+
       abstract Builder<K> setFilenameSuffix(String filenameSuffix);
 
       abstract Builder<K> setSorterMemoryMb(int sorterMemoryMb);
@@ -208,6 +212,11 @@ public class JsonSortedBucketIO {
       return toBuilder().setFilenameSuffix(filenameSuffix).build();
     }
 
+    /** Specifies the output filename prefix (i.e. "bucket" or "part"). */
+    public Write<K> withFilenamePrefix(String filenamePrefix) {
+      return toBuilder().setFilenamePrefix(filenamePrefix).build();
+    }
+
     /** Specifies the sorter memory in MB. */
     public Write<K> withSorterMemoryMb(int sorterMemoryMb) {
       return toBuilder().setSorterMemoryMb(sorterMemoryMb).build();
@@ -232,7 +241,12 @@ public class JsonSortedBucketIO {
     BucketMetadata<K, TableRow> getBucketMetadata() {
       try {
         return new JsonBucketMetadata<>(
-            getNumBuckets(), getNumShards(), getKeyClass(), getHashType(), getKeyField());
+            getNumBuckets(),
+            getNumShards(),
+            getKeyClass(),
+            getHashType(),
+            getKeyField(),
+            getFilenamePrefix());
       } catch (CannotProvideCoderException | Coder.NonDeterministicException e) {
         throw new IllegalStateException(e);
       }
@@ -267,6 +281,8 @@ public class JsonSortedBucketIO {
 
       abstract Builder<K> setFilenameSuffix(String filenameSuffix);
 
+      abstract Builder<K> setFilenamePrefix(String filenamePrefix);
+
       // JSON specific
       abstract Builder<K> setKeyField(String keyField);
 
@@ -294,6 +310,11 @@ public class JsonSortedBucketIO {
       return toBuilder().setFilenameSuffix(filenameSuffix).build();
     }
 
+    /** Specifies the output filename prefix. */
+    public TransformOutput<K> withFilenamePrefix(String filenamePrefix) {
+      return toBuilder().setFilenamePrefix(filenamePrefix).build();
+    }
+
     /** Specifies the output file {@link Compression}. */
     public TransformOutput<K> withCompression(Compression compression) {
       return toBuilder().setCompression(compression).build();
@@ -308,10 +329,12 @@ public class JsonSortedBucketIO {
     NewBucketMetadataFn<K, TableRow> getNewBucketMetadataFn() {
       final String keyField = getKeyField();
       final Class<K> keyClass = getKeyClass();
+      final String filenamePrefix = getFilenamePrefix();
 
       return (numBuckets, numShards, hashType) -> {
         try {
-          return new JsonBucketMetadata<>(numBuckets, numShards, keyClass, hashType, keyField);
+          return new JsonBucketMetadata<>(
+              numBuckets, numShards, keyClass, hashType, keyField, filenamePrefix);
         } catch (CannotProvideCoderException | Coder.NonDeterministicException e) {
           throw new IllegalStateException(e);
         }

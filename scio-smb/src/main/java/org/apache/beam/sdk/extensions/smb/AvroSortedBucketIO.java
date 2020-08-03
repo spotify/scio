@@ -84,6 +84,7 @@ public class AvroSortedBucketIO {
         .setNumShards(SortedBucketIO.DEFAULT_NUM_SHARDS)
         .setHashType(SortedBucketIO.DEFAULT_HASH_TYPE)
         .setSorterMemoryMb(SortedBucketIO.DEFAULT_SORTER_MEMORY_MB)
+        .setFilenamePrefix(SortedBucketIO.DEFAULT_FILENAME_PREFIX)
         .setKeyClass(keyClass)
         .setKeyField(keyField)
         .setKeyCacheSize(0)
@@ -96,6 +97,7 @@ public class AvroSortedBucketIO {
       Class<K> keyClass, String keyField, Schema schema) {
     return new AutoValue_AvroSortedBucketIO_TransformOutput.Builder<K, GenericRecord>()
         .setFilenameSuffix(DEFAULT_SUFFIX)
+        .setFilenamePrefix(SortedBucketIO.DEFAULT_FILENAME_PREFIX)
         .setCodec(DEFAULT_CODEC)
         .setKeyField(keyField)
         .setKeyClass(keyClass)
@@ -108,6 +110,7 @@ public class AvroSortedBucketIO {
       Class<K> keyClass, String keyField, Class<T> recordClass) {
     return new AutoValue_AvroSortedBucketIO_TransformOutput.Builder<K, T>()
         .setFilenameSuffix(DEFAULT_SUFFIX)
+        .setFilenamePrefix(SortedBucketIO.DEFAULT_FILENAME_PREFIX)
         .setCodec(DEFAULT_CODEC)
         .setKeyField(keyField)
         .setKeyClass(keyClass)
@@ -246,6 +249,8 @@ public class AvroSortedBucketIO {
 
       abstract Builder<K, T> setKeyCacheSize(int cacheSize);
 
+      abstract Builder<K, T> setFilenamePrefix(String filenamePrefix);
+
       abstract Write<K, T> build();
     }
 
@@ -298,6 +303,7 @@ public class AvroSortedBucketIO {
                 getKeyClass(),
                 getHashType(),
                 getKeyField(),
+                getFilenamePrefix(),
                 getSchema())
             : (AvroBucketMetadata<K, T>)
                 new AvroBucketMetadata<>(
@@ -306,6 +312,7 @@ public class AvroSortedBucketIO {
                     getKeyClass(),
                     getHashType(),
                     getKeyField(),
+                    getFilenamePrefix(),
                     (Class<SpecificRecordBase>) getRecordClass());
       } catch (CannotProvideCoderException | Coder.NonDeterministicException e) {
         throw new IllegalStateException(e);
@@ -315,6 +322,11 @@ public class AvroSortedBucketIO {
     /** Specifies the output filename suffix. */
     public Write<K, T> withSuffix(String filenameSuffix) {
       return toBuilder().setFilenameSuffix(filenameSuffix).build();
+    }
+
+    /** Specifies the output filename prefix (i.e. "bucket" or "part"). */
+    public Write<K, T> withFilenamePrefix(String filenamePrefix) {
+      return toBuilder().setFilenamePrefix(filenamePrefix).build();
     }
 
     /** Specifies the sorter memory in MB. */
@@ -360,6 +372,8 @@ public class AvroSortedBucketIO {
 
       abstract Builder<K, T> setFilenameSuffix(String filenameSuffix);
 
+      abstract Builder<K, T> setFilenamePrefix(String filenamePrefix);
+
       // Avro specific
       abstract Builder<K, T> setKeyField(String keyField);
 
@@ -391,6 +405,11 @@ public class AvroSortedBucketIO {
       return toBuilder().setFilenameSuffix(filenameSuffix).build();
     }
 
+    /** Specifies the output filename prefix. */
+    public TransformOutput<K, T> withFilenamePrefix(String filenamePrefix) {
+      return toBuilder().setFilenamePrefix(filenamePrefix).build();
+    }
+
     /** Specifies the output file {@link CodecFactory}. */
     public TransformOutput<K, T> withCodec(CodecFactory codec) {
       return toBuilder().setCodec(codec).build();
@@ -411,15 +430,16 @@ public class AvroSortedBucketIO {
       final Class<K> keyClass = getKeyClass();
       final Schema schema = getSchema();
       final Class<T> recordClass = getRecordClass();
+      final String filenamePrefix = getFilenamePrefix();
 
       return (numBuckets, numShards, hashType) -> {
         try {
           if (schema != null) {
             return new AvroBucketMetadata<>(
-                numBuckets, numShards, keyClass, hashType, keyField, schema);
+                numBuckets, numShards, keyClass, hashType, keyField, filenamePrefix, schema);
           } else {
             return new AvroBucketMetadata<>(
-                numBuckets, numShards, keyClass, hashType, keyField, recordClass);
+                numBuckets, numShards, keyClass, hashType, keyField, filenamePrefix, recordClass);
           }
         } catch (CannotProvideCoderException | Coder.NonDeterministicException e) {
           throw new IllegalStateException(e);
