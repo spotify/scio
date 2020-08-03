@@ -83,25 +83,12 @@ class PairHashSCollectionFunctionsTest extends PipelineSpec {
     }
   }
 
-  it should "support hashJoin() with SideMap" in {
-    runWithContext { sc =>
-      val p1 = sc.parallelize(Seq(("a", 1), ("a", 2), ("b", 3)))
-      val p2 =
-        sc.parallelize(Seq(("a", 11), ("b", 12), ("b", 13))).toSideMap // Test deprecated method.
-      val p = p1.hashJoin(p2)
-      p should
-        containInAnyOrder(Seq(("a", (1, 11)), ("a", (2, 11)), ("b", (3, 12)), ("b", (3, 13))))
-    }
-  }
-
   it should "support hashLeftOuterJoin()" in {
     runWithContext { sc =>
       val p1 = sc.parallelize(Seq(("a", 1), ("b", 2), ("c", 3)))
       val p2 = sc.parallelize(Seq(("a", 11), ("b", 12), ("d", 14)))
       val p = p1.hashLeftOuterJoin(p2)
-      val pd = p1.hashLeftJoin(p2) // Test deprecated method.
       p should containInAnyOrder(Seq(("a", (1, Some(11))), ("b", (2, Some(12))), ("c", (3, None))))
-      pd should containInAnyOrder(Seq(("a", (1, Some(11))), ("b", (2, Some(12))), ("c", (3, None))))
     }
   }
 
@@ -110,10 +97,8 @@ class PairHashSCollectionFunctionsTest extends PipelineSpec {
       val p1 = sc.parallelize(Seq(("a", 1), ("b", 2), ("c", 3)))
       val p2 = sc.parallelize(Seq.empty[(String, Int)])
       val p = p1.hashLeftOuterJoin(p2)
-      val pd = p1.hashLeftJoin(p2) // Test deprecated method.
       val empty = Option.empty[Int]
       p should containInAnyOrder(Seq(("a", (1, empty)), ("b", (2, empty)), ("c", (3, empty))))
-      pd should containInAnyOrder(Seq(("a", (1, empty)), ("b", (2, empty)), ("c", (3, empty))))
     }
   }
 
@@ -122,18 +107,7 @@ class PairHashSCollectionFunctionsTest extends PipelineSpec {
       val p1 = sc.parallelize(Seq(("a", 1), ("a", 2), ("b", 3), ("c", 4)))
       val p2 = sc.parallelize(Seq(("a", 11), ("b", 12), ("b", 13)))
       val p = p1.hashLeftOuterJoin(p2)
-      val pd = p1.hashLeftJoin(p2) // Test deprecated method.
       p should containInAnyOrder(
-        Seq(
-          ("a", (1, Some(11))),
-          ("a", (2, Some(11))),
-          ("b", (3, Some(12))),
-          ("b", (3, Some(13))),
-          ("c", (4, None))
-        )
-      )
-
-      pd should containInAnyOrder(
         Seq(
           ("a", (1, Some(11))),
           ("a", (2, Some(11))),
@@ -150,16 +124,6 @@ class PairHashSCollectionFunctionsTest extends PipelineSpec {
       val p1 = sc.parallelize(Seq(("a", 1), ("b", 2), ("c", 3)))
       val p2 = sc.parallelize(Seq(("a", 11), ("b", 12), ("d", 14))).asMultiMapSideInput
       val p = p1.hashLeftOuterJoin(p2)
-      p should containInAnyOrder(Seq(("a", (1, Some(11))), ("b", (2, Some(12))), ("c", (3, None))))
-    }
-  }
-
-  it should "support hashLeftOuterJoin() with SideMap" in {
-    runWithContext { sc =>
-      val p1 = sc.parallelize(Seq(("a", 1), ("b", 2), ("c", 3)))
-      val p2 =
-        sc.parallelize(Seq(("a", 11), ("b", 12), ("d", 14))).toSideMap // Test deprecated method.
-      val p = p1.hashLeftJoin(p2)
       p should containInAnyOrder(Seq(("a", (1, Some(11))), ("b", (2, Some(12))), ("c", (3, None))))
     }
   }
@@ -224,17 +188,6 @@ class PairHashSCollectionFunctionsTest extends PipelineSpec {
     }
   }
 
-  it should "support hashFullOuterJoin() with SideMap" in {
-    runWithContext { sc =>
-      val p1 = sc.parallelize(Seq(("a", 1), ("b", 2)))
-      val p2 = sc.parallelize(Seq(("a", 11), ("c", 13))).toSideMap // Test deprecated method.
-      val p = p1.hashFullOuterJoin(p2)
-      p should containInAnyOrder(
-        Seq(("a", (Some(1), Some(11))), ("b", (Some(2), None)), ("c", (None, Some(13))))
-      )
-    }
-  }
-
   it should "support hashIntersectByKey()" in {
     runWithContext { sc =>
       val p1 = sc.parallelize(Seq(("a", 1), ("b", 2), ("c", 3)))
@@ -275,15 +228,6 @@ class PairHashSCollectionFunctionsTest extends PipelineSpec {
     runWithContext { sc =>
       val p1 = sc.parallelize(Seq(("a", 1), ("b", 2), ("c", 3), ("b", 4)))
       val p2 = sc.parallelize(Seq[String]("a", "b", "d")).asSetSingletonSideInput
-      val p = p1.hashIntersectByKey(p2)
-      p should containInAnyOrder(Seq(("a", 1), ("b", 2), ("b", 4)))
-    }
-  }
-
-  it should "support hashIntersectByKey() with SideSet" in {
-    runWithContext { sc =>
-      val p1 = sc.parallelize(Seq(("a", 1), ("b", 2), ("c", 3), ("b", 4)))
-      val p2 = sc.parallelize(Seq[String]("a", "b", "d")).toSideSet // Test deprecated method.
       val p = p1.hashIntersectByKey(p2)
       p should containInAnyOrder(Seq(("a", 1), ("b", 2), ("b", 4)))
     }
@@ -342,15 +286,6 @@ class PairHashSCollectionFunctionsTest extends PipelineSpec {
     runWithContext { sc =>
       val p1 = sc.parallelize(Seq("a", "b", "c", "b"))
       val p2 = sc.parallelize(Seq[String]("a", "a", "b", "e")).asSetSingletonSideInput
-      val p = p1.hashFilter(p2)
-      p should containInAnyOrder(Seq("a", "b", "b"))
-    }
-  }
-
-  it should "support hashFilter() with SideSet" in {
-    runWithContext { sc =>
-      val p1 = sc.parallelize(Seq("a", "b", "c", "b"))
-      val p2 = sc.parallelize(Seq[String]("a", "a", "b", "e")).toSideSet // Test deprecated method.
       val p = p1.hashFilter(p2)
       p should containInAnyOrder(Seq("a", "b", "b"))
     }
