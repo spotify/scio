@@ -132,6 +132,7 @@ public class AvroBucketMetadataTest {
                 ByteBuffer.class,
                 HashType.MURMUR3_32,
                 "locationUnion.countryId",
+                SortedBucketIO.DEFAULT_FILENAME_PREFIX,
                 RECORD_SCHEMA)
             .extractKey(user));
 
@@ -143,6 +144,7 @@ public class AvroBucketMetadataTest {
                 ByteBuffer.class,
                 HashType.MURMUR3_32,
                 "locationUnion.postalCode",
+                SortedBucketIO.DEFAULT_FILENAME_PREFIX,
                 RECORD_SCHEMA)
             .extractKey(user));
 

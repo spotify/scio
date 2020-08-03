@@ -110,7 +110,8 @@ public abstract class BucketMetadata<K, V> implements Serializable, HasDisplayDa
     this.hashFunction = hashType.create();
     this.keyCoder = getKeyCoder();
     this.version = version;
-    this.filenamePrefix = filenamePrefix != null ? filenamePrefix : SortedBucketIO.DEFAULT_FILENAME_PREFIX;
+    this.filenamePrefix =
+        filenamePrefix != null ? filenamePrefix : SortedBucketIO.DEFAULT_FILENAME_PREFIX;
   }
 
   @JsonIgnore

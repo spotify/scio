@@ -206,8 +206,7 @@ public class SortedBucketSinkTest {
     Assert.assertEquals(0, output.getRoot().listFiles().length);
   }
 
-  private void test(int numBuckets, int numShards, boolean useKeyCache)
-      throws Exception {
+  private void test(int numBuckets, int numShards, boolean useKeyCache) throws Exception {
     final TestBucketMetadata metadata = TestBucketMetadata.of(numBuckets, numShards);
 
     final int keyCacheSize = useKeyCache ? 100 : 0;
