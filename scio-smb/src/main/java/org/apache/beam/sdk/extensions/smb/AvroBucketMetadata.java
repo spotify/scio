@@ -72,7 +72,7 @@ public class AvroBucketMetadata<K, V extends GenericRecord> extends BucketMetada
             keyField,
             keyClass,
             new ReflectData(recordClass.getClassLoader()).getSchema(recordClass)),
-            filenamePrefix);
+        filenamePrefix);
   }
 
   public AvroBucketMetadata(
