@@ -682,9 +682,7 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
       val p1 = sc.parallelize(sparseLhs)
       val p2 = sc.parallelize(sparseRhs)
       val p = p1.sparseFullOuterJoin(p2, 10)
-      val pd = p1.sparseOuterJoin(p2, 10) // Test deprecated method
       p should containInAnyOrder(sparseFullOuterJoinExpected)
-      pd should containInAnyOrder(sparseFullOuterJoinExpected)
     }
   }
 
@@ -693,16 +691,7 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
       val p1 = sc.parallelize(sparseLhs)
       val p2 = sc.parallelize(Seq[(String, Int)]())
       val p = p1.sparseFullOuterJoin(p2, 10)
-      val pd = p1.sparseOuterJoin(p2, 10) // Test deprecated method
       p should containInAnyOrder(
-        Seq[(String, (Option[Int], Option[Int]))](
-          ("a", (Some(1), None)),
-          ("a", (Some(2), None)),
-          ("b", (Some(3), None)),
-          ("c", (Some(4), None))
-        )
-      )
-      pd should containInAnyOrder(
         Seq[(String, (Option[Int], Option[Int]))](
           ("a", (Some(1), None)),
           ("a", (Some(2), None)),
@@ -718,9 +707,7 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
       val p1 = sc.parallelize(sparseLhs)
       val p2 = sc.parallelize(sparseRhs)
       val p = p1.sparseFullOuterJoin(p2, 1000000000L)
-      val pd = p1.sparseOuterJoin(p2, 10) // Test deprecated method
       p should containInAnyOrder(sparseFullOuterJoinExpected)
-      pd should containInAnyOrder(sparseFullOuterJoinExpected)
     }
   }
 
