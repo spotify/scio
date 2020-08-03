@@ -1300,28 +1300,6 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     }
 
   /**
-   * Read files represented by elements of this [[SCollection]] as file patterns.
-   *
-   * {{{
-   * sc.parallelize("a.txt").readAll(TextIO.readAll())
-   * }}}
-   */
-  @deprecated("Use readFiles instead", "0.8.1")
-  def readAll[U: Coder](read: PTransform[PCollection[String], PCollection[U]])(implicit
-    ev: T <:< String
-  ): SCollection[U] =
-    if (context.isTest) {
-      val id = context.testId.get
-      this.flatMap(s => TestDataManager.getInput(id)(ReadIO(ev(s))).asIterable.get)
-    } else {
-      this.covary_[String].applyTransform(read)
-    }
-
-  /** Read files as byte arrays represented by elements of this [[SCollection]] as file patterns. */
-  @deprecated("Use readAllAsBytes instead", "0.8.1")
-  def readAllBytes(implicit ev: T <:< String): SCollection[Array[Byte]] = readFilesAsBytes
-
-  /**
    * Pairs each element with the value of the provided [[SideInput]] in the element's window.
    *
    * Reify as List:
