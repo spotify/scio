@@ -42,8 +42,8 @@ final case class TableRowJsonTap(path: String) extends Tap[TableRow] {
 
 final case class BigQueryTypedTap[T: Coder](table: Table, fn: (GenericRecord, TableSchema) => T)
     extends Tap[T] {
-  lazy val client = BigQuery.defaultInstance()
-  lazy val ts = client.tables.table(table.spec).getSchema
+  lazy val client: BigQuery = BigQuery.defaultInstance()
+  lazy val ts: TableSchema = client.tables.table(table.spec).getSchema
 
   override def value: Iterator[T] =
     client.tables.avroRows(table).map(gr => fn(gr, ts))

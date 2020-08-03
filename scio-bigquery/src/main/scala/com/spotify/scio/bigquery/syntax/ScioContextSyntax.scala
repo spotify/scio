@@ -23,7 +23,6 @@ import com.spotify.scio.bigquery.{
   BigQuerySelect,
   BigQueryStorage,
   BigQueryStorageSelect,
-  BigQueryTable,
   BigQueryType,
   BigQueryTyped,
   Query,
@@ -39,7 +38,6 @@ import org.apache.beam.sdk.io.gcp.bigquery.SchemaAndRecord
 
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
-import scala.util.Try
 import com.spotify.scio.bigquery.BigQueryTypedTable
 import com.spotify.scio.bigquery.BigQueryTypedTable.Format
 
