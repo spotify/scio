@@ -36,22 +36,6 @@ import scala.util.{Failure, Success, Try}
 
 /** Main package for transforms APIs. Import all. */
 package object transforms {
-  @deprecated(
-    "renamed to BaseAsyncLookupDoFn. see https://spotify.github.io/scio/migrations/v0.8.0-Migration-Guide.html#async-dofns",
-    "0.8.0"
-  )
-  type AsyncLookupDoFn[A, B, C] =
-    BaseAsyncLookupDoFn[A, B, C, ListenableFuture[_], BaseAsyncLookupDoFn.Try[B]]
-
-  @deprecated(
-    "renamed to BaseAsyncLookupDoFn. see https://spotify.github.io/scio/migrations/v0.8.0-Migration-Guide.html#async-dofns",
-    "0.8.0"
-  )
-  object AsyncLookupDoFn {
-    type Try[T] = BaseAsyncLookupDoFn.Try[T]
-    type CacheSupplier[A, B, K] = BaseAsyncLookupDoFn.CacheSupplier[A, B, K]
-    type NoOpCacheSupplier[A, B] = BaseAsyncLookupDoFn.NoOpCacheSupplier[A, B]
-  }
 
   /**
    * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with
