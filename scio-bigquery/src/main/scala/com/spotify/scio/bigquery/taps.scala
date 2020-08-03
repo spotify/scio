@@ -30,6 +30,7 @@ import scala.jdk.CollectionConverters._
 import scala.concurrent.Future
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
+import com.spotify.scio.bigquery.BigQueryTypedTable.Format
 import com.twitter.chill.Externalizer
 
 /** Tap for BigQuery TableRow JSON files. */
@@ -41,21 +42,16 @@ final case class TableRowJsonTap(path: String) extends Tap[TableRow] {
 
 final case class BigQueryTypedTap[T: Coder](table: Table, fn: (GenericRecord, TableSchema) => T)
     extends Tap[T] {
-  // lazy val underlying = BigQueryTap[GenericRecord](table)
+  lazy val client = BigQuery.defaultInstance()
+  lazy val ts = client.tables.table(table.spec).getSchema
 
   override def value: Iterator[T] =
-    ???
-  // val ts = Externalizer(underlying.ts)
-  // underlying.value.map { v =>
-  //   fn(v, ts.get)
-  // }
+    client.tables.avroRows(table).map(gr => fn(gr, ts))
 
-  override def open(sc: ScioContext): SCollection[T] =
-    ???
-  // val ts = Externalizer(underlying.ts)
-  // underlying.open(sc).map { v =>
-  //   fn(v, ts.get)
-  // }
+  override def open(sc: ScioContext): SCollection[T] = {
+    val ser = Externalizer(ts)
+    sc.bigQueryTable(table, Format.GenericRecord).map(gr => fn(gr, ser.get))
+  }
 }
 
 /** Tap for BigQuery tables. */
@@ -65,19 +61,6 @@ final case class BigQueryTap(table: TableReference) extends Tap[TableRow] {
   override def open(sc: ScioContext): SCollection[TableRow] =
     sc.bigQueryTable(Table.Ref(table))
 }
-
-// final case class BigQueryFormatTap[T: Coder: Format](table: Table) extends Tap[T] {
-//   lazy val client = BigQuery.defaultInstance()
-//   lazy val ts = client.tables.table(table.spec).getSchema
-
-//   override def value: Iterator[T] = {
-//     val fn = Format[T].underlying(table).fn
-//     client.tables.avroRows(table).map(gr => fn(gr, ts))
-//   }
-
-//   override def open(sc: ScioContext): SCollection[T] =
-//     sc.bigQueryTableWithFormat(table)
-// }
 
 /** Tap for BigQuery tables using storage api. */
 final case class BigQueryStorageTap(table: Table, readOptions: TableReadOptions)
