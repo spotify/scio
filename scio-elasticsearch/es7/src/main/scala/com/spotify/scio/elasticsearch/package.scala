@@ -17,7 +17,6 @@
 
 package com.spotify.scio
 
-import com.spotify.scio.coders.Coder
 import com.spotify.scio.elasticsearch.ElasticsearchIO.{RetryConfig, WriteParam}
 import com.spotify.scio.io.ClosedTap
 import com.spotify.scio.values.SCollection
@@ -56,7 +55,7 @@ package object elasticsearch extends CoderInstances {
       maxBulkRequestSize: Int = WriteParam.DefaultMaxBulkRequestSize,
       errorFn: BulkExecutionException => Unit = WriteParam.DefaultErrorFn,
       retry: RetryConfig = WriteParam.DefaultRetryConfig
-    )(f: T => Iterable[DocWriteRequest[_]])(implicit coder: Coder[T]): ClosedTap[Nothing] = {
+    )(f: T => Iterable[DocWriteRequest[_]]): ClosedTap[Nothing] = {
       val param = WriteParam(f, errorFn, flushInterval, numOfShards, maxBulkRequestSize, retry)
       self.write(ElasticsearchIO[T](esOptions))(param)
     }
