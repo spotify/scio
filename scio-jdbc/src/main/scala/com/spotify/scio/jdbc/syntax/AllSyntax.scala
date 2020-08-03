@@ -17,4 +17,4 @@
 
 package com.spotify.scio.jdbc.syntax
 
-trait AllSyntax extends SCollectionSyntax with ScioContextSyntax
+trait AllSyntax extends ScioContextSyntax with SCollectionSyntax
