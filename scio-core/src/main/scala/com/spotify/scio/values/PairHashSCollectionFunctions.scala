@@ -41,28 +41,6 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     hashJoin(rhs.asMultiMapSingletonSideInput)
 
   /**
-   * Perform an inner join with a [[SideMap]].
-   *
-   * `SideMap`s are deprecated in favor of `SideInput[Map[K, Iterable[W]]]`.
-   * Example replacement:
-   * {{{
-   *   val si = pairSCollRight.asMultiMapSingletonSideInput
-   *   val joined1 = pairSColl1Left.hashJoin(si)
-   *   val joined2 = pairSColl2Left.hashJoin(si)
-   * }}}
-   *
-   * @group join
-   */
-  @deprecated(
-    "Use SCollection[(K, V)]#hashJoin(rhs) or SCollection[(K, V)]#hashJoin(rhs.asMultiMapSingletonSideInput) instead.",
-    "0.8.0"
-  )
-  def hashJoin[W: Coder](
-    sideMap: SideMap[K, W]
-  )(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, (V, W))] =
-    hashJoin(sideMap.asImmutableSideInput)
-
-  /**
    * Perform an inner join with a MultiMap `SideInput[Map[K, Iterable[V]]`
    *
    * The right side is tiny and fits in memory. The SideInput can be used reused for
@@ -101,51 +79,12 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    *   val joined = pairSColl1Left.hashLeftOuterJoin(pairSCollRight)
    * }}}
    * @group join
-   */
-  @deprecated("Use SCollection[(K, V)]#hashLeftOuterJoin(pairSColl) instead.", "0.8.0")
-  def hashLeftJoin[W: Coder](
-    rhs: SCollection[(K, W)]
-  )(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, (V, Option[W]))] =
-    hashLeftOuterJoin(rhs)
-
-  /**
-   * Perform a left outer join by replicating `rhs` to all workers. The right side should be tiny
-   * and fit in memory.
-   *
-   * @example
-   * {{{
-   *   val si = pairSCollRight  // Should be tiny
-   *   val joined = pairSColl1Left.hashLeftOuterJoin(pairSCollRight)
-   * }}}
-   * @group join
    * @param rhs The tiny SCollection[(K, W)] treated as right side of the join.
    */
   def hashLeftOuterJoin[W: Coder](
     rhs: SCollection[(K, W)]
   )(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, (V, Option[W]))] =
     hashLeftOuterJoin(rhs.asMultiMapSingletonSideInput)
-
-  /**
-   * Perform a left outer join with a [[SideMap]].
-   *
-   * SideMaps are deprecated in favor of `SideInput[Map[K, Iterable[W]]]`.
-   * Example replacement:
-   * {{{
-   *   val si = pairSCollRight.asMultiMapSingletonSideInput
-   *   val joined1 = pairSColl1Left.hashLeftOuterJoin(si)
-   *   val joined2 = pairSColl2Left.hashLeftOuterJoin(si)
-   * }}}
-   *
-   * @group join
-   */
-  @deprecated(
-    "Use SCollection[(K, V)]#hashLeftOuterJoin(pairSColl) or SCollection[(K, V)]#hashLeftOuterJoin(pairSColl.asMultiMapSingletonSideInput) instead.",
-    "0.8.0"
-  )
-  def hashLeftJoin[W: Coder](
-    sideMap: SideMap[K, W]
-  )(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, (V, Option[W]))] =
-    hashLeftOuterJoin(sideMap.asImmutableSideInput)
 
   /**
    * Perform a left outer join with a MultiMap `SideInput[Map[K, Iterable[V]]`
@@ -182,28 +121,6 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     rhs: SCollection[(K, W)]
   )(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, (Option[V], Option[W]))] =
     hashFullOuterJoin(rhs.asMultiMapSingletonSideInput)
-
-  /**
-   * Perform a full outer join with a [[SideMap]].
-   *
-   * SideMaps are deprecated in favour of `SideInput[Map[K, Iterable[W]]]`.
-   * Example replacement:
-   * {{{
-   *   val si = pairSCollRight.asMultiMapSingletonSideInput
-   *   val joined1 = pairSColl1Left.hashFullOuterJoin(si)
-   *   val joined2 = pairSColl2Left.hashFullOuterJoin(si)
-   * }}}
-   *
-   * @group join
-   */
-  @deprecated(
-    "Use SCollection[(K, V)]#hashFullOuterJoin(rhs) or SCollection[(K, V)]#hashFullOuterJoin(rhs.asMultiMapSingletonSideInput) instead.",
-    "0.8.0"
-  )
-  def hashFullOuterJoin[W: Coder](
-    sideMap: SideMap[K, W]
-  )(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, (Option[V], Option[W]))] =
-    hashFullOuterJoin(sideMap.asImmutableSideInput)
 
   /**
    * Perform a full outer join with a `SideInput[Map[K, Iterable[W]]]`.
@@ -270,22 +187,6 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    *
    * @group per key
    */
-  @deprecated(
-    "Use SCollection[(K, V)]#hashIntersectByKey(rhs.asSetSingletonSideInput) instead",
-    "0.8.0"
-  )
-  def hashIntersectByKey(
-    sideSet: SideSet[K]
-  )(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, V)] =
-    hashIntersectByKey(sideSet.side)
-
-  /**
-   * Return an SCollection with the pairs from `this` whose keys are in the SideSet `rhs`.
-   *
-   * Unlike [[SCollection.intersection]] this preserves duplicates in `this`.
-   *
-   * @group per key
-   */
   def hashIntersectByKey(
     sideInput: SideInput[Set[K]]
   )(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, V)] =
@@ -318,10 +219,6 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     rhs: SCollection[K]
   )(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, V)] =
     hashSubtractByKey(rhs.asSetSingletonSideInput)
-
-  @deprecated("Use SCollection[(K, V)]#asMultiMapSingletonSideInput instead", "0.8.0")
-  def toSideMap(implicit koder: Coder[K], voder: Coder[V]): SideMap[K, V] =
-    SideMap[K, V](combineAsMapSideInput(self))
 
   private def combineAsMapSideInput[W: Coder](
     rhs: SCollection[(K, W)]
