@@ -20,7 +20,6 @@ package com.spotify.scio.bigtable.syntax
 import com.google.bigtable.v2._
 import com.google.cloud.bigtable.config.BigtableOptions
 import com.google.protobuf.ByteString
-import com.spotify.scio.coders.Coder
 import com.spotify.scio.io.ClosedTap
 import com.spotify.scio.values.SCollection
 import org.joda.time.Duration
@@ -33,15 +32,11 @@ final class SCollectionMutationOps[T <: Mutation](
 ) {
 
   /** Save this SCollection as a Bigtable table. Note that elements must be of type `Mutation`. */
-  def saveAsBigtable(projectId: String, instanceId: String, tableId: String)(implicit
-    coder: Coder[T]
-  ): ClosedTap[Nothing] =
+  def saveAsBigtable(projectId: String, instanceId: String, tableId: String): ClosedTap[Nothing] =
     self.write(BigtableWrite[T](projectId, instanceId, tableId))(BigtableWrite.Default)
 
   /** Save this SCollection as a Bigtable table. Note that elements must be of type `Mutation`. */
-  def saveAsBigtable(bigtableOptions: BigtableOptions, tableId: String)(implicit
-    coder: Coder[T]
-  ): ClosedTap[Nothing] =
+  def saveAsBigtable(bigtableOptions: BigtableOptions, tableId: String): ClosedTap[Nothing] =
     self.write(BigtableWrite[T](bigtableOptions, tableId))(BigtableWrite.Default)
 
   /**
@@ -53,7 +48,7 @@ final class SCollectionMutationOps[T <: Mutation](
     tableId: String,
     numOfShards: Int,
     flushInterval: Duration = BigtableWrite.Bulk.DefaultFlushInterval
-  )(implicit coder: Coder[T]): ClosedTap[Nothing] =
+  ): ClosedTap[Nothing] =
     self.write(BigtableWrite[T](bigtableOptions, tableId))(
       BigtableWrite.Bulk(numOfShards, flushInterval)
     )
