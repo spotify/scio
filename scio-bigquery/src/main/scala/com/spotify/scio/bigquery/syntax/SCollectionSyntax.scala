@@ -39,6 +39,7 @@ import scala.reflect.runtime.universe._
 
 import com.spotify.scio.bigquery.Table
 import com.spotify.scio.schemas.Schema
+import com.spotify.scio.bigquery.BigQueryTypedTable
 
 /** Enhanced version of [[SCollection]] with BigQuery methods. */
 final class SCollectionTableRowOps[T <: TableRow](private val self: SCollection[T]) extends AnyVal {
@@ -65,7 +66,7 @@ final class SCollectionTableRowOps[T <: TableRow](private val self: SCollection[
       )
     self
       .covary[TableRow]
-      .write(BigQueryTable(table))(param)
+      .write(BigQueryTypedTable.tableRow(table))(param)
   }
 
   /**

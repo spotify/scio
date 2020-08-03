@@ -36,7 +36,7 @@ import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.TypedRead.Method
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryUtils.ConversionOptions
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryUtils.ConversionOptions.TruncateTimestamps
-import org.apache.beam.sdk.io.gcp.bigquery.{BigQueryUtils, SchemaAndRecord}
+import org.apache.beam.sdk.io.gcp.bigquery.{AvroWriteRequest, BigQueryUtils, SchemaAndRecord}
 import org.apache.beam.sdk.io.gcp.{bigquery => beam}
 import org.apache.beam.sdk.io.{Compression, TextIO}
 import org.apache.beam.sdk.transforms.SerializableFunction
@@ -45,6 +45,7 @@ import scala.jdk.CollectionConverters._
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
 import com.spotify.scio.io.TapT
+import org.apache.avro.generic.GenericRecord
 
 private object Reads {
   private[this] val cache = new ConcurrentHashMap[ScioContext, BigQuery]()
@@ -210,6 +211,12 @@ object BigQuerySelect {
 }
 
 object BigQueryTypedTable {
+  sealed abstract class Format
+  object Format {
+    case object GenericRecord extends Format
+    case object TableRow extends Format
+  }
+
   trait WriteParam {
     val schema: TableSchema
     val writeDisposition: WriteDisposition
@@ -247,6 +254,22 @@ object BigQueryTypedTable {
     ): WriteParam = apply(s, wd, cd, td, tp, DefaultExtendedErrorInfo)(defaultInsertErrorTransform)
   }
 
+  def tableRow(table: Table): BigQueryTypedTable[TableRow] =
+    BigQueryTypedTable(
+      beam.BigQueryIO.readTableRows(),
+      beam.BigQueryIO.writeTableRows(),
+      table,
+      BigQueryUtils.convertGenericRecordToTableRow(_, _)
+    )
+
+  def genericRecord(table: Table): BigQueryTypedTable[GenericRecord] =
+    BigQueryTypedTable(
+      _.getRecord(),
+      identity[GenericRecord],
+      (genericRecord: GenericRecord, _: TableSchema) => genericRecord,
+      table
+    )
+
   def apply[T: Coder](
     readerFn: SchemaAndRecord => T,
     writerFn: T => TableRow,
@@ -263,6 +286,30 @@ object BigQueryTypedTable {
       .withFormatFunction(new SerializableFunction[T, TableRow] {
         override def apply(input: T): TableRow = wFn(input)
       })
+
+    val fn: (GenericRecord, TableSchema) => T = (gr, ts) =>
+      tableRowFn(BigQueryUtils.convertGenericRecordToTableRow(gr, ts))
+
+    BigQueryTypedTable(reader, writer, table, fn)
+  }
+
+  def apply[T: Coder](
+    readerFn: SchemaAndRecord => T,
+    writerFn: T => GenericRecord,
+    tableRowFn: (GenericRecord, TableSchema) => T,
+    table: Table
+  ): BigQueryTypedTable[T] = {
+    val rFn = ClosureCleaner.clean(readerFn)
+    val wFn = ClosureCleaner.clean(writerFn)
+    val reader = beam.BigQueryIO.read(new SerializableFunction[SchemaAndRecord, T] {
+      override def apply(input: SchemaAndRecord): T = rFn(input)
+    })
+    val writer = beam.BigQueryIO
+      .write[T]()
+      .withAvroFormatFunction(new SerializableFunction[AvroWriteRequest[T], GenericRecord] {
+        override def apply(input: AvroWriteRequest[T]): GenericRecord = wFn(input.getElement)
+      })
+
     BigQueryTypedTable(reader, writer, table, tableRowFn)
   }
 }
@@ -271,7 +318,7 @@ final case class BigQueryTypedTable[T: Coder](
   reader: beam.BigQueryIO.TypedRead[T],
   writer: beam.BigQueryIO.Write[T],
   table: Table,
-  fn: TableRow => T
+  fn: (GenericRecord, TableSchema) => T
 ) extends BigQueryIO[T] {
   override type ReadP = Unit
   override type WriteP = BigQueryTypedTable.WriteParam
@@ -321,7 +368,7 @@ final case class BigQueryTable(table: Table) extends BigQueryIO[TableRow] {
       beam.BigQueryIO.readTableRows(),
       beam.BigQueryIO.writeTableRows(),
       table,
-      (tr: TableRow) => tr
+      (gr, ts) => BigQueryUtils.convertGenericRecordToTableRow(gr, ts)
     )
 
   override type ReadP = Unit
@@ -549,12 +596,11 @@ object BigQueryTyped {
       extends BigQueryIO[T] {
     private[this] val underlying = {
       val readerFn = BigQueryType[T].fromAvro
-      val toTableRow = BigQueryType[T].toTableRow
-      val fromTableRow = BigQueryType[T].fromTableRow
+      val toAvroFn = BigQueryType[T].toAvro
       BigQueryTypedTable[T](
         (i: SchemaAndRecord) => readerFn(i.getRecord),
-        toTableRow,
-        fromTableRow,
+        toAvroFn,
+        (gr: GenericRecord, _: TableSchema) => readerFn(gr),
         table
       )
     }

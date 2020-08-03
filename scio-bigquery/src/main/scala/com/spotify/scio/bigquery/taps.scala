@@ -17,18 +17,20 @@
 
 package com.spotify.scio.bigquery
 
-import com.google.api.services.bigquery.model.TableReference
 import com.google.cloud.bigquery.storage.v1beta1.ReadOptions.TableReadOptions
+import com.google.api.services.bigquery.model.{TableReference, TableSchema}
 import com.spotify.scio.ScioContext
 import com.spotify.scio.bigquery.client.BigQuery
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.io.{FileStorage, Tap, Taps}
 import com.spotify.scio.values.SCollection
+import org.apache.avro.generic.GenericRecord
 
 import scala.jdk.CollectionConverters._
 import scala.concurrent.Future
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
+import com.twitter.chill.Externalizer
 
 /** Tap for BigQuery TableRow JSON files. */
 final case class TableRowJsonTap(path: String) extends Tap[TableRow] {
@@ -37,11 +39,23 @@ final case class TableRowJsonTap(path: String) extends Tap[TableRow] {
     sc.tableRowJsonFile(path)
 }
 
-final case class BigQueryTypedTap[T: Coder](table: Table, fn: TableRow => T) extends Tap[T] {
+final case class BigQueryTypedTap[T: Coder](table: Table, fn: (GenericRecord, TableSchema) => T)
+    extends Tap[T] {
+  // lazy val underlying = BigQueryTap[GenericRecord](table)
+
   override def value: Iterator[T] =
-    BigQueryTap(table.ref).value.map(fn)
+    ???
+  // val ts = Externalizer(underlying.ts)
+  // underlying.value.map { v =>
+  //   fn(v, ts.get)
+  // }
+
   override def open(sc: ScioContext): SCollection[T] =
-    BigQueryTap(table.ref).open(sc).map(fn)
+    ???
+  // val ts = Externalizer(underlying.ts)
+  // underlying.open(sc).map { v =>
+  //   fn(v, ts.get)
+  // }
 }
 
 /** Tap for BigQuery tables. */
@@ -51,6 +65,19 @@ final case class BigQueryTap(table: TableReference) extends Tap[TableRow] {
   override def open(sc: ScioContext): SCollection[TableRow] =
     sc.bigQueryTable(Table.Ref(table))
 }
+
+// final case class BigQueryFormatTap[T: Coder: Format](table: Table) extends Tap[T] {
+//   lazy val client = BigQuery.defaultInstance()
+//   lazy val ts = client.tables.table(table.spec).getSchema
+
+//   override def value: Iterator[T] = {
+//     val fn = Format[T].underlying(table).fn
+//     client.tables.avroRows(table).map(gr => fn(gr, ts))
+//   }
+
+//   override def open(sc: ScioContext): SCollection[T] =
+//     sc.bigQueryTableWithFormat(table)
+// }
 
 /** Tap for BigQuery tables using storage api. */
 final case class BigQueryStorageTap(table: Table, readOptions: TableReadOptions)
