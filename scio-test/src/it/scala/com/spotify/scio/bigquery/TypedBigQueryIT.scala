@@ -29,6 +29,8 @@ import org.scalacheck._
 import org.scalatest.BeforeAndAfterAll
 
 import scala.util.Random
+import com.spotify.scio.bigquery.BigQueryTypedTable.Format
+import com.spotify.scio.coders.Coder
 
 object TypedBigQueryIT {
   @BigQueryType.toTable
@@ -101,6 +103,21 @@ class TypedBigQueryIT extends PipelineSpec with BeforeAndAfterAll {
     sc.typedBigQuery[Record](table)
       .map(Record.toAvro)
       .map(Record.fromAvro) should containInAnyOrder(
+      records
+    )
+    sc.run()
+  }
+
+  "BigQueryTypedTable" should "read TableRow records" in {
+    val sc = ScioContext(options)
+    sc.bigQueryTable(table).map(Record.fromTableRow) should containInAnyOrder(records)
+    sc.run()
+  }
+
+  it should "read GenericRecord recors" in {
+    val sc = ScioContext(options)
+    implicit val coder = Coder.avroGenericRecordCoder(Record.avroSchema)
+    sc.bigQueryTable(table, Format.GenericRecord).map(Record.fromAvro) should containInAnyOrder(
       records
     )
     sc.run()
