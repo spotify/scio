@@ -28,7 +28,7 @@ import com.spotify.scio.jdbc.JdbcConnectionOptions
  * @param shardColumn Column to shard by. Must be of integer/long type ideally with evenly
  *                    distributed values
  * @param rowMapper Function to map from a SQL [[java.sql.ResultSet]] to `T`
- * @param fetchSize Name of a table or materialized view to read from. Default value is 100000.
+ * @param fetchSize Amount of rows fetched per [[java.sql.ResultSet]]. Default value is 100000.
  *                  To apply an unbounded fetch size set this parameter to -1
  * @param numShards Number of shards to split the table into for reading.
  *                  There is no guarantee that Beam will actually execute reads in parallel.
