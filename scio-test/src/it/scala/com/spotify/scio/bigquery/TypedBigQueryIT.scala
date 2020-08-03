@@ -95,4 +95,14 @@ class TypedBigQueryIT extends PipelineSpec with BeforeAndAfterAll {
     sc.typedBigQuery[Record](table) should containInAnyOrder(records)
     sc.run()
   }
+
+  it should "convert to avro format" in {
+    val sc = ScioContext(options)
+    sc.typedBigQuery[Record](table)
+      .map(Record.toAvro)
+      .map(Record.fromAvro) should containInAnyOrder(
+      records
+    )
+    sc.run()
+  }
 }

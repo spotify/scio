@@ -89,7 +89,7 @@ private[types] object ConverterProvider {
 
         case t if t =:= typeOf[ByteString] =>
           val b = q"$tree.asInstanceOf[_root_.java.nio.ByteBuffer]"
-          q"_root_.com.google.protobuf.ByteString.copyFrom($b)"
+          q"_root_.com.google.protobuf.ByteString.copyFrom($b.asReadOnlyBuffer())"
         case t if t =:= typeOf[Array[Byte]] =>
           val b = q"$tree.asInstanceOf[_root_.java.nio.ByteBuffer]"
           q"_root_.java.util.Arrays.copyOfRange($b.array(), $b.position(), $b.limit())"
