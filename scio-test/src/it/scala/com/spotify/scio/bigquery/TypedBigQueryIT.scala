@@ -62,14 +62,16 @@ object TypedBigQueryIT {
     implicitly[Arbitrary[Record]].arbitrary
   }
 
-  private val table = {
+  private def table(name: String) = {
     val TIME_FORMATTER = DateTimeFormat.forPattern("yyyyMMddHHmmss")
     val now = Instant.now().toString(TIME_FORMATTER)
     val spec =
-      "data-integration-test:bigquery_avro_it.records_" + now + "_" + Random.nextInt(Int.MaxValue)
+      s"data-integration-test:bigquery_avro_it.$name${now}_${Random.nextInt(Int.MaxValue)}"
     Table.Spec(spec)
   }
-  private val records = Gen.listOfN(1000, recordGen).sample.get
+  private val tableRowTable = table("records_tablerow")
+  private val avroTable = table("records_avro")
+  private val records = Gen.listOfN(1, recordGen).sample.get
   private val options = PipelineOptionsFactory
     .fromArgs(
       "--project=data-integration-test",
@@ -83,24 +85,27 @@ class TypedBigQueryIT extends PipelineSpec with BeforeAndAfterAll {
 
   override protected def beforeAll(): Unit = {
     val sc = ScioContext(options)
-    sc.parallelize(records).saveAsTypedBigQueryTable(table)
+    sc.parallelize(records).saveAsTypedBigQueryTable(tableRowTable)
 
     sc.run()
     ()
   }
 
-  override protected def afterAll(): Unit =
-    BigQuery.defaultInstance().tables.delete(table.ref)
+  override protected def afterAll(): Unit = {
+    BigQuery.defaultInstance().tables.delete(tableRowTable.ref)
+    BigQuery.defaultInstance().tables.delete(avroTable.ref)
+  }
 
   "TypedBigQuery" should "read records" in {
     val sc = ScioContext(options)
-    sc.typedBigQuery[Record](table) should containInAnyOrder(records)
+    sc.typedBigQuery[Record](tableRowTable) should containInAnyOrder(records)
     sc.run()
   }
 
   it should "convert to avro format" in {
     val sc = ScioContext(options)
-    sc.typedBigQuery[Record](table)
+    implicit val coder = Coder.avroGenericRecordCoder(Record.avroSchema)
+    sc.typedBigQuery[Record](tableRowTable)
       .map(Record.toAvro)
       .map(Record.fromAvro) should containInAnyOrder(
       records
@@ -110,16 +115,45 @@ class TypedBigQueryIT extends PipelineSpec with BeforeAndAfterAll {
 
   "BigQueryTypedTable" should "read TableRow records" in {
     val sc = ScioContext(options)
-    sc.bigQueryTable(table).map(Record.fromTableRow) should containInAnyOrder(records)
+    sc
+      .bigQueryTable(tableRowTable)
+      .map(Record.fromTableRow) should containInAnyOrder(records)
     sc.run()
   }
 
   it should "read GenericRecord recors" in {
     val sc = ScioContext(options)
     implicit val coder = Coder.avroGenericRecordCoder(Record.avroSchema)
-    sc.bigQueryTable(table, Format.GenericRecord).map(Record.fromAvro) should containInAnyOrder(
-      records
-    )
+    sc
+      .bigQueryTable(tableRowTable, Format.GenericRecord)
+      .map(Record.fromAvro) should containInAnyOrder(records)
+    sc.run()
+  }
+
+  it should "write GenericRecord records" in {
+    val sc = ScioContext(options)
+    implicit val coder = Coder.avroGenericRecordCoder(Record.avroSchema)
+    val schema =
+      BigQueryUtil.parseSchema("""
+        |{
+        |  "fields": [
+        |    {"mode": "NULLABLE", "name": "bool", "type": "BOOLEAN"},
+        |    {"mode": "NULLABLE", "name": "int", "type": "INTEGER"},
+        |    {"mode": "NULLABLE", "name": "long", "type": "INTEGER"},
+        |    {"mode": "NULLABLE", "name": "float", "type": "FLOAT"},
+        |    {"mode": "NULLABLE", "name": "double", "type": "FLOAT"},
+        |    {"mode": "NULLABLE", "name": "string", "type": "STRING"},
+        |    {"mode": "NULLABLE", "name": "byteString", "type": "BYTES"},
+        |    {"mode": "NULLABLE", "name": "timestamp", "type": "INTEGER"},
+        |    {"mode": "NULLABLE", "name": "date", "type": "STRING"},
+        |    {"mode": "NULLABLE", "name": "time", "type": "STRING"},
+        |    {"mode": "NULLABLE", "name": "datetime", "type": "STRING"}
+        |  ]
+        |}
+      """.stripMargin)
+    sc
+      .bigQueryTable(tableRowTable, Format.GenericRecord)
+      .saveAsBigQueryTable(avroTable, schema = schema, createDisposition = CREATE_IF_NEEDED)
     sc.run()
   }
 }
