@@ -71,8 +71,14 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
 
   /** Get an SCollection for a BigQuery table. */
   def bigQueryTable(table: Table): SCollection[TableRow] =
-    self.read(BigQueryTypedTable.tableRow(table))
+    bigQueryTable(table, BigQueryTypedTable.Format.TableRow)
 
+  /**
+   * Get an SCollection for a BigQuery table using the specified [[Format]].
+   *
+   * Reading records as GenericRecord **should** offer better performance over
+   * TableRow records.
+   */
   def bigQueryTable(table: Table, format: Format)(implicit
     code: Coder[format.F]
   ): SCollection[format.F] =

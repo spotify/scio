@@ -30,7 +30,9 @@ import com.spotify.scio.io.{ScioIO, Tap, TapOf, TestIO}
 import com.spotify.scio.schemas.{Schema, SchemaMaterializer}
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
+import com.spotify.scio.io.TapT
 import com.twitter.chill.ClosureCleaner
+import org.apache.avro.generic.GenericRecord
 import org.apache.beam.sdk.extensions.gcp.options.GcpOptions
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.TypedRead.Method
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
@@ -44,8 +46,6 @@ import org.apache.beam.sdk.transforms.SerializableFunction
 import scala.jdk.CollectionConverters._
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
-import com.spotify.scio.io.TapT
-import org.apache.avro.generic.GenericRecord
 
 private object Reads {
   private[this] val cache = new ConcurrentHashMap[ScioContext, BigQuery]()
@@ -211,6 +211,8 @@ object BigQuerySelect {
 }
 
 object BigQueryTypedTable {
+
+  /** Defines the format in which BigQuery can be read and written to. */
   sealed abstract class Format {
     type F
   }
@@ -260,7 +262,7 @@ object BigQueryTypedTable {
     ): WriteParam = apply(s, wd, cd, td, tp, DefaultExtendedErrorInfo)(defaultInsertErrorTransform)
   }
 
-  def tableRow(table: Table): BigQueryTypedTable[TableRow] =
+  private[this] def tableRow(table: Table): BigQueryTypedTable[TableRow] =
     BigQueryTypedTable(
       beam.BigQueryIO.readTableRows(),
       beam.BigQueryIO.writeTableRows(),
@@ -268,7 +270,7 @@ object BigQueryTypedTable {
       BigQueryUtils.convertGenericRecordToTableRow(_, _)
     )
 
-  def genericRecord(table: Table): BigQueryTypedTable[GenericRecord] =
+  private[this] def genericRecord(table: Table): BigQueryTypedTable[GenericRecord] =
     BigQueryTypedTable(
       _.getRecord(),
       identity[GenericRecord],
@@ -276,6 +278,10 @@ object BigQueryTypedTable {
       table
     )
 
+  /**
+   * Creates a new instance of [[BigQueryTypedTable]] based on the supplied predifined
+   * [[Format]].
+   */
   def apply(table: Table, format: Format): BigQueryTypedTable[format.F] = format match {
     case Format.GenericRecord => genericRecord(table).asInstanceOf[BigQueryTypedTable[format.F]]
     case Format.TableRow      => tableRow(table).asInstanceOf[BigQueryTypedTable[format.F]]
@@ -374,14 +380,9 @@ final case class BigQueryTypedTable[T: Coder](
 }
 
 /** Get an IO for a BigQuery table. */
+@deprecated("use BigQueryTypedTable(table, Format.TableRow) instead", "0.9.2")
 final case class BigQueryTable(table: Table) extends BigQueryIO[TableRow] {
-  private[this] val underlying =
-    BigQueryTypedTable(
-      beam.BigQueryIO.readTableRows(),
-      beam.BigQueryIO.writeTableRows(),
-      table,
-      (gr, ts) => BigQueryUtils.convertGenericRecordToTableRow(gr, ts)
-    )
+  private[this] val underlying = BigQueryTypedTable(table, BigQueryTypedTable.Format.TableRow)
 
   override type ReadP = Unit
   override type WriteP = BigQueryTable.WriteParam

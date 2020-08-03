@@ -40,6 +40,7 @@ import scala.reflect.runtime.universe._
 import com.spotify.scio.bigquery.Table
 import com.spotify.scio.schemas.Schema
 import com.spotify.scio.bigquery.BigQueryTypedTable
+import com.spotify.scio.bigquery.BigQueryTypedTable.Format
 import org.apache.avro.generic.GenericRecord
 
 /** Enhanced version of [[SCollection]] with BigQuery methods. */
@@ -67,7 +68,7 @@ final class SCollectionTableRowOps[T <: TableRow](private val self: SCollection[
       )
     self
       .covary[TableRow]
-      .write(BigQueryTypedTable.tableRow(table))(param)
+      .write(BigQueryTypedTable(table, Format.TableRow))(param)
   }
 
   /**
@@ -84,13 +85,14 @@ final class SCollectionTableRowOps[T <: TableRow](private val self: SCollection[
   }
 }
 
-/** Enhanced version of [[SCollection]] with BigQuery methods. */
+/** Enhanced version of [[SCollection]] with BigQuery methods */
 final class SCollectionGenericRecordOps[T <: GenericRecord](private val self: SCollection[T])
     extends AnyVal {
 
   /**
-   * Save this SCollection as a BigQuery table. Note that elements must be of type
-   * [[com.google.api.services.bigquery.model.TableRow TableRow]].
+   * Save this SCollection as a BigQuery table using Avro writting function.
+   * Note that elements must be of type
+   * [[org.apache.avro.generic.GenericRecord GenericRecord]].
    */
   def saveAsBigQueryTable(
     table: Table,
@@ -110,7 +112,7 @@ final class SCollectionGenericRecordOps[T <: GenericRecord](private val self: SC
       )
     self
       .covary[GenericRecord]
-      .write(BigQueryTypedTable.genericRecord(table))(param)
+      .write(BigQueryTypedTable(table, Format.GenericRecord))(param)
   }
 
 }
