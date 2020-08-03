@@ -29,7 +29,12 @@ class TestBucketMetadata extends BucketMetadata<String, String> {
 
   static TestBucketMetadata of(int numBuckets, int numShards)
       throws CannotProvideCoderException, NonDeterministicException {
-    return new TestBucketMetadata(numBuckets, numShards, HashType.MURMUR3_32);
+    return of(numBuckets, numShards, SortedBucketIO.DEFAULT_FILENAME_PREFIX);
+  }
+
+  static TestBucketMetadata of(int numBuckets, int numShards, String filenamePrefix)
+      throws CannotProvideCoderException, NonDeterministicException {
+    return new TestBucketMetadata(numBuckets, numShards, HashType.MURMUR3_32, filenamePrefix);
   }
 
   TestBucketMetadata withKeyIndex(int keyIndex) {
@@ -40,9 +45,10 @@ class TestBucketMetadata extends BucketMetadata<String, String> {
   TestBucketMetadata(
       @JsonProperty("numBuckets") int numBuckets,
       @JsonProperty("numShards") int numShards,
-      @JsonProperty("hashType") HashType hashType)
+      @JsonProperty("hashType") HashType hashType,
+      @JsonProperty("filenamePrefix") String filenamePrefix)
       throws CannotProvideCoderException, NonDeterministicException {
-    this(BucketMetadata.CURRENT_VERSION, numBuckets, numShards, hashType);
+    this(BucketMetadata.CURRENT_VERSION, numBuckets, numShards, hashType, filenamePrefix);
   }
 
   @JsonCreator
@@ -50,9 +56,10 @@ class TestBucketMetadata extends BucketMetadata<String, String> {
       @JsonProperty("version") int version,
       @JsonProperty("numBuckets") int numBuckets,
       @JsonProperty("numShards") int numShards,
-      @JsonProperty("hashType") HashType hashType)
+      @JsonProperty("hashType") HashType hashType,
+      @JsonProperty("filenamePrefix") String filenamePrefix)
       throws CannotProvideCoderException, NonDeterministicException {
-    super(version, numBuckets, numShards, String.class, hashType);
+    super(version, numBuckets, numShards, String.class, hashType, filenamePrefix);
   }
 
   @Override

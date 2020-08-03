@@ -45,11 +45,24 @@ public class JsonBucketMetadataTest {
 
     Assert.assertEquals(
         (Integer) 10,
-        new JsonBucketMetadata<>(1, 1, Integer.class, HashType.MURMUR3_32, "age").extractKey(user));
+        new JsonBucketMetadata<>(
+                1,
+                1,
+                Integer.class,
+                HashType.MURMUR3_32,
+                "age",
+                SortedBucketIO.DEFAULT_FILENAME_PREFIX)
+            .extractKey(user));
 
     Assert.assertEquals(
         "US",
-        new JsonBucketMetadata<>(1, 1, String.class, HashType.MURMUR3_32, "location.currentCountry")
+        new JsonBucketMetadata<>(
+                1,
+                1,
+                String.class,
+                HashType.MURMUR3_32,
+                "location.currentCountry",
+                SortedBucketIO.DEFAULT_FILENAME_PREFIX)
             .extractKey(user));
 
     /*
@@ -65,7 +78,14 @@ public class JsonBucketMetadataTest {
   @Test
   public void testCoding() throws Exception {
     final JsonBucketMetadata<String> metadata =
-        new JsonBucketMetadata<>(1, 1, 1, String.class, HashType.MURMUR3_32, "favorite_color");
+        new JsonBucketMetadata<>(
+            1,
+            1,
+            1,
+            String.class,
+            HashType.MURMUR3_32,
+            "favorite_color",
+            SortedBucketIO.DEFAULT_FILENAME_PREFIX);
 
     final BucketMetadata<String, TableRow> copy = BucketMetadata.from(metadata.toString());
     Assert.assertEquals(metadata.getVersion(), copy.getVersion());
@@ -78,7 +98,13 @@ public class JsonBucketMetadataTest {
   @Test
   public void testVersionDefault() throws Exception {
     final JsonBucketMetadata<String> metadata =
-        new JsonBucketMetadata<>(1, 1, String.class, HashType.MURMUR3_32, "favorite_color");
+        new JsonBucketMetadata<>(
+            1,
+            1,
+            String.class,
+            HashType.MURMUR3_32,
+            "favorite_color",
+            SortedBucketIO.DEFAULT_FILENAME_PREFIX);
 
     Assert.assertEquals(BucketMetadata.CURRENT_VERSION, metadata.getVersion());
   }
@@ -86,7 +112,13 @@ public class JsonBucketMetadataTest {
   @Test
   public void testDisplayData() throws Exception {
     final JsonBucketMetadata<String> metadata =
-        new JsonBucketMetadata<>(2, 1, String.class, HashType.MURMUR3_32, "favorite_color");
+        new JsonBucketMetadata<>(
+            2,
+            1,
+            String.class,
+            HashType.MURMUR3_32,
+            "favorite_color",
+            SortedBucketIO.DEFAULT_FILENAME_PREFIX);
 
     final DisplayData displayData = DisplayData.from(metadata);
     MatcherAssert.assertThat(displayData, hasDisplayItem("numBuckets", 2));
@@ -103,16 +135,40 @@ public class JsonBucketMetadataTest {
   @Test
   public void testSameSourceCompatibility() throws Exception {
     final JsonBucketMetadata<String> metadata1 =
-        new JsonBucketMetadata<>(2, 1, String.class, HashType.MURMUR3_32, "favorite_country");
+        new JsonBucketMetadata<>(
+            2,
+            1,
+            String.class,
+            HashType.MURMUR3_32,
+            "favorite_country",
+            SortedBucketIO.DEFAULT_FILENAME_PREFIX);
 
     final JsonBucketMetadata<String> metadata2 =
-        new JsonBucketMetadata<>(2, 1, String.class, HashType.MURMUR3_32, "favorite_color");
+        new JsonBucketMetadata<>(
+            2,
+            1,
+            String.class,
+            HashType.MURMUR3_32,
+            "favorite_color",
+            SortedBucketIO.DEFAULT_FILENAME_PREFIX);
 
     final JsonBucketMetadata<String> metadata3 =
-        new JsonBucketMetadata<>(4, 1, String.class, HashType.MURMUR3_32, "favorite_color");
+        new JsonBucketMetadata<>(
+            4,
+            1,
+            String.class,
+            HashType.MURMUR3_32,
+            "favorite_color",
+            SortedBucketIO.DEFAULT_FILENAME_PREFIX);
 
     final JsonBucketMetadata<Long> metadata4 =
-        new JsonBucketMetadata<>(4, 1, Long.class, HashType.MURMUR3_32, "favorite_color");
+        new JsonBucketMetadata<>(
+            4,
+            1,
+            Long.class,
+            HashType.MURMUR3_32,
+            "favorite_color",
+            SortedBucketIO.DEFAULT_FILENAME_PREFIX);
 
     Assert.assertFalse(metadata1.isPartitionCompatible(metadata2));
     Assert.assertTrue(metadata2.isPartitionCompatible(metadata3));

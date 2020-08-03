@@ -76,10 +76,13 @@ public class SortedBucketSourceTest {
   private SMBFilenamePolicy lhsPolicy;
   private SMBFilenamePolicy rhsPolicy;
 
+  private static final String LHS_FILENAME_PREFIX = "lhs-filename-prefix"; // Custom prefix
+  private static final String RHS_FILENAME_PREFIX = "bucket"; // Default prefix
+
   @Before
   public void setup() {
-    lhsPolicy = new SMBFilenamePolicy(fromFolder(lhsFolder), ".txt");
-    rhsPolicy = new SMBFilenamePolicy(fromFolder(rhsFolder), ".txt");
+    lhsPolicy = new SMBFilenamePolicy(fromFolder(lhsFolder), LHS_FILENAME_PREFIX, ".txt");
+    rhsPolicy = new SMBFilenamePolicy(fromFolder(rhsFolder), RHS_FILENAME_PREFIX, ".txt");
   }
 
   @Test
@@ -240,7 +243,7 @@ public class SortedBucketSourceTest {
     int numBuckets = maxId(input.keySet(), BucketShardId::getBucketId) + 1;
     int numShards = maxId(input.keySet(), BucketShardId::getShardId) + 1;
 
-    TestBucketMetadata metadata = TestBucketMetadata.of(numBuckets, numShards);
+    TestBucketMetadata metadata = TestBucketMetadata.of(numBuckets, numShards, LHS_FILENAME_PREFIX);
 
     write(lhsPolicy.forDestination(), metadata, input);
 
@@ -496,8 +499,10 @@ public class SortedBucketSourceTest {
     int rhsNumBuckets = maxId(rhsInput.keySet(), BucketShardId::getBucketId) + 1;
     int rhsNumShards = maxId(rhsInput.keySet(), BucketShardId::getShardId) + 1;
 
-    TestBucketMetadata lhsMetadata = TestBucketMetadata.of(lhsNumBuckets, lhsNumShards);
-    TestBucketMetadata rhsMetadata = TestBucketMetadata.of(rhsNumBuckets, rhsNumShards);
+    TestBucketMetadata lhsMetadata =
+        TestBucketMetadata.of(lhsNumBuckets, lhsNumShards, LHS_FILENAME_PREFIX);
+    TestBucketMetadata rhsMetadata =
+        TestBucketMetadata.of(rhsNumBuckets, rhsNumShards, RHS_FILENAME_PREFIX);
 
     write(lhsPolicy.forDestination(), lhsMetadata, lhsInput);
     write(rhsPolicy.forDestination(), rhsMetadata, rhsInput);
@@ -551,11 +556,13 @@ public class SortedBucketSourceTest {
     for (Map<BucketShardId, List<String>> input : lhsInputs) {
       int numBuckets = maxId(input.keySet(), BucketShardId::getBucketId) + 1;
       int numShards = maxId(input.keySet(), BucketShardId::getShardId) + 1;
-      TestBucketMetadata metadata = TestBucketMetadata.of(numBuckets, numShards);
+      TestBucketMetadata metadata =
+          TestBucketMetadata.of(numBuckets, numShards, LHS_FILENAME_PREFIX);
       ResourceId destination =
           LocalResources.fromFile(
               partitionedInputFolder.newFolder("lhs" + lhsInputs.indexOf(input)), true);
-      FileAssignment fileAssignment = new SMBFilenamePolicy(destination, ".txt").forDestination();
+      FileAssignment fileAssignment =
+          new SMBFilenamePolicy(destination, metadata.getFilenamePrefix(), ".txt").forDestination();
       write(fileAssignment, metadata, input);
       lhsPaths.add(destination);
       input.forEach(
@@ -575,11 +582,13 @@ public class SortedBucketSourceTest {
     for (Map<BucketShardId, List<String>> input : rhsInputs) {
       int numBuckets = maxId(input.keySet(), BucketShardId::getBucketId) + 1;
       int numShards = maxId(input.keySet(), BucketShardId::getShardId) + 1;
-      TestBucketMetadata metadata = TestBucketMetadata.of(numBuckets, numShards);
+      TestBucketMetadata metadata =
+          TestBucketMetadata.of(numBuckets, numShards, RHS_FILENAME_PREFIX);
       ResourceId destination =
           LocalResources.fromFile(
               partitionedInputFolder.newFolder("rhs" + rhsInputs.indexOf(input)), true);
-      FileAssignment fileAssignment = new SMBFilenamePolicy(destination, ".txt").forDestination();
+      FileAssignment fileAssignment =
+          new SMBFilenamePolicy(destination, metadata.getFilenamePrefix(), ".txt").forDestination();
       write(fileAssignment, metadata, input);
       rhsPaths.add(destination);
       input.forEach(

@@ -59,6 +59,7 @@ public class AvroBucketMetadata<K, V extends GenericRecord> extends BucketMetada
       Class<K> keyClass,
       BucketMetadata.HashType hashType,
       String keyField,
+      String filenamePrefix,
       Class<V> recordClass)
       throws CannotProvideCoderException, NonDeterministicException {
     this(
@@ -70,7 +71,8 @@ public class AvroBucketMetadata<K, V extends GenericRecord> extends BucketMetada
         validateKeyField(
             keyField,
             keyClass,
-            new ReflectData(recordClass.getClassLoader()).getSchema(recordClass)));
+            new ReflectData(recordClass.getClassLoader()).getSchema(recordClass)),
+            filenamePrefix);
   }
 
   public AvroBucketMetadata(
@@ -79,6 +81,7 @@ public class AvroBucketMetadata<K, V extends GenericRecord> extends BucketMetada
       Class<K> keyClass,
       BucketMetadata.HashType hashType,
       String keyField,
+      String filenamePrefix,
       Schema schema)
       throws CannotProvideCoderException, NonDeterministicException {
     this(
@@ -87,7 +90,8 @@ public class AvroBucketMetadata<K, V extends GenericRecord> extends BucketMetada
         numShards,
         keyClass,
         hashType,
-        validateKeyField(keyField, keyClass, schema));
+        validateKeyField(keyField, keyClass, schema),
+        filenamePrefix);
   }
 
   @JsonCreator
@@ -97,9 +101,10 @@ public class AvroBucketMetadata<K, V extends GenericRecord> extends BucketMetada
       @JsonProperty("numShards") int numShards,
       @JsonProperty("keyClass") Class<K> keyClass,
       @JsonProperty("hashType") BucketMetadata.HashType hashType,
-      @JsonProperty("keyField") String keyField)
+      @JsonProperty("keyField") String keyField,
+      @JsonProperty(value = "filenamePrefix", required = false) String filenamePrefix)
       throws CannotProvideCoderException, NonDeterministicException {
-    super(version, numBuckets, numShards, keyClass, hashType);
+    super(version, numBuckets, numShards, keyClass, hashType, filenamePrefix);
     this.keyField = keyField;
     this.keyPath = toKeyPath(keyField);
   }

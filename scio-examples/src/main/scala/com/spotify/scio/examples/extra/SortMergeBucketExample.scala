@@ -76,10 +76,11 @@ object SortMergeBucketWriteExample {
       .saveAsSortedBucket(
         AvroSortedBucketIO
           .write(classOf[Integer], "userId", SortMergeBucketExample.UserDataSchema)
-          .to(args("userOutput"))
+          .to(args("users"))
           .withTempDirectory(sc.options.getTempLocation)
           .withCodec(CodecFactory.snappyCodec())
           .withHashType(HashType.MURMUR3_32)
+          .withFilenamePrefix("example-prefix")
           .withNumBuckets(2)
           .withNumShards(1)
       )
@@ -98,11 +99,12 @@ object SortMergeBucketWriteExample {
       .saveAsSortedBucket(
         AvroSortedBucketIO
           .write[Integer, Account](classOf[Integer], "id", classOf[Account])
-          .to(args("accountOutput"))
+          .to(args("accounts"))
           .withSorterMemoryMb(128)
           .withTempDirectory(sc.options.getTempLocation)
           .withCodec(CodecFactory.snappyCodec())
           .withHashType(HashType.MURMUR3_32)
+          .withFilenamePrefix("part") // Default is "bucket"
           .withNumBuckets(1)
           .withNumShards(1)
       )
@@ -135,10 +137,10 @@ object SortMergeBucketJoinExample {
       classOf[Integer],
       AvroSortedBucketIO
         .read(new TupleTag[GenericRecord]("lhs"), SortMergeBucketExample.UserDataSchema)
-        .from(args("lhsInput")),
+        .from(args("users")),
       AvroSortedBucketIO
         .read(new TupleTag[Account]("rhs"), classOf[Account])
-        .from(args("rhsInput")),
+        .from(args("accounts")),
       TargetParallelism.max()
     ).map(mapFn) // Apply mapping function
       .saveAsTextFile(args("output"))
@@ -160,10 +162,10 @@ object SortMergeBucketTransformExample {
       classOf[Integer],
       AvroSortedBucketIO
         .read(new TupleTag[GenericRecord]("lhs"), SortMergeBucketExample.UserDataSchema)
-        .from(args("lhsInput")),
+        .from(args("users")),
       AvroSortedBucketIO
         .read(new TupleTag[Account]("rhs"), classOf[Account])
-        .from(args("rhsInput")),
+        .from(args("accounts")),
       TargetParallelism.auto()
     ).to(
       AvroSortedBucketIO

@@ -51,6 +51,7 @@ public class SortedBucketIO {
   static final int DEFAULT_NUM_SHARDS = 1;
   static final HashType DEFAULT_HASH_TYPE = HashType.MURMUR3_128;
   static final int DEFAULT_SORTER_MEMORY_MB = 1024;
+  static final String DEFAULT_FILENAME_PREFIX = "bucket";
   static final TargetParallelism DEFAULT_PARALLELISM = TargetParallelism.auto();
 
   /** Co-groups sorted-bucket sources with the same sort key. */
@@ -139,6 +140,7 @@ public class SortedBucketIO {
     private final NewBucketMetadataFn<K, V> newBucketMetadataFn;
     private final FileOperations<V> fileOperations;
     private final String filenameSuffix;
+    private final String filenamePrefix;
 
     private CoGbkTransform(
         Class<K> keyClass,
@@ -153,6 +155,7 @@ public class SortedBucketIO {
       this.newBucketMetadataFn = transform.getNewBucketMetadataFn();
       this.fileOperations = transform.getFileOperations();
       this.filenameSuffix = transform.getFilenameSuffix();
+      this.filenamePrefix = transform.getFilenamePrefix();
     }
 
     public CoGbkTransform<K, V> via(TransformFn<K, V> toFinalResultT) {
@@ -183,7 +186,8 @@ public class SortedBucketIO {
               tmpDir,
               newBucketMetadataFn,
               fileOperations,
-              filenameSuffix));
+              filenameSuffix,
+              filenamePrefix));
     }
   }
 
@@ -197,6 +201,8 @@ public class SortedBucketIO {
     abstract ResourceId getTempDirectory();
 
     abstract String getFilenameSuffix();
+
+    abstract String getFilenamePrefix();
 
     abstract FileOperations<V> getFileOperations();
 
@@ -214,6 +220,8 @@ public class SortedBucketIO {
     abstract int getNumBuckets();
 
     abstract int getNumShards();
+
+    abstract String getFilenamePrefix();
 
     abstract Class<K> getKeyClass();
 

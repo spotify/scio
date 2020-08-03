@@ -67,41 +67,83 @@ public class TensorFlowBucketMetadataTest {
 
     Assert.assertArrayEquals(
         "data".getBytes(Charset.defaultCharset()),
-        new TensorFlowBucketMetadata<>(1, 1, byte[].class, HashType.MURMUR3_32, "bytes")
+        new TensorFlowBucketMetadata<>(
+                1,
+                1,
+                byte[].class,
+                HashType.MURMUR3_32,
+                "bytes",
+                SortedBucketIO.DEFAULT_FILENAME_PREFIX)
             .extractKey(example));
 
     Assert.assertEquals(
         ByteString.copyFrom("data".getBytes()),
-        new TensorFlowBucketMetadata<>(1, 1, ByteString.class, HashType.MURMUR3_32, "bytes")
+        new TensorFlowBucketMetadata<>(
+                1,
+                1,
+                ByteString.class,
+                HashType.MURMUR3_32,
+                "bytes",
+                SortedBucketIO.DEFAULT_FILENAME_PREFIX)
             .extractKey(example));
 
     Assert.assertEquals(
         "data",
-        new TensorFlowBucketMetadata<>(1, 1, String.class, HashType.MURMUR3_32, "bytes")
+        new TensorFlowBucketMetadata<>(
+                1,
+                1,
+                String.class,
+                HashType.MURMUR3_32,
+                "bytes",
+                SortedBucketIO.DEFAULT_FILENAME_PREFIX)
             .extractKey(example));
 
     Assert.assertEquals(
         (Long) 12345L,
-        new TensorFlowBucketMetadata<>(1, 1, Long.class, HashType.MURMUR3_32, "int")
+        new TensorFlowBucketMetadata<>(
+                1,
+                1,
+                Long.class,
+                HashType.MURMUR3_32,
+                "int",
+                SortedBucketIO.DEFAULT_FILENAME_PREFIX)
             .extractKey(example));
 
     Assert.assertThrows(
         NonDeterministicException.class,
         () ->
-            new TensorFlowBucketMetadata<>(1, 1, Float.class, HashType.MURMUR3_32, "float")
+            new TensorFlowBucketMetadata<>(
+                    1,
+                    1,
+                    Float.class,
+                    HashType.MURMUR3_32,
+                    "float",
+                    SortedBucketIO.DEFAULT_FILENAME_PREFIX)
                 .extractKey(example));
 
     Assert.assertThrows(
         IllegalStateException.class,
         () ->
-            new TensorFlowBucketMetadata<>(1, 1, Integer.class, HashType.MURMUR3_32, "bytes")
+            new TensorFlowBucketMetadata<>(
+                    1,
+                    1,
+                    Integer.class,
+                    HashType.MURMUR3_32,
+                    "bytes",
+                    SortedBucketIO.DEFAULT_FILENAME_PREFIX)
                 .extractKey(example));
   }
 
   @Test
   public void testDisplayData() throws Exception {
     final TensorFlowBucketMetadata<byte[]> metadata =
-        new TensorFlowBucketMetadata<>(2, 1, byte[].class, HashType.MURMUR3_32, "bytes");
+        new TensorFlowBucketMetadata<>(
+            2,
+            1,
+            byte[].class,
+            HashType.MURMUR3_32,
+            "bytes",
+            SortedBucketIO.DEFAULT_FILENAME_PREFIX);
 
     final DisplayData displayData = DisplayData.from(metadata);
     MatcherAssert.assertThat(displayData, hasDisplayItem("numBuckets", 2));
@@ -118,17 +160,21 @@ public class TensorFlowBucketMetadataTest {
   @Test
   public void testSameSourceCompatibility() throws Exception {
     final TensorFlowBucketMetadata<byte[]> metadata1 =
-        new TensorFlowBucketMetadata<>(2, 1, byte[].class, HashType.MURMUR3_32, "foo");
+        new TensorFlowBucketMetadata<>(
+            2, 1, byte[].class, HashType.MURMUR3_32, "foo", SortedBucketIO.DEFAULT_FILENAME_PREFIX);
 
     final TensorFlowBucketMetadata<byte[]> metadata2 =
-        new TensorFlowBucketMetadata<>(2, 1, byte[].class, HashType.MURMUR3_32, "bar");
+        new TensorFlowBucketMetadata<>(
+            2, 1, byte[].class, HashType.MURMUR3_32, "bar", SortedBucketIO.DEFAULT_FILENAME_PREFIX);
     ;
 
     final TensorFlowBucketMetadata<byte[]> metadata3 =
-        new TensorFlowBucketMetadata<>(4, 1, byte[].class, HashType.MURMUR3_32, "bar");
+        new TensorFlowBucketMetadata<>(
+            4, 1, byte[].class, HashType.MURMUR3_32, "bar", SortedBucketIO.DEFAULT_FILENAME_PREFIX);
 
     final TensorFlowBucketMetadata<String> metadata4 =
-        new TensorFlowBucketMetadata<>(4, 1, String.class, HashType.MURMUR3_32, "bar");
+        new TensorFlowBucketMetadata<>(
+            4, 1, String.class, HashType.MURMUR3_32, "bar", SortedBucketIO.DEFAULT_FILENAME_PREFIX);
 
     Assert.assertFalse(metadata1.isPartitionCompatible(metadata2));
     Assert.assertTrue(metadata2.isPartitionCompatible(metadata3));

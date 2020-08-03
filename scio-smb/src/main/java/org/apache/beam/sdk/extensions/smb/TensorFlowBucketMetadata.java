@@ -41,9 +41,17 @@ public class TensorFlowBucketMetadata<K> extends BucketMetadata<K, Example> {
       int numShards,
       Class<K> keyClass,
       BucketMetadata.HashType hashType,
-      String keyField)
+      String keyField,
+      String filenamePrefix)
       throws CannotProvideCoderException, NonDeterministicException {
-    this(BucketMetadata.CURRENT_VERSION, numBuckets, numShards, keyClass, hashType, keyField);
+    this(
+        BucketMetadata.CURRENT_VERSION,
+        numBuckets,
+        numShards,
+        keyClass,
+        hashType,
+        keyField,
+        filenamePrefix);
   }
 
   @JsonCreator
@@ -53,9 +61,10 @@ public class TensorFlowBucketMetadata<K> extends BucketMetadata<K, Example> {
       @JsonProperty("numShards") int numShards,
       @JsonProperty("keyClass") Class<K> keyClass,
       @JsonProperty("hashType") BucketMetadata.HashType hashType,
-      @JsonProperty("keyField") String keyField)
+      @JsonProperty("keyField") String keyField,
+      @JsonProperty(value = "filenamePrefix", required = false) String filenamePrefix)
       throws CannotProvideCoderException, NonDeterministicException {
-    super(version, numBuckets, numShards, keyClass, hashType);
+    super(version, numBuckets, numShards, keyClass, hashType, filenamePrefix);
     this.keyField = keyField;
   }
 

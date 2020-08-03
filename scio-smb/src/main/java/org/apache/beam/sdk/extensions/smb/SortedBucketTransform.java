@@ -85,8 +85,10 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
       ResourceId tempDirectory,
       NewBucketMetadataFn<FinalKeyT, FinalValueT> newBucketMetadataFn,
       FileOperations<FinalValueT> fileOperations,
-      String filenameSuffix) {
-    final SMBFilenamePolicy filenamePolicy = new SMBFilenamePolicy(outputDirectory, filenameSuffix);
+      String filenameSuffix,
+      String filenamePrefix) {
+    final SMBFilenamePolicy filenamePolicy =
+        new SMBFilenamePolicy(outputDirectory, filenamePrefix, filenameSuffix);
     final SourceSpec<FinalKeyT> sourceSpec = SourceSpec.from(finalKeyClass, sources);
 
     boundedSource =
