@@ -78,7 +78,7 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
    *
    * Reading records as GenericRecord **should** offer better performance over
    * TableRow records.
-   * 
+   *
    * Note: When using `Format.GenericRecord` Bigquery types DATE, TIME and DATETIME
    *       are read as STRING.
    */
