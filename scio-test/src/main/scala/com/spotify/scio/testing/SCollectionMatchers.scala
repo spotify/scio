@@ -40,6 +40,7 @@ import cats.kernel.Eq
 import org.apache.beam.sdk.testing.SerializableMatchers
 import com.spotify.scio.coders.CoderMaterializer
 import com.spotify.scio.ScioContext
+import org.apache.beam.sdk.testing.SerializableMatcher
 
 final private case class TestWrapper[T: Eq](get: T) {
 
@@ -47,8 +48,8 @@ final private case class TestWrapper[T: Eq](get: T) {
 
   override def equals(other: Any): Boolean =
     other match {
-      case TestWrapper(o: T) => Eq[T].eqv(get, o)
-      case o                 => get.equals(o)
+      case TestWrapper(o: T @unchecked) => Eq[T].eqv(get, o)
+      case o                            => get.equals(o)
     }
 }
 
@@ -150,7 +151,7 @@ private object ScioMatchers {
     makeFnSingle[T](in => Predef.assert(!p(TestWrapper(in))))
 
   def isEqualTo[T: Eq: Coder](context: ScioContext, t: T): SerializableFunction[T, Void] = {
-    val mm =
+    val mm: SerializableMatcher[Any] =
       SerializableMatchers.fromSupplier {
         supplierFromCoder(t, context)(t => Matchers.equalTo[Any](TestWrapper(t)))
       }
@@ -158,7 +159,7 @@ private object ScioMatchers {
   }
 
   def notEqualTo[T: Eq: Coder](context: ScioContext, t: T): SerializableFunction[T, Void] = {
-    val mm =
+    val mm: SerializableMatcher[Any] =
       SerializableMatchers.fromSupplier {
         supplierFromCoder(t, context)(t => Matchers.not(Matchers.equalTo[Any](TestWrapper(t))))
       }

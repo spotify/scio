@@ -34,7 +34,7 @@ object Pretty {
   import fansi.{Color, Str}
 
   private def renderFieldName(n: String) =
-    Tree.Lazy(ctx => List(Color.LightBlue(n).toString).iterator)
+    Tree.Lazy(_ => List(Color.LightBlue(n).toString).iterator)
 
   private def renderGenericRecord: PartialFunction[GenericRecord, Tree] = {
     case g =>
@@ -47,7 +47,7 @@ object Pretty {
         )
       def render(tree: Tree): Str =
         Str.join(renderer.rec(tree, 0, 0).iter.toSeq: _*)
-      Tree.Lazy { ctx =>
+      Tree.Lazy { _ =>
         val fields =
           for {
             f <- g.getSchema().getFields().asScala

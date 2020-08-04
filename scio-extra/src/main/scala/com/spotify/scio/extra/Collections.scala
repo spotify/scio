@@ -75,7 +75,7 @@ object Collections {
         m(k).add(v)
       }
     }
-    m.mapValues(_.asScala).toMap
+    m.map { case (k, v) => k -> v.asScala }.toMap
   }
 
   /** Enhance Array by adding a `top` method. */

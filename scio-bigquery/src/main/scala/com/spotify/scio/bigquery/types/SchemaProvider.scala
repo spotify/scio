@@ -123,7 +123,7 @@ private[types] object SchemaProvider {
       _.annotations
         .find(_.tree.tpe.toString == tpe)
         .map { a =>
-          val q"new $t($v)" = a.tree
+          val q"new $_($v)" = a.tree
           val Literal(Constant(s)) = v
           s.toString
         }
