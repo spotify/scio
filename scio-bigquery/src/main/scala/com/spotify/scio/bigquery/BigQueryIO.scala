@@ -38,7 +38,7 @@ import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.TypedRead.Method
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryUtils.ConversionOptions
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryUtils.ConversionOptions.TruncateTimestamps
-import org.apache.beam.sdk.io.gcp.bigquery.{AvroWriteRequest, BigQueryUtils, SchemaAndRecord}
+import org.apache.beam.sdk.io.gcp.bigquery.{BigQueryUtils, SchemaAndRecord}
 import org.apache.beam.sdk.io.gcp.{bigquery => beam}
 import org.apache.beam.sdk.io.{Compression, TextIO}
 import org.apache.beam.sdk.transforms.SerializableFunction
@@ -46,6 +46,7 @@ import org.apache.beam.sdk.transforms.SerializableFunction
 import scala.jdk.CollectionConverters._
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
+import org.apache.beam.sdk.io.gcp.bigquery.BigQueryAvroUtilsWrapper
 
 private object Reads {
   private[this] val cache = new ConcurrentHashMap[ScioContext, BigQuery]()
@@ -279,8 +280,12 @@ object BigQueryTypedTable {
     )
 
   /**
-   * Creates a new instance of [[BigQueryTypedTable]] based on the supplied predifined
-   * [[Format]].
+   * Creates a new instance of [[BigQueryTypedTable]] based on the supplied [[Format]].
+   *
+   * NOTE: LogicalType support when using `Format.GenericRecord` has some caveats:
+   * Reading: Bigquery types DATE, TIME, DATIME will be read as STRING
+   * Writting: Supports LogicalTypes only for DATE and TIME.
+   *           DATETIME is not yet supported. https://issuetracker.google.com/issues/140681683
    */
   def apply(table: Table, format: Format): BigQueryTypedTable[format.F] = format match {
     case Format.GenericRecord => genericRecord(table).asInstanceOf[BigQueryTypedTable[format.F]]
@@ -318,15 +323,14 @@ object BigQueryTypedTable {
   ): BigQueryTypedTable[T] = {
     val rFn = ClosureCleaner.clean(readerFn)
     val wFn = ClosureCleaner.clean(writerFn)
-    val reader = beam.BigQueryIO.read(new SerializableFunction[SchemaAndRecord, T] {
-      override def apply(input: SchemaAndRecord): T = rFn(input)
-    })
+    val reader = beam.BigQueryIO.read(rFn(_))
     val writer = beam.BigQueryIO
       .write[T]()
       .useAvroLogicalTypes()
-      .withAvroFormatFunction(new SerializableFunction[AvroWriteRequest[T], GenericRecord] {
-        override def apply(input: AvroWriteRequest[T]): GenericRecord = wFn(input.getElement)
-      })
+      .withAvroFormatFunction(input => wFn(input.getElement()))
+      .withAvroSchemaFactory { ts =>
+        BigQueryAvroUtilsWrapper.toGenericAvroSchema("root", ts.getFields())
+      }
 
     BigQueryTypedTable(reader, writer, table, fn)
   }

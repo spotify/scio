@@ -19,18 +19,20 @@ package com.spotify.scio.bigquery
 
 import com.google.protobuf.ByteString
 import com.spotify.scio._
+import com.spotify.scio.bigquery.BigQueryTypedTable.Format
 import com.spotify.scio.bigquery.client.BigQuery
+import com.spotify.scio.coders.Coder
 import com.spotify.scio.testing._
 import magnolify.scalacheck.auto._
+import org.apache.avro.{LogicalTypes, Schema}
+import org.apache.avro.generic.{GenericRecord, GenericRecordBuilder}
 import org.apache.beam.sdk.options.PipelineOptionsFactory
-import org.joda.time.format.DateTimeFormat
 import org.joda.time.{Instant, LocalDate, LocalDateTime, LocalTime}
+import org.joda.time.format.DateTimeFormat
 import org.scalacheck._
 import org.scalatest.BeforeAndAfterAll
 
 import scala.util.Random
-import com.spotify.scio.bigquery.BigQueryTypedTable.Format
-import com.spotify.scio.coders.Coder
 
 object TypedBigQueryIT {
   @BigQueryType.toTable
@@ -71,7 +73,9 @@ object TypedBigQueryIT {
   }
   private val tableRowTable = table("records_tablerow")
   private val avroTable = table("records_avro")
-  private val records = Gen.listOfN(1, recordGen).sample.get
+  private val avroLogicalTypeTable = table("records_avro_logical_type")
+
+  private val records = Gen.listOfN(100, recordGen).sample.get
   private val options = PipelineOptionsFactory
     .fromArgs(
       "--project=data-integration-test",
@@ -94,6 +98,7 @@ class TypedBigQueryIT extends PipelineSpec with BeforeAndAfterAll {
   override protected def afterAll(): Unit = {
     BigQuery.defaultInstance().tables.delete(tableRowTable.ref)
     BigQuery.defaultInstance().tables.delete(avroTable.ref)
+    BigQuery.defaultInstance().tables.delete(avroLogicalTypeTable.ref)
   }
 
   "TypedBigQuery" should "read records" in {
@@ -158,4 +163,57 @@ class TypedBigQueryIT extends PipelineSpec with BeforeAndAfterAll {
     val result = sc.run().waitUntilDone()
     result.tap(tap).map(Record.fromAvro).value.toList shouldBe records
   }
+
+  it should "write GenericRecord records with logical types" in {
+    val sc = ScioContext(options)
+    import scala.jdk.CollectionConverters._
+    val schema: Schema = Schema.createRecord(
+      "Record",
+      "",
+      "com.spotify.scio.bigquery",
+      false,
+      List(
+        new Schema.Field(
+          "date",
+          LogicalTypes.date().addToSchema(Schema.create(Schema.Type.INT)),
+          "",
+          0
+        ),
+        new Schema.Field(
+          "time",
+          LogicalTypes.timeMicros().addToSchema(Schema.create(Schema.Type.LONG)),
+          "",
+          0L
+        ),
+        new Schema.Field("datetime", Schema.create(Schema.Type.STRING), "", "")
+      ).asJava
+    )
+    implicit val coder = Coder.avroGenericRecordCoder(schema)
+    val ltRecords: Seq[GenericRecord] =
+      Seq(
+        new GenericRecordBuilder(schema)
+          .set("date", 10)
+          .set("time", 1000L)
+          .set("datetime", "2020-08-03 11:11:11")
+          .build()
+      )
+
+    val tableSchema =
+      BigQueryUtil.parseSchema("""
+        |{
+        |  "fields": [
+        |    {"mode": "REQUIRED", "name": "date", "type": "DATE"},
+        |    {"mode": "REQUIRED", "name": "time", "type": "TIME"},
+        |    {"mode": "REQUIRED", "name": "datetime", "type": "STRING"}
+        |  ]
+        |}
+      """.stripMargin)
+    val tap = sc
+      .parallelize(ltRecords)
+      .saveAsBigQueryTable(avroLogicalTypeTable, tableSchema, createDisposition = CREATE_IF_NEEDED)
+
+    val result = sc.run().waitUntilDone()
+    result.tap(tap).value.toList.size shouldBe 1
+  }
+
 }
