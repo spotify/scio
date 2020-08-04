@@ -151,9 +151,11 @@ class TypedBigQueryIT extends PipelineSpec with BeforeAndAfterAll {
         |  ]
         |}
       """.stripMargin)
-    sc
+    val tap = sc
       .bigQueryTable(tableRowTable, Format.GenericRecord)
       .saveAsBigQueryTable(avroTable, schema = schema, createDisposition = CREATE_IF_NEEDED)
-    sc.run()
+
+    val result = sc.run().waitUntilDone()
+    result.tap(tap).map(Record.fromAvro).value.toList shouldBe records
   }
 }
