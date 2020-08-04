@@ -33,12 +33,12 @@ import org.joda.time.Duration
 import org.slf4j.{Logger, LoggerFactory}
 
 private object DefaultBucket {
-  private[this] val isNullOrEmpty: String => Boolean = s => !Option(s).exists(_.nonEmpty)
+  private[this] val option: String => Option[String] = s => Option(s).filter(_.nonEmpty)
 
   def tryCreateDefaultBucket(options: PipelineOptions, crmClient: CloudResourceManager): String = {
-    val gcpOptions = options.as(classOf[GcsOptions])
+    val gcpOptions = options.as(classOf[GcpOptions])
     val projectId = gcpOptions.getProject
-    require(!isNullOrEmpty(projectId), "--project is a required option.")
+    require(option(projectId).nonEmpty, "--project is a required option.")
     // Look up the project number, to create a default bucket with a stable
     // name with no special characters.
     var projectNumber = 0L
@@ -47,16 +47,18 @@ private object DefaultBucket {
       case e: IOException =>
         throw new RuntimeException("Unable to verify project with ID " + projectId, e)
     }
-    var region = DEFAULT_REGION
-    if (!isNullOrEmpty(gcpOptions.getZone)) region = getRegionFromZone(gcpOptions.getZone)
+
+    val region = option(gcpOptions.getWorkerZone()).fold(DEFAULT_REGION)(getRegionFromZone)
+
+    val gcsOptions = options.as(classOf[GcsOptions])
     val bucketName = "dataflow-staging-" + region + "-" + projectNumber
     LOG.info("No staging location provided, attempting to use default bucket: {}", bucketName)
     val bucket = new Bucket().setName(bucketName).setLocation(region)
     // Always try to create the bucket before checking access, so that we do not
     // race with other pipelines that may be attempting to do the same thing.
-    try gcpOptions.getGcsUtil.createBucket(projectId, bucket)
+    try gcsOptions.getGcsUtil.createBucket(projectId, bucket)
     catch {
-      case e: FileAlreadyExistsException =>
+      case _: FileAlreadyExistsException =>
         LOG.debug("Bucket '{}'' already exists, verifying access.", bucketName)
       case e: IOException =>
         throw new RuntimeException("Unable create default bucket.", e)
@@ -64,7 +66,7 @@ private object DefaultBucket {
     // Once the bucket is expected to exist, verify that it is correctly owned
     // by the project executing the job.
     try {
-      val owner = gcpOptions.getGcsUtil.bucketOwner(GcsPath.fromComponents(bucketName, ""))
+      val owner = gcsOptions.getGcsUtil.bucketOwner(GcsPath.fromComponents(bucketName, ""))
       require(
         owner == projectNumber,
         s"Bucket owner does not match the project from --project: $owner vs. $projectNumber"
