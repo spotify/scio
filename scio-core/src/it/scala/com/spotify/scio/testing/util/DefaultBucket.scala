@@ -56,7 +56,7 @@ private object DefaultBucket {
     // race with other pipelines that may be attempting to do the same thing.
     try gcpOptions.getGcsUtil.createBucket(projectId, bucket)
     catch {
-      case e: FileAlreadyExistsException =>
+      case _: FileAlreadyExistsException =>
         LOG.debug("Bucket '{}'' already exists, verifying access.", bucketName)
       case e: IOException =>
         throw new RuntimeException("Unable create default bucket.", e)

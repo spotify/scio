@@ -181,7 +181,7 @@ private[types] object TypeProvider {
 
     val provider: OverrideTypeProvider = OverrideTypeProviderFinder.getProvider
     val (r, caseClassTree, name) = annottees.map(_.tree) match {
-      case (clazzDef @ q"$mods class $cName[..$tparams] $ctorMods(..$fields) extends { ..$earlydefns } with ..$parents { $self => ..$body }") :: tail
+      case (clazzDef @ q"$mods class $cName[..$_] $_(..$fields) extends { ..$_ } with ..$parents { $_ => ..$body }") :: tail
           if mods.asInstanceOf[Modifiers].hasFlag(Flag.CASE) =>
         if (parents.map(_.toString).toSet != Set("scala.Product", "scala.Serializable")) {
           c.abort(c.enclosingPosition, s"Invalid annotation, don't extend the case class $clazzDef")
@@ -269,7 +269,7 @@ private[types] object TypeProvider {
     // Returns: (raw type, e.g. Int, String, NestedRecord, nested case class definitions)
     def getRawType(tfs: TableFieldSchema): (Tree, Seq[Tree]) =
       tfs.getType match {
-        case t if provider.shouldOverrideType(tfs) =>
+        case _ if provider.shouldOverrideType(tfs) =>
           (provider.getScalaType(c)(tfs), Nil)
         case "BOOLEAN" | "BOOL"  => (tq"_root_.scala.Boolean", Nil)
         case "INTEGER" | "INT64" => (tq"_root_.scala.Long", Nil)
@@ -317,7 +317,7 @@ private[types] object TypeProvider {
     val (fields, records) = toFields(schema.getFields)
 
     val (r, caseClassTree, name) = annottees.map(_.tree) match {
-      case (clazzDef @ q"$mods class $cName[..$tparams] $ctorMods(..$cfields) extends { ..$earlydefns } with ..$parents { $self => ..$body }") :: tail
+      case (clazzDef @ q"$mods class $cName[..$_] $_(..$cfields) extends { ..$_ } with ..$parents { $_ => ..$body }") :: tail
           if mods.asInstanceOf[Modifiers].flags == NoFlags =>
         if (parents.map(_.toString).toSet != Set("scala.AnyRef")) {
           c.abort(c.enclosingPosition, s"Invalid annotation, don't extend the class $clazzDef")
