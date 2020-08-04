@@ -46,7 +46,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
   private[this] val context: ScioContext = self.context
 
   private[scio] def toKV(implicit koder: Coder[K], voder: Coder[V]): SCollection[KV[K, V]] =
-    self.map(kv => KV.of(kv._1, kv._2)).setCoder(CoderMaterializer.kvCoder[K, V](context))
+    self.map(kv => KV.of(kv._1, kv._2))(Coder.raw(CoderMaterializer.kvCoder[K, V](context)))
 
   private[values] def applyPerKey[UI: Coder, UO: Coder](
     t: PTransform[_ >: PCollection[KV[K, V]], PCollection[KV[K, UI]]]
