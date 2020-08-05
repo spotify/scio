@@ -36,7 +36,8 @@ credentials ++= Seq(
 ## Past release names
 
 ### 0.9.x
-- [v0.9.2](https://github.com/spotify/scio/releases/tag/v0.9.1) - _"Alohomora"_
+- [v0.9.3](https://github.com/spotify/scio/releases/tag/v0.9.3) - _"Petrificus Totalus"_
+- [v0.9.2](https://github.com/spotify/scio/releases/tag/v0.9.2) - _"Alohomora"_
 - [v0.9.1](https://github.com/spotify/scio/releases/tag/v0.9.1) - _"Aberto"_
 - [v0.9.0](https://github.com/spotify/scio/releases/tag/v0.9.0) - _"Furnunculus"_
 
