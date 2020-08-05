@@ -70,7 +70,7 @@ val grpcVersion = "1.27.2"
 val guavaVersion = "28.2-jre"
 val hadoopVersion = "2.7.7"
 val hamcrestVersion = "2.2"
-val httpCoreVersion = "4.4.12"
+val httpCoreVersion = "4.4.13"
 val jacksonVersion = "2.10.5"
 val javaLshVersion = "0.12"
 val jlineVersion = "2.14.6"
@@ -99,7 +99,7 @@ val scalatestVersion = "3.2.0"
 val shapelessVersion = "2.3.3"
 val slf4jVersion = "1.7.30"
 val sparkeyVersion = "3.1.0"
-val sparkVersion = "2.4.5"
+val sparkVersion = "2.4.6"
 val tensorFlowVersion = "1.15.0"
 val zoltarVersion = "0.5.6"
 val scalaCollectionCompatVersion = "2.1.6"
@@ -1034,7 +1034,7 @@ lazy val `scio-examples`: Project = project
       "com.google.auth" % "google-auth-library-oauth2-http" % googleAuthVersion,
       "com.google.cloud.bigdataoss" % "util" % bigdataossVersion,
       "com.google.guava" % "guava" % guavaVersion,
-      "com.google.oauth-client" % "google-oauth-client" % "1.30.4",
+      "com.google.oauth-client" % "google-oauth-client" % "1.30.6",
       "com.google.protobuf" % "protobuf-java" % protobufVersion,
       "com.spotify" %% "magnolify-shared" % magnolifyVersion,
       "com.twitter" %% "algebird-core" % algebirdVersion,
@@ -1356,7 +1356,7 @@ ThisBuild / dependencyOverrides ++= Seq(
   "com.google.http-client" % "google-http-client-jackson2" % googleHttpClientsVersion,
   "com.google.http-client" % "google-http-client" % googleHttpClientsVersion,
   "com.google.j2objc" % "j2objc-annotations" % "1.3",
-  "com.google.oauth-client" % "google-oauth-client" % "1.30.4",
+  "com.google.oauth-client" % "google-oauth-client" % "1.30.6",
   "com.google.protobuf" % "protobuf-java-util" % protobufVersion,
   "com.google.protobuf" % "protobuf-java" % protobufVersion,
   "com.propensive" %% "magnolia" % magnoliaVersion,
