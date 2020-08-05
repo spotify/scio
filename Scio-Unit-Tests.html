@@ -203,7 +203,7 @@ spotify/scio
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.9.3*
+<i class="md-icon" title="Version">label_outline</i> 0.9.4*
 </label>
 </li>
 </ul>
@@ -278,7 +278,7 @@ spotify/scio
 }</code></pre>
 <h3><a href="#test-for-pipeline-with-sideoutput" name="test-for-pipeline-with-sideoutput" class="anchor"><span class="anchor-link"></span></a>Test for pipeline with sideoutput</h3>
 <p><a href="https://github.com/spotify/scio/tree/master/scio-examples/src/test/scala/com/spotify/scio/examples/extra/SideInOutExampleTest.scala">SideInOutExampleTest</a> shows an example of how to test pipelines with sideoutputs. Each sideoutput is evaluated using the output function. The ids for <code>TextIO</code> e.g. “out1.txt” should match the ones specified in the args.</p>
-<pre class="prettyprint"><a class="icon go-to-source" href="https://github.com/spotify/scio/tree/master/scio-examples/src/test/scala/com/spotify/scio/examples/extra/SideInOutExampleTest.scala#L25-L46" target="_blank" title="Go to snippet source"></a><code class="language-scala">val inData = Seq(&quot;The quick brown fox jumps over the lazy dog.&quot;)
+<pre class="prettyprint"><a class="icon go-to-source" href="https://github.com/spotify/scio/tree/master/scio-examples/src/test/scala/com/spotify/scio/examples/extra/SideInOutExampleTest.scala#L25-L46" target="_blank" title="Go to snippet source"></a><code class="language-scala">val inData: Seq[String] = Seq(&quot;The quick brown fox jumps over the lazy dog.&quot;)
 
 &quot;SideInOutExample&quot; should &quot;work&quot; in {
   JobTest[SideInOutExample.type]
@@ -359,7 +359,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.9.3*
+0.9.4*
 </span>
 </div>
 </article>
