@@ -344,22 +344,16 @@ final private case class PubsubIOWithAttributes[T: ClassTag: Coder](
       PubsubIO.setAttrs(beam.PubsubIO.writeMessages().to(name))(idAttribute, timestampAttribute)
 
     val coder = CoderMaterializer.beam(data.context, Coder[T])
-
-    data.applyInternal(new PTransform[PCollection[WithAttributeMap], PDone]() {
-      override def expand(input: PCollection[WithAttributeMap]): PDone =
-        input
-          .apply(
-            "Encode Pubsub message and attributes",
-            ParDo.of(Functions.mapFn[WithAttributeMap, beam.PubsubMessage] { kv =>
-              val payload = CoderUtils.encodeToByteArray(coder, kv._1)
-              val attributes = kv._2.asJava
-              new beam.PubsubMessage(payload, attributes)
-            })
-          )
-          .setCoder(PubsubMessageWithAttributesCoder.of())
-          .apply("Write to Pubsub", w)
-    })
-
+    data.transform_ { coll =>
+      coll
+        .withName("Encode Pubsub message and attributes")
+        .map { kv =>
+          val payload = CoderUtils.encodeToByteArray(coder, kv._1)
+          val attributes = kv._2.asJava
+          new beam.PubsubMessage(payload, attributes)
+        }
+        .applyInternal("Write to Pubsub", w)
+    }
     EmptyTap
   }
 }
