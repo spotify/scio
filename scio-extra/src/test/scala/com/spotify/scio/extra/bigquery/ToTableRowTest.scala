@@ -23,6 +23,7 @@ import java.nio.ByteBuffer
 import com.google.protobuf.ByteString
 import com.spotify.scio.bigquery.TableRow
 import org.apache.avro.generic.GenericData
+import org.apache.avro.generic.GenericData.EnumSymbol
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.io.BaseEncoding
 import org.joda.time.{DateTime, LocalDate, LocalTime}
 import org.scalatest.flatspec.AnyFlatSpec
@@ -69,6 +70,8 @@ class ToTableRowTest extends AnyFlatSpec with Matchers {
   }
 
   it should "convert a GenericRecord to TableRow" in {
+    val enumSchema = AvroExample.SCHEMA$.getField("enumField").schema()
+
     val nestedAvro = new GenericData.Record(NestedAvro.SCHEMA$)
     nestedAvro.put("nestedField", "nestedValue")
 
@@ -90,7 +93,7 @@ class ToTableRowTest extends AnyFlatSpec with Matchers {
       Map("mapKey" -> 1.0d).asJava
         .asInstanceOf[java.util.Map[java.lang.CharSequence, java.lang.Double]]
     )
-    genericRecord.put("enumField", Kind.FOO)
+    genericRecord.put("enumField", new EnumSymbol(enumSchema, Kind.FOO.toString))
     genericRecord.put("fixedField", new fixedType("%20cフーバー".getBytes()))
 
     AvroConverters.toTableRow(genericRecord) shouldEqual expectedOutput

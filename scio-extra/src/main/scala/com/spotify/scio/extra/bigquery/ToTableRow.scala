@@ -18,13 +18,13 @@
 package com.spotify.scio.extra.bigquery
 
 import com.spotify.scio.extra.bigquery.AvroConverters.AvroConversionException
-
 import java.math.{BigDecimal => JBigDecimal}
 import java.nio.ByteBuffer
 import java.util
 
 import com.spotify.scio.bigquery.TableRow
 import org.apache.avro.Schema
+import org.apache.avro.generic.GenericData.EnumSymbol
 import org.apache.avro.generic.{GenericFixed, IndexedRecord}
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.io.BaseEncoding
 import org.joda.time.format.DateTimeFormat
@@ -56,6 +56,7 @@ private[bigquery] trait ToTableRow {
   private[bigquery] def toTableRowField(fieldValue: Any, field: Schema.Field): Any =
     fieldValue match {
       case x: CharSequence          => x.toString
+      case x: EnumSymbol            => x.toString
       case x: Enum[_]               => x.name()
       case x: JBigDecimal           => x.toString
       case x: Number                => x
