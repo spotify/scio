@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Spotify AB.
+ * Copyright 2020 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,17 +15,8 @@
  * under the License.
  */
 
-package com.spotify.scio.io
+package com.spotify.scio
 
-import com.spotify.scio.testing.PipelineSpec
-import com.google.protobuf.Message
-import org.apache.beam.sdk.io.gcp.{pubsub => beam}
+import com.spotify.scio.pubsub.syntax.AllSyntax
 
-class PubsubIOTest extends PipelineSpec {
-  "PubsubIO" should "#2582: not throw an ClassCastException when created" in {
-    PubsubIO[String]("String IO")
-    PubsubIO[com.spotify.scio.avro.Account]("SpecificRecordBase IO")
-    PubsubIO[Message]("Message IO")
-    PubsubIO[beam.PubsubMessage]("Message IO")
-  }
-}
+package object pubsub extends AllSyntax

@@ -234,27 +234,4 @@ class ScioIOTest extends ScioIOSpec {
     testJobTest(xs)(DatastoreIO(_))(_.datastore(_, null))(_.saveAsDatastore(_))
   }
 
-  "PubsubIO" should "work with subscription" in {
-    val xs = (1 to 100).map(_.toString)
-    testJobTest(xs)(PubsubIO(_))(_.pubsubSubscription(_))(_.saveAsPubsub(_))
-  }
-
-  it should "work with topic" in {
-    val xs = (1 to 100).map(_.toString)
-    testJobTest(xs)(PubsubIO(_))(_.pubsubTopic(_))(_.saveAsPubsub(_))
-  }
-
-  it should "work with subscription and attributes" in {
-    val xs = (1 to 100).map(x => (x.toString, Map.empty[String, String]))
-    val io = (s: String) => PubsubIO[(String, Map[String, String])](s)
-    testJobTest(xs)(io)(_.pubsubSubscriptionWithAttributes(_))(
-      _.saveAsPubsubWithAttributes[String](_)
-    )
-  }
-
-  it should "work with topic and attributes" in {
-    val xs = (1 to 100).map(x => (x.toString, Map.empty[String, String]))
-    val io = (s: String) => PubsubIO[(String, Map[String, String])](s)
-    testJobTest(xs)(io)(_.pubsubTopicWithAttributes(_))(_.saveAsPubsubWithAttributes[String](_))
-  }
 }

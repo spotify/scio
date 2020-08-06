@@ -429,7 +429,8 @@ lazy val root: Project = Project("scio", file("."))
     `scio-repl`,
     `scio-jmh`,
     `scio-macros`,
-    `scio-smb`
+    `scio-smb`,
+    `scio-pubsub`
   )
 
 lazy val `scio-core`: Project = project
@@ -512,6 +513,19 @@ lazy val `scio-core`: Project = project
     IntegrationTest
   )
   .enablePlugins(BuildInfoPlugin)
+
+lazy val `scio-pubsub`: Project = project
+  .in(file("scio-pubsub"))
+  .settings(commonSettings)
+  .settings(
+    description := "Scio - Google Pub/Sub",
+    libraryDependencies += "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
+    beamSDKIODependencies
+  )
+  .dependsOn(
+    `scio-core`,
+    `scio-test` % Test
+  )
 
 lazy val `scio-sql`: Project = Project(
   "scio-sql",
@@ -1073,7 +1087,8 @@ lazy val `scio-examples`: Project = project
     `scio-tensorflow`,
     `scio-sql`,
     `scio-test` % "compile->test",
-    `scio-smb`
+    `scio-smb`,
+    `scio-pubsub`
   )
 
 lazy val `scio-repl`: Project = project

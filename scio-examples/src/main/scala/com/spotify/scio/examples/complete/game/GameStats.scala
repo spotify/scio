@@ -33,6 +33,7 @@ import java.util.TimeZone
 
 import com.spotify.scio._
 import com.spotify.scio.bigquery._
+import com.spotify.scio.pubsub._
 import com.spotify.scio.values.{SCollection, WindowOptions}
 import org.apache.beam.examples.common.{ExampleOptions, ExampleUtils}
 import org.apache.beam.sdk.options.StreamingOptions

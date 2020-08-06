@@ -1469,38 +1469,6 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     this.covary_[Entity].write(DatastoreIO(projectId))
 
   /**
-   * Save this SCollection as a Pub/Sub topic.
-   * @group output
-   */
-  def saveAsPubsub(
-    topic: String,
-    idAttribute: String = null,
-    timestampAttribute: String = null,
-    maxBatchSize: Option[Int] = None,
-    maxBatchBytesSize: Option[Int] = None
-  )(implicit ct: ClassTag[T], coder: Coder[T]): ClosedTap[Nothing] = {
-    val io = PubsubIO[T](topic, idAttribute, timestampAttribute)
-    this.write(io)(PubsubIO.WriteParam(maxBatchSize, maxBatchBytesSize))
-  }
-
-  /**
-   * Save this SCollection as a Pub/Sub topic using the given map as message attributes.
-   * @group output
-   */
-  def saveAsPubsubWithAttributes[V: ClassTag: Coder](
-    topic: String,
-    idAttribute: String = null,
-    timestampAttribute: String = null,
-    maxBatchSize: Option[Int] = None,
-    maxBatchBytesSize: Option[Int] = None
-  )(implicit ev: T <:< (V, Map[String, String])): ClosedTap[Nothing] = {
-    val io = PubsubIO.withAttributes[V](topic, idAttribute, timestampAttribute)
-    this
-      .covary_[(V, Map[String, String])]
-      .write(io)(PubsubIO.WriteParam(maxBatchSize, maxBatchBytesSize))
-  }
-
-  /**
    * Save this SCollection as a text file. Note that elements must be of type `String`.
    * @group output
    */
