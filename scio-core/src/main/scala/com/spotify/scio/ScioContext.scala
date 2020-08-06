@@ -23,7 +23,6 @@ import java.net.URI
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 
-import com.google.datastore.v1.{Entity, Query}
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import com.spotify.scio.io._
 import com.spotify.scio.metrics.Metrics
@@ -748,13 +747,6 @@ class ScioContext private[scio] (
     root: PTransform[_ >: PBegin, PCollection[U]]
   ): SCollection[U] =
     applyTransform(Option(name), root)
-
-  /**
-   * Get an SCollection for a Datastore query.
-   * @group input
-   */
-  def datastore(projectId: String, query: Query, namespace: String = null): SCollection[Entity] =
-    this.read(DatastoreIO(projectId))(DatastoreIO.ReadParam(query, namespace))
 
   private def pubsubIn[T: ClassTag: Coder](
     isSubscription: Boolean,

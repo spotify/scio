@@ -17,10 +17,6 @@
 
 package com.spotify.scio.testing
 
-import java.util.Collections
-
-import com.google.datastore.v1.Entity
-import com.google.datastore.v1.client.DatastoreHelper.{makeKey, makeValue}
 import com.spotify.scio._
 import com.spotify.scio.avro.AvroUtils.{newGenericRecord, newSpecificRecord}
 import com.spotify.scio.avro._
@@ -103,16 +99,6 @@ object TableRowJsonJob {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
     sc.tableRowJsonFile(args("input"))
       .saveAsTableRowJsonFile(args("output"))
-    sc.run()
-    ()
-  }
-}
-
-object DatastoreJob {
-  def main(cmdlineArgs: Array[String]): Unit = {
-    val (sc, args) = ContextAndArgs(cmdlineArgs)
-    sc.datastore(args("input"), null, null)
-      .saveAsDatastore(args("output"))
     sc.run()
     ()
   }
@@ -397,33 +383,6 @@ class JobTestTest extends PipelineSpec {
     }
     an[AssertionError] should be thrownBy {
       testTableRowJson((1 to 4).map(newTableRow))
-    }
-  }
-
-  def newEntity(i: Int): Entity =
-    Entity
-      .newBuilder()
-      .setKey(makeKey())
-      .putAllProperties(Collections.singletonMap("int_field", makeValue(i).build()))
-      .build()
-
-  def testDatastore(xs: Seq[Entity]): Unit =
-    JobTest[DatastoreJob.type]
-      .args("--input=store.in", "--output=store.out")
-      .input(DatastoreIO("store.in"), (1 to 3).map(newEntity))
-      .output(DatastoreIO("store.out"))(coll => coll should containInAnyOrder(xs))
-      .run()
-
-  it should "pass correct DatastoreJob" in {
-    testDatastore((1 to 3).map(newEntity))
-  }
-
-  it should "fail incorrect DatastoreJob" in {
-    an[AssertionError] should be thrownBy {
-      testDatastore((1 to 2).map(newEntity))
-    }
-    an[AssertionError] should be thrownBy {
-      testDatastore((1 to 4).map(newEntity))
     }
   }
 
