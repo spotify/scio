@@ -19,7 +19,7 @@ package com.spotify.scio.coders.instances
 
 import java.io.{InputStream, OutputStream}
 import java.math.{BigDecimal, BigInteger}
-import java.time.Instant
+import java.time.{Duration, Instant, LocalDate, LocalDateTime, LocalTime, Period}
 
 import com.spotify.scio.IsJavaBean
 import com.spotify.scio.coders.Coder
@@ -97,12 +97,48 @@ trait JavaCoders extends JavaBeanCoders {
   implicit def serializableCoder: Coder[Serializable] = Coder.kryo[Serializable]
 
   implicit def jInstantCoder: Coder[Instant] =
-    Coder.xmap(Coder.pairCoder(jLongCoder, jIntegerCoder))(
-      pair => Instant.ofEpochSecond(pair._1, pair._2.toLong),
+    Coder.xmap(Coder[(Long, Int)])(
+      {
+        case (epochSeconds, nanoAdjustment) =>
+          Instant.ofEpochSecond(epochSeconds, nanoAdjustment.toLong)
+      },
       instant => (instant.getEpochSecond, instant.getNano)
     )
 
-  implicit val jSqlTimestamp: Coder[java.sql.Timestamp] =
+  implicit def jLocalDateCoder: Coder[LocalDate] =
+    Coder.xmap(Coder[(Int, Int, Int)])(
+      { case (year, month, day) => LocalDate.of(year, month, day) },
+      localDate => (localDate.getYear, localDate.getMonthValue, localDate.getDayOfMonth)
+    )
+
+  implicit def jLocalTimeCoder: Coder[LocalTime] =
+    Coder.xmap(Coder[(Int, Int, Int, Int)])(
+      {
+        case (hour, minute, second, nanoOfSecond) =>
+          LocalTime.of(hour, minute, second, nanoOfSecond)
+      },
+      localTime => (localTime.getHour, localTime.getMinute, localTime.getSecond, localTime.getNano)
+    )
+
+  implicit def jLocalDateTimeCoder: Coder[LocalDateTime] =
+    Coder.xmap(Coder[(LocalDate, LocalTime)])(
+      { case (localDate, localTime) => LocalDateTime.of(localDate, localTime) },
+      localDateTime => (localDateTime.toLocalDate, localDateTime.toLocalTime)
+    )
+
+  implicit def jDurationCoder: Coder[Duration] =
+    Coder.xmap(Coder[(Long, Int)])(
+      { case (seconds, nanoAdjustment) => Duration.ofSeconds(seconds, nanoAdjustment.toLong) },
+      duration => (duration.getSeconds, duration.getNano)
+    )
+
+  implicit def jPeriodCoder: Coder[Period] =
+    Coder.xmap(Coder[(Int, Int, Int)])(
+      { case (years, months, days) => Period.of(years, months, days) },
+      period => (period.getYears, period.getMonths, period.getDays)
+    )
+
+  implicit def jSqlTimestamp: Coder[java.sql.Timestamp] =
     Coder.xmap(jInstantCoder)(java.sql.Timestamp.from, _.toInstant())
 
   implicit def coderJEnum[E <: java.lang.Enum[E]: ClassTag]: Coder[E] =
