@@ -18,10 +18,6 @@
 package com.spotify.scio.coders
 
 import java.io.{InputStream, OutputStream}
-import java.lang.{Iterable => JIterable}
-import java.math.{BigDecimal => JBigDecimal, BigInteger => JBigInteger}
-import java.time.Instant
-
 import com.spotify.scio.coders.instances._
 import com.spotify.scio.transforms.BaseAsyncLookupDoFn
 import org.apache.beam.sdk.coders.Coder.NonDeterministicException
@@ -528,7 +524,7 @@ object Coder
   implicit val voidCoder: Coder[Void] = JavaCoders.voidCoder
   implicit val uriCoder: Coder[java.net.URI] = JavaCoders.uriCoder
   implicit val pathCoder: Coder[java.nio.file.Path] = JavaCoders.pathCoder
-  implicit def jIterableCoder[T: Coder]: Coder[JIterable[T]] = JavaCoders.jIterableCoder
+  implicit def jIterableCoder[T: Coder]: Coder[java.lang.Iterable[T]] = JavaCoders.jIterableCoder
   implicit def jlistCoder[T: Coder]: Coder[java.util.List[T]] = JavaCoders.jlistCoder
   implicit def jArrayListCoder[T: Coder]: Coder[java.util.ArrayList[T]] = JavaCoders.jArrayListCoder
   implicit def jMapCoder[K: Coder, V: Coder]: Coder[java.util.Map[K, V]] = JavaCoders.jMapCoder
@@ -542,10 +538,15 @@ object Coder
   implicit val jFloatCoder: Coder[java.lang.Float] = JavaCoders.jFloatCoder
   implicit val jDoubleCoder: Coder[java.lang.Double] = JavaCoders.jDoubleCoder
   implicit val jBooleanCoder: Coder[java.lang.Boolean] = JavaCoders.jBooleanCoder
-  implicit val jBigIntegerCoder: Coder[JBigInteger] = JavaCoders.jBigIntegerCoder
-  implicit val jBigDecimalCoder: Coder[JBigDecimal] = JavaCoders.jBigDecimalCoder
+  implicit val jBigIntegerCoder: Coder[java.math.BigInteger] = JavaCoders.jBigIntegerCoder
+  implicit val jBigDecimalCoder: Coder[java.math.BigDecimal] = JavaCoders.jBigDecimalCoder
   implicit val serializableCoder: Coder[Serializable] = Coder.kryo[Serializable]
-  implicit val jInstantCoder: Coder[Instant] = JavaCoders.jInstantCoder
+  implicit val jInstantCoder: Coder[java.time.Instant] = JavaCoders.jInstantCoder
+  implicit val jLocalDateCoder: Coder[java.time.LocalDate] = JavaCoders.jLocalDateCoder
+  implicit val jLocalTimeCoder: Coder[java.time.LocalTime] = JavaCoders.jLocalTimeCoder
+  implicit val jLocalDateTimeCoder: Coder[java.time.LocalDateTime] = JavaCoders.jLocalDateTimeCoder
+  implicit val jDurationCoder: Coder[java.time.Duration] = JavaCoders.jDurationCoder
+  implicit val jPeriodCoder: Coder[java.time.Period] = JavaCoders.jPeriodCoder
   implicit val jSqlTimestamp: Coder[java.sql.Timestamp] = JavaCoders.jSqlTimestamp
   implicit def coderJEnum[E <: java.lang.Enum[E]: ClassTag]: Coder[E] = JavaCoders.coderJEnum
 }
