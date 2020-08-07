@@ -210,7 +210,7 @@ private[types] object ConverterProvider {
       q"if ($tree.isDefined) ${cast(q"$tree.get", tpe)} else null"
 
     def list(tree: Tree, tpe: Type): Tree =
-      q"asJava($tree.iterator.map(x => ${cast(q"x", tpe)}))"
+      q"asJava($tree.map(x => ${cast(q"x", tpe)}))"
 
     def field(symbol: Symbol, fn: TermName): (String, Tree) = {
       val name = symbol.name.toString
@@ -415,7 +415,7 @@ private[types] object ConverterProvider {
       q"if ($tree.isDefined) ${cast(q"$tree.get", tpe)} else null"
 
     def list(tree: Tree, tpe: Type): Tree =
-      q"asJava($tree.iterator.map(x => ${cast(q"x", tpe)}))"
+      q"asJava($tree.map(x => ${cast(q"x", tpe)}))"
 
     def field(symbol: Symbol, fn: TermName): (String, Tree) = {
       val name = symbol.name.toString
