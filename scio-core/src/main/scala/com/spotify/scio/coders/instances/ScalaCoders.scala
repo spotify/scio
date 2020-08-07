@@ -33,6 +33,7 @@ import scala.jdk.CollectionConverters._
 import scala.reflect.ClassTag
 import scala.collection.{BitSet, SortedSet, TraversableOnce, mutable => m}
 import scala.util.Try
+import scala.collection.compat._
 import scala.collection.compat.extra.Wrappers
 
 private object UnitCoder extends AtomicCoder[Unit] {
@@ -153,8 +154,8 @@ abstract private class SeqLikeCoder[M[_], T](bc: BCoder[T])(implicit
 ) extends BaseSeqLikeCoder[M, T](bc) {
   override def encode(value: M[T], outStream: OutputStream): Unit = {
     val traversable = ev(value)
-    VarInt.encode(traversable.size, outStream)
-    traversable.foreach(bc.encode(_, outStream))
+    VarInt.encode(traversable.iterator.size, outStream)
+    traversable.iterator.foreach(bc.encode(_, outStream))
   }
 
   def decode(inStream: InputStream, builder: m.Builder[T, M[T]]): M[T] = {
@@ -174,8 +175,8 @@ abstract private class SeqLikeCoder[M[_], T](bc: BCoder[T])(implicit
     } else {
       val b = Seq.newBuilder[AnyRef]
       val traversable = ev(value)
-      b.sizeHint(traversable.size)
-      traversable.foreach(v => b += elemCoder.structuralValue(v))
+      b.sizeHint(traversable.iterator.size)
+      traversable.iterator.foreach(v => b += elemCoder.structuralValue(v))
       b.result()
     }
 
@@ -188,7 +189,7 @@ abstract private class BufferedSeqLikeCoder[M[_], T](bc: BCoder[T])(implicit
 
   override def encode(value: M[T], outStream: OutputStream): Unit = {
     val buff = new BufferedElementCountingOutputStream(outStream)
-    ev(value).foreach { elem =>
+    ev(value).iterator.foreach { elem =>
       buff.markElementStart()
       bc.encode(elem, buff)
     }
@@ -209,7 +210,7 @@ abstract private class BufferedSeqLikeCoder[M[_], T](bc: BCoder[T])(implicit
 
   override def structuralValue(value: M[T]): AnyRef = {
     val b = Seq.newBuilder[AnyRef]
-    ev(value).foreach(v => b += elemCoder.structuralValue(v))
+    ev(value).iterator.foreach(v => b += elemCoder.structuralValue(v))
     b.result()
   }
 
