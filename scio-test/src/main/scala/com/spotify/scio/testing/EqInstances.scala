@@ -18,10 +18,9 @@
 package com.spotify.scio.testing
 
 import cats.kernel.Eq
-import shapeless.LowPriority
 
 sealed trait FallbackEqInstances {
-  implicit def fallbackEq[A](implicit lp: LowPriority): Eq[A] = new Eq[A] {
+  implicit def fallbackEq[A]: Eq[A] = new Eq[A] {
     def eqv(x: A, y: A): Boolean =
       (x, y) match {
         case (x: Array[_], y: Array[_]) => x.sameElements(y)
