@@ -18,9 +18,8 @@
 package com.spotify.scio.values
 
 import com.spotify.scio.ScioContext
-import com.spotify.scio.coders.{Coder, CoderMaterializer}
-import org.apache.beam.sdk.transforms.{Combine, DoFn, PTransform, ParDo}
-import org.apache.beam.sdk.values.{PCollection, POutput, WindowingStrategy}
+import org.apache.beam.sdk.transforms.PTransform
+import org.apache.beam.sdk.values.{PCollection, POutput}
 
 private[values] trait PCollectionWrapper[T] extends TransformNameable {
 
