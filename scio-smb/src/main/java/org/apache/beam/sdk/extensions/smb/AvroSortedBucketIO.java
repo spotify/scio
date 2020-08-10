@@ -40,14 +40,12 @@ import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Immutabl
 /** API for reading and writing Avro sorted-bucket files. */
 public class AvroSortedBucketIO {
   private static final String DEFAULT_SUFFIX = ".avro";
-  private static final CodecFactory DEFAULT_CODEC = CodecFactory.snappyCodec();
-
   /** Returns a new {@link Read} for Avro generic records. */
   public static Read<GenericRecord> read(TupleTag<GenericRecord> tupleTag, Schema schema) {
     return new AutoValue_AvroSortedBucketIO_Read.Builder<>()
         .setTupleTag(tupleTag)
         .setFilenameSuffix(DEFAULT_SUFFIX)
-        .setCodec(DEFAULT_CODEC)
+        .setCodec(AvroFileOperations.DEFAULT_CODEC)
         .setSchema(schema)
         .build();
   }
@@ -58,7 +56,7 @@ public class AvroSortedBucketIO {
     return new AutoValue_AvroSortedBucketIO_Read.Builder<T>()
         .setTupleTag(tupleTag)
         .setFilenameSuffix(DEFAULT_SUFFIX)
-        .setCodec(DEFAULT_CODEC)
+        .setCodec(AvroFileOperations.DEFAULT_CODEC)
         .setRecordClass(recordClass)
         .build();
   }
@@ -89,7 +87,7 @@ public class AvroSortedBucketIO {
         .setKeyField(keyField)
         .setKeyCacheSize(0)
         .setFilenameSuffix(DEFAULT_SUFFIX)
-        .setCodec(DEFAULT_CODEC);
+        .setCodec(AvroFileOperations.DEFAULT_CODEC);
   }
 
   /** Returns a new {@link TransformOutput} for Avro generic records. */
@@ -98,7 +96,7 @@ public class AvroSortedBucketIO {
     return new AutoValue_AvroSortedBucketIO_TransformOutput.Builder<K, GenericRecord>()
         .setFilenameSuffix(DEFAULT_SUFFIX)
         .setFilenamePrefix(SortedBucketIO.DEFAULT_FILENAME_PREFIX)
-        .setCodec(DEFAULT_CODEC)
+        .setCodec(AvroFileOperations.DEFAULT_CODEC)
         .setKeyField(keyField)
         .setKeyClass(keyClass)
         .setSchema(schema)
@@ -111,7 +109,7 @@ public class AvroSortedBucketIO {
     return new AutoValue_AvroSortedBucketIO_TransformOutput.Builder<K, T>()
         .setFilenameSuffix(DEFAULT_SUFFIX)
         .setFilenamePrefix(SortedBucketIO.DEFAULT_FILENAME_PREFIX)
-        .setCodec(DEFAULT_CODEC)
+        .setCodec(AvroFileOperations.DEFAULT_CODEC)
         .setKeyField(keyField)
         .setKeyClass(keyClass)
         .setRecordClass(recordClass)
