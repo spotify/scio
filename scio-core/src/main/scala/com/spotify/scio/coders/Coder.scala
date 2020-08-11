@@ -27,7 +27,8 @@ import org.apache.beam.sdk.values.KV
 
 import scala.annotation.implicitNotFound
 import scala.jdk.CollectionConverters._
-import scala.collection.{BitSet, SortedSet, TraversableOnce, mutable => m}
+import scala.collection.compat._
+import scala.collection.{BitSet, SortedSet, mutable => m}
 import scala.reflect.ClassTag
 import scala.util.Try
 
@@ -504,8 +505,8 @@ object Coder
   implicit def iterableCoder[T: Coder]: Coder[Iterable[T]] = ScalaCoders.iterableCoder
   implicit def throwableCoder[T <: Throwable: ClassTag]: Coder[T] = ScalaCoders.throwableCoder
   implicit def listCoder[T: Coder]: Coder[List[T]] = ScalaCoders.listCoder
-  implicit def traversableOnceCoder[T: Coder]: Coder[TraversableOnce[T]] =
-    ScalaCoders.traversableOnceCoder
+  implicit def iterableOnceCoder[T: Coder]: Coder[IterableOnce[T]] =
+    ScalaCoders.iterableOnceCoder
   implicit def setCoder[T: Coder]: Coder[Set[T]] = ScalaCoders.setCoder
   implicit def mutableSetCoder[T: Coder]: Coder[m.Set[T]] = ScalaCoders.mutableSetCoder
   implicit def vectorCoder[T: Coder]: Coder[Vector[T]] = ScalaCoders.vectorCoder
