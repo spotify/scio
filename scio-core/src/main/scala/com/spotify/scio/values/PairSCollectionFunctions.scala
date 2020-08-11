@@ -30,6 +30,7 @@ import com.twitter.algebird.{Aggregator, Monoid, MonoidAggregator, Semigroup}
 import org.apache.beam.sdk.transforms._
 import org.apache.beam.sdk.values.{KV, PCollection, PCollectionView}
 import org.slf4j.LoggerFactory
+import scala.collection.compat.immutable.ArraySeq
 
 private object PairSCollectionFunctions {
   private val logger = LoggerFactory.getLogger(this.getClass)
@@ -173,20 +174,20 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     this.cogroup(rhs1, rhs2, rhs3)
 
   /**
-   * Partition this SCollection using K.hashCode() into `n` partitions
+   * Partition this SCollection using `K.##` into `n` partitions.
+   * Note that K should provide consistent hash code accross different JVM.
    *
    * @param numPartitions number of output partitions
    * @return partitioned SCollections in a `Seq`
    * @group collection
    */
-  def hashPartitionByKey(numPartitions: Int): Seq[SCollection[(K, V)]] =
-    self.partition(
-      numPartitions,
-      {
-        case (key, _) =>
-          Math.floorMod(key.hashCode(), numPartitions)
-      }
-    )
+  def hashPartitionByKey(numPartitions: Int): Seq[SCollection[(K, V)]] = {
+    val hashCodeFn: K => Int = {
+      case key: Array[_] => ArraySeq.unsafeWrapArray(key).##
+      case key           => key.##
+    }
+    self.partition(numPartitions, elem => Math.floorMod(hashCodeFn(elem._1), numPartitions))
+  }
 
   // =======================================================================
   // Joins
