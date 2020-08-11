@@ -54,7 +54,7 @@ val elasticsearch5Version = "5.6.16"
 val elasticsearch6Version = "6.8.11"
 val elasticsearch7Version = "7.8.1"
 val featranVersion = "0.6.0"
-val flinkVersion = "1.9.1"
+val flinkVersion = "1.10.1"
 val gaxVersion = "1.54.0"
 val gcsVersion = "1.8.0"
 val generatedGrpcBetaVersion = "1.9.1"
@@ -484,7 +484,7 @@ lazy val `scio-core`: Project = project
       "org.apache.beam" % "beam-runners-spark" % beamVersion % Provided exclude (
         "com.fasterxml.jackson.module", "jackson-module-scala_2.11"
       ),
-      "org.apache.beam" % "beam-runners-flink-1.9" % beamVersion % Provided excludeAll (
+      "org.apache.beam" % "beam-runners-flink-1.10" % beamVersion % Provided excludeAll (
         ExclusionRule("com.twitter", "chill_2.11"),
         ExclusionRule("org.apache.flink", "flink-clients_2.11"),
         ExclusionRule("org.apache.flink", "flink-runtime_2.11"),
