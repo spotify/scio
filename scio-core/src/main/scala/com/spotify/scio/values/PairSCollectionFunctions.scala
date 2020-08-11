@@ -181,7 +181,6 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * @return partitioned SCollections in a `Seq`
    * @group collection
    */
-
   def hashPartitionByKey(numPartitions: Int): Seq[SCollection[(K, V)]] = {
     val hashCodeFn: K => Int = {
       case key: Array[_] => ArraySeq.unsafeWrapArray(key).##
