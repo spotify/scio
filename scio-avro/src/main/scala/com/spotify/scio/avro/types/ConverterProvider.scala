@@ -83,12 +83,12 @@ private[types] object ConverterProvider {
 
     def list(tree: Tree, tpe: Type): Tree = {
       val jl = tq"_root_.java.util.List[AnyRef]"
-      q"$tree.asInstanceOf[$jl].iterator().asScala.map(x => ${cast(q"x", tpe)}).toList"
+      q"asScala($tree.asInstanceOf[$jl]).iterator.map(x => ${cast(q"x", tpe)}).toList"
     }
 
     def map(tree: Tree, tpe: Type): Tree = {
       val jm = tq"_root_.java.util.Map[AnyRef, AnyRef]"
-      q"$tree.asInstanceOf[$jm].asScala.iterator.map(kv => (kv._1.toString, ${cast(q"kv._2", tpe)})).toMap"
+      q"asScala($tree.asInstanceOf[$jm]).iterator.map(kv => (kv._1.toString, ${cast(q"kv._2", tpe)})).toMap"
     }
 
     def field(symbol: Symbol, fn: TermName): Tree = {
@@ -118,7 +118,7 @@ private[types] object ConverterProvider {
 
     val tn = TermName("r")
     q"""(r: ${p(c, ApacheAvro)}.generic.GenericRecord) => {
-          import _root_.scala.jdk.CollectionConverters._
+          import _root_.scala.collection.compat.extra.CollectionConverters._
           ${constructor(tpe, tn)}
         }
     """
@@ -164,10 +164,10 @@ private[types] object ConverterProvider {
       q"if ($tree.isDefined) ${cast(q"$tree.get", tpe)} else null"
 
     def list(tree: Tree, tpe: Type): Tree =
-      q"$tree.map(x => ${cast(q"x", tpe)}).asJava"
+      q"asJava($tree.map(x => ${cast(q"x", tpe)}))"
 
     def map(tree: Tree, tpe: Type): Tree =
-      q"$tree.iterator.map(kv => kv._1 -> ${cast(q"kv._2", tpe)}).toMap.asJava"
+      q"asJava($tree.iterator.map(kv => kv._1 -> ${cast(q"kv._2", tpe)}).toMap)"
 
     def field(symbol: Symbol, fn: TermName): (String, Tree) = {
       val name = symbol.name.toString
@@ -204,7 +204,7 @@ private[types] object ConverterProvider {
 
     val tn = TermName("r")
     q"""(r: $tpe) => {
-          import _root_.scala.jdk.CollectionConverters._
+      import _root_.scala.collection.compat.extra.CollectionConverters._
           ${constructor(tpe, tn)}
         }
     """
