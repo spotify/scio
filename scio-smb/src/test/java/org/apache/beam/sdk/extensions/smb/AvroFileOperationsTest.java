@@ -141,7 +141,7 @@ public class AvroFileOperationsTest {
     MatcherAssert.assertThat(
         displayData, hasDisplayItem("compression", Compression.UNCOMPRESSED.toString()));
     MatcherAssert.assertThat(
-        displayData, hasDisplayItem("codecFactory", CodecFactory.snappyCodec().getClass()));
+        displayData, hasDisplayItem("codecFactory", CodecFactory.deflateCodec(6).getClass()));
     MatcherAssert.assertThat(
         displayData, hasDisplayItem("schema", AvroGeneratedUser.SCHEMA$.getFullName()));
   }

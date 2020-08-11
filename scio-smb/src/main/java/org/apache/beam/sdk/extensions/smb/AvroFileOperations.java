@@ -44,7 +44,7 @@ import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Supplier;
 
 /** {@link org.apache.beam.sdk.extensions.smb.FileOperations} implementation for Avro files. */
 public class AvroFileOperations<ValueT> extends FileOperations<ValueT> {
-  private static final CodecFactory DEFAULT_CODEC = CodecFactory.snappyCodec();
+  static final CodecFactory DEFAULT_CODEC = CodecFactory.deflateCodec(6);
 
   private final Class<ValueT> recordClass;
   private final SerializableSchemaSupplier schemaSupplier;
