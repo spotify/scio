@@ -147,11 +147,13 @@ public class BucketMetadataUtilTest {
     final List<ResourceId> directories = new ArrayList<>();
 
     // all but one metadata are compatible
+    ResourceId missingMetadataDir = null;
     for (int i = 0; i < metadataList.size(); i++) {
       final File dest = folder.newFolder(String.valueOf(i));
       directories.add(LocalResources.fromFile(dest, true));
 
       if (!metadataList.get(i).isPresent()) {
+        missingMetadataDir = LocalResources.fromFile(dest, true);
         continue;
       }
 
@@ -165,7 +167,10 @@ public class BucketMetadataUtilTest {
       BucketMetadata.to(metadata, outputStream);
     }
 
-    Assert.assertFalse(util.getSourceMetadata(directories, ".txt").supportsSmb());
+    Assert.assertThrows(
+        "Could not find SMB metadata for source directory " + missingMetadataDir,
+        RuntimeException.class,
+        () -> util.getSourceMetadata(directories, ".txt"));
 
     folder.delete();
   }

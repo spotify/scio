@@ -18,6 +18,7 @@
 package org.apache.beam.sdk.extensions.smb;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
 import java.io.ByteArrayInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -486,6 +487,11 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
         List<ResourceId> inputDirectories,
         String filenameSuffix,
         FileOperations<V> fileOperations) {
+      inputDirectories.forEach(
+          path ->
+              Preconditions.checkArgument(
+                  path.isDirectory(),
+                  "Cannot construct SMB source from non-directory input " + path));
       this.tupleTag = tupleTag;
       this.filenameSuffix = filenameSuffix;
       this.fileOperations = fileOperations;
@@ -529,7 +535,7 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
       } catch (FileNotFoundException e) {
         return Collections.emptyList();
       } catch (IOException e) {
-        throw new RuntimeException();
+        throw new RuntimeException("Exception fetching metadata for " + directory, e);
       }
     }
 
