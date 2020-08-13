@@ -97,12 +97,13 @@ public class BucketMetadataUtil {
               .parallelStream()
               .map(
                   dir ->
-                      BucketMetadataUtil.getMetadata(dir)
-                          .map(metadata -> (BucketMetadata<K, V>) metadata)
-                          .orElseThrow(
-                              () ->
-                                  new RuntimeException(
-                                      "Could not find SMB metadata for source directory " + dir)))
+                      (BucketMetadata<K, V>)
+                          BucketMetadataUtil.getMetadata(dir)
+                              .orElseThrow(
+                                  () ->
+                                      new RuntimeException(
+                                          "Could not find SMB metadata for source directory "
+                                              + dir)))
               .collect(Collectors.toList());
 
       for (int i = 0; i < result.size(); i++) {
