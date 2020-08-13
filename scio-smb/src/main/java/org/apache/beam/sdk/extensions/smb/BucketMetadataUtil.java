@@ -58,10 +58,6 @@ public class BucketMetadataUtil {
     public abstract BucketMetadata<K, V> getCanonicalMetadata();
 
     public abstract Map<ResourceId, PartitionMetadata> getPartitionMetadata();
-
-    public boolean supportsSmb() {
-      return getCanonicalMetadata() != null && !getPartitionMetadata().isEmpty();
-    }
   }
 
   @AutoValue
@@ -86,6 +82,7 @@ public class BucketMetadataUtil {
     this.batchSize = batchSize;
   }
 
+  @SuppressWarnings("unchecked")
   public <K, V> SourceMetadata<K, V> getSourceMetadata(
       List<ResourceId> directories, String filenameSuffix) {
     final int total = directories.size();
@@ -95,19 +92,22 @@ public class BucketMetadataUtil {
     int start = 0;
     while (start < total) {
       final List<ResourceId> input = directories.subList(start, Math.min(total, start + batchSize));
-      final List<Optional<BucketMetadata<K, V>>> result =
+      final List<BucketMetadata<K, V>> result =
           input
               .parallelStream()
-              .map(BucketMetadataUtil::<K, V>getMetadata)
+              .map(
+                  dir ->
+                      (BucketMetadata<K, V>)
+                          BucketMetadataUtil.getMetadata(dir)
+                              .orElseThrow(
+                                  () ->
+                                      new RuntimeException(
+                                          "Could not find SMB metadata for source directory "
+                                              + dir)))
               .collect(Collectors.toList());
 
-      if (result.stream().anyMatch(o -> !o.isPresent())) {
-        // Fail fast if any partition is missing metadata
-        return SourceMetadata.create(null, Collections.emptyMap());
-      }
-
       for (int i = 0; i < result.size(); i++) {
-        final BucketMetadata<K, V> metadata = result.get(i).get();
+        final BucketMetadata<K, V> metadata = result.get(i);
         final ResourceId dir = input.get(i);
         final FileAssignment fileAssignment =
             new SMBFilenamePolicy(dir, metadata.getFilenamePrefix(), filenameSuffix)
@@ -144,11 +144,6 @@ public class BucketMetadataUtil {
   }
 
   ////////////////////////////////////////////////////////////////////////////////
-
-  private static FileAssignment getFileAssignment(
-      ResourceId directory, String filenamePrefix, String filenameSuffix) {
-    return new SMBFilenamePolicy(directory, filenamePrefix, filenameSuffix).forDestination();
-  }
 
   private static <K, V> Optional<BucketMetadata<K, V>> getMetadata(ResourceId directory) {
     final ResourceId resourceId = FileAssignment.forDstMetadata(directory);
