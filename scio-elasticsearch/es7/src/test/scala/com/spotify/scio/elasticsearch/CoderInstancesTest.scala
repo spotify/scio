@@ -107,4 +107,6 @@ case class FooDocWriteRequest(_index: String, id: String) extends DocWriteReques
   override def opType(): DocWriteRequest.OpType = DocWriteRequest.OpType.CREATE
 
   override def indices(): Array[String] = Array("foo")
+
+  override def ramBytesUsed(): Long = _index.size + id.size
 }
