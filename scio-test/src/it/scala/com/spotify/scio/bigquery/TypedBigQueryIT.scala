@@ -19,12 +19,16 @@ package com.spotify.scio.bigquery
 
 import com.google.protobuf.ByteString
 import com.spotify.scio._
+import com.spotify.scio.bigquery.BigQueryTypedTable.Format
 import com.spotify.scio.bigquery.client.BigQuery
+import com.spotify.scio.coders.Coder
 import com.spotify.scio.testing._
 import magnolify.scalacheck.auto._
+import org.apache.avro.{LogicalTypes, Schema}
+import org.apache.avro.generic.{GenericRecord, GenericRecordBuilder}
 import org.apache.beam.sdk.options.PipelineOptionsFactory
-import org.joda.time.format.DateTimeFormat
 import org.joda.time.{Instant, LocalDate, LocalDateTime, LocalTime}
+import org.joda.time.format.DateTimeFormat
 import org.scalacheck._
 import org.scalatest.BeforeAndAfterAll
 
@@ -60,14 +64,18 @@ object TypedBigQueryIT {
     implicitly[Arbitrary[Record]].arbitrary
   }
 
-  private val table = {
+  private def table(name: String) = {
     val TIME_FORMATTER = DateTimeFormat.forPattern("yyyyMMddHHmmss")
     val now = Instant.now().toString(TIME_FORMATTER)
     val spec =
-      "data-integration-test:bigquery_avro_it.records_" + now + "_" + Random.nextInt(Int.MaxValue)
+      s"data-integration-test:bigquery_avro_it.$name${now}_${Random.nextInt(Int.MaxValue)}"
     Table.Spec(spec)
   }
-  private val records = Gen.listOfN(1000, recordGen).sample.get
+  private val tableRowTable = table("records_tablerow")
+  private val avroTable = table("records_avro")
+  private val avroLogicalTypeTable = table("records_avro_logical_type")
+
+  private val records = Gen.listOfN(100, recordGen).sample.get
   private val options = PipelineOptionsFactory
     .fromArgs(
       "--project=data-integration-test",
@@ -81,28 +89,131 @@ class TypedBigQueryIT extends PipelineSpec with BeforeAndAfterAll {
 
   override protected def beforeAll(): Unit = {
     val sc = ScioContext(options)
-    sc.parallelize(records).saveAsTypedBigQueryTable(table)
+    sc.parallelize(records).saveAsTypedBigQueryTable(tableRowTable)
 
     sc.run()
     ()
   }
 
-  override protected def afterAll(): Unit =
-    BigQuery.defaultInstance().tables.delete(table.ref)
+  override protected def afterAll(): Unit = {
+    BigQuery.defaultInstance().tables.delete(tableRowTable.ref)
+    BigQuery.defaultInstance().tables.delete(avroTable.ref)
+    BigQuery.defaultInstance().tables.delete(avroLogicalTypeTable.ref)
+  }
 
   "TypedBigQuery" should "read records" in {
     val sc = ScioContext(options)
-    sc.typedBigQuery[Record](table) should containInAnyOrder(records)
+    sc.typedBigQuery[Record](tableRowTable) should containInAnyOrder(records)
     sc.run()
   }
 
   it should "convert to avro format" in {
     val sc = ScioContext(options)
-    sc.typedBigQuery[Record](table)
+    implicit val coder = Coder.avroGenericRecordCoder(Record.avroSchema)
+    sc.typedBigQuery[Record](tableRowTable)
       .map(Record.toAvro)
       .map(Record.fromAvro) should containInAnyOrder(
       records
     )
     sc.run()
   }
+
+  "BigQueryTypedTable" should "read TableRow records" in {
+    val sc = ScioContext(options)
+    sc
+      .bigQueryTable(tableRowTable)
+      .map(Record.fromTableRow) should containInAnyOrder(records)
+    sc.run()
+  }
+
+  it should "read GenericRecord recors" in {
+    val sc = ScioContext(options)
+    implicit val coder = Coder.avroGenericRecordCoder(Record.avroSchema)
+    sc
+      .bigQueryTable(tableRowTable, Format.GenericRecord)
+      .map(Record.fromAvro) should containInAnyOrder(records)
+    sc.run()
+  }
+
+  it should "write GenericRecord records" in {
+    val sc = ScioContext(options)
+    implicit val coder = Coder.avroGenericRecordCoder(Record.avroSchema)
+    val schema =
+      BigQueryUtil.parseSchema("""
+        |{
+        |  "fields": [
+        |    {"mode": "NULLABLE", "name": "bool", "type": "BOOLEAN"},
+        |    {"mode": "NULLABLE", "name": "int", "type": "INTEGER"},
+        |    {"mode": "NULLABLE", "name": "long", "type": "INTEGER"},
+        |    {"mode": "NULLABLE", "name": "float", "type": "FLOAT"},
+        |    {"mode": "NULLABLE", "name": "double", "type": "FLOAT"},
+        |    {"mode": "NULLABLE", "name": "string", "type": "STRING"},
+        |    {"mode": "NULLABLE", "name": "byteString", "type": "BYTES"},
+        |    {"mode": "NULLABLE", "name": "timestamp", "type": "INTEGER"},
+        |    {"mode": "NULLABLE", "name": "date", "type": "STRING"},
+        |    {"mode": "NULLABLE", "name": "time", "type": "STRING"},
+        |    {"mode": "NULLABLE", "name": "datetime", "type": "STRING"}
+        |  ]
+        |}
+      """.stripMargin)
+    val tap = sc
+      .bigQueryTable(tableRowTable, Format.GenericRecord)
+      .saveAsBigQueryTable(avroTable, schema = schema, createDisposition = CREATE_IF_NEEDED)
+
+    val result = sc.run().waitUntilDone()
+    result.tap(tap).map(Record.fromAvro).value.toList shouldBe records
+  }
+
+  it should "write GenericRecord records with logical types" in {
+    val sc = ScioContext(options)
+    import scala.jdk.CollectionConverters._
+    val schema: Schema = Schema.createRecord(
+      "Record",
+      "",
+      "com.spotify.scio.bigquery",
+      false,
+      List(
+        new Schema.Field(
+          "date",
+          LogicalTypes.date().addToSchema(Schema.create(Schema.Type.INT)),
+          "",
+          0
+        ),
+        new Schema.Field(
+          "time",
+          LogicalTypes.timeMicros().addToSchema(Schema.create(Schema.Type.LONG)),
+          "",
+          0L
+        ),
+        new Schema.Field("datetime", Schema.create(Schema.Type.STRING), "", "")
+      ).asJava
+    )
+    implicit val coder = Coder.avroGenericRecordCoder(schema)
+    val ltRecords: Seq[GenericRecord] =
+      Seq(
+        new GenericRecordBuilder(schema)
+          .set("date", 10)
+          .set("time", 1000L)
+          .set("datetime", "2020-08-03 11:11:11")
+          .build()
+      )
+
+    val tableSchema =
+      BigQueryUtil.parseSchema("""
+        |{
+        |  "fields": [
+        |    {"mode": "REQUIRED", "name": "date", "type": "DATE"},
+        |    {"mode": "REQUIRED", "name": "time", "type": "TIME"},
+        |    {"mode": "REQUIRED", "name": "datetime", "type": "STRING"}
+        |  ]
+        |}
+      """.stripMargin)
+    val tap = sc
+      .parallelize(ltRecords)
+      .saveAsBigQueryTable(avroLogicalTypeTable, tableSchema, createDisposition = CREATE_IF_NEEDED)
+
+    val result = sc.run().waitUntilDone()
+    result.tap(tap).value.toList.size shouldBe 1
+  }
+
 }

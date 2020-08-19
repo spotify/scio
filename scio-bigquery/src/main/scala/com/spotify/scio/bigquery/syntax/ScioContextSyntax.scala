@@ -23,7 +23,6 @@ import com.spotify.scio.bigquery.{
   BigQuerySelect,
   BigQueryStorage,
   BigQueryStorageSelect,
-  BigQueryTable,
   BigQueryType,
   BigQueryTyped,
   Query,
@@ -39,6 +38,8 @@ import org.apache.beam.sdk.io.gcp.bigquery.SchemaAndRecord
 
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
+import com.spotify.scio.bigquery.BigQueryTypedTable
+import com.spotify.scio.bigquery.BigQueryTypedTable.Format
 
 /** Enhanced version of [[ScioContext]] with BigQuery methods. */
 final class ScioContextOps(private val self: ScioContext) extends AnyVal {
@@ -70,7 +71,21 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
 
   /** Get an SCollection for a BigQuery table. */
   def bigQueryTable(table: Table): SCollection[TableRow] =
-    self.read(BigQueryTable(table))
+    bigQueryTable(table, BigQueryTypedTable.Format.TableRow)
+
+  /**
+   * Get an SCollection for a BigQuery table using the specified [[Format]].
+   *
+   * Reading records as GenericRecord **should** offer better performance over
+   * TableRow records.
+   *
+   * Note: When using `Format.GenericRecord` Bigquery types DATE, TIME and DATETIME
+   *       are read as STRING.
+   */
+  def bigQueryTable(table: Table, format: Format)(implicit
+    code: Coder[format.F]
+  ): SCollection[format.F] =
+    self.read(BigQueryTypedTable(table, format))
 
   /**
    * Get an SCollection for a BigQuery table using the storage API.

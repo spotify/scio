@@ -17,18 +17,21 @@
 
 package com.spotify.scio.bigquery
 
-import com.google.api.services.bigquery.model.TableReference
 import com.google.cloud.bigquery.storage.v1beta1.ReadOptions.TableReadOptions
+import com.google.api.services.bigquery.model.{TableReference, TableSchema}
 import com.spotify.scio.ScioContext
 import com.spotify.scio.bigquery.client.BigQuery
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.io.{FileStorage, Tap, Taps}
 import com.spotify.scio.values.SCollection
+import org.apache.avro.generic.GenericRecord
 
 import scala.jdk.CollectionConverters._
 import scala.concurrent.Future
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
+import com.spotify.scio.bigquery.BigQueryTypedTable.Format
+import com.twitter.chill.Externalizer
 
 /** Tap for BigQuery TableRow JSON files. */
 final case class TableRowJsonTap(path: String) extends Tap[TableRow] {
@@ -37,11 +40,18 @@ final case class TableRowJsonTap(path: String) extends Tap[TableRow] {
     sc.tableRowJsonFile(path)
 }
 
-final case class BigQueryTypedTap[T: Coder](table: Table, fn: TableRow => T) extends Tap[T] {
+final case class BigQueryTypedTap[T: Coder](table: Table, fn: (GenericRecord, TableSchema) => T)
+    extends Tap[T] {
+  lazy val client: BigQuery = BigQuery.defaultInstance()
+  lazy val ts: TableSchema = client.tables.table(table.spec).getSchema
+
   override def value: Iterator[T] =
-    BigQueryTap(table.ref).value.map(fn)
-  override def open(sc: ScioContext): SCollection[T] =
-    BigQueryTap(table.ref).open(sc).map(fn)
+    client.tables.avroRows(table).map(gr => fn(gr, ts))
+
+  override def open(sc: ScioContext): SCollection[T] = {
+    val ser = Externalizer(ts)
+    sc.bigQueryTable(table, Format.GenericRecord).map(gr => fn(gr, ser.get))
+  }
 }
 
 /** Tap for BigQuery tables. */
