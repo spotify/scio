@@ -91,9 +91,8 @@ public abstract class ExternalSorter implements Sorter {
 
   /** Returns a {@link Sorter} configured with the given {@link Options}. */
   public static ExternalSorter create(Options options) {
-    return options.getSorterType() == Options.SorterType.HADOOP
-        ? HadoopExternalSorter.create(options)
-        : NativeExternalSorter.create(options);
+    checkArgument(options.getSorterType() == Options.SorterType.NATIVE);
+    return NativeExternalSorter.create(options);
   }
 
   ExternalSorter(Options options) {

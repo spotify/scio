@@ -17,7 +17,6 @@
  */
 package org.apache.beam.sdk.extensions.sorter;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.EOFException;
@@ -234,7 +233,6 @@ class NativeFileSorter {
    * This method calls the garbage collector and then returns the free memory. This avoids problems
    * with applications where the GC hasn't reclaimed memory and reports no available memory.
    */
-  @SuppressFBWarnings("DM_GC")
   private static long estimateAvailableMemory() {
     System.gc();
     // http://stackoverflow.com/questions/12807797/java-get-available-memory
