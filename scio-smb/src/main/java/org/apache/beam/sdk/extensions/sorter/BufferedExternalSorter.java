@@ -109,9 +109,9 @@ public class BufferedExternalSorter implements Sorter {
 
   public static BufferedExternalSorter create(Options options) {
     ExternalSorter.Options externalSorterOptions = new ExternalSorter.Options();
-    externalSorterOptions.setMemoryMB(options.getMemoryMB());
     externalSorterOptions.setTempLocation(options.getTempLocation());
     externalSorterOptions.setSorterType(options.getExternalSorterType());
+    externalSorterOptions.setMemoryMB(options.getMemoryMB());
 
     InMemorySorter.Options inMemorySorterOptions = new InMemorySorter.Options();
     inMemorySorterOptions.setMemoryMB(options.getMemoryMB());
