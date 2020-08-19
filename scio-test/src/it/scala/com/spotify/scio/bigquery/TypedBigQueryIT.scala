@@ -161,7 +161,7 @@ class TypedBigQueryIT extends PipelineSpec with BeforeAndAfterAll {
       .saveAsBigQueryTable(avroTable, schema = schema, createDisposition = CREATE_IF_NEEDED)
 
     val result = sc.run().waitUntilDone()
-    result.tap(tap).map(Record.fromAvro).value.toList shouldBe records
+    result.tap(tap).map(Record.fromAvro).value.toSet shouldBe records.toSet
   }
 
   it should "write GenericRecord records with logical types" in {
