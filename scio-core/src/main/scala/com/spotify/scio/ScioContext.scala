@@ -659,8 +659,9 @@ class ScioContext private[scio] (
         val state = pipelineResult.waitUntilFinish(time.Duration.millis(wait))
         if (state == null && cancelJob) {
           pipelineResult.cancel()
+          val finalState = pipelineResult.getState()
           val cause = new InterruptedException(
-            s"Job cancelled after exceeding timeout value $duration"
+            s"Job cancelled after exceeding timeout value $duration with state $finalState"
           )
           throw new PipelineExecutionException(cause)
         }
