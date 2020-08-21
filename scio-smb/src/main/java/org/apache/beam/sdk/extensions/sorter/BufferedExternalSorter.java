@@ -21,6 +21,7 @@ import static org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Prec
 
 import java.io.IOException;
 import java.io.Serializable;
+import com.spotify.scio.smb.annotations.PatchedFromBeam;
 import org.apache.beam.sdk.extensions.sorter.ExternalSorter.Options.SorterType;
 import org.apache.beam.sdk.values.KV;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -30,6 +31,7 @@ import org.checkerframework.checker.nullness.qual.RequiresNonNull;
  * {@link Sorter} that will use in memory sorting until the values can't fit into memory and will
  * then fall back to external sorting.
  */
+@PatchedFromBeam(origin = "org.apache.beam.sdk.extensions.sorter")
 public class BufferedExternalSorter implements Sorter {
   public static Options options() {
     return new Options("/tmp", 100, SorterType.HADOOP);
