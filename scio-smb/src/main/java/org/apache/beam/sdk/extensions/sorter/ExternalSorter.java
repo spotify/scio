@@ -84,7 +84,7 @@ public abstract class ExternalSorter implements Sorter {
       if (getSorterType() == SorterType.HADOOP) {
         // Hadoop's external sort stores the number of available memory bytes in an int, this
         // prevents overflow
-        checkArgument(memoryMB < 2048, "memoryMB must be less than 2048");
+        checkArgument(memoryMB < 2048, "memoryMB must be less than 2048 for Hadoop sorter");
       }
     }
   }

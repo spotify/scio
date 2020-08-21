@@ -42,6 +42,7 @@ public class BufferedExternalSorter implements Sorter {
     private final SorterType sorterType;
 
     private Options(String tempLocation, int memoryMB, SorterType sorterType) {
+      checkMemoryMB(memoryMB, sorterType);
       this.tempLocation = tempLocation;
       this.memoryMB = memoryMB;
       this.sorterType = sorterType;
@@ -67,7 +68,6 @@ public class BufferedExternalSorter implements Sorter {
      * less than 2048 if sorter type is Hadoop.
      */
     public Options withMemoryMB(int memoryMB) {
-      checkMemoryMB(memoryMB, sorterType);
       return new Options(tempLocation, memoryMB, sorterType);
     }
 
@@ -78,7 +78,6 @@ public class BufferedExternalSorter implements Sorter {
 
     /** Sets the external sorter type. */
     public Options withExternalSorterType(SorterType sorterType) {
-      checkMemoryMB(memoryMB, sorterType);
       return new Options(tempLocation, memoryMB, sorterType);
     }
 
@@ -87,12 +86,12 @@ public class BufferedExternalSorter implements Sorter {
       return sorterType;
     }
 
-    private void checkMemoryMB(int memoryMB, SorterType sorterType) {
+    private static void checkMemoryMB(int memoryMB, SorterType sorterType) {
       checkArgument(memoryMB > 0, "memoryMB must be greater than zero");
-      if (getExternalSorterType() == SorterType.HADOOP) {
+      if (sorterType == SorterType.HADOOP) {
         // Hadoop's external sort stores the number of available memory bytes in an int, this
         // prevents overflow
-        checkArgument(memoryMB < 2048, "memoryMB must be less than 2048");
+        checkArgument(memoryMB < 2048, "memoryMB must be less than 2048 for Hadoop sorter");
       }
     }
   }
