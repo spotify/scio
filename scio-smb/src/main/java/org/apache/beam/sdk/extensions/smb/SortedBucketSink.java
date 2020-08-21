@@ -46,7 +46,6 @@ import org.apache.beam.sdk.extensions.smb.SortedBucketSink.WriteResult;
 import org.apache.beam.sdk.extensions.smb.SortedBucketSource.BucketedInput;
 import org.apache.beam.sdk.extensions.sorter.BufferedExternalSorter;
 import org.apache.beam.sdk.extensions.sorter.ExternalSorter;
-import org.apache.beam.sdk.extensions.sorter.SortValues;
 import org.apache.beam.sdk.io.FileSystems;
 import org.apache.beam.sdk.io.fs.MoveOptions;
 import org.apache.beam.sdk.io.fs.ResourceId;
@@ -100,7 +99,7 @@ import org.slf4j.LoggerFactory;
  * BucketMetadata#extractKey(Object)} (Object)}, and assign it to an Integer bucket using {@link
  * BucketMetadata#getBucketId(byte[])}. Next, a {@link GroupByKey} transform is applied to create a
  * {@link PCollection} of {@code N} elements, where {@code N} is the number of buckets specified by
- * {@link BucketMetadata#getNumBuckets()}, then a {@link SortValues} transform is used to sort
+ * {@link BucketMetadata#getNumBuckets()}, then a {@code SortValues} transform is used to sort
  * elements within each bucket group. Finally, the write operation is performed, where each bucket
  * is first written to a {@link SortedBucketSink#tempDirectory} and then copied to its final
  * destination.
@@ -112,7 +111,7 @@ import org.slf4j.LoggerFactory;
  *
  * <p>Bucketing properties are specified in {@link BucketMetadata}. The number of buckets, {@code
  * N}, must be a power of two and should be chosen such that each bucket can fit in a worker node's
- * memory. Note that the {@link SortValues} transform will try to sort in-memory and fall back to an
+ * memory. Note that the {@code SortValues} transform will try to sort in-memory and fall back to an
  * {@link ExternalSorter} if needed.
  *
  * <p>Each bucket can be further sharded to reduce the impact of hot keys, by specifying {@link
@@ -376,7 +375,7 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
   }
 
   /**
-   * Patch of {@link SortValues}'s SortValuesDoFn which acts on elements already encoded as bytes
+   * Patch of {@code SortValues}'s SortValuesDoFn which acts on elements already encoded as bytes
    * and can avoid the additional ser/de operation per element.
    */
   private static class SortBytesDoFn<K>
