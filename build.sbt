@@ -1152,7 +1152,8 @@ lazy val `scio-smb`: Project = project
       "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion % "it,test" classifier "tests",
-      "org.apache.beam" % "beam-sdks-java-extensions-sorter" % beamVersion,
+      // #3260 work around for sorter memory limit until we patch upstream
+      // "org.apache.beam" % "beam-sdks-java-extensions-sorter" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-extensions-protobuf" % beamVersion,
       "com.google.apis" % "google-api-services-bigquery" % googleApiServicesBigQuery,
       "org.tensorflow" % "proto" % tensorFlowVersion,
