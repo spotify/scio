@@ -23,6 +23,7 @@ import java.util.function.{Function => JFunction}
 import scala.jdk.CollectionConverters._
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.concurrent.duration.Duration
+import scala.util.{Failure, Success}
 
 /** A [[FutureHandlers.Base]] implementation for Scala [[Future]]. */
 trait ScalaFutureHandlers[T] extends FutureHandlers.Base[Future[T], T] {
@@ -43,5 +44,10 @@ trait ScalaFutureHandlers[T] extends FutureHandlers.Base[Future[T], T] {
     onSuccess: JFunction[T, Void],
     onFailure: JFunction[Throwable, Void]
   ): Future[T] =
-    future.map { r => onSuccess(r); r }.transform(identity, t => { onFailure(t); t })
+    future.andThen {
+      case Failure(exception) => onFailure(exception)
+      case Success(value) =>
+        try onSuccess(value)
+        catch { case exp: Throwable => onFailure(exp) }
+    }
 }
