@@ -138,6 +138,7 @@ class NativeFileSorter {
       }
     } finally {
       inputStream.close();
+      dataFile.delete();
     }
     return files;
   }
