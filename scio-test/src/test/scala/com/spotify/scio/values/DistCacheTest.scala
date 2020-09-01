@@ -271,4 +271,6 @@ class MockSparkeyReader(private val data: Map[String, String])
   override def getAsByteArray(key: Array[Byte]): Array[Byte] = ???
   override def getIndexHeader: IndexHeader = ???
   override def duplicate(): SparkeyReader = ???
+  override def getLoadedBytes: Long = ???
+  override def getTotalBytes: Long = ???
 }

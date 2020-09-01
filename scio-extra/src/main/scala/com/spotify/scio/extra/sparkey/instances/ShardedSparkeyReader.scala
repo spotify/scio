@@ -62,4 +62,8 @@ class ShardedSparkeyReader(val sparkeys: Map[Short, SparkeyReader], val numShard
 
   override def iterator(): util.Iterator[SparkeyReader.Entry] =
     sparkeys.values.map(_.iterator.asScala).reduce(_ ++ _).asJava
+
+  override def getLoadedBytes: Long = sparkeys.valuesIterator.map(_.getLoadedBytes).sum
+
+  override def getTotalBytes: Long = sparkeys.valuesIterator.map(_.getTotalBytes).sum
 }
