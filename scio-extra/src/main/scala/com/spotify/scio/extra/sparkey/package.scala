@@ -435,7 +435,25 @@ package object sparkey extends SparkeyReaderInstances {
       extends SideInput[SparkeyReader] {
     override def updateCacheOnGlobalWindow: Boolean = false
     override def get[I, O](context: DoFn[I, O]#ProcessContext): SparkeyReader =
-      context.sideInput(view).getReader
+      SparkeySideInput.checkMemory(context.sideInput(view).getReader)
+  }
+
+  private object SparkeySideInput {
+    private val logger = LoggerFactory.getLogger(this.getClass)
+    def checkMemory(reader: SparkeyReader): SparkeyReader = {
+      val memoryBytes = java.lang.management.ManagementFactory.getOperatingSystemMXBean
+        .asInstanceOf[com.sun.management.OperatingSystemMXBean]
+        .getTotalPhysicalMemorySize
+      if (reader.getTotalBytes > memoryBytes) {
+        logger.warn(
+          "Sparkey size {} > total memory {}, look up performance will be severely degraded. " +
+            "Increase memory or use faster SSD drives.",
+          reader.getTotalBytes,
+          memoryBytes
+        )
+      }
+      reader
+    }
   }
 
   sealed trait SparkeyWritable[K, V] extends Serializable {
