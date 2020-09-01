@@ -16,9 +16,11 @@ import scala.jdk.CollectionConverters._
  */
 class ShardedSparkeyReader(val sparkeys: Map[Short, SparkeyReader], val numShards: Short)
     extends SparkeyReader {
-  def hashKey(arr: Array[Byte]): Short = (MurmurHash3.bytesHash(arr, 1) % numShards).toShort
+  def hashKey(arr: Array[Byte]): Short =
+    Math.floorMod(MurmurHash3.bytesHash(arr, 1), numShards).toShort
 
-  def hashKey(str: String): Short = (MurmurHash3.stringHash(str, 1) % numShards).toShort
+  def hashKey(str: String): Short =
+    Math.floorMod(MurmurHash3.stringHash(str, 1), numShards).toShort
 
   override def getAsString(key: String): String = {
     val hashed = hashKey(key)
