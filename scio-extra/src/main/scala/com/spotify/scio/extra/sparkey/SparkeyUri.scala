@@ -25,7 +25,6 @@ import com.spotify.scio.coders.Coder
 import com.spotify.scio.util.{RemoteFileUtil, ScioUtil}
 import com.spotify.sparkey.extra.ThreadLocalSparkeyReader
 import com.spotify.sparkey.{Sparkey, SparkeyReader}
-import org.apache.beam.sdk.options.PipelineOptions
 
 import scala.jdk.CollectionConverters._
 
@@ -45,12 +44,19 @@ trait SparkeyUri extends Serializable {
 }
 
 private[sparkey] object SparkeyUri {
-  def apply(basePath: String, opts: PipelineOptions): SparkeyUri =
-    if (ScioUtil.isLocalUri(new URI(basePath))) {
-      LocalSparkeyUri(basePath)
+  def apply(basePath: String, rfuCreateFn: () => RemoteFileUtil): SparkeyUri = {
+    if (basePath.endsWith("*")) {
+      val basePathWithoutGlobPart = basePath.split("/").dropRight(1).mkString("/")
+      ShardedSparkeyUri(basePathWithoutGlobPart, rfuCreateFn)
     } else {
-      RemoteSparkeyUri(basePath, opts)
+      if (ScioUtil.isLocalUri(new URI(basePath))) {
+        LocalSparkeyUri(basePath)
+      } else {
+        RemoteSparkeyUri(basePath, rfuCreateFn)
+      }
     }
+  }
+
   def extensions: Seq[String] = Seq(".spi", ".spl")
 
   implicit def coderSparkeyURI: Coder[SparkeyUri] = Coder.kryo[SparkeyUri]
@@ -64,8 +70,8 @@ private case class LocalSparkeyUri(basePath: String) extends SparkeyUri {
 }
 
 private object RemoteSparkeyUri {
-  def apply(basePath: String, options: PipelineOptions): RemoteSparkeyUri =
-    RemoteSparkeyUri(basePath, RemoteFileUtil.create(options))
+  def apply(basePath: String, rfuCreateFn: () => RemoteFileUtil): RemoteSparkeyUri =
+    RemoteSparkeyUri(basePath, rfuCreateFn())
 }
 
 private case class RemoteSparkeyUri(basePath: String, rfu: RemoteFileUtil) extends SparkeyUri {
