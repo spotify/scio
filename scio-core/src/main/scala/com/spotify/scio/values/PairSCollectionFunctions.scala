@@ -739,8 +739,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     self.distinctBy(_._1)
 
   /**
-   * Pass each value in the key-value pair SCollection through a `filter` function without
-   * changing the keys.
+   * Return a new SCollection of (key, value) pairs whose values satisfy the predicate.
    * @group transform
    */
   def filterValues(f: V => Boolean)(implicit koder: Coder[K]): SCollection[(K, V)] =
