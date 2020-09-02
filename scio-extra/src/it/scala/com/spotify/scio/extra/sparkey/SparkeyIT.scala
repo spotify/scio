@@ -21,6 +21,7 @@ import java.nio.ByteBuffer
 
 import com.spotify.scio.testing.PipelineSpec
 import com.spotify.scio.testing.util.ItUtils
+import com.spotify.sparkey.CompressionType
 import org.apache.beam.sdk.io.FileSystems
 import org.apache.beam.sdk.util.MimeTypes
 
@@ -58,7 +59,7 @@ class SparkeyIT extends PipelineSpec {
       val resourceId = FileSystems.matchNewResource(basePath + ".spl", false)
       // Create a sparkey KV file
       val uri = SparkeyUri(basePath, sc.options)
-      val writer = new SparkeyWriter(uri, -1)
+      val writer = new SparkeyWriter(uri, CompressionType.NONE, 0, -1)
       (1 to 100000000).foreach(x => writer.put(x.toString, x.toString))
       writer.close()
 
