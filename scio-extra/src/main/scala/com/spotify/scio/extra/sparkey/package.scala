@@ -30,7 +30,7 @@ import com.spotify.scio.extra.sparkey.instances.{
 }
 import com.spotify.scio.util.Cache
 import com.spotify.scio.values.{SCollection, SideInput}
-import com.spotify.sparkey.SparkeyReader
+import com.spotify.sparkey.{CompressionType, SparkeyReader}
 import org.apache.beam.sdk.io.FileSystems
 import org.apache.beam.sdk.transforms.{DoFn, View}
 import org.apache.beam.sdk.values.PCollectionView
@@ -184,9 +184,11 @@ package object sparkey extends SparkeyReaderInstances {
   private def writeToSparkey[K, V](
     uri: SparkeyUri,
     maxMemoryUsage: Long,
+    compressionType: CompressionType,
+    compressionBlockSize: Int,
     elements: Iterable[(K, V)]
   )(implicit w: SparkeyWritable[K, V], koder: Coder[K], voder: Coder[V]): SparkeyUri = {
-    val writer = new SparkeyWriter(uri, maxMemoryUsage)
+    val writer = new SparkeyWriter(uri, compressionType, compressionBlockSize, maxMemoryUsage)
     val it = elements.iterator
     while (it.hasNext) {
       val kv = it.next()
@@ -215,13 +217,21 @@ package object sparkey extends SparkeyReaderInstances {
     def asSparkey(
       path: String = null,
       maxMemoryUsage: Long = -1,
-      numShards: Short = DefaultNumShards
+      numShards: Short = DefaultNumShards,
+      compressionType: CompressionType = CompressionType.NONE,
+      compressionBlockSize: Int = 0
     )(implicit
       w: SparkeyWritable[K, V],
       koder: Coder[K],
       voder: Coder[V]
     ): SCollection[SparkeyUri] = {
       require(numShards > 0, s"numShards must be greater than 0, found $numShards")
+      if (compressionType != CompressionType.NONE) {
+        require(
+          compressionBlockSize > 0,
+          s"Compression block size must be > 0 for $compressionType"
+        )
+      }
 
       val tempLocation = self.context.options.getTempLocation()
       val tempPath = s"$tempLocation/sparkey-${UUID.randomUUID}"
@@ -241,6 +251,8 @@ package object sparkey extends SparkeyReaderInstances {
               shard -> writeToSparkey(
                 uri.sparkeyUriForShard(shard, numShards),
                 maxMemoryUsage,
+                compressionType,
+                compressionBlockSize,
                 xs
               )
           }
@@ -257,6 +269,8 @@ package object sparkey extends SparkeyReaderInstances {
                 writeToSparkey(
                   uri.sparkeyUriForShard(shard, numShards),
                   maxMemoryUsage,
+                  compressionType,
+                  compressionBlockSize,
                   Iterable.empty[(K, V)]
                 )
               )
@@ -309,12 +323,22 @@ package object sparkey extends SparkeyReaderInstances {
      * @param numShards the number of shards to use when writing the Sparkey file(s).
      */
     @experimental
-    def asSparkeySideInput(numShards: Short = DefaultSideInputNumShards)(implicit
+    def asSparkeySideInput(
+      numShards: Short = DefaultSideInputNumShards,
+      compressionType: CompressionType = CompressionType.NONE,
+      compressionBlockSize: Int = 0
+    )(implicit
       w: SparkeyWritable[K, V],
       koder: Coder[K],
       voder: Coder[V]
     ): SideInput[SparkeyReader] =
-      self.asSparkey(numShards = numShards).asSparkeySideInput
+      self
+        .asSparkey(
+          numShards = numShards,
+          compressionType = compressionType,
+          compressionBlockSize = compressionBlockSize
+        )
+        .asSparkeySideInput
 
     /**
      * Convert this SCollection to a SideInput, mapping key-value pairs of each window to a
@@ -355,7 +379,9 @@ package object sparkey extends SparkeyReaderInstances {
     @experimental
     def asTypedSparkeySideInput[T](
       cache: Cache[String, T],
-      numShards: Short = DefaultSideInputNumShards
+      numShards: Short = DefaultSideInputNumShards,
+      compressionType: CompressionType = CompressionType.NONE,
+      compressionBlockSize: Int = 0
     )(
       decoder: Array[Byte] => T
     )(implicit
@@ -363,7 +389,13 @@ package object sparkey extends SparkeyReaderInstances {
       koder: Coder[K],
       voder: Coder[V]
     ): SideInput[TypedSparkeyReader[T]] =
-      self.asSparkey(numShards = numShards).asTypedSparkeySideInput[T](cache)(decoder)
+      self
+        .asSparkey(
+          numShards = numShards,
+          compressionType = compressionType,
+          compressionBlockSize = compressionBlockSize
+        )
+        .asTypedSparkeySideInput[T](cache)(decoder)
 
     /**
      * Convert this SCollection to a SideInput, mapping key-value pairs of each window to a
@@ -373,13 +405,21 @@ package object sparkey extends SparkeyReaderInstances {
     @experimental
     def asCachedStringSparkeySideInput(
       cache: Cache[String, String],
-      numShards: Short = DefaultSideInputNumShards
+      numShards: Short = DefaultSideInputNumShards,
+      compressionType: CompressionType = CompressionType.NONE,
+      compressionBlockSize: Int = 0
     )(implicit
       w: SparkeyWritable[K, V],
       koder: Coder[K],
       voder: Coder[V]
     ): SideInput[CachedStringSparkeyReader] =
-      self.asSparkey(numShards = numShards).asCachedStringSparkeySideInput(cache)
+      self
+        .asSparkey(
+          numShards = numShards,
+          compressionType = compressionType,
+          compressionBlockSize = compressionBlockSize
+        )
+        .asCachedStringSparkeySideInput(cache)
   }
 
   /** Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with Sparkey methods. */
