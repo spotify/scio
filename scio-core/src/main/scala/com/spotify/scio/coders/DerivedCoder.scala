@@ -82,7 +82,14 @@ trait LowPriorityCoderDerivation {
   type Typeclass[T] = Coder[T]
 
   def combine[T](ctx: CaseClass[Coder, T]): Coder[T] =
-    Derived.combineCoder(ctx.typeName, ctx.parameters, ctx.rawConstruct)
+    if (ctx.isValueClass) {
+      Coder.xmap(ctx.parameters(0).typeclass.asInstanceOf[Coder[Any]])(
+        a => ctx.rawConstruct(Seq(a)),
+        ctx.parameters(0).dereference
+      )
+    } else {
+      Derived.combineCoder(ctx.typeName, ctx.parameters, ctx.rawConstruct)
+    }
 
   def dispatch[T](sealedTrait: SealedTrait[Coder, T]): Coder[T] = {
     val typeName = sealedTrait.typeName.full
