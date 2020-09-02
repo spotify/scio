@@ -545,6 +545,12 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     this.pApply(Filter.by(Functions.processFn(f.asInstanceOf[T => JBoolean])))
 
   /**
+   * Return a new SCollection containing only the elements that don't satisfy a predicate.
+   * @group transform
+   */
+  def filterNot(f: T => Boolean): SCollection[T] = filter(!f(_))
+
+  /**
    * Return a new SCollection by first applying a function to all elements of
    * this SCollection, and then flattening the results.
    * @group transform
