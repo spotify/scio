@@ -158,7 +158,6 @@ val commonSettings = Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
   scalaVersion := "2.13.3",
   crossScalaVersions := Seq("2.12.12", scalaVersion.value),
   scalacOptions ++= Scalac.commonsOptions.value,
-  compileOrder := CompileOrder.JavaThenScala,
   Compile / doc / scalacOptions --= Seq("-release", "8"),
   Compile / doc / scalacOptions ++= Scalac.compileDocOptions.value,
   javacOptions ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint:unchecked"),
