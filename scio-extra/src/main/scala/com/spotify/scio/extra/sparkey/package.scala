@@ -180,6 +180,8 @@ package object sparkey extends SparkeyReaderInstances {
 
   private val DefaultNumShards: Short = 1
   private val DefaultSideInputNumShards: Short = 64
+  private val DefaultCompressionType: CompressionType = CompressionType.NONE
+  private val DefaultCompressionBlockSize: Int = 0
 
   private def writeToSparkey[K, V](
     uri: SparkeyUri,
@@ -218,8 +220,8 @@ package object sparkey extends SparkeyReaderInstances {
       path: String = null,
       maxMemoryUsage: Long = -1,
       numShards: Short = DefaultNumShards,
-      compressionType: CompressionType = CompressionType.NONE,
-      compressionBlockSize: Int = 0
+      compressionType: CompressionType = DefaultCompressionType,
+      compressionBlockSize: Int = DefaultCompressionBlockSize
     )(implicit
       w: SparkeyWritable[K, V],
       koder: Coder[K],
@@ -325,8 +327,8 @@ package object sparkey extends SparkeyReaderInstances {
     @experimental
     def asSparkeySideInput(
       numShards: Short = DefaultSideInputNumShards,
-      compressionType: CompressionType = CompressionType.NONE,
-      compressionBlockSize: Int = 0
+      compressionType: CompressionType = DefaultCompressionType,
+      compressionBlockSize: Int = DefaultCompressionBlockSize
     )(implicit
       w: SparkeyWritable[K, V],
       koder: Coder[K],
@@ -380,8 +382,8 @@ package object sparkey extends SparkeyReaderInstances {
     def asTypedSparkeySideInput[T](
       cache: Cache[String, T],
       numShards: Short = DefaultSideInputNumShards,
-      compressionType: CompressionType = CompressionType.NONE,
-      compressionBlockSize: Int = 0
+      compressionType: CompressionType = DefaultCompressionType,
+      compressionBlockSize: Int = DefaultCompressionBlockSize
     )(
       decoder: Array[Byte] => T
     )(implicit
@@ -406,8 +408,8 @@ package object sparkey extends SparkeyReaderInstances {
     def asCachedStringSparkeySideInput(
       cache: Cache[String, String],
       numShards: Short = DefaultSideInputNumShards,
-      compressionType: CompressionType = CompressionType.NONE,
-      compressionBlockSize: Int = 0
+      compressionType: CompressionType = DefaultCompressionType,
+      compressionBlockSize: Int = DefaultCompressionBlockSize
     )(implicit
       w: SparkeyWritable[K, V],
       koder: Coder[K],
