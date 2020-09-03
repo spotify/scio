@@ -88,6 +88,8 @@ final case class FirstImplementationWithAnnotation(s: String) extends TraitWithA
 @SerialVersionUID(3)
 final case class SecondImplementationWithAnnotation(i: Int) extends TraitWithAnnotation
 
+final case class AnyValExample(value: String) extends AnyVal
+
 final class CoderTest extends AnyFlatSpec with Matchers {
   val userId: UserId = UserId(Array[Byte](1, 2, 3, 4))
   val user: User = User(userId, "johndoe", "johndoe@spotify.com")
@@ -583,6 +585,11 @@ final class CoderTest extends AnyFlatSpec with Matchers {
     )
 
     tableSchema coderShould roundtrip()
+  }
+
+  it should "optimize for AnyVal" in {
+    coderIsSerializable[AnyValExample]
+    Coder[AnyValExample] shouldBe a[Transform[String, AnyValExample]]
   }
 
 }
