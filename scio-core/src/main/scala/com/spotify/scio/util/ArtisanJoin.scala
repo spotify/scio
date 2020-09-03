@@ -47,15 +47,16 @@ private[scio] object ArtisanJoin {
       DoFn[KV[KEY, CoGbkResult], (KEY, (A1, B1))]#ProcessContext
     ) => Unit
   ): SCollection[(KEY, (A1, B1))] = {
-    if (a.state.postCoGroup || b.state.postCoGroup) {
+    if (a.state.postGbkOp || b.state.postGbkOp) {
       val msg =
         """
-          |Chained cogroup/join detected. Use MultiJoin instead to reduce shuffle.
+          |Chained grouping/join detected. Use a combined operation instead to reduce shuffle.
           |
           |For example:
           |a.cogroup(B).cogroup(c) => MultiJoin.cogroup(a, b, c)
           |a.join(b).join(c) => MultiJoin(a, b, c)
           |a.leftOuterJoin(b).leftOuterJoin(c) => MultiJoin.left(a, b, c)
+          |a.groupByKey.join(b) => a.join(b)
         """.stripMargin
       a.context.optionsAs[ScioOptions].getChainedCogroups match {
         case CheckEnabled.OFF =>
@@ -86,7 +87,7 @@ private[scio] object ArtisanJoin {
           fn(key, as, bs, c)
         }
       }))
-      .withState(_.copy(postCoGroup = true))
+      .withState(_.copy(postGbkOp = true))
   }
 
   private def joinImpl[KEY: Coder, A: Coder, B: Coder, A1: Coder, B1: Coder](
@@ -108,7 +109,7 @@ private[scio] object ArtisanJoin {
             c.output((key, (a, b)))
           }
         }
-    }.withState(_.copy(postCoGroup = true))
+    }.withState(_.copy(postGbkOp = true))
 
   def cogroup[KEY: Coder, A: Coder, B: Coder](
     name: String,

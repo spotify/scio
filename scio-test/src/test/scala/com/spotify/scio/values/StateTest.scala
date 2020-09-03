@@ -87,4 +87,13 @@ class StateTest extends AnyFlatSpec with Matchers {
         }
     }
   }
+
+  it should "fail chained groupBys with joins" in {
+    testCogroup {
+      case (a, b, _) =>
+        an[RuntimeException] shouldBe thrownBy {
+          a.groupByKey.join(b)
+        }
+    }
+  }
 }
