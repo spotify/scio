@@ -81,7 +81,7 @@ object BigQueryTypeIT {
   class ShakespeareWithSequentialAnnotations
 }
 
-// scio-test/it:runMain PopulateTestData to re-populate data for integration tests
+// scio-test/it:runMain com.spotify.scio.PopulateTestData to re-populate data for integration tests
 class BigQueryTypeIT extends AnyFlatSpec with Matchers {
   import BigQueryTypeIT._
 
