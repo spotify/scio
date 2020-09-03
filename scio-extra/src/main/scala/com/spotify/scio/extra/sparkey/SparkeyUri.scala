@@ -24,7 +24,7 @@ import java.nio.file.{Files, Paths}
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.util.{RemoteFileUtil, ScioUtil}
 import com.spotify.sparkey.extra.ThreadLocalSparkeyReader
-import com.spotify.sparkey.{Sparkey, SparkeyReader}
+import com.spotify.sparkey.{CompressionType, Sparkey, SparkeyReader}
 import org.apache.beam.sdk.options.PipelineOptions
 
 import scala.jdk.CollectionConverters._
@@ -79,7 +79,12 @@ private case class RemoteSparkeyUri(basePath: String, rfu: RemoteFileUtil) exten
       .exists(e => rfu.remoteExists(new URI(basePath + e)))
 }
 
-private[sparkey] class SparkeyWriter(val uri: SparkeyUri, maxMemoryUsage: Long = -1) {
+private[sparkey] class SparkeyWriter(
+  val uri: SparkeyUri,
+  compressionType: CompressionType,
+  compressionBlockSize: Int,
+  maxMemoryUsage: Long = -1
+) {
   private val localFile = uri match {
     case u: LocalSparkeyUri => u.basePath
     case _: RemoteSparkeyUri =>
@@ -89,7 +94,7 @@ private[sparkey] class SparkeyWriter(val uri: SparkeyUri, maxMemoryUsage: Long =
   private lazy val delegate = {
     val file = new File(localFile)
     Files.createDirectories(file.getParentFile.toPath)
-    Sparkey.createNew(file)
+    Sparkey.createNew(file, compressionType, compressionBlockSize)
   }
 
   def put(key: String, value: String): Unit = delegate.put(key, value)
