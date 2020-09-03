@@ -795,7 +795,9 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * @group per_key
    */
   def groupByKey(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, Iterable[V])] =
-    this.applyPerKey(GroupByKey.create[K, V]())(kvIterableToTuple)
+    this
+      .applyPerKey(GroupByKey.create[K, V]())(kvIterableToTuple)
+      .withState(_.copy(postGbkOp = true))
 
   /**
    * Batches inputs to a desired batch size. Batches will contain only elements of a single key.
