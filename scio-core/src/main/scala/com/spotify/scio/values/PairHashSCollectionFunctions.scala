@@ -17,7 +17,7 @@
 
 package com.spotify.scio.values
 
-import com.spotify.scio.coders.Coder
+import com.spotify.scio.coders.{BeamCoders, Coder}
 
 import scala.collection.mutable.{ArrayBuffer, Map => MMap}
 
@@ -29,7 +29,7 @@ import scala.collection.mutable.{ArrayBuffer, Map => MMap}
  */
 class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
 
-  implicit private[this] val (keyCoder, valueCoder): (Coder[K], Coder[V]) = KvCoders.get(self)
+  implicit private[this] val (keyCoder, valueCoder): (Coder[K], Coder[V]) = BeamCoders.getKV(self)
 
   /**
    * Perform an inner join by replicating `rhs` to all workers. The right side should be tiny and
@@ -59,9 +59,10 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    *
    * @group join
    */
-  def hashJoin[W: Coder](
+  def hashJoin[W](
     sideInput: SideInput[Map[K, Iterable[W]]]
-  ): SCollection[(K, (V, W))] =
+  ): SCollection[(K, (V, W))] = {
+    implicit val wCoder = BeamCoders.getMultiMapKV(sideInput)._2
     self.transform { in =>
       in.withSideInputs(sideInput)
         .flatMap[(K, (V, W))] { (kv, sideInputCtx) =>
@@ -72,6 +73,7 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
         }
         .toSCollection
     }
+  }
 
   /**
    * Perform a left outer join by replicating `rhs` to all workers. The right side should be tiny
@@ -103,16 +105,19 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * }}}
    * @group join
    */
-  def hashLeftOuterJoin[W: Coder](
+  def hashLeftOuterJoin[W](
     sideInput: SideInput[Map[K, Iterable[W]]]
-  ): SCollection[(K, (V, Option[W]))] = self.transform { in =>
-    in.withSideInputs(sideInput)
-      .flatMap[(K, (V, Option[W]))] { case ((k, v), sideInputCtx) =>
-        val rhsSideMap = sideInputCtx(sideInput)
-        if (rhsSideMap.contains(k)) rhsSideMap(k).iterator.map(w => (k, (v, Some(w))))
-        else Iterator((k, (v, None)))
-      }
-      .toSCollection
+  ): SCollection[(K, (V, Option[W]))] = {
+    implicit val wCoder = BeamCoders.getMultiMapKV(sideInput)._2
+    self.transform { in =>
+      in.withSideInputs(sideInput)
+        .flatMap[(K, (V, Option[W]))] { case ((k, v), sideInputCtx) =>
+          val rhsSideMap = sideInputCtx(sideInput)
+          if (rhsSideMap.contains(k)) rhsSideMap(k).iterator.map(w => (k, (v, Some(w))))
+          else Iterator((k, (v, None)))
+        }
+        .toSCollection
+    }
   }
 
   /**
@@ -140,9 +145,10 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    *
    * @group join
    */
-  def hashFullOuterJoin[W: Coder](
+  def hashFullOuterJoin[W](
     sideInput: SideInput[Map[K, Iterable[W]]]
-  ): SCollection[(K, (Option[V], Option[W]))] =
+  ): SCollection[(K, (Option[V], Option[W]))] = {
+    implicit val wCoder = BeamCoders.getMultiMapKV(sideInput)._2
     self.transform { in =>
       val leftHashed = in
         .withSideInputs(sideInput)
@@ -171,6 +177,7 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
 
       leftHashed.map(x => (x._1, x._2)) ++ rightHashed
     }
+  }
 
   /**
    * Return an SCollection with the pairs from `this` whose keys are in `rhs`

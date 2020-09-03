@@ -17,8 +17,7 @@
 
 package com.spotify.scio.values
 
-import com.spotify.scio.coders.Coder
-
+import com.spotify.scio.coders.{BeamCoders, Coder}
 import com.twitter.algebird.{CMS, CMSHasher}
 
 final private case class Partitions[K, V](hot: SCollection[(K, V)], chill: SCollection[(K, V)])
@@ -34,7 +33,7 @@ final private case class Partitions[K, V](hot: SCollection[(K, V)], chill: SColl
  */
 class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
 
-  implicit private[this] val (keyCoder, valueCoder): (Coder[K], Coder[V]) = KvCoders.get(self)
+  implicit private[this] val (keyCoder, valueCoder): (Coder[K], Coder[V]) = BeamCoders.getKV(self)
 
   /**
    * N to 1 skew-proof flavor of [[PairSCollectionFunctions.join]].

@@ -52,7 +52,7 @@ private object NothingCoder extends AtomicCoder[Nothing] {
  * Most Coders TupleX are derived by Magnolia but we specialize Coder[(A, B)] for
  * performance reasons given that pairs are really common and used in groupBy operations.
  */
-final private[scio] class PairCoder[A, B](val ac: BCoder[A], val bc: BCoder[B])
+final private[coders] class PairCoder[A, B](val ac: BCoder[A], val bc: BCoder[B])
     extends AtomicCoder[(A, B)] {
   private[this] val materializationStackTrace: Array[StackTraceElement] = CoderStackTrace.prepare
 
@@ -128,7 +128,7 @@ final private[scio] class PairCoder[A, B](val ac: BCoder[A], val bc: BCoder[B])
   }
 }
 
-abstract private class BaseSeqLikeCoder[M[_], T](val elemCoder: BCoder[T])(implicit
+abstract private[coders] class BaseSeqLikeCoder[M[_], T](val elemCoder: BCoder[T])(implicit
   toSeq: M[T] => IterableOnce[T]
 ) extends AtomicCoder[M[T]] {
   override def getCoderArguments: java.util.List[_ <: BCoder[_]] =
@@ -325,7 +325,8 @@ private class BitSetCoder extends AtomicCoder[BitSet] {
   }
 }
 
-private class MapCoder[K, V](kc: BCoder[K], vc: BCoder[V]) extends AtomicCoder[Map[K, V]] {
+private[coders] class MapCoder[K, V](val kc: BCoder[K], val vc: BCoder[V])
+    extends AtomicCoder[Map[K, V]] {
   private[this] val lc = VarIntCoder.of()
 
   override def encode(value: Map[K, V], os: OutputStream): Unit = {

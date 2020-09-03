@@ -19,42 +19,16 @@ package com.spotify.scio.values
 
 import com.google.common.hash.Funnel
 import com.spotify.scio.ScioContext
-import com.spotify.scio.coders.instances.PairCoder
-import com.spotify.scio.coders.{Coder, CoderMaterializer, LazyCoder, RecordCoder, WrappedBCoder}
+import com.spotify.scio.coders.{BeamCoders, Coder, CoderMaterializer}
 import com.spotify.scio.hash._
 import com.spotify.scio.util._
 import com.spotify.scio.util.random.{BernoulliValueSampler, PoissonValueSampler}
 import com.twitter.algebird.{Aggregator, Monoid, MonoidAggregator, Semigroup}
-import org.apache.beam.sdk.coders.{NullableCoder, Coder => BCoder}
 import org.apache.beam.sdk.transforms._
 import org.apache.beam.sdk.values.{KV, PCollection}
 import org.slf4j.LoggerFactory
+
 import scala.collection.compat.immutable.ArraySeq
-
-private object KvCoders {
-  private def getKvCoders[K, V](coder: BCoder[(K, V)]): (BCoder[K], BCoder[V]) =
-    coder match {
-      case WrappedBCoder(u)   => getKvCoders(u)
-      case c: PairCoder[K, V] => (c.ac, c.bc)
-      case c: LazyCoder[(K, V)] =>
-        getKvCoders(CoderMaterializer.beamImpl[(K, V)](c.o, c.coder))
-      case c: NullableCoder[(K, V)] => getKvCoders(c.getValueCoder)
-      case c: RecordCoder[(K, V)] =>
-        (
-          c.cs.find(_._1 == "_1").get._2.asInstanceOf[BCoder[K]],
-          c.cs.find(_._1 == "_2").get._2.asInstanceOf[BCoder[V]]
-        )
-      case _ =>
-        throw new IllegalArgumentException(
-          s"Failed to extract key-value coders from Coder[(K, V)]: $coder"
-        )
-    }
-
-  def get[K, V](coll: SCollection[(K, V)]): (Coder[K], Coder[V]) = {
-    val (k, v) = getKvCoders(coll.internal.getCoder)
-    (Coder.beam(k), Coder.beam(v))
-  }
-}
 
 private object PairSCollectionFunctions {
   private val logger = LoggerFactory.getLogger(this.getClass)
@@ -73,7 +47,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
 
   private[this] val context: ScioContext = self.context
 
-  implicit val (keyCoder, valueCoder): (Coder[K], Coder[V]) = KvCoders.get(self)
+  implicit val (keyCoder, valueCoder): (Coder[K], Coder[V]) = BeamCoders.getKV(self)
 
   private[scio] def toKV: SCollection[KV[K, V]] =
     self.map(kv => KV.of(kv._1, kv._2))(Coder.raw(CoderMaterializer.kvCoder[K, V](context)))

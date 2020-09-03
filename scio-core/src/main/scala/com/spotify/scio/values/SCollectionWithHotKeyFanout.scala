@@ -18,7 +18,7 @@
 package com.spotify.scio.values
 
 import com.spotify.scio.ScioContext
-import com.spotify.scio.coders.Coder
+import com.spotify.scio.coders.{BeamCoders, Coder}
 import com.spotify.scio.util.Functions
 import com.spotify.scio.util.TupleFunctions._
 import com.twitter.algebird.{Aggregator, Monoid, MonoidAggregator, Semigroup}
@@ -35,7 +35,7 @@ class SCollectionWithHotKeyFanout[K, V] private[values] (
   private val hotKeyFanout: Either[K => Int, Int]
 ) extends TransformNameable {
   implicit private[this] val (keyCoder, valueCoder): (Coder[K], Coder[V]) =
-    KvCoders.get(self.self)
+    BeamCoders.getKV(self.self)
 
   private def withFanout[K0, I, O](
     combine: Combine.PerKey[K0, I, O]

@@ -23,7 +23,7 @@ import java.util.concurrent.ThreadLocalRandom
 
 import com.google.datastore.v1.Entity
 import com.spotify.scio.ScioContext
-import com.spotify.scio.coders.{AvroBytesUtil, Coder, CoderMaterializer, WrappedBCoder}
+import com.spotify.scio.coders.{AvroBytesUtil, BeamCoders, Coder, CoderMaterializer, WrappedBCoder}
 import com.spotify.scio.io._
 import com.spotify.scio.schemas.{Schema, SchemaMaterializer, To}
 import com.spotify.scio.testing.TestDataManager
@@ -849,26 +849,31 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * right side should be tiny and fit in memory.
    * @group hash
    */
-  def cross[U: Coder](that: SCollection[U]): SCollection[(T, U)] =
+  def cross[U](that: SCollection[U]): SCollection[(T, U)] = {
+    implicit val uCoder = that.coder
     this.transform { in =>
       val side = that.asListSideInput
       in.withSideInputs(side)
         .flatMap((t, s) => s(side).map((t, _)))
         .toSCollection
     }
+  }
 
   /**
    * Look up values in an `SCollection[(T, V)]` for each element `T` in this SCollection by
    * replicating `that` to all workers. The right side should be tiny and fit in memory.
    * @group hash
    */
-  def hashLookup[V: Coder](
+  def hashLookup[V](
     that: SCollection[(T, V)]
-  ): SCollection[(T, Iterable[V])] = this.transform { in =>
-    val side = that.asMultiMapSingletonSideInput
-    in.withSideInputs(side)
-      .map((t, s) => (t, s(side).getOrElse(t, Iterable())))
-      .toSCollection
+  ): SCollection[(T, Iterable[V])] = {
+    implicit val vCoder = BeamCoders.getKV(that)._2
+    this.transform { in =>
+      val side = that.asMultiMapSingletonSideInput
+      in.withSideInputs(side)
+        .map((t, s) => (t, s(side).getOrElse(t, Iterable())))
+        .toSCollection
+    }
   }
 
   /**
@@ -1330,6 +1335,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    *      .reifySideInputAsValues(other.asMultiMapSideInput)
    * }}}
    */
+  // `U: Coder` context bound is required since `PCollectionView` may be of different type
   def reifySideInputAsValues[U: Coder](side: SideInput[U]): SCollection[(T, U)] =
     this.transform(_.withSideInputs(side).map((t, s) => (t, s(side))).toSCollection)
 
@@ -1357,6 +1363,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * }}}
    * where you want to actually get an empty [[Iterable]] even if no data is present.
    */
+  // `U: Coder` context bound is required since `PCollectionView` may be of different type
   private[scio] def reifyInGlobalWindow[U: Coder](
     view: SCollection[T] => SideInput[U]
   ): SCollection[U] =
@@ -1445,13 +1452,14 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * Save this SCollection as a Pub/Sub topic using the given map as message attributes.
    * @group output
    */
-  def saveAsPubsubWithAttributes[V: ClassTag: Coder](
+  def saveAsPubsubWithAttributes[V: ClassTag](
     topic: String,
     idAttribute: String = null,
     timestampAttribute: String = null,
     maxBatchSize: Option[Int] = None,
     maxBatchBytesSize: Option[Int] = None
   )(implicit ev: T <:< (V, Map[String, String])): ClosedTap[Nothing] = {
+    implicit val vCoder = BeamCoders.getKV(this.covary_[(V, Map[String, String])])._1
     val io = PubsubIO.withAttributes[V](topic, idAttribute, timestampAttribute)
     this
       .covary_[(V, Map[String, String])]
