@@ -109,8 +109,8 @@ jobs:
             - run:
                 command: |
                   sbt -v $SBT_OPTS \
-                    scalafmtCheckAll scalafmtSbtCheck javafmtCheckAll\
-                    "; scalafixEnable; scalafix --check; test:scalafix --check; it:scalafix --check"
+                    scalafmtCheckAll scalafmtSbtCheck javafmtCheckAll \
+                    "; scalafixEnable; scalafixAll --check"
             - run:
                 command: |
                   cd scalafix; sbt -v $SBT_OPTS  scalafmtCheckAll scalafmtSbtCheck
