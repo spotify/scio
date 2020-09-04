@@ -354,7 +354,7 @@ lazy val sparkRunnerDependencies = Seq(
   "org.apache.spark" %% "spark-streaming" % sparkVersion
 )
 lazy val flinkRunnerDependencies = Seq(
-  "org.apache.beam" % "beam-runners-flink-1.9" % beamVersion excludeAll (
+  "org.apache.beam" % "beam-runners-flink-1.10" % beamVersion excludeAll (
     ExclusionRule("com.twitter", "chill_2.11"),
     ExclusionRule("org.apache.flink", "flink-clients_2.11"),
     ExclusionRule("org.apache.flink", "flink-runtime_2.11"),
