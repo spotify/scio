@@ -269,10 +269,9 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     voder: Coder[V]
   ): SCollection[(K, (Option[V], Option[W]))] = self.transform { me =>
     SCollection.unionAll(
-      split(me, rhs, rhsNumKeys, fpProb).map {
-        case (lhsUnique, lhsOverlap, rhs) =>
-          val unique = lhsUnique.map(kv => (kv._1, (Option(kv._2), Option.empty[W])))
-          unique ++ lhsOverlap.fullOuterJoin(rhs)
+      split(me, rhs, rhsNumKeys, fpProb).map { case (lhsUnique, lhsOverlap, rhs) =>
+        val unique = lhsUnique.map(kv => (kv._1, (Option(kv._2), Option.empty[W])))
+        unique ++ lhsOverlap.fullOuterJoin(rhs)
       }
     )
   }
@@ -334,9 +333,8 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
   )(implicit funnel: Funnel[K], koder: Coder[K], voder: Coder[V]): SCollection[(K, (V, W))] =
     self.transform { me =>
       SCollection.unionAll(
-        split(me, rhs, rhsNumKeys, fpProb).map {
-          case (_, lhsOverlap, rhs) =>
-            lhsOverlap.join(rhs)
+        split(me, rhs, rhsNumKeys, fpProb).map { case (_, lhsOverlap, rhs) =>
+          lhsOverlap.join(rhs)
         }
       )
     }
@@ -371,10 +369,9 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
   ): SCollection[(K, (V, Option[W]))] =
     self.transform { me =>
       SCollection.unionAll(
-        split(me, rhs, rhsNumKeys, fpProb).map {
-          case (lhsUnique, lhsOverlap, rhs) =>
-            val unique = lhsUnique.map(kv => (kv._1, (kv._2, Option.empty[W])))
-            unique ++ lhsOverlap.leftOuterJoin(rhs)
+        split(me, rhs, rhsNumKeys, fpProb).map { case (lhsUnique, lhsOverlap, rhs) =>
+          val unique = lhsUnique.map(kv => (kv._1, (kv._2, Option.empty[W])))
+          unique ++ lhsOverlap.leftOuterJoin(rhs)
         }
       )
     }
@@ -409,9 +406,8 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
   ): SCollection[(K, (Option[V], W))] =
     self.transform { me =>
       SCollection.unionAll(
-        split(me, rhs, rhsNumKeys, fpProb).map {
-          case (_, lhsOverlap, rhs) =>
-            lhsOverlap.rightOuterJoin(rhs)
+        split(me, rhs, rhsNumKeys, fpProb).map { case (_, lhsOverlap, rhs) =>
+          lhsOverlap.rightOuterJoin(rhs)
         }
       )
     }
@@ -442,19 +438,18 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     val thisParts = thisSColl.hashPartitionByKey(n)
     val rhsParts = rhsSColl.hashPartitionByKey(n)
 
-    thisParts.zip(rhsParts).zip(rhsBfSIs).map {
-      case ((lhs, rhs), bfsi) =>
-        val (lhsUnique, lhsOverlap) = (SideOutput[(K, V)](), SideOutput[(K, V)]())
-        val partitionedLhs = lhs
-          .withSideInputs(bfsi)
-          .transformWithSideOutputs(Seq(lhsUnique, lhsOverlap)) { (e, c) =>
-            if (c(bfsi).mightContain(e._1)) {
-              lhsOverlap
-            } else {
-              lhsUnique
-            }
+    thisParts.zip(rhsParts).zip(rhsBfSIs).map { case ((lhs, rhs), bfsi) =>
+      val (lhsUnique, lhsOverlap) = (SideOutput[(K, V)](), SideOutput[(K, V)]())
+      val partitionedLhs = lhs
+        .withSideInputs(bfsi)
+        .transformWithSideOutputs(Seq(lhsUnique, lhsOverlap)) { (e, c) =>
+          if (c(bfsi).mightContain(e._1)) {
+            lhsOverlap
+          } else {
+            lhsUnique
           }
-        (partitionedLhs(lhsUnique), partitionedLhs(lhsOverlap), rhs)
+        }
+      (partitionedLhs(lhsUnique), partitionedLhs(lhsOverlap), rhs)
     }
   }
 
@@ -487,16 +482,15 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
       thisParts
         .zip(selfBfSideInputs)
         .zip(rhsParts)
-        .map {
-          case ((lhs, lhsBfSi), rhs1) =>
-            lhs
-              .cogroup(
-                rhs1
-                  .withSideInputs(lhsBfSi)
-                  .filter((e, c) => c(lhsBfSi).mightContain(e._1))
-                  .toSCollection
-              )
-              .flatMap { case (k, (iV, iA)) => iV.map(v => (k, (v, iA))) }
+        .map { case ((lhs, lhsBfSi), rhs1) =>
+          lhs
+            .cogroup(
+              rhs1
+                .withSideInputs(lhsBfSi)
+                .filter((e, c) => c(lhsBfSi).mightContain(e._1))
+                .toSCollection
+            )
+            .flatMap { case (k, (iV, iA)) => iV.map(v => (k, (v, iA))) }
         }
     )
   }
@@ -852,8 +846,8 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     sideInput: SideInput[AF]
   )(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, V)] =
     self.transform {
-      _.withSideInputs(sideInput).filter {
-        case ((k, _), c) => c(sideInput).mightContain(k)
+      _.withSideInputs(sideInput).filter { case ((k, _), c) =>
+        c(sideInput).mightContain(k)
       }.toSCollection
     }
 
@@ -902,19 +896,18 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
         thisParts
           .zip(rhsParts)
           .zip(rhsBfs)
-          .map {
-            case ((lhs, rhs), rhsBf) =>
-              val approxResults = lhs
-                .withSideInputs(rhsBf)
-                .filter { case (e, c) => c(rhsBf).mightContain(e._1) }
-                .toSCollection
+          .map { case ((lhs, rhs), rhsBf) =>
+            val approxResults = lhs
+              .withSideInputs(rhsBf)
+              .filter { case (e, c) => c(rhsBf).mightContain(e._1) }
+              .toSCollection
 
-              if (computeExact) {
-                approxResults
-                  .intersectByKey(rhs)
-              } else {
-                approxResults
-              }
+            if (computeExact) {
+              approxResults
+                .intersectByKey(rhs)
+            } else {
+              approxResults
+            }
           }
       )
     }

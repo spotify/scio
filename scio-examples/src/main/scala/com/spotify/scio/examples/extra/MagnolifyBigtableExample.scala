@@ -65,11 +65,10 @@ object MagnolifyBigtableWriteExample {
       .countByValue
       // Convert case class to `Seq[Mutation]` and lift it into a key-value pair
       // for saving to Bigtable table.
-      .map {
-        case (word, count) =>
-          val mutations =
-            WordCountType(WordCount(count), columnFamily = "counts").iterator.toIterable
-          ByteString.copyFromUtf8(word) -> mutations
+      .map { case (word, count) =>
+        val mutations =
+          WordCountType(WordCount(count), columnFamily = "counts").iterator.toIterable
+        ByteString.copyFromUtf8(word) -> mutations
       }
       .saveAsBigtable(btProjectId, btInstanceId, btTableId)
 

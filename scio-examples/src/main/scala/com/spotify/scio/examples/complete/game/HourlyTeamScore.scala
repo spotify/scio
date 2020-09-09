@@ -86,10 +86,9 @@ object HourlyTeamScore {
       .sumByKey
       .withWindow[IntervalWindow]
       // Map summed results from tuples into `TeamScoreSums` case class, so we can save to BQ
-      .map {
-        case ((team, score), window) =>
-          val start = fmt.print(window.start())
-          TeamScoreSums(team, score, start)
+      .map { case ((team, score), window) =>
+        val start = fmt.print(window.start())
+        TeamScoreSums(team, score, start)
       }
       // Save to the BigQuery table defined by "output" in the arguments passed in
       .saveAsTypedBigQueryTable(Table.Spec(args("output")))

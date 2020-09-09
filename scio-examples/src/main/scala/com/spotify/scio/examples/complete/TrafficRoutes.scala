@@ -108,9 +108,8 @@ object TrafficRoutes {
         RouteInfo(kv._1, speedAvg, slowdownEvent)
       }
       .withTimestamp // explodes internal timestamp
-      .map {
-        case (r, ts) =>
-          Record(r.route, r.avgSpeed, r.slowdownEvent, ts)
+      .map { case (r, ts) =>
+        Record(r.route, r.avgSpeed, r.slowdownEvent, ts)
       }
       .saveAsTypedBigQueryTable(Table.Spec(args("output")))
 

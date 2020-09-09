@@ -36,41 +36,39 @@ object Pretty {
   private def renderFieldName(n: String) =
     Tree.Lazy(_ => List(Color.LightBlue(n).toString).iterator)
 
-  private def renderGenericRecord: PartialFunction[GenericRecord, Tree] = {
-    case g =>
-      val renderer =
-        new pprint.Renderer(
-          printer.defaultWidth,
-          printer.colorApplyPrefix,
-          printer.colorLiteral,
-          printer.defaultIndent
+  private def renderGenericRecord: PartialFunction[GenericRecord, Tree] = { case g =>
+    val renderer =
+      new pprint.Renderer(
+        printer.defaultWidth,
+        printer.colorApplyPrefix,
+        printer.colorLiteral,
+        printer.defaultIndent
+      )
+    def render(tree: Tree): Str =
+      Str.join(renderer.rec(tree, 0, 0).iter.toSeq: _*)
+    Tree.Lazy { _ =>
+      val fields =
+        for {
+          f <- g.getSchema().getFields().asScala
+        } yield Str.join(
+          render(renderFieldName(f.name)),
+          ": ",
+          render(treeifyAvro(g.get(f.name())))
         )
-      def render(tree: Tree): Str =
-        Str.join(renderer.rec(tree, 0, 0).iter.toSeq: _*)
-      Tree.Lazy { _ =>
-        val fields =
-          for {
-            f <- g.getSchema().getFields().asScala
-          } yield Str.join(
-            render(renderFieldName(f.name)),
-            ": ",
-            render(treeifyAvro(g.get(f.name())))
-          )
-        List(
-          Color.LightGray("{ ").toString +
-            fields.reduce((a, b) => Str.join(a, ", ", b)) +
-            Color.LightGray(" }")
-        ).iterator
-      }
+      List(
+        Color.LightGray("{ ").toString +
+          fields.reduce((a, b) => Str.join(a, ", ", b)) +
+          Color.LightGray(" }")
+      ).iterator
+    }
   }
 
-  private def renderSpecificRecord: PartialFunction[SpecificRecordBase, Tree] = {
-    case x =>
-      val fs =
-        for {
-          f <- x.getSchema().getFields().asScala
-        } yield Tree.Infix(renderFieldName(f.name), "=", treeifyAvro(x.get(f.name())))
-      Tree.Apply(x.getClass().getSimpleName(), fs.iterator)
+  private def renderSpecificRecord: PartialFunction[SpecificRecordBase, Tree] = { case x =>
+    val fs =
+      for {
+        f <- x.getSchema().getFields().asScala
+      } yield Tree.Infix(renderFieldName(f.name), "=", treeifyAvro(x.get(f.name())))
+    Tree.Apply(x.getClass().getSimpleName(), fs.iterator)
   }
 
   private def treeifyAvro: PartialFunction[Any, Tree] = {
@@ -82,8 +80,8 @@ object Pretty {
       printer.treeify(x)
   }
 
-  private val handlers: PartialFunction[Any, Tree] = {
-    case x: GenericRecord => treeifyAvro(x)
+  private val handlers: PartialFunction[Any, Tree] = { case x: GenericRecord =>
+    treeifyAvro(x)
   }
 
   private val useColors =

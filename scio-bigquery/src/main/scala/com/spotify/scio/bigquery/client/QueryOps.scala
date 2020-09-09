@@ -326,10 +326,9 @@ final private[client] class QueryOps(client: Client, tableService: TableOps, job
       case _ =>
         val locations = extractTables(job).get
           .map(t => (t.getProjectId, t.getDatasetId))
-          .map {
-            case (pId, dId) =>
-              val l = client.underlying.datasets().get(pId, dId).execute().getLocation
-              if (l != null) l else BigQueryConfig.location
+          .map { case (pId, dId) =>
+            val l = client.underlying.datasets().get(pId, dId).execute().getLocation
+            if (l != null) l else BigQueryConfig.location
           }
         require(locations.size <= 1, "Tables in the query must be in the same location")
         locations.headOption

@@ -45,28 +45,27 @@ object IsJavaBean {
       c.abort(c.enclosingPosition, mess)
     }
 
-    getters.foreach {
-      case (name, info) =>
-        val setter =
-          setters
-            .get(name)
-            .getOrElse {
-              val mess =
-                s"""JavaBean contained a getter for field $name""" +
-                  """ but did not contain a matching setter."""
-              c.abort(c.enclosingPosition, mess)
-            }
+    getters.foreach { case (name, info) =>
+      val setter =
+        setters
+          .get(name)
+          .getOrElse {
+            val mess =
+              s"""JavaBean contained a getter for field $name""" +
+                """ but did not contain a matching setter."""
+            c.abort(c.enclosingPosition, mess)
+          }
 
-        val resType = info.resultType
-        val paramType = setter.params.head.asTerm.info
+      val resType = info.resultType
+      val paramType = setter.params.head.asTerm.info
 
-        if (resType != paramType) {
-          val mess =
-            s"""JavaBean contained setter for field $name that had a mismatching type.
+      if (resType != paramType) {
+        val mess =
+          s"""JavaBean contained setter for field $name that had a mismatching type.
                 |  found:    $paramType
                 |  expected: $resType""".stripMargin
-          c.abort(c.enclosingPosition, mess)
-        }
+        c.abort(c.enclosingPosition, mess)
+      }
     }
   }
 

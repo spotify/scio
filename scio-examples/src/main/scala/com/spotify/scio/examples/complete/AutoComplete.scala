@@ -86,10 +86,9 @@ object AutoComplete {
   def allPrefixes(
     minPrefix: Int,
     maxPrefix: Int = Int.MaxValue
-  ): ((String, Long)) => Iterable[(String, (String, Long))] = {
-    case (word, count) =>
-      (minPrefix to Math.min(word.length, maxPrefix))
-        .map(i => (word.substring(0, i), (word, count)))
+  ): ((String, Long)) => Iterable[(String, (String, Long))] = { case (word, count) =>
+    (minPrefix to Math.min(word.length, maxPrefix))
+      .map(i => (word.substring(0, i), (word, count)))
   }
 
   def makeEntity(kind: String, kv: (String, Iterable[(String, Long)])): Entity = {

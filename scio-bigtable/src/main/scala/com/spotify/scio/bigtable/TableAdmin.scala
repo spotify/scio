@@ -89,8 +89,8 @@ object TableAdmin {
     tablesAndColumnFamilies: Map[String, Iterable[String]],
     createDisposition: CreateDisposition = CreateDisposition.default
   ): Unit = {
-    val tcf = tablesAndColumnFamilies.iterator.map {
-      case (k, l) => k -> l.map(_ -> None)
+    val tcf = tablesAndColumnFamilies.iterator.map { case (k, l) =>
+      k -> l.map(_ -> None)
     }.toMap
     ensureTablesImpl(bigtableOptions, tcf, createDisposition).get
   }
@@ -114,11 +114,10 @@ object TableAdmin {
     createDisposition: CreateDisposition = CreateDisposition.default
   ): Unit = {
     // Convert Duration to GcRule
-    val x = tablesAndColumnFamilies.iterator.map {
-      case (k, v) =>
-        k -> v.map {
-          case (columnFamily, duration) => (columnFamily, duration.map(gcRuleFromDuration))
-        }
+    val x = tablesAndColumnFamilies.iterator.map { case (k, v) =>
+      k -> v.map { case (columnFamily, duration) =>
+        (columnFamily, duration.map(gcRuleFromDuration))
+      }
     }.toMap
 
     ensureTablesImpl(bigtableOptions, x, createDisposition).get
@@ -162,28 +161,27 @@ object TableAdmin {
     adminClient(bigtableOptions) { client =>
       val existingTables = fetchTables(client, instancePath)
 
-      tablesAndColumnFamilies.foreach {
-        case (table, columnFamilies) =>
-          val tablePath = s"$instancePath/tables/$table"
+      tablesAndColumnFamilies.foreach { case (table, columnFamilies) =>
+        val tablePath = s"$instancePath/tables/$table"
 
-          val exists = existingTables.contains(tablePath)
-          createDisposition match {
-            case _ if exists =>
-              log.info("Table {} exists", table)
-            case CreateDisposition.CreateIfNeeded =>
-              log.info("Creating table {}", table)
-              client.createTable(
-                CreateTableRequest
-                  .newBuilder()
-                  .setParent(instancePath)
-                  .setTableId(table)
-                  .build()
-              )
-            case CreateDisposition.Never =>
-              throw new IllegalStateException(s"Table $table does not exist")
-          }
+        val exists = existingTables.contains(tablePath)
+        createDisposition match {
+          case _ if exists =>
+            log.info("Table {} exists", table)
+          case CreateDisposition.CreateIfNeeded =>
+            log.info("Creating table {}", table)
+            client.createTable(
+              CreateTableRequest
+                .newBuilder()
+                .setParent(instancePath)
+                .setTableId(table)
+                .build()
+            )
+          case CreateDisposition.Never =>
+            throw new IllegalStateException(s"Table $table does not exist")
+        }
 
-          ensureColumnFamilies(client, tablePath, columnFamilies, createDisposition)
+        ensureColumnFamilies(client, tablePath, columnFamilies, createDisposition)
       }
     }
   }
@@ -208,26 +206,24 @@ object TableAdmin {
           client.getTable(GetTableRequest.newBuilder().setName(tablePath).build)
 
         val cfList = columnFamilies
-          .map {
-            case (n, gcRule) =>
-              val cf = tableInfo
-                .getColumnFamiliesOrDefault(n, ColumnFamily.newBuilder().build())
-                .toBuilder
-                .setGcRule(gcRule.getOrElse(GcRule.getDefaultInstance))
-                .build()
+          .map { case (n, gcRule) =>
+            val cf = tableInfo
+              .getColumnFamiliesOrDefault(n, ColumnFamily.newBuilder().build())
+              .toBuilder
+              .setGcRule(gcRule.getOrElse(GcRule.getDefaultInstance))
+              .build()
 
-              (n, cf)
+            (n, cf)
           }
         val modifications =
-          cfList.map {
-            case (n, cf) =>
-              val mod = Modification.newBuilder().setId(n)
-              if (tableInfo.containsColumnFamilies(n)) {
-                mod.setUpdate(cf)
-              } else {
-                mod.setCreate(cf)
-              }
-              mod.build()
+          cfList.map { case (n, cf) =>
+            val mod = Modification.newBuilder().setId(n)
+            if (tableInfo.containsColumnFamilies(n)) {
+              mod.setUpdate(cf)
+            } else {
+              mod.setCreate(cf)
+            }
+            mod.build()
           }
 
         log.info(

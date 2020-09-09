@@ -88,14 +88,13 @@ object WindowedWordCount {
         .saveAsTextFile("output.txt")
     } else {
       // Write values in each group to a separate text file
-      wordCounts.map {
-        case (w, vs) =>
-          val outputShard =
-            "%s-%s-%s".format(args("output"), formatter.print(w.start()), formatter.print(w.end()))
-          val resourceId = FileSystems.matchNewResource(outputShard, false)
-          val out = Channels.newOutputStream(FileSystems.create(resourceId, MimeTypes.TEXT))
-          vs.foreach { case (k, v) => out.write(s"$k: $v\n".getBytes) }
-          out.close()
+      wordCounts.map { case (w, vs) =>
+        val outputShard =
+          "%s-%s-%s".format(args("output"), formatter.print(w.start()), formatter.print(w.end()))
+        val resourceId = FileSystems.matchNewResource(outputShard, false)
+        val out = Channels.newOutputStream(FileSystems.create(resourceId, MimeTypes.TEXT))
+        vs.foreach { case (k, v) => out.write(s"$k: $v\n".getBytes) }
+        out.close()
       }
     }
 

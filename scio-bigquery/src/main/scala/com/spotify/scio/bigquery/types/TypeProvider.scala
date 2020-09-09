@@ -533,9 +533,8 @@ private[types] object TypeProvider {
       case q"$mods class $name[..$_] $_(..$fields) extends { ..$_ } with ..$parents { $_ => ..$_ }"
           if mods.asInstanceOf[Modifiers].hasFlag(Flag.CASE) =>
         val f = fields
-          .map {
-            case ValDef(_, fname, ftpt, _) =>
-              s"${SchemaUtil.escapeNameIfReserved(fname.toString)} : $ftpt"
+          .map { case ValDef(_, fname, ftpt, _) =>
+            s"${SchemaUtil.escapeNameIfReserved(fname.toString)} : $ftpt"
           }
           .mkString(", ")
           .replaceAll(

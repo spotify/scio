@@ -143,9 +143,8 @@ final case class BigtableWrite[T <: Mutation](bigtableOptions: BigtableOptions, 
           new BigtableBulkWriter(tableId, bigtableOptions, numOfShards, flushInterval)
       }
     data
-      .map {
-        case (key, value) =>
-          KV.of(key, value.asJava.asInstanceOf[java.lang.Iterable[Mutation]])
+      .map { case (key, value) =>
+        KV.of(key, value.asJava.asInstanceOf[java.lang.Iterable[Mutation]])
       }
       .applyInternal(sink)
     EmptyTap

@@ -171,10 +171,9 @@ class AlgebirdSpec extends AnyPropSpec with ScalaCheckDrivenPropertyChecks with 
       val minOp = Aggregator.min[Double]
       val momentsOp = Moments.aggregator
       val colAgg = MultiAggregator((maxOp, minOp, momentsOp))
-        .andThenPresent {
-          case (max, min, moments) =>
-            // Present mean and stddev in Moments
-            (max, min, moments.mean, moments.stddev)
+        .andThenPresent { case (max, min, moments) =>
+          // Present mean and stddev in Moments
+          (max, min, moments.mean, moments.stddev)
         }
 
       val expected = (xs.internal.max, xs.internal.min, mean(xs.internal), stddev(xs.internal))
@@ -291,9 +290,8 @@ class AlgebirdSpec extends AnyPropSpec with ScalaCheckDrivenPropertyChecks with 
       val bounds = Seq(0.25, 0.50, 0.75).map(qt.quantileBounds)
       val expected = Seq(l / 4, l / 2, l / 4 * 3).map(xs.internal.sorted)
       // approximate bounds should contain exact 25, 50 and 75 percentile
-      bounds.zip(expected).forall {
-        case ((lower, upper), x) =>
-          lower <= x && x <= upper
+      bounds.zip(expected).forall { case ((lower, upper), x) =>
+        lower <= x && x <= upper
       } shouldBe true
     }
   }
@@ -320,10 +318,9 @@ class AlgebirdSpec extends AnyPropSpec with ScalaCheckDrivenPropertyChecks with 
       val m = CMS.monoid[String](0.001, 1e-10, 1)
       val cms = xs.map(m.create).sum(m)
       val expected = xs.internal.groupBy(identity).mapValues(_.size)
-      expected.forall {
-        case (item, freq) =>
-          // approximate bounds of each item should contain exact frequency
-          cms.frequency(item).boundsContain(freq)
+      expected.forall { case (item, freq) =>
+        // approximate bounds of each item should contain exact frequency
+        cms.frequency(item).boundsContain(freq)
       } shouldBe true
     }
   }
@@ -333,10 +330,9 @@ class AlgebirdSpec extends AnyPropSpec with ScalaCheckDrivenPropertyChecks with 
       import CMSHasherImplicits._
       val cms = xs.aggregate(CMS.aggregator(0.01, 1e-10, 1))
       val expected = xs.internal.groupBy(identity).mapValues(_.size)
-      expected.forall {
-        case (item, freq) =>
-          // approximate bounds of each item should contain exact frequency
-          cms.frequency(item).boundsContain(freq)
+      expected.forall { case (item, freq) =>
+        // approximate bounds of each item should contain exact frequency
+        cms.frequency(item).boundsContain(freq)
       } shouldBe true
     }
   }

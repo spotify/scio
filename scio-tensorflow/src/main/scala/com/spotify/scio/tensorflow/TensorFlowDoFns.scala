@@ -172,18 +172,16 @@ object SavedBundlePredictDoFn {
 
     override def extractInput(input: T): Map[String, Tensor[_]] = {
       val extractedInput = inFn(input)
-      extractedInput.iterator.map {
-        case (tensorId, tensor) =>
-          model.inputsNameMap().get(tensorId) -> tensor
+      extractedInput.iterator.map { case (tensorId, tensor) =>
+        model.inputsNameMap().get(tensorId) -> tensor
       }.toMap
     }
 
     override def extractOutput(input: T, out: Map[String, Tensor[_]]): V =
       outFn(
         input,
-        requestedFetchOps.iterator.map {
-          case (tensorId, opName) =>
-            tensorId -> out(opName)
+        requestedFetchOps.iterator.map { case (tensorId, opName) =>
+          tensorId -> out(opName)
         }.toMap
       )
 
@@ -223,8 +221,8 @@ object SavedBundlePredictDoFn {
       override def extractOutput(input: T, out: Map[String, Tensor[_]]): V =
         outFn(
           input,
-          requestedFetchOps.iterator.map {
-            case (tensorId, opName) => tensorId -> out(opName)
+          requestedFetchOps.iterator.map { case (tensorId, opName) =>
+            tensorId -> out(opName)
           }.toMap
         )
 

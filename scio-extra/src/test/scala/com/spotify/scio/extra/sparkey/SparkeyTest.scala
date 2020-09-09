@@ -150,9 +150,8 @@ class SparkeyTest extends PipelineSpec {
     val shardedReader = sparkeyUri.getReader
     shardedReader.toMap shouldBe bigSideData.toMap
 
-    bigSideData.foreach {
-      case (expectedKey, expectedValue) =>
-        shardedReader.get(expectedKey) shouldBe Some(expectedValue)
+    bigSideData.foreach { case (expectedKey, expectedValue) =>
+      shardedReader.get(expectedKey) shouldBe Some(expectedValue)
     }
 
     FileUtils.deleteDirectory(new File(sparkeyUri.basePath))
@@ -284,9 +283,8 @@ class SparkeyTest extends PipelineSpec {
     scioResult.tap(result).value.toList.sorted shouldBe input.map(sideData.toMap).sorted
     val sparkeyUri = scioResult.tap(sparkeyMaterialized).value.next()
     val shardedReader = sparkeyUri.getReader
-    sideData.foreach {
-      case (expectedKey, expectedValue) =>
-        shardedReader.get(expectedKey) shouldBe Some(expectedValue)
+    sideData.foreach { case (expectedKey, expectedValue) =>
+      shardedReader.get(expectedKey) shouldBe Some(expectedValue)
     }
 
     FileUtils.deleteDirectory(new File(sparkeyUri.basePath))
@@ -314,9 +312,8 @@ class SparkeyTest extends PipelineSpec {
 
     val sparkeyUri = scioResult.tap(sparkeyMaterialized).value.next()
     val shardedReader = sparkeyUri.getReader
-    sideData.foreach {
-      case (expectedKey, expectedValue) =>
-        shardedReader.get(expectedKey) shouldBe Some(expectedValue)
+    sideData.foreach { case (expectedKey, expectedValue) =>
+      shardedReader.get(expectedKey) shouldBe Some(expectedValue)
     }
 
     FileUtils.deleteDirectory(new File(sparkeyUri.basePath))

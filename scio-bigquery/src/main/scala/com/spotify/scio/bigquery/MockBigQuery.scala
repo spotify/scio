@@ -70,9 +70,8 @@ class MockBigQuery private (private val bq: BigQuery) {
    */
   def queryResult(sqlQuery: String, flattenResults: Boolean = false): Seq[TableRow] = {
     val isLegacy = bq.query.isLegacySql(sqlQuery, flattenResults)
-    val mockQuery = mapping.foldLeft(sqlQuery) {
-      case (q, (src, dst)) =>
-        q.replace(toTableSpec(src, isLegacy), toTableSpec(dst, isLegacy))
+    val mockQuery = mapping.foldLeft(sqlQuery) { case (q, (src, dst)) =>
+      q.replace(toTableSpec(src, isLegacy), toTableSpec(dst, isLegacy))
     }
     try {
       bq.query.rows(mockQuery, flattenResults).toList

@@ -163,11 +163,10 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
   )(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, (V, Option[W]))] = self.transform {
     in =>
       in.withSideInputs(sideInput)
-        .flatMap[(K, (V, Option[W]))] {
-          case ((k, v), sideInputCtx) =>
-            val rhsSideMap = sideInputCtx(sideInput)
-            if (rhsSideMap.contains(k)) rhsSideMap(k).iterator.map(w => (k, (v, Some(w))))
-            else Iterator((k, (v, None)))
+        .flatMap[(K, (V, Option[W]))] { case ((k, v), sideInputCtx) =>
+          val rhsSideMap = sideInputCtx(sideInput)
+          if (rhsSideMap.contains(k)) rhsSideMap(k).iterator.map(w => (k, (v, Some(w))))
+          else Iterator((k, (v, None)))
         }
         .toSCollection
   }
@@ -223,15 +222,14 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     self.transform { in =>
       val leftHashed = in
         .withSideInputs(sideInput)
-        .flatMap {
-          case ((k, v), sideInputCtx) =>
-            val rhsSideMap = sideInputCtx(sideInput)
-            if (rhsSideMap.contains(k)) {
-              rhsSideMap(k).iterator
-                .map[(K, (Option[V], Option[W]), Boolean)](w => (k, (Some(v), Some(w)), true))
-            } else {
-              Iterator((k, (Some(v), None), false))
-            }
+        .flatMap { case ((k, v), sideInputCtx) =>
+          val rhsSideMap = sideInputCtx(sideInput)
+          if (rhsSideMap.contains(k)) {
+            rhsSideMap(k).iterator
+              .map[(K, (Option[V], Option[W]), Boolean)](w => (k, (Some(v), Some(w)), true))
+          } else {
+            Iterator((k, (Some(v), None), false))
+          }
         }
         .toSCollection
 
@@ -327,19 +325,16 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     rhs: SCollection[(K, W)]
   )(implicit koder: Coder[K]): SideInput[MMap[K, ArrayBuffer[W]]] =
     rhs
-      .combine {
-        case (k, v) =>
-          MMap(k -> ArrayBuffer(v))
-      } {
-        case (combiner, (k, v)) =>
-          combiner.getOrElseUpdate(k, ArrayBuffer.empty[W]) += v
-          combiner
-      } {
-        case (left, right) =>
-          right.foreach {
-            case (k, vs) => left.getOrElseUpdate(k, ArrayBuffer.empty[W]) ++= vs
-          }
-          left
+      .combine { case (k, v) =>
+        MMap(k -> ArrayBuffer(v))
+      } { case (combiner, (k, v)) =>
+        combiner.getOrElseUpdate(k, ArrayBuffer.empty[W]) += v
+        combiner
+      } { case (left, right) =>
+        right.foreach { case (k, vs) =>
+          left.getOrElseUpdate(k, ArrayBuffer.empty[W]) ++= vs
+        }
+        left
       }
       .asSingletonSideInput(MMap.empty[K, ArrayBuffer[W]])
 }

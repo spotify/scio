@@ -78,9 +78,8 @@ class ApproxFilterTest extends PipelineSpec {
     ): SCollection[T] =
       sc.parallelize(Seq(1)) // reify single value side input.
         .withSideInputs(sideInput)
-        .map {
-          case (_, ctx) =>
-            ctx(sideInput)
+        .map { case (_, ctx) =>
+          ctx(sideInput)
         }
         .toSCollection
 

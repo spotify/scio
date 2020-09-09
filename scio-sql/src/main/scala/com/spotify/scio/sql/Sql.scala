@@ -77,20 +77,19 @@ private object Queries {
     schemas: List[(String, BSchema)],
     udfs: List[Udf]
   ): Try[BeamRelNode] = Try {
-    val tables: Map[String, BeamSqlTable] = schemas.map {
-      case (tag, schema) =>
-        tag -> new BaseBeamTable {
-          override def buildIOReader(begin: PBegin): PCollection[Row] = ???
+    val tables: Map[String, BeamSqlTable] = schemas.map { case (tag, schema) =>
+      tag -> new BaseBeamTable {
+        override def buildIOReader(begin: PBegin): PCollection[Row] = ???
 
-          override def buildIOWriter(input: PCollection[Row]): POutput = ???
+        override def buildIOWriter(input: PCollection[Row]): POutput = ???
 
-          override def isBounded: PCollection.IsBounded = PCollection.IsBounded.BOUNDED
+        override def isBounded: PCollection.IsBounded = PCollection.IsBounded.BOUNDED
 
-          override def getTableStatistics(options: PipelineOptions): BeamTableStatistics =
-            BeamTableStatistics.BOUNDED_UNKNOWN
+        override def getTableStatistics(options: PipelineOptions): BeamTableStatistics =
+          BeamTableStatistics.BOUNDED_UNKNOWN
 
-          override def getSchema: BSchema = schema
-        }
+        override def getSchema: BSchema = schema
+      }
     }.toMap
 
     val tableProvider = new ReadOnlyTableProvider(Sql.SCollectionTypeName, tables.asJava)

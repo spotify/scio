@@ -58,9 +58,8 @@ final class SqlInterpolator(private val sc: StringContext) extends AnyVal {
       .collect { case ref @ SCollectionRef(scoll) => (scoll, ref) }
       .distinct
       .zipWithIndex
-      .map {
-        case ((scoll, ref), i) =>
-          (scoll.name, (ref, new TupleTag[ref._A](s"SCOLLECTION_$i")))
+      .map { case ((scoll, ref), i) =>
+        (scoll.name, (ref, new TupleTag[ref._A](s"SCOLLECTION_$i")))
       }
       .toMap
 
@@ -231,9 +230,8 @@ object SqlInterpolatorMacro {
       }.toList
 
     val distinctSCollections =
-      scs.map {
-        case (tree, t) =>
-          (tree.symbol, (tree, t))
+      scs.map { case (tree, t) =>
+        (tree.symbol, (tree, t))
       }.toMap
 
     def toSCollectionName(s: Tree) = s.symbol.name.encodedName.toString

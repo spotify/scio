@@ -89,25 +89,22 @@ abstract class ScioResult private[scio] (val internal: PipelineResult) {
       val gauge = Option(g).getOrElse(GaugeResult.empty())
       BeamGauge(gauge.getValue, gauge.getTimestamp)
     }
-    val beamCounters = allCounters.map {
-      case (k, v) =>
-        BeamMetric(k.getNamespace, k.getName, v)
+    val beamCounters = allCounters.map { case (k, v) =>
+      BeamMetric(k.getNamespace, k.getName, v)
     }
-    val beamDistributions = allDistributions.map {
-      case (k, v) =>
-        BeamMetric(
-          k.getNamespace,
-          k.getName,
-          MetricValue(mkDist(v.attempted), v.committed.map(mkDist))
-        )
+    val beamDistributions = allDistributions.map { case (k, v) =>
+      BeamMetric(
+        k.getNamespace,
+        k.getName,
+        MetricValue(mkDist(v.attempted), v.committed.map(mkDist))
+      )
     }
-    val beamGauges = allGauges.map {
-      case (k, v) =>
-        BeamMetric(
-          k.getNamespace,
-          k.getName,
-          MetricValue(mkGauge(v.attempted), v.committed.map(mkGauge))
-        )
+    val beamGauges = allGauges.map { case (k, v) =>
+      BeamMetric(
+        k.getNamespace,
+        k.getName,
+        MetricValue(mkGauge(v.attempted), v.committed.map(mkGauge))
+      )
     }
     BeamMetrics(beamCounters, beamDistributions, beamGauges)
   }
@@ -148,8 +145,8 @@ abstract class ScioResult private[scio] (val internal: PipelineResult) {
 
   /** Retrieve aggregated values of all counters from the pipeline. */
   lazy val allCounters: Map[beam.MetricName, MetricValue[Long]] =
-    allCountersAtSteps.iterator.map {
-      case (k, v) => (k, reduceMetricValues[Long](v))
+    allCountersAtSteps.iterator.map { case (k, v) =>
+      (k, reduceMetricValues[Long](v))
     }.toMap
 
   /** Retrieve aggregated values of all distributions from the pipeline. */
@@ -163,8 +160,8 @@ abstract class ScioResult private[scio] (val internal: PipelineResult) {
           math.max(x.getMax, y.getMax)
         )
       }
-    allDistributionsAtSteps.iterator.map {
-      case (k, v) => (k, reduceMetricValues[beam.DistributionResult](v))
+    allDistributionsAtSteps.iterator.map { case (k, v) =>
+      (k, reduceMetricValues[beam.DistributionResult](v))
     }.toMap
   }
 
@@ -174,8 +171,8 @@ abstract class ScioResult private[scio] (val internal: PipelineResult) {
       // sum by taking the latest
       if (x.getTimestamp isAfter y.getTimestamp) x else y
     }
-    allGaugesAtSteps.iterator.map {
-      case (k, v) => (k, reduceMetricValues[beam.GaugeResult](v))
+    allGaugesAtSteps.iterator.map { case (k, v) =>
+      (k, reduceMetricValues[beam.GaugeResult](v))
     }.toMap
   }
 
@@ -204,12 +201,11 @@ abstract class ScioResult private[scio] (val internal: PipelineResult) {
     results
       .groupBy(_.getName)
       .iterator
-      .map {
-        case (k, xs) =>
-          val m: Map[String, MetricValue[T]] = xs.iterator.map { r =>
-            r.getKey.stepName -> MetricValue(r.getAttempted, Try(r.getCommitted).toOption)
-          }.toMap
-          (k, m)
+      .map { case (k, xs) =>
+        val m: Map[String, MetricValue[T]] = xs.iterator.map { r =>
+          r.getKey.stepName -> MetricValue(r.getAttempted, Try(r.getCommitted).toOption)
+        }.toMap
+        (k, m)
       }
       .toMap
 

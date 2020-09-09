@@ -36,8 +36,8 @@ private[scio] object JMapWrapper {
       override def removed(key: A): Map[A, Iterable[B]] =
         self.asScala.iterator
           .filter { case (k, _) => k != key }
-          .map {
-            case (k, v) => (k, v.asScala)
+          .map { case (k, v) =>
+            (k, v.asScala)
           }
           .toMap
 

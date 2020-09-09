@@ -431,16 +431,14 @@ private[types] object TypeProvider {
     (Seq(caseClass) ++ records).map {
       case q"case class $name(..$fields) { ..$_ }" =>
         s"case class $name(${fields
-          .map {
-            case ValDef(_, fname, ftpt, _) =>
-              s"${SchemaUtil.escapeNameIfReserved(fname.toString)} : $ftpt"
+          .map { case ValDef(_, fname, ftpt, _) =>
+            s"${SchemaUtil.escapeNameIfReserved(fname.toString)} : $ftpt"
           }
           .mkString(", ")})"
       case q"case class $name(..$fields) extends $annotation { ..$_ }" =>
         s"case class $name(${fields
-          .map {
-            case ValDef(_, fname, ftpt, _) =>
-              s"${SchemaUtil.escapeNameIfReserved(fname.toString)} : $ftpt"
+          .map { case ValDef(_, fname, ftpt, _) =>
+            s"${SchemaUtil.escapeNameIfReserved(fname.toString)} : $ftpt"
           }
           .mkString(", ")}) extends $annotation"
       case _ => ""

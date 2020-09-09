@@ -82,9 +82,8 @@ package object libsvm {
       col.context.parallelize(List(numFeatures))
     } else {
       data
-        .map {
-          case (_, indices, _) =>
-            indices.lastOption.getOrElse(0)
+        .map { case (_, indices, _) =>
+          indices.lastOption.getOrElse(0)
         }
         .sum(Max.maxSemigroup, Coder[Int])
         .map(_ + 1)
@@ -92,9 +91,8 @@ package object libsvm {
 
     data
       .cross(featureCntCol)
-      .map {
-        case ((label, indicies, values), featureCount) =>
-          (label, SparseVector[Double](featureCount)(indicies.zip(values): _*))
+      .map { case ((label, indicies, values), featureCount) =>
+        (label, SparseVector[Double](featureCount)(indicies.zip(values): _*))
       }
   }
 

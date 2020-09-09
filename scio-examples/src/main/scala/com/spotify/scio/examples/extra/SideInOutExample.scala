@@ -78,17 +78,16 @@ object SideInOutExample {
       // Specialized version of `map` with access to side outputs via `SideOutputContext`. Returns
       // a tuple 2 where the first element is the main output and the second element is a
       // `SideOutputCollections` that encapsulates side outputs.
-      .flatMap {
-        case ((word, count), ctx) =>
-          word.length match {
-            // Send to side outputs via `SideOutputContext`
-            case 1 => ctx.output(oneLetter, (word, count))
-            case 2 => ctx.output(twoLetter, (word, count))
-            case 3 => ctx.output(threeLetter, (word, count))
-            case _ =>
-          }
-          // Send to main output via return value
-          if (word.length >= 4) Some((word, count)) else None
+      .flatMap { case ((word, count), ctx) =>
+        word.length match {
+          // Send to side outputs via `SideOutputContext`
+          case 1 => ctx.output(oneLetter, (word, count))
+          case 2 => ctx.output(twoLetter, (word, count))
+          case 3 => ctx.output(threeLetter, (word, count))
+          case _ =>
+        }
+        // Send to main output via return value
+        if (word.length >= 4) Some((word, count)) else None
       }
 
     def toString(kv: (String, Long)) = kv._1 + ": " + kv._2

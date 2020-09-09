@@ -171,19 +171,18 @@ object SortMergeBucketTransformExample {
       AvroSortedBucketIO
         .transformOutput(classOf[Integer], "id", classOf[Account])
         .to(args("output"))
-    ).via {
-      case (key, (users, accounts), outputCollector) =>
-        users.foreach { user =>
-          outputCollector.accept(
-            Account
-              .newBuilder()
-              .setId(key)
-              .setName(user.get("userId").toString)
-              .setType("combinedAmount")
-              .setAmount(accounts.foldLeft(0.0)(_ + _.getAmount))
-              .build()
-          )
-        }
+    ).via { case (key, (users, accounts), outputCollector) =>
+      users.foreach { user =>
+        outputCollector.accept(
+          Account
+            .newBuilder()
+            .setId(key)
+            .setName(user.get("userId").toString)
+            .setType("combinedAmount")
+            .setAmount(accounts.foldLeft(0.0)(_ + _.getAmount))
+            .build()
+        )
+      }
     }
     // #SortMergeBucketExample_transform
 

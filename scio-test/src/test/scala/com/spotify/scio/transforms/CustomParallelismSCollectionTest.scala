@@ -53,8 +53,8 @@ class CustomParallelismSCollectionTest extends PipelineSpec {
         ("test2", 2),
         ("test3", 3)
       )
-      val p = sc.parallelize(records).collectWithParallelism(1) {
-        case ("test2", x) => 2 * x
+      val p = sc.parallelize(records).collectWithParallelism(1) { case ("test2", x) =>
+        2 * x
       }
       p should containSingleValue(4)
     }

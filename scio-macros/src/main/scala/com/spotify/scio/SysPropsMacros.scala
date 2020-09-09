@@ -35,8 +35,8 @@ private object registerSysPropsMacro {
 
     annottees.map(_.tree) match {
       case List(q"$mod object $name extends ..$parents { ..$body }") =>
-        val vars = body.collect {
-          case ValDef(_, _, _, rhs) => c.Expr(rhs)
+        val vars = body.collect { case ValDef(_, _, _, rhs) =>
+          c.Expr(rhs)
         }
 
         val propertiesMethod =

@@ -131,8 +131,8 @@ abstract private[scio] class RandomValueSampler[K, V, R](val fractions: Map[K, D
   // TODO: is it necessary to setSeed for each instance like Spark does?
   @StartBundle
   def startBundle(c: DoFn[(K, V), (K, V)]#StartBundleContext): Unit =
-    rngs = fractions.iterator.map {
-      case (k, v) => (k, init(v))
+    rngs = fractions.iterator.map { case (k, v) =>
+      (k, init(v))
     }.toMap
 
   @ProcessElement

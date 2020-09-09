@@ -102,8 +102,8 @@ final case class Record[T] private (
   destruct: T => Array[Any]
 ) extends Coder[T] {
   override def toString: String = {
-    val str = cs.map {
-      case (k, v) => s"($k, $v)"
+    val str = cs.map { case (k, v) =>
+      s"($k, $v)"
     }
     s"Record($typeName, ${str.mkString(", ")})"
   }
@@ -303,16 +303,15 @@ final private[scio] case class RecordCoder[T](
   // delegate methods for determinism and equality checks
 
   override def verifyDeterministic(): Unit = {
-    val problems = cs.toList.flatMap {
-      case (label, c) =>
-        try {
-          c.verifyDeterministic()
-          Nil
-        } catch {
-          case e: NonDeterministicException =>
-            val reason = s"field $label is using non-deterministic $c"
-            List(reason -> e)
-        }
+    val problems = cs.toList.flatMap { case (label, c) =>
+      try {
+        c.verifyDeterministic()
+        Nil
+      } catch {
+        case e: NonDeterministicException =>
+          val reason = s"field $label is using non-deterministic $c"
+          List(reason -> e)
+      }
     }
 
     problems match {

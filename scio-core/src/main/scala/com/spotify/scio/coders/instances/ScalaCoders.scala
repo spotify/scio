@@ -88,16 +88,15 @@ final private class PairCoder[A, B](ac: BCoder[A], bc: BCoder[B]) extends Atomic
 
   override def verifyDeterministic(): Unit = {
     val cs = List("_1" -> ac, "_2" -> bc)
-    val problems = cs.flatMap {
-      case (label, c) =>
-        try {
-          c.verifyDeterministic()
-          Nil
-        } catch {
-          case e: NonDeterministicException =>
-            val reason = s"field $label is using non-deterministic $c"
-            List(reason -> e)
-        }
+    val problems = cs.flatMap { case (label, c) =>
+      try {
+        c.verifyDeterministic()
+        Nil
+      } catch {
+        case e: NonDeterministicException =>
+          val reason = s"field $label is using non-deterministic $c"
+          List(reason -> e)
+      }
     }
 
     problems match {
@@ -366,9 +365,8 @@ private class MapCoder[K, V](kc: BCoder[K], vc: BCoder[V]) extends AtomicCoder[M
     } else {
       val b = Map.newBuilder[Any, Any]
       b.sizeHint(value.size)
-      value.foreach {
-        case (k, v) =>
-          b += kc.structuralValue(k) -> vc.structuralValue(v)
+      value.foreach { case (k, v) =>
+        b += kc.structuralValue(k) -> vc.structuralValue(v)
       }
       b.result()
     }
@@ -380,10 +378,9 @@ private class MapCoder[K, V](kc: BCoder[K], vc: BCoder[V]) extends AtomicCoder[M
     observer: ElementByteSizeObserver
   ): Unit = {
     lc.registerByteSizeObserver(value.size, observer)
-    value.foreach {
-      case (k, v) =>
-        kc.registerByteSizeObserver(k, observer)
-        vc.registerByteSizeObserver(v, observer)
+    value.foreach { case (k, v) =>
+      kc.registerByteSizeObserver(k, observer)
+      vc.registerByteSizeObserver(v, observer)
     }
   }
 
@@ -396,10 +393,9 @@ private class MutableMapCoder[K, V](kc: BCoder[K], vc: BCoder[V]) extends Atomic
 
   override def encode(value: m.Map[K, V], os: OutputStream): Unit = {
     lc.encode(value.size, os)
-    value.foreach {
-      case (k, v) =>
-        kc.encode(k, os)
-        vc.encode(v, os)
+    value.foreach { case (k, v) =>
+      kc.encode(k, os)
+      vc.encode(v, os)
     }
   }
 
@@ -431,9 +427,8 @@ private class MutableMapCoder[K, V](kc: BCoder[K], vc: BCoder[V]) extends Atomic
     } else {
       val b = m.Map.newBuilder[Any, Any]
       b.sizeHint(value.size)
-      value.foreach {
-        case (k, v) =>
-          b += kc.structuralValue(k) -> vc.structuralValue(v)
+      value.foreach { case (k, v) =>
+        b += kc.structuralValue(k) -> vc.structuralValue(v)
       }
       b.result()
     }
@@ -445,10 +440,9 @@ private class MutableMapCoder[K, V](kc: BCoder[K], vc: BCoder[V]) extends Atomic
     observer: ElementByteSizeObserver
   ): Unit = {
     lc.registerByteSizeObserver(value.size, observer)
-    value.foreach {
-      case (k, v) =>
-        kc.registerByteSizeObserver(k, observer)
-        vc.registerByteSizeObserver(v, observer)
+    value.foreach { case (k, v) =>
+      kc.registerByteSizeObserver(k, observer)
+      vc.registerByteSizeObserver(v, observer)
     }
   }
 

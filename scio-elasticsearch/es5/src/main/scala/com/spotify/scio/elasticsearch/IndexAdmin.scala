@@ -119,9 +119,8 @@ object IndexAdmin {
     removePrevious: Boolean,
     timeout: TimeValue
   ): AcknowledgedResponse = {
-    val request = indices.foldLeft(new IndicesAliasesRequest()) {
-      case (request, idx) =>
-        request.addAliasAction(AliasActions.add().index(idx).alias(alias))
+    val request = indices.foldLeft(new IndicesAliasesRequest()) { case (request, idx) =>
+      request.addAliasAction(AliasActions.add().index(idx).alias(alias))
     }
 
     if (removePrevious) {

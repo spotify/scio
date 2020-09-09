@@ -573,8 +573,8 @@ class SCollectionMatchersTest extends PipelineSpec {
       }
 
       windowedStream.groupByKey should inWindow(window) {
-        forAll[(Int, Iterable[Instant])] {
-          case (_, seq) => seq.nonEmpty
+        forAll[(Int, Iterable[Instant])] { case (_, seq) =>
+          seq.nonEmpty
         }
       }
     }

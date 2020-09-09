@@ -234,8 +234,8 @@ private[types] object ConverterProvider {
 
       val header =
         q"val result = new _root_.org.apache.avro.generic.GenericRecordBuilder(${p(c, SType)}.avroSchemaOf[$tpe])"
-      val body = sets.map {
-        case (name, value) => q"result.set($name, $value)"
+      val body = sets.map { case (name, value) =>
+        q"result.set($name, $value)"
       }
       val footer = q"result.build()"
       q"{$header; ..$body; $footer}"
@@ -437,9 +437,8 @@ private[types] object ConverterProvider {
         case _                      => c.abort(c.enclosingPosition, s"Unsupported type: $tpe")
       }
       val header = q"val result = new ${p(c, GModel)}.TableRow()"
-      val body = sets.map {
-        case (name, value) =>
-          q"if (${p(c, SBQ)}.types.ConverterUtil.notNull($value)) result.set($name, $value)"
+      val body = sets.map { case (name, value) =>
+        q"if (${p(c, SBQ)}.types.ConverterUtil.notNull($value)) result.set($name, $value)"
       }
       val footer = q"result"
       q"{$header; ..$body; $footer}"

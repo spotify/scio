@@ -98,17 +98,16 @@ private[scio] object ArtisanJoin {
     leftFn: JIterator[A] => JIterator[A1],
     rightFn: JIterator[B] => JIterator[B1]
   ): SCollection[(KEY, (A1, B1))] =
-    cogroupImpl[KEY, A, B, A1, B1](name, a, b) {
-      case (key, as, bs, c) =>
-        val bi = rightFn(bs.iterator())
-        while (bi.hasNext) {
-          val b = bi.next()
-          val ai = leftFn(as.iterator())
-          while (ai.hasNext) {
-            val a = ai.next()
-            c.output((key, (a, b)))
-          }
+    cogroupImpl[KEY, A, B, A1, B1](name, a, b) { case (key, as, bs, c) =>
+      val bi = rightFn(bs.iterator())
+      while (bi.hasNext) {
+        val b = bi.next()
+        val ai = leftFn(as.iterator())
+        while (ai.hasNext) {
+          val a = ai.next()
+          c.output((key, (a, b)))
         }
+      }
     }.withState(_.copy(postGbkOp = true))
 
   def cogroup[KEY: Coder, A: Coder, B: Coder](
@@ -116,9 +115,8 @@ private[scio] object ArtisanJoin {
     a: SCollection[(KEY, A)],
     b: SCollection[(KEY, B)]
   ): SCollection[(KEY, (Iterable[A], Iterable[B]))] =
-    cogroupImpl[KEY, A, B, Iterable[A], Iterable[B]](name, a, b) {
-      case (key, a, b, c) =>
-        c.output((key, (a.asScala, b.asScala)))
+    cogroupImpl[KEY, A, B, Iterable[A], Iterable[B]](name, a, b) { case (key, a, b, c) =>
+      c.output((key, (a.asScala, b.asScala)))
     }
 
   def apply[KEY: Coder, A: Coder, B: Coder](

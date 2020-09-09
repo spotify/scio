@@ -85,9 +85,8 @@ object MetricsExample {
 
     // Values at steps
     val s2steps = result.counterAtSteps(sum2).mapValues(_.committed.get)
-    s2steps.foreach {
-      case (step, value) =>
-        println(s"sum2 at $step: " + value)
+    s2steps.foreach { case (step, value) =>
+      println(s"sum2 at $step: " + value)
     }
 
     // `s2` should contain 2 steps
@@ -116,9 +115,8 @@ object MetricsExample {
     // Dynamic metricsk
     result.allCounters
       .filterKeys(_.getName.startsWith("even_"))
-      .foreach {
-        case (name, value) =>
-          println(name.getName + ": " + value.committed.get)
+      .foreach { case (name, value) =>
+        println(name.getName + ": " + value.committed.get)
       }
   }
 }

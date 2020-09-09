@@ -172,27 +172,26 @@ package object annoy {
 
       self.transform { in =>
         in.groupBy(_ => ())
-          .map {
-            case (_, xs) =>
-              logger.info(s"Saving as Annoy: $uri")
-              val startTime = System.nanoTime()
-              val annoyWriter = new AnnoyWriter(metric, dim, nTrees)
-              try {
-                val it = xs.iterator
-                while (it.hasNext) {
-                  val (k, v) = it.next()
-                  annoyWriter.addItem(k, v)
-                }
-                val size = annoyWriter.size
-                uri.saveAndClose(annoyWriter)
-                val elapsedTime = (System.nanoTime() - startTime) / 1000000000.0
-                logger.info(s"Built index with $size items in $elapsedTime seconds")
-              } catch {
-                case e: Throwable =>
-                  annoyWriter.free()
-                  throw e
+          .map { case (_, xs) =>
+            logger.info(s"Saving as Annoy: $uri")
+            val startTime = System.nanoTime()
+            val annoyWriter = new AnnoyWriter(metric, dim, nTrees)
+            try {
+              val it = xs.iterator
+              while (it.hasNext) {
+                val (k, v) = it.next()
+                annoyWriter.addItem(k, v)
               }
-              uri
+              val size = annoyWriter.size
+              uri.saveAndClose(annoyWriter)
+              val elapsedTime = (System.nanoTime() - startTime) / 1000000000.0
+              logger.info(s"Built index with $size items in $elapsedTime seconds")
+            } catch {
+              case e: Throwable =>
+                annoyWriter.free()
+                throw e
+            }
+            uri
           }
       }
     }

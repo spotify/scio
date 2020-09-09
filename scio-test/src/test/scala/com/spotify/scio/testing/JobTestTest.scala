@@ -611,7 +611,7 @@ class JobTestTest extends PipelineSpec {
         .run()
     } should have message
       s"java.lang.UnsupportedOperationException: Test input TestStream(${testStream.getEvents}) " +
-        s"can't be converted to Iterable[T] to test this ScioIO type"
+      s"can't be converted to Iterable[T] to test this ScioIO type"
   }
 
   def testReadAllBytesJob(xs: String*): Unit =
@@ -648,7 +648,7 @@ class JobTestTest extends PipelineSpec {
         .run()
     } should have message
       s"java.lang.UnsupportedOperationException: Test input TestStream(${testStream.getEvents}) " +
-        s"can't be converted to Iterable[T] to test this ScioIO type"
+      s"can't be converted to Iterable[T] to test this ScioIO type"
   }
 
   // =======================================================================
@@ -786,7 +786,7 @@ class JobTestTest extends PipelineSpec {
         .run()
     } should have message
       "requirement failed: Missing test dist cache: DistCacheIO(dc.txt), available: " +
-        "[DistCacheIO(bad-dc.txt)]"
+      "[DistCacheIO(bad-dc.txt)]"
   }
 
   it should "fail unmatched test dist cache" in {
@@ -1035,10 +1035,9 @@ class JobTestTest extends PipelineSpec {
         g.getValue should be >= 1L
         g.getValue should be <= 10L
       }
-      .gauges(_.map {
-        case (_, result) =>
-          result.getValue should be >= 1L
-          result.getValue should be <= 10L
+      .gauges(_.map { case (_, result) =>
+        result.getValue should be >= 1L
+        result.getValue should be <= 10L
       })
       .run()
   }

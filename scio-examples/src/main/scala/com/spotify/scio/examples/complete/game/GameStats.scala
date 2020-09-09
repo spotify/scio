@@ -123,21 +123,19 @@ object GameStats {
       .distinct
       .withWindow[IntervalWindow]
       // Get duration of all sessions in minutes, discard user info
-      .map {
-        case (_, w) =>
-          new Duration(w.start(), w.end())
-            .toPeriod()
-            .toStandardMinutes
-            .getMinutes
+      .map { case (_, w) =>
+        new Duration(w.start(), w.end())
+          .toPeriod()
+          .toStandardMinutes
+          .getMinutes
       }
       // Find the mean value for user session length durations in a fixed time window
       .withFixedWindows(Duration.standardMinutes(userActivityWindowDuration))
       .mean
       .withWindow[IntervalWindow]
-      .map {
-        case (mean, w) =>
-          // Convert data on session length to `AvgSessionLength` case class, for BigQuery storage
-          AvgSessionLength(mean, fmt.print(w.start()))
+      .map { case (mean, w) =>
+        // Convert data on session length to `AvgSessionLength` case class, for BigQuery storage
+        AvgSessionLength(mean, fmt.print(w.start()))
       }
       // Save to the BigQuery table defined by "output" + "_sessions" suffix
       .saveAsTypedBigQueryTable(Table.Spec(args("output") + "_sessions"))
@@ -157,10 +155,9 @@ object GameStats {
       // Cross product of global mean and user scores,
       // effectively appending global mean to each (user, score) tuple.
       .cross(globalMeanScore)
-      .filter {
-        case ((_, score), gmc) =>
-          // Filter keeps users who have a score higher than 2.5x the average score
-          score > (gmc * 2.5)
+      .filter { case ((_, score), gmc) =>
+        // Filter keeps users who have a score higher than 2.5x the average score
+        score > (gmc * 2.5)
       }
       // Keys are the (user, sumScore) tuples
       .keys

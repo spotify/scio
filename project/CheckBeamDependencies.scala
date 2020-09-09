@@ -38,27 +38,26 @@ object CheckBeamDependencies extends AutoPlugin {
   private def resolveBeamDependencies(deps: Seq[(String, String)]): Map[String, Set[String]] =
     deps
       .filter(d => d._1.startsWith("org.apache.beam"))
-      .map {
-        case (orgName, rev) =>
-          beamDeps.computeIfAbsent(
-            orgName,
-            new JFunction[String, Map[String, Set[String]]] {
-              override def apply(key: String): Map[String, Set[String]] = {
-                val output = s"coursier resolve $key:$rev" lineStream_!
+      .map { case (orgName, rev) =>
+        beamDeps.computeIfAbsent(
+          orgName,
+          new JFunction[String, Map[String, Set[String]]] {
+            override def apply(key: String): Map[String, Set[String]] = {
+              val output = s"coursier resolve $key:$rev" lineStream_!
 
-                output
-                  .flatMap { dep =>
-                    dep.split(":").toList match {
-                      case org :: name :: rev :: _ => Some((s"$org:$name", rev))
-                      case _                       => None
-                    }
+              output
+                .flatMap { dep =>
+                  dep.split(":").toList match {
+                    case org :: name :: rev :: _ => Some((s"$org:$name", rev))
+                    case _                       => None
                   }
-                  .toList
-                  .groupBy(_._1)
-                  .mapValues(_.map(_._2).toSet)
-              }
+                }
+                .toList
+                .groupBy(_._1)
+                .mapValues(_.map(_._2).toSet)
             }
-          )
+          }
+        )
       }
       .foldLeft(Map.empty[String, Set[String]])(_ ++ _)
 
@@ -68,8 +67,8 @@ object CheckBeamDependencies extends AutoPlugin {
       val beamDependencies = resolveBeamDependencies(deps)
       val projectBeamDeps = deps
         .map(dep => (dep, beamDependencies.getOrElse(dep._1, Nil)))
-        .collect {
-          case ((dep, version), beamVersions) => beamVersions.map(v => (dep, (version, v)))
+        .collect { case ((dep, version), beamVersions) =>
+          beamVersions.map(v => (dep, (version, v)))
         }
         .flatten
 

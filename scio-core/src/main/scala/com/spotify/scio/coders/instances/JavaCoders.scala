@@ -98,9 +98,8 @@ trait JavaCoders extends JavaBeanCoders {
 
   implicit def jInstantCoder: Coder[Instant] =
     Coder.xmap(Coder[(Long, Int)])(
-      {
-        case (epochSeconds, nanoAdjustment) =>
-          Instant.ofEpochSecond(epochSeconds, nanoAdjustment.toLong)
+      { case (epochSeconds, nanoAdjustment) =>
+        Instant.ofEpochSecond(epochSeconds, nanoAdjustment.toLong)
       },
       instant => (instant.getEpochSecond, instant.getNano)
     )
@@ -113,9 +112,8 @@ trait JavaCoders extends JavaBeanCoders {
 
   implicit def jLocalTimeCoder: Coder[LocalTime] =
     Coder.xmap(Coder[(Int, Int, Int, Int)])(
-      {
-        case (hour, minute, second, nanoOfSecond) =>
-          LocalTime.of(hour, minute, second, nanoOfSecond)
+      { case (hour, minute, second, nanoOfSecond) =>
+        LocalTime.of(hour, minute, second, nanoOfSecond)
       },
       localTime => (localTime.getHour, localTime.getMinute, localTime.getSecond, localTime.getNano)
     )

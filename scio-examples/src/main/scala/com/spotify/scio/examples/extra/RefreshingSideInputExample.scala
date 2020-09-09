@@ -88,20 +88,19 @@ object RefreshingSideInputExample {
       .withFixedWindows(Duration.standardSeconds(5))
       .withTimestamp
       .withSideInputs(winningLotteryNumbers)
-      .map {
-        case ((lotteryTicket, eventTime), side) =>
-          val currentWinningNumbers = side(winningLotteryNumbers)
+      .map { case ((lotteryTicket, eventTime), side) =>
+        val currentWinningNumbers = side(winningLotteryNumbers)
 
-          val isWinner = lotteryTicket.numbers == currentWinningNumbers
-          val result = LotteryResult(
-            eventTime,
-            Instant.now(),
-            isWinner,
-            lotteryTicket.numbers,
-            currentWinningNumbers
-          )
+        val isWinner = lotteryTicket.numbers == currentWinningNumbers
+        val result = LotteryResult(
+          eventTime,
+          Instant.now(),
+          isWinner,
+          lotteryTicket.numbers,
+          currentWinningNumbers
+        )
 
-          logger.info(s"Lottery result: $result")
+        logger.info(s"Lottery result: $result")
       } // Can save output to PubSub, BigQuery, etc.
 
     sc.run()

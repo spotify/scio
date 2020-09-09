@@ -30,9 +30,8 @@ private[scio] object MacroSettings {
     val ss: Map[String, String] =
       settings
         .map(_.split("="))
-        .map {
-          case Array(k, v) =>
-            (k.trim, v.trim)
+        .map { case Array(k, v) =>
+          (k.trim, v.trim)
         }
         .toMap
 

@@ -81,9 +81,8 @@ private[bigquery] object BigQueryPartitionUtil {
         "Cannot find latest common partition for " + tables.keys.mkString(", ")
       )
       val latest = overlaps.max
-      tables.foldLeft(sqlQuery) {
-        case (q, (spec, _)) =>
-          q.replace(spec, spec.replace("$LATEST", latest))
+      tables.foldLeft(sqlQuery) { case (q, (spec, _)) =>
+        q.replace(spec, spec.replace("$LATEST", latest))
       }
     }
   }

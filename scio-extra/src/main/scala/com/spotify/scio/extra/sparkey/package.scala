@@ -248,15 +248,14 @@ package object sparkey extends SparkeyReaderInstances {
       self.transform { collection =>
         val shards = collection
           .groupBy { case (k, _) => floorMod(w.shardHash(k), numShards).toShort }
-          .map {
-            case (shard, xs) =>
-              shard -> writeToSparkey(
-                uri.sparkeyUriForShard(shard, numShards),
-                maxMemoryUsage,
-                compressionType,
-                compressionBlockSize,
-                xs
-              )
+          .map { case (shard, xs) =>
+            shard -> writeToSparkey(
+              uri.sparkeyUriForShard(shard, numShards),
+              maxMemoryUsage,
+              compressionType,
+              compressionBlockSize,
+              xs
+            )
           }
 
         val shardsMap = shards.asMapSideInput
@@ -264,18 +263,17 @@ package object sparkey extends SparkeyReaderInstances {
         val uris = shards.context
           .parallelize((0 until numShards).map(_.toShort))
           .withSideInputs(shardsMap)
-          .map {
-            case (shard, sideContext) =>
-              sideContext(shardsMap).getOrElse(
-                shard,
-                writeToSparkey(
-                  uri.sparkeyUriForShard(shard, numShards),
-                  maxMemoryUsage,
-                  compressionType,
-                  compressionBlockSize,
-                  Iterable.empty[(K, V)]
-                )
+          .map { case (shard, sideContext) =>
+            sideContext(shardsMap).getOrElse(
+              shard,
+              writeToSparkey(
+                uri.sparkeyUriForShard(shard, numShards),
+                maxMemoryUsage,
+                compressionType,
+                compressionBlockSize,
+                Iterable.empty[(K, V)]
               )
+            )
           }
           .toSCollection
 

@@ -55,9 +55,8 @@ trait BigtableMatchers extends SCollectionMatchers {
   def containColumnFamilies(expectedCFs: String*): Matcher[BTCollection] =
     new Matcher[BTCollection] {
       override def apply(left: BTCollection): MatchResult = {
-        val foundCFs = left.flatMap {
-          case (_, cells) =>
-            cells.map(_.getSetCell.getFamilyName)
+        val foundCFs = left.flatMap { case (_, cells) =>
+          cells.map(_.getSetCell.getFamilyName)
         }
 
         containInAnyOrder(expectedCFs).apply(foundCFs.distinct)
@@ -88,16 +87,15 @@ trait BigtableMatchers extends SCollectionMatchers {
   ): Matcher[BTCollection] =
     new Matcher[BTCollection] {
       override def apply(left: BTCollection): MatchResult = {
-        val flattenedRows = left.flatMap {
-          case (rowKey, rowValue) =>
-            rowValue.map { cell =>
-              (
-                rowKey,
-                cell.getSetCell.getFamilyName,
-                cell.getSetCell.getColumnQualifier,
-                cell.getSetCell.getValue
-              )
-            }
+        val flattenedRows = left.flatMap { case (rowKey, rowValue) =>
+          rowValue.map { cell =>
+            (
+              rowKey,
+              cell.getSetCell.getFamilyName,
+              cell.getSetCell.getColumnQualifier,
+              cell.getSetCell.getValue
+            )
+          }
         }
 
         containValue(
@@ -121,9 +119,8 @@ trait BigtableMatchers extends SCollectionMatchers {
   ): Matcher[BTCollection] =
     new Matcher[BTCollection] {
       override def apply(left: BTCollection): MatchResult = {
-        val flattenedRows = left.flatMap {
-          case (rowKey, rowValue) =>
-            rowValue.map(cell => (rowKey, cell.getMutationCase.toString))
+        val flattenedRows = left.flatMap { case (rowKey, rowValue) =>
+          rowValue.map(cell => (rowKey, cell.getMutationCase.toString))
         }
 
         containValue((key, mutation.toString)).apply(flattenedRows)

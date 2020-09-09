@@ -75,9 +75,8 @@ object TfIdf {
     }
 
     computeTfIdf(uriToContent)
-      .map {
-        case (t, (d, tfIdf)) =>
-          s"$t\t$d\t$tfIdf"
+      .map { case (t, (d, tfIdf)) =>
+        s"$t\t$d\t$tfIdf"
       }
       .saveAsTextFile(args("output"))
 
@@ -90,9 +89,8 @@ object TfIdf {
     uriToContent: SCollection[(String, String)]
   ): SCollection[(String, (String, Double))] = {
     // Split lines into terms as (doc, term)
-    val uriToWords = uriToContent.flatMap {
-      case (uri, line) =>
-        line.split("\\W+").filter(_.nonEmpty).map(w => (uri, w.toLowerCase))
+    val uriToWords = uriToContent.flatMap { case (uri, line) =>
+      line.split("\\W+").filter(_.nonEmpty).map(w => (uri, w.toLowerCase))
     }
 
     val uriToWordAndCount = uriToWords

@@ -73,24 +73,23 @@ class DoubleSCollectionFunctions(self: SCollection[Double]) {
         (acc, x) => (x.min(acc._1), x.max(acc._2)),
         (l, r) => (l._1.min(r._1), l._2.max(r._2))
       )
-    val buckets = minMax.map {
-      case (min, max) =>
-        if (min.isNaN || max.isNaN || max.isInfinity || min.isInfinity) {
-          throw new UnsupportedOperationException(
-            "Histogram on either an empty SCollection or SCollection containing +/-infinity or NaN"
-          )
-        }
-        val range = if (min != max) {
-          // Range.Double.inclusive(min, max, increment)
-          // The above code doesn't always work. See Scala bug #SI-8782.
-          // https://issues.scala-lang.org/browse/SI-8782
-          val span = max - min
-          val steps = bucketCount
-          Range.Int(0, steps, 1).map(s => min + (s * span) / steps) :+ max
-        } else {
-          List(min, min)
-        }
-        range.toArray
+    val buckets = minMax.map { case (min, max) =>
+      if (min.isNaN || max.isNaN || max.isInfinity || min.isInfinity) {
+        throw new UnsupportedOperationException(
+          "Histogram on either an empty SCollection or SCollection containing +/-infinity or NaN"
+        )
+      }
+      val range = if (min != max) {
+        // Range.Double.inclusive(min, max, increment)
+        // The above code doesn't always work. See Scala bug #SI-8782.
+        // https://issues.scala-lang.org/browse/SI-8782
+        val span = max - min
+        val steps = bucketCount
+        Range.Int(0, steps, 1).map(s => min + (s * span) / steps) :+ max
+      } else {
+        List(min, min)
+      }
+      range.toArray
     }
     (buckets, histogramImpl(buckets, true))
   }
@@ -146,11 +145,10 @@ class DoubleSCollectionFunctions(self: SCollection[Double]) {
       .toSCollection
       .countByValue // Count occurrences of each bucket
       .cross(bucketSize) // Replicate bucket size
-      .map {
-        case ((bin, count), size) =>
-          val b = Array.fill(size)(0L)
-          b(bin) = count
-          b
+      .map { case ((bin, count), size) =>
+        val b = Array.fill(size)(0L)
+        b(bin) = count
+        b
       }
       .reduce { (x, y) =>
         val r = x.clone()

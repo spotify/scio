@@ -41,8 +41,8 @@ object SafeFlatMapExample {
 
     // rescue from number format exceptions:
     val rescue = errors
-      .collect {
-        case (i, _: NumberFormatException) => i.length.toLong
+      .collect { case (i, _: NumberFormatException) =>
+        i.length.toLong
       }
 
     (longs ++ rescue).sum.saveAsTextFile("num-sum")

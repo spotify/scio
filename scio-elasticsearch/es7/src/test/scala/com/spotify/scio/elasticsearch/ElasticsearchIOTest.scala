@@ -25,9 +25,8 @@ class ElasticsearchIOTest extends ScioIOSpec {
     val xs = 1 to 100
     def opts(): ElasticsearchOptions =
       ElasticsearchOptions(Nil)
-    testJobTestOutput(xs)(_ => ElasticsearchIO(opts())) {
-      case (data, _) =>
-        data.saveAsElasticsearch(opts())(_ => Seq(new IndexRequest))
+    testJobTestOutput(xs)(_ => ElasticsearchIO(opts())) { case (data, _) =>
+      data.saveAsElasticsearch(opts())(_ => Seq(new IndexRequest))
     }
   }
 }

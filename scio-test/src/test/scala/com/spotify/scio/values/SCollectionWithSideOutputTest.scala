@@ -50,14 +50,13 @@ class SCollectionWithSideOutputTest extends PipelineSpec {
     val (even, _) =
       elements
         .withSideOutputs(nSideOut)
-        .flatMap {
-          case (n, ctx) =>
-            if (n % 2 == 0)
-              Some(n)
-            else {
-              ctx.output(nSideOut, n)
-              None
-            }
+        .flatMap { case (n, ctx) =>
+          if (n % 2 == 0)
+            Some(n)
+          else {
+            ctx.output(nSideOut, n)
+            None
+          }
         }
 
     even should containInAnyOrder(expected)

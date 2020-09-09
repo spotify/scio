@@ -740,13 +740,12 @@ object TypeConvertionsTestData {
     }.toList
 
   val to: List[To1] =
-    from.map {
-      case From0(i, s, From1(xs, q)) =>
-        To1(s, To0(q, xs), i)
+    from.map { case From0(i, s, From1(xs, q)) =>
+      To1(s, To0(q, xs), i)
     }
 
-  val tinyTo: List[TinyTo] = to.map {
-    case To1(s, _, i) => TinyTo(s, i)
+  val tinyTo: List[TinyTo] = to.map { case To1(s, _, i) =>
+    TinyTo(s, i)
   }
 
   case class JavaCompatibleUser(name: String, age: Int)

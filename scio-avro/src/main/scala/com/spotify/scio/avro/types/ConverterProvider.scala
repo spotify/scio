@@ -190,9 +190,8 @@ private[types] object ConverterProvider {
       val schemaOf = q"${p(c, ScioAvroType)}.schemaOf[$tpe]"
       val header =
         q"val result = new ${p(c, ApacheAvro)}.generic.GenericData.Record($schemaOf)"
-      val body = sets.map {
-        case (fieldName, value) =>
-          q"if (${p(c, ScioAvro)}.types.ConverterUtil.notNull($value)) result.put($fieldName, $value)"
+      val body = sets.map { case (fieldName, value) =>
+        q"if (${p(c, ScioAvro)}.types.ConverterUtil.notNull($value)) result.put($fieldName, $value)"
       }
       val footer = q"result"
       q"{$header; ..$body; $footer}"

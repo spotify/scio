@@ -88,30 +88,29 @@ final private[client] class JobOps(client: Client) {
     }
 
     while (pendingJobs.nonEmpty) {
-      val remainingJobs = pendingJobs.filter {
-        case (bqJob, jobReference) =>
-          val jobId = jobReference.getJobId
-          try {
-            val poll = client.underlying
-              .jobs()
-              .get(client.project, jobId)
-              .setLocation(jobReference.getLocation)
-              .execute()
-            val error = poll.getStatus.getErrorResult
-            if (error != null) {
-              throw new RuntimeException(s"${bqJob.show} failed with error: $error")
-            }
-            if (poll.getStatus.getState == "DONE") {
-              logJobStatistics(bqJob, poll)
-              false
-            } else {
-              true
-            }
-          } catch {
-            case e: IOException =>
-              Logger.warn(s"BigQuery request failed: id: $jobId, error: $e")
-              true
+      val remainingJobs = pendingJobs.filter { case (bqJob, jobReference) =>
+        val jobId = jobReference.getJobId
+        try {
+          val poll = client.underlying
+            .jobs()
+            .get(client.project, jobId)
+            .setLocation(jobReference.getLocation)
+            .execute()
+          val error = poll.getStatus.getErrorResult
+          if (error != null) {
+            throw new RuntimeException(s"${bqJob.show} failed with error: $error")
           }
+          if (poll.getStatus.getState == "DONE") {
+            logJobStatistics(bqJob, poll)
+            false
+          } else {
+            true
+          }
+        } catch {
+          case e: IOException =>
+            Logger.warn(s"BigQuery request failed: id: $jobId, error: $e")
+            true
+        }
       }
 
       pendingJobs = remainingJobs

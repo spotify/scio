@@ -229,9 +229,8 @@ abstract class AsyncDoFnTester[P[_], F[_]] extends BaseDoFnTester {
 
   // finish bundle and start new one
   override def nextBundle(): Seq[String] = {
-    pending.foreach {
-      case (input, promise) =>
-        completePromise(promise, input.toString)
+    pending.foreach { case (input, promise) =>
+      completePromise(promise, input.toString)
     }
     fn.finishBundle(finishBundleContext)
     val result = Seq(outputBuffer.toSeq: _*)
