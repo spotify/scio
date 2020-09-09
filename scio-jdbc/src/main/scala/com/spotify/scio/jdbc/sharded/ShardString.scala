@@ -22,17 +22,19 @@ import org.apache.commons.codec.binary.Base64
 
 sealed trait ShardString extends Serializable {
   val value: String
+
+  override def toString: String = value
 }
 
 object ShardString {
 
-  final case class HexUpperString(value: String) extends ShardString {
-    override def toString: String = value.toUpperCase
-  }
+  sealed trait HexString extends ShardString
+  final case class HexUpperString(value: String) extends HexString
+  final case class HexLowerString(value: String) extends HexString
 
-  final case class HexLowerString(value: String) extends ShardString {
-    override def toString: String = value.toLowerCase
-  }
+  sealed trait UuidString extends HexString
+  final case class UuidLowerString(value: String) extends UuidString
+  final case class UuidUpperString(value: String) extends UuidString
 
   final case class Base64String(value: String) extends ShardString
 
@@ -47,19 +49,43 @@ trait RangeShardStringCodec[T <: ShardString] extends Serializable {
 object RangeShardStringCodec {
   import ShardString._
 
-  implicit val hexUpperShardRangeStringCodec: RangeShardStringCodec[HexUpperString] =
-    new RangeShardStringCodec[HexUpperString] {
-      def encode(bigInt: BigInt): HexUpperString = lift(bigInt.toString(16).toUpperCase)
-      def decode(str: HexUpperString): BigInt = BigInt(str.value, 16)
-      def lift(str: String): HexUpperString = HexUpperString(str)
+  private def hexShardRangeStringCodec[S <: HexString](
+    hexStringBuilder: String => S
+  ): RangeShardStringCodec[S] =
+    new RangeShardStringCodec[S] {
+      def encode(bigInt: BigInt): S = lift(bigInt.toString(16))
+      def decode(str: S): BigInt = BigInt(str.value, 16)
+      def lift(str: String): S = hexStringBuilder(str)
     }
 
+  implicit val hexUpperShardRangeStringCodec: RangeShardStringCodec[HexUpperString] =
+    hexShardRangeStringCodec(str => HexUpperString(str.toUpperCase))
+
   implicit val hexLowerShardRangeStringCodec: RangeShardStringCodec[HexLowerString] =
-    new RangeShardStringCodec[HexLowerString] {
-      def encode(bigInt: BigInt): HexLowerString = lift(bigInt.toString(16).toLowerCase)
-      def decode(str: HexLowerString): BigInt = BigInt(str.value, 16)
-      def lift(str: String): HexLowerString = HexLowerString(str)
+    hexShardRangeStringCodec(str => HexLowerString(str.toLowerCase))
+
+  implicit def uuidShardRangeStringCodec[S <: UuidString](
+    uuidStringBuilder: String => S
+  ): RangeShardStringCodec[S] =
+    new RangeShardStringCodec[S] {
+      def encode(bigInt: BigInt): S = lift(bigInt.toString(16))
+      def decode(str: S): BigInt = BigInt(str.value.replaceAll("-", ""), 16)
+      def lift(str: String): S = uuidStringBuilder(
+        Seq(
+          str.substring(0, 8),
+          str.substring(8, 12),
+          str.substring(12, 16),
+          str.substring(16, 20),
+          str.substring(20)
+        ).mkString("-")
+      )
     }
+
+  implicit val uuidLowerShardRangeStringCodec: RangeShardStringCodec[UuidLowerString] =
+    uuidShardRangeStringCodec(str => UuidLowerString(str.toLowerCase))
+
+  implicit val uuidUpperShardRangeStringCodec: RangeShardStringCodec[UuidUpperString] =
+    uuidShardRangeStringCodec(str => UuidUpperString(str.toUpperCase))
 
   implicit val base64ShardRangeStringCodec: RangeShardStringCodec[Base64String] =
     new RangeShardStringCodec[Base64String] {

@@ -74,4 +74,64 @@ class JdbcRangeStringShardTests extends AnyFlatSpec {
       )
     )
   }
+
+  "hex uuid lower shardable" must "partition a range of uuid strings in the lower case" in {
+    val shard = Shard.range[UuidLowerString]
+    val queries = shard.partition(
+      Range(UuidLowerString("a2c9cba1-eaa5-4c3d-b099-896730eb6310"),
+        UuidLowerString("a2c9cba1-eaa5-4c3d-b099-896730eb6337")), 3)
+
+    queries must contain theSameElementsAs (
+      Seq(
+        RangeShardQuery(
+          Range(UuidLowerString("a2c9cba1-eaa5-4c3d-b099-896730eb6310"),
+            UuidLowerString("a2c9cba1-eaa5-4c3d-b099-896730eb631d")),
+          upperBoundInclusive = false,
+          quoteValues = true
+        ),
+        RangeShardQuery(
+          Range(UuidLowerString("a2c9cba1-eaa5-4c3d-b099-896730eb631d"),
+            UuidLowerString("a2c9cba1-eaa5-4c3d-b099-896730eb632a")),
+          upperBoundInclusive = false,
+          quoteValues = true
+        ),
+        RangeShardQuery(
+          Range(UuidLowerString("a2c9cba1-eaa5-4c3d-b099-896730eb632a"),
+            UuidLowerString("a2c9cba1-eaa5-4c3d-b099-896730eb6337")),
+          upperBoundInclusive = true,
+          quoteValues = true
+        )
+      )
+      )
+  }
+
+  "hex uuid upper shardable" must "partition a range of uuid strings in the upper case" in {
+    val shard = Shard.range[UuidUpperString]
+    val queries = shard.partition(
+      Range(UuidUpperString("A2C9CBA1-EAA5-4C3D-B099-896730EB6310"),
+        UuidUpperString("A2C9CBA1-EAA5-4C3D-B099-896730EB6337")), 3)
+
+    queries must contain theSameElementsAs (
+      Seq(
+        RangeShardQuery(
+          Range(UuidUpperString("A2C9CBA1-EAA5-4C3D-B099-896730EB6310"),
+            UuidUpperString("A2C9CBA1-EAA5-4C3D-B099-896730EB631D")),
+          upperBoundInclusive = false,
+          quoteValues = true
+        ),
+        RangeShardQuery(
+          Range(UuidUpperString("A2C9CBA1-EAA5-4C3D-B099-896730EB631D"),
+            UuidUpperString("A2C9CBA1-EAA5-4C3D-B099-896730EB632A")),
+          upperBoundInclusive = false,
+          quoteValues = true
+        ),
+        RangeShardQuery(
+          Range(UuidUpperString("A2C9CBA1-EAA5-4C3D-B099-896730EB632A"),
+            UuidUpperString("A2C9CBA1-EAA5-4C3D-B099-896730EB6337")),
+          upperBoundInclusive = true,
+          quoteValues = true
+        )
+      )
+      )
+  }
 }
