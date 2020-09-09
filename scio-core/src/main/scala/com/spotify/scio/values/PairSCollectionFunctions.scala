@@ -47,7 +47,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
 
   private[this] val context: ScioContext = self.context
 
-  implicit val (keyCoder, valueCoder): (Coder[K], Coder[V]) = BeamCoders.getKV(self)
+  implicit val (keyCoder, valueCoder): (Coder[K], Coder[V]) = BeamCoders.getTupleCoders(self)
 
   private[scio] def toKV: SCollection[KV[K, V]] =
     self.map(kv => KV.of(kv._1, kv._2))(Coder.raw(CoderMaterializer.kvCoder[K, V](context)))
@@ -555,7 +555,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
   def aggregateByKey[A: Coder, U: Coder](
     aggregator: MonoidAggregator[V, A, U]
   ): SCollection[(K, U)] = self.transform { in =>
-    val a = aggregator // d efeat closure
+    val a = aggregator // defeat closure
     in.mapValues(a.prepare)
       .foldByKey(a.monoid)
       .mapValues(a.present)

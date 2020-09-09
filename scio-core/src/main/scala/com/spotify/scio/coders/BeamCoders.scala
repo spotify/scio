@@ -24,18 +24,18 @@ import org.apache.beam.sdk.{coders => beam}
 import scala.annotation.tailrec
 
 /** Utility for extracting [[Coder]]s from Scio types. */
-object BeamCoders {
+private[scio] object BeamCoders {
   @tailrec
   private def unwrap[T](coder: beam.Coder[T]): beam.Coder[T] =
     coder match {
       case WrappedBCoder(c)         => unwrap(c)
-      case c: LazyCoder[T]          => unwrap(CoderMaterializer.beamImpl(c.o, c.coder))
+      case c: LazyCoder[T]          => unwrap(c.bcoder)
       case c: beam.NullableCoder[T] => c.getValueCoder
       case _                        => coder
     }
 
   /** Get key-value coders from an `SCollection[(K, V)]`. */
-  def getKV[K, V](coll: SCollection[(K, V)]): (Coder[K], Coder[V]) = {
+  def getTupleCoders[K, V](coll: SCollection[(K, V)]): (Coder[K], Coder[V]) = {
     val coder = coll.internal.getCoder
     val (k, v) = unwrap(coder) match {
       case c: scio.PairCoder[K, V] => (c.ac, c.bc)
@@ -54,7 +54,7 @@ object BeamCoders {
 
   private def getIterableV[V](coder: beam.Coder[Iterable[V]]): beam.Coder[V] =
     unwrap(coder) match {
-      case c: scio.BaseSeqLikeCoder[Iterable, V] => c.elemCoder
+      case (c: scio.BaseSeqLikeCoder[Iterable, V] @unchecked) => c.elemCoder
       case _ =>
         throw new IllegalArgumentException(
           s"Failed to extract value coder from Coder[Iterable[V]]: $coder"
@@ -64,12 +64,11 @@ object BeamCoders {
   /** Get key-value coders from a `SideInput[Map[K, Iterable[V]]]`. */
   def getMultiMapKV[K, V](si: SideInput[Map[K, Iterable[V]]]): (Coder[K], Coder[V]) = {
     val coder = si.view.getPCollection.getCoder.asInstanceOf[beam.KvCoder[_, _]].getValueCoder
-    println(unwrap(coder), unwrap(coder).getClass.getCanonicalName)
     val (k, v) = unwrap(coder) match {
       // Beam's `View.asMultiMap`
       case c: beam.KvCoder[K, V] => (c.getKeyCoder, c.getValueCoder)
       // `asMapSingletonSideInput`
-      case c: scio.MapCoder[K, Iterable[V]] => (c.kc, getIterableV(c.vc))
+      case (c: scio.MapCoder[K, Iterable[V]] @unchecked) => (c.kc, getIterableV(c.vc))
       case _ =>
         throw new IllegalArgumentException(
           s"Failed to extract value coder from Coder[Map[K, Iterable[V]]]: $coder"

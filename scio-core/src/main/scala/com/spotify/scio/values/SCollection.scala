@@ -867,7 +867,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   def hashLookup[V](
     that: SCollection[(T, V)]
   ): SCollection[(T, Iterable[V])] = {
-    implicit val vCoder = BeamCoders.getKV(that)._2
+    implicit val vCoder = BeamCoders.getTupleCoders(that)._2
     this.transform { in =>
       val side = that.asMultiMapSingletonSideInput
       in.withSideInputs(side)
@@ -1459,7 +1459,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     maxBatchSize: Option[Int] = None,
     maxBatchBytesSize: Option[Int] = None
   )(implicit ev: T <:< (V, Map[String, String])): ClosedTap[Nothing] = {
-    implicit val vCoder = BeamCoders.getKV(this.covary_[(V, Map[String, String])])._1
+    implicit val vCoder = BeamCoders.getTupleCoders(this.covary_[(V, Map[String, String])])._1
     val io = PubsubIO.withAttributes[V](topic, idAttribute, timestampAttribute)
     this
       .covary_[(V, Map[String, String])]

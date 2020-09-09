@@ -29,7 +29,8 @@ import scala.collection.mutable.{ArrayBuffer, Map => MMap}
  */
 class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
 
-  implicit private[this] val (keyCoder, valueCoder): (Coder[K], Coder[V]) = BeamCoders.getKV(self)
+  implicit private[this] val (keyCoder, valueCoder): (Coder[K], Coder[V]) =
+    (self.keyCoder, self.valueCoder)
 
   /**
    * Perform an inner join by replicating `rhs` to all workers. The right side should be tiny and

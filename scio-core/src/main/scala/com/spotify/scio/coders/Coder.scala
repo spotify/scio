@@ -174,10 +174,10 @@ final private case class DisjunctionCoder[T, Id](
 final private[scio] case class LazyCoder[T](
   typeName: String,
   o: CoderMaterializer.CoderOptions
-)(val coder: Coder[T])
+)(coder: Coder[T])
     extends BCoder[T] {
 
-  private lazy val bcoder = CoderMaterializer.beamImpl[T](o, coder)
+  private[scio] lazy val bcoder = CoderMaterializer.beamImpl[T](o, coder)
 
   def decode(inStream: InputStream): T = bcoder.decode(inStream)
   def encode(value: T, outStream: OutputStream): Unit = bcoder.encode(value, outStream)
