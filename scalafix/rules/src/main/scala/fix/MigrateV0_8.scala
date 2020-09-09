@@ -44,9 +44,8 @@ final class FixScioIO extends SemanticRule("FixScioIO") {
   // Check that the method is a member of an implementation of ScioIO
   private def isScioIOMember(t: Tree)(implicit doc: SemanticDocument) =
     t.parent
-      .collect {
-        case p @ Template(_) =>
-          p.inits.exists(_.tpe.symbol == Symbol("com/spotify/scio/io/ScioIO#"))
+      .collect { case p @ Template(_) =>
+        p.inits.exists(_.tpe.symbol == Symbol("com/spotify/scio/io/ScioIO#"))
       }
       .getOrElse(false)
 
@@ -56,9 +55,8 @@ final class FixScioIO extends SemanticRule("FixScioIO") {
       case t @ q"""..$mods def write(
                       $sName: SCollection[$sTpe],
                       $psName: $psTpe): $ret = $impl""" if isScioIOMember(t) =>
-        ret.collect {
-          case r @ Type.Apply(Type.Name("Future"), List(tapTpe)) =>
-            Patch.replaceTree(r, tapTpe.syntax)
+        ret.collect { case r @ Type.Apply(Type.Name("Future"), List(tapTpe)) =>
+          Patch.replaceTree(r, tapTpe.syntax)
         }.asPatch
     }.asPatch
 }
@@ -113,36 +111,32 @@ final class FixSyntaxImports extends SemanticRule("FixSyntaxImports") {
 
 final class FixContextClose extends SemanticRule("FixContextClose") {
   override def fix(implicit doc: SemanticDocument): Patch =
-    doc.tree.collect {
-      case t @ q"$x.close()" =>
-        x.symbol.info.get.signature match {
-          case ValueSignature(TypeRef(_, tpe, _))
-              if tpe == Symbol("com/spotify/scio/ScioContext#") =>
-            Patch.replaceTree(t, q"$x.run()".syntax)
-          case _ =>
-            Patch.empty
-        }
+    doc.tree.collect { case t @ q"$x.close()" =>
+      x.symbol.info.get.signature match {
+        case ValueSignature(TypeRef(_, tpe, _)) if tpe == Symbol("com/spotify/scio/ScioContext#") =>
+          Patch.replaceTree(t, q"$x.run()".syntax)
+        case _ =>
+          Patch.empty
+      }
     }.asPatch
 }
 
 final class FixTensorflow extends SemanticRule("FixTensorflow") {
   override def fix(implicit doc: SemanticDocument): Patch =
-    doc.tree.collect {
-      case t @ Term.Select(s, Term.Name("saveAsTfExampleFile")) =>
-        Patch.replaceTree(t, q"$s.saveAsTfRecordFile".syntax)
+    doc.tree.collect { case t @ Term.Select(s, Term.Name("saveAsTfExampleFile")) =>
+      Patch.replaceTree(t, q"$s.saveAsTfRecordFile".syntax)
     }.asPatch
 }
 
 final class FixBigQueryDeprecations extends SemanticRule("FixBigQueryDeprecations") {
   override def fix(implicit doc: SemanticDocument): Patch =
-    doc.tree.collect {
-      case t @ Term.Apply(Term.Select(s, Term.Name("bigQueryTable")), x :: xs) =>
-        val term = x.symbol.info match {
-          case None => q"Table.Spec($x)"
-          case _    => q"Table.Ref($x)"
-        }
-        val syntax = Term.Apply(Term.Select(s, Term.Name("bigQueryTable")), term :: xs).syntax
-        Patch.replaceTree(t, syntax)
+    doc.tree.collect { case t @ Term.Apply(Term.Select(s, Term.Name("bigQueryTable")), x :: xs) =>
+      val term = x.symbol.info match {
+        case None => q"Table.Spec($x)"
+        case _    => q"Table.Ref($x)"
+      }
+      val syntax = Term.Apply(Term.Select(s, Term.Name("bigQueryTable")), term :: xs).syntax
+      Patch.replaceTree(t, syntax)
     }.asPatch
 }
 
@@ -153,33 +147,31 @@ final class ConsistenceJoinNames extends SemanticRule("ConsistenceJoinNames") {
   private val scoll = "com/spotify/scio/values/SCollection#"
 
   override def fix(implicit doc: SemanticDocument): Patch = {
-    doc.tree.collect {
-      case Term.Apply(fun, args) =>
-        fun match {
-          case Term.Select(qual, name) =>
-            name match {
-              case t @ Term.Name("hashLeftJoin") if expectedType(qual, pairedHashScol) =>
-                Patch.replaceTree(t, "hashLeftOuterJoin") + renameNamedArgs(args)
-              case t @ Term.Name("skewedLeftJoin") if expectedType(qual, pairedSkewedScol) =>
-                Patch.replaceTree(t, "skewedLeftOuterJoin") + renameNamedArgs(args)
-              case t @ Term.Name("sparseOuterJoin") if expectedType(qual, pairedScol) =>
-                Patch.replaceTree(t, "sparseFullOuterJoin") + renameNamedArgs(args)
-              case _ @(Term.Name("join") | Term.Name("fullOuterJoin") | Term.Name("leftOuterJoin") |
-                  Term.Name("rightOuterJoin") | Term.Name("sparseLeftOuterJoin") |
-                  Term.Name("sparseRightOuterJoin") | Term.Name("cogroup") |
-                  Term.Name("groupWith") | Term.Name("sparseLookup"))
-                  if expectedType(qual, pairedScol) =>
-                renameNamedArgs(args)
-              case _ @(Term.Name("skewedJoin") | Term.Name("skewedFullOuterJoin"))
-                  if expectedType(qual, pairedSkewedScol) =>
-                renameNamedArgs(args)
-              case _ @(Term.Name("hashJoin") | Term.Name("hashFullOuterJoin") |
-                  Term.Name("hashIntersectByKey")) if expectedType(qual, pairedHashScol) =>
-                renameNamedArgs(args)
-              case _ => Patch.empty
-            }
-          case _ => Patch.empty
-        }
+    doc.tree.collect { case Term.Apply(fun, args) =>
+      fun match {
+        case Term.Select(qual, name) =>
+          name match {
+            case t @ Term.Name("hashLeftJoin") if expectedType(qual, pairedHashScol) =>
+              Patch.replaceTree(t, "hashLeftOuterJoin") + renameNamedArgs(args)
+            case t @ Term.Name("skewedLeftJoin") if expectedType(qual, pairedSkewedScol) =>
+              Patch.replaceTree(t, "skewedLeftOuterJoin") + renameNamedArgs(args)
+            case t @ Term.Name("sparseOuterJoin") if expectedType(qual, pairedScol) =>
+              Patch.replaceTree(t, "sparseFullOuterJoin") + renameNamedArgs(args)
+            case _ @(Term.Name("join") | Term.Name("fullOuterJoin") | Term.Name("leftOuterJoin") |
+                Term.Name("rightOuterJoin") | Term.Name("sparseLeftOuterJoin") |
+                Term.Name("sparseRightOuterJoin") | Term.Name("cogroup") | Term.Name("groupWith") |
+                Term.Name("sparseLookup")) if expectedType(qual, pairedScol) =>
+              renameNamedArgs(args)
+            case _ @(Term.Name("skewedJoin") | Term.Name("skewedFullOuterJoin"))
+                if expectedType(qual, pairedSkewedScol) =>
+              renameNamedArgs(args)
+            case _ @(Term.Name("hashJoin") | Term.Name("hashFullOuterJoin") |
+                Term.Name("hashIntersectByKey")) if expectedType(qual, pairedHashScol) =>
+              renameNamedArgs(args)
+            case _ => Patch.empty
+          }
+        case _ => Patch.empty
+      }
     }
   }.asPatch
 
