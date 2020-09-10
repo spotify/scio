@@ -71,6 +71,12 @@ object Shard {
   implicit val hexLowerStringJdbcShardable: RangeShard[ShardString.HexLowerString] =
     new RangeStringShard[ShardString.HexLowerString]
 
+  implicit val uuidLowerStringJdbcShardable: RangeShard[ShardString.UuidLowerString] =
+    new RangeStringShard[ShardString.UuidLowerString]
+
+  implicit val uuidUpperStringJdbcShardable: RangeShard[ShardString.UuidUpperString] =
+    new RangeStringShard[ShardString.UuidUpperString]
+
   implicit val base64StringJdbcShardable: RangeShard[ShardString.Base64String] =
     new RangeStringShard[ShardString.Base64String]
 

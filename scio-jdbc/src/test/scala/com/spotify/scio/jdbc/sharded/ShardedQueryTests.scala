@@ -52,7 +52,7 @@ class ShardedQueryTests extends AnyFlatSpec {
   "toSelectStatement" must "produce the correct statement for hex string in upper case" in {
 
     val shardQuery = RangeShardQuery[HexUpperString](
-      Range(HexUpperString("a"), HexUpperString("f")),
+      Range(HexUpperString("A"), HexUpperString("F")),
       upperBoundInclusive = true,
       quoteValues = true
     )
