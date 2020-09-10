@@ -31,11 +31,13 @@ def mkArgs(n):
 
 
 def mkClassTags(n):
-    return ', '.join(x + ': Coder' for x in ['KEY'] + mkVals(n))
+    return ', '.join(['KEY'] + mkVals(n))
 
 
 def mkFnArgs(n):
-    return ', '.join(x.lower() + ': SCollection[(KEY, %s)]' % x for x in mkVals(n))  # NOQA
+    return ', '.join(
+        x.lower() + ': SCollection[(KEY, %s)]' % x
+        for x in mkVals(n))
 
 
 def mkFnRetVal(n, aWrapper=None, otherWrapper=None):
@@ -45,13 +47,11 @@ def mkFnRetVal(n, aWrapper=None, otherWrapper=None):
     return 'SCollection[(KEY, (%s))]' % ', '.join(vals)
 
 
-# Functions
-
-def cogroup(out, n):
-    vals = mkVals(n)
-
-    print('  def cogroup[%s](%s): %s = {' % (
-        mkClassTags(n), mkFnArgs(n), mkFnRetVal(n, 'Iterable', 'Iterable')),
+def common(out, vals):
+    print('    implicit val keyCoder = a.keyCoder', file=out)
+    print('    implicit val (%s) = (%s)' % (
+        ', '.join('coder' + x for x in vals),
+        ', '.join('%s.valueCoder' % x.lower() for x in vals)),
         file=out)
 
     print('    val (%s) = (%s)' % (
@@ -66,6 +66,18 @@ def cogroup(out, n):
     print(
         '      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())',
         file=out)
+
+
+# Functions
+
+def cogroup(out, n):
+    vals = mkVals(n)
+
+    print('  def cogroup[%s](%s): %s = {' % (
+        mkClassTags(n), mkFnArgs(n), mkFnRetVal(n, 'Iterable', 'Iterable')),
+        file=out)
+
+    common(out, vals)
 
     print('    a.context.wrap(keyed).withName(tfName).map { kv =>', file=out)
     print('      val (key, result) = (kv.getKey, kv.getValue)', file=out)
@@ -83,17 +95,7 @@ def join(out, n):
     print('  def apply[%s](%s): %s = {' % (
         mkClassTags(n), mkFnArgs(n), mkFnRetVal(n)), file=out)
 
-    print('    val (%s) = (%s)' % (
-        ', '.join('tag' + x for x in vals),
-        ', '.join('new TupleTag[%s]()' % x for x in vals)), file=out)
-
-    print('    val keyed = KeyedPCollectionTuple', file=out)
-    print('      .of(tagA, a.toKV.internal)', file=out)
-    for x in vals[1:]:
-        print('      .and(tag%s, %s.toKV.internal)' % (x, x.lower()), file=out)
-    print(
-        '      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())',
-        file=out)
+    common(out, vals)
 
     print(
         '    a.context.wrap(keyed).withName(tfName).flatMap { kv =>',
@@ -116,18 +118,7 @@ def left(out, n):
         mkClassTags(n), mkFnArgs(n), mkFnRetVal(n, None, 'Option')),
         file=out)
 
-    print('    val (%s) = (%s)' % (
-        ', '.join('tag' + x for x in vals),
-        ', '.join('new TupleTag[%s]()' % x for x in vals)),
-        file=out)
-
-    print('    val keyed = KeyedPCollectionTuple', file=out)
-    print('      .of(tagA, a.toKV.internal)', file=out)
-    for x in vals[1:]:
-        print('      .and(tag%s, %s.toKV.internal)' % (x, x.lower()), file=out)
-    print(
-        '      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())',
-        file=out)
+    common(out, vals)
 
     print(
         '    a.context.wrap(keyed).withName(tfName).flatMap { kv =>',
@@ -155,18 +146,7 @@ def outer(out, n):
         mkClassTags(n), mkFnArgs(n), mkFnRetVal(n, 'Option', 'Option')),
         file=out)
 
-    print('    val (%s) = (%s)' % (
-        ', '.join('tag' + x for x in vals),
-        ', '.join('new TupleTag[%s]()' % x for x in vals)),
-        file=out)
-
-    print('    val keyed = KeyedPCollectionTuple', file=out)
-    print('      .of(tagA, a.toKV.internal)', file=out)
-    for x in vals[1:]:
-        print('      .and(tag%s, %s.toKV.internal)' % (x, x.lower()), file=out)
-    print(
-        '      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())',
-        file=out)
+    common(out, vals)
 
     print(
         '    a.context.wrap(keyed).withName(tfName).flatMap { kv =>',
@@ -205,8 +185,6 @@ def main(out):
         // generated with multijoin.py
 
         package com.spotify.scio.util
-
-        import com.spotify.scio.coders.Coder
 
         import com.spotify.scio.values.SCollection
         import org.apache.beam.sdk.transforms.join.{CoGroupByKey, KeyedPCollectionTuple}  # NOQA
