@@ -332,17 +332,16 @@ anonymous function without serialization issue</p></p></div>
             
               <section class="">
                 <div class="comment "><p>Filter out tokens that matches the pattern, log, and increment counters</p></p></div>
-                <div class="code ">      .<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#filter(f:T=>Boolean)::com.spotify.scio.values.SCollection[T]" data-tooltip="<span>com.spotify.scio.values.SCollection.filter(f: T => Boolean): : com.spotify.scio.values.SCollection[T]</span>">filter</a></span> {
-        <span class="keyword">case</span> (<span class="identifier">k</span>, _) =>
-          <span class="keyword">val</span> <span class="identifier">matched</span> = <span class="identifier">filter</span>.<span class="identifier">matcher</span>(<span class="identifier">k</span>).<span class="identifier">matches</span>()
-          <span class="keyword">if</span> (<span class="identifier">matched</span>) {
-            <span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/examples/DebuggingWordCount$.html#logger:org.slf4j.Logger" data-tooltip="<span>com.spotify.scio.examples.DebuggingWordCount.logger: org.slf4j.Logger</span>">logger</a></span>.<span class="identifier">debug</span>(<span class="string">s</span>"<span class="string">Matched $</span><span class="identifier">k</span><span class="string">"</span>)
-            <span class="identifier">matchedWords</span>.<span class="identifier">inc</span>()
-          } <span class="keyword">else</span> {
-            <span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/examples/DebuggingWordCount$.html#logger:org.slf4j.Logger" data-tooltip="<span>com.spotify.scio.examples.DebuggingWordCount.logger: org.slf4j.Logger</span>">logger</a></span>.<span class="identifier">trace</span>(<span class="string">s</span>"<span class="string">Did not match: $</span><span class="identifier">k</span><span class="string">"</span>)
-            <span class="identifier">unmatchedWords</span>.<span class="identifier">inc</span>()
-          }
-          <span class="identifier">matched</span>
+                <div class="code ">      .<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#filter(f:T=>Boolean)::com.spotify.scio.values.SCollection[T]" data-tooltip="<span>com.spotify.scio.values.SCollection.filter(f: T => Boolean): : com.spotify.scio.values.SCollection[T]</span>">filter</a></span> { <span class="keyword">case</span> (<span class="identifier">k</span>, _) =>
+        <span class="keyword">val</span> <span class="identifier">matched</span> = <span class="identifier">filter</span>.<span class="identifier">matcher</span>(<span class="identifier">k</span>).<span class="identifier">matches</span>()
+        <span class="keyword">if</span> (<span class="identifier">matched</span>) {
+          <span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/examples/DebuggingWordCount$.html#logger:org.slf4j.Logger" data-tooltip="<span>com.spotify.scio.examples.DebuggingWordCount.logger: org.slf4j.Logger</span>">logger</a></span>.<span class="identifier">debug</span>(<span class="string">s</span>"<span class="string">Matched $</span><span class="identifier">k</span><span class="string">"</span>)
+          <span class="identifier">matchedWords</span>.<span class="identifier">inc</span>()
+        } <span class="keyword">else</span> {
+          <span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/examples/DebuggingWordCount$.html#logger:org.slf4j.Logger" data-tooltip="<span>com.spotify.scio.examples.DebuggingWordCount.logger: org.slf4j.Logger</span>">logger</a></span>.<span class="identifier">trace</span>(<span class="string">s</span>"<span class="string">Did not match: $</span><span class="identifier">k</span><span class="string">"</span>)
+          <span class="identifier">unmatchedWords</span>.<span class="identifier">inc</span>()
+        }
+        <span class="identifier">matched</span>
       }
 &nbsp;</div>
               </section>
