@@ -47,7 +47,7 @@ private object NothingCoder extends AtomicCoder[Nothing] {
     throw new IllegalStateException("Trying to decode a value of type Nothing is impossible")
 }
 
-abstract private class BaseSeqLikeCoder[M[_], T](val elemCoder: BCoder[T])
+abstract private[coders] class BaseSeqLikeCoder[M[_], T](val elemCoder: BCoder[T])
     extends AtomicCoder[M[T]] {
   override def getCoderArguments: java.util.List[_ <: BCoder[_]] =
     Collections.singletonList(elemCoder)
@@ -243,7 +243,8 @@ private class BitSetCoder extends AtomicCoder[BitSet] {
   }
 }
 
-private class MapCoder[K, V](kc: BCoder[K], vc: BCoder[V]) extends AtomicCoder[Map[K, V]] {
+private[coders] class MapCoder[K, V](val kc: BCoder[K], val vc: BCoder[V])
+    extends AtomicCoder[Map[K, V]] {
   private[this] val lc = VarIntCoder.of()
 
   override def encode(value: Map[K, V], os: OutputStream): Unit = {

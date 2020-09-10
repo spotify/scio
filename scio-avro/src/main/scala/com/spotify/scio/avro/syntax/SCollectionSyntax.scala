@@ -47,8 +47,7 @@ final class GenericRecordSCollectionOps(private val self: SCollection[GenericRec
     metadata: Map[String, AnyRef] = AvroIO.WriteParam.DefaultMetadata
   ): ClosedTap[GenericRecord] = {
     val param = AvroIO.WriteParam(numShards, suffix, codec, metadata)
-    val coder = Coder.avroGenericRecordCoder(schema)
-    self.write(GenericRecordIO(path, schema))(param)(coder)
+    self.write(GenericRecordIO(path, schema))(param)
   }
 }
 
