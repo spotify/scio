@@ -63,7 +63,7 @@ object AutoComplete {
   ): SCollection[(String, Iterable[(String, Long)])] =
     input
       .flatMap(allPrefixes(minPrefix))
-      .topByKey(candidatesPerPrefix, Ordering.by(_._2))
+      .topByKey(candidatesPerPrefix)(Ordering.by(_._2))
 
   def computeTopRecursive(
     input: SCollection[(String, Long)],
@@ -79,7 +79,7 @@ object AutoComplete {
       val small =
         (larger(1).flatMap(_._2) ++ input.filter(_._1.length == minPrefix))
           .flatMap(allPrefixes(minPrefix, minPrefix))
-          .topByKey(candidatesPerPrefix, Ordering.by(_._2))
+          .topByKey(candidatesPerPrefix)(Ordering.by(_._2))
       Seq(larger.head ++ larger(1), small)
     }
 

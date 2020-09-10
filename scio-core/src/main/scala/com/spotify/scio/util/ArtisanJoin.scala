@@ -35,7 +35,7 @@ import scala.jdk.CollectionConverters._
 private[scio] object ArtisanJoin {
   private val log = LoggerFactory.getLogger(this.getClass)
 
-  private def cogroupImpl[KEY: Coder, A: Coder, B: Coder, A1: Coder, B1: Coder](
+  private def cogroupImpl[KEY, A, B, A1: Coder, B1: Coder](
     name: String,
     a: SCollection[(KEY, A)],
     b: SCollection[(KEY, B)]
@@ -72,6 +72,8 @@ private[scio] object ArtisanJoin {
       .and(tagB, b.toKV.internal)
       .apply(s"CoGroupByKey@$name", CoGroupByKey.create())
 
+    implicit val (kCoder, aCoder, bCoder) = (a.keyCoder, a.valueCoder, b.valueCoder)
+
     type DF = DoFn[KV[KEY, CoGbkResult], (KEY, (A1, B1))]
     a.context
       .wrap(keyed)
@@ -90,7 +92,7 @@ private[scio] object ArtisanJoin {
       .withState(_.copy(postGbkOp = true))
   }
 
-  private def joinImpl[KEY: Coder, A: Coder, B: Coder, A1: Coder, B1: Coder](
+  private def joinImpl[KEY, A, B, A1: Coder, B1: Coder](
     name: String,
     a: SCollection[(KEY, A)],
     b: SCollection[(KEY, B)]
@@ -110,42 +112,51 @@ private[scio] object ArtisanJoin {
       }
     }.withState(_.copy(postGbkOp = true))
 
-  def cogroup[KEY: Coder, A: Coder, B: Coder](
+  def cogroup[KEY, A, B](
     name: String,
     a: SCollection[(KEY, A)],
     b: SCollection[(KEY, B)]
   ): SCollection[(KEY, (Iterable[A], Iterable[B]))] =
     cogroupImpl[KEY, A, B, Iterable[A], Iterable[B]](name, a, b) { case (key, a, b, c) =>
       c.output((key, (a.asScala, b.asScala)))
-    }
+    }(Coder.iterableCoder(a.valueCoder), Coder.iterableCoder(b.valueCoder))
 
-  def apply[KEY: Coder, A: Coder, B: Coder](
+  def apply[KEY, A, B](
     name: String,
     a: SCollection[(KEY, A)],
     b: SCollection[(KEY, B)]
   ): SCollection[(KEY, (A, B))] =
-    joinImpl(name, a, b)(identity, identity)
+    joinImpl(name, a, b)(identity, identity)(a.valueCoder, b.valueCoder)
 
-  def left[KEY: Coder, A: Coder, B: Coder](
+  def left[KEY, A, B](
     name: String,
     a: SCollection[(KEY, A)],
     b: SCollection[(KEY, B)]
   ): SCollection[(KEY, (A, Option[B]))] =
-    joinImpl(name, a, b)(identity, toOptions)
+    joinImpl(name, a, b)(identity, toOptions)(
+      a.valueCoder,
+      Coder.optionCoder[B, Option](b.valueCoder)
+    )
 
-  def right[KEY: Coder, A: Coder, B: Coder](
+  def right[KEY, A, B](
     name: String,
     a: SCollection[(KEY, A)],
     b: SCollection[(KEY, B)]
   ): SCollection[(KEY, (Option[A], B))] =
-    joinImpl(name, a, b)(toOptions, identity)
+    joinImpl(name, a, b)(toOptions, identity)(
+      Coder.optionCoder[A, Option](a.valueCoder),
+      b.valueCoder
+    )
 
-  def outer[KEY: Coder, A: Coder, B: Coder](
+  def outer[KEY, A, B](
     name: String,
     a: SCollection[(KEY, A)],
     b: SCollection[(KEY, B)]
   ): SCollection[(KEY, (Option[A], Option[B]))] =
-    joinImpl(name, a, b)(toOptions, toOptions)
+    joinImpl(name, a, b)(toOptions, toOptions)(
+      Coder.optionCoder[A, Option](a.valueCoder),
+      Coder.optionCoder[B, Option](b.valueCoder)
+    )
 
   private val emptyList = java.util.Collections.singletonList(Option.empty)
 

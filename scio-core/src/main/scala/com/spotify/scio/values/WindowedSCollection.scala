@@ -54,8 +54,7 @@ case class WindowedValue[T](value: T, timestamp: Instant, window: BoundedWindow,
 }
 
 /** An enhanced SCollection that provides access to window information via [[WindowedValue]]. */
-class WindowedSCollection[T: Coder] private[values] (coll: SCollection[T])
-    extends PCollectionWrapper[T] {
+class WindowedSCollection[T] private[values] (coll: SCollection[T]) extends PCollectionWrapper[T] {
   override val internal: PCollection[T] = coll.internal
 
   override val context: ScioContext = coll.context
