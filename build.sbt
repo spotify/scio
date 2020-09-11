@@ -102,7 +102,7 @@ val sparkeyVersion = "3.2.0"
 val sparkVersion = "2.4.6"
 val tensorFlowVersion = "1.15.0"
 val zoltarVersion = "0.5.6"
-val scalaCollectionCompatVersion = "2.1.6"
+val scalaCollectionCompatVersion = "2.2.0"
 
 lazy val mimaSettings = Seq(
   mimaPreviousArtifacts :=
