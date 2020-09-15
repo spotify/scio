@@ -482,6 +482,7 @@ lazy val `scio-sql`: Project = Project(
   "scio-sql",
   file("scio-sql")
 ).settings(commonSettings)
+  .settings(itSettings)
   .settings(macroSettings)
   .settings(
     description := "Scio - SQL extension",
