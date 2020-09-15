@@ -18,6 +18,8 @@
 package com.spotify.scio.coders
 
 import java.io.{InputStream, OutputStream}
+
+import com.spotify.scio.IsJavaBean
 import com.spotify.scio.coders.instances._
 import com.spotify.scio.transforms.BaseAsyncLookupDoFn
 import org.apache.beam.sdk.coders.Coder.NonDeterministicException
@@ -474,9 +476,8 @@ object Coder
     with ProtobufCoders
     with AlgebirdCoders
     with JodaCoders
-    with JavaBeanCoders
     with BeamTypeCoders
-    with LowPriorityFallbackCoder {
+    with LowPriorityCoders {
   @inline final def apply[T](implicit c: Coder[T]): Coder[T] = c
 
   implicit val charCoder: Coder[Char] = ScalaCoders.charCoder
@@ -549,6 +550,11 @@ object Coder
   implicit val jPeriodCoder: Coder[java.time.Period] = JavaCoders.jPeriodCoder
   implicit val jSqlTimestamp: Coder[java.sql.Timestamp] = JavaCoders.jSqlTimestamp
   implicit def coderJEnum[E <: java.lang.Enum[E]: ClassTag]: Coder[E] = JavaCoders.coderJEnum
+
+}
+
+trait LowPriorityCoders extends LowPriorityFallbackCoder {
+  implicit def javaBeanCoder[T: IsJavaBean: ClassTag]: Coder[T] = JavaCoders.javaBeanCoder
 }
 
 private[coders] object CoderStackTrace {
