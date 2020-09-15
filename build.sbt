@@ -808,7 +808,7 @@ lazy val `scio-parquet`: Project = project
     // change annotation processor output directory so IntelliJ can pick them up
     ensureSourceManaged := IO.createDirectory(sourceManaged.value / "main"),
     (compile in Compile) := Def.task {
-      ensureSourceManaged.value
+      val _ = ensureSourceManaged.value
       (compile in Compile).value
     }.value,
     javacOptions ++= Seq("-s", (sourceManaged.value / "main").toString),
@@ -1212,7 +1212,7 @@ lazy val soccoSettings = if (sys.env.contains("SOCCO")) {
     // Generate scio-examples/target/site/index.html
     soccoIndex := SoccoIndex.generate(target.value / "site" / "index.html"),
     compile in Compile := {
-      soccoIndex.value
+      val _ = soccoIndex.value
       (compile in Compile).value
     }
   )
