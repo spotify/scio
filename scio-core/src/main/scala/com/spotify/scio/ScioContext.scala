@@ -136,14 +136,11 @@ private object RunnerContext {
     pipelineOptions: PipelineOptions,
     classLoader: ClassLoader
   ): Iterable[String] = {
-    // exclude jars from JAVA_HOME and files from current directory
-    val javaHome = new File(CoreSysProps.Home.value).getCanonicalPath
-    val userDir = new File(CoreSysProps.UserDir.value).getCanonicalPath
-
+    val matchesEnvDir: String => Boolean = _.matches(s"${sys.props("user.home")}/\\..+/.+")
     val classPathJars = PipelineResources
       .detectClassPathResourcesToStage(classLoader, pipelineOptions)
       .asScala
-      .filter(path => !path.startsWith(javaHome) && path != userDir)
+      .filterNot(matchesEnvDir)
 
     logger.debug(s"Classpath jars: ${classPathJars.mkString(":")}")
 
