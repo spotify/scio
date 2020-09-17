@@ -34,10 +34,10 @@ val autoServiceVersion = "1.0-rc7"
 val autoValueVersion = "1.7.4"
 val avroVersion = "1.8.2"
 val beamVendorVersion = "0.1"
-val beamVersion = "2.23.0"
-val bigdataossVersion = "2.1.2"
-val bigQueryStorageVersion = "0.125.0-beta"
-val bigtableClientVersion = "1.13.0"
+val beamVersion = "2.24.0"
+val bigdataossVersion = "2.1.3"
+val bigQueryStorageVersion = "0.133.0-beta"
+val bigtableClientVersion = "1.14.0"
 val breezeVersion = "1.1"
 val caffeineVersion = "2.8.5"
 val caseappVersion = "2.0.4"
@@ -60,13 +60,13 @@ val gcsVersion = "1.8.0"
 val generatedGrpcBetaVersion = "1.9.1"
 val generatedDatastoreProtoVersion = "0.85.0"
 val generatedGrpcGaVersion = "1.85.1"
-val googleApiServicesBigQuery = "v2-rev20191211-1.30.9"
-val googleApiServicesDataflow = "v1b3-rev20200305-1.30.9"
+val googleApiServicesBigQuery = "v2-rev20200719-1.30.10"
+val googleApiServicesDataflow = "v1b3-rev20200713-1.30.10"
 val googleAuthVersion = "0.19.0"
-val googleClientsVersion = "1.30.9"
+val googleClientsVersion = "1.30.10"
 val googleCloudSpannerVersion = "1.49.1"
 val googleHttpClientsVersion = "1.34.0"
-val grpcVersion = "1.27.2"
+val grpcVersion = "1.29.0"
 val guavaVersion = "28.2-jre"
 val hadoopVersion = "2.7.7"
 val hamcrestVersion = "2.2"
@@ -113,30 +113,6 @@ lazy val mimaSettings = Seq(
       }
       .toSet,
   mimaBinaryIssueFilters ++= Seq()
-)
-
-val beamSDKIODependencies = Def.settings(
-  libraryDependencies ++= Seq(
-    "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion excludeAll (
-      ExclusionRule("com.google.cloud", "google-cloud-spanner"),
-      ExclusionRule("com.google.cloud.bigtable", "bigtable-client-core"),
-      ExclusionRule("com.google.cloud", "google-cloud-core-grpc"),
-      ExclusionRule("io.netty", "netty-tcnative-boringssl-static"),
-      ExclusionRule("com.google.cloud.bigdataoss", "gcsio")
-    ),
-    "io.netty" % "netty-tcnative-boringssl-static" % nettyTcNativeVersion,
-    "com.google.cloud.bigdataoss" % "gcsio" % bigdataossVersion
-  )
-)
-
-val beamSDKGoogleCloudCoreDependencies = Def.settings(
-  libraryDependencies ++= Seq(
-    "org.apache.beam" % "beam-sdks-java-extensions-google-cloud-platform-core" % beamVersion
-      excludeAll (
-        ExclusionRule("com.google.cloud.bigdataoss", "gcsio")
-      ),
-    "com.google.cloud.bigdataoss" % "gcsio" % bigdataossVersion
-  )
 )
 
 def previousVersion(currentVersion: String): Option[String] = {
@@ -481,6 +457,8 @@ lazy val `scio-core`: Project = project
       "org.apache.avro" % "avro" % avroVersion,
       "org.apache.beam" % "beam-runners-core-construction-java" % beamVersion,
       "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion % Provided,
+      "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
+      "org.apache.beam" % "beam-sdks-java-extensions-google-cloud-platform-core" % beamVersion,
       "org.apache.beam" % "beam-runners-spark" % beamVersion % Provided exclude (
         "com.fasterxml.jackson.module", "jackson-module-scala_2.11"
       ),
@@ -500,9 +478,7 @@ lazy val `scio-core`: Project = project
       "org.typelevel" %% "algebra" % algebraVersion,
       "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
       "com.propensive" %% "magnolia" % magnoliaVersion
-    ),
-    beamSDKIODependencies,
-    beamSDKGoogleCloudCoreDependencies
+    )
   )
   .dependsOn(
     `scio-schemas` % "test->test",
@@ -544,6 +520,7 @@ lazy val `scio-test`: Project = project
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
       "org.apache.beam" % "beam-runners-direct-java" % beamVersion,
+      "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
       "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion % "test,it",
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion % "test",
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion % "test" classifier "tests",
@@ -571,7 +548,6 @@ lazy val `scio-test`: Project = project
       "org.scalactic" %% "scalactic" % "3.2.2",
       "com.propensive" %% "magnolia" % magnoliaVersion
     ),
-    beamSDKIODependencies,
     (Test / compileOrder) := CompileOrder.JavaThenScala,
     Test / testGrouping := splitTests(
       (Test / definedTests).value,
@@ -615,6 +591,7 @@ lazy val `scio-avro`: Project = project
       "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
       "me.lyh" %% "protobuf-generic" % protobufGenericVersion,
       "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamVendorVersion,
+      "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "com.twitter" %% "chill" % chillVersion,
       "com.google.protobuf" % "protobuf-java" % protobufVersion,
@@ -626,8 +603,7 @@ lazy val `scio-avro`: Project = project
       "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test,it",
       "com.spotify" %% "magnolify-cats" % magnolifyVersion % "test",
       "com.spotify" %% "magnolify-scalacheck" % magnolifyVersion % "test"
-    ),
-    beamSDKIODependencies
+    )
   )
   .dependsOn(
     `scio-core` % "compile;it->it"
@@ -645,6 +621,8 @@ lazy val `scio-bigquery`: Project = project
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
       "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamVendorVersion,
+      "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
+      "org.apache.beam" % "beam-sdks-java-extensions-google-cloud-platform-core" % beamVersion,
       "com.twitter" %% "chill" % chillVersion,
       "com.google.protobuf" % "protobuf-java" % protobufVersion,
       "org.apache.avro" % "avro" % avroVersion,
@@ -652,7 +630,7 @@ lazy val `scio-bigquery`: Project = project
       "com.google.api" % "gax-grpc" % gaxVersion,
       "com.google.api-client" % "google-api-client" % googleClientsVersion,
       "com.google.apis" % "google-api-services-bigquery" % googleApiServicesBigQuery,
-      "com.google.api.grpc" % "proto-google-cloud-bigquerystorage-v1beta1" % "0.85.1",
+      "com.google.api.grpc" % "proto-google-cloud-bigquerystorage-v1beta1" % "0.98.0",
       "com.google.http-client" % "google-http-client" % googleHttpClientsVersion,
       "com.google.http-client" % "google-http-client-jackson" % "1.29.2",
       "com.google.http-client" % "google-http-client-jackson2" % googleHttpClientsVersion,
@@ -673,9 +651,7 @@ lazy val `scio-bigquery`: Project = project
       // DataFlow testing requires junit and hamcrest
       "org.hamcrest" % "hamcrest-core" % hamcrestVersion % "test,it",
       "org.hamcrest" % "hamcrest-library" % hamcrestVersion % "test,it"
-    ),
-    beamSDKIODependencies,
-    beamSDKGoogleCloudCoreDependencies
+    )
   )
   .dependsOn(
     `scio-core` % "compile;it->it"
@@ -691,6 +667,7 @@ lazy val `scio-bigtable`: Project = project
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
+      "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
       "joda-time" % "joda-time" % jodaTimeVersion,
       "com.google.protobuf" % "protobuf-java" % protobufVersion,
       "com.google.api.grpc" % "proto-google-cloud-bigtable-v2" % generatedGrpcBetaVersion,
@@ -706,8 +683,7 @@ lazy val `scio-bigtable`: Project = project
       "com.google.api.grpc" % "proto-google-cloud-bigtable-admin-v2" % generatedGrpcBetaVersion,
       "com.google.guava" % "guava" % guavaVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion
-    ),
-    beamSDKIODependencies
+    )
   )
   .dependsOn(
     `scio-core`,
@@ -820,6 +796,7 @@ lazy val `scio-extra`: Project = project
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
+      "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-extensions-sorter" % beamVersion,
       "com.google.apis" % "google-api-services-bigquery" % googleApiServicesBigQuery,
       "org.apache.avro" % "avro" % avroVersion,
@@ -843,7 +820,6 @@ lazy val `scio-extra`: Project = project
       "io.circe" %% "circe-generic" % circeVersion,
       "io.circe" %% "circe-parser" % circeVersion
     ),
-    beamSDKIODependencies,
     Compile / sourceDirectories := (Compile / sourceDirectories).value
       .filterNot(_.getPath.endsWith("/src_managed/main")),
     Compile / managedSourceDirectories := (Compile / managedSourceDirectories).value
@@ -926,12 +902,12 @@ lazy val `scio-spanner`: Project = project
       "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
       "com.google.cloud" % "google-cloud-core" % "1.92.2",
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
+      "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
       "com.google.cloud" % "google-cloud-spanner" % googleCloudSpannerVersion excludeAll (
         ExclusionRule(organization = "io.grpc")
       ),
       "org.scalatest" %% "scalatest" % scalatestVersion % "it"
-    ),
-    beamSDKIODependencies
+    )
   )
   .dependsOn(
     `scio-core`,
@@ -1007,6 +983,8 @@ lazy val `scio-examples`: Project = project
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
+      "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
+      "org.apache.beam" % "beam-sdks-java-extensions-google-cloud-platform-core" % beamVersion,
       "org.apache.avro" % "avro" % avroVersion,
       "com.google.cloud.datastore" % "datastore-v1-proto-client" % datastoreV1ProtoClientVersion,
       "com.google.http-client" % "google-http-client" % googleHttpClientsVersion,
@@ -1043,8 +1021,6 @@ lazy val `scio-examples`: Project = project
       "org.elasticsearch" % "elasticsearch" % elasticsearch7Version,
       "com.propensive" %% "magnolia" % magnoliaVersion
     ),
-    beamSDKIODependencies,
-    beamSDKGoogleCloudCoreDependencies,
     // exclude problematic sources if we don't have GCP credentials
     excludeFilter in unmanagedSources := {
       if (BuildCredentials.exists) {
@@ -1085,6 +1061,8 @@ lazy val `scio-repl`: Project = project
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
       "org.apache.beam" % "beam-runners-direct-java" % beamVersion,
+      "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
+      "org.apache.beam" % "beam-sdks-java-extensions-google-cloud-platform-core" % beamVersion,
       "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion excludeAll (
         ExclusionRule("com.google.cloud.bigdataoss", "gcsio")
       ),
@@ -1099,8 +1077,6 @@ lazy val `scio-repl`: Project = project
       "org.scala-lang" % "scala-compiler" % scalaVersion.value,
       "com.nrinaudo" %% "kantan.csv" % kantanCsvVersion
     ),
-    beamSDKIODependencies,
-    beamSDKGoogleCloudCoreDependencies,
     libraryDependencies ++= {
       VersionNumber(scalaVersion.value) match {
         case v if v.matchesSemVer(SemanticSelector("2.12.x")) =>
@@ -1152,6 +1128,7 @@ lazy val `scio-smb`: Project = project
       "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion % "it,test" classifier "tests",
+      "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
       // #3260 work around for sorter memory limit until we patch upstream
       // "org.apache.beam" % "beam-sdks-java-extensions-sorter" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-extensions-protobuf" % beamVersion,
@@ -1174,7 +1151,6 @@ lazy val `scio-smb`: Project = project
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       "com.github.ben-manes.caffeine" % "caffeine" % caffeineVersion % "provided"
     ),
-    beamSDKIODependencies,
     javacOptions ++= {
       (Compile / sourceManaged).value.mkdirs()
       Seq("-s", (Compile / sourceManaged).value.getAbsolutePath)
@@ -1340,18 +1316,18 @@ ThisBuild / dependencyOverrides ++= Seq(
   "com.google.api.grpc" % "proto-google-common-protos" % "1.17.0",
   "com.google.api" % "gax-grpc" % gaxVersion,
   "com.google.api" % "gax" % gaxVersion,
-  "com.google.apis" % "google-api-services-storage" % "v1-rev20200226-1.30.9",
+  "com.google.apis" % "google-api-services-storage" % "v1-rev20200611-1.30.10",
   "com.google.auth" % "google-auth-library-credentials" % googleAuthVersion,
   "com.google.auth" % "google-auth-library-oauth2-http" % googleAuthVersion,
   "com.google.auto.value" % "auto-value-annotations" % autoValueVersion,
   "com.google.cloud.bigdataoss" % "gcsio" % bigdataossVersion,
   "com.google.cloud.bigdataoss" % "util" % bigdataossVersion,
-  "com.google.cloud" % "google-cloud-core-grpc" % "1.92.2",
-  "com.google.cloud" % "google-cloud-core-http" % "1.92.2",
-  "com.google.cloud" % "google-cloud-core" % "1.92.2",
+  "com.google.cloud" % "google-cloud-core-grpc" % "1.93.7",
+  "com.google.cloud" % "google-cloud-core-http" % "1.93.7",
+  "com.google.cloud" % "google-cloud-core" % "1.93.7",
   "com.google.cloud" % "google-cloud-storage" % gcsVersion,
   "com.google.code.findbugs" % "jsr305" % "3.0.2",
-  "com.google.code.gson" % "gson" % "2.8.5",
+  "com.google.code.gson" % "gson" % "2.8.6",
   "com.google.errorprone" % "error_prone_annotations" % "2.3.4",
   "com.google.guava" % "guava" % guavaVersion,
   "com.google.http-client" % "google-http-client-jackson2" % googleHttpClientsVersion,
