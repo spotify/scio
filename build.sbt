@@ -290,6 +290,7 @@ lazy val assemblySettings = Seq(
       case s if s.endsWith("libsnappyjava.jnilib")   => MergeStrategy.last
       case s if s.endsWith("libsnappyjava.so")       => MergeStrategy.last
       case s if s.endsWith("snappyjava_snappy.dll")  => MergeStrategy.last
+      case s if s.endsWith("reflection-config.json") => MergeStrategy.rename
       case s if s.endsWith(".dtd")                   => MergeStrategy.rename
       case s if s.endsWith(".xsd")                   => MergeStrategy.rename
       case PathList("META-INF", "services", "org.apache.hadoop.fs.FileSystem") =>
