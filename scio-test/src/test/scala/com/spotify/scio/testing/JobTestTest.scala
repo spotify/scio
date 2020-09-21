@@ -24,7 +24,6 @@ import com.google.datastore.v1.client.DatastoreHelper.{makeKey, makeValue}
 import com.spotify.scio._
 import com.spotify.scio.avro.AvroUtils.{newGenericRecord, newSpecificRecord}
 import com.spotify.scio.avro._
-import com.spotify.scio.bigquery._
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.io._
 import com.spotify.scio.util.MockedPrintStream
@@ -83,26 +82,6 @@ object GenericParseFnAvroFileJob {
       PartialFieldsAvro(gr.get("int_field").asInstanceOf[Int])
     ).map(a => AvroUtils.newGenericRecord(a.intField))
       .saveAsAvroFile(args("output"), schema = AvroUtils.schema)
-    sc.run()
-    ()
-  }
-}
-
-object BigQueryJob {
-  def main(cmdlineArgs: Array[String]): Unit = {
-    val (sc, args) = ContextAndArgs(cmdlineArgs)
-    sc.bigQueryTable(Table.Spec(args("input")))
-      .saveAsBigQueryTable(Table.Spec(args("output")))
-    sc.run()
-    ()
-  }
-}
-
-object TableRowJsonJob {
-  def main(cmdlineArgs: Array[String]): Unit = {
-    val (sc, args) = ContextAndArgs(cmdlineArgs)
-    sc.tableRowJsonFile(args("input"))
-      .saveAsTableRowJsonFile(args("output"))
     sc.run()
     ()
   }
@@ -355,48 +334,6 @@ class JobTestTest extends PipelineSpec {
     }
     an[AssertionError] should be thrownBy {
       testGenericParseAvroFileJob((1 to 4).map(newGenericRecord))
-    }
-  }
-
-  def newTableRow(i: Int): TableRow = TableRow("int_field" -> i)
-
-  def testBigQuery(xs: Seq[TableRow]): Unit =
-    JobTest[BigQueryJob.type]
-      .args("--input=table.in", "--output=table.out")
-      .input(BigQueryIO[TableRow]("table.in"), (1 to 3).map(newTableRow))
-      .output(BigQueryIO[TableRow]("table.out"))(coll => coll should containInAnyOrder(xs))
-      .run()
-
-  it should "pass correct BigQueryJob" in {
-    testBigQuery((1 to 3).map(newTableRow))
-  }
-
-  it should "fail incorrect BigQueryJob" in {
-    an[AssertionError] should be thrownBy {
-      testBigQuery((1 to 2).map(newTableRow))
-    }
-    an[AssertionError] should be thrownBy {
-      testBigQuery((1 to 4).map(newTableRow))
-    }
-  }
-
-  def testTableRowJson(xs: Seq[TableRow]): Unit =
-    JobTest[TableRowJsonJob.type]
-      .args("--input=in.json", "--output=out.json")
-      .input(TableRowJsonIO("in.json"), (1 to 3).map(newTableRow))
-      .output(TableRowJsonIO("out.json"))(coll => coll should containInAnyOrder(xs))
-      .run()
-
-  it should "pass correct TableRowJsonIO" in {
-    testTableRowJson((1 to 3).map(newTableRow))
-  }
-
-  it should "fail incorrect TableRowJsonIO" in {
-    an[AssertionError] should be thrownBy {
-      testTableRowJson((1 to 2).map(newTableRow))
-    }
-    an[AssertionError] should be thrownBy {
-      testTableRowJson((1 to 4).map(newTableRow))
     }
   }
 
