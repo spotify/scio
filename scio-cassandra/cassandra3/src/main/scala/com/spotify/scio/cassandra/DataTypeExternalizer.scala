@@ -36,7 +36,7 @@ private[cassandra] object DataTypeExternalizer {
 
 final private[cassandra] class DataTypeExternalizer extends Externalizer[DataType] {
   override protected def kryo: KryoInstantiator =
-    new DataTypeKryoInstantiator.setReferences(true)
+    new DataTypeKryoInstantiator().setReferences(true)
 }
 
 final private class DataTypeKryoInstantiator extends EmptyScalaKryoInstantiator {
