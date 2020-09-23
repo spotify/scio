@@ -12,6 +12,7 @@ import com.google.common.{hash => g}
  * Import `magnolify.guava.auto._` to get common instances of Guava [[com.google.common.hash.Funnel Funnel]]s.
  */
 object MutableScalableBloomFilter {
+
   /**
    * The default parameter values for this implementation are based on the findings in "Scalable Bloom Filters",
    * Almeida, Baquero, et al.: http://gsd.di.uminho.pt/members/cbm/ps/dbloom.pdf
@@ -29,7 +30,7 @@ object MutableScalableBloomFilter {
     growthRate: Int = 2,
     tighteningRatio: Double = 0.9
   ): MutableScalableBloomFilter[T] =
-    new MutableScalableBloomFilter(fpProb, initialCapacity, growthRate, tighteningRatio)
+    new MutableScalableBloomFilter(fpProb, initialCapacity, growthRate, tighteningRatio, Nil, 0L)
 }
 
 /**
@@ -42,17 +43,20 @@ object MutableScalableBloomFilter {
  * @param funnel            The funnel to turn `T`s into bytes
  * @tparam T                The type of objects inserted into the filter
  */
-class MutableScalableBloomFilter[T](
+case class MutableScalableBloomFilter[T](
   var fpProb: Double,
   var headCapacity: Long,
   growthRate: Int,
   tighteningRatio: Double,
-  var filters: List[g.BloomFilter[T]] = Nil,
+  var filters: List[g.BloomFilter[T]],
   // storing a count of items in the head avoids calling the relatively expensive `approximateElementCount` after each insert
-  var headCount: Long = 0L
-)(implicit funnel: g.Funnel[T]) extends Serializable {
+  var headCount: Long
+)(implicit funnel: g.Funnel[T])
+    extends Serializable {
   def contains(item: T): Boolean = filters.exists(f => f.mightContain(item))
-  def approximateElementCount: Long = filters.foldLeft(0L) { case (sum, filter) => sum + filter.approximateElementCount() }
+  def approximateElementCount: Long = filters.foldLeft(0L) { case (sum, filter) =>
+    sum + filter.approximateElementCount()
+  }
 
   private def scale(): Unit = {
     val shouldGrow = headCount >= headCapacity || filters == Nil
