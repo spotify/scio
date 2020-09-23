@@ -15,7 +15,7 @@
  * under the License.
  */
 
-package com.spotify.scio
+package com.spotify.scio.bigquery
 
 import java.nio.channels.Channels
 import java.nio.file.{Files, Path, Paths}
@@ -25,7 +25,6 @@ import com.google.api.services.bigquery.model.{Dataset, DatasetReference}
 import com.google.protobuf.ByteString
 import com.spotify.scio.bigquery._
 import com.spotify.scio.bigquery.client.BigQuery
-import com.spotify.scio.bigquery.types.BigQueryType
 import org.apache.beam.sdk.io.FileSystems
 import org.apache.beam.sdk.options.PipelineOptionsFactory
 import org.apache.beam.sdk.util.MimeTypes

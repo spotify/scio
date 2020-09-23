@@ -652,7 +652,7 @@ lazy val `scio-google-cloud-platform`: Project = project
     )
   )
   .dependsOn(
-    `scio-core`,
+    `scio-core` % "compile;it->it",
     `scio-test` % "test;it"
   )
   .configs(IntegrationTest)
