@@ -44,42 +44,41 @@ object MutableScalableBloomFilter {
  * @tparam T                The type of objects inserted into the filter
  */
 case class MutableScalableBloomFilter[T](
-  var fpProb: Double,
-  var headCapacity: Long,
-  growthRate: Int,
-  tighteningRatio: Double,
-  var filters: List[g.BloomFilter[T]],
+  fpProb: Double,
+  private[hash] var headCapacity: Long,
+  private[hash] val growthRate: Int,
+  private[hash] val tighteningRatio: Double,
+  private[hash] var filters: List[g.BloomFilter[T]],
   // storing a count of items in the head avoids calling the relatively expensive `approximateElementCount` after each insert
-  var headCount: Long
-)(implicit funnel: g.Funnel[T])
+  private[hash] var headCount: Long
+)(implicit private val funnel: g.Funnel[T])
     extends Serializable {
+  private[hash] var headFPProb = fpProb
   def contains(item: T): Boolean = filters.exists(f => f.mightContain(item))
-  def approximateElementCount: Long = filters.foldLeft(0L) { case (sum, filter) =>
-    sum + filter.approximateElementCount()
-  }
+  def approximateElementCount: Long = filters.iterator.map(_.approximateElementCount).sum
 
   private def scale(): Unit = {
     val shouldGrow = headCount >= headCapacity || filters == Nil
     if (shouldGrow) {
-      // on initial filter construction, leave fpProb or headCapacity at their initial values
+      // on construction of the first filter, leave headFPProb & headCapacity at their starting values
       if (filters != Nil) {
-        fpProb = fpProb * tighteningRatio
+        headFPProb = headFPProb * tighteningRatio
         headCapacity = growthRate * headCapacity
       }
       headCount = 0
-      filters = g.BloomFilter.create[T](funnel, headCapacity, fpProb) :: filters
+      filters = g.BloomFilter.create[T](funnel, headCapacity, headFPProb) :: filters
     }
   }
 
-  def +(item: T): MutableScalableBloomFilter[T] = {
+  def +=(item: T): MutableScalableBloomFilter[T] = {
     scale()
     val changed = filters.head.put(item)
     if (changed) headCount = headCount + 1
     this
   }
 
-  def ++(items: Iterable[T]): MutableScalableBloomFilter[T] = {
-    items.foreach(i => this + i) // no bulk insert for guava BFs
+  def ++=(items: Iterable[T]): MutableScalableBloomFilter[T] = {
+    items.foreach(i => this += i) // no bulk insert for guava BFs
     this
   }
 }

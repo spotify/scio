@@ -17,12 +17,9 @@
 
 package com.spotify.scio.hash
 
-import java.io.{InputStream, OutputStream}
-
 import com.google.common.{hash => g}
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.values.{SCollection, SideInput}
-import org.apache.beam.sdk.coders.AtomicCoder
 import org.slf4j.LoggerFactory
 
 /**
@@ -334,15 +331,8 @@ object BloomFilter extends ApproxFilterCompanion {
     PartitionSettings(partitions, capacity, numBits(capacity, fpp) / 8)
   }
 
-  private class BloomFilterCoder[T](implicit val hash: Hash[T]) extends AtomicCoder[Filter[T]] {
-    override def encode(value: Filter[T], outStream: OutputStream): Unit =
-      value.impl.writeTo(outStream)
-    override def decode(inStream: InputStream): Filter[T] =
-      new BloomFilter[T](g.BloomFilter.readFrom(inStream, hash))
-  }
-
   implicit override def filterCoder[T: Hash]: Coder[Filter[T]] =
-    Coder.beam(new BloomFilterCoder[T]())
+    Coder.xmap(Coder[g.BloomFilter[T]])(a => new BloomFilter[T](a), b => b.impl)
 
   override protected def createImpl[T: Hash](
     elems: Iterable[T],
