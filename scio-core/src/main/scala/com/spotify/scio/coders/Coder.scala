@@ -552,9 +552,11 @@ object Coder
   implicit val jSqlTimestamp: Coder[java.sql.Timestamp] = JavaCoders.jSqlTimestamp
   implicit def coderJEnum[E <: java.lang.Enum[E]: ClassTag]: Coder[E] = JavaCoders.coderJEnum
 
+  def fallback[T](implicit lp: shapeless.LowPriority): Coder[T] =
+    macro CoderMacros.issueFallbackWarning[T]
 }
 
-trait LowPriorityCoders extends LowPriorityFallbackCoder {
+trait LowPriorityCoders extends LowPriorityCoderDerivation {
   implicit def javaBeanCoder[T: IsJavaBean: ClassTag]: Coder[T] = JavaCoders.javaBeanCoder
 }
 
