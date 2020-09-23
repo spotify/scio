@@ -1434,66 +1434,6 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     this.covary_[Entity].write(DatastoreIO(projectId))
 
   /**
-   * Save this SCollection as a Pub/Sub topic.
-   * @group output
-   */
-  @deprecated(
-    """
-    |  This method has been deprecated. Use one of the following IOs instead:
-    |    - PubsubIO.string
-    |    - PubsubIO.avro
-    |    - PubsubIO.proto
-    |    - PubsubIO.pubsub
-    |    - PubsubIO.coder
-    |
-    |  For example:
-    |     coll.write(PubsubIO.string(sub, idAttribute, timestampAttribute))(
-    |       PubsubIO.WriteParam()
-    |     )
-    """.stripMargin,
-    since = "0.10.0"
-  )
-  def saveAsPubsub(
-    topic: String,
-    idAttribute: String = null,
-    timestampAttribute: String = null,
-    maxBatchSize: Option[Int] = None,
-    maxBatchBytesSize: Option[Int] = None
-  )(implicit ct: ClassTag[T]): ClosedTap[Nothing] = {
-    val io = PubsubIO[T](topic, idAttribute, timestampAttribute)
-    this.write(io)(PubsubIO.WriteParam(maxBatchSize, maxBatchBytesSize))
-  }
-
-  /**
-   * Save this SCollection as a Pub/Sub topic using the given map as message attributes.
-   * @group output
-   */
-  @deprecated(
-    """
-    |  This method has been deprecated. Use PubsubIO.withAttributes instead
-    |
-    |  For example:
-    |     coll.write(PubsubIO.withAttributes(sub, idAttribute, timestampAttribute))(
-    |       PubsubIO.WriteParam()
-    |     )
-    """.stripMargin,
-    since = "0.10.0"
-  )
-  def saveAsPubsubWithAttributes[V: ClassTag](
-    topic: String,
-    idAttribute: String = null,
-    timestampAttribute: String = null,
-    maxBatchSize: Option[Int] = None,
-    maxBatchBytesSize: Option[Int] = None
-  )(implicit ev: T <:< (V, Map[String, String])): ClosedTap[Nothing] = {
-    implicit val vCoder = BeamCoders.getTupleCoders(this.covary_[(V, Map[String, String])])._1
-    val io = PubsubIO.withAttributes[V](topic, idAttribute, timestampAttribute)
-    this
-      .covary_[(V, Map[String, String])]
-      .write(io)(PubsubIO.WriteParam(maxBatchSize, maxBatchBytesSize))
-  }
-
-  /**
    * Save this SCollection as a text file. Note that elements must be of type `String`.
    * @group output
    */

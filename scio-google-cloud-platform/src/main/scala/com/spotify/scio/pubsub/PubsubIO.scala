@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Spotify AB.
+ * Copyright 2020 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,17 @@
  * under the License.
  */
 
-package com.spotify.scio.io
+package com.spotify.scio.pubsub
 
 import com.google.protobuf.Message
 import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import com.spotify.scio.testing.TestDataManager
 import com.spotify.scio.util.{Functions, JMapWrapper, ScioUtil}
+import com.spotify.scio.pubsub.PubsubIO.Subscription
+import com.spotify.scio.pubsub.PubsubIO.Topic
 import com.spotify.scio.values.SCollection
+import com.spotify.scio.io._
 import org.apache.avro.specific.SpecificRecordBase
 import org.apache.beam.sdk.io.gcp.pubsub.PubsubMessageWithAttributesCoder
 import org.apache.beam.sdk.io.gcp.{pubsub => beam}
@@ -33,8 +36,6 @@ import org.joda.time.Instant
 
 import scala.jdk.CollectionConverters._
 import scala.reflect.{classTag, ClassTag}
-import com.spotify.scio.io.PubsubIO.Subscription
-import com.spotify.scio.io.PubsubIO.Topic
 
 sealed trait PubsubIO[T] extends ScioIO[T] {
   override type ReadP = PubsubIO.ReadParam
@@ -177,7 +178,7 @@ object PubsubIO {
   ): PubsubIO[(T, Map[String, String])] =
     PubsubIOWithAttributes[T](name, idAttribute, timestampAttribute)
 
-  private[io] def setAttrs[T](
+  private[pubsub] def setAttrs[T](
     r: beam.PubsubIO.Read[T]
   )(idAttribute: String, timestampAttribute: String): beam.PubsubIO.Read[T] = {
     val r0 = Option(idAttribute)
@@ -189,7 +190,7 @@ object PubsubIO {
       .getOrElse(r0)
   }
 
-  private[io] def setAttrs[T](
+  private[pubsub] def setAttrs[T](
     r: beam.PubsubIO.Write[T]
   )(idAttribute: String, timestampAttribute: String): beam.PubsubIO.Write[T] = {
     val r0 = Option(idAttribute)

@@ -32,6 +32,7 @@ import java.util.TimeZone
 
 import com.spotify.scio._
 import com.spotify.scio.bigquery._
+import com.spotify.scio.pubsub._
 import com.spotify.scio.examples.complete.game.UserScore.GameActionInfo
 import com.spotify.scio.streaming._
 import com.spotify.scio.values.{SCollection, WindowOptions}

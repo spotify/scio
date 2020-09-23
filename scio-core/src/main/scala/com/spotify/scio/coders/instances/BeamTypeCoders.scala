@@ -26,7 +26,6 @@ import java.io.StringReader
 import org.apache.beam.sdk.coders.RowCoder
 import org.apache.beam.sdk.io.FileIO.ReadableFile
 import org.apache.beam.sdk.io.fs.{MatchResult, MetadataCoderV2}
-import org.apache.beam.sdk.io.gcp.pubsub.{PubsubMessage, PubsubMessageWithAttributesCoder}
 import org.apache.beam.sdk.io.ReadableFileCoder
 import org.apache.beam.sdk.schemas.{Schema => BSchema}
 import org.apache.beam.sdk.transforms.windowing.{BoundedWindow, IntervalWindow, PaneInfo}
@@ -43,9 +42,6 @@ trait BeamTypeCoders {
   implicit def paneInfoCoder: Coder[PaneInfo] = Coder.beam(PaneInfo.PaneInfoCoder.of())
 
   def row(schema: BSchema): Coder[Row] = Coder.beam(RowCoder.of(schema))
-
-  implicit def messageCoder: Coder[PubsubMessage] =
-    Coder.beam(PubsubMessageWithAttributesCoder.of())
 
   implicit def beamKVCoder[K: Coder, V: Coder]: Coder[KV[K, V]] = Coder.kv(Coder[K], Coder[V])
 
