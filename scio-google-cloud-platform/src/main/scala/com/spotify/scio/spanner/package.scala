@@ -14,10 +14,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
 package com.spotify.scio
 
-import com.spotify.scio.spanner.instances.AllInstances
-import com.spotify.scio.spanner.syntax.AllSyntax
+import com.spotify.scio.spanner.syntax.{SCollectionSyntax, ScioContextSyntax}
 
-package object spanner extends AllSyntax with AllInstances
+package object spanner extends ScioContextSyntax with SCollectionSyntax

@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Spotify AB.
+ * Copyright 2020 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,11 +14,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+package com.spotify.scio.pubsub
 
-package com.spotify.scio.bigquery.syntax
+import com.spotify.scio.pubsub.instances.CoderInstances
 
-trait AllSyntax
-    extends TableRowSyntax
-    with TableReferenceSyntax
-    with SCollectionSyntax
-    with ScioContextSyntax
+package object coders extends CoderInstances

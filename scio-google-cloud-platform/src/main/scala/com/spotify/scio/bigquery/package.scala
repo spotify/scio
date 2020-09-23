@@ -18,7 +18,12 @@
 package com.spotify.scio
 
 import com.google.api.services.bigquery.model.{TableRow => GTableRow}
-import com.spotify.scio.bigquery.syntax.AllSyntax
+import com.spotify.scio.bigquery.syntax.{
+  SCollectionSyntax,
+  ScioContextSyntax,
+  TableReferenceSyntax,
+  TableRowSyntax
+}
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write
 
 /**
@@ -39,7 +44,11 @@ import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write
  * detects the query's dialect. To override this, start the query with either `#legacysql` or
  * `#standardsql` comment line.
  */
-package object bigquery extends AllSyntax {
+package object bigquery
+    extends ScioContextSyntax
+    with SCollectionSyntax
+    with TableRowSyntax
+    with TableReferenceSyntax {
 
   /** Alias for BigQuery `CreateDisposition`. */
   val CREATE_IF_NEEDED = Write.CreateDisposition.CREATE_IF_NEEDED

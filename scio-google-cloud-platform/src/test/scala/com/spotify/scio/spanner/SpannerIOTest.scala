@@ -17,8 +17,9 @@
 
 package com.spotify.scio.spanner
 
-import com.google.cloud.spanner.{Mutation, Struct}
+import com.spotify.scio.spanner.coders._
 import com.spotify.scio.testing.ScioIOSpec
+import com.google.cloud.spanner.{Mutation, Struct}
 import org.apache.beam.sdk.io.gcp.spanner.{MutationGroup, ReadOperation, SpannerConfig}
 import org.scalatest.matchers.should.Matchers
 import com.spotify.scio.testing.CoderAssertions._

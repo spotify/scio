@@ -14,16 +14,14 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package com.spotify.scio.pubsub
+package com.spotify.scio.pubsub.instances
 
 import com.spotify.scio.coders.Coder
 import org.apache.beam.sdk.io.gcp.pubsub.{PubsubMessage, PubsubMessageWithAttributesCoder}
 
-trait PubsubCoders {
+trait CoderInstances {
 
   implicit def messageCoder: Coder[PubsubMessage] =
     Coder.beam(PubsubMessageWithAttributesCoder.of())
 
 }
-
-object coders extends PubsubCoders

@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Spotify AB.
+ * Copyright 2020 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package com.spotify.scio.spanner.instances
+package com.spotify.scio.spanner
 
-trait AllInstances extends CoderInstances
+import com.spotify.scio.spanner.instances.CoderInstances
 
-object all extends AllInstances
+package object coders extends CoderInstances

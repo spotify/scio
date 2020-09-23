@@ -16,6 +16,6 @@
  */
 package com.spotify.scio
 
-import com.spotify.scio.datastore.syntax.AllSyntax
+import com.spotify.scio.datastore.syntax.{SCollectionSyntax, ScioContextSyntax}
 
-package object datastore extends AllSyntax
+package object datastore extends ScioContextSyntax with SCollectionSyntax
