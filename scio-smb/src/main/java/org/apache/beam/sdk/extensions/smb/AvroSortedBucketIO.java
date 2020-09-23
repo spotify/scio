@@ -452,13 +452,7 @@ public class AvroSortedBucketIO {
         return (numBuckets, numShards, hashType) -> {
           try {
             return new AvroBucketMetadata<>(
-                numBuckets,
-                numShards,
-                keyClass,
-                hashType,
-                keyField,
-                filenamePrefix,
-                recordClass);
+                numBuckets, numShards, keyClass, hashType, keyField, filenamePrefix, recordClass);
           } catch (CannotProvideCoderException | Coder.NonDeterministicException e) {
             throw new IllegalStateException(e);
           }
