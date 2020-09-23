@@ -27,11 +27,8 @@ import com.spotify.scio.pubsub.PubsubIO.Topic
 import com.spotify.scio.values.SCollection
 import com.spotify.scio.io._
 import org.apache.avro.specific.SpecificRecordBase
-import org.apache.beam.sdk.io.gcp.pubsub.PubsubMessageWithAttributesCoder
 import org.apache.beam.sdk.io.gcp.{pubsub => beam}
-import org.apache.beam.sdk.transforms.{PTransform, ParDo}
 import org.apache.beam.sdk.util.CoderUtils
-import org.apache.beam.sdk.values.{PCollection, PDone}
 import org.joda.time.Instant
 
 import scala.jdk.CollectionConverters._
