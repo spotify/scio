@@ -425,12 +425,7 @@ lazy val `scio-core`: Project = project
       "com.github.alexarchambault" %% "case-app-annotations" % caseappVersion,
       "com.github.ben-manes.caffeine" % "caffeine" % caffeineVersion % "provided",
       "com.google.api-client" % "google-api-client" % googleClientsVersion,
-      "com.google.api.grpc" % "grpc-google-cloud-pubsub-v1" % generatedGrpcGaVersion,
-      "com.google.api.grpc" % "proto-google-cloud-datastore-v1" % generatedDatastoreProtoVersion,
-      "com.google.api.grpc" % "proto-google-cloud-pubsub-v1" % generatedGrpcGaVersion,
-      "com.google.apis" % "google-api-services-bigquery" % googleApiServicesBigQuery,
       "com.google.apis" % "google-api-services-dataflow" % googleApiServicesDataflow,
-      "com.google.auth" % "google-auth-library-credentials" % googleAuthVersion,
       "com.google.auto.service" % "auto-service" % autoServiceVersion,
       "com.google.guava" % "guava" % guavaVersion,
       "com.google.http-client" % "google-http-client" % googleHttpClientsVersion,
@@ -448,14 +443,11 @@ lazy val `scio-core`: Project = project
       "io.grpc" % "grpc-api" % grpcVersion,
       "io.grpc" % "grpc-stub" % grpcVersion,
       "io.netty" % "netty-handler" % nettyVersion,
-      "com.spotify" %% "magnolify-guava" % magnolifyVersion,
       "joda-time" % "joda-time" % jodaTimeVersion,
       "me.lyh" %% "protobuf-generic" % protobufGenericVersion,
       "org.apache.avro" % "avro" % avroVersion,
       "org.apache.beam" % "beam-runners-core-construction-java" % beamVersion,
       "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion % Provided,
-      "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
-      "org.apache.beam" % "beam-sdks-java-extensions-google-cloud-platform-core" % beamVersion,
       "org.apache.beam" % "beam-runners-spark" % beamVersion % Provided exclude (
         "com.fasterxml.jackson.module", "jackson-module-scala_2.11"
       ),
@@ -525,6 +517,7 @@ lazy val `scio-test`: Project = project
       "org.scalatestplus" %% "scalatestplus-scalacheck" % scalatestplusVersion % "test,it",
       "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test,it",
       "com.spotify" %% "magnolify-datastore" % magnolifyVersion % "it",
+      "com.spotify" %% "magnolify-guava" % magnolifyVersion,
       // DataFlow testing requires junit and hamcrest
       "org.hamcrest" % "hamcrest-core" % hamcrestVersion,
       "org.hamcrest" % "hamcrest-library" % hamcrestVersion,
@@ -559,7 +552,6 @@ lazy val `scio-test`: Project = project
     `scio-schemas` % "test;it",
     `scio-avro` % "compile->test;it->it",
     `scio-sql` % "compile->test;it->it"
-    // `scio-google-cloud-platform` % "compile->test;it->it"
   )
 
 lazy val `scio-macros`: Project = project
@@ -636,7 +628,6 @@ lazy val `scio-google-cloud-platform`: Project = project
       "com.google.cloud" % "google-cloud-core" % "1.92.2",
       "com.google.cloud" % "google-cloud-storage" % gcsVersion % "test,it",
       "com.google.guava" % "guava" % guavaVersion,
-      "com.google.http-client" % "google-http-client-jackson" % "1.29.2",
       "com.google.http-client" % "google-http-client-jackson2" % googleHttpClientsVersion,
       "com.google.http-client" % "google-http-client" % googleHttpClientsVersion,
       "com.google.protobuf" % "protobuf-java" % protobufVersion,
@@ -647,14 +638,12 @@ lazy val `scio-google-cloud-platform`: Project = project
       "joda-time" % "joda-time" % jodaTimeVersion,
       "junit" % "junit" % junitVersion % "test",
       "org.apache.avro" % "avro" % avroVersion,
-      "org.apache.beam" % "beam-runners-direct-java" % beamVersion % "test",
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-extensions-google-cloud-platform-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
       "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamVendorVersion,
       "org.hamcrest" % "hamcrest-core" % hamcrestVersion % "test,it",
       "org.hamcrest" % "hamcrest-library" % hamcrestVersion % "test",
-      "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
       "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test,it",
       "org.scalatest" %% "scalatest" % scalatestVersion % "test,it",
       "org.scalatestplus" %% "scalatestplus-scalacheck" % scalatestplusVersion % "test,it",
@@ -664,7 +653,7 @@ lazy val `scio-google-cloud-platform`: Project = project
   )
   .dependsOn(
     `scio-core`,
-    `scio-test`
+    `scio-test` % "test;it"
   )
   .configs(IntegrationTest)
 
