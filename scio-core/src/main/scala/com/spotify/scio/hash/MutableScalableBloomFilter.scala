@@ -3,11 +3,13 @@ package com.spotify.scio.hash
 import com.google.common.{hash => g}
 
 /**
- * A mutable, scalable, wrapper around [[com.google.common.hash.BloomFilter]]
+ * A mutable, scalable wrapper around a Guava [[com.google.common.hash.BloomFilter BloomFilter]]
  *
  * Scalable bloom filters use a series of bloom filters, adding a new one and scaling its size by `growthRate`
  * once the previous filter is saturated in order to maintain the desired false positive probability `fpProb`.
  * A scalable bloom filter `contains` ("might contain") an item if any of its filters contains the item.
+ *
+ * Import `magnolify.guava.auto._` to get common instances of Guava [[com.google.common.hash.Funnel Funnel]]s.
  */
 object MutableScalableBloomFilter {
   /**
@@ -46,7 +48,7 @@ class MutableScalableBloomFilter[T](
   growthRate: Int,
   tighteningRatio: Double,
   var filters: List[g.BloomFilter[T]] = Nil,
-  // storing a count of items in the head avoids calling the relatively expensive `approximateElementCount`
+  // storing a count of items in the head avoids calling the relatively expensive `approximateElementCount` after each insert
   var headCount: Long = 0L
 )(implicit funnel: g.Funnel[T]) extends Serializable {
   def contains(item: T): Boolean = filters.exists(f => f.mightContain(item))
