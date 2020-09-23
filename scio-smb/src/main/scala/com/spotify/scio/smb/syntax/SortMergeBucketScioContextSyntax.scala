@@ -319,7 +319,7 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
   @experimental
   def sortMergeTransform[K, R](
     keyClass: Class[K],
-    read: => SortedBucketIO.Read[R]
+    read: SortedBucketIO.Read[R]
   ): SortMergeTransformReadBuilder[K, Iterable[R]] =
     sortMergeTransform(keyClass, read, TargetParallelism.auto())
 
@@ -334,7 +334,7 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
   @experimental
   def sortMergeTransform[K, R](
     keyClass: Class[K],
-    read: => SortedBucketIO.Read[R],
+    read: SortedBucketIO.Read[R],
     targetParallelism: TargetParallelism
   ): SortMergeTransformReadBuilder[K, Iterable[R]] = {
     val tupleTag = read.getTupleTag
@@ -356,8 +356,8 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
   @experimental
   def sortMergeTransform[K, A, B](
     keyClass: Class[K],
-    readA: => SortedBucketIO.Read[A],
-    readB: => SortedBucketIO.Read[B]
+    readA: SortedBucketIO.Read[A],
+    readB: SortedBucketIO.Read[B]
   ): SortMergeTransformReadBuilder[K, (Iterable[A], Iterable[B])] =
     sortMergeTransform(keyClass, readA, readB, TargetParallelism.auto())
 
@@ -372,8 +372,8 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
   @experimental
   def sortMergeTransform[K, A, B](
     keyClass: Class[K],
-    readA: => SortedBucketIO.Read[A],
-    readB: => SortedBucketIO.Read[B],
+    readA: SortedBucketIO.Read[A],
+    readB: SortedBucketIO.Read[B],
     targetParallelism: TargetParallelism
   ): SortMergeTransformReadBuilder[K, (Iterable[A], Iterable[B])] = {
     val tupleTagA = readA.getTupleTag
@@ -396,9 +396,9 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
   @experimental
   def sortMergeTransform[K, A, B, C](
     keyClass: Class[K],
-    readA: => SortedBucketIO.Read[A],
-    readB: => SortedBucketIO.Read[B],
-    readC: => SortedBucketIO.Read[C]
+    readA: SortedBucketIO.Read[A],
+    readB: SortedBucketIO.Read[B],
+    readC: SortedBucketIO.Read[C]
   ): SortMergeTransformReadBuilder[K, (Iterable[A], Iterable[B], Iterable[C])] =
     sortMergeTransform(keyClass, readA, readB, readC, TargetParallelism.auto())
 
@@ -413,9 +413,9 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
   @experimental
   def sortMergeTransform[K, A, B, C](
     keyClass: Class[K],
-    readA: => SortedBucketIO.Read[A],
-    readB: => SortedBucketIO.Read[B],
-    readC: => SortedBucketIO.Read[C],
+    readA: SortedBucketIO.Read[A],
+    readB: SortedBucketIO.Read[B],
+    readC: SortedBucketIO.Read[C],
     targetParallelism: TargetParallelism
   ): SortMergeTransformReadBuilder[K, (Iterable[A], Iterable[B], Iterable[C])] = {
     val tupleTagA = readA.getTupleTag
@@ -439,18 +439,18 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
   }
 
   class SortMergeTransformReadBuilder[K, R](
-    coGbk: => SortedBucketIO.CoGbk[K],
+    coGbk: SortedBucketIO.CoGbk[K],
     toR: CoGbkResult => R
   ) extends Serializable {
 
     def to[W: Coder](
-      output: => SortedBucketIO.TransformOutput[K, W]
+      output: SortedBucketIO.TransformOutput[K, W]
     ): SortMergeTransformWriteBuilder[K, R, W] =
       new SortMergeTransformWriteBuilder(coGbk.transform(output), toR)
   }
 
   class SortMergeTransformWriteBuilder[K, R, W](
-    transform: => SortedBucketIO.CoGbkTransform[K, W],
+    transform: SortedBucketIO.CoGbkTransform[K, W],
     toR: CoGbkResult => R
   ) extends Serializable {
 

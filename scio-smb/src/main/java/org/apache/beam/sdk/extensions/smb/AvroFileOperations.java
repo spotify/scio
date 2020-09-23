@@ -44,12 +44,14 @@ import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Supplier;
 
 /** {@link org.apache.beam.sdk.extensions.smb.FileOperations} implementation for Avro files. */
 public class AvroFileOperations<ValueT> extends FileOperations<ValueT> {
-  static final CodecFactory DEFAULT_CODEC = CodecFactory.deflateCodec(6);
-
   private final Class<ValueT> recordClass;
   private final SerializableSchemaSupplier schemaSupplier;
   private final PatchedSerializableAvroCodecFactory codec;
   private final Map<String, Object> metadata;
+
+  static final CodecFactory defaultCodec() {
+    return CodecFactory.deflateCodec(6);
+  }
 
   private AvroFileOperations(
       Class<ValueT> recordClass, Schema schema, CodecFactory codec, Map<String, Object> metadata) {
@@ -61,7 +63,7 @@ public class AvroFileOperations<ValueT> extends FileOperations<ValueT> {
   }
 
   public static <V extends GenericRecord> AvroFileOperations<V> of(Schema schema) {
-    return of(schema, DEFAULT_CODEC);
+    return of(schema, defaultCodec());
   }
 
   public static <V extends GenericRecord> AvroFileOperations<V> of(
@@ -75,7 +77,7 @@ public class AvroFileOperations<ValueT> extends FileOperations<ValueT> {
   }
 
   public static <V extends SpecificRecordBase> AvroFileOperations<V> of(Class<V> recordClass) {
-    return of(recordClass, DEFAULT_CODEC);
+    return of(recordClass, defaultCodec());
   }
 
   public static <V extends SpecificRecordBase> AvroFileOperations<V> of(
@@ -159,7 +161,7 @@ public class AvroFileOperations<ValueT> extends FileOperations<ValueT> {
   static class SerializableSchemaSupplier implements Serializable, Supplier<Schema> {
     private transient Schema schema;
 
-    private SerializableSchemaSupplier(Schema schema) {
+    SerializableSchemaSupplier(Schema schema) {
       this.schema = schema;
     }
 

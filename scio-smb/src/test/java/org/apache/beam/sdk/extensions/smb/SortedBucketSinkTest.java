@@ -229,7 +229,7 @@ public class SortedBucketSinkTest {
             .apply(reshuffle)
             .apply(sink),
         metadata,
-        assertValidSmbFormat(metadata));
+        assertValidSmbFormat(metadata, input));
 
     pipeline.run();
   }
@@ -264,12 +264,12 @@ public class SortedBucketSinkTest {
             .apply(reshuffle)
             .apply(sink),
         metadata,
-        assertValidSmbFormat(metadata));
+        assertValidSmbFormat(metadata, input));
 
     pipeline.run();
   }
 
-  private static void check(
+  static void check(
       WriteResult writeResult,
       TestBucketMetadata metadata,
       Consumer<Map<BucketShardId, List<String>>> checkFn) {
@@ -339,10 +339,10 @@ public class SortedBucketSinkTest {
     }
   }
 
-  private interface SerializableConsumer<T> extends Consumer<T>, Serializable {}
+  interface SerializableConsumer<T> extends Consumer<T>, Serializable {}
 
-  private SerializableConsumer<Map<BucketShardId, List<String>>> assertValidSmbFormat(
-      TestBucketMetadata metadata) {
+  static SerializableConsumer<Map<BucketShardId, List<String>>> assertValidSmbFormat(
+      TestBucketMetadata metadata, String[] expectedInput) {
     return writtenBuckets -> {
       final Map<String, Integer> keysToBuckets = new HashMap<>();
       final List<String> seenItems = new ArrayList<>();
@@ -382,7 +382,7 @@ public class SortedBucketSinkTest {
       MatcherAssert.assertThat(
           "Written items do not match PCollection input",
           seenItems,
-          Matchers.containsInAnyOrder(input));
+          Matchers.containsInAnyOrder(expectedInput));
 
       final Set<BucketShardId> allBucketShardIds = new HashSet<>();
       for (int bucketId = 0; bucketId < metadata.getNumBuckets(); bucketId++) {

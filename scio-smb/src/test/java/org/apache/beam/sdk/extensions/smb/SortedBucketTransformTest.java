@@ -21,8 +21,9 @@ import static org.apache.beam.sdk.extensions.smb.SortedBucketSource.BucketedInpu
 import static org.apache.beam.sdk.extensions.smb.TestUtils.fromFolder;
 
 import java.nio.channels.Channels;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import org.apache.beam.sdk.PipelineResult;
 import org.apache.beam.sdk.extensions.smb.SMBFilenamePolicy.FileAssignment;
@@ -36,6 +37,7 @@ import org.apache.beam.sdk.values.TupleTag;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ImmutableList;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ImmutableMap;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ImmutableSet;
+import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Lists;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -154,9 +156,8 @@ public class SortedBucketTransformTest {
     final PipelineResult result = transformPipeline.run();
     result.waitUntilFinish();
 
-    final KV<BucketMetadata, Set<String>> outputs = readAllFrom(outputFolder);
-    Assert.assertEquals(expected, outputs.getValue());
-
+    final KV<TestBucketMetadata, Map<BucketShardId, List<String>>> outputs =
+        readAllFrom(outputFolder);
     int numBucketsInMetadata = outputs.getKey().getNumBuckets();
 
     if (!targetParallelism.isAuto()) {
@@ -166,6 +167,9 @@ public class SortedBucketTransformTest {
       Assert.assertTrue(numBucketsInMetadata >= 1);
     }
 
+    SortedBucketSinkTest.assertValidSmbFormat(outputs.getKey(), expected.toArray(new String[0]))
+        .accept(outputs.getValue());
+
     Assert.assertEquals(1, outputs.getKey().getNumShards());
 
     SortedBucketSourceTest.verifyMetrics(
@@ -174,26 +178,27 @@ public class SortedBucketTransformTest {
             "SortedBucketTransform-KeyGroupSize", DistributionResult.create(10, 7, 1, 2)));
   }
 
-  private static KV<BucketMetadata, Set<String>> readAllFrom(TemporaryFolder folder)
-      throws Exception {
+  private static KV<TestBucketMetadata, Map<BucketShardId, List<String>>> readAllFrom(
+      TemporaryFolder folder) throws Exception {
     final FileAssignment fileAssignment =
         new SMBFilenamePolicy(fromFolder(folder), SortedBucketIO.DEFAULT_FILENAME_PREFIX, ".txt")
             .forDestination();
 
-    BucketMetadata metadata =
+    BucketMetadata<String, String> metadata =
         BucketMetadata.from(
             Channels.newInputStream(FileSystems.open(fileAssignment.forMetadata())));
 
-    final Set<String> outputElements = new HashSet<>();
+    final Map<BucketShardId, List<String>> bucketsToOutputs = new HashMap<>();
 
     for (int bucketId = 0; bucketId < metadata.getNumBuckets(); bucketId++) {
       final FileOperations.Reader<String> outputReader = new TestFileOperations().createReader();
       outputReader.prepareRead(
           FileSystems.open(fileAssignment.forBucket(BucketShardId.of(bucketId, 0), metadata)));
 
-      outputReader.iterator().forEachRemaining(outputElements::add);
+      bucketsToOutputs.put(
+          BucketShardId.of(bucketId, 0), Lists.newArrayList(outputReader.iterator()));
     }
 
-    return KV.of(metadata, outputElements);
+    return KV.of((TestBucketMetadata) metadata, bucketsToOutputs);
   }
 }
