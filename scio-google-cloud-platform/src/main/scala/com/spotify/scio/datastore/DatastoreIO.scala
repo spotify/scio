@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Spotify AB.
+ * Copyright 2020 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,12 @@
  * under the License.
  */
 
-package com.spotify.scio.io
+package com.spotify.scio.datastore
 
-import com.google.datastore.v1.{Entity, Query}
 import com.spotify.scio.ScioContext
 import com.spotify.scio.values.SCollection
+import com.spotify.scio.io.{EmptyTap, EmptyTapOf, ScioIO, Tap, TapT}
+import com.google.datastore.v1.{Entity, Query}
 import org.apache.beam.sdk.io.gcp.{datastore => beam}
 
 final case class DatastoreIO(projectId: String) extends ScioIO[Entity] {

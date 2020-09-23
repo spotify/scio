@@ -21,7 +21,6 @@ import java.io.PrintStream
 import java.lang.{Boolean => JBoolean, Double => JDouble, Iterable => JIterable}
 import java.util.concurrent.ThreadLocalRandom
 
-import com.google.datastore.v1.Entity
 import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.{AvroBytesUtil, BeamCoders, Coder, CoderMaterializer, WrappedBCoder}
 import com.spotify.scio.io._
@@ -1425,13 +1424,6 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       .withSuffix(suffix)
       .withNumShards(numShards)
       .withCompression(compression)
-
-  /**
-   * Save this SCollection as a Datastore dataset. Note that elements must be of type `Entity`.
-   * @group output
-   */
-  def saveAsDatastore(projectId: String)(implicit ev: T <:< Entity): ClosedTap[Nothing] =
-    this.covary_[Entity].write(DatastoreIO(projectId))
 
   /**
    * Save this SCollection as a text file. Note that elements must be of type `String`.

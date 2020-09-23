@@ -28,6 +28,7 @@ import com.google.datastore.v1.Entity
 import com.google.datastore.v1.client.DatastoreHelper.{makeKey, makeValue}
 import com.spotify.scio._
 import com.spotify.scio.bigquery._
+import com.spotify.scio.datastore._
 import com.spotify.scio.values.SCollection
 import org.apache.beam.examples.common.{ExampleOptions, ExampleUtils}
 import org.apache.beam.sdk.extensions.gcp.options.GcpOptions

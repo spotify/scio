@@ -20,8 +20,6 @@ package com.spotify.scio.io
 import java.nio.ByteBuffer
 import java.nio.file.Files
 
-import com.google.datastore.v1.Entity
-import com.google.datastore.v1.client.DatastoreHelper
 import com.spotify.scio.ScioContext
 import com.spotify.scio.avro.AvroUtils.schema
 import com.spotify.scio.avro._
@@ -115,16 +113,6 @@ class ScioIOTest extends ScioIOSpec {
       .toSet shouldBe Set("part-00000-of-00001.bin")
 
     FileUtils.deleteDirectory(tmpDir.toFile)
-  }
-
-  "DatastoreIO" should "work" in {
-    val xs = (1 to 100).map { x =>
-      Entity
-        .newBuilder()
-        .putProperties("int", DatastoreHelper.makeValue(x).build())
-        .build()
-    }
-    testJobTest(xs)(DatastoreIO(_))(_.datastore(_, null))(_.saveAsDatastore(_))
   }
 
 }
