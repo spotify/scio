@@ -35,5 +35,3 @@ trait CoderInstances {
   implicit val spannerMutationGroupCoder: Coder[MutationGroup] =
     Coder.beam(bcoders.SerializableCoder.of(classOf[MutationGroup]))
 }
-
-object coders extends CoderInstances
