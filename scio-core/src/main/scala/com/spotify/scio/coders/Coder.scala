@@ -499,8 +499,7 @@ object Coder
   implicit val noneCoder: Coder[None.type] = ScalaCoders.noneCoder
   implicit val bitSetCoder: Coder[BitSet] = ScalaCoders.bitSetCoder
   implicit def seqCoder[T: Coder]: Coder[Seq[T]] = ScalaCoders.seqCoder
-  import shapeless.Strict
-  implicit def pairCoder[A, B](implicit CA: Strict[Coder[A]], CB: Strict[Coder[B]]): Coder[(A, B)] =
+  implicit def pairCoder[A, B](implicit CA: Coder[A], CB: Coder[B]): Coder[(A, B)] =
     ScalaCoders.pairCoder
   implicit def iterableCoder[T: Coder]: Coder[Iterable[T]] = ScalaCoders.iterableCoder
   implicit def throwableCoder[T <: Throwable: ClassTag]: Coder[T] = ScalaCoders.throwableCoder

@@ -30,20 +30,19 @@ def mkTypes(n):
     return ', '.join(mkVals(n))
 
 def mkBounds(n):
-    return ', '.join(x + ': Strict[Coder[' + x + ']]' for x in mkVals(n))
+    return ', '.join(x + ': Coder' for x in mkVals(n))
 
 def mkImplicits(n):
-    return '\n'.join('      implicit val x' + x + ' = ' + x + '.value' for x in mkVals(n))
+    return '\n'.join('      implicit val x' + x + ' = ' + x for x in mkVals(n))
 
 # Functions
 
 def tupleFns(out, n):
     types = mkTypes(n)
     print >> out, '''
-    implicit def tuple%sCoder[%s](implicit %s): Coder[(%s)] = {
-%s
+    implicit def tuple%sCoder[%s]: Coder[(%s)] = {
       Coder.gen[(%s)]
-    }''' % (n, types, mkBounds(n), types, mkImplicits(n), types)
+    }''' % (n, mkBounds(n), types, types)
 
 
 def main(out):
@@ -70,17 +69,10 @@ def main(out):
         // !! DO NOT EDIT MANUALLY
         // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-        
-        
-        
-        
-        
-        
-
+    
         package com.spotify.scio.coders.instances
 
         import com.spotify.scio.coders.Coder
-        import shapeless.Strict
 
         trait TupleCoders {
         ''').replace('  # NOQA', '').lstrip('\n')

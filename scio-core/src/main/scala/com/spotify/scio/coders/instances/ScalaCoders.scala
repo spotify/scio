@@ -527,10 +527,9 @@ trait ScalaCoders {
   implicit def seqCoder[T: Coder]: Coder[Seq[T]] =
     Coder.transform(Coder[T])(bc => Coder.beam(new SeqCoder[T](bc)))
 
-  import shapeless.Strict
-  implicit def pairCoder[A, B](implicit CA: Strict[Coder[A]], CB: Strict[Coder[B]]): Coder[(A, B)] =
-    Coder.transform(CA.value) { ac =>
-      Coder.transform(CB.value)(bc => Coder.beam(new PairCoder[A, B](ac, bc)))
+  implicit def pairCoder[A, B](implicit CA: Coder[A], CB: Coder[B]): Coder[(A, B)] =
+    Coder.transform(CA) { ac =>
+      Coder.transform(CB)(bc => Coder.beam(new PairCoder[A, B](ac, bc)))
     }
 
   // TODO: proper chunking implementation
