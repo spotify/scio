@@ -1509,6 +1509,17 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * Save this SCollection as a Pub/Sub topic using the given map as message attributes.
    * @group output
    */
+  @deprecated(
+    """
+    |  This method has been deprecated. Use PubsubIO.withAttributes instead
+    |
+    |  For example:
+    |     coll.write(PubsubIO.withAttributes(sub, idAttribute, timestampAttribute))(
+    |       PubsubIO.WriteParam()
+    |     )
+    """.stripMargin,
+    since = "0.10.0"
+  )
   def saveAsPubsubWithAttributes[V: ClassTag: Coder](
     topic: String,
     idAttribute: String = null,

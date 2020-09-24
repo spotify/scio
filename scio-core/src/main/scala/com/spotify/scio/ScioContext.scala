@@ -833,6 +833,16 @@ class ScioContext private[scio] (
    * Get an SCollection for a Pub/Sub subscription that includes message attributes.
    * @group input
    */
+  @deprecated(
+    """
+    |  This method has been deprecated. Use PubsubIO.withAttributes instead.
+    |  For example:
+    |     sc.read(PubsubIO.withAttributes(sub, idAttribute, timestampAttribute))(
+    |       PubsubIO.ReadParam(PubsubIO.Subscription)
+    |     )
+    """.stripMargin,
+    since = "0.10.0"
+  )
   def pubsubSubscriptionWithAttributes[T: ClassTag: Coder](
     sub: String,
     idAttribute: String = null,
@@ -844,6 +854,16 @@ class ScioContext private[scio] (
    * Get an SCollection for a Pub/Sub topic that includes message attributes.
    * @group input
    */
+  @deprecated(
+    """
+    |  This method has been deprecated. Use PubsubIO.withAttributes instead.
+    |  For example:
+    |     sc.read(PubsubIO.withAttributes(sub, idAttribute, timestampAttribute))(
+    |       PubsubIO.ReadParam(PubsubIO.Topic)
+    |     )
+    """.stripMargin,
+    since = "0.10.0"
+  )
   def pubsubTopicWithAttributes[T: ClassTag: Coder](
     topic: String,
     idAttribute: String = null,
