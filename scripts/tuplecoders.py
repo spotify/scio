@@ -32,17 +32,14 @@ def mkTypes(n):
 def mkBounds(n):
     return ', '.join(x + ': Coder' for x in mkVals(n))
 
-def mkImplicits(n):
-    return '\n'.join('      implicit val x' + x + ' = ' + x for x in mkVals(n))
-
 # Functions
 
 def tupleFns(out, n):
     types = mkTypes(n)
-    print >> out, '''
-    implicit def tuple%sCoder[%s]: Coder[(%s)] = {
-      Coder.gen[(%s)]
-    }''' % (n, mkBounds(n), types, types)
+    print >> out, '''    
+    implicit def tuple{size}Coder[{bounds}]: Coder[({type_list})] = {{
+      Coder.gen[({type_list})]
+    }}'''.format(size=n, bounds=mkBounds(n), type_list=types)
 
 
 def main(out):
