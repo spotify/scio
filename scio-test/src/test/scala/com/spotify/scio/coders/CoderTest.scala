@@ -467,8 +467,10 @@ final class CoderTest extends AnyFlatSpec with Matchers {
     null.asInstanceOf[jDouble] coderShould roundtrip(opts)
     null.asInstanceOf[jLong] coderShould roundtrip(opts)
     null.asInstanceOf[jShort] coderShould roundtrip(opts)
-    (null, null).asInstanceOf[(String, String)] coderShould roundtrip(opts)
+    (null, null).asInstanceOf[(String, Top)] coderShould roundtrip(opts)
     DummyCC(null) coderShould roundtrip(opts)
+    null.asInstanceOf[Top] coderShould roundtrip(opts)
+    null.asInstanceOf[Either[String, Int]] coderShould roundtrip(opts)
 
     type T = (String, Int, Top)
     val example: T = ("Hello", 42, TA(1, "World"))
