@@ -66,7 +66,7 @@ private[scio] object BeamCoders {
     val coder = si.view.getPCollection.getCoder.asInstanceOf[beam.KvCoder[_, _]].getValueCoder
     val (k, v) = unwrap(coder) match {
       // Beam's `View.asMultiMap`
-      case c: beam.KvCoder[K, V] => (c.getKeyCoder, c.getValueCoder)
+      case (c: beam.KvCoder[K, V] @unchecked) => (c.getKeyCoder, c.getValueCoder)
       // `asMapSingletonSideInput`
       case (c: scio.MapCoder[K, Iterable[V]] @unchecked) => (c.kc, getIterableV(c.vc))
       case _ =>
