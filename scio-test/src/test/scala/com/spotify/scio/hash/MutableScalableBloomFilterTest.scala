@@ -76,4 +76,11 @@ class MutableScalableBloomFilterTest extends PipelineSpec {
       }
     }
   }
+
+  it should "round-trip serialization" in {
+    val initialCapacity = 2
+    val sbf = MutableScalableBloomFilter[String](initialCapacity, 0.001, 2, 1.0)
+    (0 until 100).foreach(i => sbf += ("item" + i))
+    assert(MutableScalableBloomFilter.fromBytes[String](MutableScalableBloomFilter.toBytes(sbf)) == sbf)
+  }
 }
