@@ -24,6 +24,7 @@ package com.spotify.scio.coders.instances
 
 import java.io.{InputStream, OutputStream}
 
+import shapeless.Strict
 import com.spotify.scio.coders.{Coder, CoderStackTrace}
 import org.apache.beam.sdk.coders.Coder.NonDeterministicException
 import org.apache.beam.sdk.coders.{Coder => BCoder, _}
@@ -32,6 +33,89 @@ import org.apache.beam.sdk.util.common.ElementByteSizeObserver
 import scala.jdk.CollectionConverters._
 
 trait TupleCoders {
+
+  final private class Tuple2Coder[A, B](ac: BCoder[A], bc: BCoder[B]) extends AtomicCoder[(A, B)] {
+    private[this] val materializationStackTrace: Array[StackTraceElement] = CoderStackTrace.prepare
+
+    @inline def onErrorMsg[TB](msg: => (String, String))(f: => TB): TB =
+      try {
+        f
+      } catch {
+        case e: Exception =>
+          // allow Flink memory management, see WrappedBCoder#catching comment.
+          throw CoderStackTrace.append(
+            e,
+            Some(
+              s"Exception while trying to `${msg._1}` an instance" +
+                s" of Tuple2: Can't decode field ${msg._2}"
+            ),
+            materializationStackTrace
+          )
+      }
+
+    override def encode(value: (A, B), os: OutputStream): Unit = {
+      onErrorMsg("encode" -> "_1")(ac.encode(value._1, os))
+      onErrorMsg("encode" -> "_2")(bc.encode(value._2, os))
+    }
+    override def decode(is: InputStream): (A, B) =
+      (onErrorMsg("decode" -> "_1")(ac.decode(is)), onErrorMsg("decode" -> "_2")(bc.decode(is)))
+
+    override def toString: String =
+      s"Tuple2Coder(_1 -> $ac, _2 -> $bc)"
+
+    // delegate methods for determinism and equality checks
+
+    override def verifyDeterministic(): Unit = {
+      val cs = List("_1" -> ac, "_2" -> bc)
+      val problems = cs.flatMap { case (label, c) =>
+        try {
+          c.verifyDeterministic()
+          Nil
+        } catch {
+          case e: NonDeterministicException =>
+            val reason = s"field $label is using non-deterministic $c"
+            List(reason -> e)
+        }
+      }
+
+      problems match {
+        case (_, e) :: _ =>
+          val reasons = problems.map { case (reason, _) => reason }
+          throw new NonDeterministicException(this, reasons.asJava, e)
+        case Nil =>
+      }
+    }
+
+    override def consistentWithEquals(): Boolean =
+      ac.consistentWithEquals() && bc.consistentWithEquals()
+
+    override def structuralValue(value: (A, B)): AnyRef =
+      if (consistentWithEquals()) {
+        value.asInstanceOf[AnyRef]
+      } else {
+        (ac.structuralValue(value._1), bc.structuralValue(value._2))
+      }
+
+    // delegate methods for byte size estimation
+    override def isRegisterByteSizeObserverCheap(value: (A, B)): Boolean =
+      ac.isRegisterByteSizeObserverCheap(value._1) && bc.isRegisterByteSizeObserverCheap(value._2)
+
+    override def registerByteSizeObserver(
+      value: (A, B),
+      observer: ElementByteSizeObserver
+    ): Unit = {
+      ac.registerByteSizeObserver(value._1, observer)
+      bc.registerByteSizeObserver(value._2, observer)
+    }
+  }
+
+  implicit def tuple2Coder[A, B](implicit
+    CA: Strict[Coder[A]],
+    CB: Strict[Coder[B]]
+  ): Coder[(A, B)] =
+    Coder.transform(CA.value) { ac =>
+      Coder.transform(CB.value)(bc => Coder.beam(new Tuple2Coder[A, B](ac, bc)))
+    }
 
   final private class Tuple3Coder[A, B, C](ac: BCoder[A], bc: BCoder[B], cc: BCoder[C])
       extends AtomicCoder[(A, B, C)] {
@@ -118,13 +202,13 @@ trait TupleCoders {
   }
 
   implicit def tuple3Coder[A, B, C](implicit
-    CA: Coder[A],
-    CB: Coder[B],
-    CC: Coder[C]
+    CA: Strict[Coder[A]],
+    CB: Strict[Coder[B]],
+    CC: Strict[Coder[C]]
   ): Coder[(A, B, C)] =
-    Coder.transform(CA) { ac =>
-      Coder.transform(CB) { bc =>
-        Coder.transform(CC)(cc => Coder.beam(new Tuple3Coder[A, B, C](ac, bc, cc)))
+    Coder.transform(CA.value) { ac =>
+      Coder.transform(CB.value) { bc =>
+        Coder.transform(CC.value)(cc => Coder.beam(new Tuple3Coder[A, B, C](ac, bc, cc)))
       }
     }
 
@@ -228,15 +312,15 @@ trait TupleCoders {
   }
 
   implicit def tuple4Coder[A, B, C, D](implicit
-    CA: Coder[A],
-    CB: Coder[B],
-    CC: Coder[C],
-    CD: Coder[D]
+    CA: Strict[Coder[A]],
+    CB: Strict[Coder[B]],
+    CC: Strict[Coder[C]],
+    CD: Strict[Coder[D]]
   ): Coder[(A, B, C, D)] =
-    Coder.transform(CA) { ac =>
-      Coder.transform(CB) { bc =>
-        Coder.transform(CC) { cc =>
-          Coder.transform(CD)(dc => Coder.beam(new Tuple4Coder[A, B, C, D](ac, bc, cc, dc)))
+    Coder.transform(CA.value) { ac =>
+      Coder.transform(CB.value) { bc =>
+        Coder.transform(CC.value) { cc =>
+          Coder.transform(CD.value)(dc => Coder.beam(new Tuple4Coder[A, B, C, D](ac, bc, cc, dc)))
         }
       }
     }
@@ -346,17 +430,17 @@ trait TupleCoders {
   }
 
   implicit def tuple5Coder[A, B, C, D, E](implicit
-    CA: Coder[A],
-    CB: Coder[B],
-    CC: Coder[C],
-    CD: Coder[D],
-    CE: Coder[E]
+    CA: Strict[Coder[A]],
+    CB: Strict[Coder[B]],
+    CC: Strict[Coder[C]],
+    CD: Strict[Coder[D]],
+    CE: Strict[Coder[E]]
   ): Coder[(A, B, C, D, E)] =
-    Coder.transform(CA) { ac =>
-      Coder.transform(CB) { bc =>
-        Coder.transform(CC) { cc =>
-          Coder.transform(CD) { dc =>
-            Coder.transform(CE)(ec =>
+    Coder.transform(CA.value) { ac =>
+      Coder.transform(CB.value) { bc =>
+        Coder.transform(CC.value) { cc =>
+          Coder.transform(CD.value) { dc =>
+            Coder.transform(CE.value)(ec =>
               Coder.beam(new Tuple5Coder[A, B, C, D, E](ac, bc, cc, dc, ec))
             )
           }
@@ -476,19 +560,19 @@ trait TupleCoders {
   }
 
   implicit def tuple6Coder[A, B, C, D, E, G](implicit
-    CA: Coder[A],
-    CB: Coder[B],
-    CC: Coder[C],
-    CD: Coder[D],
-    CE: Coder[E],
-    CG: Coder[G]
+    CA: Strict[Coder[A]],
+    CB: Strict[Coder[B]],
+    CC: Strict[Coder[C]],
+    CD: Strict[Coder[D]],
+    CE: Strict[Coder[E]],
+    CG: Strict[Coder[G]]
   ): Coder[(A, B, C, D, E, G)] =
-    Coder.transform(CA) { ac =>
-      Coder.transform(CB) { bc =>
-        Coder.transform(CC) { cc =>
-          Coder.transform(CD) { dc =>
-            Coder.transform(CE) { ec =>
-              Coder.transform(CG)(gc =>
+    Coder.transform(CA.value) { ac =>
+      Coder.transform(CB.value) { bc =>
+        Coder.transform(CC.value) { cc =>
+          Coder.transform(CD.value) { dc =>
+            Coder.transform(CE.value) { ec =>
+              Coder.transform(CG.value)(gc =>
                 Coder.beam(new Tuple6Coder[A, B, C, D, E, G](ac, bc, cc, dc, ec, gc))
               )
             }
@@ -616,21 +700,21 @@ trait TupleCoders {
   }
 
   implicit def tuple7Coder[A, B, C, D, E, G, H](implicit
-    CA: Coder[A],
-    CB: Coder[B],
-    CC: Coder[C],
-    CD: Coder[D],
-    CE: Coder[E],
-    CG: Coder[G],
-    CH: Coder[H]
+    CA: Strict[Coder[A]],
+    CB: Strict[Coder[B]],
+    CC: Strict[Coder[C]],
+    CD: Strict[Coder[D]],
+    CE: Strict[Coder[E]],
+    CG: Strict[Coder[G]],
+    CH: Strict[Coder[H]]
   ): Coder[(A, B, C, D, E, G, H)] =
-    Coder.transform(CA) { ac =>
-      Coder.transform(CB) { bc =>
-        Coder.transform(CC) { cc =>
-          Coder.transform(CD) { dc =>
-            Coder.transform(CE) { ec =>
-              Coder.transform(CG) { gc =>
-                Coder.transform(CH)(hc =>
+    Coder.transform(CA.value) { ac =>
+      Coder.transform(CB.value) { bc =>
+        Coder.transform(CC.value) { cc =>
+          Coder.transform(CD.value) { dc =>
+            Coder.transform(CE.value) { ec =>
+              Coder.transform(CG.value) { gc =>
+                Coder.transform(CH.value)(hc =>
                   Coder.beam(new Tuple7Coder[A, B, C, D, E, G, H](ac, bc, cc, dc, ec, gc, hc))
                 )
               }
@@ -774,23 +858,23 @@ trait TupleCoders {
   }
 
   implicit def tuple8Coder[A, B, C, D, E, G, H, I](implicit
-    CA: Coder[A],
-    CB: Coder[B],
-    CC: Coder[C],
-    CD: Coder[D],
-    CE: Coder[E],
-    CG: Coder[G],
-    CH: Coder[H],
-    CI: Coder[I]
+    CA: Strict[Coder[A]],
+    CB: Strict[Coder[B]],
+    CC: Strict[Coder[C]],
+    CD: Strict[Coder[D]],
+    CE: Strict[Coder[E]],
+    CG: Strict[Coder[G]],
+    CH: Strict[Coder[H]],
+    CI: Strict[Coder[I]]
   ): Coder[(A, B, C, D, E, G, H, I)] =
-    Coder.transform(CA) { ac =>
-      Coder.transform(CB) { bc =>
-        Coder.transform(CC) { cc =>
-          Coder.transform(CD) { dc =>
-            Coder.transform(CE) { ec =>
-              Coder.transform(CG) { gc =>
-                Coder.transform(CH) { hc =>
-                  Coder.transform(CI)(ic =>
+    Coder.transform(CA.value) { ac =>
+      Coder.transform(CB.value) { bc =>
+        Coder.transform(CC.value) { cc =>
+          Coder.transform(CD.value) { dc =>
+            Coder.transform(CE.value) { ec =>
+              Coder.transform(CG.value) { gc =>
+                Coder.transform(CH.value) { hc =>
+                  Coder.transform(CI.value)(ic =>
                     Coder.beam(
                       new Tuple8Coder[A, B, C, D, E, G, H, I](ac, bc, cc, dc, ec, gc, hc, ic)
                     )
@@ -943,25 +1027,25 @@ trait TupleCoders {
   }
 
   implicit def tuple9Coder[A, B, C, D, E, G, H, I, J](implicit
-    CA: Coder[A],
-    CB: Coder[B],
-    CC: Coder[C],
-    CD: Coder[D],
-    CE: Coder[E],
-    CG: Coder[G],
-    CH: Coder[H],
-    CI: Coder[I],
-    CJ: Coder[J]
+    CA: Strict[Coder[A]],
+    CB: Strict[Coder[B]],
+    CC: Strict[Coder[C]],
+    CD: Strict[Coder[D]],
+    CE: Strict[Coder[E]],
+    CG: Strict[Coder[G]],
+    CH: Strict[Coder[H]],
+    CI: Strict[Coder[I]],
+    CJ: Strict[Coder[J]]
   ): Coder[(A, B, C, D, E, G, H, I, J)] =
-    Coder.transform(CA) { ac =>
-      Coder.transform(CB) { bc =>
-        Coder.transform(CC) { cc =>
-          Coder.transform(CD) { dc =>
-            Coder.transform(CE) { ec =>
-              Coder.transform(CG) { gc =>
-                Coder.transform(CH) { hc =>
-                  Coder.transform(CI) { ic =>
-                    Coder.transform(CJ)(jc =>
+    Coder.transform(CA.value) { ac =>
+      Coder.transform(CB.value) { bc =>
+        Coder.transform(CC.value) { cc =>
+          Coder.transform(CD.value) { dc =>
+            Coder.transform(CE.value) { ec =>
+              Coder.transform(CG.value) { gc =>
+                Coder.transform(CH.value) { hc =>
+                  Coder.transform(CI.value) { ic =>
+                    Coder.transform(CJ.value)(jc =>
                       Coder.beam(
                         new Tuple9Coder[A, B, C, D, E, G, H, I, J](
                           ac,
@@ -1134,27 +1218,27 @@ trait TupleCoders {
   }
 
   implicit def tuple10Coder[A, B, C, D, E, G, H, I, J, K](implicit
-    CA: Coder[A],
-    CB: Coder[B],
-    CC: Coder[C],
-    CD: Coder[D],
-    CE: Coder[E],
-    CG: Coder[G],
-    CH: Coder[H],
-    CI: Coder[I],
-    CJ: Coder[J],
-    CK: Coder[K]
+    CA: Strict[Coder[A]],
+    CB: Strict[Coder[B]],
+    CC: Strict[Coder[C]],
+    CD: Strict[Coder[D]],
+    CE: Strict[Coder[E]],
+    CG: Strict[Coder[G]],
+    CH: Strict[Coder[H]],
+    CI: Strict[Coder[I]],
+    CJ: Strict[Coder[J]],
+    CK: Strict[Coder[K]]
   ): Coder[(A, B, C, D, E, G, H, I, J, K)] =
-    Coder.transform(CA) { ac =>
-      Coder.transform(CB) { bc =>
-        Coder.transform(CC) { cc =>
-          Coder.transform(CD) { dc =>
-            Coder.transform(CE) { ec =>
-              Coder.transform(CG) { gc =>
-                Coder.transform(CH) { hc =>
-                  Coder.transform(CI) { ic =>
-                    Coder.transform(CJ) { jc =>
-                      Coder.transform(CK)(kc =>
+    Coder.transform(CA.value) { ac =>
+      Coder.transform(CB.value) { bc =>
+        Coder.transform(CC.value) { cc =>
+          Coder.transform(CD.value) { dc =>
+            Coder.transform(CE.value) { ec =>
+              Coder.transform(CG.value) { gc =>
+                Coder.transform(CH.value) { hc =>
+                  Coder.transform(CI.value) { ic =>
+                    Coder.transform(CJ.value) { jc =>
+                      Coder.transform(CK.value)(kc =>
                         Coder.beam(
                           new Tuple10Coder[A, B, C, D, E, G, H, I, J, K](
                             ac,
@@ -1337,29 +1421,29 @@ trait TupleCoders {
   }
 
   implicit def tuple11Coder[A, B, C, D, E, G, H, I, J, K, L](implicit
-    CA: Coder[A],
-    CB: Coder[B],
-    CC: Coder[C],
-    CD: Coder[D],
-    CE: Coder[E],
-    CG: Coder[G],
-    CH: Coder[H],
-    CI: Coder[I],
-    CJ: Coder[J],
-    CK: Coder[K],
-    CL: Coder[L]
+    CA: Strict[Coder[A]],
+    CB: Strict[Coder[B]],
+    CC: Strict[Coder[C]],
+    CD: Strict[Coder[D]],
+    CE: Strict[Coder[E]],
+    CG: Strict[Coder[G]],
+    CH: Strict[Coder[H]],
+    CI: Strict[Coder[I]],
+    CJ: Strict[Coder[J]],
+    CK: Strict[Coder[K]],
+    CL: Strict[Coder[L]]
   ): Coder[(A, B, C, D, E, G, H, I, J, K, L)] =
-    Coder.transform(CA) { ac =>
-      Coder.transform(CB) { bc =>
-        Coder.transform(CC) { cc =>
-          Coder.transform(CD) { dc =>
-            Coder.transform(CE) { ec =>
-              Coder.transform(CG) { gc =>
-                Coder.transform(CH) { hc =>
-                  Coder.transform(CI) { ic =>
-                    Coder.transform(CJ) { jc =>
-                      Coder.transform(CK) { kc =>
-                        Coder.transform(CL)(lc =>
+    Coder.transform(CA.value) { ac =>
+      Coder.transform(CB.value) { bc =>
+        Coder.transform(CC.value) { cc =>
+          Coder.transform(CD.value) { dc =>
+            Coder.transform(CE.value) { ec =>
+              Coder.transform(CG.value) { gc =>
+                Coder.transform(CH.value) { hc =>
+                  Coder.transform(CI.value) { ic =>
+                    Coder.transform(CJ.value) { jc =>
+                      Coder.transform(CK.value) { kc =>
+                        Coder.transform(CL.value)(lc =>
                           Coder.beam(
                             new Tuple11Coder[A, B, C, D, E, G, H, I, J, K, L](
                               ac,
@@ -1552,31 +1636,31 @@ trait TupleCoders {
   }
 
   implicit def tuple12Coder[A, B, C, D, E, G, H, I, J, K, L, M](implicit
-    CA: Coder[A],
-    CB: Coder[B],
-    CC: Coder[C],
-    CD: Coder[D],
-    CE: Coder[E],
-    CG: Coder[G],
-    CH: Coder[H],
-    CI: Coder[I],
-    CJ: Coder[J],
-    CK: Coder[K],
-    CL: Coder[L],
-    CM: Coder[M]
+    CA: Strict[Coder[A]],
+    CB: Strict[Coder[B]],
+    CC: Strict[Coder[C]],
+    CD: Strict[Coder[D]],
+    CE: Strict[Coder[E]],
+    CG: Strict[Coder[G]],
+    CH: Strict[Coder[H]],
+    CI: Strict[Coder[I]],
+    CJ: Strict[Coder[J]],
+    CK: Strict[Coder[K]],
+    CL: Strict[Coder[L]],
+    CM: Strict[Coder[M]]
   ): Coder[(A, B, C, D, E, G, H, I, J, K, L, M)] =
-    Coder.transform(CA) { ac =>
-      Coder.transform(CB) { bc =>
-        Coder.transform(CC) { cc =>
-          Coder.transform(CD) { dc =>
-            Coder.transform(CE) { ec =>
-              Coder.transform(CG) { gc =>
-                Coder.transform(CH) { hc =>
-                  Coder.transform(CI) { ic =>
-                    Coder.transform(CJ) { jc =>
-                      Coder.transform(CK) { kc =>
-                        Coder.transform(CL) { lc =>
-                          Coder.transform(CM)(mc =>
+    Coder.transform(CA.value) { ac =>
+      Coder.transform(CB.value) { bc =>
+        Coder.transform(CC.value) { cc =>
+          Coder.transform(CD.value) { dc =>
+            Coder.transform(CE.value) { ec =>
+              Coder.transform(CG.value) { gc =>
+                Coder.transform(CH.value) { hc =>
+                  Coder.transform(CI.value) { ic =>
+                    Coder.transform(CJ.value) { jc =>
+                      Coder.transform(CK.value) { kc =>
+                        Coder.transform(CL.value) { lc =>
+                          Coder.transform(CM.value)(mc =>
                             Coder.beam(
                               new Tuple12Coder[A, B, C, D, E, G, H, I, J, K, L, M](
                                 ac,
@@ -1778,33 +1862,33 @@ trait TupleCoders {
   }
 
   implicit def tuple13Coder[A, B, C, D, E, G, H, I, J, K, L, M, N](implicit
-    CA: Coder[A],
-    CB: Coder[B],
-    CC: Coder[C],
-    CD: Coder[D],
-    CE: Coder[E],
-    CG: Coder[G],
-    CH: Coder[H],
-    CI: Coder[I],
-    CJ: Coder[J],
-    CK: Coder[K],
-    CL: Coder[L],
-    CM: Coder[M],
-    CN: Coder[N]
+    CA: Strict[Coder[A]],
+    CB: Strict[Coder[B]],
+    CC: Strict[Coder[C]],
+    CD: Strict[Coder[D]],
+    CE: Strict[Coder[E]],
+    CG: Strict[Coder[G]],
+    CH: Strict[Coder[H]],
+    CI: Strict[Coder[I]],
+    CJ: Strict[Coder[J]],
+    CK: Strict[Coder[K]],
+    CL: Strict[Coder[L]],
+    CM: Strict[Coder[M]],
+    CN: Strict[Coder[N]]
   ): Coder[(A, B, C, D, E, G, H, I, J, K, L, M, N)] =
-    Coder.transform(CA) { ac =>
-      Coder.transform(CB) { bc =>
-        Coder.transform(CC) { cc =>
-          Coder.transform(CD) { dc =>
-            Coder.transform(CE) { ec =>
-              Coder.transform(CG) { gc =>
-                Coder.transform(CH) { hc =>
-                  Coder.transform(CI) { ic =>
-                    Coder.transform(CJ) { jc =>
-                      Coder.transform(CK) { kc =>
-                        Coder.transform(CL) { lc =>
-                          Coder.transform(CM) { mc =>
-                            Coder.transform(CN)(nc =>
+    Coder.transform(CA.value) { ac =>
+      Coder.transform(CB.value) { bc =>
+        Coder.transform(CC.value) { cc =>
+          Coder.transform(CD.value) { dc =>
+            Coder.transform(CE.value) { ec =>
+              Coder.transform(CG.value) { gc =>
+                Coder.transform(CH.value) { hc =>
+                  Coder.transform(CI.value) { ic =>
+                    Coder.transform(CJ.value) { jc =>
+                      Coder.transform(CK.value) { kc =>
+                        Coder.transform(CL.value) { lc =>
+                          Coder.transform(CM.value) { mc =>
+                            Coder.transform(CN.value)(nc =>
                               Coder.beam(
                                 new Tuple13Coder[A, B, C, D, E, G, H, I, J, K, L, M, N](
                                   ac,
@@ -2019,35 +2103,35 @@ trait TupleCoders {
   }
 
   implicit def tuple14Coder[A, B, C, D, E, G, H, I, J, K, L, M, N, O](implicit
-    CA: Coder[A],
-    CB: Coder[B],
-    CC: Coder[C],
-    CD: Coder[D],
-    CE: Coder[E],
-    CG: Coder[G],
-    CH: Coder[H],
-    CI: Coder[I],
-    CJ: Coder[J],
-    CK: Coder[K],
-    CL: Coder[L],
-    CM: Coder[M],
-    CN: Coder[N],
-    CO: Coder[O]
+    CA: Strict[Coder[A]],
+    CB: Strict[Coder[B]],
+    CC: Strict[Coder[C]],
+    CD: Strict[Coder[D]],
+    CE: Strict[Coder[E]],
+    CG: Strict[Coder[G]],
+    CH: Strict[Coder[H]],
+    CI: Strict[Coder[I]],
+    CJ: Strict[Coder[J]],
+    CK: Strict[Coder[K]],
+    CL: Strict[Coder[L]],
+    CM: Strict[Coder[M]],
+    CN: Strict[Coder[N]],
+    CO: Strict[Coder[O]]
   ): Coder[(A, B, C, D, E, G, H, I, J, K, L, M, N, O)] =
-    Coder.transform(CA) { ac =>
-      Coder.transform(CB) { bc =>
-        Coder.transform(CC) { cc =>
-          Coder.transform(CD) { dc =>
-            Coder.transform(CE) { ec =>
-              Coder.transform(CG) { gc =>
-                Coder.transform(CH) { hc =>
-                  Coder.transform(CI) { ic =>
-                    Coder.transform(CJ) { jc =>
-                      Coder.transform(CK) { kc =>
-                        Coder.transform(CL) { lc =>
-                          Coder.transform(CM) { mc =>
-                            Coder.transform(CN) { nc =>
-                              Coder.transform(CO)(oc =>
+    Coder.transform(CA.value) { ac =>
+      Coder.transform(CB.value) { bc =>
+        Coder.transform(CC.value) { cc =>
+          Coder.transform(CD.value) { dc =>
+            Coder.transform(CE.value) { ec =>
+              Coder.transform(CG.value) { gc =>
+                Coder.transform(CH.value) { hc =>
+                  Coder.transform(CI.value) { ic =>
+                    Coder.transform(CJ.value) { jc =>
+                      Coder.transform(CK.value) { kc =>
+                        Coder.transform(CL.value) { lc =>
+                          Coder.transform(CM.value) { mc =>
+                            Coder.transform(CN.value) { nc =>
+                              Coder.transform(CO.value)(oc =>
                                 Coder.beam(
                                   new Tuple14Coder[A, B, C, D, E, G, H, I, J, K, L, M, N, O](
                                     ac,
@@ -2270,37 +2354,37 @@ trait TupleCoders {
   }
 
   implicit def tuple15Coder[A, B, C, D, E, G, H, I, J, K, L, M, N, O, P](implicit
-    CA: Coder[A],
-    CB: Coder[B],
-    CC: Coder[C],
-    CD: Coder[D],
-    CE: Coder[E],
-    CG: Coder[G],
-    CH: Coder[H],
-    CI: Coder[I],
-    CJ: Coder[J],
-    CK: Coder[K],
-    CL: Coder[L],
-    CM: Coder[M],
-    CN: Coder[N],
-    CO: Coder[O],
-    CP: Coder[P]
+    CA: Strict[Coder[A]],
+    CB: Strict[Coder[B]],
+    CC: Strict[Coder[C]],
+    CD: Strict[Coder[D]],
+    CE: Strict[Coder[E]],
+    CG: Strict[Coder[G]],
+    CH: Strict[Coder[H]],
+    CI: Strict[Coder[I]],
+    CJ: Strict[Coder[J]],
+    CK: Strict[Coder[K]],
+    CL: Strict[Coder[L]],
+    CM: Strict[Coder[M]],
+    CN: Strict[Coder[N]],
+    CO: Strict[Coder[O]],
+    CP: Strict[Coder[P]]
   ): Coder[(A, B, C, D, E, G, H, I, J, K, L, M, N, O, P)] =
-    Coder.transform(CA) { ac =>
-      Coder.transform(CB) { bc =>
-        Coder.transform(CC) { cc =>
-          Coder.transform(CD) { dc =>
-            Coder.transform(CE) { ec =>
-              Coder.transform(CG) { gc =>
-                Coder.transform(CH) { hc =>
-                  Coder.transform(CI) { ic =>
-                    Coder.transform(CJ) { jc =>
-                      Coder.transform(CK) { kc =>
-                        Coder.transform(CL) { lc =>
-                          Coder.transform(CM) { mc =>
-                            Coder.transform(CN) { nc =>
-                              Coder.transform(CO) { oc =>
-                                Coder.transform(CP)(pc =>
+    Coder.transform(CA.value) { ac =>
+      Coder.transform(CB.value) { bc =>
+        Coder.transform(CC.value) { cc =>
+          Coder.transform(CD.value) { dc =>
+            Coder.transform(CE.value) { ec =>
+              Coder.transform(CG.value) { gc =>
+                Coder.transform(CH.value) { hc =>
+                  Coder.transform(CI.value) { ic =>
+                    Coder.transform(CJ.value) { jc =>
+                      Coder.transform(CK.value) { kc =>
+                        Coder.transform(CL.value) { lc =>
+                          Coder.transform(CM.value) { mc =>
+                            Coder.transform(CN.value) { nc =>
+                              Coder.transform(CO.value) { oc =>
+                                Coder.transform(CP.value)(pc =>
                                   Coder.beam(
                                     new Tuple15Coder[A, B, C, D, E, G, H, I, J, K, L, M, N, O, P](
                                       ac,
@@ -2534,39 +2618,39 @@ trait TupleCoders {
   }
 
   implicit def tuple16Coder[A, B, C, D, E, G, H, I, J, K, L, M, N, O, P, Q](implicit
-    CA: Coder[A],
-    CB: Coder[B],
-    CC: Coder[C],
-    CD: Coder[D],
-    CE: Coder[E],
-    CG: Coder[G],
-    CH: Coder[H],
-    CI: Coder[I],
-    CJ: Coder[J],
-    CK: Coder[K],
-    CL: Coder[L],
-    CM: Coder[M],
-    CN: Coder[N],
-    CO: Coder[O],
-    CP: Coder[P],
-    CQ: Coder[Q]
+    CA: Strict[Coder[A]],
+    CB: Strict[Coder[B]],
+    CC: Strict[Coder[C]],
+    CD: Strict[Coder[D]],
+    CE: Strict[Coder[E]],
+    CG: Strict[Coder[G]],
+    CH: Strict[Coder[H]],
+    CI: Strict[Coder[I]],
+    CJ: Strict[Coder[J]],
+    CK: Strict[Coder[K]],
+    CL: Strict[Coder[L]],
+    CM: Strict[Coder[M]],
+    CN: Strict[Coder[N]],
+    CO: Strict[Coder[O]],
+    CP: Strict[Coder[P]],
+    CQ: Strict[Coder[Q]]
   ): Coder[(A, B, C, D, E, G, H, I, J, K, L, M, N, O, P, Q)] =
-    Coder.transform(CA) { ac =>
-      Coder.transform(CB) { bc =>
-        Coder.transform(CC) { cc =>
-          Coder.transform(CD) { dc =>
-            Coder.transform(CE) { ec =>
-              Coder.transform(CG) { gc =>
-                Coder.transform(CH) { hc =>
-                  Coder.transform(CI) { ic =>
-                    Coder.transform(CJ) { jc =>
-                      Coder.transform(CK) { kc =>
-                        Coder.transform(CL) { lc =>
-                          Coder.transform(CM) { mc =>
-                            Coder.transform(CN) { nc =>
-                              Coder.transform(CO) { oc =>
-                                Coder.transform(CP) { pc =>
-                                  Coder.transform(CQ)(qc =>
+    Coder.transform(CA.value) { ac =>
+      Coder.transform(CB.value) { bc =>
+        Coder.transform(CC.value) { cc =>
+          Coder.transform(CD.value) { dc =>
+            Coder.transform(CE.value) { ec =>
+              Coder.transform(CG.value) { gc =>
+                Coder.transform(CH.value) { hc =>
+                  Coder.transform(CI.value) { ic =>
+                    Coder.transform(CJ.value) { jc =>
+                      Coder.transform(CK.value) { kc =>
+                        Coder.transform(CL.value) { lc =>
+                          Coder.transform(CM.value) { mc =>
+                            Coder.transform(CN.value) { nc =>
+                              Coder.transform(CO.value) { oc =>
+                                Coder.transform(CP.value) { pc =>
+                                  Coder.transform(CQ.value)(qc =>
                                     Coder.beam(
                                       new Tuple16Coder[
                                         A,
@@ -2827,41 +2911,41 @@ trait TupleCoders {
   }
 
   implicit def tuple17Coder[A, B, C, D, E, G, H, I, J, K, L, M, N, O, P, Q, R](implicit
-    CA: Coder[A],
-    CB: Coder[B],
-    CC: Coder[C],
-    CD: Coder[D],
-    CE: Coder[E],
-    CG: Coder[G],
-    CH: Coder[H],
-    CI: Coder[I],
-    CJ: Coder[J],
-    CK: Coder[K],
-    CL: Coder[L],
-    CM: Coder[M],
-    CN: Coder[N],
-    CO: Coder[O],
-    CP: Coder[P],
-    CQ: Coder[Q],
-    CR: Coder[R]
+    CA: Strict[Coder[A]],
+    CB: Strict[Coder[B]],
+    CC: Strict[Coder[C]],
+    CD: Strict[Coder[D]],
+    CE: Strict[Coder[E]],
+    CG: Strict[Coder[G]],
+    CH: Strict[Coder[H]],
+    CI: Strict[Coder[I]],
+    CJ: Strict[Coder[J]],
+    CK: Strict[Coder[K]],
+    CL: Strict[Coder[L]],
+    CM: Strict[Coder[M]],
+    CN: Strict[Coder[N]],
+    CO: Strict[Coder[O]],
+    CP: Strict[Coder[P]],
+    CQ: Strict[Coder[Q]],
+    CR: Strict[Coder[R]]
   ): Coder[(A, B, C, D, E, G, H, I, J, K, L, M, N, O, P, Q, R)] =
-    Coder.transform(CA) { ac =>
-      Coder.transform(CB) { bc =>
-        Coder.transform(CC) { cc =>
-          Coder.transform(CD) { dc =>
-            Coder.transform(CE) { ec =>
-              Coder.transform(CG) { gc =>
-                Coder.transform(CH) { hc =>
-                  Coder.transform(CI) { ic =>
-                    Coder.transform(CJ) { jc =>
-                      Coder.transform(CK) { kc =>
-                        Coder.transform(CL) { lc =>
-                          Coder.transform(CM) { mc =>
-                            Coder.transform(CN) { nc =>
-                              Coder.transform(CO) { oc =>
-                                Coder.transform(CP) { pc =>
-                                  Coder.transform(CQ) { qc =>
-                                    Coder.transform(CR)(rc =>
+    Coder.transform(CA.value) { ac =>
+      Coder.transform(CB.value) { bc =>
+        Coder.transform(CC.value) { cc =>
+          Coder.transform(CD.value) { dc =>
+            Coder.transform(CE.value) { ec =>
+              Coder.transform(CG.value) { gc =>
+                Coder.transform(CH.value) { hc =>
+                  Coder.transform(CI.value) { ic =>
+                    Coder.transform(CJ.value) { jc =>
+                      Coder.transform(CK.value) { kc =>
+                        Coder.transform(CL.value) { lc =>
+                          Coder.transform(CM.value) { mc =>
+                            Coder.transform(CN.value) { nc =>
+                              Coder.transform(CO.value) { oc =>
+                                Coder.transform(CP.value) { pc =>
+                                  Coder.transform(CQ.value) { qc =>
+                                    Coder.transform(CR.value)(rc =>
                                       Coder.beam(
                                         new Tuple17Coder[
                                           A,
@@ -3133,43 +3217,43 @@ trait TupleCoders {
   }
 
   implicit def tuple18Coder[A, B, C, D, E, G, H, I, J, K, L, M, N, O, P, Q, R, S](implicit
-    CA: Coder[A],
-    CB: Coder[B],
-    CC: Coder[C],
-    CD: Coder[D],
-    CE: Coder[E],
-    CG: Coder[G],
-    CH: Coder[H],
-    CI: Coder[I],
-    CJ: Coder[J],
-    CK: Coder[K],
-    CL: Coder[L],
-    CM: Coder[M],
-    CN: Coder[N],
-    CO: Coder[O],
-    CP: Coder[P],
-    CQ: Coder[Q],
-    CR: Coder[R],
-    CS: Coder[S]
+    CA: Strict[Coder[A]],
+    CB: Strict[Coder[B]],
+    CC: Strict[Coder[C]],
+    CD: Strict[Coder[D]],
+    CE: Strict[Coder[E]],
+    CG: Strict[Coder[G]],
+    CH: Strict[Coder[H]],
+    CI: Strict[Coder[I]],
+    CJ: Strict[Coder[J]],
+    CK: Strict[Coder[K]],
+    CL: Strict[Coder[L]],
+    CM: Strict[Coder[M]],
+    CN: Strict[Coder[N]],
+    CO: Strict[Coder[O]],
+    CP: Strict[Coder[P]],
+    CQ: Strict[Coder[Q]],
+    CR: Strict[Coder[R]],
+    CS: Strict[Coder[S]]
   ): Coder[(A, B, C, D, E, G, H, I, J, K, L, M, N, O, P, Q, R, S)] =
-    Coder.transform(CA) { ac =>
-      Coder.transform(CB) { bc =>
-        Coder.transform(CC) { cc =>
-          Coder.transform(CD) { dc =>
-            Coder.transform(CE) { ec =>
-              Coder.transform(CG) { gc =>
-                Coder.transform(CH) { hc =>
-                  Coder.transform(CI) { ic =>
-                    Coder.transform(CJ) { jc =>
-                      Coder.transform(CK) { kc =>
-                        Coder.transform(CL) { lc =>
-                          Coder.transform(CM) { mc =>
-                            Coder.transform(CN) { nc =>
-                              Coder.transform(CO) { oc =>
-                                Coder.transform(CP) { pc =>
-                                  Coder.transform(CQ) { qc =>
-                                    Coder.transform(CR) { rc =>
-                                      Coder.transform(CS)(sc =>
+    Coder.transform(CA.value) { ac =>
+      Coder.transform(CB.value) { bc =>
+        Coder.transform(CC.value) { cc =>
+          Coder.transform(CD.value) { dc =>
+            Coder.transform(CE.value) { ec =>
+              Coder.transform(CG.value) { gc =>
+                Coder.transform(CH.value) { hc =>
+                  Coder.transform(CI.value) { ic =>
+                    Coder.transform(CJ.value) { jc =>
+                      Coder.transform(CK.value) { kc =>
+                        Coder.transform(CL.value) { lc =>
+                          Coder.transform(CM.value) { mc =>
+                            Coder.transform(CN.value) { nc =>
+                              Coder.transform(CO.value) { oc =>
+                                Coder.transform(CP.value) { pc =>
+                                  Coder.transform(CQ.value) { qc =>
+                                    Coder.transform(CR.value) { rc =>
+                                      Coder.transform(CS.value)(sc =>
                                         Coder.beam(
                                           new Tuple18Coder[
                                             A,
@@ -3453,45 +3537,45 @@ trait TupleCoders {
   }
 
   implicit def tuple19Coder[A, B, C, D, E, G, H, I, J, K, L, M, N, O, P, Q, R, S, T](implicit
-    CA: Coder[A],
-    CB: Coder[B],
-    CC: Coder[C],
-    CD: Coder[D],
-    CE: Coder[E],
-    CG: Coder[G],
-    CH: Coder[H],
-    CI: Coder[I],
-    CJ: Coder[J],
-    CK: Coder[K],
-    CL: Coder[L],
-    CM: Coder[M],
-    CN: Coder[N],
-    CO: Coder[O],
-    CP: Coder[P],
-    CQ: Coder[Q],
-    CR: Coder[R],
-    CS: Coder[S],
-    CT: Coder[T]
+    CA: Strict[Coder[A]],
+    CB: Strict[Coder[B]],
+    CC: Strict[Coder[C]],
+    CD: Strict[Coder[D]],
+    CE: Strict[Coder[E]],
+    CG: Strict[Coder[G]],
+    CH: Strict[Coder[H]],
+    CI: Strict[Coder[I]],
+    CJ: Strict[Coder[J]],
+    CK: Strict[Coder[K]],
+    CL: Strict[Coder[L]],
+    CM: Strict[Coder[M]],
+    CN: Strict[Coder[N]],
+    CO: Strict[Coder[O]],
+    CP: Strict[Coder[P]],
+    CQ: Strict[Coder[Q]],
+    CR: Strict[Coder[R]],
+    CS: Strict[Coder[S]],
+    CT: Strict[Coder[T]]
   ): Coder[(A, B, C, D, E, G, H, I, J, K, L, M, N, O, P, Q, R, S, T)] =
-    Coder.transform(CA) { ac =>
-      Coder.transform(CB) { bc =>
-        Coder.transform(CC) { cc =>
-          Coder.transform(CD) { dc =>
-            Coder.transform(CE) { ec =>
-              Coder.transform(CG) { gc =>
-                Coder.transform(CH) { hc =>
-                  Coder.transform(CI) { ic =>
-                    Coder.transform(CJ) { jc =>
-                      Coder.transform(CK) { kc =>
-                        Coder.transform(CL) { lc =>
-                          Coder.transform(CM) { mc =>
-                            Coder.transform(CN) { nc =>
-                              Coder.transform(CO) { oc =>
-                                Coder.transform(CP) { pc =>
-                                  Coder.transform(CQ) { qc =>
-                                    Coder.transform(CR) { rc =>
-                                      Coder.transform(CS) { sc =>
-                                        Coder.transform(CT)(tc =>
+    Coder.transform(CA.value) { ac =>
+      Coder.transform(CB.value) { bc =>
+        Coder.transform(CC.value) { cc =>
+          Coder.transform(CD.value) { dc =>
+            Coder.transform(CE.value) { ec =>
+              Coder.transform(CG.value) { gc =>
+                Coder.transform(CH.value) { hc =>
+                  Coder.transform(CI.value) { ic =>
+                    Coder.transform(CJ.value) { jc =>
+                      Coder.transform(CK.value) { kc =>
+                        Coder.transform(CL.value) { lc =>
+                          Coder.transform(CM.value) { mc =>
+                            Coder.transform(CN.value) { nc =>
+                              Coder.transform(CO.value) { oc =>
+                                Coder.transform(CP.value) { pc =>
+                                  Coder.transform(CQ.value) { qc =>
+                                    Coder.transform(CR.value) { rc =>
+                                      Coder.transform(CS.value) { sc =>
+                                        Coder.transform(CT.value)(tc =>
                                           Coder.beam(
                                             new Tuple19Coder[
                                               A,
@@ -3786,47 +3870,47 @@ trait TupleCoders {
   }
 
   implicit def tuple20Coder[A, B, C, D, E, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U](implicit
-    CA: Coder[A],
-    CB: Coder[B],
-    CC: Coder[C],
-    CD: Coder[D],
-    CE: Coder[E],
-    CG: Coder[G],
-    CH: Coder[H],
-    CI: Coder[I],
-    CJ: Coder[J],
-    CK: Coder[K],
-    CL: Coder[L],
-    CM: Coder[M],
-    CN: Coder[N],
-    CO: Coder[O],
-    CP: Coder[P],
-    CQ: Coder[Q],
-    CR: Coder[R],
-    CS: Coder[S],
-    CT: Coder[T],
-    CU: Coder[U]
+    CA: Strict[Coder[A]],
+    CB: Strict[Coder[B]],
+    CC: Strict[Coder[C]],
+    CD: Strict[Coder[D]],
+    CE: Strict[Coder[E]],
+    CG: Strict[Coder[G]],
+    CH: Strict[Coder[H]],
+    CI: Strict[Coder[I]],
+    CJ: Strict[Coder[J]],
+    CK: Strict[Coder[K]],
+    CL: Strict[Coder[L]],
+    CM: Strict[Coder[M]],
+    CN: Strict[Coder[N]],
+    CO: Strict[Coder[O]],
+    CP: Strict[Coder[P]],
+    CQ: Strict[Coder[Q]],
+    CR: Strict[Coder[R]],
+    CS: Strict[Coder[S]],
+    CT: Strict[Coder[T]],
+    CU: Strict[Coder[U]]
   ): Coder[(A, B, C, D, E, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U)] =
-    Coder.transform(CA) { ac =>
-      Coder.transform(CB) { bc =>
-        Coder.transform(CC) { cc =>
-          Coder.transform(CD) { dc =>
-            Coder.transform(CE) { ec =>
-              Coder.transform(CG) { gc =>
-                Coder.transform(CH) { hc =>
-                  Coder.transform(CI) { ic =>
-                    Coder.transform(CJ) { jc =>
-                      Coder.transform(CK) { kc =>
-                        Coder.transform(CL) { lc =>
-                          Coder.transform(CM) { mc =>
-                            Coder.transform(CN) { nc =>
-                              Coder.transform(CO) { oc =>
-                                Coder.transform(CP) { pc =>
-                                  Coder.transform(CQ) { qc =>
-                                    Coder.transform(CR) { rc =>
-                                      Coder.transform(CS) { sc =>
-                                        Coder.transform(CT) { tc =>
-                                          Coder.transform(CU)(uc =>
+    Coder.transform(CA.value) { ac =>
+      Coder.transform(CB.value) { bc =>
+        Coder.transform(CC.value) { cc =>
+          Coder.transform(CD.value) { dc =>
+            Coder.transform(CE.value) { ec =>
+              Coder.transform(CG.value) { gc =>
+                Coder.transform(CH.value) { hc =>
+                  Coder.transform(CI.value) { ic =>
+                    Coder.transform(CJ.value) { jc =>
+                      Coder.transform(CK.value) { kc =>
+                        Coder.transform(CL.value) { lc =>
+                          Coder.transform(CM.value) { mc =>
+                            Coder.transform(CN.value) { nc =>
+                              Coder.transform(CO.value) { oc =>
+                                Coder.transform(CP.value) { pc =>
+                                  Coder.transform(CQ.value) { qc =>
+                                    Coder.transform(CR.value) { rc =>
+                                      Coder.transform(CS.value) { sc =>
+                                        Coder.transform(CT.value) { tc =>
+                                          Coder.transform(CU.value)(uc =>
                                             Coder.beam(
                                               new Tuple20Coder[
                                                 A,
@@ -4130,49 +4214,49 @@ trait TupleCoders {
   }
 
   implicit def tuple21Coder[A, B, C, D, E, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V](implicit
-    CA: Coder[A],
-    CB: Coder[B],
-    CC: Coder[C],
-    CD: Coder[D],
-    CE: Coder[E],
-    CG: Coder[G],
-    CH: Coder[H],
-    CI: Coder[I],
-    CJ: Coder[J],
-    CK: Coder[K],
-    CL: Coder[L],
-    CM: Coder[M],
-    CN: Coder[N],
-    CO: Coder[O],
-    CP: Coder[P],
-    CQ: Coder[Q],
-    CR: Coder[R],
-    CS: Coder[S],
-    CT: Coder[T],
-    CU: Coder[U],
-    CV: Coder[V]
+    CA: Strict[Coder[A]],
+    CB: Strict[Coder[B]],
+    CC: Strict[Coder[C]],
+    CD: Strict[Coder[D]],
+    CE: Strict[Coder[E]],
+    CG: Strict[Coder[G]],
+    CH: Strict[Coder[H]],
+    CI: Strict[Coder[I]],
+    CJ: Strict[Coder[J]],
+    CK: Strict[Coder[K]],
+    CL: Strict[Coder[L]],
+    CM: Strict[Coder[M]],
+    CN: Strict[Coder[N]],
+    CO: Strict[Coder[O]],
+    CP: Strict[Coder[P]],
+    CQ: Strict[Coder[Q]],
+    CR: Strict[Coder[R]],
+    CS: Strict[Coder[S]],
+    CT: Strict[Coder[T]],
+    CU: Strict[Coder[U]],
+    CV: Strict[Coder[V]]
   ): Coder[(A, B, C, D, E, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V)] =
-    Coder.transform(CA) { ac =>
-      Coder.transform(CB) { bc =>
-        Coder.transform(CC) { cc =>
-          Coder.transform(CD) { dc =>
-            Coder.transform(CE) { ec =>
-              Coder.transform(CG) { gc =>
-                Coder.transform(CH) { hc =>
-                  Coder.transform(CI) { ic =>
-                    Coder.transform(CJ) { jc =>
-                      Coder.transform(CK) { kc =>
-                        Coder.transform(CL) { lc =>
-                          Coder.transform(CM) { mc =>
-                            Coder.transform(CN) { nc =>
-                              Coder.transform(CO) { oc =>
-                                Coder.transform(CP) { pc =>
-                                  Coder.transform(CQ) { qc =>
-                                    Coder.transform(CR) { rc =>
-                                      Coder.transform(CS) { sc =>
-                                        Coder.transform(CT) { tc =>
-                                          Coder.transform(CU) { uc =>
-                                            Coder.transform(CV)(vc =>
+    Coder.transform(CA.value) { ac =>
+      Coder.transform(CB.value) { bc =>
+        Coder.transform(CC.value) { cc =>
+          Coder.transform(CD.value) { dc =>
+            Coder.transform(CE.value) { ec =>
+              Coder.transform(CG.value) { gc =>
+                Coder.transform(CH.value) { hc =>
+                  Coder.transform(CI.value) { ic =>
+                    Coder.transform(CJ.value) { jc =>
+                      Coder.transform(CK.value) { kc =>
+                        Coder.transform(CL.value) { lc =>
+                          Coder.transform(CM.value) { mc =>
+                            Coder.transform(CN.value) { nc =>
+                              Coder.transform(CO.value) { oc =>
+                                Coder.transform(CP.value) { pc =>
+                                  Coder.transform(CQ.value) { qc =>
+                                    Coder.transform(CR.value) { rc =>
+                                      Coder.transform(CS.value) { sc =>
+                                        Coder.transform(CT.value) { tc =>
+                                          Coder.transform(CU.value) { uc =>
+                                            Coder.transform(CV.value)(vc =>
                                               Coder.beam(
                                                 new Tuple21Coder[
                                                   A,
@@ -4512,51 +4596,51 @@ trait TupleCoders {
 
   implicit def tuple22Coder[A, B, C, D, E, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W](
     implicit
-    CA: Coder[A],
-    CB: Coder[B],
-    CC: Coder[C],
-    CD: Coder[D],
-    CE: Coder[E],
-    CG: Coder[G],
-    CH: Coder[H],
-    CI: Coder[I],
-    CJ: Coder[J],
-    CK: Coder[K],
-    CL: Coder[L],
-    CM: Coder[M],
-    CN: Coder[N],
-    CO: Coder[O],
-    CP: Coder[P],
-    CQ: Coder[Q],
-    CR: Coder[R],
-    CS: Coder[S],
-    CT: Coder[T],
-    CU: Coder[U],
-    CV: Coder[V],
-    CW: Coder[W]
+    CA: Strict[Coder[A]],
+    CB: Strict[Coder[B]],
+    CC: Strict[Coder[C]],
+    CD: Strict[Coder[D]],
+    CE: Strict[Coder[E]],
+    CG: Strict[Coder[G]],
+    CH: Strict[Coder[H]],
+    CI: Strict[Coder[I]],
+    CJ: Strict[Coder[J]],
+    CK: Strict[Coder[K]],
+    CL: Strict[Coder[L]],
+    CM: Strict[Coder[M]],
+    CN: Strict[Coder[N]],
+    CO: Strict[Coder[O]],
+    CP: Strict[Coder[P]],
+    CQ: Strict[Coder[Q]],
+    CR: Strict[Coder[R]],
+    CS: Strict[Coder[S]],
+    CT: Strict[Coder[T]],
+    CU: Strict[Coder[U]],
+    CV: Strict[Coder[V]],
+    CW: Strict[Coder[W]]
   ): Coder[(A, B, C, D, E, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W)] =
-    Coder.transform(CA) { ac =>
-      Coder.transform(CB) { bc =>
-        Coder.transform(CC) { cc =>
-          Coder.transform(CD) { dc =>
-            Coder.transform(CE) { ec =>
-              Coder.transform(CG) { gc =>
-                Coder.transform(CH) { hc =>
-                  Coder.transform(CI) { ic =>
-                    Coder.transform(CJ) { jc =>
-                      Coder.transform(CK) { kc =>
-                        Coder.transform(CL) { lc =>
-                          Coder.transform(CM) { mc =>
-                            Coder.transform(CN) { nc =>
-                              Coder.transform(CO) { oc =>
-                                Coder.transform(CP) { pc =>
-                                  Coder.transform(CQ) { qc =>
-                                    Coder.transform(CR) { rc =>
-                                      Coder.transform(CS) { sc =>
-                                        Coder.transform(CT) { tc =>
-                                          Coder.transform(CU) { uc =>
-                                            Coder.transform(CV) { vc =>
-                                              Coder.transform(CW)(wc =>
+    Coder.transform(CA.value) { ac =>
+      Coder.transform(CB.value) { bc =>
+        Coder.transform(CC.value) { cc =>
+          Coder.transform(CD.value) { dc =>
+            Coder.transform(CE.value) { ec =>
+              Coder.transform(CG.value) { gc =>
+                Coder.transform(CH.value) { hc =>
+                  Coder.transform(CI.value) { ic =>
+                    Coder.transform(CJ.value) { jc =>
+                      Coder.transform(CK.value) { kc =>
+                        Coder.transform(CL.value) { lc =>
+                          Coder.transform(CM.value) { mc =>
+                            Coder.transform(CN.value) { nc =>
+                              Coder.transform(CO.value) { oc =>
+                                Coder.transform(CP.value) { pc =>
+                                  Coder.transform(CQ.value) { qc =>
+                                    Coder.transform(CR.value) { rc =>
+                                      Coder.transform(CS.value) { sc =>
+                                        Coder.transform(CT.value) { tc =>
+                                          Coder.transform(CU.value) { uc =>
+                                            Coder.transform(CV.value) { vc =>
+                                              Coder.transform(CW.value)(wc =>
                                                 Coder.beam(
                                                   new Tuple22Coder[
                                                     A,

@@ -383,7 +383,7 @@ final class CoderTest extends AnyFlatSpec with Matchers {
       }
 
     val expectedMsg =
-      "PairCoder(_1 -> DoubleCoder, _2 -> DoubleCoder) is not deterministic"
+      "Tuple2Coder(_1 -> DoubleCoder, _2 -> DoubleCoder) is not deterministic"
 
     caught.getMessage should startWith(expectedMsg)
     caught.getMessage should include("field _1 is using non-deterministic DoubleCoder")

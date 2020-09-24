@@ -21,7 +21,7 @@ import java.io.{InputStream, OutputStream}
 import java.util
 import java.util.Collections
 
-import com.spotify.scio.coders.{Coder, CoderStackTrace}
+import com.spotify.scio.coders.Coder
 import org.apache.beam.sdk.coders.Coder.NonDeterministicException
 import org.apache.beam.sdk.coders.{Coder => BCoder, _}
 import org.apache.beam.sdk.util.CoderUtils
@@ -29,7 +29,6 @@ import org.apache.beam.sdk.util.common.ElementByteSizeObserver
 import org.apache.beam.sdk.util.BufferedElementCountingOutputStream
 import org.apache.beam.sdk.util.VarInt
 
-import scala.jdk.CollectionConverters._
 import scala.reflect.ClassTag
 import scala.collection.{BitSet, SortedSet, mutable => m}
 import scala.util.Try
@@ -46,85 +45,6 @@ private object NothingCoder extends AtomicCoder[Nothing] {
   override def decode(is: InputStream): Nothing =
     // can't possibly happen
     throw new IllegalStateException("Trying to decode a value of type Nothing is impossible")
-}
-
-/**
- * Most Coders TupleX are derived by Magnolia but we specialize Coder[(A, B)] for
- * performance reasons given that pairs are really common and used in groupBy operations.
- */
-final private class PairCoder[A, B](ac: BCoder[A], bc: BCoder[B]) extends AtomicCoder[(A, B)] {
-  private[this] val materializationStackTrace: Array[StackTraceElement] = CoderStackTrace.prepare
-
-  @inline def onErrorMsg[T](msg: => (String, String))(f: => T): T =
-    try {
-      f
-    } catch {
-      case e: Exception =>
-        // allow Flink memory management, see WrappedBCoder#catching comment.
-        throw CoderStackTrace.append(
-          e,
-          Some(
-            s"Exception while trying to `${msg._1}` an instance" +
-              s" of Tuple2: Can't decode field ${msg._2}"
-          ),
-          materializationStackTrace
-        )
-    }
-
-  override def encode(value: (A, B), os: OutputStream): Unit = {
-    onErrorMsg("encode" -> "_1")(ac.encode(value._1, os))
-    onErrorMsg("encode" -> "_2")(bc.encode(value._2, os))
-  }
-  override def decode(is: InputStream): (A, B) = {
-    val _1 = onErrorMsg("decode" -> "_1")(ac.decode(is))
-    val _2 = onErrorMsg("decode" -> "_2")(bc.decode(is))
-    (_1, _2)
-  }
-
-  override def toString: String =
-    s"PairCoder(_1 -> $ac, _2 -> $bc)"
-
-  // delegate methods for determinism and equality checks
-
-  override def verifyDeterministic(): Unit = {
-    val cs = List("_1" -> ac, "_2" -> bc)
-    val problems = cs.flatMap { case (label, c) =>
-      try {
-        c.verifyDeterministic()
-        Nil
-      } catch {
-        case e: NonDeterministicException =>
-          val reason = s"field $label is using non-deterministic $c"
-          List(reason -> e)
-      }
-    }
-
-    problems match {
-      case (_, e) :: _ =>
-        val reasons = problems.map { case (reason, _) => reason }
-        throw new NonDeterministicException(this, reasons.asJava, e)
-      case Nil =>
-    }
-  }
-
-  override def consistentWithEquals(): Boolean =
-    ac.consistentWithEquals() && bc.consistentWithEquals()
-
-  override def structuralValue(value: (A, B)): AnyRef =
-    if (consistentWithEquals()) {
-      value.asInstanceOf[AnyRef]
-    } else {
-      (ac.structuralValue(value._1), bc.structuralValue(value._2))
-    }
-
-  // delegate methods for byte size estimation
-  override def isRegisterByteSizeObserverCheap(value: (A, B)): Boolean =
-    ac.isRegisterByteSizeObserverCheap(value._1) && bc.isRegisterByteSizeObserverCheap(value._2)
-
-  override def registerByteSizeObserver(value: (A, B), observer: ElementByteSizeObserver): Unit = {
-    ac.registerByteSizeObserver(value._1, observer)
-    bc.registerByteSizeObserver(value._2, observer)
-  }
 }
 
 abstract private class BaseSeqLikeCoder[M[_], T](val elemCoder: BCoder[T])
@@ -526,11 +446,6 @@ trait ScalaCoders {
 
   implicit def seqCoder[T: Coder]: Coder[Seq[T]] =
     Coder.transform(Coder[T])(bc => Coder.beam(new SeqCoder[T](bc)))
-
-  implicit def pairCoder[A, B](implicit CA: Coder[A], CB: Coder[B]): Coder[(A, B)] =
-    Coder.transform(CA) { ac =>
-      Coder.transform(CB)(bc => Coder.beam(new PairCoder[A, B](ac, bc)))
-    }
 
   // TODO: proper chunking implementation
   implicit def iterableCoder[T: Coder]: Coder[Iterable[T]] =

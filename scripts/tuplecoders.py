@@ -31,16 +31,22 @@ def mkBounds(n):
 
 # Functions
 
-def tupleFns(out, n):
+def tupleFns(out, n, scala_version):
     t_type = f'T{string.ascii_uppercase[n-1]}'
     types = mkVals(n)
     bounds = mkBounds(n)
 
     def coder_transform(a):
         if len(a) == 1:
-            return f'''Coder.transform(C{a[0]})({a[0].lower()}c => Coder.beam(new Tuple{n}Coder[{','.join(types)}]({','.join(t.lower() + 'c' for t in types)})))'''
+            if scala_version == "2.12":
+                return f'''Coder.transform(C{a[0]}.value)({a[0].lower()}c => Coder.beam(new Tuple{n}Coder[{','.join(types)}]({','.join(t.lower() + 'c' for t in types)})))'''
+            else:
+                return f'''Coder.transform(C{a[0]})({a[0].lower()}c => Coder.beam(new Tuple{n}Coder[{','.join(types)}]({','.join(t.lower() + 'c' for t in types)})))'''
         else:
-            return f'''Coder.transform(C{a[0]}) {{ {a[0].lower()}c =>''' + coder_transform(a[1:]) + "}"
+            if scala_version == "2.12":
+                return f'''Coder.transform(C{a[0]}.value) {{ {a[0].lower()}c =>''' + coder_transform(a[1:]) + "}"
+            else:
+                return f'''Coder.transform(C{a[0]}) {{ {a[0].lower()}c =>''' + coder_transform(a[1:]) + "}"
         
     print(f'''    
 final private class Tuple{n}Coder[{','.join(types)}]({','.join(f'{t.lower()}c: BCoder[{t}]' for t in types)}) extends AtomicCoder[({','.join(types)})] {{
@@ -114,12 +120,12 @@ final private class Tuple{n}Coder[{','.join(types)}]({','.join(f'{t.lower()}c: B
   }}
 }}
     
-    implicit def tuple{n}Coder[{','.join(types)}](implicit {','.join(f'C{t}: Coder[{t}]' for t in types)}): Coder[({','.join(types)})] = {{
+    implicit def tuple{n}Coder[{','.join(types)}](implicit {','.join(f'C{t}: Strict[Coder[{t}]]' if scala_version == '2.12' else f'C{t}: Coder[{t}]' for t in types)}): Coder[({','.join(types)})] = {{
     {coder_transform(types)}
     }}''', file=out)
 
 
-def main(out):
+def main(out, scala_version):
     print(textwrap.dedent('''
         /*
          * Copyright 2020 Spotify AB.
@@ -148,6 +154,7 @@ def main(out):
 
         import java.io.{InputStream, OutputStream}
 
+        {'import shapeles.Stric' if scala_version == '2.12' else ''}
         import com.spotify.scio.coders.{Coder, CoderStackTrace}
         import org.apache.beam.sdk.coders.Coder.NonDeterministicException
         import org.apache.beam.sdk.coders.{Coder => BCoder, _}
@@ -159,10 +166,10 @@ def main(out):
         ''').replace('  # NOQA', '').lstrip('\n'), file=out)
 
     N = 22
-    for i in range(3, N + 1):
-        tupleFns(out, i)
+    for i in range(2, N + 1):
+        tupleFns(out, i, scala_version)
 
     print('}', file=out)
 
 if __name__ == '__main__':
-    main(sys.stdout)
+    main(sys.stdout, sys.argv[1])
