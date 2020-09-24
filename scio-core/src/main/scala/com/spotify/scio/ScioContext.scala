@@ -54,7 +54,6 @@ import scala.reflect.ClassTag
 import scala.util.control.NoStackTrace
 import scala.util.{Failure, Success, Try}
 
-
 /** Runner specific context. */
 trait RunnerContext {
   def prepareOptions(options: PipelineOptions, artifacts: List[String]): Unit
@@ -773,14 +772,14 @@ class ScioContext private[scio] (
   @deprecated(
     """
     |  This method has been deprecated. Use one of the following IOs instead:
-    |    - PubsubIO.readString
-    |    - PubsubIO.readAvro
-    |    - PubsubIO.readProto
-    |    - PubsubIO.readPubsub
-    |    - PubsubIO.readCoder
+    |    - PubsubIO.string
+    |    - PubsubIO.avro
+    |    - PubsubIO.proto
+    |    - PubsubIO.pubsub
+    |    - PubsubIO.coder
     |
     |  For example:
-    |     sc.read(PubsubIO.readString(sub, idAttribute, timestampAttribute))(
+    |     sc.read(PubsubIO.string(sub, idAttribute, timestampAttribute))(
     |       PubsubIO.ReadParam(PubsubIO.Subscription)
     |     )
     """.stripMargin,
@@ -800,14 +799,14 @@ class ScioContext private[scio] (
   @deprecated(
     """
     |  This method has been deprecated. Use one of the following IOs instead:
-    |    - PubsubIO.readString
-    |    - PubsubIO.readAvro
-    |    - PubsubIO.readProto
-    |    - PubsubIO.readPubsub
-    |    - PubsubIO.readCoder
+    |    - PubsubIO.string
+    |    - PubsubIO.avro
+    |    - PubsubIO.proto
+    |    - PubsubIO.pubsub
+    |    - PubsubIO.coder
     |
     |  For example:
-    |     sc.read(PubsubIO.readString(sub, idAttribute, timestampAttribute))(
+    |     sc.read(PubsubIO.string(sub, idAttribute, timestampAttribute))(
     |       PubsubIO.ReadParam(PubsubIO.Topic)
     |     )
     """.stripMargin,
