@@ -1040,10 +1040,10 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @group window
    */
   def withWindowFn[W <: BoundedWindow](
-    fn: WindowFn[_ <: Any, W],
+    fn: WindowFn[T, W],
     options: WindowOptions = WindowOptions()
   ): SCollection[T] = {
-    var transform = Window.into(fn).asInstanceOf[Window[T]]
+    var transform: Window[T] = Window.into(fn) //.asInstanceOf[Window[T]]
     if (options.trigger != null) {
       transform = transform.triggering(options.trigger)
     }
@@ -1082,7 +1082,10 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     offset: Duration = Duration.ZERO,
     options: WindowOptions = WindowOptions()
   ): SCollection[T] =
-    this.withWindowFn(FixedWindows.of(duration).withOffset(offset), options)
+    this.withWindowFn(
+      FixedWindows.of(duration).withOffset(offset).asInstanceOf[WindowFn[T, IntervalWindow]],
+      options
+    )
 
   /**
    * Window values into sliding windows.
@@ -1099,7 +1102,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       transform = transform.every(period)
     }
     transform = transform.withOffset(offset)
-    this.withWindowFn(transform, options)
+    this.withWindowFn(transform.asInstanceOf[WindowFn[T, IntervalWindow]], options)
   }
 
   /**
@@ -1110,28 +1113,37 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     gapDuration: Duration,
     options: WindowOptions = WindowOptions()
   ): SCollection[T] =
-    this.withWindowFn(Sessions.withGapDuration(gapDuration), options)
+    this.withWindowFn(
+      Sessions.withGapDuration(gapDuration).asInstanceOf[WindowFn[T, IntervalWindow]],
+      options
+    )
 
   /**
    * Group values in to a single global window.
    * @group window
    */
   def withGlobalWindow(options: WindowOptions = WindowOptions()): SCollection[T] =
-    this.withWindowFn(new GlobalWindows(), options)
+    this.withWindowFn(new GlobalWindows().asInstanceOf[WindowFn[T, GlobalWindow]], options)
 
   /**
    * Window values into by years.
    * @group window
    */
   def windowByYears(number: Int, options: WindowOptions = WindowOptions()): SCollection[T] =
-    this.withWindowFn(CalendarWindows.years(number), options)
+    this.withWindowFn(
+      CalendarWindows.years(number).asInstanceOf[WindowFn[T, IntervalWindow]],
+      options
+    )
 
   /**
    * Window values into by months.
    * @group window
    */
   def windowByMonths(number: Int, options: WindowOptions = WindowOptions()): SCollection[T] =
-    this.withWindowFn(CalendarWindows.months(number), options)
+    this.withWindowFn(
+      CalendarWindows.months(number).asInstanceOf[WindowFn[T, IntervalWindow]],
+      options
+    )
 
   /**
    * Window values into by weeks.
@@ -1142,14 +1154,20 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     startDayOfWeek: Int,
     options: WindowOptions = WindowOptions()
   ): SCollection[T] =
-    this.withWindowFn(CalendarWindows.weeks(number, startDayOfWeek), options)
+    this.withWindowFn(
+      CalendarWindows.weeks(number, startDayOfWeek).asInstanceOf[WindowFn[T, IntervalWindow]],
+      options
+    )
 
   /**
    * Window values into by days.
    * @group window
    */
   def windowByDays(number: Int, options: WindowOptions = WindowOptions()): SCollection[T] =
-    this.withWindowFn(CalendarWindows.days(number), options)
+    this.withWindowFn(
+      CalendarWindows.days(number).asInstanceOf[WindowFn[T, IntervalWindow]],
+      options
+    )
 
   /**
    * Convert values into pairs of (value, window).
