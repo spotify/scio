@@ -127,9 +127,8 @@ final private class PairCoder[A, B](ac: BCoder[A], bc: BCoder[B]) extends Atomic
   }
 }
 
-abstract private class BaseSeqLikeCoder[M[_], T](val elemCoder: BCoder[T])(implicit
-  toSeq: M[T] => IterableOnce[T]
-) extends AtomicCoder[M[T]] {
+abstract private class BaseSeqLikeCoder[M[_], T](val elemCoder: BCoder[T])
+    extends AtomicCoder[M[T]] {
   override def getCoderArguments: java.util.List[_ <: BCoder[_]] =
     Collections.singletonList(elemCoder)
 
