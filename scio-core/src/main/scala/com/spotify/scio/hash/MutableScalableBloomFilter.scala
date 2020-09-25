@@ -4,6 +4,7 @@ import java.io.{ByteArrayInputStream, ByteArrayOutputStream, DataInputStream, Da
 
 import com.google.common.io.ByteStreams
 import com.google.common.{hash => g}
+import com.spotify.scio.coders.Coder
 
 /**
  * A mutable, scalable wrapper around a Guava [[com.google.common.hash.BloomFilter BloomFilter]]
@@ -79,6 +80,10 @@ object MutableScalableBloomFilter {
     }
     MutableScalableBloomFilter[T](fpProb, headCapacity, growthRate, tighteningRatio, headFPProb, headCount, head, tail)
   }
+
+  implicit def coder[T](implicit funnel: g.Funnel[T]): Coder[MutableScalableBloomFilter[T]] = {
+    Coder.xmap[Array[Byte], MutableScalableBloomFilter[T]](Coder.arrayByteCoder)(bytes => fromBytes[T](bytes)(funnel), sbf => toBytes[T](sbf))
+  }
 }
 
 case class SerializedBloomFilters(numFilters: Int, filterBytes: Array[Byte]) {
@@ -133,7 +138,7 @@ case class MutableScalableBloomFilter[T](
    * @param item  The item to check
    * @return True if any of the backing filters 'might contain' `item`, false otherwise.
    */
-  def contains(item: T): Boolean = head.exists(_.mightContain(item)) || deserialize().exists(f => f.mightContain(item))
+  def mightContain(item: T): Boolean = head.exists(_.mightContain(item)) || deserialize().exists(f => f.mightContain(item))
 
   /**
    * Note: Will cause deserialization of any `SerializedBloomFilters`.

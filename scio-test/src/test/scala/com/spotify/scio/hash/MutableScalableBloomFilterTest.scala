@@ -15,7 +15,7 @@ class MutableScalableBloomFilterTest extends PipelineSpec {
     assert(sbf.approximateElementCount == 0)
 
     (0 to 100).foreach(_ => sbf += "test")
-    assert(sbf.contains("test"))
+    assert(sbf.mightContain("test"))
     assert(sbf.numFilters == 1)
     assert(sbf.approximateElementCount == 1)
   }
@@ -32,7 +32,7 @@ class MutableScalableBloomFilterTest extends PipelineSpec {
     (0 until inserts).foreach(_ => sbf += random.nextString(16))
 
     // check for the presense of any 8 character strings
-    val fpCount = (0 until trials).count(_ => sbf.contains(random.nextString(8))).toDouble
+    val fpCount = (0 until trials).count(_ => sbf.mightContain(random.nextString(8))).toDouble
     assert(fpCount / trials <= compoundedErrorRate(fpProb, tr, sbf.numFilters))
   }
 
@@ -63,7 +63,7 @@ class MutableScalableBloomFilterTest extends PipelineSpec {
           MutableScalableBloomFilter[String](10)(funnel) ++= strs
         }
       out should satisfySingleValue { sbf: MutableScalableBloomFilter[String] =>
-        inVals.foldLeft(true) { case (st, v) => st && sbf.contains(v) }
+        inVals.foldLeft(true) { case (st, v) => st && sbf.mightContain(v) }
       }
     }
   }
