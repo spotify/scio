@@ -35,7 +35,16 @@ object MutableScalableBloomFilter {
     fpProb: Double = 0.03,
     growthRate: Int = 2,
     tighteningRatio: Double = 0.9
-  ): MutableScalableBloomFilter[T] = MutableScalableBloomFilter(fpProb, initialCapacity, growthRate, tighteningRatio, fpProb, 0L, None, Nil)
+  ): MutableScalableBloomFilter[T] = MutableScalableBloomFilter(
+    fpProb,
+    initialCapacity,
+    growthRate,
+    tighteningRatio,
+    fpProb,
+    0L,
+    None,
+    Nil
+  )
 
   def toBytes[T](sbf: MutableScalableBloomFilter[T]): Array[Byte] = {
     // serialize each of the fields, excepting the implicit funnel
@@ -48,16 +57,18 @@ object MutableScalableBloomFilter {
     dos.writeDouble(sbf.tighteningRatio)
     dos.writeDouble(sbf.headFPProb)
     dos.writeLong(sbf.headCount)
-    dos.writeInt(sbf.numFilters)  // count of head + all tail filters
-    sbf.head.foreach { filter => filter.writeTo(dos) }
+    dos.writeInt(sbf.numFilters) // count of head + all tail filters
+    sbf.head.foreach(filter => filter.writeTo(dos))
     sbf.tail.foreach {
       case Left(filter) => filter.writeTo(dos)
-      case Right(ser) => dos.write(ser.filterBytes)
+      case Right(ser)   => dos.write(ser.filterBytes)
     }
     baos.toByteArray
   }
 
-  def fromBytes[T](bytes: Array[Byte])(implicit funnel: g.Funnel[T]): MutableScalableBloomFilter[T] = {
+  def fromBytes[T](
+    bytes: Array[Byte]
+  )(implicit funnel: g.Funnel[T]): MutableScalableBloomFilter[T] = {
     val bais = new ByteArrayInputStream(bytes)
     val dis = new DataInputStream(bais)
 
@@ -68,9 +79,9 @@ object MutableScalableBloomFilter {
     val headFPProb = dis.readDouble()
     val headCount = dis.readLong()
     val numFilters = dis.readInt()
-    val head = if(numFilters > 0) Some(g.BloomFilter.readFrom[T](dis, funnel)) else None
+    val head = if (numFilters > 0) Some(g.BloomFilter.readFrom[T](dis, funnel)) else None
     val tail: List[Either[g.BloomFilter[T], SerializedBloomFilters]] = {
-      if(numFilters > 1) {
+      if (numFilters > 1) {
         val baos = new ByteArrayOutputStream()
         ByteStreams.copy(dis, baos)
         List(Right(SerializedBloomFilters(numFilters - 1, baos.toByteArray)))
@@ -78,18 +89,29 @@ object MutableScalableBloomFilter {
         List.empty
       }
     }
-    MutableScalableBloomFilter[T](fpProb, headCapacity, growthRate, tighteningRatio, headFPProb, headCount, head, tail)
+    MutableScalableBloomFilter[T](
+      fpProb,
+      headCapacity,
+      growthRate,
+      tighteningRatio,
+      headFPProb,
+      headCount,
+      head,
+      tail
+    )
   }
 
-  implicit def coder[T](implicit funnel: g.Funnel[T]): Coder[MutableScalableBloomFilter[T]] = {
-    Coder.xmap[Array[Byte], MutableScalableBloomFilter[T]](Coder.arrayByteCoder)(bytes => fromBytes[T](bytes)(funnel), sbf => toBytes[T](sbf))
-  }
+  implicit def coder[T](implicit funnel: g.Funnel[T]): Coder[MutableScalableBloomFilter[T]] =
+    Coder.xmap[Array[Byte], MutableScalableBloomFilter[T]](Coder.arrayByteCoder)(
+      bytes => fromBytes[T](bytes)(funnel),
+      sbf => toBytes[T](sbf)
+    )
 }
 
 case class SerializedBloomFilters(numFilters: Int, filterBytes: Array[Byte]) {
   def deserialize[T](implicit funnel: g.Funnel[T]): List[g.BloomFilter[T]] = {
     val bais = new ByteArrayInputStream(filterBytes)
-    (1 to numFilters).map { _ => g.BloomFilter.readFrom[T](bais, funnel) }.toList
+    (1 to numFilters).map(_ => g.BloomFilter.readFrom[T](bais, funnel)).toList
   }
 }
 
@@ -114,7 +136,7 @@ case class MutableScalableBloomFilter[T](
   // storing a count of items in the head avoids calling the relatively expensive `approximateElementCount` after each insert
   private var headCount: Long,
   private var head: Option[g.BloomFilter[T]],
-  private var tail: List[Either[g.BloomFilter[T], SerializedBloomFilters]],
+  private var tail: List[Either[g.BloomFilter[T], SerializedBloomFilters]]
   // package private for testing purposes
 )(implicit private val funnel: g.Funnel[T])
     extends Serializable {
@@ -122,10 +144,10 @@ case class MutableScalableBloomFilter[T](
   // `SerializedBloomFilters` is never appended, so do deserialization check only once. package-private for testing.
   @transient private var deserialized = false
   private[hash] def deserialize(): List[g.BloomFilter[T]] = {
-    if(!deserialized) {
+    if (!deserialized) {
       tail = tail.flatMap {
         case b @ Left(_) => List(b)
-        case Right(ser) => ser.deserialize(funnel).map(Left(_))
+        case Right(ser)  => ser.deserialize(funnel).map(Left(_))
       }
       deserialized = true
     }
@@ -138,19 +160,23 @@ case class MutableScalableBloomFilter[T](
    * @param item  The item to check
    * @return True if any of the backing filters 'might contain' `item`, false otherwise.
    */
-  def mightContain(item: T): Boolean = head.exists(_.mightContain(item)) || deserialize().exists(f => f.mightContain(item))
+  def mightContain(item: T): Boolean =
+    head.exists(_.mightContain(item)) || deserialize().exists(f => f.mightContain(item))
 
   /**
    * Note: Will cause deserialization of any `SerializedBloomFilters`.
    *
    * @return The sum of the approximate element count for all underlying filters.
    */
-  def approximateElementCount: Long = head.map(_.approximateElementCount()).getOrElse(0L) + deserialize().map(_.approximateElementCount).sum
+  def approximateElementCount: Long =
+    head.map(_.approximateElementCount()).getOrElse(0L) + deserialize()
+      .map(_.approximateElementCount)
+      .sum
 
   // for testing only
   private[hash] def numFilters: Int = {
     head.map(_ => 1).getOrElse(0) + tail.map {
-      case Left(_) => 1
+      case Left(_)    => 1
       case Right(ser) => ser.numFilters
     }.sum
   }
@@ -175,7 +201,7 @@ case class MutableScalableBloomFilter[T](
       case None => scale()
       case Some(h) =>
         val shouldGrow = headCount >= headCapacity
-        if(shouldGrow) scale() else h
+        if (shouldGrow) scale() else h
     }
     val changed = headFilter.put(item)
     if (changed) headCount = headCount + 1
