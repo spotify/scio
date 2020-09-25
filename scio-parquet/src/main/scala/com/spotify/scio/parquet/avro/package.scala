@@ -24,6 +24,7 @@ import com.spotify.scio.coders.Coder
 import com.spotify.scio.parquet.avro.ParquetAvroIO.WriteParam
 import org.apache.avro.Schema
 import org.apache.avro.specific.SpecificRecordBase
+import org.apache.beam.sdk.transforms.windowing.{BoundedWindow, PaneInfo}
 import org.apache.parquet.filter2.predicate.FilterPredicate
 import org.apache.parquet.hadoop.metadata.CompressionCodecName
 import org.slf4j.LoggerFactory
@@ -136,6 +137,38 @@ package object avro {
       compression: CompressionCodecName = WriteParam.DefaultCompression
     )(implicit ct: ClassTag[T], coder: Coder[T]): ClosedTap[T] = {
       val param = WriteParam(schema, numShards, suffix, compression)
+      self.write(ParquetAvroIO[T](path))(param)
+    }
+
+    /**
+     * Save this SCollection of Avro records as a Parquet files written to dynamic destinations.
+     * @param path output location of the write operation
+     * @param schema must be not null if `T` is of type
+     *               [[org.apache.avro.generic.GenericRecord GenericRecord]].
+     * @param numShards number of shards per output directory
+     * @param suffix defaults to .parquet
+     * @param compression defaults to snappy
+     * @param windowFilenameFunction a function which generates a filename for windowed data, whose arguments represent
+     *                                (the shard number,
+     *                                the total number of shards,
+     *                                the bounded window,
+     *                                the pane info for the window)
+     * @param filenameFunction a function which generates a filename, whose arguments represent
+     *                         (the shard number,
+     *                         the total number of shards)
+     */
+    def saveAsDynamicParquetAvroFile(
+      path: String,
+      schema: Schema = WriteParam.DefaultSchema,
+      numShards: Int = WriteParam.DefaultNumShards,
+      suffix: String = WriteParam.DefaultSuffix,
+      compression: CompressionCodecName = WriteParam.DefaultCompression,
+      windowFilenameFunction: Option[(Int, Int, BoundedWindow, PaneInfo) => String] =
+        WriteParam.DefaultWindowedFilenameFunction,
+      filenameFunction: Option[(Int, Int) => String] = WriteParam.DefaultFilenameFunction
+    )(implicit ct: ClassTag[T], coder: Coder[T]): ClosedTap[T] = {
+      val param =
+        WriteParam(schema, numShards, suffix, compression, windowFilenameFunction, filenameFunction)
       self.write(ParquetAvroIO[T](path))(param)
     }
   }
