@@ -11,12 +11,12 @@ class MutableScalableBloomFilterTest extends PipelineSpec {
 
   "A MutableScalableBloomFilter" should "not grow for repeated items" in {
     val sbf = MutableScalableBloomFilter[String](256, 0.01)
-    assert(sbf.filters.isEmpty)
+    assert(sbf.numFilters == 0)
     assert(sbf.approximateElementCount == 0)
 
     (0 to 100).foreach(_ => sbf += "test")
     assert(sbf.contains("test"))
-    assert(sbf.filters.size == 1)
+    assert(sbf.numFilters == 1)
     assert(sbf.approximateElementCount == 1)
   }
 
@@ -33,31 +33,22 @@ class MutableScalableBloomFilterTest extends PipelineSpec {
 
     // check for the presense of any 8 character strings
     val fpCount = (0 until trials).count(_ => sbf.contains(random.nextString(8))).toDouble
-    assert(fpCount / trials <= compoundedErrorRate(fpProb, tr, sbf.filters.size))
+    assert(fpCount / trials <= compoundedErrorRate(fpProb, tr, sbf.numFilters))
   }
 
   it should "grow at the given growth rate" in {
     val initialCapacity = 2
     val sbf = MutableScalableBloomFilter[String](initialCapacity, 0.001, 2, 1.0)
-    assert(sbf.filters.isEmpty)
+    assert(sbf.numFilters == 0)
 
     (0 until 100).foreach(i => sbf += ("item" + i))
-    assert(sbf.filters.size == 6) // filter sizes: 2 + 4 + 8 + 16 + 32 + 64 = 126 > 100
+    assert(sbf.numFilters == 6) // filter sizes: 2 + 4 + 8 + 16 + 32 + 64 = 126 > 100
 
     val sbf2 = MutableScalableBloomFilter[String](initialCapacity, 0.001, 4, 1.0)
-    assert(sbf2.filters.isEmpty)
+    assert(sbf2.numFilters == 0)
 
     (0 until 100).foreach(i => sbf2 += ("item" + i))
-    assert(sbf2.filters.size == 4) // filter sizes: 2 + 8 + 64 + 512 > 100
-  }
-
-  it should "provide element count as the sum of underlying sizes" in {
-    val sbf = MutableScalableBloomFilter[String](128, 0.00001, 4, 0.9)
-    val random = new Random(42)
-    (0 to 1000).foreach(_ => sbf += random.nextString(8))
-    val actual = sbf.approximateElementCount
-    val expected = sbf.filters.foldLeft(0L)(_ + _.approximateElementCount)
-    assert(actual == expected)
+    assert(sbf2.numFilters == 4) // filter sizes: 2 + 8 + 64 + 512 > 100
   }
 
   it should "work in an SCollection" in {
@@ -81,6 +72,8 @@ class MutableScalableBloomFilterTest extends PipelineSpec {
     val initialCapacity = 2
     val sbf = MutableScalableBloomFilter[String](initialCapacity, 0.001, 2, 1.0)
     (0 until 100).foreach(i => sbf += ("item" + i))
-    assert(MutableScalableBloomFilter.fromBytes[String](MutableScalableBloomFilter.toBytes(sbf)) == sbf)
+    val roundtripped = MutableScalableBloomFilter.fromBytes[String](MutableScalableBloomFilter.toBytes(sbf))
+    roundtripped.deserialize()
+    assert(roundtripped == sbf)
   }
 }
