@@ -17,10 +17,8 @@
 
 package com.spotify.scio.hash
 
-import com.google.common.hash.Funnel
 import com.google.common.{hash => g}
 import com.spotify.scio.coders.Coder
-import com.spotify.scio.hash
 import com.spotify.scio.values.{SCollection, SideInput}
 import org.slf4j.LoggerFactory
 
@@ -348,40 +346,3 @@ object BloomFilter extends ApproxFilterCompanion {
   }
 }
 
-class ScalableBloomFilter[T: g.Funnel] private (private val impl: MutableScalableBloomFilter[T])
-    extends ApproxFilter[T] {
-
-  /** Return an estimate for the total number of distinct elements that have been added to this [[ApproxFilter]]. */
-  override def approxElementCount: Long = impl.approximateElementCount
-  override def mightContain(elem: T): Boolean = impl.mightContain(elem)
-  override val expectedFpp: Double = impl.fpProb
-}
-
-// TODO this has questionable value; the API has already materialized `elems`, so you can with less overhead just create a single normal BF
-object ScalableBloomFilter extends ApproxFilterCompanion {
-  override type Hash[T] = g.Funnel[T]
-  override type Filter[T] = ScalableBloomFilter[T]
-  implicit override def filterCoder[T: Hash]: Coder[Filter[T]] =
-    Coder
-      .xmap(Coder[MutableScalableBloomFilter[T]])(a => new ScalableBloomFilter[T](a), b => b.impl)
-
-  override protected def createImpl[T: Funnel](
-    elems: Iterable[T],
-    expectedInsertions: Long,
-    fpp: Double
-  ): Filter[T] =
-    new ScalableBloomFilter(MutableScalableBloomFilter(expectedInsertions, fpp) ++= elems)
-
-  override private[hash] def partitionSettings(
-    expectedInsertions: Long,
-    fpp: Double,
-    maxBytes: Int
-  ): PartitionSettings = {
-    val defaultPartitionSettings = BloomFilter.partitionSettings(expectedInsertions, fpp, maxBytes)
-    PartitionSettings(
-      defaultPartitionSettings.partitions,
-      defaultPartitionSettings.expectedInsertions,
-      defaultPartitionSettings.sizeBytes
-    )
-  }
-}
