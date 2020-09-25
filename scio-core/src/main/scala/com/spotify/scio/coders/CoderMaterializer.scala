@@ -67,21 +67,26 @@ object CoderMaterializer {
         WrappedBCoder.create(beamImpl(o, u))
       case Record(typeName, coders, construct, destruct) =>
         WrappedBCoder.create(
-          new RecordCoder(
-            typeName,
-            coders.map(c => c._1 -> nullCoder(o, beamImpl(o, c._2))),
-            construct,
-            destruct
+          nullCoder(
+            o,
+            new RecordCoder(
+              typeName,
+              coders.map(c => c._1 -> nullCoder(o, beamImpl(o, c._2))),
+              construct,
+              destruct
+            )
           )
         )
       case Disjunction(typeName, idCoder, id, coders) =>
         WrappedBCoder.create(
-          // `.map(identity) is really needed to make Map serializable.
-          DisjunctionCoder(
-            typeName,
-            beamImpl(o, idCoder),
-            id,
-            coders.iterator.map { case (k, u) => (k, beamImpl(o, u)) }.toMap
+          nullCoder(
+            o,
+            DisjunctionCoder(
+              typeName,
+              beamImpl(o, idCoder),
+              id,
+              coders.iterator.map { case (k, u) => (k, beamImpl(o, u)) }.toMap
+            )
           )
         )
       case KVCoder(koder, voder) =>
