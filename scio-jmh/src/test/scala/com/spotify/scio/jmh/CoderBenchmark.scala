@@ -89,6 +89,25 @@ class CoderBenchmark {
     CoderMaterializer.beamWithDefault(Coder[List[String]])
   val stringListExample: List[String] = (1 to 1000).map(x => s"stringvalue$x").toList
 
+  val derivedTuple3Coder: BCoder[(Int, Int, Int)] =
+    CoderMaterializer.beamWithDefault(Coder[(Int, Int, Int)])
+  val tuple3Example: (Int, Int, Int) = (1, 10, 100)
+  val derivedTuple4Coder: BCoder[(Int, Int, Int, Int)] =
+    CoderMaterializer.beamWithDefault(Coder[(Int, Int, Int, Int)])
+  val tuple4Example: (Int, Int, Int, Int) = (1, 10, 100, 1000)
+
+  @Benchmark
+  def tuple3Encode(o: SerializedOutputSize): Array[Byte] =
+    Counter.track(o) {
+      CoderUtils.encodeToByteArray(derivedTuple3Coder, tuple3Example)
+    }
+
+  @Benchmark
+  def tuple4Encode(o: SerializedOutputSize): Array[Byte] =
+    Counter.track(o) {
+      CoderUtils.encodeToByteArray(derivedTuple4Coder, tuple4Example)
+    }
+
   @Benchmark
   def kryoEncode(o: SerializedOutputSize): Array[Byte] =
     Counter.track(o) {
@@ -159,6 +178,16 @@ class CoderBenchmark {
   val derivedMapEncoded: Array[Byte] = derivedMapEncode(new SerializedOutputSize)
   val kryoStringListEncoded: Array[Byte] = kryoStringListEncode(new SerializedOutputSize)
   val derivedStringListEncoded: Array[Byte] = derivedStringListEncode(new SerializedOutputSize)
+  val tuple3Encoded: Array[Byte] = tuple3Encode(new SerializedOutputSize)
+  val tuple4Encoded: Array[Byte] = tuple4Encode(new SerializedOutputSize)
+
+  @Benchmark
+  def tuple3Decode: (Int, Int, Int) =
+    CoderUtils.decodeFromByteArray(derivedTuple3Coder, tuple3Encoded)
+
+  @Benchmark
+  def tuple4Decode: (Int, Int, Int, Int) =
+    CoderUtils.decodeFromByteArray(derivedTuple4Coder, tuple4Encoded)
 
   @Benchmark
   def kryoDecode: User =
