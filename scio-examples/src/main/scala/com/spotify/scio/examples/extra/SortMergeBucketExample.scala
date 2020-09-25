@@ -158,14 +158,19 @@ object SortMergeBucketTransformExample {
     val (sc, args) = ContextAndArgs(cmdLineArgs)
 
     // #SortMergeBucketExample_transform
-    sc.sortMergeTransform(
-      classOf[Integer],
+    val (readLhs, readRhs) = (
       AvroSortedBucketIO
         .read(new TupleTag[GenericRecord]("lhs"), SortMergeBucketExample.UserDataSchema)
         .from(args("users")),
       AvroSortedBucketIO
         .read(new TupleTag[Account]("rhs"), classOf[Account])
-        .from(args("accounts")),
+        .from(args("accounts"))
+    )
+
+    sc.sortMergeTransform(
+      classOf[Integer],
+      readLhs,
+      readRhs,
       TargetParallelism.auto()
     ).to(
       AvroSortedBucketIO

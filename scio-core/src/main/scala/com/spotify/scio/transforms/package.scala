@@ -36,22 +36,6 @@ import scala.util.{Failure, Success, Try}
 
 /** Main package for transforms APIs. Import all. */
 package object transforms {
-  @deprecated(
-    "renamed to BaseAsyncLookupDoFn. see https://spotify.github.io/scio/migrations/v0.8.0-Migration-Guide.html#async-dofns",
-    "0.8.0"
-  )
-  type AsyncLookupDoFn[A, B, C] =
-    BaseAsyncLookupDoFn[A, B, C, ListenableFuture[_], BaseAsyncLookupDoFn.Try[B]]
-
-  @deprecated(
-    "renamed to BaseAsyncLookupDoFn. see https://spotify.github.io/scio/migrations/v0.8.0-Migration-Guide.html#async-dofns",
-    "0.8.0"
-  )
-  object AsyncLookupDoFn {
-    type Try[T] = BaseAsyncLookupDoFn.Try[T]
-    type CacheSupplier[A, B, K] = BaseAsyncLookupDoFn.CacheSupplier[A, B, K]
-    type NoOpCacheSupplier[A, B] = BaseAsyncLookupDoFn.NoOpCacheSupplier[A, B]
-  }
 
   /**
    * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with
@@ -164,8 +148,8 @@ package object transforms {
      */
     def filterWithParallelism(
       parallelism: Int
-    )(fn: T => Boolean)(implicit coder: Coder[T]): SCollection[T] =
-      self.parDo(parallelFilterFn(parallelism)(fn))
+    )(fn: T => Boolean): SCollection[T] =
+      self.parDo(parallelFilterFn(parallelism)(fn))(self.coder)
 
     /**
      * Return a new SCollection by applying a function to all elements of this SCollection.
@@ -250,7 +234,7 @@ package object transforms {
      */
     def safeFlatMap[U: Coder](
       f: T => TraversableOnce[U]
-    )(implicit coder: Coder[T]): (SCollection[U], SCollection[(T, Throwable)]) = {
+    ): (SCollection[U], SCollection[(T, Throwable)]) = {
       val (mainTag, errorTag) = (new TupleTag[U], new TupleTag[(T, Throwable)])
       val doFn = new NamedDoFn[T, U] {
         val g = ClosureCleaner.clean(f) // defeat closure
@@ -272,6 +256,7 @@ package object transforms {
       val main = tuple
         .get(mainTag)
         .setCoder(CoderMaterializer.beam(self.context, Coder[U]))
+      import self.coder
       val errorPipe =
         tuple
           .get(errorTag)

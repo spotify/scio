@@ -69,7 +69,11 @@ public class SortedBucketIO {
 
     /** Returns a new {@link CoGbk} with the given first sorted-bucket source in {@link Read}. */
     public CoGbk<K> of(Read<?> read) {
-      return new CoGbk<>(finalKeyClass, Collections.singletonList(read), DEFAULT_PARALLELISM, null);
+      return new CoGbk<>(
+          finalKeyClass,
+          Collections.singletonList(read.toBucketedInput()),
+          DEFAULT_PARALLELISM,
+          null);
     }
   }
 
@@ -78,17 +82,17 @@ public class SortedBucketIO {
    */
   public static class CoGbk<K> extends PTransform<PBegin, PCollection<KV<K, CoGbkResult>>> {
     private final Class<K> keyClass;
-    private final List<Read<?>> reads;
+    private final List<BucketedInput<?, ?>> inputs;
     private final TargetParallelism targetParallelism;
     private final String metricsKey;
 
     private CoGbk(
         Class<K> keyClass,
-        List<Read<?>> reads,
+        List<BucketedInput<?, ?>> inputs,
         TargetParallelism targetParallelism,
         String metricsKey) {
       this.keyClass = keyClass;
-      this.reads = reads;
+      this.inputs = inputs;
       this.targetParallelism = targetParallelism;
       this.metricsKey = metricsKey;
     }
@@ -98,32 +102,33 @@ public class SortedBucketIO {
      * source in {@link Read}.
      */
     public CoGbk<K> and(Read<?> read) {
-      ImmutableList<Read<?>> newReads =
-          ImmutableList.<Read<?>>builder().addAll(reads).add(read).build();
+      ImmutableList<BucketedInput<?, ?>> newReads =
+          ImmutableList.<BucketedInput<?, ?>>builder()
+              .addAll(inputs)
+              .add(read.toBucketedInput())
+              .build();
       return new CoGbk<>(keyClass, newReads, targetParallelism, metricsKey);
     }
 
     public CoGbk<K> withTargetParallelism(TargetParallelism targetParallelism) {
-      return new CoGbk<>(keyClass, reads, targetParallelism, metricsKey);
+      return new CoGbk<>(keyClass, inputs, targetParallelism, metricsKey);
     }
 
     public CoGbk<K> withMetricsKey(String metricsKey) {
-      return new CoGbk<>(keyClass, reads, targetParallelism, metricsKey);
+      return new CoGbk<>(keyClass, inputs, targetParallelism, metricsKey);
     }
 
     public <V> CoGbkTransform<K, V> transform(TransformOutput<K, V> transform) {
-      return new CoGbkTransform<>(keyClass, reads, targetParallelism, transform);
+      return new CoGbkTransform<>(keyClass, inputs, targetParallelism, transform);
     }
 
     @Override
     public PCollection<KV<K, CoGbkResult>> expand(PBegin input) {
-      final List<BucketedInput<?, ?>> bucketedInputs =
-          reads.stream().map(Read::toBucketedInput).collect(Collectors.toList());
       SortedBucketSource<K> source;
       if (metricsKey == null) {
-        source = new SortedBucketSource<>(keyClass, bucketedInputs, targetParallelism);
+        source = new SortedBucketSource<>(keyClass, inputs, targetParallelism);
       } else {
-        source = new SortedBucketSource<>(keyClass, bucketedInputs, targetParallelism, metricsKey);
+        source = new SortedBucketSource<>(keyClass, inputs, targetParallelism, metricsKey);
       }
       return input.apply(org.apache.beam.sdk.io.Read.from(source));
     }
@@ -131,7 +136,7 @@ public class SortedBucketIO {
 
   public static class CoGbkTransform<K, V> extends PTransform<PBegin, WriteResult> {
     private final Class<K> keyClass;
-    private final List<Read<?>> reads;
+    private final List<BucketedInput<?, ?>> inputs;
     private final TargetParallelism targetParallelism;
     private TransformFn<K, V> toFinalResultT;
 
@@ -144,11 +149,11 @@ public class SortedBucketIO {
 
     private CoGbkTransform(
         Class<K> keyClass,
-        List<Read<?>> reads,
+        List<BucketedInput<?, ?>> inputs,
         TargetParallelism targetParallelism,
         TransformOutput<K, V> transform) {
       this.keyClass = keyClass;
-      this.reads = reads;
+      this.inputs = inputs;
       this.targetParallelism = targetParallelism;
       this.outputDirectory = transform.getOutputDirectory();
       this.tempDirectory = transform.getTempDirectory();
@@ -168,9 +173,6 @@ public class SortedBucketIO {
       Preconditions.checkNotNull(outputDirectory, "outputDirectory is not set");
       Preconditions.checkNotNull(toFinalResultT, "TransformFn<K, V> via() is not set");
 
-      final List<BucketedInput<?, ?>> bucketedInputs =
-          reads.stream().map(Read::toBucketedInput).collect(Collectors.toList());
-
       ResourceId tmpDir = tempDirectory;
       if (tmpDir == null) {
         tmpDir = outputDirectory;
@@ -179,7 +181,7 @@ public class SortedBucketIO {
       return input.apply(
           new SortedBucketTransform<>(
               keyClass,
-              bucketedInputs,
+              inputs,
               targetParallelism,
               toFinalResultT,
               outputDirectory,
@@ -210,7 +212,7 @@ public class SortedBucketIO {
   }
 
   /** Represents a single sorted-bucket source written using {@link SortedBucketSink}. */
-  public abstract static class Read<V> {
+  public abstract static class Read<V> implements Serializable {
     public abstract TupleTag<V> getTupleTag();
 
     protected abstract BucketedInput<?, V> toBucketedInput();

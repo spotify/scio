@@ -19,7 +19,6 @@ package com.spotify.scio.spanner.syntax
 import com.google.cloud.spanner.Mutation
 import com.spotify.scio.io.ClosedTap
 import com.spotify.scio.spanner.SpannerWrite
-import com.spotify.scio.spanner.instances.coders._
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.io.gcp.spanner.SpannerConfig
 import org.apache.beam.sdk.io.gcp.spanner.SpannerIO.FailureMode

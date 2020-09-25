@@ -52,7 +52,7 @@ trait SideInput[T] extends Serializable {
   /** Create a new [[SideInput]] by applying a function on the elements wrapped in this SideInput. */
   def map[B](f: T => B): SideInput[B] = new DelegatingSideInput[T, B](this, f)
 
-  private[values] val view: PCollectionView[_]
+  private[scio] val view: PCollectionView[_]
 }
 
 /** Companion object of [[SideInput]]. */
@@ -129,7 +129,7 @@ private[values] class DelegatingSideInput[A, B](val si: SideInput[A], val mapper
     extends SideInput[B] {
   override def get[I, O](context: DoFn[I, O]#ProcessContext): B = mapper(si.get(context))
 
-  private[values] val view: PCollectionView[_] = si.view
+  private[scio] val view: PCollectionView[_] = si.view
 }
 
 /** Encapsulate context of one or more [[SideInput]]s in an [[SCollectionWithSideInput]]. */

@@ -916,6 +916,7 @@ class ScioContext private[scio] (
   // =======================================================================
 
   /** Create a union of multiple SCollections. Supports empty lists. */
+  // `T: Coder` context bound is required since `scs` might be empty.
   def unionAll[T: Coder](scs: Iterable[SCollection[T]]): SCollection[T] =
     scs match {
       case Nil => empty()
@@ -928,7 +929,7 @@ class ScioContext private[scio] (
     }
 
   /** Form an empty SCollection. */
-  def empty[T: Coder](): SCollection[T] = parallelize(Seq())
+  def empty[T: Coder](): SCollection[T] = parallelize(Nil)
 
   /**
    * Distribute a local Scala `Iterable` to form an SCollection.
