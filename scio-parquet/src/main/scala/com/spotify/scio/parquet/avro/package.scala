@@ -163,10 +163,20 @@ package object avro {
       numShards: Int = WriteParam.DefaultNumShards,
       suffix: String = WriteParam.DefaultSuffix,
       compression: CompressionCodecName = WriteParam.DefaultCompression,
-      windowFilenameFunction: Option[(Int, Int, BoundedWindow, PaneInfo) => String] =
+      windowFilenameFunction: (Int, Int, BoundedWindow, PaneInfo) => String =
         WriteParam.DefaultWindowedFilenameFunction,
-      filenameFunction: Option[(Int, Int) => String] = WriteParam.DefaultFilenameFunction
+      filenameFunction: (Int, Int) => String = WriteParam.DefaultFilenameFunction
     )(implicit ct: ClassTag[T], coder: Coder[T]): ClosedTap[T] = {
+
+      if (
+        windowFilenameFunction == WriteParam.DefaultWindowedFilenameFunction &&
+        filenameFunction == WriteParam.DefaultFilenameFunction
+      ) {
+        throw new NotImplementedError(
+          "A file name function must be defined whe using saveAsDynamicParquetAvroFile"
+        )
+      }
+
       val param =
         WriteParam(schema, numShards, suffix, compression, windowFilenameFunction, filenameFunction)
       self.write(ParquetAvroIO[T](path))(param)

@@ -26,6 +26,7 @@ import com.spotify.scio.io.TapSpec
 import com.spotify.scio.testing._
 import com.spotify.scio.values.WindowOptions
 import org.apache.avro.generic.GenericRecord
+import org.apache.beam.sdk.Pipeline.PipelineExecutionException
 import org.apache.beam.sdk.options.PipelineOptionsFactory
 import org.apache.beam.sdk.transforms.windowing.{BoundedWindow, IntervalWindow, PaneInfo}
 import org.apache.commons.io.FileUtils
@@ -160,7 +161,7 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
         numShards = 1,
         schema = AvroUtils.schema,
         windowFilenameFunction =
-          Some { (shardNumber: Int, numShards: Int, window: BoundedWindow, paneInfo: PaneInfo) =>
+          (shardNumber: Int, numShards: Int, window: BoundedWindow, paneInfo: PaneInfo) => {
             val intervalWindow = window.asInstanceOf[IntervalWindow]
             val year = intervalWindow.start().get(DateTimeFieldType.year())
             val month = intervalWindow.start().get(DateTimeFieldType.monthOfYear())
@@ -213,9 +214,8 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
         dir.toString,
         numShards = 1,
         schema = AvroUtils.schema,
-        filenameFunction = Some { (shardNumber: Int, numShards: Int) =>
+        filenameFunction = (shardNumber: Int, numShards: Int) =>
           "part-%s-of-%s-with-custom-naming".format(shardNumber, numShards)
-        }
       )
     sc.run()
 
@@ -229,5 +229,55 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
     tap.value.toList should contain theSameElementsAs genericRecords
 
     FileUtils.deleteDirectory(dir)
+  }
+
+  it should "throw exception when filename functions not correctly defined for dynamic destinations" in {
+    val dir = tmpDir
+
+    val genericRecords = (1 to 100).map(AvroUtils.newGenericRecord)
+    implicit val coder = Coder.avroGenericRecordCoder(AvroUtils.schema)
+
+    an[NotImplementedError] should be thrownBy {
+      val sc = ScioContext()
+      sc.parallelize(genericRecords)
+        .saveAsDynamicParquetAvroFile(
+          dir.toString,
+          numShards = 1,
+          schema = AvroUtils.schema
+        )
+    }
+
+    val pipelineException1 = the[PipelineExecutionException] thrownBy {
+      val sc = ScioContext()
+      sc.parallelize(genericRecords)
+        .saveAsDynamicParquetAvroFile(
+          dir.toString,
+          numShards = 1,
+          schema = AvroUtils.schema,
+          windowFilenameFunction = (_, _, _, _) => "test for exception handling"
+        )
+      sc.run()
+    }
+
+    pipelineException1.getCause shouldBe a[NotImplementedError]
+
+    val pipelineException2 = the[PipelineExecutionException] thrownBy {
+      val sc = ScioContext()
+      sc.parallelize(genericRecords)
+        .timestampBy(
+          x => new Instant(x.get("int_field").asInstanceOf[Int] * 1800000),
+          Duration.ZERO
+        )
+        .withFixedWindows(Duration.standardHours(1), Duration.ZERO, WindowOptions())
+        .saveAsDynamicParquetAvroFile(
+          dir.toString,
+          numShards = 1,
+          schema = AvroUtils.schema,
+          filenameFunction = (_, _) => "test for exception handling"
+        )
+      sc.run()
+    }
+
+    pipelineException2.getCause shouldBe a[NotImplementedError]
   }
 }

@@ -43,6 +43,7 @@ import org.apache.parquet.hadoop.metadata.CompressionCodecName
 import scala.jdk.CollectionConverters._
 import scala.reflect.ClassTag
 import com.spotify.scio.io.TapT
+import com.spotify.scio.parquet.avro.ParquetAvroIO.WriteParam
 import org.apache.beam.sdk.io.FileBasedSink.FilenamePolicy
 import org.apache.beam.sdk.io.fs.ResolveOptions.StandardResolveOptions
 import org.apache.beam.sdk.io.fs.ResourceId
@@ -92,7 +93,10 @@ final case class ParquetAvroIO[T: ClassTag: Coder](path: String) extends ScioIO[
       FileBasedSink.convertToFileResourceIfPossible(ScioUtil.pathWithShards(path))
     val prefix = StaticValueProvider.of(resource)
     val fileNamePolicy =
-      if (params.windowedFilenameFunction.isDefined || params.filenameFunction.isDefined) {
+      if (
+        params.windowedFilenameFunction != WriteParam.DefaultWindowedFilenameFunction ||
+        params.filenameFunction != WriteParam.DefaultFilenameFunction
+      ) {
         createFilenamePolicy(
           resource,
           params.windowedFilenameFunction,
@@ -125,8 +129,8 @@ final case class ParquetAvroIO[T: ClassTag: Coder](path: String) extends ScioIO[
 
   def createFilenamePolicy(
     baseFileName: ResourceId,
-    windowedFilenameFunction: Option[(Int, Int, BoundedWindow, PaneInfo) => String],
-    filenameFunction: Option[(Int, Int) => String],
+    windowedFilenameFunction: (Int, Int, BoundedWindow, PaneInfo) => String,
+    filenameFunction: (Int, Int) => String,
     filenameSuffix: String
   ): FilenamePolicy = {
 
@@ -139,13 +143,11 @@ final case class ParquetAvroIO[T: ClassTag: Coder](path: String) extends ScioIO[
         paneInfo: PaneInfo,
         outputFileHints: FileBasedSink.OutputFileHints
       ): ResourceId = {
-        windowedFilenameFunction
-          .map(f => f(shardNumber, numShards, window, paneInfo))
-          .map(fileName =>
-            baseFileName.getCurrentDirectory
-              .resolve(fileName + filenameSuffix, StandardResolveOptions.RESOLVE_FILE)
-          )
-          .getOrElse(???)
+        val filename = windowedFilenameFunction(shardNumber, numShards, window, paneInfo)
+        baseFileName.getCurrentDirectory.resolve(
+          filename + filenameSuffix,
+          StandardResolveOptions.RESOLVE_FILE
+        )
       }
 
       override def unwindowedFilename(
@@ -153,13 +155,11 @@ final case class ParquetAvroIO[T: ClassTag: Coder](path: String) extends ScioIO[
         numShards: Int,
         outputFileHints: FileBasedSink.OutputFileHints
       ): ResourceId = {
-        filenameFunction
-          .map(f => f(shardNumber, numShards))
-          .map(fileName =>
-            baseFileName.getCurrentDirectory
-              .resolve(fileName + filenameSuffix, StandardResolveOptions.RESOLVE_FILE)
-          )
-          .getOrElse(???)
+        val filename = filenameFunction(shardNumber, numShards)
+        baseFileName.getCurrentDirectory.resolve(
+          filename + filenameSuffix,
+          StandardResolveOptions.RESOLVE_FILE
+        )
       }
     }
 
@@ -208,8 +208,13 @@ object ParquetAvroIO {
     private[avro] val DefaultNumShards = 0
     private[avro] val DefaultSuffix = ".parquet"
     private[avro] val DefaultCompression = CompressionCodecName.SNAPPY
-    private[avro] val DefaultWindowedFilenameFunction = None
-    private[avro] val DefaultFilenameFunction = None
+    private[avro] val DefaultWindowedFilenameFunction
+      : (Int, Int, BoundedWindow, PaneInfo) => String = (_, _, _, _) =>
+      throw new NotImplementedError(
+        "saveAsDynamicParquetAvroFile for windowed SCollections requires a windowed filename function"
+      )
+    private[avro] val DefaultFilenameFunction: (Int, Int) => String = (_, _) =>
+      throw new NotImplementedError("saveAsDynamicParquetAvroFile requires a filename function")
   }
 
   final case class WriteParam private (
@@ -217,9 +222,9 @@ object ParquetAvroIO {
     numShards: Int = WriteParam.DefaultNumShards,
     suffix: String = WriteParam.DefaultSuffix,
     compression: CompressionCodecName = WriteParam.DefaultCompression,
-    windowedFilenameFunction: Option[(Int, Int, BoundedWindow, PaneInfo) => String] =
+    windowedFilenameFunction: (Int, Int, BoundedWindow, PaneInfo) => String =
       WriteParam.DefaultWindowedFilenameFunction,
-    filenameFunction: Option[(Int, Int) => String] = WriteParam.DefaultFilenameFunction
+    filenameFunction: (Int, Int) => String = WriteParam.DefaultFilenameFunction
   )
 }
 
