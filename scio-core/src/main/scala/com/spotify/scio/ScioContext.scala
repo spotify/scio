@@ -754,6 +754,7 @@ class ScioContext private[scio] (
   def datastore(projectId: String, query: Query, namespace: String = null): SCollection[Entity] =
     this.read(DatastoreIO(projectId))(DatastoreIO.ReadParam(query, namespace))
 
+  // This method needs to be removed once pubsubSubscription and pubsubTopic are deleted
   private def pubsubIn[T: ClassTag: Coder](
     isSubscription: Boolean,
     name: String,
@@ -768,6 +769,22 @@ class ScioContext private[scio] (
    * Get an SCollection for a Pub/Sub subscription.
    * @group input
    */
+  @deprecated(
+    """
+    |  This method has been deprecated. Use one of the following IOs instead:
+    |    - PubsubIO.string
+    |    - PubsubIO.avro
+    |    - PubsubIO.proto
+    |    - PubsubIO.pubsub
+    |    - PubsubIO.coder
+    |
+    |  For example:
+    |     sc.read(PubsubIO.string(sub, idAttribute, timestampAttribute))(
+    |       PubsubIO.ReadParam(PubsubIO.Subscription)
+    |     )
+    """.stripMargin,
+    since = "0.10.0"
+  )
   def pubsubSubscription[T: ClassTag: Coder](
     sub: String,
     idAttribute: String = null,
@@ -779,6 +796,22 @@ class ScioContext private[scio] (
    * Get an SCollection for a Pub/Sub topic.
    * @group input
    */
+  @deprecated(
+    """
+    |  This method has been deprecated. Use one of the following IOs instead:
+    |    - PubsubIO.string
+    |    - PubsubIO.avro
+    |    - PubsubIO.proto
+    |    - PubsubIO.pubsub
+    |    - PubsubIO.coder
+    |
+    |  For example:
+    |     sc.read(PubsubIO.string(sub, idAttribute, timestampAttribute))(
+    |       PubsubIO.ReadParam(PubsubIO.Topic)
+    |     )
+    """.stripMargin,
+    since = "0.10.0"
+  )
   def pubsubTopic[T: ClassTag: Coder](
     topic: String,
     idAttribute: String = null,
@@ -800,6 +833,16 @@ class ScioContext private[scio] (
    * Get an SCollection for a Pub/Sub subscription that includes message attributes.
    * @group input
    */
+  @deprecated(
+    """
+    |  This method has been deprecated. Use PubsubIO.withAttributes instead.
+    |  For example:
+    |     sc.read(PubsubIO.withAttributes(sub, idAttribute, timestampAttribute))(
+    |       PubsubIO.ReadParam(PubsubIO.Subscription)
+    |     )
+    """.stripMargin,
+    since = "0.10.0"
+  )
   def pubsubSubscriptionWithAttributes[T: ClassTag: Coder](
     sub: String,
     idAttribute: String = null,
@@ -811,6 +854,16 @@ class ScioContext private[scio] (
    * Get an SCollection for a Pub/Sub topic that includes message attributes.
    * @group input
    */
+  @deprecated(
+    """
+    |  This method has been deprecated. Use PubsubIO.withAttributes instead.
+    |  For example:
+    |     sc.read(PubsubIO.withAttributes(sub, idAttribute, timestampAttribute))(
+    |       PubsubIO.ReadParam(PubsubIO.Topic)
+    |     )
+    """.stripMargin,
+    since = "0.10.0"
+  )
   def pubsubTopicWithAttributes[T: ClassTag: Coder](
     topic: String,
     idAttribute: String = null,
