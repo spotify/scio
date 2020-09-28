@@ -18,6 +18,7 @@
 package org.apache.beam.sdk.extensions.smb;
 
 import java.io.Serializable;
+import java.util.List;
 import java.util.UUID;
 import org.apache.beam.sdk.io.fs.ResolveOptions.StandardResolveOptions;
 import org.apache.beam.sdk.io.fs.ResourceId;
@@ -127,7 +128,7 @@ public final class SMBFilenamePolicy implements Serializable {
 
       final String timestamp = doTimestampFiles ? Instant.now().toString(TEMPFILE_TIMESTAMP) : "";
       String filename =
-          maxNumShards == 1
+          maxNumShards == 1 || id.isNullKeyBucket()
               ? String.format(bucketOnlyTemplate, bucketName, filenameSuffix)
               : String.format(
                   bucketShardTemplate, bucketName, id.getShardId(), maxNumShards, filenameSuffix);
@@ -142,6 +143,12 @@ public final class SMBFilenamePolicy implements Serializable {
     public ResourceId forMetadata() {
       String timestamp = doTimestampFiles ? Instant.now().toString(TEMPFILE_TIMESTAMP) : "";
       return directory.resolve(timestamp + METADATA_FILENAME, StandardResolveOptions.RESOLVE_FILE);
+    }
+
+    /** Returns a ResourceId matching the */
+    public ResourceId forNullKeys() {
+      return directory.resolve(
+          NULL_KEYS_BUCKET_TEMPLATE + "*" + filenameSuffix, StandardResolveOptions.RESOLVE_FILE);
     }
 
     public ResourceId getDirectory() {

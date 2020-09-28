@@ -17,8 +17,8 @@
 
 package org.apache.beam.sdk.extensions.smb;
 
-import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.spotify.scio.transforms.DoFnWithResource;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -29,6 +29,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -38,12 +39,9 @@ import org.apache.beam.sdk.coders.Coder;
 import org.apache.beam.sdk.coders.CoderException;
 import org.apache.beam.sdk.coders.DelegateCoder;
 import org.apache.beam.sdk.coders.KvCoder;
-import org.apache.beam.sdk.coders.ListCoder;
-import org.apache.beam.sdk.extensions.smb.BucketMetadata.BucketMetadataCoder;
 import org.apache.beam.sdk.extensions.smb.BucketShardId.BucketShardIdCoder;
 import org.apache.beam.sdk.extensions.smb.SMBFilenamePolicy.FileAssignment;
 import org.apache.beam.sdk.extensions.smb.SortedBucketSink.WriteResult;
-import org.apache.beam.sdk.extensions.smb.SortedBucketSource.BucketedInput;
 import org.apache.beam.sdk.extensions.sorter.BufferedExternalSorter;
 import org.apache.beam.sdk.extensions.sorter.ExternalSorter;
 import org.apache.beam.sdk.io.FileSystems;
@@ -53,7 +51,6 @@ import org.apache.beam.sdk.io.fs.ResourceIdCoder;
 import org.apache.beam.sdk.metrics.Counter;
 import org.apache.beam.sdk.metrics.Metrics;
 import org.apache.beam.sdk.transforms.Create;
-import org.apache.beam.sdk.transforms.Create.Values;
 import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.transforms.GroupByKey;
 import org.apache.beam.sdk.transforms.PTransform;
@@ -65,7 +62,6 @@ import org.apache.beam.sdk.transforms.display.DisplayData;
 import org.apache.beam.sdk.transforms.display.DisplayData.Builder;
 import org.apache.beam.sdk.util.CoderUtils;
 import org.apache.beam.sdk.values.KV;
-import org.apache.beam.sdk.values.PBegin;
 import org.apache.beam.sdk.values.PCollection;
 import org.apache.beam.sdk.values.PCollection.IsBounded;
 import org.apache.beam.sdk.values.PCollectionTuple;
@@ -221,7 +217,7 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
   /** Extract bucket and shard id for grouping, and key bytes for sorting. */
   private static class ExtractKeys<K, V> extends DoFn<V, KV<BucketShardId, KV<byte[], byte[]>>> {
     // Substitute null keys in the output KV<byte[], V> so that they survive serialization
-    private static final byte[] NULL_SORT_KEY = new byte[0];
+    static final byte[] NULL_SORT_KEY = new byte[0];
     private final SerializableFunction<V, K> extractKeyFn;
     private final Coder<V> valueCoder;
     private final BucketMetadata<K, ?> bucketMetadata;
@@ -266,7 +262,7 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
 
       return (keyBytes != null)
           ? KV.of(BucketShardId.of(metadata.getBucketId(keyBytes), shardId), keyBytes)
-          : KV.of(BucketShardId.ofNullKey(shardId), NULL_SORT_KEY);
+          : KV.of(BucketShardId.ofNullKey(), NULL_SORT_KEY);
     }
 
     static <ValueT> byte[] getValueBytes(Coder<ValueT> coder, ValueT value) {
@@ -343,21 +339,26 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
       final V record = c.element();
       final K key = extractKeyFn.apply(record);
 
-      final KV<BucketShardId, byte[]> bucketIdAndSortBytes =
-          Optional.ofNullable(getResource().getIfPresent(key))
-              .map(
-                  kv -> {
-                    cacheHits.inc();
-                    return KV.of(BucketShardId.of(kv.getKey(), shardId), kv.getValue());
-                  })
-              .orElseGet(
-                  () -> {
-                    cacheMisses.inc();
-                    final KV<BucketShardId, byte[]> kv =
-                        ExtractKeys.processKey(key, bucketMetadata, shardId);
-                    getResource().put(key, KV.of(kv.getKey().getBucketId(), kv.getValue()));
-                    return kv;
-                  });
+      KV<BucketShardId, byte[]> bucketIdAndSortBytes;
+      if (key == null) {
+        bucketIdAndSortBytes = KV.of(BucketShardId.ofNullKey(), ExtractKeys.NULL_SORT_KEY);
+      } else {
+        bucketIdAndSortBytes =
+            Optional.ofNullable(getResource().getIfPresent(key))
+                .map(
+                    kv -> {
+                      cacheHits.inc();
+                      return KV.of(BucketShardId.of(kv.getKey(), shardId), kv.getValue());
+                    })
+                .orElseGet(
+                    () -> {
+                      cacheMisses.inc();
+                      final KV<BucketShardId, byte[]> kv =
+                          ExtractKeys.processKey(key, bucketMetadata, shardId);
+                      getResource().put(key, KV.of(kv.getKey().getBucketId(), kv.getValue()));
+                      return kv;
+                    });
+      }
 
       c.output(
           KV.of(
@@ -592,7 +593,8 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
                               fileAssignment,
                               fileOperations,
                               bucketDst -> c.output(bucketsTag, bucketDst),
-                              metadataDst -> c.output(metadataTag, metadataDst));
+                              metadataDst -> c.output(metadataTag, metadataDst),
+                              true);
                         }
                       })
                   .withSideInputs(writtenBuckets)
@@ -600,12 +602,13 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
     }
 
     static void moveFiles(
-        BucketMetadata bucketMetadata,
+        BucketMetadata<?, ?> bucketMetadata,
         Map<BucketShardId, ResourceId> writtenTmpBuckets,
         FileAssignment dstFileAssignment,
         FileOperations fileOperations,
         Consumer<KV<BucketShardId, ResourceId>> bucketDstConsumer,
-        Consumer<ResourceId> metadataDstConsumer) {
+        Consumer<ResourceId> metadataDstConsumer,
+        boolean writeNullKeyBucket) {
       // Write metadata file first
       final ResourceId metadataDst =
           writeMetadataFile(dstFileAssignment.forMetadata(), bucketMetadata);
@@ -613,17 +616,15 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
       final List<ResourceId> filesToCleanUp = new ArrayList<>();
       filesToCleanUp.add(metadataDst);
 
-      final List<BucketShardId> allBucketShardIds = new ArrayList<>();
-      for (int i = 0; i < bucketMetadata.getNumBuckets(); i++) {
-        for (int j = 0; j < bucketMetadata.getNumShards(); j++) {
-          allBucketShardIds.add(BucketShardId.of(i, j));
-        }
-      }
-
       // Transfer bucket files once metadata has been written
       final List<ResourceId> srcFiles = new ArrayList<>();
       final List<ResourceId> dstFiles = new ArrayList<>();
       final List<KV<BucketShardId, ResourceId>> bucketDsts = new ArrayList<>();
+
+      final Set<BucketShardId> allBucketShardIds = bucketMetadata.getAllBucketShardIds();
+      if (writeNullKeyBucket) {
+        allBucketShardIds.add(BucketShardId.ofNullKey());
+      }
 
       for (BucketShardId id : allBucketShardIds) {
         final ResourceId finalDst = dstFileAssignment.forBucket(id, bucketMetadata);
@@ -790,9 +791,12 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
                     new DoFn<KV<K, V>, Void>() {
                       @ProcessElement
                       public void processElement(ProcessContext c) {
-                        if (!bucketMetadata
-                            .extractKey(c.element().getValue())
-                            .equals(c.element().getKey())) {
+                        final K key = bucketMetadata.extractKey(c.element().getValue());
+                        final boolean keysMatch =
+                            key == null
+                                ? c.element().getKey() == null
+                                : key.equals(c.element().getKey());
+                        if (!keysMatch) {
                           throw new RuntimeException(
                               "BucketMetadata's extractKey fn did not match pre-keyed PCollection");
                         }
