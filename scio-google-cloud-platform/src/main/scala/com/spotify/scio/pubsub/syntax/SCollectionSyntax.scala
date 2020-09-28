@@ -18,13 +18,14 @@
 package com.spotify.scio.pubsub.syntax
 
 import com.spotify.scio.values.SCollection
-import com.spotify.scio.coders.Coder
+import com.spotify.scio.coders.BeamCoders
 import com.spotify.scio.pubsub.PubsubIO
 import com.spotify.scio.io.ClosedTap
 import scala.reflect.ClassTag
 
 trait SCollectionSyntax {
   implicit class SCollectionPubsubOps[T](private val coll: SCollection[T]) {
+    import coll.coder
 
     /**
      * Save this SCollection as a Pub/Sub topic.
@@ -32,18 +33,18 @@ trait SCollectionSyntax {
      */
     @deprecated(
       """
-    |  This method has been deprecated. Use one of the following IOs instead:
-    |    - PubsubIO.string
-    |    - PubsubIO.avro
-    |    - PubsubIO.proto
-    |    - PubsubIO.pubsub
-    |    - PubsubIO.coder
-    |
-    |  For example:
-    |     coll.write(PubsubIO.string(sub, idAttribute, timestampAttribute))(
-    |       PubsubIO.WriteParam()
-    |     )
-    """.stripMargin,
+      |  This method has been deprecated. Use one of the following IOs instead:
+      |    - PubsubIO.string
+      |    - PubsubIO.avro
+      |    - PubsubIO.proto
+      |    - PubsubIO.pubsub
+      |    - PubsubIO.coder
+      |
+      |  For example:
+      |     coll.write(PubsubIO.string(sub, idAttribute, timestampAttribute))(
+      |       PubsubIO.WriteParam()
+      |     )
+      """.stripMargin,
       since = "0.10.0"
     )
     def saveAsPubsub(
@@ -54,7 +55,7 @@ trait SCollectionSyntax {
       maxBatchBytesSize: Option[Int] = None
     )(implicit ct: ClassTag[T]): ClosedTap[Nothing] = {
       val io = PubsubIO[T](topic, idAttribute, timestampAttribute)
-      this.write(io)(PubsubIO.WriteParam(maxBatchSize, maxBatchBytesSize))
+      coll.write(io)(PubsubIO.WriteParam(maxBatchSize, maxBatchBytesSize))
     }
 
     /**
@@ -63,13 +64,13 @@ trait SCollectionSyntax {
      */
     @deprecated(
       """
-    |  This method has been deprecated. Use PubsubIO.withAttributes instead
-    |
-    |  For example:
-    |     coll.write(PubsubIO.withAttributes(sub, idAttribute, timestampAttribute))(
-    |       PubsubIO.WriteParam()
-    |     )
-    """.stripMargin,
+      |  This method has been deprecated. Use PubsubIO.withAttributes instead
+      |
+      |  For example:
+      |     coll.write(PubsubIO.withAttributes(sub, idAttribute, timestampAttribute))(
+      |       PubsubIO.WriteParam()
+      |     )
+      """.stripMargin,
       since = "0.10.0"
     )
     def saveAsPubsubWithAttributes[V: ClassTag](
@@ -79,9 +80,9 @@ trait SCollectionSyntax {
       maxBatchSize: Option[Int] = None,
       maxBatchBytesSize: Option[Int] = None
     )(implicit ev: T <:< (V, Map[String, String])): ClosedTap[Nothing] = {
-      implicit val vCoder = BeamCoders.getTupleCoders(this.covary_[(V, Map[String, String])])._1
+      implicit val vCoder = BeamCoders.getTupleCoders(coll.covary_[(V, Map[String, String])])._1
       val io = PubsubIO.withAttributes[V](topic, idAttribute, timestampAttribute)
-      this
+      coll
         .covary_[(V, Map[String, String])]
         .write(io)(PubsubIO.WriteParam(maxBatchSize, maxBatchBytesSize))
     }

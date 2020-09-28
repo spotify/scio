@@ -34,7 +34,7 @@ trait ScioContextSyntax {
       timestampAttribute: String
     ): SCollection[T] = {
       val io = PubsubIO[T](name, idAttribute, timestampAttribute)
-      this.read(io)(PubsubIO.ReadParam(isSubscription))
+      sc.read(io)(PubsubIO.ReadParam(isSubscription))
     }
 
     /**
@@ -43,18 +43,18 @@ trait ScioContextSyntax {
      */
     @deprecated(
       """
-    |  This method has been deprecated. Use one of the following IOs instead:
-    |    - PubsubIO.string
-    |    - PubsubIO.avro
-    |    - PubsubIO.proto
-    |    - PubsubIO.pubsub
-    |    - PubsubIO.coder
-    |
-    |  For example:
-    |     sc.read(PubsubIO.string(sub, idAttribute, timestampAttribute))(
-    |       PubsubIO.ReadParam(PubsubIO.Subscription)
-    |     )
-    """.stripMargin,
+      |  This method has been deprecated. Use one of the following IOs instead:
+      |    - PubsubIO.string
+      |    - PubsubIO.avro
+      |    - PubsubIO.proto
+      |    - PubsubIO.pubsub
+      |    - PubsubIO.coder
+      |
+      |  For example:
+      |     sc.read(PubsubIO.string(sub, idAttribute, timestampAttribute))(
+      |       PubsubIO.ReadParam(PubsubIO.Subscription)
+      |     )
+      """.stripMargin,
       since = "0.10.0"
     )
     def pubsubSubscription[T: ClassTag: Coder](
@@ -70,18 +70,18 @@ trait ScioContextSyntax {
      */
     @deprecated(
       """
-    |  This method has been deprecated. Use one of the following IOs instead:
-    |    - PubsubIO.string
-    |    - PubsubIO.avro
-    |    - PubsubIO.proto
-    |    - PubsubIO.pubsub
-    |    - PubsubIO.coder
-    |
-    |  For example:
-    |     sc.read(PubsubIO.string(sub, idAttribute, timestampAttribute))(
-    |       PubsubIO.ReadParam(PubsubIO.Topic)
-    |     )
-    """.stripMargin,
+      |  This method has been deprecated. Use one of the following IOs instead:
+      |    - PubsubIO.string
+      |    - PubsubIO.avro
+      |    - PubsubIO.proto
+      |    - PubsubIO.pubsub
+      |    - PubsubIO.coder
+      |
+      |  For example:
+      |     sc.read(PubsubIO.string(sub, idAttribute, timestampAttribute))(
+      |       PubsubIO.ReadParam(PubsubIO.Topic)
+      |     )
+      """.stripMargin,
       since = "0.10.0"
     )
     def pubsubTopic[T: ClassTag: Coder](
@@ -98,7 +98,7 @@ trait ScioContextSyntax {
       timestampAttribute: String
     ): SCollection[(T, Map[String, String])] = {
       val io = PubsubIO.withAttributes[T](name, idAttribute, timestampAttribute)
-      this.read(io)(PubsubIO.ReadParam(isSubscription))
+      sc.read(io)(PubsubIO.ReadParam(isSubscription))
     }
 
     /**
@@ -107,12 +107,12 @@ trait ScioContextSyntax {
      */
     @deprecated(
       """
-    |  This method has been deprecated. Use PubsubIO.withAttributes instead.
-    |  For example:
-    |     sc.read(PubsubIO.withAttributes(sub, idAttribute, timestampAttribute))(
-    |       PubsubIO.ReadParam(PubsubIO.Subscription)
-    |     )
-    """.stripMargin,
+      |  This method has been deprecated. Use PubsubIO.withAttributes instead.
+      |  For example:
+      |     sc.read(PubsubIO.withAttributes(sub, idAttribute, timestampAttribute))(
+      |       PubsubIO.ReadParam(PubsubIO.Subscription)
+      |     )
+      """.stripMargin,
       since = "0.10.0"
     )
     def pubsubSubscriptionWithAttributes[T: ClassTag: Coder](
@@ -128,12 +128,12 @@ trait ScioContextSyntax {
      */
     @deprecated(
       """
-    |  This method has been deprecated. Use PubsubIO.withAttributes instead.
-    |  For example:
-    |     sc.read(PubsubIO.withAttributes(sub, idAttribute, timestampAttribute))(
-    |       PubsubIO.ReadParam(PubsubIO.Topic)
-    |     )
-    """.stripMargin,
+      |  This method has been deprecated. Use PubsubIO.withAttributes instead.
+      |  For example:
+      |     sc.read(PubsubIO.withAttributes(sub, idAttribute, timestampAttribute))(
+      |       PubsubIO.ReadParam(PubsubIO.Topic)
+      |     )
+      """.stripMargin,
       since = "0.10.0"
     )
     def pubsubTopicWithAttributes[T: ClassTag: Coder](
