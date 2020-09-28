@@ -86,7 +86,7 @@ final class SorterOps[K1, K2: SortingKey, V](self: SCollection[(K1, Iterable[(K2
           override def toString: String = "<iterable>"
         }
         (kv.getKey, iter)
-      }
+      }(Coder.beam(c.internal.getCoder))
   }
 }
 

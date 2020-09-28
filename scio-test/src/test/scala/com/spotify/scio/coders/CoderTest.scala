@@ -90,6 +90,8 @@ final case class SecondImplementationWithAnnotation(i: Int) extends TraitWithAnn
 
 final case class AnyValExample(value: String) extends AnyVal
 
+final case class NonDeterministic(a: Double, b: Double)
+
 final class CoderTest extends AnyFlatSpec with Matchers {
   val userId: UserId = UserId(Array[Byte](1, 2, 3, 4))
   val user: User = User(userId, "johndoe", "johndoe@spotify.com")
@@ -381,7 +383,7 @@ final class CoderTest extends AnyFlatSpec with Matchers {
       }
 
     val expectedMsg =
-      "PairCoder(_1 -> DoubleCoder, _2 -> DoubleCoder) is not deterministic"
+      "Tuple2Coder(_1 -> DoubleCoder, _2 -> DoubleCoder) is not deterministic"
 
     caught.getMessage should startWith(expectedMsg)
     caught.getMessage should include("field _1 is using non-deterministic DoubleCoder")
@@ -391,19 +393,18 @@ final class CoderTest extends AnyFlatSpec with Matchers {
   it should "have a nice verifyDeterministic exception for case classes" in {
     val caught =
       intercept[NonDeterministicException] {
-        val coder = Coder[(Double, Double, Double)]
+        val coder = Coder[NonDeterministic]
 
         materialize(coder).verifyDeterministic()
       }
 
     val expectedMsg =
-      "RecordCoder[scala.Tuple3](_1 -> DoubleCoder, _2 -> DoubleCoder, _3 -> DoubleCoder)" +
+      "RecordCoder[com.spotify.scio.coders.NonDeterministic](a -> DoubleCoder, b -> DoubleCoder)" +
         " is not deterministic"
 
     caught.getMessage should startWith(expectedMsg)
-    caught.getMessage should include("field _1 is using non-deterministic DoubleCoder")
-    caught.getMessage should include("field _2 is using non-deterministic DoubleCoder")
-    caught.getMessage should include("field _3 is using non-deterministic DoubleCoder")
+    caught.getMessage should include("field a is using non-deterministic DoubleCoder")
+    caught.getMessage should include("field b is using non-deterministic DoubleCoder")
   }
 
   it should "have a nice verifyDeterministic exception for disjunctions" in {
