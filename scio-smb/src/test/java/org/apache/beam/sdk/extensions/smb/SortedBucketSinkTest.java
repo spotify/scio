@@ -150,10 +150,10 @@ public class SortedBucketSinkTest {
     final MatchResult outputFiles =
         FileSystems.match(
             TestUtils.fromFolder(output)
-                .resolve("*.txt", StandardResolveOptions.RESOLVE_FILE)
+                .resolve("*-of-*.txt", StandardResolveOptions.RESOLVE_FILE)
                 .toString());
 
-    Assert.assertEquals(2, outputFiles.metadata().size());
+    Assert.assertEquals(1, outputFiles.metadata().size());
     Assert.assertEquals(
         "custom-prefix-00000-of-00001.txt",
         outputFiles.metadata().get(0).resourceId().getFilename());

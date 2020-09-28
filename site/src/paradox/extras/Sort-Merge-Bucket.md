@@ -67,6 +67,12 @@ See API bindings in:
 - @javadoc[JsonSortedBucketIO](org.apache.beam.sdk.extensions.smb.JsonSortedBucketIO)
 - @javadoc[TensorFlowBucketIO](org.apache.beam.sdk.extensions.smb.TensorFlowBucketIO)
 
+## Null keys in SMB datasets
+
+If the key field of one or more PCollection elements is null, those elements will be diverted into a special
+bucket file, `bucket-null-keys.avro`. This file will be ignored in SMB reads and transforms and must
+be manually read by a downstream user.
+
 ## Tuning parameters for SMB transforms
 
 SMB reads should be more performant and less resource-intensive than regular joins or groupBys.
