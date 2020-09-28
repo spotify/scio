@@ -100,35 +100,70 @@ object PubsubIO {
       FallbackPubsubIOWithoutAttributes[T](name, idAttribute, timestampAttribute)
   }
 
+  @deprecated("Use PubsubIO.string", since = "0.10.0")
   def readString(
+    name: String,
+    idAttribute: String = null,
+    timestampAttribute: String = null
+  ): PubsubIO[String] = string(name, idAttribute, timestampAttribute)
+
+  def string(
     name: String,
     idAttribute: String = null,
     timestampAttribute: String = null
   ): PubsubIO[String] =
     StringPubsubIOWithoutAttributes(name, idAttribute, timestampAttribute)
 
+  @deprecated("Use PubsubIO.avro", since = "0.10.0")
   def readAvro[T <: SpecificRecordBase: ClassTag](
+    name: String,
+    idAttribute: String = null,
+    timestampAttribute: String = null
+  ): PubsubIO[T] = readAvro(name, idAttribute, timestampAttribute)
+
+  def avro[T <: SpecificRecordBase: ClassTag](
     name: String,
     idAttribute: String = null,
     timestampAttribute: String = null
   ): PubsubIO[T] =
     AvroPubsubIOWithoutAttributes[T](name, idAttribute, timestampAttribute)
 
+  @deprecated("Use PubsubIO.proto", since = "0.10.0")
   def readProto[T <: Message: ClassTag](
+    name: String,
+    idAttribute: String = null,
+    timestampAttribute: String = null
+  ): PubsubIO[T] = proto(name, idAttribute, timestampAttribute)
+
+  def proto[T <: Message: ClassTag](
     name: String,
     idAttribute: String = null,
     timestampAttribute: String = null
   ): PubsubIO[T] =
     MessagePubsubIOWithoutAttributes[T](name, idAttribute, timestampAttribute)
 
+  @deprecated("Use PubsubIO.pubsub", since = "0.10.0")
   def readPubsub[T <: beam.PubsubMessage: ClassTag](
+    name: String,
+    idAttribute: String = null,
+    timestampAttribute: String = null
+  ): PubsubIO[T] = pubsub(name, idAttribute, timestampAttribute)
+
+  def pubsub[T <: beam.PubsubMessage: ClassTag](
     name: String,
     idAttribute: String = null,
     timestampAttribute: String = null
   ): PubsubIO[T] =
     PubSubMessagePubsubIOWithoutAttributes[T](name, idAttribute, timestampAttribute)
 
+  @deprecated("Use PubsubIO.coder", since = "0.10.0")
   def readCoder[T: Coder: ClassTag](
+    name: String,
+    idAttribute: String = null,
+    timestampAttribute: String = null
+  ): PubsubIO[T] = coder(name, idAttribute, timestampAttribute)
+
+  def coder[T: Coder: ClassTag](
     name: String,
     idAttribute: String = null,
     timestampAttribute: String = null
