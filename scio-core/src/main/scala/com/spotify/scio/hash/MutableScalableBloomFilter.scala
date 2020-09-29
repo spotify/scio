@@ -208,7 +208,7 @@ case class MutableScalableBloomFilter[T](
     this
   }
 
-  def ++=(items: Iterable[T]): MutableScalableBloomFilter[T] = {
+  def ++=(items: TraversableOnce[T]): MutableScalableBloomFilter[T] = {
     items.foreach(i => this += i) // no bulk insert for guava BFs
     this
   }
