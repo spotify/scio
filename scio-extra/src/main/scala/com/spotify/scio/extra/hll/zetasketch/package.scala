@@ -27,7 +27,7 @@ package object zetasketch {
       extends ApproxDistinctCounter[Int] {
 
     override def estimateDistinctCount(in: SCollection[Int]): SCollection[Long] = {
-      in.map(int2Integer)
+      in.asInstanceOf[SCollection[Integer]]
         .applyTransform(HllCount.Init.forIntegers().withPrecision(p).globally())
         .applyTransform(HllCount.Extract.globally())
         .map(Long2long)
@@ -62,10 +62,10 @@ package object zetasketch {
       extends ApproxDistinctCounter[Long] {
 
     override def estimateDistinctCount(in: SCollection[Long]): SCollection[Long] =
-      in.map(long2Long)
+      in.asInstanceOf[SCollection[java.lang.Long]]
         .applyTransform(HllCount.Init.forLongs().withPrecision(p).globally())
         .applyTransform(HllCount.Extract.globally())
-        .map(Long2long)
+        .asInstanceOf[SCollection[Long]]
 
     override def estimateDistinctCountPerKey[K](
       in: SCollection[(K, Long)]
@@ -98,7 +98,7 @@ package object zetasketch {
     override def estimateDistinctCount(in: SCollection[String]): SCollection[Long] =
       in.applyTransform(HllCount.Init.forStrings().withPrecision(p).globally())
         .applyTransform(HllCount.Extract.globally())
-        .map(Long2long)
+        .asInstanceOf[SCollection[Long]]
 
     override def estimateDistinctCountPerKey[K](
       in: SCollection[(K, String)]
@@ -130,7 +130,7 @@ package object zetasketch {
     override def estimateDistinctCount(in: SCollection[Array[Byte]]): SCollection[Long] =
       in.applyTransform(HllCount.Init.forBytes().withPrecision(p).globally())
         .applyTransform(HllCount.Extract.globally())
-        .map(Long2long)
+        .asInstanceOf[SCollection[Long]]
 
     override def estimateDistinctCountPerKey[K](
       in: SCollection[(K, Array[Byte])]
