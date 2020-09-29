@@ -23,7 +23,11 @@ import java.util.concurrent.ThreadLocalRandom
 
 import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.{AvroBytesUtil, BeamCoders, Coder, CoderMaterializer, WrappedBCoder}
-import com.spotify.scio.estimators.ApproxDistinctCounter
+import com.spotify.scio.estimators.{
+  ApproxDistinctCounter,
+  ApproximateUniqueCounter,
+  ApproximateUniqueCounterByError
+}
 import com.spotify.scio.io._
 import com.spotify.scio.schemas.{Schema, SchemaMaterializer, To}
 import com.spotify.scio.testing.TestDataManager
@@ -501,10 +505,12 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * more accurate the estimate will be; should be `>= 16`
    * @group transform
    */
+  @deprecated(
+    "use SCollection[T]#approximateDistinctCount(ApproximateUniqueCounter(sampleSize)) instead",
+    "0.9.5"
+  )
   def countApproxDistinct(sampleSize: Int): SCollection[Long] =
-    this
-      .pApply(ApproximateUnique.globally[T](sampleSize))
-      .asInstanceOf[SCollection[Long]]
+    ApproximateUniqueCounter(sampleSize).estimateDistinctCount(this)
 
   /**
    * Count approximate number of distinct elements in the SCollection.
@@ -512,10 +518,32 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * `[0.01, 0.5]`
    * @group transform
    */
+  @deprecated(
+    "use SCollection[T]#approximateDistinctCount(ApproximateUniqueCounterByError(maximumEstimationError)) instead",
+    "0.9.5"
+  )
   def countApproxDistinct(maximumEstimationError: Double = 0.02): SCollection[Long] =
-    this
-      .pApply(ApproximateUnique.globally[T](maximumEstimationError))
-      .asInstanceOf[SCollection[Long]]
+    ApproximateUniqueCounterByError(maximumEstimationError)
+      .estimateDistinctCount(this)
+
+  /**
+   * Returns a single valued SCollection with estimated distinct count. Correctness is depends on the
+   * [[ApproxDistinctCounter]] estimator.
+   *
+   * @Example
+   * {{{
+   *   val input: SCollection[T] = ...
+   *   val distinctCount: SCollection[Long] = input.approximateDistinctCount(ApproximateUniqueCounter(sampleSize))
+   * }}}
+   *
+   * There are two different HLL++ implementations available in the `scio-extra` module.
+   *  - [[com.spotify.scio.extra.hll.sketching.SketchingHyperLogLogPlusPlus]]
+   *  - [[com.spotify.scio.extra.hll.zetasketch.ZetasketchHllCount*]]
+   * @param estimator
+   * @return
+   */
+  def approximateDistinctCount(estimator: ApproxDistinctCounter[T]): SCollection[Long] =
+    estimator.estimateDistinctCount(this)
 
   /**
    * Count of each unique value in this SCollection as an SCollection of (value, count) pairs.
@@ -904,13 +932,6 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   def tap[U](f: T => U): SCollection[T] =
     map { elem => f(elem); elem }(Coder.beam(internal.getCoder))
 
-  /**
-   * Returns a single valued SCollection with estimated distinct count.
-   * @param estimator
-   * @return
-   */
-  def approximateDistinctCount(estimator: ApproxDistinctCounter[T]): SCollection[Long] =
-    estimator.estimateDistinctCount(this)
   // =======================================================================
   // Side input operations
   // =======================================================================
