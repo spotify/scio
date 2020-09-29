@@ -145,7 +145,7 @@ public final class SMBFilenamePolicy implements Serializable {
       return directory.resolve(timestamp + METADATA_FILENAME, StandardResolveOptions.RESOLVE_FILE);
     }
 
-    /** Returns a ResourceId matching the */
+    /** Returns a ResourceId matching the null keys. */
     public ResourceId forNullKeys() {
       return directory.resolve(
           NULL_KEYS_BUCKET_TEMPLATE + "*" + filenameSuffix, StandardResolveOptions.RESOLVE_FILE);
