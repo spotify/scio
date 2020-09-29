@@ -475,6 +475,7 @@ object Coder
     with AvroCoders
     with ProtobufCoders
     with AlgebirdCoders
+    with GuavaCoders
     with JodaCoders
     with BeamTypeCoders
     with LowPriorityCoders {
