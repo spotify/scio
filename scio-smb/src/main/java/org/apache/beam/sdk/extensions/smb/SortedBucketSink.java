@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.channels.Channels;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -790,13 +791,14 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
                 ParDo.of(
                     new DoFn<KV<K, V>, Void>() {
                       @ProcessElement
-                      public void processElement(ProcessContext c) {
+                      public void processElement(ProcessContext c) throws Exception {
                         final K key = bucketMetadata.extractKey(c.element().getValue());
-                        final boolean keysMatch =
-                            key == null
-                                ? c.element().getKey() == null
-                                : key.equals(c.element().getKey());
-                        if (!keysMatch) {
+                        final Coder<K> kCoder = bucketMetadata.getKeyCoder();
+                        if (key == null
+                            ? c.element().getKey() != null
+                            : !Arrays.equals(
+                                CoderUtils.encodeToByteArray(kCoder, key),
+                                CoderUtils.encodeToByteArray(kCoder, c.element().getKey()))) {
                           throw new RuntimeException(
                               "BucketMetadata's extractKey fn did not match pre-keyed PCollection");
                         }
