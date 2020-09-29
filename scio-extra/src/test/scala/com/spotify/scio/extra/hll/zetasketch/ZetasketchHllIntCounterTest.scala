@@ -4,12 +4,42 @@ import com.spotify.scio.extra.hll.HLLSpec
 
 class ZetasketchHllIntCounterTest extends HLLSpec {
 
-  "ZeetasketchHLL++" should "estimate distinct count" in {
+  "ZetasketchHLL++" should "estimate int distinct count" in {
     val estimator = ZetasketchHllIntCounter()
     val input = for (i <- 0 to 1000000) yield (i % 20)
     val output = runWithData(input) { scl =>
       scl
-        .approximateDistinctCount(estimator)
+        .countApproxDistinct(estimator)
+    }
+    checkWithErrorRate(output, Seq(20L), 0.6d)
+  }
+
+  it should "estimate strings distinct count" in {
+    val estimator = ZetasketchHllStringCounter()
+    val input = for (i <- 0 to 1000000) yield s"${i % 20}_"
+    val output = runWithData(input) { scl =>
+      scl
+        .countApproxDistinct(estimator)
+    }
+    checkWithErrorRate(output, Seq(20L), 0.6d)
+  }
+
+  it should "estimate longs distinct count" in {
+    val estimator = ZetasketchHllLongCounter()
+    val input = for (i <- 0 to 1000000) yield ((i % 20).toLong)
+    val output = runWithData(input) { scl =>
+      scl
+        .countApproxDistinct(estimator)
+    }
+    checkWithErrorRate(output, Seq(20L), 0.6d)
+  }
+
+  it should "estimate byte array distinct count" in {
+    val estimator = ZetasketchHllByteArrayCounter()
+    val input = for (i <- 0 to 1000000) yield (s"${i % 20}_".getBytes)
+    val output = runWithData(input) { scl =>
+      scl
+        .countApproxDistinct(estimator)
     }
     checkWithErrorRate(output, Seq(20L), 0.6d)
   }
@@ -22,9 +52,8 @@ class ZetasketchHllIntCounterTest extends HLLSpec {
     val output = runWithData(in) { scl =>
       scl
         .keyBy(_ % 5)
-        .approximateDistinctCountPerKey(estimator)
+        .countApproxDistinctByKey(estimator)
     }
-
     checkWithErrorRatePerKey(output, expt, 0.5d)
   }
 }

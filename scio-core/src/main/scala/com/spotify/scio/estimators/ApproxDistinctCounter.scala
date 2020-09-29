@@ -28,6 +28,8 @@ trait ApproxDistinctCounter[T] {
 }
 
 /**
+ * ApproxDistinctCounter impl for [[org.apache.beam.sdk.transforms.ApproximateUnique]] with sample size.
+ *
  * Count approximate number of distinct values for each key in the SCollection.
  * @param sampleSize the number of entries in the statistical sample; the higher this number, the
  * more accurate the estimate will be; should be `>= 16`.
@@ -47,6 +49,8 @@ case class ApproximateUniqueCounter[T](sampleSize: Int) extends ApproxDistinctCo
 }
 
 /**
+ * ApproxDistinctCounter impl for [[org.apache.beam.sdk.transforms.ApproximateUnique]] with maximum estimation error.
+ *
  * Count approximate number of distinct elements in the SCollection.
  * @param maximumEstimationError the maximum estimation error, which should be in the range
  * `[0.01, 0.5]`

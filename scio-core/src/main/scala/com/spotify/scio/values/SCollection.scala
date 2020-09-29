@@ -506,7 +506,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @group transform
    */
   @deprecated(
-    "use SCollection[T]#approximateDistinctCount(ApproximateUniqueCounter(sampleSize)) instead",
+    "use SCollection[T]#countApproxDistinct(ApproximateUniqueCounter(sampleSize)) instead",
     "0.9.5"
   )
   def countApproxDistinct(sampleSize: Int): SCollection[Long] =
@@ -519,7 +519,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @group transform
    */
   @deprecated(
-    "use SCollection[T]#approximateDistinctCount(ApproximateUniqueCounterByError(maximumEstimationError)) instead",
+    "use SCollection[T]#countApproxDistinct(ApproximateUniqueCounterByError(maximumEstimationError)) instead",
     "0.9.5"
   )
   def countApproxDistinct(maximumEstimationError: Double = 0.02): SCollection[Long] =
@@ -533,7 +533,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @Example
    * {{{
    *   val input: SCollection[T] = ...
-   *   val distinctCount: SCollection[Long] = input.approximateDistinctCount(ApproximateUniqueCounter(sampleSize))
+   *   val distinctCount: SCollection[Long] = input.countApproxDistinct(ApproximateUniqueCounter(sampleSize))
    * }}}
    *
    * There are two different HLL++ implementations available in the `scio-extra` module.
@@ -542,7 +542,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @param estimator
    * @return
    */
-  def approximateDistinctCount(estimator: ApproxDistinctCounter[T]): SCollection[Long] =
+  def countApproxDistinct(estimator: ApproxDistinctCounter[T]): SCollection[Long] =
     estimator.estimateDistinctCount(this)
 
   /**

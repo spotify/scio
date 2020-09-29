@@ -8,6 +8,21 @@ import org.apache.beam.sdk.extensions.zetasketch.HllCount
 
 package object zetasketch {
 
+  /**
+   * [[com.spotify.scio.estimators.ApproxDistinctCounter]] implementation for
+   * [[org.apache.beam.sdk.extensions.zetasketch.HllCount]],
+   * specifically [[org.apache.beam.sdk.extensions.zetasketch.HllCount.Init#forIntegers]].
+   * HllCount estimate the distinct count using HyperLogLogPlusPlus (HLL++) sketches on data streams based on
+   * the ZetaSketch implementation.
+   *
+   * The HyperLogLog++ (HLL++) algorithm estimates the number of distinct values in a data stream.
+   * HLL++ is based on HyperLogLog; HLL++ more accurately estimates the number of distinct values in very large and
+   * small data streams.
+   *
+   * @param p Precision, controls the accuracy of the estimation. The precision value will have an impact on the number of buckets
+   *          used to store information about the distinct elements.
+   *          should be in the range `[10, 24]`, default precision value is `15`.
+   */
   case class ZetasketchHllIntCounter(p: Int = HllCount.DEFAULT_PRECISION)
       extends ApproxDistinctCounter[Int] {
 
@@ -28,6 +43,21 @@ package object zetasketch {
         .map(klToTuple)
   }
 
+  /**
+   * [[com.spotify.scio.estimators.ApproxDistinctCounter]] implementation for
+   * [[org.apache.beam.sdk.extensions.zetasketch.HllCount]],
+   * specifically [[org.apache.beam.sdk.extensions.zetasketch.HllCount.Init#forLongs]].
+   * HllCount estimate the distinct count using HyperLogLogPlusPlus (HLL++) sketches on data streams based on
+   * the ZetaSketch implementation.
+   *
+   * The HyperLogLog++ (HLL++) algorithm estimates the number of distinct values in a data stream.
+   * HLL++ is based on HyperLogLog; HLL++ more accurately estimates the number of distinct values in very large and
+   * small data streams.
+   *
+   * @param p Precision, controls the accuracy of the estimation. The precision value will have an impact on the number of buckets
+   *          used to store information about the distinct elements.
+   *          should be in the range `[10, 24]`, default precision value is `15`.
+   */
   case class ZetasketchHllLongCounter(p: Int = HllCount.DEFAULT_PRECISION)
       extends ApproxDistinctCounter[Long] {
 
@@ -47,6 +77,21 @@ package object zetasketch {
         .map(klToTuple)
   }
 
+  /**
+   * [[com.spotify.scio.estimators.ApproxDistinctCounter]] implementation for
+   * [[org.apache.beam.sdk.extensions.zetasketch.HllCount]],
+   * specifically [[org.apache.beam.sdk.extensions.zetasketch.HllCount.Init#forStrings]].
+   * HllCount estimate the distinct count using HyperLogLogPlusPlus (HLL++) sketches on data streams based on
+   * the ZetaSketch implementation.
+   *
+   * The HyperLogLog++ (HLL++) algorithm estimates the number of distinct values in a data stream.
+   * HLL++ is based on HyperLogLog; HLL++ more accurately estimates the number of distinct values in very large and
+   * small data streams.
+   *
+   * @param p Precision, controls the accuracy of the estimation. The precision value will have an impact on the number of buckets
+   *          used to store information about the distinct elements.
+   *          should be in the range `[10, 24]`, default precision value is `15`.
+   */
   case class ZetasketchHllStringCounter(p: Int = HllCount.DEFAULT_PRECISION)
       extends ApproxDistinctCounter[String] {
 
@@ -64,6 +109,21 @@ package object zetasketch {
         .map(klToTuple)
   }
 
+  /**
+   * [[com.spotify.scio.estimators.ApproxDistinctCounter]] implementation for
+   * [[org.apache.beam.sdk.extensions.zetasketch.HllCount]],
+   * specifically [[org.apache.beam.sdk.extensions.zetasketch.HllCount.Init#forBytes]].
+   * HllCount estimate the distinct count using HyperLogLogPlusPlus (HLL++) sketches on data streams based on
+   * the ZetaSketch implementation.
+   *
+   * The HyperLogLog++ (HLL++) algorithm estimates the number of distinct values in a data stream.
+   * HLL++ is based on HyperLogLog; HLL++ more accurately estimates the number of distinct values in very large and
+   * small data streams.
+   *
+   * @param p Precision, controls the accuracy of the estimation. The precision value will have an impact on the number of buckets
+   *          used to store information about the distinct elements.
+   *          should be in the range `[10, 24]`, default precision value is `15`.
+   */
   case class ZetasketchHllByteArrayCounter(p: Int = HllCount.DEFAULT_PRECISION)
       extends ApproxDistinctCounter[Array[Byte]] {
 

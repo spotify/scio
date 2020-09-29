@@ -616,7 +616,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * @group per_key
    */
   @deprecated(
-    "use SCollection[(K, V)]#approximateDistinctCountPerKey(ApproximateUniqueCounter(sampleSize) instead",
+    "use SCollection[(K, V)]#countApproxDistinctByKey(ApproximateUniqueCounter(sampleSize) instead",
     "0.9.5"
   )
   def countApproxDistinctByKey(
@@ -632,7 +632,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * @group per_key
    */
   @deprecated(
-    "use SCollection[(K, V)]#approximateDistinctCountPerKey(ApproximateUniqueCounterByError(maximumEstimationError)) instead",
+    "use SCollection[(K, V)]#countApproxDistinctByKey(ApproximateUniqueCounterByError(maximumEstimationError)) instead",
     "0.9.5"
   )
   def countApproxDistinctByKey(
@@ -645,19 +645,24 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * Return a new SCollection of (key, value) pairs where value is estimated distinct count(as Long) per each unique key.
    * Correctness of the estimation is depends on the given [[ApproxDistinctCounter]] estimator.
    *
-   * @Example
+   * @example
    * {{{
    *   val input: SCollection[(K, V)] = ...
    *   val distinctCount: SCollection[(K, Long)] =
    *       input.approximateDistinctCountPerKey(ApproximateUniqueCounter(sampleSize))
    * }}}
    *
-   * There are two different HLL++ implementations available in the `scio-extra` module.
+   * There are two known subclass of [[ApproxDistinctCounter]] available for HLL++ implementations in
+   * the `scio-extra` module.
+   *
    *  - [[com.spotify.scio.extra.hll.sketching.SketchingHyperLogLogPlusPlus]]
-   *  - [[com.spotify.scio.extra.hll.zetasketch.ZetasketchHllCount*]]
-   * @return a key valued SCollection where value type is Long.
+   *  - [[com.spotify.scio.extra.hll.zetasketch.ZetasketchHll_Counter]]
+   *
+   * HyperLogLog++: [[https://research.google/pubs/pub40671/ Google HLL++ paper]]
+   *
+   * @return a key valued SCollection where value type is Long and hold the approximate distinct count.
    */
-  def approximateDistinctCountPerKey(estimator: ApproxDistinctCounter[V])(implicit
+  def countApproxDistinctByKey(estimator: ApproxDistinctCounter[V])(implicit
     koder: Coder[K],
     voder: Coder[V]
   ): SCollection[(K, Long)] =
