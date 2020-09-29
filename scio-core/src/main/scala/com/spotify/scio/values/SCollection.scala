@@ -23,6 +23,7 @@ import java.util.concurrent.ThreadLocalRandom
 
 import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.{AvroBytesUtil, BeamCoders, Coder, CoderMaterializer, WrappedBCoder}
+import com.spotify.scio.estimators.ApproxDistinctCounter
 import com.spotify.scio.io._
 import com.spotify.scio.schemas.{Schema, SchemaMaterializer, To}
 import com.spotify.scio.testing.TestDataManager
@@ -903,6 +904,13 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   def tap[U](f: T => U): SCollection[T] =
     map { elem => f(elem); elem }(Coder.beam(internal.getCoder))
 
+  /**
+   * Returns a single valued SCollection with estimated distinct count.
+   * @param estimator
+   * @return
+   */
+  def approximateDistinctCount(estimator: ApproxDistinctCounter[T]): SCollection[Long] =
+    estimator.estimateDistinctCount(this)
   // =======================================================================
   // Side input operations
   // =======================================================================

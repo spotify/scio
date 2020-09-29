@@ -20,6 +20,7 @@ package com.spotify.scio.values
 import com.google.common.hash.Funnel
 import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.{BeamCoders, Coder, CoderMaterializer}
+import com.spotify.scio.estimators.ApproxDistinctCounter
 import com.spotify.scio.hash._
 import com.spotify.scio.util._
 import com.spotify.scio.util.random.{BernoulliValueSampler, PoissonValueSampler}
@@ -639,6 +640,17 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    */
   def distinctByKey: SCollection[(K, V)] =
     self.distinctBy(_._1)
+
+  /**
+   * Return a new SCollection of (key, value) pairs where value is estimated distinct count(as Long) per each unique key.
+   * Correctness of the estimation is depends on the given estimator.
+   * @return a key valued SCollection where value type is Long.
+   */
+  def approximateDistinctCountPerKey(estimator: ApproxDistinctCounter[V])(implicit
+    koder: Coder[K],
+    voder: Coder[V]
+  ): SCollection[(K, Long)] =
+    estimator.estimateDistinctCountPerKey(this.self)
 
   /**
    * Return a new SCollection of (key, value) pairs whose values satisfy the predicate.

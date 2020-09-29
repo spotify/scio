@@ -1,7 +1,10 @@
 package com.spotify.scio.extra.hll
 
+import com.spotify.scio.coders.Coder
 import com.spotify.scio.estimators.ApproxDistinctCounter
-import org.apache.beam.sdk.values.{KV, PCollection}
+import com.spotify.scio.util.TupleFunctions._
+import com.spotify.scio.values.SCollection
+import org.apache.beam.sdk.extensions.sketching.ApproximateDistinct
 
 package object sketching {
 
@@ -19,21 +22,28 @@ package object sketching {
    * The value of sp should be greater than p(precision), but lower than 32.
    */
   case class SketchingHyperLogLogPlusPlus[T](p: Int, sp: Int) extends ApproxDistinctCounter[T] {
-    import org.apache.beam.sdk.extensions.sketching.ApproximateDistinct
-    override def estimateDistinctCount(in: PCollection[T]): PCollection[java.lang.Long] =
-      ApproximateDistinct
-        .globally[T]()
-        .withPrecision(p)
-        .withSparsePrecision(sp)
-        .expand(in)
+    override def estimateDistinctCount(in: SCollection[T]): SCollection[Long] =
+      in.applyTransform(
+        "Approximate distinct count",
+        ApproximateDistinct
+          .globally[T]()
+          .withPrecision(p)
+          .withSparsePrecision(sp)
+      ).map(Long2long)
 
-    override def estimateDistinctPerKey[K](
-      in: PCollection[KV[K, T]]
-    ): PCollection[KV[K, java.lang.Long]] =
-      ApproximateDistinct
-        .perKey[K, T]()
-        .withPrecision(p)
-        .withSparsePrecision(sp)
-        .expand(in)
+    override def estimateDistinctCountPerKey[K](
+      in: SCollection[(K, T)]
+    )(implicit koder: Coder[K], voder: Coder[T]): SCollection[(K, Long)] = {
+      val inKv = in.toKV
+      inKv
+        .applyTransform(
+          "Approximate distinct count per key",
+          ApproximateDistinct
+            .perKey[K, T]()
+            .withPrecision(p)
+            .withSparsePrecision(sp)
+        )
+        .map(klToTuple)
+    }
   }
 }
