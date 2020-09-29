@@ -794,11 +794,9 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
                       public void processElement(ProcessContext c) throws Exception {
                         final K key = bucketMetadata.extractKey(c.element().getValue());
                         final Coder<K> kCoder = bucketMetadata.getKeyCoder();
-                        if (key == null
-                            ? c.element().getKey() != null
-                            : !Arrays.equals(
-                                CoderUtils.encodeToByteArray(kCoder, key),
-                                CoderUtils.encodeToByteArray(kCoder, c.element().getKey()))) {
+                        if (!Arrays.equals(
+                            CoderUtils.encodeToByteArray(kCoder, key),
+                            CoderUtils.encodeToByteArray(kCoder, c.element().getKey()))) {
                           throw new RuntimeException(
                               "BucketMetadata's extractKey fn did not match pre-keyed PCollection");
                         }
