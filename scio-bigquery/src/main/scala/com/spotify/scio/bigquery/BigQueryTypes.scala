@@ -60,6 +60,8 @@ final case class Query(underlying: String) extends Source {
    */
   def latest(bq: BigQuery): Query =
     Query(BigQueryPartitionUtil.latestQuery(bq, underlying))
+
+  def latest(): Query = latest(BigQuery.defaultInstance())
 }
 
 sealed trait Table extends Source {
