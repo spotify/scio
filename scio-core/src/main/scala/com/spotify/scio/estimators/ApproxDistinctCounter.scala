@@ -24,8 +24,8 @@ import org.apache.beam.sdk.{transforms => beam}
 
 /**
  * Approximate distinct element counter for type `T`, e.g. HyperLogLog or HyperLogLog++. This has two APIs one
- * estimate total distinct count for a given PCollection and second one estimate distinct count per each key in a
- * key value SCollection.
+ * estimate total distinct count for a given SCollection and second one estimate distinct count per each key in a
+ * key-value SCollection.
  *
  * @tparam T
  */

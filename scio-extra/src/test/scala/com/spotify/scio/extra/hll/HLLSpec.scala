@@ -23,7 +23,7 @@ trait HLLSpec extends PipelineSpec {
 
   def checkWithErrorRate(actual: Seq[Long], expected: Seq[Long], errorRate: Double): Unit = {
     (actual zip expected)
-      .map { case (act, expt) =>
+      .foreach { case (act, expt) =>
         val error = ((expt / 100) * errorRate).toLong
         act should be <= (expt + error)
         act should be >= (expt - error)
@@ -37,7 +37,7 @@ trait HLLSpec extends PipelineSpec {
   ): Unit = {
     val ex = expected.toMap
     actual.toMap
-      .map { case (k, act) =>
+      .foreach { case (k, act) =>
         val expt = ex(k)
         val error = ((expt / 100) * errorRate).toLong
         act should be <= (expt + error)
