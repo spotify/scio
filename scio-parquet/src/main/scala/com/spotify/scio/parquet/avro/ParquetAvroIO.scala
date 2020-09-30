@@ -43,11 +43,12 @@ import org.apache.parquet.hadoop.metadata.CompressionCodecName
 import scala.jdk.CollectionConverters._
 import scala.reflect.ClassTag
 import com.spotify.scio.io.TapT
-import com.spotify.scio.parquet.avro.ParquetAvroIO.WriteParam
 import org.apache.beam.sdk.io.FileBasedSink.FilenamePolicy
 import org.apache.beam.sdk.io.fs.ResolveOptions.StandardResolveOptions
 import org.apache.beam.sdk.io.fs.ResourceId
 import org.apache.beam.sdk.transforms.windowing.{BoundedWindow, PaneInfo}
+
+import scala.util.Either
 
 final case class ParquetAvroIO[T: ClassTag: Coder](path: String) extends ScioIO[T] {
   override type ReadP = ParquetAvroIO.ReadParam[_, T]
@@ -93,19 +94,15 @@ final case class ParquetAvroIO[T: ClassTag: Coder](path: String) extends ScioIO[
       FileBasedSink.convertToFileResourceIfPossible(ScioUtil.pathWithShards(path))
     val prefix = StaticValueProvider.of(resource)
     val fileNamePolicy =
-      if (
-        params.windowedFilenameFunction != WriteParam.DefaultWindowedFilenameFunction ||
-        params.filenameFunction != WriteParam.DefaultFilenameFunction
-      ) {
-        createFilenamePolicy(
-          resource,
-          params.windowedFilenameFunction,
-          params.filenameFunction,
-          params.suffix
+      params.filenameFunction
+        .map({
+          case Left(f) =>
+            createFilenamePolicy(resource, params.suffix, windowedFilenameFunction = f)
+          case Right(f) => createFilenamePolicy(resource, params.suffix, filenameFunction = f)
+        })
+        .getOrElse(
+          DefaultFilenamePolicy.fromStandardParameters(prefix, null, params.suffix, false)
         )
-      } else {
-        DefaultFilenamePolicy.fromStandardParameters(prefix, null, params.suffix, false)
-      }
     val destinations = DynamicFileDestinations.constant[T](fileNamePolicy)
     val sink = new ParquetAvroSink[T](
       prefix,
@@ -129,9 +126,13 @@ final case class ParquetAvroIO[T: ClassTag: Coder](path: String) extends ScioIO[
 
   def createFilenamePolicy(
     baseFileName: ResourceId,
-    windowedFilenameFunction: (Int, Int, BoundedWindow, PaneInfo) => String,
-    filenameFunction: (Int, Int) => String,
-    filenameSuffix: String
+    filenameSuffix: String,
+    windowedFilenameFunction: (Int, Int, BoundedWindow, PaneInfo) => String = (_, _, _, _) =>
+      throw new NotImplementedError(
+        "saveAsDynamicParquetAvroFile for windowed SCollections requires a windowed filename function"
+      ),
+    filenameFunction: (Int, Int) => String = (_, _) =>
+      throw new NotImplementedError("saveAsDynamicParquetAvroFile requires a filename function")
   ): FilenamePolicy = {
 
     new FileBasedSink.FilenamePolicy {
@@ -208,13 +209,7 @@ object ParquetAvroIO {
     private[avro] val DefaultNumShards = 0
     private[avro] val DefaultSuffix = ".parquet"
     private[avro] val DefaultCompression = CompressionCodecName.SNAPPY
-    private[avro] val DefaultWindowedFilenameFunction
-      : (Int, Int, BoundedWindow, PaneInfo) => String = (_, _, _, _) =>
-      throw new NotImplementedError(
-        "saveAsDynamicParquetAvroFile for windowed SCollections requires a windowed filename function"
-      )
-    private[avro] val DefaultFilenameFunction: (Int, Int) => String = (_, _) =>
-      throw new NotImplementedError("saveAsDynamicParquetAvroFile requires a filename function")
+    private[avro] val DefaultFilenameFunction = None
   }
 
   final case class WriteParam private (
@@ -222,9 +217,9 @@ object ParquetAvroIO {
     numShards: Int = WriteParam.DefaultNumShards,
     suffix: String = WriteParam.DefaultSuffix,
     compression: CompressionCodecName = WriteParam.DefaultCompression,
-    windowedFilenameFunction: (Int, Int, BoundedWindow, PaneInfo) => String =
-      WriteParam.DefaultWindowedFilenameFunction,
-    filenameFunction: (Int, Int) => String = WriteParam.DefaultFilenameFunction
+    filenameFunction: Option[
+      Either[(Int, Int, BoundedWindow, PaneInfo) => String, (Int, Int) => String]
+    ] = WriteParam.DefaultFilenameFunction
   )
 }
 

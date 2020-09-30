@@ -26,7 +26,6 @@ import com.spotify.scio.io.TapSpec
 import com.spotify.scio.testing._
 import com.spotify.scio.values.WindowOptions
 import org.apache.avro.generic.GenericRecord
-import org.apache.beam.sdk.Pipeline.PipelineExecutionException
 import org.apache.beam.sdk.options.PipelineOptionsFactory
 import org.apache.beam.sdk.transforms.windowing.{BoundedWindow, IntervalWindow, PaneInfo}
 import org.apache.commons.io.FileUtils
@@ -158,18 +157,17 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
       .withFixedWindows(Duration.standardHours(1), Duration.ZERO, WindowOptions())
       .saveAsDynamicParquetAvroFile(
         dir.toString,
+        Left { (shardNumber: Int, numShards: Int, window: BoundedWindow, paneInfo: PaneInfo) =>
+          val intervalWindow = window.asInstanceOf[IntervalWindow]
+          val year = intervalWindow.start().get(DateTimeFieldType.year())
+          val month = intervalWindow.start().get(DateTimeFieldType.monthOfYear())
+          val day = intervalWindow.start().get(DateTimeFieldType.dayOfMonth())
+          val hour = intervalWindow.start().get(DateTimeFieldType.hourOfDay())
+          "y=%02d/m=%02d/d=%02d/h=%02d/part-%s-of-%s"
+            .format(year, month, day, hour, shardNumber, numShards)
+        },
         numShards = 1,
-        schema = AvroUtils.schema,
-        windowFilenameFunction =
-          (shardNumber: Int, numShards: Int, window: BoundedWindow, paneInfo: PaneInfo) => {
-            val intervalWindow = window.asInstanceOf[IntervalWindow]
-            val year = intervalWindow.start().get(DateTimeFieldType.year())
-            val month = intervalWindow.start().get(DateTimeFieldType.monthOfYear())
-            val day = intervalWindow.start().get(DateTimeFieldType.dayOfMonth())
-            val hour = intervalWindow.start().get(DateTimeFieldType.hourOfDay())
-            "y=%02d/m=%02d/d=%02d/h=%02d/part-%s-of-%s"
-              .format(year, month, day, hour, shardNumber, numShards)
-          }
+        schema = AvroUtils.schema
       )
     sc1.run()
 
@@ -212,10 +210,11 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
     sc.parallelize(genericRecords)
       .saveAsDynamicParquetAvroFile(
         dir.toString,
-        numShards = 1,
-        schema = AvroUtils.schema,
-        filenameFunction = (shardNumber: Int, numShards: Int) =>
+        Right((shardNumber: Int, numShards: Int) =>
           "part-%s-of-%s-with-custom-naming".format(shardNumber, numShards)
+        ),
+        numShards = 1,
+        schema = AvroUtils.schema
       )
     sc.run()
 
@@ -242,26 +241,14 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
       sc.parallelize(genericRecords)
         .saveAsDynamicParquetAvroFile(
           dir.toString,
+          Left((_, _, _, _) => "test for exception handling"),
           numShards = 1,
           schema = AvroUtils.schema
-        )
-    }
-
-    val pipelineException1 = the[PipelineExecutionException] thrownBy {
-      val sc = ScioContext()
-      sc.parallelize(genericRecords)
-        .saveAsDynamicParquetAvroFile(
-          dir.toString,
-          numShards = 1,
-          schema = AvroUtils.schema,
-          windowFilenameFunction = (_, _, _, _) => "test for exception handling"
         )
       sc.run()
     }
 
-    pipelineException1.getCause shouldBe a[NotImplementedError]
-
-    val pipelineException2 = the[PipelineExecutionException] thrownBy {
+    an[NotImplementedError] should be thrownBy {
       val sc = ScioContext()
       sc.parallelize(genericRecords)
         .timestampBy(
@@ -271,13 +258,12 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
         .withFixedWindows(Duration.standardHours(1), Duration.ZERO, WindowOptions())
         .saveAsDynamicParquetAvroFile(
           dir.toString,
+          Right((_, _) => "test for exception handling"),
           numShards = 1,
-          schema = AvroUtils.schema,
-          filenameFunction = (_, _) => "test for exception handling"
+          schema = AvroUtils.schema
         )
       sc.run()
     }
 
-    pipelineException2.getCause shouldBe a[NotImplementedError]
   }
 }
