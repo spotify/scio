@@ -345,4 +345,3 @@ object BloomFilter extends ApproxFilterCompanion {
     new BloomFilter[T](impl)
   }
 }
-
