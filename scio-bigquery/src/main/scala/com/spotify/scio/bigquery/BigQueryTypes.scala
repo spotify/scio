@@ -35,9 +35,31 @@ import org.joda.time.format.{DateTimeFormat, DateTimeFormatterBuilder}
 
 sealed trait Source
 
+/** A wrapper type [[Query]] which wraps a SQL String. */
 final case class Query(underlying: String) extends Source {
+
+  /**
+   *  A helper method to replace the "$LATEST" laceholder in query to the latest common partition.
+   *  For example:
+   *  {{{
+   *  @BigQueryType.fromQuery("SELECT ... FROM `project.data.foo_%s`", "$LATEST")
+   *  class Foo
+   *
+   *  val bq: BigQuery = BigQuery.defaultInstance()
+   *  scioContext.bigQuerySelect(Foo.queryAsSource("$LATEST").latest(bq))
+   *  }}}
+   *
+   *  Or, if your query string is a dynamic value which uses a "$LATEST" placeholder,
+   *  {{{
+   *  val dynamicSQLStr = "SELECT ... FROM some_table_$LATEST"
+   *  scioContext.bigQuerySelect(Query(dynamicSQLStr).latest(bq))
+   *  }}}
+   *
+   * @param bq [[BigQuery]] client
+   * @return [[Query]] with "$LATEST" replaced
+   */
   def latest(bq: BigQuery): Query =
-    Query(BigQueryPartitionUtil.latestQuery(bq, this.underlying))
+    Query(BigQueryPartitionUtil.latestQuery(bq, underlying))
 }
 
 sealed trait Table extends Source {
