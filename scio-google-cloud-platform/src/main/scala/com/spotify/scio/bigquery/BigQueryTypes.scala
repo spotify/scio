@@ -68,14 +68,25 @@ sealed trait Table extends Source {
   def spec: String
 
   def ref: GTableReference
+
+  def latest(bg: BigQuery): Table
+
+  def latest(): Table
 }
 
 object Table {
   final case class Ref(ref: GTableReference) extends Table {
     override lazy val spec: String = BigQueryHelpers.toTableSpec(ref)
+    def latest(bq: BigQuery): Ref =
+      Ref(Spec(spec).latest(bq).ref)
+    def latest() = latest(BigQuery.defaultInstance())
+
   }
   final case class Spec(spec: String) extends Table {
     override val ref: GTableReference = BigQueryHelpers.parseTableSpec(spec)
+    def latest(bq: BigQuery): Spec =
+      Spec(BigQueryPartitionUtil.latestTable(bq, spec))
+    def latest() = latest(BigQuery.defaultInstance())
   }
 }
 
