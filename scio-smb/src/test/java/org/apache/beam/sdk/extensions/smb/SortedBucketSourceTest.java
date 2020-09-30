@@ -225,11 +225,11 @@ public class SortedBucketSourceTest {
   public void testNullKeysIgnored() throws Exception {
     test(
         ImmutableMap.of(
-            BucketShardId.ofNullKey(0), Lists.newArrayList(""),
+            BucketShardId.ofNullKey(), Lists.newArrayList(""),
             BucketShardId.of(0, 0), Lists.newArrayList("x1", "x2", "y1", "y2"),
             BucketShardId.of(1, 0), Lists.newArrayList("c1", "c2")),
         ImmutableMap.of(
-            BucketShardId.ofNullKey(0), Lists.newArrayList(""),
+            BucketShardId.ofNullKey(), Lists.newArrayList(""),
             BucketShardId.of(0, 0), Lists.newArrayList("x3", "x4", "z3", "z4"),
             BucketShardId.of(1, 0), Lists.newArrayList("c2", "c3")));
   }

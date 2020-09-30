@@ -181,13 +181,15 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
         }
         writtenBuckets.put(BucketShardId.of(bucket.bucketId, 0), bucket.destination);
       }
+
       RenameBuckets.moveFiles(
           bucketMetadata,
           writtenBuckets,
           dstFileAssignment,
           fileOperations,
           bucketDst -> c.output(BUCKETS_TAG, bucketDst),
-          metadataDst -> c.output(METADATA_TAG, metadataDst));
+          metadataDst -> c.output(METADATA_TAG, metadataDst),
+          false); // Don't include null-key bucket in output
     }
   }
 

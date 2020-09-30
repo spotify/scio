@@ -28,7 +28,9 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import org.apache.beam.sdk.coders.AtomicCoder;
 import org.apache.beam.sdk.coders.CannotProvideCoderException;
 import org.apache.beam.sdk.coders.Coder;
@@ -180,6 +182,16 @@ public abstract class BucketMetadata<K, V> implements Serializable, HasDisplayDa
 
   public int getNumShards() {
     return numShards;
+  }
+
+  Set<BucketShardId> getAllBucketShardIds() {
+    final HashSet<BucketShardId> allBucketShardIds = new HashSet<>();
+    for (int shardId = 0; shardId < numShards; shardId++) {
+      for (int bucketId = 0; bucketId < numBuckets; bucketId++) {
+        allBucketShardIds.add(BucketShardId.of(bucketId, shardId));
+      }
+    }
+    return allBucketShardIds;
   }
 
   public Class<K> getKeyClass() {

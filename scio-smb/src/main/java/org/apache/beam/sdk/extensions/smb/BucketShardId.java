@@ -47,8 +47,8 @@ public abstract class BucketShardId {
     return new AutoValue_BucketShardId(bucketId, shardId);
   }
 
-  public static BucketShardId ofNullKey(int shardId) {
-    return new AutoValue_BucketShardId(NULL_KEYS_BUCKET_ID, shardId);
+  public static BucketShardId ofNullKey() {
+    return new AutoValue_BucketShardId(NULL_KEYS_BUCKET_ID, 0);
   }
 
   public boolean isNullKeyBucket() {
