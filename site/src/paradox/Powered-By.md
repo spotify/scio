@@ -18,3 +18,4 @@ Here is a list of organizations using Scio in production.
 | [Arquivei](https://www.arquivei.com.br) | Streaming and Batch ETL using Pub/Sub, BigQuery, GCS, S3, and ElasticSearch | |
 | [Vpon](http://www.vpon.com/en/) | Batch ETL and BigQuery | |
 | [Snowplow Analytics](https://snowplowanalytics.com/) | Streaming ETL | [Beam Enrich](https://github.com/snowplow/snowplow/tree/master/3-enrich/beam-enrich), [BigQuery Loader](https://github.com/snowplow-incubator/snowplow-bigquery-loader) and [Cloud Storage Loader](https://github.com/snowplow-incubator/snowplow-google-cloud-storage-loader) |
+| [Quibi](https://quibi.com/) | Streaming and Batch ETL from Pub/Sub and GCS to BigQuery | |
