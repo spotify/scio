@@ -19,23 +19,50 @@ package com.spotify.scio.bigquery
 import java.math.MathContext
 import java.nio.ByteBuffer
 
-import com.spotify.scio.ScioContext
-import com.spotify.scio.values.SCollection
 import com.google.api.services.bigquery.model.{
+  TableReference => GTableReference,
   TableRow => GTableRow,
-  TimePartitioning => GTimePartitioning,
-  TableReference => GTableReference
+  TimePartitioning => GTimePartitioning
 }
-import org.apache.beam.sdk.io.gcp.bigquery.{BigQueryHelpers, BigQueryInsertError, WriteResult}
+import com.spotify.scio.ScioContext
+import com.spotify.scio.bigquery.client.BigQuery
+import com.spotify.scio.values.SCollection
 import org.apache.avro.Conversions.DecimalConversion
 import org.apache.avro.LogicalTypes
+import org.apache.beam.sdk.io.gcp.bigquery.{BigQueryHelpers, BigQueryInsertError, WriteResult}
+import org.joda.time._
 import org.joda.time.format.{DateTimeFormat, DateTimeFormatterBuilder}
-import org.joda.time.DateTimeZone
-import org.joda.time.{Instant, LocalDate, LocalDateTime, LocalTime}
 
 sealed trait Source
 
-final case class Query(underlying: String) extends Source
+/** A wrapper type [[Query]] which wraps a SQL String. */
+final case class Query(underlying: String) extends Source {
+
+  /**
+   *  A helper method to replace the "$LATEST" placeholder in query to the latest common partition.
+   *  For example:
+   *  {{{
+   *  @BigQueryType.fromQuery("SELECT ... FROM `project.data.foo_%s`", "$LATEST")
+   *  class Foo
+   *
+   *  val bq: BigQuery = BigQuery.defaultInstance()
+   *  scioContext.bigQuerySelect(Foo.queryAsSource("$LATEST").latest(bq))
+   *  }}}
+   *
+   *  Or, if your query string is a dynamic value which uses a "$LATEST" placeholder,
+   *  {{{
+   *  val dynamicSQLStr = "SELECT ... FROM some_table_$LATEST"
+   *  scioContext.bigQuerySelect(Query(dynamicSQLStr).latest(bq))
+   *  }}}
+   *
+   * @param bq [[BigQuery]] client
+   * @return [[Query]] with "$LATEST" replaced
+   */
+  def latest(bq: BigQuery): Query =
+    Query(BigQueryPartitionUtil.latestQuery(bq, underlying))
+
+  def latest(): Query = latest(BigQuery.defaultInstance())
+}
 
 sealed trait Table extends Source {
   def spec: String
