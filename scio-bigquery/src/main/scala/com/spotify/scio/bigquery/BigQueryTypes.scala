@@ -39,7 +39,7 @@ sealed trait Source
 final case class Query(underlying: String) extends Source {
 
   /**
-   *  A helper method to replace the "$LATEST" laceholder in query to the latest common partition.
+   *  A helper method to replace the "$LATEST" placeholder in query to the latest common partition.
    *  For example:
    *  {{{
    *  @BigQueryType.fromQuery("SELECT ... FROM `project.data.foo_%s`", "$LATEST")
