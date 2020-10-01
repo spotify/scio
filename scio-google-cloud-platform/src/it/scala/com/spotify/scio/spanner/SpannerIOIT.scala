@@ -20,6 +20,7 @@ package com.spotify.scio.spanner
 import com.google.cloud.spanner._
 import com.spotify.scio.ScioContext
 import com.spotify.scio.spanner.client.Spanner
+import com.spotify.scio.spanner.coders._
 import org.apache.beam.sdk.io.gcp.spanner.SpannerConfig
 import org.apache.beam.sdk.options.PipelineOptionsFactory
 import org.scalatest.BeforeAndAfterAll
