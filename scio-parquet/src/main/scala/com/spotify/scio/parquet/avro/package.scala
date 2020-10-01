@@ -24,6 +24,8 @@ import com.spotify.scio.coders.Coder
 import com.spotify.scio.parquet.avro.ParquetAvroIO.WriteParam
 import org.apache.avro.Schema
 import org.apache.avro.specific.SpecificRecordBase
+import org.apache.beam.sdk.transforms.windowing.{BoundedWindow, PaneInfo}
+import org.apache.beam.sdk.values.WindowingStrategy
 import org.apache.parquet.filter2.predicate.FilterPredicate
 import org.apache.parquet.hadoop.metadata.CompressionCodecName
 import org.slf4j.LoggerFactory
@@ -136,6 +138,52 @@ package object avro {
       compression: CompressionCodecName = WriteParam.DefaultCompression
     )(implicit ct: ClassTag[T], coder: Coder[T]): ClosedTap[T] = {
       val param = WriteParam(schema, numShards, suffix, compression)
+      self.write(ParquetAvroIO[T](path))(param)
+    }
+
+    /**
+     * Save this SCollection of Avro records as a Parquet files written to dynamic destinations.
+     * @param path output location of the write operation
+     * @param filenameFunction an Either representing one of two functions which generates a filename. The Either must
+     *                         be a Left when writing dynamic files from windowed SCollections, or a Right when writing
+     *                         dynamic files from un-windowed SCollections. When the Either is a Left, the function's
+     *                         arguments represent
+     *                            (the shard number,
+     *                            the total number of shards,
+     *                            the bounded window,
+     *                            the pane info for the window)
+     *                         When the Either is a Right, the function's arguments represent
+     *                            (the shard number,
+     *                            the total number of shards)
+     * @param schema must be not null if `T` is of type
+     *               [[org.apache.avro.generic.GenericRecord GenericRecord]].
+     * @param numShards number of shards per output directory
+     * @param suffix defaults to .parquet
+     * @param compression defaults to snappy
+     */
+    def saveAsDynamicParquetAvroFile(
+      path: String,
+      filenameFunction: Either[(Int, Int, BoundedWindow, PaneInfo) => String, (Int, Int) => String],
+      schema: Schema = WriteParam.DefaultSchema,
+      numShards: Int = WriteParam.DefaultNumShards,
+      suffix: String = WriteParam.DefaultSuffix,
+      compression: CompressionCodecName = WriteParam.DefaultCompression
+    )(implicit ct: ClassTag[T], coder: Coder[T]): ClosedTap[T] = {
+
+      if (
+        (self.internal.getWindowingStrategy != WindowingStrategy
+          .globalDefault() && filenameFunction.isRight) ||
+        (self.internal.getWindowingStrategy == WindowingStrategy
+          .globalDefault() && filenameFunction.isLeft)
+      ) {
+        throw new NotImplementedError(
+          "The filenameFunction value passed to saveAsDynamicParquetAvroFile does not" +
+            " support the window strategy applied to the SCollection."
+        )
+      }
+
+      val param =
+        WriteParam(schema, numShards, suffix, compression, Some(filenameFunction))
       self.write(ParquetAvroIO[T](path))(param)
     }
   }
