@@ -173,9 +173,12 @@ class BigQueryTypeIT extends AnyFlatSpec with Matchers {
 
   it should "format and return query as source" in {
     LegacyLatestT.queryAsSource("TABLE") shouldBe Query(legacyLatestQuery.format("TABLE"))
-    LegacyLatestT.queryAsSource("$LATEST").latest(bq) shouldBe Query(legacyLatestQuery.format("$LATEST")).latest(bq)
+    LegacyLatestT.queryAsSource("$LATEST").latest(bq) shouldBe Query(
+      legacyLatestQuery.format("$LATEST")
+    ).latest(bq)
     SqlLatestT.queryAsSource("TABLE") shouldBe Query(sqlLatestQuery.format("TABLE"))
-    SqlLatestT.queryAsSource("$LATEST").latest(bq) shouldBe Query(sqlLatestQuery.format("$LATEST")).latest(bq)
+    SqlLatestT.queryAsSource("$LATEST").latest(bq) shouldBe Query(sqlLatestQuery.format("$LATEST"))
+      .latest(bq)
   }
 
   it should "type check annotation arguments" in {
