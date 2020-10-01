@@ -17,14 +17,9 @@
 
 package com.spotify.scio.testing
 
-import java.util.Collections
-
-import com.google.datastore.v1.Entity
-import com.google.datastore.v1.client.DatastoreHelper.{makeKey, makeValue}
 import com.spotify.scio._
 import com.spotify.scio.avro.AvroUtils.{newGenericRecord, newSpecificRecord}
 import com.spotify.scio.avro._
-import com.spotify.scio.bigquery._
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.io._
 import com.spotify.scio.util.MockedPrintStream
@@ -32,7 +27,6 @@ import org.apache.avro.generic.GenericRecord
 import org.apache.beam.sdk.Pipeline.PipelineExecutionException
 import org.apache.beam.sdk.metrics.DistributionResult
 import org.apache.beam.sdk.{io => beam}
-import org.joda.time.Instant
 import org.scalatest.exceptions.TestFailedException
 
 import scala.io.Source
@@ -83,60 +77,6 @@ object GenericParseFnAvroFileJob {
       PartialFieldsAvro(gr.get("int_field").asInstanceOf[Int])
     ).map(a => AvroUtils.newGenericRecord(a.intField))
       .saveAsAvroFile(args("output"), schema = AvroUtils.schema)
-    sc.run()
-    ()
-  }
-}
-
-object BigQueryJob {
-  def main(cmdlineArgs: Array[String]): Unit = {
-    val (sc, args) = ContextAndArgs(cmdlineArgs)
-    sc.bigQueryTable(Table.Spec(args("input")))
-      .saveAsBigQueryTable(Table.Spec(args("output")))
-    sc.run()
-    ()
-  }
-}
-
-object TableRowJsonJob {
-  def main(cmdlineArgs: Array[String]): Unit = {
-    val (sc, args) = ContextAndArgs(cmdlineArgs)
-    sc.tableRowJsonFile(args("input"))
-      .saveAsTableRowJsonFile(args("output"))
-    sc.run()
-    ()
-  }
-}
-
-object DatastoreJob {
-  def main(cmdlineArgs: Array[String]): Unit = {
-    val (sc, args) = ContextAndArgs(cmdlineArgs)
-    sc.datastore(args("input"), null, null)
-      .saveAsDatastore(args("output"))
-    sc.run()
-    ()
-  }
-}
-
-object PubsubJob {
-  def main(cmdlineArgs: Array[String]): Unit = {
-    val (sc, args) = ContextAndArgs(cmdlineArgs)
-    sc.pubsubTopic[String](args("input"))
-      .map(_ + "X")
-      .saveAsPubsub(args("output"))
-    sc.run()
-    ()
-  }
-}
-
-object PubsubWithAttributesJob {
-  val timestampAttribute = "tsAttribute"
-
-  def main(cmdlineArgs: Array[String]): Unit = {
-    val (sc, args) = ContextAndArgs(cmdlineArgs)
-    sc.pubsubTopicWithAttributes[String](args("input"), timestampAttribute = timestampAttribute)
-      .map(kv => (kv._1 + "X", kv._2))
-      .saveAsPubsubWithAttributes[String](args("output"), timestampAttribute = timestampAttribute)
     sc.run()
     ()
   }
@@ -355,170 +295,6 @@ class JobTestTest extends PipelineSpec {
     }
     an[AssertionError] should be thrownBy {
       testGenericParseAvroFileJob((1 to 4).map(newGenericRecord))
-    }
-  }
-
-  def newTableRow(i: Int): TableRow = TableRow("int_field" -> i)
-
-  def testBigQuery(xs: Seq[TableRow]): Unit =
-    JobTest[BigQueryJob.type]
-      .args("--input=table.in", "--output=table.out")
-      .input(BigQueryIO[TableRow]("table.in"), (1 to 3).map(newTableRow))
-      .output(BigQueryIO[TableRow]("table.out"))(coll => coll should containInAnyOrder(xs))
-      .run()
-
-  it should "pass correct BigQueryJob" in {
-    testBigQuery((1 to 3).map(newTableRow))
-  }
-
-  it should "fail incorrect BigQueryJob" in {
-    an[AssertionError] should be thrownBy {
-      testBigQuery((1 to 2).map(newTableRow))
-    }
-    an[AssertionError] should be thrownBy {
-      testBigQuery((1 to 4).map(newTableRow))
-    }
-  }
-
-  def testTableRowJson(xs: Seq[TableRow]): Unit =
-    JobTest[TableRowJsonJob.type]
-      .args("--input=in.json", "--output=out.json")
-      .input(TableRowJsonIO("in.json"), (1 to 3).map(newTableRow))
-      .output(TableRowJsonIO("out.json"))(coll => coll should containInAnyOrder(xs))
-      .run()
-
-  it should "pass correct TableRowJsonIO" in {
-    testTableRowJson((1 to 3).map(newTableRow))
-  }
-
-  it should "fail incorrect TableRowJsonIO" in {
-    an[AssertionError] should be thrownBy {
-      testTableRowJson((1 to 2).map(newTableRow))
-    }
-    an[AssertionError] should be thrownBy {
-      testTableRowJson((1 to 4).map(newTableRow))
-    }
-  }
-
-  def newEntity(i: Int): Entity =
-    Entity
-      .newBuilder()
-      .setKey(makeKey())
-      .putAllProperties(Collections.singletonMap("int_field", makeValue(i).build()))
-      .build()
-
-  def testDatastore(xs: Seq[Entity]): Unit =
-    JobTest[DatastoreJob.type]
-      .args("--input=store.in", "--output=store.out")
-      .input(DatastoreIO("store.in"), (1 to 3).map(newEntity))
-      .output(DatastoreIO("store.out"))(coll => coll should containInAnyOrder(xs))
-      .run()
-
-  it should "pass correct DatastoreJob" in {
-    testDatastore((1 to 3).map(newEntity))
-  }
-
-  it should "fail incorrect DatastoreJob" in {
-    an[AssertionError] should be thrownBy {
-      testDatastore((1 to 2).map(newEntity))
-    }
-    an[AssertionError] should be thrownBy {
-      testDatastore((1 to 4).map(newEntity))
-    }
-  }
-
-  def testPubsubJob(xs: String*): Unit =
-    JobTest[PubsubJob.type]
-      .args("--input=in", "--output=out")
-      .input(PubsubIO[String]("in"), Seq("a", "b", "c"))
-      .output(PubsubIO[String]("out"))(coll => coll should containInAnyOrder(xs))
-      .run()
-
-  it should "pass correct PubsubIO" in {
-    testPubsubJob("aX", "bX", "cX")
-  }
-
-  it should "fail incorrect PubsubIO" in {
-    an[AssertionError] should be thrownBy { testPubsubJob("aX", "bX") }
-    an[AssertionError] should be thrownBy {
-      testPubsubJob("aX", "bX", "cX", "dX")
-    }
-  }
-
-  def testPubsubJobWithTestStreamInput(xs: String*): Unit =
-    JobTest[PubsubJob.type]
-      .args("--input=in", "--output=out")
-      .inputStream(
-        PubsubIO[String]("in"),
-        testStreamOf[String].addElements("a", "b", "c").advanceWatermarkToInfinity()
-      )
-      .output(PubsubIO[String]("out"))(coll => coll should containInAnyOrder(xs))
-      .run()
-
-  it should "pass correct PubsubIO with TestStream input" in {
-    testPubsubJobWithTestStreamInput("aX", "bX", "cX")
-  }
-
-  it should "fail incorrect PubsubIO with TestStream input" in {
-    an[AssertionError] should be thrownBy testPubsubJobWithTestStreamInput("aX", "bX")
-    an[AssertionError] should be thrownBy testPubsubJobWithTestStreamInput("aX", "bX", "cX", "dX")
-  }
-
-  def testPubsubWithAttributesJob(timestampAttribute: Map[String, String], xs: String*): Unit = {
-    type M = Map[String, String]
-    val m = Map("a" -> "1", "b" -> "2", "c" -> "3") ++ timestampAttribute
-    JobTest[PubsubWithAttributesJob.type]
-      .args("--input=in", "--output=out")
-      .input(
-        PubsubIO[(String, M)]("in", null, PubsubWithAttributesJob.timestampAttribute),
-        Seq("a", "b", "c").map((_, m))
-      )
-      .output(
-        PubsubIO[(String, M)]("out", null, PubsubWithAttributesJob.timestampAttribute)
-      )(coll => coll should containInAnyOrder(xs.map((_, m))))
-      .run()
-  }
-
-  it should "pass correct PubsubIO with attributes" in {
-    testPubsubWithAttributesJob(
-      Map(PubsubWithAttributesJob.timestampAttribute -> new Instant().toString),
-      "aX",
-      "bX",
-      "cX"
-    )
-  }
-
-  it should "fail incorrect PubsubIO with attributes" in {
-    an[AssertionError] should be thrownBy {
-      testPubsubWithAttributesJob(
-        Map(PubsubWithAttributesJob.timestampAttribute -> new Instant().toString),
-        "aX",
-        "bX"
-      )
-    }
-    an[AssertionError] should be thrownBy {
-      testPubsubWithAttributesJob(
-        Map(PubsubWithAttributesJob.timestampAttribute -> new Instant().toString),
-        "aX",
-        "bX",
-        "cX",
-        "dX"
-      )
-    }
-  }
-
-  it should "fail PubsubIO with invalid or missing timestamp attribute" in {
-    an[PipelineExecutionException] should be thrownBy {
-      testPubsubWithAttributesJob(
-        Map(PubsubWithAttributesJob.timestampAttribute -> "invalidTimestamp"),
-        "aX",
-        "bX",
-        "cX"
-      )
-    }
-
-    an[PipelineExecutionException] should be thrownBy {
-      testPubsubWithAttributesJob(timestampAttribute = Map(), xs = "aX", "bX", "cX")
     }
   }
 
