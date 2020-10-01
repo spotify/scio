@@ -21,7 +21,6 @@ import java.io.PrintStream
 import java.lang.{Boolean => JBoolean, Double => JDouble, Iterable => JIterable}
 import java.util.concurrent.ThreadLocalRandom
 
-import com.google.datastore.v1.Entity
 import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.{AvroBytesUtil, BeamCoders, Coder, CoderMaterializer, WrappedBCoder}
 import com.spotify.scio.io._
@@ -1425,73 +1424,6 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       .withSuffix(suffix)
       .withNumShards(numShards)
       .withCompression(compression)
-
-  /**
-   * Save this SCollection as a Datastore dataset. Note that elements must be of type `Entity`.
-   * @group output
-   */
-  def saveAsDatastore(projectId: String)(implicit ev: T <:< Entity): ClosedTap[Nothing] =
-    this.covary_[Entity].write(DatastoreIO(projectId))
-
-  /**
-   * Save this SCollection as a Pub/Sub topic.
-   * @group output
-   */
-  @deprecated(
-    """
-    |  This method has been deprecated. Use one of the following IOs instead:
-    |    - PubsubIO.string
-    |    - PubsubIO.avro
-    |    - PubsubIO.proto
-    |    - PubsubIO.pubsub
-    |    - PubsubIO.coder
-    |
-    |  For example:
-    |     coll.write(PubsubIO.string(sub, idAttribute, timestampAttribute))(
-    |       PubsubIO.WriteParam()
-    |     )
-    """.stripMargin,
-    since = "0.10.0"
-  )
-  def saveAsPubsub(
-    topic: String,
-    idAttribute: String = null,
-    timestampAttribute: String = null,
-    maxBatchSize: Option[Int] = None,
-    maxBatchBytesSize: Option[Int] = None
-  )(implicit ct: ClassTag[T]): ClosedTap[Nothing] = {
-    val io = PubsubIO[T](topic, idAttribute, timestampAttribute)
-    this.write(io)(PubsubIO.WriteParam(maxBatchSize, maxBatchBytesSize))
-  }
-
-  /**
-   * Save this SCollection as a Pub/Sub topic using the given map as message attributes.
-   * @group output
-   */
-  @deprecated(
-    """
-    |  This method has been deprecated. Use PubsubIO.withAttributes instead
-    |
-    |  For example:
-    |     coll.write(PubsubIO.withAttributes(sub, idAttribute, timestampAttribute))(
-    |       PubsubIO.WriteParam()
-    |     )
-    """.stripMargin,
-    since = "0.10.0"
-  )
-  def saveAsPubsubWithAttributes[V: ClassTag](
-    topic: String,
-    idAttribute: String = null,
-    timestampAttribute: String = null,
-    maxBatchSize: Option[Int] = None,
-    maxBatchBytesSize: Option[Int] = None
-  )(implicit ev: T <:< (V, Map[String, String])): ClosedTap[Nothing] = {
-    implicit val vCoder = BeamCoders.getTupleCoders(this.covary_[(V, Map[String, String])])._1
-    val io = PubsubIO.withAttributes[V](topic, idAttribute, timestampAttribute)
-    this
-      .covary_[(V, Map[String, String])]
-      .write(io)(PubsubIO.WriteParam(maxBatchSize, maxBatchBytesSize))
-  }
 
   /**
    * Save this SCollection as a text file. Note that elements must be of type `String`.

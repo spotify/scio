@@ -388,8 +388,7 @@ lazy val root: Project = Project("scio", file("."))
     `scio-core`,
     `scio-test`,
     `scio-avro`,
-    `scio-bigquery`,
-    `scio-bigtable`,
+    `scio-google-cloud-platform`,
     `scio-cassandra3`,
     `scio-elasticsearch6`,
     `scio-elasticsearch7`,
@@ -398,7 +397,6 @@ lazy val root: Project = Project("scio", file("."))
     `scio-parquet`,
     `scio-tensorflow`,
     `scio-schemas`,
-    `scio-spanner`,
     `scio-sql`,
     `scio-examples`,
     `scio-repl`,
@@ -427,12 +425,7 @@ lazy val `scio-core`: Project = project
       "com.github.alexarchambault" %% "case-app-annotations" % caseappVersion,
       "com.github.ben-manes.caffeine" % "caffeine" % caffeineVersion % "provided",
       "com.google.api-client" % "google-api-client" % googleClientsVersion,
-      "com.google.api.grpc" % "grpc-google-cloud-pubsub-v1" % generatedGrpcGaVersion,
-      "com.google.api.grpc" % "proto-google-cloud-datastore-v1" % generatedDatastoreProtoVersion,
-      "com.google.api.grpc" % "proto-google-cloud-pubsub-v1" % generatedGrpcGaVersion,
-      "com.google.apis" % "google-api-services-bigquery" % googleApiServicesBigQuery,
       "com.google.apis" % "google-api-services-dataflow" % googleApiServicesDataflow,
-      "com.google.auth" % "google-auth-library-credentials" % googleAuthVersion,
       "com.google.auto.service" % "auto-service" % autoServiceVersion,
       "com.google.guava" % "guava" % guavaVersion,
       "com.google.http-client" % "google-http-client" % googleHttpClientsVersion,
@@ -450,14 +443,11 @@ lazy val `scio-core`: Project = project
       "io.grpc" % "grpc-api" % grpcVersion,
       "io.grpc" % "grpc-stub" % grpcVersion,
       "io.netty" % "netty-handler" % nettyVersion,
-      "com.spotify" %% "magnolify-guava" % magnolifyVersion,
       "joda-time" % "joda-time" % jodaTimeVersion,
       "me.lyh" %% "protobuf-generic" % protobufGenericVersion,
       "org.apache.avro" % "avro" % avroVersion,
       "org.apache.beam" % "beam-runners-core-construction-java" % beamVersion,
       "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion % Provided,
-      "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
-      "org.apache.beam" % "beam-sdks-java-extensions-google-cloud-platform-core" % beamVersion,
       "org.apache.beam" % "beam-runners-spark" % beamVersion % Provided exclude (
         "com.fasterxml.jackson.module", "jackson-module-scala_2.11"
       ),
@@ -527,6 +517,7 @@ lazy val `scio-test`: Project = project
       "org.scalatestplus" %% "scalatestplus-scalacheck" % scalatestplusVersion % "test,it",
       "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test,it",
       "com.spotify" %% "magnolify-datastore" % magnolifyVersion % "it",
+      "com.spotify" %% "magnolify-guava" % magnolifyVersion,
       // DataFlow testing requires junit and hamcrest
       "org.hamcrest" % "hamcrest-core" % hamcrestVersion,
       "org.hamcrest" % "hamcrest-library" % hamcrestVersion,
@@ -560,8 +551,7 @@ lazy val `scio-test`: Project = project
     `scio-core` % "test->test;compile->compile;it->it",
     `scio-schemas` % "test;it",
     `scio-avro` % "compile->test;it->it",
-    `scio-sql` % "compile->test;it->it",
-    `scio-bigquery` % "compile->test;it->it"
+    `scio-sql` % "compile->test;it->it"
   )
 
 lazy val `scio-macros`: Project = project
@@ -609,84 +599,62 @@ lazy val `scio-avro`: Project = project
   )
   .configs(IntegrationTest)
 
-lazy val `scio-bigquery`: Project = project
-  .in(file("scio-bigquery"))
+lazy val `scio-google-cloud-platform`: Project = project
+  .in(file("scio-google-cloud-platform"))
   .settings(commonSettings)
   .settings(macroSettings)
   .settings(itSettings)
   .settings(beamRunnerSettings)
   .settings(
-    description := "Scio add-on for Google BigQuery",
+    description := "Scio add-on for Google Cloud Platform",
     libraryDependencies ++= Seq(
-      "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
-      "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamVendorVersion,
-      "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
-      "org.apache.beam" % "beam-sdks-java-extensions-google-cloud-platform-core" % beamVersion,
-      "com.twitter" %% "chill" % chillVersion,
-      "com.google.protobuf" % "protobuf-java" % protobufVersion,
-      "org.apache.avro" % "avro" % avroVersion,
-      "com.google.api" % "gax" % gaxVersion,
-      "com.google.api" % "gax-grpc" % gaxVersion,
-      "com.google.api-client" % "google-api-client" % googleClientsVersion,
-      "com.google.apis" % "google-api-services-bigquery" % googleApiServicesBigQuery,
-      "com.google.api.grpc" % "proto-google-cloud-bigquerystorage-v1beta1" % "0.98.0",
-      "com.google.http-client" % "google-http-client" % googleHttpClientsVersion,
-      "com.google.http-client" % "google-http-client-jackson" % "1.29.2",
-      "com.google.http-client" % "google-http-client-jackson2" % googleHttpClientsVersion,
-      "com.google.auth" % "google-auth-library-credentials" % googleAuthVersion,
-      "com.google.auth" % "google-auth-library-oauth2-http" % googleAuthVersion,
-      "com.google.cloud" % "google-cloud-bigquerystorage" % bigQueryStorageVersion,
-      "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
-      "commons-io" % "commons-io" % commonsIoVersion,
-      "joda-time" % "joda-time" % jodaTimeVersion,
-      "org.slf4j" % "slf4j-api" % slf4jVersion,
-      "org.slf4j" % "slf4j-simple" % slf4jVersion % "test,it",
-      "org.scalatest" %% "scalatest" % scalatestVersion % "test,it",
-      "org.scalatestplus" %% "scalatestplus-scalacheck" % scalatestplusVersion % "test,it",
-      "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test,it",
-      "com.spotify" %% "magnolify-cats" % magnolifyVersion % "test",
-      "com.spotify" %% "magnolify-scalacheck" % magnolifyVersion % "test",
-      "com.google.cloud" % "google-cloud-storage" % gcsVersion % "test,it",
-      // DataFlow testing requires junit and hamcrest
-      "org.hamcrest" % "hamcrest-core" % hamcrestVersion % "test,it",
-      "org.hamcrest" % "hamcrest-library" % hamcrestVersion % "test,it"
-    )
-  )
-  .dependsOn(
-    `scio-core` % "compile;it->it"
-  )
-  .configs(IntegrationTest)
-
-lazy val `scio-bigtable`: Project = project
-  .in(file("scio-bigtable"))
-  .settings(commonSettings)
-  .settings(itSettings)
-  .settings(
-    description := "Scio add-on for Google Cloud Bigtable",
-    libraryDependencies ++= Seq(
-      "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
-      "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
-      "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
-      "joda-time" % "joda-time" % jodaTimeVersion,
-      "com.google.protobuf" % "protobuf-java" % protobufVersion,
-      "com.google.api.grpc" % "proto-google-cloud-bigtable-v2" % generatedGrpcBetaVersion,
+      "com.google.cloud" % "google-cloud-spanner" % googleCloudSpannerVersion excludeAll (
+        ExclusionRule(organization = "io.grpc")
+      ),
       "com.google.cloud.bigtable" % "bigtable-client-core" % bigtableClientVersion excludeAll (
         ExclusionRule(organization = "io.grpc")
       ),
-      "org.apache.beam" % "beam-runners-direct-java" % beamVersion % "test",
-      "org.scalatest" %% "scalatest" % scalatestVersion % "test",
-      "org.hamcrest" % "hamcrest-core" % hamcrestVersion % "test",
-      "org.hamcrest" % "hamcrest-library" % hamcrestVersion % "test",
-      "junit" % "junit" % junitVersion % "test",
       "com.chuusai" %% "shapeless" % shapelessVersion,
+      "com.google.api-client" % "google-api-client" % googleClientsVersion,
+      "com.google.api.grpc" % "proto-google-cloud-bigquerystorage-v1beta1" % "0.98.0",
       "com.google.api.grpc" % "proto-google-cloud-bigtable-admin-v2" % generatedGrpcBetaVersion,
+      "com.google.api.grpc" % "proto-google-cloud-bigtable-v2" % generatedGrpcBetaVersion,
+      "com.google.api" % "gax-grpc" % gaxVersion,
+      "com.google.api" % "gax" % gaxVersion,
+      "com.google.apis" % "google-api-services-bigquery" % googleApiServicesBigQuery,
+      "com.google.auth" % "google-auth-library-credentials" % googleAuthVersion,
+      "com.google.auth" % "google-auth-library-oauth2-http" % googleAuthVersion,
+      "com.google.cloud" % "google-cloud-bigquerystorage" % bigQueryStorageVersion,
+      "com.google.cloud" % "google-cloud-core" % "1.92.2",
+      "com.google.cloud" % "google-cloud-storage" % gcsVersion % "test,it",
       "com.google.guava" % "guava" % guavaVersion,
-      "org.slf4j" % "slf4j-api" % slf4jVersion
+      "com.google.http-client" % "google-http-client-jackson" % "1.29.2",
+      "com.google.http-client" % "google-http-client-jackson2" % googleHttpClientsVersion,
+      "com.google.http-client" % "google-http-client" % googleHttpClientsVersion,
+      "com.google.protobuf" % "protobuf-java" % protobufVersion,
+      "com.spotify" %% "magnolify-cats" % magnolifyVersion % "test",
+      "com.spotify" %% "magnolify-scalacheck" % magnolifyVersion % "test",
+      "com.twitter" %% "chill" % chillVersion,
+      "commons-io" % "commons-io" % commonsIoVersion,
+      "joda-time" % "joda-time" % jodaTimeVersion,
+      "junit" % "junit" % junitVersion % "test",
+      "org.apache.avro" % "avro" % avroVersion,
+      "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
+      "org.apache.beam" % "beam-sdks-java-extensions-google-cloud-platform-core" % beamVersion,
+      "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
+      "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamVendorVersion,
+      "org.hamcrest" % "hamcrest-core" % hamcrestVersion % "test,it",
+      "org.hamcrest" % "hamcrest-library" % hamcrestVersion % "test",
+      "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test,it",
+      "org.scalatest" %% "scalatest" % scalatestVersion % "test,it",
+      "org.scalatestplus" %% "scalatestplus-scalacheck" % scalatestplusVersion % "test,it",
+      "org.slf4j" % "slf4j-api" % slf4jVersion,
+      "org.slf4j" % "slf4j-simple" % slf4jVersion % "test,it"
     )
   )
   .dependsOn(
-    `scio-core`,
-    `scio-test` % "test;it->it"
+    `scio-core` % "compile;it->it",
+    `scio-test` % "test;it"
   )
   .configs(IntegrationTest)
 
@@ -810,7 +778,7 @@ lazy val `scio-extra`: Project = project
     `scio-core` % "compile->compile;provided->provided",
     `scio-test` % "it->it;test->test",
     `scio-avro`,
-    `scio-bigquery`,
+    `scio-google-cloud-platform`,
     `scio-macros`
   )
   .configs(IntegrationTest)
@@ -869,30 +837,6 @@ lazy val `scio-parquet`: Project = project
     `scio-schemas` % "test",
     `scio-test` % "test->test"
   )
-
-lazy val `scio-spanner`: Project = project
-  .in(file("scio-spanner"))
-  .settings(commonSettings)
-  .settings(itSettings)
-  .settings(beamRunnerSettings)
-  .settings(
-    description := "Scio add-on for Google Cloud Spanner",
-    libraryDependencies ++= Seq(
-      "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
-      "com.google.cloud" % "google-cloud-core" % "1.92.2",
-      "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
-      "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
-      "com.google.cloud" % "google-cloud-spanner" % googleCloudSpannerVersion excludeAll (
-        ExclusionRule(organization = "io.grpc")
-      ),
-      "org.scalatest" %% "scalatest" % scalatestVersion % "it"
-    )
-  )
-  .dependsOn(
-    `scio-core`,
-    `scio-test` % "test"
-  )
-  .configs(IntegrationTest)
 
 lazy val `scio-tensorflow`: Project = project
   .in(file("scio-tensorflow"))
@@ -1018,13 +962,11 @@ lazy val `scio-examples`: Project = project
   )
   .dependsOn(
     `scio-core`,
-    `scio-bigquery`,
-    `scio-bigtable`,
+    `scio-google-cloud-platform`,
     `scio-schemas`,
     `scio-jdbc`,
     `scio-extra`,
     `scio-elasticsearch7`,
-    `scio-spanner`,
     `scio-tensorflow`,
     `scio-sql`,
     `scio-test` % "compile->test",
@@ -1068,7 +1010,7 @@ lazy val `scio-repl`: Project = project
   )
   .dependsOn(
     `scio-core`,
-    `scio-bigquery`,
+    `scio-google-cloud-platform`,
     `scio-extra`
   )
 
@@ -1163,8 +1105,7 @@ lazy val site: Project = project
     `scio-macros`,
     `scio-core`,
     `scio-avro`,
-    `scio-bigquery`,
-    `scio-bigtable`,
+    `scio-google-cloud-platform`,
     `scio-parquet`,
     `scio-schemas`,
     `scio-smb`,
@@ -1219,15 +1160,13 @@ lazy val siteSettings = Def.settings(
       `scio-core`,
       `scio-test`,
       `scio-avro`,
-      `scio-bigquery`,
-      `scio-bigtable`,
+      `scio-google-cloud-platform`,
       `scio-cassandra3`,
       `scio-elasticsearch6`,
       `scio-extra`,
       `scio-jdbc`,
       `scio-parquet`,
       `scio-tensorflow`,
-      `scio-spanner`,
       `scio-macros`,
       `scio-smb`
     ),

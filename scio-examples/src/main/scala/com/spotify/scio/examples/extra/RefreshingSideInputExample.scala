@@ -23,6 +23,7 @@
 package com.spotify.scio.examples.extra
 
 import com.spotify.scio._
+import com.spotify.scio.pubsub._
 import com.spotify.scio.values.WindowOptions
 import org.apache.beam.sdk.io.GenerateSequence
 import org.apache.beam.sdk.options.StreamingOptions
