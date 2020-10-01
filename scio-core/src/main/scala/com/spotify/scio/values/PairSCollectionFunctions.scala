@@ -619,9 +619,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     "use SCollection[(K, V)]#countApproxDistinctByKey(ApproximateUniqueCounter(sampleSize) instead",
     "0.9.5"
   )
-  def countApproxDistinctByKey(
-    sampleSize: Int
-  )(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, Long)] =
+  def countApproxDistinctByKey(sampleSize: Int): SCollection[(K, Long)] =
     ApproximateUniqueCounter(sampleSize)
       .estimateDistinctCountPerKey(this.self)
 
@@ -635,9 +633,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     "use SCollection[(K, V)]#countApproxDistinctByKey(ApproximateUniqueCounterByError(maximumEstimationError)) instead",
     "0.9.5"
   )
-  def countApproxDistinctByKey(
-    maximumEstimationError: Double = 0.02
-  )(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, Long)] =
+  def countApproxDistinctByKey(maximumEstimationError: Double = 0.02): SCollection[(K, Long)] =
     ApproximateUniqueCounterByError(maximumEstimationError)
       .estimateDistinctCountPerKey(this.self)
 
@@ -662,10 +658,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    *
    * @return a key valued SCollection where value type is Long and hold the approximate distinct count.
    */
-  def countApproxDistinctByKey(estimator: ApproxDistinctCounter[V])(implicit
-    koder: Coder[K],
-    voder: Coder[V]
-  ): SCollection[(K, Long)] =
+  def countApproxDistinctByKey(estimator: ApproxDistinctCounter[V]): SCollection[(K, Long)] =
     estimator.estimateDistinctCountPerKey(this.self)
 
   /**

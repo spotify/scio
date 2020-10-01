@@ -17,9 +17,9 @@
 
 package com.spotify.scio.extra.hll.zetasketch
 
-import com.spotify.scio.extra.hll.HLLSpec
+import com.spotify.scio.testing.ApproxPipelineSpec
 
-class ZetasketchHllIntCounterTest extends HLLSpec {
+class ZetasketchHllIntCounterTest extends ApproxPipelineSpec {
 
   "ZetasketchHLL++" should "estimate int distinct count" in {
     val estimator = ZetasketchHllIntCounter()
@@ -65,7 +65,7 @@ class ZetasketchHllIntCounterTest extends HLLSpec {
     val estimator = ZetasketchHllIntCounter()
     val upperLimit = 10000
     val in = 0 to upperLimit
-    val expt: Seq[(Int, Long)] = for (i <- 0 to 5) yield (i, upperLimit / 5)
+    val expt = for (i <- 0 until 5) yield (i, (upperLimit / 5).toLong)
     val output = runWithData(in) { scl =>
       scl
         .keyBy(_ % 5)

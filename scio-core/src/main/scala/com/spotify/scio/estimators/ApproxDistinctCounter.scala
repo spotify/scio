@@ -17,7 +17,7 @@
 
 package com.spotify.scio.estimators
 
-import com.spotify.scio.coders.Coder
+import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import com.spotify.scio.util.TupleFunctions._
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.{transforms => beam}
@@ -63,7 +63,9 @@ case class ApproximateUniqueCounter[T](sampleSize: Int) extends ApproxDistinctCo
     in: SCollection[(K, T)]
   )(implicit koder: Coder[K], voder: Coder[T]): SCollection[(K, Long)] =
     in.toKV
-      .applyTransform(beam.ApproximateUnique.perKey[K, T](sampleSize))
+      .applyTransform(beam.ApproximateUnique.perKey[K, T](sampleSize))(
+        Coder.raw(CoderMaterializer.kvCoder[K, java.lang.Long](in.context))
+      )
       .map(klToTuple)
 }
 

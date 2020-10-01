@@ -17,12 +17,12 @@
 
 package com.spotify.scio.extra.hll.sketching
 
-import com.spotify.scio.extra.hll.HLLSpec
+import com.spotify.scio.testing.ApproxPipelineSpec
 
-class SketchingHyperLogLogPlusPlusTest extends HLLSpec {
+class SketchingHyperLogLogPlusPlusTest extends ApproxPipelineSpec {
 
   "SketchHLL++" should "estimate distinct count" in {
-    val input = for (i <- 0 to 1000000) yield (i % 20)
+    val input = for (i <- 1 to 1000000) yield (i % 20)
     val out = runWithData(input) { scl =>
       scl
         .countApproxDistinct(new SketchingHyperLogLogPlusPlus[Int](15, 20))
@@ -35,8 +35,8 @@ class SketchingHyperLogLogPlusPlusTest extends HLLSpec {
 
     val upperLimit = 1000000
     val in = 0 to upperLimit
-    val expt: Seq[(Int, Long)] = for (i <- 0 to 20) yield (i, upperLimit / 20)
-    val output: Seq[(Int, Long)] = runWithData(in) { scl =>
+    val expt = for (i <- 0 until 20) yield (i, (upperLimit / 20).toLong)
+    val output = runWithData(in) { scl =>
       scl
         .keyBy(_ % 20)
         .countApproxDistinctByKey(new SketchingHyperLogLogPlusPlus[Int](15, 20))
