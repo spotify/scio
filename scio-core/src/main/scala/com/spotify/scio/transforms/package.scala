@@ -29,7 +29,6 @@ import com.twitter.chill.ClosureCleaner
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
 import org.apache.beam.sdk.transforms.{DoFn, ParDo}
 import org.apache.beam.sdk.values.{TupleTag, TupleTagList}
-import com.google.common.util.concurrent.ListenableFuture
 
 import scala.jdk.CollectionConverters._
 import scala.util.{Failure, Success, Try}

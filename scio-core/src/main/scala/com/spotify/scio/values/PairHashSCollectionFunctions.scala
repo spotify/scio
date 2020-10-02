@@ -233,22 +233,5 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
   ): SCollection[(K, V)] =
     hashSubtractByKey(rhs.asSetSingletonSideInput)
 
-  private def combineAsMapSideInput[W](
-    rhs: SCollection[(K, W)]
-  ): SideInput[MMap[K, ArrayBuffer[W]]] = {
-    implicit val wCoder = rhs.valueCoder
-    rhs
-      .combine { case (k, v) =>
-        MMap(k -> ArrayBuffer(v))
-      } { case (combiner, (k, v)) =>
-        combiner.getOrElseUpdate(k, ArrayBuffer.empty[W]) += v
-        combiner
-      } { case (left, right) =>
-        right.foreach { case (k, vs) =>
-          left.getOrElseUpdate(k, ArrayBuffer.empty[W]) ++= vs
-        }
-        left
-      }
-      .asSingletonSideInput(MMap.empty[K, ArrayBuffer[W]])
-  }
+  
 }
