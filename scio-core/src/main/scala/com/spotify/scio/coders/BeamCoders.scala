@@ -38,7 +38,7 @@ private[scio] object BeamCoders {
   def getTupleCoders[K, V](coll: SCollection[(K, V)]): (Coder[K], Coder[V]) = {
     val coder = coll.internal.getCoder
     val (k, v) = unwrap(coder) match {
-      case c: scio.PairCoder[K, V] => (c.ac, c.bc)
+      case c: scio.Tuple2Coder[K, V] => (c.ac, c.bc)
       case c: RecordCoder[(K, V)] =>
         (
           c.cs.find(_._1 == "_1").get._2.asInstanceOf[beam.Coder[K]],
