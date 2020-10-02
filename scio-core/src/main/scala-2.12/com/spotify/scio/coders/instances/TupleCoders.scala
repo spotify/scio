@@ -24,7 +24,7 @@ package com.spotify.scio.coders.instances
 
 import java.io.{InputStream, OutputStream}
 
-import shapeles.Strict
+import shapeless.Strict
 import com.spotify.scio.coders.{Coder, CoderStackTrace}
 import org.apache.beam.sdk.coders.Coder.NonDeterministicException
 import org.apache.beam.sdk.coders.{Coder => BCoder, _}

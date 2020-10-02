@@ -179,7 +179,7 @@ def main(out, scala_version):
 
         import java.io.{{InputStream, OutputStream}}
 
-        {'import shapeles.Strict' if scala_version == '2.12' else ''}
+        {'import shapeless.Strict' if scala_version == '2.12' else ''}
         import com.spotify.scio.coders.{{Coder, CoderStackTrace}}
         import org.apache.beam.sdk.coders.Coder.NonDeterministicException
         import org.apache.beam.sdk.coders.{{Coder => BCoder, _}}
