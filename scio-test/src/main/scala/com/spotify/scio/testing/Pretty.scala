@@ -22,6 +22,8 @@ import scala.jdk.CollectionConverters._
 import com.spotify.scio.{registerSysProps, SysProp}
 import scala.util.Try
 import pprint.PPrinter
+import com.google.api.client.json.GenericJson
+import org.apache.beam.sdk.extensions.gcp.util.Transport
 
 @registerSysProps
 object PrettySysProps {
@@ -80,8 +82,15 @@ object Pretty {
       printer.treeify(x)
   }
 
-  private val handlers: PartialFunction[Any, Tree] = { case x: GenericRecord =>
-    treeifyAvro(x)
+  private[this] val jsonFactory = Transport.getJsonFactory
+
+  private def treeifyGenericJson: PartialFunction[GenericJson, Tree] = { case x =>
+    pprint.Tree.Literal(jsonFactory.toString(x))
+  }
+
+  private val handlers: PartialFunction[Any, Tree] = {
+    case x: GenericRecord => treeifyAvro(x)
+    case x: GenericJson   => treeifyGenericJson(x)
   }
 
   private val useColors =
