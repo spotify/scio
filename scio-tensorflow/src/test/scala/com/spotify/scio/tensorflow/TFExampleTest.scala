@@ -75,9 +75,7 @@ class TFExampleTest extends PipelineSpec {
       .run()
   }
 
-  // FIXME: breaking change in Scio 0.10
-  // "MultiSpecFeatranJob" should "work" in {
-  ignore should "work with MultiSpecFeatranJob" in {
+  "MultiSpecFeatranJob" should "work" in {
     import scala.jdk.CollectionConverters._
     JobTest[MultiSpecFeatranJob.type]
       .args("--output=out")
