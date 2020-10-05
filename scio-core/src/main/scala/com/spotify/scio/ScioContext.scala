@@ -52,6 +52,7 @@ import scala.io.Source
 import scala.reflect.ClassTag
 import scala.util.control.NoStackTrace
 import scala.util.{Failure, Success, Try}
+import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions
 
 /** Runner specific context. */
 trait RunnerContext {
@@ -509,6 +510,13 @@ class ScioContext private[scio] (
     o.setScalaVersion(BuildInfo.scalaVersion)
     o.setScioVersion(BuildInfo.version)
   }
+
+  private[scio] def labels: Map[String, String] =
+    (for {
+      // Check if class is in classpath
+      _ <- Try(Class.forName("org.apache.beam.runners.dataflow.options.DataflowPipelineOptions"))
+      o <- Try(optionsAs[DataflowPipelineOptions])
+    } yield o.getLabels.asScala.toMap).getOrElse(Map.empty)
 
   private[scio] val testId: Option[String] =
     Try(optionsAs[ApplicationNameOptions]).toOption.map(_.getAppName).filter(TestUtil.isTestId)

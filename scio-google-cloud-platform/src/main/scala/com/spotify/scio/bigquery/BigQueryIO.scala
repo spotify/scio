@@ -47,6 +47,7 @@ import scala.jdk.CollectionConverters._
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryAvroUtilsWrapper
+import shapeless.labelled
 
 private object Reads {
   private[this] val cache = new ConcurrentHashMap[ScioContext, BigQuery]()
@@ -68,8 +69,9 @@ private object Reads {
     flattenResults: Boolean = false
   ): SCollection[T] = {
     val bigQueryClient = client(sc)
+    val labels = sc.labels
     val read = bigQueryClient.query
-      .newQueryJob(sqlQuery, flattenResults)
+      .newQueryJob(sqlQuery, flattenResults, labels)
       .map { job =>
         sc.onClose(_ => bigQueryClient.waitForJobs(job))
         typedRead.from(job.table).withoutValidation()
@@ -78,6 +80,7 @@ private object Reads {
     sc.applyTransform(read.get)
   }
 
+  // TODO: support labels Inheritance like in bqReadQuery
   private[scio] def bqReadStorage[T: ClassTag](sc: ScioContext)(
     typedRead: beam.BigQueryIO.TypedRead[T],
     table: Table,
