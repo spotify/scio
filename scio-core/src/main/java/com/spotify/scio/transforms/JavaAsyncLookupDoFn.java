@@ -32,7 +32,7 @@ public abstract class JavaAsyncLookupDoFn<A, B, C>
     extends BaseAsyncLookupDoFn<A, B, C, CompletableFuture<B>, BaseAsyncLookupDoFn.Try<B>>
     implements FutureHandlers.Java<B> {
 
-  /** Create a {@link GuavaAsyncLookupDoFn} instance. */
+  /** Create a {@link JavaAsyncLookupDoFn} instance. */
   public JavaAsyncLookupDoFn() {
     super();
   }
