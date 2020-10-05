@@ -288,8 +288,6 @@ object TFSavedExampleInputPredictSigDefSpecifiedFetchOpsJob {
   }
 }
 
-// FIXME: breaking change in Scio 0.10
-@Ignore
 class TensorflowSpec extends PipelineSpec {
   it should "allow saved model prediction with raw inputs and outputs" in {
     val resource = getClass.getResource("/trained_model")
