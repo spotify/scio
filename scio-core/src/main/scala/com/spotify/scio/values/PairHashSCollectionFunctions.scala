@@ -233,5 +233,4 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
   ): SCollection[(K, V)] =
     hashSubtractByKey(rhs.asSetSingletonSideInput)
 
-  
 }
