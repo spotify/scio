@@ -19,7 +19,6 @@ package com.spotify.scio.values
 
 import com.spotify.scio.coders.{BeamCoders, Coder}
 
-
 /**
  * Extra functions available on SCollections of (key, value) pairs for hash based joins
  * through an implicit conversion.

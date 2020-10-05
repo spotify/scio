@@ -27,7 +27,6 @@ import com.spotify.scio.ContextAndArgs
 import com.spotify.scio.io._
 import com.spotify.scio.testing._
 import com.spotify.zoltar.tf.TensorFlowModel
-import org.scalatest.Ignore
 import org.tensorflow._
 import org.tensorflow.example.Example
 
