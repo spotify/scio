@@ -19,7 +19,6 @@ package com.spotify.scio.values
 
 import com.spotify.scio.coders.{BeamCoders, Coder}
 
-import scala.collection.mutable.{ArrayBuffer, Map => MMap}
 
 /**
  * Extra functions available on SCollections of (key, value) pairs for hash based joins
@@ -233,5 +232,4 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
   ): SCollection[(K, V)] =
     hashSubtractByKey(rhs.asSetSingletonSideInput)
 
-  
 }
