@@ -103,61 +103,121 @@ val tensorFlowVersion = "1.15.0"
 val zoltarVersion = "0.5.6"
 val scalaCollectionCompatVersion = "2.2.0"
 
-lazy val mimaSettings = Seq(
-  mimaPreviousArtifacts :=
-    previousVersion(version.value)
-      .filter(_ => publishArtifact.value)
-      .map { pv =>
-        organization.value % (normalizedName.value + "_" + scalaBinaryVersion.value) % pv
-      }
-      .toSet,
-  mimaBinaryIssueFilters ++= Seq()
-)
+ThisBuild / scalafixScalaBinaryVersion := CrossVersion.binaryScalaVersion(scalaVersion.value)
+val excludeLint = SettingKey[Set[Def.KeyedInitialize[_]]]("excludeLintKeys")
+Global / excludeLint := (Global / excludeLint).?.value.getOrElse(Set.empty)
+Global / excludeLint += releaseCrossBuild
+Global / excludeLint += releaseProcess
+Global / excludeLint += sonatypeProfileName
+Global / excludeLint += site / Paradox / sourceManaged
 
 def previousVersion(currentVersion: String): Option[String] = {
   val Version = """(\d+)\.(\d+)\.(\d+).*""".r
   val Version(x, y, z) = currentVersion
-  if (z == "0") None
-  else Some(s"$x.$y.${z.toInt - 1}")
+  if (z == "0") None else Some(s"$x.$y.${z.toInt - 1}")
 }
 
-lazy val formatSettings = Seq(
-  scalafmtOnCompile := false,
-  javafmtOnCompile := false
+lazy val mimaSettings = Def.settings(
+  mimaPreviousArtifacts :=
+    previousVersion(version.value)
+      .filter(_ => publishArtifact.value)
+      .map(organization.value % s"${normalizedName.value}_${scalaBinaryVersion.value}" % _)
+      .toSet
 )
 
-scalafixScalaBinaryVersion in ThisBuild := CrossVersion.binaryScalaVersion(scalaVersion.value)
+lazy val formatSettings = Def.settings(scalafmtOnCompile := false, javafmtOnCompile := false)
 
-val commonSettings = Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
-  organization := "com.spotify",
-  scalaVersion := "2.13.3",
-  crossScalaVersions := Seq("2.12.12", scalaVersion.value),
-  scalacOptions ++= Scalac.commonsOptions.value,
-  Compile / doc / scalacOptions --= Seq("-release", "8"),
-  Compile / doc / scalacOptions ++= Scalac.compileDocOptions.value,
-  javacOptions ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint:unchecked"),
-  javacOptions in (Compile, doc) := Seq("-source", "1.8"),
-  // protobuf-lite is an older subset of protobuf-java and causes issues
-  excludeDependencies += "com.google.protobuf" % "protobuf-lite",
-  resolvers += Resolver.sonatypeRepo("public"),
-  testOptions in Test += Tests.Argument("-oD"),
-  testOptions += Tests.Argument(TestFrameworks.JUnit, "-q", "-v"),
-  testOptions ++= {
-    if (sys.env.contains("SLOW")) {
-      Nil
-    } else {
-      Seq(Tests.Argument(TestFrameworks.ScalaTest, "-l", "org.scalatest.tags.Slow"))
-    }
-  },
-  evictionWarningOptions in update := EvictionWarningOptions.default
-    .withWarnTransitiveEvictions(false),
-  coverageExcludedPackages := (Seq(
-    "com\\.spotify\\.scio\\.examples\\..*",
-    "com\\.spotify\\.scio\\.repl\\..*",
-    "com\\.spotify\\.scio\\.util\\.MultiJoin"
-  ) ++ (2 to 10).map(x => s"com\\.spotify\\.scio\\.sql\\.Query${x}")).mkString(";"),
-  coverageHighlighting := true,
+val commonSettings = Def
+  .settings(
+    organization := "com.spotify",
+    scalaVersion := "2.13.3",
+    crossScalaVersions := Seq("2.12.12", scalaVersion.value),
+    scalacOptions ++= Scalac.commonsOptions.value,
+    Compile / doc / scalacOptions --= Seq("-release", "8"),
+    Compile / doc / scalacOptions ++= Scalac.compileDocOptions.value,
+    javacOptions ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint:unchecked"),
+    javacOptions in (Compile, doc) := Seq("-source", "1.8"),
+    // protobuf-lite is an older subset of protobuf-java and causes issues
+    excludeDependencies += "com.google.protobuf" % "protobuf-lite",
+    resolvers += Resolver.sonatypeRepo("public"),
+    testOptions in Test += Tests.Argument("-oD"),
+    testOptions += Tests.Argument(TestFrameworks.JUnit, "-q", "-v"),
+    testOptions ++= {
+      if (sys.env.contains("SLOW")) {
+        Nil
+      } else {
+        Seq(Tests.Argument(TestFrameworks.ScalaTest, "-l", "org.scalatest.tags.Slow"))
+      }
+    },
+    coverageExcludedPackages := (Seq(
+      "com\\.spotify\\.scio\\.examples\\..*",
+      "com\\.spotify\\.scio\\.repl\\..*",
+      "com\\.spotify\\.scio\\.util\\.MultiJoin"
+    ) ++ (2 to 10).map(x => s"com\\.spotify\\.scio\\.sql\\.Query${x}")).mkString(";"),
+    coverageHighlighting := true,
+    licenses := Seq("Apache 2" -> url("http://www.apache.org/licenses/LICENSE-2.0.txt")),
+    homepage := Some(url("https://github.com/spotify/scio")),
+    scmInfo := Some(
+      ScmInfo(url("https://github.com/spotify/scio"), "scm:git:git@github.com:spotify/scio.git")
+    ),
+    developers := List(
+      Developer(
+        id = "sinisa_lyh",
+        name = "Neville Li",
+        email = "neville.lyh@gmail.com",
+        url = url("https://twitter.com/sinisa_lyh")
+      ),
+      Developer(
+        id = "ravwojdyla",
+        name = "Rafal Wojdyla",
+        email = "ravwojdyla@gmail.com",
+        url = url("https://twitter.com/ravwojdyla")
+      ),
+      Developer(
+        id = "andrewsmartin",
+        name = "Andrew Martin",
+        email = "andrewsmartin.mg@gmail.com",
+        url = url("https://twitter.com/andrew_martin92")
+      ),
+      Developer(
+        id = "fallonfofallon",
+        name = "Fallon Chen",
+        email = "fallon@spotify.com",
+        url = url("https://twitter.com/fallonfofallon")
+      ),
+      Developer(
+        id = "regadas",
+        name = "Filipe Regadas",
+        email = "filiperegadas@gmail.com",
+        url = url("https://twitter.com/regadas")
+      ),
+      Developer(
+        id = "jto",
+        name = "Julien Tournay",
+        email = "julient@spotify.com",
+        url = url("https://twitter.com/skaalf")
+      ),
+      Developer(
+        id = "clairemcginty",
+        name = "Claire McGinty",
+        email = "clairem@spotify.com",
+        url = url("http://github.com/clairemcginty")
+      ),
+      Developer(
+        id = "syodage",
+        name = "Shameera Rathnayaka",
+        email = "shameerayodage@gmail.com",
+        url = url("http://github.com/syodage")
+      )
+    ),
+    mimaSettings,
+    formatSettings
+  )
+
+lazy val publishSettings = Def.settings(
   // Release settings
+  publishMavenStyle := true,
+  publishArtifact in Test := false,
   publishTo := sonatypePublishToBundle.value,
   releaseCrossBuild := true,
   releasePublishArtifactsAction := PgpKeys.publishSigned.value,
@@ -181,64 +241,6 @@ val commonSettings = Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
     commitNextVersion,
     pushChanges
   ),
-  publishMavenStyle := true,
-  publishArtifact in Test := false,
-  sonatypeProfileName := "com.spotify",
-  licenses := Seq("Apache 2" -> url("http://www.apache.org/licenses/LICENSE-2.0.txt")),
-  homepage := Some(url("https://github.com/spotify/scio")),
-  scmInfo := Some(
-    ScmInfo(url("https://github.com/spotify/scio"), "scm:git:git@github.com:spotify/scio.git")
-  ),
-  developers := List(
-    Developer(
-      id = "sinisa_lyh",
-      name = "Neville Li",
-      email = "neville.lyh@gmail.com",
-      url = url("https://twitter.com/sinisa_lyh")
-    ),
-    Developer(
-      id = "ravwojdyla",
-      name = "Rafal Wojdyla",
-      email = "ravwojdyla@gmail.com",
-      url = url("https://twitter.com/ravwojdyla")
-    ),
-    Developer(
-      id = "andrewsmartin",
-      name = "Andrew Martin",
-      email = "andrewsmartin.mg@gmail.com",
-      url = url("https://twitter.com/andrew_martin92")
-    ),
-    Developer(
-      id = "fallonfofallon",
-      name = "Fallon Chen",
-      email = "fallon@spotify.com",
-      url = url("https://twitter.com/fallonfofallon")
-    ),
-    Developer(
-      id = "regadas",
-      name = "Filipe Regadas",
-      email = "filiperegadas@gmail.com",
-      url = url("https://twitter.com/regadas")
-    ),
-    Developer(
-      id = "jto",
-      name = "Julien Tournay",
-      email = "julient@spotify.com",
-      url = url("https://twitter.com/skaalf")
-    ),
-    Developer(
-      id = "clairemcginty",
-      name = "Claire McGinty",
-      email = "clairem@spotify.com",
-      url = url("http://github.com/clairemcginty")
-    ),
-    Developer(
-      id = "syodage",
-      name = "Shameera Rathnayaka",
-      email = "shameerayodage@gmail.com",
-      url = url("http://github.com/syodage")
-    )
-  ),
   credentials ++= (for {
     username <- sys.env.get("SONATYPE_USERNAME")
     password <- sys.env.get("SONATYPE_PASSWORD")
@@ -248,11 +250,12 @@ val commonSettings = Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
     username,
     password
   )).toSeq,
-  buildInfoKeys := Seq[BuildInfoKey](scalaVersion, version, "beamVersion" -> beamVersion),
-  buildInfoPackage := "com.spotify.scio"
-) ++ mimaSettings ++ formatSettings
+  Sonatype.sonatypeSettings,
+  sonatypeProfileName := "com.spotify"
+)
 
-lazy val itSettings = Defaults.itSettings ++ Seq(
+lazy val itSettings = Def.settings(
+  Defaults.itSettings,
   IntegrationTest / classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.Flat,
   // exclude all sources if we don't have GCP credentials
   (excludeFilter in unmanagedSources) in IntegrationTest := {
@@ -261,17 +264,11 @@ lazy val itSettings = Defaults.itSettings ++ Seq(
     } else {
       HiddenFileFilter || "*.scala"
     }
-  }
-) ++
-  inConfig(IntegrationTest)(run / fork := true) ++
-  inConfig(IntegrationTest)(BloopDefaults.configSettings) ++
-  inConfig(IntegrationTest)(scalafmtConfigSettings) ++
+  },
+  inConfig(IntegrationTest)(run / fork := true),
+  inConfig(IntegrationTest)(BloopDefaults.configSettings),
+  inConfig(IntegrationTest)(scalafmtConfigSettings),
   inConfig(IntegrationTest)(scalafixConfigSettings(IntegrationTest))
-
-lazy val noPublishSettings = Seq(
-  publish := {},
-  publishLocal := {},
-  publishArtifact := false
 )
 
 lazy val assemblySettings = Seq(
@@ -382,8 +379,7 @@ def splitTests(tests: Seq[TestDefinition], filter: Seq[String]) = {
 
 lazy val root: Project = Project("scio", file("."))
   .settings(commonSettings)
-  .settings(noPublishSettings)
-  .settings(aggregate in assembly := false)
+  .settings(publish / skip := true, assembly / aggregate := false)
   .aggregate(
     `scio-core`,
     `scio-test`,
@@ -408,6 +404,7 @@ lazy val root: Project = Project("scio", file("."))
 lazy val `scio-core`: Project = project
   .in(file("scio-core"))
   .settings(commonSettings)
+  .settings(publishSettings)
   .settings(macroSettings)
   .settings(itSettings)
   .settings(
@@ -467,7 +464,9 @@ lazy val `scio-core`: Project = project
       "org.typelevel" %% "algebra" % algebraVersion,
       "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
       "com.propensive" %% "magnolia" % magnoliaVersion
-    )
+    ),
+    buildInfoKeys := Seq[BuildInfoKey](scalaVersion, version, "beamVersion" -> beamVersion),
+    buildInfoPackage := "com.spotify.scio"
   )
   .dependsOn(
     `scio-schemas` % "test->test",
@@ -503,6 +502,7 @@ lazy val `scio-sql`: Project = Project(
 lazy val `scio-test`: Project = project
   .in(file("scio-test"))
   .settings(commonSettings)
+  .settings(publishSettings)
   .settings(itSettings)
   .settings(macroSettings)
   .settings(
@@ -558,6 +558,7 @@ lazy val `scio-test`: Project = project
 lazy val `scio-macros`: Project = project
   .in(file("scio-macros"))
   .settings(commonSettings)
+  .settings(publishSettings)
   .settings(macroSettings)
   .settings(
     description := "Scio macros",
@@ -573,6 +574,7 @@ lazy val `scio-macros`: Project = project
 lazy val `scio-avro`: Project = project
   .in(file("scio-avro"))
   .settings(commonSettings)
+  .settings(publishSettings)
   .settings(macroSettings)
   .settings(itSettings)
   .settings(
@@ -603,6 +605,7 @@ lazy val `scio-avro`: Project = project
 lazy val `scio-google-cloud-platform`: Project = project
   .in(file("scio-google-cloud-platform"))
   .settings(commonSettings)
+  .settings(publishSettings)
   .settings(macroSettings)
   .settings(itSettings)
   .settings(beamRunnerSettings)
@@ -662,6 +665,7 @@ lazy val `scio-google-cloud-platform`: Project = project
 lazy val `scio-cassandra3`: Project = project
   .in(file("scio-cassandra/cassandra3"))
   .settings(commonSettings)
+  .settings(publishSettings)
   .settings(itSettings)
   .settings(
     description := "Scio add-on for Apache Cassandra 3.x",
@@ -692,6 +696,7 @@ lazy val `scio-cassandra3`: Project = project
 lazy val `scio-elasticsearch6`: Project = project
   .in(file("scio-elasticsearch/es6"))
   .settings(commonSettings)
+  .settings(publishSettings)
   .settings(
     description := "Scio add-on for writing to Elasticsearch",
     libraryDependencies ++= Seq(
@@ -713,6 +718,7 @@ lazy val `scio-elasticsearch6`: Project = project
 lazy val `scio-elasticsearch7`: Project = project
   .in(file("scio-elasticsearch/es7"))
   .settings(commonSettings)
+  .settings(publishSettings)
   .settings(
     description := "Scio add-on for writing to Elasticsearch",
     libraryDependencies ++= Seq(
@@ -737,6 +743,7 @@ lazy val `scio-elasticsearch7`: Project = project
 lazy val `scio-extra`: Project = project
   .in(file("scio-extra"))
   .settings(commonSettings)
+  .settings(publishSettings)
   .settings(itSettings)
   .settings(macroSettings)
   .settings(
@@ -787,6 +794,7 @@ lazy val `scio-extra`: Project = project
 lazy val `scio-jdbc`: Project = project
   .in(file("scio-jdbc"))
   .settings(commonSettings)
+  .settings(publishSettings)
   .settings(
     description := "Scio add-on for JDBC",
     libraryDependencies ++= Seq(
@@ -804,6 +812,7 @@ val ensureSourceManaged = taskKey[Unit]("ensureSourceManaged")
 lazy val `scio-parquet`: Project = project
   .in(file("scio-parquet"))
   .settings(commonSettings)
+  .settings(publishSettings)
   .settings(
     // change annotation processor output directory so IntelliJ can pick them up
     ensureSourceManaged := IO.createDirectory(sourceManaged.value / "main"),
@@ -842,6 +851,7 @@ lazy val `scio-parquet`: Project = project
 lazy val `scio-tensorflow`: Project = project
   .in(file("scio-tensorflow"))
   .settings(commonSettings)
+  .settings(publishSettings)
   .settings(itSettings)
   .settings(protobufSettings)
   .settings(
@@ -879,10 +889,10 @@ lazy val `scio-tensorflow`: Project = project
 lazy val `scio-schemas`: Project = project
   .in(file("scio-schemas"))
   .settings(commonSettings)
-  .settings(noPublishSettings)
   .settings(protobufSettings)
   .settings(
     description := "Avro/Proto schemas for testing",
+    publish / skip := true,
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
       "org.apache.avro" % "avro" % avroVersion
@@ -899,11 +909,11 @@ lazy val `scio-schemas`: Project = project
 lazy val `scio-examples`: Project = project
   .in(file("scio-examples"))
   .settings(commonSettings)
-  .settings(noPublishSettings)
   .settings(soccoSettings)
   .settings(beamRunnerSettings)
   .settings(macroSettings)
   .settings(
+    publish / skip := true,
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
@@ -954,7 +964,6 @@ lazy val `scio-examples`: Project = project
       }
     },
     sources in doc in Compile := List(),
-    run / classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.Flat,
     Test / classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.Flat,
     Test / testGrouping := splitTests(
       (Test / definedTests).value,
@@ -977,6 +986,8 @@ lazy val `scio-examples`: Project = project
 lazy val `scio-repl`: Project = project
   .in(file("scio-repl"))
   .settings(commonSettings)
+  .settings(publishSettings)
+  .settings(assemblySettings)
   .settings(macroSettings)
   .settings(
     scalacOptions --= Seq("-release", "8"),
@@ -1019,7 +1030,6 @@ lazy val `scio-jmh`: Project = project
   .in(file("scio-jmh"))
   .settings(commonSettings)
   .settings(macroSettings)
-  .settings(noPublishSettings)
   .settings(
     description := "Scio JMH Microbenchmarks",
     sourceDirectory in Jmh := (sourceDirectory in Test).value,
@@ -1031,7 +1041,8 @@ lazy val `scio-jmh`: Project = project
       "org.hamcrest" % "hamcrest-core" % hamcrestVersion % "test",
       "org.hamcrest" % "hamcrest-library" % hamcrestVersion % "test",
       "org.slf4j" % "slf4j-nop" % slf4jVersion
-    )
+    ),
+    publish / skip := true
   )
   .dependsOn(
     `scio-core`,
@@ -1042,6 +1053,7 @@ lazy val `scio-jmh`: Project = project
 lazy val `scio-smb`: Project = project
   .in(file("scio-smb"))
   .settings(commonSettings)
+  .settings(publishSettings)
   .settings(itSettings)
   .settings(beamRunnerSettings)
   .settings(
