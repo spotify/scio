@@ -21,6 +21,7 @@ import com.spotify.scio.ScioContext
 import com.spotify.scio.io.{EmptyTap, EmptyTapOf, ScioIO, Tap, TapT}
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.io.redis.{RedisConnectionConfiguration, RedisIO}
+import org.apache.beam.sdk.values.KV
 
 import scala.jdk.CollectionConverters._
 
@@ -30,13 +31,6 @@ sealed trait RedisIO[T] extends ScioIO[T] {
 
 case class RedisConnectionOptions(host: String, port: Int, auth: Option[String], useSsl: Boolean)
 
-sealed trait RedisValueType extends Serializable
-
-object RedisValueType {
-  final case object String extends RedisValueType
-  final case object Binary extends RedisValueType
-}
-
 final case class RedisRead(connectionOptions: RedisConnectionOptions, keyPattern: String)
   extends RedisIO[(String, String)] {
 
@@ -44,7 +38,7 @@ final case class RedisRead(connectionOptions: RedisConnectionOptions, keyPattern
   type WriteP = Nothing
 
   override def testId: String =
-    s"RedisIO(${connectionOptions.host}\t${connectionOptions.port}\t$keyPattern)"
+    s"RedisReadIO(${connectionOptions.host}\t${connectionOptions.port}\t$keyPattern)"
 
   protected def write(data: SCollection[(String, String)], params: WriteP): Tap[Nothing] =
     throw new UnsupportedOperationException("RedisRead is read-only")
@@ -61,25 +55,67 @@ final case class RedisRead(connectionOptions: RedisConnectionOptions, keyPattern
 
     connectionOptions.auth.foreach(read.withAuth)
 
-    sc.applyTransform(read).map(kv => kv.getValue -> kv.getKey)
+    sc.applyTransform(read).map(kv => kv.getKey -> kv.getValue)
   }
 
   def tap(read: RedisRead.ReadParam): Tap[Nothing] = EmptyTap
 }
 
 object RedisRead {
-
   object ReadParam {
     private[redis] val DefaultBatchSize: Int = 1000
     private[redis] val DefaultTimeout: Int = 0
     private[redis] val DefaultOutputParallelization: Boolean = true
-    private[redis] val DefaultAuth: Option[String] = None
-    private[redis] val DefaultUseSsl: Boolean = false
   }
 
   final case class ReadParam private (batchSize: Int = ReadParam.DefaultBatchSize,
                                       timeout: Int = ReadParam.DefaultTimeout,
                                       outputParallelization: Boolean = ReadParam
                                         .DefaultOutputParallelization)
+}
+
+final case class RedisWrite(connectionOptions: RedisConnectionOptions,
+                            writeMethod: RedisIO.Write.Method,
+                            expireTimeMillis: Option[Long]) extends RedisIO[(String, String)] {
+
+  type ReadP = Nothing
+  type WriteP = RedisWrite.WriteParam
+
+  def tap(params: ReadP): Tap[Nothing] = EmptyTap
+
+  override def testId: String =
+    s"RedisWriteIO(${connectionOptions.host}\t${connectionOptions.port}\t$writeMethod)"
+
+  protected def read(sc: ScioContext, params: ReadP): SCollection[(String, String)] =
+    throw new UnsupportedOperationException(
+      "RedisWrite is write-only")
+
+  protected def write(data: SCollection[(String, String)], params: WriteP): Tap[Nothing] = {
+    val sink = RedisIO
+      .write()
+        .withEndpoint(connectionOptions.host, connectionOptions.port)
+        .withTimeout(params.timeout)
+        .withMethod(writeMethod)
+
+    connectionOptions.auth.foreach(sink.withAuth)
+    expireTimeMillis.foreach(t => sink.withExpireTime(t))
+
+    data.transform_("Redis Write") { coll =>
+      coll
+        .map { case (k, v) => KV.of(k, v) }
+        .applyInternal(sink)
+    }
+    EmptyTap
+  }
+
+}
+
+object RedisWrite {
+
+  object WriteParam {
+    private[redis] val DefaultTimeout: Int = 0
+  }
+
+  final case class WriteParam private (timeout: Int = WriteParam.DefaultTimeout)
 
 }

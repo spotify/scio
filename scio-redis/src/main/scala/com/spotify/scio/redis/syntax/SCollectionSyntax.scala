@@ -17,25 +17,24 @@
 
 package com.spotify.scio.redis.syntax
 
-import com.spotify.scio.ScioContext
-import com.spotify.scio.redis.RedisRead.ReadParam
+import com.spotify.scio.io.ClosedTap
+import com.spotify.scio.redis.{RedisConnectionOptions, RedisWrite}
+import com.spotify.scio.redis.RedisWrite.WriteParam
 import com.spotify.scio.values.SCollection
-import com.spotify.scio.redis.{RedisConnectionOptions, RedisRead}
+import org.apache.beam.sdk.io.redis.RedisIO
 
-final class ScioContextSyntax(private val sc: ScioContext) extends AnyVal {
+final class SCollectionSyntax(private val self: SCollection[(String, String)]) {
 
-  def redis(host: String,
-            port: Int,
-            keyPattern: String,
-            auth: Option[String] = None,
-            useSsl: Boolean = false,
-            batchSize: Int = ReadParam.DefaultBatchSize,
-            timeout: Int = ReadParam.DefaultTimeout,
-            outputParallelization: Boolean = ReadParam.DefaultOutputParallelization)
-  : SCollection[(String, String)] = {
+  def saveAsRedis(host: String,
+                  port: Int,
+                  writeMethod: RedisIO.Write.Method,
+                  auth: Option[String] = None,
+                  useSsl: Boolean = false,
+                  expireTimeMillis: Option[Long] = None,
+                  timeout: Int = WriteParam.DefaultTimeout): ClosedTap[Nothing] = {
     val connectionOptions = RedisConnectionOptions(host, port, auth, useSsl)
-    val params = ReadParam(batchSize, timeout, outputParallelization)
-    sc.read(RedisRead(connectionOptions, keyPattern))(params)
+    val params = WriteParam(timeout)
+    self.write(RedisWrite(connectionOptions, writeMethod, expireTimeMillis))(params)
   }
 
 }

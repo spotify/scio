@@ -17,11 +17,15 @@
 
 package com.spotify.scio
 
-import com.spotify.scio.redis.syntax.ScioContextSyntax
+import com.spotify.scio.redis.syntax.{SCollectionSyntax, ScioContextSyntax}
+import com.spotify.scio.values.SCollection
 
 package object redis {
 
   implicit def redisScioContextSyntax(sc: ScioContext): ScioContextSyntax =
     new ScioContextSyntax(sc)
+
+  implicit def redisSCollectionSyntax(coll: SCollection[(String, String)]): SCollectionSyntax =
+    new SCollectionSyntax(coll)
 
 }
