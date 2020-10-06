@@ -54,9 +54,13 @@ object RedisWriteStringsExample {
     val redisHost = args("redisHost")
     val redisPort = args.int("redisPort")
 
-    sc.parallelize(Iterable(
-      "key1" -> "1", "key2" -> "2", "key3" -> "3"
-    )).saveAsRedis(redisHost, redisPort, RedisIO.Write.Method.APPEND)
+    sc.parallelize(
+      Iterable(
+        "key1" -> "1",
+        "key2" -> "2",
+        "key3" -> "3"
+      )
+    ).saveAsRedis(redisHost, redisPort, RedisIO.Write.Method.APPEND)
 
     sc.run()
     ()
