@@ -125,7 +125,6 @@ sealed trait AvroIO[T] extends ScioIO[T] {
   final override val tapT: TapT.Aux[T, T] = TapOf[T]
 
   protected def avroOut[U](
-    sc: SCollection[T],
     write: beam.AvroIO.Write[U],
     path: String,
     numShards: Int,
@@ -166,7 +165,7 @@ final case class SpecificRecordIO[T <: SpecificRecord: ClassTag: Coder](path: St
     val cls = ScioUtil.classOf[T]
     val t = beam.AvroIO.write(cls)
     data.applyInternal(
-      avroOut(data, t, path, params.numShards, params.suffix, params.codec, params.metadata)
+      avroOut(t, path, params.numShards, params.suffix, params.codec, params.metadata)
     )
     tap(())
   }
@@ -199,7 +198,7 @@ final case class GenericRecordIO(path: String, schema: Schema) extends AvroIO[Ge
   ): Tap[GenericRecord] = {
     val t = beam.AvroIO.writeGenericRecords(schema)
     data.applyInternal(
-      avroOut(data, t, path, params.numShards, params.suffix, params.codec, params.metadata)
+      avroOut(t, path, params.numShards, params.suffix, params.codec, params.metadata)
     )
     tap(())
   }
@@ -261,7 +260,7 @@ object AvroIO {
     val suffix: String = _suffix + ".avro"
   }
 
-  @inline final def apply[T](id: String, schema: Schema = null): AvroIO[T] =
+  @inline final def apply[T](id: String): AvroIO[T] =
     new AvroIO[T] with TestIO[T] {
       override def testId: String = s"AvroIO($id)"
     }
@@ -275,7 +274,6 @@ object AvroTyped {
     final override val tapT: TapT.Aux[T, T] = TapOf[T]
 
     private def typedAvroOut[U](
-      sc: SCollection[T],
       write: beam.AvroIO.TypedWrite[U, Void, GenericRecord],
       path: String,
       numShards: Int,
@@ -318,7 +316,7 @@ object AvroTyped {
         })
         .withSchema(avroT.schema)
       data.applyInternal(
-        typedAvroOut(data, t, path, params.numShards, params.suffix, params.codec, params.metadata)
+        typedAvroOut(t, path, params.numShards, params.suffix, params.codec, params.metadata)
       )
       tap(())
     }
