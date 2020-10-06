@@ -780,10 +780,10 @@ class ScioContext private[scio] (
    * @param io     an implementation of `ScioIO[T]` trait
    * @param params configurations need to pass to perform underline read implementation
    */
-  def read[T: Coder](io: ScioIO[T])(params: io.ReadP): SCollection[T] =
+  def read[T](io: ScioIO[T])(params: io.ReadP): SCollection[T] =
     io.readWithContext(this, params)
 
-  def read[T: Coder](io: ScioIO[T] { type ReadP = Unit }): SCollection[T] =
+  def read[T](io: ScioIO[T] { type ReadP = Unit }): SCollection[T] =
     io.readWithContext(this, ())
 
   // =======================================================================

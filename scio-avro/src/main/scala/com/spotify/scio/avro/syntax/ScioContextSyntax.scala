@@ -44,7 +44,7 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
     self.read(ObjectFileIO[T](path))
 
   def avroFile(path: String, schema: Schema): SCollection[GenericRecord] =
-    self.read(GenericRecordIO(path, schema))(Coder.avroGenericRecordCoder(schema))
+    self.read(GenericRecordIO(path, schema))
 
   /**
    * Get an SCollection of type [[T]] for data stored in Avro format after applying
