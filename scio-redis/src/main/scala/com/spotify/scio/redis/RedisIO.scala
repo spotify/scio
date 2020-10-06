@@ -77,7 +77,6 @@ object RedisRead {
 final case class RedisWrite(connectionOptions: RedisConnectionOptions,
                             writeMethod: RedisIO.Write.Method,
                             expireTimeMillis: Option[Long]) extends RedisIO[(String, String)] {
-
   type ReadP = Nothing
   type WriteP = RedisWrite.WriteParam
 
@@ -107,15 +106,12 @@ final case class RedisWrite(connectionOptions: RedisConnectionOptions,
     }
     EmptyTap
   }
-
 }
 
 object RedisWrite {
-
   object WriteParam {
     private[redis] val DefaultTimeout: Int = 0
   }
 
   final case class WriteParam private (timeout: Int = WriteParam.DefaultTimeout)
-
 }
