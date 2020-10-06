@@ -29,8 +29,7 @@ object RedisReadStringsExample {
 
     sc.redis(redisHost, redisPort, keyPattern)
       .debug()
-      //.saveAsTextFile(args("output"))
-
+      .saveAsTextFile(args("output"))
 
     sc.run()
     ()
@@ -98,5 +97,4 @@ object RedisWriteStringsStreamingExample {
     val result = sc.run()
     exampleUtils.waitToFinish(result.pipelineResult)
   }
-
 }
