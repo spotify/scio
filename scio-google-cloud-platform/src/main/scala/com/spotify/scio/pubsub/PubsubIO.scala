@@ -26,6 +26,7 @@ import com.spotify.scio.pubsub.PubsubIO.Subscription
 import com.spotify.scio.pubsub.PubsubIO.Topic
 import com.spotify.scio.values.SCollection
 import com.spotify.scio.io._
+import com.spotify.scio.pubsub.coders._
 import org.apache.avro.specific.SpecificRecordBase
 import org.apache.beam.sdk.io.gcp.{pubsub => beam}
 import org.apache.beam.sdk.util.CoderUtils
