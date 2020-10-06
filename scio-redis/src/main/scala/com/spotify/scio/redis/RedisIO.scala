@@ -32,7 +32,7 @@ sealed trait RedisIO[T] extends ScioIO[T] {
 case class RedisConnectionOptions(host: String, port: Int, auth: Option[String], useSsl: Boolean)
 
 final case class RedisRead(connectionOptions: RedisConnectionOptions, keyPattern: String)
-  extends RedisIO[(String, String)] {
+    extends RedisIO[(String, String)] {
 
   type ReadP = RedisRead.ReadParam
   type WriteP = Nothing
@@ -43,8 +43,10 @@ final case class RedisRead(connectionOptions: RedisConnectionOptions, keyPattern
   protected def write(data: SCollection[(String, String)], params: WriteP): Tap[Nothing] =
     throw new UnsupportedOperationException("RedisRead is read-only")
 
-  protected def read(sc: ScioContext, params: RedisRead.ReadParam)
-  : SCollection[(String, String)] = {
+  protected def read(
+    sc: ScioContext,
+    params: RedisRead.ReadParam
+  ): SCollection[(String, String)] = {
     val read = RedisIO
       .read()
       .withKeyPattern(keyPattern)
@@ -68,15 +70,18 @@ object RedisRead {
     private[redis] val DefaultOutputParallelization: Boolean = true
   }
 
-  final case class ReadParam private (batchSize: Int = ReadParam.DefaultBatchSize,
-                                      timeout: Int = ReadParam.DefaultTimeout,
-                                      outputParallelization: Boolean = ReadParam
-                                        .DefaultOutputParallelization)
+  final case class ReadParam private (
+    batchSize: Int = ReadParam.DefaultBatchSize,
+    timeout: Int = ReadParam.DefaultTimeout,
+    outputParallelization: Boolean = ReadParam.DefaultOutputParallelization
+  )
 }
 
-final case class RedisWrite(connectionOptions: RedisConnectionOptions,
-                            writeMethod: RedisIO.Write.Method,
-                            expireTimeMillis: Option[Long]) extends RedisIO[(String, String)] {
+final case class RedisWrite(
+  connectionOptions: RedisConnectionOptions,
+  writeMethod: RedisIO.Write.Method,
+  expireTimeMillis: Option[Long]
+) extends RedisIO[(String, String)] {
   type ReadP = Nothing
   type WriteP = RedisWrite.WriteParam
 
@@ -86,15 +91,14 @@ final case class RedisWrite(connectionOptions: RedisConnectionOptions,
     s"RedisWriteIO(${connectionOptions.host}\t${connectionOptions.port}\t$writeMethod)"
 
   protected def read(sc: ScioContext, params: ReadP): SCollection[(String, String)] =
-    throw new UnsupportedOperationException(
-      "RedisWrite is write-only")
+    throw new UnsupportedOperationException("RedisWrite is write-only")
 
   protected def write(data: SCollection[(String, String)], params: WriteP): Tap[Nothing] = {
     val sink = RedisIO
       .write()
-        .withEndpoint(connectionOptions.host, connectionOptions.port)
-        .withTimeout(params.timeout)
-        .withMethod(writeMethod)
+      .withEndpoint(connectionOptions.host, connectionOptions.port)
+      .withTimeout(params.timeout)
+      .withMethod(writeMethod)
 
     connectionOptions.auth.foreach(sink.withAuth)
     expireTimeMillis.foreach(t => sink.withExpireTime(t))

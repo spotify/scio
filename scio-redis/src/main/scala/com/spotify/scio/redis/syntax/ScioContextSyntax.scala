@@ -24,15 +24,16 @@ import com.spotify.scio.redis.{RedisConnectionOptions, RedisRead}
 
 final class ScioContextSyntax(private val sc: ScioContext) extends AnyVal {
 
-  def redis(host: String,
-            port: Int,
-            keyPattern: String,
-            auth: Option[String] = None,
-            useSsl: Boolean = false,
-            batchSize: Int = ReadParam.DefaultBatchSize,
-            timeout: Int = ReadParam.DefaultTimeout,
-            outputParallelization: Boolean = ReadParam.DefaultOutputParallelization)
-  : SCollection[(String, String)] = {
+  def redis(
+    host: String,
+    port: Int,
+    keyPattern: String,
+    auth: Option[String] = None,
+    useSsl: Boolean = false,
+    batchSize: Int = ReadParam.DefaultBatchSize,
+    timeout: Int = ReadParam.DefaultTimeout,
+    outputParallelization: Boolean = ReadParam.DefaultOutputParallelization
+  ): SCollection[(String, String)] = {
     val connectionOptions = RedisConnectionOptions(host, port, auth, useSsl)
     val params = ReadParam(batchSize, timeout, outputParallelization)
     sc.read(RedisRead(connectionOptions, keyPattern))(params)
