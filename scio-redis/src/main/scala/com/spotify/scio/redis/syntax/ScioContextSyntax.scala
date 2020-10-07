@@ -22,7 +22,7 @@ import com.spotify.scio.redis.RedisRead.ReadParam
 import com.spotify.scio.values.SCollection
 import com.spotify.scio.redis.{RedisConnectionOptions, RedisRead}
 
-final class ScioContextSyntax(private val sc: ScioContext) extends AnyVal {
+final class ScioContextOps(private val sc: ScioContext) extends AnyVal {
 
   def redis(
     connectionOptions: RedisConnectionOptions,
@@ -34,4 +34,8 @@ final class ScioContextSyntax(private val sc: ScioContext) extends AnyVal {
     sc.read(RedisRead(connectionOptions, keyPattern))(params)
   }
 
+}
+
+trait ScioContextSyntax {
+  implicit def redisScioContextOps(sc: ScioContext): ScioContextOps = new ScioContextOps(sc)
 }

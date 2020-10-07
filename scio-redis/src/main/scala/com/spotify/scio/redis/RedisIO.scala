@@ -38,7 +38,7 @@ case class RedisConnectionOptions(
 
 object RedisConnectionOptions {
 
-  def toConnectionConfig(
+  private[redis] def toConnectionConfig(
     connectionOptions: RedisConnectionOptions
   ): RedisConnectionConfiguration = {
     var config = RedisConnectionConfiguration

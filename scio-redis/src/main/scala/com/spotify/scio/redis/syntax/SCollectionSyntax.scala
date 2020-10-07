@@ -24,7 +24,7 @@ import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.io.redis.RedisIO
 import org.joda.time.Duration
 
-final class SCollectionSyntax(private val self: SCollection[(String, String)]) {
+final class SCollectionRedisOps(private val self: SCollection[(String, String)]) {
 
   def saveAsRedis(
     connectionOptions: RedisConnectionOptions,
@@ -35,4 +35,9 @@ final class SCollectionSyntax(private val self: SCollection[(String, String)]) {
     self.write(RedisWrite(connectionOptions, writeMethod))(params)
   }
 
+}
+
+trait SCollectionSyntax {
+  implicit def redisSCollectionOps(coll: SCollection[(String, String)]): SCollectionRedisOps =
+    new SCollectionRedisOps(coll)
 }
