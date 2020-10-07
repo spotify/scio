@@ -47,7 +47,6 @@ import scala.jdk.CollectionConverters._
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryAvroUtilsWrapper
-import shapeless.labelled
 
 private object Reads {
   private[this] val cache = new ConcurrentHashMap[ScioContext, BigQuery]()
