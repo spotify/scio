@@ -19,6 +19,7 @@ package com.spotify.scio.values
 
 import java.io.PrintStream
 import java.nio.file.Files
+import java.util.concurrent.Semaphore
 
 import com.google.api.client.util.Charsets
 import com.spotify.scio.testing.PipelineSpec
@@ -28,12 +29,7 @@ import com.twitter.algebird.{Aggregator, Semigroup}
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
 import org.apache.beam.sdk.transforms.{Count, DoFn, GroupByKey, ParDo}
 import org.apache.beam.sdk.transforms.windowing.PaneInfo.Timing
-import org.apache.beam.sdk.transforms.windowing.{
-  BoundedWindow,
-  GlobalWindow,
-  IntervalWindow,
-  PaneInfo
-}
+import org.apache.beam.sdk.transforms.windowing.{BoundedWindow, GlobalWindow, IntervalWindow, PaneInfo}
 import org.apache.beam.sdk.values.KV
 import org.joda.time.{DateTimeConstants, Duration, Instant}
 
@@ -41,6 +37,7 @@ import scala.collection.mutable
 import scala.jdk.CollectionConverters._
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.schemas.Schema
+import com.spotify.scio.transforms.DoFnWithResource.ResourceType
 
 class SCollectionTest extends PipelineSpec {
   "SCollection" should "support applyTransform()" in {
@@ -812,4 +809,63 @@ class SCollectionTest extends PipelineSpec {
     }
   }
 
+  it should "support filter with resource" in {
+    runWithContext { sc =>
+      val p =
+        sc.parallelize(Seq(1, 2, 3, 4, 5))
+          .filterWithResource(new Semaphore(10, true), ResourceType.PER_INSTANCE) {
+            (r, v) =>
+              r.acquire()
+              r.release()
+              v % 2 == 0
+          }
+      p should containInAnyOrder(Seq(2, 4))
+    }
+  }
+
+  it should "support flat map with resource" in {
+    runWithContext { sc =>
+      val p = sc
+        .parallelize(Seq("a b c", "d e", "f"))
+        .flatMapWithResource(new Semaphore(10, true), ResourceType.PER_INSTANCE) {
+          (r, v) =>
+            r.acquire()
+            r.release()
+            v.split(" ")
+        }
+      p should containInAnyOrder(Seq("a", "b", "c", "d", "e", "f"))
+    }
+  }
+
+  it should "support map with resource" in {
+    runWithContext { sc =>
+      val p = sc
+        .parallelize(Seq("1", "2", "3"))
+        .mapWithResource(new Semaphore(10, true), ResourceType.PER_INSTANCE) {
+          (r, v) =>
+            r.acquire()
+            r.release()
+            v.toInt
+        }
+      p should containInAnyOrder(Seq(1, 2, 3))
+    }
+  }
+
+  it should "support collect with resource" in {
+    runWithContext { sc =>
+      val records = Seq(
+        ("test1", 1),
+        ("test2", 2),
+        ("test3", 3)
+      )
+      val p = sc.parallelize(records)
+        .collectWithResource(new Semaphore(10, true), ResourceType.PER_INSTANCE) {
+          case (r, ("test2", v)) =>
+            r.acquire()
+            r.release()
+            2 * v
+      }
+      p should containSingleValue(4)
+    }
+  }
 }
