@@ -17,7 +17,7 @@
 
 package com.spotify.scio.extra.hll
 
-import com.spotify.scio.coders.Coder
+import com.spotify.scio.coders.{BeamCoders, Coder}
 import com.spotify.scio.estimators.ApproxDistinctCounter
 import com.spotify.scio.util.TupleFunctions._
 import com.spotify.scio.values.SCollection
@@ -52,12 +52,14 @@ package object zetasketch {
 
     override def estimateDistinctCountPerKey[K](
       in: SCollection[(K, Int)]
-    )(implicit koder: Coder[K], voder: Coder[Int]): SCollection[(K, Long)] =
+    ): SCollection[(K, Long)] = {
+      implicit val (keyCoder, _): (Coder[K], Coder[Int]) = BeamCoders.getTupleCoders(in)
       in.mapValues(int2Integer)
         .toKV
         .applyTransform(HllCount.Init.forIntegers().withPrecision(p).perKey())
         .applyTransform(HllCount.Extract.perKey())
         .map(klToTuple)
+    }
   }
 
   /**
@@ -86,12 +88,14 @@ package object zetasketch {
 
     override def estimateDistinctCountPerKey[K](
       in: SCollection[(K, Long)]
-    )(implicit koder: Coder[K], voder: Coder[Long]): SCollection[(K, Long)] =
+    ): SCollection[(K, Long)] = {
+      implicit val (keyCoder, _): (Coder[K], Coder[Long]) = BeamCoders.getTupleCoders(in)
       in.mapValues(long2Long)
         .toKV
         .applyTransform(HllCount.Init.forLongs().withPrecision(p).perKey())
         .applyTransform(HllCount.Extract.perKey())
         .map(klToTuple)
+    }
   }
 
   /**
@@ -119,11 +123,13 @@ package object zetasketch {
 
     override def estimateDistinctCountPerKey[K](
       in: SCollection[(K, String)]
-    )(implicit koder: Coder[K], voder: Coder[String]): SCollection[(K, Long)] =
+    ): SCollection[(K, Long)] = {
+      implicit val (keyCoder, _): (Coder[K], Coder[String]) = BeamCoders.getTupleCoders(in)
       in.toKV
         .applyTransform(HllCount.Init.forStrings().withPrecision(p).perKey())
         .applyTransform(HllCount.Extract.perKey())
         .map(klToTuple)
+    }
   }
 
   /**
@@ -151,11 +157,14 @@ package object zetasketch {
 
     override def estimateDistinctCountPerKey[K](
       in: SCollection[(K, Array[Byte])]
-    )(implicit koder: Coder[K], voder: Coder[Array[Byte]]): SCollection[(K, Long)] =
+    ): SCollection[(K, Long)] = {
+      implicit val (keyCoder, _): (Coder[K], Coder[Array[Byte]]) =
+        BeamCoders.getTupleCoders(in)
       in.toKV
         .applyTransform(HllCount.Init.forBytes().withPrecision(p).perKey())
         .applyTransform(HllCount.Extract.perKey())
         .map(klToTuple)
+    }
 
   }
 

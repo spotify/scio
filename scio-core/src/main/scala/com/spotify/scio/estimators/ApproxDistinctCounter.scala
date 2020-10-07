@@ -17,7 +17,7 @@
 
 package com.spotify.scio.estimators
 
-import com.spotify.scio.coders.{Coder, CoderMaterializer}
+import com.spotify.scio.coders.{BeamCoders, Coder, CoderMaterializer}
 import com.spotify.scio.util.TupleFunctions._
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.{transforms => beam}
@@ -41,9 +41,7 @@ trait ApproxDistinctCounter[T] {
    * Approximate distinct element per each key in the given key value SCollection.
    * This will output estimated distinct count per each unique key.
    */
-  def estimateDistinctCountPerKey[K](
-    in: SCollection[(K, T)]
-  )(implicit koder: Coder[K], voder: Coder[T]): SCollection[(K, Long)]
+  def estimateDistinctCountPerKey[K](in: SCollection[(K, T)]): SCollection[(K, Long)]
 }
 
 /**
@@ -59,14 +57,14 @@ case class ApproximateUniqueCounter[T](sampleSize: Int) extends ApproxDistinctCo
     in.applyTransform(beam.ApproximateUnique.globally(sampleSize))
       .asInstanceOf[SCollection[Long]]
 
-  override def estimateDistinctCountPerKey[K](
-    in: SCollection[(K, T)]
-  )(implicit koder: Coder[K], voder: Coder[T]): SCollection[(K, Long)] =
+  override def estimateDistinctCountPerKey[K](in: SCollection[(K, T)]): SCollection[(K, Long)] = {
+    implicit val (keyCoder, valueCoder): (Coder[K], Coder[T]) = BeamCoders.getTupleCoders(in)
     in.toKV
       .applyTransform(beam.ApproximateUnique.perKey[K, T](sampleSize))(
         Coder.raw(CoderMaterializer.kvCoder[K, java.lang.Long](in.context))
       )
       .map(klToTuple)
+  }
 }
 
 /**
@@ -83,11 +81,13 @@ case class ApproximateUniqueCounterByError[T](maximumEstimationError: Double = 0
     in.applyTransform(beam.ApproximateUnique.globally(maximumEstimationError))
       .asInstanceOf[SCollection[Long]]
 
-  override def estimateDistinctCountPerKey[K](
-    in: SCollection[(K, T)]
-  )(implicit koder: Coder[K], voder: Coder[T]): SCollection[(K, Long)] =
+  override def estimateDistinctCountPerKey[K](in: SCollection[(K, T)]): SCollection[(K, Long)] = {
+    implicit val (keyCoder, valueCoder): (Coder[K], Coder[T]) = BeamCoders.getTupleCoders(in)
     in.toKV
-      .applyTransform(beam.ApproximateUnique.perKey[K, T](maximumEstimationError))
+      .applyTransform(beam.ApproximateUnique.perKey[K, T](maximumEstimationError))(
+        Coder.raw(CoderMaterializer.kvCoder[K, java.lang.Long](in.context))
+      )
       .map(klToTuple)
+  }
 
 }

@@ -17,7 +17,7 @@
 
 package com.spotify.scio.extra.hll
 
-import com.spotify.scio.coders.Coder
+import com.spotify.scio.coders.{BeamCoders, Coder}
 import com.spotify.scio.estimators.ApproxDistinctCounter
 import com.spotify.scio.util.TupleFunctions._
 import com.spotify.scio.values.SCollection
@@ -55,7 +55,9 @@ package object sketching {
 
     override def estimateDistinctCountPerKey[K](
       in: SCollection[(K, T)]
-    )(implicit koder: Coder[K], voder: Coder[T]): SCollection[(K, Long)] = {
+    ): SCollection[(K, Long)] = {
+      implicit val (keyCoder, valueCoder): (Coder[K], Coder[T]) = BeamCoders.getTupleCoders(in)
+
       val inKv = in.toKV
       inKv
         .applyTransform(

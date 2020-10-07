@@ -505,10 +505,6 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * more accurate the estimate will be; should be `>= 16`
    * @group transform
    */
-  @deprecated(
-    "use SCollection[T]#countApproxDistinct(ApproximateUniqueCounter(sampleSize)) instead",
-    "0.9.5"
-  )
   def countApproxDistinct(sampleSize: Int): SCollection[Long] =
     ApproximateUniqueCounter(sampleSize).estimateDistinctCount(this)
 
@@ -518,10 +514,6 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * `[0.01, 0.5]`
    * @group transform
    */
-  @deprecated(
-    "use SCollection[T]#countApproxDistinct(ApproximateUniqueCounterByError(maximumEstimationError)) instead",
-    "0.9.5"
-  )
   def countApproxDistinct(maximumEstimationError: Double = 0.02): SCollection[Long] =
     ApproximateUniqueCounterByError(maximumEstimationError)
       .estimateDistinctCount(this)
