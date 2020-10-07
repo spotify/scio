@@ -26,8 +26,9 @@ object RedisReadStringsExample {
     val redisHost = args("redisHost")
     val redisPort = args.int("redisPort")
     val keyPattern = args("keyPattern")
+    val connectionOptions = RedisConnectionOptions(redisHost, redisPort)
 
-    sc.redis(redisHost, redisPort, keyPattern)
+    sc.redis(connectionOptions, keyPattern)
       .debug()
       .saveAsTextFile(args("output"))
 
@@ -53,6 +54,7 @@ object RedisWriteStringsExample {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
     val redisHost = args("redisHost")
     val redisPort = args.int("redisPort")
+    val connectionOptions = RedisConnectionOptions(redisHost, redisPort)
 
     sc.parallelize(
       Iterable(
@@ -60,7 +62,7 @@ object RedisWriteStringsExample {
         "key2" -> "2",
         "key3" -> "3"
       )
-    ).saveAsRedis(redisHost, redisPort, RedisIO.Write.Method.APPEND)
+    ).saveAsRedis(connectionOptions, RedisIO.Write.Method.APPEND)
 
     sc.run()
     ()
@@ -82,9 +84,6 @@ object RedisWriteStringsStreamingExample {
 
   def main(cmdlineArgs: Array[String]): Unit = {
 
-    RedisCommand.String.append("k", "v")
-    RedisCommand.String.append(Array.empty[Byte], Array.empty[Byte])
-
     val (opts, args) = ScioContext.parseArguments[PipelineOptions](cmdlineArgs)
     opts.as(classOf[StreamingOptions]).setStreaming(true)
     val exampleUtils = new ExampleUtils(opts)
@@ -95,13 +94,15 @@ object RedisWriteStringsStreamingExample {
     val redisPort = args.int("redisPort")
     val pubSubSubscription = args("subscription")
 
+    val connectionOptions = RedisConnectionOptions(redisHost, redisPort)
+
     val params = PubsubIO.ReadParam(isSubscription = true)
     sc.read(PubsubIO.string(pubSubSubscription))(params)
       .flatMap(_.split(" "))
       .filter(_.length > 0)
       .map(msg => msg -> "1")
       .debug()
-      .saveAsRedis(redisHost, redisPort, RedisIO.Write.Method.INCRBY)
+      .saveAsRedis(connectionOptions, RedisIO.Write.Method.INCRBY)
 
     val result = sc.run()
     exampleUtils.waitToFinish(result.pipelineResult)

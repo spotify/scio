@@ -22,21 +22,17 @@ import com.spotify.scio.redis.{RedisConnectionOptions, RedisWrite}
 import com.spotify.scio.redis.RedisWrite.WriteParam
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.io.redis.RedisIO
+import org.joda.time.Duration
 
 final class SCollectionSyntax(private val self: SCollection[(String, String)]) {
 
   def saveAsRedis(
-    host: String,
-    port: Int,
+    connectionOptions: RedisConnectionOptions,
     writeMethod: RedisIO.Write.Method,
-    auth: Option[String] = None,
-    useSsl: Boolean = false,
-    expireTimeMillis: Option[Long] = None,
-    timeout: Int = WriteParam.DefaultTimeout
+    expireTimeMillis: Option[Duration] = None
   ): ClosedTap[Nothing] = {
-    val connectionOptions = RedisConnectionOptions(host, port, auth, useSsl)
-    val params = WriteParam(timeout)
-    self.write(RedisWrite(connectionOptions, writeMethod, expireTimeMillis))(params)
+    val params = WriteParam(expireTimeMillis)
+    self.write(RedisWrite(connectionOptions, writeMethod))(params)
   }
 
 }

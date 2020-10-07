@@ -20,16 +20,41 @@ package com.spotify.scio.redis
 import com.spotify.scio.ScioContext
 import com.spotify.scio.io.{EmptyTap, EmptyTapOf, ScioIO, Tap, TapT}
 import com.spotify.scio.values.SCollection
-import org.apache.beam.sdk.io.redis.{RedisIO => BeamRedisIO}
+import org.apache.beam.sdk.io.redis.{RedisConnectionConfiguration, RedisIO => BeamRedisIO}
 import org.apache.beam.sdk.values.KV
-
-import scala.jdk.CollectionConverters._
+import org.joda.time.Duration
 
 sealed trait RedisIO[T] extends ScioIO[T] {
   final override val tapT: TapT.Aux[T, Nothing] = EmptyTapOf[T]
 }
 
-case class RedisConnectionOptions(host: String, port: Int, auth: Option[String], useSsl: Boolean)
+case class RedisConnectionOptions(
+  host: String,
+  port: Int,
+  auth: Option[String] = None,
+  useSSL: Boolean = false,
+  timeout: Duration = Duration.standardSeconds(2)
+)
+
+object RedisConnectionOptions {
+
+  def toConnectionConfig(
+    connectionOptions: RedisConnectionOptions
+  ): RedisConnectionConfiguration = {
+    var config = RedisConnectionConfiguration
+      .create(connectionOptions.host, connectionOptions.port)
+      .withTimeout(connectionOptions.timeout.getMillis.toInt)
+
+    if (connectionOptions.useSSL) {
+      config = config.enableSSL()
+    }
+
+    connectionOptions.auth.foreach(a => config = config.withAuth(a))
+
+    config
+  }
+
+}
 
 final case class RedisRead(connectionOptions: RedisConnectionOptions, keyPattern: String)
     extends RedisIO[(String, String)] {
@@ -47,12 +72,13 @@ final case class RedisRead(connectionOptions: RedisConnectionOptions, keyPattern
     sc: ScioContext,
     params: RedisRead.ReadParam
   ): SCollection[(String, String)] = {
+    val connectionConfig = RedisConnectionOptions.toConnectionConfig(connectionOptions)
+
     val read = BeamRedisIO
       .read()
       .withKeyPattern(keyPattern)
-      .withEndpoint(connectionOptions.host, connectionOptions.port)
+      .withConnectionConfiguration(connectionConfig)
       .withBatchSize(params.batchSize)
-      .withTimeout(params.timeout)
       .withOutputParallelization(params.outputParallelization)
 
     connectionOptions.auth.foreach(read.withAuth)
@@ -66,21 +92,18 @@ final case class RedisRead(connectionOptions: RedisConnectionOptions, keyPattern
 object RedisRead {
   object ReadParam {
     private[redis] val DefaultBatchSize: Int = 1000
-    private[redis] val DefaultTimeout: Int = 0
     private[redis] val DefaultOutputParallelization: Boolean = true
   }
 
   final case class ReadParam private (
     batchSize: Int = ReadParam.DefaultBatchSize,
-    timeout: Int = ReadParam.DefaultTimeout,
     outputParallelization: Boolean = ReadParam.DefaultOutputParallelization
   )
 }
 
 final case class RedisWrite(
   connectionOptions: RedisConnectionOptions,
-  writeMethod: BeamRedisIO.Write.Method,
-  expireTimeMillis: Option[Long]
+  writeMethod: BeamRedisIO.Write.Method
 ) extends RedisIO[(String, String)] {
   type ReadP = Nothing
   type WriteP = RedisWrite.WriteParam
@@ -94,18 +117,19 @@ final case class RedisWrite(
     throw new UnsupportedOperationException("RedisWrite is write-only")
 
   protected def write(data: SCollection[(String, String)], params: WriteP): Tap[Nothing] = {
+    val connectionConfig = RedisConnectionOptions.toConnectionConfig(connectionOptions)
+
     val sink = BeamRedisIO
       .write()
-      .withEndpoint(connectionOptions.host, connectionOptions.port)
-      .withTimeout(params.timeout)
+      .withConnectionConfiguration(connectionConfig)
       .withMethod(writeMethod)
 
     connectionOptions.auth.foreach(sink.withAuth)
-    expireTimeMillis.foreach(t => sink.withExpireTime(t))
+    params.expireTimeMillis.foreach(t => sink.withExpireTime(t.getMillis))
 
     data.transform_("Redis Write") { coll =>
       coll
-        .map { case (k, v) => KV.of(k, v) }
+        .map(kv => KV.of(kv._1, kv._2))
         .applyInternal(sink)
     }
     EmptyTap
@@ -114,8 +138,8 @@ final case class RedisWrite(
 
 object RedisWrite {
   object WriteParam {
-    private[redis] val DefaultTimeout: Int = 0
+    private[redis] val DefaultExpireTimeMillis: Option[Duration] = None
   }
 
-  final case class WriteParam private (timeout: Int = WriteParam.DefaultTimeout)
+  final case class WriteParam private (expireTimeMillis: Option[Duration])
 }
