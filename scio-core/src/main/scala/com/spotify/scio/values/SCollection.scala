@@ -1454,7 +1454,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       }
     }
 
-  private def resourceFilterFn[R, U: Coder](resource: R, resourceType: ResourceType)(
+  private def resourceFilterFn[R](resource: R, resourceType: ResourceType)(
     f: (R, T) => Boolean
   ): DoFn[T, T] =
     new DoFnWithResource[T, T, R] {
@@ -1500,8 +1500,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    */
   def filterWithResource[R](resource: => R, resourceType: ResourceType)(
     fn: (R, T) => Boolean
-  ): SCollection[T] =
-    self.parDo(resourceFilterFn(resource, resourceType)(fn))
+  )(implicit coder: Coder[T]): SCollection[T] =
+    self.parDo(resourceFilterFn(resource, resourceType)(fn))(coder)
 
   // =======================================================================
   // Write operations
