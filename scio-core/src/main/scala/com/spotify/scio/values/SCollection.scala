@@ -1416,10 +1416,9 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   // Resource operations
   // =======================================================================
 
-
-  private def resourceCollectFn[R, U: Coder](resource: R, resourceType: ResourceType)
-                                        (pfn: PartialFunction[(R, T), U])
-  : DoFn[T, U] =
+  private def resourceCollectFn[R, U: Coder](resource: R, resourceType: ResourceType)(
+    pfn: PartialFunction[(R, T), U]
+  ): DoFn[T, U] =
     new DoFnWithResource[T, U, R] {
       def getResourceType: ResourceType = resourceType
       def createResource: R = resource
@@ -1431,9 +1430,9 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
         }
     }
 
-  private def resourceMapFn[R, U: Coder](resource: R, resourceType: ResourceType)(f: (R, T)
-    => U)
-  : DoFn[T, U] =
+  private def resourceMapFn[R, U: Coder](resource: R, resourceType: ResourceType)(
+    f: (R, T) => U
+  ): DoFn[T, U] =
     new DoFnWithResource[T, U, R] {
       def getResourceType: ResourceType = resourceType
       def createResource: R = resource
@@ -1442,9 +1441,9 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
         c.output(g(getResource, c.element()))
     }
 
-  private def resourceFlatMapFn[R, U: Coder](resource: R, resourceType: ResourceType)(f: (R, T)
-    => TraversableOnce[U])
-  : DoFn[T, U] =
+  private def resourceFlatMapFn[R, U: Coder](resource: R, resourceType: ResourceType)(
+    f: (R, T) => TraversableOnce[U]
+  ): DoFn[T, U] =
     new DoFnWithResource[T, U, R] {
       def getResourceType: ResourceType = resourceType
       def createResource: R = resource
@@ -1455,9 +1454,9 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       }
     }
 
-  private def resourceFilterFn[R, U: Coder](resource: R, resourceType: ResourceType)(f: (R, T) =>
-    Boolean)
-  : DoFn[T, T] =
+  private def resourceFilterFn[R, U: Coder](resource: R, resourceType: ResourceType)(
+    f: (R, T) => Boolean
+  ): DoFn[T, T] =
     new DoFnWithResource[T, T, R] {
       def getResourceType: ResourceType = resourceType
       def createResource: R = resource
@@ -1472,34 +1471,36 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * Return a new [[SCollection]] by applying a function that also takes in a resource and
    * `ResourceType` to all elements of this SCollection.
    */
-  def mapWithResource[R, U: Coder](resource: => R, resourceType: ResourceType)(fn: (R, T) => U)
-  : SCollection[U] =
+  def mapWithResource[R, U: Coder](resource: => R, resourceType: ResourceType)(
+    fn: (R, T) => U
+  ): SCollection[U] =
     self.parDo(resourceMapFn(resource, resourceType)(fn))
 
   /**
    * Filter the elements for which the given `PartialFunction` that also takes in a resource and
    * `ResourceType` is defined, and then map.
    */
-  def collectWithResource[R, U: Coder](resource: => R, resourceType: ResourceType)
-                                      (pfn: PartialFunction[(R, T), U])
-  : SCollection[U] =
+  def collectWithResource[R, U: Coder](resource: => R, resourceType: ResourceType)(
+    pfn: PartialFunction[(R, T), U]
+  ): SCollection[U] =
     self.parDo(resourceCollectFn(resource, resourceType)(pfn))
 
   /**
    * Return a new [[SCollection]] by first applying a function that also takes in a resource and
-   *`ResourceType` to all elements of this SCollection, and then flattening the results.
+   * `ResourceType` to all elements of this SCollection, and then flattening the results.
    */
-  def flatMapWithResource[R, U: Coder](resource: => R, resourceType: ResourceType)(fn: (R, T)
-    => TraversableOnce[U])
-  : SCollection[U] =
+  def flatMapWithResource[R, U: Coder](resource: => R, resourceType: ResourceType)(
+    fn: (R, T) => TraversableOnce[U]
+  ): SCollection[U] =
     self.parDo(resourceFlatMapFn(resource, resourceType)(fn))
 
   /**
    * Return a new [[SCollection]] containing only the elements that satisfy a predicate that
    * takes in a resource and `ResourceType`
    */
-  def filterWithResource[R, U: Coder](resource: => R, resourceType: ResourceType)(fn: (R, T) =>
-    Boolean): SCollection[T] =
+  def filterWithResource[R](resource: => R, resourceType: ResourceType)(
+    fn: (R, T) => Boolean
+  ): SCollection[T] =
     self.parDo(resourceFilterFn(resource, resourceType)(fn))
 
   // =======================================================================

@@ -818,11 +818,10 @@ class SCollectionTest extends PipelineSpec {
     runWithContext { sc =>
       val p =
         sc.parallelize(Seq(1, 2, 3, 4, 5))
-          .filterWithResource(new Semaphore(10, true), ResourceType.PER_INSTANCE) {
-            (r, v) =>
-              r.acquire()
-              r.release()
-              v % 2 == 0
+          .filterWithResource(new Semaphore(10, true), ResourceType.PER_INSTANCE) { (r, v) =>
+            r.acquire()
+            r.release()
+            v % 2 == 0
           }
       p should containInAnyOrder(Seq(2, 4))
     }
@@ -832,11 +831,10 @@ class SCollectionTest extends PipelineSpec {
     runWithContext { sc =>
       val p = sc
         .parallelize(Seq("a b c", "d e", "f"))
-        .flatMapWithResource(new Semaphore(10, true), ResourceType.PER_INSTANCE) {
-          (r, v) =>
-            r.acquire()
-            r.release()
-            v.split(" ")
+        .flatMapWithResource(new Semaphore(10, true), ResourceType.PER_INSTANCE) { (r, v) =>
+          r.acquire()
+          r.release()
+          v.split(" ")
         }
       p should containInAnyOrder(Seq("a", "b", "c", "d", "e", "f"))
     }
@@ -846,11 +844,10 @@ class SCollectionTest extends PipelineSpec {
     runWithContext { sc =>
       val p = sc
         .parallelize(Seq("1", "2", "3"))
-        .mapWithResource(new Semaphore(10, true), ResourceType.PER_INSTANCE) {
-          (r, v) =>
-            r.acquire()
-            r.release()
-            v.toInt
+        .mapWithResource(new Semaphore(10, true), ResourceType.PER_INSTANCE) { (r, v) =>
+          r.acquire()
+          r.release()
+          v.toInt
         }
       p should containInAnyOrder(Seq(1, 2, 3))
     }
@@ -863,13 +860,14 @@ class SCollectionTest extends PipelineSpec {
         ("test2", 2),
         ("test3", 3)
       )
-      val p = sc.parallelize(records)
+      val p = sc
+        .parallelize(records)
         .collectWithResource(new Semaphore(10, true), ResourceType.PER_INSTANCE) {
           case (r, ("test2", v)) =>
             r.acquire()
             r.release()
             2 * v
-      }
+        }
       p should containSingleValue(4)
     }
   }
