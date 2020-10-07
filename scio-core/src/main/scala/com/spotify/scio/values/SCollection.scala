@@ -1499,12 +1499,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * takes in a resource and `ResourceType`
    */
   def filterWithResource[R, U: Coder](resource: => R, resourceType: ResourceType)(fn: (R, T) =>
-    Boolean): SCollection[U] =
+    Boolean): SCollection[T] =
     self.parDo(resourceFilterFn(resource, resourceType)(fn))
-
-//
-//  def rateLimitPerWorker(recordsPerSecond: Double): SCollection[T]
-//  = self.parDo(RateLimiterDoFn(recordsPerSecond))
 
   // =======================================================================
   // Write operations
