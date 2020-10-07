@@ -99,7 +99,7 @@ public class SortingAccumulator {
       }
       isSorted = true;
     }
-    return items;
+    return materializedItems();
   }
 
   static class SorterCoder extends AtomicCoder<SortingAccumulator> {
