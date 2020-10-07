@@ -19,9 +19,9 @@ package com.spotify.scio.redis
 
 import com.spotify.scio.ScioContext
 import com.spotify.scio.io.{EmptyTap, EmptyTapOf, ScioIO, Tap, TapT}
+import com.spotify.scio.redis.write.{RedisMutation, RedisWriteTransform}
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.io.redis.{RedisConnectionConfiguration, RedisIO => BeamRedisIO}
-import org.apache.beam.sdk.values.KV
 import org.joda.time.Duration
 
 sealed trait RedisIO[T] extends ScioIO[T] {
@@ -101,36 +101,27 @@ object RedisRead {
   )
 }
 
-final case class RedisWrite(
-  connectionOptions: RedisConnectionOptions,
-  writeMethod: BeamRedisIO.Write.Method
-) extends RedisIO[(String, String)] {
+final case class RedisWrite[T <: RedisMutation[_]](
+  connectionOptions: RedisConnectionOptions
+) extends RedisIO[T] {
   type ReadP = Nothing
   type WriteP = RedisWrite.WriteParam
 
   def tap(params: ReadP): Tap[Nothing] = EmptyTap
 
   override def testId: String =
-    s"RedisWriteIO(${connectionOptions.host}\t${connectionOptions.port}\t$writeMethod)"
+    s"RedisWriteIO(${connectionOptions.host}\t${connectionOptions.port})"
 
-  protected def read(sc: ScioContext, params: ReadP): SCollection[(String, String)] =
+  protected def read(sc: ScioContext, params: ReadP): SCollection[T] =
     throw new UnsupportedOperationException("RedisWrite is write-only")
 
-  protected def write(data: SCollection[(String, String)], params: WriteP): Tap[Nothing] = {
+  protected def write(data: SCollection[T], params: WriteP): Tap[Nothing] = {
     val connectionConfig = RedisConnectionOptions.toConnectionConfig(connectionOptions)
 
-    val sink = BeamRedisIO
-      .write()
-      .withConnectionConfiguration(connectionConfig)
-      .withMethod(writeMethod)
-
-    connectionOptions.auth.foreach(sink.withAuth)
-    params.expireTimeMillis.foreach(t => sink.withExpireTime(t.getMillis))
+    val sink = new RedisWriteTransform[T](connectionConfig, params)
 
     data.transform_("Redis Write") { coll =>
-      coll
-        .map(kv => KV.of(kv._1, kv._2))
-        .applyInternal(sink)
+      coll.applyInternal(sink)
     }
     EmptyTap
   }
@@ -138,8 +129,8 @@ final case class RedisWrite(
 
 object RedisWrite {
   object WriteParam {
-    private[redis] val DefaultExpireTimeMillis: Option[Duration] = None
+    private[redis] val DefaultBatchSize: Int = 1000
   }
 
-  final case class WriteParam private (expireTimeMillis: Option[Duration])
+  final case class WriteParam private (batchSize: Int = WriteParam.DefaultBatchSize)
 }

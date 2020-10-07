@@ -24,6 +24,7 @@ import org.apache.beam.examples.common.ExampleUtils
 import org.apache.beam.sdk.io.redis.RedisIO
 import org.apache.beam.sdk.options.{PipelineOptions, StreamingOptions}
 import com.spotify.scio.pubsub._
+import com.spotify.scio.redis.write.RedisMutation._
 
 // ## Redis Read Strings example
 // Read strings from Redis by a key pattern
@@ -76,11 +77,11 @@ object RedisWriteStringsExample {
 
     sc.parallelize(
       Iterable(
-        "key1" -> "1",
-        "key2" -> "2",
-        "key3" -> "3"
+        String.Append("key1", "1"),
+        String.Append("key2", "3"),
+        String.Append("key3", "3")
       )
-    ).saveAsRedis(connectionOptions, RedisIO.Write.Method.APPEND)
+    ).saveAsRedis(connectionOptions)
 
     sc.run()
     ()
@@ -118,9 +119,9 @@ object RedisWriteStringsStreamingExample {
     sc.read(PubsubIO.string(pubSubSubscription))(params)
       .flatMap(_.split(" "))
       .filter(_.length > 0)
-      .map(msg => msg -> "1")
+      .map(String.IncrBy(_, 1))
       .debug()
-      .saveAsRedis(connectionOptions, RedisIO.Write.Method.INCRBY)
+      .saveAsRedis(connectionOptions)
 
     val result = sc.run()
     exampleUtils.waitToFinish(result.pipelineResult)
