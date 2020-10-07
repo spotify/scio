@@ -1424,7 +1424,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       def createResource: R = resource
       val isDefined = ClosureCleaner.clean(pfn.isDefinedAt(_)) // defeat closure
       val g = ClosureCleaner.clean(pfn)
-      @ProcessElement def processElement(c: ProcessContext): Unit =
+      @ProcessElement def processElement(c: DoFn[T, U]#ProcessContext): Unit =
         if (isDefined(getResource, c.element())) {
           c.output(g(getResource, c.element()))
         }
@@ -1437,7 +1437,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       def getResourceType: ResourceType = resourceType
       def createResource: R = resource
       val g = ClosureCleaner.clean(f)
-      @ProcessElement def processElement(c: ProcessContext): Unit =
+      @ProcessElement def processElement(c: DoFn[T, U]#ProcessContext): Unit =
         c.output(g(getResource, c.element()))
     }
 
@@ -1448,7 +1448,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       def getResourceType: ResourceType = resourceType
       def createResource: R = resource
       val g = ClosureCleaner.clean(f)
-      @ProcessElement def processElement(c: ProcessContext): Unit = {
+      @ProcessElement def processElement(c: DoFn[T, U]#ProcessContext): Unit = {
         val i = g(getResource, c.element()).toIterator
         while (i.hasNext) c.output(i.next())
       }
@@ -1461,7 +1461,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       def getResourceType: ResourceType = resourceType
       def createResource: R = resource
       val g = ClosureCleaner.clean(f)
-      @ProcessElement def processElement(c: ProcessContext): Unit =
+      @ProcessElement def processElement(c: DoFn[T, T]#ProcessContext): Unit =
         if (g(getResource, c.element())) {
           c.output(c.element())
         }
