@@ -271,13 +271,19 @@ object BigQueryTypedTable {
       BigQueryUtils.convertGenericRecordToTableRow(_, _)
     )
 
-  private[this] def genericRecord(table: Table): BigQueryTypedTable[GenericRecord] =
+  private[this] def genericRecord(table: Table): BigQueryTypedTable[GenericRecord] = {
+    val tableSchema = BigQuery.defaultInstance().tables.schema(table.ref)
+    val avroSchema = BigQueryUtils.toGenericAvroSchema("root", tableSchema.getFields())
+
+    implicit val coder = Coder.avroGenericRecordCoder(avroSchema)
+
     BigQueryTypedTable(
       _.getRecord(),
       identity[GenericRecord],
       (genericRecord: GenericRecord, _: TableSchema) => genericRecord,
       table
     )
+  }
 
   /**
    * Creates a new instance of [[BigQueryTypedTable]] based on the supplied [[Format]].
