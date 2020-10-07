@@ -22,6 +22,7 @@ import com.typesafe.sbt.SbtGit.GitKeys.gitRemoteRepo
 import org.scalafmt.sbt.ScalafmtPlugin.scalafmtConfigSettings
 import bloop.integrations.sbt.BloopDefaults
 import sbtrelease.ReleaseStateTransformations._
+import de.heikoseeberger.sbtheader.CommentCreator
 
 ThisBuild / turbo := true
 
@@ -127,26 +128,20 @@ lazy val mimaSettings = Def.settings(
 
 lazy val formatSettings = Def.settings(scalafmtOnCompile := false, javafmtOnCompile := false)
 
+val keepPreviousYearComment =
+  HeaderCommentStyle.cStyleBlockComment.copy(commentCreator = new CommentCreator() {
+    override def apply(text: String, existingText: Option[String]): String =
+      existingText.getOrElse(
+        HeaderCommentStyle.cStyleBlockComment.commentCreator(text)
+      )
+  })
+
 val commonSettings = Def
   .settings(
     organization := "com.spotify",
-    organizationName := "Spotify AB",
-    startYear := Some(2020),
-    headerLicense := Some(HeaderLicense.Custom("""|Copyright 2019 Spotify AB.
-                                                  |
-                                                  |Licensed under the Apache License, Version 2.0 (the "License");
-                                                  |you may not use this file except in compliance with the License.
-                                                  |You may obtain a copy of the License at
-                                                  |
-                                                  |    http://www.apache.org/licenses/LICENSE-2.0
-                                                  |
-                                                  |Unless required by applicable law or agreed to in writing,
-                                                  |software distributed under the License is distributed on an
-                                                  |"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-                                                  |KIND, either express or implied.  See the License for the
-                                                  |specific language governing permissions and limitations
-                                                  |under the License.
-                                                  |""".stripMargin)),
+    headerEmptyLine := false,
+    headerLicense := Some(HeaderLicense.ALv2("2020", "Spotify AB")),
+    headerMappings := headerMappings.value + (HeaderFileType.scala -> keepPreviousYearComment, HeaderFileType.java -> keepPreviousYearComment),
     scalaVersion := "2.13.3",
     crossScalaVersions := Seq("2.12.12", scalaVersion.value),
     scalacOptions ++= Scalac.commonsOptions.value,
