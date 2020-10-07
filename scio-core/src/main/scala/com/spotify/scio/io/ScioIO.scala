@@ -18,13 +18,12 @@
 package com.spotify.scio.io
 
 import com.spotify.scio.ScioContext
-import com.spotify.scio.coders.Coder
 import com.spotify.scio.testing.TestDataManager
 import com.spotify.scio.values.SCollection
 
 sealed trait TapT[A] extends Serializable {
   type T
-  def saveForTest(data: SCollection[A])(implicit c: Coder[A]): Tap[T]
+  def saveForTest(data: SCollection[A]): Tap[T]
 }
 
 object TapT {
@@ -34,7 +33,7 @@ object TapT {
 final class EmptyTapOf[A] private extends TapT[A] {
   override type T = Nothing
 
-  override def saveForTest(data: SCollection[A])(implicit c: Coder[A]): Tap[T] = EmptyTap
+  override def saveForTest(data: SCollection[A]): Tap[T] = EmptyTap
 }
 
 object EmptyTapOf { def apply[A]: TapT.Aux[A, Nothing] = new EmptyTapOf[A] }
@@ -42,7 +41,7 @@ object EmptyTapOf { def apply[A]: TapT.Aux[A, Nothing] = new EmptyTapOf[A] }
 final class TapOf[A] private extends TapT[A] {
   override type T = A
 
-  override def saveForTest(data: SCollection[A])(implicit c: Coder[A]): Tap[T] =
+  override def saveForTest(data: SCollection[A]): Tap[T] =
     data.saveAsInMemoryTap.underlying
 }
 
@@ -67,39 +66,32 @@ trait ScioIO[T] {
   // identifier for JobTest IO matching
   def testId: String = this.toString
 
-  private[scio] def readWithContext(sc: ScioContext, params: ReadP)(implicit
-    coder: Coder[T]
-  ): SCollection[T] =
+  private[scio] def readWithContext(sc: ScioContext, params: ReadP): SCollection[T] =
     sc.requireNotClosed {
       if (sc.isTest) {
-        readTest(sc, params)
+        readTest(sc)
       } else {
         read(sc, params)
       }
     }
 
-  protected def readTest(sc: ScioContext, params: ReadP)(implicit
-    coder: Coder[T]
-  ): SCollection[T] =
+  protected def readTest(sc: ScioContext): SCollection[T] =
     TestDataManager.getInput(sc.testId.get)(this).toSCollection(sc)
 
   protected def read(sc: ScioContext, params: ReadP): SCollection[T]
 
-  private[scio] def writeWithContext(data: SCollection[T], params: WriteP)(implicit
-    coder: Coder[T]
-  ): ClosedTap[tapT.T] = ClosedTap {
-    if (data.context.isTest) {
-      writeTest(data, params)
-    } else {
-      write(data, params)
+  private[scio] def writeWithContext(data: SCollection[T], params: WriteP): ClosedTap[tapT.T] =
+    ClosedTap {
+      if (data.context.isTest) {
+        writeTest(data)
+      } else {
+        write(data, params)
+      }
     }
-  }
 
   protected def write(data: SCollection[T], params: WriteP): Tap[tapT.T]
 
-  protected def writeTest(data: SCollection[T], params: WriteP)(implicit
-    coder: Coder[T]
-  ): Tap[tapT.T] = {
+  protected def writeTest(data: SCollection[T]): Tap[tapT.T] = {
     TestDataManager.getOutput(data.context.testId.get)(this)(data)
     tapT.saveForTest(data)
   }

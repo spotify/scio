@@ -360,9 +360,7 @@ final private case class PubsubIOWithAttributes[T: ClassTag: Coder](
       }
   }
 
-  override def readTest(sc: ScioContext, params: ReadP)(implicit
-    coder: Coder[WithAttributeMap]
-  ): SCollection[WithAttributeMap] = {
+  override def readTest(sc: ScioContext): SCollection[WithAttributeMap] = {
     val read = TestDataManager.getInput(sc.testId.get)(this).toSCollection(sc)
 
     Option(timestampAttribute)
