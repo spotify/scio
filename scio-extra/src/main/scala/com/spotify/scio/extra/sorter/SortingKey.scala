@@ -23,4 +23,10 @@ object SortingKey {
   implicit object StringKey extends SortingKey[String]
 
   implicit object ByteArrayKey extends SortingKey[Array[Byte]]
+
+  implicit object IntKey extends SortingKey[Int]
+
+  implicit object LongKey extends SortingKey[Long]
+
+  implicit object DoubleKey extends SortingKey[Double]
 }

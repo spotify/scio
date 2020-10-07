@@ -21,7 +21,8 @@ import java.lang.{Iterable => JIterable}
 
 import com.spotify.scio.annotations.experimental
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
-import com.spotify.scio.extra.sorter.SortingKey
+import com.spotify.scio.extra.sorter.{SortingCombiner, SortingKey}
+import com.spotify.scio.util.Functions
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.coders.{IterableCoder, KvCoder}
 import org.apache.beam.sdk.extensions.sorter.ExternalSorter.Options.SorterType
@@ -90,8 +91,91 @@ final class SorterOps[K1, K2: SortingKey, V](self: SCollection[(K1, Iterable[(K2
   }
 }
 
+final class UngroupedSorterOps[K, V](self: SCollection[(K, V)]) {
+
+  /**
+   * Takes a keyed [[SCollection]] with elements consisting of a primary key and a value,
+   * and returns an [[SCollection]] keyed by the same primary key but with an [[Iterable]]
+   * of values sorted lexicographically by the secondary key specified by `sortKeyFn`.
+   *
+   * The secondary key needs to have a byte representation that can be meaningfully sorted
+   * lexicographically. See [[SortingKey]] for supported key types.
+   *
+   * This is implemented as an in-memory merge sort and will NOT spill to disk if
+   * values exceed available memory.
+   */
+  @experimental
+  def inMemoryGroupSort[SortKey](sortKeyFn: V => SortKey)(implicit
+    keyCoder: Coder[K],
+    sortKeyCoder: Coder[SortKey],
+    valueCoder: Coder[V]
+  ): SCollection[(K, Iterable[V])] = {
+    val valueBCoder = CoderMaterializer.beam(self.context, valueCoder)
+    val sortKeyBCoder = CoderMaterializer.beam(self.context, sortKeyCoder)
+    val keyBCoder = CoderMaterializer.beam(self.context, keyCoder)
+
+    val extractKeyFn = Functions.serializableFn(sortKeyFn)
+
+    self
+      .withName("TupleToKv")
+      .map(kv => KV.of(kv._1, kv._2))
+      .setCoder(KvCoder.of(keyBCoder, valueBCoder))
+      .applyTransform(
+        "Combine and sort",
+        SortingCombiner.perKey(valueBCoder, sortKeyBCoder, extractKeyFn)
+      )
+      .map(kv => (kv.getKey, kv.getValue.asScala))
+  }
+}
+
+final class ReducableSorterOps[K, V](self: SCollection[(K, Iterable[V])]) {
+
+  /**
+   * Takes a keyed [[SCollection]] with elements consisting of a primary key and an
+   * iterable of values, and returns an [[SCollection]] keyed by the same primary key but with
+   * an [[Iterable]] of values sorted lexicographically by the secondary key specified by `sortKeyFn`.
+   *
+   * The secondary key needs to have a byte representation that can be meaningfully sorted
+   * lexicographically. See [[SortingKey]] for supported key types.
+   *
+   * This is implemented as an in-memory merge sort and will NOT spill to disk if
+   * values exceed available memory.
+   */
+  @experimental
+  def inMemoryGroupSort[SortKey](sortKeyFn: V => SortKey)(implicit
+    keyCoder: Coder[K],
+    sortKeyCoder: Coder[SortKey],
+    valueCoder: Coder[V]
+  ): SCollection[(K, Iterable[V])] = {
+    val valueBCoder = CoderMaterializer.beam(self.context, valueCoder)
+    val sortKeyBCoder = CoderMaterializer.beam(self.context, sortKeyCoder)
+    val keyBCoder = CoderMaterializer.beam(self.context, keyCoder)
+
+    val extractKeyFn = Functions.serializableFn(sortKeyFn)
+
+    self
+      .withName("TupleToKv")
+      .map(kv => KV.of(kv._1, kv._2.asJava))
+      .setCoder(KvCoder.of(keyBCoder, IterableCoder.of(valueBCoder)))
+      .applyTransform(
+        "Combine and sort",
+        SortingCombiner.groupedValues(valueBCoder, sortKeyBCoder, extractKeyFn)
+      )
+      .map(kv => (kv.getKey, kv.getValue.asScala))
+  }
+}
+
 trait SCollectionSyntax {
   implicit def sorterOps[K1, K2: SortingKey, V](
     coll: SCollection[(K1, Iterable[(K2, V)])]
   ): SorterOps[K1, K2, V] = new SorterOps(coll)
+
+  implicit def sorterOp2[K, V](
+    coll: SCollection[(K, Iterable[V])]
+  ): ReducableSorterOps[K, V] = new ReducableSorterOps(coll)
+
+  implicit def sorterOps3[K, V](
+    coll: SCollection[(K, V)]
+  ): UngroupedSorterOps[K, V] = new UngroupedSorterOps(coll)
+
 }
