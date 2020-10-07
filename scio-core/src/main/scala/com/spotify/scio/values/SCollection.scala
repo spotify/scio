@@ -1416,7 +1416,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   // Resource operations
   // =======================================================================
 
-  private def resourceCollectFn[R, U: Coder](resource: R, resourceType: ResourceType)(
+  def resourceCollectFn[R, U: Coder](resource: R, resourceType: ResourceType)(
     pfn: PartialFunction[(R, T), U]
   ): DoFn[T, U] =
     new DoFnWithResource[T, U, R] {
@@ -1430,7 +1430,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
         }
     }
 
-  private def resourceMapFn[R, U: Coder](resource: R, resourceType: ResourceType)(
+  def resourceMapFn[R, U: Coder](resource: R, resourceType: ResourceType)(
     f: (R, T) => U
   ): DoFn[T, U] =
     new DoFnWithResource[T, U, R] {
@@ -1441,7 +1441,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
         c.output(g(getResource, c.element()))
     }
 
-  private def resourceFlatMapFn[R, U: Coder](resource: R, resourceType: ResourceType)(
+  def resourceFlatMapFn[R, U: Coder](resource: R, resourceType: ResourceType)(
     f: (R, T) => TraversableOnce[U]
   ): DoFn[T, U] =
     new DoFnWithResource[T, U, R] {
@@ -1454,7 +1454,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       }
     }
 
-  private def resourceFilterFn[R](resource: R, resourceType: ResourceType)(
+  def resourceFilterFn[R](resource: R, resourceType: ResourceType)(
     f: (R, T) => Boolean
   ): DoFn[T, T] =
     new DoFnWithResource[T, T, R] {
