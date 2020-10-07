@@ -14,6 +14,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 package com.spotify.scio.schemas
 
 import org.apache.beam.sdk.schemas.Schema.{Field, FieldType}
