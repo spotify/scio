@@ -20,7 +20,7 @@ package com.spotify.scio.redis
 import com.spotify.scio.ScioContext
 import com.spotify.scio.io.{EmptyTap, EmptyTapOf, ScioIO, Tap, TapT}
 import com.spotify.scio.values.SCollection
-import org.apache.beam.sdk.io.redis.{RedisConnectionConfiguration, RedisIO}
+import org.apache.beam.sdk.io.redis.{RedisIO => BeamRedisIO}
 import org.apache.beam.sdk.values.KV
 
 import scala.jdk.CollectionConverters._
@@ -47,7 +47,7 @@ final case class RedisRead(connectionOptions: RedisConnectionOptions, keyPattern
     sc: ScioContext,
     params: RedisRead.ReadParam
   ): SCollection[(String, String)] = {
-    val read = RedisIO
+    val read = BeamRedisIO
       .read()
       .withKeyPattern(keyPattern)
       .withEndpoint(connectionOptions.host, connectionOptions.port)
@@ -79,7 +79,7 @@ object RedisRead {
 
 final case class RedisWrite(
   connectionOptions: RedisConnectionOptions,
-  writeMethod: RedisIO.Write.Method,
+  writeMethod: BeamRedisIO.Write.Method,
   expireTimeMillis: Option[Long]
 ) extends RedisIO[(String, String)] {
   type ReadP = Nothing
@@ -94,7 +94,7 @@ final case class RedisWrite(
     throw new UnsupportedOperationException("RedisWrite is write-only")
 
   protected def write(data: SCollection[(String, String)], params: WriteP): Tap[Nothing] = {
-    val sink = RedisIO
+    val sink = BeamRedisIO
       .write()
       .withEndpoint(connectionOptions.host, connectionOptions.port)
       .withTimeout(params.timeout)

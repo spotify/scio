@@ -82,6 +82,9 @@ object RedisWriteStringsStreamingExample {
 
   def main(cmdlineArgs: Array[String]): Unit = {
 
+    RedisCommand.String.append("k", "v")
+    RedisCommand.String.append(Array.empty[Byte], Array.empty[Byte])
+
     val (opts, args) = ScioContext.parseArguments[PipelineOptions](cmdlineArgs)
     opts.as(classOf[StreamingOptions]).setStreaming(true)
     val exampleUtils = new ExampleUtils(opts)
@@ -94,8 +97,10 @@ object RedisWriteStringsStreamingExample {
 
     val params = PubsubIO.ReadParam(isSubscription = true)
     sc.read(PubsubIO.string(pubSubSubscription))(params)
-      .debug()
+      .flatMap(_.split(" "))
+      .filter(_.length > 0)
       .map(msg => msg -> "1")
+      .debug()
       .saveAsRedis(redisHost, redisPort, RedisIO.Write.Method.INCRBY)
 
     val result = sc.run()
