@@ -68,30 +68,18 @@ private object Reads {
     flattenResults: Boolean = false
   ): SCollection[T] = {
     val bigQueryClient = client(sc)
-    if (bigQueryClient.isCacheEnabled) {
-      val read = bigQueryClient.query
-        .newQueryJob(sqlQuery, flattenResults)
-        .map { job =>
-          sc.onClose(_ => bigQueryClient.waitForJobs(job))
-          typedRead.from(job.table).withoutValidation()
-        }
+    val labels = sc.labels
+    val read = bigQueryClient.query
+      .newQueryJob(sqlQuery, flattenResults, labels)
+      .map { job =>
+        sc.onClose(_ => bigQueryClient.waitForJobs(job))
+        typedRead.from(job.table).withoutValidation()
+      }
 
-      sc.applyTransform(read.get)
-    } else {
-      val baseQuery = if (!flattenResults) {
-        typedRead.fromQuery(sqlQuery).withoutResultFlattening()
-      } else {
-        typedRead.fromQuery(sqlQuery)
-      }
-      val query = if (bigQueryClient.query.isLegacySql(sqlQuery, flattenResults)) {
-        baseQuery
-      } else {
-        baseQuery.usingStandardSql()
-      }
-      sc.applyTransform(query)
-    }
+    sc.applyTransform(read.get)
   }
 
+  // TODO: support labels Inheritance like in bqReadQuery
   private[scio] def bqReadStorage[T: ClassTag](sc: ScioContext)(
     typedRead: beam.BigQueryIO.TypedRead[T],
     table: Table,

@@ -49,7 +49,8 @@ private[client] object QueryOps {
     destinationTable: TableReference = null,
     flattenResults: Boolean = false,
     writeDisposition: WriteDisposition = WriteDisposition.WRITE_EMPTY,
-    createDisposition: CreateDisposition = CreateDisposition.CREATE_IF_NEEDED
+    createDisposition: CreateDisposition = CreateDisposition.CREATE_IF_NEEDED,
+    labels: Map[String, String] = Map.empty
   )
 }
 
@@ -97,14 +98,16 @@ final private[client] class QueryOps(client: Client, tableService: TableOps, job
     sqlQuery: String,
     flattenResults: Boolean = false,
     writeDisposition: WriteDisposition = WriteDisposition.WRITE_EMPTY,
-    createDisposition: CreateDisposition = CreateDisposition.CREATE_IF_NEEDED
+    createDisposition: CreateDisposition = CreateDisposition.CREATE_IF_NEEDED,
+    labels: Map[String, String] = Map.empty
   ): Iterator[TableRow] = {
     val config = QueryJobConfig(
       sqlQuery,
       useLegacySql = isLegacySql(sqlQuery),
       flattenResults = flattenResults,
       writeDisposition = writeDisposition,
-      createDisposition = createDisposition
+      createDisposition = createDisposition,
+      labels = labels
     )
 
     newQueryJob(config).map { job =>
@@ -118,12 +121,14 @@ final private[client] class QueryOps(client: Client, tableService: TableOps, job
   // =======================================================================
   private[scio] def newQueryJob(
     querySql: String,
-    flattenResults: Boolean = false
+    flattenResults: Boolean = false,
+    labels: Map[String, String] = Map.empty
   ): Try[QueryJob] = {
     val config = QueryJobConfig(
       querySql,
       useLegacySql = isLegacySql(querySql),
-      flattenResults = flattenResults
+      flattenResults = flattenResults,
+      labels = labels
     )
 
     newQueryJob(config)
@@ -195,14 +200,16 @@ final private[client] class QueryOps(client: Client, tableService: TableOps, job
     destinationTable: String = null,
     flattenResults: Boolean = false,
     writeDisposition: WriteDisposition = WriteDisposition.WRITE_EMPTY,
-    createDisposition: CreateDisposition = CreateDisposition.CREATE_IF_NEEDED
+    createDisposition: CreateDisposition = CreateDisposition.CREATE_IF_NEEDED,
+    labels: Map[String, String] = Map.empty
   ): TableReference = {
     val query = QueryJobConfig(
       sqlQuery,
       useLegacySql = isLegacySql(sqlQuery),
       flattenResults = flattenResults,
       writeDisposition = writeDisposition,
-      createDisposition = createDisposition
+      createDisposition = createDisposition,
+      labels = labels
     )
     val tableReference = if (destinationTable != null) {
       val tableRef = bq.BigQueryHelpers.parseTableSpec(destinationTable)
@@ -240,7 +247,11 @@ final private[client] class QueryOps(client: Client, tableService: TableOps, job
         queryConfig.setAllowLargeResults(true).setDestinationTable(config.destinationTable)
       }
 
-      val jobConfig = new JobConfiguration().setQuery(queryConfig).setDryRun(config.dryRun)
+      val jobConfig =
+        new JobConfiguration()
+          .setQuery(queryConfig)
+          .setDryRun(config.dryRun)
+          .setLabels(config.labels.asJava)
       val fullJobId = BigQueryUtil.generateJobId(client.project)
       val jobReference = new JobReference().setProjectId(client.project).setJobId(fullJobId)
       val job = new Job().setConfiguration(jobConfig).setJobReference(jobReference)
