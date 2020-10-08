@@ -17,11 +17,9 @@
 
 package com.spotify.scio.extra.sorter;
 
-import com.google.common.primitives.UnsignedBytes;
 import com.spotify.scio.extra.sorter.SortingAccumulator.SorterCoder;
-import java.util.Comparator;
+import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import org.apache.beam.sdk.coders.Coder;
 import org.apache.beam.sdk.coders.CoderException;
@@ -32,7 +30,6 @@ import org.apache.beam.sdk.transforms.SerializableFunction;
 import org.apache.beam.sdk.util.CoderUtils;
 import org.apache.beam.sdk.values.KV;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Iterators;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.PeekingIterator;
 
 public class SortingCombiner<K, V> extends CombineFn<V, SortingAccumulator, Iterable<V>> {
 
@@ -96,16 +93,14 @@ public class SortingCombiner<K, V> extends CombineFn<V, SortingAccumulator, Iter
 
   @Override
   public SortingAccumulator mergeAccumulators(Iterable<SortingAccumulator> accumulators) {
-    final MergeSortingIterable mergeSortingIterable = new MergeSortingIterable(accumulators);
-
-    return new SortingAccumulator(mergeSortingIterable.isEmpty(), mergeSortingIterable, true);
+    return new SortingAccumulator(new MergeSortingIterable(accumulators));
   }
 
   @Override
   public Iterable<V> extractOutput(SortingAccumulator accumulator) {
     return () ->
         Iterators.transform(
-            accumulator.sorted().iterator(),
+            accumulator.sorted(false).iterator(),
             (KV<byte[], byte[]> item) -> {
               try {
                 return CoderUtils.decodeFromByteArray(valueCoder, item.getValue());
@@ -117,49 +112,19 @@ public class SortingCombiner<K, V> extends CombineFn<V, SortingAccumulator, Iter
 
   // An iterator that merges many pre-sorted iterables together
   static class MergeSortingIterable implements Iterable<KV<byte[], byte[]>> {
-    private static final Comparator<byte[]> byteComparator =
-        UnsignedBytes.lexicographicalComparator();
-    private static final Comparator<PeekingIterator<KV<byte[], byte[]>>> kvComparator =
-        (o1, o2) -> byteComparator.compare(o1.peek().getKey(), o2.peek().getKey());
-
-    private final List<SortingAccumulator> accumulators;
+    private final List<Iterator<KV<byte[], byte[]>>> sources;
 
     MergeSortingIterable(Iterable<SortingAccumulator> accumulators) {
-      this.accumulators = new LinkedList<>();
+      sources = new ArrayList<>();
       accumulators.forEach(
           a -> {
-            if (!a.isEmpty()) {
-              this.accumulators.add(a);
-            }
+            sources.add(a.sorted(true).iterator());
           });
-    }
-
-    boolean isEmpty() {
-      return this.accumulators.isEmpty();
     }
 
     @Override
     public Iterator<KV<byte[], byte[]>> iterator() {
-      final List<PeekingIterator<KV<byte[], byte[]>>> iterators = new LinkedList<>();
-      accumulators.forEach(
-          a -> {
-            if (!a.isEmpty()) {
-              iterators.add(Iterators.peekingIterator(a.sorted().iterator()));
-            }
-          });
-
-      return new Iterator<KV<byte[], byte[]>>() {
-        @Override
-        public boolean hasNext() {
-          iterators.removeIf(i -> !i.hasNext());
-          return !iterators.isEmpty();
-        }
-
-        @Override
-        public KV<byte[], byte[]> next() {
-          return iterators.stream().min(kvComparator).get().next();
-        }
-      };
+      return Iterators.mergeSorted(sources, SortingAccumulator.comparator);
     }
   }
 }

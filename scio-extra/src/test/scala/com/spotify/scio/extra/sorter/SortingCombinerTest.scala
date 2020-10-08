@@ -35,6 +35,18 @@ class SortingCombinerTest extends PipelineSpec {
     }
   }
 
+  it should "should contain all the items of the original collection" in {
+    runWithContext { sc =>
+      val sorted = sc
+        .parallelize(peopleData)
+        .keyBy(_.country)
+        .inMemoryGroupSort(_.age)
+        .flatMap(_._2)
+
+      sorted should containInAnyOrder(peopleData)
+    }
+  }
+
   it should "work on already grouped values" in {
     runWithContext { sc =>
       val sorted = sc

@@ -35,21 +35,19 @@ import org.apache.beam.sdk.values.KV;
 
 public class SortingAccumulator {
   private boolean isSorted;
-  private boolean isEmpty;
   private Iterable<KV<byte[], byte[]>> items;
 
-  private static final Comparator<KV<byte[], byte[]>> comparator =
+  static final Comparator<KV<byte[], byte[]>> comparator =
       (kv1, kv2) -> UnsignedBytes.lexicographicalComparator().compare(kv1.getKey(), kv2.getKey());
 
   public SortingAccumulator() {
     this.isSorted = false;
-    this.isEmpty = true;
   }
 
-  SortingAccumulator(boolean isEmpty, Iterable<KV<byte[], byte[]>> sortedItems, boolean isSorted) {
-    this.isEmpty = isEmpty;
+  // Items are always sorted during ser/de.
+  SortingAccumulator(Iterable<KV<byte[], byte[]>> sortedItems) {
     this.items = sortedItems;
-    this.isSorted = isSorted;
+    this.isSorted = true;
   }
 
   // Only convert Iterator to List if we have to (i.e. when "add" or "sort" is called),
@@ -66,13 +64,8 @@ public class SortingAccumulator {
     return (List<KV<byte[], byte[]>>) items;
   }
 
-  public boolean isEmpty() {
-    return isEmpty;
-  }
-
   public void add(KV<byte[], byte[]> item) {
-    isEmpty = false;
-
+    // If sorted, merge into sorted list maintaining order
     if (isSorted) {
       boolean isAdded = false;
       for (int i = 0; i < materializedItems().size(); i++) {
@@ -82,24 +75,26 @@ public class SortingAccumulator {
           break;
         }
       }
+
       if (!isAdded) {
         materializedItems().add(item);
       }
     } else {
+      // Otherwise add to collection to be sorted later
       materializedItems().add(item);
     }
   }
 
-  public Iterable<KV<byte[], byte[]>> sorted() {
+  public Iterable<KV<byte[], byte[]>> sorted(boolean materializeItems) {
     if (!isSorted) {
-      if (isEmpty) {
-        items = new ArrayList<>();
-      } else {
-        materializedItems().sort(comparator);
-      }
       isSorted = true;
+      materializedItems().sort(comparator);
+      return items;
+    } else if (materializeItems) {
+      return materializedItems();
+    } else {
+      return items;
     }
-    return materializedItems();
   }
 
   static class SorterCoder extends AtomicCoder<SortingAccumulator> {
@@ -114,11 +109,12 @@ public class SortingAccumulator {
 
     @Override
     public void encode(SortingAccumulator value, OutputStream outStream) throws IOException {
-      BOOLEAN_CODER.encode(value.isEmpty, outStream);
+      boolean isEmpty = (value.items == null);
+      BOOLEAN_CODER.encode(isEmpty, outStream);
 
-      // Always encode the sorted list
-      if (!value.isEmpty) {
-        ITERABLE_CODER.encode(value.sorted(), outStream); // Encodes as a List
+      // Always encode the materialized, sorted list
+      if (!isEmpty) {
+        ITERABLE_CODER.encode(value.sorted(true), outStream);
       }
     }
 
@@ -127,7 +123,7 @@ public class SortingAccumulator {
       final boolean isEmpty = BOOLEAN_CODER.decode(inStream);
 
       if (!isEmpty) { // If items have already been added
-        return new SortingAccumulator(false, ITERABLE_CODER.decode(inStream), true);
+        return new SortingAccumulator(ITERABLE_CODER.decode(inStream));
       } else {
         return new SortingAccumulator();
       }
