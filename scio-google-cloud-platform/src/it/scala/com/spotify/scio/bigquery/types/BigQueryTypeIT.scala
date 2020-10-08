@@ -17,7 +17,9 @@
 
 package com.spotify.scio.bigquery.types
 
+import com.google.api.services.bigquery.model.TableReference
 import com.spotify.scio.bigquery.client.BigQuery
+import com.spotify.scio.bigquery.{Query, Table}
 import org.scalatest.Assertion
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -25,7 +27,6 @@ import org.scalatest.matchers.should.Matchers
 import scala.annotation.StaticAnnotation
 import scala.jdk.CollectionConverters._
 import scala.reflect.runtime.universe._
-import com.spotify.scio.bigquery.Query
 
 object BigQueryTypeIT {
   @BigQueryType.fromQuery(
@@ -179,6 +180,17 @@ class BigQueryTypeIT extends AnyFlatSpec with Matchers {
     SqlLatestT.queryAsSource("TABLE") shouldBe Query(sqlLatestQuery.format("TABLE"))
     SqlLatestT.queryAsSource("$LATEST").latest(bq) shouldBe Query(sqlLatestQuery.format("$LATEST"))
       .latest(bq)
+  }
+
+  it should "create Table type" in {
+    val tableReference = new TableReference
+    tableReference.setProjectId("bigquery-public-data")
+    tableReference.setDatasetId("samples")
+    tableReference.setTableId("shakespeare")
+    Table.Spec("bigquery-public-data:samples.shakespeare") shouldBe Table.Ref(tableReference)
+
+    Table.Spec("data-integration-test:partition_a.table_$LATEST").latest().ref.getTableId
+      shouldBe "table_2017_01_03"
   }
 
   it should "type check annotation arguments" in {
