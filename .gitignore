@@ -1,13 +1,34 @@
-.idea
-target
-*.swp
+# scala
+*.class
+*.log
+
+# sbt
+dist/*
+target/
+lib_managed/
+src_managed/
+project/boot/
+project/plugins/project/
+.history
+.cache
+.lib/
+.bsp/
+
+# OS
 .DS_Store
-.bigquery
+
+# env
+.java-version
+
+# editors
+.idea/
+*.swp
+.bloop/
+.metals/
+metals.sbt
+.vscode/
+
+# scio
+.bigquery/
 .scio_repl
 *.jfr
-
-.bloop
-.metals
-metals.sbt
-.vscode
-.java-version
