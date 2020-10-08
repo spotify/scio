@@ -78,7 +78,8 @@ object RedisWriteStringsExample {
       Iterable(
         String.Append("key1", "1"),
         String.Append("key2", "3"),
-        String.Append("key3", "3")
+        String.Append("key3", "3"),
+        String.Set("key4", "4")
       )
     ).saveAsRedis(connectionOptions)
 
