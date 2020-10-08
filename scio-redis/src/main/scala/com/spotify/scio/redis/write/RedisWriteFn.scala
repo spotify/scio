@@ -27,7 +27,7 @@ import redis.clients.jedis.{Jedis, Pipeline}
 final class RedisWriteFn(
   connectionConfig: RedisConnectionConfiguration,
   writeParams: RedisWrite.WriteParam
-) extends DoFn[RedisMutation[_], Void] {
+) extends DoFn[RedisMutation, Void] {
 
   @transient private var jedis: Jedis = _
   @transient private var pipeline: Pipeline = _
@@ -72,7 +72,7 @@ final class RedisWriteFn(
 
 }
 
-final class RedisWriteTransform[T <: RedisMutation[_]](
+final class RedisWriteTransform[T <: RedisMutation](
   connectionConfig: RedisConnectionConfiguration,
   writeParams: RedisWrite.WriteParam
 ) extends PTransform[PCollection[T], PDone] {

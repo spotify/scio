@@ -101,7 +101,7 @@ object RedisRead {
   )
 }
 
-final case class RedisWrite[T <: RedisMutation[_]](
+final case class RedisWrite[T <: RedisMutation](
   connectionOptions: RedisConnectionOptions
 ) extends RedisIO[T] {
   type ReadP = Nothing

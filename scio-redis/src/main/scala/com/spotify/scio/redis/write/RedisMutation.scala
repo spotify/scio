@@ -17,20 +17,18 @@
 
 package com.spotify.scio.redis.write
 
-import org.joda.time.Duration
 import redis.clients.jedis.Pipeline
 
 /** Represents an abstract Redis command. */
-sealed trait RedisMutation[T] extends Serializable {
-  val key: T
-  val ttl: Option[Duration]
+sealed trait RedisMutation extends Serializable {
+  val ttl: Option[Long]
 }
 
 // This is needed to overcome the issue with type erasure
-sealed trait StringKeyMutation extends RedisMutation[String]
+sealed trait StringKeyMutation extends RedisMutation { val key: String }
 
 // This is needed to overcome the issue with type erasure
-sealed trait ByteArrayKeyMutation extends RedisMutation[Array[Byte]]
+sealed trait ByteArrayKeyMutation extends RedisMutation { val key: Array[Byte] }
 
 /** See Redis commands documentation for the description of commands: https://redis.io/commands */
 object RedisMutation {
@@ -39,31 +37,28 @@ object RedisMutation {
   object String {
 
     // String mutations
-    case class Append(key: String, value: String, ttl: Option[Duration] = None)
+    case class Append(key: String, value: String, ttl: Option[Long] = None)
         extends StringKeyMutation
 
-    case class Set(key: String, value: String, ttl: Option[Duration] = None)
-        extends StringKeyMutation
+    case class Set(key: String, value: String, ttl: Option[Long] = None) extends StringKeyMutation
 
-    case class IncrBy(key: String, value: Long, ttl: Option[Duration] = None)
-        extends StringKeyMutation
+    case class IncrBy(key: String, value: Long, ttl: Option[Long] = None) extends StringKeyMutation
 
-    case class DecrBy(key: String, value: Long, ttl: Option[Duration] = None)
-        extends StringKeyMutation
+    case class DecrBy(key: String, value: Long, ttl: Option[Long] = None) extends StringKeyMutation
 
     // Set mutations
-    case class SAdd(key: String, value: Seq[String], ttl: Option[Duration] = None)
+    case class SAdd(key: String, value: Seq[String], ttl: Option[Long] = None)
         extends StringKeyMutation
 
     // List mutations
-    case class RPush(key: String, value: Seq[String], ttl: Option[Duration] = None)
+    case class RPush(key: String, value: Seq[String], ttl: Option[Long] = None)
         extends StringKeyMutation
 
-    case class LPush(key: String, value: Seq[String], ttl: Option[Duration] = None)
+    case class LPush(key: String, value: Seq[String], ttl: Option[Long] = None)
         extends StringKeyMutation
 
     // HyperLogLog mutations
-    case class PFAdd(key: String, value: Seq[String], ttl: Option[Duration] = None)
+    case class PFAdd(key: String, value: Seq[String], ttl: Option[Long] = None)
         extends StringKeyMutation
 
   }
@@ -72,31 +67,31 @@ object RedisMutation {
   object ByteArray {
 
     // String mutations
-    case class Append(key: Array[Byte], value: Array[Byte], ttl: Option[Duration] = None)
+    case class Append(key: Array[Byte], value: Array[Byte], ttl: Option[Long] = None)
         extends ByteArrayKeyMutation
 
-    case class Set(key: Array[Byte], value: Array[Byte], ttl: Option[Duration] = None)
+    case class Set(key: Array[Byte], value: Array[Byte], ttl: Option[Long] = None)
         extends ByteArrayKeyMutation
 
-    case class IncrBy(key: Array[Byte], value: Long, ttl: Option[Duration] = None)
+    case class IncrBy(key: Array[Byte], value: Long, ttl: Option[Long] = None)
         extends ByteArrayKeyMutation
 
-    case class DecrBy(key: Array[Byte], value: Long, ttl: Option[Duration] = None)
+    case class DecrBy(key: Array[Byte], value: Long, ttl: Option[Long] = None)
         extends ByteArrayKeyMutation
 
     // Set mutations
-    case class SAdd(key: Array[Byte], value: Seq[Array[Byte]], ttl: Option[Duration] = None)
+    case class SAdd(key: Array[Byte], value: Seq[Array[Byte]], ttl: Option[Long] = None)
         extends ByteArrayKeyMutation
 
     // List mutations
-    case class RPush(key: Array[Byte], value: Seq[Array[Byte]], ttl: Option[Duration] = None)
+    case class RPush(key: Array[Byte], value: Seq[Array[Byte]], ttl: Option[Long] = None)
         extends ByteArrayKeyMutation
 
-    case class LPush(key: Array[Byte], value: Seq[Array[Byte]], ttl: Option[Duration] = None)
+    case class LPush(key: Array[Byte], value: Seq[Array[Byte]], ttl: Option[Long] = None)
         extends ByteArrayKeyMutation
 
     // HyperLogLog mutations
-    case class PFAdd(key: Array[Byte], value: Seq[Array[Byte]], ttl: Option[Duration] = None)
+    case class PFAdd(key: Array[Byte], value: Seq[Array[Byte]], ttl: Option[Long] = None)
         extends ByteArrayKeyMutation
 
   }
@@ -111,7 +106,7 @@ object RedisMutator {
    * Applies a mutation to the Redis pipeline.
    * Sets ttl if needed.
    */
-  def apply(mutation: RedisMutation[_], pipeline: Pipeline): Unit = {
+  def apply(mutation: RedisMutation, pipeline: Pipeline): Unit = {
     mutation match {
       // Append
       case String.Append(key, value, _)    => pipeline.append(key, value)
@@ -141,9 +136,9 @@ object RedisMutator {
 
     mutation match {
       case mutation: StringKeyMutation =>
-        mutation.ttl.foreach(expireTime => pipeline.pexpire(mutation.key, expireTime.getMillis))
+        mutation.ttl.foreach(expireTime => pipeline.pexpire(mutation.key, expireTime))
       case mutation: ByteArrayKeyMutation =>
-        mutation.ttl.foreach(expireTime => pipeline.pexpire(mutation.key, expireTime.getMillis))
+        mutation.ttl.foreach(expireTime => pipeline.pexpire(mutation.key, expireTime))
     }
 
   }
