@@ -799,7 +799,8 @@ lazy val `scio-extra`: Project = project
     `scio-test` % "it->it;test->test",
     `scio-avro`,
     `scio-google-cloud-platform`,
-    `scio-macros`
+    `scio-macros`,
+    `scio-redis`
   )
   .configs(IntegrationTest)
 
@@ -1111,6 +1112,26 @@ lazy val `scio-smb`: Project = project
     `scio-core`,
     `scio-test` % "test;it",
     `scio-avro` % IntegrationTest
+  )
+
+lazy val `scio-redis`: Project = project
+  .in(file("scio-redis"))
+  .settings(commonSettings)
+  .settings(itSettings)
+  .settings(
+    description := "Scio integration with Redis",
+    libraryDependencies ++= Seq(
+      "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
+      "com.google.protobuf" % "protobuf-java" % protobufVersion,
+      "com.google.guava" % "guava" % guavaVersion,
+      "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
+      "org.scalatest" %% "scalatest" % scalatestVersion % Test,
+      "org.apache.beam" % "beam-sdks-java-io-redis" % beamVersion
+    )
+  )
+  .dependsOn(
+    `scio-core`,
+    `scio-test` % "test"
   )
 
 lazy val site: Project = project
