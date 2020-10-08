@@ -56,8 +56,7 @@ object RedisReadStringsExample {
 
 }
 
-// ## Redis Write Strings example
-// Write strings to Redis
+// ## Redis Write example
 
 // Usage:
 
@@ -65,7 +64,7 @@ object RedisReadStringsExample {
 // --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
 // --redisHost=[REDIS_HOST]
 // --redisPort=[REDIS_PORT]`
-object RedisWriteStringsExample {
+object RedisWriteExample {
 
   def main(cmdlineArgs: Array[String]): Unit = {
 
@@ -79,7 +78,8 @@ object RedisWriteStringsExample {
         String.Append("key1", "1"),
         String.Append("key2", "3"),
         String.Append("key3", "3"),
-        String.Set("key4", "4")
+        String.Set("key4", "4"),
+        ByteArray.Set("keyb1".getBytes, Array[Byte](0, 1, 2, 3))
       )
     ).saveAsRedis(connectionOptions)
 
