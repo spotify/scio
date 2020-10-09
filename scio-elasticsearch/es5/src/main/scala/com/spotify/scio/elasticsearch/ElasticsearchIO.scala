@@ -30,6 +30,7 @@ import org.joda.time.Duration
 
 import scala.jdk.CollectionConverters._
 import com.spotify.scio.io.TapT
+import org.apache.beam.sdk.io.elasticsearch.ElasticsearchIO.Write
 
 final case class ElasticsearchIO[T](esOptions: ElasticsearchOptions) extends ScioIO[T] {
   override type ReadP = Nothing

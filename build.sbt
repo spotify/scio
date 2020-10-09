@@ -406,7 +406,8 @@ lazy val root: Project = Project("scio", file("."))
     `scio-repl`,
     `scio-jmh`,
     `scio-macros`,
-    `scio-smb`
+    `scio-smb`,
+    `scio-memcached`
   )
 
 lazy val `scio-core`: Project = project
@@ -845,6 +846,23 @@ lazy val `scio-jdbc`: Project = project
     libraryDependencies ++= Seq(
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-io-jdbc" % beamVersion
+    )
+  )
+  .dependsOn(
+    `scio-core`,
+    `scio-test` % "test"
+  )
+
+lazy val `scio-memcached`: Project = project
+  .in(file("scio-memcached"))
+  .settings(commonSettings)
+  .settings(
+    description := "Scio add-on memcached",
+    libraryDependencies ++= Seq(
+      "com.spotify" % "folsom" % "1.7.4",
+      "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
+      "com.google.auto.value" % "auto-value-annotations" % autoValueVersion,
+      "com.google.auto.value" % "auto-value" % autoValueVersion
     )
   )
   .dependsOn(
