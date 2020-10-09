@@ -107,14 +107,14 @@ object Table {
     override lazy val spec: String = BigQueryHelpers.toTableSpec(ref)
     def latest(bq: BigQuery): Ref =
       Ref(Spec(spec).latest(bq).ref)
-    def latest() = latest(BigQuery.defaultInstance())
+    def latest(): Ref = latest(BigQuery.defaultInstance())
 
   }
   final case class Spec(spec: String) extends Table {
     override val ref: GTableReference = BigQueryHelpers.parseTableSpec(spec)
     def latest(bq: BigQuery): Spec =
       Spec(BigQueryPartitionUtil.latestTable(bq, spec))
-    def latest() = latest(BigQuery.defaultInstance())
+    def latest(): Spec = latest(BigQuery.defaultInstance())
   }
 }
 

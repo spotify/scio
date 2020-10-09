@@ -189,8 +189,11 @@ class BigQueryTypeIT extends AnyFlatSpec with Matchers {
     tableReference.setTableId("shakespeare")
     Table.Spec("bigquery-public-data:samples.shakespeare") shouldBe Table.Ref(tableReference)
 
-    Table.Spec("data-integration-test:partition_a.table_$LATEST").latest().ref.getTableId
-      shouldBe "table_2017_01_03"
+    Table
+      .Spec("data-integration-test:partition_a.table_$LATEST")
+      .latest()
+      .ref
+      .getTableId shouldBe "table_2017_01_03"
   }
 
   it should "type check annotation arguments" in {
