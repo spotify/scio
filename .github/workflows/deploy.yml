@@ -1,0 +1,46 @@
+name: Deploy
+
+on:
+  push:
+    tags: [ v.* ]
+
+jobs:
+  build:
+    name: Publish documentation
+      runs-on: ubuntu-latest
+    steps:
+      - name: Checkout tag
+        uses: actions/checkout@v1
+
+      - name: Setup Java and Scala
+        uses: olafurpg/setup-scala@v5
+
+      - name: Cache ivy2
+        uses: actions/cache@v1
+        with:
+          path: ~/.ivy2/cache
+          key: sbt-ivy-cache-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('project/build.properties') }}
+
+      - name: Cache coursier
+        uses: actions/cache@v1
+        with:
+          path: ~/.coursier/cache/v1
+          key: sbt-coursier-cache-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('project/build.properties') }}
+
+      - name: Cache sbt
+        uses: actions/cache@v1
+        with:
+          path: ~/.sbt
+          key: sbt-cache-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('project/build.properties') }}
+
+      - name: Build documentation
+        run: sbt ++${{ matrix.scala }} scio-examples/compile site/makeSite
+        env:
+          SOCCO: true
+
+      - name: Deploy
+        uses: JamesIves/github-pages-deploy-action@3.6.2
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BRANCH: gh-pages
+          FOLDER: site/target/site

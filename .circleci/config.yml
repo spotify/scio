@@ -127,7 +127,6 @@ jobs:
                 "++$SCALA_VERSION test"
                 "++$SCALA_VERSION coverageAggregate"
             - run: ./scripts/circleci_repl.sh
-            - run: ./scripts/circleci_docs.sh <<pipeline.git.base_revision>> <<pipeline.git.revision>>
             - run: bash <(curl -s https://codecov.io/bash)
 
   build_it_212: &build_it_212
