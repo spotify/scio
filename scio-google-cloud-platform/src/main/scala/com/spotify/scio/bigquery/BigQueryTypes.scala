@@ -65,7 +65,7 @@ final case class Query(underlying: String) extends Source {
 }
 
 /**
- * A wrapper type [[Table]] which wraps a table spec String and a table [[GTableReference]]
+ * [[Table]] abstracts the multiple ways of referencing Bigquery tables. Tables can be referenced by a table spec `String` or by a table reference [[GTableReference]]. 
  *
  * Example:
  * {{{
