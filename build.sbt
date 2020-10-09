@@ -1250,7 +1250,7 @@ lazy val siteSettings = Def.settings(
   makeSite / mappings ++= Seq(
     file("scio-examples/target/site/index.html") -> "examples/index.html"
   ) ++ SoccoIndex.mappings,
-  makeSite := makeSite.dependsOn(mdoc.toTask("")).value,
+  makeSite := makeSite.dependsOn(mdoc.toTask("")).value
 )
 
 lazy val soccoSettings = if (sys.env.contains("SOCCO")) {
