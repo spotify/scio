@@ -42,4 +42,6 @@ jobs:
           key: sbt-cache-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('project/build.properties') }}
 
       - name: Build documentation
-        run: sbt ++${{ matrix.scala }} site/makeSite
+        run: sbt $SBT_OPTS ++${{ matrix.scala }} site/makeSite
+        env:
+          SBT_OPTS: -Dbigquery.project=dummy-projectX

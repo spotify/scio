@@ -37,6 +37,7 @@ jobs:
         run: sbt ++${{ matrix.scala }} scio-examples/compile site/makeSite
         env:
           SOCCO: true
+          SBT_OPTS: -Dbigquery.project=dummy-project
 
       - name: Deploy
         uses: JamesIves/github-pages-deploy-action@3.6.2
