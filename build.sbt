@@ -1190,18 +1190,9 @@ lazy val siteSettings = Def.settings(
     "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion,
     "com.nrinaudo" %% "kantan.csv" % kantanCsvVersion
   ),
-  siteSubdirName in ScalaUnidoc := "api",
-  scalacOptions in ScalaUnidoc := Seq(),
-  addMappingsToSiteDir(mappings in (ScalaUnidoc, packageDoc), siteSubdirName in ScalaUnidoc),
-  gitRemoteRepo := "git@github.com:spotify/scio.git",
-  mappings in makeSite ++= Seq(
-    file("scio-examples/target/site/index.html") -> "examples/index.html"
-  ) ++ SoccoIndex.mappings,
-  // pre-compile md using mdoc
-  mdocIn := (Paradox / sourceDirectory).value,
-  mdocExtraArguments ++= Seq("--no-link-hygiene"),
-  Paradox / sourceManaged := mdocOut.value,
-  makeSite := makeSite.dependsOn(mdoc.toTask("")).value,
+  // unidoc
+  ScalaUnidoc / siteSubdirName := "api",
+  ScalaUnidoc / scalacOptions := Seq.empty,
   ScalaUnidoc / unidoc / unidocProjectFilter := inProjects(
     `scio-core`,
     `scio-test`,
