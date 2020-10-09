@@ -64,18 +64,57 @@ final case class Query(underlying: String) extends Source {
   def latest(): Query = latest(BigQuery.defaultInstance())
 }
 
+/**
+ * [[Table]] abstracts the multiple ways of referencing Bigquery tables.
+ * Tables can be referenced by a table spec `String` or by a table reference [[GTableReference]].
+ *
+ * Example:
+ * {{{
+ *   val table = Table.Spec("bigquery-public-data:samples.shakespeare")
+ *   sc.bigQueryTable(table)
+ *     .filter(r => "hamlet".equals(r.getString("corpus")) && "Polonius".equals(r.getString("word")))
+ *     .saveAsTextFile("./output.txt")
+ *   sc.run()
+ * }}}
+ *
+ * Or create a [[Table]] from a [[GTableReference]]:
+ * {{{
+ *   val tableReference = new TableReference
+ *   tableReference.setProjectId("bigquery-public-data")
+ *   tableReference.setDatasetId("samples")
+ *   tableReference.setTableId("shakespeare")
+ *   val table = Table.Ref(tableReference)
+ * }}}
+ *
+ * A helper method is provided to replace the "$LATEST" placeholder in the table name
+ * to the latest common partition.
+ * {{{
+ *   val table = Table.Spec("some_project:some_data.some_table_$LATEST").latest()
+ * }}}
+ */
 sealed trait Table extends Source {
   def spec: String
 
   def ref: GTableReference
+
+  def latest(bg: BigQuery): Table
+
+  def latest(): Table
 }
 
 object Table {
   final case class Ref(ref: GTableReference) extends Table {
     override lazy val spec: String = BigQueryHelpers.toTableSpec(ref)
+    def latest(bq: BigQuery): Ref =
+      Ref(Spec(spec).latest(bq).ref)
+    def latest(): Ref = latest(BigQuery.defaultInstance())
+
   }
   final case class Spec(spec: String) extends Table {
     override val ref: GTableReference = BigQueryHelpers.parseTableSpec(spec)
+    def latest(bq: BigQuery): Spec =
+      Spec(BigQueryPartitionUtil.latestTable(bq, spec))
+    def latest(): Spec = latest(BigQuery.defaultInstance())
   }
 }
 
