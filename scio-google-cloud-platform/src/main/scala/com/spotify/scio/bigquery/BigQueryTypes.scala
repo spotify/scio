@@ -65,7 +65,8 @@ final case class Query(underlying: String) extends Source {
 }
 
 /**
- * [[Table]] abstracts the multiple ways of referencing Bigquery tables. Tables can be referenced by a table spec `String` or by a table reference [[GTableReference]]. 
+ * [[Table]] abstracts the multiple ways of referencing Bigquery tables.
+ * Tables can be referenced by a table spec `String` or by a table reference [[GTableReference]].
  *
  * Example:
  * {{{
