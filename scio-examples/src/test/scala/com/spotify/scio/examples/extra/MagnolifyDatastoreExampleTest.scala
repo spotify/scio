@@ -20,6 +20,7 @@ package com.spotify.scio.examples.extra
 import com.google.datastore.v1.client.DatastoreHelper.{makeKey, makeValue}
 import com.google.datastore.v1.Entity
 import com.spotify.scio.io._
+import com.spotify.scio.datastore._
 import com.spotify.scio.testing._
 
 class MagnolifyDatastoreExampleTest extends PipelineSpec {
