@@ -1,10 +1,8 @@
 package com.spotify.scio.examples.extra
 
 
-import com.spotify.scio.memcached.MemcacheConnectionOptions
-import com.spotify.scio.ContextAndArgs
 import com.spotify.scio.memcached._
-import com.spotify.scio.{ContextAndArgs, ScioContext}
+import com.spotify.scio._
 
 
 // `sbt "runMain com.spotify.scio.examples.extra.MemcacheWriteExample
@@ -17,11 +15,11 @@ object MemcacheWriteExample {
 
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
-    val memcacheHost = args("memcahceHost")
-    val memcachePort = args.int("memcahcePort")
+    val mHost = args("memcahceHost")
+    val mPort = args.int("memcahcePort")
     val ttl = 20
     val flushDelay = 40
-    val memcacheConnectionOptions = MemcacheConnectionOptions(memcacheHost, memcachePort, ttl, flushDelay)
+    val memcacheConnectionOptions = MemcacheConnectionOptions(mHost, mPort, ttl, flushDelay)
 
     sc.parallelize(
       Iterable(
@@ -30,8 +28,7 @@ object MemcacheWriteExample {
         "key3" -> "3"
       )
     ).saveAsMemcache(memcacheConnectionOptions)
-    val tmp = sc.run()
-    tmp.waitUntilDone()
+    val tmp = sc.run().waitUntilDone()
 
   }
 
