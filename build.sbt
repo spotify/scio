@@ -801,7 +801,8 @@ lazy val `scio-extra`: Project = project
     `scio-avro`,
     `scio-google-cloud-platform`,
     `scio-macros`,
-    `scio-redis`
+    `scio-redis`,
+    `scio-memcached`
   )
   .configs(IntegrationTest)
 
