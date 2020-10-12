@@ -15,9 +15,9 @@ sealed trait MemcachedIO[T] extends ScioIO[T] {
   final override val tapT: TapT.Aux[T, Nothing] = EmptyTapOf[T]
 }
 
-final class MemcachedIOWrite(memcacheConnectionOptions: MemcacheConnectionOptions) extends MemcachedIO[(String, String)] {
-  override type ReadP = Nothing
-  override type WriteP = MemcachedIOWrite
+final case class MemcachedIOWrite(memcacheConnectionOptions: MemcacheConnectionOptions) extends MemcachedIO[(String, String)] {
+  override type ReadP = Unit
+  override type WriteP = MemcachedIOWrite.WriteParam
 
   override def tap(read: ReadP): Tap[Nothing] = EmptyTap
 
@@ -44,5 +44,7 @@ object MemcachedIOWrite {
   object WriteParam {
     private[memcached] val DefaultConnectWaitSeconds = 10
   }
+
+  final case class WriteParam private (ttl: Int)
 
 }
