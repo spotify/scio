@@ -17,9 +17,10 @@
 
 package com.spotify.scio.extra.hll.zetasketch
 
-import com.spotify.scio.testing.ApproxPipelineSpec
+import com.spotify.scio.testing.PipelineSpec
+import com.spotify.scio.testing.ApproximationAssertions._
 
-class ZetasketchHllIntCounterTest extends ApproxPipelineSpec {
+class ZetasketchHllIntCounterTest extends PipelineSpec {
 
   "ZetasketchHLL++" should "estimate int distinct count" in {
     val estimator = ZetasketchHllIntCounter()
@@ -28,7 +29,7 @@ class ZetasketchHllIntCounterTest extends ApproxPipelineSpec {
       scl
         .countApproxDistinct(estimator)
     }
-    checkWithErrorRate(output, Seq(20L), 0.6d)
+    output shouldApproximate withErrorRate(Seq(20L), 0.6d)
   }
 
   it should "estimate strings distinct count" in {
@@ -38,7 +39,8 @@ class ZetasketchHllIntCounterTest extends ApproxPipelineSpec {
       scl
         .countApproxDistinct(estimator)
     }
-    checkWithErrorRate(output, Seq(20L), 0.6d)
+
+    output shouldApproximate withErrorRate(Seq(20L), 0.6d)
   }
 
   it should "estimate longs distinct count" in {
@@ -48,7 +50,7 @@ class ZetasketchHllIntCounterTest extends ApproxPipelineSpec {
       scl
         .countApproxDistinct(estimator)
     }
-    checkWithErrorRate(output, Seq(20L), 0.6d)
+    output shouldApproximate withErrorRate(Seq(20L), 0.6d)
   }
 
   it should "estimate byte array distinct count" in {
@@ -58,7 +60,7 @@ class ZetasketchHllIntCounterTest extends ApproxPipelineSpec {
       scl
         .countApproxDistinct(estimator)
     }
-    checkWithErrorRate(output, Seq(20L), 0.6d)
+    output shouldApproximate withErrorRate(Seq(20L), 0.6d)
   }
 
   it should "estimate distinct count per key" in {
@@ -71,6 +73,6 @@ class ZetasketchHllIntCounterTest extends ApproxPipelineSpec {
         .keyBy(_ % 5)
         .countApproxDistinctByKey(estimator)
     }
-    checkWithErrorRatePerKey(output, expt, 0.5d)
+    output shouldApproximate withErrorRatePerKey(expt, 0.5d)
   }
 }
