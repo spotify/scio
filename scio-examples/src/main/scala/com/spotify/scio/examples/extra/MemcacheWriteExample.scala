@@ -10,7 +10,6 @@ import com.spotify.scio._
 // --memcahceHost=[MEMCACHE_HOST]
 // --memcachPort=[MEMCACHE_PORT]`
 
-//10.72.48.3:11211
 object MemcacheWriteExample {
 
   def main(cmdlineArgs: Array[String]): Unit = {
@@ -33,5 +32,3 @@ object MemcacheWriteExample {
   }
 
 }
-
-//sbt project scio-examples runMain com.spotify.scio.examples.extra.MemcacheWriteExample --project=acmacquisition --runner=DataflowRunner --zone=europe-north1 --memcahceHost=10.72.48.3 --memcachPort=11211"
