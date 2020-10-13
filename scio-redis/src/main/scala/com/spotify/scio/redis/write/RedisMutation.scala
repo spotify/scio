@@ -20,9 +20,10 @@ package com.spotify.scio.redis.write
 import org.joda.time.Duration
 import redis.clients.jedis.Pipeline
 
-/** Represents an abstract Redis command.
+/**
+ * Represents an abstract Redis command.
  * See Redis commands documentation for the description of commands: https://redis.io/commands
- * */
+ */
 sealed trait RedisMutation[T] extends Product with Serializable {
   val key: T
   val ttl: Option[Duration]
@@ -36,21 +37,21 @@ object RedisType {
 }
 
 final case class Append[T: RedisType](key: T, value: T, ttl: Option[Duration] = None)
-  extends RedisMutation[T]
+    extends RedisMutation[T]
 final case class Set[T: RedisType](key: T, value: T, ttl: Option[Duration] = None)
-  extends RedisMutation[T]
+    extends RedisMutation[T]
 final case class IncrBy[T: RedisType](key: T, value: Long, ttl: Option[Duration] = None)
-  extends RedisMutation[T]
+    extends RedisMutation[T]
 final case class DecrBy[T: RedisType](key: T, value: Long, ttl: Option[Duration] = None)
-  extends RedisMutation[T]
+    extends RedisMutation[T]
 final case class SAdd[T: RedisType](key: T, value: Seq[T], ttl: Option[Duration] = None)
-  extends RedisMutation[T]
+    extends RedisMutation[T]
 final case class LPush[T: RedisType](key: T, value: Seq[T], ttl: Option[Duration] = None)
-  extends RedisMutation[T]
+    extends RedisMutation[T]
 final case class RPush[T: RedisType](key: T, value: Seq[T], ttl: Option[Duration] = None)
-  extends RedisMutation[T]
+    extends RedisMutation[T]
 final case class PFAdd[T: RedisType](key: T, value: Seq[T], ttl: Option[Duration] = None)
-  extends RedisMutation[T]
+    extends RedisMutation[T]
 
 sealed abstract class RedisMutator[-T] extends Serializable {
   def mutate(client: Pipeline, mutation: T): Unit
@@ -63,13 +64,13 @@ object RedisMutator {
       override def mutate(client: Pipeline, mutation: RedisMutation[String]): Unit = {
         mutation match {
           case Append(key, value, _) => client.append(key, value)
-          case Set(key, value, _) => client.set(key, value)
+          case Set(key, value, _)    => client.set(key, value)
           case IncrBy(key, value, _) => client.incrBy(key, value)
           case DecrBy(key, value, _) => client.decrBy(key, value)
-          case SAdd(key, value, _) => client.sadd(key, value: _*)
-          case LPush(key, value, _) => client.lpush(key, value: _*)
-          case RPush(key, value, _) => client.rpush(key, value: _*)
-          case PFAdd(key, value, _) => client.pfadd(key, value: _*)
+          case SAdd(key, value, _)   => client.sadd(key, value: _*)
+          case LPush(key, value, _)  => client.lpush(key, value: _*)
+          case RPush(key, value, _)  => client.rpush(key, value: _*)
+          case PFAdd(key, value, _)  => client.pfadd(key, value: _*)
         }
 
         mutation.ttl.foreach(expireTime => client.pexpire(mutation.key, expireTime.getMillis))
@@ -81,13 +82,13 @@ object RedisMutator {
       override def mutate(client: Pipeline, mutation: RedisMutation[Array[Byte]]): Unit = {
         mutation match {
           case Append(key, value, _) => client.append(key, value)
-          case Set(key, value, _) => client.set(key, value)
+          case Set(key, value, _)    => client.set(key, value)
           case IncrBy(key, value, _) => client.incrBy(key, value)
           case DecrBy(key, value, _) => client.decrBy(key, value)
-          case SAdd(key, value, _) => client.sadd(key, value: _*)
-          case LPush(key, value, _) => client.lpush(key, value: _*)
-          case RPush(key, value, _) => client.rpush(key, value: _*)
-          case PFAdd(key, value, _) => client.pfadd(key, value: _*)
+          case SAdd(key, value, _)   => client.sadd(key, value: _*)
+          case LPush(key, value, _)  => client.lpush(key, value: _*)
+          case RPush(key, value, _)  => client.rpush(key, value: _*)
+          case PFAdd(key, value, _)  => client.pfadd(key, value: _*)
         }
 
         mutation.ttl.foreach(expireTime => client.pexpire(mutation.key, expireTime.getMillis))
