@@ -128,20 +128,21 @@ lazy val mimaSettings = Def.settings(
 
 lazy val formatSettings = Def.settings(scalafmtOnCompile := false, javafmtOnCompile := false)
 
-val keepPreviousYearComment =
+lazy val keepExistingHeader =
   HeaderCommentStyle.cStyleBlockComment.copy(commentCreator = new CommentCreator() {
     override def apply(text: String, existingText: Option[String]): String =
-      existingText.getOrElse(
-        HeaderCommentStyle.cStyleBlockComment.commentCreator(text)
-      )
+      existingText
+        .getOrElse(
+          HeaderCommentStyle.cStyleBlockComment.commentCreator(text)
+        )
+        .trim()
   })
 
 val commonSettings = Def
   .settings(
     organization := "com.spotify",
-    headerEmptyLine := false,
     headerLicense := Some(HeaderLicense.ALv2("2020", "Spotify AB")),
-    headerMappings := headerMappings.value + (HeaderFileType.scala -> keepPreviousYearComment, HeaderFileType.java -> keepPreviousYearComment),
+    headerMappings := headerMappings.value + (HeaderFileType.scala -> keepExistingHeader, HeaderFileType.java -> keepExistingHeader),
     scalaVersion := "2.13.3",
     crossScalaVersions := Seq("2.12.12", scalaVersion.value),
     scalacOptions ++= Scalac.commonsOptions.value,
