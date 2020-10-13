@@ -615,10 +615,6 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * more accurate the estimate will be; should be `>= 16`.
    * @group per_key
    */
-  @deprecated(
-    "use SCollection[(K, V)]#countApproxDistinctByKey(ApproximateUniqueCounter(sampleSize) instead",
-    "0.9.5"
-  )
   def countApproxDistinctByKey(sampleSize: Int): SCollection[(K, Long)] =
     ApproximateUniqueCounter(sampleSize)
       .estimateDistinctCountPerKey(this.self)
@@ -629,10 +625,6 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * `[0.01, 0.5]`.
    * @group per_key
    */
-  @deprecated(
-    "use SCollection[(K, V)]#countApproxDistinctByKey(ApproximateUniqueCounterByError(maximumEstimationError)) instead",
-    "0.9.5"
-  )
   def countApproxDistinctByKey(maximumEstimationError: Double = 0.02): SCollection[(K, Long)] =
     ApproximateUniqueCounterByError(maximumEstimationError)
       .estimateDistinctCountPerKey(this.self)
