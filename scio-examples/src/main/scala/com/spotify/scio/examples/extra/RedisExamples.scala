@@ -23,7 +23,7 @@ import com.spotify.scio.redis._
 import org.apache.beam.examples.common.ExampleUtils
 import org.apache.beam.sdk.options.{PipelineOptions, StreamingOptions}
 import com.spotify.scio.pubsub._
-import com.spotify.scio.redis.write.RedisMutation._
+import com.spotify.scio.redis.write._
 
 // ## Redis Read Strings example
 // Read strings from Redis by a key pattern
@@ -56,15 +56,16 @@ object RedisReadStringsExample {
 
 }
 
-// ## Redis Write example
+// ## Redis Write Strings example
+// Write strings to Redis
 
 // Usage:
 
-// `sbt "runMain com.spotify.scio.examples.extra.RedisWriteStringsExample
+// `sbt "runMain com.spotify.scio.examples.extra.RedisWriteBatchExample
 // --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
 // --redisHost=[REDIS_HOST]
 // --redisPort=[REDIS_PORT]`
-object RedisWriteExample {
+object RedisWriteBatchExample {
 
   def main(cmdlineArgs: Array[String]): Unit = {
 
@@ -75,11 +76,10 @@ object RedisWriteExample {
 
     sc.parallelize(
       Iterable(
-        String.Append("key1", "1"),
-        String.Append("key2", "3"),
-        String.Append("key3", "3"),
-        String.Set("key4", "4"),
-        ByteArray.Set("keyb1".getBytes, Array[Byte](0, 1, 2, 3))
+        Append("key1", "1"),
+        Append("key2", "3"),
+        Append("key3", "3"),
+        PFAdd("pf2", Seq("x", "y"))
       )
     ).saveAsRedis(connectionOptions)
 
@@ -94,12 +94,12 @@ object RedisWriteExample {
 
 // Usage:
 
-// `sbt "runMain com.spotify.scio.examples.extra.RedisWriteStringsStreamingExample
+// `sbt "runMain com.spotify.scio.examples.extra.RedisWriteStreamingExample
 // --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
 // --subscription=[PUBSUB_SUBSCRIPTION]
 // --redisHost=[REDIS_HOST]
 // --redisPort=[REDIS_PORT]`
-object RedisWriteStringsStreamingExample {
+object RedisWriteStreamingExample {
 
   def main(cmdlineArgs: Array[String]): Unit = {
 
@@ -119,7 +119,7 @@ object RedisWriteStringsStreamingExample {
     sc.read(PubsubIO.string(pubSubSubscription))(params)
       .flatMap(_.split(" "))
       .filter(_.length > 0)
-      .map(String.IncrBy(_, 1))
+      .map(IncrBy(_, 1))
       .debug()
       .saveAsRedis(connectionOptions)
 

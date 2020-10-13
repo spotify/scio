@@ -19,7 +19,7 @@ package com.spotify.scio.redis
 
 import com.spotify.scio.ScioContext
 import com.spotify.scio.io.{EmptyTap, EmptyTapOf, ScioIO, Tap, TapT}
-import com.spotify.scio.redis.write.{RedisMutation, RedisWriteTransform}
+import com.spotify.scio.redis.write.{RedisMutation, RedisMutator, RedisWriteTransform}
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.io.redis.{RedisConnectionConfiguration, RedisIO => BeamRedisIO}
 import org.joda.time.Duration
@@ -101,7 +101,7 @@ object RedisRead {
   )
 }
 
-final case class RedisWrite[T <: RedisMutation](
+final case class RedisWrite[T <: RedisMutation[_] : RedisMutator](
   connectionOptions: RedisConnectionOptions
 ) extends RedisIO[T] {
   type ReadP = Nothing

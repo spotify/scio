@@ -20,10 +20,11 @@ package com.spotify.scio.redis.syntax
 import com.spotify.scio.io.ClosedTap
 import com.spotify.scio.redis.{RedisConnectionOptions, RedisWrite}
 import com.spotify.scio.redis.RedisWrite.WriteParam
-import com.spotify.scio.redis.write.RedisMutation
+import com.spotify.scio.redis.write.{RedisMutation, RedisMutator}
 import com.spotify.scio.values.SCollection
 
-final class SCollectionRedisOps[T <: RedisMutation](private val self: SCollection[T]) {
+final class SCollectionRedisOps[T <: RedisMutation[_] : RedisMutator]
+(private val self: SCollection[T]) {
 
   def saveAsRedis(
     connectionOptions: RedisConnectionOptions,
@@ -36,7 +37,7 @@ final class SCollectionRedisOps[T <: RedisMutation](private val self: SCollectio
 }
 
 trait SCollectionSyntax {
-  implicit def redisSCollectionOps[T <: RedisMutation](
+  implicit def redisSCollectionOps[T <: RedisMutation[_] : RedisMutator](
     coll: SCollection[T]
   ): SCollectionRedisOps[T] = new SCollectionRedisOps[T](coll)
 }
