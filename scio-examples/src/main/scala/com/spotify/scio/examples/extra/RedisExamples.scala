@@ -77,7 +77,7 @@ object RedisWriteBatchExample {
     sc.parallelize(
       Iterable(
         Append("key1", "1"),
-        Append("key2", "3"),
+        Append("key2", "2"),
         Append("key3", "3"),
         PFAdd("pf2", Seq("x", "y"))
       )
