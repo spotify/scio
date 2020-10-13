@@ -22,7 +22,15 @@ import java.io.{DataInputStream, DataOutputStream, InputStream, OutputStream}
 import com.spotify.scio.coders.Coder
 import org.apache.beam.sdk.coders.{AtomicCoder, InstantCoder}
 import org.joda.time.chrono.ISOChronology
-import org.joda.time.{Chronology, DateTime, DateTimeZone, Duration, LocalDate, LocalDateTime, LocalTime}
+import org.joda.time.{
+  Chronology,
+  DateTime,
+  DateTimeZone,
+  Duration,
+  LocalDate,
+  LocalDateTime,
+  LocalTime
+}
 
 trait JodaCoders {
   implicit def instantCoder: Coder[org.joda.time.Instant] = Coder.beam(InstantCoder.of())
