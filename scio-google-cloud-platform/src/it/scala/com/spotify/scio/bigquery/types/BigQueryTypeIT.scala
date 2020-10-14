@@ -182,18 +182,18 @@ class BigQueryTypeIT extends AnyFlatSpec with Matchers {
       .latest(bq)
   }
 
-  it should "create Table type" in {
+  it should "resolve latest Table" in {
     val tableReference = new TableReference
-    tableReference.setProjectId("bigquery-public-data")
-    tableReference.setDatasetId("samples")
-    tableReference.setTableId("shakespeare")
-    Table.Spec("bigquery-public-data:samples.shakespeare") shouldBe Table.Ref(tableReference)
+    tableReference.setProjectId("data-integration-test")
+    tableReference.setDatasetId("partition_a")
+    tableReference.setTableId("table_$LATEST")
+    Table.Ref(tableReference).latest().ref.getTableId shouldBe "table_20170103"
 
     Table
       .Spec("data-integration-test:partition_a.table_$LATEST")
       .latest()
       .ref
-      .getTableId shouldBe "table_2017_01_03"
+      .getTableId shouldBe "table_20170103"
   }
 
   it should "type check annotation arguments" in {
