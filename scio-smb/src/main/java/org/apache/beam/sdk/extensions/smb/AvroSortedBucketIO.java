@@ -32,6 +32,7 @@ import org.apache.beam.sdk.coders.Coder;
 import org.apache.beam.sdk.extensions.smb.AvroFileOperations.SerializableSchemaSupplier;
 import org.apache.beam.sdk.extensions.smb.BucketMetadata.HashType;
 import org.apache.beam.sdk.extensions.smb.SortedBucketSource.BucketedInput;
+import org.apache.beam.sdk.extensions.smb.SortedBucketSource.Predicate;
 import org.apache.beam.sdk.extensions.smb.SortedBucketTransform.NewBucketMetadataFn;
 import org.apache.beam.sdk.io.FileSystems;
 import org.apache.beam.sdk.io.fs.ResourceId;
@@ -140,6 +141,9 @@ public class AvroSortedBucketIO {
     @Nullable
     abstract Map<String, Object> getMetadata();
 
+    @Nullable
+    abstract Predicate<T> getPredicate();
+
     abstract Builder<T> toBuilder();
 
     @AutoValue.Builder
@@ -159,6 +163,8 @@ public class AvroSortedBucketIO {
       abstract Builder<T> setCodec(CodecFactory codec);
 
       abstract Builder<T> setMetadata(Map<String, Object> metadata);
+
+      abstract Builder<T> setPredicate(Predicate<T> predicate);
 
       abstract Read<T> build();
     }
@@ -181,6 +187,11 @@ public class AvroSortedBucketIO {
     /** Specifies the input filename suffix. */
     public Read<T> withSuffix(String filenameSuffix) {
       return toBuilder().setFilenameSuffix(filenameSuffix).build();
+    }
+
+    /** Specifies the filter predicate. */
+    public Read<T> withPredicate(Predicate<T> predicate) {
+      return toBuilder().setPredicate(predicate).build();
     }
 
     @Override

@@ -24,6 +24,7 @@ import org.apache.beam.sdk.coders.CannotProvideCoderException;
 import org.apache.beam.sdk.coders.Coder;
 import org.apache.beam.sdk.extensions.smb.BucketMetadata.HashType;
 import org.apache.beam.sdk.extensions.smb.SortedBucketSource.BucketedInput;
+import org.apache.beam.sdk.extensions.smb.SortedBucketSource.Predicate;
 import org.apache.beam.sdk.extensions.smb.SortedBucketTransform.NewBucketMetadataFn;
 import org.apache.beam.sdk.io.Compression;
 import org.apache.beam.sdk.io.FileSystems;
@@ -99,6 +100,9 @@ public class TensorFlowBucketIO {
 
     abstract Compression getCompression();
 
+    @Nullable
+    abstract Predicate<Example> getPredicate();
+
     abstract Builder toBuilder();
 
     @AutoValue.Builder
@@ -113,6 +117,8 @@ public class TensorFlowBucketIO {
 
       abstract Builder setCompression(Compression compression);
 
+      abstract Builder setPredicate(Predicate<Example> predicate);
+
       abstract Read build();
     }
 
@@ -126,6 +132,11 @@ public class TensorFlowBucketIO {
     /** Specifies the input filename suffix. */
     public Read withSuffix(String filenameSuffix) {
       return toBuilder().setFilenameSuffix(filenameSuffix).build();
+    }
+
+    /** Specifies the filter predicate. */
+    public Read withPredicate(Predicate<Example> predicate) {
+      return toBuilder().setPredicate(predicate).build();
     }
 
     @Override
