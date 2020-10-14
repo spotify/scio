@@ -24,7 +24,7 @@ import org.apache.beam.sdk.transforms.{DoFn, PTransform, ParDo}
 import org.apache.beam.sdk.values.{PCollection, PDone}
 import redis.clients.jedis.{Jedis, Pipeline}
 
-final class RedisWriteFn[T <: RedisMutation[_]: RedisMutator](
+final class RedisWriteFn[T <: RedisMutation: RedisMutator](
   connectionConfig: RedisConnectionConfiguration,
   writeParams: RedisWrite.WriteParam
 ) extends DoFn[T, Void] {
@@ -72,7 +72,7 @@ final class RedisWriteFn[T <: RedisMutation[_]: RedisMutator](
 
 }
 
-final class RedisWriteTransform[T <: RedisMutation[_]: RedisMutator](
+final class RedisWriteTransform[T <: RedisMutation: RedisMutator](
   connectionConfig: RedisConnectionConfiguration,
   writeParams: RedisWrite.WriteParam
 ) extends PTransform[PCollection[T], PDone] {

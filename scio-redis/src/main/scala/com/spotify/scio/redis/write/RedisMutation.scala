@@ -24,12 +24,12 @@ import redis.clients.jedis.Pipeline
  * Represents an abstract Redis command.
  * See Redis commands documentation for the description of commands: https://redis.io/commands
  */
-sealed trait RedisMutation[T] extends Product with Serializable {
-  def rt: RedisType[T]
+sealed abstract class RedisMutation extends Product with Serializable {
+  def rt: RedisType[_]
 }
 
 object RedisMutation {
-  def unapply[T <: RedisMutation[_]](mt: T): Option[(T, RedisType[_])] = Some(mt -> mt.rt)
+  def unapply[T <: RedisMutation](mt: T): Option[(T, RedisType[_])] = Some(mt -> mt.rt)
 }
 
 sealed abstract class RedisType[T]
@@ -41,28 +41,28 @@ object RedisType {
 
 final case class Append[T](key: T, value: T, ttl: Option[Duration] = None)(implicit
   val rt: RedisType[T]
-) extends RedisMutation[T]
+) extends RedisMutation
 final case class Set[T](key: T, value: T, ttl: Option[Duration] = None)(implicit
   val rt: RedisType[T]
-) extends RedisMutation[T]
+) extends RedisMutation
 final case class IncrBy[T](key: T, value: Long, ttl: Option[Duration] = None)(implicit
   val rt: RedisType[T]
-) extends RedisMutation[T]
+) extends RedisMutation
 final case class DecrBy[T](key: T, value: Long, ttl: Option[Duration] = None)(implicit
   val rt: RedisType[T]
-) extends RedisMutation[T]
+) extends RedisMutation
 final case class SAdd[T](key: T, value: Seq[T], ttl: Option[Duration] = None)(implicit
   val rt: RedisType[T]
-) extends RedisMutation[T]
+) extends RedisMutation
 final case class LPush[T](key: T, value: Seq[T], ttl: Option[Duration] = None)(implicit
   val rt: RedisType[T]
-) extends RedisMutation[T]
+) extends RedisMutation
 final case class RPush[T](key: T, value: Seq[T], ttl: Option[Duration] = None)(implicit
   val rt: RedisType[T]
-) extends RedisMutation[T]
+) extends RedisMutation
 final case class PFAdd[T](key: T, value: Seq[T], ttl: Option[Duration] = None)(implicit
   val rt: RedisType[T]
-) extends RedisMutation[T]
+) extends RedisMutation
 
 sealed abstract class RedisMutator[-T] extends Serializable {
   def mutate(client: Pipeline, mutation: T): Unit
@@ -198,7 +198,7 @@ object RedisMutator {
       }
     }
 
-  implicit def redisMutator[T <: RedisMutation[_]]: RedisMutator[T] =
+  implicit def redisMutator[T <: RedisMutation]: RedisMutator[T] =
     new RedisMutator[T] {
       override def mutate(client: Pipeline, mutation: T): Unit = {
         mutation match {
@@ -238,7 +238,7 @@ object RedisMutator {
       }
     }
 
-  def mutate[T <: RedisMutation[_]: RedisMutator](client: Pipeline)(value: T): Unit =
+  def mutate[T <: RedisMutation: RedisMutator](client: Pipeline)(value: T): Unit =
     implicitly[RedisMutator[T]].mutate(client, value)
 
 }

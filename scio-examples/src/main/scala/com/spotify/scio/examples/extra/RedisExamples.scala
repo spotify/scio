@@ -24,6 +24,7 @@ import org.apache.beam.examples.common.ExampleUtils
 import org.apache.beam.sdk.options.{PipelineOptions, StreamingOptions}
 import com.spotify.scio.pubsub._
 import com.spotify.scio.redis.write._
+import com.spotify.scio.redis.coders._
 
 // ## Redis Read Strings example
 // Read strings from Redis by a key pattern
@@ -77,9 +78,7 @@ object RedisWriteBatchExample {
     sc.parallelize(
       Iterable(
         Append("key1", "1"),
-        Append("key2", "2"),
-        Append("key3", "3"),
-        PFAdd("pf2", Seq("x", "y"))
+        Append("key2".getBytes(), "2".getBytes())
       )
     ).saveAsRedis(connectionOptions)
 
