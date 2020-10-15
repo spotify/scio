@@ -78,7 +78,7 @@ package object zetasketch {
    *          used to store information about the distinct elements.
    *          should be in the range `[10, 24]`, default precision value is `15`.
    */
-  case class ZetaSketchableHllCounter[T](p: Int = HllCount.DEFAULT_PRECISION)(implicit
+  case class ZetaSketchHllPlusPlus[T](p: Int = HllCount.DEFAULT_PRECISION)(implicit
     zs: ZetaSketchable[T]
   ) extends ApproxDistinctCounter[T] {
 

@@ -43,7 +43,7 @@ package object sketching {
    *           Uses to create a sparse representation in order to optimize memory and improve accuracy at small
    *           cardinalities. The value of sp should be greater than p(precision), but lower than 32.
    */
-  case class SketchingHyperLogLogPlusPlus[T](p: Int, sp: Int) extends ApproxDistinctCounter[T] {
+  case class SketchHllPlusPlus[T](p: Int, sp: Int) extends ApproxDistinctCounter[T] {
     require(p > 4, "For better accuracy precision should be at least greater than 4")
     require(
       sp > p && sp < 32,

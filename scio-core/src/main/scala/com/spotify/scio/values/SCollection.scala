@@ -529,8 +529,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * }}}
    *
    * There are two different HLL++ implementations available in the `scio-extra` module.
-   *  - [[com.spotify.scio.extra.hll.sketching.SketchingHyperLogLogPlusPlus]]
-   *  - [[com.spotify.scio.extra.hll.zetasketch.ZetasketchHllCount*]]
+   *  - [[com.spotify.scio.extra.hll.sketching.SketchHllPlusPlus]]
+   *  - [[com.spotify.scio.extra.hll.zetasketch.ZetaSketchHllPlusPlus]]
    * @param estimator
    * @return
    */

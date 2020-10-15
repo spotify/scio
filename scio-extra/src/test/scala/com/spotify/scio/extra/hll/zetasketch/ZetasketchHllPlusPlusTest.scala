@@ -20,10 +20,10 @@ package com.spotify.scio.extra.hll.zetasketch
 import com.spotify.scio.testing.PipelineSpec
 import com.spotify.scio.testing.ApproximationAssertions._
 
-class ZetasketchHllIntCounterTest extends PipelineSpec {
+class ZetaSketchHllPlusPlusTestTest extends PipelineSpec {
 
   "ZetasketchHLL++" should "estimate int distinct count" in {
-    val estimator = ZetaSketchableHllCounter[Int]()
+    val estimator = ZetaSketchHllPlusPlus[Int]()
     val input = for (i <- 0 to 1000000) yield (i % 20)
     val output = runWithData(input) { scl =>
       scl
@@ -33,7 +33,7 @@ class ZetasketchHllIntCounterTest extends PipelineSpec {
   }
 
   it should "estimate strings distinct count" in {
-    val estimator = ZetaSketchableHllCounter[String]()
+    val estimator = ZetaSketchHllPlusPlus[String]()
     val input = for (i <- 0 to 1000000) yield s"${i % 20}_"
     val output = runWithData(input) { scl =>
       scl
@@ -44,7 +44,7 @@ class ZetasketchHllIntCounterTest extends PipelineSpec {
   }
 
   it should "estimate longs distinct count" in {
-    val estimator = ZetaSketchableHllCounter[Long]()
+    val estimator = ZetaSketchHllPlusPlus[Long]()
     val input = for (i <- 0 to 1000000) yield ((i % 20).toLong)
     val output = runWithData(input) { scl =>
       scl
@@ -54,7 +54,7 @@ class ZetasketchHllIntCounterTest extends PipelineSpec {
   }
 
   it should "estimate byte array distinct count" in {
-    val estimator = ZetaSketchableHllCounter[Array[Byte]]()
+    val estimator = ZetaSketchHllPlusPlus[Array[Byte]]()
     val input = for (i <- 0 to 1000000) yield (s"${i % 20}_".getBytes)
     val output = runWithData(input) { scl =>
       scl
@@ -64,7 +64,7 @@ class ZetasketchHllIntCounterTest extends PipelineSpec {
   }
 
   it should "estimate distinct count per key" in {
-    val estimator = ZetaSketchableHllCounter[Int]()
+    val estimator = ZetaSketchHllPlusPlus[Int]()
     val upperLimit = 10000
     val in = 0 to upperLimit
     val expt = for (i <- 0 until 5) yield (i, (upperLimit / 5).toLong)
