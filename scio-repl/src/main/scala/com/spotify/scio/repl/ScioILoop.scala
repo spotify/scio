@@ -24,6 +24,7 @@ import org.apache.beam.sdk.options.PipelineOptionsFactory
 
 import scala.tools.nsc.CompilerCommand
 import scala.tools.nsc.interpreter.Results
+import scala.collection.compat.immutable.ArraySeq
 
 /**
  * ScioILoop - core of Scio REPL.
@@ -58,12 +59,14 @@ class ScioILoop(command: CompilerCommand, args: List[String]) extends compat.ILo
   private def newScioCmdImpl(name: String) = {
     val sc = if (name.nonEmpty) name else "sc"
     val rsc = "com.spotify.scio.repl.ReplScioContext"
-    val opts = optsFromArgs(scioOpts)
+    val opts = optsFromArgs(ArraySeq.unsafeWrapArray(scioOpts))
     intp.beQuietDuring {
-      intp.interpret(s"""val $sc: ScioContext = $rsc($opts, "${outputDir.path}")""")
+      intp.interpret(
+        s"""val $sc: ScioContext = $rsc($opts, \"\"\"${outputDir.path}\"\"\")"""
+      )
       ()
     }
-    this.echo("Scio context available as '" + sc + "'")
+    this.echo(s"Scio context available as '$sc'")
     Result.default
   }
 
