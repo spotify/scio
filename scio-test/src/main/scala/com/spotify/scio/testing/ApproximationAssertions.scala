@@ -70,16 +70,16 @@ object ApproximationAssertions {
    *
    *  Assert above for each element pair.
    * @param expected - Expected values, length should be equal to actual.size.
-   * @param errorRate - how much percentage off from expected value is acceptable.
+   * @param errorPct - how much percentage off from expected value is acceptable.
    */
 
   def withErrorRate(
     expected: Iterable[Long],
-    errorRate: Double
+    errorPct: Double
   ): ApproximationAssertion[Iterable[Long]] = { (actual: Iterable[Long]) =>
     actual.size shouldBe expected.size
     (actual zip expected).foreach { case (act, expt) =>
-      val error = ((expt / 100) * errorRate).toLong
+      val error = ((expt / 100) * errorPct).toLong
       act should be <= (expt + error)
       act should be >= (expt - error)
     }
@@ -93,18 +93,18 @@ object ApproximationAssertions {
    *
    *  Assert above for each key in the actual.
    * @param expected - Expected (key, values) pairs, length should be equal to actual.size.
-   * @param errorRate - how much percentage off from expected value is acceptable.
+   * @param errorPct - how much percentage off from expected value is acceptable.
    */
   def withErrorRatePerKey[K](
     expected: Iterable[(K, Long)],
-    errorRate: Double
+    errorPct: Double
   ): ApproximationAssertion[Iterable[(K, Long)]] = { (actual: Iterable[(K, Long)]) =>
     actual.size shouldBe expected.size
     (actual zip expected)
     val ex = expected.toMap
-    actual.toMap.foreach { case (k, act) =>
+    actual.foreach { case (k, act) =>
       val expt = ex(k)
-      val error = ((expt / 100) * errorRate).toLong
+      val error = ((expt / 100) * errorPct).toLong
       act should be <= (expt + error)
       act should be >= (expt - error)
     }

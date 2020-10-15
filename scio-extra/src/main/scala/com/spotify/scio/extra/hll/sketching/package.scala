@@ -44,6 +44,12 @@ package object sketching {
    *           cardinalities. The value of sp should be greater than p(precision), but lower than 32.
    */
   case class SketchingHyperLogLogPlusPlus[T](p: Int, sp: Int) extends ApproxDistinctCounter[T] {
+    require(p > 4, "For better accuracy precision should be at least greater than 4")
+    require(
+      sp > p && sp < 32,
+      "sparse precision(sp) should be greater than precision(p) and less than 32"
+    )
+
     override def estimateDistinctCount(in: SCollection[T]): SCollection[Long] =
       in.applyTransform(
         "Approximate distinct count",

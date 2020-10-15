@@ -20,13 +20,13 @@ package com.spotify.scio.extra.hll.sketching
 import com.spotify.scio.testing.PipelineSpec
 import com.spotify.scio.testing.ApproximationAssertions._
 
-class SketchingHyperLogLogPlusPlusTest extends PipelineSpec {
+class SketchingHllPlusPlusTest extends PipelineSpec {
 
   "SketchHLL++" should "estimate distinct count" in {
     val input = for (i <- 1 to 1000000) yield (i % 20)
     val result = runWithData(input) { scl =>
       scl
-        .countApproxDistinct(new SketchingHyperLogLogPlusPlus[Int](15, 20))
+        .countApproxDistinct(new SketchingHllPlusPlus[Int](15, 20))
     }
 
     result shouldApproximate withErrorRate(Seq(20L), 0.5d)
@@ -40,7 +40,7 @@ class SketchingHyperLogLogPlusPlusTest extends PipelineSpec {
     val result = runWithData(in) { scl =>
       scl
         .keyBy(_ % 20)
-        .countApproxDistinctByKey(new SketchingHyperLogLogPlusPlus[Int](15, 20))
+        .countApproxDistinctByKey(new SketchingHllPlusPlus[Int](15, 20))
     }
 
     result shouldApproximate withErrorRatePerKey(expt, 1.0d)

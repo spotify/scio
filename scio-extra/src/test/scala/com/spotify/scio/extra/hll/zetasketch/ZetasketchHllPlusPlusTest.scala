@@ -23,48 +23,48 @@ import com.spotify.scio.testing.ApproximationAssertions._
 class ZetasketchHllIntCounterTest extends PipelineSpec {
 
   "ZetasketchHLL++" should "estimate int distinct count" in {
-    val estimator = ZetasketchHllIntCounter()
+    val estimator = ZetaSketchableHllCounter[Int]()
     val input = for (i <- 0 to 1000000) yield (i % 20)
     val output = runWithData(input) { scl =>
       scl
         .countApproxDistinct(estimator)
     }
-    output shouldApproximate withErrorRate(Seq(20L), 0.6d)
+    output shouldApproximate withErrorRate(Seq(20L), 0.6)
   }
 
   it should "estimate strings distinct count" in {
-    val estimator = ZetasketchHllStringCounter()
+    val estimator = ZetaSketchableHllCounter[String]()
     val input = for (i <- 0 to 1000000) yield s"${i % 20}_"
     val output = runWithData(input) { scl =>
       scl
         .countApproxDistinct(estimator)
     }
 
-    output shouldApproximate withErrorRate(Seq(20L), 0.6d)
+    output shouldApproximate withErrorRate(Seq(20L), 0.6)
   }
 
   it should "estimate longs distinct count" in {
-    val estimator = ZetasketchHllLongCounter()
+    val estimator = ZetaSketchableHllCounter[Long]()
     val input = for (i <- 0 to 1000000) yield ((i % 20).toLong)
     val output = runWithData(input) { scl =>
       scl
         .countApproxDistinct(estimator)
     }
-    output shouldApproximate withErrorRate(Seq(20L), 0.6d)
+    output shouldApproximate withErrorRate(Seq(20L), 0.6)
   }
 
   it should "estimate byte array distinct count" in {
-    val estimator = ZetasketchHllByteArrayCounter()
+    val estimator = ZetaSketchableHllCounter[Array[Byte]]()
     val input = for (i <- 0 to 1000000) yield (s"${i % 20}_".getBytes)
     val output = runWithData(input) { scl =>
       scl
         .countApproxDistinct(estimator)
     }
-    output shouldApproximate withErrorRate(Seq(20L), 0.6d)
+    output shouldApproximate withErrorRate(Seq(20L), 0.6)
   }
 
   it should "estimate distinct count per key" in {
-    val estimator = ZetasketchHllIntCounter()
+    val estimator = ZetaSketchableHllCounter[Int]()
     val upperLimit = 10000
     val in = 0 to upperLimit
     val expt = for (i <- 0 until 5) yield (i, (upperLimit / 5).toLong)
@@ -73,6 +73,6 @@ class ZetasketchHllIntCounterTest extends PipelineSpec {
         .keyBy(_ % 5)
         .countApproxDistinctByKey(estimator)
     }
-    output shouldApproximate withErrorRatePerKey(expt, 0.5d)
+    output shouldApproximate withErrorRatePerKey(expt, 0.5)
   }
 }
