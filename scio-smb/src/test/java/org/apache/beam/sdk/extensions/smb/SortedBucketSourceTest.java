@@ -264,14 +264,20 @@ public class SortedBucketSourceTest {
     final TupleTag<String> tag = new TupleTag<>("GBK");
     final TestFileOperations fileOperations = new TestFileOperations();
     final BucketedInput<?, ?> bucketedInput =
-        new BucketedInput<>(tag, Collections.singletonList(fromFolder(lhsFolder)), ".txt", fileOperations, predicate);
+        new BucketedInput<>(
+            tag,
+            Collections.singletonList(fromFolder(lhsFolder)),
+            ".txt",
+            fileOperations,
+            predicate);
 
     PCollection<KV<String, CoGbkResult>> output =
         pipeline.apply(
             Read.from(
                 new SortedBucketSource<>(String.class, Collections.singletonList(bucketedInput))));
 
-    final Map<String, List<String>> expected = filter(groupByKey(input, metadata::extractKey), predicate);
+    final Map<String, List<String>> expected =
+        filter(groupByKey(input, metadata::extractKey), predicate);
 
     PAssert.thatMap(output)
         .satisfies(
@@ -522,7 +528,8 @@ public class SortedBucketSourceTest {
   }
 
   private void test(
-      Map<BucketShardId, List<String>> lhsInput, Map<BucketShardId, List<String>> rhsInput,
+      Map<BucketShardId, List<String>> lhsInput,
+      Map<BucketShardId, List<String>> rhsInput,
       TargetParallelism targetParallelism)
       throws Exception {
     test(lhsInput, rhsInput, null, null, targetParallelism);
@@ -647,7 +654,8 @@ public class SortedBucketSourceTest {
                   }));
     }
 
-    checkJoin(pipeline, lhsPaths, rhsPaths, allLhsValues, allRhsValues, null, null, targetParallelism);
+    checkJoin(
+        pipeline, lhsPaths, rhsPaths, allLhsValues, allRhsValues, null, null, targetParallelism);
     pipeline.run();
   }
 
@@ -747,19 +755,21 @@ public class SortedBucketSourceTest {
                     Stream.concat(l.stream(), r.stream()).sorted().collect(Collectors.toList())));
   }
 
-  private static Map<String, List<String>> filter(Map<String, List<String>> input,
-                                                  Predicate<String> predicate) {
+  private static Map<String, List<String>> filter(
+      Map<String, List<String>> input, Predicate<String> predicate) {
     if (predicate == null) {
       return input;
     } else {
       Map<String, List<String>> filtered = new HashMap<>();
       for (Map.Entry<String, List<String>> e : input.entrySet()) {
         List<String> value = new ArrayList<>();
-        e.getValue().forEach(v -> {
-          if (predicate.apply(value, v)) {
-            value.add(v);
-          }
-        });
+        e.getValue()
+            .forEach(
+                v -> {
+                  if (predicate.apply(value, v)) {
+                    value.add(v);
+                  }
+                });
         filtered.put(e.getKey(), value);
       }
       return filtered;

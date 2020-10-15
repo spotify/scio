@@ -335,10 +335,7 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
       this.keyGroupFilter =
           (bytes) -> sources.get(0).getMetadata().rehashBucket(bytes, parallelism) == bucketId;
 
-      predicates =
-          sources.stream()
-              .map(i -> i.predicate)
-              .toArray(Predicate[]::new);
+      predicates = sources.stream().map(i -> i.predicate).toArray(Predicate[]::new);
 
       iterators =
           sources.stream()
@@ -423,19 +420,27 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
             // If we find it in a source with a # buckets >= the parallelism of the job,
             // we know that it doesn't need to be re-hashed as it's already in the right bucket.
             if (acceptKeyGroup == 1) {
-              entry.getValue().getValue().forEachRemaining(v -> {
-                if (predicate.apply(values, v)) {
-                  values.add(v);
-                }
-              });
+              entry
+                  .getValue()
+                  .getValue()
+                  .forEachRemaining(
+                      v -> {
+                        if (predicate.apply(values, v)) {
+                          values.add(v);
+                        }
+                      });
             } else if (acceptKeyGroup == -1
                 && (bucketsPerSource.get(tupleTag) >= parallelism
                     || keyGroupFilter.apply(minKeyEntry.getValue().getKey()))) {
-              entry.getValue().getValue().forEachRemaining(v -> {
-                if (predicate.apply(values, v)) {
-                  values.add(v);
-                }
-              });
+              entry
+                  .getValue()
+                  .getValue()
+                  .forEachRemaining(
+                      v -> {
+                        if (predicate.apply(values, v)) {
+                          values.add(v);
+                        }
+                      });
               acceptKeyGroup = 1;
             } else {
               // skip key but still have to exhaust iterator
@@ -685,9 +690,9 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
   /**
    * Filter predicate when building the {{@code Iterable<T>}} in {{@link CoGbkResult}}.
    *
-   * First argument {{@code List<T>}} is the work in progress buffer for the current key.
-   * Second argument {{@code T}} is the next element to be added.
-   * Return true to accept the next element, or false to reject it.
+   * <p>First argument {{@code List<T>}} is the work in progress buffer for the current key. Second
+   * argument {{@code T}} is the next element to be added. Return true to accept the next element,
+   * or false to reject it.
    */
   public interface Predicate<T> extends BiFunction<List<T>, T, Boolean>, Serializable {}
 }
