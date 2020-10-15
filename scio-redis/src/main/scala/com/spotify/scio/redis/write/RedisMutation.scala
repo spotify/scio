@@ -64,7 +64,7 @@ final case class PFAdd[T](key: T, value: Seq[T], ttl: Option[Duration] = None)(i
   val rt: RedisType[T]
 ) extends RedisMutation
 
-sealed abstract class RedisMutator[-T] extends Serializable {
+sealed abstract class RedisMutator[T] extends Serializable {
   def mutate(client: Pipeline, mutation: T): Unit
 }
 
