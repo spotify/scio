@@ -24,7 +24,7 @@ import redis.clients.jedis.Pipeline
  * Represents an abstract Redis command.
  * See Redis commands documentation for the description of commands: https://redis.io/commands
  */
-sealed abstract class RedisMutation extends Product with Serializable {
+sealed abstract class RedisMutation extends Serializable {
   def rt: RedisType[_]
 }
 
