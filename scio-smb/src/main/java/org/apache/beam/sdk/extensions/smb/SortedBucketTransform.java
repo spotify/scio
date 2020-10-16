@@ -32,6 +32,7 @@ import java.util.stream.IntStream;
 import org.apache.beam.sdk.coders.CannotProvideCoderException;
 import org.apache.beam.sdk.coders.Coder;
 import org.apache.beam.sdk.coders.Coder.NonDeterministicException;
+import org.apache.beam.sdk.coders.NullableCoder;
 import org.apache.beam.sdk.coders.SerializableCoder;
 import org.apache.beam.sdk.extensions.smb.BucketMetadata.HashType;
 import org.apache.beam.sdk.extensions.smb.FileOperations.Writer;
@@ -48,6 +49,7 @@ import org.apache.beam.sdk.metrics.Metrics;
 import org.apache.beam.sdk.options.PipelineOptions;
 import org.apache.beam.sdk.schemas.transforms.Group;
 import org.apache.beam.sdk.transforms.DoFn;
+import org.apache.beam.sdk.transforms.Filter;
 import org.apache.beam.sdk.transforms.PTransform;
 import org.apache.beam.sdk.transforms.ParDo;
 import org.apache.beam.sdk.transforms.display.DisplayData;
@@ -119,6 +121,7 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
         begin
             .getPipeline()
             .apply("MergeAndWriteTempBuckets", Read.from(boundedSource))
+            .apply(Filter.by(Objects::nonNull))
             .apply(Group.globally())
             .apply(
                 "FinalizeTempFiles",
@@ -345,7 +348,7 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
 
     @Override
     public Coder<MergedBucket> getOutputCoder() {
-      return SerializableCoder.of(MergedBucket.class);
+      return NullableCoder.of(SerializableCoder.of(MergedBucket.class));
     }
 
     @Override
@@ -363,6 +366,7 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
         private int bucketId;
         private ResourceId dst;
         private OutputCollector<FinalValueT> outputCollector;
+        private boolean started = false;
 
         @Override
         public boolean start() throws IOException {
@@ -386,19 +390,18 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
         public MergedBucket getCurrent() throws NoSuchElementException {
           try {
             KV<FinalKeyT, CoGbkResult> mergedKeyGroup = keyGroupReader.getCurrent();
-            while (true) {
-              transformFn.writeTransform(mergedKeyGroup, outputCollector);
+            transformFn.writeTransform(mergedKeyGroup, outputCollector);
 
-              if (!keyGroupReader.advance()) {
-                break;
-              }
-              mergedKeyGroup = keyGroupReader.getCurrent();
+            // Return 1 non-null value for the entire bucket
+            if (!started) {
+              started = true;
+              return new MergedBucket(bucketId, dst, effectiveParallelism);
+            } else {
+              return null;
             }
           } catch (Exception e) {
             throw new RuntimeException("Failed to write merged key group", e);
           }
-
-          return new MergedBucket(bucketId, dst, effectiveParallelism);
         }
 
         @Override
