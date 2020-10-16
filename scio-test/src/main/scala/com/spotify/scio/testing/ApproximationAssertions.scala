@@ -28,7 +28,7 @@ object ApproximationAssertions {
   }
 
   /**
-   * Trait for unit testing approximation outputs with error rates.
+   * Trait for unit testing approximation outputs with an error rate(in percentage).
    *
    * A simple test might look like this:
    * {{{
@@ -36,19 +36,19 @@ object ApproximationAssertions {
    * import com.spotify.scio.testing.ApproximationAssertions._
    *
    * class ApproximatePipelineTest extends PipelineSpec {
-   *   "An approximate  pipeline" should "check with error rates" in {
+   *   "An approximate  pipeline" should "in range with error percentage" in {
    *     val input: Seq[Int] = ...
-   *     val estimator = ZetasketchHllIntCounter()
+   *     val estimator = ZetaSketchHllPlusPlus[Int](20) // with precision 20
    *     val output: Seq[Long] = runWithData(input) { sCol =>
    *       sCol.countApproxDistinct(estimator)
    *     }
    *     output shouldApproximate withErrorRate(Seq(3L), 0.5d)
    *   }
    *
-   *   it should "works with key-valued" in {
+   *   it should "works with key-valued output" in {
    *     val in: Seq[(String, Int)] = ...
    *     val expected: Seq[(String, Long)] = ...
-   *     val estimator = ZetasketchHllIntCounter()
+   *     val estimator = ZetaSketchHllPlusPlus[Int]() // with default precision
    *     val output = runWithData(in) { scl =>
    *       scl
    *         .countApproxDistinctByKey(estimator)
@@ -64,8 +64,8 @@ object ApproximationAssertions {
   }
 
   /**
-   * Check corresponding expected value is off by error rate percentage.
-   * i.e.  if actual value is `A`, expected values is `B` with error rate `E`, then assert following.
+   * Check corresponding expected value is off by error percentage.
+   * i.e.  if actual value is `A`, expected values is `B` with error percentage `E`, then assert following.
    *  (B - ((B / 100) * E)) <= A <= (B + ((B / 100) * E)
    *
    *  Assert above for each element pair.
@@ -87,8 +87,8 @@ object ApproximationAssertions {
   }
 
   /**
-   * Similar to above but works with tuples. Check corresponding expected value is off by error rate percentage.
-   * i.e.  if acutal value is `A`, expected values is `B` with error rate `E`, then assert following.
+   * Similar to above but works with tuples. Check corresponding expected value is off by error percentage.
+   * i.e.  if acutal value is `A`, expected values is `B` with error percentage `E`, then assert following.
    *  (B - ((B / 100) * E)) <= A <= (B + ((B / 100) * E)
    *
    *  Assert above for each key in the actual.
