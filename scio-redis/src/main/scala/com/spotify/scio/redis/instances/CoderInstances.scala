@@ -1,3 +1,19 @@
+/*
+ * Copyright 2020 Spotify AB
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.spotify.scio.redis.instances
 
 import com.spotify.scio.coders.Coder
@@ -5,14 +21,14 @@ import com.spotify.scio.redis.write._
 
 trait CoderInstances {
 
-  implicit def appendCoder[T: Coder: RedisType] = Coder.gen[Append[T]]
-  implicit def setCoder[T: Coder: RedisType] = Coder.gen[Set[T]]
-  implicit def incrByCoder[T: Coder: RedisType] = Coder.gen[IncrBy[T]]
-  implicit def decrByCoder[T: Coder: RedisType] = Coder.gen[DecrBy[T]]
-  implicit def sAddCoder[T: Coder: RedisType] = Coder.gen[SAdd[T]]
-  implicit def lPushCoder[T: Coder: RedisType] = Coder.gen[LPush[T]]
-  implicit def rPushCoder[T: Coder: RedisType] = Coder.gen[RPush[T]]
-  implicit def pfAddCoder[T: Coder: RedisType] = Coder.gen[PFAdd[T]]
+  implicit def appendCoder[T: Coder: RedisType]: Coder[Append[T]] = Coder.gen[Append[T]]
+  implicit def setCoder[T: Coder: RedisType]: Coder[Set[T]] = Coder.gen[Set[T]]
+  implicit def incrByCoder[T: Coder: RedisType]: Coder[IncrBy[T]] = Coder.gen[IncrBy[T]]
+  implicit def decrByCoder[T: Coder: RedisType]: Coder[DecrBy[T]] = Coder.gen[DecrBy[T]]
+  implicit def sAddCoder[T: Coder: RedisType]: Coder[SAdd[T]] = Coder.gen[SAdd[T]]
+  implicit def lPushCoder[T: Coder: RedisType]: Coder[LPush[T]] = Coder.gen[LPush[T]]
+  implicit def rPushCoder[T: Coder: RedisType]: Coder[RPush[T]] = Coder.gen[RPush[T]]
+  implicit def pfAddCoder[T: Coder: RedisType]: Coder[PFAdd[T]] = Coder.gen[PFAdd[T]]
 
   private[this] def coders: Map[Int, Coder[_]] = Map(
     1 -> appendCoder[String],
@@ -33,7 +49,7 @@ trait CoderInstances {
     16 -> pfAddCoder[Array[Byte]]
   )
 
-  implicit def redisMutationCoder[T <: RedisMutation] =
+  implicit def redisMutationCoder[T <: RedisMutation]: Coder[T] =
     Coder.disjunction[T, Int]("RedisMutation", coders.asInstanceOf[Map[Int, Coder[T]]]) {
       case RedisMutation(_: Append[String @unchecked], RedisType.StringRedisType)         => 1
       case RedisMutation(_: Append[Array[Byte] @unchecked], RedisType.ByteArrayRedisType) => 2
