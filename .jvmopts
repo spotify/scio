@@ -2,7 +2,7 @@
 -Dscio.ignoreVersionWarning=true
 -Dorg.slf4j.simpleLogger.defaultLogLevel=warn
 -Xms2G
--Xmx10G
+-Xmx8G
 -XX:ReservedCodeCacheSize=512m
 -XX:+TieredCompilation
 -XX:+UseParallelGC
