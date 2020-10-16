@@ -70,7 +70,7 @@ object ApproximationAssertions {
    *
    *  Assert above for each element pair.
    * @param expected - Expected values, length should be equal to actual.size.
-   * @param errorPct - how much percentage off from expected value is acceptable.
+   * @param errorPct - how much percentage(%) off from expected value is acceptable.
    */
 
   def withErrorRate(
@@ -93,7 +93,7 @@ object ApproximationAssertions {
    *
    *  Assert above for each key in the actual.
    * @param expected - Expected (key, values) pairs, length should be equal to actual.size.
-   * @param errorPct - how much percentage off from expected value is acceptable.
+   * @param errorPct - how much percentage(%) off from expected value is acceptable.
    */
   def withErrorRatePerKey[K](
     expected: Iterable[(K, Long)],

@@ -37,31 +37,32 @@ package object zetasketch {
 
   object ZetaSketchable {
 
-    implicit val intZetaSketchable = new ZetaSketchable[Int] {
+    implicit val intZetaSketchable: ZetaSketchable[Int] = new ZetaSketchable[Int] {
       type IN = lang.Integer
       override def init(p: Int): Init.Builder[lang.Integer] =
         HllCount.Init.forIntegers().withPrecision(p)
     }
 
-    implicit val longZetaSketchable = new ZetaSketchable[Long] {
+    implicit val longZetaSketchable: ZetaSketchable[Long] = new ZetaSketchable[Long] {
       type IN = lang.Long
 
       override def init(p: Int): Init.Builder[lang.Long] = HllCount.Init.forLongs().withPrecision(p)
     }
 
-    implicit val stringZetaSketchable = new ZetaSketchable[String] {
+    implicit val stringZetaSketchable: ZetaSketchable[String] = new ZetaSketchable[String] {
       override type IN = String
 
       override def init(p: Int): Init.Builder[String] =
         HllCount.Init.forStrings().withPrecision(p)
     }
 
-    implicit val byteArrayZetaSketchable = new ZetaSketchable[Array[Byte]] {
-      override type IN = Array[Byte]
+    implicit val byteArrayZetaSketchable: ZetaSketchable[Array[Byte]] =
+      new ZetaSketchable[Array[Byte]] {
+        override type IN = Array[Byte]
 
-      override def init(p: Int): Init.Builder[Array[Byte]] =
-        HllCount.Init.forBytes().withPrecision(p)
-    }
+        override def init(p: Int): Init.Builder[Array[Byte]] =
+          HllCount.Init.forBytes().withPrecision(p)
+      }
   }
 
   /**
