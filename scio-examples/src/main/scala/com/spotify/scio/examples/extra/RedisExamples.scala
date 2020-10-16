@@ -21,9 +21,10 @@ package com.spotify.scio.examples.extra
 import com.spotify.scio.{ContextAndArgs, ScioContext}
 import com.spotify.scio.redis._
 import org.apache.beam.examples.common.ExampleUtils
-import org.apache.beam.sdk.io.redis.RedisIO
 import org.apache.beam.sdk.options.{PipelineOptions, StreamingOptions}
 import com.spotify.scio.pubsub._
+import com.spotify.scio.redis.write._
+import com.spotify.scio.redis.coders._
 
 // ## Redis Read Strings example
 // Read strings from Redis by a key pattern
@@ -61,11 +62,11 @@ object RedisReadStringsExample {
 
 // Usage:
 
-// `sbt "runMain com.spotify.scio.examples.extra.RedisWriteStringsExample
+// `sbt "runMain com.spotify.scio.examples.extra.RedisWriteBatchExample
 // --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
 // --redisHost=[REDIS_HOST]
 // --redisPort=[REDIS_PORT]`
-object RedisWriteStringsExample {
+object RedisWriteBatchExample {
 
   def main(cmdlineArgs: Array[String]): Unit = {
 
@@ -76,11 +77,10 @@ object RedisWriteStringsExample {
 
     sc.parallelize(
       Iterable(
-        "key1" -> "1",
-        "key2" -> "2",
-        "key3" -> "3"
+        Append("key1", "1"),
+        Append("key2".getBytes(), "2".getBytes())
       )
-    ).saveAsRedis(connectionOptions, RedisIO.Write.Method.APPEND)
+    ).saveAsRedis(connectionOptions)
 
     sc.run()
     ()
@@ -93,12 +93,12 @@ object RedisWriteStringsExample {
 
 // Usage:
 
-// `sbt "runMain com.spotify.scio.examples.extra.RedisWriteStringsStreamingExample
+// `sbt "runMain com.spotify.scio.examples.extra.RedisWriteStreamingExample
 // --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
 // --subscription=[PUBSUB_SUBSCRIPTION]
 // --redisHost=[REDIS_HOST]
 // --redisPort=[REDIS_PORT]`
-object RedisWriteStringsStreamingExample {
+object RedisWriteStreamingExample {
 
   def main(cmdlineArgs: Array[String]): Unit = {
 
@@ -118,9 +118,9 @@ object RedisWriteStringsStreamingExample {
     sc.read(PubsubIO.string(pubSubSubscription))(params)
       .flatMap(_.split(" "))
       .filter(_.length > 0)
-      .map(msg => msg -> "1")
+      .map(IncrBy(_, 1))
       .debug()
-      .saveAsRedis(connectionOptions, RedisIO.Write.Method.INCRBY)
+      .saveAsRedis(connectionOptions)
 
     val result = sc.run()
     exampleUtils.waitToFinish(result.pipelineResult)
