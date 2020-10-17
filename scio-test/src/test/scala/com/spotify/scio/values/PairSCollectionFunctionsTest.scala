@@ -43,6 +43,24 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
     }
   }
 
+  it should "not support list cons on cogroup()" in {
+    runWithContext { sc =>
+      val xs1 = sc.parallelize(Seq[(Int, String)](1 -> "1", 2 -> "2"))
+      val xs2 = sc.parallelize(Seq[(Int, String)](2 -> "2", 3 -> "3"))
+
+      val r1 = xs1
+        .cogroup(xs2)
+        .values
+        .map {
+          case (one :: Nil, Nil)       => one
+          case (Nil, three :: Nil)     => three
+          case (two1 :: Nil, _ :: Nil) => two1
+          case _                       => "no-match"
+        }
+      r1 should containInAnyOrder(Seq("no-match", "no-match", "no-match"))
+    }
+  }
+
   it should "support cogroup() with duplicate keys" in {
     runWithContext { sc =>
       val p1 = sc.parallelize(Seq(("a", 1), ("a", 2), ("b", 2), ("c", 3)))

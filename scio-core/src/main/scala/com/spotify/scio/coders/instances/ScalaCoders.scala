@@ -34,6 +34,7 @@ import scala.collection.{BitSet, SortedSet, mutable => m}
 import scala.util.Try
 import scala.collection.compat._
 import scala.collection.compat.extra.Wrappers
+import scala.collection.AbstractIterable
 
 private object UnitCoder extends AtomicCoder[Unit] {
   override def encode(value: Unit, os: OutputStream): Unit = ()
@@ -172,9 +173,15 @@ private class IterableOnceCoder[T](bc: BCoder[T])
     decode(inStream, Seq.newBuilder[T])
 }
 
+final private case class IterableWrapper[T](underlying: Iterable[T])
+    extends AbstractIterable[T]
+    with Serializable {
+  override def iterator = underlying.iterator
+}
+
 private class IterableCoder[T](bc: BCoder[T]) extends BufferedSeqLikeCoder[Iterable, T](bc) {
   override def decode(inStream: InputStream): Iterable[T] =
-    decode(inStream, Iterable.newBuilder[T])
+    IterableWrapper(decode(inStream, Iterable.newBuilder[T]))
 }
 
 private class VectorCoder[T](bc: BCoder[T]) extends SeqLikeCoder[Vector, T](bc) {
