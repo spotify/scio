@@ -126,9 +126,9 @@ package object transforms {
     }
   }
 
-  class FilterFnWithResource[T, U, R] private[transforms](resource: R, resourceType: ResourceType,
+  class FilterFnWithResource[T, R] private[transforms](resource: R, resourceType: ResourceType,
                                                           f: (R, T) => Boolean)
-    extends DoFnWithResource[T, U, R] {
+    extends DoFnWithResource[T, T, R] {
     def getResourceType: ResourceType = resourceType
     def createResource: R = resource
 
@@ -140,7 +140,7 @@ package object transforms {
   }
 
 
-  implicit class SCollectionWithResourceFunctions[T: Coder](@transient private val self: SCollection[T])
+  implicit class SCollectionWithResourceFunctions[T](@transient private val self: SCollection[T])
     extends AnyVal {
     /**
      * Return a new [[SCollection]] by applying a function that also takes in a resource and
