@@ -25,6 +25,7 @@ package com.spotify.scio.examples.extra
 import com.google.datastore.v1.client.DatastoreHelper.makeKey
 import com.google.datastore.v1.Query
 import com.spotify.scio._
+import com.spotify.scio.datastore._
 import com.spotify.scio.examples.common.ExampleData
 import magnolify.datastore._
 

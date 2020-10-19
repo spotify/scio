@@ -23,35 +23,19 @@ import java.nio.file.Path
 
 import com.spotify.scio.util._
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
+import com.spotify.scio.transforms.DoFnWithResource.ResourceType
+
 import com.spotify.scio.values.SCollection
 import com.twitter.chill.ClosureCleaner
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
 import org.apache.beam.sdk.transforms.{DoFn, ParDo}
 import org.apache.beam.sdk.values.{TupleTag, TupleTagList}
-import com.google.common.util.concurrent.ListenableFuture
-import com.spotify.scio.transforms.DoFnWithResource.ResourceType
 
 import scala.jdk.CollectionConverters._
 import scala.util.{Failure, Success, Try}
 
 /** Main package for transforms APIs. Import all. */
 package object transforms {
-  @deprecated(
-    "renamed to BaseAsyncLookupDoFn. see https://spotify.github.io/scio/migrations/v0.8.0-Migration-Guide.html#async-dofns",
-    "0.8.0"
-  )
-  type AsyncLookupDoFn[A, B, C] =
-    BaseAsyncLookupDoFn[A, B, C, ListenableFuture[_], BaseAsyncLookupDoFn.Try[B]]
-
-  @deprecated(
-    "renamed to BaseAsyncLookupDoFn. see https://spotify.github.io/scio/migrations/v0.8.0-Migration-Guide.html#async-dofns",
-    "0.8.0"
-  )
-  object AsyncLookupDoFn {
-    type Try[T] = BaseAsyncLookupDoFn.Try[T]
-    type CacheSupplier[A, B, K] = BaseAsyncLookupDoFn.CacheSupplier[A, B, K]
-    type NoOpCacheSupplier[A, B] = BaseAsyncLookupDoFn.NoOpCacheSupplier[A, B]
-  }
 
   /**
    * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with
@@ -65,10 +49,10 @@ package object transforms {
      * @param keep keep downloaded files after processing
      */
     def mapFile[T: Coder](
-      f: Path => T,
-      batchSize: Int = 10,
-      keep: Boolean = false
-    ): SCollection[T] =
+                           f: Path => T,
+                           batchSize: Int = 10,
+                           keep: Boolean = false
+                         ): SCollection[T] =
       self.applyTransform(
         ParDo.of(
           new FileDownloadDoFn[T](
@@ -86,10 +70,10 @@ package object transforms {
      * @param keep keep downloaded files after processing
      */
     def flatMapFile[T: Coder](
-      f: Path => TraversableOnce[T],
-      batchSize: Int = 10,
-      keep: Boolean = false
-    ): SCollection[T] =
+                               f: Path => TraversableOnce[T],
+                               batchSize: Int = 10,
+                               keep: Boolean = false
+                             ): SCollection[T] =
       self
         .applyTransform(
           ParDo.of(
@@ -105,7 +89,7 @@ package object transforms {
   }
 
   class CollectFnWithResource[T, U, R] private[transforms](resource: R, resourceType: ResourceType,
-                                                       pfn: PartialFunction[(R, T), U])
+                                                           pfn: PartialFunction[(R, T), U])
     extends DoFnWithResource[T, U, R] {
     def getResourceType: ResourceType = resourceType
     def createResource: R = resource
@@ -119,7 +103,7 @@ package object transforms {
   }
 
   class MapFnWithResource[T, U, R] private[transforms](resource: R, resourceType: ResourceType,
-                                                   f: (R, T) => U)
+                                                       f: (R, T) => U)
     extends DoFnWithResource[T, U, R] {
     def getResourceType: ResourceType = resourceType
     def createResource: R = resource
@@ -130,7 +114,7 @@ package object transforms {
   }
 
   class FlatMapFnWithResource[T, U, R] private[transforms](resource: R, resourceType: ResourceType,
-                                                       f: (R, T) => TraversableOnce[U])
+                                                           f: (R, T) => TraversableOnce[U])
     extends DoFnWithResource[T, U, R] {
     def getResourceType: ResourceType = resourceType
     def createResource: R = resource
@@ -143,7 +127,7 @@ package object transforms {
   }
 
   class FilterFnWithResource[T, U, R] private[transforms](resource: R, resourceType: ResourceType,
-                                                      f: (R, T) => Boolean)
+                                                          f: (R, T) => Boolean)
     extends DoFnWithResource[T, U, R] {
     def getResourceType: ResourceType = resourceType
     def createResource: R = resource
@@ -191,8 +175,8 @@ package object transforms {
      */
     def filterWithResource[R](resource: => R, resourceType: ResourceType)(
       fn: (R, T) => Boolean
-    )(implicit coder: Coder[T]): SCollection[T] =
-      self.parDo(new FilterFnWithResource(resource, resourceType, fn))
+    ): SCollection[T] =
+      self.parDo(new FilterFnWithResource(resource, resourceType, fn))(self.coder)
 
   }
 
@@ -290,12 +274,12 @@ package object transforms {
      * @param teardownCmds tear down commands to be run after processing
      */
     def pipe(
-      command: String,
-      environment: Map[String, String] = null,
-      dir: File = null,
-      setupCmds: Seq[String] = null,
-      teardownCmds: Seq[String] = null
-    ): SCollection[String] = {
+              command: String,
+              environment: Map[String, String] = null,
+              dir: File = null,
+              setupCmds: Seq[String] = null,
+              teardownCmds: Seq[String] = null
+            ): SCollection[String] = {
       val env = if (environment == null) null else environment.asJava
       val sCmds = if (setupCmds == null) null else setupCmds.asJava
       val tCmds = if (teardownCmds == null) null else teardownCmds.asJava
@@ -311,12 +295,12 @@ package object transforms {
      * @param teardownCmds tear down commands to be run after processing
      */
     def pipe(
-      cmdArray: Array[String],
-      environment: Map[String, String],
-      dir: File,
-      setupCmds: Seq[Array[String]],
-      teardownCmds: Seq[Array[String]]
-    ): SCollection[String] = {
+              cmdArray: Array[String],
+              environment: Map[String, String],
+              dir: File,
+              setupCmds: Seq[Array[String]],
+              teardownCmds: Seq[Array[String]]
+            ): SCollection[String] = {
       val env = if (environment == null) null else environment.asJava
       val sCmds = if (setupCmds == null) null else setupCmds.asJava
       val tCmds = if (teardownCmds == null) null else teardownCmds.asJava
@@ -329,7 +313,7 @@ package object transforms {
    * versions of flatMap.
    */
   implicit class SpecializedFlatMapSCollection[T](@transient private val self: SCollection[T])
-      extends AnyVal {
+    extends AnyVal {
 
     /**
      * Latency optimized flavor of
@@ -341,8 +325,8 @@ package object transforms {
      * @group transform
      */
     def safeFlatMap[U: Coder](
-      f: T => TraversableOnce[U]
-    )(implicit coder: Coder[T]): (SCollection[U], SCollection[(T, Throwable)]) = {
+                               f: T => TraversableOnce[U]
+                             ): (SCollection[U], SCollection[(T, Throwable)]) = {
       val (mainTag, errorTag) = (new TupleTag[U], new TupleTag[(T, Throwable)])
       val doFn = new NamedDoFn[T, U] {
         val g = ClosureCleaner.clean(f) // defeat closure
@@ -364,6 +348,7 @@ package object transforms {
       val main = tuple
         .get(mainTag)
         .setCoder(CoderMaterializer.beam(self.context, Coder[U]))
+      import self.coder
       val errorPipe =
         tuple
           .get(errorTag)
@@ -376,7 +361,7 @@ package object transforms {
 
   /** Enhanced version of `AsyncLookupDoFn.Try` with convenience methods. */
   implicit class RichAsyncLookupDoFnTry[A](private val self: BaseAsyncLookupDoFn.Try[A])
-      extends AnyVal {
+    extends AnyVal {
 
     /** Convert this `AsyncLookupDoFn.Try` to a Scala `Try`. */
     def asScala: Try[A] =

@@ -16,10 +16,12 @@ addSbtPlugin("com.typesafe.sbt" % "sbt-site" % "1.3.3")
 addSbtPlugin("com.lightbend.paradox" % "sbt-paradox" % "0.8.0")
 addSbtPlugin("io.github.jonas" % "sbt-paradox-material-theme" % "0.6.0")
 addSbtPlugin("ch.epfl.scala" % "sbt-bloop" % "1.4.4")
-addSbtPlugin("org.scalameta" % "sbt-mdoc" % "2.2.9")
+addSbtPlugin("org.scalameta" % "sbt-mdoc" % "2.2.10")
 addSbtPlugin("com.lightbend.sbt" % "sbt-java-formatter" % "0.6.0")
-addSbtPlugin("com.github.cb372" % "sbt-explicit-dependencies" % "0.2.13")
+addSbtPlugin("com.github.cb372" % "sbt-explicit-dependencies" % "0.2.14")
 addSbtPlugin("com.thoughtworks.sbt-api-mappings" % "sbt-api-mappings" % "3.0.0")
+addSbtPlugin("net.virtual-void" % "sbt-dependency-graph" % "0.10.0-RC1")
+addSbtPlugin("de.heikoseeberger" % "sbt-header" % "5.6.0")
 
 libraryDependencies ++= Seq(
   "com.github.os72" % "protoc-jar" % "3.11.4",

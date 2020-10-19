@@ -29,6 +29,7 @@ import com.spotify.scio.testing._
 import com.spotify.zoltar.tf.TensorFlowModel
 import org.tensorflow._
 import org.tensorflow.example.Example
+
 import scala.io.Source
 
 private[tensorflow] object TFSavedSpec {

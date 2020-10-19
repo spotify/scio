@@ -25,7 +25,6 @@ import com.google.api.client.util.Charsets
 import com.spotify.scio._
 import com.spotify.scio.avro._
 import com.spotify.scio.avro.AvroUtils._
-import com.spotify.scio.bigquery._
 import com.spotify.scio.proto.SimpleV2.{SimplePB => SimplePBV2}
 import com.spotify.scio.proto.SimpleV3.{SimplePB => SimplePBV3}
 import com.spotify.scio.testing.PipelineSpec
@@ -240,28 +239,6 @@ class TapTest extends TapSpec {
     sc.protobufFile[SimplePBV3](s"$dir/*.avro") should containInAnyOrder(expected)
     sc.run()
 
-    FileUtils.deleteDirectory(dir)
-  }
-
-  it should "support saveAsTableRowJsonFile" in {
-    def newTableRow(i: Int): TableRow =
-      TableRow(
-        "int_field" -> 1 * i,
-        "long_field" -> 1L * i,
-        "float_field" -> 1f * i,
-        "double_field" -> 1.0 * i,
-        "boolean_field" -> "true",
-        "string_field" -> "hello"
-      )
-
-    val dir = tmpDir
-    // Compare .toString versions since TableRow may not round trip
-    val t = runWithFileFuture {
-      _.parallelize(Seq(1, 2, 3))
-        .map(newTableRow)
-        .saveAsTableRowJsonFile(dir.getPath)
-    }.map(ScioUtil.jsonFactory.toString)
-    verifyTap(t, Set(1, 2, 3).map(i => ScioUtil.jsonFactory.toString(newTableRow(i))))
     FileUtils.deleteDirectory(dir)
   }
 

@@ -20,15 +20,12 @@ package com.spotify.scio.coders.instances
 import com.google.api.client.json.GenericJson
 import com.google.api.client.json.jackson2.JacksonFactory
 import com.google.api.client.json.JsonObjectParser
-import com.google.api.services.bigquery.model.TableRow
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.util.ScioUtil
 import java.io.StringReader
 import org.apache.beam.sdk.coders.RowCoder
 import org.apache.beam.sdk.io.FileIO.ReadableFile
 import org.apache.beam.sdk.io.fs.{MatchResult, MetadataCoderV2}
-import org.apache.beam.sdk.io.gcp.bigquery.TableRowJsonCoder
-import org.apache.beam.sdk.io.gcp.pubsub.{PubsubMessage, PubsubMessageWithAttributesCoder}
 import org.apache.beam.sdk.io.ReadableFileCoder
 import org.apache.beam.sdk.schemas.{Schema => BSchema}
 import org.apache.beam.sdk.transforms.windowing.{BoundedWindow, IntervalWindow, PaneInfo}
@@ -44,12 +41,7 @@ trait BeamTypeCoders {
 
   implicit def paneInfoCoder: Coder[PaneInfo] = Coder.beam(PaneInfo.PaneInfoCoder.of())
 
-  implicit def tableRowCoder: Coder[TableRow] = Coder.beam(TableRowJsonCoder.of())
-
   def row(schema: BSchema): Coder[Row] = Coder.beam(RowCoder.of(schema))
-
-  implicit def messageCoder: Coder[PubsubMessage] =
-    Coder.beam(PubsubMessageWithAttributesCoder.of())
 
   implicit def beamKVCoder[K: Coder, V: Coder]: Coder[KV[K, V]] = Coder.kv(Coder[K], Coder[V])
 

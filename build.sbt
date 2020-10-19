@@ -22,6 +22,7 @@ import com.typesafe.sbt.SbtGit.GitKeys.gitRemoteRepo
 import org.scalafmt.sbt.ScalafmtPlugin.scalafmtConfigSettings
 import bloop.integrations.sbt.BloopDefaults
 import sbtrelease.ReleaseStateTransformations._
+import de.heikoseeberger.sbtheader.CommentCreator
 
 ThisBuild / turbo := true
 
@@ -39,7 +40,7 @@ val bigdataossVersion = "2.1.3"
 val bigQueryStorageVersion = "0.133.0-beta"
 val bigtableClientVersion = "1.14.0"
 val breezeVersion = "1.1"
-val caffeineVersion = "2.8.5"
+val caffeineVersion = "2.8.6"
 val caseappVersion = "2.0.4"
 val catsVersion = "2.1.1"
 val chillVersion = "0.9.5"
@@ -50,10 +51,9 @@ val commonsLang3Version = "3.11"
 val commonsMath3Version = "3.6.1"
 val commonsTextVersion = "1.9"
 val datastoreV1ProtoClientVersion = "1.6.3"
-val elasticsearch5Version = "5.6.16"
 val elasticsearch6Version = "6.8.12"
 val elasticsearch7Version = "7.9.2"
-val featranVersion = "0.6.0"
+val featranVersion = "0.7.0"
 val flinkVersion = "1.10.1"
 val gaxVersion = "1.54.0"
 val gcsVersion = "1.8.0"
@@ -77,7 +77,7 @@ val jlineVersion = "2.14.6"
 val jnaVersion = "5.6.0"
 val jodaTimeVersion = "2.10.6"
 val junitInterfaceVersion = "0.11"
-val junitVersion = "4.13"
+val junitVersion = "4.13.1"
 val kantanCodecsVersion = "0.5.1"
 val kantanCsvVersion = "0.6.1"
 val kryoVersion =
@@ -104,61 +104,133 @@ val tensorFlowVersion = "1.15.0"
 val zoltarVersion = "0.5.6"
 val scalaCollectionCompatVersion = "2.2.0"
 
-lazy val mimaSettings = Seq(
-  mimaPreviousArtifacts :=
-    previousVersion(version.value)
-      .filter(_ => publishArtifact.value)
-      .map { pv =>
-        organization.value % (normalizedName.value + "_" + scalaBinaryVersion.value) % pv
-      }
-      .toSet,
-  mimaBinaryIssueFilters ++= Seq()
-)
+ThisBuild / scalafixScalaBinaryVersion := CrossVersion.binaryScalaVersion(scalaVersion.value)
+val excludeLint = SettingKey[Set[Def.KeyedInitialize[_]]]("excludeLintKeys")
+Global / excludeLint := (Global / excludeLint).?.value.getOrElse(Set.empty)
+Global / excludeLint += releaseCrossBuild
+Global / excludeLint += releaseProcess
+Global / excludeLint += sonatypeProfileName
+Global / excludeLint += site / Paradox / sourceManaged
 
 def previousVersion(currentVersion: String): Option[String] = {
   val Version = """(\d+)\.(\d+)\.(\d+).*""".r
   val Version(x, y, z) = currentVersion
-  if (z == "0") None
-  else Some(s"$x.$y.${z.toInt - 1}")
+  if (z == "0") None else Some(s"$x.$y.${z.toInt - 1}")
 }
 
-lazy val formatSettings = Seq(
-  scalafmtOnCompile := false,
-  javafmtOnCompile := false
+lazy val mimaSettings = Def.settings(
+  mimaPreviousArtifacts :=
+    previousVersion(version.value)
+      .filter(_ => publishArtifact.value)
+      .map(organization.value % s"${normalizedName.value}_${scalaBinaryVersion.value}" % _)
+      .toSet
 )
 
-scalafixScalaBinaryVersion in ThisBuild := CrossVersion.binaryScalaVersion(scalaVersion.value)
+lazy val formatSettings = Def.settings(scalafmtOnCompile := false, javafmtOnCompile := false)
 
-val commonSettings = Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
-  organization := "com.spotify",
-  scalaVersion := "2.13.3",
-  crossScalaVersions := Seq("2.12.12", scalaVersion.value),
-  scalacOptions ++= Scalac.commonsOptions.value,
-  Compile / doc / scalacOptions --= Seq("-release", "8"),
-  Compile / doc / scalacOptions ++= Scalac.compileDocOptions.value,
-  javacOptions ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint:unchecked"),
-  javacOptions in (Compile, doc) := Seq("-source", "1.8"),
-  // protobuf-lite is an older subset of protobuf-java and causes issues
-  excludeDependencies += "com.google.protobuf" % "protobuf-lite",
-  resolvers += Resolver.sonatypeRepo("public"),
-  testOptions in Test += Tests.Argument("-oD"),
-  testOptions += Tests.Argument(TestFrameworks.JUnit, "-q", "-v"),
-  testOptions ++= {
-    if (sys.env.contains("SLOW")) {
-      Nil
-    } else {
-      Seq(Tests.Argument(TestFrameworks.ScalaTest, "-l", "org.scalatest.tags.Slow"))
-    }
-  },
-  evictionWarningOptions in update := EvictionWarningOptions.default
-    .withWarnTransitiveEvictions(false),
-  coverageExcludedPackages := (Seq(
-    "com\\.spotify\\.scio\\.examples\\..*",
-    "com\\.spotify\\.scio\\.repl\\..*",
-    "com\\.spotify\\.scio\\.util\\.MultiJoin"
-  ) ++ (2 to 10).map(x => s"com\\.spotify\\.scio\\.sql\\.Query${x}")).mkString(";"),
-  coverageHighlighting := true,
+lazy val keepExistingHeader =
+  HeaderCommentStyle.cStyleBlockComment.copy(commentCreator = new CommentCreator() {
+    override def apply(text: String, existingText: Option[String]): String =
+      existingText
+        .getOrElse(
+          HeaderCommentStyle.cStyleBlockComment.commentCreator(text)
+        )
+        .trim()
+  })
+
+val commonSettings = Def
+  .settings(
+    organization := "com.spotify",
+    headerLicense := Some(HeaderLicense.ALv2("2020", "Spotify AB")),
+    headerMappings := headerMappings.value + (HeaderFileType.scala -> keepExistingHeader, HeaderFileType.java -> keepExistingHeader),
+    scalaVersion := "2.13.3",
+    crossScalaVersions := Seq("2.12.12", scalaVersion.value),
+    scalacOptions ++= Scalac.commonsOptions.value,
+    Compile / doc / scalacOptions --= Seq("-release", "8"),
+    Compile / doc / scalacOptions ++= Scalac.compileDocOptions.value,
+    javacOptions ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint:unchecked"),
+    javacOptions in (Compile, doc) := Seq("-source", "1.8"),
+    // protobuf-lite is an older subset of protobuf-java and causes issues
+    excludeDependencies += "com.google.protobuf" % "protobuf-lite",
+    resolvers += Resolver.sonatypeRepo("public"),
+    Test / testOptions += Tests.Argument("-oD"),
+    testOptions += Tests.Argument(TestFrameworks.JUnit, "-q", "-v", "-a"),
+    testOptions ++= {
+      if (sys.env.contains("SLOW")) {
+        Nil
+      } else {
+        Seq(Tests.Argument(TestFrameworks.ScalaTest, "-l", "org.scalatest.tags.Slow"))
+      }
+    },
+    coverageExcludedPackages := (Seq(
+      "com\\.spotify\\.scio\\.examples\\..*",
+      "com\\.spotify\\.scio\\.repl\\..*",
+      "com\\.spotify\\.scio\\.util\\.MultiJoin"
+    ) ++ (2 to 10).map(x => s"com\\.spotify\\.scio\\.sql\\.Query${x}")).mkString(";"),
+    coverageHighlighting := true,
+    licenses := Seq("Apache 2" -> url("http://www.apache.org/licenses/LICENSE-2.0.txt")),
+    homepage := Some(url("https://github.com/spotify/scio")),
+    scmInfo := Some(
+      ScmInfo(url("https://github.com/spotify/scio"), "scm:git:git@github.com:spotify/scio.git")
+    ),
+    developers := List(
+      Developer(
+        id = "sinisa_lyh",
+        name = "Neville Li",
+        email = "neville.lyh@gmail.com",
+        url = url("https://twitter.com/sinisa_lyh")
+      ),
+      Developer(
+        id = "ravwojdyla",
+        name = "Rafal Wojdyla",
+        email = "ravwojdyla@gmail.com",
+        url = url("https://twitter.com/ravwojdyla")
+      ),
+      Developer(
+        id = "andrewsmartin",
+        name = "Andrew Martin",
+        email = "andrewsmartin.mg@gmail.com",
+        url = url("https://twitter.com/andrew_martin92")
+      ),
+      Developer(
+        id = "fallonfofallon",
+        name = "Fallon Chen",
+        email = "fallon@spotify.com",
+        url = url("https://twitter.com/fallonfofallon")
+      ),
+      Developer(
+        id = "regadas",
+        name = "Filipe Regadas",
+        email = "filiperegadas@gmail.com",
+        url = url("https://twitter.com/regadas")
+      ),
+      Developer(
+        id = "jto",
+        name = "Julien Tournay",
+        email = "julient@spotify.com",
+        url = url("https://twitter.com/skaalf")
+      ),
+      Developer(
+        id = "clairemcginty",
+        name = "Claire McGinty",
+        email = "clairem@spotify.com",
+        url = url("http://github.com/clairemcginty")
+      ),
+      Developer(
+        id = "syodage",
+        name = "Shameera Rathnayaka",
+        email = "shameerayodage@gmail.com",
+        url = url("http://github.com/syodage")
+      )
+    ),
+    mimaSettings,
+    formatSettings
+  )
+
+lazy val publishSettings = Def.settings(
   // Release settings
+  publishMavenStyle := true,
+  publishArtifact in Test := false,
   publishTo := sonatypePublishToBundle.value,
   releaseCrossBuild := true,
   releasePublishArtifactsAction := PgpKeys.publishSigned.value,
@@ -182,64 +254,6 @@ val commonSettings = Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
     commitNextVersion,
     pushChanges
   ),
-  publishMavenStyle := true,
-  publishArtifact in Test := false,
-  sonatypeProfileName := "com.spotify",
-  licenses := Seq("Apache 2" -> url("http://www.apache.org/licenses/LICENSE-2.0.txt")),
-  homepage := Some(url("https://github.com/spotify/scio")),
-  scmInfo := Some(
-    ScmInfo(url("https://github.com/spotify/scio"), "scm:git:git@github.com:spotify/scio.git")
-  ),
-  developers := List(
-    Developer(
-      id = "sinisa_lyh",
-      name = "Neville Li",
-      email = "neville.lyh@gmail.com",
-      url = url("https://twitter.com/sinisa_lyh")
-    ),
-    Developer(
-      id = "ravwojdyla",
-      name = "Rafal Wojdyla",
-      email = "ravwojdyla@gmail.com",
-      url = url("https://twitter.com/ravwojdyla")
-    ),
-    Developer(
-      id = "andrewsmartin",
-      name = "Andrew Martin",
-      email = "andrewsmartin.mg@gmail.com",
-      url = url("https://twitter.com/andrew_martin92")
-    ),
-    Developer(
-      id = "fallonfofallon",
-      name = "Fallon Chen",
-      email = "fallon@spotify.com",
-      url = url("https://twitter.com/fallonfofallon")
-    ),
-    Developer(
-      id = "regadas",
-      name = "Filipe Regadas",
-      email = "filiperegadas@gmail.com",
-      url = url("https://twitter.com/regadas")
-    ),
-    Developer(
-      id = "jto",
-      name = "Julien Tournay",
-      email = "julient@spotify.com",
-      url = url("https://twitter.com/skaalf")
-    ),
-    Developer(
-      id = "clairemcginty",
-      name = "Claire McGinty",
-      email = "clairem@spotify.com",
-      url = url("http://github.com/clairemcginty")
-    ),
-    Developer(
-      id = "syodage",
-      name = "Shameera Rathnayaka",
-      email = "shameerayodage@gmail.com",
-      url = url("http://github.com/syodage")
-    )
-  ),
   credentials ++= (for {
     username <- sys.env.get("SONATYPE_USERNAME")
     password <- sys.env.get("SONATYPE_PASSWORD")
@@ -249,11 +263,12 @@ val commonSettings = Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
     username,
     password
   )).toSeq,
-  buildInfoKeys := Seq[BuildInfoKey](scalaVersion, version, "beamVersion" -> beamVersion),
-  buildInfoPackage := "com.spotify.scio"
-) ++ mimaSettings ++ formatSettings
+  Sonatype.sonatypeSettings,
+  sonatypeProfileName := "com.spotify"
+)
 
-lazy val itSettings = Defaults.itSettings ++ Seq(
+lazy val itSettings = Def.settings(
+  Defaults.itSettings,
   IntegrationTest / classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.Flat,
   // exclude all sources if we don't have GCP credentials
   (excludeFilter in unmanagedSources) in IntegrationTest := {
@@ -262,17 +277,11 @@ lazy val itSettings = Defaults.itSettings ++ Seq(
     } else {
       HiddenFileFilter || "*.scala"
     }
-  }
-) ++
-  inConfig(IntegrationTest)(run / fork := true) ++
-  inConfig(IntegrationTest)(BloopDefaults.configSettings) ++
-  inConfig(IntegrationTest)(scalafmtConfigSettings) ++
+  },
+  inConfig(IntegrationTest)(run / fork := true),
+  inConfig(IntegrationTest)(BloopDefaults.configSettings),
+  inConfig(IntegrationTest)(scalafmtConfigSettings),
   inConfig(IntegrationTest)(scalafixConfigSettings(IntegrationTest))
-
-lazy val noPublishSettings = Seq(
-  publish := {},
-  publishLocal := {},
-  publishArtifact := false
 )
 
 lazy val assemblySettings = Seq(
@@ -383,16 +392,13 @@ def splitTests(tests: Seq[TestDefinition], filter: Seq[String]) = {
 
 lazy val root: Project = Project("scio", file("."))
   .settings(commonSettings)
-  .settings(noPublishSettings)
-  .settings(aggregate in assembly := false)
+  .settings(publish / skip := true, assembly / aggregate := false)
   .aggregate(
     `scio-core`,
     `scio-test`,
     `scio-avro`,
-    `scio-bigquery`,
-    `scio-bigtable`,
+    `scio-google-cloud-platform`,
     `scio-cassandra3`,
-    `scio-elasticsearch5`,
     `scio-elasticsearch6`,
     `scio-elasticsearch7`,
     `scio-extra`,
@@ -400,18 +406,19 @@ lazy val root: Project = Project("scio", file("."))
     `scio-parquet`,
     `scio-tensorflow`,
     `scio-schemas`,
-    `scio-spanner`,
     `scio-sql`,
     `scio-examples`,
     `scio-repl`,
     `scio-jmh`,
     `scio-macros`,
-    `scio-smb`
+    `scio-smb`,
+    `scio-redis`
   )
 
 lazy val `scio-core`: Project = project
   .in(file("scio-core"))
   .settings(commonSettings)
+  .settings(publishSettings)
   .settings(macroSettings)
   .settings(itSettings)
   .settings(
@@ -429,12 +436,7 @@ lazy val `scio-core`: Project = project
       "com.github.alexarchambault" %% "case-app-annotations" % caseappVersion,
       "com.github.ben-manes.caffeine" % "caffeine" % caffeineVersion % "provided",
       "com.google.api-client" % "google-api-client" % googleClientsVersion,
-      "com.google.api.grpc" % "grpc-google-cloud-pubsub-v1" % generatedGrpcGaVersion,
-      "com.google.api.grpc" % "proto-google-cloud-datastore-v1" % generatedDatastoreProtoVersion,
-      "com.google.api.grpc" % "proto-google-cloud-pubsub-v1" % generatedGrpcGaVersion,
-      "com.google.apis" % "google-api-services-bigquery" % googleApiServicesBigQuery,
       "com.google.apis" % "google-api-services-dataflow" % googleApiServicesDataflow,
-      "com.google.auth" % "google-auth-library-credentials" % googleAuthVersion,
       "com.google.auto.service" % "auto-service" % autoServiceVersion,
       "com.google.guava" % "guava" % guavaVersion,
       "com.google.http-client" % "google-http-client" % googleHttpClientsVersion,
@@ -452,14 +454,11 @@ lazy val `scio-core`: Project = project
       "io.grpc" % "grpc-api" % grpcVersion,
       "io.grpc" % "grpc-stub" % grpcVersion,
       "io.netty" % "netty-handler" % nettyVersion,
-      "com.spotify" %% "magnolify-guava" % magnolifyVersion,
       "joda-time" % "joda-time" % jodaTimeVersion,
       "me.lyh" %% "protobuf-generic" % protobufGenericVersion,
       "org.apache.avro" % "avro" % avroVersion,
       "org.apache.beam" % "beam-runners-core-construction-java" % beamVersion,
       "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion % Provided,
-      "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
-      "org.apache.beam" % "beam-sdks-java-extensions-google-cloud-platform-core" % beamVersion,
       "org.apache.beam" % "beam-runners-spark" % beamVersion % Provided exclude (
         "com.fasterxml.jackson.module", "jackson-module-scala_2.11"
       ),
@@ -479,7 +478,9 @@ lazy val `scio-core`: Project = project
       "org.typelevel" %% "algebra" % algebraVersion,
       "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
       "com.propensive" %% "magnolia" % magnoliaVersion
-    )
+    ),
+    buildInfoKeys := Seq[BuildInfoKey](scalaVersion, version, "beamVersion" -> beamVersion),
+    buildInfoPackage := "com.spotify.scio"
   )
   .dependsOn(
     `scio-schemas` % "test->test",
@@ -494,6 +495,7 @@ lazy val `scio-sql`: Project = Project(
   "scio-sql",
   file("scio-sql")
 ).settings(commonSettings)
+  .settings(itSettings)
   .settings(macroSettings)
   .settings(
     description := "Scio - SQL extension",
@@ -514,6 +516,7 @@ lazy val `scio-sql`: Project = Project(
 lazy val `scio-test`: Project = project
   .in(file("scio-test"))
   .settings(commonSettings)
+  .settings(publishSettings)
   .settings(itSettings)
   .settings(macroSettings)
   .settings(
@@ -529,6 +532,7 @@ lazy val `scio-test`: Project = project
       "org.scalatestplus" %% "scalatestplus-scalacheck" % scalatestplusVersion % "test,it",
       "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test,it",
       "com.spotify" %% "magnolify-datastore" % magnolifyVersion % "it",
+      "com.spotify" %% "magnolify-guava" % magnolifyVersion,
       // DataFlow testing requires junit and hamcrest
       "org.hamcrest" % "hamcrest-core" % hamcrestVersion,
       "org.hamcrest" % "hamcrest-library" % hamcrestVersion,
@@ -562,13 +566,13 @@ lazy val `scio-test`: Project = project
     `scio-core` % "test->test;compile->compile;it->it",
     `scio-schemas` % "test;it",
     `scio-avro` % "compile->test;it->it",
-    `scio-sql` % "compile->test;it->it",
-    `scio-bigquery` % "compile->test;it->it"
+    `scio-sql` % "compile->test;it->it"
   )
 
 lazy val `scio-macros`: Project = project
   .in(file("scio-macros"))
   .settings(commonSettings)
+  .settings(publishSettings)
   .settings(macroSettings)
   .settings(
     description := "Scio macros",
@@ -584,6 +588,7 @@ lazy val `scio-macros`: Project = project
 lazy val `scio-avro`: Project = project
   .in(file("scio-avro"))
   .settings(commonSettings)
+  .settings(publishSettings)
   .settings(macroSettings)
   .settings(itSettings)
   .settings(
@@ -611,90 +616,70 @@ lazy val `scio-avro`: Project = project
   )
   .configs(IntegrationTest)
 
-lazy val `scio-bigquery`: Project = project
-  .in(file("scio-bigquery"))
+lazy val `scio-google-cloud-platform`: Project = project
+  .in(file("scio-google-cloud-platform"))
   .settings(commonSettings)
+  .settings(publishSettings)
   .settings(macroSettings)
   .settings(itSettings)
   .settings(beamRunnerSettings)
   .settings(
-    description := "Scio add-on for Google BigQuery",
+    description := "Scio add-on for Google Cloud Platform",
     libraryDependencies ++= Seq(
-      "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
-      "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamVendorVersion,
-      "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
-      "org.apache.beam" % "beam-sdks-java-extensions-google-cloud-platform-core" % beamVersion,
-      "com.twitter" %% "chill" % chillVersion,
-      "com.google.protobuf" % "protobuf-java" % protobufVersion,
-      "org.apache.avro" % "avro" % avroVersion,
-      "com.google.api" % "gax" % gaxVersion,
-      "com.google.api" % "gax-grpc" % gaxVersion,
-      "com.google.api-client" % "google-api-client" % googleClientsVersion,
-      "com.google.apis" % "google-api-services-bigquery" % googleApiServicesBigQuery,
-      "com.google.api.grpc" % "proto-google-cloud-bigquerystorage-v1beta1" % "0.98.0",
-      "com.google.http-client" % "google-http-client" % googleHttpClientsVersion,
-      "com.google.http-client" % "google-http-client-jackson" % "1.29.2",
-      "com.google.http-client" % "google-http-client-jackson2" % googleHttpClientsVersion,
-      "com.google.auth" % "google-auth-library-credentials" % googleAuthVersion,
-      "com.google.auth" % "google-auth-library-oauth2-http" % googleAuthVersion,
-      "com.google.cloud" % "google-cloud-bigquerystorage" % bigQueryStorageVersion,
-      "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
-      "commons-io" % "commons-io" % commonsIoVersion,
-      "joda-time" % "joda-time" % jodaTimeVersion,
-      "org.slf4j" % "slf4j-api" % slf4jVersion,
-      "org.slf4j" % "slf4j-simple" % slf4jVersion % "test,it",
-      "org.scalatest" %% "scalatest" % scalatestVersion % "test,it",
-      "org.scalatestplus" %% "scalatestplus-scalacheck" % scalatestplusVersion % "test,it",
-      "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test,it",
-      "com.spotify" %% "magnolify-cats" % magnolifyVersion % "test",
-      "com.spotify" %% "magnolify-scalacheck" % magnolifyVersion % "test",
-      "com.google.cloud" % "google-cloud-storage" % gcsVersion % "test,it",
-      // DataFlow testing requires junit and hamcrest
-      "org.hamcrest" % "hamcrest-core" % hamcrestVersion % "test,it",
-      "org.hamcrest" % "hamcrest-library" % hamcrestVersion % "test,it"
-    )
-  )
-  .dependsOn(
-    `scio-core` % "compile;it->it"
-  )
-  .configs(IntegrationTest)
-
-lazy val `scio-bigtable`: Project = project
-  .in(file("scio-bigtable"))
-  .settings(commonSettings)
-  .settings(itSettings)
-  .settings(
-    description := "Scio add-on for Google Cloud Bigtable",
-    libraryDependencies ++= Seq(
-      "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
-      "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
-      "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
-      "joda-time" % "joda-time" % jodaTimeVersion,
-      "com.google.protobuf" % "protobuf-java" % protobufVersion,
-      "com.google.api.grpc" % "proto-google-cloud-bigtable-v2" % generatedGrpcBetaVersion,
+      "com.google.cloud" % "google-cloud-spanner" % googleCloudSpannerVersion excludeAll (
+        ExclusionRule(organization = "io.grpc")
+      ),
       "com.google.cloud.bigtable" % "bigtable-client-core" % bigtableClientVersion excludeAll (
         ExclusionRule(organization = "io.grpc")
       ),
-      "org.apache.beam" % "beam-runners-direct-java" % beamVersion % "test",
-      "org.scalatest" %% "scalatest" % scalatestVersion % "test",
-      "org.hamcrest" % "hamcrest-core" % hamcrestVersion % "test",
-      "org.hamcrest" % "hamcrest-library" % hamcrestVersion % "test",
-      "junit" % "junit" % junitVersion % "test",
       "com.chuusai" %% "shapeless" % shapelessVersion,
+      "com.google.api-client" % "google-api-client" % googleClientsVersion,
+      "com.google.api.grpc" % "proto-google-cloud-bigquerystorage-v1beta1" % "0.98.0",
       "com.google.api.grpc" % "proto-google-cloud-bigtable-admin-v2" % generatedGrpcBetaVersion,
+      "com.google.api.grpc" % "proto-google-cloud-bigtable-v2" % generatedGrpcBetaVersion,
+      "com.google.api" % "gax-grpc" % gaxVersion,
+      "com.google.api" % "gax" % gaxVersion,
+      "com.google.apis" % "google-api-services-bigquery" % googleApiServicesBigQuery,
+      "com.google.auth" % "google-auth-library-credentials" % googleAuthVersion,
+      "com.google.auth" % "google-auth-library-oauth2-http" % googleAuthVersion,
+      "com.google.cloud" % "google-cloud-bigquerystorage" % bigQueryStorageVersion,
+      "com.google.cloud" % "google-cloud-core" % "1.92.2",
+      "com.google.cloud" % "google-cloud-storage" % gcsVersion % "test,it",
       "com.google.guava" % "guava" % guavaVersion,
-      "org.slf4j" % "slf4j-api" % slf4jVersion
+      "com.google.http-client" % "google-http-client-jackson" % "1.29.2",
+      "com.google.http-client" % "google-http-client-jackson2" % googleHttpClientsVersion,
+      "com.google.http-client" % "google-http-client" % googleHttpClientsVersion,
+      "com.google.protobuf" % "protobuf-java" % protobufVersion,
+      "com.spotify" %% "magnolify-cats" % magnolifyVersion % "test",
+      "com.spotify" %% "magnolify-scalacheck" % magnolifyVersion % "test",
+      "com.twitter" %% "chill" % chillVersion,
+      "commons-io" % "commons-io" % commonsIoVersion,
+      "joda-time" % "joda-time" % jodaTimeVersion,
+      "junit" % "junit" % junitVersion % "test",
+      "org.apache.avro" % "avro" % avroVersion,
+      "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
+      "org.apache.beam" % "beam-sdks-java-extensions-google-cloud-platform-core" % beamVersion,
+      "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
+      "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamVendorVersion,
+      "org.hamcrest" % "hamcrest-core" % hamcrestVersion % "test,it",
+      "org.hamcrest" % "hamcrest-library" % hamcrestVersion % "test",
+      "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test,it",
+      "org.scalatest" %% "scalatest" % scalatestVersion % "test,it",
+      "org.scalatestplus" %% "scalatestplus-scalacheck" % scalatestplusVersion % "test,it",
+      "org.slf4j" % "slf4j-api" % slf4jVersion,
+      "org.slf4j" % "slf4j-simple" % slf4jVersion % "test,it"
     )
   )
   .dependsOn(
-    `scio-core`,
-    `scio-test` % "test;it->it"
+    `scio-core` % "compile;it->it",
+    `scio-test` % "test;it"
   )
   .configs(IntegrationTest)
 
 lazy val `scio-cassandra3`: Project = project
   .in(file("scio-cassandra/cassandra3"))
   .settings(commonSettings)
+  .settings(publishSettings)
   .settings(itSettings)
   .settings(
     description := "Scio add-on for Apache Cassandra 3.x",
@@ -722,29 +707,10 @@ lazy val `scio-cassandra3`: Project = project
   )
   .configs(IntegrationTest)
 
-lazy val `scio-elasticsearch5`: Project = project
-  .in(file("scio-elasticsearch/es5"))
-  .settings(commonSettings)
-  .settings(
-    description := "Scio add-on for writing to Elasticsearch",
-    libraryDependencies ++= Seq(
-      "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
-      "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamVendorVersion,
-      "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
-      "joda-time" % "joda-time" % jodaTimeVersion,
-      "org.slf4j" % "slf4j-api" % slf4jVersion,
-      "org.elasticsearch" % "elasticsearch" % elasticsearch5Version,
-      "org.elasticsearch.client" % "transport" % elasticsearch5Version
-    )
-  )
-  .dependsOn(
-    `scio-core`,
-    `scio-test` % "test"
-  )
-
 lazy val `scio-elasticsearch6`: Project = project
   .in(file("scio-elasticsearch/es6"))
   .settings(commonSettings)
+  .settings(publishSettings)
   .settings(
     description := "Scio add-on for writing to Elasticsearch",
     libraryDependencies ++= Seq(
@@ -766,6 +732,7 @@ lazy val `scio-elasticsearch6`: Project = project
 lazy val `scio-elasticsearch7`: Project = project
   .in(file("scio-elasticsearch/es7"))
   .settings(commonSettings)
+  .settings(publishSettings)
   .settings(
     description := "Scio add-on for writing to Elasticsearch",
     libraryDependencies ++= Seq(
@@ -790,6 +757,7 @@ lazy val `scio-elasticsearch7`: Project = project
 lazy val `scio-extra`: Project = project
   .in(file("scio-extra"))
   .settings(commonSettings)
+  .settings(publishSettings)
   .settings(itSettings)
   .settings(macroSettings)
   .settings(
@@ -799,6 +767,8 @@ lazy val `scio-extra`: Project = project
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-extensions-sorter" % beamVersion,
+      "org.apache.beam" % "beam-sdks-java-extensions-sketching" % beamVersion,
+      "org.apache.beam" % "beam-sdks-java-extensions-zetasketch" % beamVersion,
       "com.google.apis" % "google-api-services-bigquery" % googleApiServicesBigQuery,
       "org.apache.avro" % "avro" % avroVersion,
       "com.spotify" % "annoy" % annoyVersion,
@@ -832,7 +802,7 @@ lazy val `scio-extra`: Project = project
     `scio-core` % "compile->compile;provided->provided",
     `scio-test` % "it->it;test->test",
     `scio-avro`,
-    `scio-bigquery`,
+    `scio-google-cloud-platform`,
     `scio-macros`
   )
   .configs(IntegrationTest)
@@ -840,6 +810,7 @@ lazy val `scio-extra`: Project = project
 lazy val `scio-jdbc`: Project = project
   .in(file("scio-jdbc"))
   .settings(commonSettings)
+  .settings(publishSettings)
   .settings(
     description := "Scio add-on for JDBC",
     libraryDependencies ++= Seq(
@@ -857,11 +828,12 @@ val ensureSourceManaged = taskKey[Unit]("ensureSourceManaged")
 lazy val `scio-parquet`: Project = project
   .in(file("scio-parquet"))
   .settings(commonSettings)
+  .settings(publishSettings)
   .settings(
     // change annotation processor output directory so IntelliJ can pick them up
     ensureSourceManaged := IO.createDirectory(sourceManaged.value / "main"),
     (compile in Compile) := Def.task {
-      ensureSourceManaged.value
+      val _ = ensureSourceManaged.value
       (compile in Compile).value
     }.value,
     javacOptions ++= Seq("-s", (sourceManaged.value / "main").toString),
@@ -892,33 +864,10 @@ lazy val `scio-parquet`: Project = project
     `scio-test` % "test->test"
   )
 
-lazy val `scio-spanner`: Project = project
-  .in(file("scio-spanner"))
-  .settings(commonSettings)
-  .settings(itSettings)
-  .settings(beamRunnerSettings)
-  .settings(
-    description := "Scio add-on for Google Cloud Spanner",
-    libraryDependencies ++= Seq(
-      "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
-      "com.google.cloud" % "google-cloud-core" % "1.92.2",
-      "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
-      "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
-      "com.google.cloud" % "google-cloud-spanner" % googleCloudSpannerVersion excludeAll (
-        ExclusionRule(organization = "io.grpc")
-      ),
-      "org.scalatest" %% "scalatest" % scalatestVersion % "it"
-    )
-  )
-  .dependsOn(
-    `scio-core`,
-    `scio-test` % "test"
-  )
-  .configs(IntegrationTest)
-
 lazy val `scio-tensorflow`: Project = project
   .in(file("scio-tensorflow"))
   .settings(commonSettings)
+  .settings(publishSettings)
   .settings(itSettings)
   .settings(protobufSettings)
   .settings(
@@ -956,10 +905,10 @@ lazy val `scio-tensorflow`: Project = project
 lazy val `scio-schemas`: Project = project
   .in(file("scio-schemas"))
   .settings(commonSettings)
-  .settings(noPublishSettings)
   .settings(protobufSettings)
   .settings(
     description := "Avro/Proto schemas for testing",
+    publish / skip := true,
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
       "org.apache.avro" % "avro" % avroVersion
@@ -976,11 +925,11 @@ lazy val `scio-schemas`: Project = project
 lazy val `scio-examples`: Project = project
   .in(file("scio-examples"))
   .settings(commonSettings)
-  .settings(noPublishSettings)
   .settings(soccoSettings)
   .settings(beamRunnerSettings)
   .settings(macroSettings)
   .settings(
+    publish / skip := true,
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
@@ -998,7 +947,7 @@ lazy val `scio-examples`: Project = project
       "com.spotify" %% "magnolify-datastore" % magnolifyVersion,
       "com.spotify" %% "magnolify-tensorflow" % magnolifyVersion,
       "com.spotify" %% "magnolify-bigtable" % magnolifyVersion,
-      "mysql" % "mysql-connector-java" % "8.0.21",
+      "mysql" % "mysql-connector-java" % "8.0.22",
       "joda-time" % "joda-time" % jodaTimeVersion,
       "com.github.alexarchambault" %% "case-app" % caseappVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
@@ -1031,7 +980,6 @@ lazy val `scio-examples`: Project = project
       }
     },
     sources in doc in Compile := List(),
-    run / classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.Flat,
     Test / classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.Flat,
     Test / testGrouping := splitTests(
       (Test / definedTests).value,
@@ -1040,22 +988,23 @@ lazy val `scio-examples`: Project = project
   )
   .dependsOn(
     `scio-core`,
-    `scio-bigquery`,
-    `scio-bigtable`,
+    `scio-google-cloud-platform`,
     `scio-schemas`,
     `scio-jdbc`,
     `scio-extra`,
     `scio-elasticsearch7`,
-    `scio-spanner`,
     `scio-tensorflow`,
     `scio-sql`,
     `scio-test` % "compile->test",
-    `scio-smb`
+    `scio-smb`,
+    `scio-redis`
   )
 
 lazy val `scio-repl`: Project = project
   .in(file("scio-repl"))
   .settings(commonSettings)
+  .settings(publishSettings)
+  .settings(assemblySettings)
   .settings(macroSettings)
   .settings(
     scalacOptions --= Seq("-release", "8"),
@@ -1090,7 +1039,7 @@ lazy val `scio-repl`: Project = project
   )
   .dependsOn(
     `scio-core`,
-    `scio-bigquery`,
+    `scio-google-cloud-platform`,
     `scio-extra`
   )
 
@@ -1098,7 +1047,6 @@ lazy val `scio-jmh`: Project = project
   .in(file("scio-jmh"))
   .settings(commonSettings)
   .settings(macroSettings)
-  .settings(noPublishSettings)
   .settings(
     description := "Scio JMH Microbenchmarks",
     sourceDirectory in Jmh := (sourceDirectory in Test).value,
@@ -1110,7 +1058,8 @@ lazy val `scio-jmh`: Project = project
       "org.hamcrest" % "hamcrest-core" % hamcrestVersion % "test",
       "org.hamcrest" % "hamcrest-library" % hamcrestVersion % "test",
       "org.slf4j" % "slf4j-nop" % slf4jVersion
-    )
+    ),
+    publish / skip := true
   )
   .dependsOn(
     `scio-core`,
@@ -1121,6 +1070,7 @@ lazy val `scio-jmh`: Project = project
 lazy val `scio-smb`: Project = project
   .in(file("scio-smb"))
   .settings(commonSettings)
+  .settings(publishSettings)
   .settings(itSettings)
   .settings(beamRunnerSettings)
   .settings(
@@ -1156,7 +1106,6 @@ lazy val `scio-smb`: Project = project
       (Compile / sourceManaged).value.mkdirs()
       Seq("-s", (Compile / sourceManaged).value.getAbsolutePath)
     },
-    testOptions in Test := Seq(Tests.Argument(TestFrameworks.JUnit, "-a")),
     Test / classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.Flat
   )
   .configs(
@@ -1166,6 +1115,26 @@ lazy val `scio-smb`: Project = project
     `scio-core`,
     `scio-test` % "test;it",
     `scio-avro` % IntegrationTest
+  )
+
+lazy val `scio-redis`: Project = project
+  .in(file("scio-redis"))
+  .settings(commonSettings)
+  .settings(itSettings)
+  .settings(
+    description := "Scio integration with Redis",
+    libraryDependencies ++= Seq(
+      "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
+      "com.google.protobuf" % "protobuf-java" % protobufVersion,
+      "com.google.guava" % "guava" % guavaVersion,
+      "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
+      "org.scalatest" %% "scalatest" % scalatestVersion % Test,
+      "org.apache.beam" % "beam-sdks-java-io-redis" % beamVersion
+    )
+  )
+  .dependsOn(
+    `scio-core`,
+    `scio-test` % "test"
   )
 
 lazy val site: Project = project
@@ -1185,8 +1154,7 @@ lazy val site: Project = project
     `scio-macros`,
     `scio-core`,
     `scio-avro`,
-    `scio-bigquery`,
-    `scio-bigtable`,
+    `scio-google-cloud-platform`,
     `scio-parquet`,
     `scio-schemas`,
     `scio-smb`,
@@ -1241,15 +1209,13 @@ lazy val siteSettings = Def.settings(
       `scio-core`,
       `scio-test`,
       `scio-avro`,
-      `scio-bigquery`,
-      `scio-bigtable`,
+      `scio-google-cloud-platform`,
       `scio-cassandra3`,
       `scio-elasticsearch6`,
       `scio-extra`,
       `scio-jdbc`,
       `scio-parquet`,
       `scio-tensorflow`,
-      `scio-spanner`,
       `scio-macros`,
       `scio-smb`
     ),
@@ -1294,7 +1260,7 @@ lazy val soccoSettings = if (sys.env.contains("SOCCO")) {
     // Generate scio-examples/target/site/index.html
     soccoIndex := SoccoIndex.generate(target.value / "site" / "index.html"),
     compile in Compile := {
-      soccoIndex.value
+      val _ = soccoIndex.value
       (compile in Compile).value
     }
   )
