@@ -23,13 +23,13 @@ import java.nio.file.Path
 
 import com.spotify.scio.util._
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
-
 import com.spotify.scio.values.SCollection
 import com.twitter.chill.ClosureCleaner
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
 import org.apache.beam.sdk.transforms.{DoFn, ParDo}
 import org.apache.beam.sdk.values.{TupleTag, TupleTagList}
 import com.google.common.util.concurrent.ListenableFuture
+import com.spotify.scio.transforms.DoFnWithResource.ResourceType
 
 import scala.jdk.CollectionConverters._
 import scala.util.{Failure, Success, Try}
@@ -104,6 +104,97 @@ package object transforms {
         .flatMap(identity)
   }
 
+  class CollectFnWithResource[T, U, R] private[transforms](resource: R, resourceType: ResourceType,
+                                                       pfn: PartialFunction[(R, T), U])
+    extends DoFnWithResource[T, U, R] {
+    def getResourceType: ResourceType = resourceType
+    def createResource: R = resource
+
+    val isDefined = ClosureCleaner.clean(pfn.isDefinedAt(_)) // defeat closure
+    val g = ClosureCleaner.clean(pfn)
+    @ProcessElement def processElement(c: DoFn[T, U]#ProcessContext): Unit =
+      if (isDefined(getResource, c.element())) {
+        c.output(g(getResource, c.element()))
+      }
+  }
+
+  class MapFnWithResource[T, U, R] private[transforms](resource: R, resourceType: ResourceType,
+                                                   f: (R, T) => U)
+    extends DoFnWithResource[T, U, R] {
+    def getResourceType: ResourceType = resourceType
+    def createResource: R = resource
+
+    val g = ClosureCleaner.clean(f)
+    @ProcessElement def processElement(c: DoFn[T, U]#ProcessContext): Unit =
+      c.output(g(getResource, c.element()))
+  }
+
+  class FlatMapFnWithResource[T, U, R] private[transforms](resource: R, resourceType: ResourceType,
+                                                       f: (R, T) => TraversableOnce[U])
+    extends DoFnWithResource[T, U, R] {
+    def getResourceType: ResourceType = resourceType
+    def createResource: R = resource
+
+    val g = ClosureCleaner.clean(f)
+    @ProcessElement def processElement(c: DoFn[T, U]#ProcessContext): Unit = {
+      val i = g(getResource, c.element()).toIterator
+      while (i.hasNext) c.output(i.next())
+    }
+  }
+
+  class FilterFnWithResource[T, U, R] private[transforms](resource: R, resourceType: ResourceType,
+                                                      f: (R, T) => Boolean)
+    extends DoFnWithResource[T, U, R] {
+    def getResourceType: ResourceType = resourceType
+    def createResource: R = resource
+
+    val g = ClosureCleaner.clean(f)
+    @ProcessElement def processElement(c: DoFn[T, T]#ProcessContext): Unit =
+      if (g(getResource, c.element())) {
+        c.output(c.element())
+      }
+  }
+
+
+  implicit class SCollectionWithResourceFunctions[T: Coder](@transient private val self: SCollection[T])
+    extends AnyVal {
+    /**
+     * Return a new [[SCollection]] by applying a function that also takes in a resource and
+     * `ResourceType` to all elements of this SCollection.
+     */
+    def mapWithResource[R, U: Coder](resource: => R, resourceType: ResourceType)(
+      fn: (R, T) => U
+    ): SCollection[U] =
+      self.parDo(new MapFnWithResource(resource, resourceType, fn))
+
+    /**
+     * Filter the elements for which the given `PartialFunction` that also takes in a resource and
+     * `ResourceType` is defined, and then map.
+     */
+    def collectWithResource[R, U: Coder](resource: => R, resourceType: ResourceType)(
+      pfn: PartialFunction[(R, T), U]
+    ): SCollection[U] =
+      self.parDo(new CollectFnWithResource(resource, resourceType, pfn))
+
+    /**
+     * Return a new [[SCollection]] by first applying a function that also takes in a resource and
+     * `ResourceType` to all elements of this SCollection, and then flattening the results.
+     */
+    def flatMapWithResource[R, U: Coder](resource: => R, resourceType: ResourceType)(
+      fn: (R, T) => TraversableOnce[U]
+    ): SCollection[U] =
+      self.parDo(new FlatMapFnWithResource(resource, resourceType, fn))
+
+    /**
+     * Return a new [[SCollection]] containing only the elements that satisfy a predicate that
+     * takes in a resource and `ResourceType`
+     */
+    def filterWithResource[R](resource: => R, resourceType: ResourceType)(
+      fn: (R, T) => Boolean
+    )(implicit coder: Coder[T]): SCollection[T] =
+      self.parDo(new FilterFnWithResource(resource, resourceType, fn))
+
+  }
   /**
    * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with custom
    * parallelism, where `parallelism` is the number of concurrent `DoFn` threads per worker
