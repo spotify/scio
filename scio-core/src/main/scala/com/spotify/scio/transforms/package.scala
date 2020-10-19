@@ -49,10 +49,10 @@ package object transforms {
      * @param keep keep downloaded files after processing
      */
     def mapFile[T: Coder](
-                           f: Path => T,
-                           batchSize: Int = 10,
-                           keep: Boolean = false
-                         ): SCollection[T] =
+      f: Path => T,
+      batchSize: Int = 10,
+      keep: Boolean = false
+    ): SCollection[T] =
       self.applyTransform(
         ParDo.of(
           new FileDownloadDoFn[T](
@@ -70,10 +70,10 @@ package object transforms {
      * @param keep keep downloaded files after processing
      */
     def flatMapFile[T: Coder](
-                               f: Path => TraversableOnce[T],
-                               batchSize: Int = 10,
-                               keep: Boolean = false
-                             ): SCollection[T] =
+      f: Path => TraversableOnce[T],
+      batchSize: Int = 10,
+      keep: Boolean = false
+    ): SCollection[T] =
       self
         .applyTransform(
           ParDo.of(
@@ -88,9 +88,11 @@ package object transforms {
         .flatMap(identity)
   }
 
-  class CollectFnWithResource[T, U, R] private[transforms](resource: R, resourceType: ResourceType,
-                                                           pfn: PartialFunction[(R, T), U])
-    extends DoFnWithResource[T, U, R] {
+  class CollectFnWithResource[T, U, R] private[transforms] (
+    resource: R,
+    resourceType: ResourceType,
+    pfn: PartialFunction[(R, T), U]
+  ) extends DoFnWithResource[T, U, R] {
     def getResourceType: ResourceType = resourceType
     def createResource: R = resource
 
@@ -102,9 +104,11 @@ package object transforms {
       }
   }
 
-  class MapFnWithResource[T, U, R] private[transforms](resource: R, resourceType: ResourceType,
-                                                       f: (R, T) => U)
-    extends DoFnWithResource[T, U, R] {
+  class MapFnWithResource[T, U, R] private[transforms] (
+    resource: R,
+    resourceType: ResourceType,
+    f: (R, T) => U
+  ) extends DoFnWithResource[T, U, R] {
     def getResourceType: ResourceType = resourceType
     def createResource: R = resource
 
@@ -113,9 +117,11 @@ package object transforms {
       c.output(g(getResource, c.element()))
   }
 
-  class FlatMapFnWithResource[T, U, R] private[transforms](resource: R, resourceType: ResourceType,
-                                                           f: (R, T) => TraversableOnce[U])
-    extends DoFnWithResource[T, U, R] {
+  class FlatMapFnWithResource[T, U, R] private[transforms] (
+    resource: R,
+    resourceType: ResourceType,
+    f: (R, T) => TraversableOnce[U]
+  ) extends DoFnWithResource[T, U, R] {
     def getResourceType: ResourceType = resourceType
     def createResource: R = resource
 
@@ -126,9 +132,11 @@ package object transforms {
     }
   }
 
-  class FilterFnWithResource[T, R] private[transforms](resource: R, resourceType: ResourceType,
-                                                          f: (R, T) => Boolean)
-    extends DoFnWithResource[T, T, R] {
+  class FilterFnWithResource[T, R] private[transforms] (
+    resource: R,
+    resourceType: ResourceType,
+    f: (R, T) => Boolean
+  ) extends DoFnWithResource[T, T, R] {
     def getResourceType: ResourceType = resourceType
     def createResource: R = resource
 
@@ -139,9 +147,9 @@ package object transforms {
       }
   }
 
-
   implicit class SCollectionWithResourceFunctions[T](@transient private val self: SCollection[T])
-    extends AnyVal {
+      extends AnyVal {
+
     /**
      * Return a new [[SCollection]] by applying a function that also takes in a resource and
      * `ResourceType` to all elements of this SCollection.
@@ -186,7 +194,7 @@ package object transforms {
    * (default to number of CPU cores).
    */
   implicit class CustomParallelismSCollection[T](@transient private val self: SCollection[T])
-    extends AnyVal {
+      extends AnyVal {
     private def parallelCollectFn[U](parallelism: Int)(pfn: PartialFunction[T, U]): DoFn[T, U] =
       new ParallelLimitedFn[T, U](parallelism) {
         val isDefined = ClosureCleaner.clean(pfn.isDefinedAt(_)) // defeat closure
@@ -229,8 +237,8 @@ package object transforms {
      * @group transform
      */
     def flatMapWithParallelism[U: Coder](
-                                          parallelism: Int
-                                        )(fn: T => TraversableOnce[U]): SCollection[U] =
+      parallelism: Int
+    )(fn: T => TraversableOnce[U]): SCollection[U] =
       self.parDo(parallelFlatMapFn(parallelism)(fn))
 
     /**
@@ -239,8 +247,8 @@ package object transforms {
      * @group transform
      */
     def filterWithParallelism(
-                               parallelism: Int
-                             )(fn: T => Boolean): SCollection[T] =
+      parallelism: Int
+    )(fn: T => Boolean): SCollection[T] =
       self.parDo(parallelFilterFn(parallelism)(fn))(self.coder)
 
     /**
@@ -257,8 +265,8 @@ package object transforms {
      * @group transform
      */
     def collectWithParallelism[U: Coder](
-                                          parallelism: Int
-                                        )(pfn: PartialFunction[T, U]): SCollection[U] =
+      parallelism: Int
+    )(pfn: PartialFunction[T, U]): SCollection[U] =
       self.parDo(parallelCollectFn(parallelism)(pfn))
   }
 
@@ -274,12 +282,12 @@ package object transforms {
      * @param teardownCmds tear down commands to be run after processing
      */
     def pipe(
-              command: String,
-              environment: Map[String, String] = null,
-              dir: File = null,
-              setupCmds: Seq[String] = null,
-              teardownCmds: Seq[String] = null
-            ): SCollection[String] = {
+      command: String,
+      environment: Map[String, String] = null,
+      dir: File = null,
+      setupCmds: Seq[String] = null,
+      teardownCmds: Seq[String] = null
+    ): SCollection[String] = {
       val env = if (environment == null) null else environment.asJava
       val sCmds = if (setupCmds == null) null else setupCmds.asJava
       val tCmds = if (teardownCmds == null) null else teardownCmds.asJava
@@ -295,12 +303,12 @@ package object transforms {
      * @param teardownCmds tear down commands to be run after processing
      */
     def pipe(
-              cmdArray: Array[String],
-              environment: Map[String, String],
-              dir: File,
-              setupCmds: Seq[Array[String]],
-              teardownCmds: Seq[Array[String]]
-            ): SCollection[String] = {
+      cmdArray: Array[String],
+      environment: Map[String, String],
+      dir: File,
+      setupCmds: Seq[Array[String]],
+      teardownCmds: Seq[Array[String]]
+    ): SCollection[String] = {
       val env = if (environment == null) null else environment.asJava
       val sCmds = if (setupCmds == null) null else setupCmds.asJava
       val tCmds = if (teardownCmds == null) null else teardownCmds.asJava
@@ -313,7 +321,7 @@ package object transforms {
    * versions of flatMap.
    */
   implicit class SpecializedFlatMapSCollection[T](@transient private val self: SCollection[T])
-    extends AnyVal {
+      extends AnyVal {
 
     /**
      * Latency optimized flavor of
@@ -325,8 +333,8 @@ package object transforms {
      * @group transform
      */
     def safeFlatMap[U: Coder](
-                               f: T => TraversableOnce[U]
-                             ): (SCollection[U], SCollection[(T, Throwable)]) = {
+      f: T => TraversableOnce[U]
+    ): (SCollection[U], SCollection[(T, Throwable)]) = {
       val (mainTag, errorTag) = (new TupleTag[U], new TupleTag[(T, Throwable)])
       val doFn = new NamedDoFn[T, U] {
         val g = ClosureCleaner.clean(f) // defeat closure
@@ -361,7 +369,7 @@ package object transforms {
 
   /** Enhanced version of `AsyncLookupDoFn.Try` with convenience methods. */
   implicit class RichAsyncLookupDoFnTry[A](private val self: BaseAsyncLookupDoFn.Try[A])
-    extends AnyVal {
+      extends AnyVal {
 
     /** Convert this `AsyncLookupDoFn.Try` to a Scala `Try`. */
     def asScala: Try[A] =
