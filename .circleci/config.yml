@@ -106,9 +106,15 @@ jobs:
     steps:
       - build:
           build-steps:
-            - run: sbt -v $SBT_OPTS scalafmtCheckAll scalafmtSbtCheck javafmtCheckAll
-                "; scalafixEnable; scalafixAll --check"
-            - run: cd scalafix; sbt -v $SBT_OPTS  scalafmtCheckAll scalafmtSbtCheck
+            - run:
+                command: |
+                  sbt -v $SBT_OPTS \
+                    headerCheckAll \
+                    scalafmtCheckAll scalafmtSbtCheck javafmtCheckAll \
+                    "; scalafixEnable; scalafixAll --check"
+            - run:
+                command: |
+                  cd scalafix; sbt -v $SBT_OPTS  scalafmtCheckAll scalafmtSbtCheck
 
   build_scalafix_rules_212:
     executor: scala_212
@@ -122,10 +128,12 @@ jobs:
     steps:
       - build:
           build-steps:
-            - run: sbt -v $SBT_OPTS
-                coverage
-                "++$SCALA_VERSION test"
-                "++$SCALA_VERSION coverageAggregate"
+            - run:
+                command: |
+                  sbt -v $SBT_OPTS \
+                  coverage \
+                  "++$SCALA_VERSION test" \
+                  "++$SCALA_VERSION coverageAggregate"
             - run: ./scripts/circleci_repl.sh
             - run: bash <(curl -s https://codecov.io/bash)
 

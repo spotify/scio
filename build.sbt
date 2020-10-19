@@ -40,7 +40,7 @@ val bigdataossVersion = "2.1.3"
 val bigQueryStorageVersion = "0.133.0-beta"
 val bigtableClientVersion = "1.14.0"
 val breezeVersion = "1.1"
-val caffeineVersion = "2.8.5"
+val caffeineVersion = "2.8.6"
 val caseappVersion = "2.0.4"
 val catsVersion = "2.1.1"
 val chillVersion = "0.9.5"
@@ -77,7 +77,7 @@ val jlineVersion = "2.14.6"
 val jnaVersion = "5.6.0"
 val jodaTimeVersion = "2.10.6"
 val junitInterfaceVersion = "0.11"
-val junitVersion = "4.13"
+val junitVersion = "4.13.1"
 val kantanCodecsVersion = "0.5.1"
 val kantanCsvVersion = "0.6.1"
 val kryoVersion =
@@ -128,20 +128,21 @@ lazy val mimaSettings = Def.settings(
 
 lazy val formatSettings = Def.settings(scalafmtOnCompile := false, javafmtOnCompile := false)
 
-val keepPreviousYearComment =
+lazy val keepExistingHeader =
   HeaderCommentStyle.cStyleBlockComment.copy(commentCreator = new CommentCreator() {
     override def apply(text: String, existingText: Option[String]): String =
-      existingText.getOrElse(
-        HeaderCommentStyle.cStyleBlockComment.commentCreator(text)
-      )
+      existingText
+        .getOrElse(
+          HeaderCommentStyle.cStyleBlockComment.commentCreator(text)
+        )
+        .trim()
   })
 
 val commonSettings = Def
   .settings(
     organization := "com.spotify",
-    headerEmptyLine := false,
     headerLicense := Some(HeaderLicense.ALv2("2020", "Spotify AB")),
-    headerMappings := headerMappings.value + (HeaderFileType.scala -> keepPreviousYearComment, HeaderFileType.java -> keepPreviousYearComment),
+    headerMappings := headerMappings.value + (HeaderFileType.scala -> keepExistingHeader, HeaderFileType.java -> keepExistingHeader),
     scalaVersion := "2.13.3",
     crossScalaVersions := Seq("2.12.12", scalaVersion.value),
     scalacOptions ++= Scalac.commonsOptions.value,
@@ -152,8 +153,8 @@ val commonSettings = Def
     // protobuf-lite is an older subset of protobuf-java and causes issues
     excludeDependencies += "com.google.protobuf" % "protobuf-lite",
     resolvers += Resolver.sonatypeRepo("public"),
-    testOptions in Test += Tests.Argument("-oD"),
-    testOptions += Tests.Argument(TestFrameworks.JUnit, "-q", "-v"),
+    Test / testOptions += Tests.Argument("-oD"),
+    testOptions += Tests.Argument(TestFrameworks.JUnit, "-q", "-v", "-a"),
     testOptions ++= {
       if (sys.env.contains("SLOW")) {
         Nil
@@ -410,7 +411,8 @@ lazy val root: Project = Project("scio", file("."))
     `scio-repl`,
     `scio-jmh`,
     `scio-macros`,
-    `scio-smb`
+    `scio-smb`,
+    `scio-redis`
   )
 
 lazy val `scio-core`: Project = project
@@ -765,6 +767,8 @@ lazy val `scio-extra`: Project = project
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-extensions-sorter" % beamVersion,
+      "org.apache.beam" % "beam-sdks-java-extensions-sketching" % beamVersion,
+      "org.apache.beam" % "beam-sdks-java-extensions-zetasketch" % beamVersion,
       "com.google.apis" % "google-api-services-bigquery" % googleApiServicesBigQuery,
       "org.apache.avro" % "avro" % avroVersion,
       "com.spotify" % "annoy" % annoyVersion,
@@ -799,8 +803,7 @@ lazy val `scio-extra`: Project = project
     `scio-test` % "it->it;test->test",
     `scio-avro`,
     `scio-google-cloud-platform`,
-    `scio-macros`,
-    `scio-redis`
+    `scio-macros`
   )
   .configs(IntegrationTest)
 
@@ -944,7 +947,7 @@ lazy val `scio-examples`: Project = project
       "com.spotify" %% "magnolify-datastore" % magnolifyVersion,
       "com.spotify" %% "magnolify-tensorflow" % magnolifyVersion,
       "com.spotify" %% "magnolify-bigtable" % magnolifyVersion,
-      "mysql" % "mysql-connector-java" % "8.0.21",
+      "mysql" % "mysql-connector-java" % "8.0.22",
       "joda-time" % "joda-time" % jodaTimeVersion,
       "com.github.alexarchambault" %% "case-app" % caseappVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
@@ -993,7 +996,8 @@ lazy val `scio-examples`: Project = project
     `scio-tensorflow`,
     `scio-sql`,
     `scio-test` % "compile->test",
-    `scio-smb`
+    `scio-smb`,
+    `scio-redis`
   )
 
 lazy val `scio-repl`: Project = project
@@ -1102,7 +1106,6 @@ lazy val `scio-smb`: Project = project
       (Compile / sourceManaged).value.mkdirs()
       Seq("-s", (Compile / sourceManaged).value.getAbsolutePath)
     },
-    testOptions in Test := Seq(Tests.Argument(TestFrameworks.JUnit, "-a")),
     Test / classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.Flat
   )
   .configs(

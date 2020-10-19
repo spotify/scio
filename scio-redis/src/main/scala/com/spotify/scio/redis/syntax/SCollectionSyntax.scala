@@ -20,24 +20,25 @@ package com.spotify.scio.redis.syntax
 import com.spotify.scio.io.ClosedTap
 import com.spotify.scio.redis.{RedisConnectionOptions, RedisWrite}
 import com.spotify.scio.redis.RedisWrite.WriteParam
+import com.spotify.scio.redis.write.{RedisMutation, RedisMutator}
 import com.spotify.scio.values.SCollection
-import org.apache.beam.sdk.io.redis.RedisIO
-import org.joda.time.Duration
 
-final class SCollectionRedisOps(private val self: SCollection[(String, String)]) {
+final class SCollectionRedisOps[T <: RedisMutation: RedisMutator](
+  private val self: SCollection[T]
+) {
 
   def saveAsRedis(
     connectionOptions: RedisConnectionOptions,
-    writeMethod: RedisIO.Write.Method,
-    expireTimeMillis: Option[Duration] = None
+    batchSize: Int = RedisWrite.WriteParam.DefaultBatchSize
   ): ClosedTap[Nothing] = {
-    val params = WriteParam(expireTimeMillis)
-    self.write(RedisWrite(connectionOptions, writeMethod))(params)
+    val params = WriteParam(batchSize)
+    self.write(RedisWrite[T](connectionOptions))(params)
   }
 
 }
 
 trait SCollectionSyntax {
-  implicit def redisSCollectionOps(coll: SCollection[(String, String)]): SCollectionRedisOps =
-    new SCollectionRedisOps(coll)
+  implicit def redisSCollectionOps[T <: RedisMutation: RedisMutator](
+    coll: SCollection[T]
+  ): SCollectionRedisOps[T] = new SCollectionRedisOps[T](coll)
 }

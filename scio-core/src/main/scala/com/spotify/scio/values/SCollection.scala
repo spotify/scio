@@ -23,6 +23,11 @@ import java.util.concurrent.ThreadLocalRandom
 
 import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.{AvroBytesUtil, BeamCoders, Coder, CoderMaterializer, WrappedBCoder}
+import com.spotify.scio.estimators.{
+  ApproxDistinctCounter,
+  ApproximateUniqueCounter,
+  ApproximateUniqueCounterByError
+}
 import com.spotify.scio.io._
 import com.spotify.scio.schemas.{Schema, SchemaMaterializer, To}
 import com.spotify.scio.testing.TestDataManager
@@ -501,9 +506,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @group transform
    */
   def countApproxDistinct(sampleSize: Int): SCollection[Long] =
-    this
-      .pApply(ApproximateUnique.globally[T](sampleSize))
-      .asInstanceOf[SCollection[Long]]
+    ApproximateUniqueCounter(sampleSize).estimateDistinctCount(this)
 
   /**
    * Count approximate number of distinct elements in the SCollection.
@@ -512,9 +515,27 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @group transform
    */
   def countApproxDistinct(maximumEstimationError: Double = 0.02): SCollection[Long] =
-    this
-      .pApply(ApproximateUnique.globally[T](maximumEstimationError))
-      .asInstanceOf[SCollection[Long]]
+    ApproximateUniqueCounterByError(maximumEstimationError)
+      .estimateDistinctCount(this)
+
+  /**
+   * Returns a single valued SCollection with estimated distinct count. Correctness is depends on the
+   * [[ApproxDistinctCounter]] estimator.
+   *
+   * @Example
+   * {{{
+   *   val input: SCollection[T] = ...
+   *   val distinctCount: SCollection[Long] = input.countApproxDistinct(ApproximateUniqueCounter(sampleSize))
+   * }}}
+   *
+   * There are two different HLL++ implementations available in the `scio-extra` module.
+   *  - [[com.spotify.scio.extra.hll.sketching.SketchHllPlusPlus]]
+   *  - [[com.spotify.scio.extra.hll.zetasketch.ZetaSketchHllPlusPlus]]
+   * @param estimator
+   * @return
+   */
+  def countApproxDistinct(estimator: ApproxDistinctCounter[T]): SCollection[Long] =
+    estimator.estimateDistinctCount(this)
 
   /**
    * Count of each unique value in this SCollection as an SCollection of (value, count) pairs.

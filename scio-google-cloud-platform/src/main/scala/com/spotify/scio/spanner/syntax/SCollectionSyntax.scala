@@ -14,6 +14,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 package com.spotify.scio.spanner.syntax
 
 import com.google.cloud.spanner.Mutation
