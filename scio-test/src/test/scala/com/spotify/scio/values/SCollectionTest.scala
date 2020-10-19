@@ -19,7 +19,6 @@ package com.spotify.scio.values
 
 import java.io.PrintStream
 import java.nio.file.Files
-import java.util.concurrent.Semaphore
 
 import com.google.api.client.util.Charsets
 import com.spotify.scio.testing.PipelineSpec
@@ -42,7 +41,6 @@ import scala.collection.mutable
 import scala.jdk.CollectionConverters._
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.schemas.Schema
-import com.spotify.scio.transforms.DoFnWithResource.ResourceType
 
 class SCollectionTest extends PipelineSpec {
   "SCollection" should "support applyTransform()" in {
@@ -813,4 +811,5 @@ class SCollectionTest extends PipelineSpec {
       coll should containInAnyOrder(Seq(Seq.empty[Int]))
     }
   }
+
 }

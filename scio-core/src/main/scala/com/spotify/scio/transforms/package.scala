@@ -195,13 +195,14 @@ package object transforms {
       self.parDo(new FilterFnWithResource(resource, resourceType, fn))
 
   }
+
   /**
    * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with custom
    * parallelism, where `parallelism` is the number of concurrent `DoFn` threads per worker
    * (default to number of CPU cores).
    */
   implicit class CustomParallelismSCollection[T](@transient private val self: SCollection[T])
-      extends AnyVal {
+    extends AnyVal {
     private def parallelCollectFn[U](parallelism: Int)(pfn: PartialFunction[T, U]): DoFn[T, U] =
       new ParallelLimitedFn[T, U](parallelism) {
         val isDefined = ClosureCleaner.clean(pfn.isDefinedAt(_)) // defeat closure
@@ -244,8 +245,8 @@ package object transforms {
      * @group transform
      */
     def flatMapWithParallelism[U: Coder](
-      parallelism: Int
-    )(fn: T => TraversableOnce[U]): SCollection[U] =
+                                          parallelism: Int
+                                        )(fn: T => TraversableOnce[U]): SCollection[U] =
       self.parDo(parallelFlatMapFn(parallelism)(fn))
 
     /**
@@ -254,9 +255,9 @@ package object transforms {
      * @group transform
      */
     def filterWithParallelism(
-      parallelism: Int
-    )(fn: T => Boolean)(implicit coder: Coder[T]): SCollection[T] =
-      self.parDo(parallelFilterFn(parallelism)(fn))
+                               parallelism: Int
+                             )(fn: T => Boolean): SCollection[T] =
+      self.parDo(parallelFilterFn(parallelism)(fn))(self.coder)
 
     /**
      * Return a new SCollection by applying a function to all elements of this SCollection.
@@ -272,8 +273,8 @@ package object transforms {
      * @group transform
      */
     def collectWithParallelism[U: Coder](
-      parallelism: Int
-    )(pfn: PartialFunction[T, U]): SCollection[U] =
+                                          parallelism: Int
+                                        )(pfn: PartialFunction[T, U]): SCollection[U] =
       self.parDo(parallelCollectFn(parallelism)(pfn))
   }
 

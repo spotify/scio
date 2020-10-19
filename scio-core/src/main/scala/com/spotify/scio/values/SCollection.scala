@@ -27,8 +27,6 @@ import com.spotify.scio.coders.{AvroBytesUtil, Coder, CoderMaterializer}
 import com.spotify.scio.io._
 import com.spotify.scio.schemas.{Schema, SchemaMaterializer, To}
 import com.spotify.scio.testing.TestDataManager
-import com.spotify.scio.transforms.DoFnWithResource.ResourceType
-import com.spotify.scio.transforms.DoFnWithResource
 import com.spotify.scio.util._
 import com.spotify.scio.util.random.{BernoulliSampler, PoissonSampler}
 import com.twitter.algebird.{Aggregator, Monoid, MonoidAggregator, Semigroup}
@@ -1411,12 +1409,6 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     this.transform(coll =>
       context.parallelize[Unit](Seq(())).reifySideInputAsValues(view(coll)).values
     )
-
-  // =======================================================================
-  // Resource operations
-  // =======================================================================
-
-
 
   // =======================================================================
   // Write operations
