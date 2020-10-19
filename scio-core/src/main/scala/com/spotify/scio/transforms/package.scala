@@ -96,7 +96,7 @@ package object transforms {
     def getResourceType: ResourceType = resourceType
     def createResource: R = resource
 
-    val isDefined: ((R, T)) => Boolean = ClosureCleaner.clean(pfn.isDefinedAt(_)) // defeat closure
+    val isDefined: ((R, T)) => Boolean = ClosureCleaner.clean(pfn.isDefinedAt) // defeat closure
     val g: PartialFunction[(R, T), U] = ClosureCleaner.clean(pfn)
     @ProcessElement def processElement(c: DoFn[T, U]#ProcessContext): Unit =
       if (isDefined(getResource, c.element())) {
