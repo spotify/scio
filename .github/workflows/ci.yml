@@ -9,6 +9,7 @@ on:
 jobs:
   build:
     name: Build documentation
+    if: ${{ secrets.ENCRYPTION_KEY }}
     strategy:
       matrix:
         scala: [ 2.13.3, 2.12.12 ]
@@ -26,7 +27,12 @@ jobs:
         with:
           java-version: ${{ matrix.java }}
 
-      - name: Build documentation
-        run: sbt $SBT_OPTS ++${{ matrix.scala }} site/makeSite
+      - name: Setup project
+        run: scripts/gha_setup.sh
         env:
-          SBT_OPTS: -Dbigquery.project=dummy-projectX
+          GOOGLE_APPLICATION_CREDENTIALS: scripts/gha-data-integration-test.json
+          GOOGLE_PROJECT_ID: data-integration-test
+          ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY }}
+
+      - name: Build documentation
+        run: sbt ++${{ matrix.scala }} site/makeSite

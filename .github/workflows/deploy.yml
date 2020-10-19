@@ -7,6 +7,7 @@ on:
 jobs:
   build:
     name: Publish documentation
+    if: ${{ secrets.ENCRYPTION_KEY }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout tag
@@ -18,11 +19,17 @@ jobs:
       - name: Setup Java and Scala
         uses: olafurpg/setup-scala@v5
 
+      - name: Setup project
+        run: scripts/gha_setup.sh
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: scripts/gha-data-integration-test.json
+          GOOGLE_PROJECT_ID: data-integration-test
+          ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY }}
+
       - name: Build documentation
         run: sbt ++${{ matrix.scala }} scio-examples/compile site/makeSite
         env:
           SOCCO: true
-          SBT_OPTS: -Dbigquery.project=dummy-project -Dbigquery.secret=${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
 
       - name: Deploy
         uses: JamesIves/github-pages-deploy-action@3.6.2
