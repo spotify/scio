@@ -96,8 +96,8 @@ package object transforms {
     def getResourceType: ResourceType = resourceType
     def createResource: R = resource
 
-    val isDefined = ClosureCleaner.clean(pfn.isDefinedAt(_)) // defeat closure
-    val g = ClosureCleaner.clean(pfn)
+    val isDefined: ((R, T)) => Boolean = ClosureCleaner.clean(pfn.isDefinedAt(_)) // defeat closure
+    val g: PartialFunction[(R, T), U] = ClosureCleaner.clean(pfn)
     @ProcessElement def processElement(c: DoFn[T, U]#ProcessContext): Unit =
       if (isDefined(getResource, c.element())) {
         c.output(g(getResource, c.element()))
@@ -112,7 +112,7 @@ package object transforms {
     def getResourceType: ResourceType = resourceType
     def createResource: R = resource
 
-    val g = ClosureCleaner.clean(f)
+    val g: (R, T) => U = ClosureCleaner.clean(f)
     @ProcessElement def processElement(c: DoFn[T, U]#ProcessContext): Unit =
       c.output(g(getResource, c.element()))
   }
@@ -125,7 +125,7 @@ package object transforms {
     def getResourceType: ResourceType = resourceType
     def createResource: R = resource
 
-    val g = ClosureCleaner.clean(f)
+    val g: (R, T) => TraversableOnce[U] = ClosureCleaner.clean(f)
     @ProcessElement def processElement(c: DoFn[T, U]#ProcessContext): Unit = {
       val i = g(getResource, c.element()).toIterator
       while (i.hasNext) c.output(i.next())
@@ -140,7 +140,7 @@ package object transforms {
     def getResourceType: ResourceType = resourceType
     def createResource: R = resource
 
-    val g = ClosureCleaner.clean(f)
+    val g: (R, T) => Boolean = ClosureCleaner.clean(f)
     @ProcessElement def processElement(c: DoFn[T, T]#ProcessContext): Unit =
       if (g(getResource, c.element())) {
         c.output(c.element())
