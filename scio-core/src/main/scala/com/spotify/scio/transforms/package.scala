@@ -133,7 +133,7 @@ package object transforms {
   }
 
   class FilterFnWithResource[T, R] private[transforms] (
-    resource: R,
+    resource: => R,
     resourceType: ResourceType,
     f: (R, T) => Boolean
   ) extends DoFnWithResource[T, T, R] {
