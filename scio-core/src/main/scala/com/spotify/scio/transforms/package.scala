@@ -99,8 +99,8 @@ package object transforms {
     val isDefined: ((R, T)) => Boolean = ClosureCleaner.clean(pfn.isDefinedAt) // defeat closure
     val g: PartialFunction[(R, T), U] = ClosureCleaner.clean(pfn)
     @ProcessElement def processElement(c: DoFn[T, U]#ProcessContext): Unit =
-      if (isDefined(getResource, c.element())) {
-        c.output(g(getResource, c.element()))
+      if (isDefined((getResource, c.element()))) {
+        c.output(g((getResource, c.element())))
       }
   }
 
