@@ -147,7 +147,7 @@ package object transforms {
       }
   }
 
-  implicit class SCollectionWithResourceFunctions[T](@transient private val self: SCollection[T])
+  implicit class SCollectionWithResourceFunctions[T](private val self: SCollection[T])
       extends AnyVal {
 
     /**
