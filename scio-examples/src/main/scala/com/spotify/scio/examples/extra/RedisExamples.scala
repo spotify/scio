@@ -18,6 +18,7 @@
 
 package com.spotify.scio.examples.extra
 
+import com.google.common.util.concurrent.{Futures, ListenableFuture}
 import com.spotify.scio.{ContextAndArgs, ScioContext}
 import com.spotify.scio.redis._
 import org.apache.beam.examples.common.ExampleUtils
@@ -25,6 +26,8 @@ import org.apache.beam.sdk.options.{PipelineOptions, StreamingOptions}
 import com.spotify.scio.pubsub._
 import com.spotify.scio.redis.write._
 import com.spotify.scio.redis.coders._
+import com.spotify.scio.redis.lookup.RedisLookupDoFn
+import redis.clients.jedis.Jedis
 
 // ## Redis Read Strings example
 // Read strings from Redis by a key pattern
@@ -50,6 +53,42 @@ object RedisReadStringsExample {
     sc.redis(connectionOptions, keyPattern)
       .debug()
       .saveAsTextFile(args("output"))
+
+    sc.run()
+    ()
+  }
+
+}
+
+// ## Redis Lookup Strings example
+
+// Usage:
+
+// `sbt "runMain com.spotify.scio.examples.extra.RedisLookUpStringsExample
+// --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
+// --redisHost=[REDIS_HOST]
+// --redisPort=[REDIS_PORT]
+object RedisLookUpStringsExample {
+
+  private def lookupFn(connectionOptions: RedisConnectionOptions) =
+    new RedisLookupDoFn[String, Option[String]](connectionOptions) {
+      override def asyncLookup(client: ThreadLocal[Jedis],
+                               input: String): ListenableFuture[Option[String]] = {
+        Futures.immediateFuture(Option(client.get.get(input)))
+      }
+    }
+
+  def main(cmdlineArgs: Array[String]): Unit = {
+
+    val (sc, args) = ContextAndArgs(cmdlineArgs)
+    val redisHost = args("redisHost")
+    val redisPort = args.int("redisPort")
+    val connectionOptions = RedisConnectionOptions(redisHost, redisPort)
+
+    sc.parallelize(Seq("key1", "key2", "unknownKey"))
+      .parDo(lookupFn(connectionOptions))
+      .map(kv => kv.getKey -> kv.getValue.get())
+      .debug()
 
     sc.run()
     ()
