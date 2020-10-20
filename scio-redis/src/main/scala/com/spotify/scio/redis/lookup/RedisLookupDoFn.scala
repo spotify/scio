@@ -10,11 +10,10 @@ import redis.clients.jedis.Jedis
  * @tparam I Type of the input element.
  * @tparam O Type of the lookup result.
  */
-abstract class RedisLookupDoFn[I, O](connectionOptions: RedisConnectionOptions,
-                                     maxPendingRequests: Int =
-                                     RedisLookupDoFn.DEFAULT_MAX_PENDING_REQUEST)
-  extends GuavaAsyncLookupDoFn[I, O, ThreadLocal[Jedis]](maxPendingRequests) {
-
+abstract class RedisLookupDoFn[I, O](
+  connectionOptions: RedisConnectionOptions,
+  maxPendingRequests: Int = RedisLookupDoFn.DEFAULT_MAX_PENDING_REQUEST
+) extends GuavaAsyncLookupDoFn[I, O, ThreadLocal[Jedis]](maxPendingRequests) {
 
   override protected def newClient(): ThreadLocal[Jedis] = {
     val connectionConfig = RedisConnectionOptions.toConnectionConfig(connectionOptions)
