@@ -72,10 +72,11 @@ object RedisLookUpStringsExample {
 
   private def lookupFn(connectionOptions: RedisConnectionOptions) =
     new RedisLookupDoFn[String, Option[String]](connectionOptions) {
-      override def asyncLookup(client: ThreadLocal[Jedis],
-                               input: String): ListenableFuture[Option[String]] = {
+      override def asyncLookup(
+        client: ThreadLocal[Jedis],
+        input: String
+      ): ListenableFuture[Option[String]] =
         Futures.immediateFuture(Option(client.get.get(input)))
-      }
     }
 
   def main(cmdlineArgs: Array[String]): Unit = {
