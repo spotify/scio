@@ -118,7 +118,7 @@ package object transforms {
   }
 
   class FlatMapFnWithResource[T, U, R] private[transforms] (
-    resource: R,
+    resource: => R,
     resourceType: ResourceType,
     f: (R, T) => TraversableOnce[U]
   ) extends DoFnWithResource[T, U, R] {
