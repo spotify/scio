@@ -89,7 +89,7 @@ package object transforms {
   }
 
   class CollectFnWithResource[T, U, R] private[transforms] (
-    resource: R,
+    resource: => R,
     resourceType: ResourceType,
     pfn: PartialFunction[(R, T), U]
   ) extends DoFnWithResource[T, U, R] {
