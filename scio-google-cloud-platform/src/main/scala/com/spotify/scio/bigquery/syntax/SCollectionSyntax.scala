@@ -113,7 +113,11 @@ final class SCollectionGenericRecordOps[T <: GenericRecord](private val self: SC
       )
     self
       .covary[GenericRecord]
-      .write(BigQueryTypedTable(table, Format.GenericRecord))(param)
+      .write(
+        BigQueryTypedTable(table, Format.GenericRecord)(
+          self.coder.asInstanceOf[Coder[GenericRecord]]
+        )
+      )(param)
   }
 
 }

@@ -202,16 +202,10 @@ object BigQuerySelect {
 object BigQueryTypedTable {
 
   /** Defines the format in which BigQuery can be read and written to. */
-  sealed abstract class Format {
-    type F
-  }
+  sealed abstract class Format[F]
   object Format {
-    case object GenericRecord extends Format {
-      override type F = org.apache.avro.generic.GenericRecord
-    }
-    case object TableRow extends Format {
-      override type F = com.google.api.services.bigquery.model.TableRow
-    }
+    case object GenericRecord extends Format[GenericRecord]
+    case object TableRow extends Format[TableRow]
   }
 
   trait WriteParam {
@@ -259,7 +253,9 @@ object BigQueryTypedTable {
       BigQueryUtils.convertGenericRecordToTableRow(_, _)
     )
 
-  private[this] def genericRecord(table: Table): BigQueryTypedTable[GenericRecord] =
+  private[this] def genericRecord(
+    table: Table
+  )(implicit c: Coder[GenericRecord]): BigQueryTypedTable[GenericRecord] =
     BigQueryTypedTable(
       _.getRecord(),
       identity[GenericRecord],
@@ -275,10 +271,11 @@ object BigQueryTypedTable {
    * Writting: Supports LogicalTypes only for DATE and TIME.
    *           DATETIME is not yet supported. https://issuetracker.google.com/issues/140681683
    */
-  def apply(table: Table, format: Format): BigQueryTypedTable[format.F] = format match {
-    case Format.GenericRecord => genericRecord(table).asInstanceOf[BigQueryTypedTable[format.F]]
-    case Format.TableRow      => tableRow(table).asInstanceOf[BigQueryTypedTable[format.F]]
-  }
+  def apply[F: Coder](table: Table, format: Format[F]): BigQueryTypedTable[F] =
+    format match {
+      case Format.GenericRecord => genericRecord(table)
+      case Format.TableRow      => tableRow(table)
+    }
 
   def apply[T: Coder](
     readerFn: SchemaAndRecord => T,
