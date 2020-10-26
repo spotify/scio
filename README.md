@@ -46,18 +46,18 @@ Switch to the new repo (default `scio-job`) and build it:
 
 ```
 cd scio-job
-sbt pack
+sbt stage 
 ```
 
 Run the included word count example:
 
-`target/pack/bin/word-count --output=wc`
+`target/universal/stage/bin/scio-job --output=wc`
 
 List result files and inspect content:
 
 ```
 ls -l wc
-cat wc/part-00000-of-00001.txt
+cat wc/part-00000-of-00004.txt
 ```
 
 # Documentation
