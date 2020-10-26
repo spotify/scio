@@ -36,6 +36,8 @@ Scio 0.3.0 and future versions depend on Apache Beam (`org.apache.beam`) while e
 
 Download and install the [Java Development Kit (JDK)](https://adoptopenjdk.net/index.html) version 8.
 
+Install [sbt](https://www.scala-sbt.org/1.x/docs/Setup.html).
+
 Use our [giter8 template](https://github.com/spotify/scio.g8) to quickly create a new Scio job repository:
 
 `sbt new spotify/scio.g8`
