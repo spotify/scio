@@ -29,12 +29,12 @@ def scio(version: String) =
     "com.spotify" %% "scio-tensorflow"
   ).map(_ % version)
 
-lazy val input = project
+lazy val `input-0_7` = project
   .settings(
     libraryDependencies ++= scio(Scio.`0.6`)
   )
 
-lazy val output = project
+lazy val `output-0_7` = project
   .settings(
     libraryDependencies ++= scio(Scio.`0.7`)
   )
@@ -56,18 +56,18 @@ lazy val tests = project
       compile
         .in(Compile)
         .dependsOn(
-          compile.in(input, Compile),
+          compile.in(`input-0_7`, Compile),
           compile.in(`input-0_8`, Compile)
         )
         .value,
     scalafixTestkitOutputSourceDirectories :=
-      sourceDirectories.in(output, Compile).value ++
+      sourceDirectories.in(`output-0_7`, Compile).value ++
         sourceDirectories.in(`output-0_8`, Compile).value,
     scalafixTestkitInputSourceDirectories :=
-      sourceDirectories.in(`input-0_8`, Compile).value ++
-        sourceDirectories.in(input, Compile).value,
+      sourceDirectories.in(`input-0_7`, Compile).value ++
+        sourceDirectories.in(`input-0_8`, Compile).value,
     scalafixTestkitInputClasspath :=
-      fullClasspath.in(input, Compile).value ++
+      fullClasspath.in(`input-0_7`, Compile).value ++
         fullClasspath.in(`input-0_8`, Compile).value
   )
   .dependsOn(rules)
