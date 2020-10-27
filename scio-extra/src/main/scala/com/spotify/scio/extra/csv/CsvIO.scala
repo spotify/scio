@@ -61,8 +61,11 @@ import org.apache.beam.sdk.values.PCollection
  * [[https://nrinaudo.github.io/kantan.csv/rows_as_arbitrary_types.html Kantan docs]]
  * {{{
  *  case class User(name: String, age: Int)
- *  implicit val decoder = HeaderDecoder.ordered { (name: String, age: Int) => User(name, age) }
- *  val users: SCollection[User] = scioContext.csvFile(path)
+ *  implicit val decoder = RowDecoder.ordered { (name: String, age: Int) => User(name, age) }
+ *  val csvConfiguration = CsvIO.DefaultReadParams.copy(
+ *    csvConfiguration = CsvIO.DefaultCsvConfig.copy(header = CsvConfiguration.Header.None)
+ *  )
+ *  val users: SCollection[User] = scioContext.csvFile(path, csvConfiguration)
  * }}}
  *
  * =Writing=
