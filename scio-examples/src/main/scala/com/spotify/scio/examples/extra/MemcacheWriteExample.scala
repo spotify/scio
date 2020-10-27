@@ -7,15 +7,15 @@ import com.spotify.scio._
 
 // `sbt "runMain com.spotify.scio.examples.extra.MemcacheWriteExample
 // --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
-// --memcahceHost=[MEMCACHE_HOST]
-// --memcachPort=[MEMCACHE_PORT]`
+// --memcacheHost=[MEMCACHE_HOST]
+// --memcachePort=[MEMCACHE_PORT]`
 
 object MemcacheWriteExample {
 
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
-    val mHost = args("memcahceHost")
-    val mPort = args.int("memcahcePort")
+    val mHost = args("memcacheHost")
+    val mPort = args.int("memcachePort")
     val ttl = 20
     val flushDelay = 40
     val memcacheConnectionOptions = MemcacheConnectionOptions(mHost, mPort, ttl, flushDelay)
@@ -27,7 +27,8 @@ object MemcacheWriteExample {
         "key3" -> "3"
       )
     ).saveAsMemcache(memcacheConnectionOptions)
-    val tmp = sc.run().waitUntilDone()
+    sc.run()
+    ()
 
   }
 

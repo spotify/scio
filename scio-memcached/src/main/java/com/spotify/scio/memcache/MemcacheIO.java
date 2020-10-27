@@ -72,6 +72,7 @@ public class MemcacheIO {
 
             @ProcessElement
             public void processElement(ProcessContext processContext) {
+//                Insted
                 KV<String, String> record = processContext.element();
                 memcacheClient.add(record.getKey(), record.getValue(), Objects.requireNonNull(spec.memcacheConnectionConfiguration()).ttl());
 //                check the status and then of fail thrio
