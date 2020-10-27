@@ -53,10 +53,11 @@ package object elasticsearch extends CoderInstances {
       flushInterval: Duration = WriteParam.DefaultFlushInterval,
       numOfShards: Long = WriteParam.DefaultNumShards,
       maxBulkRequestSize: Int = WriteParam.DefaultMaxBulkRequestSize,
+      maxBulkRequestBytes: Long = WriteParam.DefaultMaxBulkRequestBytes,
       errorFn: BulkExecutionException => Unit = WriteParam.DefaultErrorFn,
       retry: RetryConfig = WriteParam.DefaultRetryConfig
     )(f: T => Iterable[DocWriteRequest[_]]): ClosedTap[Nothing] = {
-      val param = WriteParam(f, errorFn, flushInterval, numOfShards, maxBulkRequestSize, retry)
+      val param = WriteParam(f, errorFn, flushInterval, numOfShards, maxBulkRequestSize, maxBulkRequestBytes, retry)
       self.write(ElasticsearchIO[T](esOptions))(param)
     }
   }

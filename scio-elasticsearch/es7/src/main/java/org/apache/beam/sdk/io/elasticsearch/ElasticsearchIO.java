@@ -50,11 +50,15 @@ import org.apache.beam.sdk.values.KV;
 import org.apache.beam.sdk.values.PCollection;
 import org.apache.beam.sdk.values.PDone;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Iterables;
+import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ImmutableList;
 import org.apache.http.HttpHost;
 import org.elasticsearch.action.DocWriteRequest;
 import org.elasticsearch.action.bulk.BulkItemResponse;
 import org.elasticsearch.action.bulk.BulkRequest;
 import org.elasticsearch.action.bulk.BulkResponse;
+import org.elasticsearch.action.delete.DeleteRequest;
+import org.elasticsearch.action.index.IndexRequest;
+import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestHighLevelClient;
@@ -119,6 +123,10 @@ public class ElasticsearchIO {
       return new Bound<>().withMaxBulkRequestSize(maxBulkRequestSize);
     }
 
+    public static <T> Bound withMaxBulkRequestBytes(long maxBulkRequestBytes) {
+      return new Bound<>().withMaxBulkRequestBytes(maxBulkRequestBytes);
+    }
+
     /**
      * Returns a transform for writing to Elasticsearch cluster.
      *
@@ -141,6 +149,7 @@ public class ElasticsearchIO {
     public static class Bound<T> extends PTransform<PCollection<T>, PDone> {
 
       private static final int CHUNK_SIZE = 3000;
+      private static final long CHUNK_BYTES = 5L * 1024L * 1024L;
       private static final int DEFAULT_RETRIES = 3;
       private static final Duration DEFAULT_RETRY_PAUSE = Duration.millis(35000);
 
@@ -149,6 +158,7 @@ public class ElasticsearchIO {
       private final SerializableFunction<T, Iterable<DocWriteRequest<?>>> toDocWriteRequests;
       private final long numOfShard;
       private final int maxBulkRequestSize;
+      private final long maxBulkRequestBytes;
       private final int maxRetries;
       private final Duration retryPause;
       private final ThrowingConsumer<BulkExecutionException> error;
@@ -159,6 +169,7 @@ public class ElasticsearchIO {
           final SerializableFunction<T, Iterable<DocWriteRequest<?>>> toDocWriteRequests,
           final long numOfShard,
           final int maxBulkRequestSize,
+          final long maxBulkRequestBytes,
           int maxRetries,
           Duration retryPause,
           final ThrowingConsumer<BulkExecutionException> error) {
@@ -167,6 +178,7 @@ public class ElasticsearchIO {
         this.toDocWriteRequests = toDocWriteRequests;
         this.numOfShard = numOfShard;
         this.maxBulkRequestSize = maxBulkRequestSize;
+        this.maxBulkRequestBytes = maxBulkRequestBytes;
         this.maxRetries = maxRetries;
         this.retryPause = retryPause;
         this.error = error;
@@ -179,6 +191,7 @@ public class ElasticsearchIO {
             null,
             0,
             CHUNK_SIZE,
+            CHUNK_BYTES,
             DEFAULT_RETRIES,
             DEFAULT_RETRY_PAUSE,
             defaultErrorHandler());
@@ -191,6 +204,7 @@ public class ElasticsearchIO {
             toDocWriteRequests,
             numOfShard,
             maxBulkRequestSize,
+            maxBulkRequestBytes,
             maxRetries,
             retryPause,
             error);
@@ -203,6 +217,7 @@ public class ElasticsearchIO {
             toDocWriteRequests,
             numOfShard,
             maxBulkRequestSize,
+            maxBulkRequestBytes,
             maxRetries,
             retryPause,
             error);
@@ -216,6 +231,7 @@ public class ElasticsearchIO {
             toIndexRequest,
             numOfShard,
             maxBulkRequestSize,
+            maxBulkRequestBytes,
             maxRetries,
             retryPause,
             error);
@@ -228,6 +244,7 @@ public class ElasticsearchIO {
             toDocWriteRequests,
             numOfShard,
             maxBulkRequestSize,
+            maxBulkRequestBytes,
             maxRetries,
             retryPause,
             error);
@@ -240,6 +257,7 @@ public class ElasticsearchIO {
             toDocWriteRequests,
             numOfShard,
             maxBulkRequestSize,
+            maxBulkRequestBytes,
             maxRetries,
             retryPause,
             error);
@@ -252,6 +270,20 @@ public class ElasticsearchIO {
             toDocWriteRequests,
             numOfShard,
             maxBulkRequestSize,
+            maxBulkRequestBytes,
+            maxRetries,
+            retryPause,
+            error);
+      }
+
+      public Bound<T> withMaxBulkRequestBytes(long maxBulkRequestBytes) {
+        return new Bound<>(
+            nodes,
+            flushInterval,
+            toDocWriteRequests,
+            numOfShard,
+            maxBulkRequestSize,
+            maxBulkRequestBytes,
             maxRetries,
             retryPause,
             error);
@@ -264,6 +296,7 @@ public class ElasticsearchIO {
             toDocWriteRequests,
             numOfShard,
             maxBulkRequestSize,
+            maxBulkRequestBytes,
             maxRetries,
             retryPause,
             error);
@@ -276,6 +309,7 @@ public class ElasticsearchIO {
             toDocWriteRequests,
             numOfShard,
             maxBulkRequestSize,
+            maxBulkRequestBytes,
             maxRetries,
             retryPause,
             error);
@@ -288,6 +322,7 @@ public class ElasticsearchIO {
         checkNotNull(flushInterval);
         checkArgument(numOfShard > 0);
         checkArgument(maxBulkRequestSize > 0);
+        checkArgument(maxBulkRequestBytes > 0L);
         checkArgument(maxRetries >= 0);
         checkArgument(retryPause.getMillis() >= 0);
         input
@@ -308,6 +343,7 @@ public class ElasticsearchIO {
                     new ElasticsearchWriter<>(
                         nodes,
                         maxBulkRequestSize,
+                        maxBulkRequestBytes,
                         toDocWriteRequests,
                         error,
                         maxRetries,
@@ -345,17 +381,20 @@ public class ElasticsearchIO {
       private final ThrowingConsumer<BulkExecutionException> error;
       private FluentBackoff backoffConfig;
       private final int maxBulkRequestSize;
+      private final long maxBulkRequestBytes;
       private final int maxRetries;
       private final Duration retryPause;
 
       public ElasticsearchWriter(
           HttpHost[] nodes,
           int maxBulkRequestSize,
+          long maxBulkRequestBytes,
           SerializableFunction<T, Iterable<DocWriteRequest<?>>> toDocWriteRequests,
           ThrowingConsumer<BulkExecutionException> error,
           int maxRetries,
           Duration retryPause) {
         this.maxBulkRequestSize = maxBulkRequestSize;
+        this.maxBulkRequestBytes = maxBulkRequestBytes;
         this.clientSupplier = new ClientSupplier(nodes);
         this.toDocWriteRequests = toDocWriteRequests;
         this.error = error;
@@ -385,32 +424,46 @@ public class ElasticsearchIO {
       public void processElement(ProcessContext c) throws Exception {
         final Iterable<T> values = c.element().getValue();
 
-        // Elasticsearch throws ActionRequestValidationException if bulk request is empty,
-        // so do nothing if number of actions is zero.
-        if (!values.iterator().hasNext()) {
-          LOG.info("ElasticsearchWriter: no requests to send");
-          return;
-        }
-
         final Stream<DocWriteRequest> docWriteRequests =
             StreamSupport.stream(values.spliterator(), false)
                 .map(toDocWriteRequests::apply)
                 .flatMap(ar -> StreamSupport.stream(ar.spliterator(), false));
 
-        final Iterable<List<DocWriteRequest>> chunks =
-            Iterables.partition(docWriteRequests::iterator, maxBulkRequestSize);
+        int currentSize = 0;
+        long currentBytes = 0L;
+        ImmutableList.Builder<DocWriteRequest> chunk = ImmutableList.builder();
+
+        for (DocWriteRequest request : (Iterable<DocWriteRequest>) docWriteRequests::iterator) {
+          long requestBytes = documentSize(request);
+          if (currentSize < maxBulkRequestSize
+              && (currentBytes + requestBytes) < maxBulkRequestBytes) {
+            chunk.add(request);
+            currentSize += 1;
+            currentBytes += requestBytes;
+          } else {
+            flush(chunk.build());
+            currentSize = 1;
+            currentBytes = requestBytes;
+            chunk = ImmutableList.<DocWriteRequest>builder().add(request);
+          }
+        }
+
+        flush(chunk.build());
+      }
+
+      private void flush(List<DocWriteRequest> chunk) throws Exception {
+        if (chunk.isEmpty()) {
+          return;
+        }
 
         final ProcessFunction<List<DocWriteRequest>, BulkResponse> requestFn =
             request(clientSupplier, error);
         final ProcessFunction<List<DocWriteRequest>, BulkResponse> retryFn =
             retry(requestFn, backoffConfig);
-
-        for (final List<DocWriteRequest> chunk : chunks) {
-          try {
-            requestFn.apply(chunk);
-          } catch (Exception e) {
-            retryFn.apply(chunk);
-          }
+        try {
+          requestFn.apply(chunk);
+        } catch (Exception e) {
+          retryFn.apply(chunk);
         }
       }
 
@@ -512,5 +565,16 @@ public class ElasticsearchIO {
         return failures;
       }
     }
+  }
+
+  private static long documentSize(DocWriteRequest request) {
+    if (request instanceof IndexRequest) {
+      return ((IndexRequest) request).source().length();
+    } else if (request instanceof UpdateRequest) {
+      return ((UpdateRequest) request).doc().source().length();
+    } else if (request instanceof DeleteRequest) {
+      return 0;
+    }
+    throw new IllegalArgumentException("Encountered unknown subclass of DocWriteRequest");
   }
 }
