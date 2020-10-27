@@ -19,10 +19,13 @@ package com.spotify.scio.extra.hll
 
 import java.lang
 
+import com.google.zetasketch.HyperLogLogPlusPlus
 import com.spotify.scio.coders.{BeamCoders, Coder}
 import com.spotify.scio.estimators.ApproxDistinctCounter
 import com.spotify.scio.util.TupleFunctions._
 import com.spotify.scio.values.SCollection
+import com.twitter.algebird
+import com.twitter.algebird.{Monoid, MonoidAggregator}
 import org.apache.beam.sdk.extensions.zetasketch.HllCount
 import org.apache.beam.sdk.extensions.zetasketch.HllCount.Init
 import org.apache.beam.sdk.transforms.PTransform
@@ -30,7 +33,7 @@ import org.apache.beam.sdk.values.{KV, PCollection}
 
 package object zetasketch {
 
-  trait ZetaSketchable[T] {
+  sealed trait ZetaSketchable[T] {
     type IN
     def init(p: Int): Init.Builder[IN]
   }
@@ -111,5 +114,92 @@ package object zetasketch {
         .applyTransform(HllCount.Extract.perKey[K]())
         .map(klToTuple)
     }
+  }
+
+  sealed trait ZetaSketchHLL[T] {
+    type IN
+
+    def hll(arr: Array[Byte]): HyperLogLogPlusPlus[IN]
+
+    def hll(p: Int): HyperLogLogPlusPlus[IN]
+  }
+
+  object ZetaSketchHLL {
+
+    implicit val intZetaSketchHLL = new ZetaSketchHLL[Int] {
+      override type IN = lang.Integer
+
+      override def hll(p: Int): HyperLogLogPlusPlus[lang.Integer] =
+        new HyperLogLogPlusPlus.Builder().normalPrecision(p).buildForIntegers()
+
+      override def hll(arr: Array[Byte]): HyperLogLogPlusPlus[lang.Integer] =
+        HyperLogLogPlusPlus.forProto(arr).asInstanceOf[HyperLogLogPlusPlus[lang.Integer]]
+    }
+
+  }
+
+  final class ZetaHLLPlus[T](protected val arr: Array[Byte])(implicit
+    zt: ZetaSketchHLL[T]
+  ) {
+    private[zetasketch] val hll = zt.hll(arr)
+
+    def add(elem: T): ZetaHLLPlus[T] = {
+      hll.add(elem.asInstanceOf[zt.IN])
+      this
+    }
+
+    def merge(that: ZetaHLLPlus[T]): ZetaHLLPlus[T] = {
+      hll.merge(that.hll.asInstanceOf[HyperLogLogPlusPlus[zt.IN]])
+      this
+    }
+
+    def estimateSize: Long = hll.result()
+
+    def precision: Int = hll.getNormalPrecision
+
+    def sparsePrecision: Int = hll.getSparsePrecision
+  }
+
+  object ZetaHLLPlus {
+
+    def create[T: ZetaSketchHLL](p: Int) = new ZetaHLLPlus(
+      implicitly[ZetaSketchHLL[T]].hll(p).serializeToByteArray()
+    )
+  }
+
+  implicit def coder[T: ZetaSketchHLL]: Coder[ZetaHLLPlus[T]] = {
+    Coder.xmap[Array[Byte], ZetaHLLPlus[T]](Coder.arrayByteCoder)(
+      arr => new ZetaHLLPlus[T](arr),
+      zt => zt.hll.serializeToByteArray()
+    )
+  }
+
+// case class ZetaSketchHLLMonoid[T: ZetaSketchHLL]() extends Monoid[ZetaSketchHLL[T]] {
+//    override def zero: ZetaSketchHLL[T] = ZetaSketchHLL.create[T]()
+//
+//    override def plus(x: ZetaSketchHLL[T], y: ZetaSketchHLL[T]): ZetaSketchHLL[T] = x.merge(y)
+//  }
+//
+//  class ZetaSketchHLLAggregator[T: ZetaSketchHLLMonoid: ZetaSketchHLL]()
+//      extends MonoidAggregator[T, ZetaSketchHLL[T], Long] {
+//    override def monoid: Monoid[ZetaSketchHLL[T]] = implicitly[ZetaSketchHLLMonoid[T]]
+//
+//    override def prepare(input: T): ZetaSketchHLL[T] = ZetaSketchHLL.create(input)
+//
+//    override def present(reduction: ZetaSketchHLL[T]): Long = reduction.estimateCount()
+//  }
+
+  // Syntax
+  implicit class ZetaSCollection[T](private val scol: SCollection[T]) extends AnyVal {
+    def asZetaSketchHLL(implicit zt: ZetaSketchHLL[T]): SCollection[ZetaHLLPlus[T]] =
+      scol.map(ZetaHLLPlus.create[T](15).add(_))
+  }
+
+  implicit class ZetaSketchHLLSCollection[T](
+    private val scol: SCollection[ZetaHLLPlus[T]]
+  ) extends AnyVal {
+    def sumZ(): SCollection[ZetaHLLPlus[T]] = scol.reduce(_.merge(_))
+
+    def estimateSize(): SCollection[Long] = scol.map(_.estimateSize)
   }
 }
