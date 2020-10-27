@@ -81,7 +81,7 @@ class ZetaSketchHllPlusPlusTestTest extends PipelineSpec {
     val output = runWithData(in) { scl =>
       import com.spotify.scio.extra.hll.zetasketch._
       scl
-        .asZetaSketchHLL()
+        .asZetaSketchHLL[Integer]
         .sumZ
         .estimateSize()
     }
