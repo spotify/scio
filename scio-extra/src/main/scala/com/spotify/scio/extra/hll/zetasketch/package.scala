@@ -244,18 +244,35 @@ package object zetasketch {
 
   // Syntax
   implicit class ZetaSCollection[T](private val scol: SCollection[T]) extends AnyVal {
-    def asZetaSketchHLL(implicit zt: HllPlus[T]): SCollection[ZetaSketchHLL[T]] =
+    def asZetaSketchHLL(implicit hp: HllPlus[T]): SCollection[ZetaSketchHLL[T]] =
       scol.map(ZetaSketchHLL.create[T](_))
 
-    def approxDistinctCountWithZetaHll(implicit hl: HllPlus[T]): SCollection[Long] =
+    def approxDistinctCountWithZetaHll(implicit hp: HllPlus[T]): SCollection[Long] =
       scol.aggregate(ZetaSketchHLLAggregator())
+  }
+
+  implicit class PairedZetaSCollection[K, V](private val kvScol: SCollection[(K, V)])
+      extends AnyVal {
+    def asZetaSketchHLL(implicit hp: HllPlus[V]): SCollection[(K, ZetaSketchHLL[V])] =
+      kvScol.mapValues(ZetaSketchHLL.create[V](_))
+
+    def approxDistinctCountWithZetaHll(implicit hp: HllPlus[V]): SCollection[(K, Long)] =
+      kvScol.aggregateByKey(ZetaSketchHLLAggregator())
   }
 
   implicit class ZetaSketchHLLSCollection[T](
     private val scol: SCollection[ZetaSketchHLL[T]]
   ) extends AnyVal {
-    def sumZ(): SCollection[ZetaSketchHLL[T]] = scol.reduce(_.merge(_))
+    def sumZ: SCollection[ZetaSketchHLL[T]] = scol.reduce(_.merge(_))
 
-    def approxDistinctCount(): SCollection[Long] = scol.map(_.estimateSize())
+    def approxDistinctCount: SCollection[Long] = scol.map(_.estimateSize())
+  }
+
+  implicit class ZetaSketchHLLSCollectionKV[K, V](
+    private val kvSCol: SCollection[(K, ZetaSketchHLL[V])]
+  ) extends AnyVal {
+    def sumZ: SCollection[(K, ZetaSketchHLL[V])] = kvSCol.reduceByKey(_.merge(_))
+
+    def approxDistinctCount: SCollection[(K, Long)] = kvSCol.mapValues(_.estimateSize())
   }
 }
