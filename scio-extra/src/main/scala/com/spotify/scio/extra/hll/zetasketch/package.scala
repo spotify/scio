@@ -120,7 +120,9 @@ package object zetasketch {
   trait HllPlus[T] extends Serializable {
     type IN
 
-    lazy val hll: HyperLogLogPlusPlus[IN] = hll(HyperLogLogPlusPlus.DEFAULT_NORMAL_PRECISION)
+    @transient lazy val hll: HyperLogLogPlusPlus[IN] = hll(
+      HyperLogLogPlusPlus.DEFAULT_NORMAL_PRECISION
+    )
 
     def hll(arr: Array[Byte]): HyperLogLogPlusPlus[IN] =
       HyperLogLogPlusPlus.forProto(arr).asInstanceOf[HyperLogLogPlusPlus[IN]]
@@ -154,12 +156,16 @@ package object zetasketch {
       override type IN = ByteString
 
       override def hll(p: Int): HyperLogLogPlusPlus[IN] =
-        new HyperLogLogPlusPlus.Builder().normalPrecision(p).buildForBytes()
+        new HyperLogLogPlusPlus.Builder()
+          .normalPrecision(p)
+          .buildForBytes()
+          .asInstanceOf[HyperLogLogPlusPlus[ByteString]]
     }
   }
 
-  class ZetaSketchHLL[T](arr: Array[Byte])(implicit hp: HllPlus[T]) {
-    private val hll: HyperLogLogPlusPlus[hp.IN] = if (arr == null) hp.hll else hp.hll(arr)
+  class ZetaSketchHLL[T](arr: Array[Byte])(implicit hp: HllPlus[T]) extends Serializable {
+    @transient private lazy val hll: HyperLogLogPlusPlus[hp.IN] =
+      if (arr == null) hp.hll else hp.hll(arr)
 
     def add(elem: T): ZetaSketchHLL[T] = {
       hll.add(elem.asInstanceOf[hp.IN])
@@ -213,14 +219,10 @@ package object zetasketch {
 
   // Syntax
   implicit class ZetaSCollection[T](private val scol: SCollection[T]) extends AnyVal {
-
     def asZetaSketchHLL(implicit zt: HllPlus[T]): SCollection[ZetaSketchHLL[T]] =
       scol.map(ZetaSketchHLL.create[T]().add(_))
 
-    def approxDistinctCountWithZetaHll(implicit
-      zhm: ZetaSketchHLLMonoid[T],
-      hl: HllPlus[T]
-    ): SCollection[Long] =
+    def approxDistinctCountWithZetaHll(implicit hl: HllPlus[T]): SCollection[Long] =
       scol.aggregate(ZetaSketchHLLAggregator())
   }
 
