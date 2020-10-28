@@ -35,10 +35,10 @@ val autoServiceVersion = "1.0-rc7"
 val autoValueVersion = "1.7.4"
 val avroVersion = "1.8.2"
 val beamVendorVersion = "0.1"
-val beamVersion = "2.24.0"
-val bigdataossVersion = "2.1.3"
+val beamVersion = "2.25.0"
+val bigdataossVersion = "2.1.5"
 val bigQueryStorageVersion = "0.133.0-beta"
-val bigtableClientVersion = "1.14.0"
+val bigtableClientVersion = "1.16.0"
 val breezeVersion = "1.1"
 val caffeineVersion = "2.8.6"
 val caseappVersion = "2.0.4"
@@ -55,7 +55,7 @@ val elasticsearch6Version = "6.8.13"
 val elasticsearch7Version = "7.9.3"
 val featranVersion = "0.7.0"
 val flinkVersion = "1.10.1"
-val gaxVersion = "1.54.0"
+val gaxVersion = "1.57.1"
 val gcsVersion = "1.8.0"
 val generatedGrpcBetaVersion = "1.9.1"
 val generatedDatastoreProtoVersion = "0.85.0"
@@ -64,8 +64,10 @@ val googleApiServicesBigQuery = "v2-rev20200719-1.30.10"
 val googleApiServicesDataflow = "v1b3-rev20200713-1.30.10"
 val googleAuthVersion = "0.19.0"
 val googleClientsVersion = "1.30.10"
-val googleCloudSpannerVersion = "1.49.1"
+val googleCloudCoreVersion = "1.93.7"
+val googleCloudSpannerVersion = "1.59.0"
 val googleHttpClientsVersion = "1.34.0"
+val googleOauthClientVersion = "1.31.0"
 val grpcVersion = "1.29.0"
 val guavaVersion = "28.2-jre"
 val hadoopVersion = "2.8.5"
@@ -84,8 +86,8 @@ val kryoVersion =
   "4.0.2" // explicitly depend on 4.0.1+ due to https://github.com/EsotericSoftware/kryo/pull/516
 val magnoliaVersion = "0.17.0"
 val magnolifyVersion = "0.3.0"
-val nettyVersion = "4.1.30.Final"
-val nettyTcNativeVersion = "2.0.30.Final"
+val nettyVersion = "4.1.51.Final"
+val nettyTcNativeVersion = "2.0.33.Final"
 val opencensusVersion = "0.24.0"
 val parquetAvroVersion = "0.3.4"
 val parquetExtraVersion = "0.3.4"
@@ -643,7 +645,7 @@ lazy val `scio-google-cloud-platform`: Project = project
       "com.google.auth" % "google-auth-library-credentials" % googleAuthVersion,
       "com.google.auth" % "google-auth-library-oauth2-http" % googleAuthVersion,
       "com.google.cloud" % "google-cloud-bigquerystorage" % bigQueryStorageVersion,
-      "com.google.cloud" % "google-cloud-core" % "1.92.2",
+      "com.google.cloud" % "google-cloud-core" % googleCloudCoreVersion,
       "com.google.cloud" % "google-cloud-storage" % gcsVersion % "test,it",
       "com.google.guava" % "guava" % guavaVersion,
       "com.google.http-client" % "google-http-client-jackson" % "1.29.2",
@@ -962,7 +964,7 @@ lazy val `scio-examples`: Project = project
       "com.google.auth" % "google-auth-library-oauth2-http" % googleAuthVersion,
       "com.google.cloud.bigdataoss" % "util" % bigdataossVersion,
       "com.google.guava" % "guava" % guavaVersion,
-      "com.google.oauth-client" % "google-oauth-client" % "1.30.6",
+      "com.google.oauth-client" % "google-oauth-client" % googleOauthClientVersion,
       "com.google.protobuf" % "protobuf-java" % protobufVersion,
       "com.spotify" %% "magnolify-shared" % magnolifyVersion,
       "com.twitter" %% "algebird-core" % algebirdVersion,
@@ -1300,7 +1302,7 @@ ThisBuild / dependencyOverrides ++= Seq(
   "com.google.http-client" % "google-http-client-jackson2" % googleHttpClientsVersion,
   "com.google.http-client" % "google-http-client" % googleHttpClientsVersion,
   "com.google.j2objc" % "j2objc-annotations" % "1.3",
-  "com.google.oauth-client" % "google-oauth-client" % "1.30.6",
+  "com.google.oauth-client" % "google-oauth-client" % googleOauthClientVersion,
   "com.google.protobuf" % "protobuf-java-util" % protobufVersion,
   "com.google.protobuf" % "protobuf-java" % protobufVersion,
   "com.propensive" %% "magnolia" % magnoliaVersion,
