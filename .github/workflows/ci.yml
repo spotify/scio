@@ -1,5 +1,8 @@
 name: CI
 
+env:
+  ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY }}
+
 on:
   pull_request:
     branches: [ master ]
@@ -9,11 +12,11 @@ on:
 jobs:
   build:
     name: Build documentation
-    if: ${{ secrets.ENCRYPTION_KEY }}
+    if: ${{ env.ENCRYPTION_KEY }}
     strategy:
       matrix:
         scala: [ 2.13.3, 2.12.12 ]
-        java: [ openjdk@1.8, openjdk@1.11 ]
+        java: [ openjdk@1.11 ]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout current branch
@@ -32,7 +35,6 @@ jobs:
         env:
           GOOGLE_APPLICATION_CREDENTIALS: scripts/gha-data-integration-test.json
           GOOGLE_PROJECT_ID: data-integration-test
-          ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY }}
 
       - name: Build documentation
         run: sbt ++${{ matrix.scala }} site/makeSite

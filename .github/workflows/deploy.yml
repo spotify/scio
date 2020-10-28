@@ -1,5 +1,8 @@
 name: Deploy
 
+env:
+  ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY }}
+
 on:
   push:
     tags: [ v.* ]
@@ -7,7 +10,6 @@ on:
 jobs:
   build:
     name: Publish documentation
-    if: ${{ secrets.ENCRYPTION_KEY }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout tag
@@ -24,7 +26,6 @@ jobs:
         env:
           GOOGLE_APPLICATION_CREDENTIALS: scripts/gha-data-integration-test.json
           GOOGLE_PROJECT_ID: data-integration-test
-          ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY }}
 
       - name: Build documentation
         run: sbt ++${{ matrix.scala }} scio-examples/compile site/makeSite
