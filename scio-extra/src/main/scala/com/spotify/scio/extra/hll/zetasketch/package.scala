@@ -117,41 +117,41 @@ package object zetasketch {
     }
   }
 
-  trait HllPlus[T, R] {
-    lazy val hll: HyperLogLogPlusPlus[R] = hll(15)
+  trait HllPlus[T] extends Serializable {
+    type IN
+    lazy val hll: HyperLogLogPlusPlus[IN] = hll(15)
 
-    def hll(arr: Array[Byte]): HyperLogLogPlusPlus[R]
+    def hll(arr: Array[Byte]): HyperLogLogPlusPlus[IN]
 
-    def hll(p: Int): HyperLogLogPlusPlus[R]
+    def hll(p: Int): HyperLogLogPlusPlus[IN]
 
-    def convert(t: T): R
   }
 
   object HllPlus {
-    implicit val intHllPlus: HllPlus[Int, Integer] = new HllPlus[Int, Integer] {
+    implicit val intHllPlus: HllPlus[Int] = new HllPlus[Int] {
 
-      override def hll(arr: Array[Byte]): HyperLogLogPlusPlus[Integer] =
+      type IN = Integer
+
+      override def hll(arr: Array[Byte]): HyperLogLogPlusPlus[IN] =
         HyperLogLogPlusPlus.forProto(arr).asInstanceOf[HyperLogLogPlusPlus[Integer]]
 
       override def hll(p: Int): HyperLogLogPlusPlus[Integer] =
         new HyperLogLogPlusPlus.Builder().normalPrecision(p).buildForIntegers()
-
-      override def convert(t: Int): Integer = t
     }
 
   }
 
-  class ZetaHLL[T, R](arr: Array[Byte])(implicit hp: HllPlus[T, R]) {
+  class ZetaHLL[T](arr: Array[Byte])(implicit hp: HllPlus[T]) {
 
-    val hll = if (arr == null) hp.hll else hp.hll(arr)
+    private val hll: HyperLogLogPlusPlus[hp.IN] = if (arr == null) hp.hll else hp.hll(arr)
 
-    def add(elem: T): ZetaHLL[T, R] = {
-      hll.add(hp.convert(elem))
+    def add(elem: T): ZetaHLL[T] = {
+      hll.add(elem.asInstanceOf[hp.IN])
       this
     }
 
-    def merge(that: ZetaHLL[T, R]): ZetaHLL[T, R] = {
-      hll.merge(that.hll)
+    def merge(that: ZetaHLL[T]): ZetaHLL[T] = {
+      hll.merge(that.hll.serializeToByteArray())
       this
     }
 
@@ -165,18 +165,17 @@ package object zetasketch {
   object ZetaHLL {
     import HllPlus._
 
-    def create[T, R](arr: Array[Byte])(implicit hp: HllPlus[T, R]) = new ZetaHLL[T, R](arr)
+    def create[T](arr: Array[Byte])(implicit hp: HllPlus[T]) = new ZetaHLL[T](arr)
 
-    def create[T, R]()(implicit hp: HllPlus[T, R]): ZetaHLL[T, R] = create[T, R](null)
+    def create[T]()(implicit hp: HllPlus[T]): ZetaHLL[T] = create[T](null)
 
-    def create[T, R](p: Int)(implicit hp: HllPlus[T, R]): ZetaHLL[T, R] = create(
+    def create[T](p: Int)(implicit hp: HllPlus[T]): ZetaHLL[T] = create(
       hp.hll(p).serializeToByteArray()
     )
 
-    implicit def coder[T, R]: Coder[ZetaHLL[T, R]] = {
-      import HllPlus._
-      Coder.xmap[Array[Byte], ZetaHLL[T, R]](Coder.arrayByteCoder)(
-        arr => ZetaHLL.create[T, R](arr),
+    implicit def coder[T: HllPlus]: Coder[ZetaHLL[T]] = {
+      Coder.xmap[Array[Byte], ZetaHLL[T]](Coder.arrayByteCoder)(
+        arr => ZetaHLL.create[T](arr),
         zt => zt.hll.serializeToByteArray()
       )
     }
@@ -199,14 +198,14 @@ package object zetasketch {
 
   // Syntax
   implicit class ZetaSCollection[T](private val scol: SCollection[T]) extends AnyVal {
-    def asZetaSketchHLL[R](implicit zt: HllPlus[T, R]): SCollection[ZetaHLL[T, R]] =
-      scol.map(ZetaHLL.create[T, R]().add(_))
+    def asZetaSketchHLL(implicit zt: HllPlus[T]): SCollection[ZetaHLL[T]] =
+      scol.map(ZetaHLL.create[T]().add(_))
   }
 
-  implicit class ZetaSketchHLLSCollection[T, R](
-    private val scol: SCollection[ZetaHLL[T, R]]
+  implicit class ZetaSketchHLLSCollection[T](
+    private val scol: SCollection[ZetaHLL[T]]
   ) extends AnyVal {
-    def sumZ(): SCollection[ZetaHLL[T, R]] = scol.reduce(_.merge(_))
+    def sumZ(): SCollection[ZetaHLL[T]] = scol.reduce(_.merge(_))
 
     def estimateSize(): SCollection[Long] = scol.map(_.estimateSize)
   }
