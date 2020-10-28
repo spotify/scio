@@ -76,12 +76,22 @@ class ZetaSketchHllPlusPlusTestTest extends PipelineSpec {
     output shouldApproximate withErrorRatePerKey(expt, 0.5)
   }
 
-  "ZetaSketchHLL" should "work" in {
+  "ZetaSketchHLL" should "approximate distinct count" in {
     val input = for (i <- 0 to 10000) yield (i % 20)
     val output = runWithData(input) { scl =>
       import com.spotify.scio.extra.hll.zetasketch._
       scl.asZetaSketchHLL.sumZ
         .approxDistinctCount()
+    }
+
+    output shouldApproximate withErrorRate(Seq(20), 0.5)
+  }
+
+  it should "approximate distinct count using aggregator" in {
+
+    val input = for (i <- 0 to 10000) yield (i % 20)
+    val output = runWithData(input) { scl =>
+      scl.approxDistinctCountWithZetaHll
     }
 
     output shouldApproximate withErrorRate(Seq(20), 0.5)
