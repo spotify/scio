@@ -414,7 +414,7 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
             final TupleTag tupleTag = entry.getKey();
             int index = resultSchema.getIndex(tupleTag);
             final List<Object> values = (List<Object>) valueMap.get(index);
-            final BiFunction<List<Object>, Object, Boolean> predicate = predicates[index];
+            final Predicate<Object> predicate = predicates[index];
 
             // Track the canonical # buckets of each source that the key is found in.
             // If we find it in a source with a # buckets >= the parallelism of the job,

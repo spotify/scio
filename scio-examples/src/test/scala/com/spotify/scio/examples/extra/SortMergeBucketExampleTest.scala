@@ -61,7 +61,7 @@ class SortMergeBucketExampleTest extends AnyFlatSpec with Matchers {
         )
       )
 
-      TextTap(s"$joinOutputDir/*.txt").value.size shouldBe 250
+      TextTap(s"$joinOutputDir/*.txt").value.size shouldBe 100
       ()
   }
 

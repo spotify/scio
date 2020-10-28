@@ -145,7 +145,8 @@ public class TensorFlowBucketIO {
           getTupleTag(),
           getInputDirectories(),
           getFilenameSuffix(),
-          TensorFlowFileOperations.of(getCompression()));
+          TensorFlowFileOperations.of(getCompression()),
+          getPredicate());
     }
   }
 

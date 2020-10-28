@@ -204,7 +204,11 @@ public class AvroSortedBucketIO {
                   AvroFileOperations.of(
                       (Class<SpecificRecordBase>) getRecordClass(), getCodec(), getMetadata());
       return new BucketedInput<>(
-          getTupleTag(), getInputDirectories(), getFilenameSuffix(), fileOperations);
+          getTupleTag(),
+          getInputDirectories(),
+          getFilenameSuffix(),
+          fileOperations,
+          getPredicate());
     }
   }
 

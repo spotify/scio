@@ -137,7 +137,8 @@ public class JsonSortedBucketIO {
           getTupleTag(),
           getInputDirectories(),
           getFilenameSuffix(),
-          JsonFileOperations.of(getCompression()));
+          JsonFileOperations.of(getCompression()),
+          getPredicate());
     }
   }
 
