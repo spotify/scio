@@ -36,6 +36,8 @@ Scio 0.3.0 and future versions depend on Apache Beam (`org.apache.beam`) while e
 
 Download and install the [Java Development Kit (JDK)](https://adoptopenjdk.net/index.html) version 8.
 
+Install [sbt](https://www.scala-sbt.org/1.x/docs/Setup.html).
+
 Use our [giter8 template](https://github.com/spotify/scio.g8) to quickly create a new Scio job repository:
 
 `sbt new spotify/scio.g8`
@@ -44,18 +46,18 @@ Switch to the new repo (default `scio-job`) and build it:
 
 ```
 cd scio-job
-sbt pack
+sbt stage 
 ```
 
 Run the included word count example:
 
-`target/pack/bin/word-count --output=wc`
+`target/universal/stage/bin/scio-job --output=wc`
 
 List result files and inspect content:
 
 ```
 ls -l wc
-cat wc/part-00000-of-00001.txt
+cat wc/part-00000-of-00004.txt
 ```
 
 # Documentation
