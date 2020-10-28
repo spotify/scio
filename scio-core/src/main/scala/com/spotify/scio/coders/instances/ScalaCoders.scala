@@ -23,7 +23,7 @@ import java.util.Collections
 
 import com.spotify.scio.coders.Coder
 import org.apache.beam.sdk.coders.Coder.NonDeterministicException
-import org.apache.beam.sdk.coders.{Coder => BCoder, _}
+import org.apache.beam.sdk.coders.{Coder => BCoder, IterableCoder => BIterableCoder, _}
 import org.apache.beam.sdk.util.CoderUtils
 import org.apache.beam.sdk.util.common.ElementByteSizeObserver
 import org.apache.beam.sdk.util.BufferedElementCountingOutputStream
@@ -34,6 +34,7 @@ import scala.collection.{BitSet, SortedSet, mutable => m}
 import scala.util.Try
 import scala.collection.compat._
 import scala.collection.compat.extra.Wrappers
+import scala.collection.AbstractIterable
 
 private object UnitCoder extends AtomicCoder[Unit] {
   override def encode(value: Unit, os: OutputStream): Unit = ()
@@ -61,7 +62,7 @@ abstract private[coders] class BaseSeqLikeCoder[M[_], T](val elemCoder: BCoder[T
   override def registerByteSizeObserver(value: M[T], observer: ElementByteSizeObserver): Unit =
     if (value.isInstanceOf[Wrappers.JIterableWrapper[_]]) {
       val wrapper = value.asInstanceOf[Wrappers.JIterableWrapper[T]]
-      IterableCoder.of(elemCoder).registerByteSizeObserver(wrapper.underlying, observer)
+      BIterableCoder.of(elemCoder).registerByteSizeObserver(wrapper.underlying, observer)
     } else {
       super.registerByteSizeObserver(value, observer)
     }
@@ -174,7 +175,13 @@ private class IterableOnceCoder[T](bc: BCoder[T])
 
 private class IterableCoder[T](bc: BCoder[T]) extends BufferedSeqLikeCoder[Iterable, T](bc) {
   override def decode(inStream: InputStream): Iterable[T] =
-    decode(inStream, Iterable.newBuilder[T])
+    IterableCoder.IterableWrapper(decode(inStream, Iterable.newBuilder[T]))
+}
+
+private object IterableCoder {
+  final case class IterableWrapper[T](underlying: Iterable[T]) extends AbstractIterable[T] {
+    override def iterator = underlying.iterator
+  }
 }
 
 private class VectorCoder[T](bc: BCoder[T]) extends SeqLikeCoder[Vector, T](bc) {
