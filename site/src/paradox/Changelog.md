@@ -1,5 +1,9 @@
 # Changelog
 
+## Breaking changes since Scio 0.10.0 (@ref:[v0.10.0 Migration Guide](migrations/v0.10.0-Migration-Guide.md))
+- Move GCP modules to `scio-google-cloud-platform`
+- Simplify coder implicits
+
 ## Breaking changes since Scio 0.9.0 (@ref:[v0.9.0 Migration Guide](migrations/v0.9.0-Migration-Guide.md))
 - Drop Scala 2.11, add Scala 2.13 support
 - Remove deprecated modules `scio-cassandra2` and `scio-elasticsearch2`
