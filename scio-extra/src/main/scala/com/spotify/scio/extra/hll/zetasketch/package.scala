@@ -173,6 +173,11 @@ package object zetasketch {
     }
   }
 
+  /**
+   * This is a wrapper for internal HyperLogLogPlusPlus implementation.
+   * @param arrOpt - serialized byte array to construct the initial HyperLogLogPlusPlus instance.
+   * @param elemOpt - first element to add to the constructed new HyperLogLogPlusPlus isntance.
+   */
   final class ZetaSketchHLL[T](arrOpt: Option[Array[Byte]], elemOpt: Option[T] = None)(implicit
     hp: HllPlus[T]
   ) extends Serializable {
@@ -192,19 +197,34 @@ package object zetasketch {
       case (None, None) => hp.hll()
     }
 
+    /**
+     * Add a new element to this [[ZetaSketchHLL]].
+     * Here we have to return a new instance to maintain the immutability of [[hll]].
+     * @param elem - new element to add.
+     * @return - new [[ZetaSketchHLL]] instance with the same type parameter.
+     */
     def add(elem: T): ZetaSketchHLL[T] =
       new ZetaSketchHLL[T](Option(hll.serializeToByteArray()), Option(elem))
 
+    /**
+     * Merge both this and that [[ZetaSketchHLL]] instances.
+     * Here we have to return a new instance to maintain the immutability of this [[hll]] and that [[hll]].
+     * @param that - [[ZetaSketchHLL]] to merge with this.
+     * @return new instance of [[ZetaSketchHLL]]
+     */
     def merge(that: ZetaSketchHLL[T]): ZetaSketchHLL[T] = {
       val nhll = hp.hll(hll.serializeToByteArray())
       nhll.merge(that.hll.serializeToByteArray())
       new ZetaSketchHLL[T](Option(nhll.serializeToByteArray()))
     }
 
+    /** @return the estimated distinct count */
     def estimateSize(): Long = hll.result()
 
+    /** @return precision used in hyperloglog++ algorithm. */
     def precision: Int = hll.getNormalPrecision
 
+    /** @return sparse precision used in hyperloglog++ algorithm. */
     def sparsePrecision: Int = hll.getSparsePrecision
   }
 
@@ -244,18 +264,38 @@ package object zetasketch {
 
   // Syntax
   implicit class ZetaSCollection[T](private val scol: SCollection[T]) extends AnyVal {
+
+    /**
+     * Convert each element to [[ZetaSketchHLL]].
+     * @return [[SCollection]] of [[ZetaSketchHLL]].
+     *         This will have the exactly the same number of element as input [[SCollection]]
+     */
     def asZetaSketchHLL(implicit hp: HllPlus[T]): SCollection[ZetaSketchHLL[T]] =
       scol.map(ZetaSketchHLL.create[T](_))
 
+    /**
+     * Calculate the approximate distinct count using HyperLogLog++ algorithm.
+     * @return - [[SCollection]] with one [[Long]] value.
+     */
     def approxDistinctCountWithZetaHll(implicit hp: HllPlus[T]): SCollection[Long] =
       scol.aggregate(ZetaSketchHLLAggregator())
   }
 
   implicit class PairedZetaSCollection[K, V](private val kvScol: SCollection[(K, V)])
       extends AnyVal {
+
+    /**
+     * Convert each value in key-value pair to [[ZetaSketchHLL]].
+     * @return key-value [[SCollection]] where value being [[ZetaSketchHLL]].
+     *         This will have the similar number of elements as input [[SCollection]].
+     */
     def asZetaSketchHLL(implicit hp: HllPlus[V]): SCollection[(K, ZetaSketchHLL[V])] =
       kvScol.mapValues(ZetaSketchHLL.create[V](_))
 
+    /**
+     * Calculate the approximate distinct count using HyperLogLog++ algorithm.
+     * @return - [[SCollection]] with one [[Long]] value per each unique key.
+     */
     def approxDistinctCountWithZetaHll(implicit hp: HllPlus[V]): SCollection[(K, Long)] =
       kvScol.aggregateByKey(ZetaSketchHLLAggregator())
   }
