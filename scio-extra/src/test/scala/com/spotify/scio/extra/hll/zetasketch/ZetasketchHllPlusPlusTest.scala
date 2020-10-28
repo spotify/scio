@@ -77,13 +77,13 @@ class ZetaSketchHllPlusPlusTestTest extends PipelineSpec {
   }
 
   "ZetaSketchHLL" should "work" in {
-    val in = Seq(1, 2, 3, 4, 5, 6, 7, 8, 9, 8, 7, 5, 4, 3, 2)
-    val output = runWithData(in) { scl =>
+    val input = for (i <- 0 to 10000) yield (i % 20)
+    val output = runWithData(input) { scl =>
       import com.spotify.scio.extra.hll.zetasketch._
       scl.asZetaSketchHLL.sumZ
-        .estimateSize()
+        .approxDistinctCount()
     }
 
-    output shouldApproximate withErrorRate(Seq(10000), 0.5)
+    output shouldApproximate withErrorRate(Seq(20), 0.5)
   }
 }

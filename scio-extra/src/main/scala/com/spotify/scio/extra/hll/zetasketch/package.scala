@@ -119,18 +119,17 @@ package object zetasketch {
   // Distributed HypterLogLogPlusPlus impl support //
   trait HllPlus[T] extends Serializable {
     type IN
-    lazy val hll: HyperLogLogPlusPlus[IN] = hll(15)
+
+    lazy val hll: HyperLogLogPlusPlus[IN] = hll(HyperLogLogPlusPlus.DEFAULT_NORMAL_PRECISION)
 
     def hll(arr: Array[Byte]): HyperLogLogPlusPlus[IN] =
       HyperLogLogPlusPlus.forProto(arr).asInstanceOf[HyperLogLogPlusPlus[IN]]
 
     def hll(p: Int): HyperLogLogPlusPlus[IN]
-
   }
 
   object HllPlus {
     implicit val intHllPlus: HllPlus[Int] = new HllPlus[Int] {
-
       type IN = Integer
 
       override def hll(p: Int): HyperLogLogPlusPlus[Integer] =
@@ -159,16 +158,15 @@ package object zetasketch {
     }
   }
 
-  class ZetaHLL[T](arr: Array[Byte])(implicit hp: HllPlus[T]) {
-
+  class ZetaSketchHLL[T](arr: Array[Byte])(implicit hp: HllPlus[T]) {
     private val hll: HyperLogLogPlusPlus[hp.IN] = if (arr == null) hp.hll else hp.hll(arr)
 
-    def add(elem: T): ZetaHLL[T] = {
+    def add(elem: T): ZetaSketchHLL[T] = {
       hll.add(elem.asInstanceOf[hp.IN])
       this
     }
 
-    def merge(that: ZetaHLL[T]): ZetaHLL[T] = {
+    def merge(that: ZetaSketchHLL[T]): ZetaSketchHLL[T] = {
       hll.merge(that.hll.serializeToByteArray())
       this
     }
@@ -180,56 +178,57 @@ package object zetasketch {
     def sparsePrecision: Int = hll.getSparsePrecision
   }
 
-  object ZetaHLL {
+  object ZetaSketchHLL {
 
-    def create[T](arr: Array[Byte])(implicit hp: HllPlus[T]) = new ZetaHLL[T](arr)
+    def create[T](arr: Array[Byte])(implicit hp: HllPlus[T]) = new ZetaSketchHLL[T](arr)
 
-    def create[T]()(implicit hp: HllPlus[T]): ZetaHLL[T] = create[T](null)
+    def create[T]()(implicit hp: HllPlus[T]): ZetaSketchHLL[T] = create[T](null)
 
-    def create[T](p: Int)(implicit hp: HllPlus[T]): ZetaHLL[T] = create(
+    def create[T](p: Int)(implicit hp: HllPlus[T]): ZetaSketchHLL[T] = create(
       hp.hll(p).serializeToByteArray()
     )
 
-    implicit def coder[T: HllPlus]: Coder[ZetaHLL[T]] = {
-      Coder.xmap[Array[Byte], ZetaHLL[T]](Coder.arrayByteCoder)(
-        arr => ZetaHLL.create[T](arr),
+    implicit def coder[T: HllPlus]: Coder[ZetaSketchHLL[T]] = {
+      Coder.xmap[Array[Byte], ZetaSketchHLL[T]](Coder.arrayByteCoder)(
+        arr => ZetaSketchHLL.create[T](arr),
         zt => zt.hll.serializeToByteArray()
       )
     }
   }
 
-  case class ZetaHLLMonoid[T: HllPlus]() extends Monoid[ZetaHLL[T]] {
-    override def zero: ZetaHLL[T] = ZetaHLL.create[T]()
+  case class ZetaSketchHLLMonoid[T: HllPlus]() extends Monoid[ZetaSketchHLL[T]] {
+    override def zero: ZetaSketchHLL[T] = ZetaSketchHLL.create[T]()
 
-    override def plus(x: ZetaHLL[T], y: ZetaHLL[T]): ZetaHLL[T] = x.merge(y)
+    override def plus(x: ZetaSketchHLL[T], y: ZetaSketchHLL[T]): ZetaSketchHLL[T] = x.merge(y)
   }
 
-  case class ZetaHLLAggregator[T: HllPlus]() extends MonoidAggregator[T, ZetaHLL[T], Long] {
-    override def monoid: Monoid[ZetaHLL[T]] = ZetaHLLMonoid()
+  case class ZetaSketchHLLAggregator[T: HllPlus]()
+      extends MonoidAggregator[T, ZetaSketchHLL[T], Long] {
+    override def monoid: Monoid[ZetaSketchHLL[T]] = ZetaSketchHLLMonoid()
 
-    override def prepare(input: T): ZetaHLL[T] = ZetaHLL.create[T]().add(input)
+    override def prepare(input: T): ZetaSketchHLL[T] = ZetaSketchHLL.create[T]().add(input)
 
-    override def present(reduction: ZetaHLL[T]): Long = reduction.estimateSize()
+    override def present(reduction: ZetaSketchHLL[T]): Long = reduction.estimateSize()
   }
 
   // Syntax
   implicit class ZetaSCollection[T](private val scol: SCollection[T]) extends AnyVal {
 
-    def asZetaSketchHLL(implicit zt: HllPlus[T]): SCollection[ZetaHLL[T]] =
-      scol.map(ZetaHLL.create[T]().add(_))
+    def asZetaSketchHLL(implicit zt: HllPlus[T]): SCollection[ZetaSketchHLL[T]] =
+      scol.map(ZetaSketchHLL.create[T]().add(_))
 
     def approxDistinctCountWithZetaHll(implicit
-      zhm: ZetaHLLMonoid[T],
+      zhm: ZetaSketchHLLMonoid[T],
       hl: HllPlus[T]
     ): SCollection[Long] =
-      scol.aggregate(ZetaHLLAggregator())
+      scol.aggregate(ZetaSketchHLLAggregator())
   }
 
   implicit class ZetaSketchHLLSCollection[T](
-    private val scol: SCollection[ZetaHLL[T]]
+    private val scol: SCollection[ZetaSketchHLL[T]]
   ) extends AnyVal {
-    def sumZ(): SCollection[ZetaHLL[T]] = scol.reduce(_.merge(_))
+    def sumZ(): SCollection[ZetaSketchHLL[T]] = scol.reduce(_.merge(_))
 
-    def estimateSize(): SCollection[Long] = scol.map(_.estimateSize)
+    def approxDistinctCount(): SCollection[Long] = scol.map(_.estimateSize())
   }
 }
