@@ -18,14 +18,13 @@
 package com.spotify.scio.extra.hll
 
 import java.lang
-import java.nio.ByteBuffer
 
+import com.google.protobuf.ByteString
 import com.google.zetasketch.HyperLogLogPlusPlus
 import com.spotify.scio.coders.{BeamCoders, Coder}
 import com.spotify.scio.estimators.ApproxDistinctCounter
 import com.spotify.scio.util.TupleFunctions._
 import com.spotify.scio.values.SCollection
-import com.twitter.algebird
 import com.twitter.algebird.{Monoid, MonoidAggregator}
 import org.apache.beam.sdk.extensions.zetasketch.HllCount
 import org.apache.beam.sdk.extensions.zetasketch.HllCount.Init
@@ -117,11 +116,13 @@ package object zetasketch {
     }
   }
 
+  // Distributed HypterLogLogPlusPlus impl support //
   trait HllPlus[T] extends Serializable {
     type IN
     lazy val hll: HyperLogLogPlusPlus[IN] = hll(15)
 
-    def hll(arr: Array[Byte]): HyperLogLogPlusPlus[IN]
+    def hll(arr: Array[Byte]): HyperLogLogPlusPlus[IN] =
+      HyperLogLogPlusPlus.forProto(arr).asInstanceOf[HyperLogLogPlusPlus[IN]]
 
     def hll(p: Int): HyperLogLogPlusPlus[IN]
 
@@ -132,13 +133,30 @@ package object zetasketch {
 
       type IN = Integer
 
-      override def hll(arr: Array[Byte]): HyperLogLogPlusPlus[IN] =
-        HyperLogLogPlusPlus.forProto(arr).asInstanceOf[HyperLogLogPlusPlus[Integer]]
-
       override def hll(p: Int): HyperLogLogPlusPlus[Integer] =
         new HyperLogLogPlusPlus.Builder().normalPrecision(p).buildForIntegers()
     }
 
+    implicit val longHllPlus: HllPlus[Long] = new HllPlus[Long] {
+      override type IN = java.lang.Long
+
+      override def hll(p: Int): HyperLogLogPlusPlus[IN] =
+        new HyperLogLogPlusPlus.Builder().normalPrecision(p).buildForLongs()
+    }
+
+    implicit val stringHllPlus: HllPlus[String] = new HllPlus[String] {
+      override type IN = java.lang.String
+
+      override def hll(p: Int): HyperLogLogPlusPlus[IN] =
+        new HyperLogLogPlusPlus.Builder().normalPrecision(p).buildForStrings()
+    }
+
+    implicit val byteStringHllPlus: HllPlus[ByteString] with Object = new HllPlus[ByteString] {
+      override type IN = ByteString
+
+      override def hll(p: Int): HyperLogLogPlusPlus[IN] =
+        new HyperLogLogPlusPlus.Builder().normalPrecision(p).buildForBytes()
+    }
   }
 
   class ZetaHLL[T](arr: Array[Byte])(implicit hp: HllPlus[T]) {
@@ -163,7 +181,6 @@ package object zetasketch {
   }
 
   object ZetaHLL {
-    import HllPlus._
 
     def create[T](arr: Array[Byte])(implicit hp: HllPlus[T]) = new ZetaHLL[T](arr)
 
@@ -181,25 +198,31 @@ package object zetasketch {
     }
   }
 
-// case class ZetaSketchHLLMonoid[T: ZetaSketchHLL]() extends Monoid[ZetaSketchHLL[T]] {
-//    override def zero: ZetaSketchHLL[T] = ZetaSketchHLL.create[T]()
-//
-//    override def plus(x: ZetaSketchHLL[T], y: ZetaSketchHLL[T]): ZetaSketchHLL[T] = x.merge(y)
-//  }
-//
-//  class ZetaSketchHLLAggregator[T: ZetaSketchHLLMonoid: ZetaSketchHLL]()
-//      extends MonoidAggregator[T, ZetaSketchHLL[T], Long] {
-//    override def monoid: Monoid[ZetaSketchHLL[T]] = implicitly[ZetaSketchHLLMonoid[T]]
-//
-//    override def prepare(input: T): ZetaSketchHLL[T] = ZetaSketchHLL.create(input)
-//
-//    override def present(reduction: ZetaSketchHLL[T]): Long = reduction.estimateCount()
-//  }
+  case class ZetaHLLMonoid[T: HllPlus]() extends Monoid[ZetaHLL[T]] {
+    override def zero: ZetaHLL[T] = ZetaHLL.create[T]()
+
+    override def plus(x: ZetaHLL[T], y: ZetaHLL[T]): ZetaHLL[T] = x.merge(y)
+  }
+
+  case class ZetaHLLAggregator[T: HllPlus]() extends MonoidAggregator[T, ZetaHLL[T], Long] {
+    override def monoid: Monoid[ZetaHLL[T]] = ZetaHLLMonoid()
+
+    override def prepare(input: T): ZetaHLL[T] = ZetaHLL.create[T]().add(input)
+
+    override def present(reduction: ZetaHLL[T]): Long = reduction.estimateSize()
+  }
 
   // Syntax
   implicit class ZetaSCollection[T](private val scol: SCollection[T]) extends AnyVal {
+
     def asZetaSketchHLL(implicit zt: HllPlus[T]): SCollection[ZetaHLL[T]] =
       scol.map(ZetaHLL.create[T]().add(_))
+
+    def approxDistinctCountWithZetaHll(implicit
+      zhm: ZetaHLLMonoid[T],
+      hl: HllPlus[T]
+    ): SCollection[Long] =
+      scol.aggregate(ZetaHLLAggregator())
   }
 
   implicit class ZetaSketchHLLSCollection[T](
