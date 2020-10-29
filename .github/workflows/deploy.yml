@@ -2,10 +2,12 @@ name: Deploy
 
 env:
   ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY }}
+  GOOGLE_APPLICATION_CREDENTIALS: scripts/gha-data-integration-test.json
+  GOOGLE_PROJECT_ID: data-integration-test
 
 on:
   push:
-    tags: [ v.* ]
+    tags: [v.*]
 
 jobs:
   build:
@@ -23,12 +25,9 @@ jobs:
 
       - name: Setup project
         run: scripts/gha_setup.sh
-        env:
-          GOOGLE_APPLICATION_CREDENTIALS: scripts/gha-data-integration-test.json
-          GOOGLE_PROJECT_ID: data-integration-test
 
       - name: Build documentation
-        run: sbt ++${{ matrix.scala }} scio-examples/compile site/makeSite
+        run: sbt scio-examples/compile site/makeSite
         env:
           SOCCO: true
 

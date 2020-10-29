@@ -2,6 +2,8 @@ name: CI
 
 env:
   ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY }}
+  GOOGLE_APPLICATION_CREDENTIALS: scripts/gha-data-integration-test.json
+  GOOGLE_PROJECT_ID: data-integration-test
 
 on: [push]
 
@@ -26,9 +28,6 @@ jobs:
 
       - name: Setup project
         run: scripts/gha_setup.sh
-        env:
-          GOOGLE_APPLICATION_CREDENTIALS: scripts/gha-data-integration-test.json
-          GOOGLE_PROJECT_ID: data-integration-test
 
       - name: Build documentation
         run: sbt site/makeSite

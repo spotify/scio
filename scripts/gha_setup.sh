@@ -9,7 +9,7 @@ openssl aes-256-cbc -d -salt -pbkdf2 \
   -k "$ENCRYPTION_KEY"
 
 # Configure SBT options
-cat <<EOF >>.sbtops
+cat <<EOF >>.jvmopts
 -Dbigquery.project=$GOOGLE_PROJECT_ID
 -Dbigquery.secret=$GOOGLE_APPLICATION_CREDENTIALS
 EOF
