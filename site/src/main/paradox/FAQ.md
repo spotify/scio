@@ -253,6 +253,7 @@ This can be done by using fixed windows and using the window bounds to infer dat
 
 ```scala mdoc:reset:silent
 import com.spotify.scio._
+import com.spotify.scio.pubsub._
 import org.apache.beam.sdk.values.ValueInSingleWindow
 import org.apache.beam.sdk.transforms.SerializableFunction
 import org.apache.beam.sdk.transforms.windowing.IntervalWindow

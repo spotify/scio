@@ -1,0 +1,40 @@
+name: Deploy
+
+env:
+  ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY }}
+
+on:
+  push:
+    tags: [ v.* ]
+
+jobs:
+  build:
+    name: Publish documentation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout tag
+        uses: actions/checkout@v1
+
+      - name: Cache SBT
+        uses: coursier/cache-action@v3
+
+      - name: Setup Java and Scala
+        uses: olafurpg/setup-scala@v5
+
+      - name: Setup project
+        run: scripts/gha_setup.sh
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: scripts/gha-data-integration-test.json
+          GOOGLE_PROJECT_ID: data-integration-test
+
+      - name: Build documentation
+        run: sbt ++${{ matrix.scala }} scio-examples/compile site/makeSite
+        env:
+          SOCCO: true
+
+      - name: Deploy
+        uses: JamesIves/github-pages-deploy-action@3.6.2
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BRANCH: gh-pages
+          FOLDER: site/target/site

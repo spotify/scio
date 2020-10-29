@@ -1189,47 +1189,43 @@ lazy val siteSettings = Def.settings(
   publish / skip := true,
   description := "Scio - Documentation",
   autoAPIMappings := true,
+  gitRemoteRepo := "git@github.com:spotify/scio.git",
   libraryDependencies ++= Seq(
     "org.apache.beam" % "beam-runners-direct-java" % beamVersion,
     "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion,
     "com.nrinaudo" %% "kantan.csv" % kantanCsvVersion
   ),
-  siteSubdirName in ScalaUnidoc := "api",
-  scalacOptions in ScalaUnidoc := Seq(),
-  addMappingsToSiteDir(mappings in (ScalaUnidoc, packageDoc), siteSubdirName in ScalaUnidoc),
-  gitRemoteRepo := "git@github.com:spotify/scio.git",
-  mappings in makeSite ++= Seq(
-    file("scio-examples/target/site/index.html") -> "examples/index.html"
-  ) ++ SoccoIndex.mappings,
-  // pre-compile md using mdoc
-  mdocIn := (Paradox / sourceDirectory).value,
-  mdocExtraArguments ++= Seq("--no-link-hygiene"),
-  Paradox / sourceManaged := mdocOut.value,
-  makeSite := makeSite.dependsOn(mdoc.toTask("")).value,
-  unidocProjectFilter in (ScalaUnidoc, unidoc) :=
-    inProjects(
-      `scio-core`,
-      `scio-test`,
-      `scio-avro`,
-      `scio-google-cloud-platform`,
-      `scio-cassandra3`,
-      `scio-elasticsearch6`,
-      `scio-extra`,
-      `scio-jdbc`,
-      `scio-parquet`,
-      `scio-tensorflow`,
-      `scio-macros`,
-      `scio-smb`
-    ),
+  // unidoc
+  ScalaUnidoc / siteSubdirName := "api",
+  ScalaUnidoc / scalacOptions := Seq.empty,
+  ScalaUnidoc / unidoc / unidocProjectFilter := inProjects(
+    `scio-core`,
+    `scio-test`,
+    `scio-avro`,
+    `scio-google-cloud-platform`,
+    `scio-cassandra3`,
+    `scio-elasticsearch6`,
+    `scio-extra`,
+    `scio-jdbc`,
+    `scio-parquet`,
+    `scio-tensorflow`,
+    `scio-macros`,
+    `scio-smb`
+  ),
   // unidoc handles class paths differently than compile and may give older
   // versions high precedence.
-  unidocAllClasspaths in (ScalaUnidoc, unidoc) := {
-    (unidocAllClasspaths in (ScalaUnidoc, unidoc)).value.map { cp =>
+  ScalaUnidoc / unidoc / unidocAllClasspaths := (ScalaUnidoc / unidoc / unidocAllClasspaths).value
+    .map { cp =>
       cp.filterNot(_.data.getCanonicalPath.matches(""".*guava-11\..*"""))
         .filterNot(_.data.getCanonicalPath.matches(""".*bigtable-client-core-0\..*"""))
-    }
-  },
-  paradoxProperties in Paradox ++= Map(
+    },
+  // mdoc
+  // pre-compile md using mdoc
+  mdocIn := (paradox / sourceDirectory).value,
+  mdocExtraArguments ++= Seq("--no-link-hygiene"),
+  // paradox
+  paradox / sourceManaged := mdocOut.value,
+  paradoxProperties ++= Map(
     "javadoc.com.spotify.scio.base_url" -> "http://spotify.github.com/scio/api",
     "javadoc.org.apache.beam.sdk.extensions.smb.base_url" ->
       "https://spotify.github.io/scio/api/org/apache/beam/sdk/extensions/smb",
@@ -1238,17 +1234,19 @@ lazy val siteSettings = Def.settings(
     "github.base_url" -> "https://github.com/spotify/scio",
     "extref.example.base_url" -> "https://spotify.github.io/scio/examples/%s.scala.html"
   ),
-  sourceDirectory in Paradox in paradoxTheme := sourceDirectory.value / "paradox" / "_template",
-  ParadoxMaterialThemePlugin.paradoxMaterialThemeSettings(Paradox),
-  paradoxMaterialTheme in Paradox := {
-    ParadoxMaterialTheme()
-      .withFavicon("images/favicon.ico")
-      .withColor("white", "indigo")
-      .withLogo("images/logo.png")
-      .withCopyright("Copyright (C) 2020 Spotify AB")
-      .withRepository(uri("https://github.com/spotify/scio"))
-      .withSocial(uri("https://github.com/spotify"), uri("https://twitter.com/spotifyeng"))
-  }
+  Compile / paradoxMaterialTheme := ParadoxMaterialTheme()
+    .withFavicon("images/favicon.ico")
+    .withColor("white", "indigo")
+    .withLogo("images/logo.png")
+    .withCopyright("Copyright (C) 2020 Spotify AB")
+    .withRepository(uri("https://github.com/spotify/scio"))
+    .withSocial(uri("https://github.com/spotify"), uri("https://twitter.com/spotifyeng")),
+  // sbt-site
+  addMappingsToSiteDir(ScalaUnidoc / packageDoc / mappings, ScalaUnidoc / siteSubdirName),
+  makeSite / mappings ++= Seq(
+    file("scio-examples/target/site/index.html") -> "examples/index.html"
+  ) ++ SoccoIndex.mappings,
+  makeSite := makeSite.dependsOn(mdoc.toTask("")).value
 )
 
 lazy val soccoSettings = if (sys.env.contains("SOCCO")) {
