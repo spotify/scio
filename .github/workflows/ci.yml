@@ -3,21 +3,15 @@ name: CI
 env:
   ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY }}
 
-on:
-  pull_request:
-    branches: [ master ]
-  push:
-    branches: [ master ]
+on: [push]
 
 jobs:
   build:
     name: Build documentation
-    if: ${{ env.ENCRYPTION_KEY }}
+    runs-on: ubuntu-latest
     strategy:
       matrix:
-        scala: [ 2.13.3, 2.12.12 ]
-        java: [ openjdk@1.11 ]
-    runs-on: ubuntu-latest
+        java: [openjdk@1.11]
     steps:
       - name: Checkout current branch
         uses: actions/checkout@v1
@@ -37,4 +31,4 @@ jobs:
           GOOGLE_PROJECT_ID: data-integration-test
 
       - name: Build documentation
-        run: sbt ++${{ matrix.scala }} site/makeSite
+        run: sbt site/makeSite
