@@ -15,8 +15,6 @@
  * under the License.
  */
 
-package com.spotify.scio.extra.hll
+package com.spotify.scio.extra.hll.zetasketch.syntax
 
-import com.spotify.scio.extra.hll.zetasketch.syntax.AllSyntax
-
-package object zetasketch extends AllSyntax
+trait AllSyntax extends SCollectionSyntax

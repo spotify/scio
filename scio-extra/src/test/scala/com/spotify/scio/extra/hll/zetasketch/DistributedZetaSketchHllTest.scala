@@ -15,7 +15,7 @@
  * under the License.
  */
 
-package com.spotify.scio.extra.hll.zetasketch.distributed
+package com.spotify.scio.extra.hll.zetasketch
 
 import com.spotify.scio.testing.ApproximationAssertions._
 import com.spotify.scio.testing.PipelineSpec
