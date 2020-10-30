@@ -493,10 +493,10 @@ lazy val `scio-core`: Project = project
   )
   .enablePlugins(BuildInfoPlugin)
 
-lazy val `scio-sql`: Project = Project(
-  "scio-sql",
-  file("scio-sql")
-).settings(commonSettings)
+lazy val `scio-sql`: Project = project
+  .in(file("scio-sql"))
+  .settings(commonSettings)
+  .settings(publishSettings)
   .settings(itSettings)
   .settings(macroSettings)
   .settings(
@@ -1122,6 +1122,7 @@ lazy val `scio-smb`: Project = project
 lazy val `scio-redis`: Project = project
   .in(file("scio-redis"))
   .settings(commonSettings)
+  .settings(publishSettings)
   .settings(itSettings)
   .settings(
     description := "Scio integration with Redis",
