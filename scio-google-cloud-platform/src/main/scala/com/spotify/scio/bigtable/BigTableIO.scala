@@ -65,8 +65,8 @@ final case class BigtableRead(bigtableOptions: BigtableOptions, tableId: String)
             opts.toBuilder
         }
       )
-    if (params.keyRange != null) {
-      read = read.withKeyRange(params.keyRange)
+    if (!params.keyRange.isEmpty) {
+      read = read.withKeyRanges(params.keyRange.asJava)
     }
     if (params.rowFilter != null) {
       read = read.withRowFilter(params.rowFilter)
@@ -85,12 +85,12 @@ final case class BigtableRead(bigtableOptions: BigtableOptions, tableId: String)
 
 object BigtableRead {
   object ReadParam {
-    private[bigtable] val DefaultKeyRange: ByteKeyRange = null
+    private[bigtable] val DefaultKeyRange: Seq[ByteKeyRange] = Seq()
     private[bigtable] val DefaultRowFilter: RowFilter = null
   }
 
   final case class ReadParam private (
-    keyRange: ByteKeyRange = ReadParam.DefaultKeyRange,
+    keyRange: Seq[ByteKeyRange] = ReadParam.DefaultKeyRange,
     rowFilter: RowFilter = ReadParam.DefaultRowFilter
   )
 

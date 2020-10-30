@@ -43,7 +43,17 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
     projectId: String,
     instanceId: String,
     tableId: String,
-    keyRange: ByteKeyRange = BigtableRead.ReadParam.DefaultKeyRange,
+    keyRange: ByteKeyRange,
+    rowFilter: RowFilter = BigtableRead.ReadParam.DefaultRowFilter
+  ): SCollection[Row] =
+    bigtable(projectId, instanceId, tableId, Seq(keyRange), rowFilter)
+
+  /** Get an SCollection for a Bigtable table. */
+  def bigtable(
+    projectId: String,
+    instanceId: String,
+    tableId: String,
+    keyRange: Seq[ByteKeyRange] = BigtableRead.ReadParam.DefaultKeyRange,
     rowFilter: RowFilter = BigtableRead.ReadParam.DefaultRowFilter
   ): SCollection[Row] = {
     val parameters = BigtableRead.ReadParam(keyRange, rowFilter)
@@ -55,7 +65,16 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
     bigtableOptions: BigtableOptions,
     tableId: String,
     keyRange: ByteKeyRange,
-    rowFilter: RowFilter
+    rowFilter: RowFilter = BigtableRead.ReadParam.DefaultRowFilter
+  ): SCollection[Row] =
+    bigtable(bigtableOptions, tableId, Seq(keyRange), rowFilter)
+
+  /** Get an SCollection for a Bigtable table. */
+  def bigtable(
+    bigtableOptions: BigtableOptions,
+    tableId: String,
+    keyRange: Seq[ByteKeyRange] = BigtableRead.ReadParam.DefaultKeyRange,
+    rowFilter: RowFilter = BigtableRead.ReadParam.DefaultRowFilter
   ): SCollection[Row] = {
     val parameters = BigtableRead.ReadParam(keyRange, rowFilter)
     self.read(BigtableRead(bigtableOptions, tableId))(parameters)
