@@ -1,6 +1,3 @@
-package com.spotify.scio.extra.hll.zetasketch
-
-import java.lang
 /*
  * Copyright 2020 Spotify AB.
  *
@@ -17,6 +14,10 @@ import java.lang
  * specific language governing permissions and limitations
  * under the License.
  */
+
+package com.spotify.scio.extra.hll.zetasketch
+
+import java.lang
 
 import com.google.protobuf.ByteString
 import com.google.zetasketch.HyperLogLogPlusPlus
