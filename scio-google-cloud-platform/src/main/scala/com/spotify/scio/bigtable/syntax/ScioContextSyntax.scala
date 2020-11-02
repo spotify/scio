@@ -53,10 +53,10 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
     projectId: String,
     instanceId: String,
     tableId: String,
-    keyRange: Seq[ByteKeyRange] = BigtableRead.ReadParam.DefaultKeyRange,
+    keyRanges: Seq[ByteKeyRange] = BigtableRead.ReadParam.DefaultKeyRanges,
     rowFilter: RowFilter = BigtableRead.ReadParam.DefaultRowFilter
   ): SCollection[Row] = {
-    val parameters = BigtableRead.ReadParam(keyRange, rowFilter)
+    val parameters = BigtableRead.ReadParam(keyRanges, rowFilter)
     self.read(BigtableRead(projectId, instanceId, tableId))(parameters)
   }
 
@@ -73,10 +73,10 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
   def bigtable(
     bigtableOptions: BigtableOptions,
     tableId: String,
-    keyRange: Seq[ByteKeyRange],
+    keyRanges: Seq[ByteKeyRange],
     rowFilter: RowFilter
   ): SCollection[Row] = {
-    val parameters = BigtableRead.ReadParam(keyRange, rowFilter)
+    val parameters = BigtableRead.ReadParam(keyRanges, rowFilter)
     self.read(BigtableRead(bigtableOptions, tableId))(parameters)
   }
 
