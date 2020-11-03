@@ -1013,7 +1013,8 @@ lazy val `scio-examples`: Project = project
     `scio-tensorflow`,
     `scio-sql`,
     `scio-test` % "compile->test",
-    `scio-smb`
+    `scio-smb`,
+    `scio-memcached`
   )
 
 lazy val `scio-repl`: Project = project
