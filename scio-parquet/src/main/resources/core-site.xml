@@ -12,4 +12,14 @@
       The value provided is actually an invalid project id (starts with `_`).
     </description>
   </property>
+  <property>
+    <!-- 1 GiB blocks -->
+    <name>parquet.block.size</name>
+    <value>1073741824</value>
+  </property>
+  <property>
+    <!-- This defaults to SEQUENTIAL in GoogleCloudStorageReadOptions -->
+    <name>fs.gs.inputstream.fadvise</name>
+    <value>RANDOM</value>
+  </property>
 </configuration>
