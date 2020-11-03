@@ -11,9 +11,9 @@ to a bucket, sort values within the bucket, and write these values to a correspo
 
 |        Input        |   Key   |   Bucket   |       File Assignment      |
 |-------------------------------------------------------------------------|
-| {key:"b", value: 1} |   "b"   |      0     | bucket-00000-of-00001.avro |
-| {key:"b", value: 2} |   "b"   |      0     | bucket-00000-of-00001.avro |
-| {key:"a", value: 3} |   "a"   |      1     | bucket-00001-of-00001.avro |
+| {key:"b", value: 1} |   "b"   |      0     | bucket-00000-of-00002.avro |
+| {key:"b", value: 2} |   "b"   |      0     | bucket-00000-of-00002.avro |
+| {key:"a", value: 3} |   "a"   |      1     | bucket-00001-of-00002.avro |
 
 Two sources can be joined by opening file readers on corresponding buckets of eachT source and
 merging key-groups as we go.
@@ -123,7 +123,8 @@ dynamically configured using `TargetParallelism.min()` or `TargetParallelism.max
 construction time will determine the least or greatest amount of parallelism based on sources.
 Alternately, `TargetParallelism.of(Integer value)` can be used to statically configure a custom value,
 or `{@link TargetParallelism#auto()}` can be used to let the runner decide how to split the SMB read
-at runtime based on the combined byte size of the inputs.
+at runtime based on the combined byte size of the inputs--this is also the default behavior if
+`TargetPallelism` is left unspecified.
 
 If no value is specified, SMB read operations will use Auto parallelism.
 
@@ -140,8 +141,20 @@ When selecting a target parallelism for your SMB operation, there are tradeoffs 
     from the replicated sources must be re-hashed to avoid emitting duplicate records.
   - A custom parallelism in the middle of these bounds may be the best balance of speed and
     computing cost.
-  - Auto parallelism is more likely to pick an ideal value for most use cases. When using this option,
-    you can check the worker logs to find out which value was selected.
+  - Auto parallelism is more likely to pick an ideal value for most use cases. If its performance is
+    worse than expected, you can look up the parallelism value it has computed and try a manual adjustment.
+    Unfortunately, since it's determined at runtime, the computed parallelism value can't be added
+    to the pipeline graph through `DisplayData`. Instead, you'll have to check the worker logs to find
+    out which value was selected. When using Dataflow, you can do this in the UI by clicking on the
+    SMB transform box, and searching the associated logs for the text `Parallelism was adjusted`.
+    For example, in this case the value is 1024:
+
+    <div style="text-align: center;"><img src="../images/smb_auto_parallelism_example.png" alt="Finding computed parallelism"
+    style="margin: 10px auto; width: 75%" /></div>
+
+    From there, you can try increasing or decreasing the parallelism by specifying a different
+    `TargetParallelism` parameter to your SMB read.
+
 
 ## Testing
 Currently, mocking data for SMB transforms is not supported in the `com.spotify.scio.testing.JobTest` framework. See
