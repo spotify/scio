@@ -124,6 +124,7 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
     newSource: Source
   ): SCollection[T] = typedBigQuery(Option(newSource))
 
+  /** Get a typed SCollection for BigQuery Table or a SELECT query using the Storage API. */
   def typedBigQuery[T <: HasAnnotation: ClassTag: TypeTag: Coder](
     newSource: Option[Source]
   ): SCollection[T] = {
