@@ -26,6 +26,7 @@ import javax.annotation.Nullable;
 import org.apache.beam.sdk.coders.CannotProvideCoderException;
 import org.apache.beam.sdk.coders.Coder;
 import org.apache.beam.sdk.extensions.smb.SortedBucketSource.BucketedInput;
+import org.apache.beam.sdk.extensions.smb.SortedBucketSource.Predicate;
 import org.apache.beam.sdk.extensions.smb.SortedBucketTransform.NewBucketMetadataFn;
 import org.apache.beam.sdk.io.Compression;
 import org.apache.beam.sdk.io.FileSystems;
@@ -91,6 +92,9 @@ public class JsonSortedBucketIO {
 
     abstract Compression getCompression();
 
+    @Nullable
+    abstract Predicate<TableRow> getPredicate();
+
     abstract Builder toBuilder();
 
     @AutoValue.Builder
@@ -104,6 +108,8 @@ public class JsonSortedBucketIO {
       abstract Builder setFilenameSuffix(String filenameSuffix);
 
       abstract Builder setCompression(Compression compression);
+
+      abstract Builder setPredicate(Predicate<TableRow> predicate);
 
       abstract Read build();
     }
@@ -120,13 +126,19 @@ public class JsonSortedBucketIO {
       return toBuilder().setFilenameSuffix(filenameSuffix).build();
     }
 
+    /** Specifies the filter predicate. */
+    public Read withPredicate(Predicate<TableRow> predicate) {
+      return toBuilder().setPredicate(predicate).build();
+    }
+
     @Override
     protected BucketedInput<?, TableRow> toBucketedInput() {
       return new BucketedInput<>(
           getTupleTag(),
           getInputDirectories(),
           getFilenameSuffix(),
-          JsonFileOperations.of(getCompression()));
+          JsonFileOperations.of(getCompression()),
+          getPredicate());
     }
   }
 

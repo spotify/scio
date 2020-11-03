@@ -111,8 +111,30 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
   def sortMergeGroupByKey[K: Coder, V: Coder](
     keyClass: Class[K],
     read: SortedBucketIO.Read[V]
+  ): SCollection[(K, Iterable[V])] = sortMergeGroupByKey(keyClass, read, TargetParallelism.auto())
+
+  /**
+   * For each key K in `read` return a resulting SCollection that contains a tuple with the
+   * list of values for that key in `read`.
+   *
+   * See note on [[SortedBucketScioContext.sortMergeJoin()]] for information on how an SMB group
+   * differs from a regular [[org.apache.beam.sdk.transforms.GroupByKey]] operation.
+   *
+   * @group per_key
+   *
+   * @param keyClass cogroup key class. Must have a Coder in Beam's default
+   *                 [[org.apache.beam.sdk.coders.CoderRegistry]] as custom key coders are not
+   *                 supported yet.
+   * @param targetParallelism the desired parallelism of the job. See
+   *                 [[org.apache.beam.sdk.extensions.smb.TargetParallelism]] for more information.
+   */
+  @experimental
+  def sortMergeGroupByKey[K: Coder, V: Coder](
+    keyClass: Class[K],
+    read: SortedBucketIO.Read[V],
+    targetParallelism: TargetParallelism
   ): SCollection[(K, Iterable[V])] = {
-    val t = SortedBucketIO.read(keyClass).of(read)
+    val t = SortedBucketIO.read(keyClass).of(read).withTargetParallelism(targetParallelism)
     val tupleTag = read.getTupleTag
     val tfName = self.tfName
 

@@ -1,0 +1,33 @@
+name: CI
+
+env:
+  ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY }}
+  GOOGLE_APPLICATION_CREDENTIALS: scripts/gha-data-integration-test.json
+  GOOGLE_PROJECT_ID: data-integration-test
+
+on: [push]
+
+jobs:
+  build:
+    name: Build documentation
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        java: [openjdk@1.11]
+    steps:
+      - name: Checkout current branch
+        uses: actions/checkout@v1
+
+      - name: Cache SBT
+        uses: coursier/cache-action@v3
+
+      - name: Setup Java and Scala
+        uses: olafurpg/setup-scala@v5
+        with:
+          java-version: ${{ matrix.java }}
+
+      - name: Setup project
+        run: scripts/gha_setup.sh
+
+      - name: Build documentation
+        run: sbt site/makeSite

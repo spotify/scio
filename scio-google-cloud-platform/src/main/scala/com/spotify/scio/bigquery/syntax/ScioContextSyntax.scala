@@ -82,7 +82,7 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
    * Note: When using `Format.GenericRecord` Bigquery types DATE, TIME and DATETIME
    *       are read as STRING.
    */
-  def bigQueryTable(table: Table, format: Format): SCollection[format.F] =
+  def bigQueryTable[F: Coder](table: Table, format: Format[F]): SCollection[F] =
     self.read(BigQueryTypedTable(table, format))
 
   /**
@@ -124,6 +124,7 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
     newSource: Source
   ): SCollection[T] = typedBigQuery(Option(newSource))
 
+  /** Get a typed SCollection for BigQuery Table or a SELECT query using the Storage API. */
   def typedBigQuery[T <: HasAnnotation: ClassTag: TypeTag: Coder](
     newSource: Option[Source]
   ): SCollection[T] = {

@@ -30,7 +30,6 @@ abstract class ILoop(command: CompilerCommand)
   override def createInterpreter(interpreterSettings: Settings): Unit = {
     super.createInterpreter(interpreterSettings)
     initCommand()
-    out.print(prompt)
     out.flush()
   }
 

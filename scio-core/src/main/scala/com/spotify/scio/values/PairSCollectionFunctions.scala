@@ -20,6 +20,11 @@ package com.spotify.scio.values
 import com.google.common.hash.Funnel
 import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.{BeamCoders, Coder, CoderMaterializer}
+import com.spotify.scio.estimators.{
+  ApproxDistinctCounter,
+  ApproximateUniqueCounter,
+  ApproximateUniqueCounterByError
+}
 import com.spotify.scio.hash._
 import com.spotify.scio.util._
 import com.spotify.scio.util.random.{BernoulliValueSampler, PoissonValueSampler}
@@ -611,7 +616,8 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * @group per_key
    */
   def countApproxDistinctByKey(sampleSize: Int): SCollection[(K, Long)] =
-    this.applyPerKey(ApproximateUnique.perKey[K, V](sampleSize))(klToTuple)
+    ApproximateUniqueCounter(sampleSize)
+      .estimateDistinctCountPerKey(this.self)
 
   /**
    * Count approximate number of distinct values for each key in the SCollection.
@@ -620,7 +626,32 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * @group per_key
    */
   def countApproxDistinctByKey(maximumEstimationError: Double = 0.02): SCollection[(K, Long)] =
-    this.applyPerKey(ApproximateUnique.perKey[K, V](maximumEstimationError))(klToTuple)
+    ApproximateUniqueCounterByError(maximumEstimationError)
+      .estimateDistinctCountPerKey(this.self)
+
+  /**
+   * Return a new SCollection of (key, value) pairs where value is estimated distinct count(as Long) per each unique key.
+   * Correctness of the estimation is depends on the given [[ApproxDistinctCounter]] estimator.
+   *
+   * @example
+   * {{{
+   *   val input: SCollection[(K, V)] = ...
+   *   val distinctCount: SCollection[(K, Long)] =
+   *       input.approximateDistinctCountPerKey(ApproximateUniqueCounter(sampleSize))
+   * }}}
+   *
+   * There are two known subclass of [[ApproxDistinctCounter]] available for HLL++ implementations in
+   * the `scio-extra` module.
+   *
+   *  - [[com.spotify.scio.extra.hll.sketching.SketchingHyperLogLogPlusPlus]]
+   *  - [[com.spotify.scio.extra.hll.zetasketch.ZetasketchHll_Counter]]
+   *
+   * HyperLogLog++: [[https://research.google/pubs/pub40671/ Google HLL++ paper]]
+   *
+   * @return a key valued SCollection where value type is Long and hold the approximate distinct count.
+   */
+  def countApproxDistinctByKey(estimator: ApproxDistinctCounter[V]): SCollection[(K, Long)] =
+    estimator.estimateDistinctCountPerKey(this.self)
 
   /**
    * Count the number of elements for each key.

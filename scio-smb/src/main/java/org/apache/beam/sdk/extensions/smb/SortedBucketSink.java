@@ -40,6 +40,7 @@ import org.apache.beam.sdk.coders.Coder;
 import org.apache.beam.sdk.coders.CoderException;
 import org.apache.beam.sdk.coders.DelegateCoder;
 import org.apache.beam.sdk.coders.KvCoder;
+import org.apache.beam.sdk.coders.NullableCoder;
 import org.apache.beam.sdk.extensions.smb.BucketShardId.BucketShardIdCoder;
 import org.apache.beam.sdk.extensions.smb.SMBFilenamePolicy.FileAssignment;
 import org.apache.beam.sdk.extensions.smb.SortedBucketSink.WriteResult;
@@ -793,7 +794,7 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
                       @ProcessElement
                       public void processElement(ProcessContext c) throws Exception {
                         final K key = bucketMetadata.extractKey(c.element().getValue());
-                        final Coder<K> kCoder = bucketMetadata.getKeyCoder();
+                        final Coder<K> kCoder = NullableCoder.of(bucketMetadata.getKeyCoder());
                         if (!Arrays.equals(
                             CoderUtils.encodeToByteArray(kCoder, key),
                             CoderUtils.encodeToByteArray(kCoder, c.element().getKey()))) {

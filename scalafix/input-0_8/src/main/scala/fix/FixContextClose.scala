@@ -2,6 +2,7 @@
 rule = FixContextClose
  */
 package fix
+package v0_8_0
 
 import com.spotify.scio._
 

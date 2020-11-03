@@ -136,11 +136,13 @@ private object RunnerContext {
     pipelineOptions: PipelineOptions,
     classLoader: ClassLoader
   ): Iterable[String] = {
-    val matchesEnvDir: String => Boolean = _.matches(s"${sys.props("user.home")}/\\..+/.+")
+    val sanitize: String => String = _.replace("\\", "/")
+    val matchesEnvDir: String => Boolean =
+      _.matches(s"${sanitize(sys.props("user.home"))}/\\..+/.+")
     val classPathJars = PipelineResources
       .detectClassPathResourcesToStage(classLoader, pipelineOptions)
       .asScala
-      .filterNot(matchesEnvDir)
+      .filterNot(sanitize.andThen(matchesEnvDir))
 
     logger.debug(s"Classpath jars: ${classPathJars.mkString(":")}")
 

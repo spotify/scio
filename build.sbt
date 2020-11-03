@@ -35,10 +35,10 @@ val autoServiceVersion = "1.0-rc7"
 val autoValueVersion = "1.7.4"
 val avroVersion = "1.8.2"
 val beamVendorVersion = "0.1"
-val beamVersion = "2.24.0"
-val bigdataossVersion = "2.1.3"
+val beamVersion = "2.25.0"
+val bigdataossVersion = "2.1.5"
 val bigQueryStorageVersion = "0.133.0-beta"
-val bigtableClientVersion = "1.14.0"
+val bigtableClientVersion = "1.16.0"
 val breezeVersion = "1.1"
 val caffeineVersion = "2.8.6"
 val caseappVersion = "2.0.4"
@@ -51,11 +51,11 @@ val commonsLang3Version = "3.11"
 val commonsMath3Version = "3.6.1"
 val commonsTextVersion = "1.9"
 val datastoreV1ProtoClientVersion = "1.6.3"
-val elasticsearch6Version = "6.8.12"
-val elasticsearch7Version = "7.9.2"
+val elasticsearch6Version = "6.8.13"
+val elasticsearch7Version = "7.9.3"
 val featranVersion = "0.7.0"
 val flinkVersion = "1.10.1"
-val gaxVersion = "1.54.0"
+val gaxVersion = "1.57.1"
 val gcsVersion = "1.8.0"
 val generatedGrpcBetaVersion = "1.9.1"
 val generatedDatastoreProtoVersion = "0.85.0"
@@ -64,8 +64,10 @@ val googleApiServicesBigQuery = "v2-rev20200719-1.30.10"
 val googleApiServicesDataflow = "v1b3-rev20200713-1.30.10"
 val googleAuthVersion = "0.19.0"
 val googleClientsVersion = "1.30.10"
-val googleCloudSpannerVersion = "1.49.1"
+val googleCloudCoreVersion = "1.93.7"
+val googleCloudSpannerVersion = "1.59.0"
 val googleHttpClientsVersion = "1.34.0"
+val googleOauthClientVersion = "1.31.0"
 val grpcVersion = "1.29.0"
 val guavaVersion = "28.2-jre"
 val hadoopVersion = "2.8.5"
@@ -75,7 +77,7 @@ val jacksonVersion = "2.10.5"
 val javaLshVersion = "0.12"
 val jlineVersion = "2.14.6"
 val jnaVersion = "5.6.0"
-val jodaTimeVersion = "2.10.6"
+val jodaTimeVersion = "2.10.8"
 val junitInterfaceVersion = "0.11"
 val junitVersion = "4.13.1"
 val kantanCodecsVersion = "0.5.1"
@@ -83,16 +85,16 @@ val kantanCsvVersion = "0.6.1"
 val kryoVersion =
   "4.0.2" // explicitly depend on 4.0.1+ due to https://github.com/EsotericSoftware/kryo/pull/516
 val magnoliaVersion = "0.17.0"
-val magnolifyVersion = "0.2.3"
-val nettyVersion = "4.1.30.Final"
-val nettyTcNativeVersion = "2.0.30.Final"
+val magnolifyVersion = "0.3.0"
+val nettyVersion = "4.1.51.Final"
+val nettyTcNativeVersion = "2.0.33.Final"
 val opencensusVersion = "0.24.0"
 val parquetAvroVersion = "0.3.4"
 val parquetExtraVersion = "0.3.4"
 val parquetVersion = "1.11.1"
 val protobufGenericVersion = "0.2.9"
 val protobufVersion = "3.13.0"
-val scalacheckVersion = "1.14.3"
+val scalacheckVersion = "1.15.0"
 val scalaMacrosVersion = "2.1.1"
 val scalatestplusVersion = "3.1.0.0-RC2"
 val scalatestVersion = "3.2.2"
@@ -153,8 +155,8 @@ val commonSettings = Def
     // protobuf-lite is an older subset of protobuf-java and causes issues
     excludeDependencies += "com.google.protobuf" % "protobuf-lite",
     resolvers += Resolver.sonatypeRepo("public"),
-    testOptions in Test += Tests.Argument("-oD"),
-    testOptions += Tests.Argument(TestFrameworks.JUnit, "-q", "-v"),
+    Test / testOptions += Tests.Argument("-oD"),
+    testOptions += Tests.Argument(TestFrameworks.JUnit, "-q", "-v", "-a"),
     testOptions ++= {
       if (sys.env.contains("SLOW")) {
         Nil
@@ -412,7 +414,11 @@ lazy val root: Project = Project("scio", file("."))
     `scio-jmh`,
     `scio-macros`,
     `scio-smb`,
+<<<<<<< HEAD
     `scio-memcached`
+=======
+    `scio-redis`
+>>>>>>> upstream/master
   )
 
 lazy val `scio-core`: Project = project
@@ -491,10 +497,10 @@ lazy val `scio-core`: Project = project
   )
   .enablePlugins(BuildInfoPlugin)
 
-lazy val `scio-sql`: Project = Project(
-  "scio-sql",
-  file("scio-sql")
-).settings(commonSettings)
+lazy val `scio-sql`: Project = project
+  .in(file("scio-sql"))
+  .settings(commonSettings)
+  .settings(publishSettings)
   .settings(itSettings)
   .settings(macroSettings)
   .settings(
@@ -643,7 +649,7 @@ lazy val `scio-google-cloud-platform`: Project = project
       "com.google.auth" % "google-auth-library-credentials" % googleAuthVersion,
       "com.google.auth" % "google-auth-library-oauth2-http" % googleAuthVersion,
       "com.google.cloud" % "google-cloud-bigquerystorage" % bigQueryStorageVersion,
-      "com.google.cloud" % "google-cloud-core" % "1.92.2",
+      "com.google.cloud" % "google-cloud-core" % googleCloudCoreVersion,
       "com.google.cloud" % "google-cloud-storage" % gcsVersion % "test,it",
       "com.google.guava" % "guava" % guavaVersion,
       "com.google.http-client" % "google-http-client-jackson" % "1.29.2",
@@ -767,6 +773,8 @@ lazy val `scio-extra`: Project = project
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-extensions-sorter" % beamVersion,
+      "org.apache.beam" % "beam-sdks-java-extensions-sketching" % beamVersion,
+      "org.apache.beam" % "beam-sdks-java-extensions-zetasketch" % beamVersion,
       "com.google.apis" % "google-api-services-bigquery" % googleApiServicesBigQuery,
       "org.apache.avro" % "avro" % avroVersion,
       "com.spotify" % "annoy" % annoyVersion,
@@ -801,9 +809,13 @@ lazy val `scio-extra`: Project = project
     `scio-test` % "it->it;test->test",
     `scio-avro`,
     `scio-google-cloud-platform`,
+<<<<<<< HEAD
     `scio-macros`,
     `scio-redis`,
     `scio-memcached`
+=======
+    `scio-macros`
+>>>>>>> upstream/master
   )
   .configs(IntegrationTest)
 
@@ -964,7 +976,7 @@ lazy val `scio-examples`: Project = project
       "com.spotify" %% "magnolify-datastore" % magnolifyVersion,
       "com.spotify" %% "magnolify-tensorflow" % magnolifyVersion,
       "com.spotify" %% "magnolify-bigtable" % magnolifyVersion,
-      "mysql" % "mysql-connector-java" % "8.0.21",
+      "mysql" % "mysql-connector-java" % "8.0.22",
       "joda-time" % "joda-time" % jodaTimeVersion,
       "com.github.alexarchambault" %% "case-app" % caseappVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
@@ -979,7 +991,7 @@ lazy val `scio-examples`: Project = project
       "com.google.auth" % "google-auth-library-oauth2-http" % googleAuthVersion,
       "com.google.cloud.bigdataoss" % "util" % bigdataossVersion,
       "com.google.guava" % "guava" % guavaVersion,
-      "com.google.oauth-client" % "google-oauth-client" % "1.30.6",
+      "com.google.oauth-client" % "google-oauth-client" % googleOauthClientVersion,
       "com.google.protobuf" % "protobuf-java" % protobufVersion,
       "com.spotify" %% "magnolify-shared" % magnolifyVersion,
       "com.twitter" %% "algebird-core" % algebirdVersion,
@@ -1014,7 +1026,11 @@ lazy val `scio-examples`: Project = project
     `scio-sql`,
     `scio-test` % "compile->test",
     `scio-smb`,
+<<<<<<< HEAD
     `scio-memcached`
+=======
+    `scio-redis`
+>>>>>>> upstream/master
   )
 
 lazy val `scio-repl`: Project = project
@@ -1123,7 +1139,6 @@ lazy val `scio-smb`: Project = project
       (Compile / sourceManaged).value.mkdirs()
       Seq("-s", (Compile / sourceManaged).value.getAbsolutePath)
     },
-    testOptions in Test := Seq(Tests.Argument(TestFrameworks.JUnit, "-a")),
     Test / classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.Flat
   )
   .configs(
@@ -1138,6 +1153,7 @@ lazy val `scio-smb`: Project = project
 lazy val `scio-redis`: Project = project
   .in(file("scio-redis"))
   .settings(commonSettings)
+  .settings(publishSettings)
   .settings(itSettings)
   .settings(
     description := "Scio integration with Redis",
@@ -1205,47 +1221,43 @@ lazy val siteSettings = Def.settings(
   publish / skip := true,
   description := "Scio - Documentation",
   autoAPIMappings := true,
+  gitRemoteRepo := "git@github.com:spotify/scio.git",
   libraryDependencies ++= Seq(
     "org.apache.beam" % "beam-runners-direct-java" % beamVersion,
     "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion,
     "com.nrinaudo" %% "kantan.csv" % kantanCsvVersion
   ),
-  siteSubdirName in ScalaUnidoc := "api",
-  scalacOptions in ScalaUnidoc := Seq(),
-  addMappingsToSiteDir(mappings in (ScalaUnidoc, packageDoc), siteSubdirName in ScalaUnidoc),
-  gitRemoteRepo := "git@github.com:spotify/scio.git",
-  mappings in makeSite ++= Seq(
-    file("scio-examples/target/site/index.html") -> "examples/index.html"
-  ) ++ SoccoIndex.mappings,
-  // pre-compile md using mdoc
-  mdocIn := (Paradox / sourceDirectory).value,
-  mdocExtraArguments ++= Seq("--no-link-hygiene"),
-  Paradox / sourceManaged := mdocOut.value,
-  makeSite := makeSite.dependsOn(mdoc.toTask("")).value,
-  unidocProjectFilter in (ScalaUnidoc, unidoc) :=
-    inProjects(
-      `scio-core`,
-      `scio-test`,
-      `scio-avro`,
-      `scio-google-cloud-platform`,
-      `scio-cassandra3`,
-      `scio-elasticsearch6`,
-      `scio-extra`,
-      `scio-jdbc`,
-      `scio-parquet`,
-      `scio-tensorflow`,
-      `scio-macros`,
-      `scio-smb`
-    ),
+  // unidoc
+  ScalaUnidoc / siteSubdirName := "api",
+  ScalaUnidoc / scalacOptions := Seq.empty,
+  ScalaUnidoc / unidoc / unidocProjectFilter := inProjects(
+    `scio-core`,
+    `scio-test`,
+    `scio-avro`,
+    `scio-google-cloud-platform`,
+    `scio-cassandra3`,
+    `scio-elasticsearch6`,
+    `scio-extra`,
+    `scio-jdbc`,
+    `scio-parquet`,
+    `scio-tensorflow`,
+    `scio-macros`,
+    `scio-smb`
+  ),
   // unidoc handles class paths differently than compile and may give older
   // versions high precedence.
-  unidocAllClasspaths in (ScalaUnidoc, unidoc) := {
-    (unidocAllClasspaths in (ScalaUnidoc, unidoc)).value.map { cp =>
+  ScalaUnidoc / unidoc / unidocAllClasspaths := (ScalaUnidoc / unidoc / unidocAllClasspaths).value
+    .map { cp =>
       cp.filterNot(_.data.getCanonicalPath.matches(""".*guava-11\..*"""))
         .filterNot(_.data.getCanonicalPath.matches(""".*bigtable-client-core-0\..*"""))
-    }
-  },
-  paradoxProperties in Paradox ++= Map(
+    },
+  // mdoc
+  // pre-compile md using mdoc
+  mdocIn := (paradox / sourceDirectory).value,
+  mdocExtraArguments ++= Seq("--no-link-hygiene"),
+  // paradox
+  paradox / sourceManaged := mdocOut.value,
+  paradoxProperties ++= Map(
     "javadoc.com.spotify.scio.base_url" -> "http://spotify.github.com/scio/api",
     "javadoc.org.apache.beam.sdk.extensions.smb.base_url" ->
       "https://spotify.github.io/scio/api/org/apache/beam/sdk/extensions/smb",
@@ -1254,17 +1266,19 @@ lazy val siteSettings = Def.settings(
     "github.base_url" -> "https://github.com/spotify/scio",
     "extref.example.base_url" -> "https://spotify.github.io/scio/examples/%s.scala.html"
   ),
-  sourceDirectory in Paradox in paradoxTheme := sourceDirectory.value / "paradox" / "_template",
-  ParadoxMaterialThemePlugin.paradoxMaterialThemeSettings(Paradox),
-  paradoxMaterialTheme in Paradox := {
-    ParadoxMaterialTheme()
-      .withFavicon("images/favicon.ico")
-      .withColor("white", "indigo")
-      .withLogo("images/logo.png")
-      .withCopyright("Copyright (C) 2020 Spotify AB")
-      .withRepository(uri("https://github.com/spotify/scio"))
-      .withSocial(uri("https://github.com/spotify"), uri("https://twitter.com/spotifyeng"))
-  }
+  Compile / paradoxMaterialTheme := ParadoxMaterialTheme()
+    .withFavicon("images/favicon.ico")
+    .withColor("white", "indigo")
+    .withLogo("images/logo.png")
+    .withCopyright("Copyright (C) 2020 Spotify AB")
+    .withRepository(uri("https://github.com/spotify/scio"))
+    .withSocial(uri("https://github.com/spotify"), uri("https://twitter.com/spotifyeng")),
+  // sbt-site
+  addMappingsToSiteDir(ScalaUnidoc / packageDoc / mappings, ScalaUnidoc / siteSubdirName),
+  makeSite / mappings ++= Seq(
+    file("scio-examples/target/site/index.html") -> "examples/index.html"
+  ) ++ SoccoIndex.mappings,
+  makeSite := makeSite.dependsOn(mdoc.toTask("")).value
 )
 
 lazy val soccoSettings = if (sys.env.contains("SOCCO")) {
@@ -1318,7 +1332,7 @@ ThisBuild / dependencyOverrides ++= Seq(
   "com.google.http-client" % "google-http-client-jackson2" % googleHttpClientsVersion,
   "com.google.http-client" % "google-http-client" % googleHttpClientsVersion,
   "com.google.j2objc" % "j2objc-annotations" % "1.3",
-  "com.google.oauth-client" % "google-oauth-client" % "1.30.6",
+  "com.google.oauth-client" % "google-oauth-client" % googleOauthClientVersion,
   "com.google.protobuf" % "protobuf-java-util" % protobufVersion,
   "com.google.protobuf" % "protobuf-java" % protobufVersion,
   "com.propensive" %% "magnolia" % magnoliaVersion,
