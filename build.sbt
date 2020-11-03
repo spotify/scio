@@ -414,11 +414,8 @@ lazy val root: Project = Project("scio", file("."))
     `scio-jmh`,
     `scio-macros`,
     `scio-smb`,
-<<<<<<< HEAD
+    `scio-redis`,
     `scio-memcached`
-=======
-    `scio-redis`
->>>>>>> upstream/master
   )
 
 lazy val `scio-core`: Project = project
@@ -809,13 +806,9 @@ lazy val `scio-extra`: Project = project
     `scio-test` % "it->it;test->test",
     `scio-avro`,
     `scio-google-cloud-platform`,
-<<<<<<< HEAD
     `scio-macros`,
     `scio-redis`,
     `scio-memcached`
-=======
-    `scio-macros`
->>>>>>> upstream/master
   )
   .configs(IntegrationTest)
 
@@ -1026,11 +1019,8 @@ lazy val `scio-examples`: Project = project
     `scio-sql`,
     `scio-test` % "compile->test",
     `scio-smb`,
-<<<<<<< HEAD
+    `scio-redis`,
     `scio-memcached`
-=======
-    `scio-redis`
->>>>>>> upstream/master
   )
 
 lazy val `scio-repl`: Project = project
