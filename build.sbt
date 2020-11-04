@@ -691,7 +691,7 @@ lazy val `scio-cassandra3`: Project = project
       "com.google.guava" % "guava" % guavaVersion,
       "com.twitter" %% "chill" % chillVersion,
       "com.datastax.cassandra" % "cassandra-driver-core" % "3.10.2",
-      ("org.apache.cassandra" % "cassandra-all" % "3.11.8")
+      ("org.apache.cassandra" % "cassandra-all" % "3.11.9")
         .exclude("ch.qos.logback", "logback-classic")
         .exclude("org.slf4j", "log4j-over-slf4j"),
       "org.apache.hadoop" % "hadoop-common" % hadoopVersion,
