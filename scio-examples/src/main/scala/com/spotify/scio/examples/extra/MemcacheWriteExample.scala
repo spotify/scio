@@ -8,17 +8,15 @@ import com.spotify.scio._
 // `sbt "runMain com.spotify.scio.examples.extra.MemcacheWriteExample
 // --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
 // --memcacheHost=[MEMCACHE_HOST]
-// --memcachePort=[MEMCACHE_PORT]`
 
 object MemcacheWriteExample {
 
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
     val mHost = args("memcacheHost")
-    val mPort = args.int("memcachePort")
     val ttl = 20
     val flushDelay = 40
-    val memcacheConnectionOptions = MemcacheConnectionOptions(mHost, mPort, ttl, flushDelay)
+    val memcacheConnectionOptions = MemcacheConnectionOptions.withDefaultPort(mHost, ttl, flushDelay)
 
     sc.parallelize(
       Iterable(
