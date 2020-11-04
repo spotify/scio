@@ -23,7 +23,6 @@ import java.nio.file.Path
 
 import com.spotify.scio.util._
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
-import com.spotify.scio.transforms.DoFnWithResource.ResourceType
 
 import com.spotify.scio.values.SCollection
 import com.twitter.chill.ClosureCleaner
