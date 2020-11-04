@@ -9,7 +9,7 @@ final class SCollectionMemcacheOps(private val self: SCollection[(String, String
   def saveAsMemcache(
     memcacheConnectionOptions: MemcacheConnectionOptions
   ): ClosedTap[Nothing] = {
-    self.write(MemcachedIOWrite(memcacheConnectionOptions))(MemcachedIOWrite.WriteParam(10))
+    self.write(MemcachedIOWrite(memcacheConnectionOptions))
   }
 }
 

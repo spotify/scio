@@ -30,12 +30,12 @@ sealed trait MemcachedIO[T] extends ScioIO[T] {
 
 final case class MemcachedIOWrite(memcacheConnectionOptions: MemcacheConnectionOptions) extends MemcachedIO[(String, String)] {
   override type ReadP = Unit
-  override type WriteP = MemcachedIOWrite.WriteParam
+  override type WriteP = Unit
 
   override def tap(read: ReadP): Tap[Nothing] = EmptyTap
 
   override protected def read(sc: ScioContext, params: ReadP): SCollection[(String, String)] =
-    throw new UnsupportedOperationException("cannot write to Memcached yet")
+    throw new UnsupportedOperationException("cannot read from Memcached yet")
 
   override protected def write(
     data: SCollection[(String, String)],
@@ -47,13 +47,4 @@ final case class MemcachedIOWrite(memcacheConnectionOptions: MemcacheConnectionO
 
     EmptyTap
   }
-}
-
-object MemcachedIOWrite {
-  object WriteParam {
-    private[memcached] val DefaultConnectWaitSeconds = 10
-  }
-
-  final case class WriteParam private (ttl: Int)
-
 }
