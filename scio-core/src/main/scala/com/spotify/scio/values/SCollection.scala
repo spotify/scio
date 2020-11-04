@@ -33,6 +33,7 @@ import com.spotify.scio.schemas.{Schema, SchemaMaterializer, To}
 import com.spotify.scio.testing.TestDataManager
 import com.spotify.scio.util._
 import com.spotify.scio.util.random.{BernoulliSampler, PoissonSampler}
+import com.spotify.scio.transforms.syntax.{AllSyntax => TransformsSyntax}
 import com.twitter.algebird.{Aggregator, Monoid, MonoidAggregator, Semigroup}
 import org.apache.avro.file.CodecFactory
 import org.apache.beam.sdk.coders.{Coder => BCoder}
@@ -57,7 +58,7 @@ import scala.util.Try
 import com.twitter.chill.ClosureCleaner
 
 /** Convenience functions for creating SCollections. */
-object SCollection {
+object SCollection extends TransformsSyntax {
   private[values] val logger = LoggerFactory.getLogger(this.getClass)
 
   /**
