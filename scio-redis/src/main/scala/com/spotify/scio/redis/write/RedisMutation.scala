@@ -19,6 +19,7 @@ package com.spotify.scio.redis.write
 
 import org.joda.time.Duration
 import redis.clients.jedis.Pipeline
+import scala.annotation.implicitNotFound
 
 /**
  * Represents an abstract Redis command.
@@ -32,6 +33,7 @@ object RedisMutation {
   def unapply[T <: RedisMutation](mt: T): Option[(T, RedisType[_])] = Some(mt -> mt.rt)
 }
 
+@implicitNotFound("${T} is not a supported type. Redis only supports String or Array[Byte]")
 sealed abstract class RedisType[T]
 
 object RedisType {
