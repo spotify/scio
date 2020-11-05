@@ -427,6 +427,13 @@ public class ElasticsearchIO {
       public void processElement(ProcessContext c) throws Exception {
         final Iterable<T> values = c.element().getValue();
 
+        // Elasticsearch throws ActionRequestValidationException if bulk request is empty,
+        // so do nothing if number of actions is zero.
+        if (!values.iterator().hasNext()) {
+          LOG.info("ElasticsearchWriter: no requests to send");
+          return;
+        }
+
         final Stream<DocWriteRequest> docWriteRequests =
             StreamSupport.stream(values.spliterator(), false)
                 .map(toDocWriteRequests::apply)
