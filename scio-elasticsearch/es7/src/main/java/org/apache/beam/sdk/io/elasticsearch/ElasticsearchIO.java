@@ -148,7 +148,11 @@ public class ElasticsearchIO {
     public static class Bound<T> extends PTransform<PCollection<T>, PDone> {
 
       private static final int CHUNK_SIZE = 3000;
+
+      // 5 megabytes - recommended as a sensible default payload size (see
+      // https://www.elastic.co/guide/en/elasticsearch/reference/7.9/getting-started-index.html#getting-started-batch-processing)
       private static final long CHUNK_BYTES = 5L * 1024L * 1024L;
+
       private static final int DEFAULT_RETRIES = 3;
       private static final Duration DEFAULT_RETRY_PAUSE = Duration.millis(35000);
 
