@@ -50,7 +50,6 @@ import org.apache.beam.sdk.util.Sleeper;
 import org.apache.beam.sdk.values.KV;
 import org.apache.beam.sdk.values.PCollection;
 import org.apache.beam.sdk.values.PDone;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ImmutableList;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Iterables;
 import org.elasticsearch.action.DocWriteRequest;
 import org.elasticsearch.action.bulk.BulkItemResponse;
@@ -463,7 +462,7 @@ public class ElasticsearchIO {
 
         int currentSize = 0;
         long currentBytes = 0L;
-        ImmutableList.Builder<DocWriteRequest> chunk = ImmutableList.builder();
+        BulkRequest chunk = new BulkRequest();
 
         for (DocWriteRequest request : (Iterable<DocWriteRequest>) docWriteRequests::iterator) {
           long requestBytes = documentSize(request);
@@ -473,25 +472,23 @@ public class ElasticsearchIO {
             currentSize += 1;
             currentBytes += requestBytes;
           } else {
-            flush(chunk.build());
+            flush(chunk);
+            chunk = new BulkRequest().add(request);
             currentSize = 1;
             currentBytes = requestBytes;
-            chunk = ImmutableList.<DocWriteRequest>builder().add(request);
           }
         }
 
-        flush(chunk.build());
+        flush(chunk);
       }
 
-      private void flush(List<DocWriteRequest> chunk) throws Exception {
-        if (chunk.isEmpty()) {
+      private void flush(BulkRequest chunk) throws Exception {
+        if (chunk.numberOfActions() < 1) {
           return;
         }
 
-        final ProcessFunction<List<DocWriteRequest>, BulkResponse> requestFn =
-            request(clientSupplier, error);
-        final ProcessFunction<List<DocWriteRequest>, BulkResponse> retryFn =
-            retry(requestFn, backoffConfig);
+        final ProcessFunction<BulkRequest, BulkResponse> requestFn = request(clientSupplier, error);
+        final ProcessFunction<BulkRequest, BulkResponse> retryFn = retry(requestFn, backoffConfig);
 
         try {
           requestFn.apply(chunk);
@@ -500,13 +497,11 @@ public class ElasticsearchIO {
         }
       }
 
-      private static ProcessFunction<List<DocWriteRequest>, BulkResponse> request(
+      private static ProcessFunction<BulkRequest, BulkResponse> request(
           final ClientSupplier clientSupplier,
           final ThrowingConsumer<BulkExecutionException> bulkErrorHandler) {
         return chunk -> {
-          final BulkRequest bulkRequest =
-              new BulkRequest().add(chunk.toArray(new DocWriteRequest[0]));
-          final BulkResponse bulkItemResponse = clientSupplier.get().bulk(bulkRequest).get();
+          final BulkResponse bulkItemResponse = clientSupplier.get().bulk(chunk).get();
 
           if (bulkItemResponse.hasFailures()) {
             bulkErrorHandler.accept(new BulkExecutionException(bulkItemResponse));
@@ -516,8 +511,8 @@ public class ElasticsearchIO {
         };
       }
 
-      private static ProcessFunction<List<DocWriteRequest>, BulkResponse> retry(
-          final ProcessFunction<List<DocWriteRequest>, BulkResponse> requestFn,
+      private static ProcessFunction<BulkRequest, BulkResponse> retry(
+          final ProcessFunction<BulkRequest, BulkResponse> requestFn,
           final FluentBackoff backoffConfig) {
         return chunk -> {
           final BackOff backoff = backoffConfig.backoff();
