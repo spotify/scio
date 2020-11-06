@@ -21,16 +21,16 @@ import com.spotify.scio.ScioContext
 import com.spotify.scio.io.{EmptyTap, EmptyTapOf, ScioIO, Tap, TapT}
 import com.spotify.scio.values.SCollection
 import com.spotify.scio.redis.types._
+import com.spotify.scio.coders.{Coder, CoderMaterializer}
+import org.apache.beam.sdk.values.{PCollection, PDone}
+import org.apache.beam.sdk.transforms.{PTransform, ParDo}
+import org.apache.beam.sdk.transforms.display.DisplayData.Builder
+import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider
 import org.apache.beam.sdk.io.redis.{RedisConnectionConfiguration, RedisIO => BeamRedisIO}
 import org.joda.time.Duration
-import org.apache.beam.sdk.transforms.{PTransform, ParDo}
-import org.apache.beam.sdk.values.{PCollection, PDone}
-import com.spotify.scio.coders.Coder
-import com.spotify.scio.coders.CoderMaterializer
 
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
-import org.apache.beam.sdk.transforms.display.DisplayData.Builder
 
 sealed trait RedisIO[T] extends ScioIO[T] {
   final override val tapT: TapT.Aux[T, Nothing] = EmptyTapOf[T]
@@ -49,17 +49,12 @@ object RedisConnectionOptions {
   private[redis] def toConnectionConfig(
     connectionOptions: RedisConnectionOptions
   ): RedisConnectionConfiguration = {
-    var config = RedisConnectionConfiguration
+    val config = RedisConnectionConfiguration
       .create(connectionOptions.host, connectionOptions.port)
       .withTimeout(connectionOptions.timeout.getMillis.toInt)
+      .withSSL(StaticValueProvider.of(connectionOptions.useSSL))
 
-    if (connectionOptions.useSSL) {
-      config = config.enableSSL()
-    }
-
-    connectionOptions.auth.foreach(a => config = config.withAuth(a))
-
-    config
+    connectionOptions.auth.fold(config)(config.withAuth(_))
   }
 
 }
@@ -128,16 +123,14 @@ final case class RedisWrite[T <: RedisMutation: RedisMutator](
     }
 
     override def expand(input: PCollection[T]): PDone = {
-      val coder = CoderMaterializer.beam(
-        input.getPipeline().getOptions(),
-        Coder.unitCoder
-      )
+      val pipeline = input.getPipeline()
+      val coder = CoderMaterializer.beam(pipeline.getOptions(), Coder.unitCoder)
 
       input
         .apply(ParDo.of(WriteFn))
         .setCoder(coder)
 
-      PDone.in(input.getPipeline)
+      PDone.in(pipeline)
     }
 
     override def populateDisplayData(builder: Builder): Unit = {
