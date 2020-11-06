@@ -77,14 +77,14 @@ final case class RedisRead(connectionOptions: RedisConnectionOptions, keyPattern
   ): SCollection[(String, String)] = {
     val connectionConfig = RedisConnectionOptions.toConnectionConfig(connectionOptions)
 
-    val read = BeamRedisIO
+    var read = BeamRedisIO
       .read()
       .withKeyPattern(keyPattern)
       .withConnectionConfiguration(connectionConfig)
       .withBatchSize(params.batchSize)
       .withOutputParallelization(params.outputParallelization)
 
-    connectionOptions.auth.foreach(read.withAuth)
+    read = connectionOptions.auth.fold(read)(read.withAuth)
 
     sc.applyTransform(read).map(kv => kv.getKey -> kv.getValue)
   }
