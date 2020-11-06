@@ -23,7 +23,7 @@ import com.spotify.scio.redis._
 import org.apache.beam.examples.common.ExampleUtils
 import org.apache.beam.sdk.options.{PipelineOptions, StreamingOptions}
 import com.spotify.scio.pubsub._
-import com.spotify.scio.redis.write._
+import com.spotify.scio.redis.types._
 import com.spotify.scio.redis.coders._
 
 // ## Redis Read Strings example

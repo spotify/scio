@@ -19,10 +19,18 @@ package com.spotify.scio.redis
 
 import com.spotify.scio.ScioContext
 import com.spotify.scio.io.{EmptyTap, EmptyTapOf, ScioIO, Tap, TapT}
-import com.spotify.scio.redis.write.{RedisMutation, RedisMutator, RedisWriteTransform}
 import com.spotify.scio.values.SCollection
+import com.spotify.scio.redis.types._
 import org.apache.beam.sdk.io.redis.{RedisConnectionConfiguration, RedisIO => BeamRedisIO}
 import org.joda.time.Duration
+import org.apache.beam.sdk.transforms.{PTransform, ParDo}
+import org.apache.beam.sdk.values.{PCollection, PDone}
+import com.spotify.scio.coders.Coder
+import com.spotify.scio.coders.CoderMaterializer
+
+import scala.concurrent.Future
+import scala.concurrent.ExecutionContext.Implicits.global
+import org.apache.beam.sdk.transforms.display.DisplayData.Builder
 
 sealed trait RedisIO[T] extends ScioIO[T] {
   final override val tapT: TapT.Aux[T, Nothing] = EmptyTapOf[T]
@@ -107,7 +115,39 @@ final case class RedisWrite[T <: RedisMutation: RedisMutator](
   type ReadP = Nothing
   type WriteP = RedisWrite.WriteParam
 
-  def tap(params: ReadP): Tap[Nothing] = EmptyTap
+  final class Writer(
+    connectionConfig: RedisConnectionConfiguration,
+    batchSize: Int
+  ) extends PTransform[PCollection[T], PDone] {
+
+    private val WriteFn = new RedisDoFn[T, Unit](connectionConfig, batchSize) {
+      override def request(value: T, client: RedisDoFn[T, Unit]#Client): Future[Unit] =
+        client
+          .apply(pipeline => RedisMutator.mutate(pipeline)(value))
+          .map(_ => ())
+    }
+
+    override def expand(input: PCollection[T]): PDone = {
+      val coder = CoderMaterializer.beam(
+        input.getPipeline().getOptions(),
+        Coder.unitCoder
+      )
+
+      input
+        .apply(ParDo.of(WriteFn))
+        .setCoder(coder)
+
+      PDone.in(input.getPipeline)
+    }
+
+    override def populateDisplayData(builder: Builder): Unit = {
+      super.populateDisplayData(builder)
+      WriteFn.populateDisplayData(builder)
+    }
+
+  }
+
+  override def tap(params: ReadP): Tap[Nothing] = EmptyTap
 
   override def testId: String =
     s"RedisWriteIO(${connectionOptions.host}\t${connectionOptions.port})"
@@ -117,12 +157,7 @@ final case class RedisWrite[T <: RedisMutation: RedisMutator](
 
   protected def write(data: SCollection[T], params: WriteP): Tap[Nothing] = {
     val connectionConfig = RedisConnectionOptions.toConnectionConfig(connectionOptions)
-
-    val sink = new RedisWriteTransform[T](connectionConfig, params)
-
-    data.transform_("Redis Write") { coll =>
-      coll.applyInternal(sink)
-    }
+    data.applyInternal("Redis Write", new Writer(connectionConfig, params.batchSize))
     EmptyTap
   }
 }
@@ -133,4 +168,5 @@ object RedisWrite {
   }
 
   final case class WriteParam private (batchSize: Int = WriteParam.DefaultBatchSize)
+
 }
