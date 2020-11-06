@@ -296,7 +296,7 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
       return new MergeAndWriteBucketsSource<>(
           finalKeyClass,
           sources,
-          targetParallelism,
+          TargetParallelism.of(adjustedParallelism),
           adjustedParallelism,
           bucketOffsetId,
           sourceSpec,
