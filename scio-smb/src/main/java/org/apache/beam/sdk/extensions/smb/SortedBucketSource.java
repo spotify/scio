@@ -236,7 +236,7 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
                 new SortedBucketSource<>(
                     finalKeyClass,
                     sources,
-                    targetParallelism,
+                    TargetParallelism.of(adjustedParallelism),
                     i,
                     adjustedParallelism,
                     metricsKey,
