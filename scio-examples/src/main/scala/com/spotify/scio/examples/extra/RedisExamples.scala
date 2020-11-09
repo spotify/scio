@@ -26,7 +26,6 @@ import com.spotify.scio.redis.coders._
 import org.apache.beam.examples.common.ExampleUtils
 import org.apache.beam.sdk.options.{PipelineOptions, StreamingOptions}
 import scala.concurrent.Future
-import scala.concurrent.ExecutionContext
 
 // ## Redis Read Strings example
 // Read strings from Redis by a key pattern
