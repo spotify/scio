@@ -116,9 +116,9 @@ final case class RedisWrite[T <: RedisMutation: RedisMutator](
   ) extends PTransform[PCollection[T], PDone] {
 
     private val WriteFn = new RedisDoFn[T, Unit](connectionConfig, batchSize) {
-      override def request(value: T, client: RedisDoFn[T, Unit]#Client): Future[Unit] =
+      override def request(value: T, client: Client): Future[Unit] =
         client
-          .apply(pipeline => RedisMutator.mutate(pipeline)(value))
+          .request(pipeline => RedisMutator.mutate(pipeline)(value))
           .map(_ => ())
     }
 

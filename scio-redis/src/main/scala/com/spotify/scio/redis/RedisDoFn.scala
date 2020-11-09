@@ -45,8 +45,21 @@ abstract class RedisDoFn[I, O](
   private val requests: ConcurrentLinkedQueue[(List[Response[_]], Promise[List[_]])] =
     new ConcurrentLinkedQueue()
   private var batchCount = 0
+  private val client = new Client()
 
   private case class Result(input: I, output: O, ts: Instant, w: BoundedWindow)
+
+  final class Client extends Serializable {
+    abstract class Request {
+      def create(pipeline: Pipeline): List[Response[_]]
+    }
+
+    def request(request: Request): Future[List[_]] = {
+      val promise = Promise[List[_]]()
+      requests.add((request.create(pipeline), promise))
+      promise.future
+    }
+  }
 
   private def flush(fn: Result => Unit): Unit = {
     pipeline.exec
@@ -71,14 +84,6 @@ abstract class RedisDoFn[I, O](
 
     results.clear()
     requests.clear()
-  }
-
-  type Client = (Pipeline => List[Response[_]]) => Future[List[_]]
-
-  private def client(request: Pipeline => List[Response[_]]): Future[List[_]] = {
-    val promise = Promise[List[_]]()
-    requests.add((request(pipeline), promise))
-    promise.future
   }
 
   def request(value: I, client: Client): Future[O]
