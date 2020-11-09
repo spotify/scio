@@ -14,11 +14,18 @@
  * limitations under the License.
  */
 
-package com.spotify.scio.transforms.syntax
+package com.spotify.scio.transforms
 
-trait AllSyntax
-    extends SCollectionWithResourceSyntax
-    with SCollectionFileDownloadSyntax
-    with SCollectionParallelismSyntax
-    with SCollectionPipeSyntax
-    with SCollectionSafeSyntax
+import scala.util.{Failure, Success, Try}
+
+object JavaAsyncConverters {
+
+  /** Enhanced version of `AsyncLookupDoFn.Try` with convenience methods. */
+  implicit class RichAsyncLookupDoFnTry[A](private val self: BaseAsyncLookupDoFn.Try[A])
+      extends AnyVal {
+
+    /** Convert this `AsyncLookupDoFn.Try` to a Scala `Try`. */
+    def asScala: Try[A] =
+      if (self.isSuccess) Success(self.get()) else Failure(self.getException)
+  }
+}

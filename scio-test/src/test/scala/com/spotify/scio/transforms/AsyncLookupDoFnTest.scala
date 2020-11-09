@@ -25,6 +25,7 @@ import com.google.common.util.concurrent.{Futures, ListenableFuture}
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.testing._
 import com.spotify.scio.transforms.BaseAsyncLookupDoFn.CacheSupplier
+import com.spotify.scio.transforms.JavaAsyncConverters._
 
 import scala.jdk.CollectionConverters._
 import scala.concurrent.Future
