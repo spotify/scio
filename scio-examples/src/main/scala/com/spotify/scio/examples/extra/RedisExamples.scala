@@ -19,12 +19,14 @@
 package com.spotify.scio.examples.extra
 
 import com.spotify.scio.{ContextAndArgs, ScioContext}
-import com.spotify.scio.redis._
-import org.apache.beam.examples.common.ExampleUtils
-import org.apache.beam.sdk.options.{PipelineOptions, StreamingOptions}
 import com.spotify.scio.pubsub._
+import com.spotify.scio.redis._
 import com.spotify.scio.redis.types._
 import com.spotify.scio.redis.coders._
+import org.apache.beam.examples.common.ExampleUtils
+import org.apache.beam.sdk.options.{PipelineOptions, StreamingOptions}
+import scala.concurrent.Future
+import scala.concurrent.ExecutionContext
 
 // ## Redis Read Strings example
 // Read strings from Redis by a key pattern
@@ -125,4 +127,39 @@ object RedisWriteStreamingExample {
     val result = sc.run()
     exampleUtils.waitToFinish(result.pipelineResult)
   }
+}
+
+// ## Redis Lookup Strings example
+
+// Usage:
+
+// `sbt "runMain com.spotify.scio.examples.extra.RedisLookUpStringsExample
+// --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
+// --redisHost=[REDIS_HOST]
+// --redisPort=[REDIS_PORT]
+object RedisLookUpStringsExample {
+  import scala.concurrent.ExecutionContext.Implicits.global
+
+  def main(cmdlineArgs: Array[String]): Unit = {
+
+    val (sc, args) = ContextAndArgs(cmdlineArgs)
+    val redisHost = args("redisHost")
+    val redisPort = args.int("redisPort")
+    val connectionOptions = RedisConnectionOptions(redisHost, redisPort)
+
+    sc.parallelize(Seq("key1", "key2", "unknownKey"))
+      .parDo(
+        new RedisDoFn[String, (String, Option[String])](connectionOptions, 1000) {
+          override def request(value: String, client: Client): Future[(String, Option[String])] =
+            client
+              .request(p => p.get(value) :: Nil)
+              .map { case r: List[String @unchecked] => (value, r.headOption) }
+        }
+      )
+      .debug()
+
+    sc.run()
+    ()
+  }
+
 }

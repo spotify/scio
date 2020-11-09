@@ -24,20 +24,20 @@ import redis.clients.jedis.{Jedis, Pipeline}
 import redis.clients.jedis.Response
 import java.util.concurrent.ConcurrentLinkedQueue
 import org.apache.beam.sdk.transforms.windowing.BoundedWindow
-import org.joda.time.Instant
-import scala.concurrent.{Future, Promise}
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.util._
-import scala.jdk.CollectionConverters._
-import scala.concurrent.Await
-import scala.concurrent.duration.Duration
 import org.apache.beam.sdk.transforms.display.DisplayData.Builder
 import org.apache.beam.sdk.transforms.display.DisplayData
+import org.joda.time.Instant
+import scala.concurrent.{Future, Promise}
+import scala.util._
+import scala.concurrent.{Await, ExecutionContext}
+import scala.concurrent.duration.Duration
+import scala.jdk.CollectionConverters._
 
 abstract class RedisDoFn[I, O](
   connectionConfig: RedisConnectionConfiguration,
   batchSize: Int
-) extends DoFn[I, O] {
+)(implicit ec: ExecutionContext)
+    extends DoFn[I, O] {
 
   @transient private var jedis: Jedis = _
   @transient private var pipeline: Pipeline = _
@@ -49,17 +49,20 @@ abstract class RedisDoFn[I, O](
 
   private case class Result(input: I, output: O, ts: Instant, w: BoundedWindow)
 
-  final class Client extends Serializable {
-    abstract class Request {
-      def create(pipeline: Pipeline): List[Response[_]]
-    }
+  abstract class Request {
+    def create(pipeline: Pipeline): List[Response[_]]
+  }
 
+  final class Client extends Serializable {
     def request(request: Request): Future[List[_]] = {
       val promise = Promise[List[_]]()
       requests.add((request.create(pipeline), promise))
       promise.future
     }
   }
+
+  def this(opts: RedisConnectionOptions, batchSize: Int)(implicit ec: ExecutionContext) =
+    this(RedisConnectionOptions.toConnectionConfig(opts), batchSize)
 
   private def flush(fn: Result => Unit): Unit = {
     pipeline.exec
@@ -68,7 +71,7 @@ abstract class RedisDoFn[I, O](
     val iter = requests.iterator()
     while (iter.hasNext()) {
       val (rsp, promise) = iter.next()
-      promise.success(rsp)
+      promise.success(rsp.flatMap(r => Option(r.get())))
     }
 
     val future = Future.sequence(results.asScala).andThen {

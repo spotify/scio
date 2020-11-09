@@ -115,12 +115,13 @@ final case class RedisWrite[T <: RedisMutation: RedisMutator](
     batchSize: Int
   ) extends PTransform[PCollection[T], PDone] {
 
-    private val WriteFn = new RedisDoFn[T, Unit](connectionConfig, batchSize) {
-      override def request(value: T, client: Client): Future[Unit] =
-        client
-          .request(pipeline => RedisMutator.mutate(pipeline)(value))
-          .map(_ => ())
-    }
+    private val WriteFn =
+      new RedisDoFn[T, Unit](connectionConfig, batchSize) {
+        override def request(value: T, client: Client): Future[Unit] =
+          client
+            .request(pipeline => RedisMutator.mutate(pipeline)(value))
+            .map(_ => ())
+      }
 
     override def expand(input: PCollection[T]): PDone = {
       val pipeline = input.getPipeline()
