@@ -58,7 +58,7 @@ import scala.util.Try
 import com.twitter.chill.ClosureCleaner
 
 /** Convenience functions for creating SCollections. */
-object SCollection extends TransformsSyntax {
+object SCollection {
   private[values] val logger = LoggerFactory.getLogger(this.getClass)
 
   /**

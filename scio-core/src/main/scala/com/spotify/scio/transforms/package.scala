@@ -32,9 +32,10 @@ import org.apache.beam.sdk.values.{TupleTag, TupleTagList}
 
 import scala.jdk.CollectionConverters._
 import scala.util.{Failure, Success, Try}
+import com.spotify.scio.transforms.syntax.AllSyntax
 
 /** Main package for transforms APIs. Import all. */
-package object transforms {
+package object transforms extends AllSyntax {
 
   /**
    * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with
