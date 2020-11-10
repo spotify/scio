@@ -22,8 +22,8 @@ import org.apache.beam.sdk.transforms.DoFn
 
 class ParallelCollectFn[T, U](parallelism: Int)(pfn: PartialFunction[T, U])
     extends ParallelLimitedFn[T, U](parallelism) {
-  val isDefined = ClosureCleaner.clean(pfn.isDefinedAt(_)) // defeat closure
-  val g = ClosureCleaner.clean(pfn) // defeat closure
+  val isDefined: T => Boolean = ClosureCleaner.clean(pfn.isDefinedAt(_)) // defeat closure
+  val g: PartialFunction[T, U] = ClosureCleaner.clean(pfn) // defeat closure
   def parallelProcessElement(c: DoFn[T, U]#ProcessContext): Unit =
     if (isDefined(c.element())) {
       c.output(g(c.element()))
@@ -32,7 +32,7 @@ class ParallelCollectFn[T, U](parallelism: Int)(pfn: PartialFunction[T, U])
 
 class ParallelFilterFn[T](parallelism: Int)(f: T => Boolean)
     extends ParallelLimitedFn[T, T](parallelism) {
-  val g = ClosureCleaner.clean(f) // defeat closure
+  val g: T => Boolean = ClosureCleaner.clean(f) // defeat closure
   def parallelProcessElement(c: DoFn[T, T]#ProcessContext): Unit =
     if (g(c.element())) {
       c.output(c.element())
@@ -41,14 +41,14 @@ class ParallelFilterFn[T](parallelism: Int)(f: T => Boolean)
 
 class ParallelMapFn[T, U](parallelism: Int)(f: T => U)
     extends ParallelLimitedFn[T, U](parallelism) {
-  val g = ClosureCleaner.clean(f) // defeat closure
+  val g: T => U = ClosureCleaner.clean(f) // defeat closure
   def parallelProcessElement(c: DoFn[T, U]#ProcessContext): Unit =
     c.output(g(c.element()))
 }
 
 class ParallelFlatMapFn[T, U](parallelism: Int)(f: T => TraversableOnce[U])
     extends ParallelLimitedFn[T, U](parallelism: Int) {
-  val g = ClosureCleaner.clean(f) // defeat closure
+  val g: T => TraversableOnce[U] = ClosureCleaner.clean(f) // defeat closure
   def parallelProcessElement(c: DoFn[T, U]#ProcessContext): Unit = {
     val i = g(c.element()).toIterator
     while (i.hasNext) c.output(i.next())
