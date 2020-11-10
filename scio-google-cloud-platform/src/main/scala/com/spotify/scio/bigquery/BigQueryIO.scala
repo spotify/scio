@@ -38,7 +38,12 @@ import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.TypedRead.Method
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryUtils.ConversionOptions
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryUtils.ConversionOptions.TruncateTimestamps
-import org.apache.beam.sdk.io.gcp.bigquery.{BigQueryAvroUtilsWrapper, BigQueryUtils, SchemaAndRecord, TableDestination}
+import org.apache.beam.sdk.io.gcp.bigquery.{
+  BigQueryAvroUtilsWrapper,
+  BigQueryUtils,
+  SchemaAndRecord,
+  TableDestination
+}
 import org.apache.beam.sdk.io.gcp.{bigquery => beam}
 import org.apache.beam.sdk.io.{Compression, TextIO}
 import org.apache.beam.sdk.transforms.SerializableFunction
@@ -567,7 +572,7 @@ object BigQueryPartitionedTable {
     ): WriteParam = apply(schema, wd, cd, DefaultExtendedErrorInfo)(defaultInsertErrorTransform)
   }
 
-  def apply[T <: HasAnnotation : Coder](
+  def apply[T <: HasAnnotation: Coder](
     writerFn: T => TableRow,
     tableFn: ValueInSingleWindow[T] => TableDestination
   ): BigQueryPartitionedTable[T] = {
@@ -580,10 +585,10 @@ object BigQueryPartitionedTable {
     BigQueryPartitionedTable(writer)(tableFn)
   }
 
-  def apply[T <: TableRow : Coder](
+  def apply[T <: TableRow: Coder](
     schema: TableSchema,
     tableFn: ValueInSingleWindow[T] => TableDestination
-  ) :BigQueryPartitionedTable[T] = {
+  ): BigQueryPartitionedTable[T] = {
     val writer = beam.BigQueryIO
       .write[T]()
       .withFormatFunction(Functions.serializableFn(identity))

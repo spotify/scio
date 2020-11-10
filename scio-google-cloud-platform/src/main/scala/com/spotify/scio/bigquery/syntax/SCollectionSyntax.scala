@@ -206,7 +206,8 @@ final class SCollectionTypedOps[T <: HasAnnotation](private val self: SCollectio
   def saveAsTypedPartitionedTable(
     writeDisposition: WriteDisposition,
     createDisposition: CreateDisposition
-  )(tableFn: ValueInSingleWindow[T] => TableDestination
+  )(
+    tableFn: ValueInSingleWindow[T] => TableDestination
   )(implicit tt: TypeTag[T], coder: Coder[T]): ClosedTap[Nothing] = {
     val bqt = BigQueryType[T]
     val writeFn: T => TableRow = bqt.toTableRow

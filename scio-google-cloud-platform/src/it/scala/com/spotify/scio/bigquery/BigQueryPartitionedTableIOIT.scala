@@ -22,7 +22,6 @@ import java.util.UUID
 import com.google.api.services.bigquery.model.TableReference
 import com.spotify.scio.ScioContext
 import com.spotify.scio.bigquery.client.BigQuery
-import com.spotify.scio.bigquery.dynamic.DynamicBigQueryIT.{Record, newRecord, tableRef}
 import com.spotify.scio.testing.util.ItUtils
 import org.apache.beam.sdk.io.gcp.bigquery.TableDestination
 import org.apache.beam.sdk.options._
