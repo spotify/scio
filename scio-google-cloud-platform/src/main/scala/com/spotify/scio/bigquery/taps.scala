@@ -139,13 +139,16 @@ final case class BigQueryTaps(self: Taps) {
     mkTap(
       s"BigQuery direct read table: $table",
       () => bqc.tables.exists(table),
-      () =>
-        BigQueryStorage(Table.Ref(table)).tap(
+      () => {
+        val selectedFields = readOptions.getSelectedFieldsList.asScala.toList
+        val rowRestriction = readOptions.getRowRestriction
+        BigQueryStorage(Table.Ref(table), selectedFields, rowRestriction).tap(
           BigQueryStorage.ReadParam(
-            readOptions.getSelectedFieldsList.asScala.toList,
-            Option(readOptions.getRowRestriction)
+            selectedFields,
+            Option(rowRestriction)
           )
         )
+      }
     )
 
   def typedBigQueryStorage[T: TypeTag: Coder](
@@ -156,15 +159,18 @@ final case class BigQueryTaps(self: Taps) {
     mkTap(
       s"BigQuery direct read table: $table",
       () => bqc.tables.exists(table),
-      () =>
-        BigQueryStorage(Table.Ref(table))
+      () => {
+        val selectedFields = readOptions.getSelectedFieldsList.asScala.toList
+        val rowRestriction = readOptions.getRowRestriction
+        BigQueryStorage(Table.Ref(table), selectedFields, rowRestriction)
           .tap(
             BigQueryStorage.ReadParam(
-              readOptions.getSelectedFieldsList.asScala.toList,
-              Option(readOptions.getRowRestriction)
+              selectedFields,
+              Option(rowRestriction)
             )
           )
           .map(fn)
+      }
     )
   }
 

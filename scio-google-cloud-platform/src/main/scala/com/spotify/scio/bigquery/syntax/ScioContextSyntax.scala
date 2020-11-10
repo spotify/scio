@@ -105,7 +105,7 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
     selectedFields: List[String] = BigQueryStorage.ReadParam.DefaultSelectFields,
     rowRestriction: String = null
   ): SCollection[TableRow] =
-    self.read(BigQueryStorage(table))(
+    self.read(BigQueryStorage(table, selectedFields, rowRestriction))(
       BigQueryStorage.ReadParam(selectedFields, Option(rowRestriction))
     )
 
