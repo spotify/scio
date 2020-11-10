@@ -24,13 +24,13 @@ import com.google.api.services.bigquery.model.TableSchema
 import com.spotify.scio.ScioContext
 import com.spotify.scio.bigquery.ExtendedErrorInfo._
 import com.spotify.scio.bigquery.client.BigQuery
+import com.spotify.scio.bigquery.dynamic.DynamicDestinationsUtil
 import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
 import com.spotify.scio.coders._
-import com.spotify.scio.io.{ScioIO, Tap, TapOf, TestIO}
+import com.spotify.scio.io.{EmptyTap, EmptyTapOf, ScioIO, Tap, TapOf, TapT, TestIO}
 import com.spotify.scio.schemas.{Schema, SchemaMaterializer}
-import com.spotify.scio.util.ScioUtil
+import com.spotify.scio.util.{Functions, ScioUtil}
 import com.spotify.scio.values.SCollection
-import com.spotify.scio.io.TapT
 import com.twitter.chill.ClosureCleaner
 import org.apache.avro.generic.GenericRecord
 import org.apache.beam.sdk.extensions.gcp.options.GcpOptions
@@ -38,15 +38,15 @@ import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.TypedRead.Method
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryUtils.ConversionOptions
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryUtils.ConversionOptions.TruncateTimestamps
-import org.apache.beam.sdk.io.gcp.bigquery.{BigQueryUtils, SchemaAndRecord}
+import org.apache.beam.sdk.io.gcp.bigquery.{BigQueryAvroUtilsWrapper, BigQueryUtils, SchemaAndRecord, TableDestination}
 import org.apache.beam.sdk.io.gcp.{bigquery => beam}
 import org.apache.beam.sdk.io.{Compression, TextIO}
 import org.apache.beam.sdk.transforms.SerializableFunction
+import org.apache.beam.sdk.values.ValueInSingleWindow
 
 import scala.jdk.CollectionConverters._
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
-import org.apache.beam.sdk.io.gcp.bigquery.BigQueryAvroUtilsWrapper
 
 private object Reads {
   private[this] val cache = new ConcurrentHashMap[ScioContext, BigQuery]()
@@ -493,6 +493,103 @@ object TableRowJsonIO {
     numShards: Int = WriteParam.DefaultNumShards,
     compression: Compression = WriteParam.DefaultCompression
   )
+}
+
+final case class BigQueryPartitionedTable[T: Coder](writer: beam.BigQueryIO.Write[T])(
+  tableFn: ValueInSingleWindow[T] => TableDestination
+) extends ScioIO[T] {
+
+  override val tapT: TapT.Aux[T, Nothing] = EmptyTapOf[T]
+  override type ReadP = Nothing // WriteOnly
+  override type WriteP = BigQueryPartitionedTable.WriteParam
+
+  override protected def read(sc: ScioContext, params: ReadP): SCollection[T] =
+    throw new UnsupportedOperationException("BigQueryPartitionedTable is read-only")
+
+  override protected def write(self: SCollection[T], params: WriteP): Tap[Nothing] = {
+    if (self.context.isTest) {
+      throw new NotImplementedError(
+        "BigQuery with partitioned table destinations cannot be used in a test context"
+      )
+    } else {
+      val destinations = DynamicDestinationsUtil.tableFn(tableFn, params.schema)
+
+      var transform = writer.to(destinations)
+
+      if (params.createDisposition != null) {
+        transform = transform.withCreateDisposition(params.createDisposition)
+      }
+      if (params.writeDisposition != null) {
+        transform = transform.withWriteDisposition(params.writeDisposition)
+      }
+
+      transform = params.extendedErrorInfo match {
+        case Disabled => transform
+        case Enabled  => transform.withExtendedErrorInfo()
+      }
+
+      val wr = self.applyInternal(transform)
+
+      params.insertErrorTransform(params.extendedErrorInfo.coll(self.context, wr))
+    }
+    EmptyTap
+  }
+  override def tap(params: Nothing): Tap[Nothing] = EmptyTap
+}
+
+object BigQueryPartitionedTable {
+  trait WriteParam {
+    val schema: TableSchema
+    val writeDisposition: WriteDisposition
+    val createDisposition: CreateDisposition
+    val extendedErrorInfo: ExtendedErrorInfo
+    val insertErrorTransform: SCollection[extendedErrorInfo.Info] => Unit
+  }
+
+  object WriteParam extends Writes.WriteParamDefauls {
+    @inline final def apply(
+      schema: TableSchema,
+      wd: WriteDisposition,
+      cd: CreateDisposition,
+      ei: ExtendedErrorInfo
+    )(it: SCollection[ei.Info] => Unit): WriteParam = new WriteParam {
+      val schema: TableSchema = schema
+      val writeDisposition: WriteDisposition = wd
+      val createDisposition: CreateDisposition = cd
+      val extendedErrorInfo: ei.type = ei
+      val insertErrorTransform: SCollection[extendedErrorInfo.Info] => Unit = it
+    }
+
+    @inline final def apply(
+      schema: TableSchema,
+      wd: WriteDisposition = DefaultWriteDisposition,
+      cd: CreateDisposition = DefaultCreateDisposition
+    ): WriteParam = apply(schema, wd, cd, DefaultExtendedErrorInfo)(defaultInsertErrorTransform)
+  }
+
+  def apply[T <: HasAnnotation : Coder](
+    writerFn: T => TableRow,
+    tableFn: ValueInSingleWindow[T] => TableDestination
+  ): BigQueryPartitionedTable[T] = {
+
+    val wFn = ClosureCleaner.clean(writerFn)
+    val writer = beam.BigQueryIO
+      .write[T]()
+      .withFormatFunction(Functions.serializableFn(wFn))
+
+    BigQueryPartitionedTable(writer)(tableFn)
+  }
+
+  def apply[T <: TableRow : Coder](
+    schema: TableSchema,
+    tableFn: ValueInSingleWindow[T] => TableDestination
+  ) :BigQueryPartitionedTable[T] = {
+    val writer = beam.BigQueryIO
+      .write[T]()
+      .withFormatFunction(Functions.serializableFn(identity))
+
+    BigQueryPartitionedTable(writer)(tableFn)
+  }
 }
 
 object BigQueryTyped {

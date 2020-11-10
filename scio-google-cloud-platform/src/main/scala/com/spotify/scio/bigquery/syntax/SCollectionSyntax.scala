@@ -23,8 +23,11 @@ import com.spotify.scio.bigquery.BigQueryTyped.BeamSchema.{WriteParam => TypedWr
 import com.spotify.scio.bigquery.TableRowJsonIO.{WriteParam => TableRowJsonWriteParam}
 import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
 import com.spotify.scio.bigquery.{
+  BigQueryPartitionedTable,
   BigQueryTable,
   BigQueryTyped,
+  BigQueryTypedTable,
+  Table,
   TableRow,
   TableRowJsonIO,
   TimePartitioning
@@ -42,7 +45,10 @@ import com.spotify.scio.bigquery.Table
 import com.spotify.scio.schemas.Schema
 import com.spotify.scio.bigquery.BigQueryTypedTable
 import com.spotify.scio.bigquery.BigQueryTypedTable.Format
+import com.spotify.scio.bigquery.types.BigQueryType
 import org.apache.avro.generic.GenericRecord
+import org.apache.beam.sdk.io.gcp.bigquery.TableDestination
+import org.apache.beam.sdk.values.ValueInSingleWindow
 
 /** Enhanced version of [[SCollection]] with BigQuery methods. */
 final class SCollectionTableRowOps[T <: TableRow](private val self: SCollection[T]) extends AnyVal {
@@ -84,6 +90,17 @@ final class SCollectionTableRowOps[T <: TableRow](private val self: SCollection[
     val param = TableRowJsonWriteParam(numShards, compression)
     self.covary[TableRow].write(TableRowJsonIO(path))(param)
   }
+
+  def saveAsPartitionedTable(
+    schema: TableSchema,
+    writeDisposition: WriteDisposition,
+    createDisposition: CreateDisposition
+  )(tableFn: ValueInSingleWindow[TableRow] => TableDestination): ClosedTap[Nothing] = {
+    val param = BigQueryPartitionedTable.WriteParam(schema, writeDisposition, createDisposition)
+    self
+      .covary[TableRow]
+      .write(BigQueryPartitionedTable(schema, tableFn))(param)
+  }
 }
 
 /** Enhanced version of [[SCollection]] with BigQuery methods */
@@ -119,7 +136,6 @@ final class SCollectionGenericRecordOps[T <: GenericRecord](private val self: SC
         )
       )(param)
   }
-
 }
 
 final class SCollectionBeamSchemaOps[T: ClassTag](private val self: SCollection[T]) {
@@ -185,6 +201,17 @@ final class SCollectionTypedOps[T <: HasAnnotation](private val self: SCollectio
   )(implicit tt: TypeTag[T], ct: ClassTag[T], coder: Coder[T]): ClosedTap[T] = {
     val param = TableWriteParam(writeDisposition, createDisposition, timePartitioning)
     self.write(BigQueryTyped.Table[T](table))(param)
+  }
+
+  def saveAsTypedPartitionedTable(
+    writeDisposition: WriteDisposition,
+    createDisposition: CreateDisposition
+  )(tableFn: ValueInSingleWindow[T] => TableDestination
+  )(implicit tt: TypeTag[T], coder: Coder[T]): ClosedTap[Nothing] = {
+    val bqt = BigQueryType[T]
+    val writeFn: T => TableRow = bqt.toTableRow
+    val param = BigQueryPartitionedTable.WriteParam(bqt.schema, writeDisposition, createDisposition)
+    self.write(BigQueryPartitionedTable(writeFn, tableFn))(param)
   }
 }
 

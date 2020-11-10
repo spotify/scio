@@ -27,7 +27,7 @@ import org.apache.beam.sdk.io.gcp.bigquery.{
 import org.apache.beam.sdk.extensions.gcp.util.Transport
 import org.apache.beam.sdk.values.ValueInSingleWindow
 
-private[dynamic] object DynamicDestinationsUtil {
+private[bigquery] object DynamicDestinationsUtil {
   def constant[T](
     dst: TableDestination,
     schema: TableSchema
