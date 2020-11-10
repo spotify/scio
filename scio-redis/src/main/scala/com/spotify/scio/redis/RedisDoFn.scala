@@ -49,14 +49,12 @@ abstract class RedisDoFn[I, O](
 
   private case class Result(input: I, output: O, ts: Instant, w: BoundedWindow)
 
-  abstract class Request {
-    def create(pipeline: Pipeline): List[Response[_]]
-  }
-
   final class Client extends Serializable {
+    type Request = Pipeline => List[Response[_]]
+
     def request(request: Request): Future[List[_]] = {
       val promise = Promise[List[_]]()
-      requests.add((request.create(pipeline), promise))
+      requests.add((request(pipeline), promise))
       promise.future
     }
   }
