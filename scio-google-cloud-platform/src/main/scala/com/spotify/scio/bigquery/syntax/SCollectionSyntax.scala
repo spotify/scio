@@ -26,8 +26,6 @@ import com.spotify.scio.bigquery.{
   BigQueryPartitionedTable,
   BigQueryTable,
   BigQueryTyped,
-  BigQueryTypedTable,
-  Table,
   TableRow,
   TableRowJsonIO,
   TimePartitioning
