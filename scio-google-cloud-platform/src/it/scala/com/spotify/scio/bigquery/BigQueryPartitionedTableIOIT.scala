@@ -29,11 +29,10 @@ import org.apache.beam.sdk.values.ValueInSingleWindow
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-class BigQueryPartitionedTableIOIT extends AnyFlatSpec with Matchers {
-  import BigQueryIOIT._
-  import ItUtils.project
+object BigQueryPartitionedTableIOIT {
   val projectId = "data-integration-test"
-  val datasetId = "bigquery_dynamic_it"
+  val datasetId = "bigquery_partitioned_it"
+  val tempLocation: String = ItUtils.gcpTempLocation("bigquery_partitioned_it")
 
   def tableRef(prefix: String, name: String): TableReference =
     new TableReference()
@@ -45,6 +44,12 @@ class BigQueryPartitionedTableIOIT extends AnyFlatSpec with Matchers {
   case class Record(key: Int, value: String)
 
   def newRecord(x: Int): Record = Record(x, x.toString)
+}
+
+class BigQueryPartitionedTableIOIT extends AnyFlatSpec with Matchers {
+
+  import BigQueryPartitionedTableIOIT._
+  import ItUtils.project
 
   private val bq = BigQuery.defaultInstance()
   private val options: PipelineOptions = PipelineOptionsFactory
@@ -61,6 +66,26 @@ class BigQueryPartitionedTableIOIT extends AnyFlatSpec with Matchers {
         v: ValueInSingleWindow[Record] =>
           val mod = v.getValue.key % 2
           new TableDestination(tableRef(prefix, mod.toString), s"key % 10 == $mod")
+      }
+    sc.run()
+
+    val expected = (1 to 3).map(newRecord).toSet
+    val rows0 = bq.getTypedRows[Record](tableRef(prefix, "0").asTableSpec).toSet
+    val rows1 = bq.getTypedRows[Record](tableRef(prefix, "1").asTableSpec).toSet
+    rows0 shouldBe expected.filter(_.key % 2 == 0)
+    rows1 shouldBe expected.filter(_.key % 2 == 1)
+  }
+
+  it should "support TableRow output" in {
+    val prefix = UUID.randomUUID().toString.replaceAll("-", "")
+    val sc = ScioContext(options)
+
+    sc.parallelize(1 to 3)
+      .map(newRecord)
+      .map(Record.toTableRow)
+      .saveAsPartitionedTable(Record.schema, WRITE_EMPTY, CREATE_IF_NEEDED) { v =>
+        val mod = v.getValue.get("key").toString.toInt % 2
+        new TableDestination(tableRef(prefix, mod.toString), s"key % 10 == $mod")
       }
     sc.run()
 
