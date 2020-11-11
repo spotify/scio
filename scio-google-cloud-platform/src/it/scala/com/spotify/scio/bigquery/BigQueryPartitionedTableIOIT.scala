@@ -31,8 +31,8 @@ import org.scalatest.matchers.should.Matchers
 
 object BigQueryPartitionedTableIOIT {
   val projectId = "data-integration-test"
-  val datasetId = "bigquery_partitioned_it"
-  val tempLocation: String = ItUtils.gcpTempLocation("bigquery_partitioned_it")
+  val datasetId = "bigquery_dynamic_it"
+  val tempLocation: String = ItUtils.gcpTempLocation("bigquery_dynamic_it")
 
   def tableRef(prefix: String, name: String): TableReference =
     new TableReference()

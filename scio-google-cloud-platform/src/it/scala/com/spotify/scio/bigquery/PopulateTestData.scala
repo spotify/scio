@@ -125,7 +125,7 @@ object BigQueryTestData {
     // TypedBigQueryIT
     ensureDatasetExists(bq, projectId, "bigquery_avro_it", "EU")
 
-    // DynamicBigQueryIT
+    // BigQueryPartitionedTableIOIT
     ensureDatasetExists(bq, projectId, "bigquery_dynamic_it", "EU")
 
     // BeamSchemaIT

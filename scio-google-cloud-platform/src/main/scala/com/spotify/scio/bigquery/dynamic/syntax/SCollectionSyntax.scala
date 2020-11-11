@@ -100,6 +100,7 @@ final class DynamicBigQueryOps[T](private val self: SCollection[T]) extends AnyV
   }
 }
 
+@deprecated("use SCollectionTableRowOps instead")
 /**
  * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with dynamic
  * destinations methods.

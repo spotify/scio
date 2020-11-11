@@ -89,6 +89,11 @@ final class SCollectionTableRowOps[T <: TableRow](private val self: SCollection[
     self.covary[TableRow].write(TableRowJsonIO(path))(param)
   }
 
+  /**
+   * Save this SCollection to partitioned BigQuery tables using the specified table function.
+   * Note that elements must be of type
+   * [[com.google.api.services.bigquery.model.TableRow TableRow]].
+   */
   def saveAsPartitionedTable(
     schema: TableSchema,
     writeDisposition: WriteDisposition,
@@ -202,7 +207,7 @@ final class SCollectionTypedOps[T <: HasAnnotation](private val self: SCollectio
   }
 
   /**
-   * Save this SCollection to dynamic BigQuery tables using the specified table function.
+   * Save this SCollection to partitioned BigQuery tables using the specified table function.
    * Note that element type `T` must be annotated with
    * [[com.spotify.scio.bigquery.types.BigQueryType BigQueryType]].
    */
