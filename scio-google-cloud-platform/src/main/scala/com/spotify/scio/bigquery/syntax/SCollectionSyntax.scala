@@ -201,6 +201,11 @@ final class SCollectionTypedOps[T <: HasAnnotation](private val self: SCollectio
     self.write(BigQueryTyped.Table[T](table))(param)
   }
 
+  /**
+   * Save this SCollection to dynamic BigQuery tables using the specified table function.
+   * Note that element type `T` must be annotated with
+   * [[com.spotify.scio.bigquery.types.BigQueryType BigQueryType]].
+   */
   def saveAsTypedPartitionedTable(
     writeDisposition: WriteDisposition,
     createDisposition: CreateDisposition

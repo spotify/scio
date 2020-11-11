@@ -124,7 +124,7 @@ final class DynamicTableRowBigQueryOps[T <: TableRow](private val self: SCollect
       createDisposition
     )
 }
-
+@deprecated("use SCollectionTypedOps instead")
 /**
  * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with dynamic
  * destinations methods.
