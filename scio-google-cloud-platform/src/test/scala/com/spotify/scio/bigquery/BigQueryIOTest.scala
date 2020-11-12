@@ -17,7 +17,7 @@
 
 package com.spotify.scio.bigquery
 
-import com.spotify.scio.ScioContext
+import com.spotify.scio.{ContextAndArgs, ScioContext}
 import com.spotify.scio.testing._
 import org.apache.beam.sdk.Pipeline.PipelineVisitor
 import org.apache.beam.sdk.io.Read
@@ -67,7 +67,7 @@ object BigQueryIOTest {
 
 }
 
-final class BigQueyIOTest extends ScioIOSpec {
+final class BigQueryIOTest extends ScioIOSpec {
   import BigQueryIOTest._
 
   "BigQueryIO" should "work with TableRow" in {
@@ -125,10 +125,31 @@ final class BigQueyIOTest extends ScioIOSpec {
     unconsumedReads(context) shouldBe empty
   }
 
+  it should "read the same input table with different predicate and projections" in {
+
+    JobTest[BigQueryJobReadingTheSameTableWthDifferentPredicateAndProjections.type]
+    .args("--input=table.in")
+    .input(BigQueryIO[TableRow]("table.in", List("a"), Some("a > 0")), (1 to 3).map(x => TableRow("x" -> x.toString)))
+    .input(BigQueryIO[TableRow]("table.in", List("b"), Some("b > 0")), (1 to 3).map(x => TableRow("x" -> x.toString)))
+    .run()
+
+  }
+
   "TableRowJsonIO" should "work" in {
     val xs = (1 to 100).map(x => TableRow("x" -> x.toString))
     testTap(xs)(_.saveAsTableRowJsonFile(_))(".json")
     testJobTest(xs)(TableRowJsonIO(_))(_.tableRowJsonFile(_))(_.saveAsTableRowJsonFile(_))
   }
 
+}
+
+
+object BigQueryJobReadingTheSameTableWthDifferentPredicateAndProjections {
+  def main(cmdlineArgs: Array[String]): Unit = {
+    val (sc, args) = ContextAndArgs(cmdlineArgs)
+    sc.bigQueryStorage(Table.Spec(args("input")), List("a"), "a > 0")
+    sc.bigQueryStorage(Table.Spec(args("input")), List("b"), "b > 0")
+    sc.run()
+    ()
+  }
 }

@@ -131,6 +131,11 @@ object BigQueryIO {
         case q: Query => s"BigQueryIO(${q.underlying})"
       }
     }
+
+  @inline final def apply[T](id: String, selectedFields: List[String], rowRestriction: Option[String]): BigQueryIO[T] =
+    new BigQueryIO[T] with TestIO[T] {
+      override def testId: String = s"BigQueryIO($id, List(${selectedFields.mkString(",")}), $rowRestriction)"
+    }
 }
 object BigQueryTypedSelect {
   object ReadParam {
@@ -404,25 +409,25 @@ object BigQueryTable {
 }
 
 /** Get an IO for a BigQuery table using the storage API. */
-final case class BigQueryStorage(table: Table) extends BigQueryIO[TableRow] {
-  override type ReadP = BigQueryStorage.ReadParam
+final case class BigQueryStorage(table: Table, selectedFields: List[String], rowRestriction: Option[String]) extends BigQueryIO[TableRow] {
+  override type ReadP = Unit
   override type WriteP = Nothing // ReadOnly
 
-  override def testId: String = s"BigQueryIO(${table.spec})"
+  override def testId: String = s"BigQueryIO(${table.spec}, List(${selectedFields.mkString(",")}), $rowRestriction)"
 
   override protected def read(sc: ScioContext, params: ReadP): SCollection[TableRow] =
     Reads.bqReadStorage(sc)(
       beam.BigQueryIO.readTableRows(),
       table,
-      params.selectFields,
-      params.rowRestriction
+      selectedFields,
+      rowRestriction
     )
 
   override protected def write(data: SCollection[TableRow], params: WriteP): Tap[TableRow] =
     throw new UnsupportedOperationException("BigQueryStorage is read-only")
 
   override def tap(read: ReadP): Tap[TableRow] = {
-    val readOptions = StorageUtil.tableReadOptions(read.selectFields, read.rowRestriction)
+    val readOptions = StorageUtil.tableReadOptions(selectedFields, rowRestriction)
     BigQueryStorageTap(table, readOptions)
   }
 }
