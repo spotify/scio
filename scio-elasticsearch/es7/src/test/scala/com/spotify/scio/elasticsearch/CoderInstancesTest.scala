@@ -33,7 +33,7 @@ import scala.jdk.CollectionConverters._
 class CoderInstancesTest extends AnyFlatSpec with Matchers with CoderInstances {
   import com.spotify.scio.testing.CoderAssertions._
 
-  val indexRequest: IndexRequest = new IndexRequest("index").id("id").`type`("type")
+  val indexRequest: IndexRequest = new IndexRequest("index").id("id")
   val deleteRequest: DeleteRequest = new DeleteRequest("index2", "id2").version(2)
   val updateRequest: UpdateRequest =
     new UpdateRequest("index3", "id3").doc(Map("key" -> 4).asJava, XContentType.JSON)
@@ -109,4 +109,6 @@ case class FooDocWriteRequest(_index: String, id: String) extends DocWriteReques
   override def indices(): Array[String] = Array("foo")
 
   override def ramBytesUsed(): Long = _index.size + id.size
+
+  override def isRequireAlias(): Boolean = false
 }
