@@ -132,9 +132,14 @@ object BigQueryIO {
       }
     }
 
-  @inline final def apply[T](id: String, selectedFields: List[String], rowRestriction: Option[String]): BigQueryIO[T] =
+  @inline final def apply[T](
+    id: String,
+    selectedFields: List[String],
+    rowRestriction: Option[String]
+  ): BigQueryIO[T] =
     new BigQueryIO[T] with TestIO[T] {
-      override def testId: String = s"BigQueryIO($id, List(${selectedFields.mkString(",")}), $rowRestriction)"
+      override def testId: String =
+        s"BigQueryIO($id, List(${selectedFields.mkString(",")}), $rowRestriction)"
     }
 }
 object BigQueryTypedSelect {
@@ -409,11 +414,16 @@ object BigQueryTable {
 }
 
 /** Get an IO for a BigQuery table using the storage API. */
-final case class BigQueryStorage(table: Table, selectedFields: List[String], rowRestriction: Option[String]) extends BigQueryIO[TableRow] {
+final case class BigQueryStorage(
+  table: Table,
+  selectedFields: List[String],
+  rowRestriction: Option[String]
+) extends BigQueryIO[TableRow] {
   override type ReadP = Unit
   override type WriteP = Nothing // ReadOnly
 
-  override def testId: String = s"BigQueryIO(${table.spec}, List(${selectedFields.mkString(",")}), $rowRestriction)"
+  override def testId: String =
+    s"BigQueryIO(${table.spec}, List(${selectedFields.mkString(",")}), $rowRestriction)"
 
   override protected def read(sc: ScioContext, params: ReadP): SCollection[TableRow] =
     Reads.bqReadStorage(sc)(

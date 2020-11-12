@@ -128,10 +128,16 @@ final class BigQueryIOTest extends ScioIOSpec {
   it should "read the same input table with different predicate and projections" in {
 
     JobTest[BigQueryJobReadingTheSameTableWthDifferentPredicateAndProjections.type]
-    .args("--input=table.in")
-    .input(BigQueryIO[TableRow]("table.in", List("a"), Some("a > 0")), (1 to 3).map(x => TableRow("x" -> x.toString)))
-    .input(BigQueryIO[TableRow]("table.in", List("b"), Some("b > 0")), (1 to 3).map(x => TableRow("x" -> x.toString)))
-    .run()
+      .args("--input=table.in")
+      .input(
+        BigQueryIO[TableRow]("table.in", List("a"), Some("a > 0")),
+        (1 to 3).map(x => TableRow("x" -> x.toString))
+      )
+      .input(
+        BigQueryIO[TableRow]("table.in", List("b"), Some("b > 0")),
+        (1 to 3).map(x => TableRow("x" -> x.toString))
+      )
+      .run()
 
   }
 
@@ -142,7 +148,6 @@ final class BigQueryIOTest extends ScioIOSpec {
   }
 
 }
-
 
 object BigQueryJobReadingTheSameTableWthDifferentPredicateAndProjections {
   def main(cmdlineArgs: Array[String]): Unit = {
