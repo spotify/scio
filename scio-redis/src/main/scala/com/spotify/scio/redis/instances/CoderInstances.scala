@@ -17,7 +17,7 @@
 package com.spotify.scio.redis.instances
 
 import com.spotify.scio.coders.Coder
-import com.spotify.scio.redis.write._
+import com.spotify.scio.redis.types._
 
 trait CoderInstances {
 

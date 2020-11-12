@@ -18,9 +18,9 @@
 package com.spotify.scio.redis.syntax
 
 import com.spotify.scio.io.ClosedTap
-import com.spotify.scio.redis.{RedisConnectionOptions, RedisWrite}
+import com.spotify.scio.redis.{RedisConnectionOptions, RedisMutator, RedisWrite}
 import com.spotify.scio.redis.RedisWrite.WriteParam
-import com.spotify.scio.redis.write.{RedisMutation, RedisMutator}
+import com.spotify.scio.redis.types._
 import com.spotify.scio.values.SCollection
 
 final class SCollectionRedisOps[T <: RedisMutation: RedisMutator](
