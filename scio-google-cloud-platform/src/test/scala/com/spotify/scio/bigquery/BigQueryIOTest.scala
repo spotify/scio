@@ -125,9 +125,9 @@ final class BigQueryIOTest extends ScioIOSpec {
     unconsumedReads(context) shouldBe empty
   }
 
-  it should "read the same input table with different predicate and projections" in {
+  it should "read the same input table with different predicate and projections using bigQueryStorage" in {
 
-    JobTest[BigQueryJobReadingTheSameTableWthDifferentPredicateAndProjections.type]
+    JobTest[BigQueryJobReadingTheSameTableWithDifferentPredicateAndProjections.type]
       .args("--input=table.in")
       .input(
         BigQueryIO[TableRow]("table.in", List("a"), Some("a > 0")),
@@ -141,6 +141,22 @@ final class BigQueryIOTest extends ScioIOSpec {
 
   }
 
+  it should "read the same input table with different predicate and projections using typedBigQueryStorage" in {
+
+    JobTest[TypedBigQueryJobReadingTheSameTableWithDifferentPredicateAndProjections.type]
+      .args("--input=table.in")
+      .input(
+        BigQueryIO[BQRecord]("table.in", List("a"), Some("a > 0")),
+        (1 to 3).map(x => BQRecord(x, x.toString, (1 to x).map(_.toString).toList))
+      )
+      .input(
+        BigQueryIO[BQRecord]("table.in", List("b"), Some("b > 0")),
+        (1 to 3).map(x => BQRecord(x, x.toString, (1 to x).map(_.toString).toList))
+      )
+      .run()
+
+  }
+
   "TableRowJsonIO" should "work" in {
     val xs = (1 to 100).map(x => TableRow("x" -> x.toString))
     testTap(xs)(_.saveAsTableRowJsonFile(_))(".json")
@@ -149,11 +165,23 @@ final class BigQueryIOTest extends ScioIOSpec {
 
 }
 
-object BigQueryJobReadingTheSameTableWthDifferentPredicateAndProjections {
+object BigQueryJobReadingTheSameTableWithDifferentPredicateAndProjections {
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
     sc.bigQueryStorage(Table.Spec(args("input")), List("a"), "a > 0")
     sc.bigQueryStorage(Table.Spec(args("input")), List("b"), "b > 0")
+    sc.run()
+    ()
+  }
+}
+
+object TypedBigQueryJobReadingTheSameTableWithDifferentPredicateAndProjections {
+  import BigQueryIOTest._
+
+  def main(cmdlineArgs: Array[String]): Unit = {
+    val (sc, args) = ContextAndArgs(cmdlineArgs)
+    sc.typedBigQueryStorage[BQRecord](Table.Spec(args("input")), List("a"), "a > 0")
+    sc.typedBigQueryStorage[BQRecord](Table.Spec(args("input")), List("b"), "b > 0")
     sc.run()
     ()
   }

@@ -102,7 +102,7 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
    */
   def bigQueryStorage(
     table: Table,
-    selectedFields: List[String] = BigQueryStorage.ReadParam.DefaultSelectFields,
+    selectedFields: List[String] = Nil,
     rowRestriction: String = null
   ): SCollection[TableRow] =
     self.read(BigQueryStorage(table, selectedFields, Option(rowRestriction)))
@@ -160,18 +160,18 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
     } else {
       val table = Table.Spec(bqt.table.get)
       val rr = bqt.rowRestriction
-      val fields = bqt.selectedFields.getOrElse(BigQueryStorage.ReadParam.DefaultSelectFields)
-      val params = BigQueryTyped.Storage.ReadParam(fields, rr)
-      self.read(BigQueryTyped.Storage[T](table))(params)
+      val fields = bqt.selectedFields.getOrElse(Nil)
+      self.read(BigQueryTyped.Storage[T](table, fields, rr))
     }
   }
 
   def typedBigQueryStorage[T <: HasAnnotation: ClassTag: TypeTag: Coder](
     table: Table
   ): SCollection[T] =
-    self.read(BigQueryTyped.Storage[T](table))(
-      BigQueryStorage.ReadParam(
-        BigQueryType[T].selectedFields.getOrElse(BigQueryStorage.ReadParam.DefaultSelectFields),
+    self.read(
+      BigQueryTyped.Storage[T](
+        table,
+        BigQueryType[T].selectedFields.getOrElse(Nil),
         BigQueryType[T].rowRestriction
       )
     )
@@ -181,9 +181,10 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
   ): SCollection[T] = {
     val bqt = BigQueryType[T]
     val table = Table.Spec(bqt.table.get)
-    self.read(BigQueryTyped.Storage[T](table))(
-      BigQueryTyped.Storage.ReadParam(
-        bqt.selectedFields.getOrElse(BigQueryStorage.ReadParam.DefaultSelectFields),
+    self.read(
+      BigQueryTyped.Storage[T](
+        table,
+        bqt.selectedFields.getOrElse(Nil),
         Option(rowRestriction)
       )
     )
@@ -193,9 +194,23 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
     table: Table,
     rowRestriction: String
   ): SCollection[T] =
-    self.read(BigQueryTyped.Storage[T](table))(
-      BigQueryTyped.Storage.ReadParam(
-        BigQueryType[T].selectedFields.getOrElse(BigQueryStorage.ReadParam.DefaultSelectFields),
+    self.read(
+      BigQueryTyped.Storage[T](
+        table,
+        BigQueryType[T].selectedFields.getOrElse(Nil),
+        Option(rowRestriction)
+      )
+    )
+
+  def typedBigQueryStorage[T <: HasAnnotation: ClassTag: TypeTag: Coder](
+    table: Table,
+    selectedFields: List[String],
+    rowRestriction: String
+  ): SCollection[T] =
+    self.read(
+      BigQueryTyped.Storage[T](
+        table,
+        selectedFields,
         Option(rowRestriction)
       )
     )
