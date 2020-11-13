@@ -278,12 +278,10 @@ sealed trait ApproxFilterCompanion {
       logger.info(
         "Partition settings for approximate filter side input of {} keys: " +
           "partitions={}, expectedInsertions={}, sizeBytes={}",
-        Seq(
-          expectedInsertions,
-          settings.partitions,
-          settings.expectedInsertions,
-          settings.sizeBytes
-        )
+         expectedInsertions,
+         settings.partitions,
+         settings.expectedInsertions,
+         settings.sizeBytes
       )
       elems
         .hashPartition(settings.partitions)
