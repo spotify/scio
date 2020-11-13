@@ -29,7 +29,7 @@ import org.apache.beam.sdk.values.ValueInSingleWindow
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-object BigQueryPartitionedTableIOIT {
+object BigQueryDynamicTableIOIT {
   val projectId = "data-integration-test"
   val datasetId = "bigquery_dynamic_it"
   val tempLocation: String = ItUtils.gcpTempLocation("bigquery_dynamic_it")
@@ -46,9 +46,9 @@ object BigQueryPartitionedTableIOIT {
   def newRecord(x: Int): Record = Record(x, x.toString)
 }
 
-class BigQueryPartitionedTableIOIT extends AnyFlatSpec with Matchers {
+class BigQueryDynamicTableIOIT extends AnyFlatSpec with Matchers {
 
-  import BigQueryPartitionedTableIOIT._
+  import BigQueryDynamicTableIOIT._
   import ItUtils.project
 
   private val bq = BigQuery.defaultInstance()
@@ -62,7 +62,7 @@ class BigQueryPartitionedTableIOIT extends AnyFlatSpec with Matchers {
 
     sc.parallelize(1 to 3)
       .map(newRecord)
-      .saveAsTypedPartitionedTable(WRITE_EMPTY, CREATE_IF_NEEDED) {
+      .saveAsDynamicTypedBigQueryTable(WRITE_EMPTY, CREATE_IF_NEEDED) {
         v: ValueInSingleWindow[Record] =>
           val mod = v.getValue.key % 2
           new TableDestination(tableRef(prefix, mod.toString), s"key % 10 == $mod")
@@ -83,7 +83,7 @@ class BigQueryPartitionedTableIOIT extends AnyFlatSpec with Matchers {
     sc.parallelize(1 to 3)
       .map(newRecord)
       .map(Record.toTableRow)
-      .saveAsPartitionedTable(Record.schema, WRITE_EMPTY, CREATE_IF_NEEDED) { v =>
+      .saveAsDynamicBigQueryTable(Record.schema, WRITE_EMPTY, CREATE_IF_NEEDED) { v =>
         val mod = v.getValue.get("key").toString.toInt % 2
         new TableDestination(tableRef(prefix, mod.toString), s"key % 10 == $mod")
       }

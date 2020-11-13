@@ -112,7 +112,7 @@ final class DynamicTableRowBigQueryOps[T <: TableRow](private val self: SCollect
    * Note that elements must be of type
    * [[com.google.api.services.bigquery.model.TableRow TableRow]].
    */
-  @deprecated("use SCollectionTableRowOps.saveAsPartitionedTable instead", since = "0.10.0")
+  @deprecated("use SCollectionTableRowOps.saveAsDynamicBigQueryTable instead", since = "0.10.0")
   def saveAsBigQuery(
     schema: TableSchema,
     writeDisposition: WriteDisposition = null,
@@ -137,7 +137,7 @@ final class DynamicTypedBigQueryOps[T <: HasAnnotation](private val self: SColle
    * Note that element type `T` must be annotated with
    * [[com.spotify.scio.bigquery.types.BigQueryType BigQueryType]].
    */
-  @deprecated("use SCollectionTypedOps.saveAsTypedPartitionedTable instead", since = "0.10.0")
+  @deprecated("use SCollectionTypedOps.saveAsDynamicTypedBigQueryTable instead", since = "0.10.0")
   def saveAsTypedBigQuery(
     writeDisposition: WriteDisposition = null,
     createDisposition: CreateDisposition = null

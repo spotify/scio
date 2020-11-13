@@ -500,21 +500,21 @@ object TableRowJsonIO {
   )
 }
 
-final case class BigQueryPartitionedTable[T: Coder](writer: beam.BigQueryIO.Write[T])(
+final case class BigQueryDynamicTable[T: Coder](writer: beam.BigQueryIO.Write[T])(
   tableFn: ValueInSingleWindow[T] => TableDestination
 ) extends ScioIO[T] {
 
   override val tapT: TapT.Aux[T, Nothing] = EmptyTapOf[T]
   override type ReadP = Nothing // WriteOnly
-  override type WriteP = BigQueryPartitionedTable.WriteParam
+  override type WriteP = BigQueryDynamicTable.WriteParam
 
   override protected def read(sc: ScioContext, params: ReadP): SCollection[T] =
-    throw new UnsupportedOperationException("BigQueryPartitionedTable is read-only")
+    throw new UnsupportedOperationException("BigQueryDynamicTable is read-only")
 
   override protected def write(self: SCollection[T], params: WriteP): Tap[Nothing] = {
     if (self.context.isTest) {
       throw new NotImplementedError(
-        "BigQuery with partitioned table destinations cannot be used in a test context"
+        "BigQuery with dynamic table destinations cannot be used in a test context"
       )
     } else {
       val destinations = DynamicDestinationsUtil.tableFn(tableFn, params.schema)
@@ -542,7 +542,7 @@ final case class BigQueryPartitionedTable[T: Coder](writer: beam.BigQueryIO.Writ
   override def tap(params: Nothing): Tap[Nothing] = EmptyTap
 }
 
-object BigQueryPartitionedTable {
+object BigQueryDynamicTable {
   trait WriteParam {
     val schema: TableSchema
     val writeDisposition: WriteDisposition
@@ -575,25 +575,25 @@ object BigQueryPartitionedTable {
   def apply[T <: HasAnnotation: Coder](
     writerFn: T => TableRow,
     tableFn: ValueInSingleWindow[T] => TableDestination
-  ): BigQueryPartitionedTable[T] = {
+  ): BigQueryDynamicTable[T] = {
 
     val wFn = ClosureCleaner.clean(writerFn)
     val writer = beam.BigQueryIO
       .write[T]()
       .withFormatFunction(Functions.serializableFn(wFn))
 
-    BigQueryPartitionedTable(writer)(tableFn)
+    BigQueryDynamicTable(writer)(tableFn)
   }
 
   def apply[T <: TableRow: Coder](
     schema: TableSchema,
     tableFn: ValueInSingleWindow[T] => TableDestination
-  ): BigQueryPartitionedTable[T] = {
+  ): BigQueryDynamicTable[T] = {
     val writer = beam.BigQueryIO
       .write[T]()
       .withFormatFunction(Functions.serializableFn(identity))
 
-    BigQueryPartitionedTable(writer)(tableFn)
+    BigQueryDynamicTable(writer)(tableFn)
   }
 }
 

@@ -23,7 +23,7 @@ import com.spotify.scio.bigquery.BigQueryTyped.BeamSchema.{WriteParam => TypedWr
 import com.spotify.scio.bigquery.TableRowJsonIO.{WriteParam => TableRowJsonWriteParam}
 import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
 import com.spotify.scio.bigquery.{
-  BigQueryPartitionedTable,
+  BigQueryDynamicTable,
   BigQueryTable,
   BigQueryTyped,
   TableRow,
@@ -94,15 +94,15 @@ final class SCollectionTableRowOps[T <: TableRow](private val self: SCollection[
    * Note that elements must be of type
    * [[com.google.api.services.bigquery.model.TableRow TableRow]].
    */
-  def saveAsPartitionedTable(
+  def saveAsDynamicBigQueryTable(
     schema: TableSchema,
     writeDisposition: WriteDisposition,
     createDisposition: CreateDisposition
   )(tableFn: ValueInSingleWindow[TableRow] => TableDestination): ClosedTap[Nothing] = {
-    val param = BigQueryPartitionedTable.WriteParam(schema, writeDisposition, createDisposition)
+    val param = BigQueryDynamicTable.WriteParam(schema, writeDisposition, createDisposition)
     self
       .covary[TableRow]
-      .write(BigQueryPartitionedTable(schema, tableFn))(param)
+      .write(BigQueryDynamicTable(schema, tableFn))(param)
   }
 }
 
@@ -211,7 +211,7 @@ final class SCollectionTypedOps[T <: HasAnnotation](private val self: SCollectio
    * Note that element type `T` must be annotated with
    * [[com.spotify.scio.bigquery.types.BigQueryType BigQueryType]].
    */
-  def saveAsTypedPartitionedTable(
+  def saveAsDynamicTypedBigQueryTable(
     writeDisposition: WriteDisposition,
     createDisposition: CreateDisposition
   )(
@@ -219,8 +219,8 @@ final class SCollectionTypedOps[T <: HasAnnotation](private val self: SCollectio
   )(implicit tt: TypeTag[T], coder: Coder[T]): ClosedTap[Nothing] = {
     val bqt = BigQueryType[T]
     val writeFn: T => TableRow = bqt.toTableRow
-    val param = BigQueryPartitionedTable.WriteParam(bqt.schema, writeDisposition, createDisposition)
-    self.write(BigQueryPartitionedTable(writeFn, tableFn))(param)
+    val param = BigQueryDynamicTable.WriteParam(bqt.schema, writeDisposition, createDisposition)
+    self.write(BigQueryDynamicTable(writeFn, tableFn))(param)
   }
 }
 
