@@ -276,12 +276,9 @@ sealed trait ApproxFilterCompanion {
     } else {
       val settings = partitionSettings(expectedInsertions, fpp, 100 * 1024 * 1024)
       logger.info(
-        "Partition settings for approximate filter side input of {} keys: " +
-          "partitions={}, expectedInsertions={}, sizeBytes={}",
-         expectedInsertions,
-         settings.partitions,
-         settings.expectedInsertions,
-         settings.sizeBytes
+        s"Partition settings for approximate filter side input of $expectedInsertions keys: " +
+          "partitions=$settings.partitions, expectedInsertions=$settings.expectedInsertions," +
+          "sizeBytes=$settings.sizeBytes"
       )
       elems
         .hashPartition(settings.partitions)
