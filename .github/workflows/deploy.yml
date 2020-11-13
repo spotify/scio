@@ -1,4 +1,4 @@
-name: Deploy
+name: deploy
 
 env:
   ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY }}
