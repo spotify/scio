@@ -10,27 +10,48 @@ on:
     tags: ["*"]
 
 jobs:
-  build:
+  publish-repl:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2.1.0
+      - name: cache SBT
+        uses: coursier/cache-action@v3
+      - name: java ${{matrix.java}} setup
+        uses: olafurpg/setup-scala@v7
+      - run: sbt scio-repl/assembly
+      - name: Create Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: true
+      - name: Upload Repl
+        uses: actions/upload-release-asset@v1.0.2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: scio-repl/target/scala-2.13/scio-repl.jar
+          asset_name: scio-repl.jar
+          asset_content_type: application/java-archive
+  publish-docs:
     name: Publish documentation
     runs-on: ubuntu-latest
     steps:
       - name: Checkout tag
         uses: actions/checkout@v1
-
       - name: Cache SBT
         uses: coursier/cache-action@v3
-
       - name: Setup Java and Scala
         uses: olafurpg/setup-scala@v5
-
       - name: Setup project
         run: scripts/gha_setup.sh
-
       - name: Build documentation
         run: sbt scio-examples/compile site/makeSite
         env:
           SOCCO: true
-
       - name: Deploy
         uses: JamesIves/github-pages-deploy-action@3.6.2
         with:

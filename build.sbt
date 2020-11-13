@@ -999,7 +999,7 @@ lazy val `scio-repl`: Project = project
           Nil
       }
     },
-    assemblyJarName in assembly := s"scio-repl-${version.value}.jar"
+    assembly / assemblyJarName := "scio-repl.jar"
   )
   .dependsOn(
     `scio-core`,
