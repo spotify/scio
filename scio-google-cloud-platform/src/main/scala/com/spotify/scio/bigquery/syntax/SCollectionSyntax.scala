@@ -212,7 +212,8 @@ final class SCollectionTypedOps[T <: HasAnnotation](private val self: SCollectio
   def saveAsTypedBigQueryTable(
     writeDisposition: WriteDisposition,
     createDisposition: CreateDisposition
-  )(dynamicDestination: DynamicDestinations[T, TableDestination]
+  )(
+    dynamicDestination: DynamicDestinations[T, TableDestination]
   )(implicit tt: TypeTag[T], coder: Coder[T]): ClosedTap[Nothing] = {
     val bqt = BigQueryType[T]
     val writeFn: T => TableRow = bqt.toTableRow

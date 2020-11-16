@@ -24,7 +24,6 @@ import com.google.api.services.bigquery.model.TableSchema
 import com.spotify.scio.ScioContext
 import com.spotify.scio.bigquery.ExtendedErrorInfo._
 import com.spotify.scio.bigquery.client.BigQuery
-import com.spotify.scio.bigquery.dynamic.DynamicDestinationsUtil
 import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
 import com.spotify.scio.coders._
 import com.spotify.scio.io.{EmptyTap, EmptyTapOf, ScioIO, Tap, TapOf, TapT, TestIO}
@@ -43,11 +42,11 @@ import org.apache.beam.sdk.io.gcp.bigquery.{
   BigQueryUtils,
   DynamicDestinations,
   SchemaAndRecord,
-  TableDestination}
+  TableDestination
+}
 import org.apache.beam.sdk.io.gcp.{bigquery => beam}
 import org.apache.beam.sdk.io.{Compression, TextIO}
 import org.apache.beam.sdk.transforms.SerializableFunction
-import org.apache.beam.sdk.values.ValueInSingleWindow
 
 import scala.jdk.CollectionConverters._
 import scala.reflect.ClassTag
@@ -502,7 +501,8 @@ object TableRowJsonIO {
 
 final case class BigQueryDynamicTable[T: Coder](
   writer: beam.BigQueryIO.Write[T],
-  dynamicDestination: DynamicDestinations[T, TableDestination])(
+  dynamicDestination: DynamicDestinations[T, TableDestination]
+)(
 ) extends ScioIO[T] {
 
   override val tapT: TapT.Aux[T, Nothing] = EmptyTapOf[T]
@@ -580,7 +580,7 @@ object BigQueryDynamicTable {
   }
 
   def apply[T <: TableRow: Coder](
-   dynamicDestination: DynamicDestinations[T, TableDestination]
+    dynamicDestination: DynamicDestinations[T, TableDestination]
   ): BigQueryDynamicTable[T] = {
     val writer = beam.BigQueryIO
       .write[T]()
