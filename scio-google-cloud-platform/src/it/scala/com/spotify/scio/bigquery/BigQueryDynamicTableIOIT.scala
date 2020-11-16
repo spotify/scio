@@ -50,11 +50,10 @@ object BigQueryDynamicTableIOIT {
 class BigQueryDynamicTableIOIT extends AnyFlatSpec with Matchers {
 
   import BigQueryDynamicTableIOIT._
-  import ItUtils.project
 
   private val bq = BigQuery.defaultInstance()
   private val options: PipelineOptions = PipelineOptionsFactory
-    .fromArgs(s"--project=$project", s"--tempLocation=$tempLocation")
+    .fromArgs(s"--project=$projectId", s"--tempLocation=$tempLocation")
     .create()
 
   it should "support typed output" in {
