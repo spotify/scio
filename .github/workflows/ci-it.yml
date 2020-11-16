@@ -11,11 +11,11 @@ jobs:
   it-test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2.1.0
+      - uses: actions/checkout@v2.3.4
       - name: cache SBT
-        uses: coursier/cache-action@v3
+        uses: coursier/cache-action@v5
       - name: java ${{matrix.java}} setup
-        uses: olafurpg/setup-scala@v7
+        uses: olafurpg/setup-scala@v10
       - name: Setup project
         run: scripts/gha_setup.sh
       - run: sbt "++${{matrix.scala}} it:test"
@@ -33,11 +33,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout current branch
-        uses: actions/checkout@v1
+        uses: actions/checkout@v2.3.4
       - name: Cache SBT
-        uses: coursier/cache-action@v3
+        uses: coursier/cache-action@v5
       - name: Setup Java and Scala
-        uses: olafurpg/setup-scala@v5
+        uses: olafurpg/setup-scala@v10
         with:
           java-version: 11
       - name: Setup project

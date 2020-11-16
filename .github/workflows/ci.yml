@@ -6,33 +6,33 @@ jobs:
   checks:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2.1.0
+      - uses: actions/checkout@v2.3.4
       - name: cache SBT
-        uses: coursier/cache-action@v3
+        uses: coursier/cache-action@v5
       - name: Java 11 setup
-        uses: olafurpg/setup-scala@v7
+        uses: olafurpg/setup-scala@v10
         with:
           java-version: 11
       - run: sbt "; scalafmtCheckAll; scalafmtSbtCheck" "; scalafixEnable; scalafixAll --check"
   scalafix-rules:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2.1.0
+      - uses: actions/checkout@v2.3.4
       - name: cache SBT
-        uses: coursier/cache-action@v3
+        uses: coursier/cache-action@v5
       - name: Java 11 setup
-        uses: olafurpg/setup-scala@v7
+        uses: olafurpg/setup-scala@v10
         with:
           java-version: 11
       - run: "cd scalafix; sbt test"
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2.1.0
+      - uses: actions/checkout@v2.3.4
       - name: cache SBT
-        uses: coursier/cache-action@v3
+        uses: coursier/cache-action@v5
       - name: java ${{matrix.java}} setup
-        uses: olafurpg/setup-scala@v7
+        uses: olafurpg/setup-scala@v10
         with:
           java-version: ${{matrix.java}}
       - run: sbt "++${{matrix.scala}} test"
@@ -47,22 +47,22 @@ jobs:
   test-coverage:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2.1.0
+      - uses: actions/checkout@v2.3.4
       - name: cache SBT
-        uses: coursier/cache-action@v3
+        uses: coursier/cache-action@v5
       - name: java ${{matrix.java}} setup
-        uses: olafurpg/setup-scala@v7
+        uses: olafurpg/setup-scala@v10
       - run: |
           sbt coverage test coverageReport
           bash <(curl -s https://codecov.io/bash)
   repl-test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2.1.0
+      - uses: actions/checkout@v2.3.4
       - name: cache SBT
-        uses: coursier/cache-action@v3
+        uses: coursier/cache-action@v5
       - name: java ${{matrix.java}} setup
-        uses: olafurpg/setup-scala@v7
+        uses: olafurpg/setup-scala@v10
       - run: ./scripts/circleci_repl.sh
         env:
           SCALA_VERSION: ${{ matrix.scala }}
@@ -77,11 +77,11 @@ jobs:
   mimaReport:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2.1.0
+      - uses: actions/checkout@v2.3.4
       - name: cache SBT
-        uses: coursier/cache-action@v3
+        uses: coursier/cache-action@v5
       - name: java ${{matrix.java}} setup
-        uses: olafurpg/setup-scala@v7
+        uses: olafurpg/setup-scala@v10
         with:
           java-version: ${{matrix.java}}
       - run: sbt "++${{matrix.scala}} mimaReportBinaryIssues"
