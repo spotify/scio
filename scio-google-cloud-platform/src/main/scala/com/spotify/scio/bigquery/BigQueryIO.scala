@@ -41,9 +41,9 @@ import org.apache.beam.sdk.io.gcp.bigquery.BigQueryUtils.ConversionOptions.Trunc
 import org.apache.beam.sdk.io.gcp.bigquery.{
   BigQueryAvroUtilsWrapper,
   BigQueryUtils,
+  DynamicDestinations,
   SchemaAndRecord,
-  TableDestination
-}
+  TableDestination}
 import org.apache.beam.sdk.io.gcp.{bigquery => beam}
 import org.apache.beam.sdk.io.{Compression, TextIO}
 import org.apache.beam.sdk.transforms.SerializableFunction
@@ -500,8 +500,9 @@ object TableRowJsonIO {
   )
 }
 
-final case class BigQueryDynamicTable[T: Coder](writer: beam.BigQueryIO.Write[T])(
-  tableFn: ValueInSingleWindow[T] => TableDestination
+final case class BigQueryDynamicTable[T: Coder](
+  writer: beam.BigQueryIO.Write[T],
+  dynamicDestination: DynamicDestinations[T, TableDestination])(
 ) extends ScioIO[T] {
 
   override val tapT: TapT.Aux[T, Nothing] = EmptyTapOf[T]
@@ -517,9 +518,7 @@ final case class BigQueryDynamicTable[T: Coder](writer: beam.BigQueryIO.Write[T]
         "BigQuery with dynamic table destinations cannot be used in a test context"
       )
     } else {
-      val destinations = DynamicDestinationsUtil.tableFn(tableFn, params.schema)
-
-      var transform = writer.to(destinations)
+      var transform = writer.to(dynamicDestination)
 
       if (params.createDisposition != null) {
         transform = transform.withCreateDisposition(params.createDisposition)
@@ -544,7 +543,6 @@ final case class BigQueryDynamicTable[T: Coder](writer: beam.BigQueryIO.Write[T]
 
 object BigQueryDynamicTable {
   trait WriteParam {
-    val schema: TableSchema
     val writeDisposition: WriteDisposition
     val createDisposition: CreateDisposition
     val extendedErrorInfo: ExtendedErrorInfo
@@ -553,12 +551,10 @@ object BigQueryDynamicTable {
 
   object WriteParam extends Writes.WriteParamDefauls {
     @inline final def apply(
-      schema: TableSchema,
       wd: WriteDisposition,
       cd: CreateDisposition,
       ei: ExtendedErrorInfo
     )(it: SCollection[ei.Info] => Unit): WriteParam = new WriteParam {
-      val schema: TableSchema = schema
       val writeDisposition: WriteDisposition = wd
       val createDisposition: CreateDisposition = cd
       val extendedErrorInfo: ei.type = ei
@@ -566,33 +562,31 @@ object BigQueryDynamicTable {
     }
 
     @inline final def apply(
-      schema: TableSchema,
       wd: WriteDisposition = DefaultWriteDisposition,
       cd: CreateDisposition = DefaultCreateDisposition
-    ): WriteParam = apply(schema, wd, cd, DefaultExtendedErrorInfo)(defaultInsertErrorTransform)
+    ): WriteParam = apply(wd, cd, DefaultExtendedErrorInfo)(defaultInsertErrorTransform)
   }
 
   def apply[T <: HasAnnotation: Coder](
     writerFn: T => TableRow,
-    tableFn: ValueInSingleWindow[T] => TableDestination
+    dynamicDestination: DynamicDestinations[T, TableDestination]
   ): BigQueryDynamicTable[T] = {
-
     val wFn = ClosureCleaner.clean(writerFn)
     val writer = beam.BigQueryIO
       .write[T]()
       .withFormatFunction(Functions.serializableFn(wFn))
 
-    BigQueryDynamicTable(writer)(tableFn)
+    BigQueryDynamicTable(writer, dynamicDestination)
   }
 
   def apply[T <: TableRow: Coder](
-    tableFn: ValueInSingleWindow[T] => TableDestination
+   dynamicDestination: DynamicDestinations[T, TableDestination]
   ): BigQueryDynamicTable[T] = {
     val writer = beam.BigQueryIO
       .write[T]()
       .withFormatFunction(Functions.serializableFn(identity))
 
-    BigQueryDynamicTable(writer)(tableFn)
+    BigQueryDynamicTable(writer, dynamicDestination)
   }
 }
 

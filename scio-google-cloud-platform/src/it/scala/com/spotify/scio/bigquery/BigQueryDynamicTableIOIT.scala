@@ -22,6 +22,7 @@ import java.util.UUID
 import com.google.api.services.bigquery.model.TableReference
 import com.spotify.scio.ScioContext
 import com.spotify.scio.bigquery.client.BigQuery
+import com.spotify.scio.bigquery.dynamic.DynamicDestinationsUtil
 import com.spotify.scio.testing.util.ItUtils
 import org.apache.beam.sdk.io.gcp.bigquery.TableDestination
 import org.apache.beam.sdk.options._
@@ -59,17 +60,21 @@ class BigQueryDynamicTableIOIT extends AnyFlatSpec with Matchers {
   it should "support typed output" in {
     val prefix = UUID.randomUUID().toString.replaceAll("-", "")
     val sc = ScioContext(options)
+    val bqt = BigQueryType[Record]
 
-    sc.parallelize(1 to 3)
+    val tableFn: ValueInSingleWindow[Record] => TableDestination = {
+      v: ValueInSingleWindow[Record] =>
+        val mod = v.getValue.key % 2
+        new TableDestination(tableRef(prefix, mod.toString), s"key % 10 == $mod")
+    }
+    val destination = DynamicDestinationsUtil.tableFn(tableFn, bqt.schema)
+
+    sc.parallelize(1 to 10)
       .map(newRecord)
-      .saveAsTypedBigQueryTable(WRITE_EMPTY, CREATE_IF_NEEDED) {
-        v: ValueInSingleWindow[Record] =>
-          val mod = v.getValue.key % 2
-          new TableDestination(tableRef(prefix, mod.toString), s"key % 10 == $mod")
-      }
+      .saveAsTypedBigQueryTable(WRITE_EMPTY, CREATE_IF_NEEDED)(destination)
     sc.run()
 
-    val expected = (1 to 3).map(newRecord).toSet
+    val expected = (1 to 10).map(newRecord).toSet
     val rows0 = bq.getTypedRows[Record](tableRef(prefix, "0").asTableSpec).toSet
     val rows1 = bq.getTypedRows[Record](tableRef(prefix, "1").asTableSpec).toSet
     rows0 shouldBe expected.filter(_.key % 2 == 0)
@@ -80,16 +85,20 @@ class BigQueryDynamicTableIOIT extends AnyFlatSpec with Matchers {
     val prefix = UUID.randomUUID().toString.replaceAll("-", "")
     val sc = ScioContext(options)
 
-    sc.parallelize(1 to 3)
+    val tableFn: ValueInSingleWindow[Record] => TableDestination = {
+      v: ValueInSingleWindow[Record] =>
+        val mod = v.getValue.key % 2
+        new TableDestination(tableRef(prefix, mod.toString), s"key % 10 == $mod")
+    }
+    val destination = DynamicDestinationsUtil.tableFn(tableFn, Record.schema)
+
+    sc.parallelize(1 to 10)
       .map(newRecord)
       .map(Record.toTableRow)
-      .saveAsBigQueryTable(Record.schema, WRITE_EMPTY, CREATE_IF_NEEDED) { v =>
-        val mod = v.getValue.get("key").toString.toInt % 2
-        new TableDestination(tableRef(prefix, mod.toString), s"key % 10 == $mod")
-      }
+      .saveAsBigQueryTable(WRITE_EMPTY, CREATE_IF_NEEDED)(destination)
     sc.run()
 
-    val expected = (1 to 3).map(newRecord).toSet
+    val expected = (1 to 10).map(newRecord).toSet
     val rows0 = bq.getTypedRows[Record](tableRef(prefix, "0").asTableSpec).toSet
     val rows1 = bq.getTypedRows[Record](tableRef(prefix, "1").asTableSpec).toSet
     rows0 shouldBe expected.filter(_.key % 2 == 0)
