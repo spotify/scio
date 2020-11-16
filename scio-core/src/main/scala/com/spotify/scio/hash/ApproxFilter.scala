@@ -277,7 +277,7 @@ sealed trait ApproxFilterCompanion {
       val settings = partitionSettings(expectedInsertions, fpp, 100 * 1024 * 1024)
       logger.info(
         s"Partition settings for approximate filter side input of $expectedInsertions keys: " +
-          "partitions=$settings.partitions, expectedInsertions=$settings.expectedInsertions," +
+          s"partitions=${settings.partitions}, expectedInsertions=${settings.expectedInsertions}," +
           "sizeBytes=$settings.sizeBytes"
       )
       elems
