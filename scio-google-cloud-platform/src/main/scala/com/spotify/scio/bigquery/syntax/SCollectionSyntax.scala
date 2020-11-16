@@ -94,7 +94,7 @@ final class SCollectionTableRowOps[T <: TableRow](private val self: SCollection[
    * Note that elements must be of type
    * [[com.google.api.services.bigquery.model.TableRow TableRow]].
    */
-  def saveAsDynamicBigQueryTable(
+  def saveAsBigQueryTable(
     schema: TableSchema,
     writeDisposition: WriteDisposition,
     createDisposition: CreateDisposition
@@ -211,7 +211,7 @@ final class SCollectionTypedOps[T <: HasAnnotation](private val self: SCollectio
    * Note that element type `T` must be annotated with
    * [[com.spotify.scio.bigquery.types.BigQueryType BigQueryType]].
    */
-  def saveAsDynamicTypedBigQueryTable(
+  def saveAsTypedBigQueryTable(
     writeDisposition: WriteDisposition,
     createDisposition: CreateDisposition
   )(

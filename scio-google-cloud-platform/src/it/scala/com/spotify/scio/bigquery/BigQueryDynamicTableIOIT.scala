@@ -62,7 +62,7 @@ class BigQueryDynamicTableIOIT extends AnyFlatSpec with Matchers {
 
     sc.parallelize(1 to 3)
       .map(newRecord)
-      .saveAsDynamicTypedBigQueryTable(WRITE_EMPTY, CREATE_IF_NEEDED) {
+      .saveAsTypedBigQueryTable(WRITE_EMPTY, CREATE_IF_NEEDED) {
         v: ValueInSingleWindow[Record] =>
           val mod = v.getValue.key % 2
           new TableDestination(tableRef(prefix, mod.toString), s"key % 10 == $mod")
@@ -83,7 +83,7 @@ class BigQueryDynamicTableIOIT extends AnyFlatSpec with Matchers {
     sc.parallelize(1 to 3)
       .map(newRecord)
       .map(Record.toTableRow)
-      .saveAsDynamicBigQueryTable(Record.schema, WRITE_EMPTY, CREATE_IF_NEEDED) { v =>
+      .saveAsBigQueryTable(Record.schema, WRITE_EMPTY, CREATE_IF_NEEDED) { v =>
         val mod = v.getValue.get("key").toString.toInt % 2
         new TableDestination(tableRef(prefix, mod.toString), s"key % 10 == $mod")
       }
