@@ -102,7 +102,7 @@ final class SCollectionTableRowOps[T <: TableRow](private val self: SCollection[
     val param = BigQueryDynamicTable.WriteParam(schema, writeDisposition, createDisposition)
     self
       .covary[TableRow]
-      .write(BigQueryDynamicTable(schema, tableFn))(param)
+      .write(BigQueryDynamicTable(tableFn))(param)
   }
 }
 

@@ -586,7 +586,6 @@ object BigQueryDynamicTable {
   }
 
   def apply[T <: TableRow: Coder](
-    schema: TableSchema,
     tableFn: ValueInSingleWindow[T] => TableDestination
   ): BigQueryDynamicTable[T] = {
     val writer = beam.BigQueryIO
