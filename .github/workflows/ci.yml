@@ -16,7 +16,7 @@ jobs:
         java: [openjdk@1.11]
     steps:
       - name: Checkout current branch
-        uses: actions/checkout@v1
+        uses: actions/checkout@v2.3.4
 
       - name: Cache SBT
         uses: coursier/cache-action@v3
