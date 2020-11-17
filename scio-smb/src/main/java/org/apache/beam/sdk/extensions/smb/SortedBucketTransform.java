@@ -19,6 +19,7 @@ package org.apache.beam.sdk.extensions.smb;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.text.DecimalFormat;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -311,7 +312,7 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
     public List<? extends BoundedSource<MergedBucket>> split(
         long desiredBundleSizeBytes, PipelineOptions options) throws Exception {
 
-      final int adjustedParallelism =
+      final int numSplits =
           SortedBucketSource.getFanout(
               sourceSpec,
               effectiveParallelism,
@@ -320,17 +321,22 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
               desiredBundleSizeBytes,
               DESIRED_SIZE_BYTES_ADJUSTMENT_FACTOR);
 
-      if (adjustedParallelism == 1) {
-        return Collections.singletonList(this);
-      }
+      final long estSplitSize = estimatedSizeBytes / numSplits;
 
-      LOG.info("Parallelism was adjusted to " + adjustedParallelism);
+      final DecimalFormat sizeFormat = new DecimalFormat("0.00");
+      LOG.info(
+          "Parallelism was adjusted by splitting source of size {} MB into {} source(s) of size {} MB",
+          sizeFormat.format(estimatedSizeBytes / 1000000.0),
+          numSplits,
+          sizeFormat.format(estSplitSize / 1000000.0));
 
-      final long estSplitSize = estimatedSizeBytes / adjustedParallelism;
-
-      return IntStream.range(0, adjustedParallelism)
+      final int totalParallelism = numSplits * effectiveParallelism;
+      return IntStream.range(0, numSplits)
           .boxed()
-          .map(i -> this.split(i, adjustedParallelism, estSplitSize))
+          .map(
+              i ->
+                  this.split(
+                      bucketOffsetId + (i * effectiveParallelism), totalParallelism, estSplitSize))
           .collect(Collectors.toList());
     }
 
