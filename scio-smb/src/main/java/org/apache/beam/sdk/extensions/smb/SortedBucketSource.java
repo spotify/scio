@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -188,6 +189,11 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
     return bucketOffsetId;
   }
 
+  @VisibleForTesting
+  int getEffectiveParallelism() {
+    return effectiveParallelism;
+  }
+
   private SourceSpec<FinalKeyT> getOrComputeSourceSpec() {
     if (this.sourceSpec == null) {
       this.sourceSpec = SourceSpec.from(finalKeyClass, sources);
@@ -216,8 +222,8 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
   @Override
   public List<? extends BoundedSource<KV<FinalKeyT, CoGbkResult>>> split(
       long desiredBundleSizeBytes, PipelineOptions options) throws Exception {
-    final int adjustedParallelism =
-        getFanout(
+    final int numSplits =
+        getNumSplits(
             getOrComputeSourceSpec(),
             effectiveParallelism,
             targetParallelism,
@@ -225,11 +231,18 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
             desiredBundleSizeBytes,
             DESIRED_SIZE_BYTES_ADJUSTMENT_FACTOR);
 
-    LOG.info("Parallelism was adjusted to " + adjustedParallelism);
+    final long estSplitSize = estimatedSizeBytes / numSplits;
 
-    final long estSplitSize = estimatedSizeBytes / adjustedParallelism;
+    final DecimalFormat sizeFormat = new DecimalFormat("0.00");
+    LOG.info(
+        "Parallelism was adjusted by {}splitting source of size {} MB into {} source(s) of size {} MB",
+        effectiveParallelism > 1 ? "further " : "",
+        sizeFormat.format(estimatedSizeBytes / 1000000.0),
+        numSplits,
+        sizeFormat.format(estSplitSize / 1000000.0));
 
-    return IntStream.range(0, adjustedParallelism)
+    final int totalParallelism = numSplits * effectiveParallelism;
+    return IntStream.range(0, numSplits)
         .boxed()
         .map(
             i ->
@@ -237,14 +250,14 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
                     finalKeyClass,
                     sources,
                     targetParallelism,
-                    i,
-                    adjustedParallelism,
+                    bucketOffsetId + (i * effectiveParallelism),
+                    totalParallelism,
                     metricsKey,
                     estSplitSize))
         .collect(Collectors.toList());
   }
 
-  static int getFanout(
+  static int getNumSplits(
       SourceSpec sourceSpec,
       int effectiveParallelism,
       TargetParallelism targetParallelism,

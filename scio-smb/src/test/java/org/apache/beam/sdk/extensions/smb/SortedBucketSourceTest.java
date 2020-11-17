@@ -42,6 +42,7 @@ import org.apache.beam.sdk.PipelineResult;
 import org.apache.beam.sdk.extensions.smb.FileOperations.Writer;
 import org.apache.beam.sdk.extensions.smb.SMBFilenamePolicy.FileAssignment;
 import org.apache.beam.sdk.extensions.smb.SortedBucketSource.Predicate;
+import org.apache.beam.sdk.io.BoundedSource;
 import org.apache.beam.sdk.io.FileSystems;
 import org.apache.beam.sdk.io.LocalResources;
 import org.apache.beam.sdk.io.Read;
@@ -50,6 +51,7 @@ import org.apache.beam.sdk.io.fs.ResolveOptions.StandardResolveOptions;
 import org.apache.beam.sdk.io.fs.ResourceId;
 import org.apache.beam.sdk.metrics.DistributionResult;
 import org.apache.beam.sdk.metrics.MetricResult;
+import org.apache.beam.sdk.options.PipelineOptions;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
 import org.apache.beam.sdk.testing.NeedsRunner;
 import org.apache.beam.sdk.testing.PAssert;
@@ -64,6 +66,7 @@ import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Lists;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Sets;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -446,38 +449,48 @@ public class SortedBucketSourceTest {
 
   @SuppressWarnings("unchecked")
   @Test
-  public void testSourceSplit() throws Exception {
-    writeSmbSourceWithBytes(120, 4, 1, lhsPolicy);
-    writeSmbSourceWithBytes(60, 1, 2, rhsPolicy);
+  public void testRecursiveSourceSplit() throws Exception {
+    writeSmbSourceWithBytes(800, 8, 1, lhsPolicy);
 
     final List<BucketedInput<?, ?>> inputs =
-        Lists.newArrayList(
+        Collections.singletonList(
             new BucketedInput<String, String>(
                 new TupleTag<>("lhs"),
                 lhsPolicy.forDestination().getDirectory(),
                 ".txt",
-                new TestFileOperations()),
-            new BucketedInput<>(
-                new TupleTag<>("rhs"),
-                rhsPolicy.forDestination().getDirectory(),
-                ".txt",
                 new TestFileOperations()));
 
-    final SortedBucketSource source =
-        new SortedBucketSource(String.class, inputs, TargetParallelism.auto());
+    final SortedBucketSource<String> source =
+        new SortedBucketSource<>(String.class, inputs, TargetParallelism.auto());
 
-    Assert.assertEquals(180, source.getEstimatedSizeBytes(PipelineOptionsFactory.create()));
+    Assert.assertEquals(800, source.getEstimatedSizeBytes(PipelineOptionsFactory.create()));
 
-    final List<SortedBucketSource<String>> splitSources =
-        source.split(
-            (long) (50 / DESIRED_SIZE_BYTES_ADJUSTMENT_FACTOR), PipelineOptionsFactory.create());
-    splitSources.sort(Comparator.comparingInt(SortedBucketSource::getBucketOffset));
+    final List<SortedBucketSource<String>> firstSplit = splitAndSort(source, 400);
+    // Split into 2 source of size 400 bytes each
+    Assert.assertEquals(2, firstSplit.size());
+    firstSplit.forEach(s -> Assert.assertEquals(2, s.getEffectiveParallelism()));
 
-    Assert.assertEquals(4, splitSources.size());
-    Assert.assertEquals(0, splitSources.get(0).getBucketOffset());
-    Assert.assertEquals(1, splitSources.get(1).getBucketOffset());
-    Assert.assertEquals(2, splitSources.get(2).getBucketOffset());
-    Assert.assertEquals(3, splitSources.get(3).getBucketOffset());
+    final SortedBucketSource<String> split1 = firstSplit.get(0);
+    final SortedBucketSource<String> split2 = firstSplit.get(1);
+
+    Assert.assertEquals(0, split1.getBucketOffset());
+    Assert.assertEquals(1, split2.getBucketOffset());
+
+    // Split 1 of the sources again into 4 sources of 100 bytes each
+    List<SortedBucketSource<String>> secondSplit = splitAndSort(split1, 100);
+    Assert.assertEquals(4, secondSplit.size());
+    Assert.assertEquals(0, secondSplit.get(0).getBucketOffset());
+    Assert.assertEquals(2, secondSplit.get(1).getBucketOffset());
+    Assert.assertEquals(4, secondSplit.get(2).getBucketOffset());
+    Assert.assertEquals(6, secondSplit.get(3).getBucketOffset());
+    secondSplit.forEach(s -> Assert.assertEquals(8, s.getEffectiveParallelism()));
+
+    // Split the other source again into 2 sources of 200 bytes each
+    secondSplit = splitAndSort(split2, 200);
+    Assert.assertEquals(2, secondSplit.size());
+    Assert.assertEquals(1, secondSplit.get(0).getBucketOffset());
+    Assert.assertEquals(3, secondSplit.get(1).getBucketOffset());
+    secondSplit.forEach(s -> Assert.assertEquals(4, s.getEffectiveParallelism()));
   }
 
   @Test
@@ -497,6 +510,18 @@ public class SortedBucketSourceTest {
                     new BucketedInput<String, String>(
                         new TupleTag<>("lhs"), illegalPath, ".txt", new TestFileOperations())),
                 TargetParallelism.auto()));
+  }
+
+  @SuppressWarnings("unchecked")
+  private static List<SortedBucketSource<String>> splitAndSort(
+      SortedBucketSource<String> source, int desiredByteSize) throws Exception {
+    final PipelineOptions opts = PipelineOptionsFactory.create();
+    final List<SortedBucketSource<String>> splitSources =
+        (List<SortedBucketSource<String>>)
+            source.split((long) (desiredByteSize / DESIRED_SIZE_BYTES_ADJUSTMENT_FACTOR), opts);
+    splitSources.sort(Comparator.comparingInt(SortedBucketSource::getBucketOffset));
+
+    return splitSources;
   }
 
   private void writeSmbSourceWithBytes(
