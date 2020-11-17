@@ -25,6 +25,8 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.math.BigDecimal;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -228,12 +230,13 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
 
     final long estSplitSize = estimatedSizeBytes / adjustedParallelism;
 
+    final DecimalFormat sizeFormat = new DecimalFormat("0.00");
     LOG.info(
-        "Parallelism was adjusted from %d source(s) of size %d MB to %d source(s) of size %d MB",
+        "Parallelism was adjusted from {} source(s) of size {} MB to {} source(s) of size {} MB",
         effectiveParallelism,
-        getEstimatedSizeBytes(options) / 1000000.0,
+        sizeFormat.format((getEstimatedSizeBytes(options) / 1000000.0)),
         adjustedParallelism,
-        estSplitSize / 1000000.0);
+        sizeFormat.format(estSplitSize / 1000000.0));
 
     return IntStream.range(0, adjustedParallelism)
         .boxed()
