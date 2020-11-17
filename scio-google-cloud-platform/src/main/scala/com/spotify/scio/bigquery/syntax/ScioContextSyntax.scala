@@ -102,7 +102,7 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
    */
   def bigQueryStorage(
     table: Table,
-    selectedFields: List[String] = Nil,
+    selectedFields: List[String] = BigQueryStorage.ReadParam.DefaultSelectFields,
     rowRestriction: String = null
   ): SCollection[TableRow] =
     self.read(BigQueryStorage(table, selectedFields, Option(rowRestriction)))
@@ -160,7 +160,7 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
     } else {
       val table = Table.Spec(bqt.table.get)
       val rr = bqt.rowRestriction
-      val fields = bqt.selectedFields.getOrElse(Nil)
+      val fields = bqt.selectedFields.getOrElse(BigQueryStorage.ReadParam.DefaultSelectFields)
       self.read(BigQueryTyped.Storage[T](table, fields, rr))
     }
   }
@@ -171,7 +171,7 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
     self.read(
       BigQueryTyped.Storage[T](
         table,
-        BigQueryType[T].selectedFields.getOrElse(Nil),
+        BigQueryType[T].selectedFields.getOrElse(BigQueryStorage.ReadParam.DefaultSelectFields),
         BigQueryType[T].rowRestriction
       )
     )
@@ -184,7 +184,7 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
     self.read(
       BigQueryTyped.Storage[T](
         table,
-        bqt.selectedFields.getOrElse(Nil),
+        bqt.selectedFields.getOrElse(BigQueryStorage.ReadParam.DefaultSelectFields),
         Option(rowRestriction)
       )
     )
@@ -197,7 +197,7 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
     self.read(
       BigQueryTyped.Storage[T](
         table,
-        BigQueryType[T].selectedFields.getOrElse(Nil),
+        BigQueryType[T].selectedFields.getOrElse(BigQueryStorage.ReadParam.DefaultSelectFields),
         Option(rowRestriction)
       )
     )

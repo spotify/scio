@@ -127,7 +127,7 @@ final class BigQueryIOTest extends ScioIOSpec {
 
   it should "read the same input table with different predicate and projections using bigQueryStorage" in {
 
-    JobTest[BigQueryJobReadingTheSameTableWithDifferentPredicateAndProjections.type]
+    JobTest[JobWithDuplicateInput.type]
       .args("--input=table.in")
       .input(
         BigQueryIO[TableRow]("table.in", List("a"), Some("a > 0")),
@@ -143,7 +143,7 @@ final class BigQueryIOTest extends ScioIOSpec {
 
   it should "read the same input table with different predicate and projections using typedBigQueryStorage" in {
 
-    JobTest[TypedBigQueryJobReadingTheSameTableWithDifferentPredicateAndProjections.type]
+    JobTest[TypedJobWithDuplicateInput.type]
       .args("--input=table.in")
       .input(
         BigQueryIO[BQRecord]("table.in", List("a"), Some("a > 0")),
@@ -165,7 +165,7 @@ final class BigQueryIOTest extends ScioIOSpec {
 
 }
 
-object BigQueryJobReadingTheSameTableWithDifferentPredicateAndProjections {
+object JobWithDuplicateInput {
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
     sc.bigQueryStorage(Table.Spec(args("input")), List("a"), "a > 0")
@@ -175,7 +175,7 @@ object BigQueryJobReadingTheSameTableWithDifferentPredicateAndProjections {
   }
 }
 
-object TypedBigQueryJobReadingTheSameTableWithDifferentPredicateAndProjections {
+object TypedJobWithDuplicateInput {
   import BigQueryIOTest._
 
   def main(cmdlineArgs: Array[String]): Unit = {
