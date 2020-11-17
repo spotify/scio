@@ -226,9 +226,14 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
                 DESIRED_SIZE_BYTES_ADJUSTMENT_FACTOR)
             * effectiveParallelism;
 
-    LOG.info("Parallelism was adjusted from %d to %d", effectiveParallelism, adjustedParallelism);
-
     final long estSplitSize = estimatedSizeBytes / adjustedParallelism;
+
+    LOG.info(
+        "Parallelism was adjusted from %d source(s) of size %d MB to %d source(s) of size %d MB",
+        effectiveParallelism,
+        getEstimatedSizeBytes(options) / 1000000.0,
+        adjustedParallelism,
+        estSplitSize / 1000000.0);
 
     return IntStream.range(0, adjustedParallelism)
         .boxed()
