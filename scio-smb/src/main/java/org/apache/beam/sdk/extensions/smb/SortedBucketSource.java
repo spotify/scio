@@ -218,14 +218,15 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
       long desiredBundleSizeBytes, PipelineOptions options) throws Exception {
     final int adjustedParallelism =
         getFanout(
-            getOrComputeSourceSpec(),
-            effectiveParallelism,
-            targetParallelism,
-            getEstimatedSizeBytes(options),
-            desiredBundleSizeBytes,
-            DESIRED_SIZE_BYTES_ADJUSTMENT_FACTOR);
+                getOrComputeSourceSpec(),
+                effectiveParallelism,
+                targetParallelism,
+                getEstimatedSizeBytes(options),
+                desiredBundleSizeBytes,
+                DESIRED_SIZE_BYTES_ADJUSTMENT_FACTOR)
+            * effectiveParallelism;
 
-    LOG.info("Parallelism was adjusted to " + adjustedParallelism);
+    LOG.info("Parallelism was adjusted from %d to %d", effectiveParallelism, adjustedParallelism);
 
     final long estSplitSize = estimatedSizeBytes / adjustedParallelism;
 
