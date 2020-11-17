@@ -20,7 +20,6 @@ package org.apache.beam.sdk.extensions.smb;
 import java.io.IOException;
 import java.io.Serializable;
 import java.text.DecimalFormat;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -313,7 +312,7 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
         long desiredBundleSizeBytes, PipelineOptions options) throws Exception {
 
       final int numSplits =
-          SortedBucketSource.getFanout(
+          SortedBucketSource.getNumSplits(
               sourceSpec,
               effectiveParallelism,
               targetParallelism,

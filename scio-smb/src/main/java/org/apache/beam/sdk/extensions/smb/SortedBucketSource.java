@@ -25,7 +25,6 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
-import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -224,7 +223,7 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
   public List<? extends BoundedSource<KV<FinalKeyT, CoGbkResult>>> split(
       long desiredBundleSizeBytes, PipelineOptions options) throws Exception {
     final int numSplits =
-        getFanout(
+        getNumSplits(
             getOrComputeSourceSpec(),
             effectiveParallelism,
             targetParallelism,
@@ -257,7 +256,7 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
         .collect(Collectors.toList());
   }
 
-  static int getFanout(
+  static int getNumSplits(
       SourceSpec sourceSpec,
       int effectiveParallelism,
       TargetParallelism targetParallelism,
