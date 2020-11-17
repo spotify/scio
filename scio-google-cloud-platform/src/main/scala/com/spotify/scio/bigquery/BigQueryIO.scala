@@ -131,6 +131,16 @@ object BigQueryIO {
         case q: Query => s"BigQueryIO(${q.underlying})"
       }
     }
+
+  @inline final def apply[T](
+    id: String,
+    selectedFields: List[String],
+    rowRestriction: Option[String]
+  ): BigQueryIO[T] =
+    new BigQueryIO[T] with TestIO[T] {
+      override def testId: String =
+        s"BigQueryIO($id, List(${selectedFields.mkString(",")}), $rowRestriction)"
+    }
 }
 object BigQueryTypedSelect {
   object ReadParam {
@@ -404,35 +414,35 @@ object BigQueryTable {
 }
 
 /** Get an IO for a BigQuery table using the storage API. */
-final case class BigQueryStorage(table: Table) extends BigQueryIO[TableRow] {
-  override type ReadP = BigQueryStorage.ReadParam
+final case class BigQueryStorage(
+  table: Table,
+  selectedFields: List[String],
+  rowRestriction: Option[String]
+) extends BigQueryIO[TableRow] {
+  override type ReadP = Unit
   override type WriteP = Nothing // ReadOnly
 
-  override def testId: String = s"BigQueryIO(${table.spec})"
+  override def testId: String =
+    s"BigQueryIO(${table.spec}, List(${selectedFields.mkString(",")}), $rowRestriction)"
 
   override protected def read(sc: ScioContext, params: ReadP): SCollection[TableRow] =
     Reads.bqReadStorage(sc)(
       beam.BigQueryIO.readTableRows(),
       table,
-      params.selectFields,
-      params.rowRestriction
+      selectedFields,
+      rowRestriction
     )
 
   override protected def write(data: SCollection[TableRow], params: WriteP): Tap[TableRow] =
     throw new UnsupportedOperationException("BigQueryStorage is read-only")
 
   override def tap(read: ReadP): Tap[TableRow] = {
-    val readOptions = StorageUtil.tableReadOptions(read.selectFields, read.rowRestriction)
+    val readOptions = StorageUtil.tableReadOptions(selectedFields, rowRestriction)
     BigQueryStorageTap(table, readOptions)
   }
 }
 
 object BigQueryStorage {
-  final case class ReadParam(
-    selectFields: List[String] = ReadParam.DefaultSelectFields,
-    rowRestriction: Option[String] = ReadParam.DefaultRowRestriction
-  )
-
   object ReadParam {
     private[bigquery] val DefaultSelectFields: List[String] = Nil
     private[bigquery] val DefaultRowRestriction: Option[String] = None
@@ -537,7 +547,7 @@ object BigQueryTyped {
     ): Aux[T, Storage] =
       new IO[T] {
         type F[A <: HasAnnotation] = Storage[A]
-        def impl: Storage[T] = Storage(STable.Spec(t.table))
+        def impl: Storage[T] = Storage(STable.Spec(t.table), Nil, None)
       }
   }
 
@@ -763,12 +773,16 @@ object BigQueryTyped {
   }
 
   /** Get a typed SCollection for a BigQuery table using the storage API. */
-  final case class Storage[T <: HasAnnotation: ClassTag: TypeTag: Coder](table: STable)
-      extends BigQueryIO[T] {
-    override type ReadP = Storage.ReadParam
+  final case class Storage[T <: HasAnnotation: ClassTag: TypeTag: Coder](
+    table: STable,
+    selectedFields: List[String],
+    rowRestriction: Option[String]
+  ) extends BigQueryIO[T] {
+    override type ReadP = Unit
     override type WriteP = Nothing // ReadOnly
 
-    override def testId: String = s"BigQueryIO(${table.spec})"
+    override def testId: String =
+      s"BigQueryIO(${table.spec}, List(${selectedFields.mkString(",")}), $rowRestriction)"
 
     override protected def read(sc: ScioContext, params: ReadP): SCollection[T] = {
       val fromAvro = BigQueryType[T].fromAvro
@@ -777,7 +791,7 @@ object BigQueryTyped {
           override def apply(input: SchemaAndRecord): T = fromAvro(input.getRecord)
         })
         .withCoder(CoderMaterializer.beam(sc, Coder[T]))
-      Reads.bqReadStorage(sc)(reader, table, params.selectFields, params.rowRestriction)
+      Reads.bqReadStorage(sc)(reader, table, selectedFields, rowRestriction)
     }
 
     override protected def write(data: SCollection[T], params: WriteP): Tap[T] =
@@ -785,7 +799,7 @@ object BigQueryTyped {
 
     override def tap(read: ReadP): Tap[T] = {
       val fn = BigQueryType[T].fromTableRow
-      val readOptions = StorageUtil.tableReadOptions(read.selectFields, read.rowRestriction)
+      val readOptions = StorageUtil.tableReadOptions(selectedFields, rowRestriction)
       BigQueryStorageTap(table, readOptions).map(fn)
     }
   }
@@ -815,11 +829,6 @@ object BigQueryTyped {
       throw new UnsupportedOperationException("Storage API is read-only")
 
     override def tap(read: ReadP): Tap[T] = underlying.tap(BigQueryTypedSelect.ReadParam())
-  }
-
-  object Storage {
-    type ReadParam = BigQueryStorage.ReadParam
-    val ReadParam = BigQueryStorage.ReadParam
   }
 
   private[scio] def dynamic[T <: HasAnnotation: ClassTag: TypeTag: Coder](
