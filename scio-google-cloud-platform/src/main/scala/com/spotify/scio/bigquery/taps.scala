@@ -96,7 +96,7 @@ final case class BigQueryTaps(self: Taps) {
     mkTap(
       s"BigQuery Table: $table",
       () => bqc.tables.exists(table),
-      () => BigQueryTable(Table.Ref(table)).tap(())
+      () => BigQueryTypedTable(Table.Ref(table), Format.TableRow).tap(())
     )
 
   /** Get a `Future[Tap[TableRow]]` for BigQuery table. */
