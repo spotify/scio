@@ -21,7 +21,7 @@ jobs:
         uses: coursier/cache-action@v5
 
       - name: Setup Java and Scala
-        uses: olafurpg/setup-scala@v5
+        uses: olafurpg/setup-scala@v10
 
       - name: Setup project
         run: scripts/gha_setup.sh
