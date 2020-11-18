@@ -59,9 +59,9 @@ trait Tap[T] extends Serializable { self =>
 }
 
 case object EmptyTap extends Tap[Nothing] {
-  implicit val nothingCoder: Coder[Nothing] = Coder.xmap[Unit, Nothing](Coder[Unit])(???, ???)
+  implicit def nothingCoder: Coder[Nothing] = Coder.nothingCoder
   override def value: Iterator[Nothing] = Iterator.empty
-  override def open(sc: ScioContext): SCollection[Nothing] = sc.empty[Nothing]
+  override def open(sc: ScioContext): SCollection[Nothing] = sc.empty[Nothing]()
 }
 
 case class UnsupportedTap[T](msg: String) extends Tap[T] {
