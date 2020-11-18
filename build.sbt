@@ -21,7 +21,6 @@ import sbtassembly.AssemblyPlugin.autoImport._
 import com.typesafe.sbt.SbtGit.GitKeys.gitRemoteRepo
 import org.scalafmt.sbt.ScalafmtPlugin.scalafmtConfigSettings
 import bloop.integrations.sbt.BloopDefaults
-import sbtrelease.ReleaseStateTransformations._
 import de.heikoseeberger.sbtheader.CommentCreator
 
 ThisBuild / turbo := true
@@ -109,8 +108,6 @@ val scalaCollectionCompatVersion = "2.2.0"
 ThisBuild / scalafixScalaBinaryVersion := CrossVersion.binaryScalaVersion(scalaVersion.value)
 val excludeLint = SettingKey[Set[Def.KeyedInitialize[_]]]("excludeLintKeys")
 Global / excludeLint := (Global / excludeLint).?.value.getOrElse(Set.empty)
-Global / excludeLint += releaseCrossBuild
-Global / excludeLint += releaseProcess
 Global / excludeLint += sonatypeProfileName
 Global / excludeLint += site / Paradox / sourceManaged
 
@@ -231,41 +228,6 @@ val commonSettings = Def
 
 lazy val publishSettings = Def.settings(
   // Release settings
-  publishMavenStyle := true,
-  publishArtifact in Test := false,
-  publishTo := sonatypePublishToBundle.value,
-  releaseCrossBuild := true,
-  releasePublishArtifactsAction := PgpKeys.publishSigned.value,
-  releaseProcess := Seq[ReleaseStep](
-    checkSnapshotDependencies,
-    inquireVersions,
-    runClean,
-    ReleaseStep { st: State =>
-      if (!st.get(ReleaseKeys.skipTests).getOrElse(false)) {
-        releaseStepCommandAndRemaining("+test")(st)
-      } else {
-        st
-      }
-    },
-    setReleaseVersion,
-    commitReleaseVersion,
-    tagRelease,
-    releaseStepCommandAndRemaining("+publishSigned"),
-    releaseStepCommand("sonatypeBundleRelease"),
-    setNextVersion,
-    commitNextVersion,
-    pushChanges
-  ),
-  credentials ++= (for {
-    username <- sys.env.get("SONATYPE_USERNAME")
-    password <- sys.env.get("SONATYPE_PASSWORD")
-  } yield Credentials(
-    "Sonatype Nexus Repository Manager",
-    "oss.sonatype.org",
-    username,
-    password
-  )).toSeq,
-  Sonatype.sonatypeSettings,
   sonatypeProfileName := "com.spotify"
 )
 
@@ -1037,7 +999,7 @@ lazy val `scio-repl`: Project = project
           Nil
       }
     },
-    assemblyJarName in assembly := s"scio-repl-${version.value}.jar"
+    assembly / assemblyJarName := "scio-repl.jar"
   )
   .dependsOn(
     `scio-core`,

@@ -1,33 +1,95 @@
-name: CI
+name: ci
 
-env:
-  ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY }}
-  GOOGLE_APPLICATION_CREDENTIALS: scripts/gha-data-integration-test.json
-  GOOGLE_PROJECT_ID: data-integration-test
-
-on: [push]
+on: [push, pull_request]
 
 jobs:
-  build:
-    name: Build documentation
+  checks:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        java: [openjdk@1.11]
     steps:
-      - name: Checkout current branch
-        uses: actions/checkout@v2.3.4
-
-      - name: Cache SBT
+      - uses: actions/checkout@v2.3.4
+      - name: cache SBT
         uses: coursier/cache-action@v5
-
-      - name: Setup Java and Scala
+      - name: Java 11 setup
         uses: olafurpg/setup-scala@v10
         with:
-          java-version: ${{ matrix.java }}
-
-      - name: Setup project
-        run: scripts/gha_setup.sh
-
-      - name: Build documentation
-        run: sbt site/makeSite
+          java-version: 11
+      - run: sbt "; scalafmtCheckAll; scalafmtSbtCheck" "; scalafixEnable; scalafixAll --check"
+  scalafix-rules:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2.3.4
+      - name: cache SBT
+        uses: coursier/cache-action@v5
+      - name: Java 11 setup
+        uses: olafurpg/setup-scala@v10
+        with:
+          java-version: 11
+      - run: "cd scalafix; sbt test"
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2.3.4
+      - name: cache SBT
+        uses: coursier/cache-action@v5
+      - name: java ${{matrix.java}} setup
+        uses: olafurpg/setup-scala@v10
+        with:
+          java-version: ${{matrix.java}}
+      - run: sbt "++${{matrix.scala}} test"
+    strategy:
+      matrix:
+        java:
+          - 8
+          - 11
+        scala:
+          - 2.12.12
+          - 2.13.3
+  test-coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2.3.4
+      - name: cache SBT
+        uses: coursier/cache-action@v5
+      - name: java ${{matrix.java}} setup
+        uses: olafurpg/setup-scala@v10
+      - run: |
+          sbt coverage test coverageReport
+          bash <(curl -s https://codecov.io/bash)
+  repl-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2.3.4
+      - name: cache SBT
+        uses: coursier/cache-action@v5
+      - name: java ${{matrix.java}} setup
+        uses: olafurpg/setup-scala@v10
+      - run: ./scripts/circleci_repl.sh
+        env:
+          SCALA_VERSION: ${{ matrix.scala }}
+    strategy:
+      matrix:
+        java:
+          - 8
+          - 11
+        scala:
+          - 2.12.12
+          - 2.13.3
+  mimaReport:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2.3.4
+      - name: cache SBT
+        uses: coursier/cache-action@v5
+      - name: java ${{matrix.java}} setup
+        uses: olafurpg/setup-scala@v10
+        with:
+          java-version: ${{matrix.java}}
+      - run: sbt "++${{matrix.scala}} mimaReportBinaryIssues"
+    strategy:
+      matrix:
+        java:
+          - 8
+          - 11
+        scala:
+          - 2.12.12
+          - 2.13.3
