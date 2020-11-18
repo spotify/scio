@@ -45,8 +45,7 @@ private[scio] object VersionUtil {
    * version = "0.10.0-beta1"
    * version = "0.10.0-SNAPSHOT"
    */
-  private[this] val Pattern = """v?(\d+)\.(\d+).(\d+)((-\w+)?(\+(\d+)-(\w+))?(-\w+)?)?""".r
-
+  private[this] val Pattern = """v?(\d+)\.(\d+).(\d+)((-\w+)?(\+\d+-\w+(\+\d+-\d+)?(-\w+)?)?)?""".r
   private[this] val Logger = LoggerFactory.getLogger(this.getClass)
 
   private[this] val MessagePattern: (String, String) => String = (version, url) => s"""
@@ -83,7 +82,7 @@ private[scio] object VersionUtil {
   private def parseVersion(version: String): SemVer = {
     val m = Pattern.findFirstMatchIn(version).get
     // higher value for no "-SNAPSHOT"
-    val snapshot = if (m.group(4) != null) m.group(4).toUpperCase else "\uffff"
+    val snapshot = if (!m.group(4).isEmpty()) m.group(4).toUpperCase else "\uffff"
     SemVer(m.group(1).toInt, m.group(2).toInt, m.group(3).toInt, snapshot)
   }
 
