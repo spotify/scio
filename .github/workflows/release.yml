@@ -14,7 +14,7 @@ jobs:
               uses: olafurpg/setup-scala@v10
               with:
                   java-version: 11
-            - uses: olafurpg/setup-gpg@v2
+            - uses: olafurpg/setup-gpg@v3
             - name: Publish ${{ github.ref }}
               run: sbt ci-release
               env:
