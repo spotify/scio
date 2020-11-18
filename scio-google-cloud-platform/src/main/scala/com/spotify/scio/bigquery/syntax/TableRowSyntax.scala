@@ -77,7 +77,7 @@ final class TableRowOps(private val r: TableRow) extends AnyVal {
     this.getValue(name, x => x.asInstanceOf[java.util.List[AnyRef]].iterator().asScala.toSeq, null)
 
   def getRecord(name: AnyRef): Map[String, AnyRef] =
-    r.get(name).asInstanceOf[java.util.Map[String, AnyRef]].asScala.toMap
+    this.getValue(name, x => x.asInstanceOf[java.util.Map[String, AnyRef]].asScala.toMap, null)
 
   private def getValue[T](name: AnyRef, fn: AnyRef => T, default: T): T = {
     val o = r.get(name)
