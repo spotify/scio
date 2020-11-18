@@ -38,7 +38,15 @@ private[scio] object VersionUtil {
 
   private[this] val Timeout = 3000
   private[this] val Url = "https://api.github.com/repos/spotify/scio/releases"
-  private[this] val Pattern = """v?(\d+)\.(\d+).(\d+)(-\w+)?""".r
+
+  /**
+   * example versions:
+   * version = "0.10.0-beta1+42-828dca9a-SNAPSHOT"
+   * version = "0.10.0-beta1"
+   * version = "0.10.0-SNAPSHOT"
+   */
+  private[this] val Pattern = """v?(\d+)\.(\d+).(\d+)((-\w+)?(\+(\d+)-(\w+))?(-\w+)?)?""".r
+
   private[this] val Logger = LoggerFactory.getLogger(this.getClass)
 
   private[this] val MessagePattern: (String, String) => String = (version, url) => s"""
@@ -115,7 +123,7 @@ private[scio] object VersionUtil {
     } else {
       val buffer = mutable.Buffer.empty[String]
       val v1 = parseVersion(current)
-      if (v1.suffix == "-SNAPSHOT") {
+      if (v1.suffix.contains("-SNAPSHOT")) {
         buffer.append(s"Using a SNAPSHOT version of Scio: $current")
       }
       latestOverride.orElse(latest).foreach { v =>
