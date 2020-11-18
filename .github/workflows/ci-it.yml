@@ -4,7 +4,6 @@ env:
   ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY }}
   GOOGLE_APPLICATION_CREDENTIALS: scripts/gha-data-integration-test.json
   GOOGLE_PROJECT_ID: data-integration-test
-  SCIO_IGNORE_VERSION_WARNING: true
 
 on: push
 

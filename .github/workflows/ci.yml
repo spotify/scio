@@ -1,7 +1,6 @@
 name: ci
+
 on: [push, pull_request]
-env:
-  SCIO_IGNORE_VERSION_WARNING: true
 
 jobs:
   checks:
