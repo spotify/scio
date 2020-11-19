@@ -947,7 +947,7 @@ lazy val `scio-examples`: Project = project
     Test / testGrouping := splitTests(
       (Test / definedTests).value,
       List("com.spotify.scio.examples.WordCountTest"),
-      (Test / forkOptions).value
+      ForkOptions().withRunJVMOptions((Test / javaOptions).value.toVector)
     )
   )
   .dependsOn(
