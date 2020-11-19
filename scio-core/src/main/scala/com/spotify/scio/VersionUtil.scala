@@ -38,7 +38,14 @@ private[scio] object VersionUtil {
 
   private[this] val Timeout = 3000
   private[this] val Url = "https://api.github.com/repos/spotify/scio/releases"
-  private[this] val Pattern = """v?(\d+)\.(\d+).(\d+)(-\w+)?""".r
+
+  /**
+   * example versions:
+   * version = "0.10.0-beta1+42-828dca9a-SNAPSHOT"
+   * version = "0.10.0-beta1"
+   * version = "0.10.0-SNAPSHOT"
+   */
+  private[this] val Pattern = """v?(\d+)\.(\d+).(\d+)((-\w+)?(\+\d+-\w+(\+\d+-\d+)?(-\w+)?)?)?""".r
   private[this] val Logger = LoggerFactory.getLogger(this.getClass)
 
   private[this] val MessagePattern: (String, String) => String = (version, url) => s"""
@@ -75,12 +82,12 @@ private[scio] object VersionUtil {
   private def parseVersion(version: String): SemVer = {
     val m = Pattern.findFirstMatchIn(version).get
     // higher value for no "-SNAPSHOT"
-    val snapshot = if (m.group(4) != null) m.group(4).toUpperCase else "\uffff"
+    val snapshot = if (!m.group(4).isEmpty()) m.group(4).toUpperCase else "\uffff"
     SemVer(m.group(1).toInt, m.group(2).toInt, m.group(3).toInt, snapshot)
   }
 
   private[scio] def ignoreVersionCheck: Boolean =
-    Option(System.getProperty("scio.ignoreVersionWarning")).exists(_.trim == "true")
+    sys.props.get("scio.ignoreVersionWarning").exists(_.trim == "true")
 
   private def messages(current: SemVer, latest: SemVer): Option[String] = (current, latest) match {
     case (SemVer(0, minor, _, _), SemVer(0, 7, _, _)) if minor < 7 =>
@@ -112,7 +119,7 @@ private[scio] object VersionUtil {
     } else {
       val buffer = mutable.Buffer.empty[String]
       val v1 = parseVersion(current)
-      if (v1.suffix == "-SNAPSHOT") {
+      if (v1.suffix.contains("-SNAPSHOT")) {
         buffer.append(s"Using a SNAPSHOT version of Scio: $current")
       }
       latestOverride.orElse(latest).foreach { v =>
