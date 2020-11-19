@@ -154,8 +154,8 @@ val commonSettings = Def
     resolvers += Resolver.sonatypeRepo("public"),
     Test / javaOptions += "-Dscio.ignoreVersionWarning=true",
     Test / testOptions += Tests.Argument("-oD"),
-    Test / testOptions += Tests.Argument(TestFrameworks.JUnit, "-q", "-v", "-a"),
-    Test / testOptions ++= {
+    testOptions += Tests.Argument(TestFrameworks.JUnit, "-q", "-v", "-a"),
+    testOptions ++= {
       if (sys.env.contains("SLOW")) {
         Nil
       } else {
