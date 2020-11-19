@@ -27,4 +27,11 @@ class TableRowSyntaxTest extends AnyFlatSpec with Matchers {
     val expected = Map("foo" -> "bar")
     row.getRecord("record") shouldBe expected
   }
+
+  it should "#3378: not throw an NPE on a non-existent subrecord" in {
+    val dummy = List(("a", 1), ("b", 2))
+    val row = TableRow(dummy: _*)
+    val result = row.getRecord("c")
+    result shouldBe null
+  }
 }
