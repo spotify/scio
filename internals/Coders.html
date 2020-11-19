@@ -167,6 +167,7 @@ spotify/scio
     <li><a href="../migrations/v0.7.0-Migration-Guide.html" class="page">Scio v0.7.0</a></li>
     <li><a href="../migrations/v0.8.0-Migration-Guide.html" class="page">Scio v0.8.0</a></li>
     <li><a href="../migrations/v0.9.0-Migration-Guide.html" class="page">Scio v0.9.0</a></li>
+    <li><a href="../migrations/v0.10.0-Migration-Guide.html" class="page">Scio v0.10.0</a></li>
   </ul></li>
   <li><a href="../dev/index.html" class="page">Development</a>
   <ul>
@@ -205,7 +206,7 @@ spotify/scio
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.9.6*
+<i class="md-icon" title="Version">label_outline</i> 0.10.0-beta2+0-a05a535e+20201119-1448*
 </label>
 </li>
 </ul>
@@ -307,9 +308,9 @@ sc.run()
   <li><code>Transform</code>: A Coder implemented by &ldquo;transforming&rdquo; another Coder.</li>
   <li><code>Fallback</code>: A default <code>Coder</code>. Used when there is no better option.</li>
 </ul>
-<p>There is also a &ldquo;special&rdquo; coder called <code>KVCoder</code>. It is a specific coder for Key-Value pairs. Internally Beam treats <a href="https://beam.apache.org/releases/javadoc/2.24.0/?org/apache/beam/sdk/values/KV.html" title="org.apache.beam.sdk.values.KV"><code>KV</code></a> differently from other types so Scio needs to do the same.</p>
-<p>It is important to note that <strong>Scio&rsquo;s coders are only representations</strong> of those cases but <strong>do not actually implement any serialization logic</strong>. Before the job starts, those coders will be <em>materialized</em>, meaning they will be converted to instances of <a href="https://beam.apache.org/releases/javadoc/2.24.0/?org/apache/beam/sdk/coders/Coder.html" title="org.apache.beam.sdk.coders.Coder"><code>`org.apache.beam.sdk.coders.Coder`</code></a>. Thanks to this technique, Scio can dynamically change the behavior of coders depending on the execution context. For example coders may handle nullable values differently depending on options passed to the job.</p>
-<p><a href="https://beam.apache.org/releases/javadoc/2.24.0/?org/apache/beam/sdk/coders/Coder.html" title="org.apache.beam.sdk.coders.Coder"><code>`org.apache.beam.sdk.coders.Coder`</code></a> instances on the other hand are the actual implementations of serialization and deserialization logic. Among other thing, each instance of <code>org.apache.beam.sdk.coders.Coder[T]</code> defines two methods:</p>
+<p>There is also a &ldquo;special&rdquo; coder called <code>KVCoder</code>. It is a specific coder for Key-Value pairs. Internally Beam treats <a href="https://beam.apache.org/releases/javadoc/2.25.0/?org/apache/beam/sdk/values/KV.html" title="org.apache.beam.sdk.values.KV"><code>KV</code></a> differently from other types so Scio needs to do the same.</p>
+<p>It is important to note that <strong>Scio&rsquo;s coders are only representations</strong> of those cases but <strong>do not actually implement any serialization logic</strong>. Before the job starts, those coders will be <em>materialized</em>, meaning they will be converted to instances of <a href="https://beam.apache.org/releases/javadoc/2.25.0/?org/apache/beam/sdk/coders/Coder.html" title="org.apache.beam.sdk.coders.Coder"><code>`org.apache.beam.sdk.coders.Coder`</code></a>. Thanks to this technique, Scio can dynamically change the behavior of coders depending on the execution context. For example coders may handle nullable values differently depending on options passed to the job.</p>
+<p><a href="https://beam.apache.org/releases/javadoc/2.25.0/?org/apache/beam/sdk/coders/Coder.html" title="org.apache.beam.sdk.coders.Coder"><code>`org.apache.beam.sdk.coders.Coder`</code></a> instances on the other hand are the actual implementations of serialization and deserialization logic. Among other thing, each instance of <code>org.apache.beam.sdk.coders.Coder[T]</code> defines two methods:</p>
 <pre class="prettyprint"><code class="language-scala">class ExampleCoder extends org.apache.beam.sdk.coders.Coder[Example] {
   def decode(inStream: InputStream): Example = ???
   def encode(value: Example, outStream: OutputStream): Unit = ???
@@ -456,13 +457,13 @@ implicit def listCoder[T: Coder]: Coder[List[T]] = Coder.transform(Coder[T])(bc 
 <p>Migrating to Scio <code>0.7.x</code> from an older version is likely to break a few things at compile time in your project. See the complete <a href="../migrations/v0.7.0-Migration-Guide.html">v0.7.0 Migration Guide</a> for more information.</p>
 </div>
 <div>
-<a href="https://github.com/spotify/scio/tree/master/site/src/paradox/internals/Coders.md" title="Edit this page" class="md-source-file md-edit">
+<a href="https://github.com/spotify/scio/tree/master/site/src/main/paradox/internals/Coders.md" title="Edit this page" class="md-source-file md-edit">
 Edit this page
 </a>
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.9.6*
+0.10.0-beta2+0-a05a535e+20201119-1448*
 </span>
 </div>
 </article>
