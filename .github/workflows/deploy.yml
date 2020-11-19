@@ -20,6 +20,7 @@ jobs:
         uses: olafurpg/setup-scala@v10
       - run: sbt scio-repl/assembly
       - name: Create Release
+        id: create_release
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
