@@ -87,7 +87,7 @@ private[scio] object VersionUtil {
   }
 
   private[scio] def ignoreVersionCheck: Boolean =
-    Option(System.getProperty("scio.ignoreVersionWarning")).exists(_.trim == "true")
+    sys.props.get("scio.ignoreVersionWarning").exists(_.trim == "true")
 
   private def messages(current: SemVer, latest: SemVer): Option[String] = (current, latest) match {
     case (SemVer(0, minor, _, _), SemVer(0, 7, _, _)) if minor < 7 =>

@@ -152,9 +152,10 @@ val commonSettings = Def
     // protobuf-lite is an older subset of protobuf-java and causes issues
     excludeDependencies += "com.google.protobuf" % "protobuf-lite",
     resolvers += Resolver.sonatypeRepo("public"),
+    Test / javaOptions += "-Dscio.ignoreVersionWarning=true",
     Test / testOptions += Tests.Argument("-oD"),
-    testOptions += Tests.Argument(TestFrameworks.JUnit, "-q", "-v", "-a"),
-    testOptions ++= {
+    Test / testOptions += Tests.Argument(TestFrameworks.JUnit, "-q", "-v", "-a"),
+    Test / testOptions ++= {
       if (sys.env.contains("SLOW")) {
         Nil
       } else {
@@ -346,9 +347,9 @@ lazy val protobufSettings = Def.settings(
   )
 )
 
-def splitTests(tests: Seq[TestDefinition], filter: Seq[String]) = {
+def splitTests(tests: Seq[TestDefinition], filter: Seq[String], forkOptions: ForkOptions) = {
   val (filtered, default) = tests.partition(test => filter.contains(test.name))
-  val policy = Tests.SubProcess(ForkOptions())
+  val policy = Tests.SubProcess(forkOptions)
   new Tests.Group(name = "<default>", tests = default, runPolicy = policy) +: filtered.map { test =>
     new Tests.Group(name = test.name, tests = Seq(test), runPolicy = policy)
   }
@@ -517,15 +518,14 @@ lazy val `scio-test`: Project = project
       "org.scalactic" %% "scalactic" % "3.2.3",
       "com.propensive" %% "magnolia" % magnoliaVersion
     ),
-    (Test / compileOrder) := CompileOrder.JavaThenScala,
+    Test / compileOrder := CompileOrder.JavaThenScala,
     Test / testGrouping := splitTests(
       (Test / definedTests).value,
-      List("com.spotify.scio.ArgsTest")
+      List("com.spotify.scio.ArgsTest"),
+      (Test / forkOptions).value
     )
   )
-  .configs(
-    IntegrationTest
-  )
+  .configs(IntegrationTest)
   .dependsOn(
     `scio-core` % "test->test;compile->compile;it->it",
     `scio-schemas` % "test;it",
@@ -856,8 +856,7 @@ lazy val `scio-tensorflow`: Project = project
       "com.spotify" % "zoltar-core" % zoltarVersion,
       "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamVendorVersion,
       "org.tensorflow" % "libtensorflow" % tensorFlowVersion
-    ),
-    javaOptions += "-Dscio.ignoreVersionWarning=true"
+    )
   )
   .dependsOn(
     `scio-avro`,
@@ -947,7 +946,8 @@ lazy val `scio-examples`: Project = project
     Test / classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.Flat,
     Test / testGrouping := splitTests(
       (Test / definedTests).value,
-      List("com.spotify.scio.examples.WordCountTest")
+      List("com.spotify.scio.examples.WordCountTest"),
+      (Test / forkOptions).value
     )
   )
   .dependsOn(

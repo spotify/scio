@@ -1,5 +1,4 @@
 -Dfile.encoding=UTF8
--Dscio.ignoreVersionWarning=true
 -Dorg.slf4j.simpleLogger.defaultLogLevel=warn
 -Xms2G
 -Xmx8G
