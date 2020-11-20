@@ -6,5 +6,6 @@
 
 * @ref:[Algebird](Algebird.md)
 * @ref:[Sort Merge Bucket](Sort-Merge-Bucket.md)
+* @ref:[HyperLogLog](HyperLogLog.md)
 
 @@@

@@ -13,11 +13,12 @@ can find [here](https://s.apache.org/hll-in-beam).
 ## HyperLogLog++ Integration.
 Scio distinct count API has been extended to support HyperLogLog algorithms using ApproxDistinctCount Interface. `scio-extra` 
 module provide two different implementations of this interface,
-    - com.spotify.scio.extra.hll.sketching.SketchHllPlusPlus
-    - com.spotify.scio.extra.hll.zetasketch.ZetaSketchHllPlusPlus 
+
+- com.spotify.scio.extra.hll.sketching.SketchHllPlusPlus
+- com.spotify.scio.extra.hll.zetasketch.ZetaSketchHllPlusPlus 
 
 `SketchHllPlusPlus` provide HyperLogLog++ implementation based on [Addthis' Stream-lib library](https://github.com/addthis/stream-lib) 
-while `ZetaSketchHllPlusPlus` provide implementation basedon [ZetaSketch].
+while `ZetaSketchHllPlusPlus` provide implementation basedon [ZetaSketch](https://github.com/google/zetasketch).
 
 Following is how you can use the new API.
 
@@ -72,10 +73,10 @@ val distinctCount: SCollection[(K, Long)] =
 
 ## Distributed HyperLogLog++
 
-Both above implementation count distinct count on whole data stream and doesn't expose the underline sketch to the user.
-Scio has exposed the underline sketch to the user and possible to run this HLL++ algorithm in distributed way using the 
-ZetaSketch library's internal APIs. Since ZetaSketch is comply with Gooogle Cloud BigQuery, you can use BigQuery generated
-sketches with sketches exposed by this API.
+Both above implementation estimate distinct count for the whole data stream and doesn't expose the underline sketch to the user.
+Scio exposed the underline sketch to the user and make it possible to run this HLL++ algorithm in distributed way using the 
+ZetaSketch library's internal APIs. Since, ZetaSketch is comply with [Gooogle Cloud BigQuery](https://cloud.google.com/bigquery/docs/reference/standard-sql/hll_functions), 
+you can use BigQuery generated sketches with sketches exposed by this API.
 
 ```scala
 import com.spotify.scio.extra.hll._
@@ -96,7 +97,7 @@ val input: SCollection[T] = ...
 val approxDistCount: SCollection[Long] = input.approxDistinctCountWithZetaHll
 ```
 
-**Note**: This only support `Int`, `Long`, `String` and `ByteString` input types only.
+**Note**: This supports `Int`, `Long`, `String` and `ByteString` input types only.
 
 Similarly, for key-value SCollections.
 ```scala
