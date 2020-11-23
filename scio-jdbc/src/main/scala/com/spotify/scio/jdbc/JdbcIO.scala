@@ -21,7 +21,6 @@ import com.spotify.scio.values.SCollection
 import com.spotify.scio.ScioContext
 import com.spotify.scio.io.{EmptyTap, EmptyTapOf, ScioIO, Tap, TestIO}
 import org.apache.beam.sdk.io.{jdbc => beam}
-
 import java.sql.{PreparedStatement, ResultSet}
 
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
@@ -38,7 +37,7 @@ object JdbcIO {
 
   private[jdbc] def jdbcIoId(opts: JdbcIoOptions): String = opts match {
     case JdbcReadOptions(connOpts, query, _, _, _) => jdbcIoId(connOpts, query)
-    case JdbcWriteOptions(connOpts, statement, _, _) =>
+    case JdbcWriteOptions(connOpts, statement, _, _, _, _) =>
       jdbcIoId(connOpts, statement)
   }
 
@@ -128,6 +127,11 @@ final case class JdbcWrite[T](writeOptions: JdbcWriteOptions[T]) extends JdbcIO[
       // override default batch size.
       transform = transform.withBatchSize(writeOptions.batchSize)
     }
+
+    transform = transform
+      .withRetryConfiguration(writeOptions.retryConfiguration)
+      .withRetryStrategy(writeOptions.retryStrategy.apply)
+
     data.applyInternal(transform)
     EmptyTap
   }
