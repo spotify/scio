@@ -50,15 +50,17 @@ object RedisMutator {
   implicit val stringSet: RedisMutator[Set[String]] =
     new RedisMutator[Set[String]] {
       override def mutate(client: Pipeline, mutation: Set[String]): List[Response[_]] =
-        client.set(mutation.key, mutation.value) ::
-          mutation.ttl.map(expireTime => client.pexpire(mutation.key, expireTime.getMillis)).toList
+        mutation.ttl.fold(client.set(mutation.key, mutation.value)) { ttl =>
+          client.psetex(mutation.key, ttl.getMillis(), mutation.value)
+        } :: Nil
     }
 
   implicit val byteArraySet: RedisMutator[Set[Array[Byte]]] =
     new RedisMutator[Set[Array[Byte]]] {
       override def mutate(client: Pipeline, mutation: Set[Array[Byte]]): List[Response[_]] =
-        client.set(mutation.key, mutation.value) ::
-          mutation.ttl.map(expireTime => client.pexpire(mutation.key, expireTime.getMillis)).toList
+        mutation.ttl.fold(client.set(mutation.key, mutation.value)) { ttl =>
+          client.psetex(mutation.key, ttl.getMillis(), mutation.value)
+        } :: Nil
     }
 
   implicit val stringIncrBy: RedisMutator[IncrBy[String]] =
