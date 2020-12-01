@@ -59,13 +59,13 @@ object Scalac {
       // "-Ywarn-unused:privates", // Warn if a private member is unused.
       "-Ywarn-value-discard", // Warn when non-Unit expression results are unused.
       "-Xmacro-settings:show-coder-fallback=true",
-      "-Ydelambdafy:inline", // Set the strategy used for translating lambdas into JVM code to "inline"
-      "-Ybackend-parallelism",
-      parallelism.toString
+      "-Ydelambdafy:inline" // Set the strategy used for translating lambdas into JVM code to "inline"
+      // "-Ybackend-parallelism",
+      // parallelism.toString
     )
 
     VersionNumber(sys.props("java.version")) match {
-      case v if v.matchesSemVer(SemanticSelector(">1.8")) => base ++ List("-release", "8")
+      // case v if v.matchesSemVer(SemanticSelector(">1.8")) => base ++ List("-release", "8")
       case _                                              => base
     }
   }
