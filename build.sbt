@@ -274,7 +274,11 @@ lazy val assemblySettings = Seq(
 )
 
 lazy val macroSettings = Def.settings(
-  libraryDependencies += "org.scala-lang" % "scala-reflect" % scalaVersion.value,
+  libraryDependencies ++= {
+    if (!isDotty.value)
+      Seq("org.scala-lang" % "scala-reflect" % scalaVersion.value)
+    else Nil
+  },
   libraryDependencies ++= {
     VersionNumber(scalaVersion.value) match {
       case v if v.matchesSemVer(SemanticSelector("2.12.x")) =>
@@ -542,12 +546,19 @@ lazy val `scio-macros`: Project = project
   .settings(
     description := "Scio macros",
     libraryDependencies ++= Seq(
-      "com.chuusai" %% "shapeless" % shapelessVersion,
       "com.esotericsoftware" % "kryo-shaded" % kryoVersion,
       "org.apache.beam" % "beam-sdks-java-extensions-sql" % beamVersion,
-      "org.apache.avro" % "avro" % avroVersion,
-      "com.propensive" %% "magnolia" % magnoliaVersion
-    )
+      "org.apache.avro" % "avro" % avroVersion
+    ),
+    libraryDependencies ++= {
+      if (!isDotty.value)
+        Seq(
+          "com.chuusai" %% "shapeless" % shapelessVersion,
+          "com.propensive" %% "magnolia" % magnoliaVersion
+        )
+      else Nil
+    },
+    crossScalaVersions += "3.0.0-M2"
   )
 
 lazy val `scio-avro`: Project = project
