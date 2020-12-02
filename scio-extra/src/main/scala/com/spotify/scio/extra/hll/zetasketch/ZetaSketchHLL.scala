@@ -27,7 +27,7 @@ import com.twitter.algebird.{Monoid, MonoidAggregator}
  * @param arrOpt - serialized byte array to construct the initial HyperLogLogPlusPlus instance.
  * @param elemOpt - first element to add to the constructed new HyperLogLogPlusPlus instance.
  */
-final class ZetaSketchHLL[T](arrOpt: Option[Array[Byte]], elemOpt: Option[T] = None)(implicit
+final class ZetaSketchHll[T](arrOpt: Option[Array[Byte]], elemOpt: Option[T] = None)(implicit
   hp: HllPlus[T]
 ) extends Serializable {
 
@@ -47,24 +47,24 @@ final class ZetaSketchHLL[T](arrOpt: Option[Array[Byte]], elemOpt: Option[T] = N
   }
 
   /**
-   * Add a new element to this [[ZetaSketchHLL]].
+   * Add a new element to this [[ZetaSketchHll]].
    * Need to return a new instance to maintain the immutability of the [[hll]] value.
    * @param elem - new element to add.
-   * @return - new [[ZetaSketchHLL]] instance with the same type parameter.
+   * @return - new [[ZetaSketchHll]] instance with the same type parameter.
    */
-  def add(elem: T): ZetaSketchHLL[T] =
-    new ZetaSketchHLL[T](Option(hll.serializeToByteArray()), Option(elem))
+  def add(elem: T): ZetaSketchHll[T] =
+    new ZetaSketchHll[T](Option(hll.serializeToByteArray()), Option(elem))
 
   /**
-   * Merge both this and that [[ZetaSketchHLL]] instances.
+   * Merge both this and that [[ZetaSketchHll]] instances.
    * Need to return a new instance to maintain the immutability of this [[hll]] value and that [[hll]] value.
-   * @param that - [[ZetaSketchHLL]] to merge with this.
-   * @return new instance of [[ZetaSketchHLL]]
+   * @param that - [[ZetaSketchHll]] to merge with this.
+   * @return new instance of [[ZetaSketchHll]]
    */
-  def merge(that: ZetaSketchHLL[T]): ZetaSketchHLL[T] = {
+  def merge(that: ZetaSketchHll[T]): ZetaSketchHll[T] = {
     val nhll = hp.hll(hll.serializeToByteArray())
     nhll.merge(that.hll.serializeToByteArray())
-    new ZetaSketchHLL[T](Option(nhll.serializeToByteArray()))
+    new ZetaSketchHll[T](Option(nhll.serializeToByteArray()))
   }
 
   /** @return the estimated distinct count */
@@ -77,38 +77,38 @@ final class ZetaSketchHLL[T](arrOpt: Option[Array[Byte]], elemOpt: Option[T] = N
   def sparsePrecision: Int = hll.getSparsePrecision
 }
 
-object ZetaSketchHLL {
-  def create[T: HllPlus](): ZetaSketchHLL[T] = new ZetaSketchHLL[T](None)
+object ZetaSketchHll {
+  def create[T: HllPlus](): ZetaSketchHll[T] = new ZetaSketchHll[T](None)
 
-  def create[T: HllPlus](arr: Array[Byte]) = new ZetaSketchHLL[T](Option(arr))
+  def create[T: HllPlus](arr: Array[Byte]) = new ZetaSketchHll[T](Option(arr))
 
-  def create[T](p: Int)(implicit hp: HllPlus[T]): ZetaSketchHLL[T] = create(
+  def create[T](p: Int)(implicit hp: HllPlus[T]): ZetaSketchHll[T] = create(
     hp.hll(p).serializeToByteArray()
   )
 
-  def create[T: HllPlus](elem: T): ZetaSketchHLL[T] = new ZetaSketchHLL[T](None, Option(elem))
+  def create[T: HllPlus](elem: T): ZetaSketchHll[T] = new ZetaSketchHll[T](None, Option(elem))
 
-  /** ZetaSketchHLL [[com.twitter.algebird.Monoid]] impl */
-  final case class ZetaSketchHLLMonoid[T: HllPlus]() extends Monoid[ZetaSketchHLL[T]] {
-    override def zero: ZetaSketchHLL[T] = ZetaSketchHLL.create[T]()
+  /** ZetaSketchHll [[com.twitter.algebird.Monoid]] impl */
+  final case class ZetaSketchHllMonoid[T: HllPlus]() extends Monoid[ZetaSketchHll[T]] {
+    override def zero: ZetaSketchHll[T] = ZetaSketchHll.create[T]()
 
-    override def plus(x: ZetaSketchHLL[T], y: ZetaSketchHLL[T]): ZetaSketchHLL[T] = x.merge(y)
+    override def plus(x: ZetaSketchHll[T], y: ZetaSketchHll[T]): ZetaSketchHll[T] = x.merge(y)
   }
 
-  /** ZetaSketchHLL [[com.twitter.algebird.MonoidAggregator]] impl */
-  final case class ZetaSketchHLLAggregator[T: HllPlus]()
-      extends MonoidAggregator[T, ZetaSketchHLL[T], Long] {
-    override def monoid: Monoid[ZetaSketchHLL[T]] = ZetaSketchHLLMonoid()
+  /** ZetaSketchHll [[com.twitter.algebird.MonoidAggregator]] impl */
+  final case class ZetaSketchHllAggregator[T: HllPlus]()
+      extends MonoidAggregator[T, ZetaSketchHll[T], Long] {
+    override def monoid: Monoid[ZetaSketchHll[T]] = ZetaSketchHllMonoid()
 
-    override def prepare(input: T): ZetaSketchHLL[T] = ZetaSketchHLL.create[T](input)
+    override def prepare(input: T): ZetaSketchHll[T] = ZetaSketchHll.create[T](input)
 
-    override def present(reduction: ZetaSketchHLL[T]): Long = reduction.estimateSize()
+    override def present(reduction: ZetaSketchHll[T]): Long = reduction.estimateSize()
   }
 
-  /** Coder for ZetaSketchHLL */
-  implicit def coder[T: HllPlus]: Coder[ZetaSketchHLL[T]] = {
-    Coder.xmap[Array[Byte], ZetaSketchHLL[T]](Coder.arrayByteCoder)(
-      arr => ZetaSketchHLL.create[T](arr),
+  /** Coder for ZetaSketchHll */
+  implicit def coder[T: HllPlus]: Coder[ZetaSketchHll[T]] = {
+    Coder.xmap[Array[Byte], ZetaSketchHll[T]](Coder.arrayByteCoder)(
+      arr => ZetaSketchHll.create[T](arr),
       zt => zt.hll.serializeToByteArray()
     )
   }
