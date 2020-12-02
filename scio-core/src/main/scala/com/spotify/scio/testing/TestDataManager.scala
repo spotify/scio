@@ -22,9 +22,9 @@ import com.spotify.scio.io.ScioIO
 import com.spotify.scio.values.SCollection
 import com.spotify.scio.{ScioContext, ScioResult}
 import org.apache.beam.sdk.testing.TestStream
-
 import scala.collection.concurrent.TrieMap
 import scala.collection.mutable.{Set => MSet}
+import scala.jdk.CollectionConverters._
 import scala.util.{Failure, Success, Try}
 
 /* Inputs are Scala Iterables to be parallelized for TestPipeline, or PTransforms to be applied */
@@ -58,7 +58,8 @@ final private[scio] case class IterableInputSource[T: Coder](
 }
 
 private[scio] class TestInput(val m: Map[String, JobInputSource[_]]) {
-  val s: MSet[String] = MSet.empty
+  val s: MSet[String] =
+    java.util.concurrent.ConcurrentHashMap.newKeySet[String]().asScala
 
   def apply[T](io: ScioIO[T]): JobInputSource[T] = {
     val key = io.testId
@@ -79,7 +80,8 @@ private[scio] class TestInput(val m: Map[String, JobInputSource[_]]) {
 
 /* Outputs are lambdas that apply assertions on SCollections */
 private[scio] class TestOutput(val m: Map[String, SCollection[_] => Any]) {
-  val s: MSet[String] = MSet.empty
+  val s: MSet[String] =
+    java.util.concurrent.ConcurrentHashMap.newKeySet[String]().asScala
 
   def apply[T](io: ScioIO[T]): SCollection[T] => Any = {
     // TODO: support Materialize outputs, maybe Materialized[T]?
@@ -100,7 +102,9 @@ private[scio] class TestOutput(val m: Map[String, SCollection[_] => Any]) {
 }
 
 private[scio] class TestDistCache(val m: Map[DistCacheIO[_], _]) {
-  val s: MSet[DistCacheIO[_]] = MSet.empty
+  val s: MSet[DistCacheIO[_]] =
+    java.util.concurrent.ConcurrentHashMap.newKeySet[DistCacheIO[_]]().asScala
+
   def apply[T](key: DistCacheIO[T]): () => T = {
     require(
       m.contains(key),
