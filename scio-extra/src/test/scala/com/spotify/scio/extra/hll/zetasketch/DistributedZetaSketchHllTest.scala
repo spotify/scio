@@ -22,10 +22,10 @@ import com.spotify.scio.testing.PipelineSpec
 
 class DistributedZetaSketchHllTest extends PipelineSpec {
 
-  "DistributedZetaSketchHLL" should "approximate distinct count" in {
+  "DistributedZetaSketchHll" should "approximate distinct count" in {
     val input = for (i <- 0 to 10000) yield (i % 20)
     val output = runWithData(input) { scl =>
-      scl.asZetaSketchHLL.sumHll.approxDistinctCount
+      scl.asZetaSketchHll.sumHll.approxDistinctCount
     }
 
     output shouldApproximate withErrorRate(Seq(20), 0.5)
@@ -48,7 +48,7 @@ class DistributedZetaSketchHllTest extends PipelineSpec {
     val output = runWithData(in) { scl =>
       scl
         .keyBy(_ % 5)
-        .asZetaSketchHLLByKey
+        .asZetaSketchHllByKey
         .sumHllByKey
         .approxDistinctCountByKey
     }
