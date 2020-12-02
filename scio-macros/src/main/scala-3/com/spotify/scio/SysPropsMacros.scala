@@ -15,13 +15,15 @@
  * under the License.
  */
 
-package com.spotify.scio.io
+package com.spotify.scio
 
-/**
- * IO package for dynamic destinations. Import All.
- *
- * {{{
- * import com.spotify.scio.io.dynamic._
- * }}}
- */
-package object dynamic extends com.spotify.scio.io.dynamic.syntax.AllSyntax
+import scala.annotation.{compileTimeOnly, StaticAnnotation}
+
+// TODO: scala3 implement
+final class registerSysProps extends StaticAnnotation {
+  def macroTransform(annottees: Any*): Any = ??? // TODO: scala3
+}
+
+
+
+

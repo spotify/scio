@@ -45,7 +45,7 @@ object IsJavaBean {
     if(getters.isEmpty) {
       val mess =
         s"""Class ${sym.name} has not getter"""
-      report.error(mess)
+      report.throwError(mess)
     }
 
     getters.foreach { case (name, info) =>
@@ -75,7 +75,7 @@ object IsJavaBean {
   private def isJavaBeanImpl[T](using Quotes, Type[T]): Expr[IsJavaBean[T]] = {
     import quotes.reflect._
     val sym = TypeTree.of[T].symbol
-    // TODO: check if symbol is a Java class ?
+    // TODO: scala3 - check if symbol is a Java class ?
     checkGetterAndSetters(sym)
     '{new IsJavaBean[T]{}}
   }

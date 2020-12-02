@@ -188,21 +188,22 @@ private class VectorCoder[T](bc: BCoder[T]) extends SeqLikeCoder[Vector, T](bc) 
   override def decode(inStream: InputStream): Vector[T] = decode(inStream, Vector.newBuilder[T])
 }
 
-private class ArrayCoder[@specialized(Short, Int, Long, Float, Double, Boolean, Char) T: ClassTag](
-  bc: BCoder[T]
-) extends SeqLikeCoder[Array, T](bc) {
-  override def decode(inStream: InputStream): Array[T] = {
-    val size = VarInt.decodeInt(inStream)
-    val arr = new Array[T](size)
-    var i = 0
-    while (i < size) {
-      arr(i) = bc.decode(inStream)
-      i += 1
-    }
-    arr
-  }
-  override def consistentWithEquals(): Boolean = false
-}
+// TODO: restore once https://github.com/lampepfl/dotty/issues/10599 is fixed
+// private class ArrayCoder[@specialized(Short, Int, Long, Float, Double, Boolean, Char) T: ClassTag](
+//   bc: BCoder[T]
+// ) extends SeqLikeCoder[Array, T](bc) {
+//   override def decode(inStream: InputStream): Array[T] = {
+//     val size = VarInt.decodeInt(inStream)
+//     val arr = new Array[T](size)
+//     var i = 0
+//     while (i < size) {
+//       arr(i) = bc.decode(inStream)
+//       i += 1
+//     }
+//     arr
+//   }
+//   override def consistentWithEquals(): Boolean = false
+// }
 
 private class ArrayBufferCoder[T](bc: BCoder[T]) extends SeqLikeCoder[m.ArrayBuffer, T](bc) {
   override def decode(inStream: InputStream): m.ArrayBuffer[T] =
@@ -487,8 +488,9 @@ trait ScalaCoders {
   implicit def listBufferCoder[T: Coder]: Coder[m.ListBuffer[T]] =
     Coder.xmap(bufferCoder[T])(x => m.ListBuffer(x.toSeq: _*), identity)
 
-  implicit def arrayCoder[T: Coder: ClassTag]: Coder[Array[T]] =
-    Coder.transform(Coder[T])(bc => Coder.beam(new ArrayCoder[T](bc)))
+  // TODO: scala3 restore previous implementation (see ArrayCoder)
+  // Coder.transform(Coder[T])(bc => Coder.beam(new ArrayCoder[T](bc)))
+  implicit def arrayCoder[T: Coder: ClassTag]: Coder[Array[T]] = ???
 
   implicit def arrayByteCoder: Coder[Array[Byte]] =
     Coder.beam(ByteArrayCoder.of())

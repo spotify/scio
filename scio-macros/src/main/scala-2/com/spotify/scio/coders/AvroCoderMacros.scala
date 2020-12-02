@@ -15,13 +15,13 @@
  * under the License.
  */
 
-package com.spotify.scio.coders
+package com.spotify.scio.coders.instances
 
 import org.apache.avro.specific.SpecificRecordBase
 
 import scala.reflect.macros.blackbox
 
-private[coders] object AvroCoderMacros {
+private[instances] object AvroCoderMacros {
 
   /** Generate a coder which does not serialize the schema and relies exclusively on types. */
   def staticInvokeCoder[T <: SpecificRecordBase: c.WeakTypeTag](c: blackbox.Context): c.Tree = {

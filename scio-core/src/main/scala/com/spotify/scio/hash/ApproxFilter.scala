@@ -197,7 +197,7 @@ sealed trait ApproxFilterCompanion {
     elems.transform {
       _.groupBy(_ => ()).values
         .map { xs =>
-          val n = if (expectedInsertions > 0) expectedInsertions else xs.size
+          val n: Long = if (expectedInsertions > 0) expectedInsertions else xs.size
           create(xs, n, fpp)
         }
     }
