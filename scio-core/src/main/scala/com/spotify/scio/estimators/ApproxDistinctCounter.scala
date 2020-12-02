@@ -21,6 +21,7 @@ import com.spotify.scio.coders.{BeamCoders, Coder, CoderMaterializer}
 import com.spotify.scio.util.TupleFunctions._
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.{transforms => beam}
+ import com.spotify.scio.values.SCollection.makePairSCollectionFunctions
 
 /**
  * Approximate distinct element counter for type `T`, e.g. HyperLogLog or HyperLogLog++. This has two APIs one

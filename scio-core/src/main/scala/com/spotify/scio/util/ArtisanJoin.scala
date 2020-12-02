@@ -31,6 +31,7 @@ import org.apache.beam.sdk.values.{KV, TupleTag}
 import org.slf4j.LoggerFactory
 
 import scala.jdk.CollectionConverters._
+import com.spotify.scio.values.SCollection.makePairSCollectionFunctions
 
 private[scio] object ArtisanJoin {
   private val log = LoggerFactory.getLogger(this.getClass)
@@ -72,7 +73,7 @@ private[scio] object ArtisanJoin {
       .and(tagB, b.toKV.internal)
       .apply(s"CoGroupByKey@$name", CoGroupByKey.create())
 
-    implicit val (kCoder, aCoder, bCoder) = (a.keyCoder, a.valueCoder, b.valueCoder)
+    implicit val (kCoder: Coder[KEY], aCoder: Coder[A], bCoder: Coder[B]) = (a.keyCoder, a.valueCoder, b.valueCoder)
 
     type DF = DoFn[KV[KEY, CoGbkResult], (KEY, (A1, B1))]
     a.context

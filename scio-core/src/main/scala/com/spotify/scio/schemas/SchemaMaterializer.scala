@@ -83,14 +83,14 @@ object SchemaMaterializer {
   private def decode[A](schema: LogicalType[A])(v: schema.Repr): A =
     schema.fromBase(v)
 
-  private def decode[F[_], A: ClassTag](schema: ArrayType[F, A])(v: schema.Repr): F[A] = {
-    val values = new Array[A](v.size)
+  private def decode[F[_], A](schema: ArrayType[F, A])(v: schema.Repr): F[A] = {
+    val values = new Array[Any](v.size)
     var i = 0
     while (i < v.size) {
       values.update(i, dispatchDecode[A](schema.schema)(v.get(i)))
       i = i + 1
     }
-    schema.fromList(java.util.Arrays.asList(values: _*))
+    schema.fromList(java.util.Arrays.asList(values.asInstanceOf[Array[A]]: _*))
   }
 
   private def decode[F[_, _], A, B](schema: MapType[F, A, B])(v: schema.Repr): F[A, B] = {
@@ -150,7 +150,7 @@ object SchemaMaterializer {
     schema
       .toList(v)
       .asScala
-      .map(dispatchEncode(schema.schema, fieldType.getCollectionElementType))
+      .map[schema.schema.Repr](dispatchEncode(schema.schema, fieldType.getCollectionElementType))
       .asJava
 
   private def encode[F[_, _], A, B](schema: MapType[F, A, B], fieldType: BFieldType)(

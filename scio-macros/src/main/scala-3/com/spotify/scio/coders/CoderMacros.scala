@@ -15,13 +15,16 @@
  * under the License.
  */
 
-package com.spotify.scio.io
+package com.spotify.scio.coders
 
-/**
- * IO package for dynamic destinations. Import All.
- *
- * {{{
- * import com.spotify.scio.io.dynamic._
- * }}}
- */
-package object dynamic extends com.spotify.scio.io.dynamic.syntax.AllSyntax
+import scala.compiletime._
+import scala.deriving._
+import scala.quoted._
+
+// TODO: scala3 Implement macros ?
+private[coders] object CoderMacros {
+
+  // Add a level of indirection to prevent the macro from capturing
+  // $outer which would make the Coder serialization fail
+  def wrappedCoder[T] = { ??? }
+}

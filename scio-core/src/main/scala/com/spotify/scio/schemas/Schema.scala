@@ -19,7 +19,6 @@ package com.spotify.scio.schemas
 
 import java.util.{List => jList, Map => jMap}
 
-import com.spotify.scio.{FeatureFlag, IsJavaBean, MacroSettings}
 import com.spotify.scio.schemas.instances.{
   AvroInstances,
   JavaInstances,
@@ -36,9 +35,9 @@ import com.twitter.chill.ClosureCleaner
 
 import scala.jdk.CollectionConverters._
 import scala.reflect.ClassTag
-import org.apache.beam.sdk.values.TupleTag
 
 import scala.collection.{mutable, SortedSet}
+import com.spotify.scio.IsJavaBean
 
 object Schema extends JodaInstances with AvroInstances with LowPrioritySchemaDerivation {
   @inline final def apply[T](implicit c: Schema[T]): Schema[T] = c
@@ -210,7 +209,10 @@ final case class MapType[F[_, _], K, V](
 private[scio] case class ScalarWrapper[T](value: T) extends AnyVal
 object ScalarWrapper {
   implicit def schemaScalarWrapper[T: Schema]: Schema[ScalarWrapper[T]] =
-    Schema.gen[ScalarWrapper[T]]
+    Record(
+      Array("value" -> Schema[T].asInstanceOf[Schema[Any]]),
+      vs => ScalarWrapper(vs.head.asInstanceOf[T]),
+      w => Array(w.value))
 }
 
 private[scio] object SchemaTypes {
@@ -232,47 +234,4 @@ private[scio] object SchemaTypes {
       case _ if s1.getNullable == s2.getNullable => true
       case _                                     => false
     })
-}
-
-private[scio] trait SchemaMacroHelpers {
-  import scala.reflect.macros._
-
-  val ctx: blackbox.Context
-  import ctx.universe._
-
-  val cacheImplicitSchemas: FeatureFlag = MacroSettings.cacheImplicitSchemas(ctx)
-
-  def untyped[A](expr: ctx.Expr[Schema[A]]): ctx.Expr[Schema[A]] =
-    ctx.Expr[Schema[A]](ctx.untypecheck(expr.tree.duplicate))
-
-  def inferImplicitSchema[A: ctx.WeakTypeTag]: ctx.Expr[Schema[A]] =
-    inferImplicitSchema(weakTypeOf[A]).asInstanceOf[ctx.Expr[Schema[A]]]
-
-  def inferImplicitSchema(t: ctx.Type): ctx.Expr[Schema[_]] = {
-    val tpe =
-      cacheImplicitSchemas match {
-        case FeatureFlag.Enable =>
-          tq"_root_.shapeless.Cached[_root_.com.spotify.scio.schemas.Schema[$t]]"
-        case _ =>
-          tq"_root_.com.spotify.scio.schemas.Schema[$t]"
-      }
-
-    val tp = ctx.typecheck(tpe, ctx.TYPEmode).tpe
-    val typedTree = ctx.inferImplicitValue(tp, silent = false)
-    val untypedTree = ctx.untypecheck(typedTree.duplicate)
-
-    cacheImplicitSchemas match {
-      case FeatureFlag.Enable =>
-        ctx.Expr[Schema[_]](q"$untypedTree.value")
-      case _ =>
-        ctx.Expr[Schema[_]](untypedTree)
-    }
-  }
-
-  def inferClassTag(t: ctx.Type): ctx.Expr[ClassTag[_]] =
-    ctx.Expr[ClassTag[_]](q"implicitly[_root_.scala.reflect.ClassTag[$t]]")
-
-  implicit def liftTupleTag[A: ctx.WeakTypeTag]: Liftable[TupleTag[A]] = Liftable[TupleTag[A]] {
-    x => q"new _root_.org.apache.beam.sdk.values.TupleTag[${weakTypeOf[A]}](${x.getId()})"
-  }
 }

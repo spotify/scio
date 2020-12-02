@@ -20,10 +20,12 @@
 package com.spotify.scio.util
 
 import com.spotify.scio.values.SCollection
+import com.spotify.scio.coders.Coder
 import org.apache.beam.sdk.transforms.join.{CoGroupByKey, KeyedPCollectionTuple}
 import org.apache.beam.sdk.values.TupleTag
 
 import scala.jdk.CollectionConverters._
+import com.spotify.scio.values.SCollection.makePairSCollectionFunctions
 
 trait MultiJoin extends Serializable {
 
@@ -32,8 +34,8 @@ trait MultiJoin extends Serializable {
   def toOptions[T](xs: Iterator[T]): Iterator[Option[T]] = if (xs.isEmpty) Iterator(None) else xs.map(Option(_))
 
   def cogroup[KEY, A, B](a: SCollection[(KEY, A)], b: SCollection[(KEY, B)]): SCollection[(KEY, (Iterable[A], Iterable[B]))] = {
-    implicit val keyCoder = a.keyCoder
-    implicit val (coderA, coderB) = (a.valueCoder, b.valueCoder)
+    implicit val keyCoder: Coder[KEY] = a.keyCoder
+    implicit val (coderA: Coder[A], coderB: Coder[B]) = (a.valueCoder, b.valueCoder)
     val (tagA, tagB) = (new TupleTag[A](), new TupleTag[B]())
     val keyed = KeyedPCollectionTuple
       .of(tagA, a.toKV.internal)
@@ -46,8 +48,8 @@ trait MultiJoin extends Serializable {
   }
 
   def cogroup[KEY, A, B, C](a: SCollection[(KEY, A)], b: SCollection[(KEY, B)], c: SCollection[(KEY, C)]): SCollection[(KEY, (Iterable[A], Iterable[B], Iterable[C]))] = {
-    implicit val keyCoder = a.keyCoder
-    implicit val (coderA, coderB, coderC) = (a.valueCoder, b.valueCoder, c.valueCoder)
+    implicit val keyCoder: Coder[KEY] = a.keyCoder
+    implicit val (coderA: Coder[A], coderB: Coder[B], coderC: Coder[C]) = (a.valueCoder, b.valueCoder, c.valueCoder)
     val (tagA, tagB, tagC) = (new TupleTag[A](), new TupleTag[B](), new TupleTag[C]())
     val keyed = KeyedPCollectionTuple
       .of(tagA, a.toKV.internal)
@@ -61,8 +63,8 @@ trait MultiJoin extends Serializable {
   }
 
   def cogroup[KEY, A, B, C, D](a: SCollection[(KEY, A)], b: SCollection[(KEY, B)], c: SCollection[(KEY, C)], d: SCollection[(KEY, D)]): SCollection[(KEY, (Iterable[A], Iterable[B], Iterable[C], Iterable[D]))] = {
-    implicit val keyCoder = a.keyCoder
-    implicit val (coderA, coderB, coderC, coderD) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder)
+    implicit val keyCoder: Coder[KEY] = a.keyCoder
+    implicit val (coderA: Coder[A], coderB: Coder[B], coderC: Coder[C], coderD: Coder[D]) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder)
     val (tagA, tagB, tagC, tagD) = (new TupleTag[A](), new TupleTag[B](), new TupleTag[C](), new TupleTag[D]())
     val keyed = KeyedPCollectionTuple
       .of(tagA, a.toKV.internal)
@@ -77,8 +79,8 @@ trait MultiJoin extends Serializable {
   }
 
   def cogroup[KEY, A, B, C, D, E](a: SCollection[(KEY, A)], b: SCollection[(KEY, B)], c: SCollection[(KEY, C)], d: SCollection[(KEY, D)], e: SCollection[(KEY, E)]): SCollection[(KEY, (Iterable[A], Iterable[B], Iterable[C], Iterable[D], Iterable[E]))] = {
-    implicit val keyCoder = a.keyCoder
-    implicit val (coderA, coderB, coderC, coderD, coderE) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder)
+    implicit val keyCoder: Coder[KEY] = a.keyCoder
+    implicit val (coderA: Coder[A], coderB: Coder[B], coderC: Coder[C], coderD: Coder[D], coderE: Coder[E]) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder)
     val (tagA, tagB, tagC, tagD, tagE) = (new TupleTag[A](), new TupleTag[B](), new TupleTag[C](), new TupleTag[D](), new TupleTag[E]())
     val keyed = KeyedPCollectionTuple
       .of(tagA, a.toKV.internal)
@@ -94,8 +96,8 @@ trait MultiJoin extends Serializable {
   }
 
   def cogroup[KEY, A, B, C, D, E, F](a: SCollection[(KEY, A)], b: SCollection[(KEY, B)], c: SCollection[(KEY, C)], d: SCollection[(KEY, D)], e: SCollection[(KEY, E)], f: SCollection[(KEY, F)]): SCollection[(KEY, (Iterable[A], Iterable[B], Iterable[C], Iterable[D], Iterable[E], Iterable[F]))] = {
-    implicit val keyCoder = a.keyCoder
-    implicit val (coderA, coderB, coderC, coderD, coderE, coderF) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder)
+    implicit val keyCoder: Coder[KEY] = a.keyCoder
+    implicit val (coderA: Coder[A], coderB: Coder[B], coderC: Coder[C], coderD: Coder[D], coderE: Coder[E], coderF: Coder[F]) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder)
     val (tagA, tagB, tagC, tagD, tagE, tagF) = (new TupleTag[A](), new TupleTag[B](), new TupleTag[C](), new TupleTag[D](), new TupleTag[E](), new TupleTag[F]())
     val keyed = KeyedPCollectionTuple
       .of(tagA, a.toKV.internal)
@@ -112,8 +114,8 @@ trait MultiJoin extends Serializable {
   }
 
   def cogroup[KEY, A, B, C, D, E, F, G](a: SCollection[(KEY, A)], b: SCollection[(KEY, B)], c: SCollection[(KEY, C)], d: SCollection[(KEY, D)], e: SCollection[(KEY, E)], f: SCollection[(KEY, F)], g: SCollection[(KEY, G)]): SCollection[(KEY, (Iterable[A], Iterable[B], Iterable[C], Iterable[D], Iterable[E], Iterable[F], Iterable[G]))] = {
-    implicit val keyCoder = a.keyCoder
-    implicit val (coderA, coderB, coderC, coderD, coderE, coderF, coderG) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder)
+    implicit val keyCoder: Coder[KEY] = a.keyCoder
+    implicit val (coderA: Coder[A], coderB: Coder[B], coderC: Coder[C], coderD: Coder[D], coderE: Coder[E], coderF: Coder[F], coderG: Coder[G]) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder)
     val (tagA, tagB, tagC, tagD, tagE, tagF, tagG) = (new TupleTag[A](), new TupleTag[B](), new TupleTag[C](), new TupleTag[D](), new TupleTag[E](), new TupleTag[F](), new TupleTag[G]())
     val keyed = KeyedPCollectionTuple
       .of(tagA, a.toKV.internal)
@@ -131,8 +133,8 @@ trait MultiJoin extends Serializable {
   }
 
   def cogroup[KEY, A, B, C, D, E, F, G, H](a: SCollection[(KEY, A)], b: SCollection[(KEY, B)], c: SCollection[(KEY, C)], d: SCollection[(KEY, D)], e: SCollection[(KEY, E)], f: SCollection[(KEY, F)], g: SCollection[(KEY, G)], h: SCollection[(KEY, H)]): SCollection[(KEY, (Iterable[A], Iterable[B], Iterable[C], Iterable[D], Iterable[E], Iterable[F], Iterable[G], Iterable[H]))] = {
-    implicit val keyCoder = a.keyCoder
-    implicit val (coderA, coderB, coderC, coderD, coderE, coderF, coderG, coderH) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder)
+    implicit val keyCoder: Coder[KEY] = a.keyCoder
+    implicit val (coderA: Coder[A], coderB: Coder[B], coderC: Coder[C], coderD: Coder[D], coderE: Coder[E], coderF: Coder[F], coderG: Coder[G], coderH: Coder[H]) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder)
     val (tagA, tagB, tagC, tagD, tagE, tagF, tagG, tagH) = (new TupleTag[A](), new TupleTag[B](), new TupleTag[C](), new TupleTag[D](), new TupleTag[E](), new TupleTag[F](), new TupleTag[G](), new TupleTag[H]())
     val keyed = KeyedPCollectionTuple
       .of(tagA, a.toKV.internal)
@@ -151,8 +153,8 @@ trait MultiJoin extends Serializable {
   }
 
   def cogroup[KEY, A, B, C, D, E, F, G, H, I](a: SCollection[(KEY, A)], b: SCollection[(KEY, B)], c: SCollection[(KEY, C)], d: SCollection[(KEY, D)], e: SCollection[(KEY, E)], f: SCollection[(KEY, F)], g: SCollection[(KEY, G)], h: SCollection[(KEY, H)], i: SCollection[(KEY, I)]): SCollection[(KEY, (Iterable[A], Iterable[B], Iterable[C], Iterable[D], Iterable[E], Iterable[F], Iterable[G], Iterable[H], Iterable[I]))] = {
-    implicit val keyCoder = a.keyCoder
-    implicit val (coderA, coderB, coderC, coderD, coderE, coderF, coderG, coderH, coderI) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder)
+    implicit val keyCoder: Coder[KEY] = a.keyCoder
+    implicit val (coderA: Coder[A], coderB: Coder[B], coderC: Coder[C], coderD: Coder[D], coderE: Coder[E], coderF: Coder[F], coderG: Coder[G], coderH: Coder[H], coderI: Coder[I]) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder)
     val (tagA, tagB, tagC, tagD, tagE, tagF, tagG, tagH, tagI) = (new TupleTag[A](), new TupleTag[B](), new TupleTag[C](), new TupleTag[D](), new TupleTag[E](), new TupleTag[F](), new TupleTag[G](), new TupleTag[H](), new TupleTag[I]())
     val keyed = KeyedPCollectionTuple
       .of(tagA, a.toKV.internal)
@@ -172,8 +174,8 @@ trait MultiJoin extends Serializable {
   }
 
   def cogroup[KEY, A, B, C, D, E, F, G, H, I, J](a: SCollection[(KEY, A)], b: SCollection[(KEY, B)], c: SCollection[(KEY, C)], d: SCollection[(KEY, D)], e: SCollection[(KEY, E)], f: SCollection[(KEY, F)], g: SCollection[(KEY, G)], h: SCollection[(KEY, H)], i: SCollection[(KEY, I)], j: SCollection[(KEY, J)]): SCollection[(KEY, (Iterable[A], Iterable[B], Iterable[C], Iterable[D], Iterable[E], Iterable[F], Iterable[G], Iterable[H], Iterable[I], Iterable[J]))] = {
-    implicit val keyCoder = a.keyCoder
-    implicit val (coderA, coderB, coderC, coderD, coderE, coderF, coderG, coderH, coderI, coderJ) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder)
+    implicit val keyCoder: Coder[KEY] = a.keyCoder
+    implicit val (coderA: Coder[A], coderB: Coder[B], coderC: Coder[C], coderD: Coder[D], coderE: Coder[E], coderF: Coder[F], coderG: Coder[G], coderH: Coder[H], coderI: Coder[I], coderJ: Coder[J]) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder)
     val (tagA, tagB, tagC, tagD, tagE, tagF, tagG, tagH, tagI, tagJ) = (new TupleTag[A](), new TupleTag[B](), new TupleTag[C](), new TupleTag[D](), new TupleTag[E](), new TupleTag[F](), new TupleTag[G](), new TupleTag[H](), new TupleTag[I](), new TupleTag[J]())
     val keyed = KeyedPCollectionTuple
       .of(tagA, a.toKV.internal)
@@ -194,8 +196,8 @@ trait MultiJoin extends Serializable {
   }
 
   def cogroup[KEY, A, B, C, D, E, F, G, H, I, J, K](a: SCollection[(KEY, A)], b: SCollection[(KEY, B)], c: SCollection[(KEY, C)], d: SCollection[(KEY, D)], e: SCollection[(KEY, E)], f: SCollection[(KEY, F)], g: SCollection[(KEY, G)], h: SCollection[(KEY, H)], i: SCollection[(KEY, I)], j: SCollection[(KEY, J)], k: SCollection[(KEY, K)]): SCollection[(KEY, (Iterable[A], Iterable[B], Iterable[C], Iterable[D], Iterable[E], Iterable[F], Iterable[G], Iterable[H], Iterable[I], Iterable[J], Iterable[K]))] = {
-    implicit val keyCoder = a.keyCoder
-    implicit val (coderA, coderB, coderC, coderD, coderE, coderF, coderG, coderH, coderI, coderJ, coderK) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder, k.valueCoder)
+    implicit val keyCoder: Coder[KEY] = a.keyCoder
+    implicit val (coderA: Coder[A], coderB: Coder[B], coderC: Coder[C], coderD: Coder[D], coderE: Coder[E], coderF: Coder[F], coderG: Coder[G], coderH: Coder[H], coderI: Coder[I], coderJ: Coder[J], coderK: Coder[K]) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder, k.valueCoder)
     val (tagA, tagB, tagC, tagD, tagE, tagF, tagG, tagH, tagI, tagJ, tagK) = (new TupleTag[A](), new TupleTag[B](), new TupleTag[C](), new TupleTag[D](), new TupleTag[E](), new TupleTag[F](), new TupleTag[G](), new TupleTag[H](), new TupleTag[I](), new TupleTag[J](), new TupleTag[K]())
     val keyed = KeyedPCollectionTuple
       .of(tagA, a.toKV.internal)
@@ -217,8 +219,8 @@ trait MultiJoin extends Serializable {
   }
 
   def cogroup[KEY, A, B, C, D, E, F, G, H, I, J, K, L](a: SCollection[(KEY, A)], b: SCollection[(KEY, B)], c: SCollection[(KEY, C)], d: SCollection[(KEY, D)], e: SCollection[(KEY, E)], f: SCollection[(KEY, F)], g: SCollection[(KEY, G)], h: SCollection[(KEY, H)], i: SCollection[(KEY, I)], j: SCollection[(KEY, J)], k: SCollection[(KEY, K)], l: SCollection[(KEY, L)]): SCollection[(KEY, (Iterable[A], Iterable[B], Iterable[C], Iterable[D], Iterable[E], Iterable[F], Iterable[G], Iterable[H], Iterable[I], Iterable[J], Iterable[K], Iterable[L]))] = {
-    implicit val keyCoder = a.keyCoder
-    implicit val (coderA, coderB, coderC, coderD, coderE, coderF, coderG, coderH, coderI, coderJ, coderK, coderL) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder, k.valueCoder, l.valueCoder)
+    implicit val keyCoder: Coder[KEY] = a.keyCoder
+    implicit val (coderA: Coder[A], coderB: Coder[B], coderC: Coder[C], coderD: Coder[D], coderE: Coder[E], coderF: Coder[F], coderG: Coder[G], coderH: Coder[H], coderI: Coder[I], coderJ: Coder[J], coderK: Coder[K], coderL: Coder[L]) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder, k.valueCoder, l.valueCoder)
     val (tagA, tagB, tagC, tagD, tagE, tagF, tagG, tagH, tagI, tagJ, tagK, tagL) = (new TupleTag[A](), new TupleTag[B](), new TupleTag[C](), new TupleTag[D](), new TupleTag[E](), new TupleTag[F](), new TupleTag[G](), new TupleTag[H](), new TupleTag[I](), new TupleTag[J](), new TupleTag[K](), new TupleTag[L]())
     val keyed = KeyedPCollectionTuple
       .of(tagA, a.toKV.internal)
@@ -241,8 +243,8 @@ trait MultiJoin extends Serializable {
   }
 
   def cogroup[KEY, A, B, C, D, E, F, G, H, I, J, K, L, M](a: SCollection[(KEY, A)], b: SCollection[(KEY, B)], c: SCollection[(KEY, C)], d: SCollection[(KEY, D)], e: SCollection[(KEY, E)], f: SCollection[(KEY, F)], g: SCollection[(KEY, G)], h: SCollection[(KEY, H)], i: SCollection[(KEY, I)], j: SCollection[(KEY, J)], k: SCollection[(KEY, K)], l: SCollection[(KEY, L)], m: SCollection[(KEY, M)]): SCollection[(KEY, (Iterable[A], Iterable[B], Iterable[C], Iterable[D], Iterable[E], Iterable[F], Iterable[G], Iterable[H], Iterable[I], Iterable[J], Iterable[K], Iterable[L], Iterable[M]))] = {
-    implicit val keyCoder = a.keyCoder
-    implicit val (coderA, coderB, coderC, coderD, coderE, coderF, coderG, coderH, coderI, coderJ, coderK, coderL, coderM) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder, k.valueCoder, l.valueCoder, m.valueCoder)
+    implicit val keyCoder: Coder[KEY] = a.keyCoder
+    implicit val (coderA: Coder[A], coderB: Coder[B], coderC: Coder[C], coderD: Coder[D], coderE: Coder[E], coderF: Coder[F], coderG: Coder[G], coderH: Coder[H], coderI: Coder[I], coderJ: Coder[J], coderK: Coder[K], coderL: Coder[L], coderM: Coder[M]) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder, k.valueCoder, l.valueCoder, m.valueCoder)
     val (tagA, tagB, tagC, tagD, tagE, tagF, tagG, tagH, tagI, tagJ, tagK, tagL, tagM) = (new TupleTag[A](), new TupleTag[B](), new TupleTag[C](), new TupleTag[D](), new TupleTag[E](), new TupleTag[F](), new TupleTag[G](), new TupleTag[H](), new TupleTag[I](), new TupleTag[J](), new TupleTag[K](), new TupleTag[L](), new TupleTag[M]())
     val keyed = KeyedPCollectionTuple
       .of(tagA, a.toKV.internal)
@@ -266,8 +268,8 @@ trait MultiJoin extends Serializable {
   }
 
   def cogroup[KEY, A, B, C, D, E, F, G, H, I, J, K, L, M, N](a: SCollection[(KEY, A)], b: SCollection[(KEY, B)], c: SCollection[(KEY, C)], d: SCollection[(KEY, D)], e: SCollection[(KEY, E)], f: SCollection[(KEY, F)], g: SCollection[(KEY, G)], h: SCollection[(KEY, H)], i: SCollection[(KEY, I)], j: SCollection[(KEY, J)], k: SCollection[(KEY, K)], l: SCollection[(KEY, L)], m: SCollection[(KEY, M)], n: SCollection[(KEY, N)]): SCollection[(KEY, (Iterable[A], Iterable[B], Iterable[C], Iterable[D], Iterable[E], Iterable[F], Iterable[G], Iterable[H], Iterable[I], Iterable[J], Iterable[K], Iterable[L], Iterable[M], Iterable[N]))] = {
-    implicit val keyCoder = a.keyCoder
-    implicit val (coderA, coderB, coderC, coderD, coderE, coderF, coderG, coderH, coderI, coderJ, coderK, coderL, coderM, coderN) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder, k.valueCoder, l.valueCoder, m.valueCoder, n.valueCoder)
+    implicit val keyCoder: Coder[KEY] = a.keyCoder
+    implicit val (coderA: Coder[A], coderB: Coder[B], coderC: Coder[C], coderD: Coder[D], coderE: Coder[E], coderF: Coder[F], coderG: Coder[G], coderH: Coder[H], coderI: Coder[I], coderJ: Coder[J], coderK: Coder[K], coderL: Coder[L], coderM: Coder[M], coderN: Coder[N]) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder, k.valueCoder, l.valueCoder, m.valueCoder, n.valueCoder)
     val (tagA, tagB, tagC, tagD, tagE, tagF, tagG, tagH, tagI, tagJ, tagK, tagL, tagM, tagN) = (new TupleTag[A](), new TupleTag[B](), new TupleTag[C](), new TupleTag[D](), new TupleTag[E](), new TupleTag[F](), new TupleTag[G](), new TupleTag[H](), new TupleTag[I](), new TupleTag[J](), new TupleTag[K](), new TupleTag[L](), new TupleTag[M](), new TupleTag[N]())
     val keyed = KeyedPCollectionTuple
       .of(tagA, a.toKV.internal)
@@ -292,8 +294,8 @@ trait MultiJoin extends Serializable {
   }
 
   def cogroup[KEY, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O](a: SCollection[(KEY, A)], b: SCollection[(KEY, B)], c: SCollection[(KEY, C)], d: SCollection[(KEY, D)], e: SCollection[(KEY, E)], f: SCollection[(KEY, F)], g: SCollection[(KEY, G)], h: SCollection[(KEY, H)], i: SCollection[(KEY, I)], j: SCollection[(KEY, J)], k: SCollection[(KEY, K)], l: SCollection[(KEY, L)], m: SCollection[(KEY, M)], n: SCollection[(KEY, N)], o: SCollection[(KEY, O)]): SCollection[(KEY, (Iterable[A], Iterable[B], Iterable[C], Iterable[D], Iterable[E], Iterable[F], Iterable[G], Iterable[H], Iterable[I], Iterable[J], Iterable[K], Iterable[L], Iterable[M], Iterable[N], Iterable[O]))] = {
-    implicit val keyCoder = a.keyCoder
-    implicit val (coderA, coderB, coderC, coderD, coderE, coderF, coderG, coderH, coderI, coderJ, coderK, coderL, coderM, coderN, coderO) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder, k.valueCoder, l.valueCoder, m.valueCoder, n.valueCoder, o.valueCoder)
+    implicit val keyCoder: Coder[KEY] = a.keyCoder
+    implicit val (coderA: Coder[A], coderB: Coder[B], coderC: Coder[C], coderD: Coder[D], coderE: Coder[E], coderF: Coder[F], coderG: Coder[G], coderH: Coder[H], coderI: Coder[I], coderJ: Coder[J], coderK: Coder[K], coderL: Coder[L], coderM: Coder[M], coderN: Coder[N], coderO: Coder[O]) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder, k.valueCoder, l.valueCoder, m.valueCoder, n.valueCoder, o.valueCoder)
     val (tagA, tagB, tagC, tagD, tagE, tagF, tagG, tagH, tagI, tagJ, tagK, tagL, tagM, tagN, tagO) = (new TupleTag[A](), new TupleTag[B](), new TupleTag[C](), new TupleTag[D](), new TupleTag[E](), new TupleTag[F](), new TupleTag[G](), new TupleTag[H](), new TupleTag[I](), new TupleTag[J](), new TupleTag[K](), new TupleTag[L](), new TupleTag[M](), new TupleTag[N](), new TupleTag[O]())
     val keyed = KeyedPCollectionTuple
       .of(tagA, a.toKV.internal)
@@ -319,8 +321,8 @@ trait MultiJoin extends Serializable {
   }
 
   def cogroup[KEY, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P](a: SCollection[(KEY, A)], b: SCollection[(KEY, B)], c: SCollection[(KEY, C)], d: SCollection[(KEY, D)], e: SCollection[(KEY, E)], f: SCollection[(KEY, F)], g: SCollection[(KEY, G)], h: SCollection[(KEY, H)], i: SCollection[(KEY, I)], j: SCollection[(KEY, J)], k: SCollection[(KEY, K)], l: SCollection[(KEY, L)], m: SCollection[(KEY, M)], n: SCollection[(KEY, N)], o: SCollection[(KEY, O)], p: SCollection[(KEY, P)]): SCollection[(KEY, (Iterable[A], Iterable[B], Iterable[C], Iterable[D], Iterable[E], Iterable[F], Iterable[G], Iterable[H], Iterable[I], Iterable[J], Iterable[K], Iterable[L], Iterable[M], Iterable[N], Iterable[O], Iterable[P]))] = {
-    implicit val keyCoder = a.keyCoder
-    implicit val (coderA, coderB, coderC, coderD, coderE, coderF, coderG, coderH, coderI, coderJ, coderK, coderL, coderM, coderN, coderO, coderP) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder, k.valueCoder, l.valueCoder, m.valueCoder, n.valueCoder, o.valueCoder, p.valueCoder)
+    implicit val keyCoder: Coder[KEY] = a.keyCoder
+    implicit val (coderA: Coder[A], coderB: Coder[B], coderC: Coder[C], coderD: Coder[D], coderE: Coder[E], coderF: Coder[F], coderG: Coder[G], coderH: Coder[H], coderI: Coder[I], coderJ: Coder[J], coderK: Coder[K], coderL: Coder[L], coderM: Coder[M], coderN: Coder[N], coderO: Coder[O], coderP: Coder[P]) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder, k.valueCoder, l.valueCoder, m.valueCoder, n.valueCoder, o.valueCoder, p.valueCoder)
     val (tagA, tagB, tagC, tagD, tagE, tagF, tagG, tagH, tagI, tagJ, tagK, tagL, tagM, tagN, tagO, tagP) = (new TupleTag[A](), new TupleTag[B](), new TupleTag[C](), new TupleTag[D](), new TupleTag[E](), new TupleTag[F](), new TupleTag[G](), new TupleTag[H](), new TupleTag[I](), new TupleTag[J](), new TupleTag[K](), new TupleTag[L](), new TupleTag[M](), new TupleTag[N](), new TupleTag[O](), new TupleTag[P]())
     val keyed = KeyedPCollectionTuple
       .of(tagA, a.toKV.internal)
@@ -347,8 +349,8 @@ trait MultiJoin extends Serializable {
   }
 
   def cogroup[KEY, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q](a: SCollection[(KEY, A)], b: SCollection[(KEY, B)], c: SCollection[(KEY, C)], d: SCollection[(KEY, D)], e: SCollection[(KEY, E)], f: SCollection[(KEY, F)], g: SCollection[(KEY, G)], h: SCollection[(KEY, H)], i: SCollection[(KEY, I)], j: SCollection[(KEY, J)], k: SCollection[(KEY, K)], l: SCollection[(KEY, L)], m: SCollection[(KEY, M)], n: SCollection[(KEY, N)], o: SCollection[(KEY, O)], p: SCollection[(KEY, P)], q: SCollection[(KEY, Q)]): SCollection[(KEY, (Iterable[A], Iterable[B], Iterable[C], Iterable[D], Iterable[E], Iterable[F], Iterable[G], Iterable[H], Iterable[I], Iterable[J], Iterable[K], Iterable[L], Iterable[M], Iterable[N], Iterable[O], Iterable[P], Iterable[Q]))] = {
-    implicit val keyCoder = a.keyCoder
-    implicit val (coderA, coderB, coderC, coderD, coderE, coderF, coderG, coderH, coderI, coderJ, coderK, coderL, coderM, coderN, coderO, coderP, coderQ) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder, k.valueCoder, l.valueCoder, m.valueCoder, n.valueCoder, o.valueCoder, p.valueCoder, q.valueCoder)
+    implicit val keyCoder: Coder[KEY] = a.keyCoder
+    implicit val (coderA: Coder[A], coderB: Coder[B], coderC: Coder[C], coderD: Coder[D], coderE: Coder[E], coderF: Coder[F], coderG: Coder[G], coderH: Coder[H], coderI: Coder[I], coderJ: Coder[J], coderK: Coder[K], coderL: Coder[L], coderM: Coder[M], coderN: Coder[N], coderO: Coder[O], coderP: Coder[P], coderQ: Coder[Q]) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder, k.valueCoder, l.valueCoder, m.valueCoder, n.valueCoder, o.valueCoder, p.valueCoder, q.valueCoder)
     val (tagA, tagB, tagC, tagD, tagE, tagF, tagG, tagH, tagI, tagJ, tagK, tagL, tagM, tagN, tagO, tagP, tagQ) = (new TupleTag[A](), new TupleTag[B](), new TupleTag[C](), new TupleTag[D](), new TupleTag[E](), new TupleTag[F](), new TupleTag[G](), new TupleTag[H](), new TupleTag[I](), new TupleTag[J](), new TupleTag[K](), new TupleTag[L](), new TupleTag[M](), new TupleTag[N](), new TupleTag[O](), new TupleTag[P](), new TupleTag[Q]())
     val keyed = KeyedPCollectionTuple
       .of(tagA, a.toKV.internal)
@@ -376,8 +378,8 @@ trait MultiJoin extends Serializable {
   }
 
   def cogroup[KEY, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R](a: SCollection[(KEY, A)], b: SCollection[(KEY, B)], c: SCollection[(KEY, C)], d: SCollection[(KEY, D)], e: SCollection[(KEY, E)], f: SCollection[(KEY, F)], g: SCollection[(KEY, G)], h: SCollection[(KEY, H)], i: SCollection[(KEY, I)], j: SCollection[(KEY, J)], k: SCollection[(KEY, K)], l: SCollection[(KEY, L)], m: SCollection[(KEY, M)], n: SCollection[(KEY, N)], o: SCollection[(KEY, O)], p: SCollection[(KEY, P)], q: SCollection[(KEY, Q)], r: SCollection[(KEY, R)]): SCollection[(KEY, (Iterable[A], Iterable[B], Iterable[C], Iterable[D], Iterable[E], Iterable[F], Iterable[G], Iterable[H], Iterable[I], Iterable[J], Iterable[K], Iterable[L], Iterable[M], Iterable[N], Iterable[O], Iterable[P], Iterable[Q], Iterable[R]))] = {
-    implicit val keyCoder = a.keyCoder
-    implicit val (coderA, coderB, coderC, coderD, coderE, coderF, coderG, coderH, coderI, coderJ, coderK, coderL, coderM, coderN, coderO, coderP, coderQ, coderR) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder, k.valueCoder, l.valueCoder, m.valueCoder, n.valueCoder, o.valueCoder, p.valueCoder, q.valueCoder, r.valueCoder)
+    implicit val keyCoder: Coder[KEY] = a.keyCoder
+    implicit val (coderA: Coder[A], coderB: Coder[B], coderC: Coder[C], coderD: Coder[D], coderE: Coder[E], coderF: Coder[F], coderG: Coder[G], coderH: Coder[H], coderI: Coder[I], coderJ: Coder[J], coderK: Coder[K], coderL: Coder[L], coderM: Coder[M], coderN: Coder[N], coderO: Coder[O], coderP: Coder[P], coderQ: Coder[Q], coderR: Coder[R]) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder, k.valueCoder, l.valueCoder, m.valueCoder, n.valueCoder, o.valueCoder, p.valueCoder, q.valueCoder, r.valueCoder)
     val (tagA, tagB, tagC, tagD, tagE, tagF, tagG, tagH, tagI, tagJ, tagK, tagL, tagM, tagN, tagO, tagP, tagQ, tagR) = (new TupleTag[A](), new TupleTag[B](), new TupleTag[C](), new TupleTag[D](), new TupleTag[E](), new TupleTag[F](), new TupleTag[G](), new TupleTag[H](), new TupleTag[I](), new TupleTag[J](), new TupleTag[K](), new TupleTag[L](), new TupleTag[M](), new TupleTag[N](), new TupleTag[O](), new TupleTag[P](), new TupleTag[Q](), new TupleTag[R]())
     val keyed = KeyedPCollectionTuple
       .of(tagA, a.toKV.internal)
@@ -406,8 +408,8 @@ trait MultiJoin extends Serializable {
   }
 
   def cogroup[KEY, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S](a: SCollection[(KEY, A)], b: SCollection[(KEY, B)], c: SCollection[(KEY, C)], d: SCollection[(KEY, D)], e: SCollection[(KEY, E)], f: SCollection[(KEY, F)], g: SCollection[(KEY, G)], h: SCollection[(KEY, H)], i: SCollection[(KEY, I)], j: SCollection[(KEY, J)], k: SCollection[(KEY, K)], l: SCollection[(KEY, L)], m: SCollection[(KEY, M)], n: SCollection[(KEY, N)], o: SCollection[(KEY, O)], p: SCollection[(KEY, P)], q: SCollection[(KEY, Q)], r: SCollection[(KEY, R)], s: SCollection[(KEY, S)]): SCollection[(KEY, (Iterable[A], Iterable[B], Iterable[C], Iterable[D], Iterable[E], Iterable[F], Iterable[G], Iterable[H], Iterable[I], Iterable[J], Iterable[K], Iterable[L], Iterable[M], Iterable[N], Iterable[O], Iterable[P], Iterable[Q], Iterable[R], Iterable[S]))] = {
-    implicit val keyCoder = a.keyCoder
-    implicit val (coderA, coderB, coderC, coderD, coderE, coderF, coderG, coderH, coderI, coderJ, coderK, coderL, coderM, coderN, coderO, coderP, coderQ, coderR, coderS) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder, k.valueCoder, l.valueCoder, m.valueCoder, n.valueCoder, o.valueCoder, p.valueCoder, q.valueCoder, r.valueCoder, s.valueCoder)
+    implicit val keyCoder: Coder[KEY] = a.keyCoder
+    implicit val (coderA: Coder[A], coderB: Coder[B], coderC: Coder[C], coderD: Coder[D], coderE: Coder[E], coderF: Coder[F], coderG: Coder[G], coderH: Coder[H], coderI: Coder[I], coderJ: Coder[J], coderK: Coder[K], coderL: Coder[L], coderM: Coder[M], coderN: Coder[N], coderO: Coder[O], coderP: Coder[P], coderQ: Coder[Q], coderR: Coder[R], coderS: Coder[S]) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder, k.valueCoder, l.valueCoder, m.valueCoder, n.valueCoder, o.valueCoder, p.valueCoder, q.valueCoder, r.valueCoder, s.valueCoder)
     val (tagA, tagB, tagC, tagD, tagE, tagF, tagG, tagH, tagI, tagJ, tagK, tagL, tagM, tagN, tagO, tagP, tagQ, tagR, tagS) = (new TupleTag[A](), new TupleTag[B](), new TupleTag[C](), new TupleTag[D](), new TupleTag[E](), new TupleTag[F](), new TupleTag[G](), new TupleTag[H](), new TupleTag[I](), new TupleTag[J](), new TupleTag[K](), new TupleTag[L](), new TupleTag[M](), new TupleTag[N](), new TupleTag[O](), new TupleTag[P](), new TupleTag[Q](), new TupleTag[R](), new TupleTag[S]())
     val keyed = KeyedPCollectionTuple
       .of(tagA, a.toKV.internal)
@@ -437,8 +439,8 @@ trait MultiJoin extends Serializable {
   }
 
   def cogroup[KEY, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T](a: SCollection[(KEY, A)], b: SCollection[(KEY, B)], c: SCollection[(KEY, C)], d: SCollection[(KEY, D)], e: SCollection[(KEY, E)], f: SCollection[(KEY, F)], g: SCollection[(KEY, G)], h: SCollection[(KEY, H)], i: SCollection[(KEY, I)], j: SCollection[(KEY, J)], k: SCollection[(KEY, K)], l: SCollection[(KEY, L)], m: SCollection[(KEY, M)], n: SCollection[(KEY, N)], o: SCollection[(KEY, O)], p: SCollection[(KEY, P)], q: SCollection[(KEY, Q)], r: SCollection[(KEY, R)], s: SCollection[(KEY, S)], t: SCollection[(KEY, T)]): SCollection[(KEY, (Iterable[A], Iterable[B], Iterable[C], Iterable[D], Iterable[E], Iterable[F], Iterable[G], Iterable[H], Iterable[I], Iterable[J], Iterable[K], Iterable[L], Iterable[M], Iterable[N], Iterable[O], Iterable[P], Iterable[Q], Iterable[R], Iterable[S], Iterable[T]))] = {
-    implicit val keyCoder = a.keyCoder
-    implicit val (coderA, coderB, coderC, coderD, coderE, coderF, coderG, coderH, coderI, coderJ, coderK, coderL, coderM, coderN, coderO, coderP, coderQ, coderR, coderS, coderT) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder, k.valueCoder, l.valueCoder, m.valueCoder, n.valueCoder, o.valueCoder, p.valueCoder, q.valueCoder, r.valueCoder, s.valueCoder, t.valueCoder)
+    implicit val keyCoder: Coder[KEY] = a.keyCoder
+    implicit val (coderA: Coder[A], coderB: Coder[B], coderC: Coder[C], coderD: Coder[D], coderE: Coder[E], coderF: Coder[F], coderG: Coder[G], coderH: Coder[H], coderI: Coder[I], coderJ: Coder[J], coderK: Coder[K], coderL: Coder[L], coderM: Coder[M], coderN: Coder[N], coderO: Coder[O], coderP: Coder[P], coderQ: Coder[Q], coderR: Coder[R], coderS: Coder[S], coderT: Coder[T]) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder, k.valueCoder, l.valueCoder, m.valueCoder, n.valueCoder, o.valueCoder, p.valueCoder, q.valueCoder, r.valueCoder, s.valueCoder, t.valueCoder)
     val (tagA, tagB, tagC, tagD, tagE, tagF, tagG, tagH, tagI, tagJ, tagK, tagL, tagM, tagN, tagO, tagP, tagQ, tagR, tagS, tagT) = (new TupleTag[A](), new TupleTag[B](), new TupleTag[C](), new TupleTag[D](), new TupleTag[E](), new TupleTag[F](), new TupleTag[G](), new TupleTag[H](), new TupleTag[I](), new TupleTag[J](), new TupleTag[K](), new TupleTag[L](), new TupleTag[M](), new TupleTag[N](), new TupleTag[O](), new TupleTag[P](), new TupleTag[Q](), new TupleTag[R](), new TupleTag[S](), new TupleTag[T]())
     val keyed = KeyedPCollectionTuple
       .of(tagA, a.toKV.internal)
@@ -469,8 +471,8 @@ trait MultiJoin extends Serializable {
   }
 
   def cogroup[KEY, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U](a: SCollection[(KEY, A)], b: SCollection[(KEY, B)], c: SCollection[(KEY, C)], d: SCollection[(KEY, D)], e: SCollection[(KEY, E)], f: SCollection[(KEY, F)], g: SCollection[(KEY, G)], h: SCollection[(KEY, H)], i: SCollection[(KEY, I)], j: SCollection[(KEY, J)], k: SCollection[(KEY, K)], l: SCollection[(KEY, L)], m: SCollection[(KEY, M)], n: SCollection[(KEY, N)], o: SCollection[(KEY, O)], p: SCollection[(KEY, P)], q: SCollection[(KEY, Q)], r: SCollection[(KEY, R)], s: SCollection[(KEY, S)], t: SCollection[(KEY, T)], u: SCollection[(KEY, U)]): SCollection[(KEY, (Iterable[A], Iterable[B], Iterable[C], Iterable[D], Iterable[E], Iterable[F], Iterable[G], Iterable[H], Iterable[I], Iterable[J], Iterable[K], Iterable[L], Iterable[M], Iterable[N], Iterable[O], Iterable[P], Iterable[Q], Iterable[R], Iterable[S], Iterable[T], Iterable[U]))] = {
-    implicit val keyCoder = a.keyCoder
-    implicit val (coderA, coderB, coderC, coderD, coderE, coderF, coderG, coderH, coderI, coderJ, coderK, coderL, coderM, coderN, coderO, coderP, coderQ, coderR, coderS, coderT, coderU) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder, k.valueCoder, l.valueCoder, m.valueCoder, n.valueCoder, o.valueCoder, p.valueCoder, q.valueCoder, r.valueCoder, s.valueCoder, t.valueCoder, u.valueCoder)
+    implicit val keyCoder: Coder[KEY] = a.keyCoder
+    implicit val (coderA: Coder[A], coderB: Coder[B], coderC: Coder[C], coderD: Coder[D], coderE: Coder[E], coderF: Coder[F], coderG: Coder[G], coderH: Coder[H], coderI: Coder[I], coderJ: Coder[J], coderK: Coder[K], coderL: Coder[L], coderM: Coder[M], coderN: Coder[N], coderO: Coder[O], coderP: Coder[P], coderQ: Coder[Q], coderR: Coder[R], coderS: Coder[S], coderT: Coder[T], coderU: Coder[U]) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder, k.valueCoder, l.valueCoder, m.valueCoder, n.valueCoder, o.valueCoder, p.valueCoder, q.valueCoder, r.valueCoder, s.valueCoder, t.valueCoder, u.valueCoder)
     val (tagA, tagB, tagC, tagD, tagE, tagF, tagG, tagH, tagI, tagJ, tagK, tagL, tagM, tagN, tagO, tagP, tagQ, tagR, tagS, tagT, tagU) = (new TupleTag[A](), new TupleTag[B](), new TupleTag[C](), new TupleTag[D](), new TupleTag[E](), new TupleTag[F](), new TupleTag[G](), new TupleTag[H](), new TupleTag[I](), new TupleTag[J](), new TupleTag[K](), new TupleTag[L](), new TupleTag[M](), new TupleTag[N](), new TupleTag[O](), new TupleTag[P](), new TupleTag[Q](), new TupleTag[R](), new TupleTag[S](), new TupleTag[T](), new TupleTag[U]())
     val keyed = KeyedPCollectionTuple
       .of(tagA, a.toKV.internal)
@@ -502,8 +504,8 @@ trait MultiJoin extends Serializable {
   }
 
   def cogroup[KEY, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V](a: SCollection[(KEY, A)], b: SCollection[(KEY, B)], c: SCollection[(KEY, C)], d: SCollection[(KEY, D)], e: SCollection[(KEY, E)], f: SCollection[(KEY, F)], g: SCollection[(KEY, G)], h: SCollection[(KEY, H)], i: SCollection[(KEY, I)], j: SCollection[(KEY, J)], k: SCollection[(KEY, K)], l: SCollection[(KEY, L)], m: SCollection[(KEY, M)], n: SCollection[(KEY, N)], o: SCollection[(KEY, O)], p: SCollection[(KEY, P)], q: SCollection[(KEY, Q)], r: SCollection[(KEY, R)], s: SCollection[(KEY, S)], t: SCollection[(KEY, T)], u: SCollection[(KEY, U)], v: SCollection[(KEY, V)]): SCollection[(KEY, (Iterable[A], Iterable[B], Iterable[C], Iterable[D], Iterable[E], Iterable[F], Iterable[G], Iterable[H], Iterable[I], Iterable[J], Iterable[K], Iterable[L], Iterable[M], Iterable[N], Iterable[O], Iterable[P], Iterable[Q], Iterable[R], Iterable[S], Iterable[T], Iterable[U], Iterable[V]))] = {
-    implicit val keyCoder = a.keyCoder
-    implicit val (coderA, coderB, coderC, coderD, coderE, coderF, coderG, coderH, coderI, coderJ, coderK, coderL, coderM, coderN, coderO, coderP, coderQ, coderR, coderS, coderT, coderU, coderV) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder, k.valueCoder, l.valueCoder, m.valueCoder, n.valueCoder, o.valueCoder, p.valueCoder, q.valueCoder, r.valueCoder, s.valueCoder, t.valueCoder, u.valueCoder, v.valueCoder)
+    implicit val keyCoder: Coder[KEY] = a.keyCoder
+    implicit val (coderA: Coder[A], coderB: Coder[B], coderC: Coder[C], coderD: Coder[D], coderE: Coder[E], coderF: Coder[F], coderG: Coder[G], coderH: Coder[H], coderI: Coder[I], coderJ: Coder[J], coderK: Coder[K], coderL: Coder[L], coderM: Coder[M], coderN: Coder[N], coderO: Coder[O], coderP: Coder[P], coderQ: Coder[Q], coderR: Coder[R], coderS: Coder[S], coderT: Coder[T], coderU: Coder[U], coderV: Coder[V]) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder, k.valueCoder, l.valueCoder, m.valueCoder, n.valueCoder, o.valueCoder, p.valueCoder, q.valueCoder, r.valueCoder, s.valueCoder, t.valueCoder, u.valueCoder, v.valueCoder)
     val (tagA, tagB, tagC, tagD, tagE, tagF, tagG, tagH, tagI, tagJ, tagK, tagL, tagM, tagN, tagO, tagP, tagQ, tagR, tagS, tagT, tagU, tagV) = (new TupleTag[A](), new TupleTag[B](), new TupleTag[C](), new TupleTag[D](), new TupleTag[E](), new TupleTag[F](), new TupleTag[G](), new TupleTag[H](), new TupleTag[I](), new TupleTag[J](), new TupleTag[K](), new TupleTag[L](), new TupleTag[M](), new TupleTag[N](), new TupleTag[O](), new TupleTag[P](), new TupleTag[Q](), new TupleTag[R](), new TupleTag[S](), new TupleTag[T](), new TupleTag[U](), new TupleTag[V]())
     val keyed = KeyedPCollectionTuple
       .of(tagA, a.toKV.internal)
@@ -536,8 +538,8 @@ trait MultiJoin extends Serializable {
   }
 
   def apply[KEY, A, B](a: SCollection[(KEY, A)], b: SCollection[(KEY, B)]): SCollection[(KEY, (A, B))] = {
-    implicit val keyCoder = a.keyCoder
-    implicit val (coderA, coderB) = (a.valueCoder, b.valueCoder)
+    implicit val keyCoder: Coder[KEY] = a.keyCoder
+    implicit val (coderA: Coder[A], coderB: Coder[B]) = (a.valueCoder, b.valueCoder)
     val (tagA, tagB) = (new TupleTag[A](), new TupleTag[B]())
     val keyed = KeyedPCollectionTuple
       .of(tagA, a.toKV.internal)
@@ -553,8 +555,8 @@ trait MultiJoin extends Serializable {
   }
 
   def apply[KEY, A, B, C](a: SCollection[(KEY, A)], b: SCollection[(KEY, B)], c: SCollection[(KEY, C)]): SCollection[(KEY, (A, B, C))] = {
-    implicit val keyCoder = a.keyCoder
-    implicit val (coderA, coderB, coderC) = (a.valueCoder, b.valueCoder, c.valueCoder)
+    implicit val keyCoder: Coder[KEY] = a.keyCoder
+    implicit val (coderA: Coder[A], coderB: Coder[B], coderC: Coder[C]) = (a.valueCoder, b.valueCoder, c.valueCoder)
     val (tagA, tagB, tagC) = (new TupleTag[A](), new TupleTag[B](), new TupleTag[C]())
     val keyed = KeyedPCollectionTuple
       .of(tagA, a.toKV.internal)
@@ -572,8 +574,8 @@ trait MultiJoin extends Serializable {
   }
 
   def apply[KEY, A, B, C, D](a: SCollection[(KEY, A)], b: SCollection[(KEY, B)], c: SCollection[(KEY, C)], d: SCollection[(KEY, D)]): SCollection[(KEY, (A, B, C, D))] = {
-    implicit val keyCoder = a.keyCoder
-    implicit val (coderA, coderB, coderC, coderD) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder)
+    implicit val keyCoder: Coder[KEY] = a.keyCoder
+    implicit val (coderA: Coder[A], coderB: Coder[B], coderC: Coder[C], coderD: Coder[D]) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder)
     val (tagA, tagB, tagC, tagD) = (new TupleTag[A](), new TupleTag[B](), new TupleTag[C](), new TupleTag[D]())
     val keyed = KeyedPCollectionTuple
       .of(tagA, a.toKV.internal)
@@ -593,8 +595,8 @@ trait MultiJoin extends Serializable {
   }
 
   def apply[KEY, A, B, C, D, E](a: SCollection[(KEY, A)], b: SCollection[(KEY, B)], c: SCollection[(KEY, C)], d: SCollection[(KEY, D)], e: SCollection[(KEY, E)]): SCollection[(KEY, (A, B, C, D, E))] = {
-    implicit val keyCoder = a.keyCoder
-    implicit val (coderA, coderB, coderC, coderD, coderE) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder)
+    implicit val keyCoder: Coder[KEY] = a.keyCoder
+    implicit val (coderA: Coder[A], coderB: Coder[B], coderC: Coder[C], coderD: Coder[D], coderE: Coder[E]) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder)
     val (tagA, tagB, tagC, tagD, tagE) = (new TupleTag[A](), new TupleTag[B](), new TupleTag[C](), new TupleTag[D](), new TupleTag[E]())
     val keyed = KeyedPCollectionTuple
       .of(tagA, a.toKV.internal)
@@ -616,8 +618,8 @@ trait MultiJoin extends Serializable {
   }
 
   def apply[KEY, A, B, C, D, E, F](a: SCollection[(KEY, A)], b: SCollection[(KEY, B)], c: SCollection[(KEY, C)], d: SCollection[(KEY, D)], e: SCollection[(KEY, E)], f: SCollection[(KEY, F)]): SCollection[(KEY, (A, B, C, D, E, F))] = {
-    implicit val keyCoder = a.keyCoder
-    implicit val (coderA, coderB, coderC, coderD, coderE, coderF) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder)
+    implicit val keyCoder: Coder[KEY] = a.keyCoder
+    implicit val (coderA: Coder[A], coderB: Coder[B], coderC: Coder[C], coderD: Coder[D], coderE: Coder[E], coderF: Coder[F]) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder)
     val (tagA, tagB, tagC, tagD, tagE, tagF) = (new TupleTag[A](), new TupleTag[B](), new TupleTag[C](), new TupleTag[D](), new TupleTag[E](), new TupleTag[F]())
     val keyed = KeyedPCollectionTuple
       .of(tagA, a.toKV.internal)
@@ -641,8 +643,8 @@ trait MultiJoin extends Serializable {
   }
 
   def apply[KEY, A, B, C, D, E, F, G](a: SCollection[(KEY, A)], b: SCollection[(KEY, B)], c: SCollection[(KEY, C)], d: SCollection[(KEY, D)], e: SCollection[(KEY, E)], f: SCollection[(KEY, F)], g: SCollection[(KEY, G)]): SCollection[(KEY, (A, B, C, D, E, F, G))] = {
-    implicit val keyCoder = a.keyCoder
-    implicit val (coderA, coderB, coderC, coderD, coderE, coderF, coderG) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder)
+    implicit val keyCoder: Coder[KEY] = a.keyCoder
+    implicit val (coderA: Coder[A], coderB: Coder[B], coderC: Coder[C], coderD: Coder[D], coderE: Coder[E], coderF: Coder[F], coderG: Coder[G]) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder)
     val (tagA, tagB, tagC, tagD, tagE, tagF, tagG) = (new TupleTag[A](), new TupleTag[B](), new TupleTag[C](), new TupleTag[D](), new TupleTag[E](), new TupleTag[F](), new TupleTag[G]())
     val keyed = KeyedPCollectionTuple
       .of(tagA, a.toKV.internal)
@@ -668,8 +670,8 @@ trait MultiJoin extends Serializable {
   }
 
   def apply[KEY, A, B, C, D, E, F, G, H](a: SCollection[(KEY, A)], b: SCollection[(KEY, B)], c: SCollection[(KEY, C)], d: SCollection[(KEY, D)], e: SCollection[(KEY, E)], f: SCollection[(KEY, F)], g: SCollection[(KEY, G)], h: SCollection[(KEY, H)]): SCollection[(KEY, (A, B, C, D, E, F, G, H))] = {
-    implicit val keyCoder = a.keyCoder
-    implicit val (coderA, coderB, coderC, coderD, coderE, coderF, coderG, coderH) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder)
+    implicit val keyCoder: Coder[KEY] = a.keyCoder
+    implicit val (coderA: Coder[A], coderB: Coder[B], coderC: Coder[C], coderD: Coder[D], coderE: Coder[E], coderF: Coder[F], coderG: Coder[G], coderH: Coder[H]) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder)
     val (tagA, tagB, tagC, tagD, tagE, tagF, tagG, tagH) = (new TupleTag[A](), new TupleTag[B](), new TupleTag[C](), new TupleTag[D](), new TupleTag[E](), new TupleTag[F](), new TupleTag[G](), new TupleTag[H]())
     val keyed = KeyedPCollectionTuple
       .of(tagA, a.toKV.internal)
@@ -697,8 +699,8 @@ trait MultiJoin extends Serializable {
   }
 
   def apply[KEY, A, B, C, D, E, F, G, H, I](a: SCollection[(KEY, A)], b: SCollection[(KEY, B)], c: SCollection[(KEY, C)], d: SCollection[(KEY, D)], e: SCollection[(KEY, E)], f: SCollection[(KEY, F)], g: SCollection[(KEY, G)], h: SCollection[(KEY, H)], i: SCollection[(KEY, I)]): SCollection[(KEY, (A, B, C, D, E, F, G, H, I))] = {
-    implicit val keyCoder = a.keyCoder
-    implicit val (coderA, coderB, coderC, coderD, coderE, coderF, coderG, coderH, coderI) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder)
+    implicit val keyCoder: Coder[KEY] = a.keyCoder
+    implicit val (coderA: Coder[A], coderB: Coder[B], coderC: Coder[C], coderD: Coder[D], coderE: Coder[E], coderF: Coder[F], coderG: Coder[G], coderH: Coder[H], coderI: Coder[I]) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder)
     val (tagA, tagB, tagC, tagD, tagE, tagF, tagG, tagH, tagI) = (new TupleTag[A](), new TupleTag[B](), new TupleTag[C](), new TupleTag[D](), new TupleTag[E](), new TupleTag[F](), new TupleTag[G](), new TupleTag[H](), new TupleTag[I]())
     val keyed = KeyedPCollectionTuple
       .of(tagA, a.toKV.internal)
@@ -728,8 +730,8 @@ trait MultiJoin extends Serializable {
   }
 
   def apply[KEY, A, B, C, D, E, F, G, H, I, J](a: SCollection[(KEY, A)], b: SCollection[(KEY, B)], c: SCollection[(KEY, C)], d: SCollection[(KEY, D)], e: SCollection[(KEY, E)], f: SCollection[(KEY, F)], g: SCollection[(KEY, G)], h: SCollection[(KEY, H)], i: SCollection[(KEY, I)], j: SCollection[(KEY, J)]): SCollection[(KEY, (A, B, C, D, E, F, G, H, I, J))] = {
-    implicit val keyCoder = a.keyCoder
-    implicit val (coderA, coderB, coderC, coderD, coderE, coderF, coderG, coderH, coderI, coderJ) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder)
+    implicit val keyCoder: Coder[KEY] = a.keyCoder
+    implicit val (coderA: Coder[A], coderB: Coder[B], coderC: Coder[C], coderD: Coder[D], coderE: Coder[E], coderF: Coder[F], coderG: Coder[G], coderH: Coder[H], coderI: Coder[I], coderJ: Coder[J]) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder)
     val (tagA, tagB, tagC, tagD, tagE, tagF, tagG, tagH, tagI, tagJ) = (new TupleTag[A](), new TupleTag[B](), new TupleTag[C](), new TupleTag[D](), new TupleTag[E](), new TupleTag[F](), new TupleTag[G](), new TupleTag[H](), new TupleTag[I](), new TupleTag[J]())
     val keyed = KeyedPCollectionTuple
       .of(tagA, a.toKV.internal)
@@ -761,8 +763,8 @@ trait MultiJoin extends Serializable {
   }
 
   def apply[KEY, A, B, C, D, E, F, G, H, I, J, K](a: SCollection[(KEY, A)], b: SCollection[(KEY, B)], c: SCollection[(KEY, C)], d: SCollection[(KEY, D)], e: SCollection[(KEY, E)], f: SCollection[(KEY, F)], g: SCollection[(KEY, G)], h: SCollection[(KEY, H)], i: SCollection[(KEY, I)], j: SCollection[(KEY, J)], k: SCollection[(KEY, K)]): SCollection[(KEY, (A, B, C, D, E, F, G, H, I, J, K))] = {
-    implicit val keyCoder = a.keyCoder
-    implicit val (coderA, coderB, coderC, coderD, coderE, coderF, coderG, coderH, coderI, coderJ, coderK) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder, k.valueCoder)
+    implicit val keyCoder: Coder[KEY] = a.keyCoder
+    implicit val (coderA: Coder[A], coderB: Coder[B], coderC: Coder[C], coderD: Coder[D], coderE: Coder[E], coderF: Coder[F], coderG: Coder[G], coderH: Coder[H], coderI: Coder[I], coderJ: Coder[J], coderK: Coder[K]) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder, k.valueCoder)
     val (tagA, tagB, tagC, tagD, tagE, tagF, tagG, tagH, tagI, tagJ, tagK) = (new TupleTag[A](), new TupleTag[B](), new TupleTag[C](), new TupleTag[D](), new TupleTag[E](), new TupleTag[F](), new TupleTag[G](), new TupleTag[H](), new TupleTag[I](), new TupleTag[J](), new TupleTag[K]())
     val keyed = KeyedPCollectionTuple
       .of(tagA, a.toKV.internal)
@@ -796,8 +798,8 @@ trait MultiJoin extends Serializable {
   }
 
   def apply[KEY, A, B, C, D, E, F, G, H, I, J, K, L](a: SCollection[(KEY, A)], b: SCollection[(KEY, B)], c: SCollection[(KEY, C)], d: SCollection[(KEY, D)], e: SCollection[(KEY, E)], f: SCollection[(KEY, F)], g: SCollection[(KEY, G)], h: SCollection[(KEY, H)], i: SCollection[(KEY, I)], j: SCollection[(KEY, J)], k: SCollection[(KEY, K)], l: SCollection[(KEY, L)]): SCollection[(KEY, (A, B, C, D, E, F, G, H, I, J, K, L))] = {
-    implicit val keyCoder = a.keyCoder
-    implicit val (coderA, coderB, coderC, coderD, coderE, coderF, coderG, coderH, coderI, coderJ, coderK, coderL) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder, k.valueCoder, l.valueCoder)
+    implicit val keyCoder: Coder[KEY] = a.keyCoder
+    implicit val (coderA: Coder[A], coderB: Coder[B], coderC: Coder[C], coderD: Coder[D], coderE: Coder[E], coderF: Coder[F], coderG: Coder[G], coderH: Coder[H], coderI: Coder[I], coderJ: Coder[J], coderK: Coder[K], coderL: Coder[L]) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder, k.valueCoder, l.valueCoder)
     val (tagA, tagB, tagC, tagD, tagE, tagF, tagG, tagH, tagI, tagJ, tagK, tagL) = (new TupleTag[A](), new TupleTag[B](), new TupleTag[C](), new TupleTag[D](), new TupleTag[E](), new TupleTag[F](), new TupleTag[G](), new TupleTag[H](), new TupleTag[I](), new TupleTag[J](), new TupleTag[K](), new TupleTag[L]())
     val keyed = KeyedPCollectionTuple
       .of(tagA, a.toKV.internal)
@@ -833,8 +835,8 @@ trait MultiJoin extends Serializable {
   }
 
   def apply[KEY, A, B, C, D, E, F, G, H, I, J, K, L, M](a: SCollection[(KEY, A)], b: SCollection[(KEY, B)], c: SCollection[(KEY, C)], d: SCollection[(KEY, D)], e: SCollection[(KEY, E)], f: SCollection[(KEY, F)], g: SCollection[(KEY, G)], h: SCollection[(KEY, H)], i: SCollection[(KEY, I)], j: SCollection[(KEY, J)], k: SCollection[(KEY, K)], l: SCollection[(KEY, L)], m: SCollection[(KEY, M)]): SCollection[(KEY, (A, B, C, D, E, F, G, H, I, J, K, L, M))] = {
-    implicit val keyCoder = a.keyCoder
-    implicit val (coderA, coderB, coderC, coderD, coderE, coderF, coderG, coderH, coderI, coderJ, coderK, coderL, coderM) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder, k.valueCoder, l.valueCoder, m.valueCoder)
+    implicit val keyCoder: Coder[KEY] = a.keyCoder
+    implicit val (coderA: Coder[A], coderB: Coder[B], coderC: Coder[C], coderD: Coder[D], coderE: Coder[E], coderF: Coder[F], coderG: Coder[G], coderH: Coder[H], coderI: Coder[I], coderJ: Coder[J], coderK: Coder[K], coderL: Coder[L], coderM: Coder[M]) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder, k.valueCoder, l.valueCoder, m.valueCoder)
     val (tagA, tagB, tagC, tagD, tagE, tagF, tagG, tagH, tagI, tagJ, tagK, tagL, tagM) = (new TupleTag[A](), new TupleTag[B](), new TupleTag[C](), new TupleTag[D](), new TupleTag[E](), new TupleTag[F](), new TupleTag[G](), new TupleTag[H](), new TupleTag[I](), new TupleTag[J](), new TupleTag[K](), new TupleTag[L](), new TupleTag[M]())
     val keyed = KeyedPCollectionTuple
       .of(tagA, a.toKV.internal)
@@ -872,8 +874,8 @@ trait MultiJoin extends Serializable {
   }
 
   def apply[KEY, A, B, C, D, E, F, G, H, I, J, K, L, M, N](a: SCollection[(KEY, A)], b: SCollection[(KEY, B)], c: SCollection[(KEY, C)], d: SCollection[(KEY, D)], e: SCollection[(KEY, E)], f: SCollection[(KEY, F)], g: SCollection[(KEY, G)], h: SCollection[(KEY, H)], i: SCollection[(KEY, I)], j: SCollection[(KEY, J)], k: SCollection[(KEY, K)], l: SCollection[(KEY, L)], m: SCollection[(KEY, M)], n: SCollection[(KEY, N)]): SCollection[(KEY, (A, B, C, D, E, F, G, H, I, J, K, L, M, N))] = {
-    implicit val keyCoder = a.keyCoder
-    implicit val (coderA, coderB, coderC, coderD, coderE, coderF, coderG, coderH, coderI, coderJ, coderK, coderL, coderM, coderN) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder, k.valueCoder, l.valueCoder, m.valueCoder, n.valueCoder)
+    implicit val keyCoder: Coder[KEY] = a.keyCoder
+    implicit val (coderA: Coder[A], coderB: Coder[B], coderC: Coder[C], coderD: Coder[D], coderE: Coder[E], coderF: Coder[F], coderG: Coder[G], coderH: Coder[H], coderI: Coder[I], coderJ: Coder[J], coderK: Coder[K], coderL: Coder[L], coderM: Coder[M], coderN: Coder[N]) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder, k.valueCoder, l.valueCoder, m.valueCoder, n.valueCoder)
     val (tagA, tagB, tagC, tagD, tagE, tagF, tagG, tagH, tagI, tagJ, tagK, tagL, tagM, tagN) = (new TupleTag[A](), new TupleTag[B](), new TupleTag[C](), new TupleTag[D](), new TupleTag[E](), new TupleTag[F](), new TupleTag[G](), new TupleTag[H](), new TupleTag[I](), new TupleTag[J](), new TupleTag[K](), new TupleTag[L](), new TupleTag[M](), new TupleTag[N]())
     val keyed = KeyedPCollectionTuple
       .of(tagA, a.toKV.internal)
@@ -913,8 +915,8 @@ trait MultiJoin extends Serializable {
   }
 
   def apply[KEY, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O](a: SCollection[(KEY, A)], b: SCollection[(KEY, B)], c: SCollection[(KEY, C)], d: SCollection[(KEY, D)], e: SCollection[(KEY, E)], f: SCollection[(KEY, F)], g: SCollection[(KEY, G)], h: SCollection[(KEY, H)], i: SCollection[(KEY, I)], j: SCollection[(KEY, J)], k: SCollection[(KEY, K)], l: SCollection[(KEY, L)], m: SCollection[(KEY, M)], n: SCollection[(KEY, N)], o: SCollection[(KEY, O)]): SCollection[(KEY, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O))] = {
-    implicit val keyCoder = a.keyCoder
-    implicit val (coderA, coderB, coderC, coderD, coderE, coderF, coderG, coderH, coderI, coderJ, coderK, coderL, coderM, coderN, coderO) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder, k.valueCoder, l.valueCoder, m.valueCoder, n.valueCoder, o.valueCoder)
+    implicit val keyCoder: Coder[KEY] = a.keyCoder
+    implicit val (coderA: Coder[A], coderB: Coder[B], coderC: Coder[C], coderD: Coder[D], coderE: Coder[E], coderF: Coder[F], coderG: Coder[G], coderH: Coder[H], coderI: Coder[I], coderJ: Coder[J], coderK: Coder[K], coderL: Coder[L], coderM: Coder[M], coderN: Coder[N], coderO: Coder[O]) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder, k.valueCoder, l.valueCoder, m.valueCoder, n.valueCoder, o.valueCoder)
     val (tagA, tagB, tagC, tagD, tagE, tagF, tagG, tagH, tagI, tagJ, tagK, tagL, tagM, tagN, tagO) = (new TupleTag[A](), new TupleTag[B](), new TupleTag[C](), new TupleTag[D](), new TupleTag[E](), new TupleTag[F](), new TupleTag[G](), new TupleTag[H](), new TupleTag[I](), new TupleTag[J](), new TupleTag[K](), new TupleTag[L](), new TupleTag[M](), new TupleTag[N](), new TupleTag[O]())
     val keyed = KeyedPCollectionTuple
       .of(tagA, a.toKV.internal)
@@ -956,8 +958,8 @@ trait MultiJoin extends Serializable {
   }
 
   def apply[KEY, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P](a: SCollection[(KEY, A)], b: SCollection[(KEY, B)], c: SCollection[(KEY, C)], d: SCollection[(KEY, D)], e: SCollection[(KEY, E)], f: SCollection[(KEY, F)], g: SCollection[(KEY, G)], h: SCollection[(KEY, H)], i: SCollection[(KEY, I)], j: SCollection[(KEY, J)], k: SCollection[(KEY, K)], l: SCollection[(KEY, L)], m: SCollection[(KEY, M)], n: SCollection[(KEY, N)], o: SCollection[(KEY, O)], p: SCollection[(KEY, P)]): SCollection[(KEY, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P))] = {
-    implicit val keyCoder = a.keyCoder
-    implicit val (coderA, coderB, coderC, coderD, coderE, coderF, coderG, coderH, coderI, coderJ, coderK, coderL, coderM, coderN, coderO, coderP) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder, k.valueCoder, l.valueCoder, m.valueCoder, n.valueCoder, o.valueCoder, p.valueCoder)
+    implicit val keyCoder: Coder[KEY] = a.keyCoder
+    implicit val (coderA: Coder[A], coderB: Coder[B], coderC: Coder[C], coderD: Coder[D], coderE: Coder[E], coderF: Coder[F], coderG: Coder[G], coderH: Coder[H], coderI: Coder[I], coderJ: Coder[J], coderK: Coder[K], coderL: Coder[L], coderM: Coder[M], coderN: Coder[N], coderO: Coder[O], coderP: Coder[P]) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder, k.valueCoder, l.valueCoder, m.valueCoder, n.valueCoder, o.valueCoder, p.valueCoder)
     val (tagA, tagB, tagC, tagD, tagE, tagF, tagG, tagH, tagI, tagJ, tagK, tagL, tagM, tagN, tagO, tagP) = (new TupleTag[A](), new TupleTag[B](), new TupleTag[C](), new TupleTag[D](), new TupleTag[E](), new TupleTag[F](), new TupleTag[G](), new TupleTag[H](), new TupleTag[I](), new TupleTag[J](), new TupleTag[K](), new TupleTag[L](), new TupleTag[M](), new TupleTag[N](), new TupleTag[O](), new TupleTag[P]())
     val keyed = KeyedPCollectionTuple
       .of(tagA, a.toKV.internal)
@@ -1001,8 +1003,8 @@ trait MultiJoin extends Serializable {
   }
 
   def apply[KEY, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q](a: SCollection[(KEY, A)], b: SCollection[(KEY, B)], c: SCollection[(KEY, C)], d: SCollection[(KEY, D)], e: SCollection[(KEY, E)], f: SCollection[(KEY, F)], g: SCollection[(KEY, G)], h: SCollection[(KEY, H)], i: SCollection[(KEY, I)], j: SCollection[(KEY, J)], k: SCollection[(KEY, K)], l: SCollection[(KEY, L)], m: SCollection[(KEY, M)], n: SCollection[(KEY, N)], o: SCollection[(KEY, O)], p: SCollection[(KEY, P)], q: SCollection[(KEY, Q)]): SCollection[(KEY, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q))] = {
-    implicit val keyCoder = a.keyCoder
-    implicit val (coderA, coderB, coderC, coderD, coderE, coderF, coderG, coderH, coderI, coderJ, coderK, coderL, coderM, coderN, coderO, coderP, coderQ) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder, k.valueCoder, l.valueCoder, m.valueCoder, n.valueCoder, o.valueCoder, p.valueCoder, q.valueCoder)
+    implicit val keyCoder: Coder[KEY] = a.keyCoder
+    implicit val (coderA: Coder[A], coderB: Coder[B], coderC: Coder[C], coderD: Coder[D], coderE: Coder[E], coderF: Coder[F], coderG: Coder[G], coderH: Coder[H], coderI: Coder[I], coderJ: Coder[J], coderK: Coder[K], coderL: Coder[L], coderM: Coder[M], coderN: Coder[N], coderO: Coder[O], coderP: Coder[P], coderQ: Coder[Q]) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder, k.valueCoder, l.valueCoder, m.valueCoder, n.valueCoder, o.valueCoder, p.valueCoder, q.valueCoder)
     val (tagA, tagB, tagC, tagD, tagE, tagF, tagG, tagH, tagI, tagJ, tagK, tagL, tagM, tagN, tagO, tagP, tagQ) = (new TupleTag[A](), new TupleTag[B](), new TupleTag[C](), new TupleTag[D](), new TupleTag[E](), new TupleTag[F](), new TupleTag[G](), new TupleTag[H](), new TupleTag[I](), new TupleTag[J](), new TupleTag[K](), new TupleTag[L](), new TupleTag[M](), new TupleTag[N](), new TupleTag[O](), new TupleTag[P](), new TupleTag[Q]())
     val keyed = KeyedPCollectionTuple
       .of(tagA, a.toKV.internal)
@@ -1048,8 +1050,8 @@ trait MultiJoin extends Serializable {
   }
 
   def apply[KEY, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R](a: SCollection[(KEY, A)], b: SCollection[(KEY, B)], c: SCollection[(KEY, C)], d: SCollection[(KEY, D)], e: SCollection[(KEY, E)], f: SCollection[(KEY, F)], g: SCollection[(KEY, G)], h: SCollection[(KEY, H)], i: SCollection[(KEY, I)], j: SCollection[(KEY, J)], k: SCollection[(KEY, K)], l: SCollection[(KEY, L)], m: SCollection[(KEY, M)], n: SCollection[(KEY, N)], o: SCollection[(KEY, O)], p: SCollection[(KEY, P)], q: SCollection[(KEY, Q)], r: SCollection[(KEY, R)]): SCollection[(KEY, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R))] = {
-    implicit val keyCoder = a.keyCoder
-    implicit val (coderA, coderB, coderC, coderD, coderE, coderF, coderG, coderH, coderI, coderJ, coderK, coderL, coderM, coderN, coderO, coderP, coderQ, coderR) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder, k.valueCoder, l.valueCoder, m.valueCoder, n.valueCoder, o.valueCoder, p.valueCoder, q.valueCoder, r.valueCoder)
+    implicit val keyCoder: Coder[KEY] = a.keyCoder
+    implicit val (coderA: Coder[A], coderB: Coder[B], coderC: Coder[C], coderD: Coder[D], coderE: Coder[E], coderF: Coder[F], coderG: Coder[G], coderH: Coder[H], coderI: Coder[I], coderJ: Coder[J], coderK: Coder[K], coderL: Coder[L], coderM: Coder[M], coderN: Coder[N], coderO: Coder[O], coderP: Coder[P], coderQ: Coder[Q], coderR: Coder[R]) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder, k.valueCoder, l.valueCoder, m.valueCoder, n.valueCoder, o.valueCoder, p.valueCoder, q.valueCoder, r.valueCoder)
     val (tagA, tagB, tagC, tagD, tagE, tagF, tagG, tagH, tagI, tagJ, tagK, tagL, tagM, tagN, tagO, tagP, tagQ, tagR) = (new TupleTag[A](), new TupleTag[B](), new TupleTag[C](), new TupleTag[D](), new TupleTag[E](), new TupleTag[F](), new TupleTag[G](), new TupleTag[H](), new TupleTag[I](), new TupleTag[J](), new TupleTag[K](), new TupleTag[L](), new TupleTag[M](), new TupleTag[N](), new TupleTag[O](), new TupleTag[P](), new TupleTag[Q](), new TupleTag[R]())
     val keyed = KeyedPCollectionTuple
       .of(tagA, a.toKV.internal)
@@ -1097,8 +1099,8 @@ trait MultiJoin extends Serializable {
   }
 
   def apply[KEY, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S](a: SCollection[(KEY, A)], b: SCollection[(KEY, B)], c: SCollection[(KEY, C)], d: SCollection[(KEY, D)], e: SCollection[(KEY, E)], f: SCollection[(KEY, F)], g: SCollection[(KEY, G)], h: SCollection[(KEY, H)], i: SCollection[(KEY, I)], j: SCollection[(KEY, J)], k: SCollection[(KEY, K)], l: SCollection[(KEY, L)], m: SCollection[(KEY, M)], n: SCollection[(KEY, N)], o: SCollection[(KEY, O)], p: SCollection[(KEY, P)], q: SCollection[(KEY, Q)], r: SCollection[(KEY, R)], s: SCollection[(KEY, S)]): SCollection[(KEY, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S))] = {
-    implicit val keyCoder = a.keyCoder
-    implicit val (coderA, coderB, coderC, coderD, coderE, coderF, coderG, coderH, coderI, coderJ, coderK, coderL, coderM, coderN, coderO, coderP, coderQ, coderR, coderS) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder, k.valueCoder, l.valueCoder, m.valueCoder, n.valueCoder, o.valueCoder, p.valueCoder, q.valueCoder, r.valueCoder, s.valueCoder)
+    implicit val keyCoder: Coder[KEY] = a.keyCoder
+    implicit val (coderA: Coder[A], coderB: Coder[B], coderC: Coder[C], coderD: Coder[D], coderE: Coder[E], coderF: Coder[F], coderG: Coder[G], coderH: Coder[H], coderI: Coder[I], coderJ: Coder[J], coderK: Coder[K], coderL: Coder[L], coderM: Coder[M], coderN: Coder[N], coderO: Coder[O], coderP: Coder[P], coderQ: Coder[Q], coderR: Coder[R], coderS: Coder[S]) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder, k.valueCoder, l.valueCoder, m.valueCoder, n.valueCoder, o.valueCoder, p.valueCoder, q.valueCoder, r.valueCoder, s.valueCoder)
     val (tagA, tagB, tagC, tagD, tagE, tagF, tagG, tagH, tagI, tagJ, tagK, tagL, tagM, tagN, tagO, tagP, tagQ, tagR, tagS) = (new TupleTag[A](), new TupleTag[B](), new TupleTag[C](), new TupleTag[D](), new TupleTag[E](), new TupleTag[F](), new TupleTag[G](), new TupleTag[H](), new TupleTag[I](), new TupleTag[J](), new TupleTag[K](), new TupleTag[L](), new TupleTag[M](), new TupleTag[N](), new TupleTag[O](), new TupleTag[P](), new TupleTag[Q](), new TupleTag[R](), new TupleTag[S]())
     val keyed = KeyedPCollectionTuple
       .of(tagA, a.toKV.internal)
@@ -1148,8 +1150,8 @@ trait MultiJoin extends Serializable {
   }
 
   def apply[KEY, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T](a: SCollection[(KEY, A)], b: SCollection[(KEY, B)], c: SCollection[(KEY, C)], d: SCollection[(KEY, D)], e: SCollection[(KEY, E)], f: SCollection[(KEY, F)], g: SCollection[(KEY, G)], h: SCollection[(KEY, H)], i: SCollection[(KEY, I)], j: SCollection[(KEY, J)], k: SCollection[(KEY, K)], l: SCollection[(KEY, L)], m: SCollection[(KEY, M)], n: SCollection[(KEY, N)], o: SCollection[(KEY, O)], p: SCollection[(KEY, P)], q: SCollection[(KEY, Q)], r: SCollection[(KEY, R)], s: SCollection[(KEY, S)], t: SCollection[(KEY, T)]): SCollection[(KEY, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T))] = {
-    implicit val keyCoder = a.keyCoder
-    implicit val (coderA, coderB, coderC, coderD, coderE, coderF, coderG, coderH, coderI, coderJ, coderK, coderL, coderM, coderN, coderO, coderP, coderQ, coderR, coderS, coderT) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder, k.valueCoder, l.valueCoder, m.valueCoder, n.valueCoder, o.valueCoder, p.valueCoder, q.valueCoder, r.valueCoder, s.valueCoder, t.valueCoder)
+    implicit val keyCoder: Coder[KEY] = a.keyCoder
+    implicit val (coderA: Coder[A], coderB: Coder[B], coderC: Coder[C], coderD: Coder[D], coderE: Coder[E], coderF: Coder[F], coderG: Coder[G], coderH: Coder[H], coderI: Coder[I], coderJ: Coder[J], coderK: Coder[K], coderL: Coder[L], coderM: Coder[M], coderN: Coder[N], coderO: Coder[O], coderP: Coder[P], coderQ: Coder[Q], coderR: Coder[R], coderS: Coder[S], coderT: Coder[T]) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder, k.valueCoder, l.valueCoder, m.valueCoder, n.valueCoder, o.valueCoder, p.valueCoder, q.valueCoder, r.valueCoder, s.valueCoder, t.valueCoder)
     val (tagA, tagB, tagC, tagD, tagE, tagF, tagG, tagH, tagI, tagJ, tagK, tagL, tagM, tagN, tagO, tagP, tagQ, tagR, tagS, tagT) = (new TupleTag[A](), new TupleTag[B](), new TupleTag[C](), new TupleTag[D](), new TupleTag[E](), new TupleTag[F](), new TupleTag[G](), new TupleTag[H](), new TupleTag[I](), new TupleTag[J](), new TupleTag[K](), new TupleTag[L](), new TupleTag[M](), new TupleTag[N](), new TupleTag[O](), new TupleTag[P](), new TupleTag[Q](), new TupleTag[R](), new TupleTag[S](), new TupleTag[T]())
     val keyed = KeyedPCollectionTuple
       .of(tagA, a.toKV.internal)
@@ -1201,8 +1203,8 @@ trait MultiJoin extends Serializable {
   }
 
   def apply[KEY, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U](a: SCollection[(KEY, A)], b: SCollection[(KEY, B)], c: SCollection[(KEY, C)], d: SCollection[(KEY, D)], e: SCollection[(KEY, E)], f: SCollection[(KEY, F)], g: SCollection[(KEY, G)], h: SCollection[(KEY, H)], i: SCollection[(KEY, I)], j: SCollection[(KEY, J)], k: SCollection[(KEY, K)], l: SCollection[(KEY, L)], m: SCollection[(KEY, M)], n: SCollection[(KEY, N)], o: SCollection[(KEY, O)], p: SCollection[(KEY, P)], q: SCollection[(KEY, Q)], r: SCollection[(KEY, R)], s: SCollection[(KEY, S)], t: SCollection[(KEY, T)], u: SCollection[(KEY, U)]): SCollection[(KEY, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U))] = {
-    implicit val keyCoder = a.keyCoder
-    implicit val (coderA, coderB, coderC, coderD, coderE, coderF, coderG, coderH, coderI, coderJ, coderK, coderL, coderM, coderN, coderO, coderP, coderQ, coderR, coderS, coderT, coderU) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder, k.valueCoder, l.valueCoder, m.valueCoder, n.valueCoder, o.valueCoder, p.valueCoder, q.valueCoder, r.valueCoder, s.valueCoder, t.valueCoder, u.valueCoder)
+    implicit val keyCoder: Coder[KEY] = a.keyCoder
+    implicit val (coderA: Coder[A], coderB: Coder[B], coderC: Coder[C], coderD: Coder[D], coderE: Coder[E], coderF: Coder[F], coderG: Coder[G], coderH: Coder[H], coderI: Coder[I], coderJ: Coder[J], coderK: Coder[K], coderL: Coder[L], coderM: Coder[M], coderN: Coder[N], coderO: Coder[O], coderP: Coder[P], coderQ: Coder[Q], coderR: Coder[R], coderS: Coder[S], coderT: Coder[T], coderU: Coder[U]) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder, k.valueCoder, l.valueCoder, m.valueCoder, n.valueCoder, o.valueCoder, p.valueCoder, q.valueCoder, r.valueCoder, s.valueCoder, t.valueCoder, u.valueCoder)
     val (tagA, tagB, tagC, tagD, tagE, tagF, tagG, tagH, tagI, tagJ, tagK, tagL, tagM, tagN, tagO, tagP, tagQ, tagR, tagS, tagT, tagU) = (new TupleTag[A](), new TupleTag[B](), new TupleTag[C](), new TupleTag[D](), new TupleTag[E](), new TupleTag[F](), new TupleTag[G](), new TupleTag[H](), new TupleTag[I](), new TupleTag[J](), new TupleTag[K](), new TupleTag[L](), new TupleTag[M](), new TupleTag[N](), new TupleTag[O](), new TupleTag[P](), new TupleTag[Q](), new TupleTag[R](), new TupleTag[S](), new TupleTag[T](), new TupleTag[U]())
     val keyed = KeyedPCollectionTuple
       .of(tagA, a.toKV.internal)
@@ -1256,8 +1258,8 @@ trait MultiJoin extends Serializable {
   }
 
   def apply[KEY, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V](a: SCollection[(KEY, A)], b: SCollection[(KEY, B)], c: SCollection[(KEY, C)], d: SCollection[(KEY, D)], e: SCollection[(KEY, E)], f: SCollection[(KEY, F)], g: SCollection[(KEY, G)], h: SCollection[(KEY, H)], i: SCollection[(KEY, I)], j: SCollection[(KEY, J)], k: SCollection[(KEY, K)], l: SCollection[(KEY, L)], m: SCollection[(KEY, M)], n: SCollection[(KEY, N)], o: SCollection[(KEY, O)], p: SCollection[(KEY, P)], q: SCollection[(KEY, Q)], r: SCollection[(KEY, R)], s: SCollection[(KEY, S)], t: SCollection[(KEY, T)], u: SCollection[(KEY, U)], v: SCollection[(KEY, V)]): SCollection[(KEY, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V))] = {
-    implicit val keyCoder = a.keyCoder
-    implicit val (coderA, coderB, coderC, coderD, coderE, coderF, coderG, coderH, coderI, coderJ, coderK, coderL, coderM, coderN, coderO, coderP, coderQ, coderR, coderS, coderT, coderU, coderV) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder, k.valueCoder, l.valueCoder, m.valueCoder, n.valueCoder, o.valueCoder, p.valueCoder, q.valueCoder, r.valueCoder, s.valueCoder, t.valueCoder, u.valueCoder, v.valueCoder)
+    implicit val keyCoder: Coder[KEY] = a.keyCoder
+    implicit val (coderA: Coder[A], coderB: Coder[B], coderC: Coder[C], coderD: Coder[D], coderE: Coder[E], coderF: Coder[F], coderG: Coder[G], coderH: Coder[H], coderI: Coder[I], coderJ: Coder[J], coderK: Coder[K], coderL: Coder[L], coderM: Coder[M], coderN: Coder[N], coderO: Coder[O], coderP: Coder[P], coderQ: Coder[Q], coderR: Coder[R], coderS: Coder[S], coderT: Coder[T], coderU: Coder[U], coderV: Coder[V]) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder, k.valueCoder, l.valueCoder, m.valueCoder, n.valueCoder, o.valueCoder, p.valueCoder, q.valueCoder, r.valueCoder, s.valueCoder, t.valueCoder, u.valueCoder, v.valueCoder)
     val (tagA, tagB, tagC, tagD, tagE, tagF, tagG, tagH, tagI, tagJ, tagK, tagL, tagM, tagN, tagO, tagP, tagQ, tagR, tagS, tagT, tagU, tagV) = (new TupleTag[A](), new TupleTag[B](), new TupleTag[C](), new TupleTag[D](), new TupleTag[E](), new TupleTag[F](), new TupleTag[G](), new TupleTag[H](), new TupleTag[I](), new TupleTag[J](), new TupleTag[K](), new TupleTag[L](), new TupleTag[M](), new TupleTag[N](), new TupleTag[O](), new TupleTag[P](), new TupleTag[Q](), new TupleTag[R](), new TupleTag[S](), new TupleTag[T](), new TupleTag[U](), new TupleTag[V]())
     val keyed = KeyedPCollectionTuple
       .of(tagA, a.toKV.internal)
@@ -1313,8 +1315,8 @@ trait MultiJoin extends Serializable {
   }
 
   def left[KEY, A, B](a: SCollection[(KEY, A)], b: SCollection[(KEY, B)]): SCollection[(KEY, (A, Option[B]))] = {
-    implicit val keyCoder = a.keyCoder
-    implicit val (coderA, coderB) = (a.valueCoder, b.valueCoder)
+    implicit val keyCoder: Coder[KEY] = a.keyCoder
+    implicit val (coderA: Coder[A], coderB: Coder[B]) = (a.valueCoder, b.valueCoder)
     val (tagA, tagB) = (new TupleTag[A](), new TupleTag[B]())
     val keyed = KeyedPCollectionTuple
       .of(tagA, a.toKV.internal)
@@ -1330,8 +1332,8 @@ trait MultiJoin extends Serializable {
   }
 
   def left[KEY, A, B, C](a: SCollection[(KEY, A)], b: SCollection[(KEY, B)], c: SCollection[(KEY, C)]): SCollection[(KEY, (A, Option[B], Option[C]))] = {
-    implicit val keyCoder = a.keyCoder
-    implicit val (coderA, coderB, coderC) = (a.valueCoder, b.valueCoder, c.valueCoder)
+    implicit val keyCoder: Coder[KEY] = a.keyCoder
+    implicit val (coderA: Coder[A], coderB: Coder[B], coderC: Coder[C]) = (a.valueCoder, b.valueCoder, c.valueCoder)
     val (tagA, tagB, tagC) = (new TupleTag[A](), new TupleTag[B](), new TupleTag[C]())
     val keyed = KeyedPCollectionTuple
       .of(tagA, a.toKV.internal)
@@ -1349,8 +1351,8 @@ trait MultiJoin extends Serializable {
   }
 
   def left[KEY, A, B, C, D](a: SCollection[(KEY, A)], b: SCollection[(KEY, B)], c: SCollection[(KEY, C)], d: SCollection[(KEY, D)]): SCollection[(KEY, (A, Option[B], Option[C], Option[D]))] = {
-    implicit val keyCoder = a.keyCoder
-    implicit val (coderA, coderB, coderC, coderD) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder)
+    implicit val keyCoder: Coder[KEY] = a.keyCoder
+    implicit val (coderA: Coder[A], coderB: Coder[B], coderC: Coder[C], coderD: Coder[D]) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder)
     val (tagA, tagB, tagC, tagD) = (new TupleTag[A](), new TupleTag[B](), new TupleTag[C](), new TupleTag[D]())
     val keyed = KeyedPCollectionTuple
       .of(tagA, a.toKV.internal)
@@ -1370,8 +1372,8 @@ trait MultiJoin extends Serializable {
   }
 
   def left[KEY, A, B, C, D, E](a: SCollection[(KEY, A)], b: SCollection[(KEY, B)], c: SCollection[(KEY, C)], d: SCollection[(KEY, D)], e: SCollection[(KEY, E)]): SCollection[(KEY, (A, Option[B], Option[C], Option[D], Option[E]))] = {
-    implicit val keyCoder = a.keyCoder
-    implicit val (coderA, coderB, coderC, coderD, coderE) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder)
+    implicit val keyCoder: Coder[KEY] = a.keyCoder
+    implicit val (coderA: Coder[A], coderB: Coder[B], coderC: Coder[C], coderD: Coder[D], coderE: Coder[E]) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder)
     val (tagA, tagB, tagC, tagD, tagE) = (new TupleTag[A](), new TupleTag[B](), new TupleTag[C](), new TupleTag[D](), new TupleTag[E]())
     val keyed = KeyedPCollectionTuple
       .of(tagA, a.toKV.internal)
@@ -1393,8 +1395,8 @@ trait MultiJoin extends Serializable {
   }
 
   def left[KEY, A, B, C, D, E, F](a: SCollection[(KEY, A)], b: SCollection[(KEY, B)], c: SCollection[(KEY, C)], d: SCollection[(KEY, D)], e: SCollection[(KEY, E)], f: SCollection[(KEY, F)]): SCollection[(KEY, (A, Option[B], Option[C], Option[D], Option[E], Option[F]))] = {
-    implicit val keyCoder = a.keyCoder
-    implicit val (coderA, coderB, coderC, coderD, coderE, coderF) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder)
+    implicit val keyCoder: Coder[KEY] = a.keyCoder
+    implicit val (coderA: Coder[A], coderB: Coder[B], coderC: Coder[C], coderD: Coder[D], coderE: Coder[E], coderF: Coder[F]) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder)
     val (tagA, tagB, tagC, tagD, tagE, tagF) = (new TupleTag[A](), new TupleTag[B](), new TupleTag[C](), new TupleTag[D](), new TupleTag[E](), new TupleTag[F]())
     val keyed = KeyedPCollectionTuple
       .of(tagA, a.toKV.internal)
@@ -1418,8 +1420,8 @@ trait MultiJoin extends Serializable {
   }
 
   def left[KEY, A, B, C, D, E, F, G](a: SCollection[(KEY, A)], b: SCollection[(KEY, B)], c: SCollection[(KEY, C)], d: SCollection[(KEY, D)], e: SCollection[(KEY, E)], f: SCollection[(KEY, F)], g: SCollection[(KEY, G)]): SCollection[(KEY, (A, Option[B], Option[C], Option[D], Option[E], Option[F], Option[G]))] = {
-    implicit val keyCoder = a.keyCoder
-    implicit val (coderA, coderB, coderC, coderD, coderE, coderF, coderG) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder)
+    implicit val keyCoder: Coder[KEY] = a.keyCoder
+    implicit val (coderA: Coder[A], coderB: Coder[B], coderC: Coder[C], coderD: Coder[D], coderE: Coder[E], coderF: Coder[F], coderG: Coder[G]) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder)
     val (tagA, tagB, tagC, tagD, tagE, tagF, tagG) = (new TupleTag[A](), new TupleTag[B](), new TupleTag[C](), new TupleTag[D](), new TupleTag[E](), new TupleTag[F](), new TupleTag[G]())
     val keyed = KeyedPCollectionTuple
       .of(tagA, a.toKV.internal)
@@ -1445,8 +1447,8 @@ trait MultiJoin extends Serializable {
   }
 
   def left[KEY, A, B, C, D, E, F, G, H](a: SCollection[(KEY, A)], b: SCollection[(KEY, B)], c: SCollection[(KEY, C)], d: SCollection[(KEY, D)], e: SCollection[(KEY, E)], f: SCollection[(KEY, F)], g: SCollection[(KEY, G)], h: SCollection[(KEY, H)]): SCollection[(KEY, (A, Option[B], Option[C], Option[D], Option[E], Option[F], Option[G], Option[H]))] = {
-    implicit val keyCoder = a.keyCoder
-    implicit val (coderA, coderB, coderC, coderD, coderE, coderF, coderG, coderH) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder)
+    implicit val keyCoder: Coder[KEY] = a.keyCoder
+    implicit val (coderA: Coder[A], coderB: Coder[B], coderC: Coder[C], coderD: Coder[D], coderE: Coder[E], coderF: Coder[F], coderG: Coder[G], coderH: Coder[H]) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder)
     val (tagA, tagB, tagC, tagD, tagE, tagF, tagG, tagH) = (new TupleTag[A](), new TupleTag[B](), new TupleTag[C](), new TupleTag[D](), new TupleTag[E](), new TupleTag[F](), new TupleTag[G](), new TupleTag[H]())
     val keyed = KeyedPCollectionTuple
       .of(tagA, a.toKV.internal)
@@ -1474,8 +1476,8 @@ trait MultiJoin extends Serializable {
   }
 
   def left[KEY, A, B, C, D, E, F, G, H, I](a: SCollection[(KEY, A)], b: SCollection[(KEY, B)], c: SCollection[(KEY, C)], d: SCollection[(KEY, D)], e: SCollection[(KEY, E)], f: SCollection[(KEY, F)], g: SCollection[(KEY, G)], h: SCollection[(KEY, H)], i: SCollection[(KEY, I)]): SCollection[(KEY, (A, Option[B], Option[C], Option[D], Option[E], Option[F], Option[G], Option[H], Option[I]))] = {
-    implicit val keyCoder = a.keyCoder
-    implicit val (coderA, coderB, coderC, coderD, coderE, coderF, coderG, coderH, coderI) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder)
+    implicit val keyCoder: Coder[KEY] = a.keyCoder
+    implicit val (coderA: Coder[A], coderB: Coder[B], coderC: Coder[C], coderD: Coder[D], coderE: Coder[E], coderF: Coder[F], coderG: Coder[G], coderH: Coder[H], coderI: Coder[I]) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder)
     val (tagA, tagB, tagC, tagD, tagE, tagF, tagG, tagH, tagI) = (new TupleTag[A](), new TupleTag[B](), new TupleTag[C](), new TupleTag[D](), new TupleTag[E](), new TupleTag[F](), new TupleTag[G](), new TupleTag[H](), new TupleTag[I]())
     val keyed = KeyedPCollectionTuple
       .of(tagA, a.toKV.internal)
@@ -1505,8 +1507,8 @@ trait MultiJoin extends Serializable {
   }
 
   def left[KEY, A, B, C, D, E, F, G, H, I, J](a: SCollection[(KEY, A)], b: SCollection[(KEY, B)], c: SCollection[(KEY, C)], d: SCollection[(KEY, D)], e: SCollection[(KEY, E)], f: SCollection[(KEY, F)], g: SCollection[(KEY, G)], h: SCollection[(KEY, H)], i: SCollection[(KEY, I)], j: SCollection[(KEY, J)]): SCollection[(KEY, (A, Option[B], Option[C], Option[D], Option[E], Option[F], Option[G], Option[H], Option[I], Option[J]))] = {
-    implicit val keyCoder = a.keyCoder
-    implicit val (coderA, coderB, coderC, coderD, coderE, coderF, coderG, coderH, coderI, coderJ) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder)
+    implicit val keyCoder: Coder[KEY] = a.keyCoder
+    implicit val (coderA: Coder[A], coderB: Coder[B], coderC: Coder[C], coderD: Coder[D], coderE: Coder[E], coderF: Coder[F], coderG: Coder[G], coderH: Coder[H], coderI: Coder[I], coderJ: Coder[J]) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder)
     val (tagA, tagB, tagC, tagD, tagE, tagF, tagG, tagH, tagI, tagJ) = (new TupleTag[A](), new TupleTag[B](), new TupleTag[C](), new TupleTag[D](), new TupleTag[E](), new TupleTag[F](), new TupleTag[G](), new TupleTag[H](), new TupleTag[I](), new TupleTag[J]())
     val keyed = KeyedPCollectionTuple
       .of(tagA, a.toKV.internal)
@@ -1538,8 +1540,8 @@ trait MultiJoin extends Serializable {
   }
 
   def left[KEY, A, B, C, D, E, F, G, H, I, J, K](a: SCollection[(KEY, A)], b: SCollection[(KEY, B)], c: SCollection[(KEY, C)], d: SCollection[(KEY, D)], e: SCollection[(KEY, E)], f: SCollection[(KEY, F)], g: SCollection[(KEY, G)], h: SCollection[(KEY, H)], i: SCollection[(KEY, I)], j: SCollection[(KEY, J)], k: SCollection[(KEY, K)]): SCollection[(KEY, (A, Option[B], Option[C], Option[D], Option[E], Option[F], Option[G], Option[H], Option[I], Option[J], Option[K]))] = {
-    implicit val keyCoder = a.keyCoder
-    implicit val (coderA, coderB, coderC, coderD, coderE, coderF, coderG, coderH, coderI, coderJ, coderK) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder, k.valueCoder)
+    implicit val keyCoder: Coder[KEY] = a.keyCoder
+    implicit val (coderA: Coder[A], coderB: Coder[B], coderC: Coder[C], coderD: Coder[D], coderE: Coder[E], coderF: Coder[F], coderG: Coder[G], coderH: Coder[H], coderI: Coder[I], coderJ: Coder[J], coderK: Coder[K]) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder, k.valueCoder)
     val (tagA, tagB, tagC, tagD, tagE, tagF, tagG, tagH, tagI, tagJ, tagK) = (new TupleTag[A](), new TupleTag[B](), new TupleTag[C](), new TupleTag[D](), new TupleTag[E](), new TupleTag[F](), new TupleTag[G](), new TupleTag[H](), new TupleTag[I](), new TupleTag[J](), new TupleTag[K]())
     val keyed = KeyedPCollectionTuple
       .of(tagA, a.toKV.internal)
@@ -1573,8 +1575,8 @@ trait MultiJoin extends Serializable {
   }
 
   def left[KEY, A, B, C, D, E, F, G, H, I, J, K, L](a: SCollection[(KEY, A)], b: SCollection[(KEY, B)], c: SCollection[(KEY, C)], d: SCollection[(KEY, D)], e: SCollection[(KEY, E)], f: SCollection[(KEY, F)], g: SCollection[(KEY, G)], h: SCollection[(KEY, H)], i: SCollection[(KEY, I)], j: SCollection[(KEY, J)], k: SCollection[(KEY, K)], l: SCollection[(KEY, L)]): SCollection[(KEY, (A, Option[B], Option[C], Option[D], Option[E], Option[F], Option[G], Option[H], Option[I], Option[J], Option[K], Option[L]))] = {
-    implicit val keyCoder = a.keyCoder
-    implicit val (coderA, coderB, coderC, coderD, coderE, coderF, coderG, coderH, coderI, coderJ, coderK, coderL) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder, k.valueCoder, l.valueCoder)
+    implicit val keyCoder: Coder[KEY] = a.keyCoder
+    implicit val (coderA: Coder[A], coderB: Coder[B], coderC: Coder[C], coderD: Coder[D], coderE: Coder[E], coderF: Coder[F], coderG: Coder[G], coderH: Coder[H], coderI: Coder[I], coderJ: Coder[J], coderK: Coder[K], coderL: Coder[L]) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder, k.valueCoder, l.valueCoder)
     val (tagA, tagB, tagC, tagD, tagE, tagF, tagG, tagH, tagI, tagJ, tagK, tagL) = (new TupleTag[A](), new TupleTag[B](), new TupleTag[C](), new TupleTag[D](), new TupleTag[E](), new TupleTag[F](), new TupleTag[G](), new TupleTag[H](), new TupleTag[I](), new TupleTag[J](), new TupleTag[K](), new TupleTag[L]())
     val keyed = KeyedPCollectionTuple
       .of(tagA, a.toKV.internal)
@@ -1610,8 +1612,8 @@ trait MultiJoin extends Serializable {
   }
 
   def left[KEY, A, B, C, D, E, F, G, H, I, J, K, L, M](a: SCollection[(KEY, A)], b: SCollection[(KEY, B)], c: SCollection[(KEY, C)], d: SCollection[(KEY, D)], e: SCollection[(KEY, E)], f: SCollection[(KEY, F)], g: SCollection[(KEY, G)], h: SCollection[(KEY, H)], i: SCollection[(KEY, I)], j: SCollection[(KEY, J)], k: SCollection[(KEY, K)], l: SCollection[(KEY, L)], m: SCollection[(KEY, M)]): SCollection[(KEY, (A, Option[B], Option[C], Option[D], Option[E], Option[F], Option[G], Option[H], Option[I], Option[J], Option[K], Option[L], Option[M]))] = {
-    implicit val keyCoder = a.keyCoder
-    implicit val (coderA, coderB, coderC, coderD, coderE, coderF, coderG, coderH, coderI, coderJ, coderK, coderL, coderM) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder, k.valueCoder, l.valueCoder, m.valueCoder)
+    implicit val keyCoder: Coder[KEY] = a.keyCoder
+    implicit val (coderA: Coder[A], coderB: Coder[B], coderC: Coder[C], coderD: Coder[D], coderE: Coder[E], coderF: Coder[F], coderG: Coder[G], coderH: Coder[H], coderI: Coder[I], coderJ: Coder[J], coderK: Coder[K], coderL: Coder[L], coderM: Coder[M]) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder, k.valueCoder, l.valueCoder, m.valueCoder)
     val (tagA, tagB, tagC, tagD, tagE, tagF, tagG, tagH, tagI, tagJ, tagK, tagL, tagM) = (new TupleTag[A](), new TupleTag[B](), new TupleTag[C](), new TupleTag[D](), new TupleTag[E](), new TupleTag[F](), new TupleTag[G](), new TupleTag[H](), new TupleTag[I](), new TupleTag[J](), new TupleTag[K](), new TupleTag[L](), new TupleTag[M]())
     val keyed = KeyedPCollectionTuple
       .of(tagA, a.toKV.internal)
@@ -1649,8 +1651,8 @@ trait MultiJoin extends Serializable {
   }
 
   def left[KEY, A, B, C, D, E, F, G, H, I, J, K, L, M, N](a: SCollection[(KEY, A)], b: SCollection[(KEY, B)], c: SCollection[(KEY, C)], d: SCollection[(KEY, D)], e: SCollection[(KEY, E)], f: SCollection[(KEY, F)], g: SCollection[(KEY, G)], h: SCollection[(KEY, H)], i: SCollection[(KEY, I)], j: SCollection[(KEY, J)], k: SCollection[(KEY, K)], l: SCollection[(KEY, L)], m: SCollection[(KEY, M)], n: SCollection[(KEY, N)]): SCollection[(KEY, (A, Option[B], Option[C], Option[D], Option[E], Option[F], Option[G], Option[H], Option[I], Option[J], Option[K], Option[L], Option[M], Option[N]))] = {
-    implicit val keyCoder = a.keyCoder
-    implicit val (coderA, coderB, coderC, coderD, coderE, coderF, coderG, coderH, coderI, coderJ, coderK, coderL, coderM, coderN) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder, k.valueCoder, l.valueCoder, m.valueCoder, n.valueCoder)
+    implicit val keyCoder: Coder[KEY] = a.keyCoder
+    implicit val (coderA: Coder[A], coderB: Coder[B], coderC: Coder[C], coderD: Coder[D], coderE: Coder[E], coderF: Coder[F], coderG: Coder[G], coderH: Coder[H], coderI: Coder[I], coderJ: Coder[J], coderK: Coder[K], coderL: Coder[L], coderM: Coder[M], coderN: Coder[N]) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder, k.valueCoder, l.valueCoder, m.valueCoder, n.valueCoder)
     val (tagA, tagB, tagC, tagD, tagE, tagF, tagG, tagH, tagI, tagJ, tagK, tagL, tagM, tagN) = (new TupleTag[A](), new TupleTag[B](), new TupleTag[C](), new TupleTag[D](), new TupleTag[E](), new TupleTag[F](), new TupleTag[G](), new TupleTag[H](), new TupleTag[I](), new TupleTag[J](), new TupleTag[K](), new TupleTag[L](), new TupleTag[M](), new TupleTag[N]())
     val keyed = KeyedPCollectionTuple
       .of(tagA, a.toKV.internal)
@@ -1690,8 +1692,8 @@ trait MultiJoin extends Serializable {
   }
 
   def left[KEY, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O](a: SCollection[(KEY, A)], b: SCollection[(KEY, B)], c: SCollection[(KEY, C)], d: SCollection[(KEY, D)], e: SCollection[(KEY, E)], f: SCollection[(KEY, F)], g: SCollection[(KEY, G)], h: SCollection[(KEY, H)], i: SCollection[(KEY, I)], j: SCollection[(KEY, J)], k: SCollection[(KEY, K)], l: SCollection[(KEY, L)], m: SCollection[(KEY, M)], n: SCollection[(KEY, N)], o: SCollection[(KEY, O)]): SCollection[(KEY, (A, Option[B], Option[C], Option[D], Option[E], Option[F], Option[G], Option[H], Option[I], Option[J], Option[K], Option[L], Option[M], Option[N], Option[O]))] = {
-    implicit val keyCoder = a.keyCoder
-    implicit val (coderA, coderB, coderC, coderD, coderE, coderF, coderG, coderH, coderI, coderJ, coderK, coderL, coderM, coderN, coderO) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder, k.valueCoder, l.valueCoder, m.valueCoder, n.valueCoder, o.valueCoder)
+    implicit val keyCoder: Coder[KEY] = a.keyCoder
+    implicit val (coderA: Coder[A], coderB: Coder[B], coderC: Coder[C], coderD: Coder[D], coderE: Coder[E], coderF: Coder[F], coderG: Coder[G], coderH: Coder[H], coderI: Coder[I], coderJ: Coder[J], coderK: Coder[K], coderL: Coder[L], coderM: Coder[M], coderN: Coder[N], coderO: Coder[O]) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder, k.valueCoder, l.valueCoder, m.valueCoder, n.valueCoder, o.valueCoder)
     val (tagA, tagB, tagC, tagD, tagE, tagF, tagG, tagH, tagI, tagJ, tagK, tagL, tagM, tagN, tagO) = (new TupleTag[A](), new TupleTag[B](), new TupleTag[C](), new TupleTag[D](), new TupleTag[E](), new TupleTag[F](), new TupleTag[G](), new TupleTag[H](), new TupleTag[I](), new TupleTag[J](), new TupleTag[K](), new TupleTag[L](), new TupleTag[M](), new TupleTag[N](), new TupleTag[O]())
     val keyed = KeyedPCollectionTuple
       .of(tagA, a.toKV.internal)
@@ -1733,8 +1735,8 @@ trait MultiJoin extends Serializable {
   }
 
   def left[KEY, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P](a: SCollection[(KEY, A)], b: SCollection[(KEY, B)], c: SCollection[(KEY, C)], d: SCollection[(KEY, D)], e: SCollection[(KEY, E)], f: SCollection[(KEY, F)], g: SCollection[(KEY, G)], h: SCollection[(KEY, H)], i: SCollection[(KEY, I)], j: SCollection[(KEY, J)], k: SCollection[(KEY, K)], l: SCollection[(KEY, L)], m: SCollection[(KEY, M)], n: SCollection[(KEY, N)], o: SCollection[(KEY, O)], p: SCollection[(KEY, P)]): SCollection[(KEY, (A, Option[B], Option[C], Option[D], Option[E], Option[F], Option[G], Option[H], Option[I], Option[J], Option[K], Option[L], Option[M], Option[N], Option[O], Option[P]))] = {
-    implicit val keyCoder = a.keyCoder
-    implicit val (coderA, coderB, coderC, coderD, coderE, coderF, coderG, coderH, coderI, coderJ, coderK, coderL, coderM, coderN, coderO, coderP) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder, k.valueCoder, l.valueCoder, m.valueCoder, n.valueCoder, o.valueCoder, p.valueCoder)
+    implicit val keyCoder: Coder[KEY] = a.keyCoder
+    implicit val (coderA: Coder[A], coderB: Coder[B], coderC: Coder[C], coderD: Coder[D], coderE: Coder[E], coderF: Coder[F], coderG: Coder[G], coderH: Coder[H], coderI: Coder[I], coderJ: Coder[J], coderK: Coder[K], coderL: Coder[L], coderM: Coder[M], coderN: Coder[N], coderO: Coder[O], coderP: Coder[P]) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder, k.valueCoder, l.valueCoder, m.valueCoder, n.valueCoder, o.valueCoder, p.valueCoder)
     val (tagA, tagB, tagC, tagD, tagE, tagF, tagG, tagH, tagI, tagJ, tagK, tagL, tagM, tagN, tagO, tagP) = (new TupleTag[A](), new TupleTag[B](), new TupleTag[C](), new TupleTag[D](), new TupleTag[E](), new TupleTag[F](), new TupleTag[G](), new TupleTag[H](), new TupleTag[I](), new TupleTag[J](), new TupleTag[K](), new TupleTag[L](), new TupleTag[M](), new TupleTag[N](), new TupleTag[O](), new TupleTag[P]())
     val keyed = KeyedPCollectionTuple
       .of(tagA, a.toKV.internal)
@@ -1778,8 +1780,8 @@ trait MultiJoin extends Serializable {
   }
 
   def left[KEY, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q](a: SCollection[(KEY, A)], b: SCollection[(KEY, B)], c: SCollection[(KEY, C)], d: SCollection[(KEY, D)], e: SCollection[(KEY, E)], f: SCollection[(KEY, F)], g: SCollection[(KEY, G)], h: SCollection[(KEY, H)], i: SCollection[(KEY, I)], j: SCollection[(KEY, J)], k: SCollection[(KEY, K)], l: SCollection[(KEY, L)], m: SCollection[(KEY, M)], n: SCollection[(KEY, N)], o: SCollection[(KEY, O)], p: SCollection[(KEY, P)], q: SCollection[(KEY, Q)]): SCollection[(KEY, (A, Option[B], Option[C], Option[D], Option[E], Option[F], Option[G], Option[H], Option[I], Option[J], Option[K], Option[L], Option[M], Option[N], Option[O], Option[P], Option[Q]))] = {
-    implicit val keyCoder = a.keyCoder
-    implicit val (coderA, coderB, coderC, coderD, coderE, coderF, coderG, coderH, coderI, coderJ, coderK, coderL, coderM, coderN, coderO, coderP, coderQ) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder, k.valueCoder, l.valueCoder, m.valueCoder, n.valueCoder, o.valueCoder, p.valueCoder, q.valueCoder)
+    implicit val keyCoder: Coder[KEY] = a.keyCoder
+    implicit val (coderA: Coder[A], coderB: Coder[B], coderC: Coder[C], coderD: Coder[D], coderE: Coder[E], coderF: Coder[F], coderG: Coder[G], coderH: Coder[H], coderI: Coder[I], coderJ: Coder[J], coderK: Coder[K], coderL: Coder[L], coderM: Coder[M], coderN: Coder[N], coderO: Coder[O], coderP: Coder[P], coderQ: Coder[Q]) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder, k.valueCoder, l.valueCoder, m.valueCoder, n.valueCoder, o.valueCoder, p.valueCoder, q.valueCoder)
     val (tagA, tagB, tagC, tagD, tagE, tagF, tagG, tagH, tagI, tagJ, tagK, tagL, tagM, tagN, tagO, tagP, tagQ) = (new TupleTag[A](), new TupleTag[B](), new TupleTag[C](), new TupleTag[D](), new TupleTag[E](), new TupleTag[F](), new TupleTag[G](), new TupleTag[H](), new TupleTag[I](), new TupleTag[J](), new TupleTag[K](), new TupleTag[L](), new TupleTag[M](), new TupleTag[N](), new TupleTag[O](), new TupleTag[P](), new TupleTag[Q]())
     val keyed = KeyedPCollectionTuple
       .of(tagA, a.toKV.internal)
@@ -1825,8 +1827,8 @@ trait MultiJoin extends Serializable {
   }
 
   def left[KEY, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R](a: SCollection[(KEY, A)], b: SCollection[(KEY, B)], c: SCollection[(KEY, C)], d: SCollection[(KEY, D)], e: SCollection[(KEY, E)], f: SCollection[(KEY, F)], g: SCollection[(KEY, G)], h: SCollection[(KEY, H)], i: SCollection[(KEY, I)], j: SCollection[(KEY, J)], k: SCollection[(KEY, K)], l: SCollection[(KEY, L)], m: SCollection[(KEY, M)], n: SCollection[(KEY, N)], o: SCollection[(KEY, O)], p: SCollection[(KEY, P)], q: SCollection[(KEY, Q)], r: SCollection[(KEY, R)]): SCollection[(KEY, (A, Option[B], Option[C], Option[D], Option[E], Option[F], Option[G], Option[H], Option[I], Option[J], Option[K], Option[L], Option[M], Option[N], Option[O], Option[P], Option[Q], Option[R]))] = {
-    implicit val keyCoder = a.keyCoder
-    implicit val (coderA, coderB, coderC, coderD, coderE, coderF, coderG, coderH, coderI, coderJ, coderK, coderL, coderM, coderN, coderO, coderP, coderQ, coderR) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder, k.valueCoder, l.valueCoder, m.valueCoder, n.valueCoder, o.valueCoder, p.valueCoder, q.valueCoder, r.valueCoder)
+    implicit val keyCoder: Coder[KEY] = a.keyCoder
+    implicit val (coderA: Coder[A], coderB: Coder[B], coderC: Coder[C], coderD: Coder[D], coderE: Coder[E], coderF: Coder[F], coderG: Coder[G], coderH: Coder[H], coderI: Coder[I], coderJ: Coder[J], coderK: Coder[K], coderL: Coder[L], coderM: Coder[M], coderN: Coder[N], coderO: Coder[O], coderP: Coder[P], coderQ: Coder[Q], coderR: Coder[R]) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder, k.valueCoder, l.valueCoder, m.valueCoder, n.valueCoder, o.valueCoder, p.valueCoder, q.valueCoder, r.valueCoder)
     val (tagA, tagB, tagC, tagD, tagE, tagF, tagG, tagH, tagI, tagJ, tagK, tagL, tagM, tagN, tagO, tagP, tagQ, tagR) = (new TupleTag[A](), new TupleTag[B](), new TupleTag[C](), new TupleTag[D](), new TupleTag[E](), new TupleTag[F](), new TupleTag[G](), new TupleTag[H](), new TupleTag[I](), new TupleTag[J](), new TupleTag[K](), new TupleTag[L](), new TupleTag[M](), new TupleTag[N](), new TupleTag[O](), new TupleTag[P](), new TupleTag[Q](), new TupleTag[R]())
     val keyed = KeyedPCollectionTuple
       .of(tagA, a.toKV.internal)
@@ -1874,8 +1876,8 @@ trait MultiJoin extends Serializable {
   }
 
   def left[KEY, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S](a: SCollection[(KEY, A)], b: SCollection[(KEY, B)], c: SCollection[(KEY, C)], d: SCollection[(KEY, D)], e: SCollection[(KEY, E)], f: SCollection[(KEY, F)], g: SCollection[(KEY, G)], h: SCollection[(KEY, H)], i: SCollection[(KEY, I)], j: SCollection[(KEY, J)], k: SCollection[(KEY, K)], l: SCollection[(KEY, L)], m: SCollection[(KEY, M)], n: SCollection[(KEY, N)], o: SCollection[(KEY, O)], p: SCollection[(KEY, P)], q: SCollection[(KEY, Q)], r: SCollection[(KEY, R)], s: SCollection[(KEY, S)]): SCollection[(KEY, (A, Option[B], Option[C], Option[D], Option[E], Option[F], Option[G], Option[H], Option[I], Option[J], Option[K], Option[L], Option[M], Option[N], Option[O], Option[P], Option[Q], Option[R], Option[S]))] = {
-    implicit val keyCoder = a.keyCoder
-    implicit val (coderA, coderB, coderC, coderD, coderE, coderF, coderG, coderH, coderI, coderJ, coderK, coderL, coderM, coderN, coderO, coderP, coderQ, coderR, coderS) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder, k.valueCoder, l.valueCoder, m.valueCoder, n.valueCoder, o.valueCoder, p.valueCoder, q.valueCoder, r.valueCoder, s.valueCoder)
+    implicit val keyCoder: Coder[KEY] = a.keyCoder
+    implicit val (coderA: Coder[A], coderB: Coder[B], coderC: Coder[C], coderD: Coder[D], coderE: Coder[E], coderF: Coder[F], coderG: Coder[G], coderH: Coder[H], coderI: Coder[I], coderJ: Coder[J], coderK: Coder[K], coderL: Coder[L], coderM: Coder[M], coderN: Coder[N], coderO: Coder[O], coderP: Coder[P], coderQ: Coder[Q], coderR: Coder[R], coderS: Coder[S]) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder, k.valueCoder, l.valueCoder, m.valueCoder, n.valueCoder, o.valueCoder, p.valueCoder, q.valueCoder, r.valueCoder, s.valueCoder)
     val (tagA, tagB, tagC, tagD, tagE, tagF, tagG, tagH, tagI, tagJ, tagK, tagL, tagM, tagN, tagO, tagP, tagQ, tagR, tagS) = (new TupleTag[A](), new TupleTag[B](), new TupleTag[C](), new TupleTag[D](), new TupleTag[E](), new TupleTag[F](), new TupleTag[G](), new TupleTag[H](), new TupleTag[I](), new TupleTag[J](), new TupleTag[K](), new TupleTag[L](), new TupleTag[M](), new TupleTag[N](), new TupleTag[O](), new TupleTag[P](), new TupleTag[Q](), new TupleTag[R](), new TupleTag[S]())
     val keyed = KeyedPCollectionTuple
       .of(tagA, a.toKV.internal)
@@ -1925,8 +1927,8 @@ trait MultiJoin extends Serializable {
   }
 
   def left[KEY, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T](a: SCollection[(KEY, A)], b: SCollection[(KEY, B)], c: SCollection[(KEY, C)], d: SCollection[(KEY, D)], e: SCollection[(KEY, E)], f: SCollection[(KEY, F)], g: SCollection[(KEY, G)], h: SCollection[(KEY, H)], i: SCollection[(KEY, I)], j: SCollection[(KEY, J)], k: SCollection[(KEY, K)], l: SCollection[(KEY, L)], m: SCollection[(KEY, M)], n: SCollection[(KEY, N)], o: SCollection[(KEY, O)], p: SCollection[(KEY, P)], q: SCollection[(KEY, Q)], r: SCollection[(KEY, R)], s: SCollection[(KEY, S)], t: SCollection[(KEY, T)]): SCollection[(KEY, (A, Option[B], Option[C], Option[D], Option[E], Option[F], Option[G], Option[H], Option[I], Option[J], Option[K], Option[L], Option[M], Option[N], Option[O], Option[P], Option[Q], Option[R], Option[S], Option[T]))] = {
-    implicit val keyCoder = a.keyCoder
-    implicit val (coderA, coderB, coderC, coderD, coderE, coderF, coderG, coderH, coderI, coderJ, coderK, coderL, coderM, coderN, coderO, coderP, coderQ, coderR, coderS, coderT) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder, k.valueCoder, l.valueCoder, m.valueCoder, n.valueCoder, o.valueCoder, p.valueCoder, q.valueCoder, r.valueCoder, s.valueCoder, t.valueCoder)
+    implicit val keyCoder: Coder[KEY] = a.keyCoder
+    implicit val (coderA: Coder[A], coderB: Coder[B], coderC: Coder[C], coderD: Coder[D], coderE: Coder[E], coderF: Coder[F], coderG: Coder[G], coderH: Coder[H], coderI: Coder[I], coderJ: Coder[J], coderK: Coder[K], coderL: Coder[L], coderM: Coder[M], coderN: Coder[N], coderO: Coder[O], coderP: Coder[P], coderQ: Coder[Q], coderR: Coder[R], coderS: Coder[S], coderT: Coder[T]) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder, k.valueCoder, l.valueCoder, m.valueCoder, n.valueCoder, o.valueCoder, p.valueCoder, q.valueCoder, r.valueCoder, s.valueCoder, t.valueCoder)
     val (tagA, tagB, tagC, tagD, tagE, tagF, tagG, tagH, tagI, tagJ, tagK, tagL, tagM, tagN, tagO, tagP, tagQ, tagR, tagS, tagT) = (new TupleTag[A](), new TupleTag[B](), new TupleTag[C](), new TupleTag[D](), new TupleTag[E](), new TupleTag[F](), new TupleTag[G](), new TupleTag[H](), new TupleTag[I](), new TupleTag[J](), new TupleTag[K](), new TupleTag[L](), new TupleTag[M](), new TupleTag[N](), new TupleTag[O](), new TupleTag[P](), new TupleTag[Q](), new TupleTag[R](), new TupleTag[S](), new TupleTag[T]())
     val keyed = KeyedPCollectionTuple
       .of(tagA, a.toKV.internal)
@@ -1978,8 +1980,8 @@ trait MultiJoin extends Serializable {
   }
 
   def left[KEY, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U](a: SCollection[(KEY, A)], b: SCollection[(KEY, B)], c: SCollection[(KEY, C)], d: SCollection[(KEY, D)], e: SCollection[(KEY, E)], f: SCollection[(KEY, F)], g: SCollection[(KEY, G)], h: SCollection[(KEY, H)], i: SCollection[(KEY, I)], j: SCollection[(KEY, J)], k: SCollection[(KEY, K)], l: SCollection[(KEY, L)], m: SCollection[(KEY, M)], n: SCollection[(KEY, N)], o: SCollection[(KEY, O)], p: SCollection[(KEY, P)], q: SCollection[(KEY, Q)], r: SCollection[(KEY, R)], s: SCollection[(KEY, S)], t: SCollection[(KEY, T)], u: SCollection[(KEY, U)]): SCollection[(KEY, (A, Option[B], Option[C], Option[D], Option[E], Option[F], Option[G], Option[H], Option[I], Option[J], Option[K], Option[L], Option[M], Option[N], Option[O], Option[P], Option[Q], Option[R], Option[S], Option[T], Option[U]))] = {
-    implicit val keyCoder = a.keyCoder
-    implicit val (coderA, coderB, coderC, coderD, coderE, coderF, coderG, coderH, coderI, coderJ, coderK, coderL, coderM, coderN, coderO, coderP, coderQ, coderR, coderS, coderT, coderU) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder, k.valueCoder, l.valueCoder, m.valueCoder, n.valueCoder, o.valueCoder, p.valueCoder, q.valueCoder, r.valueCoder, s.valueCoder, t.valueCoder, u.valueCoder)
+    implicit val keyCoder: Coder[KEY] = a.keyCoder
+    implicit val (coderA: Coder[A], coderB: Coder[B], coderC: Coder[C], coderD: Coder[D], coderE: Coder[E], coderF: Coder[F], coderG: Coder[G], coderH: Coder[H], coderI: Coder[I], coderJ: Coder[J], coderK: Coder[K], coderL: Coder[L], coderM: Coder[M], coderN: Coder[N], coderO: Coder[O], coderP: Coder[P], coderQ: Coder[Q], coderR: Coder[R], coderS: Coder[S], coderT: Coder[T], coderU: Coder[U]) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder, k.valueCoder, l.valueCoder, m.valueCoder, n.valueCoder, o.valueCoder, p.valueCoder, q.valueCoder, r.valueCoder, s.valueCoder, t.valueCoder, u.valueCoder)
     val (tagA, tagB, tagC, tagD, tagE, tagF, tagG, tagH, tagI, tagJ, tagK, tagL, tagM, tagN, tagO, tagP, tagQ, tagR, tagS, tagT, tagU) = (new TupleTag[A](), new TupleTag[B](), new TupleTag[C](), new TupleTag[D](), new TupleTag[E](), new TupleTag[F](), new TupleTag[G](), new TupleTag[H](), new TupleTag[I](), new TupleTag[J](), new TupleTag[K](), new TupleTag[L](), new TupleTag[M](), new TupleTag[N](), new TupleTag[O](), new TupleTag[P](), new TupleTag[Q](), new TupleTag[R](), new TupleTag[S](), new TupleTag[T](), new TupleTag[U]())
     val keyed = KeyedPCollectionTuple
       .of(tagA, a.toKV.internal)
@@ -2033,8 +2035,8 @@ trait MultiJoin extends Serializable {
   }
 
   def left[KEY, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V](a: SCollection[(KEY, A)], b: SCollection[(KEY, B)], c: SCollection[(KEY, C)], d: SCollection[(KEY, D)], e: SCollection[(KEY, E)], f: SCollection[(KEY, F)], g: SCollection[(KEY, G)], h: SCollection[(KEY, H)], i: SCollection[(KEY, I)], j: SCollection[(KEY, J)], k: SCollection[(KEY, K)], l: SCollection[(KEY, L)], m: SCollection[(KEY, M)], n: SCollection[(KEY, N)], o: SCollection[(KEY, O)], p: SCollection[(KEY, P)], q: SCollection[(KEY, Q)], r: SCollection[(KEY, R)], s: SCollection[(KEY, S)], t: SCollection[(KEY, T)], u: SCollection[(KEY, U)], v: SCollection[(KEY, V)]): SCollection[(KEY, (A, Option[B], Option[C], Option[D], Option[E], Option[F], Option[G], Option[H], Option[I], Option[J], Option[K], Option[L], Option[M], Option[N], Option[O], Option[P], Option[Q], Option[R], Option[S], Option[T], Option[U], Option[V]))] = {
-    implicit val keyCoder = a.keyCoder
-    implicit val (coderA, coderB, coderC, coderD, coderE, coderF, coderG, coderH, coderI, coderJ, coderK, coderL, coderM, coderN, coderO, coderP, coderQ, coderR, coderS, coderT, coderU, coderV) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder, k.valueCoder, l.valueCoder, m.valueCoder, n.valueCoder, o.valueCoder, p.valueCoder, q.valueCoder, r.valueCoder, s.valueCoder, t.valueCoder, u.valueCoder, v.valueCoder)
+    implicit val keyCoder: Coder[KEY] = a.keyCoder
+    implicit val (coderA: Coder[A], coderB: Coder[B], coderC: Coder[C], coderD: Coder[D], coderE: Coder[E], coderF: Coder[F], coderG: Coder[G], coderH: Coder[H], coderI: Coder[I], coderJ: Coder[J], coderK: Coder[K], coderL: Coder[L], coderM: Coder[M], coderN: Coder[N], coderO: Coder[O], coderP: Coder[P], coderQ: Coder[Q], coderR: Coder[R], coderS: Coder[S], coderT: Coder[T], coderU: Coder[U], coderV: Coder[V]) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder, k.valueCoder, l.valueCoder, m.valueCoder, n.valueCoder, o.valueCoder, p.valueCoder, q.valueCoder, r.valueCoder, s.valueCoder, t.valueCoder, u.valueCoder, v.valueCoder)
     val (tagA, tagB, tagC, tagD, tagE, tagF, tagG, tagH, tagI, tagJ, tagK, tagL, tagM, tagN, tagO, tagP, tagQ, tagR, tagS, tagT, tagU, tagV) = (new TupleTag[A](), new TupleTag[B](), new TupleTag[C](), new TupleTag[D](), new TupleTag[E](), new TupleTag[F](), new TupleTag[G](), new TupleTag[H](), new TupleTag[I](), new TupleTag[J](), new TupleTag[K](), new TupleTag[L](), new TupleTag[M](), new TupleTag[N](), new TupleTag[O](), new TupleTag[P](), new TupleTag[Q](), new TupleTag[R](), new TupleTag[S](), new TupleTag[T](), new TupleTag[U](), new TupleTag[V]())
     val keyed = KeyedPCollectionTuple
       .of(tagA, a.toKV.internal)
@@ -2090,8 +2092,8 @@ trait MultiJoin extends Serializable {
   }
 
   def outer[KEY, A, B](a: SCollection[(KEY, A)], b: SCollection[(KEY, B)]): SCollection[(KEY, (Option[A], Option[B]))] = {
-    implicit val keyCoder = a.keyCoder
-    implicit val (coderA, coderB) = (a.valueCoder, b.valueCoder)
+    implicit val keyCoder: Coder[KEY] = a.keyCoder
+    implicit val (coderA: Coder[A], coderB: Coder[B]) = (a.valueCoder, b.valueCoder)
     val (tagA, tagB) = (new TupleTag[A](), new TupleTag[B]())
     val keyed = KeyedPCollectionTuple
       .of(tagA, a.toKV.internal)
@@ -2107,8 +2109,8 @@ trait MultiJoin extends Serializable {
   }
 
   def outer[KEY, A, B, C](a: SCollection[(KEY, A)], b: SCollection[(KEY, B)], c: SCollection[(KEY, C)]): SCollection[(KEY, (Option[A], Option[B], Option[C]))] = {
-    implicit val keyCoder = a.keyCoder
-    implicit val (coderA, coderB, coderC) = (a.valueCoder, b.valueCoder, c.valueCoder)
+    implicit val keyCoder: Coder[KEY] = a.keyCoder
+    implicit val (coderA: Coder[A], coderB: Coder[B], coderC: Coder[C]) = (a.valueCoder, b.valueCoder, c.valueCoder)
     val (tagA, tagB, tagC) = (new TupleTag[A](), new TupleTag[B](), new TupleTag[C]())
     val keyed = KeyedPCollectionTuple
       .of(tagA, a.toKV.internal)
@@ -2126,8 +2128,8 @@ trait MultiJoin extends Serializable {
   }
 
   def outer[KEY, A, B, C, D](a: SCollection[(KEY, A)], b: SCollection[(KEY, B)], c: SCollection[(KEY, C)], d: SCollection[(KEY, D)]): SCollection[(KEY, (Option[A], Option[B], Option[C], Option[D]))] = {
-    implicit val keyCoder = a.keyCoder
-    implicit val (coderA, coderB, coderC, coderD) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder)
+    implicit val keyCoder: Coder[KEY] = a.keyCoder
+    implicit val (coderA: Coder[A], coderB: Coder[B], coderC: Coder[C], coderD: Coder[D]) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder)
     val (tagA, tagB, tagC, tagD) = (new TupleTag[A](), new TupleTag[B](), new TupleTag[C](), new TupleTag[D]())
     val keyed = KeyedPCollectionTuple
       .of(tagA, a.toKV.internal)
@@ -2147,8 +2149,8 @@ trait MultiJoin extends Serializable {
   }
 
   def outer[KEY, A, B, C, D, E](a: SCollection[(KEY, A)], b: SCollection[(KEY, B)], c: SCollection[(KEY, C)], d: SCollection[(KEY, D)], e: SCollection[(KEY, E)]): SCollection[(KEY, (Option[A], Option[B], Option[C], Option[D], Option[E]))] = {
-    implicit val keyCoder = a.keyCoder
-    implicit val (coderA, coderB, coderC, coderD, coderE) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder)
+    implicit val keyCoder: Coder[KEY] = a.keyCoder
+    implicit val (coderA: Coder[A], coderB: Coder[B], coderC: Coder[C], coderD: Coder[D], coderE: Coder[E]) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder)
     val (tagA, tagB, tagC, tagD, tagE) = (new TupleTag[A](), new TupleTag[B](), new TupleTag[C](), new TupleTag[D](), new TupleTag[E]())
     val keyed = KeyedPCollectionTuple
       .of(tagA, a.toKV.internal)
@@ -2170,8 +2172,8 @@ trait MultiJoin extends Serializable {
   }
 
   def outer[KEY, A, B, C, D, E, F](a: SCollection[(KEY, A)], b: SCollection[(KEY, B)], c: SCollection[(KEY, C)], d: SCollection[(KEY, D)], e: SCollection[(KEY, E)], f: SCollection[(KEY, F)]): SCollection[(KEY, (Option[A], Option[B], Option[C], Option[D], Option[E], Option[F]))] = {
-    implicit val keyCoder = a.keyCoder
-    implicit val (coderA, coderB, coderC, coderD, coderE, coderF) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder)
+    implicit val keyCoder: Coder[KEY] = a.keyCoder
+    implicit val (coderA: Coder[A], coderB: Coder[B], coderC: Coder[C], coderD: Coder[D], coderE: Coder[E], coderF: Coder[F]) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder)
     val (tagA, tagB, tagC, tagD, tagE, tagF) = (new TupleTag[A](), new TupleTag[B](), new TupleTag[C](), new TupleTag[D](), new TupleTag[E](), new TupleTag[F]())
     val keyed = KeyedPCollectionTuple
       .of(tagA, a.toKV.internal)
@@ -2195,8 +2197,8 @@ trait MultiJoin extends Serializable {
   }
 
   def outer[KEY, A, B, C, D, E, F, G](a: SCollection[(KEY, A)], b: SCollection[(KEY, B)], c: SCollection[(KEY, C)], d: SCollection[(KEY, D)], e: SCollection[(KEY, E)], f: SCollection[(KEY, F)], g: SCollection[(KEY, G)]): SCollection[(KEY, (Option[A], Option[B], Option[C], Option[D], Option[E], Option[F], Option[G]))] = {
-    implicit val keyCoder = a.keyCoder
-    implicit val (coderA, coderB, coderC, coderD, coderE, coderF, coderG) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder)
+    implicit val keyCoder: Coder[KEY] = a.keyCoder
+    implicit val (coderA: Coder[A], coderB: Coder[B], coderC: Coder[C], coderD: Coder[D], coderE: Coder[E], coderF: Coder[F], coderG: Coder[G]) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder)
     val (tagA, tagB, tagC, tagD, tagE, tagF, tagG) = (new TupleTag[A](), new TupleTag[B](), new TupleTag[C](), new TupleTag[D](), new TupleTag[E](), new TupleTag[F](), new TupleTag[G]())
     val keyed = KeyedPCollectionTuple
       .of(tagA, a.toKV.internal)
@@ -2222,8 +2224,8 @@ trait MultiJoin extends Serializable {
   }
 
   def outer[KEY, A, B, C, D, E, F, G, H](a: SCollection[(KEY, A)], b: SCollection[(KEY, B)], c: SCollection[(KEY, C)], d: SCollection[(KEY, D)], e: SCollection[(KEY, E)], f: SCollection[(KEY, F)], g: SCollection[(KEY, G)], h: SCollection[(KEY, H)]): SCollection[(KEY, (Option[A], Option[B], Option[C], Option[D], Option[E], Option[F], Option[G], Option[H]))] = {
-    implicit val keyCoder = a.keyCoder
-    implicit val (coderA, coderB, coderC, coderD, coderE, coderF, coderG, coderH) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder)
+    implicit val keyCoder: Coder[KEY] = a.keyCoder
+    implicit val (coderA: Coder[A], coderB: Coder[B], coderC: Coder[C], coderD: Coder[D], coderE: Coder[E], coderF: Coder[F], coderG: Coder[G], coderH: Coder[H]) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder)
     val (tagA, tagB, tagC, tagD, tagE, tagF, tagG, tagH) = (new TupleTag[A](), new TupleTag[B](), new TupleTag[C](), new TupleTag[D](), new TupleTag[E](), new TupleTag[F](), new TupleTag[G](), new TupleTag[H]())
     val keyed = KeyedPCollectionTuple
       .of(tagA, a.toKV.internal)
@@ -2251,8 +2253,8 @@ trait MultiJoin extends Serializable {
   }
 
   def outer[KEY, A, B, C, D, E, F, G, H, I](a: SCollection[(KEY, A)], b: SCollection[(KEY, B)], c: SCollection[(KEY, C)], d: SCollection[(KEY, D)], e: SCollection[(KEY, E)], f: SCollection[(KEY, F)], g: SCollection[(KEY, G)], h: SCollection[(KEY, H)], i: SCollection[(KEY, I)]): SCollection[(KEY, (Option[A], Option[B], Option[C], Option[D], Option[E], Option[F], Option[G], Option[H], Option[I]))] = {
-    implicit val keyCoder = a.keyCoder
-    implicit val (coderA, coderB, coderC, coderD, coderE, coderF, coderG, coderH, coderI) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder)
+    implicit val keyCoder: Coder[KEY] = a.keyCoder
+    implicit val (coderA: Coder[A], coderB: Coder[B], coderC: Coder[C], coderD: Coder[D], coderE: Coder[E], coderF: Coder[F], coderG: Coder[G], coderH: Coder[H], coderI: Coder[I]) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder)
     val (tagA, tagB, tagC, tagD, tagE, tagF, tagG, tagH, tagI) = (new TupleTag[A](), new TupleTag[B](), new TupleTag[C](), new TupleTag[D](), new TupleTag[E](), new TupleTag[F](), new TupleTag[G](), new TupleTag[H](), new TupleTag[I]())
     val keyed = KeyedPCollectionTuple
       .of(tagA, a.toKV.internal)
@@ -2282,8 +2284,8 @@ trait MultiJoin extends Serializable {
   }
 
   def outer[KEY, A, B, C, D, E, F, G, H, I, J](a: SCollection[(KEY, A)], b: SCollection[(KEY, B)], c: SCollection[(KEY, C)], d: SCollection[(KEY, D)], e: SCollection[(KEY, E)], f: SCollection[(KEY, F)], g: SCollection[(KEY, G)], h: SCollection[(KEY, H)], i: SCollection[(KEY, I)], j: SCollection[(KEY, J)]): SCollection[(KEY, (Option[A], Option[B], Option[C], Option[D], Option[E], Option[F], Option[G], Option[H], Option[I], Option[J]))] = {
-    implicit val keyCoder = a.keyCoder
-    implicit val (coderA, coderB, coderC, coderD, coderE, coderF, coderG, coderH, coderI, coderJ) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder)
+    implicit val keyCoder: Coder[KEY] = a.keyCoder
+    implicit val (coderA: Coder[A], coderB: Coder[B], coderC: Coder[C], coderD: Coder[D], coderE: Coder[E], coderF: Coder[F], coderG: Coder[G], coderH: Coder[H], coderI: Coder[I], coderJ: Coder[J]) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder)
     val (tagA, tagB, tagC, tagD, tagE, tagF, tagG, tagH, tagI, tagJ) = (new TupleTag[A](), new TupleTag[B](), new TupleTag[C](), new TupleTag[D](), new TupleTag[E](), new TupleTag[F](), new TupleTag[G](), new TupleTag[H](), new TupleTag[I](), new TupleTag[J]())
     val keyed = KeyedPCollectionTuple
       .of(tagA, a.toKV.internal)
@@ -2315,8 +2317,8 @@ trait MultiJoin extends Serializable {
   }
 
   def outer[KEY, A, B, C, D, E, F, G, H, I, J, K](a: SCollection[(KEY, A)], b: SCollection[(KEY, B)], c: SCollection[(KEY, C)], d: SCollection[(KEY, D)], e: SCollection[(KEY, E)], f: SCollection[(KEY, F)], g: SCollection[(KEY, G)], h: SCollection[(KEY, H)], i: SCollection[(KEY, I)], j: SCollection[(KEY, J)], k: SCollection[(KEY, K)]): SCollection[(KEY, (Option[A], Option[B], Option[C], Option[D], Option[E], Option[F], Option[G], Option[H], Option[I], Option[J], Option[K]))] = {
-    implicit val keyCoder = a.keyCoder
-    implicit val (coderA, coderB, coderC, coderD, coderE, coderF, coderG, coderH, coderI, coderJ, coderK) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder, k.valueCoder)
+    implicit val keyCoder: Coder[KEY] = a.keyCoder
+    implicit val (coderA: Coder[A], coderB: Coder[B], coderC: Coder[C], coderD: Coder[D], coderE: Coder[E], coderF: Coder[F], coderG: Coder[G], coderH: Coder[H], coderI: Coder[I], coderJ: Coder[J], coderK: Coder[K]) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder, k.valueCoder)
     val (tagA, tagB, tagC, tagD, tagE, tagF, tagG, tagH, tagI, tagJ, tagK) = (new TupleTag[A](), new TupleTag[B](), new TupleTag[C](), new TupleTag[D](), new TupleTag[E](), new TupleTag[F](), new TupleTag[G](), new TupleTag[H](), new TupleTag[I](), new TupleTag[J](), new TupleTag[K]())
     val keyed = KeyedPCollectionTuple
       .of(tagA, a.toKV.internal)
@@ -2350,8 +2352,8 @@ trait MultiJoin extends Serializable {
   }
 
   def outer[KEY, A, B, C, D, E, F, G, H, I, J, K, L](a: SCollection[(KEY, A)], b: SCollection[(KEY, B)], c: SCollection[(KEY, C)], d: SCollection[(KEY, D)], e: SCollection[(KEY, E)], f: SCollection[(KEY, F)], g: SCollection[(KEY, G)], h: SCollection[(KEY, H)], i: SCollection[(KEY, I)], j: SCollection[(KEY, J)], k: SCollection[(KEY, K)], l: SCollection[(KEY, L)]): SCollection[(KEY, (Option[A], Option[B], Option[C], Option[D], Option[E], Option[F], Option[G], Option[H], Option[I], Option[J], Option[K], Option[L]))] = {
-    implicit val keyCoder = a.keyCoder
-    implicit val (coderA, coderB, coderC, coderD, coderE, coderF, coderG, coderH, coderI, coderJ, coderK, coderL) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder, k.valueCoder, l.valueCoder)
+    implicit val keyCoder: Coder[KEY] = a.keyCoder
+    implicit val (coderA: Coder[A], coderB: Coder[B], coderC: Coder[C], coderD: Coder[D], coderE: Coder[E], coderF: Coder[F], coderG: Coder[G], coderH: Coder[H], coderI: Coder[I], coderJ: Coder[J], coderK: Coder[K], coderL: Coder[L]) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder, k.valueCoder, l.valueCoder)
     val (tagA, tagB, tagC, tagD, tagE, tagF, tagG, tagH, tagI, tagJ, tagK, tagL) = (new TupleTag[A](), new TupleTag[B](), new TupleTag[C](), new TupleTag[D](), new TupleTag[E](), new TupleTag[F](), new TupleTag[G](), new TupleTag[H](), new TupleTag[I](), new TupleTag[J](), new TupleTag[K](), new TupleTag[L]())
     val keyed = KeyedPCollectionTuple
       .of(tagA, a.toKV.internal)
@@ -2387,8 +2389,8 @@ trait MultiJoin extends Serializable {
   }
 
   def outer[KEY, A, B, C, D, E, F, G, H, I, J, K, L, M](a: SCollection[(KEY, A)], b: SCollection[(KEY, B)], c: SCollection[(KEY, C)], d: SCollection[(KEY, D)], e: SCollection[(KEY, E)], f: SCollection[(KEY, F)], g: SCollection[(KEY, G)], h: SCollection[(KEY, H)], i: SCollection[(KEY, I)], j: SCollection[(KEY, J)], k: SCollection[(KEY, K)], l: SCollection[(KEY, L)], m: SCollection[(KEY, M)]): SCollection[(KEY, (Option[A], Option[B], Option[C], Option[D], Option[E], Option[F], Option[G], Option[H], Option[I], Option[J], Option[K], Option[L], Option[M]))] = {
-    implicit val keyCoder = a.keyCoder
-    implicit val (coderA, coderB, coderC, coderD, coderE, coderF, coderG, coderH, coderI, coderJ, coderK, coderL, coderM) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder, k.valueCoder, l.valueCoder, m.valueCoder)
+    implicit val keyCoder: Coder[KEY] = a.keyCoder
+    implicit val (coderA: Coder[A], coderB: Coder[B], coderC: Coder[C], coderD: Coder[D], coderE: Coder[E], coderF: Coder[F], coderG: Coder[G], coderH: Coder[H], coderI: Coder[I], coderJ: Coder[J], coderK: Coder[K], coderL: Coder[L], coderM: Coder[M]) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder, k.valueCoder, l.valueCoder, m.valueCoder)
     val (tagA, tagB, tagC, tagD, tagE, tagF, tagG, tagH, tagI, tagJ, tagK, tagL, tagM) = (new TupleTag[A](), new TupleTag[B](), new TupleTag[C](), new TupleTag[D](), new TupleTag[E](), new TupleTag[F](), new TupleTag[G](), new TupleTag[H](), new TupleTag[I](), new TupleTag[J](), new TupleTag[K](), new TupleTag[L](), new TupleTag[M]())
     val keyed = KeyedPCollectionTuple
       .of(tagA, a.toKV.internal)
@@ -2426,8 +2428,8 @@ trait MultiJoin extends Serializable {
   }
 
   def outer[KEY, A, B, C, D, E, F, G, H, I, J, K, L, M, N](a: SCollection[(KEY, A)], b: SCollection[(KEY, B)], c: SCollection[(KEY, C)], d: SCollection[(KEY, D)], e: SCollection[(KEY, E)], f: SCollection[(KEY, F)], g: SCollection[(KEY, G)], h: SCollection[(KEY, H)], i: SCollection[(KEY, I)], j: SCollection[(KEY, J)], k: SCollection[(KEY, K)], l: SCollection[(KEY, L)], m: SCollection[(KEY, M)], n: SCollection[(KEY, N)]): SCollection[(KEY, (Option[A], Option[B], Option[C], Option[D], Option[E], Option[F], Option[G], Option[H], Option[I], Option[J], Option[K], Option[L], Option[M], Option[N]))] = {
-    implicit val keyCoder = a.keyCoder
-    implicit val (coderA, coderB, coderC, coderD, coderE, coderF, coderG, coderH, coderI, coderJ, coderK, coderL, coderM, coderN) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder, k.valueCoder, l.valueCoder, m.valueCoder, n.valueCoder)
+    implicit val keyCoder: Coder[KEY] = a.keyCoder
+    implicit val (coderA: Coder[A], coderB: Coder[B], coderC: Coder[C], coderD: Coder[D], coderE: Coder[E], coderF: Coder[F], coderG: Coder[G], coderH: Coder[H], coderI: Coder[I], coderJ: Coder[J], coderK: Coder[K], coderL: Coder[L], coderM: Coder[M], coderN: Coder[N]) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder, k.valueCoder, l.valueCoder, m.valueCoder, n.valueCoder)
     val (tagA, tagB, tagC, tagD, tagE, tagF, tagG, tagH, tagI, tagJ, tagK, tagL, tagM, tagN) = (new TupleTag[A](), new TupleTag[B](), new TupleTag[C](), new TupleTag[D](), new TupleTag[E](), new TupleTag[F](), new TupleTag[G](), new TupleTag[H](), new TupleTag[I](), new TupleTag[J](), new TupleTag[K](), new TupleTag[L](), new TupleTag[M](), new TupleTag[N]())
     val keyed = KeyedPCollectionTuple
       .of(tagA, a.toKV.internal)
@@ -2467,8 +2469,8 @@ trait MultiJoin extends Serializable {
   }
 
   def outer[KEY, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O](a: SCollection[(KEY, A)], b: SCollection[(KEY, B)], c: SCollection[(KEY, C)], d: SCollection[(KEY, D)], e: SCollection[(KEY, E)], f: SCollection[(KEY, F)], g: SCollection[(KEY, G)], h: SCollection[(KEY, H)], i: SCollection[(KEY, I)], j: SCollection[(KEY, J)], k: SCollection[(KEY, K)], l: SCollection[(KEY, L)], m: SCollection[(KEY, M)], n: SCollection[(KEY, N)], o: SCollection[(KEY, O)]): SCollection[(KEY, (Option[A], Option[B], Option[C], Option[D], Option[E], Option[F], Option[G], Option[H], Option[I], Option[J], Option[K], Option[L], Option[M], Option[N], Option[O]))] = {
-    implicit val keyCoder = a.keyCoder
-    implicit val (coderA, coderB, coderC, coderD, coderE, coderF, coderG, coderH, coderI, coderJ, coderK, coderL, coderM, coderN, coderO) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder, k.valueCoder, l.valueCoder, m.valueCoder, n.valueCoder, o.valueCoder)
+    implicit val keyCoder: Coder[KEY] = a.keyCoder
+    implicit val (coderA: Coder[A], coderB: Coder[B], coderC: Coder[C], coderD: Coder[D], coderE: Coder[E], coderF: Coder[F], coderG: Coder[G], coderH: Coder[H], coderI: Coder[I], coderJ: Coder[J], coderK: Coder[K], coderL: Coder[L], coderM: Coder[M], coderN: Coder[N], coderO: Coder[O]) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder, k.valueCoder, l.valueCoder, m.valueCoder, n.valueCoder, o.valueCoder)
     val (tagA, tagB, tagC, tagD, tagE, tagF, tagG, tagH, tagI, tagJ, tagK, tagL, tagM, tagN, tagO) = (new TupleTag[A](), new TupleTag[B](), new TupleTag[C](), new TupleTag[D](), new TupleTag[E](), new TupleTag[F](), new TupleTag[G](), new TupleTag[H](), new TupleTag[I](), new TupleTag[J](), new TupleTag[K](), new TupleTag[L](), new TupleTag[M](), new TupleTag[N](), new TupleTag[O]())
     val keyed = KeyedPCollectionTuple
       .of(tagA, a.toKV.internal)
@@ -2510,8 +2512,8 @@ trait MultiJoin extends Serializable {
   }
 
   def outer[KEY, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P](a: SCollection[(KEY, A)], b: SCollection[(KEY, B)], c: SCollection[(KEY, C)], d: SCollection[(KEY, D)], e: SCollection[(KEY, E)], f: SCollection[(KEY, F)], g: SCollection[(KEY, G)], h: SCollection[(KEY, H)], i: SCollection[(KEY, I)], j: SCollection[(KEY, J)], k: SCollection[(KEY, K)], l: SCollection[(KEY, L)], m: SCollection[(KEY, M)], n: SCollection[(KEY, N)], o: SCollection[(KEY, O)], p: SCollection[(KEY, P)]): SCollection[(KEY, (Option[A], Option[B], Option[C], Option[D], Option[E], Option[F], Option[G], Option[H], Option[I], Option[J], Option[K], Option[L], Option[M], Option[N], Option[O], Option[P]))] = {
-    implicit val keyCoder = a.keyCoder
-    implicit val (coderA, coderB, coderC, coderD, coderE, coderF, coderG, coderH, coderI, coderJ, coderK, coderL, coderM, coderN, coderO, coderP) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder, k.valueCoder, l.valueCoder, m.valueCoder, n.valueCoder, o.valueCoder, p.valueCoder)
+    implicit val keyCoder: Coder[KEY] = a.keyCoder
+    implicit val (coderA: Coder[A], coderB: Coder[B], coderC: Coder[C], coderD: Coder[D], coderE: Coder[E], coderF: Coder[F], coderG: Coder[G], coderH: Coder[H], coderI: Coder[I], coderJ: Coder[J], coderK: Coder[K], coderL: Coder[L], coderM: Coder[M], coderN: Coder[N], coderO: Coder[O], coderP: Coder[P]) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder, k.valueCoder, l.valueCoder, m.valueCoder, n.valueCoder, o.valueCoder, p.valueCoder)
     val (tagA, tagB, tagC, tagD, tagE, tagF, tagG, tagH, tagI, tagJ, tagK, tagL, tagM, tagN, tagO, tagP) = (new TupleTag[A](), new TupleTag[B](), new TupleTag[C](), new TupleTag[D](), new TupleTag[E](), new TupleTag[F](), new TupleTag[G](), new TupleTag[H](), new TupleTag[I](), new TupleTag[J](), new TupleTag[K](), new TupleTag[L](), new TupleTag[M](), new TupleTag[N](), new TupleTag[O](), new TupleTag[P]())
     val keyed = KeyedPCollectionTuple
       .of(tagA, a.toKV.internal)
@@ -2555,8 +2557,8 @@ trait MultiJoin extends Serializable {
   }
 
   def outer[KEY, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q](a: SCollection[(KEY, A)], b: SCollection[(KEY, B)], c: SCollection[(KEY, C)], d: SCollection[(KEY, D)], e: SCollection[(KEY, E)], f: SCollection[(KEY, F)], g: SCollection[(KEY, G)], h: SCollection[(KEY, H)], i: SCollection[(KEY, I)], j: SCollection[(KEY, J)], k: SCollection[(KEY, K)], l: SCollection[(KEY, L)], m: SCollection[(KEY, M)], n: SCollection[(KEY, N)], o: SCollection[(KEY, O)], p: SCollection[(KEY, P)], q: SCollection[(KEY, Q)]): SCollection[(KEY, (Option[A], Option[B], Option[C], Option[D], Option[E], Option[F], Option[G], Option[H], Option[I], Option[J], Option[K], Option[L], Option[M], Option[N], Option[O], Option[P], Option[Q]))] = {
-    implicit val keyCoder = a.keyCoder
-    implicit val (coderA, coderB, coderC, coderD, coderE, coderF, coderG, coderH, coderI, coderJ, coderK, coderL, coderM, coderN, coderO, coderP, coderQ) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder, k.valueCoder, l.valueCoder, m.valueCoder, n.valueCoder, o.valueCoder, p.valueCoder, q.valueCoder)
+    implicit val keyCoder: Coder[KEY] = a.keyCoder
+    implicit val (coderA: Coder[A], coderB: Coder[B], coderC: Coder[C], coderD: Coder[D], coderE: Coder[E], coderF: Coder[F], coderG: Coder[G], coderH: Coder[H], coderI: Coder[I], coderJ: Coder[J], coderK: Coder[K], coderL: Coder[L], coderM: Coder[M], coderN: Coder[N], coderO: Coder[O], coderP: Coder[P], coderQ: Coder[Q]) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder, k.valueCoder, l.valueCoder, m.valueCoder, n.valueCoder, o.valueCoder, p.valueCoder, q.valueCoder)
     val (tagA, tagB, tagC, tagD, tagE, tagF, tagG, tagH, tagI, tagJ, tagK, tagL, tagM, tagN, tagO, tagP, tagQ) = (new TupleTag[A](), new TupleTag[B](), new TupleTag[C](), new TupleTag[D](), new TupleTag[E](), new TupleTag[F](), new TupleTag[G](), new TupleTag[H](), new TupleTag[I](), new TupleTag[J](), new TupleTag[K](), new TupleTag[L](), new TupleTag[M](), new TupleTag[N](), new TupleTag[O](), new TupleTag[P](), new TupleTag[Q]())
     val keyed = KeyedPCollectionTuple
       .of(tagA, a.toKV.internal)
@@ -2602,8 +2604,8 @@ trait MultiJoin extends Serializable {
   }
 
   def outer[KEY, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R](a: SCollection[(KEY, A)], b: SCollection[(KEY, B)], c: SCollection[(KEY, C)], d: SCollection[(KEY, D)], e: SCollection[(KEY, E)], f: SCollection[(KEY, F)], g: SCollection[(KEY, G)], h: SCollection[(KEY, H)], i: SCollection[(KEY, I)], j: SCollection[(KEY, J)], k: SCollection[(KEY, K)], l: SCollection[(KEY, L)], m: SCollection[(KEY, M)], n: SCollection[(KEY, N)], o: SCollection[(KEY, O)], p: SCollection[(KEY, P)], q: SCollection[(KEY, Q)], r: SCollection[(KEY, R)]): SCollection[(KEY, (Option[A], Option[B], Option[C], Option[D], Option[E], Option[F], Option[G], Option[H], Option[I], Option[J], Option[K], Option[L], Option[M], Option[N], Option[O], Option[P], Option[Q], Option[R]))] = {
-    implicit val keyCoder = a.keyCoder
-    implicit val (coderA, coderB, coderC, coderD, coderE, coderF, coderG, coderH, coderI, coderJ, coderK, coderL, coderM, coderN, coderO, coderP, coderQ, coderR) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder, k.valueCoder, l.valueCoder, m.valueCoder, n.valueCoder, o.valueCoder, p.valueCoder, q.valueCoder, r.valueCoder)
+    implicit val keyCoder: Coder[KEY] = a.keyCoder
+    implicit val (coderA: Coder[A], coderB: Coder[B], coderC: Coder[C], coderD: Coder[D], coderE: Coder[E], coderF: Coder[F], coderG: Coder[G], coderH: Coder[H], coderI: Coder[I], coderJ: Coder[J], coderK: Coder[K], coderL: Coder[L], coderM: Coder[M], coderN: Coder[N], coderO: Coder[O], coderP: Coder[P], coderQ: Coder[Q], coderR: Coder[R]) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder, k.valueCoder, l.valueCoder, m.valueCoder, n.valueCoder, o.valueCoder, p.valueCoder, q.valueCoder, r.valueCoder)
     val (tagA, tagB, tagC, tagD, tagE, tagF, tagG, tagH, tagI, tagJ, tagK, tagL, tagM, tagN, tagO, tagP, tagQ, tagR) = (new TupleTag[A](), new TupleTag[B](), new TupleTag[C](), new TupleTag[D](), new TupleTag[E](), new TupleTag[F](), new TupleTag[G](), new TupleTag[H](), new TupleTag[I](), new TupleTag[J](), new TupleTag[K](), new TupleTag[L](), new TupleTag[M](), new TupleTag[N](), new TupleTag[O](), new TupleTag[P](), new TupleTag[Q](), new TupleTag[R]())
     val keyed = KeyedPCollectionTuple
       .of(tagA, a.toKV.internal)
@@ -2651,8 +2653,8 @@ trait MultiJoin extends Serializable {
   }
 
   def outer[KEY, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S](a: SCollection[(KEY, A)], b: SCollection[(KEY, B)], c: SCollection[(KEY, C)], d: SCollection[(KEY, D)], e: SCollection[(KEY, E)], f: SCollection[(KEY, F)], g: SCollection[(KEY, G)], h: SCollection[(KEY, H)], i: SCollection[(KEY, I)], j: SCollection[(KEY, J)], k: SCollection[(KEY, K)], l: SCollection[(KEY, L)], m: SCollection[(KEY, M)], n: SCollection[(KEY, N)], o: SCollection[(KEY, O)], p: SCollection[(KEY, P)], q: SCollection[(KEY, Q)], r: SCollection[(KEY, R)], s: SCollection[(KEY, S)]): SCollection[(KEY, (Option[A], Option[B], Option[C], Option[D], Option[E], Option[F], Option[G], Option[H], Option[I], Option[J], Option[K], Option[L], Option[M], Option[N], Option[O], Option[P], Option[Q], Option[R], Option[S]))] = {
-    implicit val keyCoder = a.keyCoder
-    implicit val (coderA, coderB, coderC, coderD, coderE, coderF, coderG, coderH, coderI, coderJ, coderK, coderL, coderM, coderN, coderO, coderP, coderQ, coderR, coderS) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder, k.valueCoder, l.valueCoder, m.valueCoder, n.valueCoder, o.valueCoder, p.valueCoder, q.valueCoder, r.valueCoder, s.valueCoder)
+    implicit val keyCoder: Coder[KEY] = a.keyCoder
+    implicit val (coderA: Coder[A], coderB: Coder[B], coderC: Coder[C], coderD: Coder[D], coderE: Coder[E], coderF: Coder[F], coderG: Coder[G], coderH: Coder[H], coderI: Coder[I], coderJ: Coder[J], coderK: Coder[K], coderL: Coder[L], coderM: Coder[M], coderN: Coder[N], coderO: Coder[O], coderP: Coder[P], coderQ: Coder[Q], coderR: Coder[R], coderS: Coder[S]) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder, k.valueCoder, l.valueCoder, m.valueCoder, n.valueCoder, o.valueCoder, p.valueCoder, q.valueCoder, r.valueCoder, s.valueCoder)
     val (tagA, tagB, tagC, tagD, tagE, tagF, tagG, tagH, tagI, tagJ, tagK, tagL, tagM, tagN, tagO, tagP, tagQ, tagR, tagS) = (new TupleTag[A](), new TupleTag[B](), new TupleTag[C](), new TupleTag[D](), new TupleTag[E](), new TupleTag[F](), new TupleTag[G](), new TupleTag[H](), new TupleTag[I](), new TupleTag[J](), new TupleTag[K](), new TupleTag[L](), new TupleTag[M](), new TupleTag[N](), new TupleTag[O](), new TupleTag[P](), new TupleTag[Q](), new TupleTag[R](), new TupleTag[S]())
     val keyed = KeyedPCollectionTuple
       .of(tagA, a.toKV.internal)
@@ -2702,8 +2704,8 @@ trait MultiJoin extends Serializable {
   }
 
   def outer[KEY, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T](a: SCollection[(KEY, A)], b: SCollection[(KEY, B)], c: SCollection[(KEY, C)], d: SCollection[(KEY, D)], e: SCollection[(KEY, E)], f: SCollection[(KEY, F)], g: SCollection[(KEY, G)], h: SCollection[(KEY, H)], i: SCollection[(KEY, I)], j: SCollection[(KEY, J)], k: SCollection[(KEY, K)], l: SCollection[(KEY, L)], m: SCollection[(KEY, M)], n: SCollection[(KEY, N)], o: SCollection[(KEY, O)], p: SCollection[(KEY, P)], q: SCollection[(KEY, Q)], r: SCollection[(KEY, R)], s: SCollection[(KEY, S)], t: SCollection[(KEY, T)]): SCollection[(KEY, (Option[A], Option[B], Option[C], Option[D], Option[E], Option[F], Option[G], Option[H], Option[I], Option[J], Option[K], Option[L], Option[M], Option[N], Option[O], Option[P], Option[Q], Option[R], Option[S], Option[T]))] = {
-    implicit val keyCoder = a.keyCoder
-    implicit val (coderA, coderB, coderC, coderD, coderE, coderF, coderG, coderH, coderI, coderJ, coderK, coderL, coderM, coderN, coderO, coderP, coderQ, coderR, coderS, coderT) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder, k.valueCoder, l.valueCoder, m.valueCoder, n.valueCoder, o.valueCoder, p.valueCoder, q.valueCoder, r.valueCoder, s.valueCoder, t.valueCoder)
+    implicit val keyCoder: Coder[KEY] = a.keyCoder
+    implicit val (coderA: Coder[A], coderB: Coder[B], coderC: Coder[C], coderD: Coder[D], coderE: Coder[E], coderF: Coder[F], coderG: Coder[G], coderH: Coder[H], coderI: Coder[I], coderJ: Coder[J], coderK: Coder[K], coderL: Coder[L], coderM: Coder[M], coderN: Coder[N], coderO: Coder[O], coderP: Coder[P], coderQ: Coder[Q], coderR: Coder[R], coderS: Coder[S], coderT: Coder[T]) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder, k.valueCoder, l.valueCoder, m.valueCoder, n.valueCoder, o.valueCoder, p.valueCoder, q.valueCoder, r.valueCoder, s.valueCoder, t.valueCoder)
     val (tagA, tagB, tagC, tagD, tagE, tagF, tagG, tagH, tagI, tagJ, tagK, tagL, tagM, tagN, tagO, tagP, tagQ, tagR, tagS, tagT) = (new TupleTag[A](), new TupleTag[B](), new TupleTag[C](), new TupleTag[D](), new TupleTag[E](), new TupleTag[F](), new TupleTag[G](), new TupleTag[H](), new TupleTag[I](), new TupleTag[J](), new TupleTag[K](), new TupleTag[L](), new TupleTag[M](), new TupleTag[N](), new TupleTag[O](), new TupleTag[P](), new TupleTag[Q](), new TupleTag[R](), new TupleTag[S](), new TupleTag[T]())
     val keyed = KeyedPCollectionTuple
       .of(tagA, a.toKV.internal)
@@ -2755,8 +2757,8 @@ trait MultiJoin extends Serializable {
   }
 
   def outer[KEY, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U](a: SCollection[(KEY, A)], b: SCollection[(KEY, B)], c: SCollection[(KEY, C)], d: SCollection[(KEY, D)], e: SCollection[(KEY, E)], f: SCollection[(KEY, F)], g: SCollection[(KEY, G)], h: SCollection[(KEY, H)], i: SCollection[(KEY, I)], j: SCollection[(KEY, J)], k: SCollection[(KEY, K)], l: SCollection[(KEY, L)], m: SCollection[(KEY, M)], n: SCollection[(KEY, N)], o: SCollection[(KEY, O)], p: SCollection[(KEY, P)], q: SCollection[(KEY, Q)], r: SCollection[(KEY, R)], s: SCollection[(KEY, S)], t: SCollection[(KEY, T)], u: SCollection[(KEY, U)]): SCollection[(KEY, (Option[A], Option[B], Option[C], Option[D], Option[E], Option[F], Option[G], Option[H], Option[I], Option[J], Option[K], Option[L], Option[M], Option[N], Option[O], Option[P], Option[Q], Option[R], Option[S], Option[T], Option[U]))] = {
-    implicit val keyCoder = a.keyCoder
-    implicit val (coderA, coderB, coderC, coderD, coderE, coderF, coderG, coderH, coderI, coderJ, coderK, coderL, coderM, coderN, coderO, coderP, coderQ, coderR, coderS, coderT, coderU) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder, k.valueCoder, l.valueCoder, m.valueCoder, n.valueCoder, o.valueCoder, p.valueCoder, q.valueCoder, r.valueCoder, s.valueCoder, t.valueCoder, u.valueCoder)
+    implicit val keyCoder: Coder[KEY] = a.keyCoder
+    implicit val (coderA: Coder[A], coderB: Coder[B], coderC: Coder[C], coderD: Coder[D], coderE: Coder[E], coderF: Coder[F], coderG: Coder[G], coderH: Coder[H], coderI: Coder[I], coderJ: Coder[J], coderK: Coder[K], coderL: Coder[L], coderM: Coder[M], coderN: Coder[N], coderO: Coder[O], coderP: Coder[P], coderQ: Coder[Q], coderR: Coder[R], coderS: Coder[S], coderT: Coder[T], coderU: Coder[U]) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder, k.valueCoder, l.valueCoder, m.valueCoder, n.valueCoder, o.valueCoder, p.valueCoder, q.valueCoder, r.valueCoder, s.valueCoder, t.valueCoder, u.valueCoder)
     val (tagA, tagB, tagC, tagD, tagE, tagF, tagG, tagH, tagI, tagJ, tagK, tagL, tagM, tagN, tagO, tagP, tagQ, tagR, tagS, tagT, tagU) = (new TupleTag[A](), new TupleTag[B](), new TupleTag[C](), new TupleTag[D](), new TupleTag[E](), new TupleTag[F](), new TupleTag[G](), new TupleTag[H](), new TupleTag[I](), new TupleTag[J](), new TupleTag[K](), new TupleTag[L](), new TupleTag[M](), new TupleTag[N](), new TupleTag[O](), new TupleTag[P](), new TupleTag[Q](), new TupleTag[R](), new TupleTag[S](), new TupleTag[T](), new TupleTag[U]())
     val keyed = KeyedPCollectionTuple
       .of(tagA, a.toKV.internal)
@@ -2810,8 +2812,8 @@ trait MultiJoin extends Serializable {
   }
 
   def outer[KEY, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V](a: SCollection[(KEY, A)], b: SCollection[(KEY, B)], c: SCollection[(KEY, C)], d: SCollection[(KEY, D)], e: SCollection[(KEY, E)], f: SCollection[(KEY, F)], g: SCollection[(KEY, G)], h: SCollection[(KEY, H)], i: SCollection[(KEY, I)], j: SCollection[(KEY, J)], k: SCollection[(KEY, K)], l: SCollection[(KEY, L)], m: SCollection[(KEY, M)], n: SCollection[(KEY, N)], o: SCollection[(KEY, O)], p: SCollection[(KEY, P)], q: SCollection[(KEY, Q)], r: SCollection[(KEY, R)], s: SCollection[(KEY, S)], t: SCollection[(KEY, T)], u: SCollection[(KEY, U)], v: SCollection[(KEY, V)]): SCollection[(KEY, (Option[A], Option[B], Option[C], Option[D], Option[E], Option[F], Option[G], Option[H], Option[I], Option[J], Option[K], Option[L], Option[M], Option[N], Option[O], Option[P], Option[Q], Option[R], Option[S], Option[T], Option[U], Option[V]))] = {
-    implicit val keyCoder = a.keyCoder
-    implicit val (coderA, coderB, coderC, coderD, coderE, coderF, coderG, coderH, coderI, coderJ, coderK, coderL, coderM, coderN, coderO, coderP, coderQ, coderR, coderS, coderT, coderU, coderV) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder, k.valueCoder, l.valueCoder, m.valueCoder, n.valueCoder, o.valueCoder, p.valueCoder, q.valueCoder, r.valueCoder, s.valueCoder, t.valueCoder, u.valueCoder, v.valueCoder)
+    implicit val keyCoder: Coder[KEY] = a.keyCoder
+    implicit val (coderA: Coder[A], coderB: Coder[B], coderC: Coder[C], coderD: Coder[D], coderE: Coder[E], coderF: Coder[F], coderG: Coder[G], coderH: Coder[H], coderI: Coder[I], coderJ: Coder[J], coderK: Coder[K], coderL: Coder[L], coderM: Coder[M], coderN: Coder[N], coderO: Coder[O], coderP: Coder[P], coderQ: Coder[Q], coderR: Coder[R], coderS: Coder[S], coderT: Coder[T], coderU: Coder[U], coderV: Coder[V]) = (a.valueCoder, b.valueCoder, c.valueCoder, d.valueCoder, e.valueCoder, f.valueCoder, g.valueCoder, h.valueCoder, i.valueCoder, j.valueCoder, k.valueCoder, l.valueCoder, m.valueCoder, n.valueCoder, o.valueCoder, p.valueCoder, q.valueCoder, r.valueCoder, s.valueCoder, t.valueCoder, u.valueCoder, v.valueCoder)
     val (tagA, tagB, tagC, tagD, tagE, tagF, tagG, tagH, tagI, tagJ, tagK, tagL, tagM, tagN, tagO, tagP, tagQ, tagR, tagS, tagT, tagU, tagV) = (new TupleTag[A](), new TupleTag[B](), new TupleTag[C](), new TupleTag[D](), new TupleTag[E](), new TupleTag[F](), new TupleTag[G](), new TupleTag[H](), new TupleTag[I](), new TupleTag[J](), new TupleTag[K](), new TupleTag[L](), new TupleTag[M](), new TupleTag[N](), new TupleTag[O](), new TupleTag[P](), new TupleTag[Q](), new TupleTag[R](), new TupleTag[S](), new TupleTag[T](), new TupleTag[U](), new TupleTag[V]())
     val keyed = KeyedPCollectionTuple
       .of(tagA, a.toKV.internal)

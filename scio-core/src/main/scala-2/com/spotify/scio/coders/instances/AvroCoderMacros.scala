@@ -15,13 +15,12 @@
  * under the License.
  */
 
-package com.spotify.scio.io
+package com.spotify.scio.coders.instances
 
-/**
- * IO package for dynamic destinations. Import All.
- *
- * {{{
- * import com.spotify.scio.io.dynamic._
- * }}}
- */
-package object dynamic extends com.spotify.scio.io.dynamic.syntax.AllSyntax
+import com.spotify.scio.coders.Coder
+import org.apache.avro.specific.SpecificRecordBase
+
+private[instances] trait AvroCodersMacros {
+  implicit def genAvro[T <: SpecificRecordBase]: Coder[T] =
+    macro AvroCoderMacros.staticInvokeCoder[T]
+}

@@ -15,13 +15,19 @@
  * under the License.
  */
 
-package com.spotify.scio.io
+package com.spotify.scio.coders
+
+import scala.annotation.{compileTimeOnly, StaticAnnotation}
+import scala.reflect.macros._
 
 /**
- * IO package for dynamic destinations. Import All.
+ * Annotation for custom Kryo registrar classes.
  *
- * {{{
- * import com.spotify.scio.io.dynamic._
- * }}}
+ * Annotated class must extend `IKryoRegistrar` and has name that ends with "KryoRegistrar".
  */
-package object dynamic extends com.spotify.scio.io.dynamic.syntax.AllSyntax
+class KryoRegistrar extends StaticAnnotation {
+  def macroTransform(annottees: Any*): Any = ??? // TODO: scala3 implement
+}
+
+/** Trait to be added to Kryo registrar class annotated with `@KryoRegistrar`. */
+trait AnnotatedKryoRegistrar

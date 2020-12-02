@@ -525,6 +525,7 @@ object Coder
     with GuavaCoders
     with JodaCoders
     with BeamTypeCoders
+    with FallbackCoder
     with LowPriorityCoders {
   @inline final def apply[T](implicit c: Coder[T]): Coder[T] = c
 
@@ -595,9 +596,6 @@ object Coder
   implicit val jPeriodCoder: Coder[java.time.Period] = JavaCoders.jPeriodCoder
   implicit val jSqlTimestamp: Coder[java.sql.Timestamp] = JavaCoders.jSqlTimestamp
   implicit def coderJEnum[E <: java.lang.Enum[E]: ClassTag]: Coder[E] = JavaCoders.coderJEnum
-
-  def fallback[T](implicit lp: shapeless.LowPriority): Coder[T] =
-    macro CoderMacros.issueFallbackWarning[T]
 }
 
 trait LowPriorityCoders extends LowPriorityCoderDerivation {
