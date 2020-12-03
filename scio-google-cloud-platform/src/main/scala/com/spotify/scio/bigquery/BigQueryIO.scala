@@ -378,41 +378,6 @@ final case class BigQueryTypedTable[T: Coder](
   override def tap(read: ReadP): Tap[T] = BigQueryTypedTap(table, fn)
 }
 
-/** Get an IO for a BigQuery table. */
-@deprecated("use BigQueryTypedTable(table, Format.TableRow) instead", "0.9.2")
-final case class BigQueryTable(table: Table) extends BigQueryIO[TableRow] {
-  private[this] val underlying = BigQueryTypedTable(table, BigQueryTypedTable.Format.TableRow)
-
-  override type ReadP = Unit
-  override type WriteP = BigQueryTable.WriteParam
-
-  override def testId: String = s"BigQueryIO(${table.spec})"
-
-  override protected def read(sc: ScioContext, params: ReadP): SCollection[TableRow] =
-    sc.read(underlying)
-
-  override protected def write(data: SCollection[TableRow], params: WriteP): Tap[TableRow] = {
-    val ps = BigQueryTypedTable.WriteParam(
-      params.schema,
-      params.writeDisposition,
-      params.createDisposition,
-      params.tableDescription,
-      params.timePartitioning,
-      params.extendedErrorInfo
-    )(params.insertErrorTransform)
-
-    data.write(underlying)(ps)
-    tap(())
-  }
-
-  override def tap(read: ReadP): Tap[TableRow] = BigQueryTap(table.ref)
-}
-
-object BigQueryTable {
-  type WriteParam = BigQueryTypedTable.WriteParam
-  val WriteParam = BigQueryTypedTable.WriteParam
-}
-
 /** Get an IO for a BigQuery table using the storage API. */
 final case class BigQueryStorage(
   table: Table,

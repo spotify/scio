@@ -22,13 +22,7 @@ import com.spotify.scio.bigquery.BigQueryTyped.Table.{WriteParam => TableWritePa
 import com.spotify.scio.bigquery.BigQueryTyped.BeamSchema.{WriteParam => TypedWriteParam}
 import com.spotify.scio.bigquery.TableRowJsonIO.{WriteParam => TableRowJsonWriteParam}
 import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
-import com.spotify.scio.bigquery.{
-  BigQueryTable,
-  BigQueryTyped,
-  TableRow,
-  TableRowJsonIO,
-  TimePartitioning
-}
+import com.spotify.scio.bigquery.{BigQueryTyped, TableRow, TableRowJsonIO, TimePartitioning}
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.io._
 import com.spotify.scio.values.SCollection
@@ -53,14 +47,14 @@ final class SCollectionTableRowOps[T <: TableRow](private val self: SCollection[
    */
   def saveAsBigQueryTable(
     table: Table,
-    schema: TableSchema = BigQueryTable.WriteParam.DefaultSchema,
-    writeDisposition: WriteDisposition = BigQueryTable.WriteParam.DefaultWriteDisposition,
-    createDisposition: CreateDisposition = BigQueryTable.WriteParam.DefaultCreateDisposition,
-    tableDescription: String = BigQueryTable.WriteParam.DefaultTableDescription,
-    timePartitioning: TimePartitioning = BigQueryTable.WriteParam.DefaultTimePartitioning
+    schema: TableSchema = BigQueryTypedTable.WriteParam.DefaultSchema,
+    writeDisposition: WriteDisposition = BigQueryTypedTable.WriteParam.DefaultWriteDisposition,
+    createDisposition: CreateDisposition = BigQueryTypedTable.WriteParam.DefaultCreateDisposition,
+    tableDescription: String = BigQueryTypedTable.WriteParam.DefaultTableDescription,
+    timePartitioning: TimePartitioning = BigQueryTypedTable.WriteParam.DefaultTimePartitioning
   ): ClosedTap[TableRow] = {
     val param =
-      BigQueryTable.WriteParam(
+      BigQueryTypedTable.WriteParam(
         schema,
         writeDisposition,
         createDisposition,
@@ -97,14 +91,14 @@ final class SCollectionGenericRecordOps[T <: GenericRecord](private val self: SC
    */
   def saveAsBigQueryTable(
     table: Table,
-    schema: TableSchema = BigQueryTable.WriteParam.DefaultSchema,
-    writeDisposition: WriteDisposition = BigQueryTable.WriteParam.DefaultWriteDisposition,
-    createDisposition: CreateDisposition = BigQueryTable.WriteParam.DefaultCreateDisposition,
-    tableDescription: String = BigQueryTable.WriteParam.DefaultTableDescription,
-    timePartitioning: TimePartitioning = BigQueryTable.WriteParam.DefaultTimePartitioning
+    schema: TableSchema = BigQueryTypedTable.WriteParam.DefaultSchema,
+    writeDisposition: WriteDisposition = BigQueryTypedTable.WriteParam.DefaultWriteDisposition,
+    createDisposition: CreateDisposition = BigQueryTypedTable.WriteParam.DefaultCreateDisposition,
+    tableDescription: String = BigQueryTypedTable.WriteParam.DefaultTableDescription,
+    timePartitioning: TimePartitioning = BigQueryTypedTable.WriteParam.DefaultTimePartitioning
   ): ClosedTap[GenericRecord] = {
     val param =
-      BigQueryTable.WriteParam(
+      BigQueryTypedTable.WriteParam(
         schema,
         writeDisposition,
         createDisposition,
