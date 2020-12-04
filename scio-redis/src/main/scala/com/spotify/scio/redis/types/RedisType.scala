@@ -16,6 +16,9 @@
 
 package com.spotify.scio.redis.types
 
+import scala.annotation.implicitNotFound
+
+@implicitNotFound("${T} is not a supported type. Redis only supports String or Array[Byte]")
 sealed abstract class RedisType[T]
 
 object RedisType {
