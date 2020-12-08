@@ -5,25 +5,52 @@
 - Sign up for a Sonatype account [here](https://issues.sonatype.org/secure/Signup!default.jspa)
 - Ask for permissions to push to com.spotify domain like in this [ticket](https://issues.sonatype.org/browse/OSSRH-20689)
 - Add Sonatype credentials to `~/.sbt/1.0/credentials.sbt`
-```
+
+```scala
 credentials ++= Seq(
-  Credentials(
+Credentials(
     "Sonatype Nexus Repository Manager",
     "oss.sonatype.org",
     "$USERNAME",
     "$PASSWORD"))
 ```
+    
 - Create a PGP key, for example on [keybase.io](https://keybase.io/), and [distribute](https://www.gnupg.org/gph/en/manual/x457.html) it to a public keyserver 
 
-## Release procedure
+## Update documentation and version matrix
+
+- Pick a release name from [here](https://en.wikipedia.org/wiki/List_of_Latin_phrases_%28full%29), [here](https://en.wikipedia.org/wiki/List_of_songs_with_Latin_lyrics), [here](https://harrypotter.fandom.com/wiki/List_of_spells) or other interesting sources<sup>*</sup>
+- Update the list of release names below
+- If the release includes a Beam version bump, update the @ref:[version matrix](../Apache-Beam.md)
+
+## Automatic (CI)
+
+Checkout and update master
+
+```bash
+git checkout master
+
+git pull
+```
+
+Create and push a new version tag
+
+```bash
+git tag -a vX.Y.Z -m "vX.Y.Z"
+
+git push origin vX.Y.Z
+```
+
+## Manual 
+
 - Run the slow integration tests with `SLOW=true sbt it:test`
 - Run `release skip-tests` in sbt console and follow the instructions
 - Go to [oss.sonatype.org](https://oss.sonatype.org/), find the staging repository, "close" and "release"
-- Run `./scripts/make-site.sh` to update documentation
-- Pick a release name from [here](https://en.wikipedia.org/wiki/List_of_Latin_phrases_%28full%29), [here](https://en.wikipedia.org/wiki/List_of_songs_with_Latin_lyrics), [here](https://harrypotter.fandom.com/wiki/List_of_spells) or other interesting sources<sup>*</sup>
-- Update the list of release names below
 - When the tag build completes, update release notes with name and change log
-- If the release includes a Beam version bump, update the @ref:[version matrix](../Apache-Beam.md)
+- Run `./scripts/make-site.sh` to update documentation
+
+## After successfully published artifacts
+
 - Run @github[scripts/bump_scio.sh](/scripts/bump_scio.sh) to update [homebrew formula](https://github.com/spotify/homebrew-public/blob/master/scio.rb) and `scioVersion` in downstream repos including [scio.g8](https://github.com/spotify/scio.g8), [featran](https://github.com/spotify/featran), etc.
 - Bump version in the internal `scio-cookie` and monorepo
 - Send internal announcement to scio-users@spotify.com and flatmap-announce@spotify.com
@@ -36,6 +63,7 @@ credentials ++= Seq(
 ## Past release names
 
 ### 0.9.x
+
 - [v0.9.5](https://github.com/spotify/scio/releases/tag/v0.9.5) - _"Colovaria"_
 - [v0.9.4](https://github.com/spotify/scio/releases/tag/v0.9.4) - _"Deletrius"_
 - [v0.9.3](https://github.com/spotify/scio/releases/tag/v0.9.3) - _"Petrificus Totalus"_
@@ -44,6 +72,7 @@ credentials ++= Seq(
 - [v0.9.0](https://github.com/spotify/scio/releases/tag/v0.9.0) - _"Furnunculus"_
 
 ### 0.8.x
+
 - [v0.8.4](https://github.com/spotify/scio/releases/tag/v0.8.4) - _"Expecto Patronum"_
 - [v0.8.3](https://github.com/spotify/scio/releases/tag/v0.8.3) - _"Draconifors"_
 - [v0.8.2](https://github.com/spotify/scio/releases/tag/v0.8.2) - _"Capacious Extremis"_
@@ -51,6 +80,7 @@ credentials ++= Seq(
 - [v0.8.0](https://github.com/spotify/scio/releases/tag/v0.8.0) - _"Amato Animo Animato Animagus"_
 
 ### 0.7.x
+
 - [v0.7.4](https://github.com/spotify/scio/releases/tag/v0.7.4) - _"Watsonula wautieri"_
 - [v0.7.3](https://github.com/spotify/scio/releases/tag/v0.7.3) - _"Vulpes Vulpes"_
 - [v0.7.2](https://github.com/spotify/scio/releases/tag/v0.7.2) - _"Ursus t. Ussuricus"_
@@ -58,10 +88,12 @@ credentials ++= Seq(
 - [v0.7.0](https://github.com/spotify/scio/releases/tag/v0.7.0) - _"Suricata suricatta"_
 
 ### 0.6.x
+
 - [v0.6.1](https://github.com/spotify/scio/releases/tag/v0.6.1) - _"Rhyncholestes raphanurus"_
 - [v0.6.0](https://github.com/spotify/scio/releases/tag/v0.6.0) - _"Quelea Quelea"_
 
 ### 0.5.x
+
 - [v0.5.7](https://github.com/spotify/scio/releases/tag/v0.5.7) - _"Panthera pardus"_
 - [v0.5.6](https://github.com/spotify/scio/releases/tag/v0.5.6) - _"Orcinus orca"_
 - [v0.5.5](https://github.com/spotify/scio/releases/tag/v0.5.5) - _"Nesolagus netscheri"_
@@ -72,6 +104,7 @@ credentials ++= Seq(
 - [v0.5.0](https://github.com/spotify/scio/releases/tag/v0.5.0) - _"Ia io"_
 
 ### 0.4.x
+
 - [v0.4.7](https://github.com/spotify/scio/releases/tag/v0.4.7) - _"Hydrochoerus hydrochaeris"_
 - [v0.4.6](https://github.com/spotify/scio/releases/tag/v0.4.6) - _"Galago gallarum"_
 - [v0.4.5](https://github.com/spotify/scio/releases/tag/v0.4.5) - _"Felis ferus"_
@@ -82,6 +115,7 @@ credentials ++= Seq(
 - [v0.4.0](https://github.com/spotify/scio/releases/tag/v0.4.0) - _"Atelerix albiventris"_
 
 ### 0.3.x
+
 - [v0.3.6](https://github.com/spotify/scio/releases/tag/v0.3.6) - _"Veritas odit moras"_
 - [v0.3.5](https://github.com/spotify/scio/releases/tag/v0.3.5) - _"Unitas, veritas, carnitas"_
 - [v0.3.4](https://github.com/spotify/scio/releases/tag/v0.3.4) - _"Sectumsempra"_
@@ -91,6 +125,7 @@ credentials ++= Seq(
 - [v0.3.0](https://github.com/spotify/scio/releases/tag/v0.3.0) - _"Lux et veritas"_
 
 ### 0.2.x
+
 - [v0.2.13](https://github.com/spotify/scio/releases/tag/v0.2.13) - _"Ex luna scientia"_
 - [v0.2.12](https://github.com/spotify/scio/releases/tag/v0.2.12) - _"In extremo"_
 - [v0.2.11](https://github.com/spotify/scio/releases/tag/v0.2.11) - _"Saltatio mortis"_
@@ -107,6 +142,7 @@ credentials ++= Seq(
 - [v0.2.0](https://github.com/spotify/scio/releases/tag/v0.2.0) - _"Nulli secundus"_
 
 ### 0.1.x
+
 - [v0.1.11](https://github.com/spotify/scio/releases/tag/v0.1.11) - _"In silico"_
 - [v0.1.10](https://github.com/spotify/scio/releases/tag/v0.1.10) - _"Memento vivere"_
 - [v0.1.9](https://github.com/spotify/scio/releases/tag/v0.1.9) - _"Lucem sequimur"_
