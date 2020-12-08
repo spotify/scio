@@ -1123,7 +1123,8 @@ lazy val site: Project = project
     `scio-parquet`,
     `scio-schemas`,
     `scio-smb`,
-    `scio-test`
+    `scio-test`,
+    `scio-extra`
   )
 
 // =======================================================================
