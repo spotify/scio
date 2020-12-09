@@ -536,7 +536,7 @@ lazy val `scio-test`: Project = project
       "org.hamcrest" % "hamcrest" % hamcrestVersion,
       "org.scalactic" %% "scalactic" % "3.2.8",
       "com.propensive" %% "magnolia" % magnoliaVersion
-    )map(_.withDottyCompat(scalaVersion.value)),
+    ).map(_.withDottyCompat(scalaVersion.value)),
     Test / compileOrder := CompileOrder.JavaThenScala,
     Test / testGrouping := splitTests(
       (Test / definedTests).value,
@@ -698,7 +698,7 @@ lazy val `scio-cassandra3`: Project = project
       "com.esotericsoftware" % "kryo-shaded" % kryoVersion,
       "com.google.guava" % "guava" % guavaVersion,
       "com.twitter" % "chill-java" % chillVersion
-    )
+    ).map(_.withDottyCompat(scalaVersion.value))
   )
   .dependsOn(
     `scio-core`,

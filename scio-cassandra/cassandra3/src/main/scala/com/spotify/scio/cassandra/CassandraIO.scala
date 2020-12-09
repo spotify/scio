@@ -57,7 +57,7 @@ object CassandraIO {
     private[cassandra] val DefaultPar = 0
   }
 
-  final case class WriteParam[T] private (
+  final case class WriteParam[T] private[cassandra] (
     outputFn: T => Seq[Any],
     parallelism: Int = WriteParam.DefaultPar
   )
