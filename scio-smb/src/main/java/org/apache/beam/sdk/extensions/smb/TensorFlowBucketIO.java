@@ -17,8 +17,10 @@
 
 package org.apache.beam.sdk.extensions.smb;
 
+import com.google.api.services.bigquery.model.TableRow;
 import com.google.auto.value.AutoValue;
 import java.util.List;
+import java.util.function.BiFunction;
 import javax.annotation.Nullable;
 import org.apache.beam.sdk.coders.CannotProvideCoderException;
 import org.apache.beam.sdk.coders.Coder;
@@ -159,7 +161,7 @@ public class TensorFlowBucketIO {
    * {@link SortedBucketSink}.
    */
   @AutoValue
-  public abstract static class Write<K> extends SortedBucketIO.Write<K, Example> {
+  public abstract static class Write<K> extends SortedBucketIO.Write<K, Example, Example> {
     abstract int getSorterMemoryMb();
 
     // TFRecord specific
@@ -193,6 +195,8 @@ public class TensorFlowBucketIO {
       abstract Builder<K> setSorterMemoryMb(int sorterMemoryMb);
 
       // TFRecord specific
+      abstract Builder<K> setGroupMappingFn(BiFunction<K, Iterable<Example>, Iterable<Example>> groupMappingFn);
+
       abstract Builder<K> setKeyField(String keyField);
 
       abstract Builder<K> setCompression(Compression compression);

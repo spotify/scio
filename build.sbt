@@ -1083,6 +1083,7 @@ lazy val `scio-smb`: Project = project
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       "com.github.ben-manes.caffeine" % "caffeine" % caffeineVersion % "provided"
     ),
+    libraryDependencies ++= dataflowRunnerDependencies,
     javacOptions ++= {
       (Compile / sourceManaged).value.mkdirs()
       Seq("-s", (Compile / sourceManaged).value.getAbsolutePath)

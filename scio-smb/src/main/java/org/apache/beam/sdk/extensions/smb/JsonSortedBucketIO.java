@@ -22,6 +22,7 @@ import static org.apache.beam.sdk.extensions.smb.BucketMetadata.HashType;
 import com.google.api.services.bigquery.model.TableRow;
 import com.google.auto.value.AutoValue;
 import java.util.List;
+import java.util.function.BiFunction;
 import javax.annotation.Nullable;
 import org.apache.beam.sdk.coders.CannotProvideCoderException;
 import org.apache.beam.sdk.coders.Coder;
@@ -150,7 +151,7 @@ public class JsonSortedBucketIO {
    * Writes to BigQuery {@link TableRow} JSON sorted-bucket files using {@link SortedBucketSink}.
    */
   @AutoValue
-  public abstract static class Write<K> extends SortedBucketIO.Write<K, TableRow> {
+  public abstract static class Write<K> extends SortedBucketIO.Write<K, TableRow, TableRow> {
     // JSON specific
     @Nullable
     abstract String getKeyField();
@@ -183,6 +184,8 @@ public class JsonSortedBucketIO {
       abstract Builder<K> setKeyCacheSize(int cacheSize);
 
       // JSON specific
+      abstract Builder<K> setGroupMappingFn(BiFunction<K, Iterable<TableRow>, Iterable<TableRow>> groupMappingFn);
+
       abstract Builder<K> setKeyField(String keyField);
 
       abstract Builder<K> setCompression(Compression compression);
