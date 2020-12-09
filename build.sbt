@@ -721,7 +721,8 @@ lazy val `scio-elasticsearch6`: Project = project
       "org.elasticsearch" % "elasticsearch" % elasticsearch6Version,
       "org.elasticsearch" % "elasticsearch-x-content" % elasticsearch6Version,
       "org.elasticsearch.client" % "transport" % elasticsearch6Version
-    )
+    ).map(_.withDottyCompat(scalaVersion.value)),
+    compileOrder := CompileOrder.JavaThenScala, // required for Scala 3
   )
   .dependsOn(
     `scio-core`,
@@ -746,7 +747,8 @@ lazy val `scio-elasticsearch7`: Project = project
       "org.elasticsearch.client" % "elasticsearch-rest-high-level-client" % elasticsearch7Version,
       "org.apache.httpcomponents" % "httpcore" % httpCoreVersion,
       "org.elasticsearch" % "elasticsearch" % elasticsearch7Version
-    )
+    ).map(_.withDottyCompat(scalaVersion.value)),
+    compileOrder := CompileOrder.JavaThenScala, // required for Scala 3
   )
   .dependsOn(
     `scio-core`,
