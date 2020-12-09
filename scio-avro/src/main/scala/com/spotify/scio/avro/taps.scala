@@ -122,7 +122,7 @@ final case class AvroTaps(self: Taps) {
     val avroT = AvroType[T]
 
     import scala.concurrent.ExecutionContext.Implicits.global
-    implicit val bcoder = Coder.avroGenericRecordCoder(avroT.schema)
+    implicit val bcoder: Coder[GenericRecord] = Coder.avroGenericRecordCoder(avroT.schema)
     avroFile(path, avroT.schema)
       .map(_.map(avroT.fromGenericRecord))
   }

@@ -143,7 +143,7 @@ val commonSettings = Def
     headerLicense := Some(HeaderLicense.ALv2("2020", "Spotify AB")),
     headerMappings := headerMappings.value + (HeaderFileType.scala -> keepExistingHeader, HeaderFileType.java -> keepExistingHeader),
     scalaVersion := "2.13.3",
-    crossScalaVersions := Seq("2.12.12", scalaVersion.value),
+    crossScalaVersions := Seq("2.12.12", scalaVersion.value, "3.0.0-M2"),
     scalacOptions ++= Scalac.commonsOptions.value,
     Compile / doc / scalacOptions --= Seq("-release", "8"),
     Compile / doc / scalacOptions ++= Scalac.compileDocOptions.value,
@@ -399,9 +399,9 @@ lazy val `scio-core`: Project = project
     libraryDependencies ++= Seq(
       "com.esotericsoftware" % "kryo-shaded" % kryoVersion,
       "com.fasterxml.jackson.core" % "jackson-databind" % jacksonVersion,
-      ("com.fasterxml.jackson.module" %% "jackson-module-scala" % jacksonVersion).withDottyCompat(scalaVersion.value),
-      ("com.github.alexarchambault" %% "case-app" % caseappVersion).withDottyCompat(scalaVersion.value),
-      ("com.github.alexarchambault" %% "case-app-annotations" % caseappVersion).withDottyCompat(scalaVersion.value),
+      "com.fasterxml.jackson.module" %% "jackson-module-scala" % jacksonVersion,
+      "com.github.alexarchambault" %% "case-app" % caseappVersion,
+      "com.github.alexarchambault" %% "case-app-annotations" % caseappVersion,
       "com.github.ben-manes.caffeine" % "caffeine" % caffeineVersion % "provided",
       "com.google.api-client" % "google-api-client" % googleClientsVersion,
       "com.google.apis" % "google-api-services-dataflow" % googleApiServicesDataflow,
@@ -412,9 +412,9 @@ lazy val `scio-core`: Project = project
       "com.google.protobuf" % "protobuf-java" % protobufVersion,
       "com.twitter" % "chill-java" % chillVersion,
       "com.twitter" % "chill-protobuf" % chillVersion,
-      ("com.twitter" %% "algebird-core" % algebirdVersion).withDottyCompat(scalaVersion.value),
-      ("com.twitter" %% "chill" % chillVersion).withDottyCompat(scalaVersion.value),
-      ("com.twitter" %% "chill-algebird" % chillVersion).withDottyCompat(scalaVersion.value),
+      "com.twitter" %% "algebird-core" % algebirdVersion,
+      "com.twitter" %% "chill" % chillVersion,
+      "com.twitter" %% "chill-algebird" % chillVersion,
       "commons-io" % "commons-io" % commonsIoVersion,
       "io.grpc" % "grpc-auth" % grpcVersion,
       "io.grpc" % "grpc-core" % grpcVersion,
@@ -423,7 +423,7 @@ lazy val `scio-core`: Project = project
       "io.grpc" % "grpc-stub" % grpcVersion,
       "io.netty" % "netty-handler" % nettyVersion,
       "joda-time" % "joda-time" % jodaTimeVersion,
-      ("me.lyh" %% "protobuf-generic" % protobufGenericVersion).withDottyCompat(scalaVersion.value),
+      ("me.lyh" %% "protobuf-generic" % protobufGenericVersion),
       "org.apache.avro" % "avro" % avroVersion,
       "org.apache.beam" % "beam-runners-core-construction-java" % beamVersion,
       "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion % Provided,
@@ -443,13 +443,11 @@ lazy val `scio-core`: Project = project
       "org.apache.commons" % "commons-math3" % commonsMath3Version,
       "org.scalatest" %% "scalatest" % scalatestVersion % Test,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
-      ("org.typelevel" %% "algebra" % algebraVersion).withDottyCompat(scalaVersion.value),
-      ("org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion).withDottyCompat(scalaVersion.value)
-    ),
+      "org.typelevel" %% "algebra" % algebraVersion,
+      "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion
+    ).map(_.withDottyCompat(scalaVersion.value)),
     buildInfoKeys := Seq[BuildInfoKey](scalaVersion, version, "beamVersion" -> beamVersion),
     buildInfoPackage := "com.spotify.scio",
-    // Scala3 setting
-    crossScalaVersions += "3.0.0-M2",
     libraryDependencies ++= {
       if (!isDotty.value)
         Seq(
@@ -486,7 +484,10 @@ lazy val `scio-sql`: Project = project
       "org.apache.beam" % "beam-sdks-java-extensions-sql" % beamVersion,
       "org.apache.commons" % "commons-lang3" % commonsLang3Version,
       "org.apache.beam" % "beam-vendor-calcite-1_20_0" % beamVendorVersion
-    )
+    ).map(_.withDottyCompat(scalaVersion.value)),
+    scalacOptions ++= {
+      if (isDotty.value) Seq("-source:3.0-migration") else Nil
+    },
   )
   .dependsOn(
     `scio-core`,
@@ -533,13 +534,16 @@ lazy val `scio-test`: Project = project
       "org.hamcrest" % "hamcrest" % hamcrestVersion,
       "org.scalactic" %% "scalactic" % "3.2.3",
       "com.propensive" %% "magnolia" % magnoliaVersion
-    ),
+    )map(_.withDottyCompat(scalaVersion.value)),
     Test / compileOrder := CompileOrder.JavaThenScala,
     Test / testGrouping := splitTests(
       (Test / definedTests).value,
       List("com.spotify.scio.ArgsTest"),
       (Test / forkOptions).value
-    )
+    ),
+    scalacOptions ++= {
+      if (isDotty.value) Seq("-source:3.0-migration") else Nil
+    },
   )
   .configs(IntegrationTest)
   .dependsOn(
@@ -597,7 +601,10 @@ lazy val `scio-avro`: Project = project
       "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test,it",
       "com.spotify" %% "magnolify-cats" % magnolifyVersion % "test",
       "com.spotify" %% "magnolify-scalacheck" % magnolifyVersion % "test"
-    )
+    ).map(_.withDottyCompat(scalaVersion.value)),
+    scalacOptions ++= {
+      if (isDotty.value) Seq("-source:3.0-migration") else Nil
+    },
   )
   .dependsOn(
     `scio-core` % "compile;it->it"
@@ -899,7 +906,7 @@ lazy val `scio-schemas`: Project = project
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
       "org.apache.avro" % "avro" % avroVersion
-    ),
+    ).map(_.withDottyCompat(scalaVersion.value)),
     Compile / sourceDirectories := (Compile / sourceDirectories).value
       .filterNot(_.getPath.endsWith("/src_managed/main")),
     Compile / managedSourceDirectories := (Compile / managedSourceDirectories).value
