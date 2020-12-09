@@ -98,7 +98,7 @@ object RedisRead {
     private[redis] val DefaultOutputParallelization: Boolean = true
   }
 
-  final case class ReadParam private (
+  final case class ReadParam private[redis] (
     batchSize: Int = ReadParam.DefaultBatchSize,
     outputParallelization: Boolean = ReadParam.DefaultOutputParallelization
   )
@@ -161,6 +161,6 @@ object RedisWrite {
     private[redis] val DefaultBatchSize: Int = 1000
   }
 
-  final case class WriteParam private (batchSize: Int = WriteParam.DefaultBatchSize)
+  final case class WriteParam private[redis] (batchSize: Int = WriteParam.DefaultBatchSize)
 
 }
