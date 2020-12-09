@@ -1149,7 +1149,7 @@ lazy val `scio-redis`: Project = project
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.scalatest" %% "scalatest" % scalatestVersion % Test,
       "org.apache.beam" % "beam-sdks-java-io-redis" % beamVersion
-    )
+    ).map(_.withDottyCompat(scalaVersion.value))
   )
   .dependsOn(
     `scio-core`,
