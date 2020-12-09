@@ -7,6 +7,7 @@ import org.apache.beam.sdk.extensions.smb.AvroSortedBucketIO
 
 import scala.jdk.CollectionConverters._
 
+// TODO: Delete me before merge
 object AvroData {
   lazy val UserDataSchema: Schema = Schema.createRecord(
     "UserData",
