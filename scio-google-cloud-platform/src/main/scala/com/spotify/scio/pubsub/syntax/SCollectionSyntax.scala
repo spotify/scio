@@ -22,6 +22,7 @@ import com.spotify.scio.coders.BeamCoders
 import com.spotify.scio.pubsub.PubsubIO
 import com.spotify.scio.io.ClosedTap
 import scala.reflect.ClassTag
+import com.spotify.scio.coders.Coder
 
 trait SCollectionSyntax {
   implicit class SCollectionPubsubOps[T](private val coll: SCollection[T]) {
@@ -80,7 +81,7 @@ trait SCollectionSyntax {
       maxBatchSize: Option[Int] = None,
       maxBatchBytesSize: Option[Int] = None
     )(implicit ev: T <:< (V, Map[String, String])): ClosedTap[Nothing] = {
-      implicit val vCoder = BeamCoders.getTupleCoders(coll.covary_[(V, Map[String, String])])._1
+      implicit val vCoder: Coder[V] = BeamCoders.getTupleCoders(coll.covary_[(V, Map[String, String])])._1
       val io = PubsubIO.withAttributes[V](topic, idAttribute, timestampAttribute)
       coll
         .covary_[(V, Map[String, String])]
