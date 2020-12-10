@@ -48,7 +48,7 @@ object TFRecordIO {
     private[tensorflow] val DefaultCompression = Compression.AUTO
   }
 
-  final case class ReadParam private (compression: Compression = ReadParam.DefaultCompression)
+  final case class ReadParam private[tensorflow] (compression: Compression = ReadParam.DefaultCompression)
 
   object WriteParam {
     private[tensorflow] val DefaultSuffix = ".tfrecords"
@@ -56,7 +56,7 @@ object TFRecordIO {
     private[tensorflow] val DefaultNumShards = 0
   }
 
-  final case class WriteParam private (
+  final case class WriteParam private[tensorflow] (
     suffix: String = WriteParam.DefaultSuffix,
     compression: Compression = WriteParam.DefaultCompression,
     numShards: Int = WriteParam.DefaultNumShards
