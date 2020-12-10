@@ -32,7 +32,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.coders.ByteArrayCoder;
@@ -74,7 +76,9 @@ import org.apache.beam.sdk.values.PValue;
 import org.apache.beam.sdk.values.TupleTag;
 import org.apache.beam.sdk.values.TupleTagList;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions;
+import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ArrayListMultimap;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ImmutableMap;
+import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ListMultimap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -118,22 +122,24 @@ import org.slf4j.LoggerFactory;
  * @param <K> the type of the keys that values in a bucket are sorted with
  * @param <V> the type of the values in a bucket
  */
-public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResult> {
+public class SortedBucketSink<K, V, T> extends PTransform<PCollection<V>, WriteResult> {
   private static final Logger LOG = LoggerFactory.getLogger(SortedBucketSink.class);
 
   private final BucketMetadata<K, V> bucketMetadata;
   private final SMBFilenamePolicy filenamePolicy;
   private final ResourceId tempDirectory;
-  private final FileOperations<V> fileOperations;
+  private final FileOperations<T> fileOperations;
   private final int sorterMemoryMb;
   private final int keyCacheSize;
+  private final BiFunction<K, Iterable<V>, Iterable<T>> groupMappingFn;
+  private Coder<T> outputValueCoder;
 
   public SortedBucketSink(
       BucketMetadata<K, V> bucketMetadata,
       ResourceId outputDirectory,
       ResourceId tempDirectory,
       String filenameSuffix,
-      FileOperations<V> fileOperations,
+      FileOperations<T> fileOperations,
       int sorterMemoryMb) {
     this(
         bucketMetadata,
@@ -150,9 +156,31 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
       ResourceId outputDirectory,
       ResourceId tempDirectory,
       String filenameSuffix,
-      FileOperations<V> fileOperations,
+      FileOperations<T> fileOperations,
       int sorterMemoryMb,
       int keyCacheSize) {
+    this(
+        bucketMetadata,
+        outputDirectory,
+        tempDirectory,
+        filenameSuffix,
+        fileOperations,
+        sorterMemoryMb,
+        keyCacheSize,
+        null,
+        null);
+  }
+
+  public SortedBucketSink(
+      BucketMetadata<K, V> bucketMetadata,
+      ResourceId outputDirectory,
+      ResourceId tempDirectory,
+      String filenameSuffix,
+      FileOperations<T> fileOperations,
+      int sorterMemoryMb,
+      int keyCacheSize,
+      BiFunction<K, Iterable<V>, Iterable<T>> groupMappingFn,
+      Coder<T> outputValueCoder) {
     this.bucketMetadata = bucketMetadata;
     this.filenamePolicy =
         new SMBFilenamePolicy(outputDirectory, bucketMetadata.getFilenamePrefix(), filenameSuffix);
@@ -160,6 +188,12 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
     this.fileOperations = fileOperations;
     this.sorterMemoryMb = sorterMemoryMb;
     this.keyCacheSize = keyCacheSize;
+    this.groupMappingFn = groupMappingFn;
+    this.outputValueCoder = outputValueCoder;
+
+//    Preconditions.checkArgument(
+//         (groupMappingFn != null && outputValueCoder != null) || (groupMappingFn == null && outputValueCoder != null),
+//         "Group mapping function's output value coder is not set");
   }
 
   @Override
@@ -168,40 +202,59 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
     Preconditions.checkArgument(
         input.isBounded() == IsBounded.BOUNDED,
         "SortedBucketSink cannot be applied to a non-bounded PCollection");
-    final Coder<V> inputCoder = input.getCoder();
+    final Coder<V> inputValueCoder = input.getCoder();
+    Coder<T> effectiveOutputValueCoder = outputValueCoder;
+    // if group mapping function is not present then type V and type T must be the same.
+    // Hence following is a safe cast.
+    if(groupMappingFn == null) {
+      effectiveOutputValueCoder = (Coder<T>) inputValueCoder;
+    }
 
     final PCollection<KV<BucketShardId, KV<byte[], V>>> bucketedInput =
         input.apply(
             "ExtractKeys",
             ParDo.of(
                 ExtractKeys.of(
-                    bucketMetadata, bucketMetadata::extractKey, keyCacheSize)));
+                    bucketMetadata, bucketMetadata::extractKey, v -> v, keyCacheSize)));
 
     return sink(
         bucketedInput,
         getName(),
-        inputCoder,
+        inputValueCoder,
+        effectiveOutputValueCoder,
         sorterMemoryMb,
         filenamePolicy,
         fileOperations,
         bucketMetadata,
-        tempDirectory);
+        tempDirectory,
+        groupMappingFn);
   }
 
-  public static <KeyT, ValueT> WriteResult sink(
-      PCollection<KV<BucketShardId, KV<byte[], byte[]>>> bucketedInput,
+  public static <KeyT, ValueU, ValueT> WriteResult sink(
+      PCollection<KV<BucketShardId, KV<byte[], ValueU>>> bucketedInput,
       String transformName,
-      Coder<ValueT> valueCoder,
+      Coder<ValueU> inputValueCoder,
+      Coder<ValueT> outputValueCoder,
       int sorterMemoryMb,
       SMBFilenamePolicy filenamePolicy,
       FileOperations<ValueT> fileOperations,
-      BucketMetadata<KeyT, ValueT> bucketMetadata,
-      ResourceId tempDirectory) {
+      BucketMetadata<KeyT, ValueU> bucketMetadata,
+      ResourceId tempDirectory,
+      BiFunction<KeyT, Iterable<ValueU>, Iterable<ValueT>> groupMappingFn) {
+
+
     return bucketedInput
         .setCoder(
             KvCoder.of(
-                BucketShardIdCoder.of(), KvCoder.of(ByteArrayCoder.of(), ByteArrayCoder.of())))
+                BucketShardIdCoder.of(), KvCoder.of(ByteArrayCoder.of(), inputValueCoder)))
         .apply("GroupByKey", GroupByKey.create())
+        .apply("Group Mapping",
+            ParDo.of(
+                new GroupMappingDoFn<>(
+                    groupMappingFn,
+                    inputValueCoder,
+                    outputValueCoder,
+                    bucketMetadata)))
         .apply(
             "SortValues",
             ParDo.of(
@@ -213,33 +266,37 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
         .apply(
             "WriteOperation",
             new WriteOperation<>(
-                filenamePolicy, bucketMetadata, fileOperations, tempDirectory, valueCoder));
+                filenamePolicy, bucketMetadata, fileOperations, tempDirectory, outputValueCoder));
   }
 
   /** Extract bucket and shard id for grouping, and key bytes for sorting. */
-  private static class ExtractKeys<K, V> extends DoFn<V, KV<BucketShardId, KV<byte[], V>>> {
+  private static class ExtractKeys<K, U, V> extends DoFn<U, KV<BucketShardId, KV<byte[], V>>> {
     // Substitute null keys in the output KV<byte[], V> so that they survive serialization
     static final byte[] NULL_SORT_KEY = new byte[0];
-    private final SerializableFunction<V, K> extractKeyFn;
+    private final SerializableFunction<U, K> extractKeyFn;
+    private final SerializableFunction<U, V> extractValueFn;
     private final BucketMetadata<K, ?> bucketMetadata;
     private transient int shardId;
 
-    static <KeyT, ValueT> DoFn<ValueT, KV<BucketShardId, KV<byte[], ValueT>>> of(
+    static <KeyT, ValueU, ValueV> DoFn<ValueU, KV<BucketShardId, KV<byte[], ValueV>>> of(
         BucketMetadata<KeyT, ?> bucketMetadata,
-        SerializableFunction<ValueT, KeyT> extractKeyFn,
+        SerializableFunction<ValueU, KeyT> extractKeyFn,
+        SerializableFunction<ValueU, ValueV> extractValueFn,
         int keyCacheSize) {
       if (keyCacheSize == 0) {
-        return new ExtractKeys<>(bucketMetadata, extractKeyFn);
+        return new ExtractKeys<>(bucketMetadata, extractKeyFn, extractValueFn);
       } else {
-        return new ExtractKeysWithCache<>(bucketMetadata, extractKeyFn, keyCacheSize);
+        return new ExtractKeysWithCache<>(bucketMetadata, extractKeyFn, extractValueFn, keyCacheSize);
       }
     }
 
     private ExtractKeys(
         BucketMetadata<K, ?> bucketMetadata,
-        SerializableFunction<V, K> extractKeyFn) {
+        SerializableFunction<U, K> extractKeyFn,
+        SerializableFunction<U, V> extractValueFn) {
       this.bucketMetadata = bucketMetadata;
       this.extractKeyFn = extractKeyFn;
+      this.extractValueFn = extractValueFn;
     }
 
     // From Combine.PerKeyWithHotKeyFanout.
@@ -265,14 +322,14 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
 
     @ProcessElement
     public void processElement(ProcessContext c) {
-      final V record = c.element();
+      final U record = c.element();
       final KV<BucketShardId, byte[]> bucketAndSortKey =
           processKey(extractKeyFn.apply(record), bucketMetadata, shardId);
 
       c.output(
           KV.of(
               bucketAndSortKey.getKey(),
-              KV.of(bucketAndSortKey.getValue(), record)));
+              KV.of(bucketAndSortKey.getValue(), extractValueFn.apply(record))));
     }
 
     @Override
@@ -283,11 +340,12 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
   }
 
   /** Extract bucket and shard id for grouping, and key bytes for sorting. */
-  private static class ExtractKeysWithCache<K, V>
+  private static class ExtractKeysWithCache<K, U, V>
       extends DoFnWithResource<
-          V, KV<BucketShardId, KV<byte[], V>>, Cache<K, KV<Integer, byte[]>>> {
+          U, KV<BucketShardId, KV<byte[], V>>, Cache<K, KV<Integer, byte[]>>> {
     // Substitute null keys in the output KV<byte[], V> so that they survive serialization
-    private final SerializableFunction<V, K> extractKeyFn;
+    private final SerializableFunction<U, K> extractKeyFn;
+    private final SerializableFunction<U, V> extractValueFn;
     private final BucketMetadata<K, ?> bucketMetadata;
     private final int cacheSize;
     private transient int shardId;
@@ -296,10 +354,12 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
 
     ExtractKeysWithCache(
         BucketMetadata<K, ?> bucketMetadata,
-        SerializableFunction<V, K> extractKeyFn,
+        SerializableFunction<U, K> extractKeyFn,
+        SerializableFunction<U, V> extractValueFn,
         int cacheSize) {
       this.bucketMetadata = bucketMetadata;
       this.extractKeyFn = extractKeyFn;
+      this.extractValueFn = extractValueFn;
       this.cacheSize = cacheSize;
       cacheHits = Metrics.counter(SortedBucketSink.class, "cacheHits");
       cacheMisses = Metrics.counter(SortedBucketSink.class, "cacheMisses");
@@ -323,7 +383,7 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
 
     @ProcessElement
     public void processElement(ProcessContext c) {
-      final V record = c.element();
+      final U record = c.element();
       final K key = extractKeyFn.apply(record);
 
       KV<BucketShardId, byte[]> bucketIdAndSortBytes;
@@ -351,7 +411,7 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
           KV.of(
               bucketIdAndSortBytes.getKey(),
               KV.of(
-                  bucketIdAndSortBytes.getValue(), record)));
+                  bucketIdAndSortBytes.getValue(), extractValueFn.apply(record))));
     }
 
     @Override
@@ -400,6 +460,49 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
     }
   }
 
+  public static class GroupMappingDoFn<K, ValueU, ValueT> extends
+          DoFn<KV<BucketShardId, Iterable<KV<byte[],ValueU>>>, KV<BucketShardId, Iterable<KV<byte[], byte[]>>>> {
+    private final BiFunction<K, Iterable<ValueU>, Iterable<ValueT>> groupMappingFn;
+    private final Coder<ValueU> inputValueCoder;
+    private final Coder<ValueT> outputValueCoder;
+    private final BucketMetadata<K, ValueU> bucketMetadata;
+
+    public GroupMappingDoFn(
+            BiFunction<K, Iterable<ValueU>, Iterable<ValueT>> groupMappingFn,
+            Coder<ValueU> inputValueCoder,
+            Coder<ValueT> outputValueCoder,
+            BucketMetadata<K, ValueU> bucketMetadata) {
+      this.groupMappingFn = groupMappingFn;
+      this.inputValueCoder = inputValueCoder;
+      this.outputValueCoder = outputValueCoder;
+      this.bucketMetadata = bucketMetadata;
+    }
+
+    @ProcessElement
+    public void process(ProcessContext c) {
+      KV<BucketShardId, Iterable<KV<byte[], ValueU>>> input = c.element();
+
+      List<KV<byte[], byte[]>> output = new ArrayList<>();
+      if (groupMappingFn == null) {
+        input.getValue().forEach(kv -> output.add(KV.of(kv.getKey(), getValueBytes(inputValueCoder, kv.getValue()))));
+      } else {
+        ListMultimap<byte[], ValueU> multimap = ArrayListMultimap.create();
+        for (KV<byte[], ValueU> kv : input.getValue()) {
+          multimap.put(kv.getKey(), kv.getValue());
+        }
+
+        for (byte[] key : multimap.keySet()) {
+          List<ValueU> values = multimap.get(key);
+          Iterable<ValueT> outputValues = groupMappingFn.apply(bucketMetadata.decodeKeyFromBytes(key), values);
+          for (ValueT outputValue : outputValues) {
+            output.add(KV.of(key, getValueBytes(outputValueCoder, outputValue)));
+          }
+        }
+      }
+
+      c.output(KV.of(input.getKey(), output));
+    }
+  }
   /**
    * The result of a successfully completed {@link SortedBucketSink} transform. Holds {@link
    * TupleTag} references to both the successfully written {@link BucketMetadata}, and to all
@@ -453,14 +556,14 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
       extends PTransform<
           PCollection<KV<BucketShardId, Iterable<KV<byte[], byte[]>>>>, WriteResult> {
     private final SMBFilenamePolicy filenamePolicy;
-    private final BucketMetadata<?, V> bucketMetadata;
+    private final BucketMetadata<?, ?> bucketMetadata;
     private final FileOperations<V> fileOperations;
     private final ResourceId tempDirectory;
     private final Coder<V> valueCoder;
 
     WriteOperation(
         SMBFilenamePolicy filenamePolicy,
-        BucketMetadata<?, V> bucketMetadata,
+        BucketMetadata<?, ?> bucketMetadata,
         FileOperations<V> fileOperations,
         ResourceId tempDirectory,
         Coder<V> valueCoder) {
@@ -495,13 +598,13 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
       extends DoFn<KV<BucketShardId, Iterable<KV<byte[], byte[]>>>, KV<BucketShardId, ResourceId>> {
 
     private final FileAssignment fileAssignment;
-    private final BucketMetadata bucketMetadata;
+    private final BucketMetadata<?,?> bucketMetadata;
     private final FileOperations<V> fileOperations;
     private final Coder<V> valueCoder;
 
     WriteTempFiles(
         FileAssignment fileAssignment,
-        BucketMetadata bucketMetadata,
+        BucketMetadata<?, ?> bucketMetadata,
         FileOperations<V> fileOperations,
         Coder<V> valueCoder) {
       this.fileAssignment = fileAssignment;
@@ -687,13 +790,13 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
     }
   }
 
-  public static class SortedBucketPreKeyedSink<K, V>
+  public static class SortedBucketPreKeyedSink<K, V, T>
       extends PTransform<PCollection<KV<K, V>>, WriteResult> {
 
     private final BucketMetadata<K, V> bucketMetadata;
     private final SMBFilenamePolicy filenamePolicy;
     private final ResourceId tempDirectory;
-    private final FileOperations<V> fileOperations;
+    private final FileOperations<T> fileOperations;
     private final int sorterMemoryMb;
     private final int keyCacheSize;
     private final Coder<V> valueCoder;
@@ -704,7 +807,7 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
         ResourceId outputDirectory,
         ResourceId tempDirectory,
         String filenameSuffix,
-        FileOperations<V> fileOperations,
+        FileOperations<T> fileOperations,
         int sorterMemoryMb,
         Coder<V> valueCoder) {
       this(
@@ -723,7 +826,7 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
         ResourceId outputDirectory,
         ResourceId tempDirectory,
         String filenameSuffix,
-        FileOperations<V> fileOperations,
+        FileOperations<T> fileOperations,
         int sorterMemoryMb,
         Coder<V> valueCoder,
         boolean verifyKeyExtraction) {
@@ -744,7 +847,7 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
         ResourceId outputDirectory,
         ResourceId tempDirectory,
         String filenameSuffix,
-        FileOperations<V> fileOperations,
+        FileOperations<T> fileOperations,
         int sorterMemoryMb,
         Coder<V> valueCoder,
         boolean verifyKeyExtraction,
@@ -768,14 +871,14 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
           input.isBounded() == IsBounded.BOUNDED,
           "SortedBucketSink cannot be applied to a non-bounded PCollection");
 
-      final PCollection<KV<BucketShardId, KV<byte[], byte[]>>> bucketedInput =
+      final PCollection<KV<BucketShardId, KV<byte[], V>>> bucketedInput =
           input.apply(
               "ExtractKeys",
               ParDo.of(
                   ExtractKeys.of(
                       bucketMetadata,
                       KV::getKey,
-                      DelegateCoder.of(valueCoder, KV::getValue, null),
+                      KV::getValue,
                       keyCacheSize)));
 
       if (verifyKeyExtraction) {
@@ -803,11 +906,13 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
           bucketedInput,
           getName(),
           valueCoder,
+          (Coder<T>) valueCoder,
           sorterMemoryMb,
           filenamePolicy,
           fileOperations,
           bucketMetadata,
-          tempDirectory);
+          tempDirectory,
+          null);
     }
   }
 }

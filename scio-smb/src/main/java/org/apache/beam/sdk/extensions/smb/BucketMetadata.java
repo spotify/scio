@@ -22,15 +22,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.Serializable;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+
+import java.io.*;
+import java.util.*;
+
 import org.apache.beam.sdk.coders.AtomicCoder;
 import org.apache.beam.sdk.coders.CannotProvideCoderException;
 import org.apache.beam.sdk.coders.Coder;
@@ -225,6 +220,19 @@ public abstract class BucketMetadata<K, V> implements Serializable, HasDisplayDa
     }
 
     return baos.toByteArray();
+  }
+
+  K decodeKeyFromBytes(byte[] key) {
+    if(key == null || key.length == 0) {
+      return null;
+    }
+
+    final ByteArrayInputStream bais = new ByteArrayInputStream(key);
+    try {
+      return keyCoder.decode(bais);
+    } catch (IOException e) {
+      throw new RuntimeException("Could not decode key from byte array: " + Arrays.toString(key), e);
+    }
   }
 
   // Checks for complete equality between BucketMetadatas originating from the same BucketedInput

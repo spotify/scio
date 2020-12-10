@@ -169,7 +169,7 @@ public class SortedBucketSinkTest {
     final TestBucketMetadata metadata = TestBucketMetadata.of(1, 1, "custom-prefix");
 
     final ResourceId outputDirectory = fromFolder(output);
-    final SortedBucketSink<String, String> sink =
+    final SortedBucketSink<String, String, String> sink =
         new SortedBucketSink<>(
             metadata, outputDirectory, fromFolder(temp), ".txt", new TestFileOperations(), 1);
 
@@ -194,7 +194,7 @@ public class SortedBucketSinkTest {
     final TestBucketMetadata metadata = TestBucketMetadata.of(2, 2);
 
     final ResourceId outputDirectory = fromFolder(output);
-    final SortedBucketSink<String, String> sink =
+    final SortedBucketSink<String, String, String> sink =
         new SortedBucketSink<>(
             metadata, outputDirectory, fromFolder(temp), ".txt", new TestFileOperations(), 1);
 
@@ -224,7 +224,7 @@ public class SortedBucketSinkTest {
   @Category(NeedsRunner.class)
   public void testWritesNoFilesIfPriorStepsFail() throws Exception {
     // An exception will be thrown during the temp file write transform
-    final SortedBucketSink<String, String> sink =
+    final SortedBucketSink<String, String, String> sink =
         new SortedBucketSink<>(
             TestBucketMetadata.of(1, 1),
             fromFolder(output),
@@ -248,8 +248,8 @@ public class SortedBucketSinkTest {
     final TestBucketMetadata metadata = TestBucketMetadata.of(numBuckets, numShards);
 
     final int keyCacheSize = useKeyCache ? 100 : 0;
-    final SortedBucketSink<String, String> sink =
-        new SortedBucketSink<>(
+    final SortedBucketSink<String, String, String> sink =
+        new SortedBucketSink<String, String, String>(
             metadata,
             fromFolder(output),
             fromFolder(temp),
@@ -277,7 +277,7 @@ public class SortedBucketSinkTest {
     final TestBucketMetadata metadata = TestBucketMetadata.of(numBuckets, numShards);
     final int keyCacheSize = useKeyCache ? 100 : 0;
 
-    final SortedBucketPreKeyedSink<String, String> sink =
+    final SortedBucketPreKeyedSink<String, String, String> sink =
         new SortedBucketPreKeyedSink<>(
             metadata,
             fromFolder(output),

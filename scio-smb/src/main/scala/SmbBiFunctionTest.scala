@@ -1,5 +1,5 @@
 import com.spotify.scio.ContextAndArgs
-import com.spotify.scio.coders.Coder
+import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import org.apache.avro.Schema.Field
 import org.apache.avro.generic.{GenericData, GenericRecord}
 import org.apache.avro.{JsonProperties, Schema}
@@ -15,13 +15,13 @@ object AvroData {
     "com.spotify.scio.examples.extra",
     false,
     List(
-      new Field("userId", Schema.create(Schema.Type.STRING), "doc", JsonProperties.NULL_VALUE),
+      new Field("userId", Schema.create(Schema.Type.INT), "doc", JsonProperties.NULL_VALUE),
       new Field("tag", Schema.create(Schema.Type.STRING), "doc", JsonProperties.NULL_VALUE),
       new Field("size", Schema.create(Schema.Type.INT), "doc", JsonProperties.NULL_VALUE)
     ).asJava
   )
 
-  def user(id: String, tag: String): GenericRecord = {
+  def user(id: Int, tag: String): GenericRecord = {
     val gr = new GenericData.Record(UserDataSchema)
     gr.put("userId", id)
     gr.put("tag", tag)
@@ -48,7 +48,7 @@ object SmbBiFunctionTest {
     val (sc, args) = ContextAndArgs(cmdArgs)
 
     sc.parallelize(1 to 500)
-      .map(a => (s"${a % 100}", s"${a}_tag"))
+      .map(a => ({ a % 100 }, s"${a}_tag"))
       .map { case (id, tag) =>
         user(id, tag)
       }
@@ -59,7 +59,7 @@ object SmbBiFunctionTest {
       }
       .saveAsSortedBucket(
         AvroSortedBucketIO
-          .write(classOf[String], "userId", UserDataSchema)
+          .write(classOf[Integer], "userId", UserDataSchema)
           .to(args("output"))
       )
 
