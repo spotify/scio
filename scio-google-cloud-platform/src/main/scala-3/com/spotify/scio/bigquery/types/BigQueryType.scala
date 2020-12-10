@@ -49,6 +49,7 @@ import scala.util.Try
  * @groupname converters Converters
  * @groupname Ungrouped Other Members
  */
+// TODO: scala3
 object BigQueryType {
 
   /**
