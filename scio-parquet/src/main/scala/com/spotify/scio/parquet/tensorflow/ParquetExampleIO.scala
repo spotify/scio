@@ -108,7 +108,7 @@ final case class ParquetExampleIO(path: String) extends ScioIO[Example] {
 }
 
 object ParquetExampleIO {
-  final case class ReadParam private (
+  final case class ReadParam private[tensorflow] (
     projection: Seq[String] = null,
     predicate: FilterPredicate = null
   )
@@ -119,7 +119,7 @@ object ParquetExampleIO {
     private[tensorflow] val DefaultCompression = CompressionCodecName.SNAPPY
   }
 
-  final case class WriteParam private (
+  final case class WriteParam private[tensorflow] (
     schema: Schema,
     numShards: Int = WriteParam.DefaultNumShards,
     suffix: String = WriteParam.DefaultSuffix,

@@ -169,7 +169,7 @@ final case class ParquetAvroIO[T: ClassTag: Coder](path: String) extends ScioIO[
 }
 
 object ParquetAvroIO {
-  final case class ReadParam[A: ClassTag, T: ClassTag] private (
+  final case class ReadParam[A: ClassTag, T: ClassTag] private[avro] (
     projection: Schema,
     predicate: FilterPredicate,
     projectionFn: A => T
@@ -212,7 +212,7 @@ object ParquetAvroIO {
     private[avro] val DefaultFilenameFunction = None
   }
 
-  final case class WriteParam private (
+  final case class WriteParam private[avro] (
     schema: Schema = WriteParam.DefaultSchema,
     numShards: Int = WriteParam.DefaultNumShards,
     suffix: String = WriteParam.DefaultSuffix,
