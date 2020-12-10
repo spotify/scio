@@ -27,7 +27,7 @@ private[validation] object SetProperty {
     "enable macro paradise (2.12) or -Ymacro-annotations (2.13) to expand macro annotations"
   )
   class setProperty extends StaticAnnotation {
-    def macroTransform(annottees: Any*): Any = ???
+    def macroTransform(annottees: Any*): Any = ??? // TODO: scala3
   }
 
   def setSystemProperty(): String =

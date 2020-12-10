@@ -47,6 +47,7 @@ import scala.reflect.runtime.universe._
  * @groupname converters Converters
  * @groupname Ungrouped Other Members
  */
+// TODO: scala3
 trait AvroTypeMacros {
 
   /**
