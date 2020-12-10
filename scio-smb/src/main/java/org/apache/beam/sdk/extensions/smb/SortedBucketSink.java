@@ -170,12 +170,12 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
         "SortedBucketSink cannot be applied to a non-bounded PCollection");
     final Coder<V> inputCoder = input.getCoder();
 
-    final PCollection<KV<BucketShardId, KV<byte[], byte[]>>> bucketedInput =
+    final PCollection<KV<BucketShardId, KV<byte[], V>>> bucketedInput =
         input.apply(
             "ExtractKeys",
             ParDo.of(
                 ExtractKeys.of(
-                    bucketMetadata, bucketMetadata::extractKey, inputCoder, keyCacheSize)));
+                    bucketMetadata, bucketMetadata::extractKey, keyCacheSize)));
 
     return sink(
         bucketedInput,
@@ -217,33 +217,29 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
   }
 
   /** Extract bucket and shard id for grouping, and key bytes for sorting. */
-  private static class ExtractKeys<K, V> extends DoFn<V, KV<BucketShardId, KV<byte[], byte[]>>> {
+  private static class ExtractKeys<K, V> extends DoFn<V, KV<BucketShardId, KV<byte[], V>>> {
     // Substitute null keys in the output KV<byte[], V> so that they survive serialization
     static final byte[] NULL_SORT_KEY = new byte[0];
     private final SerializableFunction<V, K> extractKeyFn;
-    private final Coder<V> valueCoder;
     private final BucketMetadata<K, ?> bucketMetadata;
     private transient int shardId;
 
-    static <KeyT, ValueT> DoFn<ValueT, KV<BucketShardId, KV<byte[], byte[]>>> of(
+    static <KeyT, ValueT> DoFn<ValueT, KV<BucketShardId, KV<byte[], ValueT>>> of(
         BucketMetadata<KeyT, ?> bucketMetadata,
         SerializableFunction<ValueT, KeyT> extractKeyFn,
-        Coder<ValueT> valueCoder,
         int keyCacheSize) {
       if (keyCacheSize == 0) {
-        return new ExtractKeys<>(bucketMetadata, extractKeyFn, valueCoder);
+        return new ExtractKeys<>(bucketMetadata, extractKeyFn);
       } else {
-        return new ExtractKeysWithCache<>(bucketMetadata, extractKeyFn, valueCoder, keyCacheSize);
+        return new ExtractKeysWithCache<>(bucketMetadata, extractKeyFn, keyCacheSize);
       }
     }
 
     private ExtractKeys(
         BucketMetadata<K, ?> bucketMetadata,
-        SerializableFunction<V, K> extractKeyFn,
-        Coder<V> valueCoder) {
+        SerializableFunction<V, K> extractKeyFn) {
       this.bucketMetadata = bucketMetadata;
       this.extractKeyFn = extractKeyFn;
-      this.valueCoder = valueCoder;
     }
 
     // From Combine.PerKeyWithHotKeyFanout.
@@ -267,14 +263,6 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
           : KV.of(BucketShardId.ofNullKey(), NULL_SORT_KEY);
     }
 
-    static <ValueT> byte[] getValueBytes(Coder<ValueT> coder, ValueT value) {
-      try {
-        return CoderUtils.encodeToByteArray(coder, value);
-      } catch (CoderException e) {
-        throw new RuntimeException(e);
-      }
-    }
-
     @ProcessElement
     public void processElement(ProcessContext c) {
       final V record = c.element();
@@ -284,7 +272,7 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
       c.output(
           KV.of(
               bucketAndSortKey.getKey(),
-              KV.of(bucketAndSortKey.getValue(), getValueBytes(valueCoder, record))));
+              KV.of(bucketAndSortKey.getValue(), record)));
     }
 
     @Override
@@ -297,10 +285,9 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
   /** Extract bucket and shard id for grouping, and key bytes for sorting. */
   private static class ExtractKeysWithCache<K, V>
       extends DoFnWithResource<
-          V, KV<BucketShardId, KV<byte[], byte[]>>, Cache<K, KV<Integer, byte[]>>> {
+          V, KV<BucketShardId, KV<byte[], V>>, Cache<K, KV<Integer, byte[]>>> {
     // Substitute null keys in the output KV<byte[], V> so that they survive serialization
     private final SerializableFunction<V, K> extractKeyFn;
-    private final Coder<V> valueCoder;
     private final BucketMetadata<K, ?> bucketMetadata;
     private final int cacheSize;
     private transient int shardId;
@@ -310,11 +297,9 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
     ExtractKeysWithCache(
         BucketMetadata<K, ?> bucketMetadata,
         SerializableFunction<V, K> extractKeyFn,
-        Coder<V> valueCoder,
         int cacheSize) {
       this.bucketMetadata = bucketMetadata;
       this.extractKeyFn = extractKeyFn;
-      this.valueCoder = valueCoder;
       this.cacheSize = cacheSize;
       cacheHits = Metrics.counter(SortedBucketSink.class, "cacheHits");
       cacheMisses = Metrics.counter(SortedBucketSink.class, "cacheMisses");
@@ -366,7 +351,7 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
           KV.of(
               bucketIdAndSortBytes.getKey(),
               KV.of(
-                  bucketIdAndSortBytes.getValue(), ExtractKeys.getValueBytes(valueCoder, record))));
+                  bucketIdAndSortBytes.getValue(), record)));
     }
 
     @Override
@@ -691,6 +676,14 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
       FileSystems.delete(files, MoveOptions.StandardMoveOptions.IGNORE_MISSING_FILES);
     } catch (IOException e) {
       cause.addSuppressed(e);
+    }
+  }
+
+  static <ValueT> byte[] getValueBytes(Coder<ValueT> coder, ValueT value) {
+    try {
+      return CoderUtils.encodeToByteArray(coder, value);
+    } catch (CoderException e) {
+      throw new RuntimeException(e);
     }
   }
 

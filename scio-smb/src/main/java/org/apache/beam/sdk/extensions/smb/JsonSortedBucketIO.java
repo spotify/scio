@@ -186,6 +186,8 @@ public class JsonSortedBucketIO {
       // JSON specific
       abstract Builder<K> setGroupMappingFn(BiFunction<K, Iterable<TableRow>, Iterable<TableRow>> groupMappingFn);
 
+      abstract Builder<K> setOutputValueCoder(Coder<TableRow> outputValueCoder);
+
       abstract Builder<K> setKeyField(String keyField);
 
       abstract Builder<K> setCompression(Compression compression);
@@ -245,6 +247,14 @@ public class JsonSortedBucketIO {
     /** Specifies the output file {@link Compression}. */
     public Write<K> withCompression(Compression compression) {
       return toBuilder().setCompression(compression).build();
+    }
+
+    public Write<K> withGroupMappingFn(
+            BiFunction<K, Iterable<TableRow>, Iterable<TableRow>> groupMappingFn, Coder<TableRow> outputValueCoder) {
+      return toBuilder()
+              .setGroupMappingFn(groupMappingFn)
+              .setOutputValueCoder(outputValueCoder)
+              .build();
     }
 
     @Override

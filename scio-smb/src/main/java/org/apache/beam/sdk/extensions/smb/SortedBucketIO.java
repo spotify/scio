@@ -260,7 +260,11 @@ public class SortedBucketIO {
 
     abstract int getKeyCacheSize();
 
+    @Nullable
     abstract BiFunction<K, Iterable<U>, Iterable<V>> getGroupMappingFn();
+
+    @Nullable
+    abstract Coder<V> getOutputValueCoder();
 
     public PreKeyedWrite<K, U, V> onKeyedCollection(Coder<V> valueCoder, boolean verifyKeyExtraction) {
       return new PreKeyedWrite<K, U, V>(this, valueCoder, verifyKeyExtraction);

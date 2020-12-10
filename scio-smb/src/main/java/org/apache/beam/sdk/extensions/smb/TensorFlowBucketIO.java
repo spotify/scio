@@ -197,6 +197,8 @@ public class TensorFlowBucketIO {
       // TFRecord specific
       abstract Builder<K> setGroupMappingFn(BiFunction<K, Iterable<Example>, Iterable<Example>> groupMappingFn);
 
+      abstract Builder<K> setOutputValueCoder(Coder<Example> outputValueCoder);
+
       abstract Builder<K> setKeyField(String keyField);
 
       abstract Builder<K> setCompression(Compression compression);
@@ -258,6 +260,14 @@ public class TensorFlowBucketIO {
     /** Specifies the output file {@link Compression}. */
     public Write<K> withCompression(Compression compression) {
       return toBuilder().setCompression(compression).build();
+    }
+
+    public Write<K> withGroupMappingFn(
+            BiFunction<K, Iterable<Example>, Iterable<Example>> groupMappingFn, Coder<Example> outputValueCoder) {
+      return toBuilder()
+              .setGroupMappingFn(groupMappingFn)
+              .setOutputValueCoder(outputValueCoder)
+              .build();
     }
 
     @Override
