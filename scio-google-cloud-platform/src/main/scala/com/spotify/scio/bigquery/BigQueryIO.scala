@@ -147,7 +147,7 @@ object BigQueryTypedSelect {
     private[bigquery] val DefaultFlattenResults = false
   }
 
-  final case class ReadParam private (flattenResults: Boolean = ReadParam.DefaultFlattenResults)
+  final case class ReadParam private[bigquery] (flattenResults: Boolean = ReadParam.DefaultFlattenResults)
 }
 
 final case class BigQueryTypedSelect[T: Coder](
@@ -283,7 +283,7 @@ object BigQueryTypedTable {
    */
   def apply[F: Coder](table: Table, format: Format[F]): BigQueryTypedTable[F] =
     format match {
-      case Format.GenericRecord => genericRecord(table)
+      case Format.GenericRecord => genericRecord(table)(Coder[F]) // Not sure how this compiles since F is unbounded
       case Format.TableRow      => tableRow(table)
     }
 
@@ -499,7 +499,7 @@ object TableRowJsonIO {
     private[bigquery] val DefaultCompression = Compression.UNCOMPRESSED
   }
 
-  final case class WriteParam private (
+  final case class WriteParam private[bigquery] (
     numShards: Int = WriteParam.DefaultNumShards,
     compression: Compression = WriteParam.DefaultCompression
   )
