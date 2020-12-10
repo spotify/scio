@@ -17,6 +17,4 @@
 
 package com.spotify.scio
 
-import com.spotify.scio.smb.syntax.AllSyntax
-
-package object smb extends AllSyntax {}
+package object smb extends com.spotify.scio.smb.syntax.AllSyntax {}
