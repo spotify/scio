@@ -663,7 +663,8 @@ lazy val `scio-google-cloud-platform`: Project = project
       "org.scalatestplus" %% "scalatestplus-scalacheck" % scalatestplusVersion % "test,it",
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       "org.slf4j" % "slf4j-simple" % slf4jVersion % "test,it"
-    )
+    ).map(_.withDottyCompat(scalaVersion.value)),
+    compileOrder := CompileOrder.JavaThenScala, // required for Scala 3
   )
   .dependsOn(
     `scio-core` % "compile;it->it",
@@ -852,7 +853,8 @@ lazy val `scio-parquet`: Project = project
       "org.apache.parquet" % "parquet-common" % parquetVersion,
       "org.apache.parquet" % "parquet-hadoop" % parquetVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion
-    )
+    ).map(_.withDottyCompat(scalaVersion.value)),
+    compileOrder := CompileOrder.JavaThenScala
   )
   .dependsOn(
     `scio-core`,
@@ -889,7 +891,11 @@ lazy val `scio-tensorflow`: Project = project
       "com.spotify" % "zoltar-core" % zoltarVersion,
       "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamVendorVersion,
       "org.tensorflow" % "libtensorflow" % tensorFlowVersion
-    )
+    ).map(_.withDottyCompat(scalaVersion.value)),
+    compileOrder := CompileOrder.JavaThenScala,
+    scalacOptions ++= {
+      if (isDotty.value) Seq("-source:3.0-migration") else Nil // Easily fixable
+    },
   )
   .dependsOn(
     `scio-avro`,
@@ -1055,7 +1061,7 @@ lazy val `scio-jmh`: Project = project
       "org.hamcrest" % "hamcrest-core" % hamcrestVersion % "test",
       "org.hamcrest" % "hamcrest-library" % hamcrestVersion % "test",
       "org.slf4j" % "slf4j-nop" % slf4jVersion
-    ),
+    ).map(_.withDottyCompat(scalaVersion.value)),
     publish / skip := true
   )
   .dependsOn(
@@ -1098,12 +1104,13 @@ lazy val `scio-smb`: Project = project
       "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamVendorVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       "com.github.ben-manes.caffeine" % "caffeine" % caffeineVersion % "provided"
-    ),
+    ).map(_.withDottyCompat(scalaVersion.value)),
     javacOptions ++= {
       (Compile / sourceManaged).value.mkdirs()
       Seq("-s", (Compile / sourceManaged).value.getAbsolutePath)
     },
-    Test / classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.Flat
+    Test / classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.Flat,
+    compileOrder := CompileOrder.JavaThenScala,
   )
   .configs(
     IntegrationTest
