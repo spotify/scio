@@ -34,13 +34,11 @@ import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.coders.ByteArrayCoder;
 import org.apache.beam.sdk.coders.Coder;
 import org.apache.beam.sdk.coders.CoderException;
-import org.apache.beam.sdk.coders.DelegateCoder;
 import org.apache.beam.sdk.coders.KvCoder;
 import org.apache.beam.sdk.coders.NullableCoder;
 import org.apache.beam.sdk.extensions.smb.BucketShardId.BucketShardIdCoder;
@@ -230,17 +228,17 @@ public class SortedBucketSink<K, V, T> extends PTransform<PCollection<V>, WriteR
         groupMappingFn);
   }
 
-  public static <KeyT, ValueU, ValueT> WriteResult sink(
-      PCollection<KV<BucketShardId, KV<byte[], ValueU>>> bucketedInput,
+  public static <KeyT, ValueV, ValueT> WriteResult sink(
+      PCollection<KV<BucketShardId, KV<byte[], ValueV>>> bucketedInput,
       String transformName,
-      Coder<ValueU> inputValueCoder,
+      Coder<ValueV> inputValueCoder,
       Coder<ValueT> outputValueCoder,
       int sorterMemoryMb,
       SMBFilenamePolicy filenamePolicy,
       FileOperations<ValueT> fileOperations,
-      BucketMetadata<KeyT, ValueU> bucketMetadata,
+      BucketMetadata<KeyT, ValueV> bucketMetadata,
       ResourceId tempDirectory,
-      BiFunction<KeyT, Iterable<ValueU>, Iterable<ValueT>> groupMappingFn) {
+      BiFunction<KeyT, Iterable<ValueV>, Iterable<ValueT>> groupMappingFn) {
 
 
     return bucketedInput

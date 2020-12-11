@@ -21,7 +21,6 @@ import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.BiFunction;
-import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.coders.Coder;
@@ -231,8 +230,6 @@ public class SortedBucketIO {
     protected abstract BucketedInput<?, V> toBucketedInput();
   }
 
-  public abstract static class DirectWrite<K, V> extends Write<K, V, V> {}
-
   public abstract static class Write<K, V, T> extends PTransform<PCollection<V>, WriteResult> {
     abstract int getNumBuckets();
 
@@ -288,7 +285,7 @@ public class SortedBucketIO {
       Preconditions.checkNotNull(getOutputDirectory(), "outputDirectory is not set");
 
       return input.apply(
-          new SortedBucketSink<K, V, T>(
+          new SortedBucketSink<>(
               getBucketMetadata(),
               getOutputDirectory(),
               getTempDirectoryOrDefault(input.getPipeline()),
@@ -324,7 +321,7 @@ public class SortedBucketIO {
         tempDirectory = outputDirectory;
       }
       return input.apply(
-          new SortedBucketPreKeyedSink<K, V, T>(
+          new SortedBucketPreKeyedSink<>(
               write.getBucketMetadata(),
               outputDirectory,
               tempDirectory,
