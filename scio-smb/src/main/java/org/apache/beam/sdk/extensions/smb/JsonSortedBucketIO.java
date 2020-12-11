@@ -32,6 +32,7 @@ import org.apache.beam.sdk.extensions.smb.SortedBucketTransform.NewBucketMetadat
 import org.apache.beam.sdk.io.Compression;
 import org.apache.beam.sdk.io.FileSystems;
 import org.apache.beam.sdk.io.fs.ResourceId;
+import org.apache.beam.sdk.transforms.SerializableBiFunction;
 import org.apache.beam.sdk.values.TupleTag;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ImmutableList;
 
@@ -184,7 +185,7 @@ public class JsonSortedBucketIO {
       abstract Builder<K> setKeyCacheSize(int cacheSize);
 
       // JSON specific
-      abstract Builder<K> setGroupMappingFn(BiFunction<K, Iterable<TableRow>, Iterable<TableRow>> groupMappingFn);
+      abstract Builder<K> setGroupMappingFn(SerializableBiFunction<K, Iterable<TableRow>, Iterable<TableRow>> groupMappingFn);
 
       abstract Builder<K> setOutputValueCoder(Coder<TableRow> outputValueCoder);
 
@@ -250,7 +251,7 @@ public class JsonSortedBucketIO {
     }
 
     public Write<K> withGroupMappingFn(
-            BiFunction<K, Iterable<TableRow>, Iterable<TableRow>> groupMappingFn, Coder<TableRow> outputValueCoder) {
+            SerializableBiFunction<K, Iterable<TableRow>, Iterable<TableRow>> groupMappingFn, Coder<TableRow> outputValueCoder) {
       return toBuilder()
               .setGroupMappingFn(groupMappingFn)
               .setOutputValueCoder(outputValueCoder)

@@ -52,14 +52,7 @@ import org.apache.beam.sdk.io.fs.ResourceId;
 import org.apache.beam.sdk.io.fs.ResourceIdCoder;
 import org.apache.beam.sdk.metrics.Counter;
 import org.apache.beam.sdk.metrics.Metrics;
-import org.apache.beam.sdk.transforms.Create;
-import org.apache.beam.sdk.transforms.DoFn;
-import org.apache.beam.sdk.transforms.GroupByKey;
-import org.apache.beam.sdk.transforms.PTransform;
-import org.apache.beam.sdk.transforms.ParDo;
-import org.apache.beam.sdk.transforms.Sample;
-import org.apache.beam.sdk.transforms.SerializableFunction;
-import org.apache.beam.sdk.transforms.View;
+import org.apache.beam.sdk.transforms.*;
 import org.apache.beam.sdk.transforms.display.DisplayData;
 import org.apache.beam.sdk.transforms.display.DisplayData.Builder;
 import org.apache.beam.sdk.util.CoderUtils;
@@ -129,7 +122,7 @@ public class SortedBucketSink<K, V, T> extends PTransform<PCollection<V>, WriteR
   private final FileOperations<T> fileOperations;
   private final int sorterMemoryMb;
   private final int keyCacheSize;
-  private final BiFunction<K, Iterable<V>, Iterable<T>> groupMappingFn;
+  private final SerializableBiFunction<K, Iterable<V>, Iterable<T>> groupMappingFn;
   private Coder<T> outputValueCoder;
 
   public SortedBucketSink(
@@ -177,7 +170,7 @@ public class SortedBucketSink<K, V, T> extends PTransform<PCollection<V>, WriteR
       FileOperations<T> fileOperations,
       int sorterMemoryMb,
       int keyCacheSize,
-      BiFunction<K, Iterable<V>, Iterable<T>> groupMappingFn,
+      SerializableBiFunction<K, Iterable<V>, Iterable<T>> groupMappingFn,
       Coder<T> outputValueCoder) {
     this.bucketMetadata = bucketMetadata;
     this.filenamePolicy =
@@ -238,7 +231,7 @@ public class SortedBucketSink<K, V, T> extends PTransform<PCollection<V>, WriteR
       FileOperations<ValueT> fileOperations,
       BucketMetadata<KeyT, ValueV> bucketMetadata,
       ResourceId tempDirectory,
-      BiFunction<KeyT, Iterable<ValueV>, Iterable<ValueT>> groupMappingFn) {
+      SerializableBiFunction<KeyT, Iterable<ValueV>, Iterable<ValueT>> groupMappingFn) {
 
 
     return bucketedInput
