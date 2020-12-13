@@ -17,11 +17,7 @@
 
 package org.apache.beam.sdk.extensions.smb;
 
-import com.google.api.services.bigquery.model.TableRow;
 import com.google.auto.value.AutoValue;
-import java.util.List;
-import java.util.function.BiFunction;
-import javax.annotation.Nullable;
 import org.apache.beam.sdk.coders.CannotProvideCoderException;
 import org.apache.beam.sdk.coders.Coder;
 import org.apache.beam.sdk.extensions.smb.BucketMetadata.HashType;
@@ -35,6 +31,9 @@ import org.apache.beam.sdk.transforms.SerializableBiFunction;
 import org.apache.beam.sdk.values.TupleTag;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ImmutableList;
 import org.tensorflow.proto.example.Example;
+
+import javax.annotation.Nullable;
+import java.util.List;
 
 /**
  * API for reading and writing sorted-bucket TensorFlow TFRecord files with TensorFlow {@link
@@ -264,11 +263,11 @@ public class TensorFlowBucketIO {
     }
 
     public Write<K> withGroupMappingFn(
-            SerializableBiFunction<K, Iterable<Example>, Iterable<Example>> groupMappingFn, Coder<Example> outputValueCoder) {
+        SerializableBiFunction<K, Iterable<Example>, Iterable<Example>> groupMappingFn, Coder<Example> outputValueCoder) {
       return toBuilder()
-              .setGroupMappingFn(groupMappingFn)
-              .setOutputValueCoder(outputValueCoder)
-              .build();
+          .setGroupMappingFn(groupMappingFn)
+          .setOutputValueCoder(outputValueCoder)
+          .build();
     }
 
     @Override

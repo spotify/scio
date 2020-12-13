@@ -46,7 +46,7 @@ final class SortedBucketSCollection[T](private val self: SCollection[T]) {
    *              data. It contains information about key function, bucket and shard size, etc.
    */
   @experimental
-  def saveAsSortedBucket(write: SortedBucketIO.Write[_, T, T]): ClosedTap[Nothing] = {
+  def saveAsSortedBucket(write: SortedBucketIO.Write[_, T, _]): ClosedTap[Nothing] = {
     self.applyInternal(write)
 
     // @Todo: Implement taps for metadata/bucket elements
@@ -72,7 +72,7 @@ final class SortedBucketPairSCollection[K, V](private val self: SCollection[KV[K
    */
   @experimental
   def saveAsPreKeyedSortedBucket(
-    write: SortedBucketIO.Write[K, V, V],
+    write: SortedBucketIO.Write[K, V, _],
     verifyKeyExtraction: Boolean = true
   ): ClosedTap[Nothing] = {
     val vCoder = self.internal.getCoder.asInstanceOf[KvCoder[K, V]].getValueCoder

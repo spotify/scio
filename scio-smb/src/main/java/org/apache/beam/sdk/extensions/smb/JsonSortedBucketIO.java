@@ -17,13 +17,8 @@
 
 package org.apache.beam.sdk.extensions.smb;
 
-import static org.apache.beam.sdk.extensions.smb.BucketMetadata.HashType;
-
 import com.google.api.services.bigquery.model.TableRow;
 import com.google.auto.value.AutoValue;
-import java.util.List;
-import java.util.function.BiFunction;
-import javax.annotation.Nullable;
 import org.apache.beam.sdk.coders.CannotProvideCoderException;
 import org.apache.beam.sdk.coders.Coder;
 import org.apache.beam.sdk.extensions.smb.SortedBucketSource.BucketedInput;
@@ -35,6 +30,11 @@ import org.apache.beam.sdk.io.fs.ResourceId;
 import org.apache.beam.sdk.transforms.SerializableBiFunction;
 import org.apache.beam.sdk.values.TupleTag;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ImmutableList;
+
+import javax.annotation.Nullable;
+import java.util.List;
+
+import static org.apache.beam.sdk.extensions.smb.BucketMetadata.HashType;
 
 /** API for reading and writing BigQuery {@link TableRow} JSON sorted-bucket files. */
 public class JsonSortedBucketIO {
@@ -251,11 +251,11 @@ public class JsonSortedBucketIO {
     }
 
     public Write<K> withGroupMappingFn(
-            SerializableBiFunction<K, Iterable<TableRow>, Iterable<TableRow>> groupMappingFn, Coder<TableRow> outputValueCoder) {
+        SerializableBiFunction<K, Iterable<TableRow>, Iterable<TableRow>> groupMappingFn, Coder<TableRow> outputValueCoder) {
       return toBuilder()
-              .setGroupMappingFn(groupMappingFn)
-              .setOutputValueCoder(outputValueCoder)
-              .build();
+          .setGroupMappingFn(groupMappingFn)
+          .setOutputValueCoder(outputValueCoder)
+          .build();
     }
 
     @Override

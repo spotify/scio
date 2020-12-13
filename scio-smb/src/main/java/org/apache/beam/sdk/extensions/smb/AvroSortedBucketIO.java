@@ -309,9 +309,9 @@ public class AvroSortedBucketIO {
     public Write<K, V, T> withGroupMappingFn(
             SerializableBiFunction<K, Iterable<V>, Iterable<T>> groupMappingFn, Coder<T> outputValueCoder) {
       return toBuilder()
-              .setGroupMappingFn(groupMappingFn)
-              .setOutputValueCoder(outputValueCoder)
-              .build();
+          .setGroupMappingFn(groupMappingFn)
+          .setOutputValueCoder(outputValueCoder)
+          .build();
     }
 
     @SuppressWarnings("unchecked")

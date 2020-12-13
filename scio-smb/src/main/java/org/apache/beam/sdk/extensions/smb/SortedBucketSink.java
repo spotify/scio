@@ -23,7 +23,14 @@ import com.spotify.scio.transforms.DoFnWithResource;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.channels.Channels;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
@@ -45,7 +52,14 @@ import org.apache.beam.sdk.io.fs.ResourceId;
 import org.apache.beam.sdk.io.fs.ResourceIdCoder;
 import org.apache.beam.sdk.metrics.Counter;
 import org.apache.beam.sdk.metrics.Metrics;
-import org.apache.beam.sdk.transforms.*;
+import org.apache.beam.sdk.transforms.Create;	import org.apache.beam.sdk.transforms.*;
+import org.apache.beam.sdk.transforms.DoFn;
+import org.apache.beam.sdk.transforms.GroupByKey;
+import org.apache.beam.sdk.transforms.PTransform;
+import org.apache.beam.sdk.transforms.ParDo;
+import org.apache.beam.sdk.transforms.Sample;
+import org.apache.beam.sdk.transforms.SerializableFunction;
+import org.apache.beam.sdk.transforms.View;
 import org.apache.beam.sdk.transforms.display.DisplayData;
 import org.apache.beam.sdk.transforms.display.DisplayData.Builder;
 import org.apache.beam.sdk.util.CoderUtils;
@@ -60,7 +74,6 @@ import org.apache.beam.sdk.values.PValue;
 import org.apache.beam.sdk.values.TupleTag;
 import org.apache.beam.sdk.values.TupleTagList;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ArrayListMultimap;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ImmutableMap;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ListMultimap;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.MultimapBuilder;
@@ -175,10 +188,6 @@ public class SortedBucketSink<K, V, T> extends PTransform<PCollection<V>, WriteR
     this.keyCacheSize = keyCacheSize;
     this.groupMappingFn = groupMappingFn;
     this.outputValueCoder = outputValueCoder;
-
-//    Preconditions.checkArgument(
-//         (groupMappingFn != null && outputValueCoder != null) || (groupMappingFn == null && outputValueCoder != null),
-//         "Group mapping function's output value coder is not set");
   }
 
   @Override
@@ -446,17 +455,17 @@ public class SortedBucketSink<K, V, T> extends PTransform<PCollection<V>, WriteR
   }
 
   public static class GroupMappingDoFn<K, ValueU, ValueT> extends
-          DoFn<KV<BucketShardId, Iterable<KV<byte[],ValueU>>>, KV<BucketShardId, Iterable<KV<byte[], byte[]>>>> {
+      DoFn<KV<BucketShardId, Iterable<KV<byte[], ValueU>>>, KV<BucketShardId, Iterable<KV<byte[], byte[]>>>> {
     private final BiFunction<K, Iterable<ValueU>, Iterable<ValueT>> groupMappingFn;
     private final Coder<ValueU> inputValueCoder;
     private final Coder<ValueT> outputValueCoder;
     private final BucketMetadata<K, ValueU> bucketMetadata;
 
     public GroupMappingDoFn(
-            BiFunction<K, Iterable<ValueU>, Iterable<ValueT>> groupMappingFn,
-            Coder<ValueU> inputValueCoder,
-            Coder<ValueT> outputValueCoder,
-            BucketMetadata<K, ValueU> bucketMetadata) {
+        BiFunction<K, Iterable<ValueU>, Iterable<ValueT>> groupMappingFn,
+        Coder<ValueU> inputValueCoder,
+        Coder<ValueT> outputValueCoder,
+        BucketMetadata<K, ValueU> bucketMetadata) {
       this.groupMappingFn = groupMappingFn;
       this.inputValueCoder = inputValueCoder;
       this.outputValueCoder = outputValueCoder;
