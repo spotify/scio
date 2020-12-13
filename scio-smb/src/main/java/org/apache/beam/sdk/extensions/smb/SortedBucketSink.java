@@ -23,14 +23,7 @@ import com.spotify.scio.transforms.DoFnWithResource;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.channels.Channels;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
@@ -70,6 +63,7 @@ import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditio
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ArrayListMultimap;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ImmutableMap;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ListMultimap;
+import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.MultimapBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -472,21 +466,22 @@ public class SortedBucketSink<K, V, T> extends PTransform<PCollection<V>, WriteR
     @ProcessElement
     public void process(ProcessContext c) {
       KV<BucketShardId, Iterable<KV<byte[], ValueU>>> input = c.element();
-
       List<KV<byte[], byte[]>> output = new ArrayList<>();
+
       if (groupMappingFn == null) {
         input.getValue().forEach(kv -> output.add(KV.of(kv.getKey(), getValueBytes(inputValueCoder, kv.getValue()))));
       } else {
-        ListMultimap<byte[], ValueU> multimap = ArrayListMultimap.create();
+        ListMultimap<K, ValueU> multimap = MultimapBuilder.hashKeys().arrayListValues().build();
         for (KV<byte[], ValueU> kv : input.getValue()) {
-          multimap.put(kv.getKey(), kv.getValue());
+          multimap.put(bucketMetadata.decodeKeyFromBytes(kv.getKey()), kv.getValue());
         }
 
-        for (byte[] key : multimap.keySet()) {
-          List<ValueU> values = multimap.get(key);
-          Iterable<ValueT> outputValues = groupMappingFn.apply(bucketMetadata.decodeKeyFromBytes(key), values);
+        for (K key : multimap.keySet()) {
+          Collection<ValueU> values = multimap.get(key);
+          Iterable<ValueT> outputValues = groupMappingFn.apply(key, values);
+          byte[] keyBytes = bucketMetadata.encodeKeyBytes(key);
           for (ValueT outputValue : outputValues) {
-            output.add(KV.of(key, getValueBytes(outputValueCoder, outputValue)));
+            output.add(KV.of(keyBytes, getValueBytes(outputValueCoder, outputValue)));
           }
         }
       }
