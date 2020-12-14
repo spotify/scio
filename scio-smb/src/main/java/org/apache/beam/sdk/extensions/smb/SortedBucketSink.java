@@ -39,7 +39,6 @@ import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.coders.ByteArrayCoder;
 import org.apache.beam.sdk.coders.Coder;
 import org.apache.beam.sdk.coders.CoderException;
-import org.apache.beam.sdk.coders.IterableCoder;
 import org.apache.beam.sdk.coders.KvCoder;
 import org.apache.beam.sdk.coders.NullableCoder;
 import org.apache.beam.sdk.extensions.smb.BucketShardId.BucketShardIdCoder;
@@ -248,9 +247,6 @@ public class SortedBucketSink<K, V, T> extends PTransform<PCollection<V>, WriteR
             KvCoder.of(
                 BucketShardIdCoder.of(), KvCoder.of(ByteArrayCoder.of(), inputValueCoder)))
         .apply("GroupByKey", GroupByKey.create())
-        .setCoder(
-            KvCoder.of(
-                BucketShardIdCoder.of(), IterableCoder.of(KvCoder.of(NullableCoder.of(ByteArrayCoder.of()), inputValueCoder))))
         .apply("Group Mapping",
             ParDo.of(
                 new GroupMappingDoFn<>(
