@@ -20,7 +20,6 @@ package org.apache.beam.sdk.extensions.smb;
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
-import java.util.function.BiFunction;
 import javax.annotation.Nullable;
 import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.coders.Coder;

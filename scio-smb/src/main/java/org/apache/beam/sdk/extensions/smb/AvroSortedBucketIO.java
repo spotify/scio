@@ -68,9 +68,10 @@ public class AvroSortedBucketIO {
     return AvroSortedBucketIO.newBuilder(keyClass, keyField).setSchema(schema).build();
   }
 
-  public static <K, U extends SpecificRecordBase> Write<K, U, U> write(
-         Class<K> keyClass, String keyField, Class<U>  recordClassU) {
-    return write(keyClass, keyField, recordClassU, recordClassU);
+  /** Returns a new {@link Write} for Avro specific records. */
+  public static <K, V extends SpecificRecordBase> Write<K, V, V> write(
+         Class<K> keyClass, String keyField, Class<V>  recordClassV) {
+    return write(keyClass, keyField, recordClassV, recordClassV);
   }
 
   /** Returns a new {@link Write} for Avro specific records. */

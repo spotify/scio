@@ -139,7 +139,7 @@ public class SinkBenchmark {
                                 .collect(Collectors.toList())))
             .setCoder(TableRowJsonCoder.of());
 
-    final AvroSortedBucketIO.Write<CharSequence, AvroGeneratedUser> avroWrite =
+    final AvroSortedBucketIO.Write<CharSequence, AvroGeneratedUser, AvroGeneratedUser> avroWrite =
         AvroSortedBucketIO.write(CharSequence.class, "name", AvroGeneratedUser.class)
             .to(sinkOptions.getAvroDestination())
             .withTempDirectory(sinkOptions.getTempLocation())

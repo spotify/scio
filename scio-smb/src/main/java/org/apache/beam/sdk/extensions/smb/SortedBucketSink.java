@@ -39,6 +39,7 @@ import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.coders.ByteArrayCoder;
 import org.apache.beam.sdk.coders.Coder;
 import org.apache.beam.sdk.coders.CoderException;
+import org.apache.beam.sdk.coders.IterableCoder;
 import org.apache.beam.sdk.coders.KvCoder;
 import org.apache.beam.sdk.coders.NullableCoder;
 import org.apache.beam.sdk.extensions.smb.BucketShardId.BucketShardIdCoder;
@@ -52,12 +53,13 @@ import org.apache.beam.sdk.io.fs.ResourceId;
 import org.apache.beam.sdk.io.fs.ResourceIdCoder;
 import org.apache.beam.sdk.metrics.Counter;
 import org.apache.beam.sdk.metrics.Metrics;
-import org.apache.beam.sdk.transforms.Create;	import org.apache.beam.sdk.transforms.*;
+import org.apache.beam.sdk.transforms.Create;
 import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.transforms.GroupByKey;
 import org.apache.beam.sdk.transforms.PTransform;
 import org.apache.beam.sdk.transforms.ParDo;
 import org.apache.beam.sdk.transforms.Sample;
+import org.apache.beam.sdk.transforms.SerializableBiFunction;
 import org.apache.beam.sdk.transforms.SerializableFunction;
 import org.apache.beam.sdk.transforms.View;
 import org.apache.beam.sdk.transforms.display.DisplayData;
@@ -99,7 +101,8 @@ import org.slf4j.LoggerFactory;
  * BucketMetadata#extractKey(Object)} (Object)}, and assign it to an Integer bucket using {@link
  * BucketMetadata#getBucketId(byte[])}. Next, a {@link GroupByKey} transform is applied to create a
  * {@link PCollection} of {@code N} elements, where {@code N} is the number of buckets specified by
- * {@link BucketMetadata#getNumBuckets()}, then a {@code SortValues} transform is used to sort
+ * {@link BucketMetadata#getNumBuckets()}, if group mapping function is provided apply given function
+ * to each key and value group, then a {@code SortValues} transform is used to sort
  * elements within each bucket group. Finally, the write operation is performed, where each bucket
  * is first written to a {@link SortedBucketSink#tempDirectory} and then copied to its final
  * destination.
@@ -131,6 +134,9 @@ public class SortedBucketSink<K, V, T> extends PTransform<PCollection<V>, WriteR
   private final int keyCacheSize;
   private final SerializableBiFunction<K, Iterable<V>, Iterable<T>> groupMappingFn;
   private Coder<T> outputValueCoder;
+
+  // Substitute null keys in the output KV<byte[], V> so that they survive serialization
+  static final byte[] NULL_SORT_KEY = new byte[0];
 
   public SortedBucketSink(
       BucketMetadata<K, V> bucketMetadata,
@@ -242,6 +248,9 @@ public class SortedBucketSink<K, V, T> extends PTransform<PCollection<V>, WriteR
             KvCoder.of(
                 BucketShardIdCoder.of(), KvCoder.of(ByteArrayCoder.of(), inputValueCoder)))
         .apply("GroupByKey", GroupByKey.create())
+        .setCoder(
+            KvCoder.of(
+                BucketShardIdCoder.of(), IterableCoder.of(KvCoder.of(NullableCoder.of(ByteArrayCoder.of()), inputValueCoder))))
         .apply("Group Mapping",
             ParDo.of(
                 new GroupMappingDoFn<>(
@@ -265,8 +274,6 @@ public class SortedBucketSink<K, V, T> extends PTransform<PCollection<V>, WriteR
 
   /** Extract bucket and shard id for grouping, and key bytes for sorting. */
   private static class ExtractKeys<K, U, V> extends DoFn<U, KV<BucketShardId, KV<byte[], V>>> {
-    // Substitute null keys in the output KV<byte[], V> so that they survive serialization
-    static final byte[] NULL_SORT_KEY = new byte[0];
     private final SerializableFunction<U, K> extractKeyFn;
     private final SerializableFunction<U, V> extractValueFn;
     private final BucketMetadata<K, ?> bucketMetadata;
@@ -382,7 +389,7 @@ public class SortedBucketSink<K, V, T> extends PTransform<PCollection<V>, WriteR
 
       KV<BucketShardId, byte[]> bucketIdAndSortBytes;
       if (key == null) {
-        bucketIdAndSortBytes = KV.of(BucketShardId.ofNullKey(), ExtractKeys.NULL_SORT_KEY);
+        bucketIdAndSortBytes = KV.of(BucketShardId.ofNullKey(), NULL_SORT_KEY);
       } else {
         bucketIdAndSortBytes =
             Optional.ofNullable(getResource().getIfPresent(key))
@@ -454,6 +461,11 @@ public class SortedBucketSink<K, V, T> extends PTransform<PCollection<V>, WriteR
     }
   }
 
+  /**
+   * Apply given group mapping function{@link SerializableBiFunction} to each key and list of values associated
+   * with that key and produce new list of values, which can be the same type or different type. Output serialized
+   * values.
+   */
   public static class GroupMappingDoFn<K, ValueU, ValueT> extends
       DoFn<KV<BucketShardId, Iterable<KV<byte[], ValueU>>>, KV<BucketShardId, Iterable<KV<byte[], byte[]>>>> {
     private final BiFunction<K, Iterable<ValueU>, Iterable<ValueT>> groupMappingFn;
@@ -482,6 +494,7 @@ public class SortedBucketSink<K, V, T> extends PTransform<PCollection<V>, WriteR
       } else {
         ListMultimap<K, ValueU> multimap = MultimapBuilder.hashKeys().arrayListValues().build();
         for (KV<byte[], ValueU> kv : input.getValue()) {
+          // byte[] is not a good hash key, hence deserialize key instead.
           multimap.put(bucketMetadata.decodeKeyFromBytes(kv.getKey()), kv.getValue());
         }
 
@@ -489,12 +502,14 @@ public class SortedBucketSink<K, V, T> extends PTransform<PCollection<V>, WriteR
           Collection<ValueU> values = multimap.get(key);
           Iterable<ValueT> outputValues = groupMappingFn.apply(key, values);
           byte[] keyBytes = bucketMetadata.encodeKeyBytes(key);
+          if(keyBytes == null) {
+            keyBytes = NULL_SORT_KEY;
+          }
           for (ValueT outputValue : outputValues) {
             output.add(KV.of(keyBytes, getValueBytes(outputValueCoder, outputValue)));
           }
         }
       }
-
       c.output(KV.of(input.getKey(), output));
     }
   }
@@ -836,7 +851,29 @@ public class SortedBucketSink<K, V, T> extends PTransform<PCollection<V>, WriteR
           sorterMemoryMb,
               inputValueCoder,
           verifyKeyExtraction,
-          0,
+          0);
+    }
+
+    public SortedBucketPreKeyedSink(
+        BucketMetadata<K, V> bucketMetadata,
+        ResourceId outputDirectory,
+        ResourceId tempDirectory,
+        String filenameSuffix,
+        FileOperations<T> fileOperations,
+        int sorterMemoryMb,
+        Coder<V> inputValueCoder,
+        boolean verifyKeyExtraction,
+        int keyCacheSize) {
+      this(
+          bucketMetadata,
+          outputDirectory,
+          tempDirectory,
+          filenameSuffix,
+          fileOperations,
+          sorterMemoryMb,
+          inputValueCoder,
+          verifyKeyExtraction,
+          keyCacheSize,
           null,
           null);
     }

@@ -27,6 +27,7 @@ import java.nio.channels.Channels;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -56,6 +57,7 @@ import org.apache.beam.sdk.testing.PAssert;
 import org.apache.beam.sdk.testing.TestPipeline;
 import org.apache.beam.sdk.transforms.Create;
 import org.apache.beam.sdk.transforms.Reshuffle;
+import org.apache.beam.sdk.transforms.SerializableBiFunction;
 import org.apache.beam.sdk.util.MimeTypes;
 import org.apache.beam.sdk.values.KV;
 import org.apache.beam.sdk.values.PCollection;
@@ -125,6 +127,12 @@ public class SortedBucketSinkTest {
 
   @Test
   @Category(NeedsRunner.class)
+  public void testOneBucketOneShardWithGroupMappingFn() throws Exception {
+    testWithGroupMappingFn(1, 1, false);
+  }
+
+  @Test
+  @Category(NeedsRunner.class)
   public void testOneBucketOneShardKeyedPCollectionWithKeyCache() throws Exception {
     testKeyedCollection(1, 1, true);
   }
@@ -161,6 +169,12 @@ public class SortedBucketSinkTest {
 
     // Assert that no files are left in the temp directory
     Assert.assertFalse(Files.walk(temp.toPath(), 2).anyMatch(path -> path.toFile().isFile()));
+  }
+
+  @Test
+  @Category(NeedsRunner.class)
+  public void testOneBucketOneShardKeyedPCollectionWithGroupMappingFn() throws Exception {
+    testKeyedCollectionWithGroupMappingFn(1, 1, false);
   }
 
   @Test
@@ -272,6 +286,36 @@ public class SortedBucketSinkTest {
     pipeline.run();
   }
 
+  private void testWithGroupMappingFn(int numBuckets, int numShards, boolean useKeyCache) throws Exception {
+    final TestBucketMetadata metadata = TestBucketMetadata.of(numBuckets, numShards);
+
+    final int keyCacheSize = useKeyCache ? 100 : 0;
+    final SortedBucketSink<String, String, String> sink =
+        new SortedBucketSink<String, String, String>(
+            metadata,
+            fromFolder(output),
+            fromFolder(temp),
+            ".txt",
+            new TestFileOperations(),
+            1,
+            keyCacheSize,
+            groupMappingFn,
+            StringUtf8Coder.of());
+
+    @SuppressWarnings("deprecation")
+    final Reshuffle.ViaRandomKey<String> reshuffle = Reshuffle.viaRandomKey();
+
+    check(
+        pipeline
+            .apply(Create.of(Stream.of(input).collect(Collectors.toList())))
+            .apply(reshuffle)
+            .apply(sink),
+        metadata,
+        assertValidSmbFormat(metadata, Arrays.stream(input).map(a -> a + "_gm").toArray(String[]::new)));
+
+    pipeline.run();
+  }
+
   private void testKeyedCollection(int numBuckets, int numShards, boolean useKeyCache)
       throws Exception {
     final TestBucketMetadata metadata = TestBucketMetadata.of(numBuckets, numShards);
@@ -305,6 +349,47 @@ public class SortedBucketSinkTest {
             .apply(sink),
         metadata,
         assertValidSmbFormat(metadata, input));
+
+    pipeline.run();
+  }
+
+  private void testKeyedCollectionWithGroupMappingFn(int numBuckets, int numShards, boolean useKeyCache)
+      throws Exception {
+    final TestBucketMetadata metadata = TestBucketMetadata.of(numBuckets, numShards);
+    final int keyCacheSize = useKeyCache ? 100 : 0;
+
+
+    final SortedBucketPreKeyedSink<String, String, String> sink =
+        new SortedBucketPreKeyedSink<>(
+            metadata,
+            fromFolder(output),
+            fromFolder(temp),
+            ".txt",
+            new TestFileOperations(),
+            1,
+            StringUtf8Coder.of(),
+            true,
+            keyCacheSize,
+            groupMappingFn,
+            StringUtf8Coder.of());
+
+    @SuppressWarnings("deprecation")
+    final Reshuffle.ViaRandomKey<KV<String, String>> reshuffle = Reshuffle.viaRandomKey();
+
+    final List<KV<String, String>> keyedInput =
+        Stream.of(input).map(s -> KV.of(metadata.extractKey(s), s)).collect(Collectors.toList());
+
+
+    check(
+        pipeline
+            .apply(
+                Create.of(keyedInput)
+                    .withCoder(
+                        KvCoder.of(NullableCoder.of(StringUtf8Coder.of()), StringUtf8Coder.of())))
+            .apply(reshuffle)
+            .apply(sink),
+        metadata,
+        assertValidSmbFormat(metadata, Arrays.stream(input).map(a -> a + "_gm").toArray(String[]::new)));
 
     pipeline.run();
   }
@@ -364,6 +449,14 @@ public class SortedBucketSinkTest {
       throw new RuntimeException(e);
     }
   }
+
+  private final SerializableBiFunction<String, Iterable<String>, Iterable<String>> groupMappingFn = (k, l1) -> {
+    List<String> l2 = new ArrayList<>();
+    for (String input : l1) {
+      l2.add(input + "_gm");
+    }
+    return l2;
+  };
 
   static class ExceptionThrowingFileOperations extends FileOperations<String> {
     ExceptionThrowingFileOperations() {
