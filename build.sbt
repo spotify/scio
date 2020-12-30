@@ -34,8 +34,8 @@ val autoServiceVersion = "1.0-rc7"
 val autoValueVersion = "1.7.4"
 val avroVersion = "1.8.2"
 val beamVendorVersion = "0.1"
-val beamVersion = "2.25.0"
-val bigdataossVersion = "2.1.5"
+val beamVersion = "2.26.0"
+val bigdataossVersion = "2.1.6"
 val bigQueryStorageVersion = "0.133.0-beta"
 val bigtableClientVersion = "1.16.0"
 val breezeVersion = "1.1"
@@ -54,7 +54,7 @@ val elasticsearch6Version = "6.8.13"
 val elasticsearch7Version = "7.10.1"
 val featranVersion = "0.7.0"
 val flinkVersion = "1.10.1"
-val gaxVersion = "1.57.1"
+val gaxVersion = "1.60.0"
 val gcsVersion = "1.8.0"
 val generatedGrpcBetaVersion = "1.9.1"
 val generatedDatastoreProtoVersion = "0.85.0"
@@ -65,9 +65,9 @@ val googleAuthVersion = "0.19.0"
 val googleClientsVersion = "1.30.10"
 val googleCloudCoreVersion = "1.93.7"
 val googleCloudSpannerVersion = "1.59.0"
-val googleHttpClientsVersion = "1.34.0"
+val googleHttpClientsVersion = "1.36.0"
 val googleOauthClientVersion = "1.31.0"
-val grpcVersion = "1.32.1"
+val grpcVersion = "1.32.2"
 val guavaVersion = "28.2-jre"
 val hadoopVersion = "2.8.5"
 val hamcrestVersion = "2.2"
@@ -920,7 +920,7 @@ lazy val `scio-examples`: Project = project
       "com.github.alexarchambault" %% "case-app-annotations" % caseappVersion,
       "com.github.alexarchambault" %% "case-app-util" % caseappVersion,
       "com.google.api-client" % "google-api-client" % googleClientsVersion,
-      "com.google.apis" % "google-api-services-pubsub" % "v1-rev20191111-1.28.0",
+      "com.google.apis" % "google-api-services-pubsub" % s"v1-rev20200713-$googleClientsVersion",
       "com.google.auth" % "google-auth-library-credentials" % googleAuthVersion,
       "com.google.auth" % "google-auth-library-oauth2-http" % googleAuthVersion,
       "com.google.cloud.bigdataoss" % "util" % bigdataossVersion,
@@ -1247,7 +1247,7 @@ ThisBuild / dependencyOverrides ++= Seq(
   "com.google.api.grpc" % "proto-google-common-protos" % "1.17.0",
   "com.google.api" % "gax-grpc" % gaxVersion,
   "com.google.api" % "gax" % gaxVersion,
-  "com.google.apis" % "google-api-services-storage" % "v1-rev20200611-1.30.10",
+  "com.google.apis" % "google-api-services-storage" % s"v1-rev20200611-$googleClientsVersion",
   "com.google.auth" % "google-auth-library-credentials" % googleAuthVersion,
   "com.google.auth" % "google-auth-library-oauth2-http" % googleAuthVersion,
   "com.google.auto.value" % "auto-value-annotations" % autoValueVersion,

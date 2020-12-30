@@ -27,7 +27,7 @@ import java.util.ArrayList;
 import org.apache.beam.sdk.transforms.windowing.BoundedWindow;
 import org.apache.beam.sdk.transforms.windowing.GlobalWindow;
 import org.apache.beam.sdk.transforms.windowing.PaneInfo;
-import org.apache.beam.sdk.values.ValueInSingleWindow;
+import org.apache.beam.sdk.values.FailsafeValueInSingleWindow;
 
 import java.io.IOException;
 import java.util.List;
@@ -55,15 +55,16 @@ public class BigQueryServicesWrapper {
 
   public long insertAll(TableReference ref, List<TableRow> rowList)
       throws IOException, InterruptedException {
-    List<ValueInSingleWindow<TableRow>> rows =
+    List<FailsafeValueInSingleWindow<TableRow, TableRow>> rows =
         rowList.stream()
             .map(
                 r ->
-                    ValueInSingleWindow.of(
+                    FailsafeValueInSingleWindow.of(
                         r,
                         BoundedWindow.TIMESTAMP_MIN_VALUE,
                         GlobalWindow.INSTANCE,
-                        PaneInfo.NO_FIRING))
+                        PaneInfo.NO_FIRING,
+                        r))
             .collect(Collectors.toList());
     return bqServices
         .getDatasetService(bqOptions)
