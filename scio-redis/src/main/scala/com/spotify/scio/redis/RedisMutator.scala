@@ -140,6 +140,21 @@ object RedisMutator {
       }
     }
 
+  implicit def redisMutator[T <: RedisMutation]: RedisMutator[T] = new RedisMutator[T] {
+    override def mutate(client: Pipeline, mutation: T): List[Response[_]] = {
+      mutation match {
+        case _ @Append(_, _, _) => RedisMutator.mutate(client)(mt)
+        case _ @Set(_, _, _)    => RedisMutator.mutate(client)(mt)
+        case _ @IncrBy(_, _, _) => RedisMutator.mutate(client)(mt)
+        case _ @DecrBy(_, _, _) => RedisMutator.mutate(client)(mt)
+        case _ @SAdd(_, _, _)   => RedisMutator.mutate(client)(mt)
+        case _ @LPush(_, _, _)  => RedisMutator.mutate(client)(mt)
+        case _ @RPush(_, _, _)  => RedisMutator.mutate(client)(mt)
+        case _ @PFAdd(_, _, _)  => RedisMutator.mutate(client)(mt)
+      }
+    }
+  }
+
   def mutate[T <: RedisMutation: RedisMutator](client: Pipeline)(value: T): List[Response[_]] =
     implicitly[RedisMutator[T]].mutate(client, value)
 

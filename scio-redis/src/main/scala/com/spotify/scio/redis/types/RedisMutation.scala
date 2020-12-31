@@ -26,6 +26,10 @@ sealed abstract class RedisMutation extends Serializable {
   def rt: RedisType[_]
 }
 
+object RedisMutation {
+  def unapply[T <: RedisMutation](mt: T): Option[(T, RedisType[_])] = Some(mt -> mt.rt)
+}
+
 final case class Append[T](key: T, value: T, ttl: Option[Duration] = None)(implicit
   val rt: RedisType[T]
 ) extends RedisMutation
