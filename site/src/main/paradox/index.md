@@ -48,6 +48,8 @@ See @scaladoc[Scio Scaladocs](com.spotify.scio.index)  for current API documenta
   - @ref:[Coders](internals/Coders.md) - new [Magnolia](https://github.com/propensive/magnolia) based Coders derivation
 
 ## Further Readings
+  - [Spotify Unwrapped: How We Brought You a Decade of Data](https://engineering.atspotify.com/2020/02/18/spotify-unwrapped-how-we-brought-you-a-decade-of-data/)
+  - [Scio 0.7: a Deep Dive](https://engineering.atspotify.com/2019/05/30/scio-0-7-a-deep-dive/)
   - [Big Data Processing at Spotify: The Road to Scio (Part 1)](https://labs.spotify.com/2017/10/16/big-data-processing-at-spotify-the-road-to-scio-part-1/)
   - [Big Data Processing at Spotify: The Road to Scio (Part 2)](https://labs.spotify.com/2017/10/23/big-data-processing-at-spotify-the-road-to-scio-part-2/)
   - [The world beyond batch: Streaming 101](https://www.oreilly.com/ideas/the-world-beyond-batch-streaming-101)
@@ -56,6 +58,8 @@ See @scaladoc[Scio Scaladocs](com.spotify.scio.index)  for current API documenta
   - [VLDB paper](http://www.vldb.org/pvldb/vol8/p1792-Akidau.pdf) on the Dataflow Model
 
 ## Presentations
+  - [Techbytes: Data Processing with Scio](https://engineering.atspotify.com/2019/10/16/techbytes-data-processing-with-scio/) - Spotify Engineering Talk, 2019
+  - [Techbytes: Handling Big Data at Spotify](https://engineering.atspotify.com/2019/10/16/techbytes-handling-big-data-at-spotify/) - Spotify Engineering Talk, 2019
   - [Scio - Big Data on Google Cloud with Scala and Scio](https://docs.google.com/presentation/d/1F02Lwnqm9H3cGqDQhIZ3gbftyLQSnVMRxX69H_d04OE/edit#slide=id.p4) - Apache Beam Summit London 2018 Talk
   - [Sorry - How Bieber broke Google Cloud at Spotify](https://www.youtube.com/watch?v=1dchSsac3T4) ([slides](https://www.slideshare.net/sinisalyh/sorry-how-bieber-broke-google-cloud-at-spotify)) - Scala Up North 2017 Talk
   - [Scio - Moving to Google Cloud A Spotify Story](https://www.infoq.com/presentations/scio) ([slides](https://www.slideshare.net/sinisalyh/scio-moving-to-google-cloud-a-spotify-story)) - Philly ETE 2017 Talk
@@ -67,7 +71,10 @@ See @scaladoc[Scio Scaladocs](com.spotify.scio.index)  for current API documenta
   - [Featran](https://github.com/spotify/featran) - A Scala feature transformation library for data science and machine learning
   - [Big Data Rosetta Code](https://github.com/spotify/big-data-rosetta-code) - Code snippets for solving common big data problems in various platforms. Inspired by [Rosetta Code](https://rosettacode.org/)
   - [Ratatool](https://github.com/spotify/ratatool) - A tool for random data sampling and generation, which includes [BigDiffy](https://github.com/spotify/ratatool/blob/master/ratatool-diffy/src/main/scala/com/spotify/ratatool/diffy/BigDiffy.scala), a Scio library for pairwise field-level statistical diff of data sets ([slides](http://www.lyh.me/slides/bigdiffy.html))
+  - [Elitzur](https://github.com/spotify/elitzur) - Data validation for Scala and Scio
+  - [Scio Koans](https://github.com/nevillelyh/scio-koans/) - A collection of Scio exercises inspired by [Ruby Koans](http://rubykoans.com/) and many others.
   - [scio-deep-dive](https://github.com/nevillelyh/scio-deep-dive) - Building Scio from scratch step by step for an internal training session
+  - [Klio](https://github.com/spotify/klio) - Large scale audio or binary file processing with Python and Apache Beam
   - [scala-flow](https://github.com/zendesk/scala-flow) - A lightweight Scala wrapper for Google Cloud Dataflow from Zendesk
   - [clj-headlights](https://github.com/zendesk/clj-headlights) - Clojure API for Apache Beam, also from Zendesk
   - [datasplash](https://github.com/ngrunwald/datasplash) - A Clojure API for Google Cloud Dataflow
