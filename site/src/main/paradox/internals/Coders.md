@@ -1,7 +1,5 @@
 # Coder Typeclass
 
-Starting from Scio 0.7.0,
-
 ## `Coder` in Apache Beam
 
 As per [Beam's documentation](https://beam.apache.org/documentation/programming-guide/#specifying-coders)
