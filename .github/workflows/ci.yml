@@ -42,8 +42,8 @@ jobs:
           - 8
           - 11
         scala:
-          - 2.12.12
-          - 2.13.3
+          - 2.12.13
+          - 2.13.4
   test-coverage:
     runs-on: ubuntu-latest
     steps:
@@ -72,8 +72,8 @@ jobs:
           - 8
           - 11
         scala:
-          - 2.12.12
-          - 2.13.3
+          - 2.12.13
+          - 2.13.4
   mimaReport:
     runs-on: ubuntu-latest
     steps:
@@ -91,5 +91,5 @@ jobs:
           - 8
           - 11
         scala:
-          - 2.12.12
-          - 2.13.3
+          - 2.12.13
+          - 2.13.4
