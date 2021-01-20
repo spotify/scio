@@ -93,10 +93,10 @@ def result = input.saveAsParquetAvroFile("gs://path-to-data/lake/output", schema
 
 Some tunings might be required when writing Parquet files to maximize the read performance. Some of the Parquet settings can be configured via Hadoop [core-site.xml](https://github.com/spotify/scio/blob/master/scio-parquet/src/main/resources/core-site.xml).
 
-- `parquet.block.size` - This determines block size for HDFS or row group size. 1 GiB is recommended over the default 128 MiB.
+- `parquet.block.size` - This determines block size for HDFS and row group size. 1 GiB is recommended over the default 128 MiB.
 - `fs.gs.inputstream.fadvise` - Parquet relies heavily on random seeks so this GCS connector setting should be set to `RANDOM`. See this [blog post](https://cloud.google.com/blog/products/data-analytics/new-release-of-cloud-storage-connector-for-hadoop-improving-performance-throughput-and-more) for more.
 
 Here are some other recommended settings.
 
-- `numShards` - This should be explicitly set so that each output file is roughly the size of `parquet.block.size`, i.e. 1 GiB.
+- `numShards` - This should be explicitly set so that the size of each output file is smaller than but close to `parquet.block.size`, i.e. 1 GiB. This guarantees that each file contains 1 row group only and reduces seeks.
 - `compression` - `SNAPPY` and `GZIP` work out of the box. Snappy is less CPU intensive but has lower compression ratio. In our benchmarks GZIP seem to work better on GCS.
