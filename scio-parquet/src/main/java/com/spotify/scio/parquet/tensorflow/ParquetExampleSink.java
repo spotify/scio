@@ -25,6 +25,7 @@ import org.apache.beam.sdk.io.hadoop.SerializableConfiguration;
 import org.apache.beam.sdk.options.ValueProvider;
 import org.apache.beam.sdk.util.MimeTypes;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.parquet.hadoop.ParquetOutputFormat;
 import org.apache.parquet.hadoop.ParquetWriter;
 import org.apache.parquet.hadoop.metadata.CompressionCodecName;
 import org.tensorflow.example.Example;
@@ -105,11 +106,14 @@ public class ParquetExampleSink extends FileBasedSink<Example, Void, Example> {
     @Override
     protected void prepareWrite(WritableByteChannel channel) throws Exception {
       BeamOutputFile outputFile = BeamOutputFile.of(channel);
+      // https://github.com/apache/parquet-mr/tree/master/parquet-hadoop#class-parquetoutputformat
+      int rowGroupSize = conf.get().getInt(ParquetOutputFormat.BLOCK_SIZE, 128 * 1024 * 1024);
       writer =
           me.lyh.parquet.tensorflow.ExampleParquetWriter.builder(outputFile)
               .withSchema(schema)
               .withConf(conf.get())
               .withCompressionCodec(compression)
+              .withRowGroupSize(rowGroupSize)
               .build();
     }
 
