@@ -24,7 +24,6 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.net.InetSocketAddress;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicReference;
@@ -50,7 +49,6 @@ import org.apache.beam.sdk.util.Sleeper;
 import org.apache.beam.sdk.values.KV;
 import org.apache.beam.sdk.values.PCollection;
 import org.apache.beam.sdk.values.PDone;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Iterables;
 import org.elasticsearch.action.DocWriteRequest;
 import org.elasticsearch.action.bulk.BulkItemResponse;
 import org.elasticsearch.action.bulk.BulkRequest;
@@ -70,6 +68,12 @@ import org.slf4j.LoggerFactory;
 public class ElasticsearchIO {
 
   public static class Write {
+
+    private static final Logger LOG = LoggerFactory.getLogger(Write.class);
+    private static final String RETRY_ATTEMPT_LOG =
+        "Error writing to Elasticsearch. Retry attempt[%d]";
+    private static final String RETRY_FAILED_LOG =
+        "Error writing to ES after %d attempt(s). No more attempts allowed";
 
     /**
      * Returns a tranform for writing to Elasticsearch cluster for a given name.
@@ -362,35 +366,49 @@ public class ElasticsearchIO {
         checkNotNull(servers);
         checkNotNull(toDocWriteRequests);
         checkNotNull(flushInterval);
-        checkArgument(numOfShard > 0);
+        checkArgument(numOfShard >= 0);
         checkArgument(maxBulkRequestSize > 0);
         checkArgument(maxBulkRequestBytes > 0);
         checkArgument(maxRetries >= 0);
         checkArgument(retryPause.getMillis() >= 0);
-        input
-            .apply("Assign To Shard", ParDo.of(new AssignToShard<>(numOfShard)))
-            .apply(
-                "Re-Window to Global Window",
-                Window.<KV<Long, T>>into(new GlobalWindows())
-                    .triggering(
-                        Repeatedly.forever(
-                            AfterProcessingTime.pastFirstElementInPane()
-                                .plusDelayOf(flushInterval)))
-                    .discardingFiredPanes()
-                    .withTimestampCombiner(TimestampCombiner.END_OF_WINDOW))
-            .apply(GroupByKey.create())
-            .apply(
-                "Write to Elasticsearch",
-                ParDo.of(
-                    new ElasticsearchWriter<>(
-                        clusterName,
-                        servers,
-                        maxBulkRequestSize,
-                        maxBulkRequestBytes,
-                        toDocWriteRequests,
-                        error,
-                        maxRetries,
-                        retryPause)));
+        if (numOfShard == 0) {
+          input.apply(
+              ParDo.of(
+                  new ElasticsearchWriter<>(
+                      clusterName,
+                      servers,
+                      maxBulkRequestSize,
+                      maxBulkRequestBytes,
+                      toDocWriteRequests,
+                      error,
+                      maxRetries,
+                      retryPause)));
+        } else {
+          input
+              .apply("Assign To Shard", ParDo.of(new AssignToShard<>(numOfShard)))
+              .apply(
+                  "Re-Window to Global Window",
+                  Window.<KV<Long, T>>into(new GlobalWindows())
+                      .triggering(
+                          Repeatedly.forever(
+                              AfterProcessingTime.pastFirstElementInPane()
+                                  .plusDelayOf(flushInterval)))
+                      .discardingFiredPanes()
+                      .withTimestampCombiner(TimestampCombiner.END_OF_WINDOW))
+              .apply(GroupByKey.create())
+              .apply(
+                  "Write to Elasticsearch",
+                  ParDo.of(
+                      new ElasticsearchShardWriter<>(
+                          clusterName,
+                          servers,
+                          maxBulkRequestSize,
+                          maxBulkRequestBytes,
+                          toDocWriteRequests,
+                          error,
+                          maxRetries,
+                          retryPause)));
+        }
         return PDone.in(input.getPipeline());
       }
     }
@@ -411,22 +429,22 @@ public class ElasticsearchIO {
       }
     }
 
-    private static class ElasticsearchWriter<T> extends DoFn<KV<Long, Iterable<T>>, Void> {
+    private static class ElasticsearchWriter<T> extends DoFn<T, Void> {
 
-      private static final Logger LOG = LoggerFactory.getLogger(ElasticsearchWriter.class);
-      private static final String RETRY_ATTEMPT_LOG =
-          "Error writing to Elasticsearch. Retry attempt[%d]";
-      private static final String RETRY_FAILED_LOG =
-          "Error writing to ES after %d attempt(s). No more attempts allowed";
+      private BulkRequest chunk;
+      private long currentSize;
+      private long currentBytes;
 
       private final ClientSupplier clientSupplier;
       private final SerializableFunction<T, Iterable<DocWriteRequest<?>>> toDocWriteRequests;
       private final ThrowingConsumer<BulkExecutionException> error;
-      private FluentBackoff backoffConfig;
       private final int maxBulkRequestSize;
       private final long maxBulkRequestBytes;
       private final int maxRetries;
       private final Duration retryPause;
+
+      private ProcessFunction<BulkRequest, BulkResponse> requestFn;
+      private ProcessFunction<BulkRequest, BulkResponse> retryFn;
 
       public ElasticsearchWriter(
           String clusterName,
@@ -448,10 +466,95 @@ public class ElasticsearchIO {
 
       @Setup
       public void setup() throws Exception {
-        this.backoffConfig =
+        final FluentBackoff backoffConfig =
             FluentBackoff.DEFAULT
                 .withMaxRetries(this.maxRetries)
                 .withInitialBackoff(this.retryPause);
+        this.requestFn = request(clientSupplier, error);
+        this.retryFn = retry(requestFn, backoffConfig);
+      }
+
+      @StartBundle
+      public void startBundle(StartBundleContext c) {
+        chunk = new BulkRequest();
+        currentSize = 0;
+        currentBytes = 0;
+      }
+
+      @FinishBundle
+      public void finishBundle() throws Exception {
+        flush();
+      }
+
+      @ProcessElement
+      public void processElement(ProcessContext c) throws Exception {
+        final T t = c.element();
+        final Iterable<DocWriteRequest<?>> requests = toDocWriteRequests.apply(t);
+        for (DocWriteRequest request : requests) {
+          long requestBytes = documentSize(request);
+          if (currentSize < maxBulkRequestSize
+              && (currentBytes + requestBytes) < maxBulkRequestBytes) {
+            chunk.add(request);
+          } else {
+            flush();
+            chunk = new BulkRequest().add(request);
+            currentSize = 1;
+            currentBytes = requestBytes;
+          }
+        }
+      }
+
+      private void flush() throws Exception {
+        if (chunk.numberOfActions() < 1) {
+          return;
+        }
+        try {
+          requestFn.apply(chunk);
+        } catch (Exception e) {
+          retryFn.apply(chunk);
+        }
+      }
+    }
+
+    private static class ElasticsearchShardWriter<T> extends DoFn<KV<Long, Iterable<T>>, Void> {
+
+      private final ClientSupplier clientSupplier;
+      private final SerializableFunction<T, Iterable<DocWriteRequest<?>>> toDocWriteRequests;
+      private final ThrowingConsumer<BulkExecutionException> error;
+      private final int maxBulkRequestSize;
+      private final long maxBulkRequestBytes;
+      private final int maxRetries;
+      private final Duration retryPause;
+
+      private ProcessFunction<BulkRequest, BulkResponse> requestFn;
+      private ProcessFunction<BulkRequest, BulkResponse> retryFn;
+
+      public ElasticsearchShardWriter(
+          String clusterName,
+          InetSocketAddress[] servers,
+          int maxBulkRequestSize,
+          long maxBulkRequestBytes,
+          SerializableFunction<T, Iterable<DocWriteRequest<?>>> toDocWriteRequests,
+          ThrowingConsumer<BulkExecutionException> error,
+          int maxRetries,
+          Duration retryPause) {
+        this.maxBulkRequestSize = maxBulkRequestSize;
+        this.maxBulkRequestBytes = maxBulkRequestBytes;
+        this.clientSupplier = new ClientSupplier(clusterName, servers);
+        this.toDocWriteRequests = toDocWriteRequests;
+        this.error = error;
+        this.maxRetries = maxRetries;
+        this.retryPause = retryPause;
+      }
+
+      @Setup
+      public void setup() throws Exception {
+        final FluentBackoff backoffConfig =
+            FluentBackoff.DEFAULT
+                .withMaxRetries(this.maxRetries)
+                .withInitialBackoff(this.retryPause);
+        this.requestFn = request(clientSupplier, error);
+        this.retryFn = retry(requestFn, backoffConfig);
       }
 
       @SuppressWarnings("Duplicates")
@@ -498,56 +601,53 @@ public class ElasticsearchIO {
           return;
         }
 
-        final ProcessFunction<BulkRequest, BulkResponse> requestFn = request(clientSupplier, error);
-        final ProcessFunction<BulkRequest, BulkResponse> retryFn = retry(requestFn, backoffConfig);
-
         try {
           requestFn.apply(chunk);
         } catch (Exception e) {
           retryFn.apply(chunk);
         }
       }
+    }
 
-      private static ProcessFunction<BulkRequest, BulkResponse> request(
-          final ClientSupplier clientSupplier,
-          final ThrowingConsumer<BulkExecutionException> bulkErrorHandler) {
-        return chunk -> {
-          final BulkResponse bulkItemResponse = clientSupplier.get().bulk(chunk).get();
+    private static ProcessFunction<BulkRequest, BulkResponse> request(
+        final ClientSupplier clientSupplier,
+        final ThrowingConsumer<BulkExecutionException> bulkErrorHandler) {
+      return chunk -> {
+        final BulkResponse bulkItemResponse = clientSupplier.get().bulk(chunk).get();
 
-          if (bulkItemResponse.hasFailures()) {
-            bulkErrorHandler.accept(new BulkExecutionException(bulkItemResponse));
+        if (bulkItemResponse.hasFailures()) {
+          bulkErrorHandler.accept(new BulkExecutionException(bulkItemResponse));
+        }
+
+        return bulkItemResponse;
+      };
+    }
+
+    private static ProcessFunction<BulkRequest, BulkResponse> retry(
+        final ProcessFunction<BulkRequest, BulkResponse> requestFn,
+        final FluentBackoff backoffConfig) {
+      return chunk -> {
+        final BackOff backoff = backoffConfig.backoff();
+        int attempt = 0;
+        BulkResponse response = null;
+        Exception exception = null;
+
+        while (response == null && BackOffUtils.next(Sleeper.DEFAULT, backoff)) {
+          LOG.warn(String.format(RETRY_ATTEMPT_LOG, ++attempt));
+          try {
+            response = requestFn.apply(chunk);
+            exception = null;
+          } catch (Exception e) {
+            exception = e;
           }
+        }
 
-          return bulkItemResponse;
-        };
-      }
+        if (exception != null) {
+          throw new Exception(String.format(RETRY_FAILED_LOG, attempt), exception);
+        }
 
-      private static ProcessFunction<BulkRequest, BulkResponse> retry(
-          final ProcessFunction<BulkRequest, BulkResponse> requestFn,
-          final FluentBackoff backoffConfig) {
-        return chunk -> {
-          final BackOff backoff = backoffConfig.backoff();
-          int attempt = 0;
-          BulkResponse response = null;
-          Exception exception = null;
-
-          while (response == null && BackOffUtils.next(Sleeper.DEFAULT, backoff)) {
-            LOG.warn(String.format(RETRY_ATTEMPT_LOG, ++attempt));
-            try {
-              response = requestFn.apply(chunk);
-              exception = null;
-            } catch (Exception e) {
-              exception = e;
-            }
-          }
-
-          if (exception != null) {
-            throw new Exception(String.format(RETRY_FAILED_LOG, attempt), exception);
-          }
-
-          return response;
-        };
-      }
+        return response;
+      };
     }
 
     private static class ClientSupplier implements Supplier<Client>, Serializable {
