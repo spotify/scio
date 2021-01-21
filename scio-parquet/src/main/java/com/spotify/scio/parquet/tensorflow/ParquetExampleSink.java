@@ -107,7 +107,8 @@ public class ParquetExampleSink extends FileBasedSink<Example, Void, Example> {
     protected void prepareWrite(WritableByteChannel channel) throws Exception {
       BeamOutputFile outputFile = BeamOutputFile.of(channel);
       // https://github.com/apache/parquet-mr/tree/master/parquet-hadoop#class-parquetoutputformat
-      int rowGroupSize = conf.get().getInt(ParquetOutputFormat.BLOCK_SIZE, 128 * 1024 * 1024);
+      int rowGroupSize =
+          conf.get().getInt(ParquetOutputFormat.BLOCK_SIZE, ParquetWriter.DEFAULT_BLOCK_SIZE);
       writer =
           me.lyh.parquet.tensorflow.ExampleParquetWriter.builder(outputFile)
               .withSchema(schema)
