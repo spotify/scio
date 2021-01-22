@@ -49,6 +49,10 @@ import org.apache.beam.sdk.values.KV;
 import org.apache.beam.sdk.values.PCollection;
 import org.apache.beam.sdk.values.PDone;
 import org.apache.http.HttpHost;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.client.CredentialsProvider;
+import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.elasticsearch.action.DocWriteRequest;
 import org.elasticsearch.action.bulk.BulkItemResponse;
 import org.elasticsearch.action.bulk.BulkRequest;
@@ -58,6 +62,7 @@ import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestClient;
+import org.elasticsearch.client.RestClientBuilder;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.joda.time.Duration;
 import org.slf4j.Logger;
@@ -149,6 +154,10 @@ public class ElasticsearchIO {
       return new Bound<>().withRetryPause(retryPause);
     }
 
+    public static <T> Bound withCredentials(UsernamePasswordCredentials credentials) {
+      return new Bound<>().withCredentials(credentials);
+    }
+
     public static class Bound<T> extends PTransform<PCollection<T>, PDone> {
 
       private static final int CHUNK_SIZE = 3000;
@@ -169,6 +178,7 @@ public class ElasticsearchIO {
       private final int maxRetries;
       private final Duration retryPause;
       private final ThrowingConsumer<BulkExecutionException> error;
+      private final UsernamePasswordCredentials credentials;
 
       private Bound(
           final HttpHost[] nodes,
@@ -177,9 +187,10 @@ public class ElasticsearchIO {
           final long numOfShard,
           final int maxBulkRequestSize,
           final long maxBulkRequestBytes,
-          int maxRetries,
-          Duration retryPause,
-          final ThrowingConsumer<BulkExecutionException> error) {
+          final int maxRetries,
+          final Duration retryPause,
+          final ThrowingConsumer<BulkExecutionException> error,
+          final UsernamePasswordCredentials credentials) {
         this.nodes = nodes;
         this.flushInterval = flushInterval;
         this.toDocWriteRequests = toDocWriteRequests;
@@ -189,6 +200,7 @@ public class ElasticsearchIO {
         this.maxRetries = maxRetries;
         this.retryPause = retryPause;
         this.error = error;
+        this.credentials = credentials;
       }
 
       Bound() {
@@ -201,7 +213,8 @@ public class ElasticsearchIO {
             CHUNK_BYTES,
             DEFAULT_RETRIES,
             DEFAULT_RETRY_PAUSE,
-            defaultErrorHandler());
+            defaultErrorHandler(),
+            null);
       }
 
       public Bound<T> withNodes(HttpHost[] nodes) {
@@ -214,7 +227,8 @@ public class ElasticsearchIO {
             maxBulkRequestBytes,
             maxRetries,
             retryPause,
-            error);
+            error,
+            credentials);
       }
 
       public Bound<T> withFlushInterval(Duration flushInterval) {
@@ -227,7 +241,8 @@ public class ElasticsearchIO {
             maxBulkRequestBytes,
             maxRetries,
             retryPause,
-            error);
+            error,
+            credentials);
       }
 
       public Bound<T> withFunction(
@@ -241,7 +256,8 @@ public class ElasticsearchIO {
             maxBulkRequestBytes,
             maxRetries,
             retryPause,
-            error);
+            error,
+            credentials);
       }
 
       public Bound<T> withNumOfShard(long numOfShard) {
@@ -254,7 +270,8 @@ public class ElasticsearchIO {
             maxBulkRequestBytes,
             maxRetries,
             retryPause,
-            error);
+            error,
+            credentials);
       }
 
       public Bound<T> withError(ThrowingConsumer<BulkExecutionException> error) {
@@ -267,7 +284,8 @@ public class ElasticsearchIO {
             maxBulkRequestBytes,
             maxRetries,
             retryPause,
-            error);
+            error,
+            credentials);
       }
 
       public Bound<T> withMaxBulkRequestSize(int maxBulkRequestSize) {
@@ -280,7 +298,8 @@ public class ElasticsearchIO {
             maxBulkRequestBytes,
             maxRetries,
             retryPause,
-            error);
+            error,
+            credentials);
       }
 
       public Bound<T> withMaxBulkRequestBytes(long maxBulkRequestBytes) {
@@ -293,7 +312,8 @@ public class ElasticsearchIO {
             maxBulkRequestBytes,
             maxRetries,
             retryPause,
-            error);
+            error,
+            credentials);
       }
 
       public Bound<T> withMaxRetries(int maxRetries) {
@@ -306,7 +326,8 @@ public class ElasticsearchIO {
             maxBulkRequestBytes,
             maxRetries,
             retryPause,
-            error);
+            error,
+            credentials);
       }
 
       public Bound<T> withRetryPause(Duration retryPause) {
@@ -319,7 +340,22 @@ public class ElasticsearchIO {
             maxBulkRequestBytes,
             maxRetries,
             retryPause,
-            error);
+            error,
+            credentials);
+      }
+
+      public Bound<T> withCredentials(UsernamePasswordCredentials credentials) {
+        return new Bound<>(
+            nodes,
+            flushInterval,
+            toDocWriteRequests,
+            numOfShard,
+            maxBulkRequestSize,
+            maxBulkRequestBytes,
+            maxRetries,
+            retryPause,
+            error,
+            credentials);
       }
 
       @Override
@@ -342,7 +378,8 @@ public class ElasticsearchIO {
                       toDocWriteRequests,
                       error,
                       maxRetries,
-                      retryPause)));
+                      retryPause,
+                      credentials)));
         } else {
           input
               .apply("Assign To Shard", ParDo.of(new AssignToShard<>(numOfShard)))
@@ -412,10 +449,11 @@ public class ElasticsearchIO {
           SerializableFunction<T, Iterable<DocWriteRequest<?>>> toDocWriteRequests,
           ThrowingConsumer<BulkExecutionException> error,
           int maxRetries,
-          Duration retryPause) {
+          Duration retryPause,
+          UsernamePasswordCredentials credentials) {
         this.maxBulkRequestSize = maxBulkRequestSize;
         this.maxBulkRequestBytes = maxBulkRequestBytes;
-        this.clientSupplier = new ClientSupplier(nodes);
+        this.clientSupplier = new ClientSupplier(nodes, credentials);
         this.toDocWriteRequests = toDocWriteRequests;
         this.error = error;
         this.maxRetries = maxRetries;
@@ -630,9 +668,15 @@ public class ElasticsearchIO {
 
       private final AtomicReference<RestHighLevelClient> CLIENT = new AtomicReference<>();
       private final HttpHost[] nodes;
+      private final UsernamePasswordCredentials credentials;
 
       public ClientSupplier(final HttpHost[] nodes) {
+        this(nodes, null);
+      }
+
+      public ClientSupplier(final HttpHost[] nodes, UsernamePasswordCredentials credentials) {
         this.nodes = nodes;
+        this.credentials = credentials;
       }
 
       @Override
@@ -648,6 +692,13 @@ public class ElasticsearchIO {
       }
 
       private RestHighLevelClient create(HttpHost[] nodes) {
+        final RestClientBuilder builder = RestClient.builder(nodes);
+        if (credentials != null) {
+          final CredentialsProvider provider = new BasicCredentialsProvider();
+          provider.setCredentials(AuthScope.ANY, credentials);
+          builder.setHttpClientConfigCallback(
+              asyncBuilder -> asyncBuilder.setDefaultCredentialsProvider(provider));
+        }
         return new RestHighLevelClient(RestClient.builder(nodes));
       }
     }
