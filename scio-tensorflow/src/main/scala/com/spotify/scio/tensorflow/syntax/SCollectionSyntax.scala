@@ -21,7 +21,7 @@ import scala.reflect.ClassTag
 
 import org.apache.beam.sdk.io.Compression
 import org.tensorflow._
-import org.tensorflow.example.{Example, SequenceExample}
+import org.tensorflow.proto.example.{Example, SequenceExample}
 
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.io.ClosedTap

@@ -23,7 +23,7 @@ import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.io.Compression
 import org.apache.beam.sdk.{io => beam}
-import org.tensorflow.example.{Example, SequenceExample}
+import org.tensorflow.proto.example.{Example, SequenceExample}
 import com.spotify.scio.io.TapT
 
 final case class TFRecordIO(path: String) extends ScioIO[Array[Byte]] {

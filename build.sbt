@@ -52,7 +52,7 @@ val commonsTextVersion = "1.9"
 val datastoreV1ProtoClientVersion = "1.6.3"
 val elasticsearch6Version = "6.8.13"
 val elasticsearch7Version = "7.10.2"
-val featranVersion = "0.7.0"
+val featranVersion = "0.8.0-RC1"
 val flinkVersion = "1.12.1"
 val gaxVersion = "1.60.0"
 val gcsVersion = "1.8.0"
@@ -84,7 +84,7 @@ val kantanCsvVersion = "0.6.1"
 val kryoVersion =
   "4.0.2" // explicitly depend on 4.0.1+ due to https://github.com/EsotericSoftware/kryo/pull/516
 val magnoliaVersion = "0.17.0"
-val magnolifyVersion = "0.3.0"
+val magnolifyVersion = "0.4.0"
 val nettyVersion = "4.1.51.Final"
 val nettyTcNativeVersion = "2.0.33.Final"
 val opencensusVersion = "0.24.0"
@@ -101,8 +101,8 @@ val shapelessVersion = "2.3.3"
 val slf4jVersion = "1.7.30"
 val sparkeyVersion = "3.2.1"
 val sparkVersion = "2.4.6"
-val tensorFlowVersion = "1.15.0"
-val zoltarVersion = "0.5.6"
+val tensorFlowVersion = "0.2.0"
+val zoltarVersion = "0.6.0-M1"
 val scalaCollectionCompatVersion = "2.4.0"
 
 ThisBuild / scalafixScalaBinaryVersion := CrossVersion.binaryScalaVersion(scalaVersion.value)
@@ -344,7 +344,8 @@ lazy val protobufSettings = Def.settings(
   version in ProtobufConfig := protobufVersion,
   protobufRunProtoc in ProtobufConfig := (args =>
     com.github.os72.protocjar.Protoc.runProtoc("-v3.11.4" +: args.toArray)
-  )
+  ),
+  libraryDependencies += "com.google.protobuf" % "protobuf-java" % (version in ProtobufConfig).value % ProtobufConfig.name
 )
 
 def splitTests(tests: Seq[TestDefinition], filter: Seq[String], forkOptions: ForkOptions) = {
@@ -843,8 +844,7 @@ lazy val `scio-tensorflow`: Project = project
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
-      "org.tensorflow" % "tensorflow" % tensorFlowVersion,
-      "org.tensorflow" % "proto" % tensorFlowVersion,
+      "org.tensorflow" % "tensorflow-core-platform" % tensorFlowVersion,
       "org.apache.commons" % "commons-compress" % commonsCompressVersion,
       "com.spotify" %% "featran-core" % featranVersion,
       "com.spotify" %% "featran-scio" % featranVersion,
@@ -854,8 +854,7 @@ lazy val `scio-tensorflow`: Project = project
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       "com.spotify" %% "magnolify-tensorflow" % magnolifyVersion % Test,
       "com.spotify" % "zoltar-core" % zoltarVersion,
-      "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamVendorVersion,
-      "org.tensorflow" % "libtensorflow" % tensorFlowVersion
+      "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamVendorVersion
     )
   )
   .dependsOn(
@@ -905,7 +904,6 @@ lazy val `scio-examples`: Project = project
       "com.google.api.grpc" % "proto-google-cloud-bigtable-v2" % generatedGrpcBetaVersion,
       "com.google.cloud.sql" % "mysql-socket-factory" % "1.2.0",
       "com.google.apis" % "google-api-services-bigquery" % googleApiServicesBigQuery,
-      "org.tensorflow" % "proto" % tensorFlowVersion,
       "com.spotify" %% "magnolify-avro" % magnolifyVersion,
       "com.spotify" %% "magnolify-datastore" % magnolifyVersion,
       "com.spotify" %% "magnolify-tensorflow" % magnolifyVersion,
@@ -1048,7 +1046,7 @@ lazy val `scio-smb`: Project = project
       // "org.apache.beam" % "beam-sdks-java-extensions-sorter" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-extensions-protobuf" % beamVersion,
       "com.google.apis" % "google-api-services-bigquery" % googleApiServicesBigQuery,
-      "org.tensorflow" % "proto" % tensorFlowVersion,
+      "org.tensorflow" % "tensorflow-core-platform" % tensorFlowVersion,
       "com.google.auto.value" % "auto-value-annotations" % autoValueVersion,
       "com.google.auto.value" % "auto-value" % autoValueVersion,
       "javax.annotation" % "javax.annotation-api" % "1.3.2",

@@ -23,7 +23,7 @@ import com.spotify.scio.ScioContext
 import com.spotify.scio.tensorflow.{TFExampleIO, TFRecordIO, TFSequenceExampleIO}
 import com.spotify.scio.values.{DistCache, SCollection}
 import org.apache.beam.sdk.io.Compression
-import org.tensorflow.example.{Example, SequenceExample}
+import org.tensorflow.proto.example.{Example, SequenceExample}
 import org.tensorflow.metadata.v0._
 
 final class ScioContextOps(private val self: ScioContext) extends AnyVal {

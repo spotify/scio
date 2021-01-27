@@ -27,10 +27,15 @@ import com.spotify.scio.ContextAndArgs
 import com.spotify.scio.io._
 import com.spotify.scio.testing._
 import com.spotify.zoltar.tf.TensorFlowModel
-import org.tensorflow._
-import org.tensorflow.example.Example
+import org.tensorflow.types.TString
+import org.tensorflow.proto.example.Example
 
 import scala.io.Source
+import org.tensorflow.ndarray.NdArrays
+import org.tensorflow.types.TFloat32
+import org.tensorflow.types.TInt64
+
+import scala.jdk.CollectionConverters._
 
 private[tensorflow] object TFSavedSpec {
   case class Iris(
@@ -67,11 +72,11 @@ object TFSavedRawJob {
       .extractWithSettings(collection, settings)
       .featureValues[Example]
       .predict(args("savedModelUri"), Seq("linear/head/predictions/class_ids"), options) { e =>
-        Map("input_example_tensor" -> Tensors.create(Array(e.toByteArray)))
+        val tensor = TString.tensorOfBytes(NdArrays.vectorOfObjects(e.toByteArray()))
+        Map("input_example_tensor" -> tensor)
       } { (_, o) =>
-        val clazz = Array.ofDim[Long](1)
-        o("linear/head/predictions/class_ids").copyTo(clazz)
-        clazz(0).toString
+        val tensor = o("linear/head/predictions/class_ids")
+        tensor.data().asInstanceOf[TInt64].getObject()
       }
       .saveAsTextFile(args("output"))
 
@@ -98,15 +103,19 @@ object TFSavedTensorsMapInputDefaultSigDefJob {
       .extractWithSettings(collection, settings)
       .featureValues[Example]
       .predictWithSigDef(args("savedModelUri"), options) { e =>
-        Map("inputs" -> Tensors.create(Array(e.toByteArray)))
+        val tensor = TString.tensorOfBytes(NdArrays.vectorOfObjects(e.toByteArray()))
+        Map("inputs" -> tensor)
       } { (_, o) =>
-        val classes = Array.ofDim[Array[Byte]](1, 3)
-        o("classes").copyTo(classes)
-        val scores = Array.ofDim[Float](1, 3)
-        o("scores").copyTo(scores)
-
-        // get the highest probability class
-        new String(classes(0).toList.zip(scores(0).toList).maxBy(_._2)._1)
+        val classes = o("classes").data().asInstanceOf[TString].get(0)
+        val scores = o("scores").data().asInstanceOf[TFloat32].get(0)
+        classes
+          .scalars()
+          .iterator()
+          .asScala
+          .zip(scores.scalars().iterator().asScala)
+          .map(t => (t._1.getObject(), t._2.getObject()))
+          .maxBy(_._2)
+          ._1
       }
       .saveAsTextFile(args("output"))
 
@@ -133,12 +142,11 @@ object TFSavedTensorsMapInputPredictSigDefJob {
       .extractWithSettings(collection, settings)
       .featureValues[Example]
       .predictWithSigDef(args("savedModelUri"), options, signatureName = "predict") { e =>
-        Map("examples" -> Tensors.create(Array(e.toByteArray)))
+        val tensor = TString.tensorOfBytes(NdArrays.vectorOfObjects(e.toByteArray()))
+        Map("examples" -> tensor)
       } { (_, o) =>
-        val classes = Array.ofDim[Array[Byte]](1, 1)
-        o("classes").copyTo(classes)
         // get the highest probability class
-        new String(classes(0).head)
+        o("classes").data().asInstanceOf[TString].get(0).getObject()
       }
       .saveAsTextFile(args("output"))
 
@@ -169,11 +177,10 @@ object TFSavedTensorsMapInputPredictSigDefSpecifiedFetchOpsJob {
         options,
         fetchOps = Some(Seq("classes")),
         signatureName = "predict"
-      )(e => Map("examples" -> Tensors.create(Array(e.toByteArray)))) { (_, o) =>
-        val classes = Array.ofDim[Array[Byte]](1, 1)
-        o("classes").copyTo(classes)
-        // get the highest probability class
-        new String(classes(0).head)
+      )(e => Map("examples" -> TString.tensorOfBytes(NdArrays.vectorOfObjects(e.toByteArray())))) {
+        (_, o) =>
+          // get the highest probability class
+          o("classes").data().asInstanceOf[TString].get(0).getObject()
       }
       .saveAsTextFile(args("output"))
 
@@ -203,13 +210,17 @@ object TFSavedExampleInputDefaultSigDefJob {
         savedModelUri = args("savedModelUri"),
         options = options
       ) { (_, o) =>
-        val classes = Array.ofDim[Array[Byte]](1, 3)
-        o("classes").copyTo(classes)
-        val scores = Array.ofDim[Float](1, 3)
-        o("scores").copyTo(scores)
-
+        val classes = o("classes").data().asInstanceOf[TString].get(0)
+        val scores = o("scores").data().asInstanceOf[TFloat32].get(0)
         // get the highest probability class
-        new String(classes(0).toList.zip(scores(0).toList).maxBy(_._2)._1)
+        classes
+          .scalars()
+          .iterator()
+          .asScala
+          .zip(scores.scalars().iterator().asScala)
+          .map(t => (t._1.getObject(), t._2.getObject()))
+          .maxBy(_._2)
+          ._1
       }
       .saveAsTextFile(args("output"))
 
@@ -241,9 +252,8 @@ object TFSavedExampleInputPredictSigDefJob {
         exampleInputOp = "examples",
         signatureName = "predict"
       ) { (_, o) =>
-        val classes = Array.ofDim[Array[Byte]](1, 1)
-        o("classes").copyTo(classes)
-        new String(classes(0).head)
+          // get the highest probability class
+          o("classes").data().asInstanceOf[TString].get(0).getObject()
       }
       .saveAsTextFile(args("output"))
 
@@ -276,9 +286,8 @@ object TFSavedExampleInputPredictSigDefSpecifiedFetchOpsJob {
         fetchOps = Some(Seq("classes")),
         signatureName = "predict"
       ) { (_, o) =>
-        val classes = Array.ofDim[Array[Byte]](1, 1)
-        o("classes").copyTo(classes)
-        new String(classes(0).head)
+          // get the highest probability class
+          o("classes").data().asInstanceOf[TString].get(0).getObject()
       }
       .saveAsTextFile(args("output"))
 
