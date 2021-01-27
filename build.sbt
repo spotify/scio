@@ -103,7 +103,7 @@ val sparkeyVersion = "3.2.1"
 val sparkVersion = "2.4.6"
 val tensorFlowVersion = "1.15.0"
 val zoltarVersion = "0.5.6"
-val scalaCollectionCompatVersion = "2.3.2"
+val scalaCollectionCompatVersion = "2.4.0"
 
 ThisBuild / scalafixScalaBinaryVersion := CrossVersion.binaryScalaVersion(scalaVersion.value)
 val excludeLint = SettingKey[Set[Def.KeyedInitialize[_]]]("excludeLintKeys")
