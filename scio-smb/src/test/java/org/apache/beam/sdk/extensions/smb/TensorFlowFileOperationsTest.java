@@ -44,8 +44,7 @@ import org.tensorflow.proto.example.Int64List;
 
 /** Unit tests for {@link TensorFlowFileOperations}. */
 public class TensorFlowFileOperationsTest {
-  @Rule
-  public final TemporaryFolder output = new TemporaryFolder();
+  @Rule public final TemporaryFolder output = new TemporaryFolder();
 
   @Test
   public void testUncompressed() throws Exception {
@@ -59,17 +58,38 @@ public class TensorFlowFileOperationsTest {
 
   private void test(Compression compression) throws Exception {
     final TensorFlowFileOperations fileOperations = TensorFlowFileOperations.of(compression);
-    final ResourceId file = fromFolder(output).resolve("file.tfrecord",
-        ResolveOptions.StandardResolveOptions.RESOLVE_FILE);
+    final ResourceId file =
+        fromFolder(output)
+            .resolve("file.tfrecord", ResolveOptions.StandardResolveOptions.RESOLVE_FILE);
 
-    final List<Example> records = IntStream.range(0, 10)
-        .mapToObj(i -> Example.newBuilder().setFeatures(Features.newBuilder()
-            .putFeature("bytes", Feature.newBuilder()
-                .setBytesList(BytesList.newBuilder().addValue(ByteString.copyFromUtf8("bytes-" + i)).build()).build())
-            .putFeature("int", Feature.newBuilder().setInt64List(Int64List.newBuilder().addValue(i).build()).build())
-            .putFeature("float", Feature.newBuilder().setFloatList(FloatList.newBuilder().addValue(i).build()).build())
-            .build()).build())
-        .collect(Collectors.toList());
+    final List<Example> records =
+        IntStream.range(0, 10)
+            .mapToObj(
+                i ->
+                    Example.newBuilder()
+                        .setFeatures(
+                            Features.newBuilder()
+                                .putFeature(
+                                    "bytes",
+                                    Feature.newBuilder()
+                                        .setBytesList(
+                                            BytesList.newBuilder()
+                                                .addValue(ByteString.copyFromUtf8("bytes-" + i))
+                                                .build())
+                                        .build())
+                                .putFeature(
+                                    "int",
+                                    Feature.newBuilder()
+                                        .setInt64List(Int64List.newBuilder().addValue(i).build())
+                                        .build())
+                                .putFeature(
+                                    "float",
+                                    Feature.newBuilder()
+                                        .setFloatList(FloatList.newBuilder().addValue(i).build())
+                                        .build())
+                                .build())
+                        .build())
+            .collect(Collectors.toList());
     final FileOperations.Writer<Example> writer = fileOperations.createWriter(file);
     for (Example record : records) {
       writer.write(record);
@@ -82,7 +102,8 @@ public class TensorFlowFileOperationsTest {
     Assert.assertEquals(records, actual);
 
     final DisplayData displayData = DisplayData.from(fileOperations);
-    MatcherAssert.assertThat(displayData, hasDisplayItem("FileOperations", TensorFlowFileOperations.class));
+    MatcherAssert.assertThat(
+        displayData, hasDisplayItem("FileOperations", TensorFlowFileOperations.class));
     MatcherAssert.assertThat(displayData, hasDisplayItem("mimeType", MimeTypes.BINARY));
     MatcherAssert.assertThat(displayData, hasDisplayItem("compression", compression.toString()));
   }

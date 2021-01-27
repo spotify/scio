@@ -252,8 +252,8 @@ object TFSavedExampleInputPredictSigDefJob {
         exampleInputOp = "examples",
         signatureName = "predict"
       ) { (_, o) =>
-          // get the highest probability class
-          o("classes").data().asInstanceOf[TString].get(0).getObject()
+        // get the highest probability class
+        o("classes").data().asInstanceOf[TString].get(0).getObject()
       }
       .saveAsTextFile(args("output"))
 
@@ -286,8 +286,8 @@ object TFSavedExampleInputPredictSigDefSpecifiedFetchOpsJob {
         fetchOps = Some(Seq("classes")),
         signatureName = "predict"
       ) { (_, o) =>
-          // get the highest probability class
-          o("classes").data().asInstanceOf[TString].get(0).getObject()
+        // get the highest probability class
+        o("classes").data().asInstanceOf[TString].get(0).getObject()
       }
       .saveAsTextFile(args("output"))
 

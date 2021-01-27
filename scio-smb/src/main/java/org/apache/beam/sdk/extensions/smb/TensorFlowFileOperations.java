@@ -30,8 +30,8 @@ import org.apache.beam.sdk.util.MimeTypes;
 import org.tensorflow.proto.example.Example;
 
 /**
- * {@link org.apache.beam.sdk.extensions.smb.FileOperations} implementation for
- * TensorFlow TFRecord files with TensorFlow {@link Example} records.
+ * {@link org.apache.beam.sdk.extensions.smb.FileOperations} implementation for TensorFlow TFRecord
+ * files with TensorFlow {@link Example} records.
  */
 public class TensorFlowFileOperations extends FileOperations<Example> {
 

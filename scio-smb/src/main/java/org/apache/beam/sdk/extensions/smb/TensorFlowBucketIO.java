@@ -34,38 +34,53 @@ import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Immutabl
 import org.tensorflow.proto.example.Example;
 
 /**
- * API for reading and writing sorted-bucket TensorFlow TFRecord files with
- * TensorFlow {@link Example} records.
+ * API for reading and writing sorted-bucket TensorFlow TFRecord files with TensorFlow {@link
+ * Example} records.
  */
 public class TensorFlowBucketIO {
   private static final String DEFAULT_SUFFIX = ".tfrecord";
 
   /**
-   * Returns a new {@link Read} for TensorFlow TFRecord files with TensorFlow
-   * {@link Example} records.
+   * Returns a new {@link Read} for TensorFlow TFRecord files with TensorFlow {@link Example}
+   * records.
    */
   public static Read read(TupleTag<Example> tupleTag) {
-    return new AutoValue_TensorFlowBucketIO_Read.Builder().setTupleTag(tupleTag).setFilenameSuffix(DEFAULT_SUFFIX)
-        .setCompression(Compression.AUTO).build();
+    return new AutoValue_TensorFlowBucketIO_Read.Builder()
+        .setTupleTag(tupleTag)
+        .setFilenameSuffix(DEFAULT_SUFFIX)
+        .setCompression(Compression.AUTO)
+        .build();
   }
 
   /**
-   * Returns a new {@link Write} for TensorFlow TFRecord files with TensorFlow
-   * {@link Example} records.
+   * Returns a new {@link Write} for TensorFlow TFRecord files with TensorFlow {@link Example}
+   * records.
    */
   public static <K> Write<K> write(Class<K> keyClass, String keyField) {
-    return new AutoValue_TensorFlowBucketIO_Write.Builder<K>().setNumBuckets(SortedBucketIO.DEFAULT_NUM_BUCKETS)
-        .setNumShards(SortedBucketIO.DEFAULT_NUM_SHARDS).setHashType(SortedBucketIO.DEFAULT_HASH_TYPE)
-        .setSorterMemoryMb(SortedBucketIO.DEFAULT_SORTER_MEMORY_MB).setKeyClass(keyClass).setKeyField(keyField)
-        .setKeyCacheSize(0).setFilenameSuffix(DEFAULT_SUFFIX).setFilenamePrefix(SortedBucketIO.DEFAULT_FILENAME_PREFIX)
-        .setCompression(Compression.UNCOMPRESSED).build();
+    return new AutoValue_TensorFlowBucketIO_Write.Builder<K>()
+        .setNumBuckets(SortedBucketIO.DEFAULT_NUM_BUCKETS)
+        .setNumShards(SortedBucketIO.DEFAULT_NUM_SHARDS)
+        .setHashType(SortedBucketIO.DEFAULT_HASH_TYPE)
+        .setSorterMemoryMb(SortedBucketIO.DEFAULT_SORTER_MEMORY_MB)
+        .setKeyClass(keyClass)
+        .setKeyField(keyField)
+        .setKeyCacheSize(0)
+        .setFilenameSuffix(DEFAULT_SUFFIX)
+        .setFilenamePrefix(SortedBucketIO.DEFAULT_FILENAME_PREFIX)
+        .setCompression(Compression.UNCOMPRESSED)
+        .build();
   }
 
   /** Returns a new {@link TransformOutput} for Avro generic records. */
   public static <K> TransformOutput<K> transformOutput(Class<K> keyClass, String keyField) {
-    return new AutoValue_TensorFlowBucketIO_TransformOutput.Builder<K>().setFilenameSuffix(DEFAULT_SUFFIX)
-        .setFilenamePrefix(SortedBucketIO.DEFAULT_FILENAME_PREFIX).setKeyClass(keyClass).setKeyField(keyField)
-        .setFilenameSuffix(DEFAULT_SUFFIX).setCompression(Compression.UNCOMPRESSED).build();
+    return new AutoValue_TensorFlowBucketIO_TransformOutput.Builder<K>()
+        .setFilenameSuffix(DEFAULT_SUFFIX)
+        .setFilenamePrefix(SortedBucketIO.DEFAULT_FILENAME_PREFIX)
+        .setKeyClass(keyClass)
+        .setKeyField(keyField)
+        .setFilenameSuffix(DEFAULT_SUFFIX)
+        .setCompression(Compression.UNCOMPRESSED)
+        .build();
   }
 
   ////////////////////////////////////////////////////////////////////////////////
@@ -73,8 +88,8 @@ public class TensorFlowBucketIO {
   ////////////////////////////////////////////////////////////////////////////////
 
   /**
-   * Reads from sorted-bucket TensorFlow TFRecord files with TensorFlow
-   * {@link Example} records, to be used with {@link SortedBucketIO.CoGbk}.
+   * Reads from sorted-bucket TensorFlow TFRecord files with TensorFlow {@link Example} records, to
+   * be used with {@link SortedBucketIO.CoGbk}.
    */
   @AutoValue
   public abstract static class Read extends SortedBucketIO.Read<Example> {
@@ -109,7 +124,9 @@ public class TensorFlowBucketIO {
 
     /** Reads from the given input directory. */
     public Read from(String inputDirectory) {
-      return toBuilder().setInputDirectories(FileSystems.matchNewResource(inputDirectory, true)).build();
+      return toBuilder()
+          .setInputDirectories(FileSystems.matchNewResource(inputDirectory, true))
+          .build();
     }
 
     /** Specifies the input filename suffix. */
@@ -124,8 +141,12 @@ public class TensorFlowBucketIO {
 
     @Override
     protected BucketedInput<?, Example> toBucketedInput() {
-      return new BucketedInput<>(getTupleTag(), getInputDirectories(), getFilenameSuffix(),
-          TensorFlowFileOperations.of(getCompression()), getPredicate());
+      return new BucketedInput<>(
+          getTupleTag(),
+          getInputDirectories(),
+          getFilenameSuffix(),
+          TensorFlowFileOperations.of(getCompression()),
+          getPredicate());
     }
   }
 
@@ -134,8 +155,8 @@ public class TensorFlowBucketIO {
   ////////////////////////////////////////////////////////////////////////////////
 
   /**
-   * Writes to sorted-bucket TensorFlow TFRecord files with TensorFlow
-   * {@link Example} records with {@link SortedBucketSink}.
+   * Writes to sorted-bucket TensorFlow TFRecord files with TensorFlow {@link Example} records with
+   * {@link SortedBucketSink}.
    */
   @AutoValue
   public abstract static class Write<K> extends SortedBucketIO.Write<K, Example> {
@@ -198,12 +219,16 @@ public class TensorFlowBucketIO {
 
     /** Writes to the given output directory. */
     public Write<K> to(String outputDirectory) {
-      return toBuilder().setOutputDirectory(FileSystems.matchNewResource(outputDirectory, true)).build();
+      return toBuilder()
+          .setOutputDirectory(FileSystems.matchNewResource(outputDirectory, true))
+          .build();
     }
 
     /** Specifies the temporary directory for writing. */
     public Write<K> withTempDirectory(String tempDirectory) {
-      return toBuilder().setTempDirectory(FileSystems.matchNewResource(tempDirectory, true)).build();
+      return toBuilder()
+          .setTempDirectory(FileSystems.matchNewResource(tempDirectory, true))
+          .build();
     }
 
     /** Specifies the output filename suffix. */
@@ -221,10 +246,7 @@ public class TensorFlowBucketIO {
       return toBuilder().setSorterMemoryMb(sorterMemoryMb).build();
     }
 
-    /**
-     * Specifies the size of an optional key-to-hash cache in the ExtractKeys
-     * transform.
-     */
+    /** Specifies the size of an optional key-to-hash cache in the ExtractKeys transform. */
     public Write<K> withKeyCacheOfSize(int keyCacheSize) {
       return toBuilder().setKeyCacheSize(keyCacheSize).build();
     }
@@ -242,8 +264,13 @@ public class TensorFlowBucketIO {
     @Override
     BucketMetadata<K, Example> getBucketMetadata() {
       try {
-        return new TensorFlowBucketMetadata<>(getNumBuckets(), getNumShards(), getKeyClass(), getHashType(),
-            getKeyField(), getFilenamePrefix());
+        return new TensorFlowBucketMetadata<>(
+            getNumBuckets(),
+            getNumShards(),
+            getKeyClass(),
+            getHashType(),
+            getKeyField(),
+            getFilenamePrefix());
       } catch (CannotProvideCoderException | Coder.NonDeterministicException e) {
         throw new IllegalStateException(e);
       }
@@ -251,11 +278,12 @@ public class TensorFlowBucketIO {
   }
 
   /**
-   * Writes to sorted-bucket TensorFlow TFRecord files with TensorFlow
-   * {@link Example} records with {@link SortedBucketTransform}.
+   * Writes to sorted-bucket TensorFlow TFRecord files with TensorFlow {@link Example} records with
+   * {@link SortedBucketTransform}.
    */
   @AutoValue
-  public abstract static class TransformOutput<K> extends SortedBucketIO.TransformOutput<K, Example> {
+  public abstract static class TransformOutput<K>
+      extends SortedBucketIO.TransformOutput<K, Example> {
 
     // JSON specific
     @Nullable
@@ -289,12 +317,16 @@ public class TensorFlowBucketIO {
 
     /** Writes to the given output directory. */
     public TransformOutput<K> to(String outputDirectory) {
-      return toBuilder().setOutputDirectory(FileSystems.matchNewResource(outputDirectory, true)).build();
+      return toBuilder()
+          .setOutputDirectory(FileSystems.matchNewResource(outputDirectory, true))
+          .build();
     }
 
     /** Specifies the temporary directory for writing. */
     public TransformOutput<K> withTempDirectory(String tempDirectory) {
-      return toBuilder().setTempDirectory(FileSystems.matchNewResource(tempDirectory, true)).build();
+      return toBuilder()
+          .setTempDirectory(FileSystems.matchNewResource(tempDirectory, true))
+          .build();
     }
 
     /** Specifies the output filename suffix. */
@@ -325,7 +357,8 @@ public class TensorFlowBucketIO {
 
       return (numBuckets, numShards, hashType) -> {
         try {
-          return new TensorFlowBucketMetadata<>(numBuckets, numShards, keyClass, hashType, keyField, filenamePrefix);
+          return new TensorFlowBucketMetadata<>(
+              numBuckets, numShards, keyClass, hashType, keyField, filenamePrefix);
         } catch (CannotProvideCoderException | Coder.NonDeterministicException e) {
           throw new IllegalStateException(e);
         }
