@@ -25,7 +25,7 @@ import me.lyh.parquet.tensorflow.Schema
 import org.apache.commons.io.FileUtils
 import org.apache.parquet.filter2.predicate.FilterApi
 import org.scalatest.BeforeAndAfterAll
-import org.tensorflow.example.{BytesList, Example, Feature, Features, FloatList, Int64List}
+import org.tensorflow.proto.example.{BytesList, Example, Feature, Features, FloatList, Int64List}
 
 import scala.jdk.CollectionConverters._
 

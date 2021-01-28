@@ -28,7 +28,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.parquet.hadoop.ParquetOutputFormat;
 import org.apache.parquet.hadoop.ParquetWriter;
 import org.apache.parquet.hadoop.metadata.CompressionCodecName;
-import org.tensorflow.example.Example;
+import org.tensorflow.proto.example.Example;
 
 import java.nio.channels.WritableByteChannel;
 

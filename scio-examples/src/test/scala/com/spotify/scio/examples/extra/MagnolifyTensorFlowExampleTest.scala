@@ -21,7 +21,7 @@ import com.google.protobuf.ByteString
 import com.spotify.scio.io._
 import com.spotify.scio.tensorflow.TFRecordIO
 import com.spotify.scio.testing._
-import org.tensorflow.example._
+import org.tensorflow.proto.example._
 
 class MagnolifyTensorFlowExampleTest extends PipelineSpec {
   val textIn: Seq[String] = Seq("a b c d e", "a b a b")
