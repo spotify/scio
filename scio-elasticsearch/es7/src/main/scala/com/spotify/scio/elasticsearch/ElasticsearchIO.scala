@@ -63,7 +63,7 @@ final case class ElasticsearchIO[T](esOptions: ElasticsearchOptions) extends Sci
       .withError((t: BulkExecutionException) => params.errorFn(t))
 
     data.applyInternal(
-      params.usernameAndPassword
+      esOptions.usernameAndPassword
         .map { case (username, password) =>
           write.withCredentials(new UsernamePasswordCredentials(username, password))
         }
@@ -100,8 +100,7 @@ object ElasticsearchIO {
     numOfShards: Long = WriteParam.DefaultNumShards,
     maxBulkRequestSize: Int = WriteParam.DefaultMaxBulkRequestSize,
     maxBulkRequestBytes: Long = WriteParam.DefaultMaxBulkRequestBytes,
-    retry: RetryConfig = WriteParam.DefaultRetryConfig,
-    usernameAndPassword: Option[(String, String)] = None
+    retry: RetryConfig = WriteParam.DefaultRetryConfig
   )
 
   final case class RetryConfig(maxRetries: Int, retryPause: Duration)
