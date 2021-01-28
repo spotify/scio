@@ -111,7 +111,7 @@ public abstract class BaseAsyncLookupDoFn<A, B, C, F, T> extends DoFn<A, KV<A, T
   }
 
   @StartBundle
-  public void startBundle() {
+  public void startBundle(StartBundleContext context) {
     futures.clear();
     results.clear();
     requestCount = 0;
@@ -178,7 +178,7 @@ public abstract class BaseAsyncLookupDoFn<A, B, C, F, T> extends DoFn<A, KV<A, T
   }
 
   @FinishBundle
-  public void finishBundle(FinishBundleContext c) {
+  public void finishBundle(FinishBundleContext context) {
     if (!futures.isEmpty()) {
       try {
         // Block until all pending futures are complete
@@ -191,7 +191,7 @@ public abstract class BaseAsyncLookupDoFn<A, B, C, F, T> extends DoFn<A, KV<A, T
         LOG.error("Failed to process futures", e);
       }
     }
-    flush(r -> c.output(KV.of(r.input, r.output), r.timestamp, r.window));
+    flush(r -> context.output(KV.of(r.input, r.output), r.timestamp, r.window));
 
     // Make sure all requests are processed
     Preconditions.checkState(
