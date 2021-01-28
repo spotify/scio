@@ -24,7 +24,7 @@ import com.spotify.scio.values.SCollection
 import me.lyh.parquet.tensorflow.Schema
 import org.apache.parquet.filter2.predicate.FilterPredicate
 import org.apache.parquet.hadoop.metadata.CompressionCodecName
-import org.tensorflow.example.Example
+import org.tensorflow.proto.example.Example
 
 /**
  * Main package for Parquet TensorFlow APIs. Import all.

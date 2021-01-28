@@ -30,7 +30,7 @@ import org.apache.beam.sdk.io.FileIO;
 import org.apache.beam.sdk.io.FileSystems;
 import org.apache.beam.sdk.util.MimeTypes;
 import org.apache.beam.sdk.values.TupleTag;
-import org.tensorflow.example.Example;
+import org.tensorflow.proto.example.Example;
 
 /** Test public API access level. Passes by successfully compiling. */
 public class SmbPublicAPITest {

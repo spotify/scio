@@ -44,7 +44,7 @@ import org.apache.hadoop.mapreduce.Job
 import org.apache.parquet.filter2.predicate.FilterPredicate
 import org.apache.parquet.hadoop.ParquetInputFormat
 import org.apache.parquet.hadoop.metadata.CompressionCodecName
-import org.tensorflow.example.Example
+import org.tensorflow.proto.example.Example
 
 import scala.jdk.CollectionConverters._
 import com.spotify.scio.io.TapT
