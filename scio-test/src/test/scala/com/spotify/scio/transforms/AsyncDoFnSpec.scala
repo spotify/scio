@@ -182,7 +182,7 @@ abstract class AsyncDoFnTester[P[_], F[_]] extends BaseDoFnTester {
   private val fn = {
     val f = newDoFn
     f.setup()
-    f.startBundle()
+    f.startBundle(null)
     f
   }
 
@@ -238,7 +238,7 @@ abstract class AsyncDoFnTester[P[_], F[_]] extends BaseDoFnTester {
     nextElement = 0
     pending.clear()
     outputBuffer.clear()
-    fn.startBundle()
+    fn.startBundle(null)
 
     result
   }

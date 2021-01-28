@@ -75,7 +75,7 @@ public class FileDownloadDoFn<OutputT> extends DoFn<URI, OutputT> {
   }
 
   @StartBundle
-  public void startBundle() {
+  public void startBundle(StartBundleContext context) {
     this.batch.clear();
   }
 
@@ -88,8 +88,8 @@ public class FileDownloadDoFn<OutputT> extends DoFn<URI, OutputT> {
   }
 
   @FinishBundle
-  public void finishBundle(FinishBundleContext c) {
-    processBatch(c);
+  public void finishBundle(FinishBundleContext context) {
+    processBatch(context);
   }
 
   @Override
