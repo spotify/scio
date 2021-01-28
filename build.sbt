@@ -89,7 +89,7 @@ val nettyVersion = "4.1.51.Final"
 val nettyTcNativeVersion = "2.0.33.Final"
 val opencensusVersion = "0.24.0"
 val parquetAvroVersion = "0.3.4"
-val parquetExtraVersion = "0.3.4"
+val parquetExtraVersion = "0.4.0"
 val parquetVersion = "1.11.1"
 val protobufGenericVersion = "0.2.9"
 val protobufVersion = "3.14.0"
@@ -805,7 +805,13 @@ lazy val `scio-parquet`: Project = project
     description := "Scio add-on for Parquet",
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
-      "me.lyh" %% "parquet-avro" % parquetExtraVersion,
+      "me.lyh" %% "parquet-avro" % parquetExtraVersion excludeAll (
+        // parquet-avro depends on avro 1.10.x
+        ExclusionRule("org.apache.avro", "avro"),
+        ExclusionRule("org.apache.avro", "avro-compiler")
+      ),
+      "org.apache.avro" % "avro" % avroVersion,
+      "org.apache.avro" % "avro-compiler" % avroVersion,
       "me.lyh" % "parquet-tensorflow" % parquetExtraVersion,
       "com.google.cloud.bigdataoss" % "gcs-connector" % s"hadoop2-$bigdataossVersion",
       "org.apache.beam" % "beam-sdks-java-io-hadoop-format" % beamVersion,
