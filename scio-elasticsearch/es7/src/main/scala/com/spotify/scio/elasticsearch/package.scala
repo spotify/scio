@@ -33,7 +33,10 @@ import org.joda.time.Duration
  * }}}
  */
 package object elasticsearch extends CoderInstances {
-  final case class ElasticsearchOptions(nodes: Seq[HttpHost])
+  final case class ElasticsearchOptions(
+    nodes: Seq[HttpHost],
+    usernameAndPassword: Option[(String, String)] = None
+  )
 
   implicit
   class ElasticsearchSCollection[T](@transient private val self: SCollection[T]) extends AnyVal {

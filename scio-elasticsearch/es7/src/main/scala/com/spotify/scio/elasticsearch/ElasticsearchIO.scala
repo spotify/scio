@@ -30,6 +30,7 @@ import org.joda.time.Duration
 
 import scala.jdk.CollectionConverters._
 import com.spotify.scio.io.TapT
+import org.apache.http.auth.UsernamePasswordCredentials
 
 final case class ElasticsearchIO[T](esOptions: ElasticsearchOptions) extends ScioIO[T] {
   override type ReadP = Nothing
@@ -47,23 +48,26 @@ final case class ElasticsearchIO[T](esOptions: ElasticsearchOptions) extends Sci
       esOptions.nodes.size
     }
 
+    val write = beam.ElasticsearchIO.Write
+      .withNodes(esOptions.nodes.toArray)
+      .withFunction(new SerializableFunction[T, JIterable[DocWriteRequest[_]]]() {
+        override def apply(t: T): JIterable[DocWriteRequest[_]] =
+          params.f(t).asJava
+      })
+      .withFlushInterval(params.flushInterval)
+      .withNumOfShard(shards)
+      .withMaxBulkRequestSize(params.maxBulkRequestSize)
+      .withMaxBulkRequestBytes(params.maxBulkRequestBytes)
+      .withMaxRetries(params.retry.maxRetries)
+      .withRetryPause(params.retry.retryPause)
+      .withError((t: BulkExecutionException) => params.errorFn(t))
+
     data.applyInternal(
-      beam.ElasticsearchIO.Write
-        .withNodes(esOptions.nodes.toArray)
-        .withFunction(new SerializableFunction[T, JIterable[DocWriteRequest[_]]]() {
-          override def apply(t: T): JIterable[DocWriteRequest[_]] =
-            params.f(t).asJava
-        })
-        .withFlushInterval(params.flushInterval)
-        .withNumOfShard(shards)
-        .withMaxBulkRequestSize(params.maxBulkRequestSize)
-        .withMaxBulkRequestBytes(params.maxBulkRequestBytes)
-        .withMaxRetries(params.retry.maxRetries)
-        .withRetryPause(params.retry.retryPause)
-        .withError(new beam.ThrowingConsumer[BulkExecutionException] {
-          override def accept(t: BulkExecutionException): Unit =
-            params.errorFn(t)
-        })
+      esOptions.usernameAndPassword
+        .map { case (username, password) =>
+          write.withCredentials(new UsernamePasswordCredentials(username, password))
+        }
+        .getOrElse(write)
     )
 
     EmptyTap
