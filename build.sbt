@@ -946,6 +946,7 @@ lazy val `scio-examples`: Project = project
         HiddenFileFilter || "TypedBigQueryTornadoes*.scala" || "TypedStorageBigQueryTornadoes*.scala"
       }
     },
+    fork in run := true,
     sources in doc in Compile := List(),
     Test / classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.Flat,
     Test / testGrouping := splitTests(
