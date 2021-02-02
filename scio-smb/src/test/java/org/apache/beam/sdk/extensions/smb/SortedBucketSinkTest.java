@@ -19,17 +19,17 @@ package org.apache.beam.sdk.extensions.smb;
 
 import static org.apache.beam.sdk.extensions.smb.TestUtils.fromFolder;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Serializable;
 import java.nio.channels.Channels;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -45,6 +45,7 @@ import org.apache.beam.sdk.extensions.smb.SortedBucketSink.WriteResult;
 import org.apache.beam.sdk.io.Compression;
 import org.apache.beam.sdk.io.FileIO.Sink;
 import org.apache.beam.sdk.io.FileSystems;
+import org.apache.beam.sdk.io.LocalResources;
 import org.apache.beam.sdk.io.fs.EmptyMatchTreatment;
 import org.apache.beam.sdk.io.fs.MatchResult;
 import org.apache.beam.sdk.io.fs.MatchResult.Status;
@@ -132,6 +133,34 @@ public class SortedBucketSinkTest {
   @Category(NeedsRunner.class)
   public void testMultiBucketMultiShardKeyedPCollection() throws Exception {
     testKeyedCollection(2, 2, false);
+  }
+
+  @SuppressWarnings("unchecked")
+  @Test
+  @Category(NeedsRunner.class)
+  public void testCleansUpTempFiles() throws Exception {
+    final TestBucketMetadata metadata = TestBucketMetadata.of(1, 1);
+
+    final File output = Files.createTempDirectory("output").toFile();
+    final File temp = Files.createTempDirectory("temp").toFile();
+    output.deleteOnExit();
+    temp.deleteOnExit();
+
+    final SortedBucketSink<String, String> sink =
+        new SortedBucketSink<>(
+            metadata,
+            LocalResources.fromFile(output, true),
+            LocalResources.fromFile(temp, true),
+            ".txt",
+            new TestFileOperations(),
+            1,
+            0);
+
+    pipeline.apply(Create.of(Stream.of(input).collect(Collectors.toList()))).apply(sink);
+    pipeline.run().waitUntilFinish();
+
+    // Assert that no files are left in the temp directory
+    Assert.assertFalse(Files.walk(temp.toPath(), 2).anyMatch(path -> path.toFile().isFile()));
   }
 
   @Test
