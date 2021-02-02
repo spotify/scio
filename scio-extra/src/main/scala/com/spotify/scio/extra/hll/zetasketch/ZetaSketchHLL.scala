@@ -67,6 +67,9 @@ final class ZetaSketchHll[T](arrOpt: Option[Array[Byte]], elemOpt: Option[T] = N
     new ZetaSketchHll[T](Option(nhll.serializeToByteArray()))
   }
 
+  /** @return the byte array representation of the hll */
+  def serializeToByteArray(): Array[Byte] = hll.serializeToByteArray()
+
   /** @return the estimated distinct count */
   def estimateSize(): Long = hll.result()
 
