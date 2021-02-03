@@ -539,7 +539,8 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
                 writer.write(CoderUtils.decodeFromByteArray(valueCoder, kv.getValue()));
               } catch (IOException e) {
                 cleanupTempFiles(e, Collections.singleton(tmpFile));
-                throw new RuntimeException("Failed to write sorted-bucket file", e);
+                throw new RuntimeException(
+                    "Failed to write sorted-bucket file " + bucketShardId, e);
               }
             });
       }
@@ -649,7 +650,7 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
         }
       }
 
-      LOG.info("Renaming bucket files");
+      LOG.info("Moving {} bucket files into {}", srcFiles.size(), dstFileAssignment.getDirectory());
       try {
         FileSystems.rename(srcFiles, dstFiles);
       } catch (IOException e) {

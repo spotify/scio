@@ -17,9 +17,14 @@
 
 package org.apache.beam.sdk.extensions.smb;
 
+import org.apache.beam.sdk.Pipeline;
+import org.apache.beam.sdk.extensions.smb.SortedBucketIO.CoGbkTransform;
 import org.apache.beam.sdk.io.AvroGeneratedUser;
+import org.apache.beam.sdk.io.fs.ResourceId;
+import org.apache.beam.sdk.testing.TestPipeline;
 import org.apache.beam.sdk.util.SerializableUtils;
 import org.apache.beam.sdk.values.TupleTag;
+import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -62,5 +67,30 @@ public class AvroSortedBucketIOTest {
                 AvroSortedBucketIO.transformOutput(
                         String.class, "name", AvroGeneratedUser.getClassSchema())
                     .to(folder.toString())));
+  }
+
+  @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
+
+  @Test
+  public void testDefaultsTempLocationOpt() {
+    final Pipeline pipeline = TestPipeline.create();
+    final ResourceId tempDirectory = TestUtils.fromFolder(temporaryFolder);
+    pipeline.getOptions().setTempLocation(tempDirectory.toString());
+
+    final SortedBucketIO.Write<String, AvroGeneratedUser> write =
+        AvroSortedBucketIO.write(String.class, "name", AvroGeneratedUser.class)
+            .to(folder.toString());
+
+    final CoGbkTransform<String, AvroGeneratedUser> transform =
+        SortedBucketIO.read(String.class)
+            .of(
+                AvroSortedBucketIO.read(new TupleTag<>("input"), AvroGeneratedUser.class)
+                    .from(folder.toString()))
+            .transform(
+                AvroSortedBucketIO.transformOutput(String.class, "name", AvroGeneratedUser.class)
+                    .to(folder.toString()));
+
+    Assert.assertEquals(tempDirectory, write.getTempDirectoryOrDefault(pipeline));
+    Assert.assertEquals(tempDirectory, transform.getTempDirectoryOrDefault(pipeline));
   }
 }

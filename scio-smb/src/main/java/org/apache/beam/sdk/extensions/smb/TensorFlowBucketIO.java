@@ -224,7 +224,7 @@ public class TensorFlowBucketIO {
           .build();
     }
 
-    /** Specifies the temporary directory for writing. */
+    /** Specifies the temporary directory for writing. Defaults to --tempLocation if not set. */
     public Write<K> withTempDirectory(String tempDirectory) {
       return toBuilder()
           .setTempDirectory(FileSystems.matchNewResource(tempDirectory, true))
@@ -322,7 +322,7 @@ public class TensorFlowBucketIO {
           .build();
     }
 
-    /** Specifies the temporary directory for writing. */
+    /** Specifies the temporary directory for writing. Defaults to --tempLocation if not set. */
     public TransformOutput<K> withTempDirectory(String tempDirectory) {
       return toBuilder()
           .setTempDirectory(FileSystems.matchNewResource(tempDirectory, true))
