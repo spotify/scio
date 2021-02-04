@@ -18,6 +18,7 @@
 package com.spotify.scio.parquet.types;
 
 import com.spotify.scio.parquet.BeamOutputFile;
+import com.spotify.scio.parquet.WriterUtils;
 import magnolify.parquet.ParquetType;
 import org.apache.beam.sdk.io.FileBasedSink;
 import org.apache.beam.sdk.io.fs.ResourceId;
@@ -63,7 +64,6 @@ public class ParquetTypeSink<T> extends FileBasedSink<T, Void, T> {
     private final SerializableConfiguration conf;
     private final CompressionCodecName compression;
 
-
     public ParquetTypeWriteOperation(
         FileBasedSink<T, Void, T> sink,
         ParquetType<T> type,
@@ -107,14 +107,7 @@ public class ParquetTypeSink<T> extends FileBasedSink<T, Void, T> {
     @Override
     protected void prepareWrite(WritableByteChannel channel) throws Exception {
       BeamOutputFile outputFile = BeamOutputFile.of(channel);
-      // https://github.com/apache/parquet-mr/tree/master/parquet-hadoop#class-parquetoutputformat
-      int rowGroupSize =
-          conf.get().getInt(ParquetOutputFormat.BLOCK_SIZE, ParquetWriter.DEFAULT_BLOCK_SIZE);
-      writer = type.writeBuilder(outputFile)
-          .withConf(conf.get())
-          .withCompressionCodec(compression)
-          .withRowGroupSize(rowGroupSize)
-          .build();
+      writer = WriterUtils.build(type.writeBuilder(outputFile), conf.get(), compression);
     }
 
     @Override

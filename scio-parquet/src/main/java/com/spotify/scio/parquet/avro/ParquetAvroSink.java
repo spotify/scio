@@ -18,6 +18,7 @@
 package com.spotify.scio.parquet.avro;
 
 import com.spotify.scio.parquet.BeamOutputFile;
+import com.spotify.scio.parquet.WriterUtils;
 import org.apache.avro.Schema;
 import org.apache.beam.sdk.io.FileBasedSink;
 import org.apache.beam.sdk.io.fs.ResourceId;
@@ -25,7 +26,7 @@ import org.apache.beam.sdk.io.hadoop.SerializableConfiguration;
 import org.apache.beam.sdk.options.ValueProvider;
 import org.apache.beam.sdk.util.MimeTypes;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.parquet.hadoop.ParquetOutputFormat;
+import org.apache.parquet.avro.AvroParquetWriter;
 import org.apache.parquet.hadoop.ParquetWriter;
 import org.apache.parquet.hadoop.metadata.CompressionCodecName;
 
@@ -107,16 +108,10 @@ public class ParquetAvroSink<T> extends FileBasedSink<T, Void, T> {
     @Override
     protected void prepareWrite(WritableByteChannel channel) throws Exception {
       BeamOutputFile outputFile = BeamOutputFile.of(channel);
-      // https://github.com/apache/parquet-mr/tree/master/parquet-hadoop#class-parquetoutputformat
-      int rowGroupSize =
-          conf.get().getInt(ParquetOutputFormat.BLOCK_SIZE, ParquetWriter.DEFAULT_BLOCK_SIZE);
-      writer =
-          org.apache.parquet.avro.AvroParquetWriter.<T>builder(outputFile)
-              .withSchema(schema)
-              .withConf(conf.get())
-              .withCompressionCodec(compression)
-              .withRowGroupSize(rowGroupSize)
-              .build();
+      AvroParquetWriter.Builder<T> builder = AvroParquetWriter
+          .<T>builder(outputFile)
+          .withSchema(schema);
+      writer = WriterUtils.build(builder, conf.get(), compression);
     }
 
     @Override
