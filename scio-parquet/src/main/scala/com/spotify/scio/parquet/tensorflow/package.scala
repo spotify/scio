@@ -38,14 +38,7 @@ package object tensorflow {
   /** Enhanced version of [[ScioContext]] with Parquet [[Example]] methods. */
   implicit class ParquetExampleScioContext(private val self: ScioContext) extends AnyVal {
 
-    /**
-     * Get an SCollection for a Parquet file as [[Example]] records.
-     *
-     * Note that due to limitations of the underlying `HadoopInputFormatIO`,
-     * Avro [[org.apache.avro.generic.GenericRecord GenericRecord]] and dynamic work rebalancing
-     * are not supported. Without the latter, pipelines may not autoscale up or down during the
-     * initial read and subsequent fused transforms.
-     */
+    /** Get an SCollection for a Parquet file as [[Example]] records. */
     def parquetExampleFile(
       path: String,
       projection: Seq[String] = null,

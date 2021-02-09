@@ -88,7 +88,6 @@ val magnolifyVersion = "0.4.1"
 val nettyVersion = "4.1.51.Final"
 val nettyTcNativeVersion = "2.0.33.Final"
 val opencensusVersion = "0.24.0"
-val parquetAvroVersion = "0.3.4"
 val parquetExtraVersion = "0.4.0"
 val parquetVersion = "1.11.1"
 val protobufGenericVersion = "0.2.9"
@@ -814,6 +813,7 @@ lazy val `scio-parquet`: Project = project
       "org.apache.avro" % "avro-compiler" % avroVersion,
       "me.lyh" % "parquet-tensorflow" % parquetExtraVersion,
       "com.google.cloud.bigdataoss" % "gcs-connector" % s"hadoop2-$bigdataossVersion",
+      "com.spotify" %% "magnolify-parquet" % magnolifyVersion,
       "org.apache.beam" % "beam-sdks-java-io-hadoop-format" % beamVersion,
       "org.apache.hadoop" % "hadoop-client" % hadoopVersion,
       "org.apache.parquet" % "parquet-avro" % parquetVersion,
