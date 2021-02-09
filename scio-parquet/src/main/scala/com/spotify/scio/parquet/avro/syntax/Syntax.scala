@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Spotify AB.
+ * Copyright 2021 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,22 +15,6 @@
  * under the License.
  */
 
-package com.spotify.scio.parquet
+package com.spotify.scio.parquet.avro.syntax
 
-import com.spotify.scio.parquet.avro.syntax.Syntax
-
-/**
- * Main package for Parquet Avro APIs. Import all.
- *
- * {{{
- * import com.spotify.scio.parquet.avro._
- * }}}
- */
-package object avro extends Syntax {
-
-  /** Alias for `me.lyh.parquet.avro.Projection`. */
-  val Projection = me.lyh.parquet.avro.Projection
-
-  /** Alias for `me.lyh.parquet.avro.Predicate`. */
-  val Predicate = me.lyh.parquet.avro.Predicate
-}
+trait Syntax extends ScioContextSyntax with SCollectionSyntax
