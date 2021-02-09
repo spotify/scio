@@ -101,7 +101,7 @@ object ParquetTypeIO {
   object WriteParam {
     private[types] val DefaultNumShards = 0
     private[types] val DefaultSuffix = ".parquet"
-    private[types] val DefaultCompression = CompressionCodecName.SNAPPY
+    private[types] val DefaultCompression = CompressionCodecName.GZIP
   }
 
   final case class WriteParam[T] private (
