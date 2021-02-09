@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Spotify AB.
+ * Copyright 2021 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,6 @@
  * under the License.
  */
 
-package com.spotify.scio.parquet
+package com.spotify.scio.parquet.tensorflow.syntax
 
-import com.spotify.scio.parquet.tensorflow.syntax.Syntax
-
-/**
- * Main package for Parquet TensorFlow APIs. Import all.
- *
- * {{{
- * import com.spotify.scio.parquet.tensorflow._
- * }}}
- */
-package object tensorflow extends Syntax
+trait Syntax extends ScioContextSyntax with SCollectionSyntax
