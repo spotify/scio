@@ -208,7 +208,7 @@ object ParquetAvroIO {
     private[avro] val DefaultSchema = null
     private[avro] val DefaultNumShards = 0
     private[avro] val DefaultSuffix = ".parquet"
-    private[avro] val DefaultCompression = CompressionCodecName.SNAPPY
+    private[avro] val DefaultCompression = CompressionCodecName.GZIP
     private[avro] val DefaultFilenameFunction = None
   }
 
