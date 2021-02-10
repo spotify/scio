@@ -15,15 +15,6 @@
  * under the License.
  */
 
-package com.spotify.scio.parquet
+package com.spotify.scio.parquet.avro.syntax
 
-import com.spotify.scio.parquet.types.syntax.Syntax
-
-/**
- * Main package for Parquet type-safe APIs. Import all.
- *
- * {{{
- * import com.spotify.scio.parquet.types._
- * }}}
- */
-package object types extends Syntax
+trait Syntax extends ScioContextSyntax with SCollectionSyntax
