@@ -49,7 +49,7 @@ public class AvroFileOperations<ValueT> extends FileOperations<ValueT> {
   private final PatchedSerializableAvroCodecFactory codec;
   private final Map<String, Object> metadata;
 
-  static final CodecFactory defaultCodec() {
+  static CodecFactory defaultCodec() {
     return CodecFactory.deflateCodec(6);
   }
 
@@ -58,7 +58,7 @@ public class AvroFileOperations<ValueT> extends FileOperations<ValueT> {
     super(Compression.UNCOMPRESSED, MimeTypes.BINARY); // Avro has its own compression via codec
     this.recordClass = recordClass;
     this.schemaSupplier = new SerializableSchemaSupplier(schema);
-    this.codec = new PatchedSerializableAvroCodecFactory(codec);
+    this.codec = new PatchedSerializableAvroCodecFactory(codec == null ? defaultCodec() : codec);
     this.metadata = metadata;
   }
 
