@@ -188,10 +188,10 @@ public class AvroSortedBucketIO {
       @SuppressWarnings("unchecked")
       final AvroFileOperations<T> fileOperations =
           getRecordClass() == null
-              ? AvroFileOperations.of(getSchema(), null, null)
+              ? AvroFileOperations.of(getSchema())
               : (AvroFileOperations<T>)
                   AvroFileOperations.of(
-                      (Class<SpecificRecordBase>) getRecordClass(), null, null);
+                      (Class<SpecificRecordBase>) getRecordClass());
       return new BucketedInput<>(
           getTupleTag(),
           getInputDirectories(),

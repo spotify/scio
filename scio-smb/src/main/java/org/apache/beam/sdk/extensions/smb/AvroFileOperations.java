@@ -58,7 +58,7 @@ public class AvroFileOperations<ValueT> extends FileOperations<ValueT> {
     super(Compression.UNCOMPRESSED, MimeTypes.BINARY); // Avro has its own compression via codec
     this.recordClass = recordClass;
     this.schemaSupplier = new SerializableSchemaSupplier(schema);
-    this.codec = new PatchedSerializableAvroCodecFactory(codec == null ? defaultCodec() : codec);
+    this.codec = new PatchedSerializableAvroCodecFactory(codec);
     this.metadata = metadata;
   }
 
