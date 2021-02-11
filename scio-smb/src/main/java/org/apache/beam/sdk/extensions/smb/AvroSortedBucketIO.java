@@ -47,7 +47,6 @@ public class AvroSortedBucketIO {
     return new AutoValue_AvroSortedBucketIO_Read.Builder<>()
         .setTupleTag(tupleTag)
         .setFilenameSuffix(DEFAULT_SUFFIX)
-        .setCodec(AvroFileOperations.defaultCodec())
         .setSchema(schema)
         .build();
   }
@@ -58,7 +57,6 @@ public class AvroSortedBucketIO {
     return new AutoValue_AvroSortedBucketIO_Read.Builder<T>()
         .setTupleTag(tupleTag)
         .setFilenameSuffix(DEFAULT_SUFFIX)
-        .setCodec(AvroFileOperations.defaultCodec())
         .setRecordClass(recordClass)
         .build();
   }
@@ -136,11 +134,6 @@ public class AvroSortedBucketIO {
     @Nullable
     abstract Class<T> getRecordClass();
 
-    abstract CodecFactory getCodec();
-
-    @Nullable
-    abstract Map<String, Object> getMetadata();
-
     @Nullable
     abstract Predicate<T> getPredicate();
 
@@ -159,10 +152,6 @@ public class AvroSortedBucketIO {
       abstract Builder<T> setSchema(Schema schema);
 
       abstract Builder<T> setRecordClass(Class<T> recordClass);
-
-      abstract Builder<T> setCodec(CodecFactory codec);
-
-      abstract Builder<T> setMetadata(Map<String, Object> metadata);
 
       abstract Builder<T> setPredicate(Predicate<T> predicate);
 
@@ -199,10 +188,10 @@ public class AvroSortedBucketIO {
       @SuppressWarnings("unchecked")
       final AvroFileOperations<T> fileOperations =
           getRecordClass() == null
-              ? AvroFileOperations.of(getSchema(), getCodec(), getMetadata())
+              ? AvroFileOperations.of(getSchema())
               : (AvroFileOperations<T>)
                   AvroFileOperations.of(
-                      (Class<SpecificRecordBase>) getRecordClass(), getCodec(), getMetadata());
+                      (Class<SpecificRecordBase>) getRecordClass());
       return new BucketedInput<>(
           getTupleTag(),
           getInputDirectories(),
@@ -230,6 +219,9 @@ public class AvroSortedBucketIO {
     abstract Class<T> getRecordClass();
 
     abstract CodecFactory getCodec();
+
+    @Nullable
+    abstract Map<String, Object> getMetadata();
 
     abstract Builder<K, T> toBuilder();
 
@@ -261,6 +253,8 @@ public class AvroSortedBucketIO {
 
       abstract Builder<K, T> setCodec(CodecFactory codec);
 
+      abstract Builder<K, T> setMetadata(Map<String, Object> metadata);
+
       abstract Builder<K, T> setKeyCacheSize(int cacheSize);
 
       abstract Builder<K, T> setFilenamePrefix(String filenamePrefix);
@@ -281,6 +275,11 @@ public class AvroSortedBucketIO {
     /** Specifies the {@link HashType} for partitioning. */
     public Write<K, T> withHashType(HashType hashType) {
       return toBuilder().setHashType(hashType).build();
+    }
+
+    /** Specifies the Avro metadata. */
+    public Write<K, T> withMetadata(Map<String, Object> metadata) {
+      return toBuilder().setMetadata(metadata).build();
     }
 
     /** Writes to the given output directory. */
