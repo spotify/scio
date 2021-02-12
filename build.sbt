@@ -1053,6 +1053,7 @@ lazy val `scio-smb`: Project = project
       "org.apache.hadoop" % "hadoop-client" % hadoopVersion,
       "org.apache.parquet" % "parquet-avro" % parquetVersion,
       "org.apache.parquet" % "parquet-common" % parquetVersion,
+      "com.spotify" %% "magnolify-parquet" % magnolifyVersion,
       // #3260 work around for sorter memory limit until we patch upstream
       // "org.apache.beam" % "beam-sdks-java-extensions-sorter" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-extensions-protobuf" % beamVersion,
