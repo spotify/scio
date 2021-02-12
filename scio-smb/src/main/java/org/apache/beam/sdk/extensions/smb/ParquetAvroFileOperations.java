@@ -174,8 +174,8 @@ public class ParquetAvroFileOperations<ValueT> extends FileOperations<ValueT> {
 
   private static class ParquetAvroSink<ValueT> implements FileIO.Sink<ValueT> {
     private final SerializableSchemaSupplier schemaSupplier;
-    private final SerializableConfiguration conf;
     private final CompressionCodecName compression;
+    private final SerializableConfiguration conf;
     private transient ParquetWriter<ValueT> writer;
 
     private ParquetAvroSink(

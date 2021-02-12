@@ -44,7 +44,7 @@ import java.util.stream.IntStream;
 import static org.apache.beam.sdk.extensions.smb.TestUtils.fromFolder;
 import static org.apache.beam.sdk.transforms.display.DisplayDataMatchers.hasDisplayItem;
 
-/** Unit tests for {@link AvroFileOperations}. */
+/** Unit tests for {@link ParquetAvroFileOperations}. */
 public class ParquetAvroFileOperationsTest {
   @Rule public final TemporaryFolder output = new TemporaryFolder();
 
@@ -71,7 +71,7 @@ public class ParquetAvroFileOperationsTest {
   @Test
   public void testGenericRecord() throws Exception {
     final ResourceId file =
-        fromFolder(output).resolve("file.avro", ResolveOptions.StandardResolveOptions.RESOLVE_FILE);
+        fromFolder(output).resolve("file.parquet", ResolveOptions.StandardResolveOptions.RESOLVE_FILE);
     writeFile(file);
 
     final ParquetAvroFileOperations<GenericRecord> fileOperations =
@@ -86,7 +86,7 @@ public class ParquetAvroFileOperationsTest {
   @Test
   public void testProjection() throws Exception {
     final ResourceId file =
-        fromFolder(output).resolve("file.avro", ResolveOptions.StandardResolveOptions.RESOLVE_FILE);
+        fromFolder(output).resolve("file.parquet", ResolveOptions.StandardResolveOptions.RESOLVE_FILE);
     writeFile(file);
 
     final Schema projection =
@@ -113,7 +113,7 @@ public class ParquetAvroFileOperationsTest {
   @Test
   public void testPredicate() throws Exception {
     final ResourceId file =
-        fromFolder(output).resolve("file.avro", ResolveOptions.StandardResolveOptions.RESOLVE_FILE);
+        fromFolder(output).resolve("file.parquet", ResolveOptions.StandardResolveOptions.RESOLVE_FILE);
     writeFile(file);
 
     final FilterPredicate predicate = FilterApi.ltEq(FilterApi.intColumn("age"), 5);
