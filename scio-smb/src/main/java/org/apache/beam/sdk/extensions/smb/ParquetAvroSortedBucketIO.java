@@ -268,7 +268,7 @@ public class ParquetAvroSortedBucketIO {
     @Override
     BucketMetadata<K, T> getBucketMetadata() {
       try {
-        return new AvroBucketMetadata<>(
+        return new ParquetBucketMetadata<>(
             getNumBuckets(),
             getNumShards(),
             getKeyClass(),
@@ -402,7 +402,7 @@ public class ParquetAvroSortedBucketIO {
 
       return (numBuckets, numShards, hashType) -> {
         try {
-          return new AvroBucketMetadata<>(
+          return new ParquetBucketMetadata<>(
               numBuckets,
               numShards,
               keyClass,
