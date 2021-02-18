@@ -32,7 +32,7 @@ import scala.jdk.CollectionConverters._
 
 object ParquetTypeFileOperationsTest {
   case class User(name: String, age: Int)
-  val users = (1 to 10).map(i => User(s"user$i", i))
+  val users: Seq[User] = (1 to 10).map(i => User(s"user$i", i))
 
   case class Username(name: String)
 }
