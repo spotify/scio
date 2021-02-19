@@ -43,7 +43,7 @@ import org.junit.Test;
 /** Unit tests for {@link AvroBucketMetadata}. */
 public class AvroBucketMetadataTest {
 
-  private static final Schema LOCATION_SCHEMA =
+  static final Schema LOCATION_SCHEMA =
       Schema.createRecord(
           "Location",
           "",
@@ -62,10 +62,10 @@ public class AvroBucketMetadataTest {
                   "",
                   Collections.<String>emptyList())));
 
-  private static final Schema LOCATION_UNION_SCHEMA =
+  static final Schema LOCATION_UNION_SCHEMA =
       Schema.createUnion(Schema.create(Type.NULL), LOCATION_SCHEMA);
 
-  private static final Schema RECORD_SCHEMA =
+  static final Schema RECORD_SCHEMA =
       Schema.createRecord(
           "Record",
           "",
