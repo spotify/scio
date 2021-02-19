@@ -22,7 +22,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.reflect.ReflectData;
-import org.apache.beam.sdk.coders.*;
+import org.apache.beam.sdk.coders.CannotProvideCoderException;
+import org.apache.beam.sdk.coders.Coder;
 import org.apache.beam.sdk.transforms.display.DisplayData;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions;
 
@@ -135,8 +136,9 @@ public class ParquetBucketMetadata<K, V> extends BucketMetadata<K, V> {
         return extractAvroKey(value);
       case SCALA:
         return extractScalaKey(value);
+      default:
+        throw new IllegalStateException("Unexpected value: " + recordType);
     }
-    throw new IllegalStateException("Should never reach here");
   }
 
   private K extractAvroKey(V value) {
@@ -194,7 +196,10 @@ public class ParquetBucketMetadata<K, V> extends BucketMetadata<K, V> {
     } else if (scala.Product.class.isAssignableFrom(recordClass)) {
       return RecordType.SCALA;
     } else {
-      throw new IllegalArgumentException("Unsupported record class " + recordClass.getName());
+      throw new IllegalArgumentException(
+          "Unsupported record class "
+              + recordClass.getName()
+              + ". Must be an Avro record or a Scala case class.");
     }
   }
 
@@ -207,8 +212,9 @@ public class ParquetBucketMetadata<K, V> extends BucketMetadata<K, V> {
             new ReflectData(recordClass.getClassLoader()).getSchema(recordClass));
       case SCALA:
         return validateScalaKeyField(keyField, keyClass, recordClass);
+      default:
+        throw new IllegalStateException("Unexpected value: " + getRecordType(recordClass));
     }
-    throw new IllegalStateException("Should never reach here");
   }
 
   private static String validateScalaKeyField(
