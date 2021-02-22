@@ -188,7 +188,7 @@ object ParquetTypeSortedBucketIO {
     override def getFilenameSuffix: String = filenameSuffix
     override def getFilenamePrefix: String = filenamePrefix
     override def getFileOperations: FileOperations[T] =
-      ParquetTypeFileOperations(compression, configuration)
+      ParquetTypeFileOperations[T](compression, configuration)
 
     override def getNewBucketMetadataFn: SortedBucketTransform.NewBucketMetadataFn[K, T] = {
       val _keyField = keyField
