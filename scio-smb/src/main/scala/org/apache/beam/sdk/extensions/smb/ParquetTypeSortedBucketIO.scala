@@ -136,7 +136,7 @@ object ParquetTypeSortedBucketIO {
     override def getFilenameSuffix: String = filenameSuffix
     override def getSorterMemoryMb: Int = sorterMemoryMb
     override def getFileOperations: FileOperations[T] =
-      ParquetTypeFileOperations(compression, configuration)
+      ParquetTypeFileOperations[T](compression, configuration)
 
     override def getBucketMetadata: BucketMetadata[K, T] =
       new ParquetBucketMetadata[K, T](
