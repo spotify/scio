@@ -18,7 +18,6 @@
 package com.spotify.scio.parquet.avro
 
 import java.lang.{Boolean => JBoolean}
-
 import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import com.spotify.scio.io.{ScioIO, Tap, TapOf}
@@ -47,6 +46,7 @@ import org.apache.beam.sdk.io.FileBasedSink.FilenamePolicy
 import org.apache.beam.sdk.io.fs.ResolveOptions.StandardResolveOptions
 import org.apache.beam.sdk.io.fs.ResourceId
 import org.apache.beam.sdk.transforms.windowing.{BoundedWindow, PaneInfo}
+import org.apache.hadoop.conf.Configuration
 
 import scala.util.Either
 
@@ -58,29 +58,13 @@ final case class ParquetAvroIO[T: ClassTag: Coder](path: String) extends ScioIO[
   private val cls = ScioUtil.classOf[T]
 
   override protected def read(sc: ScioContext, params: ReadP): SCollection[T] = {
-    val job = Job.getInstance()
-    GcsConnectorUtil.setInputPaths(sc, job, path)
-    job.setInputFormatClass(classOf[AvroParquetInputFormat[T]])
-    job.getConfiguration.setClass("key.class", classOf[Void], classOf[Void])
-    job.getConfiguration.setClass("value.class", params.avroClass, params.avroClass)
-
-    AvroParquetInputFormat.setAvroReadSchema(job, params.readSchema)
-    if (params.projection != null) {
-      AvroParquetInputFormat.setRequestedProjection(job, params.projection)
-    }
-    if (params.predicate != null) {
-      ParquetInputFormat.setFilterPredicate(job.getConfiguration, params.predicate)
-    }
-
     val coder = CoderMaterializer.beam(sc, Coder[T])
     sc.pipeline.getCoderRegistry.registerCoderForClass(ScioUtil.classOf[T], coder)
-
-    val source = params.read.withConfiguration(job.getConfiguration)
-    sc.applyTransform(source).map(_.getValue)
+    sc.applyTransform(params.read(sc, path)).map(_.getValue)
   }
 
   override protected def write(data: SCollection[T], params: WriteP): Tap[T] = {
-    val job = Job.getInstance()
+    val job = Job.getInstance(params.conf)
     if (ScioUtil.isLocalRunner(data.context.options.getRunner)) {
       GcsConnectorUtil.setCredentials(job)
     }
@@ -118,7 +102,7 @@ final case class ParquetAvroIO[T: ClassTag: Coder](path: String) extends ScioIO[
         WriteFiles.to(sink).withNumShards(params.numShards)
       }
     data.applyInternal(t)
-    tap(ParquetAvroIO.ReadParam[T, T](writerSchema, null, identity))
+    tap(ParquetAvroIO.ReadParam[T, T](identity, writerSchema, null))
   }
 
   override def tap(params: ReadP): Tap[T] =
@@ -136,7 +120,6 @@ final case class ParquetAvroIO[T: ClassTag: Coder](path: String) extends ScioIO[
   ): FilenamePolicy = {
 
     new FileBasedSink.FilenamePolicy {
-
       override def windowedFilename(
         shardNumber: Int,
         numShards: Int,
@@ -169,10 +152,16 @@ final case class ParquetAvroIO[T: ClassTag: Coder](path: String) extends ScioIO[
 }
 
 object ParquetAvroIO {
+  object ReadParam {
+    private[avro] val DefaultProjection = null
+    private[avro] val DefaultPredicate = null
+    private[avro] val DefaultConfiguration = new Configuration()
+  }
   final case class ReadParam[A: ClassTag, T: ClassTag] private (
-    projection: Schema,
-    predicate: FilterPredicate,
-    projectionFn: A => T
+    projectionFn: A => T,
+    projection: Schema = ReadParam.DefaultProjection,
+    predicate: FilterPredicate = ReadParam.DefaultPredicate,
+    conf: Configuration = ReadParam.DefaultConfiguration
   ) {
     val avroClass: Class[A] = ScioUtil.classOf[A]
     val readSchema: Schema = {
@@ -183,7 +172,21 @@ object ParquetAvroIO {
       }
     }
 
-    val read: HadoopFormatIO.Read[JBoolean, T] = {
+    def read(sc: ScioContext, path: String): HadoopFormatIO.Read[JBoolean, T] = {
+      val job = Job.getInstance(conf)
+      GcsConnectorUtil.setInputPaths(sc, job, path)
+      job.setInputFormatClass(classOf[AvroParquetInputFormat[T]])
+      job.getConfiguration.setClass("key.class", classOf[Void], classOf[Void])
+      job.getConfiguration.setClass("value.class", avroClass, avroClass)
+
+      AvroParquetInputFormat.setAvroReadSchema(job, readSchema)
+      if (projection != null) {
+        AvroParquetInputFormat.setRequestedProjection(job, projection)
+      }
+      if (predicate != null) {
+        ParquetInputFormat.setFilterPredicate(job.getConfiguration, predicate)
+      }
+
       val g = ClosureCleaner.clean(projectionFn) // defeat closure
       val aCls = avroClass
       val oCls = ScioUtil.classOf[T]
@@ -201,6 +204,7 @@ object ParquetAvroIO {
           override def getInputTypeDescriptor = TypeDescriptor.of(aCls)
           override def getOutputTypeDescriptor = TypeDescriptor.of(oCls)
         })
+        .withConfiguration(job.getConfiguration)
     }
   }
 
@@ -210,6 +214,7 @@ object ParquetAvroIO {
     private[avro] val DefaultSuffix = ".parquet"
     private[avro] val DefaultCompression = CompressionCodecName.GZIP
     private[avro] val DefaultFilenameFunction = None
+    private[avro] val DefaultConfiguration = new Configuration()
   }
 
   final case class WriteParam private (
@@ -219,7 +224,8 @@ object ParquetAvroIO {
     compression: CompressionCodecName = WriteParam.DefaultCompression,
     filenameFunction: Option[
       Either[(Int, Int, BoundedWindow, PaneInfo) => String, (Int, Int) => String]
-    ] = WriteParam.DefaultFilenameFunction
+    ] = WriteParam.DefaultFilenameFunction,
+    conf: Configuration = WriteParam.DefaultConfiguration
   )
 }
 
@@ -230,7 +236,10 @@ case class ParquetAvroTap[A, T: ClassTag: Coder](
   override def value: Iterator[T] = {
     val xs = FileSystems.`match`(path).metadata().asScala.toList
     xs.iterator.flatMap { metadata =>
-      val reader = AvroParquetReader.builder[A](BeamInputFile.of(metadata.resourceId())).build()
+      val reader = AvroParquetReader
+        .builder[A](BeamInputFile.of(metadata.resourceId()))
+        .withConf(params.conf)
+        .build()
       new Iterator[T] {
         private var current: A = reader.read()
         override def hasNext: Boolean = current != null

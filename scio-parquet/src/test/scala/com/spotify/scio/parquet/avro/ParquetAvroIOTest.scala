@@ -132,7 +132,7 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
     files.length shouldBe 1
 
     val params =
-      ParquetAvroIO.ReadParam[GenericRecord, GenericRecord](AvroUtils.schema, null, identity)
+      ParquetAvroIO.ReadParam[GenericRecord, GenericRecord](identity, AvroUtils.schema, null)
     val tap = ParquetAvroTap(files.head.getAbsolutePath, params)
     tap.value.toList should contain theSameElementsAs genericRecords
 
@@ -180,7 +180,7 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
     files.length shouldBe 5
 
     val params =
-      ParquetAvroIO.ReadParam[GenericRecord, GenericRecord](AvroUtils.schema, null, identity)
+      ParquetAvroIO.ReadParam[GenericRecord, GenericRecord](identity, AvroUtils.schema, null)
 
     (0 until 10)
       .sliding(2, 2)
@@ -223,7 +223,7 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
     files.head.getAbsolutePath should include("part-0-of-1-with-custom-naming.parquet")
 
     val params =
-      ParquetAvroIO.ReadParam[GenericRecord, GenericRecord](AvroUtils.schema, null, identity)
+      ParquetAvroIO.ReadParam[GenericRecord, GenericRecord](identity, AvroUtils.schema, null)
     val tap = ParquetAvroTap(files.head.getAbsolutePath, params)
     tap.value.toList should contain theSameElementsAs genericRecords
 

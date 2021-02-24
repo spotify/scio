@@ -20,9 +20,11 @@ package com.spotify.scio.parquet.avro.syntax
 import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.parquet.avro.ParquetAvroIO
+import com.spotify.scio.parquet.avro.ParquetAvroIO.ReadParam
 import com.spotify.scio.values.SCollection
 import org.apache.avro.Schema
 import org.apache.avro.specific.SpecificRecordBase
+import org.apache.hadoop.conf.Configuration
 import org.apache.parquet.filter2.predicate.FilterPredicate
 import org.slf4j.LoggerFactory
 
@@ -43,11 +45,12 @@ final class ScioContextOps(@transient private val self: ScioContext) extends Any
    */
   def parquetAvroFile[T <: SpecificRecordBase: ClassTag](
     path: String,
-    projection: Schema = null,
-    predicate: FilterPredicate = null
+    projection: Schema = ReadParam.DefaultProjection,
+    predicate: FilterPredicate = ReadParam.DefaultPredicate,
+    conf: Configuration = ReadParam.DefaultConfiguration
   ): ParquetAvroFile[T] =
     self.requireNotClosed {
-      new ParquetAvroFile[T](self, path, projection, predicate)
+      new ParquetAvroFile[T](self, path, projection, predicate, conf)
     }
 }
 
@@ -55,7 +58,8 @@ class ParquetAvroFile[T: ClassTag] private[avro] (
   context: ScioContext,
   path: String,
   projection: Schema,
-  predicate: FilterPredicate
+  predicate: FilterPredicate,
+  conf: Configuration
 ) {
   private val logger = LoggerFactory.getLogger(this.getClass)
 
@@ -64,7 +68,7 @@ class ParquetAvroFile[T: ClassTag] private[avro] (
    * file.
    */
   def map[U: ClassTag: Coder](f: T => U): SCollection[U] = {
-    val param = ParquetAvroIO.ReadParam[T, U](projection, predicate, f)
+    val param = ParquetAvroIO.ReadParam[T, U](f, projection, predicate, conf)
     context.read(ParquetAvroIO[U](path))(param)
   }
 
