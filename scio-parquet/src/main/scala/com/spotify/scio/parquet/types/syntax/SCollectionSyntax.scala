@@ -23,6 +23,7 @@ import com.spotify.scio.parquet.types.ParquetTypeIO
 import com.spotify.scio.parquet.types.ParquetTypeIO.WriteParam
 import com.spotify.scio.values.SCollection
 import magnolify.parquet.ParquetType
+import org.apache.hadoop.conf.Configuration
 import org.apache.parquet.hadoop.metadata.CompressionCodecName
 
 import scala.reflect.ClassTag
@@ -35,9 +36,10 @@ final class SCollectionOps[T](private val self: SCollection[T]) extends AnyVal {
     path: String,
     numShards: Int = WriteParam.DefaultNumShards,
     suffix: String = WriteParam.DefaultSuffix,
-    compression: CompressionCodecName = WriteParam.DefaultCompression
+    compression: CompressionCodecName = WriteParam.DefaultCompression,
+    conf: Configuration = WriteParam.DefaultConfiguration
   )(implicit ct: ClassTag[T], coder: Coder[T], pt: ParquetType[T]): ClosedTap[T] =
-    self.write(ParquetTypeIO[T](path))(WriteParam(numShards, suffix, compression))
+    self.write(ParquetTypeIO[T](path))(WriteParam(numShards, suffix, compression, conf))
 }
 
 trait SCollectionSyntax {

@@ -35,6 +35,7 @@ import org.apache.beam.sdk.io.{
 import org.apache.beam.sdk.io.hadoop.format.HadoopFormatIO
 import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider
 import org.apache.beam.sdk.transforms.SimpleFunction
+import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.mapreduce.Job
 import org.apache.parquet.filter2.predicate.FilterPredicate
 import org.apache.parquet.hadoop.ParquetInputFormat
@@ -52,7 +53,7 @@ final case class ParquetTypeIO[T: ClassTag: Coder: ParquetType](path: String) ex
   private val tpe: ParquetType[T] = implicitly[ParquetType[T]]
 
   override protected def read(sc: ScioContext, params: ReadP): SCollection[T] = {
-    val job = Job.getInstance()
+    val job = Job.getInstance(params.conf)
     GcsConnectorUtil.setInputPaths(sc, job, path)
     tpe.setupInput(job)
     job.getConfiguration.setClass("key.class", classOf[Void], classOf[Void])
@@ -96,18 +97,27 @@ final case class ParquetTypeIO[T: ClassTag: Coder: ParquetType](path: String) ex
 }
 
 object ParquetTypeIO {
-  final case class ReadParam[T] private (predicate: FilterPredicate = null)
+  object ReadParam {
+    private[types] val DefaultPredicate = null
+    private[types] val DefaultConfiguration = new Configuration()
+  }
+  final case class ReadParam[T] private (
+    predicate: FilterPredicate = null,
+    conf: Configuration = ReadParam.DefaultConfiguration
+  )
 
   object WriteParam {
     private[types] val DefaultNumShards = 0
     private[types] val DefaultSuffix = ".parquet"
     private[types] val DefaultCompression = CompressionCodecName.GZIP
+    private[types] val DefaultConfiguration = new Configuration()
   }
 
   final case class WriteParam[T] private (
     numShards: Int = WriteParam.DefaultNumShards,
     suffix: String = WriteParam.DefaultSuffix,
-    compression: CompressionCodecName = WriteParam.DefaultCompression
+    compression: CompressionCodecName = WriteParam.DefaultCompression,
+    conf: Configuration = WriteParam.DefaultConfiguration
   )
 }
 
