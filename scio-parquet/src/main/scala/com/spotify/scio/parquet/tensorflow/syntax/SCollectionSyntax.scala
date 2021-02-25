@@ -22,6 +22,7 @@ import com.spotify.scio.parquet.tensorflow.ParquetExampleIO
 import com.spotify.scio.parquet.tensorflow.ParquetExampleIO.WriteParam
 import com.spotify.scio.values.SCollection
 import me.lyh.parquet.tensorflow.Schema
+import org.apache.hadoop.conf.Configuration
 import org.apache.parquet.hadoop.metadata.CompressionCodecName
 import org.tensorflow.proto.example.Example
 
@@ -34,9 +35,10 @@ final class SCollectionOps(private val self: SCollection[Example]) extends AnyVa
     schema: Schema,
     numShards: Int = WriteParam.DefaultNumShards,
     suffix: String = WriteParam.DefaultSuffix,
-    compression: CompressionCodecName = WriteParam.DefaultCompression
+    compression: CompressionCodecName = WriteParam.DefaultCompression,
+    conf: Configuration = WriteParam.DefaultConfiguration
   ): ClosedTap[Example] =
-    self.write(ParquetExampleIO(path))(WriteParam(schema, numShards, suffix, compression))
+    self.write(ParquetExampleIO(path))(WriteParam(schema, numShards, suffix, compression, conf))
 }
 
 trait SCollectionSyntax {
