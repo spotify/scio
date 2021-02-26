@@ -119,7 +119,7 @@ class ParquetEndToEndTest extends PipelineSpec {
           .read[User](new TupleTag[User]("rhs"))
           .from(usersDir.toString)
       )
-    val userMap = users.groupBy(_.name).view.mapValues(_.head)
+    val userMap = users.groupBy(_.name).mapValues(_.head)
     val expected = events.groupBy(_.user).toSeq.flatMap { case (k, es) =>
       es.map(e => (k, (e, userMap(k))))
     }
@@ -162,7 +162,7 @@ class ParquetEndToEndTest extends PipelineSpec {
           .read(new TupleTag[GenericRecord]("rhs"), userSchema)
           .from(usersDir.toString)
       )
-    val userMap = avroUsers.groupBy(_.get("name").toString).view.mapValues(_.head)
+    val userMap = avroUsers.groupBy(_.get("name").toString).mapValues(_.head)
     val expected = avroEvents.groupBy(_.get("user").toString).toSeq.flatMap { case (k, es) =>
       es.map(e => (k, (e, userMap(k))))
     }
