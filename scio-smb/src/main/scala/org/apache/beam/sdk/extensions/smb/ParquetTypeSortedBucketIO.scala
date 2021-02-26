@@ -48,7 +48,8 @@ object ParquetTypeSortedBucketIO {
     inputDirectories: Seq[ResourceId] = Nil,
     filenameSuffix: String = DefaultSuffix,
     filterPredicate: FilterPredicate = null,
-    predicate: Predicate[T] = null
+    predicate: Predicate[T] = null,
+    configuration: Configuration = new Configuration()
   ) extends SortedBucketIO.Read[T] {
     def from(inputDirectories: String*): Read[T] =
       this.copy(inputDirectories = inputDirectories.map(FileSystems.matchNewResource(_, true)))
@@ -62,10 +63,13 @@ object ParquetTypeSortedBucketIO {
     def withPredicate(predicate: Predicate[T]): Read[T] =
       this.copy(predicate = predicate)
 
+    def withConfiguration(configuration: Configuration): Read[T] =
+      this.copy(configuration = configuration)
+
     override def getTupleTag: TupleTag[T] = tupleTag
 
     override protected def toBucketedInput: SortedBucketSource.BucketedInput[_, T] = {
-      val fileOperations = ParquetTypeFileOperations[T](filterPredicate)
+      val fileOperations = ParquetTypeFileOperations[T](filterPredicate, configuration)
       new BucketedInput(
         getTupleTag,
         inputDirectories.asJava,

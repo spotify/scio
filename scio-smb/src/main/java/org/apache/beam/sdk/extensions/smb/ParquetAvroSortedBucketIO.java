@@ -49,6 +49,7 @@ public class ParquetAvroSortedBucketIO {
         .setTupleTag(tupleTag)
         .setFilenameSuffix(DEFAULT_SUFFIX)
         .setSchema(schema)
+        .setConfiguration(new Configuration())
         .build();
   }
 
@@ -109,6 +110,8 @@ public class ParquetAvroSortedBucketIO {
     @Nullable
     abstract Predicate<T> getPredicate();
 
+    abstract Configuration getConfiguration();
+
     abstract Builder<T> toBuilder();
 
     @AutoValue.Builder
@@ -126,6 +129,8 @@ public class ParquetAvroSortedBucketIO {
       abstract Builder<T> setFilterPredicate(FilterPredicate predicate);
 
       abstract Builder<T> setPredicate(Predicate<T> predicate);
+
+      abstract Builder<T> setConfiguration(Configuration configuration);
 
       abstract Read<T> build();
     }
@@ -160,11 +165,16 @@ public class ParquetAvroSortedBucketIO {
       return toBuilder().setPredicate(predicate).build();
     }
 
+    /** Specifies the Hadoop {@link Configuration}. */
+    public Read<T> withConfiguration(Configuration configuration) {
+      return toBuilder().setConfiguration(configuration).build();
+    }
+
     @Override
     protected BucketedInput<?, T> toBucketedInput() {
       @SuppressWarnings("unchecked")
       final ParquetAvroFileOperations<T> fileOperations =
-          ParquetAvroFileOperations.of(getSchema(), getFilterPredicate());
+          ParquetAvroFileOperations.of(getSchema(), getFilterPredicate(), getConfiguration());
       return new BucketedInput<>(
           getTupleTag(),
           getInputDirectories(),
@@ -306,7 +316,7 @@ public class ParquetAvroSortedBucketIO {
       return toBuilder().setCompression(compression).build();
     }
 
-    /** Specifies the output file {@link Configuration}. */
+    /** Specifies the Hadoop {@link Configuration}. */
     public Write<K, T> withConfiguration(Configuration conf) {
       return toBuilder().setConfiguration(conf).build();
     }
