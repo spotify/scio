@@ -102,7 +102,7 @@ final case class ParquetAvroIO[T: ClassTag: Coder](path: String) extends ScioIO[
         WriteFiles.to(sink).withNumShards(params.numShards)
       }
     data.applyInternal(t)
-    tap(ParquetAvroIO.ReadParam[T, T](identity, writerSchema, null))
+    tap(ParquetAvroIO.ReadParam[T, T](identity[T] _, writerSchema, null))
   }
 
   override def tap(params: ReadP): Tap[T] =
@@ -156,7 +156,19 @@ object ParquetAvroIO {
     private[avro] val DefaultProjection = null
     private[avro] val DefaultPredicate = null
     private[avro] val DefaultConfiguration = new Configuration()
+
+    @deprecated(
+      "Use ReadParam(projectionFn, projection, predicate, conf) instead",
+      since = "0.10.0"
+    )
+    def apply[A: ClassTag, T: ClassTag](
+      projection: Schema,
+      predicate: FilterPredicate,
+      projectionFn: A => T
+    ): ReadParam[A, T] =
+      ReadParam(projectionFn, projection, predicate)
   }
+
   final case class ReadParam[A: ClassTag, T: ClassTag] private (
     projectionFn: A => T,
     projection: Schema = ReadParam.DefaultProjection,
