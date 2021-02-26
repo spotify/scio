@@ -29,7 +29,7 @@ import org.apache.beam.sdk.values.TupleTag
 import scala.jdk.CollectionConverters._
 
 object ParquetEndToEndTest {
-  val eventSchema = Schema.createRecord(
+  val eventSchema: Schema = Schema.createRecord(
     "Event",
     "",
     "org.apache.beam.sdk.extensions.smb.avro",
@@ -41,7 +41,7 @@ object ParquetEndToEndTest {
     ).asJava
   )
 
-  val userSchema = Schema.createRecord(
+  val userSchema: Schema = Schema.createRecord(
     "User",
     "",
     "org.apache.beam.sdk.extensions.smb.avro",
@@ -74,10 +74,10 @@ object ParquetEndToEndTest {
     def apply(x: Int): User = User(s"user$x", x)
   }
 
-  val avroEvents = (1 to 100).map(avroEvent)
-  val avroUsers = (1 to 15).map(avroUser)
-  val events = (1 to 100).map(Event(_))
-  val users = (1 to 15).map(User(_))
+  val avroEvents: Seq[GenericRecord] = (1 to 100).map(avroEvent)
+  val avroUsers: Seq[GenericRecord] = (1 to 15).map(avroUser)
+  val events: Seq[Event] = (1 to 100).map(Event(_))
+  val users: Seq[User] = (1 to 15).map(User(_))
 }
 
 class ParquetEndToEndTest extends PipelineSpec {
