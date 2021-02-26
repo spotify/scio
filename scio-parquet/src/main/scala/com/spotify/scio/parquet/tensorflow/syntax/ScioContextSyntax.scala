@@ -19,7 +19,9 @@ package com.spotify.scio.parquet.tensorflow.syntax
 
 import com.spotify.scio.ScioContext
 import com.spotify.scio.parquet.tensorflow.ParquetExampleIO
+import com.spotify.scio.parquet.tensorflow.ParquetExampleIO.ReadParam
 import com.spotify.scio.values.SCollection
+import org.apache.hadoop.conf.Configuration
 import org.apache.parquet.filter2.predicate.FilterPredicate
 import org.tensorflow.proto.example.Example
 
@@ -29,10 +31,11 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
   /** Get an SCollection for a Parquet file as [[Example]] records. */
   def parquetExampleFile(
     path: String,
-    projection: Seq[String] = null,
-    predicate: FilterPredicate = null
+    projection: Seq[String] = ReadParam.DefaultProjection,
+    predicate: FilterPredicate = ReadParam.DefaultPredicate,
+    conf: Configuration = ReadParam.DefaultConfiguration
   ): SCollection[Example] =
-    self.read(ParquetExampleIO(path))(ParquetExampleIO.ReadParam(projection, predicate))
+    self.read(ParquetExampleIO(path))(ParquetExampleIO.ReadParam(projection, predicate, conf))
 }
 
 trait ScioContextSyntax {

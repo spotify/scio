@@ -25,6 +25,7 @@ import com.spotify.scio.values.SCollection
 import org.apache.avro.Schema
 import org.apache.beam.sdk.transforms.windowing.{BoundedWindow, PaneInfo}
 import org.apache.beam.sdk.values.WindowingStrategy
+import org.apache.hadoop.conf.Configuration
 import org.apache.parquet.hadoop.metadata.CompressionCodecName
 
 import scala.reflect.ClassTag
@@ -45,9 +46,10 @@ class SCollectionOps[T](private val self: SCollection[T]) extends AnyVal {
     schema: Schema = WriteParam.DefaultSchema,
     numShards: Int = WriteParam.DefaultNumShards,
     suffix: String = WriteParam.DefaultSuffix,
-    compression: CompressionCodecName = WriteParam.DefaultCompression
+    compression: CompressionCodecName = WriteParam.DefaultCompression,
+    conf: Configuration = WriteParam.DefaultConfiguration
   )(implicit ct: ClassTag[T], coder: Coder[T]): ClosedTap[T] = {
-    val param = WriteParam(schema, numShards, suffix, compression)
+    val param = WriteParam(schema, numShards, suffix, compression, None, conf)
     self.write(ParquetAvroIO[T](path))(param)
   }
 
@@ -77,9 +79,9 @@ class SCollectionOps[T](private val self: SCollection[T]) extends AnyVal {
     schema: Schema = WriteParam.DefaultSchema,
     numShards: Int = WriteParam.DefaultNumShards,
     suffix: String = WriteParam.DefaultSuffix,
-    compression: CompressionCodecName = WriteParam.DefaultCompression
+    compression: CompressionCodecName = WriteParam.DefaultCompression,
+    conf: Configuration = WriteParam.DefaultConfiguration
   )(implicit ct: ClassTag[T], coder: Coder[T]): ClosedTap[T] = {
-
     if (
       (self.internal.getWindowingStrategy != WindowingStrategy
         .globalDefault() && filenameFunction.isRight) ||
@@ -93,7 +95,7 @@ class SCollectionOps[T](private val self: SCollection[T]) extends AnyVal {
     }
 
     val param =
-      WriteParam(schema, numShards, suffix, compression, Some(filenameFunction))
+      WriteParam(schema, numShards, suffix, compression, Some(filenameFunction), conf)
     self.write(ParquetAvroIO[T](path))(param)
   }
 }

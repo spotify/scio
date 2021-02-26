@@ -20,8 +20,10 @@ package com.spotify.scio.parquet.types.syntax
 import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.parquet.types.ParquetTypeIO
+import com.spotify.scio.parquet.types.ParquetTypeIO.ReadParam
 import com.spotify.scio.values.SCollection
 import magnolify.parquet.ParquetType
+import org.apache.hadoop.conf.Configuration
 import org.apache.parquet.filter2.predicate.FilterPredicate
 
 import scala.reflect.ClassTag
@@ -32,9 +34,10 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
   /** Get an SCollection for a Parquet file as case classes `T`. */
   def typedParquetFile[T: ClassTag: Coder: ParquetType](
     path: String,
-    predicate: FilterPredicate = null
+    predicate: FilterPredicate = ReadParam.DefaultPredicate,
+    conf: Configuration = ReadParam.DefaultConfiguration
   ): SCollection[T] =
-    self.read(ParquetTypeIO[T](path))(ParquetTypeIO.ReadParam(predicate))
+    self.read(ParquetTypeIO[T](path))(ParquetTypeIO.ReadParam(predicate, conf))
 }
 trait ScioContextSyntax {
   implicit def parquetTypeScioContext(c: ScioContext): ScioContextOps = new ScioContextOps(c)
