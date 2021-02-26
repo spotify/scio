@@ -49,6 +49,7 @@ import java.util.NoSuchElementException;
  */
 public class ParquetAvroFileOperations<ValueT> extends FileOperations<ValueT> {
   static final CompressionCodecName DEFAULT_COMPRESSION = CompressionCodecName.GZIP;
+  static final Configuration DEFAULT_CONFIGURATION = new Configuration();
 
   private final SerializableSchemaSupplier schemaSupplier;
   private final CompressionCodecName compression;
@@ -73,7 +74,7 @@ public class ParquetAvroFileOperations<ValueT> extends FileOperations<ValueT> {
 
   public static <V extends GenericRecord> ParquetAvroFileOperations<V> of(
       Schema schema, CompressionCodecName compression) {
-    return of(schema, compression, new Configuration());
+    return of(schema, compression, DEFAULT_CONFIGURATION);
   }
 
   public static <V extends GenericRecord> ParquetAvroFileOperations<V> of(
@@ -83,8 +84,13 @@ public class ParquetAvroFileOperations<ValueT> extends FileOperations<ValueT> {
 
   public static <V extends GenericRecord> ParquetAvroFileOperations<V> of(
       Schema schema, FilterPredicate predicate) {
+    return of(schema, predicate, DEFAULT_CONFIGURATION);
+  }
+
+  public static <V extends GenericRecord> ParquetAvroFileOperations<V> of(
+      Schema schema, FilterPredicate predicate, Configuration conf) {
     return new ParquetAvroFileOperations<>(
-        schema, DEFAULT_COMPRESSION, new Configuration(), predicate);
+        schema, DEFAULT_COMPRESSION, conf, predicate);
   }
 
   @Override
