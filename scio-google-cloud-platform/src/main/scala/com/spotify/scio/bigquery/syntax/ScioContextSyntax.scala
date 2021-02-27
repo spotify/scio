@@ -40,6 +40,7 @@ import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
 import com.spotify.scio.bigquery.BigQueryTypedTable
 import com.spotify.scio.bigquery.BigQueryTypedTable.Format
+import com.spotify.scio.bigquery.coders.tableRowCoder
 
 /** Enhanced version of [[ScioContext]] with BigQuery methods. */
 final class ScioContextOps(private val self: ScioContext) extends AnyVal {
@@ -71,7 +72,7 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
 
   /** Get an SCollection for a BigQuery table. */
   def bigQueryTable(table: Table): SCollection[TableRow] =
-    bigQueryTable(table, BigQueryTypedTable.Format.TableRow)
+    bigQueryTable(table, BigQueryTypedTable.Format.TableRow)(tableRowCoder)
 
   /**
    * Get an SCollection for a BigQuery table using the specified [[Format]].
