@@ -378,7 +378,7 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
         public boolean start() throws IOException {
           keyGroupReader =
               new MergeBucketsReader<>(
-                  sources, bucketOffsetId, effectiveParallelism, sourceSpec, null, keyGroupSize);
+                  sources, bucketOffsetId, effectiveParallelism, sourceSpec, null, keyGroupSize, false);
 
           bucketId = bucketOffsetId;
           dst = fileAssignment.forBucket(BucketShardId.of(bucketId, 0), effectiveParallelism, 1);
