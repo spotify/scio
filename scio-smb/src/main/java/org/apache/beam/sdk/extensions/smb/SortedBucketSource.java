@@ -334,6 +334,7 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
     private KV<byte[], CoGbkResult> next;
     private Map<TupleTag, KV<byte[], Iterator<?>>> nextKeyGroups;
     private boolean materializeKeyGroup;
+    private int runningKeyGroupSize;
 
     MergeBucketsReader(
         List<BucketedInput<?, ?>> sources,
@@ -349,6 +350,7 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
       this.keyGroupSize = keyGroupSize;
       this.parallelism = parallelism;
       this.materializeKeyGroup = materializeKeyGroup;
+      this.runningKeyGroupSize = 0;
 
       this.keyGroupFilter =
           (bytes) -> sources.get(0).getMetadata().rehashBucket(bytes, parallelism) == bucketId;
@@ -390,6 +392,11 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
     @Override
     public boolean advance() throws IOException {
       while (true) {
+        if (runningKeyGroupSize != 0) {
+          keyGroupSize.update(runningKeyGroupSize);
+          runningKeyGroupSize = 0;
+        }
+
         int completedSources = 0;
         // Advance key-value groups from each source
         for (int i = 0; i < numSources; i++) {
@@ -420,9 +427,6 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
           valueMap.add(new ArrayList<>()); // placeholder
         }
 
-        LOG.error("Constructing valueMap of size" + valueMap.size());
-        int keyGroupCount = 0;
-
         // Set to 1 if subsequent key groups should be accepted or 0 if they should be filtered out
         int acceptKeyGroup = -1;
 
@@ -433,13 +437,8 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
             final TupleTag tupleTag = entry.getKey();
             int index = resultSchema.getIndex(tupleTag);
 
-            Preconditions.checkArgument(
-                materializeKeyGroup || predicates[index] == null,
-                "Can't use a predicate while lazily reading keygroups");
             final Iterable<Object> values;
-            LOG.error("Materialize?" + materializeKeyGroup);
 
-            final AtomicInteger keyGroupSize = new AtomicInteger(0);
             // Track the canonical # buckets of each source that the key is found in.
             // If we find it in a source with a # buckets >= the parallelism of the job,
             // we know that it doesn't need to be re-hashed as it's already in the right bucket.
@@ -454,6 +453,7 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
 
             final Iterator<Object> keyGroupIterator =
                 (Iterator<Object>) entry.getValue().getValue();
+
             if (emitKeyGroup) {
               if (materializeKeyGroup) {
                 values = new ArrayList<>();
@@ -461,18 +461,18 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
                     v -> {
                       if (predicate.apply((List<Object>) values, v)) {
                         ((List<Object>) values).add(v);
-                        keyGroupSize.incrementAndGet();
+                        runningKeyGroupSize++;
                       }
                     });
               } else {
-                // @TODO still need to add keyGroupSize to Distribution at the end?
-                final Function<Object, Object> counterAugmentor =
-                    (value) -> {
-                      keyGroupSize.incrementAndGet();
-                      return value;
-                    };
-
-                values = () -> Iterators.transform(keyGroupIterator, counterAugmentor);
+                values =
+                    () ->
+                        Iterators.transform(
+                            keyGroupIterator,
+                            (value) -> {
+                              runningKeyGroupSize++;
+                              return value;
+                            });
               }
               acceptKeyGroup = 1;
             } else {
@@ -482,16 +482,12 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
               acceptKeyGroup = 0;
             }
 
-            LOG.error("Adding to valueMap at index" + index);
             valueMap.add(index, values);
-            keyGroupCount += keyGroupSize.get();
             nextKeyGroupsIt.remove();
           }
         }
 
         if (acceptKeyGroup == 1) {
-          keyGroupSize.update(keyGroupCount);
-
           next =
               KV.of(
                   minKeyEntry.getValue().getKey(),

@@ -46,8 +46,6 @@ import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /** Unit tests for {@link SortedBucketTransform}. */
 public class SortedBucketTransformTest {
@@ -64,7 +62,6 @@ public class SortedBucketTransformTest {
   private static final Set<String> expected = ImmutableSet.of("c1-c2", "d1-d2", "e1-e2");
 
   private static List<BucketedInput<?, ?>> sources;
-  private static final Logger LOG = LoggerFactory.getLogger(SortedBucketTransform.class);
 
   private static final TransformFn<String, String> mergeFunction =
       (keyGroup, outputConsumer) ->
@@ -78,7 +75,6 @@ public class SortedBucketTransformTest {
                         .getAll(new TupleTag<String>("rhs"))
                         .forEach(
                             rhs -> {
-                              LOG.error("Enumerating pair" + lhs + " + " + rhs);
                               outputConsumer.accept(lhs + "-" + rhs);
                             });
                   });
