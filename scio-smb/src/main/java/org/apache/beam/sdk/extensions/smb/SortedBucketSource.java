@@ -463,9 +463,11 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
                         ((List<Object>) values).add(v);
                       }
                     });
+                keyGroupSize += ((List<Object>) values).size();
               } else {
                 // Can't use predicate here as it acts on a List<Object>
                 values = () -> (Iterator<Object>) entry.getValue().getValue();
+                keyGroupSize = -1; // We can augment this in the transformFn maybe?
               }
               acceptKeyGroup = 1;
             } else {
