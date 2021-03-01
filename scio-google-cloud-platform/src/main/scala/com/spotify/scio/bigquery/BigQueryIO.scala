@@ -142,6 +142,7 @@ object BigQueryIO {
         s"BigQueryIO($id, List(${selectedFields.mkString(",")}), $rowRestriction)"
     }
 }
+
 object BigQueryTypedSelect {
   object ReadParam {
     private[bigquery] val DefaultFlattenResults = false
@@ -189,7 +190,7 @@ final case class BigQuerySelect(sqlQuery: Query) extends BigQueryIO[TableRow] {
   override type WriteP = Nothing // ReadOnly
 
   private[this] lazy val underlying =
-    BigQueryTypedSelect(beam.BigQueryIO.readTableRows(), sqlQuery, identity)
+    BigQueryTypedSelect(beam.BigQueryIO.readTableRows(), sqlQuery, identity)(coders.tableRowCoder)
 
   override def testId: String = s"BigQueryIO(${sqlQuery.underlying})"
 
@@ -261,7 +262,7 @@ object BigQueryTypedTable {
       beam.BigQueryIO.writeTableRows(),
       table,
       BigQueryUtils.convertGenericRecordToTableRow(_, _)
-    )
+    )(coders.tableRowCoder)
 
   private[this] def genericRecord(
     table: Table
@@ -423,7 +424,7 @@ final case class BigQueryStorageSelect(sqlQuery: Query) extends BigQueryIO[Table
       beam.BigQueryIO.readTableRows().withMethod(Method.DIRECT_READ),
       sqlQuery,
       identity
-    )
+    )(coders.tableRowCoder)
 
   override def testId: String = s"BigQueryIO(${sqlQuery.underlying})"
 
