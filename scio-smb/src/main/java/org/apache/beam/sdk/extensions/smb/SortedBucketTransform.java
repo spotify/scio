@@ -378,7 +378,13 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
         public boolean start() throws IOException {
           keyGroupReader =
               new MergeBucketsReader<>(
-                  sources, bucketOffsetId, effectiveParallelism, sourceSpec, null, keyGroupSize, false);
+                  sources,
+                  bucketOffsetId,
+                  effectiveParallelism,
+                  sourceSpec,
+                  null,
+                  keyGroupSize,
+                  false);
 
           bucketId = bucketOffsetId;
           dst = fileAssignment.forBucket(BucketShardId.of(bucketId, 0), effectiveParallelism, 1);
@@ -397,6 +403,15 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
           try {
             KV<FinalKeyT, CoGbkResult> mergedKeyGroup = keyGroupReader.getCurrent();
             transformFn.writeTransform(mergedKeyGroup, outputCollector);
+
+            // exhaust iterators if necessary
+            sources.forEach(
+                source ->
+                    mergedKeyGroup
+                        .getValue()
+                        .getAll(source.getTupleTag())
+                        .iterator()
+                        .forEachRemaining(x -> {}));
 
             // Return 1 non-null value for the entire bucket
             if (!started) {

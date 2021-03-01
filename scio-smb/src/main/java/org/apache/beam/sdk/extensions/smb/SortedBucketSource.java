@@ -38,7 +38,6 @@ import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiFunction;
-import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -68,6 +67,7 @@ import org.apache.beam.sdk.transforms.join.UnionCoder;
 import org.apache.beam.sdk.values.KV;
 import org.apache.beam.sdk.values.TupleTag;
 import org.apache.beam.sdk.values.TupleTagList;
+import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Function;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Iterators;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.primitives.UnsignedBytes;
 import org.slf4j.Logger;
@@ -321,7 +321,7 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
 
     private final Coder<FinalKeyT> keyCoder;
     private final SortedBucketSource<FinalKeyT> currentSource;
-    private final Distribution keyGroupSize;
+    final Distribution keyGroupSize;
     private final int numSources;
     private final int parallelism;
     private final KeyGroupIterator[] iterators;
@@ -415,11 +415,12 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
 
         final Iterator<Map.Entry<TupleTag, KV<byte[], Iterator<?>>>> nextKeyGroupsIt =
             nextKeyGroups.entrySet().iterator();
-        final List<Iterable<?>> valueMap = new ArrayList<>();
-//        for (int i = 0; i < resultSchema.size(); i++) {
-//          valueMap.add(new ArrayList<>());
-//        }
+        final List<Iterable<?>> valueMap = new ArrayList<>(resultSchema.size());
+        for (int i = 0; i < resultSchema.size(); i++) {
+          valueMap.add(new ArrayList<>()); // placeholder
+        }
 
+        LOG.error("Constructing valueMap of size" + valueMap.size());
         int keyGroupCount = 0;
 
         // Set to 1 if subsequent key groups should be accepted or 0 if they should be filtered out
@@ -432,53 +433,58 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
             final TupleTag tupleTag = entry.getKey();
             int index = resultSchema.getIndex(tupleTag);
 
-            final Predicate<Object> predicate = predicates[index];
-            Preconditions.checkArgument(materializeKeyGroup || (predicate != null),
+            Preconditions.checkArgument(
+                materializeKeyGroup || predicates[index] == null,
                 "Can't use a predicate while lazily reading keygroups");
             final Iterable<Object> values;
+            LOG.error("Materialize?" + materializeKeyGroup);
 
-            int keyGroupSize = 0;
+            final AtomicInteger keyGroupSize = new AtomicInteger(0);
             // Track the canonical # buckets of each source that the key is found in.
             // If we find it in a source with a # buckets >= the parallelism of the job,
             // we know that it doesn't need to be re-hashed as it's already in the right bucket.
-            final Iterator<Object> keyGroupIterator = (Iterator<Object>) entry.getValue().getValue();
-
-            final boolean emitKeyGroup = acceptKeyGroup == 1
-                || (
-                    acceptKeyGroup != 0 // make sure it hasn't already been ruled out
-                    && (
-                        bucketsPerSource.get(tupleTag) >= parallelism
+            final boolean emitKeyGroup =
+                acceptKeyGroup == 1
+                    || (acceptKeyGroup != 0 // make sure it hasn't already been ruled out
+                        && (bucketsPerSource.get(tupleTag) >= parallelism
                             || keyGroupFilter.apply(minKeyEntry.getValue().getKey())));
 
+            final Predicate<Object> predicate =
+                predicates[index] != null ? predicates[index] : (xs, x) -> true;
+
+            final Iterator<Object> keyGroupIterator =
+                (Iterator<Object>) entry.getValue().getValue();
             if (emitKeyGroup) {
               if (materializeKeyGroup) {
                 values = new ArrayList<>();
                 keyGroupIterator.forEachRemaining(
                     v -> {
-                      if (predicate != null) {
-                        if (predicate.apply((List<Object>) values, v)) {
-                          ((List<Object>) values).add(v);
-                        }
-                      } else {
+                      if (predicate.apply((List<Object>) values, v)) {
                         ((List<Object>) values).add(v);
+                        keyGroupSize.incrementAndGet();
                       }
                     });
-                keyGroupSize += ((List<Object>) values).size();
               } else {
-                // Can't use predicate here as it acts on a List<Object>
-                values = () -> (Iterator<Object>) entry.getValue().getValue();
-                keyGroupSize = -1; // We can augment this in the transformFn maybe?
+                // @TODO still need to add keyGroupSize to Distribution at the end?
+                final Function<Object, Object> counterAugmentor =
+                    (value) -> {
+                      keyGroupSize.incrementAndGet();
+                      return value;
+                    };
+
+                values = () -> Iterators.transform(keyGroupIterator, counterAugmentor);
               }
               acceptKeyGroup = 1;
             } else {
               // skip key but still have to exhaust iterator
-              entry.getValue().getValue().forEachRemaining(value -> {});
+              keyGroupIterator.forEachRemaining(value -> {});
               values = new ArrayList<>();
               acceptKeyGroup = 0;
             }
-            valueMap.add(index, values);
 
-            keyGroupCount += keyGroupSize;
+            LOG.error("Adding to valueMap at index" + index);
+            valueMap.add(index, values);
+            keyGroupCount += keyGroupSize.get();
             nextKeyGroupsIt.remove();
           }
         }
