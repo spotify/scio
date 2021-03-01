@@ -25,12 +25,19 @@ import scala.jdk.CollectionConverters._
 
 /** Spark runner specific context. */
 case object SparkContext extends RunnerContext {
+
   override def prepareOptions(options: PipelineOptions, artifacts: List[String]): Unit = {
     val classLoader = classOf[SparkRunner].getClassLoader
-    val filesToStage = RunnerContext.filesToStage(options, classLoader, artifacts)
+    val sparkOptions = options.as(classOf[SparkPipelineOptions])
+    val localArtifacts = sparkOptions.getFilesToStage() match {
+      case null => Nil
+      case l    => l.asScala
+    }
+    val filesToStage = RunnerContext
+      .filesToStage(options, classLoader, localArtifacts, artifacts)
+      .asJavaCollection
 
-    options
-      .as(classOf[SparkPipelineOptions])
-      .setFilesToStage(filesToStage.toList.asJava)
+    sparkOptions.setFilesToStage(new java.util.ArrayList(filesToStage))
   }
+
 }

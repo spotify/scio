@@ -26,12 +26,19 @@ import scala.jdk.CollectionConverters._
 
 /** Dataflow runner specific context. */
 case object DataflowContext extends RunnerContext {
+
   override def prepareOptions(options: PipelineOptions, artifacts: List[String]): Unit = {
     val classLoader = classOf[DataflowRunner].getClassLoader
-    val filesToStage = RunnerContext.filesToStage(options, classLoader, artifacts)
+    val dataflowOptions = options.as(classOf[DataflowPipelineWorkerPoolOptions])
+    val localArtifacts = dataflowOptions.getFilesToStage() match {
+      case null => Nil
+      case l    => l.asScala
+    }
+    val filesToStage = RunnerContext
+      .filesToStage(options, classLoader, localArtifacts, artifacts)
+      .asJavaCollection
 
-    options
-      .as(classOf[DataflowPipelineWorkerPoolOptions])
-      .setFilesToStage(new java.util.ArrayList(filesToStage.asJavaCollection))
+    dataflowOptions.setFilesToStage(new java.util.ArrayList(filesToStage))
   }
+
 }

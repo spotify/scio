@@ -114,18 +114,24 @@ private object RunnerContext {
   def filesToStage(
     pipelineOptions: PipelineOptions,
     classLoader: ClassLoader,
-    extraLocalArtifacts: List[String]
+    localArtifacts: Iterable[String],
+    extraLocalArtifacts: Iterable[String]
   ): Iterable[String] = {
-    val finalLocalArtifacts =
-      detectClassPathResourcesToStage(pipelineOptions, classLoader) ++ extraLocalArtifacts
-        .map {
-          case path if path.endsWith(".jar") =>
-            path.substring(path.lastIndexOf("/") + 1, path.length) -> path
-          case path =>
-            path -> path
-        }
-        .toMap
-        .values
+    val artifacts = if (localArtifacts.isEmpty) {
+      detectClassPathResourcesToStage(pipelineOptions, classLoader)
+    } else {
+      localArtifacts
+    }
+
+    val finalLocalArtifacts = artifacts ++ extraLocalArtifacts.iterator
+      .map {
+        case path if path.endsWith(".jar") =>
+          path.substring(path.lastIndexOf("/") + 1, path.length) -> path
+        case path =>
+          path -> path
+      }
+      .toMap
+      .values
 
     logger.debug(s"Final list of extra artifacts: ${finalLocalArtifacts.mkString(":")}")
     finalLocalArtifacts
@@ -148,6 +154,7 @@ private object RunnerContext {
 
     classPathJars
   }
+
 }
 
 /** Convenience object for creating [[ScioContext]] and [[Args]]. */

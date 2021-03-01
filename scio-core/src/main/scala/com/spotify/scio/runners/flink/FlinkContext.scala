@@ -25,12 +25,19 @@ import scala.jdk.CollectionConverters._
 
 /** Flink runner specific context. */
 case object FlinkContext extends RunnerContext {
+
   override def prepareOptions(options: PipelineOptions, artifacts: List[String]): Unit = {
     val classLoader = classOf[FlinkRunner].getClassLoader
-    val filesToStage = RunnerContext.filesToStage(options, classLoader, artifacts)
+    val flinkOptions = options.as(classOf[FlinkPipelineOptions])
+    val localArtifacts = flinkOptions.getFilesToStage() match {
+      case null => Nil
+      case l    => l.asScala
+    }
+    val filesToStage = RunnerContext
+      .filesToStage(options, classLoader, localArtifacts, artifacts)
+      .asJavaCollection
 
-    options
-      .as(classOf[FlinkPipelineOptions])
-      .setFilesToStage(filesToStage.toList.asJava)
+    flinkOptions.setFilesToStage(new java.util.ArrayList(filesToStage))
   }
+
 }
