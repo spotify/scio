@@ -146,8 +146,13 @@ public class ParquetBucketMetadata<K, V> extends BucketMetadata<K, V> {
     for (int i = 0; i < keyPath.length - 1; i++) {
       node = (GenericRecord) node.get(keyPath[i]);
     }
+    Object keyObj = node.get(keyPath[keyPath.length - 1]);
+    // Always convert CharSequence to String, in case reader and writer disagree
+    if (getKeyClass() == CharSequence.class || getKeyClass() == String.class) {
+      keyObj = keyObj.toString();
+    }
     @SuppressWarnings("unchecked")
-    K key = (K) node.get(keyPath[keyPath.length - 1]);
+    K key = (K) keyObj;
     return key;
   }
 
