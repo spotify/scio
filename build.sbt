@@ -816,7 +816,9 @@ lazy val `scio-parquet`: Project = project
       "com.spotify" %% "magnolify-parquet" % magnolifyVersion,
       "org.apache.beam" % "beam-sdks-java-io-hadoop-format" % beamVersion,
       "org.apache.hadoop" % "hadoop-client" % hadoopVersion,
-      "org.apache.parquet" % "parquet-avro" % parquetVersion,
+      "org.apache.parquet" % "parquet-avro" % parquetVersion exclude (
+        "org.apache.avro", "avro"
+      ),
       "com.twitter" %% "chill" % chillVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-io-hadoop-common" % beamVersion,
@@ -1051,7 +1053,9 @@ lazy val `scio-smb`: Project = project
       "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-io-hadoop-format" % beamVersion,
       "org.apache.hadoop" % "hadoop-client" % hadoopVersion,
-      "org.apache.parquet" % "parquet-avro" % parquetVersion,
+      "org.apache.parquet" % "parquet-avro" % parquetVersion exclude (
+        "org.apache.avro", "avro"
+      ),
       "org.apache.parquet" % "parquet-common" % parquetVersion,
       "com.spotify" %% "magnolify-parquet" % magnolifyVersion,
       // #3260 work around for sorter memory limit until we patch upstream
