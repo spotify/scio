@@ -321,7 +321,7 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
 
     private final Coder<FinalKeyT> keyCoder;
     private final SortedBucketSource<FinalKeyT> currentSource;
-    final Distribution keyGroupSize;
+    private final Distribution keyGroupSize;
     private final int numSources;
     private final int parallelism;
     private final KeyGroupIterator[] iterators;
@@ -392,7 +392,7 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
     @Override
     public boolean advance() throws IOException {
       while (true) {
-        if (runningKeyGroupSize != 0) {
+        if (runningKeyGroupSize != 0) { // If it's 0, that means we haven't started reading
           keyGroupSize.update(runningKeyGroupSize);
           runningKeyGroupSize = 0;
         }
@@ -422,9 +422,9 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
 
         final Iterator<Map.Entry<TupleTag, KV<byte[], Iterator<?>>>> nextKeyGroupsIt =
             nextKeyGroups.entrySet().iterator();
-        final List<Iterable<?>> valueMap = new ArrayList<>(resultSchema.size());
+        final List<Iterable<?>> valueMap = new ArrayList<>();
         for (int i = 0; i < resultSchema.size(); i++) {
-          valueMap.add(new ArrayList<>()); // placeholder
+          valueMap.add(new ArrayList<>());
         }
 
         // Set to 1 if subsequent key groups should be accepted or 0 if they should be filtered out
@@ -437,7 +437,7 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
             final TupleTag tupleTag = entry.getKey();
             int index = resultSchema.getIndex(tupleTag);
 
-            final Iterable<Object> values;
+            // final Iterable<Object> values;
 
             // Track the canonical # buckets of each source that the key is found in.
             // If we find it in a source with a # buckets >= the parallelism of the job,
@@ -448,41 +448,42 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
                         && (bucketsPerSource.get(tupleTag) >= parallelism
                             || keyGroupFilter.apply(minKeyEntry.getValue().getKey())));
 
+            // If the user supplies a predicate, we have to materialize the iterable to apply it
+            boolean materialize = (materializeKeyGroup || predicates[index] != null);
+
             final Predicate<Object> predicate =
                 predicates[index] != null ? predicates[index] : (xs, x) -> true;
 
             final Iterator<Object> keyGroupIterator =
                 (Iterator<Object>) entry.getValue().getValue();
 
-            if (emitKeyGroup) {
-              if (materializeKeyGroup) {
-                values = new ArrayList<>();
-                keyGroupIterator.forEachRemaining(
-                    v -> {
-                      if (predicate.apply((List<Object>) values, v)) {
-                        ((List<Object>) values).add(v);
-                        runningKeyGroupSize++;
-                      }
-                    });
-              } else {
-                values =
-                    () ->
-                        Iterators.transform(
-                            keyGroupIterator,
-                            (value) -> {
-                              runningKeyGroupSize++;
-                              return value;
-                            });
-              }
+            if (emitKeyGroup && !materialize) {
+              acceptKeyGroup = 1;
+              valueMap.add(
+                  index,
+                  () ->
+                      Iterators.transform(
+                          keyGroupIterator,
+                          (value) -> {
+                            runningKeyGroupSize++;
+                            return value;
+                          }));
+            } else if (emitKeyGroup) {
+              final List<Object> values = (List<Object>) valueMap.get(index);
+              keyGroupIterator.forEachRemaining(
+                  v -> {
+                    if (predicate.apply(values, v)) {
+                      values.add(v);
+                      runningKeyGroupSize++;
+                    }
+                  });
               acceptKeyGroup = 1;
             } else {
               // skip key but still have to exhaust iterator
               keyGroupIterator.forEachRemaining(value -> {});
-              values = new ArrayList<>();
               acceptKeyGroup = 0;
             }
 
-            valueMap.add(index, values);
             nextKeyGroupsIt.remove();
           }
         }

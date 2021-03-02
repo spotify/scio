@@ -21,12 +21,14 @@ import static org.apache.beam.sdk.extensions.smb.SortedBucketSource.BucketedInpu
 import static org.apache.beam.sdk.extensions.smb.TestUtils.fromFolder;
 
 import java.nio.channels.Channels;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.apache.beam.sdk.PipelineResult;
 import org.apache.beam.sdk.extensions.smb.SMBFilenamePolicy.FileAssignment;
+import org.apache.beam.sdk.extensions.smb.SortedBucketSource.Predicate;
 import org.apache.beam.sdk.extensions.smb.SortedBucketTransform.TransformFn;
 import org.apache.beam.sdk.io.FileSystems;
 import org.apache.beam.sdk.io.fs.EmptyMatchTreatment;
@@ -59,7 +61,8 @@ public class SortedBucketTransformTest {
 
   private static final List<String> inputLhs = ImmutableList.of("", "a1", "b1", "c1", "d1", "e1");
   private static final List<String> inputRhs = ImmutableList.of("", "c2", "d2", "e2", "f2", "g2");
-  private static final Set<String> expected = ImmutableSet.of("c1-c2", "d1-d2", "e1-e2");
+  // Predicate will filter out c2 from RHS input
+  private static final Set<String> expected = ImmutableSet.of("d1-d2", "e1-e2");
 
   private static List<BucketedInput<?, ?>> sources;
 
@@ -107,6 +110,8 @@ public class SortedBucketTransformTest {
 
     sinkPipeline.run().waitUntilFinish();
 
+    final Predicate<String> predicate = (xs, s) -> !s.startsWith("c");
+
     sources =
         ImmutableList.of(
             new BucketedInput<String, String>(
@@ -116,9 +121,10 @@ public class SortedBucketTransformTest {
                 new TestFileOperations()),
             new BucketedInput<String, String>(
                 new TupleTag<>("rhs"),
-                fromFolder(inputRhsFolder),
+                Collections.singletonList(fromFolder(inputRhsFolder)),
                 ".txt",
-                new TestFileOperations()));
+                new TestFileOperations(),
+                predicate));
   }
 
   @Test
@@ -177,7 +183,7 @@ public class SortedBucketTransformTest {
     SortedBucketSourceTest.verifyMetrics(
         result,
         ImmutableMap.of(
-            "SortedBucketTransform-KeyGroupSize", DistributionResult.create(10, 7, 1, 2)));
+            "SortedBucketTransform-KeyGroupSize", DistributionResult.create(9, 7, 1, 2)));
   }
 
   private static KV<TestBucketMetadata, Map<BucketShardId, List<String>>> readAllFrom(

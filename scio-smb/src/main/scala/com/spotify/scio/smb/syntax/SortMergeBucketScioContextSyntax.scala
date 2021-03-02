@@ -476,6 +476,16 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
     toR: CoGbkResult => R
   ) extends Serializable {
 
+    /**
+     * Defines the transforming function applied to each key group, where the output(s) are sent to
+     * the provided consumer via its `accept` function.
+     *
+     * The key group is defined as a key K and records R, where R represents the unpacked [[CoGbkResult]]
+     * converted to Scala Iterables. Note that, unless a [[org.apache.beam.sdk.extensions.smb.SortedBucketSource.Predicate]]
+     * is provided to the PTransform, the Scala Iterable is backed by a lazy iterator, and will only
+     * materialize if .toList or similar function is used in the transformFn. If you have extremely
+     * large key groups, take care to only materialize as much of the Iterable as is needed.
+     */
     def via(
       transformFn: (K, R, SortedBucketTransform.SerializableConsumer[W]) => Unit
     ): ClosedTap[Nothing] = {
