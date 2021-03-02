@@ -456,7 +456,7 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
                 (Iterator<Object>) entry.getValue().getValue();
 
             if (emitKeyGroup && !materialize) {
-              valueMap.add(
+              valueMap.set(
                   index,
                   () ->
                       Iterators.transform(
