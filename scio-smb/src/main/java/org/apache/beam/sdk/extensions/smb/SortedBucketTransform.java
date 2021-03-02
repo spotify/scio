@@ -404,7 +404,8 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
             KV<FinalKeyT, CoGbkResult> mergedKeyGroup = keyGroupReader.getCurrent();
             transformFn.writeTransform(mergedKeyGroup, outputCollector);
 
-            // exhaust iterators if necessary before moving on to the next key group
+            // exhaust iterators if necessary before moving on to the next key group:
+            // for example, if not every element was needed in the transformFn
             sources.forEach(
                 source ->
                     mergedKeyGroup

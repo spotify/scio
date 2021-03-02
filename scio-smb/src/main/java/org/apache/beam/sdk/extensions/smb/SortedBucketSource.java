@@ -437,8 +437,6 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
             final TupleTag tupleTag = entry.getKey();
             int index = resultSchema.getIndex(tupleTag);
 
-            // final Iterable<Object> values;
-
             // Track the canonical # buckets of each source that the key is found in.
             // If we find it in a source with a # buckets >= the parallelism of the job,
             // we know that it doesn't need to be re-hashed as it's already in the right bucket.
@@ -458,7 +456,6 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
                 (Iterator<Object>) entry.getValue().getValue();
 
             if (emitKeyGroup && !materialize) {
-              acceptKeyGroup = 1;
               valueMap.add(
                   index,
                   () ->
@@ -468,6 +465,7 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
                             runningKeyGroupSize++;
                             return value;
                           }));
+              acceptKeyGroup = 1;
             } else if (emitKeyGroup) {
               final List<Object> values = (List<Object>) valueMap.get(index);
               keyGroupIterator.forEachRemaining(
