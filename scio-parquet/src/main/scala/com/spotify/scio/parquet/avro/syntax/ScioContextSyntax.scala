@@ -23,7 +23,6 @@ import com.spotify.scio.parquet.avro.ParquetAvroIO
 import com.spotify.scio.parquet.avro.ParquetAvroIO.ReadParam
 import com.spotify.scio.values.SCollection
 import org.apache.avro.Schema
-import org.apache.avro.specific.SpecificRecordBase
 import org.apache.hadoop.conf.Configuration
 import org.apache.parquet.filter2.predicate.FilterPredicate
 import org.slf4j.LoggerFactory
@@ -38,12 +37,11 @@ final class ScioContextOps(@transient private val self: ScioContext) extends Any
    * Parquet column projection may be incomplete and may fail serialization, you must
    * [[ParquetAvroFile.map map]] the result to extract projected fields from the Avro records.
    *
-   * Note that due to limitations of the underlying `HadoopInputFormatIO`,
-   * Avro [[org.apache.avro.generic.GenericRecord GenericRecord]] and dynamic work rebalancing
-   * are not supported. Without the latter, pipelines may not autoscale up or down during the
-   * initial read and subsequent fused transforms.
+   * Note that due to limitations of the underlying `HadoopInputFormatIO`, dynamic work rebalancing
+   * is not supported. Pipelines may not autoscale up or down during the initial read and subsequent
+   * fused transforms.
    */
-  def parquetAvroFile[T <: SpecificRecordBase: ClassTag](
+  def parquetAvroFile[T: ClassTag](
     path: String,
     projection: Schema = ReadParam.DefaultProjection,
     predicate: FilterPredicate = ReadParam.DefaultPredicate,
