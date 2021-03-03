@@ -19,6 +19,7 @@ package org.apache.beam.sdk.extensions.smb;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Iterables;
 import java.io.ByteArrayInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -458,13 +459,13 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
             if (emitKeyGroup && !materialize) {
               valueMap.set(
                   index,
-                  () ->
+                  new TraversableOnceIterable<>(
                       Iterators.transform(
                           keyGroupIterator,
                           (value) -> {
                             runningKeyGroupSize++;
                             return value;
-                          }));
+                          })));
               acceptKeyGroup = 1;
             } else if (emitKeyGroup) {
               final List<Object> values = (List<Object>) valueMap.get(index);
@@ -510,6 +511,42 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
     }
   }
 
+  static class TraversableOnceIterable<V> implements Iterable<V> {
+    private final Iterator<V> underlying;
+    private boolean exhausted = false;
+
+    TraversableOnceIterable(Iterator<V> underlying) {
+      this.underlying =
+          new Iterator<V>() {
+            private boolean markExhausted() {
+              exhausted = true;
+              return false;
+            }
+
+            @Override
+            public boolean hasNext() {
+              return underlying.hasNext() || markExhausted();
+            }
+
+            @Override
+            public V next() {
+              return underlying.next();
+            }
+          };
+    }
+
+    @Override
+    public Iterator<V> iterator() {
+      Preconditions.checkArgument(
+          !exhausted,
+          "CoGbkResult iterator can only be traversed once. To be re-iterable, it must be materialized as a List.");
+      return underlying;
+    }
+
+    void ensureExhausted() {
+      this.underlying.forEachRemaining(v -> {});
+    }
+  }
   /**
    * Abstracts a sorted-bucket input to {@link SortedBucketSource} written by {@link
    * SortedBucketSink}.
