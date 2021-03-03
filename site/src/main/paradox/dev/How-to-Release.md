@@ -19,7 +19,7 @@ Credentials(
 
 ## Update documentation and version matrix
 
-- Pick a release name from [here](https://en.wikipedia.org/wiki/List_of_Latin_phrases_%28full%29), [here](https://en.wikipedia.org/wiki/List_of_songs_with_Latin_lyrics), [here](https://harrypotter.fandom.com/wiki/List_of_spells) or other interesting sources<sup>*</sup>
+- Pick a release name from [here](https://en.wikipedia.org/wiki/List_of_Latin_phrases_%28full%29), [here](https://en.wikipedia.org/wiki/List_of_songs_with_Latin_lyrics), [here](https://harrypotter.fandom.com/wiki/List_of_spells), [here](https://en.wikipedia.org/wiki/List_of_Latin_names_of_cities), or other interesting sources<sup>*</sup>
 - Update the list of release names below
 - If the release includes a Beam version bump, update the @ref:[version matrix](../Apache-Beam.md)
 
@@ -58,12 +58,17 @@ git push origin vX.Y.Z
 - Announce on internal and public [Slack](https://slackin.spotify.com/)
 - Announce on Twitter
 
-<sup>*</sup>Starting with `0.4.0` all release names are scientific names of animals with genus and species starting with the same letter, in ascending alphabetical order. Starting with `0.8.0` all release names are Harry Potter spells.
+<sup>*</sup>Starting with `0.4.0` all release names are scientific names of animals with genus and species starting with the same letter, in ascending alphabetical order; Harry Potter spells starting with `0.8.0`; Latin names of cities in ascending alphabetical order starting `0.10.0`.
 
 ## Past release names
 
+### 0.10.x
+
+- [v0.10.0](https://github.com/spotify/scio/releases/tag/v0.10.0) - _"Aquae Sextiae"_
+
 ### 0.9.x
 
+- [v0.9.6](https://github.com/spotify/scio/releases/tag/v0.9.6) - _"Specialis Revelio"_
 - [v0.9.5](https://github.com/spotify/scio/releases/tag/v0.9.5) - _"Colovaria"_
 - [v0.9.4](https://github.com/spotify/scio/releases/tag/v0.9.4) - _"Deletrius"_
 - [v0.9.3](https://github.com/spotify/scio/releases/tag/v0.9.3) - _"Petrificus Totalus"_
