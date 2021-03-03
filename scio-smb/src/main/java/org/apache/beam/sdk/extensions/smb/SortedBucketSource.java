@@ -38,7 +38,6 @@ import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiFunction;
-import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -68,6 +67,8 @@ import org.apache.beam.sdk.transforms.join.UnionCoder;
 import org.apache.beam.sdk.values.KV;
 import org.apache.beam.sdk.values.TupleTag;
 import org.apache.beam.sdk.values.TupleTagList;
+import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Function;
+import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Iterators;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.primitives.UnsignedBytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -309,7 +310,8 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
         effectiveParallelism,
         getOrComputeSourceSpec(),
         this,
-        keyGroupSize);
+        keyGroupSize,
+        true);
   }
 
   /** Merge key-value groups in matching buckets. */
@@ -331,6 +333,8 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
 
     private KV<byte[], CoGbkResult> next;
     private Map<TupleTag, KV<byte[], Iterator<?>>> nextKeyGroups;
+    private boolean materializeKeyGroup;
+    private int runningKeyGroupSize;
 
     MergeBucketsReader(
         List<BucketedInput<?, ?>> sources,
@@ -338,12 +342,15 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
         int parallelism,
         SourceSpec<FinalKeyT> sourceSpec,
         SortedBucketSource<FinalKeyT> currentSource,
-        Distribution keyGroupSize) {
+        Distribution keyGroupSize,
+        boolean materializeKeyGroup) {
       this.keyCoder = sourceSpec.keyCoder;
       this.numSources = sources.size();
       this.currentSource = currentSource;
       this.keyGroupSize = keyGroupSize;
       this.parallelism = parallelism;
+      this.materializeKeyGroup = materializeKeyGroup;
+      this.runningKeyGroupSize = 0;
 
       this.keyGroupFilter =
           (bytes) -> sources.get(0).getMetadata().rehashBucket(bytes, parallelism) == bucketId;
@@ -385,6 +392,11 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
     @Override
     public boolean advance() throws IOException {
       while (true) {
+        if (runningKeyGroupSize != 0) { // If it's 0, that means we haven't started reading
+          keyGroupSize.update(runningKeyGroupSize);
+          runningKeyGroupSize = 0;
+        }
+
         int completedSources = 0;
         // Advance key-value groups from each source
         for (int i = 0; i < numSources; i++) {
@@ -415,8 +427,6 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
           valueMap.add(new ArrayList<>());
         }
 
-        int keyGroupCount = 0;
-
         // Set to 1 if subsequent key groups should be accepted or 0 if they should be filtered out
         int acceptKeyGroup = -1;
 
@@ -426,49 +436,57 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
           if (keyComparator.compare(entry, minKeyEntry) == 0) {
             final TupleTag tupleTag = entry.getKey();
             int index = resultSchema.getIndex(tupleTag);
-            final List<Object> values = (List<Object>) valueMap.get(index);
-            final Predicate<Object> predicate = predicates[index];
 
             // Track the canonical # buckets of each source that the key is found in.
             // If we find it in a source with a # buckets >= the parallelism of the job,
             // we know that it doesn't need to be re-hashed as it's already in the right bucket.
-            if (acceptKeyGroup == 1) {
-              entry
-                  .getValue()
-                  .getValue()
-                  .forEachRemaining(
-                      v -> {
-                        if (predicate.apply(values, v)) {
-                          values.add(v);
-                        }
-                      });
-            } else if (acceptKeyGroup == -1
-                && (bucketsPerSource.get(tupleTag) >= parallelism
-                    || keyGroupFilter.apply(minKeyEntry.getValue().getKey()))) {
-              entry
-                  .getValue()
-                  .getValue()
-                  .forEachRemaining(
-                      v -> {
-                        if (predicate.apply(values, v)) {
-                          values.add(v);
-                        }
-                      });
+            final boolean emitKeyGroup =
+                acceptKeyGroup == 1
+                    || (acceptKeyGroup != 0 // make sure it hasn't already been ruled out
+                        && (bucketsPerSource.get(tupleTag) >= parallelism
+                            || keyGroupFilter.apply(minKeyEntry.getValue().getKey())));
+
+            // If the user supplies a predicate, we have to materialize the iterable to apply it
+            boolean materialize = (materializeKeyGroup || predicates[index] != null);
+
+            final Predicate<Object> predicate =
+                predicates[index] != null ? predicates[index] : (xs, x) -> true;
+
+            final Iterator<Object> keyGroupIterator =
+                (Iterator<Object>) entry.getValue().getValue();
+
+            if (emitKeyGroup && !materialize) {
+              valueMap.set(
+                  index,
+                  new TraversableOnceIterable<>(
+                      Iterators.transform(
+                          keyGroupIterator,
+                          (value) -> {
+                            runningKeyGroupSize++;
+                            return value;
+                          })));
+              acceptKeyGroup = 1;
+            } else if (emitKeyGroup) {
+              final List<Object> values = (List<Object>) valueMap.get(index);
+              keyGroupIterator.forEachRemaining(
+                  v -> {
+                    if (predicate.apply(values, v)) {
+                      values.add(v);
+                      runningKeyGroupSize++;
+                    }
+                  });
               acceptKeyGroup = 1;
             } else {
               // skip key but still have to exhaust iterator
-              entry.getValue().getValue().forEachRemaining(value -> {});
+              keyGroupIterator.forEachRemaining(value -> {});
               acceptKeyGroup = 0;
             }
 
-            keyGroupCount += values.size();
             nextKeyGroupsIt.remove();
           }
         }
 
         if (acceptKeyGroup == 1) {
-          keyGroupSize.update(keyGroupCount);
-
           next =
               KV.of(
                   minKeyEntry.getValue().getKey(),
@@ -492,6 +510,27 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
     }
   }
 
+  static class TraversableOnceIterable<V> implements Iterable<V> {
+    private final Iterator<V> underlying;
+    private boolean called = false;
+
+    TraversableOnceIterable(Iterator<V> underlying) {
+      this.underlying = underlying;
+    }
+
+    @Override
+    public Iterator<V> iterator() {
+      Preconditions.checkArgument(
+          !called,
+          "CoGbkResult .iterator() can only be called once. To be re-iterable, it must be materialized as a List.");
+      called = true;
+      return underlying;
+    }
+
+    void ensureExhausted() {
+      this.underlying.forEachRemaining(v -> {});
+    }
+  }
   /**
    * Abstracts a sorted-bucket input to {@link SortedBucketSource} written by {@link
    * SortedBucketSink}.
@@ -540,7 +579,7 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
       this.filenameSuffix = filenameSuffix;
       this.fileOperations = fileOperations;
       this.inputDirectories = inputDirectories;
-      this.predicate = predicate != null ? predicate : (xs, x) -> true;
+      this.predicate = predicate;
     }
 
     public TupleTag<V> getTupleTag() {
