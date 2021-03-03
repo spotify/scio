@@ -37,6 +37,12 @@ public class ParquetAvroSortedBucketIOTest {
     SerializableUtils.ensureSerializable(
         SortedBucketIO.read(String.class)
             .of(
+                ParquetAvroSortedBucketIO.read(new TupleTag<>("input"), AvroGeneratedUser.class)
+                    .from(folder.toString())));
+
+    SerializableUtils.ensureSerializable(
+        SortedBucketIO.read(String.class)
+            .of(
                 ParquetAvroSortedBucketIO.read(
                         new TupleTag<>("input"), AvroGeneratedUser.getClassSchema())
                     .from(folder.toString())));
@@ -44,6 +50,16 @@ public class ParquetAvroSortedBucketIOTest {
 
   @Test
   public void testTransformSerializable() {
+    SerializableUtils.ensureSerializable(
+        SortedBucketIO.read(String.class)
+            .of(
+                ParquetAvroSortedBucketIO.read(new TupleTag<>("input"), AvroGeneratedUser.class)
+                    .from(folder.toString()))
+            .transform(
+                ParquetAvroSortedBucketIO.transformOutput(
+                        String.class, "name", AvroGeneratedUser.class)
+                    .to(folder.toString())));
+
     SerializableUtils.ensureSerializable(
         SortedBucketIO.read(String.class)
             .of(

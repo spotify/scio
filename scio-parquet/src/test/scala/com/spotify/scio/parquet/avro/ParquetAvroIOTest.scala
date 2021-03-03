@@ -18,13 +18,12 @@
 package com.spotify.scio.parquet.avro
 
 import java.io.File
-
 import com.spotify.scio._
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.avro._
 import com.spotify.scio.io.TapSpec
 import com.spotify.scio.testing._
-import com.spotify.scio.values.WindowOptions
+import com.spotify.scio.values.{SCollection, WindowOptions}
 import org.apache.avro.generic.GenericRecord
 import org.apache.beam.sdk.options.PipelineOptionsFactory
 import org.apache.beam.sdk.transforms.windowing.{BoundedWindow, IntervalWindow, PaneInfo}
@@ -118,27 +117,25 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
     FileUtils.deleteDirectory(dir)
   }
 
-  it should "write generic records" in {
+  it should "read/write generic records" in {
     val dir = tmpDir
 
     val genericRecords = (1 to 100).map(AvroUtils.newGenericRecord)
-    val sc = ScioContext()
+    val sc1 = ScioContext()
     implicit val coder = Coder.avroGenericRecordCoder(AvroUtils.schema)
-    sc.parallelize(genericRecords)
+    sc1
+      .parallelize(genericRecords)
       .saveAsParquetAvroFile(dir.toString, numShards = 1, schema = AvroUtils.schema)
-    sc.run()
+    sc1.run()
 
     val files = dir.listFiles()
     files.length shouldBe 1
 
-    val params =
-      ParquetAvroIO.ReadParam[GenericRecord, GenericRecord](
-        identity[GenericRecord] _,
-        AvroUtils.schema,
-        null
-      )
-    val tap = ParquetAvroTap(files.head.getAbsolutePath, params)
-    tap.value.toList should contain theSameElementsAs genericRecords
+    val sc2 = ScioContext()
+    val data: SCollection[GenericRecord] =
+      sc2.parquetAvroFile[GenericRecord](s"$dir/*.parquet", AvroUtils.schema)
+    data should containInAnyOrder(genericRecords)
+    sc2.run()
 
     FileUtils.deleteDirectory(dir)
   }
