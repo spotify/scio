@@ -45,6 +45,11 @@ class ConverterProviderTest extends AnyFlatSpec with Matchers {
     RequiredGeo.fromTableRow(TableRow("a" -> wkt)) shouldBe RequiredGeo(Geography(wkt))
     BigQueryType.toTableRow[RequiredGeo](RequiredGeo(Geography(wkt))) shouldBe TableRow("a" -> wkt)
   }
+
+  it should "handle case classes with methods" in {
+    RequiredWithMethod.fromTableRow(TableRow("a" -> "")) shouldBe RequiredWithMethod("")
+    BigQueryType.toTableRow[RequiredWithMethod](RequiredWithMethod("")) shouldBe TableRow("a" -> "")
+  }
 }
 
 object ConverterProviderTest {
@@ -60,4 +65,11 @@ object ConverterProviderTest {
 
   @BigQueryType.toTable
   case class Repeated(a: List[String])
+
+  @BigQueryType.toTable
+  case class RequiredWithMethod(a: String) {
+    val caseClassPublicValue: String = ""
+    def accessorMethod: String = ""
+    def method(x: String): String = x
+  }
 }

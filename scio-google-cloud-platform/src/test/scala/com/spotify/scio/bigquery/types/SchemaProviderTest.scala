@@ -108,4 +108,8 @@ class SchemaProviderTest extends AnyFlatSpec with Matchers {
     // The description annotation should be serializable.
     SerializableUtils.ensureSerializable(new description(value = "this a field description"))
   }
+
+  it should "ignore methods in case classes" in {
+    SchemaProvider.schemaOf[CaseClassWithMethods] shouldBe parseSchema(recordFields("REQUIRED"))
+  }
 }

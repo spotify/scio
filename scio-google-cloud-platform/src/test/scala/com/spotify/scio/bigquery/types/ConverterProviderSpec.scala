@@ -183,4 +183,14 @@ final class ConverterProviderSpec
       EqDerivation[RepeatedNested].eqv(r1, r2) shouldBe true
     }
   }
+
+  property("round trip case class with method nested types") {
+    forAll { r1: CaseClassWithMethods =>
+      val r2 =
+        BigQueryType.fromTableRow[CaseClassWithMethods](
+          BigQueryType.toTableRow[CaseClassWithMethods](r1)
+        )
+      EqDerivation[CaseClassWithMethods].eqv(r1, r2) shouldBe true
+    }
+  }
 }
