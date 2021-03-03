@@ -19,7 +19,6 @@ package org.apache.beam.sdk.extensions.smb;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Iterables;
 import java.io.ByteArrayInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -396,6 +395,19 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
         if (runningKeyGroupSize != 0) { // If it's 0, that means we haven't started reading
           keyGroupSize.update(runningKeyGroupSize);
           runningKeyGroupSize = 0;
+          if (!materializeKeyGroup) { // Key groups must be exhausted before moving on to the next
+                                      // one
+            tupleTags
+                .getAll()
+                .forEach(
+                    tupleTag -> {
+                      final Iterable<?> maybeUnfinishedIt = next.getValue().getAll(tupleTag);
+                      if (TraversableOnceIterable.class.isAssignableFrom(
+                          maybeUnfinishedIt.getClass())) {
+                        ((TraversableOnceIterable<?>) maybeUnfinishedIt).ensureExhausted();
+                      }
+                    });
+          }
         }
 
         int completedSources = 0;
@@ -513,33 +525,18 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
 
   static class TraversableOnceIterable<V> implements Iterable<V> {
     private final Iterator<V> underlying;
-    private boolean exhausted = false;
+    private boolean called = false;
 
     TraversableOnceIterable(Iterator<V> underlying) {
-      this.underlying =
-          new Iterator<V>() {
-            private boolean markExhausted() {
-              exhausted = true;
-              return false;
-            }
-
-            @Override
-            public boolean hasNext() {
-              return underlying.hasNext() || markExhausted();
-            }
-
-            @Override
-            public V next() {
-              return underlying.next();
-            }
-          };
+      this.underlying = underlying;
     }
 
     @Override
     public Iterator<V> iterator() {
       Preconditions.checkArgument(
-          !exhausted,
-          "CoGbkResult iterator can only be traversed once. To be re-iterable, it must be materialized as a List.");
+          !called,
+          "CoGbkResult .iterator() can only be called once. To be re-iterable, it must be materialized as a List.");
+      called = true;
       return underlying;
     }
 
