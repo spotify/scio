@@ -142,11 +142,11 @@ spotify/scio
   <li><a href="examples.html" class="page">Examples</a></li>
   <li><a href="io/index.html" class="page">IO</a>
   <ul>
-    <li><a href="io/Type-Safe-BigQuery.html" class="page">BigQuery</a></li>
-    <li><a href="io/Bigtable.html" class="page">Bigtable</a></li>
     <li><a href="io/Avro.html" class="page">Avro</a></li>
-    <li><a href="io/Protobuf.html" class="page">Protobuf</a></li>
+    <li><a href="io/BigQuery.html" class="page">BigQuery</a></li>
+    <li><a href="io/Bigtable.html" class="page">Bigtable</a></li>
     <li><a href="io/Parquet.html" class="page">Parquet</a></li>
+    <li><a href="io/Protobuf.html" class="page">Protobuf</a></li>
   </ul></li>
   <li><a href="Scio-Unit-Tests.html" class="page">Testing</a></li>
   <li><a href="Scio-REPL.html" class="page">REPL</a></li>
@@ -300,7 +300,7 @@ spotify/scio
     <li><a href="FAQ.html#how-do-i-fix-invalid-default-bigquery-credentials-" class="header">How do I fix invalid default BigQuery credentials?</a></li>
     <li><a href="FAQ.html#why-are-my-typed-bigquery-case-classes-not-up-to-date-" class="header">Why are my typed BigQuery case classes not up to date?</a></li>
     <li><a href="FAQ.html#how-do-i-fix-with-bigquery-" class="header">How do I fix &ldquo;SocketTimeoutException&rdquo; with BigQuery?</a></li>
-    <li><a href="FAQ.html#why-do-i-see-names-like-in-the-ui-" class="header">Why do I see names like &ldquo;<a href="mailto:&#x6d;&#97;i&#110;&#64;{Na&#x74;&#x69;&#x76;&#101;&#77;&#x65;&#116;&#x68;&#111;&#x64;&#65;c&#x63;&#x65;&#x73;&#115;&#111;&#x72;&#73;&#x6d;&#x70;&#108;&#x2e;&#x2e;&#46;&#x7d;">&#x6d;&#97;i&#110;&#64;{Na&#x74;&#x69;&#x76;&#101;&#77;&#x65;&#116;&#x68;&#111;&#x64;&#65;c&#x63;&#x65;&#x73;&#115;&#111;&#x72;&#73;&#x6d;&#x70;&#108;&#x2e;&#x2e;&#46;&#x7d;</a>&rdquo; in the UI?</a></li>
+    <li><a href="FAQ.html#why-do-i-see-names-like-in-the-ui-" class="header">Why do I see names like &ldquo;<a href="mailto:m&#x61;&#x69;n@&#x7b;N&#97;t&#x69;&#118;&#x65;&#x4d;eth&#x6f;&#100;&#65;c&#99;&#x65;&#x73;&#x73;&#111;&#x72;I&#109;p&#x6c;&#46;&#46;&#x2e;&#x7d;">m&#x61;&#x69;n@&#x7b;N&#97;t&#x69;&#118;&#x65;&#x4d;eth&#x6f;&#100;&#65;c&#99;&#x65;&#x73;&#x73;&#111;&#x72;I&#109;p&#x6c;&#46;&#46;&#x2e;&#x7d;</a>&rdquo; in the UI?</a></li>
     <li><a href="FAQ.html#how-do-i-fix-error-" class="header">How do I fix &ldquo;RESOURCE_EXHAUSTED&rdquo; error?</a></li>
     <li><a href="FAQ.html#can-i-use-trait-instead-of-method-" class="header">Can I use &ldquo;scala.App&rdquo; trait instead of &ldquo;main&rdquo; method?</a></li>
     <li><a href="FAQ.html#how-to-inspect-the-content-of-an-scollection-" class="header">How to inspect the content of an <code>SCollection</code>?</a></li>
@@ -443,7 +443,7 @@ object MyJob {
 </ul>
 <p>Because of these limitations and performance reasons, make sure <code>--zone</code>, <code>--stagingLocation</code> and <del><code>-Dbigquery.staging_dataset.location</code></del> location of BigQuery datasets are consistent.</p>
 <h4><a href="#how-stable-is-the-type-safe-bigquery-api-" name="how-stable-is-the-type-safe-bigquery-api-" class="anchor"><span class="anchor-link"></span></a>How stable is the type safe BigQuery API?</h4>
-<p><a href="io/Type-Safe-BigQuery.html">Type Safe BigQuery</a> API is considered stable and widely used at Spotify. There are several caveats however:</p>
+<p><a href="io/BigQuery.html">BigQuery</a> API is considered stable and widely used at Spotify. There are several caveats however:</p>
 <ul>
   <li>Both <a href="https://cloud.google.com/bigquery/query-reference">legacy</a> and <a href="https://cloud.google.com/bigquery/sql-reference/">SQL</a> syntax are supported although the SQL syntax is <strong>highly recommended</strong></li>
   <li>The system will detect legacy or SQL syntax and choose the correct one</li>
@@ -745,7 +745,7 @@ def main(cmdlineArgs: Array[String]): Unit = {
 <p>It can be fixed by increasing the timeout settings (default 20s).</p>
 <pre class="prettyprint"><code class="language-bash">sbt -Dbigquery.connect_timeout=30000 -Dbigquery.read_timeout=30000
 </code></pre>
-<h4><a href="#why-do-i-see-names-like-in-the-ui-" name="why-do-i-see-names-like-in-the-ui-" class="anchor"><span class="anchor-link"></span></a>Why do I see names like &ldquo;<a href="mailto:&#x6d;&#x61;&#105;&#x6e;&#64;&#123;&#78;&#x61;&#x74;&#105;&#118;&#x65;&#77;&#101;t&#x68;o&#x64;A&#x63;&#x63;e&#115;&#x73;&#111;r&#x49;&#109;&#x70;&#x6c;&#46;&#46;.&#x7d;">&#x6d;&#x61;&#105;&#x6e;&#64;&#123;&#78;&#x61;&#x74;&#105;&#118;&#x65;&#77;&#101;t&#x68;o&#x64;A&#x63;&#x63;e&#115;&#x73;&#111;r&#x49;&#109;&#x70;&#x6c;&#46;&#46;.&#x7d;</a>&rdquo; in the UI?</h4>
+<h4><a href="#why-do-i-see-names-like-in-the-ui-" name="why-do-i-see-names-like-in-the-ui-" class="anchor"><span class="anchor-link"></span></a>Why do I see names like &ldquo;<a href="mailto:m&#97;&#x69;n&#x40;&#x7b;&#78;&#x61;t&#105;&#118;&#101;&#77;&#101;&#116;&#104;&#x6f;d&#x41;&#x63;c&#x65;&#115;&#115;&#x6f;&#114;&#73;&#x6d;pl&#x2e;&#x2e;.&#x7d;">m&#97;&#x69;n&#x40;&#x7b;&#78;&#x61;t&#105;&#118;&#101;&#77;&#101;&#116;&#104;&#x6f;d&#x41;&#x63;c&#x65;&#115;&#115;&#x6f;&#114;&#73;&#x6d;pl&#x2e;&#x2e;.&#x7d;</a>&rdquo; in the UI?</h4>
 <p>Scio traverses JVM stack trace to figure out the proper name of each transform, i.e. <code>flatMap@{UserAnalysis.scala:30}</code> but may get confused if your jobs are under the <code>com.spotify.scio</code> package. Move them to a different package, e.g. <code>com.spotify.analytics</code> to fix the issue.</p>
 <h4><a href="#how-do-i-fix-error-" name="how-do-i-fix-error-" class="anchor"><span class="anchor-link"></span></a>How do I fix &ldquo;RESOURCE_EXHAUSTED&rdquo; error?</h4>
 <p>You might see errors like <code>RESOURCE_EXHAUSTED: IO error: No space left on disk</code> in a job. They usually indicate that you have allocated insufficient local disk space to process your job. If you are running your job with default settings, your job is running on 3 workers, each with 250 GB of local disk space. Consider modifying the default settings to increase the number of workers available to your job (via <code>--numWorkers</code>), to increase the default disk size per worker (via <code>--diskSizeGb</code>).</p>
