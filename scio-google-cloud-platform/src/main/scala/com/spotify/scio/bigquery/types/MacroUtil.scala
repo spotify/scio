@@ -34,7 +34,7 @@ private[types] object MacroUtil {
         .forall(b => t.baseClasses.contains(b.typeSymbol))
 
   def isField(s: Symbol): Boolean =
-    s.isPublic && s.isMethod && s.asMethod.isAccessor && !s.isSynthetic && !s.isConstructor
+    s.isPublic && s.isMethod && s.asMethod.isCaseAccessor && !s.isSynthetic && !s.isConstructor
 
   // Case class helpers for macros
 
@@ -46,7 +46,7 @@ private[types] object MacroUtil {
   }
 
   def isField(c: blackbox.Context)(s: c.Symbol): Boolean =
-    s.isPublic && s.isMethod && !s.isSynthetic && !s.isConstructor
+    s.isPublic && s.isMethod && s.asMethod.isCaseAccessor && !s.isSynthetic && !s.isConstructor
   def getFields(c: blackbox.Context)(t: c.Type): Iterable[c.Symbol] = {
     import c.universe._
     val fields = t.decls.filter(isField(c))
