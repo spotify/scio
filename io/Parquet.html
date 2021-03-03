@@ -161,6 +161,7 @@ spotify/scio
   <ul>
     <li><a href="../extras/Algebird.html" class="page">Algebird</a></li>
     <li><a href="../extras/Sort-Merge-Bucket.html" class="page">Sort Merge Bucket</a></li>
+    <li><a href="../extras/HyperLogLog.html" class="page">HyperLogLog</a></li>
   </ul></li>
   <li><a href="../migrations/index.html" class="page">Migration Guides</a>
   <ul>
@@ -193,6 +194,7 @@ spotify/scio
   <ul>
     <li><a href="../io/Parquet.html#read-avro-parquet-files" class="header">Read Avro Parquet files</a></li>
     <li><a href="../io/Parquet.html#write-avro-parquet-files" class="header">Write Avro Parquet files</a></li>
+    <li><a href="../io/Parquet.html#performance-tuning" class="header">Performance Tuning</a></li>
   </ul></li>
 </ul>
 </nav>
@@ -201,7 +203,7 @@ spotify/scio
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.10.0-beta2+0-a05a535e+20201119-1448*
+<i class="md-icon" title="Version">label_outline</i> 0.10.0+0-11cc428f+20210303-1353*
 </label>
 </li>
 </ul>
@@ -218,6 +220,7 @@ spotify/scio
   <ul>
     <li><a href="../io/Parquet.html#read-avro-parquet-files" class="header">Read Avro Parquet files</a></li>
     <li><a href="../io/Parquet.html#write-avro-parquet-files" class="header">Write Avro Parquet files</a></li>
+    <li><a href="../io/Parquet.html#performance-tuning" class="header">Performance Tuning</a></li>
   </ul></li>
 </ul>
 </nav>
@@ -229,7 +232,7 @@ spotify/scio
 <article class="md-content__inner md-typeset">
 <div class="md-content__searchable">
 <h1><a href="#parquet" name="parquet" class="anchor"><span class="anchor-link"></span></a>Parquet</h1>
-<p>Scio supports reading and writing <a href="https://parquet.apache.org/">Parquet</a> files as Avro records. It also includes <a href="https://github.com/nevillelyh/parquet-avro-extra">parquet-avro-extra</a> macros for generating column projections and row predicates using idiomatic Scala syntax. Also see <a href="./Avro.html">Avro</a> page on reading and writing regular Avro files.</p>
+<p>Scio supports reading and writing <a href="https://parquet.apache.org/">Parquet</a> files as Avro records. It also includes <a href="https://github.com/nevillelyh/parquet-extra">parquet-extra</a> macros for generating column projections and row predicates using idiomatic Scala syntax. Also see <a href="./Avro.html">Avro</a> page on reading and writing regular Avro files.</p>
 <h2><a href="#read-avro-parquet-files" name="read-avro-parquet-files" class="anchor"><span class="anchor-link"></span></a>Read Avro Parquet files</h2>
 <p>When reading Parquet files, only Avro specific records are supported.</p>
 <p>To read a Parquet file with column projections and row predicates:</p>
@@ -300,6 +303,17 @@ def yourAvroSchema: org.apache.avro.Schema = ???
 
 def result = input.saveAsParquetAvroFile(&quot;gs://path-to-data/lake/output&quot;, schema = yourAvroSchema)
 </code></pre>
+<h2><a href="#performance-tuning" name="performance-tuning" class="anchor"><span class="anchor-link"></span></a>Performance Tuning</h2>
+<p>Some tunings might be required when writing Parquet files to maximize the read performance. Some of the Parquet settings can be configured via Hadoop <a href="https://github.com/spotify/scio/blob/master/scio-parquet/src/main/resources/core-site.xml">core-site.xml</a>.</p>
+<ul>
+  <li><code>parquet.block.size</code> - This determines block size for HDFS and row group size. 1 GiB is recommended over the default 128 MiB.</li>
+  <li><code>fs.gs.inputstream.fadvise</code> - Parquet relies heavily on random seeks so this GCS connector setting should be set to <code>RANDOM</code>. See this <a href="https://cloud.google.com/blog/products/data-analytics/new-release-of-cloud-storage-connector-for-hadoop-improving-performance-throughput-and-more">blog post</a> for more.</li>
+</ul>
+<p>Here are some other recommended settings.</p>
+<ul>
+  <li><code>numShards</code> - This should be explicitly set so that the size of each output file is smaller than but close to <code>parquet.block.size</code>, i.e. 1 GiB. This guarantees that each file contains 1 row group only and reduces seeks.</li>
+  <li><code>compression</code> - <code>SNAPPY</code> and <code>GZIP</code> work out of the box. Snappy is less CPU intensive but has lower compression ratio. In our benchmarks GZIP seem to work better on GCS.</li>
+</ul>
 </div>
 <div>
 <a href="https://github.com/spotify/scio/tree/master/site/src/main/paradox/io/Parquet.md" title="Edit this page" class="md-source-file md-edit">
@@ -308,7 +322,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.10.0-beta2+0-a05a535e+20201119-1448*
+0.10.0+0-11cc428f+20210303-1353*
 </span>
 </div>
 </article>

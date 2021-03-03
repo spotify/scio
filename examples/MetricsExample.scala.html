@@ -287,7 +287,8 @@ hr {
               </section>
             
               <section class="">
-                <div class="comment "><h1 id="creating-metrics" class="title">Creating metrics</h1></p></div>
+                <div class="comment ">
+<h2 id="creating-metrics" class="section">Creating metrics</h2></p></div>
                 <div class="code empty">&nbsp;</div>
               </section>
             
@@ -324,7 +325,8 @@ hr {
               </section>
             
               <section class="">
-                <div class="comment "><h1 id="accessing-metrics" class="title">Accessing metrics</h1></p></div>
+                <div class="comment ">
+<h2 id="accessing-metrics" class="section">Accessing metrics</h2></p></div>
                 <div class="code ">    <span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/ScioContext.html" data-tooltip="<span>com.spotify.scio.ScioContext</span>">sc</a></span>.<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/ScioContext.html#parallelize[T](elems:Iterable[T])(implicitevidence$13:com.spotify.scio.coders.Coder[T])::com.spotify.scio.values.SCollection[T]" data-tooltip="<span>com.spotify.scio.ScioContext.parallelize[T](elems: Iterable[T])(implicit evidence$13: com.spotify.scio.coders.Coder[T]): : com.spotify.scio.values.SCollection[T]</span>">parallelize</a></span>(<span class="number">1</span> <span class="identifier">to</span> <span class="number">100</span>)
       .<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#filter(f:T=>Boolean)::com.spotify.scio.values.SCollection[T]" data-tooltip="<span>com.spotify.scio.values.SCollection.filter(f: T => Boolean): : com.spotify.scio.values.SCollection[T]</span>">filter</a></span> { <span class="identifier">i</span> =>&nbsp;</div>
               </section>
@@ -353,12 +355,13 @@ hr {
                 <div class="code ">        <span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/examples/extra/MetricsExample$.html#sum2:org.apache.beam.sdk.metrics.Counter" data-tooltip="<span>com.spotify.scio.examples.extra.MetricsExample.sum2: org.apache.beam.sdk.metrics.Counter</span>">sum2</a></span>.<span class="identifier">inc</span>(<span class="identifier">i</span>)
       }
 
-    <span class="keyword">val</span> <span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/ScioResult.html" data-tooltip="<span>com.spotify.scio.ScioResult</span>">result</a></span> = <span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/ScioContext.html" data-tooltip="<span>com.spotify.scio.ScioContext</span>">sc</a></span>.<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/ScioContext.html#run()::com.spotify.scio.ScioExecutionContext" data-tooltip="<span>com.spotify.scio.ScioContext.run(): : com.spotify.scio.ScioExecutionContext</span>">run</a></span>().<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/ScioExecutionContext.html#waitUntilFinish(duration:scala.concurrent.duration.Duration,cancelJob:Boolean)::com.spotify.scio.ScioResult" data-tooltip="<span>com.spotify.scio.ScioExecutionContext.waitUntilFinish(duration: scala.concurrent.duration.Duration, cancelJob: Boolean): : com.spotify.scio.ScioResult</span>">waitUntilFinish</a></span>()
+    <span class="keyword">val</span> <span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/ScioResult.html" data-tooltip="<span>com.spotify.scio.ScioResult</span>">result</a></span> = <span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/ScioContext.html" data-tooltip="<span>com.spotify.scio.ScioContext</span>">sc</a></span>.<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/ScioContext.html#run()::com.spotify.scio.ScioExecutionContext" data-tooltip="<span>com.spotify.scio.ScioContext.run(): : com.spotify.scio.ScioExecutionContext</span>">run</a></span>().<span class="identifier">waitUntilFinish</span>()
 &nbsp;</div>
               </section>
             
               <section class="">
-                <div class="comment "><h1 id="retrieving-metrics" class="title">Retrieving metrics</h1></p></div>
+                <div class="comment ">
+<h1 id="retrieving-metrics" class="section">Retrieving metrics</h1></p></div>
                 <div class="code empty">&nbsp;</div>
               </section>
             

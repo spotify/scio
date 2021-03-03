@@ -274,7 +274,7 @@ $(document).ready(function() {
 
     // highlight and jump to selected member if an anchor is provided
     if (window.location.hash) {
-        var jqElem = findElementByHash(window.location.hash);
+        var jqElem = findElementByHash(decodeURIComponent(window.location.hash));
         if (jqElem.length > 0) {
             if (jqElem.hasClass("toggleContainer")) toggleShowContentFct(jqElem);
             else exposeMember(jqElem);
@@ -355,7 +355,7 @@ function initInherit() {
         groupParents[$(this).attr("name")] = $(this);
     });
 
-    $("#types > ol > li").each(function(){
+    $("#types > ol > li").add("#deprecatedTypes > ol > li").each(function(){
         var mbr = $(this);
         this.mbrText = mbr.find("> .fullcomment .cmt").text();
         var qualName = mbr.attr("name");

@@ -161,6 +161,7 @@ spotify/scio
   <ul>
     <li><a href="extras/Algebird.html" class="page">Algebird</a></li>
     <li><a href="extras/Sort-Merge-Bucket.html" class="page">Sort Merge Bucket</a></li>
+    <li><a href="extras/HyperLogLog.html" class="page">HyperLogLog</a></li>
   </ul></li>
   <li><a href="migrations/index.html" class="page">Migration Guides</a>
   <ul>
@@ -204,7 +205,7 @@ spotify/scio
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.10.0-beta2+0-a05a535e+20201119-1448*
+<i class="md-icon" title="Version">label_outline</i> 0.10.0+0-11cc428f+20210303-1353*
 </label>
 </li>
 </ul>
@@ -256,7 +257,7 @@ spotify/scio
  val expected = Seq(&quot;a: 3&quot;, &quot;b: 3&quot;, &quot;c: 1&quot;, &quot;d: 1&quot;, &quot;e: 1&quot;)
 </code></pre>
 <p>Using <code>JobTest</code>, you can test the entire pipeline. Specify the type of the class under test, in this case it is com.spotify.scio.examples.WordCount.type . The <code>args</code> function takes the list of command line arguments passed to the main function of WordCount. The WordCount’s main function expects input and output arguments passed to it.</p>
-<pre class="prettyprint"><a class="icon go-to-source" href="https://github.com/spotify/scio/tree/master/scio-examples/src/test/scala/com/spotify/scio/examples/WordCountTest.scala#L28-L34" target="_blank" title="Go to snippet source"></a><code class="language-scala">&quot;WordCount&quot; should &quot;work&quot; in {
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/spotify/scio/tree/master/scio-examples/src/test/scala/com/spotify/scio/examples/WordCountTest.scala#L28-L34" target="_blank" title="Go to snippet source">source</a><code class="language-scala">&quot;WordCount&quot; should &quot;work&quot; in {
   JobTest[com.spotify.scio.examples.WordCount.type]
     .args(&quot;--input=in.txt&quot;, &quot;--output=out.txt&quot;)
     .input(TextIO(&quot;in.txt&quot;), inData)
@@ -269,7 +270,7 @@ spotify/scio
 <h3><a href="#test-for-pipeline-with-sideinput" name="test-for-pipeline-with-sideinput" class="anchor"><span class="anchor-link"></span></a>Test for pipeline with sideinput</h3>
 <p>We will use the <a href="https://github.com/spotify/scio/tree/master/scio-examples/src/test/scala/com/spotify/scio/examples/cookbook/JoinExamplesTest.scala#L73">SideInputJoinExamples</a> test in JoinExamplesTest to illustrate how to write a test for pipelines with sideinputs. The <a href="https://spotify.github.io/scio/examples/JoinExamples.scala.html">SideInputJoinExamples</a> pipeline has two input sources, one for eventsInfo and the other for countryInfo. CountryInfo is used as a sideinput to join with eventInfo.</p>
 <p>Since we have two input sources, we have to specify both in the <code>JobTest</code>. Note that the injected data type should match one expected by the sink.</p>
-<pre class="prettyprint"><a class="icon go-to-source" href="https://github.com/spotify/scio/tree/master/scio-examples/src/test/scala/com/spotify/scio/examples/cookbook/JoinExamplesTest.scala#L79-L86" target="_blank" title="Go to snippet source"></a><code class="language-scala">&quot;SideInputJoinExamples&quot; should &quot;work&quot; in {
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/spotify/scio/tree/master/scio-examples/src/test/scala/com/spotify/scio/examples/cookbook/JoinExamplesTest.scala#L79-L86" target="_blank" title="Go to snippet source">source</a><code class="language-scala">&quot;SideInputJoinExamples&quot; should &quot;work&quot; in {
   JobTest[com.spotify.scio.examples.cookbook.SideInputJoinExamples.type]
     .args(&quot;--output=out.txt&quot;)
     .input(BigQueryIO(ExampleData.EVENT_TABLE), eventData)
@@ -279,7 +280,7 @@ spotify/scio
 }</code></pre>
 <h3><a href="#test-for-pipeline-with-sideoutput" name="test-for-pipeline-with-sideoutput" class="anchor"><span class="anchor-link"></span></a>Test for pipeline with sideoutput</h3>
 <p><a href="https://github.com/spotify/scio/tree/master/scio-examples/src/test/scala/com/spotify/scio/examples/extra/SideInOutExampleTest.scala">SideInOutExampleTest</a> shows an example of how to test pipelines with sideoutputs. Each sideoutput is evaluated using the output function. The ids for <code>TextIO</code> e.g. “out1.txt” should match the ones specified in the args.</p>
-<pre class="prettyprint"><a class="icon go-to-source" href="https://github.com/spotify/scio/tree/master/scio-examples/src/test/scala/com/spotify/scio/examples/extra/SideInOutExampleTest.scala#L25-L46" target="_blank" title="Go to snippet source"></a><code class="language-scala">val inData: Seq[String] = Seq(&quot;The quick brown fox jumps over the lazy dog.&quot;)
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/spotify/scio/tree/master/scio-examples/src/test/scala/com/spotify/scio/examples/extra/SideInOutExampleTest.scala#L25-L46" target="_blank" title="Go to snippet source">source</a><code class="language-scala">val inData: Seq[String] = Seq(&quot;The quick brown fox jumps over the lazy dog.&quot;)
 
 &quot;SideInOutExample&quot; should &quot;work&quot; in {
   JobTest[SideInOutExample.type]
@@ -304,7 +305,7 @@ spotify/scio
 <h3><a href="#test-partial-pipeline" name="test-partial-pipeline" class="anchor"><span class="anchor-link"></span></a>Test partial pipeline</h3>
 <p>To test a section of a pipeline, use <code>runWithContext</code>. The TriggerExample.extractFlowInfo test in <a href="https://github.com/spotify/scio/tree/master/scio-examples/src/test/scala/com/spotify/scio/examples/cookbook/TriggerExampleTest.scala">TriggerExampleTest</a> tests only the extractFlowInfo part of the pipeline.</p>
 <p>The data variable hold the test data and <code>sc.parallelize</code> will transform the input iterable to a <code>SCollection</code> of strings. TriggerExample.extractFlowInfo will be executed using the <code>ScioContext</code> and you can then specify assertions against the result of the pipeline.</p>
-<pre class="prettyprint"><a class="icon go-to-source" href="https://github.com/spotify/scio/tree/master/scio-examples/src/test/scala/com/spotify/scio/examples/cookbook/TriggerExampleTest.scala#L25-L37" target="_blank" title="Go to snippet source"></a><code class="language-scala">&quot;TriggerExample.extractFlowInfo&quot; should &quot;work&quot; in {
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/spotify/scio/tree/master/scio-examples/src/test/scala/com/spotify/scio/examples/cookbook/TriggerExampleTest.scala#L25-L37" target="_blank" title="Go to snippet source">source</a><code class="language-scala">&quot;TriggerExample.extractFlowInfo&quot; should &quot;work&quot; in {
   val data = Seq(
     &quot;01/01/2010 00:00:00,1108302,94,E,ML,36,100,29,0.0065,66,9,1,0.001,74.8,1,9,3,0.0028,71,1,9,&quot;
       + &quot;12,0.0099,67.4,1,9,13,0.0121,99.0,1,,,,,0,,,,,0,,,,,0,,,,,0&quot;,
@@ -322,7 +323,7 @@ spotify/scio
 <p>In this test, we are testing calculateTeamScores for when all of the elements arrive on time, i.e. before the watermark.</p>
 <p>First, we have to create an input stream representing an unbounded <code>SCollection</code> of type GameActionInfo using the <code>testStreamOf</code>. Each element is assigned a timestamp representing when each event occurred. In the code snippet above, we start at epoch equal zero, by setting watermark to 0 in the advanceWatermarkTo.</p>
 <p>We add GameActionInfo elements with varying timestamps, and we advanced the watermark to 3 minutes. At this point, all elements are on time because they came before the watermark advances to 3 minutes.</p>
-<pre class="prettyprint"><a class="icon go-to-source" href="https://github.com/spotify/scio/tree/master/scio-examples/src/test/scala/com/spotify/scio/examples/complete/game/LeaderBoardTest.scala#L48-L57" target="_blank" title="Go to snippet source"></a><code class="language-scala">val stream = testStreamOf[GameActionInfo]
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/spotify/scio/tree/master/scio-examples/src/test/scala/com/spotify/scio/examples/complete/game/LeaderBoardTest.scala#L48-L57" target="_blank" title="Go to snippet source">source</a><code class="language-scala">val stream = testStreamOf[GameActionInfo]
   // Start at the epoch
   .advanceWatermarkTo(baseTime)
   // add some elements ahead of the watermark
@@ -333,7 +334,7 @@ spotify/scio
     event(blueTwo, 5, Duration.standardSeconds(3))
   )</code></pre>
 <p>We then more GameActionInfo elements and advance the watermark to infinity by calling the advanceWatermarkToInfinity. Similarly, these elements are also on time because the watermark is infinity.</p>
-<pre class="prettyprint"><a class="icon go-to-source" href="https://github.com/spotify/scio/tree/master/scio-examples/src/test/scala/com/spotify/scio/examples/complete/game/LeaderBoardTest.scala#L60-L67" target="_blank" title="Go to snippet source"></a><code class="language-scala">// The watermark advances slightly, but not past the end of the window
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/spotify/scio/tree/master/scio-examples/src/test/scala/com/spotify/scio/examples/complete/game/LeaderBoardTest.scala#L60-L67" target="_blank" title="Go to snippet source">source</a><code class="language-scala">// The watermark advances slightly, but not past the end of the window
 .advanceWatermarkTo(baseTime.plus(Duration.standardMinutes(3)))
 .addElements(
   event(redOne, 1, Duration.standardMinutes(4)),
@@ -342,7 +343,7 @@ spotify/scio
 // The window should close and emit an ON_TIME pane
 .advanceWatermarkToInfinity</code></pre>
 <p>To run the test, we use the <code>runWithContext</code>, this will run calculateTeamScores using the ScioContext. In calculateTeamScores, we pass the <code>SCollection</code> we created above using <code>testStreamOf</code>. The <code>IntervalWindow</code> specifies the window for which we want to assert the <code>SCollection</code> of elements created by calculateTeamScores. We want to assert that elements with initial window of 0 to 20 minutes were on time. Next we assert, using <code>inOnTimePane</code> that the <code>SCollection</code> elements are equal to the expected sums.</p>
-<pre class="prettyprint"><a class="icon go-to-source" href="https://github.com/spotify/scio/tree/master/scio-examples/src/test/scala/com/spotify/scio/examples/complete/game/LeaderBoardTest.scala#L71-L79" target="_blank" title="Go to snippet source"></a><code class="language-scala">runWithContext { sc =&gt;
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/spotify/scio/tree/master/scio-examples/src/test/scala/com/spotify/scio/examples/complete/game/LeaderBoardTest.scala#L71-L79" target="_blank" title="Go to snippet source">source</a><code class="language-scala">runWithContext { sc =&gt;
   val teamScores =
     LeaderBoard.calculateTeamScores(sc.testStream(stream), teamWindowDuration, allowedLateness)
 
@@ -360,7 +361,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.10.0-beta2+0-a05a535e+20201119-1448*
+0.10.0+0-11cc428f+20210303-1353*
 </span>
 </div>
 </article>

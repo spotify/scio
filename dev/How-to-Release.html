@@ -161,6 +161,7 @@ spotify/scio
   <ul>
     <li><a href="../extras/Algebird.html" class="page">Algebird</a></li>
     <li><a href="../extras/Sort-Merge-Bucket.html" class="page">Sort Merge Bucket</a></li>
+    <li><a href="../extras/HyperLogLog.html" class="page">HyperLogLog</a></li>
   </ul></li>
   <li><a href="../migrations/index.html" class="page">Migration Guides</a>
   <ul>
@@ -192,7 +193,10 @@ spotify/scio
   <li><a href="../dev/How-to-Release.html#how-to-release" class="header">How to Release</a>
   <ul>
     <li><a href="../dev/How-to-Release.html#prerequisites" class="header">Prerequisites</a></li>
-    <li><a href="../dev/How-to-Release.html#release-procedure" class="header">Release procedure</a></li>
+    <li><a href="../dev/How-to-Release.html#update-documentation-and-version-matrix" class="header">Update documentation and version matrix</a></li>
+    <li><a href="../dev/How-to-Release.html#automatic-ci-" class="header">Automatic (CI)</a></li>
+    <li><a href="../dev/How-to-Release.html#manual" class="header">Manual</a></li>
+    <li><a href="../dev/How-to-Release.html#after-successfully-published-artifacts" class="header">After successfully published artifacts</a></li>
     <li><a href="../dev/How-to-Release.html#past-release-names" class="header">Past release names</a></li>
   </ul></li>
 </ul>
@@ -202,7 +206,7 @@ spotify/scio
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.10.0-beta2+0-a05a535e+20201119-1448*
+<i class="md-icon" title="Version">label_outline</i> 0.10.0+0-11cc428f+20210303-1353*
 </label>
 </li>
 </ul>
@@ -218,7 +222,10 @@ spotify/scio
   <li><a href="../dev/How-to-Release.html#how-to-release" class="header">How to Release</a>
   <ul>
     <li><a href="../dev/How-to-Release.html#prerequisites" class="header">Prerequisites</a></li>
-    <li><a href="../dev/How-to-Release.html#release-procedure" class="header">Release procedure</a></li>
+    <li><a href="../dev/How-to-Release.html#update-documentation-and-version-matrix" class="header">Update documentation and version matrix</a></li>
+    <li><a href="../dev/How-to-Release.html#automatic-ci-" class="header">Automatic (CI)</a></li>
+    <li><a href="../dev/How-to-Release.html#manual" class="header">Manual</a></li>
+    <li><a href="../dev/How-to-Release.html#after-successfully-published-artifacts" class="header">After successfully published artifacts</a></li>
     <li><a href="../dev/How-to-Release.html#past-release-names" class="header">Past release names</a></li>
   </ul></li>
 </ul>
@@ -235,31 +242,49 @@ spotify/scio
 <ul>
   <li>Sign up for a Sonatype account <a href="https://issues.sonatype.org/secure/Signup!default.jspa">here</a></li>
   <li>Ask for permissions to push to com.spotify domain like in this <a href="https://issues.sonatype.org/browse/OSSRH-20689">ticket</a></li>
-  <li>
-  <p>Add Sonatype credentials to <code>~/.sbt/1.0/credentials.sbt</code></p>
-  <pre><code>credentials ++= Seq(
-  Credentials(
-&quot;Sonatype Nexus Repository Manager&quot;,
-&quot;oss.sonatype.org&quot;,
-&quot;$USERNAME&quot;,
-&quot;$PASSWORD&quot;))
-</code></pre></li>
+  <li>Add Sonatype credentials to <code>~/.sbt/1.0/credentials.sbt</code></li>
+</ul>
+<pre class="prettyprint"><code class="language-scala">credentials ++= Seq(
+Credentials(
+    &quot;Sonatype Nexus Repository Manager&quot;,
+    &quot;oss.sonatype.org&quot;,
+    &quot;$USERNAME&quot;,
+    &quot;$PASSWORD&quot;))
+</code></pre>
+<ul>
   <li>Create a PGP key, for example on <a href="https://keybase.io/">keybase.io</a>, and <a href="https://www.gnupg.org/gph/en/manual/x457.html">distribute</a> it to a public keyserver</li>
 </ul>
-<h2><a href="#release-procedure" name="release-procedure" class="anchor"><span class="anchor-link"></span></a>Release procedure</h2>
+<h2><a href="#update-documentation-and-version-matrix" name="update-documentation-and-version-matrix" class="anchor"><span class="anchor-link"></span></a>Update documentation and version matrix</h2>
+<ul>
+  <li>Pick a release name from <a href="https://en.wikipedia.org/wiki/List_of_Latin_phrases_%28full%29">here</a>, <a href="https://en.wikipedia.org/wiki/List_of_songs_with_Latin_lyrics">here</a>, <a href="https://harrypotter.fandom.com/wiki/List_of_spells">here</a> or other interesting sources<sup>*</sup></li>
+  <li>Update the list of release names below</li>
+  <li>If the release includes a Beam version bump, update the <a href="../Apache-Beam.html">version matrix</a></li>
+</ul>
+<h2><a href="#automatic-ci-" name="automatic-ci-" class="anchor"><span class="anchor-link"></span></a>Automatic (CI)</h2>
+<p>Checkout and update master</p>
+<pre class="prettyprint"><code class="language-bash">git checkout master
+
+git pull
+</code></pre>
+<p>Create and push a new version tag</p>
+<pre class="prettyprint"><code class="language-bash">git tag -a vX.Y.Z -m &quot;vX.Y.Z&quot;
+
+git push origin vX.Y.Z
+</code></pre>
+<h2><a href="#manual" name="manual" class="anchor"><span class="anchor-link"></span></a>Manual</h2>
 <ul>
   <li>Run the slow integration tests with <code>SLOW=true sbt it:test</code></li>
   <li>Run <code>release skip-tests</code> in sbt console and follow the instructions</li>
   <li>Go to <a href="https://oss.sonatype.org/">oss.sonatype.org</a>, find the staging repository, &ldquo;close&rdquo; and &ldquo;release&rdquo;</li>
-  <li>Run <code>./scripts/make-site.sh</code> to update documentation</li>
-  <li>Pick a release name from <a href="https://en.wikipedia.org/wiki/List_of_Latin_phrases_%28full%29">here</a>, <a href="https://en.wikipedia.org/wiki/List_of_songs_with_Latin_lyrics">here</a>, <a href="https://harrypotter.fandom.com/wiki/List_of_spells">here</a> or other interesting sources<sup>*</sup></li>
-  <li>Update the list of release names below</li>
   <li>When the tag build completes, update release notes with name and change log</li>
-  <li>If the release includes a Beam version bump, update the <a href="../Apache-Beam.html">version matrix</a></li>
+  <li>Run <code>./scripts/make-site.sh</code> to update documentation</li>
+</ul>
+<h2><a href="#after-successfully-published-artifacts" name="after-successfully-published-artifacts" class="anchor"><span class="anchor-link"></span></a>After successfully published artifacts</h2>
+<ul>
   <li>Run <a href="https://github.com/spotify/scio/tree/master/scripts/bump_scio.sh">scripts/bump_scio.sh</a> to update <a href="https://github.com/spotify/homebrew-public/blob/master/scio.rb">homebrew formula</a> and <code>scioVersion</code> in downstream repos including <a href="https://github.com/spotify/scio.g8">scio.g8</a>, <a href="https://github.com/spotify/featran">featran</a>, etc.</li>
   <li>Bump version in the internal <code>scio-cookie</code> and monorepo</li>
-  <li>Send internal announcement to <a href="mailto:&#115;c&#105;&#x6f;&#x2d;&#x75;&#x73;&#101;&#x72;&#x73;@&#115;&#x70;&#111;t&#105;&#102;&#121;.&#99;o&#x6d;">&#115;c&#105;&#x6f;&#x2d;&#x75;&#x73;&#101;&#x72;&#x73;@&#115;&#x70;&#111;t&#105;&#102;&#121;.&#99;o&#x6d;</a> and <a href="mailto:&#102;&#x6c;&#x61;&#116;&#109;a&#x70;&#x2d;a&#110;&#x6e;&#x6f;&#117;&#110;&#99;&#101;&#64;&#x73;&#x70;&#111;&#116;&#105;&#102;&#x79;&#46;&#99;&#111;&#x6d;">&#102;&#x6c;&#x61;&#116;&#109;a&#x70;&#x2d;a&#110;&#x6e;&#x6f;&#117;&#110;&#99;&#101;&#64;&#x73;&#x70;&#111;&#116;&#105;&#102;&#x79;&#46;&#99;&#111;&#x6d;</a></li>
-  <li>Send external announcement to <a href="mailto:&#115;&#99;&#x69;&#111;&#x2d;&#x75;&#x73;&#x65;&#114;&#x73;&#64;&#103;o&#111;&#x67;&#x6c;e&#x67;&#114;&#111;&#117;&#x70;&#115;.&#x63;&#111;&#109;">&#115;&#99;&#x69;&#111;&#x2d;&#x75;&#x73;&#x65;&#114;&#x73;&#64;&#103;o&#111;&#x67;&#x6c;e&#x67;&#114;&#111;&#117;&#x70;&#115;.&#x63;&#111;&#109;</a> and <a href="mailto:&#x75;&#115;&#x65;&#114;&#64;&#98;&#x65;&#x61;&#x6d;&#46;&#97;&#112;&#x61;&#x63;&#104;&#101;.&#x6f;r&#103;">&#x75;&#115;&#x65;&#114;&#64;&#98;&#x65;&#x61;&#x6d;&#46;&#97;&#112;&#x61;&#x63;&#104;&#101;.&#x6f;r&#103;</a></li>
+  <li>Send internal announcement to <a href="mailto:&#x73;&#99;&#105;&#x6f;-&#117;&#115;&#x65;&#x72;s&#64;&#x73;&#112;&#x6f;t&#105;fy&#46;&#x63;&#x6f;m">&#x73;&#99;&#105;&#x6f;-&#117;&#115;&#x65;&#x72;s&#64;&#x73;&#112;&#x6f;t&#105;fy&#46;&#x63;&#x6f;m</a> and <a href="mailto:&#x66;&#x6c;&#97;&#x74;m&#97;p&#x2d;&#97;nn&#111;u&#x6e;&#99;e&#x40;&#115;&#x70;&#111;tify&#x2e;&#99;&#111;m">&#x66;&#x6c;&#97;&#x74;m&#97;p&#x2d;&#97;nn&#111;u&#x6e;&#99;e&#x40;&#115;&#x70;&#111;tify&#x2e;&#99;&#111;m</a></li>
+  <li>Send external announcement to <a href="mailto:&#115;c&#105;&#111;&#x2d;&#117;&#115;&#x65;&#x72;&#x73;&#64;&#103;&#111;&#111;&#x67;&#108;&#101;&#x67;r&#x6f;&#117;p&#x73;&#x2e;&#99;&#x6f;&#x6d;">&#115;c&#105;&#111;&#x2d;&#117;&#115;&#x65;&#x72;&#x73;&#64;&#103;&#111;&#111;&#x67;&#108;&#101;&#x67;r&#x6f;&#117;p&#x73;&#x2e;&#99;&#x6f;&#x6d;</a> and <a href="mailto:&#117;&#115;&#x65;r&#64;&#98;&#x65;&#x61;&#x6d;&#x2e;&#97;&#x70;&#97;c&#x68;&#x65;&#x2e;&#111;rg">&#117;&#115;&#x65;r&#64;&#98;&#x65;&#x61;&#x6d;&#x2e;&#97;&#x70;&#97;c&#x68;&#x65;&#x2e;&#111;rg</a></li>
   <li>Announce on internal and public <a href="https://slackin.spotify.com/">Slack</a></li>
   <li>Announce on Twitter</li>
 </ul>
@@ -367,7 +392,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.10.0-beta2+0-a05a535e+20201119-1448*
+0.10.0+0-11cc428f+20210303-1353*
 </span>
 </div>
 </article>
