@@ -41,6 +41,7 @@ import org.apache.beam.sdk.extensions.smb.SortedBucketSink.RenameBuckets;
 import org.apache.beam.sdk.extensions.smb.SortedBucketSink.WriteResult;
 import org.apache.beam.sdk.extensions.smb.SortedBucketSource.BucketedInput;
 import org.apache.beam.sdk.extensions.smb.SortedBucketSource.MergeBucketsReader;
+import org.apache.beam.sdk.extensions.smb.SortedBucketSource.TraversableOnceIterable;
 import org.apache.beam.sdk.io.BoundedSource;
 import org.apache.beam.sdk.io.Read;
 import org.apache.beam.sdk.io.fs.ResourceId;
@@ -403,6 +404,18 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
           try {
             KV<FinalKeyT, CoGbkResult> mergedKeyGroup = keyGroupReader.getCurrent();
             transformFn.writeTransform(mergedKeyGroup, outputCollector);
+
+            // exhaust iterators if necessary before moving on to the next key group:
+            // for example, if not every element was needed in the transformFn
+            sources.forEach(
+                source -> {
+                  final Iterable<?> maybeUnfinishedIt =
+                      mergedKeyGroup.getValue().getAll(source.getTupleTag());
+                  if (TraversableOnceIterable.class.isAssignableFrom(
+                      maybeUnfinishedIt.getClass())) {
+                    ((TraversableOnceIterable<?>) maybeUnfinishedIt).ensureExhausted();
+                  }
+                });
 
             // Return 1 non-null value for the entire bucket
             if (!started) {

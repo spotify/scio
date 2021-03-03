@@ -395,19 +395,6 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
         if (runningKeyGroupSize != 0) { // If it's 0, that means we haven't started reading
           keyGroupSize.update(runningKeyGroupSize);
           runningKeyGroupSize = 0;
-          if (!materializeKeyGroup) { // Key groups must be exhausted before moving on to the next
-                                      // one
-            tupleTags
-                .getAll()
-                .forEach(
-                    tupleTag -> {
-                      final Iterable<?> maybeUnfinishedIt = next.getValue().getAll(tupleTag);
-                      if (TraversableOnceIterable.class.isAssignableFrom(
-                          maybeUnfinishedIt.getClass())) {
-                        ((TraversableOnceIterable<?>) maybeUnfinishedIt).ensureExhausted();
-                      }
-                    });
-          }
         }
 
         int completedSources = 0;
