@@ -333,9 +333,9 @@ import com.spotify.scio.parquet.types._
 
 object ParquetJob {
   case class MyRecord(int_field: Int, string_field: String)
-  
+
   def main(cmdlineArgs: Array[String]): Unit = {
-  
+
     val (sc, args) = ContextAndArgs(cmdlineArgs)
 
     sc.typedParquetFile[MyRecord](&quot;input.parquet&quot;)
@@ -355,6 +355,19 @@ def input: SCollection[MyRecord] = ???
 
 def result = input.saveAsTypedParquetFile(&quot;gs://path-to-data/lake/output&quot;)
 </code></pre>
+<h3><a href="#compatibility" name="compatibility" class="anchor"><span class="anchor-link"></span></a>Compatibility</h3>
+<p>Note that Parquet writes Avro <code>array</code> fields differently than most other Parquet submodules. For example <code>my_field: List[Int]</code> would normally map to something like this:</p>
+<pre><code>repeated int32 my_field;
+</code></pre>
+<p>While <code>parquet-avro</code> would map it to this:</p>
+<pre><code>required group my_field {
+  repeated int32 array;
+}
+</code></pre>
+<p>Add the following import to handle typed Parquet in a way compatible with Parquet Avro:</p>
+<pre class="prettyprint"><code class="language-scala">import magnolify.parquet.ParquetArray.AvroCompat._
+</code></pre>
+<p>The same Avro schema evolution principles apply to Parquet, i.e. only append <code>OPTIONAL</code> or <code>REPEATED</code> fields at the end of a record with default <code>null</code> or <code>[]</code>. See this <a href="https://github.com/spotify/magnolify/blob/master/parquet/src/test/scala/magnolify/parquet/test/SchemaEvolutionSuite.scala">test</a> for some common scenarios w.r.t. Parquet schema evolution.</p>
 <h2><a href="#performance-tuning" name="performance-tuning" class="anchor"><span class="anchor-link"></span></a>Performance Tuning</h2>
 <p>Some tunings might be required when writing Parquet files to maximize the read performance. Some of the Parquet settings can be configured via Hadoop <a href="https://github.com/spotify/scio/blob/master/scio-parquet/src/main/resources/core-site.xml">core-site.xml</a> or <code>Configuration</code> argument.</p>
 <ul>
