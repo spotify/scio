@@ -144,8 +144,7 @@ val commonSettings = Def
     scalaVersion := "2.13.5",
     crossScalaVersions := Seq("2.12.13", scalaVersion.value),
     scalacOptions ++= Scalac.commonsOptions.value,
-    Compile / doc / scalacOptions --= Seq("-release", "8"),
-    Compile / doc / scalacOptions ++= Scalac.compileDocOptions.value,
+    Compile / doc / scalacOptions := Scalac.docOptions.value,
     javacOptions ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint:unchecked"),
     javacOptions in (Compile, doc) := Seq("-source", "1.8"),
     // protobuf-lite is an older subset of protobuf-java and causes issues
@@ -978,7 +977,7 @@ lazy val `scio-repl`: Project = project
   .settings(assemblySettings)
   .settings(macroSettings)
   .settings(
-    scalacOptions --= Seq("-release", "8"),
+    scalacOptions := Scalac.replOptions.value,
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
       "org.apache.beam" % "beam-runners-direct-java" % beamVersion,
