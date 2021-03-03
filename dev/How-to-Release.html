@@ -256,7 +256,7 @@ Credentials(
 </ul>
 <h2><a href="#update-documentation-and-version-matrix" name="update-documentation-and-version-matrix" class="anchor"><span class="anchor-link"></span></a>Update documentation and version matrix</h2>
 <ul>
-  <li>Pick a release name from <a href="https://en.wikipedia.org/wiki/List_of_Latin_phrases_%28full%29">here</a>, <a href="https://en.wikipedia.org/wiki/List_of_songs_with_Latin_lyrics">here</a>, <a href="https://harrypotter.fandom.com/wiki/List_of_spells">here</a> or other interesting sources<sup>*</sup></li>
+  <li>Pick a release name from <a href="https://en.wikipedia.org/wiki/List_of_Latin_phrases_%28full%29">here</a>, <a href="https://en.wikipedia.org/wiki/List_of_songs_with_Latin_lyrics">here</a>, <a href="https://harrypotter.fandom.com/wiki/List_of_spells">here</a>, <a href="https://en.wikipedia.org/wiki/List_of_Latin_names_of_cities">here</a>, or other interesting sources<sup>*</sup></li>
   <li>Update the list of release names below</li>
   <li>If the release includes a Beam version bump, update the <a href="../Apache-Beam.html">version matrix</a></li>
 </ul>
@@ -283,15 +283,20 @@ git push origin vX.Y.Z
 <ul>
   <li>Run <a href="https://github.com/spotify/scio/tree/master/scripts/bump_scio.sh">scripts/bump_scio.sh</a> to update <a href="https://github.com/spotify/homebrew-public/blob/master/scio.rb">homebrew formula</a> and <code>scioVersion</code> in downstream repos including <a href="https://github.com/spotify/scio.g8">scio.g8</a>, <a href="https://github.com/spotify/featran">featran</a>, etc.</li>
   <li>Bump version in the internal <code>scio-cookie</code> and monorepo</li>
-  <li>Send internal announcement to <a href="mailto:&#x73;&#99;&#105;&#x6f;-&#117;&#115;&#x65;&#x72;s&#64;&#x73;&#112;&#x6f;t&#105;fy&#46;&#x63;&#x6f;m">&#x73;&#99;&#105;&#x6f;-&#117;&#115;&#x65;&#x72;s&#64;&#x73;&#112;&#x6f;t&#105;fy&#46;&#x63;&#x6f;m</a> and <a href="mailto:&#x66;&#x6c;&#97;&#x74;m&#97;p&#x2d;&#97;nn&#111;u&#x6e;&#99;e&#x40;&#115;&#x70;&#111;tify&#x2e;&#99;&#111;m">&#x66;&#x6c;&#97;&#x74;m&#97;p&#x2d;&#97;nn&#111;u&#x6e;&#99;e&#x40;&#115;&#x70;&#111;tify&#x2e;&#99;&#111;m</a></li>
-  <li>Send external announcement to <a href="mailto:&#115;c&#105;&#111;&#x2d;&#117;&#115;&#x65;&#x72;&#x73;&#64;&#103;&#111;&#111;&#x67;&#108;&#101;&#x67;r&#x6f;&#117;p&#x73;&#x2e;&#99;&#x6f;&#x6d;">&#115;c&#105;&#111;&#x2d;&#117;&#115;&#x65;&#x72;&#x73;&#64;&#103;&#111;&#111;&#x67;&#108;&#101;&#x67;r&#x6f;&#117;p&#x73;&#x2e;&#99;&#x6f;&#x6d;</a> and <a href="mailto:&#117;&#115;&#x65;r&#64;&#98;&#x65;&#x61;&#x6d;&#x2e;&#97;&#x70;&#97;c&#x68;&#x65;&#x2e;&#111;rg">&#117;&#115;&#x65;r&#64;&#98;&#x65;&#x61;&#x6d;&#x2e;&#97;&#x70;&#97;c&#x68;&#x65;&#x2e;&#111;rg</a></li>
+  <li>Send internal announcement to <a href="mailto:sc&#x69;&#111;&#x2d;&#117;s&#x65;&#114;&#x73;&#x40;&#115;&#x70;o&#116;&#105;f&#121;&#x2e;c&#x6f;&#109;">sc&#x69;&#111;&#x2d;&#117;s&#x65;&#114;&#x73;&#x40;&#115;&#x70;o&#116;&#105;f&#121;&#x2e;c&#x6f;&#109;</a> and <a href="mailto:f&#x6c;&#x61;&#116;&#109;&#x61;&#x70;&#x2d;a&#110;&#110;&#111;u&#x6e;&#99;&#x65;&#64;&#115;&#x70;&#x6f;&#116;&#105;&#x66;&#121;&#46;&#x63;&#111;&#109;">f&#x6c;&#x61;&#116;&#109;&#x61;&#x70;&#x2d;a&#110;&#110;&#111;u&#x6e;&#99;&#x65;&#64;&#115;&#x70;&#x6f;&#116;&#105;&#x66;&#121;&#46;&#x63;&#111;&#109;</a></li>
+  <li>Send external announcement to <a href="mailto:&#x73;c&#105;&#111;-&#x75;s&#101;&#114;&#x73;&#x40;&#103;&#111;&#x6f;&#103;&#x6c;&#x65;&#x67;&#x72;&#111;&#117;&#x70;&#x73;.&#x63;&#111;&#109;">&#x73;c&#105;&#111;-&#x75;s&#101;&#114;&#x73;&#x40;&#103;&#111;&#x6f;&#103;&#x6c;&#x65;&#x67;&#x72;&#111;&#117;&#x70;&#x73;.&#x63;&#111;&#109;</a> and <a href="mailto:&#x75;&#115;&#101;r&#64;&#x62;&#101;&#x61;&#109;&#x2e;a&#x70;&#x61;&#99;&#x68;&#x65;&#x2e;&#111;&#x72;&#x67;">&#x75;&#115;&#101;r&#64;&#x62;&#101;&#x61;&#109;&#x2e;a&#x70;&#x61;&#99;&#x68;&#x65;&#x2e;&#111;&#x72;&#x67;</a></li>
   <li>Announce on internal and public <a href="https://slackin.spotify.com/">Slack</a></li>
   <li>Announce on Twitter</li>
 </ul>
-<p><sup>*</sup>Starting with <code>0.4.0</code> all release names are scientific names of animals with genus and species starting with the same letter, in ascending alphabetical order. Starting with <code>0.8.0</code> all release names are Harry Potter spells.</p>
+<p><sup>*</sup>Starting with <code>0.4.0</code> all release names are scientific names of animals with genus and species starting with the same letter, in ascending alphabetical order; Harry Potter spells starting with <code>0.8.0</code>; Latin names of cities in ascending alphabetical order starting <code>0.10.0</code>.</p>
 <h2><a href="#past-release-names" name="past-release-names" class="anchor"><span class="anchor-link"></span></a>Past release names</h2>
+<h3><a href="#0-10-x" name="0-10-x" class="anchor"><span class="anchor-link"></span></a>0.10.x</h3>
+<ul>
+  <li><a href="https://github.com/spotify/scio/releases/tag/v0.10.0">v0.10.0</a> - <em>&ldquo;Aquae Sextiae&rdquo;</em></li>
+</ul>
 <h3><a href="#0-9-x" name="0-9-x" class="anchor"><span class="anchor-link"></span></a>0.9.x</h3>
 <ul>
+  <li><a href="https://github.com/spotify/scio/releases/tag/v0.9.6">v0.9.6</a> - <em>&ldquo;Specialis Revelio&rdquo;</em></li>
   <li><a href="https://github.com/spotify/scio/releases/tag/v0.9.5">v0.9.5</a> - <em>&ldquo;Colovaria&rdquo;</em></li>
   <li><a href="https://github.com/spotify/scio/releases/tag/v0.9.4">v0.9.4</a> - <em>&ldquo;Deletrius&rdquo;</em></li>
   <li><a href="https://github.com/spotify/scio/releases/tag/v0.9.3">v0.9.3</a> - <em>&ldquo;Petrificus Totalus&rdquo;</em></li>

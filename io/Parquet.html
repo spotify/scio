@@ -234,8 +234,7 @@ spotify/scio
 <h1><a href="#parquet" name="parquet" class="anchor"><span class="anchor-link"></span></a>Parquet</h1>
 <p>Scio supports reading and writing <a href="https://parquet.apache.org/">Parquet</a> files as Avro records. It also includes <a href="https://github.com/nevillelyh/parquet-extra">parquet-extra</a> macros for generating column projections and row predicates using idiomatic Scala syntax. Also see <a href="./Avro.html">Avro</a> page on reading and writing regular Avro files.</p>
 <h2><a href="#read-avro-parquet-files" name="read-avro-parquet-files" class="anchor"><span class="anchor-link"></span></a>Read Avro Parquet files</h2>
-<p>When reading Parquet files, only Avro specific records are supported.</p>
-<p>To read a Parquet file with column projections and row predicates:</p>
+<p>To read a Parquet file as Avro specific record with column projections and row predicates:</p>
 <pre class="prettyprint"><code class="language-scala">import com.spotify.scio._
 import com.spotify.scio.parquet.avro._
 import com.spotify.scio.avro.TestRecord
@@ -277,6 +276,27 @@ object ParquetJob {
     sc.parquetAvroFile[TestRecord](&quot;input.parquet&quot;, projection, predicate.parquet)
       // filter natively with the same logic in case of mock input in `JobTest`
       .filter(predicate.native)
+
+    sc.run()
+    ()
+  }
+}
+</code></pre>
+<p>You can also read Avro generic records by specifying a reader schema.</p>
+<pre class="prettyprint"><code class="language-scala mdoc:reset:silent">import com.spotify.scio._
+import com.spotify.scio.parquet.avro._
+import com.spotify.scio.avro.TestRecord
+import org.apache.avro.Schema
+import org.apache.avro.generic.GenericRecord
+
+object ParquetJob {
+  def main(cmdlineArgs: Array[String]): Unit = {
+
+    val (sc, args) = ContextAndArgs(cmdlineArgs)
+
+    sc.parquetAvroFile[GenericRecord](&quot;input.parquet&quot;, TestRecord.getClassSchema)
+      // Map out projected fields into something type safe
+      .map(r =&gt; (r.get(&quot;int_field&quot;).asInstanceOf[Int], r.get(&quot;string_field&quot;).toString))
 
     sc.run()
     ()
