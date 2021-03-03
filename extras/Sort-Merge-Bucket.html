@@ -160,8 +160,8 @@ spotify/scio
   <li><a href="../extras/index.html" class="page">Extras</a>
   <ul>
     <li><a href="../extras/Algebird.html" class="page">Algebird</a></li>
-    <li><a href="../extras/Sort-Merge-Bucket.html" class="active page">Sort Merge Bucket</a></li>
     <li><a href="../extras/HyperLogLog.html" class="page">HyperLogLog</a></li>
+    <li><a href="../extras/Sort-Merge-Bucket.html" class="active page">Sort Merge Bucket</a></li>
   </ul></li>
   <li><a href="../migrations/index.html" class="page">Migration Guides</a>
   <ul>
@@ -194,7 +194,6 @@ spotify/scio
   <ul>
     <li><a href="../extras/Sort-Merge-Bucket.html#what-are-smb-transforms-" class="header">What are SMB transforms?</a></li>
     <li><a href="../extras/Sort-Merge-Bucket.html#what-kind-of-data-can-i-write-using-smb-" class="header">What kind of data can I write using SMB?</a></li>
-    <li><a href="../extras/Sort-Merge-Bucket.html#null-keys-in-smb-datasets" class="header">Null keys in SMB datasets</a></li>
     <li><a href="../extras/Sort-Merge-Bucket.html#tuning-parameters-for-smb-transforms" class="header">Tuning parameters for SMB transforms</a></li>
     <li><a href="../extras/Sort-Merge-Bucket.html#testing" class="header">Testing</a></li>
   </ul></li>
@@ -205,7 +204,7 @@ spotify/scio
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.10.0+0-11cc428f+20210303-1353*
+<i class="md-icon" title="Version">label_outline</i> 0.10.0+3-08ec953a+20210303-1507*
 </label>
 </li>
 </ul>
@@ -222,7 +221,6 @@ spotify/scio
   <ul>
     <li><a href="../extras/Sort-Merge-Bucket.html#what-are-smb-transforms-" class="header">What are SMB transforms?</a></li>
     <li><a href="../extras/Sort-Merge-Bucket.html#what-kind-of-data-can-i-write-using-smb-" class="header">What kind of data can I write using SMB?</a></li>
-    <li><a href="../extras/Sort-Merge-Bucket.html#null-keys-in-smb-datasets" class="header">Null keys in SMB datasets</a></li>
     <li><a href="../extras/Sort-Merge-Bucket.html#tuning-parameters-for-smb-transforms" class="header">Tuning parameters for SMB transforms</a></li>
     <li><a href="../extras/Sort-Merge-Bucket.html#testing" class="header">Testing</a></li>
   </ul></li>
@@ -365,13 +363,16 @@ sc.sortMergeTransform(
   </li>
 </ul>
 <h2><a href="#what-kind-of-data-can-i-write-using-smb-" name="what-kind-of-data-can-i-write-using-smb-" class="anchor"><span class="anchor-link"></span></a>What kind of data can I write using SMB?</h2>
-<p>SMB writes are supported for Avro (GenericRecord and SpecificRecord), JSON, and Tensorflow records. See API bindings in:</p>
+<p>SMB writes are supported for Avro (GenericRecord and SpecificRecord), JSON, Parquet, and Tensorflow records. See API bindings in:</p>
 <ul>
   <li><a href="https://spotify.github.io/scio/api/org/apache/beam/sdk/extensions/smb/?org/apache/beam/sdk/extensions/smb/AvroSortedBucketIO.html" title="org.apache.beam.sdk.extensions.smb.AvroSortedBucketIO"><code>AvroSortedBucketIO</code></a></li>
   <li><a href="https://spotify.github.io/scio/api/org/apache/beam/sdk/extensions/smb/?org/apache/beam/sdk/extensions/smb/JsonSortedBucketIO.html" title="org.apache.beam.sdk.extensions.smb.JsonSortedBucketIO"><code>JsonSortedBucketIO</code></a></li>
-  <li><a href="https://spotify.github.io/scio/api/org/apache/beam/sdk/extensions/smb/?org/apache/beam/sdk/extensions/smb/TensorFlowBucketIO.html" title="org.apache.beam.sdk.extensions.smb.TensorFlowBucketIO"><code>TensorFlowBucketIO</code></a></li>
+  <li><a href="https://spotify.github.io/scio/api/org/apache/beam/sdk/extensions/smb/?org/apache/beam/sdk/extensions/smb/ParquetAvroSortedBucketIO.html" title="org.apache.beam.sdk.extensions.smb.ParquetAvroSortedBucketIO"><code>ParquetAvroSortedBucketIO</code></a></li>
+  <li><a href="https://spotify.github.io/scio/api/org/apache/beam/sdk/extensions/smb/?org/apache/beam/sdk/extensions/smb/ParquetTypesSortedBucketIO.html" title="org.apache.beam.sdk.extensions.smb.ParquetTypesSortedBucketIO"><code>ParquetTypesSortedBucketIO</code></a></li>
+  <li>
+  <p><a href="https://spotify.github.io/scio/api/org/apache/beam/sdk/extensions/smb/?org/apache/beam/sdk/extensions/smb/TensorFlowBucketIO.html" title="org.apache.beam.sdk.extensions.smb.TensorFlowBucketIO"><code>TensorFlowBucketIO</code></a></p>
+  <h2><a href="#null-keys-in-smb-datasets" name="null-keys-in-smb-datasets" class="anchor"><span class="anchor-link"></span></a>Null keys in SMB datasets</h2></li>
 </ul>
-<h2><a href="#null-keys-in-smb-datasets" name="null-keys-in-smb-datasets" class="anchor"><span class="anchor-link"></span></a>Null keys in SMB datasets</h2>
 <p>If the key field of one or more PCollection elements is null, those elements will be diverted into a special bucket file, <code>bucket-null-keys.avro</code>. This file will be ignored in SMB reads and transforms and must be manually read by a downstream user.</p>
 <h2><a href="#tuning-parameters-for-smb-transforms" name="tuning-parameters-for-smb-transforms" class="anchor"><span class="anchor-link"></span></a>Tuning parameters for SMB transforms</h2>
 <p>SMB reads should be more performant and less resource-intensive than regular joins or groupBys. However, SMB writes are more expensive than their regular counterparts, since they involve an extra group-by (bucketing) and sorting step.</p>
@@ -415,7 +416,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.10.0+0-11cc428f+20210303-1353*
+0.10.0+3-08ec953a+20210303-1507*
 </span>
 </div>
 </article>
@@ -425,7 +426,7 @@ Edit this page
 <footer class="md-footer">
 <div class="md-footer-nav">
 <nav class="md-footer-nav__inner md-grid">
-<a href="../extras/Algebird.html" title="Algebird" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+<a href="../extras/HyperLogLog.html" title="HyperLogLog" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
 <div class="md-flex__cell md-flex__cell--shrink">
 <i class="md-icon md-icon--arrow-back md-footer-nav__button"></i>
 </div>
@@ -434,17 +435,17 @@ Edit this page
 <span class="md-footer-nav__direction">
 Previous
 </span>
-Algebird
+HyperLogLog
 </span>
 </div>
 </a>
-<a href="../extras/HyperLogLog.html" title="HyperLogLog" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
+<a href="../migrations/index.html" title="Migration Guides" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
 <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
 <span class="md-flex__ellipsis">
 <span class="md-footer-nav__direction">
 Next
 </span>
-HyperLogLog
+Migration Guides
 </span>
 </div>
 <div class="md-flex__cell md-flex__cell--shrink">

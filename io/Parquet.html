@@ -160,8 +160,8 @@ spotify/scio
   <li><a href="../extras/index.html" class="page">Extras</a>
   <ul>
     <li><a href="../extras/Algebird.html" class="page">Algebird</a></li>
-    <li><a href="../extras/Sort-Merge-Bucket.html" class="page">Sort Merge Bucket</a></li>
     <li><a href="../extras/HyperLogLog.html" class="page">HyperLogLog</a></li>
+    <li><a href="../extras/Sort-Merge-Bucket.html" class="page">Sort Merge Bucket</a></li>
   </ul></li>
   <li><a href="../migrations/index.html" class="page">Migration Guides</a>
   <ul>
@@ -192,8 +192,8 @@ spotify/scio
 <ul>
   <li><a href="../io/Parquet.html#parquet" class="header">Parquet</a>
   <ul>
-    <li><a href="../io/Parquet.html#read-avro-parquet-files" class="header">Read Avro Parquet files</a></li>
-    <li><a href="../io/Parquet.html#write-avro-parquet-files" class="header">Write Avro Parquet files</a></li>
+    <li><a href="../io/Parquet.html#avro" class="header">Avro</a></li>
+    <li><a href="../io/Parquet.html#case-classes" class="header">Case classes</a></li>
     <li><a href="../io/Parquet.html#performance-tuning" class="header">Performance Tuning</a></li>
   </ul></li>
 </ul>
@@ -203,7 +203,7 @@ spotify/scio
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.10.0+0-11cc428f+20210303-1353*
+<i class="md-icon" title="Version">label_outline</i> 0.10.0+3-08ec953a+20210303-1507*
 </label>
 </li>
 </ul>
@@ -218,8 +218,8 @@ spotify/scio
 <ul>
   <li><a href="../io/Parquet.html#parquet" class="header">Parquet</a>
   <ul>
-    <li><a href="../io/Parquet.html#read-avro-parquet-files" class="header">Read Avro Parquet files</a></li>
-    <li><a href="../io/Parquet.html#write-avro-parquet-files" class="header">Write Avro Parquet files</a></li>
+    <li><a href="../io/Parquet.html#avro" class="header">Avro</a></li>
+    <li><a href="../io/Parquet.html#case-classes" class="header">Case classes</a></li>
     <li><a href="../io/Parquet.html#performance-tuning" class="header">Performance Tuning</a></li>
   </ul></li>
 </ul>
@@ -232,9 +232,10 @@ spotify/scio
 <article class="md-content__inner md-typeset">
 <div class="md-content__searchable">
 <h1><a href="#parquet" name="parquet" class="anchor"><span class="anchor-link"></span></a>Parquet</h1>
-<p>Scio supports reading and writing <a href="https://parquet.apache.org/">Parquet</a> files as Avro records. It also includes <a href="https://github.com/nevillelyh/parquet-extra">parquet-extra</a> macros for generating column projections and row predicates using idiomatic Scala syntax. Also see <a href="./Avro.html">Avro</a> page on reading and writing regular Avro files.</p>
-<h2><a href="#read-avro-parquet-files" name="read-avro-parquet-files" class="anchor"><span class="anchor-link"></span></a>Read Avro Parquet files</h2>
-<p>To read a Parquet file as Avro specific record with column projections and row predicates:</p>
+<p>Scio supports reading and writing <a href="https://parquet.apache.org/">Parquet</a> files as Avro records or Scala case classes. Also see <a href="./Avro.html">Avro</a> page on reading and writing regular Avro files.</p>
+<h2><a href="#avro" name="avro" class="anchor"><span class="anchor-link"></span></a>Avro</h2>
+<h3><a href="#read-parquet-files-as-avro" name="read-parquet-files-as-avro" class="anchor"><span class="anchor-link"></span></a>Read Parquet files as Avro</h3>
+<p>When reading Parquet as Avro specific records, one can use <a href="https://github.com/nevillelyh/parquet-extra">parquet-extra</a> macros for generating column projections and row predicates using idiomatic Scala syntax. To read a Parquet file as Avro specific record with column projections and row predicates:</p>
 <pre class="prettyprint"><code class="language-scala">import com.spotify.scio._
 import com.spotify.scio.parquet.avro._
 import com.spotify.scio.avro.TestRecord
@@ -303,7 +304,7 @@ object ParquetJob {
   }
 }
 </code></pre>
-<h2><a href="#write-avro-parquet-files" name="write-avro-parquet-files" class="anchor"><span class="anchor-link"></span></a>Write Avro Parquet files</h2>
+<h3><a href="#write-avro-to-parquet-files" name="write-avro-to-parquet-files" class="anchor"><span class="anchor-link"></span></a>Write Avro to Parquet files</h3>
 <p>Both Avro <a href="https://avro.apache.org/docs/1.8.1/api/java/org/apache/avro/generic/GenericData.Record.html">generic</a> and <a href="https://avro.apache.org/docs/1.8.2/api/java/org/apache/avro/specific/package-summary.html">specific</a> records are supported when writing.</p>
 <p>Type of Avro specific records will hold information about schema, therefore Scio will figure out the schema by itself:</p>
 <pre class="prettyprint"><code class="language-scala mdoc:reset:silent">import com.spotify.scio.values._
@@ -323,8 +324,39 @@ def yourAvroSchema: org.apache.avro.Schema = ???
 
 def result = input.saveAsParquetAvroFile(&quot;gs://path-to-data/lake/output&quot;, schema = yourAvroSchema)
 </code></pre>
+<h2><a href="#case-classes" name="case-classes" class="anchor"><span class="anchor-link"></span></a>Case classes</h2>
+<p>Scio uses <a href="https://github.com/spotify/magnolify/blob/master/docs/parquet.md">magnolify-parquet</a> to derive Parquet reader and writer for case classes at compile time, similar to how <a href="../internals/Coders.html">coders</a> work. See this <a href="https://github.com/spotify/magnolify/blob/master/docs/mapping.md">mapping table</a> for how Scala and Parquet types map.</p>
+<h3><a href="#read-parquet-files-as-case-classes" name="read-parquet-files-as-case-classes" class="anchor"><span class="anchor-link"></span></a>Read Parquet files as case classes</h3>
+<p>When reading Parquet files as case classes, all fields in the case class definition are read. Therefore, it&rsquo;s desirable to construct a case class type with only fields needed for processing.</p>
+<pre class="prettyprint"><code class="language-scala mdoc:reset:silent">import com.spotify.scio._
+import com.spotify.scio.parquet.types._
+
+object ParquetJob {
+  case class MyRecord(int_field: Int, string_field: String)
+  
+  def main(cmdlineArgs: Array[String]): Unit = {
+  
+    val (sc, args) = ContextAndArgs(cmdlineArgs)
+
+    sc.typedParquetFile[MyRecord](&quot;input.parquet&quot;)
+
+    sc.run()
+    ()
+  }
+}
+</code></pre>
+<h3><a href="#write-case-classes-to-parquet-files" name="write-case-classes-to-parquet-files" class="anchor"><span class="anchor-link"></span></a>Write case classes to Parquet files</h3>
+<p>When writing case classes as Parquet files, the schema is derived from the case class and all fields are written.</p>
+<pre class="prettyprint"><code class="language-scala mdoc:reset:silent">import com.spotify.scio.values._
+import com.spotify.scio.parquet.types._
+
+case class MyRecord(int_field: Int, string_field: String)
+def input: SCollection[MyRecord] = ???
+
+def result = input.saveAsTypedParquetFile(&quot;gs://path-to-data/lake/output&quot;)
+</code></pre>
 <h2><a href="#performance-tuning" name="performance-tuning" class="anchor"><span class="anchor-link"></span></a>Performance Tuning</h2>
-<p>Some tunings might be required when writing Parquet files to maximize the read performance. Some of the Parquet settings can be configured via Hadoop <a href="https://github.com/spotify/scio/blob/master/scio-parquet/src/main/resources/core-site.xml">core-site.xml</a>.</p>
+<p>Some tunings might be required when writing Parquet files to maximize the read performance. Some of the Parquet settings can be configured via Hadoop <a href="https://github.com/spotify/scio/blob/master/scio-parquet/src/main/resources/core-site.xml">core-site.xml</a> or <code>Configuration</code> argument.</p>
 <ul>
   <li><code>parquet.block.size</code> - This determines block size for HDFS and row group size. 1 GiB is recommended over the default 128 MiB.</li>
   <li><code>fs.gs.inputstream.fadvise</code> - Parquet relies heavily on random seeks so this GCS connector setting should be set to <code>RANDOM</code>. See this <a href="https://cloud.google.com/blog/products/data-analytics/new-release-of-cloud-storage-connector-for-hadoop-improving-performance-throughput-and-more">blog post</a> for more.</li>
@@ -342,7 +374,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.10.0+0-11cc428f+20210303-1353*
+0.10.0+3-08ec953a+20210303-1507*
 </span>
 </div>
 </article>
