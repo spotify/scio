@@ -18,8 +18,10 @@
 package org.apache.beam.sdk.extensions.smb;
 
 import org.apache.avro.Schema;
+import org.apache.avro.file.CodecFactory;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.generic.GenericRecordBuilder;
+import org.apache.beam.sdk.io.AvroGeneratedUser;
 import org.apache.beam.sdk.io.Compression;
 import org.apache.beam.sdk.io.fs.ResolveOptions;
 import org.apache.beam.sdk.io.fs.ResourceId;
@@ -71,7 +73,8 @@ public class ParquetAvroFileOperationsTest {
   @Test
   public void testGenericRecord() throws Exception {
     final ResourceId file =
-        fromFolder(output).resolve("file.parquet", ResolveOptions.StandardResolveOptions.RESOLVE_FILE);
+        fromFolder(output)
+            .resolve("file.parquet", ResolveOptions.StandardResolveOptions.RESOLVE_FILE);
     writeFile(file);
 
     final ParquetAvroFileOperations<GenericRecord> fileOperations =
@@ -84,9 +87,40 @@ public class ParquetAvroFileOperationsTest {
   }
 
   @Test
+  public void testSpecificRecord() throws Exception {
+    final ParquetAvroFileOperations<AvroGeneratedUser> fileOperations =
+        ParquetAvroFileOperations.of(AvroGeneratedUser.getClassSchema());
+    final ResourceId file =
+        fromFolder(output)
+            .resolve("file.parquet", ResolveOptions.StandardResolveOptions.RESOLVE_FILE);
+
+    final List<AvroGeneratedUser> records =
+        IntStream.range(0, 10)
+            .mapToObj(
+                i ->
+                    AvroGeneratedUser.newBuilder()
+                        .setName(String.format("user%02d", i))
+                        .setFavoriteColor(String.format("color%02d", i))
+                        .setFavoriteNumber(i)
+                        .build())
+            .collect(Collectors.toList());
+    final FileOperations.Writer<AvroGeneratedUser> writer = fileOperations.createWriter(file);
+    for (AvroGeneratedUser record : records) {
+      writer.write(record);
+    }
+    writer.close();
+
+    final List<AvroGeneratedUser> actual = new ArrayList<>();
+    fileOperations.iterator(file).forEachRemaining(actual::add);
+
+    Assert.assertEquals(records, actual);
+  }
+
+  @Test
   public void testProjection() throws Exception {
     final ResourceId file =
-        fromFolder(output).resolve("file.parquet", ResolveOptions.StandardResolveOptions.RESOLVE_FILE);
+        fromFolder(output)
+            .resolve("file.parquet", ResolveOptions.StandardResolveOptions.RESOLVE_FILE);
     writeFile(file);
 
     final Schema projection =
@@ -113,7 +147,8 @@ public class ParquetAvroFileOperationsTest {
   @Test
   public void testPredicate() throws Exception {
     final ResourceId file =
-        fromFolder(output).resolve("file.parquet", ResolveOptions.StandardResolveOptions.RESOLVE_FILE);
+        fromFolder(output)
+            .resolve("file.parquet", ResolveOptions.StandardResolveOptions.RESOLVE_FILE);
     writeFile(file);
 
     final FilterPredicate predicate = FilterApi.ltEq(FilterApi.intColumn("age"), 5);
