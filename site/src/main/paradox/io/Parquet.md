@@ -1,10 +1,12 @@
 # Parquet
 
-Scio supports reading and writing [Parquet](https://parquet.apache.org/) files as Avro records. It also includes [parquet-extra](https://github.com/nevillelyh/parquet-extra) macros for generating column projections and row predicates using idiomatic Scala syntax. Also see [[Avro]] page on reading and writing regular Avro files.
+Scio supports reading and writing [Parquet](https://parquet.apache.org/) files as Avro records or Scala case classes.  Also see [[Avro]] page on reading and writing regular Avro files.
 
-## Read Avro Parquet files
+## Avro
 
-To read a Parquet file as Avro specific record with column projections and row predicates:
+### Read Parquet files as Avro
+
+When reading Parquet as Avro specific records, one can use [parquet-extra](https://github.com/nevillelyh/parquet-extra) macros for generating column projections and row predicates using idiomatic Scala syntax. To read a Parquet file as Avro specific record with column projections and row predicates:
 
 ```scala
 import com.spotify.scio._
@@ -83,7 +85,7 @@ object ParquetJob {
 }
 ```
 
-## Write Avro Parquet files
+### Write Avro to Parquet files
 
 Both Avro [generic](https://avro.apache.org/docs/1.8.1/api/java/org/apache/avro/generic/GenericData.Record.html) and [specific](https://avro.apache.org/docs/1.8.2/api/java/org/apache/avro/specific/package-summary.html) records are supported when writing.
 
@@ -111,9 +113,50 @@ def yourAvroSchema: org.apache.avro.Schema = ???
 def result = input.saveAsParquetAvroFile("gs://path-to-data/lake/output", schema = yourAvroSchema)
 ```
 
+## Case classes
+
+Scio uses [magnolify-parquet](https://github.com/spotify/magnolify/blob/master/docs/parquet.md) to derive Parquet reader and writer for case classes at compile time, similar to how @ref:[coders](../internals/Coders.md) work. See this [mapping table](https://github.com/spotify/magnolify/blob/master/docs/mapping.md) for how Scala and Parquet types map.
+
+### Read Parquet files as case classes
+
+When reading Parquet files as case classes, all fields in the case class definition are read. Therefore, it's desirable to construct a case class type with only fields needed for processing.
+
+```scala mdoc:reset:silent
+import com.spotify.scio._
+import com.spotify.scio.parquet.types._
+
+object ParquetJob {
+  case class MyRecord(int_field: Int, string_field: String)
+
+  def main(cmdlineArgs: Array[String]): Unit = {
+
+    val (sc, args) = ContextAndArgs(cmdlineArgs)
+
+    sc.typedParquetFile[MyRecord]("input.parquet")
+
+    sc.run()
+    ()
+  }
+}
+```
+
+### Write case classes to Parquet files
+
+When writing case classes as Parquet files, the schema is derived from the case class and all fields are written.
+
+```scala mdoc:reset:silent
+import com.spotify.scio.values._
+import com.spotify.scio.parquet.types._
+
+case class MyRecord(int_field: Int, string_field: String)
+def input: SCollection[MyRecord] = ???
+
+def result = input.saveAsTypedParquetFile("gs://path-to-data/lake/output")
+```
+
 ## Performance Tuning
 
-Some tunings might be required when writing Parquet files to maximize the read performance. Some of the Parquet settings can be configured via Hadoop [core-site.xml](https://github.com/spotify/scio/blob/master/scio-parquet/src/main/resources/core-site.xml).
+Some tunings might be required when writing Parquet files to maximize the read performance. Some of the Parquet settings can be configured via Hadoop [core-site.xml](https://github.com/spotify/scio/blob/master/scio-parquet/src/main/resources/core-site.xml) or `Configuration` argument.
 
 - `parquet.block.size` - This determines block size for HDFS and row group size. 1 GiB is recommended over the default 128 MiB.
 - `fs.gs.inputstream.fadvise` - Parquet relies heavily on random seeks so this GCS connector setting should be set to `RANDOM`. See this [blog post](https://cloud.google.com/blog/products/data-analytics/new-release-of-cloud-storage-connector-for-hadoop-improving-performance-throughput-and-more) for more.

@@ -60,13 +60,14 @@ function, and immediately rewrites them using the same bucketing scheme.
 
 ## What kind of data can I write using SMB?
 
-SMB writes are supported for Avro (GenericRecord and SpecificRecord), JSON, and Tensorflow records.
+SMB writes are supported for Avro (GenericRecord and SpecificRecord), JSON, Parquet, and Tensorflow records.
 See API bindings in:
 
 - @javadoc[AvroSortedBucketIO](org.apache.beam.sdk.extensions.smb.AvroSortedBucketIO)
 - @javadoc[JsonSortedBucketIO](org.apache.beam.sdk.extensions.smb.JsonSortedBucketIO)
+- @javadoc[ParquetAvroSortedBucketIO](org.apache.beam.sdk.extensions.smb.ParquetAvroSortedBucketIO)
+- @javadoc[ParquetTypesSortedBucketIO](org.apache.beam.sdk.extensions.smb.ParquetTypesSortedBucketIO)
 - @javadoc[TensorFlowBucketIO](org.apache.beam.sdk.extensions.smb.TensorFlowBucketIO)
-
 ## Null keys in SMB datasets
 
 If the key field of one or more PCollection elements is null, those elements will be diverted into a special
