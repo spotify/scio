@@ -4,9 +4,7 @@ Scio supports reading and writing [Parquet](https://parquet.apache.org/) files a
 
 ## Read Avro Parquet files
 
-When reading Parquet files, only Avro specific records are supported.
-
-To read a Parquet file with column projections and row predicates:
+To read a Parquet file as Avro specific record with column projections and row predicates:
 
 ```scala
 import com.spotify.scio._
@@ -54,6 +52,30 @@ object ParquetJob {
     sc.parquetAvroFile[TestRecord]("input.parquet", projection, predicate.parquet)
       // filter natively with the same logic in case of mock input in `JobTest`
       .filter(predicate.native)
+
+    sc.run()
+    ()
+  }
+}
+```
+
+You can also read Avro generic records by specifying a reader schema.
+
+```scala mdoc:reset:silent
+import com.spotify.scio._
+import com.spotify.scio.parquet.avro._
+import com.spotify.scio.avro.TestRecord
+import org.apache.avro.Schema
+import org.apache.avro.generic.GenericRecord
+
+object ParquetJob {
+  def main(cmdlineArgs: Array[String]): Unit = {
+
+    val (sc, args) = ContextAndArgs(cmdlineArgs)
+
+    sc.parquetAvroFile[GenericRecord]("input.parquet", TestRecord.getClassSchema)
+      // Map out projected fields into something type safe
+      .map(r => (r.get("int_field").asInstanceOf[Int], r.get("string_field").toString))
 
     sc.run()
     ()
