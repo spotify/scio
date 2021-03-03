@@ -23,6 +23,7 @@ import com.spotify.scio.parquet.avro.ParquetAvroIO
 import com.spotify.scio.parquet.avro.ParquetAvroIO.ReadParam
 import com.spotify.scio.values.SCollection
 import org.apache.avro.Schema
+import org.apache.avro.generic.GenericRecord
 import org.apache.hadoop.conf.Configuration
 import org.apache.parquet.filter2.predicate.FilterPredicate
 import org.slf4j.LoggerFactory
@@ -41,7 +42,7 @@ final class ScioContextOps(@transient private val self: ScioContext) extends Any
    * is not supported. Pipelines may not autoscale up or down during the initial read and subsequent
    * fused transforms.
    */
-  def parquetAvroFile[T: ClassTag](
+  def parquetAvroFile[T <: GenericRecord: ClassTag](
     path: String,
     projection: Schema = ReadParam.DefaultProjection,
     predicate: FilterPredicate = ReadParam.DefaultPredicate,
