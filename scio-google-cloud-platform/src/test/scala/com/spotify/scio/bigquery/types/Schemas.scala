@@ -89,4 +89,10 @@ object Schemas {
     @description("account user") user: User,
     @description("in USD") balance: Double
   )
+
+  case class CaseClassWithMethods(required: Required, optional: Optional, repeated: Repeated) {
+    val innerAccessorValue: String = ""
+    def accessorMethod: String = ""
+    def nonAccessorMethod(x: String): String = x
+  }
 }
