@@ -154,6 +154,30 @@ def input: SCollection[MyRecord] = ???
 def result = input.saveAsTypedParquetFile("gs://path-to-data/lake/output")
 ```
 
+### Compatibility
+
+Note that Parquet writes Avro `array` fields differently than most other Parquet submodules. For example `my_field: List[Int]` would normally map to something like this:
+
+```
+repeated int32 my_field;
+```
+
+While `parquet-avro` would map it to this:
+
+```
+required group my_field {
+  repeated int32 array;
+}
+```
+
+Add the following import to handle typed Parquet in a way compatible with Parquet Avro:
+
+```scala
+import magnolify.parquet.ParquetArray.AvroCompat._
+```
+
+The same Avro schema evolution principles apply to Parquet, i.e. only append `OPTIONAL` or `REPEATED` fields at the end of a record with default `null` or `[]`. See this [test](https://github.com/spotify/magnolify/blob/master/parquet/src/test/scala/magnolify/parquet/test/SchemaEvolutionSuite.scala) for some common scenarios w.r.t. Parquet schema evolution.
+
 ## Performance Tuning
 
 Some tunings might be required when writing Parquet files to maximize the read performance. Some of the Parquet settings can be configured via Hadoop [core-site.xml](https://github.com/spotify/scio/blob/master/scio-parquet/src/main/resources/core-site.xml) or `Configuration` argument.
