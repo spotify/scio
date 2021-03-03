@@ -187,7 +187,7 @@ Because of these limitations and performance reasons, make sure `--zone`, `--sta
 
 #### How stable is the type safe BigQuery API?
 
-@ref:[Type Safe BigQuery](io/Type-Safe-BigQuery.md) API is considered stable and widely used at Spotify. There are several caveats however:
+@ref:[BigQuery](io/BigQuery.md) API is considered stable and widely used at Spotify. There are several caveats however:
 
 - Both [legacy](https://cloud.google.com/bigquery/query-reference) and [SQL](https://cloud.google.com/bigquery/sql-reference/) syntax are supported although the SQL syntax is **highly recommended**
 - The system will detect legacy or SQL syntax and choose the correct one

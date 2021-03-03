@@ -4,10 +4,10 @@
 
 @@@ index
 
-* @ref:[Type safe BigQuery](Type-Safe-BigQuery.md)
-* @ref:[Bigtable](Bigtable.md)
 * @ref:[Avro](Avro.md)
-* @ref:[Protobuf](Protobuf.md)
+* @ref:[BigQuery](BigQuery.md)
+* @ref:[Bigtable](Bigtable.md)
 * @ref:[Parquet](Parquet.md)
+* @ref:[Protobuf](Protobuf.md)
 
 @@@

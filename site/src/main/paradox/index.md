@@ -31,11 +31,11 @@ See @scaladoc[Scio Scaladocs](com.spotify.scio.index)  for current API documenta
 - @ref:[Powered By](Powered-By.md) - see who is using Scio in production
 
 ### IO
-  - @ref:[Type safe BigQuery](io/Type-Safe-BigQuery.md) - tutorial for the type safe BigQuery API
-  - @ref:[Bigtable](io/Bigtable.md) - using Scio with Bigtable
   - @ref:[Avro](io/Avro.md) - using Scio with Avro files
-  - @ref:[Protobuf](io/Protobuf.md) - using Scio with Protobuf
+  - @ref:[BigQuery](io/BigQuery.md) - using Scio with BigQuery in a type safe way
+  - @ref:[Bigtable](io/Bigtable.md) - using Scio with Bigtable
   - @ref:[Parquet](io/Parquet.md) - using Scio with Parquet files
+  - @ref:[Protobuf](io/Protobuf.md) - using Scio with Protobuf
 
 ### Extras
   - @ref:[Algebird](extras/Algebird.md)
