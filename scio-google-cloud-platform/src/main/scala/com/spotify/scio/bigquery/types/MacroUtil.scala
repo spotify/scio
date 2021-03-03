@@ -34,7 +34,7 @@ private[types] object MacroUtil {
         .forall(b => t.baseClasses.contains(b.typeSymbol))
 
   def isField(s: Symbol): Boolean =
-    s.isPublic && s.isMethod && !s.isSynthetic && !s.isConstructor
+    s.isPublic && s.isMethod && s.asMethod.isAccessor && !s.isSynthetic && !s.isConstructor
 
   // Case class helpers for macros
 
