@@ -34,7 +34,7 @@ trait SideInput[T] extends Serializable {
 
   // Use this attribute in implementations of SideInput to force caching
   // even on GlobalWindows. (Used to fix #1269)
-  protected def updateCacheOnGlobalWindow = true
+  protected[values] def updateCacheOnGlobalWindow = true
 
   private[values] def get[I, O](context: DoFn[I, O]#ProcessContext): T
 
@@ -127,6 +127,10 @@ private[values] class MultiMapSideInput[K, V](val view: PCollectionView[JMap[K, 
 
 private[values] class DelegatingSideInput[A, B](val si: SideInput[A], val mapper: A => B)
     extends SideInput[B] {
+
+  // Only update the cached value (and re-run the mapper) if the underlying SI does the same.
+  override protected[values] def updateCacheOnGlobalWindow: Boolean = si.updateCacheOnGlobalWindow
+
   override def get[I, O](context: DoFn[I, O]#ProcessContext): B = mapper(si.get(context))
 
   private[scio] val view: PCollectionView[_] = si.view
