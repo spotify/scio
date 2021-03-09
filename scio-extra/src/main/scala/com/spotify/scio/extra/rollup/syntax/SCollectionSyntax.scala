@@ -36,6 +36,7 @@ trait SCollectionSyntax {
     ): SCollection[((D, R), (M, Long))] = {
 
       val doubleCounting = self
+        .withName("RollupAndCountDuplicates")
         .transform {
           _.map { case (_, dims, rollupDims, measure) =>
             ((dims, rollupDims), (measure, 1L))
@@ -47,9 +48,9 @@ trait SCollectionSyntax {
 
             }
         }
-        .withName("RollupAndCountDuplicates")
 
       val correctingCounts = self
+        .withName("RollupAndCountCorrection")
         .transform {
           _.map { case (uniqueKey, dims, rollupDims, _) =>
             ((uniqueKey, dims), rollupDims)
@@ -73,12 +74,12 @@ trait SCollectionSyntax {
             }
             .map { case ((_, dims), (rollupDims, count)) => ((dims, rollupDims), (g.zero, count)) }
         }
-        .withName("RollupAndCountCorrection")
 
       SCollection
         .unionAll(List(doubleCounting, correctingCounts))
-        .sumByKey
         .withName("RollupAndCountCorrected")
+        .sumByKey
+
 
     }
 
