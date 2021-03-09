@@ -36,42 +36,49 @@ trait SCollectionSyntax {
     ): SCollection[((D, R), (M, Long))] = {
 
       val doubleCounting = self
-        .map { case (_, dims, rollupDims, measure) =>
-          ((dims, rollupDims), (measure, 1L))
-        }
-        .sumByKey
-        .flatMap { case (dims @ (_, rollupDims), measure) =>
-          rollupFunction(rollupDims)
-            .map((x: R) => dims.copy(_2 = x))
-            .map(newDims => (newDims, measure))
+        .transform {
+          _.map { case (_, dims, rollupDims, measure) =>
+            ((dims, rollupDims), (measure, 1L))
+          }.sumByKey
+            .flatMap { case (dims @ (_, rollupDims), measure) =>
+              rollupFunction(rollupDims)
+                .map((x: R) => dims.copy(_2 = x))
+                .map(newDims => (newDims, measure))
 
+            }
         }
+        .withName("RollupAndCountDuplicates")
 
       val correctingCounts = self
-        .map { case (uniqueKey, dims, rollupDims, _) =>
-          ((uniqueKey, dims), rollupDims)
-        }
-        .groupByKey
-        .filterValues(_.size > 1)
-        .flatMapValues {
-          _.flatMap {
-            rollupFunction(_)
-              .map(newDims => (newDims, -1L))
-          }
-            .groupBy { case (rollupDims, _) =>
-              rollupDims
+        .transform {
+          _.map { case (uniqueKey, dims, rollupDims, _) =>
+            ((uniqueKey, dims), rollupDims)
+          }.groupByKey
+            .filterValues(_.size > 1)
+            .flatMapValues {
+              _.flatMap {
+                rollupFunction(_)
+                  .map(newDims => (newDims, -1L))
+              }
+                .groupBy { case (rollupDims, _) =>
+                  rollupDims
+                }
+                .mapValues(_.map { case (_, count) => count }.sum)
+                .map { case (rollupDims, count) =>
+                  // Add 1 to correction count. We only care to correct for excessive counts
+                  (rollupDims, count + 1L)
+                }
+                // We only care about correcting cases where we actually double-count
+                .filter { case (_, count) => count < 0L }
             }
-            .mapValues(_.map { case (_, count) => count }.sum)
-            .map { case (rollupDims, count) =>
-              // Add 1 to correction count. We only care to correct for excessive counts
-              (rollupDims, count + 1L)
-            }
-            // We only care about correcting cases where we actually double-count
-            .filter { case (_, count) => count < 0L }
+            .map { case ((_, dims), (rollupDims, count)) => ((dims, rollupDims), (g.zero, count)) }
         }
-        .map { case ((_, dims), (rollupDims, count)) => ((dims, rollupDims), (g.zero, count)) }
+        .withName("RollupAndCountCorrection")
 
-      SCollection.unionAll(List(doubleCounting, correctingCounts)).sumByKey
+      SCollection
+        .unionAll(List(doubleCounting, correctingCounts))
+        .sumByKey
+        .withName("RollupAndCountCorrected")
 
     }
 
