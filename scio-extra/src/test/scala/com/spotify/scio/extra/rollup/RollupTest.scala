@@ -52,7 +52,7 @@ class RollupTest extends PipelineSpec {
     runWithData(input)(_.rollupAndCount(groupingSets)) should contain theSameElementsAs expected
   }
 
-  "it" should "correctly sum users on top-level even if they are active in dfferent cohorts" in {
+  "it" should "correctly sum users on top-level even if they are active in different cohorts" in {
 
     val input = Seq(
       ("user1", FixedDims("2020-01-01", "sweden"), RollupDims1D(Some("web")), MsPlayed(100L)),

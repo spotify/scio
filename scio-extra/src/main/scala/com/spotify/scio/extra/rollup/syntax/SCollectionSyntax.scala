@@ -24,8 +24,9 @@ trait SCollectionSyntax {
      * R - Dimensions that should be rolled up
      * M - Additional measure that is summable over all dimensions
      *
-     * @param rollupFunction A function takes dimensions R for one element and creates new element
-     *                       for each combination of rollups that we want to provide
+     * @param rollupFunction A function takes one element with dimensions of type R and returns a
+     *                       set of R with one element for each combination of rollups that we
+     *                       want to provide
      */
     def rollupAndCount(rollupFunction: R => Set[R])(implicit
       c: Coder[U],
@@ -79,7 +80,6 @@ trait SCollectionSyntax {
         .unionAll(List(doubleCounting, correctingCounts))
         .withName("RollupAndCountCorrected")
         .sumByKey
-
 
     }
 
