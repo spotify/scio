@@ -21,12 +21,13 @@ import java.io.File
 import java.nio.file.Files
 import java.util.Arrays
 
-import com.spotify.scio.util._
 import com.github.benmanes.caffeine.cache.{Caffeine, Cache => CCache}
 import com.spotify.scio._
 import com.spotify.scio.testing._
+import com.spotify.scio.util._
 import com.spotify.sparkey._
 import org.apache.beam.sdk.io.FileSystems
+import org.apache.beam.sdk.values.KV
 import org.apache.commons.io.FileUtils
 
 import scala.jdk.CollectionConverters._
@@ -536,6 +537,72 @@ class SparkeyTest extends PipelineSpec {
     cache.underlying.stats().loadCount shouldBe 0
 
     val basePath = scioResult.tap(sparkeyMaterialized).value.next().basePath
+    FileUtils.deleteDirectory(new File(basePath))
+  }
+
+  it should "support .asLargeMapSideInput" in {
+    val sc = ScioContext()
+
+    val input = Seq("ab", "bc", "cd", "de")
+    val typedSideData = Seq(("ab", Seq(1, 2)), ("bc", Seq(2, 3)), ("cd", Seq(3, 4)))
+    val typedSideDataMap = typedSideData.toMap
+
+    val si = sc.parallelize(typedSideData).asLargeMapSideInput
+
+    val result = sc
+      .parallelize(input)
+      .withSideInputs(si)
+      .flatMap((x, sic) => sic(si).get(x))
+      .toSCollection
+      .materialize
+
+    val sparkeyMaterialized = sc.wrap(si.view.getPCollection).materialize
+
+    val scioResult = sc.run().waitUntilFinish()
+    val expectedOutput = input.flatMap(typedSideDataMap.get)
+
+    scioResult.tap(result).value.toList should contain theSameElementsAs expectedOutput
+
+    val basePath = scioResult
+      .tap(sparkeyMaterialized)
+      .value
+      .next
+      .asInstanceOf[KV[Any, SparkeyUri]]
+      .getValue
+      .basePath
+    FileUtils.deleteDirectory(new File(basePath))
+  }
+
+  it should "support .asLargeMapSideInput with one shard" in {
+    val sc = ScioContext()
+
+    val input = Seq("ab", "bc", "cd", "de")
+    val typedSideData = Seq(("ab", Seq(1, 2)), ("bc", Seq(2, 3)), ("cd", Seq(3, 4)))
+    val typedSideDataMap = typedSideData.toMap
+
+    val si = sc.parallelize(typedSideData).asLargeMapSideInput(numShards = 1)
+
+    val result = sc
+      .parallelize(input)
+      .withSideInputs(si)
+      .flatMap((x, sic) => sic(si).get(x))
+      .toSCollection
+      .materialize
+
+    val sparkeyMaterialized = sc.wrap(si.view.getPCollection).materialize
+
+    val scioResult = sc.run().waitUntilFinish()
+    val expectedOutput = input.flatMap(typedSideDataMap.get)
+
+    scioResult.tap(result).value.toList should contain theSameElementsAs expectedOutput
+
+    val basePath = scioResult
+      .tap(sparkeyMaterialized)
+      .value
+      .next
+      .asInstanceOf[KV[Any, SparkeyUri]]
+      .getValue
+      .basePath
     FileUtils.deleteDirectory(new File(basePath))
   }
 }

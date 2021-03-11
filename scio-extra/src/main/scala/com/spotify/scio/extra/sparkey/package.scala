@@ -22,15 +22,12 @@ import java.util.UUID
 
 import com.spotify.scio.ScioContext
 import com.spotify.scio.annotations.experimental
-import com.spotify.scio.coders.Coder
-import com.spotify.scio.extra.sparkey.instances.{
-  CachedStringSparkeyReader,
-  SparkeyReaderInstances,
-  TypedSparkeyReader
-}
+import com.spotify.scio.coders.{Coder, CoderMaterializer}
+import com.spotify.scio.extra.sparkey.instances._
 import com.spotify.scio.util.Cache
 import com.spotify.scio.values.{SCollection, SideInput}
 import com.spotify.sparkey.{CompressionType, SparkeyReader}
+import org.apache.beam.sdk.coders
 import org.apache.beam.sdk.io.FileSystems
 import org.apache.beam.sdk.transforms.{DoFn, View}
 import org.apache.beam.sdk.values.PCollectionView
@@ -97,11 +94,12 @@ import scala.util.hashing.MurmurHash3
  *   }
  * }}}
  *
- * A `TypedSparkeyReader` can be used to do automatic decoding of JVM types from byte values:
+ * A `SparkeyMap` can store any types of keys and values, but can only be used as a SideInput:
  * {{{
  * val main: SCollection[String] = sc.parallelize(Seq("a", "b", "c"))
- * val side: SideInput[TypedSparkeyReader[MyObject]] = sc
- *   .typedSparkeySideInput("gs://<bucket>/<path>/<sparkey-prefix>", MyObject.decode)
+ * val side: SideInput[SparkeyMap[String, Int]] = sc
+ *   .parallelize(Seq("a" -> 1, "b" -> 2, "c" -> 3))
+ *   .asLargeMapSideInput()
  *
  * val objects: SCollection[MyObject] = main
  *   .withSideInputs(side)
@@ -109,7 +107,9 @@ import scala.util.hashing.MurmurHash3
  *   .toSCollection
  * }}}
  *
- * A `TypedSparkeyReader` can also accept a Caffeine cache to reduce IO and deserialization load:
+ * To read a static Sparkey collection and use it as a typed SideInput, use `TypedSparkeyReader`.
+ * `TypedSparkeyReader` can also accept a Caffeine cache to reduce IO and deserialization load:
+ *
  * {{{
  * val main: SCollection[String] = sc.parallelize(Seq("a", "b", "c"))
  * val cache: Cache[String, MyObject] = ...
@@ -362,6 +362,7 @@ package object sparkey extends SparkeyReaderInstances {
      * [[Cache]] will be used to cache reads from the resulting [[SparkeyReader]].
      */
     @experimental
+    @deprecated("Use asLargeMapSideInput if no cache is required.")
     def asTypedSparkeySideInput[T](decoder: Array[Byte] => T)(implicit
       w: SparkeyWritable[K, V],
       koder: Coder[K],
@@ -396,6 +397,71 @@ package object sparkey extends SparkeyReaderInstances {
           compressionBlockSize = compressionBlockSize
         )
         .asTypedSparkeySideInput[T](cache)(decoder)
+
+    /**
+     * Convert this SCollection to a SideInput, mapping key-value pairs of each window to a
+     * `SparkeyMap`, to be used with
+     * [[com.spotify.scio.values.SCollection.withSideInputs SCollection.withSideInputs]]. It is
+     * required that each key of the input be associated with a single value. The resulting
+     * SideInput must fit on disk on each worker that reads it. This is strongly recommended
+     * over a regular MapSideInput if the data in the side input exceeds 100MB.
+     */
+    @experimental
+    def asLargeMapSideInput(implicit
+      koder: Coder[K],
+      voder: Coder[V]
+    ): SideInput[SparkeyMap[K, V]] = self.asLargeMapSideInput()
+
+    /**
+     * Convert this SCollection to a SideInput, mapping key-value pairs of each window to a
+     * `SparkeyMap`, to be used with
+     * [[com.spotify.scio.values.SCollection.withSideInputs SCollection.withSideInputs]]. It is
+     * required that each key of the input be associated with a single value. The resulting
+     * SideInput must fit on disk on each worker that reads it. This is strongly recommended
+     * over a regular MapSideInput if the data in the side input exceeds 100MB.
+     */
+    @experimental
+    def asLargeMapSideInput(
+      numShards: Short = DefaultSideInputNumShards,
+      compressionType: CompressionType = DefaultCompressionType,
+      compressionBlockSize: Int = DefaultCompressionBlockSize
+    )(implicit koder: Coder[K], voder: Coder[V]): SideInput[SparkeyMap[K, V]] = {
+      val beamKoder =
+        CoderMaterializer.beam(self.context.options, koder).asInstanceOf[coders.Coder[Any]]
+      val beamVoder =
+        CoderMaterializer.beam(self.context.options, voder).asInstanceOf[coders.Coder[Any]]
+
+      new LargeMapSideInput[K, V](
+        self
+          .transform(
+            _.map(tuple =>
+              (
+                SparkeyCoderUtils.encode(tuple._1, beamKoder),
+                SparkeyCoderUtils.encode(tuple._2, beamVoder)
+              )
+            )
+              .asSparkey(
+                numShards = numShards,
+                compressionType = compressionType,
+                compressionBlockSize = compressionBlockSize
+              )
+          )
+          .applyInternal(View.asSingleton())
+      )
+    }
+
+    /**
+     * Convert this SCollection to a SideInput, mapping key-value pairs of each window to a
+     * `Map[key, Iterable[value]]`, to be used with [[SCollection.withSideInputs]]. In contrast to
+     * [[asLargeMapSideInput]], it is not required that the keys in the input collection be
+     * unique. The resulting map is required to fit on disk on each worker. This is strongly
+     * recommended over a regular MultiMapSideInput if the data in the side input exceeds 100MB.
+     */
+    def asLargeMultiMapSideInput(implicit
+      koder: Coder[K],
+      voder: Coder[Iterable[V]]
+    ): SideInput[SparkeyMap[K, Iterable[V]]] =
+      self.groupByKey.asLargeMapSideInput()(koder, voder)
 
     /**
      * Convert this SCollection to a SideInput, mapping key-value pairs of each window to a
@@ -476,6 +542,21 @@ package object sparkey extends SparkeyReaderInstances {
     override def updateCacheOnGlobalWindow: Boolean = false
     override def get[I, O](context: DoFn[I, O]#ProcessContext): SparkeyReader =
       SparkeySideInput.checkMemory(context.sideInput(view).getReader)
+  }
+
+  /**
+   * A Sparkey-backed MapSideInput, named "Large" to help discovery and usability.
+   * For most MapSideInput use cases >100MB or so, this performs dramatically faster.(100-1000x)
+   */
+  private class LargeMapSideInput[K: Coder, V: Coder](val view: PCollectionView[SparkeyUri])
+      extends SideInput[SparkeyMap[K, V]] {
+    override def updateCacheOnGlobalWindow: Boolean = false
+    override def get[I, O](context: DoFn[I, O]#ProcessContext): SparkeyMap[K, V] =
+      new SparkeyMap(
+        context.sideInput(view).getReader,
+        CoderMaterializer.beam(context.getPipelineOptions, Coder[K]),
+        CoderMaterializer.beam(context.getPipelineOptions, Coder[V])
+      )
   }
 
   private object SparkeySideInput {
