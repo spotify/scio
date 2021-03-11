@@ -26,6 +26,7 @@ import com.spotify.scio.extra.sparkey.instances._
 import com.spotify.scio.util.Cache
 import com.spotify.scio.values.{SCollection, SideInput}
 import com.spotify.sparkey.{CompressionType, SparkeyReader}
+import org.apache.beam.sdk.coders
 import org.apache.beam.sdk.io.FileSystems
 import org.apache.beam.sdk.transforms.{DoFn, View}
 import org.apache.beam.sdk.util.CoderUtils
