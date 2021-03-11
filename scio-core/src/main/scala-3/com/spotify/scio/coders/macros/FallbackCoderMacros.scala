@@ -31,7 +31,7 @@ object FallbackCoderMacros {
     // val show = MacroSettings.showCoderFallback(c) == FeatureFlag.Enable
     val show = true
 
-    val fullTypeColored = Type.showAnsiColored[T]
+    val fullTypeColored = Type.show[T]
     val fullType = Type.show[T]
     val typeName: String = fullType.split('.').last // TODO: Type.showShort[T] ?
 

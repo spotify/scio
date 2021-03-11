@@ -1,0 +1,58 @@
+name: Migration
+on: push
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        task:
+          # - scio-sql/compile
+          # - scio-sql/test
+          # - scio-parquet/compile
+          # - scio-parquet/test
+          # - scio-elasticsearch7/compile
+          # - scio-elasticsearch7/test
+          # - scio-repl/compile
+          # - scio-repl/test
+          # - scio-jmh/compile
+          # - scio-jmh/test
+          # - scio-jdbc/compile
+          # - scio-jdbc/test
+          # - scio-extra/compile
+          # - scio-extra/test
+          # - scio-core/compile
+          # - scio-core/test
+          # - scio-examples/compile
+          # - scio-examples/test
+          # - scio-redis/compile
+          # - scio-redis/test
+          # - scio-schemas/compile
+          # - scio-schemas/test
+          # - scio-cassandra3/compile
+          # - scio-cassandra3/test
+          # - scio-tensorflow/compile
+          # - scio-tensorflow/test
+          - scio-macros/compile
+          - scio-macros/test
+          # - scio-test/compile
+          # - scio-test/test
+          # - scio-avro/compile
+          # - scio-avro/test
+          # - scio-google-cloud-platform/compile
+          # - scio-google-cloud-platform/test
+          # - scio-elasticsearch6/compile
+          # - scio-elasticsearch6/test
+          # - scio-smb/compile
+          # - scio-smb/test
+          # - steps/compile
+          # - steps/test
+    steps:
+      - uses: actions/checkout@v2.3.4
+      - name: cache SBT
+        uses: coursier/cache-action@v5
+      - name: java 8 setup
+        uses: olafurpg/setup-scala@v10
+      - name: Compile
+        run: sbt "++3.0.0-RC1;${{ matrix.task }}"

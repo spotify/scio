@@ -21,13 +21,13 @@ import scala.compiletime._
 import scala.deriving._
 
 object DerivationUtils {
-  inline given mirrorFields[Fields <: Tuple] as List[String] =
+  inline given mirrorFields[Fields <: Tuple]: List[String] =
     inline erasedValue[Fields] match {
       case _: (field *: fields) => constValue[field].toString :: mirrorFields[fields]
       case _ => Nil
     }
 
-  inline given summonAllF[F[_], T <: Tuple] as Widen[T] = {
+  inline given summonAllF[F[_], T <: Tuple]: Widen[T] = {
     val res =
       inline erasedValue[T] match {
         case _: EmptyTuple => EmptyTuple

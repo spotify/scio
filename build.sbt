@@ -25,6 +25,7 @@ import de.heikoseeberger.sbtheader.CommentCreator
 
 ThisBuild / turbo := true
 
+val scala3Version = "3.0.0-RC1"
 val algebirdVersion = "0.13.7"
 val algebraVersion = "2.2.2"
 val annoy4sVersion = "0.10.0"
@@ -143,7 +144,7 @@ val commonSettings = Def
     headerLicense := Some(HeaderLicense.ALv2("2020", "Spotify AB")),
     headerMappings := headerMappings.value + (HeaderFileType.scala -> keepExistingHeader, HeaderFileType.java -> keepExistingHeader),
     scalaVersion := "2.13.5",
-    crossScalaVersions := Seq("2.12.12", scalaVersion.value, "3.0.0-M2"),
+    crossScalaVersions := Seq("2.12.12", scalaVersion.value, scala3Version),
     scalacOptions ++= Scalac.commonsOptions.value,
     Compile / doc / scalacOptions := Scalac.docOptions.value,
     javacOptions ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint:unchecked"),
@@ -575,7 +576,7 @@ lazy val `scio-macros`: Project = project
       else Nil
     },
     // Scala3 setting
-    crossScalaVersions += "3.0.0-M2"
+    crossScalaVersions += scala3Version
   )
 
 lazy val `scio-avro`: Project = project

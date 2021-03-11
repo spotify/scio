@@ -234,7 +234,7 @@ private class SortedSetCoder[T: Ordering](bc: BCoder[T]) extends SeqLikeCoder[So
     decode(inStream, SortedSet.newBuilder[T])
 }
 
-private class BitSetCoder extends AtomicCoder[BitSet] {
+private class BitSetCoderInternal extends AtomicCoder[BitSet] {
   private[this] val lc = VarIntCoder.of()
 
   def decode(in: InputStream): BitSet = {
@@ -452,7 +452,7 @@ trait ScalaCoders {
   implicit def noneCoder: Coder[None.type] =
     optionCoder[Nothing, Option](nothingCoder).asInstanceOf[Coder[None.type]]
 
-  implicit def bitSetCoder: Coder[BitSet] = Coder.beam(new BitSetCoder)
+  implicit def bitSetCoder: Coder[BitSet] = Coder.beam(new BitSetCoderInternal)
 
   implicit def seqCoder[T: Coder]: Coder[Seq[T]] =
     Coder.transform(Coder[T])(bc => Coder.beam(new SeqCoder[T](bc)))

@@ -28,7 +28,7 @@ object IsJavaBean {
 
   private def checkGetterAndSetters(using q: Quotes)(sym: q.reflect.Symbol): Unit = {
     import q.reflect._
-    val methods: List[Symbol] = sym.classMethods
+    val methods: List[Symbol] = sym.declaredMethods
 
     val getters =
       methods.collect {
@@ -59,15 +59,18 @@ object IsJavaBean {
             report.throwError(mess)
           }
 
-      val resType = info.returnTpt.tpe
-      val paramType = setter.paramss.head.head.tpt.tpe
-
-      if (resType != paramType) {
-          val mess =
-            s"""JavaBean contained setter for field $name that had a mismatching type.
-                  |  found:    $paramType
-                  |  expected: $resType""".stripMargin
-          report.throwError(mess)
+      val resType: TypeRepr = info.returnTpt.tpe
+      setter.paramss.head match {
+        case TypeParamClause(params: List[TypeDef]) => report.throwError(s"JavaBean setter for field $name has type parameters")
+        case TermParamClause(head :: _) => 
+          val tpe = head.tpt.tpe
+          if (resType != tpe) {
+            val mess =
+              s"""JavaBean contained setter for field $name that had a mismatching type.
+                    |  found:    $tpe
+                    |  expected: $resType""".stripMargin
+            report.throwError(mess)
+          }
       }
     }
   }
@@ -80,7 +83,7 @@ object IsJavaBean {
     '{new IsJavaBean[T]{}}
   }
 
-  inline given isJavaBean[T] as IsJavaBean[T] = {
+  inline given isJavaBean[T]: IsJavaBean[T] = {
     ${ isJavaBeanImpl[T] }
   }
 

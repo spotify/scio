@@ -198,7 +198,7 @@ object SchemaMaterializer {
         (bschema, toRow, fromRow)
       case _ =>
         implicit val imp = schema
-        val (bschema, to, from) = materialize(implicitly[Schema[ScalarWrapper[T]]])
+        val (bschema, to, from) = materialize(ScalarWrapper.schemaScalarWrapper[T])
 
         def fromRow =
           new SerializableFunction[Row, T] {
@@ -219,6 +219,6 @@ object SchemaMaterializer {
     case s @ (_: Record[T] | _: RawRecord[T]) =>
       SchemaMaterializer.fieldType(s).getRowSchema
     case _ =>
-      SchemaMaterializer.fieldType(Schema[ScalarWrapper[T]]).getRowSchema
+      SchemaMaterializer.fieldType(Schema[ScalarWrapper[T]](ScalarWrapper.schemaScalarWrapper[T])).getRowSchema
   }
 }

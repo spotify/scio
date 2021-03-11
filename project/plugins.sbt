@@ -20,7 +20,7 @@ addSbtPlugin("com.thoughtworks.sbt-api-mappings" % "sbt-api-mappings" % "3.0.0")
 addSbtPlugin("net.virtual-void" % "sbt-dependency-graph" % "0.10.0-RC1")
 addSbtPlugin("de.heikoseeberger" % "sbt-header" % "5.6.0")
 addSbtPlugin("com.geirsson" % "sbt-ci-release" % "1.5.7")
-addSbtPlugin("ch.epfl.lamp" % "sbt-dotty" % "0.4.4")
+addSbtPlugin("ch.epfl.lamp" % "sbt-dotty" % "0.5.3")
 
 libraryDependencies ++= Seq(
   "com.github.os72" % "protoc-jar" % "3.11.4",
