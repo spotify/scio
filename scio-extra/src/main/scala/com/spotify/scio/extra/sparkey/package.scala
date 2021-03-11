@@ -467,6 +467,57 @@ package object sparkey extends SparkeyReaderInstances {
   }
 
   /** Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with Sparkey methods. */
+  implicit class SparkeySetSCollection[K](@transient private val self: SCollection[K]) {
+
+    /**
+     * Convert this SCollection to a SideInput, mapping key-value pairs of each window to a
+     * `SparkeySet`, to be used with
+     * [[com.spotify.scio.values.SCollection.withSideInputs SCollection.withSideInputs]]. It is
+     * required that each element of the input be unique. The resulting
+     * SideInput must fit on disk on each worker that reads it. This is strongly recommended
+     * over a regular SetSideInput if the data in the side input exceeds 100MB.
+     */
+    @experimental
+    def asLargeSetSideInput(implicit koder: Coder[K]): SideInput[SparkeySet[K]] =
+      self.asLargeSetSideInput()(koder)
+
+    /**
+     * Convert this SCollection to a SideInput, mapping key-value pairs of each window to a
+     * `SparkeySet`, to be used with
+     * [[com.spotify.scio.values.SCollection.withSideInputs SCollection.withSideInputs]]. It is
+     * required that each element of the input be unique. The resulting
+     * SideInput must fit on disk on each worker that reads it. This is strongly recommended
+     * over a regular SetSideInput if the data in the side input exceeds 100MB.
+     */
+    @experimental
+    def asLargeSetSideInput(
+      numShards: Short = DefaultSideInputNumShards,
+      compressionType: CompressionType = DefaultCompressionType,
+      compressionBlockSize: Int = DefaultCompressionBlockSize
+    )(implicit koder: Coder[K]): SideInput[SparkeySet[K]] = {
+      val beamKoder = CoderMaterializer.beam(self.context.options, koder)
+
+      new LargeSetSideInput[K](
+        self
+          .transform(
+            _.map(x =>
+              (
+                SparkeyCoderUtils.encode(x, beamKoder),
+                Array.emptyByteArray
+              )
+            )
+              .asSparkey(
+                numShards = numShards,
+                compressionType = compressionType,
+                compressionBlockSize = compressionBlockSize
+              )
+          )
+          .applyInternal(View.asSingleton())
+      )
+    }
+  }
+
+  /** Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with Sparkey methods. */
   implicit class SparkeySCollection(private val self: SCollection[SparkeyUri]) extends AnyVal {
 
     /**
@@ -534,6 +585,20 @@ package object sparkey extends SparkeyReaderInstances {
         context.sideInput(view).getReader,
         CoderMaterializer.beam(context.getPipelineOptions, Coder[K]),
         CoderMaterializer.beam(context.getPipelineOptions, Coder[V])
+      )
+  }
+
+  /**
+   * A Sparkey-backed SetSideInput, named as such to help discovery and usability.
+   * For most SetSideInput use cases >100MB or so, this performs dramatically faster.(100-1000x)
+   */
+  private class LargeSetSideInput[K: Coder](val view: PCollectionView[SparkeyUri])
+      extends SideInput[SparkeySet[K]] {
+    override def updateCacheOnGlobalWindow: Boolean = false
+    override def get[I, O](context: DoFn[I, O]#ProcessContext): SparkeySet[K] =
+      new SparkeySet(
+        context.sideInput(view).getReader,
+        CoderMaterializer.beam(context.getPipelineOptions, Coder[K])
       )
   }
 

@@ -605,4 +605,68 @@ class SparkeyTest extends PipelineSpec {
       .basePath
     FileUtils.deleteDirectory(new File(basePath))
   }
+
+  it should "support .asLargeSetSideInput" in {
+    val sc = ScioContext()
+
+    val input = Seq("ab", "bc", "cd", "de")
+    val typedSideData = Set("ab", "bc", "cd")
+
+    val si = sc.parallelize(typedSideData).asLargeSetSideInput
+
+    val result = sc
+      .parallelize(input)
+      .withSideInputs(si)
+      .filter((x, sic) => sic(si).contains(x))
+      .toSCollection
+      .materialize
+
+    val sparkeyMaterialized = sc.wrap(si.view.getPCollection).materialize
+
+    val scioResult = sc.run().waitUntilFinish()
+    val expectedOutput = input.filter(typedSideData.contains)
+
+    scioResult.tap(result).value.toList should contain theSameElementsAs expectedOutput
+
+    val basePath = scioResult
+      .tap(sparkeyMaterialized)
+      .value
+      .next
+      .asInstanceOf[KV[Any, SparkeyUri]]
+      .getValue
+      .basePath
+    FileUtils.deleteDirectory(new File(basePath))
+  }
+
+  it should "support .asLargeSetSideInput with one shard" in {
+    val sc = ScioContext()
+
+    val input = Seq("ab", "bc", "cd", "de")
+    val typedSideData = Set("ab", "bc", "cd")
+
+    val si = sc.parallelize(typedSideData).asLargeSetSideInput(numShards = 1)
+
+    val result = sc
+      .parallelize(input)
+      .withSideInputs(si)
+      .filter((x, sic) => sic(si).contains(x))
+      .toSCollection
+      .materialize
+
+    val sparkeyMaterialized = sc.wrap(si.view.getPCollection).materialize
+
+    val scioResult = sc.run().waitUntilFinish()
+    val expectedOutput = input.filter(typedSideData.contains)
+
+    scioResult.tap(result).value.toList should contain theSameElementsAs expectedOutput
+
+    val basePath = scioResult
+      .tap(sparkeyMaterialized)
+      .value
+      .next
+      .asInstanceOf[KV[Any, SparkeyUri]]
+      .getValue
+      .basePath
+    FileUtils.deleteDirectory(new File(basePath))
+  }
 }
