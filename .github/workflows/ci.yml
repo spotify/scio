@@ -39,8 +39,8 @@ jobs:
     strategy:
       matrix:
         java:
-          - 8
-          - 11
+          - graalvm-ce-java8@21.0.0
+          - graalvm-ce-java11@21.0.0
         scala:
           - 2.12.13
           - 2.13.5
@@ -69,8 +69,8 @@ jobs:
     strategy:
       matrix:
         java:
-          - 8
-          - 11
+          - graalvm-ce-java8@21.0.0
+          - graalvm-ce-java11@21.0.0
         scala:
           - 2.12.13
           - 2.13.5
@@ -88,8 +88,8 @@ jobs:
     strategy:
       matrix:
         java:
-          - 8
-          - 11
+          - graalvm-ce-java8@21.0.0
+          - graalvm-ce-java11@21.0.0
         scala:
           - 2.12.13
           - 2.13.5
