@@ -16,14 +16,13 @@ jobs:
         uses: coursier/cache-action@v5
       - name: java ${{matrix.java}} setup
         uses: olafurpg/setup-scala@v10
+        with:
+          java-version: graalvm-ce-java11@21.0.0
       - name: Setup project
         run: scripts/gha_setup.sh
       - run: sbt "++${{matrix.scala}} it:test"
     strategy:
       matrix:
-        java:
-          - "8"
-          - "11"
         scala:
           - "2.12.13"
           - "2.13.5"
@@ -39,7 +38,7 @@ jobs:
       - name: Setup Java and Scala
         uses: olafurpg/setup-scala@v10
         with:
-          java-version: 11
+          java-version: graalvm-ce-java11@21.0.0
       - name: Setup project
         run: scripts/gha_setup.sh
       - name: Build documentation
