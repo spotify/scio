@@ -43,7 +43,6 @@ final case class GenericRecordTap(
   override def value: Iterator[GenericRecord] = FileStorage(path).avroFile[GenericRecord](s.get)
 
   override def open(sc: ScioContext): SCollection[GenericRecord] =
-    // implicit val coder = Coder.avroGenericRecordCoder(s.get)
     sc.read(GenericRecordIO(path, s.get))
 }
 
