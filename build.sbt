@@ -459,7 +459,6 @@ lazy val `scio-sql`: Project = project
   .in(file("scio-sql"))
   .settings(commonSettings)
   .settings(publishSettings)
-  .settings(itSettings)
   .settings(macroSettings)
   .settings(
     description := "Scio - SQL extension",
@@ -469,12 +468,15 @@ lazy val `scio-sql`: Project = project
       "org.apache.beam" % "beam-sdks-java-extensions-sql" % beamVersion,
       "org.apache.commons" % "commons-lang3" % commonsLang3Version,
       "org.apache.beam" % "beam-vendor-calcite-1_20_0" % beamVendorVersion
-    )
+    ),
+    Test / compileOrder := CompileOrder.JavaThenScala
   )
   .dependsOn(
+    `scio-macros`,
     `scio-core`,
-    `scio-schemas` % "test->test",
-    `scio-macros`
+    `scio-schemas` % "test",
+    `scio-avro` % "compile->test",
+    `scio-test`
   )
 
 lazy val `scio-test`: Project = project
@@ -528,8 +530,7 @@ lazy val `scio-test`: Project = project
   .dependsOn(
     `scio-core` % "test->test;compile->compile;it->it",
     `scio-schemas` % "test;it",
-    `scio-avro` % "compile->test;it->it",
-    `scio-sql` % "compile->test;it->it"
+    `scio-avro` % "compile->test;it->it"
   )
 
 lazy val `scio-macros`: Project = project
@@ -635,6 +636,8 @@ lazy val `scio-google-cloud-platform`: Project = project
   )
   .dependsOn(
     `scio-core` % "compile;it->it",
+    `scio-schemas` % "test",
+    `scio-avro` % "test",
     `scio-test` % "test;it"
   )
   .configs(IntegrationTest)
