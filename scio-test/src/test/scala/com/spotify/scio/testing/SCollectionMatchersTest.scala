@@ -40,6 +40,7 @@ import com.twitter.chill.Externalizer
 import com.esotericsoftware.kryo.KryoSerializable
 import com.esotericsoftware.kryo.Kryo
 import com.esotericsoftware.kryo.io.{Input, Output}
+import scala.annotation.unused
 
 object SCollectionMatchersTest {
   // intentionally not serializable to test lambda ser/de
@@ -53,11 +54,11 @@ object SCollectionMatchersTest {
 final case class DoesNotSerialize[B](a: String, b: B) extends KryoSerializable with Serializable {
 
   @throws(classOf[IOException])
-  private def writeObject(o: ObjectOutputStream): Unit =
+  private def writeObject(@unused o: ObjectOutputStream): Unit =
     throw new NotSerializableException("DoesNotSerialize can't be serialized")
 
   @throws(classOf[IOException])
-  private def readObject(o: ObjectInputStream): Unit =
+  private def readObject(@unused o: ObjectInputStream): Unit =
     throw new NotSerializableException("DoesNotSerialize can't be serialized")
 
   @throws(classOf[IOException])

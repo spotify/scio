@@ -104,7 +104,7 @@ class IoCommands(options: PipelineOptions) {
   def writeText(path: String, data: Seq[String]): Unit = {
     IOUtils.writeLines(
       data.asJava,
-      IOUtils.LINE_SEPARATOR,
+      System.lineSeparator(),
       outputStream(path, MimeTypes.TEXT),
       StandardCharsets.UTF_8
     )

@@ -193,7 +193,6 @@ sealed trait ApproxFilterCompanion {
     expectedInsertions: Long,
     fpp: Double
   ): SCollection[Filter[T]] = {
-    implicit val elemCoder = Coder.beam(elems.internal.getCoder)
     elems.transform {
       _.groupBy(_ => ()).values
         .map { xs =>
@@ -298,8 +297,7 @@ sealed trait ApproxFilterCompanion {
  * Import `magnolify.guava.auto._` to get common instances of Guava
  * [[com.google.common.hash.Funnel Funnel]]s.
  */
-class BloomFilter[T: g.Funnel] private (private val impl: g.BloomFilter[T])
-    extends ApproxFilter[T] {
+class BloomFilter[T] private (private val impl: g.BloomFilter[T]) extends ApproxFilter[T] {
   override def mightContain(elem: T): Boolean = impl.mightContain(elem)
   override val approxElementCount: Long = impl.approximateElementCount()
   override val expectedFpp: Double = impl.expectedFpp()

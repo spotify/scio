@@ -42,10 +42,9 @@ final case class GenericRecordTap(
 
   override def value: Iterator[GenericRecord] = FileStorage(path).avroFile[GenericRecord](s.get)
 
-  override def open(sc: ScioContext): SCollection[GenericRecord] = {
-    implicit val coder = Coder.avroGenericRecordCoder(s.get)
+  override def open(sc: ScioContext): SCollection[GenericRecord] =
+    // implicit val coder = Coder.avroGenericRecordCoder(s.get)
     sc.read(GenericRecordIO(path, s.get))
-  }
 }
 
 /** Tap for [[org.apache.avro.specific.SpecificRecord SpecificRecord]] Avro files. */
@@ -90,11 +89,11 @@ case class ObjectFileTap[T: Coder](path: String) extends Tap[T] {
 final case class AvroTaps(self: Taps) {
 
   /** Get a `Future[Tap[T]]` of a Protobuf file. */
-  def protobufFile[T: ClassTag: Coder](path: String)(implicit ev: T <:< Message): Future[Tap[T]] =
+  def protobufFile[T: Coder](path: String)(implicit ev: T <:< Message): Future[Tap[T]] =
     self.mkTap(s"Protobuf: $path", () => self.isPathDone(path), () => ObjectFileTap[T](path))
 
   /** Get a `Future[Tap[T]]` of an object file. */
-  def objectFile[T: ClassTag: Coder](path: String): Future[Tap[T]] =
+  def objectFile[T: Coder](path: String): Future[Tap[T]] =
     self.mkTap(s"Object file: $path", () => self.isPathDone(path), () => ObjectFileTap[T](path))
 
   /**
@@ -116,14 +115,12 @@ final case class AvroTaps(self: Taps) {
     self.mkTap(s"Avro: $path", () => self.isPathDone(path), () => SpecificRecordTap[T](path))
 
   /** Get a `Future[Tap[T]]` for typed Avro source. */
-  def typedAvroFile[T <: HasAvroAnnotation: TypeTag: ClassTag: Coder](
+  def typedAvroFile[T <: HasAvroAnnotation: TypeTag: Coder](
     path: String
   ): Future[Tap[T]] = {
     val avroT = AvroType[T]
 
     import scala.concurrent.ExecutionContext.Implicits.global
-    implicit val bcoder = Coder.avroGenericRecordCoder(avroT.schema)
-    avroFile(path, avroT.schema)
-      .map(_.map(avroT.fromGenericRecord))
+    avroFile(path, avroT.schema).map(_.map(avroT.fromGenericRecord))
   }
 }

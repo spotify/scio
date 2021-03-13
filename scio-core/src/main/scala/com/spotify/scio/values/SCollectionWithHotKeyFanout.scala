@@ -34,8 +34,7 @@ class SCollectionWithHotKeyFanout[K, V] private[values] (
   private val self: PairSCollectionFunctions[K, V],
   private val hotKeyFanout: Either[K => Int, Int]
 ) extends TransformNameable {
-  implicit private[this] val (keyCoder, valueCoder): (Coder[K], Coder[V]) =
-    (self.keyCoder, self.valueCoder)
+  implicit private[this] val valueCoder: Coder[V] = self.valueCoder
 
   private def withFanout[K0, I, O](
     combine: Combine.PerKey[K0, I, O]

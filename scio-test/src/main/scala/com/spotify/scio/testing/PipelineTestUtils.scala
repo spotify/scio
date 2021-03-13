@@ -146,7 +146,7 @@ trait PipelineTestUtils {
    * @return a tuple containing the [[ScioResult]] and the materialized result of fn as a
    *         [[scala.collection.Seq Seq]]
    */
-  def runWithLocalOutput[U: Coder](fn: ScioContext => SCollection[U]): (ScioResult, Seq[U]) = {
+  def runWithLocalOutput[U](fn: ScioContext => SCollection[U]): (ScioResult, Seq[U]) = {
     val sc = ScioContext()
     val f = fn(sc).materialize
     val result: ScioResult = sc.run().waitUntilFinish() // block non-test runner
