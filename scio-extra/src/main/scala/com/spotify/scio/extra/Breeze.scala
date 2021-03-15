@@ -21,7 +21,6 @@ import breeze.linalg.operators.OpAdd
 import breeze.linalg.support.CanCopy
 import com.twitter.algebird.Semigroup
 
-
 /**
  * Utilities for Breeze.
  *
