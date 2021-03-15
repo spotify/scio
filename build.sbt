@@ -1141,7 +1141,8 @@ lazy val site: Project = project
     `scio-schemas`,
     `scio-smb`,
     `scio-test`,
-    `scio-extra`
+    `scio-extra`,
+    `scio-sql`
   )
 
 // =======================================================================
