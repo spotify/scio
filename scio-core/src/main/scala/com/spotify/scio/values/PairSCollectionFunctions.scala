@@ -33,7 +33,7 @@ import org.apache.beam.sdk.transforms._
 import org.apache.beam.sdk.values.{KV, PCollection}
 import org.slf4j.LoggerFactory
 
-import scala.collection.compat.immutable.ArraySeq
+import scala.collection.compat._
 
 private object PairSCollectionFunctions {
   private val logger = LoggerFactory.getLogger(this.getClass)
@@ -167,7 +167,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    */
   def hashPartitionByKey(numPartitions: Int): Seq[SCollection[(K, V)]] = {
     val hashCodeFn: K => Int = {
-      case key: Array[_] => ArraySeq.unsafeWrapArray(key).##
+      case key: Array[_] => immutable.ArraySeq.unsafeWrapArray(key).##
       case key           => key.##
     }
     self.partition(numPartitions, elem => Math.floorMod(hashCodeFn(elem._1), numPartitions))
@@ -684,7 +684,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * @group transform
    */
   def flatMapValues[U: Coder](f: V => TraversableOnce[U]): SCollection[(K, U)] =
-    self.flatMap(kv => f(kv._2).map(v => (kv._1, v)))
+    self.flatMap(kv => f(kv._2).iterator.map(v => (kv._1, v)))
 
   /**
    * Merge the values for each key using an associative function and a neutral "zero value" which
