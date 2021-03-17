@@ -82,7 +82,7 @@ class SparkeyTest extends PipelineSpec {
     }
   }
 
-  "SCollection" should "support reading in an existing Sparkey file" in {
+  it should "support reading in an existing Sparkey file" in {
     // Create a temporary Sparkey file pair
     val sc = ScioContext()
     val p = sc.parallelize(sideData).asSparkey.materialize
@@ -106,7 +106,7 @@ class SparkeyTest extends PipelineSpec {
     }
   }
 
-  "SCollection" should "support reading in an existing sharded Sparkey collection" in {
+  it should "support reading in an existing sharded Sparkey collection" in {
     // Create a temporary Sparkey file pair
     val sc = ScioContext()
     val p = sc.parallelize(sideData).asSparkey(numShards = 2).materialize
@@ -129,7 +129,7 @@ class SparkeyTest extends PipelineSpec {
     FileUtils.deleteDirectory(new File(sparkeyUri.basePath))
   }
 
-  "SCollection" should "support .asSparkey with shards" in {
+  it should "support .asSparkey with shards" in {
     val sc = ScioContext()
     val p = sc.parallelize(bigSideData).asSparkey(numShards = 2).materialize
     val scioResult = sc.run().waitUntilFinish()
