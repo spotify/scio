@@ -19,7 +19,6 @@ package com.spotify.scio.extra
 
 import java.lang.Math.floorMod
 import java.util.UUID
-
 import com.spotify.scio.ScioContext
 import com.spotify.scio.annotations.experimental
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
@@ -30,6 +29,7 @@ import com.spotify.sparkey.{CompressionType, SparkeyReader}
 import org.apache.beam.sdk.coders
 import org.apache.beam.sdk.io.FileSystems
 import org.apache.beam.sdk.transforms.{DoFn, View}
+import org.apache.beam.sdk.util.CoderUtils
 import org.apache.beam.sdk.values.PCollectionView
 import org.slf4j.LoggerFactory
 
@@ -426,20 +426,17 @@ package object sparkey extends SparkeyReaderInstances {
       compressionType: CompressionType = DefaultCompressionType,
       compressionBlockSize: Int = DefaultCompressionBlockSize
     )(implicit koder: Coder[K], voder: Coder[V]): SideInput[SparkeyMap[K, V]] = {
-      val beamKoder =
-        CoderMaterializer.beam(self.context.options, koder).asInstanceOf[coders.Coder[Any]]
-      val beamVoder =
-        CoderMaterializer.beam(self.context.options, voder).asInstanceOf[coders.Coder[Any]]
+      val beamKoder = CoderMaterializer.beam(self.context.options, koder)
+      val beamVoder = CoderMaterializer.beam(self.context.options, voder)
 
       new LargeMapSideInput[K, V](
         self
           .transform(
-            _.map(tuple =>
-              (
-                SparkeyCoderUtils.encode(tuple._1, beamKoder),
-                SparkeyCoderUtils.encode(tuple._2, beamVoder)
-              )
-            )
+            _.map { tuple =>
+              val k = CoderUtils.encodeToByteArray(beamKoder, tuple._1)
+              val v = CoderUtils.encodeToByteArray(beamVoder, tuple._2)
+              (k, v)
+            }
               .asSparkey(
                 numShards = numShards,
                 compressionType = compressionType,

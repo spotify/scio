@@ -16,9 +16,9 @@
 
 package com.spotify.scio.extra.sparkey.instances
 
-import com.spotify.scio.extra.sparkey.instances.SparkeyCoderUtils.{decode, encode}
 import com.spotify.sparkey.SparkeyReader
 import org.apache.beam.sdk
+import org.apache.beam.sdk.util.CoderUtils
 
 import scala.jdk.CollectionConverters._
 
@@ -33,12 +33,12 @@ class SparkeyMap[K, V](
 ) extends SparkeyMapBase[K, V] {
 
   private def loadValueFromSparkey(key: K): V = {
-    val value = sparkey.getAsByteArray(encode(key, koder))
+    val value = sparkey.getAsByteArray(CoderUtils.encodeToByteArray(koder, key))
     if (value == null) {
       // This is fine since `SparkeyMapBase` defeats primitive specialization
       null.asInstanceOf[V]
     } else {
-      decode(value, voder)
+      CoderUtils.decodeFromByteArray(voder, value)
     }
   }
 
@@ -46,12 +46,13 @@ class SparkeyMap[K, V](
 
   override def iterator: Iterator[(K, V)] =
     sparkey.iterator.asScala.map { e =>
-      val key = decode(e.getKey, koder)
-      val value = decode(e.getValue, voder)
+      val key = CoderUtils.decodeFromByteArray(koder, e.getKey)
+      val value = CoderUtils.decodeFromByteArray(voder, e.getValue)
       (key, value)
     }
 
   def close(): Unit = sparkey.close()
 
-  override def contains(key: K): Boolean = sparkey.getAsEntry(encode(key, koder)) != null
+  override def contains(key: K): Boolean =
+    sparkey.getAsEntry(CoderUtils.encodeToByteArray(koder, key)) != null
 }
