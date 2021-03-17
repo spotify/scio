@@ -20,8 +20,9 @@ package com.spotify.scio.pubsub
 import com.spotify.scio.testing.PipelineSpec
 import com.google.protobuf.Message
 import org.apache.beam.sdk.io.gcp.{pubsub => beam}
-
 import com.spotify.scio._
+import com.spotify.scio.avro.Account
+import com.spotify.scio.proto.Track.TrackPB
 import com.spotify.scio.testing._
 import com.spotify.scio.pubsub._
 import com.spotify.scio.pubsub.coders._
@@ -58,6 +59,26 @@ class PubsubIOTest extends PipelineSpec with ScioIOSpec {
     PubsubIO[com.spotify.scio.avro.Account]("SpecificRecordBase IO")
     PubsubIO[Message]("Message IO")
     PubsubIO[beam.PubsubMessage]("Message IO")
+  }
+
+  it should "support deprecated readAvro" in {
+    val xs = (1 to 100).map(x => new Account(x, "", "", x.toDouble))
+    testJobTest(xs)(PubsubIO.readAvro[Account](_))(_.pubsubSubscription(_))(_.saveAsPubsub(_))
+  }
+
+  it should "support deprecated readString" in {
+    val xs = (1 to 100).map(_.toString)
+    testJobTest(xs)(PubsubIO.readString(_))(_.pubsubSubscription(_))(_.saveAsPubsub(_))
+  }
+
+  it should "support deprecated readProto" in {
+    val xs = (1 to 100).map(x => TrackPB.newBuilder().setTrackId(x.toString).build())
+    testJobTest(xs)(PubsubIO.readProto(_))(_.pubsubSubscription(_))(_.saveAsPubsub(_))
+  }
+
+  it should "support deprecated readCoder" in {
+    val xs = 1 to 100
+    testJobTest(xs)(PubsubIO.readCoder(_))(_.pubsubSubscription(_))(_.saveAsPubsub(_))
   }
 
   def testPubsubJob(xs: String*): Unit =
