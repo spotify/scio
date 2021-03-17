@@ -23,12 +23,14 @@ import org.apache.beam.sdk
 import scala.jdk.CollectionConverters._
 
 /**
- * Enhanced version of `SparkeyReader` that assumes the underlying
- * Sparkey is encoded with the given Coders, providing a very similar interface to Map[K, V].
- * */
-class SparkeyMap[K, V](val sparkey: SparkeyReader,
-                       val koder: sdk.coders.Coder[K],
-                       val voder: sdk.coders.Coder[V]) extends Map[K, V] {
+ * Enhanced version of [[SparkeyReader]] that assumes the underlying Sparkey is encoded with the
+ * given Coders, providing a very similar interface to Map[K, V].
+ */
+class SparkeyMap[K, V](
+  val sparkey: SparkeyReader,
+  val koder: sdk.coders.Coder[K],
+  val voder: sdk.coders.Coder[V]
+) extends SparkeyMapBase[K, V] {
 
   private def loadValueFromSparkey(key: K): V = {
     val value = sparkey.getAsByteArray(encode(key, koder))
@@ -48,15 +50,7 @@ class SparkeyMap[K, V](val sparkey: SparkeyReader,
       (key, value)
     }
 
-  def close(): Unit = {
-    sparkey.close()
-  }
+  def close(): Unit = sparkey.close()
 
   override def contains(key: K): Boolean = sparkey.getAsEntry(encode(key, koder)) != null
-
-  override def -(key: K): Map[K, V] =
-    throw new NotImplementedError("Sparkey-backed map; operation not supported.")
-
-  override def +[V1 >: V](kv: (K, V1)): Map[K, V1] =
-    throw new NotImplementedError("Sparkey-backed map; operation not supported.")
 }
