@@ -205,7 +205,7 @@ package object sparkey extends SparkeyReaderInstances {
   }
 
   /** Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with Sparkey methods. */
-  implicit class SparkeyPairSCollection[K, V](@transient private val self: SCollection[(K, V)])
+  implicit class SparkeyPairSCollection[K, V](private val self: SCollection[(K, V)])
       extends Serializable {
 
     import SparkeyPairSCollection._
@@ -354,7 +354,7 @@ package object sparkey extends SparkeyReaderInstances {
      * [[Cache]] will be used to cache reads from the resulting [[SparkeyReader]].
      */
     @experimental
-    @deprecated("Use asLargeMapSideInput if no cache is required.")
+    @deprecated("Use asLargeMapSideInput if no cache is required.", since = "0.10.1")
     def asTypedSparkeySideInput[T](decoder: Array[Byte] => T)(implicit
       w: SparkeyWritable[K, V]
     ): SideInput[TypedSparkeyReader[T]] =
@@ -437,6 +437,7 @@ package object sparkey extends SparkeyReaderInstances {
      * unique. The resulting map is required to fit on disk on each worker. This is strongly
      * recommended over a regular MultiMapSideInput if the data in the side input exceeds 100MB.
      */
+    @experimental
     def asLargeMultiMapSideInput: SideInput[SparkeyMap[K, Iterable[V]]] =
       self.groupByKey.asLargeMapSideInput
 
