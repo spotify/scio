@@ -20,6 +20,7 @@ package com.spotify.scio.io
 import com.spotify.scio.ScioContext
 import com.spotify.scio.testing.TestDataManager
 import com.spotify.scio.values.SCollection
+import scala.annotation.unused
 
 sealed trait TapT[A] extends Serializable {
   type T
@@ -69,7 +70,7 @@ trait ScioIO[T] {
   private[scio] def readWithContext(sc: ScioContext, params: ReadP): SCollection[T] =
     sc.requireNotClosed(if (sc.isTest) readTest(sc, params) else read(sc, params))
 
-  protected def readTest(sc: ScioContext, params: ReadP): SCollection[T] =
+  protected def readTest(sc: ScioContext, @unused params: ReadP): SCollection[T] =
     TestDataManager.getInput(sc.testId.get)(this).toSCollection(sc)
 
   protected def read(sc: ScioContext, params: ReadP): SCollection[T]
@@ -79,7 +80,7 @@ trait ScioIO[T] {
 
   protected def write(data: SCollection[T], params: WriteP): Tap[tapT.T]
 
-  protected def writeTest(data: SCollection[T], params: WriteP): Tap[tapT.T] = {
+  protected def writeTest(data: SCollection[T], @unused params: WriteP): Tap[tapT.T] = {
     TestDataManager.getOutput(data.context.testId.get)(this)(data)
     tapT.saveForTest(data)
   }

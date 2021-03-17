@@ -75,7 +75,7 @@ class ParquetAvroFile[T: ClassTag] private[avro] (
    * Return a new SCollection by first applying a function to all Parquet Avro records of
    * this Parquet file, and then flattening the results.
    */
-  def flatMap[U: ClassTag: Coder](f: T => TraversableOnce[U]): SCollection[U] =
+  def flatMap[U: Coder](f: T => TraversableOnce[U]): SCollection[U] =
     this
       // HadoopInputFormatIO does not support custom coder, force SerializableCoder
       .map(x => f(x).asInstanceOf[Serializable])

@@ -73,7 +73,6 @@ object MagnolifyAvroReadExample {
     import MagnolifyAvroExample._
 
     val (sc, args) = ContextAndArgs(cmdlineArgs)
-    implicit def genericCoder = Coder.avroGenericRecordCoder(wordCountType.schema)
     sc.avroFile(args("input"), wordCountType.schema)
       .map(e => wordCountType(e))
       .map(wc => wc.word + ": " + wc.count)

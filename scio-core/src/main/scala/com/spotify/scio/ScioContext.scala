@@ -777,7 +777,7 @@ class ScioContext private[scio] (
    * Get an SCollection with a custom input transform. The transform should have a unique name.
    * @group input
    */
-  def customInput[T: Coder, I >: PBegin <: PInput](
+  def customInput[T, I >: PBegin <: PInput](
     name: String,
     transform: PTransform[I, PCollection[T]]
   ): SCollection[T] =
