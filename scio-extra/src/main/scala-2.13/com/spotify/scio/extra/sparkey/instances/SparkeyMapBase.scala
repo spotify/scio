@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Spotify AB
+ * Copyright 2021 Spotify AB
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,19 +16,10 @@
 
 package com.spotify.scio.extra.sparkey.instances
 
-import com.spotify.sparkey.SparkeyReader
-
-import scala.jdk.CollectionConverters._
-
-/** Enhanced version of `SparkeyReader` that mimics a `Map`. */
-class StringSparkeyReader(self: SparkeyReader) extends Map[String, String] {
-  override def get(key: String): Option[String] =
-    Option(self.getAsString(key))
-  override def iterator: Iterator[(String, String)] =
-    self.iterator.asScala.map(e => (e.getKeyAsString, e.getValueAsString))
-
-  override def updated[B1 >: String](key: String, value: B1): Map[String, B1] =
+trait SparkeyMapBase[K, V] extends Map[K, V] {
+  override def removed(key: K): Map[K, V] =
     throw new NotImplementedError("Sparkey-backed map; operation not supported.")
-  override def removed(key: String): Map[String, String] =
+
+  override def updated[V1 >: V](k: K, v: V1): Map[K, V1] =
     throw new NotImplementedError("Sparkey-backed map; operation not supported.")
 }
