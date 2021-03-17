@@ -21,7 +21,7 @@ import java.lang.Math.floorMod
 import java.util.UUID
 import com.spotify.scio.ScioContext
 import com.spotify.scio.annotations.experimental
-import com.spotify.scio.coders.{Coder, CoderMaterializer}
+import com.spotify.scio.coders.{BeamCoders, Coder, CoderMaterializer}
 import com.spotify.scio.extra.sparkey.instances._
 import com.spotify.scio.util.Cache
 import com.spotify.scio.values.{SCollection, SideInput}
@@ -200,9 +200,17 @@ package object sparkey extends SparkeyReaderInstances {
     uri
   }
 
-  /** Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with Sparkey methods. */
-  implicit class SparkeyPairSCollection[K, V](@transient private val self: SCollection[(K, V)]) {
+  private object SparkeyPairSCollection {
     private val logger = LoggerFactory.getLogger(this.getClass)
+  }
+
+  /** Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with Sparkey methods. */
+  implicit class SparkeyPairSCollection[K, V](@transient private val self: SCollection[(K, V)])
+      extends Serializable {
+
+    import SparkeyPairSCollection._
+
+    implicit val (keyCoder, valueCoder): (Coder[K], Coder[V]) = BeamCoders.getTupleCoders(self)
 
     /**
      * Write the key-value pairs of this SCollection as a Sparkey file to a specific location.
@@ -222,11 +230,7 @@ package object sparkey extends SparkeyReaderInstances {
       numShards: Short = DefaultNumShards,
       compressionType: CompressionType = DefaultCompressionType,
       compressionBlockSize: Int = DefaultCompressionBlockSize
-    )(implicit
-      w: SparkeyWritable[K, V],
-      koder: Coder[K],
-      voder: Coder[V]
-    ): SCollection[SparkeyUri] = {
+    )(implicit w: SparkeyWritable[K, V]): SCollection[SparkeyUri] = {
       require(numShards > 0, s"numShards must be greater than 0, found $numShards")
       if (compressionType != CompressionType.NONE) {
         require(
@@ -308,11 +312,7 @@ package object sparkey extends SparkeyReaderInstances {
      * @return A singleton SCollection containing the [[SparkeyUri]] of the saved files.
      */
     @experimental
-    def asSparkey(implicit
-      w: SparkeyWritable[K, V],
-      koder: Coder[K],
-      voder: Coder[V]
-    ): SCollection[SparkeyUri] = this.asSparkey()
+    def asSparkey(implicit w: SparkeyWritable[K, V]): SCollection[SparkeyUri] = this.asSparkey()
 
     /**
      * Convert this SCollection to a SideInput, mapping key-value pairs of each window to a
@@ -327,11 +327,7 @@ package object sparkey extends SparkeyReaderInstances {
       numShards: Short = DefaultSideInputNumShards,
       compressionType: CompressionType = DefaultCompressionType,
       compressionBlockSize: Int = DefaultCompressionBlockSize
-    )(implicit
-      w: SparkeyWritable[K, V],
-      koder: Coder[K],
-      voder: Coder[V]
-    ): SideInput[SparkeyReader] =
+    )(implicit w: SparkeyWritable[K, V]): SideInput[SparkeyReader] =
       self
         .asSparkey(
           numShards = numShards,
@@ -347,11 +343,7 @@ package object sparkey extends SparkeyReaderInstances {
      * required that each key of the input be associated with a single value.
      */
     @experimental
-    def asSparkeySideInput(implicit
-      w: SparkeyWritable[K, V],
-      koder: Coder[K],
-      voder: Coder[V]
-    ): SideInput[SparkeyReader] =
+    def asSparkeySideInput(implicit w: SparkeyWritable[K, V]): SideInput[SparkeyReader] =
       self.asSparkeySideInput()
 
     /**
@@ -364,9 +356,7 @@ package object sparkey extends SparkeyReaderInstances {
     @experimental
     @deprecated("Use asLargeMapSideInput if no cache is required.")
     def asTypedSparkeySideInput[T](decoder: Array[Byte] => T)(implicit
-      w: SparkeyWritable[K, V],
-      koder: Coder[K],
-      voder: Coder[V]
+      w: SparkeyWritable[K, V]
     ): SideInput[TypedSparkeyReader[T]] =
       self.asSparkey.asTypedSparkeySideInput[T](decoder)
 
@@ -385,11 +375,7 @@ package object sparkey extends SparkeyReaderInstances {
       compressionBlockSize: Int = DefaultCompressionBlockSize
     )(
       decoder: Array[Byte] => T
-    )(implicit
-      w: SparkeyWritable[K, V],
-      koder: Coder[K],
-      voder: Coder[V]
-    ): SideInput[TypedSparkeyReader[T]] =
+    )(implicit w: SparkeyWritable[K, V]): SideInput[TypedSparkeyReader[T]] =
       self
         .asSparkey(
           numShards = numShards,
@@ -407,10 +393,7 @@ package object sparkey extends SparkeyReaderInstances {
      * over a regular MapSideInput if the data in the side input exceeds 100MB.
      */
     @experimental
-    def asLargeMapSideInput(implicit
-      koder: Coder[K],
-      voder: Coder[V]
-    ): SideInput[SparkeyMap[K, V]] = self.asLargeMapSideInput()
+    def asLargeMapSideInput: SideInput[SparkeyMap[K, V]] = self.asLargeMapSideInput()
 
     /**
      * Convert this SCollection to a SideInput, mapping key-value pairs of each window to a
@@ -425,9 +408,9 @@ package object sparkey extends SparkeyReaderInstances {
       numShards: Short = DefaultSideInputNumShards,
       compressionType: CompressionType = DefaultCompressionType,
       compressionBlockSize: Int = DefaultCompressionBlockSize
-    )(implicit koder: Coder[K], voder: Coder[V]): SideInput[SparkeyMap[K, V]] = {
-      val beamKoder = CoderMaterializer.beam(self.context.options, koder)
-      val beamVoder = CoderMaterializer.beam(self.context.options, voder)
+    ): SideInput[SparkeyMap[K, V]] = {
+      val beamKoder = CoderMaterializer.beam(self.context.options, keyCoder)
+      val beamVoder = CoderMaterializer.beam(self.context.options, valueCoder)
 
       new LargeMapSideInput[K, V](
         self
@@ -454,11 +437,8 @@ package object sparkey extends SparkeyReaderInstances {
      * unique. The resulting map is required to fit on disk on each worker. This is strongly
      * recommended over a regular MultiMapSideInput if the data in the side input exceeds 100MB.
      */
-    def asLargeMultiMapSideInput(implicit
-      koder: Coder[K],
-      voder: Coder[Iterable[V]]
-    ): SideInput[SparkeyMap[K, Iterable[V]]] =
-      self.groupByKey.asLargeMapSideInput()(koder, voder)
+    def asLargeMultiMapSideInput: SideInput[SparkeyMap[K, Iterable[V]]] =
+      self.groupByKey.asLargeMapSideInput
 
     /**
      * Convert this SCollection to a SideInput, mapping key-value pairs of each window to a
