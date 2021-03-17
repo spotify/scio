@@ -35,6 +35,7 @@ class SparkeyMap[K, V](
   private def loadValueFromSparkey(key: K): V = {
     val value = sparkey.getAsByteArray(encode(key, koder))
     if (value == null) {
+      // This is fine since `SparkeyMapBase` defeats primitive specialization
       null.asInstanceOf[V]
     } else {
       decode(value, voder)

@@ -38,6 +38,7 @@ class TypedSparkeyReader[T](
   private def loadValueFromSparkey(key: String): T = {
     val value = sparkey.getAsByteArray(stringKeyToBytes(key))
     if (value == null) {
+      // This is fine since `SparkeyMapBase` defeats primitive specialization
       null.asInstanceOf[T]
     } else {
       decoder(value)
