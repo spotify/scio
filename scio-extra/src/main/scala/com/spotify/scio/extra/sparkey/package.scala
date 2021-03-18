@@ -26,7 +26,6 @@ import com.spotify.scio.extra.sparkey.instances._
 import com.spotify.scio.util.Cache
 import com.spotify.scio.values.{SCollection, SideInput}
 import com.spotify.sparkey.{CompressionType, SparkeyReader}
-import org.apache.beam.sdk.coders
 import org.apache.beam.sdk.io.FileSystems
 import org.apache.beam.sdk.transforms.{DoFn, View}
 import org.apache.beam.sdk.util.CoderUtils
@@ -467,7 +466,8 @@ package object sparkey extends SparkeyReaderInstances {
   }
 
   /** Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with Sparkey methods. */
-  implicit class SparkeySetSCollection[K](@transient private val self: SCollection[K]) {
+  implicit class SparkeySetSCollection[T](private val self: SCollection[T]) {
+    implicit val coder: Coder[T] = self.coder
 
     /**
      * Convert this SCollection to a SideInput, mapping key-value pairs of each window to a
@@ -478,8 +478,8 @@ package object sparkey extends SparkeyReaderInstances {
      * over a regular SetSideInput if the data in the side input exceeds 100MB.
      */
     @experimental
-    def asLargeSetSideInput(implicit koder: Coder[K]): SideInput[SparkeySet[K]] =
-      self.asLargeSetSideInput()(koder)
+    def asLargeSetSideInput: SideInput[SparkeySet[T]] =
+      self.asLargeSetSideInput()
 
     /**
      * Convert this SCollection to a SideInput, mapping key-value pairs of each window to a
@@ -494,18 +494,15 @@ package object sparkey extends SparkeyReaderInstances {
       numShards: Short = DefaultSideInputNumShards,
       compressionType: CompressionType = DefaultCompressionType,
       compressionBlockSize: Int = DefaultCompressionBlockSize
-    )(implicit koder: Coder[K]): SideInput[SparkeySet[K]] = {
-      val beamKoder = CoderMaterializer.beam(self.context.options, koder)
+    ): SideInput[SparkeySet[T]] = {
+      val beamKoder = CoderMaterializer.beam(self.context.options, coder)
 
-      new LargeSetSideInput[K](
+      new LargeSetSideInput[T](
         self
           .transform(
-            _.map(x =>
-              (
-                SparkeyCoderUtils.encode(x, beamKoder),
-                Array.emptyByteArray
-              )
-            )
+            _.map { x =>
+              (CoderUtils.encodeToByteArray(beamKoder, x), Array.emptyByteArray)
+            }
               .asSparkey(
                 numShards = numShards,
                 compressionType = compressionType,

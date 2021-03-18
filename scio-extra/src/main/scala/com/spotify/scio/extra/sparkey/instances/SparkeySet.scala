@@ -16,9 +16,9 @@
 
 package com.spotify.scio.extra.sparkey.instances
 
-import com.spotify.scio.extra.sparkey.instances.SparkeyCoderUtils.{decode, encode}
 import com.spotify.sparkey.SparkeyReader
-import org.apache.beam.sdk
+import org.apache.beam.sdk.coders.Coder
+import org.apache.beam.sdk.util.CoderUtils
 
 import scala.jdk.CollectionConverters._
 
@@ -27,16 +27,11 @@ import scala.jdk.CollectionConverters._
  * Sparkey is encoded with a given Coder, but contains no values
  * (i.e.: only used as an on-disk HashSet).
  */
-class SparkeySet[K](val sparkey: SparkeyReader, val koder: sdk.coders.Coder[K]) extends Set[K] {
+class SparkeySet[T](val sparkey: SparkeyReader, val coder: Coder[T]) extends SparkeySetBase[T] {
 
-  override def incl(elem: K): Set[K] =
-    throw new NotImplementedError("Sparkey-backed set; operation not supported.")
+  override def contains(elem: T): Boolean =
+    sparkey.getAsEntry(CoderUtils.encodeToByteArray(coder, elem)) != null
 
-  override def excl(elem: K): Set[K] =
-    throw new NotImplementedError("Sparkey-backed set; operation not supported.")
-
-  // getAsEntry is used here on purpose to avoid hitting disk just to find an empty value there.
-  override def contains(key: K): Boolean = sparkey.getAsEntry(encode(key, koder)) != null
-
-  override def iterator: Iterator[K] = sparkey.iterator.asScala.map(e => decode(e.getKey, koder))
+  override def iterator: Iterator[T] =
+    sparkey.iterator.asScala.map(e => CoderUtils.decodeFromByteArray(coder, e.getKey))
 }

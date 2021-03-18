@@ -16,26 +16,11 @@
 
 package com.spotify.scio.extra.sparkey.instances
 
-import com.spotify.scio.extra.sparkey.instances.SparkeyCoderUtils.{decode, encode}
-import com.spotify.sparkey.SparkeyReader
-import org.apache.beam.sdk
+trait SparkeySetBase[T] extends Set[T] {
 
-import scala.jdk.CollectionConverters._
-
-/**
- * Enhanced version of `SparkeyReader` that assumes the underlying
- * Sparkey is encoded with a given Coder, but contains no values
- * (i.e.: only used as an on-disk HashSet).
- */
-class SparkeySet[T](val sparkey: SparkeyReader, val koder: sdk.coders.Coder[T]) extends Set[T] {
-
-  override def +(elem: T): Set[T] =
+  override def incl(elem: T): Set[T] =
     throw new NotImplementedError("Sparkey-backed set; operation not supported.")
 
-  override def -(elem: T): Set[T] =
+  override def excl(elem: T): Set[T] =
     throw new NotImplementedError("Sparkey-backed set; operation not supported.")
-
-  override def contains(key: T): Boolean = sparkey.getAsEntry(encode(key, koder)) != null
-
-  override def iterator: Iterator[T] = sparkey.iterator.asScala.map(e => decode(e.getKey, koder))
 }
