@@ -451,14 +451,8 @@ package object sparkey extends SparkeyReaderInstances {
       numShards: Short = DefaultSideInputNumShards,
       compressionType: CompressionType = DefaultCompressionType,
       compressionBlockSize: Int = DefaultCompressionBlockSize
-    )(implicit
-      koder: Coder[K],
-      voder: Coder[Iterable[V]]
     ): SideInput[SparkeyMap[K, Iterable[V]]] =
-      self.groupByKey.asLargeMapSideInput(numShards, compressionType, compressionBlockSize)(
-        koder,
-        voder
-      )
+      self.groupByKey.asLargeMapSideInput(numShards, compressionType, compressionBlockSize)
 
     /**
      * Convert this SCollection to a SideInput, mapping key-value pairs of each window to a

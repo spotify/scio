@@ -34,12 +34,7 @@ class PairLargeHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     compressionBlockSize: Int = DefaultCompressionBlockSize
   ): SCollection[(K, (V, W))] = {
     implicit val wCoder: Coder[W] = rhs.valueCoder
-    hashJoin(
-      rhs.asLargeMultiMapSideInput(numShards, compressionType, compressionBlockSize)(
-        Coder[K],
-        Coder[Iterable[W]]
-      )
-    )
+    hashJoin(rhs.asLargeMultiMapSideInput(numShards, compressionType, compressionBlockSize))
   }
 
   /**
