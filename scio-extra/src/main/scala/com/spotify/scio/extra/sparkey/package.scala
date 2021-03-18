@@ -465,11 +465,7 @@ package object sparkey extends SparkeyReaderInstances {
       numShards: Short = DefaultSideInputNumShards,
       compressionType: CompressionType = DefaultCompressionType,
       compressionBlockSize: Int = DefaultCompressionBlockSize
-    )(implicit
-      w: SparkeyWritable[K, V],
-      koder: Coder[K],
-      voder: Coder[V]
-    ): SideInput[CachedStringSparkeyReader] =
+    )(implicit w: SparkeyWritable[K, V]): SideInput[CachedStringSparkeyReader] =
       self
         .asSparkey(
           numShards = numShards,

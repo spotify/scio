@@ -17,7 +17,7 @@
 package com.spotify.scio.extra.sparkey.instances
 
 import com.spotify.sparkey.SparkeyReader
-import org.apache.beam.sdk
+import org.apache.beam.sdk.coders.Coder
 import org.apache.beam.sdk.util.CoderUtils
 
 import scala.jdk.CollectionConverters._
@@ -26,11 +26,8 @@ import scala.jdk.CollectionConverters._
  * Enhanced version of [[SparkeyReader]] that assumes the underlying Sparkey is encoded with the
  * given Coders, providing a very similar interface to Map[K, V].
  */
-class SparkeyMap[K, V](
-  val sparkey: SparkeyReader,
-  val koder: sdk.coders.Coder[K],
-  val voder: sdk.coders.Coder[V]
-) extends SparkeyMapBase[K, V] {
+class SparkeyMap[K, V](val sparkey: SparkeyReader, val koder: Coder[K], val voder: Coder[V])
+    extends SparkeyMapBase[K, V] {
 
   private def loadValueFromSparkey(key: K): V = {
     val value = sparkey.getAsByteArray(CoderUtils.encodeToByteArray(koder, key))
