@@ -584,7 +584,8 @@ lazy val `scio-macros`: Project = project
     libraryDependencies ++= Seq(
       "com.esotericsoftware" % "kryo-shaded" % kryoVersion,
       "org.apache.beam" % "beam-sdks-java-extensions-sql" % beamVersion,
-      "org.apache.avro" % "avro" % avroVersion
+      "org.apache.avro" % "avro" % avroVersion,
+      "org.scalatest" %% "scalatest" % scalatestVersion % Test
     ),
     // Scala 2 dependencies
     libraryDependencies ++= {
