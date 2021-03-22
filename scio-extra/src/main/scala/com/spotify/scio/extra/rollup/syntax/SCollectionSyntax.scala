@@ -17,7 +17,7 @@
 
 package com.spotify.scio.extra.rollup.syntax
 
-import com.spotify.scio.coders.Coder
+import com.spotify.scio.coders.BeamCoders
 import com.spotify.scio.values.SCollection
 import com.twitter.algebird.Group
 
@@ -45,13 +45,10 @@ trait SCollectionSyntax {
      *                       set of R with one element for each combination of rollups that we
      *                       want to provide
      */
-    def rollupAndCount(rollupFunction: R => Set[R])(implicit
-      c: Coder[U],
-      d: Coder[D],
-      r: Coder[R],
-      m: Coder[M],
-      g: Group[M]
-    ): SCollection[((D, R), (M, Long))] = {
+    def rollupAndCount(
+      rollupFunction: R => Set[R]
+    )(implicit g: Group[M]): SCollection[((D, R), (M, Long))] = {
+      implicit val (coderU, coderD, coderR, coderM) = BeamCoders.getTuple4Coders(self)
 
       val doubleCounting = self
         .withName("RollupAndCountDuplicates")
