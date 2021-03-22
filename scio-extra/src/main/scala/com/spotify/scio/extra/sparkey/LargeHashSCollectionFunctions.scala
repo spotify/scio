@@ -23,13 +23,13 @@ import com.spotify.scio.values.{SCollection, SideInput}
 /** Extra functions available on SCollections for Sparkey hash-based filtering. */
 class LargeHashSCollectionFunctions[T](private val self: SCollection[T]) {
 
-  implicit val coder = self.coder
-
   /**
    * Return a new SCollection containing only elements that also exist in the `LargeSetSideInput`.
    *
    * @group transform
    */
-  def hashFilter(sideInput: SideInput[SparkeySet[T]]): SCollection[T] =
+  def hashFilter(sideInput: SideInput[SparkeySet[T]]): SCollection[T] = {
+    implicit val coder = self.coder
     self.map((_, ())).hashIntersectByKey(sideInput).keys
+  }
 }

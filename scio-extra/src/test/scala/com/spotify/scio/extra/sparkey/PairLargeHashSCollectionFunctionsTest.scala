@@ -245,7 +245,7 @@ class PairLargeHashSCollectionFunctionsTest extends PipelineSpec {
 
   it should "support largeHashSubtractByKey() with empty LHS" in {
     runWithContext { sc =>
-      val p1 = sc.parallelize(Seq.empty[(String, Any)])
+      val p1 = sc.parallelize(Seq.empty[(String, Int)])
       val p2 = sc.parallelize(Seq("1", "2", "3"))
       val output = p1.largeHashSubtractByKey(p2)
       output should beEmpty
