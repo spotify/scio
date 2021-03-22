@@ -204,7 +204,7 @@ package object sparkey extends SparkeyReaderInstances {
   }
 
   /** Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with Sparkey methods. */
-  implicit class SparkeyPairSCollection[K, V](private val self: SCollection[(K, V)])
+  implicit class SparkeyPairSCollection[K, V](@transient private val self: SCollection[(K, V)])
       extends Serializable {
 
     import SparkeyPairSCollection._
