@@ -46,14 +46,14 @@ object RollupTest {
 
 class RollupTest extends PipelineSpec {
 
-  "it" should "work with empty input" in {
+  "RollupAndCount" should "work with empty input" in {
 
     val input = Seq[(String, FixedDims, RollupDims1D, MsPlayed)]()
 
     runWithData(input)(_.rollupAndCount(groupingSets)) should contain theSameElementsAs Seq()
   }
 
-  "it" should "not double-count a user with multiple values of rollup dimensions" in {
+  it should "not double-count a user with multiple values of rollup dimensions" in {
 
     val input = Seq(
       ("user1", FixedDims("2020-01-01", "sweden"), RollupDims1D(Some("web")), MsPlayed(100L)),
@@ -69,7 +69,7 @@ class RollupTest extends PipelineSpec {
     runWithData(input)(_.rollupAndCount(groupingSets)) should contain theSameElementsAs expected
   }
 
-  "it" should "correctly sum users on top-level even if they are active in different cohorts" in {
+  it should "correctly sum users on top-level even if they are active in different cohorts" in {
 
     val input = Seq(
       ("user1", FixedDims("2020-01-01", "sweden"), RollupDims1D(Some("web")), MsPlayed(100L)),
@@ -87,7 +87,7 @@ class RollupTest extends PipelineSpec {
     runWithData(input)(_.rollupAndCount(groupingSets)) should contain theSameElementsAs expected
   }
 
-  "it" should "correctly separate on fixed dimensions and not sum users with the same rolllup " +
+  it should "correctly separate on fixed dimensions and not sum users with the same rolllup " +
     "dimensions" in {
 
       val input = Seq(
@@ -107,7 +107,7 @@ class RollupTest extends PipelineSpec {
       runWithData(input)(_.rollupAndCount(groupingSets)) should contain theSameElementsAs expected
     }
 
-  "it" should "correctly sum users on matching rolled up dimensions (android, total)" in {
+  it should "correctly sum users on matching rolled up dimensions (android, total)" in {
 
     val input = Seq(
       (
