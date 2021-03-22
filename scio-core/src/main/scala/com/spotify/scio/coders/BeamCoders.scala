@@ -68,7 +68,9 @@ private[scio] object BeamCoders {
     (Coder.beam(a), Coder.beam(b), Coder.beam(c))
   }
 
-  def getTuple4Coders[A, B, C, D](coll: SCollection[(A, B, C, D)]): (Coder[A], Coder[B], Coder[C], Coder[D]) = {
+  def getTuple4Coders[A, B, C, D](
+    coll: SCollection[(A, B, C, D)]
+  ): (Coder[A], Coder[B], Coder[C], Coder[D]) = {
     val coder = coll.internal.getCoder
     val (a, b, c, d) = unwrap(coder) match {
       case c: scio.Tuple4Coder[A, B, C, D] => (c.ac, c.bc, c.cc, c.dc)
