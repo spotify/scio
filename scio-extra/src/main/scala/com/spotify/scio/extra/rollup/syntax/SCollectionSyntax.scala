@@ -30,12 +30,12 @@ trait SCollectionSyntax {
      * measure and returns an [[SCollection]] tuple, where the key is a set of dimensions and
      * the value the summed measure combined with a distinct count.
      *
-     * This is to be used when doing a count dinstint for one key over a set of
+     * This is to be used when doing a count distinct for one key over a set of
      * dimensions, when that key can be present in multiple elements in the final dataset,
      * such that there is a need to provide additional rollups over the non-unique dimensions
      * where distinct counts are not summable.
      *
-     * U - Unique key, this is what we want to count distinct occurences of
+     * U - Unique key, this is what we want to count distinct occurrences of
      * D - Dimensions that should not be rolled up (these are either unique per U or we are not
      *     expected to sum U over these dimensions, eg. a metric for different dates)
      * R - Dimensions that should be rolled up
