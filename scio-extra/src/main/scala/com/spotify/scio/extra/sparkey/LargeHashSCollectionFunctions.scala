@@ -5,7 +5,7 @@ import com.spotify.scio.extra.sparkey.instances.SparkeySet
 import com.spotify.scio.values.{SCollection, SideInput}
 
 /** Extra functions available on SCollections for Sparkey hash-based filtering. */
-class LargeHashSCollectionFunctions[T](val self: SCollection[T]) {
+class LargeHashSCollectionFunctions[T](private val self: SCollection[T]) {
 
   /**
    * Return a new SCollection containing only elements that also exist in the `LargeSetSideInput`.
