@@ -408,8 +408,8 @@ package object sparkey extends SparkeyReaderInstances {
       compressionType: CompressionType = DefaultCompressionType,
       compressionBlockSize: Int = DefaultCompressionBlockSize
     ): SideInput[SparkeyMap[K, V]] = {
-      val beamKoder = CoderMaterializer.beam(self.context.options, keyCoder)
-      val beamVoder = CoderMaterializer.beam(self.context.options, valueCoder)
+      val beamKoder = CoderMaterializer.beam(self.context.options, Coder[K])
+      val beamVoder = CoderMaterializer.beam(self.context.options, Coder[V])
 
       new LargeMapSideInput[K, V](
         self
@@ -509,7 +509,7 @@ package object sparkey extends SparkeyReaderInstances {
       compressionType: CompressionType = DefaultCompressionType,
       compressionBlockSize: Int = DefaultCompressionBlockSize
     ): SideInput[SparkeySet[T]] = {
-      val beamKoder = CoderMaterializer.beam(self.context.options, coder)
+      val beamKoder = CoderMaterializer.beam(self.context.options, Coder[T])
 
       new LargeSetSideInput[T](
         self
