@@ -415,12 +415,12 @@ class SparkeyTest extends PipelineSpec {
     val typedSideData = Seq(("ab", Seq(1, 2)), ("bc", Seq(2, 3)), ("cd", Seq(3, 4)))
     val typedSideDataMap = typedSideData.toMap
 
-    val cache = TestCache[String, AnyRef]()
+    val cache = TestCache[String, Seq[Int]]()
 
     val sparkey = sc.parallelize(typedSideData).mapValues(_.mkString(",")).asSparkey
     val sparkeyMaterialized = sparkey.materialize
 
-    val si = sparkey.asTypedSparkeySideInput[Object](cache) { b: Array[Byte] =>
+    val si = sparkey.asTypedSparkeySideInput[Seq[Int]](cache) { b: Array[Byte] =>
       new String(b).split(",").map(_.toInt).toSeq
     }
 
@@ -478,12 +478,12 @@ class SparkeyTest extends PipelineSpec {
     val input = Seq("1")
     val typedSideData = Seq(("ab", Seq(1, 2)), ("bc", Seq(2, 3)), ("cd", Seq(3, 4)))
 
-    val cache = TestCache[String, AnyRef]()
+    val cache = TestCache[String, Seq[Int]]()
 
     val sparkey = sc.parallelize(typedSideData).mapValues(_.mkString(",")).asSparkey
     val sparkeyMaterialized = sparkey.materialize
 
-    val si = sparkey.asTypedSparkeySideInput[Object](cache) { b: Array[Byte] =>
+    val si = sparkey.asTypedSparkeySideInput[Seq[Int]](cache) { b: Array[Byte] =>
       new String(b).split(",").map(_.toInt).toSeq
     }
 
@@ -512,12 +512,12 @@ class SparkeyTest extends PipelineSpec {
     val input = Seq("1")
     val typedSideData = Seq(("ab", Seq(1, 2)), ("bc", Seq(2, 3)), ("cd", Seq(3, 4)))
 
-    val cache = TestCache[String, AnyRef]()
+    val cache = TestCache[String, Seq[Int]]()
 
     val sparkey = sc.parallelize(typedSideData).mapValues(_.mkString(",")).asSparkey(numShards = 2)
     val sparkeyMaterialized = sparkey.materialize
 
-    val si = sparkey.asTypedSparkeySideInput[Object](cache) { b: Array[Byte] =>
+    val si = sparkey.asTypedSparkeySideInput[Seq[Int]](cache) { b: Array[Byte] =>
       new String(b).split(",").map(_.toInt).toSeq
     }
 
