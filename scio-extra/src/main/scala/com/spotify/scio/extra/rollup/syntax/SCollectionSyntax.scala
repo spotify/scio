@@ -58,9 +58,7 @@ trait SCollectionSyntax {
           }.sumByKey
             .flatMap { case (dims @ (_, rollupDims), measure) =>
               rollupFunction(rollupDims)
-                .map((x: R) => dims.copy(_2 = x))
-                .map(newDims => (newDims, measure))
-
+                .map((x: R) => dims.copy(_2 = x) -> measure)
             }
         }
 
@@ -71,21 +69,16 @@ trait SCollectionSyntax {
             ((uniqueKey, dims), rollupDims)
           }.groupByKey
             .filterValues(_.size > 1)
-            .flatMapValues {
-              _.flatMap {
-                rollupFunction(_)
-                  .map(newDims => (newDims, -1L))
-              }
-                .groupBy { case (rollupDims, _) =>
-                  rollupDims
-                }
-                .mapValues(_.map { case (_, count) => count }.sum)
-                .map { case (rollupDims, count) =>
+            .flatMapValues { values =>
+              val rollupMap = collection.mutable.Map.empty[R, Long]
+              for (r <- values) {
+                for (newDim <- rollupFunction(r)) {
                   // Add 1 to correction count. We only care to correct for excessive counts
-                  (rollupDims, count + 1L)
+                  rollupMap(newDim) = rollupMap.getOrElse(newDim, 1L) - 1L
                 }
-                // We only care about correcting cases where we actually double-count
-                .filter { case (_, count) => count < 0L }
+              }
+              // We only care about correcting cases where we actually double-count
+              rollupMap.iterator.filter(_._2 < 0L)
             }
             .map { case ((_, dims), (rollupDims, count)) => ((dims, rollupDims), (g.zero, count)) }
         }
@@ -94,9 +87,7 @@ trait SCollectionSyntax {
         .unionAll(List(doubleCounting, correctingCounts))
         .withName("RollupAndCountCorrected")
         .sumByKey
-
     }
-
   }
 
 }
