@@ -16,7 +16,7 @@ import com.spotify.sparkey.CompressionType
  *
  * @groupname join Join Operations
  */
-class PairLargeHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
+class PairLargeHashSCollectionFunctions[K, V](private val self: SCollection[(K, V)]) {
 
   implicit private[this] val (keyCoder, valueCoder): (Coder[K], Coder[V]) =
     (self.keyCoder, self.valueCoder)
