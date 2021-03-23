@@ -88,7 +88,6 @@ class RollupTest extends PipelineSpec {
   }
 
   it should "correctly separate on fixed dimensions and not sum users with the same rolllup " +
-
   "dimensions" in {
 
     val input = Seq(
