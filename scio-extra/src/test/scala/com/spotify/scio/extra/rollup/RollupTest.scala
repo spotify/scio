@@ -88,24 +88,24 @@ class RollupTest extends PipelineSpec {
   }
 
   it should "correctly separate on fixed dimensions and not sum users with the same rolllup " +
-  "dimensions" in {
+    "dimensions" in {
 
-    val input = Seq(
-      ("user1", FixedDims("2020-01-01", "sweden"), RollupDims1D(Some("web")), MsPlayed(100L)),
-      ("user1", FixedDims("2020-01-01", "sweden"), RollupDims1D(Some("mobile")), MsPlayed(200L)),
-      ("user2", FixedDims("2020-01-02", "sweden"), RollupDims1D(Some("speaker")), MsPlayed(200L))
-    )
+      val input = Seq(
+        ("user1", FixedDims("2020-01-01", "sweden"), RollupDims1D(Some("web")), MsPlayed(100L)),
+        ("user1", FixedDims("2020-01-01", "sweden"), RollupDims1D(Some("mobile")), MsPlayed(200L)),
+        ("user2", FixedDims("2020-01-02", "sweden"), RollupDims1D(Some("speaker")), MsPlayed(200L))
+      )
 
-    val expected = Seq(
-      ((FixedDims("2020-01-01", "sweden"), RollupDims1D(Some("web"))), (MsPlayed(100L), 1L)),
-      ((FixedDims("2020-01-01", "sweden"), RollupDims1D(Some("mobile"))), (MsPlayed(200L), 1L)),
-      ((FixedDims("2020-01-02", "sweden"), RollupDims1D(Some("speaker"))), (MsPlayed(200L), 1L)),
-      ((FixedDims("2020-01-01", "sweden"), RollupDims1D(None)), (MsPlayed(300L), 1L)),
-      ((FixedDims("2020-01-02", "sweden"), RollupDims1D(None)), (MsPlayed(200L), 1L))
-    )
+      val expected = Seq(
+        ((FixedDims("2020-01-01", "sweden"), RollupDims1D(Some("web"))), (MsPlayed(100L), 1L)),
+        ((FixedDims("2020-01-01", "sweden"), RollupDims1D(Some("mobile"))), (MsPlayed(200L), 1L)),
+        ((FixedDims("2020-01-02", "sweden"), RollupDims1D(Some("speaker"))), (MsPlayed(200L), 1L)),
+        ((FixedDims("2020-01-01", "sweden"), RollupDims1D(None)), (MsPlayed(300L), 1L)),
+        ((FixedDims("2020-01-02", "sweden"), RollupDims1D(None)), (MsPlayed(200L), 1L))
+      )
 
-    runWithData(input)(_.rollupAndCount(groupingSets)) should contain theSameElementsAs expected
-  }
+      runWithData(input)(_.rollupAndCount(groupingSets)) should contain theSameElementsAs expected
+    }
 
   it should "correctly sum users on matching rolled up dimensions (android, total)" in {
 
