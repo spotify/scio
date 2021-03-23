@@ -52,6 +52,41 @@ private[scio] object BeamCoders {
     (Coder.beam(k), Coder.beam(v))
   }
 
+  def getTuple3Coders[A, B, C](coll: SCollection[(A, B, C)]): (Coder[A], Coder[B], Coder[C]) = {
+    val coder = coll.internal.getCoder
+    val (a, b, c) = unwrap(coder) match {
+      case c: scio.Tuple3Coder[A, B, C] => (c.ac, c.bc, c.cc)
+      case c: RecordCoder[(A, B, C)] =>
+        (
+          c.cs.find(_._1 == "_1").get._2.asInstanceOf[beam.Coder[A]],
+          c.cs.find(_._1 == "_2").get._2.asInstanceOf[beam.Coder[B]],
+          c.cs.find(_._1 == "_3").get._2.asInstanceOf[beam.Coder[C]]
+        )
+      case _ =>
+        throw new IllegalArgumentException(s"Failed to extract tuples coders from: $coder")
+    }
+    (Coder.beam(a), Coder.beam(b), Coder.beam(c))
+  }
+
+  def getTuple4Coders[A, B, C, D](
+    coll: SCollection[(A, B, C, D)]
+  ): (Coder[A], Coder[B], Coder[C], Coder[D]) = {
+    val coder = coll.internal.getCoder
+    val (a, b, c, d) = unwrap(coder) match {
+      case c: scio.Tuple4Coder[A, B, C, D] => (c.ac, c.bc, c.cc, c.dc)
+      case c: RecordCoder[(A, B, C, D)] =>
+        (
+          c.cs.find(_._1 == "_1").get._2.asInstanceOf[beam.Coder[A]],
+          c.cs.find(_._1 == "_2").get._2.asInstanceOf[beam.Coder[B]],
+          c.cs.find(_._1 == "_3").get._2.asInstanceOf[beam.Coder[C]],
+          c.cs.find(_._1 == "_4").get._2.asInstanceOf[beam.Coder[D]]
+        )
+      case _ =>
+        throw new IllegalArgumentException(s"Failed to extract tuples coders from: $coder")
+    }
+    (Coder.beam(a), Coder.beam(b), Coder.beam(c), Coder.beam(d))
+  }
+
   private def getIterableV[V](coder: beam.Coder[Iterable[V]]): beam.Coder[V] =
     unwrap(coder) match {
       case (c: scio.BaseSeqLikeCoder[Iterable, V] @unchecked) => c.elemCoder
