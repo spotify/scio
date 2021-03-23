@@ -49,7 +49,6 @@ final case class ObjectFileIO[T: Coder](path: String) extends ScioIO[T] {
    */
   override protected def read(sc: ScioContext, params: ReadP): SCollection[T] = {
     val coder = CoderMaterializer.beamWithDefault(Coder[T])
-    implicit val bcoder = Coder.avroGenericRecordCoder(AvroBytesUtil.schema)
     sc.read(GenericRecordIO(path, AvroBytesUtil.schema))
       .parDo(new DoFn[GenericRecord, T] {
         @ProcessElement
@@ -267,8 +266,7 @@ object AvroIO {
 }
 
 object AvroTyped {
-  final case class AvroIO[T <: HasAvroAnnotation: ClassTag: TypeTag: Coder](path: String)
-      extends ScioIO[T] {
+  final case class AvroIO[T <: HasAvroAnnotation: TypeTag: Coder](path: String) extends ScioIO[T] {
     override type ReadP = Unit
     override type WriteP = avro.AvroIO.WriteParam
     final override val tapT: TapT.Aux[T, T] = TapOf[T]

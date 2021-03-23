@@ -51,12 +51,12 @@ val commonsMath3Version = "3.6.1"
 val commonsTextVersion = "1.9"
 val datastoreV1ProtoClientVersion = "1.6.3"
 val elasticsearch6Version = "6.8.14"
-val elasticsearch7Version = "7.11.1"
+val elasticsearch7Version = "7.11.2"
 val featranVersion = "0.8.0-RC1"
 val flinkVersion = "1.12.1"
 val gaxVersion = "1.60.0"
 val gcsVersion = "1.8.0"
-val generatedGrpcBetaVersion = "1.9.1"
+val generatedGrpcBetaVersion = "1.14.0"
 val generatedDatastoreProtoVersion = "0.85.0"
 val generatedGrpcGaVersion = "1.85.1"
 val googleApiServicesBigQuery = "v2-rev20200719-1.30.10"
@@ -84,24 +84,24 @@ val kantanCsvVersion = "0.6.1"
 val kryoVersion =
   "4.0.2" // explicitly depend on 4.0.1+ due to https://github.com/EsotericSoftware/kryo/pull/516
 val magnoliaVersion = "0.17.0"
-val magnolifyVersion = "0.4.2"
+val magnolifyVersion = "0.4.3"
 val nettyVersion = "4.1.51.Final"
 val nettyTcNativeVersion = "2.0.33.Final"
 val opencensusVersion = "0.24.0"
 val parquetExtraVersion = "0.4.0"
 val parquetVersion = "1.11.1"
 val protobufGenericVersion = "0.2.9"
-val protobufVersion = "3.15.5"
+val protobufVersion = "3.15.6"
 val scalacheckVersion = "1.15.3"
 val scalaMacrosVersion = "2.1.1"
 val scalatestplusVersion = "3.1.0.0-RC2"
-val scalatestVersion = "3.2.5"
+val scalatestVersion = "3.2.6"
 val shapelessVersion = "2.3.3"
 val slf4jVersion = "1.7.30"
 val sparkeyVersion = "3.2.1"
 val sparkVersion = "2.4.6"
 val tensorFlowVersion = "0.2.0"
-val zoltarVersion = "0.6.0-M1"
+val zoltarVersion = "0.6.0-M2"
 val scalaCollectionCompatVersion = "2.4.2"
 
 ThisBuild / scalafixScalaBinaryVersion := CrossVersion.binaryScalaVersion(scalaVersion.value)
@@ -459,7 +459,6 @@ lazy val `scio-sql`: Project = project
   .in(file("scio-sql"))
   .settings(commonSettings)
   .settings(publishSettings)
-  .settings(itSettings)
   .settings(macroSettings)
   .settings(
     description := "Scio - SQL extension",
@@ -469,12 +468,15 @@ lazy val `scio-sql`: Project = project
       "org.apache.beam" % "beam-sdks-java-extensions-sql" % beamVersion,
       "org.apache.commons" % "commons-lang3" % commonsLang3Version,
       "org.apache.beam" % "beam-vendor-calcite-1_20_0" % beamVendorVersion
-    )
+    ),
+    Test / compileOrder := CompileOrder.JavaThenScala
   )
   .dependsOn(
+    `scio-macros`,
     `scio-core`,
-    `scio-schemas` % "test->test",
-    `scio-macros`
+    `scio-schemas` % "test",
+    `scio-avro` % "compile->test",
+    `scio-test`
   )
 
 lazy val `scio-test`: Project = project
@@ -506,7 +508,7 @@ lazy val `scio-test`: Project = project
       "com.spotify.sparkey" % "sparkey" % sparkeyVersion % "test",
       "com.novocode" % "junit-interface" % junitInterfaceVersion,
       "junit" % "junit" % junitVersion % "test",
-      "com.lihaoyi" %% "pprint" % "0.6.1",
+      "com.lihaoyi" %% "pprint" % "0.6.2",
       "com.chuusai" %% "shapeless" % shapelessVersion,
       "com.google.api.grpc" % "proto-google-cloud-bigtable-v2" % generatedGrpcBetaVersion,
       "com.google.protobuf" % "protobuf-java" % protobufVersion,
@@ -514,7 +516,7 @@ lazy val `scio-test`: Project = project
       "commons-io" % "commons-io" % commonsIoVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.hamcrest" % "hamcrest" % hamcrestVersion,
-      "org.scalactic" %% "scalactic" % "3.2.5",
+      "org.scalactic" %% "scalactic" % "3.2.6",
       "com.propensive" %% "magnolia" % magnoliaVersion
     ),
     Test / compileOrder := CompileOrder.JavaThenScala,
@@ -528,8 +530,7 @@ lazy val `scio-test`: Project = project
   .dependsOn(
     `scio-core` % "test->test;compile->compile;it->it",
     `scio-schemas` % "test;it",
-    `scio-avro` % "compile->test;it->it",
-    `scio-sql` % "compile->test;it->it"
+    `scio-avro` % "compile->test;it->it"
   )
 
 lazy val `scio-macros`: Project = project
@@ -635,6 +636,8 @@ lazy val `scio-google-cloud-platform`: Project = project
   )
   .dependsOn(
     `scio-core` % "compile;it->it",
+    `scio-schemas` % "test",
+    `scio-avro` % "test",
     `scio-test` % "test;it"
   )
   .configs(IntegrationTest)
@@ -651,7 +654,7 @@ lazy val `scio-cassandra3`: Project = project
       "com.google.protobuf" % "protobuf-java" % protobufVersion,
       "com.google.guava" % "guava" % guavaVersion,
       "com.twitter" %% "chill" % chillVersion,
-      "com.datastax.cassandra" % "cassandra-driver-core" % "3.10.2",
+      "com.datastax.cassandra" % "cassandra-driver-core" % "3.11.0",
       ("org.apache.cassandra" % "cassandra-all" % "3.11.10")
         .exclude("ch.qos.logback", "logback-classic")
         .exclude("org.slf4j", "log4j-over-slf4j"),
@@ -1138,7 +1141,8 @@ lazy val site: Project = project
     `scio-schemas`,
     `scio-smb`,
     `scio-test`,
-    `scio-extra`
+    `scio-extra`,
+    `scio-sql`
   )
 
 // =======================================================================

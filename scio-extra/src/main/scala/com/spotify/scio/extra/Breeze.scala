@@ -21,8 +21,6 @@ import breeze.linalg.operators.OpAdd
 import breeze.linalg.support.CanCopy
 import com.twitter.algebird.Semigroup
 
-import scala.reflect.ClassTag
-
 /**
  * Utilities for Breeze.
  *
@@ -37,7 +35,7 @@ import scala.reflect.ClassTag
  * }}}
  */
 object Breeze {
-  implicit def breezeSemigroup[M[_], T: ClassTag](implicit
+  implicit def breezeSemigroup[M[_], T](implicit
     add: OpAdd.Impl2[M[T], M[T], M[T]],
     addInto: OpAdd.InPlaceImpl2[M[T], M[T]],
     copy: CanCopy[M[T]]

@@ -80,7 +80,7 @@ private object Reads {
   }
 
   // TODO: support labels Inheritance like in bqReadQuery
-  private[scio] def bqReadStorage[T: ClassTag](sc: ScioContext)(
+  private[scio] def bqReadStorage[T](sc: ScioContext)(
     typedRead: beam.BigQueryIO.TypedRead[T],
     table: Table,
     selectedFields: List[String] = BigQueryStorage.ReadParam.DefaultSelectFields,
@@ -492,7 +492,7 @@ object BigQueryTyped {
     type Aux[T <: HasAnnotation, F0[_ <: HasAnnotation] <: ScioIO[_]] =
       IO[T] { type F[A <: HasAnnotation] = F0[A] }
 
-    implicit def tableIO[T <: HasAnnotation: ClassTag: TypeTag: Coder](implicit
+    implicit def tableIO[T <: HasAnnotation: TypeTag: Coder](implicit
       t: BigQueryType.Table[T]
     ): Aux[T, Table] =
       new IO[T] {
@@ -500,7 +500,7 @@ object BigQueryTyped {
         def impl: Table[T] = Table(STable.Spec(t.table))
       }
 
-    implicit def queryIO[T <: HasAnnotation: ClassTag: TypeTag: Coder](implicit
+    implicit def queryIO[T <: HasAnnotation: TypeTag: Coder](implicit
       t: BigQueryType.Query[T]
     ): Aux[T, Select] =
       new IO[T] {
@@ -508,7 +508,7 @@ object BigQueryTyped {
         def impl: Select[T] = Select(Query(t.queryRaw))
       }
 
-    implicit def storageIO[T <: HasAnnotation: ClassTag: TypeTag: Coder](implicit
+    implicit def storageIO[T <: HasAnnotation: TypeTag: Coder](implicit
       t: BigQueryType.StorageOptions[T]
     ): Aux[T, Storage] =
       new IO[T] {
@@ -527,7 +527,7 @@ object BigQueryTyped {
    *
    * The source (table) specified in the annotation will be used
    */
-  @inline final def apply[T <: HasAnnotation: ClassTag: TypeTag](implicit t: IO[T]): t.F[T] =
+  @inline final def apply[T <: HasAnnotation](implicit t: IO[T]): t.F[T] =
     t.impl
 
   /**
@@ -538,8 +538,7 @@ object BigQueryTyped {
    * supported. By default the query dialect will be automatically detected. To override this
    * behavior, start the query string with `#legacysql` or `#standardsql`.
    */
-  final case class Select[T <: HasAnnotation: ClassTag: TypeTag: Coder](query: Query)
-      extends BigQueryIO[T] {
+  final case class Select[T <: HasAnnotation: TypeTag: Coder](query: Query) extends BigQueryIO[T] {
     override type ReadP = Unit
     override type WriteP = Nothing // ReadOnly
 
@@ -565,14 +564,13 @@ object BigQueryTyped {
   }
 
   object Select {
-    @inline final def apply[T <: HasAnnotation: ClassTag: TypeTag: Coder](
+    @inline final def apply[T <: HasAnnotation: TypeTag: Coder](
       query: String
     ): Select[T] = new Select[T](Query(query))
   }
 
   /** Get a typed SCollection for a BigQuery table. */
-  final case class Table[T <: HasAnnotation: ClassTag: TypeTag: Coder](table: STable)
-      extends BigQueryIO[T] {
+  final case class Table[T <: HasAnnotation: TypeTag: Coder](table: STable) extends BigQueryIO[T] {
     private[this] val underlying = {
       val readerFn = BigQueryType[T].fromAvro
       val toTableRow = BigQueryType[T].toTableRow
@@ -739,7 +737,7 @@ object BigQueryTyped {
   }
 
   /** Get a typed SCollection for a BigQuery table using the storage API. */
-  final case class Storage[T <: HasAnnotation: ClassTag: TypeTag: Coder](
+  final case class Storage[T <: HasAnnotation: TypeTag: Coder](
     table: STable,
     selectedFields: List[String],
     rowRestriction: Option[String]
@@ -770,7 +768,7 @@ object BigQueryTyped {
     }
   }
 
-  final case class StorageQuery[T <: HasAnnotation: ClassTag: TypeTag: Coder](sqlQuery: Query)
+  final case class StorageQuery[T <: HasAnnotation: TypeTag: Coder](sqlQuery: Query)
       extends BigQueryIO[T] {
     override type ReadP = Unit
     override type WriteP = Nothing // ReadOnly
@@ -797,7 +795,7 @@ object BigQueryTyped {
     override def tap(read: ReadP): Tap[T] = underlying.tap(BigQueryTypedSelect.ReadParam())
   }
 
-  private[scio] def dynamic[T <: HasAnnotation: ClassTag: TypeTag: Coder](
+  private[scio] def dynamic[T <: HasAnnotation: TypeTag: Coder](
     newSource: Option[Source]
   ): ScioIO.ReadOnly[T, Unit] = {
     val bqt = BigQueryType[T]

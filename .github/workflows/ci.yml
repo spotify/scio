@@ -12,7 +12,7 @@ jobs:
       - name: Java 11 setup
         uses: olafurpg/setup-scala@v10
         with:
-          java-version: 11
+          java-version: graalvm-ce-java11@21.0.0
       - run: sbt "; scalafmtCheckAll; scalafmtSbtCheck" "; scalafixEnable; scalafixAll --check"
   scalafix-rules:
     runs-on: ubuntu-latest
@@ -23,7 +23,7 @@ jobs:
       - name: Java 11 setup
         uses: olafurpg/setup-scala@v10
         with:
-          java-version: 11
+          java-version: graalvm-ce-java11@21.0.0
       - run: "cd scalafix; sbt test"
   test:
     runs-on: ubuntu-latest
@@ -31,7 +31,7 @@ jobs:
       - uses: actions/checkout@v2.3.4
       - name: cache SBT
         uses: coursier/cache-action@v5
-      - name: java ${{matrix.java}} setup
+      - name: Java ${{matrix.java}} setup
         uses: olafurpg/setup-scala@v10
         with:
           java-version: ${{matrix.java}}
@@ -39,8 +39,8 @@ jobs:
     strategy:
       matrix:
         java:
-          - 8
-          - 11
+          - graalvm-ce-java8@21.0.0
+          - graalvm-ce-java11@21.0.0
         scala:
           - 2.12.13
           - 2.13.5
@@ -50,8 +50,10 @@ jobs:
       - uses: actions/checkout@v2.3.4
       - name: cache SBT
         uses: coursier/cache-action@v5
-      - name: java ${{matrix.java}} setup
+      - name: Java 11 setup
         uses: olafurpg/setup-scala@v10
+        with:
+          java-version: graalvm-ce-java11@21.0.0
       - run: |
           sbt coverage test coverageReport
           bash <(curl -s https://codecov.io/bash)
@@ -61,7 +63,7 @@ jobs:
       - uses: actions/checkout@v2.3.4
       - name: cache SBT
         uses: coursier/cache-action@v5
-      - name: java ${{matrix.java}} setup
+      - name: Java ${{matrix.java}} setup
         uses: olafurpg/setup-scala@v10
       - run: ./scripts/circleci_repl.sh
         env:
@@ -69,8 +71,8 @@ jobs:
     strategy:
       matrix:
         java:
-          - 8
-          - 11
+          - graalvm-ce-java8@21.0.0
+          - graalvm-ce-java11@21.0.0
         scala:
           - 2.12.13
           - 2.13.5
@@ -80,7 +82,7 @@ jobs:
       - uses: actions/checkout@v2.3.4
       - name: cache SBT
         uses: coursier/cache-action@v5
-      - name: java ${{matrix.java}} setup
+      - name: Java ${{matrix.java}} setup
         uses: olafurpg/setup-scala@v10
         with:
           java-version: ${{matrix.java}}
@@ -88,8 +90,8 @@ jobs:
     strategy:
       matrix:
         java:
-          - 8
-          - 11
+          - graalvm-ce-java8@21.0.0
+          - graalvm-ce-java11@21.0.0
         scala:
           - 2.12.13
           - 2.13.5

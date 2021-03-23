@@ -118,7 +118,7 @@ object PubsubIO {
     name: String,
     idAttribute: String = null,
     timestampAttribute: String = null
-  ): PubsubIO[T] = readAvro(name, idAttribute, timestampAttribute)
+  ): PubsubIO[T] = avro(name, idAttribute, timestampAttribute)
 
   def avro[T <: SpecificRecordBase: ClassTag](
     name: String,

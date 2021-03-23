@@ -130,7 +130,7 @@ object CsvIO {
     override def tap(params: ReadP): Tap[T] = new CsvTap[T](path, params)
   }
 
-  final case class Write[T: HeaderEncoder: Coder](path: String) extends ScioIO[T] {
+  final case class Write[T: HeaderEncoder](path: String) extends ScioIO[T] {
     override type ReadP = Nothing // WriteOnly
     override type WriteP = CsvIO.WriteParam
     final override val tapT: TapT.Aux[T, Nothing] = EmptyTapOf[T]

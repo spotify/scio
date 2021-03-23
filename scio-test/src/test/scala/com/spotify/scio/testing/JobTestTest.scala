@@ -56,7 +56,6 @@ object SpecificAvroFileJob {
 object GenericAvroFileJob {
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
-    implicit val coder = Coder.avroGenericRecordCoder(AvroUtils.schema)
     sc.avroFile(args("input"), AvroUtils.schema)
       .saveAsAvroFile(args("output"), schema = AvroUtils.schema)
     sc.run()

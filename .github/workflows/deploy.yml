@@ -16,8 +16,10 @@ jobs:
       - uses: actions/checkout@v2.3.4
       - name: cache SBT
         uses: coursier/cache-action@v5
-      - name: java ${{matrix.java}} setup
+      - name: Java 11 setup
         uses: olafurpg/setup-scala@v10
+        with:
+          java-version: graalvm-ce-java11@21.0.0
       - run: sbt scio-repl/assembly
       - name: Create Release
         id: create_release
@@ -45,8 +47,10 @@ jobs:
         uses: actions/checkout@v2.3.4
       - name: Cache SBT
         uses: coursier/cache-action@v5
-      - name: Setup Java and Scala
+      - name: Java 11 setup
         uses: olafurpg/setup-scala@v10
+        with:
+          java-version: graalvm-ce-java11@21.0.0
       - name: Setup project
         run: scripts/gha_setup.sh
       - name: Build documentation

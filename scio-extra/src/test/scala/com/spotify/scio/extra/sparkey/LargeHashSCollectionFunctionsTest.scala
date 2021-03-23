@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Spotify AB.
+ * Copyright 2021 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,21 +15,17 @@
  * under the License.
  */
 
-package com.spotify.scio
+package com.spotify.scio.extra.sparkey
 
-import com.spotify.scio.values.SCollection
+import com.spotify.scio.testing.PipelineSpec
 
-package object repl {
-  implicit class ReplSCollection[T](private val self: SCollection[T]) extends AnyVal {
-
-    /** Convenience method to close the current [[ScioContext]] and collect elements. */
-    def runAndCollect(): Iterator[T] = {
-      val closedTap = self.materialize
-      self.context
-        .run()
-        .waitUntilDone()
-        .tap(closedTap)
-        .value
+class LargeHashSCollectionFunctionsTest extends PipelineSpec {
+  it should "support hashFilter() with asLargeSetSideInput" in {
+    runWithContext { sc =>
+      val p1 = sc.parallelize(Seq("a", "b", "c", "b"))
+      val p2 = sc.parallelize(Seq[String]("a", "a", "b", "e")).asLargeSetSideInput
+      val p = p1.hashFilter(p2)
+      p should containInAnyOrder(Seq("a", "b", "b"))
     }
   }
 }

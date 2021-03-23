@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Spotify AB.
+ * Copyright 2021 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,21 +15,17 @@
  * under the License.
  */
 
-package com.spotify.scio
+package com.spotify.scio.extra.sparkey.instances
 
-import com.spotify.scio.values.SCollection
+import com.spotify.sparkey.SparkeyReader
 
-package object repl {
-  implicit class ReplSCollection[T](private val self: SCollection[T]) extends AnyVal {
+import scala.jdk.CollectionConverters._
 
-    /** Convenience method to close the current [[ScioContext]] and collect elements. */
-    def runAndCollect(): Iterator[T] = {
-      val closedTap = self.materialize
-      self.context
-        .run()
-        .waitUntilDone()
-        .tap(closedTap)
-        .value
-    }
-  }
+/** Enhanced version of `SparkeyReader` that mimics a `Map`. */
+class StringSparkeyReader(self: SparkeyReader) extends SparkeyMapBase[String, String] {
+  override def get(key: String): Option[String] =
+    Option(self.getAsString(key))
+
+  override def iterator: Iterator[(String, String)] =
+    self.iterator.asScala.map(e => (e.getKeyAsString, e.getValueAsString))
 }

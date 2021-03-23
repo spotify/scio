@@ -38,10 +38,8 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    */
   def hashJoin[W](
     rhs: SCollection[(K, W)]
-  ): SCollection[(K, (V, W))] = {
-    implicit val wCoder = rhs.valueCoder
+  ): SCollection[(K, (V, W))] =
     hashJoin(rhs.asMultiMapSingletonSideInput)
-  }
 
   /**
    * Perform an inner join with a MultiMap `SideInput[Map[K, Iterable[V]]`
@@ -88,10 +86,8 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    */
   def hashLeftOuterJoin[W](
     rhs: SCollection[(K, W)]
-  ): SCollection[(K, (V, Option[W]))] = {
-    implicit val wCoder = rhs.valueCoder
+  ): SCollection[(K, (V, Option[W]))] =
     hashLeftOuterJoin(rhs.asMultiMapSingletonSideInput)
-  }
 
   /**
    * Perform a left outer join with a MultiMap `SideInput[Map[K, Iterable[V]]`
@@ -127,10 +123,8 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    */
   def hashFullOuterJoin[W](
     rhs: SCollection[(K, W)]
-  ): SCollection[(K, (Option[V], Option[W]))] = {
-    implicit val wCoder = rhs.valueCoder
+  ): SCollection[(K, (Option[V], Option[W]))] =
     hashFullOuterJoin(rhs.asMultiMapSingletonSideInput)
-  }
 
   /**
    * Perform a full outer join with a `SideInput[Map[K, Iterable[W]]]`.
