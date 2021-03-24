@@ -138,9 +138,11 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
     }
   }
 
+  @deprecated("Beam SQL support will be removed in 0.11.0", since = "0.10.1")
   def typedBigQueryTable[T: Schema: Coder: ClassTag](table: Table): SCollection[T] =
     self.read(BigQueryTyped.BeamSchema(table))
 
+  @deprecated("Beam SQL support will be removed in 0.11.0", since = "0.10.1")
   def typedBigQueryTable[T: Schema: Coder: ClassTag](
     table: Table,
     parseFn: SchemaAndRecord => T

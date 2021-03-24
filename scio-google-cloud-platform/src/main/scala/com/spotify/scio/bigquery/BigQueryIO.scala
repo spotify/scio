@@ -695,6 +695,7 @@ object BigQueryTyped {
       new BeamSchema(table, defaultParseFn)
   }
 
+  @deprecated("Beam SQL support will be removed in 0.11.0", since = "0.10.1")
   final case class BeamSchema[T: Schema: Coder: ClassTag](
     table: STable,
     parseFn: SchemaAndRecord => T

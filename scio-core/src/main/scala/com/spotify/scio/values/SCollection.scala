@@ -283,6 +283,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    *   SCollection[T]#to[U](To.unsafe)
    * }}}
    */
+  @deprecated("Beam SQL support will be removed in 0.11.0", since = "0.10.1")
   def to[U](to: To[T, U]): SCollection[U] = transform(to)
 
   // =======================================================================
