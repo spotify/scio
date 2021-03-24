@@ -549,6 +549,10 @@ final class CoderTest extends AnyFlatSpec with Matchers {
 
     SampleField("hello", StringType) coderShould roundtrip()
 
+    // https://github.com/spotify/scio/issues/3707
+    SampleField("hello", StringType) coderShould beConsistentWithEquals()
+    SampleField("hello", StringType) coderShould beDeterministic()
+
     SampleField(
       "hello",
       RecordType(
