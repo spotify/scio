@@ -76,7 +76,9 @@ object CoderAssertions {
       }
     }
 
-  def beConsistentWithEquals[T: ClassTag](opts: PipelineOptions = DefaultPipelineOptions): CoderAssertion[T] =
+  def beConsistentWithEquals[T: ClassTag](
+    opts: PipelineOptions = DefaultPipelineOptions
+  ): CoderAssertion[T] =
     new CoderAssertion[T] {
       override def assert(value: T)(implicit c: Coder[T], eq: Equality[T]): Assertion = {
         val beamCoder = CoderMaterializer.beamWithDefault(c, o = opts)
@@ -84,7 +86,9 @@ object CoderAssertions {
       }
     }
 
-  def beDeterministic[T: ClassTag](opts: PipelineOptions = DefaultPipelineOptions): CoderAssertion[T] =
+  def beDeterministic[T: ClassTag](
+    opts: PipelineOptions = DefaultPipelineOptions
+  ): CoderAssertion[T] =
     new CoderAssertion[T] {
       override def assert(value: T)(implicit c: Coder[T], eq: Equality[T]): Assertion = {
         val beamCoder = CoderMaterializer.beamWithDefault(c, o = opts)
