@@ -45,6 +45,7 @@ private object NothingCoder extends AtomicCoder[Nothing] {
   override def decode(is: InputStream): Nothing =
     // can't possibly happen
     throw new IllegalStateException("Trying to decode a value of type Nothing is impossible")
+  override def consistentWithEquals(): Boolean = true
 }
 
 abstract private class BaseSeqLikeCoder[M[_], T](val elemCoder: BCoder[T])
