@@ -68,17 +68,3 @@ For changes available in `latest` but not in `current`:
 For changes we want to make to `latest`:
 - Submit pull request to `latest`
 - Follow the steps above once merged
-
-## Beam master nightly build
-
-To keep up with upstream changes, [beam-master](https://github.com/spotify/scio/tree/beam-master) branch is built nightly and depends on latest Beam SNAPSHOT.
-
-We should do the following periodically to reduce work when upgrading Beam release version.
-- rebase `beam-master` on `master`
-- fix for breaking changes in `beam-master`
-- rebase `master` on `beam-master` when upgrading Beam release version.
-
-To work on a breaking change:
-- checkout `beam-master` branch
-- run `./scripts/circleci_snapshot.sh` to change `beamVersion` to the latest SNAPSHOT
-- run `sbt test it:test` and fix errors
