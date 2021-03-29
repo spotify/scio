@@ -77,9 +77,8 @@ object IsJavaBean {
 
   private def isJavaBeanImpl[T](using Quotes, Type[T]): Expr[IsJavaBean[T]] = {
     import quotes.reflect._
-    val sym = TypeTree.of[T].symbol
-    // TODO: scala3 - check if symbol is a Java class ?
-    checkGetterAndSetters(sym)
+    val sym =  TypeRepr.of[T].typeSymbol
+    if sym.flags.is(Flags.JavaDefined) then checkGetterAndSetters(sym)
     '{new IsJavaBean[T]{}}
   }
 

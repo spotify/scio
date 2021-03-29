@@ -122,7 +122,7 @@ final private class PollingTaps(private[this] val backOff: BackOff) extends Taps
 }
 
 /** Companion object for [[Taps]]. */
-object Taps extends {
+object Taps {
   import TapsSysProps._
 
   /** Default taps algorithm. */

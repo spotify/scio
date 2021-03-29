@@ -48,7 +48,7 @@ object DynamicSCollectionOps {
       .withNumShards(numShards)
       .by(Functions.serializableFn(destinationFn))
       .withDestinationCoder(StringUtf8Coder.of())
-      .withNaming(Functions.serializableFn { destination: String =>
+      .withNaming(Functions.serializableFn { (destination: String) =>
         FileIO.Write.defaultNaming(s"$destination/part", suffix)
       })
 }
