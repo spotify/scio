@@ -65,7 +65,7 @@ jobs:
         uses: coursier/cache-action@v6
       - name: Java ${{matrix.java}} setup
         uses: olafurpg/setup-scala@v10
-      - run: ./scripts/circleci_repl.sh
+      - run: ./scripts/ci_repl.sh
         env:
           SCALA_VERSION: ${{ matrix.scala }}
     strategy:
