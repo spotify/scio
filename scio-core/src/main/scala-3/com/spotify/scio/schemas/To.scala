@@ -17,13 +17,33 @@
 
 package com.spotify.scio.schemas
 
+package com.spotify.scio.schemas.Schema
 import org.apache.beam.sdk.schemas.{SchemaCoder, Schema => BSchema}
 
 import scala.compiletime._
 import scala.deriving._
 import scala.quoted._
 
+
 object ToMacro {
+
+  //given optionSchema[T](using t: Schema[T]): Schema[Option[T]] = 
+
+  def interpretSchema[T: Type](schemaExpr: Expr[Schema[T]])(using Quotes): Option[Schema[T]] =
+    schemaExpr match
+    case '{ Schema.optionSchema[t](using $tSchemaExpr) } =>
+      for
+        tSchema <- interpretSchema($tSchemaExpr)
+      yield
+        Schema.optionSchema(using tSchema).asInstanceOf[Schema[T]]
+    case '{ Schema.mapSchema[k, v](using $keySchemaExpr, $valueSchemaExpr) } =>
+      for 
+        keySchema <- interpretSchema($keySchemaExpr)
+        valueSchema <- interpretSchema($valueSchemaExpr)
+      yield Schema.mapSchema(using keySchema, valueSchema).asInstanceOf[Schema[T]]
+     case _ => None
+
+
   def safeImpl[I, O](si: Expr[Schema[I]])(implicit q: Quotes): Expr[To[I, O]] = {
     ???
   }
