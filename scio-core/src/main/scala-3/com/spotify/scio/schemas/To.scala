@@ -53,7 +53,7 @@ object ToMacro {
   }
 
 
-  def safeImpl[I, O](iSchema: Expr[Schema[I]], oSchema: Expr[Schema[O]])(implicit q: Quotes): Expr[To[I, O]] = {
+  def safeImpl[I, O](iSchema: Expr[Schema[I]], oSchema: Expr[Schema[O]])(using Quotes): Expr[To[I, O]] = {
     import scala.quoted.quotes.reflect.report
 
     (interpretSchema(iSchema), interpretSchema(oSchema)) match {
