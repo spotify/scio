@@ -22,7 +22,7 @@ jobs:
           # - scio-jdbc/test
           # - scio-extra/compile
           # - scio-extra/test
-          # - scio-core/compile
+          - scio-core/compile
           # - scio-core/test
           # - scio-examples/compile
           # - scio-examples/test
