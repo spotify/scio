@@ -17,7 +17,6 @@
 
 package com.spotify.scio.schemas
 
-package com.spotify.scio.schemas.Schema
 import org.apache.beam.sdk.schemas.{SchemaCoder, Schema => BSchema}
 
 import scala.compiletime._
@@ -27,7 +26,7 @@ import scala.quoted._
 
 object ToMacro {
 
-  def interpretSchema[T: Type](schemaExpr: Expr[Schema[T]])(using Quotes): Option[Schema[T]] = schemaExpr match {
+  def interpretSchema[T: scala.quoted.Type](schemaExpr: Expr[Schema[T]])(using Quotes): Option[Schema[T]] = schemaExpr match {
     case '{ Schema.stringSchema }     => Some(Schema.stringSchema.asInstanceOf[Schema[T]])
     case '{ Schema.byteSchema }       => Some(Schema.byteSchema.asInstanceOf[Schema[T]])
     case '{ Schema.bytesSchema }      => Some(Schema.bytesSchema.asInstanceOf[Schema[T]])
