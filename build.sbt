@@ -88,7 +88,7 @@ val magnolifyVersion = "0.4.3"
 val nettyVersion = "4.1.51.Final"
 val nettyTcNativeVersion = "2.0.33.Final"
 val opencensusVersion = "0.24.0"
-val parquetExtraVersion = "0.4.0"
+val parquetExtraVersion = "0.4.1"
 val parquetVersion = "1.12.0"
 val protobufGenericVersion = "0.2.9"
 val protobufVersion = "3.15.6"
@@ -100,7 +100,7 @@ val shapelessVersion = "2.3.3"
 val slf4jVersion = "1.7.30"
 val sparkeyVersion = "3.2.1"
 val sparkVersion = "2.4.6"
-val tensorFlowVersion = "0.3.0"
+val tensorFlowVersion = "0.3.1"
 val zoltarVersion = "0.6.0-M2"
 val scalaCollectionCompatVersion = "2.4.3"
 
@@ -814,6 +814,7 @@ lazy val `scio-parquet`: Project = project
       "org.apache.avro" % "avro" % avroVersion,
       "org.apache.avro" % "avro-compiler" % avroVersion,
       "me.lyh" % "parquet-tensorflow" % parquetExtraVersion,
+      "org.tensorflow" % "tensorflow-core-api" % tensorFlowVersion,
       "com.google.cloud.bigdataoss" % "gcs-connector" % s"hadoop2-$bigdataossVersion",
       "com.spotify" %% "magnolify-parquet" % magnolifyVersion,
       "org.apache.beam" % "beam-sdks-java-io-hadoop-format" % beamVersion,
