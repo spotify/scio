@@ -22,7 +22,7 @@ import org.apache.beam.sdk.schemas.{SchemaCoder, Schema => BSchema}
 import scala.compiletime._
 import scala.deriving._
 import scala.quoted._
-
+import scala.reflect.ClassTag
 
 object ToMacro {
 
@@ -52,8 +52,11 @@ object ToMacro {
   }
 
 
-  def safeImpl[I, O](iSchema: Expr[Schema[I]], oSchema: Expr[Schema[O]])(using Quotes): Expr[To[I, O]] = {
-    import scala.quoted.quotes.reflect.report
+  def safeImpl[I: scala.quoted.Type, O: scala.quoted.Type](
+    iSchema: Expr[Schema[I]],
+    oSchema: Expr[Schema[O]]
+  )(using Quotes): Expr[To[I, O]] = {
+    import scala.quoted.quotes.reflect.{report, TypeRepr}
 
     (interpretSchema(iSchema), interpretSchema(oSchema)) match {
       case (None, None) => report.throwError(
@@ -69,7 +72,12 @@ object ToMacro {
       case (Some(sIn), Some(sOut)) =>
         val schemaOut: BSchema = SchemaMaterializer.fieldType(sOut).getRowSchema()
         val schemaIn: BSchema = SchemaMaterializer.fieldType(sIn).getRowSchema()
-        To.checkCompatibility(schemaIn, schemaOut)('{ To.unchecked[I, O] })
+        val classTagOpt = Expr.summon[ClassTag[O]]
+        if (classTagOpt.isEmpty) {
+          report.throwError(s"Could not summon Expr[ClassTag[${TypeRepr.of[O].show}]]")
+        }
+        val classTag = classTagOpt.get
+        To.checkCompatibility(schemaIn, schemaOut)('{ To.unchecked[I, O](using $iSchema, $oSchema, $classTag) })
           .fold(message => report.throwError(message), identity)
     }
   }
