@@ -203,10 +203,10 @@ final private[scio] case class LazyCoder[T](
         case Record(typeName, _, _, _) if types.contains(typeName) =>
           Coder[Nothing].asInstanceOf[Coder[B]]
         //
-        case ref: Ref[_]       => go(ref.value, types + ref.typeName)
-        case c @ RawBeam(_) => c
-        case c @ Beam(_)    => c
-        case c @ Fallback(_)  => c
+        case ref: Ref[_]     => go(ref.value, types + ref.typeName)
+        case c @ RawBeam(_)  => c
+        case c @ Beam(_)     => c
+        case c @ Fallback(_) => c
         case Transform(c, f) =>
           val c2 = f(CoderMaterializer.beamImpl(o, c))
           go(c2, types)
