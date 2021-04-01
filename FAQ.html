@@ -207,7 +207,7 @@ spotify/scio
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.10.0+41-43a89f36*
+<i class="md-icon" title="Version">label_outline</i> 0.10.1+0-7c94085b+20210401-1841*
 </label>
 </li>
 </ul>
@@ -300,7 +300,7 @@ spotify/scio
     <li><a href="FAQ.html#how-do-i-fix-invalid-default-bigquery-credentials-" class="header">How do I fix invalid default BigQuery credentials?</a></li>
     <li><a href="FAQ.html#why-are-my-typed-bigquery-case-classes-not-up-to-date-" class="header">Why are my typed BigQuery case classes not up to date?</a></li>
     <li><a href="FAQ.html#how-do-i-fix-with-bigquery-" class="header">How do I fix &ldquo;SocketTimeoutException&rdquo; with BigQuery?</a></li>
-    <li><a href="FAQ.html#why-do-i-see-names-like-in-the-ui-" class="header">Why do I see names like &ldquo;<a href="mailto:&#109;&#x61;&#105;n&#64;{&#x4e;&#x61;&#x74;&#105;&#118;&#101;&#77;&#101;&#116;h&#111;&#x64;&#65;&#x63;&#x63;e&#x73;&#x73;&#x6f;&#114;I&#x6d;&#x70;&#108;&#x2e;&#x2e;&#46;&#125;">&#109;&#x61;&#105;n&#64;{&#x4e;&#x61;&#x74;&#105;&#118;&#101;&#77;&#101;&#116;h&#111;&#x64;&#65;&#x63;&#x63;e&#x73;&#x73;&#x6f;&#114;I&#x6d;&#x70;&#108;&#x2e;&#x2e;&#46;&#125;</a>&rdquo; in the UI?</a></li>
+    <li><a href="FAQ.html#why-do-i-see-names-like-in-the-ui-" class="header">Why do I see names like &ldquo;<a href="mailto:&#109;a&#x69;&#x6e;&#x40;&#123;&#78;a&#116;&#105;&#x76;e&#77;&#101;&#116;&#x68;&#111;d&#65;cce&#115;&#x73;&#x6f;&#x72;I&#x6d;pl&#46;&#46;&#46;&#125;">&#109;a&#x69;&#x6e;&#x40;&#123;&#78;a&#116;&#105;&#x76;e&#77;&#101;&#116;&#x68;&#111;d&#65;cce&#115;&#x73;&#x6f;&#x72;I&#x6d;pl&#46;&#46;&#46;&#125;</a>&rdquo; in the UI?</a></li>
     <li><a href="FAQ.html#how-do-i-fix-error-" class="header">How do I fix &ldquo;RESOURCE_EXHAUSTED&rdquo; error?</a></li>
     <li><a href="FAQ.html#can-i-use-trait-instead-of-method-" class="header">Can I use &ldquo;scala.App&rdquo; trait instead of &ldquo;main&rdquo; method?</a></li>
     <li><a href="FAQ.html#how-to-inspect-the-content-of-an-scollection-" class="header">How to inspect the content of an <code>SCollection</code>?</a></li>
@@ -745,7 +745,7 @@ def main(cmdlineArgs: Array[String]): Unit = {
 <p>It can be fixed by increasing the timeout settings (default 20s).</p>
 <pre class="prettyprint"><code class="language-bash">sbt -Dbigquery.connect_timeout=30000 -Dbigquery.read_timeout=30000
 </code></pre>
-<h4><a href="#why-do-i-see-names-like-in-the-ui-" name="why-do-i-see-names-like-in-the-ui-" class="anchor"><span class="anchor-link"></span></a>Why do I see names like &ldquo;<a href="mailto:&#x6d;&#x61;&#105;&#110;&#64;{&#x4e;&#97;&#x74;i&#x76;&#x65;&#77;&#101;&#116;&#104;&#x6f;&#100;&#x41;&#99;&#x63;&#101;s&#x73;&#111;&#114;I&#x6d;&#x70;&#x6c;&#46;&#46;.&#125;">&#x6d;&#x61;&#105;&#110;&#64;{&#x4e;&#97;&#x74;i&#x76;&#x65;&#77;&#101;&#116;&#104;&#x6f;&#100;&#x41;&#99;&#x63;&#101;s&#x73;&#111;&#114;I&#x6d;&#x70;&#x6c;&#46;&#46;.&#125;</a>&rdquo; in the UI?</h4>
+<h4><a href="#why-do-i-see-names-like-in-the-ui-" name="why-do-i-see-names-like-in-the-ui-" class="anchor"><span class="anchor-link"></span></a>Why do I see names like &ldquo;<a href="mailto:m&#97;&#105;&#110;&#x40;&#x7b;&#x4e;&#x61;&#116;&#105;v&#x65;&#77;e&#x74;&#x68;o&#100;&#65;&#99;c&#101;&#x73;s&#x6f;&#x72;Imp&#x6c;&#x2e;&#46;.&#125;">m&#97;&#105;&#110;&#x40;&#x7b;&#x4e;&#x61;&#116;&#105;v&#x65;&#77;e&#x74;&#x68;o&#100;&#65;&#99;c&#101;&#x73;s&#x6f;&#x72;Imp&#x6c;&#x2e;&#46;.&#125;</a>&rdquo; in the UI?</h4>
 <p>Scio traverses JVM stack trace to figure out the proper name of each transform, i.e. <code>flatMap@{UserAnalysis.scala:30}</code> but may get confused if your jobs are under the <code>com.spotify.scio</code> package. Move them to a different package, e.g. <code>com.spotify.analytics</code> to fix the issue.</p>
 <h4><a href="#how-do-i-fix-error-" name="how-do-i-fix-error-" class="anchor"><span class="anchor-link"></span></a>How do I fix &ldquo;RESOURCE_EXHAUSTED&rdquo; error?</h4>
 <p>You might see errors like <code>RESOURCE_EXHAUSTED: IO error: No space left on disk</code> in a job. They usually indicate that you have allocated insufficient local disk space to process your job. If you are running your job with default settings, your job is running on 3 workers, each with 250 GB of local disk space. Consider modifying the default settings to increase the number of workers available to your job (via <code>--numWorkers</code>), to increase the default disk size per worker (via <code>--diskSizeGb</code>).</p>
@@ -798,7 +798,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.10.0+41-43a89f36*
+0.10.1+0-7c94085b+20210401-1841*
 </span>
 </div>
 </article>
