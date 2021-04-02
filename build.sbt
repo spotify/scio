@@ -41,7 +41,7 @@ val bigtableClientVersion = "1.16.0"
 val breezeVersion = "1.1"
 val caffeineVersion = "2.9.0"
 val caseappVersion = "2.0.4"
-val catsVersion = "2.1.1"
+val catsVersion = "2.5.0"
 val chillVersion = "0.9.5"
 val circeVersion = "0.13.0"
 val commonsCompressVersion = "1.20"
@@ -85,6 +85,7 @@ val kryoVersion =
   "4.0.2" // explicitly depend on 4.0.1+ due to https://github.com/EsotericSoftware/kryo/pull/516
 val magnoliaVersion = "0.17.0"
 val magnolifyVersion = "0.4.3"
+val metricsVersion = "3.2.6"
 val nettyVersion = "4.1.51.Final"
 val nettyTcNativeVersion = "2.0.33.Final"
 val opencensusVersion = "0.24.0"
@@ -610,6 +611,7 @@ lazy val `scio-google-cloud-platform`: Project = project
       "com.google.cloud" % "google-cloud-core" % googleCloudCoreVersion,
       "com.google.cloud" % "google-cloud-storage" % gcsVersion % "test,it",
       "com.google.guava" % "guava" % guavaVersion,
+      // From BeamModulePlugin.groovy
       "com.google.http-client" % "google-http-client-jackson" % "1.29.2",
       "com.google.http-client" % "google-http-client-jackson2" % googleHttpClientsVersion,
       "com.google.http-client" % "google-http-client" % googleHttpClientsVersion,
@@ -1269,6 +1271,7 @@ ThisBuild / dependencyOverrides ++= Seq(
   "com.google.apis" % "google-api-services-storage" % s"v1-rev20200611-$googleClientsVersion",
   "com.google.auth" % "google-auth-library-credentials" % googleAuthVersion,
   "com.google.auth" % "google-auth-library-oauth2-http" % googleAuthVersion,
+  "com.google.auto.value" % "auto-value" % autoValueVersion,
   "com.google.auto.value" % "auto-value-annotations" % autoValueVersion,
   "com.google.cloud.bigdataoss" % "gcsio" % bigdataossVersion,
   "com.google.cloud.bigdataoss" % "util" % bigdataossVersion,
@@ -1280,10 +1283,12 @@ ThisBuild / dependencyOverrides ++= Seq(
   "com.google.code.gson" % "gson" % "2.8.6",
   "com.google.errorprone" % "error_prone_annotations" % "2.3.4",
   "com.google.guava" % "guava" % guavaVersion,
-  "com.google.http-client" % "google-http-client-jackson2" % googleHttpClientsVersion,
   "com.google.http-client" % "google-http-client" % googleHttpClientsVersion,
+  "com.google.http-client" % "google-http-client-jackson2" % googleHttpClientsVersion,
+  "com.google.http-client" % "google-http-client-protobuf" % googleHttpClientsVersion,
   "com.google.j2objc" % "j2objc-annotations" % "1.3",
   "com.google.oauth-client" % "google-oauth-client" % googleOauthClientVersion,
+  "com.google.oauth-client" % "google-oauth-client-java6" % googleOauthClientVersion,
   "com.google.protobuf" % "protobuf-java-util" % protobufVersion,
   "com.google.protobuf" % "protobuf-java" % protobufVersion,
   "com.propensive" %% "magnolia" % magnoliaVersion,
@@ -1298,7 +1303,8 @@ ThisBuild / dependencyOverrides ++= Seq(
   "io.circe" %% "circe-core" % circeVersion,
   "io.circe" %% "circe-generic" % circeVersion,
   "io.circe" %% "circe-parser" % circeVersion,
-  "io.dropwizard.metrics" % "metrics-core" % "3.2.2",
+  "io.dropwizard.metrics" % "metrics-core" % metricsVersion,
+  "io.dropwizard.metrics" % "metrics-jvm" % metricsVersion,
   "io.grpc" % "grpc-auth" % grpcVersion,
   "io.grpc" % "grpc-context" % grpcVersion,
   "io.grpc" % "grpc-core" % grpcVersion,
@@ -1312,6 +1318,7 @@ ThisBuild / dependencyOverrides ++= Seq(
   "io.grpc" % "grpc-alts" % grpcVersion,
   "io.grpc" % "grpc-all" % grpcVersion,
   "io.grpc" % "grpc-okhttp" % grpcVersion,
+  "io.netty" % "netty-all" % nettyVersion,
   "io.netty" % "netty-buffer" % nettyVersion,
   "io.netty" % "netty-codec-http" % nettyVersion,
   "io.netty" % "netty-codec-http2" % nettyVersion,
