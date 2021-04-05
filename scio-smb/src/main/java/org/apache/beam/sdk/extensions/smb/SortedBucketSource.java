@@ -305,6 +305,7 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
   public BoundedReader<KV<FinalKeyT, CoGbkResult>> createReader(PipelineOptions options)
       throws IOException {
     return new MergeBucketsReader<>(
+        options,
         sources,
         bucketOffsetId,
         effectiveParallelism,
@@ -319,6 +320,7 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
     private static final Comparator<Map.Entry<TupleTag, KV<byte[], Iterator<?>>>> keyComparator =
         (o1, o2) -> bytesComparator.compare(o1.getValue().getKey(), o2.getValue().getKey());
 
+    private final PipelineOptions options;
     private final Coder<FinalKeyT> keyCoder;
     private final SortedBucketSource<FinalKeyT> currentSource;
     private final Distribution keyGroupSize;
@@ -337,6 +339,7 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
     private int runningKeyGroupSize;
 
     MergeBucketsReader(
+        PipelineOptions options,
         List<BucketedInput<?, ?>> sources,
         Integer bucketId,
         int parallelism,
@@ -344,6 +347,7 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
         SortedBucketSource<FinalKeyT> currentSource,
         Distribution keyGroupSize,
         boolean materializeKeyGroup) {
+      this.options = options;
       this.keyCoder = sourceSpec.keyCoder;
       this.numSources = sources.size();
       this.currentSource = currentSource;
@@ -359,7 +363,7 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
 
       iterators =
           sources.stream()
-              .map(i -> i.createIterator(bucketId, parallelism))
+              .map(i -> i.createIterator(bucketId, parallelism, options))
               .toArray(KeyGroupIterator[]::new);
 
       resultSchema = BucketedInput.schemaOf(sources);
@@ -667,14 +671,26 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
           .sum();
     }
 
-    KeyGroupIterator<byte[], V> createIterator(int bucketId, int targetParallelism) {
+    KeyGroupIterator<byte[], V> createIterator(
+        int bucketId, int targetParallelism, PipelineOptions options) {
+      final SortedBucketOptions opts = options.as(SortedBucketOptions.class);
+      final int bufferSize = opts.getReadBufferSize();
+      final boolean backoff = opts.getReadBackoff();
       final List<Iterator<V>> iterators =
           mapBucketFiles(
               bucketId,
               targetParallelism,
-              file -> {
+              (partition, file) -> {
                 try {
-                  return fileOperations.iterator(file);
+                  if (backoff) {
+                    // we hit 10,000ms limit when partition = 23, 32,442ms cumulatively
+                    // 26.71min at partition = 180
+                    long millis = (long) Math.min(10000, Math.pow(1.5, partition));
+                    Thread.sleep(millis);
+                  }
+
+                  Iterator<V> iterator = fileOperations.iterator(file);
+                  return bufferSize > 0 ? new BufferedIterator<>(iterator, bufferSize) : iterator;
                 } catch (Exception e) {
                   throw new RuntimeException(e);
                 }
@@ -685,24 +701,26 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
     }
 
     private <T> List<T> mapBucketFiles(
-        int bucketId, int targetParallelism, Function<ResourceId, T> mapFn) {
+        int bucketId, int targetParallelism, BiFunction<Integer, ResourceId, T> mapFn) {
       final List<T> results = new ArrayList<>();
-      getPartitionMetadata()
-          .forEach(
-              (resourceId, partitionMetadata) -> {
-                final int numBuckets = partitionMetadata.getNumBuckets();
-                final int numShards = partitionMetadata.getNumShards();
+      int partition = 0;
+      for (Map.Entry<ResourceId, PartitionMetadata> entry : getPartitionMetadata().entrySet()) {
+        PartitionMetadata partitionMetadata = entry.getValue();
+        final int numBuckets = partitionMetadata.getNumBuckets();
+        final int numShards = partitionMetadata.getNumShards();
 
-                for (int i = (bucketId % numBuckets); i < numBuckets; i += targetParallelism) {
-                  for (int j = 0; j < numShards; j++) {
-                    results.add(
-                        mapFn.apply(
-                            partitionMetadata
-                                .getFileAssignment()
-                                .forBucket(BucketShardId.of(i, j), numBuckets, numShards)));
-                  }
-                }
-              });
+        for (int i = (bucketId % numBuckets); i < numBuckets; i += targetParallelism) {
+          for (int j = 0; j < numShards; j++) {
+            results.add(
+                mapFn.apply(
+                    partition,
+                    partitionMetadata
+                        .getFileAssignment()
+                        .forBucket(BucketShardId.of(i, j), numBuckets, numShards)));
+          }
+        }
+        partition++;
+      }
       return results;
     }
 

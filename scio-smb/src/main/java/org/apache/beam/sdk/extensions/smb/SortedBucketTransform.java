@@ -379,6 +379,7 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
         public boolean start() throws IOException {
           keyGroupReader =
               new MergeBucketsReader<>(
+                  options,
                   sources,
                   bucketOffsetId,
                   effectiveParallelism,
