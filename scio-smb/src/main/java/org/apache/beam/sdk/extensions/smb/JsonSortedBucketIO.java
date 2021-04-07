@@ -21,7 +21,10 @@ import static org.apache.beam.sdk.extensions.smb.BucketMetadata.HashType;
 
 import com.google.api.services.bigquery.model.TableRow;
 import com.google.auto.value.AutoValue;
+
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.apache.beam.sdk.coders.CannotProvideCoderException;
 import org.apache.beam.sdk.coders.Coder;
@@ -115,9 +118,16 @@ public class JsonSortedBucketIO {
     }
 
     /** Reads from the given input directory. */
-    public Read from(String inputDirectory) {
+    public Read from(String... inputDirectories) {
+      return from(Arrays.asList(inputDirectories));
+    }
+
+    public Read from(List<String> inputDirectories) {
       return toBuilder()
-          .setInputDirectories(FileSystems.matchNewResource(inputDirectory, true))
+          .setInputDirectories(
+              inputDirectories.stream()
+                .map(dir -> FileSystems.matchNewResource(dir, true))
+                .collect(Collectors.toList()))
           .build();
     }
 
