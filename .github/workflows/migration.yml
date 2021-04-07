@@ -55,4 +55,4 @@ jobs:
       - name: java 8 setup
         uses: olafurpg/setup-scala@v10
       - name: Compile
-        run: sbt "++3.0.0-RC1;${{ matrix.task }}"
+        run: sbt "++3.0.0-RC2;${{ matrix.task }}"
