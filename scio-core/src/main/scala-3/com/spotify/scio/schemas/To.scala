@@ -90,6 +90,6 @@ trait ToMacro {
    * at compile time.
    * @see To#unsafe
    */
-  inline def safe[I, O](inline iSchema: Schema[I], inline oSchema: Schema[O]): To[I, O] = 
+  inline def safe[I, O](using inline iSchema: Schema[I], inline oSchema: Schema[O]): To[I, O] = 
     ${ ToMacro.safeImpl('iSchema, 'oSchema) }
 }
