@@ -150,7 +150,7 @@ object SchemaMaterializer {
     schema
       .toList(v)
       .asScala
-      .map[schema.schema.Repr](dispatchEncode(schema.schema, fieldType.getCollectionElementType))
+      .map(dispatchEncode(schema.schema, fieldType.getCollectionElementType): A => schema.schema.Repr)
       .asJava
 
   private def encode[F[_, _], A, B](schema: MapType[F, A, B], fieldType: BFieldType)(
