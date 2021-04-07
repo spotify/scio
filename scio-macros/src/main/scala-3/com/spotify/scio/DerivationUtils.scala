@@ -27,12 +27,12 @@ object DerivationUtils {
       case _ => Nil
     }
 
-  inline given summonAllF[F[_], T <: Tuple]: Widen[T] = {
+  inline given summonAllF[F[_], T <: Tuple]: T = {
     val res =
       inline erasedValue[T] match {
         case _: EmptyTuple => EmptyTuple
         case _: (t *: ts) => summonInline[F[t]] *: summonAllF[F, ts]
       }
-    res.asInstanceOf[Widen[T]]
+    res.asInstanceOf[T]
   }
 }
